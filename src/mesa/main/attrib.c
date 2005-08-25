@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -890,9 +890,6 @@ _mesa_PopAttrib(void)
                _mesa_ClearDepth(depth->Clear);
                _mesa_set_enable(ctx, GL_DEPTH_TEST, depth->Test);
                _mesa_DepthMask(depth->Mask);
-               if (ctx->Extensions.HP_occlusion_test)
-                  _mesa_set_enable(ctx, GL_OCCLUSION_TEST_HP,
-                                   depth->OcclusionTest);
             }
             break;
          case GL_ENABLE_BIT:

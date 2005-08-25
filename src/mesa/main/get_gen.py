@@ -558,21 +558,6 @@ StateVars = [
 	   "matrix[3]", "matrix[7]", "matrix[11]", "matrix[15]"],
 	  "const GLfloat *matrix = ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Top->m;", None ),
 
-	# GL_HP_occlusion_test
-	( "GL_OCCLUSION_TEST_HP", GLboolean, ["ctx->Depth.OcclusionTest"], "",
-	  "HP_occlusion_test" ),
-	( "GL_OCCLUSION_TEST_RESULT_HP", GLboolean, [],
-	  """FLUSH_VERTICES(ctx, _NEW_DEPTH);
-         if (ctx->Depth.OcclusionTest)
-            params[0] = ctx->OcclusionResult;
-         else
-            params[0] = ctx->OcclusionResultSaved;
-         /* reset flag now */
-         ctx->OcclusionResult = GL_FALSE;
-         ctx->OcclusionResultSaved = GL_FALSE;
-         return;""",
-	  "HP_occlusion_test" ),
-
 	# GL_SGIS_pixel_texture
 	( "GL_PIXEL_TEXTURE_SGIS", GLboolean, ["ctx->Pixel.PixelTextureEnabled"],
 	  "", "SGIS_pixel_texture" ),

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -127,10 +127,6 @@
 	 return;
       ltor = (GLboolean) (area < 0.0F);
    }
-
-#ifndef DO_OCCLUSION_TEST
-   ctx->OcclusionResult = GL_TRUE;
-#endif
 
    /* Plane equation setup:
     * We evaluate plane equations at window (x,y) coordinates in order

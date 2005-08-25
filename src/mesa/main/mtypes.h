@@ -7,7 +7,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -584,7 +584,6 @@ struct gl_depthbuffer_attrib
    GLclampd Clear;		/**< Value to clear depth buffer to */
    GLboolean Test;		/**< Depth buffering enabled flag */
    GLboolean Mask;		/**< Depth buffer writable? */
-   GLboolean OcclusionTest;	/**< GL_HP_occlusion_test */
    GLboolean BoundsTest;        /**< GL_EXT_depth_bounds_test */
    GLfloat BoundsMin, BoundsMax;/**< GL_EXT_depth_bounds_test */
 };
@@ -2358,7 +2357,6 @@ struct gl_extensions
    GLboolean ATI_texture_mirror_once;
    GLboolean ATI_texture_env_combine3;
    GLboolean ATI_fragment_shader;
-   GLboolean HP_occlusion_test;
    GLboolean IBM_rasterpos_clip;
    GLboolean IBM_multimode_draw_arrays;
    GLboolean MESA_pack_invert;
@@ -2836,8 +2834,6 @@ struct __GLcontextRec
    struct gl_list_extensions ListExt; /**< driver dlist extensions */
 
 
-   GLboolean OcclusionResult;       /**< for GL_HP_occlusion_test */
-   GLboolean OcclusionResultSaved;  /**< for GL_HP_occlusion_test */
    GLuint _Facing; /**< This is a hack for 2-sided stencil test.
 		    *
 		    * We don't have a better way to communicate this value from

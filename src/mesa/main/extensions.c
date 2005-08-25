@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -129,7 +129,6 @@ static const struct {
    { OFF, "GL_ATI_texture_env_combine3",       F(ATI_texture_env_combine3)},
    { OFF, "GL_ATI_texture_mirror_once",        F(ATI_texture_mirror_once)},
    { OFF, "GL_ATI_fragment_shader",            F(ATI_fragment_shader)},
-   { OFF, "GL_HP_occlusion_test",              F(HP_occlusion_test) },
    { OFF, "GL_IBM_multimode_draw_arrays",      F(IBM_multimode_draw_arrays) },
    { ON,  "GL_IBM_rasterpos_clip",             F(IBM_rasterpos_clip) },
    { OFF, "GL_IBM_texture_mirrored_repeat",    F(ARB_texture_mirrored_repeat)},
@@ -247,7 +246,6 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.EXT_texture_mirror_clamp = GL_TRUE;
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
-   ctx->Extensions.HP_occlusion_test = GL_TRUE;
    ctx->Extensions.IBM_multimode_draw_arrays = GL_TRUE;
    ctx->Extensions.MESA_pack_invert = GL_TRUE;
 #if FEATURE_MESA_program_debug

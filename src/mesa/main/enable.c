@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -687,19 +687,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          client_state( ctx, cap, state );
          return;
 
-      /* GL_HP_occlusion_test */
-      case GL_OCCLUSION_TEST_HP:
-         CHECK_EXTENSION(HP_occlusion_test, cap);
-         if (ctx->Depth.OcclusionTest == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_DEPTH);
-         ctx->Depth.OcclusionTest = state;
-         if (state)
-            ctx->OcclusionResult = ctx->OcclusionResultSaved;
-         else
-            ctx->OcclusionResultSaved = ctx->OcclusionResult;
-         break;
-
       /* GL_SGIS_pixel_texture */
       case GL_PIXEL_TEXTURE_SGIS:
          CHECK_EXTENSION(SGIS_pixel_texture, cap);
@@ -1254,11 +1241,6 @@ _mesa_IsEnabled( GLenum cap )
       case GL_MINMAX:
          CHECK_EXTENSION(EXT_histogram);
          return ctx->Pixel.MinMaxEnabled;
-
-      /* GL_HP_occlusion_test */
-      case GL_OCCLUSION_TEST_HP:
-         CHECK_EXTENSION(HP_occlusion_test);
-         return ctx->Depth.OcclusionTest;
 
       /* GL_SGIS_pixel_texture */
       case GL_PIXEL_TEXTURE_SGIS:

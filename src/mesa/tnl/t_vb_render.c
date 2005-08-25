@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -133,7 +132,6 @@ do {							\
 #define TAG(x) clip_##x##_verts
 #define INIT(x) tnl->Driver.Render.PrimitiveNotify( ctx, x )
 #define RESET_STIPPLE if (stipple) tnl->Driver.Render.ResetLineStipple( ctx )
-#define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE
 #define PRESERVE_VB_DEFS
 #include "t_vb_rendertmp.h"
 
@@ -220,7 +218,6 @@ static void clip_elt_triangles( GLcontext *ctx,
    (void) elt; (void) stipple
 
 #define RESET_STIPPLE if (stipple) tnl->Driver.Render.ResetLineStipple( ctx )
-#define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE
 #define INIT(x) tnl->Driver.Render.PrimitiveNotify( ctx, x )
 #define RENDER_TAB_QUALIFIER
 #define PRESERVE_VB_DEFS

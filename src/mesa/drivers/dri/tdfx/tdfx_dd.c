@@ -153,96 +153,6 @@ static void tdfxDDGetBufferSize( GLframebuffer *buffer,
 }
 
 
-
-/*
- * Return the current value of the occlusion test flag and
- * reset the flag (hardware counters) to false.
- */
-static GLboolean get_occlusion_result( GLcontext *ctx )
-{
-   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   GLboolean result;
-
-   LOCK_HARDWARE( fxMesa );
-   fxMesa->Glide.grFinish(); /* required to flush the FIFO - FB 21-01-2002 */ 
-
-   if (ctx->Depth.OcclusionTest) {
-      if (ctx->OcclusionResult) {
-	 result = GL_TRUE;  /* result of software rendering */
-      }
-      else {
-	 FxI32 zfail, in;
-         fxMesa->Glide.grGet(GR_STATS_PIXELS_DEPTHFUNC_FAIL, 4, &zfail);
-         fxMesa->Glide.grGet(GR_STATS_PIXELS_IN, 4, &in);
-         /* Geometry is occluded if there is no input (in == 0) */
-         /* or if all pixels failed the depth test (zfail == in) */
-         /* The < 1 is there because I have empirically seen cases where */
-         /* zfail > in.... go figure.  FB - 21-01-2002. */
-         result = ((in - zfail) < 1 || in == 0) ? GL_FALSE : GL_TRUE;
-      }
-   }
-   else {
-      result = ctx->OcclusionResultSaved;
-   }
-
-   /* reset results now */
-   fxMesa->Glide.grReset(GR_STATS_PIXELS);
-   ctx->OcclusionResult = GL_FALSE;
-   ctx->OcclusionResultSaved = GL_FALSE;
-
-   UNLOCK_HARDWARE( fxMesa );
-
-   return result;
-}
-
-
-/*
- * We're only implementing this function to handle the
- * GL_OCCLUSTION_TEST_RESULT_HP case.  It's special because it
- * has a side-effect: resetting the occlustion result flag.
- */
-static GLboolean tdfxDDGetBooleanv( GLcontext *ctx, GLenum pname,
-				    GLboolean *result )
-{
-   if ( pname == GL_OCCLUSION_TEST_RESULT_HP ) {
-      *result = get_occlusion_result( ctx );
-      return GL_TRUE;
-   }
-   return GL_FALSE;
-}
-
-static GLboolean tdfxDDGetDoublev( GLcontext *ctx, GLenum pname,
-				   GLdouble *result )
-{
-   if ( pname == GL_OCCLUSION_TEST_RESULT_HP ) {
-      *result = (GLdouble) get_occlusion_result( ctx );
-      return GL_TRUE;
-   }
-   return GL_FALSE;
-}
-
-static GLboolean tdfxDDGetFloatv( GLcontext *ctx, GLenum pname,
-				  GLfloat *result )
-{
-   if ( pname == GL_OCCLUSION_TEST_RESULT_HP ) {
-      *result = (GLfloat) get_occlusion_result( ctx );
-      return GL_TRUE;
-   }
-   return GL_FALSE;
-}
-
-static GLboolean tdfxDDGetIntegerv( GLcontext *ctx, GLenum pname,
-				    GLint *result )
-{
-   if ( pname == GL_OCCLUSION_TEST_RESULT_HP ) {
-      *result = (GLint) get_occlusion_result( ctx );
-      return GL_TRUE;
-   }
-   return GL_FALSE;
-}
-
-
-
 #define VISUAL_EQUALS_RGBA(vis, r, g, b, a)        \
    ((vis->redBits == r) &&                         \
     (vis->greenBits == g) &&                       \
@@ -271,11 +181,6 @@ void tdfxDDInitDriverFuncs( const __GLcontextModes *visual,
    {
       functions->ReadPixels	= tdfx_readpixels_R5G6B5;
    }
-
-   functions->GetBooleanv	= tdfxDDGetBooleanv;
-   functions->GetDoublev	= tdfxDDGetDoublev;
-   functions->GetFloatv		= tdfxDDGetFloatv;
-   functions->GetIntegerv	= tdfxDDGetIntegerv;
 }
 
 

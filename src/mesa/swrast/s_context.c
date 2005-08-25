@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -80,7 +80,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
       rasterMask |= CLIP_BIT;
    }
 
-   if (ctx->Depth.OcclusionTest || ctx->Occlusion.Active)
+   if (ctx->Occlusion.Active)
       rasterMask |= OCCLUSION_BIT;
 
 

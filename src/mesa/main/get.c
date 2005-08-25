@@ -1179,24 +1179,6 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[15] = FLOAT_TO_BOOLEAN(matrix[15]);
          }
          break;
-      case GL_OCCLUSION_TEST_HP:
-         CHECK_EXTENSION_B(HP_occlusion_test, pname);
-         params[0] = ctx->Depth.OcclusionTest;
-         break;
-      case GL_OCCLUSION_TEST_RESULT_HP:
-         CHECK_EXTENSION_B(HP_occlusion_test, pname);
-         {
-         FLUSH_VERTICES(ctx, _NEW_DEPTH);
-         if (ctx->Depth.OcclusionTest)
-            params[0] = ctx->OcclusionResult;
-         else
-            params[0] = ctx->OcclusionResultSaved;
-         /* reset flag now */
-         ctx->OcclusionResult = GL_FALSE;
-         ctx->OcclusionResultSaved = GL_FALSE;
-         return;
-         }
-         break;
       case GL_PIXEL_TEXTURE_SGIS:
          CHECK_EXTENSION_B(SGIS_pixel_texture, pname);
          params[0] = ctx->Pixel.PixelTextureEnabled;
@@ -3024,24 +3006,6 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[15] = matrix[15];
          }
          break;
-      case GL_OCCLUSION_TEST_HP:
-         CHECK_EXTENSION_F(HP_occlusion_test, pname);
-         params[0] = BOOLEAN_TO_FLOAT(ctx->Depth.OcclusionTest);
-         break;
-      case GL_OCCLUSION_TEST_RESULT_HP:
-         CHECK_EXTENSION_F(HP_occlusion_test, pname);
-         {
-         FLUSH_VERTICES(ctx, _NEW_DEPTH);
-         if (ctx->Depth.OcclusionTest)
-            params[0] = ctx->OcclusionResult;
-         else
-            params[0] = ctx->OcclusionResultSaved;
-         /* reset flag now */
-         ctx->OcclusionResult = GL_FALSE;
-         ctx->OcclusionResultSaved = GL_FALSE;
-         return;
-         }
-         break;
       case GL_PIXEL_TEXTURE_SGIS:
          CHECK_EXTENSION_F(SGIS_pixel_texture, pname);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.PixelTextureEnabled);
@@ -4867,24 +4831,6 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[13] = IROUND(matrix[7]);
          params[14] = IROUND(matrix[11]);
          params[15] = IROUND(matrix[15]);
-         }
-         break;
-      case GL_OCCLUSION_TEST_HP:
-         CHECK_EXTENSION_I(HP_occlusion_test, pname);
-         params[0] = BOOLEAN_TO_INT(ctx->Depth.OcclusionTest);
-         break;
-      case GL_OCCLUSION_TEST_RESULT_HP:
-         CHECK_EXTENSION_I(HP_occlusion_test, pname);
-         {
-         FLUSH_VERTICES(ctx, _NEW_DEPTH);
-         if (ctx->Depth.OcclusionTest)
-            params[0] = ctx->OcclusionResult;
-         else
-            params[0] = ctx->OcclusionResultSaved;
-         /* reset flag now */
-         ctx->OcclusionResult = GL_FALSE;
-         ctx->OcclusionResultSaved = GL_FALSE;
-         return;
          }
          break;
       case GL_PIXEL_TEXTURE_SGIS:

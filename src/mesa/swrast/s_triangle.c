@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -910,7 +910,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
    ASSERT(ctx->Depth.Test);					\
    ASSERT(!ctx->Depth.Mask);					\
    ASSERT(ctx->Depth.Func == GL_LESS);				\
-   if (ctx->OcclusionResult && !ctx->Occlusion.Active) {	\
+   if (!ctx->Occlusion.Active) {				\
       return;							\
    }
 #define RENDER_SPAN( span )						\
@@ -921,7 +921,6 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
       for (i = 0; i < span.end; i++) {					\
          GLdepth z = FixedToDepth(span.z);				\
          if (z < zRow[i]) {						\
-            ctx->OcclusionResult = GL_TRUE;				\
             ctx->Occlusion.PassedCounter++;				\
          }								\
          span.z += span.zStep;						\
@@ -933,7 +932,6 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
          rb->GetPointer(ctx, rb, span.x, span.y);			\
       for (i = 0; i < span.end; i++) {					\
          if ((GLuint)span.z < zRow[i]) {				\
-            ctx->OcclusionResult = GL_TRUE;				\
             ctx->Occlusion.PassedCounter++;				\
          }								\
          span.z += span.zStep;						\
@@ -1057,7 +1055,7 @@ _swrast_choose_triangle( GLcontext *ctx )
       }
 
       /* special case for occlusion testing */
-      if ((ctx->Depth.OcclusionTest || ctx->Occlusion.Active) &&
+      if (ctx->Occlusion.Active &&
           ctx->Depth.Test &&
           ctx->Depth.Mask == GL_FALSE &&
           ctx->Depth.Func == GL_LESS &&

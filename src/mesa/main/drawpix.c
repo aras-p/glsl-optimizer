@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -70,7 +70,6 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       x = IROUND(ctx->Current.RasterPos[0]);
       y = IROUND(ctx->Current.RasterPos[1]);
 
-      ctx->OcclusionResult = GL_TRUE;
       ctx->Driver.DrawPixels(ctx, x, y, width, height, format, type,
 			     &ctx->Unpack, pixels);
    }
@@ -126,8 +125,6 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
       /* Round, to satisfy conformance tests (matches SGI's OpenGL) */
       destx = IROUND(ctx->Current.RasterPos[0]);
       desty = IROUND(ctx->Current.RasterPos[1]);
-
-      ctx->OcclusionResult = GL_TRUE;
 
       ctx->Driver.CopyPixels( ctx, srcx, srcy, width, height, destx, desty,
 			      type );
@@ -206,7 +203,6 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
          _mesa_update_state(ctx);
       }
 
-      ctx->OcclusionResult = GL_TRUE;
       ctx->Driver.Bitmap( ctx, x, y, width, height, &ctx->Unpack, bitmap );
    }
 #if _HAVE_FULL_GL
@@ -271,7 +267,6 @@ _mesa_DrawDepthPixelsMESA( GLsizei width, GLsizei height,
       x = IROUND(ctx->Current.RasterPos[0]);
       y = IROUND(ctx->Current.RasterPos[1]);
 
-      ctx->OcclusionResult = GL_TRUE;
       ctx->Driver.DrawDepthPixelsMESA(ctx, x, y, width, height,
                                       colorFormat, colorType, colors,
                                       depthType, depths, &ctx->Unpack);

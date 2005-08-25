@@ -97,7 +97,6 @@ const struct dri_extension card_extensions[] =
     { "GL_EXT_stencil_wrap",               NULL },
     { "GL_EXT_texture_env_add",            NULL },
     { "GL_EXT_texture_lod_bias",           NULL },
-    { "GL_HP_occlusion_test",              NULL },
     { "GL_IBM_multimode_draw_arrays",      GL_IBM_multimode_draw_arrays_functions },
 
 #ifdef need_GL_ARB_point_parameters

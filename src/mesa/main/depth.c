@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -160,7 +160,6 @@ void _mesa_init_depth( GLcontext * ctx )
    ctx->Depth.Clear = 1.0;
    ctx->Depth.Func = GL_LESS;
    ctx->Depth.Mask = GL_TRUE;
-   ctx->Depth.OcclusionTest = GL_FALSE;
 
    /* XXX this is now per-framebuffer state */
 #if 00
