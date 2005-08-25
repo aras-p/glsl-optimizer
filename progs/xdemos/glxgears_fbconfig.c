@@ -467,7 +467,7 @@ make_window( Display *dpy, const char *name,
                               None, (char **)NULL, 0, &sizehints);
    }
 
-   ctx = (*create_new_context)(dpy, fbconfig[0], GLX_RGBA_BIT, NULL, GL_TRUE);
+   ctx = (*create_new_context)(dpy, fbconfig[0], GLX_RGBA_TYPE, NULL, GL_TRUE);
    if (!ctx) {
       printf("Error: glXCreateNewContext failed\n");
       exit(1);
