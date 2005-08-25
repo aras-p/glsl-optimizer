@@ -410,6 +410,15 @@ Idle(void)
 
 
 static void
+UpdateIdleFunc(void)
+{
+   if (AnyAnimating())
+      glutIdleFunc(Idle);
+   else
+      glutIdleFunc(NULL);
+}
+
+static void
 Key(unsigned char key, int x, int y)
 {
    struct window *w = CurrentWindow();
@@ -436,14 +445,12 @@ Key(unsigned char key, int x, int y)
    case ' ':
       w->anim = !w->anim;
       w->t0 = -1;
-      if (AnyAnimating())
-         glutIdleFunc(Idle);
-      else
-         glutIdleFunc(NULL);
+      UpdateIdleFunc();
       glutPostRedisplay();
       break;
    case 'n':
       CreateWindow();
+      UpdateIdleFunc();
       break;
    case 'k':
       KillWindow(w);
