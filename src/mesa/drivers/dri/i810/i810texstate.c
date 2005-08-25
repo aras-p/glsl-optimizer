@@ -25,6 +25,7 @@
 #include "glheader.h"
 #include "macros.h"
 #include "mtypes.h"
+#include "texformat.h"
 #include "simple_list.h"
 #include "enums.h"
 
@@ -52,29 +53,33 @@ static void i810SetTexImages( i810ContextPtr imesa,
 
 /*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
-   switch (baseImage->Format) {
-   case GL_RGB:
-   case GL_LUMINANCE:
-      t->texelBytes = 2;
-      textureFormat = MI1_FMT_16BPP | MI1_PF_16BPP_RGB565;
+   t->texelBytes = 2;
+   switch (baseImage->TexFormat->MesaFormat) {
+   case MESA_FORMAT_ARGB1555:
+      textureFormat = MI1_FMT_16BPP | MI1_PF_16BPP_ARGB1555;
       break;
-   case GL_ALPHA:
-   case GL_LUMINANCE_ALPHA:
-   case GL_INTENSITY:
-   case GL_RGBA:
-      t->texelBytes = 2;
+   case MESA_FORMAT_ARGB4444:
       textureFormat = MI1_FMT_16BPP | MI1_PF_16BPP_ARGB4444;
       break;
-   case GL_COLOR_INDEX:
-      textureFormat = MI1_FMT_8CI | MI1_PF_8CI_ARGB4444;
-      t->texelBytes = 1;
+   case MESA_FORMAT_RGB565:
+      textureFormat = MI1_FMT_16BPP | MI1_PF_16BPP_RGB565;
       break;
-   case GL_YCBCR_MESA:
-      t->texelBytes = 2;
+   case MESA_FORMAT_AL88:
+      textureFormat = MI1_FMT_16BPP | MI1_PF_16BPP_AY88;
+      break;
+   case MESA_FORMAT_YCBCR:
       textureFormat = MI1_FMT_422 | MI1_PF_422_YCRCB_SWAP_Y
 	  | MI1_COLOR_CONV_ENABLE;
       break;
-       
+   case MESA_FORMAT_YCBCR_REV:
+      textureFormat = MI1_FMT_422 | MI1_PF_422_YCRCB
+	  | MI1_COLOR_CONV_ENABLE;
+      break;
+   case MESA_FORMAT_CI8:
+      textureFormat = MI1_FMT_8CI | MI1_PF_8CI_ARGB4444;
+      t->texelBytes = 1;
+      break;
+
    default:
       fprintf(stderr, "i810SetTexImages: bad image->Format\n" );
       return;

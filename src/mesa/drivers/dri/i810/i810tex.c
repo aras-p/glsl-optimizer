@@ -437,10 +437,8 @@ static void i810DeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
 /**
  * Choose a Mesa texture format to match the requested format.
  * 
- * \todo
- * Determine why \c _mesa_texformat_al88 doesn't work right for
- * \c GL_LUMINANCE_ALPHA textures.  It seems to work fine for \c GL_INTENSITY,
- * but \c GL_LUMINANCE_ALPHA gets some red bands in progs/demos/texenv.
+ * The i810 only supports 5 texture modes that are useful to Mesa.  That
+ * makes this routine pretty simple.
  */
 static const struct gl_texture_format *
 i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
@@ -449,11 +447,18 @@ i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    switch ( internalFormat ) {
    case 4:
    case GL_RGBA:
+   case GL_RGBA2:
+   case GL_RGBA4:
+   case GL_RGB5_A1:
+   case GL_RGBA8:
+   case GL_RGB10_A2:
+   case GL_RGBA12:
+   case GL_RGBA16:
    case GL_COMPRESSED_RGBA:
-      if ( format == GL_BGRA ) {
-         if ( type == GL_UNSIGNED_SHORT_1_5_5_5_REV ) {
-	    return &_mesa_texformat_argb1555;
-	 }
+      if ( (format == GL_BGRA) && (type == GL_UNSIGNED_SHORT_1_5_5_5_REV)
+	   || (format == GL_RGBA) && (type == GL_UNSIGNED_SHORT_5_5_5_1)
+	   || (internalFormat == GL_RGB5_A1) ) {
+	 return &_mesa_texformat_argb1555;
       }
       return &_mesa_texformat_argb4444;
 
@@ -467,18 +472,7 @@ i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-     return &_mesa_texformat_rgb565;
-
-   case GL_RGBA2:
-   case GL_RGBA4:
-   case GL_RGBA8:
-   case GL_RGB10_A2:
-   case GL_RGBA12:
-   case GL_RGBA16:
-      return &_mesa_texformat_argb4444;
-
-   case GL_RGB5_A1:
-      return &_mesa_texformat_argb1555;
+      return &_mesa_texformat_rgb565;
 
    case GL_ALPHA:
    case GL_ALPHA4:
@@ -486,8 +480,6 @@ i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_ALPHA12:
    case GL_ALPHA16:
    case GL_COMPRESSED_ALPHA:
-      return &_mesa_texformat_al88;
-
    case 1:
    case GL_LUMINANCE:
    case GL_LUMINANCE4:
@@ -495,8 +487,6 @@ i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
    case GL_COMPRESSED_LUMINANCE:
-      return &_mesa_texformat_rgb565;
-
    case 2:
    case GL_LUMINANCE_ALPHA:
    case GL_LUMINANCE4_ALPHA4:
@@ -512,11 +502,7 @@ i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_INTENSITY12:
    case GL_INTENSITY16:
    case GL_COMPRESSED_INTENSITY:
-#if 0
       return &_mesa_texformat_al88;
-#else
-      return &_mesa_texformat_argb4444;
-#endif
 
    case GL_YCBCR_MESA:
       if (type == GL_UNSIGNED_SHORT_8_8_MESA ||
