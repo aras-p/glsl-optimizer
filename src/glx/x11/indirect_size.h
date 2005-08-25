@@ -54,7 +54,7 @@
 #    define INTERNAL
 #  endif
 
-#  if defined(__CYGWIN__) || defined(WIN32)
+#  if defined(__CYGWIN__) || defined(__MINGW32__)
 #    undef FASTCALL
 #    define FASTCALL
 #    undef INTERNAL
