@@ -93,8 +93,7 @@ check_color_per_fragment_ops( const GLcontext *ctx )
 		    !ctx->Color.ColorMask[2] ||
 		    !ctx->Color.ColorMask[3] ||
 		    ctx->Color.ColorLogicOpEnabled ||
-		    ctx->Texture._EnabledUnits ||
-		    ctx->Depth.OcclusionTest
+		    ctx->Texture._EnabledUnits
            ) &&
 	   ctx->Current.RasterPosValid);
    

@@ -618,7 +618,6 @@ tdfx_drawpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
        !ctx->Color.ColorMask[3] ||
        ctx->Color.ColorLogicOpEnabled ||
        ctx->Texture._EnabledUnits ||
-       ctx->Depth.OcclusionTest ||
        fxMesa->Fallback)       
    {
       _swrast_DrawPixels( ctx, x, y, width, height, format, type, 

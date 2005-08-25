@@ -624,8 +624,7 @@ i830TryTextureDrawPixels( GLcontext *ctx,
 	!ctx->Color.ColorMask[2] ||
 	!ctx->Color.ColorMask[3] ||
 	ctx->Color.ColorLogicOpEnabled ||
-	ctx->Texture._EnabledUnits ||
-	ctx->Depth.OcclusionTest) {
+	ctx->Texture._EnabledUnits) {
       fprintf(stderr, "%s: other tests failed\n", __FUNCTION__);
       return GL_FALSE;
    }
