@@ -2099,7 +2099,10 @@ Fake_glXCreatePbuffer( Display *dpy, GLXFBConfig config,
    /* A GLXPbuffer handle must be an X Drawable because that's what
     * glXMakeCurrent takes.
     */
-   return (GLXPbuffer) xmbuf->frontxrb->pixmap;
+   if (xmbuf)
+      return (GLXPbuffer) xmbuf->frontxrb->pixmap;
+   else
+      return 0;
 }
 
 
