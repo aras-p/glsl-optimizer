@@ -44,6 +44,7 @@ PROGS = \
 	reflect \
 	renormal \
 	shadowtex \
+	singlebuffer \
 	spectex \
 	spriteblast \
 	stex3d \
