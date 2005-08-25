@@ -12,7 +12,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.4
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -384,6 +384,8 @@ _mesa_HashFindFreeKeyBlock(struct _mesa_HashTable *table, GLuint numKeys)
 }
 
 
+#if 0 /* debug only */
+
 /**
  * Test walking over all the entries in a hash table.
  */
@@ -445,3 +447,5 @@ _mesa_test_hash_functions(void)
 
    test_hash_walking();
 }
+
+#endif
