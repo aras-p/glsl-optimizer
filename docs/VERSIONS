@@ -1377,6 +1377,7 @@ Mesa Version History
 6.5  month, day, 2005
     New:
 	- reflect demo improved to support multiple windows
+	- singlebuffer demo (shows no/little-flicker single-buffered rendering)
     Changes:
 	- removed GL_HP_occlusion_test (use GL_ARB_occlusion_query instead)
     Bug fixes:
