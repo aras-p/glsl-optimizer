@@ -1372,3 +1372,12 @@ Mesa Version History
 	- wglGetProcAddress() didn't handle wgl-functions
 	- fixed glxext.h cross-compile issue (Colin Harrison)
 	- assorted DRI driver fixes
+
+
+6.5  month, day, 2005
+    New:
+	- reflect demo improved to support multiple windows
+    Changes:
+	- removed GL_HP_occlusion_test (use GL_ARB_occlusion_query instead)
+    Bug fixes:
+
