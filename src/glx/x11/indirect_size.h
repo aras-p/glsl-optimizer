@@ -42,22 +42,15 @@
 #    define PURE
 #  endif
 
-#  if defined(__i386__) && defined(__GNUC__)
+#  if defined(__i386__) && defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)
 #    define FASTCALL __attribute__((fastcall))
 #  else
 #    define FASTCALL
 #  endif
 
-#  if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)
+#  if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)) && !defined(__CYGWIN__) && !defined(__MINGW32__)
 #    define INTERNAL  __attribute__((visibility("internal")))
 #  else
-#    define INTERNAL
-#  endif
-
-#  if defined(__CYGWIN__) || defined(__MINGW32__)
-#    undef FASTCALL
-#    define FASTCALL
-#    undef INTERNAL
 #    define INTERNAL
 #  endif
 
