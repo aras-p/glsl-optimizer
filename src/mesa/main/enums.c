@@ -3267,6 +3267,7 @@ static const enum_elt all_enums[1612] =
 
 static const unsigned reduced_enums[1232] =
 {
+        26, /* GL_ALL_CLIENT_ATTRIB_BITS */
        389, /* GL_FALSE */
        561, /* GL_LINES */
        563, /* GL_LINE_LOOP */
@@ -4498,7 +4499,6 @@ static const unsigned reduced_enums[1232] =
       1212, /* GL_SCISSOR_BIT */
         25, /* GL_ALL_ATTRIB_BITS */
        845, /* GL_MULTISAMPLE_BIT */
-        26, /* GL_ALL_CLIENT_ATTRIB_BITS */
 };
 
 #define Elements(x) sizeof(x)/sizeof(*x)

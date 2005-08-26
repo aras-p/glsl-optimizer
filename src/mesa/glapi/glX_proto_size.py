@@ -320,7 +320,7 @@ class PrintGlxSizeStubs_c(PrintGlxSizeStubs_common):
 		self.printVisibility( "INTERNAL", "internal" )
 		print ''
 		print ''
-		print '#if defined(__CYGWIN__) || defined(__MINGW32__)'
+		print '#if defined(__CYGWIN__) || defined(__MINGW32__) || defined(__APPLE__)'
 		print '#  undef HAVE_ALIAS'
 		print '#endif'
 		print '#ifdef HAVE_ALIAS'
