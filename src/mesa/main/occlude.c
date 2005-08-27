@@ -51,6 +51,7 @@ new_query_object(GLenum target, GLuint id)
       q->Id = id;
       q->Result = 0;
       q->Active = GL_FALSE;
+      q->Ready = GL_TRUE;   /* correct, see spec */
    }
    return q;
 }
@@ -297,6 +298,13 @@ _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
 
    switch (pname) {
       case GL_QUERY_RESULT_ARB:
+         while (!q->Ready) {
+            /* Wait for the query to finish! */
+            /* If using software rendering, the result will always be ready
+             * by time we get here.  Otherwise, we must be using hardware!
+             */
+            ASSERT(ctx->Driver.EndQuery);
+         }
          *params = q->Result;
          break;
       case GL_QUERY_RESULT_AVAILABLE_ARB:
@@ -328,6 +336,13 @@ _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
 
    switch (pname) {
       case GL_QUERY_RESULT_ARB:
+         while (!q->Ready) {
+            /* Wait for the query to finish! */
+            /* If using software rendering, the result will always be ready
+             * by time we get here.  Otherwise, we must be using hardware!
+             */
+            ASSERT(ctx->Driver.EndQuery);
+         }
          *params = q->Result;
          break;
       case GL_QUERY_RESULT_AVAILABLE_ARB:
