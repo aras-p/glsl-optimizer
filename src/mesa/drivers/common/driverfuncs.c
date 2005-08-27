@@ -209,6 +209,10 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->FramebufferRenderbuffer = _mesa_framebuffer_renderbuffer;
 #endif
 
+   /* query objects */
+   driver->BeginQuery = NULL;
+   driver->EndQuery = NULL;
+
    /* T&L stuff */
    driver->NeedValidate = GL_FALSE;
    driver->ValidateTnlModule = NULL;

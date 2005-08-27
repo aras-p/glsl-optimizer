@@ -904,14 +904,15 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
  */
 #define NAME occlusion_zless_triangle
 #define INTERP_Z 1
-#define SETUP_CODE						\
-   struct gl_renderbuffer *rb					\
-      = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;	\
-   ASSERT(ctx->Depth.Test);					\
-   ASSERT(!ctx->Depth.Mask);					\
-   ASSERT(ctx->Depth.Func == GL_LESS);				\
-   if (!ctx->Occlusion.Active) {				\
-      return;							\
+#define SETUP_CODE							\
+   struct gl_renderbuffer *rb						\
+      = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;		\
+   struct gl_query_object *q = ctx->Query.CurrentOcclusionObject;	\
+   ASSERT(ctx->Depth.Test);						\
+   ASSERT(!ctx->Depth.Mask);						\
+   ASSERT(ctx->Depth.Func == GL_LESS);					\
+   if (!q) {								\
+      return;								\
    }
 #define RENDER_SPAN( span )						\
    if (ctx->Visual.depthBits <= 16) {					\
@@ -921,7 +922,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
       for (i = 0; i < span.end; i++) {					\
          GLdepth z = FixedToDepth(span.z);				\
          if (z < zRow[i]) {						\
-            ctx->Occlusion.PassedCounter++;				\
+            q->Result++;						\
          }								\
          span.z += span.zStep;						\
       }									\
@@ -932,7 +933,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
          rb->GetPointer(ctx, rb, span.x, span.y);			\
       for (i = 0; i < span.end; i++) {					\
          if ((GLuint)span.z < zRow[i]) {				\
-            ctx->Occlusion.PassedCounter++;				\
+            q->Result++;						\
          }								\
          span.z += span.zStep;						\
       }									\
@@ -1055,7 +1056,7 @@ _swrast_choose_triangle( GLcontext *ctx )
       }
 
       /* special case for occlusion testing */
-      if (ctx->Occlusion.Active &&
+      if (ctx->Query.CurrentOcclusionObject &&
           ctx->Depth.Test &&
           ctx->Depth.Mask == GL_FALSE &&
           ctx->Depth.Func == GL_LESS &&

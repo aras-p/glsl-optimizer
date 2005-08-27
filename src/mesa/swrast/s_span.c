@@ -850,11 +850,12 @@ _swrast_write_index_span( GLcontext *ctx, struct sw_span *span)
    }
 
 #if FEATURE_ARB_occlusion_query
-   if (ctx->Occlusion.Active) {
+   if (ctx->Query.CurrentOcclusionObject) {
       /* update count of 'passed' fragments */
+      struct gl_query_object *q = ctx->Query.CurrentOcclusionObject;
       GLuint i;
       for (i = 0; i < span->end; i++)
-         ctx->Occlusion.PassedCounter += span->array->mask[i];
+         q->Result += span->array->mask[i];
    }
 #endif
 
@@ -1215,11 +1216,12 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
    }
 
 #if FEATURE_ARB_occlusion_query
-   if (ctx->Occlusion.Active) {
+   if (ctx->Query.CurrentOcclusionObject) {
       /* update count of 'passed' fragments */
+      struct gl_query_object *q = ctx->Query.CurrentOcclusionObject;
       GLuint i;
       for (i = 0; i < span->end; i++)
-         ctx->Occlusion.PassedCounter += span->array->mask[i];
+         q->Result += span->array->mask[i];
    }
 #endif
 

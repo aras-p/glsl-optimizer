@@ -80,7 +80,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
       rasterMask |= CLIP_BIT;
    }
 
-   if (ctx->Occlusion.Active)
+   if (ctx->Query.CurrentOcclusionObject)
       rasterMask |= OCCLUSION_BIT;
 
 

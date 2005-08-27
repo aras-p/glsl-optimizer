@@ -816,6 +816,14 @@ struct dd_function_table {
    /*@}*/
 #endif
 
+   /**
+    * \name Query objects
+    */
+   /*@{*/
+   void (*BeginQuery)(GLcontext *ctx, struct gl_query_object *q);
+   void (*EndQuery)(GLcontext *ctx, struct gl_query_object *q);
+   /*@}*/
+
 
    /**
     * \name Support for multiple T&L engines

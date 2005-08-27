@@ -1853,7 +1853,7 @@ struct gl_vertex_program_state
 };
 
 
-/*
+/**
  * State for GL_ARB/NV_fragment_program
  */
 struct gl_fragment_program_state
@@ -1874,8 +1874,9 @@ struct gl_fragment_program_state
 #endif
 };
 
-/*
- * State for GL_fragment_shader
+
+/**
+ * State for GL_ATI_fragment_shader
  */
 struct gl_ati_fragment_shader_state
 {
@@ -1886,16 +1887,23 @@ struct gl_ati_fragment_shader_state
    struct ati_fragment_shader *Current;
 };
 
-/*
- * State for GL_ARB_occlusion_query
- */
-struct gl_occlusion_state
+
+struct gl_query_object
 {
-   GLboolean Active;
-   GLuint CurrentQueryObject;
-   GLuint PassedCounter;
-   struct _mesa_HashTable *QueryObjects;
+   GLenum Target;
+   GLuint Id;
+   GLuint Result;      /* the counter */
+   GLboolean Active;   /* inside Begin/EndQuery */
+   GLboolean Ready;    /* result is ready */
 };
+
+
+struct gl_query_state
+{
+   struct _mesa_HashTable *QueryObjects;
+   struct gl_query_object *CurrentOcclusionObject; /* GL_ARB_occlusion_query */
+};
+
 
 /**
  * gl2 unique interface identifier.
@@ -2802,7 +2810,7 @@ struct __GLcontextRec
    GLboolean _MaintainTexEnvProgram;
    GLboolean _MaintainTnlProgram;
 
-   struct gl_occlusion_state Occlusion;  /**< GL_ARB_occlusion_query */
+   struct gl_query_state Query;  /**< GL_ARB_occlusion_query */
 
    struct gl_shader_objects_state ShaderObjects;	/* GL_ARB_shader_objects */
    /*@}*/
