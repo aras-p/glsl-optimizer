@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -102,13 +102,13 @@ set_component_sizes( struct gl_color_table *table )
 
    switch (table->Type) {
    case GL_UNSIGNED_BYTE:
-      sz = sizeof(GLubyte);
+      sz = 8 * sizeof(GLubyte);
       break;
    case GL_UNSIGNED_SHORT:
-      sz = sizeof(GLushort);
+      sz = 8 * sizeof(GLushort);
       break;
    case GL_FLOAT:
-      sz = sizeof(GLfloat);
+      sz = 8 * sizeof(GLfloat);
       break;
    default:
       _mesa_problem(NULL, "bad color table type in set_component_sizes 0x%x", table->Type);
@@ -363,6 +363,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          break;
       case GL_SHARED_TEXTURE_PALETTE_EXT:
          table = &ctx->Texture.Palette;
+	 tableType = GL_FLOAT;
          break;
       case GL_COLOR_TABLE:
          table = &ctx->ColorTable;
@@ -402,6 +403,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
             return;
          }
          table = &(texUnit->ProxyColorTable);
+	 tableType = GL_FLOAT;
          proxy = GL_TRUE;
          break;
       case GL_POST_CONVOLUTION_COLOR_TABLE:
@@ -418,6 +420,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          break;
       case GL_PROXY_POST_CONVOLUTION_COLOR_TABLE:
          table = &ctx->ProxyPostConvolutionColorTable;
+	 tableType = GL_FLOAT;
          proxy = GL_TRUE;
          break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE:
@@ -434,6 +437,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          break;
       case GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE:
          table = &ctx->ProxyPostColorMatrixColorTable;
+	 tableType = GL_FLOAT;
          proxy = GL_TRUE;
          break;
       default:
@@ -483,6 +487,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
    table->Size = width;
    table->IntFormat = internalFormat;
    table->Format = (GLenum) baseFormat;
+   table->Type = (tableType == GL_FLOAT) ? GL_FLOAT : CHAN_TYPE;
 
    comps = _mesa_components_in_format(table->Format);
    assert(comps > 0);  /* error should have been caught sooner */
@@ -495,12 +500,10 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
       }
 
       if (width > 0) {
-         if (tableType == GL_FLOAT) {
-	    table->Type = GL_FLOAT;
+         if (table->Type == GL_FLOAT) {
 	    table->Table = MALLOC(comps * width * sizeof(GLfloat));
 	 }
 	 else {
-	    table->Type = CHAN_TYPE;
             table->Table = MALLOC(comps * width * sizeof(GLchan));
 	 }
 
