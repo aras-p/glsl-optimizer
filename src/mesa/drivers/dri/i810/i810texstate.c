@@ -132,620 +132,567 @@ static void i810SetTexImages( i810ContextPtr imesa,
  * Texture combine functions
  */
 
-#define I810_DISABLE		0
-#define I810_PASSTHRU		1
-#define I810_REPLACE		2
-#define I810_MODULATE		3
-#define I810_DECAL		4
-#define I810_BLEND		5
-#define I810_ALPHA_BLEND	6
-#define I810_ADD		7
-#define I810_MAX_COMBFUNC	8
 
-
-static GLuint i810_color_combine[][I810_MAX_COMBFUNC] =
+static void set_color_stage( unsigned color, int stage,
+			      i810ContextPtr imesa )
 {
-   /* Unit 0:
-    */
-   {
-      /* Disable combiner stage
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_0 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_ITERATED_COLOR | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_ONE |
-	MC_UPDATE_OP |
-	MC_OP_ARG1 ),		/* actually passthru */
-
-      /* Passthru
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_0 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_ITERATED_COLOR | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_ONE |
-	MC_UPDATE_OP |
-	MC_OP_ARG1 ),
-
-      /* GL_REPLACE 
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_0 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_TEX0_COLOR | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_ONE |
-	MC_UPDATE_OP |
-	MC_OP_ARG1 ),
-
-      /* GL_MODULATE
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_0 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_TEX0_COLOR | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_ITERATED_COLOR |
-	MC_UPDATE_OP |
-	MC_OP_MODULATE ),
-
-      /* GL_DECAL 
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_0 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_COLOR_FACTOR | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_TEX0_COLOR |
-	MC_UPDATE_OP |
-	MC_OP_LIN_BLEND_TEX0_ALPHA ),
-
-      /* GL_BLEND 
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_0 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_COLOR_FACTOR | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_ITERATED_COLOR |
-	MC_UPDATE_OP |
-	MC_OP_LIN_BLEND_TEX0_COLOR ),
-
-      /* GL_BLEND according to alpha
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_0 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_TEX0_COLOR | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_ITERATED_COLOR |
-	MC_UPDATE_OP |
-	MC_OP_LIN_BLEND_TEX0_ALPHA ),
-
-      /* GL_ADD 
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_0 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_TEX0_COLOR | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_ITERATED_COLOR |
-	MC_UPDATE_OP |
-	MC_OP_ADD ),
-   },
-
-   /* Unit 1:
-    */
-   {
-      /* Disable combiner stage (Note: disables all subsequent stages)
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_1 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_ONE | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_ONE |
-	MC_UPDATE_OP |
-	MC_OP_DISABLE ),
-
-      
-      /* Passthru
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_1 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_CURRENT_COLOR | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_ONE |
-	MC_UPDATE_OP |
-	MC_OP_ARG1 ),
-
-      /* GL_REPLACE
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_1 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_TEX1_COLOR | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_ONE |
-	MC_UPDATE_OP |
-	MC_OP_ARG1 ),
-
-      /* GL_MODULATE
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_1 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_TEX1_COLOR | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_CURRENT_COLOR |
-	MC_UPDATE_OP |
-	MC_OP_MODULATE ),
-
-      /* GL_DECAL
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_1 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_COLOR_FACTOR | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_TEX1_COLOR |
-	MC_UPDATE_OP |
-	MC_OP_LIN_BLEND_TEX1_ALPHA ),
-      
-      /* GL_BLEND 
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_1 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_COLOR_FACTOR | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_CURRENT_COLOR |
-	MC_UPDATE_OP |
-	MC_OP_LIN_BLEND_TEX1_COLOR ),
-
-      /* GL_BLEND according to alpha
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_1 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_TEX1_COLOR | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_CURRENT_COLOR |
-	MC_UPDATE_OP |
-	MC_OP_LIN_BLEND_TEX1_ALPHA ),
-
-      /* GL_ADD 
-       */
-      ( GFX_OP_MAP_COLOR_STAGES |
-	MC_STAGE_1 |
-	MC_UPDATE_DEST |
-	MC_DEST_CURRENT |
-	MC_UPDATE_ARG1 |
-	MC_ARG1_TEX1_COLOR | 
-	MC_UPDATE_ARG2 |
-	MC_ARG2_CURRENT_COLOR |
-	MC_UPDATE_OP |
-	MC_OP_ADD ),
+   if ( color != imesa->Setup[I810_CTXREG_MC0 + stage] ) {
+      I810_STATECHANGE( imesa, I810_UPLOAD_CTX );
+      imesa->Setup[I810_CTXREG_MC0 + stage] = color;
    }
+}
+
+
+static void set_alpha_stage( unsigned alpha, int stage,
+				    i810ContextPtr imesa )
+{
+   if ( alpha != imesa->Setup[I810_CTXREG_MA0 + stage] ) {
+      I810_STATECHANGE( imesa, I810_UPLOAD_CTX );
+      imesa->Setup[I810_CTXREG_MA0 + stage] = alpha;
+   }
+}
+
+
+static const unsigned operand_modifiers[] = {
+   0,                       MC_ARG_INVERT,
+   MC_ARG_REPLICATE_ALPHA,  MC_ARG_INVERT | MC_ARG_REPLICATE_ALPHA
 };
 
-static GLuint i810_alpha_combine[][I810_MAX_COMBFUNC] =
-{
-   /* Unit 0:
-    */
-   {
-      /* Disable combiner stage
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_0 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_ITERATED_ALPHA |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_TEX0_ALPHA |
-	MA_UPDATE_OP |
-	MA_OP_ARG1 ),
-
-      /* Passthru
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_0 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_ITERATED_ALPHA |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_TEX0_ALPHA |
-	MA_UPDATE_OP |
-	MA_OP_ARG1 ),
-
-      /* GL_REPLACE 
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_0 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_ITERATED_ALPHA |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_TEX0_ALPHA |
-	MA_UPDATE_OP |
-	MA_OP_ARG2 ),
-
-      /* GL_MODULATE
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_0 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_ITERATED_ALPHA |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_TEX0_ALPHA |
-	MA_UPDATE_OP |
-	MA_OP_MODULATE ),
-
-      /* GL_DECAL 
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_0 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_ALPHA_FACTOR |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_ALPHA_FACTOR |
-	MA_UPDATE_OP |
-	MA_OP_ARG1 ),
-
-      /* GL_BLEND 
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_0 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_ALPHA_FACTOR |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_ITERATED_ALPHA |
-	MA_UPDATE_OP |
-	MA_OP_LIN_BLEND_TEX0_ALPHA ),
-
-      /* GL_BLEND according to alpha (same as above)
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_0 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_ALPHA_FACTOR |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_ITERATED_ALPHA |
-	MA_UPDATE_OP |
-	MA_OP_LIN_BLEND_TEX0_ALPHA ),
-
-      /* GL_ADD 
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_0 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_ITERATED_ALPHA |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_TEX0_ALPHA |
-	MA_UPDATE_OP |
-	MA_OP_ADD ),
-   },
-
-   /* Unit 1:
-    */
-   {
-      /* Disable combiner stage
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_1 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_CURRENT_ALPHA |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_CURRENT_ALPHA |
-	MA_UPDATE_OP |
-	MA_OP_ARG1 ),
-
-      /* Passthru
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_1 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_CURRENT_ALPHA |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_CURRENT_ALPHA |
-	MA_UPDATE_OP |
-	MA_OP_ARG1 ),
-
-      /* GL_REPLACE 
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_1 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_CURRENT_ALPHA |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_TEX1_ALPHA |
-	MA_UPDATE_OP |
-	MA_OP_ARG2 ),
-
-      /* GL_MODULATE 
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_1 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_CURRENT_ALPHA |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_TEX1_ALPHA |
-	MA_UPDATE_OP |
-	MA_OP_MODULATE ),
-
-      /* GL_DECAL 
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_1 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_ALPHA_FACTOR |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_ALPHA_FACTOR |
-	MA_UPDATE_OP |
-	MA_OP_ARG1 ),
-
-      /* GL_BLEND 
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_1 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_ALPHA_FACTOR |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_ITERATED_ALPHA |
-	MA_UPDATE_OP |
-	MA_OP_LIN_BLEND_TEX1_ALPHA ),
-
-      /* GL_BLEND according to alpha (same as above)
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_1 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_ALPHA_FACTOR |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_ITERATED_ALPHA |
-	MA_UPDATE_OP |
-	MA_OP_LIN_BLEND_TEX1_ALPHA ),
-
-      /* GL_ADD 
-       */
-      ( GFX_OP_MAP_ALPHA_STAGES |
-	MA_STAGE_1 |
-	MA_UPDATE_ARG1 |
-	MA_ARG1_CURRENT_ALPHA |
-	MA_UPDATE_ARG2 |
-	MA_ARG2_TEX1_ALPHA |
-	MA_UPDATE_OP |
-	MA_OP_ADD ),
-   }
-
-};
-
-
-
-static void i810UpdateTexEnv( GLcontext *ctx, GLuint unit )
+/**
+ * Configure the hardware bits for the specified texture environment.
+ *
+ * Configures the hardware bits for the texture environment state for the
+ * specified texture unit.  As combine stages are added, the values pointed
+ * to by \c color_stage and \c alpha_stage are incremented.
+ *
+ * \param ctx          GL context pointer.
+ * \param unit         Texture unit to be added.
+ * \param color_stage  Next available hardware color combine stage.
+ * \param alpha_stage  Next available hardware alpha combine stage.
+ *
+ * \returns
+ * If the combine mode for the specified texture unit could be added without
+ * requiring a software fallback, \c GL_TRUE is returned.  Otherwise,
+ * \c GL_FALSE is returned.
+ *
+ * \todo
+ * If the mode is (GL_REPLACE, GL_PREVIOUS), treat it as though the texture
+ * stage is disabled.  That is, don't emit any combine stages.
+ *
+ * \todo
+ * Add support for ATI_texture_env_combine3 modes.  This will require using
+ * two combine stages.
+ *
+ * \todo
+ * Add support for the missing \c GL_INTERPOLATE modes.  This will require
+ * using all three combine stages.  There is a comment in the function
+ * describing how this might work.
+ *
+ * \todo
+ * If, after all the combine stages have been emitted, a texture is never
+ * actually used, disable the texture unit.  That should save texture some
+ * memory bandwidth.  This won't happen in this function, but this seems like
+ * a reasonable place to make note of it.
+ */
+static GLboolean
+i810UpdateTexEnvCombine( GLcontext *ctx, GLuint unit, 
+			 int * color_stage, int * alpha_stage )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-   const struct gl_texture_object *tObj = texUnit->_Current;
-   const GLuint format = tObj->Image[0][tObj->BaseLevel]->Format;
+   GLuint color_arg[3] = {
+      MC_ARG_ONE,            MC_ARG_ONE,            MC_ARG_ONE
+   };
+   GLuint alpha_arg[3] = {
+      MA_ARG_ITERATED_ALPHA, MA_ARG_ITERATED_ALPHA, MA_ARG_ITERATED_ALPHA
+   };
+   GLuint i;
    GLuint color_combine, alpha_combine;
+   const GLuint numColorArgs = texUnit->_CurrentCombine->_NumArgsRGB;
+   const GLuint numAlphaArgs = texUnit->_CurrentCombine->_NumArgsA;
+   GLuint RGBshift = texUnit->_CurrentCombine->ScaleShiftRGB;
+   GLuint Ashift = texUnit->_CurrentCombine->ScaleShiftA;
 
-   switch (texUnit->EnvMode) {
+
+   if ( !texUnit->_ReallyEnabled ) {
+      return GL_TRUE;
+   }
+
+      
+   if ((*color_stage >= 3) || (*alpha_stage >= 3)) {
+      return GL_FALSE;
+   }
+
+
+   /* Step 1:
+    * Extract the color and alpha combine function arguments.
+    */
+
+   for ( i = 0 ; i < numColorArgs ; i++ ) {
+      unsigned op = texUnit->_CurrentCombine->OperandRGB[i] - GL_SRC_COLOR;
+      assert(op >= 0);
+      assert(op <= 3);
+      switch ( texUnit->_CurrentCombine->SourceRGB[i] ) {
+      case GL_TEXTURE0:
+	 color_arg[i] = MC_ARG_TEX0_COLOR;
+	 break;
+      case GL_TEXTURE1:
+	 color_arg[i] = MC_ARG_TEX1_COLOR;
+	 break;
+      case GL_TEXTURE:
+	 color_arg[i] = (unit == 0) 
+	   ? MC_ARG_TEX0_COLOR : MC_ARG_TEX1_COLOR;
+	 break;
+      case GL_CONSTANT:
+	 color_arg[i] = MC_ARG_COLOR_FACTOR;
+	 break;
+      case GL_PRIMARY_COLOR:
+	 color_arg[i] = MC_ARG_ITERATED_COLOR;
+	 break;
+      case GL_PREVIOUS:
+	 color_arg[i] = (unit == 0)
+	   ? MC_ARG_ITERATED_COLOR : MC_ARG_CURRENT_COLOR;
+	 break;
+      case GL_ZERO:
+	 /* Toggle the low bit of the op value.  The is the 'invert' bit,
+	  * and it acts to convert GL_ZERO+op to the equivalent GL_ONE+op.
+	  */
+	 op ^= 1;
+
+	 /*FALLTHROUGH*/
+
+      case GL_ONE:
+	 color_arg[i] = MC_ARG_ONE;
+	 break;
+      default:
+	 return GL_FALSE;
+      }
+
+      color_arg[i] |= operand_modifiers[op];
+   }
+
+
+   for ( i = 0 ; i < numAlphaArgs ; i++ ) {
+      unsigned op = texUnit->_CurrentCombine->OperandA[i] - GL_SRC_ALPHA;
+      assert(op >= 0);
+      assert(op <= 1);
+      switch ( texUnit->_CurrentCombine->SourceA[i] ) {
+      case GL_TEXTURE0:
+	 alpha_arg[i] = MA_ARG_TEX0_ALPHA;
+	 break;
+      case GL_TEXTURE1:
+	 alpha_arg[i] = MA_ARG_TEX1_ALPHA;
+	 break;
+      case GL_TEXTURE:
+	 alpha_arg[i] = (unit == 0)
+	   ? MA_ARG_TEX0_ALPHA : MA_ARG_TEX1_ALPHA;
+	 break;
+      case GL_CONSTANT:
+	 alpha_arg[i] = MA_ARG_ALPHA_FACTOR;
+	 break;
+      case GL_PRIMARY_COLOR:
+	 alpha_arg[i] = MA_ARG_ITERATED_ALPHA;
+	 break;
+      case GL_PREVIOUS:
+	 alpha_arg[i] = (unit == 0)
+	   ? MA_ARG_ITERATED_ALPHA : MA_ARG_CURRENT_ALPHA;
+	 break;
+      case GL_ZERO:
+	 /* Toggle the low bit of the op value.  The is the 'invert' bit,
+	  * and it acts to convert GL_ZERO+op to the equivalent GL_ONE+op.
+	  */
+	 op ^= 1;
+
+	 /*FALLTHROUGH*/
+
+      case GL_ONE:
+	 if (i != 2) {
+	    return GL_FALSE;
+	 }
+
+	 alpha_arg[i] = MA_ARG_ONE;
+	 break;
+      default:
+	 return GL_FALSE;
+      }
+
+      alpha_arg[i] |= operand_modifiers[op];
+   }
+
+
+   /* Step 2:
+    * Build up the color and alpha combine functions.
+    */
+   switch ( texUnit->_CurrentCombine->ModeRGB ) {
    case GL_REPLACE:
-      if (format == GL_ALPHA) {
-	 color_combine = i810_color_combine[unit][I810_PASSTHRU];
-	 alpha_combine = i810_alpha_combine[unit][I810_REPLACE];
-      } else if (format == GL_LUMINANCE || format == GL_RGB) {
-	 color_combine = i810_color_combine[unit][I810_REPLACE];
-	 alpha_combine = i810_alpha_combine[unit][I810_PASSTHRU];
-      } else {
-	 color_combine = i810_color_combine[unit][I810_REPLACE];
-	 alpha_combine = i810_alpha_combine[unit][I810_REPLACE];
-      }
+      color_combine = MC_OP_ARG1;
       break;
-
    case GL_MODULATE:
-      if (format == GL_ALPHA) {
-	 color_combine = i810_color_combine[unit][I810_PASSTHRU];
-	 alpha_combine = i810_alpha_combine[unit][I810_MODULATE];
-      } else {
-	 color_combine = i810_color_combine[unit][I810_MODULATE];
-	 alpha_combine = i810_alpha_combine[unit][I810_MODULATE];
-      }
+      color_combine = MC_OP_MODULATE + RGBshift;
+      RGBshift = 0;
       break;
-
-   case GL_DECAL:
-      switch (format) {
-      case GL_RGBA:
-	 color_combine = i810_color_combine[unit][I810_ALPHA_BLEND];
-	 alpha_combine = i810_alpha_combine[unit][I810_PASSTHRU];
-	 break;
-      case GL_RGB:
-	 color_combine = i810_color_combine[unit][I810_REPLACE];
-	 alpha_combine = i810_alpha_combine[unit][I810_PASSTHRU];
-	 break;
-      case GL_ALPHA:
-      case GL_LUMINANCE:
-      case GL_LUMINANCE_ALPHA:
-      case GL_INTENSITY:
-	 color_combine = i810_color_combine[unit][I810_PASSTHRU];
-	 alpha_combine = i810_alpha_combine[unit][I810_PASSTHRU];
-	 break;
-      case GL_COLOR_INDEX:
-      default:
-	 return;
-      }
-      break;
-
-   case GL_BLEND:
-      switch (format) {
-      case GL_RGB:
-      case GL_LUMINANCE:
-	 color_combine = i810_color_combine[unit][I810_BLEND];
-	 alpha_combine = i810_alpha_combine[unit][I810_PASSTHRU];
-	 break;
-      case GL_RGBA:
-      case GL_LUMINANCE_ALPHA:
-	 color_combine = i810_color_combine[unit][I810_BLEND];
-	 alpha_combine = i810_alpha_combine[unit][I810_MODULATE];
-	 break;
-      case GL_ALPHA:
-	 color_combine = i810_color_combine[unit][I810_PASSTHRU];
-	 alpha_combine = i810_alpha_combine[unit][I810_MODULATE];
-	 break;
-      case GL_INTENSITY:
-	 color_combine = i810_color_combine[unit][I810_BLEND];
-	 alpha_combine = i810_alpha_combine[unit][I810_BLEND];
-	 break;
-      case GL_COLOR_INDEX:
-      default:
-	 return;
-      }
-      break;
-
    case GL_ADD:
-      switch (format) {
-      case GL_RGB:
-      case GL_LUMINANCE:
-	 color_combine = i810_color_combine[unit][I810_ADD];
-	 alpha_combine = i810_alpha_combine[unit][I810_PASSTHRU];
+      color_combine = MC_OP_ADD;
+      break;
+   case GL_ADD_SIGNED:
+      color_combine = MC_OP_ADD_SIGNED;
+      break;
+   case GL_SUBTRACT:
+      color_combine = MC_OP_SUBTRACT;
+      break;
+   case GL_INTERPOLATE:
+      /* For interpolation, the i810 hardware has some limitations.  It
+       * can't handle using the secondary or diffuse color (diffuse alpha
+       * is okay) for the third argument.
+       *
+       * It is possible to emulate the missing modes by using multiple
+       * combine stages.  Unfortunately it requires all three stages to
+       * emulate a single interpolate stage.  The (arg0*arg2) portion is
+       * done in stage zero and writes to MC_DEST_ACCUMULATOR.  The
+       * (arg1*(1-arg2)) portion is done in stage 1, and the final stage is
+       * (MC_ARG1_ACCUMULATOR | MC_ARG2_CURRENT_COLOR | MC_OP_ADD).
+       * 
+       * It can also be done without using the accumulator by rearranging
+       * the equation as (arg1 + (arg2 * (arg0 - arg1))).  Too bad the i810
+       * doesn't support the MODULATE_AND_ADD mode that the i830 supports.
+       * If it did, the interpolate could be done in only two stages.
+       */
+	 
+      if ( (color_arg[2] & MC_ARG_INVERT) != 0 ) {
+	 unsigned temp = color_arg[0];
+
+	 color_arg[0] = color_arg[1];
+	 color_arg[1] = temp;
+	 color_arg[2] &= ~MC_ARG_INVERT;
+      }
+
+      switch (color_arg[2]) {
+      case (MC_ARG_ONE):
+      case (MC_ARG_ONE | MC_ARG_REPLICATE_ALPHA):
+	 color_combine = MC_OP_ARG1;
+	 color_arg[1] = MC_ARG_ONE;
 	 break;
-      case GL_RGBA:
-      case GL_LUMINANCE_ALPHA:
-	 color_combine = i810_color_combine[unit][I810_ADD];
-	 alpha_combine = i810_alpha_combine[unit][I810_MODULATE];
+
+      case (MC_ARG_COLOR_FACTOR):
+	 return GL_FALSE;
+
+      case (MC_ARG_COLOR_FACTOR | MC_ARG_REPLICATE_ALPHA):
+	 color_combine = MC_OP_LIN_BLEND_ALPHA_FACTOR;
 	 break;
-      case GL_ALPHA:
-	 color_combine = i810_color_combine[unit][I810_PASSTHRU];
-	 alpha_combine = i810_alpha_combine[unit][I810_MODULATE];
+
+      case (MC_ARG_ITERATED_COLOR):
+	 return GL_FALSE;
+
+      case (MC_ARG_ITERATED_COLOR | MC_ARG_REPLICATE_ALPHA):
+	 color_combine = MC_OP_LIN_BLEND_ITER_ALPHA;
 	 break;
-      case GL_INTENSITY:
-	 color_combine = i810_color_combine[unit][I810_ADD];
-	 alpha_combine = i810_alpha_combine[unit][I810_ADD];
+
+      case (MC_ARG_SPECULAR_COLOR):
+      case (MC_ARG_SPECULAR_COLOR | MC_ARG_REPLICATE_ALPHA):
+	 return GL_FALSE;
+
+      case (MC_ARG_TEX0_COLOR):
+	 color_combine = MC_OP_LIN_BLEND_TEX0_COLOR;
 	 break;
-      case GL_COLOR_INDEX:
+
+      case (MC_ARG_TEX0_COLOR | MC_ARG_REPLICATE_ALPHA):
+	 color_combine = MC_OP_LIN_BLEND_TEX0_ALPHA;
+	 break;
+
+      case (MC_ARG_TEX1_COLOR):
+	 color_combine = MC_OP_LIN_BLEND_TEX1_COLOR;
+	 break;
+
+      case (MC_ARG_TEX1_COLOR | MC_ARG_REPLICATE_ALPHA):
+	 color_combine = MC_OP_LIN_BLEND_TEX1_ALPHA;
+	 break;
+
       default:
-	 return;
+	 return GL_FALSE;
       }
       break;
 
    default:
-      return;
+      return GL_FALSE;
    }
 
-   if (alpha_combine != imesa->Setup[I810_CTXREG_MA0 + unit] ||
-       color_combine != imesa->Setup[I810_CTXREG_MC0 + unit]) 
-   {
-      I810_STATECHANGE( imesa, I810_UPLOAD_CTX );
-      imesa->Setup[I810_CTXREG_MA0 + unit] = alpha_combine;
-      imesa->Setup[I810_CTXREG_MC0 + unit] = color_combine;
-   }	
+   
+   switch ( texUnit->_CurrentCombine->ModeA ) {
+   case GL_REPLACE:
+      alpha_combine = MA_OP_ARG1;
+      break;
+   case GL_MODULATE:
+      alpha_combine = MA_OP_MODULATE + Ashift;
+      Ashift = 0;
+      break;
+   case GL_ADD:
+      alpha_combine = MA_OP_ADD;
+      break;
+   case GL_ADD_SIGNED:
+      alpha_combine = MA_OP_ADD_SIGNED;
+      break;
+   case GL_SUBTRACT:
+      alpha_combine = MA_OP_SUBTRACT;
+      break;
+   case GL_INTERPOLATE:
+      if ( (alpha_arg[2] & MA_ARG_INVERT) != 0 ) {
+	 unsigned temp = alpha_arg[0];
+
+	 alpha_arg[0] = alpha_arg[1];
+	 alpha_arg[1] = temp;
+	 alpha_arg[2] &= ~MA_ARG_INVERT;
+      }
+
+      switch (alpha_arg[2]) {
+      case MA_ARG_ONE:
+	 alpha_combine = MA_OP_ARG1;
+	 alpha_arg[1] = MA_ARG_ITERATED_ALPHA;
+	 break;
+
+      case MA_ARG_ALPHA_FACTOR:
+	 alpha_combine = MA_OP_LIN_BLEND_ALPHA_FACTOR;
+	 break;
+
+      case MA_ARG_ITERATED_ALPHA:
+	 alpha_combine = MA_OP_LIN_BLEND_ITER_ALPHA;
+	 break;
+
+      case MA_ARG_TEX0_ALPHA:
+	 alpha_combine = MA_OP_LIN_BLEND_TEX0_ALPHA;
+	 break;
+
+      case MA_ARG_TEX1_ALPHA:
+	 alpha_combine = MA_OP_LIN_BLEND_TEX1_ALPHA;
+	 break;
+
+      default:
+	 return GL_FALSE;
+      }
+      break;
+
+   default:
+      return GL_FALSE;
+   }
+
+
+   color_combine |= GFX_OP_MAP_COLOR_STAGES | (*color_stage << MC_STAGE_SHIFT)
+     | MC_UPDATE_DEST | MC_DEST_CURRENT
+     | MC_UPDATE_ARG1 | (color_arg[0] << MC_ARG1_SHIFT)
+     | MC_UPDATE_ARG2 | (color_arg[1] << MC_ARG2_SHIFT)
+     | MC_UPDATE_OP;
+
+   alpha_combine |= GFX_OP_MAP_ALPHA_STAGES | (*alpha_stage << MA_STAGE_SHIFT)
+     | MA_UPDATE_ARG1 | (alpha_arg[0] << MA_ARG1_SHIFT)
+     | MA_UPDATE_ARG2 | (alpha_arg[1] << MA_ARG2_SHIFT)
+     | MA_UPDATE_OP;
+
+   set_color_stage( color_combine, *color_stage, imesa );
+   set_alpha_stage( alpha_combine, *alpha_stage, imesa );
+   (*color_stage)++;
+   (*alpha_stage)++;
+
+
+   /* Step 3:
+    * Apply the scale factor.
+    */
+   /* The only operation where the i810 directly supports adding a post-
+    * scale factor is modulate.  For all the other modes the post-scale is
+    * emulated by inserting and extra modulate stage.  For the modulate
+    * case, the scaling is handled above when color_combine / alpha_combine
+    * are initially set.
+    */
+
+   if ( RGBshift != 0 ) {
+      const unsigned color_scale = GFX_OP_MAP_COLOR_STAGES
+	| (*color_stage << MC_STAGE_SHIFT)
+	| MC_UPDATE_DEST | MC_DEST_CURRENT
+	| MC_UPDATE_ARG1 | (MC_ARG_CURRENT_COLOR << MC_ARG1_SHIFT)
+	| MC_UPDATE_ARG2 | (MC_ARG_ONE           << MC_ARG2_SHIFT)
+	| MC_UPDATE_OP   | (MC_OP_MODULATE + RGBshift);
+
+      if ( *color_stage >= 3 ) {
+	 return GL_FALSE;
+      }
+
+      set_color_stage( color_scale, *color_stage, imesa );
+      (*color_stage)++;
+   }
+
+   
+   if ( Ashift != 0 ) {
+      const unsigned alpha_scale = GFX_OP_MAP_ALPHA_STAGES
+	| (*alpha_stage << MA_STAGE_SHIFT)
+	| MA_UPDATE_ARG1 | (MA_ARG_CURRENT_ALPHA << MA_ARG1_SHIFT)
+	| MA_UPDATE_ARG2 | (MA_ARG_ONE           << MA_ARG2_SHIFT)
+	| MA_UPDATE_OP   | (MA_OP_MODULATE + Ashift);
+
+      if ( *alpha_stage >= 3 ) {
+	 return GL_FALSE;
+      }
+
+      set_alpha_stage( alpha_scale, *alpha_stage, imesa );
+      (*alpha_stage)++;
+   }
+
+   return GL_TRUE;
 }
 
 
-
-
-static void i810UpdateTexUnit( GLcontext *ctx, GLuint unit )
+/**
+ * Update hardware state for a texture unit.
+ *
+ * \todo
+ * 1D textures should be supported!  Just use a 2D texture with the second
+ * texture coordinate value fixed at 0.0.
+ */
+static void i810UpdateTexUnit( GLcontext *ctx, GLuint unit, 
+			      int * next_color_stage, int * next_alpha_stage )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
-   if (texUnit->_ReallyEnabled == TEXTURE_2D_BIT) 
-   {
-      struct gl_texture_object *tObj = texUnit->_Current;
-      i810TextureObjectPtr t = (i810TextureObjectPtr)tObj->DriverData;
+   if ( (texUnit->_ReallyEnabled == TEXTURE_2D_BIT)
+	|| (texUnit->_ReallyEnabled == 0) ) {
+      if (texUnit->_ReallyEnabled != 0) {
+	 struct gl_texture_object *tObj = texUnit->_Current;
+	 i810TextureObjectPtr t = (i810TextureObjectPtr)tObj->DriverData;
 
-      /* Upload teximages (not pipelined)
-       */
-      if (t->base.dirty_images[0]) {
-	 I810_FIREVERTICES(imesa);
-	 i810SetTexImages( imesa, tObj );
-	 if (!t->base.memBlock) {
+	 if (tObj->Image[0][tObj->BaseLevel]->Border > 0) {
 	    FALLBACK( imesa, I810_FALLBACK_TEXTURE, GL_TRUE );
 	    return;
 	 }
+
+
+	 /* Upload teximages (not pipelined)
+	  */
+	 if (t->base.dirty_images[0]) {
+	    I810_FIREVERTICES(imesa);
+	    i810SetTexImages( imesa, tObj );
+	    if (!t->base.memBlock) {
+	       FALLBACK( imesa, I810_FALLBACK_TEXTURE, GL_TRUE );
+	       return;
+	    }
+	 }
+
+
+	 /* Update state if this is a different texture object to last
+	  * time.
+	  */
+	 if (imesa->CurrentTexObj[unit] != t) {
+	    I810_STATECHANGE(imesa, (I810_UPLOAD_TEX0<<unit));
+	    imesa->CurrentTexObj[unit] = t;
+	    t->base.bound |= (1U << unit);
+
+	    /* XXX: should be locked */
+	    driUpdateTextureLRU( (driTextureObject *) t );
+	 }
+      
+	 /* Update texture environment if texture object image format or 
+	  * texture environment state has changed.
+	  */
+
+	 imesa->TexEnvImageFmt[unit] = tObj->Image[0][tObj->BaseLevel]->Format;
       }
-
-      if (tObj->Image[0][tObj->BaseLevel]->Border > 0) {
-         FALLBACK( imesa, I810_FALLBACK_TEXTURE, GL_TRUE );
-         return;
-      }
-
-      /* Update state if this is a different texture object to last
-       * time.
-       */
-      if (imesa->CurrentTexObj[unit] != t) {
-	 I810_STATECHANGE(imesa, (I810_UPLOAD_TEX0<<unit));
-	 imesa->CurrentTexObj[unit] = t;
-	 t->base.bound |= (1U << unit);
-	 
-	 driUpdateTextureLRU( (driTextureObject *) t ); /* XXX: should be locked */
-
+      else {
+	 imesa->CurrentTexObj[unit] = 0;
+	 imesa->TexEnvImageFmt[unit] = 0;	
+	 imesa->dirty &= ~(I810_UPLOAD_TEX0<<unit); 
       }
       
-      /* Update texture environment if texture object image format or 
-       * texture environment state has changed.
-       */
-      if (tObj->Image[0][tObj->BaseLevel]->Format != imesa->TexEnvImageFmt[unit]) {
-	 imesa->TexEnvImageFmt[unit] = tObj->Image[0][tObj->BaseLevel]->Format;
-	 i810UpdateTexEnv( ctx, unit );
+      if (!i810UpdateTexEnvCombine( ctx, unit, 
+				    next_color_stage, next_alpha_stage )) {
+	 FALLBACK( imesa, I810_FALLBACK_TEXTURE, GL_TRUE );
       }
    }
    else if (texUnit->_ReallyEnabled) {
       FALLBACK( imesa, I810_FALLBACK_TEXTURE, GL_TRUE );
    }
-   else /*if (imesa->CurrentTexObj[unit])*/ {
-      imesa->CurrentTexObj[unit] = 0;
-      imesa->TexEnvImageFmt[unit] = 0;	
-      imesa->dirty &= ~(I810_UPLOAD_TEX0<<unit); 
-      imesa->Setup[I810_CTXREG_MA0 + unit] = 
-	 i810_alpha_combine[unit][I810_DISABLE];
-      imesa->Setup[I810_CTXREG_MC0 + unit] = 
-	 i810_color_combine[unit][I810_DISABLE];
-      I810_STATECHANGE( imesa, I810_UPLOAD_CTX );
-   }
+
+   return;
 }
 
 
 void i810UpdateTextureState( GLcontext *ctx )
 {
+   static const unsigned color_pass[3] = {
+      GFX_OP_MAP_COLOR_STAGES | MC_STAGE_0 | MC_UPDATE_DEST | MC_DEST_CURRENT
+	| MC_UPDATE_ARG1 | (MC_ARG_ITERATED_COLOR << MC_ARG1_SHIFT)
+	| MC_UPDATE_ARG2 | (MC_ARG_ONE            << MC_ARG2_SHIFT)
+	| MC_UPDATE_OP   | MC_OP_ARG1,
+      GFX_OP_MAP_COLOR_STAGES | MC_STAGE_1 | MC_UPDATE_DEST | MC_DEST_CURRENT
+	| MC_UPDATE_ARG1 | (MC_ARG_CURRENT_COLOR  << MC_ARG1_SHIFT)
+	| MC_UPDATE_ARG2 | (MC_ARG_ONE            << MC_ARG2_SHIFT)
+	| MC_UPDATE_OP   | MC_OP_ARG1,
+      GFX_OP_MAP_COLOR_STAGES | MC_STAGE_2 | MC_UPDATE_DEST | MC_DEST_CURRENT
+	| MC_UPDATE_ARG1 | (MC_ARG_CURRENT_COLOR  << MC_ARG1_SHIFT)
+	| MC_UPDATE_ARG2 | (MC_ARG_ONE            << MC_ARG2_SHIFT)
+	| MC_UPDATE_OP   | MC_OP_ARG1
+   };
+   static const unsigned alpha_pass[3] = {
+      GFX_OP_MAP_ALPHA_STAGES | MA_STAGE_0
+	| MA_UPDATE_ARG1 | (MA_ARG_ITERATED_ALPHA << MA_ARG1_SHIFT)
+	| MA_UPDATE_ARG2 | (MA_ARG_ITERATED_ALPHA << MA_ARG2_SHIFT)
+	| MA_UPDATE_OP   | MA_OP_ARG1,
+      GFX_OP_MAP_ALPHA_STAGES | MA_STAGE_1
+	| MA_UPDATE_ARG1 | (MA_ARG_CURRENT_ALPHA  << MA_ARG1_SHIFT)
+	| MA_UPDATE_ARG2 | (MA_ARG_CURRENT_ALPHA  << MA_ARG2_SHIFT)
+	| MA_UPDATE_OP   | MA_OP_ARG1,
+      GFX_OP_MAP_ALPHA_STAGES | MA_STAGE_2
+	| MA_UPDATE_ARG1 | (MA_ARG_CURRENT_ALPHA  << MA_ARG1_SHIFT)
+	| MA_UPDATE_ARG2 | (MA_ARG_CURRENT_ALPHA  << MA_ARG2_SHIFT)
+	| MA_UPDATE_OP   | MA_OP_ARG1
+   };
    i810ContextPtr imesa = I810_CONTEXT(ctx);
+   int next_color_stage = 0;
+   int next_alpha_stage = 0;
+
+
    /*  fprintf(stderr, "%s\n", __FUNCTION__); */
    FALLBACK( imesa, I810_FALLBACK_TEXTURE, GL_FALSE );
-   i810UpdateTexUnit( ctx, 0 );
-   i810UpdateTexUnit( ctx, 1 );
+
+   i810UpdateTexUnit( ctx, 0, & next_color_stage, & next_alpha_stage );
+   i810UpdateTexUnit( ctx, 1, & next_color_stage, & next_alpha_stage );
+
+   /* There needs to be at least one combine stage emitted that just moves
+    * the incoming primary color to the current color register.  In addition,
+    * there number be the same number of color and alpha stages emitted.
+    * Finally, if there are less than 3 combine stages, a MC_OP_DISABLE stage
+    * must be emitted.
+    */
+
+   while ( (next_color_stage == 0) ||
+	   (next_color_stage < next_alpha_stage) ) {
+      set_color_stage( color_pass[ next_color_stage ], next_color_stage,
+		       imesa );
+      next_color_stage++;
+   }
+
+   assert( next_color_stage <= 3 );
+
+   while ( next_alpha_stage < next_color_stage ) {
+      set_alpha_stage( alpha_pass[ next_alpha_stage ], next_alpha_stage,
+		       imesa );
+      next_alpha_stage++;
+   }
+
+   assert( next_alpha_stage <= 3 );
+   assert( next_color_stage == next_alpha_stage );
+
+   if ( next_color_stage < 3 ) {
+      const unsigned color = GFX_OP_MAP_COLOR_STAGES
+	| (next_color_stage << MC_STAGE_SHIFT)
+	| MC_UPDATE_DEST | MC_DEST_CURRENT
+	| MC_UPDATE_ARG1 | (MC_ARG_ONE << MC_ARG1_SHIFT)
+	| MC_UPDATE_ARG2 | (MC_ARG_ONE << MC_ARG2_SHIFT)
+	| MC_UPDATE_OP   | (MC_OP_DISABLE);
+
+      const unsigned alpha = GFX_OP_MAP_ALPHA_STAGES
+	| (next_color_stage << MC_STAGE_SHIFT)
+	| MA_UPDATE_ARG1 | (MA_ARG_CURRENT_ALPHA << MA_ARG1_SHIFT)
+	| MA_UPDATE_ARG2 | (MA_ARG_CURRENT_ALPHA << MA_ARG2_SHIFT)
+	| MA_UPDATE_OP   | (MA_OP_ARG1);
+
+      set_color_stage( color, next_color_stage, imesa );
+      set_alpha_stage( alpha, next_alpha_stage, imesa );
+   }
 }
-
-
-

@@ -73,7 +73,7 @@ int I810_DEBUG = (0);
 PUBLIC const char __driConfigOptions[] = { 0 };
 const GLuint __driNConfigOptions = 0;
 
-#define DRIVER_DATE                     "20050818"
+#define DRIVER_DATE                     "20050821"
 
 static const GLubyte *i810GetString( GLcontext *ctx, GLenum name )
 {
@@ -125,9 +125,12 @@ const struct dri_extension card_extensions[] =
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
     { "GL_ARB_texture_env_add",            NULL },
+    { "GL_ARB_texture_env_combine",        NULL },
+    { "GL_ARB_texture_env_crossbar",       NULL },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
     { "GL_EXT_stencil_wrap",               NULL },
     { "GL_EXT_texture_edge_clamp",         NULL },
+    { "GL_EXT_texture_env_combine",        NULL },
     { "GL_EXT_texture_lod_bias",           NULL },
     { "GL_MESA_ycbcr_texture",             NULL },
     { "GL_NV_blend_square",                NULL },

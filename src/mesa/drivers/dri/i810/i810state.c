@@ -746,13 +746,13 @@ void i810InitState( GLcontext *ctx )
 				     MC_UPDATE_DEST |
 				     MC_DEST_CURRENT |
 				     MC_UPDATE_ARG1 |
-				     MC_ARG1_ITERATED_COLOR |
-				     MC_ARG1_DONT_REPLICATE_ALPHA |
-				     MC_ARG1_DONT_INVERT |
+				     ((MC_ARG_ITERATED_COLOR |
+				       MC_ARG_DONT_REPLICATE_ALPHA |
+				       MC_ARG_DONT_INVERT) << MC_ARG1_SHIFT) |
 				     MC_UPDATE_ARG2 |
-				     MC_ARG2_ONE |
-				     MC_ARG2_DONT_REPLICATE_ALPHA |
-				     MC_ARG2_DONT_INVERT |
+				     ((MC_ARG_ONE |
+				       MC_ARG_DONT_REPLICATE_ALPHA |
+				       MC_ARG_DONT_INVERT) << MC_ARG2_SHIFT) |
 				     MC_UPDATE_OP |
 				     MC_OP_ARG1 );
 
@@ -761,13 +761,13 @@ void i810InitState( GLcontext *ctx )
 				     MC_UPDATE_DEST |
 				     MC_DEST_CURRENT |
 				     MC_UPDATE_ARG1 |
-				     MC_ARG1_ONE |
-				     MC_ARG1_DONT_REPLICATE_ALPHA |
-				     MC_ARG1_DONT_INVERT |
+				     ((MC_ARG_ONE |
+				       MC_ARG_DONT_REPLICATE_ALPHA |
+				       MC_ARG_DONT_INVERT) << MC_ARG1_SHIFT) |
 				     MC_UPDATE_ARG2 |
-				     MC_ARG2_ONE |
-				     MC_ARG2_DONT_REPLICATE_ALPHA |
-				     MC_ARG2_DONT_INVERT |
+				     ((MC_ARG_ONE |
+				       MC_ARG_DONT_REPLICATE_ALPHA |
+				       MC_ARG_DONT_INVERT) << MC_ARG2_SHIFT) |
 				     MC_UPDATE_OP |
 				     MC_OP_DISABLE );
 
@@ -777,13 +777,13 @@ void i810InitState( GLcontext *ctx )
 				     MC_UPDATE_DEST |
 				     MC_DEST_CURRENT |
 				     MC_UPDATE_ARG1 |
-				     MC_ARG1_CURRENT_COLOR |
-				     MC_ARG1_REPLICATE_ALPHA |
-				     MC_ARG1_DONT_INVERT |
+				     ((MC_ARG_CURRENT_COLOR |
+				       MC_ARG_REPLICATE_ALPHA |
+				       MC_ARG_DONT_INVERT) << MC_ARG1_SHIFT) |
 				     MC_UPDATE_ARG2 |
-				     MC_ARG2_ONE |
-				     MC_ARG2_DONT_REPLICATE_ALPHA |
-				     MC_ARG2_DONT_INVERT |
+				     ((MC_ARG_ONE |
+				       MC_ARG_DONT_REPLICATE_ALPHA |
+				       MC_ARG_DONT_INVERT) << MC_ARG2_SHIFT) |
 				     MC_UPDATE_OP |
 				     MC_OP_DISABLE );
 
@@ -791,11 +791,11 @@ void i810InitState( GLcontext *ctx )
    imesa->Setup[I810_CTXREG_MA0] = ( GFX_OP_MAP_ALPHA_STAGES |
 				     MA_STAGE_0 |
 				     MA_UPDATE_ARG1 |
-				     MA_ARG1_ITERATED_ALPHA |
-				     MA_ARG1_DONT_INVERT |
+				     ((MA_ARG_ITERATED_ALPHA |
+				       MA_ARG_DONT_INVERT) << MA_ARG1_SHIFT) |
 				     MA_UPDATE_ARG2 |
-				     MA_ARG2_CURRENT_ALPHA |
-				     MA_ARG2_DONT_INVERT |
+				     ((MA_ARG_CURRENT_ALPHA |
+				       MA_ARG_DONT_INVERT) << MA_ARG2_SHIFT) |
 				     MA_UPDATE_OP |
 				     MA_OP_ARG1 );
 
@@ -803,11 +803,11 @@ void i810InitState( GLcontext *ctx )
    imesa->Setup[I810_CTXREG_MA1] = ( GFX_OP_MAP_ALPHA_STAGES |
 				     MA_STAGE_1 |
 				     MA_UPDATE_ARG1 |
-				     MA_ARG1_CURRENT_ALPHA |
-				     MA_ARG1_DONT_INVERT |
+				     ((MA_ARG_CURRENT_ALPHA |
+				       MA_ARG_DONT_INVERT) << MA_ARG1_SHIFT) |
 				     MA_UPDATE_ARG2 |
-				     MA_ARG2_CURRENT_ALPHA |
-				     MA_ARG2_DONT_INVERT |
+				     ((MA_ARG_CURRENT_ALPHA |
+				       MA_ARG_DONT_INVERT) << MA_ARG2_SHIFT) |
 				     MA_UPDATE_OP |
 				     MA_OP_ARG1 );
 
@@ -815,11 +815,11 @@ void i810InitState( GLcontext *ctx )
    imesa->Setup[I810_CTXREG_MA2] = ( GFX_OP_MAP_ALPHA_STAGES |
 				     MA_STAGE_2 |
 				     MA_UPDATE_ARG1 |
-				     MA_ARG1_CURRENT_ALPHA |
-				     MA_ARG1_DONT_INVERT |
+				     ((MA_ARG_CURRENT_ALPHA |
+				       MA_ARG_DONT_INVERT) << MA_ARG1_SHIFT) |
 				     MA_UPDATE_ARG2 |
-				     MA_ARG2_CURRENT_ALPHA |
-				     MA_ARG2_DONT_INVERT |
+				     ((MA_ARG_CURRENT_ALPHA |
+				       MA_ARG_DONT_INVERT) << MA_ARG2_SHIFT) |
 				     MA_UPDATE_OP |
 				     MA_OP_ARG1 );
 
