@@ -26,3 +26,7 @@ On Alpha platforms at default a sharable images for the libraries are created.
 To get a static library make it by typing MMS/MACRO=(NOSHARE=1).
 On VAX platforms only static libraries can be build.
 
+
+You may want to compile Mesa to use IEEE floating point arithmetic, instead
+of VAX floating point by specifying the /float=IEEE flag to the compiler.
+For more information see https://bugs.freedesktop.org/show_bug.cgi?id=4270
