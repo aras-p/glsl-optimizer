@@ -11,7 +11,6 @@
 typedef struct {
     drm_handle_t handle;
     drmSize size;
-    drmAddress map;
 } viaRegion, *viaRegionPtr;
 
 typedef struct {
