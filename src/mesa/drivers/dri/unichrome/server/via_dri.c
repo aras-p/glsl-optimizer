@@ -22,19 +22,6 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#if 0
-#include "xf86.h"
-#include "xf86_OSproc.h"
-#include "xf86_ansic.h"
-#include "xf86Priv.h"
-
-#include "xf86PciInfo.h"
-#include "xf86Pci.h"
-
-#define _XF86DRI_SERVER_
-#include "GL/glxtokens.h"
-
-#else
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,7 +32,8 @@
 #include "driver.h"
 #include "drm.h"
 #include "imports.h"
-#endif
+
+typedef int Bool; /* via_dri.h makes use of this */
 
 #include "dri_util.h"
 

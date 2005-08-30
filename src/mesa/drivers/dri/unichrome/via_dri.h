@@ -13,6 +13,8 @@ typedef struct {
     drmSize size;
 } viaRegion, *viaRegionPtr;
 
+typedef int Bool;
+
 typedef struct {
     viaRegion regs, agp;
     int deviceID;
@@ -24,7 +26,7 @@ typedef struct {
     int priv2;
     int fbOffset;
     int fbSize;
-    char drixinerama;
+    Bool drixinerama;
     int backOffset;
     int depthOffset;
     int textureOffset;
