@@ -100,6 +100,7 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
     PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
       (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
     void * const psc = sPriv->psc->screenConfigs;
+    drmAddress map;
 
     if (sPriv->devPrivSize != sizeof(VIADRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(VIADRIRec) does not match passed size from device driver\n");
@@ -150,7 +151,7 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
     if (drmMap(sPriv->fd,
                gDRIPriv->regs.handle,
                gDRIPriv->regs.size,
-               (drmAddress *)&viaScreen->reg) != 0) {
+               &map) != 0) {
         FREE(viaScreen);
         sPriv->private = NULL;
         __driUtilMessage("viaInitDriver: drmMap regs failed");
@@ -162,8 +163,8 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
                    gDRIPriv->agp.handle,
                    gDRIPriv->agp.size,
 	           (drmAddress *)&viaScreen->agpLinearStart) != 0) {
-	    FREE(viaScreen);
 	    drmUnmap(viaScreen->reg, gDRIPriv->agp.size);
+	    FREE(viaScreen);
 	    sPriv->private = NULL;
 	    __driUtilMessage("viaInitDriver: drmMap agp failed");
 	    return GL_FALSE;

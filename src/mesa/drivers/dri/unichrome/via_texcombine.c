@@ -111,7 +111,7 @@ viaTexCombineState( struct via_context *vmesa,
    unsigned constant_alpha[3];
    unsigned bias_alpha = 0;
    unsigned abc_alpha = 0;
-   const struct gl_texture_unit const * texUnit = 
+   const struct gl_texture_unit * texUnit = 
       &vmesa->glCtx->Texture.Unit[unit];
    unsigned env_color[4];
 
