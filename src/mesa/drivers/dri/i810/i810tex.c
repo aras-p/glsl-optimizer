@@ -455,8 +455,8 @@ i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGBA12:
    case GL_RGBA16:
    case GL_COMPRESSED_RGBA:
-      if ( (format == GL_BGRA) && (type == GL_UNSIGNED_SHORT_1_5_5_5_REV)
-	   || (format == GL_RGBA) && (type == GL_UNSIGNED_SHORT_5_5_5_1)
+      if ( ((format == GL_BGRA) && (type == GL_UNSIGNED_SHORT_1_5_5_5_REV))
+	   || ((format == GL_RGBA) && (type == GL_UNSIGNED_SHORT_5_5_5_1))
 	   || (internalFormat == GL_RGB5_A1) ) {
 	 return &_mesa_texformat_argb1555;
       }
