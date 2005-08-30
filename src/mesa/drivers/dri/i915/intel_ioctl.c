@@ -107,7 +107,7 @@ void intel_dump_batchbuffer( long offset,
    int i;
    fprintf(stderr, "\n\n\nSTART BATCH (%d dwords):\n", count);
    for (i = 0; i < count/4; i += 4) 
-      fprintf(stderr, "\t0x%lx: 0x%08x 0x%08x 0x%08x 0x%08x\n", 
+      fprintf(stderr, "\t0x%x: 0x%08x 0x%08x 0x%08x 0x%08x\n", 
 	      (unsigned int)offset + i*4, ptr[i], ptr[i+1], ptr[i+2], ptr[i+3]);
    fprintf(stderr, "END BATCH\n\n\n");
 }
@@ -130,7 +130,7 @@ void intelRefillBatchLocked( intelContextPtr intel, GLboolean allow_unlock )
       fprintf(stderr, "%s: now using half %d\n", __FUNCTION__, buf);
 
    intel->batch.start_offset = intel->alloc.offset + buf * half;
-   intel->batch.ptr = (char *)intel->alloc.ptr + buf * half;
+   intel->batch.ptr = (GLubyte *)intel->alloc.ptr + buf * half;
    intel->batch.size = half - 8;
    intel->batch.space = half - 8;
    assert(intel->batch.space >= 0);
@@ -247,7 +247,7 @@ void intelFlushBatchLocked( intelContextPtr intel,
 	 }
       } else {
 	 drmI830CmdBuffer cmd;
-	 cmd.buf = (GLubyte *)intel->alloc.ptr + batch.start;
+	 cmd.buf = (char *)intel->alloc.ptr + batch.start;
 	 cmd.sz = batch.used;
 	 cmd.DR1 = batch.DR1;
 	 cmd.DR4 = batch.DR4;
