@@ -163,7 +163,7 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
                    gDRIPriv->agp.handle,
                    gDRIPriv->agp.size,
 	           (drmAddress *)&viaScreen->agpLinearStart) != 0) {
-	    drmUnmap(viaScreen->reg, gDRIPriv->agp.size);
+	    drmUnmap(viaScreen->reg, gDRIPriv->regs.size);
 	    FREE(viaScreen);
 	    sPriv->private = NULL;
 	    __driUtilMessage("viaInitDriver: drmMap agp failed");
