@@ -33,8 +33,6 @@
 #include "drm.h"
 #include "imports.h"
 
-typedef int Bool; /* via_dri.h makes use of this */
-
 #include "dri_util.h"
 
 #include "via_context.h"
@@ -384,7 +382,6 @@ static int VIADRIScreenInit(DRIDriverContext * ctx)
     }
 
     pVIADRI->regs.size = VIA_MMIO_REGSIZE;
-    pVIADRI->regs.map = 0;
     pVIADRI->regs.handle = pVia->registerHandle;
     xf86DrvMsg(pScreen->myNum, X_INFO, "[drm] mmio Registers = 0x%08lx\n",
 	pVIADRI->regs.handle);
