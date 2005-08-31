@@ -189,7 +189,7 @@ static void r300BufferData(GLcontext *ctx, GLenum target, GLsizeiptrARB size,
 		_mesa_buffer_data(ctx, target, size, data, usage, obj);
 		return ;
 	}
-	obj->Data = ((char *)rmesa->radeon.radeonScreen->gartTextures.map) + offset;
+	obj->Data = ((GLubyte *)rmesa->radeon.radeonScreen->gartTextures.map) + offset;
 	
 	if (data)
 		memcpy(obj->Data, data, size);
