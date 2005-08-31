@@ -42,7 +42,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "buffers.h"
 #include "context.h"
 
-#include "swrast/swrast.h"
 #include "array_cache/acache.h"
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
@@ -2229,6 +2228,8 @@ static void radeonWrapRunPipeline( GLcontext *ctx )
 
 
 /* Initialize the driver's state functions.
+ * Many of the ctx->Driver functions might have been initialized to
+ * software defaults in the earlier _mesa_init_driver_functions() call.
  */
 void radeonInitStateFuncs( GLcontext *ctx )
 {
@@ -2274,21 +2275,6 @@ void radeonInitStateFuncs( GLcontext *ctx )
    ctx->Driver.StencilMask		= radeonStencilMask;
    ctx->Driver.StencilOp		= radeonStencilOp;
    ctx->Driver.Viewport			= radeonViewport;
-
-   /* Pixel path fallbacks
-    */
-   ctx->Driver.Accum                    = _swrast_Accum;
-   ctx->Driver.Bitmap                   = _swrast_Bitmap;
-   ctx->Driver.CopyPixels               = _swrast_CopyPixels;
-   ctx->Driver.DrawPixels               = _swrast_DrawPixels;
-   ctx->Driver.ReadPixels               = _swrast_ReadPixels;
-
-   /* Swrast hooks for imaging extensions:
-    */
-   ctx->Driver.CopyColorTable		= _swrast_CopyColorTable;
-   ctx->Driver.CopyColorSubTable	= _swrast_CopyColorSubTable;
-   ctx->Driver.CopyConvolutionFilter1D	= _swrast_CopyConvolutionFilter1D;
-   ctx->Driver.CopyConvolutionFilter2D	= _swrast_CopyConvolutionFilter2D;
 
    TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange = radeonUpdateMaterial;
    TNL_CONTEXT(ctx)->Driver.RunPipeline = radeonWrapRunPipeline;
