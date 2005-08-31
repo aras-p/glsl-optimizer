@@ -50,6 +50,7 @@ struct window {
    GLfloat xrot, yrot;
    GLfloat spin;
    GLenum showBuffer;
+   GLenum drawBuffer;
    GLuint table_list;
    GLuint objects_list[MAX_OBJECTS];
    double t0;
@@ -296,8 +297,10 @@ DrawWindow(void)
    GLfloat dist = 20.0;
    GLfloat eyex, eyey, eyez;
 
-   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+   glDrawBuffer(w->drawBuffer);
+   glReadBuffer(w->drawBuffer);
 
+   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
    eyex = dist  *  cos(w->yrot * DEG2RAD)  *  cos(w->xrot * DEG2RAD);
    eyez = dist  *  sin(w->yrot * DEG2RAD)  *  cos(w->xrot * DEG2RAD);
@@ -368,7 +371,10 @@ DrawWindow(void)
       ShowAlphaBuffer(w->width, w->height);
    }
 
-   glutSwapBuffers();
+   if (w->drawBuffer == GL_BACK)
+      glutSwapBuffers();
+   else
+      glFinish();
 
    /* calc/show frame rate */
    {
@@ -442,6 +448,13 @@ Key(unsigned char key, int x, int y)
       w->showBuffer = GL_NONE;
       glutPostRedisplay();
       break;
+   case 'f':
+      if (w->drawBuffer == GL_FRONT)
+         w->drawBuffer = GL_BACK;
+      else
+         w->drawBuffer = GL_FRONT;
+      glutPostRedisplay();
+      break;
    case ' ':
       w->anim = !w->anim;
       w->t0 = -1;
@@ -513,6 +526,7 @@ CreateWindow(void)
    w->yrot = 50.0;
    w->spin = 0.0;
    w->showBuffer = GL_NONE;
+   w->drawBuffer = GL_BACK;
 
    InitWindow(w);
 
@@ -535,6 +549,7 @@ Usage(void)
    printf("  d      - show depth buffer\n");
    printf("  s      - show stencil buffer\n");
    printf("  c      - show color buffer\n");
+   printf("  f      - toggle rendering to front/back color buffer\n");
    printf("  n      - create new window\n");
    printf("  k      - kill window\n");
    printf("  SPACE  - toggle animation\n");
