@@ -5,7 +5,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -320,14 +320,11 @@ read_buffer_enum_to_bitmask(GLenum buffer)
 
 
 /**
- * Specify which color buffers to draw into.
+ * Specify which color buffer(s) to draw into for the first color output.
+ * Recall that fragment programs can write to multiple outputs.
+ * \sa _mesa_DrawBuffersARB
  *
  * \param buffer  color buffer, such as GL_LEFT or GL_FRONT_AND_BACK.
- *
- * Flushes the vertices and verifies the parameter and updates the
- * gl_colorbuffer_attrib::_DrawDestMask bitfield. Marks new color state in
- * __GLcontextRec::NewState and notifies the driver via the
- * dd_function_table::DrawBuffer callback.
  */
 void GLAPIENTRY
 _mesa_DrawBuffer(GLenum buffer)
@@ -370,9 +367,7 @@ _mesa_DrawBuffer(GLenum buffer)
 /**
  * Called by glDrawBuffersARB; specifies the destination color buffers
  * for N fragment program color outputs.
- *
- * XXX This function is called by _mesa_PopAttrib() and we need to do
- * some more work to deal with the current framebuffer binding state!
+ * \sa _mesa_DrawBuffer
  */
 void GLAPIENTRY
 _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)

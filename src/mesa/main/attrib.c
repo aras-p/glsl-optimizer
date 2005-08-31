@@ -841,13 +841,8 @@ _mesa_PopAttrib(void)
                                (GLboolean) (color->ColorMask[1] != 0),
                                (GLboolean) (color->ColorMask[2] != 0),
                                (GLboolean) (color->ColorMask[3] != 0));
-#if 0
-               _mesa_DrawBuffersARB(ctx->Const.MaxDrawBuffers,
-                                    color->DrawBuffer);
-#else
                _mesa_drawbuffers(ctx, ctx->Const.MaxDrawBuffers,
                                  color->DrawBuffer, NULL);
-#endif
                _mesa_set_enable(ctx, GL_ALPHA_TEST, color->AlphaEnabled);
                _mesa_AlphaFunc(color->AlphaFunc, color->AlphaRef);
                _mesa_set_enable(ctx, GL_BLEND, color->BlendEnabled);
