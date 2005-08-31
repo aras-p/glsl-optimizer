@@ -433,6 +433,11 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
  * output, but fragment programs can now have several distinct color
  * outputs (see GL_ARB_draw_buffers).  This function sets the state
  * for one such color output.
+ * \param ctx  current context
+ * \param output  which fragment program output
+ * \param buffer  buffer to write to (like GL_LEFT)
+ * \param destMask  BUFFER_* bitmask
+ *                  (like BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT).
  */
 static void
 set_color_output(GLcontext *ctx, GLuint output, GLenum buffer, GLuint destMask)
@@ -457,6 +462,14 @@ set_color_output(GLcontext *ctx, GLuint output, GLenum buffer, GLuint destMask)
 /**
  * Helper routine used by _mesa_DrawBuffer, _mesa_DrawBuffersARB and
  * _mesa_PopAttrib to set drawbuffer state.
+ * All error checking will have been done prior to calling this function
+ * so nothing should go wrong at this point.
+ * \param ctx  current context
+ * \param n    number of color outputs to set
+ * \param buffers  array[n] of colorbuffer names, like GL_LEFT.
+ * \param destMask  array[n] of BUFFER_* bitmasks which correspond to the
+ *                  colorbuffer names.  (i.e. GL_FRONT_AND_BACK =>
+ *                  BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT).
  */
 void
 _mesa_drawbuffers(GLcontext *ctx, GLsizei n, const GLenum *buffers,

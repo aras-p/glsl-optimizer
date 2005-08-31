@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -349,6 +349,9 @@ _swrast_DrawBuffers( GLcontext *ctx, GLsizei n, const GLenum *buffers )
  * Setup things so that we read/write spans from the user-designated
  * read buffer (set via glReadPixels).  We usually just have to call
  * this for glReadPixels, glCopyPixels, etc.
+ *
+ * XXX this will go away when the last OLD_RENDERBUFFER code is removed.
+ * The swrast->CurrentBufferBit var can be totally removed then too.
  */
 void
 _swrast_use_read_buffer( GLcontext *ctx )
@@ -366,6 +369,9 @@ _swrast_use_read_buffer( GLcontext *ctx )
 /*
  * Setup things so that we read/write spans from the default draw buffer.
  * This is the usual mode that Mesa's software rasterizer operates in.
+ *
+ * XXX this will go away when the last OLD_RENDERBUFFER code is removed.
+ * The swrast->CurrentBufferBit var can be totally removed then too.
  */
 void
 _swrast_use_draw_buffer( GLcontext *ctx )

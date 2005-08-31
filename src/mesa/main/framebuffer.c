@@ -460,7 +460,14 @@ get_renderbuffer(struct gl_framebuffer *fb, GLuint bufferBit)
 
 /**
  * Update state related to the current draw/read framebuffers.
+ * Specifically, update these framebuffer fields:
+ *    _ColorDrawBuffers
+ *    _ColorDrawBit
+ *    _NumColorDrawBuffers
+ *    _ColorReadBuffer
  * If the current framebuffer is user-created, make sure it's complete.
+ * The following functions can effect this state:  glReadBuffer,
+ * glDrawBuffer, glDrawBuffersARB, glFramebufferRenderbufferEXT.
  */
 void
 _mesa_update_framebuffer(GLcontext *ctx)
