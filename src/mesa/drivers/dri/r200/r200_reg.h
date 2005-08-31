@@ -172,6 +172,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_TEX_BLEND_4_ENABLE                   0x00010000
 #define     R200_TEX_BLEND_5_ENABLE                   0x00020000
 #define     R200_TEX_BLEND_6_ENABLE                   0x00040000
+#define     R200_TEX_BLEND_ENABLE_MASK                0x0007f800
+#define     R200_TEX_BLEND_0_ENABLE_SHIFT             (12)
 #define     R200_MULTI_PASS_ENABLE                    0x00080000
 #define     R200_SPECULAR_ENABLE                      0x00200000
 #define     R200_FOG_ENABLE                           0x00400000
@@ -1146,6 +1148,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_TXC_CLAMP_WRAP                    (0 << 12)
 #define     R200_TXC_CLAMP_0_1                     (1 << 12)
 #define     R200_TXC_CLAMP_8_8                     (2 << 12)
+#define     R200_TXC_OUTPUT_REG_SHIFT              16
 #define     R200_TXC_OUTPUT_REG_MASK               (7 << 16)
 #define     R200_TXC_OUTPUT_REG_NONE               (0 << 16)
 #define     R200_TXC_OUTPUT_REG_R0                 (1 << 16)
@@ -1288,6 +1291,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_TXA_CLAMP_WRAP                    (0 << 12)
 #define     R200_TXA_CLAMP_0_1                     (1 << 12)
 #define     R200_TXA_CLAMP_8_8                     (2 << 12)
+#define     R200_TXA_OUTPUT_REG_SHIFT              16
 #define     R200_TXA_OUTPUT_REG_MASK               (7 << 16)
 #define     R200_TXA_OUTPUT_REG_NONE               (0 << 16)
 #define     R200_TXA_OUTPUT_REG_R0                 (1 << 16)

@@ -118,7 +118,9 @@ static int cmdscl2( int offset, int stride, int count )
 #define CHECK( NM, FLAG )				\
 static GLboolean check_##NM( GLcontext *ctx, int idx )	\
 {							\
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);		\
    (void) idx;						\
+   (void) rmesa;					\
    return FLAG;						\
 }
 
@@ -135,12 +137,13 @@ static GLboolean check_##NM( GLcontext *ctx, int idx )	\
 CHECK( always, GL_TRUE )
 CHECK( never, GL_FALSE )
 CHECK( tex_any, ctx->Texture._EnabledUnits )
-CHECK( tex_pair, (ctx->Texture.Unit[idx]._ReallyEnabled | ctx->Texture.Unit[idx & ~1]._ReallyEnabled))
-CHECK( tex, ctx->Texture.Unit[idx]._ReallyEnabled )
-CHECK( tex_cube, ctx->Texture.Unit[idx]._ReallyEnabled & TEXTURE_CUBE_BIT)
+CHECK( tex_pair, (rmesa->state.texture.unit[idx].unitneeded | rmesa->state.texture.unit[idx & ~1].unitneeded))
+CHECK( tex, rmesa->state.texture.unit[idx].unitneeded )
+CHECK( texenv, rmesa->state.envneeded & (1 << idx) )
+CHECK( tex_cube, rmesa->state.texture.unit[idx].unitneeded & TEXTURE_CUBE_BIT )
 CHECK( fog, ctx->Fog.Enabled )
 TCL_CHECK( tcl, GL_TRUE )
-TCL_CHECK( tcl_tex, ctx->Texture.Unit[idx]._ReallyEnabled )
+TCL_CHECK( tcl_tex, rmesa->state.texture.unit[idx].unitneeded )
 TCL_CHECK( tcl_lighting, ctx->Light.Enabled )
 TCL_CHECK( tcl_light, ctx->Light.Enabled && ctx->Light.Light[idx].Enabled )
 TCL_CHECK( tcl_ucp, (ctx->Transform.ClipPlanesEnabled & (1 << idx)) )
@@ -300,11 +303,11 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( lit[6], tcl_light, LIT_STATE_SIZE, "LIT/light-6", 6 );
    ALLOC_STATE( lit[7], tcl_light, LIT_STATE_SIZE, "LIT/light-7", 7 );
    ALLOC_STATE( pix[0], always, PIX_STATE_SIZE, "PIX/pixstage-0", 0 );
-   ALLOC_STATE( pix[1], tex, PIX_STATE_SIZE, "PIX/pixstage-1", 1 );
-   ALLOC_STATE( pix[2], tex, PIX_STATE_SIZE, "PIX/pixstage-2", 2 );
-   ALLOC_STATE( pix[3], tex, PIX_STATE_SIZE, "PIX/pixstage-3", 3 );
-   ALLOC_STATE( pix[4], tex, PIX_STATE_SIZE, "PIX/pixstage-4", 4 );
-   ALLOC_STATE( pix[5], tex, PIX_STATE_SIZE, "PIX/pixstage-5", 5 );
+   ALLOC_STATE( pix[1], texenv, PIX_STATE_SIZE, "PIX/pixstage-1", 1 );
+   ALLOC_STATE( pix[2], texenv, PIX_STATE_SIZE, "PIX/pixstage-2", 2 );
+   ALLOC_STATE( pix[3], texenv, PIX_STATE_SIZE, "PIX/pixstage-3", 3 );
+   ALLOC_STATE( pix[4], texenv, PIX_STATE_SIZE, "PIX/pixstage-4", 4 );
+   ALLOC_STATE( pix[5], texenv, PIX_STATE_SIZE, "PIX/pixstage-5", 5 );
    if (rmesa->r200Screen->drmSupportsTriPerf) {
       ALLOC_STATE( prf, always, PRF_STATE_SIZE, "PRF/performance-tri", 0 );
    }

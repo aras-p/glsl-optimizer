@@ -172,8 +172,8 @@ struct r200_tex_obj {
 
 struct r200_texture_env_state {
    r200TexObjPtr texobj;
-   GLenum format;
-   GLenum envMode;
+   GLuint outputreg;
+   GLuint unitneeded;
 };
 
 #define R200_MAX_TEXTURE_UNITS 6
@@ -544,6 +544,7 @@ struct r200_state {
    struct r200_stencilbuffer_state stencil;
    struct r200_stipple_state stipple;
    struct r200_texture_state texture;
+   GLuint envneeded;
 };
 
 /* Need refcounting on dma buffers:

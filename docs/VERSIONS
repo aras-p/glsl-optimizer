@@ -1378,6 +1378,8 @@ Mesa Version History
     New:
 	- reflect demo improved to support multiple windows
 	- singlebuffer demo (shows no/little-flicker single-buffered rendering)
+	- r200: enable GL_ARB_texture_env_crossbar, separate the texture sampling
+	  unit bits from the texture env combine enable bits
     Changes:
 	- removed GL_HP_occlusion_test (use GL_ARB_occlusion_query instead)
     Bug fixes:

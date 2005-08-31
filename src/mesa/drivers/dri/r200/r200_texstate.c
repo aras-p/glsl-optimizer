@@ -407,6 +407,14 @@ static GLuint r200_tfactor_color[] =
    R200_TXC_ARG_A_TFACTOR_ALPHA | R200_TXC_COMP_ARG_A
 };
 
+static GLuint r200_tfactor1_color[] =
+{
+   R200_TXC_ARG_A_TFACTOR1_COLOR,
+   R200_TXC_ARG_A_TFACTOR1_COLOR | R200_TXC_COMP_ARG_A,
+   R200_TXC_ARG_A_TFACTOR1_ALPHA,
+   R200_TXC_ARG_A_TFACTOR1_ALPHA | R200_TXC_COMP_ARG_A
+};
+
 static GLuint r200_primary_color[] =
 {
    R200_TXC_ARG_A_DIFFUSE_COLOR,
@@ -455,6 +463,12 @@ static GLuint r200_tfactor_alpha[] =
    R200_TXA_ARG_A_TFACTOR_ALPHA | R200_TXA_COMP_ARG_A
 };
 
+static GLuint r200_tfactor1_alpha[] =
+{
+   R200_TXA_ARG_A_TFACTOR1_ALPHA,
+   R200_TXA_ARG_A_TFACTOR1_ALPHA | R200_TXA_COMP_ARG_A
+};
+
 static GLuint r200_primary_alpha[] =
 {
    R200_TXA_ARG_A_DIFFUSE_ALPHA,
@@ -500,15 +514,17 @@ do {							\
  * Texture unit state management
  */
 
-static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
+static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit, int slot, GLuint replaceargs )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    GLuint color_combine, alpha_combine;
-   GLuint color_scale = rmesa->hw.pix[unit].cmd[PIX_PP_TXCBLEND2] &
-      ~(R200_TXC_SCALE_MASK);
-   GLuint alpha_scale = rmesa->hw.pix[unit].cmd[PIX_PP_TXABLEND2] &
-      ~(R200_TXA_DOT_ALPHA | R200_TXA_SCALE_MASK);
+   GLuint color_scale = rmesa->hw.pix[slot].cmd[PIX_PP_TXCBLEND2] &
+      ~(R200_TXC_SCALE_MASK | R200_TXC_OUTPUT_REG_MASK | R200_TXC_TFACTOR_SEL_MASK |
+	R200_TXC_TFACTOR1_SEL_MASK);
+   GLuint alpha_scale = rmesa->hw.pix[slot].cmd[PIX_PP_TXABLEND2] &
+      ~(R200_TXA_DOT_ALPHA | R200_TXA_SCALE_MASK | R200_TXA_OUTPUT_REG_MASK |
+	R200_TXA_TFACTOR_SEL_MASK | R200_TXA_TFACTOR1_SEL_MASK);
 
    /* texUnit->_Current can be NULL if and only if the texture unit is
     * not actually enabled.
@@ -526,24 +542,20 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
     * reduces the amount of special-casing we have to do, alpha-only
     * textures being a notable exception.
     */
-   /* Don't cache these results.
-    */
-   rmesa->state.texture.unit[unit].format = 0;
-   rmesa->state.texture.unit[unit].envMode = 0;
+
+   color_scale |= ((rmesa->state.texture.unit[unit].outputreg + 1) << R200_TXC_OUTPUT_REG_SHIFT) |
+			(unit << R200_TXC_TFACTOR_SEL_SHIFT) |
+			(replaceargs << R200_TXC_TFACTOR1_SEL_SHIFT);
+   alpha_scale |= ((rmesa->state.texture.unit[unit].outputreg + 1) << R200_TXA_OUTPUT_REG_SHIFT) |
+			(unit << R200_TXA_TFACTOR_SEL_SHIFT) |
+			(replaceargs << R200_TXA_TFACTOR1_SEL_SHIFT);
 
    if ( !texUnit->_ReallyEnabled ) {
-      if ( unit == 0 ) {
-	 color_combine = R200_TXC_ARG_A_ZERO | R200_TXC_ARG_B_ZERO
-	     | R200_TXC_ARG_C_DIFFUSE_COLOR | R200_TXC_OP_MADD;
-	 alpha_combine = R200_TXA_ARG_A_ZERO | R200_TXA_ARG_B_ZERO
-	     | R200_TXA_ARG_C_DIFFUSE_ALPHA | R200_TXA_OP_MADD;
-      }
-      else {
-	 color_combine = R200_TXC_ARG_A_ZERO | R200_TXC_ARG_B_ZERO
-	     | R200_TXC_ARG_C_R0_COLOR | R200_TXC_OP_MADD;
-	 alpha_combine = R200_TXA_ARG_A_ZERO | R200_TXA_ARG_B_ZERO
-	     | R200_TXA_ARG_C_R0_ALPHA | R200_TXA_OP_MADD;
-      }
+      assert( unit == 0);
+      color_combine = R200_TXC_ARG_A_ZERO | R200_TXC_ARG_B_ZERO
+	  | R200_TXC_ARG_C_DIFFUSE_COLOR | R200_TXC_OP_MADD;
+      alpha_combine = R200_TXA_ARG_A_ZERO | R200_TXA_ARG_B_ZERO
+	  | R200_TXA_ARG_C_DIFFUSE_ALPHA | R200_TXA_OP_MADD;
    }
    else {
       GLuint color_arg[3], alpha_arg[3];
@@ -554,14 +566,20 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
       GLuint Ashift = texUnit->_CurrentCombine->ScaleShiftA;
 
 
+      const GLint replaceoprgb =
+	 ctx->Texture.Unit[replaceargs]._CurrentCombine->OperandRGB[0] - GL_SRC_COLOR;
+      const GLint replaceopa =
+	 ctx->Texture.Unit[replaceargs]._CurrentCombine->OperandA[0] - GL_SRC_ALPHA;
+
       /* Step 1:
        * Extract the color and alpha combine function arguments.
        */
       for ( i = 0 ; i < numColorArgs ; i++ ) {
-	 const GLint op = texUnit->_CurrentCombine->OperandRGB[i] - GL_SRC_COLOR;
+	 GLint op = texUnit->_CurrentCombine->OperandRGB[i] - GL_SRC_COLOR;
+	 const GLint srcRGBi = texUnit->_CurrentCombine->SourceRGB[i];
 	 assert(op >= 0);
 	 assert(op <= 3);
-	 switch ( texUnit->_CurrentCombine->SourceRGB[i] ) {
+	 switch ( srcRGBi ) {
 	 case GL_TEXTURE:
 	    color_arg[i] = r200_register_color[op][unit];
 	    break;
@@ -572,10 +590,54 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
 	    color_arg[i] = r200_primary_color[op];
 	    break;
 	 case GL_PREVIOUS:
-	    if (unit == 0)
-		color_arg[i] = r200_primary_color[op];
-	    else
-		color_arg[i] = r200_register_color[op][0];
+	    if (replaceargs != unit) {
+	       const GLint srcRGBreplace = ctx->Texture.Unit[replaceargs]._CurrentCombine->SourceRGB[0];
+	       if (op >= 2) {
+		  op = op ^ replaceopa;
+	       }
+	       else {
+		  op = op ^ replaceoprgb;
+	       }
+	       switch (srcRGBreplace) {
+	       case GL_TEXTURE:
+		  color_arg[i] = r200_register_color[op][replaceargs];
+		  break;
+	       case GL_CONSTANT:
+		  color_arg[i] = r200_tfactor1_color[op];
+		  break;
+	       case GL_PRIMARY_COLOR:
+		  color_arg[i] = r200_primary_color[op];
+		  break;
+	       case GL_PREVIOUS:
+		  if (slot == 0)
+		     color_arg[i] = r200_primary_color[op];
+		  else
+		     color_arg[i] = r200_register_color[op][rmesa->state.texture.unit[replaceargs - 1].outputreg];
+		  break;
+	       case GL_ZERO:
+		  color_arg[i] = r200_zero_color[op];
+		  break;
+	       case GL_ONE:
+		  color_arg[i] = r200_zero_color[op+1];
+		  break;
+	       case GL_TEXTURE0:
+	       case GL_TEXTURE1:
+	       case GL_TEXTURE2:
+	       case GL_TEXTURE3:
+	       case GL_TEXTURE4:
+	       case GL_TEXTURE5:
+		  color_arg[i] = r200_register_color[op][srcRGBreplace - GL_TEXTURE0];
+		  break;
+	       default:
+	       return GL_FALSE;
+	       }
+	    }
+	    else {
+	       if (slot == 0)
+		  color_arg[i] = r200_primary_color[op];
+	       else
+		  color_arg[i] = r200_register_color[op][rmesa->state.texture.unit[unit - 1].outputreg];
+            }
 	    break;
 	 case GL_ZERO:
 	    color_arg[i] = r200_zero_color[op];
@@ -583,16 +645,25 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
 	 case GL_ONE:
 	    color_arg[i] = r200_zero_color[op+1];
 	    break;
+	 case GL_TEXTURE0:
+	 case GL_TEXTURE1:
+	 case GL_TEXTURE2:
+	 case GL_TEXTURE3:
+	 case GL_TEXTURE4:
+	 case GL_TEXTURE5:
+	    color_arg[i] = r200_register_color[op][srcRGBi - GL_TEXTURE0];
+	    break;
 	 default:
 	    return GL_FALSE;
 	 }
       }
 
       for ( i = 0 ; i < numAlphaArgs ; i++ ) {
-	 const GLint op = texUnit->_CurrentCombine->OperandA[i] - GL_SRC_ALPHA;
+	 GLint op = texUnit->_CurrentCombine->OperandA[i] - GL_SRC_ALPHA;
+	 const GLint srcAi = texUnit->_CurrentCombine->SourceA[i];
 	 assert(op >= 0);
 	 assert(op <= 1);
-	 switch ( texUnit->_CurrentCombine->SourceA[i] ) {
+	 switch ( srcAi ) {
 	 case GL_TEXTURE:
 	    alpha_arg[i] = r200_register_alpha[op][unit];
 	    break;
@@ -603,16 +674,63 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
 	    alpha_arg[i] = r200_primary_alpha[op];
 	    break;
 	 case GL_PREVIOUS:
-	    if (unit == 0)
-		alpha_arg[i] = r200_primary_alpha[op];
-	    else
-		alpha_arg[i] = r200_register_alpha[op][0];
+	    if (replaceargs != unit) {
+	       const GLint srcAreplace = ctx->Texture.Unit[replaceargs]._CurrentCombine->SourceA[0];
+	       op = op ^ replaceopa;
+	       switch (srcAreplace) {
+	       case GL_TEXTURE:
+		  alpha_arg[i] = r200_register_alpha[op][replaceargs];
+		  break;
+	       case GL_CONSTANT:
+		  alpha_arg[i] = r200_tfactor1_alpha[op];
+		  break;
+	       case GL_PRIMARY_COLOR:
+		  alpha_arg[i] = r200_primary_alpha[op];
+		  break;
+	       case GL_PREVIOUS:
+		  if (slot == 0)
+		     alpha_arg[i] = r200_primary_alpha[op];
+		  else
+		     alpha_arg[i] = r200_register_alpha[op][rmesa->state.texture.unit[replaceargs - 1].outputreg];
+		  break;
+	       case GL_ZERO:
+		  alpha_arg[i] = r200_zero_alpha[op];
+		  break;
+	       case GL_ONE:
+		  alpha_arg[i] = r200_zero_alpha[op+1];
+		  break;
+	       case GL_TEXTURE0:
+	       case GL_TEXTURE1:
+	       case GL_TEXTURE2:
+	       case GL_TEXTURE3:
+	       case GL_TEXTURE4:
+	       case GL_TEXTURE5:
+		  alpha_arg[i] = r200_register_alpha[op][srcAreplace - GL_TEXTURE0];
+		  break;
+	       default:
+	       return GL_FALSE;
+	       }
+	    }
+	    else {
+	       if (slot == 0)
+		  alpha_arg[i] = r200_primary_alpha[op];
+	       else
+		  alpha_arg[i] = r200_register_alpha[op][rmesa->state.texture.unit[unit - 1].outputreg];
+            }
 	    break;
 	 case GL_ZERO:
 	    alpha_arg[i] = r200_zero_alpha[op];
 	    break;
 	 case GL_ONE:
 	    alpha_arg[i] = r200_zero_alpha[op+1];
+	    break;
+	 case GL_TEXTURE0:
+	 case GL_TEXTURE1:
+	 case GL_TEXTURE2:
+	 case GL_TEXTURE3:
+	 case GL_TEXTURE4:
+	 case GL_TEXTURE5:
+	    alpha_arg[i] = r200_register_alpha[op][srcAi - GL_TEXTURE0];
 	    break;
 	 default:
 	    return GL_FALSE;
@@ -801,19 +919,187 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
        */
    }
 
-   if ( rmesa->hw.pix[unit].cmd[PIX_PP_TXCBLEND] != color_combine ||
-	rmesa->hw.pix[unit].cmd[PIX_PP_TXABLEND] != alpha_combine ||
-	rmesa->hw.pix[unit].cmd[PIX_PP_TXCBLEND2] != color_scale ||
-	rmesa->hw.pix[unit].cmd[PIX_PP_TXABLEND2] != alpha_scale) {
-      R200_STATECHANGE( rmesa, pix[unit] );
-      rmesa->hw.pix[unit].cmd[PIX_PP_TXCBLEND] = color_combine;
-      rmesa->hw.pix[unit].cmd[PIX_PP_TXABLEND] = alpha_combine;
-      rmesa->hw.pix[unit].cmd[PIX_PP_TXCBLEND2] = color_scale;
-      rmesa->hw.pix[unit].cmd[PIX_PP_TXABLEND2] = alpha_scale;
+   if ( rmesa->hw.pix[slot].cmd[PIX_PP_TXCBLEND] != color_combine ||
+	rmesa->hw.pix[slot].cmd[PIX_PP_TXABLEND] != alpha_combine ||
+	rmesa->hw.pix[slot].cmd[PIX_PP_TXCBLEND2] != color_scale ||
+	rmesa->hw.pix[slot].cmd[PIX_PP_TXABLEND2] != alpha_scale) {
+      R200_STATECHANGE( rmesa, pix[slot] );
+      rmesa->hw.pix[slot].cmd[PIX_PP_TXCBLEND] = color_combine;
+      rmesa->hw.pix[slot].cmd[PIX_PP_TXABLEND] = alpha_combine;
+      rmesa->hw.pix[slot].cmd[PIX_PP_TXCBLEND2] = color_scale;
+      rmesa->hw.pix[slot].cmd[PIX_PP_TXABLEND2] = alpha_scale;
    }
 
    return GL_TRUE;
 }
+
+#define REF_COLOR 1
+#define REF_ALPHA 2
+
+static GLboolean r200UpdateAllTexEnv( GLcontext *ctx )
+{
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   GLint i, j, currslot;
+   GLint maxunitused = -1;
+   GLboolean texregfree[6] = {GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE};
+   GLubyte stageref[7] = {0, 0, 0, 0, 0, 0, 0};
+   GLint nextunit[R200_MAX_TEXTURE_UNITS] = {0, 0, 0, 0, 0, 0};
+   GLint currentnext = -1;
+   GLboolean ok;
+
+   /* find highest used unit */
+   for ( j = 0; j < R200_MAX_TEXTURE_UNITS; j++) {
+      if (ctx->Texture.Unit[j]._ReallyEnabled) {
+	 maxunitused = j;
+      }
+   }
+   stageref[maxunitused + 1] = REF_COLOR | REF_ALPHA;
+
+   for ( j = maxunitused; j >= 0; j-- ) {
+      const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[j];
+
+      rmesa->state.texture.unit[j].outputreg = -1;
+
+      if (stageref[j + 1]) {
+
+	 /* use the lowest available reg. That gets us automatically reg0 for the last stage.
+	    need this even for disabled units, as it may get referenced due to the replace
+	    optimization */
+	 for ( i = 0 ; i < R200_MAX_TEXTURE_UNITS; i++ ) {
+	    if (texregfree[i]) {
+	       rmesa->state.texture.unit[j].outputreg = i;
+	       break;
+	    }
+	 }
+	 if (rmesa->state.texture.unit[j].outputreg == -1) {
+	    /* no more free regs we can use. Need a fallback :-( */
+	    return GL_FALSE;
+         }
+
+         nextunit[j] = currentnext;
+
+         if (!texUnit->_ReallyEnabled) {
+	 /* the not enabled stages are referenced "indirectly",
+            must not cut off the lower stages */
+	    stageref[j] = REF_COLOR | REF_ALPHA;
+	    continue;
+         }
+	 currentnext = j;
+ 
+	 const GLuint numColorArgs = texUnit->_CurrentCombine->_NumArgsRGB;
+	 const GLuint numAlphaArgs = texUnit->_CurrentCombine->_NumArgsA;
+	 const GLboolean isdot3rgba = (texUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGBA) ||
+				      (texUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGBA_EXT);
+
+
+	 /* check if we need the color part, special case for dot3_rgba
+	    as if only the alpha part is referenced later on it still is using the color part */
+	 if ((stageref[j + 1] & REF_COLOR) || isdot3rgba) {
+	    for ( i = 0 ; i < numColorArgs ; i++ ) {
+	       const GLuint srcRGBi = texUnit->_CurrentCombine->SourceRGB[i];
+	       const GLuint op = texUnit->_CurrentCombine->OperandRGB[i];
+	       switch ( srcRGBi ) {
+	       case GL_PREVIOUS:
+		  /* op 0/1 are referencing color, op 2/3 alpha */
+		  stageref[j] |= (op >> 1) + 1;
+	          break;
+	       case GL_TEXTURE:
+		  texregfree[j] = GL_FALSE;
+		  break;
+	       case GL_TEXTURE0:
+	       case GL_TEXTURE1:
+	       case GL_TEXTURE2:
+	       case GL_TEXTURE3:
+	       case GL_TEXTURE4:
+	       case GL_TEXTURE5:
+		  texregfree[srcRGBi - GL_TEXTURE0] = GL_FALSE;
+	          break;
+	       default: /* don't care about other sources here */
+		  break;
+	       }
+	    }
+	 }
+
+	 /* alpha args are ignored for dot3_rgba */
+	 if ((stageref[j + 1] & REF_ALPHA) && !isdot3rgba) {
+
+	    for ( i = 0 ; i < numAlphaArgs ; i++ ) {
+	       const GLuint srcAi = texUnit->_CurrentCombine->SourceA[i];
+	       switch ( srcAi ) {
+	       case GL_PREVIOUS:
+		  stageref[j] |= REF_ALPHA;
+		  break;
+	       case GL_TEXTURE:
+		  texregfree[j] = GL_FALSE;
+		  break;
+	       case GL_TEXTURE0:
+	       case GL_TEXTURE1:
+	       case GL_TEXTURE2:
+	       case GL_TEXTURE3:
+	       case GL_TEXTURE4:
+	       case GL_TEXTURE5:
+		  texregfree[srcAi - GL_TEXTURE0] = GL_FALSE;
+		  break;
+	       default: /* don't care about other sources here */
+		  break;
+	       }
+	    }
+	 }
+      }
+   }
+
+   /* don't enable texture sampling for units if the result is not used */
+   for (i = 0; i < R200_MAX_TEXTURE_UNITS; i++) {
+      if (ctx->Texture.Unit[i]._ReallyEnabled && !texregfree[i])
+	 rmesa->state.texture.unit[i].unitneeded = ctx->Texture.Unit[i]._ReallyEnabled;
+      else rmesa->state.texture.unit[i].unitneeded = 0;
+   }
+
+   ok = GL_TRUE;
+   currslot = 0;
+   rmesa->state.envneeded = 1;
+
+   i = 0;
+   while ((i <= maxunitused) && (i >= 0)) {
+      /* only output instruction if the results are referenced */
+      if (ctx->Texture.Unit[i]._ReallyEnabled && stageref[i+1]) {
+         GLuint replaceunit = i;
+	 /* try to optimize GL_REPLACE away (only one level deep though) */
+	 if (	(ctx->Texture.Unit[i]._CurrentCombine->ModeRGB == GL_REPLACE) &&
+		(ctx->Texture.Unit[i]._CurrentCombine->ModeA == GL_REPLACE) &&
+		(ctx->Texture.Unit[i]._CurrentCombine->ScaleShiftRGB == 0) &&
+		(ctx->Texture.Unit[i]._CurrentCombine->ScaleShiftA == 0) &&
+		(nextunit[i] > 0) ) {
+	    /* yippie! can optimize it away! */
+	    replaceunit = i;
+	    i = nextunit[i];
+	 }
+
+	 /* need env instruction slot */
+	 rmesa->state.envneeded |= 1 << currslot;
+	 ok = r200UpdateTextureEnv( ctx, i, currslot, replaceunit );
+	 if (!ok) return GL_FALSE;
+	 currslot++;
+      }
+      i = i + 1;
+   }
+
+   if (currslot == 0) {
+      /* need one stage at least */
+      rmesa->state.texture.unit[0].outputreg = 0;
+      ok = r200UpdateTextureEnv( ctx, 0, 0, 0 );
+   }
+
+   R200_STATECHANGE( rmesa, ctx );
+   rmesa->hw.ctx.cmd[CTX_PP_CNTL] &= ~R200_TEX_BLEND_ENABLE_MASK;
+   rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= rmesa->state.envneeded << R200_TEX_BLEND_0_ENABLE_SHIFT;
+
+   return ok;
+}
+
+#undef REF_COLOR
+#undef REF_ALPHA
+
 
 #define TEXOBJ_TXFILTER_MASK (R200_MAX_MIP_LEVEL_MASK |		\
 			      R200_MIN_FILTER_MASK | 		\
@@ -1063,9 +1349,7 @@ static void disable_tex( GLcontext *ctx, int unit )
       }
 
       R200_STATECHANGE( rmesa, ctx );
-      rmesa->hw.ctx.cmd[CTX_PP_CNTL] &= ~((R200_TEX_0_ENABLE |
-					   R200_TEX_BLEND_0_ENABLE) << unit);
-      rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_BLEND_0_ENABLE; 
+      rmesa->hw.ctx.cmd[CTX_PP_CNTL] &= ~(R200_TEX_0_ENABLE << unit);
 	 
       R200_STATECHANGE( rmesa, vtx );
       rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_1] &= ~(7 << (unit * 3));
@@ -1077,10 +1361,6 @@ static void disable_tex( GLcontext *ctx, int unit )
       /* Actually want to keep all units less than max active texture
        * enabled, right?  Fix this for >2 texunits.
        */
-      /* FIXME: What should happen here if r200UpdateTextureEnv fails? */
-      if (unit == 0) 
-	 r200UpdateTextureEnv( ctx, unit ); 
-
 
       {
 	 GLuint tmp = rmesa->TexGenEnabled;
@@ -1258,7 +1538,6 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *tObj = texUnit->_Current;
    r200TexObjPtr t = (r200TexObjPtr) tObj->DriverData;
-   GLenum format;
 
    /* Fallback if there's a texture border */
    if ( tObj->Image[0][tObj->BaseLevel]->Border > 0 )
@@ -1288,8 +1567,7 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
     */
    if ( 1|| !(rmesa->hw.ctx.cmd[CTX_PP_CNTL] & (R200_TEX_0_ENABLE<<unit))) {
       R200_STATECHANGE( rmesa, ctx );
-      rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= (R200_TEX_0_ENABLE | 
-					 R200_TEX_BLEND_0_ENABLE) << unit;
+      rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_0_ENABLE << unit;
 
       R200_STATECHANGE( rmesa, vtx );
       rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_1] &= ~(7 << (unit * 3));
@@ -1309,16 +1587,6 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
       rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
    }
 
-   format = tObj->Image[0][tObj->BaseLevel]->Format;
-   if ( rmesa->state.texture.unit[unit].format != format ||
-	rmesa->state.texture.unit[unit].envMode != texUnit->EnvMode ) {
-      rmesa->state.texture.unit[unit].format = format;
-      rmesa->state.texture.unit[unit].envMode = texUnit->EnvMode;
-      if ( ! r200UpdateTextureEnv( ctx, unit ) ) {
-	 return GL_FALSE;
-      }
-   }
-
    FALLBACK( rmesa, R200_FALLBACK_BORDER_MODE, t->border_fallback );
    return !t->border_fallback;
 }
@@ -1327,27 +1595,27 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
 
 static GLboolean r200UpdateTextureUnit( GLcontext *ctx, int unit )
 {
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
-   if ( texUnit->_ReallyEnabled & (TEXTURE_RECT_BIT) ) {
+   if ( rmesa->state.texture.unit[unit].unitneeded & (TEXTURE_RECT_BIT) ) {
       return (enable_tex_rect( ctx, unit ) &&
 	      update_tex_common( ctx, unit ));
    }
-   else if ( texUnit->_ReallyEnabled & (TEXTURE_1D_BIT | TEXTURE_2D_BIT) ) {
+   else if (  rmesa->state.texture.unit[unit].unitneeded & (TEXTURE_1D_BIT | TEXTURE_2D_BIT) ) {
       return (enable_tex_2d( ctx, unit ) &&
 	      update_tex_common( ctx, unit ));
    }
 #if ENABLE_HW_3D_TEXTURE
-   else if ( texUnit->_ReallyEnabled & (TEXTURE_3D_BIT) ) {
+   else if ( rmesa->state.texture.unit[unit].unitneeded & (TEXTURE_3D_BIT) ) {
       return (enable_tex_3d( ctx, unit ) &&
 	      update_tex_common( ctx, unit ));
    }
 #endif
-   else if ( texUnit->_ReallyEnabled & (TEXTURE_CUBE_BIT) ) {
+   else if ( rmesa->state.texture.unit[unit].unitneeded & (TEXTURE_CUBE_BIT) ) {
       return (enable_tex_cube( ctx, unit ) &&
 	      update_tex_common( ctx, unit ));
    }
-   else if ( texUnit->_ReallyEnabled ) {
+   else if ( rmesa->state.texture.unit[unit].unitneeded ) {
       return GL_FALSE;
    }
    else {
@@ -1363,12 +1631,16 @@ void r200UpdateTextureState( GLcontext *ctx )
    GLboolean ok;
    GLuint dbg;
 
-   ok = (r200UpdateTextureUnit( ctx, 0 ) &&
+   ok = r200UpdateAllTexEnv( ctx );
+
+   if (ok) {
+      ok = (r200UpdateTextureUnit( ctx, 0 ) &&
 	 r200UpdateTextureUnit( ctx, 1 ) &&
 	 r200UpdateTextureUnit( ctx, 2 ) &&
 	 r200UpdateTextureUnit( ctx, 3 ) &&
 	 r200UpdateTextureUnit( ctx, 4 ) &&
 	 r200UpdateTextureUnit( ctx, 5 ));
+   }
 
    FALLBACK( rmesa, R200_FALLBACK_TEXTURE, !ok );
 

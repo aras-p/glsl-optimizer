@@ -140,6 +140,7 @@ const struct dri_extension card_extensions[] =
     { "GL_ARB_texture_env_add",            NULL },
     { "GL_ARB_texture_env_combine",        NULL },
     { "GL_ARB_texture_env_dot3",           NULL },
+    { "GL_ARB_texture_env_crossbar",       NULL },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
     { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
     { "GL_EXT_blend_minmax",               GL_EXT_blend_minmax_functions },
