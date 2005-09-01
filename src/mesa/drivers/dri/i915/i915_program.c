@@ -349,7 +349,7 @@ GLuint i915_emit_param4fv( struct i915_fragment_program *p,
 
 
 
-void i915_program_error( struct i915_fragment_program *p, const GLubyte *msg )
+void i915_program_error( struct i915_fragment_program *p, const char *msg )
 {
    fprintf(stderr, "%s\n", msg);
    p->error = 1;

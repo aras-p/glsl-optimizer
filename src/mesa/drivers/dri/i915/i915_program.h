@@ -147,7 +147,7 @@ extern GLuint i915_emit_param4fv( struct i915_fragment_program *p,
 				 const GLfloat *values );
 
 extern void i915_program_error( struct i915_fragment_program *p,
-			       const GLubyte *msg );
+                                const char *msg );
 
 extern void i915_init_program( i915ContextPtr i915,
 			      struct i915_fragment_program *p );
