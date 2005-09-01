@@ -73,7 +73,7 @@ r200UpdatePageFlipping( r200ContextPtr rmesa )
 #else
    if (rmesa->doPageFlip != rmesa->sarea->pfState
        || rmesa->sarea->pfState) {
-      /* If page flipping is on, re we're turning it on/off now we need
+      /* If page flipping is on, or we're turning it on/off now we need
        * to update the flipped buffer info.
        */
      struct gl_framebuffer *fb = rmesa->glCtx->WinSysDrawBuffer;
