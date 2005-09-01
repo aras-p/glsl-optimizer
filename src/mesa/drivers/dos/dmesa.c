@@ -102,6 +102,13 @@ struct dmesa_context {
 };
 
 
+/*
+ * SPAN FUNCTIONS
+ * XXX: These need to be updated to take the new gl_renderbuffer parameter
+ * introduced in Mesa 6.3.  That parameter will indicate whether the front
+ * or back color buffer is to be read/written.
+ */
+
 #ifndef FX
 /****************************************************************************
  * Read/Write pixels
@@ -781,26 +788,6 @@ clear (GLcontext *ctx, GLbitfield mask, GLboolean all,
 
 
 /*
- * This function is called to specify which buffer to read and write
- * for software rasterization (swrast) fallbacks.  This doesn't necessarily
- * correspond to glDrawBuffer() or glReadBuffer() calls.
- */
-static void
-set_buffer (GLcontext *ctx, GLframebuffer *colorBuffer, GLuint bufferBit)
-{
-   /*
-    * XXX todo - examine bufferBit and set read/write pointers
-    */
-   /* Normally, we would have
-    *    ctx->Driver.ReadBuffer == set_read_buffer
-    *    ctx->Driver.DrawBuffer == set_draw_buffer
-    * and make sure set_draw_buffer calls _swrast_DrawBuffer,
-    * which in turn will call this routine via dd->SetBuffer.
-    */
-}
-
-
-/*
  * Return the width and height of the current buffer.
  * If anything special has to been done when the buffer/window is
  * resized, do it now.
@@ -928,8 +915,6 @@ static void
 dmesa_init_pointers (GLcontext *ctx)
 {
    struct swrast_device_driver *dd = _swrast_GetDeviceDriverReference(ctx);
-
-   dd->SetBuffer = set_buffer;
 
    /* The span functions should be in `dmesa_update_state', but I'm
     * pretty sure they will never change during the life of the Visual
