@@ -29,6 +29,20 @@ typedef struct {
    GLint offset;  /* in bytes */
    GLint pitch;   /* in pixels */
 
+   /* If the driver can do page flipping (full-screen double buffering)
+    * the current front/back buffers may get swapped.
+    * If page flipping is disabled, these  fields will be identical to
+    * the offset/pitch above.
+    * If page flipping is enabled, and this is the front(back) renderbuffer,
+    * flippedOffset/Pitch will have the back(front) renderbuffer's values.
+    */
+   GLint flippedOffset;
+   GLint flippedPitch;
+
+   /* XXX this is for radeon/r200 only.  We should really create a new
+    * r200Renderbuffer class, derived from this class...  not a huge deal.
+    */
+   GLboolean depthHasSurface;
 } driRenderbuffer;
 
 

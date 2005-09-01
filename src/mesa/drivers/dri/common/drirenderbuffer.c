@@ -93,6 +93,10 @@ driNewRenderbuffer(GLenum format, GLint cpp, GLint offset, GLint pitch)
       drb->offset = offset;
       drb->pitch = pitch;
       drb->cpp = cpp;
+
+      /* may be changed if page flipping is active: */
+      drb->flippedOffset = offset;
+      drb->flippedPitch = pitch;
    }
    return drb;
 }
