@@ -164,14 +164,6 @@ viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 }
 
 
-/* specifies the buffer for swrast span rendering/reading */
-static void
-set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
-{
-   /* this is a no-op when using the new gl_renderbuffer span functions. */
-}
-
-
 /*
  * Generate code for span functions.
  */
@@ -194,7 +186,7 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
    DST[BCOMP] = SRC[0];  \
    DST[ACOMP] = CHAN_MAX
 
-#include "swrast/s_spantemp2.h"
+#include "swrast/s_spantemp.h"
 
 
 /* 32-bit BGRA */
@@ -216,7 +208,7 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
    DST[BCOMP] = SRC[0];  \
    DST[ACOMP] = SRC[3]
 
-#include "swrast/s_spantemp2.h"
+#include "swrast/s_spantemp.h"
 
 
 /* 16-bit BGR (XXX implement dithering someday) */
@@ -235,7 +227,7 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
    DST[BCOMP] = ( (((SRC[0]) << 3) & 0xf8) | (((SRC[0])      ) & 0x7) ); \
    DST[ACOMP] = CHAN_MAX
 
-#include "swrast/s_spantemp2.h"
+#include "swrast/s_spantemp.h"
 
 
 /* 15-bit BGR (XXX implement dithering someday) */
@@ -254,7 +246,7 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
    DST[BCOMP] = ( (((SRC[0]) << 3) & 0xf8) | (((SRC[0])      ) & 0x7) ); \
    DST[ACOMP] = CHAN_MAX
 
-#include "swrast/s_spantemp2.h"
+#include "swrast/s_spantemp.h"
 
 
 /* 8-bit color index */
@@ -270,7 +262,7 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
 #define FETCH_PIXEL(DST, SRC) \
    DST = SRC[0]
 
-#include "swrast/s_spantemp2.h"
+#include "swrast/s_spantemp.h"
 
 
 
@@ -766,22 +758,6 @@ glFBDevCreateContext( const GLFBDevVisualPtr visual, GLFBDevContextPtr share )
    _tnl_CreateContext( glctx );
    _swsetup_CreateContext( glctx );
    _swsetup_Wakeup( glctx );
-
-   /* swrast init */
-   {
-      struct swrast_device_driver *swdd;
-      swdd = _swrast_GetDeviceDriverReference( glctx );
-      swdd->SetBuffer = set_buffer;
-
-      /* no longer used */
-      swdd->WriteRGBASpan = NULL;
-      swdd->WriteRGBSpan = NULL;
-      swdd->WriteMonoRGBASpan = NULL;
-      swdd->WriteRGBAPixels = NULL;
-      swdd->WriteMonoRGBAPixels = NULL;
-      swdd->ReadRGBASpan = NULL;
-      swdd->ReadRGBAPixels = NULL;
-   }
 
    /* use default TCL pipeline */
    {
