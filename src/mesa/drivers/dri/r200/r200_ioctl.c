@@ -49,8 +49,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_sanity.h"
 #include "radeon_reg.h"
 
+#include "drirenderbuffer.h"
 #include "vblank.h"
-
 
 #define R200_TIMEOUT             512
 #define R200_IDLE_RETRY           16
@@ -573,6 +573,13 @@ void r200PageFlip( const __DRIdrawablePrivate *dPriv )
       rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
    }
 #else
+   /* Get ready for drawing next frame.  Update the renderbuffers'
+    * flippedOffset/Pitch fields so we draw into the right place.
+    */
+   driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
+                        rmesa->sarea->pfCurrentPage);
+
+
    r200UpdateDrawBuffer(rmesa->glCtx);
 #endif
 }

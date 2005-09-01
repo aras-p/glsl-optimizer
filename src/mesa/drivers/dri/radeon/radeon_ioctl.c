@@ -52,6 +52,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define STANDALONE_MMIO
 #include "radeon_macros.h"  /* for INREG() */
 
+#include "drirenderbuffer.h"
 #include "vblank.h"
 
 #define RADEON_TIMEOUT             512
@@ -998,6 +999,12 @@ void radeonPageFlip( const __DRIdrawablePrivate *dPriv )
 
    rmesa->swap_count++;
    (void) (*dri_interface->getUST)( & rmesa->swap_ust );
+
+   /* Get ready for drawing next frame.  Update the renderbuffers'
+    * flippedOffset/Pitch fields so we draw into the right place.
+    */
+   driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
+                        rmesa->sarea->pfCurrentPage);
 
    radeonUpdateDrawBuffer(rmesa->glCtx);
 }

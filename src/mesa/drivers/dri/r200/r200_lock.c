@@ -32,14 +32,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Authors:
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
-#include <string.h>
  
 #include "r200_context.h"
 #include "r200_lock.h"
 #include "r200_tex.h"
 #include "r200_state.h"
 #include "r200_ioctl.h"
+
 #include "drirenderbuffer.h"
+
 
 #if DEBUG_LOCKING
 char *prevLockFile = NULL;
@@ -51,62 +52,10 @@ int prevLockLine = 0;
 static void
 r200UpdatePageFlipping( r200ContextPtr rmesa )
 {
-#if 000
-   int use_back;
    rmesa->doPageFlip = rmesa->sarea->pfState;
-
-   use_back = (rmesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT);
-   use_back ^= (rmesa->sarea->pfCurrentPage == 1);
-   
-   if (use_back) {
-	 rmesa->state.color.drawOffset = rmesa->r200Screen->backOffset;
-	 rmesa->state.color.drawPitch  = rmesa->r200Screen->backPitch;
-   } else {
-	 rmesa->state.color.drawOffset = rmesa->r200Screen->frontOffset;
-	 rmesa->state.color.drawPitch  = rmesa->r200Screen->frontPitch;
+   if (!rmesa->doPageFlip) {
+      driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer, GL_FALSE);
    }
-
-   R200_STATECHANGE( rmesa, ctx );
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = rmesa->state.color.drawOffset
-					   + rmesa->r200Screen->fbLocation;
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH]  = rmesa->state.color.drawPitch;
-#else
-   if (rmesa->doPageFlip != rmesa->sarea->pfState
-       || rmesa->sarea->pfState) {
-      /* If page flipping is on, or we're turning it on/off now we need
-       * to update the flipped buffer info.
-       */
-     struct gl_framebuffer *fb = rmesa->glCtx->WinSysDrawBuffer;
-     driRenderbuffer *front_drb
-        = (driRenderbuffer *) fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-     driRenderbuffer *back_drb
-        = (driRenderbuffer *) fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-
-     if (rmesa->sarea->pfState && rmesa->sarea->pfCurrentPage == 1) {
-        /* flipped buffers */
-        front_drb->flippedOffset = back_drb->offset;
-	front_drb->flippedPitch  = back_drb->pitch;
-	back_drb->flippedOffset  = front_drb->offset;
-	back_drb->flippedPitch   = front_drb->pitch;
-     }
-     else {
-        /* unflipped buffers */
-        front_drb->flippedOffset = front_drb->offset;
-	front_drb->flippedPitch  = front_drb->pitch;
-	if (back_drb) {
-	   /* back buffer is non-existant when single buffered */
-	   back_drb->flippedOffset  = back_drb->offset;
-	   back_drb->flippedPitch   = back_drb->pitch;
-	}
-     }
-
-     /* update local state */
-     rmesa->doPageFlip = rmesa->sarea->pfState;
-
-     /* set hw.ctx.cmd state here */
-     r200UpdateDrawBuffer(rmesa->glCtx);
-   }
-#endif
 }
 
 
