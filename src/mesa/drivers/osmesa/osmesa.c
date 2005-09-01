@@ -121,15 +121,6 @@ osmesa_update_state( GLcontext *ctx, GLuint new_state )
 }
 
 
-static void
-set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
-{
-   /* separate read buffer not supported */
-   ASSERT(buffer == ctx->DrawBuffer);
-   ASSERT(bufferBit == BUFFER_BIT_FRONT_LEFT);
-}
-
-
 /*
  * Just return the current buffer size.
  * There's no window to track the size of.
@@ -983,7 +974,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       {
 	 GLcontext *ctx = &osmesa->mesa;
          SWcontext *swrast;
-         struct swrast_device_driver *swdd;
          TNLcontext *tnl;
 
 	 if (!_swrast_CreateContext( ctx ) ||
@@ -1001,9 +991,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
          /* use default TCL pipeline */
          tnl = TNL_CONTEXT(ctx);
          tnl->Driver.RunPipeline = _tnl_run_pipeline;
-
-         swdd = _swrast_GetDeviceDriverReference( ctx );
-         swdd->SetBuffer = set_buffer;
 
          /* Extend the software rasterizer with our optimized line and triangle
           * drawing functions.
