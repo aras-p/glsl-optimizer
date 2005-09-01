@@ -42,9 +42,9 @@
    GLubyte *buf = map +					\
 		  dPriv->x * cpp +			\
 		  dPriv->y * pitch;			\
-   char *read_buf = buf;					\
+   GLubyte *read_buf = buf;				\
    GLuint p;						\
-   (void) p
+   (void) p; (void) read_buf;
 
 #define LOCAL_DEPTH_VARS				\
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);	\
@@ -193,7 +193,7 @@ static void savageDDSetBuffer(GLcontext *ctx, GLframebuffer *buffer,
 			      GLuint bufferBit)
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-   char *map;
+   GLubyte *map;
 
    assert((bufferBit == BUFFER_BIT_FRONT_LEFT) || (bufferBit == BUFFER_BIT_BACK_LEFT));
 
@@ -266,7 +266,6 @@ static void savageSpanRenderStart( GLcontext *ctx )
 
 void savageDDInitSpanFuncs( GLcontext *ctx )
 {
-   savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
 
    swdd->SetBuffer = savageDDSetBuffer;
