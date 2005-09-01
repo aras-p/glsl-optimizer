@@ -317,8 +317,8 @@ static void flush_last_swtcl_prim( radeonContextPtr rmesa  )
 
 /* Alloc space in the current dma region.
  */
-static __inline void *radeonAllocDmaLowVerts( radeonContextPtr rmesa,
-					      int nverts, int vsize )
+static INLINE void *
+radeonAllocDmaLowVerts( radeonContextPtr rmesa, int nverts, int vsize )
 {
    GLuint bytes = vsize * nverts;
 
@@ -378,7 +378,8 @@ static const GLuint hw_prim[GL_POLYGON+1] = {
    0
 };
 
-static __inline void radeonDmaPrimitive( radeonContextPtr rmesa, GLenum prim )
+static INLINE void
+radeonDmaPrimitive( radeonContextPtr rmesa, GLenum prim )
 {
    RADEON_NEWPRIM( rmesa );
    rmesa->swtcl.hw_primitive = hw_prim[prim];

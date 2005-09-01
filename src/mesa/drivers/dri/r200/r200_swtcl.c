@@ -307,8 +307,8 @@ static void flush_last_swtcl_prim( r200ContextPtr rmesa  )
 
 /* Alloc space in the current dma region.
  */
-static __inline void *r200AllocDmaLowVerts( r200ContextPtr rmesa,
-					      int nverts, int vsize )
+static INLINE void *
+r200AllocDmaLowVerts( r200ContextPtr rmesa, int nverts, int vsize )
 {
    GLuint bytes = vsize * nverts;
 
