@@ -999,21 +999,7 @@ void radeonPageFlip( const __DRIdrawablePrivate *dPriv )
    rmesa->swap_count++;
    (void) (*dri_interface->getUST)( & rmesa->swap_ust );
 
-   if ( rmesa->sarea->pfCurrentPage == 1 ) {
-	 rmesa->state.color.drawOffset = rmesa->radeonScreen->frontOffset;
-	 rmesa->state.color.drawPitch  = rmesa->radeonScreen->frontPitch;
-   } else {
-	 rmesa->state.color.drawOffset = rmesa->radeonScreen->backOffset;
-	 rmesa->state.color.drawPitch  = rmesa->radeonScreen->backPitch;
-   }
-
-   RADEON_STATECHANGE( rmesa, ctx );
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = rmesa->state.color.drawOffset
-					   + rmesa->radeonScreen->fbLocation;
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH]  = rmesa->state.color.drawPitch;
-   if (rmesa->sarea->tiling_enabled) {
-      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= RADEON_COLOR_TILE_ENABLE;
-   }
+   radeonUpdateDrawBuffer(rmesa->glCtx);
 }
 
 

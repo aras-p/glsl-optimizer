@@ -49,6 +49,7 @@ extern void radeonSetCliprects( radeonContextPtr rmesa, GLenum mode );
 extern void radeonRecalcScissorRects( radeonContextPtr rmesa );
 extern void radeonUpdateViewportOffset( GLcontext *ctx );
 extern void radeonUpdateWindow( GLcontext *ctx );
+extern void radeonUpdateDrawBuffer(GLcontext *ctx);
 
 extern void radeonValidateState( GLcontext *ctx );
 

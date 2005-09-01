@@ -95,7 +95,6 @@ typedef void (*radeon_point_func)( radeonContextPtr,
 
 struct radeon_colorbuffer_state {
    GLuint clear;
-   GLint drawOffset, drawPitch;
    int roundEnable;
 };
 
@@ -103,10 +102,6 @@ struct radeon_colorbuffer_state {
 struct radeon_depthbuffer_state {
    GLuint clear;
    GLfloat scale;
-};
-
-struct radeon_pixel_state {
-   GLint readOffset, readPitch;
 };
 
 struct radeon_scissor_state {
@@ -434,7 +429,6 @@ struct radeon_state {
     */
    struct radeon_colorbuffer_state color;
    struct radeon_depthbuffer_state depth;
-   struct radeon_pixel_state pixel;
    struct radeon_scissor_state scissor;
    struct radeon_stencilbuffer_state stencil;
    struct radeon_stipple_state stipple;

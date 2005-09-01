@@ -55,6 +55,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_tex.h"
 #include "radeon_swtcl.h"
 #include "radeon_vtxfmt.h"
+#include "drirenderbuffer.h"
 
 /* =============================================================
  * Alpha blending
@@ -1647,6 +1648,9 @@ void radeonSetCliprects( radeonContextPtr rmesa, GLenum mode )
 }
 
 
+/**
+ * Called via glDrawBuffer.
+ */
 static void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
@@ -1658,7 +1662,8 @@ static void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
    RADEON_FIREVERTICES(rmesa);	/* don't pipeline cliprect changes */
 
    /*
-    * _DrawDestMask is easier to cope with than <mode>.
+    * _ColorDrawBufferMask is easier to cope with than <mode>.
+    * Check for software fallback, update cliprects.
     */
    switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
    case BUFFER_BIT_FRONT_LEFT:
@@ -1675,19 +1680,9 @@ static void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
       return;
    }
 
-   /* We want to update the s/w rast state too so that r200SetBuffer()
-    * gets called.
+   /* We'll set the drawing engine's offset/pitch parameters later
+    * when we update other state.
     */
-   _swrast_DrawBuffer(ctx, mode);
-
-   RADEON_STATECHANGE( rmesa, ctx );
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((rmesa->state.color.drawOffset +
-					       rmesa->radeonScreen->fbLocation)
-					      & RADEON_COLOROFFSET_MASK);
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = rmesa->state.color.drawPitch;
-   if (rmesa->sarea->tiling_enabled) {
-      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= RADEON_COLOR_TILE_ENABLE;
-   }
 }
 
 static void radeonReadBuffer( GLcontext *ctx, GLenum mode )
@@ -2122,11 +2117,54 @@ static void update_texturematrix( GLcontext *ctx )
 }
 
 
+/**
+ * Tell the card where to render (offset, pitch).
+ * Effected by glDrawBuffer, etc
+ */
+void
+radeonUpdateDrawBuffer(GLcontext *ctx)
+{
+   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   driRenderbuffer *drb;
+
+   if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT) {
+      /* draw to front */
+      drb = (driRenderbuffer *) fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+   }
+   else if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT) {
+      /* draw to back */
+      drb = (driRenderbuffer *) fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+   }
+   else {
+      /* drawing to multiple buffers, or none */
+      return;
+   }
+
+   assert(drb);
+   assert(drb->flippedPitch);
+
+   RADEON_STATECHANGE( rmesa, ctx );
+
+   /* Note: we used the (possibly) page-flipped values */
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET]
+     = ((drb->flippedOffset + rmesa->radeonScreen->fbLocation)
+	& RADEON_COLOROFFSET_MASK);
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = drb->flippedPitch;
+   if (rmesa->sarea->tiling_enabled) {
+      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= RADEON_COLOR_TILE_ENABLE;
+   }
+}
+
 
 void radeonValidateState( GLcontext *ctx )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    GLuint new_state = rmesa->NewGLState;
+
+   if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
+     radeonUpdateDrawBuffer(ctx);
+   }
 
    if (new_state & _NEW_TEXTURE) {
       radeonUpdateTextureState( ctx );
