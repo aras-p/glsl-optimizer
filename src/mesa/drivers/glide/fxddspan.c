@@ -54,6 +54,7 @@
 
 
 #define LOCAL_VARS							\
+    GrBuffer_t currentFB = GR_BUFFER_BACKBUFFER;			\
     GLuint pitch = info.strideInBytes;					\
     GLuint height = fxMesa->height;					\
     char *buf = (char *)((char *)info.lfbPtr + 0 /* x, y offset */);	\
@@ -80,22 +81,22 @@
     GrLfbInfo_t info;							\
     info.size = sizeof(GrLfbInfo_t);					\
     if ( grLfbLock( GR_LFB_WRITE_ONLY,					\
-                   fxMesa->currentFB, LFB_MODE,				\
+                   currentFB, LFB_MODE,					\
 		   GR_ORIGIN_UPPER_LEFT, FXFALSE, &info ) ) {
 
 #define HW_WRITE_UNLOCK()						\
-	grLfbUnlock( GR_LFB_WRITE_ONLY, fxMesa->currentFB );		\
+	grLfbUnlock( GR_LFB_WRITE_ONLY, currentFB );			\
     }
 
 #define HW_READ_LOCK()							\
     fxMesaContext fxMesa = FX_CONTEXT(ctx);				\
     GrLfbInfo_t info;							\
     info.size = sizeof(GrLfbInfo_t);					\
-    if ( grLfbLock( GR_LFB_READ_ONLY, fxMesa->currentFB,		\
+    if ( grLfbLock( GR_LFB_READ_ONLY, currentFB,			\
                     LFB_MODE, GR_ORIGIN_UPPER_LEFT, FXFALSE, &info ) ) {
 
 #define HW_READ_UNLOCK()						\
-	grLfbUnlock( GR_LFB_READ_ONLY, fxMesa->currentFB );		\
+	grLfbUnlock( GR_LFB_READ_ONLY, currentFB );			\
     }
 
 #define HW_WRITE_CLIPLOOP()						\
@@ -337,9 +338,10 @@ static void fxReadRGBASpan_ARGB1555 (const GLcontext * ctx,
                                      GLubyte rgba[][4])
 {
  fxMesaContext fxMesa = FX_CONTEXT(ctx);
+ GrBuffer_t currentFB = GR_BUFFER_BACKBUFFER;
  GrLfbInfo_t info;
  info.size = sizeof(GrLfbInfo_t);
- if (grLfbLock(GR_LFB_READ_ONLY, fxMesa->currentFB,
+ if (grLfbLock(GR_LFB_READ_ONLY, currentFB,
                GR_LFBWRITEMODE_ANY, GR_ORIGIN_UPPER_LEFT, FXFALSE, &info)) {
     const GLint winX = 0;
     const GLint winY = fxMesa->height - 1;
@@ -370,7 +372,7 @@ static void fxReadRGBASpan_ARGB1555 (const GLcontext * ctx,
        rgba[n][3] = (pixel & 0x8000) ? 255 : 0;
     }
 
-    grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
+    grLfbUnlock(GR_LFB_READ_ONLY, currentFB);
  }
 }
 
@@ -385,9 +387,10 @@ static void fxReadRGBASpan_RGB565 (const GLcontext * ctx,
                                    GLubyte rgba[][4])
 {
  fxMesaContext fxMesa = FX_CONTEXT(ctx);
+ GrBuffer_t currentFB = GR_BUFFER_BACKBUFFER;
  GrLfbInfo_t info;
  info.size = sizeof(GrLfbInfo_t);
- if (grLfbLock(GR_LFB_READ_ONLY, fxMesa->currentFB,
+ if (grLfbLock(GR_LFB_READ_ONLY, currentFB,
                GR_LFBWRITEMODE_ANY, GR_ORIGIN_UPPER_LEFT, FXFALSE, &info)) {
     const GLint winX = 0;
     const GLint winY = fxMesa->height - 1;
@@ -418,7 +421,7 @@ static void fxReadRGBASpan_RGB565 (const GLcontext * ctx,
        rgba[n][3] = 255;
     }
 
-    grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
+    grLfbUnlock(GR_LFB_READ_ONLY, currentFB);
  }
 }
 
@@ -433,8 +436,9 @@ static void fxReadRGBASpan_ARGB8888 (const GLcontext * ctx,
                                      GLubyte rgba[][4])
 {
  fxMesaContext fxMesa = FX_CONTEXT(ctx);
+ GrBuffer_t currentFB = GR_BUFFER_BACKBUFFER;
  GLuint i;
- grLfbReadRegion(fxMesa->currentFB, x, fxMesa->height - 1 - y, n, 1, n * 4, rgba);
+ grLfbReadRegion(currentFB, x, fxMesa->height - 1 - y, n, 1, n * 4, rgba);
  for (i = 0; i < n; i++) {
      GLubyte c = rgba[i][0];
      rgba[i][0] = rgba[i][2];
@@ -541,44 +545,11 @@ fxReadStencilPixels (GLcontext *ctx, struct gl_renderbuffer *rb, GLuint n,
 }
 
 
-
-/*
- * This function is called to specify which buffer to read and write
- * for software rasterization (swrast) fallbacks.  This doesn't necessarily
- * correspond to glDrawBuffer() or glReadBuffer() calls.
- */
-static void
-fxDDSetBuffer(GLcontext * ctx, GLframebuffer * buffer, GLuint bufferBit)
-{
-   fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   (void) buffer;
-
-   if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxDDSetBuffer(%x)\n", (int)bufferBit);
-   }
-
-   if (bufferBit == BUFFER_BIT_FRONT_LEFT) {
-      fxMesa->currentFB = GR_BUFFER_FRONTBUFFER;
-      grRenderBuffer(fxMesa->currentFB);
-   }
-   else if (bufferBit == BUFFER_BIT_BACK_LEFT) {
-      fxMesa->currentFB = GR_BUFFER_BACKBUFFER;
-      grRenderBuffer(fxMesa->currentFB);
-   }
-}
-
-
-/************************************************************************/
-
-
-
 void
 fxSetupDDSpanPointers(GLcontext * ctx)
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference( ctx );
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
-
-   swdd->SetBuffer = fxDDSetBuffer;
 
    switch (fxMesa->colDepth) {
           case 15:
