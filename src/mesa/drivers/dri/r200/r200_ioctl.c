@@ -556,6 +556,7 @@ void r200PageFlip( const __DRIdrawablePrivate *dPriv )
    rmesa->swap_count++;
    (void) (*dri_interface->getUST)( & rmesa->swap_ust );
 
+#if 000
    if ( rmesa->sarea->pfCurrentPage == 1 ) {
 	 rmesa->state.color.drawOffset = rmesa->r200Screen->frontOffset;
 	 rmesa->state.color.drawPitch  = rmesa->r200Screen->frontPitch;
@@ -571,6 +572,9 @@ void r200PageFlip( const __DRIdrawablePrivate *dPriv )
    if (rmesa->sarea->tiling_enabled) {
       rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
    }
+#else
+   r200UpdateDrawBuffer(rmesa->glCtx);
+#endif
 }
 
 

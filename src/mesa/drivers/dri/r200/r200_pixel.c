@@ -43,6 +43,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_pixel.h"
 #include "r200_swtcl.h"
 
+#include "drirenderbuffer.h"
 
 
 static GLboolean
@@ -213,10 +214,11 @@ r200TryReadPixels( GLcontext *ctx,
 
    {
       __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
+      driRenderbuffer *drb = (driRenderbuffer *) ctx->ReadBuffer->_ColorReadBuffer;
       int nbox = dPriv->numClipRects;
-      int src_offset = rmesa->state.color.drawOffset
+      int src_offset = drb->offset
 		     + rmesa->r200Screen->fbLocation;
-      int src_pitch = rmesa->state.color.drawPitch * rmesa->r200Screen->cpp;
+      int src_pitch = drb->pitch * drb->cpp;
       int dst_offset = r200GartOffsetFromVirtual( rmesa, pixels );
       int dst_pitch = pitch * rmesa->r200Screen->cpp;
       drm_clip_rect_t *box = dPriv->pClipRects;
@@ -293,6 +295,8 @@ static void do_draw_pix( GLcontext *ctx,
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
    drm_clip_rect_t *box = dPriv->pClipRects;
+   struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorDrawBuffers[0][0];
+   driRenderbuffer *drb = (driRenderbuffer *) rb;
    int nbox = dPriv->numClipRects;
    int i;
    int blit_format;
@@ -353,8 +357,8 @@ static void do_draw_pix( GLcontext *ctx,
       r200EmitBlit( rmesa,
 		    blit_format,
 		    src_pitch, src_offset,
-		    rmesa->state.color.drawPitch * rmesa->r200Screen->cpp,
-		    rmesa->state.color.drawOffset + rmesa->r200Screen->fbLocation,
+		    drb->pitch * drb->cpp,
+		    drb->offset + rmesa->r200Screen->fbLocation,
 		    bx - x, by - y,
 		    bx, by,
 		    bw, bh );
@@ -383,6 +387,10 @@ r200TryDrawPixels( GLcontext *ctx,
 
    if (R200_DEBUG & DEBUG_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
+
+   /* check that we're drawing to exactly one color buffer */
+   if (ctx->DrawBuffer->_NumColorDrawBuffers[0] != 1)
+     return GL_FALSE;
 
    switch (format) {
    case GL_RGB:

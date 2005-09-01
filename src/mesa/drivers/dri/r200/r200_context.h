@@ -92,7 +92,9 @@ typedef void (*r200_point_func)( r200ContextPtr,
 
 struct r200_colorbuffer_state {
    GLuint clear;
+#if 000
    GLint drawOffset, drawPitch;
+#endif
    int roundEnable;
 };
 
@@ -102,9 +104,11 @@ struct r200_depthbuffer_state {
    GLfloat scale;
 };
 
+#if 000
 struct r200_pixel_state {
    GLint readOffset, readPitch;
 };
+#endif
 
 struct r200_scissor_state {
    drm_clip_rect_t rect;
@@ -539,7 +543,9 @@ struct r200_state {
     */
    struct r200_colorbuffer_state color;
    struct r200_depthbuffer_state depth;
+#if 00
    struct r200_pixel_state pixel;
+#endif
    struct r200_scissor_state scissor;
    struct r200_stencilbuffer_state stencil;
    struct r200_stipple_state stipple;

@@ -155,6 +155,7 @@ void r200InitState( r200ContextPtr rmesa )
 {
    GLcontext *ctx = rmesa->glCtx;
    GLuint color_fmt, depth_fmt, i;
+   GLint drawPitch, drawOffset;
 
    switch ( rmesa->r200Screen->cpp ) {
    case 2:
@@ -196,6 +197,14 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->Fallback = 0;
 
    if ( ctx->Visual.doubleBufferMode && rmesa->sarea->pfCurrentPage == 0 ) {
+      drawOffset = rmesa->r200Screen->backOffset;
+      drawPitch  = rmesa->r200Screen->backPitch;
+   } else {
+      drawOffset = rmesa->r200Screen->frontOffset;
+      drawPitch  = rmesa->r200Screen->frontPitch;
+   }
+#if 000
+   if ( ctx->Visual.doubleBufferMode && rmesa->sarea->pfCurrentPage == 0 ) {
       rmesa->state.color.drawOffset = rmesa->r200Screen->backOffset;
       rmesa->state.color.drawPitch  = rmesa->r200Screen->backPitch;
    } else {
@@ -205,6 +214,7 @@ void r200InitState( r200ContextPtr rmesa )
 
    rmesa->state.pixel.readOffset = rmesa->state.color.drawOffset;
    rmesa->state.pixel.readPitch  = rmesa->state.color.drawPitch;
+#endif
 
    rmesa->hw.max_state_size = 0;
 
@@ -502,6 +512,7 @@ void r200InitState( r200ContextPtr rmesa )
    else
       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= rmesa->state.color.roundEnable;
 
+#if 000
    rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((rmesa->state.color.drawOffset +
 					       rmesa->r200Screen->fbLocation)
 					      & R200_COLOROFFSET_MASK);
@@ -509,6 +520,15 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = ((rmesa->state.color.drawPitch &
 					      R200_COLORPITCH_MASK) |
 					     R200_COLOR_ENDIAN_NO_SWAP);
+#else
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((drawOffset +
+					       rmesa->r200Screen->fbLocation)
+					      & R200_COLOROFFSET_MASK);
+
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = ((drawPitch &
+					      R200_COLORPITCH_MASK) |
+					     R200_COLOR_ENDIAN_NO_SWAP);
+#endif
    /* (fixed size) sarea is initialized to zero afaics so can omit version check. Phew! */
    if (rmesa->sarea->tiling_enabled) {
       rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;

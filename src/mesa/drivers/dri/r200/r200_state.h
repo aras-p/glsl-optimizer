@@ -48,6 +48,7 @@ extern void r200SetCliprects( r200ContextPtr rmesa, GLenum mode );
 extern void r200RecalcScissorRects( r200ContextPtr rmesa );
 extern void r200UpdateViewportOffset( GLcontext *ctx );
 extern void r200UpdateWindow( GLcontext *ctx );
+extern void r200UpdateDrawBuffer(GLcontext *ctx);
 
 extern void r200ValidateState( GLcontext *ctx );
 

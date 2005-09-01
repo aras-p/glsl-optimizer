@@ -48,7 +48,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
 
-
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_state.h"
@@ -56,6 +55,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_tex.h"
 #include "r200_swtcl.h"
 #include "r200_vtxfmt.h"
+
+#include "drirenderbuffer.h"
 
 
 /* =============================================================
@@ -1794,7 +1795,8 @@ static void r200DrawBuffer( GLcontext *ctx, GLenum mode )
    R200_FIREVERTICES(rmesa);	/* don't pipeline cliprect changes */
 
    /*
-    * _DrawDestMask is easier to cope with than <mode>.
+    * _ColorDrawBufferMask is easier to cope with than <mode>.
+    * Check for software fallback, update cliprects.
     */
    switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
    case BUFFER_BIT_FRONT_LEFT:
@@ -1811,6 +1813,7 @@ static void r200DrawBuffer( GLcontext *ctx, GLenum mode )
       return;
    }
 
+#if 000
    /* We want to update the s/w rast state too so that r200SetBuffer()
     * gets called.
     */
@@ -1824,6 +1827,11 @@ static void r200DrawBuffer( GLcontext *ctx, GLenum mode )
    if (rmesa->sarea->tiling_enabled) {
       rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
    }
+#else
+   /* We'll set the drawing engine's offset/pitch parameters later
+    * when we update other state.
+    */
+#endif
 }
 
 
@@ -2218,10 +2226,55 @@ static void update_texturematrix( GLcontext *ctx )
 
 
 
+/**
+ * Tell the card where to render (offset, pitch).
+ * Effected by glDrawBuffer, etc
+ */
+void
+r200UpdateDrawBuffer(GLcontext *ctx)
+{
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   driRenderbuffer *drb;
+
+   if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT) {
+      /* draw to front */
+      drb = (driRenderbuffer *) fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+   }
+   else if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT) {
+      /* draw to back */
+      drb = (driRenderbuffer *) fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+   }
+   else {
+      /* drawing to multiple buffers, or none */
+      return;
+   }
+
+   assert(drb);
+   assert(drb->flippedPitch);
+
+   R200_STATECHANGE( rmesa, ctx );
+
+   /* Note: we used the (possibly) page-flipped values */
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET]
+     = ((drb->flippedOffset + rmesa->r200Screen->fbLocation)
+	& R200_COLOROFFSET_MASK);
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = drb->flippedPitch;
+   if (rmesa->sarea->tiling_enabled) {
+      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
+   }
+}
+
+
+
 void r200ValidateState( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint new_state = rmesa->NewGLState;
+
+   if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
+     r200UpdateDrawBuffer(ctx);
+   }
 
    if (new_state & _NEW_TEXTURE) {
       r200UpdateTextureState( ctx );
