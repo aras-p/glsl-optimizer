@@ -80,13 +80,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define LOCAL_DEPTH_VARS						\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);				\
+   r200ScreenPtr r200Screen = rmesa->r200Screen;			\
    __DRIscreenPrivate *sPriv = rmesa->dri.screen;			\
    __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;			\
    driRenderbuffer *drb = (driRenderbuffer *) rb;			\
    GLuint height = dPriv->h;						\
    GLuint xo = dPriv->x;						\
    GLuint yo = dPriv->y;						\
-   char *buf = (char *)(sPriv->pFB + drb->offset);
+   char *buf = (char *)(sPriv->pFB + drb->offset);			\
+   assert(drb->offset == r200Screen->depthOffset);
 
 #define LOCAL_STENCIL_VARS	LOCAL_DEPTH_VARS
 
