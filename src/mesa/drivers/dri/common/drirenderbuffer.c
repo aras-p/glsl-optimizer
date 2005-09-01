@@ -100,3 +100,35 @@ driNewRenderbuffer(GLenum format, GLint cpp, GLint offset, GLint pitch)
    }
    return drb;
 }
+
+
+/**
+ * Update the front and back renderbuffers' flippedPitch/Offset fields.
+ * This is used when we do double buffering via page flipping.
+ */
+void
+driFlipRenderbuffers(struct gl_framebuffer *fb, GLenum flipped)
+{
+   driRenderbuffer *front_drb
+      = (driRenderbuffer *) fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+   driRenderbuffer *back_drb
+      = (driRenderbuffer *) fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+
+   /* If this fails, it means we're trying to do page flipping for a
+    * single-buffered window!
+    */
+   assert(back_drb);
+
+   if (flipped) {
+      front_drb->flippedOffset = back_drb->offset;
+      front_drb->flippedPitch  = back_drb->pitch;
+      back_drb->flippedOffset  = front_drb->offset;
+      back_drb->flippedPitch   = front_drb->pitch;
+   }
+   else {
+      front_drb->flippedOffset = front_drb->offset;
+      front_drb->flippedPitch  = front_drb->pitch;
+      back_drb->flippedOffset  = back_drb->offset;
+      back_drb->flippedPitch   = back_drb->pitch;
+   }
+}

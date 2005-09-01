@@ -46,8 +46,10 @@ typedef struct {
 } driRenderbuffer;
 
 
-driRenderbuffer *
+extern driRenderbuffer *
 driNewRenderbuffer(GLenum format, GLint cpp, GLint offset, GLint pitch);
 
+extern void
+driFlipRenderbuffers(struct gl_framebuffer *fb, GLenum flipped);
 
 #endif /* DRIRENDERBUFFER_H */
