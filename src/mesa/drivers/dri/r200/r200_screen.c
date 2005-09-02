@@ -592,6 +592,7 @@ r200CreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  screen->depthOffset, screen->depthPitch);
          r200SetSpanFunctions(stencilRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
+	 stencilRb->depthHasSurface = screen->depthHasSurface;
       }
 
       _mesa_add_soft_renderbuffers(fb,
