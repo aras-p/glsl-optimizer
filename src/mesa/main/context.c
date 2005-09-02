@@ -1047,11 +1047,11 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_lighting( ctx );
    _mesa_init_matrix( ctx );
    _mesa_init_multisample( ctx );
-   _mesa_init_occlude( ctx );
    _mesa_init_pixel( ctx );
    _mesa_init_point( ctx );
    _mesa_init_polygon( ctx );
    _mesa_init_program( ctx );
+   _mesa_init_query( ctx );
    _mesa_init_rastpos( ctx );
    _mesa_init_scissor( ctx );
    _mesa_init_shaderobjects (ctx);
@@ -1290,7 +1290,7 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_viewport_data( ctx );
    _mesa_free_colortables_data( ctx );
    _mesa_free_program_data(ctx);
-   _mesa_free_occlude_data(ctx);
+   _mesa_free_query_data(ctx);
 
 #if FEATURE_ARB_vertex_buffer_object
    _mesa_delete_buffer_object(ctx, ctx->Array.NullBufferObj);

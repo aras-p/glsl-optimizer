@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -28,6 +28,7 @@
 #include "buffers.h"
 #include "context.h"
 #include "framebuffer.h"
+#include "occlude.h"
 #include "program.h"
 #include "renderbuffer.h"
 #include "texcompress.h"
@@ -210,6 +211,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
 #endif
 
    /* query objects */
+   driver->NewQueryObject = _mesa_new_query_object;
    driver->BeginQuery = NULL;
    driver->EndQuery = NULL;
 

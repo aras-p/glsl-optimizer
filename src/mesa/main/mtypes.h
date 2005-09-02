@@ -1900,7 +1900,6 @@ struct gl_ati_fragment_shader_state
 
 struct gl_query_object
 {
-   GLenum Target;
    GLuint Id;
    GLuint Result;      /* the counter */
    GLboolean Active;   /* inside Begin/EndQuery */
@@ -1912,6 +1911,7 @@ struct gl_query_state
 {
    struct _mesa_HashTable *QueryObjects;
    struct gl_query_object *CurrentOcclusionObject; /* GL_ARB_occlusion_query */
+   struct gl_query_object *CurrentTimerObject;     /* GL_EXT_timer_query */
 };
 
 
@@ -2367,6 +2367,7 @@ struct gl_extensions
    GLboolean EXT_texture_filter_anisotropic;
    GLboolean EXT_texture_lod_bias;
    GLboolean EXT_texture_mirror_clamp;
+   GLboolean EXT_timer_query;
    GLboolean EXT_vertex_array;
    GLboolean EXT_vertex_array_set;
    /* vendor extensions */

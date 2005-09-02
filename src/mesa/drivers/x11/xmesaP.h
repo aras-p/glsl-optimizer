@@ -539,7 +539,12 @@ extern GLboolean XMesaLoseCurrent(XMesaContext c);
 extern void XMesaReset( void );
 
 
-#define SWTC 0 /* SW texture compression */
+#define ENABLE_EXT_texure_compression_s3tc 0 /* SW texture compression */
 
+#ifdef XFree86Server
+#define ENABLE_EXT_timer_query 0
+#else
+#define ENABLE_EXT_timer_query 1
+#endif
 
 #endif

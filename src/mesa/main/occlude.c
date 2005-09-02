@@ -23,11 +23,6 @@
  */
 
 
-/*
- * Functions to implement the GL_ARB_occlusion_query extension.
- */
-
-
 #include "glheader.h"
 #include "context.h"
 #include "hash.h"
@@ -37,17 +32,18 @@
 
 
 /**
- * Allocate a new occlusion query object.
- * \param target - must be GL_SAMPLES_PASSED_ARB at this time
+ * Allocate a new query object.  This is a fallback routine called via
+ * ctx->Driver.NewQueryObject().
+ * \param target - GL_SAMPLES_PASSED_ARB or GL_TIME_ELAPSED_EXT or 0.
+ * \param ctx - rendering context
  * \param id - the object's ID
  * \return pointer to new query_object object or NULL if out of memory.
  */
-static struct gl_query_object *
-new_query_object(GLenum target, GLuint id)
+struct gl_query_object *
+_mesa_new_query_object(GLcontext *ctx, GLuint id)
 {
    struct gl_query_object *q = MALLOC_STRUCT(gl_query_object);
    if (q) {
-      q->Target = target;
       q->Id = id;
       q->Result = 0;
       q->Active = GL_FALSE;
@@ -80,8 +76,8 @@ lookup_query_object(GLcontext *ctx, GLuint id)
 void GLAPIENTRY
 _mesa_GenQueriesARB(GLsizei n, GLuint *ids)
 {
-   GET_CURRENT_CONTEXT(ctx);
    GLuint first;
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (n < 0) {
@@ -90,7 +86,8 @@ _mesa_GenQueriesARB(GLsizei n, GLuint *ids)
    }
 
    /* No query objects can be active at this time! */
-   if (ctx->Query.CurrentOcclusionObject) {
+   if (ctx->Query.CurrentOcclusionObject ||
+       ctx->Query.CurrentTimerObject) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGenQueriesARB");
       return;
    }
@@ -99,8 +96,8 @@ _mesa_GenQueriesARB(GLsizei n, GLuint *ids)
    if (first) {
       GLsizei i;
       for (i = 0; i < n; i++) {
-         struct gl_query_object *q = new_query_object(GL_SAMPLES_PASSED_ARB,
-                                                      first + i);
+         struct gl_query_object *q
+            = ctx->Driver.NewQueryObject(ctx, first + i);
          if (!q) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenQueriesARB");
             return;
@@ -115,8 +112,8 @@ _mesa_GenQueriesARB(GLsizei n, GLuint *ids)
 void GLAPIENTRY
 _mesa_DeleteQueriesARB(GLsizei n, const GLuint *ids)
 {
-   GET_CURRENT_CONTEXT(ctx);
    GLint i;
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (n < 0) {
@@ -125,7 +122,8 @@ _mesa_DeleteQueriesARB(GLsizei n, const GLuint *ids)
    }
 
    /* No query objects can be active at this time! */
-   if (ctx->Query.CurrentOcclusionObject) {
+   if (ctx->Query.CurrentOcclusionObject ||
+       ctx->Query.CurrentTimerObject) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glDeleteQueriesARB");
       return;
    }
@@ -159,15 +157,36 @@ _mesa_IsQueryARB(GLuint id)
 void GLAPIENTRY
 _mesa_BeginQueryARB(GLenum target, GLuint id)
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_query_object *q;
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_DEPTH);
 
-   if (target != GL_SAMPLES_PASSED_ARB) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glBeginQueryARB(target)");
-      return;
+   switch (target) {
+      case GL_SAMPLES_PASSED_ARB:
+         if (!ctx->Extensions.ARB_occlusion_query) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glBeginQueryARB(target)");
+            return;
+         }
+         if (ctx->Query.CurrentOcclusionObject) {
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glBeginQueryARB");
+            return;
+         }
+         break;
+      case GL_TIME_ELAPSED_EXT:
+         if (!ctx->Extensions.EXT_timer_query) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glBeginQueryARB(target)");
+            return;
+         }
+         if (ctx->Query.CurrentTimerObject) {
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glBeginQueryARB");
+            return;
+         }
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_ENUM, "glBeginQueryARB(target)");
+         return;
    }
 
    if (id == 0) {
@@ -175,15 +194,10 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
       return;
    }
 
-   if (ctx->Query.CurrentOcclusionObject) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glBeginQueryARB(target)");
-      return;
-   }
-
    q = lookup_query_object(ctx, id);
    if (!q) {
       /* create new object */
-      q = new_query_object(target, id);
+      q = ctx->Driver.NewQueryObject(ctx, id);
       if (!q) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBeginQueryARB");
          return;
@@ -192,11 +206,6 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
    }
    else {
       /* pre-existing object */
-      if (q->Target != target) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glBeginQueryARB(target mismatch)");
-         return;
-      }
       if (q->Active) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glBeginQueryARB(query already active)");
@@ -207,10 +216,16 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
    q->Active = GL_TRUE;
    q->Result = 0;
    q->Ready = GL_FALSE;
-   ctx->Query.CurrentOcclusionObject = q;
+
+   if (target == GL_SAMPLES_PASSED_ARB) {
+      ctx->Query.CurrentOcclusionObject = q;
+   }
+   else if (target == GL_TIME_ELAPSED_EXT) {
+      ctx->Query.CurrentTimerObject = q;
+   }
 
    if (ctx->Driver.BeginQuery) {
-      ctx->Driver.BeginQuery(ctx, q);
+      ctx->Driver.BeginQuery(ctx, target, q);
    }
 }
 
@@ -218,16 +233,28 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
 void GLAPIENTRY
 _mesa_EndQueryARB(GLenum target)
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_query_object *q;
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_DEPTH);
 
    switch (target) {
       case GL_SAMPLES_PASSED_ARB:
+         if (!ctx->Extensions.ARB_occlusion_query) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glEndQueryARB(target)");
+            return;
+         }
          q = ctx->Query.CurrentOcclusionObject;
          ctx->Query.CurrentOcclusionObject = NULL;
+         break;
+      case GL_TIME_ELAPSED_EXT:
+         if (!ctx->Extensions.EXT_timer_query) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glEndQueryARB(target)");
+            return;
+         }
+         q = ctx->Query.CurrentTimerObject;
+         ctx->Query.CurrentTimerObject = NULL;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glEndQueryARB(target)");
@@ -242,9 +269,10 @@ _mesa_EndQueryARB(GLenum target)
 
    q->Active = GL_FALSE;
    if (ctx->Driver.EndQuery) {
-      ctx->Driver.EndQuery(ctx, q);
+      ctx->Driver.EndQuery(ctx, target, q);
    }
    else {
+      /* if we're using software rendering/querying */
       q->Ready = GL_TRUE;
    }
 }
@@ -253,13 +281,24 @@ _mesa_EndQueryARB(GLenum target)
 void GLAPIENTRY
 _mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params)
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_query_object *q;
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (target) {
       case GL_SAMPLES_PASSED_ARB:
+         if (!ctx->Extensions.ARB_occlusion_query) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glEndQueryARB(target)");
+            return;
+         }
          q = ctx->Query.CurrentOcclusionObject;
+         break;
+      case GL_TIME_ELAPSED_EXT:
+         if (!ctx->Extensions.EXT_timer_query) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glEndQueryARB(target)");
+            return;
+         }
+         q = ctx->Query.CurrentTimerObject;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetQueryivARB(target)");
@@ -283,8 +322,8 @@ _mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params)
 void GLAPIENTRY
 _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_query_object *q = NULL;
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (id)
@@ -321,8 +360,8 @@ _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
 void GLAPIENTRY
 _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_query_object *q = NULL;
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (id)
@@ -358,10 +397,10 @@ _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
 
 
 /**
- * Allocate/init the context state related to occlusion query objects.
+ * Allocate/init the context state related to query objects.
  */
 void
-_mesa_init_occlude(GLcontext *ctx)
+_mesa_init_query(GLcontext *ctx)
 {
 #if FEATURE_ARB_occlusion_query
    ctx->Query.QueryObjects = _mesa_NewHashTable();
@@ -371,10 +410,10 @@ _mesa_init_occlude(GLcontext *ctx)
 
 
 /**
- * Free the context state related to occlusion query objects.
+ * Free the context state related to query objects.
  */
 void
-_mesa_free_occlude_data(GLcontext *ctx)
+_mesa_free_query_data(GLcontext *ctx)
 {
    while (1) {
       GLuint id = _mesa_HashFirstEntry(ctx->Query.QueryObjects);

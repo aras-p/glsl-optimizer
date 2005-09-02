@@ -1689,12 +1689,15 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    _mesa_enable_1_4_extensions(mesaCtx);
    _mesa_enable_1_5_extensions(mesaCtx);
    _mesa_enable_2_0_extensions(mesaCtx);
-#if SWTC
+#if ENABLE_EXT_texure_compression_s3tc
     if (c->Mesa_DXTn) {
        _mesa_enable_extension(c, "GL_EXT_texture_compression_s3tc");
        _mesa_enable_extension(c, "GL_S3_s3tc");
     }
     _mesa_enable_extension(c, "GL_3DFX_texture_compression_FXT1");
+#endif
+#if ENABLE_EXT_timer_query
+    _mesa_enable_extension(c, "GL_EXT_timer_query");
 #endif
 
    /* finish up xmesa context initializations */

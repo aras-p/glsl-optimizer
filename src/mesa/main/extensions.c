@@ -120,6 +120,7 @@ static const struct {
    { OFF, "GL_EXT_texture_mirror_clamp",       F(EXT_texture_mirror_clamp) },
    { ON,  "GL_EXT_texture_object",             F(EXT_texture_object) },
    { OFF, "GL_EXT_texture_rectangle",          F(NV_texture_rectangle) },
+   { OFF, "GL_EXT_timer_query",                F(EXT_timer_query) },
    { ON,  "GL_EXT_vertex_array",               F(EXT_vertex_array) },
    { OFF, "GL_EXT_vertex_array_set",           F(EXT_vertex_array_set) },
    { OFF, "GL_3DFX_texture_compression_FXT1",  F(TDFX_texture_compression_FXT1) },

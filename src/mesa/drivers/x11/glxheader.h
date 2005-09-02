@@ -51,6 +51,7 @@
 #  include <X11/extensions/XShm.h>
 # endif
 # include <GL/glx.h>
+# include <sys/time.h>
 
 #endif
 

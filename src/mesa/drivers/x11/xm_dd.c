@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1130,6 +1130,78 @@ xmesa_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 }
 
 
+#if ENABLE_EXT_timer_query
+
+/*
+ * The GL_EXT_timer_query extension is not enabled for the XServer
+ * indirect renderer.  Not sure about how/if wrapping of gettimeofday()
+ * is done, etc.
+ */
+
+struct xmesa_query_object
+{
+   struct gl_query_object Base;
+   struct timeval StartTime;
+};
+
+
+static struct gl_query_object *
+xmesa_new_query_object(GLcontext *ctx, GLuint id)
+{
+   struct xmesa_query_object *q = CALLOC_STRUCT(xmesa_query_object);
+   if (q) {
+      q->Base.Id = id;
+      q->Base.Ready = GL_TRUE;
+   }
+   return &q->Base;
+}
+
+
+static void
+xmesa_begin_query(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+{
+   if (target == GL_TIME_ELAPSED_EXT) {
+      struct xmesa_query_object *xq = (struct xmesa_query_object *) q;
+      (void) gettimeofday(&xq->StartTime, NULL);
+   }
+}
+
+
+/**
+ * Return the difference between the two given times in microseconds.
+ */
+static unsigned int
+time_diff(const struct timeval *t0, const struct timeval *t1)
+{
+   time_t seconds0 = t0->tv_sec & 0xff;  /* 0 .. 255 seconds */
+   time_t seconds1 = t1->tv_sec & 0xff;  /* 0 .. 255 seconds */
+   suseconds_t useconds0 = seconds0 * 1000000 + t0->tv_usec;
+   suseconds_t useconds1 = seconds1 * 1000000 + t1->tv_usec;
+   return useconds1 - useconds0;
+}
+
+
+static void
+xmesa_end_query(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+{
+   if (target == GL_TIME_ELAPSED_EXT) {
+      struct xmesa_query_object *xq = (struct xmesa_query_object *) q;
+      struct timeval endTime;
+      unsigned int dt;
+      (void) gettimeofday(&endTime, NULL);
+      dt = time_diff(&xq->StartTime, &endTime);
+      /* clamp if we'd overflow a 32-bit unsigned int */
+      if (dt >= 0xffffffffU / 1000U)
+         q->Result = 0xffffffffU;
+      else
+         q->Result = dt * 1000; /* result is in nanoseconds! */
+   }
+   q->Ready = GL_TRUE;
+}
+
+#endif /* ENABLE_timer_query */
+
+
 /**
  * Initialize the device driver function table with the functions
  * we implement in this driver.
@@ -1162,10 +1234,16 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    }
 #endif
    driver->TestProxyTexImage = test_proxy_teximage;
-#if SWTC
+#if ENABLE_EXT_texure_compression_s3tc
    driver->ChooseTextureFormat = choose_tex_format;
 #else
    (void) choose_tex_format;
+#endif
+
+#if ENABLE_EXT_timer_query
+   driver->NewQueryObject = xmesa_new_query_object;
+   driver->BeginQuery = xmesa_begin_query;
+   driver->EndQuery = xmesa_end_query;
 #endif
 }
 

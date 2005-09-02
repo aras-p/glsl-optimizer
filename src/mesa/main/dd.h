@@ -820,8 +820,10 @@ struct dd_function_table {
     * \name Query objects
     */
    /*@{*/
-   void (*BeginQuery)(GLcontext *ctx, struct gl_query_object *q);
-   void (*EndQuery)(GLcontext *ctx, struct gl_query_object *q);
+   struct gl_query_object * (*NewQueryObject)(GLcontext *ctx, GLuint id);
+   void (*BeginQuery)(GLcontext *ctx, GLenum target,
+                      struct gl_query_object *q);
+   void (*EndQuery)(GLcontext *ctx, GLenum target, struct gl_query_object *q);
    /*@}*/
 
 
