@@ -1237,8 +1237,7 @@ Parse_PrintInstruction(struct parse_state *parseState,
       }
    }
    else {
-      /* File = 0 indicates no register to print */
-      inst->SrcReg[0].File = -1;
+      inst->SrcReg[0].File = PROGRAM_UNDEFINED;
    }
 
    inst->SrcReg[0].Swizzle = SWIZZLE_NOOP;
@@ -1260,10 +1259,10 @@ Parse_InstructionSequence(struct parse_state *parseState,
       GLubyte token[100];
 
       /* Initialize the instruction */
-      inst->SrcReg[0].File = (enum register_file) -1;
-      inst->SrcReg[1].File = (enum register_file) -1;
-      inst->SrcReg[2].File = (enum register_file) -1;
-      inst->DstReg.File = (enum register_file) -1;
+      inst->SrcReg[0].File = PROGRAM_UNDEFINED;
+      inst->SrcReg[1].File = PROGRAM_UNDEFINED;
+      inst->SrcReg[2].File = PROGRAM_UNDEFINED;
+      inst->DstReg.File = PROGRAM_UNDEFINED;
       inst->DstReg.CondSwizzle = SWIZZLE_NOOP;
       inst->Data = NULL;
 
