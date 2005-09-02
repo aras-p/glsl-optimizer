@@ -34,9 +34,8 @@
 /**
  * Allocate a new query object.  This is a fallback routine called via
  * ctx->Driver.NewQueryObject().
- * \param target - GL_SAMPLES_PASSED_ARB or GL_TIME_ELAPSED_EXT or 0.
  * \param ctx - rendering context
- * \param id - the object's ID
+ * \param id - the new object's ID
  * \return pointer to new query_object object or NULL if out of memory.
  */
 struct gl_query_object *
@@ -56,6 +55,7 @@ _mesa_new_query_object(GLcontext *ctx, GLuint id)
 /**
  * Delete an occlusion query object.
  * Not removed from hash table here.
+ * XXX maybe add Delete() method to gl_query_object class and call that instead
  */
 static void
 delete_query_object(struct gl_query_object *q)
