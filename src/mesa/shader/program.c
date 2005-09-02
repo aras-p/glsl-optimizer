@@ -40,6 +40,7 @@
 #include "nvfragprog.h"
 #include "nvvertparse.h"
 #include "nvvertprog.h"
+#include "atifragshader.h"
 
 
 /**********************************************************************/
@@ -324,8 +325,13 @@ _mesa_delete_program(GLcontext *ctx, struct program *prog)
    }
    else if (prog->Target == GL_FRAGMENT_SHADER_ATI) {
       struct ati_fragment_shader *atifs = (struct ati_fragment_shader *)prog;
-      if (atifs->Instructions)
-	 _mesa_free(atifs->Instructions);
+      GLuint i;
+      for (i = 0; i < MAX_NUM_PASSES_ATI; i++) {
+	 if (atifs->Instructions[i])
+	    _mesa_free(atifs->Instructions[i]);
+	 if (atifs->SetupInst[i])
+	    _mesa_free(atifs->SetupInst[i]);
+      }
    }
 
    _mesa_free(prog);

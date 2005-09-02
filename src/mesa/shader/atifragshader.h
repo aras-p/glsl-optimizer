@@ -40,7 +40,7 @@ struct atifragshader_dst_register
 #define ATI_FRAGMENT_SHADER_PASS_OP  2
 #define ATI_FRAGMENT_SHADER_SAMPLE_OP 3
 
-/* two opcodes - one for color/one for alpha - also pass/sample */
+/* two opcodes - one for color/one for alpha */
 /* up to three source registers for most ops */
 struct atifs_instruction
 {
@@ -48,6 +48,14 @@ struct atifs_instruction
    GLuint ArgCount[2];
    struct atifragshader_src_register SrcReg[2][3];
    struct atifragshader_dst_register DstReg[2];
+};
+
+/* different from arithmetic shader instruction */
+struct atifs_setupinst
+{
+   GLenum Opcode;
+   GLuint src;
+   GLenum swizzle;
 };
 
 extern GLuint GLAPIENTRY _mesa_GenFragmentShadersATI(GLuint range);

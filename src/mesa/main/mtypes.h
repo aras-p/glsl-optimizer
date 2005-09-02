@@ -1746,6 +1746,7 @@ enum register_file
 struct vp_instruction;
 struct fp_instruction;
 struct atifs_instruction;
+struct atifs_setupinst;
 struct program_parameter_list;
 
 
@@ -1806,10 +1807,18 @@ struct fragment_program
 struct ati_fragment_shader
 {
    struct program Base;
-   struct atifs_instruction *Instructions;
+   struct atifs_instruction *Instructions[2];
+   struct atifs_setupinst *SetupInst[2];
    GLfloat Constants[8][4];
-   GLint NumPasses;
-   GLint cur_pass;
+   GLuint localConstDef;
+   GLubyte numArithInstr[2];
+   GLubyte regsAssigned[2];
+   GLubyte NumPasses;
+   GLubyte cur_pass;
+   GLubyte last_optype;
+   GLboolean interpinp1;
+   GLboolean isValid;
+   GLuint swizzlerq;
 };
 
 /**
@@ -1883,6 +1892,7 @@ struct gl_ati_fragment_shader_state
    GLboolean Enabled;
    GLboolean _Enabled;
    GLboolean Compiling;
+   GLfloat globalConstants[8][4];
    struct atifs_machine Machine;            /* machine state */
    struct ati_fragment_shader *Current;
 };

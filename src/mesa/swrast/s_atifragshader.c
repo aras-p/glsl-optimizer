@@ -258,18 +258,12 @@ struct ati_fs_opcode_st ati_fs_opcodes[] = {
 
 
 static void
-handle_pass_op(struct atifs_machine *machine, struct atifs_instruction *inst,
-	       const struct sw_span *span, GLuint column)
+handle_pass_op(struct atifs_machine *machine, struct atifs_setupinst *texinst,
+	       const struct sw_span *span, GLuint column, GLuint idx)
 {
-   GLuint idx = inst->DstReg[0].Index - GL_REG_0_ATI;
-   GLuint swizzle = inst->DstReg[0].Swizzle;
-   GLuint pass_tex = inst->SrcReg[0][0].Index;
+   GLuint swizzle = texinst->swizzle;
+   GLuint pass_tex = texinst->src;
 
-   /* if we get here after passing pass one then we are starting pass two - backup the registers */
-   if (machine->pass == 1) {
-      finish_pass(machine);
-      machine->pass = 2;
-   }
    if (pass_tex >= GL_TEXTURE0_ARB && pass_tex <= GL_TEXTURE7_ARB) {
       pass_tex -= GL_TEXTURE0_ARB;
       COPY_4V(machine->Registers[idx],
@@ -286,18 +280,11 @@ handle_pass_op(struct atifs_machine *machine, struct atifs_instruction *inst,
 
 static void
 handle_sample_op(GLcontext * ctx, struct atifs_machine *machine,
-		 struct atifs_instruction *inst, const struct sw_span *span,
-		 GLuint column)
+		 struct atifs_setupinst *texinst, const struct sw_span *span,
+		 GLuint column, GLuint idx)
 {
-   GLuint idx = inst->DstReg[0].Index - GL_REG_0_ATI;
-   GLuint swizzle = inst->DstReg[0].Swizzle;
-   GLuint sample_tex = inst->SrcReg[0][0].Index;
-
-   /* if we get here after passing pass one then we are starting pass two - backup the registers */
-   if (machine->pass == 1) {
-      finish_pass(machine);
-      machine->pass = 2;
-   }
+   GLuint swizzle = texinst->swizzle;
+   GLuint sample_tex = texinst->src;
 
    if (sample_tex >= GL_TEXTURE0_ARB && sample_tex <= GL_TEXTURE7_ARB) {
       sample_tex -= GL_TEXTURE0_ARB;
@@ -310,7 +297,6 @@ handle_sample_op(GLcontext * ctx, struct atifs_machine *machine,
       fetch_texel(ctx, machine->Registers[sample_tex], 0, sample_tex,
 		  machine->Registers[idx]);
    }
-
    apply_swizzle(machine, idx, swizzle);
 }
 
@@ -329,24 +315,28 @@ execute_shader(GLcontext * ctx,
 {
    GLuint pc;
    struct atifs_instruction *inst;
+   struct atifs_setupinst *texinst;
    GLint optype;
-   GLint i;
+   GLint i, j, pass;
    GLint dstreg;
    GLfloat src[2][3][4];
    GLfloat zeros[4] = { 0.0, 0.0, 0.0, 0.0 };
    GLfloat ones[4] = { 1.0, 1.0, 1.0, 1.0 };
    GLfloat dst[2][4], *dstp;
 
-   for (pc = 0; pc < shader->Base.NumInstructions; pc++) {
-      inst = &shader->Instructions[pc];
+   for (pass = 0; pass < shader->NumPasses; pass++) {
+      if (pass > 0)
+	 finish_pass(machine);
+      for (j = 0; j < MAX_NUM_FRAGMENT_REGISTERS_ATI; j++) {
+	 texinst = &shader->SetupInst[pass][j];
+	 if (texinst->Opcode == ATI_FRAGMENT_SHADER_PASS_OP)
+	    handle_pass_op(machine, texinst, span, column, j);
+	 else if (texinst->Opcode == ATI_FRAGMENT_SHADER_SAMPLE_OP)
+	    handle_sample_op(ctx, machine, texinst, span, column, j);
+      }
 
-      if (inst->Opcode[0] == ATI_FRAGMENT_SHADER_PASS_OP)
-	 handle_pass_op(machine, inst, span, column);
-      else if (inst->Opcode[0] == ATI_FRAGMENT_SHADER_SAMPLE_OP)
-	 handle_sample_op(ctx, machine, inst, span, column);
-      else {
-	 if (machine->pass == 0)
-	    machine->pass = 1;
+      for (pc = 0; pc < shader->numArithInstr[pass]; pc++) {
+	 inst = &shader->Instructions[pass][pc];
 
 	 /* setup the source registers for color and alpha ops */
 	 for (optype = 0; optype < 2; optype++) {
@@ -356,9 +346,15 @@ execute_shader(GLcontext * ctx,
 	       if (index >= GL_REG_0_ATI && index <= GL_REG_5_ATI)
 		  SETUP_SRC_REG(optype, i,
 				machine->Registers[index - GL_REG_0_ATI]);
-	       else if (index >= GL_CON_0_ATI && index <= GL_CON_7_ATI)
-		  SETUP_SRC_REG(optype, i,
+	       else if (index >= GL_CON_0_ATI && index <= GL_CON_7_ATI) {
+		  if (shader->localConstDef & (1 << (index - GL_CON_0_ATI))) {
+		     SETUP_SRC_REG(optype, i,
 				shader->Constants[index - GL_CON_0_ATI]);
+		  } else {
+		     SETUP_SRC_REG(optype, i,
+				ctx->ATIFragmentShader.globalConstants[index - GL_CON_0_ATI]);
+		  }
+	       }
 	       else if (index == GL_ONE)
 		  SETUP_SRC_REG(optype, i, ones);
 	       else if (index == GL_ZERO)
