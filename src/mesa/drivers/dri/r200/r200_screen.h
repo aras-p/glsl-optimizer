@@ -86,7 +86,7 @@ typedef struct {
 
    drmBufMapPtr buffers;
 
-   __volatile__ int32_t *scratch;
+   __volatile__ u_int32_t *scratch;       /* is this used for anything? */
 
    __DRIscreenPrivate *driScreen;
    unsigned int sarea_priv_offset;
