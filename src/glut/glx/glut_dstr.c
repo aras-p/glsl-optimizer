@@ -1530,11 +1530,7 @@ main(int argc, char **argv)
   char *str, buffer[1024];
   int tty = isatty(fileno(stdin));
   int overlay = 0, showconfig = 0;
-#if defined(GLX_VERSION_1_1) && defined(GLX_SGIX_fbconfig)
-  GLXFBConfigSGIX fbc;
-#else
   void *fbc;
-#endif
 
 #if !defined(_WIN32)
   dpy = XOpenDisplay(NULL);
@@ -1563,10 +1559,10 @@ main(int argc, char **argv)
       } else {
         if (overlay) {
           vinfo = getVisualInfoFromString(str, &treatAsSingle,
-            requiredOverlayCriteria, numRequiredOverlayCriteria, requiredOverlayCriteriaMask, (void**) &fbc);
+            requiredOverlayCriteria, numRequiredOverlayCriteria, requiredOverlayCriteriaMask, &fbc);
         } else {
           vinfo = getVisualInfoFromString(str, &treatAsSingle,
-            requiredWindowCriteria, numRequiredWindowCriteria, requiredWindowCriteriaMask, (void**) &fbc);
+            requiredWindowCriteria, numRequiredWindowCriteria, requiredWindowCriteriaMask, &fbc);
         }
         if (vinfo) {
           printf("\n");

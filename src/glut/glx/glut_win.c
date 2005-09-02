@@ -30,7 +30,7 @@ GLUTwindow *__glutMenuWindow = NULL;
 
 void (*__glutFreeOverlayFunc) (GLUToverlay *);
 XVisualInfo *(*__glutDetermineVisualFromString) (char *string, Bool * treatAsSingle,
-  Criterion * requiredCriteria, int nRequired, int requiredMask, void** fbc) = NULL;
+  Criterion * requiredCriteria, int nRequired, int requiredMask, void **fbc) = NULL;
 
 static Criterion requiredWindowCriteria[] =
 {
@@ -471,11 +471,7 @@ __glutCreateWindow(GLUTwindow * parent,
   unsigned long attribMask;
   int winnum;
   int i;
-#if defined(GLX_VERSION_1_1) && defined(GLX_SGIX_fbconfig)
-  GLXFBConfigSGIX fbc;
-#else
   void *fbc;
-#endif
 
 #if defined(_WIN32)
   WNDCLASS wc;
@@ -501,7 +497,7 @@ __glutCreateWindow(GLUTwindow * parent,
 
 #if !defined(_WIN32)
   window->vis = __glutDetermineWindowVisual(&window->treatAsSingle,
-    &window->visAlloced, (void**) &fbc);
+    &window->visAlloced, &fbc);
   if (!window->vis) {
     __glutFatalError(
       "visual with necessary capabilities not found.");

@@ -362,11 +362,7 @@ glutEstablishOverlay(void)
   GLUToverlay *overlay;
   GLUTwindow *window;
   XSetWindowAttributes wa;
-#if defined(GLX_VERSION_1_1) && defined(GLX_SGIX_fbconfig)
-  GLXFBConfigSGIX fbc;
-#else
   void *fbc;
-#endif
 
   /* Register a routine to free an overlay with glut_win.c;
      this keeps glut_win.c from pulling in all of
@@ -389,7 +385,7 @@ glutEstablishOverlay(void)
     __glutFatalError("out of memory.");
 
   overlay->vis = determineOverlayVisual(&overlay->treatAsSingle,
-    &overlay->visAlloced, (void **) &fbc);
+    &overlay->visAlloced, &fbc);
   if (!overlay->vis) {
     __glutFatalError("lacks overlay support.");
   }
