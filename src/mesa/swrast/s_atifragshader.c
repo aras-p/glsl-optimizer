@@ -53,38 +53,40 @@ fetch_texel(GLcontext * ctx, const GLfloat texcoord[4], GLfloat lambda,
 }
 
 static void
-apply_swizzle(struct atifs_machine *machine, GLuint reg, GLuint swizzle)
+apply_swizzle(GLfloat values[4], GLuint swizzle)
 {
    GLfloat s, t, r, q;
 
-   s = machine->Registers[reg][0];
-   t = machine->Registers[reg][1];
-   r = machine->Registers[reg][2];
-   q = machine->Registers[reg][3];
+   s = values[0];
+   t = values[1];
+   r = values[2];
+   q = values[3];
 
    switch (swizzle) {
    case GL_SWIZZLE_STR_ATI:
-      machine->Registers[reg][0] = s;
-      machine->Registers[reg][1] = t;
-      machine->Registers[reg][2] = r;
+      values[0] = s;
+      values[1] = t;
+      values[2] = r;
       break;
    case GL_SWIZZLE_STQ_ATI:
-      machine->Registers[reg][0] = s;
-      machine->Registers[reg][1] = t;
-      machine->Registers[reg][2] = q;
+      values[0] = s;
+      values[1] = t;
+      values[2] = q;
       break;
    case GL_SWIZZLE_STR_DR_ATI:
-      machine->Registers[reg][0] = s / r;
-      machine->Registers[reg][1] = t / r;
-      machine->Registers[reg][2] = 1 / r;
+      values[0] = s / r;
+      values[1] = t / r;
+      values[2] = 1 / r;
       break;
    case GL_SWIZZLE_STQ_DQ_ATI:
-      machine->Registers[reg][0] = s / q;
-      machine->Registers[reg][1] = t / q;
-      machine->Registers[reg][2] = 1 / q;
+/* make sure q is not 0 to avoid problems later with infinite values (texture lookup)? */
+      if (q == 0.0F) q = 0.000000001;
+      values[0] = s / q;
+      values[1] = t / q;
+      values[2] = 1 / q;
       break;
    }
-   machine->Registers[reg][3] = 0.0;
+   values[3] = 0.0;
 }
 
 static void
@@ -269,12 +271,11 @@ handle_pass_op(struct atifs_machine *machine, struct atifs_setupinst *texinst,
       COPY_4V(machine->Registers[idx],
 	      span->array->texcoords[pass_tex][column]);
    }
-   else if (pass_tex >= GL_REG_0_ATI && pass_tex <= GL_REG_5_ATI
-	    && machine->pass == 2) {
+   else if (pass_tex >= GL_REG_0_ATI && pass_tex <= GL_REG_5_ATI) {
       pass_tex -= GL_REG_0_ATI;
       COPY_4V(machine->Registers[idx], machine->PrevPassRegisters[pass_tex]);
    }
-   apply_swizzle(machine, idx, swizzle);
+   apply_swizzle(machine->Registers[idx], swizzle);
 
 }
 
@@ -283,21 +284,21 @@ handle_sample_op(GLcontext * ctx, struct atifs_machine *machine,
 		 struct atifs_setupinst *texinst, const struct sw_span *span,
 		 GLuint column, GLuint idx)
 {
+/* sample from unit idx using texinst->src as coords */
    GLuint swizzle = texinst->swizzle;
-   GLuint sample_tex = texinst->src;
+   GLuint coord_source = texinst->src;
+   GLfloat tex_coords[4];
 
-   if (sample_tex >= GL_TEXTURE0_ARB && sample_tex <= GL_TEXTURE7_ARB) {
-      sample_tex -= GL_TEXTURE0_ARB;
-      fetch_texel(ctx, span->array->texcoords[sample_tex][column], 0.0F,
-		  sample_tex, machine->Registers[idx]);
+   if (coord_source >= GL_TEXTURE0_ARB && coord_source <= GL_TEXTURE7_ARB) {
+      coord_source -= GL_TEXTURE0_ARB;
+      COPY_4V(tex_coords, span->array->texcoords[coord_source][column]);
    }
-   else if (sample_tex >= GL_REG_0_ATI && sample_tex <= GL_REG_5_ATI) {
-      /* this is wrong... */
-      sample_tex -= GL_REG_0_ATI;
-      fetch_texel(ctx, machine->Registers[sample_tex], 0, sample_tex,
-		  machine->Registers[idx]);
+   else if (coord_source >= GL_REG_0_ATI && coord_source <= GL_REG_5_ATI) {
+      coord_source -= GL_REG_0_ATI;
+      COPY_4V(tex_coords, machine->PrevPassRegisters[coord_source]);
    }
-   apply_swizzle(machine, idx, swizzle);
+   apply_swizzle(tex_coords, swizzle);
+   fetch_texel(ctx, tex_coords, 0.0F, idx, machine->Registers[idx]);
 }
 
 #define SETUP_SRC_REG(optype, i, x)	     do {	\

@@ -432,7 +432,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               if (ctx->FragmentProgram._Active) {
+               if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled) {
                   /* do perspective correction but don't divide s, t, r by q */
                   const GLfloat dwdx = span->dwdx;
                   GLfloat w = span->w;
@@ -483,7 +483,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               if (ctx->FragmentProgram._Active) {
+               if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled) {
                   /* do perspective correction but don't divide s, t, r by q */
                   const GLfloat dwdx = span->dwdx;
                   GLfloat w = span->w;
@@ -566,7 +566,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         if (ctx->FragmentProgram._Active) {
+         if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled) {
             /* do perspective correction but don't divide s, t, r by q */
             const GLfloat dwdx = span->dwdx;
             GLfloat w = span->w;
@@ -617,7 +617,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         if (ctx->FragmentProgram._Active) {
+         if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled) {
             /* do perspective correction but don't divide s, t, r by q */
             const GLfloat dwdx = span->dwdx;
             GLfloat w = span->w;
