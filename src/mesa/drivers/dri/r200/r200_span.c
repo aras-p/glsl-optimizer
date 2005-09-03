@@ -49,25 +49,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define GET_PTR(X,Y) (sPriv->pFB + drb->flippedOffset		\
      + ((dPriv->y + (Y)) * drb->flippedPitch + (dPriv->x + (X))) * drb->cpp)
 
-#if 000
-#define LOCAL_VARS							\
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);				\
-   r200ScreenPtr r200Screen = rmesa->r200Screen;			\
-   __DRIscreenPrivate *sPriv = rmesa->dri.screen;			\
-   __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;			\
-   GLuint pitch = r200Screen->frontPitch * r200Screen->cpp;		\
-   GLuint height = dPriv->h;						\
-   char *buf = (char *)(sPriv->pFB +					\
-			rmesa->state.color.drawOffset +			\
-			(dPriv->x * r200Screen->cpp) +			\
-			(dPriv->y * pitch));				\
-   char *read_buf = (char *)(sPriv->pFB +				\
-			     rmesa->state.pixel.readOffset +		\
-			     (dPriv->x * r200Screen->cpp) +		\
-			     (dPriv->y * pitch));			\
-   GLuint p;								\
-   (void) read_buf; (void) buf; (void) p
-#else
 #define LOCAL_VARS							\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);				\
    __DRIscreenPrivate *sPriv = rmesa->dri.screen;			\
@@ -76,7 +57,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    GLuint height = dPriv->h;						\
    GLuint p;								\
    (void) p;
-#endif
 
 #define LOCAL_DEPTH_VARS						\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);				\
@@ -138,6 +118,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * are set up correctly. It is not quite enough to get it working with hyperz too...
  */
 
+/* extract bit 'b' of x, result is zero or one */
 #define BIT(x,b) ((x & (1<<b))>>b)
 
 static GLuint
@@ -201,7 +182,7 @@ r200_mba_z16( driRenderbuffer *drb, GLint x, GLint y )
 #define READ_DEPTH( d, _x, _y )						\
    d = *(GLushort *)(buf + r200_mba_z16( drb, _x + xo, _y + yo ));
 
-#define TAG(x) r200##x##_16
+#define TAG(x) r200##x##_z16
 #include "depthtmp.h"
 
 
@@ -221,7 +202,7 @@ do {									\
    d = *(GLuint *)(buf + r200_mba_z32( drb, _x + xo,			\
 					 _y + yo )) & 0x00ffffff;
 
-#define TAG(x) r200##x##_24_8
+#define TAG(x) r200##x##_z24_s8
 #include "depthtmp.h"
 
 
@@ -248,55 +229,9 @@ do {									\
    d = tmp >> 24;							\
 } while (0)
 
-#define TAG(x) r200##x##_24_8
+#define TAG(x) r200##x##_z24_s8
 #include "stenciltmp.h"
 
-
-#if 000
-/*
- * This function is called to specify which buffer to read and write
- * for software rasterization (swrast) fallbacks.  This doesn't necessarily
- * correspond to glDrawBuffer() or glReadBuffer() calls.
- */
-static void r200SetBuffer( GLcontext *ctx,
-                           GLframebuffer *colorBuffer,
-                           GLuint bufferBit )
-{
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-
-   switch ( bufferBit ) {
-   case BUFFER_BIT_FRONT_LEFT:
-      if ( rmesa->doPageFlip && rmesa->sarea->pfCurrentPage == 1 ) {
-        rmesa->state.pixel.readOffset = rmesa->r200Screen->backOffset;
-        rmesa->state.pixel.readPitch  = rmesa->r200Screen->backPitch;
-        rmesa->state.color.drawOffset = rmesa->r200Screen->backOffset;
-        rmesa->state.color.drawPitch  = rmesa->r200Screen->backPitch;
-      } else {
-      	rmesa->state.pixel.readOffset = rmesa->r200Screen->frontOffset;
-      	rmesa->state.pixel.readPitch  = rmesa->r200Screen->frontPitch;
-      	rmesa->state.color.drawOffset = rmesa->r200Screen->frontOffset;
-      	rmesa->state.color.drawPitch  = rmesa->r200Screen->frontPitch;
-      }
-      break;
-   case BUFFER_BIT_BACK_LEFT:
-      if ( rmesa->doPageFlip && rmesa->sarea->pfCurrentPage == 1 ) {
-      	rmesa->state.pixel.readOffset = rmesa->r200Screen->frontOffset;
-      	rmesa->state.pixel.readPitch  = rmesa->r200Screen->frontPitch;
-      	rmesa->state.color.drawOffset = rmesa->r200Screen->frontOffset;
-      	rmesa->state.color.drawPitch  = rmesa->r200Screen->frontPitch;
-      } else {
-        rmesa->state.pixel.readOffset = rmesa->r200Screen->backOffset;
-        rmesa->state.pixel.readPitch  = rmesa->r200Screen->backPitch;
-        rmesa->state.color.drawOffset = rmesa->r200Screen->backOffset;
-        rmesa->state.color.drawPitch  = rmesa->r200Screen->backPitch;
-      }
-      break;
-   default:
-      _mesa_problem(ctx, "Bad bufferBit in %s", __FUNCTION__);
-      break;
-   }
-}
-#endif
 
 /* Move locking out to get reasonable span performance (10x better
  * than doing this in HW_LOCK above).  WaitForIdle() is the main
@@ -341,10 +276,6 @@ static void r200SpanRenderFinish( GLcontext *ctx )
 void r200InitSpanFuncs( GLcontext *ctx )
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
-
-#if 000
-   swdd->SetBuffer = r200SetBuffer;
-#endif
    swdd->SpanRenderStart          = r200SpanRenderStart;
    swdd->SpanRenderFinish         = r200SpanRenderFinish; 
 }
@@ -366,27 +297,12 @@ r200SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
       }
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-      drb->Base.GetRow        = r200ReadDepthSpan_16;
-      drb->Base.GetValues     = r200ReadDepthPixels_16;
-      drb->Base.PutRow        = r200WriteDepthSpan_16;
-      drb->Base.PutMonoRow    = r200WriteMonoDepthSpan_16;
-      drb->Base.PutValues     = r200WriteDepthPixels_16;
-      drb->Base.PutMonoValues = NULL;
+      r200InitDepthPointers_z16(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
-      drb->Base.GetRow        = r200ReadDepthSpan_24_8;
-      drb->Base.GetValues     = r200ReadDepthPixels_24_8;
-      drb->Base.PutRow        = r200WriteDepthSpan_24_8;
-      drb->Base.PutMonoRow    = r200WriteMonoDepthSpan_24_8;
-      drb->Base.PutValues     = r200WriteDepthPixels_24_8;
-      drb->Base.PutMonoValues = NULL;
+      r200InitDepthPointers_z24_s8(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-      drb->Base.GetRow        = r200ReadStencilSpan_24_8;
-      drb->Base.GetValues     = r200ReadStencilPixels_24_8;
-      drb->Base.PutRow        = r200WriteStencilSpan_24_8;
-      drb->Base.PutMonoRow    = r200WriteMonoStencilSpan_24_8;
-      drb->Base.PutValues     = r200WriteStencilPixels_24_8;
-      drb->Base.PutMonoValues = NULL;
+      r200InitStencilPointers_z24_s8(&drb->Base);
    }
 }

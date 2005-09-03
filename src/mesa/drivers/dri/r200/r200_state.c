@@ -1813,25 +1813,9 @@ static void r200DrawBuffer( GLcontext *ctx, GLenum mode )
       return;
    }
 
-#if 000
-   /* We want to update the s/w rast state too so that r200SetBuffer()
-    * gets called.
-    */
-   _swrast_DrawBuffer(ctx, mode);
-
-   R200_STATECHANGE( rmesa, ctx );
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((rmesa->state.color.drawOffset +
-					       rmesa->r200Screen->fbLocation)
-					      & R200_COLOROFFSET_MASK);
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = rmesa->state.color.drawPitch;
-   if (rmesa->sarea->tiling_enabled) {
-      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
-   }
-#else
    /* We'll set the drawing engine's offset/pitch parameters later
     * when we update other state.
     */
-#endif
 }
 
 
