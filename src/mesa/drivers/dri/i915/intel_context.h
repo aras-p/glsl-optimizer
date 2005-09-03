@@ -206,8 +206,6 @@ struct intel_context
 
    /* These refer to the current draw (front vs. back) buffer:
     */
-   char *drawMap;		/* draw buffer address in virtual mem */
-   char *readMap;	
    GLuint drawOffset;		/* agp offset of drawbuffer */
    int drawX;			/* origin of drawable in draw buffer */
    int drawY;

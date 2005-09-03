@@ -187,11 +187,6 @@ static void intelDrawBuffer(GLcontext *ctx, GLenum mode )
       return;
    }
 
-   /* We want to update the s/w rast state too so that r200SetBuffer()
-    * gets called.
-    */
-   _swrast_DrawBuffer(ctx, mode);
-
    if ( intel->sarea->pf_current_page == 1 ) 
       front ^= 1;
    
@@ -199,12 +194,8 @@ static void intelDrawBuffer(GLcontext *ctx, GLenum mode )
 
    if (front) {
       intel->drawOffset = screen->frontOffset;
-      intel->drawMap = (char *)intel->driScreen->pFB;
-      intel->readMap = (char *)intel->driScreen->pFB;
    } else {
       intel->drawOffset = screen->backOffset;
-      intel->drawMap = screen->back.map;
-      intel->readMap = screen->back.map;
    }
 
    intel->vtbl.set_draw_offset( intel, intel->drawOffset );

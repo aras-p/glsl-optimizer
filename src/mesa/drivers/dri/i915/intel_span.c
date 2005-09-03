@@ -40,29 +40,27 @@
 #define DBG 0
 
 #define LOCAL_VARS						\
-   intelContextPtr intel = INTEL_CONTEXT(ctx);                    \
+   intelContextPtr intel = INTEL_CONTEXT(ctx);			\
    __DRIdrawablePrivate *dPriv = intel->driDrawable;		\
-   intelScreenPrivate *intelScreen = intel->intelScreen;		\
-   GLuint pitch = intelScreen->backPitch * intelScreen->cpp;	\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;		\
+   GLuint pitch = drb->pitch * drb->cpp;			\
    GLuint height = dPriv->h;					\
-   char *buf = (char *)(intel->drawMap +			\
-			dPriv->x * intelScreen->cpp +		\
-			dPriv->y * pitch);			\
-   char *read_buf = (char *)(intel->readMap +			\
-			     dPriv->x * intelScreen->cpp +	\
-			     dPriv->y * pitch); 		\
-   GLushort p;         						\
+   char *buf = (char *) drb->Base.Data +			\
+			dPriv->x * drb->cpp +			\
+			dPriv->y * pitch;			\
+   char *read_buf = buf;					\
+   GLushort p;							\
    (void) read_buf; (void) buf; (void) p
 
 #define LOCAL_DEPTH_VARS					\
-   intelContextPtr intel = INTEL_CONTEXT(ctx);                    \
+   intelContextPtr intel = INTEL_CONTEXT(ctx);			\
    __DRIdrawablePrivate *dPriv = intel->driDrawable;		\
-   intelScreenPrivate *intelScreen = intel->intelScreen;		\
-   GLuint pitch = intelScreen->backPitch * intelScreen->cpp;	\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;		\
+   GLuint pitch = drb->pitch * drb->cpp;			\
    GLuint height = dPriv->h;					\
-   char *buf = (char *)(intelScreen->depth.map +			\
-			dPriv->x * intelScreen->cpp +		\
-			dPriv->y * pitch)
+   char *buf = (char *) drb->Base.Data +			\
+			dPriv->x * drb->cpp +			\
+			dPriv->y * pitch
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS 
 
@@ -127,7 +125,7 @@ do {								\
    d = *(GLushort *)(buf + (_x)*2 + (_y)*pitch);	 
 
 
-#define TAG(x) intel##x##_16
+#define TAG(x) intel##x##_z16
 #include "depthtmp.h"
 
 
@@ -135,15 +133,13 @@ do {								\
 #define LOCAL_VARS						\
    intelContextPtr intel = INTEL_CONTEXT(ctx);			\
    __DRIdrawablePrivate *dPriv = intel->driDrawable;		\
-   intelScreenPrivate *intelScreen = intel->intelScreen;		\
-   GLuint pitch = intelScreen->backPitch * intelScreen->cpp;	\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;		\
+   GLuint pitch = drb->pitch * drb->cpp;			\
    GLuint height = dPriv->h;					\
-   char *buf = (char *)(intel->drawMap +			\
-			dPriv->x * intelScreen->cpp +		\
-			dPriv->y * pitch);			\
-   char *read_buf = (char *)(intel->readMap +			\
-			     dPriv->x * intelScreen->cpp +	\
-			     dPriv->y * pitch);			\
+   char *buf = (char *)drb->Base.Data +				\
+			dPriv->x * drb->cpp +			\
+			dPriv->y * pitch;			\
+   char *read_buf = buf;					\
    GLuint p;							\
    (void) read_buf; (void) buf; (void) p
 
@@ -189,7 +185,7 @@ do {								\
    d = *(GLuint *)(buf + (_x)*4 + (_y)*pitch) & 0xffffff;
 
 
-#define TAG(x) intel##x##_24_8
+#define TAG(x) intel##x##_z24_s8
 #include "depthtmp.h"
 
 #define WRITE_STENCIL( _x, _y, d ) {			\
@@ -202,29 +198,8 @@ do {								\
 #define READ_STENCIL( d, _x, _y )			\
    d = *(GLuint *)(buf + (_x)*4 + (_y)*pitch) >> 24;
 
-#define TAG(x) intel##x##_24_8
+#define TAG(x) intel##x##_z24_s8
 #include "stenciltmp.h"
-
-
-/*
- * This function is called to specify which buffer to read and write
- * for software rasterization (swrast) fallbacks.  This doesn't necessarily
- * correspond to glDrawBuffer() or glReadBuffer() calls.
- */
-static void intelSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
-                          GLuint bufferBit)
-{
-   intelContextPtr intel = INTEL_CONTEXT(ctx);
-   if (bufferBit == BUFFER_BIT_FRONT_LEFT) {
-      intel->drawMap = (char *)intel->driScreen->pFB;
-      intel->readMap = (char *)intel->driScreen->pFB;
-   } else if (bufferBit == BUFFER_BIT_BACK_LEFT) {
-      intel->drawMap = intel->intelScreen->back.map;
-      intel->readMap = intel->intelScreen->back.map;
-   } else {
-      ASSERT(0);
-   }
-}
 
 
 /* Move locking out to get reasonable span performance.
@@ -247,68 +222,7 @@ void intelSpanRenderFinish( GLcontext *ctx )
 
 void intelInitSpanFuncs( GLcontext *ctx )
 {
-   intelContextPtr intel = INTEL_CONTEXT(ctx);
-   intelScreenPrivate *intelScreen = intel->intelScreen;
-
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
-
-   swdd->SetBuffer = intelSetBuffer;
-
-   switch (intelScreen->fbFormat) {
-   case DV_PF_555:
-#if 0
-      swdd->WriteRGBASpan = intelWriteRGBASpan_555;
-      swdd->WriteRGBSpan = intelWriteRGBSpan_555;
-      swdd->WriteMonoRGBASpan = intelWriteMonoRGBASpan_555;
-      swdd->WriteRGBAPixels = intelWriteRGBAPixels_555;
-      swdd->WriteMonoRGBAPixels = intelWriteMonoRGBAPixels_555;
-      swdd->ReadRGBASpan = intelReadRGBASpan_555;
-      swdd->ReadRGBAPixels = intelReadRGBAPixels_555;
-      swdd->ReadDepthSpan = intelReadDepthSpan_16;
-      swdd->WriteDepthSpan = intelWriteDepthSpan_16;
-      swdd->ReadDepthPixels = intelReadDepthPixels_16;
-      swdd->WriteDepthPixels = intelWriteDepthPixels_16;
-#endif
-      break;
-
-   case DV_PF_565:
-#if 0
-      swdd->WriteRGBASpan = intelWriteRGBASpan_565;
-      swdd->WriteRGBSpan = intelWriteRGBSpan_565;
-      swdd->WriteMonoRGBASpan = intelWriteMonoRGBASpan_565;
-      swdd->WriteRGBAPixels = intelWriteRGBAPixels_565;
-      swdd->WriteMonoRGBAPixels = intelWriteMonoRGBAPixels_565; 
-      swdd->ReadRGBASpan = intelReadRGBASpan_565;
-      swdd->ReadRGBAPixels = intelReadRGBAPixels_565;
-      swdd->ReadDepthSpan = intelReadDepthSpan_16;
-      swdd->WriteDepthSpan = intelWriteDepthSpan_16;
-      swdd->ReadDepthPixels = intelReadDepthPixels_16;
-      swdd->WriteDepthPixels = intelWriteDepthPixels_16;
-#endif
-      break;
-
-   case DV_PF_8888:
-#if 0
-      swdd->WriteRGBASpan = intelWriteRGBASpan_8888;
-      swdd->WriteRGBSpan = intelWriteRGBSpan_8888;
-      swdd->WriteMonoRGBASpan = intelWriteMonoRGBASpan_8888;
-      swdd->WriteRGBAPixels = intelWriteRGBAPixels_8888;
-      swdd->WriteMonoRGBAPixels = intelWriteMonoRGBAPixels_8888;
-      swdd->ReadRGBASpan = intelReadRGBASpan_8888;
-      swdd->ReadRGBAPixels = intelReadRGBAPixels_8888;
-      swdd->ReadDepthSpan = intelReadDepthSpan_24_8;
-      swdd->WriteDepthSpan = intelWriteDepthSpan_24_8;
-      swdd->ReadDepthPixels = intelReadDepthPixels_24_8;
-      swdd->WriteDepthPixels = intelWriteDepthPixels_24_8;
-
-      swdd->WriteStencilSpan = intelWriteStencilSpan_24_8;
-      swdd->ReadStencilSpan = intelReadStencilSpan_24_8;
-      swdd->WriteStencilPixels = intelWriteStencilPixels_24_8;
-      swdd->ReadStencilPixels = intelReadStencilPixels_24_8;
-#endif
-      break;
-   }
-
    swdd->SpanRenderStart = intelSpanRenderStart;
    swdd->SpanRenderFinish = intelSpanRenderFinish; 
 }
@@ -353,27 +267,12 @@ intelSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
       }
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-      drb->Base.GetRow        = intelReadDepthSpan_16;
-      drb->Base.GetValues     = intelReadDepthPixels_16;
-      drb->Base.PutRow        = intelWriteDepthSpan_16;
-      drb->Base.PutMonoRow    = intelWriteMonoDepthSpan_16;
-      drb->Base.PutValues     = intelWriteDepthPixels_16;
-      drb->Base.PutMonoValues = NULL;
+      intelInitDepthPointers_z16(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
-      drb->Base.GetRow        = intelReadDepthSpan_24_8;
-      drb->Base.GetValues     = intelReadDepthPixels_24_8;
-      drb->Base.PutRow        = intelWriteDepthSpan_24_8;
-      drb->Base.PutMonoRow    = intelWriteMonoDepthSpan_24_8;
-      drb->Base.PutValues     = intelWriteDepthPixels_24_8;
-      drb->Base.PutMonoValues = NULL;
+      intelInitDepthPointers_z24_s8(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-      drb->Base.GetRow        = intelReadStencilSpan_24_8;
-      drb->Base.GetValues     = intelReadStencilPixels_24_8;
-      drb->Base.PutRow        = intelWriteStencilSpan_24_8;
-      drb->Base.PutMonoRow    = intelWriteMonoStencilSpan_24_8;
-      drb->Base.PutValues     = intelWriteStencilPixels_24_8;
-      drb->Base.PutMonoValues = NULL;
+      intelInitStencilPointers_z24_s8(&drb->Base);
    }
 }

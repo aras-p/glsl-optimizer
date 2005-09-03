@@ -239,14 +239,6 @@ static GLboolean intelCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       GLboolean swStencil = (mesaVis->stencilBits > 0 && 
 			     mesaVis->depthBits != 24);
 
-#if 0
-      driDrawPriv->driverPrivate = (void *) 
-	 _mesa_create_framebuffer(mesaVis,
-				  GL_FALSE,  /* software depth buffer? */
-				  swStencil,
-				  mesaVis->accumRedBits > 0,
-				  GL_FALSE /* s/w alpha planes */);
-#else
       struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
 
       {
@@ -255,6 +247,7 @@ static GLboolean intelCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  screen->frontOffset, screen->frontPitch);
          intelSetSpanFunctions(frontRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
+         frontRb->Base.Data = driScrnPriv->pFB;
       }
 
       if (mesaVis->doubleBufferMode) {
@@ -263,6 +256,7 @@ static GLboolean intelCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  screen->backOffset, screen->backPitch);
          intelSetSpanFunctions(backRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
+         backRb->Base.Data = screen->back.map;
       }
 
       if (mesaVis->depthBits == 16) {
@@ -271,6 +265,7 @@ static GLboolean intelCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  screen->depthOffset, screen->depthPitch);
          intelSetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+         depthRb->Base.Data = screen->depth.map;
       }
       else if (mesaVis->depthBits == 24) {
          driRenderbuffer *depthRb
@@ -278,6 +273,7 @@ static GLboolean intelCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  screen->depthOffset, screen->depthPitch);
          intelSetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+         depthRb->Base.Data = screen->depth.map;
       }
 
       if (mesaVis->stencilBits > 0 && !swStencil) {
@@ -286,6 +282,7 @@ static GLboolean intelCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  screen->depthOffset, screen->depthPitch);
          intelSetSpanFunctions(stencilRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
+         stencilRb->Base.Data = screen->depth.map;
       }
 
       _mesa_add_soft_renderbuffers(fb,
@@ -296,7 +293,7 @@ static GLboolean intelCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                    GL_FALSE, /* alpha */
                                    GL_FALSE /* aux */);
       driDrawPriv->driverPrivate = (void *) fb;
-#endif
+
       return (driDrawPriv->driverPrivate != NULL);
    }
 }
