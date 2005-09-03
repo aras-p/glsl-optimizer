@@ -241,6 +241,22 @@ static void TAG(ReadDepthPixels)( GLcontext *ctx,
 }
 
 
+/**
+ * Initialize the given renderbuffer's span routines to point to
+ * the depth/z functions we generated above.
+ */
+static void TAG(InitDepthPointers)(struct gl_renderbuffer *rb)
+{
+   rb->GetRow = TAG(ReadDepthSpan);
+   rb->GetValues = TAG(ReadDepthPixels);
+   rb->PutRow = TAG(WriteDepthSpan);
+   rb->PutRowRGB = NULL;
+   rb->PutMonoRow = TAG(WriteMonoDepthSpan);
+   rb->PutValues = TAG(WriteDepthPixels);
+   rb->PutMonoValues = NULL;
+}
+
+
 #if HAVE_HW_DEPTH_SPANS
 #undef WRITE_DEPTH_SPAN
 #undef WRITE_DEPTH_PIXELS

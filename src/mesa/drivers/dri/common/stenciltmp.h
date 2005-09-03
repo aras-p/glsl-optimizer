@@ -176,6 +176,21 @@ static void TAG(ReadStencilPixels)( GLcontext *ctx,
 
 
 
+/**
+ * Initialize the given renderbuffer's span routines to point to
+ * the stencil functions we generated above.
+ */
+static void TAG(InitStencilPointers)(struct gl_renderbuffer *rb)
+{
+   rb->GetRow = TAG(ReadStencilSpan);
+   rb->GetValues = TAG(ReadStencilPixels);
+   rb->PutRow = TAG(WriteStencilSpan);
+   rb->PutRowRGB = NULL;
+   rb->PutMonoRow = TAG(WriteMonoStencilSpan);
+   rb->PutValues = TAG(WriteStencilPixels);
+   rb->PutMonoValues = NULL;
+}
+
 
 #undef WRITE_STENCIL
 #undef READ_STENCIL
