@@ -144,13 +144,8 @@ struct radeon_colorbuffer_state {
 	GLint drawOffset, drawPitch;
 };
 
-struct radeon_pixel_state {
-	GLint readOffset, readPitch;
-};
-
 struct radeon_state {
 	struct radeon_colorbuffer_state color;
-	struct radeon_pixel_state pixel;
 	struct radeon_scissor_state scissor;
 };
 

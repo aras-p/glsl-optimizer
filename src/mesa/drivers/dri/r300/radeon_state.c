@@ -229,9 +229,6 @@ void radeonInitState(radeonContextPtr radeon)
 		radeon->state.color.drawOffset = radeon->radeonScreen->frontOffset;
 		radeon->state.color.drawPitch = radeon->radeonScreen->frontPitch;
 	}
-
-	radeon->state.pixel.readOffset = radeon->state.color.drawOffset;
-	radeon->state.pixel.readPitch = radeon->state.color.drawPitch;
 }
 
 

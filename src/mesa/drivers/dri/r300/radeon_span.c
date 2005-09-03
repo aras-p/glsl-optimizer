@@ -49,10 +49,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    driRenderbuffer* drb = (driRenderbuffer*)rb;				\
    __DRIscreenPrivate *sPriv = radeon->dri.screen;			\
    __DRIdrawablePrivate *dPriv = radeon->dri.drawable;			\
-   GLuint pitch = drb->pitch * drb->cpp;				\
+   GLuint pitch = drb->flippedPitch * drb->cpp;				\
    GLuint height = dPriv->h;						\
    char *buf = (char *)(sPriv->pFB +					\
-			drb->offset +					\
+			drb->flippedOffset +				\
 			(dPriv->x * drb->cpp) +				\
 			(dPriv->y * pitch));				\
    GLuint p;								\
@@ -228,59 +228,6 @@ do {									\
 #define TAG(x) radeon##x##_24_8_LINEAR
 #include "stenciltmp.h"
 
-/*
- * This function is called to specify which buffer to read and write
- * for software rasterization (swrast) fallbacks.  This doesn't necessarily
- * correspond to glDrawBuffer() or glReadBuffer() calls.
- */
-static void radeonSetBuffer(GLcontext * ctx,
-			  GLframebuffer * colorBuffer, GLuint bufferBit)
-{
-	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-	int buffer;
-
-	switch (bufferBit) {
-	case BUFFER_BIT_FRONT_LEFT:
-		buffer = 0;
-		break;
-
-	case BUFFER_BIT_BACK_LEFT:
-		buffer = 1;
-		break;
-
-	default:
-		_mesa_problem(ctx, "Bad bufferBit in %s", __FUNCTION__);
-		return;
-	}
-
-	if (radeon->doPageFlip && radeon->sarea->pfCurrentPage == 1)
-		buffer ^= 1;
-
-#if 0
-	fprintf(stderr, "%s: using %s buffer\n", __FUNCTION__,
-		buffer ? "back" : "front");
-#endif
-
-	if (buffer) {
-		radeon->state.pixel.readOffset =
-			radeon->radeonScreen->backOffset;
-		radeon->state.pixel.readPitch =
-			radeon->radeonScreen->backPitch;
-		radeon->state.color.drawOffset =
-			radeon->radeonScreen->backOffset;
-		radeon->state.color.drawPitch =
-			radeon->radeonScreen->backPitch;
-	} else {
-		radeon->state.pixel.readOffset =
-			radeon->radeonScreen->frontOffset;
-		radeon->state.pixel.readPitch =
-			radeon->radeonScreen->frontPitch;
-		radeon->state.color.drawOffset =
-			radeon->radeonScreen->frontOffset;
-		radeon->state.color.drawPitch =
-			radeon->radeonScreen->frontPitch;
-	}
-}
 
 /* Move locking out to get reasonable span performance (10x better
  * than doing this in HW_LOCK above).  WaitForIdle() is the main
@@ -310,9 +257,10 @@ static void radeonSpanRenderStart(GLcontext * ctx)
 	 */
 	{
 		int p;
+		driRenderbuffer *drb =
+			(driRenderbuffer *) ctx->WinSysDrawBuffer->_ColorDrawBuffers[0][0];
 		volatile int *read_buf =
-		    (volatile int *)(radeon->dri.screen->pFB +
-				     radeon->state.pixel.readOffset);
+			(volatile int *)(radeon->dri.screen->pFB + drb->offset);
 		p = *read_buf;
 		*read_buf = p;
 	}
@@ -328,12 +276,8 @@ static void radeonSpanRenderFinish(GLcontext * ctx)
 
 void radeonInitSpanFuncs(GLcontext * ctx)
 {
-	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct swrast_device_driver *swdd =
 	    _swrast_GetDeviceDriverReference(ctx);
-
-	swdd->SetBuffer = radeonSetBuffer;
-
 	swdd->SpanRenderStart = radeonSpanRenderStart;
 	swdd->SpanRenderFinish = radeonSpanRenderFinish;
 }
@@ -364,28 +308,13 @@ void radeonSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 		}
 	}
 	else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-		drb->Base.GetRow        = radeonReadDepthSpan_16_LINEAR;
-		drb->Base.GetValues     = radeonReadDepthPixels_16_LINEAR;
-		drb->Base.PutRow        = radeonWriteDepthSpan_16_LINEAR;
-		drb->Base.PutMonoRow    = radeonWriteMonoDepthSpan_16_LINEAR;
-		drb->Base.PutValues     = radeonWriteDepthPixels_16_LINEAR;
-		drb->Base.PutMonoValues = NULL;
+		radeonInitDepthPointers_16_LINEAR(&drb->Base);
 	}
 	else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
-		drb->Base.GetRow        = radeonReadDepthSpan_24_8_LINEAR;
-		drb->Base.GetValues     = radeonReadDepthPixels_24_8_LINEAR;
-		drb->Base.PutRow        = radeonWriteDepthSpan_24_8_LINEAR;
-		drb->Base.PutMonoRow    = radeonWriteMonoDepthSpan_24_8_LINEAR;
-		drb->Base.PutValues     = radeonWriteDepthPixels_24_8_LINEAR;
-		drb->Base.PutMonoValues = NULL;
+		radeonInitDepthPointers_24_8_LINEAR(&drb->Base);
 	}
 	else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-		drb->Base.GetRow        = radeonReadStencilSpan_24_8_LINEAR;
-		drb->Base.GetValues     = radeonReadStencilPixels_24_8_LINEAR;
-		drb->Base.PutRow        = radeonWriteStencilSpan_24_8_LINEAR;
-		drb->Base.PutMonoRow    = radeonWriteMonoStencilSpan_24_8_LINEAR;
-		drb->Base.PutValues     = radeonWriteStencilPixels_24_8_LINEAR;
-		drb->Base.PutMonoValues = NULL;
+		radeonInitStencilPointers_24_8_LINEAR(&drb->Base);
 	}
 }
 

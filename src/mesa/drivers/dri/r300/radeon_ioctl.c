@@ -51,6 +51,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "radeon_reg.h"
 
+#include "drirenderbuffer.h"
 #include "vblank.h"
 
 static void radeonWaitForIdle(radeonContextPtr radeon);
@@ -281,6 +282,9 @@ void radeonPageFlip(const __DRIdrawablePrivate * dPriv)
 
 	radeon->swap_count++;
 	(void)(*dri_interface->getUST) (&radeon->swap_ust);
+
+        driFlipRenderbuffers(radeon->glCtx->WinSysDrawBuffer, 
+                             radeon->sarea->pfCurrentPage);
 
 	if (radeon->sarea->pfCurrentPage == 1) {
 		radeon->state.color.drawOffset = radeon->radeonScreen->frontOffset;
