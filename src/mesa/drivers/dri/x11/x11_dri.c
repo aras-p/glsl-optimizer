@@ -202,68 +202,6 @@ x11CreateContext(const __GLcontextModes *glVisual,
    _swsetup_CreateContext(ctx);
    _swsetup_Wakeup(ctx);
 
-   /* swrast init */
-   {
-      struct swrast_device_driver *swdd;
-      swdd = _swrast_GetDeviceDriverReference(ctx);
-      swdd->SetBuffer = set_buffer;
-      if (!glVisual->rgbMode) {
-         swdd->WriteCI32Span = 
-         swdd->WriteCI32Span = 
-         swdd->WriteCI8Span = 
-         swdd->WriteMonoCISpan = 
-         swdd->WriteCI32Pixels = 
-         swdd->WriteMonoCIPixels = 
-         swdd->ReadCI32Span = 
-         swdd->ReadCI32Pixels = nullwrite;
-      }
-      else if (glVisual->rgbBits == 24 &&
-	       glVisual->alphaBits == 0) {
-         swdd->WriteRGBASpan = 
-         swdd->WriteRGBSpan = 
-         swdd->WriteMonoRGBASpan = 
-         swdd->WriteRGBAPixels = 
-         swdd->WriteMonoRGBAPixels = 
-         swdd->ReadRGBASpan = 
-         swdd->ReadRGBAPixels = nullwrite;
-      }
-      else if (glVisual->rgbBits == 32 &&
-	       glVisual->alphaBits == 8) {
-         swdd->WriteRGBASpan = 
-         swdd->WriteRGBSpan = 
-         swdd->WriteMonoRGBASpan = 
-         swdd->WriteRGBAPixels = 
-         swdd->WriteMonoRGBAPixels = 
-         swdd->ReadRGBASpan = 
-         swdd->ReadRGBAPixels = nullwrite;
-      }
-      else if (glVisual->rgbBits == 16 &&
-	       glVisual->alphaBits == 0) {
-         swdd->WriteRGBASpan = 
-         swdd->WriteRGBSpan = 
-         swdd->WriteMonoRGBASpan = 
-         swdd->WriteRGBAPixels = 
-         swdd->WriteMonoRGBAPixels = 
-         swdd->ReadRGBASpan = 
-         swdd->ReadRGBAPixels = nullwrite;
-      }
-      else if (glVisual->rgbBits == 15 &&
-	       glVisual->alphaBits == 0) {
-         swdd->WriteRGBASpan = 
-         swdd->WriteRGBSpan = 
-         swdd->WriteMonoRGBASpan = 
-         swdd->WriteRGBAPixels = 
-         swdd->WriteMonoRGBAPixels = 
-         swdd->ReadRGBASpan = 
-         swdd->ReadRGBAPixels = nullwrite;
-      }
-      else {
-         _mesa_printf("bad pixelformat rgb %d alpha %d\n",
-		      glVisual->rgbBits, 
-		      glVisual->alphaBits );
-      }
-   }
-
    /* use default TCL pipeline */
    {
       TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -317,16 +255,24 @@ x11CreateBuffer(__DRIscreenPrivate *driScrnPriv,
       return GL_FALSE; /* not implemented */
    }
    else {
+      const GLboolean swColor = GL_TRUE;
       const GLboolean swDepth = mesaVis->depthBits > 0;
       const GLboolean swAlpha = mesaVis->alphaBits > 0;
       const GLboolean swAccum = mesaVis->accumRedBits > 0;
       const GLboolean swStencil = mesaVis->stencilBits > 0;
-      driDrawPriv->driverPrivate = (void *)
-         _mesa_create_framebuffer(mesaVis,
-                                  swDepth,
-                                  swStencil,
-                                  swAccum,
-                                  swAlpha);
+      const GLboolean swAux = mesaVis->auxBuffers > 0;
+      struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
+
+      driDrawPriv->driverPrivate = (void *) fb;
+
+      /* all software-based renderbuffers */
+      _mesa_add_soft_renderbuffers(fb,
+                                   swColor,
+                                   swDepth,
+                                   swStencil,
+                                   swAccum,
+                                   swAlpha,
+                                   swAux);
 
       if (!driDrawPriv->driverPrivate)
 	 return 0;
