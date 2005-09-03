@@ -362,6 +362,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  /*screen->frontOffset*/0, screen->backPitch);
          i810SetSpanFunctions(frontRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
+         frontRb->Base.Data = driScrnPriv->pFB;
       }
 
       if (mesaVis->doubleBufferMode) {
@@ -370,6 +371,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  screen->backOffset, screen->backPitch);
          i810SetSpanFunctions(backRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
+         backRb->Base.Data = (GLubyte *) screen->back.map;
       }
 
       if (mesaVis->depthBits == 16) {
@@ -378,6 +380,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  screen->depthOffset, screen->backPitch);
          i810SetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+         depthRb->Base.Data = (GLubyte *) screen->depth.map;
       }
 
       _mesa_add_soft_renderbuffers(fb,

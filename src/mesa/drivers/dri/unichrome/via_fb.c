@@ -33,7 +33,7 @@
 #include <sys/ioctl.h>
 
 GLboolean
-via_alloc_draw_buffer(struct via_context *vmesa, struct via_buffer *buf)
+via_alloc_draw_buffer(struct via_context *vmesa, struct via_renderbuffer *buf)
 {
    drm_via_mem_t mem;
    mem.context = vmesa->hHWContext;
@@ -53,7 +53,7 @@ via_alloc_draw_buffer(struct via_context *vmesa, struct via_buffer *buf)
 }
 
 void
-via_free_draw_buffer(struct via_context *vmesa, struct via_buffer *buf)
+via_free_draw_buffer(struct via_context *vmesa, struct via_renderbuffer *buf)
 {
    drm_via_mem_t mem;
 

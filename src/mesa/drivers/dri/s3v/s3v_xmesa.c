@@ -90,6 +90,7 @@ s3vCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  screen->backOffset, screen->backPitch);
          s3vSetSpanFunctions(backRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
+         backRb->backBuffer = GL_TRUE;
       }
 
       if (mesaVis->depthBits == 16) {

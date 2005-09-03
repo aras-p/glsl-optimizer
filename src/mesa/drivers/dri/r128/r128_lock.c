@@ -37,6 +37,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_tex.h"
 #include "r128_state.h"
 
+#include "drirenderbuffer.h"
+
+
 #if DEBUG_LOCKING
 char *prevLockFile = NULL;
 int prevLockLine = 0;
@@ -48,28 +51,11 @@ int prevLockLine = 0;
 static void
 r128UpdatePageFlipping( r128ContextPtr rmesa )
 {
-   int use_back;
-
    rmesa->doPageFlip = rmesa->sarea->pfAllowPageFlip;
-
-   use_back = (rmesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT);
-   use_back ^= (rmesa->sarea->pfCurrentPage == 1);
-
-   if ( R128_DEBUG & DEBUG_VERBOSE_API )
-      fprintf(stderr, "%s allow %d current %d\n", __FUNCTION__, 
-	      rmesa->doPageFlip,
-	      rmesa->sarea->pfCurrentPage );
-
-   if ( use_back ) {
-	 rmesa->drawOffset = rmesa->r128Screen->backOffset;
-	 rmesa->drawPitch  = rmesa->r128Screen->backPitch;
-   } else {
-	 rmesa->drawOffset = rmesa->r128Screen->frontOffset;
-	 rmesa->drawPitch  = rmesa->r128Screen->frontPitch;
+   if (!rmesa->doPageFlip) {
+      driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer, GL_FALSE);
    }
 
-   rmesa->setup.dst_pitch_offset_c = (((rmesa->drawPitch/8) << 21) |
-                                      (rmesa->drawOffset >> 5));
    rmesa->new_state |= R128_NEW_WINDOW;
 }
 

@@ -152,8 +152,6 @@ struct i810_context_t {
 
    /* These refer to the current draw (front vs. back) buffer:
     */
-   char *drawMap;		/* draw buffer address in virtual mem */
-   char *readMap;	
    int drawX;			/* origin of drawable in draw buffer */
    int drawY;
    GLuint numClipRects;		/* cliprects for that buffer */

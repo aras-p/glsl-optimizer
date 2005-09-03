@@ -32,30 +32,26 @@
 
 #define DBG 0
 
-#define LOCAL_VARS					\
-   savageContextPtr imesa = SAVAGE_CONTEXT(ctx);	\
-   __DRIdrawablePrivate *dPriv = imesa->mesa_drawable;	\
-   savageScreenPrivate *savageScreen = imesa->savageScreen;	\
-   GLuint cpp   = savageScreen->cpp;			\
-   GLuint pitch = imesa->aperturePitch;			\
-   GLuint height = dPriv->h;				\
-   GLubyte *buf = map +					\
-		  dPriv->x * cpp +			\
-		  dPriv->y * pitch;			\
-   GLubyte *read_buf = buf;				\
-   GLuint p;						\
+#define LOCAL_VARS						\
+   savageContextPtr imesa = SAVAGE_CONTEXT(ctx);		\
+   __DRIdrawablePrivate *dPriv = imesa->driDrawable;		\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;		\
+   GLuint cpp   = drb->cpp;					\
+   GLuint pitch = drb->pitch;					\
+   GLuint height = dPriv->h;					\
+   GLubyte *buf = drb->Base.Data + dPriv->x * cpp + dPriv->y * pitch;	\
+   GLubyte *read_buf = buf;					\
+   GLuint p;							\
    (void) p; (void) read_buf;
 
-#define LOCAL_DEPTH_VARS				\
-   savageContextPtr imesa = SAVAGE_CONTEXT(ctx);	\
-   __DRIdrawablePrivate *dPriv = imesa->mesa_drawable;	\
-   savageScreenPrivate *savageScreen = imesa->savageScreen;	\
-   GLuint zpp   = savageScreen->zpp;			\
-   GLuint pitch = imesa->aperturePitch;			\
-   GLuint height = dPriv->h;				\
-   GLubyte *buf = imesa->apertureBase[TARGET_DEPTH] +	\
-		  dPriv->x * zpp +			\
-		  dPriv->y * pitch
+#define LOCAL_DEPTH_VARS					\
+   savageContextPtr imesa = SAVAGE_CONTEXT(ctx);		\
+   __DRIdrawablePrivate *dPriv = imesa->driDrawable;		\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;		\
+   GLuint zpp   = drb->cpp;					\
+   GLuint pitch = drb->pitch;					\
+   GLuint height = dPriv->h;					\
+   GLubyte *buf = drb->Base.Data + dPriv->x * zpp + dPriv->y * pitch;
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
 
@@ -65,13 +61,9 @@
 
 #define HW_UNLOCK()
 
-#define HW_WRITE_LOCK()					\
-	savageContextPtr imesa = SAVAGE_CONTEXT(ctx);	\
-	GLubyte *map = imesa->drawMap;
+#define HW_WRITE_LOCK()
 
-#define HW_READ_LOCK()					\
-	savageContextPtr imesa = SAVAGE_CONTEXT(ctx);	\
-	GLubyte *map = imesa->readMap;
+#define HW_READ_LOCK()
 
 
 /* 16 bit, 565 rgb color spanline and pixel functions
@@ -110,7 +102,7 @@
 #define READ_DEPTH( d, _x, _y ) \
     d = 0xFFFF - *(GLushort *)(buf + ((_x)<<1) + (_y)*pitch)
 
-#define TAG(x) savage##x##_16
+#define TAG(x) savage##x##_z16
 #include "depthtmp.h"
 
 
@@ -127,7 +119,7 @@
         savageDecodeFloat16( *(GLushort *)(buf + ((_x)<<1) + (_y)*pitch) ) * \
 	65535.0
 
-#define TAG(x) savage##x##_16f
+#define TAG(x) savage##x##_z16f
 #include "depthtmp.h"
 
 
@@ -146,7 +138,7 @@
 #define READ_DEPTH( d, _x, _y )	\
    d = 0x00FFFFFF - (*(GLuint *)(buf + ((_x)<<2) + (_y)*pitch) & 0x00FFFFFF)
 
-#define TAG(x) savage##x##_8_24
+#define TAG(x) savage##x##_s8_z24
 #include "depthtmp.h"
 
 
@@ -166,7 +158,7 @@
 	*(GLuint *)(buf + ((_x)<<2) + (_y)*pitch) & 0x00FFFFFF)	\
 	* 16777215.0
 
-#define TAG(x) savage##x##_8_24f
+#define TAG(x) savage##x##_s8_z24f
 #include "depthtmp.h"
 
 
@@ -180,36 +172,10 @@
 #define READ_STENCIL( d, _x, _y ) \
    d = (GLstencil)((*(GLuint *)(buf + ((_x)<<2) + (_y)*pitch) & 0xFF000000) >> 24)
 
-#define TAG(x) savage##x##_8_24
+#define TAG(x) savage##x##_s8_z24
 #include "stenciltmp.h"
 
 
-/*
- * This function is called to specify which buffer to read and write
- * for software rasterization (swrast) fallbacks.  This doesn't necessarily
- * correspond to glDrawBuffer() or glReadBuffer() calls.
- */
-static void savageDDSetBuffer(GLcontext *ctx, GLframebuffer *buffer,
-			      GLuint bufferBit)
-{
-   savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-   GLubyte *map;
-
-   assert((bufferBit == BUFFER_BIT_FRONT_LEFT) || (bufferBit == BUFFER_BIT_BACK_LEFT));
-
-   map = (bufferBit == BUFFER_BIT_FRONT_LEFT)
-       ? imesa->apertureBase[TARGET_FRONT]
-       : imesa->apertureBase[TARGET_BACK];
-
-   imesa->drawMap = map;
-   imesa->readMap = map;
-
-   assert( (buffer == imesa->driDrawable->driverPrivate)
-	   || (buffer == imesa->driReadable->driverPrivate) );
-
-   imesa->mesa_drawable = (buffer == imesa->driDrawable->driverPrivate)
-       ? imesa->driDrawable : imesa->driReadable;
-}
 
 /*
  * Wrappers around _swrast_Copy/Draw/ReadPixels that make sure all
@@ -267,8 +233,6 @@ static void savageSpanRenderStart( GLcontext *ctx )
 void savageDDInitSpanFuncs( GLcontext *ctx )
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
-
-   swdd->SetBuffer = savageDDSetBuffer;
    swdd->SpanRenderStart = savageSpanRenderStart;
 
    /* Pixel path fallbacks.
@@ -299,44 +263,21 @@ savageSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis,
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
       if (float_depth) {
-         drb->Base.GetRow        = savageReadDepthSpan_16f;
-         drb->Base.GetValues     = savageReadDepthPixels_16f;
-         drb->Base.PutRow        = savageWriteDepthSpan_16f;
-         drb->Base.PutMonoRow    = savageWriteMonoDepthSpan_16f;
-         drb->Base.PutValues     = savageWriteDepthPixels_16f;
+         savageInitDepthPointers_z16f(&drb->Base);
       }
       else {
-         drb->Base.GetRow        = savageReadDepthSpan_16;
-         drb->Base.GetValues     = savageReadDepthPixels_16;
-         drb->Base.PutRow        = savageWriteDepthSpan_16;
-         drb->Base.PutMonoRow    = savageWriteMonoDepthSpan_16;
-         drb->Base.PutValues     = savageWriteDepthPixels_16;
+         savageInitDepthPointers_z16(&drb->Base);
       }
-      drb->Base.PutMonoValues = NULL;
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
       if (float_depth) {
-         drb->Base.GetRow        = savageReadDepthSpan_8_24f;
-         drb->Base.GetValues     = savageReadDepthPixels_8_24f;
-         drb->Base.PutRow        = savageWriteDepthSpan_8_24f;
-         drb->Base.PutMonoRow    = savageWriteMonoDepthSpan_8_24f;
-         drb->Base.PutValues     = savageWriteDepthPixels_8_24f;
+         savageInitDepthPointers_s8_z24f(&drb->Base);
       }
       else {
-         drb->Base.GetRow        = savageReadDepthSpan_8_24;
-         drb->Base.GetValues     = savageReadDepthPixels_8_24;
-         drb->Base.PutRow        = savageWriteDepthSpan_8_24;
-         drb->Base.PutMonoRow    = savageWriteMonoDepthSpan_8_24;
-         drb->Base.PutValues     = savageWriteDepthPixels_8_24;
+         savageInitDepthPointers_s8_z24(&drb->Base);
       }
-      drb->Base.PutMonoValues = NULL;
    }
    else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-      drb->Base.GetRow        = savageReadStencilSpan_8_24;
-      drb->Base.GetValues     = savageReadStencilPixels_8_24;
-      drb->Base.PutRow        = savageWriteStencilSpan_8_24;
-      drb->Base.PutMonoRow    = savageWriteMonoStencilSpan_8_24;
-      drb->Base.PutValues     = savageWriteStencilPixels_8_24;
-      drb->Base.PutMonoValues = NULL;
+      savageInitStencilPointers_s8_z24(&drb->Base);
    }
 }

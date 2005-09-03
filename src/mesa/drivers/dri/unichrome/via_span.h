@@ -25,13 +25,11 @@
 #ifndef _VIA_SPAN_H
 #define _VIA_SPAN_H
 
-#include "drirenderbuffer.h"
-
 extern void viaInitSpanFuncs(GLcontext *ctx);
 extern void viaSpanRenderStart( GLcontext *ctx );
 extern void viaSpanRenderFinish( GLcontext *ctx );
 
 extern void
-viaSetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis);
+viaSetSpanFunctions(struct via_renderbuffer *vrb, const GLvisual *vis);
 
 #endif

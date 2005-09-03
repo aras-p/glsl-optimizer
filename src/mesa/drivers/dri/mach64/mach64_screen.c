@@ -372,14 +372,6 @@ mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
       return GL_FALSE; /* not implemented */
    }
    else {
-#if 0
-      driDrawPriv->driverPrivate = (void *) 
-         _mesa_create_framebuffer( mesaVis,
-                                   GL_FALSE,  /* software depth buffer? */
-                                   mesaVis->stencilBits > 0,
-                                   mesaVis->accumRedBits > 0,
-                                   mesaVis->alphaBits > 0 );
-#else
       struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
 
       {
@@ -406,6 +398,7 @@ mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
       }
       else if (mesaVis->depthBits == 24) {
+         /* XXX I don't think 24-bit Z is supported - so this isn't used */
          driRenderbuffer *depthRb
             = driNewRenderbuffer(GL_DEPTH_COMPONENT24, screen->cpp,
                                  screen->depthOffset, screen->depthPitch);
@@ -421,7 +414,7 @@ mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                    GL_FALSE, /* alpha */
                                    GL_FALSE /* aux */);
       driDrawPriv->driverPrivate = (void *) fb;
-#endif
+
       return (driDrawPriv->driverPrivate != NULL);
    }
 }

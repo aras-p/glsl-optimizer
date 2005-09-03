@@ -44,8 +44,6 @@ extern void r128DDInitStateFuncs( GLcontext *ctx );
 extern void r128DDUpdateState( GLcontext *ctx );
 extern void r128DDUpdateHWState( GLcontext *ctx );
 
-extern void r128UpdateWindow( GLcontext *ctx );
-
 extern void r128EmitHwStateLocked( r128ContextPtr rmesa );
 
 #endif

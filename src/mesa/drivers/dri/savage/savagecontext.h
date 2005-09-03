@@ -236,8 +236,6 @@ struct savage_context_t {
 
     /* These refer to the current draw (front vs. back) buffer:
      */
-    GLubyte *drawMap;		/* draw buffer address in virtual mem */
-    GLubyte *readMap;	
     int drawX;   		/* origin of drawable in draw buffer */
     int drawY;
     GLuint numClipRects;		/* cliprects for that buffer */
@@ -276,13 +274,6 @@ struct savage_context_t {
 
     __DRIdrawablePrivate *driDrawable;
     __DRIdrawablePrivate *driReadable;
-
-    /**
-     * Drawable used by Mesa for software fallbacks for reading and
-     * writing.  It is set by Mesa's \c SetBuffer callback, and will always be
-     * either \c mga_context_t::driDrawable or \c mga_context_t::driReadable.
-     */
-    __DRIdrawablePrivate *mesa_drawable;
 
     __DRIscreenPrivate *driScreen;
     savageScreenPrivate *savageScreen; 

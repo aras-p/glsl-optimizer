@@ -38,35 +38,26 @@
 
 #define DBG 0
 
+#define GET_PTR(X,Y) (sPriv->pFB + drb->offset		\
+     + ((dPriv->y + (Y)) * drb->pitch + (dPriv->x + (X))) * drb->cpp)
+
 #define LOCAL_VARS							\
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);			\
-   mach64ScreenRec *mach64Screen = mmesa->mach64Screen;			\
-   __DRIscreenPrivate *driScreen = mmesa->driScreen;			\
+   __DRIscreenPrivate *sPriv = mmesa->driScreen;			\
    __DRIdrawablePrivate *dPriv = mmesa->driDrawable;			\
-   GLuint pitch = mmesa->drawPitch * mach64Screen->cpp;			\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;			\
    GLuint height = dPriv->h;						\
-   char *buf = (char *)(driScreen->pFB +				\
-			mmesa->drawOffset +				\
-			(dPriv->x * mach64Screen->cpp) +		\
-			(dPriv->y * pitch));				\
-   char *read_buf = (char *)(driScreen->pFB +				\
-			     mmesa->readOffset +			\
-			     (dPriv->x * mach64Screen->cpp) +		\
-			     (dPriv->y * pitch));			\
    GLushort p;								\
-   (void) read_buf; (void) buf; (void) p
+   (void) p;
 
 #define LOCAL_DEPTH_VARS						\
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);			\
-   mach64ScreenRec *mach64Screen = mmesa->mach64Screen;			\
    __DRIdrawablePrivate *dPriv = mmesa->driDrawable;			\
    __DRIscreenPrivate *driScreen = mmesa->driScreen;			\
-   GLuint pitch = mach64Screen->depthPitch * 2;				\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;			\
    GLuint height = dPriv->h;						\
-   char *buf = (char *)(driScreen->pFB +				\
-			mach64Screen->depthOffset +			\
-			dPriv->x * 2 +					\
-			dPriv->y * pitch)
+   char *buf = (char *)(driScreen->pFB + drb->offset +			\
+			(dPriv->x + dPriv->y * drb->pitch) * 2)
 
 #define LOCAL_STENCIL_VARS	LOCAL_DEPTH_VARS
 
@@ -104,6 +95,8 @@
 
 #define TAG(x)    mach64##x##_RGB565
 #define TAG2(x,y) mach64##x##_RGB565##y
+#define GET_SRC_PTR(X,Y) GET_PTR(X,Y)
+#define GET_DST_PTR(X,Y) GET_SRC_PTR(X,Y)
 #include "spantmp2.h"
 
 
@@ -116,6 +109,8 @@
 
 #define TAG(x)    mach64##x##_ARGB8888
 #define TAG2(x,y) mach64##x##_ARGB8888##y
+#define GET_SRC_PTR(X,Y) GET_PTR(X,Y)
+#define GET_DST_PTR(X,Y) GET_SRC_PTR(X,Y)
 #include "spantmp2.h"
 
 
@@ -126,43 +121,14 @@
 /* 16 bit depthbuffer functions.
  */
 #define WRITE_DEPTH( _x, _y, d )					\
-   *(GLushort *)(buf + (_x)*2 + (_y)*pitch) = d;
+   *(GLushort *)(buf + ((_x) + (_y) * drb->pitch) * 2) = d;
 
 #define READ_DEPTH( d, _x, _y )						\
-   d = *(GLushort *)(buf + (_x)*2 + (_y)*pitch);
+   d = *(GLushort *)(buf + ((_x) + (_y) * drb->pitch) * 2);
 
-#define TAG(x) mach64##x##_16
+#define TAG(x) mach64##x##_z16
 #include "depthtmp.h"
 
-
-/*
- * This function is called to specify which buffer to read and write
- * for software rasterization (swrast) fallbacks.  This doesn't necessarily
- * correspond to glDrawBuffer() or glReadBuffer() calls.
- */
-static void mach64DDSetBuffer( GLcontext *ctx,
-			       GLframebuffer *colorBuffer,
-			       GLuint bufferBit )
-{
-   mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
-
-   switch ( bufferBit ) {
-   case BUFFER_BIT_FRONT_LEFT:
-      if (MACH64_DEBUG & DEBUG_VERBOSE_MSG)
-	 fprintf(stderr,"%s: BUFFER_BIT_FRONT_LEFT\n", __FUNCTION__);
-      mmesa->drawOffset = mmesa->readOffset = mmesa->mach64Screen->frontOffset;
-      mmesa->drawPitch  = mmesa->readPitch  = mmesa->mach64Screen->frontPitch;
-      break;
-   case BUFFER_BIT_BACK_LEFT:
-      if (MACH64_DEBUG & DEBUG_VERBOSE_MSG)
-	 fprintf(stderr,"%s: BUFFER_BIT_BACK_LEFT\n", __FUNCTION__);
-      mmesa->drawOffset = mmesa->readOffset = mmesa->mach64Screen->backOffset;
-      mmesa->drawPitch  = mmesa->readPitch  = mmesa->mach64Screen->backPitch;
-      break;
-   default:
-      break;
-   }
-}
 
 static void mach64SpanRenderStart( GLcontext *ctx )
 {
@@ -181,8 +147,6 @@ static void mach64SpanRenderFinish( GLcontext *ctx )
 void mach64DDInitSpanFuncs( GLcontext *ctx )
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
-
-   swdd->SetBuffer = mach64DDSetBuffer;
    swdd->SpanRenderStart	= mach64SpanRenderStart;
    swdd->SpanRenderFinish	= mach64SpanRenderFinish;
 }
@@ -203,29 +167,6 @@ mach64SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
       }
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-      drb->Base.GetRow        = mach64ReadDepthSpan_16;
-      drb->Base.GetValues     = mach64ReadDepthPixels_16;
-      drb->Base.PutRow        = mach64WriteDepthSpan_16;
-      drb->Base.PutMonoRow    = mach64WriteMonoDepthSpan_16;
-      drb->Base.PutValues     = mach64WriteDepthPixels_16;
-      drb->Base.PutMonoValues = NULL;
-   }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
-      /* never */
-      drb->Base.GetRow        = NULL;
-      drb->Base.GetValues     = NULL;
-      drb->Base.PutRow        = NULL;
-      drb->Base.PutMonoRow    = NULL;
-      drb->Base.PutValues     = NULL;
-      drb->Base.PutMonoValues = NULL;
-   }
-   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-      /* never */
-      drb->Base.GetRow        = NULL;
-      drb->Base.GetValues     = NULL;
-      drb->Base.PutRow        = NULL;
-      drb->Base.PutMonoRow    = NULL;
-      drb->Base.PutValues     = NULL;
-      drb->Base.PutMonoValues = NULL;
+      mach64InitDepthPointers_z16(&drb->Base);
    }
 }

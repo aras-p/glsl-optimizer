@@ -345,7 +345,6 @@ struct sis_context
   /* Drawable, cliprect and scissor information
    */
   GLint drawOffset, drawPitch;
-  GLint readOffset, readPitch;
 
   /* Mirrors of some DRI state
    */

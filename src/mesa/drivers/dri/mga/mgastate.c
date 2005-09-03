@@ -845,11 +845,6 @@ static void mgaDDDrawBuffer(GLcontext *ctx, GLenum mode )
       FALLBACK( ctx, MGA_FALLBACK_DRAW_BUFFER, GL_TRUE );
       return;
    }
-
-   /* We want to update the s/w rast state too so that r200SetBuffer()
-    * gets called.
-    */
-   _swrast_DrawBuffer(ctx, mode);
 }
 
 

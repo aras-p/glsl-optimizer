@@ -172,7 +172,7 @@ static void viaBlit(struct via_context *vmesa, GLuint bpp,
 }
 
 static void viaFillBuffer(struct via_context *vmesa,
-			  struct via_buffer *buffer,
+			  struct via_renderbuffer *buffer,
 			  drm_clip_rect_t *pbox,
 			  int nboxes,
 			  GLuint pixel,
@@ -339,8 +339,8 @@ static void viaDoSwapBuffers(struct via_context *vmesa,
 			     GLuint nbox)
 {    
    GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
-   struct via_buffer *front = &vmesa->front;
-   struct via_buffer *back = &vmesa->back;
+   struct via_renderbuffer *front = &vmesa->front;
+   struct via_renderbuffer *back = &vmesa->back;
    GLuint i;
         
    for (i = 0; i < nbox; i++, b++) {        
@@ -366,7 +366,7 @@ static void viaDoSwapBuffers(struct via_context *vmesa,
 
 static void viaEmitBreadcrumbLocked( struct via_context *vmesa )
 {
-   struct via_buffer *buffer = &vmesa->breadcrumb;
+   struct via_renderbuffer *buffer = &vmesa->breadcrumb;
    GLuint value = vmesa->lastBreadcrumbWrite + 1;
 
    if (VIA_DEBUG & DEBUG_IOCTL) 
@@ -562,10 +562,10 @@ void viaResetPageFlippingLocked(struct via_context *vmesa)
    viaDoPageFlipLocked( vmesa, 0 );
 
    if (vmesa->front.offset != 0) {
-      struct via_buffer buffer_tmp;
-      memcpy(&buffer_tmp, &vmesa->back, sizeof(struct via_buffer));
-      memcpy(&vmesa->back, &vmesa->front, sizeof(struct via_buffer));
-      memcpy(&vmesa->front, &buffer_tmp, sizeof(struct via_buffer));
+      struct via_renderbuffer buffer_tmp;
+      memcpy(&buffer_tmp, &vmesa->back, sizeof(struct via_renderbuffer));
+      memcpy(&vmesa->back, &vmesa->front, sizeof(struct via_renderbuffer));
+      memcpy(&vmesa->front, &buffer_tmp, sizeof(struct via_renderbuffer));
    }
 
    assert(vmesa->front.offset == 0);
@@ -623,7 +623,7 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
 {
     struct via_context *vmesa = 
        (struct via_context *)dPriv->driContextPriv->driverPrivate;
-    struct via_buffer buffer_tmp;
+    struct via_renderbuffer buffer_tmp;
 
     VIA_FLUSH_DMA(vmesa);
    if (vmesa->vblank_flags == VBLANK_FLAG_SYNC &&
@@ -645,9 +645,9 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
     /* KW: FIXME: When buffers are freed, could free frontbuffer by
      * accident:
      */
-    memcpy(&buffer_tmp, &vmesa->back, sizeof(struct via_buffer));
-    memcpy(&vmesa->back, &vmesa->front, sizeof(struct via_buffer));
-    memcpy(&vmesa->front, &buffer_tmp, sizeof(struct via_buffer));
+    memcpy(&buffer_tmp, &vmesa->back, sizeof(struct via_renderbuffer));
+    memcpy(&vmesa->back, &vmesa->front, sizeof(struct via_renderbuffer));
+    memcpy(&vmesa->front, &buffer_tmp, sizeof(struct via_renderbuffer));
 }
 
 
@@ -724,7 +724,7 @@ static int fire_buffer(struct via_context *vmesa)
 static void via_emit_cliprect(struct via_context *vmesa,
 			      drm_clip_rect_t *b) 
 {
-   struct via_buffer *buffer = vmesa->drawBuffer;
+   struct via_renderbuffer *buffer = vmesa->drawBuffer;
    GLuint *vb = (GLuint *)(vmesa->dma + vmesa->dmaCliprectAddr);
 
    GLuint format = (vmesa->viaScreen->bitsPerPixel == 0x20 

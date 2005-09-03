@@ -665,11 +665,6 @@ static void savageDDDrawBuffer(GLcontext *ctx, GLenum mode )
 	return;
     }
     
-    /* We want to update the s/w rast state too so that r200SetBuffer() (?)
-     * gets called.
-     */
-    _swrast_DrawBuffer(ctx, mode);
-
     if (destCtrl != imesa->regs.s4.destCtrl.ui)
         imesa->dirty |= SAVAGE_UPLOAD_GLOBAL;
 }
@@ -1663,8 +1658,6 @@ void savageDDInitState( savageContextPtr imesa ) {
         imesa->regs.s4.destCtrl.ni.dstWidthInTile =
             (imesa->savageScreen->width+31)>>5;
     }
-    imesa->drawMap = imesa->apertureBase[imesa->toggle];
-    imesa->readMap = imesa->apertureBase[imesa->toggle];
     imesa->NotFirstFrame = GL_FALSE;
 
     imesa->regs.s4.zBufOffset.ni.offset=imesa->savageScreen->depthOffset>>11;

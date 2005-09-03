@@ -16,25 +16,23 @@
 #define LOCAL_VARS					\
    i810ContextPtr imesa = I810_CONTEXT(ctx);	        \
    __DRIdrawablePrivate *dPriv = imesa->driDrawable;	\
-   i810ScreenPrivate *i810Screen = imesa->i810Screen;	\
-   GLuint pitch = i810Screen->backPitch;		\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;	\
+   GLuint pitch = drb->pitch;				\
    GLuint height = dPriv->h;				\
    GLushort p;						\
-   char *buf = (char *)(imesa->drawMap +		\
+   char *buf = (char *)(drb->flippedData +		\
 			dPriv->x * 2 +			\
 			dPriv->y * pitch);		\
-   char *read_buf = (char *)(imesa->readMap +		\
-			     dPriv->x * 2 +		\
-			     dPriv->y * pitch);		\
+   char *read_buf = buf;				\
    (void) read_buf; (void) buf; (void) p
 
 #define LOCAL_DEPTH_VARS				\
    i810ContextPtr imesa = I810_CONTEXT(ctx);	        \
    __DRIdrawablePrivate *dPriv = imesa->driDrawable;	\
-   i810ScreenPrivate *i810Screen = imesa->i810Screen;	\
-   GLuint pitch = i810Screen->backPitch;		\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;	\
+   GLuint pitch = drb->pitch;				\
    GLuint height = dPriv->h;				\
-   char *buf = (char *)(i810Screen->depth.map +	\
+   char *buf = (char *)(drb->Base.Data +		\
 			dPriv->x * 2 +			\
 			dPriv->y * pitch)
 
@@ -76,40 +74,9 @@ do {									\
 #define READ_DEPTH( d, _x, _y )	\
    d = *(GLushort *)(buf + (_x)*2 + (_y)*pitch);
 
-#define TAG(x) i810##x##_16
+#define TAG(x) i810##x##_z16
 #include "depthtmp.h"
 
-
-/*
- * This function is called to specify which buffer to read and write
- * for software rasterization (swrast) fallbacks.  This doesn't necessarily
- * correspond to glDrawBuffer() or glReadBuffer() calls.
- */
-static void i810SetBuffer(GLcontext *ctx, GLframebuffer *buffer,
-                          GLuint bufferBit )
-{
-   i810ContextPtr imesa = I810_CONTEXT(ctx);
-   (void) buffer;
-
-   switch(bufferBit) {
-    case BUFFER_BIT_FRONT_LEFT:
-      if ( imesa->sarea->pf_current_page == 1)
-        imesa->readMap = imesa->i810Screen->back.map;
-      else
-        imesa->readMap = (char*)imesa->driScreen->pFB;
-      break;
-    case BUFFER_BIT_BACK_LEFT:
-      if ( imesa->sarea->pf_current_page == 1)
-        imesa->readMap =  (char*)imesa->driScreen->pFB;
-      else
-        imesa->readMap = imesa->i810Screen->back.map;
-      break;
-    default:
-      	ASSERT(0);
-	break;
-   }
-   imesa->drawMap = imesa->readMap;
-}
 
 /* Move locking out to get reasonable span performance.
  */
@@ -131,26 +98,6 @@ void i810SpanRenderFinish( GLcontext *ctx )
 void i810InitSpanFuncs( GLcontext *ctx )
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
-
-   swdd->SetBuffer = i810SetBuffer;
-
-#if 0
-   swdd->WriteRGBASpan = i810WriteRGBASpan_565;
-   swdd->WriteRGBSpan = i810WriteRGBSpan_565;
-   swdd->WriteMonoRGBASpan = i810WriteMonoRGBASpan_565;
-   swdd->WriteRGBAPixels = i810WriteRGBAPixels_565;
-   swdd->WriteMonoRGBAPixels = i810WriteMonoRGBAPixels_565;
-   swdd->ReadRGBASpan = i810ReadRGBASpan_565;
-   swdd->ReadRGBAPixels = i810ReadRGBAPixels_565;
-#endif
-
-#if 0
-   swdd->ReadDepthSpan = i810ReadDepthSpan_16;
-   swdd->WriteDepthSpan = i810WriteDepthSpan_16;
-   swdd->ReadDepthPixels = i810ReadDepthPixels_16;
-   swdd->WriteDepthPixels = i810WriteDepthPixels_16;
-#endif
-
    swdd->SpanRenderStart = i810SpanRenderStart;
    swdd->SpanRenderFinish = i810SpanRenderFinish; 
 }
@@ -174,12 +121,7 @@ i810SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
       drb->Base.PutMonoValues = i810WriteMonoRGBAPixels_565;
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-      drb->Base.GetRow        = i810ReadDepthSpan_16;
-      drb->Base.GetValues     = i810ReadDepthPixels_16;
-      drb->Base.PutRow        = i810WriteDepthSpan_16;
-      drb->Base.PutMonoRow    = i810WriteMonoDepthSpan_16;
-      drb->Base.PutValues     = i810WriteDepthPixels_16;
-      drb->Base.PutMonoValues = NULL;
+      i810InitDepthPointers_z16(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
       /* should never get here */

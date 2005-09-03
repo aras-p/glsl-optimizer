@@ -44,9 +44,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define LOCAL_VARS							\
    sisContextPtr smesa = SIS_CONTEXT(ctx);				\
    __DRIdrawablePrivate *dPriv = smesa->driDrawable;			\
-   GLuint pitch = smesa->drawPitch;					\
-   char *buf = (char *)(smesa->FbBase + smesa->drawOffset);		\
-   char *read_buf = (char *)(smesa->FbBase + smesa->readOffset);	\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;			\
+   GLuint pitch = drb->pitch;						\
+   char *buf = (char *)(smesa->FbBase + drb->offset);			\
+   char *read_buf = buf;						\
    GLuint p;								\
    (void) read_buf; (void) buf; (void) p
 
@@ -89,7 +90,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define READ_DEPTH( d, _x, _y )		\
    d = *(GLushort *)(buf + (_x)*2 + (_y)*smesa->depthPitch);
 
-#define TAG(x) sis##x##_16
+#define TAG(x) sis##x##_z16
 #include "depthtmp.h"
 
 
@@ -101,7 +102,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define READ_DEPTH( d, _x, _y )		\
    d = *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch);
 
-#define TAG(x) sis##x##_32
+#define TAG(x) sis##x##_z32
 #include "depthtmp.h"
 
 
@@ -118,7 +119,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
    d = *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch) & 0x00ffffff; \
 }
 
-#define TAG(x) sis##x##_24_8
+#define TAG(x) sis##x##_z24_s8
 #include "depthtmp.h"
 
 #define WRITE_STENCIL( _x, _y, d ) {				\
@@ -131,33 +132,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define READ_STENCIL( d, _x, _y )			\
    d = (*(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch) & 0xff000000) >> 24;
 
-#define TAG(x) sis##x##_24_8
+#define TAG(x) sis##x##_z24_s8
 #include "stenciltmp.h"
 
-/*
- * This function is called to specify which buffer to read and write
- * for software rasterization (swrast) fallbacks.  This doesn't necessarily
- * correspond to glDrawBuffer() or glReadBuffer() calls.
- */
-static void sisDDSetBuffer( GLcontext *ctx,
-                            GLframebuffer *colorBuffer,
-                            GLuint bufferBit )
-{
-   sisContextPtr smesa = SIS_CONTEXT(ctx);
 
-   switch ( bufferBit ) {
-   case BUFFER_BIT_FRONT_LEFT:
-      smesa->drawOffset = smesa->readOffset = smesa->frontOffset;
-      smesa->drawPitch  = smesa->readPitch  = smesa->frontPitch;
-      break;
-   case BUFFER_BIT_BACK_LEFT:
-      smesa->drawOffset = smesa->readOffset = smesa->backOffset;
-      smesa->drawPitch  = smesa->readPitch  = smesa->backPitch;
-      break;
-   default:
-      break;
-   }
-}
 
 void sisSpanRenderStart( GLcontext *ctx )
 {
@@ -180,8 +158,6 @@ void
 sisDDInitSpanFuncs( GLcontext *ctx )
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
-
-   swdd->SetBuffer = sisDDSetBuffer;
    swdd->SpanRenderStart   = sisSpanRenderStart;
    swdd->SpanRenderFinish  = sisSpanRenderFinish; 
 }
@@ -203,35 +179,15 @@ sisSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
       }
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-      drb->Base.GetRow        = sisReadDepthSpan_16;
-      drb->Base.GetValues     = sisReadDepthPixels_16;
-      drb->Base.PutRow        = sisWriteDepthSpan_16;
-      drb->Base.PutMonoRow    = sisWriteMonoDepthSpan_16;
-      drb->Base.PutValues     = sisWriteDepthPixels_16;
-      drb->Base.PutMonoValues = NULL;
+      sisInitDepthPointers_z16(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
-      drb->Base.GetRow        = sisReadDepthSpan_24_8;
-      drb->Base.GetValues     = sisReadDepthPixels_24_8;
-      drb->Base.PutRow        = sisWriteDepthSpan_24_8;
-      drb->Base.PutMonoRow    = sisWriteMonoDepthSpan_24_8;
-      drb->Base.PutValues     = sisWriteDepthPixels_24_8;
-      drb->Base.PutMonoValues = NULL;
+      sisInitDepthPointers_z24_s8(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT32) {
-      drb->Base.GetRow        = sisReadDepthSpan_32;
-      drb->Base.GetValues     = sisReadDepthPixels_32;
-      drb->Base.PutRow        = sisWriteDepthSpan_32;
-      drb->Base.PutMonoRow    = sisWriteMonoDepthSpan_32;
-      drb->Base.PutValues     = sisWriteDepthPixels_32;
-      drb->Base.PutMonoValues = NULL;
+      sisInitDepthPointers_z32(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-      drb->Base.GetRow        = sisReadStencilSpan_24_8;
-      drb->Base.GetValues     = sisReadStencilPixels_24_8;
-      drb->Base.PutRow        = sisWriteStencilSpan_24_8;
-      drb->Base.PutMonoRow    = sisWriteMonoStencilSpan_24_8;
-      drb->Base.PutValues     = sisWriteStencilPixels_24_8;
-      drb->Base.PutMonoValues = NULL;
+      sisInitStencilPointers_z24_s8(&drb->Base);
    }
 }

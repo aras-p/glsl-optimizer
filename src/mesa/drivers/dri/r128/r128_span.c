@@ -44,26 +44,20 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define DBG 0
 
+#define GET_PTR(X,Y) (sPriv->pFB + drb->flippedOffset		\
+     + ((dPriv->y + (Y)) * drb->flippedPitch + (dPriv->x + (X))) * drb->cpp)
+
 #define HAVE_HW_DEPTH_SPANS	1
 #define HAVE_HW_DEPTH_PIXELS	1
 
 #define LOCAL_VARS							\
    r128ContextPtr rmesa = R128_CONTEXT(ctx);				\
-   r128ScreenPtr r128scrn = rmesa->r128Screen;				\
    __DRIscreenPrivate *sPriv = rmesa->driScreen;			\
    __DRIdrawablePrivate *dPriv = rmesa->driDrawable;			\
-   GLuint pitch = r128scrn->frontPitch * r128scrn->cpp;			\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;			\
    GLuint height = dPriv->h;						\
-   char *buf = (char *)(sPriv->pFB +					\
-			rmesa->drawOffset +				\
-			(dPriv->x * r128scrn->cpp) +			\
-			(dPriv->y * pitch));				\
-   char *read_buf = (char *)(sPriv->pFB +				\
-			     rmesa->readOffset +			\
-			     (dPriv->x * r128scrn->cpp) +		\
-			     (dPriv->y * pitch));			\
    GLuint p;								\
-   (void) read_buf; (void) buf; (void) p
+   (void) p;
 
 #define LOCAL_DEPTH_VARS						\
    r128ContextPtr rmesa = R128_CONTEXT(ctx);				\
@@ -94,6 +88,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define TAG(x)    r128##x##_RGB565
 #define TAG2(x,y) r128##x##_RGB565##y
+#define GET_SRC_PTR(X,Y) GET_PTR(X,Y)
+#define GET_DST_PTR(X,Y) GET_PTR(X,Y)
 #include "spantmp2.h"
 
 
@@ -104,6 +100,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define TAG(x)    r128##x##_ARGB8888
 #define TAG2(x,y) r128##x##_ARGB8888##y
+#define GET_SRC_PTR(X,Y) GET_PTR(X,Y)
+#define GET_DST_PTR(X,Y) GET_PTR(X,Y)
 #include "spantmp2.h"
 
 
@@ -181,7 +179,7 @@ do {									\
    }									\
 } while (0)
 
-#define TAG(x) r128##x##_16
+#define TAG(x) r128##x##_z16
 #include "depthtmp.h"
 
 
@@ -254,7 +252,7 @@ do {									\
    }									\
 } while (0)
 
-#define TAG(x) r128##x##_24_8
+#define TAG(x) r128##x##_z24_s8
 #include "depthtmp.h"
 
 
@@ -265,41 +263,6 @@ do {									\
 
 /* FIXME: Add support for hardware stencil buffers.
  */
-
-/*
- * This function is called to specify which buffer to read and write
- * for software rasterization (swrast) fallbacks.  This doesn't necessarily
- * correspond to glDrawBuffer() or glReadBuffer() calls.
- */
-static void r128DDSetBuffer( GLcontext *ctx,
-                             GLframebuffer *colorBuffer,
-                             GLuint bufferBit )
-{
-   r128ContextPtr rmesa = R128_CONTEXT(ctx);
-
-   switch ( bufferBit ) {
-   case BUFFER_BIT_FRONT_LEFT:
-      if ( rmesa->sarea->pfCurrentPage == 1 ) {
-         rmesa->drawOffset = rmesa->readOffset = rmesa->r128Screen->backOffset;
-         rmesa->drawPitch  = rmesa->readPitch  = rmesa->r128Screen->backPitch;
-      } else {
-         rmesa->drawOffset = rmesa->readOffset = rmesa->r128Screen->frontOffset;
-         rmesa->drawPitch  = rmesa->readPitch  = rmesa->r128Screen->frontPitch;
-      }
-      break;
-   case BUFFER_BIT_BACK_LEFT:
-      if ( rmesa->sarea->pfCurrentPage == 1 ) {
-         rmesa->drawOffset = rmesa->readOffset = rmesa->r128Screen->frontOffset;
-         rmesa->drawPitch  = rmesa->readPitch  = rmesa->r128Screen->frontPitch;
-      } else {
-         rmesa->drawOffset = rmesa->readOffset = rmesa->r128Screen->backOffset;
-         rmesa->drawPitch  = rmesa->readPitch  = rmesa->r128Screen->backPitch;
-      }
-      break;
-   default:
-      break;
-   }
-}
 
 void r128SpanRenderStart( GLcontext *ctx )
 {
@@ -318,10 +281,7 @@ void r128SpanRenderFinish( GLcontext *ctx )
 
 void r128DDInitSpanFuncs( GLcontext *ctx )
 {
-   r128ContextPtr rmesa = R128_CONTEXT(ctx);
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
-
-   swdd->SetBuffer = r128DDSetBuffer;
    swdd->SpanRenderStart	= r128SpanRenderStart;
    swdd->SpanRenderFinish	= r128SpanRenderFinish;
 }
@@ -342,27 +302,9 @@ r128SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
       }
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-      drb->Base.GetRow        = r128ReadDepthSpan_16;
-      drb->Base.GetValues     = r128ReadDepthPixels_16;
-      drb->Base.PutRow        = r128WriteDepthSpan_16;
-      drb->Base.PutMonoRow    = r128WriteMonoDepthSpan_16;
-      drb->Base.PutValues     = r128WriteDepthPixels_16;
-      drb->Base.PutMonoValues = NULL;
+      r128InitDepthPointers_z16(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
-      drb->Base.GetRow        = r128ReadDepthSpan_24_8;
-      drb->Base.GetValues     = r128ReadDepthPixels_24_8;
-      drb->Base.PutRow        = r128WriteDepthSpan_24_8;
-      drb->Base.PutMonoRow    = r128WriteMonoDepthSpan_24_8;
-      drb->Base.PutValues     = r128WriteDepthPixels_24_8;
-      drb->Base.PutMonoValues = NULL;
-   }
-   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-      drb->Base.GetRow        = NULL;
-      drb->Base.GetValues     = NULL;
-      drb->Base.PutRow        = NULL;
-      drb->Base.PutMonoRow    = NULL;
-      drb->Base.PutValues     = NULL;
-      drb->Base.PutMonoValues = NULL;
+      r128InitDepthPointers_z24_s8(&drb->Base);
    }
 }

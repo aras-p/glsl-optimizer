@@ -214,7 +214,7 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 
     GLboolean swStencil = (mesaVis->stencilBits > 0 && 
 			   mesaVis->depthBits != 24);
-
+    GLboolean swAccum = mesaVis->accumRedBits > 0;
 
     if (isPixmap) {
        /* KW: This needs work, disabled for now:
@@ -232,16 +232,14 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 	return GL_FALSE;
     }
     else {
-#if 0
-        driDrawPriv->driverPrivate = (void *)
-            _mesa_create_framebuffer(mesaVis,
-                                     GL_FALSE,	/* software depth buffer? */
-                                     swStencil,
-                                     mesaVis->accumRedBits > 0,
-                                     GL_FALSE 	/* s/w alpha planes */);
-#else
       struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
 
+      /* The front color, back color and depth renderbuffers are
+       * set up later in calculate_buffer_parameters().
+       * Only create/connect software-based buffers here.
+       */
+
+#if 000
       /* XXX check/fix the offset/pitch parameters! */
       {
          driRenderbuffer *frontRb
@@ -288,17 +286,18 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
          viaSetSpanFunctions(stencilRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
       }
+#endif
 
       _mesa_add_soft_renderbuffers(fb,
                                    GL_FALSE, /* color */
                                    GL_FALSE, /* depth */
                                    swStencil,
-                                   mesaVis->accumRedBits > 0,
+                                   swAccum,
                                    GL_FALSE, /* alpha */
                                    GL_FALSE /* aux */);
       driDrawPriv->driverPrivate = (void *) fb;
-#endif
-        return (driDrawPriv->driverPrivate != NULL);
+
+      return (driDrawPriv->driverPrivate != NULL);
    }
 }
 

@@ -177,11 +177,8 @@ struct r128_context {
     */
    GLuint doPageFlip;
 
-   /* Drawable, cliprect and scissor information
+   /* Cliprect and scissor information
     */
-   GLint drawOffset, drawPitch;
-   GLint readOffset, readPitch;
-
    GLuint numClipRects;			/* Cliprects for the draw buffer */
    drm_clip_rect_t *pClipRects;
 

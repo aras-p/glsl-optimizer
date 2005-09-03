@@ -329,11 +329,6 @@ void i810DrawBuffer(GLcontext *ctx, GLenum mode )
 					     imesa->i810Screen->backPitchBits);
      i810XMesaSetBackClipRects( imesa );
    }
-
-   /* We want to update the s/w rast state too so that r200SetBuffer()
-    * gets called.
-    */
-   _swrast_DrawBuffer(ctx, mode);
 }
 
 
@@ -939,14 +934,10 @@ void i810InitState( GLcontext *ctx )
 
    if (imesa->glCtx->Visual.doubleBufferMode && imesa->sarea->pf_current_page == 0) {
       /* use back buffer by default */
-      imesa->drawMap = i810Screen->back.map;
-      imesa->readMap = i810Screen->back.map;
       imesa->BufferSetup[I810_DESTREG_DI1] = (i810Screen->backOffset |
 					      i810Screen->backPitchBits);
    } else {
       /* use front buffer by default */
-      imesa->drawMap = (char *)imesa->driScreen->pFB;
-      imesa->readMap = (char *)imesa->driScreen->pFB;
       imesa->BufferSetup[I810_DESTREG_DI1] = (i810Screen->fbOffset |
 					      i810Screen->backPitchBits);
    }

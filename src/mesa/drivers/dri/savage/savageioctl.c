@@ -254,9 +254,9 @@ static void savage_BCI_swap(savageContextPtr imesa)
         else
             imesa->toggle = TARGET_BACK; 
         
-        imesa->drawMap = (char *)imesa->apertureBase[imesa->toggle];
-        imesa->readMap = (char *)imesa->apertureBase[imesa->toggle];
-        
+        driFlipRenderbuffers(imesa->glCtx->DrawBuffer,
+                             imesa->toggle != TARGET_FRONT);
+
         imesa->regs.s4.destCtrl.ni.offset = imesa->savageScreen->backOffset>>11;
         imesa->dirty |= SAVAGE_UPLOAD_GLOBAL;
         bciptr = SAVAGE_GET_BCI_POINTER(imesa,3);

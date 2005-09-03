@@ -1055,11 +1055,6 @@ static void tdfxDDDrawBuffer( GLcontext *ctx, GLenum mode )
       FALLBACK( fxMesa, TDFX_FALLBACK_DRAW_BUFFER, GL_TRUE );
       break;
    }
-
-   /* We want to update the s/w rast state too so that tdfxDDSetBuffer()
-    * gets called.
-    */
-   _swrast_DrawBuffer(ctx, mode);
 }
 
 

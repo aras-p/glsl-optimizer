@@ -11,36 +11,29 @@
 #define DBG 0
 
 #define LOCAL_VARS \
-	s3vContextPtr vmesa = S3V_CONTEXT(ctx);	\
-	s3vScreenPtr s3vscrn = vmesa->s3vScreen; \
-	__DRIscreenPrivate *sPriv = vmesa->driScreen; \
-	__DRIdrawablePrivate *dPriv = vmesa->driDrawable; \
-	GLuint pitch = ( (vmesa->Flags & S3V_BACK_BUFFER) ? \
-			((dPriv->w+31)&~31) * s3vscrn->cpp \
-			: sPriv->fbWidth * s3vscrn->cpp); \
-	GLuint height = dPriv->h; \
-	char *buf = ( (vmesa->Flags & S3V_BACK_BUFFER) ? \
-			(char *)(sPriv->pFB + vmesa->drawOffset) \
-			: (char *)(sPriv->pFB + vmesa->drawOffset \
-			  + dPriv->x * s3vscrn->cpp + dPriv->y * pitch) ); \
-	char *read_buf = ( (vmesa->Flags & S3V_BACK_BUFFER) ? \
-			(char *)(sPriv->pFB + vmesa->drawOffset) \
-			: (char *)(sPriv->pFB + vmesa->drawOffset \
-		          + dPriv->x * s3vscrn->cpp + dPriv->y * pitch) ); \
+	s3vContextPtr vmesa = S3V_CONTEXT(ctx);				\
+	__DRIscreenPrivate *sPriv = vmesa->driScreen;			\
+	__DRIdrawablePrivate *dPriv = vmesa->driDrawable;		\
+	driRenderbuffer *drb = (driRenderbuffer *) rb;			\
+	GLuint cpp = drb->cpp;						\
+	GLuint pitch = ( (drb->backBuffer) ?				\
+			((dPriv->w+31)&~31) * cpp			\
+			: sPriv->fbWidth * cpp);			\
+	GLuint height = dPriv->h;					\
+	char *buf = (char *)(sPriv->pFB + drb->offset			\
+	   + (drb->backBuffer ?	0 : dPriv->x * cpp + dPriv->y * pitch));\
+	char *read_buf = buf;						\
 	GLuint p; \
 	(void) read_buf; (void) buf; (void) p; (void) pitch
 
 /* FIXME! Depth/Stencil read/writes don't work ! */
-#define LOCAL_DEPTH_VARS \
-	s3vScreenPtr s3vscrn = vmesa->s3vScreen; \
-	__DRIdrawablePrivate *dPriv = vmesa->driDrawable; \
-	__DRIscreenPrivate *sPriv = vmesa->driScreen; \
-	GLuint pitch = s3vscrn->depthPitch; \
-	GLuint height = dPriv->h; \
-	char *buf = (char *)(sPriv->pFB + \
-			s3vscrn->depthOffset); /* + \	
-			dPriv->x * s3vscrn->cpp + \
-			dPriv->y * pitch)*/ \
+#define LOCAL_DEPTH_VARS					\
+	__DRIdrawablePrivate *dPriv = vmesa->driDrawable;	\
+	__DRIscreenPrivate *sPriv = vmesa->driScreen;		\
+	driRenderbuffer *drb = (driRenderbuffer *) rb;		\
+	GLuint pitch = drb->pitch;				\
+	GLuint height = dPriv->h;				\
+	char *buf = (char *)(sPriv->pFB + drb->offset);		\
 	(void) pitch
 
 #define LOCAL_STENCIL_VARS	LOCAL_DEPTH_VARS
@@ -81,8 +74,8 @@ do { \
    *(GLushort *)(buf + _x*2 + _y*pitch) = ((((int)r & 0xf8) << 7) | \
 					   (((int)g & 0xf8) << 2) | \
 					   (((int)b & 0xf8) >> 3)); \
-   DEBUG(("buf=0x%x drawOffset=0x%x dPriv->x=%i s3vscrn->cpp=%i dPriv->y=%i pitch=%i\n", \
-   	sPriv->pFB, vmesa->drawOffset, dPriv->x, s3vscrn->cpp, dPriv->y, pitch)); \
+   DEBUG(("buf=0x%x drawOffset=0x%x dPriv->x=%i drb->cpp=%i dPriv->y=%i pitch=%i\n", \
+   	sPriv->pFB, vmesa->drawOffset, dPriv->x, drb->cpp, dPriv->y, pitch)); \
    DEBUG(("dPriv->w = %i\n", dPriv->w)); \
 } while(0)
 
@@ -142,7 +135,7 @@ do { \
 #define READ_DEPTH( d, _x, _y ) \
    d = *(GLushort *)(buf + _x*2 + _y*dPriv->w*2);
 
-#define TAG(x) s3v##x##_16
+#define TAG(x) s3v##x##_z16
 #include "depthtmp.h"
 
 
@@ -194,92 +187,6 @@ do { \
 
 #endif
 
-static void s3vSetBuffer( GLcontext *ctx, GLframebuffer *colorBuffer,
-			  GLuint bufferBit )
-{
-   s3vContextPtr vmesa = S3V_CONTEXT(ctx);
-
-   switch ( bufferBit ) {
-   case BUFFER_BIT_FRONT_LEFT:
-      vmesa->drawOffset = vmesa->readOffset = 0;
-      break;
-   case BUFFER_BIT_BACK_LEFT:
-      vmesa->drawOffset = vmesa->readOffset = vmesa->driScreen->fbHeight *
-                                              vmesa->driScreen->fbWidth *
-                                              vmesa->s3vScreen->cpp; 
-      break;
-   }
-}
-
-
-void s3vInitSpanFuncs( GLcontext *ctx )
-{
-   s3vContextPtr vmesa = S3V_CONTEXT(ctx);
-   struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
-
-   swdd->SetBuffer = s3vSetBuffer;
-
-#if 0
-   switch ( vmesa->s3vScreen->cpp ) {
-   case 2:
-      swdd->WriteRGBASpan	= s3vWriteRGBASpan_RGB555;
-      swdd->WriteRGBSpan	= s3vWriteRGBSpan_RGB555;
-      swdd->WriteMonoRGBASpan	= s3vWriteMonoRGBASpan_RGB555;
-      swdd->WriteRGBAPixels	= s3vWriteRGBAPixels_RGB555;
-      swdd->WriteMonoRGBAPixels	= s3vWriteMonoRGBAPixels_RGB555;
-      swdd->ReadRGBASpan	= s3vReadRGBASpan_RGB555;
-      swdd->ReadRGBAPixels      = s3vReadRGBAPixels_RGB555;
-      break;
-
-   case 4:
-      swdd->WriteRGBASpan	= s3vWriteRGBASpan_ARGB8888;
-      swdd->WriteRGBSpan	= s3vWriteRGBSpan_ARGB8888;
-      swdd->WriteMonoRGBASpan   = s3vWriteMonoRGBASpan_ARGB8888;
-      swdd->WriteRGBAPixels     = s3vWriteRGBAPixels_ARGB8888;
-      swdd->WriteMonoRGBAPixels = s3vWriteMonoRGBAPixels_ARGB8888;
-#if 1
-      swdd->ReadRGBASpan    = s3vReadRGBASpan_ARGB8888;
-#else
-      swdd->ReadRGBASpan    = s3vReadRGBASpan8888;
-#endif
-      swdd->ReadRGBAPixels  = s3vReadRGBAPixels_ARGB8888;
-      break;
-
-   default:
-      break;
-   }
-#endif
-
-   switch ( vmesa->glCtx->Visual.depthBits ) {
-   case 15:
-   case 16:
-#if 0
-      swdd->ReadDepthSpan	= s3vReadDepthSpan_16;
-      swdd->WriteDepthSpan	= s3vWriteDepthSpan_16;
-      swdd->ReadDepthPixels	= s3vReadDepthPixels_16;
-      swdd->WriteDepthPixels	= s3vWriteDepthPixels_16;
-#endif
-      break;
-
-#if 0
-   case 24:
-      swdd->ReadDepthSpan	= s3vReadDepthSpan_24_8;
-      swdd->WriteDepthSpan	= s3vWriteDepthSpan_24_8;
-      swdd->ReadDepthPixels	= s3vReadDepthPixels_24_8;
-      swdd->WriteDepthPixels	= s3vWriteDepthPixels_24_8;
-
-      swdd->ReadStencilSpan	= s3vReadStencilSpan_24_8;
-      swdd->WriteStencilSpan	= s3vWriteStencilSpan_24_8;
-      swdd->ReadStencilPixels	= s3vReadStencilPixels_24_8;
-      swdd->WriteStencilPixels	= s3vWriteStencilPixels_24_8;
-      break;
-#endif
-
-   default:
-      break;
-   }
-}
-
 
 /**
  * Plug in the Get/Put routines for the given driRenderbuffer.
@@ -308,27 +215,12 @@ s3vSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
       }
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-      drb->Base.GetRow        = s3vReadDepthSpan_16;
-      drb->Base.GetValues     = s3vReadDepthPixels_16;
-      drb->Base.PutRow        = s3vWriteDepthSpan_16;
-      drb->Base.PutMonoRow    = s3vWriteMonoDepthSpan_16;
-      drb->Base.PutValues     = s3vWriteDepthPixels_16;
-      drb->Base.PutMonoValues = NULL;
+      s3vInitDepthPointers_z16(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
-      drb->Base.GetRow = NULL;
-      drb->Base.GetValues = NULL;
-      drb->Base.PutRow = NULL;
-      drb->Base.PutMonoRow = NULL;
-      drb->Base.PutValues = NULL;
-      drb->Base.PutMonoValues = NULL;
+      /* not done yet */
    }
    else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-      drb->Base.GetRow = NULL;
-      drb->Base.GetValues = NULL;
-      drb->Base.PutRow = NULL;
-      drb->Base.PutMonoRow = NULL;
-      drb->Base.PutValues = NULL;
-      drb->Base.PutMonoValues = NULL;
+      /* not done yet */
    }
 }

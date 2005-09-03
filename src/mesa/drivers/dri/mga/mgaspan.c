@@ -24,7 +24,6 @@
  * Authors:
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaspan.c,v 1.11 2002/10/30 12:51:36 alanh Exp $ */
 
 #include "mtypes.h"
 #include "mgadd.h"
@@ -36,20 +35,17 @@
 #define DBG 0
 
 #define LOCAL_VARS					\
-   mgaContextPtr mmesa = MGA_CONTEXT(ctx);				\
+   mgaContextPtr mmesa = MGA_CONTEXT(ctx);		\
    __DRIdrawablePrivate *dPriv = mmesa->mesa_drawable;	\
-   mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;	\
    __DRIscreenPrivate *sPriv = mmesa->driScreen;	\
-   GLuint pitch = mgaScreen->frontPitch;		\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;	\
+   GLuint pitch = drb->pitch;				\
    GLuint height = dPriv->h;				\
-   char *read_buf = (char *)(sPriv->pFB +		\
-			mmesa->readOffset +		\
-			dPriv->x * mgaScreen->cpp +	\
-			dPriv->y * pitch);		\
    char *buf = (char *)(sPriv->pFB +			\
-			mmesa->drawOffset +		\
-			dPriv->x * mgaScreen->cpp +	\
+			drb->offset +			\
+			dPriv->x * drb->cpp +		\
 			dPriv->y * pitch);		\
+   char *read_buf = buf;				\
    GLuint p;						\
    (void) read_buf; (void) buf; (void) p
 
@@ -58,13 +54,13 @@
 #define LOCAL_DEPTH_VARS						\
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);				\
    __DRIdrawablePrivate *dPriv = mmesa->mesa_drawable;			\
-   mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;			\
    __DRIscreenPrivate *sPriv = mmesa->driScreen;			\
-   GLuint pitch = mgaScreen->frontPitch;				\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;			\
+   GLuint pitch = drb->pitch;						\
    GLuint height = dPriv->h;						\
    char *buf = (char *)(sPriv->pFB +					\
-			mgaScreen->depthOffset +			\
-			dPriv->x * mgaScreen->cpp +			\
+			drb->offset +					\
+			dPriv->x * drb->cpp +				\
 			dPriv->y * pitch)
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS 
@@ -118,7 +114,7 @@
 #define READ_DEPTH( d, _x, _y )		\
    d = *(GLushort *)(buf + (_x)*2 + (_y)*pitch);
 
-#define TAG(x) mga##x##_16
+#define TAG(x) mga##x##_z16
 #include "depthtmp.h"
 
 
@@ -132,7 +128,7 @@
 #define READ_DEPTH( d, _x, _y )		\
    d = *(GLuint *)(buf + (_x)*4 + (_y)*pitch);
 
-#define TAG(x) mga##x##_32
+#define TAG(x) mga##x##_z32
 #include "depthtmp.h"
 
 
@@ -150,7 +146,7 @@
    d = (*(GLuint *)(buf + (_x)*4 + (_y)*pitch) & ~0xff) >> 8;	\
 }
 
-#define TAG(x) mga##x##_24_8
+#define TAG(x) mga##x##_z24_s8
 #include "depthtmp.h"
 
 #define WRITE_STENCIL( _x, _y, d ) {			\
@@ -163,37 +159,9 @@
 #define READ_STENCIL( d, _x, _y )		\
    d = *(GLuint *)(buf + _x*4 + _y*pitch) & 0xff;
 
-#define TAG(x) mga##x##_24_8
+#define TAG(x) mga##x##_z24_s8
 #include "stenciltmp.h"
 
-
-
-/*
- * This function is called to specify which buffer to read and write
- * for software rasterization (swrast) fallbacks.  This doesn't necessarily
- * correspond to glDrawBuffer() or glReadBuffer() calls.
- */
-static void mgaDDSetBuffer(GLcontext *ctx, GLframebuffer *buffer,
-                           GLuint bufferBit)
-{
-   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
-   unsigned int   offset;
-
-   assert((bufferBit == BUFFER_BIT_FRONT_LEFT) || (bufferBit == BUFFER_BIT_BACK_LEFT));
-
-   offset = (bufferBit == BUFFER_BIT_FRONT_LEFT)
-       ? mmesa->mgaScreen->frontOffset
-       : mmesa->mgaScreen->backOffset;
-
-   mmesa->drawOffset = offset;
-   mmesa->readOffset = offset;
-
-   assert( (buffer == mmesa->driDrawable->driverPrivate)
-	   || (buffer == mmesa->driReadable->driverPrivate) );
-
-   mmesa->mesa_drawable = (buffer == mmesa->driDrawable->driverPrivate)
-       ? mmesa->driDrawable : mmesa->driReadable;
-}
 
 void mgaSpanRenderStart( GLcontext *ctx )
 {
@@ -219,45 +187,7 @@ void mgaSpanRenderFinish( GLcontext *ctx )
  */
 void mgaDDInitSpanFuncs( GLcontext *ctx )
 {
-   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
-
-   swdd->SetBuffer = mgaDDSetBuffer;
-
-   switch (mmesa->mgaScreen->cpp) {
-   case 2:
-#if 0
-      mgaInitPointers_565( swdd );
-      swdd->ReadDepthSpan = mgaReadDepthSpan_16;
-      swdd->WriteDepthSpan = mgaWriteDepthSpan_16;
-      swdd->ReadDepthPixels = mgaReadDepthPixels_16;
-      swdd->WriteDepthPixels = mgaWriteDepthPixels_16;
-#endif
-      break;
-
-   case 4:
-#if 0
-      mgaInitPointers_8888( swdd );
-
-      if (!mmesa->hw_stencil) {
-	 swdd->ReadDepthSpan = mgaReadDepthSpan_32;
-	 swdd->WriteDepthSpan = mgaWriteDepthSpan_32;
-	 swdd->ReadDepthPixels = mgaReadDepthPixels_32;
-	 swdd->WriteDepthPixels = mgaWriteDepthPixels_32;
-      } else {
-	 swdd->ReadDepthSpan = mgaReadDepthSpan_24_8;
-	 swdd->WriteDepthSpan = mgaWriteDepthSpan_24_8;
-	 swdd->ReadDepthPixels = mgaReadDepthPixels_24_8;
-	 swdd->WriteDepthPixels = mgaWriteDepthPixels_24_8;
-
-	 swdd->ReadStencilSpan = mgaReadStencilSpan_24_8;
-	 swdd->WriteStencilSpan = mgaWriteStencilSpan_24_8;
-	 swdd->ReadStencilPixels = mgaReadStencilPixels_24_8;
-	 swdd->WriteStencilPixels = mgaWriteStencilPixels_24_8;
-      }
-#endif
-      break;
-   }
    swdd->SpanRenderStart = mgaSpanRenderStart;
    swdd->SpanRenderFinish = mgaSpanRenderFinish;
 }
@@ -278,35 +208,15 @@ mgaSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
       }
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-      drb->Base.GetRow        = mgaReadDepthSpan_16;
-      drb->Base.GetValues     = mgaReadDepthPixels_16;
-      drb->Base.PutRow        = mgaWriteDepthSpan_16;
-      drb->Base.PutMonoRow    = mgaWriteMonoDepthSpan_16;
-      drb->Base.PutValues     = mgaWriteDepthPixels_16;
-      drb->Base.PutMonoValues = NULL;
+      mgaInitDepthPointers_z16(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
-      drb->Base.GetRow        = mgaReadDepthSpan_24_8;
-      drb->Base.GetValues     = mgaReadDepthPixels_24_8;
-      drb->Base.PutRow        = mgaWriteDepthSpan_24_8;
-      drb->Base.PutMonoRow    = mgaWriteMonoDepthSpan_24_8;
-      drb->Base.PutValues     = mgaWriteDepthPixels_24_8;
-      drb->Base.PutMonoValues = NULL;
+      mgaInitDepthPointers_z24_s8(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT32) {
-      drb->Base.GetRow        = mgaReadDepthSpan_32;
-      drb->Base.GetValues     = mgaReadDepthPixels_32;
-      drb->Base.PutRow        = mgaWriteDepthSpan_32;
-      drb->Base.PutMonoRow    = mgaWriteMonoDepthSpan_32;
-      drb->Base.PutValues     = mgaWriteDepthPixels_32;
-      drb->Base.PutMonoValues = NULL;
+      mgaInitDepthPointers_z32(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-      drb->Base.GetRow        = mgaReadStencilSpan_24_8;
-      drb->Base.GetValues     = mgaReadStencilPixels_24_8;
-      drb->Base.PutRow        = mgaWriteStencilSpan_24_8;
-      drb->Base.PutMonoRow    = mgaWriteMonoStencilSpan_24_8;
-      drb->Base.PutValues     = mgaWriteStencilPixels_24_8;
-      drb->Base.PutMonoValues = NULL;
+      mgaInitStencilPointers_z24_s8(&drb->Base);
    }
 }

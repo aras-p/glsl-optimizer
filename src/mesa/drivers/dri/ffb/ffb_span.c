@@ -114,7 +114,7 @@ do {	GLuint p = *(GLuint *)(buf + ((__x)<<2) + ((__y)<<13));	\
 
 #define TAG(x) ffb##x##_888
 
-#include <spantmp.h>
+#include "spantmp.h"
 
 /**
  * Plug in the Get/Put routines for the given driRenderbuffer.

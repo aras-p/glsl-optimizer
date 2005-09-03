@@ -753,11 +753,6 @@ static void mach64DDDrawBuffer( GLcontext *ctx, GLenum mode )
       break;
    }
 
-   /* We want to update the s/w rast state too so that mach64SetBuffer()
-    * gets called.
-    */
-   _swrast_DrawBuffer(ctx, mode);
-
    mmesa->setup.dst_off_pitch = (((mmesa->drawPitch/8) << 22) |
 				 (mmesa->drawOffset >> 3));
 

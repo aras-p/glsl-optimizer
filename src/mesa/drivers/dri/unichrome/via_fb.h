@@ -27,7 +27,7 @@
 
 #include "via_context.h"
 
-extern GLboolean via_alloc_draw_buffer(struct via_context *vmesa, struct via_buffer *buf);
+extern GLboolean via_alloc_draw_buffer(struct via_context *vmesa, struct via_renderbuffer *buf);
 extern GLboolean via_alloc_dma_buffer(struct via_context *vmesa);
 
 struct via_tex_buffer *
@@ -35,7 +35,7 @@ via_alloc_texture(struct via_context *vmesa,
 		  GLuint size,
 		  GLuint memType);
 
-extern void via_free_draw_buffer(struct via_context *vmesa, struct via_buffer *buf);
+extern void via_free_draw_buffer(struct via_context *vmesa, struct via_renderbuffer *buf);
 extern void via_free_dma_buffer(struct via_context *vmesa);
 extern void via_free_texture(struct via_context *vmesa, struct via_tex_buffer *t);
 void via_release_pending_textures( struct via_context *vmesa );

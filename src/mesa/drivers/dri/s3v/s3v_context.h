@@ -162,7 +162,6 @@ void s3vEmitHwState( s3vContextPtr vmesa );
 void s3vGetLock( s3vContextPtr vmesa, GLuint flags );
 void s3vInitExtensions( GLcontext *ctx );
 void s3vInitDriverFuncs( GLcontext *ctx );
-void s3vInitSpanFuncs( GLcontext *ctx );
 void s3vSetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis);
 void s3vInitState( s3vContextPtr vmesa );
 void s3vInitHW( s3vContextPtr vmesa );

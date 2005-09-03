@@ -522,17 +522,21 @@ sisDDLogicOpCode( GLcontext *ctx, GLenum opcode )
 void sisDDDrawBuffer( GLcontext *ctx, GLenum mode )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
-
    __GLSiSHardware *prev = &smesa->prev;
    __GLSiSHardware *current = &smesa->current;
+   int pitch;
 
    /*
     * _DrawDestMask is easier to cope with than <mode>.
     */
    switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
    case BUFFER_BIT_FRONT_LEFT:
+      FALLBACK( smesa, SIS_FALLBACK_DRAW_BUFFER, GL_FALSE );
+      pitch = smesa->frontPitch;
+      break;
    case BUFFER_BIT_BACK_LEFT:
       FALLBACK( smesa, SIS_FALLBACK_DRAW_BUFFER, GL_FALSE );
+      pitch = smesa->backPitch;
       break;
    default:
       /* GL_NONE or GL_FRONT_AND_BACK or stereo left&right, etc */
@@ -540,14 +544,9 @@ void sisDDDrawBuffer( GLcontext *ctx, GLenum mode )
       return;
    }
 
-   /* We want to update the s/w rast state too so that sisDDSetBuffer()
-    * gets called.
-    */
-   _swrast_DrawBuffer(ctx, mode);
-
    current->hwOffsetDest = (smesa->drawOffset) >> 1;
    current->hwDstSet &= ~MASK_DstBufferPitch;
-   current->hwDstSet |= smesa->drawPitch >> 2;
+   current->hwDstSet |= pitch >> 2;
 
    if (current->hwDstSet != prev->hwDstSet) {
       prev->hwDstSet = current->hwDstSet;

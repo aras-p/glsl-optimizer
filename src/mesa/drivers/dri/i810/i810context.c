@@ -60,6 +60,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "i810vb.h"
 #include "i810ioctl.h"
 
+#include "drirenderbuffer.h"
 #include "utils.h"
 
 #define need_GL_ARB_multisample
@@ -489,15 +490,13 @@ i810UpdatePageFlipping( i810ContextPtr imesa )
 
    if ( imesa->sarea->pf_current_page == 1 ) 
      front ^= 1;
+
+   driFlipRenderbuffers(ctx->WinSysDrawBuffer, front);
    
    if (front) {
       imesa->BufferSetup[I810_DESTREG_DI1] = imesa->i810Screen->fbOffset | imesa->i810Screen->backPitchBits;
-      imesa->drawMap = (char *)imesa->driScreen->pFB;
-      imesa->readMap = (char *)imesa->driScreen->pFB;
    } else {
       imesa->BufferSetup[I810_DESTREG_DI1] = imesa->i810Screen->backOffset | imesa->i810Screen->backPitchBits;
-      imesa->drawMap = imesa->i810Screen->back.map;
-      imesa->readMap = imesa->i810Screen->back.map;
    }
 
    imesa->dirty |= I810_UPLOAD_BUFFERS;

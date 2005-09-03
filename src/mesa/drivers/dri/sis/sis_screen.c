@@ -209,14 +209,7 @@ sisCreateBuffer( __DRIscreenPrivate *driScrnPriv,
    if (isPixmap)
       return GL_FALSE; /* not implemented */
 
-#if 0
-   driDrawPriv->driverPrivate = (void *)_mesa_create_framebuffer(
-				 mesaVis,
-				 GL_FALSE,  /* software depth buffer? */
-				 mesaVis->stencilBits > 0,
-				 mesaVis->accumRedBits > 0,
-				 mesaVis->alphaBits > 0 ); /* XXX */
-#else
+   {
       struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
 
       /* XXX double-check the Offset/Pitch parameters! */
@@ -275,7 +268,7 @@ sisCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                    GL_FALSE, /* alpha */
                                    GL_FALSE /* aux */);
       driDrawPriv->driverPrivate = (void *) fb;
-#endif
+   }
 
    return (driDrawPriv->driverPrivate != NULL);
 }

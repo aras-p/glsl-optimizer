@@ -44,6 +44,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "vblank.h"
 #include "mmio.h"
+#include "drirenderbuffer.h"
 
 #define R128_TIMEOUT        2048
 #define R128_IDLE_RETRY       32
@@ -373,16 +374,12 @@ void r128PageFlip( const __DRIdrawablePrivate *dPriv )
       exit( 1 );
    }
 
-   if ( rmesa->sarea->pfCurrentPage == 1 ) {
-	 rmesa->drawOffset = rmesa->r128Screen->frontOffset;
-	 rmesa->drawPitch  = rmesa->r128Screen->frontPitch;
-   } else {
-	 rmesa->drawOffset = rmesa->r128Screen->backOffset;
-	 rmesa->drawPitch  = rmesa->r128Screen->backPitch;
-   }
+   /* Get ready for drawing next frame.  Update the renderbuffers'
+    * flippedOffset/Pitch fields so we draw into the right place.
+    */
+   driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
+                        rmesa->sarea->pfCurrentPage);
 
-   rmesa->setup.dst_pitch_offset_c = (((rmesa->drawPitch/8) << 21) |
-				      (rmesa->drawOffset >> 5));
    rmesa->new_state |= R128_NEW_WINDOW;
 
    /* FIXME: Do we need this anymore? */

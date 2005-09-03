@@ -82,7 +82,11 @@ typedef void (*via_tri_func)(struct via_context *, viaVertex *, viaVertex *,
 typedef void (*via_line_func)(struct via_context *, viaVertex *, viaVertex *);
 typedef void (*via_point_func)(struct via_context *, viaVertex *);
 
-struct via_buffer {
+/**
+ * Derived from gl_renderbuffer.
+ */
+struct via_renderbuffer {
+   struct gl_renderbuffer Base;  /* must be first! */
    drm_handle_t handle;
    drmSize size;
    GLuint offset;
@@ -144,10 +148,12 @@ struct via_context {
    GLcontext *glCtx;
    GLcontext *shareCtx;
 
-   struct via_buffer front;
-   struct via_buffer back;
-   struct via_buffer depth;
-   struct via_buffer breadcrumb;
+   /* XXX These don't belong here.  They should be per-drawable state. */
+   struct via_renderbuffer front;
+   struct via_renderbuffer back;
+   struct via_renderbuffer depth;
+   struct via_renderbuffer stencil; /* mirrors depth */
+   struct via_renderbuffer breadcrumb;
 
    GLboolean hasBack;
    GLboolean hasDepth;
@@ -264,8 +270,7 @@ struct via_context {
     */
    GLboolean doPageFlip;
 
-   struct via_buffer *drawBuffer;
-   struct via_buffer *readBuffer;
+   struct via_renderbuffer *drawBuffer;
 
    int drawX;                   /* origin of drawable in draw buffer */
    int drawY;    

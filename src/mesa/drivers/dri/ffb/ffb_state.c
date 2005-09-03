@@ -510,6 +510,13 @@ static void ffbDDReadBuffer(GLcontext *ctx, GLenum buffer)
 /*
  * Specifies buffer for sw fallbacks (spans)
  */
+#if 000
+/* XXX
+ * This function is obsolete.  It's not clear how this really effected
+ * span reading/writing above.  The span functions should use the
+ * incoming driRenderbuffer (gl_renderbuffer) pointer to determine how
+ * to read from the specified bufer.
+ */
 static void ffbDDSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
 			   GLuint bufferBit)
 {
@@ -546,6 +553,8 @@ static void ffbDDSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
 		FFB_MAKE_DIRTY(fmesa, FFB_STATE_FBC, 1);
 	}
 }
+#endif
+
 
 static void ffbDDClearColor(GLcontext *ctx, const GLfloat color[4])
 {
@@ -1091,14 +1100,6 @@ void ffbDDInitStateFuncs(GLcontext *ctx)
 	ctx->Driver.ClearIndex = 0;
 	ctx->Driver.IndexMask = 0;
         */
-
-	{
-		struct swrast_device_driver *swdd = 
-			_swrast_GetDeviceDriverReference(ctx);
-		swdd->SetBuffer = ffbDDSetBuffer;
-	}
-   
-
 }
 
 void ffbDDInitContextHwState(GLcontext *ctx)

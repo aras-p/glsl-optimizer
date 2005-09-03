@@ -271,14 +271,6 @@ r128CreateBuffer( __DRIscreenPrivate *driScrnPriv,
       return GL_FALSE; /* not implemented */
    }
    else {
-#if 0
-      driDrawPriv->driverPrivate = (void *) 
-         _mesa_create_framebuffer( mesaVis,
-                                   GL_FALSE,  /* software depth buffer? */
-                                   mesaVis->stencilBits > 0,
-                                   mesaVis->accumRedBits > 0,
-                                   mesaVis->alphaBits > 0 );
-#else
       struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
 
       {
@@ -320,7 +312,7 @@ r128CreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                    GL_FALSE, /* alpha */
                                    GL_FALSE /* aux */);
       driDrawPriv->driverPrivate = (void *) fb;
-#endif
+
       return (driDrawPriv->driverPrivate != NULL);
    }
 }
