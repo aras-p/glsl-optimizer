@@ -825,11 +825,6 @@ static void i830DrawBuffer(GLcontext *ctx, GLenum mode )
       FALLBACK( imesa, I830_FALLBACK_DRAW_BUFFER, GL_TRUE );
       return;
    }
-
-   /* We want to update the s/w rast state too so that i830SetBuffer()
-    * gets called.
-    */
-   _swrast_DrawBuffer(ctx, mode);
 }
 
 static void i830ReadBuffer(GLcontext *ctx, GLenum mode )

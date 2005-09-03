@@ -192,7 +192,7 @@ radeon_mba_z16( const driRenderbuffer *drb, GLint x, GLint y )
 #define READ_DEPTH( d, _x, _y )						\
    d = *(GLushort *)(buf + radeon_mba_z16( drb, _x + xo, _y + yo ));
 
-#define TAG(x) radeon##x##_16
+#define TAG(x) radeon##x##_z16
 #include "depthtmp.h"
 
 
@@ -211,7 +211,7 @@ do {									\
    d = *(GLuint *)(buf + radeon_mba_z32( drb, _x + xo,			\
 					 _y + yo )) & 0x00ffffff;
 
-#define TAG(x) radeon##x##_24_8
+#define TAG(x) radeon##x##_z24_s8
 #include "depthtmp.h"
 
 
@@ -238,7 +238,7 @@ do {									\
    d = tmp >> 24;							\
 } while (0)
 
-#define TAG(x) radeon##x##_24_8
+#define TAG(x) radeon##x##_z24_s8
 #include "stenciltmp.h"
 
 
@@ -287,27 +287,12 @@ radeonSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
       }
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-      drb->Base.GetRow        = radeonReadDepthSpan_16;
-      drb->Base.GetValues     = radeonReadDepthPixels_16;
-      drb->Base.PutRow        = radeonWriteDepthSpan_16;
-      drb->Base.PutMonoRow    = radeonWriteMonoDepthSpan_16;
-      drb->Base.PutValues     = radeonWriteDepthPixels_16;
-      drb->Base.PutMonoValues = NULL;
+      radeonInitDepthPointers_z16(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
-      drb->Base.GetRow        = radeonReadDepthSpan_24_8;
-      drb->Base.GetValues     = radeonReadDepthPixels_24_8;
-      drb->Base.PutRow        = radeonWriteDepthSpan_24_8;
-      drb->Base.PutMonoRow    = radeonWriteMonoDepthSpan_24_8;
-      drb->Base.PutValues     = radeonWriteDepthPixels_24_8;
-      drb->Base.PutMonoValues = NULL;
+      radeonInitDepthPointers_z24_s8(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-      drb->Base.GetRow        = radeonReadStencilSpan_24_8;
-      drb->Base.GetValues     = radeonReadStencilPixels_24_8;
-      drb->Base.PutRow        = radeonWriteStencilSpan_24_8;
-      drb->Base.PutMonoRow    = radeonWriteMonoStencilSpan_24_8;
-      drb->Base.PutValues     = radeonWriteStencilPixels_24_8;
-      drb->Base.PutMonoValues = NULL;
+      radeonInitStencilPointers_z24_s8(&drb->Base);
    }
 }

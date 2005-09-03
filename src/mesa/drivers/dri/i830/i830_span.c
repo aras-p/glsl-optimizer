@@ -139,7 +139,7 @@ do {								\
    d = *(GLushort *)(buf + _x*2 + _y*pitch);	 
 
 
-#define TAG(x) i830##x##_16
+#define TAG(x) i830##x##_z16
 #include "depthtmp.h"
 
 
@@ -195,7 +195,7 @@ do {								\
 #define READ_DEPTH( d, _x, _y )		\
    d = *(GLuint *)(buf + _x*4 + _y*pitch) & 0xffffff;
 
-#define TAG(x) i830##x##_24
+#define TAG(x) i830##x##_z24
 #include "depthtmp.h"
 
 /* 24/8 bit interleaved depth/stencil functions
@@ -211,7 +211,7 @@ do {								\
    d = *(GLuint *)(buf + _x*4 + _y*pitch) & 0xffffff;
 
 
-#define TAG(x) i830##x##_24_8
+#define TAG(x) i830##x##_z24_s8
 #include "depthtmp.h"
 
 #define WRITE_STENCIL( _x, _y, d ) {			\
@@ -224,7 +224,7 @@ do {								\
 #define READ_STENCIL( d, _x, _y )			\
    d = *(GLuint *)(buf + _x*4 + _y*pitch) >> 24;
 
-#define TAG(x) i830##x##_24_8
+#define TAG(x) i830##x##_z24_s8
 #include "stenciltmp.h"
 
 /*
@@ -232,6 +232,7 @@ do {								\
  * for software rasterization (swrast) fallbacks.  This doesn't necessarily
  * correspond to glDrawBuffer() or glReadBuffer() calls.
  */
+#if 000
 static void i830SetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
                           GLuint bufferBit)
 {
@@ -253,7 +254,7 @@ static void i830SetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
       ASSERT(0);
    }
 }
-
+#endif
 
 
 /* Move locking out to get reasonable span performance.
@@ -275,79 +276,7 @@ void i830SpanRenderFinish( GLcontext *ctx )
 
 void i830DDInitSpanFuncs( GLcontext *ctx )
 {
-   i830ContextPtr imesa = I830_CONTEXT(ctx);
-   i830ScreenPrivate *i830Screen = imesa->i830Screen;
-
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
-
-   swdd->SetBuffer = i830SetBuffer;
-
-   switch (i830Screen->fbFormat) {
-   case DV_PF_555:
-#if 0
-      swdd->WriteRGBASpan = i830WriteRGBASpan_555;
-      swdd->WriteRGBSpan = i830WriteRGBSpan_555;
-      swdd->WriteMonoRGBASpan = i830WriteMonoRGBASpan_555;
-      swdd->WriteRGBAPixels = i830WriteRGBAPixels_555;
-      swdd->WriteMonoRGBAPixels = i830WriteMonoRGBAPixels_555;
-      swdd->ReadRGBASpan = i830ReadRGBASpan_555;
-      swdd->ReadRGBAPixels = i830ReadRGBAPixels_555;
-      swdd->ReadDepthSpan = i830ReadDepthSpan_16;
-      swdd->WriteDepthSpan = i830WriteDepthSpan_16;
-      swdd->ReadDepthPixels = i830ReadDepthPixels_16;
-      swdd->WriteDepthPixels = i830WriteDepthPixels_16;
-#endif
-      break;
-
-   case DV_PF_565:
-#if 0
-      swdd->WriteRGBASpan = i830WriteRGBASpan_565;
-      swdd->WriteRGBSpan = i830WriteRGBSpan_565;
-      swdd->WriteMonoRGBASpan = i830WriteMonoRGBASpan_565;
-      swdd->WriteRGBAPixels = i830WriteRGBAPixels_565;
-      swdd->WriteMonoRGBAPixels = i830WriteMonoRGBAPixels_565; 
-      swdd->ReadRGBASpan = i830ReadRGBASpan_565;
-      swdd->ReadRGBAPixels = i830ReadRGBAPixels_565;
-      swdd->ReadDepthSpan = i830ReadDepthSpan_16;
-      swdd->WriteDepthSpan = i830WriteDepthSpan_16;
-      swdd->ReadDepthPixels = i830ReadDepthPixels_16;
-      swdd->WriteDepthPixels = i830WriteDepthPixels_16;
-#endif
-      break;
-
-   case DV_PF_8888:
-#if 0
-      swdd->WriteRGBASpan = i830WriteRGBASpan_8888;
-      swdd->WriteRGBSpan = i830WriteRGBSpan_8888;
-      swdd->WriteMonoRGBASpan = i830WriteMonoRGBASpan_8888;
-      swdd->WriteRGBAPixels = i830WriteRGBAPixels_8888;
-      swdd->WriteMonoRGBAPixels = i830WriteMonoRGBAPixels_8888;
-      swdd->ReadRGBASpan = i830ReadRGBASpan_8888;
-      swdd->ReadRGBAPixels = i830ReadRGBAPixels_8888;
-#endif
-
-      if(imesa->hw_stencil) {
-#if 0
-	 swdd->ReadDepthSpan = i830ReadDepthSpan_24_8;
-	 swdd->WriteDepthSpan = i830WriteDepthSpan_24_8;
-	 swdd->ReadDepthPixels = i830ReadDepthPixels_24_8;
-	 swdd->WriteDepthPixels = i830WriteDepthPixels_24_8;
-	 swdd->WriteStencilSpan = i830WriteStencilSpan_24_8;
-	 swdd->ReadStencilSpan = i830ReadStencilSpan_24_8;
-	 swdd->WriteStencilPixels = i830WriteStencilPixels_24_8;
-	 swdd->ReadStencilPixels = i830ReadStencilPixels_24_8;
-#endif
-      } else {
-#if 0
-	 swdd->ReadDepthSpan = i830ReadDepthSpan_24;
-	 swdd->WriteDepthSpan = i830WriteDepthSpan_24;
-	 swdd->ReadDepthPixels = i830ReadDepthPixels_24;
-	 swdd->WriteDepthPixels = i830WriteDepthPixels_24;
-#endif
-      }
-      break;
-   }
-
    swdd->SpanRenderStart = i830SpanRenderStart;
    swdd->SpanRenderFinish = i830SpanRenderFinish; 
 }
@@ -392,36 +321,16 @@ i830SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
       }
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-      drb->Base.GetRow        = i830ReadDepthSpan_16;
-      drb->Base.GetValues     = i830ReadDepthPixels_16;
-      drb->Base.PutRow        = i830WriteDepthSpan_16;
-      drb->Base.PutMonoRow    = i830WriteMonoDepthSpan_16;
-      drb->Base.PutValues     = i830WriteDepthPixels_16;
-      drb->Base.PutMonoValues = NULL;
+      i830InitDepthPointers_z16(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
-      drb->Base.GetRow        = i830ReadDepthSpan_24_8;
-      drb->Base.GetValues     = i830ReadDepthPixels_24_8;
-      drb->Base.PutRow        = i830WriteDepthSpan_24_8;
-      drb->Base.PutMonoRow    = i830WriteMonoDepthSpan_24_8;
-      drb->Base.PutValues     = i830WriteDepthPixels_24_8;
-      drb->Base.PutMonoValues = NULL;
+      i830InitDepthPointers_z24_s8(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT32) {
       /* not _really_ 32-bit Z */
-      drb->Base.GetRow        = i830ReadDepthSpan_24;
-      drb->Base.GetValues     = i830ReadDepthPixels_24;
-      drb->Base.PutRow        = i830WriteDepthSpan_24;
-      drb->Base.PutMonoRow    = i830WriteMonoDepthSpan_24;
-      drb->Base.PutValues     = i830WriteDepthPixels_24;
-      drb->Base.PutMonoValues = NULL;
+      i830InitDepthPointers_z24(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-      drb->Base.GetRow        = i830ReadStencilSpan_24_8;
-      drb->Base.GetValues     = i830ReadStencilPixels_24_8;
-      drb->Base.PutRow        = i830WriteStencilSpan_24_8;
-      drb->Base.PutMonoRow    = i830WriteMonoStencilSpan_24_8;
-      drb->Base.PutValues     = i830WriteStencilPixels_24_8;
-      drb->Base.PutMonoValues = NULL;
+      i830InitStencilPointers_z24_s8(&drb->Base);
    }
 }
