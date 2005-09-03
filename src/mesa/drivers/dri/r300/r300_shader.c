@@ -11,8 +11,10 @@
 
 static void r300BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
 {
+	/*
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct r300_vertex_program *vp=(void *)prog;
+	*/
 	
 	switch(target){
 		case GL_VERTEX_PROGRAM_ARB:
@@ -40,24 +42,29 @@ static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 	switch(target){
 		case GL_VERTEX_PROGRAM_ARB:
 			vp=CALLOC_STRUCT(r300_vertex_program);
-		return _mesa_init_vertex_program(ctx, &vp->mesa_program, target, id);
-		
+			return _mesa_init_vertex_program(ctx, &vp->mesa_program, target, id);
 		case GL_FRAGMENT_PROGRAM_ARB:
 #if USE_ARB_F_P == 1
 			fp=CALLOC_STRUCT(r300_fragment_program);
 			fp->ctx = ctx;
-		return _mesa_init_fragment_program(ctx, &fp->mesa_program, target, id);
+			return _mesa_init_fragment_program(ctx, &fp->mesa_program, target, id);
 #else
 			fp=CALLOC_STRUCT(fragment_program);
-		return _mesa_init_fragment_program(ctx, fp, target, id);
+			return _mesa_init_fragment_program(ctx, fp, target, id);
 #endif	
 		case GL_FRAGMENT_PROGRAM_NV:
+#if USE_ARB_F_P == 1
+			fp=CALLOC_STRUCT(r300_fragment_program);
+			return _mesa_init_fragment_program(ctx, &fp->mesa_program, target, id);
+#else
 			fp=CALLOC_STRUCT(fragment_program);
-		return _mesa_init_fragment_program(ctx, fp, target, id);
-		
+			return _mesa_init_fragment_program(ctx, fp, target, id);
+#endif
 		case GL_FRAGMENT_SHADER_ATI:
 			afs=CALLOC_STRUCT(ati_fragment_shader);
-		return _mesa_init_ati_fragment_shader(ctx, afs, target, id);
+			return _mesa_init_ati_fragment_shader(ctx, afs, target, id);
+		default:
+			_mesa_problem(ctx, "Bad target in r300NewProgram");
 	}
 	
 	return NULL;	
@@ -75,9 +82,9 @@ static void r300DeleteProgram(GLcontext *ctx, struct program *prog)
 static void r300ProgramStringNotify(GLcontext *ctx, GLenum target, 
 				struct program *prog)
 {
-	struct r300_vertex_program *vp=(void *)prog;
+	/*struct r300_vertex_program *vp=(void *)prog;*/
 #if USE_ARB_F_P == 1
-	struct r300_fragment_program *fp=(void *)prog;
+	struct r300_fragment_program *fp = (struct r300_fragment_program *) prog;
 #endif
 	
 	switch(target) {

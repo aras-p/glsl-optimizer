@@ -112,9 +112,6 @@ int r300FlushCmdBufLocked(r300ContextPtr r300, const char* caller)
 int r300FlushCmdBuf(r300ContextPtr r300, const char* caller)
 {
 	int ret;
-	int i;
-	drm_radeon_cmd_buffer_t cmd;
-	int start;
 
 	LOCK_HARDWARE(&r300->radeon);
 
@@ -273,7 +270,7 @@ CHECK( vpu, vpu_count(atom->cmd) ? (1 + vpu_count(atom->cmd)*4) : 0 )
  */
 void r300InitCmdBuf(r300ContextPtr r300)
 {
-	int size, i, mtu;
+	int size, mtu;
 	
 	r300->hw.max_state_size = 2; /* reserve extra space for WAIT_IDLE */
 

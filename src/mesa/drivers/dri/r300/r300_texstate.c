@@ -1035,9 +1035,9 @@ static GLboolean r300_validate_texgen(GLcontext * ctx, GLuint unit)
 
 static void disable_tex(GLcontext * ctx, int unit)
 {
+#if 0 /* This needs to be redone.. or done elsewhere */
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
-#if 0 /* This needs to be redone.. or done elsewhere */
 	if (rmesa->hw.ctx.cmd[CTX_PP_CNTL] & (R200_TEX_0_ENABLE << unit)) {
 		/* Texture unit disabled */
 		if (rmesa->state.texture.unit[unit].texobj != NULL) {
@@ -1339,10 +1339,12 @@ static GLboolean r300UpdateTextureUnit(GLcontext * ctx, int unit)
 
 void r300UpdateTextureState(GLcontext * ctx)
 {
+#if 0
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	GLboolean ok;
 	GLuint dbg;
 	int i;
+#endif
+	GLboolean ok;
 
 	ok = (r300UpdateTextureUnit(ctx, 0) &&
 	      r300UpdateTextureUnit(ctx, 1) &&
