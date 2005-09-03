@@ -32,17 +32,23 @@ typedef struct {
    /* If the driver can do page flipping (full-screen double buffering)
     * the current front/back buffers may get swapped.
     * If page flipping is disabled, these  fields will be identical to
-    * the offset/pitch above.
+    * the offset/pitch/Data above.
     * If page flipping is enabled, and this is the front(back) renderbuffer,
-    * flippedOffset/Pitch will have the back(front) renderbuffer's values.
+    * flippedOffset/Pitch/Data will have the back(front) renderbuffer's values.
     */
    GLint flippedOffset;
    GLint flippedPitch;
+   GLubyte *flippedData;  /* mmap'd memory, if used */
 
    /* XXX this is for radeon/r200 only.  We should really create a new
     * r200Renderbuffer class, derived from this class...  not a huge deal.
     */
    GLboolean depthHasSurface;
+
+   /* XXX this is for s3v only.  A handy flag to know if this is the back
+    * color buffer.
+    */
+   GLboolean backBuffer;
 } driRenderbuffer;
 
 
@@ -50,6 +56,6 @@ extern driRenderbuffer *
 driNewRenderbuffer(GLenum format, GLint cpp, GLint offset, GLint pitch);
 
 extern void
-driFlipRenderbuffers(struct gl_framebuffer *fb, GLenum flipped);
+driFlipRenderbuffers(struct gl_framebuffer *fb, GLboolean flipped);
 
 #endif /* DRIRENDERBUFFER_H */

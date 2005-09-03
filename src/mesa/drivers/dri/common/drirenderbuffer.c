@@ -22,6 +22,16 @@ driRenderbufferStorage(GLcontext *ctx, struct gl_renderbuffer *rb,
 }
 
 
+static void
+driDeleteRenderbuffer(struct gl_renderbuffer *rb)
+{
+   /* don't free rb->Data  Chances are it's a memory mapped region for
+    * the dri drivers.
+    */
+   _mesa_free(rb);
+}
+
+
 /**
  * Allocate a new driRenderbuffer object.
  * Individual drivers are free to implement different versions of
@@ -86,8 +96,7 @@ driNewRenderbuffer(GLenum format, GLint cpp, GLint offset, GLint pitch)
        */
 
       drb->Base.AllocStorage = driRenderbufferStorage;
-      /* using default Delete function */
-
+      drb->Base.Delete = driDeleteRenderbuffer;
 
       /* DRI renderbuffer-specific fields: */
       drb->offset = offset;
@@ -103,32 +112,43 @@ driNewRenderbuffer(GLenum format, GLint cpp, GLint offset, GLint pitch)
 
 
 /**
- * Update the front and back renderbuffers' flippedPitch/Offset fields.
+ * Update the front and back renderbuffers' flippedPitch/Offset/Data fields.
+ * If stereo, flip both the left and right pairs.
  * This is used when we do double buffering via page flipping.
+ * \param fb  the framebuffer we're page flipping
+ * \param flipped  if true, set flipped values, else set non-flipped values
  */
 void
-driFlipRenderbuffers(struct gl_framebuffer *fb, GLenum flipped)
+driFlipRenderbuffers(struct gl_framebuffer *fb, GLboolean flipped)
 {
-   driRenderbuffer *front_drb
-      = (driRenderbuffer *) fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-   driRenderbuffer *back_drb
-      = (driRenderbuffer *) fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+   const GLuint count = fb->Visual.stereoMode ? 2 : 1;
+   GLuint lr; /* left or right */
 
-   /* If this fails, it means we're trying to do page flipping for a
-    * single-buffered window!
-    */
-   assert(back_drb);
+   ASSERT(fb->Visual.doubleBufferMode);
 
-   if (flipped) {
-      front_drb->flippedOffset = back_drb->offset;
-      front_drb->flippedPitch  = back_drb->pitch;
-      back_drb->flippedOffset  = front_drb->offset;
-      back_drb->flippedPitch   = front_drb->pitch;
-   }
-   else {
-      front_drb->flippedOffset = front_drb->offset;
-      front_drb->flippedPitch  = front_drb->pitch;
-      back_drb->flippedOffset  = back_drb->offset;
-      back_drb->flippedPitch   = back_drb->pitch;
+   for (lr = 0; lr < count; lr++) {
+      GLuint frontBuf = (lr == 0) ? BUFFER_FRONT_LEFT : BUFFER_FRONT_RIGHT;
+      GLuint backBuf  = (lr == 0) ? BUFFER_BACK_LEFT  : BUFFER_BACK_RIGHT;
+      driRenderbuffer *front_drb
+         = (driRenderbuffer *) fb->Attachment[frontBuf].Renderbuffer;
+      driRenderbuffer *back_drb
+         = (driRenderbuffer *) fb->Attachment[backBuf].Renderbuffer;
+
+      if (flipped) {
+         front_drb->flippedOffset = back_drb->offset;
+         front_drb->flippedPitch  = back_drb->pitch;
+         front_drb->flippedData   = back_drb->Base.Data;
+         back_drb->flippedOffset  = front_drb->offset;
+         back_drb->flippedPitch   = front_drb->pitch;
+         back_drb->flippedData    = front_drb->Base.Data;
+      }
+      else {
+         front_drb->flippedOffset = front_drb->offset;
+         front_drb->flippedPitch  = front_drb->pitch;
+         front_drb->flippedData   = front_drb->Base.Data;
+         back_drb->flippedOffset  = back_drb->offset;
+         back_drb->flippedPitch   = back_drb->pitch;
+         back_drb->flippedData    = back_drb->Base.Data;
+      }
    }
 }
