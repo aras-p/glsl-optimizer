@@ -313,12 +313,6 @@ fbDestroyScreen( __DRIscreenPrivate *sPriv )
 {
 }
 
-void fbSetBuffer( GLcontext *ctx,
-                             GLframebuffer *colorBuffer,
-                             GLuint bufferBit )
-{
-    /* NOP until SetBuffer is fully removed */
-}
 
 /* Create the device specific context.
  */
@@ -365,15 +359,6 @@ fbCreateContext( const __GLcontextModes *glVisual,
    _swsetup_CreateContext( ctx );
    _swsetup_Wakeup( ctx );
 
-
-   /* swrast init -- need to verify these tests - I just plucked the
-    * numbers out of the air.  (KW)
-    */
-   {
-      struct swrast_device_driver *swdd;
-      swdd = _swrast_GetDeviceDriverReference( ctx );
-      swdd->SetBuffer = fbSetBuffer;
-   }
 
    /* use default TCL pipeline */
    {
