@@ -108,7 +108,11 @@ set_component_sizes( struct gl_color_table *table )
       sz = 8 * sizeof(GLushort);
       break;
    case GL_FLOAT:
-      sz = 8 * sizeof(GLfloat);
+      /* Don't actually return 32 here since that causes the conformance
+       * tests to blow up.  Conform thinks the component is an integer,
+       * not a float.
+       */
+      sz = 8;  /** 8 * sizeof(GLfloat); **/
       break;
    default:
       _mesa_problem(NULL, "bad color table type in set_component_sizes 0x%x", table->Type);
