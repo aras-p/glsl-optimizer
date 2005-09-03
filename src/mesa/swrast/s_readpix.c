@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -74,8 +74,6 @@ read_index_pixels( GLcontext *ctx,
       return;
    }
 
-   _swrast_use_read_buffer(ctx);
-
    /* XXX: width should never be > MAX_WIDTH since we did clipping earlier */
    readWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
 
@@ -92,8 +90,6 @@ read_index_pixels( GLcontext *ctx,
       _mesa_pack_index_span(ctx, readWidth, type, dest, index,
                             &ctx->Pack, ctx->_ImageTransferState);
    }
-
-   _swrast_use_draw_buffer(ctx);
 }
 
 
@@ -378,13 +374,9 @@ read_rgba_pixels( GLcontext *ctx,
       return;
    }
 
-   _swrast_use_read_buffer(ctx);
-
    /* Try optimized path first */
    if (read_fast_rgba_pixels( ctx, x, y, width, height,
                               format, type, pixels, packing )) {
-
-      _swrast_use_draw_buffer(ctx);
       return; /* done! */
    }
 
@@ -499,8 +491,6 @@ read_rgba_pixels( GLcontext *ctx,
          }
       }
    }
-
-   _swrast_use_draw_buffer(ctx);
 }
 
 

@@ -317,8 +317,4 @@
 #define MAX_CLIPPED_VERTICES ((2 * (6 + MAX_CLIP_PLANES))+1)
 
 
-/* XXX everything marked with OLD_RENDERBUFFER will be going away... */
-#define OLD_RENDERBUFFER 1
-
-
 #endif /* CONFIG_H */

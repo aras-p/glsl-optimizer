@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -133,7 +133,6 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct gl_renderbuffer *drawRb = NULL;
    GLboolean quick_draw;
    GLint row;
-   GLboolean changeBuffer;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    const GLuint transferOps = ctx->_ImageTransferState;
    GLfloat *dest, *tmpImage, *convImage;
@@ -158,11 +157,6 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       quick_draw = GL_FALSE;
    }
 
-   /* If read and draw buffer are different we must do buffer switching */
-   changeBuffer = ctx->Pixel.ReadBuffer != ctx->Color.DrawBuffer[0]
-               || ctx->DrawBuffer != ctx->ReadBuffer;
-
-
    /* allocate space for GLfloat image */
    tmpImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
    if (!tmpImage) {
@@ -176,11 +170,6 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       return;
    }
 
-   if (changeBuffer) {
-      /* choose the read buffer */
-      _swrast_use_read_buffer(ctx);
-   }
-
    /* read source image */
    dest = tmpImage;
    for (row = 0; row < height; row++) {
@@ -191,11 +180,6 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       chan_span_to_float(width, (CONST GLchan (*)[4]) rgba,
                          (GLfloat (*)[4]) dest);
       dest += 4 * width;
-   }
-
-   if (changeBuffer) {
-      /* restore default src/dst buffer */
-      _swrast_use_draw_buffer(ctx);
    }
 
    /* do the image transfer ops which preceed convolution */
@@ -274,7 +258,6 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    GLchan *tmpImage,*p;
    GLboolean quick_draw;
    GLint sy, dy, stepy, j;
-   GLboolean changeBuffer;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
    const GLuint transferOps = ctx->_ImageTransferState;
@@ -331,10 +314,6 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       drawRb = NULL;
    }
 
-   /* If read and draw buffer are different we must do buffer switching */
-   changeBuffer = ctx->Pixel.ReadBuffer != ctx->Color.DrawBuffer[0]
-                  || ctx->DrawBuffer != ctx->ReadBuffer;
-
    if (overlapping) {
       GLint ssy = sy;
       tmpImage = (GLchan *) MALLOC(width * height * sizeof(GLchan) * 4);
@@ -342,9 +321,6 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
          return;
       }
-      /* setup source */
-      if (changeBuffer)
-         _swrast_use_read_buffer(ctx);
       /* read the source image */
       p = tmpImage;
       for (j = 0; j < height; j++, ssy += stepy) {
@@ -353,11 +329,6 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          p += width * 4;
       }
       p = tmpImage;
-      /* restore dest */
-      if (changeBuffer) {
-         _swrast_use_draw_buffer(ctx);
-         changeBuffer = GL_FALSE;
-      }
    }
    else {
       tmpImage = NULL;  /* silence compiler warnings */
@@ -374,13 +345,9 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
       else {
          /* get from framebuffer */
-         if (changeBuffer)
-            _swrast_use_read_buffer(ctx);
          ASSERT(width < MAX_WIDTH);
          _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
                                  width, srcx, sy, span.array->rgba );
-         if (changeBuffer)
-            _swrast_use_draw_buffer(ctx);
       }
 
       if (transferOps) {
@@ -435,7 +402,6 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    GLuint *tmpImage,*p;
    GLint sy, dy, stepy;
    GLint j;
-   GLboolean changeBuffer;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    const GLboolean shift_or_offset = ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset;
    GLint overlapping;
@@ -475,10 +441,6 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    if (ctx->Fog.Enabled)
       _swrast_span_default_fog(ctx, &span);
 
-   /* If read and draw buffer are different we must do buffer switching */
-   changeBuffer = ctx->Pixel.ReadBuffer != ctx->Color.DrawBuffer[0]
-               || ctx->DrawBuffer != ctx->ReadBuffer;
-
    if (overlapping) {
       GLint ssy = sy;
       tmpImage = (GLuint *) MALLOC(width * height * sizeof(GLuint));
@@ -486,9 +448,6 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
          return;
       }
-      /* setup source */
-      if (changeBuffer)
-         _swrast_use_read_buffer(ctx);
       /* read the image */
       p = tmpImage;
       for (j = 0; j < height; j++, ssy += stepy) {
@@ -497,11 +456,6 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
          p += width;
       }
       p = tmpImage;
-      /* restore to draw buffer */
-      if (changeBuffer) {
-         _swrast_use_draw_buffer(ctx);
-         changeBuffer = GL_FALSE;
-      }
    }
    else {
       tmpImage = NULL;  /* silence compiler warning */
@@ -515,12 +469,8 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
          p += width;
       }
       else {
-         if (changeBuffer)
-            _swrast_use_read_buffer(ctx);
          _swrast_read_index_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
                                   width, srcx, sy, span.array->index );
-         if (changeBuffer)
-            _swrast_use_draw_buffer(ctx);
       }
 
       /* Apply shift, offset, look-up table */

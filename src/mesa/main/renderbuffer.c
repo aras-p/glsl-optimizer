@@ -1845,8 +1845,10 @@ _mesa_add_renderbuffer(struct gl_framebuffer *fb,
 {
    assert(fb);
    assert(rb);
+#if 00
    /* there should be no previous renderbuffer on this attachment point! */
    assert(fb->Attachment[bufferName].Renderbuffer == NULL);
+#endif
    assert(bufferName < BUFFER_COUNT);
 
    /* winsys vs. user-created buffer cross check */

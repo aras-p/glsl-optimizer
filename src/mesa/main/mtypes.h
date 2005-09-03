@@ -2211,11 +2211,6 @@ struct gl_framebuffer
    struct gl_renderbuffer *_ColorDrawBuffers[MAX_DRAW_BUFFERS][4];
    struct gl_renderbuffer *_ColorReadBuffer;
 
-#if OLD_RENDERBUFFER
-   /* XXX THIS IS TEMPORARY */
-   GLuint _ColorDrawBit[MAX_DRAW_BUFFERS][4];
-#endif
-
    /** Delete this framebuffer */
    void (*Delete)(struct gl_framebuffer *fb);
 };

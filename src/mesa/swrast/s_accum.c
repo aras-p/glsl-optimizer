@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -286,8 +286,6 @@ accum_accum(GLcontext *ctx, GLfloat value,
    if (swrast->_IntegerAccumMode && value != swrast->_IntegerAccumScaler)
       rescale_accum(ctx);
 
-   _swrast_use_read_buffer(ctx);
-
    if (rb->DataType == GL_SHORT || rb->DataType == GL_UNSIGNED_SHORT) {
       const GLfloat scale = value * ACCUM_SCALE16 / CHAN_MAXF;
       GLshort accumRow[4 * MAX_WIDTH];
@@ -338,8 +336,6 @@ accum_accum(GLcontext *ctx, GLfloat value,
    else {
       /* other types someday */
    }
-
-   _swrast_use_draw_buffer(ctx);
 }
 
 
@@ -373,8 +369,6 @@ accum_load(GLcontext *ctx, GLfloat value,
       swrast->_IntegerAccumMode = GL_FALSE;
       swrast->_IntegerAccumScaler = 0.0;
    }
-
-   _swrast_use_read_buffer(ctx);
 
    if (rb->DataType == GL_SHORT || rb->DataType == GL_UNSIGNED_SHORT) {
       const GLfloat scale = value * ACCUM_SCALE16 / CHAN_MAXF;
@@ -428,8 +422,6 @@ accum_load(GLcontext *ctx, GLfloat value,
    else {
       /* other types someday */
    }
-
-   _swrast_use_draw_buffer(ctx);
 }
 
 

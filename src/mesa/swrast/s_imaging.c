@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,18 +46,12 @@ _swrast_CopyColorTable( GLcontext *ctx,
       return;
    }
 
-   /* Select buffer to read from */
-   _swrast_use_read_buffer(ctx);
-
    if (width > MAX_WIDTH)
       width = MAX_WIDTH;
 
    /* read the data from framebuffer */
    _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
                            width, x, y, data );
-
-   /* Restore reading from draw buffer (the default) */
-   _swrast_use_draw_buffer(ctx);
 
    /* save PBO binding */
    bufferSave = ctx->Unpack.BufferObj;
@@ -82,18 +76,12 @@ _swrast_CopyColorSubTable( GLcontext *ctx,GLenum target, GLsizei start,
       return;
    }
 
-   /* Select buffer to read from */
-   _swrast_use_read_buffer(ctx);
-
    if (width > MAX_WIDTH)
       width = MAX_WIDTH;
 
    /* read the data from framebuffer */
    _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
                            width, x, y, data );
-
-   /* Restore reading from draw buffer (the default) */
-   _swrast_use_draw_buffer(ctx);
 
    /* save PBO binding */
    bufferSave = ctx->Unpack.BufferObj;
@@ -120,9 +108,6 @@ _swrast_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
       return;
    }
 
-   /* Select buffer to read from */
-   _swrast_use_read_buffer(ctx);
-
    RENDER_START( swrast, ctx );
 
    /* read the data from framebuffer */
@@ -130,9 +115,6 @@ _swrast_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
                            width, x, y, (GLchan (*)[4]) rgba );
    
    RENDER_FINISH( swrast, ctx );
-
-   /* Restore reading from draw buffer (the default) */
-   _swrast_use_draw_buffer(ctx);
 
    /* save PBO binding */
    bufferSave = ctx->Unpack.BufferObj;
@@ -163,9 +145,6 @@ _swrast_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
       return;
    }
 
-   /* Select buffer to read from */
-   _swrast_use_read_buffer(ctx);
-
    RENDER_START(swrast,ctx);
    
    /* read pixels from framebuffer */
@@ -175,9 +154,6 @@ _swrast_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
    }
 
    RENDER_FINISH(swrast,ctx);
-
-   /* Restore reading from draw buffer (the default) */
-   _swrast_use_draw_buffer(ctx);
 
    /*
     * HACK: save & restore context state so we can store this as a

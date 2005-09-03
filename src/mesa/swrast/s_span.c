@@ -983,11 +983,6 @@ _swrast_write_index_span( GLcontext *ctx, struct sw_span *span)
       }
    }
 
-#if OLD_RENDERBUFFER
-   /* restore default dest buffer */
-   _swrast_use_draw_buffer(ctx);
-#endif
-
    span->interpMask = origInterpMask;
    span->arrayMask = origArrayMask;
 }
@@ -1029,9 +1024,6 @@ add_colors(GLuint n, GLchan rgba[][4], GLchan specular[][4] )
 static void
 multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
 {
-#if OLD_RENDERBUFFER
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-#endif
    const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    const GLuint output = 0;
@@ -1043,15 +1035,6 @@ multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
    for (i = 0; i < fb->_NumColorDrawBuffers[output]; i++) {
       struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[output][i];
       GLchan rgbaTmp[MAX_WIDTH][4];
-
-#if OLD_RENDERBUFFER
-      /* obsolete code */
-      GLuint bufferBit = fb->_ColorDrawBit[output][i];
-      /* Set the current read/draw buffer */
-      swrast->CurrentBufferBit = bufferBit;
-      if (swrast->Driver.SetBuffer)
-         (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, bufferBit);
-#endif
 
       /* make copy of incoming colors */
       MEMCPY( rgbaTmp, span->array->rgba, 4 * span->end * sizeof(GLchan) );
@@ -1080,11 +1063,6 @@ multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
                     span->array->mask);
       }
    }
-
-#if OLD_RENDERBUFFER
-   /* restore default dest buffer */
-   _swrast_use_draw_buffer(ctx);
-#endif
 }
 
 

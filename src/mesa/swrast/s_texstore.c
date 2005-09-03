@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -71,9 +71,6 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
    if (!image)
       return NULL;
 
-   /* Select buffer to read from */
-   _swrast_use_read_buffer(ctx);
-
    RENDER_START(swrast,ctx);
 
    dst = image;
@@ -85,9 +82,6 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
    }
 
    RENDER_FINISH(swrast,ctx);
-
-   /* Read from draw buffer (the default) */
-   _swrast_use_draw_buffer(ctx);
 
    return image;
 }
