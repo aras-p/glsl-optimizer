@@ -52,34 +52,30 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 /*
- * Eventually, try to remove all references to ctx/rmesa here.
- * The renderbuffer parameter to the span functions should provide all
- * the info needed to read/write the pixels.
- * We'll be a step closer to supporting Pbuffer and framebuffer objects then.
+ * Note that all information needed to access pixels in a renderbuffer
+ * should be obtained through the gl_renderbuffer parameter, not per-context
+ * information.
  */
-#define LOCAL_VARS							\
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);			\
-   __DRIscreenPrivate *sPriv = rmesa->dri.screen;			\
-   __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;			\
-   driRenderbuffer *drb = (driRenderbuffer *) rb;			\
-   GLuint height = dPriv->h;						\
-   GLuint p;								\
+#define LOCAL_VARS						\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;		\
+   const __DRIdrawablePrivate *dPriv = drb->dPriv;		\
+   const GLuint bottom = dPriv->h - 1;				\
+   GLubyte *buf = (GLubyte *) drb->flippedData			\
+      + (dPriv->y * drb->flippedPitch + dPriv->x) * drb->cpp;	\
+   GLuint p;							\
    (void) p;
 
-#define LOCAL_DEPTH_VARS						\
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);			\
-   __DRIscreenPrivate *sPriv = rmesa->dri.screen;			\
-   __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;			\
-   driRenderbuffer *drb = (driRenderbuffer *) rb;			\
-   GLuint height = dPriv->h;						\
-   GLuint xo = dPriv->x;						\
-   GLuint yo = dPriv->y;						\
-   char *buf = (char *)(sPriv->pFB + drb->offset);
+#define LOCAL_DEPTH_VARS				\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;	\
+   const __DRIdrawablePrivate *dPriv = drb->dPriv;	\
+   const GLuint bottom = dPriv->h - 1;			\
+   GLuint xo = dPriv->x;				\
+   GLuint yo = dPriv->y;				\
+   GLubyte *buf = (GLubyte *) drb->Base.Data;
 
+#define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
 
-#define LOCAL_STENCIL_VARS	LOCAL_DEPTH_VARS
-
-#define Y_FLIP( _y )		(height - _y - 1)
+#define Y_FLIP(Y) (bottom - (Y))
 
 #define HW_LOCK()
 
@@ -98,8 +94,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define TAG(x)    radeon##x##_RGB565
 #define TAG2(x,y) radeon##x##_RGB565##y
-#define GET_PTR(X,Y) (sPriv->pFB + drb->flippedOffset		\
-     + ((dPriv->y + (Y)) * drb->flippedPitch + (dPriv->x + (X))) * drb->cpp)
+#define GET_PTR(X,Y) (buf + ((Y) * drb->flippedPitch + (X)) * 2)
 #include "spantmp2.h"
 
 
@@ -110,8 +105,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define TAG(x)    radeon##x##_ARGB8888
 #define TAG2(x,y) radeon##x##_ARGB8888##y
-#define GET_PTR(X,Y) (sPriv->pFB + drb->flippedOffset		\
-     + ((dPriv->y + (Y)) * drb->flippedPitch + (dPriv->x + (X))) * drb->cpp)
+#define GET_PTR(X,Y) (buf + ((Y) * drb->flippedPitch + (X)) * 4)
 #include "spantmp2.h"
 
 
