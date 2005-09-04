@@ -38,12 +38,16 @@ driDeleteRenderbuffer(struct gl_renderbuffer *rb)
  * this function.
  * \param format  Either GL_RGBA, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT24,
  *                GL_DEPTH_COMPONENT32, or GL_STENCIL_INDEX8_EXT (for now).
+ * \param addr  address in main memory of the buffer.  Probably a memory
+ *              mapped region.
  * \param cpp  chars or bytes per pixel
  * \param offset  start of renderbuffer with respect to start of framebuffer
  * \param pitch   pixels per row
  */
 driRenderbuffer *
-driNewRenderbuffer(GLenum format, GLint cpp, GLint offset, GLint pitch)
+driNewRenderbuffer(GLenum format, GLvoid *addr,
+                   GLint cpp, GLint offset, GLint pitch,
+                   __DRIdrawablePrivate *dPriv)
 {
    driRenderbuffer *drb;
 
@@ -98,7 +102,10 @@ driNewRenderbuffer(GLenum format, GLint cpp, GLint offset, GLint pitch)
       drb->Base.AllocStorage = driRenderbufferStorage;
       drb->Base.Delete = driDeleteRenderbuffer;
 
+      drb->Base.Data = addr;
+
       /* DRI renderbuffer-specific fields: */
+      drb->dPriv = dPriv;
       drb->offset = offset;
       drb->pitch = pitch;
       drb->cpp = cpp;
@@ -106,6 +113,7 @@ driNewRenderbuffer(GLenum format, GLint cpp, GLint offset, GLint pitch)
       /* may be changed if page flipping is active: */
       drb->flippedOffset = offset;
       drb->flippedPitch = pitch;
+      drb->flippedData = addr;
    }
    return drb;
 }

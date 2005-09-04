@@ -376,32 +376,43 @@ mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA, screen->cpp,
-                                 screen->frontOffset, screen->frontPitch);
+            = driNewRenderbuffer(GL_RGBA,
+                                 NULL,
+                                 screen->cpp,
+                                 screen->frontOffset, screen->frontPitch,
+                                 driDrawPriv);
          mach64SetSpanFunctions(frontRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
       }
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA, screen->cpp,
-                                 screen->backOffset, screen->backPitch);
+            = driNewRenderbuffer(GL_RGBA,
+                                 NULL,
+                                 screen->cpp,
+                                 screen->backOffset, screen->backPitch,
+                                 driDrawPriv);
          mach64SetSpanFunctions(backRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
       }
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, screen->cpp,
-                                 screen->depthOffset, screen->depthPitch);
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
+                                 NULL, screen->cpp,
+                                 screen->depthOffset, screen->depthPitch,
+                                 driDrawPriv);
          mach64SetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
       }
       else if (mesaVis->depthBits == 24) {
          /* XXX I don't think 24-bit Z is supported - so this isn't used */
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT24, screen->cpp,
-                                 screen->depthOffset, screen->depthPitch);
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT24,
+                                 NULL,
+                                 screen->cpp,
+                                 screen->depthOffset, screen->depthPitch,
+                                 driDrawPriv);
          mach64SetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
       }

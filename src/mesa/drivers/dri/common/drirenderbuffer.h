@@ -11,6 +11,8 @@
 #define DRIRENDERBUFFER_H
 
 #include "mtypes.h"
+#include "dri_util.h"
+
 
 typedef struct {
    struct gl_renderbuffer Base;
@@ -38,7 +40,12 @@ typedef struct {
     */
    GLint flippedOffset;
    GLint flippedPitch;
-   GLubyte *flippedData;  /* mmap'd memory, if used */
+   GLvoid *flippedData;  /* mmap'd address of buffer memory, if used */
+
+   /* Pointer to corresponding __DRIdrawablePrivate.  This is used to compute
+    * the window's position within the framebuffer.
+    */
+   __DRIdrawablePrivate *dPriv;
 
    /* XXX this is for radeon/r200 only.  We should really create a new
     * r200Renderbuffer class, derived from this class...  not a huge deal.
@@ -53,7 +60,9 @@ typedef struct {
 
 
 extern driRenderbuffer *
-driNewRenderbuffer(GLenum format, GLint cpp, GLint offset, GLint pitch);
+driNewRenderbuffer(GLenum format, GLvoid *addr,
+                   GLint cpp, GLint offset, GLint pitch,
+                   __DRIdrawablePrivate *dPriv);
 
 extern void
 driFlipRenderbuffers(struct gl_framebuffer *fb, GLboolean flipped);

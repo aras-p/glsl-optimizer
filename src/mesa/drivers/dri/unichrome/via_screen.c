@@ -44,6 +44,7 @@
 #include "via_dri.h"
 
 #include "GL/internal/dri_interface.h"
+#include "drirenderbuffer.h"
 
 /* Radeon configuration
  */
@@ -240,49 +241,60 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
        */
 
 #if 000
+      /* This code _should_ be put to use.  We have to move the
+       * viaRenderbuffer members out of the via_context structure.
+       * Those members should just be the renderbuffers hanging off the
+       * gl_framebuffer object.
+       */
       /* XXX check/fix the offset/pitch parameters! */
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA, screen->bytesPerPixel,
-                                 0, screen->width);
+            = driNewRenderbuffer(GL_RGBA, NULL,
+                                 screen->bytesPerPixel,
+                                 0, screen->width, driDrawPriv);
          viaSetSpanFunctions(frontRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
       }
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA, screen->bytesPerPixel,
-                                 0, screen->width);
+            = driNewRenderbuffer(GL_RGBA, NULL,
+                                 screen->bytesPerPixel,
+                                 0, screen->width, driDrawPriv);
          viaSetSpanFunctions(backRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
       }
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, screen->bytesPerPixel,
-                                 0, screen->width);
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, NULL,
+                                 screen->bytesPerPixel,
+                                 0, screen->width, driDrawPriv);
          viaSetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
       }
       else if (mesaVis->depthBits == 24) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT24, screen->bytesPerPixel,
-                                 0, screen->width);
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT24, NULL,
+                                 screen->bytesPerPixel,
+                                 0, screen->width, driDrawPriv);
          viaSetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
       }
       else if (mesaVis->depthBits == 32) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT32, screen->bytesPerPixel,
-                                 0, screen->width);
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT32, NULL,
+                                 screen->bytesPerPixel,
+                                 0, screen->width, driDrawPriv);
          viaSetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
       }
 
       if (mesaVis->stencilBits > 0 && !swStencil) {
          driRenderbuffer *stencilRb
-            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT, screen->bytesPerPixel,
-                                 0, screen->width);
+            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT, NULL,
+                                 screen->bytesPerPixel,
+                                 0, screen->width, driDrawPriv);
          viaSetSpanFunctions(stencilRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
       }

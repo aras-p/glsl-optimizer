@@ -343,28 +343,32 @@ ffbCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA, bpp, offset, bogusPitch);
+            = driNewRenderbuffer(GL_RGBA, NULL, bpp, offset, bogusPitch,
+                                 driDrawPriv);
          ffbSetSpanFunctions(frontRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
       }
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA, bpp, offset, bogusPitch);
+            = driNewRenderbuffer(GL_RGBA, NULL, bpp, offset, bogusPitch,
+                                 driDrawPriv);
          ffbSetSpanFunctions(backRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
       }
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, bpp, offset, bogusPitch);
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, NULL, bpp, offset,
+                                 bogusPitch, driDrawPriv);
          ffbSetDepthFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
       }
 
       if (mesaVis->stencilBits > 0 && !swStencil) {
          driRenderbuffer *stencilRb
-            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT, bpp, offset,bogusPitch);
+            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT, NULL, bpp, offset,
+                                 bogusPitch, driDrawPriv);
          ffbSetStencilFunctions(stencilRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
       }

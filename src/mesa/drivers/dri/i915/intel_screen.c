@@ -243,46 +243,56 @@ static GLboolean intelCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA, screen->cpp,
-                                 screen->frontOffset, screen->frontPitch);
+            = driNewRenderbuffer(GL_RGBA,
+                                 driScrnPriv->pFB,
+                                 screen->cpp,
+                                 screen->frontOffset, screen->frontPitch,
+                                 driDrawPriv);
          intelSetSpanFunctions(frontRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
-         frontRb->Base.Data = driScrnPriv->pFB;
       }
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA, screen->cpp,
-                                 screen->backOffset, screen->backPitch);
+            = driNewRenderbuffer(GL_RGBA,
+                                 screen->back.map,
+                                 screen->cpp,
+                                 screen->backOffset, screen->backPitch,
+                                 driDrawPriv);
          intelSetSpanFunctions(backRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
-         backRb->Base.Data = screen->back.map;
       }
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, screen->cpp,
-                                 screen->depthOffset, screen->depthPitch);
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
+                                 screen->depth.map,
+                                 screen->cpp,
+                                 screen->depthOffset, screen->depthPitch,
+                                 driDrawPriv);
          intelSetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
-         depthRb->Base.Data = screen->depth.map;
       }
       else if (mesaVis->depthBits == 24) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT24, screen->cpp,
-                                 screen->depthOffset, screen->depthPitch);
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT24,
+                                 screen->depth.map,
+                                 screen->cpp,
+                                 screen->depthOffset, screen->depthPitch,
+                                 driDrawPriv);
          intelSetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
-         depthRb->Base.Data = screen->depth.map;
       }
 
       if (mesaVis->stencilBits > 0 && !swStencil) {
          driRenderbuffer *stencilRb
-            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT, screen->cpp,
-                                 screen->depthOffset, screen->depthPitch);
+            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT,
+                                 screen->depth.map,
+                                 screen->cpp,
+                                 screen->depthOffset, screen->depthPitch,
+                                 driDrawPriv);
          intelSetSpanFunctions(stencilRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
-         stencilRb->Base.Data = screen->depth.map;
       }
 
       _mesa_add_soft_renderbuffers(fb,

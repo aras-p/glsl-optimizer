@@ -346,41 +346,39 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
       return GL_FALSE; /* not implemented */
    }
    else {
-#if 0
-      driDrawPriv->driverPrivate = (void *)
-         _mesa_create_framebuffer(mesaVis,
-                                  GL_FALSE,  /* software depth buffer? */
-                                  mesaVis->stencilBits > 0,
-                                  mesaVis->accumRedBits > 0,
-                                  GL_FALSE /* s/w alpha planes */);
-#else
       struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA, screen->cpp,
-                                 /*screen->frontOffset*/0, screen->backPitch);
+            = driNewRenderbuffer(GL_RGBA,
+                                 driScrnPriv->pFB,
+                                 screen->cpp,
+                                 /*screen->frontOffset*/0, screen->backPitch,
+                                 driDrawPriv);
          i810SetSpanFunctions(frontRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
-         frontRb->Base.Data = driScrnPriv->pFB;
       }
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA, screen->cpp,
-                                 screen->backOffset, screen->backPitch);
+            = driNewRenderbuffer(GL_RGBA,
+                                 screen->back.map,
+                                 screen->cpp,
+                                 screen->backOffset, screen->backPitch,
+                                 driDrawPriv);
          i810SetSpanFunctions(backRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
-         backRb->Base.Data = (GLubyte *) screen->back.map;
       }
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, screen->cpp,
-                                 screen->depthOffset, screen->backPitch);
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
+                                 screen->depth.map,
+                                 screen->cpp,
+                                 screen->depthOffset, screen->backPitch,
+                                 driDrawPriv);
          i810SetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
-         depthRb->Base.Data = (GLubyte *) screen->depth.map;
       }
 
       _mesa_add_soft_renderbuffers(fb,
@@ -391,7 +389,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                    GL_FALSE, /* alpha */
                                    GL_FALSE /* aux */);
       driDrawPriv->driverPrivate = (void *) fb;
-#endif
+
       return (driDrawPriv->driverPrivate != NULL);
    }
 }

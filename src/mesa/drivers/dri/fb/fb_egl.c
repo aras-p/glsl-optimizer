@@ -682,20 +682,21 @@ fbCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
 
    /* front color renderbuffer */
    {
-      driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, bytesPerPixel,
-                                                origin, stride);
+      driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, display->pFB,
+                                                bytesPerPixel,
+                                                origin, stride, NULL);
       fbSetSpanFunctions(drb, &vis);
-      drb->Base.Data = display->pFB;
       _mesa_add_renderbuffer(surface->mesa_framebuffer,
                              BUFFER_FRONT_LEFT, &drb->Base);
    }
 
    /* back color renderbuffer */
    if (vis.doubleBufferMode) {
-      driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, bytesPerPixel,
-                                                origin, stride);
+      GLubyte *backBuf = _mesa_malloc(stride * height);
+      driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, backBuf,
+                                                bytesPerPixel,
+                                                origin, stride, NULL);
       fbSetSpanFunctions(drb, &vis);
-      drb->Base.Data =  _mesa_malloc(stride * height);
       _mesa_add_renderbuffer(surface->mesa_framebuffer,
                              BUFFER_BACK_LEFT, &drb->Base);
    }

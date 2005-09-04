@@ -206,21 +206,13 @@ tridentCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       return GL_FALSE; /* not implemented */
    }
    else {
-#if 0
-      driDrawPriv->driverPrivate = (void *) 
-         _mesa_create_framebuffer(mesaVis,
-                                  GL_FALSE,  /* software depth buffer? */
-                                  mesaVis->stencilBits > 0,
-                                  mesaVis->accumRedBits > 0,
-                                  mesaVis->alphaBits > 0
-                                  );
-#else
       struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA, screen->cpp,
-                                 screen->frontOffset, screen->frontPitch);
+            = driNewRenderbuffer(GL_RGBA, NULL, screen->cpp,
+                                 screen->frontOffset, screen->frontPitch,
+                                 driDrawPriv);
          /*
          tridentSetSpanFunctions(frontRb, mesaVis);
          */
@@ -229,8 +221,9 @@ tridentCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA, screen->cpp,
-                                 screen->backOffset, screen->backPitch);
+            = driNewRenderbuffer(GL_RGBA, NULL, screen->cpp,
+                                 screen->backOffset, screen->backPitch,
+                                 driDrawPriv);
          /*
          tridentSetSpanFunctions(backRb, mesaVis);
          */
@@ -239,8 +232,9 @@ tridentCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, screen->cpp,
-                                 screen->depthOffset, screen->depthPitch);
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, NULL, screen->cpp,
+                                 screen->depthOffset, screen->depthPitch,
+                                 driDrawPriv);
          /*
          tridentSetSpanFunctions(depthRb, mesaVis);
          */
@@ -248,8 +242,9 @@ tridentCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       }
       else if (mesaVis->depthBits == 24) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT24, screen->cpp,
-                                 screen->depthOffset, screen->depthPitch);
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT24, NULL, screen->cpp,
+                                 screen->depthOffset, screen->depthPitch,
+                                 driDrawPriv);
          /*
          tridentSetSpanFunctions(depthRb, mesaVis);
          */
@@ -273,7 +268,7 @@ tridentCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                    GL_FALSE, /* alpha */
                                    GL_FALSE /* aux */);
       driDrawPriv->driverPrivate = (void *) fb;
-#endif
+
       return (driDrawPriv->driverPrivate != NULL);
    }
 }

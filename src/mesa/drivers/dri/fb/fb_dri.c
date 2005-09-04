@@ -426,21 +426,27 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       /* XXX double-check these parameters (bpp vs cpp, etc) */
       {
-         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, driScrnPriv->fbBPP / 8,
-               driScrnPriv->fbOrigin,
-               driScrnPriv->fbStride);
+         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA,
+                                                   driScrnPriv->pFB,
+                                                   driScrnPriv->fbBPP / 8,
+                                                   driScrnPriv->fbOrigin,
+                                                   driScrnPriv->fbStride,
+                                                   driDrawPriv);
          fbSetSpanFunctions(drb, mesaVis);
-         drb->Base.Data = driScrnPriv->pFB;
          _mesa_add_renderbuffer(mesa_framebuffer,
                                 BUFFER_FRONT_LEFT, &drb->Base);
       }
       if (mesaVis->doubleBufferMode) {
          /* XXX what are the correct origin/stride values? */
-         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, driScrnPriv->fbBPP /8,
-               driScrnPriv->fbOrigin,
-               driScrnPriv->fbStride);
+         GLvoid *backBuf = _mesa_malloc(driScrnPriv->fbStride
+                                        * driScrnPriv->fbHeight);
+         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA,
+                                                   backBuf,
+                                                   driScrnPriv->fbBPP /8,
+                                                   driScrnPriv->fbOrigin,
+                                                   driScrnPriv->fbStride,
+                                                   driDrawPriv);
          fbSetSpanFunctions(drb, mesaVis);
-         drb->Base.Data =  _mesa_malloc(driScrnPriv->fbStride * driScrnPriv->fbHeight);
          _mesa_add_renderbuffer(mesa_framebuffer,
                                 BUFFER_BACK_LEFT, &drb->Base);
       }
