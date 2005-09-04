@@ -53,9 +53,8 @@ static void
 r200UpdatePageFlipping( r200ContextPtr rmesa )
 {
    rmesa->doPageFlip = rmesa->sarea->pfState;
-   if (!rmesa->doPageFlip) {
-      driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer, GL_FALSE);
-   }
+   driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
+                        rmesa->sarea->pfCurrentPage);
 }
 
 
