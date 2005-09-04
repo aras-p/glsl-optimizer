@@ -39,7 +39,7 @@ driDeleteRenderbuffer(struct gl_renderbuffer *rb)
  * \param format  Either GL_RGBA, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT24,
  *                GL_DEPTH_COMPONENT32, or GL_STENCIL_INDEX8_EXT (for now).
  * \param cpp  chars or bytes per pixel
- * \param offset  start of buffer with respect to framebuffer address
+ * \param offset  start of renderbuffer with respect to start of framebuffer
  * \param pitch   pixels per row
  */
 driRenderbuffer *
@@ -124,7 +124,11 @@ driFlipRenderbuffers(struct gl_framebuffer *fb, GLboolean flipped)
    const GLuint count = fb->Visual.stereoMode ? 2 : 1;
    GLuint lr; /* left or right */
 
-   ASSERT(fb->Visual.doubleBufferMode);
+   /* we shouldn't really call this function if single-buffered, but
+    * play it safe.
+    */
+   if (!fb->Visual.doubleBufferMode)
+      return;
 
    for (lr = 0; lr < count; lr++) {
       GLuint frontBuf = (lr == 0) ? BUFFER_FRONT_LEFT : BUFFER_FRONT_RIGHT;
