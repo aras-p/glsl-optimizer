@@ -53,12 +53,14 @@ static const int empty_attribute_list[1] = { None };
 static int api_ver = 0;
 
 /* forward declarations */
-static int driQueryFrameTracking( __DRInativeDisplay * dpy, void * priv,
-    int64_t * sbc, int64_t * missedFrames, float * lastMissedUsage,
-    float * usage );
+static int driQueryFrameTracking( __DRInativeDisplay *dpy, void *priv,
+                                  int64_t *sbc, int64_t *missedFrames,
+                                  float *lastMissedUsage, float *usage );
 
-static void *driCreateNewDrawable(__DRInativeDisplay *dpy, const __GLcontextModes *modes,
-    __DRIid draw, __DRIdrawable *pdraw, int renderType, const int *attrs);
+static void *driCreateNewDrawable(__DRInativeDisplay *dpy,
+                                  const __GLcontextModes *modes,
+                                  __DRIid draw, __DRIdrawable *pdraw,
+                                  int renderType, const int *attrs);
 
 static void driDestroyDrawable(__DRInativeDisplay *dpy, void *drawablePrivate);
 
@@ -642,8 +644,8 @@ static void *driCreateNewDrawable(__DRInativeDisplay *dpy,
    return (void *) pdp;
 }
 
-static __DRIdrawable *driGetDrawable(__DRInativeDisplay *dpy, __DRIid draw,
-					 void *screenPrivate)
+static __DRIdrawable *
+driGetDrawable(__DRInativeDisplay *dpy, __DRIid draw, void *screenPrivate)
 {
     __DRIscreenPrivate *psp = (__DRIscreenPrivate *) screenPrivate;
 
@@ -654,7 +656,8 @@ static __DRIdrawable *driGetDrawable(__DRInativeDisplay *dpy, __DRIid draw,
     return __driFindDrawable(psp->drawHash, draw);
 }
 
-static void driDestroyDrawable(__DRInativeDisplay *dpy, void *drawablePrivate)
+static void
+driDestroyDrawable(__DRInativeDisplay *dpy, void *drawablePrivate)
 {
     __DRIdrawablePrivate *pdp = (__DRIdrawablePrivate *) drawablePrivate;
     __DRIscreenPrivate *psp = pdp->driScreenPriv;
@@ -695,7 +698,8 @@ static void driDestroyDrawable(__DRInativeDisplay *dpy, void *drawablePrivate)
  * This function calls __DriverAPIRec::DestroyContext on \p contextPrivate, calls
  * drmDestroyContext(), and finally frees \p contextPrivate.
  */
-static void driDestroyContext(__DRInativeDisplay *dpy, int scrn, void *contextPrivate)
+static void
+driDestroyContext(__DRInativeDisplay *dpy, int scrn, void *contextPrivate)
 {
     __DRIcontextPrivate  *pcp   = (__DRIcontextPrivate *) contextPrivate;
 
