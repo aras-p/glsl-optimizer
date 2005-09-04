@@ -23,8 +23,7 @@
    char *buf = (char *)(drb->flippedData +		\
 			dPriv->x * 2 +			\
 			dPriv->y * pitch);		\
-   char *read_buf = buf;				\
-   (void) read_buf; (void) buf; (void) p
+   (void) buf; (void) p
 
 #define LOCAL_DEPTH_VARS				\
    i810ContextPtr imesa = I810_CONTEXT(ctx);	        \
@@ -56,7 +55,7 @@
 
 #define READ_RGBA( rgba, _x, _y )					\
 do {									\
-   GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);		\
+   GLushort p = *(GLushort *)(buf + _x*2 + _y*pitch);			\
    rgba[0] = ((p >> 8) & 0xf8) * 255 / 0xf8;				\
    rgba[1] = ((p >> 3) & 0xfc) * 255 / 0xfc;				\
    rgba[2] = ((p << 3) & 0xf8) * 255 / 0xf8;				\
@@ -112,13 +111,7 @@ i810SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
    if (drb->Base.InternalFormat == GL_RGBA) {
       /* always 565 RGB */
-      drb->Base.GetRow        = i810ReadRGBASpan_565;
-      drb->Base.GetValues     = i810ReadRGBAPixels_565;
-      drb->Base.PutRow        = i810WriteRGBASpan_565;
-      drb->Base.PutRowRGB     = i810WriteRGBSpan_565;
-      drb->Base.PutMonoRow    = i810WriteMonoRGBASpan_565;
-      drb->Base.PutValues     = i810WriteRGBAPixels_565;
-      drb->Base.PutMonoValues = i810WriteMonoRGBAPixels_565;
+      i810InitPointers_565(&drb->Base);
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
       i810InitDepthPointers_z16(&drb->Base);

@@ -1356,33 +1356,15 @@ tdfxSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
    if (drb->Base.InternalFormat == GL_RGBA) {
       if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         drb->Base.GetRow        = tdfxReadRGBASpan_RGB565;
-         drb->Base.GetValues     = tdfxReadRGBAPixels_RGB565;
-         drb->Base.PutRow        = tdfxWriteRGBASpan_RGB565;
-         drb->Base.PutRowRGB     = tdfxWriteRGBSpan_RGB565;
-         drb->Base.PutMonoRow    = tdfxWriteMonoRGBASpan_RGB565;
-         drb->Base.PutValues     = tdfxWriteRGBAPixels_RGB565;
-         drb->Base.PutMonoValues = tdfxWriteMonoRGBAPixels_RGB565;
+         tdfxInitPointers_RGB565(&drb->Base);
       }
       else if (vis->redBits == 8 && vis->greenBits == 8
                && vis->blueBits == 8 && vis->alphaBits == 0) {
-         drb->Base.GetRow        = tdfxReadRGBASpan_RGB888;
-         drb->Base.GetValues     = tdfxReadRGBAPixels_RGB888;
-         drb->Base.PutRow        = tdfxWriteRGBASpan_RGB888;
-         drb->Base.PutRowRGB     = tdfxWriteRGBSpan_RGB888;
-         drb->Base.PutMonoRow    = tdfxWriteMonoRGBASpan_RGB888;
-         drb->Base.PutValues     = tdfxWriteRGBAPixels_RGB888;
-         drb->Base.PutMonoValues = tdfxWriteMonoRGBAPixels_RGB888;
+         tdfxInitPointers_RGB888(&drb->Base);
       }
       else if (vis->redBits == 8 && vis->greenBits == 8
                && vis->blueBits == 8 && vis->alphaBits == 8) {
-         drb->Base.GetRow        = tdfxReadRGBASpan_ARGB8888;
-         drb->Base.GetValues     = tdfxReadRGBAPixels_ARGB8888;
-         drb->Base.PutRow        = tdfxWriteRGBASpan_ARGB8888;
-         drb->Base.PutRowRGB     = tdfxWriteRGBSpan_ARGB8888;
-         drb->Base.PutMonoRow    = tdfxWriteMonoRGBASpan_ARGB8888;
-         drb->Base.PutValues     = tdfxWriteRGBAPixels_ARGB8888;
-         drb->Base.PutMonoValues = tdfxWriteMonoRGBAPixels_ARGB8888;
+         tdfxInitPointers_ARGB8888(&drb->Base);
       }
       else {
          _mesa_problem(NULL, "problem in tdfxSetSpanFunctions");

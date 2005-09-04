@@ -48,9 +48,8 @@
    char *buf = (char *) drb->Base.Data +			\
 			dPriv->x * drb->cpp +			\
 			dPriv->y * pitch;			\
-   char *read_buf = buf;					\
    GLushort p;							\
-   (void) read_buf; (void) buf; (void) p
+   (void) buf; (void) p
 
 #define LOCAL_DEPTH_VARS					\
    intelContextPtr intel = INTEL_CONTEXT(ctx);			\
@@ -84,7 +83,7 @@
 
 #define READ_RGBA( rgba, _x, _y )				\
 do {								\
-   GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);	\
+   GLushort p = *(GLushort *)(buf + _x*2 + _y*pitch);		\
    rgba[0] = (((p >> 11) & 0x1f) * 255) / 31;			\
    rgba[1] = (((p >>  5) & 0x3f) * 255) / 63;			\
    rgba[2] = (((p >>  0) & 0x1f) * 255) / 31;			\
@@ -106,7 +105,7 @@ do {								\
 
 #define READ_RGBA( rgba, _x, _y )				\
 do {								\
-   GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);	\
+   GLushort p = *(GLushort *)(buf + _x*2 + _y*pitch);		\
    rgba[0] = (p >> 7) & 0xf8;					\
    rgba[1] = (p >> 3) & 0xf8;					\
    rgba[2] = (p << 3) & 0xf8;					\
@@ -139,9 +138,8 @@ do {								\
    char *buf = (char *)drb->Base.Data +				\
 			dPriv->x * drb->cpp +			\
 			dPriv->y * pitch;			\
-   char *read_buf = buf;					\
    GLuint p;							\
-   (void) read_buf; (void) buf; (void) p
+   (void) buf; (void) p
 
 #undef INIT_MONO_PIXEL
 #define INIT_MONO_PIXEL(p,color)\
@@ -161,7 +159,7 @@ do {								\
 
 #define READ_RGBA(rgba, _x, _y)					\
     do {							\
-	GLuint p = *(GLuint *)(read_buf + _x*4 + _y*pitch);	\
+	GLuint p = *(GLuint *)(buf + _x*4 + _y*pitch);		\
 	rgba[0] = (p >> 16) & 0xff;				\
 	rgba[1] = (p >> 8)  & 0xff;				\
 	rgba[2] = (p >> 0)  & 0xff;				\
@@ -236,34 +234,16 @@ intelSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
    if (drb->Base.InternalFormat == GL_RGBA) {
       if (vis->redBits == 5 && vis->greenBits == 5 && vis->blueBits == 5) {
-         drb->Base.GetRow        = intelReadRGBASpan_555;
-         drb->Base.GetValues     = intelReadRGBAPixels_555;
-         drb->Base.PutRow        = intelWriteRGBASpan_555;
-         drb->Base.PutRowRGB     = intelWriteRGBSpan_555;
-         drb->Base.PutMonoRow    = intelWriteMonoRGBASpan_555;
-         drb->Base.PutValues     = intelWriteRGBAPixels_555;
-         drb->Base.PutMonoValues = intelWriteMonoRGBAPixels_555;
+         intelInitPointers_555(&drb->Base);
       }
       else if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         drb->Base.GetRow        = intelReadRGBASpan_565;
-         drb->Base.GetValues     = intelReadRGBAPixels_565;
-         drb->Base.PutRow        = intelWriteRGBASpan_565;
-         drb->Base.PutRowRGB     = intelWriteRGBSpan_565;
-         drb->Base.PutMonoRow    = intelWriteMonoRGBASpan_565;
-         drb->Base.PutValues     = intelWriteRGBAPixels_565;
-         drb->Base.PutMonoValues = intelWriteMonoRGBAPixels_565;
+         intelInitPointers_565(&drb->Base);
       }
       else {
          assert(vis->redBits == 8);
          assert(vis->greenBits == 8);
          assert(vis->blueBits == 8);
-         drb->Base.GetRow        = intelReadRGBASpan_8888;
-         drb->Base.GetValues     = intelReadRGBAPixels_8888;
-         drb->Base.PutRow        = intelWriteRGBASpan_8888;
-         drb->Base.PutRowRGB     = intelWriteRGBSpan_8888;
-         drb->Base.PutMonoRow    = intelWriteMonoRGBASpan_8888;
-         drb->Base.PutValues     = intelWriteRGBAPixels_8888;
-         drb->Base.PutMonoValues = intelWriteMonoRGBAPixels_8888;
+         intelInitPointers_8888(&drb->Base);
       }
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {

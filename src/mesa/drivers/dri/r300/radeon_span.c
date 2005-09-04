@@ -259,17 +259,16 @@ static void radeonSpanRenderStart(GLcontext * ctx)
 		int p;
 		driRenderbuffer *drb =
 			(driRenderbuffer *) ctx->WinSysDrawBuffer->_ColorDrawBuffers[0][0];
-		volatile int *read_buf =
+		volatile int *buf =
 			(volatile int *)(radeon->dri.screen->pFB + drb->offset);
-		p = *read_buf;
-		*read_buf = p;
+		p = *buf;
+		*buf = p;
 	}
 }
 
 static void radeonSpanRenderFinish(GLcontext * ctx)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-
 	_swrast_flush(ctx);
 	UNLOCK_HARDWARE(radeon);
 }
@@ -289,22 +288,10 @@ void radeonSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
 	if (drb->Base.InternalFormat == GL_RGBA) {
 		if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-			drb->Base.GetRow        = radeonReadRGBASpan_RGB565;
-			drb->Base.GetValues     = radeonReadRGBAPixels_RGB565;
-			drb->Base.PutRow        = radeonWriteRGBASpan_RGB565;
-			drb->Base.PutRowRGB     = radeonWriteRGBSpan_RGB565;
-			drb->Base.PutMonoRow    = radeonWriteMonoRGBASpan_RGB565;
-			drb->Base.PutValues     = radeonWriteRGBAPixels_RGB565;
-			drb->Base.PutMonoValues = radeonWriteMonoRGBAPixels_RGB565;
+			radeonInitPointers_RGB565(&drb->Base);
 		}
 		else {
-			drb->Base.GetRow        = radeonReadRGBASpan_ARGB8888;
-			drb->Base.GetValues     = radeonReadRGBAPixels_ARGB8888;
-			drb->Base.PutRow        = radeonWriteRGBASpan_ARGB8888;
-			drb->Base.PutRowRGB     = radeonWriteRGBSpan_ARGB8888;
-			drb->Base.PutMonoRow    = radeonWriteMonoRGBASpan_ARGB8888;
-			drb->Base.PutValues     = radeonWriteRGBAPixels_ARGB8888;
-			drb->Base.PutMonoValues = radeonWriteMonoRGBAPixels_ARGB8888;
+			radeonInitPointers_ARGB8888(&drb->Base);
 		}
 	}
 	else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {

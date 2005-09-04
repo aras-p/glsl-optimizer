@@ -93,7 +93,7 @@ do {	unsigned int fbc, ppc, cmp;					\
 	fmesa->ffbScreen->rp_active = 1; \
 } while(0)
 
-#define Y_FLIP(__y)		(height - __y)
+#define Y_FLIP(__y)		(height - __y - 1)
 
 #define READ_RGBA(rgba,__x,__y)					\
 do {	GLuint p = *(GLuint *)(buf + ((__x)<<2) + ((__y)<<13));	\
@@ -125,11 +125,5 @@ ffbSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 	assert(vis->redBits == 8);
         assert(vis->greenBits == 8);
         assert(vis->blueBits == 8);
-        drb->Base.GetRow        = ffbReadRGBASpan_888;
-        drb->Base.GetValues     = ffbReadRGBAPixels_888;
-        drb->Base.PutRow        = ffbWriteRGBASpan_888;
-        drb->Base.PutRowRGB     = ffbWriteRGBSpan_888;
-        drb->Base.PutMonoRow    = ffbWriteMonoRGBASpan_888;
-        drb->Base.PutValues     = ffbWriteRGBAPixels_888;
-        drb->Base.PutMonoValues = ffbWriteMonoRGBAPixels_888;
+        ffbInitPointers_888(&drb->Base);
 }

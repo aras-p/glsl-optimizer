@@ -22,9 +22,8 @@
 	GLuint height = dPriv->h;					\
 	char *buf = (char *)(sPriv->pFB + drb->offset			\
 	   + (drb->backBuffer ?	0 : dPriv->x * cpp + dPriv->y * pitch));\
-	char *read_buf = buf;						\
 	GLuint p; \
-	(void) read_buf; (void) buf; (void) p; (void) pitch
+	(void) p
 
 /* FIXME! Depth/Stencil read/writes don't work ! */
 #define LOCAL_DEPTH_VARS					\
@@ -84,7 +83,7 @@ do { \
 
 #define READ_RGBA( rgba, _x, _y ) \
    do { \
-      GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch); \
+      GLushort p = *(GLushort *)(buf + _x*2 + _y*pitch); \
       rgba[0] = (p >> 7) & 0xf8; \
       rgba[1] = (p >> 2) & 0xf8; \
       rgba[2] = (p << 3) & 0xf8; \
@@ -116,7 +115,7 @@ do { \
 
 #define READ_RGBA( rgba, _x, _y ) \
 do { \
-   GLuint p = *(GLuint *)(read_buf + _x*4 + _y*pitch); \
+   GLuint p = *(GLuint *)(buf + _x*4 + _y*pitch); \
    rgba[0] = (p >> 16) & 0xff; \
    rgba[1] = (p >>  8) & 0xff; \
    rgba[2] = (p >>  0) & 0xff; \
@@ -196,22 +195,10 @@ s3vSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
    if (drb->Base.InternalFormat == GL_RGBA) {
       if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         drb->Base.GetRow        = s3vReadRGBASpan_RGB555;
-         drb->Base.GetValues     = s3vReadRGBAPixels_RGB555;
-         drb->Base.PutRow        = s3vWriteRGBASpan_RGB555;
-         drb->Base.PutRowRGB     = s3vWriteRGBSpan_RGB555;
-         drb->Base.PutMonoRow    = s3vWriteMonoRGBASpan_RGB555;
-         drb->Base.PutValues     = s3vWriteRGBAPixels_RGB555;
-         drb->Base.PutMonoValues = s3vWriteMonoRGBAPixels_RGB555;
+         s3vInitPointers_RGB555(&drb->Base);
       }
       else {
-         drb->Base.GetRow        = s3vReadRGBASpan_ARGB8888;
-         drb->Base.GetValues     = s3vReadRGBAPixels_ARGB8888;
-         drb->Base.PutRow        = s3vWriteRGBASpan_ARGB8888;
-         drb->Base.PutRowRGB     = s3vWriteRGBSpan_ARGB8888;
-         drb->Base.PutMonoRow    = s3vWriteMonoRGBASpan_ARGB8888;
-         drb->Base.PutValues     = s3vWriteRGBAPixels_ARGB8888;
-         drb->Base.PutMonoValues = s3vWriteMonoRGBAPixels_ARGB8888;
+         s3vInitPointers_ARGB8888(&drb->Base);
       }
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {

@@ -290,34 +290,16 @@ i830SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
    if (drb->Base.InternalFormat == GL_RGBA) {
       if (vis->redBits == 5 && vis->greenBits == 5 && vis->blueBits == 5) {
-         drb->Base.GetRow        = i830ReadRGBASpan_555;
-         drb->Base.GetValues     = i830ReadRGBAPixels_555;
-         drb->Base.PutRow        = i830WriteRGBASpan_555;
-         drb->Base.PutRowRGB     = i830WriteRGBSpan_555;
-         drb->Base.PutMonoRow    = i830WriteMonoRGBASpan_555;
-         drb->Base.PutValues     = i830WriteRGBAPixels_555;
-         drb->Base.PutMonoValues = i830WriteMonoRGBAPixels_555;
+         i830InitPointers_555(&drb->Base);
       }
       else if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         drb->Base.GetRow        = i830ReadRGBASpan_565;
-         drb->Base.GetValues     = i830ReadRGBAPixels_565;
-         drb->Base.PutRow        = i830WriteRGBASpan_565;
-         drb->Base.PutRowRGB     = i830WriteRGBSpan_565;
-         drb->Base.PutMonoRow    = i830WriteMonoRGBASpan_565;
-         drb->Base.PutValues     = i830WriteRGBAPixels_565;
-         drb->Base.PutMonoValues = i830WriteMonoRGBAPixels_565;
+         i830InitPointers_565(&drb->Base);
       }
       else {
          assert(vis->redBits == 8);
          assert(vis->greenBits == 8);
          assert(vis->blueBits == 8);
-         drb->Base.GetRow        = i830ReadRGBASpan_8888;
-         drb->Base.GetValues     = i830ReadRGBAPixels_8888;
-         drb->Base.PutRow        = i830WriteRGBASpan_8888;
-         drb->Base.PutRowRGB     = i830WriteRGBSpan_8888;
-         drb->Base.PutMonoRow    = i830WriteMonoRGBASpan_8888;
-         drb->Base.PutValues     = i830WriteRGBAPixels_8888;
-         drb->Base.PutMonoValues = i830WriteMonoRGBAPixels_8888;
+         i830InitPointers_8888(&drb->Base);
       }
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
