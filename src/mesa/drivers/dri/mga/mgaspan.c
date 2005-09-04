@@ -45,9 +45,8 @@
 			drb->offset +			\
 			dPriv->x * drb->cpp +		\
 			dPriv->y * pitch);		\
-   char *read_buf = buf;				\
    GLuint p;						\
-   (void) read_buf; (void) buf; (void) p
+   (void) buf; (void) p
 
 
 

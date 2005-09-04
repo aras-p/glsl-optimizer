@@ -40,9 +40,8 @@
    GLuint pitch = drb->pitch;					\
    GLuint height = dPriv->h;					\
    GLubyte *buf = drb->Base.Data + dPriv->x * cpp + dPriv->y * pitch;	\
-   GLubyte *read_buf = buf;					\
    GLuint p;							\
-   (void) p; (void) read_buf;
+   (void) p
 
 #define LOCAL_DEPTH_VARS					\
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);		\

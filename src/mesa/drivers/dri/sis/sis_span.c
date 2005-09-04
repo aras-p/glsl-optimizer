@@ -47,9 +47,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
    driRenderbuffer *drb = (driRenderbuffer *) rb;			\
    GLuint pitch = drb->pitch;						\
    char *buf = (char *)(smesa->FbBase + drb->offset);			\
-   char *read_buf = buf;						\
    GLuint p;								\
-   (void) read_buf; (void) buf; (void) p
+   (void) buf; (void) p
 
 #define LOCAL_DEPTH_VARS						\
    sisContextPtr smesa = SIS_CONTEXT(ctx);				\
