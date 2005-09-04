@@ -56,8 +56,7 @@
 
 /* 16 bit, RGB565 color spanline and pixel functions
  */
-#define GET_SRC_PTR(_x, _y) (buf + (_x) * 2 + (_y) * pitch)
-#define GET_DST_PTR(_x, _y) GET_SRC_PTR(_x, _y);
+#define GET_PTR(_x, _y) (buf + (_x) * 2 + (_y) * pitch)
 #define SPANTMP_PIXEL_FMT GL_RGB
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
 
@@ -68,8 +67,7 @@
 
 /* 32 bit, ARGB8888 color spanline and pixel functions
  */
-#define GET_SRC_PTR(_x, _y) (buf + (_x) * 4 + (_y) * pitch)
-#define GET_DST_PTR(_x, _y) GET_SRC_PTR(_x, _y);
+#define GET_PTR(_x, _y) (buf + (_x) * 4 + (_y) * pitch)
 #define SPANTMP_PIXEL_FMT GL_BGRA
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
 

@@ -38,9 +38,6 @@
 
 #define DBG 0
 
-#define GET_PTR(X,Y) (sPriv->pFB + drb->offset		\
-     + ((dPriv->y + (Y)) * drb->pitch + (dPriv->x + (X))) * drb->cpp)
-
 #define LOCAL_VARS							\
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);			\
    __DRIscreenPrivate *sPriv = mmesa->driScreen;			\
@@ -95,8 +92,8 @@
 
 #define TAG(x)    mach64##x##_RGB565
 #define TAG2(x,y) mach64##x##_RGB565##y
-#define GET_SRC_PTR(X,Y) GET_PTR(X,Y)
-#define GET_DST_PTR(X,Y) GET_SRC_PTR(X,Y)
+#define GET_PTR(X,Y) (sPriv->pFB + drb->offset		\
+     + ((dPriv->y + (Y)) * drb->pitch + (dPriv->x + (X))) * drb->cpp)
 #include "spantmp2.h"
 
 
@@ -109,8 +106,8 @@
 
 #define TAG(x)    mach64##x##_ARGB8888
 #define TAG2(x,y) mach64##x##_ARGB8888##y
-#define GET_SRC_PTR(X,Y) GET_PTR(X,Y)
-#define GET_DST_PTR(X,Y) GET_SRC_PTR(X,Y)
+#define GET_PTR(X,Y) (sPriv->pFB + drb->offset		\
+     + ((dPriv->y + (Y)) * drb->pitch + (dPriv->x + (X))) * drb->cpp)
 #include "spantmp2.h"
 
 

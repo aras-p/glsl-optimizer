@@ -19,12 +19,8 @@
 			gmesa->drawOffset +				\
 			(dPriv->x * gammascrn->cpp) +			\
 			(dPriv->y * pitch));				\
-   char *read_buf = (char *)(sPriv->pFB +				\
-			     gmesa->readOffset +			\
-			     (dPriv->x * gammascrn->cpp) +		\
-			     (dPriv->y * pitch));			\
    GLuint p;								\
-   (void) read_buf; (void) buf; (void) p
+   (void) buf; (void) p
 
 /* FIXME! Depth/Stencil read/writes don't work ! */
 #define LOCAL_DEPTH_VARS				\
@@ -71,7 +67,7 @@
 
 #define READ_RGBA( rgba, _x, _y )					\
    do {									\
-      GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);		\
+      GLushort p = *(GLushort *)(buf + _x*2 + _y*pitch);		\
       rgba[0] = (p >> 8) & 0xf8;					\
       rgba[1] = (p >> 3) & 0xfc;					\
       rgba[2] = (p << 3) & 0xf8;					\
@@ -103,7 +99,7 @@
 
 #define READ_RGBA( rgba, _x, _y )					\
 do {									\
-   GLuint p = *(GLuint *)(read_buf + _x*4 + _y*pitch);			\
+   GLuint p = *(GLuint *)(buf + _x*4 + _y*pitch);			\
    rgba[0] = (p >> 16) & 0xff;						\
    rgba[1] = (p >>  8) & 0xff;						\
    rgba[2] = (p >>  0) & 0xff;						\

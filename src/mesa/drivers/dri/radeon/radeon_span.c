@@ -50,8 +50,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define DBG 0
 
-#define GET_PTR(X,Y) (sPriv->pFB + drb->flippedOffset		\
-     + ((dPriv->y + (Y)) * drb->flippedPitch + (dPriv->x + (X))) * drb->cpp)
 
 /*
  * Eventually, try to remove all references to ctx/rmesa here.
@@ -100,8 +98,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define TAG(x)    radeon##x##_RGB565
 #define TAG2(x,y) radeon##x##_RGB565##y
-#define GET_SRC_PTR(X,Y) GET_PTR(X, Y)
-#define GET_DST_PTR(X,Y) GET_PTR(X, Y)
+#define GET_PTR(X,Y) (sPriv->pFB + drb->flippedOffset		\
+     + ((dPriv->y + (Y)) * drb->flippedPitch + (dPriv->x + (X))) * drb->cpp)
 #include "spantmp2.h"
 
 
@@ -112,8 +110,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define TAG(x)    radeon##x##_ARGB8888
 #define TAG2(x,y) radeon##x##_ARGB8888##y
-#define GET_SRC_PTR(X,Y) GET_PTR(X, Y)
-#define GET_DST_PTR(X,Y) GET_PTR(X, Y)
+#define GET_PTR(X,Y) (sPriv->pFB + drb->flippedOffset		\
+     + ((dPriv->y + (Y)) * drb->flippedPitch + (dPriv->x + (X))) * drb->cpp)
 #include "spantmp2.h"
 
 
@@ -251,7 +249,6 @@ do {									\
 static void radeonSpanRenderStart( GLcontext *ctx )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
-
    RADEON_FIREVERTICES( rmesa );
    LOCK_HARDWARE( rmesa );
    radeonWaitForIdleLocked( rmesa );
