@@ -89,10 +89,7 @@ void radeonGetLock( radeonContextPtr rmesa, GLuint flags )
 
    if ( rmesa->lastStamp != dPriv->lastStamp ) {
       radeonUpdatePageFlipping( rmesa );
-      if (rmesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT)
-         radeonSetCliprects( rmesa, GL_BACK_LEFT );
-      else
-         radeonSetCliprects( rmesa, GL_FRONT_LEFT );
+      radeonSetCliprects( rmesa );
       radeonUpdateViewportOffset( rmesa->glCtx );
       rmesa->lastStamp = dPriv->lastStamp;
    }

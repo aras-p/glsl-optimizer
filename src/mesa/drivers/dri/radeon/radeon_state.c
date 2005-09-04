@@ -1468,6 +1468,11 @@ static void radeonClearStencil( GLcontext *ctx, GLint s )
 #define SUBPIXEL_X 0.125
 #define SUBPIXEL_Y 0.125
 
+
+/**
+ * Called when window size or position changes or viewport or depth range
+ * state is changed.  We update the hardware viewport state here.
+ */
 void radeonUpdateWindow( GLcontext *ctx )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
@@ -1617,16 +1622,15 @@ static void radeonLogicOpCode( GLcontext *ctx, GLenum opcode )
 }
 
 
-void radeonSetCliprects( radeonContextPtr rmesa, GLenum mode )
+/**
+ * Set up the cliprects for either front or back-buffer drawing.
+ */
+void radeonSetCliprects( radeonContextPtr rmesa )
 {
    __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
 
-   switch ( mode ) {
-   case GL_FRONT_LEFT:
-      rmesa->numClipRects = dPriv->numClipRects;
-      rmesa->pClipRects = dPriv->pClipRects;
-      break;
-   case GL_BACK_LEFT:
+   if (rmesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0]
+       == BUFFER_BIT_BACK_LEFT) {
       /* Can't ignore 2d windows if we are page flipping.
        */
       if ( dPriv->numBackClipRects == 0 || rmesa->doPageFlip ) {
@@ -1637,10 +1641,11 @@ void radeonSetCliprects( radeonContextPtr rmesa, GLenum mode )
 	 rmesa->numClipRects = dPriv->numBackClipRects;
 	 rmesa->pClipRects = dPriv->pBackClipRects;
       }
-      break;
-   default:
-      fprintf(stderr, "bad mode in radeonSetCliprects\n");
-      return;
+   }
+   else {
+      /* front buffer (or none, or multiple buffers */
+      rmesa->numClipRects = dPriv->numClipRects;
+      rmesa->pClipRects = dPriv->pClipRects;
    }
 
    if (rmesa->state.scissor.enabled)
@@ -1667,18 +1672,16 @@ static void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
     */
    switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
    case BUFFER_BIT_FRONT_LEFT:
-      FALLBACK( rmesa, RADEON_FALLBACK_DRAW_BUFFER, GL_FALSE );
-      radeonSetCliprects( rmesa, GL_FRONT_LEFT );
-      break;
    case BUFFER_BIT_BACK_LEFT:
       FALLBACK( rmesa, RADEON_FALLBACK_DRAW_BUFFER, GL_FALSE );
-      radeonSetCliprects( rmesa, GL_BACK_LEFT );
       break;
    default:
-      /* GL_NONE or GL_FRONT_AND_BACK or stereo left&right, etc */
+      /* 0 (GL_NONE) buffers or multiple color drawing buffers */
       FALLBACK( rmesa, RADEON_FALLBACK_DRAW_BUFFER, GL_TRUE );
       return;
    }
+
+   radeonSetCliprects( rmesa );
 
    /* We'll set the drawing engine's offset/pitch parameters later
     * when we update other state.
