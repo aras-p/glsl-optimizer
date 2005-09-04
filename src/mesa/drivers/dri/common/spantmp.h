@@ -320,6 +320,16 @@ static void TAG(ReadRGBAPixels)( GLcontext *ctx,
 }
 
 
+static void TAG(InitPointers)(struct gl_renderbuffer *rb)
+{
+   rb->PutRow = TAG(WriteRGBASpan);
+   rb->PutRowRGB = TAG(WriteRGBSpan);
+   rb->PutMonoRow = TAG(WriteMonoRGBASpan);
+   rb->PutValues = TAG(WriteRGBAPixels);
+   rb->PutMonoValues = TAG(WriteMonoRGBAPixels);
+   rb->GetValues = TAG(ReadRGBAPixels);
+   rb->GetRow = TAG(ReadRGBASpan);
+}
 
 
 #undef WRITE_PIXEL
