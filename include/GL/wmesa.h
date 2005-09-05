@@ -78,7 +78,7 @@ typedef struct wmesa_context *WMesaContext;
  * appropriate colormap.
  *
  * Input:
- *         hWnd - Window handle
+ *         hDC - Windows device or memory context
  *         Pal  - Palette to use
  *         rgb_flag - GL_TRUE = RGB mode,
  *                    GL_FALSE = color index mode
@@ -91,7 +91,7 @@ typedef struct wmesa_context *WMesaContext;
  *
  * Return:  a WMesa_context or NULL if error.
  */
-extern WMesaContext WMesaCreateContext(HWND hWnd,HPALETTE* pPal,
+extern WMesaContext WMesaCreateContext(HDC hDC,HPALETTE* pPal,
                                        GLboolean rgb_flag,
                                        GLboolean db_flag,
                                        GLboolean alpha_flag);

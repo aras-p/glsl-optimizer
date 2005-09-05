@@ -1,5 +1,5 @@
 /*
- * Windows (Win32) device driver for Mesa
+ * Windows (Win32/Win64) device driver for Mesa
  *
  */
 
@@ -890,7 +890,6 @@ static void
 wmesa_resize_buffers(GLcontext *ctx, GLframebuffer *buffer,
                      GLuint width, GLuint height)
 {
-    RECT CR;
     if (Current->width != width || Current->height != height) {
 	Current->width = width;
 	Current->height = height;
@@ -899,9 +898,6 @@ wmesa_resize_buffers(GLcontext *ctx, GLframebuffer *buffer,
 	    wmDeleteBackingStore(Current);
 	    wmCreateBackingStore(Current, width, height);
 	}
-	GetClientRect(Current->Window, &CR);
-	Current->width = CR.right;
-	Current->height = CR.bottom;
     }
     _mesa_resize_framebuffer(ctx, buffer, width, height);
 }
@@ -954,13 +950,12 @@ static void wmesa_update_state(GLcontext *ctx, GLuint new_state)
 /*****                   WMESA Functions                          *****/
 /**********************************************************************/
 
-WMesaContext WMesaCreateContext(HWND hWnd, 
+WMesaContext WMesaCreateContext(HDC hDC, 
 				HPALETTE* Pal,
 				GLboolean rgb_flag,
 				GLboolean db_flag,
 				GLboolean alpha_flag)
 {
-    RECT CR;
     WMesaContext c;
     struct dd_function_table functions;
     struct gl_renderbuffer *rb;
@@ -974,12 +969,18 @@ WMesaContext WMesaCreateContext(HWND hWnd,
     c = CALLOC_STRUCT(wmesa_context);
     if (!c)
 	return NULL;
-    
-    c->Window = hWnd;
-    c->hDC = GetDC(hWnd);
-    GetClientRect(c->Window, &CR);
-    c->width = CR.right;
-    c->height = CR.bottom;
+
+    /* Support memory and device contexts */
+    if(WindowFromDC(hDC) != NULL)
+    {
+      c->hDC = GetDC(WindowFromDC(hDC));
+    }
+    else
+    {
+      c->hDC = hDC;
+    }
+    c->width = GetDeviceCaps(c->hDC, HORZRES);
+    c->height = GetDeviceCaps(c->hDC, VERTRES);
 
     c->clearPen = CreatePen(PS_SOLID, 1, 0); 
     c->clearBrush = CreateSolidBrush(0); 
@@ -997,7 +998,7 @@ WMesaContext WMesaCreateContext(HWND hWnd,
 				       8,8,8,      /* color RGB */
 				       alpha_flag ? 8 : 0, /* color A */
 				       0,          /* index bits */
-				       16,         /* depth_bits */
+				       DEFAULT_SOFTWARE_DEPTH_BITS,         /* depth_bits */
 				       8,          /* stencil_bits */
 				       16,16,16,   /* accum RGB */
 				       alpha_flag ? 16 : 0, /* accum A */
@@ -1133,7 +1134,11 @@ void WMesaDestroyContext( void )
 
     WMesaMakeCurrent(NULL);
 
-    ReleaseDC(c->Window, c->hDC);
+    /* Release for device, not memory contexts */
+    if(WindowFromDC(c->hDC) != NULL)
+    {
+      ReleaseDC(WindowFromDC(c->hDC), c->hDC);
+    }
     DeleteObject(c->clearPen); 
     DeleteObject(c->clearBrush); 
     

@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.9 2005/07/01 15:56:14 kschultz Exp $ */
+/* $Id: wgl.c,v 1.10 2005/09/05 14:48:39 kschultz Exp $ */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
  * we get the right export linkage. */
 #define _GDI32_
 #include <windows.h>
+#include "glapi.h"
 
 #include "GL/wmesa.h"   /* protos for wmesa* functions */
 
@@ -155,12 +156,7 @@ static unsigned curPFD = 0;
 
 WINGDIAPI HGLRC GLAPIENTRY wglCreateContext(HDC hdc)
 {
-    HWND hWnd;
     int i = 0;
-    if(!(hWnd = WindowFromDC(hdc))) {
-	SetLastError(0);
-	return(NULL);
-    }
     if (!ctx_count) {
 	for(i=0;i<MESAWGL_CTX_MAX_COUNT;i++) {
 	    wgl_ctx[i].ctx = NULL;
@@ -170,10 +166,11 @@ WINGDIAPI HGLRC GLAPIENTRY wglCreateContext(HDC hdc)
     for( i = 0; i < MESAWGL_CTX_MAX_COUNT; i++ ) {
         if ( wgl_ctx[i].ctx == NULL ) {
             wgl_ctx[i].ctx = 
-		WMesaCreateContext(hWnd, NULL, GL_TRUE,
-				   pfd[curPFD-1].doubleBuffered, 
-				   pfd[curPFD-1].pfd.cAlphaBits ? 
-				   GL_TRUE : GL_FALSE);
+		WMesaCreateContext(hdc, NULL, (GLboolean)GL_TRUE,
+				   (GLboolean) (pfd[curPFD-1].doubleBuffered ?
+                                   GL_TRUE : GL_FALSE), 
+				   (GLboolean)(pfd[curPFD-1].pfd.cAlphaBits ? 
+				   GL_TRUE : GL_FALSE) );
             if (wgl_ctx[i].ctx == NULL)
                 break;
             wgl_ctx[i].hdc = hdc;
@@ -418,7 +415,7 @@ static BOOL wglUseFontBitmaps_FX(HDC fontDevice, DWORD firstChar,
 	HGDIOBJ origBmap;
 	unsigned char *bmap;
 	
-	curChar = i + firstChar;
+	curChar = (char)(i + firstChar);
 	
 	// Find how high/wide this character is
 	VERIFY(GetTextExtentPoint32(bitDevice, &curChar, 1, &size));
@@ -461,8 +458,8 @@ static BOOL wglUseFontBitmaps_FX(HDC fontDevice, DWORD firstChar,
 	
 	// Create the GL object
 	glNewList(i + listBase, GL_COMPILE);
-	glBitmap(bmapWidth, bmapHeight, 0.0, metric.tmDescent,
-		 charWidth, 0.0,
+	glBitmap(bmapWidth, bmapHeight, 0.0, (GLfloat)metric.tmDescent,
+		 (GLfloat)charWidth, 0.0,
 		 bmap);
 	glEndList();
 	// CheckGL();
@@ -559,9 +556,10 @@ WINGDIAPI BOOL GLAPIENTRY wglUseFontBitmapsA(HDC hdc, DWORD first,
 	}
 	
 	glBitmap(gm.gmBlackBoxX,gm.gmBlackBoxY,
-		 -gm.gmptGlyphOrigin.x,
-		 gm.gmptGlyphOrigin.y,
-		 gm.gmCellIncX,gm.gmCellIncY,
+		 (GLfloat)-gm.gmptGlyphOrigin.x,
+		 (GLfloat)gm.gmptGlyphOrigin.y,
+		 (GLfloat)gm.gmCellIncX,
+		 (GLfloat)gm.gmCellIncY,
 		 (const GLubyte * )lpBits);
 	
 	GlobalUnlock(hBits);
