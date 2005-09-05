@@ -1043,7 +1043,6 @@ EXPORTS
 ;	_swrast_alloc_buffers
 	_swrast_Bitmap
 	_swrast_CopyPixels
-	_swrast_DrawBuffer
 	_swrast_DrawPixels
 	_swrast_GetDeviceDriverReference
 	_swrast_Clear

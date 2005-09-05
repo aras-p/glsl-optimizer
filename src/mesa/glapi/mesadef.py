@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: mesadef.py,v 1.2 2004/05/10 07:42:27 dborca Exp $
+# $Id: mesadef.py,v 1.3 2005/09/05 14:09:25 kschultz Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -159,7 +159,6 @@ def PrintTail():
 	print '\t_swrast_alloc_buffers'
 	print '\t_swrast_Bitmap'
 	print '\t_swrast_CopyPixels'
-	print '\t_swrast_DrawBuffer'
 	print '\t_swrast_DrawPixels'
 	print '\t_swrast_GetDeviceDriverReference'
 	print '\t_swrast_Clear'
