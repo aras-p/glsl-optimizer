@@ -299,7 +299,6 @@ typedef struct
    GLuint NewState;
    GLuint StateChanges;
    GLenum Primitive;    /* current primitive being drawn (ala glBegin) */
-   GLbitfield CurrentBufferBit; /* exactly one the of DD_*_BIT buffer bits */
 
    /** Mechanism to allow driver (like X11) to register further
     * software rasterization routines.

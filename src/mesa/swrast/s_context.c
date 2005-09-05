@@ -599,11 +599,6 @@ _swrast_CreateContext( GLcontext *ctx )
    swrast->AllowVertexFog = GL_TRUE;
    swrast->AllowPixelFog = GL_TRUE;
 
-   if (ctx->Visual.doubleBufferMode)
-      swrast->CurrentBufferBit = BUFFER_BIT_BACK_LEFT;
-   else
-      swrast->CurrentBufferBit = BUFFER_FRONT_LEFT;
-
    /* Optimized Accum buffer */
    swrast->_IntegerAccumMode = GL_FALSE;
    swrast->_IntegerAccumScaler = 0.0;
