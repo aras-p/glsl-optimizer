@@ -261,7 +261,8 @@ do {									\
 /* FIXME: Add support for hardware stencil buffers.
  */
 
-void r128SpanRenderStart( GLcontext *ctx )
+static void
+r128SpanRenderStart( GLcontext *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    FLUSH_BATCH(rmesa);
@@ -269,7 +270,8 @@ void r128SpanRenderStart( GLcontext *ctx )
    r128WaitForIdleLocked( rmesa );
 }
 
-void r128SpanRenderFinish( GLcontext *ctx )
+static void
+r128SpanRenderFinish( GLcontext *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    _swrast_flush( ctx );
