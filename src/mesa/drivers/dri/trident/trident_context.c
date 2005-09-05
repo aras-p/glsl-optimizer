@@ -62,9 +62,10 @@ static const struct tnl_pipeline_stage *trident_pipeline[] = {
 };
 
 
-GLboolean tridentCreateContext( const __GLcontextModes *glVisual,
-			     __DRIcontextPrivate *driContextPriv,
-                     	     void *sharedContextPrivate)
+static GLboolean
+tridentCreateContext( const __GLcontextModes *glVisual,
+                      __DRIcontextPrivate *driContextPriv,
+                      void *sharedContextPrivate)
 {
    GLcontext *ctx, *shareCtx;
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
@@ -348,7 +349,8 @@ tridentUnbindContext( __DRIcontextPrivate *driContextPriv )
 }
 
 
-tridentScreenPtr tridentCreateScreen( __DRIscreenPrivate *sPriv )
+static tridentScreenPtr
+tridentCreateScreen( __DRIscreenPrivate *sPriv )
 {
    TRIDENTDRIPtr tDRIPriv = (TRIDENTDRIPtr)sPriv->pDevPriv;
    tridentScreenPtr tridentScreen;
@@ -393,12 +395,14 @@ printf("MAPPED at %p\n", tridentScreen->mmio.map);
 
 /* Destroy the device specific screen private data struct.
  */
-void tridentDestroyScreen( __DRIscreenPrivate *sPriv )
+static void
+tridentDestroyScreen( __DRIscreenPrivate *sPriv )
 {
     tridentScreenPtr tridentScreen = (tridentScreenPtr)sPriv->private;
 
     FREE(tridentScreen);
 }
+
 static GLboolean 
 tridentInitDriver(__DRIscreenPrivate *sPriv)
 {

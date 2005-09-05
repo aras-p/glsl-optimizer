@@ -322,7 +322,8 @@ static void tridentDDShadeModel( GLcontext *ctx, GLenum mode )
    }
 }
 
-void tridentCalcViewport( GLcontext *ctx )
+static void
+tridentCalcViewport( GLcontext *ctx )
 {
    tridentContextPtr tmesa = TRIDENT_CONTEXT(ctx);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -358,7 +359,8 @@ static void tridentDDDepthRange( GLcontext *ctx,
    tridentCalcViewport( ctx );
 }
 
-void tridentSetCliprects( tridentContextPtr tmesa, GLenum mode )
+static void
+tridentSetCliprects( tridentContextPtr tmesa, GLenum mode )
 {
    __DRIdrawablePrivate *dPriv = tmesa->driDrawable;
 
@@ -455,7 +457,8 @@ static void tridentDDClearColor( GLcontext *ctx,
 }
 #endif
 
-void tridentDDUpdateState( GLcontext *ctx, GLuint new_state )
+static void
+tridentDDUpdateState( GLcontext *ctx, GLuint new_state )
 {
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
