@@ -699,6 +699,7 @@ _mesa_AlphaFragmentOp3ATI(GLenum op, GLuint dst, GLuint dstMod, GLuint arg1,
 void GLAPIENTRY
 _mesa_SetFragmentShaderConstantATI(GLuint dst, const GLfloat * value)
 {
+   GLuint dstindex;
    GET_CURRENT_CONTEXT(ctx);
 
    if ((dst < GL_CON_0_ATI) || (dst > GL_CON_7_ATI)) {
@@ -707,7 +708,7 @@ _mesa_SetFragmentShaderConstantATI(GLuint dst, const GLfloat * value)
       return;
    }
 
-   GLuint dstindex = dst - GL_CON_0_ATI;
+   dstindex = dst - GL_CON_0_ATI;
    if (ctx->ATIFragmentShader.Compiling) {
       struct ati_fragment_shader *curProg = ctx->ATIFragmentShader.Current;
       COPY_4V(curProg->Constants[dstindex], value);
