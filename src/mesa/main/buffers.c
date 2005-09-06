@@ -320,11 +320,12 @@ read_buffer_enum_to_bitmask(GLenum buffer)
 
 
 /**
- * Specify which color buffer(s) to draw into for the first color output.
- * Recall that fragment programs can write to multiple outputs.
+ * Called by glDrawBuffer().
+ * Specify which renderbuffer(s) to draw into for the first color output.
+ * <buffer> can name zero, one, two or four renderbuffers!
  * \sa _mesa_DrawBuffersARB
  *
- * \param buffer  color buffer, such as GL_LEFT or GL_FRONT_AND_BACK.
+ * \param buffer  buffer token such as GL_LEFT or GL_FRONT_AND_BACK, etc.
  */
 void GLAPIENTRY
 _mesa_DrawBuffer(GLenum buffer)
@@ -365,9 +366,13 @@ _mesa_DrawBuffer(GLenum buffer)
 
 
 /**
- * Called by glDrawBuffersARB; specifies the destination color buffers
+ * Called by glDrawBuffersARB; specifies the destination color renderbuffers
  * for N fragment program color outputs.
  * \sa _mesa_DrawBuffer
+ * \param n  number of outputs
+ * \param buffers  array [n] of renderbuffer names.  Unlike glDrawBuffer, the
+ *                 names cannot specify more than one buffer.  For example,
+ *                 GL_FRONT_AND_BACK is illegal.
  */
 void GLAPIENTRY
 _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
@@ -513,12 +518,8 @@ _mesa_drawbuffers(GLcontext *ctx, GLsizei n, const GLenum *buffers,
 
 
 /**
- * Set the color buffer source for reading pixels.
- *
- * \param mode color buffer.
- *
- * \sa glReadBuffer().
- *
+ * Called by glReadBuffer to set the source renderbuffer for reading pixels.
+ * \param mode color buffer such as GL_FRONT, GL_BACK, etc.
  */
 void GLAPIENTRY
 _mesa_ReadBuffer(GLenum buffer)
