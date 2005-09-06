@@ -101,63 +101,6 @@ extern "C" {
 #define ADD_POINTERS(A, B)  ( (GLubyte *) (A) + (uintptr_t) (B) )
 
 
-/**********************************************************************/
-/** \name [Pseudo] static array declaration.
- *
- * MACs and BeOS don't support static larger than 32kb, so ...
- */
-/*@{*/
-
-/**
- * \def DEFARRAY
- * Define a [static] unidimensional array
- */
-
-/**
- * \def DEFMARRAY
- * Define a [static] bi-dimensional array
- */
-
-/**
- * \def DEFMNARRAY
- * Define a [static] tri-dimensional array
- */
-
-/**
- * \def CHECKARRAY
- * Verifies a [static] array was properly allocated.
- */
-
-/**
- * \def UNDEFARRAY
- * Undefine (free) a [static] array.
- */
-
-#if defined(macintosh) && !defined(__MRC__)
-/*extern char *AGLAlloc(int size);*/
-/*extern void AGLFree(char* ptr);*/
-#  define DEFARRAY(TYPE,NAME,SIZE)  			TYPE *NAME = (TYPE*)_mesa_alloc(sizeof(TYPE)*(SIZE))
-#  define DEFMARRAY(TYPE,NAME,SIZE1,SIZE2)		TYPE (*NAME)[SIZE2] = (TYPE(*)[SIZE2])_mesa_alloc(sizeof(TYPE)*(SIZE1)*(SIZE2))
-#  define DEFMNARRAY(TYPE,NAME,SIZE1,SIZE2,SIZE3)	TYPE (*NAME)[SIZE2][SIZE3] = (TYPE(*)[SIZE2][SIZE3])_mesa_alloc(sizeof(TYPE)*(SIZE1)*(SIZE2)*(SIZE3))
-#  define CHECKARRAY(NAME,CMD)				do {if (!(NAME)) {CMD;}} while (0)
-#  define UNDEFARRAY(NAME)          			do {if ((NAME)) {_mesa_free((char*)NAME);}  }while (0)
-#elif defined(__BEOS__)
-#  define DEFARRAY(TYPE,NAME,SIZE)  			TYPE *NAME = (TYPE*)_mesa_malloc(sizeof(TYPE)*(SIZE))
-#  define DEFMARRAY(TYPE,NAME,SIZE1,SIZE2)  		TYPE (*NAME)[SIZE2] = (TYPE(*)[SIZE2])_mesa_malloc(sizeof(TYPE)*(SIZE1)*(SIZE2))
-#  define DEFMNARRAY(TYPE,NAME,SIZE1,SIZE2,SIZE3)	TYPE (*NAME)[SIZE2][SIZE3] = (TYPE(*)[SIZE2][SIZE3])_mesa_malloc(sizeof(TYPE)*(SIZE1)*(SIZE2)*(SIZE3))
-#  define CHECKARRAY(NAME,CMD)				do {if (!(NAME)) {CMD;}} while (0)
-#  define UNDEFARRAY(NAME)          			do {if ((NAME)) {_mesa_free((char*)NAME);}  }while (0)
-#else
-#  define DEFARRAY(TYPE,NAME,SIZE)  			TYPE NAME[SIZE]
-#  define DEFMARRAY(TYPE,NAME,SIZE1,SIZE2)		TYPE NAME[SIZE1][SIZE2]
-#  define DEFMNARRAY(TYPE,NAME,SIZE1,SIZE2,SIZE3)	TYPE NAME[SIZE1][SIZE2][SIZE3]
-#  define CHECKARRAY(NAME,CMD)				do {} while(0)
-#  define UNDEFARRAY(NAME)
-#endif
-
-/*@}*/
-
-
 /**
  * Sometimes we treat GLfloats as GLints.  On x86 systems, moving a float
  * as a int (thereby using integer registers instead of FP registers) is
