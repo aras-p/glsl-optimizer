@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.4
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -2829,6 +2829,7 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
 }
 
 
+/* Fixed-point products */
 #define PROD(A,B)   ( (GLuint)(A) * ((GLuint)(B)+1) )
 #define S_PROD(A,B) ( (GLint)(A) * ((GLint)(B)+1) )
 
@@ -2848,7 +2849,7 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
  * 
  * \param rgba         incoming colors, which get modified here
  */
-static INLINE void
+static void
 texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
                  CONST GLchan (*primary_rgba)[4],
                  CONST GLchan *texelBuffer,
@@ -2869,17 +2870,14 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
    static const GLchan one[4] = { CHAN_MAX, CHAN_MAX, CHAN_MAX, CHAN_MAX };
    static const GLchan zero[4] = { 0, 0, 0, 0 };
 #endif
-   GLuint i, j;
-   GLuint numColorArgs;
-   GLuint numAlphaArgs;
-
-   /* GLchan ccolor[3][4]; */
+   const GLuint numColorArgs = textureUnit->_CurrentCombine->_NumArgsRGB;
+   const GLuint numAlphaArgs = textureUnit->_CurrentCombine->_NumArgsA;
    GLchan ccolor[3][MAX_WIDTH][4];
+   GLuint i, j;
 
    ASSERT(ctx->Extensions.EXT_texture_env_combine ||
           ctx->Extensions.ARB_texture_env_combine);
    ASSERT(SWRAST_CONTEXT(ctx)->_AnyTextureCombine);
-
 
    /*
    printf("modeRGB 0x%x  modeA 0x%x  srcRGB1 0x%x  srcA1 0x%x  srcRGB2 0x%x  srcA2 0x%x\n",
@@ -2894,9 +2892,6 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
    /*
     * Do operand setup for up to 3 operands.  Loop over the terms.
     */
-   numColorArgs = textureUnit->_CurrentCombine->_NumArgsRGB;
-   numAlphaArgs = textureUnit->_CurrentCombine->_NumArgsA;
-
    for (j = 0; j < numColorArgs; j++) {
       const GLenum srcRGB = textureUnit->_CurrentCombine->SourceRGB[j];
 
@@ -2981,7 +2976,9 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
       }
    }
 
-
+   /*
+    * Set up the argA[i] pointers
+    */
    for (j = 0; j < numAlphaArgs; j++) {
       const GLenum srcA = textureUnit->_CurrentCombine->SourceA[j];
 
