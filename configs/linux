@@ -8,7 +8,7 @@ CONFIG_NAME = linux
 CC = gcc
 CXX = g++
 
-WARN_FLAGS = -Wall
+WARN_FLAGS = -Wall -Wmissing-prototypes
 OPT_FLAGS  = -O3 -g
 PIC_FLAGS  = -fPIC
 

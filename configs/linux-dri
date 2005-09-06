@@ -13,8 +13,8 @@ MKDEP = /usr/X11R6/bin/makedepend
 #MKDEP = gcc -M
 #MKDEP_OPTIONS = -MF depend
 
-WARN_FLAGS = -Wall
-OPT_FLAGS  = -O -g
+WARN_FLAGS = -Wall -Wmissing-prototypes
+OPT_FLAGS  = -g
 PIC_FLAGS  = -fPIC
 
 # Add '-DGLX_USE_TLS' to ARCH_FLAGS to enable TLS support.
