@@ -39,7 +39,7 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/swrast_setup
 
 # Core Mesa objects
-MESA_MODULES = $(TOP)/src/mesa/mesa.a
+MESA_MODULES = $(TOP)/src/mesa/libmesa.a
 
 # Libraries that the driver shared lib depends on
 LIB_DEPS = -lm -lpthread -lc

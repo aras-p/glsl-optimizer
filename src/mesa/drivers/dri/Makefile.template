@@ -1,6 +1,6 @@
 # -*-makefile-*-
 
-MESA_MODULES = $(TOP)/src/mesa/mesa.a
+MESA_MODULES = $(TOP)/src/mesa/libmesa.a
 
 COMMON_SOURCES = \
         ../../common/driverfuncs.c \

@@ -38,7 +38,7 @@ default:
 	fi
 
 # BeOS driver target
-beos: depend subdirs mesa.a
+beos: depend subdirs libmesa.a
 	cd drivers/beos; $(MAKE)
 
 
@@ -64,13 +64,12 @@ SOLO_C_SOURCES = \
 SOLO_OBJECTS = $(SOLO_C_SOURCES:.c=.o) \
 		$(ASM_SOURCES:.S=.o)
 
-linux-solo: depend subdirs mesa.a drivers-dri
+linux-solo: depend subdirs libmesa.a drivers-dri
 
 # Make archive of core object files
-mesa.a:	$(SOLO_OBJECTS)
+libmesa.a: $(SOLO_OBJECTS)
 	rm -f $@
-	ar rcv $@ $(SOLO_OBJECTS)
-	ranlib $@
+	@ $(TOP)/bin/mklib -o mesa -static $(SOLO_OBJECTS);
 	@if [ "${CONFIG_NAME}" = "beos" ] ; then \
 		mimeset -f "$@" ; \
 	fi
@@ -221,7 +220,7 @@ tags:
 clean:
 	-rm -f */*.o
 	-rm -f */*/*.o
-	-rm -f depend depend.bak mesa.a
+	-rm -f depend depend.bak libmesa.a
 	-rm -f drivers/*/*.o
 	(cd drivers/dri ; $(MAKE) clean)
 	(cd x86 ; $(MAKE) clean)
