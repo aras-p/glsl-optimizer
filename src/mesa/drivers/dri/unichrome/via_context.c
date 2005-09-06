@@ -129,9 +129,19 @@ buffer_align( unsigned width )
 
 
 static void
-nop_delete_renderbuffer(struct gl_renderbuffer *rb)
+viaDeleteRenderbuffer(struct gl_renderbuffer *rb)
 {
    /* Don't free() since we're contained in via_context struct. */
+}
+
+static GLboolean
+viaRenderbufferStorage(GLcontext *ctx, struct gl_renderbuffer *rb,
+                       GLenum internalFormat, GLuint width, GLuint height)
+{
+   rb->Width = width;
+   rb->Height = height;
+   rb->InternalFormat = internalFormat;
+   return GL_TRUE;
 }
 
 
@@ -171,7 +181,8 @@ viaInitRenderbuffer(struct gl_renderbuffer *rb, GLenum format)
       rb->DataType = GL_UNSIGNED_BYTE;
    }
 
-   rb->Delete = nop_delete_renderbuffer;
+   rb->Delete = viaDeleteRenderbuffer;
+   rb->AllocStorage = viaRenderbufferStorage;
 }
 
 
