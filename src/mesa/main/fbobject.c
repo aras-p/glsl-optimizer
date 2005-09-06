@@ -827,8 +827,7 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    if (target != GL_FRAMEBUFFER_EXT) {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glBindFramebufferEXT(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBindFramebufferEXT(target)");
       return;
    }
 
