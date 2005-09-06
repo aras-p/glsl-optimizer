@@ -2874,8 +2874,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
    GLuint numAlphaArgs;
 
    /* GLchan ccolor[3][4]; */
-   DEFMNARRAY(GLchan, ccolor, 3, 3 * MAX_WIDTH, 4);  /* mac 32k limitation */
-   CHECKARRAY(ccolor, return);  /* mac 32k limitation */
+   GLchan ccolor[3][MAX_WIDTH][4];
 
    ASSERT(ctx->Extensions.EXT_texture_env_combine ||
           ctx->Extensions.ARB_texture_env_combine);
@@ -3509,7 +3508,6 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 	 rgba[i][ACOMP] = rgba[i][RCOMP];
       }
    }
-   UNDEFARRAY(ccolor);  /* mac 32k limitation */
 }
 #undef PROD
 

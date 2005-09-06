@@ -351,17 +351,13 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
 
       if (transferOps) {
-         DEFMARRAY(GLfloat, rgbaFloat, MAX_WIDTH, 4);  /* mac 32k limitation */
-         CHECKARRAY(rgbaFloat, return);
-
+         GLfloat rgbaFloat[MAX_WIDTH][4];
          /* convert to float, transfer, convert back to chan */
          chan_span_to_float(width, (CONST GLchan (*)[4]) span.array->rgba,
                             rgbaFloat);
          _mesa_apply_rgba_transfer_ops(ctx, transferOps, width, rgbaFloat);
          float_span_to_chan(width, (CONST GLfloat (*)[4]) rgbaFloat,
                             span.array->rgba);
-
-         UNDEFARRAY(rgbaFloat);  /* mac 32k limitation */
       }
 
       if (ctx->Pixel.PixelTextureEnabled && ctx->Texture._EnabledUnits) {

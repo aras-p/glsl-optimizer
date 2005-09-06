@@ -473,15 +473,13 @@ read_rgba_pixels( GLcontext *ctx,
              * there.  This fixes conformance failures with 16-bit color
              * buffers, for example.
              */
-            DEFMARRAY(GLfloat, rgbaf, MAX_WIDTH, 4);  /* mac 32k limitation */
-            CHECKARRAY(rgbaf, return);  /* mac 32k limitation */
+            GLfloat rgbaf[MAX_WIDTH][4];
             _mesa_chan_to_float_span(ctx, readWidth,
                                      (CONST GLchan (*)[4]) rgba, rgbaf);
             _mesa_pack_rgba_span_float(ctx, readWidth,
                                        (CONST GLfloat (*)[4]) rgbaf,
                                        format, type, dst, packing,
                                        ctx->_ImageTransferState);
-            UNDEFARRAY(rgbaf);  /* mac 32k limitation */
          }
          else {
             /* GLubytes are fine */
