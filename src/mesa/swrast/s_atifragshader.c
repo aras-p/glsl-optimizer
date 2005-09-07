@@ -301,12 +301,10 @@ handle_sample_op(GLcontext * ctx, struct atifs_machine *machine,
    fetch_texel(ctx, tex_coords, 0.0F, idx, machine->Registers[idx]);
 }
 
-#define SETUP_SRC_REG(optype, i, x)	     do {	\
-    if (optype) \
-      src[optype][i][3] = x[3]; \
-    else \
-      COPY_3V(src[optype][i], x); \
-  } while (0)
+#define SETUP_SRC_REG(optype, i, x)		\
+do {						\
+   COPY_4V(src[optype][i], x); 			\
+} while (0)
 
 static GLboolean
 execute_shader(GLcontext * ctx,
