@@ -211,23 +211,43 @@ calculate_buffer_parameters( struct via_context *vmesa,
     * state!
     * That should be fixed someday.
     */
-   _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &vmesa->front.Base);
-   _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &vmesa->back.Base);
-   _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &vmesa->depth.Base);
-   _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &vmesa->stencil.Base);
 
    if (!vmesa->front.Base.InternalFormat) {
       /* do one-time init for the renderbuffers */
       viaInitRenderbuffer(&vmesa->front.Base, GL_RGBA);
-      viaInitRenderbuffer(&vmesa->back.Base, GL_RGBA);
+      viaSetSpanFunctions(&vmesa->front, &fb->Visual);
+      _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &vmesa->front.Base);
+
+      if (fb->Visual.doubleBufferMode) {
+         viaInitRenderbuffer(&vmesa->back.Base, GL_RGBA);
+         viaSetSpanFunctions(&vmesa->back, &fb->Visual);
+         _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &vmesa->back.Base);
+      }
+
       if (vmesa->glCtx->Visual.depthBits > 0) {
          viaInitRenderbuffer(&vmesa->depth.Base, 
                              (vmesa->glCtx->Visual.depthBits == 16
                               ? GL_DEPTH_COMPONENT16 : GL_DEPTH_COMPONENT24));
+         viaSetSpanFunctions(&vmesa->depth, &fb->Visual);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &vmesa->depth.Base);
       }
+
       if (vmesa->glCtx->Visual.stencilBits > 0) {
          viaInitRenderbuffer(&vmesa->stencil.Base, GL_STENCIL_INDEX8_EXT);
+         viaSetSpanFunctions(&vmesa->stencil, &fb->Visual);
+         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &vmesa->stencil.Base);
       }
+   }
+
+   assert(vmesa->front.Base.InternalFormat);
+   assert(vmesa->front.Base.AllocStorage);
+   if (fb->Visual.doubleBufferMode) {
+      assert(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
+      assert(vmesa->front.Base.AllocStorage);
+   }
+   if (fb->Visual.depthBits) {
+      assert(fb->Attachment[BUFFER_DEPTH].Renderbuffer);
+      assert(vmesa->depth.Base.AllocStorage);
    }
 
 
@@ -329,13 +349,9 @@ void viaReAllocateBuffers(GLcontext *ctx, GLframebuffer *drawbuffer,
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
 
-#if 0
-    _swrast_alloc_buffers( drawbuffer );
-#else
-    _mesa_resize_framebuffer(ctx, drawbuffer, width, height);
-#endif
-
     calculate_buffer_parameters( vmesa, drawbuffer );
+
+    _mesa_resize_framebuffer(ctx, drawbuffer, width, height);
 }
 
 static void viaBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
