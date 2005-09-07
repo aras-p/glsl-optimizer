@@ -156,6 +156,11 @@ typedef enum {
 } BufferType;
 
 
+/* Values for db_mode: */
+#define BACK_PIXMAP	1
+#define BACK_XIMAGE	2
+
+
 struct xmesa_renderbuffer
 {
    struct gl_renderbuffer Base;  /* Base class */
@@ -174,7 +179,7 @@ struct xmesa_renderbuffer
    GLuint *origin4;	/* used for PIXEL_ADDR4 macro */
    GLint width4;
 
-   GLint bottom;	/* used for FLIP macro */
+   GLint bottom;	/* used for FLIP macro, equals height - 1 */
 
    ClearFunc clearFunc;
 };
@@ -199,18 +204,16 @@ struct xmesa_buffer {
 
    unsigned long selectedEvents;/* for pbuffers only */
 
-   GLint db_state;		/* 0 = single buffered */
+   GLint db_mode;		/* 0 = single buffered */
 				/* BACK_PIXMAP = use Pixmap for back buffer */
 				/* BACK_XIMAGE = use XImage for back buffer */
 
-#ifndef XFree86Server
    GLuint shm;			/* X Shared Memory extension status:	*/
 				/*    0 = not available			*/
 				/*    1 = XImage support available	*/
 				/*    2 = Pixmap support available too	*/
-#ifdef USE_XSHM
+#if defined(USE_XSHM) && !defined(XFree86Server)
    XShmSegmentInfo shminfo;
-#endif
 #endif
 
    XMesaImage *rowimage;	/* Used for optimized span writing */
@@ -250,12 +253,6 @@ struct xmesa_buffer {
 
    struct xmesa_buffer *Next;	/* Linked list pointer: */
 };
-
-
-/* Values for xmesa->db_state: */
-#define FRONT_PIXMAP	1
-#define BACK_PIXMAP	2
-#define BACK_XIMAGE	4
 
 
 /*
@@ -489,7 +486,8 @@ extern const int xmesa_kernel1[16];
  */
 
 extern struct xmesa_renderbuffer *
-xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, GLboolean rgbMode);
+xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, GLboolean rgbMode,
+                       GLboolean backBuffer);
 
 extern unsigned long
 xmesa_color_to_pixel( GLcontext *ctx,

@@ -114,8 +114,8 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 
    _glthread_LOCK_MUTEX(_xmesa_lock);
    XSync(xmBuffer->xm_visual->display, 0); /* added for Chromium */
-   XGetGeometry( xmBuffer->xm_visual->display, xmBuffer->frontxrb->pixmap, &root,
-		 &winx, &winy, &winwidth, &winheight, &bw, &d );
+   XGetGeometry( xmBuffer->xm_visual->display, xmBuffer->frontxrb->pixmap,
+                 &root, &winx, &winy, &winwidth, &winheight, &bw, &d );
    _glthread_UNLOCK_MUTEX(_xmesa_lock);
 #endif
 
@@ -1095,6 +1095,34 @@ choose_tex_format( GLcontext *ctx, GLint internalFormat,
 
 
 /**
+ * Get the current drawing (and reading) window's size and update the
+ * corresponding gl_framebuffer(s) if needed.
+ */
+static void
+update_framebuffer_size(GLcontext *ctx)
+{
+   struct gl_framebuffer *fb = ctx->WinSysDrawBuffer;
+   GLuint newWidth, newHeight;
+   get_buffer_size(fb, &newWidth, &newHeight);
+   if (newWidth != fb->Width || newHeight != fb->Height) {
+      xmesa_resize_buffers(ctx, fb, newWidth, newHeight);
+      ctx->NewState |= _NEW_BUFFERS;  /* to update scissor / window bounds */
+   }
+
+   if (ctx->WinSysReadBuffer != ctx->WinSysDrawBuffer) {
+      /* Update readbuffer's size */
+      struct gl_framebuffer *fb = ctx->WinSysReadBuffer;
+      GLuint newWidth, newHeight;
+      get_buffer_size(fb, &newWidth, &newHeight);
+      if (newWidth != fb->Width || newHeight != fb->Height) {
+         xmesa_resize_buffers(ctx, fb, newWidth, newHeight);
+         ctx->NewState |= _NEW_BUFFERS;
+      }
+   }
+}
+
+
+/**
  * Called by glViewport.
  * This is a good time for us to poll the current X window size and adjust
  * our renderbuffers to match the current window size.
@@ -1107,26 +1135,7 @@ choose_tex_format( GLcontext *ctx, GLint internalFormat,
 static void
 xmesa_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
-#if 1
-   struct gl_framebuffer *fb = ctx->WinSysDrawBuffer;
-   GLuint newWidth, newHeight;
-
-   /*
-   printf("%s before %d x %d\n", __FUNCTION__, fb->Width, fb->Height);
-   */
-
-   get_buffer_size(fb, &newWidth, &newHeight);
-   if (newWidth != fb->Width || newHeight != fb->Height) {
-      xmesa_resize_buffers(ctx, fb, newWidth, newHeight);
-      ctx->NewState |= _NEW_BUFFERS;  /* to update scissor / window bounds */
-   }
-   /*
-   printf("%s after %d x %d\n", __FUNCTION__, fb->Width, fb->Height);
-   */
-#else
-   /* This also works: */
-   _mesa_ResizeBuffersMESA();
-#endif
+   update_framebuffer_size(ctx);
 }
 
 

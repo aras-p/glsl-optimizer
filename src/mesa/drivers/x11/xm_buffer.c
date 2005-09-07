@@ -42,16 +42,44 @@ xmesa_delete_renderbuffer(struct gl_renderbuffer *rb)
 
 
 /**
- * Reallocate renderbuffer storage.
- * This is called when the window's resized.  It'll get called once for
- * the front color renderbuffer and again for the back color renderbuffer.
+ * Reallocate renderbuffer storage for front color buffer.
  */
 static GLboolean
-xmesa_alloc_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
-                    GLenum internalFormat, GLuint width, GLuint height)
+xmesa_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+                          GLenum internalFormat, GLuint width, GLuint height)
 {
    struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
 
+   /* just clear these to be sure we don't accidentally use them */
+   xrb->origin1 = NULL;
+   xrb->origin2 = NULL;
+   xrb->origin4 = NULL;
+
+   /* for the FLIP macro: */
+   xrb->bottom = height - 1;
+
+   rb->Width = width;
+   rb->Height = height;
+   rb->InternalFormat = internalFormat;
+
+   return GL_TRUE;
+}
+
+
+/**
+ * Reallocate renderbuffer storage for back color buffer.
+ * XXX we should resize the back pixmap/ximage here.
+ */
+static GLboolean
+xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+                         GLenum internalFormat, GLuint width, GLuint height)
+{
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
+
+   /* same as front buffer */
+   (void) xmesa_alloc_front_storage(ctx, rb, internalFormat, width, height);
+
+   /* plus... */
    if (xrb->ximage) {
       /* Needed by PIXELADDR1 macro */
       xrb->width1 = xrb->ximage->bytes_per_line;
@@ -73,19 +101,13 @@ xmesa_alloc_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       assert(xrb->pixmap);
    }
 
-   /* for the FLIP macro: */
-   xrb->bottom = height - 1;
-
-   rb->Width = width;
-   rb->Height = height;
-   rb->InternalFormat = internalFormat;
-
    return GL_TRUE;
 }
 
 
 struct xmesa_renderbuffer *
-xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, GLboolean rgbMode)
+xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, GLboolean rgbMode,
+                       GLboolean backBuffer)
 {
    struct xmesa_renderbuffer *xrb = CALLOC_STRUCT(xmesa_renderbuffer);
    if (xrb) {
@@ -93,7 +115,10 @@ xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, GLboolean rgbMode)
       _mesa_init_renderbuffer(&xrb->Base, name);
 
       xrb->Base.Delete = xmesa_delete_renderbuffer;
-      xrb->Base.AllocStorage = xmesa_alloc_storage;
+      if (backBuffer)
+         xrb->Base.AllocStorage = xmesa_alloc_back_storage;
+      else
+         xrb->Base.AllocStorage = xmesa_alloc_front_storage;
 
       if (rgbMode) {
          xrb->Base.InternalFormat = GL_RGBA;
