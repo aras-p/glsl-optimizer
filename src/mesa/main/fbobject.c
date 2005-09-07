@@ -1184,6 +1184,7 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
    }
 
    if (ctx->DrawBuffer->Name == 0) {
+      /* Can't attach new renderbuffers to a window system framebuffer */
       _mesa_error(ctx, GL_INVALID_OPERATION, "glFramebufferRenderbufferEXT");
       return;
    }
