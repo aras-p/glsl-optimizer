@@ -593,9 +593,11 @@ _mesa_ResizeBuffersMESA( void )
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glResizeBuffersMESA\n");
 
-   if (ctx->DrawBuffer && ctx->DrawBuffer->Name == 0) {
+   if (ctx->WinSysDrawBuffer) {
       GLuint newWidth, newHeight;
-      GLframebuffer *buffer = ctx->DrawBuffer;
+      GLframebuffer *buffer = ctx->WinSysDrawBuffer;
+
+      assert(buffer->Name == 0);
 
       /* ask device driver for size of output buffer */
       ctx->Driver.GetBufferSize( buffer, &newWidth, &newHeight );
@@ -607,10 +609,12 @@ _mesa_ResizeBuffersMESA( void )
       }
    }
 
-   if (ctx->ReadBuffer && ctx->ReadBuffer != ctx->DrawBuffer
-       && ctx->ReadBuffer->Name == 0) {
+   if (ctx->WinSysReadBuffer
+       && ctx->WinSysReadBuffer != ctx->WinSysDrawBuffer) {
       GLuint newWidth, newHeight;
-      GLframebuffer *buffer = ctx->ReadBuffer;
+      GLframebuffer *buffer = ctx->WinSysReadBuffer;
+
+      assert(buffer->Name == 0);
 
       /* ask device driver for size of read buffer */
       ctx->Driver.GetBufferSize( buffer, &newWidth, &newHeight );
