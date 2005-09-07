@@ -150,7 +150,7 @@ static int changed(ggi_visual_t vis, int whatchanged)
 		/* The targets have cleared everything they can do from 
 		   the framebuffer structure so we provide the rest in sw
 		 */
-		_swrast_alloc_buffers(gl_fb);
+		/*_swrast_alloc_buffers(gl_fb);*/
 		
 		break;
 	} 
@@ -405,59 +405,21 @@ static void gl_ggiSetupPointers(GLcontext *ctx)
 
 	GGIMESADPRINT_CORE("gl_ggiSetupPointers() called\n");
 
-	/* General information */
+	/* Plug in default driver functions */
+	_mesa_init_driver_functions(&ctx->Driver);
+
+	/* Plug in ggi-specific functions */
 	ctx->Driver.GetString = gl_ggiGetString;
 	ctx->Driver.GetBufferSize = gl_ggiGetSize;
         ctx->Driver.Viewport = gl_ggiViewport;
 	ctx->Driver.Finish = gl_ggiFlush;
 	ctx->Driver.Flush = gl_ggiFlush;
-	
-	/* Software rasterizer pixel paths */
-	ctx->Driver.Accum = _swrast_Accum;
-	ctx->Driver.Bitmap = _swrast_Bitmap;
 	ctx->Driver.Clear = gl_ggiClear;
-	ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
-	ctx->Driver.CopyPixels = _swrast_CopyPixels;
-	ctx->Driver.DrawPixels = _swrast_DrawPixels;
-	ctx->Driver.ReadPixels = _swrast_ReadPixels;
-        ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
-
-	/* Software texturing */
-	ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
-	ctx->Driver.TexImage1D = _mesa_store_teximage1d;
-	ctx->Driver.TexImage2D = _mesa_store_teximage2d;
-	ctx->Driver.TexImage3D = _mesa_store_teximage3d;
-	ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
-	ctx->Driver.TexSubImage2D = _mesa_store_texsubimage2d;
-	ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
-	ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
-
-        ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
-        ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
-        ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
-        ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
-        ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
-        ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
-
-	ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
-	ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
-	ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
-	ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
-	ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
-
-	/* Imaging extensions */
-	ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
-	ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
-	ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-	ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
-	
-	/* State change callbacks */
 	ctx->Driver.ClearIndex = gl_ggiSetClearIndex; 
 	ctx->Driver.ClearColor = gl_ggiSetClearColor;
 	ctx->Driver.IndexMask = gl_ggiIndexMask;
 	ctx->Driver.ColorMask = gl_ggiColorMask;
 	ctx->Driver.Enable = gl_ggiEnable;
-	
 	ctx->Driver.UpdateState = gl_ggiUpdateState;
 
 	/* Initialize TNL driver interface */

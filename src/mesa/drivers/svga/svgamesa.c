@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.25 2004/11/29 17:30:21 brianp Exp $ */
+/* $Id: svgamesa.c,v 1.26 2005/09/07 23:26:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -263,17 +263,7 @@ static void svgamesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.UpdateState = svgamesa_update_state;
 
    ctx->Driver.GetBufferSize = get_buffer_size;
-   ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
    ctx->Driver.Viewport = viewport;
-
-   /* Software rasterizer pixel paths:
-    */
-   ctx->Driver.Accum = _swrast_Accum;
-   ctx->Driver.Bitmap = _swrast_Bitmap;
-   ctx->Driver.CopyPixels = _swrast_CopyPixels;
-   ctx->Driver.DrawPixels = _swrast_DrawPixels;
-   ctx->Driver.ReadPixels = _swrast_ReadPixels;
-   ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
 
    /* Fill in the swrast driver interface:
     */
@@ -412,6 +402,8 @@ SVGAMesaContext SVGAMesaCreateContext( GLboolean doubleBuffer )
 
    _mesa_enable_sw_extensions(ctx->gl_ctx);
    _mesa_enable_1_3_extensions(ctx->gl_ctx);
+
+   _mesa_init_driver_functions(&ctx->Driver);
 
    ctx->gl_buffer = _mesa_create_framebuffer( ctx->gl_vis,
                                               ctx->gl_vis->depthBits > 0,
