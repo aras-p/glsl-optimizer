@@ -1179,6 +1179,9 @@ xmesa_begin_query(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 /**
  * Return the difference between the two given times in microseconds.
  */
+#ifdef __VMS
+#define suseconds_t unsigned int
+#endif
 static unsigned int
 time_diff(const struct timeval *t0, const struct timeval *t1)
 {
