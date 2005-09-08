@@ -124,8 +124,7 @@ _mesa_debug_fp_inst(GLint num, struct fp_instruction *fp)
 	 _mesa_printf("_SAT");
 
       if (fp[a].DstReg.File != 0xf) {
-	 if (fp[a].DstReg.WriteMask != 0xf ||
-	     fp[a].SrcReg[0].NegateBase)
+	 if (fp[a].DstReg.WriteMask != 0xf)
 	    _mesa_printf(" %s[%d].%s%s%s%s ", file_string[fp[a].DstReg.File], fp[a].DstReg.Index,
 			 GET_BIT(fp[a].DstReg.WriteMask, 0) ? "x" : "",
 			 GET_BIT(fp[a].DstReg.WriteMask, 1) ? "y" : "",
@@ -135,14 +134,19 @@ _mesa_debug_fp_inst(GLint num, struct fp_instruction *fp)
 	    _mesa_printf(" %s[%d] ", file_string[fp[a].DstReg.File], fp[a].DstReg.Index);
       }
 
+      /* Examine each bit of negatebase here as this may be a SWZ instruction
+       */
       if (fp[a].SrcReg[0].File != 0xf) {
 	 if (fp[a].SrcReg[0].Swizzle != SWIZZLE_NOOP ||
 	     fp[a].SrcReg[0].NegateBase)
-	    _mesa_printf("%s[%d].%s%c%c%c%c ", file_string[fp[a].SrcReg[0].File], fp[a].SrcReg[0].Index,
-			 fp[a].SrcReg[0].NegateBase ? "-" : "",
+	    _mesa_printf("%s[%d].%s%c%s%c%s%c%s%c ", file_string[fp[a].SrcReg[0].File], fp[a].SrcReg[0].Index,
+			 GET_BIT(fp[a].SrcReg[0].NegateBase, 0) ? "-" : "",
 			 swz[GET_SWZ(fp[a].SrcReg[0].Swizzle, 0)],
+			 GET_BIT(fp[a].SrcReg[0].NegateBase, 0) ? "-" : "",
 			 swz[GET_SWZ(fp[a].SrcReg[0].Swizzle, 1)],
+			 GET_BIT(fp[a].SrcReg[0].NegateBase, 0) ? "-" : "",
 			 swz[GET_SWZ(fp[a].SrcReg[0].Swizzle, 2)],
+			 GET_BIT(fp[a].SrcReg[0].NegateBase, 0) ? "-" : "",
 			 swz[GET_SWZ(fp[a].SrcReg[0].Swizzle, 3)]);
 	 else
 	    _mesa_printf("%s[%d] ", file_string[fp[a].SrcReg[0].File], fp[a].SrcReg[0].Index);

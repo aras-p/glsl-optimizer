@@ -983,16 +983,16 @@ Parse_VectorSrc(struct parse_state *parseState,
       srcReg->NegateAbs = (sign < 0.0F) ? GL_TRUE : GL_FALSE;
 
       if (Parse_String(parseState, "-"))
-         srcReg->NegateBase = GL_TRUE;
+         srcReg->NegateBase = 0xf;
       else if (Parse_String(parseState, "+"))
-         srcReg->NegateBase = GL_FALSE;
+         srcReg->NegateBase = 0;
       else
-         srcReg->NegateBase = GL_FALSE;
+         srcReg->NegateBase = 0;
    }
    else {
       srcReg->Abs = GL_FALSE;
       srcReg->NegateAbs = GL_FALSE;
-      srcReg->NegateBase = (sign < 0.0F) ? GL_TRUE : GL_FALSE;
+      srcReg->NegateBase = (sign < 0.0F) ? 0xf : 0x0;
    }
 
    /* This should be the real src vector/register name */
@@ -1107,16 +1107,16 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
       srcReg->NegateAbs = (sign < 0.0F) ? GL_TRUE : GL_FALSE;
 
       if (Parse_String(parseState, "-"))
-         srcReg->NegateBase = GL_TRUE;
+         srcReg->NegateBase = 0xf;
       else if (Parse_String(parseState, "+"))
-         srcReg->NegateBase = GL_FALSE;
+         srcReg->NegateBase = 0x0;
       else
-         srcReg->NegateBase = GL_FALSE;
+         srcReg->NegateBase = 0x0;
    }
    else {
       srcReg->Abs = GL_FALSE;
       srcReg->NegateAbs = GL_FALSE;
-      srcReg->NegateBase = (sign < 0.0F) ? GL_TRUE : GL_FALSE;
+      srcReg->NegateBase = (sign < 0.0F) ? 0xf : 0x0;
    }
 
    if (!Peek_Token(parseState, token))
@@ -1241,7 +1241,7 @@ Parse_PrintInstruction(struct parse_state *parseState,
    }
 
    inst->SrcReg[0].Swizzle = SWIZZLE_NOOP;
-   inst->SrcReg[0].NegateBase = GL_FALSE;
+   inst->SrcReg[0].NegateBase = 0x0;
    inst->SrcReg[0].Abs = GL_FALSE;
    inst->SrcReg[0].NegateAbs = GL_FALSE;
 

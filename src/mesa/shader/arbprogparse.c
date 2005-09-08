@@ -2444,15 +2444,15 @@ parse_swizzle_mask (GLubyte ** inst, GLubyte * mask, GLint len)
 /**
  */
 static GLuint
-parse_extended_swizzle_mask (GLubyte ** inst, GLubyte * mask, GLboolean * Negate)
+parse_extended_swizzle_mask (GLubyte ** inst, GLubyte * mask, GLubyte * Negate)
 {
    GLint a;
    GLubyte swz;
 
-   *Negate = GL_FALSE;
+   *Negate = 0x0;
    for (a = 0; a < 4; a++) {
       if (parse_sign (inst) == -1)
-         *Negate = GL_TRUE;
+         *Negate |= 1<<a;
 
       swz = *(*inst)++;
 
@@ -3036,19 +3036,16 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
             return 1;
 
 	 {
-	    GLubyte Swizzle[4]; /* FP's swizzle mask is a GLubyte, while VP's is GLuint */
-	    GLubyte Negate[4];
+	    GLubyte Swizzle[4];
+	    GLubyte NegateMask;
 	    GLint File, Index;
 
 	    if (parse_src_reg(ctx, inst, vc_head, Program, &File, &Index, &rel))
 	       return 1;
-	    parse_extended_swizzle_mask (inst, Swizzle, Negate);
+	    parse_extended_swizzle_mask (inst, Swizzle, &NegateMask);
 	    fp->SrcReg[0].File = File;
 	    fp->SrcReg[0].Index = Index;
-	    fp->SrcReg[0].NegateBase = (Negate[0] << 0 |
-					Negate[1] << 1 |
-					Negate[2] << 2 |
-					Negate[3] << 3);
+	    fp->SrcReg[0].NegateBase = NegateMask;
 	    fp->SrcReg[0].Swizzle = (Swizzle[0] << 0 |
 				     Swizzle[1] << 3 |
 				     Swizzle[2] << 6 |
@@ -3423,8 +3420,8 @@ parse_vp_instruction (GLcontext * ctx, GLubyte ** inst,
                break;
          }
 	 {
-	    GLubyte Swizzle[4]; /* FP's swizzle mask is a GLubyte, while VP's is GLuint */
-	    GLubyte Negate[4];
+	    GLubyte Swizzle[4]; 
+	    GLubyte NegateMask;
 	    GLboolean RelAddr;
 	    GLint File, Index;
 
@@ -3433,13 +3430,10 @@ parse_vp_instruction (GLcontext * ctx, GLubyte ** inst,
 
 	    if (parse_src_reg(ctx, inst, vc_head, Program, &File, &Index, &RelAddr))
 	       return 1;
-	    parse_extended_swizzle_mask (inst, Swizzle, Negate);
+	    parse_extended_swizzle_mask (inst, Swizzle, &NegateMask);
 	    vp->SrcReg[0].File = File;
 	    vp->SrcReg[0].Index = Index;
-	    vp->SrcReg[0].Negate = (Negate[0] << 0 |
-				    Negate[1] << 1 |
-				    Negate[2] << 2 |
-				    Negate[3] << 3);
+	    vp->SrcReg[0].Negate = NegateMask;
 	    vp->SrcReg[0].Swizzle = (Swizzle[0] << 0 |
 				     Swizzle[1] << 3 |
 				     Swizzle[2] << 6 |
