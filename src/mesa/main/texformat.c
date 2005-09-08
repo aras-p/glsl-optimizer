@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1185,7 +1185,8 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
          ; /* fallthrough */
    }
 
-   if (ctx->Extensions.SGIX_depth_texture) {
+   if (ctx->Extensions.SGIX_depth_texture ||
+       ctx->Extensions.ARB_depth_texture) {
       switch (internalFormat) {
          case GL_DEPTH_COMPONENT:
          case GL_DEPTH_COMPONENT24_SGIX:

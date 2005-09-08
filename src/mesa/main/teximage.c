@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -242,7 +242,8 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
       }
    }
 
-   if (ctx->Extensions.SGIX_depth_texture) {
+   if (ctx->Extensions.SGIX_depth_texture ||
+       ctx->Extensions.ARB_depth_texture) {
       switch (internalFormat) {
          case GL_DEPTH_COMPONENT:
          case GL_DEPTH_COMPONENT16_SGIX:
@@ -1982,7 +1983,8 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
    }
 
-   if (!ctx->Extensions.SGIX_depth_texture && is_depth_format(format)) {
+   if (!ctx->Extensions.SGIX_depth_texture &&
+       !ctx->Extensions.ARB_depth_texture && is_depth_format(format)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
    }
 

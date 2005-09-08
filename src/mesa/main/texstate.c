@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -1771,10 +1771,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
             *params = 0;
          return;
       case GL_DEPTH_BITS:
-         /* XXX this isn't in the GL_SGIX_depth_texture spec
-          * but seems appropriate.
-          */
-         if (ctx->Extensions.SGIX_depth_texture)
+         if (ctx->Extensions.SGIX_depth_texture ||
+             ctx->Extensions.ARB_depth_texture)
             *params = img->TexFormat->DepthBits;
          else
             _mesa_error(ctx, GL_INVALID_ENUM,
