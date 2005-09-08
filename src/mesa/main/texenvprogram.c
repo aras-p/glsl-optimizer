@@ -362,6 +362,9 @@ static struct ureg get_temp( struct texenv_fragment_program *p )
       exit(1);
    }
 
+   if (bit > p->program->Base.NumTemporaries)
+      p->program->Base.NumTemporaries = bit;
+
    p->temp_in_use |= 1<<(bit-1);
    return make_ureg(PROGRAM_TEMPORARY, (bit-1));
 }
@@ -386,6 +389,9 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
       _mesa_problem(NULL, "%s: out of temporaries\n", __FILE__);
       exit(1);
    }
+
+   if (bit > p->program->Base.NumTemporaries)
+      p->program->Base.NumTemporaries = bit;
 
    p->temp_in_use |= 1<<(bit-1);
    return make_ureg(PROGRAM_TEMPORARY, (bit-1));
@@ -1031,6 +1037,7 @@ static void create_new_program(struct state_key *key, GLcontext *ctx,
        */
       struct ureg s = register_input(&p, FRAG_ATTRIB_COL1);
       emit_arith( &p, FP_OPCODE_ADD, out, WRITEMASK_XYZ, 0, cf, s, undef );
+      emit_arith( &p, FP_OPCODE_MOV, out, WRITEMASK_W, 0, cf, undef, undef );
    }
    else if (memcmp(&cf, &out, sizeof(cf)) != 0) {
       /* Will wind up in here if no texture enabled or a couple of
