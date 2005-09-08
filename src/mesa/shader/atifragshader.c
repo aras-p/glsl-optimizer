@@ -246,6 +246,7 @@ _mesa_DeleteFragmentShaderATI(GLuint id)
       else if (prog) {
 	 if (ctx->ATIFragmentShader.Current &&
 	     ctx->ATIFragmentShader.Current->Base.Id == id) {
+	     FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 	    _mesa_BindFragmentShaderATI(0);
 	 }
       }
@@ -279,6 +280,8 @@ _mesa_BeginFragmentShaderATI(void)
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBeginFragmentShaderATI(insideShader)");
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    /* if the shader was already defined free instructions and get new ones
       (or, could use the same mem but would need to reinitialize) */
@@ -715,6 +718,7 @@ _mesa_SetFragmentShaderConstantATI(GLuint dst, const GLfloat * value)
       curProg->localConstDef |= 1 << dstindex;
    }
    else {
+      FLUSH_VERTICES(ctx, _NEW_PROGRAM);
       COPY_4V(ctx->ATIFragmentShader.globalConstants[dstindex], value);
    }
 }
