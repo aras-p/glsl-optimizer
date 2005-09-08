@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -1273,18 +1273,24 @@ _swrast_read_depth_span_float( GLcontext *ctx, struct gl_renderbuffer *rb,
 
 /**
  * Clear the depth buffer.
- * XXX this is no longer a swrast function!!!
  */
 void
 _swrast_clear_depth_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
 {
-   const GLuint clearValue
-      = (GLuint) (ctx->Depth.Clear * ctx->DrawBuffer->_DepthMaxF);
+   GLuint clearValue;
    GLint x, y, width, height;
 
    if (!rb || !ctx->Depth.Mask) {
       /* no depth buffer, or writing to it is disabled */
       return;
+   }
+
+   /* compute integer clearing value */
+   if (ctx->Depth.Clear == 1.0) {
+      clearValue = ctx->DrawBuffer->_DepthMax;
+   }
+   else {
+      clearValue = (GLuint) (ctx->Depth.Clear * ctx->DrawBuffer->_DepthMaxF);
    }
 
    assert(rb->_BaseFormat == GL_DEPTH_COMPONENT);
