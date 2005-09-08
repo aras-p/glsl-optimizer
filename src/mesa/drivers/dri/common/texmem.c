@@ -414,7 +414,7 @@ static void driTexturesGone( driTexHeap * heap, int offset, int size,
       }
       t->heap = heap;
       if (in_use) 
-	 t->bound = 0; /* bound to no tex units */
+	 t->reserved = 1; 
       insert_at_head( & heap->texture_objects, t );
    }
 }
@@ -572,7 +572,7 @@ driAllocateTexture( driTexHeap * const * heap_array, unsigned nr_heaps,
 	    /* The the LRU element.  If the texture is bound to one of
 	     * the texture units, then we cannot kick it out.
 	     */
-	    if ( cursor->bound /* || cursor->reserved */ ) {
+	    if ( cursor->bound || cursor->reserved ) {
 	       continue;
 	    }
 

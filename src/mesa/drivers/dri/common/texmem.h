@@ -67,6 +67,9 @@ struct dri_texture_object {
 					 * A placeholder should have a heap and a memBlock.
 					 */
 	PMemBlock   memBlock;		/**< Memory block containing texture */
+
+        unsigned    reserved;	        /**< Cannot be swapped out by user contexts.  */
+
 	unsigned    bound;		/**< Bitmask indicating which tex units
 					 * this texture object is bound to.
 					 * Bit 0 = unit 0, Bit 1 = unit 1, etc
