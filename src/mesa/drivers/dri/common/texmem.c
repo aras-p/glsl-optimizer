@@ -414,7 +414,7 @@ static void driTexturesGone( driTexHeap * heap, int offset, int size,
       }
       t->heap = heap;
       if (in_use) 
-	 t->bound = 99;
+	 t->bound = 0; /* bound to no tex units */
       insert_at_head( & heap->texture_objects, t );
    }
 }
