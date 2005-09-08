@@ -395,13 +395,14 @@ _mesa_PassTexCoordATI(GLuint dst, GLuint coord, GLenum swizzle)
       _mesa_error(ctx, GL_INVALID_OPERATION, "glPassTexCoord(pass)");
       return;
    }
-   if ((dst < GL_REG_0_ATI) || (dst > GL_REG_5_ATI)) {
+   if ((dst < GL_REG_0_ATI) || (dst > GL_REG_5_ATI) ||
+      ((dst - GL_REG_0_ATI) >= ctx->Const.MaxTextureUnits)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glPassTexCoordATI(dst)");
       return;
    }
    if (((coord < GL_REG_0_ATI) || (coord > GL_REG_5_ATI)) &&
-       ((coord < GL_TEXTURE0_ARB) || (coord > GL_TEXTURE5_ARB))) {
-   /* is this texture5 or texture7? spec is a bit unclear there */
+       ((coord < GL_TEXTURE0_ARB) || (coord > GL_TEXTURE7_ARB) ||
+       ((coord - GL_TEXTURE0_ARB) >= ctx->Const.MaxTextureUnits))) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glPassTexCoordATI(coord)");
       return;
    }
@@ -417,13 +418,14 @@ _mesa_PassTexCoordATI(GLuint dst, GLuint coord, GLenum swizzle)
       _mesa_error(ctx, GL_INVALID_OPERATION, "glPassTexCoordATI(swizzle)");
       return;
    }
-   if (coord <= GL_TEXTURE5) {
-      if ((((curProg->swizzlerq >> (coord * 2)) & 3) != 0) &&
-	   (((swizzle & 1) + 1) != ((curProg->swizzlerq >> (coord * 2)) & 3))) {
+   if (coord <= GL_TEXTURE7_ARB) {
+      GLuint tmp = coord - GL_TEXTURE0_ARB;
+      if ((((curProg->swizzlerq >> (tmp * 2)) & 3) != 0) &&
+	   (((swizzle & 1) + 1) != ((curProg->swizzlerq >> (tmp * 2)) & 3))) {
 	 _mesa_error(ctx, GL_INVALID_OPERATION, "glPassTexCoordATI(swizzle)");
 	 return;
       } else {
-	 curProg->swizzlerq |= (((swizzle & 1) + 1) << (coord * 2));
+	 curProg->swizzlerq |= (((swizzle & 1) + 1) << (tmp * 2));
       }
    }
 
@@ -465,12 +467,14 @@ _mesa_SampleMapATI(GLuint dst, GLuint interp, GLenum swizzle)
       _mesa_error(ctx, GL_INVALID_OPERATION, "glSampleMapATI(pass)");
       return;
    }
-   if ((dst < GL_REG_0_ATI) || (dst > GL_REG_5_ATI)) {
+   if ((dst < GL_REG_0_ATI) || (dst > GL_REG_5_ATI) ||
+      ((dst - GL_REG_0_ATI) >= ctx->Const.MaxTextureUnits)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glSampleMapATI(dst)");
       return;
    }
    if (((interp < GL_REG_0_ATI) || (interp > GL_REG_5_ATI)) &&
-       ((interp < GL_TEXTURE0_ARB) || (interp > GL_TEXTURE5_ARB))) {
+       ((interp < GL_TEXTURE0_ARB) || (interp > GL_TEXTURE7_ARB) ||
+       ((interp - GL_TEXTURE0_ARB) >= ctx->Const.MaxTextureUnits))) {
    /* is this texture5 or texture7? spec is a bit unclear there */
       _mesa_error(ctx, GL_INVALID_ENUM, "glSampleMapATI(interp)");
       return;
@@ -487,13 +491,14 @@ _mesa_SampleMapATI(GLuint dst, GLuint interp, GLenum swizzle)
       _mesa_error(ctx, GL_INVALID_OPERATION, "glSampleMapATI(swizzle)");
       return;
    }
-   if (interp <= GL_TEXTURE5) {
-      if ((((curProg->swizzlerq >> (interp * 2)) & 3) != 0) &&
-	   (((swizzle & 1) + 1) != ((curProg->swizzlerq >> (interp * 2)) & 3))) {
+   if (interp <= GL_TEXTURE7_ARB) {
+      GLuint tmp = interp - GL_TEXTURE0_ARB;
+      if ((((curProg->swizzlerq >> (tmp * 2)) & 3) != 0) &&
+	   (((swizzle & 1) + 1) != ((curProg->swizzlerq >> (tmp * 2)) & 3))) {
 	 _mesa_error(ctx, GL_INVALID_OPERATION, "glSampleMapATI(swizzle)");
 	 return;
       } else {
-	 curProg->swizzlerq |= (((swizzle & 1) + 1) << (interp * 2));
+	 curProg->swizzlerq |= (((swizzle & 1) + 1) << (tmp * 2));
       }
    }
 
