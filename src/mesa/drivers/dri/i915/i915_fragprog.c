@@ -145,7 +145,11 @@ static GLuint src_vector( struct i915_fragment_program *p,
 		 GET_SWZ(source->Swizzle, 3));
 
    if (source->NegateBase)
-      src = negate( src, 1,1,1,1 );
+      src = negate( src, 
+		    GET_BIT(source->NegateBase, 0),
+		    GET_BIT(source->NegateBase, 1),
+		    GET_BIT(source->NegateBase, 2),
+		    GET_BIT(source->NegateBase, 3));
 
    return src;
 }
