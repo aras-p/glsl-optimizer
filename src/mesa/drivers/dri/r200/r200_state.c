@@ -2084,7 +2084,7 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
 
    case GL_VERTEX_PROGRAM_ARB:
-      TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, state);
+      TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_VERTEX_PROGRAM, state);
       break;
 
    default:
