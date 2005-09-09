@@ -540,7 +540,8 @@ static char *fallbackStrings[] = {
    "Texgen unit 4",
    "Texgen unit 5",
    "User disable",
-   "Bitmap as points"
+   "Bitmap as points",
+   "Vertex program"
 };
 
 
