@@ -66,7 +66,6 @@ typedef struct
    
    
    int textureOffset;
-   int textureSize;
    int logTextureGranularity;
    
    __DRIscreenPrivate *driScrnPriv;

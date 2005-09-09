@@ -66,7 +66,7 @@ static void intelPrintDRIInfo(intelScreenPrivate *intelScreen,
    fprintf(stderr, "Back offset : 0x%x\n", intelScreen->backOffset);
    fprintf(stderr, "Depth size : 0x%x\n", intelScreen->depth.size);
    fprintf(stderr, "Depth offset : 0x%x\n", intelScreen->depthOffset);
-   fprintf(stderr, "Texture size : 0x%x\n", intelScreen->textureSize);
+   fprintf(stderr, "Texture size : 0x%x\n", intelScreen->tex.size);
    fprintf(stderr, "Texture offset : 0x%x\n", intelScreen->textureOffset);
    fprintf(stderr, "Memory : 0x%x\n", gDRIPriv->mem);
 }
@@ -116,7 +116,6 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
    intelScreen->depthOffset = gDRIPriv->depthOffset;
    intelScreen->depthPitch = gDRIPriv->depthPitch;
    intelScreen->textureOffset = gDRIPriv->textureOffset;
-   intelScreen->textureSize = gDRIPriv->textureSize;
    intelScreen->logTextureGranularity = gDRIPriv->logTextureGranularity;
    intelScreen->back.handle = gDRIPriv->backbuffer;
    intelScreen->back.size = gDRIPriv->backbufferSize;

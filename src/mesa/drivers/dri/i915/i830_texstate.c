@@ -436,7 +436,7 @@ static GLboolean i830UpdateTexUnit( GLcontext *ctx, GLuint unit )
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
    if (texUnit->_ReallyEnabled &&
-       INTEL_CONTEXT(ctx)->intelScreen->textureSize < 2048 * 1024)
+       INTEL_CONTEXT(ctx)->intelScreen->tex.size < 2048 * 1024)
       return GL_FALSE;
 
    switch(texUnit->_ReallyEnabled) {

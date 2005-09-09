@@ -79,7 +79,7 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
    intel->nr_heaps = 1;
    intel->texture_heaps[0] = 
       driCreateTextureHeap( 0, intel,
-			    intel->intelScreen->textureSize,
+			    intel->intelScreen->tex.size,
 			    12,
 			    I830_NR_TEX_REGIONS,
 			    intel->sarea->texList,
