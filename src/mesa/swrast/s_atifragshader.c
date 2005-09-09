@@ -98,7 +98,7 @@ apply_src_rep(GLint optype, GLuint rep, GLfloat * val)
       return;
 
    start = optype ? 3 : 0;
-   end = optype ? 4 : 3;
+   end = 4;
 
    for (i = start; i < end; i++) {
       switch (rep) {
@@ -128,7 +128,7 @@ apply_src_mod(GLint optype, GLuint mod, GLfloat * val)
       return;
 
    start = optype ? 3 : 0;
-   end = optype ? 4 : 3;
+   end = 4;
 
    for (i = start; i < end; i++) {
       if (mod & GL_COMP_BIT_ATI)
@@ -474,6 +474,7 @@ execute_shader(GLcontext * ctx,
 		     GLfloat result;
 
 		     /* DOT 2 always uses the source from the color op */
+		     /* could save recalculation of dot products for alpha inst */
 		     result = src[0][0][0] * src[0][1][0] +
 			src[0][0][1] * src[0][1][1] + src[0][2][2];
 		     if (!optype) {
@@ -483,7 +484,6 @@ execute_shader(GLcontext * ctx,
 		     }
 		     else
 			dst[optype][3] = result;
-
 		  }
 		  break;
 	       case GL_DOT3_ATI:
@@ -509,7 +509,7 @@ execute_shader(GLcontext * ctx,
 		     GLfloat result;
 
 		     /* DOT 4 always uses the source from the color op */
-		     result = src[optype][0][0] * src[0][1][0] +
+		     result = src[0][0][0] * src[0][1][0] +
 			src[0][0][1] * src[0][1][1] +
 			src[0][0][2] * src[0][1][2] +
 			src[0][0][3] * src[0][1][3];
@@ -533,9 +533,13 @@ execute_shader(GLcontext * ctx,
 	       dstreg = inst->DstReg[optype].Index;
 	       dstp = machine->Registers[dstreg - GL_REG_0_ATI];
 
-	       write_dst_addr(optype, inst->DstReg[optype].dstMod,
+	       if ((optype == 0) || ((inst->Opcode[1] != GL_DOT2_ADD_ATI) &&
+		  (inst->Opcode[1] != GL_DOT3_ATI) && (inst->Opcode[1] != GL_DOT4_ATI)))
+	          write_dst_addr(optype, inst->DstReg[optype].dstMod,
 			      inst->DstReg[optype].dstMask, dst[optype],
 			      dstp);
+	       else
+		  write_dst_addr(1, inst->DstReg[0].dstMod, 0, dst[1], dstp);
 	    }
 	 }
       }
