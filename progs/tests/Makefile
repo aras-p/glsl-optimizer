@@ -98,6 +98,11 @@ getprocaddress: getprocaddress.c getproclist.h
 getproclist.h: $(TOP)/src/mesa/glapi/gl_API.xml getprocaddress.c getprocaddress.py
 	python getprocaddress.py > getproclist.h
 
+afsmultiarb: afsmultiarb.o readtex.o
+	$(CC) afsmultiarb.o readtex.o $(LIBS) -o $@
+
+afsmultiarb.o: afsmultiarb.c readtex.h
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 texrect: texrect.o readtex.o
 	$(CC) texrect.o readtex.o $(LIBS) -o $@
