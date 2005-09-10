@@ -1000,16 +1000,16 @@ static void i830_init_packets( i830ContextPtr i830 )
    i830->state.Buffer[I830_DESTREG_CBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
    i830->state.Buffer[I830_DESTREG_CBUFADDR1] = 
       (BUF_3D_ID_COLOR_BACK | 
-       BUF_3D_PITCH(screen->frontPitch * screen->cpp) |
+       BUF_3D_PITCH(screen->front.pitch * screen->cpp) |
        BUF_3D_USE_FENCE);
 
 
    i830->state.Buffer[I830_DESTREG_DBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
    i830->state.Buffer[I830_DESTREG_DBUFADDR1] = 
       (BUF_3D_ID_DEPTH |
-       BUF_3D_PITCH(screen->depthPitch * screen->cpp) |
+       BUF_3D_PITCH(screen->depth.pitch * screen->cpp) |
        BUF_3D_USE_FENCE);
-   i830->state.Buffer[I830_DESTREG_DBUFADDR2] = screen->depthOffset;
+   i830->state.Buffer[I830_DESTREG_DBUFADDR2] = screen->depth.offset;
 
 
    i830->state.Buffer[I830_DESTREG_DV0] = _3DSTATE_DST_BUF_VARS_CMD;

@@ -130,7 +130,7 @@ clip_pixelrect( const GLcontext *ctx,
    if (*height <= 0)
       return GL_FALSE;
 
-   *size = ((*y + *height - 1) * intel->intelScreen->frontPitch +
+   *size = ((*y + *height - 1) * intel->intelScreen->front.pitch +
 	    (*x + *width - 1) * intel->intelScreen->cpp);
 
    return GL_TRUE;
@@ -193,7 +193,7 @@ intelTryReadPixels( GLcontext *ctx,
       __DRIdrawablePrivate *dPriv = intel->driDrawable;
       int nbox = dPriv->numClipRects;
       int src_offset = intel->drawOffset;
-      int src_pitch = intel->intelScreen->frontPitch;
+      int src_pitch = intel->intelScreen->front.pitch;
       int dst_offset = intelAgpOffsetFromVirtual( intel, pixels);
       drm_clip_rect_t *box = dPriv->pClipRects;
       int i;
@@ -318,7 +318,7 @@ static void do_draw_pix( GLcontext *ctx,
 	 intelEmitCopyBlitLocked( intel,
 			    intel->intelScreen->cpp,
 			    src_pitch, src_offset,
-			    intel->intelScreen->frontPitch,
+			    intel->intelScreen->front.pitch,
 			      intel->drawOffset,
 			    bx - x, by - y,
 			    bx, by,

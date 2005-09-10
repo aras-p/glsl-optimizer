@@ -61,13 +61,13 @@ static void intelPrintDRIInfo(intelScreenPrivate *intelScreen,
 			    I830DRIPtr gDRIPriv)
 {
    fprintf(stderr, "Front size : 0x%x\n", sPriv->fbSize);
-   fprintf(stderr, "Front offset : 0x%x\n", intelScreen->frontOffset);
+   fprintf(stderr, "Front offset : 0x%x\n", intelScreen->front.offset);
    fprintf(stderr, "Back size : 0x%x\n", intelScreen->back.size);
-   fprintf(stderr, "Back offset : 0x%x\n", intelScreen->backOffset);
+   fprintf(stderr, "Back offset : 0x%x\n", intelScreen->back.offset);
    fprintf(stderr, "Depth size : 0x%x\n", intelScreen->depth.size);
-   fprintf(stderr, "Depth offset : 0x%x\n", intelScreen->depthOffset);
+   fprintf(stderr, "Depth offset : 0x%x\n", intelScreen->depth.offset);
    fprintf(stderr, "Texture size : 0x%x\n", intelScreen->tex.size);
-   fprintf(stderr, "Texture offset : 0x%x\n", intelScreen->textureOffset);
+   fprintf(stderr, "Texture offset : 0x%x\n", intelScreen->tex.offset);
    fprintf(stderr, "Memory : 0x%x\n", gDRIPriv->mem);
 }
 
@@ -102,21 +102,19 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
    intelScreen->height = gDRIPriv->height;
    intelScreen->mem = gDRIPriv->mem;
    intelScreen->cpp = gDRIPriv->cpp;
-   intelScreen->frontPitch = gDRIPriv->fbStride;
-   intelScreen->frontOffset = gDRIPriv->fbOffset;
 			 
    switch (gDRIPriv->bitsPerPixel) {
    case 15: intelScreen->fbFormat = DV_PF_555; break;
    case 16: intelScreen->fbFormat = DV_PF_565; break;
    case 32: intelScreen->fbFormat = DV_PF_8888; break;
    }
-			 
-   intelScreen->backOffset = gDRIPriv->backOffset;
-   intelScreen->backPitch = gDRIPriv->backPitch;
-   intelScreen->depthOffset = gDRIPriv->depthOffset;
-   intelScreen->depthPitch = gDRIPriv->depthPitch;
-   intelScreen->textureOffset = gDRIPriv->textureOffset;
-   intelScreen->logTextureGranularity = gDRIPriv->logTextureGranularity;
+
+   intelScreen->front.pitch = gDRIPriv->fbStride;
+   intelScreen->front.offset = gDRIPriv->fbOffset;
+   intelScreen->front.map = sPriv->pFB;
+
+   intelScreen->back.offset = gDRIPriv->backOffset;
+   intelScreen->back.pitch = gDRIPriv->backPitch;
    intelScreen->back.handle = gDRIPriv->backbuffer;
    intelScreen->back.size = gDRIPriv->backbufferSize;
 			 
@@ -131,6 +129,8 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
       return GL_FALSE;
    }
 
+   intelScreen->depth.offset = gDRIPriv->depthOffset;
+   intelScreen->depth.pitch = gDRIPriv->depthPitch;
    intelScreen->depth.handle = gDRIPriv->depthbuffer;
    intelScreen->depth.size = gDRIPriv->depthbufferSize;
 
@@ -146,6 +146,8 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
       return GL_FALSE;
    }
 
+   intelScreen->tex.offset = gDRIPriv->textureOffset;
+   intelScreen->logTextureGranularity = gDRIPriv->logTextureGranularity;
    intelScreen->tex.handle = gDRIPriv->textures;
    intelScreen->tex.size = gDRIPriv->textureSize;
 
@@ -245,7 +247,7 @@ static GLboolean intelCreateBuffer( __DRIscreenPrivate *driScrnPriv,
             = driNewRenderbuffer(GL_RGBA,
                                  driScrnPriv->pFB,
                                  screen->cpp,
-                                 screen->frontOffset, screen->frontPitch,
+                                 screen->front.offset, screen->front.pitch,
                                  driDrawPriv);
          intelSetSpanFunctions(frontRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
@@ -256,7 +258,7 @@ static GLboolean intelCreateBuffer( __DRIscreenPrivate *driScrnPriv,
             = driNewRenderbuffer(GL_RGBA,
                                  screen->back.map,
                                  screen->cpp,
-                                 screen->backOffset, screen->backPitch,
+                                 screen->back.offset, screen->back.pitch,
                                  driDrawPriv);
          intelSetSpanFunctions(backRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
@@ -267,7 +269,7 @@ static GLboolean intelCreateBuffer( __DRIscreenPrivate *driScrnPriv,
             = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
                                  screen->depth.map,
                                  screen->cpp,
-                                 screen->depthOffset, screen->depthPitch,
+                                 screen->depth.offset, screen->depth.pitch,
                                  driDrawPriv);
          intelSetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
@@ -277,7 +279,7 @@ static GLboolean intelCreateBuffer( __DRIscreenPrivate *driScrnPriv,
             = driNewRenderbuffer(GL_DEPTH_COMPONENT24,
                                  screen->depth.map,
                                  screen->cpp,
-                                 screen->depthOffset, screen->depthPitch,
+                                 screen->depth.offset, screen->depth.pitch,
                                  driDrawPriv);
          intelSetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
@@ -288,7 +290,7 @@ static GLboolean intelCreateBuffer( __DRIscreenPrivate *driScrnPriv,
             = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT,
                                  screen->depth.map,
                                  screen->cpp,
-                                 screen->depthOffset, screen->depthPitch,
+                                 screen->depth.offset, screen->depth.pitch,
                                  driDrawPriv);
          intelSetSpanFunctions(stencilRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);

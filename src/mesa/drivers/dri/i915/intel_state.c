@@ -193,9 +193,9 @@ static void intelDrawBuffer(GLcontext *ctx, GLenum mode )
    intelSetFrontClipRects( intel );
 
    if (front) {
-      intel->drawOffset = screen->frontOffset;
+      intel->drawOffset = screen->front.offset;
    } else {
-      intel->drawOffset = screen->backOffset;
+      intel->drawOffset = screen->back.offset;
    }
 
    intel->vtbl.set_draw_offset( intel, intel->drawOffset );

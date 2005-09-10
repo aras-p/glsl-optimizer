@@ -478,7 +478,7 @@ i915ClearWithTris(intelContextPtr intel, GLbitfield mask,
    if (mask & BUFFER_BIT_FRONT_LEFT) { 
       set_no_depth_stencil_write( i915 );
       set_color_mask( i915, GL_TRUE );
-      set_draw_offset( i915, screen->frontOffset );
+      set_draw_offset( i915, screen->front.offset );
 
       draw_quad(i915, x0, x1, y0, y1,
 		intel->clear_red, intel->clear_green, 
@@ -489,7 +489,7 @@ i915ClearWithTris(intelContextPtr intel, GLbitfield mask,
    if (mask & BUFFER_BIT_BACK_LEFT) {
       set_no_depth_stencil_write( i915 );
       set_color_mask( i915, GL_TRUE );
-      set_draw_offset( i915, screen->backOffset );
+      set_draw_offset( i915, screen->back.offset );
 
       draw_quad(i915, x0, x1, y0, y1,
 		intel->clear_red, intel->clear_green,
@@ -503,7 +503,7 @@ i915ClearWithTris(intelContextPtr intel, GLbitfield mask,
 			   intel->ctx.Stencil.Clear);
       
       set_color_mask( i915, GL_FALSE );
-      set_draw_offset( i915, screen->frontOffset ); /* could be either? */
+      set_draw_offset( i915, screen->front.offset ); /* could be either? */
 
       draw_quad( i915, x0, x1, y0, y1, 0, 0, 0, 0, 0, 0, 0, 0 );
    }

@@ -558,7 +558,7 @@ GLuint intelAgpOffsetFromVirtual( intelContextPtr intel, const GLvoid *pointer )
    if (offset < 0 || offset > intel->intelScreen->tex.size)
       return ~0;
    else
-      return intel->intelScreen->textureOffset + offset;
+      return intel->intelScreen->tex.offset + offset;
 }
 
 

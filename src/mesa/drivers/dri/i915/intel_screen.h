@@ -34,8 +34,10 @@
 
 typedef struct {
    drm_handle_t handle;
-   drmSize size;
-   char *map;
+   drmSize size;        /* region size in bytes */
+   char *map;           /* memory map */
+   int offset;          /* from start of video mem, in bytes */
+   int pitch;           /* row stride, in pixels */
 } intelRegion;
 
 typedef struct 
@@ -48,24 +50,12 @@ typedef struct
    int deviceID;
    int width;
    int height;
-   int mem;
-   
+   int mem;         /* unused */
+
    int cpp;         /* for front and back buffers */
-   int bitsPerPixel;
-   
+   int bitsPerPixel;  /* unused */
    int fbFormat;
 
-   int frontOffset;
-   int frontPitch;
-
-   int backOffset;
-   int backPitch;
-
-   int depthOffset;
-   int depthPitch;
-   
-   
-   int textureOffset;
    int logTextureGranularity;
    
    __DRIscreenPrivate *driScrnPriv;

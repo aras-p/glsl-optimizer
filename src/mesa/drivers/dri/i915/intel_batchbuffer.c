@@ -51,8 +51,8 @@ static void intel_fill_box( intelContextPtr intel,
 {
    intelEmitFillBlitLocked( intel, 
 			    intel->intelScreen->cpp,
-			    intel->intelScreen->backPitch,
-			    intel->intelScreen->frontOffset,
+			    intel->intelScreen->back.pitch,
+			    intel->intelScreen->front.offset,
 			    x, y, w, h,
 			    INTEL_PACKCOLOR(intel->intelScreen->fbFormat,
 					    r,g,b,0xff));
@@ -338,7 +338,7 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv )
       __DRIdrawablePrivate *dPriv = intel->driDrawable;
       int nbox = dPriv->numClipRects;
       drm_clip_rect_t *pbox = dPriv->pClipRects;
-      int pitch = intelScreen->frontPitch;
+      int pitch = intelScreen->front.pitch;
       int cpp = intelScreen->cpp;
       int i;
       GLuint CMD, BR13;
@@ -378,17 +378,17 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv )
 	 OUT_BATCH( (pbox->y2 << 16) | pbox->x2 );
 
 	 if (intel->sarea->pf_current_page == 0) 
-	    OUT_BATCH( intelScreen->frontOffset );
+	    OUT_BATCH( intelScreen->front.offset );
 	 else
-	    OUT_BATCH( intelScreen->backOffset );			
+	    OUT_BATCH( intelScreen->back.offset );			
 
 	 OUT_BATCH( (pbox->y1 << 16) | pbox->x1 );
 	 OUT_BATCH( BR13 & 0xffff );
 
 	 if (intel->sarea->pf_current_page == 0) 
-	    OUT_BATCH( intelScreen->backOffset );			
+	    OUT_BATCH( intelScreen->back.offset );			
 	 else
-	    OUT_BATCH( intelScreen->frontOffset );
+	    OUT_BATCH( intelScreen->front.offset );
 
 	 ADVANCE_BATCH();
       }
@@ -502,7 +502,7 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
    intelScreenPrivate *intelScreen = intel->intelScreen;
    GLuint clear_depth, clear_color;
    GLint cx, cy;
-   GLint pitch = intelScreen->frontPitch;
+   GLint pitch = intelScreen->front.pitch;
    GLint cpp = intelScreen->cpp;
    GLint i;
    GLuint BR13, CMD, D_CMD;
@@ -596,7 +596,7 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
 	    OUT_BATCH( BR13 );
 	    OUT_BATCH( (b.y1 << 16) | b.x1 );
 	    OUT_BATCH( (b.y2 << 16) | b.x2 );
-	    OUT_BATCH( intelScreen->frontOffset );
+	    OUT_BATCH( intelScreen->front.offset );
 	    OUT_BATCH( clear_color );
 	    ADVANCE_BATCH();
 	 }
@@ -607,7 +607,7 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
 	    OUT_BATCH( BR13 );
 	    OUT_BATCH( (b.y1 << 16) | b.x1 );
 	    OUT_BATCH( (b.y2 << 16) | b.x2 );
-	    OUT_BATCH( intelScreen->backOffset );
+	    OUT_BATCH( intelScreen->back.offset );
 	    OUT_BATCH( clear_color );
 	    ADVANCE_BATCH();
 	 }
@@ -618,7 +618,7 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
 	    OUT_BATCH( BR13 );
 	    OUT_BATCH( (b.y1 << 16) | b.x1 );
 	    OUT_BATCH( (b.y2 << 16) | b.x2 );
-	    OUT_BATCH( intelScreen->depthOffset );
+	    OUT_BATCH( intelScreen->depth.offset );
 	    OUT_BATCH( clear_depth );
 	    ADVANCE_BATCH();
 	 }      
