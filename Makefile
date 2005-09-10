@@ -137,6 +137,7 @@ ultrix-gcc:
 DIRECTORY = Mesa-6.5
 LIB_NAME = MesaLib-6.5
 DEMO_NAME = MesaDemos-6.5
+GLUT_NAME = MesaGLUT-6.5
 
 MAIN_FILES = \
 	$(DIRECTORY)/Makefile*						\
@@ -309,7 +310,7 @@ GLW_FILES = \
 	$(DIRECTORY)/src/glw/README			\
 	$(DIRECTORY)/src/glw/depend
 
-PROG_FILES = \
+DEMO_FILES = \
 	$(DIRECTORY)/progs/beos/*.cpp			\
 	$(DIRECTORY)/progs/beos/Makefile		\
 	$(DIRECTORY)/progs/images/*.rgb			\
@@ -334,10 +335,8 @@ PROG_FILES = \
 	$(DIRECTORY)/progs/windml/*.bmp			\
 	$(DIRECTORY)/progs/ggi/*.c			\
 	$(DIRECTORY)/windows/VC6/progs/demos/*.dsp	\
-	$(DIRECTORY)/windows/VC6/progs/glut/glut.dsp	\
 	$(DIRECTORY)/windows/VC6/progs/progs.dsw	\
 	$(DIRECTORY)/windows/VC7/progs/demos/*.vcproj	\
-	$(DIRECTORY)/windows/VC7/progs/glut/glut.vcproj	\
 	$(DIRECTORY)/windows/VC7/progs/progs.sln
 
 GLUT_FILES = \
@@ -356,7 +355,9 @@ GLUT_FILES = \
 	$(DIRECTORY)/src/glut/dos/Makefile.DJ		\
 	$(DIRECTORY)/src/glut/dos/PC_HW/*.[chS]		\
 	$(DIRECTORY)/src/glut/ggi/*.[ch]		\
-	$(DIRECTORY)/src/glut/ggi/Makefile
+	$(DIRECTORY)/src/glut/ggi/Makefile		\
+	$(DIRECTORY)/windows/VC6/progs/glut/glut.dsp	\
+	$(DIRECTORY)/windows/VC7/progs/glut/glut.vcproj
 
 DEPEND_FILES = \
 	$(TOP)/src/mesa/depend		\
@@ -367,11 +368,9 @@ DEPEND_FILES = \
 
 LIB_FILES = $(MAIN_FILES) $(DRI_FILES) $(SGI_GLU_FILES) $(GLW_FILES)
 
-DEMO_FILES = $(PROG_FILES) $(GLUT_FILES)
-
 
 # Everything for new a Mesa release:
-tarballs: rm_depend lib_gz demo_gz lib_bz2 demo_bz2 lib_zip demo_zip md5
+tarballs: rm_depend lib_gz demo_gz glut_gz lib_bz2 demo_bz2 glut_gz2 lib_zip demo_zip glut_zip md5
 
 
 rm_depend:
@@ -393,6 +392,12 @@ demo_gz:
 	gzip $(DEMO_NAME).tar ; \
 	mv $(DEMO_NAME).tar.gz $(DIRECTORY)
 
+glut_gz:
+	cd .. ; \
+	tar -cf $(GLUT_NAME).tar $(GLUT_FILES) ; \
+	gzip $(GLUT_NAME).tar ; \
+	mv $(GLUT_NAME).tar.gz $(DIRECTORY)
+
 lib_bz2:
 	rm -f configs/current ; \
 	cd .. ; \
@@ -405,6 +410,12 @@ demo_bz2:
 	tar -cf $(DEMO_NAME).tar $(DEMO_FILES) ; \
 	bzip2 $(DEMO_NAME).tar ; \
 	mv $(DEMO_NAME).tar.bz2 $(DIRECTORY)
+
+glut_bz2:
+	cd .. ; \
+	tar -cf $(GLUT_NAME).tar $(GLUT_FILES) ; \
+	bzip2 $(GLUT_NAME).tar ; \
+	mv $(GLUT_NAME).tar.bz2 $(DIRECTORY)
 
 lib_zip:
 	rm -f configs/current ; \
@@ -419,6 +430,12 @@ demo_zip:
 	zip -qr $(DEMO_NAME).zip $(DEMO_FILES) ; \
 	mv $(DEMO_NAME).zip $(DIRECTORY)
 
+glut_zip:
+	rm -f $(GLUT_NAME).zip ; \
+	cd .. ; \
+	zip -qr $(GLUT_NAME).zip $(GLUT_FILES) ; \
+	mv $(GLUT_NAME).zip $(DIRECTORY)
+
 md5:
 	@-md5sum $(LIB_NAME).tar.gz
 	@-md5sum $(LIB_NAME).tar.bz2
@@ -426,3 +443,6 @@ md5:
 	@-md5sum $(DEMO_NAME).tar.gz
 	@-md5sum $(DEMO_NAME).tar.bz2
 	@-md5sum $(DEMO_NAME).zip
+	@-md5sum $(GLUT_NAME).tar.gz
+	@-md5sum $(GLUT_NAME).tar.bz2
+	@-md5sum $(GLUT_NAME).zip
