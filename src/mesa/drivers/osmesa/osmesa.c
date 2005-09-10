@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -294,7 +294,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 #define SPAN_VARS \
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = osmesa->rowaddr[Y] + (X)
+   GLubyte *P = (GLubyte *) osmesa->rowaddr[Y] + (X)
 #define INC_PIXEL_PTR(P) P += 1
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    *DST = VALUE[0]
@@ -1039,7 +1039,7 @@ compute_row_addresses( OSMesaContext ctx )
 
    if (ctx->format == OSMESA_COLOR_INDEX) {
       /* CI mode */
-      bytesPerPixel = 1 * sizeof(GLchan);
+      bytesPerPixel = 1 * sizeof(GLubyte);
    }
    else if ((ctx->format == OSMESA_RGB) || (ctx->format == OSMESA_BGR)) {
       /* RGB mode */
