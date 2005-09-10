@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,14 +40,14 @@
 #include "texstore.h"
 
 
-static GLint
+static void
 fxt1_encode (GLuint width, GLuint height, GLint comps,
              const void *source, GLint srcRowStride,
              void *dest, GLint destRowStride);
 
-void
+static void
 fxt1_decode_1 (const void *texture, GLint stride,
-               GLint i, GLint j, GLubyte *rgba);
+               GLint i, GLint j, GLchan *rgba);
 
 
 /**
@@ -1346,7 +1346,7 @@ fxt1_quantize (GLuint *cc, const GLubyte *lines[], GLint comps)
 }
 
 
-static GLint
+static void
 fxt1_encode (GLuint width, GLuint height, GLint comps,
              const void *source, GLint srcRowStride,
              void *dest, GLint destRowStride)
@@ -1354,21 +1354,48 @@ fxt1_encode (GLuint width, GLuint height, GLint comps,
    GLuint x, y;
    const GLubyte *data;
    GLuint *encoded = (GLuint *)dest;
-   GLubyte *newSource = NULL;
+   void *newSource = NULL;
+
+   assert(comps == 3 || comps == 4);
 
    /* Replicate image if width is not M8 or height is not M4 */
    if ((width & 7) | (height & 3)) {
       GLint newWidth = (width + 7) & ~7;
       GLint newHeight = (height + 3) & ~3;
-      newSource = (GLubyte *)
-         _mesa_malloc(comps * newWidth * newHeight * sizeof(GLubyte *));
+      newSource = _mesa_malloc(comps * newWidth * newHeight * sizeof(GLchan));
+      if (!newSource) {
+         GET_CURRENT_CONTEXT(ctx);
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture compression");
+         goto cleanUp;
+      }
       _mesa_upscale_teximage2d(width, height, newWidth, newHeight,
                                comps, (const GLchan *) source,
-                               srcRowStride, newSource);
+                               srcRowStride, (GLchan *) newSource);
       source = newSource;
       width = newWidth;
       height = newHeight;
       srcRowStride = comps * newWidth;
+   }
+
+   /* convert from 16/32-bit channels to GLubyte if needed */
+   if (CHAN_TYPE != GL_UNSIGNED_BYTE) {
+      const GLuint n = width * height * comps;
+      const GLchan *src = (const GLchan *) source;
+      GLubyte *dest = (GLubyte *) _mesa_malloc(n * sizeof(GLubyte));
+      GLuint i;
+      if (!dest) {
+         GET_CURRENT_CONTEXT(ctx);
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture compression");
+         goto cleanUp;
+      }
+      for (i = 0; i < n; i++) {
+         dest[i] = CHAN_TO_UBYTE(src[i]);
+      }
+      if (newSource != NULL) {
+         _mesa_free(newSource);
+      }
+      newSource = dest;  /* we'll free this buffer before returning */
+      source = dest;  /* the new, GLubyte incoming image */
    }
 
    data = (const GLubyte *) source;
@@ -1389,11 +1416,10 @@ fxt1_encode (GLuint width, GLuint height, GLint comps,
       encoded += destRowStride;
    }
 
+ cleanUp:
    if (newSource != NULL) {
       _mesa_free(newSource);
    }
-
-   return 0;
 }
 
 
@@ -1430,11 +1456,10 @@ static const GLubyte _rgb_scale_6[] = {
 #define UP5(c) _rgb_scale_5[(c) & 31]
 #define UP6(c, b) _rgb_scale_6[(((c) & 31) << 1) | ((b) & 1)]
 #define LERP(n, t, c0, c1) (((n) - (t)) * (c0) + (t) * (c1) + (n) / 2) / (n)
-#define ZERO_4UBV(v) *((GLuint *)(v)) = 0
 
 
 static void
-fxt1_decode_1HI (const GLubyte *code, GLint t, GLubyte *rgba)
+fxt1_decode_1HI (const GLubyte *code, GLint t, GLchan *rgba)
 {
    const GLuint *cc;
 
@@ -1443,29 +1468,33 @@ fxt1_decode_1HI (const GLubyte *code, GLint t, GLubyte *rgba)
    t = (cc[0] >> (t & 7)) & 7;
 
    if (t == 7) {
-      ZERO_4UBV(rgba);
+      rgba[RCOMP] = rgba[GCOMP] = rgba[BCOMP] = rgba[ACOMP] = 0;
    } else {
+      GLubyte r, g, b;
       cc = (const GLuint *)(code + 12);
       if (t == 0) {
-         rgba[BCOMP] = UP5(CC_SEL(cc, 0));
-         rgba[GCOMP] = UP5(CC_SEL(cc, 5));
-         rgba[RCOMP] = UP5(CC_SEL(cc, 10));
+         b = UP5(CC_SEL(cc, 0));
+         g = UP5(CC_SEL(cc, 5));
+         r = UP5(CC_SEL(cc, 10));
       } else if (t == 6) {
-         rgba[BCOMP] = UP5(CC_SEL(cc, 15));
-         rgba[GCOMP] = UP5(CC_SEL(cc, 20));
-         rgba[RCOMP] = UP5(CC_SEL(cc, 25));
+         b = UP5(CC_SEL(cc, 15));
+         g = UP5(CC_SEL(cc, 20));
+         r = UP5(CC_SEL(cc, 25));
       } else {
-         rgba[BCOMP] = LERP(6, t, UP5(CC_SEL(cc, 0)), UP5(CC_SEL(cc, 15)));
-         rgba[GCOMP] = LERP(6, t, UP5(CC_SEL(cc, 5)), UP5(CC_SEL(cc, 20)));
-         rgba[RCOMP] = LERP(6, t, UP5(CC_SEL(cc, 10)), UP5(CC_SEL(cc, 25)));
+         b = LERP(6, t, UP5(CC_SEL(cc, 0)), UP5(CC_SEL(cc, 15)));
+         g = LERP(6, t, UP5(CC_SEL(cc, 5)), UP5(CC_SEL(cc, 20)));
+         r = LERP(6, t, UP5(CC_SEL(cc, 10)), UP5(CC_SEL(cc, 25)));
       }
-      rgba[ACOMP] = 255;
+      rgba[RCOMP] = UBYTE_TO_CHAN(r);
+      rgba[GCOMP] = UBYTE_TO_CHAN(g);
+      rgba[BCOMP] = UBYTE_TO_CHAN(b);
+      rgba[ACOMP] = CHAN_MAX;
    }
 }
 
 
 static void
-fxt1_decode_1CHROMA (const GLubyte *code, GLint t, GLubyte *rgba)
+fxt1_decode_1CHROMA (const GLubyte *code, GLint t, GLchan *rgba)
 {
    const GLuint *cc;
    GLuint kk;
@@ -1480,15 +1509,15 @@ fxt1_decode_1CHROMA (const GLubyte *code, GLint t, GLubyte *rgba)
    t *= 15;
    cc = (const GLuint *)(code + 8 + t / 8);
    kk = cc[0] >> (t & 7);
-   rgba[BCOMP] = UP5(kk);
-   rgba[GCOMP] = UP5(kk >> 5);
-   rgba[RCOMP] = UP5(kk >> 10);
-   rgba[ACOMP] = 255;
+   rgba[BCOMP] = UBYTE_TO_CHAN( UP5(kk) );
+   rgba[GCOMP] = UBYTE_TO_CHAN( UP5(kk >> 5) );
+   rgba[RCOMP] = UBYTE_TO_CHAN( UP5(kk >> 10) );
+   rgba[ACOMP] = CHAN_MAX;
 }
 
 
 static void
-fxt1_decode_1MIXED (const GLubyte *code, GLint t, GLubyte *rgba)
+fxt1_decode_1MIXED (const GLubyte *code, GLint t, GLchan *rgba)
 {
    const GLuint *cc;
    GLuint col[2][3];
@@ -1526,49 +1555,58 @@ fxt1_decode_1MIXED (const GLubyte *code, GLint t, GLubyte *rgba)
       /* alpha[0] == 1 */
 
       if (t == 3) {
-         ZERO_4UBV(rgba);
+         /* zero */
+         rgba[RCOMP] = rgba[BCOMP] = rgba[GCOMP] = rgba[ACOMP] = 0;
       } else {
+         GLubyte r, g, b;
          if (t == 0) {
-            rgba[BCOMP] = UP5(col[0][BCOMP]);
-            rgba[GCOMP] = UP5(col[0][GCOMP]);
-            rgba[RCOMP] = UP5(col[0][RCOMP]);
+            b = UP5(col[0][BCOMP]);
+            g = UP5(col[0][GCOMP]);
+            r = UP5(col[0][RCOMP]);
          } else if (t == 2) {
-            rgba[BCOMP] = UP5(col[1][BCOMP]);
-            rgba[GCOMP] = UP6(col[1][GCOMP], glsb);
-            rgba[RCOMP] = UP5(col[1][RCOMP]);
+            b = UP5(col[1][BCOMP]);
+            g = UP6(col[1][GCOMP], glsb);
+            r = UP5(col[1][RCOMP]);
          } else {
-            rgba[BCOMP] = (UP5(col[0][BCOMP]) + UP5(col[1][BCOMP])) / 2;
-            rgba[GCOMP] = (UP5(col[0][GCOMP]) + UP6(col[1][GCOMP], glsb)) / 2;
-            rgba[RCOMP] = (UP5(col[0][RCOMP]) + UP5(col[1][RCOMP])) / 2;
+            b = (UP5(col[0][BCOMP]) + UP5(col[1][BCOMP])) / 2;
+            g = (UP5(col[0][GCOMP]) + UP6(col[1][GCOMP], glsb)) / 2;
+            r = (UP5(col[0][RCOMP]) + UP5(col[1][RCOMP])) / 2;
          }
-         rgba[ACOMP] = 255;
+         rgba[RCOMP] = UBYTE_TO_CHAN(r);
+         rgba[GCOMP] = UBYTE_TO_CHAN(g);
+         rgba[BCOMP] = UBYTE_TO_CHAN(b);
+         rgba[ACOMP] = CHAN_MAX;
       }
    } else {
       /* alpha[0] == 0 */
-
+      GLubyte r, g, b;
       if (t == 0) {
-         rgba[BCOMP] = UP5(col[0][BCOMP]);
-         rgba[GCOMP] = UP6(col[0][GCOMP], glsb ^ selb);
-         rgba[RCOMP] = UP5(col[0][RCOMP]);
+         b = UP5(col[0][BCOMP]);
+         g = UP6(col[0][GCOMP], glsb ^ selb);
+         r = UP5(col[0][RCOMP]);
       } else if (t == 3) {
-         rgba[BCOMP] = UP5(col[1][BCOMP]);
-         rgba[GCOMP] = UP6(col[1][GCOMP], glsb);
-         rgba[RCOMP] = UP5(col[1][RCOMP]);
+         b = UP5(col[1][BCOMP]);
+         g = UP6(col[1][GCOMP], glsb);
+         r = UP5(col[1][RCOMP]);
       } else {
-         rgba[BCOMP] = LERP(3, t, UP5(col[0][BCOMP]), UP5(col[1][BCOMP]));
-         rgba[GCOMP] = LERP(3, t, UP6(col[0][GCOMP], glsb ^ selb),
-                                  UP6(col[1][GCOMP], glsb));
-         rgba[RCOMP] = LERP(3, t, UP5(col[0][RCOMP]), UP5(col[1][RCOMP]));
+         b = LERP(3, t, UP5(col[0][BCOMP]), UP5(col[1][BCOMP]));
+         g = LERP(3, t, UP6(col[0][GCOMP], glsb ^ selb),
+                        UP6(col[1][GCOMP], glsb));
+         r = LERP(3, t, UP5(col[0][RCOMP]), UP5(col[1][RCOMP]));
       }
-      rgba[ACOMP] = 255;
+      rgba[RCOMP] = UBYTE_TO_CHAN(r);
+      rgba[GCOMP] = UBYTE_TO_CHAN(g);
+      rgba[BCOMP] = UBYTE_TO_CHAN(b);
+      rgba[ACOMP] = CHAN_MAX;
    }
 }
 
 
 static void
-fxt1_decode_1ALPHA (const GLubyte *code, GLint t, GLubyte *rgba)
+fxt1_decode_1ALPHA (const GLubyte *code, GLint t, GLchan *rgba)
 {
    const GLuint *cc;
+   GLubyte r, g, b, a;
 
    cc = (const GLuint *)code;
    if (CC_SEL(cc, 124) & 1) {
@@ -1593,20 +1631,20 @@ fxt1_decode_1ALPHA (const GLubyte *code, GLint t, GLubyte *rgba)
       }
 
       if (t == 0) {
-         rgba[BCOMP] = UP5(col0[BCOMP]);
-         rgba[GCOMP] = UP5(col0[GCOMP]);
-         rgba[RCOMP] = UP5(col0[RCOMP]);
-         rgba[ACOMP] = UP5(col0[ACOMP]);
+         b = UP5(col0[BCOMP]);
+         g = UP5(col0[GCOMP]);
+         r = UP5(col0[RCOMP]);
+         a = UP5(col0[ACOMP]);
       } else if (t == 3) {
-         rgba[BCOMP] = UP5(CC_SEL(cc, 79));
-         rgba[GCOMP] = UP5(CC_SEL(cc, 84));
-         rgba[RCOMP] = UP5(CC_SEL(cc, 89));
-         rgba[ACOMP] = UP5(CC_SEL(cc, 114));
+         b = UP5(CC_SEL(cc, 79));
+         g = UP5(CC_SEL(cc, 84));
+         r = UP5(CC_SEL(cc, 89));
+         a = UP5(CC_SEL(cc, 114));
       } else {
-         rgba[BCOMP] = LERP(3, t, UP5(col0[BCOMP]), UP5(CC_SEL(cc, 79)));
-         rgba[GCOMP] = LERP(3, t, UP5(col0[GCOMP]), UP5(CC_SEL(cc, 84)));
-         rgba[RCOMP] = LERP(3, t, UP5(col0[RCOMP]), UP5(CC_SEL(cc, 89)));
-         rgba[ACOMP] = LERP(3, t, UP5(col0[ACOMP]), UP5(CC_SEL(cc, 114)));
+         b = LERP(3, t, UP5(col0[BCOMP]), UP5(CC_SEL(cc, 79)));
+         g = LERP(3, t, UP5(col0[GCOMP]), UP5(CC_SEL(cc, 84)));
+         r = LERP(3, t, UP5(col0[RCOMP]), UP5(CC_SEL(cc, 89)));
+         a = LERP(3, t, UP5(col0[ACOMP]), UP5(CC_SEL(cc, 114)));
       }
    } else {
       /* lerp == 0 */
@@ -1618,27 +1656,33 @@ fxt1_decode_1ALPHA (const GLubyte *code, GLint t, GLubyte *rgba)
       t = (cc[0] >> (t * 2)) & 3;
 
       if (t == 3) {
-         ZERO_4UBV(rgba);
+         /* zero */
+         r = g = b = 0;
       } else {
          GLuint kk;
+         GLubyte r, g, b, a;
          cc = (const GLuint *)code;
-         rgba[ACOMP] = UP5(cc[3] >> (t * 5 + 13));
+         a = UP5(cc[3] >> (t * 5 + 13));
          t *= 15;
          cc = (const GLuint *)(code + 8 + t / 8);
          kk = cc[0] >> (t & 7);
-         rgba[BCOMP] = UP5(kk);
-         rgba[GCOMP] = UP5(kk >> 5);
-         rgba[RCOMP] = UP5(kk >> 10);
+         b = UP5(kk);
+         g = UP5(kk >> 5);
+         r = UP5(kk >> 10);
       }
    }
+   rgba[RCOMP] = UBYTE_TO_CHAN(r);
+   rgba[GCOMP] = UBYTE_TO_CHAN(g);
+   rgba[BCOMP] = UBYTE_TO_CHAN(b);
+   rgba[ACOMP] = UBYTE_TO_CHAN(a);
 }
 
 
-void
+static void
 fxt1_decode_1 (const void *texture, GLint stride, /* in pixels */
-               GLint i, GLint j, GLubyte *rgba)
+               GLint i, GLint j, GLchan *rgba)
 {
-   static void (*decode_1[]) (const GLubyte *, GLint, GLubyte *) = {
+   static void (*decode_1[]) (const GLubyte *, GLint, GLchan *) = {
       fxt1_decode_1HI,     /* cc-high   = "00?" */
       fxt1_decode_1HI,     /* cc-high   = "00?" */
       fxt1_decode_1CHROMA, /* cc-chroma = "010" */
