@@ -935,43 +935,100 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_FACE_HEIGHT_4_SHIFT                 28
 #define     R200_FACE_WIDTH_4_MASK                   (0xf << 24)
 #define     R200_FACE_HEIGHT_4_MASK                  (0xf << 28)
-#define R200_PP_TXFILTER_1                0x2c20 
+#define R200_PP_TXMULTI_CTL_0                  0x2c1c /* name from ddx, rest RE... */
+#define     R200_PASS1_TXFORMAT_LOOKUP_DISABLE (1 << 0)
+#define     R200_PASS1_TEXCOORD_NONPROJ        (0 << 1)
+#define     R200_PASS1_TEXCOORD_CUBIC_ENV      (1 << 1)
+#define     R200_PASS1_TEXCOORD_VOLUME         (2 << 1)
+#define     R200_PASS1_TEXCOORD_PROJ           (3 << 1)
+#define     R200_PASS1_TEXCOORD_DEPTH          (4 << 1)
+#define     R200_PASS1_TEXCOORD_1D_PROJ        (5 << 1)
+#define     R200_PASS1_TEXCOORD_1D             (6 << 1) /* pass1 texcoords only */
+#define     R200_PASS1_TEXCOORD_ZERO           (7 << 1) /* verifed for 2d targets! */
+#define     R200_PASS1_TEXCOORD_MASK           (7 << 1) /* assumed same values as for pass2 */
+#define     R200_PASS1_ST_ROUTE_STQ0           (0 << 4)
+#define     R200_PASS1_ST_ROUTE_STQ1           (1 << 4)
+#define     R200_PASS1_ST_ROUTE_STQ2           (2 << 4)
+#define     R200_PASS1_ST_ROUTE_STQ3           (3 << 4)
+#define     R200_PASS1_ST_ROUTE_STQ4           (4 << 4)
+#define     R200_PASS1_ST_ROUTE_STQ5           (5 << 4)
+#define     R200_PASS1_ST_ROUTE_MASK           (7 << 4)
+#define     R200_PASS1_ST_ROUTE_SHIFT          (4)
+#define     R200_PASS2_COORDS_REG_0            (2 << 24)
+#define     R200_PASS2_COORDS_REG_1            (3 << 24)
+#define     R200_PASS2_COORDS_REG_2            (4 << 24)
+#define     R200_PASS2_COORDS_REG_3            (5 << 24)
+#define     R200_PASS2_COORDS_REG_4            (6 << 24)
+#define     R200_PASS2_COORDS_REG_5            (7 << 24)
+#define     R200_PASS2_COORDS_REG_MASK         (0x7 << 24)
+#define     R200_PASS2_COORDS_REG_SHIFT        (24)
+#define R200_PP_TXFILTER_1                0x2c20
 #define R200_PP_TXFORMAT_1                0x2c24
 #define R200_PP_TXFORMAT_X_1              0x2c28
 #define R200_PP_TXSIZE_1                  0x2c2c
 #define R200_PP_TXPITCH_1                 0x2c30
 #define R200_PP_BORDER_COLOR_1            0x2c34
 #define R200_PP_CUBIC_FACES_1             0x2c38
-#define R200_PP_TXFILTER_2                0x2c40 
+#define R200_PP_TXMULTI_CTL_1             0x2c3c
+#define R200_PP_TXFILTER_2                0x2c40
 #define R200_PP_TXFORMAT_2                0x2c44
 #define R200_PP_TXSIZE_2                  0x2c4c
 #define R200_PP_TXFORMAT_X_2              0x2c48
 #define R200_PP_TXPITCH_2                 0x2c50
 #define R200_PP_BORDER_COLOR_2            0x2c54
 #define R200_PP_CUBIC_FACES_2             0x2c58
-#define R200_PP_TXFILTER_3                0x2c60 
+#define R200_PP_TXMULTI_CTL_2             0x2c5c
+#define R200_PP_TXFILTER_3                0x2c60
 #define R200_PP_TXFORMAT_3                0x2c64
 #define R200_PP_TXSIZE_3                  0x2c6c
 #define R200_PP_TXFORMAT_X_3              0x2c68
 #define R200_PP_TXPITCH_3                 0x2c70
 #define R200_PP_BORDER_COLOR_3            0x2c74
 #define R200_PP_CUBIC_FACES_3             0x2c78
-#define R200_PP_TXFILTER_4                0x2c80 
+#define R200_PP_TXMULTI_CTL_3             0x2c7c
+#define R200_PP_TXFILTER_4                0x2c80
 #define R200_PP_TXFORMAT_4                0x2c84
 #define R200_PP_TXSIZE_4                  0x2c8c
 #define R200_PP_TXFORMAT_X_4              0x2c88
 #define R200_PP_TXPITCH_4                 0x2c90
 #define R200_PP_BORDER_COLOR_4            0x2c94
 #define R200_PP_CUBIC_FACES_4             0x2c98
-#define R200_PP_TXFILTER_5                0x2ca0 
+#define R200_PP_TXMULTI_CTL_4             0x2c9c
+#define R200_PP_TXFILTER_5                0x2ca0
 #define R200_PP_TXFORMAT_5                0x2ca4
 #define R200_PP_TXSIZE_5                  0x2cac
 #define R200_PP_TXFORMAT_X_5              0x2ca8
 #define R200_PP_TXPITCH_5                 0x2cb0
 #define R200_PP_BORDER_COLOR_5            0x2cb4
 #define R200_PP_CUBIC_FACES_5             0x2cb8
+#define R200_PP_TXMULTI_CTL_5             0x2cbc
 /* gap */
-#define R200_PP_CNTL_X             0x2cc4
+#define R200_PP_CNTL_X             0x2cc4  /* Reveree engineered from fglrx */
+#define     R200_PPX_TEX_0_ENABLE      (1 <<  0)
+#define     R200_PPX_TEX_1_ENABLE      (1 <<  1)
+#define     R200_PPX_TEX_2_ENABLE      (1 <<  2)
+#define     R200_PPX_TEX_3_ENABLE      (1 <<  3)
+#define     R200_PPX_TEX_4_ENABLE      (1 <<  4)
+#define     R200_PPX_TEX_5_ENABLE      (1 <<  5)
+#define     R200_PPX_TEX_ENABLE_MASK   (0x3f << 0)
+#define     R200_PPX_OUTPUT_REG_0      (1 <<  6)
+#define     R200_PPX_OUTPUT_REG_1      (1 <<  7)
+#define     R200_PPX_OUTPUT_REG_2      (1 <<  8)
+#define     R200_PPX_OUTPUT_REG_3      (1 <<  9)
+#define     R200_PPX_OUTPUT_REG_4      (1 << 10)
+#define     R200_PPX_OUTPUT_REG_5      (1 << 11)
+#define     R200_PPX_OUTPUT_REG_MASK   (0x3f << 6)
+#define     R200_PPX_OUTPUT_REG_0_SHIFT (6)
+#define     R200_PPX_PFS_INST0_ENABLE  (1 << 12)
+#define     R200_PPX_PFS_INST1_ENABLE  (1 << 13)
+#define     R200_PPX_PFS_INST2_ENABLE  (1 << 14)
+#define     R200_PPX_PFS_INST3_ENABLE  (1 << 15)
+#define     R200_PPX_PFS_INST4_ENABLE  (1 << 16)
+#define     R200_PPX_PFS_INST5_ENABLE  (1 << 17)
+#define     R200_PPX_PFS_INST6_ENABLE  (1 << 18)
+#define     R200_PPX_PFS_INST7_ENABLE  (1 << 19)
+#define     R200_PPX_PFS_INST_ENABLE_MASK (0xff << 12)
+#define     R200_PPX_FPS_INST0_ENABLE_SHIFT (12)
 /* gap */
 #define R200_PP_TRI_PERF                  0x2cf8
 #define     R200_TRI_CUTOFF_MASK            (0x1f << 0)
@@ -1029,7 +1086,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R200_PP_TFACTOR_3                 0x2eec
 #define R200_PP_TFACTOR_4                 0x2ef0
 #define R200_PP_TFACTOR_5                 0x2ef4
-/* gap */
+#define R200_PP_TFACTOR_6                 0x2ef8
+#define R200_PP_TFACTOR_7                 0x2efc
 #define R200_PP_TXCBLEND_0                0x2f00
 #define     R200_TXC_ARG_A_ZERO                (0)
 #define     R200_TXC_ARG_A_CURRENT_COLOR       (2)
@@ -1338,6 +1396,38 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R200_PP_TXCBLEND2_7               0x2f74
 #define R200_PP_TXABLEND_7                0x2f78
 #define R200_PP_TXABLEND2_7               0x2f7c
+#define R200_PP_TXCBLEND_8                0x2f80
+#define R200_PP_TXCBLEND2_8               0x2f84
+#define R200_PP_TXABLEND_8                0x2f88
+#define R200_PP_TXABLEND2_8               0x2f8c
+#define R200_PP_TXCBLEND_9                0x2f90
+#define R200_PP_TXCBLEND2_9               0x2f94
+#define R200_PP_TXABLEND_9                0x2f98
+#define R200_PP_TXABLEND2_9               0x2f9c
+#define R200_PP_TXCBLEND_10               0x2fa0
+#define R200_PP_TXCBLEND2_10              0x2fa4
+#define R200_PP_TXABLEND_10               0x2fa8
+#define R200_PP_TXABLEND2_10              0x2fac
+#define R200_PP_TXCBLEND_11               0x2fb0
+#define R200_PP_TXCBLEND2_11              0x2fb4
+#define R200_PP_TXABLEND_11               0x2fb8
+#define R200_PP_TXABLEND2_11              0x2fbc
+#define R200_PP_TXCBLEND_12               0x2fc0
+#define R200_PP_TXCBLEND2_12              0x2fc4
+#define R200_PP_TXABLEND_12               0x2fc8
+#define R200_PP_TXABLEND2_12              0x2fcc
+#define R200_PP_TXCBLEND_13               0x2fd0
+#define R200_PP_TXCBLEND2_13              0x2fd4
+#define R200_PP_TXABLEND_13               0x2fd8
+#define R200_PP_TXABLEND2_13              0x2fdc
+#define R200_PP_TXCBLEND_14               0x2fe0
+#define R200_PP_TXCBLEND2_14              0x2fe4
+#define R200_PP_TXABLEND_14               0x2fe8
+#define R200_PP_TXABLEND2_14              0x2fec
+#define R200_PP_TXCBLEND_15               0x2ff0
+#define R200_PP_TXCBLEND2_15              0x2ff4
+#define R200_PP_TXABLEND_15               0x2ff8
+#define R200_PP_TXABLEND2_15              0x2ffc
 /* gap */
 #define R200_RB3D_BLENDCOLOR               0x3218 /* ARGB 8888 */
 #define R200_RB3D_ABLENDCNTL               0x321C /* see BLENDCTL */
