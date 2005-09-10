@@ -147,6 +147,15 @@ static struct {
    { RADEON_PP_CUBIC_FACES_2, 1, "RADEON_PP_CUBIC_FACES_2" },
    { RADEON_PP_CUBIC_OFFSET_T2_0, 5, "RADEON_PP_CUBIC_OFFSET_T2_0" },
    { 0, 2, "R200_PP_TRI_PERF" },
+   { 0, 32, "R200_PP_AFS_0"},   /* 85 */
+   { 0, 32, "R200_PP_AFS_1"},
+   { 0, 8, "R200_ATF_TFACTOR"},
+   { 0, 8, "R200_PP_TXCTLALL_0"},
+   { 0, 8, "R200_PP_TXCTLALL_1"},
+   { 0, 8, "R200_PP_TXCTLALL_2"},
+   { 0, 8, "R200_PP_TXCTLALL_3"},
+   { 0, 8, "R200_PP_TXCTLALL_4"},
+   { 0, 8, "R200_PP_TXCTLALL_5"},
 };
 
 struct reg_names {
