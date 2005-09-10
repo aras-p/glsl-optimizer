@@ -69,10 +69,14 @@ dxtFetchTexelFuncExt fetch_ext_rgba_dxt1 = NULL;
 dxtFetchTexelFuncExt fetch_ext_rgba_dxt3 = NULL;
 dxtFetchTexelFuncExt fetch_ext_rgba_dxt5 = NULL;
 
-typedef void (*dxtCompressTexFuncExt)(GLint srccomps, GLint width, GLint height, const GLubyte *srcPixData, GLenum destformat, GLubyte *dest, GLint dstRowStride);
-dxtCompressTexFuncExt ext_tx_compress_dxtn = NULL;
+typedef void (*dxtCompressTexFuncExt)(GLint srccomps, GLint width,
+                                      GLint height, const GLchan *srcPixData,
+                                      GLenum destformat, GLubyte *dest,
+                                      GLint dstRowStride);
+static dxtCompressTexFuncExt ext_tx_compress_dxtn = NULL;
 
-void *dxtlibhandle = NULL;
+static void *dxtlibhandle = NULL;
+
 
 void
 _mesa_init_texture_s3tc( GLcontext *ctx )
