@@ -6,99 +6,127 @@
 
 <BODY>
 
-<H1>Downloading / Unpacking</H1>
+<H1>Downloading</H1>
 
 <p>
-Mesa can be downloaded from the
-<a href="http://www.sourceforge.net/projects/mesa3d" target="_parent">
-SourceForge download area</A>.
+Last development release: <b>6.3.2</b>
 </p>
 
 <p>
-Since version 2.3, Mesa is distributed in two pieces:  main library code
-and demos.  If you're upgrading from a previous version of Mesa or you're not
-interested in the demos you can just download the core Mesa archive file.
+Last stable release: <b>6.2.1</b>
 </p>
 
 <p>
-Mesa is available in at least three archive formats:
+Primary download site:
+<a href="http://sourceforge.net/project/showfiles.php?group_id=3"
+target="_parent">SourceForge</a>
 </p>
 
+
+<p>
+Mesa is distributed in several parts:
+</p>
+<ul>
+<li><b>MesaLib-x.y.z</b> - the main Mesa library source code, drivers
+    and documentation.
+</li>
+<li><b>MesaDemos-x.y.z</b> - OpenGL demonstration and test programs.
+    Most of the programs require GLUT (either the
+    <a href="http://www.opengl.org/resources/libraries/glut.html"
+    target="_parent">original GLUT by Mark Kilgard</a> or
+    <a href="http://freeglut.sourceforge.net" target="_parent">freeglut</a> or
+    <a href="http://freeglut.sourceforge.net" target="_parent">OpenGLUT</a>).
+</li>
+<li><b>MesaGLUT-x.y.z</b> - Mark Kilgard's GLUT, easily compiled and used
+    with Mesa.  Plus, other implementation of GLUT for DOS, OS/2, BeOS, etc.
+</li>
+</ul>
+
+<p>
+If you're not interested in running the demos, you'll only need the first
+package.
+</p>
+
+<p>
+The packages are available in .tar.gz, .tar.bz2 and .zip formats.
+Other organizations might offer additional package formats.
+</p>
+
+<H1>Unpacking</H1>
+
+<p>
+All the packages should be in the same directory prior to unpacking.
+</p>
+
+<ul>
+<li>To unpack .tar.gz files:
 <pre>
-1. GNU zip/tar
-
-	Download MesaLib-X.Y.tar.gz and optionally MesaDemos-X.Y.tar.gz
-	Unpack with:
-		gzcat MesaLib-X.Y.tar.gz | tar xf -
-		gzcat MesaDemos-X.Y.tar.gz | tar xf -
-	or
-		gunzip MesaLib-X.Y.tar.gz ; tar xf MesaLib-X.Y.tar
-		gunzip MesaDemos-X.Y.tar.gz ; tar xf MesaLib-X.Y.tar
-	or
-		tar zxf MesaLib-X.Y.tar.gz
-		tar zxf MesaDemos-X.Y.tar.gz
-
-	If you don't have gzcat try zcat instead.
-
-2. Unix compressed/tar
-
-	Download MesaLib-X.Y.tar.Z and optionally MesaDemos-X.Y.tar.Z
-	Unpack with:
-		zcat MesaLib-X.Y.tar.Z | tar xf -
-		zcat MesaDemos-X.Y.tar.Z | tar xf -
-
-3. ZIP format
-
-	Download MesaLib-X.Y.zip and optionally MesaDemos-X.Y.zip
-	Unpack with:
-		unzip MesaLib-X.Y.zip
-		unzip MesaDemos-X.Y.zip
+	tar zxf MesaLib-X.Y.tar.gz
+	tar zxf MesaDemos-X.Y.tar.gz
+	tar zxf MesaGLUT-X.Y.tar.gz
 </pre>
+or
+<pre>
+	gzcat MesaLib-X.Y.tar.gz | tar xf -
+	gzcat MesaDemos-X.Y.tar.gz | tar xf -
+	gzcat MesaGLUT-X.Y.tar.gz | tar xf -
+</pre>
+or
+<pre>
+	gunzip MesaLib-X.Y.tar.gz ; tar xf MesaLib-X.Y.tar
+	gunzip MesaDemos-X.Y.tar.gz ; tar xf MesaDemos-X.Y.tar
+	gunzip MesaGLUT-X.Y.tar.gz ; tar xf MesaGLUT-X.Y.tar
+</pre>
+<li>To unpack .tar.bz2 files:
+<pre>
+	bunzip2 -c MesaLib-X.Y.tar.gz | tar xf -
+	bunzip2 -c MesaDemos-X.Y.tar.gz | tar xf -
+	bunzip2 -c MesaGLUT-X.Y.tar.gz | tar xf -
+</pre>
+<li>To unpack .zip files:
+<pre>
+	unzip MesaLib-X.Y.zip
+	unzip MesaDemos-X.Y.zip
+	unzip MesaGLUT-X.Y.zip
+</pre>
+</ul>
+
+
+<h1>Contents</h1>
 
 <p>
-After unpacking you'll have these directories (and more):
+After unpacking you'll have these directories:
 </p>
 <pre>
-Makefile.X11	- top-level Makefile for X11-based systems
-Make-config	- system configurations used by the Makefile.X11
+Makefile	- top-level Makefile for most systems
+configs/	- makefile parameter files for various systems
 include/	- GL header (include) files
 bin/		- shell scripts for making shared libraries, etc
-lib/		- final client libraries, created during compilation
 docs/		- documentation
 src/		- source code for libraries
 src/mesa	- sources for the main Mesa library and device drivers
 src/glu		- libGLU source code
 src/glw		- Xt/Motif/OpenGL widget code
+</pre>
 
+If you downloaded and unpacked the MesaDemos.X.Y package:
 
-and if you downloaded and unpacked the MesaDemos.X.Y archive:
-
-src/glut	- GLUT source code
-progs/		- OpenGL programs
+<pre>
 progs/demos	- original Mesa demos
 progs/xdemos	- GLX OpenGL/Mesa demos
 progs/redbook	- examples from the OpenGL Programming Guide
 progs/samples	- examples from SGI
 progs/images/	- image files
+</pre>
 
+If you downloaded and unpacked the MesaGLUT.X.Y package:
+<pre>
+src/glut	- GLUT library source code
 </pre>
 
 <p>
-Proceed to <a href="install.html">compilation and installation
+Proceed to the <a href="install.html">compilation and installation
 instructions</a>.
-</p>
-
-<H1>GLUT</H1>
-
-<p>
-Mesa 2.5 and later includes Mark Kilgard's GLUT library (GL Utility Toolkit).
-GLUT is built automatically on systems which support it.
-</p>
-<p>
-The GLUT tests, demos, examples, etc are not included, just the main library.
-To obtain the latest complete release of GLUT please visit the
-<a href="http://www.opengl.org/resources/libraries/glut.html"
-target ="_parent">GLUT page</a> on www.opengl.org.
 </p>
 
 
