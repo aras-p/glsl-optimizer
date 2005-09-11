@@ -57,7 +57,7 @@ libmesa.a: $(SOLO_OBJECTS)
 		mimeset -f "$@" ; \
 	fi
 
-linux-solo: depend subdirs mesa.a
+linux-solo: depend subdirs libmesa.a
 	cd drivers/dri ; $(MAKE)
 
 
