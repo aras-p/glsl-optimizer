@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -65,7 +65,7 @@ glFBDevGetString( int str );
 typedef void (*GLFBDevProc)();
 
 
-extern const GLFBDevProc
+extern GLFBDevProc
 glFBDevGetProcAddress( const char *procName );
 
 

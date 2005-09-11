@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,6 +38,7 @@
  * 24 bits |    ?     0x312   0x315    0x318      ?      0x31B     0x31F
  * 32 bits |    ?       ?       ?        ?      0x164      ?
  */
+
 #ifdef USE_GLFBDEV_DRIVER
 
 #include "glheader.h"
@@ -286,7 +287,7 @@ glFBDevGetString( int str )
 }
 
 
-const GLFBDevProc
+GLFBDevProc
 glFBDevGetProcAddress( const char *procName )
 {
    struct name_address {
@@ -513,6 +514,7 @@ new_glfbdev_renderbuffer(void *bufferStart, int pixelFormat)
          rb->Base.GetRow = get_row_B8G8R8;
          rb->Base.GetValues = get_values_B8G8R8;
          rb->Base.PutRow = put_row_B8G8R8;
+         rb->Base.PutRowRGB = put_row_rgb_B8G8R8;
          rb->Base.PutMonoRow = put_mono_row_B8G8R8;
          rb->Base.PutValues = put_values_B8G8R8;
          rb->Base.PutMonoValues = put_mono_values_B8G8R8;
@@ -521,6 +523,7 @@ new_glfbdev_renderbuffer(void *bufferStart, int pixelFormat)
          rb->Base.GetRow = get_row_B8G8R8A8;
          rb->Base.GetValues = get_values_B8G8R8A8;
          rb->Base.PutRow = put_row_B8G8R8A8;
+         rb->Base.PutRowRGB = put_row_rgb_B8G8R8A8;
          rb->Base.PutMonoRow = put_mono_row_B8G8R8A8;
          rb->Base.PutValues = put_values_B8G8R8A8;
          rb->Base.PutMonoValues = put_mono_values_B8G8R8A8;
@@ -529,6 +532,7 @@ new_glfbdev_renderbuffer(void *bufferStart, int pixelFormat)
          rb->Base.GetRow = get_row_B5G6R5;
          rb->Base.GetValues = get_values_B5G6R5;
          rb->Base.PutRow = put_row_B5G6R5;
+         rb->Base.PutRowRGB = put_row_rgb_B5G6R5;
          rb->Base.PutMonoRow = put_mono_row_B5G6R5;
          rb->Base.PutValues = put_values_B5G6R5;
          rb->Base.PutMonoValues = put_mono_values_B5G6R5;
@@ -537,6 +541,7 @@ new_glfbdev_renderbuffer(void *bufferStart, int pixelFormat)
          rb->Base.GetRow = get_row_B5G5R5;
          rb->Base.GetValues = get_values_B5G5R5;
          rb->Base.PutRow = put_row_B5G5R5;
+         rb->Base.PutRowRGB = put_row_rgb_B5G5R5;
          rb->Base.PutMonoRow = put_mono_row_B5G5R5;
          rb->Base.PutValues = put_values_B5G5R5;
          rb->Base.PutMonoValues = put_mono_values_B5G5R5;
@@ -834,4 +839,4 @@ glFBDevMakeCurrent( GLFBDevContextPtr context,
    return 1;
 }
 
-#endif
+#endif /* USE_GLFBDEV_DRIVER */
