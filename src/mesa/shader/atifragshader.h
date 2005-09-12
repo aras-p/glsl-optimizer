@@ -32,7 +32,6 @@ struct atifragshader_dst_register
    GLuint Index;
    GLuint dstMod;
    GLuint dstMask;
-   GLuint Swizzle;
 };
 
 #define ATI_FRAGMENT_SHADER_COLOR_OP 0
