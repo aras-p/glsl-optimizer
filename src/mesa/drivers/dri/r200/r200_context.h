@@ -278,12 +278,17 @@ struct r200_state_atom {
 #define TEX_PP_TXSIZE               4  /*2c0c*/
 #define TEX_PP_TXPITCH              5  /*2c10*/
 #define TEX_PP_BORDER_COLOR         6  /*2c14*/
-#define TEX_CMD_1                   7
-#define TEX_PP_TXOFFSET             8  /*2d00 */
-#define TEX_STATE_SIZE              9
+#define TEX_CMD_1_OLDDRM            7
+#define TEX_PP_TXOFFSET_OLDDRM      8  /*2d00 */
+#define TEX_STATE_SIZE_OLDDRM       9
+#define TEX_PP_CUBIC_FACES          7
+#define TEX_PP_TXMULTI_CTL          8
+#define TEX_CMD_1_NEWDRM            9
+#define TEX_PP_TXOFFSET_NEWDRM     10
+#define TEX_STATE_SIZE_NEWDRM      11
 
-#define CUBE_CMD_0                  0  /* 1 register follows */
-#define CUBE_PP_CUBIC_FACES         1  /* 0x2c18 */
+#define CUBE_CMD_0                  0  /* 1 register follows */ /* this command unnecessary */
+#define CUBE_PP_CUBIC_FACES         1  /* 0x2c18 */             /* with new enough drm */
 #define CUBE_CMD_1                  2  /* 5 registers follow */
 #define CUBE_PP_CUBIC_OFFSET_F1     3  /* 0x2d04 */
 #define CUBE_PP_CUBIC_OFFSET_F2     4  /* 0x2d08 */
@@ -307,6 +312,25 @@ struct r200_state_atom {
 #define TF_TFACTOR_4                5
 #define TF_TFACTOR_5                6
 #define TF_STATE_SIZE               7
+
+#define ATF_CMD_0                   0
+#define ATF_TFACTOR_0               1
+#define ATF_TFACTOR_1               2
+#define ATF_TFACTOR_2               3
+#define ATF_TFACTOR_3               4
+#define ATF_TFACTOR_4               5
+#define ATF_TFACTOR_5               6
+#define ATF_TFACTOR_6               7
+#define ATF_TFACTOR_7               8
+#define ATF_STATE_SIZE              9
+
+/* ATI_FRAGMENT_SHADER */
+#define AFS_CMD_0                 0
+#define AFS_IC0                   1 /* 2f00 */
+#define AFS_IC1                   2 /* 2f04 */
+#define AFS_IA0                   3 /* 2f08 */
+#define AFS_IA1                   4 /* 2f0c */
+#define AFS_STATE_SIZE           33
 
 #define TCL_CMD_0                 0
 #define TCL_LIGHT_MODEL_CTL_0     1
@@ -533,6 +557,8 @@ struct r200_hw_state {
    struct r200_state_atom fog;
    struct r200_state_atom glt;
    struct r200_state_atom prf;
+   struct r200_state_atom afs[2];
+   struct r200_state_atom atf;
 
    int max_state_size;	/* Number of bytes necessary for a full state emit. */
    GLboolean is_dirty, all_dirty;
@@ -942,6 +968,8 @@ struct r200_context {
 
    GLboolean using_hyperz;
    GLboolean texmicrotile;
+
+  struct ati_fragment_shader *afs_loaded;
 };
 
 #define R200_CONTEXT(ctx)		((r200ContextPtr)(ctx->DriverCtx))

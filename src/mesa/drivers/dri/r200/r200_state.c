@@ -2087,6 +2087,34 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
       TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_VERTEX_PROGRAM, state);
       break;
 
+   case GL_FRAGMENT_SHADER_ATI:
+      if ( !state ) {
+	 /* restore normal tex env colors and make sure tex env combine will get updated
+	    mark env atoms dirty (as their data was overwritten by afs even
+	    if they didn't change) and restore tex coord routing */
+	 GLuint unit;
+	 for (unit = 0; unit < R200_MAX_TEXTURE_UNITS; unit++) {
+	    rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT] &=
+		~(R200_TXFORMAT_ST_ROUTE_MASK | R200_TXFORMAT_LOOKUP_DISABLE);
+	    rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT] |= unit << R200_TXFORMAT_ST_ROUTE_SHIFT;
+	    /* need to guard this with drmSupportsFragmentShader? Should never get here if
+	       we don't announce ATI_fs, right? */
+	    rmesa->hw.tex[unit].cmd[TEX_PP_TXMULTI_CTL] = 0;
+	    R200_STATECHANGE( rmesa, pix[unit] );
+	    R200_STATECHANGE( rmesa, tex[unit] );
+         }
+	 rmesa->hw.cst.cmd[CST_PP_CNTL_X] = 0;
+	 R200_STATECHANGE( rmesa, cst );
+	 R200_STATECHANGE( rmesa, tf );
+      }
+      else {
+	 /* need to mark this dirty as pix/tf atoms have overwritten the data
+	    even if the data in the atoms didn't change */
+	 R200_STATECHANGE( rmesa, atf );
+	 R200_STATECHANGE( rmesa, afs[1] );
+	 /* everything else picked up in r200UpdateTextureState hopefully */
+      }
+      break;
    default:
       return;
    }
@@ -2260,7 +2288,7 @@ void r200ValidateState( GLcontext *ctx )
      r200UpdateDrawBuffer(ctx);
    }
 
-   if (new_state & _NEW_TEXTURE) {
+   if (new_state & (_NEW_TEXTURE | _NEW_PROGRAM)) {
       r200UpdateTextureState( ctx );
       new_state |= rmesa->NewGLState; /* may add TEXTURE_MATRIX */
    }
@@ -2282,7 +2310,7 @@ void r200ValidateState( GLcontext *ctx )
     */
    if (new_state & (_NEW_TEXTURE|_NEW_TEXTURE_MATRIX)) {
       update_texturematrix( ctx );
-   }      
+   }
 
    if (new_state & (_NEW_LIGHT|_NEW_MODELVIEW|_MESA_NEW_NEED_EYE_COORDS)) {
       update_light( ctx );

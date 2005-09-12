@@ -315,6 +315,7 @@ static void r200SetTexImages( r200ContextPtr rmesa,
       ASSERT(log2Width == log2Height);
       t->pp_txformat |= ((log2Width << R200_TXFORMAT_F5_WIDTH_SHIFT) |
                          (log2Height << R200_TXFORMAT_F5_HEIGHT_SHIFT) |
+/* don't think we need this bit, if it exists at all - fglrx does not set it */
                          (R200_TXFORMAT_CUBIC_MAP_ENABLE));
       t->pp_txformat_x |= R200_TEXCOORD_CUBIC_ENV;
       t->pp_cubic_faces = ((log2Width << R200_FACE_WIDTH_1_SHIFT) |
@@ -591,7 +592,8 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit, int slot, GLuin
 	    break;
 	 case GL_PREVIOUS:
 	    if (replaceargs != unit) {
-	       const GLint srcRGBreplace = ctx->Texture.Unit[replaceargs]._CurrentCombine->SourceRGB[0];
+	       const GLint srcRGBreplace =
+		  ctx->Texture.Unit[replaceargs]._CurrentCombine->SourceRGB[0];
 	       if (op >= 2) {
 		  op = op ^ replaceopa;
 	       }
@@ -612,7 +614,8 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit, int slot, GLuin
 		  if (slot == 0)
 		     color_arg[i] = r200_primary_color[op];
 		  else
-		     color_arg[i] = r200_register_color[op][rmesa->state.texture.unit[replaceargs - 1].outputreg];
+		     color_arg[i] = r200_register_color[op]
+			[rmesa->state.texture.unit[replaceargs - 1].outputreg];
 		  break;
 	       case GL_ZERO:
 		  color_arg[i] = r200_zero_color[op];
@@ -636,7 +639,8 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit, int slot, GLuin
 	       if (slot == 0)
 		  color_arg[i] = r200_primary_color[op];
 	       else
-		  color_arg[i] = r200_register_color[op][rmesa->state.texture.unit[unit - 1].outputreg];
+		  color_arg[i] = r200_register_color[op]
+		     [rmesa->state.texture.unit[unit - 1].outputreg];
             }
 	    break;
 	 case GL_ZERO:
@@ -675,7 +679,8 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit, int slot, GLuin
 	    break;
 	 case GL_PREVIOUS:
 	    if (replaceargs != unit) {
-	       const GLint srcAreplace = ctx->Texture.Unit[replaceargs]._CurrentCombine->SourceA[0];
+	       const GLint srcAreplace =
+		  ctx->Texture.Unit[replaceargs]._CurrentCombine->SourceA[0];
 	       op = op ^ replaceopa;
 	       switch (srcAreplace) {
 	       case GL_TEXTURE:
@@ -691,7 +696,8 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit, int slot, GLuin
 		  if (slot == 0)
 		     alpha_arg[i] = r200_primary_alpha[op];
 		  else
-		     alpha_arg[i] = r200_register_alpha[op][rmesa->state.texture.unit[replaceargs - 1].outputreg];
+		     alpha_arg[i] = r200_register_alpha[op]
+			[rmesa->state.texture.unit[replaceargs - 1].outputreg];
 		  break;
 	       case GL_ZERO:
 		  alpha_arg[i] = r200_zero_alpha[op];
@@ -715,7 +721,8 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit, int slot, GLuin
 	       if (slot == 0)
 		  alpha_arg[i] = r200_primary_alpha[op];
 	       else
-		  alpha_arg[i] = r200_register_alpha[op][rmesa->state.texture.unit[unit - 1].outputreg];
+		  alpha_arg[i] = r200_register_alpha[op]
+		    [rmesa->state.texture.unit[unit - 1].outputreg];
             }
 	    break;
 	 case GL_ZERO:
@@ -1091,7 +1098,7 @@ static GLboolean r200UpdateAllTexEnv( GLcontext *ctx )
    }
 
    R200_STATECHANGE( rmesa, ctx );
-   rmesa->hw.ctx.cmd[CTX_PP_CNTL] &= ~R200_TEX_BLEND_ENABLE_MASK;
+   rmesa->hw.ctx.cmd[CTX_PP_CNTL] &= ~(R200_TEX_BLEND_ENABLE_MASK | R200_MULTI_PASS_ENABLE);
    rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= rmesa->state.envneeded << R200_TEX_BLEND_0_ENABLE_SHIFT;
 
    return ok;
@@ -1114,11 +1121,11 @@ static GLboolean r200UpdateAllTexEnv( GLcontext *ctx )
 #define TEXOBJ_TXFORMAT_MASK (R200_TXFORMAT_WIDTH_MASK |	\
 			      R200_TXFORMAT_HEIGHT_MASK |	\
 			      R200_TXFORMAT_FORMAT_MASK |	\
-                              R200_TXFORMAT_F5_WIDTH_MASK |	\
-                              R200_TXFORMAT_F5_HEIGHT_MASK |	\
+			      R200_TXFORMAT_F5_WIDTH_MASK |	\
+			      R200_TXFORMAT_F5_HEIGHT_MASK |	\
 			      R200_TXFORMAT_ALPHA_IN_MAP |	\
 			      R200_TXFORMAT_CUBIC_MAP_ENABLE |	\
-                              R200_TXFORMAT_NON_POWER2)
+			      R200_TXFORMAT_NON_POWER2)
 
 #define TEXOBJ_TXFORMAT_X_MASK (R200_DEPTH_LOG2_MASK |		\
                                 R200_TEXCOORD_MASK |		\
@@ -1140,15 +1147,24 @@ static void import_tex_obj_state( r200ContextPtr rmesa,
    cmd[TEX_PP_TXFORMAT_X] |= texobj->pp_txformat_x & TEXOBJ_TXFORMAT_X_MASK;
    cmd[TEX_PP_TXSIZE] = texobj->pp_txsize; /* NPOT only! */
    cmd[TEX_PP_TXPITCH] = texobj->pp_txpitch; /* NPOT only! */
-   cmd[TEX_PP_TXOFFSET] = texobj->pp_txoffset;
    cmd[TEX_PP_BORDER_COLOR] = texobj->pp_border_color;
-   R200_DB_STATECHANGE( rmesa, &rmesa->hw.tex[unit] );
+   if (rmesa->r200Screen->drmSupportsFragShader) {
+      cmd[TEX_PP_TXOFFSET_NEWDRM] = texobj->pp_txoffset;
+   }
+   else {
+      cmd[TEX_PP_TXOFFSET_OLDDRM] = texobj->pp_txoffset;
+   }
 
    if (texobj->base.tObj->Target == GL_TEXTURE_CUBE_MAP) {
       GLuint *cube_cmd = R200_DB_STATE( cube[unit] );
       GLuint bytesPerFace = texobj->base.totalSize / 6;
       ASSERT(texobj->base.totalSize % 6 == 0);
       cube_cmd[CUBE_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
+      if (rmesa->r200Screen->drmSupportsFragShader) {
+	 /* that value is submitted twice. could change cube atom
+	    to not include that command when new drm is used */
+	 cmd[TEX_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
+      }
       cube_cmd[CUBE_PP_CUBIC_OFFSET_F1] = texobj->pp_txoffset + 1 * bytesPerFace;
       cube_cmd[CUBE_PP_CUBIC_OFFSET_F2] = texobj->pp_txoffset + 2 * bytesPerFace;
       cube_cmd[CUBE_PP_CUBIC_OFFSET_F3] = texobj->pp_txoffset + 3 * bytesPerFace;
@@ -1156,6 +1172,7 @@ static void import_tex_obj_state( r200ContextPtr rmesa,
       cube_cmd[CUBE_PP_CUBIC_OFFSET_F5] = texobj->pp_txoffset + 5 * bytesPerFace;
       R200_DB_STATECHANGE( rmesa, &rmesa->hw.cube[unit] );
    }
+   R200_DB_STATECHANGE( rmesa, &rmesa->hw.tex[unit] );
 
    texobj->dirty_state &= ~(1<<unit);
 }
@@ -1378,7 +1395,7 @@ static void disable_tex( GLcontext *ctx, int unit )
    }
 }
 
-static void set_re_cntl_d3d( GLcontext *ctx, int unit, GLboolean use_d3d )
+void set_re_cntl_d3d( GLcontext *ctx, int unit, GLboolean use_d3d )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
@@ -1596,26 +1613,27 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
 static GLboolean r200UpdateTextureUnit( GLcontext *ctx, int unit )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   GLuint unitneeded = rmesa->state.texture.unit[unit].unitneeded;
 
-   if ( rmesa->state.texture.unit[unit].unitneeded & (TEXTURE_RECT_BIT) ) {
+   if ( unitneeded & (TEXTURE_RECT_BIT) ) {
       return (enable_tex_rect( ctx, unit ) &&
 	      update_tex_common( ctx, unit ));
    }
-   else if (  rmesa->state.texture.unit[unit].unitneeded & (TEXTURE_1D_BIT | TEXTURE_2D_BIT) ) {
+   else if ( unitneeded & (TEXTURE_1D_BIT | TEXTURE_2D_BIT) ) {
       return (enable_tex_2d( ctx, unit ) &&
 	      update_tex_common( ctx, unit ));
    }
 #if ENABLE_HW_3D_TEXTURE
-   else if ( rmesa->state.texture.unit[unit].unitneeded & (TEXTURE_3D_BIT) ) {
+   else if ( unitneeded & (TEXTURE_3D_BIT) ) {
       return (enable_tex_3d( ctx, unit ) &&
 	      update_tex_common( ctx, unit ));
    }
 #endif
-   else if ( rmesa->state.texture.unit[unit].unitneeded & (TEXTURE_CUBE_BIT) ) {
+   else if ( unitneeded & (TEXTURE_CUBE_BIT) ) {
       return (enable_tex_cube( ctx, unit ) &&
 	      update_tex_common( ctx, unit ));
    }
-   else if ( rmesa->state.texture.unit[unit].unitneeded ) {
+   else if ( unitneeded ) {
       return GL_FALSE;
    }
    else {
@@ -1631,8 +1649,16 @@ void r200UpdateTextureState( GLcontext *ctx )
    GLboolean ok;
    GLuint dbg;
 
-   ok = r200UpdateAllTexEnv( ctx );
-
+   if (ctx->ATIFragmentShader._Enabled) {
+      GLuint i;
+      for (i = 0; i < R200_MAX_TEXTURE_UNITS; i++) {
+	 rmesa->state.texture.unit[i].unitneeded = ctx->Texture.Unit[i]._ReallyEnabled;
+      }
+      ok = GL_TRUE;
+   }
+   else {
+      ok = r200UpdateAllTexEnv( ctx );
+   }
    if (ok) {
       ok = (r200UpdateTextureUnit( ctx, 0 ) &&
 	 r200UpdateTextureUnit( ctx, 1 ) &&
@@ -1640,6 +1666,10 @@ void r200UpdateTextureState( GLcontext *ctx )
 	 r200UpdateTextureUnit( ctx, 3 ) &&
 	 r200UpdateTextureUnit( ctx, 4 ) &&
 	 r200UpdateTextureUnit( ctx, 5 ));
+   }
+
+   if (ok && ctx->ATIFragmentShader._Enabled) {
+      r200UpdateFragmentShader(ctx);
    }
 
    FALLBACK( rmesa, R200_FALLBACK_TEXTURE, !ok );
@@ -1652,23 +1682,37 @@ void r200UpdateTextureState( GLcontext *ctx )
 
       /*
        * T0 hang workaround -------------
-       * not needed for r200 derivatives?
-       */
+       * not needed for r200 derivatives
+        */
       if ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_ENABLE_MASK) == R200_TEX_0_ENABLE &&
-         (rmesa->hw.tex[0].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK) > R200_MIN_FILTER_LINEAR) {
+	 (rmesa->hw.tex[0].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK) > R200_MIN_FILTER_LINEAR) {
 
-         R200_STATECHANGE(rmesa, ctx);
-         R200_STATECHANGE(rmesa, tex[1]);
-         rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_1_ENABLE;
-         rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] &= ~TEXOBJ_TXFORMAT_MASK;
-         rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] |= 0x08000000;
+	 R200_STATECHANGE(rmesa, ctx);
+	 R200_STATECHANGE(rmesa, tex[1]);
+	 rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_1_ENABLE;
+	 if (!(rmesa->hw.cst.cmd[CST_PP_CNTL_X] & R200_PPX_TEX_1_ENABLE))
+	    rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] &= ~TEXOBJ_TXFORMAT_MASK;
+	 rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] |= R200_TXFORMAT_LOOKUP_DISABLE;
       }
-      else {
-         if ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_1_ENABLE) &&
-            (rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] & 0x08000000)) {
-               R200_STATECHANGE(rmesa, tex[1]);
-               rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] &= ~0x08000000;
+      else if (!ctx->ATIFragmentShader._Enabled) {
+	 if ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_1_ENABLE) &&
+	    (rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] & R200_TXFORMAT_LOOKUP_DISABLE)) {
+	    R200_STATECHANGE(rmesa, tex[1]);
+	    rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] &= ~R200_TXFORMAT_LOOKUP_DISABLE;
          }
+      }
+      /* do the same workaround for the first pass of a fragment shader.
+       * completely unknown if necessary / sufficient.
+       */
+      if ((rmesa->hw.cst.cmd[CST_PP_CNTL_X] & R200_PPX_TEX_ENABLE_MASK) == R200_PPX_TEX_0_ENABLE &&
+	 (rmesa->hw.tex[0].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK) > R200_MIN_FILTER_LINEAR) {
+
+	 R200_STATECHANGE(rmesa, cst);
+	 R200_STATECHANGE(rmesa, tex[1]);
+	 rmesa->hw.cst.cmd[CST_PP_CNTL_X] |= R200_PPX_TEX_1_ENABLE;
+	 if (!(rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_1_ENABLE))
+	    rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] &= ~TEXOBJ_TXFORMAT_MASK;
+	 rmesa->hw.tex[1].cmd[TEX_PP_TXMULTI_CTL] |= R200_PASS1_TXFORMAT_LOOKUP_DISABLE;
       }
 
       /* maybe needs to be done pairwise due to 2 parallel (physical) tex units ?
@@ -1695,7 +1739,8 @@ void r200UpdateTextureState( GLcontext *ctx )
 
       /*
        * Texture cache LRU hang workaround -------------
-       * not needed for r200 derivatives?
+       * not needed for r200 derivatives
+       * hopefully this covers first pass of a shader as well
        */
 
       /* While the cases below attempt to only enable the workaround in the

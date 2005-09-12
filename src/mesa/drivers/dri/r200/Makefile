@@ -31,6 +31,7 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_vtxfmt_c.c \
 		 r200_vtxfmt_sse.c \
 		 r200_vtxfmt_x86.c \
+		 r200_fragshader.c \
 		 $(EGL_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)

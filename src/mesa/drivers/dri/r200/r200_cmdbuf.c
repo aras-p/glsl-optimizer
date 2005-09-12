@@ -88,13 +88,15 @@ void r200SetUpAtomList( r200ContextPtr rmesa )
    insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.fog );
    insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.tam );
    insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.tf );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.atf );
    for (i = 0; i < mtu; ++i)
        insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.tex[i] );
    for (i = 0; i < mtu; ++i)
        insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.cube[i] );
    for (i = 0; i < 6; ++i)
        insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.pix[i] );
-
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.afs[0] );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.afs[1] );
    for (i = 0; i < 8; ++i)
        insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.lit[i] );
    for (i = 0; i < 3 + mtu; ++i)

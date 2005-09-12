@@ -137,9 +137,13 @@ static GLboolean check_##NM( GLcontext *ctx, int idx )	\
 CHECK( always, GL_TRUE )
 CHECK( never, GL_FALSE )
 CHECK( tex_any, ctx->Texture._EnabledUnits )
-CHECK( tex_pair, (rmesa->state.texture.unit[idx].unitneeded | rmesa->state.texture.unit[idx & ~1].unitneeded))
+CHECK( tf, (ctx->Texture._EnabledUnits && !ctx->ATIFragmentShader._Enabled) );
+CHECK( tex_pair, (rmesa->state.texture.unit[idx].unitneeded | rmesa->state.texture.unit[idx & ~1].unitneeded) )
 CHECK( tex, rmesa->state.texture.unit[idx].unitneeded )
-CHECK( texenv, rmesa->state.envneeded & (1 << idx) )
+CHECK( pix_zero, !ctx->ATIFragmentShader._Enabled )
+CHECK( texenv, (rmesa->state.envneeded & (1 << idx) && !ctx->ATIFragmentShader._Enabled) )
+CHECK( afs_pass1, (ctx->ATIFragmentShader._Enabled && (ctx->ATIFragmentShader.Current->NumPasses > 1)) )
+CHECK( afs, ctx->ATIFragmentShader._Enabled )
 CHECK( tex_cube, rmesa->state.texture.unit[idx].unitneeded & TEXTURE_CUBE_BIT )
 CHECK( fog, ctx->Fog.Enabled )
 TCL_CHECK( tcl, GL_TRUE )
@@ -229,8 +233,8 @@ void r200InitState( r200ContextPtr rmesa )
       rmesa->hw.ATOM.dirty = GL_FALSE;				\
       rmesa->hw.max_state_size += SZ * sizeof(int);		\
    } while (0)
-      
-      
+
+
    /* Allocate state buffers:
     */
    if (rmesa->r200Screen->drmSupportsBlendColor)
@@ -247,22 +251,46 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( msc, always, MSC_STATE_SIZE, "MSC/misc", 0 );
    ALLOC_STATE( cst, always, CST_STATE_SIZE, "CST/constant", 0 );
    ALLOC_STATE( zbs, always, ZBS_STATE_SIZE, "ZBS/zbias", 0 );
-   ALLOC_STATE( tf, tex_any, TF_STATE_SIZE, "TF/tfactor", 0 );
-   if (rmesa->r200Screen->chipset & R200_CHIPSET_REAL_R200) {
-   /* make sure texture units 0/1 are emitted pair-wise for r200 t0 hang workaround */
-      ALLOC_STATE( tex[0], tex_pair, TEX_STATE_SIZE, "TEX/tex-0", 0 );
-      ALLOC_STATE( tex[1], tex_pair, TEX_STATE_SIZE, "TEX/tex-1", 1 );
-      ALLOC_STATE( tam, tex_any, TAM_STATE_SIZE, "TAM/tam", 0 );
+   ALLOC_STATE( tf, tf, TF_STATE_SIZE, "TF/tfactor", 0 );
+   if (rmesa->r200Screen->drmSupportsFragShader) {
+      if (rmesa->r200Screen->chipset & R200_CHIPSET_REAL_R200) {
+      /* make sure texture units 0/1 are emitted pair-wise for r200 t0 hang workaround */
+	 ALLOC_STATE( tex[0], tex_pair, TEX_STATE_SIZE_NEWDRM, "TEX/tex-0", 0 );
+	 ALLOC_STATE( tex[1], tex_pair, TEX_STATE_SIZE_NEWDRM, "TEX/tex-1", 1 );
+	 ALLOC_STATE( tam, tex_any, TAM_STATE_SIZE, "TAM/tam", 0 );
+      }
+      else {
+	 ALLOC_STATE( tex[0], tex, TEX_STATE_SIZE_NEWDRM, "TEX/tex-0", 0 );
+	 ALLOC_STATE( tex[1], tex, TEX_STATE_SIZE_NEWDRM, "TEX/tex-1", 1 );
+	 ALLOC_STATE( tam, never, TAM_STATE_SIZE, "TAM/tam", 0 );
+      }
+      ALLOC_STATE( tex[2], tex, TEX_STATE_SIZE_NEWDRM, "TEX/tex-2", 2 );
+      ALLOC_STATE( tex[3], tex, TEX_STATE_SIZE_NEWDRM, "TEX/tex-3", 3 );
+      ALLOC_STATE( tex[4], tex, TEX_STATE_SIZE_NEWDRM, "TEX/tex-4", 4 );
+      ALLOC_STATE( tex[5], tex, TEX_STATE_SIZE_NEWDRM, "TEX/tex-5", 5 );
+      ALLOC_STATE( atf, afs, ATF_STATE_SIZE, "ATF/tfactor", 0 );
+      ALLOC_STATE( afs[0], afs_pass1, AFS_STATE_SIZE, "AFS/afsinst-0", 0 );
+      ALLOC_STATE( afs[1], afs, AFS_STATE_SIZE, "AFS/afsinst-1", 1 );
    }
    else {
-      ALLOC_STATE( tex[0], tex, TEX_STATE_SIZE, "TEX/tex-0", 0 );
-      ALLOC_STATE( tex[1], tex, TEX_STATE_SIZE, "TEX/tex-1", 1 );
-      ALLOC_STATE( tam, never, TAM_STATE_SIZE, "TAM/tam", 0 );
+      if (rmesa->r200Screen->chipset & R200_CHIPSET_REAL_R200) {
+	 ALLOC_STATE( tex[0], tex_pair, TEX_STATE_SIZE_OLDDRM, "TEX/tex-0", 0 );
+	 ALLOC_STATE( tex[1], tex_pair, TEX_STATE_SIZE_OLDDRM, "TEX/tex-1", 1 );
+	 ALLOC_STATE( tam, tex_any, TAM_STATE_SIZE, "TAM/tam", 0 );
+      }
+      else {
+	 ALLOC_STATE( tex[0], tex, TEX_STATE_SIZE_OLDDRM, "TEX/tex-0", 0 );
+	 ALLOC_STATE( tex[1], tex, TEX_STATE_SIZE_OLDDRM, "TEX/tex-1", 1 );
+	 ALLOC_STATE( tam, never, TAM_STATE_SIZE, "TAM/tam", 0 );
+      }
+      ALLOC_STATE( tex[2], tex, TEX_STATE_SIZE_OLDDRM, "TEX/tex-2", 2 );
+      ALLOC_STATE( tex[3], tex, TEX_STATE_SIZE_OLDDRM, "TEX/tex-3", 3 );
+      ALLOC_STATE( tex[4], tex, TEX_STATE_SIZE_OLDDRM, "TEX/tex-4", 4 );
+      ALLOC_STATE( tex[5], tex, TEX_STATE_SIZE_OLDDRM, "TEX/tex-5", 5 );
+      ALLOC_STATE( atf, never, ATF_STATE_SIZE, "TF/tfactor", 0 );
+      ALLOC_STATE( afs[0], never, AFS_STATE_SIZE, "AFS/afsinst-0", 0 );
+      ALLOC_STATE( afs[1], never, AFS_STATE_SIZE, "AFS/afsinst-1", 1 );
    }
-   ALLOC_STATE( tex[2], tex, TEX_STATE_SIZE, "TEX/tex-2", 2 );
-   ALLOC_STATE( tex[3], tex, TEX_STATE_SIZE, "TEX/tex-3", 3 );
-   ALLOC_STATE( tex[4], tex, TEX_STATE_SIZE, "TEX/tex-4", 4 );
-   ALLOC_STATE( tex[5], tex, TEX_STATE_SIZE, "TEX/tex-5", 5 );
    if (rmesa->r200Screen->drmSupportsCubeMaps) {
       ALLOC_STATE( cube[0], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
       ALLOC_STATE( cube[1], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );
@@ -312,7 +340,7 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( lit[5], tcl_light, LIT_STATE_SIZE, "LIT/light-5", 5 );
    ALLOC_STATE( lit[6], tcl_light, LIT_STATE_SIZE, "LIT/light-6", 6 );
    ALLOC_STATE( lit[7], tcl_light, LIT_STATE_SIZE, "LIT/light-7", 7 );
-   ALLOC_STATE( pix[0], always, PIX_STATE_SIZE, "PIX/pixstage-0", 0 );
+   ALLOC_STATE( pix[0], pix_zero, PIX_STATE_SIZE, "PIX/pixstage-0", 0 );
    ALLOC_STATE( pix[1], texenv, PIX_STATE_SIZE, "PIX/pixstage-1", 1 );
    ALLOC_STATE( pix[2], texenv, PIX_STATE_SIZE, "PIX/pixstage-2", 2 );
    ALLOC_STATE( pix[3], texenv, PIX_STATE_SIZE, "PIX/pixstage-3", 3 );
@@ -348,19 +376,37 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.cst.cmd[CST_CMD_5] = cmdpkt(R200_EMIT_RE_POINTSIZE);
    rmesa->hw.cst.cmd[CST_CMD_6] = cmdpkt(R200_EMIT_TCL_INPUT_VTX_VECTOR_ADDR_0);
    rmesa->hw.tam.cmd[TAM_CMD_0] = cmdpkt(R200_EMIT_PP_TAM_DEBUG3);
-   rmesa->hw.tf.cmd[TF_CMD_0]   = cmdpkt(R200_EMIT_TFACTOR_0);
-   rmesa->hw.tex[0].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_0);
-   rmesa->hw.tex[0].cmd[TEX_CMD_1] = cmdpkt(R200_EMIT_PP_TXOFFSET_0);
-   rmesa->hw.tex[1].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_1);
-   rmesa->hw.tex[1].cmd[TEX_CMD_1] = cmdpkt(R200_EMIT_PP_TXOFFSET_1);
-   rmesa->hw.tex[2].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_2);
-   rmesa->hw.tex[2].cmd[TEX_CMD_1] = cmdpkt(R200_EMIT_PP_TXOFFSET_2);
-   rmesa->hw.tex[3].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_3);
-   rmesa->hw.tex[3].cmd[TEX_CMD_1] = cmdpkt(R200_EMIT_PP_TXOFFSET_3);
-   rmesa->hw.tex[4].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_4);
-   rmesa->hw.tex[4].cmd[TEX_CMD_1] = cmdpkt(R200_EMIT_PP_TXOFFSET_4);
-   rmesa->hw.tex[5].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_5);
-   rmesa->hw.tex[5].cmd[TEX_CMD_1] = cmdpkt(R200_EMIT_PP_TXOFFSET_5);
+   rmesa->hw.tf.cmd[TF_CMD_0] = cmdpkt(R200_EMIT_TFACTOR_0);
+   if (rmesa->r200Screen->drmSupportsFragShader) {
+      rmesa->hw.atf.cmd[ATF_CMD_0] = cmdpkt(R200_EMIT_ATF_TFACTOR);
+      rmesa->hw.tex[0].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCTLALL_0);
+      rmesa->hw.tex[0].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_0);
+      rmesa->hw.tex[1].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCTLALL_1);
+      rmesa->hw.tex[1].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_1);
+      rmesa->hw.tex[2].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCTLALL_2);
+      rmesa->hw.tex[2].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_2);
+      rmesa->hw.tex[3].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCTLALL_3);
+      rmesa->hw.tex[3].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_3);
+      rmesa->hw.tex[4].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCTLALL_4);
+      rmesa->hw.tex[4].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_4);
+      rmesa->hw.tex[5].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCTLALL_5);
+      rmesa->hw.tex[5].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_5);
+   } else {
+      rmesa->hw.tex[0].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_0);
+      rmesa->hw.tex[0].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_0);
+      rmesa->hw.tex[1].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_1);
+      rmesa->hw.tex[1].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_1);
+      rmesa->hw.tex[2].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_2);
+      rmesa->hw.tex[2].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_2);
+      rmesa->hw.tex[3].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_3);
+      rmesa->hw.tex[3].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_3);
+      rmesa->hw.tex[4].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_4);
+      rmesa->hw.tex[4].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_4);
+      rmesa->hw.tex[5].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_5);
+      rmesa->hw.tex[5].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_5);
+   }
+   rmesa->hw.afs[0].cmd[AFS_CMD_0] = cmdpkt(R200_EMIT_PP_AFS_0);
+   rmesa->hw.afs[1].cmd[AFS_CMD_0] = cmdpkt(R200_EMIT_PP_AFS_1);
    rmesa->hw.cube[0].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_0);
    rmesa->hw.cube[0].cmd[CUBE_CMD_1] = cmdpkt(R200_EMIT_PP_CUBIC_OFFSETS_0);
    rmesa->hw.cube[1].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_1);
@@ -623,12 +669,20 @@ void r200InitState( r200ContextPtr rmesa )
          ((i << R200_TXFORMAT_ST_ROUTE_SHIFT) |  /* <-- note i */
           (2 << R200_TXFORMAT_WIDTH_SHIFT) |
           (2 << R200_TXFORMAT_HEIGHT_SHIFT));
-      rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET] =
-	  rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.tex[i].cmd[TEX_PP_BORDER_COLOR] = 0;
       rmesa->hw.tex[i].cmd[TEX_PP_TXFORMAT_X] =
          (/* R200_TEXCOORD_PROJ | */
           0x100000);	/* Small default bias */
+      if (rmesa->r200Screen->drmSupportsFragShader) {
+	 rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET_NEWDRM] =
+	     rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+	 rmesa->hw.tex[i].cmd[TEX_PP_CUBIC_FACES] = 0;
+	 rmesa->hw.tex[i].cmd[TEX_PP_TXMULTI_CTL] = 0;
+      }
+      else {
+	  rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET_OLDDRM] =
+	     rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+     }
 
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_FACES] = 0;
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F1] =

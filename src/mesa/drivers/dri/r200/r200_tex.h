@@ -44,4 +44,8 @@ extern void r200DestroyTexObj( r200ContextPtr rmesa, r200TexObjPtr t );
 
 extern void r200InitTextureFuncs( struct dd_function_table *functions );
 
+extern void r200UpdateFragmentShader( GLcontext *ctx );
+
+extern void set_re_cntl_d3d( GLcontext *ctx, int unit, GLboolean use_d3d );
+
 #endif /* __R200_TEX_H__ */

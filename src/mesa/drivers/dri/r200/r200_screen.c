@@ -94,6 +94,7 @@ extern const struct dri_extension card_extensions[];
 extern const struct dri_extension blend_extensions[];
 extern const struct dri_extension ARB_vp_extension[];
 extern const struct dri_extension NV_vp_extension[];
+extern const struct dri_extension ATI_fs_extension[];
 
 #if 1
 /* Including xf86PciInfo.h introduces a bunch of errors...
@@ -357,8 +358,9 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
 	 /* Check if kernel module is new enough to support blend color and
 	    separate blend functions/equations */
 	 screen->drmSupportsBlendColor = (sPriv->drmMinor >= 11);
-
 	 screen->drmSupportsTriPerf = (sPriv->drmMinor >= 16);
+	 screen->drmSupportsFragShader = (sPriv->drmMinor >= 18);
+
       }
       /* Check if ddx has set up a surface reg to cover depth buffer */
       screen->depthHasSurface = (sPriv->ddxMajor > 4);
@@ -711,6 +713,7 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
       driInitExtensions( NULL, blend_extensions, GL_FALSE );
       driInitSingleExtension( NULL, ARB_vp_extension );
       driInitSingleExtension( NULL, NV_vp_extension );
+      driInitSingleExtension( NULL, ATI_fs_extension );
    }
 
    return (void *) psp;

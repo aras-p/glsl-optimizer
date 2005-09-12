@@ -94,9 +94,10 @@ typedef struct {
    unsigned int gart_texture_offset;	/* offset in card memory space */
    unsigned int gart_base;
 
-   GLboolean drmSupportsCubeMaps;       /* need radeon kernel module >=1.7 */
+   GLboolean drmSupportsCubeMaps;       /* need radeon kernel module >= 1.7 */
    GLboolean drmSupportsBlendColor;     /* need radeon kernel module >= 1.11 */
    GLboolean drmSupportsTriPerf;        /* need radeon kernel module >= 1.16 */
+   GLboolean drmSupportsFragShader;     /* need radeon kernel module >= 1.18 */
    GLboolean depthHasSurface;
 
    /* Configuration cache with default values for all contexts */
