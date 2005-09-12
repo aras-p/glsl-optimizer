@@ -64,7 +64,7 @@ delete_query_object(struct gl_query_object *q)
 }
 
 
-struct gl_query_object *
+static struct gl_query_object *
 lookup_query_object(GLcontext *ctx, GLuint id)
 {
    return (struct gl_query_object *)
