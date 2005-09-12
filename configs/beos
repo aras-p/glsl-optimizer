@@ -26,7 +26,8 @@ ifeq ($(CPU), x86)
 		-DUSE_3DNOW_ASM \
 		-DUSE_SSE_ASM
 	
-	ASM_SOURCES = $(X86_SOURCES) $(X86_API)
+	ASM_SOURCES = $(X86_SOURCES)
+	ASM_API = $(X86_API)
 
 	CC = gcc
 	CXX = g++

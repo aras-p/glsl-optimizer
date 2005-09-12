@@ -3,10 +3,7 @@ include $(TOP)/configs/current
 
 DEFINES += -DXF86VIDMODE -D_REENTRANT -UIN_DRI_DRIVER
 
-C_SOURCES = \
-	  $(TOP)/src/mesa/glapi/glapi.c \
-	  $(TOP)/src/mesa/glapi/glthread.c \
-	  $(TOP)/src/mesa/main/dispatch.c \
+SOURCES = \
 	  glcontextmodes.c \
 	  clientattrib.c \
 	  compsize.c \
@@ -33,15 +30,15 @@ C_SOURCES = \
 	  glx_query.c \
 	  glx_texture_compression.c \
 	  dri_glx.c \
-	  XF86dri.c \
+	  XF86dri.c
 
-X86_SOURCES = $(TOP)/src/mesa/x86/glapi_x86.S
-X86-64_SOURCES = $(TOP)/src/mesa/x86-64/glapi_x86-64.S
+include $(TOP)/src/mesa/sources
 
-# ASM_SOURCES = $(X86_SOURCES)
+MESA_ASM_API = $(addprefix $(TOP)/src/mesa/, $(ASM_API))
+MESA_GLAPI_SOURCES = $(addprefix $(TOP)/src/mesa/, $(GLAPI_SOURCES))
+MESA_GLAPI_OBJECTS = $(addprefix $(TOP)/src/mesa/, $(GLAPI_OBJECTS))
 
-OBJECTS = $(C_SOURCES:.c=.o) \
-	  $(ASM_SOURCES:.S=.o)
+OBJECTS = $(SOURCES:.c=.o) $(MESA_GLAPI_OBJECTS)
 
 INCLUDES = -I. \
 	-I$(TOP)/include \
@@ -75,9 +72,10 @@ $(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) Makefile
 		-install $(LIB_DIR) $(GL_LIB_DEPS) $(OBJECTS)
 
 
-depend: $(C_SOURCES) $(ASM_SOURCES) Makefile
+depend: $(SOURCES) $(MESA_GLAPI_SOURCES) $(MESA_ASM_API) Makefile
 	touch depend
-	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(C_SOURCES) $(ASM_SOURCES) 
+	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(SOURCES) \
+		$(MESA_GLAPI_SOURCES) $(MESA_ASM_API) 
 
 
 # Emacs tags

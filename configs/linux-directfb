@@ -17,7 +17,8 @@ HAVE_X86 = $(shell uname -m | grep 'i[3-6]86' >/dev/null && echo yes)
 ifeq ($(HAVE_X86), yes)
      CFLAGS   += -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM
      CXXFLAGS += -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM
-     ASM_SOURCES = $(X86_SOURCES) $(X86_API)
+     ASM_SOURCES = $(X86_SOURCES)
+     ASM_API = $(X86_API)
 endif
 
 # Directories

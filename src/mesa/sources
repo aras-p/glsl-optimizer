@@ -16,7 +16,6 @@ MAIN_SOURCES = \
 	main/convolve.c \
 	main/debug.c \
 	main/depth.c \
-	main/dispatch.c \
 	main/dlist.c \
 	main/drawpix.c \
 	main/enable.c \
@@ -59,6 +58,7 @@ MAIN_SOURCES = \
 	main/vtxfmt.c
 
 GLAPI_SOURCES = \
+	main/dispatch.c \
 	glapi/glapi.c \
 	glapi/glthread.c
 
@@ -302,6 +302,10 @@ SOLO_SOURCES = \
 
 #	$(SLANG_C_SOURCES)
 
+CORE_SOURCES = \
+	$(GLAPI_SOURCES)	\
+	$(SOLO_SOURCES)
+
 
 ### Object files
 
@@ -311,7 +315,7 @@ SOLO_OBJECTS = \
 
 GLAPI_OBJECTS = \
 	$(GLAPI_SOURCES:.c=.o) \
-	$(ASM_API_SOURCES:.S=.o)
+	$(ASM_API:.S=.o)
 
 CORE_OBJECTS = $(SOLO_OBJECTS) $(GLAPI_OBJECTS)
 

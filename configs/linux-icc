@@ -16,6 +16,7 @@ GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread
 GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
 APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm
 
-ASM_SOURCES = $(X86_SOURCES) $(X86_API)
+ASM_SOURCES = $(X86_SOURCES)
+ASM_API = $(X86_API)
 
 

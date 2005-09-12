@@ -15,7 +15,8 @@ CXXFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199
 GLUT_CFLAGS = -fexceptions
 
 
-ASM_SOURCES = $(X86_SOURCES) $(X86_API)
+ASM_SOURCES = $(X86_SOURCES)
+ASM_API = $(X86_API)
 
 # Library/program dependencies
 GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -lXCB
