@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -616,6 +616,7 @@ xmesa_alloc_back_buffer( XMesaBuffer b, GLuint width, GLuint height )
 #endif
 	 if (!b->backxrb->ximage) {
 	    _mesa_warning(NULL, "alloc_back_buffer: XCreateImage failed.");
+            return;
 	 }
          b->backxrb->ximage->data = (char *) MALLOC( b->backxrb->ximage->height
                                         * b->backxrb->ximage->bytes_per_line );
@@ -626,7 +627,6 @@ xmesa_alloc_back_buffer( XMesaBuffer b, GLuint width, GLuint height )
          }
       }
       b->backxrb->pixmap = None;
-      b->backxrb->ximage = b->backxrb->ximage;
    }
    else if (b->db_mode == BACK_PIXMAP) {
       if (!width)
