@@ -602,6 +602,7 @@ xmesa_alloc_back_buffer( XMesaBuffer b, GLuint width, GLuint height )
       /* Allocate a regular XImage for the back buffer. */
       b->backxrb->ximage = XMesaCreateImage(b->xm_visual->BitsPerPixel,
                                             width, height, NULL);
+      {
 #else
       if (b->shm == 0 || !alloc_shm_back_buffer(b, width, height)) {
 	 /* Allocate a regular XImage for the back buffer. */
