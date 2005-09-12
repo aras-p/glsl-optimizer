@@ -1381,6 +1381,7 @@ Mesa Version History
 	- r200: enable GL_ARB_texture_env_crossbar, separate the texture
 	  sampling unit bits from the texture env combine enable bits
 	- GL_EXT_timer_query extension
+	- r200: add support for GL_ATI_fragment_shader
     Changes:
 	- removed GL_HP_occlusion_test (use GL_ARB_occlusion_query instead)
     Bug fixes:
