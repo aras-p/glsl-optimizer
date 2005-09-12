@@ -1660,7 +1660,6 @@ fxt1_decode_1ALPHA (const GLubyte *code, GLint t, GLchan *rgba)
          r = g = b = 0;
       } else {
          GLuint kk;
-         GLubyte r, g, b, a;
          cc = (const GLuint *)code;
          a = UP5(cc[3] >> (t * 5 + 13));
          t *= 15;
