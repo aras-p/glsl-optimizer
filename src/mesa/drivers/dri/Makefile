@@ -17,18 +17,18 @@ subdirs:
 	echo $(DRI_DIRS)
 	@for dir in $(DRI_DIRS) ; do \
 		echo $$dir ; \
-		(cd $$dir ; $(MAKE)) || exit 1; \
+		(cd $$dir && $(MAKE)) || exit 1; \
 	done
 
 
 install:
 	@for dir in $(DRI_DIRS) ; do \
-		(cd $$dir ; $(MAKE) install) || exit 1; \
+		(cd $$dir && $(MAKE) install) || exit 1; \
 	done
 
 
 clean:
 	@for dir in $(DRI_DIRS) ; do \
-		(cd $$dir ; $(MAKE) clean) ; \
+		(cd $$dir && $(MAKE) clean) ; \
 	done
 	-rm -f common/*.o
