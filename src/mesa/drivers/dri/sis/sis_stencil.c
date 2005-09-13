@@ -37,7 +37,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_stencil.h"
 
 static void
-sisDDStencilFunc( GLcontext * ctx, GLenum func, GLint ref, GLuint mask )
+sisDDStencilFuncSeparate( GLcontext * ctx, GLenum face,
+                          GLenum func, GLint ref, GLuint mask )
 {
   sisContextPtr smesa = SIS_CONTEXT(ctx);
   __GLSiSHardware *prev = &smesa->prev;
@@ -84,7 +85,7 @@ sisDDStencilFunc( GLcontext * ctx, GLenum func, GLint ref, GLuint mask )
 }
 
 static void
-sisDDStencilMask( GLcontext * ctx, GLuint mask )
+sisDDStencilMaskSeparate( GLcontext * ctx, GLenum face, GLuint mask )
 {
   if (!ctx->Visual.stencilBits)
     return;
@@ -94,7 +95,8 @@ sisDDStencilMask( GLcontext * ctx, GLuint mask )
 }
 
 static void
-sisDDStencilOp( GLcontext * ctx, GLenum fail, GLenum zfail, GLenum zpass )
+sisDDStencilOpSeparate( GLcontext * ctx, GLenum face, GLenum fail,
+                        GLenum zfail, GLenum zpass )
 {
   sisContextPtr smesa = SIS_CONTEXT(ctx);
   __GLSiSHardware *prev = &smesa->prev;
@@ -179,7 +181,7 @@ sisDDStencilOp( GLcontext * ctx, GLenum fail, GLenum zfail, GLenum zpass )
 void
 sisDDInitStencilFuncs( GLcontext *ctx )
 {
-  ctx->Driver.StencilFunc = sisDDStencilFunc;
-  ctx->Driver.StencilMask = sisDDStencilMask;
-  ctx->Driver.StencilOp   = sisDDStencilOp;
+  ctx->Driver.StencilFuncSeparate = sisDDStencilFuncSeparate;
+  ctx->Driver.StencilMaskSeparate = sisDDStencilMaskSeparate;
+  ctx->Driver.StencilOpSeparate   = sisDDStencilOpSeparate;
 }

@@ -266,7 +266,9 @@ static void ffbDDDepthMask(GLcontext *ctx, GLboolean flag)
 	}
 }
 
-static void ffbDDStencilFunc(GLcontext *ctx, GLenum func, GLint ref, GLuint mask)
+static void
+ffbDDStencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func,
+                         GLint ref, GLuint mask)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	unsigned int stencil, stencilctl, consty;
@@ -310,7 +312,8 @@ static void ffbDDStencilFunc(GLcontext *ctx, GLenum func, GLint ref, GLuint mask
 	}
 }
 
-static void ffbDDStencilMask(GLcontext *ctx, GLuint mask)
+static void
+ffbDDStencilMaskSeparate(GLcontext *ctx, GLenum face, GLuint mask)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 
@@ -321,7 +324,9 @@ static void ffbDDStencilMask(GLcontext *ctx, GLuint mask)
 	}
 }
 
-static void ffbDDStencilOp(GLcontext *ctx, GLenum fail, GLenum zfail, GLenum zpass)
+static void
+ffbDDStencilOpSeparate(GLcontext *ctx, GLenum face, GLenum fail,
+                       GLenum zfail, GLenum zpass)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	unsigned int stencilctl;
@@ -860,12 +865,13 @@ static void ffbDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
 
 		tmp = fmesa->fbc & ~FFB_FBC_YE_MASK;
 		if (state) {
-			ffbDDStencilFunc(ctx,
+			ffbDDStencilFuncSeparate(ctx, GL_FRONT,
 					 ctx->Stencil.Function[0],
 					 ctx->Stencil.Ref[0],
 					 ctx->Stencil.ValueMask[0]);
-			ffbDDStencilMask(ctx, ctx->Stencil.WriteMask[0]);
-			ffbDDStencilOp(ctx,
+			ffbDDStencilMaskSeparate(ctx, GL_FRONT,
+                                                 ctx->Stencil.WriteMask[0]);
+			ffbDDStencilOpSeparate(ctx, GL_FRONT,
 				       ctx->Stencil.FailFunc[0],
 				       ctx->Stencil.ZFailFunc[0],
 				       ctx->Stencil.ZPassFunc[0]);
@@ -1084,9 +1090,9 @@ void ffbDDInitStateFuncs(GLcontext *ctx)
 	ctx->Driver.DepthRange = ffbDDDepthRange;
 
 	if (fmesa->ffb_sarea->flags & FFB_DRI_FFB2PLUS) {
-		ctx->Driver.StencilFunc = ffbDDStencilFunc;
-		ctx->Driver.StencilMask = ffbDDStencilMask;
-		ctx->Driver.StencilOp = ffbDDStencilOp;
+		ctx->Driver.StencilFuncSeparate = ffbDDStencilFuncSeparate;
+		ctx->Driver.StencilMaskSeparate = ffbDDStencilMaskSeparate;
+		ctx->Driver.StencilOpSeparate = ffbDDStencilOpSeparate;
 	}
 
 	ctx->Driver.DrawBuffer = ffbDDDrawBuffer;

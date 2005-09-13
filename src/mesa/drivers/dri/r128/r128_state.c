@@ -1226,10 +1226,6 @@ void r128DDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.RenderMode		= r128DDRenderMode;
    ctx->Driver.Scissor			= r128DDScissor;
    ctx->Driver.ShadeModel		= r128DDShadeModel;
-   ctx->Driver.ClearStencil		= NULL;
-   ctx->Driver.StencilFunc		= NULL;
-   ctx->Driver.StencilMask		= NULL;
-   ctx->Driver.StencilOp		= NULL;
 
    ctx->Driver.DepthRange               = r128DepthRange;
    ctx->Driver.Viewport                 = r128Viewport;

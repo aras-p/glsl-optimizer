@@ -697,15 +697,24 @@ void intelInitState( GLcontext *ctx )
    ctx->Driver.Scissor( ctx, ctx->Scissor.X, ctx->Scissor.Y,
 			ctx->Scissor.Width, ctx->Scissor.Height );
    ctx->Driver.ShadeModel( ctx, ctx->Light.ShadeModel );
-   ctx->Driver.StencilFunc( ctx, 
-			    ctx->Stencil.Function[0],
-			    ctx->Stencil.Ref[0],
-			    ctx->Stencil.ValueMask[0] );
-   ctx->Driver.StencilMask( ctx, ctx->Stencil.WriteMask[0] );
-   ctx->Driver.StencilOp( ctx, 
-			  ctx->Stencil.FailFunc[0],
-			  ctx->Stencil.ZFailFunc[0],
-			  ctx->Stencil.ZPassFunc[0]);
+   ctx->Driver.StencilFuncSeparate( ctx, GL_FRONT,
+                                    ctx->Stencil.Function[0],
+                                    ctx->Stencil.Ref[0],
+                                    ctx->Stencil.ValueMask[0] );
+   ctx->Driver.StencilFuncSeparate( ctx, GL_BACK,
+                                    ctx->Stencil.Function[1],
+                                    ctx->Stencil.Ref[1],
+                                    ctx->Stencil.ValueMask[1] );
+   ctx->Driver.StencilMaskSeparate( ctx, GL_FRONT, ctx->Stencil.WriteMask[0] );
+   ctx->Driver.StencilMaskSeparate( ctx, GL_BACK, ctx->Stencil.WriteMask[1] );
+   ctx->Driver.StencilOpSeparate( ctx, GL_FRONT,
+                                  ctx->Stencil.FailFunc[0],
+                                  ctx->Stencil.ZFailFunc[0],
+                                  ctx->Stencil.ZPassFunc[0]);
+   ctx->Driver.StencilOpSeparate( ctx, GL_BACK,
+                                  ctx->Stencil.FailFunc[1],
+                                  ctx->Stencil.ZFailFunc[1],
+                                  ctx->Stencil.ZPassFunc[1]);
 
 
    ctx->Driver.DrawBuffer( ctx, ctx->Color.DrawBuffer[0] );

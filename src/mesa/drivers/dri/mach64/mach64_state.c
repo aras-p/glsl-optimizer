@@ -1186,10 +1186,6 @@ void mach64DDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.RenderMode		= mach64DDRenderMode;
    ctx->Driver.Scissor			= mach64DDScissor;
    ctx->Driver.ShadeModel		= mach64DDShadeModel;
-   ctx->Driver.ClearStencil		= NULL;
-   ctx->Driver.StencilFunc		= NULL;
-   ctx->Driver.StencilMask		= NULL;
-   ctx->Driver.StencilOp		= NULL;
    
    ctx->Driver.DepthRange		= mach64DepthRange;
    ctx->Driver.Viewport			= mach64Viewport;

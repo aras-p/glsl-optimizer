@@ -1681,7 +1681,8 @@ static GrStencil_t convertGLStencilOp( GLenum op )
 }
 
 void
-fxDDStencilFunc (GLcontext *ctx, GLenum func, GLint ref, GLuint mask)
+fxDDStencilFuncSeparate (GLcontext *ctx, GLenum face, GLenum func,
+                         GLint ref, GLuint mask)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;
@@ -1705,7 +1706,7 @@ fxDDStencilFunc (GLcontext *ctx, GLenum func, GLint ref, GLuint mask)
 }
 
 void
-fxDDStencilMask (GLcontext *ctx, GLuint mask)
+fxDDStencilMaskSeparate (GLcontext *ctx, GLenum face, GLuint mask)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;
@@ -1721,7 +1722,8 @@ fxDDStencilMask (GLcontext *ctx, GLuint mask)
 }
 
 void
-fxDDStencilOp (GLcontext *ctx, GLenum sfail, GLenum zfail, GLenum zpass)
+fxDDStencilOpSeparate (GLcontext *ctx, GLenum face, GLenum sfail,
+                       GLenum zfail, GLenum zpass)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;

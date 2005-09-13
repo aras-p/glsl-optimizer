@@ -880,9 +880,5 @@ void s3vInitStateFuncs( GLcontext *ctx )
    ctx->Driver.PolygonStipple		= NULL; /* s3vDDPolygonStipple; */
    ctx->Driver.Scissor			= s3vDDScissor; /* ScissorLR / ScissorTB */
    ctx->Driver.ShadeModel		= NULL; /* s3vDDShadeModel; */
-   ctx->Driver.ClearStencil		= NULL;
-   ctx->Driver.StencilFunc		= NULL;
-   ctx->Driver.StencilMask		= NULL;
-   ctx->Driver.StencilOp		= NULL;
    ctx->Driver.Viewport			= NULL; /* s3vDDViewport; */
 }

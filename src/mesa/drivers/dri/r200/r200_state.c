@@ -1435,8 +1435,9 @@ static void r200UpdateClipPlanes( GLcontext *ctx )
  * Stencil
  */
 
-static void r200StencilFunc( GLcontext *ctx, GLenum func,
-			       GLint ref, GLuint mask )
+static void
+r200StencilFuncSeparate( GLcontext *ctx, GLenum face, GLenum func,
+                         GLint ref, GLuint mask )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint refmask = ((ctx->Stencil.Ref[0] << R200_STENCIL_REF_SHIFT) |
@@ -1479,7 +1480,8 @@ static void r200StencilFunc( GLcontext *ctx, GLenum func,
    rmesa->hw.msk.cmd[MSK_RB3D_STENCILREFMASK] |= refmask;
 }
 
-static void r200StencilMask( GLcontext *ctx, GLuint mask )
+static void
+r200StencilMaskSeparate( GLcontext *ctx, GLenum face, GLuint mask )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
@@ -1489,8 +1491,9 @@ static void r200StencilMask( GLcontext *ctx, GLuint mask )
       (ctx->Stencil.WriteMask[0] << R200_STENCIL_WRITEMASK_SHIFT);
 }
 
-static void r200StencilOp( GLcontext *ctx, GLenum fail,
-			     GLenum zfail, GLenum zpass )
+static void
+r200StencilOpSeparate( GLcontext *ctx, GLenum face, GLenum fail,
+                       GLenum zfail, GLenum zpass )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
@@ -2427,9 +2430,9 @@ void r200InitStateFuncs( struct dd_function_table *functions )
    functions->RenderMode		= r200RenderMode;
    functions->Scissor			= r200Scissor;
    functions->ShadeModel		= r200ShadeModel;
-   functions->StencilFunc		= r200StencilFunc;
-   functions->StencilMask		= r200StencilMask;
-   functions->StencilOp			= r200StencilOp;
+   functions->StencilFuncSeparate	= r200StencilFuncSeparate;
+   functions->StencilMaskSeparate	= r200StencilMaskSeparate;
+   functions->StencilOpSeparate		= r200StencilOpSeparate;
    functions->Viewport			= r200Viewport;
 
    /* Swrast hooks for imaging extensions:

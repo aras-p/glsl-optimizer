@@ -476,8 +476,9 @@ static void tdfxUpdateStencil( GLcontext *ctx )
 }
 
 
-static void tdfxDDStencilFunc( GLcontext *ctx, GLenum func,
-			       GLint ref, GLuint mask )
+static void
+tdfxDDStencilFuncSeparate( GLcontext *ctx, GLenum face, GLenum func,
+                           GLint ref, GLuint mask )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -485,7 +486,8 @@ static void tdfxDDStencilFunc( GLcontext *ctx, GLenum func,
    fxMesa->new_state |= TDFX_NEW_STENCIL;
 }
 
-static void tdfxDDStencilMask( GLcontext *ctx, GLuint mask )
+static void
+tdfxDDStencilMaskSeparate( GLcontext *ctx, GLenum face, GLuint mask )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -493,8 +495,9 @@ static void tdfxDDStencilMask( GLcontext *ctx, GLuint mask )
    fxMesa->new_state |= TDFX_NEW_STENCIL;
 }
 
-static void tdfxDDStencilOp( GLcontext *ctx, GLenum sfail,
-			     GLenum zfail, GLenum zpass )
+static void
+tdfxDDStencilOpSeparate( GLcontext *ctx, GLenum face, GLenum sfail,
+                         GLenum zfail, GLenum zpass )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -1428,9 +1431,9 @@ void tdfxDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.ShadeModel		= tdfxDDShadeModel;
 
    if ( fxMesa->haveHwStencil ) {
-      ctx->Driver.StencilFunc		= tdfxDDStencilFunc;
-      ctx->Driver.StencilMask		= tdfxDDStencilMask;
-      ctx->Driver.StencilOp		= tdfxDDStencilOp;
+      ctx->Driver.StencilFuncSeparate	= tdfxDDStencilFuncSeparate;
+      ctx->Driver.StencilMaskSeparate	= tdfxDDStencilMaskSeparate;
+      ctx->Driver.StencilOpSeparate	= tdfxDDStencilOpSeparate;
    }
 
    ctx->Driver.Viewport			= tdfxDDViewport;

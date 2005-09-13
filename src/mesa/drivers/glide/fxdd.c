@@ -2170,9 +2170,9 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.ShadeModel = fxDDShadeModel;
    ctx->Driver.Enable = fxDDEnable;
    if (fxMesa->haveHwStencil) {
-      ctx->Driver.StencilFunc	= fxDDStencilFunc;
-      ctx->Driver.StencilMask	= fxDDStencilMask;
-      ctx->Driver.StencilOp	= fxDDStencilOp;
+      ctx->Driver.StencilFuncSeparate	= fxDDStencilFuncSeparate;
+      ctx->Driver.StencilMaskSeparate	= fxDDStencilMaskSeparate;
+      ctx->Driver.StencilOpSeparate	= fxDDStencilOpSeparate;
    }
 
    fxSetupDDSpanPointers(ctx);

@@ -1081,14 +1081,17 @@ _mesa_PopAttrib(void)
                                              ? GL_BACK : GL_FRONT);
                }
                /* front state */
-               _mesa_StencilFunc(stencil->Function[0], stencil->Ref[0],
-                                 stencil->ValueMask[0]);
-               _mesa_StencilMask(stencil->WriteMask[0]);
-               _mesa_StencilOp(stencil->FailFunc[0],
-                               stencil->ZFailFunc[0],
-                               stencil->ZPassFunc[0]);
+               _mesa_StencilFuncSeparate(GL_FRONT,
+                                         stencil->Function[0],
+                                         stencil->Ref[0],
+                                         stencil->ValueMask[0]);
+               _mesa_StencilMaskSeparate(GL_FRONT, stencil->WriteMask[0]);
+               _mesa_StencilOpSeparate(GL_FRONT, stencil->FailFunc[0],
+                                       stencil->ZFailFunc[0],
+                                       stencil->ZPassFunc[0]);
                /* back state */
-               _mesa_StencilFuncSeparate(GL_BACK, stencil->Function[1],
+               _mesa_StencilFuncSeparate(GL_BACK,
+                                         stencil->Function[1],
                                          stencil->Ref[1],
                                          stencil->ValueMask[1]);
                _mesa_StencilMaskSeparate(GL_BACK, stencil->WriteMask[1]);

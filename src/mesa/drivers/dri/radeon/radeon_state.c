@@ -1273,8 +1273,9 @@ static void radeonUpdateClipPlanes( GLcontext *ctx )
  * Stencil
  */
 
-static void radeonStencilFunc( GLcontext *ctx, GLenum func,
-			       GLint ref, GLuint mask )
+static void
+radeonStencilFuncSeparate( GLcontext *ctx, GLenum face, GLenum func,
+                           GLint ref, GLuint mask )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    GLuint refmask = ((ctx->Stencil.Ref[0] << RADEON_STENCIL_REF_SHIFT) |
@@ -1317,7 +1318,8 @@ static void radeonStencilFunc( GLcontext *ctx, GLenum func,
    rmesa->hw.msk.cmd[MSK_RB3D_STENCILREFMASK] |= refmask;
 }
 
-static void radeonStencilMask( GLcontext *ctx, GLuint mask )
+static void
+radeonStencilMaskSeparate( GLcontext *ctx, GLenum face, GLuint mask )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 
@@ -1327,8 +1329,8 @@ static void radeonStencilMask( GLcontext *ctx, GLuint mask )
       (ctx->Stencil.WriteMask[0] << RADEON_STENCIL_WRITEMASK_SHIFT);
 }
 
-static void radeonStencilOp( GLcontext *ctx, GLenum fail,
-			     GLenum zfail, GLenum zpass )
+static void radeonStencilOpSeparate( GLcontext *ctx, GLenum face, GLenum fail,
+                                     GLenum zfail, GLenum zpass )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 
@@ -2312,9 +2314,9 @@ void radeonInitStateFuncs( GLcontext *ctx )
    ctx->Driver.RenderMode		= radeonRenderMode;
    ctx->Driver.Scissor			= radeonScissor;
    ctx->Driver.ShadeModel		= radeonShadeModel;
-   ctx->Driver.StencilFunc		= radeonStencilFunc;
-   ctx->Driver.StencilMask		= radeonStencilMask;
-   ctx->Driver.StencilOp		= radeonStencilOp;
+   ctx->Driver.StencilFuncSeparate	= radeonStencilFuncSeparate;
+   ctx->Driver.StencilMaskSeparate	= radeonStencilMaskSeparate;
+   ctx->Driver.StencilOpSeparate	= radeonStencilOpSeparate;
    ctx->Driver.Viewport			= radeonViewport;
 
    TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange = radeonUpdateMaterial;

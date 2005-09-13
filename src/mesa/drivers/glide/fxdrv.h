@@ -642,9 +642,9 @@ extern void fxDDBlendFuncSeparate(GLcontext *, GLenum, GLenum, GLenum, GLenum);
 extern void fxDDBlendEquationSeparate(GLcontext *, GLenum, GLenum);
 extern void fxDDDepthMask(GLcontext *, GLboolean);
 extern void fxDDDepthFunc(GLcontext *, GLenum);
-extern void fxDDStencilFunc (GLcontext *ctx, GLenum func, GLint ref, GLuint mask);
-extern void fxDDStencilMask (GLcontext *ctx, GLuint mask);
-extern void fxDDStencilOp (GLcontext *ctx, GLenum sfail, GLenum zfail, GLenum zpass);
+extern void fxDDStencilFuncSeparate (GLcontext *ctx, GLenum face, GLenum func, GLint ref, GLuint mask);
+extern void fxDDStencilMaskSeparate (GLcontext *ctx, GLenum face, GLuint mask);
+extern void fxDDStencilOpSeparate (GLcontext *ctx, GLenum face, GLenum sfail, GLenum zfail, GLenum zpass);
 
 extern void fxDDInitExtensions(GLcontext * ctx);
 

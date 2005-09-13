@@ -127,6 +127,10 @@ _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
       ctx->Stencil.Function[face] = func;
       ctx->Stencil.Ref[face] = ref;
       ctx->Stencil.ValueMask[face] = mask;
+      if (ctx->Driver.StencilFuncSeparate) {
+         ctx->Driver.StencilFuncSeparate(ctx, face ? GL_BACK : GL_FRONT,
+                                         func, ref, mask);
+      }
    }
    else {
       /* set both front and back state */
@@ -141,10 +145,10 @@ _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
       ctx->Stencil.Function[0]  = ctx->Stencil.Function[1]  = func;
       ctx->Stencil.Ref[0]       = ctx->Stencil.Ref[1]       = ref;
       ctx->Stencil.ValueMask[0] = ctx->Stencil.ValueMask[1] = mask;
-   }
-
-   if (ctx->Driver.StencilFunc) {
-      ctx->Driver.StencilFunc( ctx, func, ref, mask );
+      if (ctx->Driver.StencilFuncSeparate) {
+         ctx->Driver.StencilFuncSeparate(ctx, GL_FRONT_AND_BACK,
+                                         func, ref, mask);
+      }
    }
 }
 
@@ -173,6 +177,9 @@ _mesa_StencilMask( GLuint mask )
          return;
       FLUSH_VERTICES(ctx, _NEW_STENCIL);
       ctx->Stencil.WriteMask[face] = mask;
+      if (ctx->Driver.StencilMaskSeparate) {
+         ctx->Driver.StencilMaskSeparate(ctx, face ? GL_BACK : GL_FRONT, mask);
+      }
    }
    else {
       /* set both front and back state */
@@ -181,10 +188,9 @@ _mesa_StencilMask( GLuint mask )
          return;
       FLUSH_VERTICES(ctx, _NEW_STENCIL);
       ctx->Stencil.WriteMask[0] = ctx->Stencil.WriteMask[1] = mask;
-   }
-
-   if (ctx->Driver.StencilMask) {
-      ctx->Driver.StencilMask( ctx, mask );
+      if (ctx->Driver.StencilMaskSeparate) {
+         ctx->Driver.StencilMaskSeparate(ctx, GL_FRONT_AND_BACK, mask);
+      }
    }
 }
 
@@ -275,6 +281,10 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
       ctx->Stencil.ZFailFunc[face] = zfail;
       ctx->Stencil.ZPassFunc[face] = zpass;
       ctx->Stencil.FailFunc[face] = fail;
+      if (ctx->Driver.StencilOpSeparate) {
+         ctx->Driver.StencilOpSeparate(ctx, face ? GL_BACK : GL_FRONT,
+                                       fail, zfail, zpass);
+      }
    }
    else {
       /* set both front and back state */
@@ -289,10 +299,10 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
       ctx->Stencil.ZFailFunc[0] = ctx->Stencil.ZFailFunc[1] = zfail;
       ctx->Stencil.ZPassFunc[0] = ctx->Stencil.ZPassFunc[1] = zpass;
       ctx->Stencil.FailFunc[0]  = ctx->Stencil.FailFunc[1]  = fail;
-   }
-
-   if (ctx->Driver.StencilOp) {
-      ctx->Driver.StencilOp(ctx, fail, zfail, zpass);
+      if (ctx->Driver.StencilOpSeparate) {
+         ctx->Driver.StencilOpSeparate(ctx, GL_FRONT_AND_BACK,
+                                       fail, zfail, zpass);
+      }
    }
 }
 
@@ -317,11 +327,6 @@ _mesa_ActiveStencilFaceEXT(GLenum face)
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glActiveStencilFaceEXT(face)");
-      return;
-   }
-
-   if (ctx->Driver.ActiveStencilFace) {
-      ctx->Driver.ActiveStencilFace(ctx, (GLuint) ctx->Stencil.ActiveFace);
    }
 }
 #endif
