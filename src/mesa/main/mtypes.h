@@ -1037,10 +1037,10 @@ struct gl_stencil_attrib
    GLenum FailFunc[2];		/**< Fail function */
    GLenum ZPassFunc[2];		/**< Depth buffer pass function */
    GLenum ZFailFunc[2];		/**< Depth buffer fail function */
-   GLstencil Ref[2];		/**< Reference value */
-   GLstencil ValueMask[2];	/**< Value mask */
-   GLstencil WriteMask[2];	/**< Write mask */
-   GLstencil Clear;		/**< Clear value */
+   GLint Ref[2];		/**< Reference value */
+   GLuint ValueMask[2];		/**< Value mask */
+   GLuint WriteMask[2];		/**< Write mask */
+   GLuint Clear;		/**< Clear value */
 };
 
 

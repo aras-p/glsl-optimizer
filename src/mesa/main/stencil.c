@@ -5,7 +5,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -31,11 +31,9 @@
 #include "glheader.h"
 #include "imports.h"
 #include "context.h"
-#include "depth.h"
 #include "macros.h"
 #include "stencil.h"
 #include "mtypes.h"
-#include "enable.h"
 
 
 /**
@@ -55,11 +53,11 @@ _mesa_ClearStencil( GLint s )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (ctx->Stencil.Clear == (GLstencil) s)
+   if (ctx->Stencil.Clear == (GLuint) s)
       return;
 
    FLUSH_VERTICES(ctx, _NEW_STENCIL);
-   ctx->Stencil.Clear = (GLstencil) s;
+   ctx->Stencil.Clear = (GLuint) s;
 
    if (ctx->Driver.ClearStencil) {
       (*ctx->Driver.ClearStencil)( ctx, s );
@@ -104,17 +102,17 @@ _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
    }
 
    maxref = (1 << STENCIL_BITS) - 1;
-   ref = (GLstencil) CLAMP( ref, 0, maxref );
+   ref = CLAMP( ref, 0, maxref );
 
    if (ctx->Stencil.Function[face] == func &&
-       ctx->Stencil.ValueMask[face] == (GLstencil) mask &&
+       ctx->Stencil.ValueMask[face] == mask &&
        ctx->Stencil.Ref[face] == ref)
       return;
 
    FLUSH_VERTICES(ctx, _NEW_STENCIL);
    ctx->Stencil.Function[face] = func;
    ctx->Stencil.Ref[face] = ref;
-   ctx->Stencil.ValueMask[face] = (GLstencil) mask;
+   ctx->Stencil.ValueMask[face] = mask;
 
    if (ctx->Driver.StencilFunc) {
       (*ctx->Driver.StencilFunc)( ctx, func, ref, mask );
@@ -140,11 +138,11 @@ _mesa_StencilMask( GLuint mask )
    const GLint face = ctx->Stencil.ActiveFace;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (ctx->Stencil.WriteMask[face] == (GLstencil) mask)
+   if (ctx->Stencil.WriteMask[face] == mask)
       return;
 
    FLUSH_VERTICES(ctx, _NEW_STENCIL);
-   ctx->Stencil.WriteMask[face] = (GLstencil) mask;
+   ctx->Stencil.WriteMask[face] = mask;
 
    if (ctx->Driver.StencilMask) {
       (*ctx->Driver.StencilMask)( ctx, mask );
@@ -156,7 +154,7 @@ _mesa_StencilMask( GLuint mask )
  * Set the stencil test actions.
  *
  * \param fail action to take when stencil test fails.
- * \param zfail action to take when stencil test passes, but the depth test fails.
+ * \param zfail action to take when stencil test passes, but depth test fails.
  * \param zpass action to take when stencil test passes and the depth test
  * passes (or depth testing is not enabled).
  * 
@@ -386,19 +384,19 @@ _mesa_StencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask)
    }
 
    maxref = (1 << STENCIL_BITS) - 1;
-   ref = (GLstencil) CLAMP(ref, 0, maxref);
+   ref = CLAMP(ref, 0, maxref);
 
    FLUSH_VERTICES(ctx, _NEW_STENCIL);
 
    if (face == GL_FRONT || face == GL_FRONT_AND_BACK) {
       ctx->Stencil.Function[0] = func;
       ctx->Stencil.Ref[0] = ref;
-      ctx->Stencil.ValueMask[0] = (GLstencil) mask;
+      ctx->Stencil.ValueMask[0] = mask;
    }
    if (face == GL_BACK || face == GL_FRONT_AND_BACK) {
       ctx->Stencil.Function[1] = func;
       ctx->Stencil.Ref[1] = ref;
-      ctx->Stencil.ValueMask[1] = (GLstencil) mask;
+      ctx->Stencil.ValueMask[1] = mask;
    }
 
    if (ctx->Driver.StencilFuncSeparate) {
@@ -422,10 +420,10 @@ _mesa_StencilMaskSeparate(GLenum face, GLuint mask)
    FLUSH_VERTICES(ctx, _NEW_STENCIL);
 
    if (face == GL_FRONT || face == GL_FRONT_AND_BACK) {
-      ctx->Stencil.WriteMask[0] = (GLstencil) mask;
+      ctx->Stencil.WriteMask[0] = mask;
    }
    if (face == GL_BACK || face == GL_FRONT_AND_BACK) {
-      ctx->Stencil.WriteMask[1] = (GLstencil) mask;
+      ctx->Stencil.WriteMask[1] = mask;
    }
 
    if (ctx->Driver.StencilMaskSeparate) {
@@ -441,9 +439,9 @@ _mesa_StencilMaskSeparate(GLenum face, GLuint mask)
  *
  * Initializes __GLcontextRec::Stencil attribute group.
  */
-void _mesa_init_stencil( GLcontext * ctx )
+void
+_mesa_init_stencil( GLcontext * ctx )
 {
-
    /* Stencil group */
    ctx->Stencil.Enabled = GL_FALSE;
    ctx->Stencil.TestTwoSide = GL_FALSE;
@@ -458,9 +456,9 @@ void _mesa_init_stencil( GLcontext * ctx )
    ctx->Stencil.ZFailFunc[1] = GL_KEEP;
    ctx->Stencil.Ref[0] = 0;
    ctx->Stencil.Ref[1] = 0;
-   ctx->Stencil.ValueMask[0] = STENCIL_MAX;
-   ctx->Stencil.ValueMask[1] = STENCIL_MAX;
-   ctx->Stencil.WriteMask[0] = STENCIL_MAX;
-   ctx->Stencil.WriteMask[1] = STENCIL_MAX;
+   ctx->Stencil.ValueMask[0] = ~0U;
+   ctx->Stencil.ValueMask[1] = ~0U;
+   ctx->Stencil.WriteMask[0] = ~0U;
+   ctx->Stencil.WriteMask[1] = ~0U;
    ctx->Stencil.Clear = 0;
 }
