@@ -6,7 +6,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -121,6 +121,7 @@
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
+#include "version.h"
 #include "vtxfmt.h"
 #if _HAVE_FULL_GL
 #include "math/m_translate.h"
@@ -652,7 +653,8 @@ one_time_init( GLcontext *ctx )
       }
 
 #if defined(DEBUG) && defined(__DATE__) && defined(__TIME__)
-      _mesa_debug(ctx, "Mesa DEBUG build %s %s\n", __DATE__, __TIME__);
+      _mesa_debug(ctx, "Mesa %s DEBUG build %s %s\n",
+                  MESA_VERSION_STRING, __DATE__, __TIME__);
 #endif
 
       alreadyCalled = GL_TRUE;
