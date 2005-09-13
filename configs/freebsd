@@ -9,7 +9,8 @@ CC = gcc
 CXX = g++
 MAKE = gmake
 
-CFLAGS = -O2 -fPIC -pedantic -I/usr/X11R6/include -DUSE_XSHM -DHZ=100
+CFLAGS = -O2 -fPIC -pedantic -I/usr/X11R6/include -DUSE_XSHM -DHZ=100 \
+	$(ASM_FLAGS)
 CXXFLAGS = -O2 -fPIC -pedantic
 GLUT_CFLAGS = -fexceptions
 
