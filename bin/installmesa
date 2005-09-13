@@ -12,7 +12,7 @@ TOP=.
 INCLUDE_DIR="/usr/local/include"
 LIB_DIR="/usr/local/lib"
 
-if [ x$# == "x0" ] ; then
+if [ "x$#" = "x0" ] ; then
 echo
 echo "***** Mesa installation - You may need root privileges to do this *****"
 echo
@@ -20,7 +20,7 @@ echo "Default directory for header files is:" ${INCLUDE_DIR}
 echo "Enter new directory or press <Enter> to accept this default."
 
 read INPUT
-if [ x${INPUT} != "x" ] ; then
+if [ "x${INPUT}" != "x" ] ; then
 	INCLUDE_DIR=${INPUT}
 fi
 
@@ -29,7 +29,7 @@ echo "Default directory for library files is:" ${LIB_DIR}
 echo "Enter new directory or press <Enter> to accept this default."
 
 read INPUT
-if [ x${INPUT} != "x" ] ; then
+if [ "x${INPUT}" != "x" ] ; then
 	LIB_DIR=${INPUT}
 fi
 
@@ -47,7 +47,14 @@ fi
 
 # flags:
 #  -f = force
-#  -d = preserve symlinks
+#  -d = preserve symlinks (does not work on BSD)
+
+if [ `uname` = "FreeBSD" ] ; then
+	CP_FLAGS="-f"
+else
+	CP_FLAGS="-fd"
+fi
+
 
 set -v
 
@@ -56,7 +63,7 @@ mkdir ${INCLUDE_DIR}/GL
 mkdir ${INCLUDE_DIR}/GLES
 mkdir ${LIB_DIR}
 cp -f ${TOP}/include/GL/*.h ${INCLUDE_DIR}/GL
-cp -f ${TOP}/include/GLES/*.h ${INCLUDE_DIR}/GLES
-cp -fd ${TOP}/lib*/lib* ${LIB_DIR}
+# NOT YET: cp -f ${TOP}/include/GLES/*.h ${INCLUDE_DIR}/GLES
+cp ${CP_FLAGS} ${TOP}/lib*/lib* ${LIB_DIR}
 
 echo "Done."
