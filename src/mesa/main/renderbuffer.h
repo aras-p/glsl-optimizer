@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -76,6 +76,15 @@ _mesa_add_accum_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
 extern GLboolean
 _mesa_add_aux_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
                             GLuint bits, GLuint numBuffers);
+
+extern void
+_mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
+                             GLboolean color,
+                             GLboolean depth,
+                             GLboolean stencil,
+                             GLboolean accum,
+                             GLboolean alpha,
+                             GLboolean aux);
 
 extern void
 _mesa_add_renderbuffer(struct gl_framebuffer *fb,

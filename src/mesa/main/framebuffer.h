@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -35,15 +35,6 @@ _mesa_new_framebuffer(GLcontext *ctx, GLuint name);
 
 extern void
 _mesa_initialize_framebuffer(struct gl_framebuffer *fb, const GLvisual *visual);
-
-extern void
-_mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
-                             GLboolean color,
-                             GLboolean depth,
-                             GLboolean stencil,
-                             GLboolean accum,
-                             GLboolean alpha,
-                             GLboolean aux);
 
 extern void
 _mesa_destroy_framebuffer(struct gl_framebuffer *buffer);

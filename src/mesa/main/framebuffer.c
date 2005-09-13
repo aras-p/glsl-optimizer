@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -103,7 +103,6 @@ _mesa_new_framebuffer(GLcontext *ctx, GLuint name)
    if (fb) {
       fb->Name = name;
       fb->RefCount = 1;
-      fb->Delete = _mesa_destroy_framebuffer;
       fb->ColorDrawBuffer[0] = GL_COLOR_ATTACHMENT0_EXT;
       fb->_ColorDrawBufferMask[0] = BUFFER_BIT_COLOR0;
       fb->ColorReadBuffer = GL_COLOR_ATTACHMENT0_EXT;
@@ -115,7 +114,8 @@ _mesa_new_framebuffer(GLcontext *ctx, GLuint name)
 
 
 /**
- * Initialize a gl_framebuffer object.
+ * Initialize a gl_framebuffer object.  Typically used to initialize
+ * window system-created framebuffers, not user-created framebuffers.
  * \sa _mesa_create_framebuffer
  */
 void
@@ -150,98 +150,15 @@ _mesa_initialize_framebuffer(struct gl_framebuffer *fb, const GLvisual *visual)
 
 
 /**
- * Create/attach software-based renderbuffers to the given framebuffer.
- * This is a helper routine for device drivers.  Drivers can just as well
- * call the individual _mesa_add_*_renderbuffer() routines directly.
- */
-void
-_mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
-                             GLboolean color,
-                             GLboolean depth,
-                             GLboolean stencil,
-                             GLboolean accum,
-                             GLboolean alpha,
-                             GLboolean aux)
-{
-   GLboolean frontLeft = GL_TRUE;
-   GLboolean backLeft = fb->Visual.doubleBufferMode;
-   GLboolean frontRight = fb->Visual.stereoMode;
-   GLboolean backRight = fb->Visual.stereoMode && fb->Visual.doubleBufferMode;
-
-   if (color) {
-      if (fb->Visual.rgbMode) {
-         assert(fb->Visual.redBits == fb->Visual.greenBits);
-         assert(fb->Visual.redBits == fb->Visual.blueBits);
-         _mesa_add_color_renderbuffers(NULL, fb,
-                                       fb->Visual.redBits,
-                                       fb->Visual.alphaBits,
-                                       frontLeft, backLeft,
-                                       frontRight, backRight);
-      }
-      else {
-         _mesa_add_color_index_renderbuffers(NULL, fb,
-                                             fb->Visual.indexBits,
-                                             frontLeft, backLeft,
-                                             frontRight, backRight);
-      }
-   }
-
-   if (depth) {
-      assert(fb->Visual.depthBits > 0);
-      _mesa_add_depth_renderbuffer(NULL, fb, fb->Visual.depthBits);
-   }
-
-   if (stencil) {
-      assert(fb->Visual.stencilBits > 0);
-      _mesa_add_stencil_renderbuffer(NULL, fb, fb->Visual.stencilBits);
-   }
-
-   if (accum) {
-      assert(fb->Visual.rgbMode);
-      assert(fb->Visual.accumRedBits > 0);
-      assert(fb->Visual.accumGreenBits > 0);
-      assert(fb->Visual.accumBlueBits > 0);
-      _mesa_add_accum_renderbuffer(NULL, fb,
-                                   fb->Visual.accumRedBits,
-                                   fb->Visual.accumGreenBits,
-                                   fb->Visual.accumBlueBits,
-                                   fb->Visual.accumAlphaBits);
-   }
-
-   if (aux) {
-      assert(fb->Visual.rgbMode);
-      assert(fb->Visual.numAuxBuffers > 0);
-      _mesa_add_aux_renderbuffers(NULL, fb, fb->Visual.redBits,
-                                  fb->Visual.numAuxBuffers);
-   }
-
-#if 1
-   if (alpha) {
-      assert(fb->Visual.rgbMode);
-      assert(fb->Visual.alphaBits > 0);
-      _mesa_add_alpha_renderbuffers(NULL, fb, fb->Visual.alphaBits,
-                                    frontLeft, backLeft,
-                                    frontRight, backRight);
-   }
-#endif
-
-#if 0
-   if (multisample) {
-      /* maybe someday */
-   }
-#endif
-}
-
-
-/**
  * Deallocate buffer and everything attached to it.
+ * Typically called via the gl_framebuffer->Delete() method.
  */
 void
-_mesa_destroy_framebuffer(struct gl_framebuffer *buffer)
+_mesa_destroy_framebuffer(struct gl_framebuffer *fb)
 {
-   if (buffer) {
-      _mesa_free_framebuffer_data(buffer);
-      FREE(buffer);
+   if (fb) {
+      _mesa_free_framebuffer_data(fb);
+      FREE(fb);
    }
 }
 
@@ -398,7 +315,7 @@ _mesa_update_draw_buffer_bounds(GLcontext *ctx)
 /**
  * The glGet queries of the framebuffer red/green/blue size, stencil size,
  * etc. are satisfied by the fields of ctx->DrawBuffer->Visual.  These can
- * change depending on the renderbuffer bindings.  This function update's
+ * change depending on the renderbuffer bindings.  This function updates
  * the given framebuffer's Visual from the current renderbuffer bindings.
  * This is only intended for user-created framebuffers.
  */
@@ -481,8 +398,9 @@ _mesa_update_framebuffer(GLcontext *ctx)
    /*
     * Update the list of drawing renderbuffer pointers.
     * Later, when we're rendering we'll loop from 0 to _NumColorDrawBuffers
-    * writing colors.  We have a loop because glDrawBuffer(GL_FRONT_AND_BACK)
-    * can specify writing to two or four color buffers.
+    * writing colors.  We need the inner loop here because
+    * glDrawBuffer(GL_FRONT_AND_BACK) can specify writing to two or four
+    * color buffers (for example).
     */
    for (output = 0; output < ctx->Const.MaxDrawBuffers; output++) {
       GLuint bufferMask = fb->_ColorDrawBufferMask[output];

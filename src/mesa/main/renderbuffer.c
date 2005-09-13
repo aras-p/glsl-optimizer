@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -48,6 +48,7 @@
 #include "renderbuffer.h"
 
 
+/* 32-bit color index format.  Not a public format. */
 #define COLOR_INDEX32 0x424243
 
 
@@ -58,7 +59,7 @@
  */
 
 /**********************************************************************
- * Functions for buffers of 1 X GLushort values.
+ * Functions for buffers of 1 X GLubyte values.
  * Typically stencil.
  */
 
@@ -1834,6 +1835,87 @@ _mesa_add_aux_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
    return GL_TRUE;
 }
 
+
+/**
+ * Create/attach software-based renderbuffers to the given framebuffer.
+ * This is a helper routine for device drivers.  Drivers can just as well
+ * call the individual _mesa_add_*_renderbuffer() routines directly.
+ */
+void
+_mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
+                             GLboolean color,
+                             GLboolean depth,
+                             GLboolean stencil,
+                             GLboolean accum,
+                             GLboolean alpha,
+                             GLboolean aux)
+{
+   GLboolean frontLeft = GL_TRUE;
+   GLboolean backLeft = fb->Visual.doubleBufferMode;
+   GLboolean frontRight = fb->Visual.stereoMode;
+   GLboolean backRight = fb->Visual.stereoMode && fb->Visual.doubleBufferMode;
+
+   if (color) {
+      if (fb->Visual.rgbMode) {
+         assert(fb->Visual.redBits == fb->Visual.greenBits);
+         assert(fb->Visual.redBits == fb->Visual.blueBits);
+         _mesa_add_color_renderbuffers(NULL, fb,
+                                       fb->Visual.redBits,
+                                       fb->Visual.alphaBits,
+                                       frontLeft, backLeft,
+                                       frontRight, backRight);
+      }
+      else {
+         _mesa_add_color_index_renderbuffers(NULL, fb,
+                                             fb->Visual.indexBits,
+                                             frontLeft, backLeft,
+                                             frontRight, backRight);
+      }
+   }
+
+   if (depth) {
+      assert(fb->Visual.depthBits > 0);
+      _mesa_add_depth_renderbuffer(NULL, fb, fb->Visual.depthBits);
+   }
+
+   if (stencil) {
+      assert(fb->Visual.stencilBits > 0);
+      _mesa_add_stencil_renderbuffer(NULL, fb, fb->Visual.stencilBits);
+   }
+
+   if (accum) {
+      assert(fb->Visual.rgbMode);
+      assert(fb->Visual.accumRedBits > 0);
+      assert(fb->Visual.accumGreenBits > 0);
+      assert(fb->Visual.accumBlueBits > 0);
+      _mesa_add_accum_renderbuffer(NULL, fb,
+                                   fb->Visual.accumRedBits,
+                                   fb->Visual.accumGreenBits,
+                                   fb->Visual.accumBlueBits,
+                                   fb->Visual.accumAlphaBits);
+   }
+
+   if (aux) {
+      assert(fb->Visual.rgbMode);
+      assert(fb->Visual.numAuxBuffers > 0);
+      _mesa_add_aux_renderbuffers(NULL, fb, fb->Visual.redBits,
+                                  fb->Visual.numAuxBuffers);
+   }
+
+   if (alpha) {
+      assert(fb->Visual.rgbMode);
+      assert(fb->Visual.alphaBits > 0);
+      _mesa_add_alpha_renderbuffers(NULL, fb, fb->Visual.alphaBits,
+                                    frontLeft, backLeft,
+                                    frontRight, backRight);
+   }
+
+#if 0
+   if (multisample) {
+      /* maybe someday */
+   }
+#endif
+}
 
 
 /**
