@@ -1,8 +1,3 @@
-/**
- * \file stencil.c
- * Stencil operations.
- */
-
 /*
  * Mesa 3-D graphics library
  * Version:  6.5
@@ -25,6 +20,24 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+
+/**
+ * \file stencil.c
+ * Stencil operations.
+ *
+ * Note: There's an incompatibility between GL_EXT_stencil_two_side and
+ * OpenGL 2.0's two-sided stencil feature.
+ *
+ * With GL_EXT_stencil_two_side, calling glStencilOp/Func/Mask() only the
+ * front OR back face state (as set by glActiveStencilFaceEXT) is set.
+ *
+ * But with OpenGL 2.0, calling glStencilOp/Func/Mask() sets BOTH the
+ * front AND back state.
+ *
+ * So either we advertise the GL_EXT_stencil_two_side extension, or OpenGL
+ * 2.0, but not both.
  */
 
 
@@ -60,7 +73,7 @@ _mesa_ClearStencil( GLint s )
    ctx->Stencil.Clear = (GLuint) s;
 
    if (ctx->Driver.ClearStencil) {
-      (*ctx->Driver.ClearStencil)( ctx, s );
+      ctx->Driver.ClearStencil( ctx, s );
    }
 }
 
@@ -82,7 +95,6 @@ void GLAPIENTRY
 _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
-   const GLint face = ctx->Stencil.ActiveFace;
    GLint maxref;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -104,18 +116,35 @@ _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
    maxref = (1 << STENCIL_BITS) - 1;
    ref = CLAMP( ref, 0, maxref );
 
-   if (ctx->Stencil.Function[face] == func &&
-       ctx->Stencil.ValueMask[face] == mask &&
-       ctx->Stencil.Ref[face] == ref)
-      return;
-
-   FLUSH_VERTICES(ctx, _NEW_STENCIL);
-   ctx->Stencil.Function[face] = func;
-   ctx->Stencil.Ref[face] = ref;
-   ctx->Stencil.ValueMask[face] = mask;
+   if (ctx->Extensions.EXT_stencil_two_side) {
+      /* only set active face state */
+      const GLint face = ctx->Stencil.ActiveFace;
+      if (ctx->Stencil.Function[face] == func &&
+          ctx->Stencil.ValueMask[face] == mask &&
+          ctx->Stencil.Ref[face] == ref)
+         return;
+      FLUSH_VERTICES(ctx, _NEW_STENCIL);
+      ctx->Stencil.Function[face] = func;
+      ctx->Stencil.Ref[face] = ref;
+      ctx->Stencil.ValueMask[face] = mask;
+   }
+   else {
+      /* set both front and back state */
+      if (ctx->Stencil.Function[0] == func &&
+          ctx->Stencil.Function[1] == func &&
+          ctx->Stencil.ValueMask[0] == mask &&
+          ctx->Stencil.ValueMask[1] == mask &&
+          ctx->Stencil.Ref[0] == ref &&
+          ctx->Stencil.Ref[1] == ref)
+         return;
+      FLUSH_VERTICES(ctx, _NEW_STENCIL);
+      ctx->Stencil.Function[0]  = ctx->Stencil.Function[1]  = func;
+      ctx->Stencil.Ref[0]       = ctx->Stencil.Ref[1]       = ref;
+      ctx->Stencil.ValueMask[0] = ctx->Stencil.ValueMask[1] = mask;
+   }
 
    if (ctx->Driver.StencilFunc) {
-      (*ctx->Driver.StencilFunc)( ctx, func, ref, mask );
+      ctx->Driver.StencilFunc( ctx, func, ref, mask );
    }
 }
 
@@ -135,17 +164,27 @@ void GLAPIENTRY
 _mesa_StencilMask( GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
-   const GLint face = ctx->Stencil.ActiveFace;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (ctx->Stencil.WriteMask[face] == mask)
-      return;
-
-   FLUSH_VERTICES(ctx, _NEW_STENCIL);
-   ctx->Stencil.WriteMask[face] = mask;
+   if (ctx->Extensions.EXT_stencil_two_side) {
+      /* only set active face state */
+      const GLint face = ctx->Stencil.ActiveFace;
+      if (ctx->Stencil.WriteMask[face] == mask)
+         return;
+      FLUSH_VERTICES(ctx, _NEW_STENCIL);
+      ctx->Stencil.WriteMask[face] = mask;
+   }
+   else {
+      /* set both front and back state */
+      if (ctx->Stencil.WriteMask[0] == mask &&
+          ctx->Stencil.WriteMask[1] == mask)
+         return;
+      FLUSH_VERTICES(ctx, _NEW_STENCIL);
+      ctx->Stencil.WriteMask[0] = ctx->Stencil.WriteMask[1] = mask;
+   }
 
    if (ctx->Driver.StencilMask) {
-      (*ctx->Driver.StencilMask)( ctx, mask );
+      ctx->Driver.StencilMask( ctx, mask );
    }
 }
 
@@ -168,7 +207,6 @@ void GLAPIENTRY
 _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
 {
    GET_CURRENT_CONTEXT(ctx);
-   const GLint face = ctx->Stencil.ActiveFace;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (fail) {
@@ -226,18 +264,35 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
          return;
    }
 
-   if (ctx->Stencil.ZFailFunc[face] == zfail &&
-       ctx->Stencil.ZPassFunc[face] == zpass &&
-       ctx->Stencil.FailFunc[face] == fail)
-      return;
-
-   FLUSH_VERTICES(ctx, _NEW_STENCIL);
-   ctx->Stencil.ZFailFunc[face] = zfail;
-   ctx->Stencil.ZPassFunc[face] = zpass;
-   ctx->Stencil.FailFunc[face] = fail;
+   if (ctx->Extensions.EXT_stencil_two_side) {
+      /* only set active face state */
+      const GLint face = ctx->Stencil.ActiveFace;
+      if (ctx->Stencil.ZFailFunc[face] == zfail &&
+          ctx->Stencil.ZPassFunc[face] == zpass &&
+          ctx->Stencil.FailFunc[face] == fail)
+         return;
+      FLUSH_VERTICES(ctx, _NEW_STENCIL);
+      ctx->Stencil.ZFailFunc[face] = zfail;
+      ctx->Stencil.ZPassFunc[face] = zpass;
+      ctx->Stencil.FailFunc[face] = fail;
+   }
+   else {
+      /* set both front and back state */
+      if (ctx->Stencil.ZFailFunc[0] == zfail &&
+          ctx->Stencil.ZFailFunc[1] == zfail &&
+          ctx->Stencil.ZPassFunc[0] == zpass &&
+          ctx->Stencil.ZPassFunc[1] == zpass &&
+          ctx->Stencil.FailFunc[0] == fail &&
+          ctx->Stencil.FailFunc[1] == fail)
+         return;
+      FLUSH_VERTICES(ctx, _NEW_STENCIL);
+      ctx->Stencil.ZFailFunc[0] = ctx->Stencil.ZFailFunc[1] = zfail;
+      ctx->Stencil.ZPassFunc[0] = ctx->Stencil.ZPassFunc[1] = zpass;
+      ctx->Stencil.FailFunc[0]  = ctx->Stencil.FailFunc[1]  = fail;
+   }
 
    if (ctx->Driver.StencilOp) {
-      (*ctx->Driver.StencilOp)(ctx, fail, zfail, zpass);
+      ctx->Driver.StencilOp(ctx, fail, zfail, zpass);
    }
 }
 
@@ -251,13 +306,22 @@ _mesa_ActiveStencilFaceEXT(GLenum face)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   if (!ctx->Extensions.EXT_stencil_two_side) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glActiveStencilFaceEXT");
+      return;
+   }
+
    if (face == GL_FRONT || face == GL_BACK) {
       FLUSH_VERTICES(ctx, _NEW_STENCIL);
       ctx->Stencil.ActiveFace = (face == GL_FRONT) ? 0 : 1;
    }
+   else {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glActiveStencilFaceEXT(face)");
+      return;
+   }
 
    if (ctx->Driver.ActiveStencilFace) {
-      (*ctx->Driver.ActiveStencilFace)( ctx, (GLuint) ctx->Stencil.ActiveFace );
+      ctx->Driver.ActiveStencilFace(ctx, (GLuint) ctx->Stencil.ActiveFace);
    }
 }
 #endif
@@ -433,6 +497,28 @@ _mesa_StencilMaskSeparate(GLenum face, GLuint mask)
 
 
 /**
+ * Update derived stencil state.
+ */
+void
+_mesa_update_stencil(GLcontext *ctx)
+{
+   if (ctx->Extensions.EXT_stencil_two_side) {
+      ctx->Stencil._TestTwoSide = ctx->Stencil.TestTwoSide;
+   }
+   else {
+      ctx->Stencil._TestTwoSide = 
+         (ctx->Stencil.Function[0] != ctx->Stencil.Function[1] ||
+          ctx->Stencil.FailFunc[0] != ctx->Stencil.FailFunc[1] ||
+          ctx->Stencil.ZPassFunc[0] != ctx->Stencil.ZPassFunc[1] ||
+          ctx->Stencil.ZFailFunc[0] != ctx->Stencil.ZFailFunc[1] ||
+          ctx->Stencil.Ref[0] != ctx->Stencil.Ref[1] ||
+          ctx->Stencil.ValueMask[0] != ctx->Stencil.ValueMask[1] ||
+          ctx->Stencil.WriteMask[0] != ctx->Stencil.WriteMask[1]);
+   }
+}
+
+
+/**
  * Initialize the context stipple state.
  *
  * \param ctx GL context.
@@ -440,9 +526,8 @@ _mesa_StencilMaskSeparate(GLenum face, GLuint mask)
  * Initializes __GLcontextRec::Stencil attribute group.
  */
 void
-_mesa_init_stencil( GLcontext * ctx )
+_mesa_init_stencil(GLcontext *ctx)
 {
-   /* Stencil group */
    ctx->Stencil.Enabled = GL_FALSE;
    ctx->Stencil.TestTwoSide = GL_FALSE;
    ctx->Stencil.ActiveFace = 0;  /* 0 = GL_FRONT, 1 = GL_BACK */

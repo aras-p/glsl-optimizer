@@ -993,6 +993,9 @@ _mesa_update_state( GLcontext *ctx )
    if (new_state & _NEW_LIGHT)
       _mesa_update_lighting( ctx );
 
+   if (new_state & _NEW_STENCIL)
+      _mesa_update_stencil( ctx );
+
    if (new_state & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_pixel( ctx, new_state );
 

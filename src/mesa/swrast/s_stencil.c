@@ -1004,7 +1004,7 @@ GLboolean
 _swrast_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span)
 {
    /* span->facing can only be non-zero if using two-sided stencil */
-   ASSERT(ctx->Stencil.TestTwoSide || span->facing == 0);
+   ASSERT(ctx->Stencil._TestTwoSide || span->facing == 0);
    if (span->arrayMask & SPAN_XY)
       return stencil_and_ztest_pixels(ctx, span, span->facing);
    else

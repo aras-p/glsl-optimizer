@@ -1070,26 +1070,31 @@ _mesa_PopAttrib(void)
             break;
          case GL_STENCIL_BUFFER_BIT:
             {
-               GLint face;
                const struct gl_stencil_attrib *stencil;
                stencil = (const struct gl_stencil_attrib *) attr->data;
                _mesa_set_enable(ctx, GL_STENCIL_TEST, stencil->Enabled);
                _mesa_ClearStencil(stencil->Clear);
-               face = stencil->ActiveFace;
                if (ctx->Extensions.EXT_stencil_two_side) {
-                  _mesa_set_enable(ctx, GL_STENCIL_TEST_TWO_SIDE_EXT, stencil->TestTwoSide);
-                  face ^= 1;
+                  _mesa_set_enable(ctx, GL_STENCIL_TEST_TWO_SIDE_EXT,
+                                   stencil->TestTwoSide);
+                  _mesa_ActiveStencilFaceEXT(stencil->ActiveFace
+                                             ? GL_BACK : GL_FRONT);
                }
-               do {
-                  _mesa_ActiveStencilFaceEXT(face);
-                  _mesa_StencilFunc(stencil->Function[face], stencil->Ref[face],
-                                    stencil->ValueMask[face]);
-                  _mesa_StencilMask(stencil->WriteMask[face]);
-                  _mesa_StencilOp(stencil->FailFunc[face],
-                                  stencil->ZFailFunc[face],
-                                  stencil->ZPassFunc[face]);
-                  face ^= 1;
-               } while (face != (stencil->ActiveFace ^ 1));
+               /* front state */
+               _mesa_StencilFunc(stencil->Function[0], stencil->Ref[0],
+                                 stencil->ValueMask[0]);
+               _mesa_StencilMask(stencil->WriteMask[0]);
+               _mesa_StencilOp(stencil->FailFunc[0],
+                               stencil->ZFailFunc[0],
+                               stencil->ZPassFunc[0]);
+               /* back state */
+               _mesa_StencilFuncSeparate(GL_BACK, stencil->Function[1],
+                                         stencil->Ref[1],
+                                         stencil->ValueMask[1]);
+               _mesa_StencilMaskSeparate(GL_BACK, stencil->WriteMask[1]);
+               _mesa_StencilOpSeparate(GL_BACK, stencil->FailFunc[1],
+                                       stencil->ZFailFunc[1],
+                                       stencil->ZPassFunc[1]);
             }
             break;
          case GL_TRANSFORM_BIT:

@@ -1033,6 +1033,7 @@ struct gl_stencil_attrib
    GLboolean Enabled;		/**< Enabled flag */
    GLboolean TestTwoSide;	/**< GL_EXT_stencil_two_side */
    GLubyte ActiveFace;		/**< GL_EXT_stencil_two_side (0 or 1) */
+   GLboolean _TestTwoSide;
    GLenum Function[2];		/**< Stencil function */
    GLenum FailFunc[2];		/**< Fail function */
    GLenum ZPassFunc[2];		/**< Depth buffer pass function */

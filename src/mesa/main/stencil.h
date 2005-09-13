@@ -5,7 +5,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -65,6 +65,10 @@ _mesa_StencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask);
 
 extern void GLAPIENTRY
 _mesa_StencilMaskSeparate(GLenum face, GLuint mask);
+
+
+extern void
+_mesa_update_stencil(GLcontext *ctx);
 
 
 extern void 

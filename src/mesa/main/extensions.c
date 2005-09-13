@@ -376,7 +376,7 @@ _mesa_enable_2_0_extensions(GLcontext *ctx)
 #if 0 && FEATURE_ARB_shading_language_100
    ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
 #endif
-   ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
+   ctx->Extensions.EXT_stencil_two_side = GL_FALSE; /* yes, turn it off */
 #if 0 && FEATURE_ARB_vertex_shader
    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
 #endif
