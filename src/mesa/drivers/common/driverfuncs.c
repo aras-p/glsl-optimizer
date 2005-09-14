@@ -226,7 +226,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->SaveFlushVertices = NULL;
    driver->NotifySaveBegin = NULL;
    driver->LightingSpaceChange = NULL;
-   driver->MakeCurrent = NULL;
 
    /* display list */
    driver->NewList = NULL;

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -47,15 +47,6 @@
 
 
 
-void
-_tnl_MakeCurrent( GLcontext *ctx,
-		  GLframebuffer *drawBuffer,
-		  GLframebuffer *readBuffer )
-{
-   (void) ctx; (void) drawBuffer; (void) readBuffer;
-}
-
-
 static void
 install_driver_callbacks( GLcontext *ctx )
 {
@@ -63,7 +54,6 @@ install_driver_callbacks( GLcontext *ctx )
    ctx->Driver.EndList = _tnl_EndList;
    ctx->Driver.FlushVertices = _tnl_FlushVertices;
    ctx->Driver.SaveFlushVertices = _tnl_SaveFlushVertices;
-   ctx->Driver.MakeCurrent = _tnl_MakeCurrent;
    ctx->Driver.BeginCallList = _tnl_BeginCallList;
    ctx->Driver.EndCallList = _tnl_EndCallList;
 }
@@ -211,10 +201,6 @@ _tnl_wakeup_exec( GLcontext *ctx )
    /* Hook our functions into exec and compile dispatch tables.
     */
    _mesa_install_exec_vtxfmt( ctx, &tnl->exec_vtxfmt );
-
-   /* Call all appropriate driver callbacks to revive state.
-    */
-   _tnl_MakeCurrent( ctx, ctx->DrawBuffer, ctx->ReadBuffer );
 
    /* Assume we haven't been getting state updates either:
     */

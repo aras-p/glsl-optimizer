@@ -1598,13 +1598,6 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
          }
       }
 
-      /* Alert the driver - usually passed on to the sw t&l module,
-       * but also used to detect threaded cases in the radeon codegen
-       * hw t&l module.
-       */
-      if (newCtx->Driver.MakeCurrent)
-	 newCtx->Driver.MakeCurrent( newCtx, drawBuffer, readBuffer );
-
       /* We can use this to help debug user's problems.  Tell them to set
        * the MESA_INFO env variable before running their app.  Then the
        * first time each context is made current we'll print some useful

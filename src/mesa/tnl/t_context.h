@@ -1,6 +1,6 @@
 /*
  * mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -789,12 +789,6 @@ typedef struct
 
 #define TYPE_IDX(t) ((t) & 0xf)
 #define MAX_TYPES TYPE_IDX(GL_DOUBLE)+1      /* 0xa + 1 */
-
-extern void _tnl_MakeCurrent( GLcontext *ctx,
-			      GLframebuffer *drawBuffer,
-			      GLframebuffer *readBuffer );
-
-
 
 
 #endif

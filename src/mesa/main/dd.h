@@ -903,12 +903,6 @@ struct dd_function_table {
    void (*LightingSpaceChange)( GLcontext *ctx );
 
    /**
-    * Let the T&L component know when the context becomes current.
-    */
-   void (*MakeCurrent)( GLcontext *ctx, GLframebuffer *drawBuffer,
-			GLframebuffer *readBuffer );
-
-   /**
     * Called by glNewList().
     *
     * Let the T&L component know what is going on with display lists
