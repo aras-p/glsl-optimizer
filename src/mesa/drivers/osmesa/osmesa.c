@@ -1137,10 +1137,6 @@ OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
    /* this will make ensure we recognize the new buffer size */
    _mesa_resize_framebuffer(&ctx->mesa, ctx->gl_buffer, width, height);
 
-   /* Added by Gerk Huisma: */
-   _tnl_MakeCurrent( &ctx->mesa, ctx->mesa.DrawBuffer,
-                     ctx->mesa.ReadBuffer );
-
    return GL_TRUE;
 }
 
