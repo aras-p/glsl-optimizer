@@ -90,6 +90,7 @@ static void radeonGetBufferSize( GLframebuffer *buffer,
    LOCK_HARDWARE( rmesa );
    *width  = rmesa->dri.drawable->w;
    *height = rmesa->dri.drawable->h;
+
    UNLOCK_HARDWARE( rmesa );
 }
 
@@ -576,8 +577,8 @@ radeonSwapBuffers( __DRIdrawablePrivate *dPriv )
 }
 
 
-/* Force the context `c' to be the current context and associate with it
- * buffer `b'.
+/* Make context `c' the current context and bind it to the given
+ * drawing and reading surfaces.
  */
 GLboolean
 radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
@@ -592,6 +593,7 @@ radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 fprintf(stderr, "%s ctx %p\n", __FUNCTION__, (void *) newCtx->glCtx);
 
       if ( newCtx->dri.drawable != driDrawPriv ) {
+         /* XXX we may need to validate the drawable here!!! */
 	 driDrawableInitVBlank( driDrawPriv, newCtx->vblank_flags );
 	 newCtx->dri.drawable = driDrawPriv;
 	 radeonUpdateWindow( newCtx->glCtx );
