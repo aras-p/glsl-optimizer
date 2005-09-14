@@ -209,10 +209,8 @@ case $ARCH in
         elif [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}"     # prefix with "lib"
             echo "mklib: Making" $ARCH "static library: " ${LIBNAME}.a
-            LINK="ar"
-            OPTS="-ru"
-            # make lib
-            ${LINK} ${OPTS} ${LIBNAME}.a ${OBJECTS}
+            rm -f ${LIBNAME}.a
+            ar -ru ${LIBNAME}.a ${OBJECTS}
 	    ranlib ${LIBNAME}.a
             # finish up
             FINAL_LIBS=${LIBNAME}.a
@@ -415,6 +413,7 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
             LIBNAME="lib${LIBNAME}.a"
             echo "mklib: Making AIX static library: " ${LIBNAME}
+	    rm -f ${LIBNAME}
             ar -ruv ${X64} ${LIBNAME} ${OBJECTS}
             FINAL_LIBS=${LIBNAME}
         else
