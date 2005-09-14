@@ -42,6 +42,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "framebuffer.h"
 
+#include "drirenderbuffer.h"
+
 #if DEBUG_LOCKING
 char *prevLockFile = NULL;
 int prevLockLine = 0;
@@ -54,6 +56,9 @@ static void radeonUpdatePageFlipping(radeonContextPtr radeon)
 	int use_back;
 
 	radeon->doPageFlip = radeon->sarea->pfState;
+        if (!radeon->doPageFlip) {
+           driFlipRenderbuffers(radeon->glCtx->WinSysDrawBuffer, GL_FALSE);
+        }
 
 	use_back = (radeon->glCtx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT);
 	use_back ^= (radeon->sarea->pfCurrentPage == 1);
