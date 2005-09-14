@@ -1942,9 +1942,9 @@ void r300ResetHwState(r300ContextPtr r300)
 	
 	/* stencil */
 	r300Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
-	r300StencilMask(ctx, ctx->Stencil.WriteMask[0]);
-	r300StencilFunc(ctx, ctx->Stencil.Function[0], ctx->Stencil.Ref[0], ctx->Stencil.ValueMask[0]);
-	r300StencilOp(ctx, ctx->Stencil.FailFunc[0], ctx->Stencil.ZFailFunc[0], ctx->Stencil.ZPassFunc[0]);
+	r300StencilMaskSeparate(ctx, 0, ctx->Stencil.WriteMask[0]);
+	r300StencilFuncSeparate(ctx, 0, ctx->Stencil.Function[0], ctx->Stencil.Ref[0], ctx->Stencil.ValueMask[0]);
+	r300StencilOpSeparate(ctx, 0, ctx->Stencil.FailFunc[0], ctx->Stencil.ZFailFunc[0], ctx->Stencil.ZPassFunc[0]);
 
 	r300UpdateCulling(ctx);
 
