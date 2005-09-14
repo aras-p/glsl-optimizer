@@ -162,14 +162,16 @@
 #include "stenciltmp.h"
 
 
-void mgaSpanRenderStart( GLcontext *ctx )
+static void
+mgaSpanRenderStart( GLcontext *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    FLUSH_BATCH( mmesa );
    LOCK_HARDWARE_QUIESCENT( mmesa );
 }
 
-void mgaSpanRenderFinish( GLcontext *ctx )
+static void
+mgaSpanRenderFinish( GLcontext *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    _swrast_flush( ctx );
