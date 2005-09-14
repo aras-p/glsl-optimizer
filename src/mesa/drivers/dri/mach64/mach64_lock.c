@@ -33,6 +33,7 @@
 #include "mach64_state.h"
 #include "mach64_lock.h"
 #include "mach64_tex.h"
+#include "drirenderbuffer.h"
 
 #if DEBUG_LOCKING
 char *prevLockFile = NULL;
@@ -73,6 +74,7 @@ void mach64GetLock( mach64ContextPtr mmesa, GLuint flags )
          mach64SetCliprects( mmesa->glCtx, GL_BACK_LEFT );
       else
          mach64SetCliprects( mmesa->glCtx, GL_FRONT_LEFT );
+      driUpdateFramebufferSize( mmesa->glCtx, dPriv );
       mach64CalcViewport( mmesa->glCtx );
    }
 
