@@ -203,7 +203,8 @@ radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
 
 /* Create the device specific screen private data struct.
  */
-radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv )
+static radeonScreenPtr
+radeonCreateScreen( __DRIscreenPrivate *sPriv )
 {
    radeonScreenPtr screen;
    RADEONDRIPtr dri_priv = (RADEONDRIPtr)sPriv->pDevPriv;
@@ -412,7 +413,8 @@ radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv )
 
 /* Destroy the device specific screen private data struct.
  */
-void radeonDestroyScreen( __DRIscreenPrivate *sPriv )
+static void
+radeonDestroyScreen( __DRIscreenPrivate *sPriv )
 {
    radeonScreenPtr screen = (radeonScreenPtr)sPriv->private;
 
