@@ -72,8 +72,6 @@ struct osmesa_context {
    GLint width, height;		/* size of image buffer */
    GLint rowlength;		/* number of pixels per row */
    GLint userRowLength;		/* user-specified number of pixels per row */
-   GLint rshift, gshift;	/* bit shifts for RGBA formats */
-   GLint bshift, ashift;
    GLint rInd, gInd, bInd, aInd;/* index offsets for RGBA formats */
    GLchan *rowaddr[MAX_HEIGHT];	/* address of first pixel in each image row */
    GLboolean yup;		/* TRUE  -> Y increases upward */
@@ -269,7 +267,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    DST[ACOMP] = CHAN_MAX
 #include "swrast/s_spantemp.h"
 
-/* 16-bit BGR */
+/* 16-bit RGB */
 #if CHAN_TYPE == GL_UNSIGNED_BYTE
 #define NAME(PREFIX) PREFIX##_RGB_565
 #define FORMAT GL_RGBA
@@ -753,18 +751,13 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
 {
    OSMesaContext osmesa;
    struct dd_function_table functions;
-   GLint rshift, gshift, bshift, ashift;
    GLint rind, gind, bind, aind;
    GLint indexBits = 0, redBits = 0, greenBits = 0, blueBits = 0, alphaBits =0;
    GLboolean rgbmode;
-   const GLuint i4 = 1;
-   const GLubyte *i1 = (GLubyte *) &i4;
-   const GLint little_endian = *i1;
 
    rind = gind = bind = aind = 0;
    if (format==OSMESA_COLOR_INDEX) {
       indexBits = 8;
-      rshift = gshift = bshift = ashift = 0;
       rgbmode = GL_FALSE;
    }
    else if (format==OSMESA_RGBA) {
@@ -777,18 +770,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       gind = 1;
       bind = 2;
       aind = 3;
-      if (little_endian) {
-         rshift = 0;
-         gshift = 8;
-         bshift = 16;
-         ashift = 24;
-      }
-      else {
-         rshift = 24;
-         gshift = 16;
-         bshift = 8;
-         ashift = 0;
-      }
       rgbmode = GL_TRUE;
    }
    else if (format==OSMESA_BGRA) {
@@ -801,18 +782,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       gind = 1;
       rind = 2;
       aind = 3;
-      if (little_endian) {
-         bshift = 0;
-         gshift = 8;
-         rshift = 16;
-         ashift = 24;
-      }
-      else {
-         bshift = 24;
-         gshift = 16;
-         rshift = 8;
-         ashift = 0;
-      }
       rgbmode = GL_TRUE;
    }
    else if (format==OSMESA_ARGB) {
@@ -825,18 +794,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       rind = 1;
       gind = 2;
       bind = 3;
-      if (little_endian) {
-         ashift = 0;
-         rshift = 8;
-         gshift = 16;
-         bshift = 24;
-      }
-      else {
-         ashift = 24;
-         rshift = 16;
-         gshift = 8;
-         bshift = 0;
-      }
       rgbmode = GL_TRUE;
    }
    else if (format==OSMESA_RGB) {
@@ -845,10 +802,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       greenBits = CHAN_BITS;
       blueBits = CHAN_BITS;
       alphaBits = 0;
-      bshift = 0;
-      gshift = 8;
-      rshift = 16;
-      ashift = 24;
       rind = 0;
       gind = 1;
       bind = 2;
@@ -860,10 +813,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       greenBits = CHAN_BITS;
       blueBits = CHAN_BITS;
       alphaBits = 0;
-      bshift = 0;
-      gshift = 8;
-      rshift = 16;
-      ashift = 24;
       rind = 2;
       gind = 1;
       bind = 0;
@@ -876,10 +825,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       greenBits = 6;
       blueBits = 5;
       alphaBits = 0;
-      rshift = 11;
-      gshift = 5;
-      bshift = 0;
-      ashift = 0;
       rind = 0; /* not used */
       gind = 0;
       bind = 0;
@@ -961,10 +906,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       osmesa->userRowLength = 0;
       osmesa->rowlength = 0;
       osmesa->yup = GL_TRUE;
-      osmesa->rshift = rshift;
-      osmesa->gshift = gshift;
-      osmesa->bshift = bshift;
-      osmesa->ashift = ashift;
       osmesa->rInd = rind;
       osmesa->gInd = gind;
       osmesa->bInd = bind;
