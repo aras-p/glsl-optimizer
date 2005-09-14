@@ -74,10 +74,9 @@ default: depend symlinks $(LIBNAME) $(LIB_DIR)/$(LIBNAME)
 #	$(TOP)/bin/mklib -o $(LIBNAME) -noprefix -install $(LIB_DIR) \
 #		$(WINLIB) $(LIB_DEPS) $(WINOBJ) $(MESA_MODULES) $(OBJECTS)
 
-# XXX we should use the mklib script here
 $(LIBNAME):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
-	rm -f $@ 
-	$(CC) $(ARCH_FLAGS) -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
+	$(TOP)/bin/mklib -noprefix -o $@ \
+		$(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
 
 
 $(LIB_DIR)/$(LIBNAME): $(LIBNAME)
