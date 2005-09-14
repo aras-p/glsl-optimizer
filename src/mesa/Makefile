@@ -51,7 +51,6 @@ beos: depend subdirs libmesa.a
 
 # Make archive of core object files
 libmesa.a: $(SOLO_OBJECTS)
-	rm -f $@
 	@ $(TOP)/bin/mklib -o mesa -static $(SOLO_OBJECTS);
 	@if [ "${CONFIG_NAME}" = "beos" ] ; then \
 		mimeset -f "$@" ; \
