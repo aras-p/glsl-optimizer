@@ -35,6 +35,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "glheader.h"
+#include "mtypes.h"
 #include "radeon_context.h"
 #include "radeon_lock.h"
 #include "radeon_tex.h"
@@ -58,7 +59,6 @@ radeonUpdatePageFlipping( radeonContextPtr rmesa )
    driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
                         rmesa->sarea->pfCurrentPage);
 }
-
 
 
 /* Update the hardware state.  This is called if another context has
@@ -91,6 +91,7 @@ void radeonGetLock( radeonContextPtr rmesa, GLuint flags )
       radeonUpdatePageFlipping( rmesa );
       radeonSetCliprects( rmesa );
       radeonUpdateViewportOffset( rmesa->glCtx );
+      driUpdateFramebufferSize(rmesa->glCtx, dPriv);
       rmesa->lastStamp = dPriv->lastStamp;
    }
 
