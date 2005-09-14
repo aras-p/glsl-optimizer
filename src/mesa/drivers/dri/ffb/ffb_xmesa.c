@@ -59,6 +59,8 @@
 
 #include "drm_sarea.h"
 
+#include "drirenderbuffer.h"
+
 static GLboolean
 ffbInitDriver(__DRIscreenPrivate *sPriv)
 {
@@ -595,9 +597,11 @@ void ffbXMesaUpdateState(ffbContextPtr fmesa)
 		GLcontext *ctx = fmesa->glCtx;
 
 		ffbCalcViewport(ctx);
-		if (ctx->Polygon.StippleFlag)
+		driUpdateFramebufferSize(ctx, dPriv);
+		if (ctx->Polygon.StippleFlag) {
 			ffbXformAreaPattern(fmesa,
 					    (const GLubyte *)ctx->PolygonStipple);
+		}
 	}
 }
 

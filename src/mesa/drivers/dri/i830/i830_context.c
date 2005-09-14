@@ -63,7 +63,7 @@
 #include "i830_tris.h"
 #include "i830_ioctl.h"
 
-
+#include "drirenderbuffer.h"
 #include "utils.h"
 
 #define need_GL_ARB_multisample
@@ -573,6 +573,7 @@ void i830GetLock( i830ContextPtr imesa, GLuint flags )
     */
 
    if (sarea->ctxOwner != me) {
+      driUpdateFramebufferSize(imesa->glCtx, dPriv);
       imesa->upload_cliprects = GL_TRUE;
       imesa->dirty |= (I830_UPLOAD_CTX |
 		       I830_UPLOAD_BUFFERS | 

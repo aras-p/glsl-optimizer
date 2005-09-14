@@ -26,7 +26,6 @@
  */
 
 #include "mtypes.h"
-#include "buffers.h"
 #include "colormac.h"
 #include "mm.h"
 #include "ffb_dd.h"
@@ -450,8 +449,6 @@ void ffbCalcViewport(GLcontext *ctx)
 static void ffbDDViewport(GLcontext *ctx, GLint x, GLint y,
 			  GLsizei width, GLsizei height)
 {
-	/* update size of Mesa/software ancillary buffers */
-	_mesa_ResizeBuffersMESA();
 	ffbCalcViewport(ctx);
 }
 

@@ -34,6 +34,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_lock.h"
 #include "sis_dd.h"
 #include "sis_state.h"
+#include "drirenderbuffer.h"
 
 /* Update the hardware state.  This is called if another context has
  * grabbed the hardware lock, which includes the X server.  This
@@ -66,6 +67,7 @@ sisGetLock( sisContextPtr smesa, GLuint flags )
       sisUpdateBufferSize( smesa );
       sisUpdateClipping( smesa->glCtx );
       sisDDDrawBuffer( smesa->glCtx, smesa->glCtx->Color.DrawBuffer[0] );
+      driUpdateFramebufferSize(smesa->glCtx, dPriv);
       smesa->lastStamp = dPriv->lastStamp;
    }
 

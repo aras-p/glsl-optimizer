@@ -86,6 +86,7 @@ void r128GetLock( r128ContextPtr rmesa, GLuint flags )
 
    if ( rmesa->lastStamp != dPriv->lastStamp ) {
       r128UpdatePageFlipping( rmesa );
+      driUpdateFramebufferSize(rmesa->glCtx, dPriv);
       rmesa->lastStamp = dPriv->lastStamp;
       rmesa->new_state |= R128_NEW_CLIP;
       rmesa->tnl_state = ~0;

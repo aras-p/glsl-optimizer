@@ -2,6 +2,7 @@
 
 #include "gamma_context.h"
 #include "gamma_lock.h"
+#include "drirenderbuffer.h"
 
 #ifdef DEBUG_LOCKING
 char *prevLockFile = NULL;
@@ -35,6 +36,7 @@ void gammaGetLock( gammaContextPtr gmesa, GLuint flags )
    DRI_VALIDATE_DRAWABLE_INFO( sPriv, dPriv );
 
    if ( gmesa->lastStamp != dPriv->lastStamp ) {
+      driUpdateFramebufferSize(gmesa->glCtx, dPriv);
       gmesa->lastStamp = dPriv->lastStamp;
       gmesa->new_state |= GAMMA_NEW_WINDOW | GAMMA_NEW_CLIP;
    }

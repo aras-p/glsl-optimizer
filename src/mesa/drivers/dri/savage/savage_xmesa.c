@@ -56,6 +56,7 @@
 
 #include "savage_dri.h"
 
+#include "drirenderbuffer.h"
 #include "texmem.h"
 
 #define need_GL_ARB_multisample
@@ -907,11 +908,10 @@ void savageGetLock( savageContextPtr imesa, GLuint flags )
       DRI_AGE_TEXTURES( imesa->textureHeaps[heap] );
    }
 
-   if (dPriv->lastStamp != stamp)
+   if (dPriv->lastStamp != stamp) {
+      driUpdateFramebufferSize(imesa->glCtx, dPriv);
       savageXMesaWindowMoved( imesa );
-
-  
-   
+   }
 }
 
 

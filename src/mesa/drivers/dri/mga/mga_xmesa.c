@@ -66,6 +66,7 @@
 #include "vblank.h"
 
 #include "extensions.h"
+#include "drirenderbuffer.h"
 
 #include "GL/internal/dri_interface.h"
 
@@ -911,6 +912,7 @@ void mgaGetLock( mgaContextPtr mmesa, GLuint flags )
       mmesa->SetupNewInputs |= VERT_BIT_POS;
       mmesa->dirty_cliprects = (MGA_FRONT|MGA_BACK);
       mgaUpdateRects( mmesa, (MGA_FRONT|MGA_BACK) );
+      driUpdateFramebufferSize(mmesa->glCtx, dPriv);
    }
 
    mmesa->dirty |= MGA_UPLOAD_CONTEXT | MGA_UPLOAD_CLIPRECTS;

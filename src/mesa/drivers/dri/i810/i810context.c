@@ -526,6 +526,7 @@ void i810GetLock( i810ContextPtr imesa, GLuint flags )
     * more broken than usual.
     */
    if (sarea->ctxOwner != me) {
+      driUpdateFramebufferSize(imesa->glCtx, dPriv);
       imesa->upload_cliprects = GL_TRUE;
       imesa->dirty = I810_UPLOAD_CTX|I810_UPLOAD_BUFFERS;
       if (imesa->CurrentTexObj[0]) imesa->dirty |= I810_UPLOAD_TEX0;

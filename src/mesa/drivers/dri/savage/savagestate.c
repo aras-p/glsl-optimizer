@@ -26,7 +26,6 @@
 #include <stdio.h>
 
 #include "mtypes.h"
-#include "buffers.h"
 #include "enums.h"
 #include "macros.h"
 #include "dd.h"
@@ -718,8 +717,6 @@ static void savageViewport( GLcontext *ctx,
 			    GLint x, GLint y, 
 			    GLsizei width, GLsizei height )
 {
-   /* update size of Mesa/software ancillary buffers */
-   _mesa_ResizeBuffersMESA();
    savageCalcViewport( ctx );
 }
 

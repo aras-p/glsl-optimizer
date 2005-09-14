@@ -41,6 +41,8 @@
 #include "tdfx_texman.h"
 #include "tdfx_tris.h"
 
+#include "drirenderbuffer.h"
+
 
 void tdfxGetLock( tdfxContextPtr fxMesa )
 {
@@ -84,6 +86,7 @@ void tdfxGetLock( tdfxContextPtr fxMesa )
     if ( *dPriv->pStamp != stamp || saPriv->ctxOwner != fxMesa->hHWContext ) {
        tdfxUpdateClipping(fxMesa->glCtx);
        tdfxUploadClipping(fxMesa);
+       driUpdateFramebufferSize(fxMesa->glCtx, dPriv);
     }
 
     DEBUG_LOCK();

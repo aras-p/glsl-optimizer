@@ -1099,8 +1099,6 @@ void gammaUpdateWindow( GLcontext *ctx )
 static void gammaDDViewport( GLcontext *ctx, GLint x, GLint y,
 			    GLsizei width, GLsizei height )
 {
-   /* update size of Mesa/software ancillary buffers */
-   _mesa_ResizeBuffersMESA();
    gammaUpdateWindow( ctx );
 }
 

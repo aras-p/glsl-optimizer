@@ -60,6 +60,7 @@
 
 #include <stdio.h>
 #include "macros.h"
+#include "drirenderbuffer.h"
 
 #define need_GL_ARB_multisample
 #define need_GL_ARB_point_parameters
@@ -852,6 +853,7 @@ void viaGetLock(struct via_context *vmesa, GLuint flags)
 
     if (vmesa->lastStamp != dPriv->lastStamp) {
        viaXMesaWindowMoved(vmesa);
+       driUpdateFramebufferSize(vmesa->glCtx, dPriv);
        vmesa->newEmitState = ~0;
        vmesa->lastStamp = dPriv->lastStamp;
     }

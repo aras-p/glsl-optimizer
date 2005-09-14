@@ -41,7 +41,7 @@
  *      that may not be valid everywhere.
  */
 
-#include "driver.h"
+/*#include "driver.h"*/
 #include "drm.h"
 #include "utils.h"
 #include "drirenderbuffer.h"
@@ -114,9 +114,21 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 
 
 static void
+updateFramebufferSize(GLcontext *ctx)
+{
+   fbContextPtr fbmesa = FB_CONTEXT(ctx);
+   struct gl_framebuffer *fb = ctx->WinSysDrawBuffer;
+   if (fbmesa->dri.drawable->w != fb->Width ||
+       fbmesa->dri.drawable->h != fb->Height) {
+      driUpdateFramebufferSize(ctx, fbmesa->dri.drawable);
+   }
+}
+
+static void
 viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
-   _mesa_ResizeBuffersMESA();
+   /* XXX this should be called after we acquire the DRI lock, not here */
+   updateFramebufferSize(ctx);
 }
 
 

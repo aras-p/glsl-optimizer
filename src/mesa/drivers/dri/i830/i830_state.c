@@ -36,7 +36,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "glheader.h"
-#include "buffers.h"
 #include "context.h"
 #include "macros.h"
 #include "enums.h"
@@ -1227,8 +1226,6 @@ static void i830Viewport( GLcontext *ctx,
 			  GLint x, GLint y,
 			  GLsizei width, GLsizei height )
 {
-   /* update size of Mesa/software ancillary buffers */
-   _mesa_ResizeBuffersMESA();
    i830CalcViewport( ctx );
 }
 
