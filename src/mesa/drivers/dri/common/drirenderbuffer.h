@@ -67,4 +67,9 @@ driNewRenderbuffer(GLenum format, GLvoid *addr,
 extern void
 driFlipRenderbuffers(struct gl_framebuffer *fb, GLboolean flipped);
 
+
+extern void
+driUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawablePrivate *dPriv);
+
+
 #endif /* DRIRENDERBUFFER_H */

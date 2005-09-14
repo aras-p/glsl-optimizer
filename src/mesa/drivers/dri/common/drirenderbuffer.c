@@ -1,15 +1,19 @@
 
 #include "mtypes.h"
 #include "drirenderbuffer.h"
+#include "framebuffer.h"
 #include "renderbuffer.h"
 #include "imports.h"
 
 
 /**
- * This will get called when a window is resized.
+ * This will get called when a window (gl_framebuffer) is resized (probably
+ * via driUpdateFramebufferSize(), below).
  * Just update width, height and internal format fields for now.
  * There's usually no memory allocation above because the present
- * DRI drivers use statically-allocated full-screen buffers.
+ * DRI drivers use statically-allocated full-screen buffers. If that's not
+ * the case for a DRI driver, a different AllocStorage method should
+ * be used.
  */
 static GLboolean
 driRenderbufferStorage(GLcontext *ctx, struct gl_renderbuffer *rb,
@@ -162,5 +166,23 @@ driFlipRenderbuffers(struct gl_framebuffer *fb, GLboolean flipped)
          back_drb->flippedPitch   = back_drb->pitch;
          back_drb->flippedData    = back_drb->Base.Data;
       }
+   }
+}
+
+
+/**
+ * Check that the gl_framebuffer associated with dPriv is the right size.
+ * Resize the gl_framebuffer if needed.
+ * It's expected that the dPriv->driverPrivate member points to a
+ * gl_framebuffer object.
+ */
+void
+driUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawablePrivate *dPriv)
+{
+   struct gl_framebuffer *fb = (struct gl_framebuffer *) dPriv->driverPrivate;
+   if (fb && (dPriv->w != fb->Width || dPriv->h != fb->Height)) {
+      _mesa_resize_framebuffer(ctx, fb, dPriv->w, dPriv->h);
+      assert(fb->Width == dPriv->w);
+      assert(fb->Height == dPriv->h);
    }
 }
