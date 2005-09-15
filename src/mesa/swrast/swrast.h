@@ -244,26 +244,24 @@ _swrast_copy_texsubimage3d(GLcontext *ctx,
                            GLint x, GLint y, GLsizei width, GLsizei height);
 
 
-/* The driver interface for the software rasterizer.
- * Unless otherwise noted, all functions are mandatory.  
+/**
+ * The driver interface for the software rasterizer.
+ * XXX this may go away.
+ * We may move these functions to ctx->Driver.RenderStart, RenderEnd.
  */
 struct swrast_device_driver {
-   /***
-    *** Functions for synchronizing access to the framebuffer:
-    ***/
-
-   void (*SpanRenderStart)(GLcontext *ctx);
-   void (*SpanRenderFinish)(GLcontext *ctx);
-   /* OPTIONAL.
+   /*
+    * These are called before and after accessing renderbuffers during
+    * software rasterization.
     *
-    * Called before and after all rendering operations, including DrawPixels,
-    * ReadPixels, Bitmap, span functions, and CopyTexImage, etc commands.
     * These are a suitable place for grabbing/releasing hardware locks.
     *
     * NOTE: The swrast triangle/line/point routines *DO NOT* call
     * these functions.  Locking in that case must be organized by the
     * driver by other mechanisms.
     */
+   void (*SpanRenderStart)(GLcontext *ctx);
+   void (*SpanRenderFinish)(GLcontext *ctx);
 };
 
 
