@@ -450,7 +450,11 @@ SOURCE=..\..\..\..\src\mesa\swrast\s_texstore.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\swrast\s_texture.c
+SOURCE=..\..\..\..\src\mesa\swrast\s_texcombine.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\swrast\s_texfiltere.c
 # End Source File
 # Begin Source File
 
@@ -1119,7 +1123,11 @@ SOURCE=..\..\..\..\src\mesa\swrast\s_stencil.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\swrast\s_texture.h
+SOURCE=..\..\..\..\src\mesa\swrast\s_texcombine.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\swrast\s_texfilter.h
 # End Source File
 # Begin Source File
 

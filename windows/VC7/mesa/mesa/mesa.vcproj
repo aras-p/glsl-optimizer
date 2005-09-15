@@ -393,7 +393,10 @@
 				RelativePath="..\..\..\..\src\mesa\swrast\s_texstore.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\swrast\s_texture.c">
+				RelativePath="..\..\..\..\src\mesa\swrast\s_texcombine.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\swrast\s_texfilter.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_triangle.c">
@@ -907,7 +910,10 @@
 				RelativePath="..\..\..\..\src\mesa\swrast\s_stencil.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\swrast\s_texture.h">
+				RelativePath="..\..\..\..\src\mesa\swrast\s_texcombine.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\swrast\s_texfilter.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_triangle.h">
