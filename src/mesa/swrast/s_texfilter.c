@@ -178,6 +178,41 @@ lerp_rgba_2d(GLchan result[4], GLfloat a, GLfloat b,
 
 
 /**
+ * Do trilinear interpolation of colors.
+ */
+static INLINE void
+lerp_rgba_3d(GLchan result[4], GLfloat a, GLfloat b, GLfloat c,
+             const GLchan t000[4], const GLchan t100[4],
+             const GLchan t010[4], const GLchan t110[4],
+             const GLchan t001[4], const GLchan t101[4],
+             const GLchan t011[4], const GLchan t111[4])
+{
+   GLuint k;
+   /* compiler should unroll these short loops */
+#if CHAN_TYPE == GL_FLOAT
+   for (k = 0; k < 4; k++) {
+      result[k] = lerp_3d(a, b, c, t000[k], t100[k], t010[k], t110[k],
+                                   t001[k], t101[k], t011[k], t111[k]);
+   }
+#elif CHAN_TYPE == GL_UNSIGNED_SHORT
+   for (k = 0; k < 4; k++) {
+      result[k] = (GLchan)(lerp_3d(a, b, c,
+                                   t000[k], t100[k], t010[k], t110[k],
+                                   t001[k], t101[k], t011[k], t111[k]) + 0.5F);
+   }
+#else
+   GLint ia = IROUND_POS(a * ILERP_SCALE);
+   GLint ib = IROUND_POS(b * ILERP_SCALE);
+   GLint ic = IROUND_POS(c * ILERP_SCALE);
+   for (k = 0; k < 4; k++) {
+      result[k] = ilerp_3d(ia, ib, ic, t000[k], t100[k], t010[k], t110[k],
+                                       t001[k], t101[k], t011[k], t111[k]);
+   }
+#endif
+}
+
+
+/**
  * Compute the remainder of a divided by b, but be careful with
  * negative values so that GL_REPEAT mode works right.
  */
@@ -613,13 +648,9 @@ sample_1d_nearest(GLcontext *ctx,
 {
    const GLint width = img->Width2;  /* without border, power of two */
    GLint i;
-   (void) ctx;
-
    COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoord[0], width, i);
-
    /* skip over the border, if any */
    i += img->Border;
-
    if (i < 0 || i >= (GLint) img->Width) {
       /* Need this test for GL_CLAMP_TO_BORDER mode */
       COPY_CHAN4(rgba, tObj->_BorderChan);
@@ -628,7 +659,6 @@ sample_1d_nearest(GLcontext *ctx,
       img->FetchTexelc(img, i, 0, 0, rgba);
    }
 }
-
 
 
 /*
@@ -643,12 +673,12 @@ sample_1d_linear(GLcontext *ctx,
    const GLint width = img->Width2;
    GLint i0, i1;
    GLfloat u;
-   GLuint useBorderColor;
-   (void) ctx;
+   GLbitfield useBorderColor = 0x0;
+   GLfloat a;
+   GLchan t0[4], t1[4];  /* texels */
 
    COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoord[0], u, width, i0, i1);
 
-   useBorderColor = 0;
    if (img->Border) {
       i0 += img->Border;
       i1 += img->Border;
@@ -658,26 +688,22 @@ sample_1d_linear(GLcontext *ctx,
       if (i1 < 0 || i1 >= width)   useBorderColor |= I1BIT;
    }
 
-   {
-      const GLfloat a = FRAC(u);
-      GLchan t0[4], t1[4];  /* texels */
-
-      /* fetch texel colors */
-      if (useBorderColor & I0BIT) {
-         COPY_CHAN4(t0, tObj->_BorderChan);
-      }
-      else {
-         img->FetchTexelc(img, i0, 0, 0, t0);
-      }
-      if (useBorderColor & I1BIT) {
-         COPY_CHAN4(t1, tObj->_BorderChan);
-      }
-      else {
-         img->FetchTexelc(img, i1, 0, 0, t1);
-      }
-
-      lerp_rgba(rgba, a, t0, t1);
+   /* fetch texel colors */
+   if (useBorderColor & I0BIT) {
+      COPY_CHAN4(t0, tObj->_BorderChan);
    }
+   else {
+      img->FetchTexelc(img, i0, 0, 0, t0);
+   }
+   if (useBorderColor & I1BIT) {
+      COPY_CHAN4(t1, tObj->_BorderChan);
+   }
+   else {
+      img->FetchTexelc(img, i1, 0, 0, t1);
+   }
+
+   a = FRAC(u);
+   lerp_rgba(rgba, a, t0, t1);
 }
 
 
@@ -928,14 +954,14 @@ sample_2d_linear(GLcontext *ctx,
    const GLint width = img->Width2;
    const GLint height = img->Height2;
    GLint i0, j0, i1, j1;
-   GLuint useBorderColor;
+   GLbitfield useBorderColor = 0x0;
    GLfloat u, v;
-   (void) ctx;
+   GLfloat a, b;
+   GLchan t00[4], t10[4], t01[4], t11[4]; /* sampled texel colors */
 
    COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoord[0], u, width,  i0, i1);
    COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapT, texcoord[1], v, height, j0, j1);
 
-   useBorderColor = 0;
    if (img->Border) {
       i0 += img->Border;
       i1 += img->Border;
@@ -949,39 +975,35 @@ sample_2d_linear(GLcontext *ctx,
       if (j1 < 0 || j1 >= height)  useBorderColor |= J1BIT;
    }
 
-   {
-      const GLfloat a = FRAC(u);
-      const GLfloat b = FRAC(v);
-      GLchan t00[4], t10[4], t01[4], t11[4]; /* sampled texel colors */
-
-      /* fetch four texel colors */
-      if (useBorderColor & (I0BIT | J0BIT)) {
-         COPY_CHAN4(t00, tObj->_BorderChan);
-      }
-      else {
-         img->FetchTexelc(img, i0, j0, 0, t00);
-      }
-      if (useBorderColor & (I1BIT | J0BIT)) {
-         COPY_CHAN4(t10, tObj->_BorderChan);
-      }
-      else {
-         img->FetchTexelc(img, i1, j0, 0, t10);
-      }
-      if (useBorderColor & (I0BIT | J1BIT)) {
-         COPY_CHAN4(t01, tObj->_BorderChan);
-      }
-      else {
-         img->FetchTexelc(img, i0, j1, 0, t01);
-      }
-      if (useBorderColor & (I1BIT | J1BIT)) {
-         COPY_CHAN4(t11, tObj->_BorderChan);
-      }
-      else {
-         img->FetchTexelc(img, i1, j1, 0, t11);
-      }
-
-      lerp_rgba_2d(rgba, a, b, t00, t10, t01, t11);
+   /* fetch four texel colors */
+   if (useBorderColor & (I0BIT | J0BIT)) {
+      COPY_CHAN4(t00, tObj->_BorderChan);
    }
+   else {
+      img->FetchTexelc(img, i0, j0, 0, t00);
+   }
+   if (useBorderColor & (I1BIT | J0BIT)) {
+      COPY_CHAN4(t10, tObj->_BorderChan);
+   }
+   else {
+      img->FetchTexelc(img, i1, j0, 0, t10);
+   }
+   if (useBorderColor & (I0BIT | J1BIT)) {
+      COPY_CHAN4(t01, tObj->_BorderChan);
+   }
+   else {
+      img->FetchTexelc(img, i0, j1, 0, t01);
+   }
+   if (useBorderColor & (I1BIT | J1BIT)) {
+      COPY_CHAN4(t11, tObj->_BorderChan);
+   }
+   else {
+      img->FetchTexelc(img, i1, j1, 0, t11);
+   }
+
+   a = FRAC(u);
+   b = FRAC(v);
+   lerp_rgba_2d(rgba, a, b, t00, t10, t01, t11);
 }
 
 
@@ -1000,9 +1022,9 @@ sample_2d_linear_repeat(GLcontext *ctx,
    const GLint height = img->Height2;
    GLint i0, j0, i1, j1;
    GLfloat u, v;
-   (void) ctx;
-   (void) tObj;
-   
+   GLfloat a, b;
+   GLchan t00[4], t10[4], t01[4], t11[4]; /* sampled texel colors */
+
    ASSERT(tObj->WrapS == GL_REPEAT);
    ASSERT(tObj->WrapT == GL_REPEAT);
    ASSERT(img->Border == 0);
@@ -1012,18 +1034,14 @@ sample_2d_linear_repeat(GLcontext *ctx,
    COMPUTE_LINEAR_REPEAT_TEXEL_LOCATION(texcoord[0], u, width,  i0, i1);
    COMPUTE_LINEAR_REPEAT_TEXEL_LOCATION(texcoord[1], v, height, j0, j1);
 
-   {
-      const GLfloat a = FRAC(u);
-      const GLfloat b = FRAC(v);
-      GLchan t00[4], t10[4], t01[4], t11[4]; /* sampled texel colors */
+   img->FetchTexelc(img, i0, j0, 0, t00);
+   img->FetchTexelc(img, i1, j0, 0, t10);
+   img->FetchTexelc(img, i0, j1, 0, t01);
+   img->FetchTexelc(img, i1, j1, 0, t11);
 
-      img->FetchTexelc(img, i0, j0, 0, t00);
-      img->FetchTexelc(img, i1, j0, 0, t10);
-      img->FetchTexelc(img, i0, j1, 0, t01);
-      img->FetchTexelc(img, i1, j1, 0, t11);
-
-      lerp_rgba_2d(rgba, a, b, t00, t10, t01, t11);
-   }
+   a = FRAC(u);
+   b = FRAC(v);
+   lerp_rgba_2d(rgba, a, b, t00, t10, t01, t11);
 }
 
 
@@ -1447,15 +1465,16 @@ sample_3d_linear(GLcontext *ctx,
    const GLint height = img->Height2;
    const GLint depth = img->Depth2;
    GLint i0, j0, k0, i1, j1, k1;
-   GLuint useBorderColor;
+   GLbitfield useBorderColor = 0x0;
    GLfloat u, v, w;
-   (void) ctx;
+   GLfloat a, b, c;
+   GLchan t000[4], t010[4], t001[4], t011[4];
+   GLchan t100[4], t110[4], t101[4], t111[4];
 
    COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoord[0], u, width,  i0, i1);
    COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapT, texcoord[1], v, height, j0, j1);
    COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapR, texcoord[2], w, depth,  k0, k1);
 
-   useBorderColor = 0;
    if (img->Border) {
       i0 += img->Border;
       i1 += img->Border;
@@ -1474,112 +1493,62 @@ sample_3d_linear(GLcontext *ctx,
       if (k1 < 0 || k1 >= depth)   useBorderColor |= K1BIT;
    }
 
-   {
-      const GLfloat a = FRAC(u);
-      const GLfloat b = FRAC(v);
-      const GLfloat c = FRAC(w);
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-      const GLint ia = IROUND_POS(a * ILERP_SCALE);
-      const GLint ib = IROUND_POS(b * ILERP_SCALE);
-      const GLint ic = IROUND_POS(c * ILERP_SCALE);
-#endif
-      GLchan t000[4], t010[4], t001[4], t011[4];
-      GLchan t100[4], t110[4], t101[4], t111[4];
-
-      /* Fetch texels */
-      if (useBorderColor & (I0BIT | J0BIT | K0BIT)) {
-         COPY_CHAN4(t000, tObj->_BorderChan);
-      }
-      else {
-         img->FetchTexelc(img, i0, j0, k0, t000);
-      }
-      if (useBorderColor & (I1BIT | J0BIT | K0BIT)) {
-         COPY_CHAN4(t100, tObj->_BorderChan);
-      }
-      else {
-         img->FetchTexelc(img, i1, j0, k0, t100);
-      }
-      if (useBorderColor & (I0BIT | J1BIT | K0BIT)) {
-         COPY_CHAN4(t010, tObj->_BorderChan);
-      }
-      else {
-         img->FetchTexelc(img, i0, j1, k0, t010);
-      }
-      if (useBorderColor & (I1BIT | J1BIT | K0BIT)) {
-         COPY_CHAN4(t110, tObj->_BorderChan);
-      }
-      else {
-         img->FetchTexelc(img, i1, j1, k0, t110);
-      }
-
-      if (useBorderColor & (I0BIT | J0BIT | K1BIT)) {
-         COPY_CHAN4(t001, tObj->_BorderChan);
-      }
-      else {
-         img->FetchTexelc(img, i0, j0, k1, t001);
-      }
-      if (useBorderColor & (I1BIT | J0BIT | K1BIT)) {
-         COPY_CHAN4(t101, tObj->_BorderChan);
-      }
-      else {
-         img->FetchTexelc(img, i1, j0, k1, t101);
-      }
-      if (useBorderColor & (I0BIT | J1BIT | K1BIT)) {
-         COPY_CHAN4(t011, tObj->_BorderChan);
-      }
-      else {
-         img->FetchTexelc(img, i0, j1, k1, t011);
-      }
-      if (useBorderColor & (I1BIT | J1BIT | K1BIT)) {
-         COPY_CHAN4(t111, tObj->_BorderChan);
-      }
-      else {
-         img->FetchTexelc(img, i1, j1, k1, t111);
-      }
-
-      /* trilinear interpolation of samples */
-#if CHAN_TYPE == GL_FLOAT
-      rgba[0] = lerp_3d(a, b, c,
-                        t000[0], t100[0], t010[0], t110[0],
-                        t001[0], t101[0], t011[0], t111[0]);
-      rgba[1] = lerp_3d(a, b, c,
-                        t000[1], t100[1], t010[1], t110[1],
-                        t001[1], t101[1], t011[1], t111[1]);
-      rgba[2] = lerp_3d(a, b, c,
-                        t000[2], t100[2], t010[2], t110[2],
-                        t001[2], t101[2], t011[2], t111[2]);
-      rgba[3] = lerp_3d(a, b, c,
-                        t000[3], t100[3], t010[3], t110[3],
-                        t001[3], t101[3], t011[3], t111[3]);
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-      rgba[0] = (GLchan) (lerp_3d(a, b, c,
-                                  t000[0], t100[0], t010[0], t110[0],
-                                  t001[0], t101[0], t011[0], t111[0]) + 0.5F);
-      rgba[1] = (GLchan) (lerp_3d(a, b, c,
-                                  t000[1], t100[1], t010[1], t110[1],
-                                  t001[1], t101[1], t011[1], t111[1]) + 0.5F);
-      rgba[2] = (GLchan) (lerp_3d(a, b, c,
-                                  t000[2], t100[2], t010[2], t110[2],
-                                  t001[2], t101[2], t011[2], t111[2]) + 0.5F);
-      rgba[3] = (GLchan) (lerp_3d(a, b, c,
-                                  t000[3], t100[3], t010[3], t110[3],
-                                  t001[3], t101[3], t011[3], t111[3]) + 0.5F);
-#else
-      ASSERT(CHAN_TYPE == GL_UNSIGNED_BYTE);
-      rgba[0] = ilerp_3d(ia, ib, ic,
-                         t000[0], t100[0], t010[0], t110[0],
-                         t001[0], t101[0], t011[0], t111[0]);
-      rgba[1] = ilerp_3d(ia, ib, ic,
-                         t000[1], t100[1], t010[1], t110[1],
-                         t001[1], t101[1], t011[1], t111[1]);
-      rgba[2] = ilerp_3d(ia, ib, ic,
-                         t000[2], t100[2], t010[2], t110[2],
-                         t001[2], t101[2], t011[2], t111[2]);
-      rgba[3] = ilerp_3d(ia, ib, ic,
-                         t000[3], t100[3], t010[3], t110[3],
-                         t001[3], t101[3], t011[3], t111[3]);
-#endif
+   /* Fetch texels */
+   if (useBorderColor & (I0BIT | J0BIT | K0BIT)) {
+      COPY_CHAN4(t000, tObj->_BorderChan);
    }
+   else {
+      img->FetchTexelc(img, i0, j0, k0, t000);
+   }
+   if (useBorderColor & (I1BIT | J0BIT | K0BIT)) {
+      COPY_CHAN4(t100, tObj->_BorderChan);
+   }
+   else {
+      img->FetchTexelc(img, i1, j0, k0, t100);
+   }
+   if (useBorderColor & (I0BIT | J1BIT | K0BIT)) {
+      COPY_CHAN4(t010, tObj->_BorderChan);
+   }
+   else {
+      img->FetchTexelc(img, i0, j1, k0, t010);
+   }
+   if (useBorderColor & (I1BIT | J1BIT | K0BIT)) {
+      COPY_CHAN4(t110, tObj->_BorderChan);
+   }
+   else {
+      img->FetchTexelc(img, i1, j1, k0, t110);
+   }
+
+   if (useBorderColor & (I0BIT | J0BIT | K1BIT)) {
+      COPY_CHAN4(t001, tObj->_BorderChan);
+   }
+   else {
+      img->FetchTexelc(img, i0, j0, k1, t001);
+   }
+   if (useBorderColor & (I1BIT | J0BIT | K1BIT)) {
+      COPY_CHAN4(t101, tObj->_BorderChan);
+   }
+   else {
+      img->FetchTexelc(img, i1, j0, k1, t101);
+   }
+   if (useBorderColor & (I0BIT | J1BIT | K1BIT)) {
+      COPY_CHAN4(t011, tObj->_BorderChan);
+   }
+   else {
+      img->FetchTexelc(img, i0, j1, k1, t011);
+   }
+   if (useBorderColor & (I1BIT | J1BIT | K1BIT)) {
+      COPY_CHAN4(t111, tObj->_BorderChan);
+   }
+   else {
+      img->FetchTexelc(img, i1, j1, k1, t111);
+   }
+
+   /* trilinear interpolation of samples */
+   a = FRAC(u);
+   b = FRAC(v);
+   c = FRAC(w);
+   lerp_rgba_3d(rgba, a, b, c, t000, t100, t010, t110, t001, t101, t011, t111);
 }
 
 
@@ -2153,7 +2122,7 @@ sample_linear_rect(GLcontext *ctx, GLuint texUnit,
       GLint i0, j0, i1, j1;
       GLchan t00[4], t01[4], t10[4], t11[4];
       GLfloat a, b;
-      GLuint useBorderColor = 0;
+      GLbitfield useBorderColor = 0x0;
 
       /* NOTE: we DO NOT use [0, 1] texture coordinates! */
       if (tObj->WrapS == GL_CLAMP) {
