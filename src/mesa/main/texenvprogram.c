@@ -169,7 +169,7 @@ static GLuint translate_mode( GLenum mode )
 }
 
 #define TEXTURE_UNKNOWN_INDEX 7
-static GLuint translate_tex_src_bit( GLuint bit )
+static GLuint translate_tex_src_bit( GLbitfield bit )
 {
    switch (bit) {
    case TEXTURE_1D_BIT:   return TEXTURE_1D_INDEX;

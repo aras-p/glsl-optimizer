@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -963,7 +963,7 @@ void
 _mesa_update_lighting( GLcontext *ctx )
 {
    struct gl_light *light;
-   ctx->Light._NeedEyeCoords = 0;
+   ctx->Light._NeedEyeCoords = GL_FALSE;
    ctx->Light._Flags = 0;
 
    if (!ctx->Light.Enabled)
@@ -1127,17 +1127,17 @@ _mesa_update_tnl_spaces( GLcontext *ctx, GLuint new_state )
    const GLuint oldneedeyecoords = ctx->_NeedEyeCoords;
 
    (void) new_state;
-   ctx->_NeedEyeCoords = 0;
+   ctx->_NeedEyeCoords = GL_FALSE;
 
    if (ctx->_ForceEyeCoords ||
        (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD) ||
        ctx->Point._Attenuated ||
        ctx->Light._NeedEyeCoords)
-      ctx->_NeedEyeCoords = 1;
+      ctx->_NeedEyeCoords = GL_TRUE;
 
    if (ctx->Light.Enabled &&
        !_math_matrix_is_length_preserving(ctx->ModelviewMatrixStack.Top))
-      ctx->_NeedEyeCoords = 1;
+      ctx->_NeedEyeCoords = GL_TRUE;
 
 
    /* Check if the truth-value interpretations of the bitfields have
@@ -1294,8 +1294,8 @@ _mesa_init_lighting( GLcontext *ctx )
    }
 
    /* Miscellaneous */
-   ctx->Light._NeedEyeCoords = 0;
-   ctx->_NeedEyeCoords = 0;
+   ctx->Light._NeedEyeCoords = GL_FALSE;
+   ctx->_NeedEyeCoords = GL_FALSE;
    ctx->_ModelViewInvScale = 1.0;
 }
 

@@ -775,8 +775,8 @@ _swrast_write_index_span( GLcontext *ctx, struct sw_span *span)
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const struct gl_framebuffer *fb = ctx->DrawBuffer;
    const GLuint output = 0;
-   const GLuint origInterpMask = span->interpMask;
-   const GLuint origArrayMask = span->arrayMask;
+   const GLbitfield origInterpMask = span->interpMask;
+   const GLbitfield origArrayMask = span->arrayMask;
    GLuint buf;
 
    ASSERT(span->end <= MAX_WIDTH);
@@ -1078,8 +1078,8 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
 {
    const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const GLuint origInterpMask = span->interpMask;
-   const GLuint origArrayMask = span->arrayMask;
+   const GLbitfield origInterpMask = span->interpMask;
+   const GLbitfield origArrayMask = span->arrayMask;
 
    ASSERT(span->primitive == GL_POINT  ||  span->primitive == GL_LINE ||
 	  span->primitive == GL_POLYGON  ||  span->primitive == GL_BITMAP);

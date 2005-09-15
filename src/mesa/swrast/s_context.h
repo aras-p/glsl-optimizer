@@ -139,7 +139,7 @@ struct sw_span {
     * This bitmask (of  \link SpanFlags SPAN_* flags\endlink) indicates
     * which of the x/xStep variables are relevant.
     */
-   GLuint interpMask;
+   GLbitfield interpMask;
 
    /* For horizontal spans, step is the partial derivative wrt X.
     * For lines, step is the delta from one fragment to the next.
@@ -185,7 +185,7 @@ struct sw_span {
     * This bitmask (of \link SpanFlags SPAN_* flags\endlink) indicates
     * which of the fragment arrays in the span_arrays struct are relevant.
     */
-   GLuint arrayMask;
+   GLbitfield arrayMask;
 
    /**
     * We store the arrays of fragment values in a separate struct so
@@ -279,7 +279,7 @@ typedef struct
    /** Derived values, invalidated on statechanges, updated from
     * _swrast_validate_derived():
     */
-   GLuint _RasterMask;
+   GLbitfield _RasterMask;
    GLfloat _MinMagThresh[MAX_TEXTURE_IMAGE_UNITS];
    GLfloat _BackfaceSign;
    GLboolean _PreferPixelFog;    /* Compute fog blend factor per fragment? */
@@ -296,7 +296,7 @@ typedef struct
    /* Working values:
     */
    GLuint StippleCounter;    /**< Line stipple counter */
-   GLuint NewState;
+   GLbitfield NewState;
    GLuint StateChanges;
    GLenum Primitive;    /* current primitive being drawn (ala glBegin) */
 
@@ -315,7 +315,7 @@ typedef struct
 
    /** Function pointers for dispatch behind public entrypoints. */
    /*@{*/
-   void (*InvalidateState)( GLcontext *ctx, GLuint new_state );
+   void (*InvalidateState)( GLcontext *ctx, GLbitfield new_state );
 
    swrast_point_func Point;
    swrast_line_func Line;

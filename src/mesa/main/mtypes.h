@@ -443,7 +443,7 @@ struct gl_light
     * \name Derived fields
     */
    /*@{*/
-   GLuint _Flags;		/**< State */
+   GLbitfield _Flags;		/**< State */
 
    GLfloat _Position[4];	/**< position in eye/obj coordinates */
    GLfloat _VP_inf_norm[3];	/**< Norm direction to infinite light */
@@ -597,7 +597,7 @@ struct gl_enable_attrib
    GLboolean AlphaTest;
    GLboolean AutoNormal;
    GLboolean Blend;
-   GLuint ClipPlanes;
+   GLbitfield ClipPlanes;
    GLboolean ColorMaterial;
    GLboolean ColorTable;                /* SGI_color_table */
    GLboolean PostColorMatrixColorTable; /* SGI_color_table */
@@ -821,7 +821,7 @@ struct gl_light_attrib
    GLenum ShadeModel;			/**< GL_FLAT or GL_SMOOTH */
    GLenum ColorMaterialFace;		/**< GL_FRONT, BACK or FRONT_AND_BACK */
    GLenum ColorMaterialMode;		/**< GL_AMBIENT, GL_DIFFUSE, etc */
-   GLuint ColorMaterialBitmask;		/**< bitmask formed from Face and Mode */
+   GLbitfield ColorMaterialBitmask;	/**< bitmask formed from Face and Mode */
    GLboolean ColorMaterialEnabled;
 
    struct gl_light EnabledList;         /**< List sentinel */
@@ -832,7 +832,7 @@ struct gl_light_attrib
    /*@{*/
    GLboolean _NeedEyeCoords;		
    GLboolean _NeedVertices;		/**< Use fast shader? */
-   GLuint  _Flags;		        /**< LIGHT_* flags, see above */
+   GLbitfield  _Flags;		        /**< LIGHT_* flags, see above */
    GLfloat _BaseColor[2][3];
    /*@}*/
 };
@@ -1364,12 +1364,12 @@ struct gl_tex_env_combine_state
  */
 struct gl_texture_unit
 {
-   GLuint Enabled;              /**< bitmask of TEXTURE_*_BIT flags */
-   GLuint _ReallyEnabled;       /**< 0 or exactly one of TEXTURE_*_BIT flags */
+   GLbitfield Enabled;          /**< bitmask of TEXTURE_*_BIT flags */
+   GLbitfield _ReallyEnabled;   /**< 0 or exactly one of TEXTURE_*_BIT flags */
 
    GLenum EnvMode;              /**< GL_MODULATE, GL_DECAL, GL_BLEND, etc. */
    GLfloat EnvColor[4];
-   GLuint TexGenEnabled;	/**< Bitwise-OR of [STRQ]_BIT values */
+   GLbitfield TexGenEnabled;	/**< Bitwise-OR of [STRQ]_BIT values */
    /** \name Tex coord generation mode
     * Either GL_OBJECT_LINEAR, GL_EYE_LINEAR or GL_SPHERE_MAP. */
    /*@{*/
@@ -1378,11 +1378,11 @@ struct gl_texture_unit
    GLenum GenModeR;
    GLenum GenModeQ;
    /*@}*/
-   GLuint _GenBitS;
-   GLuint _GenBitT;
-   GLuint _GenBitR;
-   GLuint _GenBitQ;
-   GLuint _GenFlags;		/**< bitwise or of GenBit[STRQ] */
+   GLbitfield _GenBitS;
+   GLbitfield _GenBitT;
+   GLbitfield _GenBitR;
+   GLbitfield _GenBitQ;
+   GLbitfield _GenFlags;	/**< bitwise or of GenBit[STRQ] */
    GLfloat ObjectPlaneS[4];
    GLfloat ObjectPlaneT[4];
    GLfloat ObjectPlaneR[4];
@@ -1446,12 +1446,12 @@ struct gl_texture_attrib
     * name multitexture 
     */
    /**@{*/
-   GLuint CurrentUnit;	        /**< Active texture unit */
-   GLuint _EnabledUnits;        /**< one bit set for each really-enabled unit */
-   GLuint _EnabledCoordUnits;   /**< one bit per enabled coordinate unit */
-   GLuint _GenFlags;            /**< for texgen */
-   GLuint _TexGenEnabled;
-   GLuint _TexMatEnabled;
+   GLuint CurrentUnit;	       /**< Active texture unit */
+   GLbitfield _EnabledUnits;  /**< one bit set for each really-enabled unit */
+   GLbitfield _EnabledCoordUnits;   /**< one bit per enabled coordinate unit */
+   GLbitfield _GenFlags;            /**< for texgen */
+   GLbitfield _TexGenEnabled;
+   GLbitfield _TexMatEnabled;
    /**@}*/
 
    struct gl_texture_unit Unit[MAX_TEXTURE_UNITS];
@@ -1479,7 +1479,7 @@ struct gl_transform_attrib
    GLenum MatrixMode;				/**< Matrix mode */
    GLfloat EyeUserPlane[MAX_CLIP_PLANES][4];	/**< User clip planes */
    GLfloat _ClipUserPlane[MAX_CLIP_PLANES][4];	/**< derived */
-   GLuint ClipPlanesEnabled;                    /**< on/off bitmask */
+   GLbitfield ClipPlanesEnabled;                /**< on/off bitmask */
    GLboolean Normalize;				/**< Normalize all normals? */
    GLboolean RescaleNormals;			/**< GL_EXT_rescale_normal */
    GLboolean RasterPositionUnclipped;           /**< GL_IBM_rasterpos_clip */
@@ -1562,14 +1562,14 @@ struct gl_client_array
    GLsizei Stride;		/**< user-specified stride */
    GLsizei StrideB;		/**< actual stride in bytes */
    const GLubyte *Ptr;          /**< Points to array data */
-   GLuint Enabled;		/**< one of the _NEW_ARRAY_ bits */
+   GLbitfield Enabled;		/**< one of the _NEW_ARRAY_ bits */
    GLboolean Normalized;        /**< GL_ARB_vertex_program */
 
    /**< GL_ARB_vertex_buffer_object */
    struct gl_buffer_object *BufferObj;
    GLuint _MaxElement;
 
-   GLuint Flags;
+   GLbitfield Flags;
 };
 
 
@@ -1593,8 +1593,8 @@ struct gl_array_attrib
    GLuint LockFirst;            /**< GL_EXT_compiled_vertex_array */
    GLuint LockCount;            /**< GL_EXT_compiled_vertex_array */
 
-   GLuint _Enabled;		/**< _NEW_ARRAY_* - bit set if array enabled */
-   GLuint NewState;		/**< _NEW_ARRAY_* */
+   GLbitfield _Enabled;		/**< _NEW_ARRAY_* - bit set if array enabled */
+   GLbitfield NewState;		/**< _NEW_ARRAY_* */
 
 #if FEATURE_ARB_vertex_buffer_object
    struct gl_buffer_object *NullBufferObj;
@@ -1611,7 +1611,7 @@ struct gl_array_attrib
 struct gl_feedback
 {
    GLenum Type;
-   GLuint _Mask;		/* FB_* bits */
+   GLbitfield _Mask;		/* FB_* bits */
    GLfloat *Buffer;
    GLuint BufferSize;
    GLuint Count;
@@ -1778,8 +1778,8 @@ struct vertex_program
    struct vp_instruction *Instructions;  /* Compiled instructions */
    GLboolean IsNVProgram; /* GL_NV_vertex_program ? */
    GLboolean IsPositionInvariant;  /* GL_NV_vertex_program1_1 */
-   GLuint InputsRead;     /* Bitmask of which input regs are read */
-   GLuint OutputsWritten; /* Bitmask of which output regs are written to */
+   GLbitfield InputsRead;     /* Bitmask of which input regs are read */
+   GLbitfield OutputsWritten; /* Bitmask of which output regs are written to */
    struct program_parameter_list *Parameters; /**< array [NumParameters] */
    void *TnlData;		/* should probably use Base.DriverData */
 };
@@ -1790,9 +1790,9 @@ struct fragment_program
 {
    struct program Base;   /**< base class */
    struct fp_instruction *Instructions;  /**< Compiled instructions */
-   GLuint InputsRead;     /**< Bitmask of which input regs are read */
-   GLuint OutputsWritten; /**< Bitmask of which output regs are written to */
-   GLuint TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /**< TEXTURE_x_INDEX bitmask */
+   GLbitfield InputsRead;     /**< Bitmask of which input regs are read */
+   GLbitfield OutputsWritten; /**< Bitmask of which output regs are written to */
+   GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /**< TEXTURE_x_INDEX bitmask */
    GLuint NumAluInstructions; /**< GL_ARB_fragment_program */
    GLuint NumTexInstructions;
    GLuint NumTexIndirections;
@@ -2204,8 +2204,8 @@ struct gl_framebuffer
    GLenum ColorReadBuffer;
 
    /* These are computed from ColorDrawBuffer and ColorReadBuffer */
-   GLuint _ColorDrawBufferMask[MAX_DRAW_BUFFERS]; /* Mask of BUFFER_BIT_* flags */
-   GLuint _ColorReadBufferMask; /* Zero or one of BUFFER_BIT_ flags */
+   GLbitfield _ColorDrawBufferMask[MAX_DRAW_BUFFERS]; /* Mask of BUFFER_BIT_* flags */
+   GLbitfield _ColorReadBufferMask; /* Zero or one of BUFFER_BIT_ flags */
 
    /* These are computed from _Draw/ReadBufferMask, above. */
    GLuint _NumColorDrawBuffers[MAX_DRAW_BUFFERS];
@@ -2633,7 +2633,7 @@ struct mesa_display_list
 {
    Node *node;
    GLuint id;
-   GLuint flags;
+   GLbitfield flags;
 };
 
 
@@ -2829,16 +2829,16 @@ struct __GLcontextRec
 
    GLenum ErrorValue;        /**< Last error code */
    GLenum RenderMode;        /**< either GL_RENDER, GL_SELECT, GL_FEEDBACK */
-   GLuint NewState;          /**< bitwise-or of _NEW_* flags */
+   GLbitfield NewState;      /**< bitwise-or of _NEW_* flags */
 
    /** \name Derived state */
    /*@{*/
-   GLuint _TriangleCaps;      /**< bitwise-or of DD_* flags */
-   GLuint _ImageTransferState;/**< bitwise-or of IMAGE_*_BIT flags */
+   GLbitfield _TriangleCaps;      /**< bitwise-or of DD_* flags */
+   GLbitfield _ImageTransferState;/**< bitwise-or of IMAGE_*_BIT flags */
    GLfloat _EyeZDir[3];
    GLfloat _ModelViewInvScale;
-   GLuint _NeedEyeCoords;
-   GLuint _ForceEyeCoords; 
+   GLboolean _NeedEyeCoords;
+   GLboolean _ForceEyeCoords; 
    GLboolean _RotateMode;
    GLenum _CurrentProgram;    /* currently executing program */
 

@@ -812,8 +812,8 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
     * General solution
     */
    {
-      const GLuint interpMask = span.interpMask;
-      const GLuint arrayMask = span.arrayMask;
+      const GLbitfield interpMask = span.interpMask;
+      const GLbitfield arrayMask = span.arrayMask;
       GLint row, skipPixels = 0;
 
       /* if the span is wider than MAX_WIDTH we have to do it in chunks */

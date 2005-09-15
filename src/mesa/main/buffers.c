@@ -183,10 +183,10 @@ _mesa_Clear( GLbitfield mask )
  * framebuffers we look at the framebuffer's visual.  But for user-
  * create framebuffers we look at the number of supported color attachments.
  */
-static GLuint
+static GLbitfield
 supported_buffer_bitmask(const GLcontext *ctx, GLuint framebufferID)
 {
-   GLuint mask = 0x0;
+   GLbitfield mask = 0x0;
    GLint i;
 
    if (framebufferID > 0) {
@@ -223,7 +223,7 @@ supported_buffer_bitmask(const GLcontext *ctx, GLuint framebufferID)
  * Given a GLenum naming one or more color buffers (such as
  * GL_FRONT_AND_BACK), return the corresponding bitmask of BUFFER_BIT_* flags.
  */
-static GLuint
+static GLbitfield
 draw_buffer_enum_to_bitmask(GLenum buffer)
 {
    switch (buffer) {
@@ -276,7 +276,7 @@ draw_buffer_enum_to_bitmask(GLenum buffer)
  * Given a GLenum naming (a) color buffer(s), return the corresponding
  * bitmask of DD_* flags.
  */
-static GLuint
+static GLbitfield
 read_buffer_enum_to_bitmask(GLenum buffer)
 {
    switch (buffer) {
@@ -331,7 +331,7 @@ void GLAPIENTRY
 _mesa_DrawBuffer(GLenum buffer)
 {
    GLuint bufferID;
-   GLuint destMask;
+   GLbitfield destMask;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* too complex... */
 
@@ -345,7 +345,7 @@ _mesa_DrawBuffer(GLenum buffer)
       destMask = 0x0;
    }
    else {
-      const GLuint supportedMask = supported_buffer_bitmask(ctx, bufferID);
+      const GLbitfield supportedMask = supported_buffer_bitmask(ctx, bufferID);
       destMask = draw_buffer_enum_to_bitmask(buffer);
       if (destMask == BAD_MASK) {
          /* totally bogus buffer */
@@ -378,9 +378,9 @@ void GLAPIENTRY
 _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
 {
    GLint output;
-   GLuint usedBufferMask, supportedMask;
    GLuint bufferID;
-   GLuint destMask[MAX_DRAW_BUFFERS];
+   GLbitfield usedBufferMask, supportedMask;
+   GLbitfield destMask[MAX_DRAW_BUFFERS];
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -445,7 +445,8 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
  *                  (like BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT).
  */
 static void
-set_color_output(GLcontext *ctx, GLuint output, GLenum buffer, GLuint destMask)
+set_color_output(GLcontext *ctx, GLuint output, GLenum buffer,
+                 GLbitfield destMask)
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
 
@@ -478,15 +479,15 @@ set_color_output(GLcontext *ctx, GLuint output, GLenum buffer, GLuint destMask)
  */
 void
 _mesa_drawbuffers(GLcontext *ctx, GLsizei n, const GLenum *buffers,
-                  const GLuint *destMask)
+                  const GLbitfield *destMask)
 {
-   GLuint mask[MAX_DRAW_BUFFERS];
+   GLbitfield mask[MAX_DRAW_BUFFERS];
    GLint output;
 
    if (!destMask) {
       /* compute destMask values now */
       const GLuint bufferID = ctx->DrawBuffer->Name;
-      const GLuint supportedMask = supported_buffer_bitmask(ctx, bufferID);
+      const GLbitfield supportedMask = supported_buffer_bitmask(ctx, bufferID);
       for (output = 0; output < n; output++) {
          mask[output] = draw_buffer_enum_to_bitmask(buffers[output]);
          ASSERT(mask[output] != BAD_MASK);
@@ -525,7 +526,7 @@ void GLAPIENTRY
 _mesa_ReadBuffer(GLenum buffer)
 {
    struct gl_framebuffer *fb;
-   GLuint srcMask, supportedMask;
+   GLbitfield srcMask, supportedMask;
    GLuint bufferID;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);

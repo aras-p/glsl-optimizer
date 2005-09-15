@@ -5,7 +5,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -54,7 +54,7 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers);
 
 extern void
 _mesa_drawbuffers(GLcontext *ctx, GLsizei n, const GLenum *buffers,
-                  const GLuint *destMask);
+                  const GLbitfield *destMask);
 
 extern void GLAPIENTRY
 _mesa_ReadBuffer( GLenum mode );

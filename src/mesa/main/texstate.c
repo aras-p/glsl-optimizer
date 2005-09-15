@@ -2155,7 +2155,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
       case GL_S:
          if (pname==GL_TEXTURE_GEN_MODE) {
 	    GLenum mode = (GLenum) (GLint) *params;
-	    GLuint bits;
+	    GLbitfield bits;
 	    switch (mode) {
 	    case GL_OBJECT_LINEAR:
 	       bits = TEXGEN_OBJ_LINEAR;
@@ -2212,7 +2212,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
       case GL_T:
          if (pname==GL_TEXTURE_GEN_MODE) {
 	    GLenum mode = (GLenum) (GLint) *params;
-	    GLuint bitt;
+	    GLbitfield bitt;
 	    switch (mode) {
                case GL_OBJECT_LINEAR:
                   bitt = TEXGEN_OBJ_LINEAR;
@@ -2268,7 +2268,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
       case GL_R:
          if (pname==GL_TEXTURE_GEN_MODE) {
 	    GLenum mode = (GLenum) (GLint) *params;
-	    GLuint bitr;
+	    GLbitfield bitr;
 	    switch (mode) {
 	    case GL_OBJECT_LINEAR:
 	       bitr = TEXGEN_OBJ_LINEAR;
@@ -2321,7 +2321,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
       case GL_Q:
          if (pname==GL_TEXTURE_GEN_MODE) {
 	    GLenum mode = (GLenum) (GLint) *params;
-	    GLuint bitq;
+	    GLbitfield bitq;
 	    switch (mode) {
 	    case GL_OBJECT_LINEAR:
 	       bitq = TEXGEN_OBJ_LINEAR;
@@ -2937,7 +2937,7 @@ update_texture_state( GLcontext *ctx )
     */
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-      GLuint enableBits;
+      GLbitfield enableBits;
 
       texUnit->_Current = NULL;
       texUnit->_ReallyEnabled = 0;

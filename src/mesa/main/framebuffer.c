@@ -362,7 +362,7 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
  * the corresponding renderbuffer.
  */
 static struct gl_renderbuffer *
-get_renderbuffer(struct gl_framebuffer *fb, GLuint bufferBit)
+get_renderbuffer(struct gl_framebuffer *fb, GLbitfield bufferBit)
 {
    GLuint index;
    for (index = 0; index < BUFFER_COUNT; index++) {
@@ -403,7 +403,7 @@ _mesa_update_framebuffer(GLcontext *ctx)
     * color buffers (for example).
     */
    for (output = 0; output < ctx->Const.MaxDrawBuffers; output++) {
-      GLuint bufferMask = fb->_ColorDrawBufferMask[output];
+      GLbitfield bufferMask = fb->_ColorDrawBufferMask[output];
       GLuint count = 0;
       GLuint bufferBit;
       /* for each bit that's set in the bufferMask... */

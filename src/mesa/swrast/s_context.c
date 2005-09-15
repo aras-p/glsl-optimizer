@@ -54,7 +54,7 @@
 static void
 _swrast_update_rasterflags( GLcontext *ctx )
 {
-   GLuint rasterMask = 0;
+   GLbitfield rasterMask = 0;
 
    if (ctx->Color.AlphaEnabled)           rasterMask |= ALPHATEST_BIT;
    if (ctx->Color.BlendEnabled)           rasterMask |= BLEND_BIT;
