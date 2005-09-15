@@ -2090,14 +2090,6 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
 
       ASSERT(texImage->TexFormat);
 
-      /* If driver didn't explicitly set this, use the defaults */
-      if (!texImage->FetchTexelc)
-         texImage->FetchTexelc = texImage->TexFormat->FetchTexel1D;
-      if (!texImage->FetchTexelf)
-         texImage->FetchTexelf = texImage->TexFormat->FetchTexel1Df;
-      ASSERT(texImage->FetchTexelc);
-      ASSERT(texImage->FetchTexelf);
-
       /* state update */
       texObj->Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
@@ -2189,14 +2181,6 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
 
       ASSERT(texImage->TexFormat);
 
-      /* If driver didn't explicitly set these, use the defaults */
-      if (!texImage->FetchTexelc)
-         texImage->FetchTexelc = texImage->TexFormat->FetchTexel2D;
-      if (!texImage->FetchTexelf)
-         texImage->FetchTexelf = texImage->TexFormat->FetchTexel2Df;
-      ASSERT(texImage->FetchTexelc);
-      ASSERT(texImage->FetchTexelf);
-
       /* state update */
       texObj->Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
@@ -2283,14 +2267,6 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
                                 pixels, &ctx->Unpack, texObj, texImage);
 
       ASSERT(texImage->TexFormat);
-
-      /* If driver didn't explicitly set these, use the defaults */
-      if (!texImage->FetchTexelc)
-         texImage->FetchTexelc = texImage->TexFormat->FetchTexel3D;
-      if (!texImage->FetchTexelf)
-         texImage->FetchTexelf = texImage->TexFormat->FetchTexel3Df;
-      ASSERT(texImage->FetchTexelc);
-      ASSERT(texImage->FetchTexelf);
 
       /* state update */
       texObj->Complete = GL_FALSE;
@@ -2519,14 +2495,6 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
 
    ASSERT(texImage->TexFormat);
 
-   /* If driver didn't explicitly set these, use the defaults */
-   if (!texImage->FetchTexelc)
-      texImage->FetchTexelc = texImage->TexFormat->FetchTexel1D;
-   if (!texImage->FetchTexelf)
-      texImage->FetchTexelf = texImage->TexFormat->FetchTexel1Df;
-   ASSERT(texImage->FetchTexelc);
-   ASSERT(texImage->FetchTexelf);
-
    /* state update */
    texObj->Complete = GL_FALSE;
    ctx->NewState |= _NEW_TEXTURE;
@@ -2580,14 +2548,6 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
                                  x, y, width, height, border);
 
    ASSERT(texImage->TexFormat);
-
-   /* If driver didn't explicitly set these, use the defaults */
-   if (!texImage->FetchTexelc)
-      texImage->FetchTexelc = texImage->TexFormat->FetchTexel2D;
-   if (!texImage->FetchTexelf)
-      texImage->FetchTexelf = texImage->TexFormat->FetchTexel2Df;
-   ASSERT(texImage->FetchTexelc);
-   ASSERT(texImage->FetchTexelf);
 
    /* state update */
    texObj->Complete = GL_FALSE;

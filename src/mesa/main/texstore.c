@@ -2172,6 +2172,95 @@ _mesa_unmap_teximage_pbo(GLcontext *ctx,
 }
 
 
+
+/**
+ * Adaptor for fetching a GLchan texel from a float-valued texture.
+ */
+static void
+FetchTexelFloatToChan( const struct gl_texture_image *texImage,
+                       GLint i, GLint j, GLint k, GLchan *texelOut )
+{
+   GLfloat temp[4];
+   ASSERT(texImage->FetchTexelf);
+   texImage->FetchTexelf(texImage, i, j, k, temp);
+   if (texImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT) {
+      /* just one channel */
+      UNCLAMPED_FLOAT_TO_CHAN(texelOut[0], temp[0]);
+   }
+   else {
+      /* four channels */
+      UNCLAMPED_FLOAT_TO_CHAN(texelOut[0], temp[0]);
+      UNCLAMPED_FLOAT_TO_CHAN(texelOut[1], temp[1]);
+      UNCLAMPED_FLOAT_TO_CHAN(texelOut[2], temp[2]);
+      UNCLAMPED_FLOAT_TO_CHAN(texelOut[3], temp[3]);
+   }
+}
+
+
+/**
+ * Adaptor for fetching a float texel from a GLchan-valued texture.
+ */
+static void
+FetchTexelChanToFloat( const struct gl_texture_image *texImage,
+                       GLint i, GLint j, GLint k, GLfloat *texelOut )
+{
+   GLchan temp[4];
+   ASSERT(texImage->FetchTexelc);
+   texImage->FetchTexelc(texImage, i, j, k, temp);
+   if (texImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT) {
+      /* just one channel */
+      texelOut[0] = CHAN_TO_FLOAT(temp[0]);
+   }
+   else {
+      /* four channels */
+      texelOut[0] = CHAN_TO_FLOAT(temp[0]);
+      texelOut[1] = CHAN_TO_FLOAT(temp[1]);
+      texelOut[2] = CHAN_TO_FLOAT(temp[2]);
+      texelOut[3] = CHAN_TO_FLOAT(temp[3]);
+   }
+}
+
+
+/**
+ * Initialize the texture image's FetchTexelc and FetchTexelf methods.
+ */
+static void
+set_fetch_functions(struct gl_texture_image *texImage, GLuint dims)
+{
+   ASSERT(dims == 1 || dims == 2 || dims == 3);
+   ASSERT(texImage->TexFormat);
+
+   switch (dims) {
+   case 1:
+      texImage->FetchTexelc = texImage->TexFormat->FetchTexel1D;
+      texImage->FetchTexelf = texImage->TexFormat->FetchTexel1Df;
+      break;
+   case 2:
+      texImage->FetchTexelc = texImage->TexFormat->FetchTexel2D;
+      texImage->FetchTexelf = texImage->TexFormat->FetchTexel2Df;
+      break;
+   case 3:
+      texImage->FetchTexelc = texImage->TexFormat->FetchTexel3D;
+      texImage->FetchTexelf = texImage->TexFormat->FetchTexel3Df;
+      break;
+   default:
+      ;
+   }
+
+   /* now check if we need to use a float/chan adaptor */
+   if (!texImage->FetchTexelc) {
+      texImage->FetchTexelc = FetchTexelFloatToChan;
+   }
+   else if (!texImage->FetchTexelf) {
+      texImage->FetchTexelf = FetchTexelChanToFloat;
+   }
+
+
+   ASSERT(texImage->FetchTexelc);
+   ASSERT(texImage->FetchTexelf);
+}
+
+
 /*
  * This is the software fallback for Driver.TexImage1D()
  * and Driver.CopyTexImage1D().
@@ -2199,8 +2288,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
    texImage->TexFormat = ctx->Driver.ChooseTextureFormat(ctx, internalFormat,
                                                          format, type);
    assert(texImage->TexFormat);
-   texImage->FetchTexelc = texImage->TexFormat->FetchTexel1D;
-   texImage->FetchTexelf = texImage->TexFormat->FetchTexel1Df;
+   set_fetch_functions(texImage, 1);
 
    /* allocate memory */
    if (texImage->IsCompressed)
@@ -2285,8 +2373,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
                                           internalFormat, format, type);
    assert(texImage->TexFormat);
-   texImage->FetchTexelc = texImage->TexFormat->FetchTexel2D;
-   texImage->FetchTexelf = texImage->TexFormat->FetchTexel2Df;
+   set_fetch_functions(texImage, 2);
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
@@ -2365,8 +2452,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
    texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
                                           internalFormat, format, type);
    assert(texImage->TexFormat);
-   texImage->FetchTexelc = texImage->TexFormat->FetchTexel3D;
-   texImage->FetchTexelf = texImage->TexFormat->FetchTexel3Df;
+   set_fetch_functions(texImage, 3);
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
@@ -2629,8 +2715,7 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
                                           internalFormat, 0, 0);
    assert(texImage->TexFormat);
-   texImage->FetchTexelc = texImage->TexFormat->FetchTexel2D;
-   texImage->FetchTexelf = texImage->TexFormat->FetchTexel2Df;
+   set_fetch_functions(texImage, 2);
 
    /* allocate storage */
    texImage->Data = _mesa_alloc_texmemory(imageSize);
