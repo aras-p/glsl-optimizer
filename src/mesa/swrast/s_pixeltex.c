@@ -37,7 +37,6 @@
 
 #include "s_context.h"
 #include "s_pixeltex.h"
-#include "s_texture.h"
 
 
 /*

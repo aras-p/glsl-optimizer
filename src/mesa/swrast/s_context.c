@@ -42,7 +42,7 @@
 #include "s_points.h"
 #include "s_span.h"
 #include "s_triangle.h"
-#include "s_texture.h"
+#include "s_texfilter.h"
 
 
 /**

@@ -30,7 +30,7 @@
 #include "s_atifragshader.h"
 #include "s_nvfragprog.h"
 #include "s_span.h"
-#include "s_texture.h"
+
 
 /**
  * Fetch a texel.

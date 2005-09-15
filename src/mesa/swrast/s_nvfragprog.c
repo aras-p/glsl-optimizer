@@ -35,12 +35,10 @@
 #include "colormac.h"
 #include "context.h"
 #include "nvfragprog.h"
-#include "macros.h"
 #include "program.h"
 
 #include "s_nvfragprog.h"
 #include "s_span.h"
-#include "s_texture.h"
 
 
 /* if 1, print some debugging info */

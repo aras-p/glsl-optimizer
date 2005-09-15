@@ -41,7 +41,6 @@
 #include "program.h"
 
 #include "s_nvfragprog.h"
-#include "s_texture.h"
 
 #ifdef USE_TCC
 

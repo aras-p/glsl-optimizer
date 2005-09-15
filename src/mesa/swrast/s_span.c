@@ -47,7 +47,7 @@
 #include "s_nvfragprog.h"
 #include "s_span.h"
 #include "s_stencil.h"
-#include "s_texture.h"
+#include "s_texcombine.h"
 
 
 /**
