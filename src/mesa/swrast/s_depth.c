@@ -1190,22 +1190,29 @@ _swrast_depth_bounds_test( GLcontext *ctx, struct sw_span *span )
 
 
 /**
- * Read a span of depth values from the depth buffer.
- * This function does clipping before calling the device driver function.
- *
- * XXXX this is no longer a swrast function!!!
- *
+ * Read a span of depth values from the given depth renderbuffer, returning
+ * the values as GLfloats.
+ * This function does clipping to prevent reading outside the depth buffer's
+ * bounds.  Though the clipping is redundant when we're called from
+ * _swrast_ReadPixels.
  */
 void
-_swrast_read_depth_span( GLcontext *ctx, struct gl_renderbuffer *rb,
-                         GLint n, GLint x, GLint y, GLuint depth[] )
+_swrast_read_depth_span_float( GLcontext *ctx, struct gl_renderbuffer *rb,
+                               GLint n, GLint x, GLint y, GLfloat depth[] )
 {
+   const GLfloat scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
+
+   if (!rb) {
+      /* really only doing this to prevent FP exceptions later */
+      _mesa_bzero(depth, n * sizeof(GLfloat));
+   }
+
+   ASSERT(rb->_BaseFormat == GL_DEPTH_COMPONENT);
+
    if (y < 0 || y >= (GLint) rb->Height ||
        x + (GLint) n <= 0 || x >= (GLint) rb->Width) {
       /* span is completely outside framebuffer */
-      GLint i;
-      for (i = 0; i < n; i++)
-         depth[i] = 0;
+      _mesa_bzero(depth, n * sizeof(GLfloat));
       return;
    }
 
@@ -1213,7 +1220,7 @@ _swrast_read_depth_span( GLcontext *ctx, struct gl_renderbuffer *rb,
       GLint dx = -x;
       GLint i;
       for (i = 0; i < dx; i++)
-         depth[i] = 0;
+         depth[i] = 0.0;
       x = 0;
       n -= dx;
       depth += dx;
@@ -1222,57 +1229,37 @@ _swrast_read_depth_span( GLcontext *ctx, struct gl_renderbuffer *rb,
       GLint dx = x + n - (GLint) rb->Width;
       GLint i;
       for (i = 0; i < dx; i++)
-         depth[n - i - 1] = 0;
+         depth[n - i - 1] = 0.0;
       n -= dx;
    }
    if (n <= 0) {
       return;
    }
 
-   /* we'll always return 32-bit values to our caller */
-   if (!rb) {
-      _mesa_bzero(depth, n * sizeof(GLuint));
+   if (rb->DataType == GL_UNSIGNED_INT) {
+      GLuint temp[MAX_WIDTH];
+      GLint i;
+      rb->GetRow(ctx, rb, n, x, y, temp);
+      for (i = 0; i < n; i++) {
+         depth[i] = temp[i] * scale;
+      }
    }
-   else if (rb->DataType == GL_UNSIGNED_INT) {
-      rb->GetRow(ctx, rb, n, x, y, depth);
-   }
-   else {
+   else if (rb->DataType == GL_UNSIGNED_SHORT) {
       GLushort temp[MAX_WIDTH];
-      GLuint i;
-      ASSERT(rb->DataType == GL_UNSIGNED_SHORT);
+      GLint i;
       rb->GetRow(ctx, rb, n, x, y, temp);
       for (i = 0; i < n; i++) {
          depth[i] = temp[i];
       }
    }
-}
-
-
-/**
- * Return a span of depth values from the depth buffer as floats in [0,1].
- * Input:  n - how many pixels
- *         x,y - location of first pixel
- * Output:  depth - the array of depth values
- */
-void
-_swrast_read_depth_span_float( GLcontext *ctx, struct gl_renderbuffer *rb,
-                               GLint n, GLint x, GLint y, GLfloat depth[] )
-{
-   const GLfloat scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
-   GLuint temp[MAX_WIDTH];
-   GLint i;
-
-   assert(n <= MAX_WIDTH);
-
-   _swrast_read_depth_span(ctx, rb, n, x, y, temp);
-   for (i = 0; i < n; i++) {
-      depth[i] = temp[i] * scale;
+   else {
+      _mesa_problem(ctx, "Invalid depth renderbuffer internal format");
    }
 }
 
 
 /**
- * Clear the depth buffer.
+ * Clear the given z/depth renderbuffer.
  */
 void
 _swrast_clear_depth_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
