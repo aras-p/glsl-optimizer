@@ -66,7 +66,7 @@ static void TEX( void *cc, const float *texcoord, int unit, float *result )
    GLfloat lambda = 1.0;	/* hack */
    GLchan rgba[4];
 
-   swrast->TextureSample[unit](ctx, unit, ctx->Texture.Unit[unit]._Current,
+   swrast->TextureSample[unit](ctx, ctx->Texture.Unit[unit]._Current,
                                1, (const GLfloat (*)[4]) texcoord,
                                &lambda, &rgba);
 
@@ -90,7 +90,7 @@ static void TXB( void *cc, const float *texcoord, int unit, float *result )
 
    /* Is it necessary to reset texcoord[3] to 1 at this point?
     */
-   swrast->TextureSample[unit](ctx, unit, ctx->Texture.Unit[unit]._Current,
+   swrast->TextureSample[unit](ctx, ctx->Texture.Unit[unit]._Current,
                                1, (const GLfloat (*)[4]) texcoord,
                                &lambda, &rgba);
 

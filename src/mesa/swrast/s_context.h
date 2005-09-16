@@ -209,7 +209,7 @@ do {								\
 } while (0)
 
 
-typedef void (*texture_sample_func)(GLcontext *ctx, GLuint texUnit,
+typedef void (*texture_sample_func)(GLcontext *ctx,
                                     const struct gl_texture_object *tObj,
                                     GLuint n, const GLfloat texcoords[][4],
                                     const GLfloat lambda[], GLchan rgba[][4]);
@@ -280,7 +280,6 @@ typedef struct
     * _swrast_validate_derived():
     */
    GLbitfield _RasterMask;
-   GLfloat _MinMagThresh[MAX_TEXTURE_IMAGE_UNITS];
    GLfloat _BackfaceSign;
    GLboolean _PreferPixelFog;    /* Compute fog blend factor per fragment? */
    GLboolean _AnyTextureCombine;

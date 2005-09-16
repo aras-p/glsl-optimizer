@@ -364,44 +364,6 @@ _swrast_validate_blend_func( GLcontext *ctx, GLuint n,
 }
 
 
-/**
- * Called via the swrast->TextureSample[i] function pointer.
- * Basically, given a texture object, an array of texture coords
- * and an array of level-of-detail values, return an array of colors.
- * In this case, determine the correct texture sampling routine
- * (depending on filter mode, texture dimensions, etc) then call the
- * sampler routine.
- */
-static void
-_swrast_validate_texture_sample( GLcontext *ctx, GLuint texUnit,
-				 const struct gl_texture_object *tObj,
-				 GLuint n, const GLfloat texcoords[][4],
-				 const GLfloat lambda[], GLchan rgba[][4] )
-{
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-
-   _swrast_validate_derived( ctx );
-
-   /* Compute min/mag filter threshold */
-   if (tObj && tObj->MinFilter != tObj->MagFilter) {
-      if (tObj->MagFilter == GL_LINEAR
-          && (tObj->MinFilter == GL_NEAREST_MIPMAP_NEAREST ||
-              tObj->MinFilter == GL_NEAREST_MIPMAP_LINEAR)) {
-         swrast->_MinMagThresh[texUnit] = 0.5F;
-      }
-      else {
-         swrast->_MinMagThresh[texUnit] = 0.0F;
-      }
-   }
-
-   swrast->TextureSample[texUnit] =
-      _swrast_choose_texture_sample_func( ctx, tObj );
-
-   swrast->TextureSample[texUnit]( ctx, texUnit, tObj, n, texcoords,
-                                   lambda, rgba );
-}
-
-
 static void
 _swrast_sleep( GLcontext *ctx, GLbitfield new_state )
 {
@@ -440,7 +402,22 @@ _swrast_invalidate_state( GLcontext *ctx, GLbitfield new_state )
 
    if (new_state & _SWRAST_NEW_TEXTURE_SAMPLE_FUNC)
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
-	 swrast->TextureSample[i] = _swrast_validate_texture_sample;
+	 swrast->TextureSample[i] = NULL;
+}
+
+
+static void
+_swrast_update_texture_samplers(GLcontext *ctx)
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GLuint u;
+
+   for (u = 0; u < ctx->Const.MaxTextureImageUnits; u++) {
+      const struct gl_texture_object *tObj = ctx->Texture.Unit[u]._Current;
+      if (tObj)
+         swrast->TextureSample[u] =
+            _swrast_choose_texture_sample_func(ctx, tObj);
+   }
 }
 
 
@@ -467,6 +444,9 @@ _swrast_validate_derived( GLcontext *ctx )
 
       if (swrast->NewState & _NEW_PROGRAM)
 	 _swrast_update_fragment_program( ctx );
+
+      if (swrast->NewState & _NEW_TEXTURE)
+         _swrast_update_texture_samplers( ctx );
 
       swrast->NewState = 0;
       swrast->StateChanges = 0;
@@ -604,7 +584,7 @@ _swrast_CreateContext( GLcontext *ctx )
    swrast->_IntegerAccumScaler = 0.0;
 
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
-      swrast->TextureSample[i] = _swrast_validate_texture_sample;
+      swrast->TextureSample[i] = NULL;
 
    swrast->SpanArrays = MALLOC_STRUCT(span_arrays);
    if (!swrast->SpanArrays) {

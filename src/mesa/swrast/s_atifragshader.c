@@ -43,9 +43,9 @@ fetch_texel(GLcontext * ctx, const GLfloat texcoord[4], GLfloat lambda,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    /* XXX use a float-valued TextureSample routine here!!! */
-   swrast->TextureSample[unit] (ctx, unit, ctx->Texture.Unit[unit]._Current,
-				1, (const GLfloat(*)[4]) texcoord,
-				&lambda, &rgba);
+   swrast->TextureSample[unit](ctx, ctx->Texture.Unit[unit]._Current,
+                               1, (const GLfloat(*)[4]) texcoord,
+                               &lambda, &rgba);
    color[0] = CHAN_TO_FLOAT(rgba[0]);
    color[1] = CHAN_TO_FLOAT(rgba[1]);
    color[2] = CHAN_TO_FLOAT(rgba[2]);

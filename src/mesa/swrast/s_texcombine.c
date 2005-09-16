@@ -1123,8 +1123,8 @@ _swrast_texture_span( GLcontext *ctx, struct sw_span *span )
             }
          }
 
-         /* Sample the texture (span->end fragments) */
-         swrast->TextureSample[unit]( ctx, unit, texUnit->_Current, span->end,
+         /* Sample the texture (span->end = number of fragments) */
+         swrast->TextureSample[unit]( ctx, texUnit->_Current, span->end,
                          (const GLfloat (*)[4]) span->array->texcoords[unit],
                          lambda, texels );
 
