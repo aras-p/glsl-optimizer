@@ -50,8 +50,7 @@
 /**
  * \defgroup SpanFlags SPAN_XXX-flags
  * Bitmasks to indicate which span_arrays need to be computed
- * (sw_span::interpMask) or have already been filled
- * (sw_span::arrayMask)
+ * (sw_span::interpMask) or have already been filled in (sw_span::arrayMask)
  */
 /*@{*/
 #define SPAN_RGBA         0x001
@@ -65,9 +64,8 @@
 #define SPAN_LAMBDA       0x100
 #define SPAN_COVERAGE     0x200
 #define SPAN_FLAT         0x400  /**< flat shading? */
-/** sw_span::arrayMask only - for span_arrays::x, span_arrays::y */
 #define SPAN_XY           0x800
-#define SPAN_MASK        0x1000  /**< sw_span::arrayMask only */
+#define SPAN_MASK        0x1000
 /*@}*/
 
 
@@ -80,6 +78,7 @@
  * These arrays are separated out of sw_span to conserve memory.
  */
 struct span_arrays {
+   /* XXX the next three fields could go into a union */
    GLchan  rgb[MAX_WIDTH][3];
    GLchan  rgba[MAX_WIDTH][4];
    GLuint  index[MAX_WIDTH];
@@ -92,7 +91,7 @@ struct span_arrays {
    GLfloat lambda[MAX_TEXTURE_COORD_UNITS][MAX_WIDTH];
    GLfloat coverage[MAX_WIDTH];
 
-   /** This mask indicates if fragment is alive or culled */
+   /** This mask indicates which fragments are alive or culled */
    GLubyte mask[MAX_WIDTH];
 };
 
