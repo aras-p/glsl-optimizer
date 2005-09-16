@@ -308,9 +308,9 @@ typedef struct
    void (*choose_line)( GLcontext * );
    void (*choose_triangle)( GLcontext * );
 
-   GLuint invalidate_point;
-   GLuint invalidate_line;
-   GLuint invalidate_triangle;
+   GLbitfield invalidate_point;
+   GLbitfield invalidate_line;
+   GLbitfield invalidate_triangle;
    /*@}*/
 
    /** Function pointers for dispatch behind public entrypoints. */
@@ -345,7 +345,7 @@ typedef struct
     */
    struct sw_span PointSpan;
 
-   /** Internal hooks, kept uptodate by the same mechanism as above.
+   /** Internal hooks, kept up to date by the same mechanism as above.
     */
    blend_func BlendFunc;
    texture_sample_func TextureSample[MAX_TEXTURE_IMAGE_UNITS];

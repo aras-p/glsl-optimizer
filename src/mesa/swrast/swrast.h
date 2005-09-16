@@ -173,7 +173,7 @@ _swrast_render_finish( GLcontext *ctx );
 /* Tell the software rasterizer about core state changes.
  */
 extern void
-_swrast_InvalidateState( GLcontext *ctx, GLuint new_state );
+_swrast_InvalidateState( GLcontext *ctx, GLbitfield new_state );
 
 /* Configure software rasterizer to match hardware rasterizer characteristics:
  */

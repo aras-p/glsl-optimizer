@@ -403,14 +403,14 @@ _swrast_validate_texture_sample( GLcontext *ctx, GLuint texUnit,
 
 
 static void
-_swrast_sleep( GLcontext *ctx, GLuint new_state )
+_swrast_sleep( GLcontext *ctx, GLbitfield new_state )
 {
    (void) ctx; (void) new_state;
 }
 
 
 static void
-_swrast_invalidate_state( GLcontext *ctx, GLuint new_state )
+_swrast_invalidate_state( GLcontext *ctx, GLbitfield new_state )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint i;
@@ -529,7 +529,7 @@ _swrast_Point( GLcontext *ctx, const SWvertex *v0 )
 }
 
 void
-_swrast_InvalidateState( GLcontext *ctx, GLuint new_state )
+_swrast_InvalidateState( GLcontext *ctx, GLbitfield new_state )
 {
    if (SWRAST_DEBUG) {
       _mesa_debug(ctx, "_swrast_InvalidateState\n");
