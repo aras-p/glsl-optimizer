@@ -613,6 +613,8 @@ _mesa_memset16( unsigned short *dst, unsigned short val, size_t n );
 extern void
 _mesa_bzero( void *dst, size_t n );
 
+extern int
+_mesa_memcmp( const void *s1, const void *s2, size_t n );
 
 extern double
 _mesa_sin(double a);

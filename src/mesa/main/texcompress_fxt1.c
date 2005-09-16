@@ -474,7 +474,7 @@ fxt1_choose (GLfloat vec[][MAX_COMP], GLint nv,
    } hist[N_TEXELS];
    GLint lenh = 0;
 
-   memset(hist, 0, sizeof(hist));
+   _mesa_memset(hist, 0, sizeof(hist));
 
    for (k = 0; k < n; k++) {
       GLint l;
@@ -1268,7 +1268,7 @@ fxt1_quantize (GLuint *cc, const GLubyte *lines[], GLint comps)
 
    if (comps == 3) {
       /* make the whole block opaque */
-      memset(input, -1, sizeof(input));
+      _mesa_memset(input, -1, sizeof(input));
    }
 
    /* 8 texels each line */

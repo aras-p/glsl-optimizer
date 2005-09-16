@@ -1,5 +1,6 @@
 #if defined(USE_X86_ASM)
 
+#include "imports.h"
 #include "x86sse.h"
 
 #define DISASSEM 0
@@ -970,13 +971,13 @@ struct x86_reg x86_fn_arg( struct x86_function *p,
 
 void x86_init_func( struct x86_function *p )
 {
-   p->store = malloc(1024);
+   p->store = _mesa_malloc(1024);
    p->csr = p->store;
 }
 
 void x86_release_func( struct x86_function *p )
 {
-   free(p->store);
+   _mesa_free(p->store);
 }
 
 

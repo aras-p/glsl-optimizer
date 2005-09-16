@@ -90,7 +90,7 @@ EXTERN( _tnl_x86_choose_fv );
    insert_at_head( &CACHE, dfn );			\
    dfn->key = KEY;					\
    dfn->code = ALIGN_MALLOC( end - start, 16 );		\
-   memcpy (dfn->code, start, end - start)
+   _mesa_memcpy (dfn->code, start, end - start)
 
 
 
@@ -277,7 +277,7 @@ do {									\
    const char *end = WARP##_end;					\
    int offset = 0;							\
    code = ALIGN_MALLOC( end - start, 16 );				\
-   memcpy (code, start, end - start);					\
+   _mesa_memcpy (code, start, end - start);					\
    FIXUP(code, 0, 0, (int)&(TNL_CONTEXT(ctx)->vtx.tabfv[ATTR][SIZE-1]));\
    *(void **)&vfmt->FUNC = code;					\
 } while (0)
@@ -351,7 +351,7 @@ void _tnl_x86choosers( tnl_attrfv_func (*choose)[4],
          const char *end = _tnl_x86_choose_fv_end;
          int offset = 0;
          code = ALIGN_MALLOC( end - start, 16 );
-         memcpy (code, start, end - start);
+         _mesa_memcpy (code, start, end - start);
          FIXUP(code, 0, 0, attr);
          FIXUP(code, 0, 1, size + 1);
          FIXUPREL(code, 0, 2, do_choose);

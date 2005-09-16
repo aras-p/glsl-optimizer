@@ -1031,7 +1031,7 @@ static void compile_vertex_program( struct vertex_program *program,
    /* Initialize cp.  Note that ctx and VB aren't used in compilation
     * so we don't have to worry about statechanges:
     */
-   memset(&cp, 0, sizeof(cp));
+   _mesa_memset(&cp, 0, sizeof(cp));
    cp.csr = p->instructions;
 
    /* Compile instructions:

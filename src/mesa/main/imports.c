@@ -259,6 +259,19 @@ _mesa_bzero( void *dst, size_t n )
 #endif
 }
 
+/** Wrapper around either memcmp() or xf86memcmp() */
+int
+_mesa_memcmp( const void *s1, const void *s2, size_t n )
+{
+#if defined(XFree86LOADER) && defined(IN_MODULE)
+   return xf86memcmp( s1, s2, n );
+#elif defined(SUNOS4)
+   return memcmp( (char *) s1, (char *) s2, (int) n );
+#else
+   return memcmp(s1, s2, n);
+#endif
+}
+
 /*@}*/
 
 

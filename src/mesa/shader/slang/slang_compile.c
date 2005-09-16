@@ -635,7 +635,7 @@ int slang_info_log_error (slang_info_log *log, const char *msg, ...)
 	char buf[1024];
 
 	va_start (va, msg);
-	vsprintf (buf, msg, va);
+	_mesa_sprintf (buf, msg, va);
 	if (slang_info_log_message (log, "error", buf))
 		return 1;
 	slang_info_log_memory (log);
@@ -649,7 +649,7 @@ int slang_info_log_warning (slang_info_log *log, const char *msg, ...)
 	char buf[1024];
 
 	va_start (va, msg);
-	vsprintf (buf, msg, va);
+	_mesa_sprintf (buf, msg, va);
 	if (slang_info_log_message (log, "warning", buf))
 		return 1;
 	slang_info_log_memory (log);

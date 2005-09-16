@@ -1181,7 +1181,7 @@ _tnl_sse_codegen_vertex_program(struct tnl_compiled_program *p)
 {
    struct compilation cp;
    
-   memset(&cp, 0, sizeof(cp));
+   _mesa_memset(&cp, 0, sizeof(cp));
    cp.p = p;
    cp.have_sse2 = 1;
 

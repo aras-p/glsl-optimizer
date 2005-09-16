@@ -943,7 +943,7 @@ void _tnl_vtx_init( GLcontext *ctx )
 
    _mesa_install_exec_vtxfmt( ctx, &tnl->exec_vtxfmt );
 
-   memcpy( tnl->vtx.tabfv, choose, sizeof(choose) );
+   _mesa_memcpy( tnl->vtx.tabfv, choose, sizeof(choose) );
 
    for (i = 0 ; i < _TNL_ATTRIB_MAX ; i++) 
       tnl->vtx.attrsz[i] = 0;

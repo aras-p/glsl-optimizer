@@ -169,7 +169,7 @@ static void dump (const slang_assembly_file *file)
 	char filename[256];
 
 	counter++;
-	sprintf (filename, "~mesa-slang-assembly-dump-(%u).txt", counter);
+	_mesa_sprintf (filename, "~mesa-slang-assembly-dump-(%u).txt", counter);
 	f = fopen (filename, "w");
 	if (f == NULL)
 		return;

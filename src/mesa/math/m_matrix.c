@@ -804,8 +804,8 @@ _math_matrix_rotate( GLmatrix *mat,
    GLfloat m[16];
    GLboolean optimized;
 
-   s = (GLfloat) sin( angle * DEG2RAD );
-   c = (GLfloat) cos( angle * DEG2RAD );
+   s = (GLfloat) _mesa_sin( angle * DEG2RAD );
+   c = (GLfloat) _mesa_cos( angle * DEG2RAD );
 
    MEMCPY(m, Identity, sizeof(GLfloat)*16);
    optimized = GL_FALSE;
