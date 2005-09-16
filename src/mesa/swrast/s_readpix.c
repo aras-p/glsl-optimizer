@@ -52,10 +52,7 @@ read_index_pixels( GLcontext *ctx,
                    const struct gl_pixelstore_attrib *packing )
 {
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
-   /*
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   */
-   GLint i, readWidth;
+   GLint i;
 
    /* error checking */
    if (ctx->Visual.rgbMode) {
@@ -74,20 +71,24 @@ read_index_pixels( GLcontext *ctx,
       return;
    }
 
-   /* XXX: width should never be > MAX_WIDTH since we did clipping earlier */
-   readWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
+   if (!rb) {
+      return;  /* no readbuffer OK */
+   }
+
+   /* width should never be > MAX_WIDTH since we did clipping earlier */
+   ASSERT(width <= MAX_WIDTH);
 
    /* process image row by row */
    for (i = 0; i < height; i++) {
       GLuint index[MAX_WIDTH];
       GLvoid *dest;
       ASSERT(rb->DataType == GL_UNSIGNED_INT);
-      rb->GetRow(ctx, rb, readWidth, x, y + i, index);
+      rb->GetRow(ctx, rb, width, x, y + i, index);
 
       dest = _mesa_image_address2d(packing, pixels, width, height,
                                    GL_COLOR_INDEX, type, i, 0);
 
-      _mesa_pack_index_span(ctx, readWidth, type, dest, index,
+      _mesa_pack_index_span(ctx, width, type, dest, index,
                             &ctx->Pack, ctx->_ImageTransferState);
    }
 }
@@ -106,13 +107,15 @@ read_depth_pixels( GLcontext *ctx,
 {
    struct gl_renderbuffer *rb
       = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
-   GLint readWidth;
    GLboolean bias_or_scale;
 
-   if (!rb) {
-      /* no readbuffer - OK */
-      return;
-   }
+   /* clipping should have been done already */
+   ASSERT(x >= 0);
+   ASSERT(y >= 0);
+   ASSERT(x + width <= rb->Width);
+   ASSERT(y + height <= rb->Height);
+   /* width should never be > MAX_WIDTH since we did clipping earlier */
+   ASSERT(width <= MAX_WIDTH);
 
    /* Error checking */
    if (ctx->Visual.depthBits <= 0) {
@@ -132,48 +135,49 @@ read_depth_pixels( GLcontext *ctx,
       return;
    }
 
-   /* XXX: width should never be > MAX_WIDTH since we did clipping earlier */
-   readWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
+   if (!rb) {
+      return;  /* no readbuffer OK */
+   }
 
-   bias_or_scale = ctx->Pixel.DepthBias!=0.0 || ctx->Pixel.DepthScale!=1.0;
+   bias_or_scale = ctx->Pixel.DepthBias != 0.0 || ctx->Pixel.DepthScale != 1.0;
 
-   if (type==GL_UNSIGNED_SHORT && ctx->Visual.depthBits == 16
+   if (type == GL_UNSIGNED_SHORT && ctx->Visual.depthBits == 16
        && !bias_or_scale && !packing->SwapBytes) {
       /* Special case: directly read 16-bit unsigned depth values. */
       GLint j;
-      for (j=0;j<height;j++,y++) {
-         GLdepth depth[MAX_WIDTH];
-         GLushort *dst = (GLushort*) _mesa_image_address2d(packing, pixels,
-                                width, height, GL_DEPTH_COMPONENT, type, j, 0);
-         GLint i;
-         _swrast_read_depth_span(ctx, rb, width, x, y, depth);
-         for (i = 0; i < width; i++)
-            dst[i] = depth[i];
+      ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT16);
+      ASSERT(rb->DataType == GL_UNSIGNED_SHORT);
+      for (j = 0; j < height; j++, y++) {
+         void *dest =_mesa_image_address2d(packing, pixels, width, height,
+                                           GL_DEPTH_COMPONENT, type, j, 0);
+         rb->GetRow(ctx, rb, width, x, y, dest);
       }
    }
-   else if (type==GL_UNSIGNED_INT && ctx->Visual.depthBits == 32
+   else if (type == GL_UNSIGNED_INT && ctx->Visual.depthBits == 32
             && !bias_or_scale && !packing->SwapBytes) {
       /* Special case: directly read 32-bit unsigned depth values. */
       GLint j;
-      for (j=0;j<height;j++,y++) {
-         GLdepth *dst = (GLdepth *) _mesa_image_address2d(packing, pixels,
-                                width, height, GL_DEPTH_COMPONENT, type, j, 0);
-         _swrast_read_depth_span(ctx, rb, width, x, y, dst);
+      ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT32);
+      ASSERT(rb->DataType == GL_UNSIGNED_INT);
+      for (j = 0; j < height; j++, y++) {
+         void *dest = _mesa_image_address2d(packing, pixels, width, height,
+                                            GL_DEPTH_COMPONENT, type, j, 0);
+         rb->GetRow(ctx, rb, width, x, y, dest);
       }
    }
    else {
       /* General case (slower) */
       GLint j;
-      for (j=0;j<height;j++,y++) {
+      for (j = 0; j < height; j++, y++) {
          GLfloat depth[MAX_WIDTH];
          GLvoid *dest;
 
-         _swrast_read_depth_span_float(ctx, rb, readWidth, x, y, depth);
+         _swrast_read_depth_span_float(ctx, rb, width, x, y, depth);
 
          dest = _mesa_image_address2d(packing, pixels, width, height,
                                       GL_DEPTH_COMPONENT, type, j, 0);
 
-         _mesa_pack_depth_span(ctx, readWidth, (GLdepth *) dest, type,
+         _mesa_pack_depth_span(ctx, width, (GLdepth *) dest, type,
                                depth, packing);
       }
    }
@@ -192,7 +196,7 @@ read_stencil_pixels( GLcontext *ctx,
 {
    struct gl_renderbuffer *rb
       = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
-   GLint j, readWidth;
+   GLint j;
 
    if (!rb) {
       /* no readbuffer - OK */
@@ -217,20 +221,20 @@ read_stencil_pixels( GLcontext *ctx,
       return;
    }
 
-   /* XXX: width should never be > MAX_WIDTH since we did clipping earlier */
-   readWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
+   /* width should never be > MAX_WIDTH since we did clipping earlier */
+   ASSERT(width <= MAX_WIDTH);
 
    /* process image row by row */
    for (j=0;j<height;j++,y++) {
       GLvoid *dest;
       GLstencil stencil[MAX_WIDTH];
 
-      _swrast_read_stencil_span(ctx, rb, readWidth, x, y, stencil);
+      _swrast_read_stencil_span(ctx, rb, width, x, y, stencil);
 
       dest = _mesa_image_address2d(packing, pixels, width, height,
                                    GL_STENCIL_INDEX, type, j, 0);
 
-      _mesa_pack_stencil_span(ctx, readWidth, type, dest, stencil, packing);
+      _mesa_pack_stencil_span(ctx, width, type, dest, stencil, packing);
    }
 }
 
@@ -250,6 +254,7 @@ read_fast_rgba_pixels( GLcontext *ctx,
                        const struct gl_pixelstore_attrib *packing )
 {
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
+
    /* can't do scale, bias, mapping, etc */
    if (ctx->_ImageTransferState)
        return GL_FALSE;
@@ -324,10 +329,6 @@ read_rgba_pixels( GLcontext *ctx,
                   const struct gl_pixelstore_attrib *packing )
 {
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
-   /*
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   */
-   GLint readWidth;
 
    if (!rb) {
       /* No readbuffer is OK with GL_EXT_framebuffer_object */
@@ -380,9 +381,8 @@ read_rgba_pixels( GLcontext *ctx,
       return; /* done! */
    }
 
-   /* XXX: width should never be > MAX_WIDTH since we did clipping earlier */
-   readWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
-
+   /* width should never be > MAX_WIDTH since we did clipping earlier */
+   ASSERT(width <= MAX_WIDTH);
 
    if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
       const GLuint transferOps = ctx->_ImageTransferState;
@@ -406,18 +406,18 @@ read_rgba_pixels( GLcontext *ctx,
       for (row = 0; row < height; row++, y++) {
          GLchan rgba[MAX_WIDTH][4];
          if (ctx->Visual.rgbMode) {
-            _swrast_read_rgba_span(ctx, rb, readWidth, x, y, rgba);
+            _swrast_read_rgba_span(ctx, rb, width, x, y, rgba);
          }
          else {
             GLuint index[MAX_WIDTH];
             ASSERT(rb->DataType == GL_UNSIGNED_INT);
-            rb->GetRow(ctx, rb, readWidth, x, y, index);
+            rb->GetRow(ctx, rb, width, x, y, index);
             if (ctx->Pixel.IndexShift != 0 || ctx->Pixel.IndexOffset !=0 ) {
-               _mesa_map_ci(ctx, readWidth, index);
+               _mesa_map_ci(ctx, width, index);
             }
-            _mesa_map_ci_to_rgba_chan(ctx, readWidth, index, rgba);
+            _mesa_map_ci_to_rgba_chan(ctx, width, index, rgba);
          }
-         _mesa_pack_rgba_span_chan(ctx, readWidth, (const GLchan (*)[4]) rgba,
+         _mesa_pack_rgba_span_chan(ctx, width, (const GLchan (*)[4]) rgba,
                               GL_RGBA, GL_FLOAT, dest, &ctx->DefaultPacking,
                               transferOps & IMAGE_PRE_CONVOLUTION_BITS);
          dest += width * 4;
@@ -425,11 +425,11 @@ read_rgba_pixels( GLcontext *ctx,
 
       /* do convolution */
       if (ctx->Pixel.Convolution2DEnabled) {
-         _mesa_convolve_2d_image(ctx, &readWidth, &height, tmpImage, convImage);
+         _mesa_convolve_2d_image(ctx, &width, &height, tmpImage, convImage);
       }
       else {
          ASSERT(ctx->Pixel.Separable2DEnabled);
-         _mesa_convolve_sep_image(ctx, &readWidth, &height, tmpImage, convImage);
+         _mesa_convolve_sep_image(ctx, &width, &height, tmpImage, convImage);
       }
       _mesa_free(tmpImage);
 
@@ -437,13 +437,13 @@ read_rgba_pixels( GLcontext *ctx,
       src = convImage;
       for (row = 0; row < height; row++) {
          GLvoid *dest;
-         dest = _mesa_image_address2d(packing, pixels, readWidth, height,
+         dest = _mesa_image_address2d(packing, pixels, width, height,
                                       format, type, row, 0);
-         _mesa_pack_rgba_span_float(ctx, readWidth,
+         _mesa_pack_rgba_span_float(ctx, width,
                                     (const GLfloat (*)[4]) src,
                                     format, type, dest, packing,
                                     transferOps & IMAGE_POST_CONVOLUTION_BITS);
-         src += readWidth * 4;
+         src += width * 4;
       }
    }
    else {
@@ -453,16 +453,16 @@ read_rgba_pixels( GLcontext *ctx,
          GLchan rgba[MAX_WIDTH][4];
          GLvoid *dst;
          if (ctx->Visual.rgbMode) {
-            _swrast_read_rgba_span(ctx, rb, readWidth, x, y, rgba);
+            _swrast_read_rgba_span(ctx, rb, width, x, y, rgba);
          }
          else {
             GLuint index[MAX_WIDTH];
             ASSERT(rb->DataType == GL_UNSIGNED_INT);
-            rb->GetRow(ctx, rb, readWidth, x, y, index);
+            rb->GetRow(ctx, rb, width, x, y, index);
             if (ctx->Pixel.IndexShift != 0 || ctx->Pixel.IndexOffset != 0) {
-               _mesa_map_ci(ctx, readWidth, index);
+               _mesa_map_ci(ctx, width, index);
             }
-            _mesa_map_ci_to_rgba_chan(ctx, readWidth, index, rgba);
+            _mesa_map_ci_to_rgba_chan(ctx, width, index, rgba);
          }
          dst = _mesa_image_address2d(packing, pixels, width, height,
                                      format, type, row, 0);
@@ -474,16 +474,16 @@ read_rgba_pixels( GLcontext *ctx,
              * buffers, for example.
              */
             GLfloat rgbaf[MAX_WIDTH][4];
-            _mesa_chan_to_float_span(ctx, readWidth,
+            _mesa_chan_to_float_span(ctx, width,
                                      (CONST GLchan (*)[4]) rgba, rgbaf);
-            _mesa_pack_rgba_span_float(ctx, readWidth,
+            _mesa_pack_rgba_span_float(ctx, width,
                                        (CONST GLfloat (*)[4]) rgbaf,
                                        format, type, dst, packing,
                                        ctx->_ImageTransferState);
          }
          else {
             /* GLubytes are fine */
-            _mesa_pack_rgba_span_chan(ctx, readWidth, (CONST GLchan (*)[4]) rgba,
+            _mesa_pack_rgba_span_chan(ctx, width, (CONST GLchan (*)[4]) rgba,
                                  format, type, dst, packing,
                                  ctx->_ImageTransferState);
          }
@@ -546,7 +546,7 @@ _swrast_ReadPixels( GLcontext *ctx,
                            &clippedPacking);
 	 break;
       case GL_STENCIL_INDEX:
-	 read_stencil_pixels(ctx, x,y, width,height, type, pixels,
+	 read_stencil_pixels(ctx, x, y, width, height, type, pixels,
                              &clippedPacking);
          break;
       case GL_DEPTH_COMPONENT:
