@@ -28,7 +28,6 @@
 #include "macros.h"
 #include "imports.h"
 #include "mtypes.h"
-#include "fbobject.h"
 
 #include "s_accum.h"
 #include "s_context.h"
@@ -80,21 +79,20 @@ clear_ci_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
    const GLint y = ctx->DrawBuffer->_Ymin;
    const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
    const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
-   GLuint span[MAX_WIDTH];
-   GLubyte mask[MAX_WIDTH];
-   GLint i, j;
+   GLint i;
 
    ASSERT(!ctx->Visual.rgbMode);
+   ASSERT(rb->PutRow);
+   ASSERT(rb->DataType == GL_UNSIGNED_INT);
 
-   MEMSET( mask, 1, width );
    for (i = 0; i < height;i++) {
+      GLuint span[MAX_WIDTH];
+      GLint j;
       for (j = 0; j < width;j++) {
          span[j] = ctx->Color.ClearIndex;
       }
       _swrast_mask_ci_array(ctx, rb, width, x, y + i, span);
-      ASSERT(rb->PutRow);
-      ASSERT(rb->DataType == GL_UNSIGNED_INT);
-      rb->PutRow(ctx, rb, width, x, y + i, span, mask);
+      rb->PutRow(ctx, rb, width, x, y + i, span, NULL);
    }
 }
 
@@ -256,7 +254,8 @@ clear_color_buffers(GLcontext *ctx)
 /**
  * Called via the device driver's ctx->Driver.Clear() function if the
  * device driver can't clear one or more of the buffers itself.
- * \param mask  bitwise-OR of DD_*_BIT flags.
+ * \param mask  bitfield of BUFER_BIT_* values indicating which renderbuffers
+ *              are to be cleared.
  * \param all  if GL_TRUE, clear whole buffer, else clear specified region.
  */
 void
