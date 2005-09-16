@@ -61,7 +61,8 @@ _swrast_mask_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
    ASSERT(span->arrayMask & SPAN_RGBA);
 
    if (span->arrayMask & SPAN_XY) {
-      rb->GetValues(ctx, rb, n, span->array->x, span->array->y, dest);
+      _swrast_get_values(ctx, rb, n, span->array->x, span->array->y,
+                         dest, 4 * sizeof(GLchan));
    }
    else {
       _swrast_read_rgba_span(ctx, rb, n, span->x, span->y, dest);
@@ -134,11 +135,12 @@ _swrast_mask_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
    GLuint i;
 
    ASSERT(span->arrayMask & SPAN_INDEX);
-   ASSERT(span->end < MAX_WIDTH);
+   ASSERT(span->end <= MAX_WIDTH);
    ASSERT(rb->DataType == GL_UNSIGNED_INT);
 
    if (span->arrayMask & SPAN_XY) {
-      rb->GetValues(ctx, rb, span->end, span->array->x, span->array->y, dest);
+      _swrast_get_values(ctx, rb, span->end, span->array->x, span->array->y,
+                         dest, sizeof(GLuint));
    }
    else {
       _swrast_read_index_span(ctx, rb, span->end, span->x, span->y, dest);

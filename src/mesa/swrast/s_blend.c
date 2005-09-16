@@ -858,8 +858,8 @@ _swrast_blend_span(GLcontext *ctx, struct gl_renderbuffer *rb,
    /* Read span of current frame buffer pixels */
    if (span->arrayMask & SPAN_XY) {
       /* array of x/y pixel coords */
-      rb->GetValues(ctx, rb, span->end, span->array->x, span->array->y,
-                    framebuffer);
+      _swrast_get_values(ctx, rb, span->end, span->array->x, span->array->y,
+                         framebuffer, 4 * sizeof(GLchan));
    }
    else {
       /* horizontal run of pixels */

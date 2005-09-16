@@ -192,7 +192,8 @@ _swrast_logicop_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
 
    /* Read dest values from frame buffer */
    if (span->arrayMask & SPAN_XY) {
-      rb->GetValues(ctx, rb, span->end, span->array->x, span->array->y, dest);
+      _swrast_get_values(ctx, rb, span->end, span->array->x, span->array->y,
+                         dest, sizeof(GLuint));
    }
    else {
       rb->GetRow(ctx, rb, span->end, span->x, span->y, dest);
@@ -218,7 +219,8 @@ _swrast_logicop_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
    ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
 
    if (span->arrayMask & SPAN_XY) {
-      rb->GetValues(ctx, rb, span->end, span->array->x, span->array->y, dest);
+      _swrast_get_values(ctx, rb, span->end, span->array->x, span->array->y,
+                         dest, 4 * sizeof(GLchan));
    }
    else {
       _swrast_read_rgba_span(ctx, rb, span->end, span->x, span->y, dest);

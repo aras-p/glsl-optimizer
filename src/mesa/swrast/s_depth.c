@@ -31,6 +31,7 @@
 
 #include "s_depth.h"
 #include "s_context.h"
+#include "s_span.h"
 
 
 /**
@@ -1076,14 +1077,14 @@ depth_test_pixels( GLcontext *ctx, struct sw_span *span )
       /* read depth values from buffer, test, write back */
       if (rb->DataType == GL_UNSIGNED_SHORT) {
          GLushort zbuffer[MAX_WIDTH];
-         rb->GetValues(ctx, rb, count, x, y, zbuffer);
+         _swrast_get_values(ctx, rb, count, x, y, zbuffer, sizeof(GLushort));
          depth_test_span16(ctx, count, zbuffer, z, mask );
          rb->PutValues(ctx, rb, count, x, y, zbuffer, NULL);
       }
       else {
          GLuint zbuffer[MAX_WIDTH];
          ASSERT(rb->DataType == GL_UNSIGNED_INT);
-         rb->GetValues(ctx, rb, count, x, y, zbuffer);
+         _swrast_get_values(ctx, rb, count, x, y, zbuffer, sizeof(GLuint));
          depth_test_span32(ctx, count, zbuffer, z, mask );
          rb->PutValues(ctx, rb, count, x, y, zbuffer, NULL);
       }
@@ -1130,7 +1131,8 @@ _swrast_depth_bounds_test( GLcontext *ctx, struct sw_span *span )
       /* get 16-bit values */
       GLushort zbuffer16[MAX_WIDTH], *zbuffer;
       if (span->arrayMask & SPAN_XY) {
-         rb->GetValues(ctx, rb, count, span->array->x, span->array->y, zbuffer16);
+         _swrast_get_values(ctx, rb, count, span->array->x, span->array->y,
+                            zbuffer16, sizeof(GLushort));
          zbuffer = zbuffer16;
       }
       else {
@@ -1156,7 +1158,8 @@ _swrast_depth_bounds_test( GLcontext *ctx, struct sw_span *span )
       /* get 32-bit values */
       GLuint zbuffer32[MAX_WIDTH], *zbuffer;
       if (span->arrayMask & SPAN_XY) {
-         rb->GetValues(ctx, rb, count, span->array->x, span->array->y, zbuffer32);
+         _swrast_get_values(ctx, rb, count, span->array->x, span->array->y,
+                            zbuffer32, sizeof(GLuint));
          zbuffer = zbuffer32;
       }
       else {

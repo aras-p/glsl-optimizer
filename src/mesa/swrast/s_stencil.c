@@ -32,6 +32,7 @@
 #include "s_context.h"
 #include "s_depth.h"
 #include "s_stencil.h"
+#include "s_span.h"
 
 
 
@@ -460,7 +461,7 @@ stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span, GLuint face)
       GLuint i;
 
       /* save the current mask bits */
-      MEMCPY(oldmask, mask, n * sizeof(GLubyte));
+      _mesa_memcpy(oldmask, mask, n * sizeof(GLubyte));
 
       /* apply the depth test */
       _swrast_depth_test_span(ctx, span);
@@ -913,9 +914,10 @@ stencil_and_ztest_pixels( GLcontext *ctx, struct sw_span *span, GLuint face )
       GLstencil stencil[MAX_WIDTH];
       GLubyte origMask[MAX_WIDTH];
 
-      rb->GetValues(ctx, rb, n, x, y, stencil);
+      ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
+      _swrast_get_values(ctx, rb, n, x, y, stencil, sizeof(GLubyte));
 
-      MEMCPY(origMask, mask, n * sizeof(GLubyte));
+      _mesa_memcpy(origMask, mask, n * sizeof(GLubyte));
 
       (void) do_stencil_test(ctx, face, n, stencil, mask);
 
@@ -969,7 +971,7 @@ stencil_and_ztest_pixels( GLcontext *ctx, struct sw_span *span, GLuint face )
          GLubyte passmask[MAX_WIDTH], failmask[MAX_WIDTH], oldmask[MAX_WIDTH];
          GLuint i;
 
-         MEMCPY(oldmask, mask, n * sizeof(GLubyte));
+         _mesa_memcpy(oldmask, mask, n * sizeof(GLubyte));
 
          _swrast_depth_test_span(ctx, span);
 

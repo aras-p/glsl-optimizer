@@ -1436,3 +1436,41 @@ _swrast_read_index_span( GLcontext *ctx, struct gl_renderbuffer *rb,
       }
    }
 }
+
+
+/**
+ * Wrapper for gl_renderbuffer::GetValues() which does clipping to avoid
+ * reading values outside the buffer bounds.
+ * We can use this for reading any format/type of renderbuffer.
+ * \param valueSize is the size in bytes of each value put into the
+ *                  values array.
+ */
+void
+_swrast_get_values(GLcontext *ctx, struct gl_renderbuffer *rb,
+                   GLuint count, const GLint x[], const GLint y[],
+                   void *values, GLuint valueSize)
+{
+   GLuint i, inCount = 0, inStart = 0;
+
+   for (i = 0; i < count; i++) {
+      if (x[i] >= 0 && y[i] >= 0 && x[i] < rb->Width && y[i] < rb->Height) {
+         /* inside */
+         if (inCount == 0)
+            inStart = i;
+         inCount++;
+      }
+      else {
+         if (inCount > 0) {
+            /* read [inStart, inStart + inCount) */
+            rb->GetValues(ctx, rb, inCount, x + inStart, y + inStart,
+                          (GLubyte *) values + inStart * valueSize);
+            inCount = 0;
+         }
+      }
+   }
+   if (inCount > 0) {
+      /* read last values */
+      rb->GetValues(ctx, rb, inCount, x + inStart, y + inStart,
+                    (GLubyte *) values + inStart * valueSize);
+   }
+}

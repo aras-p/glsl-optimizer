@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -37,11 +37,6 @@ _swrast_depth_test_span( GLcontext *ctx, struct sw_span *span);
 
 extern GLboolean
 _swrast_depth_bounds_test( GLcontext *ctx, struct sw_span *span );
-
-
-extern void
-_swrast_read_depth_span( GLcontext *ctx, struct gl_renderbuffer *rb,
-                         GLint n, GLint x, GLint y, GLuint depth[] );
 
 
 extern void
