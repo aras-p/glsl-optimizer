@@ -50,8 +50,8 @@ MAIN_SOURCES = \
 	main/texenvprogram.c \
 	main/texformat.c \
 	main/teximage.c \
-	main/texrender.c \
 	main/texobj.c \
+	main/texrender.c \
 	main/texstate.c \
 	main/texstore.c \
 	main/varray.c \
@@ -77,7 +77,6 @@ ARRAY_CACHE_SOURCES = \
 	array_cache/ac_import.c
 
 SWRAST_SOURCES = \
-	swrast/s_fragprog_to_c.c \
 	swrast/s_aaline.c \
 	swrast/s_aatriangle.c \
 	swrast/s_accum.c \
@@ -92,6 +91,7 @@ SWRAST_SOURCES = \
 	swrast/s_drawpix.c \
 	swrast/s_feedback.c \
 	swrast/s_fog.c \
+	swrast/s_fragprog_to_c.c \
 	swrast/s_imaging.c \
 	swrast/s_lines.c \
 	swrast/s_logic.c \
