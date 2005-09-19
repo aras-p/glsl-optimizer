@@ -452,7 +452,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
             {
                GLfloat t[4], q[4], floor_t0;
                fetch_vector1( &inst->SrcReg[0], state, t );
-               floor_t0 = (float) floor(t[0]);
+               floor_t0 = FLOORF(t[0]);
                if (floor_t0 > FLT_MAX_EXP) {
                   SET_POS_INFINITY(q[0]);
                   SET_POS_INFINITY(q[2]);
@@ -481,7 +481,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
             {
                GLfloat t[4], q[4], abs_t0;
                fetch_vector1( &inst->SrcReg[0], state, t );
-               abs_t0 = (GLfloat) fabs(t[0]);
+               abs_t0 = FABSF(t[0]);
                if (abs_t0 != 0.0F) {
                   /* Since we really can't handle infinite values on VMS
                    * like other OSes we'll use __MAXFLOAT to represent
@@ -499,7 +499,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
                   }
                   else {
                      int exponent;
-                     double mantissa = frexp(t[0], &exponent);
+                     GLfloat mantissa = FREXPF(t[0], &exponent);
                      q[0] = (GLfloat) (exponent - 1);
                      q[1] = (GLfloat) (2.0 * mantissa); /* map [.5, 1) -> [1, 2) */
                      q[2] = (GLfloat) (q[0] + LOG2(q[1]));
@@ -635,7 +635,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
             {
                GLfloat t[4];
                fetch_vector4( &inst->SrcReg[0], state, t );
-               state->AddressReg[0] = (GLint) floor(t[0]);
+               state->AddressReg[0] = (GLint) FLOORF(t[0]);
             }
             break;
          case VP_OPCODE_DPH:

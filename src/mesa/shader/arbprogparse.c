@@ -3886,7 +3886,7 @@ static int extension_is_supported (const GLubyte *ext)
 
    while (extensions < end)
    {
-      const GLubyte *name_end = (const GLubyte *) strchr ((const char *) extensions, ' ');
+      const GLubyte *name_end = (const GLubyte *) _mesa_strstr ((const char *) extensions, " ");
       if (name_end == NULL)
          name_end = end;
       if (name_end - extensions == ext_len && _mesa_strncmp ((const char *) ext,
@@ -4037,7 +4037,7 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    strz[len] = '\0';
 
 #if DEBUG_PARSING
-   printf ("Checking Grammar!\n");
+   fprintf (stderr, "Checking Grammar!\n");
 #endif
    /* do a fast check on program string - initial production buffer is 4K */
    err = grammar_fast_check (arbprogram_syn_id, strz, &parsed, &parsed_len, 0x1000);
@@ -4050,21 +4050,23 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
       _mesa_error (ctx, GL_INVALID_OPERATION, "glProgramStringARB(syntax error)");
 
       /* useful for debugging */
-      if (0) {
+#if DEBUG_PARSING
+      do {
          int line, col;
          char *s;
-         printf("Program: %s\n", (char *) strz);
-         printf("Error Pos: %d\n", ctx->Program.ErrorPos);
+         fprintf(stderr, "Program: %s\n", (char *) strz);
+         fprintf(stderr, "Error Pos: %d\n", ctx->Program.ErrorPos);
          s = (char *) _mesa_find_line_column(strz, strz+ctx->Program.ErrorPos, &line, &col);
-         printf("line %d col %d: %s\n", line, col, s);
-      }
+         fprintf(stderr, "line %d col %d: %s\n", line, col, s);
+      } while (0)
+#endif
 
       grammar_destroy (arbprogram_syn_id);
       return 1;
    }
 
 #if DEBUG_PARSING
-   printf ("Destroying grammer dict [parse retval: %d]\n", err);
+   fprintf (stderr, "Destroying grammer dict [parse retval: %d]\n", err);
 #endif
    grammar_destroy (arbprogram_syn_id);
 
@@ -4120,7 +4122,7 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
 
    _mesa_free (parsed);
 #if DEBUG_PARSING
-   printf ("_mesa_parse_arb_program() done\n");
+   fprintf (stderr, "_mesa_parse_arb_program() done\n");
 #endif
    return err;
 }

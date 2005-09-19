@@ -113,8 +113,12 @@ static void _tnl_vb_bind_vtx( GLcontext *ctx )
    GLuint count = tnl->vtx.initial_counter - tnl->vtx.counter;
    GLuint attr, i;
 
-   if (0) fprintf(stderr, "_tnl_vb_bind_vtx(): %d verts %d vertsize\n",
+#undef DEBUG_VTX
+
+#ifdef DEBUG_VTX
+   fprintf(stderr, "_tnl_vb_bind_vtx(): %d verts %d vertsize\n",
 		  count, tnl->vtx.vertex_size);
+#endif
 
 
    /* Setup constant data in the VB.

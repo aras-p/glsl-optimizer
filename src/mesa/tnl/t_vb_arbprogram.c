@@ -97,7 +97,7 @@ static GLfloat RoughApproxPower(GLfloat x, GLfloat y)
  */
 static GLfloat ApproxLog2(GLfloat t)
 {
-   return (GLfloat) (log(t) * 1.442695F);
+   return (GLfloat) (LOGF(t) * 1.442695F);
 }
 
 static GLfloat ApproxExp2(GLfloat t)

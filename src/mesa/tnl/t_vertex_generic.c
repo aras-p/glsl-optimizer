@@ -203,7 +203,7 @@ static INLINE void insert_3f_xyw_4( const struct tnl_clipspace_attr *a, GLubyte 
 static INLINE void insert_3f_xyw_err( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
 {
    (void) a; (void) v; (void) in;
-   abort();
+   _mesa_exit(1);
 }
 
 static INLINE void insert_3f_3( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )

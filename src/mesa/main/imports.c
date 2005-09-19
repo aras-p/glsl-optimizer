@@ -23,7 +23,6 @@
  * \todo Functions still needed:
  * - scanf
  * - qsort
- * - bsearch
  * - rand and RAND_MAX
  *
  * \note When compiled into a XFree86 module these functions wrap around
@@ -529,6 +528,34 @@ _mesa_pow(double x, double y)
 }
 
 
+/* Windows does not have the ffs() function */
+#if defined(_WIN32) && !defined(__MINGW32__)
+int INLINE ffs(int value)
+{
+    int bit;
+    if (value == 0)
+	return 0;
+    for (bit=1; !(value & 1); bit++)
+	value >>= 1;
+    return bit;
+}
+#endif
+
+
+/**
+ * Wrapper around either ffs() or xf86ffs().
+ */
+int
+_mesa_ffs(int i)
+{
+#if defined(XFree86LOADER) && defined(IN_MODULE)
+   return xf86ffs(i);
+#else
+   return ffs(i);
+#endif
+}
+
+
 /**
  * Return number of bits set in given GLuint.
  */
@@ -679,6 +706,27 @@ _mesa_half_to_float(GLhalfARB val)
    flt = (flt_s << 31) | (flt_e << 23) | flt_m;
    result = *((float *) (void *) &flt);
    return result;
+}
+
+/*@}*/
+
+
+/**********************************************************************/
+/** \name Sort & Search */
+/*@{*/
+
+/**
+ * Wrapper for bsearch().
+ */
+void *
+_mesa_bsearch( const void *key, const void *base, size_t nmemb, size_t size, 
+               int (*compar)(const void *, const void *) )
+{
+#if defined(XFree86LOADER) && defined(IN_MODULE)
+   return xf86bsearch(key, base, nmemb, size, compar);
+#else
+   return bsearch(key, base, nmemb, size, compar);
+#endif
 }
 
 /*@}*/
@@ -860,6 +908,17 @@ _mesa_printf( const char *fmtString, ... )
 #endif
 }
 
+/** Wrapper around either vsprintf() or xf86vsprintf() */
+int
+_mesa_vsprintf( char *str, const char *fmt, va_list args )
+{
+#if defined(XFree86LOADER) && defined(IN_MODULE)
+   return xf86vsprintf( str, fmt, args );
+#else
+   return vsprintf( str, fmt, args );
+#endif
+}
+
 /*@}*/
 
 
@@ -1029,6 +1088,26 @@ _mesa_debug( const GLcontext *ctx, const char *fmtString, ... )
    xf86fprintf(stderr, "Mesa: %s", s);
 #else
    fprintf(stderr, "Mesa: %s", s);
+#endif
+}
+
+/*@}*/
+
+
+/**********************************************************************/
+/** \name Exit */
+/*@{*/
+
+/**
+ * Wrapper for exit().
+ */
+void
+_mesa_exit( int status )
+{
+#if defined(XFree86LOADER) && defined(IN_MODULE)
+   xf86exit(status);
+#else
+   exit(status);
 #endif
 }
 

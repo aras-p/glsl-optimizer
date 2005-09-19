@@ -821,7 +821,7 @@ execute_program( GLcontext *ctx,
                result[0] = 1.0F;
                result[1] = a[0];
                /* XXX we could probably just use pow() here */
-               result[2] = (a[0] > 0.0F) ? (GLfloat) exp(a[3] * log(a[1])) : 0.0F;
+               result[2] = (a[0] > 0.0F) ? EXPF(a[3] * LOGF(a[1])) : 0.0F;
                result[3] = 1.0F;
                store_vector4( inst, machine, result );
             }

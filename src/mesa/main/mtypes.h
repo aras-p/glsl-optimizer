@@ -36,6 +36,7 @@
 
 
 #include "glheader.h"
+#include <GL/internal/glcore.h>	/* GLimports/GLexports/GLcontextModes */
 #include "config.h"		/* Hardwired parameters */
 #include "glapitable.h"
 #include "glthread.h"

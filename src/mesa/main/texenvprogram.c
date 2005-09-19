@@ -350,16 +350,16 @@ static struct ureg get_temp( struct texenv_fragment_program *p )
    
    /* First try and reuse temps which have been used already:
     */
-   bit = ffs( ~p->temp_in_use & p->alu_temps );
+   bit = _mesa_ffs( ~p->temp_in_use & p->alu_temps );
 
    /* Then any unused temporary:
     */
    if (!bit)
-      bit = ffs( ~p->temp_in_use );
+      bit = _mesa_ffs( ~p->temp_in_use );
 
    if (!bit) {
       _mesa_problem(NULL, "%s: out of temporaries\n", __FILE__);
-      exit(1);
+      _mesa_exit(1);
    }
 
    if (bit > p->program->Base.NumTemporaries)
@@ -378,16 +378,16 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
     * ~p->temps_output isn't necessary, but will keep it there for
     * now:
     */
-   bit = ffs( ~p->temp_in_use & ~p->alu_temps & ~p->temps_output );
+   bit = _mesa_ffs( ~p->temp_in_use & ~p->alu_temps & ~p->temps_output );
 
    /* Then any unused temporary:
     */
    if (!bit) 
-      bit = ffs( ~p->temp_in_use );
+      bit = _mesa_ffs( ~p->temp_in_use );
 
    if (!bit) {
       _mesa_problem(NULL, "%s: out of temporaries\n", __FILE__);
-      exit(1);
+      _mesa_exit(1);
    }
 
    if (bit > p->program->Base.NumTemporaries)

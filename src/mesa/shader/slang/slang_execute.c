@@ -34,6 +34,9 @@
 #include "slang_storage.h"
 #include "slang_execute.h"
 
+#define DEBUG_SLANG
+
+#ifdef DEBUG_SLANG
 static void dump_instruction (FILE *f, slang_assembly *a, unsigned int i)
 {
 	fprintf (f, "%.5u:\t", i);
@@ -179,11 +182,14 @@ static void dump (const slang_assembly_file *file)
 
 	fclose (f);
 }
+#endif
 
 int _slang_execute (const slang_assembly_file *file)
 {
 	slang_machine mach;
+#ifdef DEBUG_SLANG
 	FILE *f;
+#endif
 
 	mach.ip = 0;
 	mach.sp = SLANG_MACHINE_STACK_SIZE;
@@ -200,13 +206,18 @@ int _slang_execute (const slang_assembly_file *file)
 	static_assert(sizeof (GLuint) == 4);
 	/*static_assert(sizeof (GLuint *) == 4);*/
 
+#ifdef DEBUG_SLANG
 	dump (file);
+#endif
 
+#ifdef DEBUG_SLANG
 	f = fopen ("~mesa-slang-assembly-execution.txt", "w");
+#endif
 
 	while (!mach.exit)
 	{
 		slang_assembly *a = file->code + mach.ip;
+#ifdef DEBUG_SLANG
 		if (f != NULL)
 		{
 			unsigned int i;
@@ -216,6 +227,7 @@ int _slang_execute (const slang_assembly_file *file)
 				fprintf (f, "\t%.5u\t%6f\t%u\n", i, mach.stack._float[i], mach.stack._addr[i]);
 			fflush (f);
 		}
+#endif
 		mach.ip++;
 
 		switch (a->type)
@@ -344,8 +356,10 @@ int _slang_execute (const slang_assembly_file *file)
 		}
 	}
 
+#ifdef DEBUG_SLANG
 	if (f != NULL)
 		fclose (f);
+#endif
 
 	return 0;
 }

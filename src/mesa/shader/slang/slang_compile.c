@@ -635,7 +635,7 @@ int slang_info_log_error (slang_info_log *log, const char *msg, ...)
 	char buf[1024];
 
 	va_start (va, msg);
-	_mesa_sprintf (buf, msg, va);
+	_mesa_vsprintf (buf, msg, va);
 	if (slang_info_log_message (log, "error", buf))
 		return 1;
 	slang_info_log_memory (log);
@@ -649,7 +649,7 @@ int slang_info_log_warning (slang_info_log *log, const char *msg, ...)
 	char buf[1024];
 
 	va_start (va, msg);
-	_mesa_sprintf (buf, msg, va);
+	_mesa_vsprintf (buf, msg, va);
 	if (slang_info_log_message (log, "warning", buf))
 		return 1;
 	slang_info_log_memory (log);
@@ -685,7 +685,7 @@ static int parse_identifier (slang_parse_ctx *C, char **id)
 		slang_info_log_memory (C->L);
 		return 0;
 	}
-	C->I += strlen ((const char *) C->I) + 1;
+	C->I += _mesa_strlen ((const char *) C->I) + 1;
 	return 1;
 }
 
@@ -734,8 +734,9 @@ static int parse_float (slang_parse_ctx *C, float *number)
 		return 0;
 	}
 
-	whole = (char *) (slang_alloc_malloc ((strlen (integral) + strlen (fractional) + strlen (
-		exponent) + 3) * sizeof (char)));
+	whole = (char *) (slang_alloc_malloc ((_mesa_strlen (integral) + 
+		_mesa_strlen (fractional) + _mesa_strlen (exponent) + 3) * 
+		sizeof (char)));
 	if (whole == NULL)
 	{
 		slang_alloc_free (exponent);
@@ -751,7 +752,7 @@ static int parse_float (slang_parse_ctx *C, float *number)
 	slang_string_concat (whole, "E");
 	slang_string_concat (whole, exponent);
 
-	*number = (float) (atof (whole));
+	*number = (float) (_mesa_strtod(whole, (char **)NULL));
 
 	slang_alloc_free (whole);
 	slang_alloc_free (exponent);
@@ -2115,7 +2116,7 @@ if (slang_string_compare ("main", (**parsed_func_ret).header.name) == 0)
 xxx_prolog (&file, (**parsed_func_ret).address);
 _slang_execute (&file);
 slang_assembly_file_destruct (&file);
-exit (0);
+_mesa_exit (0);
 }
 	}
 	return 1;

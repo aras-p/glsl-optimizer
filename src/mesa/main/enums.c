@@ -4542,7 +4542,7 @@ const char *_mesa_lookup_enum_by_nr( int nr )
 {
    unsigned * i;
 
-   i = (unsigned *)bsearch( & nr, reduced_enums, Elements(reduced_enums),
+   i = (unsigned *)_mesa_bsearch( & nr, reduced_enums, Elements(reduced_enums),
                             sizeof(reduced_enums[0]), (cfunc) compar_nr );
 
    if ( i != NULL ) {
@@ -4560,7 +4560,7 @@ int _mesa_lookup_enum_by_name( const char *symbol )
    enum_elt * f = NULL;
 
    if ( symbol != NULL ) {
-      f = (enum_elt *)bsearch( symbol, all_enums, Elements(all_enums),
+      f = (enum_elt *)_mesa_bsearch( symbol, all_enums, Elements(all_enums),
 			       sizeof( enum_elt ), (cfunc) compar_name );
    }
 

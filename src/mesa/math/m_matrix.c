@@ -382,9 +382,9 @@ static GLboolean invert_matrix_general( GLmatrix *mat )
    r3[7] = 1.0, r3[4] = r3[5] = r3[6] = 0.0;
 
    /* choose pivot - or die */
-   if (fabs(r3[0])>fabs(r2[0])) SWAP_ROWS(r3, r2);
-   if (fabs(r2[0])>fabs(r1[0])) SWAP_ROWS(r2, r1);
-   if (fabs(r1[0])>fabs(r0[0])) SWAP_ROWS(r1, r0);
+   if (FABSF(r3[0])>FABSF(r2[0])) SWAP_ROWS(r3, r2);
+   if (FABSF(r2[0])>FABSF(r1[0])) SWAP_ROWS(r2, r1);
+   if (FABSF(r1[0])>FABSF(r0[0])) SWAP_ROWS(r1, r0);
    if (0.0 == r0[0])  return GL_FALSE;
 
    /* eliminate first variable     */
@@ -402,8 +402,8 @@ static GLboolean invert_matrix_general( GLmatrix *mat )
    if (s != 0.0) { r1[7] -= m1 * s; r2[7] -= m2 * s; r3[7] -= m3 * s; }
 
    /* choose pivot - or die */
-   if (fabs(r3[1])>fabs(r2[1])) SWAP_ROWS(r3, r2);
-   if (fabs(r2[1])>fabs(r1[1])) SWAP_ROWS(r2, r1);
+   if (FABSF(r3[1])>FABSF(r2[1])) SWAP_ROWS(r3, r2);
+   if (FABSF(r2[1])>FABSF(r1[1])) SWAP_ROWS(r2, r1);
    if (0.0 == r1[1])  return GL_FALSE;
 
    /* eliminate second variable */
@@ -416,7 +416,7 @@ static GLboolean invert_matrix_general( GLmatrix *mat )
    s = r1[7]; if (0.0 != s) { r2[7] -= m2 * s; r3[7] -= m3 * s; }
 
    /* choose pivot - or die */
-   if (fabs(r3[2])>fabs(r2[2])) SWAP_ROWS(r3, r2);
+   if (FABSF(r3[2])>FABSF(r2[2])) SWAP_ROWS(r3, r2);
    if (0.0 == r2[2])  return GL_FALSE;
 
    /* eliminate third variable */
@@ -1075,7 +1075,7 @@ _math_matrix_scale( GLmatrix *mat, GLfloat x, GLfloat y, GLfloat z )
    m[2] *= x;   m[6] *= y;   m[10] *= z;
    m[3] *= x;   m[7] *= y;   m[11] *= z;
 
-   if (fabs(x - y) < 1e-8 && fabs(x - z) < 1e-8)
+   if (FABSF(x - y) < 1e-8 && FABSF(x - z) < 1e-8)
       mat->flags |= MAT_FLAG_UNIFORM_SCALE;
    else
       mat->flags |= MAT_FLAG_GENERAL_SCALE;

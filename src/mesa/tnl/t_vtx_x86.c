@@ -44,7 +44,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "t_vtx_api.h"
 #include "simple_list.h"
 
-
 #if defined(USE_X86_ASM) && !defined(HAVE_NONSTANDARD_GLAPIENTRY)
 
 #define EXTERN( FUNC )		\
@@ -94,6 +93,18 @@ EXTERN( _tnl_x86_choose_fv );
 
 
 
+#undef DEBUG_VTX
+
+#ifdef DEBUG_VTX
+#define FIXUP_PRINTF( offset, NEWVAL ) \
+      fprintf(stderr, "%s/%d: offset %d, new value: 0x%x\n", __FILE__, __LINE__, offset, (int)(NEWVAL))
+#define FIXUPREL_PRINTF( offset, NEWVAL, CODE ) \
+      fprintf(stderr, "%s/%d: offset %d, new value: 0x%x\n", __FILE__, __LINE__, offset, (int)(NEWVAL) - ((int)(CODE)+offset) - 4)
+#else
+#define FIXUP_PRINTF( offset, NEWVAL )
+#define FIXUPREL_PRINTF( offset, NEWVAL, CODE )
+#endif
+
 #define FIXUP( CODE, KNOWN_OFFSET, CHECKVAL, NEWVAL )	\
 do {							\
    GLint subst = 0x10101010 + CHECKVAL;			\
@@ -101,7 +112,7 @@ do {							\
    if (DONT_KNOW_OFFSETS) {				\
       while (*(int *)(CODE+offset) != subst) offset++;	\
       *(int *)(CODE+offset) = (int)(NEWVAL);		\
-      if (0) fprintf(stderr, "%s/%d: offset %d, new value: 0x%x\n", __FILE__, __LINE__, offset, (int)(NEWVAL)); \
+      FIXUP_PRINTF(offset, NEWVAL);			\
       offset += 4;					\
    }							\
    else {						\
@@ -120,7 +131,7 @@ do {							\
    if (DONT_KNOW_OFFSETS) {				\
       while (*(int *)(CODE+offset) != subst) offset++;	\
       *(int *)(CODE+offset) = (int)(NEWVAL) - ((int)(CODE)+offset) - 4; \
-      if (0) fprintf(stderr, "%s/%d: offset %d, new value: 0x%x\n", __FILE__, __LINE__, offset, (int)(NEWVAL) - ((int)(CODE)+offset) - 4); \
+      FIXUPREL_PRINTF(offset, NEWVAL, CODE);		\
       offset += 4;					\
    }							\
    else {						\

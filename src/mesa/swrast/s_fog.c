@@ -51,12 +51,12 @@ _swrast_z_to_fogfactor(GLcontext *ctx, GLfloat z)
       return CLAMP(f, 0.0F, 1.0F);
    case GL_EXP:
       d = ctx->Fog.Density;
-      f = (GLfloat) exp(-d * z);
+      f = EXPF(-d * z);
       f = CLAMP(f, 0.0F, 1.0F);
       return f;
    case GL_EXP2:
       d = ctx->Fog.Density;
-      f = (GLfloat) exp(-(d * d * z * z));
+      f = EXPF(-(d * d * z * z));
       f = CLAMP(f, 0.0F, 1.0F);
       return f;
    default:
@@ -130,7 +130,7 @@ _swrast_fog_rgba_span( const GLcontext *ctx, struct sw_span *span )
             GLuint i;
             for (i = 0; i < span->end; i++) {
                GLfloat f, oneMinusF;
-               f = (GLfloat) exp(density * FABSF(fogCoord) / w);
+               f = EXPF(density * FABSF(fogCoord) / w);
                f = CLAMP(f, 0.0F, 1.0F);
                oneMinusF = 1.0F - f;
                rgba[i][RCOMP] = (GLchan) (f * rgba[i][RCOMP] + oneMinusF * rFog);
@@ -158,7 +158,7 @@ _swrast_fog_rgba_span( const GLcontext *ctx, struct sw_span *span )
                if (tmp < FLT_MIN_10_EXP)
                   tmp = FLT_MIN_10_EXP;
 #endif
-               f = (GLfloat) exp(tmp);
+               f = EXPF(tmp);
                f = CLAMP(f, 0.0F, 1.0F);
                oneMinusF = 1.0F - f;
                rgba[i][RCOMP] = (GLchan) (f * rgba[i][RCOMP] + oneMinusF * rFog);
@@ -259,7 +259,7 @@ _swrast_fog_ci_span( const GLcontext *ctx, struct sw_span *span )
             GLfloat w = haveW ? span->w : 1.0F;
             GLuint i;
             for (i = 0; i < span->end; i++) {
-               GLfloat f = (GLfloat) exp(density * fogCoord / w);
+               GLfloat f = EXPF(density * fogCoord / w);
                f = CLAMP(f, 0.0F, 1.0F);
                index[i] = (GLuint) ((GLfloat) index[i] + (1.0F - f) * fogIndex);
                fogCoord += fogStep;
@@ -284,7 +284,7 @@ _swrast_fog_ci_span( const GLcontext *ctx, struct sw_span *span )
                if (tmp < FLT_MIN_10_EXP)
                   tmp = FLT_MIN_10_EXP;
 #endif
-               f = (GLfloat) exp(tmp);
+               f = EXPF(tmp);
                f = CLAMP(f, 0.0F, 1.0F);
                index[i] = (GLuint) ((GLfloat) index[i] + (1.0F - f) * fogIndex);
                fogCoord += fogStep;

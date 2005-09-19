@@ -297,7 +297,7 @@ repeat_remainder(GLint a, GLint b)
       }									\
       break;								\
    case GL_MIRROR_CLAMP_EXT:						\
-      U = (GLfloat) fabs(S);						\
+      U = FABSF(S);							\
       if (U >= 1.0F)							\
          U = (GLfloat) SIZE;						\
       else								\
@@ -307,7 +307,7 @@ repeat_remainder(GLint a, GLint b)
       I1 = I0 + 1;							\
       break;								\
    case GL_MIRROR_CLAMP_TO_EDGE_EXT:					\
-      U = (GLfloat) fabs(S);						\
+      U = FABSF(S);							\
       if (U >= 1.0F)							\
          U = (GLfloat) SIZE;						\
       else								\
@@ -324,7 +324,7 @@ repeat_remainder(GLint a, GLint b)
       {									\
          const GLfloat min = -1.0F / (2.0F * SIZE);			\
          const GLfloat max = 1.0F - min;				\
-         U = (GLfloat) fabs(S);						\
+         U = FABSF(S);							\
          if (U <= min)							\
             U = min * SIZE;						\
          else if (U >= max)						\
@@ -418,7 +418,7 @@ repeat_remainder(GLint a, GLint b)
       {									\
          /* s limited to [0,1] */					\
          /* i limited to [0,size-1] */					\
-         const GLfloat u = (GLfloat) fabs(S);				\
+         const GLfloat u = FABSF(S);					\
          if (u <= 0.0F)							\
             I = 0;							\
          else if (u >= 1.0F)						\
@@ -433,7 +433,7 @@ repeat_remainder(GLint a, GLint b)
          /* i limited to [0, size-1] */					\
          const GLfloat min = 1.0F / (2.0F * SIZE);			\
          const GLfloat max = 1.0F - min;				\
-         const GLfloat u = (GLfloat) fabs(S);				\
+         const GLfloat u = FABSF(S);					\
          if (u < min)							\
             I = 0;							\
          else if (u > max)						\
@@ -448,7 +448,7 @@ repeat_remainder(GLint a, GLint b)
          /* i limited to [0, size-1] */					\
          const GLfloat min = -1.0F / (2.0F * SIZE);			\
          const GLfloat max = 1.0F - min;				\
-         const GLfloat u = (GLfloat) fabs(S);				\
+         const GLfloat u = FABSF(S);					\
          if (u < min)							\
             I = -1;							\
          else if (u > max)						\

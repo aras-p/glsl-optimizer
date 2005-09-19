@@ -71,7 +71,7 @@ static void message( const char *msg )
    }
 #endif
    if ( debug ) {
-      fprintf( stderr, "%s", msg );
+      _mesa_debug( NULL, "%s", msg );
    }
 }
 

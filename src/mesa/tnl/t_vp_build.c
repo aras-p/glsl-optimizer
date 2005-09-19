@@ -326,10 +326,10 @@ static struct ureg swizzle1( struct ureg reg, int x )
 
 static struct ureg get_temp( struct tnl_program *p )
 {
-   int bit = ffs( ~p->temp_in_use );
+   int bit = _mesa_ffs( ~p->temp_in_use );
    if (!bit) {
-      fprintf(stderr, "%s: out of temporaries\n", __FILE__);
-      exit(1);
+      _mesa_problem(NULL, "%s: out of temporaries\n", __FILE__);
+      _mesa_exit(1);
    }
 
    p->temp_in_use |= 1<<(bit-1);

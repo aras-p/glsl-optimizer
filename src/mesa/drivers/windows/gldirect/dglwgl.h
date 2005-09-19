@@ -60,6 +60,31 @@ typedef struct {
 	char *name;
 }  DGL_extension;
 
+#ifndef __MINGW32__
+/* XXX why is this here?
+ * It should probaby be somewhere in src/mesa/drivers/windows/
+ */
+#if defined(_WIN32) && !defined(_WINGDI_) && !defined(_WINGDI_H) && !defined(_GNU_H_WINDOWS32_DEFINES) && !defined(OPENSTEP) && !defined(BUILD_FOR_SNAP) 
+#	define WGL_FONT_LINES      0
+#	define WGL_FONT_POLYGONS   1
+#ifndef _GNU_H_WINDOWS32_FUNCTIONS
+#	ifdef UNICODE
+#		define wglUseFontBitmaps  wglUseFontBitmapsW
+#		define wglUseFontOutlines  wglUseFontOutlinesW
+#	else
+#		define wglUseFontBitmaps  wglUseFontBitmapsA
+#		define wglUseFontOutlines  wglUseFontOutlinesA
+#	endif /* !UNICODE */
+#endif /* _GNU_H_WINDOWS32_FUNCTIONS */
+typedef struct tagLAYERPLANEDESCRIPTOR LAYERPLANEDESCRIPTOR, *PLAYERPLANEDESCRIPTOR, *LPLAYERPLANEDESCRIPTOR;
+typedef struct _GLYPHMETRICSFLOAT GLYPHMETRICSFLOAT, *PGLYPHMETRICSFLOAT, *LPGLYPHMETRICSFLOAT;
+typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESCRIPTOR, *LPPIXELFORMATDESCRIPTOR;
+#if !defined(GLX_USE_MESA)
+#include <GL/mesa_wgl.h>
+#endif
+#endif
+#endif /* !__MINGW32__ */
+
 /*------------------------- Function Prototypes ---------------------------*/
 
 #ifdef  __cplusplus

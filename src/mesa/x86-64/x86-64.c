@@ -1,4 +1,4 @@
-/* $Id: x86-64.c,v 1.1 2005/05/07 16:59:59 brianp Exp $ */
+/* $Id: x86-64.c,v 1.2 2005/09/19 20:12:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -70,7 +70,7 @@ static void message( const char *msg )
    }
 #endif
    if ( debug ) {
-      fprintf( stderr, "%s", msg );
+      _mesa_debug( NULL, "%s", msg );
    }
 }
 #endif

@@ -118,32 +118,6 @@ typedef UINT_PTR uintptr_t;
 #endif /* WIN32 / CYGWIN bracket */
 
 
-#ifndef __MINGW32__
-/* XXX why is this here?
- * It should probaby be somewhere in src/mesa/drivers/windows/
- */
-#if defined(_WIN32) && !defined(_WINGDI_) && !defined(_WINGDI_H) && !defined(_GNU_H_WINDOWS32_DEFINES) && !defined(OPENSTEP) && !defined(BUILD_FOR_SNAP) 
-#	define WGL_FONT_LINES      0
-#	define WGL_FONT_POLYGONS   1
-#ifndef _GNU_H_WINDOWS32_FUNCTIONS
-#	ifdef UNICODE
-#		define wglUseFontBitmaps  wglUseFontBitmapsW
-#		define wglUseFontOutlines  wglUseFontOutlinesW
-#	else
-#		define wglUseFontBitmaps  wglUseFontBitmapsA
-#		define wglUseFontOutlines  wglUseFontOutlinesA
-#	endif /* !UNICODE */
-#endif /* _GNU_H_WINDOWS32_FUNCTIONS */
-typedef struct tagLAYERPLANEDESCRIPTOR LAYERPLANEDESCRIPTOR, *PLAYERPLANEDESCRIPTOR, *LPLAYERPLANEDESCRIPTOR;
-typedef struct _GLYPHMETRICSFLOAT GLYPHMETRICSFLOAT, *PGLYPHMETRICSFLOAT, *LPGLYPHMETRICSFLOAT;
-typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESCRIPTOR, *LPPIXELFORMATDESCRIPTOR;
-#if !defined(GLX_USE_MESA)
-#include <GL/mesa_wgl.h>
-#endif
-#endif
-#endif /* !__MINGW32__ */
-
-
 /*
  * Either define MESA_BIG_ENDIAN or MESA_LITTLE_ENDIAN.
  * Do not use them unless absolutely necessary!
@@ -173,7 +147,6 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #if !defined(CAPI) && defined(WIN32) && !defined(BUILD_FOR_SNAP)
 #define CAPI _cdecl
 #endif
-#include <GL/internal/glcore.h>
 
 
 /* This is a macro on IRIX */
@@ -266,20 +239,6 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #if !defined __GNUC__ || __GNUC__ < 3
 #  define __builtin_expect(x, y) x
 #endif
-
-/* Windows does not have the ffs() function */
-#if defined(_WIN32) && !defined(__MINGW32__)
-int INLINE ffs(int value)
-{
-    int bit;
-    if (value == 0)
-	return 0;
-    for (bit=1; !(value & 1); bit++)
-	value >>= 1;
-    return bit;
-}
-#endif
-
 
 /* The __FUNCTION__ gcc variable is generally only used for debugging.
  * If we're not using gcc, define __FUNCTION__ as a cpp symbol here.
