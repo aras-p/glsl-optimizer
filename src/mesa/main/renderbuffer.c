@@ -933,7 +933,7 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->ComponentSizes[1] = 8 * sizeof(GLubyte);
       rb->ComponentSizes[2] = 8 * sizeof(GLubyte);
       rb->ComponentSizes[3] = 0;
-      pixelSize = 3 * sizeof(GLchan);
+      pixelSize = 3 * sizeof(GLubyte);
       break;
    case GL_RGBA:
    case GL_RGBA2:
@@ -1441,6 +1441,7 @@ _mesa_delete_renderbuffer(struct gl_renderbuffer *rb)
  * Allocate a software-based renderbuffer.  This is called via the
  * ctx->Driver.NewRenderbuffer() function when the user creates a new
  * renderbuffer.
+ * This would not be used for hardware-based renderbuffers.
  */
 struct gl_renderbuffer *
 _mesa_new_soft_renderbuffer(GLcontext *ctx, GLuint name)
@@ -1541,7 +1542,7 @@ _mesa_add_color_index_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
 
    if (indexBits > 8) {
       _mesa_problem(ctx,
-                    "Unsupported bit depth in _mesa_add_color_renderbuffers");
+                "Unsupported bit depth in _mesa_add_color_index_renderbuffers");
       return GL_FALSE;
    }
 
