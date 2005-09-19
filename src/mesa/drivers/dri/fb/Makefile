@@ -15,6 +15,9 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
+# XXX not 100% sure this is right
+WINDOW_SYSTEM = solo
+
 include ../Makefile.template
 
 symlinks:

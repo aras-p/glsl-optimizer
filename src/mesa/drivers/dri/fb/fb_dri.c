@@ -41,7 +41,7 @@
  *      that may not be valid everywhere.
  */
 
-/*#include "driver.h"*/
+#include "driver.h"
 #include "drm.h"
 #include "utils.h"
 #include "drirenderbuffer.h"
@@ -468,7 +468,7 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                    swDepth,
                                    swStencil,
                                    swAccum,
-                                   0,
+                                   swAlpha, /* or always zero? */
                                    GL_FALSE /* aux */);
       
       driDrawPriv->driverPrivate = mesa_framebuffer;
@@ -610,7 +610,8 @@ __driInitFBDev( struct DRIDriverContextRec *ctx )
       return 0;
    }
    fprintf(stderr, "[drm] added %d byte SAREA at 0x%08lx\n",
-           ctx->shared.SAREASize, ctx->shared.hSAREA);
+           ctx->shared.SAREASize,
+           (unsigned long) ctx->shared.hSAREA);
 
    if (drmMap( ctx->drmFD,
        ctx->shared.hSAREA,
@@ -622,7 +623,8 @@ __driInitFBDev( struct DRIDriverContextRec *ctx )
    }
    memset(ctx->pSAREA, 0, ctx->shared.SAREASize);
    fprintf(stderr, "[drm] mapped SAREA 0x%08lx to %p, size %d\n",
-           ctx->shared.hSAREA, ctx->pSAREA, ctx->shared.SAREASize);
+           (unsigned long) ctx->shared.hSAREA, ctx->pSAREA,
+           ctx->shared.SAREASize);
    
    /* Need to AddMap the framebuffer and mmio regions here:
    */
@@ -642,7 +644,7 @@ __driInitFBDev( struct DRIDriverContextRec *ctx )
    }
 
    fprintf(stderr, "[drm] framebuffer handle = 0x%08lx\n",
-           ctx->shared.hFrameBuffer);
+           (unsigned long) ctx->shared.hFrameBuffer);
 
    return 1;
 }

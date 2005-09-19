@@ -83,7 +83,14 @@ typedef struct fb_context
 {
    _EGLContext Base;  /* base class/object */
    GLcontext *glCtx;
-} fbContext;
+   struct {
+      __DRIcontextPrivate *context;	
+      __DRIscreenPrivate *screen;	
+      __DRIdrawablePrivate *drawable; /* drawable bound to this ctx */
+   } dri;
+} fbContext, *fbContextPtr;
+
+#define FB_CONTEXT(ctx)		((fbContextPtr)(ctx->DriverCtx))
 
 
 static EGLBoolean
