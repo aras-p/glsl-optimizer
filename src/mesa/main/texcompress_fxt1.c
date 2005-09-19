@@ -1657,7 +1657,7 @@ fxt1_decode_1ALPHA (const GLubyte *code, GLint t, GLchan *rgba)
 
       if (t == 3) {
          /* zero */
-         r = g = b = 0;
+         r = g = b = a = 0;
       } else {
          GLuint kk;
          cc = (const GLuint *)code;
