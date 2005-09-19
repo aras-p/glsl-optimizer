@@ -87,9 +87,9 @@ typedef struct DRIDriverContextRec {
     * the initial handshaking.
     */
    struct {
-      unsigned long hSAREA;
+      drm_handle_t hSAREA;
       int SAREASize;
-      unsigned long hFrameBuffer;
+      drm_handle_t hFrameBuffer;
       int fbOrigin;
       int fbSize;
       int fbStride;
