@@ -581,8 +581,8 @@ _mesa_ReadBuffer(GLenum buffer)
  * ResizeBuffers function.  The driver will then resize its color buffers
  * as needed, and maybe call the swrast's routine for reallocating
  * swrast-managed depth/stencil/accum/etc buffers.
- * \note This function may be called from within Mesa or called by the
- * user directly (see the GL_MESA_resize_buffers extension).
+ * \note This function should only be called through the GL API, not
+ * from device drivers (as was done in the past).
  */
 void GLAPIENTRY
 _mesa_ResizeBuffersMESA( void )
