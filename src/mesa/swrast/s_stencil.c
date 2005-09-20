@@ -69,6 +69,7 @@ apply_stencil_op( const GLcontext *ctx, GLenum oper, GLuint face,
    const GLstencil ref = ctx->Stencil.Ref[face];
    const GLstencil wrtmask = ctx->Stencil.WriteMask[face];
    const GLstencil invmask = (GLstencil) (~wrtmask);
+   const GLstencil stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
    GLuint i;
 
    switch (oper) {
@@ -113,7 +114,7 @@ apply_stencil_op( const GLcontext *ctx, GLenum oper, GLuint face,
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
 		  GLstencil s = stencil[i];
-		  if (s < STENCIL_MAX) {
+		  if (s < stencilMax) {
 		     stencil[i] = (GLstencil) (s+1);
 		  }
 	       }
@@ -124,7 +125,7 @@ apply_stencil_op( const GLcontext *ctx, GLenum oper, GLuint face,
 	       if (mask[i]) {
 		  /* VERIFY logic of adding 1 to a write-masked value */
 		  GLstencil s = stencil[i];
-		  if (s < STENCIL_MAX) {
+		  if (s < stencilMax) {
 		     stencil[i] = (GLstencil) ((invmask & s) | (wrtmask & (s+1)));
 		  }
 	       }
@@ -530,6 +531,7 @@ apply_stencil_op_to_pixels( GLcontext *ctx,
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   const GLstencil stencilMax = (1 << fb->Visual.stencilBits) - 1;
    const GLstencil ref = ctx->Stencil.Ref[face];
    const GLstencil wrtmask = ctx->Stencil.WriteMask[face];
    const GLstencil invmask = (GLstencil) (~wrtmask);
@@ -585,7 +587,7 @@ apply_stencil_op_to_pixels( GLcontext *ctx,
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
                   GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
-		  if (*sptr < STENCIL_MAX) {
+		  if (*sptr < stencilMax) {
 		     *sptr = (GLstencil) (*sptr + 1);
 		  }
 	       }
@@ -595,7 +597,7 @@ apply_stencil_op_to_pixels( GLcontext *ctx,
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
                   GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
-		  if (*sptr < STENCIL_MAX) {
+		  if (*sptr < stencilMax) {
 		     *sptr = (GLstencil) ((invmask & *sptr) | (wrtmask & (*sptr+1)));
 		  }
 	       }

@@ -77,10 +77,8 @@
  */
 #if STENCIL_BITS==8
    typedef GLubyte GLstencil;
-#  define STENCIL_MAX 0xff
 #elif STENCIL_BITS==16
    typedef GLushort GLstencil;
-#  define STENCIL_MAX 0xffff
 #else
 #  error "illegal number of stencil bits"
 #endif
