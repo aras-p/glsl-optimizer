@@ -1296,8 +1296,9 @@ _swrast_clear_depth_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
        * memory, or perhaps the driver mmap'd the zbuffer memory.
        */
       if (rb->DataType == GL_UNSIGNED_SHORT) {
-         if (width == rb->Width &&
-             (clearValue & 0xff) == ((clearValue >> 8) & 0xff)) {
+         if ((clearValue & 0xff) == ((clearValue >> 8) & 0xff) &&
+             ((GLushort *) rb->GetPointer(ctx, rb, 0, 0) + width ==
+              (GLushort *) rb->GetPointer(ctx, rb, 0, 1))) {
             /* optimized case */
             GLushort *dst = (GLushort *) rb->GetPointer(ctx, rb, x, y);
             GLuint len = width * height * sizeof(GLushort);
@@ -1328,25 +1329,21 @@ _swrast_clear_depth_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
    else {
       /* Direct access not possible.  Use PutRow to write new values. */
       if (rb->DataType == GL_UNSIGNED_SHORT) {
-         GLushort clearRow[MAX_WIDTH];
-         GLint i, j;
-         for (j = 0; j < width; j++) {
-            clearRow[j] = clearValue;
-         }
+         GLushort clearVal16 = (GLushort) (clearValue & 0xffff);
+         GLint i;
          for (i = 0; i < height; i++) {
-            rb->PutRow(ctx, rb, width, x, y + i, clearRow, NULL);
+            rb->PutMonoRow(ctx, rb, width, x, y + i, &clearVal16, NULL);
+         }
+      }
+      else if (rb->DataType == GL_UNSIGNED_INT) {
+         GLint i;
+         ASSERT(sizeof(clearValue) == sizeof(GLuint));
+         for (i = 0; i < height; i++) {
+            rb->PutMonoRow(ctx, rb, width, x, y + i, &clearValue, NULL);
          }
       }
       else {
-         GLuint clearRow[MAX_WIDTH];
-         GLint i, j;
-         assert(rb->DataType == GL_UNSIGNED_INT);
-         for (j = 0; j < width; j++) {
-            clearRow[j] = clearValue;
-         }
-         for (i = 0; i < height; i++) {
-            rb->PutRow(ctx, rb, width, x, y + i, clearRow, NULL);
-         }
+         _mesa_problem(ctx, "bad depth renderbuffer DataType");
       }
    }
 }
