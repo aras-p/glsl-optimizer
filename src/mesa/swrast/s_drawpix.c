@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -631,7 +631,6 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
       }
    }
    else if (type == GL_UNSIGNED_INT
-            && sizeof(GLdepth) == 4
             && !bias_or_scale
             && !zoom
             && ctx->Visual.rgbMode
