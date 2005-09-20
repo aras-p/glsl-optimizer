@@ -2611,7 +2611,7 @@ sample_depth_texture2(const GLcontext *ctx,
  * We use this function when a texture object is in an "incomplete" state.
  * When a fragment program attempts to sample an incomplete texture we
  * return black (see issue 23 in GL_ARB_fragment_program spec).
- * Note: fragment programss don't observe the texture enable/disable flags.
+ * Note: fragment programs don't observe the texture enable/disable flags.
  */
 static void
 null_sample_func( GLcontext *ctx,
