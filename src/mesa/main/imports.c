@@ -31,7 +31,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -528,27 +528,20 @@ _mesa_pow(double x, double y)
 }
 
 
-/* Windows does not have the ffs() function */
-#if defined(_WIN32) && !defined(__MINGW32__)
-int INLINE ffs(int value)
-{
-    int bit;
-    if (value == 0)
-	return 0;
-    for (bit=1; !(value & 1); bit++)
-	value >>= 1;
-    return bit;
-}
-#endif
-
-
 /**
- * Wrapper around either ffs() or xf86ffs().
+ * Find the first bit set in a word.
  */
 int
 _mesa_ffs(int i)
 {
-#if defined(XFree86LOADER) && defined(IN_MODULE)
+#if defined(_WIN32) && !defined(__MINGW32__)
+   int bit;
+   if (i == 0)
+      return 0;
+   for (bit = 1; !(i & 1); bit++)
+      i >>= 1;
+   return bit;
+#elif defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86ffs(i);
 #else
    return ffs(i);
