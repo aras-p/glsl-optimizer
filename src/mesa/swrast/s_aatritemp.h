@@ -286,7 +286,7 @@
             array->coverage[count] = coverage;
 #endif
 #ifdef DO_Z
-            array->z[count] = (GLdepth) IROUND(solve_plane(cx, cy, zPlane));
+            array->z[count] = (GLuint) solve_plane(cx, cy, zPlane);
 #endif
 #ifdef DO_FOG
 	    array->fog[count] = solve_plane(cx, cy, fogPlane);
@@ -390,7 +390,7 @@
             array->coverage[ix] = coverage;
 #endif
 #ifdef DO_Z
-            array->z[ix] = (GLdepth) IROUND(solve_plane(cx, cy, zPlane));
+            array->z[ix] = (GLuint) solve_plane(cx, cy, zPlane);
 #endif
 #ifdef DO_FOG
             array->fog[ix] = solve_plane(cx, cy, fogPlane);
