@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.4
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -1209,7 +1209,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
        * return 16 to maintain performance with earlier versions of Mesa.
        */
       if (depth_size > 24)
-         depth_size = 31;   /* 32 causes int overflow problems */
+         depth_size = 32;
       else if (depth_size > 16)
          depth_size = 24;
       else if (depth_size > 0) {
