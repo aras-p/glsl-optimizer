@@ -95,7 +95,7 @@ void GLAPIENTRY
 _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLint maxref;
+   const GLint stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (func) {
@@ -113,8 +113,7 @@ _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
          return;
    }
 
-   maxref = (1 << STENCIL_BITS) - 1;
-   ref = CLAMP( ref, 0, maxref );
+   ref = CLAMP( ref, 0, stencilMax );
 
    if (ctx->Extensions.EXT_stencil_two_side) {
       /* only set active face state */
@@ -429,7 +428,7 @@ void GLAPIENTRY
 _mesa_StencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLint maxref;
+   const GLint stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (face != GL_FRONT && face != GL_BACK && face != GL_FRONT_AND_BACK) {
@@ -452,8 +451,7 @@ _mesa_StencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask)
          return;
    }
 
-   maxref = (1 << STENCIL_BITS) - 1;
-   ref = CLAMP(ref, 0, maxref);
+   ref = CLAMP(ref, 0, stencilMax);
 
    FLUSH_VERTICES(ctx, _NEW_STENCIL);
 
