@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -693,7 +693,8 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
          DEPTH_TYPE *zRow = NULL;
          GLint dZRowOuter = 0, dZRowInner;  /* offset in bytes */
 #  endif
-         GLfixed zLeft = 0, fdzOuter = 0, fdzInner;
+         GLuint zLeft = 0;
+         GLfixed fdzOuter = 0, fdzInner;
 #endif
 #ifdef INTERP_W
          GLfloat wLeft = 0, dwOuter = 0, dwInner;
@@ -841,7 +842,8 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   GLfloat z0 = vLower->win[2];
                   if (depthBits <= 16) {
                      /* interpolate fixed-pt values */
-                     GLfloat tmp = (z0 * FIXED_SCALE + span.dzdx * adjx + span.dzdy * adjy) + FIXED_HALF;
+                     GLfloat tmp = (z0 * FIXED_SCALE + span.dzdx * adjx
+                                    + span.dzdy * adjy) + FIXED_HALF;
                      if (tmp < MAX_GLUINT / 2)
                         zLeft = (GLfixed) tmp;
                      else
@@ -849,8 +851,9 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                      fdzOuter = SignedFloatToFixed(span.dzdy + dxOuter * span.dzdx);
                   }
                   else {
-                     /* interpolate depth values exactly */
-                     zLeft = (GLint) (z0 + span.dzdx * FixedToFloat(adjx) + span.dzdy * FixedToFloat(adjy));
+                     /* interpolate depth values w/out scaling */
+                     zLeft = (GLuint) (z0 + span.dzdx * FixedToFloat(adjx)
+                                       + span.dzdy * FixedToFloat(adjy));
                      fdzOuter = (GLint) (span.dzdy + dxOuter * span.dzdx);
                   }
 #  ifdef DEPTH_TYPE

@@ -321,7 +321,7 @@ _swrast_span_interpolate_z( const GLcontext *ctx, struct sw_span *span )
    }
    else {
       /* Deep Z buffer, no fixed->int shift */
-      GLfixed zval = span->z;
+      GLuint zval = span->z;
       GLdepth *z = span->array->z;
       for (i = 0; i < n; i++) {
          z[i] = zval;
