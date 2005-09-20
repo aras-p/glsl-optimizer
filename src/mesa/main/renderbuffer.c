@@ -373,10 +373,18 @@ put_mono_row_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 {
    const GLuint val = *((const GLuint *) value);
    GLuint *dst = (GLuint *) rb->Data + y * rb->Width + x;
-   GLuint i;
    ASSERT(rb->DataType == GL_UNSIGNED_INT);
-   for (i = 0; i < count; i++) {
-      if (!mask || mask[i]) {
+   if (mask) {
+      GLuint i;
+      for (i = 0; i < count; i++) {
+         if (mask[i]) {
+            dst[i] = val;
+         }
+      }
+   }
+   else {
+      GLuint i;
+      for (i = 0; i < count; i++) {
          dst[i] = val;
       }
    }
