@@ -1770,7 +1770,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          else
             *params = 0;
          return;
-      case GL_DEPTH_BITS:
+      case GL_TEXTURE_DEPTH_SIZE_ARB:
          if (ctx->Extensions.SGIX_depth_texture ||
              ctx->Extensions.ARB_depth_texture)
             *params = img->TexFormat->DepthBits;
