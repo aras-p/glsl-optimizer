@@ -169,16 +169,11 @@ read_depth_pixels( GLcontext *ctx,
       /* General case (slower) */
       GLint j;
       for (j = 0; j < height; j++, y++) {
-         GLfloat depth[MAX_WIDTH];
-         GLvoid *dest;
-
-         _swrast_read_depth_span_float(ctx, rb, width, x, y, depth);
-
-         dest = _mesa_image_address2d(packing, pixels, width, height,
-                                      GL_DEPTH_COMPONENT, type, j, 0);
-
-         _mesa_pack_depth_span(ctx, width, (GLdepth *) dest, type,
-                               depth, packing);
+         GLfloat depthValues[MAX_WIDTH];
+         GLvoid *dest = _mesa_image_address2d(packing, pixels, width, height,
+                                              GL_DEPTH_COMPONENT, type, j, 0);
+         _swrast_read_depth_span_float(ctx, rb, width, x, y, depthValues);
+         _mesa_pack_depth_span(ctx, width, dest, type, depthValues, packing);
       }
    }
 }

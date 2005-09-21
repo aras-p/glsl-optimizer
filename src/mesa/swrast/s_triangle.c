@@ -218,7 +218,7 @@ _swrast_culltriangle( GLcontext *ctx,
    span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
    span.intTex[1] -= FIXED_HALF;					\
    for (i = 0; i < span.end; i++) {					\
-      const GLdepth z = FixedToDepth(span.z);				\
+      const GLuint z = FixedToDepth(span.z);				\
       if (z < zRow[i]) {						\
          GLint s = FixedToInt(span.intTex[0]) & smask;			\
          GLint t = FixedToInt(span.intTex[1]) & tmask;			\
@@ -920,7 +920,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
       const GLushort *zRow = (const GLushort *)				\
          rb->GetPointer(ctx, rb, span.x, span.y);			\
       for (i = 0; i < span.end; i++) {					\
-         GLdepth z = FixedToDepth(span.z);				\
+         GLuint z = FixedToDepth(span.z);				\
          if (z < zRow[i]) {						\
             q->Result++;						\
          }								\

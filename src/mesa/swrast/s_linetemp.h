@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -354,7 +354,7 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 
       for (i = 0; i < dx; i++) {
 #ifdef DEPTH_TYPE
-         GLdepth Z = FixedToDepth(span.z);
+         GLuint Z = FixedToDepth(span.z);
 #endif
 #ifdef PLOT
          PLOT( x0, y0 );
@@ -394,7 +394,7 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 
       for (i=0;i<dy;i++) {
 #ifdef DEPTH_TYPE
-         GLdepth Z = FixedToDepth(span.z);
+         GLuint Z = FixedToDepth(span.z);
 #endif
 #ifdef PLOT
          PLOT( x0, y0 );

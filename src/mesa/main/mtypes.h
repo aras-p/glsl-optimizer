@@ -85,15 +85,6 @@
 
 
 /**
- * Used for storing intermediate depth buffer values.
- * The actual depth/Z buffer might use 16 or 32-bit values.
- *
- * \note Must be 32-bits!
- */
-typedef GLuint GLdepth;  
-
-
-/**
  * Fixed point data type.
  */
 typedef int GLfixed;

@@ -643,7 +643,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
             _mesa_image_address2d(unpack, pixels, width, height,
                                   GL_DEPTH_COMPONENT, type, row, 0);
          if (shift == 0) {
-            MEMCPY(span.array->z, zSrc, width * sizeof(GLdepth));
+            MEMCPY(span.array->z, zSrc, width * sizeof(GLuint));
          }
          else {
             GLint col;
@@ -688,7 +688,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
             {
                GLuint i;
                for (i = 0; i < span.end; i++) {
-                  span.array->z[i] = (GLdepth) (floatSpan[i] * depthMax);
+                  span.array->z[i] = (GLuint) (floatSpan[i] * depthMax);
                }
             }
             if (zoom) {

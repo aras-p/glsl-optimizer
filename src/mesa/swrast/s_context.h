@@ -85,7 +85,7 @@ struct span_arrays {
    GLchan  spec[MAX_WIDTH][4]; /* specular color */
    GLint   x[MAX_WIDTH];  /**< X/Y used for point/line rendering only */
    GLint   y[MAX_WIDTH];  /**< X/Y used for point/line rendering only */
-   GLdepth z[MAX_WIDTH];
+   GLuint  z[MAX_WIDTH];
    GLfloat fog[MAX_WIDTH];
    GLfloat texcoords[MAX_TEXTURE_COORD_UNITS][MAX_WIDTH][4];
    GLfloat lambda[MAX_TEXTURE_COORD_UNITS][MAX_WIDTH];
@@ -161,7 +161,7 @@ struct sw_span {
    GLfixed specBlue, specBlueStep;
 #endif
    GLfixed index, indexStep;
-   GLfixed z, zStep;
+   GLfixed z, zStep;    /* XXX z should probably be GLuint */
    GLfloat fog, fogStep;
    GLfloat tex[MAX_TEXTURE_COORD_UNITS][4];  /* s, t, r, q */
    GLfloat texStepX[MAX_TEXTURE_COORD_UNITS][4];

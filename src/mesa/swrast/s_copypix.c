@@ -569,7 +569,6 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
    for (j = 0; j < height; j++, sy += stepy, dy += stepy) {
       GLfloat depth[MAX_WIDTH];
-      float sum = 0;
       /* get depth values */
       if (overlapping) {
          MEMCPY(depth, p, width * sizeof(GLfloat));
@@ -582,8 +581,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       /* apply scale and bias */
       for (i = 0; i < width; i++) {
          GLfloat d = depth[i] * ctx->Pixel.DepthScale + ctx->Pixel.DepthBias;
-         sum += d;
-         span.array->z[i] = (GLdepth) (CLAMP(d, 0.0F, 1.0F) * depthMax);
+         span.array->z[i] = (GLuint) (CLAMP(d, 0.0F, 1.0F) * depthMax);
       }
 
       /* write depth values */
