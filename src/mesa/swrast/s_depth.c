@@ -1252,7 +1252,7 @@ _swrast_read_depth_span_float( GLcontext *ctx, struct gl_renderbuffer *rb,
       GLint i;
       rb->GetRow(ctx, rb, n, x, y, temp);
       for (i = 0; i < n; i++) {
-         depth[i] = temp[i];
+         depth[i] = temp[i] * scale;
       }
    }
    else {
