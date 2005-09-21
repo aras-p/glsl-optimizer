@@ -62,7 +62,7 @@
  */
 
 
-#if CHAN_BITS == 8 && ACCUM_BITS <= 32
+#if CHAN_BITS == 8
 /* enable the optimization */
 #define USE_OPTIMIZED_ACCUM  1
 #else

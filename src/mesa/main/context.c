@@ -527,18 +527,10 @@ _mesa_initialize_visual( GLvisual *vis,
    if (stencilBits < 0 || stencilBits > STENCIL_BITS) {
       return GL_FALSE;
    }
-   if (accumRedBits < 0 || accumRedBits > ACCUM_BITS) {
-      return GL_FALSE;
-   }
-   if (accumGreenBits < 0 || accumGreenBits > ACCUM_BITS) {
-      return GL_FALSE;
-   }
-   if (accumBlueBits < 0 || accumBlueBits > ACCUM_BITS) {
-      return GL_FALSE;
-   }
-   if (accumAlphaBits < 0 || accumAlphaBits > ACCUM_BITS) {
-      return GL_FALSE;
-   }
+   assert(accumRedBits >= 0);
+   assert(accumGreenBits >= 0);
+   assert(accumBlueBits >= 0);
+   assert(accumAlphaBits >= 0);
 
    vis->rgbMode          = rgbFlag;
    vis->doubleBufferMode = dbFlag;

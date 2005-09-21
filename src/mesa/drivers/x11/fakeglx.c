@@ -378,6 +378,12 @@ default_depth_bits(void)
    return zBits;
 }
 
+static GLint
+default_accum_bits(void)
+{
+   return 16;
+}
+
 
 
 /*
@@ -393,6 +399,7 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
 {
    int vislevel;
    GLint zBits = default_depth_bits();
+   GLint accBits = default_accum_bits();
 
    vislevel = level_of_visual( dpy, visinfo );
    if (vislevel) {
@@ -435,10 +442,10 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
                                  GL_FALSE,  /* stereo */
                                  zBits,
                                  STENCIL_BITS,
-                                 ACCUM_BITS, /* r */
-                                 ACCUM_BITS, /* g */
-                                 ACCUM_BITS, /* b */
-                                 ACCUM_BITS, /* a */
+                                 accBits, /* r */
+                                 accBits, /* g */
+                                 accBits, /* b */
+                                 accBits, /* a */
                                  0,         /* level */
                                  0          /* numAux */
                                );
@@ -1221,10 +1228,10 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
          stencil_size = STENCIL_BITS;
       if (accumRedSize > 0 || accumGreenSize > 0 || accumBlueSize > 0 ||
           accumAlphaSize > 0) {
-         accumRedSize = ACCUM_BITS;
-         accumGreenSize = ACCUM_BITS;
-         accumBlueSize = ACCUM_BITS;
-         accumAlphaSize = alpha_flag ? ACCUM_BITS : 0;
+         accumRedSize = 
+         accumGreenSize = 
+         accumBlueSize = default_accum_bits();
+         accumAlphaSize = alpha_flag ? accumRedSize : 0;
       }
 
       xmvis = save_glx_visual( dpy, vis, rgb_flag, alpha_flag, double_flag,

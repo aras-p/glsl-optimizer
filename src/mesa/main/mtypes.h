@@ -66,12 +66,6 @@
 #endif
 
 
-#if ACCUM_BITS != 16
-/* Software accum done with GLshort at this time */
-#  error "illegal number of accumulation bits"
-#endif
-
-
 /**
  * Stencil buffer data type.
  */

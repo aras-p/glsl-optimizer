@@ -234,10 +234,6 @@
  */
 #define TRIANGLE_WALK_DOUBLE 0
 
-/**
- * Bits per accumulation buffer color component:  8, 16 or 32
- */
-#define ACCUM_BITS 16
 
 /**
  * Bits per depth buffer value.  
