@@ -453,7 +453,7 @@ static void fxReadRGBASpan_ARGB8888 (const GLcontext * ctx,
 
 static void
 fxReadDepthSpan_Z16(GLcontext * ctx, struct gl_renderbuffer *rb,
-		    GLuint n, GLint x, GLint y, GLdepth depth[])
+		    GLuint n, GLint x, GLint y, GLuint depth[])
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GLint bottom = fxMesa->height - 1;
@@ -473,7 +473,7 @@ fxReadDepthSpan_Z16(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 static void
 fxReadDepthSpan_Z24(GLcontext * ctx, struct gl_renderbuffer *rb,
-		    GLuint n, GLint x, GLint y, GLdepth depth[])
+		    GLuint n, GLint x, GLint y, GLuint depth[])
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GLint bottom = fxMesa->height - 1;

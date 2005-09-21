@@ -539,7 +539,7 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 
 void r128WriteDepthSpanLocked( r128ContextPtr rmesa,
 			       GLuint n, GLint x, GLint y,
-			       const GLdepth depth[],
+			       const GLuint depth[],
 			       const GLubyte mask[] )
 {
    drm_clip_rect_t *pbox = rmesa->pClipRects;
@@ -602,7 +602,7 @@ void r128WriteDepthSpanLocked( r128ContextPtr rmesa,
 
 void r128WriteDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 				 const GLint x[], const GLint y[],
-				 const GLdepth depth[],
+				 const GLuint depth[],
 				 const GLubyte mask[] )
 {
    drm_clip_rect_t *pbox = rmesa->pClipRects;

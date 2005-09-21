@@ -464,7 +464,7 @@ osmesa_choose_line_function( GLcontext *ctx )
    GLuint i;							\
    GLchan *img = PIXELADDR4(span.x, span.y); 			\
    for (i = 0; i < span.end; i++, img += 4) {			\
-      const GLdepth z = FixedToDepth(span.z);			\
+      const GLuint z = FixedToDepth(span.z);			\
       if (z < zRow[i]) {					\
          PACK_RGBA(img, FixedToChan(span.red),			\
             FixedToChan(span.green), FixedToChan(span.blue),	\
@@ -501,7 +501,7 @@ osmesa_choose_line_function( GLcontext *ctx )
    GLuint i;						\
    GLuint *img = (GLuint *) PIXELADDR4(span.x, span.y);	\
    for (i = 0; i < span.end; i++) {			\
-      const GLdepth z = FixedToDepth(span.z);		\
+      const GLuint z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {				\
          img[i] = pixel;				\
          zRow[i] = z;					\

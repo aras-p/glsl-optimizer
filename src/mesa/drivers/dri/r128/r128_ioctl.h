@@ -75,11 +75,11 @@ extern void r128FireBlitLocked( r128ContextPtr rmesa, drmBufPtr buffer,
 
 extern void r128WriteDepthSpanLocked( r128ContextPtr rmesa,
 				      GLuint n, GLint x, GLint y,
-				      const GLdepth depth[],
+				      const GLuint depth[],
 				      const GLubyte mask[] );
 extern void r128WriteDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 					const GLint x[], const GLint y[],
-					const GLdepth depth[],
+					const GLuint depth[],
 					const GLubyte mask[] );
 extern void r128ReadDepthSpanLocked( r128ContextPtr rmesa,
 				     GLuint n, GLint x, GLint y );

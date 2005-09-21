@@ -294,13 +294,13 @@ do {	if ((STATE_MASK) & ~((FMESA)->state_dirty)) {	\
  * 1.0 would produce a value of 0x0fffffff in the actual Z
  * buffer, which is the maximum value.
  *
- * Mesa's depth type is a 32-bit int, so we use the following macro
+ * Mesa's depth type is a 32-bit uint, so we use the following macro
  * to convert to/from FFB hw Z values.  Note we also have to clear
  * out the top bits as that is where the Y (stencil) buffer is stored
  * and during hw Z buffer reads it is always there. (During writes
  * we tell the hw to discard those top 4 bits).
  */
-#define Z_TO_MESA(VAL)		((GLdepth)(((VAL) & 0x0fffffff) << (32 - 28)))
+#define Z_TO_MESA(VAL)		((GLuint)(((VAL) & 0x0fffffff) << (32 - 28)))
 #define Z_FROM_MESA(VAL)	(((GLuint)((GLdouble)(VAL))) >> (32 - 28))
 
 #endif /* !(_FFB_CONTEXT_H) */

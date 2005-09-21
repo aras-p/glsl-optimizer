@@ -674,18 +674,18 @@ extern void fxDDColorMask(GLcontext * ctx,
 			  GLboolean r, GLboolean g, GLboolean b, GLboolean a);
 
 extern void fxDDWriteDepthSpan(GLcontext * ctx, GLuint n, GLint x, GLint y,
-			       const GLdepth depth[], const GLubyte mask[]);
+			       const GLuint depth[], const GLubyte mask[]);
 
 extern void fxDDReadDepthSpan(GLcontext * ctx, GLuint n, GLint x, GLint y,
-			      GLdepth depth[]);
+			      GLuint depth[]);
 
 extern void fxDDWriteDepthPixels(GLcontext * ctx, GLuint n,
 				 const GLint x[], const GLint y[],
-				 const GLdepth depth[], const GLubyte mask[]);
+				 const GLuint depth[], const GLubyte mask[]);
 
 extern void fxDDReadDepthPixels(GLcontext * ctx, GLuint n,
 				const GLint x[], const GLint y[],
-				GLdepth depth[]);
+				GLuint depth[]);
 
 extern void fxDDShadeModel(GLcontext * ctx, GLenum mode);
 
