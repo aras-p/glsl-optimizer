@@ -1086,6 +1086,78 @@ static void savageUploadTexImages( savageContextPtr imesa, savageTexObjPtr t )
 }
 
 
+static void
+savage4_set_wrap_mode( savageContextPtr imesa, unsigned unit,
+		      GLenum s_mode, GLenum t_mode )
+{
+    switch( s_mode ) {
+    case GL_REPEAT:
+	imesa->regs.s4.texCtrl[ unit ].ni.uMode = TAM_Wrap;
+	break;
+    case GL_CLAMP:
+    case GL_CLAMP_TO_EDGE:
+	imesa->regs.s4.texCtrl[ unit ].ni.uMode = TAM_Clamp;
+	break;
+    case GL_MIRRORED_REPEAT:
+	imesa->regs.s4.texCtrl[ unit ].ni.uMode = TAM_Mirror;
+	break;
+    }
+
+    switch( t_mode ) {
+    case GL_REPEAT:
+	imesa->regs.s4.texCtrl[ unit ].ni.vMode = TAM_Wrap;
+	break;
+    case GL_CLAMP:
+    case GL_CLAMP_TO_EDGE:
+	imesa->regs.s4.texCtrl[ unit ].ni.vMode = TAM_Clamp;
+	break;
+    case GL_MIRRORED_REPEAT:
+	imesa->regs.s4.texCtrl[ unit ].ni.vMode = TAM_Mirror;
+	break;
+    }
+}
+
+
+/**
+ * Sets the hardware bits for the specified GL texture filter modes.
+ * 
+ * \todo
+ * Does the Savage4 have the ability to select the magnification filter?
+ */
+static void
+savage4_set_filter_mode( savageContextPtr imesa, unsigned unit,
+			 GLenum minFilter, GLenum magFilter )
+{
+    (void) magFilter;
+
+    switch (minFilter) {
+    case GL_NEAREST:
+	imesa->regs.s4.texCtrl[ unit ].ni.filterMode   = TFM_Point;
+	imesa->regs.s4.texCtrl[ unit ].ni.mipmapEnable = GL_FALSE;
+	break;
+
+    case GL_LINEAR:
+	imesa->regs.s4.texCtrl[ unit ].ni.filterMode   = TFM_Bilin;
+	imesa->regs.s4.texCtrl[ unit ].ni.mipmapEnable = GL_FALSE;
+	break;
+
+    case GL_NEAREST_MIPMAP_NEAREST:
+	imesa->regs.s4.texCtrl[ unit ].ni.filterMode   = TFM_Point;
+	imesa->regs.s4.texCtrl[ unit ].ni.mipmapEnable = GL_TRUE;
+	break;
+
+    case GL_LINEAR_MIPMAP_NEAREST:
+	imesa->regs.s4.texCtrl[ unit ].ni.filterMode   = TFM_Bilin;
+	imesa->regs.s4.texCtrl[ unit ].ni.mipmapEnable = GL_TRUE;
+	break;
+
+    case GL_NEAREST_MIPMAP_LINEAR:
+    case GL_LINEAR_MIPMAP_LINEAR:
+	imesa->regs.s4.texCtrl[ unit ].ni.filterMode   = TFM_Trilin;
+	imesa->regs.s4.texCtrl[ unit ].ni.mipmapEnable = GL_TRUE;
+	break;
+    }
+}
 
 
 static void savageUpdateTex0State_s4( GLcontext *ctx )
@@ -1301,39 +1373,8 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
       break;			
    }
 
-    imesa->regs.s4.texCtrl[0].ni.uMode =
-	t->setup.sWrapMode == GL_REPEAT ? 0 : 1;
-    imesa->regs.s4.texCtrl[0].ni.vMode = 
-	t->setup.tWrapMode == GL_REPEAT ? 0 : 1;
-
-    switch (t->setup.minFilter)
-    {
-        case GL_NEAREST:
-            imesa->regs.s4.texCtrl[0].ni.filterMode   = TFM_Point;
-            imesa->regs.s4.texCtrl[0].ni.mipmapEnable = GL_FALSE;
-            break;
-
-        case GL_LINEAR:
-            imesa->regs.s4.texCtrl[0].ni.filterMode   = TFM_Bilin;
-            imesa->regs.s4.texCtrl[0].ni.mipmapEnable = GL_FALSE;
-            break;
-
-        case GL_NEAREST_MIPMAP_NEAREST:
-            imesa->regs.s4.texCtrl[0].ni.filterMode   = TFM_Point;
-            imesa->regs.s4.texCtrl[0].ni.mipmapEnable = GL_TRUE;
-            break;
-
-        case GL_LINEAR_MIPMAP_NEAREST:
-            imesa->regs.s4.texCtrl[0].ni.filterMode   = TFM_Bilin;
-            imesa->regs.s4.texCtrl[0].ni.mipmapEnable = GL_TRUE;
-            break;
-
-        case GL_NEAREST_MIPMAP_LINEAR:
-        case GL_LINEAR_MIPMAP_LINEAR:
-            imesa->regs.s4.texCtrl[0].ni.filterMode   = TFM_Trilin;
-            imesa->regs.s4.texCtrl[0].ni.mipmapEnable = GL_TRUE;
-            break;
-    }
+    savage4_set_wrap_mode( imesa, 0, t->setup.sWrapMode, t->setup.tWrapMode );
+    savage4_set_filter_mode( imesa, 0, t->setup.minFilter, t->setup.magFilter );
 
     if((ctx->Texture.Unit[0].LodBias !=0.0F) ||
        (imesa->regs.s4.texCtrl[0].ni.dBias != 0))
@@ -1514,45 +1555,14 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
       break;
 
    default:
-      fprintf(stderr, "unkown tex 1 env mode\n");
+      fprintf(stderr, "unknown tex 1 env mode\n");
       exit(1);
       break;			
    }
 
-    imesa->regs.s4.texCtrl[1].ni.uMode =
-	t->setup.sWrapMode == GL_REPEAT ? 0 : 1;
-    imesa->regs.s4.texCtrl[1].ni.vMode =
-	t->setup.tWrapMode == GL_REPEAT ? 0 : 1;
+    savage4_set_wrap_mode( imesa, 1, t->setup.sWrapMode, t->setup.tWrapMode );
+    savage4_set_filter_mode( imesa, 1, t->setup.minFilter, t->setup.magFilter );
 
-    switch (t->setup.minFilter)
-    {
-        case GL_NEAREST:
-            imesa->regs.s4.texCtrl[1].ni.filterMode   = TFM_Point;
-            imesa->regs.s4.texCtrl[1].ni.mipmapEnable = GL_FALSE;
-            break;
-
-        case GL_LINEAR:
-            imesa->regs.s4.texCtrl[1].ni.filterMode   = TFM_Bilin;
-            imesa->regs.s4.texCtrl[1].ni.mipmapEnable = GL_FALSE;
-            break;
-
-        case GL_NEAREST_MIPMAP_NEAREST:
-            imesa->regs.s4.texCtrl[1].ni.filterMode   = TFM_Point;
-            imesa->regs.s4.texCtrl[1].ni.mipmapEnable = GL_TRUE;
-            break;
-
-        case GL_LINEAR_MIPMAP_NEAREST:
-            imesa->regs.s4.texCtrl[1].ni.filterMode   = TFM_Bilin;
-            imesa->regs.s4.texCtrl[1].ni.mipmapEnable = GL_TRUE;
-            break;
-
-        case GL_NEAREST_MIPMAP_LINEAR:
-        case GL_LINEAR_MIPMAP_LINEAR:
-            imesa->regs.s4.texCtrl[1].ni.filterMode   = TFM_Trilin;
-            imesa->regs.s4.texCtrl[1].ni.mipmapEnable = GL_TRUE;
-            break;
-    }
-    
     if((ctx->Texture.Unit[1].LodBias !=0.0F) ||
        (imesa->regs.s4.texCtrl[1].ni.dBias != 0))
     {
@@ -1650,7 +1660,7 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
 	imesa->regs.s3d.drawCtrl.ni.texBlendCtrl = SAVAGETBC_MODULATEALPHA_S3D;
 	break;
     default:
-	fprintf(stderr, "unkown tex env mode\n");
+	fprintf(stderr, "unknown tex env mode\n");
 	/*exit(1);*/
 	break;			
     }

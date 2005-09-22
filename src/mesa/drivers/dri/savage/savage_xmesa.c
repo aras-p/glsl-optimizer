@@ -142,6 +142,7 @@ static const struct dri_extension card_extensions[] =
 static const struct dri_extension s4_extensions[] =
 {
     { "GL_ARB_texture_env_add",            NULL },
+    { "GL_ARB_texture_mirrored_repeat",    NULL },
     { NULL,                                NULL }
 };
 
