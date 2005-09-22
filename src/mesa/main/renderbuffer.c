@@ -937,10 +937,10 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_ubyte3;
       rb->PutValues = put_values_ubyte3;
       rb->PutMonoValues = put_mono_values_ubyte3;
-      rb->ComponentSizes[0] = 8 * sizeof(GLubyte);
-      rb->ComponentSizes[1] = 8 * sizeof(GLubyte);
-      rb->ComponentSizes[2] = 8 * sizeof(GLubyte);
-      rb->ComponentSizes[3] = 0;
+      rb->RedBits   = 8 * sizeof(GLubyte);
+      rb->GreenBits = 8 * sizeof(GLubyte);
+      rb->BlueBits  = 8 * sizeof(GLubyte);
+      rb->AlphaBits = 0;
       pixelSize = 3 * sizeof(GLubyte);
       break;
    case GL_RGBA:
@@ -958,10 +958,10 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_ubyte4;
       rb->PutValues = put_values_ubyte4;
       rb->PutMonoValues = put_mono_values_ubyte4;
-      rb->ComponentSizes[0] = 8 * sizeof(GLubyte);
-      rb->ComponentSizes[1] = 8 * sizeof(GLubyte);
-      rb->ComponentSizes[2] = 8 * sizeof(GLubyte);
-      rb->ComponentSizes[3] = 8 * sizeof(GLubyte);
+      rb->RedBits   = 8 * sizeof(GLubyte);
+      rb->GreenBits = 8 * sizeof(GLubyte);
+      rb->BlueBits  = 8 * sizeof(GLubyte);
+      rb->AlphaBits = 8 * sizeof(GLubyte);
       pixelSize = 4 * sizeof(GLubyte);
       break;
    case GL_RGB10_A2:
@@ -977,10 +977,10 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_ushort4;
       rb->PutValues = put_values_ushort4;
       rb->PutMonoValues = put_mono_values_ushort4;
-      rb->ComponentSizes[0] = 8 * sizeof(GLushort);
-      rb->ComponentSizes[1] = 8 * sizeof(GLushort);
-      rb->ComponentSizes[2] = 8 * sizeof(GLushort);
-      rb->ComponentSizes[3] = 8 * sizeof(GLushort);
+      rb->RedBits   = 8 * sizeof(GLushort);
+      rb->GreenBits = 8 * sizeof(GLushort);
+      rb->BlueBits  = 8 * sizeof(GLushort);
+      rb->AlphaBits = 8 * sizeof(GLushort);
       pixelSize = 4 * sizeof(GLushort);
       break;
 #if 00
@@ -995,10 +995,10 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_alpha8;
       rb->PutValues = put_values_alpha8;
       rb->PutMonoValues = put_mono_values_alpha8;
-      rb->ComponentSizes[0] = 0; /*red*/
-      rb->ComponentSizes[1] = 0; /*green*/
-      rb->ComponentSizes[2] = 0; /*blue*/
-      rb->ComponentSizes[3] = 8 * sizeof(GLubyte);
+      rb->RedBits   = 0; /*red*/
+      rb->GreenBits = 0; /*green*/
+      rb->BlueBits  = 0; /*blue*/
+      rb->AlphaBits = 8 * sizeof(GLubyte);
       pixelSize = sizeof(GLubyte);
       break;
 #endif
@@ -1016,7 +1016,7 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_ubyte;
       rb->PutValues = put_values_ubyte;
       rb->PutMonoValues = put_mono_values_ubyte;
-      rb->ComponentSizes[0] = 8 * sizeof(GLubyte);
+      rb->StencilBits = 8 * sizeof(GLubyte);
       pixelSize = sizeof(GLubyte);
       break;
    case GL_STENCIL_INDEX16_EXT:
@@ -1030,7 +1030,7 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_ushort;
       rb->PutValues = put_values_ushort;
       rb->PutMonoValues = put_mono_values_ushort;
-      rb->ComponentSizes[0] = 8 * sizeof(GLushort);
+      rb->StencilBits = 8 * sizeof(GLushort);
       pixelSize = sizeof(GLushort);
       break;
    case GL_DEPTH_COMPONENT:
@@ -1045,7 +1045,7 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_ushort;
       rb->PutValues = put_values_ushort;
       rb->PutMonoValues = put_mono_values_ushort;
-      rb->ComponentSizes[0] = 8 * sizeof(GLushort);
+      rb->DepthBits = 8 * sizeof(GLushort);
       pixelSize = sizeof(GLushort);
       break;
    case GL_DEPTH_COMPONENT24:
@@ -1060,7 +1060,7 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_uint;
       rb->PutValues = put_values_uint;
       rb->PutMonoValues = put_mono_values_uint;
-      rb->ComponentSizes[0] = 8 * sizeof(GLuint);
+      rb->DepthBits = 8 * sizeof(GLuint);
       pixelSize = sizeof(GLuint);
       break;
    case GL_COLOR_INDEX8_EXT:
@@ -1074,7 +1074,7 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_ubyte;
       rb->PutValues = put_values_ubyte;
       rb->PutMonoValues = put_mono_values_ubyte;
-      rb->ComponentSizes[0] = 8 * sizeof(GLubyte);
+      rb->IndexBits = 8 * sizeof(GLubyte);
       pixelSize = sizeof(GLubyte);
       break;
    case GL_COLOR_INDEX16_EXT:
@@ -1088,7 +1088,7 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_ushort;
       rb->PutValues = put_values_ushort;
       rb->PutMonoValues = put_mono_values_ushort;
-      rb->ComponentSizes[0] = 8 * sizeof(GLushort);
+      rb->IndexBits = 8 * sizeof(GLushort);
       pixelSize = sizeof(GLushort);
       break;
    case COLOR_INDEX32:
@@ -1102,7 +1102,7 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_uint;
       rb->PutValues = put_values_uint;
       rb->PutMonoValues = put_mono_values_uint;
-      rb->ComponentSizes[0] = 8 * sizeof(GLuint);
+      rb->IndexBits = 8 * sizeof(GLuint);
       pixelSize = sizeof(GLuint);
       break;
    default:
@@ -1118,7 +1118,6 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
    ASSERT(rb->PutMonoRow);
    ASSERT(rb->PutValues);
    ASSERT(rb->PutMonoValues);
-   ASSERT(rb->ComponentSizes[0] > 0);
 
    /* free old buffer storage */
    if (rb->Data)
@@ -1399,10 +1398,10 @@ _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name)
    rb->InternalFormat = GL_NONE;
    rb->_BaseFormat = GL_NONE;
    rb->DataType = GL_NONE;
-   rb->ComponentSizes[0] = 0;
-   rb->ComponentSizes[1] = 0;
-   rb->ComponentSizes[2] = 0;
-   rb->ComponentSizes[3] = 0;
+   rb->RedBits = rb->GreenBits = rb->BlueBits = rb->AlphaBits = 0;
+   rb->IndexBits = 0;
+   rb->DepthBits = 0;
+   rb->StencilBits = 0;
    rb->Data = NULL;
 
    rb->GetPointer = nop_get_pointer;

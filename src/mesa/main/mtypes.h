@@ -2055,7 +2055,13 @@ struct gl_renderbuffer
    GLenum _BaseFormat;    /* Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or */
                           /* GL_STENCIL_INDEX. */
    GLenum DataType;       /* Type of values passed to the Get/Put functions */
-   GLubyte ComponentSizes[4];  /* bits per component or channel */
+   GLubyte RedBits;       /**< Bits per image component */
+   GLubyte GreenBits;
+   GLubyte BlueBits;
+   GLubyte AlphaBits;
+   GLubyte IndexBits;
+   GLubyte DepthBits;
+   GLubyte StencilBits;
    GLvoid *Data;
 
    /* Delete this renderbuffer */

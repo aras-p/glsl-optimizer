@@ -100,7 +100,7 @@ driNewRenderbuffer(GLenum format, GLvoid *addr,
       }
 
       /* XXX if we were allocating a user-created renderbuffer, we'd have
-       * to fill in the ComponentSizes[] array too.
+       * to fill in the Red/Green/Blue/.../Bits values too.
        */
 
       drb->Base.AllocStorage = driRenderbufferStorage;

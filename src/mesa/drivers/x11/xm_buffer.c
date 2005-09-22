@@ -130,7 +130,7 @@ xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, GLboolean rgbMode,
          xrb->Base._BaseFormat = GL_COLOR_INDEX;
          xrb->Base.DataType = GL_UNSIGNED_INT;
       }
-      xrb->Base.ComponentSizes[0] = 0; /* XXX fix? */
+      /* only need to set Red/Green/EtcBits fields for user-created RBs */
    }
    return xrb;
 }

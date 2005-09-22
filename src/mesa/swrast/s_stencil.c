@@ -1127,7 +1127,7 @@ _swrast_write_stencil_span(GLcontext *ctx, GLint n, GLint x, GLint y,
 void
 _swrast_clear_stencil_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
 {
-   const GLubyte stencilBits = rb->ComponentSizes[0];
+   const GLubyte stencilBits = ctx->DrawBuffer->Visual.stencilBits;
    const GLuint mask = ctx->Stencil.WriteMask[0];
    const GLuint invMask = ~mask;
    const GLuint clearVal = (ctx->Stencil.Clear & mask);

@@ -329,13 +329,13 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
 
    if (fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer) {
       fb->Visual.redBits
-         = fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer->ComponentSizes[0];
+         = fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer->RedBits;
       fb->Visual.greenBits
-         = fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer->ComponentSizes[1];
+         = fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer->GreenBits;
       fb->Visual.blueBits
-         = fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer->ComponentSizes[2];
+         = fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer->BlueBits;
       fb->Visual.alphaBits
-         = fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer->ComponentSizes[3];
+         = fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer->AlphaBits;
       fb->Visual.rgbBits
          = fb->Visual.redBits + fb->Visual.greenBits + fb->Visual.blueBits;
       fb->Visual.floatMode = GL_FALSE;
@@ -344,13 +344,13 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
    if (fb->Attachment[BUFFER_DEPTH].Renderbuffer) {
       fb->Visual.haveDepthBuffer = GL_TRUE;
       fb->Visual.depthBits
-         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->ComponentSizes[0];
+         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->DepthBits;
    }
 
    if (fb->Attachment[BUFFER_STENCIL].Renderbuffer) {
       fb->Visual.haveStencilBuffer = GL_TRUE;
       fb->Visual.stencilBits
-         = fb->Attachment[BUFFER_STENCIL].Renderbuffer->ComponentSizes[0];
+         = fb->Attachment[BUFFER_STENCIL].Renderbuffer->StencilBits;
    }
 
    compute_depth_max(fb);
