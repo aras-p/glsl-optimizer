@@ -105,8 +105,8 @@ read_depth_pixels( GLcontext *ctx,
                    GLenum type, GLvoid *pixels,
                    const struct gl_pixelstore_attrib *packing )
 {
-   struct gl_renderbuffer *rb
-      = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
+   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
    GLboolean bias_or_scale;
 
    /* clipping should have been done already */
@@ -118,7 +118,7 @@ read_depth_pixels( GLcontext *ctx,
    ASSERT(width <= MAX_WIDTH);
 
    /* Error checking */
-   if (ctx->Visual.depthBits <= 0) {
+   if (fb->Visual.depthBits <= 0) {
       /* No depth buffer */
       _mesa_error( ctx, GL_INVALID_OPERATION, "glReadPixels" );
       return;
@@ -141,7 +141,7 @@ read_depth_pixels( GLcontext *ctx,
 
    bias_or_scale = ctx->Pixel.DepthBias != 0.0 || ctx->Pixel.DepthScale != 1.0;
 
-   if (type == GL_UNSIGNED_SHORT && ctx->Visual.depthBits == 16
+   if (type == GL_UNSIGNED_SHORT && fb->Visual.depthBits == 16
        && !bias_or_scale && !packing->SwapBytes) {
       /* Special case: directly read 16-bit unsigned depth values. */
       GLint j;
@@ -153,7 +153,7 @@ read_depth_pixels( GLcontext *ctx,
          rb->GetRow(ctx, rb, width, x, y, dest);
       }
    }
-   else if (type == GL_UNSIGNED_INT && ctx->Visual.depthBits == 32
+   else if (type == GL_UNSIGNED_INT && fb->Visual.depthBits == 32
             && !bias_or_scale && !packing->SwapBytes) {
       /* Special case: directly read 32-bit unsigned depth values. */
       GLint j;
@@ -189,8 +189,8 @@ read_stencil_pixels( GLcontext *ctx,
                      GLenum type, GLvoid *pixels,
                      const struct gl_pixelstore_attrib *packing )
 {
-   struct gl_renderbuffer *rb
-      = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
+   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
    GLint j;
 
    if (!rb) {
@@ -210,7 +210,7 @@ read_stencil_pixels( GLcontext *ctx,
       return;
    }
 
-   if (ctx->Visual.stencilBits <= 0) {
+   if (fb->Visual.stencilBits <= 0) {
       /* No stencil buffer */
       _mesa_error( ctx, GL_INVALID_OPERATION, "glReadPixels" );
       return;
@@ -323,7 +323,8 @@ read_rgba_pixels( GLcontext *ctx,
                   GLenum format, GLenum type, GLvoid *pixels,
                   const struct gl_pixelstore_attrib *packing )
 {
-   struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
+   struct gl_renderbuffer *rb = fb->_ColorReadBuffer;
 
    if (!rb) {
       /* No readbuffer is OK with GL_EXT_framebuffer_object */
@@ -400,7 +401,7 @@ read_rgba_pixels( GLcontext *ctx,
       dest = tmpImage;
       for (row = 0; row < height; row++, y++) {
          GLchan rgba[MAX_WIDTH][4];
-         if (ctx->Visual.rgbMode) {
+         if (fb->Visual.rgbMode) {
             _swrast_read_rgba_span(ctx, rb, width, x, y, rgba);
          }
          else {
@@ -447,7 +448,7 @@ read_rgba_pixels( GLcontext *ctx,
       for (row = 0; row < height; row++, y++) {
          GLchan rgba[MAX_WIDTH][4];
          GLvoid *dst;
-         if (ctx->Visual.rgbMode) {
+         if (fb->Visual.rgbMode) {
             _swrast_read_rgba_span(ctx, rb, width, x, y, rgba);
          }
          else {
@@ -461,9 +462,9 @@ read_rgba_pixels( GLcontext *ctx,
          }
          dst = _mesa_image_address2d(packing, pixels, width, height,
                                      format, type, row, 0);
-         if (ctx->Visual.redBits < CHAN_BITS ||
-             ctx->Visual.greenBits < CHAN_BITS ||
-             ctx->Visual.blueBits < CHAN_BITS) {
+         if (fb->Visual.redBits < CHAN_BITS ||
+             fb->Visual.greenBits < CHAN_BITS ||
+             fb->Visual.blueBits < CHAN_BITS) {
             /* Requantize the color values into floating point and go from
              * there.  This fixes conformance failures with 16-bit color
              * buffers, for example.

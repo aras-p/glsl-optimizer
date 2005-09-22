@@ -500,9 +500,9 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
                    GLint width, GLint height,
                    GLint destx, GLint desty )
 {
-   const GLfloat depthMax = ctx->DrawBuffer->_DepthMaxF;
-   struct gl_renderbuffer *readRb
-      = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
+   struct gl_renderbuffer *readRb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   const GLfloat depthMax = fb->_DepthMaxF;
    GLfloat *p, *tmpImage;
    GLint sy, dy, stepy;
    GLint i, j;
@@ -517,7 +517,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_Z);
 
-   if (!ctx->Visual.depthBits) {
+   if (fb->Visual.depthBits == 0) {
       _mesa_error( ctx, GL_INVALID_OPERATION, "glCopyPixels" );
       return;
    }
@@ -588,7 +588,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       span.x = destx;
       span.y = dy;
       span.end = width;
-      if (ctx->Visual.rgbMode) {
+      if (fb->Visual.rgbMode) {
          if (zoom)
             _swrast_write_zoomed_rgba_span( ctx, &span, 
                             (const GLchan (*)[4])span.array->rgba, desty, 0 );
@@ -614,8 +614,8 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
                      GLint width, GLint height,
                      GLint destx, GLint desty )
 {
-   struct gl_renderbuffer *rb
-      = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
+   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
    GLint sy, dy, stepy;
    GLint j;
    GLstencil *p, *tmpImage;
@@ -623,7 +623,7 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    const GLboolean shift_or_offset = ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset;
    GLint overlapping;
 
-   if (!ctx->Visual.stencilBits) {
+   if (fb->Visual.stencilBits == 0) {
       _mesa_error( ctx, GL_INVALID_OPERATION, "glCopyPixels" );
       return;
    }

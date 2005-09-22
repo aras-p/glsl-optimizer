@@ -529,8 +529,8 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
       return;
    }
 
-   if (ctx->Visual.stencilBits == 0) {
-      _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawPixels(no stencil buffer)");
+   if (ctx->DrawBuffer->Visual.stencilBits == 0) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawPixels(no stencil buffer)");
       return;
    }
 
@@ -584,6 +584,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
                    const struct gl_pixelstore_attrib *unpack,
                    const GLvoid *pixels )
 {
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
    const GLboolean bias_or_scale = ctx->Pixel.DepthBias!=0.0 || ctx->Pixel.DepthScale!=1.0;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
    const GLint desty = y;
@@ -610,7 +611,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
       _swrast_span_default_texcoords(ctx, &span);
 
    if (type == GL_UNSIGNED_SHORT
-       && ctx->Visual.depthBits == 16
+       && fb->Visual.depthBits == 16
        && !bias_or_scale
        && !zoom
        && ctx->Visual.rgbMode
@@ -635,8 +636,8 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
             && !zoom
             && ctx->Visual.rgbMode
             && width <= MAX_WIDTH) {
-      /* Special case: shift 32-bit values down to ctx->Visual.depthBits */
-      const GLint shift = 32 - ctx->Visual.depthBits;
+      /* Special case: shift 32-bit values down to Visual.depthBits */
+      const GLint shift = 32 - fb->Visual.depthBits;
       GLint row, spanY = y;
       for (row = 0; row < height; row++, spanY++) {
          const GLuint *zSrc = (const GLuint *)
