@@ -1173,8 +1173,7 @@ _swrast_clear_stencil_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
       }
       else {
          /* no bit masking */
-         if (width == rb->Width &&
-             rb->InternalFormat == GL_STENCIL_INDEX8_EXT) {
+         if (width == rb->Width && rb->DataType == GL_UNSIGNED_BYTE) {
             /* optimized case */
             /* XXX bottom-to-op raster assumed! */
             GLubyte *stencil = rb->GetPointer(ctx, rb, x, y);
