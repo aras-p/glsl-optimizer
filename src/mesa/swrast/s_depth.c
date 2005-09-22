@@ -1256,7 +1256,7 @@ _swrast_read_depth_span_float( GLcontext *ctx, struct gl_renderbuffer *rb,
       }
    }
    else {
-      _mesa_problem(ctx, "Invalid depth renderbuffer internal format");
+      _mesa_problem(ctx, "Invalid depth renderbuffer data type");
    }
 }
 
