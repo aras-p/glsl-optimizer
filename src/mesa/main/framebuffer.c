@@ -106,7 +106,7 @@ _mesa_new_framebuffer(GLcontext *ctx, GLuint name)
       fb->ColorDrawBuffer[0] = GL_COLOR_ATTACHMENT0_EXT;
       fb->_ColorDrawBufferMask[0] = BUFFER_BIT_COLOR0;
       fb->ColorReadBuffer = GL_COLOR_ATTACHMENT0_EXT;
-      fb->_ColorReadBufferMask = BUFFER_BIT_COLOR0;
+      fb->_ColorReadBufferIndex = BUFFER_COLOR0;
       fb->Delete = _mesa_destroy_framebuffer;
    }
    return fb;
@@ -134,13 +134,13 @@ _mesa_initialize_framebuffer(struct gl_framebuffer *fb, const GLvisual *visual)
       fb->ColorDrawBuffer[0] = GL_BACK;
       fb->_ColorDrawBufferMask[0] = BUFFER_BIT_BACK_LEFT;
       fb->ColorReadBuffer = GL_BACK;
-      fb->_ColorReadBufferMask = BUFFER_BIT_BACK_LEFT;
+      fb->_ColorReadBufferIndex = BUFFER_BACK_LEFT;
    }
    else {
       fb->ColorDrawBuffer[0] = GL_FRONT;
       fb->_ColorDrawBufferMask[0] = BUFFER_BIT_FRONT_LEFT;
       fb->ColorReadBuffer = GL_FRONT;
-      fb->_ColorReadBufferMask = BUFFER_BIT_FRONT_LEFT;
+      fb->_ColorReadBufferIndex = BUFFER_FRONT_LEFT;
    }
 
    fb->Delete = _mesa_destroy_framebuffer;
@@ -358,24 +358,6 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
 
 
 /**
- * Given a framebuffer and a buffer bit (like BUFFER_BIT_FRONT_LEFT), return
- * the corresponding renderbuffer.
- */
-static struct gl_renderbuffer *
-get_renderbuffer(struct gl_framebuffer *fb, GLbitfield bufferBit)
-{
-   GLuint index;
-   for (index = 0; index < BUFFER_COUNT; index++) {
-      if ((1 << index) == bufferBit) {
-         return fb->Attachment[index].Renderbuffer;
-      }
-   }
-   _mesa_problem(NULL, "Bad bufferBit in get_renderbuffer");
-   return NULL;
-}
-
-
-/**
  * Update state related to the current draw/read framebuffers.
  * Specifically, update these framebuffer fields:
  *    _ColorDrawBuffers
@@ -396,7 +378,7 @@ _mesa_update_framebuffer(GLcontext *ctx)
       _mesa_test_framebuffer_completeness(ctx, fb);
 
    /*
-    * Update the list of drawing renderbuffer pointers.
+    * Update the list of color drawing renderbuffer pointers.
     * Later, when we're rendering we'll loop from 0 to _NumColorDrawBuffers
     * writing colors.  We need the inner loop here because
     * glDrawBuffer(GL_FRONT_AND_BACK) can specify writing to two or four
@@ -405,11 +387,11 @@ _mesa_update_framebuffer(GLcontext *ctx)
    for (output = 0; output < ctx->Const.MaxDrawBuffers; output++) {
       GLbitfield bufferMask = fb->_ColorDrawBufferMask[output];
       GLuint count = 0;
-      GLuint bufferBit;
-      /* for each bit that's set in the bufferMask... */
-      for (bufferBit = 1; bufferMask; bufferBit <<= 1) {
+      GLuint i;
+      for (i = 0; bufferMask && i < BUFFER_COUNT; i++) {
+         const GLuint bufferBit = 1 << i;
          if (bufferBit & bufferMask) {
-            struct gl_renderbuffer *rb = get_renderbuffer(fb, bufferBit);
+            struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
             if (rb) {
                fb->_ColorDrawBuffers[output][count] = rb;
                count++;
@@ -424,13 +406,18 @@ _mesa_update_framebuffer(GLcontext *ctx)
    }
 
    /*
-    * Update the read renderbuffer pointer.
+    * Update the color read renderbuffer pointer.
     * Unlike the DrawBuffer, we can only read from one (or zero) color buffers.
     */
-   if (fb->_ColorReadBufferMask == 0x0)
+   if (fb->_ColorReadBufferIndex == -1) {
       fb->_ColorReadBuffer = NULL; /* legal! */
-   else
-      fb->_ColorReadBuffer = get_renderbuffer(fb, fb->_ColorReadBufferMask);
-
+   }
+   else {
+      ASSERT(fb->_ColorReadBufferIndex >= 0);
+      ASSERT(fb->_ColorReadBufferIndex < BUFFER_COUNT);
+      fb->_ColorReadBuffer
+         = fb->Attachment[fb->_ColorReadBufferIndex].Renderbuffer;
+      printf("Read buffer index %d\n", fb->_ColorReadBufferIndex);
+   }
    compute_depth_max(fb);
 }

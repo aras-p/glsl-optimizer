@@ -273,48 +273,49 @@ draw_buffer_enum_to_bitmask(GLenum buffer)
 
 /**
  * Helper routine used by glReadBuffer.
- * Given a GLenum naming (a) color buffer(s), return the corresponding
- * bitmask of DD_* flags.
+ * Given a GLenum naming a color buffer, return the index of the corresponding
+ * renderbuffer (a BUFFER_* value).
+ * return -1 for an invalid buffer.
  */
-static GLbitfield
-read_buffer_enum_to_bitmask(GLenum buffer)
+static GLint
+read_buffer_enum_to_index(GLenum buffer)
 {
    switch (buffer) {
       case GL_FRONT:
-         return BUFFER_BIT_FRONT_LEFT;
+         return BUFFER_FRONT_LEFT;
       case GL_BACK:
-         return BUFFER_BIT_BACK_LEFT;
+         return BUFFER_BACK_LEFT;
       case GL_RIGHT:
-         return BUFFER_BIT_FRONT_RIGHT;
+         return BUFFER_FRONT_RIGHT;
       case GL_FRONT_RIGHT:
-         return BUFFER_BIT_FRONT_RIGHT;
+         return BUFFER_FRONT_RIGHT;
       case GL_BACK_RIGHT:
-         return BUFFER_BIT_BACK_RIGHT;
+         return BUFFER_BACK_RIGHT;
       case GL_BACK_LEFT:
-         return BUFFER_BIT_BACK_LEFT;
+         return BUFFER_BACK_LEFT;
       case GL_LEFT:
-         return BUFFER_BIT_FRONT_LEFT;
+         return BUFFER_FRONT_LEFT;
       case GL_FRONT_LEFT:
-         return BUFFER_BIT_FRONT_LEFT;
+         return BUFFER_FRONT_LEFT;
       case GL_AUX0:
-         return BUFFER_BIT_AUX0;
+         return BUFFER_AUX0;
       case GL_AUX1:
-         return BUFFER_BIT_AUX1;
+         return BUFFER_AUX1;
       case GL_AUX2:
-         return BUFFER_BIT_AUX2;
+         return BUFFER_AUX2;
       case GL_AUX3:
-         return BUFFER_BIT_AUX3;
+         return BUFFER_AUX3;
       case GL_COLOR_ATTACHMENT0_EXT:
-         return BUFFER_BIT_COLOR0;
+         return BUFFER_COLOR0;
       case GL_COLOR_ATTACHMENT1_EXT:
-         return BUFFER_BIT_COLOR1;
+         return BUFFER_COLOR1;
       case GL_COLOR_ATTACHMENT2_EXT:
-         return BUFFER_BIT_COLOR2;
+         return BUFFER_COLOR2;
       case GL_COLOR_ATTACHMENT3_EXT:
-         return BUFFER_BIT_COLOR3;
+         return BUFFER_COLOR3;
       default:
          /* error */
-         return BAD_MASK;
+         return -1;
    }
 }
 
@@ -526,7 +527,8 @@ void GLAPIENTRY
 _mesa_ReadBuffer(GLenum buffer)
 {
    struct gl_framebuffer *fb;
-   GLbitfield srcMask, supportedMask;
+   GLbitfield supportedMask;
+   GLint srcBuffer;
    GLuint bufferID;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
@@ -538,18 +540,18 @@ _mesa_ReadBuffer(GLenum buffer)
       _mesa_debug(ctx, "glReadBuffer %s\n", _mesa_lookup_enum_by_nr(buffer));
 
    if (bufferID > 0 && buffer == GL_NONE) {
-      /* legal! */
-      srcMask = 0x0;
+      /* This is legal for user-created framebuffer objects */
+      srcBuffer = -1;
    }
    else {
-      /* general case */
-      srcMask = read_buffer_enum_to_bitmask(buffer);
-      if (srcMask == BAD_MASK) {
+      /* general case / window-system framebuffer */
+      srcBuffer = read_buffer_enum_to_index(buffer);
+      if (srcBuffer == -1) {
          _mesa_error(ctx, GL_INVALID_ENUM, "glReadBuffer(buffer)");
          return;
       }
       supportedMask = supported_buffer_bitmask(ctx, bufferID);
-      if ((srcMask & supportedMask) == 0) {
+      if (((1 << srcBuffer) & supportedMask) == 0) {
          _mesa_error(ctx, GL_INVALID_OPERATION, "glReadBuffer(buffer)");
          return;
       }
@@ -559,7 +561,7 @@ _mesa_ReadBuffer(GLenum buffer)
       ctx->Pixel.ReadBuffer = buffer;
    }
    fb->ColorReadBuffer = buffer;
-   fb->_ColorReadBufferMask = srcMask;
+   fb->_ColorReadBufferIndex = srcBuffer;
 
    ctx->NewState |= _NEW_PIXEL;
 
