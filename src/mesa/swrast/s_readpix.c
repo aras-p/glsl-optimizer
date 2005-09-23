@@ -507,6 +507,9 @@ _swrast_ReadPixels( GLcontext *ctx,
 
    /* Do all needed clipping here, so that we can forget about it later */
    clippedPacking = *packing;
+   if (clippedPacking.RowLength == 0) {
+      clippedPacking.RowLength = width;
+   }
    if (!_mesa_clip_readpixels(ctx, &x, &y, &width, &height,
                               &clippedPacking.SkipPixels,
                               &clippedPacking.SkipRows)) {
