@@ -417,7 +417,6 @@ _mesa_update_framebuffer(GLcontext *ctx)
       ASSERT(fb->_ColorReadBufferIndex < BUFFER_COUNT);
       fb->_ColorReadBuffer
          = fb->Attachment[fb->_ColorReadBufferIndex].Renderbuffer;
-      printf("Read buffer index %d\n", fb->_ColorReadBufferIndex);
    }
    compute_depth_max(fb);
 }
