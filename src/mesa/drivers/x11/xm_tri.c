@@ -45,7 +45,7 @@
 
 
 #define GET_XRB(XRB)  struct xmesa_renderbuffer *XRB = \
-   (struct xmesa_renderbuffer *) ctx->DrawBuffer->_ColorDrawBuffers[0][0]
+   (struct xmesa_renderbuffer *) ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped
 
 
 /**********************************************************************/
@@ -1430,8 +1430,7 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    XMesaContext xmesa = XMESA_CONTEXT(ctx);
    int depth = GET_VISUAL_DEPTH(xmesa->xm_visual);
-   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *)
-      ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+   GET_XRB(xrb);
 
 #ifdef DEBUG
    triFuncName = NULL;

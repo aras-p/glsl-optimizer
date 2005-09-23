@@ -1146,47 +1146,43 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 /**
- * The alpha_renderbuffer class is used to augment an RGB renderbuffer with
- * an alpha channel.  The RGB buffer can be hardware-based.
- * We basically wrap the RGB buffer.  When PutRow is called (for example),
- * we store the alpha values in this buffer, then pass on the PutRow call
- * to the wrapped RGB buffer.
+ * Here we utilize the gl_renderbuffer->Wrapper field to put an alpha
+ * buffer wrapper around an existing RGB renderbuffer (hw or sw).
+ *
+ * When PutRow is called (for example), we store the alpha values in
+ * this buffer, then pass on the PutRow call to the wrapped RGB
+ * buffer.
  */
-struct alpha_renderbuffer
-{
-   struct gl_renderbuffer Base;        /* the alpha buffer */
-   struct gl_renderbuffer *RGBbuffer;  /* the wrapped RGB buffer */
-};
 
 
 static GLboolean
-alloc_storage_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb,
+alloc_storage_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb,
                      GLenum internalFormat, GLuint width, GLuint height)
 {
-   struct alpha_renderbuffer *arb = (struct alpha_renderbuffer *) rb;
+   ASSERT(arb != arb->Wrapped);
 
    /* first, pass the call to the wrapped RGB buffer */
-   if (!arb->RGBbuffer->AllocStorage(ctx, arb->RGBbuffer, internalFormat,
-                                     width, height)) {
+   if (!arb->Wrapped->AllocStorage(ctx, arb->Wrapped, internalFormat,
+                                  width, height)) {
       return GL_FALSE;
    }
 
    /* next, resize my alpha buffer */
-   if (arb->Base.Data) {
-      _mesa_free(arb->Base.Data);
+   if (arb->Data) {
+      _mesa_free(arb->Data);
    }
 
-   arb->Base.Data = _mesa_malloc(width * height * sizeof(GLubyte));
-   if (arb->Base.Data == NULL) {
-      arb->Base.Width = 0;
-      arb->Base.Height = 0;
+   arb->Data = _mesa_malloc(width * height * sizeof(GLubyte));
+   if (arb->Data == NULL) {
+      arb->Width = 0;
+      arb->Height = 0;
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "software alpha buffer allocation");
       return GL_FALSE;
    }
 
-   arb->Base.Width = width;
-   arb->Base.Height = height;
-   arb->Base.InternalFormat = internalFormat;
+   arb->Width = width;
+   arb->Height = height;
+   arb->InternalFormat = internalFormat;
 
    return GL_TRUE;
 }
@@ -1196,21 +1192,21 @@ alloc_storage_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb,
  * Delete an alpha_renderbuffer object, as well as the wrapped RGB buffer.
  */
 static void
-delete_renderbuffer_alpha8(struct gl_renderbuffer *rb)
+delete_renderbuffer_alpha8(struct gl_renderbuffer *arb)
 {
-   struct alpha_renderbuffer *arb = (struct alpha_renderbuffer *) rb;
-   if (arb->Base.Data) {
-      _mesa_free(arb->Base.Data);
+   if (arb->Data) {
+      _mesa_free(arb->Data);
    }
-   assert(arb->RGBbuffer);
-   arb->RGBbuffer->Delete(arb->RGBbuffer);
-   arb->RGBbuffer = NULL;
+   ASSERT(arb->Wrapped);
+   ASSERT(arb != arb->Wrapped);
+   arb->Wrapped->Delete(arb->Wrapped);
+   arb->Wrapped = NULL;
    _mesa_free(arb);
 }
 
 
 static void *
-get_pointer_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb,
+get_pointer_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb,
                    GLint x, GLint y)
 {
    return NULL;   /* don't allow direct access! */
@@ -1218,17 +1214,17 @@ get_pointer_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-get_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+get_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
                GLint x, GLint y, void *values)
 {
    /* NOTE: 'values' is RGBA format! */
-   struct alpha_renderbuffer *arb = (struct alpha_renderbuffer *) rb;
-   const GLubyte *src = (const GLubyte *) rb->Data + y * rb->Width + x;
+   const GLubyte *src = (const GLubyte *) arb->Data + y * arb->Width + x;
    GLubyte *dst = (GLubyte *) values;
    GLuint i;
-   ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
+   ASSERT(arb != arb->Wrapped);
+   ASSERT(arb->DataType == GL_UNSIGNED_BYTE);
    /* first, pass the call to the wrapped RGB buffer */
-   arb->RGBbuffer->GetRow(ctx, arb->RGBbuffer, count, x, y, values);
+   arb->Wrapped->GetRow(ctx, arb->Wrapped, count, x, y, values);
    /* second, fill in alpha values from this buffer! */
    for (i = 0; i < count; i++) {
       dst[i * 4 + 3] = src[i];
@@ -1237,34 +1233,34 @@ get_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-get_values_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+get_values_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
                   const GLint x[], const GLint y[], void *values)
 {
-   struct alpha_renderbuffer *arb = (struct alpha_renderbuffer *) rb;
    GLubyte *dst = (GLubyte *) values;
    GLuint i;
-   assert(rb->DataType == GL_UNSIGNED_BYTE);
+   ASSERT(arb != arb->Wrapped);
+   ASSERT(arb->DataType == GL_UNSIGNED_BYTE);
    /* first, pass the call to the wrapped RGB buffer */
-   arb->RGBbuffer->GetValues(ctx, arb->RGBbuffer, count, x, y, values);
+   arb->Wrapped->GetValues(ctx, arb->Wrapped, count, x, y, values);
    /* second, fill in alpha values from this buffer! */
    for (i = 0; i < count; i++) {
-      const GLubyte *src = (GLubyte *) rb->Data + y[i] * rb->Width + x[i];
+      const GLubyte *src = (GLubyte *) arb->Data + y[i] * arb->Width + x[i];
       dst[i * 4 + 3] = *src;
    }
 }
 
 
 static void
-put_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
                GLint x, GLint y, const void *values, const GLubyte *mask)
 {
-   struct alpha_renderbuffer *arb = (struct alpha_renderbuffer *) rb;
    const GLubyte *src = (const GLubyte *) values;
-   GLubyte *dst = (GLubyte *) rb->Data + y * rb->Width + x;
+   GLubyte *dst = (GLubyte *) arb->Data + y * arb->Width + x;
    GLuint i;
-   assert(rb->DataType == GL_UNSIGNED_BYTE);
+   ASSERT(arb != arb->Wrapped);
+   ASSERT(arb->DataType == GL_UNSIGNED_BYTE);
    /* first, pass the call to the wrapped RGB buffer */
-   arb->RGBbuffer->PutRow(ctx, arb->RGBbuffer, count, x, y, values, mask);
+   arb->Wrapped->PutRow(ctx, arb->Wrapped, count, x, y, values, mask);
    /* second, store alpha in our buffer */
    for (i = 0; i < count; i++) {
       if (!mask || mask[i]) {
@@ -1275,16 +1271,16 @@ put_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_row_rgb_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_row_rgb_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
                    GLint x, GLint y, const void *values, const GLubyte *mask)
 {
-   struct alpha_renderbuffer *arb = (struct alpha_renderbuffer *) rb;
    const GLubyte *src = (const GLubyte *) values;
-   GLubyte *dst = (GLubyte *) rb->Data + y * rb->Width + x;
+   GLubyte *dst = (GLubyte *) arb->Data + y * arb->Width + x;
    GLuint i;
-   assert(rb->DataType == GL_UNSIGNED_BYTE);
+   ASSERT(arb != arb->Wrapped);
+   ASSERT(arb->DataType == GL_UNSIGNED_BYTE);
    /* first, pass the call to the wrapped RGB buffer */
-   arb->RGBbuffer->PutRowRGB(ctx, arb->RGBbuffer, count, x, y, values, mask);
+   arb->Wrapped->PutRowRGB(ctx, arb->Wrapped, count, x, y, values, mask);
    /* second, store alpha in our buffer */
    for (i = 0; i < count; i++) {
       if (!mask || mask[i]) {
@@ -1295,15 +1291,15 @@ put_row_rgb_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_mono_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
                     GLint x, GLint y, const void *value, const GLubyte *mask)
 {
-   struct alpha_renderbuffer *arb = (struct alpha_renderbuffer *) rb;
    const GLubyte val = ((const GLubyte *) value)[3];
-   GLubyte *dst = (GLubyte *) rb->Data + y * rb->Width + x;
-   assert(rb->DataType == GL_UNSIGNED_BYTE);
+   GLubyte *dst = (GLubyte *) arb->Data + y * arb->Width + x;
+   ASSERT(arb != arb->Wrapped);
+   ASSERT(arb->DataType == GL_UNSIGNED_BYTE);
    /* first, pass the call to the wrapped RGB buffer */
-   arb->RGBbuffer->PutMonoRow(ctx, arb->RGBbuffer, count, x, y, value, mask);
+   arb->Wrapped->PutMonoRow(ctx, arb->Wrapped, count, x, y, value, mask);
    /* second, store alpha in our buffer */
    if (mask) {
       GLuint i;
@@ -1320,20 +1316,20 @@ put_mono_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_values_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+put_values_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
                   const GLint x[], const GLint y[],
                   const void *values, const GLubyte *mask)
 {
-   struct alpha_renderbuffer *arb = (struct alpha_renderbuffer *) rb;
    const GLubyte *src = (const GLubyte *) values;
    GLuint i;
-   assert(rb->DataType == GL_UNSIGNED_BYTE);
+   ASSERT(arb != arb->Wrapped);
+   ASSERT(arb->DataType == GL_UNSIGNED_BYTE);
    /* first, pass the call to the wrapped RGB buffer */
-   arb->RGBbuffer->PutValues(ctx, arb->RGBbuffer, count, x, y, values, mask);
+   arb->Wrapped->PutValues(ctx, arb->Wrapped, count, x, y, values, mask);
    /* second, store alpha in our buffer */
    for (i = 0; i < count; i++) {
       if (!mask || mask[i]) {
-         GLubyte *dst = (GLubyte *) rb->Data + y[i] * rb->Width + x[i];
+         GLubyte *dst = (GLubyte *) arb->Data + y[i] * arb->Width + x[i];
          *dst = src[i * 4 + 3];
       }
    }
@@ -1341,20 +1337,20 @@ put_values_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_values_alpha8(GLcontext *ctx, struct gl_renderbuffer *rb,
+put_mono_values_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb,
                        GLuint count, const GLint x[], const GLint y[],
                        const void *value, const GLubyte *mask)
 {
-   struct alpha_renderbuffer *arb = (struct alpha_renderbuffer *) rb;
    const GLubyte val = ((const GLubyte *) value)[3];
    GLuint i;
-   assert(rb->DataType == GL_UNSIGNED_BYTE);
+   ASSERT(arb != arb->Wrapped);
+   ASSERT(arb->DataType == GL_UNSIGNED_BYTE);
    /* first, pass the call to the wrapped RGB buffer */
-   arb->RGBbuffer->PutValues(ctx, arb->RGBbuffer, count, x, y, value, mask);
+   arb->Wrapped->PutValues(ctx, arb->Wrapped, count, x, y, value, mask);
    /* second, store alpha in our buffer */
    for (i = 0; i < count; i++) {
       if (!mask || mask[i]) {
-         GLubyte *dst = (GLubyte *) rb->Data + y[i] * rb->Width + x[i];
+         GLubyte *dst = (GLubyte *) arb->Data + y[i] * arb->Width + x[i];
          *dst = val;
       }
    }
@@ -1403,6 +1399,11 @@ _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name)
    rb->DepthBits = 0;
    rb->StencilBits = 0;
    rb->Data = NULL;
+
+   /* Point back to ourself so that we don't have to check for Wrapped==NULL
+    * all over the drivers.
+    */
+   rb->Wrapped = rb;
 
    rb->GetPointer = nop_get_pointer;
    rb->GetRow = NULL;
@@ -1618,8 +1619,10 @@ _mesa_add_alpha_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
 
    assert(MAX_COLOR_ATTACHMENTS >= 4);
 
+   /* Wrap each of the RGB color buffers with an alpha renderbuffer.
+    */
    for (b = BUFFER_FRONT_LEFT; b <= BUFFER_BACK_RIGHT; b++) {
-      struct alpha_renderbuffer *arb;
+      struct gl_renderbuffer *arb;
 
       if (b == BUFFER_FRONT_LEFT && !frontLeft)
          continue;
@@ -1636,37 +1639,40 @@ _mesa_add_alpha_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
       /* only GLubyte supported for now */
       assert(fb->Attachment[b].Renderbuffer->DataType == GL_UNSIGNED_BYTE);
 
-      arb = CALLOC_STRUCT(alpha_renderbuffer);
+      /* allocate alpha renderbuffer */
+      arb = _mesa_new_renderbuffer(ctx, 0);
       if (!arb) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "Allocating alpha buffer");
          return GL_FALSE;
       }
 
-      _mesa_init_renderbuffer(&arb->Base, 0);
+      /* wrap the alpha renderbuffer around the RGB renderbuffer */
+      arb->Wrapped = fb->Attachment[b].Renderbuffer;
 
-      /* wrap the RGB buffer */
-      arb->RGBbuffer = fb->Attachment[b].Renderbuffer;
-
-      /* plug in my functions */
-      arb->Base.InternalFormat = arb->RGBbuffer->InternalFormat;
-      arb->Base._BaseFormat    = arb->RGBbuffer->_BaseFormat;
-      arb->Base.DataType       = arb->RGBbuffer->DataType;
-      arb->Base.AllocStorage   = alloc_storage_alpha8;
-      arb->Base.Delete         = delete_renderbuffer_alpha8;
-      arb->Base.GetPointer     = get_pointer_alpha8;
-      arb->Base.GetRow         = get_row_alpha8;
-      arb->Base.GetValues      = get_values_alpha8;
-      arb->Base.PutRow         = put_row_alpha8;
-      arb->Base.PutRowRGB      = put_row_rgb_alpha8;
-      arb->Base.PutMonoRow     = put_mono_row_alpha8;
-      arb->Base.PutValues      = put_values_alpha8;
-      arb->Base.PutMonoValues  = put_mono_values_alpha8;
+      /* Set up my alphabuffer fields and plug in my functions.
+       * The functions will put/get the alpha values from/to RGBA arrays
+       * and then call the wrapped buffer's functions to handle the RGB
+       * values.
+       */
+      arb->InternalFormat = arb->Wrapped->InternalFormat;
+      arb->_BaseFormat    = arb->Wrapped->_BaseFormat;
+      arb->DataType       = arb->Wrapped->DataType;
+      arb->AllocStorage   = alloc_storage_alpha8;
+      arb->Delete         = delete_renderbuffer_alpha8;
+      arb->GetPointer     = get_pointer_alpha8;
+      arb->GetRow         = get_row_alpha8;
+      arb->GetValues      = get_values_alpha8;
+      arb->PutRow         = put_row_alpha8;
+      arb->PutRowRGB      = put_row_rgb_alpha8;
+      arb->PutMonoRow     = put_mono_row_alpha8;
+      arb->PutValues      = put_values_alpha8;
+      arb->PutMonoValues  = put_mono_values_alpha8;
 
       /* clear the pointer to avoid assertion/sanity check failure later */
       fb->Attachment[b].Renderbuffer = NULL;
 
       /* plug the alpha renderbuffer into the colorbuffer attachment */
-      _mesa_add_renderbuffer(fb, b, &arb->Base);
+      _mesa_add_renderbuffer(fb, b, arb);
    }
 
    return GL_TRUE;

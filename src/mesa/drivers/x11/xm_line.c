@@ -118,7 +118,7 @@ void xmesa_choose_point( GLcontext *ctx )
 
 
 #define GET_XRB(XRB)  struct xmesa_renderbuffer *XRB = \
-   (struct xmesa_renderbuffer *) ctx->DrawBuffer->_ColorDrawBuffers[0][0]
+   (struct xmesa_renderbuffer *) ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped
 
 
 /*
