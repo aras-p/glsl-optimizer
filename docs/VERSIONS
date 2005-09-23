@@ -1382,6 +1382,7 @@ Mesa Version History
 	  sampling unit bits from the texture env combine enable bits
 	- GL_EXT_timer_query extension
 	- r200: add support for GL_ATI_fragment_shader
+	- added fast XOR-mode line drawing optimization
     Changes:
 	- removed GL_HP_occlusion_test (use GL_ARB_occlusion_query instead)
     Bug fixes:
