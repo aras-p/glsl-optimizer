@@ -16,7 +16,7 @@ VPATH = RCS
 
 INCDIR = [---.include],[-.main],[-.glapi],[-.shader]
 LIBDIR = [---.lib]
-CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
+CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)/float=ieee/ieee=denorm
 
 SOURCES = s_aaline.c s_aatriangle.c s_accum.c s_alpha.c \
 	s_bitmap.c s_blend.c s_buffers.c s_context.c s_copypix.c s_depth.c \

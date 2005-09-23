@@ -13,7 +13,7 @@ VPATH = RCS
 INCDIR =([-.include],[.include],[.internals],[.libnurbs.internals],\
        [.libnurbs.interface],[.libnurbs.nurbtess])
 LIBDIR = [---.lib]
-CFLAGS = /include=$(INCDIR)/name=(as_is,short)
+CFLAGS = /include=$(INCDIR)/name=(as_is,short)/float=ieee/ieee=denorm
 
 LU_OBJECTS=\
 	[.libutil]error.obj,	\

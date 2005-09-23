@@ -16,7 +16,7 @@ VPATH = RCS
 
 INCDIR = [----.include],[--.main],[--.glapi],[-.slang],[-.grammar],[-]
 LIBDIR = [----.lib]
-CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
+CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)/float=ieee/ieee=denorm
 
 SOURCES = \
 	slang_compile.c,slang_preprocess.c

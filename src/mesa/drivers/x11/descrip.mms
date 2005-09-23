@@ -19,7 +19,7 @@ VPATH = RCS
 
 INCDIR = [----.include],[--.main],[--.glapi]
 LIBDIR = [----.lib]
-CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
+CFLAGS =/include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)/float=ieee/ieee=denorm
 
 SOURCES = fakeglx.c glxapi.c xfonts.c xm_api.c xm_dd.c xm_line.c xm_span.c\
 	xm_tri.c xm_buffer.c

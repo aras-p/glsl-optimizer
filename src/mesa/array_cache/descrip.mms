@@ -15,7 +15,7 @@ VPATH = RCS
 
 INCDIR = [---.include],[-.main],[-.glapi]
 LIBDIR = [---.lib]
-CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
+CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)/float=ieee/ieee=denorm
 
 SOURCES = ac_context.c ac_import.c
 

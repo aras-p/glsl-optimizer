@@ -12,7 +12,7 @@ VPATH = RCS
 
 INCDIR = $disk2:[-.include]
 LIBDIR = [-.lib]
-CFLAGS = /include=$(INCDIR)/define=(FBIND=1)/name=(as_is,short)
+CFLAGS = /include=$(INCDIR)/define=(FBIND=1)/name=(as_is,short)/float=ieee/ieee=denorm
 
 SOURCES = glu.c mipmap.c nurbs.c nurbscrv.c nurbssrf.c nurbsutl.c \
 	polytest.c project.c quadric.c tess.c tesselat.c

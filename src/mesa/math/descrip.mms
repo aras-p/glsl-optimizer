@@ -14,7 +14,7 @@ VPATH = RCS
 
 INCDIR = [---.include],[-.main],[-.glapi]
 LIBDIR = [---.lib]
-CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
+CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)/float=ieee/ieee=denorm
 
 SOURCES = m_debug_clip.c m_debug_norm.c m_debug_xform.c m_eval.c m_matrix.c\
 	m_translate.c m_vector.c m_xform.c

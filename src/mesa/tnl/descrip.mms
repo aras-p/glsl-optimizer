@@ -16,7 +16,7 @@ VPATH = RCS
 
 INCDIR = [---.include],[-.main],[-.glapi],[-.shader]
 LIBDIR = [---.lib]
-CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
+CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)/float=ieee/ieee=denorm
 
 SOURCES = t_array_api.c t_array_import.c t_context.c \
 	t_pipeline.c t_vb_fog.c t_save_api.c t_vtx_api.c \
