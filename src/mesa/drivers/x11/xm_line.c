@@ -533,7 +533,46 @@ void xmesa_choose_point( GLcontext *ctx )
 
 
 
-static swrast_line_func get_line_func( GLcontext *ctx )
+#ifndef XFree86Server
+/**
+ * Draw fast, XOR line with XDrawLine in front color buffer.
+ * WARNING: this isn't fully OpenGL conformant because different pixels
+ * will be hit versus using the other line functions.
+ * Don't use the code in X server GLcore module since we need a wrapper
+ * for the XSetLineAttributes() function call.
+ */
+static void
+xor_line(GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1)
+{
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   XMesaDisplay *dpy = xmesa->xm_visual->display;
+   XMesaGC gc = xmesa->xm_buffer->gc;
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *)
+      ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+   unsigned long pixel = xmesa_color_to_pixel(ctx,
+                                              vert1->color[0], vert1->color[1],
+                                              vert1->color[2], vert1->color[3],
+                                              xmesa->pixelformat);
+   int x0 = (int) vert0->win[0];
+   int y0 = YFLIP(xrb, (GLint) vert0->win[1]);
+   int x1 = (int) vert1->win[0];
+   int y1 = YFLIP(xrb, (GLint) vert1->win[1]);
+   XMesaSetForeground(dpy, gc, pixel);
+   XMesaSetFunction(dpy, gc, GXxor);
+   XSetLineAttributes(dpy, gc, (int) ctx->Line.Width,
+                      LineSolid, CapButt, JoinMiter);
+   XDrawLine(dpy, xrb->pixmap, gc, x0, y0, x1, y1);
+   XMesaSetFunction(dpy, gc, GXcopy);  /* this gc is used elsewhere */
+}
+#endif /* XFree86Server */
+
+
+/**
+ * Return pointer to line drawing function, or NULL if we should use a
+ * swrast fallback.
+ */
+static swrast_line_func
+get_line_func(GLcontext *ctx)
 {
    XMesaContext xmesa = XMESA_CONTEXT(ctx);
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -611,14 +650,28 @@ static swrast_line_func get_line_func( GLcontext *ctx )
       }
    }
 
+#ifndef XFree86Server
+   if (ctx->DrawBuffer->_NumColorDrawBuffers[0] == 1
+       && ctx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT
+       && swrast->_RasterMask == LOGIC_OP_BIT
+       && ctx->Color.LogicOp == GL_XOR
+       && !ctx->Line.StippleFlag
+       && !ctx->Line.SmoothFlag) {
+      return xor_line;
+   }
+#endif /* XFree86Server */
+
    return (swrast_line_func) NULL;
 }
 
-/* Override for the swrast line-selection function.  Try to use one
+
+/**
+ * Override for the swrast line-selection function.  Try to use one
  * of our internal line functions, otherwise fall back to the
  * standard swrast functions.
  */
-void xmesa_choose_line( GLcontext *ctx )
+void
+xmesa_choose_line(GLcontext *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
