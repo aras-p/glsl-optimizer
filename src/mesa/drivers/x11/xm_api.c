@@ -340,6 +340,8 @@ alloc_xmesa_buffer(XMesaVisual vis, BufferType type, XMesaColormap cmap)
 {
    XMesaBuffer b = (XMesaBuffer) CALLOC_STRUCT(xmesa_buffer);
    if (b) {
+      GLboolean swAlpha;
+
       b->display = vis->display;
       b->xm_visual = vis;
       b->type = type;
@@ -369,12 +371,25 @@ alloc_xmesa_buffer(XMesaVisual vis, BufferType type, XMesaColormap cmap)
                                 &b->backxrb->Base);
       }
 
+      /* determine if we need software alpha planes */
+      if (vis->mesa_visual.alphaBits > 0
+          && vis->undithered_pf != PF_8A8B8G8R
+          && vis->undithered_pf != PF_8A8R8G8B) {
+         /* Visual has alpha, but pixel format doesn't support it.
+          * We'll use an alpha renderbuffer wrapper.
+          */
+         swAlpha = GL_TRUE;
+      }
+      else {
+         swAlpha = GL_FALSE;
+      }
+
       _mesa_add_soft_renderbuffers(&b->mesa_buffer,
                                    GL_FALSE,  /* color */
                                    vis->mesa_visual.haveDepthBuffer,
                                    vis->mesa_visual.haveStencilBuffer,
                                    vis->mesa_visual.haveAccumBuffer,
-                                   vis->mesa_visual.alphaBits > 0,
+                                   swAlpha,
                                    vis->mesa_visual.numAuxBuffers > 0 );
 
       /* insert into linked list */
