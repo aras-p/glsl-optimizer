@@ -587,6 +587,7 @@ void r300EmitBlit(r300ContextPtr rmesa,
 							__FUNCTION__);
 
 	cmd[0].header.cmd_type = R300_CMD_PACKET3;
+	cmd[0].header.pad0 = R300_CMD_PACKET3_RAW;
 	cmd[1].i = R200_CP_CMD_BITBLT_MULTI | (5 << 16);
 	cmd[2].i = (RADEON_GMC_SRC_PITCH_OFFSET_CNTL |
 		    RADEON_GMC_DST_PITCH_OFFSET_CNTL |

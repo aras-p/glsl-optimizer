@@ -54,6 +54,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R200_TXFORMAT_AL88      R200_TXFORMAT_AI88
 #define R200_TXFORMAT_YCBCR     R200_TXFORMAT_YVYU422
 #define R200_TXFORMAT_YCBCR_REV R200_TXFORMAT_VYUY422
+#define R200_TXFORMAT_RGB_DXT1  R200_TXFORMAT_DXT1
+#define R200_TXFORMAT_RGBA_DXT1 R200_TXFORMAT_DXT1
+#define R200_TXFORMAT_RGBA_DXT3 R200_TXFORMAT_DXT23
+#define R200_TXFORMAT_RGBA_DXT5 R200_TXFORMAT_DXT45
 
 #define _COLOR(f) \
     [ MESA_FORMAT_ ## f ] = { R200_TXFORMAT_ ## f, 0 }
@@ -67,7 +71,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     [ MESA_FORMAT_ ## f ] = { R200_TXFORMAT_ ## f, R200_YUV_TO_RGB }
 #define _INVALID(f) \
     [ MESA_FORMAT_ ## f ] = { 0xffffffff, 0 }
-#define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_YCBCR_REV) \
+#define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_RGBA_DXT5) \
 			     && tx_table[f].flag )
 
 #define _ASSIGN(entry, format)	\
@@ -95,6 +99,12 @@ static const struct {
 	    _INVALID(CI8),
 	    _YUV(YCBCR),
 	    _YUV(YCBCR_REV),
+	    _INVALID(RGB_FXT1),
+	    _INVALID(RGBA_FXT1),
+	    _COLOR(RGB_DXT1),
+	    _ALPHA(RGBA_DXT1),
+	    _ALPHA(RGBA_DXT3),
+	    _ALPHA(RGBA_DXT5),
 	    };
 
 static const struct {
@@ -129,6 +139,10 @@ static const struct {
 	    _ASSIGN(CI8, R300_EASY_TX_FORMAT(X, X, X, X, X8)),
 	    _ASSIGN(YCBCR, R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8)|R300_TX_FORMAT_YUV_MODE ),
 	    _ASSIGN(YCBCR_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8)|R300_TX_FORMAT_YUV_MODE),
+	    _ASSIGN(RGB_DXT1, R300_EASY_TX_FORMAT(X, Y, Z, ONE, DXT1)),
+	    _ASSIGN(RGBA_DXT1, R300_EASY_TX_FORMAT(X, Y, Z, W, DXT1)),
+	    _ASSIGN(RGBA_DXT3, R300_EASY_TX_FORMAT(X, Y, Z, W, DXT3)),
+	    _ASSIGN(RGBA_DXT5, R300_EASY_TX_FORMAT(Y, Z, W, X, DXT5)),
 	    };
 
 #undef _COLOR
@@ -154,8 +168,8 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	r300TexObjPtr t = (r300TexObjPtr) tObj->DriverData;
 	const struct gl_texture_image *baseImage =
 	    tObj->Image[0][tObj->BaseLevel];
-	GLint curOffset;
-	GLint i;
+	GLint curOffset, blitWidth;
+	GLint i, texelBytes;
 	GLint numLevels;
 	GLint log2Width, log2Height, log2Depth;
 
@@ -180,6 +194,8 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 		return;
 	}
 
+	texelBytes = baseImage->TexFormat->TexelBytes;
+
 	/* Compute which mipmap levels we really want to send to the hardware.
 	 */
 
@@ -197,68 +213,85 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	 * memory organized as a rectangle of width BLIT_WIDTH_BYTES.
 	 */
 	curOffset = 0;
+	blitWidth = BLIT_WIDTH_BYTES;
 
 	for (i = 0; i < numLevels; i++) {
-		const struct gl_texture_image *texImage;
-		GLuint size;
-
-		texImage = tObj->Image[0][i + t->base.firstLevel];
-		if (!texImage)
-			break;
-
-		/* find image size in bytes */
-		if (texImage->IsCompressed) {
-			size = texImage->CompressedSize;
-		} else if (tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
-			size =
-			    ((texImage->Width *
-			      texImage->TexFormat->TexelBytes + 63)
-			     & ~63) * texImage->Height;
-		} else {
-			int w =
-			    texImage->Width * texImage->TexFormat->TexelBytes;
-			if (w < 32)
-				w = 32;
-			size = w * texImage->Height * texImage->Depth;
-		}
-		assert(size > 0);
-
-		if(0)
-			fprintf(stderr, "w=%d h=%d d=%d tb=%d intFormat=%d\n", texImage->Width, texImage->Height,
-				texImage->Depth, texImage->TexFormat->TexelBytes,
-				texImage->IntFormat);
-
-		/* Align to 32-byte offset.  It is faster to do this unconditionally
-		 * (no branch penalty).
-		 */
-
-		curOffset = (curOffset + 0x1f) & ~0x1f;
-
-		t->image[0][i].x = curOffset % BLIT_WIDTH_BYTES;
-		t->image[0][i].y = curOffset / BLIT_WIDTH_BYTES;
-		t->image[0][i].width = MIN2(size, BLIT_WIDTH_BYTES);
-		t->image[0][i].height = size / t->image[0][i].width;
-
+	  const struct gl_texture_image *texImage;
+	  GLuint size;
+	  
+	  texImage = tObj->Image[0][i + t->base.firstLevel];
+	  if (!texImage)
+	    break;
+	  
+	  /* find image size in bytes */
+	  if (texImage->IsCompressed) {
+	    if ((t->format & R300_TX_FORMAT_DXT1) == R300_TX_FORMAT_DXT1) {
+	      fprintf(stderr,"DXT 1 %d %08X\n", texImage->Width, t->format);
+	      if ((texImage->Width + 3) < 8) /* width one block */
+		size = texImage->CompressedSize * 4;
+	      else if ((texImage->Width + 3) < 16)
+		size = texImage->CompressedSize * 2;
+	      else size = texImage->CompressedSize;
+	    }
+	    else /* DXT3/5, 16 bytes per block */
+	    {
+	      fprintf(stderr,"DXT 3/5 %d\n", texImage->Width);
+	      if ((texImage->Width + 3) < 8)
+		size = texImage->CompressedSize * 2;
+	      else size = texImage->CompressedSize;
+	    }
+	    
+	  } else if (tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
+	    size = ((texImage->Width * texelBytes + 63) & ~63) * texImage->Height;
+	  } else {
+	    int w = (texImage->Width * texelBytes + 31) & ~31;
+	    size = w * texImage->Height * texImage->Depth;
+	    blitWidth = MAX2(texImage->Width, 64 / texelBytes);
+	  }
+	  assert(size > 0);
+	  
+	  if(0)
+	    fprintf(stderr, "w=%d h=%d d=%d tb=%d intFormat=%d\n", texImage->Width, texImage->Height,
+		    texImage->Depth, texImage->TexFormat->TexelBytes,
+		    texImage->IntFormat);
+	  
+	  /* Align to 32-byte offset.  It is faster to do this unconditionally
+	   * (no branch penalty).
+	   */
+	  
+	  curOffset = (curOffset + 0x1f) & ~0x1f;
+	  
+	  if (texelBytes) {
+	    t->image[0][i].x = curOffset; /* fix x and y coords up later together with offset */
+	    t->image[0][i].y = 0;
+	    t->image[0][i].width = MIN2(size / texelBytes, blitWidth);
+	    t->image[0][i].height = (size / texelBytes) / t->image[0][i].width;
+	  } else {
+	    t->image[0][i].x = curOffset % BLIT_WIDTH_BYTES;
+	    t->image[0][i].y = curOffset / BLIT_WIDTH_BYTES;
+	    t->image[0][i].width = MIN2(size, BLIT_WIDTH_BYTES);
+	    t->image[0][i].height = size / t->image[0][i].width;
+	  }
 #if 0
-		/* for debugging only and only  applicable to non-rectangle targets */
-		assert(size % t->image[0][i].width == 0);
-		assert(t->image[0][i].x == 0
-		       || (size < BLIT_WIDTH_BYTES
-			   && t->image[0][i].height == 1));
+	  /* for debugging only and only  applicable to non-rectangle targets */
+	  assert(size % t->image[0][i].width == 0);
+	  assert(t->image[0][i].x == 0
+		 || (size < BLIT_WIDTH_BYTES
+		     && t->image[0][i].height == 1));
 #endif
-
-		if (0)
-			fprintf(stderr,
-				"level %d: %dx%d x=%d y=%d w=%d h=%d size=%d at %d\n",
-				i, texImage->Width, texImage->Height,
-				t->image[0][i].x, t->image[0][i].y,
-				t->image[0][i].width, t->image[0][i].height,
-				size, curOffset);
-
-		curOffset += size;
-
+	  
+	  if (0)
+	    fprintf(stderr,
+		    "level %d: %dx%d x=%d y=%d w=%d h=%d size=%d at %d\n",
+		    i, texImage->Width, texImage->Height,
+		    t->image[0][i].x, t->image[0][i].y,
+		    t->image[0][i].width, t->image[0][i].height,
+		    size, curOffset);
+	  
+	  curOffset += size;
+	  
 	}
-
+	
 	/* Align the total size of texture memory block.
 	 */
 	t->base.totalSize =
@@ -336,7 +369,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	else
 		t->pitch =
 		    ((tObj->Image[0][t->base.firstLevel]->Width *
-		      baseImage->TexFormat->TexelBytes) + 63) & ~(63);
+		      texelBytes) + 63) & ~(63);
 	t->pitch -= 32;
 
 	t->dirty_state = TEX_ALL;

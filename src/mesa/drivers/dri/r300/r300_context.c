@@ -380,6 +380,14 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 
 	driInitExtensions(ctx, card_extensions, GL_TRUE);
 	
+	if (r300->radeon.glCtx->Mesa_DXTn) {
+	  _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
+	  _mesa_enable_extension( ctx, "GL_S3_s3tc" );
+	}
+	else if (driQueryOptionb (&r300->radeon.optionCache, "force_s3tc_enable")) {
+	  _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
+	}
+
 	radeonInitSpanFuncs(ctx);
 	r300InitCmdBuf(r300);
 	r300InitState(r300);
