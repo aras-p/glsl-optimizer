@@ -68,7 +68,8 @@ SYMLINKS = \
 	server/radeon_dri.h \
 	server/radeon.h \
 	server/radeon_macros.h \
-	server/radeon_reg.h
+	server/radeon_reg.h \
+	server/radeon_egl.c
 
 ##### TARGETS #####
 
