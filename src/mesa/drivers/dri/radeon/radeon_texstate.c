@@ -836,22 +836,18 @@ static void set_texgen_matrix( radeonContextPtr rmesa,
 			       const GLfloat *s_plane,
 			       const GLfloat *t_plane )
 {
-   static const GLfloat scale_identity[4] = { 1,1,1,1 };
+   rmesa->TexGenMatrix[unit].m[0]  = s_plane[0];
+   rmesa->TexGenMatrix[unit].m[4]  = s_plane[1];
+   rmesa->TexGenMatrix[unit].m[8]  = s_plane[2];
+   rmesa->TexGenMatrix[unit].m[12] = s_plane[3];
 
-   if (!TEST_EQ_4V( s_plane, scale_identity) ||
-       !TEST_EQ_4V( t_plane, scale_identity)) {
-      rmesa->TexGenEnabled |= RADEON_TEXMAT_0_ENABLE<<unit;
-      rmesa->TexGenMatrix[unit].m[0]  = s_plane[0];
-      rmesa->TexGenMatrix[unit].m[4]  = s_plane[1];
-      rmesa->TexGenMatrix[unit].m[8]  = s_plane[2];
-      rmesa->TexGenMatrix[unit].m[12] = s_plane[3];
+   rmesa->TexGenMatrix[unit].m[1]  = t_plane[0];
+   rmesa->TexGenMatrix[unit].m[5]  = t_plane[1];
+   rmesa->TexGenMatrix[unit].m[9]  = t_plane[2];
+   rmesa->TexGenMatrix[unit].m[13] = t_plane[3];
 
-      rmesa->TexGenMatrix[unit].m[1]  = t_plane[0];
-      rmesa->TexGenMatrix[unit].m[5]  = t_plane[1];
-      rmesa->TexGenMatrix[unit].m[9]  = t_plane[2];
-      rmesa->TexGenMatrix[unit].m[13] = t_plane[3];
-      rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
-   }
+   rmesa->TexGenEnabled |= RADEON_TEXMAT_0_ENABLE << unit;
+   rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
 }
 
 /* Ignoring the Q texcoord for now.
