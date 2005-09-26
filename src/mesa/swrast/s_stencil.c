@@ -1085,7 +1085,8 @@ _swrast_read_stencil_span(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 /**
- * Write a span of stencil values to the stencil buffer.
+ * Write a span of stencil values to the stencil buffer.  This function
+ * applies the stencil write mask when needed.
  * Used for glDraw/CopyPixels
  * Input:  n - how many pixels
  *         x, y - location of first pixel
@@ -1097,6 +1098,8 @@ _swrast_write_stencil_span(GLcontext *ctx, GLint n, GLint x, GLint y,
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   const GLuint stencilMax = (1 << fb->Visual.stencilBits) - 1;
+   const GLuint stencilMask = ctx->Stencil.WriteMask[0];
 
    if (y < 0 || y >= rb->Height || x + n <= 0 || x >= rb->Width) {
       /* span is completely outside framebuffer */
@@ -1116,7 +1119,20 @@ _swrast_write_stencil_span(GLcontext *ctx, GLint n, GLint x, GLint y,
       return;
    }
 
-   rb->PutRow(ctx, rb, n, x, y, stencil, NULL);
+   if ((stencilMask & stencilMax) != stencilMax) {
+      /* need to apply writemask */
+      GLstencil destVals[MAX_WIDTH], newVals[MAX_WIDTH];
+      GLint i;
+      rb->GetRow(ctx, rb, n, x, y, destVals);
+      for (i = 0; i < n; i++) {
+         newVals[i]
+            = (stencil[i] & stencilMask) | (destVals[i] & ~stencilMask);
+      }
+      rb->PutRow(ctx, rb, n, x, y, newVals, NULL);
+   }
+   else {
+      rb->PutRow(ctx, rb, n, x, y, stencil, NULL);
+   }
 }
 
 
