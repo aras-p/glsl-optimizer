@@ -499,10 +499,20 @@ static GLboolean run_texrect_stage( GLcontext *ctx,
 	 GLint instride = VB->TexCoordPtr[i]->stride;
 	 GLfloat (*out)[4] = store->texcoord[i].data;
 	 GLint j;
-	 
+
+	 store->texcoord[i].size = VB->TexCoordPtr[i]->size;
 	 for (j = 0 ; j < VB->Count ; j++) {
-	    out[j][0] = in[0] * iw;
-	    out[j][1] = in[1] * ih;
+	    switch (VB->TexCoordPtr[i]->size) {
+	    case 4:
+	       out[j][3] = in[3];
+	    /* fallthrough */
+	    case 3:
+	       out[j][2] = in[2];
+	    /* fallthrough */
+	    default:
+	       out[j][0] = in[0] * iw;
+	       out[j][1] = in[1] * ih;
+	    }
 	    in = (GLfloat *)((GLubyte *)in + instride);
 	 }
 

@@ -2073,11 +2073,11 @@ static void update_texturematrix( GLcontext *ctx )
 	    /* Need to preconcatenate any active texgen 
 	     * obj/eyeplane matrices:
 	     */
-	    _math_matrix_mul_matrix( &rmesa->tmpmat, 
-				     &rmesa->TexGenMatrix[unit],
-				     ctx->TextureMatrixStack[unit].Top );
+	    _math_matrix_mul_matrix( &rmesa->tmpmat,
+				     ctx->TextureMatrixStack[unit].Top,
+				     &rmesa->TexGenMatrix[unit] );
 	    upload_matrix( rmesa, rmesa->tmpmat.m, TEXMAT_0+unit );
-	 } 
+	 }
 	 else {
 	    rmesa->TexMatEnabled |= 
 	       (RADEON_TEXGEN_INPUT_TEXCOORD_0+unit) << inputshift;
