@@ -161,13 +161,23 @@ typedef enum {
 #define BACK_XIMAGE	2
 
 
+/**
+ * An xmesa_renderbuffer represents the back or front color buffer.
+ * For the front color buffer:
+ *    <drawable> is the X window
+ * For the back color buffer:
+ *    Either <ximage> or <pixmap> will be used, never both.
+ * In any case, <drawable> always equals <pixmap>.
+ * For stand-alone Mesa, we could merge <drawable> and <pixmap> into one
+ * field.  We don't do that for the server-side GLcore module because
+ * pixmaps and drawables are different and we'd need a bunch of casts.
+ */
 struct xmesa_renderbuffer
 {
    struct gl_renderbuffer Base;  /* Base class */
 
-   XMesaDrawable pixmap;	/* Either an X Window ID (front color buf) */
-                                /* or X Pixmap ID (back color buf) */
-
+   XMesaDrawable drawable;	/* Usually the X window ID */
+   XMesaPixmap pixmap;	/* Back color buffer */
    XMesaImage *ximage;	/* The back buffer, if not using a Pixmap */
 
    GLubyte *origin1;	/* used for PIXEL_ADDR1 macro */

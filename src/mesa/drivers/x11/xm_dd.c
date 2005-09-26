@@ -105,8 +105,8 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    unsigned int winwidth, winheight;
 #ifdef XFree86Server
    /* XFree86 GLX renderer */
-   winwidth = MIN2(xmBuffer->frontxrb->pixmap->width, MAX_WIDTH);
-   winheight = MIN2(xmBuffer->frontxrb->pixmap->height, MAX_HEIGHT);
+   winwidth = MIN2(xmBuffer->frontxrb->drawable->width, MAX_WIDTH);
+   winheight = MIN2(xmBuffer->frontxrb->drawable->height, MAX_HEIGHT);
 #else
    Window root;
    int winx, winy;
