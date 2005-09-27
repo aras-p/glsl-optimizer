@@ -517,11 +517,6 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_Z);
 
-   if (fb->Visual.depthBits == 0) {
-      _mesa_error( ctx, GL_INVALID_OPERATION, "glCopyPixels" );
-      return;
-   }
-
    /* Determine if copy should be bottom-to-top or top-to-bottom */
    if (srcy<desty) {
       /* top-down  max-to-min */
@@ -623,11 +618,6 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    const GLboolean shift_or_offset = ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset;
    GLint overlapping;
 
-   if (fb->Visual.stencilBits == 0) {
-      _mesa_error( ctx, GL_INVALID_OPERATION, "glCopyPixels" );
-      return;
-   }
-
    if (!rb) {
       /* no readbuffer - OK */
       return;
@@ -709,12 +699,14 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 }
 
 
-
+/**
+ * Do software-based glCopyPixels.
+ * By time we get here, all parameters will have been error-checked.
+ */
 void
 _swrast_CopyPixels( GLcontext *ctx,
 		    GLint srcx, GLint srcy, GLsizei width, GLsizei height,
-		    GLint destx, GLint desty,
-		    GLenum type )
+		    GLint destx, GLint desty, GLenum type )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    RENDER_START(swrast,ctx);
@@ -722,20 +714,23 @@ _swrast_CopyPixels( GLcontext *ctx,
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-   if (type == GL_COLOR && ctx->Visual.rgbMode) {
-      copy_rgba_pixels( ctx, srcx, srcy, width, height, destx, desty );
-   }
-   else if (type == GL_COLOR && !ctx->Visual.rgbMode) {
-      copy_ci_pixels( ctx, srcx, srcy, width, height, destx, desty );
-   }
-   else if (type == GL_DEPTH) {
+   switch (type) {
+   case GL_COLOR:
+      if (ctx->Visual.rgbMode) {
+         copy_rgba_pixels( ctx, srcx, srcy, width, height, destx, desty );
+      }
+      else {
+         copy_ci_pixels( ctx, srcx, srcy, width, height, destx, desty );
+      }
+      break;
+   case GL_DEPTH:
       copy_depth_pixels( ctx, srcx, srcy, width, height, destx, desty );
-   }
-   else if (type == GL_STENCIL) {
+      break;
+   case GL_STENCIL:
       copy_stencil_pixels( ctx, srcx, srcy, width, height, destx, desty );
-   }
-   else {
-      _mesa_error( ctx, GL_INVALID_ENUM, "glCopyPixels" );
+      break;
+   default:
+      _mesa_problem(ctx, "unexpected type in _swrast_CopyPixels");
    }
 
    RENDER_FINISH(swrast,ctx);

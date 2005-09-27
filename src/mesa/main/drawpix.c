@@ -24,13 +24,83 @@
 
 #include "glheader.h"
 #include "imports.h"
-#include "colormac.h"
 #include "context.h"
 #include "drawpix.h"
 #include "feedback.h"
-#include "macros.h"
+#include "image.h"
 #include "state.h"
-#include "mtypes.h"
+
+
+/**
+ * Do error checking of the format/type parameters to glReadPixels and
+ * glDrawPixels.
+ * \param drawing if GL_TRUE do checking for DrawPixels, else do checking
+ *                for ReadPixels.
+ * \return GL_TRUE if error detected, GL_FALSE if no errors
+ */
+static GLboolean
+error_check_format_type(GLcontext *ctx, GLenum format, GLenum type,
+                        GLboolean drawing)
+{
+   const char *readDraw = drawing ? "Draw" : "Read";
+
+   /* basic combinations test */
+   if (!_mesa_is_legal_format_and_type(ctx, format, type)) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "gl%sPixels(format or type)", readDraw);
+      return GL_TRUE;
+   }
+
+   /* additional checks */
+   switch (format) {
+   case GL_RED:
+   case GL_GREEN:
+   case GL_BLUE:
+   case GL_ALPHA:
+   case GL_LUMINANCE:
+   case GL_LUMINANCE_ALPHA:
+   case GL_RGB:
+   case GL_BGR:
+   case GL_RGBA:
+   case GL_BGRA:
+   case GL_ABGR_EXT:
+      if (drawing && !ctx->Visual.rgbMode) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                   "glDrawPixels(drawing RGB pixels into color index buffer)");
+         return GL_TRUE;
+      }
+      break;
+   case GL_COLOR_INDEX:
+      if (!drawing && ctx->Visual.rgbMode) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                    "glReadPixels(reading color index format from RGB buffer");
+         return GL_TRUE;
+      }
+      break;
+   case GL_STENCIL_INDEX:
+      if (ctx->DrawBuffer->Visual.stencilBits == 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "gl%sPixels(no stencil buffer)", readDraw);
+         return GL_TRUE;
+      }
+      break;
+   case GL_DEPTH_COMPONENT:
+      if (ctx->DrawBuffer->Visual.depthBits == 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "gl%sPixels(no depth buffer)", readDraw);
+         return GL_TRUE;
+      }
+      break;
+   default:
+      /* this should have been caught in _mesa_is_legal_format_type() */
+      _mesa_problem(ctx, "unexpected format in _mesa_%sPixels", readDraw);
+      return GL_TRUE;
+   }
+
+   /* no errors */
+   return GL_FALSE;
+}
+      
 
 
 #if _HAVE_FULL_GL
@@ -56,8 +126,13 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       return;
    }
 
-   if (!ctx->Current.RasterPosValid) {
+   if (error_check_format_type(ctx, format, type, GL_TRUE)) {
+      /* found an error */
       return;
+   }
+
+   if (!ctx->Current.RasterPosValid) {
+      return; /* not an error */
    }
 
    if (ctx->NewState) {
@@ -102,7 +177,32 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
    }
 
    if (width < 0 || height < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glCopyPixels(width or height < 0)" );
+      _mesa_error(ctx, GL_INVALID_VALUE, "glCopyPixels(width or height < 0)");
+      return;
+   }
+
+   switch (type) {
+   case GL_COLOR:
+      /* OK */
+      break;
+   case GL_DEPTH:
+      if (ctx->DrawBuffer->Visual.depthBits == 0 ||
+          ctx->ReadBuffer->Visual.depthBits == 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glCopyPixels(no depth buffer)");
+         return;
+      }
+      break;
+   case GL_STENCIL:
+      if (ctx->DrawBuffer->Visual.stencilBits == 0 ||
+          ctx->ReadBuffer->Visual.stencilBits == 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glCopyPixels(no stencil buffer)");
+         return;
+      }
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glCopyPixels");
       return;
    }
 
@@ -150,6 +250,11 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
    if (width < 0 || height < 0) {
       _mesa_error( ctx, GL_INVALID_VALUE,
                    "glReadPixels(width=%d height=%d)", width, height );
+      return;
+   }
+
+   if (error_check_format_type(ctx, format, type, GL_FALSE)) {
+      /* found an error */
       return;
    }
 

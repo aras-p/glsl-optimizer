@@ -517,23 +517,6 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
    const GLint desty = y;
    GLint row, skipPixels;
 
-   if (type != GL_BYTE &&
-       type != GL_UNSIGNED_BYTE &&
-       type != GL_SHORT &&
-       type != GL_UNSIGNED_SHORT &&
-       type != GL_INT &&
-       type != GL_UNSIGNED_INT &&
-       type != GL_FLOAT &&
-       type != GL_BITMAP) {
-      _mesa_error( ctx, GL_INVALID_ENUM, "glDrawPixels(stencil type)");
-      return;
-   }
-
-   if (ctx->DrawBuffer->Visual.stencilBits == 0) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawPixels(no stencil buffer)");
-      return;
-   }
-
    /* if width > MAX_WIDTH, have to process image in chunks */
    skipPixels = 0;
    while (skipPixels < width) {
@@ -565,8 +548,7 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
                                             spanX, spanY, values, desty, 0);
          }
          else {
-            _swrast_write_stencil_span(ctx, (GLuint) spanWidth,
-                                     spanX, spanY, values);
+            _swrast_write_stencil_span(ctx, spanWidth, spanX, spanY, values);
          }
       }
       skipPixels += spanWidth;
@@ -591,17 +573,6 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    struct sw_span span;
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_Z);
-
-   if (type != GL_BYTE
-       && type != GL_UNSIGNED_BYTE
-       && type != GL_SHORT
-       && type != GL_UNSIGNED_SHORT
-       && type != GL_INT
-       && type != GL_UNSIGNED_INT
-       && type != GL_FLOAT) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawPixels(type)");
-      return;
-   }
 
    _swrast_span_default_color(ctx, &span);
 
@@ -728,11 +699,6 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    struct sw_span span;
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
-
-   if (!_mesa_is_legal_format_and_type(ctx, format, type)) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawPixels(format or type)");
-      return;
-   }
 
    /* Try an optimized glDrawPixels first */
    if (fast_draw_pixels(ctx, x, y, width, height, format, type, unpack, pixels))
@@ -874,9 +840,9 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
 }
 
 
-
-/*
- * Execute glDrawPixels
+/**
+ * Execute software-based glDrawPixels.
+ * By time we get here, all error checking will have been done.
  */
 void
 _swrast_DrawPixels( GLcontext *ctx,
@@ -940,7 +906,7 @@ _swrast_DrawPixels( GLcontext *ctx,
       draw_rgba_pixels(ctx, x, y, width, height, format, type, unpack, pixels);
       break;
    default:
-      _mesa_error( ctx, GL_INVALID_ENUM, "glDrawPixels(format)" );
+      _mesa_problem(ctx, "unexpected format in _swrast_DrawPixels");
       /* don't return yet, clean-up */
    }
 
@@ -978,9 +944,11 @@ _swrast_DrawDepthPixelsMESA( GLcontext *ctx,
    switch (colorFormat) {
    case GL_COLOR_INDEX:
       if (ctx->Visual.rgbMode)
-	 draw_rgba_pixels(ctx, x,y, width, height, colorFormat, colorType, unpack, colors);
+	 draw_rgba_pixels(ctx, x,y, width, height, colorFormat, colorType,
+                          unpack, colors);
       else
-	 draw_index_pixels(ctx, x, y, width, height, colorType, unpack, colors);
+	 draw_index_pixels(ctx, x, y, width, height, colorType,
+                           unpack, colors);
       break;
    case GL_RED:
    case GL_GREEN:
@@ -993,11 +961,11 @@ _swrast_DrawDepthPixelsMESA( GLcontext *ctx,
    case GL_RGBA:
    case GL_BGRA:
    case GL_ABGR_EXT:
-      draw_rgba_pixels(ctx, x, y, width, height, colorFormat, colorType, unpack, colors);
+      draw_rgba_pixels(ctx, x, y, width, height, colorFormat, colorType,
+                       unpack, colors);
       break;
    default:
-      _mesa_error( ctx, GL_INVALID_ENUM,
-                   "glDrawDepthPixelsMESA(colorFormat)" );
+      _mesa_problem(ctx, "unexpected format in glDrawDepthPixelsMESA");
    }
 
    RENDER_FINISH(swrast,ctx);

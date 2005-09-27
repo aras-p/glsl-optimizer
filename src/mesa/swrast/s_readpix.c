@@ -40,7 +40,6 @@
 #include "s_stencil.h"
 
 
-
 /*
  * Read a block of color index pixels.
  */
@@ -53,23 +52,6 @@ read_index_pixels( GLcontext *ctx,
 {
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
    GLint i;
-
-   /* error checking */
-   if (ctx->Visual.rgbMode) {
-      _mesa_error( ctx, GL_INVALID_OPERATION, "glReadPixels" );
-      return;
-   }
-
-   if (type != GL_BYTE &&
-       type != GL_UNSIGNED_BYTE &&
-       type != GL_SHORT &&
-       type != GL_UNSIGNED_SHORT &&
-       type != GL_INT &&
-       type != GL_UNSIGNED_INT &&
-       type != GL_FLOAT) {
-      _mesa_error( ctx, GL_INVALID_OPERATION, "glReadPixels(index type)");
-      return;
-   }
 
    if (!rb) {
       return;  /* no readbuffer OK */
@@ -116,24 +98,6 @@ read_depth_pixels( GLcontext *ctx,
    ASSERT(y + height <= rb->Height);
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
-
-   /* Error checking */
-   if (fb->Visual.depthBits <= 0) {
-      /* No depth buffer */
-      _mesa_error( ctx, GL_INVALID_OPERATION, "glReadPixels" );
-      return;
-   }
-
-   if (type != GL_BYTE &&
-       type != GL_UNSIGNED_BYTE &&
-       type != GL_SHORT &&
-       type != GL_UNSIGNED_SHORT &&
-       type != GL_INT &&
-       type != GL_UNSIGNED_INT &&
-       type != GL_FLOAT) {
-      _mesa_error( ctx, GL_INVALID_OPERATION, "glReadPixels(depth type)");
-      return;
-   }
 
    if (!rb) {
       return;  /* no readbuffer OK */
@@ -195,24 +159,6 @@ read_stencil_pixels( GLcontext *ctx,
 
    if (!rb) {
       /* no readbuffer - OK */
-      return;
-   }
-
-   if (type != GL_BYTE &&
-       type != GL_UNSIGNED_BYTE &&
-       type != GL_SHORT &&
-       type != GL_UNSIGNED_SHORT &&
-       type != GL_INT &&
-       type != GL_UNSIGNED_INT &&
-       type != GL_FLOAT &&
-       type != GL_BITMAP) {
-      _mesa_error( ctx, GL_INVALID_OPERATION, "glReadPixels(stencil type)");
-      return;
-   }
-
-   if (fb->Visual.stencilBits <= 0) {
-      /* No stencil buffer */
-      _mesa_error( ctx, GL_INVALID_OPERATION, "glReadPixels" );
       return;
    }
 
@@ -280,12 +226,13 @@ read_fast_rgba_pixels( GLcontext *ctx,
        * skip "skipRows" rows and skip "skipPixels" pixels/row.
        */
 #if CHAN_BITS == 8
-      if (format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
+      if (format == GL_RGBA && type == GL_UNSIGNED_BYTE)
 #elif CHAN_BITS == 16
-      if (format == GL_RGBA && type == GL_UNSIGNED_SHORT) {
+      if (format == GL_RGBA && type == GL_UNSIGNED_SHORT)
 #else
-      if (0) {
+      if (0)
 #endif
+      {
          GLchan *dest = (GLchan *) pixels
                       + (skipRows * rowLength + skipPixels) * 4;
          GLint row;
@@ -328,46 +275,6 @@ read_rgba_pixels( GLcontext *ctx,
 
    if (!rb) {
       /* No readbuffer is OK with GL_EXT_framebuffer_object */
-      return;
-   }
-
-   /* do error checking on pixel type, format was already checked by caller */
-   switch (type) {
-      case GL_UNSIGNED_BYTE:
-      case GL_BYTE:
-      case GL_UNSIGNED_SHORT:
-      case GL_SHORT:
-      case GL_UNSIGNED_INT:
-      case GL_INT:
-      case GL_FLOAT:
-      case GL_UNSIGNED_BYTE_3_3_2:
-      case GL_UNSIGNED_BYTE_2_3_3_REV:
-      case GL_UNSIGNED_SHORT_5_6_5:
-      case GL_UNSIGNED_SHORT_5_6_5_REV:
-      case GL_UNSIGNED_SHORT_4_4_4_4:
-      case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-      case GL_UNSIGNED_SHORT_5_5_5_1:
-      case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-      case GL_UNSIGNED_INT_8_8_8_8:
-      case GL_UNSIGNED_INT_8_8_8_8_REV:
-      case GL_UNSIGNED_INT_10_10_10_2:
-      case GL_UNSIGNED_INT_2_10_10_10_REV:
-         /* valid pixel type */
-         break;
-      case GL_HALF_FLOAT_ARB:
-         if (!ctx->Extensions.ARB_half_float_pixel) {
-            _mesa_error( ctx, GL_INVALID_ENUM, "glReadPixels(type)" );
-            return;
-         }
-         break;
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glReadPixels(type)" );
-         return;
-   }
-
-   if (!_mesa_is_legal_format_and_type(ctx, format, type) ||
-       format == GL_INTENSITY) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(format or type)");
       return;
    }
 
@@ -490,7 +397,7 @@ read_rgba_pixels( GLcontext *ctx,
 
 /**
  * Software fallback routine for ctx->Driver.ReadPixels().
- * We wind up using the swrast->ReadSpan() routines to do the job.
+ * By time we get here, all error checking will have been done.
  */
 void
 _swrast_ReadPixels( GLcontext *ctx,
@@ -567,7 +474,7 @@ _swrast_ReadPixels( GLcontext *ctx,
                           format, type, pixels, &clippedPacking);
 	 break;
       default:
-	 _mesa_error( ctx, GL_INVALID_ENUM, "glReadPixels(format)" );
+	 _mesa_problem(ctx, "unexpected format in _swrast_ReadPixels");
          /* don't return yet, clean-up */
    }
 
