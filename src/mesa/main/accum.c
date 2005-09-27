@@ -58,11 +58,6 @@ _mesa_Accum( GLenum op, GLfloat value )
    GLuint xpos, ypos, width, height;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->Visual.accumRedBits == 0 || ctx->DrawBuffer != ctx->ReadBuffer) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glAccum");
-      return;
-   }
-
    switch (op) {
    case GL_ADD:
    case GL_MULT:
@@ -73,6 +68,11 @@ _mesa_Accum( GLenum op, GLfloat value )
       break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glAccum(op)");
+      return;
+   }
+
+   if (ctx->Visual.accumRedBits == 0) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glAccum(no accum buffer)");
       return;
    }
 
