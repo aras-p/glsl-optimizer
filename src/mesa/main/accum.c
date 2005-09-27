@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -73,6 +73,13 @@ _mesa_Accum( GLenum op, GLfloat value )
       break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glAccum(op)");
+      return;
+   }
+
+   if (ctx->DrawBuffer != ctx->ReadBuffer) {
+      /* See GLX_SGI_make_current_read or WGL_ARB_make_current_read */
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glAccum(different read/draw buffers)");
       return;
    }
 
