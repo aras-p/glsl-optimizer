@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -482,6 +482,7 @@ const struct gl_texture_format _mesa_texformat_rgb_dxt1 = {
    0,					/* IntensityBits */
    0,					/* IndexBits */
    0,					/* DepthBits */
+   0,					/* StencilBits */
    0,					/* TexelBytes */
    texstore_rgb_dxt1,			/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
@@ -504,6 +505,7 @@ const struct gl_texture_format _mesa_texformat_rgba_dxt1 = {
    0,					/* IntensityBits */
    0,					/* IndexBits */
    0,					/* DepthBits */
+   0,					/* StencilBits */
    0,					/* TexelBytes */
    texstore_rgba_dxt1,			/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
@@ -526,6 +528,7 @@ const struct gl_texture_format _mesa_texformat_rgba_dxt3 = {
    0,					/* IntensityBits */
    0,					/* IndexBits */
    0,					/* DepthBits */
+   0,					/* StencilBits */
    0,					/* TexelBytes */
    texstore_rgba_dxt3,			/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
@@ -548,6 +551,7 @@ const struct gl_texture_format _mesa_texformat_rgba_dxt5 = {
    0,					/* IntensityBits */
    0,					/* IndexBits */
    0,					/* DepthBits */
+   0,					/* StencilBits */
    0,					/* TexelBytes */
    texstore_rgba_dxt5,			/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -289,7 +289,14 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
          }
       }
       else if (format == GL_DEPTH) {
-         if (texImage->TexFormat->BaseFormat != GL_DEPTH_COMPONENT) {
+         if (texImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT) {
+            /* OK */
+         }
+         else if (ctx->Extensions.EXT_packed_depth_stencil &&
+                  att->Renderbuffer->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+            /* OK */
+         }
+         else {
             att->Complete = GL_FALSE;
             return;
          }
@@ -313,14 +320,28 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
          }
       }
       else if (format == GL_DEPTH) {
-         if (att->Renderbuffer->_BaseFormat != GL_DEPTH_COMPONENT) {
+         if (att->Renderbuffer->_BaseFormat == GL_DEPTH_COMPONENT) {
+            /* OK */
+         }
+         else if (ctx->Extensions.EXT_packed_depth_stencil &&
+                  att->Renderbuffer->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+            /* OK */
+         }
+         else {
             att->Complete = GL_FALSE;
             return;
          }
       }
       else {
          assert(format == GL_STENCIL);
-         if (att->Renderbuffer->_BaseFormat != GL_STENCIL_INDEX) {
+         if (att->Renderbuffer->_BaseFormat == GL_STENCIL_INDEX) {
+            /* OK */
+         }
+         else if (ctx->Extensions.EXT_packed_depth_stencil &&
+                  att->Renderbuffer->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+            /* OK */
+         }
+         else {
             att->Complete = GL_FALSE;
             return;
          }
@@ -390,6 +411,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          f = att->Texture->Image[att->CubeMapFace][att->TextureLevel]->Format;
          numImages++;
          if (f != GL_RGB && f != GL_RGBA && f != GL_DEPTH_COMPONENT) {
+            /* XXX need GL_DEPTH_STENCIL_EXT test? */
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT;
             return;
          }
@@ -449,14 +471,17 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
       }
    }
 
-   /* Check if any renderbuffer is attached more than once */
+   /* Check if any renderbuffer is attached more than once.
+    * Note that there's one exception: a GL_DEPTH_STENCIL renderbuffer can be
+    * bound to both the stencil and depth attachment points at the same time.
+    */
    for (i = 0; i < BUFFER_COUNT - 1; i++) {
       struct gl_renderbuffer *rb_i = fb->Attachment[i].Renderbuffer;
       if (rb_i) {
          GLint j;
          for (j = i + 1; j < BUFFER_COUNT; j++) {
             struct gl_renderbuffer *rb_j = fb->Attachment[j].Renderbuffer;
-            if (rb_i == rb_j) {
+            if (rb_i == rb_j && rb_i->_BaseFormat != GL_DEPTH_STENCIL_EXT) {
                fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT_EXT;
                return;
             }
@@ -607,7 +632,7 @@ _mesa_GenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers)
  * Given an internal format token for a render buffer, return the
  * corresponding base format.
  * \return one of GL_RGB, GL_RGBA, GL_STENCIL_INDEX, GL_DEPTH_COMPONENT
- *  or zero if error.
+ *  GL_DEPTH_STENCIL_EXT or zero if error.
  */
 static GLenum
 base_internal_format(GLcontext *ctx, GLenum internalFormat)
@@ -642,6 +667,12 @@ base_internal_format(GLcontext *ctx, GLenum internalFormat)
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
       return GL_DEPTH_COMPONENT;
+   case GL_DEPTH_STENCIL_EXT:
+   case GL_DEPTH24_STENCIL8_EXT:
+      if (ctx->Extensions.EXT_packed_depth_stencil)
+         return GL_DEPTH_STENCIL_EXT;
+      else
+         return 0;
    /* XXX add floating point formats eventually */
    default:
       return 0;
@@ -781,7 +812,8 @@ _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
       }
       break;
    case GL_RENDERBUFFER_DEPTH_SIZE_EXT:
-      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_DEPTH_COMPONENT) {
+      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_DEPTH_COMPONENT ||
+          ctx->CurrentRenderbuffer->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
          *params = ctx->CurrentRenderbuffer->DepthBits;
       }
       else {
@@ -789,7 +821,8 @@ _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
       }
       break;
    case GL_RENDERBUFFER_STENCIL_SIZE_EXT:
-      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_STENCIL_INDEX) {
+      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_STENCIL_INDEX ||
+          ctx->CurrentRenderbuffer->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
          *params = ctx->CurrentRenderbuffer->StencilBits;
       }
       else {

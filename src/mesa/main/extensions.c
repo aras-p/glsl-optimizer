@@ -95,6 +95,7 @@ static const struct {
    { OFF, "GL_EXT_fog_coord",                  F(EXT_fog_coord) },
    { OFF, "GL_EXT_histogram",                  F(EXT_histogram) },
    { OFF, "GL_EXT_multi_draw_arrays",          F(EXT_multi_draw_arrays) },
+   { ON,  "GL_EXT_packed_depth_stencil",       F(EXT_packed_depth_stencil) },
    { ON,  "GL_EXT_packed_pixels",              F(EXT_packed_pixels) },
    { OFF, "GL_EXT_paletted_texture",           F(EXT_paletted_texture) },
    { OFF, "GL_EXT_pixel_buffer_object",        F(EXT_pixel_buffer_object) },
@@ -232,6 +233,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #endif
    ctx->Extensions.EXT_histogram = GL_TRUE;
    ctx->Extensions.EXT_multi_draw_arrays = GL_TRUE;
+   ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
    ctx->Extensions.EXT_paletted_texture = GL_TRUE;
 #if FEATURE_EXT_pixel_buffer_object
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;

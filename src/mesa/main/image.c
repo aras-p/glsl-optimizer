@@ -30,7 +30,6 @@
 
 
 #include "glheader.h"
-#include "bufferobj.h"
 #include "colormac.h"
 #include "context.h"
 #include "image.h"
@@ -38,7 +37,6 @@
 #include "histogram.h"
 #include "macros.h"
 #include "pixel.h"
-#include "mtypes.h"
 
 
 /** Compute ceiling of integer quotient of A divided by B. */
@@ -201,7 +199,9 @@ GLint _mesa_sizeof_packed_type( GLenum type )
          return sizeof(GLuint);
       case GL_UNSIGNED_SHORT_8_8_MESA:
       case GL_UNSIGNED_SHORT_8_8_REV_MESA:
-          return sizeof(GLushort);      
+         return sizeof(GLushort);      
+      case GL_UNSIGNED_INT_24_8_EXT:
+         return sizeof(GLuint);
       default:
          return -1;
    }
@@ -247,6 +247,8 @@ GLint _mesa_components_in_format( GLenum format )
       case GL_ABGR_EXT:
          return 4;
       case GL_YCBCR_MESA:
+         return 2;
+      case GL_DEPTH_STENCIL_EXT:
          return 2;
       default:
          return -1;
@@ -316,6 +318,11 @@ GLint _mesa_bytes_per_pixel( GLenum format, GLenum type )
       case GL_UNSIGNED_SHORT_8_8_REV_MESA:
          if (format == GL_YCBCR_MESA)
             return sizeof(GLushort);
+         else
+            return -1;
+      case GL_UNSIGNED_INT_24_8_EXT:
+         if (format == GL_DEPTH_STENCIL_EXT)
+            return sizeof(GLuint);
          else
             return -1;
       default:
@@ -440,6 +447,12 @@ _mesa_is_legal_format_and_type( GLcontext *ctx, GLenum format, GLenum type )
       case GL_YCBCR_MESA:
          if (type == GL_UNSIGNED_SHORT_8_8_MESA ||
              type == GL_UNSIGNED_SHORT_8_8_REV_MESA)
+            return GL_TRUE;
+         else
+            return GL_FALSE;
+      case GL_DEPTH_STENCIL_EXT:
+         if (ctx->Extensions.EXT_packed_depth_stencil
+             && type == GL_UNSIGNED_INT_24_8_EXT)
             return GL_TRUE;
          else
             return GL_FALSE;
@@ -2066,6 +2079,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
           srcType == GL_SHORT ||
           srcType == GL_UNSIGNED_INT ||
           srcType == GL_INT ||
+          srcType == GL_UNSIGNED_INT_24_8_EXT ||
           srcType == GL_HALF_FLOAT_ARB ||
           srcType == GL_FLOAT);
 
@@ -2221,6 +2235,24 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
             }
          }
          break;
+      case GL_UNSIGNED_INT_24_8_EXT:
+         {
+            GLuint i;
+            const GLuint *s = (const GLuint *) src;
+            if (unpack->SwapBytes) {
+               for (i = 0; i < n; i++) {
+                  GLuint value = s[i];
+                  SWAP4BYTE(value);
+                  indexes[i] = value & 0xff;  /* lower 8 bits */
+               }
+            }
+            else {
+               for (i = 0; i < n; i++)
+                  indexes[i] = s[i] & 0xfff;  /* lower 8 bits */
+            }
+         }
+         break;
+
       default:
          _mesa_problem(NULL, "bad srcType in extract_uint_indexes");
          return;
@@ -3563,6 +3595,7 @@ _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
           srcType == GL_SHORT ||
           srcType == GL_UNSIGNED_INT ||
           srcType == GL_INT ||
+          srcType == GL_UNSIGNED_INT_24_8_EXT ||
           srcType == GL_HALF_FLOAT_ARB ||
           srcType == GL_FLOAT);
 
@@ -3801,10 +3834,20 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
 
 
 void
-_mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
+_mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
+                         GLenum dstType, GLvoid *dest, GLfloat depthScale,
                          GLenum srcType, const GLvoid *source,
                          const struct gl_pixelstore_attrib *srcPacking )
 {
+   GLfloat depthTemp[MAX_WIDTH], *depthValues;
+
+   if (dstType == GL_FLOAT) {
+      depthValues = (GLfloat *) dest;
+   }
+   else {
+      depthValues = depthTemp;
+   }
+
    (void) srcPacking;
 
    switch (srcType) {
@@ -3813,7 +3856,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
             GLuint i;
             const GLubyte *src = (const GLubyte *) source;
             for (i = 0; i < n; i++) {
-               dest[i] = BYTE_TO_FLOAT(src[i]);
+               depthValues[i] = BYTE_TO_FLOAT(src[i]);
             }
          }
          break;
@@ -3822,7 +3865,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
             GLuint i;
             const GLubyte *src = (const GLubyte *) source;
             for (i = 0; i < n; i++) {
-               dest[i] = UBYTE_TO_FLOAT(src[i]);
+               depthValues[i] = UBYTE_TO_FLOAT(src[i]);
             }
          }
          break;
@@ -3831,7 +3874,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
             GLuint i;
             const GLshort *src = (const GLshort *) source;
             for (i = 0; i < n; i++) {
-               dest[i] = SHORT_TO_FLOAT(src[i]);
+               depthValues[i] = SHORT_TO_FLOAT(src[i]);
             }
          }
          break;
@@ -3840,7 +3883,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
             GLuint i;
             const GLushort *src = (const GLushort *) source;
             for (i = 0; i < n; i++) {
-               dest[i] = USHORT_TO_FLOAT(src[i]);
+               depthValues[i] = USHORT_TO_FLOAT(src[i]);
             }
          }
          break;
@@ -3849,7 +3892,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
             GLuint i;
             const GLint *src = (const GLint *) source;
             for (i = 0; i < n; i++) {
-               dest[i] = INT_TO_FLOAT(src[i]);
+               depthValues[i] = INT_TO_FLOAT(src[i]);
             }
          }
          break;
@@ -3858,19 +3901,39 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
             GLuint i;
             const GLuint *src = (const GLuint *) source;
             for (i = 0; i < n; i++) {
-               dest[i] = UINT_TO_FLOAT(src[i]);
+               depthValues[i] = UINT_TO_FLOAT(src[i]);
+            }
+         }
+         break;
+      case GL_UNSIGNED_INT_24_8_EXT: /* GL_EXT_packed_depth_stencil */
+         if (dstType == GL_UNSIGNED_INT && ctx->Pixel.DepthScale == 1.0 &&
+             ctx->Pixel.DepthBias == 0.0 && depthScale == (GLfloat) 0xffffff) {
+            const GLuint *src = (const GLuint *) source;
+            GLuint *zValues = (GLuint *) dest;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               zValues[i] = src[i] & 0xffffff00;
+            }
+            return;
+         }
+         else {
+            const GLuint *src = (const GLuint *) source;
+            const GLfloat scale = 1.0f / 0xffffff;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               depthValues[i] = (src[i] >> 8) * scale;
             }
          }
          break;
       case GL_FLOAT:
-         MEMCPY(dest, source, n * sizeof(GLfloat));
+         MEMCPY(depthValues, source, n * sizeof(GLfloat));
          break;
       case GL_HALF_FLOAT_ARB:
          {
             GLuint i;
             const GLhalfARB *src = (const GLhalfARB *) source;
             for (i = 0; i < n; i++) {
-               dest[i] = _mesa_half_to_float(src[i]);
+               depthValues[i] = _mesa_half_to_float(src[i]);
             }
          }
          break;
@@ -3882,11 +3945,26 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
 
    /* apply depth scale and bias and clamp to [0,1] */
    if (ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0) {
+      _mesa_scale_and_bias_depth(ctx, n, depthValues);
+   }
+
+   if (dstType == GL_UNSIGNED_INT) {
+      GLuint *zValues = (GLuint *) dest;
       GLuint i;
       for (i = 0; i < n; i++) {
-         GLfloat d = dest[i] * ctx->Pixel.DepthScale + ctx->Pixel.DepthBias;
-         dest[i] = CLAMP(d, 0.0F, 1.0F);
+         zValues[i] = (GLuint) (depthValues[i] * depthScale);
       }
+   }
+   else if (dstType == GL_UNSIGNED_SHORT) {
+      GLushort *zValues = (GLushort *) dest;
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         zValues[i] = (GLushort) (depthValues[i] * depthScale);
+      }
+   }
+   else {
+      ASSERT(dstType == GL_FLOAT);
+      ASSERT(depthScale == 1.0F);
    }
 }
 
@@ -3900,18 +3978,12 @@ _mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLvoid *dest,
                        const struct gl_pixelstore_attrib *dstPacking )
 {
    GLfloat depthCopy[MAX_WIDTH];
-   const GLboolean bias_or_scale = ctx->Pixel.DepthBias != 0.0 ||
-                                   ctx->Pixel.DepthScale != 1.0;
 
    ASSERT(n <= MAX_WIDTH);
 
-   if (bias_or_scale) {
-      GLuint i;
-      for (i = 0; i < n; i++) {
-         GLfloat d;
-         d = depthSpan[i] * ctx->Pixel.DepthScale + ctx->Pixel.DepthBias;
-         depthCopy[i] = CLAMP(d, 0.0F, 1.0F);
-      }
+   if (ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0) {
+      _mesa_memcpy(depthCopy, depthSpan, n * sizeof(GLfloat));
+      _mesa_scale_and_bias_depth(ctx, n, depthCopy);
       depthSpan = depthCopy;
    }
 
@@ -4089,7 +4161,7 @@ _mesa_unpack_image( GLuint dimensions,
 
 /**
  * Perform clipping for glDrawPixels.  The image's window position
- * and size, and the unpack skipPixels and skipRows are adjusted so
+ * and size, and the unpack SkipPixels and SkipRows are adjusted so
  * that the image region is entirely within the window and scissor bounds.
  * NOTE: this will only work when glPixelZoom is (1, 1).
  *
@@ -4100,15 +4172,19 @@ GLboolean
 _mesa_clip_drawpixels(const GLcontext *ctx,
                       GLint *destX, GLint *destY,
                       GLsizei *width, GLsizei *height,
-                      GLint *skipPixels, GLint *skipRows)
+                      struct gl_pixelstore_attrib *unpack)
 {
    const GLframebuffer *buffer = ctx->DrawBuffer;
+
+   if (unpack->RowLength == 0) {
+      unpack->RowLength = *width;
+   }
 
    ASSERT(ctx->Pixel.ZoomX == 1.0F && ctx->Pixel.ZoomY == 1.0F);
 
    /* left clipping */
    if (*destX < buffer->_Xmin) {
-      *skipPixels += (buffer->_Xmin - *destX);
+      unpack->SkipPixels += (buffer->_Xmin - *destX);
       *width -= (buffer->_Xmin - *destX);
       *destX = buffer->_Xmin;
    }
@@ -4121,7 +4197,7 @@ _mesa_clip_drawpixels(const GLcontext *ctx,
 
    /* bottom clipping */
    if (*destY < buffer->_Ymin) {
-      *skipRows += (buffer->_Ymin - *destY);
+      unpack->SkipRows += (buffer->_Ymin - *destY);
       *height -= (buffer->_Ymin - *destY);
       *destY = buffer->_Ymin;
    }
@@ -4138,11 +4214,11 @@ _mesa_clip_drawpixels(const GLcontext *ctx,
 
 /**
  * Perform clipping for glReadPixels.  The image's window position
- * and size, and the pack skipPixels and skipRows are adjusted so
- * that the image region is entirely within the window bounds.
+ * and size, and the pack skipPixels, skipRows and rowLength are adjusted
+ * so that the image region is entirely within the window bounds.
  * Note: this is different from _mesa_clip_drawpixels() in that the
- * scissor box is ignored, and we use the bounds of the current "read"
- * surface;
+ * scissor box is ignored, and we use the bounds of the current readbuffer
+ * surface.
  *
  * \return  GL_TRUE if image is ready for drawing or
  *          GL_FALSE if image was completely clipped away (draw nothing)
@@ -4151,13 +4227,17 @@ GLboolean
 _mesa_clip_readpixels(const GLcontext *ctx,
                       GLint *srcX, GLint *srcY,
                       GLsizei *width, GLsizei *height,
-                      GLint *skipPixels, GLint *skipRows)
+                      struct gl_pixelstore_attrib *pack)
 {
    const GLframebuffer *buffer = ctx->ReadBuffer;
 
+   if (pack->RowLength == 0) {
+      pack->RowLength = *width;
+   }
+
    /* left clipping */
    if (*srcX < 0) {
-      *skipPixels += (0 - *srcX);
+      pack->SkipPixels += (0 - *srcX);
       *width -= (0 - *srcX);
       *srcX = 0;
    }
@@ -4170,7 +4250,7 @@ _mesa_clip_readpixels(const GLcontext *ctx,
 
    /* bottom clipping */
    if (*srcY < 0) {
-      *skipRows += (0 - *srcY);
+      pack->SkipRows += (0 - *srcY);
       *height -= (0 - *srcY);
       *srcY = 0;
    }

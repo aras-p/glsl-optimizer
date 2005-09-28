@@ -1178,6 +1178,7 @@ struct gl_texture_format
    GLubyte IntensityBits;
    GLubyte IndexBits;
    GLubyte DepthBits;
+   GLubyte StencilBits; 	/**< GL_EXT_packed_depth_stencil */
 
    GLuint TexelBytes;		/**< Bytes per texel, 0 if compressed format */
 
@@ -2200,7 +2201,7 @@ struct gl_framebuffer
    GLbitfield _ColorDrawBufferMask[MAX_DRAW_BUFFERS]; /* Mask of BUFFER_BIT_* flags */
    GLint _ColorReadBufferIndex; /* -1 = None */
 
-   /* These are computed from _Draw/ReadBufferMask, above. */
+   /* These are computed from _ColorDrawBufferMask and _ColorReadBufferIndex */
    GLuint _NumColorDrawBuffers[MAX_DRAW_BUFFERS];
    struct gl_renderbuffer *_ColorDrawBuffers[MAX_DRAW_BUFFERS][4];
    struct gl_renderbuffer *_ColorReadBuffer;
@@ -2334,6 +2335,7 @@ struct gl_extensions
    GLboolean EXT_histogram;
    GLboolean EXT_multi_draw_arrays;
    GLboolean EXT_paletted_texture;
+   GLboolean EXT_packed_depth_stencil;
    GLboolean EXT_packed_pixels;
    GLboolean EXT_pixel_buffer_object;
    GLboolean EXT_point_parameters;

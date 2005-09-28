@@ -641,7 +641,6 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
                              ? MAX_WIDTH : (width - skipPixels);
          ASSERT(span.end <= MAX_WIDTH);
          for (row = 0; row < height; row++, spanY++) {
-            GLfloat floatSpan[MAX_WIDTH];
             const GLvoid *zSrc = _mesa_image_address2d(unpack,
                                                       pixels, width, height,
                                                       GL_DEPTH_COMPONENT, type,
@@ -654,15 +653,9 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
             span.y = spanY;
             span.end = spanEnd;
 
-            _mesa_unpack_depth_span(ctx, span.end, floatSpan, type,
-                                    zSrc, unpack);
-            /* clamp depth values to [0,1] and convert from floats to ints */
-            {
-               GLuint i;
-               for (i = 0; i < span.end; i++) {
-                  span.array->z[i] = (GLuint) (floatSpan[i] * depthMax);
-               }
-            }
+            _mesa_unpack_depth_span(ctx, span.end,
+                                    GL_UNSIGNED_INT, span.array->z, depthMax,
+                                    type, zSrc, unpack);
             if (zoom) {
                _swrast_write_zoomed_depth_span(ctx, &span, desty, skipPixels);
             }
@@ -840,6 +833,102 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
 }
 
 
+
+static void
+draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
+                          GLsizei width, GLsizei height, GLenum type,
+                          const struct gl_pixelstore_attrib *unpack,
+                          const GLvoid *pixels)
+{
+   const GLfloat depthScale = ctx->DrawBuffer->_DepthMaxF;
+   const GLuint stencilMask = ctx->Stencil.WriteMask[0];
+   const GLuint stencilType = (STENCIL_BITS == 8) ? 
+      GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
+   const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
+   struct gl_renderbuffer *depthRb, *stencilRb;
+   struct gl_pixelstore_attrib clippedUnpack = *unpack;
+   GLint i;
+
+   depthRb = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   stencilRb = ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+
+   ASSERT(depthRb);
+   ASSERT(stencilRb);
+
+   if (!zoom) {
+      if (!_mesa_clip_drawpixels(ctx, &x, &y, &width, &height,
+                                 &clippedUnpack)) {
+         /* totally clipped */
+         return;
+      }
+   }
+
+   /* XXX need to do pixelzoom! */
+
+   for (i = 0; i < height; i++) {
+      const GLuint *depthStencilSrc = (const GLuint *)
+         _mesa_image_address2d(&clippedUnpack, pixels, width, height,
+                               GL_DEPTH_STENCIL_EXT, type, i, 0);
+
+      if (ctx->Depth.Mask) {
+         if (ctx->Pixel.DepthScale == 1.0F && ctx->Pixel.DepthBias == 0.0F
+             && depthRb->DepthBits == 24) {
+            /* fast path 24-bit zbuffer */
+            GLuint zValues[MAX_WIDTH];
+            GLint j;
+            ASSERT(depthRb->DataType == GL_UNSIGNED_INT);
+            for (j = 0; j < width; j++) {
+               zValues[j] = depthStencilSrc[j] >> 8;
+            }
+            if (zoom)
+               ;
+            else
+               depthRb->PutRow(ctx, depthRb, width, x, y + i, zValues, NULL);
+         }
+         else if (ctx->Pixel.DepthScale == 1.0F && ctx->Pixel.DepthBias == 0.0F
+                  && depthRb->DepthBits == 16) {
+            /* fast path 16-bit zbuffer */
+            GLushort zValues[MAX_WIDTH];
+            GLint j;
+            ASSERT(depthRb->DataType == GL_UNSIGNED_SHORT);
+            for (j = 0; j < width; j++) {
+               zValues[j] = depthStencilSrc[j] >> 16;
+            }
+            if (zoom)
+               ;
+            else
+               depthRb->PutRow(ctx, depthRb, width, x, y + i, zValues, NULL);
+         }
+         else {
+            /* general case */
+            GLuint zValues[MAX_WIDTH];
+            _mesa_unpack_depth_span(ctx, width,
+                                    depthRb->DataType, zValues, depthScale,
+                                    type, depthStencilSrc, &clippedUnpack);
+            if (zoom)
+               ;
+            else
+               depthRb->PutRow(ctx, depthRb, width, x, y + i, zValues, NULL);
+         }
+      }
+
+      if (stencilMask != 0x0) {
+         GLstencil stencilValues[MAX_WIDTH];
+         /* get stencil values, with shift/offset/mapping */
+         _mesa_unpack_stencil_span(ctx, width, stencilType, stencilValues,
+                                   type, depthStencilSrc, &clippedUnpack,
+                                   ctx->_ImageTransferState);
+         if (zoom)
+            ;
+         else
+            _swrast_write_stencil_span(ctx, width, x, y + i, stencilValues);
+      }
+
+   }
+}
+
+
+
 /**
  * Execute software-based glDrawPixels.
  * By time we get here, all error checking will have been done.
@@ -904,6 +993,10 @@ _swrast_DrawPixels( GLcontext *ctx,
    case GL_BGRA:
    case GL_ABGR_EXT:
       draw_rgba_pixels(ctx, x, y, width, height, format, type, unpack, pixels);
+      break;
+   case GL_DEPTH_STENCIL_EXT:
+      draw_depth_stencil_pixels(ctx, x, y, width, height,
+                                type, unpack, pixels);
       break;
    default:
       _mesa_problem(ctx, "unexpected format in _swrast_DrawPixels");

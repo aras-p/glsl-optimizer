@@ -1215,6 +1215,30 @@ static void store_texel_ycbcr_rev(struct gl_texture_image *texImage,
 #endif
 
 
+/* MESA_TEXFORMAT_Z24_S8 ***************************************************/
+
+static void FETCH(f_z24_s8)( const struct gl_texture_image *texImage,
+                             GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   /* only return Z, not stencil data */
+   const GLuint *src = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   const GLfloat scale = 0xffffff;
+   texel[0] = *src * scale;
+}
+
+#if DIM == 3
+static void store_texel_z24_s8(struct gl_texture_image *texImage,
+                               GLint i, GLint j, GLint k, const void *texel)
+{
+   /* only store Z, not stencil */
+   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   GLfloat z = *((GLfloat *) texel);
+   GLuint zi = ((GLuint) (z * 0xffffff)) << 8;
+   *dst = zi | (*dst & 0xff);
+}
+#endif
+
+
 
 #undef TEXEL_ADDR
 #undef DIM

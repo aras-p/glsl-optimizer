@@ -881,7 +881,8 @@ _mesa_texstore_depth_component_float32(STORE_PARAMS)
          for (row = 0; row < srcHeight; row++) {
             const GLvoid *src = _mesa_image_address(dims, srcPacking,
                 srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, row, 0);
-            _mesa_unpack_depth_span(ctx, srcWidth, (GLfloat *) dstRow,
+            _mesa_unpack_depth_span(ctx, srcWidth,
+                                    GL_FLOAT, (GLfloat *) dstRow, 1.0F,
                                     srcType, src, srcPacking);
             dstRow += dstRowStride;
          }
@@ -920,19 +921,16 @@ _mesa_texstore_depth_component16(STORE_PARAMS)
                         + dstZoffset * dstImageStride
                         + dstYoffset * dstRowStride
                         + dstXoffset * dstFormat->TexelBytes;
-      GLint img, row, col;
+      GLint img, row;
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = dstImage;
          for (row = 0; row < srcHeight; row++) {
-            GLfloat depthTemp[MAX_WIDTH];
             const GLvoid *src = _mesa_image_address(dims, srcPacking,
                 srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, row, 0);
             GLushort *dst16 = (GLushort *) dstRow;
-            _mesa_unpack_depth_span(ctx, srcWidth, depthTemp,
+            _mesa_unpack_depth_span(ctx, srcWidth,
+                                    GL_UNSIGNED_SHORT, dst16, 65535.0F,
                                     srcType, src, srcPacking);
-            for (col = 0; col < srcWidth; col++) {
-               dst16[col] = (GLushort) (depthTemp[col] * 65535.0F);
-            }
             dstRow += dstRowStride;
          }
          dstImage += dstImageStride;
@@ -4070,6 +4068,10 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                else if (ctx->Pack.SwapBytes) {
                   _mesa_swap2((GLushort *) dest, width);
                }
+            }
+            else if (format == GL_DEPTH_STENCIL_EXT) {
+               /* XXX special case */
+
             }
             else {
                /* general case:  convert row to RGBA format */

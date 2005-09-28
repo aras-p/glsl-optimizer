@@ -699,6 +699,16 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 }
 
 
+static void
+copy_depth_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
+                          GLint width, GLint height, GLint destx, GLint desty)
+{
+
+
+
+}
+
+
 /**
  * Do software-based glCopyPixels.
  * By time we get here, all parameters will have been error-checked.
@@ -728,6 +738,9 @@ _swrast_CopyPixels( GLcontext *ctx,
       break;
    case GL_STENCIL:
       copy_stencil_pixels( ctx, srcx, srcy, width, height, destx, desty );
+      break;
+   case GL_DEPTH_STENCIL_EXT:
+      copy_depth_stencil_pixels(ctx, srcx, srcy, width, height, destx, desty);
       break;
    default:
       _mesa_problem(ctx, "unexpected type in _swrast_CopyPixels");

@@ -1,13 +1,8 @@
-/**
- * \file image.h
- * Image handling.
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -183,7 +178,8 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
 
 
 extern void
-_mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
+_mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
+                         GLenum dstType, GLvoid *dest, GLfloat depthScale,
                          GLenum srcType, const GLvoid *source,
                          const struct gl_pixelstore_attrib *srcPacking );
 
@@ -204,14 +200,14 @@ extern GLboolean
 _mesa_clip_drawpixels(const GLcontext *ctx,
                       GLint *destX, GLint *destY,
                       GLsizei *width, GLsizei *height,
-                      GLint *skipPixels, GLint *skipRows);
+                      struct gl_pixelstore_attrib *unpack);
 
 
 extern GLboolean
 _mesa_clip_readpixels(const GLcontext *ctx,
                       GLint *destX, GLint *destY,
                       GLsizei *width, GLsizei *height,
-                      GLint *skipPixels, GLint *skipRows);
+                      struct gl_pixelstore_attrib *pack);
 
 
 #endif

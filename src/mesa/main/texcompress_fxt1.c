@@ -234,6 +234,7 @@ const struct gl_texture_format _mesa_texformat_rgb_fxt1 = {
    0,					/* IntensityBits */
    0,					/* IndexBits */
    0,					/* DepthBits */
+   0,					/* StencilBits */
    0,					/* TexelBytes */
    texstore_rgb_fxt1,			/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
@@ -256,6 +257,7 @@ const struct gl_texture_format _mesa_texformat_rgba_fxt1 = {
    0,					/* IntensityBits */
    0,					/* IndexBits */
    0,					/* DepthBits */
+   0,					/* StencilBits */
    0,					/* TexelBytes */
    texstore_rgba_fxt1,			/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */

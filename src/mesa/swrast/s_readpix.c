@@ -105,7 +105,7 @@ read_depth_pixels( GLcontext *ctx,
 
    bias_or_scale = ctx->Pixel.DepthBias != 0.0 || ctx->Pixel.DepthScale != 1.0;
 
-   if (type == GL_UNSIGNED_SHORT && fb->Visual.depthBits == 16
+   if (type == GL_UNSIGNED_SHORT && rb->DepthBits == 16
        && !bias_or_scale && !packing->SwapBytes) {
       /* Special case: directly read 16-bit unsigned depth values. */
       GLint j;
@@ -117,7 +117,25 @@ read_depth_pixels( GLcontext *ctx,
          rb->GetRow(ctx, rb, width, x, y, dest);
       }
    }
-   else if (type == GL_UNSIGNED_INT && fb->Visual.depthBits == 32
+   else if (type == GL_UNSIGNED_INT && rb->DepthBits == 24
+            && !bias_or_scale && !packing->SwapBytes) {
+      /* Special case: directly read 24-bit unsigned depth values. */
+      GLint j;
+      ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT32);
+      ASSERT(rb->DataType == GL_UNSIGNED_INT);
+      for (j = 0; j < height; j++, y++) {
+         GLuint *dest = (GLuint *)
+            _mesa_image_address2d(packing, pixels, width, height,
+                                  GL_DEPTH_COMPONENT, type, j, 0);
+         GLint k;
+         rb->GetRow(ctx, rb, width, x, y, dest);
+         /* convert range from 24-bit to 32-bit */
+         for (k = 0; k < width; k++) {
+            dest[k] = (dest[k] << 8) | (dest[k] >> 24);
+         }
+      }
+   }
+   else if (type == GL_UNSIGNED_INT && rb->DepthBits == 32
             && !bias_or_scale && !packing->SwapBytes) {
       /* Special case: directly read 32-bit unsigned depth values. */
       GLint j;
@@ -396,6 +414,77 @@ read_rgba_pixels( GLcontext *ctx,
 
 
 /**
+ * Read combined depth/stencil values.
+ * We'll have already done error checking to be sure the expected
+ * depth and stencil buffers really exist.
+ */
+static void
+read_depth_stencil_pixels(GLcontext *ctx,
+                          GLint x, GLint y,
+                          GLsizei width, GLsizei height,
+                          GLenum type, GLvoid *pixels,
+                          const struct gl_pixelstore_attrib *packing )
+{
+   struct gl_renderbuffer *depthRb, *stencilRb;
+   GLint i;
+
+   depthRb = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   stencilRb = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+
+   ASSERT(depthRb);
+   ASSERT(stencilRb);
+
+   for (i = 0; i < height; i++) {
+      GLuint zVals[MAX_WIDTH]; /* 24-bit values! */
+      GLstencil stencilVals[MAX_WIDTH];
+      GLint j;
+
+      GLuint *depthStencilDst = (GLuint *)
+         _mesa_image_address2d(packing, pixels, width, height,
+                               GL_DEPTH_STENCIL_EXT, type, i, 0);
+
+      /* get depth values */
+      if (ctx->Pixel.DepthScale == 1.0
+          && ctx->Pixel.DepthBias == 0.0
+          && depthRb->DepthBits == 24) {
+         /* ideal case */
+         ASSERT(depthRb->DataType == GL_UNSIGNED_INT);
+         /* note, we've already been clipped */
+         depthRb->GetRow(ctx, depthRb, width, x, y + i, zVals);
+      }
+      else {
+         /* general case */
+         GLfloat depthVals[MAX_WIDTH];
+         _swrast_read_depth_span_float(ctx, depthRb, width, x, y + i,
+                                       depthVals);
+         if (ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0) {
+            _mesa_scale_and_bias_depth(ctx, width, depthVals);
+         }
+         /* convert to 24-bit GLuints */
+         for (j = 0; j < width; j++) {
+            zVals[j] = FLOAT_TO_UINT(depthVals[j]) >> 8;
+         }
+      }
+
+      /* get stencil values */
+      _swrast_read_stencil_span(ctx, stencilRb, width, x, y + i, stencilVals);
+      if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset) {
+         _mesa_shift_and_offset_stencil(ctx, width, stencilVals);
+      }
+      if (ctx->Pixel.MapStencilFlag) {
+         _mesa_map_stencil(ctx, width, stencilVals);
+      }
+
+      for (j = 0; j < width; j++) {
+         /* build combined Z/stencil values */
+         depthStencilDst[j] = (zVals[j] << 8) | (stencilVals[j] & 0xff);
+      }
+   }
+}
+
+
+
+/**
  * Software fallback routine for ctx->Driver.ReadPixels().
  * By time we get here, all error checking will have been done.
  */
@@ -407,19 +496,13 @@ _swrast_ReadPixels( GLcontext *ctx,
 		    GLvoid *pixels )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   struct gl_pixelstore_attrib clippedPacking;
+   struct gl_pixelstore_attrib clippedPacking = *packing;
 
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
    /* Do all needed clipping here, so that we can forget about it later */
-   clippedPacking = *packing;
-   if (clippedPacking.RowLength == 0) {
-      clippedPacking.RowLength = width;
-   }
-   if (!_mesa_clip_readpixels(ctx, &x, &y, &width, &height,
-                              &clippedPacking.SkipPixels,
-                              &clippedPacking.SkipRows)) {
+   if (!_mesa_clip_readpixels(ctx, &x, &y, &width, &height, &clippedPacking)) {
       /* The ReadPixels region is totally outside the window bounds */
       return;
    }
@@ -473,6 +556,10 @@ _swrast_ReadPixels( GLcontext *ctx,
          read_rgba_pixels(ctx, x, y, width, height,
                           format, type, pixels, &clippedPacking);
 	 break;
+      case GL_DEPTH_STENCIL_EXT:
+         read_depth_stencil_pixels(ctx, x, y, width, height,
+                                   type, pixels, &clippedPacking);
+         break;
       default:
 	 _mesa_problem(ctx, "unexpected format in _swrast_ReadPixels");
          /* don't return yet, clean-up */

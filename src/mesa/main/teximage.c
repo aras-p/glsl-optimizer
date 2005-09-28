@@ -341,6 +341,16 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
       }
    }
 
+   if (ctx->Extensions.EXT_packed_depth_stencil) {
+      switch (internalFormat) {
+         case GL_DEPTH_STENCIL_EXT:
+         case GL_DEPTH24_STENCIL8_EXT:
+            return GL_DEPTH_STENCIL_EXT;
+         default:
+            ; /* fallthrough */
+      }
+   }
+
    return -1; /* error */
 }
 
@@ -493,6 +503,23 @@ is_ycbcr_format(GLenum format)
          return GL_FALSE;
    }
 }
+
+
+/**
+ * Test if the given image format is a Depth/Stencil format.
+ */
+static GLboolean
+is_depthstencil_format(GLenum format)
+{
+   switch (format) {
+      case GL_DEPTH24_STENCIL8_EXT:
+      case GL_DEPTH_STENCIL_EXT:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
+
 
 
 /**
@@ -1369,7 +1396,8 @@ texture_error_check( GLcontext *ctx, GLenum target,
    if ((is_color_format(internalFormat) && !colorFormat && !indexFormat) ||
        (is_index_format(internalFormat) && !indexFormat) ||
        (is_depth_format(internalFormat) != is_depth_format(format)) ||
-       (is_ycbcr_format(internalFormat) != is_ycbcr_format(format))) {
+       (is_ycbcr_format(internalFormat) != is_ycbcr_format(format)) ||
+       (is_depthstencil_format(internalFormat) != is_depthstencil_format(format))) {
       if (!isProxy)
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glTexImage(internalFormat/format)");
@@ -1992,6 +2020,11 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
    }
 
+   if (!ctx->Extensions.EXT_packed_depth_stencil
+       && is_depthstencil_format(format)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+   }
+
    if (!pixels)
       return;
 
@@ -2023,6 +2056,11 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
    }
    else if (is_ycbcr_format(format)
        && !is_ycbcr_format(texImage->TexFormat->BaseFormat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
+      return;
+   }
+   else if (is_depthstencil_format(format)
+       && !is_depthstencil_format(texImage->TexFormat->BaseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return;
    }

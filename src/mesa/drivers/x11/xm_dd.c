@@ -610,9 +610,7 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
       int dstY = y;
       int w = width;
       int h = height;
-      int srcX = unpack->SkipPixels;
-      int srcY = unpack->SkipRows;
-      int rowLength = unpack->RowLength ? unpack->RowLength : width;
+      struct gl_pixelstore_attrib clippedUnpack = *unpack;
 
       if (unpack->BufferObj->Name) {
          /* unpack from PBO */
@@ -636,11 +634,14 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
          pixels = ADD_POINTERS(buf, pixels);
       }
 
-      if (_mesa_clip_drawpixels(ctx, &dstX, &dstY, &w, &h, &srcX, &srcY)) {
+      if (_mesa_clip_drawpixels(ctx, &dstX, &dstY, &w, &h, &clippedUnpack)) {
          /* This is a little tricky since all coordinates up to now have
           * been in the OpenGL bottom-to-top orientation.  X is top-to-bottom
           * so we have to carefully compute the Y coordinates/addresses here.
           */
+         int srcX = clippedUnpack.SkipPixels;
+         int srcY = clippedUnpack.SkipRows;
+         int rowLength = clippedUnpack.RowLength;
          XMesaImage ximage;
          MEMSET(&ximage, 0, sizeof(XMesaImage));
          ximage.width = width;
@@ -715,9 +716,7 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
       int dstY = y;
       int w = width;
       int h = height;
-      int srcX = unpack->SkipPixels;
-      int srcY = unpack->SkipRows;
-      int rowLength = unpack->RowLength ? unpack->RowLength : width;
+      struct gl_pixelstore_attrib clippedUnpack = *unpack;
 
       if (unpack->BufferObj->Name) {
          /* unpack from PBO */
@@ -741,11 +740,14 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
          pixels = ADD_POINTERS(buf, pixels);
       }
 
-      if (_mesa_clip_drawpixels(ctx, &dstX, &dstY, &w, &h, &srcX, &srcY)) {
+      if (_mesa_clip_drawpixels(ctx, &dstX, &dstY, &w, &h, &clippedUnpack)) {
          /* This is a little tricky since all coordinates up to now have
           * been in the OpenGL bottom-to-top orientation.  X is top-to-bottom
           * so we have to carefully compute the Y coordinates/addresses here.
           */
+         int srcX = clippedUnpack.SkipPixels;
+         int srcY = clippedUnpack.SkipRows;
+         int rowLength = clippedUnpack.RowLength;
          XMesaImage ximage;
          MEMSET(&ximage, 0, sizeof(XMesaImage));
          ximage.width = width;

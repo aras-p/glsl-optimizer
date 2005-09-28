@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -71,6 +71,7 @@ extern GLboolean _mesa_texstore_rgb332(STORE_PARAMS);
 extern GLboolean _mesa_texstore_a8(STORE_PARAMS);
 extern GLboolean _mesa_texstore_ci8(STORE_PARAMS);
 extern GLboolean _mesa_texstore_ycbcr(STORE_PARAMS);
+extern GLboolean _mesa_texstore_z24_s8(STORE_PARAMS);
 extern GLboolean _mesa_texstore_rgba_float32(STORE_PARAMS);
 extern GLboolean _mesa_texstore_rgba_float16(STORE_PARAMS);
 extern GLboolean _mesa_texstore_rgb_fxt1(STORE_PARAMS);

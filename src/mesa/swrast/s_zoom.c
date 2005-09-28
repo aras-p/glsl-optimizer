@@ -75,8 +75,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
       zoomed.interpMask = span->interpMask & ~SPAN_INDEX;
       zoomed.arrayMask |= SPAN_INDEX;
    }
-   else {
-      assert(format == GL_DEPTH_COMPONENT);
+   else if (format == GL_DEPTH_COMPONENT) {
       /* Copy color info */
       zoomed.red = span->red;
       zoomed.green = span->green;
@@ -89,6 +88,14 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
       /* we'll generate an array of depth values */
       zoomed.interpMask = span->interpMask & ~SPAN_Z;
       zoomed.arrayMask |= SPAN_Z;
+   }
+   else if (format == GL_DEPTH_COMPONENT16 ||
+            format == GL_DEPTH_COMPONENT32) {
+      /* writing Z values directly to depth buffer, bypassing fragment ops */
+   }
+   else {
+      _mesa_problem(ctx, "Bad format in zoom_span");
+      return;
    }
 
    /*
@@ -230,9 +237,8 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
          }
       }
    }
-   else {
+   else if (format == GL_DEPTH_COMPONENT) {
       const GLuint *zValues = (const GLuint *) src;
-      assert(format == GL_DEPTH_COMPONENT);
       if (ctx->Pixel.ZoomX == -1.0F) {
          /* common case */
          for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
@@ -260,7 +266,26 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
       else
          format = GL_COLOR_INDEX;
    }
-
+   else if (format == GL_DEPTH_COMPONENT32) {
+      /* 32-bit Z values */
+      struct gl_renderbuffer *rb
+         = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+      const GLuint *zSrc32 = (const GLuint *) src;
+      GLuint zDst32[MAX_WIDTH];
+      const GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
+      for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
+         i = (GLint) ((j + skipCol) * xscale);
+         if (ctx->Pixel.ZoomX < 0.0) {
+            ASSERT(i <= 0);
+            i = span->end + i - 1;
+         }
+         ASSERT(i >= 0);
+         ASSERT(i < (GLint) span->end);
+         zDst32[j] = zSrc32[i];
+      }
+      rb->PutRow(ctx, rb, zoomed.end, zoomed.x, zoomed.y, zDst32, NULL);
+      return;
+   }
 
    /* write the span in rows [r0, r1) */
    if (format == GL_RGBA || format == GL_RGB) {

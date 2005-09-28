@@ -1778,6 +1778,15 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
             _mesa_error(ctx, GL_INVALID_ENUM,
                         "glGetTexLevelParameter[if]v(pname)");
          return;
+      case GL_TEXTURE_STENCIL_SIZE_EXT:
+         if (ctx->Extensions.EXT_packed_depth_stencil) {
+            *params = img->TexFormat->StencilBits;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glGetTexLevelParameter[if]v(pname)");
+         }
+         return;
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSED_IMAGE_SIZE:
@@ -1867,6 +1876,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                         "glGetTexLevelParameter[if]v(pname)");
          }
          return;
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glGetTexLevelParameter[if]v(pname)");
