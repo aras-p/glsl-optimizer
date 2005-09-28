@@ -2239,6 +2239,16 @@ typedef void (APIENTRYP PFNGLBLENDEQUATIONSEPARATEATIPROC) (GLenum modeRGB, GLen
 #endif /* GL_EXT_timer_query */
 
 
+#ifndef GL_EXT_packed_depth_stencil
+#define GL_EXT_packed_depth_stencil 1
+
+#define GL_DEPTH_STENCIL_EXT          0x84F9
+#define GL_UNSIGNED_INT_24_8_EXT      0x84FA
+#define GL_DEPTH24_STENCIL8_EXT       0x88F0
+#define GL_TEXTURE_STENCIL_SIZE_EXT   0x88F1
+
+#endif /* GL_EXT_packed_depth_stencil */
+
 
 /**
  ** NOTE!!!!!  If you add new functions to this file, or update
