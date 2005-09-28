@@ -631,6 +631,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  screen->frontOffset, screen->aperturePitch,
                                  driDrawPriv);
          savageSetSpanFunctions(frontRb, mesaVis, float_depth);
+         assert(frontRb->Base.Data);
          _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
       }
 
@@ -643,6 +644,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  screen->backOffset, screen->aperturePitch,
                                  driDrawPriv);
          savageSetSpanFunctions(backRb, mesaVis, float_depth);
+         assert(backRb->Base.Data);
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
       }
 
@@ -831,7 +833,9 @@ savageMakeCurrent(__DRIcontextPrivate *driContextPriv,
          drawBuffer->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
 
       assert(frontRb->Base.Data);
-      assert(backRb->Base.Data);
+      if (imesa->glCtx->Visual.doubleBufferMode) {
+         assert(backRb->Base.Data);
+      }
 
       imesa->driReadable = driReadPriv;
       imesa->driDrawable = driDrawPriv;
