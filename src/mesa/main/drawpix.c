@@ -153,12 +153,18 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       return;
    }
 
-   if (!ctx->Current.RasterPosValid) {
-      return; /* not an error */
-   }
-
    if (ctx->NewState) {
       _mesa_update_state(ctx);
+   }
+
+   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
+                  "glDrawPixels(incomplete framebuffer)" );
+      return;
+   }
+
+   if (!ctx->Current.RasterPosValid) {
+      return;
    }
 
    if (ctx->RenderMode == GL_RENDER) {
@@ -246,6 +252,13 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
       _mesa_update_state(ctx);
    }
 
+   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT ||
+       ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
+                  "glCopyPixels(incomplete framebuffer)" );
+      return;
+   }
+
    if (!ctx->Current.RasterPosValid) {
       return;
    }
@@ -281,6 +294,7 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
 		  GLenum format, GLenum type, GLvoid *pixels )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (width < 0 || height < 0) {
@@ -296,6 +310,17 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
 
    if (ctx->NewState)
       _mesa_update_state(ctx);
+
+   if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
+                  "glReadPixels(incomplete framebuffer)" );
+      return;
+   }
+
+   if (!rb) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(no readbuffer)");
+      return;
+   }
 
    ctx->Driver.ReadPixels(ctx, x, y, width, height,
 			  format, type, &ctx->Pack, pixels);
@@ -328,6 +353,12 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
 
    if (ctx->NewState) {
       _mesa_update_state(ctx);
+   }
+
+   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
+                  "glBitmap(incomplete framebuffer)");
+      return;
    }
 
    if (ctx->RenderMode == GL_RENDER) {
@@ -388,6 +419,12 @@ _mesa_DrawDepthPixelsMESA( GLsizei width, GLsizei height,
 
    if (ctx->NewState) {
       _mesa_update_state(ctx);
+   }
+
+   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
+                  "glDrawDepthPixelsMESA(incomplete framebuffer)");
+      return;
    }
 
    if (ctx->RenderMode == GL_RENDER) {
