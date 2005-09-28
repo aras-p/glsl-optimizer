@@ -1045,7 +1045,7 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_ushort;
       rb->PutValues = put_values_ushort;
       rb->PutMonoValues = put_mono_values_ushort;
-      rb->DepthBits = 8 * sizeof(GLushort);
+      /*rb->DepthBits not set here */
       pixelSize = sizeof(GLushort);
       break;
    case GL_DEPTH_COMPONENT24:
@@ -1060,7 +1060,7 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_uint;
       rb->PutValues = put_values_uint;
       rb->PutMonoValues = put_mono_values_uint;
-      rb->DepthBits = 8 * sizeof(GLuint);
+      /* rb->DepthBits not set here */
       pixelSize = sizeof(GLuint);
       break;
    case GL_COLOR_INDEX8_EXT:
@@ -1138,6 +1138,7 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
    return GL_TRUE;
 }
+
 
 
 /**********************************************************************/
@@ -1713,6 +1714,7 @@ _mesa_add_depth_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
    else {
       rb->InternalFormat = GL_DEPTH_COMPONENT32;
    }
+   rb->DepthBits = depthBits;
 
    rb->AllocStorage = soft_renderbuffer_storage;
    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, rb);
