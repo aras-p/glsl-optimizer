@@ -55,7 +55,6 @@ void GLAPIENTRY
 _mesa_Accum( GLenum op, GLfloat value )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLuint xpos, ypos, width, height;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    switch (op) {
@@ -84,29 +83,21 @@ _mesa_Accum( GLenum op, GLfloat value )
    }
 
    if (ctx->NewState)
-      _mesa_update_state( ctx );
+      _mesa_update_state(ctx);
 
-   if (ctx->RenderMode != GL_RENDER) {
-      /* no-op */
+   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
+                  "glAccum(incomplete framebuffer)");
       return;
    }
 
-   /* Determine region to operate upon. */
-   if (ctx->Scissor.Enabled) {
-      xpos = ctx->Scissor.X;
-      ypos = ctx->Scissor.Y;
-      width = ctx->Scissor.Width;
-      height = ctx->Scissor.Height;
+   if (ctx->RenderMode == GL_RENDER) {
+      GLint x = ctx->DrawBuffer->_Xmin;
+      GLint y = ctx->DrawBuffer->_Ymin;
+      GLint width =  ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
+      GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
+      ctx->Driver.Accum(ctx, op, value, x, y, width, height);
    }
-   else {
-      /* whole window */
-      xpos = 0;
-      ypos = 0;
-      width = ctx->DrawBuffer->Width;
-      height = ctx->DrawBuffer->Height;
-   }
-
-   ctx->Driver.Accum( ctx, op, value, xpos, ypos, width, height );
 }
 
 

@@ -144,6 +144,7 @@ _mesa_initialize_framebuffer(struct gl_framebuffer *fb, const GLvisual *visual)
    }
 
    fb->Delete = _mesa_destroy_framebuffer;
+   fb->_Status = GL_FRAMEBUFFER_COMPLETE_EXT;
 
    compute_depth_max(fb);
 }
