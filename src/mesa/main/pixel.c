@@ -1838,6 +1838,19 @@ _mesa_map_stencil( const GLcontext *ctx, GLuint n, GLstencil stencil[] )
 }
 
 
+void
+_mesa_scale_and_bias_depth(const GLcontext *ctx, GLuint n,
+                           GLfloat depthValues[])
+{
+   const GLfloat scale = ctx->Pixel.DepthScale;
+   const GLfloat bias = ctx->Pixel.DepthBias;
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      GLfloat d = depthValues[i] * scale + bias;
+      depthValues[i] = CLAMP(d, 0.0F, 1.0F);
+   }
+}
+
 
 /*
  * This function converts an array of GLchan colors to GLfloat colors.
