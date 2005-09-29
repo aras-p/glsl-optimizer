@@ -71,7 +71,9 @@ static void Display( void )
    glDisable(GL_SCISSOR_TEST);
    glDisable(GL_FOG);
 
-   if (!DrawFront)
+   if (DrawFront)
+      glFinish();
+   else
       glutSwapBuffers();
 }
 
