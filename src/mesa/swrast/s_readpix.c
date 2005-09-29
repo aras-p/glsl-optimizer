@@ -53,9 +53,7 @@ read_index_pixels( GLcontext *ctx,
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
    GLint i;
 
-   if (!rb) {
-      return;  /* no readbuffer OK */
-   }
+   ASSERT(rb);
 
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
@@ -99,9 +97,7 @@ read_depth_pixels( GLcontext *ctx,
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
 
-   if (!rb) {
-      return;  /* no readbuffer OK */
-   }
+   ASSERT(rb);
 
    bias_or_scale = ctx->Pixel.DepthBias != 0.0 || ctx->Pixel.DepthScale != 1.0;
 
@@ -175,10 +171,7 @@ read_stencil_pixels( GLcontext *ctx,
    struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
    GLint j;
 
-   if (!rb) {
-      /* no readbuffer - OK */
-      return;
-   }
+   ASSERT(rb);
 
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
@@ -291,10 +284,7 @@ read_rgba_pixels( GLcontext *ctx,
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *rb = fb->_ColorReadBuffer;
 
-   if (!rb) {
-      /* No readbuffer is OK with GL_EXT_framebuffer_object */
-      return;
-   }
+   ASSERT(rb);
 
    /* Try optimized path first */
    if (read_fast_rgba_pixels( ctx, x, y, width, height,

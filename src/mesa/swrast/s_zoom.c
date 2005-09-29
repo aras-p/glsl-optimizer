@@ -33,25 +33,116 @@
 #include "s_zoom.h"
 
 
-/*
- * Helper function called from _swrast_write_zoomed_rgba/rgb/index_span().
+/**
+ * Compute the bounds of the region resulting from zooming a pixel span.
+ * The resulting region will be entirely inside the window/scissor bounds
+ * so no additional clipping is needed.
+ * \param imageX, imageY  position of the overall image being drawn
+ * \param spanX, spanY  position of span being drawing
+ * \param x0, x1  returned X bounds of zoomed region [x0, x1)
+ * \param y0, y1  returned Y bounds of zoomed region [y0, y1)
+ * \return GL_TRUE if any zoomed pixels visible, GL_FALSE if totally clipped
+ */
+static GLboolean
+compute_zoomed_bounds(GLcontext *ctx, GLint imageX, GLint imageY,
+                      GLint spanX, GLint spanY, GLint width,
+                      GLint *x0, GLint *x1, GLint *y0, GLint *y1)
+{
+   const struct gl_framebuffer *fb = ctx->DrawBuffer;
+   GLint c0, c1, r0, r1;
+
+   ASSERT(spanX >= imageX);
+   ASSERT(spanY >= imageY);
+
+   /*
+    * Compute destination columns: [c0, c1)
+    */
+   c0 = imageX + (GLint) ((spanX - imageX) * ctx->Pixel.ZoomX);
+   c1 = imageX + (GLint) ((spanX + width - imageX) * ctx->Pixel.ZoomX);
+   if (c1 < c0) {
+      /* swap */
+      GLint tmp = c1;
+      c1 = c0;
+      c0 = tmp;
+   }
+   c0 = CLAMP(c0, fb->_Xmin, fb->_Xmax);
+   c1 = CLAMP(c1, fb->_Xmin, fb->_Xmax);
+   if (c0 == c1) {
+      return GL_FALSE; /* no width */
+   }
+
+   /*
+    * Compute destination rows: [r0, r1)
+    */
+   r0 = imageY + (GLint) ((spanY - imageY) * ctx->Pixel.ZoomY);
+   r1 = imageY + (GLint) ((spanY + 1 - imageY) * ctx->Pixel.ZoomY);
+   if (r1 < r0) {
+      /* swap */
+      GLint tmp = r1;
+      r1 = r0;
+      r0 = tmp;
+   }
+   r0 = CLAMP(r0, fb->_Ymin, fb->_Ymax);
+   r1 = CLAMP(r1, fb->_Ymin, fb->_Ymax);
+   if (r0 == r1) {
+      return GL_FALSE; /* no height */
+   }
+
+   *x0 = c0;
+   *x1 = c1;
+   *y0 = r0;
+   *y1 = r1;
+
+   return GL_TRUE;
+}
+
+
+/**
+ * Can use this for unzooming X or Y values.
+ */
+static INLINE GLint
+unzoom_x(GLfloat zoomX, GLint imageX, GLint zx)
+{
+   /*
+   zx = imageX + (x - imageX) * zoomX;
+   zx - imageX = (x - imageX) * zoomX;
+   (zx - imageX) / zoomX = x - imageX;
+   */
+   GLint x = imageX + (GLint) ((zx - imageX) / zoomX);
+   return x;
+}
+
+
+
+/**
+ * Helper function called from _swrast_write_zoomed_rgba/rgb/
+ * index/depth_span().
  */
 static void
-zoom_span( GLcontext *ctx, const struct sw_span *span,
-           const GLvoid *src, GLint y0, GLenum format, GLint skipPixels )
+zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const struct sw_span *span,
+           const GLvoid *src, GLenum format )
 {
-   GLint r0, r1, row;
-   GLint c0, c1, skipCol;
-   GLint i, j;
-   const GLuint maxWidth = MIN2( ctx->DrawBuffer->Width, MAX_WIDTH );
    struct sw_span zoomed;
    struct span_arrays zoomed_arrays;  /* this is big! */
+   GLint x0, x1, y0, y1;
+   GLint zoomedWidth;
+
+   if (!compute_zoomed_bounds(ctx, imgX, imgY, span->x, span->y, span->end,
+                              &x0, &x1, &y0, &y1)) {
+      return;  /* totally clipped */
+   }
+
+   zoomedWidth = x1 - x0;
+   ASSERT(zoomedWidth > 0);
+   ASSERT(zoomedWidth <= MAX_WIDTH);
 
    /* no pixel arrays! must be horizontal spans. */
    ASSERT((span->arrayMask & SPAN_XY) == 0);
    ASSERT(span->primitive == GL_BITMAP);
 
    INIT_SPAN(zoomed, GL_BITMAP, 0, 0, 0);
+   zoomed.x = x0;
+   zoomed.end = zoomedWidth;
    zoomed.array = &zoomed_arrays;
 
    /* copy fog interp info */
@@ -66,6 +157,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
       /* we'll generate an array of colorss */
       zoomed.interpMask = span->interpMask & ~SPAN_RGBA;
       zoomed.arrayMask |= SPAN_RGBA;
+      ASSERT(span->arrayMask & SPAN_RGBA);
    }
    else if (format == GL_COLOR_INDEX) {
       /* copy Z info */
@@ -74,6 +166,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
       /* we'll generate an array of color indexes */
       zoomed.interpMask = span->interpMask & ~SPAN_INDEX;
       zoomed.arrayMask |= SPAN_INDEX;
+      ASSERT(span->arrayMask & SPAN_INDEX);
    }
    else if (format == GL_DEPTH_COMPONENT) {
       /* Copy color info */
@@ -88,203 +181,58 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
       /* we'll generate an array of depth values */
       zoomed.interpMask = span->interpMask & ~SPAN_Z;
       zoomed.arrayMask |= SPAN_Z;
-   }
-   else if (format == GL_DEPTH_COMPONENT16 ||
-            format == GL_DEPTH_COMPONENT32) {
-      /* writing Z values directly to depth buffer, bypassing fragment ops */
+      ASSERT(span->arrayMask & SPAN_Z);
    }
    else {
       _mesa_problem(ctx, "Bad format in zoom_span");
       return;
    }
 
-   /*
-    * Compute which columns to draw: [c0, c1)
-    */
-   c0 = (GLint) (span->x + skipPixels * ctx->Pixel.ZoomX);
-   c1 = (GLint) (span->x + (skipPixels + span->end) * ctx->Pixel.ZoomX);
-   if (c0 == c1) {
-      return;
-   }
-   else if (c1 < c0) {
-      /* swap */
-      GLint ctmp = c1;
-      c1 = c0;
-      c0 = ctmp;
-   }
-   if (c0 < 0) {
-      zoomed.x = 0;
-      zoomed.start = 0;
-      zoomed.end = c1;
-      skipCol = -c0;
-   }
-   else {
-      zoomed.x = c0;
-      zoomed.start = 0;
-      zoomed.end = c1 - c0;
-      skipCol = 0;
-   }
-   if (zoomed.end > maxWidth)
-      zoomed.end = maxWidth;
-
-   /*
-    * Compute which rows to draw: [r0, r1)
-    */
-   row = span->y - y0;
-   r0 = y0 + (GLint) (row * ctx->Pixel.ZoomY);
-   r1 = y0 + (GLint) ((row+1) * ctx->Pixel.ZoomY);
-   if (r0 == r1) {
-      return;
-   }
-   else if (r1 < r0) {
-      /* swap */
-      GLint rtmp = r1;
-      r1 = r0;
-      r0 = rtmp;
-   }
-
-   ASSERT(r0 < r1);
-   ASSERT(c0 < c1);
-
-   /*
-    * Trivial clip rejection testing.
-    */
-   if (r1 < 0) /* below window */
-      return;
-   if (r0 >= (GLint) ctx->DrawBuffer->Height) /* above window */
-      return;
-   if (c1 < 0) /* left of window */
-      return;
-   if (c0 >= (GLint) ctx->DrawBuffer->Width) /* right of window */
-      return;
-
    /* zoom the span horizontally */
    if (format == GL_RGBA) {
       const GLchan (*rgba)[4] = (const GLchan (*)[4]) src;
-      if (ctx->Pixel.ZoomX == -1.0F) {
-         /* common case */
-         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
-            i = span->end - (j + skipCol) - 1;
-            COPY_CHAN4(zoomed.array->rgba[j], rgba[i]);
-         }
-      }
-      else {
-         /* general solution */
-         const GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
-         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
-            i = (GLint) ((j + skipCol) * xscale);
-            if (ctx->Pixel.ZoomX < 0.0) {
-               ASSERT(i <= 0);
-               i = span->end + i - 1;
-            }
-            ASSERT(i >= 0);
-            ASSERT(i < (GLint)  span->end);
-            COPY_CHAN4(zoomed.array->rgba[j], rgba[i]);
-         }
+      GLint i;
+      for (i = 0; i < zoomedWidth; i++) {
+         GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - span->x;
+         ASSERT(j >= 0);
+         ASSERT(j < span->end);
+         COPY_CHAN4(zoomed.array->rgba[i], rgba[j]);
       }
    }
    else if (format == GL_RGB) {
       const GLchan (*rgb)[3] = (const GLchan (*)[3]) src;
-      if (ctx->Pixel.ZoomX == -1.0F) {
-         /* common case */
-         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
-            i = span->end - (j + skipCol) - 1;
-            zoomed.array->rgba[j][0] = rgb[i][0];
-            zoomed.array->rgba[j][1] = rgb[i][1];
-            zoomed.array->rgba[j][2] = rgb[i][2];
-            zoomed.array->rgba[j][3] = CHAN_MAX;
-         }
-      }
-      else {
-         /* general solution */
-         const GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
-         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
-            i = (GLint) ((j + skipCol) * xscale);
-            if (ctx->Pixel.ZoomX < 0.0) {
-               ASSERT(i <= 0);
-               i = span->end + i - 1;
-            }
-            ASSERT(i >= 0);
-            ASSERT(i < (GLint) span->end);
-            zoomed.array->rgba[j][0] = rgb[i][0];
-            zoomed.array->rgba[j][1] = rgb[i][1];
-            zoomed.array->rgba[j][2] = rgb[i][2];
-            zoomed.array->rgba[j][3] = CHAN_MAX;
-         }
+      GLint i;
+      for (i = 0; i < zoomedWidth; i++) {
+         GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - span->x;
+         ASSERT(j >= 0);
+         ASSERT(j < span->end);
+         zoomed.array->rgba[i][0] = rgb[j][0];
+         zoomed.array->rgba[i][1] = rgb[j][1];
+         zoomed.array->rgba[i][2] = rgb[j][2];
+         zoomed.array->rgba[i][3] = CHAN_MAX;
       }
    }
    else if (format == GL_COLOR_INDEX) {
       const GLuint *indexes = (const GLuint *) src;
-      if (ctx->Pixel.ZoomX == -1.0F) {
-         /* common case */
-         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
-            i = span->end - (j + skipCol) - 1;
-            zoomed.array->index[j] = indexes[i];
-         }
-      }
-      else {
-         /* general solution */
-         const GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
-         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
-            i = (GLint) ((j + skipCol) * xscale);
-            if (ctx->Pixel.ZoomX < 0.0) {
-               ASSERT(i <= 0);
-               i = span->end + i - 1;
-            }
-            ASSERT(i >= 0);
-            ASSERT(i < (GLint) span->end);
-            zoomed.array->index[j] = indexes[i];
-         }
+      GLint i;
+      for (i = 0; i < zoomedWidth; i++) {
+         GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - span->x;
+         ASSERT(j >= 0);
+         ASSERT(j < span->end);
+         zoomed.array->index[i] = indexes[j];
       }
    }
    else if (format == GL_DEPTH_COMPONENT) {
       const GLuint *zValues = (const GLuint *) src;
-      if (ctx->Pixel.ZoomX == -1.0F) {
-         /* common case */
-         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
-            i = span->end - (j + skipCol) - 1;
-            zoomed.array->z[j] = zValues[i];
-         }
-      }
-      else {
-         /* general solution */
-         const GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
-         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
-            i = (GLint) ((j + skipCol) * xscale);
-            if (ctx->Pixel.ZoomX < 0.0) {
-               ASSERT(i <= 0);
-               i = span->end + i - 1;
-            }
-            ASSERT(i >= 0);
-            ASSERT(i < (GLint) span->end);
-            zoomed.array->z[j] = zValues[i];
-         }
+      GLint i;
+      for (i = 0; i < zoomedWidth; i++) {
+         GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - span->x;
+         ASSERT(j >= 0);
+         ASSERT(j < span->end);
+         zoomed.array->z[i] = zValues[j];
       }
       /* Now, fall into either the RGB or COLOR_INDEX path below */
-      if (ctx->Visual.rgbMode)
-         format = GL_RGBA;
-      else
-         format = GL_COLOR_INDEX;
-   }
-   else if (format == GL_DEPTH_COMPONENT32) {
-      /* 32-bit Z values */
-      struct gl_renderbuffer *rb
-         = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
-      const GLuint *zSrc32 = (const GLuint *) src;
-      GLuint zDst32[MAX_WIDTH];
-      const GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
-      for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
-         i = (GLint) ((j + skipCol) * xscale);
-         if (ctx->Pixel.ZoomX < 0.0) {
-            ASSERT(i <= 0);
-            i = span->end + i - 1;
-         }
-         ASSERT(i >= 0);
-         ASSERT(i < (GLint) span->end);
-         zDst32[j] = zSrc32[i];
-      }
-      rb->PutRow(ctx, rb, zoomed.end, zoomed.x, zoomed.y, zDst32, NULL);
-      return;
+      format = ctx->Visual.rgbMode ? GL_RGBA : GL_COLOR_INDEX;
    }
 
    /* write the span in rows [r0, r1) */
@@ -295,13 +243,13 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
        */
       GLchan rgbaSave[MAX_WIDTH][4];
       const GLint end = zoomed.end; /* save */
-      if (r1 - r0 > 1) {
+      if (y1 - y0 > 1) {
          MEMCPY(rgbaSave, zoomed.array->rgba, zoomed.end * 4 * sizeof(GLchan));
       }
-      for (zoomed.y = r0; zoomed.y < r1; zoomed.y++) {
+      for (zoomed.y = y0; zoomed.y < y1; zoomed.y++) {
          _swrast_write_rgba_span(ctx, &zoomed);
          zoomed.end = end;  /* restore */
-         if (r1 - r0 > 1) {
+         if (y1 - y0 > 1) {
             /* restore the colors */
             MEMCPY(zoomed.array->rgba, rgbaSave, zoomed.end*4 * sizeof(GLchan));
          }
@@ -310,13 +258,13 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
    else if (format == GL_COLOR_INDEX) {
       GLuint indexSave[MAX_WIDTH];
       const GLint end = zoomed.end; /* save */
-      if (r1 - r0 > 1) {
+      if (y1 - y0 > 1) {
          MEMCPY(indexSave, zoomed.array->index, zoomed.end * sizeof(GLuint));
       }
-      for (zoomed.y = r0; zoomed.y < r1; zoomed.y++) {
+      for (zoomed.y = y0; zoomed.y < y1; zoomed.y++) {
          _swrast_write_index_span(ctx, &zoomed);
          zoomed.end = end;  /* restore */
-         if (r1 - r0 > 1) {
+         if (y1 - y0 > 1) {
             /* restore the colors */
             MEMCPY(zoomed.array->index, indexSave, zoomed.end * sizeof(GLuint));
          }
@@ -326,127 +274,126 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
 
 
 void
-_swrast_write_zoomed_rgba_span( GLcontext *ctx, const struct sw_span *span,
-                              CONST GLchan rgba[][4], GLint y0,
-                              GLint skipPixels )
+_swrast_write_zoomed_rgba_span( GLcontext *ctx, GLint imgX, GLint imgY,
+                               const struct sw_span *span,
+                               CONST GLchan rgba[][4])
 {
-   zoom_span(ctx, span, (const GLvoid *) rgba, y0, GL_RGBA, skipPixels);
+   zoom_span(ctx, imgX, imgY, span, (const GLvoid *) rgba, GL_RGBA);
 }
 
 
 void
-_swrast_write_zoomed_rgb_span( GLcontext *ctx, const struct sw_span *span,
-                             CONST GLchan rgb[][3], GLint y0,
-                             GLint skipPixels )
+_swrast_write_zoomed_rgb_span(GLcontext *ctx, GLint imgX, GLint imgY,
+                              const struct sw_span *span,
+                              CONST GLchan rgb[][3])
 {
-   zoom_span(ctx, span, (const GLvoid *) rgb, y0, GL_RGB, skipPixels);
+   zoom_span(ctx, imgX, imgY, span, (const GLvoid *) rgb, GL_RGB);
 }
 
 
 void
-_swrast_write_zoomed_index_span( GLcontext *ctx, const struct sw_span *span,
-                               GLint y0, GLint skipPixels )
+_swrast_write_zoomed_index_span(GLcontext *ctx, GLint imgX, GLint imgY,
+                                const struct sw_span *span)
 {
-   zoom_span(ctx, span, (const GLvoid *) span->array->index, y0,
-             GL_COLOR_INDEX, skipPixels);
+   zoom_span(ctx, imgX, imgY, span,
+             (const GLvoid *) span->array->index, GL_COLOR_INDEX);
 }
 
 
 void
-_swrast_write_zoomed_depth_span( GLcontext *ctx, const struct sw_span *span,
-                                 GLint y0, GLint skipPixels )
+_swrast_write_zoomed_depth_span(GLcontext *ctx, GLint imgX, GLint imgY,
+                                const struct sw_span *span)
 {
-   zoom_span(ctx, span, (const GLvoid *) span->array->z, y0,
-             GL_DEPTH_COMPONENT, skipPixels);
+   zoom_span(ctx, imgX, imgY, span,
+             (const GLvoid *) span->array->z, GL_DEPTH_COMPONENT);
 }
 
 
-/*
- * As above, but write stencil values.
+/**
+ * Zoom/write stencil values.
+ * No per-fragment operations are applied.
  */
 void
-_swrast_write_zoomed_stencil_span( GLcontext *ctx,
-                                 GLuint n, GLint x, GLint y,
-                                 const GLstencil stencil[], GLint y0,
-                                 GLint skipPixels )
+_swrast_write_zoomed_stencil_span(GLcontext *ctx, GLint imgX, GLint imgY,
+                                  GLint width, GLint spanX, GLint spanY,
+                                  const GLstencil stencil[])
 {
-   GLint m;
-   GLint r0, r1, row, r;
-   GLint i, j, skipcol;
-   GLstencil zstencil[MAX_WIDTH];  /* zoomed stencil values */
-   GLint maxwidth = MIN2( ctx->DrawBuffer->Width, MAX_WIDTH );
+   GLstencil zoomedVals[MAX_WIDTH];
+   GLint x0, x1, y0, y1, y;
+   GLint i, zoomedWidth;
 
-   (void) skipPixels;  /* XXX this shouldn't be ignored */
-
-   /* compute width of output row */
-   m = (GLint) FABSF( n * ctx->Pixel.ZoomX );
-   if (m==0) {
-      return;
-   }
-   if (ctx->Pixel.ZoomX<0.0) {
-      /* adjust x coordinate for left/right mirroring */
-      x = x - m;
+   if (!compute_zoomed_bounds(ctx, imgX, imgY, spanX, spanY, width,
+                              &x0, &x1, &y0, &y1)) {
+      return;  /* totally clipped */
    }
 
-   /* compute which rows to draw */
-   row = y - y0;
-   r0 = y0 + (GLint) (row * ctx->Pixel.ZoomY);
-   r1 = y0 + (GLint) ((row+1) * ctx->Pixel.ZoomY);
-   if (r0==r1) {
-      return;
-   }
-   else if (r1<r0) {
-      GLint rtmp = r1;
-      r1 = r0;
-      r0 = rtmp;
-   }
-
-   /* return early if r0...r1 is above or below window */
-   if (r0<0 && r1<0) {
-      /* below window */
-      return;
-   }
-   if (r0 >= (GLint) ctx->DrawBuffer->Height &&
-       r1 >= (GLint) ctx->DrawBuffer->Height) {
-      /* above window */
-      return;
-   }
-
-   /* check if left edge is outside window */
-   skipcol = 0;
-   if (x<0) {
-      skipcol = -x;
-      m += x;
-   }
-   /* make sure span isn't too long or short */
-   if (m>maxwidth) {
-      m = maxwidth;
-   }
-   else if (m<=0) {
-      return;
-   }
-
-   ASSERT( m <= MAX_WIDTH );
+   zoomedWidth = x1 - x0;
+   ASSERT(zoomedWidth > 0);
+   ASSERT(zoomedWidth <= MAX_WIDTH);
 
    /* zoom the span horizontally */
-   if (ctx->Pixel.ZoomX==-1.0F) {
-      /* n==m */
-      for (j=0;j<m;j++) {
-         i = n - (j+skipcol) - 1;
-         zstencil[j] = stencil[i];
-      }
-   }
-   else {
-      GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
-      for (j=0;j<m;j++) {
-         i = (GLint) ((j+skipcol) * xscale);
-         if (i<0)  i = n + i - 1;
-         zstencil[j] = stencil[i];
-      }
+   for (i = 0; i < zoomedWidth; i++) {
+      GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - spanX;
+      ASSERT(j >= 0);
+      ASSERT(j < width);
+      zoomedVals[i] = stencil[j];
    }
 
-   /* write the span */
-   for (r=r0; r<r1; r++) {
-      _swrast_write_stencil_span( ctx, m, x+skipcol, r, zstencil );
+   /* write the zoomed spans */
+   for (y = y0; y < y1; y++) {
+      _swrast_write_stencil_span(ctx, zoomedWidth, x0, y, zoomedVals);
+   }
+}
+
+
+/**
+ * Zoom/write z values (16 or 32-bit).
+ * No per-fragment operations are applied.
+ */
+void
+_swrast_write_zoomed_z_span(GLcontext *ctx, GLint imgX, GLint imgY,
+                            GLint width, GLint spanX, GLint spanY,
+                            const GLvoid *z)
+{
+   struct gl_renderbuffer *rb
+      = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   GLushort zoomedVals16[MAX_WIDTH];
+   GLuint zoomedVals32[MAX_WIDTH];
+   GLint x0, x1, y0, y1, y;
+   GLint i, zoomedWidth;
+
+   if (!compute_zoomed_bounds(ctx, imgX, imgY, spanX, spanY, width,
+                              &x0, &x1, &y0, &y1)) {
+      return;  /* totally clipped */
+   }
+
+   zoomedWidth = x1 - x0;
+   ASSERT(zoomedWidth > 0);
+   ASSERT(zoomedWidth <= MAX_WIDTH);
+
+   /* zoom the span horizontally */
+   if (rb->DataType == GL_UNSIGNED_SHORT) {
+      for (i = 0; i < zoomedWidth; i++) {
+         GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - spanX;
+         ASSERT(j >= 0);
+         ASSERT(j < width);
+         zoomedVals16[i] = ((GLushort *) z)[j];
+      }
+      z = zoomedVals16;
+   }
+   else {
+      ASSERT(rb->DataType == GL_UNSIGNED_INT);
+      for (i = 0; i < zoomedWidth; i++) {
+         GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - spanX;
+         ASSERT(j >= 0);
+         ASSERT(j < width);
+         zoomedVals32[i] = ((GLuint *) z)[j];
+      }
+      z = zoomedVals32;
+   }
+
+   /* write the zoomed spans */
+   for (y = y0; y < y1; y++) {
+      rb->PutRow(ctx, rb, zoomedWidth, x0, y, z, NULL);
    }
 }

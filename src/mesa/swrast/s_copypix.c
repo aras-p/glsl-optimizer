@@ -226,19 +226,17 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       if (quick_draw && dy >= 0 && dy < (GLint) ctx->DrawBuffer->Height) {
          drawRb->PutRow(ctx, drawRb, width, destx, dy, span.array->rgba, NULL);
       }
-      else if (zoom) {
-         span.x = destx;
-         span.y = dy;
-         span.end = width;
-         _swrast_write_zoomed_rgba_span(ctx, &span, 
-                                     (CONST GLchan (*)[4])span.array->rgba,
-                                     desty, 0);
-      }
       else {
          span.x = destx;
          span.y = dy;
          span.end = width;
-         _swrast_write_rgba_span(ctx, &span);
+         if (zoom) {
+            _swrast_write_zoomed_rgba_span(ctx, destx, desty, &span, 
+                                        (CONST GLchan (*)[4])span.array->rgba);
+         }
+         else {
+            _swrast_write_rgba_span(ctx, &span);
+         }
       }
    }
 
@@ -368,19 +366,17 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       if (quick_draw && dy >= 0 && dy < (GLint) ctx->DrawBuffer->Height) {
          drawRb->PutRow(ctx, drawRb, width, destx, dy, span.array->rgba, NULL);
       }
-      else if (zoom) {
-         span.x = destx;
-         span.y = dy;
-         span.end = width;
-         _swrast_write_zoomed_rgba_span(ctx, &span,
-                                     (CONST GLchan (*)[4]) span.array->rgba,
-                                     desty, 0);
-      }
       else {
          span.x = destx;
          span.y = dy;
          span.end = width;
-         _swrast_write_rgba_span(ctx, &span);
+         if (zoom) {
+            _swrast_write_zoomed_rgba_span(ctx, destx, desty, &span,
+                                       (CONST GLchan (*)[4]) span.array->rgba);
+         }
+         else {
+            _swrast_write_rgba_span(ctx, &span);
+         }
       }
    }
 
@@ -481,7 +477,7 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       span.y = dy;
       span.end = width;
       if (zoom)
-         _swrast_write_zoomed_index_span(ctx, &span, desty, 0);
+         _swrast_write_zoomed_index_span(ctx, destx, desty, &span);
       else
          _swrast_write_index_span(ctx, &span);
    }
@@ -585,14 +581,14 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       span.end = width;
       if (fb->Visual.rgbMode) {
          if (zoom)
-            _swrast_write_zoomed_rgba_span( ctx, &span, 
-                            (const GLchan (*)[4])span.array->rgba, desty, 0 );
+            _swrast_write_zoomed_rgba_span(ctx, destx, desty, &span, 
+                                       (const GLchan (*)[4]) span.array->rgba);
          else
             _swrast_write_rgba_span(ctx, &span);
       }
       else {
          if (zoom)
-            _swrast_write_zoomed_index_span( ctx, &span, desty, 0 );
+            _swrast_write_zoomed_index_span(ctx, destx, desty, &span);
          else
             _swrast_write_index_span(ctx, &span);
       }
@@ -686,8 +682,8 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
       /* Write stencil values */
       if (zoom) {
-         _swrast_write_zoomed_stencil_span( ctx, width, destx, dy,
-                                          stencil, desty, 0 );
+         _swrast_write_zoomed_stencil_span(ctx, destx, desty, width,
+                                           destx, dy, stencil);
       }
       else {
          _swrast_write_stencil_span( ctx, width, destx, dy, stencil );
