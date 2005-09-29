@@ -157,14 +157,14 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    /* allocate space for GLfloat image */
-   tmpImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
+   tmpImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
    if (!tmpImage) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
       return;
    }
-   convImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
+   convImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
    if (!convImage) {
-      FREE(tmpImage);
+      _mesa_free(tmpImage);
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
       return;
    }
@@ -197,7 +197,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       ASSERT(ctx->Pixel.Separable2DEnabled);
       _mesa_convolve_sep_image(ctx, &width, &height, tmpImage, convImage);
    }
-   FREE(tmpImage);
+   _mesa_free(tmpImage);
 
    /* do remaining post-convolution image transfer ops */
    for (row = 0; row < height; row++) {
@@ -240,7 +240,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
    }
 
-   FREE(convImage);
+   _mesa_free(convImage);
 }
 
 
@@ -313,7 +313,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    if (overlapping) {
       GLint ssy = sy;
-      tmpImage = (GLchan *) MALLOC(width * height * sizeof(GLchan) * 4);
+      tmpImage = (GLchan *) _mesa_malloc(width * height * sizeof(GLchan) * 4);
       if (!tmpImage) {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
          return;
@@ -381,7 +381,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    if (overlapping)
-      FREE(tmpImage);
+      _mesa_free(tmpImage);
 }
 
 
@@ -434,7 +434,7 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
    if (overlapping) {
       GLint ssy = sy;
-      tmpImage = (GLuint *) MALLOC(width * height * sizeof(GLuint));
+      tmpImage = (GLuint *) _mesa_malloc(width * height * sizeof(GLuint));
       if (!tmpImage) {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
          return;
@@ -483,7 +483,7 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    if (overlapping)
-      FREE(tmpImage);
+      _mesa_free(tmpImage);
 }
 
 
@@ -541,7 +541,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
    if (overlapping) {
       GLint ssy = sy;
-      tmpImage = (GLfloat *) MALLOC(width * height * sizeof(GLfloat));
+      tmpImage = (GLfloat *) _mesa_malloc(width * height * sizeof(GLfloat));
       if (!tmpImage) {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
          return;
@@ -595,7 +595,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    if (overlapping)
-      FREE(tmpImage);
+      _mesa_free(tmpImage);
 }
 
 
@@ -643,7 +643,7 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
    if (overlapping) {
       GLint ssy = sy;
-      tmpImage = (GLstencil *) MALLOC(width * height * sizeof(GLstencil));
+      tmpImage = (GLstencil *) _mesa_malloc(width * height * sizeof(GLstencil));
       if (!tmpImage) {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
          return;
@@ -691,17 +691,191 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    if (overlapping)
-      FREE(tmpImage);
+      _mesa_free(tmpImage);
 }
 
 
+/**
+ * This isn't terribly efficient.  If a drivef really has combined
+ * depth/stencil buffers the driver should implement an optimized
+ * CopyPixels function.
+ */
 static void
-copy_depth_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
-                          GLint width, GLint height, GLint destx, GLint desty)
+copy_depth_stencil_pixels(GLcontext *ctx,
+                          const GLint srcX, const GLint srcY,
+                          const GLint width, const GLint height,
+                          const GLint destX, const GLint destY)
 {
+   struct gl_renderbuffer *stencilReadRb, *depthReadRb, *depthDrawRb;
+   GLint sy, dy, stepy;
+   GLint j;
+   GLstencil *tempStencilImage = NULL, *stencilPtr = NULL;
+   GLfloat *tempDepthImage = NULL, *depthPtr = NULL;
+   const GLfloat depthScale = ctx->DrawBuffer->_DepthMaxF;
+   const GLuint stencilMask = ctx->Stencil.WriteMask[0];
+   const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
+   const GLboolean shiftOrOffset
+      = ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset;
+   const GLboolean scaleOrBias
+      = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
+   GLint overlapping;
 
+   depthDrawRb = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   depthReadRb = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   stencilReadRb = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
 
+   ASSERT(depthDrawRb);
+   ASSERT(depthReadRb);
+   ASSERT(stencilReadRb);
 
+   /* Determine if copy should be bottom-to-top or top-to-bottom */
+   if (srcY < destY) {
+      /* top-down  max-to-min */
+      sy = srcY + height - 1;
+      dy = destY + height - 1;
+      stepy = -1;
+   }
+   else {
+      /* bottom-up  min-to-max */
+      sy = srcY;
+      dy = destY;
+      stepy = 1;
+   }
+
+   if (ctx->DrawBuffer == ctx->ReadBuffer) {
+      overlapping = regions_overlap(srcX, srcY, destX, destY, width, height,
+                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
+   }
+   else {
+      overlapping = GL_FALSE;
+   }
+
+   if (overlapping) {
+      GLint ssy = sy;
+
+      if (stencilMask != 0x0) {
+         tempStencilImage
+            = (GLstencil *) _mesa_malloc(width * height * sizeof(GLstencil));
+         if (!tempStencilImage) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
+            return;
+         }
+
+         /* get copy of stencil pixels */
+         stencilPtr = tempStencilImage;
+         for (j = 0; j < height; j++, ssy += stepy) {
+            _swrast_read_stencil_span(ctx, stencilReadRb,
+                                      width, srcX, ssy, stencilPtr);
+            stencilPtr += width;
+         }
+         stencilPtr = tempStencilImage;
+      }
+
+      if (ctx->Depth.Mask) {
+         tempDepthImage
+            = (GLfloat *) _mesa_malloc(width * height * sizeof(GLfloat));
+         if (!tempDepthImage) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
+            _mesa_free(tempStencilImage);
+            return;
+         }
+
+         /* get copy of depth pixels */
+         depthPtr = tempDepthImage;
+         for (j = 0; j < height; j++, ssy += stepy) {
+            _swrast_read_depth_span_float(ctx, depthReadRb,
+                                          width, srcX, ssy, depthPtr);
+            depthPtr += width;
+         }
+         depthPtr = tempDepthImage;
+      }
+   }
+
+   for (j = 0; j < height; j++, sy += stepy, dy += stepy) {
+      if (stencilMask != 0x0) {
+         GLstencil stencil[MAX_WIDTH];
+
+         /* Get stencil values */
+         if (overlapping) {
+            _mesa_memcpy(stencil, stencilPtr, width * sizeof(GLstencil));
+            stencilPtr += width;
+         }
+         else {
+            _swrast_read_stencil_span(ctx, stencilReadRb,
+                                      width, srcX, sy, stencil);
+         }
+
+         /* Apply shift, offset, look-up table */
+         if (shiftOrOffset) {
+            _mesa_shift_and_offset_stencil(ctx, width, stencil);
+         }
+         if (ctx->Pixel.MapStencilFlag) {
+            _mesa_map_stencil(ctx, width, stencil);
+         }
+
+         /* Write values */
+         if (zoom) {
+            _swrast_write_zoomed_stencil_span(ctx, destX, destY, width,
+                                              destX, dy, stencil);
+         }
+         else {
+            _swrast_write_stencil_span( ctx, width, destX, dy, stencil );
+         }
+      }
+
+      if (ctx->Depth.Mask) {
+         GLfloat depth[MAX_WIDTH];
+         GLuint zVals32[MAX_WIDTH];
+         GLushort zVals16[MAX_WIDTH];
+         GLvoid *zVals;
+         GLuint zBytes;
+
+         /* get depth values */
+         if (overlapping) {
+            _mesa_memcpy(depth, depthPtr, width * sizeof(GLfloat));
+            depthPtr += width;
+         }
+         else {
+            _swrast_read_depth_span_float(ctx, depthReadRb,
+                                          width, srcX, sy, depth);
+         }
+
+         /* scale & bias */
+         if (scaleOrBias) {
+            _mesa_scale_and_bias_depth(ctx, width, depth);
+         }
+         /* convert to integer Z values */
+         if (depthDrawRb->DataType == GL_UNSIGNED_SHORT) {
+            GLint k;
+            for (k = 0; k < width; k++)
+               zVals16[k] = (GLushort) (depth[k] * depthScale);
+            zVals = zVals16;
+            zBytes = 2;
+         }
+         else {
+            GLint k;
+            for (k = 0; k < width; k++)
+               zVals32[k] = (GLuint) (depth[k] * depthScale);
+            zVals = zVals32;
+            zBytes = 4;
+         }
+
+         /* Write values */
+         if (zoom) {
+            _swrast_write_zoomed_z_span(ctx, destX, destY, width,
+                                        destX, dy, zVals);
+         }
+         else {
+            _swrast_put_row(ctx, depthDrawRb, width, destX, dy, zVals, zBytes);
+         }
+      }
+   }
+
+   if (tempStencilImage)
+      _mesa_free(tempStencilImage);
+
+   if (tempDepthImage)
+      _mesa_free(tempDepthImage);
 }
 
 
