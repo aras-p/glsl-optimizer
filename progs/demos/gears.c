@@ -234,7 +234,9 @@ idle(void)
   dt = t - t0;
   t0 = t;
 
-  angle += 70.0 * dt;  /* 90 degrees per second */
+  angle += 70.0 * dt;  /* 70 degrees per second */
+  angle = fmod(angle, 360.0); /* prevents eventual overflow */
+
   glutPostRedisplay();
 }
 
