@@ -64,30 +64,30 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
                   GLsizei width, GLsizei height )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLint stride, i;
+   const GLint stride = 4 * width;
+   GLint i;
    GLchan *image, *dst;
 
    image = (GLchan *) _mesa_malloc(width * height * 4 * sizeof(GLchan));
    if (!image)
       return NULL;
 
-   RENDER_START(swrast,ctx);
+   RENDER_START(swrast, ctx);
 
    dst = image;
-   stride = width * 4;
    for (i = 0; i < height; i++) {
       _swrast_read_rgba_span(ctx, ctx->ReadBuffer->_ColorReadBuffer,
                              width, x, y + i, (GLchan (*)[4]) dst);
       dst += stride;
    }
 
-   RENDER_FINISH(swrast,ctx);
+   RENDER_FINISH(swrast, ctx);
 
    return image;
 }
 
 
-/*
+/**
  * As above, but read data from depth buffer.
  */
 static GLfloat *
@@ -104,7 +104,7 @@ read_depth_image( GLcontext *ctx, GLint x, GLint y,
    if (!image)
       return NULL;
 
-   RENDER_START(swrast,ctx);
+   RENDER_START(swrast, ctx);
 
    dst = image;
    for (i = 0; i < height; i++) {
@@ -112,11 +112,99 @@ read_depth_image( GLcontext *ctx, GLint x, GLint y,
       dst += width;
    }
 
-   RENDER_FINISH(swrast,ctx);
+   RENDER_FINISH(swrast, ctx);
 
    return image;
 }
 
+
+/**
+ * As above, but read data from depth+stencil buffers.
+ */
+static GLuint *
+read_depth_stencil_image(GLcontext *ctx, GLint x, GLint y,
+                         GLsizei width, GLsizei height)
+{
+   struct gl_renderbuffer *depthRb
+      = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   struct gl_renderbuffer *stencilRb
+      = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GLuint *image, *dst;
+   GLint i;
+
+   ASSERT(depthRb);
+   ASSERT(stencilRb);
+
+   image = (GLuint *) _mesa_malloc(width * height * sizeof(GLuint));
+   if (!image)
+      return NULL;
+
+   RENDER_START(swrast, ctx);
+
+   /* read from depth buffer */
+   dst = image;
+   if (depthRb->DataType == GL_UNSIGNED_INT) {
+      for (i = 0; i < height; i++) {
+         _swrast_get_row(ctx, depthRb, width, x, y + i, dst, sizeof(GLuint));
+         dst += width;
+      }
+   }
+   else {
+      GLuint z16[MAX_WIDTH];
+      ASSERT(depthRb->DataType == GL_UNSIGNED_SHORT);
+      for (i = 0; i < height; i++) {
+         GLint j;
+         _swrast_get_row(ctx, depthRb, width, x, y + i, z16, sizeof(GLushort));
+         for (j = 0; j < width; j++) {
+            dst[j] = z16[j];
+         }
+         dst += width;
+      }
+   }
+
+   /* put depth values into bits 0xffffff00 */
+   if (depthRb->DepthBits == 24) {
+      GLint j;
+      for (j = 0; j < width * height; j++) {
+         image[j] <<= 8;
+      }
+   }
+   else if (depthRb->DepthBits == 16) {
+      GLint j;
+      for (j = 0; j < width * height; j++) {
+         image[j] = (image[j] << 16) | (image[j] & 0xff00);
+      }      
+   }
+   else {
+      /* this handles arbitrary depthBits >= 12 */
+      GLint lShift = 32 - depthRb->DepthBits;
+      GLint rShift = depthRb->DepthBits;
+      GLint j;
+      for (j = 0; j < width * height; j++) {
+         GLuint z = (image[j] << lShift);
+         image[j] = z | (z >> rShift);
+      }
+   }
+
+   /* read stencil values and interleave into image array */
+   dst = image;
+   for (i = 0; i < height; i++) {
+      GLstencil stencil[MAX_WIDTH];
+      GLint j;
+      ASSERT(sizeof(GLstencil) == stencilRb->StencilBits);
+      _swrast_get_row(ctx, stencilRb, width, x, y + i,
+                      stencil, sizeof(GLstencil));
+      for (j = 0; j < width; j++) {
+         dst[j] = (dst[j] & 0xffffff00) | (stencil[j] & 0xff);
+      }
+      dst += width;
+   }
+
+   RENDER_FINISH(swrast, ctx);
+
+   return image;
+}
 
 
 static GLboolean
@@ -127,6 +215,19 @@ is_depth_format(GLenum format)
       case GL_DEPTH_COMPONENT16_SGIX:
       case GL_DEPTH_COMPONENT24_SGIX:
       case GL_DEPTH_COMPONENT32_SGIX:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
+
+
+static GLboolean
+is_depth_stencil_format(GLenum format)
+{
+   switch (format) {
+      case GL_DEPTH_STENCIL_EXT:
+      case GL_DEPTH24_STENCIL8_EXT:
          return GL_TRUE;
       default:
          return GL_FALSE;
@@ -161,12 +262,25 @@ _swrast_copy_teximage1d( GLcontext *ctx, GLenum target, GLint level,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
          return;
       }
-
       /* call glTexImage1D to redefine the texture */
-      (*ctx->Driver.TexImage1D)(ctx, target, level, internalFormat,
-                                width, border,
-                                GL_DEPTH_COMPONENT, GL_FLOAT, image,
-                                &ctx->DefaultPacking, texObj, texImage);
+      ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
+                             width, border,
+                             GL_DEPTH_COMPONENT, GL_FLOAT, image,
+                             &ctx->DefaultPacking, texObj, texImage);
+      _mesa_free(image);
+   }
+   else if (is_depth_stencil_format(internalFormat)) {
+      /* read depth/stencil image from framebuffer */
+      GLuint *image = read_depth_stencil_image(ctx, x, y, width, 1);
+      if (!image) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
+         return;
+      }
+      /* call glTexImage1D to redefine the texture */
+      ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
+                             width, border,
+                             GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
+                             image, &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
    else {
@@ -176,12 +290,11 @@ _swrast_copy_teximage1d( GLcontext *ctx, GLenum target, GLint level,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
          return;
       }
-
       /* call glTexImage1D to redefine the texture */
-      (*ctx->Driver.TexImage1D)(ctx, target, level, internalFormat,
-                                width, border,
-                                GL_RGBA, CHAN_TYPE, image,
-                                &ctx->DefaultPacking, texObj, texImage);
+      ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
+                             width, border,
+                             GL_RGBA, CHAN_TYPE, image,
+                             &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
 
@@ -220,12 +333,24 @@ _swrast_copy_teximage2d( GLcontext *ctx, GLenum target, GLint level,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
          return;
       }
-
       /* call glTexImage2D to redefine the texture */
-      (*ctx->Driver.TexImage2D)(ctx, target, level, internalFormat,
-                                width, height, border,
-                                GL_DEPTH_COMPONENT, GL_FLOAT, image,
-                                &ctx->DefaultPacking, texObj, texImage);
+      ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
+                             width, height, border,
+                             GL_DEPTH_COMPONENT, GL_FLOAT, image,
+                             &ctx->DefaultPacking, texObj, texImage);
+      _mesa_free(image);
+   }
+   else if (is_depth_stencil_format(internalFormat)) {
+      GLuint *image = read_depth_stencil_image(ctx, x, y, width, height);
+      if (!image) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
+         return;
+      }
+      /* call glTexImage2D to redefine the texture */
+      ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
+                             width, height, border,
+                             GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
+                             image, &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
    else {
@@ -235,12 +360,11 @@ _swrast_copy_teximage2d( GLcontext *ctx, GLenum target, GLint level,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
          return;
       }
-
       /* call glTexImage2D to redefine the texture */
-      (*ctx->Driver.TexImage2D)(ctx, target, level, internalFormat,
-                                width, height, border,
-                                GL_RGBA, CHAN_TYPE, image,
-                                &ctx->DefaultPacking, texObj, texImage);
+      ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
+                             width, height, border,
+                             GL_RGBA, CHAN_TYPE, image,
+                             &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
 
@@ -279,9 +403,22 @@ _swrast_copy_texsubimage1d( GLcontext *ctx, GLenum target, GLint level,
       }
 
       /* call glTexSubImage1D to redefine the texture */
-      (*ctx->Driver.TexSubImage1D)(ctx, target, level, xoffset, width,
-                                   GL_DEPTH_COMPONENT, GL_FLOAT, image,
-                                   &ctx->DefaultPacking, texObj, texImage);
+      ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
+                                GL_DEPTH_COMPONENT, GL_FLOAT, image,
+                                &ctx->DefaultPacking, texObj, texImage);
+      _mesa_free(image);
+   }
+   else if (texImage->Format == GL_DEPTH_STENCIL_EXT) {
+      /* read depth/stencil image from framebuffer */
+      GLuint *image = read_depth_stencil_image(ctx, x, y, width, 1);
+      if (!image) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D");
+         return;
+      }
+      /* call glTexImage1D to redefine the texture */
+      ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
+                                GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
+                                image, &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
    else {
@@ -291,11 +428,10 @@ _swrast_copy_texsubimage1d( GLcontext *ctx, GLenum target, GLint level,
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D" );
          return;
       }
-
       /* now call glTexSubImage1D to do the real work */
-      (*ctx->Driver.TexSubImage1D)(ctx, target, level, xoffset, width,
-                                   GL_RGBA, CHAN_TYPE, image,
-                                   &ctx->DefaultPacking, texObj, texImage);
+      ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
+                                GL_RGBA, CHAN_TYPE, image,
+                                &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
 
@@ -334,12 +470,25 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D");
          return;
       }
-
-      /* call glTexImage1D to redefine the texture */
-      (*ctx->Driver.TexSubImage2D)(ctx, target, level,
-                                   xoffset, yoffset, width, height,
-                                   GL_DEPTH_COMPONENT, GL_FLOAT, image,
-                                   &ctx->DefaultPacking, texObj, texImage);
+      /* call glTexImage2D to redefine the texture */
+      ctx->Driver.TexSubImage2D(ctx, target, level,
+                                xoffset, yoffset, width, height,
+                                GL_DEPTH_COMPONENT, GL_FLOAT, image,
+                                &ctx->DefaultPacking, texObj, texImage);
+      _mesa_free(image);
+   }
+   else if (texImage->Format == GL_DEPTH_STENCIL_EXT) {
+      /* read depth/stencil image from framebuffer */
+      GLuint *image = read_depth_stencil_image(ctx, x, y, width, height);
+      if (!image) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D");
+         return;
+      }
+      /* call glTexImage2D to redefine the texture */
+      ctx->Driver.TexSubImage2D(ctx, target, level,
+                                xoffset, yoffset, width, height,
+                                GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
+                                image, &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
    else {
@@ -349,12 +498,11 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D" );
          return;
       }
-
       /* now call glTexSubImage2D to do the real work */
-      (*ctx->Driver.TexSubImage2D)(ctx, target, level,
-                                   xoffset, yoffset, width, height,
-                                   GL_RGBA, CHAN_TYPE, image,
-                                   &ctx->DefaultPacking, texObj, texImage);
+      ctx->Driver.TexSubImage2D(ctx, target, level,
+                                xoffset, yoffset, width, height,
+                                GL_RGBA, CHAN_TYPE, image,
+                                &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
 
@@ -393,12 +541,25 @@ _swrast_copy_texsubimage3d( GLcontext *ctx,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D");
          return;
       }
-
-      /* call glTexImage1D to redefine the texture */
-      (*ctx->Driver.TexSubImage3D)(ctx, target, level,
-                                   xoffset, yoffset, zoffset, width, height, 1,
-                                   GL_DEPTH_COMPONENT, GL_FLOAT, image,
-                                   &ctx->DefaultPacking, texObj, texImage);
+      /* call glTexImage3D to redefine the texture */
+      ctx->Driver.TexSubImage3D(ctx, target, level,
+                                xoffset, yoffset, zoffset, width, height, 1,
+                                GL_DEPTH_COMPONENT, GL_FLOAT, image,
+                                &ctx->DefaultPacking, texObj, texImage);
+      _mesa_free(image);
+   }
+   else if (texImage->Format == GL_DEPTH_STENCIL_EXT) {
+      /* read depth/stencil image from framebuffer */
+      GLuint *image = read_depth_stencil_image(ctx, x, y, width, height);
+      if (!image) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D");
+         return;
+      }
+      /* call glTexImage3D to redefine the texture */
+      ctx->Driver.TexSubImage3D(ctx, target, level,
+                                xoffset, yoffset, zoffset, width, height, 1,
+                                GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
+                                image, &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
    else {
@@ -408,12 +569,11 @@ _swrast_copy_texsubimage3d( GLcontext *ctx,
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D" );
          return;
       }
-
       /* now call glTexSubImage3D to do the real work */
-      (*ctx->Driver.TexSubImage3D)(ctx, target, level,
-                                   xoffset, yoffset, zoffset, width, height, 1,
-                                   GL_RGBA, CHAN_TYPE, image,
-                                   &ctx->DefaultPacking, texObj, texImage);
+      ctx->Driver.TexSubImage3D(ctx, target, level,
+                                xoffset, yoffset, zoffset, width, height, 1,
+                                GL_RGBA, CHAN_TYPE, image,
+                                &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
 
