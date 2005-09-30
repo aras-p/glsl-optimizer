@@ -77,4 +77,9 @@ _swrast_put_row(GLcontext *ctx, struct gl_renderbuffer *rb,
                 GLuint count, GLint x, GLint y,
                 const GLvoid *values, GLuint valueSize);
 
+extern void
+_swrast_get_row(GLcontext *ctx, struct gl_renderbuffer *rb,
+                GLuint count, GLint x, GLint y,
+                GLvoid *values, GLuint valueSize);
+
 #endif
