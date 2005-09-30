@@ -1213,7 +1213,7 @@ _swrast_read_depth_span_float( GLcontext *ctx, struct gl_renderbuffer *rb,
    ASSERT(rb->_BaseFormat == GL_DEPTH_COMPONENT);
 
    if (y < 0 || y >= (GLint) rb->Height ||
-       x + (GLint) n <= 0 || x >= (GLint) rb->Width) {
+       x + n <= 0 || x >= (GLint) rb->Width) {
       /* span is completely outside framebuffer */
       _mesa_bzero(depth, n * sizeof(GLfloat));
       return;

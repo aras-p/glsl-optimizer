@@ -415,6 +415,8 @@ read_depth_stencil_pixels(GLcontext *ctx,
                           GLenum type, GLvoid *pixels,
                           const struct gl_pixelstore_attrib *packing )
 {
+   const GLboolean scaleOrBias = 
+      ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
    struct gl_renderbuffer *depthRb, *stencilRb;
    GLint i;
 
@@ -434,9 +436,7 @@ read_depth_stencil_pixels(GLcontext *ctx,
                                GL_DEPTH_STENCIL_EXT, type, i, 0);
 
       /* get depth values */
-      if (ctx->Pixel.DepthScale == 1.0
-          && ctx->Pixel.DepthBias == 0.0
-          && depthRb->DepthBits == 24) {
+      if (!scaleOrBias && depthRb->DepthBits == 24) {
          /* ideal case */
          ASSERT(depthRb->DataType == GL_UNSIGNED_INT);
          /* note, we've already been clipped */
@@ -447,12 +447,12 @@ read_depth_stencil_pixels(GLcontext *ctx,
          GLfloat depthVals[MAX_WIDTH];
          _swrast_read_depth_span_float(ctx, depthRb, width, x, y + i,
                                        depthVals);
-         if (ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0) {
+         if (scaleOrBias) {
             _mesa_scale_and_bias_depth(ctx, width, depthVals);
          }
          /* convert to 24-bit GLuints */
          for (j = 0; j < width; j++) {
-            zVals[j] = FLOAT_TO_UINT(depthVals[j]) >> 8;
+            zVals[j] = (GLuint) (depthVals[j] * (GLfloat) 0xffffff);
          }
       }
 
