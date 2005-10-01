@@ -44,6 +44,14 @@ error_check_format_type(GLcontext *ctx, GLenum format, GLenum type,
 {
    const char *readDraw = drawing ? "Draw" : "Read";
 
+   if (ctx->Extensions.EXT_packed_depth_stencil
+       && type == GL_UNSIGNED_INT_24_8_EXT
+       && format != GL_DEPTH_STENCIL_EXT) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "gl%sPixels(format is not GL_DEPTH_STENCIL_EXT)", readDraw);
+      return GL_TRUE;
+   }
+
    /* basic combinations test */
    if (!_mesa_is_legal_format_and_type(ctx, format, type)) {
       _mesa_error(ctx, GL_INVALID_ENUM,
@@ -109,13 +117,6 @@ error_check_format_type(GLcontext *ctx, GLenum format, GLenum type,
    default:
       /* this should have been caught in _mesa_is_legal_format_type() */
       _mesa_problem(ctx, "unexpected format in _mesa_%sPixels", readDraw);
-      return GL_TRUE;
-   }
-
-   /* XXX might have to move this to the top of the function */
-   if (type == GL_UNSIGNED_INT_24_8_EXT && format != GL_DEPTH_STENCIL_EXT) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "gl%sPixels(format is not GL_DEPTH_STENCIL_EXT)", readDraw);
       return GL_TRUE;
    }
 
