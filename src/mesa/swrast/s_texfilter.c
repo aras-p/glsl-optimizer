@@ -2248,7 +2248,9 @@ sample_depth_texture( GLcontext *ctx,
 
    (void) lambda;
 
-   ASSERT(tObj->Image[0][tObj->BaseLevel]->Format == GL_DEPTH_COMPONENT);
+   ASSERT(tObj->Image[0][tObj->BaseLevel]->Format == GL_DEPTH_COMPONENT ||
+          tObj->Image[0][tObj->BaseLevel]->Format == GL_DEPTH_STENCIL_EXT);
+
    ASSERT(tObj->Target == GL_TEXTURE_1D ||
           tObj->Target == GL_TEXTURE_2D ||
           tObj->Target == GL_TEXTURE_RECTANGLE_NV);
@@ -2649,7 +2651,7 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
 
       switch (t->Target) {
       case GL_TEXTURE_1D:
-         if (format == GL_DEPTH_COMPONENT) {
+         if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL_EXT) {
             return &sample_depth_texture;
          }
          else if (needLambda) {
@@ -2663,7 +2665,7 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
             return &sample_nearest_1d;
          }
       case GL_TEXTURE_2D:
-         if (format == GL_DEPTH_COMPONENT) {
+         if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL_EXT) {
             return &sample_depth_texture;
          }
          else if (needLambda) {
