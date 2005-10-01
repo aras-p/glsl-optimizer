@@ -3037,7 +3037,8 @@ update_texture_state( GLcontext *ctx )
          if (format == GL_COLOR_INDEX) {
             format = GL_RGBA;  /* a bit of a hack */
          }
-         else if (format == GL_DEPTH_COMPONENT) {
+         else if (format == GL_DEPTH_COMPONENT
+                  || format == GL_DEPTH_STENCIL_EXT) {
             format = texUnit->_Current->DepthMode;
          }
 	 calculate_derived_texenv(&texUnit->_EnvMode, texUnit->EnvMode, format);
