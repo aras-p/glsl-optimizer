@@ -4084,6 +4084,53 @@ _mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLvoid *dest,
 }
 
 
+
+/**
+ * Pack depth and stencil values as GL_DEPTH_STENCIL/GL_UNSIGNED_INT_24_8.
+ */
+void
+_mesa_pack_depth_stencil_span(const GLcontext *ctx, GLuint n, GLuint *dest,
+                              const GLfloat *depthVals,
+                              const GLstencil *stencilVals,
+                              const struct gl_pixelstore_attrib *dstPacking)
+{
+   GLfloat depthCopy[MAX_WIDTH];
+   GLstencil stencilCopy[MAX_WIDTH];
+   GLuint i;
+
+   ASSERT(n <= MAX_WIDTH);
+
+   if (ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0) {
+      _mesa_memcpy(depthCopy, depthVals, n * sizeof(GLfloat));
+      _mesa_scale_and_bias_depth(ctx, n, depthCopy);
+      depthVals = depthCopy;
+   }
+
+   if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset) {
+      _mesa_memcpy(stencilCopy, stencilVals, n * sizeof(GLstencil));
+      _mesa_shift_and_offset_stencil(ctx, n, stencilCopy);
+      stencilVals = stencilCopy;
+   }
+   if (ctx->Pixel.MapStencilFlag) {
+      if (stencilVals != stencilCopy)
+         _mesa_memcpy(stencilCopy, stencilVals, n * sizeof(GLstencil));
+      _mesa_map_stencil(ctx, n, stencilCopy);
+      stencilVals = stencilCopy;
+   }
+
+   for (i = 0; i < n; i++) {
+      GLuint z = (GLuint) (depthVals[i] * 0xffffff);
+      dest[i] = (z << 8) | (stencilVals[i] & 0xff);
+   }
+
+   if (dstPacking->SwapBytes) {
+      _mesa_swap4(dest, n);
+   }
+}
+
+
+
+
 /**
  * Unpack image data.  Apply byte swapping, byte flipping (bitmap).
  * Return all image data in a contiguous block.  This is used when we
