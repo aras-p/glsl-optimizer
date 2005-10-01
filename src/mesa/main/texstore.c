@@ -1936,6 +1936,33 @@ _mesa_texstore_ycbcr(STORE_PARAMS)
 
 
 
+/**
+ * Store a combined depth/stencil texture image.
+ */
+GLboolean
+_mesa_texstore_z24_s8(STORE_PARAMS)
+{
+   ASSERT(dstFormat == &_mesa_texformat_z24_s8);
+   ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT);
+   ASSERT(srcType == GL_UNSIGNED_INT_24_8_EXT);
+
+   if (!ctx->_ImageTransferState &&
+       !srcPacking->SwapBytes) {
+      memcpy_texture(ctx, dims,
+                     dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
+                     dstRowStride, dstImageStride,
+                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
+                     srcAddr, srcPacking);
+   }
+   else {
+      _mesa_problem(ctx, "_mesa_texstore_z24_s8 not finished");
+   }
+
+
+   return GL_TRUE;
+}
+
+
 
 /**
  * Store an image in any of the formats:
@@ -4021,16 +4048,16 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                /* Can't use FetchTexel here because that returns RGBA */
                if (texImage->TexFormat->IndexBits == 8) {
                   const GLubyte *src = (const GLubyte *) texImage->Data;
+                  src += width * (img * texImage->Height + row);
                   for (col = 0; col < width; col++) {
-                     indexRow[col] = src[texImage->Width *
-                                        (img * texImage->Height + row) + col];
+                     indexRow[col] = src[col];
                   }
                }
                else if (texImage->TexFormat->IndexBits == 16) {
                   const GLushort *src = (const GLushort *) texImage->Data;
+                  src += width * (img * texImage->Height + row);
                   for (col = 0; col < width; col++) {
-                     indexRow[col] = src[texImage->Width *
-                                        (img * texImage->Height + row) + col];
+                     indexRow[col] = src[col];
                   }
                }
                else {
@@ -4051,6 +4078,15 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                _mesa_pack_depth_span(ctx, width, dest, type,
                                      depthRow, &ctx->Pack);
             }
+            else if (format == GL_DEPTH_STENCIL_EXT) {
+               /* XXX Note: we're bypassing texImage->FetchTexel()! */
+               const GLuint *src = (const GLuint *) texImage->Data;
+               src += width * row + width * height * img;
+               _mesa_memcpy(dest, src, width * sizeof(GLuint));
+               if (ctx->Pack.SwapBytes) {
+                  _mesa_swap4((GLuint *) dest, width);
+               }
+            }
             else if (format == GL_YCBCR_MESA) {
                /* No pixel transfer */
                const GLint rowstride = texImage->RowStride;
@@ -4068,10 +4104,6 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                else if (ctx->Pack.SwapBytes) {
                   _mesa_swap2((GLushort *) dest, width);
                }
-            }
-            else if (format == GL_DEPTH_STENCIL_EXT) {
-               /* XXX special case */
-
             }
             else {
                /* general case:  convert row to RGBA format */
