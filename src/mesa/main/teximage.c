@@ -1687,8 +1687,9 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
                          GLenum target, GLint level, GLint internalFormat,
                          GLint width, GLint height, GLint border )
 {
-   GLenum format, type;
+   GLenum type;
    GLboolean sizeOK;
+   GLint format;
 
    /* Basic level check (more checking in ctx->Driver.TestProxyTexImage) */
    if (level < 0 || level >= MAX_TEXTURE_LEVELS) {
@@ -1704,10 +1705,16 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   /* The format and type aren't really significant here, but we need to pass
-    * something to TestProxyTexImage().
-    */
    format = _mesa_base_tex_format(ctx, internalFormat);
+   if (format < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glCopyTexImage%dD(internalFormat)", dimensions);
+      return GL_TRUE;
+   }
+
+   /* NOTE: the format and type aren't really significant for
+    * TestProxyTexImage().  Only the internalformat really matters.
+    */
    type = GL_FLOAT;
 
    /* Check target and call ctx->Driver.TestProxyTexImage() to check the
@@ -1777,12 +1784,6 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   if (_mesa_base_tex_format(ctx, internalFormat) < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glCopyTexImage%dD(internalFormat)", dimensions);
-      return GL_TRUE;
-   }
-
    if (is_compressed_format(ctx, internalFormat)) {
       if (target != GL_TEXTURE_2D) {
          _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1792,6 +1793,23 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
       if (border != 0) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glCopyTexImage%D(border!=0)", dimensions);
+         return GL_TRUE;
+      }
+   }
+   else if (is_depth_format(internalFormat)) {
+      /* make sure we have depth/stencil buffers */
+      if (!ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glCopyTexImage%D(no depth)", dimensions);
+         return GL_TRUE;
+      }
+   }
+   else if (is_depthstencil_format(internalFormat)) {
+      /* make sure we have depth/stencil buffers */
+      if (!ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer ||
+          !ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glCopyTexImage%D(no depth/stencil buffer)", dimensions);
          return GL_TRUE;
       }
    }
@@ -1956,6 +1974,24 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
+   if (teximage->Format == GL_DEPTH_COMPONENT) {
+      if (!ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glCopyTexSubImage%D(no depth buffer)",
+                     dimensions);
+         return GL_TRUE;
+      }
+   }
+   else if (teximage->Format == GL_DEPTH_STENCIL_EXT) {
+      if (!ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer ||
+          !ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glCopyTexSubImage%D(no depth/stencil buffer)",
+                     dimensions);
+         return GL_TRUE;
+      }
+   }
+
    /* if we get here, the parameters are OK */
    return GL_FALSE;
 }
@@ -2035,8 +2071,8 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
    }
 
    /* Make sure the requested image format is compatible with the
-    * texture's format. We let the colorformat-indexformat go through,
-    * because the texelfetcher will dequantize to full rgba.
+    * texture's format.  Note that a color index texture can be converted
+    * to RGBA so that combo is allowed.
     */
    if (is_color_format(format)
        && !is_color_format(texImage->TexFormat->BaseFormat)
@@ -2050,7 +2086,8 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
    else if (is_depth_format(format)
-       && !is_depth_format(texImage->TexFormat->BaseFormat)) {
+       && !is_depth_format(texImage->TexFormat->BaseFormat)
+       && !is_depthstencil_format(texImage->TexFormat->BaseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return;
    }
