@@ -192,7 +192,7 @@ read_depth_stencil_image(GLcontext *ctx, GLint x, GLint y,
    for (i = 0; i < height; i++) {
       GLstencil stencil[MAX_WIDTH];
       GLint j;
-      ASSERT(sizeof(GLstencil) == stencilRb->StencilBits);
+      ASSERT(8 * sizeof(GLstencil) == stencilRb->StencilBits);
       _swrast_get_row(ctx, stencilRb, width, x, y + i,
                       stencil, sizeof(GLstencil));
       for (j = 0; j < width; j++) {
