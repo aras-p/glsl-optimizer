@@ -415,8 +415,10 @@ read_depth_stencil_pixels(GLcontext *ctx,
                           GLenum type, GLvoid *pixels,
                           const struct gl_pixelstore_attrib *packing )
 {
-   const GLboolean scaleOrBias = 
-      ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
+   const GLboolean scaleOrBias
+      = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
+   const GLboolean stencilTransfer = ctx->Pixel.IndexShift
+      || ctx->Pixel.IndexOffset || ctx->Pixel.MapStencilFlag;
    struct gl_renderbuffer *depthRb, *stencilRb;
    GLint i;
 
@@ -427,47 +429,32 @@ read_depth_stencil_pixels(GLcontext *ctx,
    ASSERT(stencilRb);
 
    for (i = 0; i < height; i++) {
-      GLuint zVals[MAX_WIDTH]; /* 24-bit values! */
       GLstencil stencilVals[MAX_WIDTH];
-      GLint j;
 
       GLuint *depthStencilDst = (GLuint *)
          _mesa_image_address2d(packing, pixels, width, height,
                                GL_DEPTH_STENCIL_EXT, type, i, 0);
 
-      /* get depth values */
-      if (!scaleOrBias && depthRb->DepthBits == 24) {
+      _swrast_read_stencil_span(ctx, stencilRb, width, x, y + i, stencilVals);
+
+      if (!scaleOrBias && !stencilTransfer && depthRb->DepthBits == 24) {
          /* ideal case */
+         GLuint zVals[MAX_WIDTH]; /* 24-bit values! */
+         GLint j;
          ASSERT(depthRb->DataType == GL_UNSIGNED_INT);
          /* note, we've already been clipped */
          depthRb->GetRow(ctx, depthRb, width, x, y + i, zVals);
+         for (j = 0; j < width; j++) {
+            depthStencilDst[j] = (zVals[j] << 8) | (stencilVals[j] & 0xff);
+         }
       }
       else {
          /* general case */
          GLfloat depthVals[MAX_WIDTH];
          _swrast_read_depth_span_float(ctx, depthRb, width, x, y + i,
                                        depthVals);
-         if (scaleOrBias) {
-            _mesa_scale_and_bias_depth(ctx, width, depthVals);
-         }
-         /* convert to 24-bit GLuints */
-         for (j = 0; j < width; j++) {
-            zVals[j] = (GLuint) (depthVals[j] * (GLfloat) 0xffffff);
-         }
-      }
-
-      /* get stencil values */
-      _swrast_read_stencil_span(ctx, stencilRb, width, x, y + i, stencilVals);
-      if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset) {
-         _mesa_shift_and_offset_stencil(ctx, width, stencilVals);
-      }
-      if (ctx->Pixel.MapStencilFlag) {
-         _mesa_map_stencil(ctx, width, stencilVals);
-      }
-
-      for (j = 0; j < width; j++) {
-         /* build combined Z/stencil values */
-         depthStencilDst[j] = (zVals[j] << 8) | (stencilVals[j] & 0xff);
+         _mesa_pack_depth_stencil_span(ctx, width, depthStencilDst,
+                                       depthVals, stencilVals, packing);
       }
    }
 }
