@@ -1222,8 +1222,8 @@ static void FETCH(f_z24_s8)( const struct gl_texture_image *texImage,
 {
    /* only return Z, not stencil data */
    const GLuint *src = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   const GLfloat scale = 0xffffff;
-   texel[0] = *src * scale;
+   const GLfloat scale = 1.0F / (GLfloat) 0xffffff;
+   texel[0] = ((*src) >> 8) * scale;
 }
 
 #if DIM == 3
@@ -1232,8 +1232,8 @@ static void store_texel_z24_s8(struct gl_texture_image *texImage,
 {
    /* only store Z, not stencil */
    GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   GLfloat z = *((GLfloat *) texel);
-   GLuint zi = ((GLuint) (z * 0xffffff)) << 8;
+   GLfloat depth = *((GLfloat *) texel);
+   GLuint zi = ((GLuint) (depth * 0xffffff)) << 8;
    *dst = zi | (*dst & 0xff);
 }
 #endif
