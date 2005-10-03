@@ -398,7 +398,7 @@ _mesa_update_framebuffer(GLcontext *ctx)
                count++;
             }
             else {
-               _mesa_warning(ctx, "DrawBuffer names a missing buffer!");
+               /*_mesa_warning(ctx, "DrawBuffer names a missing buffer!\n");*/
             }
             bufferMask &= ~bufferBit;
          }
