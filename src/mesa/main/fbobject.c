@@ -1083,6 +1083,8 @@ _mesa_FramebufferTexture1DEXT(GLenum target, GLenum attachment,
       texObj = NULL;
    }
    ctx->Driver.RenderbufferTexture(ctx, att, texObj, textarget, level, 0);
+
+   _mesa_update_framebuffer_visual(ctx->DrawBuffer);
 }
 
 
@@ -1135,6 +1137,7 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
       texObj = NULL;
    }
    ctx->Driver.RenderbufferTexture(ctx, att, texObj, textarget, level, 0);
+   _mesa_update_framebuffer_visual(ctx->DrawBuffer);
 }
 
 
@@ -1189,6 +1192,7 @@ _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
    }
    ctx->Driver.RenderbufferTexture(ctx, att, texObj, textarget,
                                    level, zoffset);
+   _mesa_update_framebuffer_visual(ctx->DrawBuffer);
 }
 
 
