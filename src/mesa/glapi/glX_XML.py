@@ -59,6 +59,8 @@ class glx_enum(gl_XML.gl_enum):
 				
 				if not c:
 					c = self.default_count
+				else:
+					c = int(c)
 
 				if m == "get":
 					mode = 0

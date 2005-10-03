@@ -4115,7 +4115,7 @@
     <enum name="NUM_COMPRESSED_TEXTURE_FORMATS" count="1" value="0x86A2">
         <size name="Get" mode="get"/>
     </enum>
-    <enum name="COMPRESSED_TEXTURE_FORMATS"    count="?"  value="0x86A3">
+    <enum name="COMPRESSED_TEXTURE_FORMATS"    count="-1"  value="0x86A3">
         <size name="Get" mode="get"/>
     </enum>
     <enum name="CLAMP_TO_BORDER"                          value="0x812D"/>
@@ -4884,7 +4884,7 @@
     <enum name="DYNAMIC_READ"                             value="0x88E9"/>
     <enum name="DYNAMIC_COPY"                             value="0x88EA"/>
     <enum name="SAMPLES_PASSED"                count="1"  value="0x8914"/>
-    <enum name="FOG_COORD_SOURCE"                         value="0x8450">
+    <enum name="FOG_COORD_SRC"                            value="0x8450">
         <size name="Get" mode="get"/>
     </enum>
     <enum name="FOG_COORD"                                value="0x8451"/>
