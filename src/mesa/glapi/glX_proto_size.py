@@ -55,14 +55,21 @@ class glx_enum_function:
 
 
 		# Fill self.count and self.enums using the dictionary of enums
-		# that was passed in.
+		# that was passed in.  The generic Get functions (e.g.,
+		# GetBooleanv and friends) are handled specially here.  In
+		# the data the generic Get functions are refered to as "Get".
+
+		if func_name in ["GetIntegerv", "GetBooleanv", "GetFloatv", "GetDoublev"]:
+			match_name = "Get"
+		else:
+			match_name = func_name
 
 		mode_set = 0
 		for enum_name in enum_dict:
 			e = enum_dict[ enum_name ]
-		
-			if e.functions.has_key( func_name ):
-				[count, mode] = e.functions[ func_name ]
+
+			if e.functions.has_key( match_name ):
+				[count, mode] = e.functions[ match_name ]
 
 				if mode_set and mode != self.mode:
 					raise RuntimeError("Not all enums for %s have the same mode." % (func_name))
@@ -92,8 +99,8 @@ class glx_enum_function:
 
 				self.count[i].sort()
 				for e in self.count[i]:
-					self.sig += "%04x,%u," % (e, i)
-	
+					self.sig += "%04x,%d," % (e, i)
+
 		return self.sig
 
 
@@ -422,6 +429,13 @@ class PrintGlxReqSize_h(PrintGlxReqSize_common):
 
 
 class PrintGlxReqSize_c(PrintGlxReqSize_common):
+	"""Create the server-side 'request size' functions.
+
+	Create the server-side functions that are used to determine what the
+	size of a varible length command should be.  The server then uses
+	this value to determine if the incoming command packed it malformed.
+	"""
+
 	def __init__(self):
 		PrintGlxReqSize_common.__init__(self)
 		self.counter_sigs = {}
@@ -430,10 +444,17 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 	def printRealHeader(self):
 		print ''
 		print '#include <GL/gl.h>'
-		print '#include <byteswap.h>'
 		print '#include "glxserver.h"'
 		print '#include "indirect_size.h"'
 		print '#include "indirect_reqsize.h"'
+		print ''
+		print '#if defined(linux)'
+		print '#  include <byteswap.h>'
+		print '#  define SWAP_32(v)  do { (v) = bswap_32(v)); } while(0)'
+		print '#else'
+		print '#  include <X11/misc.h>'
+		print '#  define SWAP_32(v)  do { char tmp; swapl(&v, tmp); } while(0)'
+		print '#endif'
 		
 		print ''
 		print '#define __GLX_PAD(x)  (((x) + 3) & ~3)'
@@ -515,7 +536,7 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 		if fixup:
 			print '    if (swap) {'
 			for name in fixup:
-				print '        %-14s = bswap_32( %s );' % (name, name)
+				print '        SWAP_32( %s );' % (name)
 			print '    }'
 
 		return
@@ -539,7 +560,7 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 		self.common_func_print_just_header(f)
 		
 		f.offset_of( f.parameters[0].name )
-		[dim, w, h, d, junk] = f.dimensions()
+		[dim, w, h, d, junk] = f.get_images()[0].get_dimensions()
 
 		print '    GLint row_length   = *  (GLint *)(pc +  4);'
 
@@ -636,8 +657,6 @@ def show_usage():
 	print "    -m output_mode   Output mode can be one of 'size_c' or 'size_h'."
 	print "    --only-get       Only emit 'get'-type functions."
 	print "    --only-set       Only emit 'set'-type functions."
-	print "    --get-alias-set  When only 'get'-type functions are emitted, allow them"
-	print "                     to be aliases to 'set'-type funcitons."
 	print ""
 	print "By default, both 'get' and 'set'-type functions are emitted."
 	sys.exit(1)
