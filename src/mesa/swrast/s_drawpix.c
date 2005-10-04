@@ -561,8 +561,6 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
                    const struct gl_pixelstore_attrib *unpack,
                    const GLvoid *pixels )
 {
-   struct gl_renderbuffer *rb
-      = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
    const GLboolean scaleOrBias
       = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
@@ -578,7 +576,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
       _swrast_span_default_texcoords(ctx, &span);
 
    if (type == GL_UNSIGNED_SHORT
-       && rb->DepthBits == 16
+       && ctx->DrawBuffer->Visual.depthBits == 16
        && !scaleOrBias
        && !zoom
        && ctx->Visual.rgbMode
@@ -604,7 +602,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
             && ctx->Visual.rgbMode
             && width <= MAX_WIDTH) {
       /* Special case: shift 32-bit values down to Visual.depthBits */
-      const GLint shift = 32 - rb->DepthBits;
+      const GLint shift = 32 - ctx->DrawBuffer->Visual.depthBits;
       GLint row;
       for (row = 0; row < height; row++) {
          const GLuint *zSrc = (const GLuint *)
@@ -867,7 +865,7 @@ draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                                GL_DEPTH_STENCIL_EXT, type, i, 0);
 
       if (ctx->Depth.Mask) {
-         if (!scaleOrBias && depthRb->DepthBits == 24) {
+         if (!scaleOrBias && ctx->DrawBuffer->Visual.depthBits == 24) {
             /* fast path 24-bit zbuffer */
             GLuint zValues[MAX_WIDTH];
             GLint j;
@@ -881,7 +879,7 @@ draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
             else
                depthRb->PutRow(ctx, depthRb, width, x, y + i, zValues, NULL);
          }
-         else if (!scaleOrBias && depthRb->DepthBits == 16) {
+         else if (!scaleOrBias && ctx->DrawBuffer->Visual.depthBits == 16) {
             /* fast path 16-bit zbuffer */
             GLushort zValues[MAX_WIDTH];
             GLint j;

@@ -101,7 +101,7 @@ read_depth_pixels( GLcontext *ctx,
 
    bias_or_scale = ctx->Pixel.DepthBias != 0.0 || ctx->Pixel.DepthScale != 1.0;
 
-   if (type == GL_UNSIGNED_SHORT && rb->DepthBits == 16
+   if (type == GL_UNSIGNED_SHORT && fb->Visual.depthBits == 16
        && !bias_or_scale && !packing->SwapBytes) {
       /* Special case: directly read 16-bit unsigned depth values. */
       GLint j;
@@ -113,7 +113,7 @@ read_depth_pixels( GLcontext *ctx,
          rb->GetRow(ctx, rb, width, x, y, dest);
       }
    }
-   else if (type == GL_UNSIGNED_INT && rb->DepthBits == 24
+   else if (type == GL_UNSIGNED_INT && fb->Visual.depthBits == 24
             && !bias_or_scale && !packing->SwapBytes) {
       /* Special case: directly read 24-bit unsigned depth values. */
       GLint j;
@@ -131,7 +131,7 @@ read_depth_pixels( GLcontext *ctx,
          }
       }
    }
-   else if (type == GL_UNSIGNED_INT && rb->DepthBits == 32
+   else if (type == GL_UNSIGNED_INT && fb->Visual.depthBits == 32
             && !bias_or_scale && !packing->SwapBytes) {
       /* Special case: directly read 32-bit unsigned depth values. */
       GLint j;
@@ -437,7 +437,8 @@ read_depth_stencil_pixels(GLcontext *ctx,
 
       _swrast_read_stencil_span(ctx, stencilRb, width, x, y + i, stencilVals);
 
-      if (!scaleOrBias && !stencilTransfer && depthRb->DepthBits == 24) {
+      if (!scaleOrBias && !stencilTransfer
+          && ctx->ReadBuffer->Visual.depthBits == 24) {
          /* ideal case */
          GLuint zVals[MAX_WIDTH]; /* 24-bit values! */
          GLint j;

@@ -164,13 +164,13 @@ read_depth_stencil_image(GLcontext *ctx, GLint x, GLint y,
    }
 
    /* put depth values into bits 0xffffff00 */
-   if (depthRb->DepthBits == 24) {
+   if (ctx->ReadBuffer->Visual.depthBits == 24) {
       GLint j;
       for (j = 0; j < width * height; j++) {
          image[j] <<= 8;
       }
    }
-   else if (depthRb->DepthBits == 16) {
+   else if (ctx->ReadBuffer->Visual.depthBits == 16) {
       GLint j;
       for (j = 0; j < width * height; j++) {
          image[j] = (image[j] << 16) | (image[j] & 0xff00);
@@ -178,8 +178,8 @@ read_depth_stencil_image(GLcontext *ctx, GLint x, GLint y,
    }
    else {
       /* this handles arbitrary depthBits >= 12 */
-      GLint lShift = 32 - depthRb->DepthBits;
-      GLint rShift = depthRb->DepthBits;
+      const GLint rShift = ctx->ReadBuffer->Visual.depthBits;
+      const GLint lShift = 32 - rShift;
       GLint j;
       for (j = 0; j < width * height; j++) {
          GLuint z = (image[j] << lShift);
