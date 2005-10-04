@@ -117,14 +117,14 @@ Init( void )
 
    glGenFramebuffersEXT(1, &MyFB);
    assert(MyFB);
-   assert(glIsFramebufferEXT(MyFB));
+   assert(!glIsFramebufferEXT(MyFB));
    glDeleteFramebuffersEXT(1, &MyFB);
    assert(!glIsFramebufferEXT(MyFB));
    /* Note, continue to use MyFB below */
 
    glGenRenderbuffersEXT(1, &rb);
    assert(rb);
-   assert(glIsRenderbufferEXT(rb));
+   assert(!glIsRenderbufferEXT(rb));
    glDeleteRenderbuffersEXT(1, &rb);
    assert(!glIsRenderbufferEXT(rb));
    rb = 42; /* an arbitrary ID */

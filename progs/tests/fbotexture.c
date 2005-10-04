@@ -206,7 +206,7 @@ Init(void)
    /* make framebuffer */
    glGenFramebuffersEXT(1, &MyFB);
    assert(MyFB);
-   assert(glIsFramebufferEXT(MyFB));
+   assert(!glIsFramebufferEXT(MyFB));
    glDeleteFramebuffersEXT(1, &MyFB);
    assert(!glIsFramebufferEXT(MyFB));
    /* Note, continue to use MyFB below */
@@ -219,7 +219,7 @@ Init(void)
    /* make depth renderbuffer */
    glGenRenderbuffersEXT(1, &DepthRB);
    assert(DepthRB);
-   assert(glIsRenderbufferEXT(DepthRB));
+   assert(!glIsRenderbufferEXT(DepthRB));
    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, DepthRB);
    glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT,
                             TexWidth, TexHeight);
@@ -231,7 +231,7 @@ Init(void)
    /* make stencil renderbuffer */
    glGenRenderbuffersEXT(1, &StencilRB);
    assert(StencilRB);
-   assert(glIsRenderbufferEXT(StencilRB));
+   assert(!glIsRenderbufferEXT(StencilRB));
    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, StencilRB);
    glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_STENCIL_INDEX,
                             TexWidth, TexHeight);
