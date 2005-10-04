@@ -509,10 +509,12 @@ _mesa_IsRenderbufferEXT(GLuint renderbuffer)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
-   if (renderbuffer && lookup_renderbuffer(ctx, renderbuffer))
-      return GL_TRUE;
-   else
-      return GL_FALSE;
+   if (renderbuffer) {
+      struct gl_renderbuffer *rb = lookup_renderbuffer(ctx, renderbuffer);
+      if (rb != NULL && rb != &DummyRenderbuffer)
+         return GL_TRUE;
+   }
+   return GL_FALSE;
 }
 
 
@@ -843,10 +845,12 @@ _mesa_IsFramebufferEXT(GLuint framebuffer)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
-   if (framebuffer && lookup_framebuffer(ctx, framebuffer))
-      return GL_TRUE;
-   else
-      return GL_FALSE;
+   if (framebuffer) {
+      struct gl_framebuffer *rb = lookup_framebuffer(ctx, framebuffer);
+      if (rb != NULL && rb != &DummyFramebuffer)
+         return GL_TRUE;
+   }
+   return GL_FALSE;
 }
 
 
