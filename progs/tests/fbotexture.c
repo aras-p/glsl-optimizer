@@ -56,7 +56,8 @@ RenderTexture(void)
    glLoadIdentity();
    glTranslatef(0.0, 0.0, -15.0);
 
-   /* draw to texture */
+   /* draw to texture image */
+   glBindTexture(GL_TEXTURE_2D, 0);
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, MyFB);
    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
                              GL_TEXTURE_2D, TexObj, level);
@@ -142,6 +143,7 @@ Display(void)
    glPushMatrix();
    glRotatef(Rot, 0, 1, 0);
    glEnable(GL_TEXTURE_2D);
+   glBindTexture(GL_TEXTURE_2D, TexObj);
    glBegin(GL_POLYGON);
    glColor3f(0.25, 0.25, 0.25);
    glTexCoord2f(0, 0);
@@ -203,7 +205,7 @@ Init(void)
    }
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
 
-   /* make framebuffer */
+   /* gen framebuffer id, delete it, do some assertions, just for testing */
    glGenFramebuffersEXT(1, &MyFB);
    assert(MyFB);
    assert(!glIsFramebufferEXT(MyFB));
@@ -221,6 +223,7 @@ Init(void)
    assert(DepthRB);
    assert(!glIsRenderbufferEXT(DepthRB));
    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, DepthRB);
+   assert(glIsRenderbufferEXT(DepthRB));
    glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT,
                             TexWidth, TexHeight);
    glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT,
@@ -233,6 +236,7 @@ Init(void)
    assert(StencilRB);
    assert(!glIsRenderbufferEXT(StencilRB));
    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, StencilRB);
+   assert(glIsRenderbufferEXT(StencilRB));
    glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_STENCIL_INDEX,
                             TexWidth, TexHeight);
    glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT,
