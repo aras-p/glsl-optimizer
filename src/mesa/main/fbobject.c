@@ -582,6 +582,13 @@ _mesa_DeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers)
 	 struct gl_renderbuffer *rb;
 	 rb = lookup_renderbuffer(ctx, renderbuffers[i]);
 	 if (rb) {
+            /* check if deleting currently bound renderbuffer object */
+            if (rb == ctx->CurrentRenderbuffer) {
+               /* bind default */
+               ASSERT(rb->RefCount >= 2);
+               _mesa_BindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
+            }
+
 	    /* remove from hash table immediately, to free the ID */
 	    _mesa_HashRemove(ctx->Shared->RenderBuffers, renderbuffers[i]);
 
@@ -896,7 +903,7 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    }
 
    oldFb = ctx->DrawBuffer;
-   if (oldFb) { /* AND oldFb->Name != 0 */
+   if (oldFb && oldFb->Name != 0) {
       oldFb->RefCount--;
       if (oldFb->RefCount == 0) {
          oldFb->Delete(oldFb);
@@ -925,6 +932,14 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
 	 fb = lookup_framebuffer(ctx, framebuffers[i]);
 	 if (fb) {
             ASSERT(fb == &DummyFramebuffer || fb->Name == framebuffers[i]);
+
+            /* check if deleting currently bound framebuffer object */
+            if (fb == ctx->DrawBuffer) {
+               /* bind default */
+               ASSERT(fb->RefCount >= 2);
+               _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+            }
+
 	    /* remove from hash table immediately, to free the ID */
 	    _mesa_HashRemove(ctx->Shared->FrameBuffers, framebuffers[i]);
 
