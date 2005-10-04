@@ -319,6 +319,11 @@ _mesa_update_draw_buffer_bounds(GLcontext *ctx)
  * change depending on the renderbuffer bindings.  This function updates
  * the given framebuffer's Visual from the current renderbuffer bindings.
  * This is only intended for user-created framebuffers.
+ *
+ * Also note: ctx->DrawBuffer->Visual.depthBits might not equal
+ * ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer.DepthBits.
+ * The former one is used to convert floating point depth values into
+ * integer Z values.
  */
 void
 _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
