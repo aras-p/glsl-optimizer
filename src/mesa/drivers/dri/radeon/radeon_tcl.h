@@ -55,9 +55,6 @@ extern void radeonTclFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 #define RADEON_TCL_FALLBACK_TEXGEN_1          0x20 /* texgen, unit 1 */
 #define RADEON_TCL_FALLBACK_TEXGEN_2          0x40 /* texgen, unit 2 */
 #define RADEON_TCL_FALLBACK_TCL_DISABLE       0x80 /* user disable */
-#define RADEON_TCL_FALLBACK_TEXRECT_0         0x100 /* texture rectangle */
-#define RADEON_TCL_FALLBACK_TEXRECT_1         0x200 /* texture rectangle */
-#define RADEON_TCL_FALLBACK_TEXRECT_2         0x400 /* texture rectangle */
 
 #define RADEON_MAX_TCL_VERTSIZE (15*4)
 

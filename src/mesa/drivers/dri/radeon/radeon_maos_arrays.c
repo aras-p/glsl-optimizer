@@ -387,6 +387,7 @@ static void emit_tex_vector( GLcontext *ctx,
 
    switch (size) {
    case 4: emitsize = 3; break;
+   case 3: emitsize = 3; break;
    default: emitsize = 2; break;
    }
 
@@ -416,7 +417,7 @@ static void emit_tex_vector( GLcontext *ctx,
       emit_vec8( ctx, rvb, data, stride, count );
       break;
    case 3:
-      emit_vec8( ctx, rvb, data, stride, count );
+      emit_vec12( ctx, rvb, data, stride, count );
       break;
    case 4:
       emit_stq_vec( ctx, rvb, data, stride, count );
@@ -529,38 +530,52 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 
    if (inputs & VERT_BIT_TEX0) {
       if (!rmesa->tcl.tex[0].buf)
-	 emit_tex_vector( ctx, 
-			  &(rmesa->tcl.tex[0]), 
+	 emit_tex_vector( ctx,
+			  &(rmesa->tcl.tex[0]),
 			  (char *)VB->TexCoordPtr[0]->data,
 			  VB->TexCoordPtr[0]->size,
 			  VB->TexCoordPtr[0]->stride,
 			  count );
 
-      switch( VB->TexCoordPtr[0]->size ) {
-      case 4:
-	 vtx |= RADEON_TCL_VTX_Q0; 
+      vfmt |= RADEON_CP_VC_FRMT_ST0;
+      /* assume we need the 3rd coord if texgen is active for r/q OR at least 3
+         coords are submitted. This may not be 100% correct */
+      if ( (VB->TexCoordPtr[0]->size >= 3) {
+	 vtx |= RADEON_TCL_VTX_Q0;
 	 vfmt |= RADEON_CP_VC_FRMT_Q0;
-      default: 
-	 vfmt |= RADEON_CP_VC_FRMT_ST0;
+      }
+      if ( (ctx->Texture.Unit[0].TexGenEnabled & (R_BIT | Q_BIT)) )
+	 vtx |= RADEON_TCL_VTX_Q0;
+      else if (VB->TexCoordPtr[0]->size >= 3) {
+	 GLuint swaptexmatcol = (VB->TexCoordPtr[0]->size - 3);
+	 if ((rmesa->NeedTexMatrix & 1) &&
+		(swaptexmatcol != (rmesa->TexMatColSwap & 1)))
+	    radeonUploadTexMatrix( rmesa, rmesa->tmpmat[0].m, 0, swaptexmatcol ) ;
       }
       component[nr++] = &rmesa->tcl.tex[0];
    }
 
    if (inputs & VERT_BIT_TEX1) {
       if (!rmesa->tcl.tex[1].buf)
-	 emit_tex_vector( ctx, 
-			  &(rmesa->tcl.tex[1]), 
+	 emit_tex_vector( ctx,
+			  &(rmesa->tcl.tex[1]),
 			  (char *)VB->TexCoordPtr[1]->data,
 			  VB->TexCoordPtr[1]->size,
 			  VB->TexCoordPtr[1]->stride,
 			  count );
 	 
-      switch( VB->TexCoordPtr[1]->size ) {
-      case 4: 
+      vfmt |= RADEON_CP_VC_FRMT_ST1;
+      if ( (VB->TexCoordPtr[1]->size >= 3) {
 	 vtx |= RADEON_TCL_VTX_Q1;
 	 vfmt |= RADEON_CP_VC_FRMT_Q1;
-      default: 
-	 vfmt |= RADEON_CP_VC_FRMT_ST1;
+      }
+      if ( (ctx->Texture.Unit[1].TexGenEnabled & (R_BIT | Q_BIT)) )
+	 vtx |= RADEON_TCL_VTX_Q1;
+      else if (VB->TexCoordPtr[1]->size >= 3) {
+	 GLuint swaptexmatcol = (VB->TexCoordPtr[1]->size - 3);
+	 if (((rmesa->NeedTexMatrix >> 1) & 1) &&
+		(swaptexmatcol != ((rmesa->TexMatColSwap >> 1) & 1)))
+	    radeonUploadTexMatrix( rmesa, rmesa->tmpmat[1].m, 1, swaptexmatcol ) ;
       }
       component[nr++] = &rmesa->tcl.tex[1];
    }

@@ -834,7 +834,9 @@ static void import_tex_obj_state( radeonContextPtr rmesa,
 static void set_texgen_matrix( radeonContextPtr rmesa, 
 			       GLuint unit,
 			       const GLfloat *s_plane,
-			       const GLfloat *t_plane )
+			       const GLfloat *t_plane,
+			       const GLfloat *r_plane,
+			       const GLfloat *q_plane )
 {
    rmesa->TexGenMatrix[unit].m[0]  = s_plane[0];
    rmesa->TexGenMatrix[unit].m[4]  = s_plane[1];
@@ -846,78 +848,119 @@ static void set_texgen_matrix( radeonContextPtr rmesa,
    rmesa->TexGenMatrix[unit].m[9]  = t_plane[2];
    rmesa->TexGenMatrix[unit].m[13] = t_plane[3];
 
+   rmesa->TexGenMatrix[unit].m[2]  = r_plane[0];
+   rmesa->TexGenMatrix[unit].m[6]  = r_plane[1];
+   rmesa->TexGenMatrix[unit].m[10] = r_plane[2];
+   rmesa->TexGenMatrix[unit].m[14] = r_plane[3];
+
+   rmesa->TexGenMatrix[unit].m[3]  = q_plane[0];
+   rmesa->TexGenMatrix[unit].m[7]  = q_plane[1];
+   rmesa->TexGenMatrix[unit].m[11] = q_plane[2];
+   rmesa->TexGenMatrix[unit].m[15] = q_plane[3];
+
    rmesa->TexGenEnabled |= RADEON_TEXMAT_0_ENABLE << unit;
    rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
 }
 
-/* Ignoring the Q texcoord for now.
- *
- * Returns GL_FALSE if fallback required.  
+/* Returns GL_FALSE if fallback required.
  */
 static GLboolean radeon_validate_texgen( GLcontext *ctx, GLuint unit )
-{  
+{
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    GLuint inputshift = RADEON_TEXGEN_0_INPUT_SHIFT + unit*4;
    GLuint tmp = rmesa->TexGenEnabled;
+   static const GLfloat reflect[16] = {
+      -1,  0,  0,  0,
+       0, -1,  0,  0,
+       0,  0,  -1, 0,
+       0,  0,  0,  1 };
 
-   rmesa->TexGenEnabled &= ~(RADEON_TEXGEN_TEXMAT_0_ENABLE<<unit);
-   rmesa->TexGenEnabled &= ~(RADEON_TEXMAT_0_ENABLE<<unit);
-   rmesa->TexGenEnabled &= ~(RADEON_TEXGEN_INPUT_MASK<<inputshift);
+   rmesa->TexGenEnabled &= ~(RADEON_TEXGEN_TEXMAT_0_ENABLE << unit);
+   rmesa->TexGenEnabled &= ~(RADEON_TEXMAT_0_ENABLE << unit);
+   rmesa->TexGenEnabled &= ~(RADEON_TEXGEN_INPUT_MASK << inputshift);
    rmesa->TexGenNeedNormals[unit] = 0;
 
-   if ((texUnit->TexGenEnabled & (S_BIT|T_BIT)) == 0) {
+   if ((texUnit->TexGenEnabled & (S_BIT|T_BIT|R_BIT|Q_BIT)) == 0) {
       /* Disabled, no fallback:
        */
-      rmesa->TexGenEnabled |= 
-	 (RADEON_TEXGEN_INPUT_TEXCOORD_0+unit) << inputshift;
+      rmesa->TexGenEnabled |=
+	 (RADEON_TEXGEN_INPUT_TEXCOORD_0 + unit) << inputshift;
       return GL_TRUE;
    }
-   else if (texUnit->TexGenEnabled & Q_BIT) {
-      /* Very easy to do this, in fact would remove a fallback case
-       * elsewhere, but I haven't done it yet...  Fallback: 
-       */
-      if (RADEON_DEBUG & DEBUG_FALLBACKS) 
-	fprintf(stderr, "fallback Q_BIT\n");
-      return GL_FALSE;
-   }
-   else if ((texUnit->TexGenEnabled & (S_BIT|T_BIT)) != (S_BIT|T_BIT) ||
-	    texUnit->GenModeS != texUnit->GenModeT) {
-      /* Mixed modes, fallback:
-       */
-      if (RADEON_DEBUG & DEBUG_FALLBACKS) 
-        fprintf(stderr, "fallback mixed texgen\n");
-      return GL_FALSE;
-   }
-   else
+   /* the r100 cannot do texgen for some coords and not for others
+    * we do not detect such cases (certainly can't do it here) and just
+    * ASSUME that when S and T are texgen enabled we do not need other
+    * non-texgen enabled coords, no matter if the R and Q bits are texgen
+    * enabled. Still check for mixed mode texgen for all coords.
+    */
+   else if ( (texUnit->TexGenEnabled & S_BIT) &&
+	     (texUnit->TexGenEnabled & T_BIT) &&
+	     (texUnit->GenModeS == texUnit->GenModeT) ) {
+      if ( ((texUnit->TexGenEnabled & R_BIT) &&
+	    (texUnit->GenModeS != texUnit->GenModeR)) ||
+	   ((texUnit->TexGenEnabled & Q_BIT) &&
+	    (texUnit->GenModeS != texUnit->GenModeQ)) ) {
+	 /* Mixed modes, fallback:
+	  */
+	 if (RADEON_DEBUG & DEBUG_FALLBACKS)
+	    fprintf(stderr, "fallback mixed texgen\n");
+	 return GL_FALSE;
+      }
       rmesa->TexGenEnabled |= RADEON_TEXGEN_TEXMAT_0_ENABLE << unit;
+   }
+   else {
+   /* some texgen mode not including both S and T bits */
+      if (RADEON_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "fallback mixed texgen/nontexgen\n");
+      return GL_FALSE;
+   }
+
+   if ((texUnit->TexGenEnabled & (R_BIT | Q_BIT)) != 0) {
+      /* need this here for vtxfmt presumably. Argh we need to set
+         this from way too many places, would be much easier if we could leave
+         tcl q coord always enabled as on r200) */
+      RADEON_STATECHANGE( rmesa, tcl );
+      if (unit == 0)
+	 rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] |= RADEON_TCL_VTX_Q0;
+      else
+	 rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] |= RADEON_TCL_VTX_Q1;
+   }
 
    switch (texUnit->GenModeS) {
    case GL_OBJECT_LINEAR:
       rmesa->TexGenEnabled |= RADEON_TEXGEN_INPUT_OBJ << inputshift;
-      set_texgen_matrix( rmesa, unit, 
+      set_texgen_matrix( rmesa, unit,
 			 texUnit->ObjectPlaneS,
-			 texUnit->ObjectPlaneT);
+			 texUnit->ObjectPlaneT,
+			 texUnit->ObjectPlaneR,
+			 texUnit->ObjectPlaneQ);
       break;
 
    case GL_EYE_LINEAR:
       rmesa->TexGenEnabled |= RADEON_TEXGEN_INPUT_EYE << inputshift;
-      set_texgen_matrix( rmesa, unit, 
+      set_texgen_matrix( rmesa, unit,
 			 texUnit->EyePlaneS,
-			 texUnit->EyePlaneT);
+			 texUnit->EyePlaneT,
+			 texUnit->EyePlaneR,
+			 texUnit->EyePlaneQ);
       break;
 
    case GL_REFLECTION_MAP_NV:
       rmesa->TexGenNeedNormals[unit] = GL_TRUE;
-      rmesa->TexGenEnabled |= RADEON_TEXGEN_INPUT_EYE_REFLECT<<inputshift;
+      rmesa->TexGenEnabled |= RADEON_TEXGEN_INPUT_EYE_REFLECT << inputshift;
+      /* TODO: unknown if this is needed/correct */
+      set_texgen_matrix( rmesa, unit, reflect, reflect + 4,
+			reflect + 8, reflect + 12 );
       break;
 
    case GL_NORMAL_MAP_NV:
       rmesa->TexGenNeedNormals[unit] = GL_TRUE;
-      rmesa->TexGenEnabled |= RADEON_TEXGEN_INPUT_EYE_NORMAL<<inputshift;
+      rmesa->TexGenEnabled |= RADEON_TEXGEN_INPUT_EYE_NORMAL << inputshift;
       break;
 
    case GL_SPHERE_MAP:
+      /* the mode which everyone uses :-( */
    default:
       /* Unsupported mode, fallback:
        */
@@ -1131,11 +1174,7 @@ static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
 {
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
-   TCL_FALLBACK( ctx, RADEON_TCL_FALLBACK_TEXRECT_0 << unit, 0 );
-
    if ( texUnit->_ReallyEnabled & (TEXTURE_RECT_BIT) ) {
-      TCL_FALLBACK( ctx, RADEON_TCL_FALLBACK_TEXRECT_0 << unit, 1 );
-
       return (enable_tex_rect( ctx, unit ) &&
 	      update_tex_common( ctx, unit ));
    }

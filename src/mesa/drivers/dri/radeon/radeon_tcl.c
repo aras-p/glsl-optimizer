@@ -320,6 +320,7 @@ static GLboolean radeon_run_tcl_render( GLcontext *ctx,
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled) {
+      /* TODO: probably should not emit texture coords when texgen is enabled */
 	 if (rmesa->TexGenNeedNormals[i]) {
 	    inputs |= VERT_BIT_NORMAL;
 	 }
@@ -444,10 +445,7 @@ static char *fallbackStrings[] = {
    "Texgen unit 0",
    "Texgen unit 1",
    "Texgen unit 2",
-   "User disable",
-   "texture rectangle unit 0",
-   "texture rectangle unit 1",
-   "texture rectangle unit 2"
+   "User disable"
 };
 
 

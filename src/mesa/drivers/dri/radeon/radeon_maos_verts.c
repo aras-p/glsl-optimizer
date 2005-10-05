@@ -243,7 +243,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       init_tcl_verts();
       firsttime = 0;
    }
-		     
+
    if (1) {
       req |= RADEON_CP_VC_FRMT_Z;
       if (VB->ObjPtr->size == 4) {
@@ -254,7 +254,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
    if (inputs & VERT_BIT_NORMAL) {
       req |= RADEON_CP_VC_FRMT_N0;
    }
-   
+
    if (inputs & VERT_BIT_COLOR0) {
       req |= RADEON_CP_VC_FRMT_PKCOLOR;
    }
@@ -265,19 +265,37 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 
    if (inputs & VERT_BIT_TEX0) {
       req |= RADEON_CP_VC_FRMT_ST0;
-
-      if (VB->TexCoordPtr[0]->size == 4) {
+      /* assume we need the 3rd coord if texgen is active for r/q OR at least 3
+         coords are submitted. This may not be 100% correct */
+      if (VB->TexCoordPtr[0]->size >= 3) {
 	 req |= RADEON_CP_VC_FRMT_Q0;
 	 vtx |= RADEON_TCL_VTX_Q0;
       }
+      if ( (ctx->Texture.Unit[0].TexGenEnabled & (R_BIT | Q_BIT)) )
+	 vtx |= RADEON_TCL_VTX_Q0;
+      else if (VB->TexCoordPtr[0]->size >= 3) {
+	 GLuint swaptexmatcol = (VB->TexCoordPtr[0]->size - 3);
+	 if ((rmesa->NeedTexMatrix & 1) &&
+		(swaptexmatcol != (rmesa->TexMatColSwap & 1)))
+	    radeonUploadTexMatrix( rmesa, rmesa->tmpmat[0].m, 0, swaptexmatcol ) ;
+      }
    }
+
 
    if (inputs & VERT_BIT_TEX1) {
       req |= RADEON_CP_VC_FRMT_ST1;
 
-      if (VB->TexCoordPtr[1]->size == 4) {
+      if (VB->TexCoordPtr[1]->size >= 3) {
 	 req |= RADEON_CP_VC_FRMT_Q1;
 	 vtx |= RADEON_TCL_VTX_Q1;
+      }
+      if ( (ctx->Texture.Unit[1].TexGenEnabled & (R_BIT | Q_BIT)) )
+	 vtx |= RADEON_TCL_VTX_Q1;
+      else if (VB->TexCoordPtr[1]->size >= 3) {
+	 GLuint swaptexmatcol = (VB->TexCoordPtr[1]->size - 3);
+	 if (((rmesa->NeedTexMatrix >> 1) & 1) &&
+		(swaptexmatcol != ((rmesa->TexMatColSwap >> 1) & 1)))
+	    radeonUploadTexMatrix( rmesa, rmesa->tmpmat[1].m, 1, swaptexmatcol ) ;
       }
    }
 

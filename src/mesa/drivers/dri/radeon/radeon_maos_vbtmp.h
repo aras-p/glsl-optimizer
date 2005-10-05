@@ -47,6 +47,7 @@ static void TAG(emit)( GLcontext *ctx,
    GLuint tc0_stride, tc1_stride, col_stride, spec_stride, fog_stride;
    GLuint tc2_stride, norm_stride;
    GLuint fill_tex = 0;
+   GLuint rqcoordsnoswap = 0;
    GLuint (*coord)[4];
    GLuint coord_stride; /* object coordinates */
    GLubyte dummy[4];
@@ -65,8 +66,13 @@ static void TAG(emit)( GLcontext *ctx,
 	 const GLuint t2 = GET_TEXSOURCE(2);
 	 tc2 = (GLuint (*)[4])VB->TexCoordPtr[t2]->data;
 	 tc2_stride = VB->TexCoordPtr[t2]->stride;
-	 if (DO_PTEX && VB->TexCoordPtr[t2]->size < 4) {
+	 if (DO_PTEX && VB->TexCoordPtr[t2]->size < 3) {
+	 /* since DO_PTEX is only true when we have 3 or more coords
+	    in the first place we don't really need this right? */
 	    fill_tex |= (1<<2);
+	 }
+	 else if (DO_PTEX && VB->TexCoordPtr[t2]->size < 4) {
+	    rqcoordsnoswap |= (1<<2);
 	 }
       } else {
 	 tc2 = (GLuint (*)[4])&ctx->Current.Attrib[VERT_ATTRIB_TEX2];
@@ -79,8 +85,11 @@ static void TAG(emit)( GLcontext *ctx,
 	 const GLuint t1 = GET_TEXSOURCE(1);
 	 tc1 = (GLuint (*)[4])VB->TexCoordPtr[t1]->data;
 	 tc1_stride = VB->TexCoordPtr[t1]->stride;
-	 if (DO_PTEX && VB->TexCoordPtr[t1]->size < 4) {
+	 if (DO_PTEX && VB->TexCoordPtr[t1]->size < 3) {
 	    fill_tex |= (1<<1);
+	 }
+	 else if (DO_PTEX && VB->TexCoordPtr[t1]->size < 4) {
+	    rqcoordsnoswap |= (1<<1);
 	 }
       } else {
 	 tc1 = (GLuint (*)[4])&ctx->Current.Attrib[VERT_ATTRIB_TEX1];
@@ -93,8 +102,11 @@ static void TAG(emit)( GLcontext *ctx,
 	 const GLuint t0 = GET_TEXSOURCE(0);
 	 tc0_stride = VB->TexCoordPtr[t0]->stride;
 	 tc0 = (GLuint (*)[4])VB->TexCoordPtr[t0]->data;
-	 if (DO_PTEX && VB->TexCoordPtr[t0]->size < 4) {
+	 if (DO_PTEX && VB->TexCoordPtr[t0]->size < 3) {
 	    fill_tex |= (1<<0);
+	 }
+	 else if (DO_PTEX && VB->TexCoordPtr[t0]->size < 4) {
+	    rqcoordsnoswap |= (1<<0);
 	 }
       } else {
 	 tc0 = (GLuint (*)[4])&ctx->Current.Attrib[VERT_ATTRIB_TEX0];
@@ -213,6 +225,8 @@ static void TAG(emit)( GLcontext *ctx,
 	    if (DO_PTEX) {
 	       if (fill_tex & (1<<0))
 		  v[2].f = 1.0;
+	       else if (rqcoordsnoswap & (1<<0))
+		  v[2].ui = tc0[0][2];
 	       else
 		  v[2].ui = tc0[0][3];
 	       if (TCL_DEBUG) fprintf(stderr, "%.2f ", v[2].f);
@@ -229,6 +243,8 @@ static void TAG(emit)( GLcontext *ctx,
 	    if (DO_PTEX) {
 	       if (fill_tex & (1<<1))
 		  v[2].f = 1.0;
+	       else if (rqcoordsnoswap & (1<<1))
+		  v[2].ui = tc1[0][2];
 	       else
 		  v[2].ui = tc1[0][3];
 	       if (TCL_DEBUG) fprintf(stderr, "%.2f ", v[2].f);
@@ -244,6 +260,8 @@ static void TAG(emit)( GLcontext *ctx,
 	    if (DO_PTEX) {
 	       if (fill_tex & (1<<2))
 		  v[2].f = 1.0;
+	       else if (rqcoordsnoswap & (1<<2))
+		  v[2].ui = tc2[0][2];
 	       else
 		  v[2].ui = tc2[0][3];
 	       v += 3;

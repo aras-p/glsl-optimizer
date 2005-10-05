@@ -753,9 +753,10 @@ struct radeon_context {
    GLmatrix TexGenMatrix[RADEON_MAX_TEXTURE_UNITS];
    GLboolean recheck_texgen[RADEON_MAX_TEXTURE_UNITS];
    GLboolean TexGenNeedNormals[RADEON_MAX_TEXTURE_UNITS];
-   GLuint TexMatEnabled;
    GLuint TexGenEnabled;
-   GLmatrix tmpmat;
+   GLuint NeedTexMatrix;
+   GLuint TexMatColSwap;
+   GLmatrix tmpmat[RADEON_MAX_TEXTURE_UNITS];
    GLuint last_ReallyEnabled;
 
    /* VBI

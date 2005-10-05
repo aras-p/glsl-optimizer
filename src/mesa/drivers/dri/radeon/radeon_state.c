@@ -2024,7 +2024,105 @@ static void radeonLightingSpaceChange( GLcontext *ctx )
  * Deferred state management - matrices, textures, other?
  */
 
+static void texmat_set_texrect( radeonContextPtr rmesa,
+				struct gl_texture_object *tObj, GLuint unit )
+{
+   const struct gl_texture_image *baseImage = tObj->Image[0][tObj->BaseLevel];
+   _math_matrix_set_identity( &rmesa->tmpmat[unit] );
+   rmesa->tmpmat[unit].m[0] = 1.0 / baseImage->Width;
+   rmesa->tmpmat[unit].m[5] = 1.0 / baseImage->Height;
 
+}
+
+static void texmat_fixup_texrect( radeonContextPtr rmesa,
+				  struct gl_texture_object *tObj, GLuint unit )
+{
+   const struct gl_texture_image *baseImage = tObj->Image[0][tObj->BaseLevel];
+   GLuint i;
+   for (i = 0; i < 4; i++) {
+      rmesa->tmpmat[unit].m[i] = rmesa->tmpmat[unit].m[i] / baseImage->Width;
+      rmesa->tmpmat[unit].m[i+4] = rmesa->tmpmat[unit].m[i+4] / baseImage->Height;
+   }}
+
+
+void radeonUploadTexMatrix( radeonContextPtr rmesa, GLfloat *src,
+			    int unit, GLboolean swapcols )
+{
+/* Here's how this works: on r100, only 3 tex coords can be submitted, so the
+   vector looks like this probably: (s t r|q 0) (not sure if the last coord
+   is hardwired to 0, could be 1 too). Interestingly, it actually looks like
+   texgen generates all 4 coords, at least tests with projtex indicated that.
+   So: if we need the q coord in the end (solely determined by the texture
+   target, i.e. 2d / 1d / texrect targets) we swap the third and 4th row.
+   Additionally, if we don't have texgen but 4 tex coords submitted, we swap
+   column 3 and 4 (for the 2d / 1d / texrect targets) since the the q coord
+   will get submitted in the "wrong", i.e. 3rd, slot.
+   If an app submits 3 coords for 2d targets, we assume it is saving on vertex
+   size and using the texture matrix to swap the r and q coords around (ut2k3
+   does exactly that), so we don't need the 3rd / 4th column swap - still need
+   the 3rd / 4th row swap of course. This will potentially break for apps which
+   use TexCoord3x just for fun. Additionally, it will never work if an app uses
+   an "advanced" texture matrix and relies on all 4 texcoord inputs to generate
+   the maximum needed 3. This seems impossible to do with hw tcl on r100, and
+   incredibly hard to detect so we can't just fallback in such a case. Assume
+   it never happens... - rs
+*/
+
+   int idx = TEXMAT_0 + unit;
+   float *dest = ((float *)RADEON_DB_STATE( mat[idx] )) + MAT_ELT_0;
+   int i;
+   struct gl_texture_unit tUnit = rmesa->glCtx->Texture.Unit[unit];
+
+   rmesa->TexMatColSwap &= ~(1 << unit);
+   if ((tUnit._ReallyEnabled & (TEXTURE_3D_BIT | TEXTURE_CUBE_BIT)) == 0) {
+      if (swapcols) {
+	 rmesa->TexMatColSwap |= 1 << unit;
+	 /* attention some elems are swapped 2 times! */
+	 *dest++ = src[0];
+	 *dest++ = src[4];
+	 *dest++ = src[12];
+	 *dest++ = src[8];
+	 *dest++ = src[1];
+	 *dest++ = src[5];
+	 *dest++ = src[13];
+	 *dest++ = src[9];
+	 *dest++ = src[2];
+	 *dest++ = src[6];
+	 *dest++ = src[15];
+	 *dest++ = src[11];
+	 /* those last 4 are probably never used */
+	 *dest++ = src[3];
+	 *dest++ = src[7];
+	 *dest++ = src[14];
+	 *dest++ = src[10];
+      }
+      else {
+	 for (i = 0; i < 2; i++) {
+	    *dest++ = src[i];
+	    *dest++ = src[i+4];
+	    *dest++ = src[i+8];
+	    *dest++ = src[i+12];
+	 }
+	 for (i = 3; i >= 2; i--) {
+	    *dest++ = src[i];
+	    *dest++ = src[i+4];
+	    *dest++ = src[i+8];
+	    *dest++ = src[i+12];
+	 }
+      }
+   }
+   else {
+      /* never used currently - no swapping needed at all presumably */
+      for (i = 0 ; i < 4 ; i++) {
+	 *dest++ = src[i];
+	 *dest++ = src[i+4];
+	 *dest++ = src[i+8];
+	 *dest++ = src[i+12];
+      }
+   }
+
+   RADEON_DB_STATECHANGE( rmesa, &rmesa->hw.mat[idx] );
+}
 
 
 static void upload_matrix( radeonContextPtr rmesa, GLfloat *src, int idx )
@@ -2057,42 +2155,53 @@ static void update_texturematrix( GLcontext *ctx )
    GLuint tpc = rmesa->hw.tcl.cmd[TCL_TEXTURE_PROC_CTL];
    GLuint vs = rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXSEL];
    int unit;
-
-   rmesa->TexMatEnabled = 0;
+   GLuint texMatEnabled = 0;
+   rmesa->NeedTexMatrix = 0;
+   rmesa->TexMatColSwap = 0;
 
    for (unit = 0 ; unit < 2; unit++) {
-      if (!ctx->Texture.Unit[unit]._ReallyEnabled) {
-      }
-      else if (ctx->TextureMatrixStack[unit].Top->type != MATRIX_IDENTITY) {
-	 GLuint inputshift = RADEON_TEXGEN_0_INPUT_SHIFT + unit*4;
-	 
-	 rmesa->TexMatEnabled |= (RADEON_TEXGEN_TEXMAT_0_ENABLE|
-				  RADEON_TEXMAT_0_ENABLE) << unit;
+      if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+	 GLboolean needMatrix = GL_FALSE;
+	 if (ctx->TextureMatrixStack[unit].Top->type != MATRIX_IDENTITY) {
+	    needMatrix = GL_TRUE;
+	    texMatEnabled |= (RADEON_TEXGEN_TEXMAT_0_ENABLE |
+			      RADEON_TEXMAT_0_ENABLE) << unit;
 
-	 if (rmesa->TexGenEnabled & (RADEON_TEXMAT_0_ENABLE << unit)) {
-	    /* Need to preconcatenate any active texgen 
-	     * obj/eyeplane matrices:
-	     */
-	    _math_matrix_mul_matrix( &rmesa->tmpmat,
+	    if (rmesa->TexGenEnabled & (RADEON_TEXMAT_0_ENABLE << unit)) {
+	       /* Need to preconcatenate any active texgen
+	        * obj/eyeplane matrices:
+	        */
+	       _math_matrix_mul_matrix( &rmesa->tmpmat[unit],
 				     ctx->TextureMatrixStack[unit].Top,
 				     &rmesa->TexGenMatrix[unit] );
-	    upload_matrix( rmesa, rmesa->tmpmat.m, TEXMAT_0+unit );
+	    }
+	    else {
+	       _math_matrix_copy( &rmesa->tmpmat[unit],
+		  ctx->TextureMatrixStack[unit].Top );
+	    }
 	 }
-	 else {
-	    rmesa->TexMatEnabled |= 
-	       (RADEON_TEXGEN_INPUT_TEXCOORD_0+unit) << inputshift;
-	    upload_matrix( rmesa, ctx->TextureMatrixStack[unit].Top->m, 
-			   TEXMAT_0+unit );
+	 else if (rmesa->TexGenEnabled & (RADEON_TEXMAT_0_ENABLE << unit)) {
+	    _math_matrix_copy( &rmesa->tmpmat[unit], &rmesa->TexGenMatrix[unit] );
+	    needMatrix = GL_TRUE;
 	 }
-      }
-      else if (rmesa->TexGenEnabled & (RADEON_TEXMAT_0_ENABLE << unit)) {
-	 upload_matrix( rmesa, rmesa->TexGenMatrix[unit].m, 
-			TEXMAT_0+unit );
+	 if (ctx->Texture.Unit[unit]._ReallyEnabled == TEXTURE_RECT_BIT) {
+	    texMatEnabled |= (RADEON_TEXGEN_TEXMAT_0_ENABLE |
+			      RADEON_TEXMAT_0_ENABLE) << unit;
+	    if (needMatrix)
+	       texmat_fixup_texrect( rmesa, ctx->Texture.Unit[unit]._Current, unit );
+	    else
+	       texmat_set_texrect( rmesa, ctx->Texture.Unit[unit]._Current, unit );
+	    needMatrix = GL_TRUE;
+	 }
+	 if (needMatrix) {
+	    rmesa->NeedTexMatrix |= 1 << unit;
+	    radeonUploadTexMatrix( rmesa, rmesa->tmpmat[unit].m, unit,
+			!ctx->Texture.Unit[unit].TexGenEnabled );
+	 }
       }
    }
 
-
-   tpc = (rmesa->TexMatEnabled | rmesa->TexGenEnabled);
+   tpc = (texMatEnabled | rmesa->TexGenEnabled);
 
    vs &= ~((0xf << RADEON_TCL_TEX_0_OUTPUT_SHIFT) |
 	   (0xf << RADEON_TCL_TEX_1_OUTPUT_SHIFT));
@@ -2109,7 +2218,7 @@ static void update_texturematrix( GLcontext *ctx )
 
    if (tpc != rmesa->hw.tcl.cmd[TCL_TEXTURE_PROC_CTL] ||
        vs != rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXSEL]) {
-      
+
       RADEON_STATECHANGE(rmesa, tcl);
       rmesa->hw.tcl.cmd[TCL_TEXTURE_PROC_CTL] = tpc;
       rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXSEL] = vs;
@@ -2188,7 +2297,7 @@ void radeonValidateState( GLcontext *ctx )
     */
    if (new_state & _NEW_TEXTURE_MATRIX) {
       update_texturematrix( ctx );
-   }      
+   }
 
    if (new_state & (_NEW_LIGHT|_NEW_MODELVIEW|_MESA_NEW_NEED_EYE_COORDS)) {
       update_light( ctx );

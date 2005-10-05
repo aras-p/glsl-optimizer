@@ -405,10 +405,12 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 
    _math_matrix_ctr( &rmesa->TexGenMatrix[0] );
    _math_matrix_ctr( &rmesa->TexGenMatrix[1] );
-   _math_matrix_ctr( &rmesa->tmpmat );
+   _math_matrix_ctr( &rmesa->tmpmat[0] );
+   _math_matrix_ctr( &rmesa->tmpmat[1] );
    _math_matrix_set_identity( &rmesa->TexGenMatrix[0] );
    _math_matrix_set_identity( &rmesa->TexGenMatrix[1] );
-   _math_matrix_set_identity( &rmesa->tmpmat );
+   _math_matrix_set_identity( &rmesa->tmpmat[0] );
+   _math_matrix_set_identity( &rmesa->tmpmat[1] );
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
    if (rmesa->glCtx->Mesa_DXTn) {
