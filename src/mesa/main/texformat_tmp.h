@@ -1078,7 +1078,7 @@ static void FETCH(ci8)( const struct gl_texture_image *texImage,
    /* Mask the index against size of palette to avoid going out of bounds */
    index = (*src) & (palette->Size - 1);
 
-   switch (palette->Format) {
+   switch (palette->_BaseFormat) {
       case GL_ALPHA:
          texel[RCOMP] =
          texel[GCOMP] =

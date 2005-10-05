@@ -312,8 +312,8 @@ enum {
  */
 struct gl_color_table
 {
-   GLenum Format;         /**< GL_ALPHA, GL_RGB, GL_RGB, etc */
-   GLenum IntFormat;
+   GLenum InternalFormat;      /**< The user-specified format */
+   GLenum _BaseFormat;         /**< GL_ALPHA, GL_RGBA, GL_RGB, etc */
    GLuint Size;           /**< number of entries (rows) in table */
    GLvoid *Table;         /**< points to data of <Type> */
    GLenum Type;           /**< GL_UNSIGNED_BYTE or GL_FLOAT */

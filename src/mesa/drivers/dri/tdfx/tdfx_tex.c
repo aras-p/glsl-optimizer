@@ -599,7 +599,7 @@ convertPalette(FxU32 data[256], const struct gl_color_table *table)
 
     ASSERT(table->Type == GL_UNSIGNED_BYTE);
 
-    switch (table->Format) {
+    switch (table->_BaseFormat) {
     case GL_INTENSITY:
         for (i = 0; i < width; i++) {
             r = tableUB[i];
@@ -1260,7 +1260,7 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
 
     /*
     printf("TexImage id=%d int 0x%x  format 0x%x  type 0x%x  %dx%d\n",
-           texObj->Name, texImage->IntFormat, format, type,
+           texObj->Name, texImage->InternalFormat, format, type,
            texImage->Width, texImage->Height);
     */
 

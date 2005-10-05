@@ -1174,7 +1174,7 @@ _mesa_lookup_rgba_float(const struct gl_color_table *table,
    if (!table->Table || table->Size == 0)
       return;
 
-   switch (table->Format) {
+   switch (table->_BaseFormat) {
       case GL_INTENSITY:
          /* replace RGBA with I */
          if (table->Type == GL_FLOAT) {
@@ -1385,7 +1385,7 @@ _mesa_lookup_rgba_chan(const struct gl_color_table *table,
    if (!table->Table || table->Size == 0)
       return;
 
-   switch (table->Format) {
+   switch (table->_BaseFormat) {
       case GL_INTENSITY:
          /* replace RGBA with I */
          if (table->Type == GL_FLOAT) {

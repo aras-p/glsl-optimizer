@@ -119,7 +119,7 @@ set_component_sizes( struct gl_color_table *table )
       return;
    }
 
-   switch (table->Format) {
+   switch (table->_BaseFormat) {
       case GL_ALPHA:
          table->RedSize = 0;
          table->GreenSize = 0;
@@ -225,7 +225,7 @@ store_colortable_entries(GLcontext *ctx, struct gl_color_table *table,
 
       _mesa_unpack_color_span_float(ctx,
                                     count,         /* number of pixels */
-                                    table->Format, /* dest format */
+                                    table->_BaseFormat, /* dest format */
                                     tempTab,       /* dest address */
                                     format, type,  /* src format/type */
                                     data,          /* src data */
@@ -236,7 +236,7 @@ store_colortable_entries(GLcontext *ctx, struct gl_color_table *table,
       tableF = (GLfloat *) table->Table;
 
       /* Apply scale & bias & clamp now */
-      switch (table->Format) {
+      switch (table->_BaseFormat) {
          case GL_INTENSITY:
             for (i = 0; i < count; i++) {
                GLuint j = start + i;
@@ -286,10 +286,10 @@ store_colortable_entries(GLcontext *ctx, struct gl_color_table *table,
    }
    else {
       /* non-float (GLchan) */
-      const GLint comps = _mesa_components_in_format(table->Format);
+      const GLint comps = _mesa_components_in_format(table->_BaseFormat);
       GLchan *dest = (GLchan *) table->Table + start * comps;
       _mesa_unpack_color_span_chan(ctx, count,         /* number of entries */
-				   table->Format,      /* dest format */
+				   table->_BaseFormat, /* dest format */
 				   dest,               /* dest address */
                                    format, type, data, /* src data */
 				   &ctx->Unpack,
@@ -458,7 +458,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
    }
 
    baseFormat = base_colortab_format(internalFormat);
-   if (baseFormat < 0 || baseFormat == GL_COLOR_INDEX) {
+   if (baseFormat < 0) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glColorTable(internalFormat)");
       return;
    }
@@ -467,8 +467,8 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
       /* error */
       if (proxy) {
          table->Size = 0;
-         table->IntFormat = (GLenum) 0;
-         table->Format = (GLenum) 0;
+         table->InternalFormat = (GLenum) 0;
+         table->_BaseFormat = (GLenum) 0;
       }
       else {
          _mesa_error(ctx, GL_INVALID_VALUE, "glColorTable(width=%d)", width);
@@ -479,8 +479,8 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
    if (width > (GLsizei) ctx->Const.MaxColorTableSize) {
       if (proxy) {
          table->Size = 0;
-         table->IntFormat = (GLenum) 0;
-         table->Format = (GLenum) 0;
+         table->InternalFormat = (GLenum) 0;
+         table->_BaseFormat = (GLenum) 0;
       }
       else {
          _mesa_error(ctx, GL_TABLE_TOO_LARGE, "glColorTable(width)");
@@ -489,11 +489,11 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
    }
 
    table->Size = width;
-   table->IntFormat = internalFormat;
-   table->Format = (GLenum) baseFormat;
+   table->InternalFormat = internalFormat;
+   table->_BaseFormat = (GLenum) baseFormat;
    table->Type = (tableType == GL_FLOAT) ? GL_FLOAT : CHAN_TYPE;
 
-   comps = _mesa_components_in_format(table->Format);
+   comps = _mesa_components_in_format(table->_BaseFormat);
    assert(comps > 0);  /* error should have been caught sooner */
 
    if (!proxy) {
@@ -645,7 +645,7 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
    }
 
    /* error should have been caught sooner */
-   assert(_mesa_components_in_format(table->Format) > 0);
+   assert(_mesa_components_in_format(table->_BaseFormat) > 0);
 
    if (start + count > (GLint) table->Size) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glColorSubTable(count)");
@@ -758,7 +758,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
 
    ASSERT(table);
 
-   switch (table->Format) {
+   switch (table->_BaseFormat) {
       case GL_ALPHA:
          if (table->Type == GL_FLOAT) {
             const GLfloat *tableF = (const GLfloat *) table->Table;
@@ -1187,7 +1187,7 @@ _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
 
    switch (pname) {
       case GL_COLOR_TABLE_FORMAT:
-         *params = (GLfloat) table->IntFormat;
+         *params = (GLfloat) table->InternalFormat;
          break;
       case GL_COLOR_TABLE_WIDTH:
          *params = (GLfloat) table->Size;
@@ -1361,7 +1361,7 @@ _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
 
    switch (pname) {
       case GL_COLOR_TABLE_FORMAT:
-         *params = table->IntFormat;
+         *params = table->InternalFormat;
          break;
       case GL_COLOR_TABLE_WIDTH:
          *params = table->Size;
@@ -1401,7 +1401,7 @@ _mesa_init_colortable( struct gl_color_table *p )
    p->Type = CHAN_TYPE;
    p->Table = NULL;
    p->Size = 0;
-   p->IntFormat = GL_RGBA;
+   p->InternalFormat = GL_RGBA;
 }
 
 

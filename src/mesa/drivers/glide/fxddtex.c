@@ -511,7 +511,7 @@ convertPalette(const fxMesaContext fxMesa, FxU32 data[256], const struct gl_colo
 
    ASSERT(table->Type == GL_UNSIGNED_BYTE);
 
-   switch (table->Format) {
+   switch (table->_BaseFormat) {
    case GL_INTENSITY:
       for (i = 0; i < width; i++) {
 	 r = tableUB[i];
