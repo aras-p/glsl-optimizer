@@ -689,7 +689,11 @@ static void r200FrontFace( GLcontext *ctx, GLenum mode )
  */
 static void r200PointSize( GLcontext *ctx, GLfloat size )
 {
-   if (0) fprintf(stderr, "%s: %f\n", __FUNCTION__, size );
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
+
+   R200_STATECHANGE( rmesa, cst );
+   rmesa->hw.cst.cmd[CST_RE_POINTSIZE] &= ~0xffff;
+   rmesa->hw.cst.cmd[CST_RE_POINTSIZE] |= ((GLuint)(ctx->Point.Size * 16.0));
 }
 
 /* =============================================================
@@ -1982,10 +1986,10 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
       }
       break;
 
-      /* Pointsize registers on r200 don't seem to do anything.  Maybe
-       * have to pass pointsizes as vertex parameters?  In any case,
-       * setting pointmin == pointsizemax == 1.0, and doing nothing
-       * for aa is enough to satisfy conform.
+      /* Pointsize registers on r200 only work for point sprites, and point smooth
+       * doesn't work for point sprites (and isn't needed for 1.0 sized aa points).
+       * In any case, setting pointmin == pointsizemax == 1.0 for aa points
+       * is enough to satisfy conform.
        */
    case GL_POINT_SMOOTH:
       break;

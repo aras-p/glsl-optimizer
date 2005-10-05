@@ -352,6 +352,10 @@ void r200InitState( r200ContextPtr rmesa )
    else {
       ALLOC_STATE( prf, never, PRF_STATE_SIZE, "PRF/performance-tri", 0 );
    }
+   if (rmesa->r200Screen->drmSupportsPointSprites)
+      ALLOC_STATE( spr, always, SPR_STATE_SIZE, "SPR/pointsprite", 0 );
+   else
+      ALLOC_STATE (spr, never, SPR_STATE_SIZE, "SPR/pointsprite", 0 );
 
    r200SetUpAtomList( rmesa );
 
@@ -436,6 +440,7 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.vtx.cmd[VTX_CMD_2] = cmdpkt(R200_EMIT_SE_VTX_STATE_CNTL);
    rmesa->hw.vte.cmd[VTE_CMD_0] = cmdpkt(R200_EMIT_VTE_CNTL);
    rmesa->hw.prf.cmd[PRF_CMD_0] = cmdpkt(R200_EMIT_PP_TRI_PERF_CNTL);
+   rmesa->hw.spr.cmd[SPR_CMD_0] = cmdpkt(R200_EMIT_TCL_POINT_SPRITE_CNTL);
    rmesa->hw.mtl[0].cmd[MTL_CMD_0] = 
       cmdvec( R200_VS_MAT_0_EMISS, 1, 16 );
    rmesa->hw.mtl[0].cmd[MTL_CMD_1] = 
@@ -640,7 +645,8 @@ void r200InitState( r200ContextPtr rmesa )
       rmesa->hw.cst.cmd[CST_SE_VAP_CNTL_STATUS] |= (1<<8);
    }
 
-   rmesa->hw.cst.cmd[CST_RE_POINTSIZE] = 0x100010;
+   rmesa->hw.cst.cmd[CST_RE_POINTSIZE] =
+      (((GLuint)(ctx->Const.MaxPointSize * 16.0)) << R200_MAXPOINTSIZE_SHIFT) | 0x10;
    rmesa->hw.cst.cmd[CST_SE_TCL_INPUT_VTX_0] =
       (0x0 << R200_VERTEX_POSITION_ADDR__SHIFT);
    rmesa->hw.cst.cmd[CST_SE_TCL_INPUT_VTX_1] =
@@ -869,7 +875,9 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.eye.cmd[EYE_Z] = IEEE_ONE;
    rmesa->hw.eye.cmd[EYE_RESCALE_FACTOR] = IEEE_ONE;
 
+   rmesa->hw.spr.cmd[SPR_POINT_SPRITE_CNTL] = R200_POINTSIZE_SEL_STATE;
+
    r200LightingSpaceChange( ctx );
-   
+
    rmesa->hw.all_dirty = GL_TRUE;
 }

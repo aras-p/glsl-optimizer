@@ -397,6 +397,11 @@ struct r200_state_atom {
 #define VTX_STATE_CNTL          8
 #define VTX_STATE_SIZE          9
 
+/* SPR - point sprite state
+ */
+#define SPR_CMD_0             0
+#define SPR_POINT_SPRITE_CNTL 1
+#define SPR_STATE_SIZE        2
 
 #define VTX_COLOR(v,n)   (((v)>>(R200_VTX_COLOR_0_SHIFT+(n)*2))&\
                          R200_VTX_COLOR_MASK)
@@ -559,6 +564,7 @@ struct r200_hw_state {
    struct r200_state_atom prf;
    struct r200_state_atom afs[2];
    struct r200_state_atom atf;
+   struct r200_state_atom spr;
 
    int max_state_size;	/* Number of bytes necessary for a full state emit. */
    GLboolean is_dirty, all_dirty;
@@ -928,7 +934,6 @@ struct r200_context {
    GLmatrix TexGenMatrix[R200_MAX_TEXTURE_UNITS];
    GLboolean recheck_texgen[R200_MAX_TEXTURE_UNITS];
    GLboolean TexGenNeedNormals[R200_MAX_TEXTURE_UNITS];
-   GLuint TexMatEnabled;
    GLuint TexMatCompSel;
    GLuint TexGenEnabled;
    GLuint TexGenCompSel;

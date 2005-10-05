@@ -340,18 +340,24 @@ r200AllocDmaLowVerts( r200ContextPtr rmesa, int nverts, int vsize )
 /**************************************************************************/
 
 
-static const GLuint reduced_hw_prim[GL_POLYGON+1] = {
-   R200_VF_PRIM_POINTS,
-   R200_VF_PRIM_LINES,
-   R200_VF_PRIM_LINES,
-   R200_VF_PRIM_LINES,
-   R200_VF_PRIM_TRIANGLES,
-   R200_VF_PRIM_TRIANGLES,
-   R200_VF_PRIM_TRIANGLES,
-   R200_VF_PRIM_TRIANGLES,
-   R200_VF_PRIM_TRIANGLES,
-   R200_VF_PRIM_TRIANGLES
-};
+static INLINE GLuint reduced_hw_prim( GLcontext *ctx, GLuint prim)
+{
+   switch (prim) {
+   case GL_POINTS:
+      return (ctx->_TriangleCaps & DD_POINT_SIZE) ?
+	 R200_VF_PRIM_POINT_SPRITES : R200_VF_PRIM_POINTS;
+   case GL_LINES:
+   /* fallthrough */
+   case GL_LINE_LOOP:
+   /* fallthrough */
+   case GL_LINE_STRIP:
+      return R200_VF_PRIM_LINES;
+   default:
+   /* all others reduced to triangles */
+      return R200_VF_PRIM_TRIANGLES;
+   }
+}
+
 
 static void r200RasterPrimitive( GLcontext *ctx, GLuint hwprim );
 static void r200RenderPrimitive( GLcontext *ctx, GLenum prim );
@@ -496,7 +502,7 @@ do {							\
  *                Helpers for rendering unfilled primitives            *
  ***********************************************************************/
 
-#define RASTERIZE(x) r200RasterPrimitive( ctx, reduced_hw_prim[x] )
+#define RASTERIZE(x) r200RasterPrimitive( ctx, reduced_hw_prim(ctx, x) )
 #define RENDER_PRIMITIVE rmesa->swtcl.render_primitive
 #undef TAG
 #define TAG(x) x
@@ -631,7 +637,7 @@ static void r200RenderPrimitive( GLcontext *ctx, GLenum prim )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    rmesa->swtcl.render_primitive = prim;
    if (prim < GL_TRIANGLES || !(ctx->_TriangleCaps & DD_TRI_UNFILLED)) 
-      r200RasterPrimitive( ctx, reduced_hw_prim[prim] );
+      r200RasterPrimitive( ctx, reduced_hw_prim(ctx, prim) );
 }
 
 static void r200RenderFinish( GLcontext *ctx )

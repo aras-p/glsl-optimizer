@@ -360,6 +360,7 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
 	 screen->drmSupportsBlendColor = (sPriv->drmMinor >= 11);
 	 screen->drmSupportsTriPerf = (sPriv->drmMinor >= 16);
 	 screen->drmSupportsFragShader = (sPriv->drmMinor >= 18);
+	 screen->drmSupportsPointSprites = (sPriv->drmMinor >= 13);
 
       }
       /* Check if ddx has set up a surface reg to cover depth buffer */

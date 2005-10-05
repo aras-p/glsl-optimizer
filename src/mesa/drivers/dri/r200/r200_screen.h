@@ -98,6 +98,7 @@ typedef struct {
    GLboolean drmSupportsBlendColor;     /* need radeon kernel module >= 1.11 */
    GLboolean drmSupportsTriPerf;        /* need radeon kernel module >= 1.16 */
    GLboolean drmSupportsFragShader;     /* need radeon kernel module >= 1.18 */
+   GLboolean drmSupportsPointSprites;   /* need radeon kernel module >= 1.13 */
    GLboolean depthHasSurface;
 
    /* Configuration cache with default values for all contexts */

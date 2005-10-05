@@ -400,12 +400,19 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 
    ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 
-   /* No wide points.
+   /* No wide AA points.
     */
    ctx->Const.MinPointSize = 1.0;
    ctx->Const.MinPointSizeAA = 1.0;
-   ctx->Const.MaxPointSize = 1.0;
    ctx->Const.MaxPointSizeAA = 1.0;
+   ctx->Const.PointSizeGranularity = 0.0625;
+   if (rmesa->r200Screen->drmSupportsPointSprites)
+      ctx->Const.MaxPointSize = 2047.0;
+   else
+      ctx->Const.MaxPointSize = 1.0;
+
+   /* mesa initialization problem - _mesa_init_point was already called */
+   ctx->Point.MaxSize = ctx->Const.MaxPointSize;
 
    ctx->Const.MinLineWidth = 1.0;
    ctx->Const.MinLineWidthAA = 1.0;
