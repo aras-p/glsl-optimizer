@@ -31,8 +31,8 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/error.c,v 1.1 2001/03/17 00:25:41 brianp Exp $
+** $Date: 2005/10/05 02:08:53 $ $Revision: 1.2 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/error.c,v 1.2 2005/10/05 02:08:53 brianp Exp $
 */
 
 #include "gluos.h"
@@ -81,6 +81,11 @@ gluErrorString(GLenum errorCode)
     if ((errorCode >= GLU_TESS_ERROR1) && (errorCode <= GLU_TESS_ERROR8)) {
 	return (const unsigned char *) __gluTessErrorString(errorCode - (GLU_TESS_ERROR1 - 1));
     }
+#ifdef GL_EXT_framebuffer_object
+    if (errorCode == GL_INVALID_FRAMEBUFFER_OPERATION_EXT) {
+       return (const unsigned char *) "invalid framebuffer operation";
+    }
+#endif
 
     return 0;
 }
