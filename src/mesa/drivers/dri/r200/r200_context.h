@@ -934,6 +934,7 @@ struct r200_context {
    GLmatrix TexGenMatrix[R200_MAX_TEXTURE_UNITS];
    GLboolean recheck_texgen[R200_MAX_TEXTURE_UNITS];
    GLboolean TexGenNeedNormals[R200_MAX_TEXTURE_UNITS];
+   GLuint TexMatEnabled;
    GLuint TexMatCompSel;
    GLuint TexGenEnabled;
    GLuint TexGenCompSel;
