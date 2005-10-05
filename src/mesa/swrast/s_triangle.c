@@ -1093,7 +1093,7 @@ _swrast_choose_triangle( GLcontext *ctx )
              && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
              && texObj2D->WrapS == GL_REPEAT
 	     && texObj2D->WrapT == GL_REPEAT
-             && texObj2D->_IsPowerOfTwo
+             && texImg->_IsPowerOfTwo
              && texImg->Border == 0
              && texImg->Width == texImg->RowStride
              && (format == MESA_FORMAT_RGB || format == MESA_FORMAT_RGBA)
