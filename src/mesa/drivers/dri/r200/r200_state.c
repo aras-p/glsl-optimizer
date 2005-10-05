@@ -1322,8 +1322,25 @@ static void r200Lightfv( GLcontext *ctx, GLenum light,
    }
 }
 
-		  
-
+static void r200UpdateLocalViewer ( GLcontext *ctx )
+{
+/* It looks like for the texgen modes GL_SPHERE_MAP, GL_NORMAL_MAP and
+   GL_REFLECTION_MAP we need R200_LOCAL_VIEWER set (fglrx does exactly that
+   for these and only these modes). This means specular highlights may turn out
+   wrong in some cases when lighting is enabled but GL_LIGHT_MODEL_LOCAL_VIEWER
+   is not set, though it seems to happen rarely and the effect seems quite
+   subtle. May need TCL fallback to fix it completely, though I'm not sure
+   how you'd identify the cases where the specular highlights indeed will
+   be wrong. Don't know if fglrx does something special in that case.
+*/
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   R200_STATECHANGE( rmesa, tcl );
+   if (ctx->Light.Model.LocalViewer ||
+       ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS)
+      rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] |= R200_LOCAL_VIEWER;
+   else
+      rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] &= ~R200_LOCAL_VIEWER;
+}
 
 static void r200LightModelfv( GLcontext *ctx, GLenum pname,
 				const GLfloat *param )
@@ -1336,11 +1353,7 @@ static void r200LightModelfv( GLcontext *ctx, GLenum pname,
 	 break;
 
       case GL_LIGHT_MODEL_LOCAL_VIEWER:
-	 R200_STATECHANGE( rmesa, tcl );
-	 if (ctx->Light.Model.LocalViewer)
-	    rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] |= R200_LOCAL_VIEWER;
-	 else
-	    rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] &= ~R200_LOCAL_VIEWER;
+	 r200UpdateLocalViewer( ctx );
          break;
 
       case GL_LIGHT_MODEL_TWO_SIDE:
@@ -2295,6 +2308,7 @@ void r200ValidateState( GLcontext *ctx )
    if (new_state & (_NEW_TEXTURE | _NEW_PROGRAM)) {
       r200UpdateTextureState( ctx );
       new_state |= rmesa->NewGLState; /* may add TEXTURE_MATRIX */
+      r200UpdateLocalViewer( ctx );
    }
 
    /* Need an event driven matrix update?
