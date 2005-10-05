@@ -540,7 +540,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       vfmt |= RADEON_CP_VC_FRMT_ST0;
       /* assume we need the 3rd coord if texgen is active for r/q OR at least 3
          coords are submitted. This may not be 100% correct */
-      if ( (VB->TexCoordPtr[0]->size >= 3) {
+      if (VB->TexCoordPtr[0]->size >= 3) {
 	 vtx |= RADEON_TCL_VTX_Q0;
 	 vfmt |= RADEON_CP_VC_FRMT_Q0;
       }
@@ -565,7 +565,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 			  count );
 	 
       vfmt |= RADEON_CP_VC_FRMT_ST1;
-      if ( (VB->TexCoordPtr[1]->size >= 3) {
+      if (VB->TexCoordPtr[1]->size >= 3) {
 	 vtx |= RADEON_TCL_VTX_Q1;
 	 vfmt |= RADEON_CP_VC_FRMT_Q1;
       }
