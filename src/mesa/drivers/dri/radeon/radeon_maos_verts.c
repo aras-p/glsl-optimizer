@@ -277,7 +277,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 	 GLuint swaptexmatcol = (VB->TexCoordPtr[0]->size - 3);
 	 if ((rmesa->NeedTexMatrix & 1) &&
 		(swaptexmatcol != (rmesa->TexMatColSwap & 1)))
-	    radeonUploadTexMatrix( rmesa, rmesa->tmpmat[0].m, 0, swaptexmatcol ) ;
+	    radeonUploadTexMatrix( rmesa, 0, swaptexmatcol ) ;
       }
    }
 
@@ -295,7 +295,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 	 GLuint swaptexmatcol = (VB->TexCoordPtr[1]->size - 3);
 	 if (((rmesa->NeedTexMatrix >> 1) & 1) &&
 		(swaptexmatcol != ((rmesa->TexMatColSwap >> 1) & 1)))
-	    radeonUploadTexMatrix( rmesa, rmesa->tmpmat[1].m, 1, swaptexmatcol ) ;
+	    radeonUploadTexMatrix( rmesa, 1, swaptexmatcol ) ;
       }
    }
 

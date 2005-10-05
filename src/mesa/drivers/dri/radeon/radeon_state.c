@@ -2045,7 +2045,7 @@ static void texmat_fixup_texrect( radeonContextPtr rmesa,
    }}
 
 
-void radeonUploadTexMatrix( radeonContextPtr rmesa, GLfloat *src,
+void radeonUploadTexMatrix( radeonContextPtr rmesa,
 			    int unit, GLboolean swapcols )
 {
 /* Here's how this works: on r100, only 3 tex coords can be submitted, so the
@@ -2072,6 +2072,7 @@ void radeonUploadTexMatrix( radeonContextPtr rmesa, GLfloat *src,
    float *dest = ((float *)RADEON_DB_STATE( mat[idx] )) + MAT_ELT_0;
    int i;
    struct gl_texture_unit tUnit = rmesa->glCtx->Texture.Unit[unit];
+   GLfloat *src = rmesa->tmpmat[unit].m;
 
    rmesa->TexMatColSwap &= ~(1 << unit);
    if ((tUnit._ReallyEnabled & (TEXTURE_3D_BIT | TEXTURE_CUBE_BIT)) == 0) {
@@ -2195,7 +2196,7 @@ static void update_texturematrix( GLcontext *ctx )
 	 }
 	 if (needMatrix) {
 	    rmesa->NeedTexMatrix |= 1 << unit;
-	    radeonUploadTexMatrix( rmesa, rmesa->tmpmat[unit].m, unit,
+	    radeonUploadTexMatrix( rmesa, unit,
 			!ctx->Texture.Unit[unit].TexGenEnabled );
 	 }
       }

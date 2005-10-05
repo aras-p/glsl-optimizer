@@ -50,8 +50,8 @@ extern void radeonRecalcScissorRects( radeonContextPtr rmesa );
 extern void radeonUpdateViewportOffset( GLcontext *ctx );
 extern void radeonUpdateWindow( GLcontext *ctx );
 extern void radeonUpdateDrawBuffer( GLcontext *ctx );
-extern void radeonUploadTexMatrix( radeonContextPtr rmesa, GLfloat *src,
-				       int unit, GLboolean swapcols );
+extern void radeonUploadTexMatrix( radeonContextPtr rmesa,
+				   int unit, GLboolean swapcols );
 
 extern void radeonValidateState( GLcontext *ctx );
 
