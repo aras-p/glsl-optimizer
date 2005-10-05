@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -1917,15 +1917,15 @@ _mesa_texstore_ycbcr(STORE_PARAMS)
        (srcType == GL_UNSIGNED_SHORT_8_8_REV_MESA) ^
        (dstFormat == &_mesa_texformat_ycbcr_rev) ^
        !littleEndian) {
-      GLushort *pImage = (GLushort *) ((GLubyte *) dstAddr
-                                       + dstZoffset * dstImageStride
-                                       + dstYoffset * dstRowStride
-                                       + dstXoffset * dstFormat->TexelBytes);
+      GLubyte *pImage = (GLubyte *) dstAddr
+                      + dstZoffset * dstImageStride
+                      + dstYoffset * dstRowStride
+                      + dstXoffset * dstFormat->TexelBytes;
       GLint img, row;
       for (img = 0; img < srcDepth; img++) {
-         GLushort *pRow = pImage;
+         GLubyte *pRow = pImage;
          for (row = 0; row < srcHeight; row++) {
-            _mesa_swap2(pRow, srcWidth);
+            _mesa_swap2((GLushort *) pRow, srcWidth);
             pRow += dstRowStride;
          }
          pImage += dstImageStride;
