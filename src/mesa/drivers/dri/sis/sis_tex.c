@@ -63,7 +63,7 @@ sisAllocTexImage( sisContextPtr smesa, sisTexObjPtr t, int level,
    int size, texel_size;
 
    if (t->format == 0) {
-      t->format = image->Format;
+      t->format = image->_BaseFormat;
       switch (t->format)
       {
       case GL_RGBA:
@@ -88,7 +88,7 @@ sisAllocTexImage( sisContextPtr smesa, sisTexObjPtr t, int level,
          sis_fatal_error("Bad texture format.\n");
       }
    }
-   assert(t->format == image->Format);
+   assert(t->format == image->_BaseFormat);
 
    texel_size = image->TexFormat->TexelBytes;
    size = image->Width * image->Height * texel_size + TEXTURE_HW_PLUS;

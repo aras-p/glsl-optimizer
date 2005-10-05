@@ -201,7 +201,7 @@ static GLboolean r128UpdateTextureEnv( GLcontext *ctx, int unit )
    GLint source = rmesa->tmu_source[unit];
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[source];
    const struct gl_texture_object *tObj = texUnit->_Current;
-   const GLenum format = tObj->Image[0][tObj->BaseLevel]->Format;
+   const GLenum format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
    GLuint combine;
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {

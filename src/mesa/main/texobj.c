@@ -435,7 +435,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
                   t->Complete = GL_FALSE;
                   return;
                }
-               if (t->Image[0][i]->Format == GL_DEPTH_COMPONENT) {
+               if (t->Image[0][i]->_BaseFormat == GL_DEPTH_COMPONENT) {
                   t->Complete = GL_FALSE;
                   incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
                   return;
@@ -482,7 +482,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
 		     return;
 		  }
 		  /* Don't support GL_DEPTH_COMPONENT for cube maps */
-		  if (t->Image[face][i]->Format == GL_DEPTH_COMPONENT) {
+		  if (t->Image[face][i]->_BaseFormat == GL_DEPTH_COMPONENT) {
 		     t->Complete = GL_FALSE;
 		     incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
 		     return;

@@ -95,7 +95,8 @@ _mesa_halve2x2_teximage2d ( GLcontext *ctx,
                               srcRowStride, /* dstRowStride */
                               0, /* dstImageStride */
                               srcWidth, srcHeight, 1,
-                              texImage->Format, _t, srcImage, &ctx->DefaultPacking);
+                              texImage->_BaseFormat, _t,
+                              srcImage, &ctx->DefaultPacking);
    }
 
    if (srcHeight == 1) {
@@ -136,7 +137,7 @@ _mesa_halve2x2_teximage2d ( GLcontext *ctx,
    if (bpt) {
       src = _s;
       dst = _d;
-      texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+      texImage->TexFormat->StoreImage(ctx, 2, texImage->_BaseFormat,
                                       texImage->TexFormat, dstImage,
                                       0, 0, 0, /* dstX/Y/Zoffset */
                                       dstWidth * bpt,
@@ -1238,7 +1239,7 @@ adjust2DRatio (GLcontext *ctx,
          return GL_FALSE;
       }
 
-      texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+      texImage->TexFormat->StoreImage(ctx, 2, texImage->_BaseFormat,
                                       texImage->TexFormat, tempImage,
                                       0, 0, 0, /* dstX/Y/Zoffset */
                                       width * texelBytes, /* dstRowStride */
@@ -1282,7 +1283,7 @@ adjust2DRatio (GLcontext *ctx,
                                width, height, /* src */
                                newWidth, newHeight, /* dst */
                                rawImage /*src*/, tempImage /*dst*/ );
-      texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+      texImage->TexFormat->StoreImage(ctx, 2, texImage->_BaseFormat,
                                       texImage->TexFormat, texImage->Data,
                                       xoffset * mml->wScale, yoffset * mml->hScale, 0, /* dstX/Y/Zoffset */
                                       dstRowStride,
@@ -1313,7 +1314,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 
    if (TDFX_DEBUG & VERBOSE_TEXTURE) {
        fprintf(stderr, "fxDDTexImage2D: id=%d int 0x%x  format 0x%x  type 0x%x  %dx%d\n",
-                       texObj->Name, texImage->IntFormat, format, type,
+                       texObj->Name, texImage->InternalFormat, format, type,
                        texImage->Width, texImage->Height);
    }
 
@@ -1362,7 +1363,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
      case GL_RGBA4_S3TC:
        internalFormat = GL_COMPRESSED_RGBA_FXT1_3DFX;
      }
-     texImage->IntFormat = internalFormat;
+     texImage->InternalFormat = internalFormat;
    }
 #endif
 #if FX_TC_NAPALM
@@ -1374,7 +1375,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
          texNapalm = GL_COMPRESSED_RGBA_FXT1_3DFX;
       }
       if (texNapalm) {
-         texImage->IntFormat = internalFormat = texNapalm;
+         texImage->InternalFormat = internalFormat = texNapalm;
          texImage->IsCompressed = GL_TRUE;
       }
    }
@@ -1429,7 +1430,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       else {
          /* no rescaling needed */
          /* unpack image, apply transfer ops and store in texImage->Data */
-         texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+         texImage->TexFormat->StoreImage(ctx, 2, texImage->_BaseFormat,
                                          texImage->TexFormat, texImage->Data,
                                          0, 0, 0, /* dstX/Y/Zoffset */
                                          dstRowStride,
@@ -1515,11 +1516,11 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    assert(mml);
 
    assert(texImage->Data);	/* must have an existing texture image! */
-   assert(texImage->Format);
+   assert(texImage->_BaseFormat);
 
    texelBytes = texImage->TexFormat->TexelBytes;
    if (texImage->IsCompressed) {
-      dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat, mml->width);
+      dstRowStride = _mesa_compressed_row_stride(texImage->InternalFormat, mml->width);
    } else {
       dstRowStride = mml->width * texelBytes;
    }
@@ -1542,7 +1543,7 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    }
    else {
       /* no rescaling needed */
-      texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+      texImage->TexFormat->StoreImage(ctx, 2, texImage->_BaseFormat,
                                       texImage->TexFormat, (GLubyte *) texImage->Data,
                                       xoffset, yoffset, 0, /* dstX/Y/Zoffset */
                                       dstRowStride,
@@ -1739,12 +1740,12 @@ fxDDCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
    mml = FX_MIPMAP_DATA(texImage);
    assert(mml);
 
-   srcRowStride = _mesa_compressed_row_stride(texImage->IntFormat, width);
+   srcRowStride = _mesa_compressed_row_stride(texImage->InternalFormat, width);
 
-   destRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
+   destRowStride = _mesa_compressed_row_stride(texImage->InternalFormat,
                                                mml->width);
    dest = _mesa_compressed_image_address(xoffset, yoffset, 0,
-                                         texImage->IntFormat,
+                                         texImage->InternalFormat,
                                          mml->width,
                               (GLubyte*) texImage->Data);
 
@@ -1760,9 +1761,9 @@ fxDDCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
     * see fxDDCompressedTexImage2D for caveats
     */
    if (mml->wScale != 1 || mml->hScale != 1) {
-      srcRowStride = _mesa_compressed_row_stride(texImage->IntFormat, texImage->Width);
+      srcRowStride = _mesa_compressed_row_stride(texImage->InternalFormat, texImage->Width);
 
-      destRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
+      destRowStride = _mesa_compressed_row_stride(texImage->InternalFormat,
                                                mml->width);
       _mesa_upscale_teximage2d(srcRowStride, texImage->Height / 4,
                                destRowStride, mml->height / 4,

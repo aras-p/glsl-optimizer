@@ -106,7 +106,7 @@ static void i810SetTexImages( i810ContextPtr imesa,
    for ( height = i = 0 ; i < numLevels ; i++ ) {
       t->image[i].image = tObj->Image[0][t->base.firstLevel + i];
       t->image[i].offset = height * pitch;
-      t->image[i].internalFormat = baseImage->Format;
+      t->image[i].internalFormat = baseImage->_BaseFormat;
       height += t->image[i].image->Height;
    }
 
@@ -591,7 +591,7 @@ static void i810UpdateTexUnit( GLcontext *ctx, GLuint unit,
 	  * texture environment state has changed.
 	  */
 
-	 imesa->TexEnvImageFmt[unit] = tObj->Image[0][tObj->BaseLevel]->Format;
+	 imesa->TexEnvImageFmt[unit] = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
       }
       else {
 	 imesa->CurrentTexObj[unit] = 0;

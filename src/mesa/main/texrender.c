@@ -164,7 +164,7 @@ wrap_texture(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
 
    trb->Base.Width = trb->TexImage->Width;
    trb->Base.Height = trb->TexImage->Height;
-   trb->Base.InternalFormat = trb->TexImage->IntFormat; /* XXX fix? */
+   trb->Base.InternalFormat = trb->TexImage->InternalFormat; /* XXX fix? */
    trb->Base._BaseFormat = trb->TexImage->TexFormat->BaseFormat;
 #if 0
    /* fix/avoid this assertion someday */

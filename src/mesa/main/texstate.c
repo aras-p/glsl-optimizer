@@ -1717,38 +1717,39 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          *params = img->Depth;
          return;
       case GL_TEXTURE_INTERNAL_FORMAT:
-         *params = img->IntFormat;
+         *params = img->InternalFormat;
          return;
       case GL_TEXTURE_BORDER:
          *params = img->Border;
          return;
       case GL_TEXTURE_RED_SIZE:
-         if (img->Format == GL_RGB || img->Format == GL_RGBA)
+         if (img->_BaseFormat == GL_RGB || img->_BaseFormat == GL_RGBA)
             *params = img->TexFormat->RedBits;
          else
             *params = 0;
          return;
       case GL_TEXTURE_GREEN_SIZE:
-         if (img->Format == GL_RGB || img->Format == GL_RGBA)
+         if (img->_BaseFormat == GL_RGB || img->_BaseFormat == GL_RGBA)
             *params = img->TexFormat->GreenBits;
          else
             *params = 0;
          return;
       case GL_TEXTURE_BLUE_SIZE:
-         if (img->Format == GL_RGB || img->Format == GL_RGBA)
+         if (img->_BaseFormat == GL_RGB || img->_BaseFormat == GL_RGBA)
             *params = img->TexFormat->BlueBits;
          else
             *params = 0;
          return;
       case GL_TEXTURE_ALPHA_SIZE:
-         if (img->Format == GL_ALPHA || img->Format == GL_LUMINANCE_ALPHA ||
-             img->Format == GL_RGBA)
+         if (img->_BaseFormat == GL_ALPHA ||
+             img->_BaseFormat == GL_LUMINANCE_ALPHA ||
+             img->_BaseFormat == GL_RGBA)
             *params = img->TexFormat->AlphaBits;
          else
             *params = 0;
          return;
       case GL_TEXTURE_INTENSITY_SIZE:
-         if (img->Format != GL_INTENSITY)
+         if (img->_BaseFormat != GL_INTENSITY)
             *params = 0;
          else if (img->TexFormat->IntensityBits > 0)
             *params = img->TexFormat->IntensityBits;
@@ -1756,8 +1757,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
             *params = MIN2(img->TexFormat->RedBits, img->TexFormat->GreenBits);
          return;
       case GL_TEXTURE_LUMINANCE_SIZE:
-         if (img->Format != GL_LUMINANCE &&
-             img->Format != GL_LUMINANCE_ALPHA)
+         if (img->_BaseFormat != GL_LUMINANCE &&
+             img->_BaseFormat != GL_LUMINANCE_ALPHA)
             *params = 0;
          else if (img->TexFormat->LuminanceBits > 0)
             *params = img->TexFormat->LuminanceBits;
@@ -1765,7 +1766,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
             *params = MIN2(img->TexFormat->RedBits, img->TexFormat->GreenBits);
          return;
       case GL_TEXTURE_INDEX_SIZE_EXT:
-         if (img->Format == GL_COLOR_INDEX)
+         if (img->_BaseFormat == GL_COLOR_INDEX)
             *params = img->TexFormat->IndexBits;
          else
             *params = 0;
@@ -3033,7 +3034,7 @@ update_texture_state( GLcontext *ctx )
 	 texUnit->_CurrentCombine = & texUnit->Combine;
       }
       else {
-         GLenum format = texUnit->_Current->Image[0][0]->Format;
+         GLenum format = texUnit->_Current->Image[0][0]->_BaseFormat;
          if (format == GL_COLOR_INDEX) {
             format = GL_RGBA;  /* a bit of a hack */
          }

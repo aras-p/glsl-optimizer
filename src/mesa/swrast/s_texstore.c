@@ -394,7 +394,7 @@ _swrast_copy_texsubimage1d( GLcontext *ctx, GLenum target, GLint level,
 
    ASSERT(ctx->Driver.TexImage1D);
 
-   if (texImage->Format == GL_DEPTH_COMPONENT) {
+   if (texImage->_BaseFormat == GL_DEPTH_COMPONENT) {
       /* read depth image from framebuffer */
       GLfloat *image = read_depth_image(ctx, x, y, width, 1);
       if (!image) {
@@ -408,7 +408,7 @@ _swrast_copy_texsubimage1d( GLcontext *ctx, GLenum target, GLint level,
                                 &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
-   else if (texImage->Format == GL_DEPTH_STENCIL_EXT) {
+   else if (texImage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
       /* read depth/stencil image from framebuffer */
       GLuint *image = read_depth_stencil_image(ctx, x, y, width, 1);
       if (!image) {
@@ -463,7 +463,7 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
 
    ASSERT(ctx->Driver.TexImage2D);
 
-   if (texImage->Format == GL_DEPTH_COMPONENT) {
+   if (texImage->_BaseFormat == GL_DEPTH_COMPONENT) {
       /* read depth image from framebuffer */
       GLfloat *image = read_depth_image(ctx, x, y, width, height);
       if (!image) {
@@ -477,7 +477,7 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
                                 &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
-   else if (texImage->Format == GL_DEPTH_STENCIL_EXT) {
+   else if (texImage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
       /* read depth/stencil image from framebuffer */
       GLuint *image = read_depth_stencil_image(ctx, x, y, width, height);
       if (!image) {
@@ -534,7 +534,7 @@ _swrast_copy_texsubimage3d( GLcontext *ctx,
 
    ASSERT(ctx->Driver.TexImage3D);
 
-   if (texImage->Format == GL_DEPTH_COMPONENT) {
+   if (texImage->_BaseFormat == GL_DEPTH_COMPONENT) {
       /* read depth image from framebuffer */
       GLfloat *image = read_depth_image(ctx, x, y, width, height);
       if (!image) {
@@ -548,7 +548,7 @@ _swrast_copy_texsubimage3d( GLcontext *ctx,
                                 &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
-   else if (texImage->Format == GL_DEPTH_STENCIL_EXT) {
+   else if (texImage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
       /* read depth/stencil image from framebuffer */
       GLuint *image = read_depth_stencil_image(ctx, x, y, width, height);
       if (!image) {

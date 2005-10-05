@@ -115,7 +115,7 @@ static void i915LayoutTextureImages( i915ContextPtr i915,
 	 
 	    t->intel.image[face][i].offset = 
 	       y * pitch + x * t->intel.texelBytes;
-	    t->intel.image[face][i].internalFormat = baseImage->Format;
+	    t->intel.image[face][i].internalFormat = baseImage->_BaseFormat;
 
 	    d >>= 1;
 	    x += step_offsets[face][0] * d;
@@ -144,7 +144,7 @@ static void i915LayoutTextureImages( i915ContextPtr i915,
 	 t->intel.image[0][i].image = tObj->Image[0][firstLevel + i];
 	 if (t->intel.image[0][i].image) {
 	    t->intel.image[0][i].offset = total_height * pitch;
-	    t->intel.image[0][i].internalFormat = baseImage->Format;
+	    t->intel.image[0][i].internalFormat = baseImage->_BaseFormat;
 	 }
 
 	 total_height += MAX2(2, virtual_height);
@@ -171,7 +171,7 @@ static void i915LayoutTextureImages( i915ContextPtr i915,
 	    break;
 	 
 	 t->intel.image[0][i].offset = total_height * pitch;
-	 t->intel.image[0][i].internalFormat = baseImage->Format;
+	 t->intel.image[0][i].internalFormat = baseImage->_BaseFormat;
 	 if (t->intel.image[0][i].image->IsCompressed)
 	 {
 	   if (t->intel.image[0][i].image->Height > 4)
@@ -266,7 +266,7 @@ static void i945LayoutTextureImages( i915ContextPtr i915,
 	 
 	    t->intel.image[face][i].offset = 
 	       y * pitch + x * t->intel.texelBytes;
-	    t->intel.image[face][i].internalFormat = baseImage->Format;
+	    t->intel.image[face][i].internalFormat = baseImage->_BaseFormat;
 
 	    d >>= 1;
 	    
@@ -326,7 +326,7 @@ static void i945LayoutTextureImages( i915ContextPtr i915,
 
 	 
 	 t->intel.image[0][i].offset = total_height * pitch;
-	 t->intel.image[0][i].internalFormat = baseImage->Format;
+	 t->intel.image[0][i].internalFormat = baseImage->_BaseFormat;
 	 
 
 
@@ -358,7 +358,7 @@ static void i945LayoutTextureImages( i915ContextPtr i915,
 	    break;
 	 
 	 t->intel.image[0][i].offset = offset;
-	 t->intel.image[0][i].internalFormat = baseImage->Format;
+	 t->intel.image[0][i].internalFormat = baseImage->_BaseFormat;
 
 	 if (t->intel.image[0][i].image->IsCompressed)
 	    sz = MAX2(1, t->intel.image[0][i].image->Height/4) * pitch;

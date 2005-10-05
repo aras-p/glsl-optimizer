@@ -646,8 +646,7 @@ static void intelUploadTexImage( intelContextPtr intel,
 		 image->Width, image->Height, image->Depth, offset,
 		 row_len, t->Pitch, t->depth_pitch);
 
-      switch(image->IntFormat)
-	{
+      switch (image->InternalFormat) {
 	case GL_COMPRESSED_RGB_FXT1_3DFX:
 	case GL_COMPRESSED_RGBA_FXT1_3DFX:
 	case GL_RGB_S3TC:
@@ -669,9 +668,9 @@ static void intelUploadTexImage( intelContextPtr intel,
 	  }
 	  break;
 	default:
-	  fprintf(stderr,"Internal Compressed format not supported %d\n", image->IntFormat);
+	  fprintf(stderr,"Internal Compressed format not supported %d\n", image->InternalFormat);
 	  break;
-	}
+      }
    }
    else {
       GLuint row_len = image->Width * image->TexFormat->TexelBytes;

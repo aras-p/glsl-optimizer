@@ -1629,7 +1629,7 @@ static void setupTextureSingleTMU(GLcontext * ctx, GLuint unit)
 
    /* Check if we really need to update the texenv state */
    envMode = ctx->Texture.Unit[unit].EnvMode;
-   baseFormat = tObj->Image[0][tObj->BaseLevel]->Format;
+   baseFormat = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
 
    if (TDFX_IS_NAPALM(fxMesa)) {
       /* see if we really need to update the unit */
@@ -1952,10 +1952,10 @@ static void setupTextureDoubleTMU(GLcontext * ctx)
           baseImage0->Format != fxMesa->TexState.TexFormat[1] ||
           (fxMesa->Fallback & TDFX_FALLBACK_TEXTURE_ENV)*/) {
          hw1 = SetupTexEnvNapalm(ctx, GL_TRUE, &ctx->Texture.Unit[0],
-                                baseImage0->Format, &fxMesa->TexCombineExt[1]);
+                                baseImage0->_BaseFormat, &fxMesa->TexCombineExt[1]);
 #if 0/*JJJ*/
          fxMesa->TexState.EnvMode[1] = envMode0;
-         fxMesa->TexState.TexFormat[1] = baseImage0->Format;
+         fxMesa->TexState.TexFormat[1] = baseImage0->_BaseFormat;
          fxMesa->TexState.Enabled[0] = ctx->Texture.Unit[0]._ReallyEnabled;
 #endif
       }
@@ -1964,13 +1964,13 @@ static void setupTextureDoubleTMU(GLcontext * ctx)
       if (1/*fxMesa->TexState.Enabled[1] != ctx->Texture.Unit[1]._ReallyEnabled ||
           envMode1 != fxMesa->TexState.EnvMode[0] ||
           envMode1 == GL_COMBINE_EXT ||
-          baseImage1->Format != fxMesa->TexState.TexFormat[0] ||
+          baseImage1->_BaseFormat != fxMesa->TexState.TexFormat[0] ||
           (fxMesa->Fallback & TDFX_FALLBACK_TEXTURE_ENV)*/) {
          hw2 = SetupTexEnvNapalm(ctx, GL_FALSE, &ctx->Texture.Unit[1],
-                                baseImage1->Format, &fxMesa->TexCombineExt[0]);
+                                baseImage1->_BaseFormat, &fxMesa->TexCombineExt[0]);
 #if 0/*JJJ*/
          fxMesa->TexState.EnvMode[0] = envMode1;
-         fxMesa->TexState.TexFormat[0] = baseImage1->Format;
+         fxMesa->TexState.TexFormat[0] = baseImage1->_BaseFormat;
          fxMesa->TexState.Enabled[1] = ctx->Texture.Unit[1]._ReallyEnabled;
 #endif
       }
@@ -1994,21 +1994,21 @@ static void setupTextureDoubleTMU(GLcontext * ctx)
           envMode0 == GL_COMBINE_EXT ||
           envMode1 != fxMesa->TexState.EnvMode[unit1] ||
           envMode1 == GL_COMBINE_EXT ||
-          baseImage0->Format != fxMesa->TexState.TexFormat[unit0] ||
-          baseImage1->Format != fxMesa->TexState.TexFormat[unit1] ||
+          baseImage0->_BaseFormat != fxMesa->TexState.TexFormat[unit0] ||
+          baseImage1->_BaseFormat != fxMesa->TexState.TexFormat[unit1] ||
           (fxMesa->Fallback & TDFX_FALLBACK_TEXTURE_ENV)*/) {
 
          if (!SetupDoubleTexEnvVoodoo3(ctx, unit0,
-                         ctx->Texture.Unit[0].EnvMode, baseImage0->Format,
-                         ctx->Texture.Unit[1].EnvMode, baseImage1->Format)) {
+                         ctx->Texture.Unit[0].EnvMode, baseImage0->_BaseFormat,
+                         ctx->Texture.Unit[1].EnvMode, baseImage1->_BaseFormat)) {
             FALLBACK(fxMesa, TDFX_FALLBACK_TEXTURE_ENV, GL_TRUE);
          }
 
 #if 0/*JJJ*/
          fxMesa->TexState.EnvMode[unit0] = envMode0;
-         fxMesa->TexState.TexFormat[unit0] = baseImage0->Format;
+         fxMesa->TexState.TexFormat[unit0] = baseImage0->_BaseFormat;
          fxMesa->TexState.EnvMode[unit1] = envMode1;
-         fxMesa->TexState.TexFormat[unit1] = baseImage1->Format;
+         fxMesa->TexState.TexFormat[unit1] = baseImage1->_BaseFormat;
          fxMesa->TexState.Enabled[0] = ctx->Texture.Unit[0]._ReallyEnabled;
          fxMesa->TexState.Enabled[1] = ctx->Texture.Unit[1]._ReallyEnabled;
 #endif

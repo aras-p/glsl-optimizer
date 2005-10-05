@@ -406,9 +406,11 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
       }
 
       if (att->Type == GL_TEXTURE) {
-         w = att->Texture->Image[att->CubeMapFace][att->TextureLevel]->Width;
-         h = att->Texture->Image[att->CubeMapFace][att->TextureLevel]->Height;
-         f = att->Texture->Image[att->CubeMapFace][att->TextureLevel]->Format;
+         const struct gl_texture_image *texImg
+            = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+         w = texImg->Width;
+         h = texImg->Height;
+         f = texImg->_BaseFormat;
          numImages++;
          if (f != GL_RGB && f != GL_RGBA && f != GL_DEPTH_COMPONENT) {
             /* XXX need GL_DEPTH_STENCIL_EXT test? */

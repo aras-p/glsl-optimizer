@@ -163,9 +163,9 @@ static void mach64SetTexImages( mach64ContextPtr mmesa,
       t->setup.tex_cntl &= ~R128_MIP_MAP_DISABLE;
 
 #else
-   if ( ( baseImage->Format == GL_RGBA ) ||
-	( baseImage->Format == GL_ALPHA ) ||
-	( baseImage->Format == GL_LUMINANCE_ALPHA ) ) {
+   if ( ( baseImage->_BaseFormat == GL_RGBA ) ||
+	( baseImage->_BaseFormat == GL_ALPHA ) ||
+	( baseImage->_BaseFormat == GL_LUMINANCE_ALPHA ) ) {
       t->hasAlpha = 1;
    } else {
       t->hasAlpha = 0;
@@ -188,7 +188,7 @@ static void mach64UpdateTextureEnv( GLcontext *ctx, int unit )
    GLint source = mmesa->tmu_source[unit];
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[source];
    const struct gl_texture_object *tObj = texUnit->_Current;
-   const GLenum format = tObj->Image[0][tObj->BaseLevel]->Format;
+   const GLenum format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
    GLuint s = mmesa->setup.scale_3d_cntl;
 
    if ( MACH64_DEBUG & DEBUG_VERBOSE_API ) {

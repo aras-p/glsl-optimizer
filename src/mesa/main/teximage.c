@@ -1037,8 +1037,8 @@ static void
 clear_teximage_fields(struct gl_texture_image *img)
 {
    ASSERT(img);
-   img->Format = 0;
-   img->IntFormat = 0;
+   img->_BaseFormat = 0;
+   img->InternalFormat = 0;
    img->Border = 0;
    img->Width = 0;
    img->Height = 0;
@@ -1081,9 +1081,9 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
                            GLint border, GLenum internalFormat)
 {
    ASSERT(img);
-   img->Format = _mesa_base_tex_format( ctx, internalFormat );
-   ASSERT(img->Format > 0);
-   img->IntFormat = internalFormat;
+   img->_BaseFormat = _mesa_base_tex_format( ctx, internalFormat );
+   ASSERT(img->_BaseFormat > 0);
+   img->InternalFormat = internalFormat;
    img->Border = border;
    img->Width = width;
    img->Height = height;
@@ -1969,12 +1969,12 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
       }         
    }
 
-   if (teximage->IntFormat == GL_YCBCR_MESA) {
+   if (teximage->InternalFormat == GL_YCBCR_MESA) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glCopyTexSubImage2D");
       return GL_TRUE;
    }
 
-   if (teximage->Format == GL_DEPTH_COMPONENT) {
+   if (teximage->_BaseFormat == GL_DEPTH_COMPONENT) {
       if (!ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glCopyTexSubImage%D(no depth buffer)",
@@ -1982,7 +1982,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
          return GL_TRUE;
       }
    }
-   else if (teximage->Format == GL_DEPTH_STENCIL_EXT) {
+   else if (teximage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
       if (!ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer ||
           !ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -3191,7 +3191,7 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
    texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
    assert(texImage);
 
-   if ((GLint) format != texImage->IntFormat) {
+   if ((GLint) format != texImage->InternalFormat) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCompressedTexSubImage1D(format)");
       return;
@@ -3241,7 +3241,7 @@ _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
    texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
    assert(texImage);
 
-   if ((GLint) format != texImage->IntFormat) {
+   if ((GLint) format != texImage->InternalFormat) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCompressedTexSubImage2D(format)");
       return;
@@ -3291,7 +3291,7 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
    texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
    assert(texImage);
 
-   if ((GLint) format != texImage->IntFormat) {
+   if ((GLint) format != texImage->InternalFormat) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCompressedTexSubImage3D(format)");
       return;

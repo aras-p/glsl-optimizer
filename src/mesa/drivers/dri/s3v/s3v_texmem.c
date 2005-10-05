@@ -297,7 +297,7 @@ static void s3vUploadTexLevel( s3vContextPtr vmesa, s3vTextureObjectPtr t,
 
 	default:
 		fprintf(stderr, "Not supported texture format %s\n",
-			_mesa_lookup_enum_by_nr(image->Format));
+			_mesa_lookup_enum_by_nr(image->_BaseFormat));
 	}
 
 	DEBUG_TEX(("words = %i\n\n", words));

@@ -782,13 +782,14 @@ static void viaTexImage(GLcontext *ctx,
       GLint dstRowStride, dstImageStride = 0;
       GLboolean success;
       if (texImage->IsCompressed) {
-         dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat,width);
+         dstRowStride = _mesa_compressed_row_stride(texImage->InternalFormat,width);
       }
       else {
          dstRowStride = postConvWidth * texImage->TexFormat->TexelBytes;
       }
       ASSERT(texImage->TexFormat->StoreImage);
-      success = texImage->TexFormat->StoreImage(ctx, dims, texImage->Format,
+      success = texImage->TexFormat->StoreImage(ctx, dims,
+                                                texImage->_BaseFormat,
                                                 texImage->TexFormat,
                                                 texImage->Data,
                                                 0, 0, 0,  /* dstX/Y/Zoffset */

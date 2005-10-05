@@ -205,7 +205,7 @@ static void mgaUpdateTextureEnvG200( GLcontext *ctx, GLuint unit )
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[0]._Current;
    mgaTextureObjectPtr t = (mgaTextureObjectPtr) tObj->DriverData;
-   GLenum format = tObj->Image[0][tObj->BaseLevel]->Format;
+   GLenum format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
 
    if (tObj != ctx->Texture.Unit[0].Current2D &&
        tObj != ctx->Texture.Unit[0].CurrentRect)
@@ -537,7 +537,7 @@ static GLboolean mgaUpdateTextureEnvBlend( GLcontext *ctx, int unit )
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[source];
    const struct gl_texture_object *tObj = texUnit->_Current;
    GLuint *reg = ((GLuint *)&mmesa->setup.tdualstage0 + unit);
-   GLenum format = tObj->Image[0][tObj->BaseLevel]->Format;
+   GLenum format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
 
    *reg = 0;
 
@@ -634,7 +634,7 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, GLuint unit )
    const struct gl_texture_object *tObj = texUnit->_Current;
    GLuint *reg = ((GLuint *)&mmesa->setup.tdualstage0 + unit);
    mgaTextureObjectPtr t = (mgaTextureObjectPtr) tObj->DriverData;
-   GLenum format = tObj->Image[0][tObj->BaseLevel]->Format;
+   GLenum format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
 
    if (tObj != ctx->Texture.Unit[source].Current2D &&
        tObj != ctx->Texture.Unit[source].CurrentRect)

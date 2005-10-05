@@ -544,7 +544,7 @@ affine_span(GLcontext *ctx, struct sw_span *span,
    info.twidth_log2 = obj->Image[0][b]->WidthLog2;			\
    info.smask = obj->Image[0][b]->Width - 1;				\
    info.tmask = obj->Image[0][b]->Height - 1;				\
-   info.format = obj->Image[0][b]->Format;				\
+   info.format = obj->Image[0][b]->_BaseFormat;				\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
    span.arrayMask |= SPAN_RGBA;						\
@@ -814,7 +814,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
    info.twidth_log2 = obj->Image[0][b]->WidthLog2;			\
    info.smask = obj->Image[0][b]->Width - 1;				\
    info.tmask = obj->Image[0][b]->Height - 1;				\
-   info.format = obj->Image[0][b]->Format;				\
+   info.format = obj->Image[0][b]->_BaseFormat;				\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
 									\

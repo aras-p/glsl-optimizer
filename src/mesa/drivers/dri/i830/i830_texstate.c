@@ -185,7 +185,7 @@ static void i830SetTexImages( i830ContextPtr imesa,
 	}
       else
 	total_height += t->image[0][i].image->Height;
-      t->image[0][i].internalFormat = baseImage->Format;
+      t->image[0][i].internalFormat = baseImage->_BaseFormat;
    }
 
    t->Pitch = pitch;
@@ -586,9 +586,9 @@ static GLboolean enable_tex_common( GLcontext *ctx, GLuint unit )
     * missed (need to update last stage flag?).  Call
     * i830UpdateTexEnv always.
     */
-   if (tObj->Image[0][tObj->BaseLevel]->Format !=
+   if (tObj->Image[0][tObj->BaseLevel]->_BaseFormat !=
        imesa->TexEnvImageFmt[unit]) {
-      imesa->TexEnvImageFmt[unit] = tObj->Image[0][tObj->BaseLevel]->Format;
+      imesa->TexEnvImageFmt[unit] = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
    }
    i830UpdateTexEnv( ctx, unit );
    imesa->TexEnabledMask |= I830_TEX_UNIT_ENABLED(unit);

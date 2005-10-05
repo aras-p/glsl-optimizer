@@ -1206,13 +1206,13 @@ struct gl_texture_format
  */
 struct gl_texture_image
 {
-   GLenum Format;		/**< Either GL_RGB, GL_RGBA, GL_ALPHA,
+   GLenum _BaseFormat;		/**< Either GL_RGB, GL_RGBA, GL_ALPHA,
 				 *   GL_LUMINANCE, GL_LUMINANCE_ALPHA,
 				 *   GL_INTENSITY, GL_COLOR_INDEX,
 				 *   GL_DEPTH_COMPONENT or GL_DEPTH_STENCIL_EXT
                                  *   only. Used for choosing TexEnv arithmetic.
 				 */
-   GLint IntFormat;		/**< Internal format as given by the user */
+   GLint InternalFormat;	/**< Internal format as given by the user */
    GLuint Border;		/**< 0 or 1 */
    GLuint Width;		/**< = 2^WidthLog2 + 2*Border */
    GLuint Height;		/**< = 2^HeightLog2 + 2*Border */

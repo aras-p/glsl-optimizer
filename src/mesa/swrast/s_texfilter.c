@@ -1041,7 +1041,7 @@ sample_2d_linear_repeat(GLcontext *ctx,
    ASSERT(tObj->WrapS == GL_REPEAT);
    ASSERT(tObj->WrapT == GL_REPEAT);
    ASSERT(img->Border == 0);
-   ASSERT(img->Format != GL_COLOR_INDEX);
+   ASSERT(img->_BaseFormat != GL_COLOR_INDEX);
    ASSERT(img->_IsPowerOfTwo);
 
    COMPUTE_LINEAR_REPEAT_TEXEL_LOCATION(texcoord[0], u, width,  i0, i1);
@@ -1234,7 +1234,7 @@ opt_sample_rgb_2d( GLcontext *ctx,
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
    ASSERT(img->Border==0);
-   ASSERT(img->Format==GL_RGB);
+   ASSERT(img->_BaseFormat==GL_RGB);
    ASSERT(img->_IsPowerOfTwo);
 
    for (k=0; k<n; k++) {
@@ -1275,7 +1275,7 @@ opt_sample_rgba_2d( GLcontext *ctx,
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
    ASSERT(img->Border==0);
-   ASSERT(img->Format==GL_RGBA);
+   ASSERT(img->_BaseFormat==GL_RGBA);
    ASSERT(img->_IsPowerOfTwo);
 
    for (i = 0; i < n; i++) {
@@ -1305,7 +1305,7 @@ sample_lambda_2d( GLcontext *ctx,
    const GLboolean repeatNoBorderPOT = (tObj->WrapS == GL_REPEAT)
       && (tObj->WrapT == GL_REPEAT)
       && (tImg->Border == 0 && (tImg->Width == tImg->RowStride))
-      && (tImg->Format != GL_COLOR_INDEX)
+      && (tImg->_BaseFormat != GL_COLOR_INDEX)
       && tImg->_IsPowerOfTwo;
 
    ASSERT(lambda != NULL);
@@ -2045,7 +2045,7 @@ sample_nearest_rect(GLcontext *ctx,
    ASSERT(tObj->WrapT == GL_CLAMP ||
           tObj->WrapT == GL_CLAMP_TO_EDGE ||
           tObj->WrapT == GL_CLAMP_TO_BORDER);
-   ASSERT(img->Format != GL_COLOR_INDEX);
+   ASSERT(img->_BaseFormat != GL_COLOR_INDEX);
 
    /* XXX move Wrap mode tests outside of loops for common cases */
    for (i = 0; i < n; i++) {
@@ -2100,7 +2100,7 @@ sample_linear_rect(GLcontext *ctx,
    ASSERT(tObj->WrapT == GL_CLAMP ||
           tObj->WrapT == GL_CLAMP_TO_EDGE ||
           tObj->WrapT == GL_CLAMP_TO_BORDER);
-   ASSERT(img->Format != GL_COLOR_INDEX);
+   ASSERT(img->_BaseFormat != GL_COLOR_INDEX);
 
    /* XXX lots of opportunity for optimization in this loop */
    for (i = 0; i < n; i++) {
@@ -2248,8 +2248,8 @@ sample_depth_texture( GLcontext *ctx,
 
    (void) lambda;
 
-   ASSERT(tObj->Image[0][tObj->BaseLevel]->Format == GL_DEPTH_COMPONENT ||
-          tObj->Image[0][tObj->BaseLevel]->Format == GL_DEPTH_STENCIL_EXT);
+   ASSERT(tObj->Image[0][tObj->BaseLevel]->_BaseFormat == GL_DEPTH_COMPONENT ||
+          tObj->Image[0][tObj->BaseLevel]->_BaseFormat == GL_DEPTH_STENCIL_EXT);
 
    ASSERT(tObj->Target == GL_TEXTURE_1D ||
           tObj->Target == GL_TEXTURE_2D ||
@@ -2544,7 +2544,7 @@ sample_depth_texture2(const GLcontext *ctx,
     * GL_TEXTURE_COMPARE_SGIX == GL_TRUE but the current texture object
     * isn't a depth texture.
     */
-   if (texImage->Format != GL_DEPTH_COMPONENT) {
+   if (texImage->_BaseFormat != GL_DEPTH_COMPONENT) {
       _mesa_problem(ctx,"GL_TEXTURE_COMPARE_SGIX enabled with non-depth texture");
       return;
    }
@@ -2647,7 +2647,7 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
    }
    else {
       const GLboolean needLambda = (GLboolean) (t->MinFilter != t->MagFilter);
-      const GLenum format = t->Image[0][t->BaseLevel]->Format;
+      const GLenum format = t->Image[0][t->BaseLevel]->_BaseFormat;
 
       switch (t->Target) {
       case GL_TEXTURE_1D:

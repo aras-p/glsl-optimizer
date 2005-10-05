@@ -561,6 +561,7 @@ static struct gl_texture_format _savage_texformat_a1114444 = {
     0,					/* IntensityBits */
     0,					/* IndexBits */
     0,					/* DepthBits */
+    0,					/* StencilBits */
     2,					/* TexelBytes */
     _savage_texstore_a1114444,		/* StoreTexImageFunc */
     NULL, NULL, NULL, NULL, NULL, NULL  /* FetchTexel* filled in by 
@@ -578,6 +579,7 @@ static struct gl_texture_format _savage_texformat_a1118888 = {
     0,					/* IntensityBits */
     0,					/* IndexBits */
     0,					/* DepthBits */
+    0,					/* StencilBits */
     4,					/* TexelBytes */
     _savage_texstore_a1118888,		/* StoreTexImageFunc */
     NULL, NULL, NULL, NULL, NULL, NULL  /* FetchTexel* filled in by 
@@ -1202,7 +1204,7 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
    
    driUpdateTextureLRU( &t->base );
 
-   format = tObj->Image[0][tObj->BaseLevel]->Format;
+   format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
 
    switch (ctx->Texture.Unit[0].EnvMode) {
    case GL_REPLACE:
@@ -1455,7 +1457,7 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
    
    driUpdateTextureLRU( &t->base );
 
-   format = tObj->Image[0][tObj->BaseLevel]->Format;
+   format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
 
    switch (ctx->Texture.Unit[1].EnvMode) {
    case GL_REPLACE:
@@ -1629,7 +1631,7 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
 
     driUpdateTextureLRU( &t->base );
 
-    format = tObj->Image[0][tObj->BaseLevel]->Format;
+    format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
 
     /* FIXME: copied from utah-glx, probably needs some tuning */
     switch (ctx->Texture.Unit[0].EnvMode) {

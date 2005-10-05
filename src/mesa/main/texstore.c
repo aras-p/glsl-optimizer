@@ -2338,7 +2338,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
       const GLint dstRowStride = 0, dstImageStride = 0;
       GLboolean success;
       ASSERT(texImage->TexFormat->StoreImage);
-      success = texImage->TexFormat->StoreImage(ctx, 1, texImage->Format,
+      success = texImage->TexFormat->StoreImage(ctx, 1, texImage->_BaseFormat,
                                                 texImage->TexFormat,
                                                 texImage->Data,
                                                 0, 0, 0,  /* dstX/Y/Zoffset */
@@ -2425,13 +2425,14 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
       GLint dstRowStride, dstImageStride = 0;
       GLboolean success;
       if (texImage->IsCompressed) {
-         dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat,width);
+         dstRowStride
+            = _mesa_compressed_row_stride(texImage->InternalFormat,width);
       }
       else {
          dstRowStride = postConvWidth * texImage->TexFormat->TexelBytes;
       }
       ASSERT(texImage->TexFormat->StoreImage);
-      success = texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+      success = texImage->TexFormat->StoreImage(ctx, 2, texImage->_BaseFormat,
                                                 texImage->TexFormat,
                                                 texImage->Data,
                                                 0, 0, 0,  /* dstX/Y/Zoffset */
@@ -2504,7 +2505,8 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
       GLint dstRowStride, dstImageStride;
       GLboolean success;
       if (texImage->IsCompressed) {
-         dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat,width);
+         dstRowStride
+            = _mesa_compressed_row_stride(texImage->InternalFormat,width);
          dstImageStride = 0;
       }
       else {
@@ -2512,7 +2514,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
          dstImageStride = dstRowStride * height;
       }
       ASSERT(texImage->TexFormat->StoreImage);
-      success = texImage->TexFormat->StoreImage(ctx, 3, texImage->Format,
+      success = texImage->TexFormat->StoreImage(ctx, 3, texImage->_BaseFormat,
                                                 texImage->TexFormat,
                                                 texImage->Data,
                                                 0, 0, 0,  /* dstX/Y/Zoffset */
@@ -2558,7 +2560,7 @@ _mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
       const GLint dstRowStride = 0, dstImageStride = 0;
       GLboolean success;
       ASSERT(texImage->TexFormat->StoreImage);
-      success = texImage->TexFormat->StoreImage(ctx, 1, texImage->Format,
+      success = texImage->TexFormat->StoreImage(ctx, 1, texImage->_BaseFormat,
                                                 texImage->TexFormat,
                                                 texImage->Data,
                                                 xoffset, 0, 0,  /* offsets */
@@ -2604,14 +2606,14 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
       GLint dstRowStride = 0, dstImageStride = 0;
       GLboolean success;
       if (texImage->IsCompressed) {
-         dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
+         dstRowStride = _mesa_compressed_row_stride(texImage->InternalFormat,
                                                     texImage->Width);
       }
       else {
          dstRowStride = texImage->Width * texImage->TexFormat->TexelBytes;
       }
       ASSERT(texImage->TexFormat->StoreImage);
-      success = texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+      success = texImage->TexFormat->StoreImage(ctx, 2, texImage->_BaseFormat,
                                                 texImage->TexFormat,
                                                 texImage->Data,
                                                 xoffset, yoffset, 0,
@@ -2657,7 +2659,7 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
       GLint dstRowStride, dstImageStride;
       GLboolean success;
       if (texImage->IsCompressed) {
-         dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
+         dstRowStride = _mesa_compressed_row_stride(texImage->InternalFormat,
                                                     texImage->Width);
          dstImageStride = 0; /* XXX fix */
       }
@@ -2666,7 +2668,7 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
          dstImageStride = dstRowStride * texImage->Height;
       }
       ASSERT(texImage->TexFormat->StoreImage);
-      success = texImage->TexFormat->StoreImage(ctx, 3, texImage->Format,
+      success = texImage->TexFormat->StoreImage(ctx, 3, texImage->_BaseFormat,
                                                 texImage->TexFormat,
                                                 texImage->Data,
                                                 xoffset, yoffset, zoffset,
@@ -2850,13 +2852,13 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
    if (!data)
       return;
 
-   srcRowStride = _mesa_compressed_row_stride(texImage->IntFormat, width);
+   srcRowStride = _mesa_compressed_row_stride(texImage->InternalFormat, width);
    src = (const GLubyte *) data;
 
-   destRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
+   destRowStride = _mesa_compressed_row_stride(texImage->InternalFormat,
                                                texImage->Width);
    dest = _mesa_compressed_image_address(xoffset, yoffset, 0,
-                                         texImage->IntFormat,
+                                         texImage->InternalFormat,
                                          texImage->Width,
                               (GLubyte*) texImage->Data);
 
@@ -3683,21 +3685,21 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 
       assert(texObj->Target == GL_TEXTURE_2D);
 
-      if (srcImage->Format == GL_RGB) {
+      if (srcImage->_BaseFormat == GL_RGB) {
          convertFormat = &_mesa_texformat_rgb;
          components = 3;
       }
-      else if (srcImage->Format == GL_RGBA) {
+      else if (srcImage->_BaseFormat == GL_RGBA) {
          convertFormat = &_mesa_texformat_rgba;
          components = 4;
       }
       else {
-         _mesa_problem(ctx, "bad srcImage->Format in _mesa_generate_mipmaps");
+         _mesa_problem(ctx, "bad srcImage->_BaseFormat in _mesa_generate_mipmaps");
          return;
       }
 
       /* allocate storage for uncompressed GL_RGB or GL_RGBA images */
-      size = _mesa_bytes_per_pixel(srcImage->Format, CHAN_TYPE)
+      size = _mesa_bytes_per_pixel(srcImage->_BaseFormat, CHAN_TYPE)
          * srcImage->Width * srcImage->Height * srcImage->Depth + 20;
       /* 20 extra bytes, just be safe when calling last FetchTexel */
       srcData = (GLubyte *) _mesa_malloc(size);
@@ -3788,7 +3790,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 
       /* initialize new image */
       _mesa_init_teximage_fields(ctx, target, dstImage, dstWidth, dstHeight,
-                                 dstDepth, border, srcImage->IntFormat);
+                                 dstDepth, border, srcImage->InternalFormat);
       dstImage->DriverData = NULL;
       dstImage->TexFormat = srcImage->TexFormat;
       dstImage->FetchTexelc = srcImage->FetchTexelc;
@@ -3861,10 +3863,10 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
          GLubyte *temp;
          /* compress image from dstData into dstImage->Data */
          const GLenum srcFormat = convertFormat->BaseFormat;
-         GLint dstRowStride = _mesa_compressed_row_stride(srcImage->IntFormat,
-                                                          dstWidth);
+         GLint dstRowStride
+            = _mesa_compressed_row_stride(srcImage->InternalFormat, dstWidth);
          ASSERT(srcFormat == GL_RGB || srcFormat == GL_RGBA);
-         dstImage->TexFormat->StoreImage(ctx, 2, dstImage->Format,
+         dstImage->TexFormat->StoreImage(ctx, 2, dstImage->_BaseFormat,
                                          dstImage->TexFormat,
                                          dstImage->Data,
                                          0, 0, 0, /* dstX/Y/Zoffset */

@@ -1111,7 +1111,7 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
       rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
    }
 
-   format = tObj->Image[0][tObj->BaseLevel]->Format;
+   format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
    if ( rmesa->state.texture.unit[unit].format != format ||
 	rmesa->state.texture.unit[unit].envMode != texUnit->EnvMode ) {
       rmesa->state.texture.unit[unit].format = format;

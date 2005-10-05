@@ -199,7 +199,7 @@ static GLboolean i830SetTexImages( i830ContextPtr i830,
 	 
 	    t->intel.image[face][i].offset = 
 	       y * pitch + x * t->intel.texelBytes;
-	    t->intel.image[face][i].internalFormat = baseImage->Format;
+	    t->intel.image[face][i].internalFormat = baseImage->_BaseFormat;
 
 	    d >>= 1;
 	    x += step_offsets[face][0] * d;
@@ -219,7 +219,7 @@ static GLboolean i830SetTexImages( i830ContextPtr i830,
 	    break;
 	 
 	 t->intel.image[0][i].offset = total_height * pitch;
-	 t->intel.image[0][i].internalFormat = baseImage->Format;
+	 t->intel.image[0][i].internalFormat = baseImage->_BaseFormat;
 	 if (t->intel.image[0][i].image->IsCompressed)
 	 {
 	   if (t->intel.image[0][i].image->Height > 4)

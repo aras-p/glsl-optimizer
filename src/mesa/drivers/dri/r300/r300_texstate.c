@@ -253,7 +253,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	  if(0)
 	    fprintf(stderr, "w=%d h=%d d=%d tb=%d intFormat=%d\n", texImage->Width, texImage->Height,
 		    texImage->Depth, texImage->TexFormat->TexelBytes,
-		    texImage->IntFormat);
+		    texImage->InternalFormat);
 	  
 	  /* Align to 32-byte offset.  It is faster to do this unconditionally
 	   * (no branch penalty).
@@ -1325,7 +1325,7 @@ static GLboolean update_tex_common(GLcontext * ctx, int unit)
 	}
 #endif
 
-	format = tObj->Image[0][tObj->BaseLevel]->Format;
+	format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
 	if (rmesa->state.texture.unit[unit].format != format ||
 	    rmesa->state.texture.unit[unit].envMode != texUnit->EnvMode) {
 		//rmesa->state.texture.unit[unit].format = format;

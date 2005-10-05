@@ -743,7 +743,7 @@ texture_apply( const GLcontext *ctx,
    baseLevel = texUnit->_Current->BaseLevel;
    ASSERT(texUnit->_Current->Image[0][baseLevel]);
 
-   format = texUnit->_Current->Image[0][baseLevel]->Format;
+   format = texUnit->_Current->Image[0][baseLevel]->_BaseFormat;
 
    if (format == GL_COLOR_INDEX || format == GL_YCBCR_MESA) {
       format = GL_RGBA;  /* a bit of a hack */

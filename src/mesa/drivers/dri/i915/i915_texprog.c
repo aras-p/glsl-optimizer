@@ -291,7 +291,7 @@ static GLuint emit_texenv( struct i915_fragment_program *p, int unit )
    struct gl_texture_unit *texUnit = &p->ctx->Texture.Unit[unit];
    GLenum envMode = texUnit->EnvMode;
    struct gl_texture_object *tObj = texUnit->_Current;
-   GLenum format = tObj->Image[0][tObj->BaseLevel]->Format;
+   GLenum format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
    GLuint saturate = unit < p->last_tex_stage ? A0_DEST_SATURATE : 0;
 
    switch(envMode) {

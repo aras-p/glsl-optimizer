@@ -73,7 +73,7 @@ static void s3vSetTexImages( s3vContextPtr vmesa,
    for ( height = i = 0 ; i < numLevels ; i++ ) {
       t->image[i].image = tObj->Image[0][firstLevel + i];
       t->image[i].offset = height * pitch;
-      t->image[i].internalFormat = baseImage->Format;
+      t->image[i].internalFormat = baseImage->_BaseFormat;
       height += t->image[i].image->Height;
       t->TextureBaseAddr[i] = (t->BufAddr + t->image[i].offset +
          _TEXALIGN) & (GLuint)(~_TEXALIGN);
@@ -96,7 +96,7 @@ static void s3vUpdateTexEnv( GLcontext *ctx, GLuint unit )
    s3vContextPtr vmesa = S3V_CONTEXT(ctx);
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    const struct gl_texture_object *tObj = texUnit->_Current;
-   const GLuint format = tObj->Image[0][tObj->BaseLevel]->Format;
+   const GLuint format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
 /*
    s3vTextureObjectPtr t = (s3vTextureObjectPtr)tObj->DriverData;
    GLuint tc;
@@ -246,9 +246,9 @@ static void s3vUpdateTexUnit( GLcontext *ctx, GLuint unit )
       /* Update texture environment if texture object image format or 
        * texture environment state has changed.
        */
-      if (tObj->Image[0][tObj->BaseLevel]->Format !=
+      if (tObj->Image[0][tObj->BaseLevel]->_BaseFormat !=
           vmesa->TexEnvImageFmt[unit]) {
-         vmesa->TexEnvImageFmt[unit] = tObj->Image[0][tObj->BaseLevel]->Format;
+         vmesa->TexEnvImageFmt[unit] = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
          s3vUpdateTexEnv( ctx, unit );
       }
 #if 1
