@@ -43,7 +43,7 @@
 static char dummy;
 #endif
 
-#ifdef DEBUG  /* This code only used for debugging */
+#ifdef DEBUG_MATH  /* This code only used for debugging */
 
 
 static int m_norm_identity[16] = {
@@ -375,10 +375,9 @@ void _math_test_all_normal_transform_functions( char *description )
 #ifdef RUN_DEBUG_BENCHMARK
    if ( mesa_profile ) {
       _mesa_printf( "\n" );
-      fflush( stdout );
    }
 #endif
 }
 
 
-#endif /* DEBUG */
+#endif /* DEBUG_MATH */

@@ -29,7 +29,7 @@
 #define __M_DEBUG_UTIL_H__
 
 
-#ifdef DEBUG  /* This code only used for debugging */
+#ifdef DEBUG_MATH  /* This code only used for debugging */
 
 
 /* Comment this out to deactivate the cycle counter.
@@ -315,6 +315,6 @@ enum { NIL = 0, ONE = 1, NEG = -1, VAR = 2 };
 #endif
 
 
-#endif /* DEBUG */
+#endif /* DEBUG_MATH */
 
 #endif /* __M_DEBUG_UTIL_H__ */

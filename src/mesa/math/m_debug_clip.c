@@ -41,7 +41,7 @@
 static char dummy;
 #endif
 
-#ifdef DEBUG  /* This code only used for debugging */
+#ifdef DEBUG_MATH  /* This code only used for debugging */
 
 static clip_func *clip_tab[2] = {
    _mesa_clip_tab,
@@ -368,4 +368,4 @@ void _math_test_all_cliptest_functions( char *description )
 }
 
 
-#endif /* DEBUG */
+#endif /* DEBUG_MATH */

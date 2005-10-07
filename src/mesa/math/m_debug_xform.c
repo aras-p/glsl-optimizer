@@ -42,7 +42,7 @@
 static char dummy;
 #endif
 
-#ifdef DEBUG  /* This code only used for debugging */
+#ifdef DEBUG_MATH  /* This code only used for debugging */
 
 
 /* Overhead of profiling counter in cycles.  Automatically adjusted to
@@ -335,4 +335,4 @@ void _math_test_all_transform_functions( char *description )
 }
 
 
-#endif /* DEBUG */
+#endif /* DEBUG_MATH */
