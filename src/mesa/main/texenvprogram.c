@@ -452,7 +452,7 @@ static void emit_arg( struct fp_src_register *reg,
    reg->File = ureg.file;
    reg->Index = ureg.idx;
    reg->Swizzle = ureg.swz;
-   reg->NegateBase = ureg.negatebase;
+   reg->NegateBase = ureg.negatebase ? 0xf : 0x0;
    reg->Abs = ureg.abs;
    reg->NegateAbs = ureg.negateabs;
 }
