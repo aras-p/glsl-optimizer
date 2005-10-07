@@ -987,6 +987,9 @@ _mesa_update_state( GLcontext *ctx )
    if (new_state & (_NEW_SCISSOR|_NEW_BUFFERS))
       _mesa_update_draw_buffer_bounds( ctx );
 
+   if (new_state & _NEW_POINT)
+      _mesa_update_point( ctx );
+
    if (new_state & _NEW_POLYGON)
       _mesa_update_polygon( ctx );
 
