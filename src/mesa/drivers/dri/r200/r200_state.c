@@ -485,19 +485,16 @@ static void r200Fogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
       rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] |= i;
       break;
    case GL_FOG_COORD_SRC: {
-      GLuint fmt_0 = rmesa->hw.vtx.cmd[VTX_VTXFMT_0];
       GLuint out_0 = rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0];
       GLuint fog   = rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR];
 
       fog &= ~R200_FOG_USE_MASK;
       if ( ctx->Fog.FogCoordinateSource == GL_FOG_COORD ) {
 	 fog   |= R200_FOG_USE_VTX_FOG;
-	 fmt_0 |= R200_VTX_DISCRETE_FOG;
 	 out_0 |= R200_VTX_DISCRETE_FOG;
       }
       else {
 	 fog   |=  R200_FOG_USE_SPEC_ALPHA;
-	 fmt_0 &= ~R200_VTX_DISCRETE_FOG;
 	 out_0 &= ~R200_VTX_DISCRETE_FOG;
       }
 
@@ -506,10 +503,8 @@ static void r200Fogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
 	 rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] = fog;
       }
 
-      if ( (fmt_0 != rmesa->hw.vtx.cmd[VTX_VTXFMT_0])
-	   || (out_0 != rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0])) {
+      if (out_0 != rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0]) {
 	 R200_STATECHANGE( rmesa, vtx );
-	 rmesa->hw.vtx.cmd[VTX_VTXFMT_0] = fmt_0;
 	 rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] = out_0;	 
       }
 
