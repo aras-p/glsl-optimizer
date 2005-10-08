@@ -1025,6 +1025,9 @@ def EmitGetFunction(stateVars, returnType):
 	print "   if (!params)"
 	print "      return;"
 	print ""
+	print "   if (ctx->NewState)"
+	print "      _mesa_update_state(ctx);"
+	print ""
 	print "   if (ctx->Driver.%s &&" % function
 	print "       ctx->Driver.%s(ctx, pname, params))" % function
 	print "      return;"
@@ -1075,6 +1078,7 @@ def EmitHeader():
 #include "get.h"
 #include "macros.h"
 #include "mtypes.h"
+#include "state.h"
 #include "texcompress.h"
 
 

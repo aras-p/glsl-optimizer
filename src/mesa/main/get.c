@@ -11,6 +11,7 @@
 #include "get.h"
 #include "macros.h"
 #include "mtypes.h"
+#include "state.h"
 #include "texcompress.h"
 
 
@@ -84,6 +85,9 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
    if (!params)
       return;
+
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
 
    if (ctx->Driver.GetBooleanv &&
        ctx->Driver.GetBooleanv(ctx, pname, params))
@@ -1912,6 +1916,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
    if (!params)
       return;
 
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
    if (ctx->Driver.GetFloatv &&
        ctx->Driver.GetFloatv(ctx, pname, params))
       return;
@@ -3738,6 +3745,9 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
    if (!params)
       return;
+
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
 
    if (ctx->Driver.GetIntegerv &&
        ctx->Driver.GetIntegerv(ctx, pname, params))

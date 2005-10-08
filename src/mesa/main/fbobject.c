@@ -527,13 +527,14 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    if (target != GL_RENDERBUFFER_EXT) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                   "glBindRenderbufferEXT(target)");
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    if (renderbuffer) {
       newRb = lookup_renderbuffer(ctx, renderbuffer);
@@ -578,6 +579,7 @@ _mesa_DeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers)
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    for (i = 0; i < n; i++) {
       if (renderbuffers[i] > 0) {
@@ -700,7 +702,6 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    if (target != GL_RENDERBUFFER_EXT) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glRenderbufferStorageEXT(target)");
@@ -730,6 +731,8 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
       _mesa_error(ctx, GL_INVALID_OPERATION, "glRenderbufferStorageEXT");
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    /* Now allocate the storage */
    ASSERT(rb->AllocStorage);
@@ -775,6 +778,8 @@ _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
                   "glGetRenderbufferParameterivEXT");
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    switch (pname) {
    case GL_RENDERBUFFER_WIDTH_EXT:
@@ -870,12 +875,13 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    if (target != GL_FRAMEBUFFER_EXT) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glBindFramebufferEXT(target)");
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    if (framebuffer) {
       /* Binding a user-created framebuffer object */
@@ -927,6 +933,7 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    for (i = 0; i < n; i++) {
       if (framebuffers[i] > 0) {
@@ -1008,6 +1015,8 @@ _mesa_CheckFramebufferStatusEXT(GLenum target)
       return GL_FRAMEBUFFER_COMPLETE_EXT;
    }
 
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+
    _mesa_test_framebuffer_completeness(ctx, ctx->DrawBuffer);
    return ctx->DrawBuffer->_Status;
 }
@@ -1070,7 +1079,6 @@ _mesa_FramebufferTexture1DEXT(GLenum target, GLenum attachment,
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS); /* XXX check */
 
    if (error_check_framebuffer_texture(ctx, 1, target, attachment,
 				       textarget, texture, level))
@@ -1084,6 +1092,8 @@ _mesa_FramebufferTexture1DEXT(GLenum target, GLenum attachment,
 		  "glFramebufferTexture1DEXT(attachment)");
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    if (texture) {
       texObj = (struct gl_texture_object *)
@@ -1104,8 +1114,6 @@ _mesa_FramebufferTexture1DEXT(GLenum target, GLenum attachment,
       texObj = NULL;
    }
    ctx->Driver.RenderbufferTexture(ctx, att, texObj, textarget, level, 0);
-
-   _mesa_update_framebuffer_visual(ctx->DrawBuffer);
 }
 
 
@@ -1118,7 +1126,6 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS); /* XXX check */
 
    if (error_check_framebuffer_texture(ctx, 2, target, attachment,
 				       textarget, texture, level))
@@ -1134,6 +1141,8 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
 		  "glFramebufferTexture2DEXT(attachment)");
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    if (texture) {
       texObj = (struct gl_texture_object *)
@@ -1158,7 +1167,6 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
       texObj = NULL;
    }
    ctx->Driver.RenderbufferTexture(ctx, att, texObj, textarget, level, 0);
-   _mesa_update_framebuffer_visual(ctx->DrawBuffer);
 }
 
 
@@ -1172,7 +1180,6 @@ _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS); /* XXX check */
 
    if (error_check_framebuffer_texture(ctx, 3, target, attachment,
 				       textarget, texture, level))
@@ -1186,6 +1193,8 @@ _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
 		  "glFramebufferTexture1DEXT(attachment)");
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    if (texture) {
       const GLint maxSize = 1 << (ctx->Const.Max3DTextureLevels - 1);
@@ -1213,7 +1222,6 @@ _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
    }
    ctx->Driver.RenderbufferTexture(ctx, att, texObj, textarget,
                                    level, zoffset);
-   _mesa_update_framebuffer_visual(ctx->DrawBuffer);
 }
 
 
@@ -1227,7 +1235,6 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    if (target != GL_FRAMEBUFFER_EXT) {
       _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1267,10 +1274,10 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
       rb = NULL;
    }
 
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+
    assert(ctx->Driver.FramebufferRenderbuffer);
    ctx->Driver.FramebufferRenderbuffer(ctx, att, rb);
-
-   _mesa_update_framebuffer_visual(ctx->DrawBuffer);
 }
 
 
@@ -1301,6 +1308,8 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
                   "glGetFramebufferAttachmentParameterivEXT(attachment)");
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    switch (pname) {
    case GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT:
@@ -1361,6 +1370,7 @@ _mesa_GenerateMipmapEXT(GLenum target)
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    switch (target) {
    case GL_TEXTURE_1D:
