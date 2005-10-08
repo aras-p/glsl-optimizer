@@ -1886,44 +1886,29 @@ static void radeonEnable( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
 
    case GL_POLYGON_OFFSET_POINT:
-      if (rmesa->dri.drmMinor == 1) {
-	 radeonChooseRenderState( ctx );
-      } 
-      else {
-	 RADEON_STATECHANGE( rmesa, set );
-	 if ( state ) {
-	    rmesa->hw.set.cmd[SET_SE_CNTL] |=  RADEON_ZBIAS_ENABLE_POINT;
-	 } else {
-	    rmesa->hw.set.cmd[SET_SE_CNTL] &= ~RADEON_ZBIAS_ENABLE_POINT;
-	 }
+      RADEON_STATECHANGE( rmesa, set );
+      if ( state ) {
+	 rmesa->hw.set.cmd[SET_SE_CNTL] |=  RADEON_ZBIAS_ENABLE_POINT;
+      } else {
+	 rmesa->hw.set.cmd[SET_SE_CNTL] &= ~RADEON_ZBIAS_ENABLE_POINT;
       }
       break;
 
    case GL_POLYGON_OFFSET_LINE:
-      if (rmesa->dri.drmMinor == 1) {
-	 radeonChooseRenderState( ctx );
-      } 
-      else {
-	 RADEON_STATECHANGE( rmesa, set );
-	 if ( state ) {
-	    rmesa->hw.set.cmd[SET_SE_CNTL] |=  RADEON_ZBIAS_ENABLE_LINE;
-	 } else {
-	    rmesa->hw.set.cmd[SET_SE_CNTL] &= ~RADEON_ZBIAS_ENABLE_LINE;
-	 }
+      RADEON_STATECHANGE( rmesa, set );
+      if ( state ) {
+	 rmesa->hw.set.cmd[SET_SE_CNTL] |=  RADEON_ZBIAS_ENABLE_LINE;
+      } else {
+	 rmesa->hw.set.cmd[SET_SE_CNTL] &= ~RADEON_ZBIAS_ENABLE_LINE;
       }
       break;
 
    case GL_POLYGON_OFFSET_FILL:
-      if (rmesa->dri.drmMinor == 1) {
-	 radeonChooseRenderState( ctx );
-      } 
-      else {
-	 RADEON_STATECHANGE( rmesa, set );
-	 if ( state ) {
-	    rmesa->hw.set.cmd[SET_SE_CNTL] |=  RADEON_ZBIAS_ENABLE_TRI;
-	 } else {
-	    rmesa->hw.set.cmd[SET_SE_CNTL] &= ~RADEON_ZBIAS_ENABLE_TRI;
-	 }
+      RADEON_STATECHANGE( rmesa, set );
+      if ( state ) {
+	 rmesa->hw.set.cmd[SET_SE_CNTL] |=  RADEON_ZBIAS_ENABLE_TRI;
+      } else {
+	 rmesa->hw.set.cmd[SET_SE_CNTL] &= ~RADEON_ZBIAS_ENABLE_TRI;
       }
       break;
 
@@ -2411,10 +2396,7 @@ void radeonInitStateFuncs( GLcontext *ctx )
    ctx->Driver.LineWidth                = radeonLineWidth;
    ctx->Driver.LogicOpcode		= radeonLogicOpCode;
    ctx->Driver.PolygonMode		= radeonPolygonMode;
-
-   if (RADEON_CONTEXT(ctx)->dri.drmMinor > 1)
-      ctx->Driver.PolygonOffset		= radeonPolygonOffset;
-
+   ctx->Driver.PolygonOffset		= radeonPolygonOffset;
    ctx->Driver.PolygonStipple		= radeonPolygonStipple;
    ctx->Driver.RenderMode		= radeonRenderMode;
    ctx->Driver.Scissor			= radeonScissor;
