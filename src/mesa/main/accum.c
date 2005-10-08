@@ -70,7 +70,7 @@ _mesa_Accum( GLenum op, GLfloat value )
       return;
    }
 
-   if (ctx->Visual.accumRedBits == 0) {
+   if (ctx->DrawBuffer->Visual.haveAccumBuffer == 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glAccum(no accum buffer)");
       return;
    }
