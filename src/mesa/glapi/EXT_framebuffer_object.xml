@@ -14,11 +14,21 @@
     <enum name="STENCIL_INDEX8_EXT"                       value="0x8D48"/>
     <enum name="STENCIL_INDEX16_EXT"                      value="0x8D49"/>
 
-    <enum name="FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT"   value="0x8CD0"/>
-    <enum name="FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT"   value="0x8CD1"/>
-    <enum name="FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL_EXT" value="0x8CD2"/>
-    <enum name="FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE_EXT" value="0x8CD3"/>
-    <enum name="FRAMEBUFFER_ATTACHMENT_TEXTURE_3D_ZOFFSET_EXT"    value="0x8CD4"/>
+    <enum name="FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT"   count="1" value="0x8CD0">
+        <size name="GetFramebufferAttachmentParameterivEXT" mode="get"/>
+    </enum>
+    <enum name="FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT"   count="1" value="0x8CD1">
+        <size name="GetFramebufferAttachmentParameterivEXT" mode="get"/>
+    </enum>
+    <enum name="FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL_EXT" count="1" value="0x8CD2">
+        <size name="GetFramebufferAttachmentParameterivEXT" mode="get"/>
+    </enum>
+    <enum name="FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE_EXT" count="1" value="0x8CD3">
+        <size name="GetFramebufferAttachmentParameterivEXT" mode="get"/>
+    </enum>
+    <enum name="FRAMEBUFFER_ATTACHMENT_TEXTURE_3D_ZOFFSET_EXT"    count="1" value="0x8CD4">
+        <size name="GetFramebufferAttachmentParameterivEXT" mode="get"/>
+    </enum>
 
     <enum name="COLOR_ATTACHMENT0_EXT"                    value="0x8CE0"/>
     <enum name="COLOR_ATTACHMENT1_EXT"                    value="0x8CE1"/>

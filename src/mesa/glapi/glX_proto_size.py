@@ -450,7 +450,7 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 		print ''
 		print '#if defined(linux)'
 		print '#  include <byteswap.h>'
-		print '#  define SWAP_32(v)  do { (v) = bswap_32(v)); } while(0)'
+		print '#  define SWAP_32(v)  do { (v) = bswap_32(v); } while(0)'
 		print '#else'
 		print '#  include <X11/misc.h>'
 		print '#  define SWAP_32(v)  do { char tmp; swapl(&v, tmp); } while(0)'
