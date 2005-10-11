@@ -315,11 +315,10 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
    if (rmesa->tcl.indexed_verts.buf)
       radeonReleaseArrays( ctx, ~0 );
 
-   radeonAllocDmaRegionVerts( rmesa, 
-			      &rmesa->tcl.indexed_verts, 
-			      VB->Count,
-			      setup_tab[i].vertex_size * 4, 
-			      4);
+   radeonAllocDmaRegion( rmesa,
+			 &rmesa->tcl.indexed_verts, 
+			 VB->Count * setup_tab[i].vertex_size * 4, 
+			 4);
 
    /* The vertex code expects Obj to be clean to element 3.  To fix
     * this, add more vertex code (for obj-2, obj-3) or preferably move

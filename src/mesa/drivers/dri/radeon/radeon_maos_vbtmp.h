@@ -67,8 +67,6 @@ static void TAG(emit)( GLcontext *ctx,
 	 tc2 = (GLuint (*)[4])VB->TexCoordPtr[t2]->data;
 	 tc2_stride = VB->TexCoordPtr[t2]->stride;
 	 if (DO_PTEX && VB->TexCoordPtr[t2]->size < 3) {
-	 /* since DO_PTEX is only true when we have 3 or more coords
-	    in the first place we don't really need this right? */
 	    fill_tex |= (1<<2);
 	 }
 	 else if (DO_PTEX && VB->TexCoordPtr[t2]->size < 4) {

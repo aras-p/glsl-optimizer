@@ -23,7 +23,6 @@ DRIVER_SOURCES = \
 	radeon_span.c \
 	radeon_maos.c \
 	radeon_sanity.c \
-	radeon_compat.c \
 	radeon_vtxfmt.c \
 	radeon_vtxfmt_c.c \
 	radeon_vtxfmt_sse.c \

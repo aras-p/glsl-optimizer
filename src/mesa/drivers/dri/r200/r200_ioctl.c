@@ -330,15 +330,6 @@ void r200AllocDmaRegion( r200ContextPtr rmesa,
    assert( rmesa->dma.current.ptr <= rmesa->dma.current.end );
 }
 
-void r200AllocDmaRegionVerts( r200ContextPtr rmesa, 
-				struct r200_dma_region *region,
-				int numverts,
-				int vertsize,
-				int alignment )
-{
-   r200AllocDmaRegion( rmesa, region, vertsize * numverts, alignment );
-}
-
 /* ================================================================
  * SwapBuffers with client-side throttling
  */

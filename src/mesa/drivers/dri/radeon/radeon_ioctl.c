@@ -775,15 +775,6 @@ void radeonAllocDmaRegion( radeonContextPtr rmesa,
       rmesa->dma.current.ptr = (rmesa->dma.current.ptr + 0x7) & ~0x7;  
 }
 
-void radeonAllocDmaRegionVerts( radeonContextPtr rmesa, 
-				struct radeon_dma_region *region,
-				int numverts,
-				int vertsize,
-				int alignment )
-{
-   radeonAllocDmaRegion( rmesa, region, vertsize * numverts, alignment );
-}
-
 /* ================================================================
  * SwapBuffers with client-side throttling
  */

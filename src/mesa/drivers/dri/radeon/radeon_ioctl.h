@@ -83,12 +83,6 @@ extern void radeonAllocDmaRegion( radeonContextPtr rmesa,
 				  int bytes, 
 				  int alignment );
 
-extern void radeonAllocDmaRegionVerts( radeonContextPtr rmesa,
-				       struct radeon_dma_region *region,
-				       int numverts,
-				       int vertsize, 
-				       int alignment );
-
 extern void radeonReleaseDmaRegion( radeonContextPtr rmesa,
 				    struct radeon_dma_region *region,
 				    const char *caller );
@@ -102,13 +96,6 @@ extern void radeonWaitForVBlank( radeonContextPtr rmesa );
 extern void radeonInitIoctlFuncs( GLcontext *ctx );
 extern void radeonGetAllParams( radeonContextPtr rmesa );
 extern void radeonSetUpAtomList( radeonContextPtr rmesa );
-
-/* radeon_compat.c:
- */
-extern void radeonCompatEmitPrimitive( radeonContextPtr rmesa,
-				       GLuint vertex_format,
-				       GLuint hw_primitive,
-				       GLuint nrverts );
 
 /* ================================================================
  * Helper macros:

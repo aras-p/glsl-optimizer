@@ -86,12 +86,6 @@ extern void r200AllocDmaRegion( r200ContextPtr rmesa,
 				  int bytes, 
 				  int alignment );
 
-extern void r200AllocDmaRegionVerts( r200ContextPtr rmesa,
-				       struct r200_dma_region *region,
-				       int numverts,
-				       int vertsize, 
-				       int alignment );
-
 extern void r200ReleaseDmaRegion( r200ContextPtr rmesa,
 				    struct r200_dma_region *region,
 				    const char *caller );
