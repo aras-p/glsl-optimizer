@@ -3762,7 +3762,7 @@ clip_for_xgetimage(GLcontext *ctx, GLuint *n, GLint *x, GLint *y)
    Window child;
    GLint screenWidth = WidthOfScreen(DefaultScreenOfDisplay(xmesa->display));
    GLint dx, dy;
-   if (source->type == PBUFFER)
+   if (source->type == PBUFFER || source->type == PIXMAP)
       return 0;
    XTranslateCoordinates(xmesa->display, source->frontxrb->pixmap, rootWin,
                          *x, *y, &dx, &dy, &child);
