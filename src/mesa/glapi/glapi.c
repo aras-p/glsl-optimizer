@@ -343,7 +343,7 @@ _glapi_get_dispatch(void)
 }
 
 
-#if !defined( USE_X86_ASM )
+#if !defined( USE_X86_ASM ) && !defined( XFree86Server )
 #define NEED_FUNCTION_POINTER
 #endif
 
@@ -388,6 +388,7 @@ get_static_proc_offset(const char *funcName)
 }
 
 
+#if !defined( XFree86Server )
 #ifdef USE_X86_ASM
 
 #if defined( GLX_USE_TLS )
@@ -437,6 +438,7 @@ get_static_proc_address(const char *funcName)
 }
 
 #endif /* USE_X86_ASM */
+#endif /* !defined( XFree86Server ) */
 
 
 /**
@@ -890,12 +892,14 @@ _glapi_get_proc_address(const char *funcName)
       }
    }
 
+#if !defined( XFree86Server )
    /* search static functions */
    {
       const _glapi_proc func = get_static_proc_address(funcName);
       if (func)
          return func;
    }
+#endif /* !defined( XFree86Server ) */
 
    entry = add_function_name(funcName);
    return (entry == NULL) ? NULL : entry->dispatch_stub;
