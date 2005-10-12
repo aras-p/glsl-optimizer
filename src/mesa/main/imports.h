@@ -644,9 +644,6 @@ _mesa_inv_sqrtf(float x);
 extern double
 _mesa_pow(double x, double y);
 
-extern float
-_mesa_log2(float x);
-
 extern int
 _mesa_ffs(int i);
 
