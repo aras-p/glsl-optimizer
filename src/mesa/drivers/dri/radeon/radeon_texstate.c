@@ -921,10 +921,7 @@ static GLboolean radeon_validate_texgen( GLcontext *ctx, GLuint unit )
          this from way too many places, would be much easier if we could leave
          tcl q coord always enabled as on r200) */
       RADEON_STATECHANGE( rmesa, tcl );
-      if (unit == 0)
-	 rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] |= RADEON_TCL_VTX_Q0;
-      else
-	 rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] |= RADEON_TCL_VTX_Q1;
+      rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] |= RADEON_Q_BIT(unit);
    }
 
    switch (texUnit->GenModeS) {
@@ -997,19 +994,8 @@ static void disable_tex( GLcontext *ctx, int unit )
 	  ~((RADEON_TEX_0_ENABLE | RADEON_TEX_BLEND_0_ENABLE) << unit);
 
       RADEON_STATECHANGE( rmesa, tcl );
-      switch (unit) {
-      case 0:
-	 rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] &= ~(RADEON_TCL_VTX_ST0 |
-						   RADEON_TCL_VTX_Q0);
-	    break;
-      case 1:
-	 rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] &= ~(RADEON_TCL_VTX_ST1 |
-						   RADEON_TCL_VTX_Q1);
-	 break;
-      default:
-	 break;
-      }
-
+      rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] &= ~(RADEON_ST_BIT(unit) |
+						RADEON_Q_BIT(unit));
 
       if (rmesa->TclFallback & (RADEON_TCL_FALLBACK_TEXGEN_0<<unit)) {
 	 TCL_FALLBACK( ctx, (RADEON_TCL_FALLBACK_TEXGEN_0<<unit), GL_FALSE);
@@ -1135,10 +1121,7 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
 
       RADEON_STATECHANGE( rmesa, tcl );
 
-      if (unit == 0)
-	  rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] |= RADEON_TCL_VTX_ST0;
-      else 
-	  rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] |= RADEON_TCL_VTX_ST1;
+      rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] |= RADEON_ST_BIT(unit);
 
       rmesa->recheck_texgen[unit] = GL_TRUE;
    }
@@ -1199,7 +1182,8 @@ void radeonUpdateTextureState( GLcontext *ctx )
    GLboolean ok;
 
    ok = (radeonUpdateTextureUnit( ctx, 0 ) &&
-	 radeonUpdateTextureUnit( ctx, 1 ));
+	 radeonUpdateTextureUnit( ctx, 1 ) &&
+	 radeonUpdateTextureUnit( ctx, 2 ));
 
    FALLBACK( rmesa, RADEON_FALLBACK_TEXTURE, !ok );
 

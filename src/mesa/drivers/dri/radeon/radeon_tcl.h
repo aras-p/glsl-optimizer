@@ -56,7 +56,8 @@ extern void radeonTclFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 #define RADEON_TCL_FALLBACK_TEXGEN_2          0x40 /* texgen, unit 2 */
 #define RADEON_TCL_FALLBACK_TCL_DISABLE       0x80 /* user disable */
 
-#define RADEON_MAX_TCL_VERTSIZE (15*4)
+/* max maos_verts vertex format has a size of 18 floats */
+#define RADEON_MAX_TCL_VERTSIZE (18*4)
 
 #define TCL_FALLBACK( ctx, bit, mode )	radeonTclFallback( ctx, bit, mode )
 

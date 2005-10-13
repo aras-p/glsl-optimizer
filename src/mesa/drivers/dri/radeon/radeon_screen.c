@@ -65,6 +65,7 @@ DRI_CONF_BEGIN
         DRI_CONF_TCL_MODE(DRI_CONF_TCL_CODEGEN)
         DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
         DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+        DRI_CONF_MAX_TEXTURE_UNITS(2,2,3)
         DRI_CONF_HYPERZ(false)
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_QUALITY
@@ -81,7 +82,7 @@ DRI_CONF_BEGIN
         DRI_CONF_NO_RAST(false)
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 13;
+static const GLuint __driNConfigOptions = 14;
 
 extern const struct dri_extension card_extensions[];
 

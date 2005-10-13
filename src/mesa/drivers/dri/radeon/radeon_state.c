@@ -2145,7 +2145,7 @@ static void update_texturematrix( GLcontext *ctx )
    rmesa->NeedTexMatrix = 0;
    rmesa->TexMatColSwap = 0;
 
-   for (unit = 0 ; unit < 2; unit++) {
+   for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
       if (ctx->Texture.Unit[unit]._ReallyEnabled) {
 	 GLboolean needMatrix = GL_FALSE;
 	 if (ctx->TextureMatrixStack[unit].Top->type != MATRIX_IDENTITY) {
@@ -2189,18 +2189,17 @@ static void update_texturematrix( GLcontext *ctx )
 
    tpc = (texMatEnabled | rmesa->TexGenEnabled);
 
-   vs &= ~((0xf << RADEON_TCL_TEX_0_OUTPUT_SHIFT) |
-	   (0xf << RADEON_TCL_TEX_1_OUTPUT_SHIFT));
+   /* TCL_TEX_COMPUTED_x is TCL_TEX_INPUT_x | 0x8 */
+   vs &= ~((RADEON_TCL_TEX_COMPUTED_TEX_0 << RADEON_TCL_TEX_0_OUTPUT_SHIFT) |
+	   (RADEON_TCL_TEX_COMPUTED_TEX_0 << RADEON_TCL_TEX_1_OUTPUT_SHIFT) |
+	   (RADEON_TCL_TEX_COMPUTED_TEX_0 << RADEON_TCL_TEX_2_OUTPUT_SHIFT));
 
-   if (tpc & RADEON_TEXGEN_TEXMAT_0_ENABLE)
-      vs |= RADEON_TCL_TEX_COMPUTED_TEX_0 << RADEON_TCL_TEX_0_OUTPUT_SHIFT;
-   else
-      vs |= RADEON_TCL_TEX_INPUT_TEX_0 << RADEON_TCL_TEX_0_OUTPUT_SHIFT;
-
-   if (tpc & RADEON_TEXGEN_TEXMAT_1_ENABLE)
-      vs |= RADEON_TCL_TEX_COMPUTED_TEX_1 << RADEON_TCL_TEX_1_OUTPUT_SHIFT;
-   else
-      vs |= RADEON_TCL_TEX_INPUT_TEX_1 << RADEON_TCL_TEX_1_OUTPUT_SHIFT;
+   vs |= (((tpc & RADEON_TEXGEN_TEXMAT_0_ENABLE) <<
+	 (RADEON_TCL_TEX_0_OUTPUT_SHIFT + 3)) |
+      ((tpc & RADEON_TEXGEN_TEXMAT_1_ENABLE) <<
+	 (RADEON_TCL_TEX_1_OUTPUT_SHIFT + 2)) |
+      ((tpc & RADEON_TEXGEN_TEXMAT_2_ENABLE) <<
+	 (RADEON_TCL_TEX_2_OUTPUT_SHIFT + 1)));
 
    if (tpc != rmesa->hw.tcl.cmd[TCL_TEXTURE_PROC_CTL] ||
        vs != rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXSEL]) {

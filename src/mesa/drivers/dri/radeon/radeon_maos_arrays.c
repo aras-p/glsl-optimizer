@@ -443,7 +443,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
    GLuint nr = 0;
    GLuint vfmt = 0;
    GLuint count = VB->Count;
-   GLuint vtx;
+   GLuint vtx, unit;
    
 #if 0
    if (RADEON_DEBUG & DEBUG_VERTS) 
@@ -526,58 +526,36 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
    }
 
    vtx = (rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] &
-	  ~(RADEON_TCL_VTX_Q0|RADEON_TCL_VTX_Q1));
+	  ~(RADEON_TCL_VTX_Q0|RADEON_TCL_VTX_Q1|RADEON_TCL_VTX_Q2));
+      
+   for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
+      if (inputs & VERT_BIT_TEX(unit)) {
+	 if (!rmesa->tcl.tex[unit].buf)
+	    emit_tex_vector( ctx,
+			     &(rmesa->tcl.tex[unit]),
+			     (char *)VB->TexCoordPtr[unit]->data,
+			     VB->TexCoordPtr[unit]->size,
+			     VB->TexCoordPtr[unit]->stride,
+			     count );
 
-   if (inputs & VERT_BIT_TEX0) {
-      if (!rmesa->tcl.tex[0].buf)
-	 emit_tex_vector( ctx,
-			  &(rmesa->tcl.tex[0]),
-			  (char *)VB->TexCoordPtr[0]->data,
-			  VB->TexCoordPtr[0]->size,
-			  VB->TexCoordPtr[0]->stride,
-			  count );
-
-      vfmt |= RADEON_CP_VC_FRMT_ST0;
-      /* assume we need the 3rd coord if texgen is active for r/q OR at least 3
-         coords are submitted. This may not be 100% correct */
-      if (VB->TexCoordPtr[0]->size >= 3) {
-	 vtx |= RADEON_TCL_VTX_Q0;
-	 vfmt |= RADEON_CP_VC_FRMT_Q0;
+	 vfmt |= RADEON_ST_BIT(unit);
+         /* assume we need the 3rd coord if texgen is active for r/q OR at least
+	    3 coords are submitted. This may not be 100% correct */
+         if (VB->TexCoordPtr[unit]->size >= 3) {
+	 /* tcl_vtx and vc_frmt values are identical */
+	    vtx |= RADEON_Q_BIT(unit);
+	    vfmt |= RADEON_Q_BIT(unit);
+	 }
+	 if ( (ctx->Texture.Unit[unit].TexGenEnabled & (R_BIT | Q_BIT)) )
+	    vtx |= RADEON_Q_BIT(unit);
+	 else if (VB->TexCoordPtr[unit]->size >= 3) {
+	    GLuint swaptexmatcol = (VB->TexCoordPtr[unit]->size - 3);
+	    if (((rmesa->NeedTexMatrix >> unit) & 1) &&
+		 (swaptexmatcol != ((rmesa->TexMatColSwap >> unit) & 1)))
+	       radeonUploadTexMatrix( rmesa, unit, swaptexmatcol ) ;
+	 }
+	 component[nr++] = &rmesa->tcl.tex[unit];
       }
-      if ( (ctx->Texture.Unit[0].TexGenEnabled & (R_BIT | Q_BIT)) )
-	 vtx |= RADEON_TCL_VTX_Q0;
-      else if (VB->TexCoordPtr[0]->size >= 3) {
-	 GLuint swaptexmatcol = (VB->TexCoordPtr[0]->size - 3);
-	 if ((rmesa->NeedTexMatrix & 1) &&
-		(swaptexmatcol != (rmesa->TexMatColSwap & 1)))
-	    radeonUploadTexMatrix( rmesa, 0, swaptexmatcol ) ;
-      }
-      component[nr++] = &rmesa->tcl.tex[0];
-   }
-
-   if (inputs & VERT_BIT_TEX1) {
-      if (!rmesa->tcl.tex[1].buf)
-	 emit_tex_vector( ctx,
-			  &(rmesa->tcl.tex[1]),
-			  (char *)VB->TexCoordPtr[1]->data,
-			  VB->TexCoordPtr[1]->size,
-			  VB->TexCoordPtr[1]->stride,
-			  count );
-	 
-      vfmt |= RADEON_CP_VC_FRMT_ST1;
-      if (VB->TexCoordPtr[1]->size >= 3) {
-	 vtx |= RADEON_TCL_VTX_Q1;
-	 vfmt |= RADEON_CP_VC_FRMT_Q1;
-      }
-      if ( (ctx->Texture.Unit[1].TexGenEnabled & (R_BIT | Q_BIT)) )
-	 vtx |= RADEON_TCL_VTX_Q1;
-      else if (VB->TexCoordPtr[1]->size >= 3) {
-	 GLuint swaptexmatcol = (VB->TexCoordPtr[1]->size - 3);
-	 if (((rmesa->NeedTexMatrix >> 1) & 1) &&
-		(swaptexmatcol != ((rmesa->TexMatColSwap >> 1) & 1)))
-	    radeonUploadTexMatrix( rmesa, 1, swaptexmatcol ) ;
-      }
-      component[nr++] = &rmesa->tcl.tex[1];
    }
 
    if (vtx != rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT]) {
@@ -593,6 +571,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
+   GLuint unit;
 
 #if 0
    if (RADEON_DEBUG & DEBUG_VERTS) 
@@ -611,9 +590,8 @@ void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs )
    if (newinputs & VERT_BIT_COLOR1) 
       radeonReleaseDmaRegion( rmesa, &rmesa->tcl.spec, __FUNCTION__ );
 
-   if (newinputs & VERT_BIT_TEX0)
-      radeonReleaseDmaRegion( rmesa, &rmesa->tcl.tex[0], __FUNCTION__ );
-
-   if (newinputs & VERT_BIT_TEX1)
-      radeonReleaseDmaRegion( rmesa, &rmesa->tcl.tex[1], __FUNCTION__ );
+   for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
+      if (newinputs & VERT_BIT_TEX(unit))
+         radeonReleaseDmaRegion( rmesa, &rmesa->tcl.tex[unit], __FUNCTION__ );
+   }
 }

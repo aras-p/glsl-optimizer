@@ -170,6 +170,7 @@ static struct dynfn *radeon_makeSSETexCoord2f( GLcontext *ctx, int key )
 				     __FUNCTION__, rmesa->vb.texcoordptr[0] );
 }
 
+#if 0 /* Temporarily disabled - probably needs adjustments for more than 2 tex units -rs */
 static struct dynfn *radeon_makeSSEMultiTexCoord2fv( GLcontext *ctx, int key )
 {
    struct dynfn *dfn = MALLOC_STRUCT( dynfn );
@@ -207,6 +208,7 @@ static struct dynfn *radeon_makeSSEMultiTexCoord2f( GLcontext *ctx, int key )
    }
    return dfn;
 }
+#endif
 
 void radeonInitSSECodegen( struct dfn_generators *gen )
 {
@@ -217,8 +219,10 @@ void radeonInitSSECodegen( struct dfn_generators *gen )
       gen->Color3f = (void *) radeon_makeSSEColor3f;
       gen->TexCoord2fv = (void *) radeon_makeSSETexCoord2fv;
       gen->TexCoord2f = (void *) radeon_makeSSETexCoord2f;
+#if 0 /* Temporarily disabled - probably needs adjustments for more than 2 tex units -rs */
       gen->MultiTexCoord2fvARB = (void *) radeon_makeSSEMultiTexCoord2fv;
       gen->MultiTexCoord2fARB = (void *) radeon_makeSSEMultiTexCoord2f;
+#endif
    }
 }
 

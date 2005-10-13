@@ -563,7 +563,7 @@ static void radeon_MultiTexCoord1fARB( GLenum target, GLfloat s  )
 {
    GET_CURRENT_CONTEXT(ctx);
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   GLfloat *dest = rmesa->vb.texcoordptr[target & 1];
+   GLfloat *dest = rmesa->vb.texcoordptr[target & 3];
    dest[0] = s;
    dest[1] = 0;
 }
@@ -572,7 +572,7 @@ static void radeon_MultiTexCoord1fvARB( GLenum target, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   GLfloat *dest = rmesa->vb.texcoordptr[target & 1];
+   GLfloat *dest = rmesa->vb.texcoordptr[target & 3];
    dest[0] = v[0];
    dest[1] = 0;
 }
@@ -581,7 +581,7 @@ static void radeon_MultiTexCoord2fARB( GLenum target, GLfloat s, GLfloat t )
 {
    GET_CURRENT_CONTEXT(ctx);
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   GLfloat *dest = rmesa->vb.texcoordptr[target & 1];
+   GLfloat *dest = rmesa->vb.texcoordptr[target & 3];
    dest[0] = s;
    dest[1] = t;
 }
@@ -590,7 +590,7 @@ static void radeon_MultiTexCoord2fvARB( GLenum target, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   GLfloat *dest = rmesa->vb.texcoordptr[target & 1];
+   GLfloat *dest = rmesa->vb.texcoordptr[target & 3];
    dest[0] = v[0];
    dest[1] = v[1];
 }
@@ -746,7 +746,8 @@ static void choose_##FN ARGS1						\
 
 #define ACTIVE_ST0 RADEON_CP_VC_FRMT_ST0
 #define ACTIVE_ST1 RADEON_CP_VC_FRMT_ST1
-#define ACTIVE_ST_ALL (RADEON_CP_VC_FRMT_ST1|RADEON_CP_VC_FRMT_ST0)
+#define ACTIVE_ST2 RADEON_CP_VC_FRMT_ST2
+#define ACTIVE_ST_ALL (RADEON_CP_VC_FRMT_ST1|RADEON_CP_VC_FRMT_ST0|RADEON_CP_VC_FRMT_ST2)
 
 /* Each codegen function should be able to be fully specified by a
  * subsetted version of rmesa->vb.vertex_format.
@@ -756,7 +757,8 @@ static void choose_##FN ARGS1						\
 #define MASK_SPEC    (MASK_COLOR|ACTIVE_COLOR)
 #define MASK_ST0     (MASK_SPEC|ACTIVE_SPEC)
 #define MASK_ST1     (MASK_ST0|ACTIVE_ST0)
-#define MASK_ST_ALL  (MASK_ST1|ACTIVE_ST1)
+#define MASK_ST2     (MASK_ST1|ACTIVE_ST1)
+#define MASK_ST_ALL  (MASK_ST2|ACTIVE_ST2)
 #define MASK_VERTEX  (MASK_ST_ALL|ACTIVE_FPALPHA) 
 
 

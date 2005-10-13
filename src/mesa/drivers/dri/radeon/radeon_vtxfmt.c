@@ -57,6 +57,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_swtcl.h"
 #include "radeon_vtxfmt.h"
 
+#define VERT_ATTRIB_TEX(u)	(VERT_ATTRIB_TEX0 + (u))
+
 #include "dispatch.h"
 
 static void radeonVtxfmtFlushVertices( GLcontext *, GLuint );
@@ -102,6 +104,7 @@ static void count_funcs( radeonContextPtr rmesa )
 
 void radeon_copy_to_current( GLcontext *ctx ) 
 {
+   GLuint unit;
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 
    assert(ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT);
@@ -134,18 +137,13 @@ void radeon_copy_to_current( GLcontext *ctx )
       ctx->Current.Attrib[VERT_ATTRIB_COLOR1][2] = UBYTE_TO_FLOAT( rmesa->vb.specptr->blue );
    } 
 
-   if (rmesa->vb.vertex_format & RADEON_CP_VC_FRMT_ST0) {
-      ctx->Current.Attrib[VERT_ATTRIB_TEX0][0] = rmesa->vb.texcoordptr[0][0];
-      ctx->Current.Attrib[VERT_ATTRIB_TEX0][1] = rmesa->vb.texcoordptr[0][1];
-      ctx->Current.Attrib[VERT_ATTRIB_TEX0][2] = 0.0F;
-      ctx->Current.Attrib[VERT_ATTRIB_TEX0][3] = 1.0F;
-   }
-
-   if (rmesa->vb.vertex_format & RADEON_CP_VC_FRMT_ST1) {
-      ctx->Current.Attrib[VERT_ATTRIB_TEX1][0] = rmesa->vb.texcoordptr[1][0];
-      ctx->Current.Attrib[VERT_ATTRIB_TEX1][1] = rmesa->vb.texcoordptr[1][1];
-      ctx->Current.Attrib[VERT_ATTRIB_TEX1][2] = 0.0F;
-      ctx->Current.Attrib[VERT_ATTRIB_TEX1][3] = 1.0F;
+   for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
+      if (rmesa->vb.vertex_format & RADEON_ST_BIT(unit)) {
+	 ctx->Current.Attrib[VERT_ATTRIB_TEX(unit)][0] = rmesa->vb.texcoordptr[unit][0];
+	 ctx->Current.Attrib[VERT_ATTRIB_TEX(unit)][1] = rmesa->vb.texcoordptr[unit][1];
+	 ctx->Current.Attrib[VERT_ATTRIB_TEX(unit)][2] = 0.0F;
+	 ctx->Current.Attrib[VERT_ATTRIB_TEX(unit)][3] = 1.0F;
+      }
    }
 
    ctx->Driver.NeedFlush &= ~FLUSH_UPDATE_CURRENT;
@@ -264,7 +262,7 @@ static void copy_vertex( radeonContextPtr rmesa, GLuint n, GLfloat *dst )
  * memory.  Could also use the counter/notify mechanism to populate
  * tmp on the fly as vertices are generated.  
  */
-static GLuint copy_dma_verts( radeonContextPtr rmesa, GLfloat (*tmp)[15] )
+static GLuint copy_dma_verts( radeonContextPtr rmesa, GLfloat (*tmp)[RADEON_MAX_VERTEX_SIZE] )
 {
    GLuint ovf, i;
    GLuint nr = (rmesa->vb.initial_counter - rmesa->vb.counter) - rmesa->vb.primlist[rmesa->vb.nrprims].start;
@@ -356,11 +354,12 @@ static void VFMT_FALLBACK( const char *caller )
 {
    GET_CURRENT_CONTEXT(ctx);
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   GLfloat tmp[3][15];
+   GLfloat tmp[3][RADEON_MAX_VERTEX_SIZE];
    GLuint i, prim;
    GLuint ind = rmesa->vb.vertex_format;
    GLuint nrverts;
    GLfloat alpha = 1.0;
+   GLuint unit;
 
    if (RADEON_DEBUG & (DEBUG_FALLBACKS|DEBUG_VFMT))
       fprintf(stderr, "%s from %s\n", __FUNCTION__, caller);
@@ -423,14 +422,11 @@ static void VFMT_FALLBACK( const char *caller )
 	 offset++;
       }
 
-      if (ind & RADEON_CP_VC_FRMT_ST0) {
-	 CALL_TexCoord2fv(GET_DISPATCH(), (&tmp[i][offset]));
-	 offset += 2;
-      }
-
-      if (ind & RADEON_CP_VC_FRMT_ST1) {
-	 CALL_MultiTexCoord2fvARB(GET_DISPATCH(), (GL_TEXTURE1_ARB, &tmp[i][offset]));
-	 offset += 2;
+      for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
+	 if (ind & RADEON_ST_BIT(unit)) {
+	    CALL_MultiTexCoord2fvARB(GET_DISPATCH(), ((GL_TEXTURE0 + unit), &tmp[i][offset]));
+	    offset += 2;
+	 }
       }
       CALL_Vertex3fv(GET_DISPATCH(), (&tmp[i][0]));
    }
@@ -441,7 +437,8 @@ static void VFMT_FALLBACK( const char *caller )
       CALL_Normal3fv(GET_DISPATCH(), (rmesa->vb.normalptr));
 
    if (ind & RADEON_CP_VC_FRMT_PKCOLOR)
-      CALL_Color4ub(GET_DISPATCH(), (rmesa->vb.colorptr->red, rmesa->vb.colorptr->green, rmesa->vb.colorptr->blue, rmesa->vb.colorptr->alpha));
+      CALL_Color4ub(GET_DISPATCH(), (rmesa->vb.colorptr->red, rmesa->vb.colorptr->green,
+      				     rmesa->vb.colorptr->blue, rmesa->vb.colorptr->alpha));
    else if (ind & RADEON_CP_VC_FRMT_FPALPHA)
       CALL_Color4fv(GET_DISPATCH(), (rmesa->vb.floatcolorptr));
    else if (ind & RADEON_CP_VC_FRMT_FPCOLOR) {
@@ -455,13 +452,16 @@ static void VFMT_FALLBACK( const char *caller )
    }
 
    if (ind & RADEON_CP_VC_FRMT_PKSPEC) 
-       CALL_SecondaryColor3ubEXT(GET_DISPATCH(), (rmesa->vb.specptr->red, rmesa->vb.specptr->green, rmesa->vb.specptr->blue));
+       CALL_SecondaryColor3ubEXT(GET_DISPATCH(), (rmesa->vb.specptr->red,
+       						  rmesa->vb.specptr->green,
+						  rmesa->vb.specptr->blue));
 
-   if (ind & RADEON_CP_VC_FRMT_ST0) 
-      CALL_TexCoord2fv(GET_DISPATCH(), (rmesa->vb.texcoordptr[0]));
-
-   if (ind & RADEON_CP_VC_FRMT_ST1) 
-      CALL_MultiTexCoord2fvARB(GET_DISPATCH(), (GL_TEXTURE1_ARB, rmesa->vb.texcoordptr[1]));
+   for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
+      if (ind & RADEON_ST_BIT(unit)) {
+	 CALL_MultiTexCoord2fvARB(GET_DISPATCH(), ((GL_TEXTURE0 + unit),
+	 			  rmesa->vb.texcoordptr[unit]));
+      }
+   }
 }
 
 
@@ -470,7 +470,7 @@ static void wrap_buffer( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   GLfloat tmp[3][15];
+   GLfloat tmp[3][RADEON_MAX_VERTEX_SIZE];
    GLuint i, nrverts;
 
    if (RADEON_DEBUG & (DEBUG_VFMT|DEBUG_PRIMS))
@@ -547,6 +547,7 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    GLuint ind = RADEON_CP_VC_FRMT_Z;
+   GLuint unit;
 
    if (rmesa->TclFallback || rmesa->vb.fell_back || ctx->CompileFlag)
       return GL_FALSE;
@@ -581,35 +582,20 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
       }
    }
 
-   if (ctx->Texture.Unit[0]._ReallyEnabled) {
-      if (ctx->Texture.Unit[0].TexGenEnabled) {
-	 if (rmesa->TexGenNeedNormals[0]) {
-	    ind |= RADEON_CP_VC_FRMT_N0;
+   for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
+      if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+	 if (ctx->Texture.Unit[unit].TexGenEnabled) {
+	    if (rmesa->TexGenNeedNormals[unit]) {
+	       ind |= RADEON_CP_VC_FRMT_N0;
+	    }
+	 } else {
+	    if (ctx->Current.Attrib[VERT_ATTRIB_TEX(unit)][3] != 1.0) {
+	       if (RADEON_DEBUG & (DEBUG_VFMT|DEBUG_FALLBACKS))
+		  fprintf(stderr, "%s: q%u\n", __FUNCTION__, unit);
+	       return GL_FALSE;
+	    }
+	    ind |= RADEON_ST_BIT(unit);
 	 }
-      } else {
-	 if (ctx->Current.Attrib[VERT_ATTRIB_TEX0][2] != 0.0F ||
-	     ctx->Current.Attrib[VERT_ATTRIB_TEX0][3] != 1.0) {
-	    if (RADEON_DEBUG & (DEBUG_VFMT|DEBUG_FALLBACKS))
-	       fprintf(stderr, "%s: rq0\n", __FUNCTION__);
-	    return GL_FALSE;
-	 }
-	 ind |= RADEON_CP_VC_FRMT_ST0;
-      }
-   }
-
-   if (ctx->Texture.Unit[1]._ReallyEnabled) {
-      if (ctx->Texture.Unit[1].TexGenEnabled) {
-	 if (rmesa->TexGenNeedNormals[1]) {
-	    ind |= RADEON_CP_VC_FRMT_N0;
-	 }
-      } else {
-	 if (ctx->Current.Attrib[VERT_ATTRIB_TEX1][2] != 0.0F ||
-	     ctx->Current.Attrib[VERT_ATTRIB_TEX1][3] != 1.0) {
-	    if (RADEON_DEBUG & (DEBUG_VFMT|DEBUG_FALLBACKS))
-	       fprintf(stderr, "%s: rq1\n", __FUNCTION__);
-	    return GL_FALSE;
-	 }
-	 ind |= RADEON_CP_VC_FRMT_ST1;
       }
    }
 
@@ -628,6 +614,8 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
    rmesa->vb.floatspecptr = ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
    rmesa->vb.texcoordptr[0] = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
    rmesa->vb.texcoordptr[1] = ctx->Current.Attrib[VERT_ATTRIB_TEX1];
+   rmesa->vb.texcoordptr[2] = ctx->Current.Attrib[VERT_ATTRIB_TEX2];
+   rmesa->vb.texcoordptr[3] = ctx->Current.Attrib[VERT_ATTRIB_TEX0]; /* dummy */
 
    /* Run through and initialize the vertex components in the order
     * the hardware understands:
@@ -671,19 +659,14 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
       UNCLAMPED_FLOAT_TO_CHAN( rmesa->vb.specptr->blue,  ctx->Current.Attrib[VERT_ATTRIB_COLOR1][2] );
    }
 
-   if (ind & RADEON_CP_VC_FRMT_ST0) {
-      rmesa->vb.texcoordptr[0] = &rmesa->vb.vertex[rmesa->vb.vertex_size].f;
-      rmesa->vb.vertex_size += 2;
-      rmesa->vb.texcoordptr[0][0] = ctx->Current.Attrib[VERT_ATTRIB_TEX0][0];
-      rmesa->vb.texcoordptr[0][1] = ctx->Current.Attrib[VERT_ATTRIB_TEX0][1];   
-   } 
-
-   if (ind & RADEON_CP_VC_FRMT_ST1) {
-      rmesa->vb.texcoordptr[1] = &rmesa->vb.vertex[rmesa->vb.vertex_size].f;
-      rmesa->vb.vertex_size += 2;
-      rmesa->vb.texcoordptr[1][0] = ctx->Current.Attrib[VERT_ATTRIB_TEX1][0];
-      rmesa->vb.texcoordptr[1][1] = ctx->Current.Attrib[VERT_ATTRIB_TEX1][1];
-   } 
+   for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
+      if (ind & RADEON_ST_BIT(unit)) {
+	 rmesa->vb.texcoordptr[unit] = &rmesa->vb.vertex[rmesa->vb.vertex_size].f;
+	 rmesa->vb.vertex_size += 2;
+	 rmesa->vb.texcoordptr[unit][0] = ctx->Current.Attrib[VERT_ATTRIB_TEX(unit)][0];
+	 rmesa->vb.texcoordptr[unit][1] = ctx->Current.Attrib[VERT_ATTRIB_TEX(unit)][1];
+      }
+   }
 
    if (rmesa->vb.installed_vertex_format != rmesa->vb.vertex_format) {
       if (RADEON_DEBUG & DEBUG_VFMT)
@@ -813,6 +796,7 @@ static void radeon_Begin( GLenum mode )
    /* Need to arrange to save vertices here?  Or always copy from dma (yuk)?
     */
    if (!rmesa->dma.flush) {
+/* FIXME: what are these constants? */
       if (rmesa->dma.current.ptr + 12*rmesa->vb.vertex_size*4 > 
 	  rmesa->dma.current.end) {
 	 RADEON_NEWPRIM( rmesa );

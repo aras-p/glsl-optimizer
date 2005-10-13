@@ -122,11 +122,17 @@ struct radeon_stipple_state {
    GLuint mask[32];
 };
 
+/* used for both tcl_vtx and vc_frmt tex bits (they are identical) */
+#define RADEON_ST_BIT(unit) \
+(unit == 0 ? RADEON_CP_VC_FRMT_ST0 : (RADEON_CP_VC_FRMT_ST1 >> 2) << (2 * unit))
 
+#define RADEON_Q_BIT(unit) \
+(unit == 0 ? RADEON_CP_VC_FRMT_Q0 : (RADEON_CP_VC_FRMT_Q1 >> 2) << (2 * unit))
 
 #define TEX_0   0x1
 #define TEX_1   0x2
-#define TEX_ALL 0x3
+#define TEX_2   0x4
+#define TEX_ALL 0x7
 
 typedef struct radeon_tex_obj radeonTexObj, *radeonTexObjPtr;
 
@@ -408,17 +414,17 @@ struct radeon_hw_state {
    struct radeon_state_atom vpt;
    struct radeon_state_atom tcl;
    struct radeon_state_atom msc;
-   struct radeon_state_atom tex[2];
+   struct radeon_state_atom tex[3];
    struct radeon_state_atom zbs;
    struct radeon_state_atom mtl; 
-   struct radeon_state_atom mat[5]; 
+   struct radeon_state_atom mat[6];
    struct radeon_state_atom lit[8]; /* includes vec, scl commands */
    struct radeon_state_atom ucp[6];
    struct radeon_state_atom eye; /* eye pos */
    struct radeon_state_atom grd; /* guard band clipping */
    struct radeon_state_atom fog; 
    struct radeon_state_atom glt; 
-   struct radeon_state_atom txr[2]; /* for NPOT */
+   struct radeon_state_atom txr[3]; /* for NPOT */
 
    int max_state_size;	/* Number of bytes necessary for a full state emit. */
    GLboolean is_dirty, all_dirty;
@@ -646,30 +652,29 @@ struct radeon_prim {
    GLuint prim;
 };
 
+/* A maximum total of 20 elements per vertex:  3 floats for position, 3
+ * floats for normal, 4 floats for color, 4 bytes for secondary color,
+ * 3 floats for each texture unit (9 floats total).
+ * 
+ * The position data is never actually stored here, so 3 elements could be
+ * trimmed out of the buffer. This number is only valid for vtxfmt!
+ */
+#define RADEON_MAX_VERTEX_SIZE 20
+
 struct radeon_vbinfo {
    GLint counter, initial_counter;
    GLint *dmaptr;
    void (*notify)( void );
    GLint vertex_size;
 
-   /* A maximum total of 15 elements per vertex:  3 floats for position, 3
-    * floats for normal, 4 floats for color, 4 bytes for secondary color,
-    * 2 floats for each texture unit (4 floats total).
-    * 
-    * As soon as the 3rd TMU is supported or cube maps (or 3D textures) are
-    * supported, this value will grow.
-    * 
-    * The position data is never actually stored here, so 3 elements could be
-    * trimmed out of the buffer.
-    */
-   union { float f; int i; radeon_color_t color; } vertex[15];
+   union { float f; int i; radeon_color_t color; } vertex[RADEON_MAX_VERTEX_SIZE];
 
    GLfloat *normalptr;
    GLfloat *floatcolorptr;
    radeon_color_t *colorptr;
    GLfloat *floatspecptr;
    radeon_color_t *specptr;
-   GLfloat *texcoordptr[2];
+   GLfloat *texcoordptr[4];	/* 3 (TMU) + 1 for radeon_vtxfmt_c.c when GL_TEXTURE3 */
 
    GLenum *prim;		/* &ctx->Driver.CurrentExecPrimitive */
    GLuint primflags;

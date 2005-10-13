@@ -351,6 +351,7 @@ struct dynfn *radeon_makeX86TexCoord2f( GLcontext *ctx, int key )
 				     __FUNCTION__, rmesa->vb.texcoordptr[0] );
 }
 
+#if 0 /* Temporarily disabled - probably needs adjustments for more than 2 tex units -rs */
 struct dynfn *radeon_makeX86MultiTexCoord2fvARB( GLcontext *ctx, int key )
 {
    struct dynfn *dfn = MALLOC_STRUCT( dynfn );
@@ -395,7 +396,7 @@ struct dynfn *radeon_makeX86MultiTexCoord2fARB( GLcontext *ctx,
    }      
    return dfn;
 }
-
+#endif
 
 void radeonInitX86Codegen( struct dfn_generators *gen )
 {
@@ -407,8 +408,10 @@ void radeonInitX86Codegen( struct dfn_generators *gen )
    gen->Normal3fv = radeon_makeX86Normal3fv;
    gen->TexCoord2f = radeon_makeX86TexCoord2f;
    gen->TexCoord2fv = radeon_makeX86TexCoord2fv;
+#if 0 /* Temporarily disabled - probably needs adjustments for more than 2 tex units -rs */
    gen->MultiTexCoord2fARB = radeon_makeX86MultiTexCoord2fARB;
    gen->MultiTexCoord2fvARB = radeon_makeX86MultiTexCoord2fvARB;
+#endif
    gen->Color3f = radeon_makeX86Color3f;
    gen->Color3fv = radeon_makeX86Color3fv;
 

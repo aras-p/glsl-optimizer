@@ -4,7 +4,7 @@
  * Otherwise, must use verts.
  */
 #include "radeon_context.h"
-#define RADEON_MAOS_VERTS 1
+#define RADEON_MAOS_VERTS 0
 #if (RADEON_MAOS_VERTS) || (RADEON_OLD_PACKETS)
 #include "radeon_maos_verts.c"
 #else

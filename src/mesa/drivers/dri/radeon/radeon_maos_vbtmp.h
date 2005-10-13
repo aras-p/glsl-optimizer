@@ -255,6 +255,7 @@ static void TAG(emit)( GLcontext *ctx,
 	 if (DO_TEX2) {
 	    v[0].ui = tc2[0][0];
 	    v[1].ui = tc2[0][1];
+	    if (TCL_DEBUG) fprintf(stderr, "t2: %.2f %.2f ", v[0].f, v[1].f);
 	    if (DO_PTEX) {
 	       if (fill_tex & (1<<2))
 		  v[2].f = 1.0;
@@ -262,6 +263,7 @@ static void TAG(emit)( GLcontext *ctx,
 		  v[2].ui = tc2[0][2];
 	       else
 		  v[2].ui = tc2[0][3];
+	       if (TCL_DEBUG) fprintf(stderr, "%.2f ", v[2].f);
 	       v += 3;
 	    } 
 	    else

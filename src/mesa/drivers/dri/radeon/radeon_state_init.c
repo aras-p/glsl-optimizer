@@ -115,10 +115,12 @@ static GLboolean check_##NM( GLcontext *ctx )		\
 CHECK( always, GL_TRUE )
 CHECK( tex0, ctx->Texture.Unit[0]._ReallyEnabled )
 CHECK( tex1, ctx->Texture.Unit[1]._ReallyEnabled )
+CHECK( tex2, ctx->Texture.Unit[2]._ReallyEnabled )
 CHECK( fog, ctx->Fog.Enabled )
 TCL_CHECK( tcl, GL_TRUE )
 TCL_CHECK( tcl_tex0, ctx->Texture.Unit[0]._ReallyEnabled )
 TCL_CHECK( tcl_tex1, ctx->Texture.Unit[1]._ReallyEnabled )
+TCL_CHECK( tcl_tex2, ctx->Texture.Unit[2]._ReallyEnabled )
 TCL_CHECK( tcl_lighting, ctx->Light.Enabled )
 TCL_CHECK( tcl_eyespace_or_lighting, ctx->_NeedEyeCoords || ctx->Light.Enabled )
 TCL_CHECK( tcl_lit0, ctx->Light.Enabled && ctx->Light.Light[0].Enabled )
@@ -139,6 +141,7 @@ TCL_CHECK( tcl_eyespace_or_fog, ctx->_NeedEyeCoords || ctx->Fog.Enabled )
 
 CHECK( txr0, (ctx->Texture.Unit[0]._ReallyEnabled & TEXTURE_RECT_BIT))
 CHECK( txr1, (ctx->Texture.Unit[1]._ReallyEnabled & TEXTURE_RECT_BIT))
+CHECK( txr2, (ctx->Texture.Unit[2]._ReallyEnabled & TEXTURE_RECT_BIT))
 
 
 
@@ -229,11 +232,13 @@ void radeonInitState( radeonContextPtr rmesa )
    ALLOC_STATE( eye, tcl_lighting, EYE_STATE_SIZE, "EYE/eye-vector", 1 );
    ALLOC_STATE( tex[0], tex0, TEX_STATE_SIZE, "TEX/tex-0", 0 );
    ALLOC_STATE( tex[1], tex1, TEX_STATE_SIZE, "TEX/tex-1", 0 );
+   ALLOC_STATE( tex[2], tex2, TEX_STATE_SIZE, "TEX/tex-2", 0 );
    ALLOC_STATE( mat[0], tcl, MAT_STATE_SIZE, "MAT/modelproject", 1 );
    ALLOC_STATE( mat[1], tcl_eyespace_or_fog, MAT_STATE_SIZE, "MAT/modelview", 1 );
    ALLOC_STATE( mat[2], tcl_eyespace_or_lighting, MAT_STATE_SIZE, "MAT/it-modelview", 1 );
    ALLOC_STATE( mat[3], tcl_tex0, MAT_STATE_SIZE, "MAT/texmat0", 1 );
    ALLOC_STATE( mat[4], tcl_tex1, MAT_STATE_SIZE, "MAT/texmat1", 1 );
+   ALLOC_STATE( mat[5], tcl_tex2, MAT_STATE_SIZE, "MAT/texmat2", 1 );
    ALLOC_STATE( ucp[0], tcl_ucp0, UCP_STATE_SIZE, "UCP/userclip-0", 1 );
    ALLOC_STATE( ucp[1], tcl_ucp1, UCP_STATE_SIZE, "UCP/userclip-1", 1 );
    ALLOC_STATE( ucp[2], tcl_ucp2, UCP_STATE_SIZE, "UCP/userclip-2", 1 );
@@ -250,6 +255,7 @@ void radeonInitState( radeonContextPtr rmesa )
    ALLOC_STATE( lit[7], tcl_lit7, LIT_STATE_SIZE, "LIT/light-7", 1 );
    ALLOC_STATE( txr[0], txr0, TXR_STATE_SIZE, "TXR/txr-0", 0 );
    ALLOC_STATE( txr[1], txr1, TXR_STATE_SIZE, "TXR/txr-1", 0 );
+   ALLOC_STATE( txr[2], txr2, TXR_STATE_SIZE, "TXR/txr-2", 0 );
 
    radeonSetUpAtomList( rmesa );
 
@@ -269,12 +275,15 @@ void radeonInitState( radeonContextPtr rmesa )
    rmesa->hw.tex[0].cmd[TEX_CMD_1] = cmdpkt(RADEON_EMIT_PP_BORDER_COLOR_0);
    rmesa->hw.tex[1].cmd[TEX_CMD_0] = cmdpkt(RADEON_EMIT_PP_TXFILTER_1);
    rmesa->hw.tex[1].cmd[TEX_CMD_1] = cmdpkt(RADEON_EMIT_PP_BORDER_COLOR_1);
+   rmesa->hw.tex[2].cmd[TEX_CMD_0] = cmdpkt(RADEON_EMIT_PP_TXFILTER_2);
+   rmesa->hw.tex[2].cmd[TEX_CMD_1] = cmdpkt(RADEON_EMIT_PP_BORDER_COLOR_2);
    rmesa->hw.zbs.cmd[ZBS_CMD_0] = cmdpkt(RADEON_EMIT_SE_ZBIAS_FACTOR);
    rmesa->hw.tcl.cmd[TCL_CMD_0] = cmdpkt(RADEON_EMIT_SE_TCL_OUTPUT_VTX_FMT);
    rmesa->hw.mtl.cmd[MTL_CMD_0] = 
       cmdpkt(RADEON_EMIT_SE_TCL_MATERIAL_EMMISSIVE_RED);
    rmesa->hw.txr[0].cmd[TXR_CMD_0] = cmdpkt(RADEON_EMIT_PP_TEX_SIZE_0);
    rmesa->hw.txr[1].cmd[TXR_CMD_0] = cmdpkt(RADEON_EMIT_PP_TEX_SIZE_1);
+   rmesa->hw.txr[2].cmd[TXR_CMD_0] = cmdpkt(RADEON_EMIT_PP_TEX_SIZE_2);
    rmesa->hw.grd.cmd[GRD_CMD_0] = 
       cmdscl( RADEON_SS_VERT_GUARD_CLIP_ADJ_ADDR, 1, 4 );
    rmesa->hw.fog.cmd[FOG_CMD_0] = 
@@ -284,7 +293,7 @@ void radeonInitState( radeonContextPtr rmesa )
    rmesa->hw.eye.cmd[EYE_CMD_0] = 
       cmdvec( RADEON_VS_EYE_VECTOR_ADDR, 1, 4 );
 
-   for (i = 0 ; i < 5; i++) {
+   for (i = 0 ; i < 6; i++) {
       rmesa->hw.mat[i].cmd[MAT_CMD_0] = 
 	 cmdvec( RADEON_VS_MATRIX_0_ADDR + i*4, 1, 16);
    }
@@ -309,8 +318,8 @@ void radeonInitState( radeonContextPtr rmesa )
 				     RADEON_CHROMA_FUNC_FAIL |
 				     RADEON_CHROMA_KEY_NEAREST |
 				     RADEON_SHADOW_FUNC_EQUAL |
-				     RADEON_SHADOW_PASS_1 |
-				     RADEON_RIGHT_HAND_CUBE_OGL);
+				     RADEON_SHADOW_PASS_1 /*|
+				     RADEON_RIGHT_HAND_CUBE_OGL */);
 
    rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] = (RADEON_FOG_VERTEX |
 					  RADEON_FOG_USE_DEPTH);
@@ -505,7 +514,8 @@ void radeonInitState( radeonContextPtr rmesa )
    rmesa->hw.tcl.cmd[TCL_MATRIX_SELECT_1] = 
       ((MODEL_PROJ << RADEON_MODELPROJECT_0_SHIFT) |
        (TEXMAT_0 << RADEON_TEXMAT_0_SHIFT) |
-       (TEXMAT_1 << RADEON_TEXMAT_1_SHIFT));
+       (TEXMAT_1 << RADEON_TEXMAT_1_SHIFT) |
+       (TEXMAT_2 << RADEON_TEXMAT_2_SHIFT));
 
    rmesa->hw.tcl.cmd[TCL_UCP_VERT_BLEND_CTL] = 
       (RADEON_UCP_IN_CLIP_SPACE |

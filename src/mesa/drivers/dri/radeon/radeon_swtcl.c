@@ -625,7 +625,7 @@ static void radeonResetLineStipple( GLcontext *ctx );
 
 #define RADEON_TWOSIDE_BIT	0x01
 #define RADEON_UNFILLED_BIT	0x02
-#define RADEON_MAX_TRIFUNC	0x08
+#define RADEON_MAX_TRIFUNC	0x04
 
 
 static struct {
