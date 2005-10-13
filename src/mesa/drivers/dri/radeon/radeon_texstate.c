@@ -1145,6 +1145,8 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
 
    if (t->dirty_state & (1<<unit)) {
       import_tex_obj_state( rmesa, unit, t );
+      /* may need to update texture matrix (for texrect adjustments) */
+      rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
    }
 
    if (rmesa->recheck_texgen[unit]) {
