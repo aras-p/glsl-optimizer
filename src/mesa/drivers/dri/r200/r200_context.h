@@ -651,7 +651,8 @@ struct r200_tcl_info {
    GLint last_offset;
    GLuint hw_primitive;
 
-   struct r200_dma_region *aos_components[8];
+/* FIXME: what's the maximum number of components? */
+   struct r200_dma_region *aos_components[11];
    GLuint nr_aos_components;
 
    GLuint *Elts;
