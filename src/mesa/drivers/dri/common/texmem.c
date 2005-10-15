@@ -945,7 +945,7 @@ get_max_size( unsigned nr_heaps,
     do { if ( max_sizes[v] != 0 ) { limits-> f = max_sizes[v]; } } while( 0 )
 
 #define SET_MAX_RECT(f,v) \
-    do { if ( max_sizes[v] != 0 ) { limits-> f = 1 << max_sizes[v]; } } while( 0 )
+    do { if ( max_sizes[v] != 0 ) { limits-> f = 1 << (max_sizes[v] - 1); } } while( 0 )
 
 
 /**
@@ -1000,8 +1000,8 @@ driCalculateMaxTextureLevels( driTexHeap * const * heaps,
 
    mipmaps[0] = mipmaps_at_once;
    mipmaps[1] = mipmaps_at_once;
-   mipmaps[2] = 1;
-   mipmaps[3] = mipmaps_at_once;
+   mipmaps[2] = mipmaps_at_once;
+   mipmaps[3] = 1;
 
 
    /* Calculate the maximum number of texture levels in two passes.  The
