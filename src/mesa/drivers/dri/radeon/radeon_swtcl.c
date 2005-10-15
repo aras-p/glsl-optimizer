@@ -184,13 +184,18 @@ static void radeonSetVertexFormat( GLcontext *ctx )
 	    switch (sz) {
 	    case 1:
 	    case 2:
-	    case 3:
 	       EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_2F,
 			  radeon_cp_vc_frmts[i][0] );
 	       break;
+	    case 3:
 	    case 4:
-	       EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_3F_XYW,
-			  radeon_cp_vc_frmts[i][1] );
+	       if (ctx->Texture.Unit[i]._ReallyEnabled & (TEXTURE_CUBE_BIT) ) {
+		  EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_3F,
+			     radeon_cp_vc_frmts[i][1] );
+	       } else {
+		  EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_3F_XYW,
+			     radeon_cp_vc_frmts[i][1] );
+	       }
 	       break;
 	    default:
 	       continue;

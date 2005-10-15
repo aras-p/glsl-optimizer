@@ -262,6 +262,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	    fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_IRQ_NR): %d\n", ret);
 	    return NULL;
 	 }
+	 screen->drmSupportsCubeMaps = (sPriv->drmMinor >= 15);
       }
    }
 

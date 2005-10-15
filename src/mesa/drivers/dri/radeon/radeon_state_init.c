@@ -113,9 +113,14 @@ static GLboolean check_##NM( GLcontext *ctx )		\
 
 
 CHECK( always, GL_TRUE )
+CHECK( never, GL_FALSE )
 CHECK( tex0, ctx->Texture.Unit[0]._ReallyEnabled )
 CHECK( tex1, ctx->Texture.Unit[1]._ReallyEnabled )
-CHECK( tex2, ctx->Texture.Unit[2]._ReallyEnabled )
+/* need this for the cubic_map on disabled unit 2 bug, maybe r100 only? */
+CHECK( tex2, ctx->Texture._EnabledUnits )
+CHECK( cube0, (ctx->Texture.Unit[0]._ReallyEnabled & TEXTURE_CUBE_BIT))
+CHECK( cube1, (ctx->Texture.Unit[1]._ReallyEnabled & TEXTURE_CUBE_BIT))
+CHECK( cube2, (ctx->Texture.Unit[2]._ReallyEnabled & TEXTURE_CUBE_BIT))
 CHECK( fog, ctx->Fog.Enabled )
 TCL_CHECK( tcl, GL_TRUE )
 TCL_CHECK( tcl_tex0, ctx->Texture.Unit[0]._ReallyEnabled )
@@ -233,6 +238,18 @@ void radeonInitState( radeonContextPtr rmesa )
    ALLOC_STATE( tex[0], tex0, TEX_STATE_SIZE, "TEX/tex-0", 0 );
    ALLOC_STATE( tex[1], tex1, TEX_STATE_SIZE, "TEX/tex-1", 0 );
    ALLOC_STATE( tex[2], tex2, TEX_STATE_SIZE, "TEX/tex-2", 0 );
+   if (rmesa->radeonScreen->drmSupportsCubeMaps)
+   {
+      ALLOC_STATE( cube[0], cube0, CUBE_STATE_SIZE, "CUBE/cube-0", 0 );
+      ALLOC_STATE( cube[1], cube1, CUBE_STATE_SIZE, "CUBE/cube-1", 0 );
+      ALLOC_STATE( cube[2], cube2, CUBE_STATE_SIZE, "CUBE/cube-2", 0 );
+   }
+   else
+   {
+      ALLOC_STATE( cube[0], never, CUBE_STATE_SIZE, "CUBE/cube-0", 0 );
+      ALLOC_STATE( cube[1], never, CUBE_STATE_SIZE, "CUBE/cube-1", 0 );
+      ALLOC_STATE( cube[2], never, CUBE_STATE_SIZE, "CUBE/cube-2", 0 );
+   }
    ALLOC_STATE( mat[0], tcl, MAT_STATE_SIZE, "MAT/modelproject", 1 );
    ALLOC_STATE( mat[1], tcl_eyespace_or_fog, MAT_STATE_SIZE, "MAT/modelview", 1 );
    ALLOC_STATE( mat[2], tcl_eyespace_or_lighting, MAT_STATE_SIZE, "MAT/it-modelview", 1 );
@@ -277,6 +294,12 @@ void radeonInitState( radeonContextPtr rmesa )
    rmesa->hw.tex[1].cmd[TEX_CMD_1] = cmdpkt(RADEON_EMIT_PP_BORDER_COLOR_1);
    rmesa->hw.tex[2].cmd[TEX_CMD_0] = cmdpkt(RADEON_EMIT_PP_TXFILTER_2);
    rmesa->hw.tex[2].cmd[TEX_CMD_1] = cmdpkt(RADEON_EMIT_PP_BORDER_COLOR_2);
+   rmesa->hw.cube[0].cmd[CUBE_CMD_0] = cmdpkt(RADEON_EMIT_PP_CUBIC_FACES_0);
+   rmesa->hw.cube[0].cmd[CUBE_CMD_1] = cmdpkt(RADEON_EMIT_PP_CUBIC_OFFSETS_T0);
+   rmesa->hw.cube[1].cmd[CUBE_CMD_0] = cmdpkt(RADEON_EMIT_PP_CUBIC_FACES_1);
+   rmesa->hw.cube[1].cmd[CUBE_CMD_1] = cmdpkt(RADEON_EMIT_PP_CUBIC_OFFSETS_T1);
+   rmesa->hw.cube[2].cmd[CUBE_CMD_0] = cmdpkt(RADEON_EMIT_PP_CUBIC_FACES_2);
+   rmesa->hw.cube[2].cmd[CUBE_CMD_1] = cmdpkt(RADEON_EMIT_PP_CUBIC_OFFSETS_T2);
    rmesa->hw.zbs.cmd[ZBS_CMD_0] = cmdpkt(RADEON_EMIT_SE_ZBIAS_FACTOR);
    rmesa->hw.tcl.cmd[TCL_CMD_0] = cmdpkt(RADEON_EMIT_SE_TCL_OUTPUT_VTX_FMT);
    rmesa->hw.mtl.cmd[MTL_CMD_0] = 
@@ -488,6 +511,18 @@ void radeonInitState( radeonContextPtr rmesa )
 	   RADEON_SCALE_1X |
 	   RADEON_CLAMP_TX);
       rmesa->hw.tex[i].cmd[TEX_PP_TFACTOR] = 0;
+
+      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_FACES] = 0;
+      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_0] =
+	  rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
+      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_1] =
+	  rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
+      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_2] =
+	  rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
+      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_3] =
+	  rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
+      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_4] =
+	  rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
    }
 
    /* Can only add ST1 at the time of doing some multitex but can keep

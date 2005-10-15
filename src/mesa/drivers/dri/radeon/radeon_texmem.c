@@ -67,7 +67,6 @@ radeonDestroyTexObj( radeonContextPtr rmesa, radeonTexObjPtr t )
       for ( i = 0 ; i < rmesa->glCtx->Const.MaxTextureUnits ; i++ ) {
 	 if ( t == rmesa->state.texture.unit[i].texobj ) {
 	    rmesa->state.texture.unit[i].texobj = NULL;
-	    rmesa->hw.tex[i].dirty = GL_FALSE;
 	 }
       }
    }
@@ -226,7 +225,7 @@ static void uploadSubImage( radeonContextPtr rmesa, radeonTexObjPtr t,
    imageWidth = texImage->Width;
    imageHeight = texImage->Height;
 
-   offset = t->bufAddr;
+   offset = t->bufAddr + t->base.totalSize * face / 6;
 
    if ( RADEON_DEBUG & (DEBUG_TEXTURE|DEBUG_IOCTL) ) {
       GLint imageX = 0;

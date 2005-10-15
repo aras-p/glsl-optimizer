@@ -152,6 +152,7 @@ void radeonSetUpAtomList( radeonContextPtr rmesa )
    for (i = 0; i < mtu; ++i) {
        insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.tex[i]);
        insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.txr[i]);
+       insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.cube[i]);
    }
    insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.zbs);
    insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.mtl);

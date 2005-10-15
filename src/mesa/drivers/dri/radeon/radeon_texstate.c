@@ -153,7 +153,13 @@ static void radeonSetTexImages( radeonContextPtr rmesa,
    /* Compute which mipmap levels we really want to send to the hardware.
     */
 
-   driCalculateTextureFirstLastLevel( (driTextureObject *) t );
+   if (tObj->Target != GL_TEXTURE_CUBE_MAP)
+      driCalculateTextureFirstLastLevel( (driTextureObject *) t );
+   else {
+      /* r100 can't handle mipmaps for cube/3d textures, so don't waste
+         memory for them */
+      t->base.firstLevel = t->base.lastLevel = tObj->BaseLevel;
+   }
    log2Width  = tObj->Image[0][t->base.firstLevel]->WidthLog2;
    log2Height = tObj->Image[0][t->base.firstLevel]->HeightLog2;
    log2Depth  = tObj->Image[0][t->base.firstLevel]->DepthLog2;
@@ -284,6 +290,22 @@ static void radeonSetTexImages( radeonContextPtr rmesa,
     */
    t->base.totalSize = (curOffset + RADEON_OFFSET_MASK) & ~RADEON_OFFSET_MASK;
 
+   /* Setup remaining cube face blits, if needed */
+   if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
+      const GLuint faceSize = t->base.totalSize;
+      GLuint face;
+      /* reuse face 0 x/y/width/height - just update the offset when uploading */
+      for (face = 1; face < 6; face++) {
+         for (i = 0; i < numLevels; i++) {
+            t->image[face][i].x =  t->image[0][i].x;
+            t->image[face][i].y =  t->image[0][i].y;
+            t->image[face][i].width  = t->image[0][i].width;
+            t->image[face][i].height = t->image[0][i].height;
+         }
+      }
+      t->base.totalSize = 6 * faceSize; /* total texmem needed */
+   }
+
    /* Hardware state:
     */
    t->pp_txfilter &= ~RADEON_MAX_MIP_LEVEL_MASK;
@@ -291,9 +313,26 @@ static void radeonSetTexImages( radeonContextPtr rmesa,
 
    t->pp_txformat &= ~(RADEON_TXFORMAT_WIDTH_MASK |
 		       RADEON_TXFORMAT_HEIGHT_MASK |
-                       RADEON_TXFORMAT_CUBIC_MAP_ENABLE);
+                       RADEON_TXFORMAT_CUBIC_MAP_ENABLE |
+                       RADEON_TXFORMAT_F5_WIDTH_MASK |
+                       RADEON_TXFORMAT_F5_HEIGHT_MASK);
    t->pp_txformat |= ((log2Width << RADEON_TXFORMAT_WIDTH_SHIFT) |
 		      (log2Height << RADEON_TXFORMAT_HEIGHT_SHIFT));
+
+   if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
+      assert(log2Width == log2Height);
+      t->pp_txformat |= ((log2Width << RADEON_TXFORMAT_F5_WIDTH_SHIFT) |
+                         (log2Height << RADEON_TXFORMAT_F5_HEIGHT_SHIFT) |
+                         (RADEON_TXFORMAT_CUBIC_MAP_ENABLE));
+      t->pp_cubic_faces = ((log2Width << RADEON_FACE_WIDTH_1_SHIFT) |
+                           (log2Height << RADEON_FACE_HEIGHT_1_SHIFT) |
+                           (log2Width << RADEON_FACE_WIDTH_2_SHIFT) |
+                           (log2Height << RADEON_FACE_HEIGHT_2_SHIFT) |
+                           (log2Width << RADEON_FACE_WIDTH_3_SHIFT) |
+                           (log2Height << RADEON_FACE_HEIGHT_3_SHIFT) |
+                           (log2Width << RADEON_FACE_WIDTH_4_SHIFT) |
+                           (log2Height << RADEON_FACE_HEIGHT_4_SHIFT));
+   }
 
    t->pp_txsize = (((tObj->Image[0][t->base.firstLevel]->Width - 1) << 0) |
                    ((tObj->Image[0][t->base.firstLevel]->Height - 1) << 16));
@@ -816,14 +855,32 @@ static void import_tex_obj_state( radeonContextPtr rmesa,
    cmd[TEX_PP_TXFORMAT] |= texobj->pp_txformat & TEXOBJ_TXFORMAT_MASK;
    cmd[TEX_PP_TXOFFSET] = texobj->pp_txoffset;
    cmd[TEX_PP_BORDER_COLOR] = texobj->pp_border_color;
-   RADEON_DB_STATECHANGE( rmesa, &rmesa->hw.tex[unit] );
 
-   if (texobj->base.tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
+   if (texobj->base.tObj->Target == GL_TEXTURE_CUBE_MAP) {
+      GLuint *cube_cmd = RADEON_DB_STATE( cube[unit] );
+      GLuint bytesPerFace = texobj->base.totalSize / 6;
+      ASSERT(texobj->totalSize % 6 == 0);
+
+      cube_cmd[CUBE_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
+      /* dont know if this setup conforms to OpenGL.. 
+       * at least it matches the behavior of mesa software renderer
+       */
+      cube_cmd[CUBE_PP_CUBIC_OFFSET_0] = texobj->pp_txoffset; /* right */
+      cube_cmd[CUBE_PP_CUBIC_OFFSET_1] = texobj->pp_txoffset + 1 * bytesPerFace; /* left */
+      cube_cmd[CUBE_PP_CUBIC_OFFSET_2] = texobj->pp_txoffset + 2 * bytesPerFace; /* top */
+      cube_cmd[CUBE_PP_CUBIC_OFFSET_3] = texobj->pp_txoffset + 3 * bytesPerFace; /* bottom */
+      cube_cmd[CUBE_PP_CUBIC_OFFSET_4] = texobj->pp_txoffset + 4 * bytesPerFace; /* front */
+      RADEON_DB_STATECHANGE( rmesa, &rmesa->hw.cube[unit] );
+      cmd[TEX_PP_TXOFFSET] = texobj->pp_txoffset + 5 * bytesPerFace; /* back */
+   }
+   else if (texobj->base.tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
       GLuint *txr_cmd = RADEON_DB_STATE( txr[unit] );
       txr_cmd[TXR_PP_TEX_SIZE] = texobj->pp_txsize; /* NPOT only! */
       txr_cmd[TXR_PP_TEX_PITCH] = texobj->pp_txpitch; /* NPOT only! */
       RADEON_DB_STATECHANGE( rmesa, &rmesa->hw.txr[unit] );
    }
+
+   RADEON_DB_STATECHANGE( rmesa, &rmesa->hw.tex[unit] );
 
    texobj->dirty_state &= ~(1<<unit);
 }
@@ -1002,7 +1059,14 @@ static void disable_tex( GLcontext *ctx, int unit )
 	 rmesa->recheck_texgen[unit] = GL_TRUE;
       }
 
-
+      if (rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT] & RADEON_TXFORMAT_CUBIC_MAP_ENABLE) {
+      /* this seems to be a genuine (r100 only?) hw bug. Need to remove the
+         cubic_map bit on unit 2 when the unit is disabled, otherwise every
+	 2nd (2d) mipmap on unit 0 will be broken (may not be needed for other
+	 units, better be safe than sorry though).*/
+	 RADEON_STATECHANGE( rmesa, tex[unit] );
+	 rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT] &= ~RADEON_TXFORMAT_CUBIC_MAP_ENABLE;
+      }
 
       {
 	 GLuint inputshift = RADEON_TEXGEN_0_INPUT_SHIFT + unit*4;
@@ -1045,6 +1109,48 @@ static GLboolean enable_tex_2d( GLcontext *ctx, int unit )
       radeonUploadTexImages( rmesa, (radeonTexObjPtr) tObj->DriverData, 0 );
       if ( !t->base.memBlock ) 
 	return GL_FALSE;
+   }
+
+   return GL_TRUE;
+}
+
+static GLboolean enable_tex_cube( GLcontext *ctx, int unit )
+{
+   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+   struct gl_texture_object *tObj = texUnit->_Current;
+   radeonTexObjPtr t = (radeonTexObjPtr) tObj->DriverData;
+   GLuint face;
+
+   /* Need to load the 2d images associated with this unit.
+    */
+   if (t->pp_txformat & RADEON_TXFORMAT_NON_POWER2) {
+      t->pp_txformat &= ~RADEON_TXFORMAT_NON_POWER2;
+      for (face = 0; face < 6; face++)
+         t->base.dirty_images[face] = ~0;
+   }
+
+   ASSERT(tObj->Target == GL_TEXTURE_CUBE_MAP);
+
+   if ( t->base.dirty_images[0] || t->base.dirty_images[1] ||
+        t->base.dirty_images[2] || t->base.dirty_images[3] ||
+        t->base.dirty_images[4] || t->base.dirty_images[5] ) {
+      /* flush */
+      RADEON_FIREVERTICES( rmesa );
+      /* layout memory space, once for all faces */
+      radeonSetTexImages( rmesa, tObj );
+   }
+
+   /* upload (per face) */
+   for (face = 0; face < 6; face++) {
+      if (t->base.dirty_images[face]) {
+         radeonUploadTexImages( rmesa, (radeonTexObjPtr) tObj->DriverData, face );
+      }
+   }
+      
+   if ( !t->base.memBlock ) {
+      /* texmem alloc failed, use s/w fallback */
+      return GL_FALSE;
    }
 
    return GL_TRUE;
@@ -1165,6 +1271,10 @@ static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
    }
    else if ( texUnit->_ReallyEnabled & (TEXTURE_1D_BIT | TEXTURE_2D_BIT) ) {
       return (enable_tex_2d( ctx, unit ) &&
+	      update_tex_common( ctx, unit ));
+   }
+   else if ( texUnit->_ReallyEnabled & (TEXTURE_CUBE_BIT) ) {
+      return (enable_tex_cube( ctx, unit ) &&
 	      update_tex_common( ctx, unit ));
    }
    else if ( texUnit->_ReallyEnabled ) {

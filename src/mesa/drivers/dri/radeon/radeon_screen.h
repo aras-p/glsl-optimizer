@@ -98,6 +98,7 @@ typedef struct {
 
    /* Configuration cache with default values for all contexts */
    driOptionCache optionCache;
+   GLboolean drmSupportsCubeMaps;
 } radeonScreenRec, *radeonScreenPtr;
 
 #endif /* __RADEON_SCREEN_H__ */

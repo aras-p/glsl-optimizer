@@ -174,7 +174,24 @@ static void radeonSetTexFilter( radeonTexObjPtr t, GLenum minf, GLenum magf )
 
    t->pp_txfilter &= ~(RADEON_MIN_FILTER_MASK | RADEON_MAG_FILTER_MASK);
 
-   if ( anisotropy == RADEON_MAX_ANISO_1_TO_1 ) {
+   /* r100 chips can't handle mipmaps/aniso for cubemap/volume textures */
+   if ( t->base.tObj->Target == GL_TEXTURE_CUBE_MAP ) {
+      switch ( minf ) {
+      case GL_NEAREST:
+      case GL_NEAREST_MIPMAP_NEAREST:
+      case GL_NEAREST_MIPMAP_LINEAR:
+	 t->pp_txfilter |= RADEON_MIN_FILTER_NEAREST;
+	 break;
+      case GL_LINEAR:
+      case GL_LINEAR_MIPMAP_NEAREST:
+      case GL_LINEAR_MIPMAP_LINEAR:
+	 t->pp_txfilter |= RADEON_MIN_FILTER_LINEAR;
+	 break;
+      default:
+	 break;
+      }
+   }
+   else if ( anisotropy == RADEON_MAX_ANISO_1_TO_1 ) {
       switch ( minf ) {
       case GL_NEAREST:
 	 t->pp_txfilter |= RADEON_MIN_FILTER_NEAREST;
@@ -774,7 +791,7 @@ static void radeonBindTexture( GLcontext *ctx, GLenum target,
    }
 
    assert( (target != GL_TEXTURE_1D && target != GL_TEXTURE_2D &&
-            target != GL_TEXTURE_RECTANGLE_NV) ||
+            target != GL_TEXTURE_RECTANGLE_NV && target != GL_TEXTURE_CUBE_MAP) ||
            (texObj->DriverData != NULL) );
 }
 

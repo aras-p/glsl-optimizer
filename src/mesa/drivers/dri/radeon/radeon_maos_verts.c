@@ -352,7 +352,8 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 	 }
 	 if ( (ctx->Texture.Unit[unit].TexGenEnabled & (R_BIT | Q_BIT)) )
 	    vtx |= RADEON_Q_BIT(unit);
-	 else if (VB->TexCoordPtr[unit]->size >= 3) {
+	 else if ((VB->TexCoordPtr[unit]->size >= 3) &&
+	          ((ctx->Texture.Unit[unit]._ReallyEnabled & (TEXTURE_CUBE_BIT)) == 0)) {
 	    GLuint swaptexmatcol = (VB->TexCoordPtr[unit]->size - 3);
 	    if (((rmesa->NeedTexMatrix >> unit) & 1) &&
 		 (swaptexmatcol != ((rmesa->TexMatColSwap >> unit) & 1)))

@@ -69,7 +69,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_EXT_secondary_color
 #include "extension_helper.h"
 
-#define DRIVER_DATE	"20051008"
+#define DRIVER_DATE	"20051013"
 
 #include "vblank.h"
 #include "utils.h"
@@ -338,7 +338,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 				 4,
 				 11, /* max 2D texture size is 2048x2048 */
 				 0,  /* 3D textures unsupported. */
-				 0,  /* cube textures unsupported. */
+				 9,  /* \todo: max cube texture size seems to be 512x512(x6) */
 				 11, /* max rect texture size is 2048x2048. */
 				 12,
 				 GL_FALSE );
@@ -412,6 +412,8 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    }
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
+   if (rmesa->radeonScreen->drmSupportsCubeMaps)
+      _mesa_enable_extension( ctx, "GL_ARB_texture_cube_map" );
    if (rmesa->glCtx->Mesa_DXTn) {
       _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
       _mesa_enable_extension( ctx, "GL_S3_s3tc" );

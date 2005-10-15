@@ -264,6 +264,16 @@ struct radeon_state_atom {
 #define TXR_PP_TEX_PITCH            2 /* 0x1d08, 0x1d10 for NPOT! */
 #define TXR_STATE_SIZE              3
 
+#define CUBE_CMD_0                  0
+#define CUBE_PP_CUBIC_FACES         1
+#define CUBE_CMD_1                  2
+#define CUBE_PP_CUBIC_OFFSET_0      3
+#define CUBE_PP_CUBIC_OFFSET_1      4
+#define CUBE_PP_CUBIC_OFFSET_2      5
+#define CUBE_PP_CUBIC_OFFSET_3      6
+#define CUBE_PP_CUBIC_OFFSET_4      7
+#define CUBE_STATE_SIZE             8
+
 #define ZBS_CMD_0              0
 #define ZBS_SE_ZBIAS_FACTOR             1
 #define ZBS_SE_ZBIAS_CONSTANT           2
@@ -415,6 +425,7 @@ struct radeon_hw_state {
    struct radeon_state_atom tcl;
    struct radeon_state_atom msc;
    struct radeon_state_atom tex[3];
+   struct radeon_state_atom cube[3];
    struct radeon_state_atom zbs;
    struct radeon_state_atom mtl; 
    struct radeon_state_atom mat[6];

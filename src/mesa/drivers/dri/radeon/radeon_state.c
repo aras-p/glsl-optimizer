@@ -2098,7 +2098,6 @@ void radeonUploadTexMatrix( radeonContextPtr rmesa,
       }
    }
    else {
-      /* never used currently - no swapping needed at all presumably */
       for (i = 0 ; i < 4 ; i++) {
 	 *dest++ = src[i];
 	 *dest++ = src[i+4];
