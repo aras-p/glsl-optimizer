@@ -66,6 +66,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_ARB_multisample
 #define need_GL_ARB_texture_compression
 #define need_GL_EXT_blend_minmax
+#define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
 #include "extension_helper.h"
 
@@ -139,6 +140,7 @@ const struct dri_extension card_extensions[] =
     { "GL_ARB_texture_mirrored_repeat",    NULL },
     { "GL_EXT_blend_logic_op",             NULL },
     { "GL_EXT_blend_subtract",             GL_EXT_blend_minmax_functions },
+    { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
     { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
     { "GL_EXT_stencil_wrap",               NULL },
     { "GL_EXT_texture_edge_clamp",         NULL },
@@ -238,6 +240,9 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    if ( !rmesa )
       return GL_FALSE;
 
+   /* init exp fog table data */
+   radeonInitStaticFogData();
+   
    /* Parse configuration files.
     * Do this here so that initialMaxAnisotropy is set before we create
     * the default textures.

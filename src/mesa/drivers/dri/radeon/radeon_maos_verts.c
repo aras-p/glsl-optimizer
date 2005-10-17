@@ -63,8 +63,11 @@ static struct {
 
 #define DO_W    (IND & RADEON_CP_VC_FRMT_W0)
 #define DO_RGBA (IND & RADEON_CP_VC_FRMT_PKCOLOR)
-#define DO_SPEC (IND & RADEON_CP_VC_FRMT_PKSPEC)
-#define DO_FOG  (IND & RADEON_CP_VC_FRMT_PKSPEC)
+#define DO_SPEC_OR_FOG (IND & RADEON_CP_VC_FRMT_PKSPEC)
+#define DO_SPEC ((IND & RADEON_CP_VC_FRMT_PKSPEC) && \
+		 (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR))
+#define DO_FOG  ((IND & RADEON_CP_VC_FRMT_PKSPEC) && ctx->Fog.Enabled && \
+		 (ctx->Fog.FogCoordinateSource == GL_FOG_COORD))
 #define DO_TEX0 (IND & RADEON_CP_VC_FRMT_ST0)
 #define DO_TEX1 (IND & RADEON_CP_VC_FRMT_ST1)
 #define DO_TEX2 (IND & RADEON_CP_VC_FRMT_ST2)
@@ -337,7 +340,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       req |= RADEON_CP_VC_FRMT_PKCOLOR;
    }
 
-   if (inputs & VERT_BIT_COLOR1) {
+   if (inputs & (VERT_BIT_COLOR1|VERT_BIT_FOG)) {
       req |= RADEON_CP_VC_FRMT_PKSPEC;
    }
 

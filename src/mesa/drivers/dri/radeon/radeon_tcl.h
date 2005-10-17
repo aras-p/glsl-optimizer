@@ -46,7 +46,10 @@ extern void radeonEmitPrimitive( GLcontext *ctx, GLuint first, GLuint last,
 				 GLuint flags );
 
 extern void radeonTclFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
-					      
+
+extern void radeonInitStaticFogData( void );
+extern float radeonComputeFogBlendFactor( GLcontext *ctx, GLfloat fogcoord );
+
 #define RADEON_TCL_FALLBACK_RASTER            0x1 /* rasterization */
 #define RADEON_TCL_FALLBACK_UNFILLED          0x2 /* unfilled tris */
 #define RADEON_TCL_FALLBACK_LIGHT_TWOSIDE     0x4 /* twoside tris */
@@ -55,6 +58,7 @@ extern void radeonTclFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 #define RADEON_TCL_FALLBACK_TEXGEN_1          0x20 /* texgen, unit 1 */
 #define RADEON_TCL_FALLBACK_TEXGEN_2          0x40 /* texgen, unit 2 */
 #define RADEON_TCL_FALLBACK_TCL_DISABLE       0x80 /* user disable */
+#define RADEON_TCL_FALLBACK_FOGCOORDSPEC      0x100 /* fogcoord, sep. spec light */
 
 /* max maos_verts vertex format has a size of 18 floats */
 #define RADEON_MAX_TCL_VERTSIZE (18*4)

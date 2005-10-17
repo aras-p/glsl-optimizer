@@ -48,6 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_state.h"
 #include "radeon_swtcl.h"
 #include "radeon_maos.h"
+#include "radeon_tcl.h"
 
 #if 0
 /* Usage:
@@ -169,6 +170,46 @@ do {						\
 } while (0)
 #endif
 
+static void emit_vecfog( GLcontext *ctx,
+			 struct radeon_dma_region *rvb,
+			 char *data,
+			 int stride,
+			 int count )
+{
+   int i;
+   GLfloat *out;
+
+   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+
+   if (RADEON_DEBUG & DEBUG_VERTS)
+      fprintf(stderr, "%s count %d stride %d\n",
+	      __FUNCTION__, count, stride);
+
+   assert (!rvb->buf);
+
+   if (stride == 0) {
+      radeonAllocDmaRegion( rmesa, rvb, 4, 4 );
+      count = 1;
+      rvb->aos_start = GET_START(rvb);
+      rvb->aos_stride = 0;
+      rvb->aos_size = 1;
+   }
+   else {
+      radeonAllocDmaRegion( rmesa, rvb, count * 4, 4 );	/* alignment? */
+      rvb->aos_start = GET_START(rvb);
+      rvb->aos_stride = 1;
+      rvb->aos_size = 1;
+   }
+
+   /* Emit the data
+    */
+   out = (GLfloat *)(rvb->address + rvb->start);
+   for (i = 0; i < count; i++) {
+      out[0] = radeonComputeFogBlendFactor( ctx, *(GLfloat *)data );
+      out++;
+      data += stride;
+   }
+}
 
 static void emit_vec4( GLcontext *ctx,
 		       struct radeon_dma_region *rvb,
@@ -525,6 +566,20 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       component[nr++] = &rmesa->tcl.spec;
    }
 
+
+   if (inputs & VERT_BIT_FOG) {
+      if (!rmesa->tcl.fog.buf)
+	 emit_vecfog( ctx,
+		      &(rmesa->tcl.fog),
+		      (char *)VB->FogCoordPtr->data,
+		      VB->FogCoordPtr->stride,
+		      count);
+
+      vfmt |= RADEON_CP_VC_FRMT_FPFOG;
+      component[nr++] = &rmesa->tcl.fog;
+   }
+
+
    vtx = (rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] &
 	  ~(RADEON_TCL_VTX_Q0|RADEON_TCL_VTX_Q1|RADEON_TCL_VTX_Q2));
       
@@ -589,6 +644,9 @@ void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs )
 
    if (newinputs & VERT_BIT_COLOR1) 
       radeonReleaseDmaRegion( rmesa, &rmesa->tcl.spec, __FUNCTION__ );
+      
+   if (newinputs & VERT_BIT_FOG)
+      radeonReleaseDmaRegion( rmesa, &rmesa->tcl.fog, __FUNCTION__ );
 
    for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
       if (newinputs & VERT_BIT_TEX(unit))

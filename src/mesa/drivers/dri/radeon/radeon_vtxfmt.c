@@ -549,7 +549,8 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
    GLuint ind = RADEON_CP_VC_FRMT_Z;
    GLuint unit;
 
-   if (rmesa->TclFallback || rmesa->vb.fell_back || ctx->CompileFlag)
+   if (rmesa->TclFallback || rmesa->vb.fell_back || ctx->CompileFlag ||
+      (ctx->Fog.Enabled && (ctx->Fog.FogCoordinateSource == GL_FOG_COORD)))
       return GL_FALSE;
 
    if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT) 
@@ -580,6 +581,10 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
       if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
 	 ind |= RADEON_CP_VC_FRMT_PKSPEC;
       }
+   }
+
+   if ( ctx->Fog.FogCoordinateSource == GL_FOG_COORD ) {
+      ind |= RADEON_CP_VC_FRMT_PKSPEC;
    }
 
    for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
@@ -657,6 +662,9 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
       UNCLAMPED_FLOAT_TO_CHAN( rmesa->vb.specptr->red,   ctx->Current.Attrib[VERT_ATTRIB_COLOR1][0] );
       UNCLAMPED_FLOAT_TO_CHAN( rmesa->vb.specptr->green, ctx->Current.Attrib[VERT_ATTRIB_COLOR1][1] );
       UNCLAMPED_FLOAT_TO_CHAN( rmesa->vb.specptr->blue,  ctx->Current.Attrib[VERT_ATTRIB_COLOR1][2] );
+      /* fog ??? */
+/*      UNCLAMPED_FLOAT_TO_CHAN( rmesa->vb.specptr->alpha,
+			       radeonComputeFogFactor(ctx->Current.Attrib[VERT_ATTRIB_FOG][0]) ); */
    }
 
    for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
@@ -948,8 +956,6 @@ void radeonVtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
 
    /* Not active in supported states; just keep ctx->Current uptodate:
     */
-   vfmt->FogCoordfvEXT = _mesa_noop_FogCoordfvEXT;
-   vfmt->FogCoordfEXT = _mesa_noop_FogCoordfEXT;
    vfmt->EdgeFlag = _mesa_noop_EdgeFlag;
    vfmt->EdgeFlagv = _mesa_noop_EdgeFlagv;
    vfmt->Indexf = _mesa_noop_Indexf;
@@ -986,6 +992,8 @@ void radeonVtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
    vfmt->VertexAttrib3fvNV = radeon_fallback_VertexAttrib3fvNV;
    vfmt->VertexAttrib4fNV  = radeon_fallback_VertexAttrib4fNV;
    vfmt->VertexAttrib4fvNV = radeon_fallback_VertexAttrib4fvNV;
+   vfmt->FogCoordfEXT = radeon_fallback_FogCoordfEXT;
+   vfmt->FogCoordfvEXT = radeon_fallback_FogCoordfvEXT;
 
    (void)radeon_fallback_vtxfmt;
 

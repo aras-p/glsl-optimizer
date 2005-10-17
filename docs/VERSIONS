@@ -1383,7 +1383,8 @@ Mesa Version History
 	- GL_EXT_timer_query extension
 	- r200: add support for GL_ATI_fragment_shader
 	- added fast XOR-mode line drawing optimization
-	- radeon: add support for all 3 tmus and cube maps
+	- radeon: add support for all 3 tmus, GL_ARB_texture_cube_map
+	  and GL_EXT_fog_coord
     Changes:
 	- removed GL_HP_occlusion_test (use GL_ARB_occlusion_query instead)
     Bug fixes:

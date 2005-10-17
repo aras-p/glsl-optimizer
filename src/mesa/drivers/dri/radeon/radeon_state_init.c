@@ -345,6 +345,7 @@ void radeonInitState( radeonContextPtr rmesa )
 				     RADEON_RIGHT_HAND_CUBE_OGL */);
 
    rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] = (RADEON_FOG_VERTEX |
+					  /* this bit unused for vertex fog */
 					  RADEON_FOG_USE_DEPTH);
 
    rmesa->hw.ctx.cmd[CTX_RE_SOLID_COLOR] = 0x00000000;

@@ -55,6 +55,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_vtxfmt.h"
 #include "drirenderbuffer.h"
 
+static void radeonUpdateSpecular( GLcontext *ctx );
+
 /* =============================================================
  * Alpha blending
  */
@@ -329,9 +331,6 @@ static void radeonFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
    union { int i; float f; } c, d;
    GLchan col[4];
 
-   c.i = rmesa->hw.fog.cmd[FOG_C];
-   d.i = rmesa->hw.fog.cmd[FOG_D];
-
    switch (pname) {
    case GL_FOG_MODE:
       if (!ctx->Fog.Enabled)
@@ -341,30 +340,24 @@ static void radeonFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
       switch (ctx->Fog.Mode) {
       case GL_LINEAR:
 	 rmesa->hw.tcl.cmd[TCL_UCP_VERT_BLEND_CTL] |= RADEON_TCL_FOG_LINEAR;
-	 if (ctx->Fog.Start == ctx->Fog.End) {
-	    c.f = 1.0F;
-	    d.f = 1.0F;
-	 }
-	 else {
-	    c.f = ctx->Fog.End/(ctx->Fog.End-ctx->Fog.Start);
-	    d.f = 1.0/(ctx->Fog.End-ctx->Fog.Start);
-	 }
 	 break;
       case GL_EXP:
 	 rmesa->hw.tcl.cmd[TCL_UCP_VERT_BLEND_CTL] |= RADEON_TCL_FOG_EXP;
-	 c.f = 0.0;
-	 d.f = ctx->Fog.Density;
 	 break;
       case GL_EXP2:
 	 rmesa->hw.tcl.cmd[TCL_UCP_VERT_BLEND_CTL] |= RADEON_TCL_FOG_EXP2;
-	 c.f = 0.0;
-	 d.f = -(ctx->Fog.Density * ctx->Fog.Density);
 	 break;
       default:
 	 return;
       }
-      break;
+   /* fallthrough */
    case GL_FOG_DENSITY:
+   case GL_FOG_START:
+   case GL_FOG_END:
+      if (!ctx->Fog.Enabled)
+	 return;
+      c.i = rmesa->hw.fog.cmd[FOG_C];
+      d.i = rmesa->hw.fog.cmd[FOG_D];
       switch (ctx->Fog.Mode) {
       case GL_EXP:
 	 c.f = 0.0;
@@ -374,13 +367,7 @@ static void radeonFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
 	 c.f = 0.0;
 	 d.f = -(ctx->Fog.Density * ctx->Fog.Density);
 	 break;
-      default:
-	 break;
-      }
-      break;
-   case GL_FOG_START:
-   case GL_FOG_END:
-      if (ctx->Fog.Mode == GL_LINEAR) {
+      case GL_LINEAR:
 	 if (ctx->Fog.Start == ctx->Fog.End) {
 	    c.f = 1.0F;
 	    d.f = 1.0F;
@@ -388,26 +375,28 @@ static void radeonFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
 	    c.f = ctx->Fog.End/(ctx->Fog.End-ctx->Fog.Start);
 	    d.f = 1.0/(ctx->Fog.End-ctx->Fog.Start);
 	 }
+	 break;
+      default:
+	 break;
+      }
+      if (c.i != rmesa->hw.fog.cmd[FOG_C] || d.i != rmesa->hw.fog.cmd[FOG_D]) {
+	 RADEON_STATECHANGE( rmesa, fog );
+	 rmesa->hw.fog.cmd[FOG_C] = c.i;
+	 rmesa->hw.fog.cmd[FOG_D] = d.i;
       }
       break;
    case GL_FOG_COLOR: 
       RADEON_STATECHANGE( rmesa, ctx );
       UNCLAMPED_FLOAT_TO_RGB_CHAN( col, ctx->Fog.Color );
-      rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] =
+      rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] &= ~RADEON_FOG_COLOR_MASK;
+      rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] |=
 	 radeonPackColor( 4, col[0], col[1], col[2], 0 );
       break;
-   case GL_FOG_COORDINATE_SOURCE_EXT: 
-      /* What to do?
-       */
+   case GL_FOG_COORD_SRC:
+      radeonUpdateSpecular( ctx );
       break;
    default:
       return;
-   }
-
-   if (c.i != rmesa->hw.fog.cmd[FOG_C] || d.i != rmesa->hw.fog.cmd[FOG_D]) {
-      RADEON_STATECHANGE( rmesa, fog );
-      rmesa->hw.fog.cmd[FOG_C] = c.i;
-      rmesa->hw.fog.cmd[FOG_D] = d.i;
    }
 }
 
@@ -692,6 +681,7 @@ static void radeonUpdateSpecular( GLcontext *ctx )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    u_int32_t p = rmesa->hw.ctx.cmd[CTX_PP_CNTL];
+   GLuint flag = 0;
 
    RADEON_STATECHANGE( rmesa, tcl );
 
@@ -730,13 +720,22 @@ static void radeonUpdateSpecular( GLcontext *ctx )
    }
 
    if (ctx->Fog.Enabled) {
-      rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXSEL] |= RADEON_TCL_COMPUTE_SPECULAR;
       rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] |= RADEON_TCL_VTX_PK_SPEC;
-
-      /* Bizzare: have to leave lighting enabled to get fog.
-       */
-      rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL] |= RADEON_LIGHTING_ENABLE;
+      if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH) {
+	 rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXSEL] |= RADEON_TCL_COMPUTE_SPECULAR;
+      /* Bizzare: have to leave lighting enabled to get fog. */
+	 rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL] |= RADEON_LIGHTING_ENABLE;
+      }
+      else {
+      /* cannot do tcl fog factor calculation with fog coord source
+       * (send precomputed factors). Cannot use precomputed fog
+       * factors together with tcl spec light (need tcl fallback) */
+	 flag = (rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXSEL] &
+	    RADEON_TCL_COMPUTE_SPECULAR) != 0;
+      }
    }
+ 
+   TCL_FALLBACK( ctx, RADEON_TCL_FALLBACK_FOGCOORDSPEC, flag);
 
    if (NEED_SECONDARY_COLOR(ctx)) {
       assert( (p & RADEON_SPECULAR_ENABLE) != 0 );
@@ -1809,8 +1808,6 @@ static void radeonEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 rmesa->hw.tcl.cmd[TCL_UCP_VERT_BLEND_CTL] &= ~RADEON_TCL_FOG_MASK;
       }
       radeonUpdateSpecular( ctx ); /* for PK_SPEC */
-      if (rmesa->TclFallback) 
-	 radeonChooseVertexState( ctx );
       _mesa_allow_light_in_model( ctx, !state );
       break;
 
