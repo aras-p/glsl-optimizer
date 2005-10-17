@@ -260,6 +260,8 @@ MAIN_FILES = \
 	$(DIRECTORY)/windows/VC7/mesa/osmesa/osmesa.vcproj
 
 DRI_FILES = \
+	$(DIRECTORY)/include/GL/internal/dri_interface.h		\
+	$(DIRECTORY)/include/GL/internal/sarea.h			\
 	$(DIRECTORY)/src/glx/Makefile					\
 	$(DIRECTORY)/src/glx/x11/Makefile				\
 	$(DIRECTORY)/src/glx/x11/*.[ch]					\
