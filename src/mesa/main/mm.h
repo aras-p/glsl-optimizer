@@ -19,11 +19,21 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-#ifndef MM_INC
-#define MM_INC
+
+/**
+ * Memory manager code.  Primarily used by device drivers to manage texture
+ * heaps, etc.
+ */
+
+
+#ifndef MM_H
+#define MM_H
+
+
+#include "imports.h"
+
 
 struct mem_block_t {
   struct mem_block_t *next;
@@ -33,25 +43,39 @@ struct mem_block_t {
   unsigned int free:1;
   unsigned int reserved:1;
 };
+
 typedef struct mem_block_t TMemBlock;
+
 typedef struct mem_block_t *PMemBlock;
 
 /* a heap is just the first block in a chain */
 typedef struct mem_block_t memHeap_t;
 
-static __inline__ int mmBlockSize(PMemBlock b)
-{ return b->size; }
 
-static __inline__ int mmOffset(PMemBlock b)
-{ return b->ofs; }
+/* XXX are these needed? */
+#if 0
+static INLINE int
+mmBlockSize(PMemBlock b)
+{
+   return b->size;
+}
 
-/* 
+static INLINE int
+mmOffset(PMemBlock b)
+{
+   return b->ofs;
+}
+#endif
+
+
+
+/** 
  * input: total size in bytes
  * return: a heap pointer if OK, NULL if error
  */
-memHeap_t *mmInit( int ofs, int size );
+extern memHeap_t *mmInit(int ofs, int size);
 
-/*
+/**
  * Allocate 'size' bytes with 2^align2 bytes alignment,
  * restrict the search to free memory after 'startSearch'
  * depth and back buffers should be in different 4mb banks
@@ -61,29 +85,31 @@ memHeap_t *mmInit( int ofs, int size );
  *		startSearch = linear offset from start of heap to begin search
  * return: pointer to the allocated block, 0 if error
  */
-PMemBlock  mmAllocMem( memHeap_t *heap, int size, int align2, 
-		       int startSearch );
+extern PMemBlock mmAllocMem(memHeap_t *heap, int size, int align2, 
+                            int startSearch);
 
-/*
+/**
  * Free block starts at offset
  * input: pointer to a block
  * return: 0 if OK, -1 if error
  */
-int  mmFreeMem( PMemBlock b );
+extern int mmFreeMem(PMemBlock b);
 
-/*
+/**
  * Free block starts at offset
  * input: pointer to a heap, start offset
  * return: pointer to a block
  */
-PMemBlock mmFindBlock( memHeap_t *heap, int start);
+extern PMemBlock mmFindBlock(memHeap_t *heap, int start);
 
-/*
+/**
  * destroy MM
  */
-void mmDestroy( memHeap_t *mmInit );
+extern void mmDestroy(memHeap_t *mmInit);
 
-/* For debuging purpose. */
-void mmDumpMemInfo( memHeap_t *mmInit );
+/**
+ * For debuging purpose.
+ */
+extern void mmDumpMemInfo(const memHeap_t *mmInit);
 
 #endif

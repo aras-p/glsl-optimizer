@@ -1,3 +1,36 @@
+/*
+ * Mesa 3-D graphics library
+ * Version:  6.5
+ *
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+
+/**
+ * \file exemem.c
+ * Functions for allocating executable memory.
+ *
+ * \author Keith Whitwell
+ */
+
+
 #include "imports.h"
 #include "glthread.h"
 
@@ -5,9 +38,15 @@
 
 #ifdef __linux__
 
+/*
+ * Allocate a large block of memory which can hold code then dole it out
+ * in pieces by means of the generic memory manager code.
+*/
+
+
 #include <unistd.h>
 #include <sys/mman.h>
-#include <mm.h>
+#include "mm.h"
 
 #define EXEC_HEAP_SIZE (128*1024)
 
@@ -16,7 +55,9 @@ _glthread_DECLARE_STATIC_MUTEX(exec_mutex);
 static memHeap_t *exec_heap = NULL;
 static unsigned char *exec_mem = NULL;
 
-static void init_heap( void )
+
+static void
+init_heap(void)
 {
    if (!exec_heap)
       exec_heap = mmInit( 0, EXEC_HEAP_SIZE );
@@ -29,7 +70,7 @@ static void init_heap( void )
 
 
 void *
-_mesa_exec_malloc( GLuint size )
+_mesa_exec_malloc(GLuint size)
 {
    PMemBlock block = NULL;
    void *addr = NULL;
@@ -50,6 +91,7 @@ _mesa_exec_malloc( GLuint size )
    
    return addr;
 }
+
  
 void 
 _mesa_exec_free(void *addr)
@@ -66,18 +108,25 @@ _mesa_exec_free(void *addr)
    _glthread_UNLOCK_MUTEX(exec_mutex);
 }
 
+
 #else
 
+/*
+ * Just use regular memory.
+ */
+
 void *
-_mesa_exec_malloc( GLuint size )
+_mesa_exec_malloc(GLuint size)
 {
    return _mesa_malloc( size );
 }
+
  
 void 
 _mesa_exec_free(void *addr)
 {
    _mesa_free(addr);
 }
+
 
 #endif

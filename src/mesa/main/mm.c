@@ -21,17 +21,14 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/common/mm.c,v 1.4 2002/10/30 12:51:27 alanh Exp $ */
-
-#include <stdlib.h>
-#include <stdio.h>
 
 #include "mm.h"
 
 
-void mmDumpMemInfo( memHeap_t *heap )
+void
+mmDumpMemInfo(const memHeap_t *heap)
 {
-   TMemBlock *p;
+   const TMemBlock *p;
 
    fprintf(stderr, "Memory heap %p:\n", (void *)heap);
    if (heap == 0) {
@@ -48,34 +45,37 @@ void mmDumpMemInfo( memHeap_t *heap )
    fprintf(stderr, "End of memory blocks\n");
 }
 
-memHeap_t *mmInit(int ofs,
-		  int size)
+memHeap_t *
+mmInit(int ofs, int size)
 {
    PMemBlock blocks;
   
    if (size <= 0) {
       return NULL;
    }
-   blocks = (TMemBlock *) calloc(1,sizeof(TMemBlock));
+   blocks = (TMemBlock *) _mesa_calloc(sizeof(TMemBlock));
    if (blocks) {
       blocks->ofs = ofs;
       blocks->size = size;
       blocks->free = 1;
       return (memHeap_t *)blocks;
-   } else
+   }
+   else {
       return NULL;
+   }
 }
 
 
-static TMemBlock* SliceBlock(TMemBlock *p, 
-			     int startofs, int size, 
-			     int reserved, int alignment)
+static TMemBlock *
+SliceBlock(TMemBlock *p, 
+           int startofs, int size, 
+           int reserved, int alignment)
 {
    TMemBlock *newblock;
 
    /* break left */
    if (startofs > p->ofs) {
-      newblock = (TMemBlock*) calloc(1,sizeof(TMemBlock));
+      newblock = (TMemBlock*) _mesa_calloc(sizeof(TMemBlock));
       if (!newblock)
 	 return NULL;
       newblock->ofs = startofs;
@@ -89,7 +89,7 @@ static TMemBlock* SliceBlock(TMemBlock *p,
 
    /* break right */
    if (size < p->size) {
-      newblock = (TMemBlock*) calloc(1,sizeof(TMemBlock));
+      newblock = (TMemBlock*) _mesa_calloc(sizeof(TMemBlock));
       if (!newblock)
 	 return NULL;
       newblock->ofs = startofs + size;
@@ -107,7 +107,9 @@ static TMemBlock* SliceBlock(TMemBlock *p,
    return p;
 }
 
-PMemBlock mmAllocMem( memHeap_t *heap, int size, int align2, int startSearch)
+
+PMemBlock
+mmAllocMem(memHeap_t *heap, int size, int align2, int startSearch)
 {
    int mask,startofs,endofs;
    TMemBlock *p;
@@ -136,7 +138,9 @@ PMemBlock mmAllocMem( memHeap_t *heap, int size, int align2, int startSearch)
    return p;
 }
 
-PMemBlock mmFindBlock( memHeap_t *heap, int start)
+
+PMemBlock
+mmFindBlock(memHeap_t *heap, int start)
 {
    TMemBlock *p = (TMemBlock *)heap;
 
@@ -151,19 +155,22 @@ PMemBlock mmFindBlock( memHeap_t *heap, int start)
 }
 
 
-static __inline__ int Join2Blocks(TMemBlock *p)
+static INLINE int
+Join2Blocks(TMemBlock *p)
 {
+   /* XXX there should be some assertions here */
    if (p->free && p->next && p->next->free) {
       TMemBlock *q = p->next;
       p->size += q->size;
       p->next = q->next;
-      free(q);
+      _mesa_free(q);
       return 1;
    }
    return 0;
 }
 
-int mmFreeMem(PMemBlock b)
+int
+mmFreeMem(PMemBlock b)
 {
    TMemBlock *p,*prev;
 
@@ -196,16 +203,18 @@ int mmFreeMem(PMemBlock b)
 }
 
 
-void mmDestroy(memHeap_t *heap)
+void
+mmDestroy(memHeap_t *heap)
 {
-   TMemBlock *p,*q;
+   TMemBlock *p;
 
    if (!heap)
       return;
-   p = (TMemBlock *)heap;
+
+   p = (TMemBlock *) heap;
    while (p) {
-      q = p->next;
-      free(p);
-      p = q;
+      TMemBlock *next = p->next;
+      _mesa_free(p);
+      p = next;
    }
 }
