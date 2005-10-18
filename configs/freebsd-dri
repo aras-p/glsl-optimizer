@@ -24,7 +24,7 @@ ASM_SOURCES =
 # Library/program dependencies
 LIBDRM_LIB = `pkg-config --libs libdrm` -ldrm
 DRI_LIB_DEPS = -L/usr/local/lib -lm -lpthread -lexpat $(LIBDRM_LIB)
-GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread $(LIBDRM_LIB)
+GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXxf86vm -lm -lpthread $(LIBDRM_LIB)
 
 GLUT_LIB_DEPS = -L$(LIB_DIR) -L/usr/X11R6/lib -lGLU -lGL -lX11 -lXmu -lXt -lXi -lm
 GLW_LIB_DEPS = -L$(LIB_DIR) -L/usr/X11R6/lib -lGL -lXt -lXm -lX11

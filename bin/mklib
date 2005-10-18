@@ -307,11 +307,23 @@ case $ARCH in
 	;;
 
     'FreeBSD')
+	# we assume gcc
+
+	if [ "x$LINK" = "x" ] ; then
+	    # -linker was not specified so set default link command now
+            if [ $CPLUSPLUS = 1 ] ; then
+                LINK=g++
+            else
+                LINK=gcc
+            fi
+	fi
+
 	if [ $NOPREFIX = 1 ] ; then
 	    # No "lib" or ".so" part
 	    echo "mklib: Making FreeBSD shared library: " ${LIBNAME}
+	    OPTS="-shared"
 	    rm -f ${LIBNAME}
-	    ld -Bshareable -o ${LIBNAME} ${OBJECTS}
+	    ${LINK} ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
 	    FINAL_LIBS=${LIBNAME}
         elif [ $STATIC = 1 ] ; then
 	    STLIB="lib${LIBNAME}.a"
@@ -321,11 +333,11 @@ case $ARCH in
 	    ranlib ${STLIB}
 	    FINAL_LIBS=${STLIB}
 	else
-	    SHLIB="lib${LIBNAME}.so.${MAJOR}.${MINOR}"
+	    SHLIB="lib${LIBNAME}.so.${MAJOR}"
+	    OPTS="-shared -Wl,-soname,${SHLIB}"
 	    echo "mklib: Making FreeBSD shared library: " ${SHLIB}
 	    rm -f ${SHLIB}
-	    ld -Bshareable -o ${SHLIB} ${OBJECTS}
-	    # XXX make lib${LIBNAME}.so.${MAJOR} symlink?
+	    ${LINK} ${OPTS} -o ${SHLIB} ${OBJECTS} ${DEPS}
 	    FINAL_LIBS=${SHLIB}
 	fi
 	;;
