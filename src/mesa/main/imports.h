@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -609,6 +609,12 @@ extern void
 _mesa_align_free( void *ptr );
 
 extern void *
+_mesa_exec_malloc( GLuint size );
+
+extern void 
+_mesa_exec_free( void *addr );
+
+extern void *
 _mesa_realloc( void *oldBuffer, size_t oldSize, size_t newSize );
 
 extern void *
@@ -722,15 +728,6 @@ _mesa_exit( int status );
 
 extern void
 _mesa_init_default_imports( __GLimports *imports, void *driverCtx );
-
-/* Allocate executable memory for codegen:
- */
-extern void *
-_mesa_exec_malloc( GLuint size );
-
-extern void 
-_mesa_exec_free( void *addr );
-
 
 
 #ifdef __cplusplus
