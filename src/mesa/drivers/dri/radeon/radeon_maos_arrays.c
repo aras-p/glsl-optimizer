@@ -566,7 +566,9 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       component[nr++] = &rmesa->tcl.spec;
    }
 
-
+/* FIXME: not sure if this is correct. May need to stitch this together with
+   secondary color. It seems odd that for primary color color and alpha values
+   are emitted together but for secondary color not. */
    if (inputs & VERT_BIT_FOG) {
       if (!rmesa->tcl.fog.buf)
 	 emit_vecfog( ctx,

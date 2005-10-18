@@ -400,7 +400,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
       }
    }
 
-   if ( ctx->Fog.FogCoordinateSource == GL_FOG_COORD ) {
+   if ( (ctx->Fog.FogCoordinateSource == GL_FOG_COORD) && ctx->Fog.Enabled ) {
       inputs |= VERT_BIT_FOG;
    }
 
