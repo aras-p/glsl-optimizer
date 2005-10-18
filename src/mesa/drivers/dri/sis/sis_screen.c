@@ -59,6 +59,7 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 static const GLuint __driNConfigOptions = 2;
 
+extern const struct dri_extension card_extensions[];
 
 static __GLcontextModes *
 sisFillInModes(int bpp)
@@ -443,6 +444,16 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn,
    if (psp != NULL) {
       SISDRIPtr dri_priv = (SISDRIPtr)psp->pDevPriv;
       *driver_modes = sisFillInModes(dri_priv->bytesPerPixel * 8);
+
+      /* Calling driInitExtensions here, with a NULL context pointer, does not actually
+       * enable the extensions.  It just makes sure that all the dispatch offsets for all
+       * the extensions that *might* be enables are known.  This is needed because the
+       * dispatch offsets need to be known when _mesa_context_create is called, but we can't
+       * enable the extensions until we have a context pointer.
+       *
+       * Hello chicken.  Hello egg.  How are you two today?
+       */
+      driInitExtensions( NULL, card_extensions, GL_FALSE );
    }
 
    return (void *)psp;
