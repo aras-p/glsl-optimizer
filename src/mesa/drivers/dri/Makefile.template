@@ -4,7 +4,6 @@ MESA_MODULES = $(TOP)/src/mesa/libmesa.a
 
 COMMON_SOURCES = \
         ../../common/driverfuncs.c \
-        ../common/mm.c \
         ../common/utils.c \
         ../common/texmem.c \
         ../common/vblank.c \

@@ -723,6 +723,15 @@ _mesa_exit( int status );
 extern void
 _mesa_init_default_imports( __GLimports *imports, void *driverCtx );
 
+/* Allocate executable memory for codegen:
+ */
+extern void *
+_mesa_exec_malloc( GLuint size );
+
+extern void 
+_mesa_exec_free( void *addr );
+
+
 
 #ifdef __cplusplus
 }

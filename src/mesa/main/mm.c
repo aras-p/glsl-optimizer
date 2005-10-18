@@ -136,6 +136,21 @@ PMemBlock mmAllocMem( memHeap_t *heap, int size, int align2, int startSearch)
    return p;
 }
 
+PMemBlock mmFindBlock( memHeap_t *heap, int start)
+{
+   TMemBlock *p = (TMemBlock *)heap;
+
+   while (p) {
+      if (p->ofs == start && p->free) 
+	 return p;
+
+      p = p->next;
+   }
+
+   return NULL;
+}
+
+
 static __inline__ int Join2Blocks(TMemBlock *p)
 {
    if (p->free && p->next && p->next->free) {

@@ -72,6 +72,13 @@ PMemBlock  mmAllocMem( memHeap_t *heap, int size, int align2,
 int  mmFreeMem( PMemBlock b );
 
 /*
+ * Free block starts at offset
+ * input: pointer to a heap, start offset
+ * return: pointer to a block
+ */
+PMemBlock mmFindBlock( memHeap_t *heap, int start);
+
+/*
  * destroy MM
  */
 void mmDestroy( memHeap_t *mmInit );
