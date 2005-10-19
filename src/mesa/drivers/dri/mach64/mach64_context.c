@@ -79,7 +79,7 @@ static const struct dri_debug_control debug_control[] =
     { NULL,    0 }
 };
 
-static const struct dri_extension card_extensions[] =
+const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },
