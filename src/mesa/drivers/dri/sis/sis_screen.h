@@ -46,7 +46,6 @@ typedef struct {
    unsigned int AGPCmdBufSize;
 
    int deviceID;
-   int irqEnabled;
 
    int cpp;
    unsigned int screenX, screenY;

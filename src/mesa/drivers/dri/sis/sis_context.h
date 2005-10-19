@@ -231,6 +231,19 @@ typedef void (*sis_line_func)( sisContextPtr,
 typedef void (*sis_point_func)( sisContextPtr,
 				sisVertex * );
 
+/**
+ * Derived from gl_renderbuffer.
+ */
+struct sis_renderbuffer {
+   struct gl_renderbuffer Base;  /* must be first! */
+   drmSize size;
+   GLuint offset;
+   void *handle;
+   GLuint pitch;
+   GLuint bpp;
+   char *map;
+};
+
 /* Device dependent context state */
 
 struct sis_context
@@ -264,8 +277,6 @@ struct sis_context
   unsigned char *IOBase;
   unsigned char *FbBase;
   unsigned int displayWidth;
-  unsigned int frontOffset;
-  unsigned int frontPitch;
 
   /* HW RGBA layout */
   unsigned int redMask, greenMask, blueMask, alphaMask;
@@ -333,18 +344,12 @@ struct sis_context
   /* Front/back/depth buffer info */
   GLuint width, height;			/* size of buffers */
   GLint bottom;				/* used for FLIP macro */
-  GLvoid *backbuffer;
-  unsigned int backOffset;
-  unsigned int backPitch;
-  GLvoid *depthbuffer;
-  unsigned int depthOffset;
-  unsigned int depthPitch;
-  void *zbFree, *bbFree;		/* Cookies for freeing buffers */
   ENGPACKET zClearPacket, cbClearPacket;
-
-  /* Drawable, cliprect and scissor information
-   */
-  GLint drawOffset, drawPitch;
+  /* XXX These don't belong here.  They should be per-drawable state. */
+  struct sis_renderbuffer front;
+  struct sis_renderbuffer back;
+  struct sis_renderbuffer depth;
+  struct sis_renderbuffer stencil; /* mirrors depth */
 
   /* Mirrors of some DRI state
    */
@@ -394,9 +399,10 @@ struct sis_context
    *(volatile GLuint *)(smesa->IOBase + 0x8b60) = 0xffffffff;		\
 }
 
-#define sis_fatal_error(msg)						\
+#define sis_fatal_error(...)						\
 do {									\
-	fprintf(stderr, "[%s:%d]: %s", __FILE__, __LINE__, msg);	\
+	fprintf(stderr, "[%s:%d]:", __FILE__, __LINE__);		\
+	fprintf(stderr, __VA_ARGS__);					\
 	exit(-1);							\
 } while (0)
 
@@ -421,6 +427,9 @@ extern GLboolean sisCreateContext( const __GLcontextModes *glVisual,
 				   __DRIcontextPrivate *driContextPriv,
                                    void *sharedContextPrivate );
 extern void sisDestroyContext( __DRIcontextPrivate * );
+
+void sisReAllocateBuffers(GLcontext *ctx, GLframebuffer *drawbuffer,
+                          GLuint width, GLuint height);
 
 extern GLboolean sisMakeCurrent( __DRIcontextPrivate *driContextPriv,
                                   __DRIdrawablePrivate *driDrawPriv,

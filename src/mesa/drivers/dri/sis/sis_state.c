@@ -521,29 +521,27 @@ void sisDDDrawBuffer( GLcontext *ctx, GLenum mode )
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    __GLSiSHardware *prev = &smesa->prev;
    __GLSiSHardware *current = &smesa->current;
-   int pitch;
 
    /*
     * _DrawDestMask is easier to cope with than <mode>.
     */
+   current->hwDstSet &= ~MASK_DstBufferPitch;
    switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
    case BUFFER_BIT_FRONT_LEFT:
       FALLBACK( smesa, SIS_FALLBACK_DRAW_BUFFER, GL_FALSE );
-      pitch = smesa->frontPitch;
+      current->hwOffsetDest = smesa->front.offset >> 1;
+      current->hwDstSet |= smesa->front.pitch >> 2;
       break;
    case BUFFER_BIT_BACK_LEFT:
       FALLBACK( smesa, SIS_FALLBACK_DRAW_BUFFER, GL_FALSE );
-      pitch = smesa->backPitch;
+      current->hwOffsetDest = smesa->back.offset >> 1;
+      current->hwDstSet |= smesa->back.pitch >> 2;
       break;
    default:
       /* GL_NONE or GL_FRONT_AND_BACK or stereo left&right, etc */
       FALLBACK( smesa, SIS_FALLBACK_DRAW_BUFFER, GL_TRUE );
       return;
    }
-
-   current->hwOffsetDest = (smesa->drawOffset) >> 1;
-   current->hwDstSet &= ~MASK_DstBufferPitch;
-   current->hwDstSet |= pitch >> 2;
 
    if (current->hwDstSet != prev->hwDstSet) {
       prev->hwDstSet = current->hwDstSet;
@@ -598,7 +596,7 @@ sisDDEnable( GLcontext * ctx, GLenum cap, GLboolean state )
          current->hwCapEnable &= ~MASK_CullEnable;
       break;
    case GL_DEPTH_TEST:
-      if (state && smesa->depthbuffer)
+      if (state && smesa->depth.offset != 0)
          current->hwCapEnable |= MASK_ZTestEnable;
       else
          current->hwCapEnable &= ~MASK_ZTestEnable;
@@ -840,6 +838,7 @@ void sisDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.DrawPixels	 = _swrast_DrawPixels;
    ctx->Driver.ReadPixels	 = _swrast_ReadPixels;
 
+   ctx->Driver.ResizeBuffers	 = sisReAllocateBuffers;
   /* Swrast hooks for imaging extensions:
    */
   ctx->Driver.CopyColorTable	 = _swrast_CopyColorTable;

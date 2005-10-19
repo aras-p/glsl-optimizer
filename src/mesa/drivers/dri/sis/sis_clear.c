@@ -144,7 +144,7 @@ sisDDClear( GLcontext * ctx, GLbitfield mask, GLboolean all,
    }
 
    if (mask & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) {
-      if (smesa->depthbuffer != NULL)
+      if (smesa->depth.offset != NULL)
          sis_clear_z_stencil_buffer( ctx, mask, x1, y1, width1, height1 );
       mask &= ~(BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);
    }
@@ -393,8 +393,8 @@ sis_clear_color_buffer( GLcontext *ctx, GLenum mask, GLint x, GLint y,
    memset( &stEngPacket, 0, sizeof (ENGPACKET) );
 
    stEngPacket.dwSrcPitch = (depth == 2) ? 0x80000000 : 0xc0000000;
-   stEngPacket.dwDestBaseAddr = smesa->frontOffset;
-   stEngPacket.wDestPitch = smesa->frontPitch;
+   stEngPacket.dwDestBaseAddr = smesa->front.offset;
+   stEngPacket.wDestPitch = smesa->front.pitch;
    /* TODO: set maximum value? */
    stEngPacket.wDestHeight = smesa->virtualY;
    stEngPacket.stdwCmd.cRop = 0xf0;

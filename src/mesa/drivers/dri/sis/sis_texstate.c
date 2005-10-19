@@ -122,8 +122,10 @@ sis_set_texture_env0( GLcontext *ctx, struct gl_texture_object *texObj,
       break;
 
    case GL_BLEND:
+#if 1 /* XXX Blending broken */
       FALLBACK(smesa, SIS_FALLBACK_TEXENV0, 1);
-#if 0 /* XXX Blending broken */
+#else
+      FALLBACK(smesa, SIS_FALLBACK_TEXENV0, 0);
       current->hwTexEnvColor =
          ((GLint) (texture_unit->EnvColor[3])) << 24 |
          ((GLint) (texture_unit->EnvColor[0])) << 16 |

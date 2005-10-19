@@ -47,6 +47,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "matrix.h"
 #include "extensions.h"
 #include "utils.h"
+#include "framebuffer.h"
 
 #include "drivers/common/driverfuncs.h"
 
@@ -105,6 +106,16 @@ WaitingFor3dIdle(sisContextPtr smesa, int wLen)
    }
 }
 
+void sisReAllocateBuffers(GLcontext *ctx, GLframebuffer *drawbuffer,
+                          GLuint width, GLuint height)
+{
+   sisContextPtr smesa = SIS_CONTEXT(ctx);
+
+   sisUpdateBufferSize(smesa);
+
+   _mesa_resize_framebuffer(ctx, drawbuffer, width, height);
+}
+
 GLboolean
 sisCreateContext( const __GLcontextModes *glVisual,
 		  __DRIcontextPrivate *driContextPriv,
@@ -156,11 +167,10 @@ sisCreateContext( const __GLcontextModes *glVisual,
    smesa->bytesPerPixel = sisScreen->cpp;
    smesa->IOBase = sisScreen->mmio.map;
    smesa->Chipset = sisScreen->deviceID;
-   smesa->irqEnabled = sisScreen->irqEnabled;
 
    smesa->FbBase = sPriv->pFB;
    smesa->displayWidth = sPriv->fbWidth;
-   smesa->frontPitch = sPriv->fbStride;
+   smesa->front.pitch = sPriv->fbStride;
 
    smesa->sarea = (SISSAREAPriv *)((char *)sPriv->pSAREA +
 				   sisScreen->sarea_priv_offset);
@@ -187,7 +197,7 @@ sisCreateContext( const __GLcontextModes *glVisual,
       smesa->colorFormat = DST_FORMAT_RGB_565;
       break;
    default:
-      sis_fatal_error("Bad bytesPerPixel.\n");
+      sis_fatal_error("Bad bytesPerPixel %d.\n", smesa->bytesPerPixel);
    }
 
    /* Parse configuration files */
@@ -303,6 +313,7 @@ sisMakeCurrent( __DRIcontextPrivate *driContextPriv,
       GET_CURRENT_CONTEXT(ctx);
       sisContextPtr oldSisCtx = ctx ? SIS_CONTEXT(ctx) : NULL;
       sisContextPtr newSisCtx = (sisContextPtr) driContextPriv->driverPrivate;
+      struct gl_framebuffer *drawBuffer, *readBuffer;
 
       if ( newSisCtx != oldSisCtx) {
          newSisCtx->GlobalFlag = GFLAG_ALL;
@@ -310,9 +321,10 @@ sisMakeCurrent( __DRIcontextPrivate *driContextPriv,
 
       newSisCtx->driDrawable = driDrawPriv;
 
-      _mesa_make_current( newSisCtx->glCtx,
-                          (GLframebuffer *) driDrawPriv->driverPrivate,
-                          (GLframebuffer *) driReadPriv->driverPrivate );
+      drawBuffer = (GLframebuffer *)driDrawPriv->driverPrivate;
+      readBuffer = (GLframebuffer *)driReadPriv->driverPrivate;
+
+      _mesa_make_current( newSisCtx->glCtx, drawBuffer, readBuffer );
 
       sisUpdateBufferSize( newSisCtx );
       sisUpdateClipping( newSisCtx->glCtx );

@@ -41,6 +41,6 @@ extern void sisSpanRenderFinish( GLcontext *ctx );
 extern void sisDDInitSpanFuncs( GLcontext *ctx );
 
 extern void
-sisSetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis);
+sisSetSpanFunctions(struct sis_renderbuffer *srb, const GLvisual *vis);
 
 #endif

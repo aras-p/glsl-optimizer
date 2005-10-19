@@ -143,7 +143,6 @@ sisCreateScreen( __DRIscreenPrivate *sPriv )
    sisScreen->screenX = sisDRIPriv->width;
    sisScreen->screenY = sisDRIPriv->height;
    sisScreen->cpp = sisDRIPriv->bytesPerPixel;
-   sisScreen->irqEnabled = sisDRIPriv->bytesPerPixel;
    sisScreen->deviceID = sisDRIPriv->deviceID;
    sisScreen->AGPCmdBufOffset = sisDRIPriv->AGPCmdBufOffset;
    sisScreen->AGPCmdBufSize = sisDRIPriv->AGPCmdBufSize;
@@ -206,70 +205,21 @@ sisCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                  GLboolean isPixmap )
 {
    sisScreenPtr screen = (sisScreenPtr) driScrnPriv->private;
+   struct gl_framebuffer *fb;
 
    if (isPixmap)
       return GL_FALSE; /* not implemented */
 
-   {
-      struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
+   fb = _mesa_create_framebuffer(mesaVis);
 
-      /* XXX double-check the Offset/Pitch parameters! */
-      {
-         driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA, NULL, screen->cpp,
-                                 0, driScrnPriv->fbStride, driDrawPriv);
-         sisSetSpanFunctions(frontRb, mesaVis);
-         _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
-      }
-
-      if (mesaVis->doubleBufferMode) {
-         driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA, NULL, screen->cpp,
-                                 0, driScrnPriv->fbStride, driDrawPriv);
-         sisSetSpanFunctions(backRb, mesaVis);
-         _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
-      }
-
-      if (mesaVis->depthBits == 16) {
-         driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, NULL, screen->cpp,
-                                 0, driScrnPriv->fbStride, driDrawPriv);
-         sisSetSpanFunctions(depthRb, mesaVis);
-         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
-      }
-      else if (mesaVis->depthBits == 24) {
-         driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT24, NULL, screen->cpp,
-                                 0, driScrnPriv->fbStride, driDrawPriv);
-         sisSetSpanFunctions(depthRb, mesaVis);
-         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
-      }
-      else if (mesaVis->depthBits == 32) {
-         driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT32, NULL, screen->cpp,
-                                 0, driScrnPriv->fbStride, driDrawPriv);
-         sisSetSpanFunctions(depthRb, mesaVis);
-         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
-      }
-
-      /* no h/w stencil?
-      if (mesaVis->stencilBits > 0) {
-         driRenderbuffer *stencilRb
-            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT);
-         sisSetSpanFunctions(stencilRb, mesaVis);
-         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
-      }
-      */
-
-      _mesa_add_soft_renderbuffers(fb,
-                                   GL_FALSE, /* color */
-                                   GL_FALSE, /* depth */
-                                   mesaVis->stencilBits > 0,
-                                   mesaVis->accumRedBits > 0,
-                                   GL_FALSE, /* alpha */
-                                   GL_FALSE /* aux */);
-      driDrawPriv->driverPrivate = (void *) fb;
-   }
+   _mesa_add_soft_renderbuffers(fb,
+				GL_FALSE, /* color */
+				GL_FALSE, /* depth */
+				mesaVis->stencilBits > 0,
+				mesaVis->accumRedBits > 0,
+				GL_FALSE, /* alpha */
+				GL_FALSE /* aux */);
+   driDrawPriv->driverPrivate = (void *) fb;
 
    return (driDrawPriv->driverPrivate != NULL);
 }
@@ -312,11 +262,11 @@ static void sisCopyBuffer( __DRIdrawablePrivate *dPriv )
 
    LOCK_HARDWARE();
 
-   stEngPacket.dwSrcBaseAddr = smesa->backOffset;
-   stEngPacket.dwSrcPitch = smesa->backPitch |
+   stEngPacket.dwSrcBaseAddr = smesa->back.offset;
+   stEngPacket.dwSrcPitch = smesa->back.pitch |
       ((smesa->bytesPerPixel == 2) ? 0x80000000 : 0xc0000000);
    stEngPacket.dwDestBaseAddr = 0;
-   stEngPacket.wDestPitch = smesa->frontPitch;
+   stEngPacket.wDestPitch = smesa->front.pitch;
    /* TODO: set maximum value? */
    stEngPacket.wDestHeight = smesa->virtualY;
 

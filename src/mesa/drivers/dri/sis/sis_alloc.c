@@ -136,45 +136,42 @@ sisFreeAGP( sisContextPtr smesa, void *handle )
 void
 sisAllocZStencilBuffer( sisContextPtr smesa )
 {
-   GLuint z_depth;
-   GLuint totalBytes;
-   int width2;
-
-   GLubyte *addr;
-
-   z_depth = ( smesa->glCtx->Visual.depthBits +
+   int cpp = ( smesa->glCtx->Visual.depthBits +
                smesa->glCtx->Visual.stencilBits ) / 8;
+   unsigned char *addr;
 
-   width2 = ALIGNMENT( smesa->width * z_depth, 4 );
+   smesa->depth.bpp = cpp * 8;
+   smesa->depth.pitch = ALIGNMENT(smesa->driDrawable->w * cpp, 4);
+   smesa->depth.size = smesa->depth.pitch * smesa->driDrawable->h;
+   smesa->depth.size += Z_BUFFER_HW_PLUS;
 
-   totalBytes = smesa->height * width2 + Z_BUFFER_HW_PLUS;
-
-   addr = sisAllocFB( smesa, totalBytes, &smesa->zbFree );
+   addr = sisAllocFB(smesa, smesa->depth.size, &smesa->depth.handle);
    if (addr == NULL)
       sis_fatal_error("Failure to allocate Z buffer.\n");
+   addr = (char *)ALIGNMENT((unsigned long)addr, Z_BUFFER_HW_ALIGNMENT);
 
-   if (SIS_VERBOSE & VERBOSE_SIS_BUFFER) {
-      fprintf(stderr, "sis_alloc_z_stencil_buffer: addr=%p\n", addr);
-   }
+   smesa->depth.map = addr;
+   smesa->depth.offset = addr - smesa->FbBase;
 
-   addr = (GLubyte *)ALIGNMENT( (unsigned long)addr, Z_BUFFER_HW_ALIGNMENT );
-
-   smesa->depthbuffer = (void *) addr;
-   smesa->depthPitch = width2;
-   smesa->depthOffset = (unsigned long)addr - (unsigned long)smesa->FbBase;
+   /* stencil buffer is same as depth buffer */
+   smesa->stencil.size = smesa->depth.size;
+   smesa->stencil.offset = smesa->depth.offset;
+   smesa->stencil.handle = smesa->depth.handle;
+   smesa->stencil.pitch = smesa->depth.pitch;
+   smesa->stencil.bpp = smesa->depth.bpp;
+   smesa->stencil.map = smesa->depth.map;
 
    /* set pZClearPacket */
    memset( &smesa->zClearPacket, 0, sizeof(ENGPACKET) );
 
-   smesa->zClearPacket.dwSrcPitch = (z_depth == 2) ? 0x80000000 : 0xf0000000;
-   smesa->zClearPacket.dwDestBaseAddr = (unsigned long)(addr -
-      (unsigned long)smesa->FbBase);
-   smesa->zClearPacket.wDestPitch = width2;
+   smesa->zClearPacket.dwSrcPitch = (cpp == 2) ? 0x80000000 : 0xf0000000;
+   smesa->zClearPacket.dwDestBaseAddr = smesa->depth.offset;
+   smesa->zClearPacket.wDestPitch = smesa->depth.pitch;
    smesa->zClearPacket.stdwDestPos.wY = 0;
    smesa->zClearPacket.stdwDestPos.wX = 0;
 
    smesa->zClearPacket.wDestHeight = smesa->virtualY;
-   smesa->zClearPacket.stdwDim.wWidth = (GLshort)width2 / z_depth;
+   smesa->zClearPacket.stdwDim.wWidth = smesa->depth.pitch / cpp;
    smesa->zClearPacket.stdwDim.wHeight = (GLshort)smesa->height;
    smesa->zClearPacket.stdwCmd.cRop = 0xf0;
 
@@ -188,43 +185,40 @@ sisAllocZStencilBuffer( sisContextPtr smesa )
 void
 sisFreeZStencilBuffer( sisContextPtr smesa )
 {
-   sisFreeFB( smesa, smesa->zbFree );
-   smesa->zbFree = NULL;
-   smesa->depthbuffer = NULL;
+   sisFreeFB(smesa, smesa->depth.handle);
+   smesa->depth.map = NULL; 
+   smesa->depth.offset = 0; 
 }
 
 void
 sisAllocBackbuffer( sisContextPtr smesa )
 {
-   GLuint depth = smesa->bytesPerPixel;
-   GLuint size, width2;
+   int cpp = smesa->bytesPerPixel;
+   unsigned char *addr;
 
-   char *addr;
+   smesa->back.bpp = smesa->bytesPerPixel * 8;
+   smesa->back.pitch = ALIGNMENT(smesa->driDrawable->w * cpp, 4);
+   smesa->back.size = smesa->back.pitch * smesa->driDrawable->h;
+   smesa->back.size += DRAW_BUFFER_HW_PLUS;
 
-   width2 = (depth == 2) ? ALIGNMENT (smesa->width, 2) : smesa->width;
-   size = width2 * smesa->height * depth + DRAW_BUFFER_HW_PLUS;
-
-   /* Fixme: unique context alloc/free back-buffer? */
-   addr = sisAllocFB( smesa, size, &smesa->bbFree );
+   addr = sisAllocFB(smesa, smesa->back.size, &smesa->back.handle);
    if (addr == NULL)
       sis_fatal_error("Failure to allocate back buffer.\n");
+   addr = (char *)ALIGNMENT((unsigned long)addr, DRAW_BUFFER_HW_ALIGNMENT);
 
-   addr = (char *)ALIGNMENT( (unsigned long)addr, DRAW_BUFFER_HW_ALIGNMENT );
-
-   smesa->backbuffer = addr;
-   smesa->backOffset = (unsigned long)(addr - (unsigned long)smesa->FbBase);
-   smesa->backPitch = width2 * depth;
+   smesa->back.map = addr;
+   smesa->back.offset = addr - smesa->FbBase;
 
    memset ( &smesa->cbClearPacket, 0, sizeof(ENGPACKET) );
 
-   smesa->cbClearPacket.dwSrcPitch = (depth == 2) ? 0x80000000 : 0xf0000000;
-   smesa->cbClearPacket.dwDestBaseAddr = smesa->backOffset;
-   smesa->cbClearPacket.wDestPitch = smesa->backPitch;
+   smesa->cbClearPacket.dwSrcPitch = (cpp == 2) ? 0x80000000 : 0xf0000000;
+   smesa->cbClearPacket.dwDestBaseAddr = smesa->back.offset;
+   smesa->cbClearPacket.wDestPitch = smesa->back.pitch;
    smesa->cbClearPacket.stdwDestPos.wY = 0;
    smesa->cbClearPacket.stdwDestPos.wX = 0;
 
    smesa->cbClearPacket.wDestHeight = smesa->virtualY;
-   smesa->cbClearPacket.stdwDim.wWidth = (GLshort) width2;
+   smesa->cbClearPacket.stdwDim.wWidth = (GLshort) smesa->back.pitch / cpp;
    smesa->cbClearPacket.stdwDim.wHeight = (GLshort) smesa->height;
    smesa->cbClearPacket.stdwCmd.cRop = 0xf0;
 
@@ -238,6 +232,7 @@ sisAllocBackbuffer( sisContextPtr smesa )
 void
 sisFreeBackbuffer( sisContextPtr smesa )
 {
-   sisFreeFB( smesa, smesa->bbFree );
-   smesa->backbuffer = NULL; 
+   sisFreeFB(smesa, smesa->back.handle);
+   smesa->back.map = NULL; 
+   smesa->back.offset = 0; 
 }

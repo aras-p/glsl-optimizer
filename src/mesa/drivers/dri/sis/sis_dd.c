@@ -37,11 +37,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_dd.h"
 #include "sis_lock.h"
 #include "sis_alloc.h"
+#include "sis_span.h"
 #include "sis_state.h"
 #include "sis_tris.h"
 
 #include "swrast/swrast.h"
 #include "framebuffer.h"
+#include "renderbuffer.h"
 
 #include "utils.h"
 
@@ -111,53 +113,139 @@ sisFinish( GLcontext *ctx )
    UNLOCK_HARDWARE();
 }
 
+static void
+sisDeleteRenderbuffer(struct gl_renderbuffer *rb)
+{
+   /* Don't free() since we're contained in sis_context struct. */
+}
+
+static GLboolean
+sisRenderbufferStorage(GLcontext *ctx, struct gl_renderbuffer *rb,
+                       GLenum internalFormat, GLuint width, GLuint height)
+{
+   rb->Width = width;
+   rb->Height = height;
+   rb->InternalFormat = internalFormat;
+   return GL_TRUE;
+}
+
+static void
+sisInitRenderbuffer(struct gl_renderbuffer *rb, GLenum format)
+{
+   const GLuint name = 0;
+
+   _mesa_init_renderbuffer(rb, name);
+
+   /* Make sure we're using a null-valued GetPointer routine */
+   assert(rb->GetPointer(NULL, rb, 0, 0) == NULL);
+
+   rb->InternalFormat = format;
+
+   if (format == GL_RGBA) {
+      /* Color */
+      rb->_BaseFormat = GL_RGBA;
+      rb->DataType = GL_UNSIGNED_BYTE;
+   }
+   else if (format == GL_DEPTH_COMPONENT16) {
+      /* Depth */
+      rb->_BaseFormat = GL_DEPTH_COMPONENT;
+      /* we always Get/Put 32-bit Z values */
+      rb->DataType = GL_UNSIGNED_INT;
+   }
+   else if (format == GL_DEPTH_COMPONENT24) {
+      /* Depth */
+      rb->_BaseFormat = GL_DEPTH_COMPONENT;
+      /* we always Get/Put 32-bit Z values */
+      rb->DataType = GL_UNSIGNED_INT;
+   }
+   else {
+      /* Stencil */
+      ASSERT(format == GL_STENCIL_INDEX8);
+      rb->_BaseFormat = GL_STENCIL_INDEX;
+      rb->DataType = GL_UNSIGNED_BYTE;
+   }
+
+   rb->Delete = sisDeleteRenderbuffer;
+   rb->AllocStorage = sisRenderbufferStorage;
+}
+
 void
-sisUpdateBufferSize( sisContextPtr smesa )
+sisUpdateBufferSize(sisContextPtr smesa)
 {
    __GLSiSHardware *current = &smesa->current;
    __GLSiSHardware *prev = &smesa->prev;
-   GLuint z_depth;
+   struct gl_framebuffer *fb = smesa->glCtx->DrawBuffer;
 
-   /* XXX Should get the base offset of the frontbuffer from the X Server */
-   smesa->frontOffset = smesa->driDrawable->x * smesa->bytesPerPixel +
-			smesa->driDrawable->y * smesa->frontPitch;
+   if (!smesa->front.Base.InternalFormat) {
+      /* do one-time init for the renderbuffers */
+      sisInitRenderbuffer(&smesa->front.Base, GL_RGBA);
+      sisSetSpanFunctions(&smesa->front, &fb->Visual);
+      _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &smesa->front.Base);
+
+      if (fb->Visual.doubleBufferMode) {
+         sisInitRenderbuffer(&smesa->back.Base, GL_RGBA);
+         sisSetSpanFunctions(&smesa->back, &fb->Visual);
+         _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &smesa->back.Base);
+      }
+
+      if (smesa->glCtx->Visual.depthBits > 0) {
+         sisInitRenderbuffer(&smesa->depth.Base, 
+                             (smesa->glCtx->Visual.depthBits == 16
+                              ? GL_DEPTH_COMPONENT16 : GL_DEPTH_COMPONENT24));
+         sisSetSpanFunctions(&smesa->depth, &fb->Visual);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &smesa->depth.Base);
+      }
+
+      if (smesa->glCtx->Visual.stencilBits > 0) {
+         sisInitRenderbuffer(&smesa->stencil.Base, GL_STENCIL_INDEX8_EXT);
+         sisSetSpanFunctions(&smesa->stencil, &fb->Visual);
+         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &smesa->stencil.Base);
+      }
+   }
+
+   /* Make sure initialization did what we think it should */
+   assert(smesa->front.Base.InternalFormat);
+   assert(smesa->front.Base.AllocStorage);
+   if (fb->Visual.doubleBufferMode) {
+      assert(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
+      assert(smesa->front.Base.AllocStorage);
+   }
+   if (fb->Visual.depthBits) {
+      assert(fb->Attachment[BUFFER_DEPTH].Renderbuffer);
+      assert(smesa->depth.Base.AllocStorage);
+   }
 
    if ( smesa->width == smesa->driDrawable->w &&
-      smesa->height == smesa->driDrawable->h )
+	smesa->height == smesa->driDrawable->h )
    {
       return;
    }
+
+   smesa->front.bpp = smesa->bytesPerPixel * 8;
+   /* Front pitch set on context create */
+   smesa->front.size = smesa->front.pitch * smesa->driDrawable->h;
+   /* XXX Should get the base offset of the frontbuffer from the X Server */
+   smesa->front.offset = smesa->driDrawable->x * smesa->bytesPerPixel +
+			 smesa->driDrawable->y * smesa->front.pitch;
+   smesa->front.map = (char *) smesa->driScreen->pFB;
 
    smesa->width = smesa->driDrawable->w;
    smesa->height = smesa->driDrawable->h;
    smesa->bottom = smesa->height - 1;
 
-   if ( smesa->backbuffer )
+   if (smesa->back.offset)
       sisFreeBackbuffer( smesa );
-   if ( smesa->depthbuffer )
+   if (smesa->depth.offset)
       sisFreeZStencilBuffer( smesa );
-	
+
    if ( smesa->glCtx->Visual.depthBits > 0 )
       sisAllocZStencilBuffer( smesa );
    if ( smesa->glCtx->Visual.doubleBufferMode )
       sisAllocBackbuffer( smesa );
 
-   switch (smesa->zFormat)
-   {
-   case SiS_ZFORMAT_Z16:
-      z_depth = 2;
-      break;
-   case SiS_ZFORMAT_Z32:
-   case SiS_ZFORMAT_S8Z24:
-      z_depth = 4;
-      break;
-   default:
-      sis_fatal_error("Bad Z format\n");
-   }
-
    current->hwZ &= ~MASK_ZBufferPitch;
-   current->hwZ |= smesa->width * z_depth >> 2;
-   current->hwOffsetZ = smesa->depthOffset >> 2;
+   current->hwZ |= smesa->depth.pitch >> 2;
+   current->hwOffsetZ = smesa->depth.offset >> 2;
 
    if ((current->hwOffsetZ != prev->hwOffsetZ) || (current->hwZ != prev->hwZ)) {
       prev->hwOffsetZ = current->hwOffsetZ;
@@ -174,7 +262,6 @@ void
 sisInitDriverFuncs( struct dd_function_table *functions )
 {
    functions->GetBufferSize = sisGetBufferSize;
-   functions->ResizeBuffers = _mesa_resize_framebuffer;
    functions->GetString     = sisGetString;
    functions->Finish        = sisFinish;
    functions->Flush         = sisFlush;

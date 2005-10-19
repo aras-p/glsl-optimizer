@@ -44,16 +44,18 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define LOCAL_VARS							\
    sisContextPtr smesa = SIS_CONTEXT(ctx);				\
    __DRIdrawablePrivate *dPriv = smesa->driDrawable;			\
-   driRenderbuffer *drb = (driRenderbuffer *) rb;			\
-   GLuint pitch = drb->pitch;						\
-   char *buf = (char *)(smesa->FbBase + drb->offset);			\
+   struct sis_renderbuffer *srb = (struct sis_renderbuffer *) rb;	\
+   GLuint pitch = srb->pitch;						\
+   char *buf = srb->map;						\
    GLuint p;								\
-   (void) buf; (void) p
+   (void) buf; (void) p;
+   
 
 #define LOCAL_DEPTH_VARS						\
    sisContextPtr smesa = SIS_CONTEXT(ctx);				\
    __DRIdrawablePrivate *dPriv = smesa->driDrawable;			\
-   char *buf = smesa->depthbuffer;					\
+   struct sis_renderbuffer *srb = (struct sis_renderbuffer *) rb;	\
+   char *buf = srb->map;
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS 
 
@@ -84,10 +86,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* 16 bit depthbuffer functions.
  */
 #define WRITE_DEPTH( _x, _y, d )	\
-   *(GLushort *)(buf + (_x)*2 + (_y)*smesa->depthPitch) = d;
+   *(GLushort *)(buf + (_x)*2 + (_y)*srb->pitch) = d;
 
 #define READ_DEPTH( d, _x, _y )		\
-   d = *(GLushort *)(buf + (_x)*2 + (_y)*smesa->depthPitch);
+   d = *(GLushort *)(buf + (_x)*2 + (_y)*srb->pitch);
 
 #define TAG(x) sis##x##_z16
 #include "depthtmp.h"
@@ -96,10 +98,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* 32 bit depthbuffer functions.
  */
 #define WRITE_DEPTH( _x, _y, d )	\
-   *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch) = d;
+   *(GLuint *)(buf + (_x)*4 + (_y)*srb->pitch) = d;
 
 #define READ_DEPTH( d, _x, _y )		\
-   d = *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch);
+   d = *(GLuint *)(buf + (_x)*4 + (_y)*srb->pitch);
 
 #define TAG(x) sis##x##_z32
 #include "depthtmp.h"
@@ -108,28 +110,28 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* 8/24 bit interleaved depth/stencil functions
  */
 #define WRITE_DEPTH( _x, _y, d ) {				\
-   GLuint tmp = *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch); \
+   GLuint tmp = *(GLuint *)(buf + (_x)*4 + (_y)*srb->pitch);	\
    tmp &= 0xff000000;						\
    tmp |= (d & 0x00ffffff);					\
-   *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch) = tmp;	\
+   *(GLuint *)(buf + (_x)*4 + (_y)*srb->pitch) = tmp;		\
 }
 
-#define READ_DEPTH( d, _x, _y )	{			\
-   d = *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch) & 0x00ffffff; \
+#define READ_DEPTH( d, _x, _y )	{				\
+   d = *(GLuint *)(buf + (_x)*4 + (_y)*srb->pitch) & 0x00ffffff; \
 }
 
 #define TAG(x) sis##x##_z24_s8
 #include "depthtmp.h"
 
 #define WRITE_STENCIL( _x, _y, d ) {				\
-   GLuint tmp = *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch); \
+   GLuint tmp = *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depth.pitch); \
    tmp &= 0x00ffffff;						\
    tmp |= (d << 24);						\
-   *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch) = tmp;	\
+   *(GLuint *)(buf + (_x)*4 + (_y)*srb->pitch) = tmp;	\
 }
 
 #define READ_STENCIL( d, _x, _y )			\
-   d = (*(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch) & 0xff000000) >> 24;
+   d = (*(GLuint *)(buf + (_x)*4 + (_y)*srb->pitch) & 0xff000000) >> 24;
 
 #define TAG(x) sis##x##_z24_s8
 #include "stenciltmp.h"
@@ -167,26 +169,26 @@ sisDDInitSpanFuncs( GLcontext *ctx )
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
 void
-sisSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+sisSetSpanFunctions(struct sis_renderbuffer *srb, const GLvisual *vis)
 {
-   if (drb->Base.InternalFormat == GL_RGBA) {
+   if (srb->Base.InternalFormat == GL_RGBA) {
       if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         sisInitPointers_RGB565( &drb->Base );
+         sisInitPointers_RGB565( &srb->Base );
       }
       else {
-         sisInitPointers_ARGB8888( &drb->Base );
+         sisInitPointers_ARGB8888( &srb->Base );
       }
    }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-      sisInitDepthPointers_z16(&drb->Base);
+   else if (srb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+      sisInitDepthPointers_z16(&srb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
-      sisInitDepthPointers_z24_s8(&drb->Base);
+   else if (srb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+      sisInitDepthPointers_z24_s8(&srb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT32) {
-      sisInitDepthPointers_z32(&drb->Base);
+   else if (srb->Base.InternalFormat == GL_DEPTH_COMPONENT32) {
+      sisInitDepthPointers_z32(&srb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-      sisInitStencilPointers_z24_s8(&drb->Base);
+   else if (srb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+      sisInitStencilPointers_z24_s8(&srb->Base);
    }
 }
