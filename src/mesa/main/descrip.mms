@@ -38,6 +38,7 @@ SOURCES =accum.c \
 	enable.c \
 	enums.c \
 	eval.c \
+	execmem.c \
 	extensions.c \
 	fbobject.c \
 	feedback.c \
@@ -53,6 +54,7 @@ SOURCES =accum.c \
 	light.c \
 	lines.c \
 	matrix.c \
+	mm.c \
 	occlude.c \
 	pixel.c \
 	points.c \
@@ -95,6 +97,7 @@ drawpix.obj,\
 enable.obj,\
 enums.obj,\
 eval.obj,\
+execmem.obj,\
 extensions.obj,\
 fbobject.obj,\
 feedback.obj,\
@@ -110,6 +113,7 @@ imports.obj,\
 light.obj,\
 lines.obj,\
 matrix.obj,\
+mm.obj,\
 occlude.obj,\
 pixel.obj,\
 points.obj,\
@@ -166,6 +170,7 @@ drawpix.obj : drawpix.c
 enable.obj : enable.c
 enums.obj : enums.c
 eval.obj : eval.c
+execmem.obj : execmem.c
 extensions.obj : extensions.c
 fbobject.obj : fbobject.c
 feedback.obj : feedback.c
@@ -181,6 +186,7 @@ imports.obj : imports.c vsnprintf.c
 light.obj : light.c
 lines.obj : lines.c
 matrix.obj : matrix.c
+mm.obj: mm.c
 occlude.obj : occlude.c
 pixel.obj : pixel.c
 points.obj : points.c

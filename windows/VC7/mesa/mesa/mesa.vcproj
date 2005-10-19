@@ -192,6 +192,9 @@
 				RelativePath="..\..\..\..\src\mesa\main\eval.c">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\execmem.c">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\extensions.c">
 			</File>
 			<File
@@ -283,6 +286,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\matrix.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\mm.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\nvfragparse.c">
@@ -794,6 +800,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\matrix.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\mm.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\mtypes.h">
