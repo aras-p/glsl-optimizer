@@ -959,6 +959,27 @@ void sisFlushPrims(sisContextPtr smesa)
 /*           Transition to/from hardware rasterization.               */
 /**********************************************************************/
 
+static const char * const fallbackStrings[] = {
+   "Texture mode",
+   "Texture 0 mode",
+   "Texture 1 moder",
+   "Texture 0 env",
+   "Texture 1 env",
+   "glDrawBuffer(GL_FRONT_AND_BACK)",
+   "glEnable(GL_STENCIL) without hw stencil buffer",
+   "no_rast",
+};
+
+static const char *getFallbackString(GLuint bit)
+{
+   int i = 0;
+   while (bit > 1) {
+      i++;
+      bit >>= 1;
+   }
+   return fallbackStrings[i];
+}
+
 void sisFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -971,6 +992,10 @@ void sisFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	 SIS_FIREVERTICES(smesa);
 	 _swsetup_Wakeup( ctx );
 	 smesa->RenderIndex = ~0;
+         if (SIS_DEBUG & DEBUG_FALLBACKS) {
+            fprintf(stderr, "SiS begin rasterization fallback: 0x%x %s\n",
+                    bit, getFallbackString(bit));
+         }
       }
    }
    else {
@@ -993,6 +1018,10 @@ void sisFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 			     smesa->hw_viewport, 0 ); 
 
 	 smesa->NewGLState |= _SIS_NEW_RENDER_STATE;
+         if (SIS_DEBUG & DEBUG_FALLBACKS) {
+            fprintf(stderr, "SiS end rasterization fallback: 0x%x %s\n",
+                    bit, getFallbackString(bit));
+         }
       }
    }
 }
@@ -1045,11 +1074,6 @@ void sisInitTriFuncs( GLcontext *ctx )
       sis_vert_init_wst0t1();
       sis_vert_init_gwst0t1();
    }
-
-   if (driQueryOptionb(&smesa->optionCache, "fallback_force"))
-      sisFallback(ctx, SIS_FALLBACK_FORCE, 1);
-   else
-      sisFallback(ctx, SIS_FALLBACK_FORCE, 0);
 
    smesa->RenderIndex = ~0;
    smesa->NewGLState |= _SIS_NEW_RENDER_STATE;

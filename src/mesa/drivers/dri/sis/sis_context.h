@@ -65,7 +65,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define SIS_FALLBACK_TEXENV1		0x0010
 #define SIS_FALLBACK_DRAW_BUFFER	0x0020
 #define SIS_FALLBACK_STENCIL		0x0040
-#define SIS_FALLBACK_FORCE		0x8000
+#define SIS_FALLBACK_DISABLE		0x0080
 
 /* Flags for hardware state that needs to be updated */
 #define GFLAG_ENABLESETTING		0x00000001
@@ -445,4 +445,17 @@ void WaitingFor3dIdle(sisContextPtr smesa, int wLen);
 extern void sis_update_texture_state( sisContextPtr smesa );
 extern void sis_update_render_state( sisContextPtr smesa );
 
+/* ================================================================
+ * Debugging:
+ */
+#define DO_DEBUG		1
+
+#if DO_DEBUG
+extern int SIS_DEBUG;
+#else
+#define SIS_DEBUG		0
 #endif
+
+#define DEBUG_FALLBACKS		0x01
+
+#endif /* _sis_ctx_h_ */

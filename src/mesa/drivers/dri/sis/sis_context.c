@@ -61,6 +61,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_ARB_multisample
 #include "extension_helper.h"
 
+#ifndef SIS_DEBUG
+int SIS_DEBUG = 0;
+#endif
+
 int GlobalCurrentHwcx = -1;
 int GlobalHwcxCountBase = 1;
 int GlobalCmdQueueLen = 0;
@@ -72,6 +76,12 @@ struct dri_extension card_extensions[] =
     { "GL_EXT_texture_lod_bias",           NULL },
     { "GL_NV_blend_square",                NULL },
     { NULL,                                NULL }
+};
+
+static const struct dri_debug_control debug_control[] =
+{
+    { "fall",  DEBUG_FALLBACKS },
+    { NULL,    0 }
 };
 
 void
@@ -200,6 +210,10 @@ sisCreateContext( const __GLcontextModes *glVisual,
    driParseConfigFiles (&smesa->optionCache, &sisScreen->optionCache,
 			sisScreen->driScreen->myNum, "sis");
 
+#if DO_DEBUG
+   SIS_DEBUG = driParseDebugString(getenv("SIS_DEBUG"), debug_control);
+#endif
+
    /* TODO: index mode */
 
    smesa->CurrentQueueLenPtr = &(smesa->sarea->QueueLength);
@@ -267,6 +281,11 @@ sisCreateContext( const __GLcontextModes *glVisual,
    for (i = 0; i < SIS_MAX_TEXTURES; i++) {
       smesa->TexStates[i] = 0;
       smesa->PrevTexFormat[i] = 0;
+   }
+
+   if (driQueryOptionb(&smesa->optionCache, "no_rast")) {
+      fprintf(stderr, "disabling 3D acceleration\n");
+      FALLBACK(smesa, SIS_FALLBACK_DISABLE, 1);
    }
 
    return GL_TRUE;
