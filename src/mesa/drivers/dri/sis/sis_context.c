@@ -175,10 +175,6 @@ sisCreateContext( const __GLcontextModes *glVisual,
    smesa->sarea = (SISSAREAPriv *)((char *)sPriv->pSAREA +
 				   sisScreen->sarea_priv_offset);
 
-#if defined(SIS_DUMP)
-   IOBase4Debug = GET_IOBase (smesa);
-#endif
-
    /* support ARGB8888 and RGB565 */
    switch (smesa->bytesPerPixel)
    {

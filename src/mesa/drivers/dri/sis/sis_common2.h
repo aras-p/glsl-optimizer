@@ -34,16 +34,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _sis_common_h_
 #define _sis_common_h_
 
-#if 0
-#define free(x)
-#define calloc(x,y) sis_debug_malloc((x)*(y))
-extern void *sis_debug_malloc(int x);
-#endif
-
-#if defined(SIS_DUMP)
-#include "sis_debug.h"
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
