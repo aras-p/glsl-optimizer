@@ -220,10 +220,10 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
 			t->filter |= R300_TX_MIN_FILTER_NEAREST_MIP_NEAREST;
 			break;
 		case GL_NEAREST_MIPMAP_LINEAR:
-			t->filter |= R300_TX_MIN_FILTER_LINEAR_MIP_NEAREST;
+			t->filter |= R300_TX_MIN_FILTER_NEAREST_MIP_LINEAR;
 			break;
 		case GL_LINEAR_MIPMAP_NEAREST:
-			t->filter |= R300_TX_MIN_FILTER_NEAREST_MIP_LINEAR;
+			t->filter |= R300_TX_MIN_FILTER_LINEAR_MIP_NEAREST;
 			break;
 		case GL_LINEAR_MIPMAP_LINEAR:
 			t->filter |= R300_TX_MIN_FILTER_LINEAR_MIP_LINEAR;
@@ -951,9 +951,9 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 				R200_STATECHANGE(rmesa, tf);
 				rmesa->hw.tf.cmd[TF_TFACTOR_0 + unit] =
 				    envColor;
-			}
+			}*/
 			break;
-		*/}
+		}
 
 	case GL_TEXTURE_LOD_BIAS_EXT:{
 			GLfloat bias, min;
