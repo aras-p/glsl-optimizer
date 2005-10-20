@@ -39,7 +39,7 @@
 #include "utils.h"
 #include "framebuffer.h"
 
-#define DRIVER_DATE	"20030502"
+#define DRIVER_DATE	"20051019"
 
 /* Return the current color buffer size.
  */
