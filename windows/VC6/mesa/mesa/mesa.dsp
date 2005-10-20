@@ -201,6 +201,10 @@ SOURCE=..\..\..\..\src\mesa\main\extensions.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\main\execmem.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\main\fbobject.c
 # End Source File
 # Begin Source File
@@ -303,6 +307,10 @@ SOURCE=..\..\..\..\src\mesa\math\m_xform.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\main\matrix.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\main\mm.c
 # End Source File
 # Begin Source File
 
@@ -968,6 +976,10 @@ SOURCE=..\..\..\..\src\mesa\math\mathmod.h
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\main\matrix.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\main\mm.h
 # End Source File
 # Begin Source File
 
