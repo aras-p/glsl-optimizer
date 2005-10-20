@@ -186,7 +186,7 @@ imports.obj : imports.c vsnprintf.c
 light.obj : light.c
 lines.obj : lines.c
 matrix.obj : matrix.c
-mm.obj: mm.c
+mm.obj : mm.c
 occlude.obj : occlude.c
 pixel.obj : pixel.c
 points.obj : points.c
