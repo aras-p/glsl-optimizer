@@ -42,7 +42,11 @@
 #  else
 #    define HIDDEN
 #  endif
-#define FASTCALL
+#  if defined(__i386__) && defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)
+#    define FASTCALL __attribute__((fastcall))
+#  else
+#    define FASTCALL
+#  endif
 #  if defined(__GNUC__)
 #    define NOINLINE __attribute__((noinline))
 #  else
