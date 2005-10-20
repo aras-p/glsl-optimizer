@@ -194,11 +194,9 @@ class gl_print_base:
 		"""
 
 		self.undef_list.append("FASTCALL")
-		print """#  if defined(__i386__) && defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)
-#    define FASTCALL __attribute__((fastcall))
-#  else
-#    define FASTCALL
-#  endif"""
+		# I've removed the previous code for __attribute__((fastcall))
+		# because it breaks server-side GLX. (BrianP)
+		print "#define FASTCALL"
 		return
 
 
