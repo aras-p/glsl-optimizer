@@ -29,7 +29,7 @@ static void TransposeMatrixf(const GLfloat s[16], GLfloat d[16])
 {
     int i, j;
     for (i = 0; i < 4; i++) {
-        for (j = 0; j < i; j++) {
+        for (j = 0; j < 4; j++) {
             d[i*4+j] = s[j*4+i];
         }
     }
@@ -39,7 +39,7 @@ static void TransposeMatrixd(const GLdouble s[16], GLdouble d[16])
 {
     int i, j;
     for (i = 0; i < 4; i++) {
-        for (j = 0; j < i; j++) {
+        for (j = 0; j < 4; j++) {
             d[i*4+j] = s[j*4+i];
         }
     }
