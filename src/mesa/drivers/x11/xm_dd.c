@@ -1108,7 +1108,6 @@ update_framebuffer_size(GLcontext *ctx)
    get_buffer_size(fb, &newWidth, &newHeight);
    if (newWidth != fb->Width || newHeight != fb->Height) {
       xmesa_resize_buffers(ctx, fb, newWidth, newHeight);
-      ctx->NewState |= _NEW_BUFFERS;  /* to update scissor / window bounds */
    }
 
    if (ctx->WinSysReadBuffer != ctx->WinSysDrawBuffer) {
