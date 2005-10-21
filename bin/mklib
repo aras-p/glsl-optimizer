@@ -503,7 +503,7 @@ case $ARCH in
         else
             LIBNAME="lib${LIBNAME}.dylib"
             echo "mklib: Making Darwin shared library: " ${LIBNAME}
-            FLAGS="-dynamiclib -multiply_defined suppress"
+            FLAGS="-dynamiclib -multiply_defined suppress -current_version ${MAJOR}.${MINOR}.0 -compatibility_version ${MAJOR}.${MINOR}.0"
 	    if [ $CPLUSPLUS = 1 ] ; then
 		LINK="g++"
 	    else
