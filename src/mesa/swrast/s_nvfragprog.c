@@ -1155,15 +1155,15 @@ execute_program( GLcontext *ctx,
                GLuint i;
 
                /* do extended swizzling here */
-               for (i = 0; i < 3; i++) {
+               for (i = 0; i < 4; i++) {
                   if (GET_SWZ(source->Swizzle, i) == SWIZZLE_ZERO)
                      result[i] = 0.0;
                   else if (GET_SWZ(source->Swizzle, i) == SWIZZLE_ONE)
-                     result[i] = -1.0;
+                     result[i] = 1.0;
                   else
-                     result[i] = -src[GET_SWZ(source->Swizzle, i)];
+                     result[i] = src[GET_SWZ(source->Swizzle, i)];
 
-                  if (source->NegateBase)
+                  if (source->NegateBase & (1 << i))
                      result[i] = -result[i];
                }
                store_vector4( inst, machine, result );

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2444,15 +2444,15 @@ parse_swizzle_mask (GLubyte ** inst, GLubyte * mask, GLint len)
 /**
  */
 static GLuint
-parse_extended_swizzle_mask (GLubyte ** inst, GLubyte * mask, GLubyte * Negate)
+parse_extended_swizzle_mask(GLubyte **inst, GLubyte *mask, GLubyte *negate)
 {
    GLint a;
    GLubyte swz;
 
-   *Negate = 0x0;
+   *negate = 0x0;
    for (a = 0; a < 4; a++) {
       if (parse_sign (inst) == -1)
-         *Negate |= 1<<a;
+         *negate |= (1 << a);
 
       swz = *(*inst)++;
 
@@ -3037,15 +3037,15 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
 
 	 {
 	    GLubyte Swizzle[4];
-	    GLubyte NegateMask;
+	    GLubyte negateMask;
 	    GLint File, Index;
 
 	    if (parse_src_reg(ctx, inst, vc_head, Program, &File, &Index, &rel))
 	       return 1;
-	    parse_extended_swizzle_mask (inst, Swizzle, &NegateMask);
+	    parse_extended_swizzle_mask (inst, Swizzle, &negateMask);
 	    fp->SrcReg[0].File = File;
 	    fp->SrcReg[0].Index = Index;
-	    fp->SrcReg[0].NegateBase = NegateMask;
+	    fp->SrcReg[0].NegateBase = negateMask;
 	    fp->SrcReg[0].Swizzle = (Swizzle[0] << 0 |
 				     Swizzle[1] << 3 |
 				     Swizzle[2] << 6 |
@@ -3259,6 +3259,7 @@ parse_vp_instruction (GLcontext * ctx, GLubyte ** inst,
    vp->SrcReg[0].Swizzle = SWIZZLE_NOOP;
    vp->SrcReg[1].Swizzle = SWIZZLE_NOOP;
    vp->SrcReg[2].Swizzle = SWIZZLE_NOOP;
+   vp->SrcReg[3].Swizzle = SWIZZLE_NOOP;
    vp->DstReg.WriteMask = 0xf;
 
    switch (type) {
