@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1459,11 +1459,13 @@ _swrast_exec_fragment_program( GLcontext *ctx, struct sw_span *span )
 					      &ctx->FragmentProgram.Machine,
 					      span, i)) {
             span->array->mask[i] = GL_FALSE;  /* killed fragment */
+            span->writeAll = GL_FALSE;
          }
 #else
          if (!execute_program(ctx, program, ~0,
                               &ctx->FragmentProgram.Machine, span, i)) {
             span->array->mask[i] = GL_FALSE;  /* killed fragment */
+            span->writeAll = GL_FALSE;
          }
 #endif
 
