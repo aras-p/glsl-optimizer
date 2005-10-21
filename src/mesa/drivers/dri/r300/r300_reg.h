@@ -698,6 +698,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_TX_UNK23                     (1 << 23)
 #       define R300_TX_SIZE_SHIFT                26 /* largest of width, height */
 #       define R300_TX_SIZE_MASK                 (15 << 26)
+#       define R300_TX_SIZE_UNK31                     (1<<31)
 #define R300_TX_FORMAT_0                    0x44C0
 	/* The interpretation of the format word by Wladimir van der Laan */
 	/* The X, Y, Z and W refer to the layout of the components.
@@ -782,6 +783,8 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_TXO_ENDIAN_BYTE_SWAP         (1 << 0)
 #       define R300_TXO_ENDIAN_WORD_SWAP         (2 << 0)
 #       define R300_TXO_ENDIAN_HALFDW_SWAP       (3 << 0)
+#       define R300_TXO_MACRO_TILE               (1 << 2)
+#       define R300_TXO_MICRO_TILE               (1 << 3)
 #       define R300_TXO_OFFSET_MASK              0xffffffe0
 #       define R300_TXO_OFFSET_SHIFT             5
 /* END */
