@@ -45,6 +45,10 @@ SOURCES = \
 	tri-tex.c \
 	tri-xpd.c \
 	tri-position.c \
+	tri-depth.c \
+	tri-depth2.c \
+	tri-depthwrite.c \
+	tri-depthwrite2.c \
 
 NOTDONE=\
 	tri-txb.c \
