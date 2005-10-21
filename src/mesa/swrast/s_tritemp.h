@@ -1181,7 +1181,10 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                } /* span.end > 1 */
 
                /* This is where we actually generate fragments */
-               if (span.end > 0) {
+               /* XXX the test for span.y > 0 _shouldn't_ be needed but
+                * it fixes a problem on 64-bit Opterons (bug 4842).
+                */
+               if (span.end > 0 && span.y >= 0) {
                   RENDER_SPAN( span );
                }
 
