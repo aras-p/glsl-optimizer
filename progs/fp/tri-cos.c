@@ -42,8 +42,9 @@ static void Init( void )
       "!!ARBfp1.0\n"
       "TEMP R0; \n"
       "MUL R0, fragment.color, {3.14}.x; \n"
-      "SIN result.color.x, R0.x; \n"
+      "COS result.color.x, R0.x; \n"
       "COS result.color.y, R0.y; \n"
+      "COS result.color.z, R0.z; \n"
       "END"
       ;
    GLuint modulateProg;

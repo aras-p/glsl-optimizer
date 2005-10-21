@@ -40,8 +40,12 @@ static void Init( void )
 {
    static const char *modulate2D =
       "!!ARBfp1.0\n"
+      "TEMP R0; \n"
+      "MUL R0, fragment.color, {3.14}.x; \n"
       "MOV result.color, {0.0}.x; \n"
-      "COS result.color.y, fragment.color.y; \n"
+      "SIN result.color.x, R0.x; \n"
+      "SIN result.color.y, R0.y; \n"
+      "SIN result.color.z, R0.z; \n"
       "END"
       ;
    GLuint modulateProg;
