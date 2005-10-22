@@ -99,24 +99,6 @@ extern const struct dri_extension ATI_fs_extension[];
 #if 1
 /* Including xf86PciInfo.h introduces a bunch of errors...
  */
-#define PCI_CHIP_R200_QD	0x5144 /* why do they have r200 names? */
-#define PCI_CHIP_R200_QE	0x5145 /* Those are all standard radeons */
-#define PCI_CHIP_R200_QF	0x5146
-#define PCI_CHIP_R200_QG	0x5147
-#define PCI_CHIP_R200_QY	0x5159
-#define PCI_CHIP_R200_QZ	0x515A
-#define PCI_CHIP_R200_LW	0x4C57
-#define PCI_CHIP_R200_LX	0x4C58
-#define PCI_CHIP_R200_LY	0x4C59
-#define PCI_CHIP_R200_LZ	0x4C5A
-#define PCI_CHIP_RV200_QW	0x5157 /* Radeon 7500 - not an R200 at all */
-#define PCI_CHIP_RV200_QX       0x5158
-#define PCI_CHIP_RS100_4136     0x4136 /* IGP RS100, RS200, RS250 are not R200 */
-#define PCI_CHIP_RS200_4137     0x4137
-#define PCI_CHIP_RS250_4237     0x4237
-#define PCI_CHIP_RS100_4336     0x4336
-#define PCI_CHIP_RS200_4337     0x4337
-#define PCI_CHIP_RS250_4437     0x4437
 #define PCI_CHIP_RS300_5834     0x5834 /* All RS300's are R200 */
 #define PCI_CHIP_RS300_5835     0x5835
 #define PCI_CHIP_RS300_5836     0x5836
@@ -139,6 +121,26 @@ extern const struct dri_extension ATI_fs_extension[];
 #define PCI_CHIP_R200_Qj        0x516A
 #define PCI_CHIP_R200_Qk        0x516B
 #define PCI_CHIP_R200_Ql        0x516C
+#define PCI_CHIP_RV250_Id       0x4964
+#define PCI_CHIP_RV250_Ie       0x4965
+#define PCI_CHIP_RV250_If       0x4966
+#define PCI_CHIP_RV250_Ig       0x4967
+#define PCI_CHIP_RV250_Ld       0x4C64
+#define PCI_CHIP_RV250_Le       0x4C65
+#define PCI_CHIP_RV250_Lf       0x4C66
+#define PCI_CHIP_RV250_Lg       0x4C67
+#define PCI_CHIP_RV280_5960     0x5960
+#define PCI_CHIP_RV280_5961     0x5961
+#define PCI_CHIP_RV280_5962     0x5962
+#define PCI_CHIP_RV280_5963     0x5963
+#define PCI_CHIP_RV280_5964     0x5964
+#define PCI_CHIP_RV280_5968     0x5968
+#define PCI_CHIP_RV280_596A     0x596A
+#define PCI_CHIP_RV280_596B     0x596B
+#define PCI_CHIP_RV280_5C61     0x5C61
+#define PCI_CHIP_RV280_5C62     0x5C62
+#define PCI_CHIP_RV280_5C63     0x5C63
+#define PCI_CHIP_RV280_5C64     0x5C64
 
 #endif
 
@@ -255,34 +257,6 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
 
    screen->chipset = 0;
    switch ( dri_priv->deviceID ) {
-   case PCI_CHIP_R200_QD:
-   case PCI_CHIP_R200_QE:
-   case PCI_CHIP_R200_QF:
-   case PCI_CHIP_R200_QG:
-   case PCI_CHIP_R200_QY:
-   case PCI_CHIP_R200_QZ:
-   case PCI_CHIP_RV200_QW:
-   case PCI_CHIP_RV200_QX:
-   case PCI_CHIP_R200_LW:
-   case PCI_CHIP_R200_LX:
-   case PCI_CHIP_R200_LY:
-   case PCI_CHIP_R200_LZ:
-   case PCI_CHIP_RS100_4136:
-   case PCI_CHIP_RS200_4137:
-   case PCI_CHIP_RS250_4237:
-   case PCI_CHIP_RS100_4336:
-   case PCI_CHIP_RS200_4337:
-   case PCI_CHIP_RS250_4437:
-      __driUtilMessage("r200CreateScreen(): Device isn't an r200!\n");
-      FREE( screen );
-      return NULL;
-
-   case PCI_CHIP_RS300_5834:
-   case PCI_CHIP_RS300_5835:
-   case PCI_CHIP_RS300_5836:
-   case PCI_CHIP_RS300_5837:
-      break;
-
    case PCI_CHIP_R200_BB:
    case PCI_CHIP_R200_BC:
    case PCI_CHIP_R200_QH:
@@ -299,9 +273,42 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_R200_Qk:
    case PCI_CHIP_R200_Ql:
       screen->chipset |= R200_CHIPSET_REAL_R200;
-   /* fallthrough */
-   default:
       screen->chipset |= R200_CHIPSET_TCL;
+      break;
+   case PCI_CHIP_RV250_Id:
+   case PCI_CHIP_RV250_Ie:
+   case PCI_CHIP_RV250_If:
+   case PCI_CHIP_RV250_Ig:
+   case PCI_CHIP_RV250_Ld:
+   case PCI_CHIP_RV250_Le:
+   case PCI_CHIP_RV250_Lf:
+   case PCI_CHIP_RV250_Lg:
+      screen->chipset |= R200_CHIPSET_YCBCR_BROKEN;
+      screen->chipset |= R200_CHIPSET_TCL;
+      break;
+   case PCI_CHIP_RV280_5960:
+   case PCI_CHIP_RV280_5961:
+   case PCI_CHIP_RV280_5962:
+   case PCI_CHIP_RV280_5963:
+   case PCI_CHIP_RV280_5964:
+   case PCI_CHIP_RV280_5968:
+   case PCI_CHIP_RV280_596A:
+   case PCI_CHIP_RV280_596B:
+   case PCI_CHIP_RV280_5C61:
+   case PCI_CHIP_RV280_5C62:
+   case PCI_CHIP_RV280_5C63:
+   case PCI_CHIP_RV280_5C64:
+      screen->chipset |= R200_CHIPSET_TCL;
+      break;
+   case PCI_CHIP_RS300_5834:
+   case PCI_CHIP_RS300_5835:
+   case PCI_CHIP_RS300_5836:
+   case PCI_CHIP_RS300_5837:
+      break;
+   default:
+      __driUtilMessage("r200CreateScreen(): Device isn't an r200!\n");
+      FREE( screen );
+      return NULL;
       break;
    }
 
