@@ -338,7 +338,8 @@ case $ARCH in
 	    echo "mklib: Making FreeBSD shared library: " ${SHLIB}
 	    rm -f ${SHLIB}
 	    ${LINK} ${OPTS} -o ${SHLIB} ${OBJECTS} ${DEPS}
-	    FINAL_LIBS=${SHLIB}
+	    ln -sf ${SHLIB} "lib${LIBNAME}.so"
+	    FINAL_LIBS="${SHLIB} lib${LIBNAME}.so"
 	fi
 	;;
 
