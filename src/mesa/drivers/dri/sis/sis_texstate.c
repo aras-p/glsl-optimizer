@@ -383,14 +383,21 @@ sis_set_texobj_parm( GLcontext *ctx, struct gl_texture_object *texObj,
    case GL_REPEAT:
       current->texture[hw_unit].hwTextureSet |= MASK_TextureWrapU;
       break;
+   case GL_MIRRORED_REPEAT:
+      current->texture[hw_unit].hwTextureSet |= MASK_TextureMirrorU;
+      break;
    case GL_CLAMP:
       current->texture[hw_unit].hwTextureSet |= MASK_TextureClampU;
+       /* XXX: GL_CLAMP isn't conformant, but falling back makes the situation
+        * worse in other programs at the moment.
+        */
+      /*ok = 0;*/
       break;
    case GL_CLAMP_TO_EDGE:
-      /* 
-      * ?? not support yet 
-      */
-      ok = 0;
+      current->texture[hw_unit].hwTextureSet |= MASK_TextureClampU;
+      break;
+   case GL_CLAMP_TO_BORDER:
+      current->texture[hw_unit].hwTextureSet |= MASK_TextureBorderU;
       break;
    }
 
@@ -399,34 +406,30 @@ sis_set_texobj_parm( GLcontext *ctx, struct gl_texture_object *texObj,
    case GL_REPEAT:
       current->texture[hw_unit].hwTextureSet |= MASK_TextureWrapV;
       break;
+   case GL_MIRRORED_REPEAT:
+      current->texture[hw_unit].hwTextureSet |= MASK_TextureMirrorV;
+      break;
    case GL_CLAMP:
       current->texture[hw_unit].hwTextureSet |= MASK_TextureClampV;
+       /* XXX: GL_CLAMP isn't conformant, but falling back makes the situation
+        * worse in other programs at the moment.
+        */
+      /*ok = 0;*/
       break;
    case GL_CLAMP_TO_EDGE:
-      /* 
-      * ?? not support yet 
-      */
-      ok = 0;
+      current->texture[hw_unit].hwTextureSet |= MASK_TextureClampV;
+      break;
+   case GL_CLAMP_TO_BORDER:
+      current->texture[hw_unit].hwTextureSet |= MASK_TextureBorderV;
       break;
    }
 
-/*
-   if (current->texture[hw_unit].hwTextureSet & MASK_TextureClampU) {
-      current->texture[hw_unit].hwTextureSet &= ~MASK_TextureClampU;
-      current->texture[hw_unit].hwTextureSet |= MASK_TextureBorderU;
-   }
-   
-   if (current->texture[hw_unit].hwTextureSet & MASK_TextureClampV) {
-      current->texture[hw_unit].hwTextureSet &= ~MASK_TextureClampV;
-      current->texture[hw_unit].hwTextureSet |= MASK_TextureBorderV;
-   }
-*/
    current->texture[hw_unit].hwTextureBorderColor = 
-      ((GLuint) texObj->BorderColor[3] << 24) + 
-      ((GLuint) texObj->BorderColor[0] << 16) + 
-      ((GLuint) texObj->BorderColor[1] << 8) + 
-      ((GLuint) texObj->BorderColor[2]);
-   
+      ((GLuint) texObj->_BorderChan[3] << 24) + 
+      ((GLuint) texObj->_BorderChan[0] << 16) + 
+      ((GLuint) texObj->_BorderChan[1] << 8) + 
+      ((GLuint) texObj->_BorderChan[2]);
+
    if (current->texture[hw_unit].hwTextureBorderColor !=
        prev->texture[hw_unit].hwTextureBorderColor) 
    {
