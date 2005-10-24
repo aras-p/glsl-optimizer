@@ -379,7 +379,7 @@ do {								\
 
 #define VERT_SET_SPEC( v0, c )					\
 do {								\
-   if (havespec) {						\
+   if (specoffset != 0) {					\
       UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.red, (c)[0]);	\
       UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.green, (c)[1]);	\
       UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.blue, (c)[2]);	\
@@ -387,7 +387,7 @@ do {								\
 } while (0)
 #define VERT_COPY_SPEC( v0, v1 )			\
 do {							\
-   if (havespec) {					\
+   if (specoffset != 0) {				\
       v0->v.specular.red   = v1->v.specular.red;	\
       v0->v.specular.green = v1->v.specular.green;	\
       v0->v.specular.blue  = v1->v.specular.blue; 	\
@@ -396,15 +396,15 @@ do {							\
 
 #define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->ui[coloroffset]
 #define VERT_RESTORE_RGBA( idx ) v[idx]->ui[coloroffset] = color[idx]
-#define VERT_SAVE_SPEC( idx )    if (havespec) spec[idx] = v[idx]->ui[5]
-#define VERT_RESTORE_SPEC( idx ) if (havespec) v[idx]->ui[5] = spec[idx]
+#define VERT_SAVE_SPEC( idx )    if (specoffset != 0) spec[idx] = v[idx]->ui[specoffset]
+#define VERT_RESTORE_SPEC( idx ) if (specoffset != 0) v[idx]->ui[specoffset] = spec[idx]
 
 #define LOCAL_VARS(n)						\
    sisContextPtr smesa = SIS_CONTEXT(ctx);			\
    GLuint color[n], spec[n];					\
-   GLuint coloroffset = (smesa->vertex_size == 4 ? 3 : 4);	\
-   GLboolean havespec = (smesa->vertex_size == 4 ? 0 : 1);	\
-   (void) color; (void) spec; (void) coloroffset; (void) havespec;
+   GLuint coloroffset = smesa->coloroffset;			\
+   GLuint specoffset = smesa->specoffset;			\
+   (void) color; (void) spec; (void) coloroffset; (void) specoffset;
 
 /***********************************************************************
  *                Helpers for rendering unfilled primitives            *
@@ -833,14 +833,17 @@ static void sisRenderStart( GLcontext *ctx )
    if (index & _TNL_BITS_TEX_ANY) {
       EMIT_ATTR(_TNL_ATTRIB_POS, EMIT_4F_VIEWPORT);
       AGPParseSet |= SiS_PS_HAS_W;
+      smesa->coloroffset = 4;
    } else {
       EMIT_ATTR(_TNL_ATTRIB_POS, EMIT_3F_VIEWPORT);
+      smesa->coloroffset = 3;
    }
 
    EMIT_ATTR(_TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA);
 
    if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
       AGPParseSet |= SiS_PS_HAS_SPECULAR;
+      smesa->specoffset = smesa->coloroffset + 1;
 
       if (index & _TNL_BIT_COLOR1) {
 	 EMIT_ATTR(_TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR);
@@ -848,10 +851,13 @@ static void sisRenderStart( GLcontext *ctx )
 	 EMIT_PAD(3);
       }
 
-      if (index & _TNL_BIT_FOG)
+      if (index & _TNL_BIT_FOG) {
 	 EMIT_ATTR(_TNL_ATTRIB_FOG, EMIT_1UB_1F);
-      else 
+      } else {
 	 EMIT_PAD(1);
+      }
+   } else {
+      smesa->specoffset = 0;
    }
 
    /* projective textures are not supported by the hardware */

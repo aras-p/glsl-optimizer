@@ -400,6 +400,25 @@ static void sisDDColorMask( GLcontext *ctx,
  * Rendering attributes
  */
 
+static void sisUpdateSpecular(GLcontext *ctx)
+{
+   sisContextPtr smesa = SIS_CONTEXT(ctx);
+   __GLSiSHardware *current = &smesa->current;
+
+   if (NEED_SECONDARY_COLOR(ctx))
+      current->hwCapEnable |= MASK_SpecularEnable;
+   else
+      current->hwCapEnable &= ~MASK_SpecularEnable;
+}
+
+static void sisDDLightModelfv(GLcontext *ctx, GLenum pname,
+			      const GLfloat *param)
+{
+   if (pname == GL_LIGHT_MODEL_COLOR_CONTROL) {
+      sisUpdateSpecular(ctx);
+   }
+}
+
 static void sisDDShadeModel( GLcontext *ctx, GLenum mode )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
@@ -636,7 +655,11 @@ sisDDEnable( GLcontext * ctx, GLenum cap, GLboolean state )
 				   MASK_StencilWriteEnable);
       }
       break;
-    }
+   case GL_LIGHTING:
+   case GL_COLOR_SUM_EXT:
+      sisUpdateSpecular(ctx);
+      break;
+   }
 }
 
 
@@ -694,7 +717,6 @@ void sisDDInitState( sisContextPtr smesa )
    /* add Texture Perspective Enable */
    prev->hwCapEnable = MASK_FogPerspectiveEnable | MASK_TextureCacheEnable |
       MASK_TexturePerspectiveEnable | MASK_DitherEnable;
-   /*| MASK_SpecularEnable*/
 
    /*
    prev->hwCapEnable2 = 0x00aa0080;
@@ -829,6 +851,7 @@ void sisDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.RenderMode	 = NULL;
    ctx->Driver.Scissor		 = sisDDScissor;
    ctx->Driver.ShadeModel	 = sisDDShadeModel;
+   ctx->Driver.LightModelfv	 = sisDDLightModelfv;
    ctx->Driver.Viewport		 = sisDDViewport;
 
    /* Pixel path fallbacks. */

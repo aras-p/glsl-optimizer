@@ -234,12 +234,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * wrong, new names SiS_PS_* based off of the 4.3.0 driver and research are
  * below.
  */
-#define SiS_PS_HAS_XYZ				0x08000000
-#define SiS_PS_HAS_W				0x04000000
-#define SiS_PS_HAS_SPECULAR			0x02000000 /* XXX ? */
-#define SiS_PS_HAS_DIFFUSE			0x01000000
-#define SiS_PS_HAS_UV0				0x00400000
-#define SiS_PS_HAS_UV1				0x00200000
+#define SiS_PS_HAS_XYZ				MASK_PsVertex_HAS_RHW
+#define SiS_PS_HAS_W				MASK_PsVertex_HAS_NORMALXYZ
+#define SiS_PS_HAS_DIFFUSE			MASK_PsVertex_HAS_SPECULAR
+#define SiS_PS_HAS_SPECULAR			MASK_PsVertex_HAS_DIFFUSE
+#define SiS_PS_HAS_UV0				MASK_PsVertex_HAS_UVSet2
+#define SiS_PS_HAS_UV1				MASK_PsVertex_HAS_UVSet3
 #define MASK_PsVertex_HAS_RHW			0x08000000
 #define MASK_PsVertex_HAS_NORMALXYZ		0x04000000
 #define MASK_PsVertex_HAS_DIFFUSE		0x02000000

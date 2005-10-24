@@ -265,6 +265,8 @@ struct sis_context
   void *vb_agp_handle;
   GLuint vb_agp_offset;
   GLboolean using_agp;
+  GLint coloroffset;		/* Offset in vertex format of current color */
+  GLint specoffset;		/* Offset in vertex format of specular color */
 
   GLuint NewGLState;
   GLuint Fallback;

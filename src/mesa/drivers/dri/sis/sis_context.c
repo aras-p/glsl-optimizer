@@ -60,6 +60,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define need_GL_ARB_multisample
 #define need_GL_ARB_texture_compression
+#define need_GL_EXT_secondary_color
 #include "extension_helper.h"
 
 #ifndef SIS_DEBUG
@@ -78,6 +79,7 @@ struct dri_extension card_extensions[] =
     { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
     { "GL_EXT_texture_lod_bias",           NULL },
+    { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
     { "GL_EXT_stencil_wrap",               NULL },
     /*{ "GL_MESA_ycbcr_texture",             NULL },*/ /* not working yet */
     { "GL_NV_blend_square",                NULL },
