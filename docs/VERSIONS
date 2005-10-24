@@ -1374,13 +1374,47 @@ Mesa Version History
 	- assorted DRI driver fixes
 
 
+6.4  October 24, 2005
+    New:
+	- Added a fast XOR line drawing function in Xlib driver
+	- Added support for GL_ARB_texture_mirrored_repeat to savage
+	  driver (supported only on Savage4 hardware).
+    Changes:
+	- Mesa now packaged in three parts: Library, Demos and GLUT
+    Bug fixes:
+	- GLX_X_RENDERABLE token wasn't accepted by glXChooseFBConfig
+	- Some files were present multiple times in the 6.3.2 tarballs
+	- r200_vtxtmp_x86.S file was missing from 6.3.2 tarball (bug 4207)
+	- glxgears_fbconfig demo didn't work (bug 4237)
+	- fixed bug when bilinear sampling 2d textures with borders
+	- glXCreatePbuffer() could segfault instead of returning 0 (bug 4235)
+	- fixed undefined frexp and rand in X.org libGLcore.a (bug 4242)
+	- fixed a few problems with proxy color tables (bug 4270)
+	- fixed precision problem in Z clearing (bug 4395)
+	- glBitmap, glDraw/CopyPixels mistakenly generated selection hits
+	- fixed potential segfault caused by reading pixels outside
+	  of renderbuffer bounds
+	- glGetTexLevelParameter didn't accept GL_TEXTURE_DEPTH_SIZE_ARB
+	- fixed memory corruption bug involving software alpha buffers
+	- glReadPixels clipped by window bounds was sometimes broken
+	- glDraw/CopyPixels of stencil data ignored the stencil write mask
+	- glReadPixels from a texture bound to a framebuffer object didn't work
+	- glIsRender/FramebufferEXT weren't totally correct
+	- fixed a number of point size attenuation/fade bugs
+	- fixed glFogCoord bug 4729
+	- GLX encoding for transpose matrix functions was broken
+	- fixed broken fragment program KIL and SWZ instructions
+	- fragment programs that wrote result.depth.z didn't work
+
+
 6.5  month, day, 2005
     New:
+	- GL_EXT_packed_depth_stencil extension
+	- GL_EXT_timer_query extension
 	- reflect demo improved to support multiple windows
 	- singlebuffer demo (shows no/little-flicker single-buffered rendering)
 	- r200: enable GL_ARB_texture_env_crossbar, separate the texture
 	  sampling unit bits from the texture env combine enable bits
-	- GL_EXT_timer_query extension
 	- r200: add support for GL_ATI_fragment_shader
 	- added fast XOR-mode line drawing optimization
 	- radeon: add support for all 3 tmus, GL_ARB_texture_cube_map

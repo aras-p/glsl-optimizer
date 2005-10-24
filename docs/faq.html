@@ -9,7 +9,7 @@
 
 <center>
 <h1>Mesa Frequently Asked Questions</h1>
-Last updated: 17 November 2004
+Last updated: 21 October 2004
 </center>
 
 <br>
@@ -39,14 +39,14 @@ See the </a><a href="http://www.opengl.org/">OpenGL website</a> for more
 information.
 </p>
 <p>
-Mesa 5.x supports the OpenGL 1.4 specification.
+Mesa 6.x supports the OpenGL 1.5 specification.
 </p>
 
 
 <h2>1.2 Does Mesa support/use graphics hardware?</h2>
 <p>
-Yes.  Specifically, Mesa serves as the OpenGL core for the open-source
-XFree86/DRI OpenGL drivers.  See the <a href="http://dri.sf.net/">DRI
+Yes.  Specifically, Mesa serves as the OpenGL core for the open-source DRI
+drivers for XFree86/X.org.  See the <a href="http://dri.sf.net/">DRI
 website</a> for more information.
 </p>
 <p>
@@ -62,7 +62,8 @@ operating systems today.
 Still, Mesa serves at least these purposes:
 </p>
 <ul>
-<li>Mesa is used as the core of the open-source XFree86/DRI hardware drivers.
+<li>Mesa is used as the core of the open-source XFree86/X.org DRI
+    hardware drivers.
 </li>
 <li>Mesa is quite portable and allows OpenGL to be used on systems
     that have no other OpenGL solution.
@@ -86,8 +87,8 @@ Still, Mesa serves at least these purposes:
 <h2>1.4 What's the difference between"Stand-Alone" Mesa and the DRI drivers?</h2>
 <p>
 <em>Stand-alone Mesa</em> is the original incarnation of Mesa.
-On systems running the X Window System, it does all its rendering through
-the Xlib API.
+On systems running the X Window System it does all its rendering through
+the Xlib API:
 <ul>
 <li>The GLX API is supported, but it's really just an emulation of the
      real thing.
@@ -116,21 +117,10 @@ within the DRI (Direct Rendering Infrastructure):
 
 <h2>1.5 How do I upgrade my DRI installation to use a new Mesa release?</h2>
 <p>
-You don't!  A copy of the Mesa source code lives inside the XFree86/DRI source
-tree and gets compiled into the individual DRI driver modules.
-If you try to install Mesa over an XFree86/DRI installation, you'll lose
-hardware rendering (because stand-alone Mesa's libGL.so is different than
-the XFree86 libGL.so).
-</p>
-<p>
-The DRI developers will incorporate the latest release of Mesa into the
-DRI drivers when the time is right.
-</p>
-<p>
-To upgrade, either look for a new release of <a href="http://www.xfree86.org"
-target="_parent">XFree86</a> or visit the
-<a href="http://dri.sf.net" target="_parent">DRI website</a> to see
-if there's newer drivers.
+This wasn't easy in the past.
+Now, the DRI drivers are included in the Mesa tree and can be compiled
+separately from the X server.
+Just follow the Mesa <a href="install.html">compilation instructions</a>.
 </p>
 
 
@@ -201,7 +191,7 @@ Mesa no longer supports GNU autoconf/automake.  Why?
 </ul>
 
 <p>
-Now, Mesa again uses a conventional Makefile system (as it did originally).
+Now Mesa again uses a conventional Makefile system (as it did originally).
 Basically, each Makefile in the tree includes one of the configuration
 files from the config/ directory.
 The config files specify all the variables for a variety of popular systems.
@@ -219,9 +209,9 @@ Mesa's not the solution.
 
 <h2><a name="part2">2.4 Where is the GLUT library?</a></h2>
 <p>
-<a name="part2">GLUT (OpenGL Utility Toolkit) is in the separate MesaDemos-x.y.z.tar.gz file.
-If you don't already have GLUT installed, you should grab the MesaDemos
-package and unpack it before compiling Mesa.
+<a name="part2">GLUT (OpenGL Utility Toolkit) is in the separate MesaGLUT-x.y.z.tar.gz file.
+If you don't already have GLUT installed, you should grab the MesaGLUT
+package and compile it with the rest of Mesa.
 </a></p>
 
 
@@ -250,7 +240,7 @@ Mesa version number.
 version number.
 </li></ul>
 <p>
-After installing XFree86 and the DRI drivers, some of these files
+After installing XFree86/X.org and the DRI drivers, some of these files
 may be symlinks into the /usr/X11R6/ tree.
 </p>
 <p>
