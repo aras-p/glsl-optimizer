@@ -43,7 +43,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_vertex.h"
 
 #include "sis_screen.h"
-#include "sis_common2.h"
+#include "sis_reg.h"
 #include "sis_dri.h"
 
 /* for GLboolean */
@@ -115,7 +115,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define SUBPIXEL_X  (-0.5F)
 #define SUBPIXEL_Y  (-0.5F)
 
+#define SIS_MAX_TEXTURE_SIZE 2048
+#define SIS_MAX_TEXTURES 2
 #define SIS_MAX_TEXTURE_LEVELS		11
+#define SIS_MAX_FRAME_LENGTH 3
 
 typedef struct {
    GLubyte *Data;		/* Pointer to texture in offscreen */
@@ -322,9 +325,6 @@ struct sis_context
 
   GLint drawableID;
 
-  /* SGRAM block write */
-  GLboolean blockWrite;
-
   GLint GlobalFlag;
   GLuint last_tcl_state;
 
@@ -346,7 +346,6 @@ struct sis_context
   /* Front/back/depth buffer info */
   GLuint width, height;			/* size of buffers */
   GLint bottom;				/* used for FLIP macro */
-  ENGPACKET zClearPacket, cbClearPacket;
   /* XXX These don't belong here.  They should be per-drawable state. */
   struct sis_renderbuffer front;
   struct sis_renderbuffer back;

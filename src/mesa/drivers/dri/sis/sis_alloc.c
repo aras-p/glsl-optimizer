@@ -160,26 +160,6 @@ sisAllocZStencilBuffer( sisContextPtr smesa )
    smesa->stencil.pitch = smesa->depth.pitch;
    smesa->stencil.bpp = smesa->depth.bpp;
    smesa->stencil.map = smesa->depth.map;
-
-   /* set pZClearPacket */
-   memset( &smesa->zClearPacket, 0, sizeof(ENGPACKET) );
-
-   smesa->zClearPacket.dwSrcPitch = (cpp == 2) ? 0x80000000 : 0xf0000000;
-   smesa->zClearPacket.dwDestBaseAddr = smesa->depth.offset;
-   smesa->zClearPacket.wDestPitch = smesa->depth.pitch;
-   smesa->zClearPacket.stdwDestPos.wY = 0;
-   smesa->zClearPacket.stdwDestPos.wX = 0;
-
-   smesa->zClearPacket.wDestHeight = smesa->virtualY;
-   smesa->zClearPacket.stdwDim.wWidth = smesa->depth.pitch / cpp;
-   smesa->zClearPacket.stdwDim.wHeight = (GLshort)smesa->height;
-   smesa->zClearPacket.stdwCmd.cRop = 0xf0;
-
-   if (smesa->blockWrite)
-      smesa->zClearPacket.stdwCmd.cCmd0 = CMD0_PAT_FG_COLOR;
-   else
-      smesa->zClearPacket.stdwCmd.cCmd0 = 0;
-   smesa->zClearPacket.stdwCmd.cCmd1 = CMD1_DIR_X_INC | CMD1_DIR_Y_INC;
 }
 
 void
@@ -208,25 +188,6 @@ sisAllocBackbuffer( sisContextPtr smesa )
 
    smesa->back.map = addr;
    smesa->back.offset = addr - smesa->FbBase;
-
-   memset ( &smesa->cbClearPacket, 0, sizeof(ENGPACKET) );
-
-   smesa->cbClearPacket.dwSrcPitch = (cpp == 2) ? 0x80000000 : 0xf0000000;
-   smesa->cbClearPacket.dwDestBaseAddr = smesa->back.offset;
-   smesa->cbClearPacket.wDestPitch = smesa->back.pitch;
-   smesa->cbClearPacket.stdwDestPos.wY = 0;
-   smesa->cbClearPacket.stdwDestPos.wX = 0;
-
-   smesa->cbClearPacket.wDestHeight = smesa->virtualY;
-   smesa->cbClearPacket.stdwDim.wWidth = (GLshort) smesa->back.pitch / cpp;
-   smesa->cbClearPacket.stdwDim.wHeight = (GLshort) smesa->height;
-   smesa->cbClearPacket.stdwCmd.cRop = 0xf0;
-
-   if (smesa->blockWrite)
-      smesa->cbClearPacket.stdwCmd.cCmd0 = (GLbyte)(CMD0_PAT_FG_COLOR);
-   else
-      smesa->cbClearPacket.stdwCmd.cCmd0 = 0;
-   smesa->cbClearPacket.stdwCmd.cCmd1 = CMD1_DIR_X_INC | CMD1_DIR_Y_INC;
 }
 
 void

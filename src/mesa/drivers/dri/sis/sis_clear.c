@@ -144,7 +144,7 @@ sisDDClear( GLcontext * ctx, GLbitfield mask, GLboolean all,
    }
 
    if (mask & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) {
-      if (smesa->depth.offset != NULL)
+      if (smesa->depth.offset != 0)
          sis_clear_z_stencil_buffer( ctx, mask, x1, y1, width1, height1 );
       mask &= ~(BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);
    }
@@ -332,28 +332,6 @@ sis_3D_Clear( GLcontext * ctx, GLbitfield mask,
 }
 
 static void
-sis_bitblt_clear_cmd( sisContextPtr smesa, ENGPACKET * pkt )
-{
-   GLint *lpdwDest, *lpdwSrc;
-   int i;
-
-   lpdwSrc = (GLint *) pkt + 1;
-   lpdwDest = (GLint *) (GET_IOBase (smesa) + REG_SRC_ADDR) + 1;
-
-   mWait3DCmdQueue (10);
-
-   *lpdwDest++ = *lpdwSrc++;
-   lpdwSrc++;
-   lpdwDest++;
-   for (i = 3; i < 8; i++) {
-      *lpdwDest++ = *lpdwSrc++;
-   }
-
-   MMIO(REG_CMD0, *(GLint *) & pkt->stdwCmd);
-   MMIO(REG_CommandQueue, -1);
-}
-
-static void
 sis_clear_color_buffer( GLcontext *ctx, GLenum mask, GLint x, GLint y,
 			GLint width, GLint height )
 {
@@ -365,17 +343,18 @@ sis_clear_color_buffer( GLcontext *ctx, GLenum mask, GLint x, GLint y,
    GLint xx, yy;
    GLint x0, y0, width0, height0;
 
-   ENGPACKET stEngPacket;
-
    /* Clear back buffer */
    if (mask & BUFFER_BIT_BACK_LEFT) {
-      smesa->cbClearPacket.stdwDestPos.wY = y;
-      smesa->cbClearPacket.stdwDestPos.wX = x;
-      smesa->cbClearPacket.stdwDim.wWidth = (GLshort) width;
-      smesa->cbClearPacket.stdwDim.wHeight = (GLshort) height;
-      smesa->cbClearPacket.dwFgRopColor = smesa->clearColorPattern;
-
-      sis_bitblt_clear_cmd( smesa, &smesa->cbClearPacket );
+      mWait3DCmdQueue (8);
+      MMIO(REG_SRC_PITCH, (smesa->bytesPerPixel == 4) ? 
+			   BLIT_DEPTH_32 : BLIT_DEPTH_16);
+      MMIO(REG_DST_X_Y, (x << 16) | y);
+      MMIO(REG_DST_ADDR, smesa->back.offset);
+      MMIO(REG_DST_PITCH_HEIGHT, (smesa->virtualY << 16) | smesa->back.pitch);
+      MMIO(REG_WIDTH_HEIGHT, (height << 16) | width);
+      MMIO(REG_PATFG, smesa->clearColorPattern);
+      MMIO(REG_BLIT_CMD, CMD_DIR_X_INC | CMD_DIR_Y_INC | CMD_ROP_PAT);
+      MMIO(REG_CommandQueue, -1);
    }
   
    if ((mask & BUFFER_BIT_FRONT_LEFT) == 0)
@@ -389,23 +368,6 @@ sis_clear_color_buffer( GLcontext *ctx, GLenum mask, GLint x, GLint y,
 
    pExtents = smesa->driDrawable->pClipRects;
    count = smesa->driDrawable->numClipRects;
-
-   memset( &stEngPacket, 0, sizeof (ENGPACKET) );
-
-   stEngPacket.dwSrcPitch = (depth == 2) ? 0x80000000 : 0xc0000000;
-   stEngPacket.dwDestBaseAddr = smesa->front.offset;
-   stEngPacket.wDestPitch = smesa->front.pitch;
-   /* TODO: set maximum value? */
-   stEngPacket.wDestHeight = smesa->virtualY;
-   stEngPacket.stdwCmd.cRop = 0xf0;
-   stEngPacket.dwFgRopColor = smesa->clearColorPattern;
-
-   /* for SGRAM Block Write Enable */
-   if (smesa->blockWrite)
-      stEngPacket.stdwCmd.cCmd0 = CMD0_PAT_FG_COLOR;
-   else
-      stEngPacket.stdwCmd.cCmd0 = 0;
-   stEngPacket.stdwCmd.cCmd1 = CMD1_DIR_X_INC | CMD1_DIR_Y_INC;
 
    while (count--) {
       GLint x2 = pExtents->x1 - smesa->driDrawable->x;
@@ -424,12 +386,18 @@ sis_clear_color_buffer( GLcontext *ctx, GLenum mask, GLint x, GLint y,
       if (width <= 0 || height <= 0)
 	continue;
 
-      stEngPacket.stdwDestPos.wY = y;
-      stEngPacket.stdwDestPos.wX = x;
-      stEngPacket.stdwDim.wWidth = (GLshort)width;
-      stEngPacket.stdwDim.wHeight = (GLshort)height;
+      int cmd;
 
-      sis_bitblt_clear_cmd( smesa, &stEngPacket );
+      mWait3DCmdQueue (8);
+      MMIO(REG_SRC_PITCH, (smesa->bytesPerPixel == 4) ? 
+			   BLIT_DEPTH_32 : BLIT_DEPTH_16);
+      MMIO(REG_DST_X_Y, (x << 16) | y);
+      MMIO(REG_DST_ADDR, smesa->front.offset);
+      MMIO(REG_DST_PITCH_HEIGHT, (smesa->virtualY << 16) | smesa->front.pitch);
+      MMIO(REG_WIDTH_HEIGHT, (height << 16) | width);
+      MMIO(REG_PATFG, smesa->clearColorPattern);
+      MMIO(REG_BLIT_CMD, CMD_DIR_X_INC | CMD_DIR_Y_INC | CMD_ROP_PAT);
+      MMIO(REG_CommandQueue, -1);
    }
 }
 
@@ -438,14 +406,17 @@ sis_clear_z_stencil_buffer( GLcontext * ctx, GLbitfield mask,
 			    GLint x, GLint y, GLint width, GLint height )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
+   int cmd;
 
-   /* TODO: consider alignment of width, height? */
-   smesa->zClearPacket.stdwDestPos.wY = y;
-   smesa->zClearPacket.stdwDestPos.wX = x;
-   smesa->zClearPacket.stdwDim.wWidth = (GLshort) width;
-   smesa->zClearPacket.stdwDim.wHeight = (GLshort) height;
-   smesa->zClearPacket.dwFgRopColor = smesa->clearZStencilPattern;
-
-   sis_bitblt_clear_cmd( smesa, &smesa->zClearPacket );
+   mWait3DCmdQueue (8);
+   MMIO(REG_SRC_PITCH, (smesa->zFormat == SiS_ZFORMAT_Z16) ?
+			BLIT_DEPTH_16 : BLIT_DEPTH_32);
+   MMIO(REG_DST_X_Y, (x << 16) | y);
+   MMIO(REG_DST_ADDR, smesa->depth.offset);
+   MMIO(REG_DST_PITCH_HEIGHT, (smesa->virtualY << 16) | smesa->depth.pitch);
+   MMIO(REG_WIDTH_HEIGHT, (height << 16) | width);
+   MMIO(REG_PATFG, smesa->clearZStencilPattern);
+   MMIO(REG_BLIT_CMD, CMD_DIR_X_INC | CMD_DIR_Y_INC | CMD_ROP_PAT);
+   MMIO(REG_CommandQueue, -1);
 }
 

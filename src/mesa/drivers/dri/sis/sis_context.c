@@ -282,10 +282,6 @@ sisCreateContext( const __GLcontextModes *glVisual,
 
    driInitExtensions( ctx, card_extensions, GL_FALSE );
 
-   /* TODO */
-   /* smesa->blockWrite = SGRAMbw = IsBlockWrite (); */
-   smesa->blockWrite = GL_FALSE;
-
    for (i = 0; i < SIS_MAX_TEXTURES; i++) {
       smesa->TexStates[i] = 0;
       smesa->PrevTexFormat[i] = 0;

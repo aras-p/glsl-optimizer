@@ -39,6 +39,35 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Define All the Register Address of 6327
  */
+#define REG_SRC_ADDR			0x8200
+#define REG_SRC_PITCH			0x8204
+#	define BLIT_DEPTH_8		0x00000000
+#	define BLIT_DEPTH_15		0x40000000
+#	define BLIT_DEPTH_16		0x80000000
+#	define BLIT_DEPTH_32		0xc0000000
+#define REG_SRC_X_Y			0x8208
+#define REG_DST_X_Y			0x820c
+#define REG_DST_ADDR			0x8210
+#define REG_DST_PITCH_HEIGHT		0x8214
+#define REG_WIDTH_HEIGHT		0x8218
+#define REG_PATFG			0x821c
+#define REG_PATBG			0x8220
+#define REG_SRCFG			0x8224
+#define REG_SRCBG			0x8228
+#define REG_MONOPAT0			0x822c
+#define REG_MONOPAT1			0x8230
+#define REG_CLIPLT			0x8234
+#define REG_CLIPRB			0x8238
+#define REG_BLIT_CMD			0x823c
+#	define CMD_ROP_PAT		0x0000f000
+#	define CMD_ROP_SRC		0x0000cc00
+#	define CMD_DD_ENABLE		0x00000006
+#	define CMD_SRC_VIDEO		0x00000000
+#	define CMD_SRC_CPU		0x00000010
+#	define CMD_DIR_X_DEC		0x00000000
+#	define CMD_DIR_X_INC		0x00010000
+#	define CMD_DIR_Y_DEC		0x00000000
+#	define CMD_DIR_Y_INC		0x00020000
 
 #define REG_CommandQueue		0x8240
  

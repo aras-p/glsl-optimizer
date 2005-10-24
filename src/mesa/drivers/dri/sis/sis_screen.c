@@ -235,63 +235,30 @@ sisDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
    _mesa_destroy_framebuffer((GLframebuffer *) (driDrawPriv->driverPrivate));
 }
 
-__inline__ static void
-sis_bitblt_copy_cmd (sisContextPtr smesa, ENGPACKET * pkt)
-{
-   GLint *lpdwDest, *lpdwSrc;
-   int i;
-
-   lpdwSrc = (GLint *) pkt;
-   lpdwDest = (GLint *) (GET_IOBase (smesa) + REG_SRC_ADDR);
-
-   mWait3DCmdQueue (10);
-
-   for (i = 0; i < 7; i++)
-      *lpdwDest++ = *lpdwSrc++;
-
-   MMIO(REG_CMD0, *(GLint *)&pkt->stdwCmd);
-   MMIO(REG_CommandQueue, -1);
-}
-
 static void sisCopyBuffer( __DRIdrawablePrivate *dPriv )
 {
    sisContextPtr smesa = (sisContextPtr)dPriv->driContextPriv->driverPrivate;
    int i;
-   ENGPACKET stEngPacket;
-  
-   memset(&stEngPacket, 0, sizeof(ENGPACKET));
 
    while ((*smesa->FrameCountPtr) - MMIO_READ(0x8a2c) > SIS_MAX_FRAME_LENGTH)
       ;
 
    LOCK_HARDWARE();
 
-   stEngPacket.dwSrcBaseAddr = smesa->back.offset;
-   stEngPacket.dwSrcPitch = smesa->back.pitch |
-      ((smesa->bytesPerPixel == 2) ? 0x80000000 : 0xc0000000);
-   stEngPacket.dwDestBaseAddr = 0;
-   stEngPacket.wDestPitch = smesa->front.pitch;
-   /* TODO: set maximum value? */
-   stEngPacket.wDestHeight = smesa->virtualY;
-
-   stEngPacket.stdwCmd.cRop = 0xcc;
-
-   if (smesa->blockWrite)
-      stEngPacket.stdwCmd.cCmd0 = CMD0_PAT_FG_COLOR;
-   else
-      stEngPacket.stdwCmd.cCmd0 = 0;
-   stEngPacket.stdwCmd.cCmd1 = CMD1_DIR_X_INC | CMD1_DIR_Y_INC;
-
    for (i = 0; i < dPriv->numClipRects; i++) {
       drm_clip_rect_t *box = &dPriv->pClipRects[i];
-      stEngPacket.stdwSrcPos.wY = box->y1 - dPriv->y;
-      stEngPacket.stdwSrcPos.wX = box->x1 - dPriv->x;
-      stEngPacket.stdwDestPos.wY = box->y1;
-      stEngPacket.stdwDestPos.wX = box->x1;
 
-      stEngPacket.stdwDim.wWidth = (GLshort) box->x2 - box->x1;
-      stEngPacket.stdwDim.wHeight = (GLshort) box->y2 - box->y1;
-      sis_bitblt_copy_cmd( smesa, &stEngPacket );
+      mWait3DCmdQueue(10);
+      MMIO(REG_SRC_ADDR, smesa->back.offset);
+      MMIO(REG_SRC_PITCH, smesa->back.pitch | ((smesa->bytesPerPixel == 4) ? 
+			   BLIT_DEPTH_32 : BLIT_DEPTH_16));
+      MMIO(REG_SRC_X_Y, ((box->x1 - dPriv->x) << 16) | (box->y1 - dPriv->y));
+      MMIO(REG_DST_X_Y, (box->x1 << 16) | box->y1);
+      MMIO(REG_DST_ADDR, smesa->front.offset);
+      MMIO(REG_DST_PITCH_HEIGHT, (smesa->virtualY << 16) | smesa->front.pitch);
+      MMIO(REG_WIDTH_HEIGHT, ((box->y2 - box->y1) << 16) | (box->x2 - box->x1));
+      MMIO(REG_BLIT_CMD, CMD_DIR_X_INC | CMD_DIR_Y_INC | CMD_ROP_SRC);
+      MMIO(REG_CommandQueue, -1);
    }
 
    *(GLint *)(smesa->IOBase+0x8a2c) = *smesa->FrameCountPtr;

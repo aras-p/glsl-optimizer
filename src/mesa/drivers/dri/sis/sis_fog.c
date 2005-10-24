@@ -39,6 +39,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "macros.h"
 
 static GLint convertFtToFogFt( GLfloat dwInValue );
+static GLint doFPtoFixedNoRound( GLfloat dwInValue, int nFraction );
 
 void
 sisDDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *params )
@@ -114,7 +115,7 @@ sisDDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *params )
    }
 }
 
-GLint
+static GLint
 doFPtoFixedNoRound( GLfloat dwInValue, int nFraction )
 {
    GLint dwMantissa;
