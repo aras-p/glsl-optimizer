@@ -962,7 +962,7 @@ void sisFlushPrims(sisContextPtr smesa)
 static const char * const fallbackStrings[] = {
    "Texture mode",
    "Texture 0 mode",
-   "Texture 1 moder",
+   "Texture 1 mode",
    "Texture 0 env",
    "Texture 1 env",
    "glDrawBuffer(GL_FRONT_AND_BACK)",
