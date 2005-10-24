@@ -81,7 +81,7 @@ struct dri_extension card_extensions[] =
     { "GL_EXT_texture_lod_bias",           NULL },
     { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
     { "GL_EXT_stencil_wrap",               NULL },
-    /*{ "GL_MESA_ycbcr_texture",             NULL },*/ /* not working yet */
+    { "GL_MESA_ycbcr_texture",             NULL },
     { "GL_NV_blend_square",                NULL },
     { NULL,                                NULL }
 };

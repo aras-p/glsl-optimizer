@@ -96,10 +96,10 @@ sisAllocTexImage( sisContextPtr smesa, sisTexObjPtr t, int level,
          t->hwformat = TEXEL_AL88;
          break;
       case MESA_FORMAT_YCBCR:
-         t->hwformat = TEXEL_YVU422;	/* Doesn't work?  Extension disabled */
+         t->hwformat = TEXEL_YUV422;
          break;
       case MESA_FORMAT_YCBCR_REV:
-         t->hwformat = TEXEL_YUV422;	/* Doesn't work?  Extension disabled */
+         t->hwformat = TEXEL_VUY422;
          break;
       default:
          sis_fatal_error("Bad texture format 0x%x.\n",
