@@ -47,7 +47,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "utils.h"
 
-#define DRIVER_DATE	"20051019"
+#define DRIVER_DATE	"20051023"
 
 /* Return the width and height of the given buffer.
  */

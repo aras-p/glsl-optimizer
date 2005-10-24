@@ -125,6 +125,12 @@ sisDDStencilOpSeparate( GLcontext * ctx, GLenum face, GLenum fail,
     case GL_DECR:
       current->hwStSetting2 |= SiS_SFAIL_DECR;
       break;
+    case GL_INCR_WRAP:
+      current->hwStSetting2 |= SiS_SFAIL_INCR_WRAP;
+      break;
+    case GL_DECR_WRAP:
+      current->hwStSetting2 |= SiS_SFAIL_DECR_WRAP;
+      break;
     }
 
   switch (zfail)
@@ -147,6 +153,12 @@ sisDDStencilOpSeparate( GLcontext * ctx, GLenum face, GLenum fail,
     case GL_DECR:
       current->hwStSetting2 |= SiS_SPASS_ZFAIL_DECR;
       break;
+    case GL_INCR_WRAP:
+      current->hwStSetting2 |= SiS_SPASS_ZFAIL_INCR_WRAP;
+      break;
+    case GL_DECR_WRAP:
+      current->hwStSetting2 |= SiS_SPASS_ZFAIL_DECR_WRAP;
+      break;
     }
 
   switch (zpass)
@@ -168,6 +180,12 @@ sisDDStencilOpSeparate( GLcontext * ctx, GLenum face, GLenum fail,
       break;
     case GL_DECR:
       current->hwStSetting2 |= SiS_SPASS_ZPASS_DECR;
+      break;
+    case GL_INCR_WRAP:
+      current->hwStSetting2 |= SiS_SPASS_ZPASS_INCR_WRAP;
+      break;
+    case GL_DECR_WRAP:
+      current->hwStSetting2 |= SiS_SPASS_ZPASS_DECR_WRAP;
       break;
     }
 

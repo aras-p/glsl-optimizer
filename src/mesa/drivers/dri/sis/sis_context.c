@@ -74,6 +74,7 @@ struct dri_extension card_extensions[] =
     { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },
     { "GL_EXT_texture_lod_bias",           NULL },
+    { "GL_EXT_stencil_wrap",               NULL },
     { "GL_NV_blend_square",                NULL },
     { NULL,                                NULL }
 };
