@@ -59,6 +59,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_pipeline.h"
 
 #define need_GL_ARB_multisample
+#define need_GL_ARB_texture_compression
 #include "extension_helper.h"
 
 #ifndef SIS_DEBUG
@@ -74,9 +75,11 @@ struct dri_extension card_extensions[] =
     { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_texture_border_clamp",       NULL },
+    { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
     { "GL_EXT_texture_lod_bias",           NULL },
     { "GL_EXT_stencil_wrap",               NULL },
+    /*{ "GL_MESA_ycbcr_texture",             NULL },*/ /* not working yet */
     { "GL_NV_blend_square",                NULL },
     { NULL,                                NULL }
 };
@@ -290,6 +293,7 @@ sisCreateContext( const __GLcontextModes *glVisual,
       fprintf(stderr, "disabling 3D acceleration\n");
       FALLBACK(smesa, SIS_FALLBACK_DISABLE, 1);
    }
+   smesa->texture_depth = driQueryOptioni(&smesa->optionCache, "texture_depth");
 
    return GL_TRUE;
 }

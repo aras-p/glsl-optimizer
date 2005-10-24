@@ -40,6 +40,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "teximage.h"
 #include "texobj.h"
 
+#include "xmlpool.h"
+
 #define ALIGN(value, align) (GLubyte *)((long)(value + align - 1) & ~(align - 1))
 
 #define TEXTURE_HW_ALIGNMENT 4
@@ -64,28 +66,44 @@ sisAllocTexImage( sisContextPtr smesa, sisTexObjPtr t, int level,
 
    if (t->format == 0) {
       t->format = image->_BaseFormat;
-      switch (t->format)
+      switch (image->TexFormat->MesaFormat)
       {
-      case GL_RGBA:
+      case MESA_FORMAT_ARGB8888:
          t->hwformat = TEXEL_ARGB_8888_32;
          break;
-      case GL_INTENSITY:
+      case MESA_FORMAT_ARGB4444:
+         t->hwformat = TEXEL_ARGB_4444_16;
+         break;
+      case MESA_FORMAT_ARGB1555:
+         t->hwformat = TEXEL_ARGB_1555_16;
+         break;
+      case MESA_FORMAT_RGB565:
+         t->hwformat = TEXEL_RGB_565_16;
+         break;
+      case MESA_FORMAT_RGB332:
+         t->hwformat = TEXEL_RGB_332_8;
+         break;
+      case MESA_FORMAT_I8:
          t->hwformat = TEXEL_I8;
          break;
-      case GL_ALPHA:
+      case MESA_FORMAT_A8:
          t->hwformat = TEXEL_A8;
          break;
-      case GL_LUMINANCE:
+      case MESA_FORMAT_L8:
          t->hwformat = TEXEL_L8;
          break;
-      case GL_LUMINANCE_ALPHA:
+      case MESA_FORMAT_AL88:
          t->hwformat = TEXEL_AL88;
          break;
-      case GL_RGB:
-         t->hwformat = TEXEL_ARGB_0888_32;
+      case MESA_FORMAT_YCBCR:
+         t->hwformat = TEXEL_YVU422;	/* Doesn't work?  Extension disabled */
+         break;
+      case MESA_FORMAT_YCBCR_REV:
+         t->hwformat = TEXEL_YUV422;	/* Doesn't work?  Extension disabled */
          break;
       default:
-         sis_fatal_error("Bad texture format.\n");
+         sis_fatal_error("Bad texture format 0x%x.\n",
+			 image->TexFormat->MesaFormat);
       }
    }
    assert(t->format == image->_BaseFormat);
@@ -215,58 +233,123 @@ static const struct gl_texture_format *
 sisChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 			  GLenum format, GLenum type )
 {
-   /* XXX 16-bit internal texture formats? */
+   sisContextPtr smesa = SIS_CONTEXT(ctx);
+
+   const GLboolean do32bpt =
+       (smesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_32);
+   const GLboolean force16bpt =
+       (smesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FORCE_16);
+
    switch ( internalFormat ) {
+   case 4:
+   case GL_RGBA:
+   case GL_COMPRESSED_RGBA:
+      switch ( type ) {
+      case GL_UNSIGNED_INT_10_10_10_2:
+      case GL_UNSIGNED_INT_2_10_10_10_REV:
+	 return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb1555;
+      case GL_UNSIGNED_SHORT_4_4_4_4:
+      case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+	 return &_mesa_texformat_argb4444;
+      case GL_UNSIGNED_SHORT_5_5_5_1:
+      case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+	 return &_mesa_texformat_argb1555;
+      default:
+         return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
+      }
+
+   case 3:
+   case GL_RGB:
+   case GL_COMPRESSED_RGB:
+      switch ( type ) {
+      case GL_UNSIGNED_SHORT_4_4_4_4:
+      case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+	 return &_mesa_texformat_argb4444;
+      case GL_UNSIGNED_SHORT_5_5_5_1:
+      case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+	 return &_mesa_texformat_argb1555;
+      case GL_UNSIGNED_SHORT_5_6_5:
+      case GL_UNSIGNED_SHORT_5_6_5_REV:
+	 return &_mesa_texformat_rgb565;
+      default:
+         return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_rgb565;
+      }
+
+   case GL_RGBA8:
+   case GL_RGBA12:
+   case GL_RGBA16:
+      return !force16bpt ?
+	  &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
+
+   case GL_RGB10_A2:
+      return !force16bpt ?
+	  &_mesa_texformat_argb8888 : &_mesa_texformat_argb1555;
+
+   case GL_RGBA4:
+   case GL_RGBA2:
+      return &_mesa_texformat_argb4444;
+
+   case GL_RGB5_A1:
+      return &_mesa_texformat_argb1555;
+
+   case GL_RGB8:
+   case GL_RGB10:
+   case GL_RGB12:
+   case GL_RGB16:
+      return !force16bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_rgb565;
+
+   case GL_RGB5:
+   case GL_RGB4:
+      return &_mesa_texformat_rgb565;
+
+   case GL_R3_G3_B2:
+      return &_mesa_texformat_rgb332;
+
    case GL_ALPHA:
-   case GL_ALPHA4:
+   case GL_ALPHA4:		/* FIXME: This could use its own texstore */
    case GL_ALPHA8:
    case GL_ALPHA12:
    case GL_ALPHA16:
+   case GL_COMPRESSED_ALPHA:
       return &_mesa_texformat_a8;
+
    case 1:
    case GL_LUMINANCE:
-   case GL_LUMINANCE4:
+   case GL_LUMINANCE4:		/* FIXME: This could use its own texstore */
    case GL_LUMINANCE8:
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
+   case GL_COMPRESSED_LUMINANCE:
       return &_mesa_texformat_l8;
+
    case 2:
    case GL_LUMINANCE_ALPHA:
-   case GL_LUMINANCE4_ALPHA4:
-   case GL_LUMINANCE6_ALPHA2:
+   case GL_LUMINANCE4_ALPHA4:	/* FIXME: This could use its own texstore */
+   case GL_LUMINANCE6_ALPHA2:	/* FIXME: This could use its own texstore */
    case GL_LUMINANCE8_ALPHA8:
-   case GL_LUMINANCE12_ALPHA4:
+   case GL_LUMINANCE12_ALPHA4:	/* FIXME: This could use its own texstore */
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
+   case GL_COMPRESSED_LUMINANCE_ALPHA:
       return &_mesa_texformat_al88;
+
    case GL_INTENSITY:
    case GL_INTENSITY4:
    case GL_INTENSITY8:
    case GL_INTENSITY12:
    case GL_INTENSITY16:
+   case GL_COMPRESSED_INTENSITY:
       return &_mesa_texformat_i8;
-   case GL_R3_G3_B2:
-   case GL_RGB4:
-   case GL_RGB5:
-   case 3:
-   case GL_RGB:
-   case GL_RGB8:
-   case GL_RGB10:
-   case GL_RGB12:
-   case GL_RGB16:
-      return &_mesa_texformat_argb8888 /*_mesa_texformat_rgb888*/; /* XXX */
-   case GL_RGBA2:
-   case GL_RGBA4:
-   case GL_RGB5_A1:
-   case 4:
-   case GL_RGBA:
-   case GL_RGBA8:
-   case GL_RGB10_A2:
-   case GL_RGBA12:
-   case GL_RGBA16:
-      return &_mesa_texformat_argb8888;
+
+   case GL_YCBCR_MESA:
+      if (type == GL_UNSIGNED_SHORT_8_8_APPLE ||
+          type == GL_UNSIGNED_BYTE)
+         return &_mesa_texformat_ycbcr;
+      else
+         return &_mesa_texformat_ycbcr_rev;
+
    default:
-      _mesa_problem(ctx, "unexpected format in tdfxDDChooseTextureFormat: %d",
+      _mesa_problem(ctx, "unexpected format in sisDDChooseTextureFormat: %d",
          internalFormat);
       return NULL;
    }

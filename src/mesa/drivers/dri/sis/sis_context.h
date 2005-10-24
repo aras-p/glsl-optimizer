@@ -367,6 +367,7 @@ struct sis_context
 
    /* Configuration cache */
    driOptionCache optionCache;
+    GLint texture_depth;
 };
 
 #define SIS_CONTEXT(ctx)		((sisContextPtr)(ctx->DriverCtx))

@@ -46,16 +46,22 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "GL/internal/dri_interface.h"
 
+#define SIS_AGP_DISABLE(def) \
+DRI_CONF_OPT_BEGIN(agp_disable,bool,def)				\
+	DRI_CONF_DESC(en,"Disable AGP vertex dispatch")			\
+DRI_CONF_OPT_END
+
 PUBLIC const char __driConfigOptions[] =
 DRI_CONF_BEGIN
+	DRI_CONF_SECTION_QUALITY
+		DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
+	DRI_CONF_SECTION_END
 	DRI_CONF_SECTION_DEBUG
-		DRI_CONF_OPT_BEGIN(agp_disable,bool,false)
-		DRI_CONF_DESC(en,"Disable AGP vertex dispatch")
-		DRI_CONF_OPT_END
-        DRI_CONF_NO_RAST(false)
+		SIS_AGP_DISABLE(false)
+		DRI_CONF_NO_RAST(false)
 	DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 2;
+static const GLuint __driNConfigOptions = 3;
 
 extern const struct dri_extension card_extensions[];
 
