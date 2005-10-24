@@ -328,6 +328,7 @@ _swrast_span_interpolate_z( const GLcontext *ctx, struct sw_span *span )
          zval += span->zStep;
       }
    }
+   span->interpMask &= ~SPAN_Z;
    span->arrayMask |= SPAN_Z;
 }
 
@@ -1080,6 +1081,9 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLbitfield origInterpMask = span->interpMask;
    const GLbitfield origArrayMask = span->arrayMask;
+   const GLboolean deferredTexture = !(ctx->Color.AlphaEnabled ||
+                                       ctx->FragmentProgram._Active ||
+                                       ctx->ATIFragmentShader._Enabled);
 
    ASSERT(span->primitive == GL_POINT  ||  span->primitive == GL_LINE ||
 	  span->primitive == GL_POLYGON  ||  span->primitive == GL_BITMAP);
@@ -1134,14 +1138,12 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
       interpolate_texcoords(ctx, span);
    }
 
-   /* If the alpha test is enabled, we have to compute the fragment colors
-    * at this point and do the alpha test.
-    * Else, if alpha test is not enabled, we'll try to defer fragment
-    * color computation (by interpolation, texture mapping, fragment program)
-    * until after the Z/stencil tests in the hope that many fragments will
-    * get culled, leaving less work to do.
+   /* This is the normal place to compute the resulting fragment color/Z.
+    * As an optimization, we try to defer this until after Z/stencil
+    * testing in order to try to avoid computing colors that we won't
+    * actually need.
     */
-   if (ctx->Color.AlphaEnabled) {
+   if (!deferredTexture) {
       /* Now we need the rgba array, fill it in if needed */
       if ((span->interpMask & SPAN_RGBA) && (span->arrayMask & SPAN_RGBA) == 0)
          interpolate_colors(ctx, span);
@@ -1153,9 +1155,12 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
          interpolate_fog(ctx, span);
 
       /* Compute fragment colors with fragment program or texture lookups */
-      if (ctx->FragmentProgram._Active)
-         /* XXX interpolate depth values here??? */
+      if (ctx->FragmentProgram._Active) {
+         /* frag prog may need Z values */
+         if (span->interpMask & SPAN_Z)
+            _swrast_span_interpolate_z(ctx, span);
          _swrast_exec_fragment_program( ctx, span );
+      }
       else if (ctx->ATIFragmentShader._Enabled)
          _swrast_exec_fragment_shader( ctx, span );
       else if (ctx->Texture._EnabledUnits && (span->arrayMask & SPAN_TEXTURE))
@@ -1212,11 +1217,11 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
       return;
    }
 
-   /* If the alpha test isn't enabled, we're able to defer computing fragment
-    * colors (by interpolation, texturing, fragment program) until now.
-    * Hopefully, Z/stencil tests culled many of the fragments!
+   /* If we were able to defer fragment color computation to now, there's
+    * a good chance that many fragments will have already been killed by
+    * Z/stencil testing.
     */
-   if (!ctx->Color.AlphaEnabled) {
+   if (deferredTexture) {
       /* Now we need the rgba array, fill it in if needed */
       if ((span->interpMask & SPAN_RGBA) && (span->arrayMask & SPAN_RGBA) == 0)
          interpolate_colors(ctx, span);

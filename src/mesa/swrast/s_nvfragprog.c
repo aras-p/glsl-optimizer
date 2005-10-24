@@ -1390,6 +1390,7 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
    /* Load input registers */
    if (inputsRead & (1 << FRAG_ATTRIB_WPOS)) {
       GLfloat *wpos = machine->Inputs[FRAG_ATTRIB_WPOS];
+      ASSERT(span->arrayMask & SPAN_Z);
       wpos[0] = (GLfloat) span->x + col;
       wpos[1] = (GLfloat) span->y;
       wpos[2] = (GLfloat) span->array->z[col] / ctx->DrawBuffer->_DepthMaxF;
@@ -1397,6 +1398,7 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
    }
    if (inputsRead & (1 << FRAG_ATTRIB_COL0)) {
       GLfloat *col0 = machine->Inputs[FRAG_ATTRIB_COL0];
+      ASSERT(span->arrayMask & SPAN_RGBA);
       col0[0] = CHAN_TO_FLOAT(span->array->rgba[col][RCOMP]);
       col0[1] = CHAN_TO_FLOAT(span->array->rgba[col][GCOMP]);
       col0[2] = CHAN_TO_FLOAT(span->array->rgba[col][BCOMP]);
@@ -1411,6 +1413,7 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
    }
    if (inputsRead & (1 << FRAG_ATTRIB_FOGC)) {
       GLfloat *fogc = machine->Inputs[FRAG_ATTRIB_FOGC];
+      ASSERT(span->arrayMask & SPAN_FOG);
       fogc[0] = span->array->fog[col];
       fogc[1] = 0.0F;
       fogc[2] = 0.0F;
@@ -1479,9 +1482,17 @@ _swrast_exec_fragment_program( GLcontext *ctx, struct sw_span *span )
             UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][ACOMP], colOut[3]);
          }
          /* depth value */
-         if (program->OutputsWritten & (1 << FRAG_OUTPUT_DEPR))
-            span->array->z[i] = IROUND(ctx->FragmentProgram.Machine.Outputs[FRAG_OUTPUT_DEPR][0] * ctx->DrawBuffer->_DepthMaxF);
+         if (program->OutputsWritten & (1 << FRAG_OUTPUT_DEPR)) {
+            const GLfloat depth
+               = ctx->FragmentProgram.Machine.Outputs[FRAG_OUTPUT_DEPR][2];
+            span->array->z[i] = IROUND(depth * ctx->DrawBuffer->_DepthMaxF);
+         }
       }
+   }
+
+   if (program->OutputsWritten & (1 << FRAG_OUTPUT_DEPR)) {
+      span->interpMask &= ~SPAN_Z;
+      span->arrayMask |= SPAN_Z;
    }
 
    ctx->_CurrentProgram = 0;
