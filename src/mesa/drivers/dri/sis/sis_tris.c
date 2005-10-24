@@ -622,6 +622,9 @@ static void sisChooseRenderState(GLcontext *ctx)
    GLuint flags = ctx->_TriangleCaps;
    GLuint index = 0;
 
+   if (smesa->Fallback)
+      return;
+
    if (flags & (ANY_RASTER_FLAGS|ANY_FALLBACK_FLAGS)) {
 
       if (flags & ANY_RASTER_FLAGS) {
@@ -716,9 +719,9 @@ static void sisRunPipeline( GLcontext *ctx )
 {
    sisContextPtr smesa = SIS_CONTEXT( ctx );
 
-   if (!smesa->Fallback && smesa->NewGLState) {
+   if (smesa->NewGLState) {
+      SIS_FIREVERTICES(smesa);
       if (smesa->NewGLState & _NEW_TEXTURE) {
-	 SIS_FIREVERTICES(smesa);
 	 sisUpdateTextureState(ctx);
       }
 
