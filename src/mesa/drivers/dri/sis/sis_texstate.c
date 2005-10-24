@@ -124,6 +124,13 @@ sis_set_texture_env0( GLcontext *ctx, struct gl_texture_object *texObj,
          current->hwTexBlendColor0 = STAGE0_C_CFOMAS_CSAS;
          current->hwTexBlendAlpha0 = STAGE0_A_AF;
          break;
+      case GL_ALPHA:
+      case GL_LUMINANCE:
+      case GL_INTENSITY:
+      case GL_LUMINANCE_ALPHA:
+         current->hwTexBlendColor0 = STAGE0_C_CF;
+         current->hwTexBlendAlpha0 = STAGE0_A_AF;
+         break;
       default:
 	 sis_fatal_error("unknown base format 0x%x\n", t->format);
       }
@@ -251,6 +258,13 @@ sis_set_texture_env1( GLcontext *ctx, struct gl_texture_object *texObj,
          break;
       case GL_RGBA:
          current->hwTexBlendColor1 = STAGE1_C_CFOMAS_CSAS;
+         current->hwTexBlendAlpha1 = STAGE1_A_AF;
+         break;
+      case GL_ALPHA:
+      case GL_LUMINANCE:
+      case GL_INTENSITY:
+      case GL_LUMINANCE_ALPHA:
+         current->hwTexBlendColor1 = STAGE1_C_CF;
          current->hwTexBlendAlpha1 = STAGE1_A_AF;
          break;
       default:
