@@ -966,8 +966,8 @@ static const char * const fallbackStrings[] = {
    "Texture mode",
    "Texture 0 mode",
    "Texture 1 mode",
-   "Texture 0 env",
-   "Texture 1 env",
+   "Texture 0 env",	/* Note: unused */
+   "Texture 1 env",	/* Note: unused */
    "glDrawBuffer(GL_FRONT_AND_BACK)",
    "glEnable(GL_STENCIL) without hw stencil buffer",
    "no_rast",

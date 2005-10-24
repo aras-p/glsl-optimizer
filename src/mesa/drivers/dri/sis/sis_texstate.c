@@ -34,6 +34,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "glheader.h"
 #include "imports.h"
+#include "colormac.h"
 #include "context.h"
 #include "macros.h"
 #include "texformat.h"
@@ -52,7 +53,8 @@ sis_set_texture_env0( GLcontext *ctx, struct gl_texture_object *texObj,
    int unit )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
-   
+   GLubyte c[4];
+
    __GLSiSHardware *prev = &smesa->prev;
    __GLSiSHardware *current = &smesa->current;
 
@@ -63,7 +65,6 @@ sis_set_texture_env0( GLcontext *ctx, struct gl_texture_object *texObj,
    switch (texture_unit->EnvMode)
    {
    case GL_REPLACE:
-      FALLBACK(smesa, SIS_FALLBACK_TEXENV0, 0);
       switch (t->format)
       {
       case GL_ALPHA:
@@ -85,7 +86,6 @@ sis_set_texture_env0( GLcontext *ctx, struct gl_texture_object *texObj,
       break;
 
    case GL_MODULATE:
-      FALLBACK(smesa, SIS_FALLBACK_TEXENV0, 0);
       switch (t->format)
       {
       case GL_ALPHA:
@@ -107,7 +107,6 @@ sis_set_texture_env0( GLcontext *ctx, struct gl_texture_object *texObj,
       break;
 
    case GL_DECAL:
-      FALLBACK(smesa, SIS_FALLBACK_TEXENV0, 0);
       switch (t->format)
       {
       case GL_RGB:
@@ -122,15 +121,11 @@ sis_set_texture_env0( GLcontext *ctx, struct gl_texture_object *texObj,
       break;
 
    case GL_BLEND:
-#if 1 /* XXX Blending broken */
-      FALLBACK(smesa, SIS_FALLBACK_TEXENV0, 1);
-#else
-      FALLBACK(smesa, SIS_FALLBACK_TEXENV0, 0);
-      current->hwTexEnvColor =
-         ((GLint) (texture_unit->EnvColor[3])) << 24 |
-         ((GLint) (texture_unit->EnvColor[0])) << 16 |
-         ((GLint) (texture_unit->EnvColor[1])) << 8 |
-         ((GLint) (texture_unit->EnvColor[2]));
+      UNCLAMPED_FLOAT_TO_RGBA_CHAN(c, texture_unit->EnvColor);
+      current->hwTexEnvColor = ((GLint) (c[3])) << 24 |
+			       ((GLint) (c[0])) << 16 |
+			       ((GLint) (c[1])) << 8 |
+			       ((GLint) (c[2]));
       switch (t->format)
       {
       case GL_ALPHA:
@@ -153,7 +148,6 @@ sis_set_texture_env0( GLcontext *ctx, struct gl_texture_object *texObj,
          break;
       }
       break;
-#endif
    }
 
    if ((current->hwTexBlendColor0 != prev->hwTexBlendColor0) ||
@@ -173,6 +167,7 @@ sis_set_texture_env1( GLcontext *ctx, struct gl_texture_object *texObj,
    int unit)
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
+   GLubyte c[4];
 
    __GLSiSHardware *prev = &smesa->prev;
    __GLSiSHardware *current = &smesa->current;
@@ -184,7 +179,6 @@ sis_set_texture_env1( GLcontext *ctx, struct gl_texture_object *texObj,
    switch (texture_unit->EnvMode)
    {
    case GL_REPLACE:
-      FALLBACK(smesa, SIS_FALLBACK_TEXENV1, 0);
       switch (t->format)
       {
       case GL_ALPHA:
@@ -206,7 +200,6 @@ sis_set_texture_env1( GLcontext *ctx, struct gl_texture_object *texObj,
       break;
 
    case GL_MODULATE:
-      FALLBACK(smesa, SIS_FALLBACK_TEXENV1, 0);
       switch (t->format)
       {
       case GL_ALPHA:
@@ -228,7 +221,6 @@ sis_set_texture_env1( GLcontext *ctx, struct gl_texture_object *texObj,
       break;
 
    case GL_DECAL:
-      FALLBACK(smesa, SIS_FALLBACK_TEXENV1, 0);
       switch (t->format)
       {
       case GL_RGB:
@@ -243,13 +235,11 @@ sis_set_texture_env1( GLcontext *ctx, struct gl_texture_object *texObj,
       break;
 
    case GL_BLEND:
-      FALLBACK(smesa, SIS_FALLBACK_TEXENV1, 1);
-#if 0 /* XXX Blending broken */
-      current->hwTexEnvColor =
-         ((GLint) (texture_unit->EnvColor[3])) << 24 |
-         ((GLint) (texture_unit->EnvColor[0])) << 16 |
-         ((GLint) (texture_unit->EnvColor[1])) << 8 |
-         ((GLint) (texture_unit->EnvColor[2]));
+      UNCLAMPED_FLOAT_TO_RGBA_CHAN(c, texture_unit->EnvColor);
+      current->hwTexEnvColor = ((GLint) (c[3])) << 24 |
+			       ((GLint) (c[0])) << 16 |
+			       ((GLint) (c[1])) << 8 |
+			       ((GLint) (c[2]));
       switch (t->format)
       {
       case GL_ALPHA:
@@ -272,7 +262,6 @@ sis_set_texture_env1( GLcontext *ctx, struct gl_texture_object *texObj,
          break;
       }
       break;
-#endif
    }
 
    if ((current->hwTexBlendColor1 != prev->hwTexBlendColor1) ||
