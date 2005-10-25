@@ -10,6 +10,8 @@ LIBNAME = sis_dri.so
 # MINIGLX_SOURCES = server/sis_dri.c 
 
 DRIVER_SOURCES = \
+	sis6326_state.c \
+	sis6326_clear.c \
 	sis_alloc.c \
 	sis_clear.c \
 	sis_context.c \

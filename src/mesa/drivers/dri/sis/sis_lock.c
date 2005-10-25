@@ -66,7 +66,10 @@ sisGetLock( sisContextPtr smesa, GLuint flags )
    if ( smesa->lastStamp != dPriv->lastStamp ) {
       sisUpdateBufferSize( smesa );
       sisUpdateClipping( smesa->glCtx );
-      sisDDDrawBuffer( smesa->glCtx, smesa->glCtx->Color.DrawBuffer[0] );
+      if (smesa->is6326)
+	 sis6326DDDrawBuffer( smesa->glCtx, smesa->glCtx->Color.DrawBuffer[0] );
+      else
+	 sisDDDrawBuffer( smesa->glCtx, smesa->glCtx->Color.DrawBuffer[0] );
       driUpdateFramebufferSize(smesa->glCtx, dPriv);
       smesa->lastStamp = dPriv->lastStamp;
    }

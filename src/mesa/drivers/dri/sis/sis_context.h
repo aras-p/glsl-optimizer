@@ -44,6 +44,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "sis_screen.h"
 #include "sis_reg.h"
+#include "sis6326_reg.h"
 #include "sis_dri.h"
 
 /* for GLboolean */
@@ -65,7 +66,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define SIS_FALLBACK_TEXENV1		0x0010
 #define SIS_FALLBACK_DRAW_BUFFER	0x0020
 #define SIS_FALLBACK_STENCIL		0x0040
-#define SIS_FALLBACK_DISABLE		0x0080
+#define SIS_FALLBACK_WRITEMASK		0x0080
+#define SIS_FALLBACK_DISABLE		0x0100
 
 /* Flags for hardware state that needs to be updated */
 #define GFLAG_ENABLESETTING		0x00000001
@@ -132,7 +134,8 @@ typedef struct sis_tex_obj {
    sisTexImage image[SIS_MAX_TEXTURE_LEVELS];	/* Image data for each mipmap
 						 * level */
    GLenum format;		/* One of GL_ALPHA, GL_INTENSITY, GL_LUMINANCE,
-				 * GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA */
+				 * GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA
+				 * MESA_YCBCR */
    GLint hwformat;              /* One of the TEXEL_ defines */
    GLint numImages;             /* Number of images loaded into .image */
 } sisTexObj, *sisTexObjPtr;
@@ -146,6 +149,7 @@ typedef struct __GLSiSTextureRec
   GLint hwTextureMip;
   GLint hwTextureClrHigh;
   GLint hwTextureClrLow;
+  GLint hwTexWidthHeight;	/* 6326: Texture Blending Setting */
   GLint hwTextureBorderColor;
 
   GLint texOffset0;
@@ -205,6 +209,7 @@ typedef struct __GLSiSHardwareRec
 
   GLint hwTexEnvColor;		/* Texture Blending Setting */
 
+  GLint hwTexBlendSet;		/* 6326 */
   GLint hwTexBlendColor0;
   GLint hwTexBlendColor1;
   GLint hwTexBlendAlpha0;
@@ -322,6 +327,7 @@ struct sis_context
   __GLSiSHardware prev, current;
 
   int Chipset;
+  GLboolean is6326;
 
   GLint drawableID;
 
@@ -395,6 +401,12 @@ struct sis_context
 #define MMIO_READ(reg) *(volatile GLint *)(smesa->IOBase + (reg))
 #define MMIO_READf(reg) *(volatile GLfloat *)(smesa->IOBase + (reg))
 
+#if defined(__i386__) || defined(__amd64__)
+#define MMIO_WMB()	__asm __volatile("" : : : "memory")
+#else
+#error platform needs WMB
+#endif
+
 #define mEndPrimitive()  \
 {       \
    *(volatile GLubyte *)(smesa->IOBase + REG_3D_EndPrimitiveList) = 0xff; \
@@ -446,6 +458,8 @@ void WaitingFor3dIdle(sisContextPtr smesa, int wLen);
 /* update to hw */
 extern void sis_update_texture_state( sisContextPtr smesa );
 extern void sis_update_render_state( sisContextPtr smesa );
+extern void sis6326_update_texture_state( sisContextPtr smesa );
+extern void sis6326_update_render_state( sisContextPtr smesa );
 
 /* ================================================================
  * Debugging:

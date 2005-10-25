@@ -50,6 +50,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_alloc.h"
 #include "sis_tex.h"
 
+/* 6326 and 300-series shared */
 static const GLuint hw_prim[GL_POLYGON+1] = {
    OP_3D_POINT_DRAW,		/* GL_POINTS */
    OP_3D_LINE_DRAW,		/* GL_LINES */
@@ -67,6 +68,11 @@ static const GLuint hw_prim_mmio_fire[OP_3D_TRIANGLE_DRAW+1] = {
    OP_3D_FIRE_TSARGBa,
    OP_3D_FIRE_TSARGBb,
    OP_3D_FIRE_TSARGBc
+};
+static const GLuint hw_prim_6326_mmio_fire[OP_3D_TRIANGLE_DRAW+1] = {
+   OP_6326_3D_FIRE_TSARGBa,
+   OP_6326_3D_FIRE_TSARGBb,
+   OP_6326_3D_FIRE_TSARGBc
 };
 
 static const GLuint hw_prim_mmio_shade[OP_3D_TRIANGLE_DRAW+1] = {
@@ -142,6 +148,25 @@ do {								\
       MMIO(REG_3D_TSARGBa+(i)*0x30, __color);			\
 } while (0)
 
+#define SIS6326_MMIO_WRITE_VERTEX(_v, i, lastvert)		\
+do {								\
+   GLuint __color, __i = 0;					\
+   MMIO(REG_6326_3D_TSXa+(i)*0x20, _v->ui[__i++]);		\
+   MMIO(REG_6326_3D_TSYa+(i)*0x20, _v->ui[__i++]);		\
+   MMIO(REG_6326_3D_TSZa+(i)*0x20, _v->ui[__i++]);		\
+   if (SIS_STATES & VERT_W)					\
+      MMIO(REG_6326_3D_TSWa+(i)*0x20, _v->ui[__i++]);		\
+   __color = _v->ui[__i++];					\
+   if (SIS_STATES & VERT_SPEC)					\
+      MMIO(REG_6326_3D_TSFSa+(i)*0x20, _v->ui[__i++]);		\
+   if (SIS_STATES & VERT_UV0) {					\
+      MMIO(REG_6326_3D_TSUa+(i)*0x20, _v->ui[__i++]);		\
+      MMIO(REG_6326_3D_TSVa+(i)*0x20, _v->ui[__i++]);		\
+   }								\
+   if (lastvert || (SIS_STATES & VERT_SMOOTH))			\
+      MMIO(REG_6326_3D_TSARGBa+(i)*0x30, __color);		\
+} while (0)
+
 #define MMIO_VERT_REG_COUNT 10
 
 #define VERT_SMOOTH	0x01
@@ -149,11 +174,12 @@ do {								\
 #define VERT_SPEC	0x04
 #define VERT_UV0	0x08
 #define VERT_UV1	0x10
+#define VERT_6326	0x20	/* Right after UV1, but won't have a UV1 set */
 
 typedef void (*mmio_draw_func)(sisContextPtr smesa, char *verts);
-static mmio_draw_func sis_tri_func_mmio[32];
-static mmio_draw_func sis_line_func_mmio[32];
-static mmio_draw_func sis_point_func_mmio[32];
+static mmio_draw_func sis_tri_func_mmio[48];
+static mmio_draw_func sis_line_func_mmio[48];
+static mmio_draw_func sis_point_func_mmio[48];
 
 #define SIS_STATES (0)
 #define TAG(x) x##_none
@@ -754,17 +780,30 @@ static void sisRasterPrimitive( GLcontext *ctx, GLuint hwprim )
    if (smesa->hw_primitive != hwprim) {
       SIS_FIREVERTICES(smesa);
       smesa->hw_primitive = hwprim;
+
       smesa->AGPParseSet &= ~(MASK_PsDataType | MASK_PsShadingMode);
-      smesa->dwPrimitiveSet &= ~(MASK_DrawPrimitiveCommand |
-	 MASK_SetFirePosition | MASK_ShadingMode);
       smesa->AGPParseSet |= hw_prim_agp_type[hwprim];
-      smesa->dwPrimitiveSet |= hwprim | hw_prim_mmio_fire[hwprim];
+
+      if (smesa->is6326) {
+	 smesa->dwPrimitiveSet &= ~(MASK_6326_DrawPrimitiveCommand |
+	    MASK_6326_SetFirePosition | MASK_6326_ShadingMode);
+	 smesa->dwPrimitiveSet |= hwprim | hw_prim_6326_mmio_fire[hwprim];
+      } else {
+	 smesa->dwPrimitiveSet &= ~(MASK_DrawPrimitiveCommand |
+	    MASK_SetFirePosition | MASK_ShadingMode);
+	 smesa->dwPrimitiveSet |= hwprim | hw_prim_mmio_fire[hwprim];
+      }
+
       if (ctx->Light.ShadeModel == GL_FLAT) {
 	 smesa->AGPParseSet |= hw_prim_agp_shade[hwprim];
 	 smesa->dwPrimitiveSet |= hw_prim_mmio_shade[hwprim];
       } else {
 	 smesa->AGPParseSet |= MASK_PsShadingSmooth;
-	 smesa->dwPrimitiveSet |= SHADE_GOURAUD;
+	 if (smesa->is6326) {
+	    smesa->dwPrimitiveSet |= OP_6326_3D_SHADE_FLAT_GOURAUD;
+	 } else {
+	    smesa->dwPrimitiveSet |= SHADE_GOURAUD;
+	 }
       }
    }
 }
@@ -867,6 +906,7 @@ static void sisRenderStart( GLcontext *ctx )
       EMIT_ATTR(_TNL_ATTRIB_TEX0, EMIT_2F);
       AGPParseSet |= SiS_PS_HAS_UV0;
    }
+   /* Will only hit tex1 on SiS300 */
    if (index & _TNL_BIT_TEX(1)) {
       if (VB->TexCoordPtr[1]->size > 2)
 	 tex_fallback = GL_TRUE;
@@ -900,7 +940,10 @@ sisFlushPrimsLocked(sisContextPtr smesa)
    if (smesa->vb_cur == smesa->vb_last)
       return;
 
-   sisUpdateHWState(smesa->glCtx);
+   if (smesa->is6326)
+      sis6326UpdateHWState(smesa->glCtx);
+   else
+      sisUpdateHWState(smesa->glCtx);
 
    if (smesa->using_agp) {
       mWait3DCmdQueue(8);
@@ -926,6 +969,8 @@ sisFlushPrimsLocked(sisContextPtr smesa)
 	 mmio_index |= VERT_UV0;
       if (smesa->AGPParseSet & SiS_PS_HAS_UV1)
 	 mmio_index |= VERT_UV1;
+      if (smesa->is6326)
+	 mmio_index |= VERT_6326;
 
       switch (smesa->AGPParseSet & MASK_PsDataType) {
       case MASK_PsPointList:
@@ -941,9 +986,11 @@ sisFlushPrimsLocked(sisContextPtr smesa)
 	 sis_emit_func = sis_tri_func_mmio[mmio_index];
 	 break;
       }
-      
-      mWait3DCmdQueue(1);
-      MMIO(REG_3D_PrimitiveSet, smesa->dwPrimitiveSet);
+
+      if (!smesa->is6326) {
+	 mWait3DCmdQueue(1);
+	 MMIO(REG_3D_PrimitiveSet, smesa->dwPrimitiveSet);
+      }
       while (smesa->vb_last < smesa->vb_cur) {
 	 sis_emit_func(smesa, smesa->vb_last);
 	 smesa->vb_last += incr;
@@ -976,6 +1023,7 @@ static const char * const fallbackStrings[] = {
    "Texture 1 env",	/* Note: unused */
    "glDrawBuffer(GL_FRONT_AND_BACK)",
    "glEnable(GL_STENCIL) without hw stencil buffer",
+   "write mask",
    "no_rast",
 };
 

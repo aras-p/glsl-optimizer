@@ -86,6 +86,16 @@ struct dri_extension card_extensions[] =
     { NULL,                                NULL }
 };
 
+struct dri_extension card_extensions_6326[] =
+{
+    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
+    /*{ "GL_ARB_texture_border_clamp",       NULL },*/
+    { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
+    /*{ "GL_ARB_texture_mirrored_repeat",    NULL },*/
+    /*{ "GL_MESA_ycbcr_texture",             NULL },*/
+    { NULL,                                NULL }
+};
+
 static const struct dri_debug_control debug_control[] =
 {
     { "fall",  DEBUG_FALLBACKS },
@@ -97,9 +107,15 @@ WaitEngIdle (sisContextPtr smesa)
 {
    GLuint engineState;
 
-   do {
-      engineState = MMIO_READ(REG_CommandQueue);
-   } while ((engineState & SiS_EngIdle) != SiS_EngIdle);
+   if (smesa->is6326) {
+      do {
+	 engineState = MMIO_READ(REG_3D_EngineFire); /* XXX right reg? */
+      } while ((engineState & ENG_3DIDLEQE) != 0);
+   } else {
+      do {
+	 engineState = MMIO_READ(REG_CommandQueue);
+      } while ((engineState & SiS_EngIdle) != SiS_EngIdle);
+   }
 }
 
 void
@@ -107,9 +123,15 @@ Wait2DEngIdle (sisContextPtr smesa)
 {
    GLuint engineState;
 
-   do {
-      engineState = MMIO_READ(REG_CommandQueue);
-   } while ((engineState & SiS_EngIdle2d) != SiS_EngIdle2d);
+   if (smesa->is6326) {
+      do {
+	 engineState = MMIO_READ(REG_6326_BitBlt_Cmd);
+      } while ((engineState & BLT_BUSY) != 0);
+   } else {
+      do {
+	 engineState = MMIO_READ(REG_CommandQueue);
+      } while ((engineState & SiS_EngIdle2d) != SiS_EngIdle2d);
+   }
 }
 
 /* To be called from mWait3DCmdQueue.  Separate function for profiling
@@ -118,9 +140,16 @@ Wait2DEngIdle (sisContextPtr smesa)
 void
 WaitingFor3dIdle(sisContextPtr smesa, int wLen)
 {
-   while (*(smesa->CurrentQueueLenPtr) < wLen) {
-      *(smesa->CurrentQueueLenPtr) =
-         (MMIO_READ(REG_CommandQueue) & MASK_QueueLen) - 20;
+   if (smesa->is6326) {
+      while (*(smesa->CurrentQueueLenPtr) < wLen) {
+	 *(smesa->CurrentQueueLenPtr) =
+	    ((GLuint)MMIO_READ(REG_3D_EngineFire) >> 16) * 2;
+      }
+   } else {
+      while (*(smesa->CurrentQueueLenPtr) < wLen) {
+	 *(smesa->CurrentQueueLenPtr) =
+            (MMIO_READ(REG_CommandQueue) & MASK_QueueLen) - 20;
+      }
    }
 }
 
@@ -173,6 +202,7 @@ sisCreateContext( const __GLcontextModes *glVisual,
 
    sisScreen = smesa->sisScreen = (sisScreenPtr)(sPriv->private);
 
+   smesa->is6326 = GL_FALSE; /* XXX */
    smesa->driContext = driContextPriv;
    smesa->driScreen = sPriv;
    smesa->driDrawable = NULL;
@@ -213,6 +243,16 @@ sisCreateContext( const __GLcontextModes *glVisual,
    default:
       sis_fatal_error("Bad bytesPerPixel %d.\n", smesa->bytesPerPixel);
    }
+
+   if (smesa->is6326) {
+      ctx->Const.MaxTextureUnits = 1;
+      ctx->Const.MaxTextureLevels = 9;
+   } else {
+      ctx->Const.MaxTextureUnits = 2;
+      ctx->Const.MaxTextureLevels = 11;
+   }
+   ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
+   ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
 
    /* Parse configuration files */
    driParseConfigFiles (&smesa->optionCache, &sisScreen->optionCache,
@@ -274,11 +314,16 @@ sisCreateContext( const __GLcontextModes *glVisual,
    _tnl_allow_vertex_fog( ctx, GL_FALSE );
 
    /* XXX these should really go right after _mesa_init_driver_functions() */
-   sisDDInitStateFuncs( ctx );
-   sisDDInitState( smesa );	/* Initializes smesa->zFormat, important */
+   if (smesa->is6326) {
+      sis6326DDInitStateFuncs( ctx );
+      sis6326DDInitState( smesa ); /* Initializes smesa->zFormat, important */
+   } else {
+      sisDDInitStateFuncs( ctx );
+      sisDDInitState( smesa );	/* Initializes smesa->zFormat, important */
+      sisDDInitStencilFuncs( ctx );
+   }
    sisInitTriFuncs( ctx );
    sisDDInitSpanFuncs( ctx );
-   sisDDInitStencilFuncs( ctx );
 
    driInitExtensions( ctx, card_extensions, GL_FALSE );
 
@@ -553,3 +598,127 @@ sis_update_texture_state (sisContextPtr smesa)
    smesa->GlobalFlag &= ~GFLAG_TEXTURE_STATES;
 }
 
+void
+sis6326_update_render_state( sisContextPtr smesa )
+{
+   __GLSiSHardware *prev = &smesa->prev;
+
+   mWait3DCmdQueue (45);
+
+   if (smesa->GlobalFlag & GFLAG_ENABLESETTING) {
+      if (!smesa->clearTexCache) {
+	 MMIO(REG_6326_3D_TEnable, prev->hwCapEnable);
+      } else {
+	 MMIO(REG_6326_3D_TEnable, prev->hwCapEnable & ~S_ENABLE_TextureCache);
+	 MMIO(REG_6326_3D_TEnable, prev->hwCapEnable);
+	 smesa->clearTexCache = GL_FALSE;
+      }
+   }
+
+   /* Z Setting */
+   if (smesa->GlobalFlag & GFLAG_ZSETTING) {
+      MMIO(REG_6326_3D_ZSet, prev->hwZ);
+      MMIO(REG_6326_3D_ZAddress, prev->hwOffsetZ);
+   }
+
+   /* Alpha Setting */
+   if (smesa->GlobalFlag & GFLAG_ALPHASETTING)
+      MMIO(REG_6326_3D_AlphaSet, prev->hwAlpha);
+
+   if (smesa->GlobalFlag & GFLAG_DESTSETTING) {
+      MMIO(REG_6326_3D_DstSet, prev->hwDstSet);
+      MMIO(REG_6326_3D_DstAddress, prev->hwOffsetDest);
+   }
+
+   /* Fog Setting */
+   if (smesa->GlobalFlag & GFLAG_FOGSETTING) {
+      MMIO(REG_6326_3D_FogSet, prev->hwFog);
+   }
+
+   /* Miscellaneous Setting */
+   if (smesa->GlobalFlag & GFLAG_DSTBLEND)
+      MMIO(REG_6326_3D_DstSrcBlendMode, prev->hwDstSrcBlend);
+
+   if (smesa->GlobalFlag & GFLAG_CLIPPING) {
+      MMIO(REG_6326_3D_ClipTopBottom, prev->clipTopBottom);
+      MMIO(REG_6326_3D_ClipLeftRight, prev->clipLeftRight);
+   }
+
+  smesa->GlobalFlag &= ~GFLAG_RENDER_STATES;
+}
+
+void
+sis6326_update_texture_state (sisContextPtr smesa)
+{
+   __GLSiSHardware *prev = &smesa->prev;
+
+   mWait3DCmdQueue (55);
+   if (smesa->clearTexCache || (smesa->GlobalFlag & GFLAG_TEXTUREADDRESS)) {
+      MMIO(REG_6326_3D_TEnable, prev->hwCapEnable & ~S_ENABLE_TextureCache);
+      MMIO(REG_6326_3D_TEnable, prev->hwCapEnable);
+      smesa->clearTexCache = GL_FALSE;
+   }
+
+   /* Texture Setting */
+   if (smesa->GlobalFlag & CFLAG_TEXTURERESET)
+      MMIO(REG_6326_3D_TextureSet, prev->texture[0].hwTextureSet);
+
+   if (smesa->GlobalFlag & GFLAG_TEXTUREMIPMAP)
+      MMIO(REG_6326_3D_TextureWidthHeight, prev->texture[0].hwTexWidthHeight);
+
+  /*
+  MMIO(REG_3D_TextureTransparencyColorHigh, prev->texture[0].hwTextureClrHigh);
+  MMIO(REG_3D_TextureTransparencyColorLow, prev->texture[0].hwTextureClrLow);
+  */
+
+   if (smesa->GlobalFlag & GFLAG_TEXBORDERCOLOR)
+      MMIO(REG_6326_3D_TextureBorderColor, prev->texture[0].hwTextureBorderColor);
+
+   if (smesa->GlobalFlag & GFLAG_TEXTUREADDRESS) {
+      switch ((prev->texture[0].hwTextureSet & MASK_6326_TextureLevel) >> 8)
+      {
+      case 9:
+         MMIO(REG_6326_3D_TextureAddress9, prev->texture[0].texOffset9);
+         /* FALLTHROUGH */
+      case 8:
+         MMIO(REG_6326_3D_TextureAddress8, prev->texture[0].texOffset8);
+         MMIO(REG_6326_3D_TexturePitch89, prev->texture[0].texPitch89);
+         /* FALLTHROUGH */
+      case 7:
+         MMIO(REG_6326_3D_TextureAddress7, prev->texture[0].texOffset7);
+         /* FALLTHROUGH */
+      case 6:
+         MMIO(REG_6326_3D_TextureAddress6, prev->texture[0].texOffset6);
+         MMIO(REG_6326_3D_TexturePitch67, prev->texture[0].texPitch67);
+         /* FALLTHROUGH */
+      case 5:
+         MMIO(REG_6326_3D_TextureAddress5, prev->texture[0].texOffset5);
+         /* FALLTHROUGH */
+      case 4:
+         MMIO(REG_6326_3D_TextureAddress4, prev->texture[0].texOffset4);
+         MMIO(REG_6326_3D_TexturePitch45, prev->texture[0].texPitch45);
+         /* FALLTHROUGH */
+      case 3:
+         MMIO(REG_6326_3D_TextureAddress3, prev->texture[0].texOffset3);
+         /* FALLTHROUGH */
+      case 2:
+         MMIO(REG_6326_3D_TextureAddress2, prev->texture[0].texOffset2);
+         MMIO(REG_6326_3D_TexturePitch23, prev->texture[0].texPitch23);
+         /* FALLTHROUGH */
+      case 1:
+         MMIO(REG_6326_3D_TextureAddress1, prev->texture[0].texOffset1);
+         /* FALLTHROUGH */
+      case 0:
+	 MMIO(REG_6326_3D_TextureAddress0, prev->texture[0].texOffset0);
+	 MMIO(REG_6326_3D_TexturePitch01, prev->texture[0].texPitch01);
+	 break;
+      }
+   }
+
+   /* texture environment */
+   if (smesa->GlobalFlag & GFLAG_TEXTUREENV) {
+      MMIO(REG_6326_3D_TextureBlendSet, prev->hwTexBlendSet);
+   }
+
+   smesa->GlobalFlag &= ~GFLAG_TEXTURE_STATES;
+}

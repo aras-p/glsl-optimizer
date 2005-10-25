@@ -34,20 +34,37 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "sis_context.h"
 
-extern void sisDDInitState( sisContextPtr smesa );
-extern void sisDDInitStateFuncs( GLcontext *ctx );
+/* sis6326_clear.c */
+extern void sis6326DDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
+			    GLint x, GLint y, GLint width, GLint height );
+extern void sis6326DDClearColor( GLcontext * ctx, const GLfloat color[4] );
+extern void sis6326DDClearDepth( GLcontext * ctx, GLclampd d );
+extern void sis6326UpdateZPattern(sisContextPtr smesa, GLclampd z);
 
+/* sis_clear.c */
 extern void sisDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 			GLint x, GLint y, GLint width, GLint height );
 extern void sisDDClearColor( GLcontext * ctx, const GLfloat color[4] );
 extern void sisDDClearDepth( GLcontext * ctx, GLclampd d );
 extern void sisDDClearStencil( GLcontext * ctx, GLint s );
-extern void sisDDFogfv( GLcontext * ctx, GLenum pname, const GLfloat * params );
-extern void sisDDDepthMask( GLcontext * ctx, GLboolean flag );
-
-extern void sisUpdateClipping( GLcontext * gc );
 extern void sisUpdateZStencilPattern( sisContextPtr smesa, GLclampd z,
 				      int stencil );
+
+/* sis_fog.c */
+extern void sisDDFogfv( GLcontext * ctx, GLenum pname, const GLfloat * params );
+
+/* sis6326_state.c */
+extern void sis6326DDInitState( sisContextPtr smesa );
+extern void sis6326DDInitStateFuncs( GLcontext *ctx );
+extern void sis6326UpdateClipping( GLcontext * gc );
+extern void sis6326DDDrawBuffer( GLcontext *ctx, GLenum mode );
+extern void sis6326UpdateHWState( GLcontext *ctx );
+
+/* sis_state.c */
+extern void sisDDInitState( sisContextPtr smesa );
+extern void sisDDInitStateFuncs( GLcontext *ctx );
+extern void sisDDDepthMask( GLcontext * ctx, GLboolean flag );
+extern void sisUpdateClipping( GLcontext * gc );
 extern void sisDDDrawBuffer( GLcontext *ctx, GLenum mode );
 extern void sisUpdateHWState( GLcontext *ctx );
 

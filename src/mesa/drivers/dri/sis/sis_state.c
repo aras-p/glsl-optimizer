@@ -290,6 +290,12 @@ sisUpdateClipping( GLcontext *ctx )
 
    GLint x1, y1, x2, y2;
 
+   if (smesa->is6326) {
+      /* XXX: 6326 has its own clipping for now. Should be fixed */
+      sis6326UpdateClipping(ctx);
+      return;
+   }
+
    x1 = 0;
    y1 = 0;
    x2 = smesa->width - 1;
@@ -824,7 +830,7 @@ void sisDDInitState( sisContextPtr smesa )
  */
 void sisDDInitStateFuncs( GLcontext *ctx )
 {
-  ctx->Driver.UpdateState	 = sisDDInvalidateState;
+   ctx->Driver.UpdateState	 = sisDDInvalidateState;
 
    ctx->Driver.Clear		 = sisDDClear;
    ctx->Driver.ClearColor	 = sisDDClearColor;
