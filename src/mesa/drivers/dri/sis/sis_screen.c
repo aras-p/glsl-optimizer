@@ -253,7 +253,7 @@ static void sisCopyBuffer( __DRIdrawablePrivate *dPriv )
       MMIO(REG_SRC_PITCH, smesa->back.pitch | ((smesa->bytesPerPixel == 4) ? 
 			   BLIT_DEPTH_32 : BLIT_DEPTH_16));
       MMIO(REG_SRC_X_Y, ((box->x1 - dPriv->x) << 16) | (box->y1 - dPriv->y));
-      MMIO(REG_DST_X_Y, (box->x1 << 16) | box->y1);
+      MMIO(REG_DST_X_Y, ((box->x1 - dPriv->x) << 16) | (box->y1 - dPriv->y));
       MMIO(REG_DST_ADDR, smesa->front.offset);
       MMIO(REG_DST_PITCH_HEIGHT, (smesa->virtualY << 16) | smesa->front.pitch);
       MMIO(REG_WIDTH_HEIGHT, ((box->y2 - box->y1) << 16) | (box->x2 - box->x1));

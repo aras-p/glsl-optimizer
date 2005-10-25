@@ -215,6 +215,11 @@ sisUpdateBufferSize(sisContextPtr smesa)
       assert(smesa->depth.Base.AllocStorage);
    }
 
+   /* XXX Should get the base offset of the frontbuffer from the X Server */
+   smesa->front.offset = smesa->driDrawable->x * smesa->bytesPerPixel +
+			 smesa->driDrawable->y * smesa->front.pitch;
+   smesa->front.map = (char *) smesa->driScreen->pFB + smesa->front.offset;
+
    if ( smesa->width == smesa->driDrawable->w &&
 	smesa->height == smesa->driDrawable->h )
    {
@@ -224,10 +229,6 @@ sisUpdateBufferSize(sisContextPtr smesa)
    smesa->front.bpp = smesa->bytesPerPixel * 8;
    /* Front pitch set on context create */
    smesa->front.size = smesa->front.pitch * smesa->driDrawable->h;
-   /* XXX Should get the base offset of the frontbuffer from the X Server */
-   smesa->front.offset = smesa->driDrawable->x * smesa->bytesPerPixel +
-			 smesa->driDrawable->y * smesa->front.pitch;
-   smesa->front.map = (char *) smesa->driScreen->pFB + smesa->front.offset;
 
    smesa->width = smesa->driDrawable->w;
    smesa->height = smesa->driDrawable->h;
