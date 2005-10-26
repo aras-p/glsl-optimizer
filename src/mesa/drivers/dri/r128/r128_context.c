@@ -68,6 +68,7 @@ int R128_DEBUG = 0;
 
 #define need_GL_ARB_multisample
 #define need_GL_ARB_texture_compression
+#define need_GL_EXT_fog_coord
 #define need_GL_EXT_blend_minmax
 #include "extension_helper.h"
 
@@ -79,6 +80,7 @@ const struct dri_extension card_extensions[] =
     { "GL_ARB_texture_env_add",            NULL },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
     { "GL_EXT_blend_subtract",             GL_EXT_blend_minmax_functions },
+    { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
     { "GL_EXT_texture_edge_clamp",         NULL },
     { "GL_MESA_ycbcr_texture",             NULL },
     { "GL_NV_blend_square",                NULL },
