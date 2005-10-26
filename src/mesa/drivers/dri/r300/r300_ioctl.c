@@ -71,6 +71,8 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	r300ContextPtr rmesa=r300;
 	LOCAL_VARS;
 #else
+	r300ContextPtr rmesa=r300;
+	LOCAL_VARS;
 	int i;
 #endif
 	
@@ -261,6 +263,11 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 
 	r300EmitState(r300);
 #else
+#if 1
+	cp_wait(r300, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
+	end_3d(PASS_PREFIX_VOID);
+#endif
+	
 	R300_STATECHANGE(r300, cb);
 	reg_start(R300_RB3D_COLOROFFSET0, 0);
 	e32(cboffset);
@@ -269,6 +276,9 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 		cbpitch |= R300_COLOR_FORMAT_ARGB8888;
 	else
 		cbpitch |= R300_COLOR_FORMAT_RGB565;
+	
+	if (r300->radeon.sarea->tiling_enabled)
+		cbpitch |= R300_COLOR_TILE_ENABLE;
 	
 	reg_start(R300_RB3D_COLORPITCH0, 0);
 	e32(cbpitch);
@@ -352,6 +362,15 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	cmd2[7].u = r300PackFloat32(ctx->Color.ClearColor[2]);
 	cmd2[8].u = r300PackFloat32(ctx->Color.ClearColor[3]);
 
+#if 1
+	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
+	e32(0x0000000a);
+	  
+
+	reg_start(0x4f18,0);
+	e32(0x00000003);
+	cp_wait(rmesa, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
+#endif
 }
 
 #ifdef CB_DPATH
@@ -422,7 +441,7 @@ static void r300EmitClearState(GLcontext * ctx)
 	R300_STATECHANGE(r300, rc);
 	/* The second constant is needed to get glxgears display anything .. */
 	reg_start(R300_RS_CNTL_0, 1);
-	e32(R300_RS_CNTL_0_UNKNOWN_7 | R300_RS_CNTL_0_UNKNOWN_18);
+	e32((1 << R300_RS_CNTL_CI_CNT_SHIFT) | R300_RS_CNTL_0_UNKNOWN_18);
 	e32(0);
 	
 	R300_STATECHANGE(r300, rr);
@@ -477,6 +496,8 @@ static void r300EmitClearState(GLcontext * ctx)
 	e32(VP_ZERO());
 	e32(0);
 	
+	/*reg_start(0x4500,0);
+	e32(2560-1);*/
 }
 #endif
 
@@ -561,6 +582,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 #endif
 }
 
+
 void r300Flush(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
@@ -572,6 +594,104 @@ void r300Flush(GLcontext * ctx)
 		r300FlushCmdBuf(r300, __FUNCTION__);
 }
 
+#ifdef USER_BUFFERS
+#include "radeon_mm.h"
+
+void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
+{
+	struct r300_dma_buffer *dmabuf;
+	int fd = rmesa->radeon.dri.fd;
+	int index = 0;
+	int size = 0;
+	drmDMAReq dma;
+	int ret;
+	
+	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA))
+		fprintf(stderr, "%s\n", __FUNCTION__);
+
+	if (rmesa->dma.flush) {
+		rmesa->dma.flush(rmesa);
+	}
+
+	if (rmesa->dma.current.buf)
+		r300ReleaseDmaRegion(rmesa, &rmesa->dma.current, __FUNCTION__);
+
+	if (rmesa->dma.nr_released_bufs > 4)
+		r300FlushCmdBuf(rmesa, __FUNCTION__);
+	
+	dmabuf = CALLOC_STRUCT(r300_dma_buffer);
+	dmabuf->buf = (void *)1; /* hack */
+	dmabuf->refcount = 1;
+
+	dmabuf->id = radeon_mm_alloc(rmesa, 4, RADEON_BUFFER_SIZE*16);
+			
+	rmesa->dma.current.buf = dmabuf;
+	rmesa->dma.current.address = radeon_mm_ptr(rmesa, dmabuf->id);
+	rmesa->dma.current.end = RADEON_BUFFER_SIZE*16;
+	rmesa->dma.current.start = 0;
+	rmesa->dma.current.ptr = 0;
+}
+
+void r300ReleaseDmaRegion(r300ContextPtr rmesa,
+			  struct r300_dma_region *region, const char *caller)
+{
+	if (RADEON_DEBUG & DEBUG_IOCTL)
+		fprintf(stderr, "%s from %s\n", __FUNCTION__, caller);
+
+	if (!region->buf)
+		return;
+
+	if (rmesa->dma.flush)
+		rmesa->dma.flush(rmesa);
+
+	if (--region->buf->refcount == 0) {
+		radeon_mm_free(rmesa, region->buf->id);
+		FREE(region->buf);
+		rmesa->dma.nr_released_bufs++;
+	}
+
+	region->buf = 0;
+	region->start = 0;
+}
+
+/* Allocates a region from rmesa->dma.current.  If there isn't enough
+ * space in current, grab a new buffer (and discard what was left of current)
+ */
+void r300AllocDmaRegion(r300ContextPtr rmesa,
+			struct r300_dma_region *region,
+			int bytes, int alignment)
+{
+	if (RADEON_DEBUG & DEBUG_IOCTL)
+		fprintf(stderr, "%s %d\n", __FUNCTION__, bytes);
+
+	if (rmesa->dma.flush)
+		rmesa->dma.flush(rmesa);
+
+	if (region->buf)
+		r300ReleaseDmaRegion(rmesa, region, __FUNCTION__);
+
+	alignment--;
+	rmesa->dma.current.start = rmesa->dma.current.ptr =
+	    (rmesa->dma.current.ptr + alignment) & ~alignment;
+
+	if (rmesa->dma.current.ptr + bytes > rmesa->dma.current.end)
+		r300RefillCurrentDmaRegion(rmesa);
+
+	region->start = rmesa->dma.current.start;
+	region->ptr = rmesa->dma.current.start;
+	region->end = rmesa->dma.current.start + bytes;
+	region->address = rmesa->dma.current.address;
+	region->buf = rmesa->dma.current.buf;
+	region->buf->refcount++;
+
+	rmesa->dma.current.ptr += bytes;	/* bug - if alignment > 7 */
+	rmesa->dma.current.start =
+	    rmesa->dma.current.ptr = (rmesa->dma.current.ptr + 0x7) & ~0x7;
+
+	assert(rmesa->dma.current.ptr <= rmesa->dma.current.end);
+}
+
+#else
 void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
 {
 	struct r300_dma_buffer *dmabuf;
@@ -713,6 +833,8 @@ void r300AllocDmaRegion(r300ContextPtr rmesa,
 
 	assert(rmesa->dma.current.ptr <= rmesa->dma.current.end);
 }
+
+#endif
 
 /* Called via glXGetMemoryOffsetMESA() */
 GLuint r300GetMemoryOffsetMESA(__DRInativeDisplay * dpy, int scrn,

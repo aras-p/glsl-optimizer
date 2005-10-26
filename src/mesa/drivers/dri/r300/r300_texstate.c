@@ -341,9 +341,8 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 		t->format_x |= R200_TEXCOORD_VOLUME;
 	} else if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
 		ASSERT(log2Width == log2Height);
-		t->format |= ((log2Width << R200_TXFORMAT_F5_WIDTH_SHIFT) |
-				   (log2Height << R200_TXFORMAT_F5_HEIGHT_SHIFT)
-				   | (R200_TXFORMAT_CUBIC_MAP_ENABLE));
+		t->format |= R300_TX_FORMAT_CUBIC_MAP;
+		
 		t->format_x |= R200_TEXCOORD_CUBIC_ENV;
 		t->pp_cubic_faces = ((log2Width << R200_FACE_WIDTH_1_SHIFT) |
 				     (log2Height << R200_FACE_HEIGHT_1_SHIFT) |

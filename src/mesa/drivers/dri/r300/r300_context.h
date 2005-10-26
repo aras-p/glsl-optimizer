@@ -48,6 +48,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_context.h"
 
 #define USE_ARB_F_P 1
+//#define USER_BUFFERS
+//#define RADEON_VTXFMT_A
+//#define HW_VBOS
+//#define OPTIMIZE_ELTS
 
 struct r300_context;
 typedef struct r300_context r300ContextRec;
@@ -109,12 +113,15 @@ static __inline__ uint32_t r300PackFloat32(float fl)
 struct r300_dma_buffer {
 	int refcount;		/* the number of retained regions in buf */
 	drmBufPtr buf;
+	int id;
 };
-
+#ifdef USER_BUFFERS
+#define GET_START(rvb) (r300GartOffsetFromVirtual(rmesa, (rvb)->address+(rvb)->start))
+#else
 #define GET_START(rvb) (rmesa->radeon.radeonScreen->gart_buffer_offset +		\
 			(rvb)->address - rmesa->dma.buf0_address +	\
 			(rvb)->start)
-
+#endif
 /* A retained region, eg vertices for indexed vertices.
  */
 struct r300_dma_region {
@@ -738,6 +745,30 @@ struct r300_pixel_shader_state {
 #define REG_COLOR0	1
 #define REG_TEX0	2
 
+#ifdef USER_BUFFERS
+struct dt {
+	GLint size;
+	GLenum type;
+	GLsizei stride;
+	void *data;
+};
+
+struct radeon_vertex_buffer {
+	int Count;
+	void *Elts;
+	int elt_size;
+	int elt_min, elt_max; /* debug */
+	
+	struct dt AttribPtr[VERT_ATTRIB_MAX];
+	
+	struct tnl_prim  *Primitive;	              
+	GLuint      PrimitiveCount;
+	GLint LockFirst;
+	GLsizei LockCount;
+	int lock_uptodate;
+};
+#endif
+
 struct r300_aos_rec {
 	GLuint offset;
 	int element_size; /* in dwords */
@@ -761,6 +792,9 @@ struct r300_state {
 #endif
 	struct r300_dma_region aos[R300_MAX_AOS_ARRAYS];
 	int aos_count;
+#ifdef USER_BUFFERS
+	struct radeon_vertex_buffer VB;
+#endif
 
 	GLuint *Elts;
 	struct r300_dma_region elt_dma;
@@ -815,8 +849,19 @@ struct r300_context {
 	GLuint TexGenInputs;
 	GLuint TexGenCompSel;
 	GLmatrix tmpmat;
+#ifdef USER_BUFFERS
+	key_t mm_ipc_key;
+	int mm_shm_id;
+	int mm_sem_id;
+	struct radeon_memory_manager *rmm;
+#endif
 };
 
+struct r300_buffer_object {
+	struct gl_buffer_object mesa_obj;
+	int id;
+};
+		
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))
 
 static __inline GLuint r300PackColor( GLuint cpp,
@@ -840,5 +885,13 @@ extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 void translate_vertex_shader(struct r300_vertex_program *vp);
 extern void r300InitShaderFuncs(struct dd_function_table *functions);
 extern void r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp);
+
+#ifdef RADEON_VTXFMT_A
+extern void radeon_init_vtxfmt_a(r300ContextPtr rmesa);
+#endif
+
+#ifdef HW_VBOS
+extern void r300_init_vbo_funcs(struct dd_function_table *functions);
+#endif
 
 #endif				/* __R300_CONTEXT_H__ */

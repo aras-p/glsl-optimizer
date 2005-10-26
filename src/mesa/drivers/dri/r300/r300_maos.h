@@ -40,8 +40,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r300_context.h"
 
-extern void r300EmitElts(GLcontext * ctx, GLuint *elts, unsigned long n_elts);
+extern void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts, int elt_size);
 extern void r300EmitArrays(GLcontext * ctx, GLboolean immd);
+
+#ifdef RADEON_VTXFMT_A
+extern void r300EmitArraysVtx(GLcontext * ctx, GLboolean immd);
+#endif
+
+#ifdef USER_BUFFERS
+void r300UseArrays(GLcontext * ctx);
+#endif
+
 extern void r300ReleaseArrays(GLcontext * ctx);
 
 #endif

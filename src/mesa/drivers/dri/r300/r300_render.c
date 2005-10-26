@@ -417,27 +417,81 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 
 /* vertex buffer implementation */
 
-static void inline fire_EB(PREFIX unsigned long addr, int vertex_count, int type)
+static void inline fire_EB(PREFIX unsigned long addr, int vertex_count, int type, int elt_size)
 {
 	LOCAL_VARS
 	unsigned long addr_a;
+	unsigned long t_addr;
+	unsigned long magic_1, magic_2;
+	GLcontext *ctx;
+	ctx = rmesa->radeon.glCtx; 
 	
-	if(addr & 1){
+	assert(elt_size == 2 || elt_size == 4);
+	
+	if(addr & (elt_size-1)){
 		WARN_ONCE("Badly aligned buffer\n");
 		return ;
 	}
-	addr_a = 0; /*addr & 0x1c;*/
+#ifdef OPTIMIZE_ELTS
+	addr_a = 0;
+	
+	magic_1 = (addr % 32) / 4;
+	t_addr = addr & (~0x1d);
+	magic_2 = (vertex_count + 1 + (t_addr & 0x2)) / 2 + magic_1;
 	
 	check_space(6);
 	
 	start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, 0);
-	/* TODO: R300_VAP_VF_CNTL__INDEX_SIZE_32bit . */
-	e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count<<16) | type);
+	if(elt_size == 4){
+		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count<<16) | type | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
+	} else {
+		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count<<16) | type);
+	}
 
 	start_packet3(RADEON_CP_PACKET3_INDX_BUFFER, 2);
-	e32(R300_EB_UNK1 | (addr_a << 16) | R300_EB_UNK2);
+	if(elt_size == 4){
+		e32(R300_EB_UNK1 | (0 << 16) | R300_EB_UNK2);
+		e32(addr /*& 0xffffffe3*/);
+	} else {
+		e32(R300_EB_UNK1 | (magic_1 << 16) | R300_EB_UNK2);
+		e32(t_addr);
+	}
+	
+	if(elt_size == 4){
+		e32(vertex_count /*+ addr_a/4*/); /* Total number of dwords needed? */
+	} else {
+		e32(magic_2); /* Total number of dwords needed? */
+	}
+	//cp_delay(PASS_PREFIX 1);
+#if 0
+	fprintf(stderr, "magic_1 %d\n", magic_1);
+	fprintf(stderr, "t_addr %x\n", t_addr);
+	fprintf(stderr, "magic_2 %d\n", magic_2);
+	exit(1);
+#endif
+#else
+	addr_a = 0;
+	
+	check_space(6);
+	
+	start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, 0);
+	if(elt_size == 4){
+		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count<<16) | type | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
+	} else {
+		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count<<16) | type);
+	}
+
+	start_packet3(RADEON_CP_PACKET3_INDX_BUFFER, 2);
+	e32(R300_EB_UNK1 | (0 << 16) | R300_EB_UNK2);
 	e32(addr /*& 0xffffffe3*/);
-	e32((vertex_count+1)/2 /*+ addr_a/4*/); /* Total number of dwords needed? */
+	
+	if(elt_size == 4){
+		e32(vertex_count /*+ addr_a/4*/); /* Total number of dwords needed? */
+	} else {
+		e32((vertex_count+1)/2 /*+ addr_a/4*/); /* Total number of dwords needed? */
+	}
+	//cp_delay(PASS_PREFIX 1);
+#endif	
 }
 
 static void r300_render_vb_primitive(r300ContextPtr rmesa,
@@ -476,8 +530,8 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 		WARN_ONCE("Too many elts\n");
 		return;
 	}
-	r300EmitElts(ctx, rmesa->state.Elts+start, num_verts);
-	fire_EB(PASS_PREFIX GET_START(&(rmesa->state.elt_dma)), num_verts, type);
+	r300EmitElts(ctx, rmesa->state.Elts+start, num_verts, 4);
+	fire_EB(PASS_PREFIX GET_START(&(rmesa->state.elt_dma)), num_verts, type, 4);
 #endif
    }else{
 	   r300EmitAOS(rmesa, rmesa->state.aos_count, start);
@@ -500,7 +554,7 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 
    	r300ReleaseArrays(ctx);
 	r300EmitArrays(ctx, GL_FALSE);
-
+	
 //	LOCK_HARDWARE(&(rmesa->radeon));
 
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
@@ -526,6 +580,9 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 	reg_start(0x4f18,0);
 	e32(0x00000003);
 
+#ifdef USER_BUFFERS
+	r300UseArrays(ctx);
+#endif
 //	end_3d(PASS_PREFIX_VOID);
 
    /* Flush state - we are done drawing.. */
@@ -535,6 +592,186 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 //	UNLOCK_HARDWARE(&(rmesa->radeon));
 	return GL_FALSE;
 }
+
+#ifdef RADEON_VTXFMT_A
+
+static void r300_render_vb_primitive_vtxfmt_a(r300ContextPtr rmesa,
+	GLcontext *ctx,
+	int start,
+	int end,
+	int prim)
+{
+   int type, num_verts;
+   radeonScreenPtr rsp=rmesa->radeon.radeonScreen;
+   LOCAL_VARS
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   int i;
+
+   type=r300_get_primitive_type(rmesa, ctx, prim);
+   num_verts=r300_get_num_verts(rmesa, ctx, end-start, prim);
+
+   if(type<0 || num_verts <= 0)return;
+
+   if(rmesa->state.VB.Elts){
+	r300EmitAOS(rmesa, rmesa->state.aos_count, /*0*/start);
+#if 0
+	start_index32_packet(num_verts, type);
+	for(i=0; i < num_verts; i++)
+		e32(((unsigned long *)rmesa->state.VB.Elts)[i]/*rmesa->state.Elts[start+i]*/); /* start ? */
+#else
+	WARN_ONCE("Rendering with elt buffers\n");
+	if(num_verts == 1){
+		//start_index32_packet(num_verts, type);
+		//e32(rmesa->state.Elts[start]);
+		return;
+	}
+	
+	if(num_verts > 65535){ /* not implemented yet */
+		WARN_ONCE("Too many elts\n");
+		return;
+	}
+	
+	r300EmitElts(ctx, rmesa->state.VB.Elts, num_verts, rmesa->state.VB.elt_size);
+	fire_EB(PASS_PREFIX rmesa->state.elt_dma.aos_offset, num_verts, type, rmesa->state.VB.elt_size);
+#endif
+   }else{
+	   r300EmitAOS(rmesa, rmesa->state.aos_count, start);
+	   fire_AOS(PASS_PREFIX num_verts, type);
+   }
+}
+
+void dump_array(struct r300_dma_region *rvb, int count)
+{
+	int *out = (int *)(rvb->address + rvb->start);
+	int i, ci;
+	
+	for (i=0; i < count; i++) {
+		fprintf(stderr, "{");
+		if (rvb->aos_format == AOS_FORMAT_FLOAT)
+			for (ci=0; ci < rvb->aos_size; ci++)
+				fprintf(stderr, "%f ", ((float *)out)[ci]);
+		else
+			for (ci=0; ci < rvb->aos_size; ci++)
+				fprintf(stderr, "%d ", ((unsigned char *)out)[ci]);
+		fprintf(stderr, "}");
+		
+		out += rvb->aos_stride;
+	}
+
+	fprintf(stderr, "\n");
+}
+		
+void dump_dt(struct dt *dt, int count)
+{
+	int *out = dt->data;
+	int i, ci;
+	
+	fprintf(stderr, "base at %p ", out);
+	
+	for (i=0; i < count; i++){
+		fprintf(stderr, "{");
+		if (dt->type == GL_FLOAT)
+			for (ci=0; ci < dt->size; ci++)
+				fprintf(stderr, "%f ", ((float *)out)[ci]);
+		else
+			for (ci=0; ci < dt->size; ci++)
+				fprintf(stderr, "%d ", ((unsigned char *)out)[ci]);
+		fprintf(stderr, "}");
+		
+		out = (char *)out + dt->stride;
+	}
+	
+	fprintf(stderr, "\n");
+}
+
+/*static */GLboolean r300_run_vb_render_vtxfmt_a(GLcontext *ctx,
+				 struct tnl_pipeline_stage *stage)
+{
+   r300ContextPtr rmesa = R300_CONTEXT(ctx);
+   //TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct radeon_vertex_buffer *VB = &rmesa->state.VB; //&tnl->vb;
+   int i, j;
+   LOCAL_VARS
+   
+	if (RADEON_DEBUG & DEBUG_PRIMS)
+		fprintf(stderr, "%s\n", __FUNCTION__);
+	
+	if (rmesa->state.VB.LockCount == 0) {
+ 	  	r300ReleaseArrays(ctx);
+		r300EmitArraysVtx(ctx, GL_FALSE);
+	} else {
+		/* TODO: Figure out why do we need these. */
+		R300_STATECHANGE(rmesa, vir[0]);
+		R300_STATECHANGE(rmesa, vir[1]);
+		R300_STATECHANGE(rmesa, vic);
+		R300_STATECHANGE(rmesa, vof);
+		
+#if 0		
+		fprintf(stderr, "dt:\n");
+		for(i=0; i < VERT_ATTRIB_MAX; i++){
+			fprintf(stderr, "dt %d:", i);
+			dump_dt(&rmesa->state.VB.AttribPtr[i], VB->Count);
+		}
+		
+		fprintf(stderr, "before:\n");
+		for(i=0; i < rmesa->state.aos_count; i++){
+			fprintf(stderr, "aos %d:", i);
+			dump_array(&rmesa->state.aos[i], VB->Count);
+		}
+#endif
+#if 0
+ 	  	r300ReleaseArrays(ctx);
+		r300EmitArraysVtx(ctx, GL_FALSE);
+			
+		fprintf(stderr, "after:\n");
+		for(i=0; i < rmesa->state.aos_count; i++){
+			fprintf(stderr, "aos %d:", i);
+			dump_array(&rmesa->state.aos[i], VB->Count);
+		}
+#endif
+	}
+	
+//	LOCK_HARDWARE(&(rmesa->radeon));
+
+	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
+	e32(0x0000000a);
+
+	reg_start(0x4f18,0);
+	e32(0x00000003);
+#if 0
+	reg_start(R300_VAP_PVS_WAITIDLE,0);
+		e32(0x00000000);
+#endif
+	r300EmitState(rmesa);
+	
+	for(i=0; i < VB->PrimitiveCount; i++){
+		GLuint prim = VB->Primitive[i].mode;
+		GLuint start = VB->Primitive[i].start;
+		GLuint length = VB->Primitive[i].count;
+		
+		r300_render_vb_primitive_vtxfmt_a(rmesa, ctx, start, start + length, prim);
+	}
+
+	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
+	e32(0x0000000a/*0x2*/);
+
+	reg_start(0x4f18,0);
+	e32(0x00000003/*0x1*/);
+
+#ifdef USER_BUFFERS
+	r300UseArrays(ctx);
+#endif
+//	end_3d(PASS_PREFIX_VOID);
+
+   /* Flush state - we are done drawing.. */
+//	r300FlushCmdBufLocked(rmesa, __FUNCTION__);
+//	radeonWaitForIdleLocked(&(rmesa->radeon));
+
+//	UNLOCK_HARDWARE(&(rmesa->radeon));
+	return GL_FALSE;
+}
+#endif
 
 /**
  * Called by the pipeline manager to render a batch of primitives.
@@ -678,26 +915,9 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 		fprintf(stderr, "%s\n", __FUNCTION__);
 	if(hw_tcl_on == GL_FALSE)
 		return GL_TRUE;
-	if(ctx->VertexProgram._Enabled == GL_FALSE){
-		_tnl_UpdateFixedFunctionProgram(ctx);
-	}
-	vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
-	if(vp->translated == GL_FALSE)
-		translate_vertex_shader(vp);
-	if(vp->translated == GL_FALSE){
-		fprintf(stderr, "Failing back to sw-tcl\n");
-		debug_vp(ctx, &vp->mesa_program);
-		hw_tcl_on=future_hw_tcl_on=0;
-		r300ResetHwState(rmesa);
-		return GL_TRUE;
-	}
-		
-	r300_setup_textures(ctx);
-	r300_setup_rs_unit(ctx);
-
-	r300SetupVertexShader(rmesa);
-	r300SetupPixelShader(rmesa);
-
+	
+	r300UpdateShaderStates(rmesa);
+	
 	return r300_run_vb_render(ctx, stage);
 }
 

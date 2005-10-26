@@ -1,0 +1,35 @@
+#ifndef __RADEON_MM_H__
+#define __RADEON_MM_H__
+
+//#define RADEON_MM_PDL 0
+#define RADEON_MM_UL 1
+
+#define RADEON_MM_R 1
+#define RADEON_MM_W 2
+#define RADEON_MM_RW (RADEON_MM_R | RADEON_MM_W)
+    
+struct radeon_memory_manager {
+	uint32_t vb_age;
+	/*uint32_t ages[1024];*/
+	
+	struct {
+		void *ptr;
+		uint32_t size;
+		uint32_t age;
+		uint32_t h_pending;
+		int pending;
+		int mapped;
+	} u_list[/*4096*/2048];
+	int u_head, u_tail, u_size;
+	
+};
+
+extern void radeon_mm_init(r300ContextPtr rmesa);
+extern void *radeon_mm_ptr(r300ContextPtr rmesa, int id);
+extern int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size);
+extern void radeon_mm_use(r300ContextPtr rmesa, int id);
+extern void *radeon_mm_map(r300ContextPtr rmesa, int id, int access);
+extern void radeon_mm_unmap(r300ContextPtr rmesa, int id);
+extern void radeon_mm_free(r300ContextPtr rmesa, int id);
+
+#endif

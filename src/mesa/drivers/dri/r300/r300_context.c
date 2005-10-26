@@ -59,6 +59,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_ioctl.h"
 #include "r300_tex.h"
 
+#ifdef USER_BUFFERS
+#include "radeon_mm.h"
+#endif
+
 #include "vblank.h"
 #include "utils.h"
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
@@ -83,8 +87,7 @@ const struct dri_extension card_extensions[] = {
   {"GL_ARB_multitexture",		NULL},
   {"GL_ARB_texture_border_clamp",	NULL},
   {"GL_ARB_texture_compression",	GL_ARB_texture_compression_functions},
-/* disable until we support it, fixes a few things in ut2004 */
-/*	{"GL_ARB_texture_cube_map",	NULL}, */
+  {"GL_ARB_texture_cube_map",		NULL},
   {"GL_ARB_texture_env_add",		NULL},
   {"GL_ARB_texture_env_combine",	NULL},
   {"GL_ARB_texture_env_crossbar",	NULL},
@@ -155,75 +158,6 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 	0,
 };
 
-static void r300BufferData(GLcontext *ctx, GLenum target, GLsizeiptrARB size,
-		const GLvoid *data, GLenum usage, struct gl_buffer_object *obj)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	drm_radeon_mem_alloc_t alloc;
-	int offset, ret;
-
-	/* Free previous buffer */
-	if (obj->OnCard) {
-		drm_radeon_mem_free_t memfree;
-		
-		memfree.region = RADEON_MEM_REGION_GART;
-		memfree.region_offset = (char *)obj->Data - (char *)rmesa->radeon.radeonScreen->gartTextures.map;
-
-		ret = drmCommandWrite(rmesa->radeon.radeonScreen->driScreen->fd,
-				      DRM_RADEON_FREE, &memfree, sizeof(memfree));
-
-		if (ret) {
-			WARN_ONCE("Failed to free GART memroy!\n");
-		}
-		obj->OnCard = GL_FALSE;
-	}
-	
-	alloc.region = RADEON_MEM_REGION_GART;
-	alloc.alignment = 4;
-	alloc.size = size;
-	alloc.region_offset = &offset;
-
-	ret = drmCommandWriteRead( rmesa->radeon.dri.fd, DRM_RADEON_ALLOC, &alloc, sizeof(alloc));
-   	if (ret) {
-		WARN_ONCE("Ran out of GART memory!\n");
-		obj->Data = NULL;
-		_mesa_buffer_data(ctx, target, size, data, usage, obj);
-		return ;
-	}
-	obj->Data = ((GLubyte *)rmesa->radeon.radeonScreen->gartTextures.map) + offset;
-	
-	if (data)
-		memcpy(obj->Data, data, size);
-	
-	obj->Size = size;
-	obj->Usage = usage;
-	obj->OnCard = GL_TRUE;
-#if 0
-	fprintf(stderr, "allocated %d bytes at %p, offset=%d\n", size, obj->Data, offset);
-#endif
-}
-
-static void r300DeleteBuffer(GLcontext *ctx, struct gl_buffer_object *obj)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	
-	if(r300IsGartMemory(rmesa, obj->Data, obj->Size)){
-		drm_radeon_mem_free_t memfree;
-		int ret;
-		
-		memfree.region = RADEON_MEM_REGION_GART;
-		memfree.region_offset = (char *)obj->Data - (char *)rmesa->radeon.radeonScreen->gartTextures.map;
-
-		ret = drmCommandWrite(rmesa->radeon.radeonScreen->driScreen->fd,
-				      DRM_RADEON_FREE, &memfree, sizeof(memfree));
-
-		if(ret){
-			WARN_ONCE("Failed to free GART memroy!\n");
-		}
-		obj->Data = NULL;
-	}
-	_mesa_delete_buffer_object(ctx, obj);
-}
 
 /* Create the device specific rendering context.
  */
@@ -263,13 +197,14 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitTextureFuncs(&functions);
 	r300InitShaderFuncs(&functions);
 	
-#if 0 /* Needs various Mesa changes... */
-	if (hw_tcl_on) {
-		functions.BufferData = r300BufferData;
-		functions.DeleteBuffer = r300DeleteBuffer;
-	}
+#ifdef USER_BUFFERS
+	radeon_mm_init(r300);
 #endif
-	
+#ifdef HW_VBOS
+	if (hw_tcl_on) {
+		r300_init_vbo_funcs(&functions);
+	}
+#endif	
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv, sharedContextPrivate)) {
 		FREE(r300);
@@ -331,6 +266,11 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->Const.MinLineWidthAA = 1.0;
 	ctx->Const.MaxLineWidth = R300_LINESIZE_MAX;
 	ctx->Const.MaxLineWidthAA = R300_LINESIZE_MAX;
+	
+#ifdef USER_BUFFERS
+	/* Needs further modifications */
+	//ctx->Const.MaxArrayLockSize = (/*512*/RADEON_BUFFER_SIZE*16*1024) / (4*4);
+#endif
 
 	/* Initialize the software rasterizer and helper modules.
 	 */
@@ -391,6 +331,10 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	radeonInitSpanFuncs(ctx);
 	r300InitCmdBuf(r300);
 	r300InitState(r300);
+	
+#ifdef RADEON_VTXFMT_A
+	radeon_init_vtxfmt_a(r300);
+#endif
 
 #if 0
 	/* plug in a few more device driver functions */

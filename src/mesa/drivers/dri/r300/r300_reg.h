@@ -728,6 +728,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #	define R300_TX_FORMAT_G8R8_G8B8	    	    0x15     /* no swizzle */
 						  /* 0x16 - some 16 bit green format.. ?? */
 #	define R300_TX_FORMAT_UNK25		   (1 << 25) /* no swizzle */
+#	define R300_TX_FORMAT_CUBIC_MAP		   (1 << 26)
 
 	/* gap */
 	/* Floating point formats */

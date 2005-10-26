@@ -1553,6 +1553,36 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 #endif
 }
 
+extern int future_hw_tcl_on;
+void r300UpdateShaderStates(r300ContextPtr rmesa)
+{
+	GLcontext *ctx;
+	struct r300_vertex_program *vp;
+	
+	ctx = rmesa->radeon.glCtx; 
+	
+	if(ctx->VertexProgram._Enabled == GL_FALSE){
+		_tnl_UpdateFixedFunctionProgram(ctx);
+	}
+	vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
+	if(vp->translated == GL_FALSE)
+		translate_vertex_shader(vp);
+	if(vp->translated == GL_FALSE){
+		fprintf(stderr, "Failing back to sw-tcl\n");
+		debug_vp(ctx, &vp->mesa_program);
+		hw_tcl_on=future_hw_tcl_on=0;
+		r300ResetHwState(rmesa);
+		
+		return ;
+	}
+		
+	r300_setup_textures(ctx);
+	r300_setup_rs_unit(ctx);
+
+	r300SetupVertexShader(rmesa);
+	r300SetupPixelShader(rmesa);
+}
+
 /* This is probably wrong for some values, I need to test this
  * some more.  Range checking would be a good idea also..
  * 

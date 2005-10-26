@@ -43,6 +43,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 		r300->hw.is_dirty = GL_TRUE;		\
 	} while(0)
 
+#define R300_PRINT_STATE(r300, atom) \
+		r300_print_state_atom(r300, &r300->hw.atom)
+
 /* Fire the buffered vertices no matter what.
    TODO: This has not been implemented yet
  */
@@ -65,5 +68,6 @@ extern void r300SetupPixelShader(r300ContextPtr rmesa);
 
 extern void r300_setup_textures(GLcontext *ctx);
 extern void r300_setup_rs_unit(GLcontext *ctx);
+extern void r300UpdateShaderStates(r300ContextPtr rmesa);
 
 #endif /* __R300_STATE_H__ */

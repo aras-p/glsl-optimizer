@@ -128,9 +128,10 @@ int r300FlushCmdBuf(r300ContextPtr r300, const char* caller)
 }
 
 
-static void print_state_atom(struct r300_state_atom *state, int dwords)
+void r300_print_state_atom(r300ContextPtr r300, struct r300_state_atom *state)
 {
 	int i;
+	int dwords = (*state->check)(r300, state);
 
 	fprintf(stderr, "  emit %s/%d/%d\n", state->name, dwords, state->cmd_size);
 
@@ -159,7 +160,7 @@ static __inline__ void r300DoEmitState(r300ContextPtr r300, GLboolean dirty)
 				int dwords = (*atom->check)(r300, atom);
 
 				if (dwords)
-					print_state_atom(atom, dwords);
+					r300_print_state_atom(r300, atom);
 				else
 					fprintf(stderr, "  skip state %s\n",
 						atom->name);
@@ -567,7 +568,7 @@ void r300EmitBlit(r300ContextPtr rmesa,
 		  GLint srcx, GLint srcy,
 		  GLint dstx, GLint dsty, GLuint w, GLuint h)
 {
-	drm_radeon_cmd_header_t *cmd;
+	drm_r300_cmd_header_t *cmd;
 
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr,
@@ -582,14 +583,13 @@ void r300EmitBlit(r300ContextPtr rmesa,
 	assert(w < (1 << 16));
 	assert(h < (1 << 16));
 
-	cmd =
-	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 8,
+	cmd = (drm_r300_cmd_header_t *) r300AllocCmdBuf(rmesa, 8,
 							__FUNCTION__);
 
 	cmd[0].header.cmd_type = R300_CMD_PACKET3;
 	cmd[0].header.pad0 = R300_CMD_PACKET3_RAW;
-	cmd[1].i = R200_CP_CMD_BITBLT_MULTI | (5 << 16);
-	cmd[2].i = (RADEON_GMC_SRC_PITCH_OFFSET_CNTL |
+	cmd[1].u = R200_CP_CMD_BITBLT_MULTI | (5 << 16);
+	cmd[2].u = (RADEON_GMC_SRC_PITCH_OFFSET_CNTL |
 		    RADEON_GMC_DST_PITCH_OFFSET_CNTL |
 		    RADEON_GMC_BRUSH_NONE |
 		    (color_fmt << 8) |
@@ -598,28 +598,24 @@ void r300EmitBlit(r300ContextPtr rmesa,
 		    RADEON_DP_SRC_SOURCE_MEMORY |
 		    RADEON_GMC_CLR_CMP_CNTL_DIS | RADEON_GMC_WR_MSK_DIS);
 
-	cmd[3].i = ((src_pitch / 64) << 22) | (src_offset >> 10);
-	cmd[4].i = ((dst_pitch / 64) << 22) | (dst_offset >> 10);
-	cmd[5].i = (srcx << 16) | srcy;
-	cmd[6].i = (dstx << 16) | dsty;	/* dst */
-	cmd[7].i = (w << 16) | h;
+	cmd[3].u = ((src_pitch / 64) << 22) | (src_offset >> 10);
+	cmd[4].u = ((dst_pitch / 64) << 22) | (dst_offset >> 10);
+	cmd[5].u = (srcx << 16) | srcy;
+	cmd[6].u = (dstx << 16) | dsty;	/* dst */
+	cmd[7].u = (w << 16) | h;
 }
 
 void r300EmitWait(r300ContextPtr rmesa, GLuint flags)
 {
-	if (rmesa->radeon.dri.drmMinor >= 6) {
-		drm_radeon_cmd_header_t *cmd;
+	drm_r300_cmd_header_t *cmd;
 
-		assert(!(flags & ~(R300_WAIT_2D | R300_WAIT_3D)));
+	assert(!(flags & ~(R300_WAIT_2D | R300_WAIT_3D)));
 
-		cmd =
-		    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa,
-								1,
-								__FUNCTION__);
-		cmd[0].i = 0;
-		cmd[0].wait.cmd_type = R300_CMD_WAIT;
-		cmd[0].wait.flags = flags;
-	}
+	cmd = (drm_r300_cmd_header_t *) r300AllocCmdBuf(rmesa, 1,
+							__FUNCTION__);
+	cmd[0].u = 0;
+	cmd[0].wait.cmd_type = R300_CMD_WAIT;
+	cmd[0].wait.flags = flags;
 }
 
 void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
