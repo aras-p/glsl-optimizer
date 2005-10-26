@@ -823,6 +823,7 @@ void sisDDInitState( sisContextPtr smesa )
    /* Set initial fog settings. Start and end are the same case.  */
    sisDDFogfv( ctx, GL_FOG_DENSITY, &ctx->Fog.Density );
    sisDDFogfv( ctx, GL_FOG_END, &ctx->Fog.End );
+   sisDDFogfv( ctx, GL_FOG_COORDINATE_SOURCE_EXT, NULL );
    sisDDFogfv( ctx, GL_FOG_MODE, NULL );
 }
 

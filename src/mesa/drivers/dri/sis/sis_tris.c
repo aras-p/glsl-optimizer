@@ -403,21 +403,24 @@ do {								\
 
 #define VERT_COPY_RGBA( v0, v1 ) v0->ui[coloroffset] = v1->ui[coloroffset]
 
-#define VERT_SET_SPEC( v0, c )					\
+#define VERT_SET_SPEC( v, c )					\
 do {								\
    if (specoffset != 0) {					\
-      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.red, (c)[0]);	\
-      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.green, (c)[1]);	\
-      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.blue, (c)[2]);	\
+      sis_color_t *spec = (sis_color_t *)&((v)->ui[specoffset]); \
+      UNCLAMPED_FLOAT_TO_UBYTE(spec->red, (c)[0]);		\
+      UNCLAMPED_FLOAT_TO_UBYTE(spec->green, (c)[1]);		\
+      UNCLAMPED_FLOAT_TO_UBYTE(spec->blue, (c)[2]);		\
    }								\
 } while (0)
-#define VERT_COPY_SPEC( v0, v1 )			\
-do {							\
-   if (specoffset != 0) {				\
-      v0->v.specular.red   = v1->v.specular.red;	\
-      v0->v.specular.green = v1->v.specular.green;	\
-      v0->v.specular.blue  = v1->v.specular.blue; 	\
-   }							\
+#define VERT_COPY_SPEC( v0, v1 )				\
+do {								\
+   if (specoffset != 0) {					\
+      sis_color_t *spec0 = (sis_color_t *)&((v0)->ui[specoffset]); \
+      sis_color_t *spec1 = (sis_color_t *)&((v1)->ui[specoffset]); \
+      spec0->red   = spec1->red;				\
+      spec0->green = spec1->green;				\
+      spec0->blue  = spec1->blue; 				\
+   }								\
 } while (0)
 
 #define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->ui[coloroffset]
@@ -833,9 +836,6 @@ do {									\
    smesa->vertex_attrs[smesa->vertex_attr_count].offset = (N);		\
    smesa->vertex_attr_count++;						\
 } while (0)
-
-#define SIS_TCL_STATE_BITS \
-	(_TNL_BITS_TEX_ANY | _TNL_BIT_COLOR1 | _TNL_BIT_FOG)
 				
 static void sisRenderStart( GLcontext *ctx )
 {
@@ -880,12 +880,13 @@ static void sisRenderStart( GLcontext *ctx )
 
    EMIT_ATTR(_TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA);
 
+   smesa->specoffset = 0;
    if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
       AGPParseSet |= SiS_PS_HAS_SPECULAR;
-      smesa->specoffset = smesa->coloroffset + 1;
 
       if (index & _TNL_BIT_COLOR1) {
 	 EMIT_ATTR(_TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR);
+	 smesa->specoffset = smesa->coloroffset + 1;
       } else {
 	 EMIT_PAD(3);
       }
@@ -895,8 +896,6 @@ static void sisRenderStart( GLcontext *ctx )
       } else {
 	 EMIT_PAD(1);
       }
-   } else {
-      smesa->specoffset = 0;
    }
 
    /* projective textures are not supported by the hardware */
