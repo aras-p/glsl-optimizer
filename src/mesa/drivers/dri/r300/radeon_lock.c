@@ -35,7 +35,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r200_context.h"
 #include "radeon_lock.h"
+#if R200_MERGED
 #include "r200_tex.h"
+#endif
 #include "r200_state.h"
 #include "radeon_ioctl.h"
 #include "radeon_state.h"

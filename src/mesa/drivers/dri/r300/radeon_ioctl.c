@@ -46,8 +46,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_ioctl.h"
 #include "r200_ioctl.h"
 #include "r300_ioctl.h"
+#if R200_MERGED
 #include "r200_tcl.h"
 #include "r200_sanity.h"
+#endif
 #include "r300_state.h"
 #include "radeon_reg.h"
 
