@@ -595,7 +595,7 @@ static void r128RenderStart( GLcontext *ctx )
 #if MESA_LITTLE_ENDIAN
       if ( index & _TNL_BIT_COLOR1) {
 	 rmesa->specoffset = offset;
-	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB,
+	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR,
 	    R128_CCE_VC_FRMT_SPEC_FRGB, 3 );
       } else 
 	 EMIT_PAD( 3 );

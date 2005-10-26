@@ -545,34 +545,20 @@ static void updateSpecularLighting( GLcontext *ctx )
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint t = rmesa->setup.tex_cntl_c;
 
-   if ( ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR &&
-        ctx->Light.Enabled) {
-      /* XXX separate specular color just doesn't seem to work as it should.
-       * For now, we fall back to s/w rendering whenever separate specular
-       * is enabled.
-       */
-#if 0
+   if ( NEED_SECONDARY_COLOR( ctx ) ) {
       if (ctx->Light.ShadeModel == GL_FLAT) {
          /* R128 can't do flat-shaded separate specular */
          t &= ~R128_SPEC_LIGHT_ENABLE;
          FALLBACK( rmesa, R128_FALLBACK_SEP_SPECULAR, GL_TRUE );
-         /*printf("%s fallback  sep spec\n", __FUNCTION__);*/
       }
       else {
          t |= R128_SPEC_LIGHT_ENABLE;
          FALLBACK( rmesa, R128_FALLBACK_SEP_SPECULAR, GL_FALSE );
-         /*printf("%s enable sep spec\n", __FUNCTION__);*/
       }
-#else
-      t &= ~R128_SPEC_LIGHT_ENABLE;
-      FALLBACK( rmesa, R128_FALLBACK_SEP_SPECULAR, GL_TRUE );
-      /*printf("%s fallback  sep spec\n", __FUNCTION__);*/
-#endif
    }
    else {
       t &= ~R128_SPEC_LIGHT_ENABLE;
       FALLBACK( rmesa, R128_FALLBACK_SEP_SPECULAR, GL_FALSE );
-      /*printf("%s disable sep spec\n", __FUNCTION__);*/
    }
 
    if ( rmesa->setup.tex_cntl_c != t ) {
@@ -855,6 +841,7 @@ static void r128DDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
 
    case GL_LIGHTING:
+   case GL_COLOR_SUM_EXT:
       updateSpecularLighting(ctx);
       break;
 
