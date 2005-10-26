@@ -70,10 +70,7 @@ extern int future_hw_tcl_on;
 
 static int r300_get_primitive_type(r300ContextPtr rmesa, GLcontext *ctx, int prim)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   GLuint i;
-   int type=-1;
+	int type=-1;
 
 	switch (prim & PRIM_MODE_MASK) {
 	case GL_POINTS:
@@ -121,11 +118,8 @@ static int r300_get_num_verts(r300ContextPtr rmesa,
 	int num_verts,
 	int prim)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   GLuint i;
-   int type=-1, verts_off=0;
-   char *name="UNKNOWN";
+	int verts_off=0;
+	char *name="UNKNOWN";
 
 	switch (prim & PRIM_MODE_MASK) {
 	case GL_POINTS:
@@ -184,13 +178,15 @@ static int r300_get_num_verts(r300ContextPtr rmesa,
          	break;
    	}
 
-	if(num_verts - verts_off == 0){
-		WARN_ONCE("user error: Need more than %d vertices to draw primitive %s !\n", num_verts, name);
-		return 0;
-	}
+	if (RADEON_DEBUG & DEBUG_VERTS) {
+		if (num_verts - verts_off == 0) {
+			WARN_ONCE("user error: Need more than %d vertices to draw primitive %s !\n", num_verts, name);
+			return 0;
+		}
 
-	if(verts_off > 0){
-		WARN_ONCE("user error: %d is not a valid number of vertices for primitive %s !\n", num_verts, name);
+		if (verts_off > 0) {
+			WARN_ONCE("user error: %d is not a valid number of vertices for primitive %s !\n", num_verts, name);
+		}
 	}
 
 	return num_verts - verts_off;
@@ -333,9 +329,6 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
-   /* Only do 2d textures */
-   struct gl_texture_object *to=ctx->Texture.Unit[0].Current2D;
-   r300TexObjPtr t=to->DriverData;
    LOCAL_VARS
 
 
@@ -470,6 +463,8 @@ static void inline fire_EB(PREFIX unsigned long addr, int vertex_count, int type
 	exit(1);
 #endif
 #else
+	(void)magic_2, (void)magic_1, (void)t_addr;
+	
 	addr_a = 0;
 	
 	check_space(6);
@@ -501,11 +496,7 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 	int prim)
 {
    int type, num_verts;
-   radeonScreenPtr rsp=rmesa->radeon.radeonScreen;
    LOCAL_VARS
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   int i;
 
    type=r300_get_primitive_type(rmesa, ctx, prim);
    num_verts=r300_get_num_verts(rmesa, ctx, end-start, prim);
@@ -515,6 +506,7 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
    if(rmesa->state.Elts){
 	r300EmitAOS(rmesa, rmesa->state.aos_count, 0);
 #if 0
+	int i;
 	start_index32_packet(num_verts, type);
 	for(i=0; i < num_verts; i++)
 		e32(rmesa->state.Elts[start+i]); /* start ? */
@@ -542,11 +534,11 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 static GLboolean r300_run_vb_render(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
-   r300ContextPtr rmesa = R300_CONTEXT(ctx);
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   int i, j;
-   LOCAL_VARS
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	struct vertex_buffer *VB = &tnl->vb;
+	int i;
+	LOCAL_VARS
    
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
@@ -782,24 +774,14 @@ void dump_dt(struct dt *dt, int count)
 static GLboolean r300_run_render(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
-   r300ContextPtr rmesa = R300_CONTEXT(ctx);
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   GLuint i;
 
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
-
-
-#if 1
 
 #if 0
 		return r300_run_immediate_render(ctx, stage);
 #else
 		return r300_run_vb_render(ctx, stage);
-#endif
-#else
-	return GL_TRUE;
 #endif
 }
 
@@ -813,9 +795,8 @@ static GLboolean r300_run_render(GLcontext *ctx,
 #define FALLBACK_IF(expr) \
 do {										\
 	if (expr) {								\
-		if (1 || RADEON_DEBUG & DEBUG_FALLBACKS)				\
-			fprintf(stderr, "%s: fallback:%s\n",			\
-				__FUNCTION__, #expr);				\
+		if (1 || RADEON_DEBUG & DEBUG_FALLBACKS)			\
+			WARN_ONCE("fallback:%s\n", #expr);			\
 		/*stage->active = GL_FALSE*/;					\
 		return;								\
 	}									\
@@ -823,8 +804,6 @@ do {										\
 
 static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	int i;
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);
@@ -903,11 +882,7 @@ const struct tnl_pipeline_stage _r300_render_stage = {
 static GLboolean r300_run_tcl_render(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
-   r300ContextPtr rmesa = R300_CONTEXT(ctx);
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   GLuint i;
-   struct r300_vertex_program *vp;
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
    
    	hw_tcl_on=future_hw_tcl_on;
    
@@ -923,8 +898,6 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 
 static void r300_check_tcl_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	int i;
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);

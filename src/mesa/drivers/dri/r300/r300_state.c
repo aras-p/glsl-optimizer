@@ -1015,7 +1015,6 @@ void r300_setup_textures(GLcontext *ctx)
 	struct r300_tex_obj *t;
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int max_texture_unit=-1; /* -1 translates into no setup costs for fields */
-	struct gl_texture_unit *texUnit;
 	GLuint OutputsWritten;
 	
 	if(hw_tcl_on)
@@ -1433,16 +1432,6 @@ static void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 void r300SetupVertexShader(r300ContextPtr rmesa)
 {
 	GLcontext* ctx = rmesa->radeon.glCtx;
-	struct r300_vertex_shader_fragment unk4={
-			length: 4,
-			body: { f: {
-				/*0.0*/(rand()%100)/10.0,
-				/*0.0*/(rand()%100)/10.0,
-				/*1.0*/(rand()%100)/10.0,
-				/*0.0*/(rand()%100)/10.0
-				} }
-			};
-	LOCAL_VARS
 
 	/* Reset state, in case we don't use something */
 	((drm_r300_cmd_header_t*)rmesa->hw.vpp.cmd)->vpu.count = 0;
@@ -1513,7 +1502,6 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	GLcontext* ctx = rmesa->radeon.glCtx;
 	int inst_count;
 	int param_count;
-	LOCAL_VARS
 	struct r300_vertex_program *prog=(struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 			
 
@@ -1552,6 +1540,8 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 		e32(0x00000000);
 #endif
 }
+
+extern void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx );
 
 extern int future_hw_tcl_on;
 void r300UpdateShaderStates(r300ContextPtr rmesa)
@@ -1878,66 +1868,16 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 	r300ResetHwState(r300);
 }
 
-/* Checks that r300ResetHwState actually modifies all states.
-   Should probably be burried in somewhere else as this file is getting longish. */
-static void verify_r300ResetHwState(r300ContextPtr r300, int stage)
-{
-	struct r300_state_atom* atom;
-	int i;
-	drm_r300_cmd_header_t cmd;
-	
-	if(stage){ /* mess around with states */
-		unsigned long fp1, cb1;
-	
-		fp1=r300->hw.fp.cmd[R300_FP_CMD_1]; /* some special cases... */
-		cb1=r300->hw.cb.cmd[R300_CB_CMD_1];
-	
-		fprintf(stderr, "verify begin:\n");
-	
-		foreach(atom, &r300->hw.atomlist) {
-			for(i=1; i < (*atom->check)(r300, atom); i++)
-				atom->cmd[i]=0xdeadbeef;
-		}	
-		r300->hw.fp.cmd[R300_FP_CMD_1]=fp1;
-		r300->hw.cb.cmd[R300_CB_CMD_1]=cb1;
-			
-		foreach(atom, &r300->hw.atomlist) {
-			cmd.u=atom->cmd[0];
-			switch(cmd.header.cmd_type){
-			case R300_CMD_PACKET0:
-			case R300_CMD_VPU:
-			case R300_CMD_PACKET3:
-			case R300_CMD_END3D:
-			case R300_CMD_CP_DELAY:
-			case R300_CMD_DMA_DISCARD:
-				break;
-			default: fprintf(stderr, "unknown cmd_type %d in atom %s\n",
-					cmd.header.cmd_type, atom->name);
-			}
-		
-		}	
-	} else { /* check that they were set */
-		foreach(atom, &r300->hw.atomlist) {
-			for(i=1; i < (*atom->check)(r300, atom); i++)
-				if(atom->cmd[i]==0xdeadbeef)
-					fprintf(stderr, "atom %s is untouched\n", atom->name);
-		}	
-	}
-}
-		
 /**
  * Completely recalculates hardware state based on the Mesa state.
  */
 void r300ResetHwState(r300ContextPtr r300)
 {
 	GLcontext* ctx = r300->radeon.glCtx;
-	int i;
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	//verify_r300ResetHwState(r300, 1);
-			
 		/* This is a place to initialize registers which
 		   have bitfields accessed by different functions
 		   and not all bits are used */
@@ -2259,7 +2199,6 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.vps.cmd[R300_VPS_ZERO_3] = 0;
 
 //END: TODO
-	//verify_r300ResetHwState(r300, 0);
 	r300->hw.all_dirty = GL_TRUE;
 }
 
@@ -2305,10 +2244,11 @@ void r300InitState(r300ContextPtr r300)
 
 static void r300RenderMode( GLcontext *ctx, GLenum mode )
 {
-   r300ContextPtr rmesa = R300_CONTEXT(ctx);
-   WARN_ONCE("TODO: fallback properly when rendering mode is not GL_RENDER\n"
-   	     "\tThe way things are now neither selection nor feedback modes work\n")
-//   FALLBACK( rmesa, R300_FALLBACK_RENDER_MODE, (mode != GL_RENDER) );
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	(void)rmesa;
+	WARN_ONCE("TODO: fallback properly when rendering mode is not GL_RENDER\n"
+		"\tThe way things are now neither selection nor feedback modes work\n")
+//	FALLBACK( rmesa, R300_FALLBACK_RENDER_MODE, (mode != GL_RENDER) );
 }
 
 /**

@@ -928,7 +928,6 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	GLuint unit = ctx->Texture.CurrentUnit;
-	struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
 	if (RADEON_DEBUG & DEBUG_STATE) {
 		fprintf(stderr, "%s( %s )\n",
@@ -1084,27 +1083,6 @@ static void r300DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 	_mesa_delete_texture_object(ctx, texObj);
 }
 
-/* Need:
- *  - Same GEN_MODE for all active bits
- *  - Same EyePlane/ObjPlane for all active bits when using Eye/Obj
- *  - STRQ presumably all supported (matrix means incoming R values
- *    can end up in STQ, this has implications for vertex support,
- *    presumably ok if maos is used, though?)
- *
- * Basically impossible to do this on the fly - just collect some
- * basic info & do the checks from ValidateState().
- */
-static void r300TexGen(GLcontext * ctx,
-		       GLenum coord, GLenum pname, const GLfloat * params)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	GLuint unit = ctx->Texture.CurrentUnit;
-#if 0 /* Disable this for now - looks like we will be recalculating everything
-	         anyway */
-	rmesa->recheck_texgen[unit] = GL_TRUE;
-#endif
-}
-
 /**
  * Allocate a new texture object.
  * Called via ctx->Driver.NewTextureObject.
@@ -1156,7 +1134,6 @@ void r300InitTextureFuncs(struct dd_function_table *functions)
 
 	functions->TexEnv = r300TexEnv;
 	functions->TexParameter = r300TexParameter;
-	functions->TexGen = r300TexGen;
 	
 	functions->CompressedTexImage2D	= r300CompressedTexImage2D;
 	functions->CompressedTexSubImage2D	= r300CompressedTexSubImage2D;

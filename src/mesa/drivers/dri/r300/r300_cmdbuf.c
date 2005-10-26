@@ -50,6 +50,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_reg.h"
 #include "r300_cmdbuf.h"
 #include "r300_emit.h"
+#include "r300_state.h"
 
 
 // Set this to 1 for extremely verbose debugging of command buffers
@@ -246,7 +247,6 @@ static int check_##NM( r300ContextPtr r300, 		\
 #define vpu_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
 
 CHECK( always, atom->cmd_size )
-CHECK( never, 0 )
 CHECK( variable, packet0_count(atom->cmd) ? (1 + packet0_count(atom->cmd)) : 0 )
 CHECK( vpu, vpu_count(atom->cmd) ? (1 + vpu_count(atom->cmd)*4) : 0 )
 

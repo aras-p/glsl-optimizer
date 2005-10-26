@@ -314,7 +314,7 @@ static pfs_reg_t emit_const4fv(struct r300_fragment_program *rp, GLfloat *cp)
 
 static pfs_reg_t negate(pfs_reg_t r)
 {
-	r.negate = 1;
+	r.negate = !r.negate;
 	return r;
 }
 
@@ -911,7 +911,6 @@ static void init_program(struct r300_fragment_program *rp)
 	struct fragment_program *mp = &rp->mesa_program;	
 	struct fp_instruction *fpi;
 	GLuint InputsRead = mp->InputsRead;
-	GLuint fp_reg = 0;
 	GLuint temps_used = 0; /* for rp->temps[] */
 	int i;
 
@@ -1020,7 +1019,6 @@ static void update_params(struct r300_fragment_program *rp) {
 
 void translate_fragment_shader(struct r300_fragment_program *rp)
 {
-	int i;
 	
 	if (!rp->translated) {
 		init_program(rp);
