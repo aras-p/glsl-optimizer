@@ -30,6 +30,7 @@ SOURCES = antialias.c \
 	floattex.c \
 	fbotest1.c \
 	fbotexture.c \
+	fog.c \
 	fogcoord.c \
 	fptest1.c \
 	fptexture.c \
