@@ -361,7 +361,10 @@ static void radeonFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
       switch (ctx->Fog.Mode) {
       case GL_EXP:
 	 c.f = 0.0;
-	 d.f = ctx->Fog.Density;
+	 /* While this is the opposite sign from the DDK, it makes the fog test
+	  * pass, and matches r200.
+	  */
+	 d.f = -ctx->Fog.Density;
 	 break;
       case GL_EXP2:
 	 c.f = 0.0;
@@ -373,7 +376,10 @@ static void radeonFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
 	    d.f = 1.0F;
 	 } else {
 	    c.f = ctx->Fog.End/(ctx->Fog.End-ctx->Fog.Start);
-	    d.f = 1.0/(ctx->Fog.End-ctx->Fog.Start);
+	    /* While this is the opposite sign from the DDK, it makes the fog
+	     * test pass, and matches r200.
+	     */
+	    d.f = -1.0/(ctx->Fog.End-ctx->Fog.Start);
 	 }
 	 break;
       default:
