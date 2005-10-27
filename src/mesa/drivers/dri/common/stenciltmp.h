@@ -6,6 +6,14 @@
 #define DBG 0
 #endif
 
+#ifndef HAVE_HW_STENCIL_SPANS
+#define HAVE_HW_STENCIL_SPANS 0
+#endif
+
+#ifndef HAVE_HW_STENCIL_PIXELS
+#define HAVE_HW_STENCIL_PIXELS 0
+#endif
+
 static void TAG(WriteStencilSpan)( GLcontext *ctx,
                                    struct gl_renderbuffer *rb,
 				   GLuint n, GLint x, GLint y,
@@ -20,6 +28,14 @@ static void TAG(WriteStencilSpan)( GLcontext *ctx,
 
 	 y = Y_FLIP(y);
 
+#if HAVE_HW_STENCIL_SPANS
+	 (void) x1; (void) n1;
+
+	 if (DBG) fprintf(stderr, "WriteStencilSpan 0..%d (x1 %d)\n",
+			  (int)n1, (int)x1);
+
+	 WRITE_STENCIL_SPAN();
+#else /* HAVE_HW_STENCIL_SPANS */
 	 HW_CLIPLOOP() 
 	    {
 	       GLint i = 0;
@@ -41,11 +57,26 @@ static void TAG(WriteStencilSpan)( GLcontext *ctx,
 	       }
 	    }
 	 HW_ENDCLIPLOOP();
+#endif /* !HAVE_HW_STENCIL_SPANS */
       }
    HW_WRITE_UNLOCK();
 }
 
-
+#if HAVE_HW_STENCIL_SPANS
+/* implement MonoWriteDepthSpan() in terms of WriteDepthSpan() */
+static void
+TAG(WriteMonoStencilSpan)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                           GLuint n, GLint x, GLint y,
+                           const void *value, const GLubyte mask[] )
+{
+   const GLuint stenVal = *((GLuint *) value);
+   GLuint stens[MAX_WIDTH];
+   GLuint i;
+   for (i = 0; i < n; i++)
+      stens[i] = stenVal;
+   TAG(WriteStencilSpan)(ctx, rb, n, x, y, stens, mask);
+}
+#else /* HAVE_HW_STENCIL_SPANS */
 static void TAG(WriteMonoStencilSpan)( GLcontext *ctx,
                                        struct gl_renderbuffer *rb,
                                        GLuint n, GLint x, GLint y,
@@ -85,7 +116,7 @@ static void TAG(WriteMonoStencilSpan)( GLcontext *ctx,
       }
    HW_WRITE_UNLOCK();
 }
-
+#endif /* !HAVE_HW_STENCIL_SPANS */
 
 
 static void TAG(WriteStencilPixels)( GLcontext *ctx,
@@ -102,6 +133,11 @@ static void TAG(WriteStencilPixels)( GLcontext *ctx,
 
 	 if (DBG) fprintf(stderr, "WriteStencilPixels\n");
 
+#if HAVE_HW_STENCIL_PIXELS
+	 (void) i;
+
+	 WRITE_STENCIL_PIXELS();
+#else /* HAVE_HW_STENCIL_PIXELS */
 	 HW_CLIPLOOP()
 	    {
 	       for (i=0;i<n;i++)
@@ -114,6 +150,7 @@ static void TAG(WriteStencilPixels)( GLcontext *ctx,
 	       }
 	    }
 	 HW_ENDCLIPLOOP();
+#endif /* !HAVE_HW_STENCIL_PIXELS */
       }
    HW_WRITE_UNLOCK();
 }
@@ -136,6 +173,11 @@ static void TAG(ReadStencilSpan)( GLcontext *ctx,
 
 	 if (DBG) fprintf(stderr, "ReadStencilSpan\n");
 
+#if HAVE_HW_STENCIL_SPANS
+	 (void) x1; (void) n1;
+
+	 READ_STENCIL_SPAN();
+#else /* HAVE_HW_STENCIL_SPANS */
 	 HW_CLIPLOOP() 
 	    {
 	       GLint i = 0;
@@ -144,6 +186,7 @@ static void TAG(ReadStencilSpan)( GLcontext *ctx,
 		  READ_STENCIL( stencil[i], (x+i), y );
 	    }
 	 HW_ENDCLIPLOOP();
+#endif /* !HAVE_HW_STENCIL_SPANS */
       }
    HW_READ_UNLOCK();
 }
@@ -161,6 +204,11 @@ static void TAG(ReadStencilPixels)( GLcontext *ctx,
 
 	 if (DBG) fprintf(stderr, "ReadStencilPixels\n");
  
+#if HAVE_HW_STENCIL_PIXELS
+	 (void) i;
+
+	 READ_STENCIL_PIXELS();
+#else /* HAVE_HW_STENCIL_PIXELS */
 	 HW_CLIPLOOP()
 	    {
 	       for (i=0;i<n;i++) {
@@ -170,6 +218,7 @@ static void TAG(ReadStencilPixels)( GLcontext *ctx,
 	       }
 	    }
 	 HW_ENDCLIPLOOP();
+#endif /* !HAVE_HW_STENCIL_PIXELS */
       }
    HW_READ_UNLOCK();
 }
