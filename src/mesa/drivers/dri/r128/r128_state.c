@@ -322,7 +322,6 @@ static void r128DDStencilOpSeparate( GLcontext *ctx, GLenum face, GLenum fail,
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint z = rmesa->setup.z_sten_cntl_c;
-   GLboolean ok = 1;
 
    if (!( ctx->Visual.stencilBits > 0 && ctx->Visual.depthBits == 24 ))
       return;
@@ -336,11 +335,9 @@ static void r128DDStencilOpSeparate( GLcontext *ctx, GLenum face, GLenum fail,
       break;
    case GL_ZERO:
       z |= R128_STENCIL_S_FAIL_ZERO;
-      ok = 0; /* Hardware bug?  ZERO maps to KEEP */
       break;
    case GL_REPLACE:
       z |= R128_STENCIL_S_FAIL_REPLACE;
-      ok = 0; /* Hardware bug?  REPLACE maps to KEEP */
       break;
    case GL_INCR:
       z |= R128_STENCIL_S_FAIL_INC;
@@ -350,14 +347,18 @@ static void r128DDStencilOpSeparate( GLcontext *ctx, GLenum face, GLenum fail,
       break;
    case GL_INVERT:
       z |= R128_STENCIL_S_FAIL_INV;
-      ok = 0; /* Hardware bug?  INV maps to ZERO */
+      break;
+   case GL_INCR_WRAP:
+      z |= R128_STENCIL_S_FAIL_INC_WRAP;
+      break;
+   case GL_DECR_WRAP:
+      z |= R128_STENCIL_S_FAIL_DEC_WRAP;
       break;
    }
 
    switch ( ctx->Stencil.ZFailFunc[0] ) {
    case GL_KEEP:
       z |= R128_STENCIL_ZFAIL_KEEP;
-      ok = 0; /* Hardware bug?  KEEP maps to ZERO */
       break;
    case GL_ZERO:
       z |= R128_STENCIL_ZFAIL_ZERO;
@@ -373,14 +374,18 @@ static void r128DDStencilOpSeparate( GLcontext *ctx, GLenum face, GLenum fail,
       break;
    case GL_INVERT:
       z |= R128_STENCIL_ZFAIL_INV;
-      ok = 0; /* Hardware bug?  INV maps to ZERO */
+      break;
+   case GL_INCR_WRAP:
+      z |= R128_STENCIL_ZFAIL_INC_WRAP;
+      break;
+   case GL_DECR_WRAP:
+      z |= R128_STENCIL_ZFAIL_DEC_WRAP;
       break;
    }
 
    switch ( ctx->Stencil.ZPassFunc[0] ) {
    case GL_KEEP:
       z |= R128_STENCIL_ZPASS_KEEP;
-      ok = 0; /* Hardware bug?  KEEP maps to ZERO */
       break;
    case GL_ZERO:
       z |= R128_STENCIL_ZPASS_ZERO;
@@ -393,21 +398,17 @@ static void r128DDStencilOpSeparate( GLcontext *ctx, GLenum face, GLenum fail,
       break;
    case GL_DECR:
       z |= R128_STENCIL_ZPASS_DEC;
-      ok = 0; /* Hardware bug?  DEC maps to INCR_WRAP */
       break;
    case GL_INVERT:
       z |= R128_STENCIL_ZPASS_INV;
-      ok = 0; /* Hardware bug?  INV maps to ZERO */
+      break;
+   case GL_INCR_WRAP:
+      z |= R128_STENCIL_ZPASS_INC_WRAP;
+      break;
+   case GL_DECR_WRAP:
+      z |= R128_STENCIL_ZPASS_DEC_WRAP;
       break;
    }
-
-   /* XXX: Now that we know whether we can do the given funcs successfully
-    * (according to testing done with a modified stencilwrap test), go
-    * ahead and drop that knowledge on the floor.  While fallbacks remain
-    * broken, they make the situation even worse (in test apps, at least) than
-    * failing in just the stencil part.
-    */
-   /*FALLBACK( rmesa, R128_FALLBACK_STENCIL, !ok );*/
 
    if ( rmesa->setup.z_sten_cntl_c != z ) {
       rmesa->setup.z_sten_cntl_c = z;

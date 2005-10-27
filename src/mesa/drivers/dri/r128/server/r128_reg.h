@@ -1075,6 +1075,8 @@
 #       define R128_STENCIL_S_FAIL_INC        (3 << 16)
 #       define R128_STENCIL_S_FAIL_DEC        (4 << 16)
 #       define R128_STENCIL_S_FAIL_INV        (5 << 16)
+#       define R128_STENCIL_S_FAIL_INC_WRAP   (6 << 16)	/* GUESS */
+#       define R128_STENCIL_S_FAIL_DEC_WRAP   (7 << 16)	/* GUESS */
 #       define R128_STENCIL_S_FAIL_MASK       (7 << 16)
 #       define R128_STENCIL_ZPASS_KEEP        (0 << 20)
 #       define R128_STENCIL_ZPASS_ZERO        (1 << 20)
@@ -1082,6 +1084,8 @@
 #       define R128_STENCIL_ZPASS_INC         (3 << 20)
 #       define R128_STENCIL_ZPASS_DEC         (4 << 20)
 #       define R128_STENCIL_ZPASS_INV         (5 << 20)
+#       define R128_STENCIL_ZPASS_INC_WRAP    (6 << 20)	/* GUESS */
+#       define R128_STENCIL_ZPASS_DEC_WRAP    (7 << 20)	/* GUESS */
 #       define R128_STENCIL_ZPASS_MASK        (7 << 20)
 #       define R128_STENCIL_ZFAIL_KEEP        (0 << 24)
 #       define R128_STENCIL_ZFAIL_ZERO        (1 << 24)
@@ -1089,6 +1093,8 @@
 #       define R128_STENCIL_ZFAIL_INC         (3 << 24)
 #       define R128_STENCIL_ZFAIL_DEC         (4 << 24)
 #       define R128_STENCIL_ZFAIL_INV         (5 << 24)
+#       define R128_STENCIL_ZFAIL_INC_WRAP    (6 << 24)	/* GUESS */
+#       define R128_STENCIL_ZFAIL_DEC_WRAP    (7 << 24)	/* GUESS */
 #       define R128_STENCIL_ZFAIL_MASK        (7 << 24)
 #define R128_TEX_CNTL_C                   0x1c9c
 #       define R128_Z_ENABLE                   (1 <<  0)
