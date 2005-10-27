@@ -46,6 +46,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define HAVE_HW_DEPTH_SPANS	1
 #define HAVE_HW_DEPTH_PIXELS	1
+#define HAVE_HW_STENCIL_SPANS	1
+#define HAVE_HW_STENCIL_PIXELS	1
 
 #define LOCAL_VARS							\
    r128ContextPtr rmesa = R128_CONTEXT(ctx);				\
@@ -101,6 +103,21 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
      + ((dPriv->y + (Y)) * drb->flippedPitch + (dPriv->x + (X))) * drb->cpp)
 #include "spantmp2.h"
 
+/* Idling in the depth/stencil span functions:
+ * For writes, the kernel reads from the given user-space buffer at dispatch
+ * time, and then writes to the depth buffer asynchronously.
+ * For reads, the kernel reads from the depth buffer and writes to the span
+ * temporary asynchronously.
+ * So, if we're going to read from the span temporary, we need to idle before
+ * doing so.  But we don't need to idle after write, because the CPU won't
+ * be accessing the destination, only the accelerator (through 3d rendering or
+ * depth span reads)
+ * However, due to interactions from pixel cache between 2d (what we do with
+ * depth) and 3d (all other parts of the system), we idle at the begin and end
+ * of a set of span operations, which should cover the pix cache issue.
+ * Except, we still have major issues, as shown by no_rast=true glxgears, or
+ * stencilwrap.
+ */
 
 /* ================================================================
  * Depth buffer
@@ -110,10 +127,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #define WRITE_DEPTH_SPAN()						\
+do {									\
    r128WriteDepthSpanLocked( rmesa, n,					\
 			     x + dPriv->x,				\
 			     y + dPriv->y,				\
-			     depth, mask );
+			     depth, mask );				\
+} while (0)
 
 #define WRITE_DEPTH_PIXELS()						\
 do {									\
@@ -183,20 +202,41 @@ do {									\
 /* 24-bit depth, 8-bit stencil buffer functions
  */
 #define WRITE_DEPTH_SPAN()						\
+do {									\
+   GLint buf[n];							\
+   GLint i;								\
+   GLuint *readbuf = (GLuint *)((GLubyte *)sPriv->pFB +			\
+				r128scrn->spanOffset);			\
+   r128ReadDepthSpanLocked( rmesa, n,					\
+			    x + dPriv->x,				\
+			    y + dPriv->y );				\
+   r128WaitForIdleLocked( rmesa );					\
+   for ( i = 0 ; i < n ; i++ ) {					\
+      buf[i] = (readbuf[i] & 0xff000000) | (depth[i] & 0x00ffffff);	\
+   }									\
    r128WriteDepthSpanLocked( rmesa, n,					\
 			     x + dPriv->x,				\
 			     y + dPriv->y,				\
-			     depth, mask );
+			     buf, mask );				\
+} while (0)
 
 #define WRITE_DEPTH_PIXELS()						\
 do {									\
+   GLint buf[n];							\
    GLint ox[MAX_WIDTH];							\
    GLint oy[MAX_WIDTH];							\
+   GLuint *readbuf = (GLuint *)((GLubyte *)sPriv->pFB +			\
+				r128scrn->spanOffset);			\
    for ( i = 0 ; i < n ; i++ ) {					\
       ox[i] = x[i] + dPriv->x;						\
       oy[i] = Y_FLIP( y[i] ) + dPriv->y;				\
    }									\
-   r128WriteDepthPixelsLocked( rmesa, n, ox, oy, depth, mask );		\
+   r128ReadDepthPixelsLocked( rmesa, n, ox, oy );			\
+   r128WaitForIdleLocked( rmesa );					\
+   for ( i = 0 ; i < n ; i++ ) {					\
+      buf[i] = (readbuf[i] & 0xff000000) | (depth[i] & 0x00ffffff);	\
+   }									\
+   r128WriteDepthPixelsLocked( rmesa, n, ox, oy, buf, mask );		\
 } while (0)
 
 #define READ_DEPTH_SPAN()						\
@@ -205,6 +245,7 @@ do {									\
 			    r128scrn->spanOffset);			\
    GLint i;								\
 									\
+   /*if (n >= 128) fprintf(stderr, "Large number of pixels: %d\n", n);*/	\
    r128ReadDepthSpanLocked( rmesa, n,					\
 			    x + dPriv->x,				\
 			    y + dPriv->y );				\
@@ -258,8 +299,99 @@ do {									\
  * Stencil buffer
  */
 
-/* FIXME: Add support for hardware stencil buffers.
+/* 24 bit depth, 8 bit stencil depthbuffer functions
  */
+#define WRITE_STENCIL_SPAN()						\
+do {									\
+   GLint buf[n];							\
+   GLint i;								\
+   GLuint *readbuf = (GLuint *)((GLubyte *)sPriv->pFB +			\
+				r128scrn->spanOffset);			\
+   r128ReadDepthSpanLocked( rmesa, n,					\
+			    x + dPriv->x,				\
+			    y + dPriv->y );				\
+   r128WaitForIdleLocked( rmesa );					\
+   for ( i = 0 ; i < n ; i++ ) {					\
+      buf[i] = (readbuf[i] & 0x00ffffff) | (stencil[i] << 24);		\
+   }									\
+   r128WriteDepthSpanLocked( rmesa, n,					\
+			     x + dPriv->x,				\
+			     y + dPriv->y,				\
+			     buf, mask );				\
+} while (0)
+
+#define WRITE_STENCIL_PIXELS()						\
+do {									\
+   GLint buf[n];							\
+   GLint ox[MAX_WIDTH];							\
+   GLint oy[MAX_WIDTH];							\
+   GLuint *readbuf = (GLuint *)((GLubyte *)sPriv->pFB +			\
+				r128scrn->spanOffset);			\
+   for ( i = 0 ; i < n ; i++ ) {					\
+      ox[i] = x[i] + dPriv->x;						\
+      oy[i] = Y_FLIP( y[i] ) + dPriv->y;				\
+   }									\
+   r128ReadDepthPixelsLocked( rmesa, n, ox, oy );			\
+   r128WaitForIdleLocked( rmesa );					\
+   for ( i = 0 ; i < n ; i++ ) {					\
+      buf[i] = (readbuf[i] & 0x00ffffff) | (stencil[i] << 24);		\
+   }									\
+   r128WriteDepthPixelsLocked( rmesa, n, ox, oy, buf, mask );		\
+} while (0)
+
+#define READ_STENCIL_SPAN()						\
+do {									\
+   GLuint *buf = (GLuint *)((GLubyte *)sPriv->pFB +			\
+			    r128scrn->spanOffset);			\
+   GLint i;								\
+									\
+   /*if (n >= 128) fprintf(stderr, "Large number of pixels: %d\n", n);*/	\
+   r128ReadDepthSpanLocked( rmesa, n,					\
+			    x + dPriv->x,				\
+			    y + dPriv->y );				\
+   r128WaitForIdleLocked( rmesa );					\
+									\
+   for ( i = 0 ; i < n ; i++ ) {					\
+      stencil[i] = (buf[i] & 0xff000000) >> 24;				\
+   }									\
+} while (0)
+
+#define READ_STENCIL_PIXELS()						\
+do {									\
+   GLuint *buf = (GLuint *)((GLubyte *)sPriv->pFB +			\
+			    r128scrn->spanOffset);			\
+   GLint i, remaining = n;						\
+									\
+   while ( remaining > 0 ) {						\
+      GLint ox[128];							\
+      GLint oy[128];							\
+      GLint count;							\
+									\
+      if ( remaining <= 128 ) {						\
+	 count = remaining;						\
+      } else {								\
+	 count = 128;							\
+      }									\
+      for ( i = 0 ; i < count ; i++ ) {					\
+	 ox[i] = x[i] + dPriv->x;					\
+	 oy[i] = Y_FLIP( y[i] ) + dPriv->y;				\
+      }									\
+									\
+      r128ReadDepthPixelsLocked( rmesa, count, ox, oy );		\
+      r128WaitForIdleLocked( rmesa );					\
+									\
+      for ( i = 0 ; i < count ; i++ ) {					\
+	 stencil[i] = (buf[i] & 0xff000000) >> 24;			\
+      }									\
+      stencil += count;							\
+      x += count;							\
+      y += count;							\
+      remaining -= count;						\
+   }									\
+} while (0)
+
+#define TAG(x) radeon##x##_z24_s8
+#include "stenciltmp.h"
 
 static void
 r128SpanRenderStart( GLcontext *ctx )
@@ -275,6 +407,7 @@ r128SpanRenderFinish( GLcontext *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    _swrast_flush( ctx );
+   r128WaitForIdleLocked( rmesa );
    UNLOCK_HARDWARE( rmesa );
 }
 
@@ -305,5 +438,8 @@ r128SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
       r128InitDepthPointers_z24_s8(&drb->Base);
+   }
+   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+      radeonInitStencilPointers_z24_s8(&drb->Base);
    }
 }

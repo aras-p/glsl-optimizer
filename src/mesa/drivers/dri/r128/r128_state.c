@@ -251,6 +251,179 @@ static void r128DDBlendFuncSeparate( GLcontext *ctx,
    rmesa->new_state |= R128_NEW_ALPHA;
 }
 
+/* =============================================================
+ * Stencil
+ */
+
+static void
+r128DDStencilFuncSeparate( GLcontext *ctx, GLenum face, GLenum func,
+                           GLint ref, GLuint mask )
+{
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   GLuint refmask = ((ctx->Stencil.Ref[0] << 0) |
+		     (ctx->Stencil.ValueMask[0] << 16) |
+		     (ctx->Stencil.WriteMask[0] << 24)); 
+   GLuint z = rmesa->setup.z_sten_cntl_c;
+
+   z &= ~R128_STENCIL_TEST_MASK;
+   switch ( ctx->Stencil.Function[0] ) {
+   case GL_NEVER:
+      z |= R128_STENCIL_TEST_NEVER;
+      break;
+   case GL_LESS:
+      z |= R128_STENCIL_TEST_LESS;
+      break;
+   case GL_EQUAL:
+      z |= R128_STENCIL_TEST_EQUAL;
+      break;
+   case GL_LEQUAL:
+      z |= R128_STENCIL_TEST_LESSEQUAL;
+      break;
+   case GL_GREATER:
+      z |= R128_STENCIL_TEST_GREATER;
+      break;
+   case GL_NOTEQUAL:
+      z |= R128_STENCIL_TEST_NEQUAL;
+      break;
+   case GL_GEQUAL:
+      z |= R128_STENCIL_TEST_GREATEREQUAL;
+      break;
+   case GL_ALWAYS:
+      z |= R128_STENCIL_TEST_ALWAYS;
+      break;
+   }
+
+   if ( rmesa->setup.sten_ref_mask_c != refmask ) {
+      rmesa->setup.sten_ref_mask_c = refmask;
+      rmesa->dirty |= R128_UPLOAD_MASKS;
+   }
+   if ( rmesa->setup.z_sten_cntl_c != z ) {
+      rmesa->setup.z_sten_cntl_c = z;
+      rmesa->dirty |= R128_UPLOAD_CONTEXT;
+   }
+}
+
+static void
+r128DDStencilMaskSeparate( GLcontext *ctx, GLenum face, GLuint mask )
+{
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   GLuint refmask = ((ctx->Stencil.Ref[0] << 0) |
+		     (ctx->Stencil.ValueMask[0] << 16) |
+		     (ctx->Stencil.WriteMask[0] << 24)); 
+
+   if ( rmesa->setup.sten_ref_mask_c != refmask ) {
+      rmesa->setup.sten_ref_mask_c = refmask;
+      rmesa->dirty |= R128_UPLOAD_MASKS;
+   }
+}
+
+static void r128DDStencilOpSeparate( GLcontext *ctx, GLenum face, GLenum fail,
+                                     GLenum zfail, GLenum zpass )
+{
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   GLuint z = rmesa->setup.z_sten_cntl_c;
+   GLboolean ok = 1;
+
+   if (!( ctx->Visual.stencilBits > 0 && ctx->Visual.depthBits == 24 ))
+      return;
+
+   z &= ~(R128_STENCIL_S_FAIL_MASK | R128_STENCIL_ZPASS_MASK |
+	  R128_STENCIL_ZFAIL_MASK);
+
+   switch ( ctx->Stencil.FailFunc[0] ) {
+   case GL_KEEP:
+      z |= R128_STENCIL_S_FAIL_KEEP;
+      break;
+   case GL_ZERO:
+      z |= R128_STENCIL_S_FAIL_ZERO;
+      ok = 0; /* Hardware bug?  ZERO maps to KEEP */
+      break;
+   case GL_REPLACE:
+      z |= R128_STENCIL_S_FAIL_REPLACE;
+      ok = 0; /* Hardware bug?  REPLACE maps to KEEP */
+      break;
+   case GL_INCR:
+      z |= R128_STENCIL_S_FAIL_INC;
+      break;
+   case GL_DECR:
+      z |= R128_STENCIL_S_FAIL_DEC;
+      break;
+   case GL_INVERT:
+      z |= R128_STENCIL_S_FAIL_INV;
+      ok = 0; /* Hardware bug?  INV maps to ZERO */
+      break;
+   }
+
+   switch ( ctx->Stencil.ZFailFunc[0] ) {
+   case GL_KEEP:
+      z |= R128_STENCIL_ZFAIL_KEEP;
+      ok = 0; /* Hardware bug?  KEEP maps to ZERO */
+      break;
+   case GL_ZERO:
+      z |= R128_STENCIL_ZFAIL_ZERO;
+      break;
+   case GL_REPLACE:
+      z |= R128_STENCIL_ZFAIL_REPLACE;
+      break;
+   case GL_INCR:
+      z |= R128_STENCIL_ZFAIL_INC;
+      break;
+   case GL_DECR:
+      z |= R128_STENCIL_ZFAIL_DEC;
+      break;
+   case GL_INVERT:
+      z |= R128_STENCIL_ZFAIL_INV;
+      ok = 0; /* Hardware bug?  INV maps to ZERO */
+      break;
+   }
+
+   switch ( ctx->Stencil.ZPassFunc[0] ) {
+   case GL_KEEP:
+      z |= R128_STENCIL_ZPASS_KEEP;
+      ok = 0; /* Hardware bug?  KEEP maps to ZERO */
+      break;
+   case GL_ZERO:
+      z |= R128_STENCIL_ZPASS_ZERO;
+      break;
+   case GL_REPLACE:
+      z |= R128_STENCIL_ZPASS_REPLACE;
+      break;
+   case GL_INCR:
+      z |= R128_STENCIL_ZPASS_INC;
+      break;
+   case GL_DECR:
+      z |= R128_STENCIL_ZPASS_DEC;
+      ok = 0; /* Hardware bug?  DEC maps to INCR_WRAP */
+      break;
+   case GL_INVERT:
+      z |= R128_STENCIL_ZPASS_INV;
+      ok = 0; /* Hardware bug?  INV maps to ZERO */
+      break;
+   }
+
+   /* XXX: Now that we know whether we can do the given funcs successfully
+    * (according to testing done with a modified stencilwrap test), go
+    * ahead and drop that knowledge on the floor.  While fallbacks remain
+    * broken, they make the situation even worse (in test apps, at least) than
+    * failing in just the stencil part.
+    */
+   /*FALLBACK( rmesa, R128_FALLBACK_STENCIL, !ok );*/
+
+   if ( rmesa->setup.z_sten_cntl_c != z ) {
+      rmesa->setup.z_sten_cntl_c = z;
+      rmesa->dirty |= R128_UPLOAD_CONTEXT;
+   }
+}
+
+static void r128DDClearStencil( GLcontext *ctx, GLint s )
+{
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+
+   if (ctx->Visual.stencilBits > 0 && ctx->Visual.depthBits == 24) {
+      rmesa->ClearDepth &= 0x00ffffff;
+      rmesa->ClearDepth |= ctx->Stencil.Clear << 24;
+   }
+}
 
 /* =============================================================
  * Depth testing
@@ -339,6 +512,7 @@ static void r128DDClearDepth( GLcontext *ctx, GLclampd d )
       break;
    case R128_Z_PIX_WIDTH_24:
       rmesa->ClearDepth = d * 0x00ffffff;
+      rmesa->ClearDepth |= ctx->Stencil.Clear << 24;
       break;
    case R128_Z_PIX_WIDTH_32:
       rmesa->ClearDepth = d * 0xffffffff;
@@ -853,7 +1027,21 @@ static void r128DDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 
    case GL_STENCIL_TEST:
       FLUSH_BATCH( rmesa );
-      FALLBACK( rmesa, R128_FALLBACK_STENCIL, state );
+      if ( ctx->Visual.stencilBits > 0 && ctx->Visual.depthBits == 24 ) {
+	 if ( state ) {
+	    rmesa->setup.tex_cntl_c |=  R128_STENCIL_ENABLE;
+	    /* Reset the fallback (if any) for bad stencil funcs */
+	    r128DDStencilOpSeparate( ctx, 0, ctx->Stencil.FailFunc[0],
+				     ctx->Stencil.ZFailFunc[0],
+				     ctx->Stencil.ZPassFunc[0] );
+	 } else {
+	    rmesa->setup.tex_cntl_c &= ~R128_STENCIL_ENABLE;
+	    FALLBACK( rmesa, R128_FALLBACK_STENCIL, GL_FALSE );
+	 }
+	 rmesa->dirty |= R128_UPLOAD_CONTEXT;
+      } else {
+	 FALLBACK( rmesa, R128_FALLBACK_STENCIL, state );
+      }
       break;
 
    case GL_TEXTURE_1D:
@@ -1184,6 +1372,7 @@ void r128DDInitStateFuncs( GLcontext *ctx )
 
    ctx->Driver.ClearIndex		= NULL;
    ctx->Driver.ClearColor		= r128DDClearColor;
+   ctx->Driver.ClearStencil		= r128DDClearStencil;
    ctx->Driver.DrawBuffer		= r128DDDrawBuffer;
    ctx->Driver.ReadBuffer		= r128DDReadBuffer;
 
@@ -1208,6 +1397,9 @@ void r128DDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.RenderMode		= r128DDRenderMode;
    ctx->Driver.Scissor			= r128DDScissor;
    ctx->Driver.ShadeModel		= r128DDShadeModel;
+   ctx->Driver.StencilFuncSeparate	= r128DDStencilFuncSeparate;
+   ctx->Driver.StencilMaskSeparate	= r128DDStencilMaskSeparate;
+   ctx->Driver.StencilOpSeparate	= r128DDStencilOpSeparate;
 
    ctx->Driver.DepthRange               = r128DepthRange;
    ctx->Driver.Viewport                 = r128Viewport;

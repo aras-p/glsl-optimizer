@@ -408,6 +408,7 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    GLuint flags = 0;
    GLint i;
    GLint ret;
+   GLuint depthmask = 0;
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "%s:\n", __FUNCTION__ );
@@ -438,15 +439,17 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 
    if ( ( mask & BUFFER_BIT_DEPTH ) && ctx->Depth.Mask ) {
       flags |= R128_DEPTH;
+      /* if we're at 16 bits, extra plane mask won't hurt */
+      depthmask |= 0x00ffffff;
       mask &= ~BUFFER_BIT_DEPTH;
    }
-#if 0
-   /* FIXME: Add stencil support */
-   if ( mask & BUFFER_BIT_STENCIL ) {
-      flags |= DRM_R128_DEPTH_BUFFER;
+
+   if ( mask & BUFFER_BIT_STENCIL &&
+	(ctx->Visual.stencilBits > 0 && ctx->Visual.depthBits == 24) ) {
+      flags |= R128_DEPTH;
+      depthmask |= ctx->Stencil.WriteMask[0] << 24;
       mask &= ~BUFFER_BIT_STENCIL;
    }
-#endif
 
    if ( flags ) {
 
@@ -511,7 +514,7 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
          clear.clear_color = rmesa->ClearColor;
          clear.clear_depth = rmesa->ClearDepth;
          clear.color_mask = rmesa->setup.plane_3d_mask_c;
-         clear.depth_mask = ~0;
+         clear.depth_mask = depthmask;
 
          ret = drmCommandWrite( rmesa->driFd, DRM_R128_CLEAR,
                                 &clear, sizeof(clear) );

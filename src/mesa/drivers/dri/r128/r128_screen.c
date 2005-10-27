@@ -271,6 +271,11 @@ r128CreateBuffer( __DRIscreenPrivate *driScrnPriv,
       return GL_FALSE; /* not implemented */
    }
    else {
+      const GLboolean swDepth = GL_FALSE;
+      const GLboolean swAlpha = GL_FALSE;
+      const GLboolean swAccum = mesaVis->accumRedBits > 0;
+      const GLboolean swStencil = mesaVis->stencilBits > 0 &&
+         mesaVis->depthBits != 24;
       struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
 
       {
@@ -316,12 +321,23 @@ r128CreateBuffer( __DRIscreenPrivate *driScrnPriv,
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
       }
 
+      if (mesaVis->stencilBits > 0 && !swStencil) {
+         driRenderbuffer *stencilRb
+            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT,
+                                 NULL,
+                                 screen->cpp,
+                                 screen->depthOffset, screen->depthPitch,
+                                 driDrawPriv);
+         r128SetSpanFunctions(stencilRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
+      }
+
       _mesa_add_soft_renderbuffers(fb,
                                    GL_FALSE, /* color */
-                                   GL_FALSE, /* depth */
-                                   mesaVis->stencilBits > 0,
-                                   mesaVis->accumRedBits > 0,
-                                   GL_FALSE, /* alpha */
+                                   swDepth,
+                                   swStencil,
+                                   swAccum,
+                                   swAlpha,
                                    GL_FALSE /* aux */);
       driDrawPriv->driverPrivate = (void *) fb;
 
