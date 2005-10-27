@@ -44,7 +44,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "utils.h"
 
-#define DRIVER_DATE	"20041026"
+#define DRIVER_DATE	"20051026"
 
 
 /* Return the width and height of the current color buffer.
