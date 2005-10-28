@@ -40,6 +40,7 @@ static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 	struct ati_fragment_shader *afs;
 	
 	switch(target){
+		case GL_VERTEX_STATE_PROGRAM_NV:
 		case GL_VERTEX_PROGRAM_ARB:
 			vp=CALLOC_STRUCT(r300_vertex_program);
 			return _mesa_init_vertex_program(ctx, &vp->mesa_program, target, id);

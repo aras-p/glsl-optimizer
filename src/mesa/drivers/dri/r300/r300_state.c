@@ -1257,7 +1257,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 
 	r300->hw.rc.cmd[1] = 0
 			| (cur_reg /* count */ << R300_RS_CNTL_TC_CNT_SHIFT)
-			| R300_RS_CNTL_0_UNKNOWN_7
+			| (1 << R300_RS_CNTL_CI_CNT_SHIFT)
 			| R300_RS_CNTL_0_UNKNOWN_18;
 
 	if (r300->state.texture.tc_count > 0) {
@@ -1867,6 +1867,10 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 
 	/* Go inefficiency! */
 	r300ResetHwState(r300);
+#ifdef HW_VBOS
+	if(new_state & _NEW_ARRAY)
+		r300->state.VB.lock_uptodate = GL_FALSE;
+#endif
 }
 
 /**

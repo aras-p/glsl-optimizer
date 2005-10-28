@@ -52,6 +52,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //#define RADEON_VTXFMT_A
 //#define HW_VBOS
 //#define OPTIMIZE_ELTS
+//#define CB_DPATH
 
 struct r300_context;
 typedef struct r300_context r300ContextRec;
