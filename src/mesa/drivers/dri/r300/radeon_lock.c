@@ -41,6 +41,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_state.h"
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
+#include "r300_context.h"
 
 #include "framebuffer.h"
 
@@ -109,6 +110,8 @@ static void r200RegainedLock(r200ContextPtr r200)
 static void r300RegainedLock(radeonContextPtr radeon)
 {
 	__DRIdrawablePrivate *dPriv = radeon->dri.drawable;
+	int i;
+	r300ContextPtr r300 = (r300ContextPtr)radeon;
 
 	if (radeon->lastStamp != dPriv->lastStamp) {
 		_mesa_resize_framebuffer(radeon->glCtx,
@@ -126,11 +129,9 @@ static void r300RegainedLock(radeonContextPtr radeon)
 		radeon->lastStamp = dPriv->lastStamp;
 	}
 
-#if R200_MERGED
-	for (i = 0; i < r200->nr_heaps; i++) {
-		DRI_AGE_TEXTURES(r200->texture_heaps[i]);
+	for (i = 0; i < r300->nr_heaps; i++) {
+		DRI_AGE_TEXTURES(r300->texture_heaps[i]);
 	}
-#endif
 }
 
 /* Update the hardware state.  This is called if another context has
