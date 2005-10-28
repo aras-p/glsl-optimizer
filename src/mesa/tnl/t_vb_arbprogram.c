@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -42,6 +42,7 @@
 #include "t_context.h"
 #include "t_pipeline.h"
 #include "t_vb_arbprogram.h"
+#include "tnl.h"
 
 
 #define DISASSEM 0
