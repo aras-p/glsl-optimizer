@@ -129,13 +129,16 @@ static void do_RSW( struct arb_vp_machine *m, union instruction op )
    const GLfloat *arg0 = m->File[op.rsw.file0][op.rsw.idx0];
    GLuint swz = op.rsw.swz;
    GLuint neg = op.rsw.neg;
+   GLfloat tmp[4];
 
-   ASSERT(result != arg0);  /* this would be very bad */
-
-   result[0] = arg0[GET_RSW(swz, 0)];
-   result[1] = arg0[GET_RSW(swz, 1)];
-   result[2] = arg0[GET_RSW(swz, 2)];
-   result[3] = arg0[GET_RSW(swz, 3)];
+   /* Need a temporary to be correct in the case where result == arg0.
+    */
+   COPY_4V(tmp, arg0);
+   
+   result[0] = tmp[GET_RSW(swz, 0)];
+   result[1] = tmp[GET_RSW(swz, 1)];
+   result[2] = tmp[GET_RSW(swz, 2)];
+   result[3] = tmp[GET_RSW(swz, 3)];
    
    if (neg) {
       if (neg & 0x1) result[0] = -result[0];
@@ -254,6 +257,8 @@ static void do_DST( struct arb_vp_machine *m, union instruction op )
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
 
+   /* This should be ok even if result == arg0 or result == arg1.
+    */
    result[0] = 1.0F;
    result[1] = arg0[1] * arg1[1];
    result[2] = arg0[2];
@@ -498,10 +503,18 @@ static void do_XPD( struct arb_vp_machine *m, union instruction op )
    GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
+   GLfloat tmp[3];
 
-   result[0] = arg0[1] * arg1[2] - arg0[2] * arg1[1];
-   result[1] = arg0[2] * arg1[0] - arg0[0] * arg1[2];
-   result[2] = arg0[0] * arg1[1] - arg0[1] * arg1[0];
+   tmp[0] = arg0[1] * arg1[2] - arg0[2] * arg1[1];
+   tmp[1] = arg0[2] * arg1[0] - arg0[0] * arg1[2];
+   tmp[2] = arg0[0] * arg1[1] - arg0[1] * arg1[0];
+
+   /* Need a temporary to be correct in the case where result == arg0
+    * or result == arg1.
+    */
+   result[0] = tmp[0];
+   result[1] = tmp[1];
+   result[2] = tmp[2];
 }
 
 static void do_NOP( struct arb_vp_machine *m, union instruction op ) 
