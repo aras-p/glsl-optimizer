@@ -454,7 +454,7 @@ struct r300_hw_state {
 	struct r300_state_atom unk4E00;	/* (4E00) */
 	struct r300_state_atom bld;	/* blending (4E04) */
 	struct r300_state_atom cmk;	/* colormask (4E0C) */
-	struct r300_state_atom unk4E10;	/* (4E10) */
+	struct r300_state_atom unk4E10;	/* constant blend color + ??? (4E10) */
 	struct r300_state_atom cb;	/* colorbuffer (4E28) */
 	struct r300_state_atom unk4E50;	/* (4E50) */
 	struct r300_state_atom unk4E88;	/* (4E88) */

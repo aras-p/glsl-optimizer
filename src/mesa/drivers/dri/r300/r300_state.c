@@ -118,13 +118,13 @@ static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 
 	R300_STATECHANGE(rmesa, unk4E10);
 
-	/* Ordering might be wrong */
 	CLAMPED_FLOAT_TO_UBYTE(color[0], cf[0]);
 	CLAMPED_FLOAT_TO_UBYTE(color[1], cf[1]);
 	CLAMPED_FLOAT_TO_UBYTE(color[2], cf[2]);
 	CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
 
-	rmesa->hw.unk4E10.cmd[1]=r300PackColor(4, color[0], color[1], color[2], color[3]);
+	rmesa->hw.unk4E10.cmd[1] = r300PackColor(4, color[3], color[0],
+						 color[1], color[2]);
 }
 
 /**
@@ -194,6 +194,7 @@ static int blend_factor(GLenum factor, GLboolean is_src)
 		func = R200_BLEND_GL_ONE_MINUS_CONST_ALPHA;
 		break;
 	default:
+		fprintf(stderr, "unknown blend factor %x\n", factor);
 		func = (is_src) ? R200_BLEND_GL_ONE : R200_BLEND_GL_ZERO;
 	}
 	return func;
