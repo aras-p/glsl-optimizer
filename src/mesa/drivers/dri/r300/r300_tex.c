@@ -64,7 +64,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 			   GLenum rwrap)
 {
-	GLboolean is_clamp = GL_FALSE;
 	unsigned long hw_swrap=0, hw_twrap=0, hw_qwrap=0;
 
 	t->filter &=
@@ -76,7 +75,6 @@ static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 		break;
 	case GL_CLAMP:
 		hw_swrap |= R300_TX_CLAMP;
-		is_clamp = GL_TRUE;
 		break;
 	case GL_CLAMP_TO_EDGE:
 		hw_swrap |= R300_TX_CLAMP_TO_EDGE;
@@ -89,7 +87,6 @@ static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 		break;
 	case GL_MIRROR_CLAMP_EXT:
 		hw_swrap |= R300_TX_CLAMP | R300_TX_MIRRORED;
-		is_clamp = GL_TRUE;
 		break;
 	case GL_MIRROR_CLAMP_TO_EDGE_EXT:
 		hw_swrap |= R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
@@ -107,7 +104,6 @@ static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 		break;
 	case GL_CLAMP:
 		hw_twrap |= R300_TX_CLAMP;
-		is_clamp = GL_TRUE;
 		break;
 	case GL_CLAMP_TO_EDGE:
 		hw_twrap |= R300_TX_CLAMP_TO_EDGE;
@@ -120,7 +116,6 @@ static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 		break;
 	case GL_MIRROR_CLAMP_EXT:
 		hw_twrap |= R300_TX_CLAMP | R300_TX_MIRRORED;
-		is_clamp = GL_TRUE;
 		break;
 	case GL_MIRROR_CLAMP_TO_EDGE_EXT:
 		hw_twrap |= R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
@@ -138,7 +133,6 @@ static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 		break;
 	case GL_CLAMP:
 		hw_qwrap |= R300_TX_CLAMP;
-		is_clamp = GL_TRUE;
 		break;
 	case GL_CLAMP_TO_EDGE:
 		hw_qwrap |= R300_TX_CLAMP_TO_EDGE;
@@ -151,7 +145,6 @@ static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 		break;
 	case GL_MIRROR_CLAMP_EXT:
 		hw_qwrap |= R300_TX_CLAMP | R300_TX_MIRRORED;
-		is_clamp = GL_TRUE;
 		break;
 	case GL_MIRROR_CLAMP_TO_EDGE_EXT:
 		hw_qwrap |= R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
