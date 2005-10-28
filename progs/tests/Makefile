@@ -47,6 +47,7 @@ SOURCES = antialias.c \
 	stencilwrap.c \
 	stencil_wrap.c \
 	tex1d.c \
+	texfilt.c \
 	texline.c \
 	texobjshare.c \
 	texrect.c \
@@ -100,13 +101,13 @@ getproclist.h: $(TOP)/src/mesa/glapi/gl_API.xml getprocaddress.c getprocaddress.
 	python getprocaddress.py > getproclist.h
 
 afsmultiarb: afsmultiarb.o readtex.o
-	$(CC) afsmultiarb.o readtex.o $(LIBS) -o $@
+	$(CC) $(CFLAGS) afsmultiarb.o readtex.o $(LIBS) -o $@
 
 afsmultiarb.o: afsmultiarb.c readtex.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 texrect: texrect.o readtex.o
-	$(CC) texrect.o readtex.o $(LIBS) -o $@
+	$(CC) $(CFLAGS) texrect.o readtex.o $(LIBS) -o $@
 
 texrect.o: texrect.c readtex.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
@@ -118,7 +119,7 @@ bug_3195.o: bug_3195.c readtex.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 invert: invert.o readtex.o
-	$(CC) invert.o readtex.o $(LIBS) -o $@
+	$(CC) $(CFLAGS) invert.o readtex.o $(LIBS) -o $@
 
 invert.o: invert.c readtex.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
