@@ -103,6 +103,7 @@ typedef struct {
 
 	GLboolean drmSupportsCubeMaps;	/* need radeon kernel module >=1.7 */
 	GLboolean drmSupportsBlendColor;	/* need radeon kernel module >= 1.11 */
+        GLboolean depthHasSurface;
 
 	/* Configuration cache with default values for all contexts */
 	driOptionCache optionCache;
