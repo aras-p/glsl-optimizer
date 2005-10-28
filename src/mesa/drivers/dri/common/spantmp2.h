@@ -421,7 +421,7 @@ static void TAG2(ReadRGBASpan,_MMX)( GLcontext *ctx,
 	     CLIPSPAN(x,y,n,x1,n1,i);
 
 	       {
-		  const char * src = GET_PTR( x1, y );
+		  const void * src = GET_PTR( x1, y );
 #if (SPANTMP_PIXEL_FMT == GL_RGB) && \
 		  (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_SHORT_5_6_5)
 		  _generic_read_RGBA_span_RGB565_MMX( src, rgba[i], n1 );
@@ -464,7 +464,7 @@ static void TAG2(ReadRGBASpan,_SSE2)( GLcontext *ctx,
 	     CLIPSPAN(x,y,n,x1,n1,i);
 
 	       {
-		  const char * src = GET_PTR( x1, y );
+		  const void * src = GET_PTR( x1, y );
 		  _generic_read_RGBA_span_BGRA8888_REV_SSE2( src, rgba[i], n1 );
 	       }
 	  }
@@ -505,7 +505,7 @@ static void TAG2(ReadRGBASpan,_SSE)( GLcontext *ctx,
 	     CLIPSPAN(x,y,n,x1,n1,i);
 
 	       {
-		  const char * src = GET_PTR( x1, y );
+		  const void * src = GET_PTR( x1, y );
 		  _generic_read_RGBA_span_BGRA8888_REV_SSE( src, rgba[i], n1 );
 	       }
 	  }
