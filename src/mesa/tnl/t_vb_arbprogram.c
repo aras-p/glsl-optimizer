@@ -43,6 +43,7 @@
 #include "t_pipeline.h"
 #include "t_vb_arbprogram.h"
 
+
 #define DISASSEM 0
 
 /*--------------------------------------------------------------------------- */
@@ -1459,3 +1460,20 @@ const struct tnl_pipeline_stage _tnl_arb_vertex_program_stage =
    validate_vertex_program,	/* validate */
    run_arb_vertex_program	/* run */
 };
+
+
+/**
+ * Called via ctx->Driver.ProgramStringNotify() after a new vertex program
+ * string has been parsed.
+ */
+void
+_tnl_program_string(GLcontext *ctx, GLenum target, struct program *program)
+{
+   if (target == GL_VERTEX_PROGRAM_ARB) {
+      /* free any existing tnl data hanging off the program */
+      struct vertex_program *vprog = (struct vertex_program *) program;
+      if (vprog->TnlData) {
+         free_tnl_data(vprog);
+      }
+   }
+}

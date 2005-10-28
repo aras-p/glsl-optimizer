@@ -45,6 +45,7 @@
 #endif
 
 #include "driverfuncs.h"
+#include "tnl/tnl.h"
 #include "swrast/swrast.h"
 
 
@@ -222,6 +223,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->NeedFlush = 0;
    driver->SaveNeedFlush = 0;
 
+   driver->ProgramStringNotify = _tnl_program_string;
    driver->FlushVertices = NULL;
    driver->SaveFlushVertices = NULL;
    driver->NotifySaveBegin = NULL;
