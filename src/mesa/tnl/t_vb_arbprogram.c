@@ -129,6 +129,8 @@ static void do_RSW( struct arb_vp_machine *m, union instruction op )
    GLuint swz = op.rsw.swz;
    GLuint neg = op.rsw.neg;
 
+   ASSERT(result != arg0);  /* this would be very bad */
+
    result[0] = arg0[GET_RSW(swz, 0)];
    result[1] = arg0[GET_RSW(swz, 1)];
    result[2] = arg0[GET_RSW(swz, 2)];
