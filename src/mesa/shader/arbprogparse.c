@@ -1949,9 +1949,9 @@ parse_param (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
    if (specified_length) {
       if (specified_length != (int)param_var->param_binding_length) {
          _mesa_set_program_error (ctx, Program->Position,
-                                  "Declared parameter array lenght does not match parameter list");
+                                  "Declared parameter array length does not match parameter list");
          _mesa_error (ctx, GL_INVALID_OPERATION,
-                      "Declared parameter array lenght does not match parameter list");
+                      "Declared parameter array length does not match parameter list");
       }
    }
 
