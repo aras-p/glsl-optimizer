@@ -91,7 +91,10 @@ static GLfloat RoughApproxExp2(GLfloat t)
 
 static GLfloat RoughApproxPower(GLfloat x, GLfloat y)
 {
-   return RoughApproxExp2(y * RoughApproxLog2(x));
+   if (x == 0.0 && y == 0.0)
+      return 1.0;  /* spec requires this */
+   else
+      return RoughApproxExp2(y * RoughApproxLog2(x));
 }
 
 
@@ -336,17 +339,15 @@ static void do_LIT( struct arb_vp_machine *m, union instruction op )
    GLfloat tmp[4];
 
    tmp[0] = 1.0;
-   tmp[1] = 0.0;
-   tmp[2] = 0.0;
+   tmp[1] = arg0[0];
+   if (arg0[0] > 0.0) {
+      tmp[2] = RoughApproxPower(arg0[1], arg0[3]);
+   }
+   else {
+      tmp[2] = 0.0;
+   }
    tmp[3] = 1.0;
 
-   if (arg0[0] > 0.0) {
-      tmp[1] = arg0[0];
-
-      if (arg0[1] > 0.0) {
-	 tmp[2] = RoughApproxPower(arg0[1], arg0[3]);
-      }
-   }
 
    COPY_4V(result, tmp);
 }
@@ -1485,7 +1486,7 @@ const struct tnl_pipeline_stage _tnl_arb_vertex_program_stage =
 void
 _tnl_program_string(GLcontext *ctx, GLenum target, struct program *program)
 {
-   if (target == GL_VERTEX_PROGRAM_ARB) {
+   if (program->Target == GL_VERTEX_PROGRAM_ARB) {
       /* free any existing tnl data hanging off the program */
       struct vertex_program *vprog = (struct vertex_program *) program;
       if (vprog->TnlData) {
