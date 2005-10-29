@@ -790,6 +790,13 @@ static struct reg cvp_emit_arg( struct compilation *cp,
     */
    rsw.dword = 0;
    rsw.rsw.neg = src->Negate ? WRITEMASK_XYZW : 0;
+
+   /* we're expecting 2-bit swizzles below... */
+   ASSERT(GET_SWZ(src->Swizzle, 0) < 4);
+   ASSERT(GET_SWZ(src->Swizzle, 1) < 4);
+   ASSERT(GET_SWZ(src->Swizzle, 2) < 4);
+   ASSERT(GET_SWZ(src->Swizzle, 3) < 4);
+
    rsw.rsw.swz = ((GET_SWZ(src->Swizzle, 0) << 0) |
 		  (GET_SWZ(src->Swizzle, 1) << 2) |
 		  (GET_SWZ(src->Swizzle, 2) << 4) |
