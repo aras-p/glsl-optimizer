@@ -1901,6 +1901,10 @@ struct gl_query_state
 
 
 /**
+ ** XXX do these gl2 structs really neeed to be here?
+ **/
+
+/**
  * gl2 unique interface identifier.
  * Each gl2 interface has its own interface id used for object queries.
  */
@@ -2008,7 +2012,7 @@ struct gl_shared_state
     * \name Vertex/fragment programs
     */
    /*@{*/
-   struct _mesa_HashTable *Programs;
+   struct _mesa_HashTable *Programs; /**< All vertex/fragment programs */
 #if FEATURE_ARB_vertex_program
    struct program *DefaultVertexProgram;
 #endif
@@ -2730,10 +2734,10 @@ struct __GLcontextRec
    GLboolean ExecuteFlag;	/**< Execute GL commands? */
    GLboolean CompileFlag;	/**< Compile GL commands into display list? */
 
-   /** Extensions */
+   /** Extension information */
    struct gl_extensions Extensions;
 
-   /** \name Renderer attribute stack */
+   /** \name State attribute stack (for glPush/PopAttrib) */
    /*@{*/
    GLuint AttribStackDepth;
    struct gl_attrib_node *AttribStack[MAX_ATTRIB_STACK_DEPTH];
@@ -2745,8 +2749,8 @@ struct __GLcontextRec
     * attributes easy.  Also it's a good organization.
     */
    /*@{*/
-   struct gl_accum_attrib	Accum;		/**< Accumulation buffer attributes */
-   struct gl_colorbuffer_attrib	Color;		/**< Color buffers attributes */
+   struct gl_accum_attrib	Accum;		/**< Accum buffer attributes */
+   struct gl_colorbuffer_attrib	Color;		/**< Color buffer attributes */
    struct gl_current_attrib	Current;	/**< Current attributes */
    struct gl_depthbuffer_attrib	Depth;		/**< Depth buffer attributes */
    struct gl_eval_attrib	Eval;		/**< Eval attributes */
@@ -2817,7 +2821,6 @@ struct __GLcontextRec
    /*@}*/
 
 #if FEATURE_EXT_framebuffer_object
-   /*struct gl_framebuffer *CurrentFramebuffer;*/
    struct gl_renderbuffer *CurrentRenderbuffer;
 #endif
 
