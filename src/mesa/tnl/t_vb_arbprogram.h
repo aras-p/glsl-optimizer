@@ -112,6 +112,10 @@ union instruction {
    GLuint dword;
 };
 
+
+/**
+ * Reduced swizzle is a 2-bit field; only X/Y/Z/W are allowed, not 0/1.
+ */
 #define RSW_NOOP ((0<<0) | (1<<2) | (2<<4) | (3<<6))
 #define GET_RSW(swz, idx)      (((swz) >> ((idx)*2)) & 0x3)
 
