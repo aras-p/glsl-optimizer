@@ -157,31 +157,29 @@ void _mesa_debug_vp_inst(GLint num, struct vp_instruction *vp)
 }
 
 
+/**
+ * Parse the vertex program string.  If success, update the given
+ * vertex_program object with the new program.  Else, leave the vertex_program
+ * object unchanged.
+ */
 void
 _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
 			       const GLubyte * str, GLsizei len,
 			       struct vertex_program *program)
 {
-   GLuint retval;
    struct arb_program ap;
    (void) target;
 
    /* set the program target before parsing */
    ap.Base.Target = GL_VERTEX_PROGRAM_ARB;
 
-   retval = _mesa_parse_arb_program(ctx, str, len, &ap);
-
-   /*  Parse error. Allocate a dummy program and return */	
-   if (retval)
-   {
-      program->Instructions = (struct vp_instruction *)
-         _mesa_malloc ( sizeof(struct vp_instruction) );
-      program->Instructions[0].Opcode = VP_OPCODE_END;
+   if (!_mesa_parse_arb_program(ctx, str, len, &ap)) {
+      /* Error in the program. Just return. */
       return;
    }
 
-   /* copy the relvant contents of the arb_program struct into the 
-    * fragment_program struct
+   /* Copy the relevant contents of the arb_program struct into the 
+    * vertex_program struct.
     */
    program->Base.String          = ap.Base.String;
    program->Base.NumInstructions = ap.Base.NumInstructions;

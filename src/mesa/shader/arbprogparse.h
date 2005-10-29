@@ -67,8 +67,9 @@ struct arb_program
    GLuint NumTexIndirections;
 };
 
-extern GLuint 
+
+extern GLboolean
 _mesa_parse_arb_program( GLcontext *ctx, const GLubyte *str, GLsizei len, 
-                         struct arb_program *Program );
-                          
+                         struct arb_program *program );
+
 #endif

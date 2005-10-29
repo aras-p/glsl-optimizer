@@ -182,31 +182,26 @@ _mesa_debug_fp_inst(GLint num, struct fp_instruction *fp)
    }
 }
 
+
 void
 _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
                                  const GLubyte * str, GLsizei len,
                                  struct fragment_program *program)
 {
-   GLuint a, retval;
+   GLuint i;
    struct arb_program ap;
    (void) target;
 
    /* set the program target before parsing */
    ap.Base.Target = GL_FRAGMENT_PROGRAM_ARB;
 
-   retval = _mesa_parse_arb_program(ctx, str, len, &ap);
-
-   /* XXX: Parse error. Cleanup things and return */
-   if (retval)
-   {
-      program->Instructions = (struct fp_instruction *) _mesa_malloc (
-                                     sizeof(struct fp_instruction) );
-      program->Instructions[0].Opcode = FP_OPCODE_END;
+   if (!_mesa_parse_arb_program(ctx, str, len, &ap)) {
+      /* Error in the program. Just return. */
       return;
    }
 
-   /* copy the relvant contents of the arb_program struct into the
-    * fragment_program struct
+   /* Copy the relevant contents of the arb_program struct into the
+    * fragment_program struct.
     */
    program->Base.String          = ap.Base.String;
    program->Base.NumInstructions = ap.Base.NumInstructions;
@@ -217,8 +212,8 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
 
    program->InputsRead     = ap.InputsRead;
    program->OutputsWritten = ap.OutputsWritten;
-   for (a=0; a<MAX_TEXTURE_IMAGE_UNITS; a++)
-      program->TexturesUsed[a] = ap.TexturesUsed[a];
+   for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
+      program->TexturesUsed[i] = ap.TexturesUsed[i];
    program->NumAluInstructions = ap.NumAluInstructions;
    program->NumTexInstructions = ap.NumTexInstructions;
    program->NumTexIndirections = ap.NumTexIndirections;

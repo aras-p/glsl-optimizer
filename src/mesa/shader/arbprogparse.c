@@ -3702,11 +3702,11 @@ debug_variables (GLcontext * ctx, struct var_cache *vc_head,
 /**
  * The main loop for parsing a fragment or vertex program
  *
- * \return 0 on sucess, 1 on error
+ * \return GL_TRUE on success, GL_FALSE on error.
  */
-static GLint
-parse_arb_program (GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
-                   struct arb_program *Program)
+static GLboolean
+parse_arb_program(GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
+                  struct arb_program *Program)
 {
    GLint err = 0;
 
@@ -3913,10 +3913,10 @@ static int enable_ext (GLcontext *ctx, grammar id, const byte *name, const byte 
  * \param ctx - The GL Context
  * \param str - The program string
  * \param len - The program string length
- * \param Program - The arb_program struct to return all the parsed info in
- * \return 0 on sucess, 1 on error
+ * \param program - The arb_program struct to return all the parsed info in
+ * \return GL_TRUE on sucess, GL_FALSE on error
  */
-GLuint
+GLboolean
 _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
                          struct arb_program * program)
 {
@@ -3949,22 +3949,21 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
          _mesa_set_program_error (ctx, error_pos, error_msg);
          _mesa_error (ctx, GL_INVALID_OPERATION,
                       "Error loading grammar rule set");
-         return 1;
+         return GL_FALSE;
       }
 
       err = grammar_check (grammar_syn_id, (byte *) arb_grammar_text, &parsed, &parsed_len);
 
-      /* NOTE: we cant destroy grammar_syn_id right here because grammar_destroy() can
-         reset the last error
-      */
-
+      /* NOTE: we can't destroy grammar_syn_id right here because
+       * grammar_destroy() can reset the last error
+       */
       if (err == 0) {
          grammar_get_last_error ((byte *) error_msg, 300, &error_pos);
          _mesa_set_program_error (ctx, error_pos, error_msg);
          _mesa_error (ctx, GL_INVALID_OPERATION, "Error loading grammar rule set");
 
          grammar_destroy (grammar_syn_id);
-         return 1;
+         return GL_FALSE;
       }
 
       grammar_destroy (grammar_syn_id);
@@ -3979,14 +3978,14 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
       _mesa_set_program_error (ctx, error_pos, error_msg);
       _mesa_error (ctx, GL_INVALID_OPERATION,
                    "Error loading grammer rule set");
-      return 1;
+      return GL_FALSE;
    }
 
    /* Set program_target register value */
    if (set_reg8 (ctx, arbprogram_syn_id, (byte *) "program_target",
       program->Base.Target == GL_FRAGMENT_PROGRAM_ARB ? 0x10 : 0x20)) {
       grammar_destroy (arbprogram_syn_id);
-      return 1;
+      return GL_FALSE;
    }
 
    /* Enable all active extensions */
@@ -4015,7 +4014,7 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
        enable_ext (ctx, arbprogram_syn_id,
           (byte *) "draw_buffers", (byte *) "GL_ARB_draw_buffers")) {
       grammar_destroy (arbprogram_syn_id);
-      return 1;
+      return GL_FALSE;
    }
 
    /* check for NULL character occurences */
@@ -4027,13 +4026,16 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
             _mesa_error (ctx, GL_INVALID_OPERATION, "Lexical Error");
 
             grammar_destroy (arbprogram_syn_id);
-            return 1;
+            return GL_FALSE;
          }
    }
 
    /* copy the program string to a null-terminated string */
-   /* XXX should I check for NULL from malloc()? */
    strz = (GLubyte *) _mesa_malloc (len + 1);
+   if (!strz) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glprogramStringARB");
+      return GL_FALSE;
+   }
    _mesa_memcpy (strz, str, len);
    strz[len] = '\0';
 
@@ -4048,22 +4050,22 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
       _mesa_free (strz);
       grammar_get_last_error ((GLubyte *) error_msg, 300, &error_pos);
       _mesa_set_program_error (ctx, error_pos, error_msg);
-      _mesa_error (ctx, GL_INVALID_OPERATION, "glProgramStringARB(syntax error)");
+      _mesa_error (ctx, GL_INVALID_OPERATION, "glprogramStringARB(syntax error)");
 
       /* useful for debugging */
 #if DEBUG_PARSING
       do {
          int line, col;
          char *s;
-         fprintf(stderr, "Program: %s\n", (char *) strz);
-         fprintf(stderr, "Error Pos: %d\n", ctx->Program.ErrorPos);
-         s = (char *) _mesa_find_line_column(strz, strz+ctx->Program.ErrorPos, &line, &col);
+         fprintf(stderr, "program: %s\n", (char *) strz);
+         fprintf(stderr, "Error Pos: %d\n", ctx->program.ErrorPos);
+         s = (char *) _mesa_find_line_column(strz, strz+ctx->program.ErrorPos, &line, &col);
          fprintf(stderr, "line %d col %d: %s\n", line, col, s);
       } while (0)
 #endif
 
       grammar_destroy (arbprogram_syn_id);
-      return 1;
+      return GL_FALSE;
    }
 
 #if DEBUG_PARSING
@@ -4095,7 +4097,7 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    program->VPInstructions = NULL;
 
    vc_head = NULL;
-   err = 0;
+   err = GL_FALSE;
 
    /* Start examining the tokens in the array */
    inst = parsed;
@@ -4103,8 +4105,9 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    /* Check the grammer rev */
    if (*inst++ != REVISION) {
       _mesa_set_program_error (ctx, 0, "Grammar version mismatch");
-      _mesa_error (ctx, GL_INVALID_OPERATION, "glProgramStringARB(Grammar verison mismatch)");
-      err = 1;
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glProgramStringARB(Grammar verison mismatch)");
+      err = GL_TRUE;
    }
    else {
       /* ignore program target */
@@ -4125,5 +4128,6 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
 #if DEBUG_PARSING
    fprintf (stderr, "_mesa_parse_arb_program() done\n");
 #endif
-   return err;
+
+   return !err;
 }
