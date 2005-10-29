@@ -191,6 +191,11 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
    program->IsPositionInvariant = ap.HintPositionInvariant;
    program->InputsRead     = ap.InputsRead;
    program->OutputsWritten = ap.OutputsWritten;
+
+   if (program->Parameters) {
+      /* free previous program's parameters */
+      _mesa_free_parameter_list(program->Parameters);
+   }
    program->Parameters     = ap.Parameters; 
 
    program->Instructions   = ap.VPInstructions;

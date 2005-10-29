@@ -209,14 +209,19 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
    program->Base.NumParameters   = ap.Base.NumParameters;
    program->Base.NumAttributes   = ap.Base.NumAttributes;
    program->Base.NumAddressRegs  = ap.Base.NumAddressRegs;
+   program->NumAluInstructions = ap.NumAluInstructions;
+   program->NumTexInstructions = ap.NumTexInstructions;
+   program->NumTexIndirections = ap.NumTexIndirections;
 
    program->InputsRead     = ap.InputsRead;
    program->OutputsWritten = ap.OutputsWritten;
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
       program->TexturesUsed[i] = ap.TexturesUsed[i];
-   program->NumAluInstructions = ap.NumAluInstructions;
-   program->NumTexInstructions = ap.NumTexInstructions;
-   program->NumTexIndirections = ap.NumTexIndirections;
+
+   if (program->Parameters) {
+      /* free previous program's parameters */
+      _mesa_free_parameter_list(program->Parameters);
+   }
    program->Parameters         = ap.Parameters;
    program->FogOption          = ap.FogOption;
 
