@@ -395,9 +395,10 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
     */
    if (ctx->Light.Enabled) {
       inputs |= VERT_BIT_NORMAL;
-      if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
-	 inputs |= VERT_BIT_COLOR1;
-      }
+   }
+
+   if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
+      inputs |= VERT_BIT_COLOR1;
    }
 
    if ( (ctx->Fog.FogCoordinateSource == GL_FOG_COORD) && ctx->Fog.Enabled ) {
