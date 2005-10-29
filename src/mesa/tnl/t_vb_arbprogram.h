@@ -65,7 +65,7 @@
 #define REG_NEG    67		/* -1,-1,-1,-1 */
 #define REG_LIT    68           /* 1,0,0,1 */
 #define REG_LIT2    69           /* 1,0,0,1 */
-#define REG_SCRATCH 70		/* internal temporary */
+#define REG_SCRATCH 70		/* internal temporary. XXX we can't actually use this because 70 doesn't fit in the 5-bit 'dst' instruction field! */
 #define REG_UNDEF  127		/* special case - never used */
 #define REG_MAX    128
 #define REG_INVALID ~0
