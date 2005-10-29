@@ -41,7 +41,7 @@
 #include "nvfragprog.h"
 #include "arbprogparse.h"
 #include "grammar_mesa.h"
-
+#include "program.h"
 #include "dispatch.h"
 
 #ifndef __extension__
@@ -2395,100 +2395,85 @@ parse_masked_address_reg (GLcontext * ctx, GLubyte ** inst,
 /**
  * Parse out a swizzle mask.
  *
- * The values in the input stream are:
- *   COMPONENT_X -> x/r
- *   COMPONENT_Y -> y/g
- *   COMPONENT_Z-> z/b
- *   COMPONENT_W-> w/a
- *
- * The values in the output mask are:
- *   0 -> x/r
- *   1 -> y/g
- *   2 -> z/b
- *   3 -> w/a
+ * Basically convert COMPONENT_X/Y/Z/W to SWIZZLE_X/Y/Z/W
  *
  * The len parameter allows us to grab 4 components for a vector
  * swizzle, or just 1 component for a scalar src register selection
  */
-static GLuint
-parse_swizzle_mask (GLubyte ** inst, GLubyte * mask, GLint len)
+static void
+parse_swizzle_mask(GLubyte ** inst, GLubyte *swizzle, GLint len)
 {
-   GLint a;
+   GLint i;
 
-   for (a = 0; a < 4; a++)
-      mask[a] = a;
+   for (i = 0; i < 4; i++)
+      swizzle[i] = i;
 
-   for (a = 0; a < len; a++) {
+   for (i = 0; i < len; i++) {
       switch (*(*inst)++) {
          case COMPONENT_X:
-            mask[a] = 0;
+            swizzle[i] = SWIZZLE_X;
             break;
-
          case COMPONENT_Y:
-            mask[a] = 1;
+            swizzle[i] = SWIZZLE_Y;
             break;
-
          case COMPONENT_Z:
-            mask[a] = 2;
+            swizzle[i] = SWIZZLE_Z;
             break;
-
          case COMPONENT_W:
-            mask[a] = 3;
+            swizzle[i] = SWIZZLE_W;
             break;
+         default:
+            _mesa_problem(NULL, "bad component in parse_swizzle_mask()");
+            return;
       }
    }
-
-   return 0;
 }
 
-/**
- */
-static GLuint
-parse_extended_swizzle_mask(GLubyte **inst, GLubyte *mask, GLubyte *negate)
-{
-   GLint a;
-   GLubyte swz;
 
-   *negate = 0x0;
-   for (a = 0; a < 4; a++) {
-      if (parse_sign (inst) == -1)
-         *negate |= (1 << a);
+/**
+ * Parse an extended swizzle mask which is a sequence of
+ * four x/y/z/w/0/1 tokens.
+ * \return swizzle  four swizzle values
+ * \return negateMask  four element bitfield
+ */
+static void
+parse_extended_swizzle_mask(GLubyte **inst, GLubyte swizzle[4],
+                            GLubyte *negateMask)
+{
+   GLint i;
+
+   *negateMask = 0x0;
+   for (i = 0; i < 4; i++) {
+      GLubyte swz;
+      if (parse_sign(inst) == -1)
+         *negateMask |= (1 << i);
 
       swz = *(*inst)++;
 
       switch (swz) {
          case COMPONENT_0:
-            mask[a] = SWIZZLE_ZERO;
+            swizzle[i] = SWIZZLE_ZERO;
             break;
          case COMPONENT_1:
-            mask[a] = SWIZZLE_ONE;
+            swizzle[i] = SWIZZLE_ONE;
             break;
          case COMPONENT_X:
-            mask[a] = SWIZZLE_X;
+            swizzle[i] = SWIZZLE_X;
             break;
          case COMPONENT_Y:
-            mask[a] = SWIZZLE_Y;
+            swizzle[i] = SWIZZLE_Y;
             break;
          case COMPONENT_Z:
-            mask[a] = SWIZZLE_Z;
+            swizzle[i] = SWIZZLE_Z;
             break;
          case COMPONENT_W:
-            mask[a] = SWIZZLE_W;
+            swizzle[i] = SWIZZLE_W;
             break;
-
+         default:
+            _mesa_problem(NULL, "bad case in parse_extended_swizzle_mask()");
+            return;
       }
-#if 0
-      if (swz == 0)
-         mask[a] = SWIZZLE_ZERO;
-      else if (swz == 1)
-         mask[a] = SWIZZLE_ONE;
-      else
-         mask[a] = swz - 2;
-#endif
-
    }
-
-   return 0;
 }
 
 
@@ -2657,37 +2642,33 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
 /**
  */
 static GLuint
-parse_fp_vector_src_reg (GLcontext * ctx, GLubyte ** inst,
-			 struct var_cache **vc_head, struct arb_program *Program,
-			 struct fp_src_register *reg )
+parse_fp_vector_src_reg(GLcontext * ctx, GLubyte ** inst,
+                        struct var_cache **vc_head,
+                        struct arb_program *program,
+                        struct fp_src_register *reg)
 {
-
-   GLint File;
-   GLint Index;
-   GLboolean Negate;
-   GLubyte Swizzle[4];
-   GLboolean IsRelOffset;
+   GLint file;
+   GLint index;
+   GLboolean negate;
+   GLubyte swizzle[4];
+   GLboolean isRelOffset;
 
    /* Grab the sign */
-   Negate = (parse_sign (inst) == -1) ? 0xf : 0x0;
+   negate = (parse_sign (inst) == -1) ? 0xf : 0x0;
 
    /* And the src reg */
-   if (parse_src_reg (ctx, inst, vc_head, Program, &File, &Index, &IsRelOffset))
+   if (parse_src_reg(ctx, inst, vc_head, program, &file, &index, &isRelOffset))
       return 1;
 
    /* finally, the swizzle */
-   parse_swizzle_mask (inst, Swizzle, 4);
+   parse_swizzle_mask(inst, swizzle, 4);
 
-   reg->File = File;
-   reg->Index = Index;
+   reg->File = file;
+   reg->Index = index;
    reg->Abs = 0;		/* NV only */
    reg->NegateAbs = 0;		/* NV only */
-   reg->NegateBase = Negate;
-   reg->Swizzle = (Swizzle[0] << 0 |
-		   Swizzle[1] << 3 |
-		   Swizzle[2] << 6 |
-		   Swizzle[3] << 9);
-
+   reg->NegateBase = negate;
+   reg->Swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1], swizzle[2], swizzle[3]);
    return 0;
 }
 
@@ -2732,7 +2713,7 @@ parse_fp_scalar_src_reg (GLcontext * ctx, GLubyte ** inst,
       return 1;
 
    /* finally, the swizzle */
-   parse_swizzle_mask (inst, Swizzle, 1);
+   parse_swizzle_mask(inst, Swizzle, 1);
 
    reg->File = File;
    reg->Index = Index;
@@ -3036,20 +3017,20 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
             return 1;
 
 	 {
-	    GLubyte Swizzle[4];
+	    GLubyte swizzle[4];
 	    GLubyte negateMask;
-	    GLint File, Index;
+	    GLint file, index;
 
-	    if (parse_src_reg(ctx, inst, vc_head, Program, &File, &Index, &rel))
+	    if (parse_src_reg(ctx, inst, vc_head, Program, &file, &index, &rel))
 	       return 1;
-	    parse_extended_swizzle_mask (inst, Swizzle, &negateMask);
-	    fp->SrcReg[0].File = File;
-	    fp->SrcReg[0].Index = Index;
+	    parse_extended_swizzle_mask(inst, swizzle, &negateMask);
+	    fp->SrcReg[0].File = file;
+	    fp->SrcReg[0].Index = index;
 	    fp->SrcReg[0].NegateBase = negateMask;
-	    fp->SrcReg[0].Swizzle = (Swizzle[0] << 0 |
-				     Swizzle[1] << 3 |
-				     Swizzle[2] << 6 |
-				     Swizzle[3] << 9);
+	    fp->SrcReg[0].Swizzle = MAKE_SWIZZLE4(swizzle[0],
+                                                  swizzle[1],
+                                                  swizzle[2],
+                                                  swizzle[3]);
 	 }
          break;
 
@@ -3170,35 +3151,33 @@ parse_vp_address_reg (GLcontext * ctx, GLubyte ** inst,
 /**
  */
 static GLuint
-parse_vp_vector_src_reg (GLcontext * ctx, GLubyte ** inst,
-			 struct var_cache **vc_head, struct arb_program *Program,
-			 struct vp_src_register *reg )
+parse_vp_vector_src_reg(GLcontext * ctx, GLubyte ** inst,
+                        struct var_cache **vc_head,
+                        struct arb_program *program,
+                        struct vp_src_register *reg )
 {
-
-   GLint File;
-   GLint Index;
-   GLboolean Negate;
-   GLubyte Swizzle[4];
-   GLboolean IsRelOffset;
+   GLint file;
+   GLint index;
+   GLboolean negate;
+   GLubyte swizzle[4];
+   GLboolean isRelOffset;
 
    /* Grab the sign */
-   Negate = (parse_sign (inst) == -1) ? 0xf : 0x0;
+   negate = (parse_sign (inst) == -1) ? 0xf : 0x0;
 
    /* And the src reg */
-   if (parse_src_reg (ctx, inst, vc_head, Program, &File, &Index, &IsRelOffset))
+   if (parse_src_reg (ctx, inst, vc_head, program, &file, &index, &isRelOffset))
       return 1;
 
    /* finally, the swizzle */
-   parse_swizzle_mask (inst, Swizzle, 4);
+   parse_swizzle_mask(inst, swizzle, 4);
 
-   reg->File = File;
-   reg->Index = Index;
-   reg->Swizzle = ((Swizzle[0] << 0) |
-		   (Swizzle[1] << 3) |
-		   (Swizzle[2] << 6) |
-		   (Swizzle[3] << 9));
-   reg->Negate = Negate;
-   reg->RelAddr = IsRelOffset;
+   reg->File = file;
+   reg->Index = index;
+   reg->Swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
+                                swizzle[2], swizzle[3]);
+   reg->Negate = negate;
+   reg->RelAddr = isRelOffset;
    return 0;
 }
 
@@ -3223,7 +3202,7 @@ parse_vp_scalar_src_reg (GLcontext * ctx, GLubyte ** inst,
       return 1;
 
    /* finally, the swizzle */
-   parse_swizzle_mask (inst, Swizzle, 1);
+   parse_swizzle_mask(inst, Swizzle, 1);
 
    reg->File = File;
    reg->Index = Index;
@@ -3421,25 +3400,25 @@ parse_vp_instruction (GLcontext * ctx, GLubyte ** inst,
                break;
          }
 	 {
-	    GLubyte Swizzle[4]; 
-	    GLubyte NegateMask;
-	    GLboolean RelAddr;
-	    GLint File, Index;
+	    GLubyte swizzle[4]; 
+	    GLubyte negateMask;
+	    GLboolean relAddr;
+	    GLint file, index;
 
 	    if (parse_vp_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
 	       return 1;
 
-	    if (parse_src_reg(ctx, inst, vc_head, Program, &File, &Index, &RelAddr))
+	    if (parse_src_reg(ctx, inst, vc_head, Program, &file, &index, &relAddr))
 	       return 1;
-	    parse_extended_swizzle_mask (inst, Swizzle, &NegateMask);
-	    vp->SrcReg[0].File = File;
-	    vp->SrcReg[0].Index = Index;
-	    vp->SrcReg[0].Negate = NegateMask;
-	    vp->SrcReg[0].Swizzle = (Swizzle[0] << 0 |
-				     Swizzle[1] << 3 |
-				     Swizzle[2] << 6 |
-				     Swizzle[3] << 9);
-	    vp->SrcReg[0].RelAddr = RelAddr;
+	    parse_extended_swizzle_mask (inst, swizzle, &negateMask);
+	    vp->SrcReg[0].File = file;
+	    vp->SrcReg[0].Index = index;
+	    vp->SrcReg[0].Negate = negateMask;
+	    vp->SrcReg[0].Swizzle = MAKE_SWIZZLE4(swizzle[0],
+                                                  swizzle[1],
+                                                  swizzle[2],
+                                                  swizzle[3]);
+	    vp->SrcReg[0].RelAddr = relAddr;
 	 }
          break;
    }
