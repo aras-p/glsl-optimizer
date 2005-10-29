@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -765,14 +765,14 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
                GLuint i;
 
                /* do extended swizzling here */
-               for (i = 0; i < 3; i++) {
+               for (i = 0; i < 4; i++) {
                   if (GET_SWZ(source->Swizzle, i) == SWIZZLE_ZERO)
                      result[i] = 0.0;
                   else if (GET_SWZ(source->Swizzle, i) == SWIZZLE_ONE)
-                     result[i] = -1.0;
+                     result[i] = 1.0;
                   else
-                     result[i] = -src[GET_SWZ(source->Swizzle, i)];
-                  if (source->Negate)
+                     result[i] = src[GET_SWZ(source->Swizzle, i)];
+                  if (source->Negate & (1 << i))
                      result[i] = -result[i];
                }
                store_vector4( &inst->DstReg, state, result );
