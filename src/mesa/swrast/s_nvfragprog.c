@@ -1031,10 +1031,11 @@ execute_program( GLcontext *ctx,
             {
                GLfloat a[4], result[4];
                fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
+               a[0] = FABSF(a[0]);
                result[0] = result[1] = result[2] = result[3] = INV_SQRTF(a[0]);
                store_vector4( inst, machine, result );
 #if DEBUG_FRAG
-               printf("RSQ %g = 1/sqrt(%g)\n", result[0], a[0]);
+               printf("RSQ %g = 1/sqrt(|%g|)\n", result[0], a[0]);
 #endif
             }
             break;
