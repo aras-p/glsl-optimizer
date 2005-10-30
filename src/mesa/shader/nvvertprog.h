@@ -108,4 +108,8 @@ struct vp_instruction
 };
 
 
+extern void
+_mesa_init_vp_instruction(struct vp_instruction *inst);
+
+
 #endif /* VERTPROG_H */

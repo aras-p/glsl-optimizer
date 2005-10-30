@@ -1259,12 +1259,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
       GLubyte token[100];
 
       /* Initialize the instruction */
-      inst->SrcReg[0].File = PROGRAM_UNDEFINED;
-      inst->SrcReg[1].File = PROGRAM_UNDEFINED;
-      inst->SrcReg[2].File = PROGRAM_UNDEFINED;
-      inst->DstReg.File = PROGRAM_UNDEFINED;
-      inst->DstReg.CondSwizzle = SWIZZLE_NOOP;
-      inst->Data = NULL;
+      _mesa_init_fp_instruction(inst);
 
       /* special instructions */
       if (Parse_String(parseState, "DEFINE")) {
@@ -1822,4 +1817,25 @@ _mesa_nv_fragment_output_register_name(GLuint i)
 {
    ASSERT(i < MAX_NV_FRAGMENT_PROGRAM_OUTPUTS);
    return OutputRegisters[i];
+}
+
+
+/**
+ * Initialize fragment program instruction fields to defaults.
+ */
+void
+_mesa_init_fp_instruction(struct fp_instruction *inst)
+{
+   _mesa_bzero(inst, sizeof(struct fp_instruction));
+   inst->SrcReg[0].File = PROGRAM_UNDEFINED;
+   inst->SrcReg[0].Swizzle = SWIZZLE_NOOP;
+   inst->SrcReg[1].File = PROGRAM_UNDEFINED;
+   inst->SrcReg[1].Swizzle = SWIZZLE_NOOP;
+   inst->SrcReg[2].File = PROGRAM_UNDEFINED;
+   inst->SrcReg[2].Swizzle = SWIZZLE_NOOP;
+   inst->DstReg.File = PROGRAM_UNDEFINED;
+   inst->DstReg.WriteMask = 0xf;
+   inst->DstReg.CondSwizzle = SWIZZLE_NOOP;
+   inst->Precision = FLOAT32;
+   inst->DstReg.CondMask = COND_TR;
 }

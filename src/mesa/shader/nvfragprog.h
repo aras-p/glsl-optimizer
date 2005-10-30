@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,10 +36,15 @@
 #include "config.h"
 #include "mtypes.h"
 
-/* output registers */
-#define FRAG_OUTPUT_COLR  0
-#define FRAG_OUTPUT_COLH  1
-#define FRAG_OUTPUT_DEPR  2
+
+/**
+ * Fragment program output registers.
+ * Note: when we fully suppport GL_ARB_draw_buffers we'll have more than
+ * one output color.
+ */
+#define FRAG_OUTPUT_COLR  0   /* fragment color */
+#define FRAG_OUTPUT_COLH  1   /* fragment color, half precision (NV) */
+#define FRAG_OUTPUT_DEPR  2   /* depth/Z */
 
 
 /* condition codes */
@@ -163,6 +168,10 @@ struct fp_instruction
    struct fp_src_register SrcReg[3];
    struct fp_dst_register DstReg;
 };
+
+
+extern void
+_mesa_init_fp_instruction(struct fp_instruction *inst);
 
 
 #endif
