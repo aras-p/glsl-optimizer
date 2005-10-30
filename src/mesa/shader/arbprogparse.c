@@ -493,8 +493,6 @@ struct var_cache
    GLuint address_binding;      /* The index of the address register we should
                                  * be using                                        */
    GLuint attrib_binding;       /* For type vt_attrib, see nvfragprog.h for values */
-   GLuint attrib_binding_idx;   /* The index into the attrib register file corresponding
-                                 * to the state in attrib_binding                  */
    GLuint attrib_is_generic;    /* If the attrib was specified through a generic
                                  * vertex attrib                                   */
    GLuint temp_binding;         /* The index of the temp register we are to use    */
@@ -1389,9 +1387,9 @@ generic_attrib_check(struct var_cache *vc_head)
    while (curr) {
       if (curr->type == vt_attrib) {
          if (curr->attrib_is_generic)
-            genericAttrib[ curr->attrib_binding_idx ] = GL_TRUE;
+            genericAttrib[ curr->attrib_binding ] = GL_TRUE;
          else
-            explicitAttrib[ curr->attrib_binding_idx ] = GL_TRUE;
+            explicitAttrib[ curr->attrib_binding ] = GL_TRUE;
       }
 
       curr = curr->next;
@@ -1408,46 +1406,41 @@ generic_attrib_check(struct var_cache *vc_head)
 /**
  * This will handle the binding side of an ATTRIB var declaration
  *
- * \param binding     - the fragment input register state, defined in nvfragprog.h
- * \param binding_idx - the index in the attrib register file that binding is associated with
+ * \param inputReg  returns the input register index, one of the
+ *                  VERT_ATTRIB_* or FRAG_ATTRIB_* values.
  * \return returns 0 on sucess, 1 on error
- *
- * See nvfragparse.c for attrib register file layout
  */
 static GLuint
-parse_attrib_binding (GLcontext * ctx, GLubyte ** inst,
-                      struct arb_program *Program, GLuint * binding,
-                      GLuint * binding_idx, GLuint *is_generic)
+parse_attrib_binding(GLcontext * ctx, GLubyte ** inst,
+                     struct arb_program *Program,
+                     GLuint *inputReg, GLuint *is_generic)
 {
-   GLuint texcoord;
-   GLint coord;
    GLint err = 0;
 
    *is_generic = 0;
+
    if (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
       switch (*(*inst)++) {
          case FRAGMENT_ATTRIB_COLOR:
-            err = parse_color_type (ctx, inst, Program, &coord);
-            *binding = FRAG_ATTRIB_COL0 + coord;
-            *binding_idx = 1 + coord;
+            {
+               GLint coord;
+               err = parse_color_type (ctx, inst, Program, &coord);
+               *inputReg = FRAG_ATTRIB_COL0 + coord;
+            }
             break;
-
          case FRAGMENT_ATTRIB_TEXCOORD:
-            err = parse_texcoord_num (ctx, inst, Program, &texcoord);
-            *binding = FRAG_ATTRIB_TEX0 + texcoord;
-            *binding_idx = 4 + texcoord;
+            {
+               GLuint texcoord;
+               err = parse_texcoord_num (ctx, inst, Program, &texcoord);
+               *inputReg = FRAG_ATTRIB_TEX0 + texcoord;
+            }
             break;
-
          case FRAGMENT_ATTRIB_FOGCOORD:
-            *binding = FRAG_ATTRIB_FOGC;
-            *binding_idx = 3;
+            *inputReg = FRAG_ATTRIB_FOGC;
             break;
-
          case FRAGMENT_ATTRIB_POSITION:
-            *binding = FRAG_ATTRIB_WPOS;
-            *binding_idx = 0;
+            *inputReg = FRAG_ATTRIB_WPOS;
             break;
-
          default:
             err = 1;
             break;
@@ -1456,105 +1449,65 @@ parse_attrib_binding (GLcontext * ctx, GLubyte ** inst,
    else {
       switch (*(*inst)++) {
          case VERTEX_ATTRIB_POSITION:
-            *binding = VERT_ATTRIB_POS;
-            *binding_idx = 0;
+            *inputReg = VERT_ATTRIB_POS;
             break;
 
          case VERTEX_ATTRIB_WEIGHT:
             {
+               const char *msg = "ARB_vertex_blend not supported";
                GLint weight;
-
                err = parse_weight_num (ctx, inst, Program, &weight);
-               *binding = VERT_ATTRIB_WEIGHT;
-               *binding_idx = 1;
+               *inputReg = VERT_ATTRIB_WEIGHT;
+               _mesa_set_program_error(ctx, Program->Position, msg);
+               _mesa_error(ctx, GL_INVALID_OPERATION, msg);
             }
-            _mesa_set_program_error (ctx, Program->Position,
-                 "ARB_vertex_blend not supported\n");
-            _mesa_error (ctx, GL_INVALID_OPERATION,
-                 "ARB_vertex_blend not supported\n");
             return 1;
-            break;
 
          case VERTEX_ATTRIB_NORMAL:
-            *binding = VERT_ATTRIB_NORMAL;
-            *binding_idx = 2;
+            *inputReg = VERT_ATTRIB_NORMAL;
             break;
 
          case VERTEX_ATTRIB_COLOR:
             {
                GLint color;
-
                err = parse_color_type (ctx, inst, Program, &color);
                if (color) {
-                  *binding = VERT_ATTRIB_COLOR1;
-                  *binding_idx = 4;
+                  *inputReg = VERT_ATTRIB_COLOR1;
                }
                else {
-                  *binding = VERT_ATTRIB_COLOR0;
-                  *binding_idx = 3;
+                  *inputReg = VERT_ATTRIB_COLOR0;
                }
             }
             break;
 
          case VERTEX_ATTRIB_FOGCOORD:
-            *binding = VERT_ATTRIB_FOG;
-            *binding_idx = 5;
+            *inputReg = VERT_ATTRIB_FOG;
             break;
 
          case VERTEX_ATTRIB_TEXCOORD:
             {
                GLuint unit;
-
                err = parse_texcoord_num (ctx, inst, Program, &unit);
-               *binding = VERT_ATTRIB_TEX0 + unit;
-               *binding_idx = 8 + unit;
+               *inputReg = VERT_ATTRIB_TEX0 + unit;
             }
             break;
 
-            /* It looks like we don't support this at all, atm */
          case VERTEX_ATTRIB_MATRIXINDEX:
-            parse_integer (inst, Program);
-            _mesa_set_program_error (ctx, Program->Position,
-                  "ARB_palette_matrix not supported");
-            _mesa_error (ctx, GL_INVALID_OPERATION,
-                  "ARB_palette_matrix not supported");
+            /* Not supported at this time */
+            {
+               const char *msg = "ARB_palette_matrix not supported";
+               parse_integer (inst, Program);
+               _mesa_set_program_error (ctx, Program->Position, msg);
+               _mesa_error (ctx, GL_INVALID_OPERATION, msg);
+            }
             return 1;
-            break;
 
          case VERTEX_ATTRIB_GENERIC:
             {
                GLuint attrib;
-
                if (!parse_generic_attrib_num(ctx, inst, Program, &attrib)) {
                   *is_generic = 1;
-                  switch (attrib) {
-                     case 0:
-                        *binding = VERT_ATTRIB_POS;
-                        break;
-                     case 1:
-                        *binding = VERT_ATTRIB_WEIGHT;
-                        break;
-                     case 2:
-                        *binding = VERT_ATTRIB_NORMAL;
-                        break;
-                     case 3:
-                        *binding = VERT_ATTRIB_COLOR0;
-                        break;
-                     case 4:
-                        *binding = VERT_ATTRIB_COLOR1;
-                        break;
-                     case 5:
-                        *binding = VERT_ATTRIB_FOG;
-                        break;
-                     case 6:
-                        break;
-                     case 7:
-                        break;
-                     default:
-                        *binding = VERT_ATTRIB_TEX0 + (attrib-8);
-                        break;
-                  }
-                  *binding_idx = attrib;
+                  *inputReg = attrib;
                }
             }
             break;
@@ -1567,12 +1520,12 @@ parse_attrib_binding (GLcontext * ctx, GLubyte ** inst,
 
    /* Can this even happen? */
    if (err) {
-      _mesa_set_program_error (ctx, Program->Position,
-                               "Bad attribute binding");
-      _mesa_error (ctx, GL_INVALID_OPERATION, "Bad attribute binding");
+      const char *msg = "Bad attribute binding";
+      _mesa_set_program_error(ctx, Program->Position, msg);
+      _mesa_error(ctx, GL_INVALID_OPERATION, msg);
    }
 
-   Program->InputsRead |= (1 << *binding_idx);
+   Program->InputsRead |= (1 << *inputReg);
 
    return err;
 }
@@ -1703,7 +1656,6 @@ parse_attrib (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
    attrib_var->type = vt_attrib;
 
    if (parse_attrib_binding(ctx, inst, Program, &attrib_var->attrib_binding,
-                            &attrib_var->attrib_binding_idx,
                             &attrib_var->attrib_is_generic))
       return 1;
 
@@ -2461,7 +2413,7 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
                GLboolean *IsRelOffset )
 {
    struct var_cache *src;
-   GLuint binding_state, binding_idx, is_generic, found;
+   GLuint binding, is_generic, found;
    GLint offset;
 
    *IsRelOffset = 0;
@@ -2470,10 +2422,10 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
    switch (*(*inst)++) {
       case REGISTER_ATTRIB:
          if (parse_attrib_binding
-             (ctx, inst, Program, &binding_state, &binding_idx, &is_generic))
+             (ctx, inst, Program, &binding, &is_generic))
             return 1;
          *File = PROGRAM_INPUT;
-         *Index = binding_idx;
+         *Index = binding;
 
          /* We need to insert a dummy variable into the var_cache so we can
           * catch generic vertex attrib aliasing errors
@@ -2481,9 +2433,8 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
          var_cache_create(&src);
          src->type = vt_attrib;
          src->name = (GLubyte *)_mesa_strdup("Dummy Attrib Variable");
-         src->attrib_binding     = binding_state;
-         src->attrib_binding_idx = binding_idx;
-         src->attrib_is_generic  = is_generic;
+         src->attrib_binding = binding;
+         src->attrib_is_generic = is_generic;
          var_cache_append(vc_head, src);
          if (generic_attrib_check(*vc_head)) {
             const char *msg = "Cannot use both a generic vertex attribute "
@@ -2554,7 +2505,6 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
                break;
 
             default:
-
                if (parse_param_use (ctx, inst, vc_head, Program, &src))
                   return 1;
 
@@ -2580,7 +2530,7 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
          switch (src->type) {
             case vt_attrib:
                *File = PROGRAM_INPUT;
-               *Index = src->attrib_binding_idx;
+               *Index = src->attrib_binding;
                break;
 
                /* XXX: We have to handle offsets someplace in here!  -- or are those above? */
@@ -2617,6 +2567,7 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
 }
 
 /**
+ * Parse fragment program vector source register.
  */
 static GLuint
 parse_fp_vector_src_reg(GLcontext * ctx, GLubyte ** inst,
