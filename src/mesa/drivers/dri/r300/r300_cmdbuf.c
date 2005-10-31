@@ -620,11 +620,12 @@ void r300EmitWait(r300ContextPtr rmesa, GLuint flags)
 
 void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 {
-	if (RADEON_DEBUG & DEBUG_VERTS)
-	    fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __func__, nr, offset);
     int sz = 1 + (nr >> 1) * 3 + (nr & 1) * 2;
     int i;
     LOCAL_VARS
+
+    if (RADEON_DEBUG & DEBUG_VERTS)
+	fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __func__, nr, offset);
 
     start_packet3(RADEON_CP_PACKET3_3D_LOAD_VBPNTR, sz-1);
     e32(nr);

@@ -219,6 +219,8 @@ void r200ChooseVertexState( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    TNLcontext *tnl = TNL_CONTEXT(ctx);
+   GLuint vte;
+   GLuint vap;
 
    /* We must ensure that we don't do _tnl_need_projected_coords while in a
     * rasterization fallback.  As this function will be called again when we
@@ -227,8 +229,8 @@ void r200ChooseVertexState( GLcontext *ctx )
    if (rmesa->Fallback != 0)
       return;
 
-   GLuint vte = rmesa->hw.vte.cmd[VTE_SE_VTE_CNTL];
-   GLuint vap = rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL];
+   vte = rmesa->hw.vte.cmd[VTE_SE_VTE_CNTL];
+   vap = rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL];
 
    /* HW perspective divide is a win, but tiny vertex formats are a
     * bigger one.

@@ -277,9 +277,9 @@ static void free_temp(struct r300_fragment_program *rp, pfs_reg_t r)
 static pfs_reg_t emit_param4fv(struct r300_fragment_program *rp, GLfloat *values)
 {
 	pfs_reg_t r = pfs_default_reg;
-		r.type = REG_TYPE_CONST;
 	int pidx;
 
+	r.type = REG_TYPE_CONST;
 	pidx = rp->param_nr++;
 	r.index = rp->const_nr++;
 	if (pidx >= PFS_NUM_CONST_REGS || r.index >= PFS_NUM_CONST_REGS) {
@@ -626,6 +626,7 @@ static void emit_arith(struct r300_fragment_program *rp, int op,
 	int argc;
 	int vop, sop;
 	int i;
+	int str;
 	
 	if (!dest.valid || !src0.valid || !src1.valid || !src2.valid) {
 		ERROR("invalid register.  dest/src0/src1/src2 valid = %d/%d/%d/%d\n",
@@ -657,7 +658,6 @@ static void emit_arith(struct r300_fragment_program *rp, int op,
 		return;
 	}
 	
-	int str;
 	for (i=0;i<3;i++) {
 		if (i<argc) {
 			hwsrc = t_hw_src(rp, src[i]);

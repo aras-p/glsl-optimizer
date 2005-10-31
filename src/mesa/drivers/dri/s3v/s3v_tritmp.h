@@ -17,7 +17,8 @@
         int start02, end01; \
         int ystart, y01y12; \
         int i, tmp, tmp2, tmp3; \
-        GLfloat ydiff, fy[3]; \
+        GLfloat ydiff, fy[3]
+#define LINE_VERT_VARS_VOIDS \
         (void) v; (void) vvv; (void) x; (void) y; (void) z; (void) idx; \
         (void) dx01; (void) dy01; (void) delt02; (void) deltzy; \
         (void) zstart; (void) start02; (void) ystart; (void) y01y12; \
@@ -26,7 +27,8 @@
 #define LINE_FLAT_VARS \
         int arstart, gbstart; \
         int deltarx, deltgbx, deltary, deltgby; \
-        GLubyte *(col)[3]; \
+        GLubyte *(col)[3]
+#define LINE_FLAT_VARS_VOIDS \
         (void) arstart; (void) gbstart; (void) deltarx; (void) deltgbx; \
         (void) deltary; (void) deltgby; (void) col
 
@@ -34,7 +36,8 @@
         int arstart, gbstart; \
         int deltary, deltgby; \
         int ctmp, ctmp2, ctmp3, ctmp4; \
-        GLubyte *(col)[3]; \
+        GLubyte *(col)[3]
+#define LINE_GOURAUD_VARS_VOIDS \
         (void) arstart; (void) gbstart; (void) deltary; (void) deltgby; \
         (void) ctmp; (void) ctmp2; (void) ctmp3; (void) ctmp4; (void) col
 
@@ -207,7 +210,8 @@ do { \
         int start02, end01, end12; \
         int ystart, y01y12; \
         int i, tmp, lr; \
-        GLfloat ydiff, fy[3]; \
+        GLfloat ydiff, fy[3]
+#define VERT_VARS_VOIDS \
         (void) v; (void) x; (void) y; (void) z; (void) idx; (void) dx01; \
         (void) dy01; (void) dx02; (void) dy02; (void) dx12; (void) dy12; \
         (void) delt01; (void) delt02; (void) delt12; (void) deltzx; \
@@ -219,7 +223,8 @@ do { \
         int arstart, gbstart; \
         int deltarx, deltgbx, deltary, deltgby; \
         int ctmp, ctmp2, ctmp3, ctmp4; \
-        GLubyte *(col)[3]; \
+        GLubyte *(col)[3]
+#define GOURAUD_VARS_VOIDS \
         (void) arstart; (void) gbstart; (void) deltarx; (void) deltgbx; \
         (void) deltary; (void) deltgby; (void) ctmp; (void) ctmp2; \
         (void) ctmp3; (void) ctmp4; (void) col
@@ -227,7 +232,8 @@ do { \
 #define FLAT_VARS \
         int arstart, gbstart; \
         int deltarx, deltgbx, deltary, deltgby; \
-        GLubyte *(col)[3]; \
+        GLubyte *(col)[3]
+#define FLAT_VARS_VOIDS \
         (void) arstart; (void) gbstart; (void) deltarx; (void) deltgbx; \
         (void) deltary; (void) deltgby; (void) col
 
@@ -245,7 +251,8 @@ do { \
         int rbaseu, rbasev; \
         int dstart, ustart, wstart, vstart; \
         static int stmp = 0; \
-        s3vTextureObjectPtr t; \
+        s3vTextureObjectPtr t
+#define TEX_VARS_VOIDS \
         (void) u0; (void) u1; (void) u2; (void) ru0; (void) ru1; (void) ru2; \
         (void) v0; (void) v1; (void) v2; (void) rv0; (void) rv1; (void) rv2; \
         (void) w0; (void) w1; (void) w2; (void) rw0; (void) rw1; (void) rw2; \
@@ -620,6 +627,12 @@ static void TAG(s3v_line)( s3vContextPtr vmesa,
 	GLfloat cull;
         (void) cull;
 #endif
+	LINE_VERT_VARS_VOIDS;
+#if (IND & S3V_RAST_FLAT_BIT)
+	LINE_FLAT_VARS_VOIDS;
+#else
+	LINE_GOURAUD_VARS_VOIDS;
+#endif
 
 	DEBUG(("*** s3v_line: "));
 #if (IND & S3V_RAST_CULL_BIT)
@@ -683,6 +696,15 @@ static void TAG(s3v_triangle)( s3vContextPtr vmesa,
 #endif
 #if (IND & S3V_RAST_CULL_BIT)
 	GLfloat cull;
+#endif
+	VERT_VARS_VOIDS;
+#if (IND & S3v_RAST_FLAT_BIT)
+	FLAT_VARS_VOIDS;
+#else
+	GOURAUD_VARS_VOIDS;
+#endif
+#if (IND & S3V_RAST_TEX_BIT)
+	TEX_VARS_VOIDS;
 #endif
 
 	DEBUG(("*** s3v_triangle: "));
@@ -773,6 +795,15 @@ static void TAG(s3v_quad)( s3vContextPtr vmesa,
 #endif
 #if (IND & S3V_RAST_CULL_BIT)
         GLfloat cull;
+#endif
+        VERT_VARS_VOIDS;
+#if (IND & S3v_RAST_FLAT_BIT)
+        FLAT_VARS_VOIDS;
+#else
+        GOURAUD_VARS_VOIDS;
+#endif
+#if (IND & S3V_RAST_TEX_BIT)
+        TEX_VARS_VOIDS;
 #endif
 
 	DEBUG(("*** s3v_quad: "));

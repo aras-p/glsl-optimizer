@@ -632,18 +632,18 @@ void savageFlushCmdBuf( savageContextPtr imesa, GLboolean discard )
 
 static void savageDDFlush( GLcontext *ctx )
 {
+    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG)
 	fprintf (stderr, "%s\n", __FUNCTION__);
-    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     savageFlushVertices (imesa);
     savageFlushCmdBuf(imesa, GL_FALSE);
 }
 
 static void savageDDFinish( GLcontext *ctx  ) 
 {
+    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG)
 	fprintf (stderr, "%s\n", __FUNCTION__);
-    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     savageFlushVertices (imesa);
     savageFlushCmdBuf(imesa, GL_FALSE);
     WAIT_IDLE_EMPTY(imesa);

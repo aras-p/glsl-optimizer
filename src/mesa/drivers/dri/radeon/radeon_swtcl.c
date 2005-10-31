@@ -391,7 +391,7 @@ radeonDmaPrimitive( radeonContextPtr rmesa, GLenum prim )
    assert(rmesa->dma.current.ptr == rmesa->dma.current.start);
 }
 
-#define LOCAL_VARS radeonContextPtr rmesa = RADEON_CONTEXT(ctx); (void)rmesa
+#define LOCAL_VARS radeonContextPtr rmesa = RADEON_CONTEXT(ctx)
 #define INIT( prim ) radeonDmaPrimitive( rmesa, prim )
 #define FLUSH()  RADEON_NEWPRIM( rmesa )
 #define GET_CURRENT_VB_MAX_VERTS() \

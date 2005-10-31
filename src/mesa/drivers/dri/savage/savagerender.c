@@ -246,11 +246,6 @@ static GLboolean run_texnorm_stage( GLcontext *ctx,
       return GL_TRUE;
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
-      if (!ctx->Texture.Unit[i]._ReallyEnabled ||
-	  VB->TexCoordPtr[i]->size == 4)
-	 /* Never try to normalize homogenous tex coords! */
-	 continue;
-
       GLuint reallyEnabled = ctx->Texture.Unit[i]._ReallyEnabled;
       struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
       GLboolean normalizeS = (texObj->WrapS == GL_REPEAT);
@@ -260,6 +255,11 @@ static GLboolean run_texnorm_stage( GLcontext *ctx,
       GLint instride = VB->TexCoordPtr[i]->stride;
       GLfloat (*out)[4] = store->texcoord[i].data;
       GLint j;
+
+      if (!ctx->Texture.Unit[i]._ReallyEnabled ||
+	  VB->TexCoordPtr[i]->size == 4)
+	 /* Never try to normalize homogenous tex coords! */
+	 continue;
 
       if (normalizeS && normalizeT) {
 	 /* take first texcoords as rough estimate of mean value */
