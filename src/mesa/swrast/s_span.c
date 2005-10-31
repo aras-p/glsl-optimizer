@@ -868,7 +868,7 @@ _swrast_write_index_span( GLcontext *ctx, struct sw_span *span)
    }
 
    /* Interpolate the color indexes if needed */
-   if (ctx->Fog.Enabled ||
+   if (swrast->_FogEnabled ||
        ctx->Color.IndexLogicOpEnabled ||
        ctx->Color.IndexMask != 0xffffffff ||
        (span->arrayMask & SPAN_COVERAGE)) {
@@ -878,7 +878,7 @@ _swrast_write_index_span( GLcontext *ctx, struct sw_span *span)
    }
 
    /* Fog */
-   if (ctx->Fog.Enabled) {
+   if (swrast->_FogEnabled) {
       _swrast_fog_ci_span(ctx, span);
    }
 

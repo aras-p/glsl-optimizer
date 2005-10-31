@@ -54,12 +54,13 @@
 static void
 _swrast_update_rasterflags( GLcontext *ctx )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLbitfield rasterMask = 0;
 
    if (ctx->Color.AlphaEnabled)           rasterMask |= ALPHATEST_BIT;
    if (ctx->Color.BlendEnabled)           rasterMask |= BLEND_BIT;
    if (ctx->Depth.Test)                   rasterMask |= DEPTH_BIT;
-   if (ctx->Fog.Enabled)                  rasterMask |= FOG_BIT;
+   if (swrast->_FogEnabled)               rasterMask |= FOG_BIT;
    if (ctx->Scissor.Enabled)              rasterMask |= CLIP_BIT;
    if (ctx->Stencil.Enabled)              rasterMask |= STENCIL_BIT;
    if (ctx->Visual.rgbMode) {

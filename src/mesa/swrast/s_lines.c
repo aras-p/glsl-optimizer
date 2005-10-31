@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -310,7 +310,7 @@ _swrast_choose_line( GLcontext *ctx )
             USE(textured_line);
          }
       }
-      else if (ctx->Depth.Test || ctx->Fog.Enabled || ctx->Line._Width != 1.0
+      else if (ctx->Depth.Test || swrast->_FogEnabled || ctx->Line._Width != 1.0
                || ctx->Line.StippleFlag) {
          /* no texture, but Z, fog, width>1, stipple, etc. */
          if (rgbmode)

@@ -98,7 +98,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
 
    if (ctx->Depth.Test)
       _swrast_span_default_z(ctx, &span);
-   if (ctx->Fog.Enabled)
+   if (swrast->_FogEnabled)
       _swrast_span_default_fog(ctx, &span);
    if (ctx->Texture._EnabledCoordUnits)
       _swrast_span_default_texcoords(ctx, &span);
@@ -220,7 +220,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
 
    if (ctx->Depth.Test)
       _swrast_span_default_z(ctx, &span);
-   if (ctx->Fog.Enabled)
+   if (swrast->_FogEnabled)
       _swrast_span_default_fog(ctx, &span);
    if (ctx->Texture._EnabledCoordUnits)
       _swrast_span_default_texcoords(ctx, &span);

@@ -129,6 +129,7 @@ static void
 copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                       GLint width, GLint height, GLint destx, GLint desty)
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_renderbuffer *drawRb = NULL;
    GLboolean quick_draw;
    GLint row;
@@ -141,7 +142,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    if (ctx->Depth.Test)
       _swrast_span_default_z(ctx, &span);
-   if (ctx->Fog.Enabled)
+   if (swrast->_FogEnabled)
       _swrast_span_default_fog(ctx, &span);
 
 
@@ -251,6 +252,7 @@ static void
 copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                  GLint width, GLint height, GLint destx, GLint desty)
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_renderbuffer *drawRb;
    GLchan *tmpImage,*p;
    GLboolean quick_draw;
@@ -296,7 +298,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    if (ctx->Depth.Test)
       _swrast_span_default_z(ctx, &span);
-   if (ctx->Fog.Enabled)
+   if (swrast->_FogEnabled)
       _swrast_span_default_fog(ctx, &span);
 
    if (SWRAST_CONTEXT(ctx)->_RasterMask == 0
@@ -390,6 +392,7 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
                 GLint width, GLint height,
                 GLint destx, GLint desty )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint *tmpImage,*p;
    GLint sy, dy, stepy;
    GLint j;
@@ -429,7 +432,7 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
    if (ctx->Depth.Test)
       _swrast_span_default_z(ctx, &span);
-   if (ctx->Fog.Enabled)
+   if (swrast->_FogEnabled)
       _swrast_span_default_fog(ctx, &span);
 
    if (overlapping) {
@@ -496,6 +499,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
                    GLint width, GLint height,
                    GLint destx, GLint desty )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *readRb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
    const GLfloat depthMax = fb->_DepthMaxF;
@@ -536,7 +540,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    _swrast_span_default_color(ctx, &span);
-   if (ctx->Fog.Enabled)
+   if (swrast->_FogEnabled)
       _swrast_span_default_fog(ctx, &span);
 
    if (overlapping) {
