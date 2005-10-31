@@ -231,7 +231,7 @@ static struct state_key *make_state_key( GLcontext *ctx )
  */
 #define PREFER_DP4 0
 
-#define MAX_INSN 200
+#define MAX_INSN 256
 
 /* Use uregs to represent registers internally, translate to Mesa's
  * expected formats on emit.  
