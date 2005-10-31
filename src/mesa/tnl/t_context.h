@@ -614,12 +614,16 @@ struct tnl_clipspace
 };
 
 
-
-struct tnl_cache {
+struct tnl_cache_item {
    GLuint hash;
    void *key;
    void *data;
-   struct tnl_cache *next;
+   struct tnl_cache_item *next;
+};
+
+struct tnl_cache {
+   struct tnl_cache_item **items;
+   GLuint size, n_items;
 };
 
 

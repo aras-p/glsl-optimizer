@@ -1403,9 +1403,9 @@ static void *search_cache( struct tnl_cache *cache,
 			   const void *key,
 			   GLuint keysize)
 {
-   struct tnl_cache *c;
+   struct tnl_cache_item *c;
 
-   for (c = cache; c; c = c->next) {
+   for (c = cache->items[hash % cache->size]; c; c = c->next) {
       if (c->hash == hash && _mesa_memcmp(c->key, key, keysize) == 0)
 	 return c->data;
    }
@@ -1413,17 +1413,43 @@ static void *search_cache( struct tnl_cache *cache,
    return NULL;
 }
 
-static void cache_item( struct tnl_cache **cache,
+static void rehash( struct tnl_cache *cache )
+{
+   struct tnl_cache_item **items;
+   struct tnl_cache_item *c, *next;
+   GLuint size, i;
+
+   size = cache->size * 3;
+   items = MALLOC(size * sizeof(*items));
+   _mesa_memset(items, 0, size * sizeof(*items));
+
+   for (i = 0; i < cache->size; i++)
+      for (c = cache->items[i]; c; c = next) {
+	 next = c->next;
+	 c->next = items[c->hash % size];
+	 items[c->hash % size] = c;
+      }
+
+   FREE(cache->items);
+   cache->items = items;
+   cache->size = size;
+}
+
+static void cache_item( struct tnl_cache *cache,
 			GLuint hash,
 			void *key,
 			void *data )
 {
-   struct tnl_cache *c = MALLOC(sizeof(*c));
+   struct tnl_cache_item *c = MALLOC(sizeof(*c));
    c->hash = hash;
    c->key = key;
    c->data = data;
-   c->next = *cache;
-   *cache = c;
+
+   if (++cache->n_items > cache->size * 1.5)
+      rehash(cache);
+
+   c->next = cache->items[hash % cache->size];
+   cache->items[hash % cache->size] = c;
 }
 
 static GLuint hash_key( struct state_key *key )
@@ -1453,6 +1479,16 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
    key = make_state_key(ctx);
    hash = hash_key(key);
 
+   if (tnl->vp_cache == NULL) {
+      tnl->vp_cache = MALLOC(sizeof(*tnl->vp_cache));
+      tnl->vp_cache->size = 5;
+      tnl->vp_cache->n_items = 0;
+      tnl->vp_cache->items = MALLOC(tnl->vp_cache->size *
+				sizeof(*tnl->vp_cache->items));
+      _mesa_memset(tnl->vp_cache->items, 0, tnl->vp_cache->size *
+				sizeof(*tnl->vp_cache->items));
+   }
+
    /* Look for an already-prepared program for this state:
     */
    ctx->_TnlProgram = (struct vertex_program *)
@@ -1470,7 +1506,7 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
       create_new_program( key, ctx->_TnlProgram, 
 			  ctx->Const.MaxVertexProgramTemps );
 
-      cache_item(&tnl->vp_cache, hash, key, ctx->_TnlProgram );
+      cache_item(tnl->vp_cache, hash, key, ctx->_TnlProgram );
    }
    else {
       FREE(key);
@@ -1486,12 +1522,17 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 void _tnl_ProgramCacheDestroy( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct tnl_cache *a, *tmp;
+   struct tnl_cache_item *c, *next;
+   GLuint i;
 
-   for (a = tnl->vp_cache ; a; a = tmp) {
-      tmp = a->next;
-      FREE(a->key);
-      FREE(a->data);
-      FREE(a);
-   }
+   for (i = 0; i < tnl->vp_cache->size; i++)
+      for (c = tnl->vp_cache->items[i]; c; c = next) {
+	 next = c->next;
+	 FREE(c->key);
+	 FREE(c->data);
+	 FREE(c);
+      }
+
+   FREE(tnl->vp_cache->items);
+   FREE(tnl->vp_cache);
 }
