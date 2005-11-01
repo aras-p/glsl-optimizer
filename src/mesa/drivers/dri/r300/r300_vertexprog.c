@@ -242,11 +242,11 @@ void debug_vp(GLcontext *ctx, struct vertex_program *vp)
 	
 }
 
-void r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp)
+int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp, float *dst)
 {
 	int pi;
 	struct vertex_program *mesa_vp=(void *)vp;
-	int dst_index;
+	float *dst_o=dst;
 	
 	_mesa_load_state_parameters(ctx, mesa_vp->Parameters);
 	
@@ -255,7 +255,7 @@ void r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp)
 		fprintf(stderr, "%s:Params exhausted\n", __FUNCTION__);
 		exit(-1);
 	}
-	dst_index=0;
+	
 	for(pi=0; pi < mesa_vp->Parameters->NumParameters; pi++){
 		switch(mesa_vp->Parameters->Parameters[pi].Type){
 			
@@ -263,10 +263,10 @@ void r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp)
 		case NAMED_PARAMETER:
 			//fprintf(stderr, "%s", vp->Parameters->Parameters[pi].Name);
 		case CONSTANT:
-			vp->params.body.f[dst_index++]=mesa_vp->Parameters->ParameterValues[pi][0];
-			vp->params.body.f[dst_index++]=mesa_vp->Parameters->ParameterValues[pi][1];
-			vp->params.body.f[dst_index++]=mesa_vp->Parameters->ParameterValues[pi][2];
-			vp->params.body.f[dst_index++]=mesa_vp->Parameters->ParameterValues[pi][3];
+			*dst++=mesa_vp->Parameters->ParameterValues[pi][0];
+			*dst++=mesa_vp->Parameters->ParameterValues[pi][1];
+			*dst++=mesa_vp->Parameters->ParameterValues[pi][2];
+			*dst++=mesa_vp->Parameters->ParameterValues[pi][3];
 		break;
 		
 		default: _mesa_problem(NULL, "Bad param type in %s", __FUNCTION__);
@@ -274,7 +274,7 @@ void r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp)
 	
 	}
 	
-	vp->params.length=dst_index;
+	return dst - dst_o;
 }
 		
 static unsigned long t_dst_mask(GLuint mask)

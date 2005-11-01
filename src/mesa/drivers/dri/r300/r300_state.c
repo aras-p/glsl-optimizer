@@ -621,14 +621,7 @@ static void r300DepthFunc(GLcontext* ctx, GLenum func)
 static void r300DepthMask(GLcontext* ctx, GLboolean mask)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-
-	if (!ctx->Depth.Test)
-		return;
-
-	R300_STATECHANGE(r300, zs);
-	r300->hw.zs.cmd[R300_ZS_CNTL_0] &= R300_RB3D_STENCIL_ENABLE;
-	r300->hw.zs.cmd[R300_ZS_CNTL_0] |= mask 
-	    ? R300_RB3D_Z_TEST_AND_WRITE : R300_RB3D_Z_TEST;
+	r300Enable(ctx, GL_DEPTH_TEST, ctx->Depth.Test);
 }
 
 
@@ -1054,7 +1047,7 @@ void r300_setup_textures(GLcontext *ctx)
 			
 			if(t == NULL){
 				fprintf(stderr, "Texture unit %d enabled, but corresponding texobj is NULL, using default object.\n", i);
-				//exit(-1);
+				exit(-1);
 				t=&default_tex_obj;
 			}
 			
@@ -1506,16 +1499,17 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	struct r300_vertex_program *prog=(struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 			
 
-	/* Reset state, in case we don't use something */
 	((drm_r300_cmd_header_t*)rmesa->hw.vpp.cmd)->vpu.count = 0;
+	R300_STATECHANGE(rmesa, vpp);
+	param_count = r300VertexProgUpdateParams(ctx, prog, (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
+	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
+	param_count /= 4;
+	
+	/* Reset state, in case we don't use something */
 	((drm_r300_cmd_header_t*)rmesa->hw.vpi.cmd)->vpu.count = 0;
 	((drm_r300_cmd_header_t*)rmesa->hw.vps.cmd)->vpu.count = 0;
 
-	r300VertexProgUpdateParams(ctx, prog);
-
 	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(prog->program));
-
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_MATRIX0, &(prog->params));
 
 #if 0
 	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1, &(rmesa->state.vertex_shader.unknown1));
@@ -1523,7 +1517,6 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 #endif
 
 	inst_count=prog->program.length/4 - 1;
-	param_count=prog->params.length/4;
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1]=(0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT)
@@ -1545,28 +1538,42 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 extern void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx );
 
 extern int future_hw_tcl_on;
-void r300UpdateShaderStates(r300ContextPtr rmesa)
+void r300UpdateShaders(r300ContextPtr rmesa)
 {
 	GLcontext *ctx;
 	struct r300_vertex_program *vp;
 	
-	ctx = rmesa->radeon.glCtx; 
+	ctx = rmesa->radeon.glCtx;
 	
-	if(ctx->VertexProgram._Enabled == GL_FALSE){
-		_tnl_UpdateFixedFunctionProgram(ctx);
+	if (rmesa->NewGLState && hw_tcl_on) {
+		rmesa->NewGLState = 0;
+		if (ctx->VertexProgram._Enabled == GL_FALSE)
+			_tnl_UpdateFixedFunctionProgram(ctx);
+	
+		vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
+		if (vp->translated == GL_FALSE)
+			translate_vertex_shader(vp);
+		if (vp->translated == GL_FALSE) {
+			fprintf(stderr, "Failing back to sw-tcl\n");
+			debug_vp(ctx, &vp->mesa_program);
+			hw_tcl_on = future_hw_tcl_on = 0;
+			r300ResetHwState(rmesa);
+
+			return ;
+		}
 	}
-	vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
-	if(vp->translated == GL_FALSE)
-		translate_vertex_shader(vp);
-	if(vp->translated == GL_FALSE){
-		fprintf(stderr, "Failing back to sw-tcl\n");
-		debug_vp(ctx, &vp->mesa_program);
-		hw_tcl_on=future_hw_tcl_on=0;
-		r300ResetHwState(rmesa);
-		
-		return ;
-	}
-		
+	
+}
+
+void r300UpdateShaderStates(r300ContextPtr rmesa)
+{
+	GLcontext *ctx;
+	ctx = rmesa->radeon.glCtx;
+	
+#ifdef CB_DPATH
+	r300UpdateTextureState(ctx);
+#endif
+	
 	r300_setup_textures(ctx);
 	r300_setup_rs_unit(ctx);
 
@@ -1865,12 +1872,15 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 	_tnl_InvalidateState(ctx, new_state);
 	_ae_invalidate_state(ctx, new_state);
 
+#ifndef CB_DPATH
 	/* Go inefficiency! */
 	r300ResetHwState(r300);
+#endif
 #ifdef HW_VBOS
 	if(new_state & _NEW_ARRAY)
 		r300->state.VB.lock_uptodate = GL_FALSE;
 #endif
+	r300->NewGLState |= new_state;
 }
 
 /**

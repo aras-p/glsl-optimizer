@@ -826,6 +826,7 @@ struct r300_context {
 	 */
 	struct r300_dma dma;
 	GLboolean save_on_next_unlock;
+	GLuint NewGLState;
 
 	/* Texture object bookkeeping
 	 */
@@ -839,17 +840,6 @@ struct r300_context {
 	 */
 	GLuint prefer_gart_client_texturing;
 
-	/* TCL stuff
-	 */
-	GLmatrix TexGenMatrix[R300_MAX_TEXTURE_UNITS];
-	GLboolean recheck_texgen[R300_MAX_TEXTURE_UNITS];
-	GLboolean TexGenNeedNormals[R300_MAX_TEXTURE_UNITS];
-	GLuint TexMatEnabled;
-	GLuint TexMatCompSel;
-	GLuint TexGenEnabled;
-	GLuint TexGenInputs;
-	GLuint TexGenCompSel;
-	GLmatrix tmpmat;
 #ifdef USER_BUFFERS
 	key_t mm_ipc_key;
 	int mm_shm_id;
@@ -885,7 +875,7 @@ extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 
 void translate_vertex_shader(struct r300_vertex_program *vp);
 extern void r300InitShaderFuncs(struct dd_function_table *functions);
-extern void r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp);
+extern int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp, float *dst);
 
 #ifdef RADEON_VTXFMT_A
 extern void radeon_init_vtxfmt_a(r300ContextPtr rmesa);

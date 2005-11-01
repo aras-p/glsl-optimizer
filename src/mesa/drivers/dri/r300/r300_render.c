@@ -543,10 +543,13 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 	
-
+	
+	r300UpdateShaders(rmesa);
+	
    	r300ReleaseArrays(ctx);
 	r300EmitArrays(ctx, GL_FALSE);
 	
+	r300UpdateShaderStates(rmesa);
 //	LOCK_HARDWARE(&(rmesa->radeon));
 
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
@@ -692,6 +695,8 @@ void dump_dt(struct dt *dt, int count)
 	if (rmesa->state.VB.LockCount == 0) {
  	  	r300ReleaseArrays(ctx);
 		r300EmitArraysVtx(ctx, GL_FALSE);
+		
+		r300UpdateShaderStates(rmesa);
 	} else {
 		/* TODO: Figure out why do we need these. */
 		R300_STATECHANGE(rmesa, vir[0]);
@@ -891,7 +896,8 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 	if(hw_tcl_on == GL_FALSE)
 		return GL_TRUE;
 	
-	r300UpdateShaderStates(rmesa);
+	//r300UpdateShaders(rmesa);
+	//r300UpdateShaderStates(rmesa);
 	
 	return r300_run_vb_render(ctx, stage);
 }

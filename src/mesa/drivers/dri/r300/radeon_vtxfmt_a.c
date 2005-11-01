@@ -136,12 +136,6 @@ void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *
 	
 	switch (type) {
 	case GL_UNSIGNED_BYTE:
-		elt_size = 2;
-		
-		r300AllocDmaRegion(rmesa, &rvb, count * elt_size, elt_size);
-		rvb.aos_offset = GET_START(&rvb);
-		ptr = rvb.address + rvb.start;
-			
 		for (i=0; i < count; i++) {
 			if(((unsigned char *)indices)[i] < min)
 				min = ((unsigned char *)indices)[i];
@@ -149,17 +143,17 @@ void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *
 				max = ((unsigned char *)indices)[i];
 		}
 		
-		for (i=0; i < count; i++)
-			((unsigned short int *)ptr)[i] = ((unsigned char *)indices)[i] - min;
-	break;
-		
-	case GL_UNSIGNED_SHORT:
 		elt_size = 2;
 		
 		r300AllocDmaRegion(rmesa, &rvb, count * elt_size, elt_size);
 		rvb.aos_offset = GET_START(&rvb);
 		ptr = rvb.address + rvb.start;
+			
+		for (i=0; i < count; i++)
+			((unsigned short int *)ptr)[i] = ((unsigned char *)indices)[i] - min;
+	break;
 		
+	case GL_UNSIGNED_SHORT:
 		for (i=0; i < count; i++) {
 			if(((unsigned short int *)indices)[i] < min)
 				min = ((unsigned short int *)indices)[i];
@@ -167,17 +161,17 @@ void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *
 				max = ((unsigned short int *)indices)[i];
 		}
 		
-		for (i=0; i < count; i++)
-			((unsigned short int *)ptr)[i] = ((unsigned short int *)indices)[i] - min;
-	break;
-	
-	case GL_UNSIGNED_INT:
-		elt_size = 4;
+		elt_size = 2;
 		
 		r300AllocDmaRegion(rmesa, &rvb, count * elt_size, elt_size);
 		rvb.aos_offset = GET_START(&rvb);
 		ptr = rvb.address + rvb.start;
 		
+		for (i=0; i < count; i++)
+			((unsigned short int *)ptr)[i] = ((unsigned short int *)indices)[i] - min;
+	break;
+	
+	case GL_UNSIGNED_INT:
 		for (i=0; i < count; i++) {
 			if(((unsigned int *)indices)[i] < min)
 				min = ((unsigned int *)indices)[i];
@@ -185,8 +179,22 @@ void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *
 				max = ((unsigned int *)indices)[i];
 		}
 		
-		for (i=0; i < count; i++)
-			((unsigned int *)ptr)[i] = ((unsigned int *)indices)[i] - min;
+		if (max - min <= 65535)
+			elt_size = 2;
+		else 
+			elt_size = 4;
+		
+		r300AllocDmaRegion(rmesa, &rvb, count * elt_size, elt_size);
+		rvb.aos_offset = GET_START(&rvb);
+		ptr = rvb.address + rvb.start;
+		
+		
+		if (max - min <= 65535)
+			for (i=0; i < count; i++)
+				((unsigned short int *)ptr)[i] = ((unsigned int *)indices)[i] - min;
+		else
+			for (i=0; i < count; i++)
+				((unsigned int *)ptr)[i] = ((unsigned int *)indices)[i] - min;
 	break;
 	
 	default:
@@ -199,7 +207,7 @@ void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *
 	if (ctx->NewState) 
 		_mesa_update_state( ctx );
 	
-	r300UpdateShaderStates(rmesa);
+	r300UpdateShaders(rmesa);
 	
 	if (rmesa->state.VB.LockCount) {
 		if (rmesa->state.VB.lock_uptodate == GL_FALSE) {
@@ -230,6 +238,8 @@ void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *
 		rmesa->state.VB.Count = max - min + 1;
 	}
 	
+	r300UpdateShaderStates(rmesa);
+	
 	rmesa->state.VB.Primitive = &prim;
 	rmesa->state.VB.PrimitiveCount = 1;
 	
@@ -256,7 +266,7 @@ void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei count,
 	struct tnl_prim prim;
 	int elt_size;
 	int i;
-	static void *ptr = NULL;
+	void *ptr = NULL;
 	static struct r300_dma_region rvb;
 	
 	if (ctx->Array.ElementArrayBufferObj->Name) {
@@ -275,7 +285,7 @@ void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei count,
 	
 	FLUSH_CURRENT( ctx, 0 );
 #ifdef OPTIMIZE_ELTS
-	start = 0;
+	min = 0;
 #endif
 	r300ReleaseDmaRegion(rmesa, &rvb, __FUNCTION__);
 	
@@ -295,7 +305,7 @@ void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei count,
 		elt_size = 2;
 		
 #ifdef OPTIMIZE_ELTS
-		if (start == 0 && ctx->Array.ElementArrayBufferObj->Name){
+		if (min == 0 && ctx->Array.ElementArrayBufferObj->Name){
 			ptr = indices;
 			break;
 		}
@@ -309,14 +319,21 @@ void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei count,
 	break;
 	
 	case GL_UNSIGNED_INT:
-		elt_size = 4;
+		if (max - min <= 65535)
+			elt_size = 2;
+		else 
+			elt_size = 4;
 		
 		r300AllocDmaRegion(rmesa, &rvb, count * elt_size, elt_size);
 		rvb.aos_offset = GET_START(&rvb);
 		ptr = rvb.address + rvb.start;
 		
-		for(i=0; i < count; i++)
-			((unsigned int *)ptr)[i] = ((unsigned int *)indices)[i] - min;
+		if (max - min <= 65535)
+			for (i=0; i < count; i++)
+				((unsigned short int *)ptr)[i] = ((unsigned int *)indices)[i] - min;
+		else
+			for (i=0; i < count; i++)
+				((unsigned int *)ptr)[i] = ((unsigned int *)indices)[i] - min;
 	break;
 	
 	default:
@@ -330,7 +347,7 @@ void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei count,
 	if (ctx->NewState) 
 		_mesa_update_state( ctx );
 	
-	r300UpdateShaderStates(rmesa);
+	r300UpdateShaders(rmesa);
 
 	if (rmesa->state.VB.LockCount) {
 		if (rmesa->state.VB.lock_uptodate == GL_FALSE) {
@@ -360,6 +377,8 @@ void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei count,
 			return;
 		rmesa->state.VB.Count = max - min + 1;
 	}
+	
+	r300UpdateShaderStates(rmesa);
 	
 	rmesa->state.VB.Primitive = &prim;
 	rmesa->state.VB.PrimitiveCount = 1;
@@ -398,7 +417,7 @@ void radeonDrawArrays( GLenum mode, GLint start, GLsizei count )
 	
 	/* XXX: setup_arrays before state update? */
 	
-	r300UpdateShaderStates(rmesa);
+	r300UpdateShaders(rmesa);
 
 	if (rmesa->state.VB.LockCount) {
 		if (rmesa->state.VB.lock_uptodate == GL_FALSE) {
@@ -429,6 +448,8 @@ void radeonDrawArrays( GLenum mode, GLint start, GLsizei count )
 		rmesa->state.VB.Count = count;
 	}
 
+	r300UpdateShaderStates(rmesa);
+	
 	rmesa->state.VB.Primitive = &prim;
 	rmesa->state.VB.PrimitiveCount = 1;
 	
