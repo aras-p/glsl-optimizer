@@ -159,9 +159,9 @@ static void Display( void )
 
       ASSIGN_3V(v[0].v.color, 0,0,1); 
       ASSIGN_3V(v[0].v.pos,  0.9, -0.9, 0.0);
-      ASSIGN_3V(v[1].v.color, 0,1,0); 
-      ASSIGN_3V(v[1].v.pos, 0.9, 0.9, 0.0);
       ASSIGN_3V(v[2].v.color, 1,0,0); 
+      ASSIGN_3V(v[1].v.pos, 0.9, 0.9, 0.0);
+      ASSIGN_3V(v[1].v.color, 0,1,0); 
       ASSIGN_3V(v[2].v.pos, -0.9, 0, 0.0);
 
       subdiv(&v[0], &v[1], &v[2], nr_steps);
