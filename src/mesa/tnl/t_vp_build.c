@@ -53,10 +53,10 @@ struct state_key {
    unsigned fog_source_is_depth:1;
    unsigned tnl_do_vertex_fog:1;
    unsigned separate_specular:1;
-   unsigned fog_enabled:1;
    unsigned fog_mode:2;
    unsigned point_attenuated:1;
    unsigned texture_enabled_global:1;
+   unsigned fragprog_inputs_read:12;
 
    struct {
       unsigned light_enabled:1;
@@ -75,10 +75,10 @@ struct state_key {
 
 
 
-#define FOG_LINEAR   0
-#define FOG_EXP      1
-#define FOG_EXP2     2
-#define FOG_UNKNOWN  3
+#define FOG_NONE   0
+#define FOG_LINEAR 1
+#define FOG_EXP    2
+#define FOG_EXP2   3
 
 static GLuint translate_fog_mode( GLenum mode )
 {
@@ -86,7 +86,7 @@ static GLuint translate_fog_mode( GLenum mode )
    case GL_LINEAR: return FOG_LINEAR;
    case GL_EXP: return FOG_EXP;
    case GL_EXP2: return FOG_EXP2;
-   default: return FOG_UNKNOWN;
+   default: return FOG_NONE;
    }
 }
 
@@ -116,8 +116,15 @@ static struct state_key *make_state_key( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
+   struct fragment_program *fp = ctx->FragmentProgram._Current;
    struct state_key *key = CALLOC_STRUCT(state_key);
    GLuint i;
+
+   /* This now relies on texenvprogram.c being active:
+    */
+   assert(fp);
+
+   key->fragprog_inputs_read = fp->InputsRead;
 
    key->separate_specular = (ctx->Light.Model.ColorControl ==
 			     GL_SEPARATE_SPECULAR_COLOR);
@@ -166,18 +173,13 @@ static struct state_key *make_state_key( GLcontext *ctx )
    if (ctx->Transform.RescaleNormals)
       key->rescale_normals = 1;
 
-   if (ctx->Fog.Enabled)
-      key->fog_enabled = 1;
-
-   if (key->fog_enabled) {
-      if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT)
-	 key->fog_source_is_depth = 1;
-
-      if (tnl->_DoVertexFog)
-	 key->tnl_do_vertex_fog = 1;
-
-      key->fog_mode = translate_fog_mode(ctx->Fog.Mode);
-   }
+   key->fog_mode = translate_fog_mode(fp->FogOption);
+   
+   if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT)
+      key->fog_source_is_depth = 1;
+   
+   if (tnl->_DoVertexFog)
+      key->tnl_do_vertex_fog = 1;
 
    if (ctx->Point._Attenuated)
       key->point_attenuated = 1;
@@ -331,6 +333,9 @@ static struct ureg get_temp( struct tnl_program *p )
       _mesa_problem(NULL, "%s: out of temporaries\n", __FILE__);
       _mesa_exit(1);
    }
+
+   if (bit > p->program->Base.NumTemporaries)
+      p->program->Base.NumTemporaries = bit;
 
    p->temp_in_use |= 1<<(bit-1);
    return make_ureg(PROGRAM_TEMPORARY, bit-1);
@@ -710,6 +715,8 @@ static GLuint material_attrib( GLuint side, GLuint property )
 	   side);
 }
 
+/* Get a bitmask of which material values vary on a per-vertex basis.
+ */
 static void set_material_flags( struct tnl_program *p )
 {
    p->color_materials = 0;
@@ -1194,9 +1201,14 @@ static void build_texture_transform( struct tnl_program *p )
    GLuint i, j;
 
    for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
-      GLuint texmat_enabled = p->state->unit[i].texmat_enabled;
 
-      if (p->state->unit[i].texgen_enabled || texmat_enabled) {
+      if (!(p->state->fragprog_inputs_read & (FRAG_BIT_TEX0<<i)))
+	 continue;
+							     
+      if (p->state->unit[i].texgen_enabled || 
+	  p->state->unit[i].texmat_enabled) {
+	 
+	 GLuint texmat_enabled = p->state->unit[i].texmat_enabled;
 	 struct ureg out = register_output(p, VERT_RESULT_TEX0 + i);
 	 struct ureg out_texgen = undef;
 
@@ -1293,10 +1305,7 @@ static void build_texture_transform( struct tnl_program *p )
 
 	 release_temps(p);
       } 
-      else if (p->state->unit[i].texunit_really_enabled) {
-	 /* KW: _ReallyEnabled isn't sufficient?  Need to know whether
-	  * this texture unit is referenced by the fragment shader.  
-	  */
+      else {
 	 emit_passthrough(p, VERT_ATTRIB_TEX0+i, VERT_RESULT_TEX0+i);
       }
    }
@@ -1338,15 +1347,23 @@ static void build_tnl_program( struct tnl_program *p )
 
    /* Lighting calculations:
     */
-   if (p->state->light_global_enabled)
-      build_lighting(p);
-   else
-      emit_passthrough(p, VERT_ATTRIB_COLOR0, VERT_RESULT_COL0);
+   if (p->state->fragprog_inputs_read & (FRAG_BIT_COL0|FRAG_BIT_COL1)) {
+      if (p->state->light_global_enabled)
+	 build_lighting(p);
+      else {
+	 if (p->state->fragprog_inputs_read & FRAG_BIT_COL0)
+	    emit_passthrough(p, VERT_ATTRIB_COLOR0, VERT_RESULT_COL0);
 
-   if (p->state->fog_enabled)
+	 if (p->state->fragprog_inputs_read & FRAG_BIT_COL1)
+	    emit_passthrough(p, VERT_ATTRIB_COLOR0, VERT_RESULT_COL1);
+      }
+   }
+
+   if ((p->state->fragprog_inputs_read & FRAG_BIT_FOGC) ||
+       p->state->fog_mode != FOG_NONE)
       build_fog(p);
 
-   if (p->state->texture_enabled_global)
+   if (p->state->fragprog_inputs_read & FRAG_BITS_TEX_ANY)
       build_texture_transform(p);
 
    if (p->state->point_attenuated)
@@ -1470,42 +1487,60 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct state_key *key;
    GLuint hash;
+   struct vertex_program *prev = ctx->VertexProgram._Current;
 
-   if (ctx->VertexProgram._Enabled)
-      return;
+   if (ctx->VertexProgram._Enabled) { 
+      /* Grab all the relevent state and put it in a single structure:
+       */
+      key = make_state_key(ctx);
+      hash = hash_key(key);
 
-   /* Grab all the relevent state and put it in a single structure:
-    */
-   key = make_state_key(ctx);
-   hash = hash_key(key);
+      if (tnl->vp_cache == NULL) {
+	 tnl->vp_cache = MALLOC(sizeof(*tnl->vp_cache));
+	 tnl->vp_cache->size = 5;
+	 tnl->vp_cache->n_items = 0;
+	 tnl->vp_cache->items = MALLOC(tnl->vp_cache->size *
+				       sizeof(*tnl->vp_cache->items));
+	 _mesa_memset(tnl->vp_cache->items, 0, tnl->vp_cache->size *
+		      sizeof(*tnl->vp_cache->items));
+      }
 
-   /* Look for an already-prepared program for this state:
-    */
-   ctx->_TnlProgram = (struct vertex_program *)
-      search_cache( tnl->vp_cache, hash, key, sizeof(*key) );
-   
-   /* OK, we'll have to build a new one:
-    */
-   if (!ctx->_TnlProgram) {
-      if (0)
-	 _mesa_printf("Build new TNL program\n");
-
+      /* Look for an already-prepared program for this state:
+       */
       ctx->_TnlProgram = (struct vertex_program *)
-	 ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0); 
+	 search_cache( tnl->vp_cache, hash, key, sizeof(*key) );
+   
+      /* OK, we'll have to build a new one:
+       */
+      if (!ctx->_TnlProgram) {
+	 if (0)
+	    _mesa_printf("Build new TNL program\n");
+	 
+	 ctx->_TnlProgram = (struct vertex_program *)
+	    ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0); 
 
-      create_new_program( key, ctx->_TnlProgram, 
-			  ctx->Const.VertexProgram.MaxTemps );
+	 create_new_program( key, ctx->_TnlProgram, 
+			     ctx->Const.VertexProgram.MaxTemps );
 
-      cache_item(tnl->vp_cache, hash, key, ctx->_TnlProgram );
+
+	 cache_item(tnl->vp_cache, hash, key, ctx->_TnlProgram );
+      }
+      else {
+	 FREE(key);
+	 if (0) 
+	    _mesa_printf("Found existing TNL program for key %x\n", hash);
+      }
    }
    else {
-      FREE(key);
-      if (0) 
-	 _mesa_printf("Found existing TNL program for key %x\n", hash);
+      ctx->VertexProgram._Current = ctx->VertexProgram.Current;
    }
 
-   /* Need a BindProgram callback for the driver?
+   /* Tell the driver about the change.  Could define a new target for
+    * this?
     */
+   if (ctx->VertexProgram._Current != prev) 
+      ctx->Driver.BindProgram(ctx, GL_VERTEX_PROGRAM_ARB, (struct program *)
+			      ctx->VertexProgram._Current);   
 }
 
 

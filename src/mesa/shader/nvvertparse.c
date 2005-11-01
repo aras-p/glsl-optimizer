@@ -288,8 +288,9 @@ static const char *InputRegisters[MAX_NV_VERTEX_PROGRAM_INPUTS + 1] = {
 };
 
 static const char *OutputRegisters[MAX_NV_VERTEX_PROGRAM_OUTPUTS + 1] = {
-   "HPOS", "COL0", "COL1", "BFC0", "BFC1", "FOGC", "PSIZ",
-   "TEX0", "TEX1", "TEX2", "TEX3", "TEX4", "TEX5", "TEX6", "TEX7", NULL
+   "HPOS", "COL0", "COL1", "FOGC", 
+   "TEX0", "TEX1", "TEX2", "TEX3", "TEX4", "TEX5", "TEX6", "TEX7", 
+   "PSIZ", "BFC0", "BFC1", NULL
 };
 
 /* NOTE: the order here must match opcodes in nvvertprog.h */

@@ -65,6 +65,8 @@ struct arb_program
    GLuint NumAluInstructions; 
    GLuint NumTexInstructions;
    GLuint NumTexIndirections;
+
+   GLboolean UsesKill;
 };
 
 

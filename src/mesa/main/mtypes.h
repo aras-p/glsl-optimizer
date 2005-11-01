@@ -195,18 +195,18 @@ enum
 #define VERT_RESULT_HPOS 0
 #define VERT_RESULT_COL0 1
 #define VERT_RESULT_COL1 2
-#define VERT_RESULT_BFC0 3
-#define VERT_RESULT_BFC1 4
-#define VERT_RESULT_FOGC 5
-#define VERT_RESULT_PSIZ 6
-#define VERT_RESULT_TEX0 7
-#define VERT_RESULT_TEX1 8
-#define VERT_RESULT_TEX2 9
-#define VERT_RESULT_TEX3 10
-#define VERT_RESULT_TEX4 11
-#define VERT_RESULT_TEX5 12
-#define VERT_RESULT_TEX6 13
-#define VERT_RESULT_TEX7 14
+#define VERT_RESULT_FOGC 3
+#define VERT_RESULT_TEX0 4
+#define VERT_RESULT_TEX1 5
+#define VERT_RESULT_TEX2 6
+#define VERT_RESULT_TEX3 7
+#define VERT_RESULT_TEX4 8
+#define VERT_RESULT_TEX5 9
+#define VERT_RESULT_TEX6 10
+#define VERT_RESULT_TEX7 11
+#define VERT_RESULT_PSIZ 12
+#define VERT_RESULT_BFC0 13
+#define VERT_RESULT_BFC1 14
 #define VERT_RESULT_MAX  15
 
 
@@ -226,7 +226,9 @@ enum
    FRAG_ATTRIB_TEX4 = 8,
    FRAG_ATTRIB_TEX5 = 9,
    FRAG_ATTRIB_TEX6 = 10,
-   FRAG_ATTRIB_TEX7 = 11
+   FRAG_ATTRIB_TEX7 = 11,
+   
+   FRAG_ATTRIB_MAX = 12
 };
 
 /*
@@ -255,6 +257,14 @@ enum
 			   FRAG_BIT_TEX6|	\
 			   FRAG_BIT_TEX7)
 /*@}*/
+
+
+/* Fragment program results
+ */
+#define FRAG_OUTPUT_COLR  0
+#define FRAG_OUTPUT_COLH  1
+#define FRAG_OUTPUT_DEPR  2
+#define FRAG_OUTPUT_MAX   3
 
 
 /**
@@ -1791,6 +1801,7 @@ struct fragment_program
    GLuint NumNativeTexIndirections;
    GLenum FogOption;
    struct program_parameter_list *Parameters; /**< array [NumParameters] */
+   GLboolean UsesKill;
 
 #ifdef USE_TCC
    char c_str[4096];		/* experimental... */
@@ -1835,6 +1846,9 @@ struct gl_vertex_program_state
    GLboolean PointSizeEnabled;         /**< GL_VERTEX_PROGRAM_POINT_SIZE_NV */
    GLboolean TwoSideEnabled;           /**< GL_VERTEX_PROGRAM_TWO_SIDE_NV */
    struct vertex_program *Current;     /**< ptr to currently bound program */
+   struct vertex_program *_Current;    /**< ptr to currently bound
+					   program, including internal
+					   (t_vp_build.c) programs */
 
    GLenum TrackMatrix[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
    GLenum TrackMatrixTransform[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
@@ -1865,7 +1879,8 @@ struct gl_fragment_program_state
    GLboolean _Enabled;                   /* Really enabled? */
    GLboolean _Active;                    /* Really really enabled? */
    struct fragment_program *Current;     /* ptr to currently bound program */
-   struct fragment_program *_Current;    /* ptr to currently active program */
+   struct fragment_program *_Current;    /* ptr to currently active program 
+					    (including internal programs) */
    struct fp_machine Machine;            /* machine state */
    GLfloat Parameters[MAX_NV_FRAGMENT_PROGRAM_PARAMS][4]; /* Env params */
 

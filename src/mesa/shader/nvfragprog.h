@@ -37,15 +37,6 @@
 #include "mtypes.h"
 
 
-/**
- * Fragment program output registers.
- * Note: when we fully suppport GL_ARB_draw_buffers we'll have more than
- * one output color.
- */
-#define FRAG_OUTPUT_COLR  0   /* fragment color */
-#define FRAG_OUTPUT_COLH  1   /* fragment color, half precision (NV) */
-#define FRAG_OUTPUT_DEPR  2   /* depth/Z */
-
 
 /* condition codes */
 #define COND_GT  1  /* greater than zero */

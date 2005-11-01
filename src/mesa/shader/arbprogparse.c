@@ -3013,6 +3013,7 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
          break;
 
       case OP_TEX_KIL:
+         Program->UsesKill = 1;
 	 if (parse_fp_vector_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[0]))
             return 1;
          fp->Opcode = FP_OPCODE_KIL;
@@ -4013,6 +4014,8 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    program->NumAluInstructions =
    program->NumTexInstructions =
    program->NumTexIndirections = 0;
+
+   program->UsesKill = 0;
 
    program->FPInstructions = NULL;
    program->VPInstructions = NULL;
