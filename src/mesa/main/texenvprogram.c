@@ -400,7 +400,7 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
 
 static void release_temps( struct texenv_fragment_program *p )
 {
-   GLuint max_temp = p->ctx->Const.MaxFragmentProgramTemps;
+   GLuint max_temp = p->ctx->Const.FragmentProgram.MaxTemps;
 
    /* KW: To support tex_env_crossbar, don't release the registers in
     * temps_output.
@@ -1058,13 +1058,13 @@ static void create_new_program(struct state_key *key, GLcontext *ctx,
    } else
       p.program->FogOption = GL_NONE;
 
-   if (p.program->NumTexIndirections > ctx->Const.MaxFragmentProgramTexIndirections) 
+   if (p.program->NumTexIndirections > ctx->Const.FragmentProgram.MaxTexIndirections) 
       program_error(&p, "Exceeded max nr indirect texture lookups");
 
-   if (p.program->NumTexInstructions > ctx->Const.MaxFragmentProgramTexInstructions)
+   if (p.program->NumTexInstructions > ctx->Const.FragmentProgram.MaxTexInstructions)
       program_error(&p, "Exceeded max TEX instructions");
 
-   if (p.program->NumAluInstructions > ctx->Const.MaxFragmentProgramAluInstructions)
+   if (p.program->NumAluInstructions > ctx->Const.FragmentProgram.MaxAluInstructions)
       program_error(&p, "Exceeded max ALU instructions");
 
 

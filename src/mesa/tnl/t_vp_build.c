@@ -1504,7 +1504,7 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 	 ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0); 
 
       create_new_program( key, ctx->_TnlProgram, 
-			  ctx->Const.MaxVertexProgramTemps );
+			  ctx->Const.VertexProgram.MaxTemps );
 
       cache_item(tnl->vp_cache, hash, key, ctx->_TnlProgram );
    }

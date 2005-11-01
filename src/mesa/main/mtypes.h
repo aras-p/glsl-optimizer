@@ -1752,6 +1752,12 @@ struct program
    GLuint NumParameters;
    GLuint NumAttributes;
    GLuint NumAddressRegs;
+   /* native, h/w counts */
+   GLuint NumNativeInstructions;
+   GLuint NumNativeTemporaries;
+   GLuint NumNativeParameters;
+   GLuint NumNativeAttributes;
+   GLuint NumNativeAddressRegs;
 };
 
 
@@ -1780,6 +1786,9 @@ struct fragment_program
    GLuint NumAluInstructions; /**< GL_ARB_fragment_program */
    GLuint NumTexInstructions;
    GLuint NumTexIndirections;
+   GLuint NumNativeAluInstructions; /**< GL_ARB_fragment_program */
+   GLuint NumNativeTexInstructions;
+   GLuint NumNativeTexIndirections;
    GLenum FogOption;
    struct program_parameter_list *Parameters; /**< array [NumParameters] */
 
@@ -2215,6 +2224,34 @@ struct gl_framebuffer
 
 
 /**
+ * Limits for vertex and fragment programs.
+ */
+struct gl_program_constants
+{
+   /* logical limits */
+   GLuint MaxInstructions;
+   GLuint MaxAluInstructions; /* fragment programs only, for now */
+   GLuint MaxTexInstructions; /* fragment programs only, for now */
+   GLuint MaxTexIndirections; /* fragment programs only, for now */
+   GLuint MaxAttribs;
+   GLuint MaxTemps;
+   GLuint MaxAddressRegs; /* vertex program only, for now */
+   GLuint MaxParameters;
+   GLuint MaxLocalParams;
+   GLuint MaxEnvParams;
+   /* native/hardware limits */
+   GLuint MaxNativeInstructions;
+   GLuint MaxNativeAluInstructions; /* fragment programs only, for now */
+   GLuint MaxNativeTexInstructions; /* fragment programs only, for now */
+   GLuint MaxNativeTexIndirections; /* fragment programs only, for now */
+   GLuint MaxNativeAttribs;
+   GLuint MaxNativeTemps;
+   GLuint MaxNativeAddressRegs; /* vertex program only, for now */
+   GLuint MaxNativeParameters;
+};
+
+
+/**
  * Constants which may be overridden by device driver during context creation
  * but are never changed after that.
  */
@@ -2245,24 +2282,9 @@ struct gl_constants
    GLfloat MaxShininess;			/* GL_NV_light_max_exponent */
    GLfloat MaxSpotExponent;			/* GL_NV_light_max_exponent */
    GLuint MaxViewportWidth, MaxViewportHeight;
-   /* GL_ARB_vertex_program */
-   GLuint MaxVertexProgramInstructions;
-   GLuint MaxVertexProgramAttribs;
-   GLuint MaxVertexProgramTemps;
-   GLuint MaxVertexProgramLocalParams;
-   GLuint MaxVertexProgramEnvParams;
-   GLuint MaxVertexProgramAddressRegs;
-   /* GL_ARB_fragment_program */
-   GLuint MaxFragmentProgramInstructions;
-   GLuint MaxFragmentProgramAttribs;
-   GLuint MaxFragmentProgramTemps;
-   GLuint MaxFragmentProgramLocalParams;
-   GLuint MaxFragmentProgramEnvParams;
-   GLuint MaxFragmentProgramAddressRegs;
-   GLuint MaxFragmentProgramAluInstructions;
-   GLuint MaxFragmentProgramTexInstructions;
-   GLuint MaxFragmentProgramTexIndirections;
-   /* vertex or fragment program */
+   struct gl_program_constants VertexProgram;    /* GL_ARB_vertex_program */
+   struct gl_program_constants FragmentProgram;  /* GL_ARB_fragment_program */
+   /* shared by vertex and fragment program: */
    GLuint MaxProgramMatrices;
    GLuint MaxProgramMatrixStackDepth;
    /* vertex array / buffer object bounds checking */

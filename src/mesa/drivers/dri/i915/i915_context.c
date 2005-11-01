@@ -154,16 +154,15 @@ GLboolean i915CreateContext( const __GLcontextModes *mesaVis,
     * we'll still have to check and fallback each time.
     */
    
-   ctx->Const.MaxFragmentProgramTemps = I915_MAX_TEMPORARY;
-   ctx->Const.MaxFragmentProgramAttribs = 11; /* 8 tex, 2 color, fog */
-   ctx->Const.MaxFragmentProgramLocalParams = I915_MAX_CONSTANT;
-   ctx->Const.MaxFragmentProgramEnvParams = I915_MAX_CONSTANT;
-   ctx->Const.MaxFragmentProgramAluInstructions = I915_MAX_ALU_INSN;
-   ctx->Const.MaxFragmentProgramTexInstructions = I915_MAX_TEX_INSN;
-   ctx->Const.MaxFragmentProgramInstructions = (I915_MAX_ALU_INSN + 
+   ctx->Const.FragmentProgram.MaxNativeTemps = I915_MAX_TEMPORARY;
+   ctx->Const.FragmentProgram.MaxNativeAttribs = 11; /* 8 tex, 2 color, fog */
+   ctx->Const.FragmentProgram.MaxNativeParameters = I915_MAX_CONSTANT;
+   ctx->Const.FragmentProgram.MaxNativeAluInstructions = I915_MAX_ALU_INSN;
+   ctx->Const.FragmentProgram.MaxNativeTexInstructions = I915_MAX_TEX_INSN;
+   ctx->Const.FragmentProgram.MaxNativeInstructions = (I915_MAX_ALU_INSN + 
 						I915_MAX_TEX_INSN);
-   ctx->Const.MaxFragmentProgramTexIndirections = I915_MAX_TEX_INDIRECT;
-   ctx->Const.MaxFragmentProgramAddressRegs = 0; /* I don't think we have one */
+   ctx->Const.FragmentProgram.MaxNativeTexIndirections = I915_MAX_TEX_INDIRECT;
+   ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0; /* I don't think we have one */
 
 
    driInitExtensions( ctx, i915_extensions, GL_FALSE );

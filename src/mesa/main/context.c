@@ -912,6 +912,23 @@ _mesa_init_current( GLcontext *ctx )
 
 
 /**
+ * Init vertex/fragment program native limits from logical limits.
+ */
+static void
+init_natives(struct gl_program_constants *prog)
+{
+   prog->MaxNativeInstructions = prog->MaxInstructions;
+   prog->MaxNativeAluInstructions = prog->MaxAluInstructions;
+   prog->MaxNativeTexInstructions = prog->MaxTexInstructions;
+   prog->MaxNativeTexIndirections = prog->MaxTexIndirections;
+   prog->MaxNativeAttribs = prog->MaxAttribs;
+   prog->MaxNativeTemps = prog->MaxTemps;
+   prog->MaxNativeAddressRegs = prog->MaxAddressRegs;
+   prog->MaxNativeParameters = prog->MaxParameters;
+}
+
+
+/**
  * Initialize fields of gl_constants (aka ctx->Const.*).
  * Use defaults from config.h.  The device drivers will often override
  * some of these values (such as number of texture units).
@@ -956,25 +973,31 @@ _mesa_init_constants( GLcontext *ctx )
    ctx->Const.MaxViewportWidth = MAX_WIDTH;
    ctx->Const.MaxViewportHeight = MAX_HEIGHT;
 #if FEATURE_ARB_vertex_program
-   ctx->Const.MaxVertexProgramInstructions = MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS;
-   ctx->Const.MaxVertexProgramAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
-   ctx->Const.MaxVertexProgramTemps = MAX_NV_VERTEX_PROGRAM_TEMPS;
-   ctx->Const.MaxVertexProgramLocalParams = MAX_NV_VERTEX_PROGRAM_PARAMS;
-   ctx->Const.MaxVertexProgramEnvParams = MAX_NV_VERTEX_PROGRAM_PARAMS;/*XXX*/
-   ctx->Const.MaxVertexProgramAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
+   ctx->Const.VertexProgram.MaxInstructions = MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS;
+   ctx->Const.VertexProgram.MaxAluInstructions = 0;
+   ctx->Const.VertexProgram.MaxTexInstructions = 0;
+   ctx->Const.VertexProgram.MaxTexIndirections = 0;
+   ctx->Const.VertexProgram.MaxAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
+   ctx->Const.VertexProgram.MaxTemps = MAX_NV_VERTEX_PROGRAM_TEMPS;
+   ctx->Const.VertexProgram.MaxParameters = MAX_NV_VERTEX_PROGRAM_PARAMS;
+   ctx->Const.VertexProgram.MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
+   ctx->Const.VertexProgram.MaxEnvParams = MAX_NV_VERTEX_PROGRAM_PARAMS;
+   ctx->Const.VertexProgram.MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
+   init_natives(&ctx->Const.VertexProgram);
 #endif
 #if FEATURE_ARB_fragment_program
-   ctx->Const.MaxFragmentProgramInstructions = MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS;
-   ctx->Const.MaxFragmentProgramAttribs = MAX_NV_FRAGMENT_PROGRAM_INPUTS;
-   ctx->Const.MaxFragmentProgramTemps = MAX_NV_FRAGMENT_PROGRAM_TEMPS;
-   ctx->Const.MaxFragmentProgramLocalParams = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
-   ctx->Const.MaxFragmentProgramEnvParams = MAX_NV_FRAGMENT_PROGRAM_PARAMS;/*XXX*/
-   ctx->Const.MaxFragmentProgramAddressRegs = MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
-   ctx->Const.MaxFragmentProgramAluInstructions = MAX_FRAGMENT_PROGRAM_ALU_INSTRUCTIONS;
-   ctx->Const.MaxFragmentProgramTexInstructions = MAX_FRAGMENT_PROGRAM_TEX_INSTRUCTIONS;
-   ctx->Const.MaxFragmentProgramTexIndirections = MAX_FRAGMENT_PROGRAM_TEX_INDIRECTIONS;
+   ctx->Const.FragmentProgram.MaxInstructions = MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS;
+   ctx->Const.FragmentProgram.MaxAluInstructions = MAX_FRAGMENT_PROGRAM_ALU_INSTRUCTIONS;
+   ctx->Const.FragmentProgram.MaxTexInstructions = MAX_FRAGMENT_PROGRAM_TEX_INSTRUCTIONS;
+   ctx->Const.FragmentProgram.MaxTexIndirections = MAX_FRAGMENT_PROGRAM_TEX_INDIRECTIONS;
+   ctx->Const.FragmentProgram.MaxAttribs = MAX_NV_FRAGMENT_PROGRAM_INPUTS;
+   ctx->Const.FragmentProgram.MaxTemps = MAX_NV_FRAGMENT_PROGRAM_TEMPS;
+   ctx->Const.FragmentProgram.MaxParameters = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
+   ctx->Const.FragmentProgram.MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
+   ctx->Const.FragmentProgram.MaxEnvParams = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
+   ctx->Const.FragmentProgram.MaxAddressRegs = MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
+   init_natives(&ctx->Const.FragmentProgram);
 #endif
-
    ctx->Const.MaxProgramMatrices = MAX_PROGRAM_MATRICES;
    ctx->Const.MaxProgramMatrixStackDepth = MAX_PROGRAM_MATRIX_STACK_DEPTH;
 
@@ -987,6 +1010,7 @@ _mesa_init_constants( GLcontext *ctx )
    ctx->Const.CheckArrayBounds = GL_FALSE;
 #endif
 
+   /* GL_ARB_draw_buffers */
    ctx->Const.MaxDrawBuffers = MAX_DRAW_BUFFERS;
 
    /* GL_OES_read_format */
@@ -1000,6 +1024,8 @@ _mesa_init_constants( GLcontext *ctx )
 
    /* sanity checks */
    ASSERT(ctx->Const.MaxTextureUnits == MAX2(ctx->Const.MaxTextureImageUnits, ctx->Const.MaxTextureCoordUnits));
+   ASSERT(ctx->Const.FragmentProgram.MaxLocalParams <= MAX_PROGRAM_LOCAL_PARAMS);
+   ASSERT(ctx->Const.VertexProgram.MaxLocalParams <= MAX_PROGRAM_LOCAL_PARAMS);
 }
 
 

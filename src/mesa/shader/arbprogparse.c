@@ -1324,10 +1324,10 @@ parse_program_single_item (GLcontext * ctx, GLubyte ** inst,
 
          /* Check state_tokens[2] against the number of ENV parameters available */
          if (((Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) &&
-              (state_tokens[2] >= (GLint) ctx->Const.MaxFragmentProgramEnvParams))
+              (state_tokens[2] >= (GLint) ctx->Const.FragmentProgram.MaxEnvParams))
              ||
              ((Program->Base.Target == GL_VERTEX_PROGRAM_ARB) &&
-              (state_tokens[2] >= (GLint) ctx->Const.MaxVertexProgramEnvParams))) {
+              (state_tokens[2] >= (GLint) ctx->Const.VertexProgram.MaxEnvParams))) {
             _mesa_set_program_error (ctx, Program->Position,
                                      "Invalid Program Env Parameter");
             _mesa_error (ctx, GL_INVALID_OPERATION,
@@ -1344,10 +1344,10 @@ parse_program_single_item (GLcontext * ctx, GLubyte ** inst,
 
          /* Check state_tokens[2] against the number of LOCAL parameters available */
          if (((Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) &&
-              (state_tokens[2] >= (GLint) ctx->Const.MaxFragmentProgramLocalParams))
+              (state_tokens[2] >= (GLint) ctx->Const.FragmentProgram.MaxLocalParams))
              ||
              ((Program->Base.Target == GL_VERTEX_PROGRAM_ARB) &&
-              (state_tokens[2] >= (GLint) ctx->Const.MaxVertexProgramLocalParams))) {
+              (state_tokens[2] >= (GLint) ctx->Const.VertexProgram.MaxLocalParams))) {
             _mesa_set_program_error (ctx, Program->Position,
                                      "Invalid Program Local Parameter");
             _mesa_error (ctx, GL_INVALID_OPERATION,
@@ -1742,18 +1742,18 @@ parse_param_elements (GLcontext * ctx, GLubyte ** inst,
             out_of_range = 0;
             if (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
                if (((state_tokens[1] == STATE_ENV)
-                    && (end_idx >= ctx->Const.MaxFragmentProgramEnvParams))
+                    && (end_idx >= ctx->Const.FragmentProgram.MaxEnvParams))
                    || ((state_tokens[1] == STATE_LOCAL)
                        && (end_idx >=
-                           ctx->Const.MaxFragmentProgramLocalParams)))
+                           ctx->Const.FragmentProgram.MaxLocalParams)))
                   out_of_range = 1;
             }
             else {
                if (((state_tokens[1] == STATE_ENV)
-                    && (end_idx >= ctx->Const.MaxVertexProgramEnvParams))
+                    && (end_idx >= ctx->Const.VertexProgram.MaxEnvParams))
                    || ((state_tokens[1] == STATE_LOCAL)
                        && (end_idx >=
-                           ctx->Const.MaxVertexProgramLocalParams)))
+                           ctx->Const.VertexProgram.MaxLocalParams)))
                   out_of_range = 1;
             }
             if (out_of_range) {
@@ -1800,10 +1800,10 @@ parse_param_elements (GLcontext * ctx, GLubyte ** inst,
    /* Make sure we haven't blown past our parameter limits */
    if (((Program->Base.Target == GL_VERTEX_PROGRAM_ARB) &&
         (Program->Base.NumParameters >=
-         ctx->Const.MaxVertexProgramLocalParams))
+         ctx->Const.VertexProgram.MaxLocalParams))
        || ((Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB)
            && (Program->Base.NumParameters >=
-               ctx->Const.MaxFragmentProgramLocalParams))) {
+               ctx->Const.FragmentProgram.MaxLocalParams))) {
       _mesa_set_program_error (ctx, Program->Position,
                                "Too many parameter variables");
       _mesa_error (ctx, GL_INVALID_OPERATION, "Too many parameter variables");
@@ -1958,10 +1958,10 @@ parse_temp (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
 
       if (((Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) &&
            (Program->Base.NumTemporaries >=
-            ctx->Const.MaxFragmentProgramTemps))
+            ctx->Const.FragmentProgram.MaxTemps))
           || ((Program->Base.Target == GL_VERTEX_PROGRAM_ARB)
               && (Program->Base.NumTemporaries >=
-                  ctx->Const.MaxVertexProgramTemps))) {
+                  ctx->Const.VertexProgram.MaxTemps))) {
          _mesa_set_program_error (ctx, Program->Position,
                                   "Too many TEMP variables declared");
          _mesa_error (ctx, GL_INVALID_OPERATION,
@@ -2091,7 +2091,7 @@ parse_address (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
       temp_var->type = vt_address;
 
       if (Program->Base.NumAddressRegs >=
-          ctx->Const.MaxVertexProgramAddressRegs) {
+          ctx->Const.VertexProgram.MaxAddressRegs) {
          const char *msg = "Too many ADDRESS variables declared";
          _mesa_set_program_error(ctx, Program->Position, msg);
                                   
@@ -3759,6 +3759,22 @@ parse_arb_program(GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
       Program->VPInstructions[numInst].StringPos = Program->Position;
    }
    Program->Base.NumInstructions++;
+
+   /*
+    * Initialize native counts to logical counts.  The device driver may
+    * change them if program is translated into a hardware program.
+    */
+   Program->Base.NumNativeInstructions = Program->Base.NumInstructions;
+   Program->Base.NumNativeTemporaries = Program->Base.NumTemporaries;
+   Program->Base.NumNativeParameters = Program->Base.NumParameters;
+   Program->Base.NumNativeAttributes = Program->Base.NumAttributes;
+   Program->Base.NumNativeAddressRegs = Program->Base.NumAddressRegs;
+   if (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
+      struct fragment_program *fp = (struct fragment_program *) Program;
+      fp->NumNativeAluInstructions = fp->NumAluInstructions;
+      fp->NumNativeTexInstructions = fp->NumTexInstructions;
+      fp->NumNativeTexIndirections = fp->NumTexIndirections;
+   }
 
    return err;
 }

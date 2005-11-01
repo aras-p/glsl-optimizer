@@ -1707,7 +1707,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_MAX_VERTEX_ATTRIBS_ARB:
          CHECK_EXTENSION_B(ARB_vertex_program, pname);
-         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxVertexProgramAttribs);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.VertexProgram.MaxAttribs);
          break;
       case GL_FRAGMENT_PROGRAM_ARB:
          CHECK_EXTENSION_B(ARB_fragment_program, pname);
@@ -3537,7 +3537,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_MAX_VERTEX_ATTRIBS_ARB:
          CHECK_EXTENSION_F(ARB_vertex_program, pname);
-         params[0] = (GLfloat)(ctx->Const.MaxVertexProgramAttribs);
+         params[0] = (GLfloat)(ctx->Const.VertexProgram.MaxAttribs);
          break;
       case GL_FRAGMENT_PROGRAM_ARB:
          CHECK_EXTENSION_F(ARB_fragment_program, pname);
@@ -5367,7 +5367,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_MAX_VERTEX_ATTRIBS_ARB:
          CHECK_EXTENSION_I(ARB_vertex_program, pname);
-         params[0] = ctx->Const.MaxVertexProgramAttribs;
+         params[0] = ctx->Const.VertexProgram.MaxAttribs;
          break;
       case GL_FRAGMENT_PROGRAM_ARB:
          CHECK_EXTENSION_I(ARB_fragment_program, pname);

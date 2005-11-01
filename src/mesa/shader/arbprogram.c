@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,7 +50,7 @@ _mesa_EnableVertexAttribArrayARB(GLuint index)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index >= ctx->Const.MaxVertexProgramAttribs) {
+   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glEnableVertexAttribArrayARB(index)");
       return;
@@ -69,7 +69,7 @@ _mesa_DisableVertexAttribArrayARB(GLuint index)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index >= ctx->Const.MaxVertexProgramAttribs) {
+   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glEnableVertexAttribArrayARB(index)");
       return;
@@ -173,7 +173,7 @@ _mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index >= ctx->Const.MaxVertexProgramAttribs) {
+   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetVertexAttribPointerARB(index)");
       return;
    }
@@ -259,7 +259,7 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
 
    if (target == GL_FRAGMENT_PROGRAM_ARB
        && ctx->Extensions.ARB_fragment_program) {
-      if (index >= ctx->Const.MaxFragmentProgramEnvParams) {
+      if (index >= ctx->Const.FragmentProgram.MaxEnvParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter(index)");
          return;
       }
@@ -267,7 +267,7 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
    }
    else if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
-      if (index >= ctx->Const.MaxVertexProgramEnvParams) {
+      if (index >= ctx->Const.VertexProgram.MaxEnvParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter(index)");
          return;
       }
@@ -319,7 +319,7 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
 
    if (target == GL_FRAGMENT_PROGRAM_ARB
        && ctx->Extensions.ARB_fragment_program) {
-      if (index >= ctx->Const.MaxFragmentProgramEnvParams) {
+      if (index >= ctx->Const.FragmentProgram.MaxEnvParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramEnvParameter(index)");
          return;
       }
@@ -327,7 +327,7 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
    }
    else if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
-      if (index >= ctx->Const.MaxVertexProgramEnvParams) {
+      if (index >= ctx->Const.VertexProgram.MaxEnvParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramEnvParameter(index)");
          return;
       }
@@ -357,7 +357,7 @@ _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
         && ctx->Extensions.NV_fragment_program) ||
        (target == GL_FRAGMENT_PROGRAM_ARB
         && ctx->Extensions.ARB_fragment_program)) {
-      if (index >= ctx->Const.MaxFragmentProgramLocalParams) {
+      if (index >= ctx->Const.FragmentProgram.MaxLocalParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameterARB");
          return;
       }
@@ -365,7 +365,7 @@ _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
    }
    else if (target == GL_VERTEX_PROGRAM_ARB
             && ctx->Extensions.ARB_vertex_program) {
-      if (index >= ctx->Const.MaxVertexProgramLocalParams) {
+      if (index >= ctx->Const.VertexProgram.MaxLocalParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameterARB");
          return;
       }
@@ -437,12 +437,12 @@ _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
    if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
       prog = &(ctx->VertexProgram.Current->Base);
-      maxParams = ctx->Const.MaxVertexProgramLocalParams;
+      maxParams = ctx->Const.VertexProgram.MaxLocalParams;
    }
    else if (target == GL_FRAGMENT_PROGRAM_ARB
             && ctx->Extensions.ARB_fragment_program) {
       prog = &(ctx->FragmentProgram.Current->Base);
-      maxParams = ctx->Const.MaxFragmentProgramLocalParams;
+      maxParams = ctx->Const.FragmentProgram.MaxLocalParams;
    }
    else if (target == GL_FRAGMENT_PROGRAM_NV
             && ctx->Extensions.NV_fragment_program) {
@@ -486,6 +486,7 @@ _mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
 void GLAPIENTRY
 _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
 {
+   const struct gl_program_constants *limits;
    struct program *prog;
    GET_CURRENT_CONTEXT(ctx);
 
@@ -495,10 +496,12 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
    if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
       prog = &(ctx->VertexProgram.Current->Base);
+      limits = &ctx->Const.VertexProgram;
    }
    else if (target == GL_FRAGMENT_PROGRAM_ARB
             && ctx->Extensions.ARB_fragment_program) {
       prog = &(ctx->FragmentProgram.Current->Base);
+      limits = &ctx->Const.FragmentProgram;
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivARB(target)");
@@ -506,188 +509,150 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
    }
 
    ASSERT(prog);
+   ASSERT(limits);
 
+   /* Queries supported for both vertex and fragment programs */
    switch (pname) {
       case GL_PROGRAM_LENGTH_ARB:
-         *params = prog->String ? (GLint)_mesa_strlen((char *) prog->String) : 0;
-         break;
+         *params
+            = prog->String ? (GLint) _mesa_strlen((char *) prog->String) : 0;
+         return;
       case GL_PROGRAM_FORMAT_ARB:
          *params = prog->Format;
-         break;
+         return;
       case GL_PROGRAM_BINDING_ARB:
          *params = prog->Id;
-         break;
+         return;
       case GL_PROGRAM_INSTRUCTIONS_ARB:
          *params = prog->NumInstructions;
-         break;
+         return;
       case GL_MAX_PROGRAM_INSTRUCTIONS_ARB:
-         if (target == GL_VERTEX_PROGRAM_ARB)
-            *params = ctx->Const.MaxVertexProgramInstructions;
-         else
-            *params = ctx->Const.MaxFragmentProgramInstructions;
-         break;
+         *params = limits->MaxInstructions;
+         return;
       case GL_PROGRAM_NATIVE_INSTRUCTIONS_ARB:
-         *params = prog->NumInstructions;
-         break;
+         *params = prog->NumNativeInstructions;
+         return;
       case GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB:
-         if (target == GL_VERTEX_PROGRAM_ARB)
-            *params = ctx->Const.MaxVertexProgramInstructions;
-         else
-            *params = ctx->Const.MaxFragmentProgramInstructions;
-         break;
+         *params = limits->MaxNativeInstructions;
+         return;
       case GL_PROGRAM_TEMPORARIES_ARB:
          *params = prog->NumTemporaries;
-         break;
+         return;
       case GL_MAX_PROGRAM_TEMPORARIES_ARB:
-         if (target == GL_VERTEX_PROGRAM_ARB)
-            *params = ctx->Const.MaxVertexProgramTemps;
-         else
-            *params = ctx->Const.MaxFragmentProgramTemps;
-         break;
+         *params = limits->MaxTemps;
+         return;
       case GL_PROGRAM_NATIVE_TEMPORARIES_ARB:
-         /* XXX same as GL_PROGRAM_TEMPORARIES_ARB? */
-         *params = prog->NumTemporaries;
-         break;
+         *params = prog->NumNativeTemporaries;
+         return;
       case GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB:
-         /* XXX same as GL_MAX_PROGRAM_TEMPORARIES_ARB? */
-         if (target == GL_VERTEX_PROGRAM_ARB)
-            *params = ctx->Const.MaxVertexProgramTemps;
-         else
-            *params = ctx->Const.MaxFragmentProgramTemps;
-         break;
+         *params = limits->MaxNativeTemps;
+         return;
       case GL_PROGRAM_PARAMETERS_ARB:
          *params = prog->NumParameters;
-         break;
+         return;
       case GL_MAX_PROGRAM_PARAMETERS_ARB:
-         if (target == GL_VERTEX_PROGRAM_ARB)
-            *params = ctx->Const.MaxVertexProgramLocalParams;
-         else
-            *params = ctx->Const.MaxFragmentProgramLocalParams;
-         break;
+         *params = limits->MaxParameters;
+         return;
       case GL_PROGRAM_NATIVE_PARAMETERS_ARB:
-         /* XXX same as GL_MAX_PROGRAM_PARAMETERS_ARB? */
-         *params = prog->NumParameters;
-         break;
+         *params = prog->NumNativeParameters;
+         return;
       case GL_MAX_PROGRAM_NATIVE_PARAMETERS_ARB:
-         /* XXX same as GL_MAX_PROGRAM_PARAMETERS_ARB? */
-         if (target == GL_VERTEX_PROGRAM_ARB)
-            *params = ctx->Const.MaxVertexProgramLocalParams;
-         else
-            *params = ctx->Const.MaxFragmentProgramLocalParams;
-         break;
+         *params = limits->MaxNativeParameters;
+         return;
       case GL_PROGRAM_ATTRIBS_ARB:
          *params = prog->NumAttributes;
-         break;
+         return;
       case GL_MAX_PROGRAM_ATTRIBS_ARB:
-         if (target == GL_VERTEX_PROGRAM_ARB)
-            *params = ctx->Const.MaxVertexProgramAttribs;
-         else
-            *params = ctx->Const.MaxFragmentProgramAttribs;
-         break;
+         *params = limits->MaxAttribs;
+         return;
       case GL_PROGRAM_NATIVE_ATTRIBS_ARB:
-         /* XXX same as GL_PROGRAM_ATTRIBS_ARB? */
-         *params = prog->NumAttributes;
-         break;
+         *params = prog->NumNativeAttributes;
+         return;
       case GL_MAX_PROGRAM_NATIVE_ATTRIBS_ARB:
-         /* XXX same as GL_MAX_PROGRAM_ATTRIBS_ARB? */
-         if (target == GL_VERTEX_PROGRAM_ARB)
-            *params = ctx->Const.MaxVertexProgramAttribs;
-         else
-            *params = ctx->Const.MaxFragmentProgramAttribs;
-         break;
+         *params = limits->MaxNativeAttribs;
+         return;
       case GL_PROGRAM_ADDRESS_REGISTERS_ARB:
          *params = prog->NumAddressRegs;
-         break;
+         return;
       case GL_MAX_PROGRAM_ADDRESS_REGISTERS_ARB:
-         if (target == GL_VERTEX_PROGRAM_ARB)
-            *params = ctx->Const.MaxVertexProgramAddressRegs;
-         else
-            *params = ctx->Const.MaxFragmentProgramAddressRegs;
-         break;
+         *params = limits->MaxAddressRegs;
+         return;
       case GL_PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB:
-         /* XXX same as GL_PROGRAM_ADDRESS_REGISTERS_ARB? */
-         *params = prog->NumAddressRegs;
-         break;
+         *params = prog->NumNativeAddressRegs;
+         return;
       case GL_MAX_PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB:
-         /* XXX same as GL_MAX_PROGRAM_ADDRESS_REGISTERS_ARB? */
-         if (target == GL_VERTEX_PROGRAM_ARB)
-            *params = ctx->Const.MaxVertexProgramAddressRegs;
-         else
-            *params = ctx->Const.MaxFragmentProgramAddressRegs;
-         break;
+         *params = limits->MaxNativeAddressRegs;
+         return;
       case GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB:
-         if (target == GL_VERTEX_PROGRAM_ARB)
-            *params = ctx->Const.MaxVertexProgramLocalParams;
-         else
-            *params = ctx->Const.MaxFragmentProgramLocalParams;
-         break;
+         *params = limits->MaxLocalParams;
+         return;
       case GL_MAX_PROGRAM_ENV_PARAMETERS_ARB:
-         if (target == GL_VERTEX_PROGRAM_ARB)
-            *params = ctx->Const.MaxVertexProgramEnvParams;
-         else
-            *params = ctx->Const.MaxFragmentProgramEnvParams;
-         break;
+         *params = limits->MaxEnvParams;
+         return;
       case GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB:
+         /*
+          * XXX we may not really need a driver callback here.
+          * If the number of native instructions, registers, etc. used
+          * are all below the maximums, we could return true.
+          * The spec says that even if this query returns true, there's
+          * no guarantee that the program will run in hardware.
+          */
 	 if (ctx->Driver.IsProgramNative) 
 	    *params = ctx->Driver.IsProgramNative( ctx, target, prog );
 	 else
 	    *params = GL_TRUE;
-         break;
-
-      /*
-       * The following apply to fragment programs only.
-       */
-      case GL_PROGRAM_ALU_INSTRUCTIONS_ARB:
-      case GL_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB:
-         if (target != GL_FRAGMENT_PROGRAM_ARB) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivARB(target)");
-            return;
-         }
-         *params = ctx->FragmentProgram.Current->NumAluInstructions;
-         break;
-      case GL_PROGRAM_TEX_INSTRUCTIONS_ARB:
-      case GL_PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB:
-         if (target != GL_FRAGMENT_PROGRAM_ARB) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivARB(target)");
-            return;
-         }
-         *params = ctx->FragmentProgram.Current->NumTexInstructions;
-         break;
-      case GL_PROGRAM_TEX_INDIRECTIONS_ARB:
-      case GL_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB:
-         if (target != GL_FRAGMENT_PROGRAM_ARB) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivARB(target)");
-            return;
-         }
-         *params = ctx->FragmentProgram.Current->NumTexIndirections;
-         break;
-      case GL_MAX_PROGRAM_ALU_INSTRUCTIONS_ARB:
-      case GL_MAX_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB:
-         if (target != GL_FRAGMENT_PROGRAM_ARB) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivARB(target)");
-            return;
-         }
-         *params = ctx->Const.MaxFragmentProgramAluInstructions;
-         break;
-      case GL_MAX_PROGRAM_TEX_INSTRUCTIONS_ARB:
-      case GL_MAX_PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB:
-         if (target != GL_FRAGMENT_PROGRAM_ARB) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivARB(target)");
-            return;
-         }
-         *params = ctx->Const.MaxFragmentProgramTexInstructions;
-         break;
-      case GL_MAX_PROGRAM_TEX_INDIRECTIONS_ARB:
-      case GL_MAX_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB:
-         if (target != GL_FRAGMENT_PROGRAM_ARB) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivARB(target)");
-            return;
-         }
-         *params = ctx->Const.MaxFragmentProgramTexIndirections;
-         break;
-      default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivARB(pname)");
          return;
+      default:
+         /* continue with fragment-program only queries below */
+         break;
+   }
+
+   /*
+    * The following apply to fragment programs only (at this time)
+    */
+   if (target == GL_FRAGMENT_PROGRAM_ARB) {
+      const struct fragment_program *fp = ctx->FragmentProgram.Current;
+      switch (pname) {
+         case GL_PROGRAM_ALU_INSTRUCTIONS_ARB:
+            *params = fp->NumNativeAluInstructions;
+            return;
+         case GL_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB:
+            *params = fp->NumAluInstructions;
+            return;
+         case GL_PROGRAM_TEX_INSTRUCTIONS_ARB:
+            *params = fp->NumTexInstructions;
+            return;
+         case GL_PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB:
+            *params = fp->NumNativeTexInstructions;
+            return;
+         case GL_PROGRAM_TEX_INDIRECTIONS_ARB:
+            *params = fp->NumTexIndirections;
+            return;
+         case GL_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB:
+            *params = fp->NumNativeTexIndirections;
+            return;
+         case GL_MAX_PROGRAM_ALU_INSTRUCTIONS_ARB:
+            *params = limits->MaxAluInstructions;
+            return;
+         case GL_MAX_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB:
+            *params = limits->MaxNativeAluInstructions;
+            return;
+         case GL_MAX_PROGRAM_TEX_INSTRUCTIONS_ARB:
+            *params = limits->MaxTexInstructions;
+            return;
+         case GL_MAX_PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB:
+            *params = limits->MaxNativeTexInstructions;
+            return;
+         case GL_MAX_PROGRAM_TEX_INDIRECTIONS_ARB:
+            *params = limits->MaxTexIndirections;
+            return;
+         case GL_MAX_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB:
+            *params = limits->MaxNativeTexIndirections;
+            return;
+         default:
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivARB(pname)");
+            return;
+      }
    }
 }
 
@@ -695,7 +660,7 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
 void GLAPIENTRY
 _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string)
 {
-   struct program *prog;
+   const struct program *prog;
    GET_CURRENT_CONTEXT(ctx);
 
    if (!ctx->_CurrentProgram)
@@ -719,6 +684,5 @@ _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string)
       return;
    }
 
-   MEMCPY(string, prog->String, _mesa_strlen((char *) prog->String));
+   _mesa_memcpy(string, prog->String, _mesa_strlen((char *) prog->String));
 }
-

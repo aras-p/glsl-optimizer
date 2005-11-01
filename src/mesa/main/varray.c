@@ -499,7 +499,7 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index >= ctx->Const.MaxVertexProgramAttribs) {
+   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerARB(index)");
       return;
    }

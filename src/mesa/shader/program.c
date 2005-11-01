@@ -1291,7 +1291,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
          if (reg[0] == 'R') {
             /* Temp register */
             GLint i = _mesa_atoi(reg + 1);
-            if (i >= (GLint)ctx->Const.MaxVertexProgramTemps) {
+            if (i >= (GLint)ctx->Const.VertexProgram.MaxTemps) {
                _mesa_error(ctx, GL_INVALID_VALUE,
                            "glGetProgramRegisterfvMESA(registerName)");
                return;
@@ -1301,7 +1301,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
          else if (reg[0] == 'v' && reg[1] == '[') {
             /* Vertex Input attribute */
             GLuint i;
-            for (i = 0; i < ctx->Const.MaxVertexProgramAttribs; i++) {
+            for (i = 0; i < ctx->Const.VertexProgram.MaxAttribs; i++) {
                const char *name = _mesa_nv_vertex_input_register_name(i);
                char number[10];
                _mesa_sprintf(number, "%d", i);
@@ -1355,7 +1355,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
          if (reg[0] == 'R') {
             /* Temp register */
             GLint i = _mesa_atoi(reg + 1);
-            if (i >= (GLint)ctx->Const.MaxFragmentProgramTemps) {
+            if (i >= (GLint)ctx->Const.FragmentProgram.MaxTemps) {
                _mesa_error(ctx, GL_INVALID_VALUE,
                            "glGetProgramRegisterfvMESA(registerName)");
                return;
@@ -1365,7 +1365,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
          else if (reg[0] == 'f' && reg[1] == '[') {
             /* Fragment input attribute */
             GLuint i;
-            for (i = 0; i < ctx->Const.MaxFragmentProgramAttribs; i++) {
+            for (i = 0; i < ctx->Const.FragmentProgram.MaxAttribs; i++) {
                const char *name = _mesa_nv_fragment_input_register_name(i);
                if (_mesa_strncmp(reg + 2, name, 4) == 0) {
                   COPY_4V(v, ctx->FragmentProgram.Machine.Inputs[i]);

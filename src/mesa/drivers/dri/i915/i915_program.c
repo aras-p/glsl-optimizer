@@ -351,6 +351,9 @@ GLuint i915_emit_param4fv( struct i915_fragment_program *p,
 
 void i915_program_error( struct i915_fragment_program *p, const char *msg )
 {
+   /* XXX we shouldn't print anything to stdout, record GL error or
+    * call _mesa_problem()
+    */
    fprintf(stderr, "%s\n", msg);
    p->error = 1;
 }
@@ -409,6 +412,21 @@ void i915_fini_program( struct i915_fragment_program *p )
 
    if (p->nr_decl_insn > I915_MAX_DECL_INSN)
       i915_program_error(p, "Exceeded max DECL instructions");
+
+   if (p->error) {
+      p->FragProg.Base.NumNativeInstructions = 0;
+      p->FragProg.NumNativeAluInstructions = 0;
+      p->FragProg.NumNativeTexInstructions = 0;
+      p->FragProg.NumNativeTexIndirections = 0;
+   }
+   else {
+      p->FragProg.Base.NumNativeInstructions = (p->nr_alu_insn +
+                                                p->nr_tex_insn +
+                                                p->nr_decl_insn);
+      p->FragProg.NumNativeAluInstructions = p->nr_alu_insn;
+      p->FragProg.NumNativeTexInstructions = p->nr_tex_insn;
+      p->FragProg.NumNativeTexIndirections = p->nr_tex_indirect;
+   }
 
    p->declarations[0] |= program_size + decl_size - 2;
 }
