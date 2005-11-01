@@ -267,6 +267,9 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->Const.MaxLineWidth = R300_LINESIZE_MAX;
 	ctx->Const.MaxLineWidthAA = R300_LINESIZE_MAX;
 	
+	if (hw_tcl_on)
+		ctx->_MaintainTnlProgram = GL_TRUE;
+	
 #ifdef USER_BUFFERS
 	/* Needs further modifications */
 #if 0
