@@ -1479,16 +1479,6 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
    key = make_state_key(ctx);
    hash = hash_key(key);
 
-   if (tnl->vp_cache == NULL) {
-      tnl->vp_cache = MALLOC(sizeof(*tnl->vp_cache));
-      tnl->vp_cache->size = 5;
-      tnl->vp_cache->n_items = 0;
-      tnl->vp_cache->items = MALLOC(tnl->vp_cache->size *
-				sizeof(*tnl->vp_cache->items));
-      _mesa_memset(tnl->vp_cache->items, 0, tnl->vp_cache->size *
-				sizeof(*tnl->vp_cache->items));
-   }
-
    /* Look for an already-prepared program for this state:
     */
    ctx->_TnlProgram = (struct vertex_program *)
