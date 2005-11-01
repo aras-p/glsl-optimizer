@@ -770,6 +770,48 @@ void dump_dt(struct dt *dt, int count)
 }
 #endif
 
+#define FALLBACK_IF(expr) \
+do {										\
+	if (expr) {								\
+		if (1 || RADEON_DEBUG & DEBUG_FALLBACKS)			\
+			WARN_ONCE("fallback:%s\n", #expr);			\
+		return GL_TRUE;							\
+	}									\
+} while(0)
+
+GLboolean r300Fallback(GLcontext *ctx)
+{
+
+	FALLBACK_IF(ctx->RenderMode != GL_RENDER);  // We do not do SELECT or FEEDBACK (yet ?)
+	
+#if 0 /* These should work now.. */
+	FALLBACK_IF(ctx->Color.DitherFlag);
+	FALLBACK_IF(ctx->Color.AlphaEnabled); // GL_ALPHA_TEST
+	FALLBACK_IF(ctx->Color.BlendEnabled); // GL_BLEND
+	FALLBACK_IF(ctx->Polygon.OffsetFill); // GL_POLYGON_OFFSET_FILL
+#endif
+	FALLBACK_IF(ctx->Polygon.OffsetPoint); // GL_POLYGON_OFFSET_POINT
+	FALLBACK_IF(ctx->Polygon.OffsetLine); // GL_POLYGON_OFFSET_LINE
+	//FALLBACK_IF(ctx->Stencil.Enabled); // GL_STENCIL_TEST
+	
+	//FALLBACK_IF(ctx->Fog.Enabled); // GL_FOG disable as swtcl doesnt seem to support this
+	//FALLBACK_IF(ctx->Polygon.SmoothFlag); // GL_POLYGON_SMOOTH disabling to get blender going
+	FALLBACK_IF(ctx->Polygon.StippleFlag); // GL_POLYGON_STIPPLE
+	FALLBACK_IF(ctx->Multisample.Enabled); // GL_MULTISAMPLE_ARB
+	
+	
+	FALLBACK_IF(ctx->Line.StippleFlag);
+	
+	/* HW doesnt appear to directly support these */
+	FALLBACK_IF(ctx->Line.SmoothFlag); // GL_LINE_SMOOTH
+	FALLBACK_IF(ctx->Point.SmoothFlag); // GL_POINT_SMOOTH
+	/* Rest could be done with vertex fragments */
+	if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite)
+		FALLBACK_IF(ctx->Point.PointSprite); // GL_POINT_SPRITE_NV
+	
+	return GL_FALSE;
+}
+
 /**
  * Called by the pipeline manager to render a batch of primitives.
  * We can return true to pass on to the next stage (i.e. software
@@ -783,6 +825,8 @@ static GLboolean r300_run_render(GLcontext *ctx,
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
+	if (r300Fallback(ctx))
+		return GL_TRUE;
 #if 0
 		return r300_run_immediate_render(ctx, stage);
 #else
@@ -790,97 +834,12 @@ static GLboolean r300_run_render(GLcontext *ctx,
 #endif
 }
 
-
-/**
- * Called by the pipeline manager once before rendering.
- * We check the GL state here to
- *  a) decide whether we can do the current state in hardware and
- *  b) update hardware registers
- */
-#define FALLBACK_IF(expr) \
-do {										\
-	if (expr) {								\
-		if (1 || RADEON_DEBUG & DEBUG_FALLBACKS)			\
-			WARN_ONCE("fallback:%s\n", #expr);			\
-		/*stage->active = GL_FALSE*/;					\
-		return;								\
-	}									\
-} while(0)
-
-static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
-{
-
-	if (RADEON_DEBUG & DEBUG_STATE)
-		fprintf(stderr, "%s\n", __FUNCTION__);
-
-	/* We only support rendering in hardware for now */
-	if (ctx->RenderMode != GL_RENDER) {
-		//stage->active = GL_FALSE;
-		return;
-	}
-		
-
-	/* I'm almost certain I forgot something here */
-#if 0 /* These should work now.. */
-	FALLBACK_IF(ctx->Color.DitherFlag);
-	FALLBACK_IF(ctx->Color.AlphaEnabled); // GL_ALPHA_TEST
-	FALLBACK_IF(ctx->Color.BlendEnabled); // GL_BLEND
-	FALLBACK_IF(ctx->Polygon.OffsetFill); // GL_POLYGON_OFFSET_FILL
-#endif
-	//FALLBACK_IF(ctx->Polygon.OffsetPoint); // GL_POLYGON_OFFSET_POINT
-	//FALLBACK_IF(ctx->Polygon.OffsetLine); // GL_POLYGON_OFFSET_LINE
-	//FALLBACK_IF(ctx->Stencil.Enabled); // GL_STENCIL_TEST
-	
-	//FALLBACK_IF(ctx->Fog.Enabled); // GL_FOG disable as swtcl doesnt seem to support this
-	//FALLBACK_IF(ctx->Polygon.SmoothFlag); // GL_POLYGON_SMOOTH disabling to get blender going
-	FALLBACK_IF(ctx->Polygon.StippleFlag); // GL_POLYGON_STIPPLE
-	FALLBACK_IF(ctx->Multisample.Enabled); // GL_MULTISAMPLE_ARB
-	
-	FALLBACK_IF(ctx->RenderMode != GL_RENDER);  // We do not do SELECT or FEEDBACK (yet ?)
-
-#if 0 /* ut2k3 fails to start if this is on */
-	/* One step at a time - let one texture pass.. */
-	for (i = 1; i < ctx->Const.MaxTextureUnits; i++)
-		FALLBACK_IF(ctx->Texture.Unit[i].Enabled);
-#endif	
-	
-	/* Assumed factor reg is found but pattern is still missing */
-	//FALLBACK_IF(ctx->Line.StippleFlag); // GL_LINE_STIPPLE disabling to get blender going
-	
-	/* HW doesnt appear to directly support these */
-	//FALLBACK_IF(ctx->Line.SmoothFlag); // GL_LINE_SMOOTH disabling to get blender going
-	FALLBACK_IF(ctx->Point.SmoothFlag); // GL_POINT_SMOOTH
-	/* Rest could be done with vertex fragments */
-	if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite)
-		FALLBACK_IF(ctx->Point.PointSprite); // GL_POINT_SPRITE_NV
-	//GL_POINT_DISTANCE_ATTENUATION_ARB
-	//GL_POINT_FADE_THRESHOLD_SIZE_ARB
-	
-	/* let r300_run_render do its job */
-#if 0
-	stage->active = GL_FALSE;
-#endif
-}
-
-
-static void dtr(struct tnl_pipeline_stage *stage)
-{
-	(void)stage;
-}
-
-static GLboolean r300_create_render(GLcontext *ctx,
-				    struct tnl_pipeline_stage *stage)
-{
-	return GL_TRUE;	
-}
-
-
 const struct tnl_pipeline_stage _r300_render_stage = {
 	"r300 hw rasterize",
 	NULL,
-	r300_create_render,
-	dtr,			/* destructor */
-	r300_check_render,	/* check */
+	NULL,
+	NULL,
+	NULL,
 	r300_run_render		/* run */
 };
 
@@ -918,8 +877,8 @@ static void r300_check_tcl_render(GLcontext *ctx, struct tnl_pipeline_stage *sta
 const struct tnl_pipeline_stage _r300_tcl_stage = {
 	"r300 tcl",
 	NULL,
-	r300_create_render,
-	dtr,			/* destructor */
-	r300_check_tcl_render,	/* check */
+	NULL,
+	NULL,
+	NULL,
 	r300_run_tcl_render	/* run */
 };

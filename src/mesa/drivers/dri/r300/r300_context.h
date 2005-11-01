@@ -876,6 +876,7 @@ extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 void translate_vertex_shader(struct r300_vertex_program *vp);
 extern void r300InitShaderFuncs(struct dd_function_table *functions);
 extern int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp, float *dst);
+extern GLboolean r300Fallback(GLcontext *ctx);
 
 #ifdef RADEON_VTXFMT_A
 extern void radeon_init_vtxfmt_a(r300ContextPtr rmesa);

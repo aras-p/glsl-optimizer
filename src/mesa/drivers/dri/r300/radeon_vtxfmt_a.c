@@ -18,7 +18,11 @@ static int setup_arrays(r300ContextPtr rmesa, GLint start)
 	GLcontext *ctx;
 	GLuint enabled = 0;
 	
-	ctx = rmesa->radeon.glCtx; 
+	ctx = rmesa->radeon.glCtx;
+	if (r300Fallback(ctx)) {
+		WARN_ONCE("No fallbacks in vtxftm_a yet.\n");
+		//return -1;
+	}
 
 	memset(rmesa->state.VB.AttribPtr, 0, VERT_ATTRIB_MAX*sizeof(struct dt));
 	

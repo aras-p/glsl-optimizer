@@ -2261,9 +2261,7 @@ static void r300RenderMode( GLcontext *ctx, GLenum mode )
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	(void)rmesa;
-	WARN_ONCE("TODO: fallback properly when rendering mode is not GL_RENDER\n"
-		"\tThe way things are now neither selection nor feedback modes work\n")
-//	FALLBACK( rmesa, R300_FALLBACK_RENDER_MODE, (mode != GL_RENDER) );
+	(void)mode;
 }
 
 /**
