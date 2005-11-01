@@ -643,6 +643,11 @@ struct tnl_device_driver
    /* Alert tnl-aware drivers of changes to material.
     */
 
+   void (*NotifyInputChanges)(GLcontext *ctx, GLuint bitmask);
+   /* Alert tnl-aware drivers of changes to size and stride of input
+    * arrays.
+    */
+
    GLboolean (*NotifyBegin)(GLcontext *ctx, GLenum p);
    /* Allow drivers to hook in optimized begin/end engines.
     * Return value:  GL_TRUE - driver handled the begin
