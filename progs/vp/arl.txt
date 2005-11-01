@@ -1,0 +1,9 @@
+!!ARBvp1.0
+PARAM arr[5]  = { {1,0,0,1}, {0,1,0,1}, {0,0,1,1}, {1,0,1,1}, {0,1,1,1} };
+ADDRESS addr;
+TEMP R0;
+MUL R0, {5.0}.x, vertex.color; 
+ARL addr.x, R0.x;
+MOV result.color, arr[addr.x];
+MOV result.position, vertex.position;
+END

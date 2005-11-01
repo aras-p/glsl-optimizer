@@ -78,7 +78,6 @@ static void Init( void )
    glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
 		      sz, (const GLubyte *) buf);
 
-   assert(glIsProgramARB(prognum));
    errno = glGetError();
    printf("glGetError = %d\n", errno);
    if (errno != GL_NO_ERROR)
@@ -89,6 +88,7 @@ static void Init( void )
       printf("errorpos: %d\n", errorpos);
       printf("%s\n", (char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB));
    }
+   assert(glIsProgramARB(prognum));
 }
 
 
