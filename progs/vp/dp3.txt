@@ -1,0 +1,5 @@
+!!ARBvp1.0
+DP3 result.color, vertex.color, vertex.color; 
+MOV  result.position, vertex.position;
+END
+

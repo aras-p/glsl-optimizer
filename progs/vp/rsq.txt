@@ -1,0 +1,7 @@
+!!ARBvp1.0
+TEMP R0;
+MUL R0, vertex.color, {3.0}.x;	
+RSQ result.color, R0.x;
+MOV  result.position, vertex.position;
+END
+

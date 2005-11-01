@@ -1,0 +1,5 @@
+!!ARBvp1.0
+MIN result.color, {0.5}.x, vertex.color; 
+MOV  result.position, vertex.position;
+END
+
