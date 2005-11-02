@@ -580,7 +580,7 @@ struct r300_vertex_shader_state {
 	
 extern int hw_tcl_on;
 
-#define CURRENT_VERTEX_SHADER(ctx) (ctx->VertexProgram._Enabled ? ctx->VertexProgram.Current : ctx->_TnlProgram)
+#define CURRENT_VERTEX_SHADER(ctx) (ctx->VertexProgram._Current)
 
 //#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && (OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit)))) : 
 //	(r300->state.render_inputs & (_TNL_BIT_TEX0<<(unit))))
