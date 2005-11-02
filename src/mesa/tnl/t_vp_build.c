@@ -1489,21 +1489,11 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
    GLuint hash;
    struct vertex_program *prev = ctx->VertexProgram._Current;
 
-   if (ctx->VertexProgram._Enabled) { 
+   if (ctx->VertexProgram._Enabled == GL_FALSE) { 
       /* Grab all the relevent state and put it in a single structure:
        */
       key = make_state_key(ctx);
       hash = hash_key(key);
-
-      if (tnl->vp_cache == NULL) {
-	 tnl->vp_cache = MALLOC(sizeof(*tnl->vp_cache));
-	 tnl->vp_cache->size = 5;
-	 tnl->vp_cache->n_items = 0;
-	 tnl->vp_cache->items = MALLOC(tnl->vp_cache->size *
-				       sizeof(*tnl->vp_cache->items));
-	 _mesa_memset(tnl->vp_cache->items, 0, tnl->vp_cache->size *
-		      sizeof(*tnl->vp_cache->items));
-      }
 
       /* Look for an already-prepared program for this state:
        */
@@ -1530,6 +1520,7 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 	 if (0) 
 	    _mesa_printf("Found existing TNL program for key %x\n", hash);
       }
+      ctx->VertexProgram._Current = ctx->_TnlProgram;
    }
    else {
       ctx->VertexProgram._Current = ctx->VertexProgram.Current;
