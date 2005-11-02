@@ -1537,7 +1537,7 @@ parse_attrib_binding(GLcontext * ctx, GLubyte ** inst,
  *
  * \param inst       The parsed tokens
  * \param outputReg  Returned index/number of the output register,
- *                   one of the VERT_RESULT_* or FRAG_OUTPUT_* values.
+ *                   one of the VERT_RESULT_* or FRAG_RESULT_* values.
  */
 static GLuint
 parse_result_binding(GLcontext *ctx, GLubyte **inst,
@@ -1555,7 +1555,7 @@ parse_result_binding(GLcontext *ctx, GLubyte **inst,
              */
             parse_output_color_num(ctx, inst, Program, &out_color);
             ASSERT(out_color < MAX_DRAW_BUFFERS);
-            *outputReg = FRAG_OUTPUT_COLR;
+            *outputReg = FRAG_RESULT_COLR;
          }
          else {
             /* for vtx programs, this is VERTEX_RESULT_POSITION */
@@ -1566,7 +1566,7 @@ parse_result_binding(GLcontext *ctx, GLubyte **inst,
       case FRAGMENT_RESULT_DEPTH:
          if (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
             /* for frag programs, this is FRAGMENT_RESULT_DEPTH */
-            *outputReg = FRAG_OUTPUT_DEPR;
+            *outputReg = FRAG_RESULT_DEPR;
          }
          else {
             /* for vtx programs, this is VERTEX_RESULT_COLOR */

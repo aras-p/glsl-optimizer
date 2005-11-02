@@ -1378,15 +1378,15 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
          }
          else if (_mesa_strcmp(reg, "o[COLR]") == 0) {
             /* Fragment output color */
-            COPY_4V(v, ctx->FragmentProgram.Machine.Outputs[FRAG_OUTPUT_COLR]);
+            COPY_4V(v, ctx->FragmentProgram.Machine.Outputs[FRAG_RESULT_COLR]);
          }
          else if (_mesa_strcmp(reg, "o[COLH]") == 0) {
             /* Fragment output color */
-            COPY_4V(v, ctx->FragmentProgram.Machine.Outputs[FRAG_OUTPUT_COLH]);
+            COPY_4V(v, ctx->FragmentProgram.Machine.Outputs[FRAG_RESULT_COLH]);
          }
          else if (_mesa_strcmp(reg, "o[DEPR]") == 0) {
             /* Fragment output depth */
-            COPY_4V(v, ctx->FragmentProgram.Machine.Outputs[FRAG_OUTPUT_DEPR]);
+            COPY_4V(v, ctx->FragmentProgram.Machine.Outputs[FRAG_RESULT_DEPR]);
          }
          else {
             /* try user-defined identifiers */

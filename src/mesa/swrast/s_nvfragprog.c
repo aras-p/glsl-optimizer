@@ -1484,22 +1484,22 @@ _swrast_exec_fragment_program( GLcontext *ctx, struct sw_span *span )
          /* Store output registers */
          {
             const GLfloat *colOut
-               = ctx->FragmentProgram.Machine.Outputs[FRAG_OUTPUT_COLR];
+               = ctx->FragmentProgram.Machine.Outputs[FRAG_RESULT_COLR];
             UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][RCOMP], colOut[0]);
             UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][GCOMP], colOut[1]);
             UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][BCOMP], colOut[2]);
             UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][ACOMP], colOut[3]);
          }
          /* depth value */
-         if (program->OutputsWritten & (1 << FRAG_OUTPUT_DEPR)) {
+         if (program->OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
             const GLfloat depth
-               = ctx->FragmentProgram.Machine.Outputs[FRAG_OUTPUT_DEPR][2];
+               = ctx->FragmentProgram.Machine.Outputs[FRAG_RESULT_DEPR][2];
             span->array->z[i] = IROUND(depth * ctx->DrawBuffer->_DepthMaxF);
          }
       }
    }
 
-   if (program->OutputsWritten & (1 << FRAG_OUTPUT_DEPR)) {
+   if (program->OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
       span->interpMask &= ~SPAN_Z;
       span->arrayMask |= SPAN_Z;
    }

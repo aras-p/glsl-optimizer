@@ -843,7 +843,7 @@ Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
    /* try to match an output register name */
    for (j = 0; OutputRegisters[j]; j++) {
       if (_mesa_strcmp((const char *) token, OutputRegisters[j]) == 0) {
-         static GLuint bothColors = (1 << FRAG_OUTPUT_COLR) | (1 << FRAG_OUTPUT_COLH);
+         static GLuint bothColors = (1 << FRAG_RESULT_COLR) | (1 << FRAG_RESULT_COLH);
          *outputRegNum = j;
          parseState->outputsWritten |= (1 << j);
          if ((parseState->outputsWritten & bothColors) == bothColors) {

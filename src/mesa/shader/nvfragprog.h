@@ -123,10 +123,10 @@ struct fp_src_register
    GLuint File:4;
    GLuint Index:8;
    GLuint Swizzle:12;
-   GLuint NegateBase:4; /* ARB: negate/extended negate.
+   GLuint NegateBase:4; /* ARB: negate/extended negate, per component.
 			   NV: negate before absolute value? */
-   GLuint Abs:1;        /* NV: take absolute value? */
-   GLuint NegateAbs:1;  /* NV: negate after absolute value? */
+   GLuint Abs:1;        /* NV: take absolute value (all components) ? */
+   GLuint NegateAbs:1;  /* NV: negate (all components) after absolute value? */
 };
 
 

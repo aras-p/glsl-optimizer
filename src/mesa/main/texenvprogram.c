@@ -857,7 +857,7 @@ static struct ureg emit_texenv( struct texenv_fragment_program *p, int unit )
        rgb_shift)
       dest = get_temp( p );
    else
-      dest = make_ureg(PROGRAM_OUTPUT, FRAG_OUTPUT_COLR);
+      dest = make_ureg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
 
    /* Emit the RGB and A combine ops
     */
@@ -1000,7 +1000,7 @@ static void create_new_program(struct state_key *key, GLcontext *ctx,
    p.program->Parameters = _mesa_new_parameter_list();
 
    p.program->InputsRead = 0;
-   p.program->OutputsWritten = 1 << FRAG_OUTPUT_COLR;
+   p.program->OutputsWritten = 1 << FRAG_RESULT_COLR;
 
    for (unit = 0; unit < MAX_TEXTURE_UNITS; unit++)
       p.src_texture[unit] = undef;
@@ -1030,7 +1030,7 @@ static void create_new_program(struct state_key *key, GLcontext *ctx,
    }
 
    cf = get_source( &p, SRC_PREVIOUS, 0 );
-   out = make_ureg( PROGRAM_OUTPUT, FRAG_OUTPUT_COLR );
+   out = make_ureg( PROGRAM_OUTPUT, FRAG_RESULT_COLR );
 
    if (key->separate_specular) {
       /* Emit specular add.

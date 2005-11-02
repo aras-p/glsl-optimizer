@@ -155,7 +155,7 @@ enum
    VERT_ATTRIB_GENERIC1 = 17,
    VERT_ATTRIB_GENERIC2 = 18,
    VERT_ATTRIB_GENERIC3 = 19,
-   VERT_ATTRIB_MAX = 16
+   VERT_ATTRIB_MAX = 16  /* XXX not counting generic attribs yet */
 };
 
 /**
@@ -188,10 +188,10 @@ enum
 #define VERT_BIT_GENERIC(g)  (1 << (VERT_ATTRIB_GENERIC0 + (g)))
 /*@}*/
 
-
 /**
  * Indexes for vertex program result attributes
  */
+/*@{*/
 #define VERT_RESULT_HPOS 0
 #define VERT_RESULT_COL0 1
 #define VERT_RESULT_COL1 2
@@ -208,6 +208,7 @@ enum
 #define VERT_RESULT_BFC0 13
 #define VERT_RESULT_BFC1 14
 #define VERT_RESULT_MAX  15
+/*@}*/
 
 
 /**
@@ -227,12 +228,11 @@ enum
    FRAG_ATTRIB_TEX5 = 9,
    FRAG_ATTRIB_TEX6 = 10,
    FRAG_ATTRIB_TEX7 = 11,
-   
    FRAG_ATTRIB_MAX = 12
 };
 
-/*
- * Bitflags for fragment attributes.
+/**
+ * Bitflags for fragment program input attributes.
  */
 /*@{*/
 #define FRAG_BIT_WPOS  (1 << FRAG_ATTRIB_WPOS)
@@ -259,12 +259,15 @@ enum
 /*@}*/
 
 
-/* Fragment program results
+/**
+ * Fragment program results
  */
-#define FRAG_OUTPUT_COLR  0
-#define FRAG_OUTPUT_COLH  1
-#define FRAG_OUTPUT_DEPR  2
-#define FRAG_OUTPUT_MAX   3
+/*@{*/
+#define FRAG_RESULT_COLR  0
+#define FRAG_RESULT_COLH  1
+#define FRAG_RESULT_DEPR  2
+#define FRAG_RESULT_MAX   3
+/*@}*/
 
 
 /**
