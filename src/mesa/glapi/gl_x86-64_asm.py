@@ -120,12 +120,21 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 		print "/* If we build with gcc's -fvisibility=hidden flag, we'll need to change"
 		print " * the symbol visibility mode to 'default'."
 		print ' */'
+		print ''
+		print '#include "assyntax.h"'
+		print ''
 		print '#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303'
 		print '#  pragma GCC visibility push(default)'
 		print '#  define HIDDEN(x) .hidden x'
 		print '#else'
 		print '#  define HIDDEN(x)'
 		print '#endif'
+		print ''
+		print '# if defined(USE_MGL_NAMESPACE)'
+		print '#  define GL_PREFIX(n) GLNAME(CONCAT(mgl,n))'
+		print '# else'
+		print '#  define GL_PREFIX(n) GLNAME(CONCAT(gl,n))'
+		print '# endif'
 		print ''
 		print '#if defined(PTHREADS) || defined(USE_XTHREADS) || defined(SOLARIS_THREADS) || defined(WIN32_THREADS) || defined(BEOS_THREADS)'
 		print '#  define THREADS'
@@ -224,9 +233,9 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 
 
 		print '\t.p2align\t4,,15'
-		print '\t.globl\tgl%s' % (f.name)
-		print '\t.type\tgl%s, @function' % (f.name)
-		print 'gl%s:' % (f.name)
+		print '\t.globl\tGL_PREFIX(%s)' % (f.name)
+		print '\t.type\tGL_PREFIX(%s), @function' % (f.name)
+		print 'GL_PREFIX(%s):' % (f.name)
 		print '#if defined(GLX_USE_TLS)'
 		print '\tcall\t_x86_64_get_dispatch@PLT'
 		print '\tmovq\t%u(%%rax), %%r11' % (f.offset * 8)
@@ -260,7 +269,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 		print '\tjmp\t*%r11'
 		print '#endif /* defined(GLX_USE_TLS) */'
 
-		print '\t.size\tgl%s, .-gl%s' % (f.name, f.name)
+		print '\t.size\tGL_PREFIX(%s), .-GL_PREFIX(%s)' % (f.name, f.name)
 		print ''
 		return
 
@@ -273,7 +282,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 		for f in api.functionIterateByOffset():
 			for n in f.entry_points:
 				if n != f.name:
-					print '\t.globl gl%s ; .set gl%s, gl%s' % (n, n, f.name)
+					print '\t.globl GL_PREFIX(%s) ; .set GL_PREFIX(%s), GL_PREFIX(%s)' % (n, n, f.name)
 
 		return
 

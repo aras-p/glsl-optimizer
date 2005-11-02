@@ -28,12 +28,21 @@
 /* If we build with gcc's -fvisibility=hidden flag, we'll need to change
  * the symbol visibility mode to 'default'.
  */
+
+#include "assyntax.h"
+
 #if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
 #  pragma GCC visibility push(default)
 #  define HIDDEN(x) .hidden x
 #else
 #  define HIDDEN(x)
 #endif
+
+# if defined(USE_MGL_NAMESPACE)
+#  define GL_PREFIX(n) GLNAME(CONCAT(mgl,n))
+# else
+#  define GL_PREFIX(n) GLNAME(CONCAT(gl,n))
+# endif
 
 #if defined(PTHREADS) || defined(USE_XTHREADS) || defined(SOLARIS_THREADS) || defined(WIN32_THREADS) || defined(BEOS_THREADS)
 #  define THREADS
@@ -73,9 +82,9 @@ _x86_64_get_dispatch:
 #endif
 
 	.p2align	4,,15
-	.globl	glNewList
-	.type	glNewList, @function
-glNewList:
+	.globl	GL_PREFIX(NewList)
+	.type	GL_PREFIX(NewList), @function
+GL_PREFIX(NewList):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	0(%rax), %r11
@@ -107,12 +116,12 @@ glNewList:
 	movq	0(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glNewList, .-glNewList
+	.size	GL_PREFIX(NewList), .-GL_PREFIX(NewList)
 
 	.p2align	4,,15
-	.globl	glEndList
-	.type	glEndList, @function
-glEndList:
+	.globl	GL_PREFIX(EndList)
+	.type	GL_PREFIX(EndList), @function
+GL_PREFIX(EndList):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	8(%rax), %r11
@@ -136,12 +145,12 @@ glEndList:
 	movq	8(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEndList, .-glEndList
+	.size	GL_PREFIX(EndList), .-GL_PREFIX(EndList)
 
 	.p2align	4,,15
-	.globl	glCallList
-	.type	glCallList, @function
-glCallList:
+	.globl	GL_PREFIX(CallList)
+	.type	GL_PREFIX(CallList), @function
+GL_PREFIX(CallList):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	16(%rax), %r11
@@ -165,12 +174,12 @@ glCallList:
 	movq	16(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCallList, .-glCallList
+	.size	GL_PREFIX(CallList), .-GL_PREFIX(CallList)
 
 	.p2align	4,,15
-	.globl	glCallLists
-	.type	glCallLists, @function
-glCallLists:
+	.globl	GL_PREFIX(CallLists)
+	.type	GL_PREFIX(CallLists), @function
+GL_PREFIX(CallLists):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	24(%rax), %r11
@@ -202,12 +211,12 @@ glCallLists:
 	movq	24(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCallLists, .-glCallLists
+	.size	GL_PREFIX(CallLists), .-GL_PREFIX(CallLists)
 
 	.p2align	4,,15
-	.globl	glDeleteLists
-	.type	glDeleteLists, @function
-glDeleteLists:
+	.globl	GL_PREFIX(DeleteLists)
+	.type	GL_PREFIX(DeleteLists), @function
+GL_PREFIX(DeleteLists):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	32(%rax), %r11
@@ -239,12 +248,12 @@ glDeleteLists:
 	movq	32(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDeleteLists, .-glDeleteLists
+	.size	GL_PREFIX(DeleteLists), .-GL_PREFIX(DeleteLists)
 
 	.p2align	4,,15
-	.globl	glGenLists
-	.type	glGenLists, @function
-glGenLists:
+	.globl	GL_PREFIX(GenLists)
+	.type	GL_PREFIX(GenLists), @function
+GL_PREFIX(GenLists):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	40(%rax), %r11
@@ -268,12 +277,12 @@ glGenLists:
 	movq	40(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGenLists, .-glGenLists
+	.size	GL_PREFIX(GenLists), .-GL_PREFIX(GenLists)
 
 	.p2align	4,,15
-	.globl	glListBase
-	.type	glListBase, @function
-glListBase:
+	.globl	GL_PREFIX(ListBase)
+	.type	GL_PREFIX(ListBase), @function
+GL_PREFIX(ListBase):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	48(%rax), %r11
@@ -297,12 +306,12 @@ glListBase:
 	movq	48(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glListBase, .-glListBase
+	.size	GL_PREFIX(ListBase), .-GL_PREFIX(ListBase)
 
 	.p2align	4,,15
-	.globl	glBegin
-	.type	glBegin, @function
-glBegin:
+	.globl	GL_PREFIX(Begin)
+	.type	GL_PREFIX(Begin), @function
+GL_PREFIX(Begin):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	56(%rax), %r11
@@ -326,12 +335,12 @@ glBegin:
 	movq	56(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBegin, .-glBegin
+	.size	GL_PREFIX(Begin), .-GL_PREFIX(Begin)
 
 	.p2align	4,,15
-	.globl	glBitmap
-	.type	glBitmap, @function
-glBitmap:
+	.globl	GL_PREFIX(Bitmap)
+	.type	GL_PREFIX(Bitmap), @function
+GL_PREFIX(Bitmap):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	64(%rax), %r11
@@ -383,12 +392,12 @@ glBitmap:
 	movq	64(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBitmap, .-glBitmap
+	.size	GL_PREFIX(Bitmap), .-GL_PREFIX(Bitmap)
 
 	.p2align	4,,15
-	.globl	glColor3b
-	.type	glColor3b, @function
-glColor3b:
+	.globl	GL_PREFIX(Color3b)
+	.type	GL_PREFIX(Color3b), @function
+GL_PREFIX(Color3b):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	72(%rax), %r11
@@ -420,12 +429,12 @@ glColor3b:
 	movq	72(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3b, .-glColor3b
+	.size	GL_PREFIX(Color3b), .-GL_PREFIX(Color3b)
 
 	.p2align	4,,15
-	.globl	glColor3bv
-	.type	glColor3bv, @function
-glColor3bv:
+	.globl	GL_PREFIX(Color3bv)
+	.type	GL_PREFIX(Color3bv), @function
+GL_PREFIX(Color3bv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	80(%rax), %r11
@@ -449,12 +458,12 @@ glColor3bv:
 	movq	80(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3bv, .-glColor3bv
+	.size	GL_PREFIX(Color3bv), .-GL_PREFIX(Color3bv)
 
 	.p2align	4,,15
-	.globl	glColor3d
-	.type	glColor3d, @function
-glColor3d:
+	.globl	GL_PREFIX(Color3d)
+	.type	GL_PREFIX(Color3d), @function
+GL_PREFIX(Color3d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	88(%rax), %r11
@@ -490,12 +499,12 @@ glColor3d:
 	movq	88(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3d, .-glColor3d
+	.size	GL_PREFIX(Color3d), .-GL_PREFIX(Color3d)
 
 	.p2align	4,,15
-	.globl	glColor3dv
-	.type	glColor3dv, @function
-glColor3dv:
+	.globl	GL_PREFIX(Color3dv)
+	.type	GL_PREFIX(Color3dv), @function
+GL_PREFIX(Color3dv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	96(%rax), %r11
@@ -519,12 +528,12 @@ glColor3dv:
 	movq	96(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3dv, .-glColor3dv
+	.size	GL_PREFIX(Color3dv), .-GL_PREFIX(Color3dv)
 
 	.p2align	4,,15
-	.globl	glColor3f
-	.type	glColor3f, @function
-glColor3f:
+	.globl	GL_PREFIX(Color3f)
+	.type	GL_PREFIX(Color3f), @function
+GL_PREFIX(Color3f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	104(%rax), %r11
@@ -560,12 +569,12 @@ glColor3f:
 	movq	104(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3f, .-glColor3f
+	.size	GL_PREFIX(Color3f), .-GL_PREFIX(Color3f)
 
 	.p2align	4,,15
-	.globl	glColor3fv
-	.type	glColor3fv, @function
-glColor3fv:
+	.globl	GL_PREFIX(Color3fv)
+	.type	GL_PREFIX(Color3fv), @function
+GL_PREFIX(Color3fv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	112(%rax), %r11
@@ -589,12 +598,12 @@ glColor3fv:
 	movq	112(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3fv, .-glColor3fv
+	.size	GL_PREFIX(Color3fv), .-GL_PREFIX(Color3fv)
 
 	.p2align	4,,15
-	.globl	glColor3i
-	.type	glColor3i, @function
-glColor3i:
+	.globl	GL_PREFIX(Color3i)
+	.type	GL_PREFIX(Color3i), @function
+GL_PREFIX(Color3i):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	120(%rax), %r11
@@ -626,12 +635,12 @@ glColor3i:
 	movq	120(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3i, .-glColor3i
+	.size	GL_PREFIX(Color3i), .-GL_PREFIX(Color3i)
 
 	.p2align	4,,15
-	.globl	glColor3iv
-	.type	glColor3iv, @function
-glColor3iv:
+	.globl	GL_PREFIX(Color3iv)
+	.type	GL_PREFIX(Color3iv), @function
+GL_PREFIX(Color3iv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	128(%rax), %r11
@@ -655,12 +664,12 @@ glColor3iv:
 	movq	128(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3iv, .-glColor3iv
+	.size	GL_PREFIX(Color3iv), .-GL_PREFIX(Color3iv)
 
 	.p2align	4,,15
-	.globl	glColor3s
-	.type	glColor3s, @function
-glColor3s:
+	.globl	GL_PREFIX(Color3s)
+	.type	GL_PREFIX(Color3s), @function
+GL_PREFIX(Color3s):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	136(%rax), %r11
@@ -692,12 +701,12 @@ glColor3s:
 	movq	136(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3s, .-glColor3s
+	.size	GL_PREFIX(Color3s), .-GL_PREFIX(Color3s)
 
 	.p2align	4,,15
-	.globl	glColor3sv
-	.type	glColor3sv, @function
-glColor3sv:
+	.globl	GL_PREFIX(Color3sv)
+	.type	GL_PREFIX(Color3sv), @function
+GL_PREFIX(Color3sv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	144(%rax), %r11
@@ -721,12 +730,12 @@ glColor3sv:
 	movq	144(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3sv, .-glColor3sv
+	.size	GL_PREFIX(Color3sv), .-GL_PREFIX(Color3sv)
 
 	.p2align	4,,15
-	.globl	glColor3ub
-	.type	glColor3ub, @function
-glColor3ub:
+	.globl	GL_PREFIX(Color3ub)
+	.type	GL_PREFIX(Color3ub), @function
+GL_PREFIX(Color3ub):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	152(%rax), %r11
@@ -758,12 +767,12 @@ glColor3ub:
 	movq	152(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3ub, .-glColor3ub
+	.size	GL_PREFIX(Color3ub), .-GL_PREFIX(Color3ub)
 
 	.p2align	4,,15
-	.globl	glColor3ubv
-	.type	glColor3ubv, @function
-glColor3ubv:
+	.globl	GL_PREFIX(Color3ubv)
+	.type	GL_PREFIX(Color3ubv), @function
+GL_PREFIX(Color3ubv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	160(%rax), %r11
@@ -787,12 +796,12 @@ glColor3ubv:
 	movq	160(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3ubv, .-glColor3ubv
+	.size	GL_PREFIX(Color3ubv), .-GL_PREFIX(Color3ubv)
 
 	.p2align	4,,15
-	.globl	glColor3ui
-	.type	glColor3ui, @function
-glColor3ui:
+	.globl	GL_PREFIX(Color3ui)
+	.type	GL_PREFIX(Color3ui), @function
+GL_PREFIX(Color3ui):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	168(%rax), %r11
@@ -824,12 +833,12 @@ glColor3ui:
 	movq	168(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3ui, .-glColor3ui
+	.size	GL_PREFIX(Color3ui), .-GL_PREFIX(Color3ui)
 
 	.p2align	4,,15
-	.globl	glColor3uiv
-	.type	glColor3uiv, @function
-glColor3uiv:
+	.globl	GL_PREFIX(Color3uiv)
+	.type	GL_PREFIX(Color3uiv), @function
+GL_PREFIX(Color3uiv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	176(%rax), %r11
@@ -853,12 +862,12 @@ glColor3uiv:
 	movq	176(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3uiv, .-glColor3uiv
+	.size	GL_PREFIX(Color3uiv), .-GL_PREFIX(Color3uiv)
 
 	.p2align	4,,15
-	.globl	glColor3us
-	.type	glColor3us, @function
-glColor3us:
+	.globl	GL_PREFIX(Color3us)
+	.type	GL_PREFIX(Color3us), @function
+GL_PREFIX(Color3us):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	184(%rax), %r11
@@ -890,12 +899,12 @@ glColor3us:
 	movq	184(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3us, .-glColor3us
+	.size	GL_PREFIX(Color3us), .-GL_PREFIX(Color3us)
 
 	.p2align	4,,15
-	.globl	glColor3usv
-	.type	glColor3usv, @function
-glColor3usv:
+	.globl	GL_PREFIX(Color3usv)
+	.type	GL_PREFIX(Color3usv), @function
+GL_PREFIX(Color3usv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	192(%rax), %r11
@@ -919,12 +928,12 @@ glColor3usv:
 	movq	192(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor3usv, .-glColor3usv
+	.size	GL_PREFIX(Color3usv), .-GL_PREFIX(Color3usv)
 
 	.p2align	4,,15
-	.globl	glColor4b
-	.type	glColor4b, @function
-glColor4b:
+	.globl	GL_PREFIX(Color4b)
+	.type	GL_PREFIX(Color4b), @function
+GL_PREFIX(Color4b):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	200(%rax), %r11
@@ -964,12 +973,12 @@ glColor4b:
 	movq	200(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4b, .-glColor4b
+	.size	GL_PREFIX(Color4b), .-GL_PREFIX(Color4b)
 
 	.p2align	4,,15
-	.globl	glColor4bv
-	.type	glColor4bv, @function
-glColor4bv:
+	.globl	GL_PREFIX(Color4bv)
+	.type	GL_PREFIX(Color4bv), @function
+GL_PREFIX(Color4bv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	208(%rax), %r11
@@ -993,12 +1002,12 @@ glColor4bv:
 	movq	208(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4bv, .-glColor4bv
+	.size	GL_PREFIX(Color4bv), .-GL_PREFIX(Color4bv)
 
 	.p2align	4,,15
-	.globl	glColor4d
-	.type	glColor4d, @function
-glColor4d:
+	.globl	GL_PREFIX(Color4d)
+	.type	GL_PREFIX(Color4d), @function
+GL_PREFIX(Color4d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	216(%rax), %r11
@@ -1038,12 +1047,12 @@ glColor4d:
 	movq	216(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4d, .-glColor4d
+	.size	GL_PREFIX(Color4d), .-GL_PREFIX(Color4d)
 
 	.p2align	4,,15
-	.globl	glColor4dv
-	.type	glColor4dv, @function
-glColor4dv:
+	.globl	GL_PREFIX(Color4dv)
+	.type	GL_PREFIX(Color4dv), @function
+GL_PREFIX(Color4dv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	224(%rax), %r11
@@ -1067,12 +1076,12 @@ glColor4dv:
 	movq	224(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4dv, .-glColor4dv
+	.size	GL_PREFIX(Color4dv), .-GL_PREFIX(Color4dv)
 
 	.p2align	4,,15
-	.globl	glColor4f
-	.type	glColor4f, @function
-glColor4f:
+	.globl	GL_PREFIX(Color4f)
+	.type	GL_PREFIX(Color4f), @function
+GL_PREFIX(Color4f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	232(%rax), %r11
@@ -1112,12 +1121,12 @@ glColor4f:
 	movq	232(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4f, .-glColor4f
+	.size	GL_PREFIX(Color4f), .-GL_PREFIX(Color4f)
 
 	.p2align	4,,15
-	.globl	glColor4fv
-	.type	glColor4fv, @function
-glColor4fv:
+	.globl	GL_PREFIX(Color4fv)
+	.type	GL_PREFIX(Color4fv), @function
+GL_PREFIX(Color4fv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	240(%rax), %r11
@@ -1141,12 +1150,12 @@ glColor4fv:
 	movq	240(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4fv, .-glColor4fv
+	.size	GL_PREFIX(Color4fv), .-GL_PREFIX(Color4fv)
 
 	.p2align	4,,15
-	.globl	glColor4i
-	.type	glColor4i, @function
-glColor4i:
+	.globl	GL_PREFIX(Color4i)
+	.type	GL_PREFIX(Color4i), @function
+GL_PREFIX(Color4i):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	248(%rax), %r11
@@ -1186,12 +1195,12 @@ glColor4i:
 	movq	248(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4i, .-glColor4i
+	.size	GL_PREFIX(Color4i), .-GL_PREFIX(Color4i)
 
 	.p2align	4,,15
-	.globl	glColor4iv
-	.type	glColor4iv, @function
-glColor4iv:
+	.globl	GL_PREFIX(Color4iv)
+	.type	GL_PREFIX(Color4iv), @function
+GL_PREFIX(Color4iv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	256(%rax), %r11
@@ -1215,12 +1224,12 @@ glColor4iv:
 	movq	256(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4iv, .-glColor4iv
+	.size	GL_PREFIX(Color4iv), .-GL_PREFIX(Color4iv)
 
 	.p2align	4,,15
-	.globl	glColor4s
-	.type	glColor4s, @function
-glColor4s:
+	.globl	GL_PREFIX(Color4s)
+	.type	GL_PREFIX(Color4s), @function
+GL_PREFIX(Color4s):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	264(%rax), %r11
@@ -1260,12 +1269,12 @@ glColor4s:
 	movq	264(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4s, .-glColor4s
+	.size	GL_PREFIX(Color4s), .-GL_PREFIX(Color4s)
 
 	.p2align	4,,15
-	.globl	glColor4sv
-	.type	glColor4sv, @function
-glColor4sv:
+	.globl	GL_PREFIX(Color4sv)
+	.type	GL_PREFIX(Color4sv), @function
+GL_PREFIX(Color4sv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	272(%rax), %r11
@@ -1289,12 +1298,12 @@ glColor4sv:
 	movq	272(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4sv, .-glColor4sv
+	.size	GL_PREFIX(Color4sv), .-GL_PREFIX(Color4sv)
 
 	.p2align	4,,15
-	.globl	glColor4ub
-	.type	glColor4ub, @function
-glColor4ub:
+	.globl	GL_PREFIX(Color4ub)
+	.type	GL_PREFIX(Color4ub), @function
+GL_PREFIX(Color4ub):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	280(%rax), %r11
@@ -1334,12 +1343,12 @@ glColor4ub:
 	movq	280(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4ub, .-glColor4ub
+	.size	GL_PREFIX(Color4ub), .-GL_PREFIX(Color4ub)
 
 	.p2align	4,,15
-	.globl	glColor4ubv
-	.type	glColor4ubv, @function
-glColor4ubv:
+	.globl	GL_PREFIX(Color4ubv)
+	.type	GL_PREFIX(Color4ubv), @function
+GL_PREFIX(Color4ubv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	288(%rax), %r11
@@ -1363,12 +1372,12 @@ glColor4ubv:
 	movq	288(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4ubv, .-glColor4ubv
+	.size	GL_PREFIX(Color4ubv), .-GL_PREFIX(Color4ubv)
 
 	.p2align	4,,15
-	.globl	glColor4ui
-	.type	glColor4ui, @function
-glColor4ui:
+	.globl	GL_PREFIX(Color4ui)
+	.type	GL_PREFIX(Color4ui), @function
+GL_PREFIX(Color4ui):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	296(%rax), %r11
@@ -1408,12 +1417,12 @@ glColor4ui:
 	movq	296(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4ui, .-glColor4ui
+	.size	GL_PREFIX(Color4ui), .-GL_PREFIX(Color4ui)
 
 	.p2align	4,,15
-	.globl	glColor4uiv
-	.type	glColor4uiv, @function
-glColor4uiv:
+	.globl	GL_PREFIX(Color4uiv)
+	.type	GL_PREFIX(Color4uiv), @function
+GL_PREFIX(Color4uiv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	304(%rax), %r11
@@ -1437,12 +1446,12 @@ glColor4uiv:
 	movq	304(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4uiv, .-glColor4uiv
+	.size	GL_PREFIX(Color4uiv), .-GL_PREFIX(Color4uiv)
 
 	.p2align	4,,15
-	.globl	glColor4us
-	.type	glColor4us, @function
-glColor4us:
+	.globl	GL_PREFIX(Color4us)
+	.type	GL_PREFIX(Color4us), @function
+GL_PREFIX(Color4us):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	312(%rax), %r11
@@ -1482,12 +1491,12 @@ glColor4us:
 	movq	312(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4us, .-glColor4us
+	.size	GL_PREFIX(Color4us), .-GL_PREFIX(Color4us)
 
 	.p2align	4,,15
-	.globl	glColor4usv
-	.type	glColor4usv, @function
-glColor4usv:
+	.globl	GL_PREFIX(Color4usv)
+	.type	GL_PREFIX(Color4usv), @function
+GL_PREFIX(Color4usv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	320(%rax), %r11
@@ -1511,12 +1520,12 @@ glColor4usv:
 	movq	320(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColor4usv, .-glColor4usv
+	.size	GL_PREFIX(Color4usv), .-GL_PREFIX(Color4usv)
 
 	.p2align	4,,15
-	.globl	glEdgeFlag
-	.type	glEdgeFlag, @function
-glEdgeFlag:
+	.globl	GL_PREFIX(EdgeFlag)
+	.type	GL_PREFIX(EdgeFlag), @function
+GL_PREFIX(EdgeFlag):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	328(%rax), %r11
@@ -1540,12 +1549,12 @@ glEdgeFlag:
 	movq	328(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEdgeFlag, .-glEdgeFlag
+	.size	GL_PREFIX(EdgeFlag), .-GL_PREFIX(EdgeFlag)
 
 	.p2align	4,,15
-	.globl	glEdgeFlagv
-	.type	glEdgeFlagv, @function
-glEdgeFlagv:
+	.globl	GL_PREFIX(EdgeFlagv)
+	.type	GL_PREFIX(EdgeFlagv), @function
+GL_PREFIX(EdgeFlagv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	336(%rax), %r11
@@ -1569,12 +1578,12 @@ glEdgeFlagv:
 	movq	336(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEdgeFlagv, .-glEdgeFlagv
+	.size	GL_PREFIX(EdgeFlagv), .-GL_PREFIX(EdgeFlagv)
 
 	.p2align	4,,15
-	.globl	glEnd
-	.type	glEnd, @function
-glEnd:
+	.globl	GL_PREFIX(End)
+	.type	GL_PREFIX(End), @function
+GL_PREFIX(End):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	344(%rax), %r11
@@ -1598,12 +1607,12 @@ glEnd:
 	movq	344(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEnd, .-glEnd
+	.size	GL_PREFIX(End), .-GL_PREFIX(End)
 
 	.p2align	4,,15
-	.globl	glIndexd
-	.type	glIndexd, @function
-glIndexd:
+	.globl	GL_PREFIX(Indexd)
+	.type	GL_PREFIX(Indexd), @function
+GL_PREFIX(Indexd):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	352(%rax), %r11
@@ -1631,12 +1640,12 @@ glIndexd:
 	movq	352(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIndexd, .-glIndexd
+	.size	GL_PREFIX(Indexd), .-GL_PREFIX(Indexd)
 
 	.p2align	4,,15
-	.globl	glIndexdv
-	.type	glIndexdv, @function
-glIndexdv:
+	.globl	GL_PREFIX(Indexdv)
+	.type	GL_PREFIX(Indexdv), @function
+GL_PREFIX(Indexdv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	360(%rax), %r11
@@ -1660,12 +1669,12 @@ glIndexdv:
 	movq	360(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIndexdv, .-glIndexdv
+	.size	GL_PREFIX(Indexdv), .-GL_PREFIX(Indexdv)
 
 	.p2align	4,,15
-	.globl	glIndexf
-	.type	glIndexf, @function
-glIndexf:
+	.globl	GL_PREFIX(Indexf)
+	.type	GL_PREFIX(Indexf), @function
+GL_PREFIX(Indexf):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	368(%rax), %r11
@@ -1693,12 +1702,12 @@ glIndexf:
 	movq	368(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIndexf, .-glIndexf
+	.size	GL_PREFIX(Indexf), .-GL_PREFIX(Indexf)
 
 	.p2align	4,,15
-	.globl	glIndexfv
-	.type	glIndexfv, @function
-glIndexfv:
+	.globl	GL_PREFIX(Indexfv)
+	.type	GL_PREFIX(Indexfv), @function
+GL_PREFIX(Indexfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	376(%rax), %r11
@@ -1722,12 +1731,12 @@ glIndexfv:
 	movq	376(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIndexfv, .-glIndexfv
+	.size	GL_PREFIX(Indexfv), .-GL_PREFIX(Indexfv)
 
 	.p2align	4,,15
-	.globl	glIndexi
-	.type	glIndexi, @function
-glIndexi:
+	.globl	GL_PREFIX(Indexi)
+	.type	GL_PREFIX(Indexi), @function
+GL_PREFIX(Indexi):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	384(%rax), %r11
@@ -1751,12 +1760,12 @@ glIndexi:
 	movq	384(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIndexi, .-glIndexi
+	.size	GL_PREFIX(Indexi), .-GL_PREFIX(Indexi)
 
 	.p2align	4,,15
-	.globl	glIndexiv
-	.type	glIndexiv, @function
-glIndexiv:
+	.globl	GL_PREFIX(Indexiv)
+	.type	GL_PREFIX(Indexiv), @function
+GL_PREFIX(Indexiv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	392(%rax), %r11
@@ -1780,12 +1789,12 @@ glIndexiv:
 	movq	392(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIndexiv, .-glIndexiv
+	.size	GL_PREFIX(Indexiv), .-GL_PREFIX(Indexiv)
 
 	.p2align	4,,15
-	.globl	glIndexs
-	.type	glIndexs, @function
-glIndexs:
+	.globl	GL_PREFIX(Indexs)
+	.type	GL_PREFIX(Indexs), @function
+GL_PREFIX(Indexs):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	400(%rax), %r11
@@ -1809,12 +1818,12 @@ glIndexs:
 	movq	400(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIndexs, .-glIndexs
+	.size	GL_PREFIX(Indexs), .-GL_PREFIX(Indexs)
 
 	.p2align	4,,15
-	.globl	glIndexsv
-	.type	glIndexsv, @function
-glIndexsv:
+	.globl	GL_PREFIX(Indexsv)
+	.type	GL_PREFIX(Indexsv), @function
+GL_PREFIX(Indexsv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	408(%rax), %r11
@@ -1838,12 +1847,12 @@ glIndexsv:
 	movq	408(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIndexsv, .-glIndexsv
+	.size	GL_PREFIX(Indexsv), .-GL_PREFIX(Indexsv)
 
 	.p2align	4,,15
-	.globl	glNormal3b
-	.type	glNormal3b, @function
-glNormal3b:
+	.globl	GL_PREFIX(Normal3b)
+	.type	GL_PREFIX(Normal3b), @function
+GL_PREFIX(Normal3b):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	416(%rax), %r11
@@ -1875,12 +1884,12 @@ glNormal3b:
 	movq	416(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glNormal3b, .-glNormal3b
+	.size	GL_PREFIX(Normal3b), .-GL_PREFIX(Normal3b)
 
 	.p2align	4,,15
-	.globl	glNormal3bv
-	.type	glNormal3bv, @function
-glNormal3bv:
+	.globl	GL_PREFIX(Normal3bv)
+	.type	GL_PREFIX(Normal3bv), @function
+GL_PREFIX(Normal3bv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	424(%rax), %r11
@@ -1904,12 +1913,12 @@ glNormal3bv:
 	movq	424(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glNormal3bv, .-glNormal3bv
+	.size	GL_PREFIX(Normal3bv), .-GL_PREFIX(Normal3bv)
 
 	.p2align	4,,15
-	.globl	glNormal3d
-	.type	glNormal3d, @function
-glNormal3d:
+	.globl	GL_PREFIX(Normal3d)
+	.type	GL_PREFIX(Normal3d), @function
+GL_PREFIX(Normal3d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	432(%rax), %r11
@@ -1945,12 +1954,12 @@ glNormal3d:
 	movq	432(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glNormal3d, .-glNormal3d
+	.size	GL_PREFIX(Normal3d), .-GL_PREFIX(Normal3d)
 
 	.p2align	4,,15
-	.globl	glNormal3dv
-	.type	glNormal3dv, @function
-glNormal3dv:
+	.globl	GL_PREFIX(Normal3dv)
+	.type	GL_PREFIX(Normal3dv), @function
+GL_PREFIX(Normal3dv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	440(%rax), %r11
@@ -1974,12 +1983,12 @@ glNormal3dv:
 	movq	440(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glNormal3dv, .-glNormal3dv
+	.size	GL_PREFIX(Normal3dv), .-GL_PREFIX(Normal3dv)
 
 	.p2align	4,,15
-	.globl	glNormal3f
-	.type	glNormal3f, @function
-glNormal3f:
+	.globl	GL_PREFIX(Normal3f)
+	.type	GL_PREFIX(Normal3f), @function
+GL_PREFIX(Normal3f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	448(%rax), %r11
@@ -2015,12 +2024,12 @@ glNormal3f:
 	movq	448(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glNormal3f, .-glNormal3f
+	.size	GL_PREFIX(Normal3f), .-GL_PREFIX(Normal3f)
 
 	.p2align	4,,15
-	.globl	glNormal3fv
-	.type	glNormal3fv, @function
-glNormal3fv:
+	.globl	GL_PREFIX(Normal3fv)
+	.type	GL_PREFIX(Normal3fv), @function
+GL_PREFIX(Normal3fv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	456(%rax), %r11
@@ -2044,12 +2053,12 @@ glNormal3fv:
 	movq	456(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glNormal3fv, .-glNormal3fv
+	.size	GL_PREFIX(Normal3fv), .-GL_PREFIX(Normal3fv)
 
 	.p2align	4,,15
-	.globl	glNormal3i
-	.type	glNormal3i, @function
-glNormal3i:
+	.globl	GL_PREFIX(Normal3i)
+	.type	GL_PREFIX(Normal3i), @function
+GL_PREFIX(Normal3i):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	464(%rax), %r11
@@ -2081,12 +2090,12 @@ glNormal3i:
 	movq	464(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glNormal3i, .-glNormal3i
+	.size	GL_PREFIX(Normal3i), .-GL_PREFIX(Normal3i)
 
 	.p2align	4,,15
-	.globl	glNormal3iv
-	.type	glNormal3iv, @function
-glNormal3iv:
+	.globl	GL_PREFIX(Normal3iv)
+	.type	GL_PREFIX(Normal3iv), @function
+GL_PREFIX(Normal3iv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	472(%rax), %r11
@@ -2110,12 +2119,12 @@ glNormal3iv:
 	movq	472(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glNormal3iv, .-glNormal3iv
+	.size	GL_PREFIX(Normal3iv), .-GL_PREFIX(Normal3iv)
 
 	.p2align	4,,15
-	.globl	glNormal3s
-	.type	glNormal3s, @function
-glNormal3s:
+	.globl	GL_PREFIX(Normal3s)
+	.type	GL_PREFIX(Normal3s), @function
+GL_PREFIX(Normal3s):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	480(%rax), %r11
@@ -2147,12 +2156,12 @@ glNormal3s:
 	movq	480(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glNormal3s, .-glNormal3s
+	.size	GL_PREFIX(Normal3s), .-GL_PREFIX(Normal3s)
 
 	.p2align	4,,15
-	.globl	glNormal3sv
-	.type	glNormal3sv, @function
-glNormal3sv:
+	.globl	GL_PREFIX(Normal3sv)
+	.type	GL_PREFIX(Normal3sv), @function
+GL_PREFIX(Normal3sv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	488(%rax), %r11
@@ -2176,12 +2185,12 @@ glNormal3sv:
 	movq	488(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glNormal3sv, .-glNormal3sv
+	.size	GL_PREFIX(Normal3sv), .-GL_PREFIX(Normal3sv)
 
 	.p2align	4,,15
-	.globl	glRasterPos2d
-	.type	glRasterPos2d, @function
-glRasterPos2d:
+	.globl	GL_PREFIX(RasterPos2d)
+	.type	GL_PREFIX(RasterPos2d), @function
+GL_PREFIX(RasterPos2d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	496(%rax), %r11
@@ -2213,12 +2222,12 @@ glRasterPos2d:
 	movq	496(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos2d, .-glRasterPos2d
+	.size	GL_PREFIX(RasterPos2d), .-GL_PREFIX(RasterPos2d)
 
 	.p2align	4,,15
-	.globl	glRasterPos2dv
-	.type	glRasterPos2dv, @function
-glRasterPos2dv:
+	.globl	GL_PREFIX(RasterPos2dv)
+	.type	GL_PREFIX(RasterPos2dv), @function
+GL_PREFIX(RasterPos2dv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	504(%rax), %r11
@@ -2242,12 +2251,12 @@ glRasterPos2dv:
 	movq	504(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos2dv, .-glRasterPos2dv
+	.size	GL_PREFIX(RasterPos2dv), .-GL_PREFIX(RasterPos2dv)
 
 	.p2align	4,,15
-	.globl	glRasterPos2f
-	.type	glRasterPos2f, @function
-glRasterPos2f:
+	.globl	GL_PREFIX(RasterPos2f)
+	.type	GL_PREFIX(RasterPos2f), @function
+GL_PREFIX(RasterPos2f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	512(%rax), %r11
@@ -2279,12 +2288,12 @@ glRasterPos2f:
 	movq	512(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos2f, .-glRasterPos2f
+	.size	GL_PREFIX(RasterPos2f), .-GL_PREFIX(RasterPos2f)
 
 	.p2align	4,,15
-	.globl	glRasterPos2fv
-	.type	glRasterPos2fv, @function
-glRasterPos2fv:
+	.globl	GL_PREFIX(RasterPos2fv)
+	.type	GL_PREFIX(RasterPos2fv), @function
+GL_PREFIX(RasterPos2fv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	520(%rax), %r11
@@ -2308,12 +2317,12 @@ glRasterPos2fv:
 	movq	520(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos2fv, .-glRasterPos2fv
+	.size	GL_PREFIX(RasterPos2fv), .-GL_PREFIX(RasterPos2fv)
 
 	.p2align	4,,15
-	.globl	glRasterPos2i
-	.type	glRasterPos2i, @function
-glRasterPos2i:
+	.globl	GL_PREFIX(RasterPos2i)
+	.type	GL_PREFIX(RasterPos2i), @function
+GL_PREFIX(RasterPos2i):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	528(%rax), %r11
@@ -2345,12 +2354,12 @@ glRasterPos2i:
 	movq	528(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos2i, .-glRasterPos2i
+	.size	GL_PREFIX(RasterPos2i), .-GL_PREFIX(RasterPos2i)
 
 	.p2align	4,,15
-	.globl	glRasterPos2iv
-	.type	glRasterPos2iv, @function
-glRasterPos2iv:
+	.globl	GL_PREFIX(RasterPos2iv)
+	.type	GL_PREFIX(RasterPos2iv), @function
+GL_PREFIX(RasterPos2iv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	536(%rax), %r11
@@ -2374,12 +2383,12 @@ glRasterPos2iv:
 	movq	536(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos2iv, .-glRasterPos2iv
+	.size	GL_PREFIX(RasterPos2iv), .-GL_PREFIX(RasterPos2iv)
 
 	.p2align	4,,15
-	.globl	glRasterPos2s
-	.type	glRasterPos2s, @function
-glRasterPos2s:
+	.globl	GL_PREFIX(RasterPos2s)
+	.type	GL_PREFIX(RasterPos2s), @function
+GL_PREFIX(RasterPos2s):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	544(%rax), %r11
@@ -2411,12 +2420,12 @@ glRasterPos2s:
 	movq	544(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos2s, .-glRasterPos2s
+	.size	GL_PREFIX(RasterPos2s), .-GL_PREFIX(RasterPos2s)
 
 	.p2align	4,,15
-	.globl	glRasterPos2sv
-	.type	glRasterPos2sv, @function
-glRasterPos2sv:
+	.globl	GL_PREFIX(RasterPos2sv)
+	.type	GL_PREFIX(RasterPos2sv), @function
+GL_PREFIX(RasterPos2sv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	552(%rax), %r11
@@ -2440,12 +2449,12 @@ glRasterPos2sv:
 	movq	552(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos2sv, .-glRasterPos2sv
+	.size	GL_PREFIX(RasterPos2sv), .-GL_PREFIX(RasterPos2sv)
 
 	.p2align	4,,15
-	.globl	glRasterPos3d
-	.type	glRasterPos3d, @function
-glRasterPos3d:
+	.globl	GL_PREFIX(RasterPos3d)
+	.type	GL_PREFIX(RasterPos3d), @function
+GL_PREFIX(RasterPos3d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	560(%rax), %r11
@@ -2481,12 +2490,12 @@ glRasterPos3d:
 	movq	560(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos3d, .-glRasterPos3d
+	.size	GL_PREFIX(RasterPos3d), .-GL_PREFIX(RasterPos3d)
 
 	.p2align	4,,15
-	.globl	glRasterPos3dv
-	.type	glRasterPos3dv, @function
-glRasterPos3dv:
+	.globl	GL_PREFIX(RasterPos3dv)
+	.type	GL_PREFIX(RasterPos3dv), @function
+GL_PREFIX(RasterPos3dv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	568(%rax), %r11
@@ -2510,12 +2519,12 @@ glRasterPos3dv:
 	movq	568(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos3dv, .-glRasterPos3dv
+	.size	GL_PREFIX(RasterPos3dv), .-GL_PREFIX(RasterPos3dv)
 
 	.p2align	4,,15
-	.globl	glRasterPos3f
-	.type	glRasterPos3f, @function
-glRasterPos3f:
+	.globl	GL_PREFIX(RasterPos3f)
+	.type	GL_PREFIX(RasterPos3f), @function
+GL_PREFIX(RasterPos3f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	576(%rax), %r11
@@ -2551,12 +2560,12 @@ glRasterPos3f:
 	movq	576(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos3f, .-glRasterPos3f
+	.size	GL_PREFIX(RasterPos3f), .-GL_PREFIX(RasterPos3f)
 
 	.p2align	4,,15
-	.globl	glRasterPos3fv
-	.type	glRasterPos3fv, @function
-glRasterPos3fv:
+	.globl	GL_PREFIX(RasterPos3fv)
+	.type	GL_PREFIX(RasterPos3fv), @function
+GL_PREFIX(RasterPos3fv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	584(%rax), %r11
@@ -2580,12 +2589,12 @@ glRasterPos3fv:
 	movq	584(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos3fv, .-glRasterPos3fv
+	.size	GL_PREFIX(RasterPos3fv), .-GL_PREFIX(RasterPos3fv)
 
 	.p2align	4,,15
-	.globl	glRasterPos3i
-	.type	glRasterPos3i, @function
-glRasterPos3i:
+	.globl	GL_PREFIX(RasterPos3i)
+	.type	GL_PREFIX(RasterPos3i), @function
+GL_PREFIX(RasterPos3i):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	592(%rax), %r11
@@ -2617,12 +2626,12 @@ glRasterPos3i:
 	movq	592(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos3i, .-glRasterPos3i
+	.size	GL_PREFIX(RasterPos3i), .-GL_PREFIX(RasterPos3i)
 
 	.p2align	4,,15
-	.globl	glRasterPos3iv
-	.type	glRasterPos3iv, @function
-glRasterPos3iv:
+	.globl	GL_PREFIX(RasterPos3iv)
+	.type	GL_PREFIX(RasterPos3iv), @function
+GL_PREFIX(RasterPos3iv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	600(%rax), %r11
@@ -2646,12 +2655,12 @@ glRasterPos3iv:
 	movq	600(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos3iv, .-glRasterPos3iv
+	.size	GL_PREFIX(RasterPos3iv), .-GL_PREFIX(RasterPos3iv)
 
 	.p2align	4,,15
-	.globl	glRasterPos3s
-	.type	glRasterPos3s, @function
-glRasterPos3s:
+	.globl	GL_PREFIX(RasterPos3s)
+	.type	GL_PREFIX(RasterPos3s), @function
+GL_PREFIX(RasterPos3s):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	608(%rax), %r11
@@ -2683,12 +2692,12 @@ glRasterPos3s:
 	movq	608(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos3s, .-glRasterPos3s
+	.size	GL_PREFIX(RasterPos3s), .-GL_PREFIX(RasterPos3s)
 
 	.p2align	4,,15
-	.globl	glRasterPos3sv
-	.type	glRasterPos3sv, @function
-glRasterPos3sv:
+	.globl	GL_PREFIX(RasterPos3sv)
+	.type	GL_PREFIX(RasterPos3sv), @function
+GL_PREFIX(RasterPos3sv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	616(%rax), %r11
@@ -2712,12 +2721,12 @@ glRasterPos3sv:
 	movq	616(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos3sv, .-glRasterPos3sv
+	.size	GL_PREFIX(RasterPos3sv), .-GL_PREFIX(RasterPos3sv)
 
 	.p2align	4,,15
-	.globl	glRasterPos4d
-	.type	glRasterPos4d, @function
-glRasterPos4d:
+	.globl	GL_PREFIX(RasterPos4d)
+	.type	GL_PREFIX(RasterPos4d), @function
+GL_PREFIX(RasterPos4d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	624(%rax), %r11
@@ -2757,12 +2766,12 @@ glRasterPos4d:
 	movq	624(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos4d, .-glRasterPos4d
+	.size	GL_PREFIX(RasterPos4d), .-GL_PREFIX(RasterPos4d)
 
 	.p2align	4,,15
-	.globl	glRasterPos4dv
-	.type	glRasterPos4dv, @function
-glRasterPos4dv:
+	.globl	GL_PREFIX(RasterPos4dv)
+	.type	GL_PREFIX(RasterPos4dv), @function
+GL_PREFIX(RasterPos4dv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	632(%rax), %r11
@@ -2786,12 +2795,12 @@ glRasterPos4dv:
 	movq	632(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos4dv, .-glRasterPos4dv
+	.size	GL_PREFIX(RasterPos4dv), .-GL_PREFIX(RasterPos4dv)
 
 	.p2align	4,,15
-	.globl	glRasterPos4f
-	.type	glRasterPos4f, @function
-glRasterPos4f:
+	.globl	GL_PREFIX(RasterPos4f)
+	.type	GL_PREFIX(RasterPos4f), @function
+GL_PREFIX(RasterPos4f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	640(%rax), %r11
@@ -2831,12 +2840,12 @@ glRasterPos4f:
 	movq	640(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos4f, .-glRasterPos4f
+	.size	GL_PREFIX(RasterPos4f), .-GL_PREFIX(RasterPos4f)
 
 	.p2align	4,,15
-	.globl	glRasterPos4fv
-	.type	glRasterPos4fv, @function
-glRasterPos4fv:
+	.globl	GL_PREFIX(RasterPos4fv)
+	.type	GL_PREFIX(RasterPos4fv), @function
+GL_PREFIX(RasterPos4fv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	648(%rax), %r11
@@ -2860,12 +2869,12 @@ glRasterPos4fv:
 	movq	648(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos4fv, .-glRasterPos4fv
+	.size	GL_PREFIX(RasterPos4fv), .-GL_PREFIX(RasterPos4fv)
 
 	.p2align	4,,15
-	.globl	glRasterPos4i
-	.type	glRasterPos4i, @function
-glRasterPos4i:
+	.globl	GL_PREFIX(RasterPos4i)
+	.type	GL_PREFIX(RasterPos4i), @function
+GL_PREFIX(RasterPos4i):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	656(%rax), %r11
@@ -2905,12 +2914,12 @@ glRasterPos4i:
 	movq	656(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos4i, .-glRasterPos4i
+	.size	GL_PREFIX(RasterPos4i), .-GL_PREFIX(RasterPos4i)
 
 	.p2align	4,,15
-	.globl	glRasterPos4iv
-	.type	glRasterPos4iv, @function
-glRasterPos4iv:
+	.globl	GL_PREFIX(RasterPos4iv)
+	.type	GL_PREFIX(RasterPos4iv), @function
+GL_PREFIX(RasterPos4iv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	664(%rax), %r11
@@ -2934,12 +2943,12 @@ glRasterPos4iv:
 	movq	664(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos4iv, .-glRasterPos4iv
+	.size	GL_PREFIX(RasterPos4iv), .-GL_PREFIX(RasterPos4iv)
 
 	.p2align	4,,15
-	.globl	glRasterPos4s
-	.type	glRasterPos4s, @function
-glRasterPos4s:
+	.globl	GL_PREFIX(RasterPos4s)
+	.type	GL_PREFIX(RasterPos4s), @function
+GL_PREFIX(RasterPos4s):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	672(%rax), %r11
@@ -2979,12 +2988,12 @@ glRasterPos4s:
 	movq	672(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos4s, .-glRasterPos4s
+	.size	GL_PREFIX(RasterPos4s), .-GL_PREFIX(RasterPos4s)
 
 	.p2align	4,,15
-	.globl	glRasterPos4sv
-	.type	glRasterPos4sv, @function
-glRasterPos4sv:
+	.globl	GL_PREFIX(RasterPos4sv)
+	.type	GL_PREFIX(RasterPos4sv), @function
+GL_PREFIX(RasterPos4sv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	680(%rax), %r11
@@ -3008,12 +3017,12 @@ glRasterPos4sv:
 	movq	680(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRasterPos4sv, .-glRasterPos4sv
+	.size	GL_PREFIX(RasterPos4sv), .-GL_PREFIX(RasterPos4sv)
 
 	.p2align	4,,15
-	.globl	glRectd
-	.type	glRectd, @function
-glRectd:
+	.globl	GL_PREFIX(Rectd)
+	.type	GL_PREFIX(Rectd), @function
+GL_PREFIX(Rectd):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	688(%rax), %r11
@@ -3053,12 +3062,12 @@ glRectd:
 	movq	688(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRectd, .-glRectd
+	.size	GL_PREFIX(Rectd), .-GL_PREFIX(Rectd)
 
 	.p2align	4,,15
-	.globl	glRectdv
-	.type	glRectdv, @function
-glRectdv:
+	.globl	GL_PREFIX(Rectdv)
+	.type	GL_PREFIX(Rectdv), @function
+GL_PREFIX(Rectdv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	696(%rax), %r11
@@ -3090,12 +3099,12 @@ glRectdv:
 	movq	696(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRectdv, .-glRectdv
+	.size	GL_PREFIX(Rectdv), .-GL_PREFIX(Rectdv)
 
 	.p2align	4,,15
-	.globl	glRectf
-	.type	glRectf, @function
-glRectf:
+	.globl	GL_PREFIX(Rectf)
+	.type	GL_PREFIX(Rectf), @function
+GL_PREFIX(Rectf):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	704(%rax), %r11
@@ -3135,12 +3144,12 @@ glRectf:
 	movq	704(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRectf, .-glRectf
+	.size	GL_PREFIX(Rectf), .-GL_PREFIX(Rectf)
 
 	.p2align	4,,15
-	.globl	glRectfv
-	.type	glRectfv, @function
-glRectfv:
+	.globl	GL_PREFIX(Rectfv)
+	.type	GL_PREFIX(Rectfv), @function
+GL_PREFIX(Rectfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	712(%rax), %r11
@@ -3172,12 +3181,12 @@ glRectfv:
 	movq	712(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRectfv, .-glRectfv
+	.size	GL_PREFIX(Rectfv), .-GL_PREFIX(Rectfv)
 
 	.p2align	4,,15
-	.globl	glRecti
-	.type	glRecti, @function
-glRecti:
+	.globl	GL_PREFIX(Recti)
+	.type	GL_PREFIX(Recti), @function
+GL_PREFIX(Recti):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	720(%rax), %r11
@@ -3217,12 +3226,12 @@ glRecti:
 	movq	720(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRecti, .-glRecti
+	.size	GL_PREFIX(Recti), .-GL_PREFIX(Recti)
 
 	.p2align	4,,15
-	.globl	glRectiv
-	.type	glRectiv, @function
-glRectiv:
+	.globl	GL_PREFIX(Rectiv)
+	.type	GL_PREFIX(Rectiv), @function
+GL_PREFIX(Rectiv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	728(%rax), %r11
@@ -3254,12 +3263,12 @@ glRectiv:
 	movq	728(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRectiv, .-glRectiv
+	.size	GL_PREFIX(Rectiv), .-GL_PREFIX(Rectiv)
 
 	.p2align	4,,15
-	.globl	glRects
-	.type	glRects, @function
-glRects:
+	.globl	GL_PREFIX(Rects)
+	.type	GL_PREFIX(Rects), @function
+GL_PREFIX(Rects):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	736(%rax), %r11
@@ -3299,12 +3308,12 @@ glRects:
 	movq	736(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRects, .-glRects
+	.size	GL_PREFIX(Rects), .-GL_PREFIX(Rects)
 
 	.p2align	4,,15
-	.globl	glRectsv
-	.type	glRectsv, @function
-glRectsv:
+	.globl	GL_PREFIX(Rectsv)
+	.type	GL_PREFIX(Rectsv), @function
+GL_PREFIX(Rectsv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	744(%rax), %r11
@@ -3336,12 +3345,12 @@ glRectsv:
 	movq	744(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRectsv, .-glRectsv
+	.size	GL_PREFIX(Rectsv), .-GL_PREFIX(Rectsv)
 
 	.p2align	4,,15
-	.globl	glTexCoord1d
-	.type	glTexCoord1d, @function
-glTexCoord1d:
+	.globl	GL_PREFIX(TexCoord1d)
+	.type	GL_PREFIX(TexCoord1d), @function
+GL_PREFIX(TexCoord1d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	752(%rax), %r11
@@ -3369,12 +3378,12 @@ glTexCoord1d:
 	movq	752(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord1d, .-glTexCoord1d
+	.size	GL_PREFIX(TexCoord1d), .-GL_PREFIX(TexCoord1d)
 
 	.p2align	4,,15
-	.globl	glTexCoord1dv
-	.type	glTexCoord1dv, @function
-glTexCoord1dv:
+	.globl	GL_PREFIX(TexCoord1dv)
+	.type	GL_PREFIX(TexCoord1dv), @function
+GL_PREFIX(TexCoord1dv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	760(%rax), %r11
@@ -3398,12 +3407,12 @@ glTexCoord1dv:
 	movq	760(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord1dv, .-glTexCoord1dv
+	.size	GL_PREFIX(TexCoord1dv), .-GL_PREFIX(TexCoord1dv)
 
 	.p2align	4,,15
-	.globl	glTexCoord1f
-	.type	glTexCoord1f, @function
-glTexCoord1f:
+	.globl	GL_PREFIX(TexCoord1f)
+	.type	GL_PREFIX(TexCoord1f), @function
+GL_PREFIX(TexCoord1f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	768(%rax), %r11
@@ -3431,12 +3440,12 @@ glTexCoord1f:
 	movq	768(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord1f, .-glTexCoord1f
+	.size	GL_PREFIX(TexCoord1f), .-GL_PREFIX(TexCoord1f)
 
 	.p2align	4,,15
-	.globl	glTexCoord1fv
-	.type	glTexCoord1fv, @function
-glTexCoord1fv:
+	.globl	GL_PREFIX(TexCoord1fv)
+	.type	GL_PREFIX(TexCoord1fv), @function
+GL_PREFIX(TexCoord1fv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	776(%rax), %r11
@@ -3460,12 +3469,12 @@ glTexCoord1fv:
 	movq	776(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord1fv, .-glTexCoord1fv
+	.size	GL_PREFIX(TexCoord1fv), .-GL_PREFIX(TexCoord1fv)
 
 	.p2align	4,,15
-	.globl	glTexCoord1i
-	.type	glTexCoord1i, @function
-glTexCoord1i:
+	.globl	GL_PREFIX(TexCoord1i)
+	.type	GL_PREFIX(TexCoord1i), @function
+GL_PREFIX(TexCoord1i):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	784(%rax), %r11
@@ -3489,12 +3498,12 @@ glTexCoord1i:
 	movq	784(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord1i, .-glTexCoord1i
+	.size	GL_PREFIX(TexCoord1i), .-GL_PREFIX(TexCoord1i)
 
 	.p2align	4,,15
-	.globl	glTexCoord1iv
-	.type	glTexCoord1iv, @function
-glTexCoord1iv:
+	.globl	GL_PREFIX(TexCoord1iv)
+	.type	GL_PREFIX(TexCoord1iv), @function
+GL_PREFIX(TexCoord1iv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	792(%rax), %r11
@@ -3518,12 +3527,12 @@ glTexCoord1iv:
 	movq	792(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord1iv, .-glTexCoord1iv
+	.size	GL_PREFIX(TexCoord1iv), .-GL_PREFIX(TexCoord1iv)
 
 	.p2align	4,,15
-	.globl	glTexCoord1s
-	.type	glTexCoord1s, @function
-glTexCoord1s:
+	.globl	GL_PREFIX(TexCoord1s)
+	.type	GL_PREFIX(TexCoord1s), @function
+GL_PREFIX(TexCoord1s):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	800(%rax), %r11
@@ -3547,12 +3556,12 @@ glTexCoord1s:
 	movq	800(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord1s, .-glTexCoord1s
+	.size	GL_PREFIX(TexCoord1s), .-GL_PREFIX(TexCoord1s)
 
 	.p2align	4,,15
-	.globl	glTexCoord1sv
-	.type	glTexCoord1sv, @function
-glTexCoord1sv:
+	.globl	GL_PREFIX(TexCoord1sv)
+	.type	GL_PREFIX(TexCoord1sv), @function
+GL_PREFIX(TexCoord1sv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	808(%rax), %r11
@@ -3576,12 +3585,12 @@ glTexCoord1sv:
 	movq	808(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord1sv, .-glTexCoord1sv
+	.size	GL_PREFIX(TexCoord1sv), .-GL_PREFIX(TexCoord1sv)
 
 	.p2align	4,,15
-	.globl	glTexCoord2d
-	.type	glTexCoord2d, @function
-glTexCoord2d:
+	.globl	GL_PREFIX(TexCoord2d)
+	.type	GL_PREFIX(TexCoord2d), @function
+GL_PREFIX(TexCoord2d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	816(%rax), %r11
@@ -3613,12 +3622,12 @@ glTexCoord2d:
 	movq	816(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord2d, .-glTexCoord2d
+	.size	GL_PREFIX(TexCoord2d), .-GL_PREFIX(TexCoord2d)
 
 	.p2align	4,,15
-	.globl	glTexCoord2dv
-	.type	glTexCoord2dv, @function
-glTexCoord2dv:
+	.globl	GL_PREFIX(TexCoord2dv)
+	.type	GL_PREFIX(TexCoord2dv), @function
+GL_PREFIX(TexCoord2dv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	824(%rax), %r11
@@ -3642,12 +3651,12 @@ glTexCoord2dv:
 	movq	824(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord2dv, .-glTexCoord2dv
+	.size	GL_PREFIX(TexCoord2dv), .-GL_PREFIX(TexCoord2dv)
 
 	.p2align	4,,15
-	.globl	glTexCoord2f
-	.type	glTexCoord2f, @function
-glTexCoord2f:
+	.globl	GL_PREFIX(TexCoord2f)
+	.type	GL_PREFIX(TexCoord2f), @function
+GL_PREFIX(TexCoord2f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	832(%rax), %r11
@@ -3679,12 +3688,12 @@ glTexCoord2f:
 	movq	832(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord2f, .-glTexCoord2f
+	.size	GL_PREFIX(TexCoord2f), .-GL_PREFIX(TexCoord2f)
 
 	.p2align	4,,15
-	.globl	glTexCoord2fv
-	.type	glTexCoord2fv, @function
-glTexCoord2fv:
+	.globl	GL_PREFIX(TexCoord2fv)
+	.type	GL_PREFIX(TexCoord2fv), @function
+GL_PREFIX(TexCoord2fv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	840(%rax), %r11
@@ -3708,12 +3717,12 @@ glTexCoord2fv:
 	movq	840(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord2fv, .-glTexCoord2fv
+	.size	GL_PREFIX(TexCoord2fv), .-GL_PREFIX(TexCoord2fv)
 
 	.p2align	4,,15
-	.globl	glTexCoord2i
-	.type	glTexCoord2i, @function
-glTexCoord2i:
+	.globl	GL_PREFIX(TexCoord2i)
+	.type	GL_PREFIX(TexCoord2i), @function
+GL_PREFIX(TexCoord2i):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	848(%rax), %r11
@@ -3745,12 +3754,12 @@ glTexCoord2i:
 	movq	848(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord2i, .-glTexCoord2i
+	.size	GL_PREFIX(TexCoord2i), .-GL_PREFIX(TexCoord2i)
 
 	.p2align	4,,15
-	.globl	glTexCoord2iv
-	.type	glTexCoord2iv, @function
-glTexCoord2iv:
+	.globl	GL_PREFIX(TexCoord2iv)
+	.type	GL_PREFIX(TexCoord2iv), @function
+GL_PREFIX(TexCoord2iv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	856(%rax), %r11
@@ -3774,12 +3783,12 @@ glTexCoord2iv:
 	movq	856(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord2iv, .-glTexCoord2iv
+	.size	GL_PREFIX(TexCoord2iv), .-GL_PREFIX(TexCoord2iv)
 
 	.p2align	4,,15
-	.globl	glTexCoord2s
-	.type	glTexCoord2s, @function
-glTexCoord2s:
+	.globl	GL_PREFIX(TexCoord2s)
+	.type	GL_PREFIX(TexCoord2s), @function
+GL_PREFIX(TexCoord2s):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	864(%rax), %r11
@@ -3811,12 +3820,12 @@ glTexCoord2s:
 	movq	864(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord2s, .-glTexCoord2s
+	.size	GL_PREFIX(TexCoord2s), .-GL_PREFIX(TexCoord2s)
 
 	.p2align	4,,15
-	.globl	glTexCoord2sv
-	.type	glTexCoord2sv, @function
-glTexCoord2sv:
+	.globl	GL_PREFIX(TexCoord2sv)
+	.type	GL_PREFIX(TexCoord2sv), @function
+GL_PREFIX(TexCoord2sv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	872(%rax), %r11
@@ -3840,12 +3849,12 @@ glTexCoord2sv:
 	movq	872(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord2sv, .-glTexCoord2sv
+	.size	GL_PREFIX(TexCoord2sv), .-GL_PREFIX(TexCoord2sv)
 
 	.p2align	4,,15
-	.globl	glTexCoord3d
-	.type	glTexCoord3d, @function
-glTexCoord3d:
+	.globl	GL_PREFIX(TexCoord3d)
+	.type	GL_PREFIX(TexCoord3d), @function
+GL_PREFIX(TexCoord3d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	880(%rax), %r11
@@ -3881,12 +3890,12 @@ glTexCoord3d:
 	movq	880(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord3d, .-glTexCoord3d
+	.size	GL_PREFIX(TexCoord3d), .-GL_PREFIX(TexCoord3d)
 
 	.p2align	4,,15
-	.globl	glTexCoord3dv
-	.type	glTexCoord3dv, @function
-glTexCoord3dv:
+	.globl	GL_PREFIX(TexCoord3dv)
+	.type	GL_PREFIX(TexCoord3dv), @function
+GL_PREFIX(TexCoord3dv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	888(%rax), %r11
@@ -3910,12 +3919,12 @@ glTexCoord3dv:
 	movq	888(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord3dv, .-glTexCoord3dv
+	.size	GL_PREFIX(TexCoord3dv), .-GL_PREFIX(TexCoord3dv)
 
 	.p2align	4,,15
-	.globl	glTexCoord3f
-	.type	glTexCoord3f, @function
-glTexCoord3f:
+	.globl	GL_PREFIX(TexCoord3f)
+	.type	GL_PREFIX(TexCoord3f), @function
+GL_PREFIX(TexCoord3f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	896(%rax), %r11
@@ -3951,12 +3960,12 @@ glTexCoord3f:
 	movq	896(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord3f, .-glTexCoord3f
+	.size	GL_PREFIX(TexCoord3f), .-GL_PREFIX(TexCoord3f)
 
 	.p2align	4,,15
-	.globl	glTexCoord3fv
-	.type	glTexCoord3fv, @function
-glTexCoord3fv:
+	.globl	GL_PREFIX(TexCoord3fv)
+	.type	GL_PREFIX(TexCoord3fv), @function
+GL_PREFIX(TexCoord3fv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	904(%rax), %r11
@@ -3980,12 +3989,12 @@ glTexCoord3fv:
 	movq	904(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord3fv, .-glTexCoord3fv
+	.size	GL_PREFIX(TexCoord3fv), .-GL_PREFIX(TexCoord3fv)
 
 	.p2align	4,,15
-	.globl	glTexCoord3i
-	.type	glTexCoord3i, @function
-glTexCoord3i:
+	.globl	GL_PREFIX(TexCoord3i)
+	.type	GL_PREFIX(TexCoord3i), @function
+GL_PREFIX(TexCoord3i):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	912(%rax), %r11
@@ -4017,12 +4026,12 @@ glTexCoord3i:
 	movq	912(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord3i, .-glTexCoord3i
+	.size	GL_PREFIX(TexCoord3i), .-GL_PREFIX(TexCoord3i)
 
 	.p2align	4,,15
-	.globl	glTexCoord3iv
-	.type	glTexCoord3iv, @function
-glTexCoord3iv:
+	.globl	GL_PREFIX(TexCoord3iv)
+	.type	GL_PREFIX(TexCoord3iv), @function
+GL_PREFIX(TexCoord3iv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	920(%rax), %r11
@@ -4046,12 +4055,12 @@ glTexCoord3iv:
 	movq	920(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord3iv, .-glTexCoord3iv
+	.size	GL_PREFIX(TexCoord3iv), .-GL_PREFIX(TexCoord3iv)
 
 	.p2align	4,,15
-	.globl	glTexCoord3s
-	.type	glTexCoord3s, @function
-glTexCoord3s:
+	.globl	GL_PREFIX(TexCoord3s)
+	.type	GL_PREFIX(TexCoord3s), @function
+GL_PREFIX(TexCoord3s):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	928(%rax), %r11
@@ -4083,12 +4092,12 @@ glTexCoord3s:
 	movq	928(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord3s, .-glTexCoord3s
+	.size	GL_PREFIX(TexCoord3s), .-GL_PREFIX(TexCoord3s)
 
 	.p2align	4,,15
-	.globl	glTexCoord3sv
-	.type	glTexCoord3sv, @function
-glTexCoord3sv:
+	.globl	GL_PREFIX(TexCoord3sv)
+	.type	GL_PREFIX(TexCoord3sv), @function
+GL_PREFIX(TexCoord3sv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	936(%rax), %r11
@@ -4112,12 +4121,12 @@ glTexCoord3sv:
 	movq	936(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord3sv, .-glTexCoord3sv
+	.size	GL_PREFIX(TexCoord3sv), .-GL_PREFIX(TexCoord3sv)
 
 	.p2align	4,,15
-	.globl	glTexCoord4d
-	.type	glTexCoord4d, @function
-glTexCoord4d:
+	.globl	GL_PREFIX(TexCoord4d)
+	.type	GL_PREFIX(TexCoord4d), @function
+GL_PREFIX(TexCoord4d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	944(%rax), %r11
@@ -4157,12 +4166,12 @@ glTexCoord4d:
 	movq	944(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord4d, .-glTexCoord4d
+	.size	GL_PREFIX(TexCoord4d), .-GL_PREFIX(TexCoord4d)
 
 	.p2align	4,,15
-	.globl	glTexCoord4dv
-	.type	glTexCoord4dv, @function
-glTexCoord4dv:
+	.globl	GL_PREFIX(TexCoord4dv)
+	.type	GL_PREFIX(TexCoord4dv), @function
+GL_PREFIX(TexCoord4dv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	952(%rax), %r11
@@ -4186,12 +4195,12 @@ glTexCoord4dv:
 	movq	952(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord4dv, .-glTexCoord4dv
+	.size	GL_PREFIX(TexCoord4dv), .-GL_PREFIX(TexCoord4dv)
 
 	.p2align	4,,15
-	.globl	glTexCoord4f
-	.type	glTexCoord4f, @function
-glTexCoord4f:
+	.globl	GL_PREFIX(TexCoord4f)
+	.type	GL_PREFIX(TexCoord4f), @function
+GL_PREFIX(TexCoord4f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	960(%rax), %r11
@@ -4231,12 +4240,12 @@ glTexCoord4f:
 	movq	960(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord4f, .-glTexCoord4f
+	.size	GL_PREFIX(TexCoord4f), .-GL_PREFIX(TexCoord4f)
 
 	.p2align	4,,15
-	.globl	glTexCoord4fv
-	.type	glTexCoord4fv, @function
-glTexCoord4fv:
+	.globl	GL_PREFIX(TexCoord4fv)
+	.type	GL_PREFIX(TexCoord4fv), @function
+GL_PREFIX(TexCoord4fv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	968(%rax), %r11
@@ -4260,12 +4269,12 @@ glTexCoord4fv:
 	movq	968(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord4fv, .-glTexCoord4fv
+	.size	GL_PREFIX(TexCoord4fv), .-GL_PREFIX(TexCoord4fv)
 
 	.p2align	4,,15
-	.globl	glTexCoord4i
-	.type	glTexCoord4i, @function
-glTexCoord4i:
+	.globl	GL_PREFIX(TexCoord4i)
+	.type	GL_PREFIX(TexCoord4i), @function
+GL_PREFIX(TexCoord4i):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	976(%rax), %r11
@@ -4305,12 +4314,12 @@ glTexCoord4i:
 	movq	976(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord4i, .-glTexCoord4i
+	.size	GL_PREFIX(TexCoord4i), .-GL_PREFIX(TexCoord4i)
 
 	.p2align	4,,15
-	.globl	glTexCoord4iv
-	.type	glTexCoord4iv, @function
-glTexCoord4iv:
+	.globl	GL_PREFIX(TexCoord4iv)
+	.type	GL_PREFIX(TexCoord4iv), @function
+GL_PREFIX(TexCoord4iv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	984(%rax), %r11
@@ -4334,12 +4343,12 @@ glTexCoord4iv:
 	movq	984(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord4iv, .-glTexCoord4iv
+	.size	GL_PREFIX(TexCoord4iv), .-GL_PREFIX(TexCoord4iv)
 
 	.p2align	4,,15
-	.globl	glTexCoord4s
-	.type	glTexCoord4s, @function
-glTexCoord4s:
+	.globl	GL_PREFIX(TexCoord4s)
+	.type	GL_PREFIX(TexCoord4s), @function
+GL_PREFIX(TexCoord4s):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	992(%rax), %r11
@@ -4379,12 +4388,12 @@ glTexCoord4s:
 	movq	992(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord4s, .-glTexCoord4s
+	.size	GL_PREFIX(TexCoord4s), .-GL_PREFIX(TexCoord4s)
 
 	.p2align	4,,15
-	.globl	glTexCoord4sv
-	.type	glTexCoord4sv, @function
-glTexCoord4sv:
+	.globl	GL_PREFIX(TexCoord4sv)
+	.type	GL_PREFIX(TexCoord4sv), @function
+GL_PREFIX(TexCoord4sv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1000(%rax), %r11
@@ -4408,12 +4417,12 @@ glTexCoord4sv:
 	movq	1000(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoord4sv, .-glTexCoord4sv
+	.size	GL_PREFIX(TexCoord4sv), .-GL_PREFIX(TexCoord4sv)
 
 	.p2align	4,,15
-	.globl	glVertex2d
-	.type	glVertex2d, @function
-glVertex2d:
+	.globl	GL_PREFIX(Vertex2d)
+	.type	GL_PREFIX(Vertex2d), @function
+GL_PREFIX(Vertex2d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1008(%rax), %r11
@@ -4445,12 +4454,12 @@ glVertex2d:
 	movq	1008(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex2d, .-glVertex2d
+	.size	GL_PREFIX(Vertex2d), .-GL_PREFIX(Vertex2d)
 
 	.p2align	4,,15
-	.globl	glVertex2dv
-	.type	glVertex2dv, @function
-glVertex2dv:
+	.globl	GL_PREFIX(Vertex2dv)
+	.type	GL_PREFIX(Vertex2dv), @function
+GL_PREFIX(Vertex2dv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1016(%rax), %r11
@@ -4474,12 +4483,12 @@ glVertex2dv:
 	movq	1016(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex2dv, .-glVertex2dv
+	.size	GL_PREFIX(Vertex2dv), .-GL_PREFIX(Vertex2dv)
 
 	.p2align	4,,15
-	.globl	glVertex2f
-	.type	glVertex2f, @function
-glVertex2f:
+	.globl	GL_PREFIX(Vertex2f)
+	.type	GL_PREFIX(Vertex2f), @function
+GL_PREFIX(Vertex2f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1024(%rax), %r11
@@ -4511,12 +4520,12 @@ glVertex2f:
 	movq	1024(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex2f, .-glVertex2f
+	.size	GL_PREFIX(Vertex2f), .-GL_PREFIX(Vertex2f)
 
 	.p2align	4,,15
-	.globl	glVertex2fv
-	.type	glVertex2fv, @function
-glVertex2fv:
+	.globl	GL_PREFIX(Vertex2fv)
+	.type	GL_PREFIX(Vertex2fv), @function
+GL_PREFIX(Vertex2fv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1032(%rax), %r11
@@ -4540,12 +4549,12 @@ glVertex2fv:
 	movq	1032(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex2fv, .-glVertex2fv
+	.size	GL_PREFIX(Vertex2fv), .-GL_PREFIX(Vertex2fv)
 
 	.p2align	4,,15
-	.globl	glVertex2i
-	.type	glVertex2i, @function
-glVertex2i:
+	.globl	GL_PREFIX(Vertex2i)
+	.type	GL_PREFIX(Vertex2i), @function
+GL_PREFIX(Vertex2i):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1040(%rax), %r11
@@ -4577,12 +4586,12 @@ glVertex2i:
 	movq	1040(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex2i, .-glVertex2i
+	.size	GL_PREFIX(Vertex2i), .-GL_PREFIX(Vertex2i)
 
 	.p2align	4,,15
-	.globl	glVertex2iv
-	.type	glVertex2iv, @function
-glVertex2iv:
+	.globl	GL_PREFIX(Vertex2iv)
+	.type	GL_PREFIX(Vertex2iv), @function
+GL_PREFIX(Vertex2iv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1048(%rax), %r11
@@ -4606,12 +4615,12 @@ glVertex2iv:
 	movq	1048(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex2iv, .-glVertex2iv
+	.size	GL_PREFIX(Vertex2iv), .-GL_PREFIX(Vertex2iv)
 
 	.p2align	4,,15
-	.globl	glVertex2s
-	.type	glVertex2s, @function
-glVertex2s:
+	.globl	GL_PREFIX(Vertex2s)
+	.type	GL_PREFIX(Vertex2s), @function
+GL_PREFIX(Vertex2s):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1056(%rax), %r11
@@ -4643,12 +4652,12 @@ glVertex2s:
 	movq	1056(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex2s, .-glVertex2s
+	.size	GL_PREFIX(Vertex2s), .-GL_PREFIX(Vertex2s)
 
 	.p2align	4,,15
-	.globl	glVertex2sv
-	.type	glVertex2sv, @function
-glVertex2sv:
+	.globl	GL_PREFIX(Vertex2sv)
+	.type	GL_PREFIX(Vertex2sv), @function
+GL_PREFIX(Vertex2sv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1064(%rax), %r11
@@ -4672,12 +4681,12 @@ glVertex2sv:
 	movq	1064(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex2sv, .-glVertex2sv
+	.size	GL_PREFIX(Vertex2sv), .-GL_PREFIX(Vertex2sv)
 
 	.p2align	4,,15
-	.globl	glVertex3d
-	.type	glVertex3d, @function
-glVertex3d:
+	.globl	GL_PREFIX(Vertex3d)
+	.type	GL_PREFIX(Vertex3d), @function
+GL_PREFIX(Vertex3d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1072(%rax), %r11
@@ -4713,12 +4722,12 @@ glVertex3d:
 	movq	1072(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex3d, .-glVertex3d
+	.size	GL_PREFIX(Vertex3d), .-GL_PREFIX(Vertex3d)
 
 	.p2align	4,,15
-	.globl	glVertex3dv
-	.type	glVertex3dv, @function
-glVertex3dv:
+	.globl	GL_PREFIX(Vertex3dv)
+	.type	GL_PREFIX(Vertex3dv), @function
+GL_PREFIX(Vertex3dv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1080(%rax), %r11
@@ -4742,12 +4751,12 @@ glVertex3dv:
 	movq	1080(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex3dv, .-glVertex3dv
+	.size	GL_PREFIX(Vertex3dv), .-GL_PREFIX(Vertex3dv)
 
 	.p2align	4,,15
-	.globl	glVertex3f
-	.type	glVertex3f, @function
-glVertex3f:
+	.globl	GL_PREFIX(Vertex3f)
+	.type	GL_PREFIX(Vertex3f), @function
+GL_PREFIX(Vertex3f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1088(%rax), %r11
@@ -4783,12 +4792,12 @@ glVertex3f:
 	movq	1088(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex3f, .-glVertex3f
+	.size	GL_PREFIX(Vertex3f), .-GL_PREFIX(Vertex3f)
 
 	.p2align	4,,15
-	.globl	glVertex3fv
-	.type	glVertex3fv, @function
-glVertex3fv:
+	.globl	GL_PREFIX(Vertex3fv)
+	.type	GL_PREFIX(Vertex3fv), @function
+GL_PREFIX(Vertex3fv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1096(%rax), %r11
@@ -4812,12 +4821,12 @@ glVertex3fv:
 	movq	1096(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex3fv, .-glVertex3fv
+	.size	GL_PREFIX(Vertex3fv), .-GL_PREFIX(Vertex3fv)
 
 	.p2align	4,,15
-	.globl	glVertex3i
-	.type	glVertex3i, @function
-glVertex3i:
+	.globl	GL_PREFIX(Vertex3i)
+	.type	GL_PREFIX(Vertex3i), @function
+GL_PREFIX(Vertex3i):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1104(%rax), %r11
@@ -4849,12 +4858,12 @@ glVertex3i:
 	movq	1104(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex3i, .-glVertex3i
+	.size	GL_PREFIX(Vertex3i), .-GL_PREFIX(Vertex3i)
 
 	.p2align	4,,15
-	.globl	glVertex3iv
-	.type	glVertex3iv, @function
-glVertex3iv:
+	.globl	GL_PREFIX(Vertex3iv)
+	.type	GL_PREFIX(Vertex3iv), @function
+GL_PREFIX(Vertex3iv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1112(%rax), %r11
@@ -4878,12 +4887,12 @@ glVertex3iv:
 	movq	1112(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex3iv, .-glVertex3iv
+	.size	GL_PREFIX(Vertex3iv), .-GL_PREFIX(Vertex3iv)
 
 	.p2align	4,,15
-	.globl	glVertex3s
-	.type	glVertex3s, @function
-glVertex3s:
+	.globl	GL_PREFIX(Vertex3s)
+	.type	GL_PREFIX(Vertex3s), @function
+GL_PREFIX(Vertex3s):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1120(%rax), %r11
@@ -4915,12 +4924,12 @@ glVertex3s:
 	movq	1120(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex3s, .-glVertex3s
+	.size	GL_PREFIX(Vertex3s), .-GL_PREFIX(Vertex3s)
 
 	.p2align	4,,15
-	.globl	glVertex3sv
-	.type	glVertex3sv, @function
-glVertex3sv:
+	.globl	GL_PREFIX(Vertex3sv)
+	.type	GL_PREFIX(Vertex3sv), @function
+GL_PREFIX(Vertex3sv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1128(%rax), %r11
@@ -4944,12 +4953,12 @@ glVertex3sv:
 	movq	1128(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex3sv, .-glVertex3sv
+	.size	GL_PREFIX(Vertex3sv), .-GL_PREFIX(Vertex3sv)
 
 	.p2align	4,,15
-	.globl	glVertex4d
-	.type	glVertex4d, @function
-glVertex4d:
+	.globl	GL_PREFIX(Vertex4d)
+	.type	GL_PREFIX(Vertex4d), @function
+GL_PREFIX(Vertex4d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1136(%rax), %r11
@@ -4989,12 +4998,12 @@ glVertex4d:
 	movq	1136(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex4d, .-glVertex4d
+	.size	GL_PREFIX(Vertex4d), .-GL_PREFIX(Vertex4d)
 
 	.p2align	4,,15
-	.globl	glVertex4dv
-	.type	glVertex4dv, @function
-glVertex4dv:
+	.globl	GL_PREFIX(Vertex4dv)
+	.type	GL_PREFIX(Vertex4dv), @function
+GL_PREFIX(Vertex4dv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1144(%rax), %r11
@@ -5018,12 +5027,12 @@ glVertex4dv:
 	movq	1144(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex4dv, .-glVertex4dv
+	.size	GL_PREFIX(Vertex4dv), .-GL_PREFIX(Vertex4dv)
 
 	.p2align	4,,15
-	.globl	glVertex4f
-	.type	glVertex4f, @function
-glVertex4f:
+	.globl	GL_PREFIX(Vertex4f)
+	.type	GL_PREFIX(Vertex4f), @function
+GL_PREFIX(Vertex4f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1152(%rax), %r11
@@ -5063,12 +5072,12 @@ glVertex4f:
 	movq	1152(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex4f, .-glVertex4f
+	.size	GL_PREFIX(Vertex4f), .-GL_PREFIX(Vertex4f)
 
 	.p2align	4,,15
-	.globl	glVertex4fv
-	.type	glVertex4fv, @function
-glVertex4fv:
+	.globl	GL_PREFIX(Vertex4fv)
+	.type	GL_PREFIX(Vertex4fv), @function
+GL_PREFIX(Vertex4fv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1160(%rax), %r11
@@ -5092,12 +5101,12 @@ glVertex4fv:
 	movq	1160(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex4fv, .-glVertex4fv
+	.size	GL_PREFIX(Vertex4fv), .-GL_PREFIX(Vertex4fv)
 
 	.p2align	4,,15
-	.globl	glVertex4i
-	.type	glVertex4i, @function
-glVertex4i:
+	.globl	GL_PREFIX(Vertex4i)
+	.type	GL_PREFIX(Vertex4i), @function
+GL_PREFIX(Vertex4i):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1168(%rax), %r11
@@ -5137,12 +5146,12 @@ glVertex4i:
 	movq	1168(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex4i, .-glVertex4i
+	.size	GL_PREFIX(Vertex4i), .-GL_PREFIX(Vertex4i)
 
 	.p2align	4,,15
-	.globl	glVertex4iv
-	.type	glVertex4iv, @function
-glVertex4iv:
+	.globl	GL_PREFIX(Vertex4iv)
+	.type	GL_PREFIX(Vertex4iv), @function
+GL_PREFIX(Vertex4iv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1176(%rax), %r11
@@ -5166,12 +5175,12 @@ glVertex4iv:
 	movq	1176(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex4iv, .-glVertex4iv
+	.size	GL_PREFIX(Vertex4iv), .-GL_PREFIX(Vertex4iv)
 
 	.p2align	4,,15
-	.globl	glVertex4s
-	.type	glVertex4s, @function
-glVertex4s:
+	.globl	GL_PREFIX(Vertex4s)
+	.type	GL_PREFIX(Vertex4s), @function
+GL_PREFIX(Vertex4s):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1184(%rax), %r11
@@ -5211,12 +5220,12 @@ glVertex4s:
 	movq	1184(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex4s, .-glVertex4s
+	.size	GL_PREFIX(Vertex4s), .-GL_PREFIX(Vertex4s)
 
 	.p2align	4,,15
-	.globl	glVertex4sv
-	.type	glVertex4sv, @function
-glVertex4sv:
+	.globl	GL_PREFIX(Vertex4sv)
+	.type	GL_PREFIX(Vertex4sv), @function
+GL_PREFIX(Vertex4sv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1192(%rax), %r11
@@ -5240,12 +5249,12 @@ glVertex4sv:
 	movq	1192(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertex4sv, .-glVertex4sv
+	.size	GL_PREFIX(Vertex4sv), .-GL_PREFIX(Vertex4sv)
 
 	.p2align	4,,15
-	.globl	glClipPlane
-	.type	glClipPlane, @function
-glClipPlane:
+	.globl	GL_PREFIX(ClipPlane)
+	.type	GL_PREFIX(ClipPlane), @function
+GL_PREFIX(ClipPlane):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1200(%rax), %r11
@@ -5277,12 +5286,12 @@ glClipPlane:
 	movq	1200(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glClipPlane, .-glClipPlane
+	.size	GL_PREFIX(ClipPlane), .-GL_PREFIX(ClipPlane)
 
 	.p2align	4,,15
-	.globl	glColorMaterial
-	.type	glColorMaterial, @function
-glColorMaterial:
+	.globl	GL_PREFIX(ColorMaterial)
+	.type	GL_PREFIX(ColorMaterial), @function
+GL_PREFIX(ColorMaterial):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1208(%rax), %r11
@@ -5314,12 +5323,12 @@ glColorMaterial:
 	movq	1208(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColorMaterial, .-glColorMaterial
+	.size	GL_PREFIX(ColorMaterial), .-GL_PREFIX(ColorMaterial)
 
 	.p2align	4,,15
-	.globl	glCullFace
-	.type	glCullFace, @function
-glCullFace:
+	.globl	GL_PREFIX(CullFace)
+	.type	GL_PREFIX(CullFace), @function
+GL_PREFIX(CullFace):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1216(%rax), %r11
@@ -5343,12 +5352,12 @@ glCullFace:
 	movq	1216(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCullFace, .-glCullFace
+	.size	GL_PREFIX(CullFace), .-GL_PREFIX(CullFace)
 
 	.p2align	4,,15
-	.globl	glFogf
-	.type	glFogf, @function
-glFogf:
+	.globl	GL_PREFIX(Fogf)
+	.type	GL_PREFIX(Fogf), @function
+GL_PREFIX(Fogf):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1224(%rax), %r11
@@ -5380,12 +5389,12 @@ glFogf:
 	movq	1224(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFogf, .-glFogf
+	.size	GL_PREFIX(Fogf), .-GL_PREFIX(Fogf)
 
 	.p2align	4,,15
-	.globl	glFogfv
-	.type	glFogfv, @function
-glFogfv:
+	.globl	GL_PREFIX(Fogfv)
+	.type	GL_PREFIX(Fogfv), @function
+GL_PREFIX(Fogfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1232(%rax), %r11
@@ -5417,12 +5426,12 @@ glFogfv:
 	movq	1232(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFogfv, .-glFogfv
+	.size	GL_PREFIX(Fogfv), .-GL_PREFIX(Fogfv)
 
 	.p2align	4,,15
-	.globl	glFogi
-	.type	glFogi, @function
-glFogi:
+	.globl	GL_PREFIX(Fogi)
+	.type	GL_PREFIX(Fogi), @function
+GL_PREFIX(Fogi):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1240(%rax), %r11
@@ -5454,12 +5463,12 @@ glFogi:
 	movq	1240(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFogi, .-glFogi
+	.size	GL_PREFIX(Fogi), .-GL_PREFIX(Fogi)
 
 	.p2align	4,,15
-	.globl	glFogiv
-	.type	glFogiv, @function
-glFogiv:
+	.globl	GL_PREFIX(Fogiv)
+	.type	GL_PREFIX(Fogiv), @function
+GL_PREFIX(Fogiv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1248(%rax), %r11
@@ -5491,12 +5500,12 @@ glFogiv:
 	movq	1248(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFogiv, .-glFogiv
+	.size	GL_PREFIX(Fogiv), .-GL_PREFIX(Fogiv)
 
 	.p2align	4,,15
-	.globl	glFrontFace
-	.type	glFrontFace, @function
-glFrontFace:
+	.globl	GL_PREFIX(FrontFace)
+	.type	GL_PREFIX(FrontFace), @function
+GL_PREFIX(FrontFace):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1256(%rax), %r11
@@ -5520,12 +5529,12 @@ glFrontFace:
 	movq	1256(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFrontFace, .-glFrontFace
+	.size	GL_PREFIX(FrontFace), .-GL_PREFIX(FrontFace)
 
 	.p2align	4,,15
-	.globl	glHint
-	.type	glHint, @function
-glHint:
+	.globl	GL_PREFIX(Hint)
+	.type	GL_PREFIX(Hint), @function
+GL_PREFIX(Hint):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1264(%rax), %r11
@@ -5557,12 +5566,12 @@ glHint:
 	movq	1264(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glHint, .-glHint
+	.size	GL_PREFIX(Hint), .-GL_PREFIX(Hint)
 
 	.p2align	4,,15
-	.globl	glLightf
-	.type	glLightf, @function
-glLightf:
+	.globl	GL_PREFIX(Lightf)
+	.type	GL_PREFIX(Lightf), @function
+GL_PREFIX(Lightf):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1272(%rax), %r11
@@ -5598,12 +5607,12 @@ glLightf:
 	movq	1272(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLightf, .-glLightf
+	.size	GL_PREFIX(Lightf), .-GL_PREFIX(Lightf)
 
 	.p2align	4,,15
-	.globl	glLightfv
-	.type	glLightfv, @function
-glLightfv:
+	.globl	GL_PREFIX(Lightfv)
+	.type	GL_PREFIX(Lightfv), @function
+GL_PREFIX(Lightfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1280(%rax), %r11
@@ -5635,12 +5644,12 @@ glLightfv:
 	movq	1280(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLightfv, .-glLightfv
+	.size	GL_PREFIX(Lightfv), .-GL_PREFIX(Lightfv)
 
 	.p2align	4,,15
-	.globl	glLighti
-	.type	glLighti, @function
-glLighti:
+	.globl	GL_PREFIX(Lighti)
+	.type	GL_PREFIX(Lighti), @function
+GL_PREFIX(Lighti):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1288(%rax), %r11
@@ -5672,12 +5681,12 @@ glLighti:
 	movq	1288(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLighti, .-glLighti
+	.size	GL_PREFIX(Lighti), .-GL_PREFIX(Lighti)
 
 	.p2align	4,,15
-	.globl	glLightiv
-	.type	glLightiv, @function
-glLightiv:
+	.globl	GL_PREFIX(Lightiv)
+	.type	GL_PREFIX(Lightiv), @function
+GL_PREFIX(Lightiv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1296(%rax), %r11
@@ -5709,12 +5718,12 @@ glLightiv:
 	movq	1296(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLightiv, .-glLightiv
+	.size	GL_PREFIX(Lightiv), .-GL_PREFIX(Lightiv)
 
 	.p2align	4,,15
-	.globl	glLightModelf
-	.type	glLightModelf, @function
-glLightModelf:
+	.globl	GL_PREFIX(LightModelf)
+	.type	GL_PREFIX(LightModelf), @function
+GL_PREFIX(LightModelf):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1304(%rax), %r11
@@ -5746,12 +5755,12 @@ glLightModelf:
 	movq	1304(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLightModelf, .-glLightModelf
+	.size	GL_PREFIX(LightModelf), .-GL_PREFIX(LightModelf)
 
 	.p2align	4,,15
-	.globl	glLightModelfv
-	.type	glLightModelfv, @function
-glLightModelfv:
+	.globl	GL_PREFIX(LightModelfv)
+	.type	GL_PREFIX(LightModelfv), @function
+GL_PREFIX(LightModelfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1312(%rax), %r11
@@ -5783,12 +5792,12 @@ glLightModelfv:
 	movq	1312(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLightModelfv, .-glLightModelfv
+	.size	GL_PREFIX(LightModelfv), .-GL_PREFIX(LightModelfv)
 
 	.p2align	4,,15
-	.globl	glLightModeli
-	.type	glLightModeli, @function
-glLightModeli:
+	.globl	GL_PREFIX(LightModeli)
+	.type	GL_PREFIX(LightModeli), @function
+GL_PREFIX(LightModeli):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1320(%rax), %r11
@@ -5820,12 +5829,12 @@ glLightModeli:
 	movq	1320(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLightModeli, .-glLightModeli
+	.size	GL_PREFIX(LightModeli), .-GL_PREFIX(LightModeli)
 
 	.p2align	4,,15
-	.globl	glLightModeliv
-	.type	glLightModeliv, @function
-glLightModeliv:
+	.globl	GL_PREFIX(LightModeliv)
+	.type	GL_PREFIX(LightModeliv), @function
+GL_PREFIX(LightModeliv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1328(%rax), %r11
@@ -5857,12 +5866,12 @@ glLightModeliv:
 	movq	1328(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLightModeliv, .-glLightModeliv
+	.size	GL_PREFIX(LightModeliv), .-GL_PREFIX(LightModeliv)
 
 	.p2align	4,,15
-	.globl	glLineStipple
-	.type	glLineStipple, @function
-glLineStipple:
+	.globl	GL_PREFIX(LineStipple)
+	.type	GL_PREFIX(LineStipple), @function
+GL_PREFIX(LineStipple):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1336(%rax), %r11
@@ -5894,12 +5903,12 @@ glLineStipple:
 	movq	1336(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLineStipple, .-glLineStipple
+	.size	GL_PREFIX(LineStipple), .-GL_PREFIX(LineStipple)
 
 	.p2align	4,,15
-	.globl	glLineWidth
-	.type	glLineWidth, @function
-glLineWidth:
+	.globl	GL_PREFIX(LineWidth)
+	.type	GL_PREFIX(LineWidth), @function
+GL_PREFIX(LineWidth):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1344(%rax), %r11
@@ -5927,12 +5936,12 @@ glLineWidth:
 	movq	1344(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLineWidth, .-glLineWidth
+	.size	GL_PREFIX(LineWidth), .-GL_PREFIX(LineWidth)
 
 	.p2align	4,,15
-	.globl	glMaterialf
-	.type	glMaterialf, @function
-glMaterialf:
+	.globl	GL_PREFIX(Materialf)
+	.type	GL_PREFIX(Materialf), @function
+GL_PREFIX(Materialf):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1352(%rax), %r11
@@ -5968,12 +5977,12 @@ glMaterialf:
 	movq	1352(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMaterialf, .-glMaterialf
+	.size	GL_PREFIX(Materialf), .-GL_PREFIX(Materialf)
 
 	.p2align	4,,15
-	.globl	glMaterialfv
-	.type	glMaterialfv, @function
-glMaterialfv:
+	.globl	GL_PREFIX(Materialfv)
+	.type	GL_PREFIX(Materialfv), @function
+GL_PREFIX(Materialfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1360(%rax), %r11
@@ -6005,12 +6014,12 @@ glMaterialfv:
 	movq	1360(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMaterialfv, .-glMaterialfv
+	.size	GL_PREFIX(Materialfv), .-GL_PREFIX(Materialfv)
 
 	.p2align	4,,15
-	.globl	glMateriali
-	.type	glMateriali, @function
-glMateriali:
+	.globl	GL_PREFIX(Materiali)
+	.type	GL_PREFIX(Materiali), @function
+GL_PREFIX(Materiali):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1368(%rax), %r11
@@ -6042,12 +6051,12 @@ glMateriali:
 	movq	1368(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMateriali, .-glMateriali
+	.size	GL_PREFIX(Materiali), .-GL_PREFIX(Materiali)
 
 	.p2align	4,,15
-	.globl	glMaterialiv
-	.type	glMaterialiv, @function
-glMaterialiv:
+	.globl	GL_PREFIX(Materialiv)
+	.type	GL_PREFIX(Materialiv), @function
+GL_PREFIX(Materialiv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1376(%rax), %r11
@@ -6079,12 +6088,12 @@ glMaterialiv:
 	movq	1376(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMaterialiv, .-glMaterialiv
+	.size	GL_PREFIX(Materialiv), .-GL_PREFIX(Materialiv)
 
 	.p2align	4,,15
-	.globl	glPointSize
-	.type	glPointSize, @function
-glPointSize:
+	.globl	GL_PREFIX(PointSize)
+	.type	GL_PREFIX(PointSize), @function
+GL_PREFIX(PointSize):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1384(%rax), %r11
@@ -6112,12 +6121,12 @@ glPointSize:
 	movq	1384(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPointSize, .-glPointSize
+	.size	GL_PREFIX(PointSize), .-GL_PREFIX(PointSize)
 
 	.p2align	4,,15
-	.globl	glPolygonMode
-	.type	glPolygonMode, @function
-glPolygonMode:
+	.globl	GL_PREFIX(PolygonMode)
+	.type	GL_PREFIX(PolygonMode), @function
+GL_PREFIX(PolygonMode):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1392(%rax), %r11
@@ -6149,12 +6158,12 @@ glPolygonMode:
 	movq	1392(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPolygonMode, .-glPolygonMode
+	.size	GL_PREFIX(PolygonMode), .-GL_PREFIX(PolygonMode)
 
 	.p2align	4,,15
-	.globl	glPolygonStipple
-	.type	glPolygonStipple, @function
-glPolygonStipple:
+	.globl	GL_PREFIX(PolygonStipple)
+	.type	GL_PREFIX(PolygonStipple), @function
+GL_PREFIX(PolygonStipple):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1400(%rax), %r11
@@ -6178,12 +6187,12 @@ glPolygonStipple:
 	movq	1400(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPolygonStipple, .-glPolygonStipple
+	.size	GL_PREFIX(PolygonStipple), .-GL_PREFIX(PolygonStipple)
 
 	.p2align	4,,15
-	.globl	glScissor
-	.type	glScissor, @function
-glScissor:
+	.globl	GL_PREFIX(Scissor)
+	.type	GL_PREFIX(Scissor), @function
+GL_PREFIX(Scissor):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1408(%rax), %r11
@@ -6223,12 +6232,12 @@ glScissor:
 	movq	1408(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glScissor, .-glScissor
+	.size	GL_PREFIX(Scissor), .-GL_PREFIX(Scissor)
 
 	.p2align	4,,15
-	.globl	glShadeModel
-	.type	glShadeModel, @function
-glShadeModel:
+	.globl	GL_PREFIX(ShadeModel)
+	.type	GL_PREFIX(ShadeModel), @function
+GL_PREFIX(ShadeModel):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1416(%rax), %r11
@@ -6252,12 +6261,12 @@ glShadeModel:
 	movq	1416(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glShadeModel, .-glShadeModel
+	.size	GL_PREFIX(ShadeModel), .-GL_PREFIX(ShadeModel)
 
 	.p2align	4,,15
-	.globl	glTexParameterf
-	.type	glTexParameterf, @function
-glTexParameterf:
+	.globl	GL_PREFIX(TexParameterf)
+	.type	GL_PREFIX(TexParameterf), @function
+GL_PREFIX(TexParameterf):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1424(%rax), %r11
@@ -6293,12 +6302,12 @@ glTexParameterf:
 	movq	1424(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexParameterf, .-glTexParameterf
+	.size	GL_PREFIX(TexParameterf), .-GL_PREFIX(TexParameterf)
 
 	.p2align	4,,15
-	.globl	glTexParameterfv
-	.type	glTexParameterfv, @function
-glTexParameterfv:
+	.globl	GL_PREFIX(TexParameterfv)
+	.type	GL_PREFIX(TexParameterfv), @function
+GL_PREFIX(TexParameterfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1432(%rax), %r11
@@ -6330,12 +6339,12 @@ glTexParameterfv:
 	movq	1432(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexParameterfv, .-glTexParameterfv
+	.size	GL_PREFIX(TexParameterfv), .-GL_PREFIX(TexParameterfv)
 
 	.p2align	4,,15
-	.globl	glTexParameteri
-	.type	glTexParameteri, @function
-glTexParameteri:
+	.globl	GL_PREFIX(TexParameteri)
+	.type	GL_PREFIX(TexParameteri), @function
+GL_PREFIX(TexParameteri):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1440(%rax), %r11
@@ -6367,12 +6376,12 @@ glTexParameteri:
 	movq	1440(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexParameteri, .-glTexParameteri
+	.size	GL_PREFIX(TexParameteri), .-GL_PREFIX(TexParameteri)
 
 	.p2align	4,,15
-	.globl	glTexParameteriv
-	.type	glTexParameteriv, @function
-glTexParameteriv:
+	.globl	GL_PREFIX(TexParameteriv)
+	.type	GL_PREFIX(TexParameteriv), @function
+GL_PREFIX(TexParameteriv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1448(%rax), %r11
@@ -6404,12 +6413,12 @@ glTexParameteriv:
 	movq	1448(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexParameteriv, .-glTexParameteriv
+	.size	GL_PREFIX(TexParameteriv), .-GL_PREFIX(TexParameteriv)
 
 	.p2align	4,,15
-	.globl	glTexImage1D
-	.type	glTexImage1D, @function
-glTexImage1D:
+	.globl	GL_PREFIX(TexImage1D)
+	.type	GL_PREFIX(TexImage1D), @function
+GL_PREFIX(TexImage1D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1456(%rax), %r11
@@ -6457,12 +6466,12 @@ glTexImage1D:
 	movq	1456(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexImage1D, .-glTexImage1D
+	.size	GL_PREFIX(TexImage1D), .-GL_PREFIX(TexImage1D)
 
 	.p2align	4,,15
-	.globl	glTexImage2D
-	.type	glTexImage2D, @function
-glTexImage2D:
+	.globl	GL_PREFIX(TexImage2D)
+	.type	GL_PREFIX(TexImage2D), @function
+GL_PREFIX(TexImage2D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1464(%rax), %r11
@@ -6510,12 +6519,12 @@ glTexImage2D:
 	movq	1464(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexImage2D, .-glTexImage2D
+	.size	GL_PREFIX(TexImage2D), .-GL_PREFIX(TexImage2D)
 
 	.p2align	4,,15
-	.globl	glTexEnvf
-	.type	glTexEnvf, @function
-glTexEnvf:
+	.globl	GL_PREFIX(TexEnvf)
+	.type	GL_PREFIX(TexEnvf), @function
+GL_PREFIX(TexEnvf):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1472(%rax), %r11
@@ -6551,12 +6560,12 @@ glTexEnvf:
 	movq	1472(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexEnvf, .-glTexEnvf
+	.size	GL_PREFIX(TexEnvf), .-GL_PREFIX(TexEnvf)
 
 	.p2align	4,,15
-	.globl	glTexEnvfv
-	.type	glTexEnvfv, @function
-glTexEnvfv:
+	.globl	GL_PREFIX(TexEnvfv)
+	.type	GL_PREFIX(TexEnvfv), @function
+GL_PREFIX(TexEnvfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1480(%rax), %r11
@@ -6588,12 +6597,12 @@ glTexEnvfv:
 	movq	1480(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexEnvfv, .-glTexEnvfv
+	.size	GL_PREFIX(TexEnvfv), .-GL_PREFIX(TexEnvfv)
 
 	.p2align	4,,15
-	.globl	glTexEnvi
-	.type	glTexEnvi, @function
-glTexEnvi:
+	.globl	GL_PREFIX(TexEnvi)
+	.type	GL_PREFIX(TexEnvi), @function
+GL_PREFIX(TexEnvi):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1488(%rax), %r11
@@ -6625,12 +6634,12 @@ glTexEnvi:
 	movq	1488(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexEnvi, .-glTexEnvi
+	.size	GL_PREFIX(TexEnvi), .-GL_PREFIX(TexEnvi)
 
 	.p2align	4,,15
-	.globl	glTexEnviv
-	.type	glTexEnviv, @function
-glTexEnviv:
+	.globl	GL_PREFIX(TexEnviv)
+	.type	GL_PREFIX(TexEnviv), @function
+GL_PREFIX(TexEnviv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1496(%rax), %r11
@@ -6662,12 +6671,12 @@ glTexEnviv:
 	movq	1496(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexEnviv, .-glTexEnviv
+	.size	GL_PREFIX(TexEnviv), .-GL_PREFIX(TexEnviv)
 
 	.p2align	4,,15
-	.globl	glTexGend
-	.type	glTexGend, @function
-glTexGend:
+	.globl	GL_PREFIX(TexGend)
+	.type	GL_PREFIX(TexGend), @function
+GL_PREFIX(TexGend):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1504(%rax), %r11
@@ -6703,12 +6712,12 @@ glTexGend:
 	movq	1504(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexGend, .-glTexGend
+	.size	GL_PREFIX(TexGend), .-GL_PREFIX(TexGend)
 
 	.p2align	4,,15
-	.globl	glTexGendv
-	.type	glTexGendv, @function
-glTexGendv:
+	.globl	GL_PREFIX(TexGendv)
+	.type	GL_PREFIX(TexGendv), @function
+GL_PREFIX(TexGendv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1512(%rax), %r11
@@ -6740,12 +6749,12 @@ glTexGendv:
 	movq	1512(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexGendv, .-glTexGendv
+	.size	GL_PREFIX(TexGendv), .-GL_PREFIX(TexGendv)
 
 	.p2align	4,,15
-	.globl	glTexGenf
-	.type	glTexGenf, @function
-glTexGenf:
+	.globl	GL_PREFIX(TexGenf)
+	.type	GL_PREFIX(TexGenf), @function
+GL_PREFIX(TexGenf):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1520(%rax), %r11
@@ -6781,12 +6790,12 @@ glTexGenf:
 	movq	1520(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexGenf, .-glTexGenf
+	.size	GL_PREFIX(TexGenf), .-GL_PREFIX(TexGenf)
 
 	.p2align	4,,15
-	.globl	glTexGenfv
-	.type	glTexGenfv, @function
-glTexGenfv:
+	.globl	GL_PREFIX(TexGenfv)
+	.type	GL_PREFIX(TexGenfv), @function
+GL_PREFIX(TexGenfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1528(%rax), %r11
@@ -6818,12 +6827,12 @@ glTexGenfv:
 	movq	1528(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexGenfv, .-glTexGenfv
+	.size	GL_PREFIX(TexGenfv), .-GL_PREFIX(TexGenfv)
 
 	.p2align	4,,15
-	.globl	glTexGeni
-	.type	glTexGeni, @function
-glTexGeni:
+	.globl	GL_PREFIX(TexGeni)
+	.type	GL_PREFIX(TexGeni), @function
+GL_PREFIX(TexGeni):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1536(%rax), %r11
@@ -6855,12 +6864,12 @@ glTexGeni:
 	movq	1536(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexGeni, .-glTexGeni
+	.size	GL_PREFIX(TexGeni), .-GL_PREFIX(TexGeni)
 
 	.p2align	4,,15
-	.globl	glTexGeniv
-	.type	glTexGeniv, @function
-glTexGeniv:
+	.globl	GL_PREFIX(TexGeniv)
+	.type	GL_PREFIX(TexGeniv), @function
+GL_PREFIX(TexGeniv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1544(%rax), %r11
@@ -6892,12 +6901,12 @@ glTexGeniv:
 	movq	1544(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexGeniv, .-glTexGeniv
+	.size	GL_PREFIX(TexGeniv), .-GL_PREFIX(TexGeniv)
 
 	.p2align	4,,15
-	.globl	glFeedbackBuffer
-	.type	glFeedbackBuffer, @function
-glFeedbackBuffer:
+	.globl	GL_PREFIX(FeedbackBuffer)
+	.type	GL_PREFIX(FeedbackBuffer), @function
+GL_PREFIX(FeedbackBuffer):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1552(%rax), %r11
@@ -6929,12 +6938,12 @@ glFeedbackBuffer:
 	movq	1552(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFeedbackBuffer, .-glFeedbackBuffer
+	.size	GL_PREFIX(FeedbackBuffer), .-GL_PREFIX(FeedbackBuffer)
 
 	.p2align	4,,15
-	.globl	glSelectBuffer
-	.type	glSelectBuffer, @function
-glSelectBuffer:
+	.globl	GL_PREFIX(SelectBuffer)
+	.type	GL_PREFIX(SelectBuffer), @function
+GL_PREFIX(SelectBuffer):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1560(%rax), %r11
@@ -6966,12 +6975,12 @@ glSelectBuffer:
 	movq	1560(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSelectBuffer, .-glSelectBuffer
+	.size	GL_PREFIX(SelectBuffer), .-GL_PREFIX(SelectBuffer)
 
 	.p2align	4,,15
-	.globl	glRenderMode
-	.type	glRenderMode, @function
-glRenderMode:
+	.globl	GL_PREFIX(RenderMode)
+	.type	GL_PREFIX(RenderMode), @function
+GL_PREFIX(RenderMode):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1568(%rax), %r11
@@ -6995,12 +7004,12 @@ glRenderMode:
 	movq	1568(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRenderMode, .-glRenderMode
+	.size	GL_PREFIX(RenderMode), .-GL_PREFIX(RenderMode)
 
 	.p2align	4,,15
-	.globl	glInitNames
-	.type	glInitNames, @function
-glInitNames:
+	.globl	GL_PREFIX(InitNames)
+	.type	GL_PREFIX(InitNames), @function
+GL_PREFIX(InitNames):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1576(%rax), %r11
@@ -7024,12 +7033,12 @@ glInitNames:
 	movq	1576(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glInitNames, .-glInitNames
+	.size	GL_PREFIX(InitNames), .-GL_PREFIX(InitNames)
 
 	.p2align	4,,15
-	.globl	glLoadName
-	.type	glLoadName, @function
-glLoadName:
+	.globl	GL_PREFIX(LoadName)
+	.type	GL_PREFIX(LoadName), @function
+GL_PREFIX(LoadName):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1584(%rax), %r11
@@ -7053,12 +7062,12 @@ glLoadName:
 	movq	1584(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLoadName, .-glLoadName
+	.size	GL_PREFIX(LoadName), .-GL_PREFIX(LoadName)
 
 	.p2align	4,,15
-	.globl	glPassThrough
-	.type	glPassThrough, @function
-glPassThrough:
+	.globl	GL_PREFIX(PassThrough)
+	.type	GL_PREFIX(PassThrough), @function
+GL_PREFIX(PassThrough):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1592(%rax), %r11
@@ -7086,12 +7095,12 @@ glPassThrough:
 	movq	1592(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPassThrough, .-glPassThrough
+	.size	GL_PREFIX(PassThrough), .-GL_PREFIX(PassThrough)
 
 	.p2align	4,,15
-	.globl	glPopName
-	.type	glPopName, @function
-glPopName:
+	.globl	GL_PREFIX(PopName)
+	.type	GL_PREFIX(PopName), @function
+GL_PREFIX(PopName):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1600(%rax), %r11
@@ -7115,12 +7124,12 @@ glPopName:
 	movq	1600(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPopName, .-glPopName
+	.size	GL_PREFIX(PopName), .-GL_PREFIX(PopName)
 
 	.p2align	4,,15
-	.globl	glPushName
-	.type	glPushName, @function
-glPushName:
+	.globl	GL_PREFIX(PushName)
+	.type	GL_PREFIX(PushName), @function
+GL_PREFIX(PushName):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1608(%rax), %r11
@@ -7144,12 +7153,12 @@ glPushName:
 	movq	1608(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPushName, .-glPushName
+	.size	GL_PREFIX(PushName), .-GL_PREFIX(PushName)
 
 	.p2align	4,,15
-	.globl	glDrawBuffer
-	.type	glDrawBuffer, @function
-glDrawBuffer:
+	.globl	GL_PREFIX(DrawBuffer)
+	.type	GL_PREFIX(DrawBuffer), @function
+GL_PREFIX(DrawBuffer):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1616(%rax), %r11
@@ -7173,12 +7182,12 @@ glDrawBuffer:
 	movq	1616(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDrawBuffer, .-glDrawBuffer
+	.size	GL_PREFIX(DrawBuffer), .-GL_PREFIX(DrawBuffer)
 
 	.p2align	4,,15
-	.globl	glClear
-	.type	glClear, @function
-glClear:
+	.globl	GL_PREFIX(Clear)
+	.type	GL_PREFIX(Clear), @function
+GL_PREFIX(Clear):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1624(%rax), %r11
@@ -7202,12 +7211,12 @@ glClear:
 	movq	1624(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glClear, .-glClear
+	.size	GL_PREFIX(Clear), .-GL_PREFIX(Clear)
 
 	.p2align	4,,15
-	.globl	glClearAccum
-	.type	glClearAccum, @function
-glClearAccum:
+	.globl	GL_PREFIX(ClearAccum)
+	.type	GL_PREFIX(ClearAccum), @function
+GL_PREFIX(ClearAccum):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1632(%rax), %r11
@@ -7247,12 +7256,12 @@ glClearAccum:
 	movq	1632(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glClearAccum, .-glClearAccum
+	.size	GL_PREFIX(ClearAccum), .-GL_PREFIX(ClearAccum)
 
 	.p2align	4,,15
-	.globl	glClearIndex
-	.type	glClearIndex, @function
-glClearIndex:
+	.globl	GL_PREFIX(ClearIndex)
+	.type	GL_PREFIX(ClearIndex), @function
+GL_PREFIX(ClearIndex):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1640(%rax), %r11
@@ -7280,12 +7289,12 @@ glClearIndex:
 	movq	1640(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glClearIndex, .-glClearIndex
+	.size	GL_PREFIX(ClearIndex), .-GL_PREFIX(ClearIndex)
 
 	.p2align	4,,15
-	.globl	glClearColor
-	.type	glClearColor, @function
-glClearColor:
+	.globl	GL_PREFIX(ClearColor)
+	.type	GL_PREFIX(ClearColor), @function
+GL_PREFIX(ClearColor):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1648(%rax), %r11
@@ -7325,12 +7334,12 @@ glClearColor:
 	movq	1648(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glClearColor, .-glClearColor
+	.size	GL_PREFIX(ClearColor), .-GL_PREFIX(ClearColor)
 
 	.p2align	4,,15
-	.globl	glClearStencil
-	.type	glClearStencil, @function
-glClearStencil:
+	.globl	GL_PREFIX(ClearStencil)
+	.type	GL_PREFIX(ClearStencil), @function
+GL_PREFIX(ClearStencil):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1656(%rax), %r11
@@ -7354,12 +7363,12 @@ glClearStencil:
 	movq	1656(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glClearStencil, .-glClearStencil
+	.size	GL_PREFIX(ClearStencil), .-GL_PREFIX(ClearStencil)
 
 	.p2align	4,,15
-	.globl	glClearDepth
-	.type	glClearDepth, @function
-glClearDepth:
+	.globl	GL_PREFIX(ClearDepth)
+	.type	GL_PREFIX(ClearDepth), @function
+GL_PREFIX(ClearDepth):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1664(%rax), %r11
@@ -7383,12 +7392,12 @@ glClearDepth:
 	movq	1664(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glClearDepth, .-glClearDepth
+	.size	GL_PREFIX(ClearDepth), .-GL_PREFIX(ClearDepth)
 
 	.p2align	4,,15
-	.globl	glStencilMask
-	.type	glStencilMask, @function
-glStencilMask:
+	.globl	GL_PREFIX(StencilMask)
+	.type	GL_PREFIX(StencilMask), @function
+GL_PREFIX(StencilMask):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1672(%rax), %r11
@@ -7412,12 +7421,12 @@ glStencilMask:
 	movq	1672(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glStencilMask, .-glStencilMask
+	.size	GL_PREFIX(StencilMask), .-GL_PREFIX(StencilMask)
 
 	.p2align	4,,15
-	.globl	glColorMask
-	.type	glColorMask, @function
-glColorMask:
+	.globl	GL_PREFIX(ColorMask)
+	.type	GL_PREFIX(ColorMask), @function
+GL_PREFIX(ColorMask):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1680(%rax), %r11
@@ -7457,12 +7466,12 @@ glColorMask:
 	movq	1680(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColorMask, .-glColorMask
+	.size	GL_PREFIX(ColorMask), .-GL_PREFIX(ColorMask)
 
 	.p2align	4,,15
-	.globl	glDepthMask
-	.type	glDepthMask, @function
-glDepthMask:
+	.globl	GL_PREFIX(DepthMask)
+	.type	GL_PREFIX(DepthMask), @function
+GL_PREFIX(DepthMask):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1688(%rax), %r11
@@ -7486,12 +7495,12 @@ glDepthMask:
 	movq	1688(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDepthMask, .-glDepthMask
+	.size	GL_PREFIX(DepthMask), .-GL_PREFIX(DepthMask)
 
 	.p2align	4,,15
-	.globl	glIndexMask
-	.type	glIndexMask, @function
-glIndexMask:
+	.globl	GL_PREFIX(IndexMask)
+	.type	GL_PREFIX(IndexMask), @function
+GL_PREFIX(IndexMask):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1696(%rax), %r11
@@ -7515,12 +7524,12 @@ glIndexMask:
 	movq	1696(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIndexMask, .-glIndexMask
+	.size	GL_PREFIX(IndexMask), .-GL_PREFIX(IndexMask)
 
 	.p2align	4,,15
-	.globl	glAccum
-	.type	glAccum, @function
-glAccum:
+	.globl	GL_PREFIX(Accum)
+	.type	GL_PREFIX(Accum), @function
+GL_PREFIX(Accum):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1704(%rax), %r11
@@ -7552,12 +7561,12 @@ glAccum:
 	movq	1704(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glAccum, .-glAccum
+	.size	GL_PREFIX(Accum), .-GL_PREFIX(Accum)
 
 	.p2align	4,,15
-	.globl	glDisable
-	.type	glDisable, @function
-glDisable:
+	.globl	GL_PREFIX(Disable)
+	.type	GL_PREFIX(Disable), @function
+GL_PREFIX(Disable):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1712(%rax), %r11
@@ -7581,12 +7590,12 @@ glDisable:
 	movq	1712(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDisable, .-glDisable
+	.size	GL_PREFIX(Disable), .-GL_PREFIX(Disable)
 
 	.p2align	4,,15
-	.globl	glEnable
-	.type	glEnable, @function
-glEnable:
+	.globl	GL_PREFIX(Enable)
+	.type	GL_PREFIX(Enable), @function
+GL_PREFIX(Enable):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1720(%rax), %r11
@@ -7610,12 +7619,12 @@ glEnable:
 	movq	1720(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEnable, .-glEnable
+	.size	GL_PREFIX(Enable), .-GL_PREFIX(Enable)
 
 	.p2align	4,,15
-	.globl	glFinish
-	.type	glFinish, @function
-glFinish:
+	.globl	GL_PREFIX(Finish)
+	.type	GL_PREFIX(Finish), @function
+GL_PREFIX(Finish):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1728(%rax), %r11
@@ -7639,12 +7648,12 @@ glFinish:
 	movq	1728(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFinish, .-glFinish
+	.size	GL_PREFIX(Finish), .-GL_PREFIX(Finish)
 
 	.p2align	4,,15
-	.globl	glFlush
-	.type	glFlush, @function
-glFlush:
+	.globl	GL_PREFIX(Flush)
+	.type	GL_PREFIX(Flush), @function
+GL_PREFIX(Flush):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1736(%rax), %r11
@@ -7668,12 +7677,12 @@ glFlush:
 	movq	1736(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFlush, .-glFlush
+	.size	GL_PREFIX(Flush), .-GL_PREFIX(Flush)
 
 	.p2align	4,,15
-	.globl	glPopAttrib
-	.type	glPopAttrib, @function
-glPopAttrib:
+	.globl	GL_PREFIX(PopAttrib)
+	.type	GL_PREFIX(PopAttrib), @function
+GL_PREFIX(PopAttrib):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1744(%rax), %r11
@@ -7697,12 +7706,12 @@ glPopAttrib:
 	movq	1744(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPopAttrib, .-glPopAttrib
+	.size	GL_PREFIX(PopAttrib), .-GL_PREFIX(PopAttrib)
 
 	.p2align	4,,15
-	.globl	glPushAttrib
-	.type	glPushAttrib, @function
-glPushAttrib:
+	.globl	GL_PREFIX(PushAttrib)
+	.type	GL_PREFIX(PushAttrib), @function
+GL_PREFIX(PushAttrib):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1752(%rax), %r11
@@ -7726,12 +7735,12 @@ glPushAttrib:
 	movq	1752(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPushAttrib, .-glPushAttrib
+	.size	GL_PREFIX(PushAttrib), .-GL_PREFIX(PushAttrib)
 
 	.p2align	4,,15
-	.globl	glMap1d
-	.type	glMap1d, @function
-glMap1d:
+	.globl	GL_PREFIX(Map1d)
+	.type	GL_PREFIX(Map1d), @function
+GL_PREFIX(Map1d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1760(%rax), %r11
@@ -7779,12 +7788,12 @@ glMap1d:
 	movq	1760(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMap1d, .-glMap1d
+	.size	GL_PREFIX(Map1d), .-GL_PREFIX(Map1d)
 
 	.p2align	4,,15
-	.globl	glMap1f
-	.type	glMap1f, @function
-glMap1f:
+	.globl	GL_PREFIX(Map1f)
+	.type	GL_PREFIX(Map1f), @function
+GL_PREFIX(Map1f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1768(%rax), %r11
@@ -7832,12 +7841,12 @@ glMap1f:
 	movq	1768(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMap1f, .-glMap1f
+	.size	GL_PREFIX(Map1f), .-GL_PREFIX(Map1f)
 
 	.p2align	4,,15
-	.globl	glMap2d
-	.type	glMap2d, @function
-glMap2d:
+	.globl	GL_PREFIX(Map2d)
+	.type	GL_PREFIX(Map2d), @function
+GL_PREFIX(Map2d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1776(%rax), %r11
@@ -7901,12 +7910,12 @@ glMap2d:
 	movq	1776(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMap2d, .-glMap2d
+	.size	GL_PREFIX(Map2d), .-GL_PREFIX(Map2d)
 
 	.p2align	4,,15
-	.globl	glMap2f
-	.type	glMap2f, @function
-glMap2f:
+	.globl	GL_PREFIX(Map2f)
+	.type	GL_PREFIX(Map2f), @function
+GL_PREFIX(Map2f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1784(%rax), %r11
@@ -7970,12 +7979,12 @@ glMap2f:
 	movq	1784(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMap2f, .-glMap2f
+	.size	GL_PREFIX(Map2f), .-GL_PREFIX(Map2f)
 
 	.p2align	4,,15
-	.globl	glMapGrid1d
-	.type	glMapGrid1d, @function
-glMapGrid1d:
+	.globl	GL_PREFIX(MapGrid1d)
+	.type	GL_PREFIX(MapGrid1d), @function
+GL_PREFIX(MapGrid1d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1792(%rax), %r11
@@ -8011,12 +8020,12 @@ glMapGrid1d:
 	movq	1792(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMapGrid1d, .-glMapGrid1d
+	.size	GL_PREFIX(MapGrid1d), .-GL_PREFIX(MapGrid1d)
 
 	.p2align	4,,15
-	.globl	glMapGrid1f
-	.type	glMapGrid1f, @function
-glMapGrid1f:
+	.globl	GL_PREFIX(MapGrid1f)
+	.type	GL_PREFIX(MapGrid1f), @function
+GL_PREFIX(MapGrid1f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1800(%rax), %r11
@@ -8052,12 +8061,12 @@ glMapGrid1f:
 	movq	1800(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMapGrid1f, .-glMapGrid1f
+	.size	GL_PREFIX(MapGrid1f), .-GL_PREFIX(MapGrid1f)
 
 	.p2align	4,,15
-	.globl	glMapGrid2d
-	.type	glMapGrid2d, @function
-glMapGrid2d:
+	.globl	GL_PREFIX(MapGrid2d)
+	.type	GL_PREFIX(MapGrid2d), @function
+GL_PREFIX(MapGrid2d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1808(%rax), %r11
@@ -8105,12 +8114,12 @@ glMapGrid2d:
 	movq	1808(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMapGrid2d, .-glMapGrid2d
+	.size	GL_PREFIX(MapGrid2d), .-GL_PREFIX(MapGrid2d)
 
 	.p2align	4,,15
-	.globl	glMapGrid2f
-	.type	glMapGrid2f, @function
-glMapGrid2f:
+	.globl	GL_PREFIX(MapGrid2f)
+	.type	GL_PREFIX(MapGrid2f), @function
+GL_PREFIX(MapGrid2f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1816(%rax), %r11
@@ -8158,12 +8167,12 @@ glMapGrid2f:
 	movq	1816(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMapGrid2f, .-glMapGrid2f
+	.size	GL_PREFIX(MapGrid2f), .-GL_PREFIX(MapGrid2f)
 
 	.p2align	4,,15
-	.globl	glEvalCoord1d
-	.type	glEvalCoord1d, @function
-glEvalCoord1d:
+	.globl	GL_PREFIX(EvalCoord1d)
+	.type	GL_PREFIX(EvalCoord1d), @function
+GL_PREFIX(EvalCoord1d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1824(%rax), %r11
@@ -8191,12 +8200,12 @@ glEvalCoord1d:
 	movq	1824(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEvalCoord1d, .-glEvalCoord1d
+	.size	GL_PREFIX(EvalCoord1d), .-GL_PREFIX(EvalCoord1d)
 
 	.p2align	4,,15
-	.globl	glEvalCoord1dv
-	.type	glEvalCoord1dv, @function
-glEvalCoord1dv:
+	.globl	GL_PREFIX(EvalCoord1dv)
+	.type	GL_PREFIX(EvalCoord1dv), @function
+GL_PREFIX(EvalCoord1dv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1832(%rax), %r11
@@ -8220,12 +8229,12 @@ glEvalCoord1dv:
 	movq	1832(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEvalCoord1dv, .-glEvalCoord1dv
+	.size	GL_PREFIX(EvalCoord1dv), .-GL_PREFIX(EvalCoord1dv)
 
 	.p2align	4,,15
-	.globl	glEvalCoord1f
-	.type	glEvalCoord1f, @function
-glEvalCoord1f:
+	.globl	GL_PREFIX(EvalCoord1f)
+	.type	GL_PREFIX(EvalCoord1f), @function
+GL_PREFIX(EvalCoord1f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1840(%rax), %r11
@@ -8253,12 +8262,12 @@ glEvalCoord1f:
 	movq	1840(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEvalCoord1f, .-glEvalCoord1f
+	.size	GL_PREFIX(EvalCoord1f), .-GL_PREFIX(EvalCoord1f)
 
 	.p2align	4,,15
-	.globl	glEvalCoord1fv
-	.type	glEvalCoord1fv, @function
-glEvalCoord1fv:
+	.globl	GL_PREFIX(EvalCoord1fv)
+	.type	GL_PREFIX(EvalCoord1fv), @function
+GL_PREFIX(EvalCoord1fv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1848(%rax), %r11
@@ -8282,12 +8291,12 @@ glEvalCoord1fv:
 	movq	1848(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEvalCoord1fv, .-glEvalCoord1fv
+	.size	GL_PREFIX(EvalCoord1fv), .-GL_PREFIX(EvalCoord1fv)
 
 	.p2align	4,,15
-	.globl	glEvalCoord2d
-	.type	glEvalCoord2d, @function
-glEvalCoord2d:
+	.globl	GL_PREFIX(EvalCoord2d)
+	.type	GL_PREFIX(EvalCoord2d), @function
+GL_PREFIX(EvalCoord2d):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1856(%rax), %r11
@@ -8319,12 +8328,12 @@ glEvalCoord2d:
 	movq	1856(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEvalCoord2d, .-glEvalCoord2d
+	.size	GL_PREFIX(EvalCoord2d), .-GL_PREFIX(EvalCoord2d)
 
 	.p2align	4,,15
-	.globl	glEvalCoord2dv
-	.type	glEvalCoord2dv, @function
-glEvalCoord2dv:
+	.globl	GL_PREFIX(EvalCoord2dv)
+	.type	GL_PREFIX(EvalCoord2dv), @function
+GL_PREFIX(EvalCoord2dv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1864(%rax), %r11
@@ -8348,12 +8357,12 @@ glEvalCoord2dv:
 	movq	1864(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEvalCoord2dv, .-glEvalCoord2dv
+	.size	GL_PREFIX(EvalCoord2dv), .-GL_PREFIX(EvalCoord2dv)
 
 	.p2align	4,,15
-	.globl	glEvalCoord2f
-	.type	glEvalCoord2f, @function
-glEvalCoord2f:
+	.globl	GL_PREFIX(EvalCoord2f)
+	.type	GL_PREFIX(EvalCoord2f), @function
+GL_PREFIX(EvalCoord2f):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1872(%rax), %r11
@@ -8385,12 +8394,12 @@ glEvalCoord2f:
 	movq	1872(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEvalCoord2f, .-glEvalCoord2f
+	.size	GL_PREFIX(EvalCoord2f), .-GL_PREFIX(EvalCoord2f)
 
 	.p2align	4,,15
-	.globl	glEvalCoord2fv
-	.type	glEvalCoord2fv, @function
-glEvalCoord2fv:
+	.globl	GL_PREFIX(EvalCoord2fv)
+	.type	GL_PREFIX(EvalCoord2fv), @function
+GL_PREFIX(EvalCoord2fv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1880(%rax), %r11
@@ -8414,12 +8423,12 @@ glEvalCoord2fv:
 	movq	1880(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEvalCoord2fv, .-glEvalCoord2fv
+	.size	GL_PREFIX(EvalCoord2fv), .-GL_PREFIX(EvalCoord2fv)
 
 	.p2align	4,,15
-	.globl	glEvalMesh1
-	.type	glEvalMesh1, @function
-glEvalMesh1:
+	.globl	GL_PREFIX(EvalMesh1)
+	.type	GL_PREFIX(EvalMesh1), @function
+GL_PREFIX(EvalMesh1):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1888(%rax), %r11
@@ -8451,12 +8460,12 @@ glEvalMesh1:
 	movq	1888(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEvalMesh1, .-glEvalMesh1
+	.size	GL_PREFIX(EvalMesh1), .-GL_PREFIX(EvalMesh1)
 
 	.p2align	4,,15
-	.globl	glEvalPoint1
-	.type	glEvalPoint1, @function
-glEvalPoint1:
+	.globl	GL_PREFIX(EvalPoint1)
+	.type	GL_PREFIX(EvalPoint1), @function
+GL_PREFIX(EvalPoint1):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1896(%rax), %r11
@@ -8480,12 +8489,12 @@ glEvalPoint1:
 	movq	1896(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEvalPoint1, .-glEvalPoint1
+	.size	GL_PREFIX(EvalPoint1), .-GL_PREFIX(EvalPoint1)
 
 	.p2align	4,,15
-	.globl	glEvalMesh2
-	.type	glEvalMesh2, @function
-glEvalMesh2:
+	.globl	GL_PREFIX(EvalMesh2)
+	.type	GL_PREFIX(EvalMesh2), @function
+GL_PREFIX(EvalMesh2):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1904(%rax), %r11
@@ -8525,12 +8534,12 @@ glEvalMesh2:
 	movq	1904(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEvalMesh2, .-glEvalMesh2
+	.size	GL_PREFIX(EvalMesh2), .-GL_PREFIX(EvalMesh2)
 
 	.p2align	4,,15
-	.globl	glEvalPoint2
-	.type	glEvalPoint2, @function
-glEvalPoint2:
+	.globl	GL_PREFIX(EvalPoint2)
+	.type	GL_PREFIX(EvalPoint2), @function
+GL_PREFIX(EvalPoint2):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1912(%rax), %r11
@@ -8562,12 +8571,12 @@ glEvalPoint2:
 	movq	1912(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEvalPoint2, .-glEvalPoint2
+	.size	GL_PREFIX(EvalPoint2), .-GL_PREFIX(EvalPoint2)
 
 	.p2align	4,,15
-	.globl	glAlphaFunc
-	.type	glAlphaFunc, @function
-glAlphaFunc:
+	.globl	GL_PREFIX(AlphaFunc)
+	.type	GL_PREFIX(AlphaFunc), @function
+GL_PREFIX(AlphaFunc):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1920(%rax), %r11
@@ -8599,12 +8608,12 @@ glAlphaFunc:
 	movq	1920(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glAlphaFunc, .-glAlphaFunc
+	.size	GL_PREFIX(AlphaFunc), .-GL_PREFIX(AlphaFunc)
 
 	.p2align	4,,15
-	.globl	glBlendFunc
-	.type	glBlendFunc, @function
-glBlendFunc:
+	.globl	GL_PREFIX(BlendFunc)
+	.type	GL_PREFIX(BlendFunc), @function
+GL_PREFIX(BlendFunc):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1928(%rax), %r11
@@ -8636,12 +8645,12 @@ glBlendFunc:
 	movq	1928(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBlendFunc, .-glBlendFunc
+	.size	GL_PREFIX(BlendFunc), .-GL_PREFIX(BlendFunc)
 
 	.p2align	4,,15
-	.globl	glLogicOp
-	.type	glLogicOp, @function
-glLogicOp:
+	.globl	GL_PREFIX(LogicOp)
+	.type	GL_PREFIX(LogicOp), @function
+GL_PREFIX(LogicOp):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1936(%rax), %r11
@@ -8665,12 +8674,12 @@ glLogicOp:
 	movq	1936(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLogicOp, .-glLogicOp
+	.size	GL_PREFIX(LogicOp), .-GL_PREFIX(LogicOp)
 
 	.p2align	4,,15
-	.globl	glStencilFunc
-	.type	glStencilFunc, @function
-glStencilFunc:
+	.globl	GL_PREFIX(StencilFunc)
+	.type	GL_PREFIX(StencilFunc), @function
+GL_PREFIX(StencilFunc):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1944(%rax), %r11
@@ -8702,12 +8711,12 @@ glStencilFunc:
 	movq	1944(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glStencilFunc, .-glStencilFunc
+	.size	GL_PREFIX(StencilFunc), .-GL_PREFIX(StencilFunc)
 
 	.p2align	4,,15
-	.globl	glStencilOp
-	.type	glStencilOp, @function
-glStencilOp:
+	.globl	GL_PREFIX(StencilOp)
+	.type	GL_PREFIX(StencilOp), @function
+GL_PREFIX(StencilOp):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1952(%rax), %r11
@@ -8739,12 +8748,12 @@ glStencilOp:
 	movq	1952(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glStencilOp, .-glStencilOp
+	.size	GL_PREFIX(StencilOp), .-GL_PREFIX(StencilOp)
 
 	.p2align	4,,15
-	.globl	glDepthFunc
-	.type	glDepthFunc, @function
-glDepthFunc:
+	.globl	GL_PREFIX(DepthFunc)
+	.type	GL_PREFIX(DepthFunc), @function
+GL_PREFIX(DepthFunc):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1960(%rax), %r11
@@ -8768,12 +8777,12 @@ glDepthFunc:
 	movq	1960(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDepthFunc, .-glDepthFunc
+	.size	GL_PREFIX(DepthFunc), .-GL_PREFIX(DepthFunc)
 
 	.p2align	4,,15
-	.globl	glPixelZoom
-	.type	glPixelZoom, @function
-glPixelZoom:
+	.globl	GL_PREFIX(PixelZoom)
+	.type	GL_PREFIX(PixelZoom), @function
+GL_PREFIX(PixelZoom):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1968(%rax), %r11
@@ -8805,12 +8814,12 @@ glPixelZoom:
 	movq	1968(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPixelZoom, .-glPixelZoom
+	.size	GL_PREFIX(PixelZoom), .-GL_PREFIX(PixelZoom)
 
 	.p2align	4,,15
-	.globl	glPixelTransferf
-	.type	glPixelTransferf, @function
-glPixelTransferf:
+	.globl	GL_PREFIX(PixelTransferf)
+	.type	GL_PREFIX(PixelTransferf), @function
+GL_PREFIX(PixelTransferf):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1976(%rax), %r11
@@ -8842,12 +8851,12 @@ glPixelTransferf:
 	movq	1976(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPixelTransferf, .-glPixelTransferf
+	.size	GL_PREFIX(PixelTransferf), .-GL_PREFIX(PixelTransferf)
 
 	.p2align	4,,15
-	.globl	glPixelTransferi
-	.type	glPixelTransferi, @function
-glPixelTransferi:
+	.globl	GL_PREFIX(PixelTransferi)
+	.type	GL_PREFIX(PixelTransferi), @function
+GL_PREFIX(PixelTransferi):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1984(%rax), %r11
@@ -8879,12 +8888,12 @@ glPixelTransferi:
 	movq	1984(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPixelTransferi, .-glPixelTransferi
+	.size	GL_PREFIX(PixelTransferi), .-GL_PREFIX(PixelTransferi)
 
 	.p2align	4,,15
-	.globl	glPixelStoref
-	.type	glPixelStoref, @function
-glPixelStoref:
+	.globl	GL_PREFIX(PixelStoref)
+	.type	GL_PREFIX(PixelStoref), @function
+GL_PREFIX(PixelStoref):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	1992(%rax), %r11
@@ -8916,12 +8925,12 @@ glPixelStoref:
 	movq	1992(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPixelStoref, .-glPixelStoref
+	.size	GL_PREFIX(PixelStoref), .-GL_PREFIX(PixelStoref)
 
 	.p2align	4,,15
-	.globl	glPixelStorei
-	.type	glPixelStorei, @function
-glPixelStorei:
+	.globl	GL_PREFIX(PixelStorei)
+	.type	GL_PREFIX(PixelStorei), @function
+GL_PREFIX(PixelStorei):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2000(%rax), %r11
@@ -8953,12 +8962,12 @@ glPixelStorei:
 	movq	2000(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPixelStorei, .-glPixelStorei
+	.size	GL_PREFIX(PixelStorei), .-GL_PREFIX(PixelStorei)
 
 	.p2align	4,,15
-	.globl	glPixelMapfv
-	.type	glPixelMapfv, @function
-glPixelMapfv:
+	.globl	GL_PREFIX(PixelMapfv)
+	.type	GL_PREFIX(PixelMapfv), @function
+GL_PREFIX(PixelMapfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2008(%rax), %r11
@@ -8990,12 +8999,12 @@ glPixelMapfv:
 	movq	2008(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPixelMapfv, .-glPixelMapfv
+	.size	GL_PREFIX(PixelMapfv), .-GL_PREFIX(PixelMapfv)
 
 	.p2align	4,,15
-	.globl	glPixelMapuiv
-	.type	glPixelMapuiv, @function
-glPixelMapuiv:
+	.globl	GL_PREFIX(PixelMapuiv)
+	.type	GL_PREFIX(PixelMapuiv), @function
+GL_PREFIX(PixelMapuiv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2016(%rax), %r11
@@ -9027,12 +9036,12 @@ glPixelMapuiv:
 	movq	2016(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPixelMapuiv, .-glPixelMapuiv
+	.size	GL_PREFIX(PixelMapuiv), .-GL_PREFIX(PixelMapuiv)
 
 	.p2align	4,,15
-	.globl	glPixelMapusv
-	.type	glPixelMapusv, @function
-glPixelMapusv:
+	.globl	GL_PREFIX(PixelMapusv)
+	.type	GL_PREFIX(PixelMapusv), @function
+GL_PREFIX(PixelMapusv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2024(%rax), %r11
@@ -9064,12 +9073,12 @@ glPixelMapusv:
 	movq	2024(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPixelMapusv, .-glPixelMapusv
+	.size	GL_PREFIX(PixelMapusv), .-GL_PREFIX(PixelMapusv)
 
 	.p2align	4,,15
-	.globl	glReadBuffer
-	.type	glReadBuffer, @function
-glReadBuffer:
+	.globl	GL_PREFIX(ReadBuffer)
+	.type	GL_PREFIX(ReadBuffer), @function
+GL_PREFIX(ReadBuffer):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2032(%rax), %r11
@@ -9093,12 +9102,12 @@ glReadBuffer:
 	movq	2032(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glReadBuffer, .-glReadBuffer
+	.size	GL_PREFIX(ReadBuffer), .-GL_PREFIX(ReadBuffer)
 
 	.p2align	4,,15
-	.globl	glCopyPixels
-	.type	glCopyPixels, @function
-glCopyPixels:
+	.globl	GL_PREFIX(CopyPixels)
+	.type	GL_PREFIX(CopyPixels), @function
+GL_PREFIX(CopyPixels):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2040(%rax), %r11
@@ -9138,12 +9147,12 @@ glCopyPixels:
 	movq	2040(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCopyPixels, .-glCopyPixels
+	.size	GL_PREFIX(CopyPixels), .-GL_PREFIX(CopyPixels)
 
 	.p2align	4,,15
-	.globl	glReadPixels
-	.type	glReadPixels, @function
-glReadPixels:
+	.globl	GL_PREFIX(ReadPixels)
+	.type	GL_PREFIX(ReadPixels), @function
+GL_PREFIX(ReadPixels):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2048(%rax), %r11
@@ -9191,12 +9200,12 @@ glReadPixels:
 	movq	2048(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glReadPixels, .-glReadPixels
+	.size	GL_PREFIX(ReadPixels), .-GL_PREFIX(ReadPixels)
 
 	.p2align	4,,15
-	.globl	glDrawPixels
-	.type	glDrawPixels, @function
-glDrawPixels:
+	.globl	GL_PREFIX(DrawPixels)
+	.type	GL_PREFIX(DrawPixels), @function
+GL_PREFIX(DrawPixels):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2056(%rax), %r11
@@ -9236,12 +9245,12 @@ glDrawPixels:
 	movq	2056(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDrawPixels, .-glDrawPixels
+	.size	GL_PREFIX(DrawPixels), .-GL_PREFIX(DrawPixels)
 
 	.p2align	4,,15
-	.globl	glGetBooleanv
-	.type	glGetBooleanv, @function
-glGetBooleanv:
+	.globl	GL_PREFIX(GetBooleanv)
+	.type	GL_PREFIX(GetBooleanv), @function
+GL_PREFIX(GetBooleanv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2064(%rax), %r11
@@ -9273,12 +9282,12 @@ glGetBooleanv:
 	movq	2064(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetBooleanv, .-glGetBooleanv
+	.size	GL_PREFIX(GetBooleanv), .-GL_PREFIX(GetBooleanv)
 
 	.p2align	4,,15
-	.globl	glGetClipPlane
-	.type	glGetClipPlane, @function
-glGetClipPlane:
+	.globl	GL_PREFIX(GetClipPlane)
+	.type	GL_PREFIX(GetClipPlane), @function
+GL_PREFIX(GetClipPlane):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2072(%rax), %r11
@@ -9310,12 +9319,12 @@ glGetClipPlane:
 	movq	2072(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetClipPlane, .-glGetClipPlane
+	.size	GL_PREFIX(GetClipPlane), .-GL_PREFIX(GetClipPlane)
 
 	.p2align	4,,15
-	.globl	glGetDoublev
-	.type	glGetDoublev, @function
-glGetDoublev:
+	.globl	GL_PREFIX(GetDoublev)
+	.type	GL_PREFIX(GetDoublev), @function
+GL_PREFIX(GetDoublev):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2080(%rax), %r11
@@ -9347,12 +9356,12 @@ glGetDoublev:
 	movq	2080(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetDoublev, .-glGetDoublev
+	.size	GL_PREFIX(GetDoublev), .-GL_PREFIX(GetDoublev)
 
 	.p2align	4,,15
-	.globl	glGetError
-	.type	glGetError, @function
-glGetError:
+	.globl	GL_PREFIX(GetError)
+	.type	GL_PREFIX(GetError), @function
+GL_PREFIX(GetError):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2088(%rax), %r11
@@ -9376,12 +9385,12 @@ glGetError:
 	movq	2088(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetError, .-glGetError
+	.size	GL_PREFIX(GetError), .-GL_PREFIX(GetError)
 
 	.p2align	4,,15
-	.globl	glGetFloatv
-	.type	glGetFloatv, @function
-glGetFloatv:
+	.globl	GL_PREFIX(GetFloatv)
+	.type	GL_PREFIX(GetFloatv), @function
+GL_PREFIX(GetFloatv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2096(%rax), %r11
@@ -9413,12 +9422,12 @@ glGetFloatv:
 	movq	2096(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetFloatv, .-glGetFloatv
+	.size	GL_PREFIX(GetFloatv), .-GL_PREFIX(GetFloatv)
 
 	.p2align	4,,15
-	.globl	glGetIntegerv
-	.type	glGetIntegerv, @function
-glGetIntegerv:
+	.globl	GL_PREFIX(GetIntegerv)
+	.type	GL_PREFIX(GetIntegerv), @function
+GL_PREFIX(GetIntegerv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2104(%rax), %r11
@@ -9450,12 +9459,12 @@ glGetIntegerv:
 	movq	2104(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetIntegerv, .-glGetIntegerv
+	.size	GL_PREFIX(GetIntegerv), .-GL_PREFIX(GetIntegerv)
 
 	.p2align	4,,15
-	.globl	glGetLightfv
-	.type	glGetLightfv, @function
-glGetLightfv:
+	.globl	GL_PREFIX(GetLightfv)
+	.type	GL_PREFIX(GetLightfv), @function
+GL_PREFIX(GetLightfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2112(%rax), %r11
@@ -9487,12 +9496,12 @@ glGetLightfv:
 	movq	2112(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetLightfv, .-glGetLightfv
+	.size	GL_PREFIX(GetLightfv), .-GL_PREFIX(GetLightfv)
 
 	.p2align	4,,15
-	.globl	glGetLightiv
-	.type	glGetLightiv, @function
-glGetLightiv:
+	.globl	GL_PREFIX(GetLightiv)
+	.type	GL_PREFIX(GetLightiv), @function
+GL_PREFIX(GetLightiv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2120(%rax), %r11
@@ -9524,12 +9533,12 @@ glGetLightiv:
 	movq	2120(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetLightiv, .-glGetLightiv
+	.size	GL_PREFIX(GetLightiv), .-GL_PREFIX(GetLightiv)
 
 	.p2align	4,,15
-	.globl	glGetMapdv
-	.type	glGetMapdv, @function
-glGetMapdv:
+	.globl	GL_PREFIX(GetMapdv)
+	.type	GL_PREFIX(GetMapdv), @function
+GL_PREFIX(GetMapdv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2128(%rax), %r11
@@ -9561,12 +9570,12 @@ glGetMapdv:
 	movq	2128(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetMapdv, .-glGetMapdv
+	.size	GL_PREFIX(GetMapdv), .-GL_PREFIX(GetMapdv)
 
 	.p2align	4,,15
-	.globl	glGetMapfv
-	.type	glGetMapfv, @function
-glGetMapfv:
+	.globl	GL_PREFIX(GetMapfv)
+	.type	GL_PREFIX(GetMapfv), @function
+GL_PREFIX(GetMapfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2136(%rax), %r11
@@ -9598,12 +9607,12 @@ glGetMapfv:
 	movq	2136(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetMapfv, .-glGetMapfv
+	.size	GL_PREFIX(GetMapfv), .-GL_PREFIX(GetMapfv)
 
 	.p2align	4,,15
-	.globl	glGetMapiv
-	.type	glGetMapiv, @function
-glGetMapiv:
+	.globl	GL_PREFIX(GetMapiv)
+	.type	GL_PREFIX(GetMapiv), @function
+GL_PREFIX(GetMapiv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2144(%rax), %r11
@@ -9635,12 +9644,12 @@ glGetMapiv:
 	movq	2144(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetMapiv, .-glGetMapiv
+	.size	GL_PREFIX(GetMapiv), .-GL_PREFIX(GetMapiv)
 
 	.p2align	4,,15
-	.globl	glGetMaterialfv
-	.type	glGetMaterialfv, @function
-glGetMaterialfv:
+	.globl	GL_PREFIX(GetMaterialfv)
+	.type	GL_PREFIX(GetMaterialfv), @function
+GL_PREFIX(GetMaterialfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2152(%rax), %r11
@@ -9672,12 +9681,12 @@ glGetMaterialfv:
 	movq	2152(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetMaterialfv, .-glGetMaterialfv
+	.size	GL_PREFIX(GetMaterialfv), .-GL_PREFIX(GetMaterialfv)
 
 	.p2align	4,,15
-	.globl	glGetMaterialiv
-	.type	glGetMaterialiv, @function
-glGetMaterialiv:
+	.globl	GL_PREFIX(GetMaterialiv)
+	.type	GL_PREFIX(GetMaterialiv), @function
+GL_PREFIX(GetMaterialiv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2160(%rax), %r11
@@ -9709,12 +9718,12 @@ glGetMaterialiv:
 	movq	2160(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetMaterialiv, .-glGetMaterialiv
+	.size	GL_PREFIX(GetMaterialiv), .-GL_PREFIX(GetMaterialiv)
 
 	.p2align	4,,15
-	.globl	glGetPixelMapfv
-	.type	glGetPixelMapfv, @function
-glGetPixelMapfv:
+	.globl	GL_PREFIX(GetPixelMapfv)
+	.type	GL_PREFIX(GetPixelMapfv), @function
+GL_PREFIX(GetPixelMapfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2168(%rax), %r11
@@ -9746,12 +9755,12 @@ glGetPixelMapfv:
 	movq	2168(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetPixelMapfv, .-glGetPixelMapfv
+	.size	GL_PREFIX(GetPixelMapfv), .-GL_PREFIX(GetPixelMapfv)
 
 	.p2align	4,,15
-	.globl	glGetPixelMapuiv
-	.type	glGetPixelMapuiv, @function
-glGetPixelMapuiv:
+	.globl	GL_PREFIX(GetPixelMapuiv)
+	.type	GL_PREFIX(GetPixelMapuiv), @function
+GL_PREFIX(GetPixelMapuiv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2176(%rax), %r11
@@ -9783,12 +9792,12 @@ glGetPixelMapuiv:
 	movq	2176(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetPixelMapuiv, .-glGetPixelMapuiv
+	.size	GL_PREFIX(GetPixelMapuiv), .-GL_PREFIX(GetPixelMapuiv)
 
 	.p2align	4,,15
-	.globl	glGetPixelMapusv
-	.type	glGetPixelMapusv, @function
-glGetPixelMapusv:
+	.globl	GL_PREFIX(GetPixelMapusv)
+	.type	GL_PREFIX(GetPixelMapusv), @function
+GL_PREFIX(GetPixelMapusv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2184(%rax), %r11
@@ -9820,12 +9829,12 @@ glGetPixelMapusv:
 	movq	2184(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetPixelMapusv, .-glGetPixelMapusv
+	.size	GL_PREFIX(GetPixelMapusv), .-GL_PREFIX(GetPixelMapusv)
 
 	.p2align	4,,15
-	.globl	glGetPolygonStipple
-	.type	glGetPolygonStipple, @function
-glGetPolygonStipple:
+	.globl	GL_PREFIX(GetPolygonStipple)
+	.type	GL_PREFIX(GetPolygonStipple), @function
+GL_PREFIX(GetPolygonStipple):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2192(%rax), %r11
@@ -9849,12 +9858,12 @@ glGetPolygonStipple:
 	movq	2192(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetPolygonStipple, .-glGetPolygonStipple
+	.size	GL_PREFIX(GetPolygonStipple), .-GL_PREFIX(GetPolygonStipple)
 
 	.p2align	4,,15
-	.globl	glGetString
-	.type	glGetString, @function
-glGetString:
+	.globl	GL_PREFIX(GetString)
+	.type	GL_PREFIX(GetString), @function
+GL_PREFIX(GetString):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2200(%rax), %r11
@@ -9878,12 +9887,12 @@ glGetString:
 	movq	2200(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetString, .-glGetString
+	.size	GL_PREFIX(GetString), .-GL_PREFIX(GetString)
 
 	.p2align	4,,15
-	.globl	glGetTexEnvfv
-	.type	glGetTexEnvfv, @function
-glGetTexEnvfv:
+	.globl	GL_PREFIX(GetTexEnvfv)
+	.type	GL_PREFIX(GetTexEnvfv), @function
+GL_PREFIX(GetTexEnvfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2208(%rax), %r11
@@ -9915,12 +9924,12 @@ glGetTexEnvfv:
 	movq	2208(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetTexEnvfv, .-glGetTexEnvfv
+	.size	GL_PREFIX(GetTexEnvfv), .-GL_PREFIX(GetTexEnvfv)
 
 	.p2align	4,,15
-	.globl	glGetTexEnviv
-	.type	glGetTexEnviv, @function
-glGetTexEnviv:
+	.globl	GL_PREFIX(GetTexEnviv)
+	.type	GL_PREFIX(GetTexEnviv), @function
+GL_PREFIX(GetTexEnviv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2216(%rax), %r11
@@ -9952,12 +9961,12 @@ glGetTexEnviv:
 	movq	2216(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetTexEnviv, .-glGetTexEnviv
+	.size	GL_PREFIX(GetTexEnviv), .-GL_PREFIX(GetTexEnviv)
 
 	.p2align	4,,15
-	.globl	glGetTexGendv
-	.type	glGetTexGendv, @function
-glGetTexGendv:
+	.globl	GL_PREFIX(GetTexGendv)
+	.type	GL_PREFIX(GetTexGendv), @function
+GL_PREFIX(GetTexGendv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2224(%rax), %r11
@@ -9989,12 +9998,12 @@ glGetTexGendv:
 	movq	2224(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetTexGendv, .-glGetTexGendv
+	.size	GL_PREFIX(GetTexGendv), .-GL_PREFIX(GetTexGendv)
 
 	.p2align	4,,15
-	.globl	glGetTexGenfv
-	.type	glGetTexGenfv, @function
-glGetTexGenfv:
+	.globl	GL_PREFIX(GetTexGenfv)
+	.type	GL_PREFIX(GetTexGenfv), @function
+GL_PREFIX(GetTexGenfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2232(%rax), %r11
@@ -10026,12 +10035,12 @@ glGetTexGenfv:
 	movq	2232(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetTexGenfv, .-glGetTexGenfv
+	.size	GL_PREFIX(GetTexGenfv), .-GL_PREFIX(GetTexGenfv)
 
 	.p2align	4,,15
-	.globl	glGetTexGeniv
-	.type	glGetTexGeniv, @function
-glGetTexGeniv:
+	.globl	GL_PREFIX(GetTexGeniv)
+	.type	GL_PREFIX(GetTexGeniv), @function
+GL_PREFIX(GetTexGeniv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2240(%rax), %r11
@@ -10063,12 +10072,12 @@ glGetTexGeniv:
 	movq	2240(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetTexGeniv, .-glGetTexGeniv
+	.size	GL_PREFIX(GetTexGeniv), .-GL_PREFIX(GetTexGeniv)
 
 	.p2align	4,,15
-	.globl	glGetTexImage
-	.type	glGetTexImage, @function
-glGetTexImage:
+	.globl	GL_PREFIX(GetTexImage)
+	.type	GL_PREFIX(GetTexImage), @function
+GL_PREFIX(GetTexImage):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2248(%rax), %r11
@@ -10108,12 +10117,12 @@ glGetTexImage:
 	movq	2248(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetTexImage, .-glGetTexImage
+	.size	GL_PREFIX(GetTexImage), .-GL_PREFIX(GetTexImage)
 
 	.p2align	4,,15
-	.globl	glGetTexParameterfv
-	.type	glGetTexParameterfv, @function
-glGetTexParameterfv:
+	.globl	GL_PREFIX(GetTexParameterfv)
+	.type	GL_PREFIX(GetTexParameterfv), @function
+GL_PREFIX(GetTexParameterfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2256(%rax), %r11
@@ -10145,12 +10154,12 @@ glGetTexParameterfv:
 	movq	2256(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetTexParameterfv, .-glGetTexParameterfv
+	.size	GL_PREFIX(GetTexParameterfv), .-GL_PREFIX(GetTexParameterfv)
 
 	.p2align	4,,15
-	.globl	glGetTexParameteriv
-	.type	glGetTexParameteriv, @function
-glGetTexParameteriv:
+	.globl	GL_PREFIX(GetTexParameteriv)
+	.type	GL_PREFIX(GetTexParameteriv), @function
+GL_PREFIX(GetTexParameteriv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2264(%rax), %r11
@@ -10182,12 +10191,12 @@ glGetTexParameteriv:
 	movq	2264(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetTexParameteriv, .-glGetTexParameteriv
+	.size	GL_PREFIX(GetTexParameteriv), .-GL_PREFIX(GetTexParameteriv)
 
 	.p2align	4,,15
-	.globl	glGetTexLevelParameterfv
-	.type	glGetTexLevelParameterfv, @function
-glGetTexLevelParameterfv:
+	.globl	GL_PREFIX(GetTexLevelParameterfv)
+	.type	GL_PREFIX(GetTexLevelParameterfv), @function
+GL_PREFIX(GetTexLevelParameterfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2272(%rax), %r11
@@ -10227,12 +10236,12 @@ glGetTexLevelParameterfv:
 	movq	2272(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetTexLevelParameterfv, .-glGetTexLevelParameterfv
+	.size	GL_PREFIX(GetTexLevelParameterfv), .-GL_PREFIX(GetTexLevelParameterfv)
 
 	.p2align	4,,15
-	.globl	glGetTexLevelParameteriv
-	.type	glGetTexLevelParameteriv, @function
-glGetTexLevelParameteriv:
+	.globl	GL_PREFIX(GetTexLevelParameteriv)
+	.type	GL_PREFIX(GetTexLevelParameteriv), @function
+GL_PREFIX(GetTexLevelParameteriv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2280(%rax), %r11
@@ -10272,12 +10281,12 @@ glGetTexLevelParameteriv:
 	movq	2280(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetTexLevelParameteriv, .-glGetTexLevelParameteriv
+	.size	GL_PREFIX(GetTexLevelParameteriv), .-GL_PREFIX(GetTexLevelParameteriv)
 
 	.p2align	4,,15
-	.globl	glIsEnabled
-	.type	glIsEnabled, @function
-glIsEnabled:
+	.globl	GL_PREFIX(IsEnabled)
+	.type	GL_PREFIX(IsEnabled), @function
+GL_PREFIX(IsEnabled):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2288(%rax), %r11
@@ -10301,12 +10310,12 @@ glIsEnabled:
 	movq	2288(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIsEnabled, .-glIsEnabled
+	.size	GL_PREFIX(IsEnabled), .-GL_PREFIX(IsEnabled)
 
 	.p2align	4,,15
-	.globl	glIsList
-	.type	glIsList, @function
-glIsList:
+	.globl	GL_PREFIX(IsList)
+	.type	GL_PREFIX(IsList), @function
+GL_PREFIX(IsList):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2296(%rax), %r11
@@ -10330,12 +10339,12 @@ glIsList:
 	movq	2296(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIsList, .-glIsList
+	.size	GL_PREFIX(IsList), .-GL_PREFIX(IsList)
 
 	.p2align	4,,15
-	.globl	glDepthRange
-	.type	glDepthRange, @function
-glDepthRange:
+	.globl	GL_PREFIX(DepthRange)
+	.type	GL_PREFIX(DepthRange), @function
+GL_PREFIX(DepthRange):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2304(%rax), %r11
@@ -10367,12 +10376,12 @@ glDepthRange:
 	movq	2304(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDepthRange, .-glDepthRange
+	.size	GL_PREFIX(DepthRange), .-GL_PREFIX(DepthRange)
 
 	.p2align	4,,15
-	.globl	glFrustum
-	.type	glFrustum, @function
-glFrustum:
+	.globl	GL_PREFIX(Frustum)
+	.type	GL_PREFIX(Frustum), @function
+GL_PREFIX(Frustum):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2312(%rax), %r11
@@ -10420,12 +10429,12 @@ glFrustum:
 	movq	2312(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFrustum, .-glFrustum
+	.size	GL_PREFIX(Frustum), .-GL_PREFIX(Frustum)
 
 	.p2align	4,,15
-	.globl	glLoadIdentity
-	.type	glLoadIdentity, @function
-glLoadIdentity:
+	.globl	GL_PREFIX(LoadIdentity)
+	.type	GL_PREFIX(LoadIdentity), @function
+GL_PREFIX(LoadIdentity):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2320(%rax), %r11
@@ -10449,12 +10458,12 @@ glLoadIdentity:
 	movq	2320(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLoadIdentity, .-glLoadIdentity
+	.size	GL_PREFIX(LoadIdentity), .-GL_PREFIX(LoadIdentity)
 
 	.p2align	4,,15
-	.globl	glLoadMatrixf
-	.type	glLoadMatrixf, @function
-glLoadMatrixf:
+	.globl	GL_PREFIX(LoadMatrixf)
+	.type	GL_PREFIX(LoadMatrixf), @function
+GL_PREFIX(LoadMatrixf):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2328(%rax), %r11
@@ -10478,12 +10487,12 @@ glLoadMatrixf:
 	movq	2328(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLoadMatrixf, .-glLoadMatrixf
+	.size	GL_PREFIX(LoadMatrixf), .-GL_PREFIX(LoadMatrixf)
 
 	.p2align	4,,15
-	.globl	glLoadMatrixd
-	.type	glLoadMatrixd, @function
-glLoadMatrixd:
+	.globl	GL_PREFIX(LoadMatrixd)
+	.type	GL_PREFIX(LoadMatrixd), @function
+GL_PREFIX(LoadMatrixd):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2336(%rax), %r11
@@ -10507,12 +10516,12 @@ glLoadMatrixd:
 	movq	2336(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLoadMatrixd, .-glLoadMatrixd
+	.size	GL_PREFIX(LoadMatrixd), .-GL_PREFIX(LoadMatrixd)
 
 	.p2align	4,,15
-	.globl	glMatrixMode
-	.type	glMatrixMode, @function
-glMatrixMode:
+	.globl	GL_PREFIX(MatrixMode)
+	.type	GL_PREFIX(MatrixMode), @function
+GL_PREFIX(MatrixMode):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2344(%rax), %r11
@@ -10536,12 +10545,12 @@ glMatrixMode:
 	movq	2344(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMatrixMode, .-glMatrixMode
+	.size	GL_PREFIX(MatrixMode), .-GL_PREFIX(MatrixMode)
 
 	.p2align	4,,15
-	.globl	glMultMatrixf
-	.type	glMultMatrixf, @function
-glMultMatrixf:
+	.globl	GL_PREFIX(MultMatrixf)
+	.type	GL_PREFIX(MultMatrixf), @function
+GL_PREFIX(MultMatrixf):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2352(%rax), %r11
@@ -10565,12 +10574,12 @@ glMultMatrixf:
 	movq	2352(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultMatrixf, .-glMultMatrixf
+	.size	GL_PREFIX(MultMatrixf), .-GL_PREFIX(MultMatrixf)
 
 	.p2align	4,,15
-	.globl	glMultMatrixd
-	.type	glMultMatrixd, @function
-glMultMatrixd:
+	.globl	GL_PREFIX(MultMatrixd)
+	.type	GL_PREFIX(MultMatrixd), @function
+GL_PREFIX(MultMatrixd):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2360(%rax), %r11
@@ -10594,12 +10603,12 @@ glMultMatrixd:
 	movq	2360(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultMatrixd, .-glMultMatrixd
+	.size	GL_PREFIX(MultMatrixd), .-GL_PREFIX(MultMatrixd)
 
 	.p2align	4,,15
-	.globl	glOrtho
-	.type	glOrtho, @function
-glOrtho:
+	.globl	GL_PREFIX(Ortho)
+	.type	GL_PREFIX(Ortho), @function
+GL_PREFIX(Ortho):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2368(%rax), %r11
@@ -10647,12 +10656,12 @@ glOrtho:
 	movq	2368(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glOrtho, .-glOrtho
+	.size	GL_PREFIX(Ortho), .-GL_PREFIX(Ortho)
 
 	.p2align	4,,15
-	.globl	glPopMatrix
-	.type	glPopMatrix, @function
-glPopMatrix:
+	.globl	GL_PREFIX(PopMatrix)
+	.type	GL_PREFIX(PopMatrix), @function
+GL_PREFIX(PopMatrix):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2376(%rax), %r11
@@ -10676,12 +10685,12 @@ glPopMatrix:
 	movq	2376(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPopMatrix, .-glPopMatrix
+	.size	GL_PREFIX(PopMatrix), .-GL_PREFIX(PopMatrix)
 
 	.p2align	4,,15
-	.globl	glPushMatrix
-	.type	glPushMatrix, @function
-glPushMatrix:
+	.globl	GL_PREFIX(PushMatrix)
+	.type	GL_PREFIX(PushMatrix), @function
+GL_PREFIX(PushMatrix):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2384(%rax), %r11
@@ -10705,12 +10714,12 @@ glPushMatrix:
 	movq	2384(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPushMatrix, .-glPushMatrix
+	.size	GL_PREFIX(PushMatrix), .-GL_PREFIX(PushMatrix)
 
 	.p2align	4,,15
-	.globl	glRotated
-	.type	glRotated, @function
-glRotated:
+	.globl	GL_PREFIX(Rotated)
+	.type	GL_PREFIX(Rotated), @function
+GL_PREFIX(Rotated):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2392(%rax), %r11
@@ -10750,12 +10759,12 @@ glRotated:
 	movq	2392(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRotated, .-glRotated
+	.size	GL_PREFIX(Rotated), .-GL_PREFIX(Rotated)
 
 	.p2align	4,,15
-	.globl	glRotatef
-	.type	glRotatef, @function
-glRotatef:
+	.globl	GL_PREFIX(Rotatef)
+	.type	GL_PREFIX(Rotatef), @function
+GL_PREFIX(Rotatef):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2400(%rax), %r11
@@ -10795,12 +10804,12 @@ glRotatef:
 	movq	2400(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRotatef, .-glRotatef
+	.size	GL_PREFIX(Rotatef), .-GL_PREFIX(Rotatef)
 
 	.p2align	4,,15
-	.globl	glScaled
-	.type	glScaled, @function
-glScaled:
+	.globl	GL_PREFIX(Scaled)
+	.type	GL_PREFIX(Scaled), @function
+GL_PREFIX(Scaled):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2408(%rax), %r11
@@ -10836,12 +10845,12 @@ glScaled:
 	movq	2408(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glScaled, .-glScaled
+	.size	GL_PREFIX(Scaled), .-GL_PREFIX(Scaled)
 
 	.p2align	4,,15
-	.globl	glScalef
-	.type	glScalef, @function
-glScalef:
+	.globl	GL_PREFIX(Scalef)
+	.type	GL_PREFIX(Scalef), @function
+GL_PREFIX(Scalef):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2416(%rax), %r11
@@ -10877,12 +10886,12 @@ glScalef:
 	movq	2416(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glScalef, .-glScalef
+	.size	GL_PREFIX(Scalef), .-GL_PREFIX(Scalef)
 
 	.p2align	4,,15
-	.globl	glTranslated
-	.type	glTranslated, @function
-glTranslated:
+	.globl	GL_PREFIX(Translated)
+	.type	GL_PREFIX(Translated), @function
+GL_PREFIX(Translated):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2424(%rax), %r11
@@ -10918,12 +10927,12 @@ glTranslated:
 	movq	2424(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTranslated, .-glTranslated
+	.size	GL_PREFIX(Translated), .-GL_PREFIX(Translated)
 
 	.p2align	4,,15
-	.globl	glTranslatef
-	.type	glTranslatef, @function
-glTranslatef:
+	.globl	GL_PREFIX(Translatef)
+	.type	GL_PREFIX(Translatef), @function
+GL_PREFIX(Translatef):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2432(%rax), %r11
@@ -10959,12 +10968,12 @@ glTranslatef:
 	movq	2432(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTranslatef, .-glTranslatef
+	.size	GL_PREFIX(Translatef), .-GL_PREFIX(Translatef)
 
 	.p2align	4,,15
-	.globl	glViewport
-	.type	glViewport, @function
-glViewport:
+	.globl	GL_PREFIX(Viewport)
+	.type	GL_PREFIX(Viewport), @function
+GL_PREFIX(Viewport):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2440(%rax), %r11
@@ -11004,12 +11013,12 @@ glViewport:
 	movq	2440(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glViewport, .-glViewport
+	.size	GL_PREFIX(Viewport), .-GL_PREFIX(Viewport)
 
 	.p2align	4,,15
-	.globl	glArrayElement
-	.type	glArrayElement, @function
-glArrayElement:
+	.globl	GL_PREFIX(ArrayElement)
+	.type	GL_PREFIX(ArrayElement), @function
+GL_PREFIX(ArrayElement):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2448(%rax), %r11
@@ -11033,12 +11042,12 @@ glArrayElement:
 	movq	2448(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glArrayElement, .-glArrayElement
+	.size	GL_PREFIX(ArrayElement), .-GL_PREFIX(ArrayElement)
 
 	.p2align	4,,15
-	.globl	glBindTexture
-	.type	glBindTexture, @function
-glBindTexture:
+	.globl	GL_PREFIX(BindTexture)
+	.type	GL_PREFIX(BindTexture), @function
+GL_PREFIX(BindTexture):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2456(%rax), %r11
@@ -11070,12 +11079,12 @@ glBindTexture:
 	movq	2456(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBindTexture, .-glBindTexture
+	.size	GL_PREFIX(BindTexture), .-GL_PREFIX(BindTexture)
 
 	.p2align	4,,15
-	.globl	glColorPointer
-	.type	glColorPointer, @function
-glColorPointer:
+	.globl	GL_PREFIX(ColorPointer)
+	.type	GL_PREFIX(ColorPointer), @function
+GL_PREFIX(ColorPointer):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2464(%rax), %r11
@@ -11115,12 +11124,12 @@ glColorPointer:
 	movq	2464(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColorPointer, .-glColorPointer
+	.size	GL_PREFIX(ColorPointer), .-GL_PREFIX(ColorPointer)
 
 	.p2align	4,,15
-	.globl	glDisableClientState
-	.type	glDisableClientState, @function
-glDisableClientState:
+	.globl	GL_PREFIX(DisableClientState)
+	.type	GL_PREFIX(DisableClientState), @function
+GL_PREFIX(DisableClientState):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2472(%rax), %r11
@@ -11144,12 +11153,12 @@ glDisableClientState:
 	movq	2472(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDisableClientState, .-glDisableClientState
+	.size	GL_PREFIX(DisableClientState), .-GL_PREFIX(DisableClientState)
 
 	.p2align	4,,15
-	.globl	glDrawArrays
-	.type	glDrawArrays, @function
-glDrawArrays:
+	.globl	GL_PREFIX(DrawArrays)
+	.type	GL_PREFIX(DrawArrays), @function
+GL_PREFIX(DrawArrays):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2480(%rax), %r11
@@ -11181,12 +11190,12 @@ glDrawArrays:
 	movq	2480(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDrawArrays, .-glDrawArrays
+	.size	GL_PREFIX(DrawArrays), .-GL_PREFIX(DrawArrays)
 
 	.p2align	4,,15
-	.globl	glDrawElements
-	.type	glDrawElements, @function
-glDrawElements:
+	.globl	GL_PREFIX(DrawElements)
+	.type	GL_PREFIX(DrawElements), @function
+GL_PREFIX(DrawElements):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2488(%rax), %r11
@@ -11226,12 +11235,12 @@ glDrawElements:
 	movq	2488(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDrawElements, .-glDrawElements
+	.size	GL_PREFIX(DrawElements), .-GL_PREFIX(DrawElements)
 
 	.p2align	4,,15
-	.globl	glEdgeFlagPointer
-	.type	glEdgeFlagPointer, @function
-glEdgeFlagPointer:
+	.globl	GL_PREFIX(EdgeFlagPointer)
+	.type	GL_PREFIX(EdgeFlagPointer), @function
+GL_PREFIX(EdgeFlagPointer):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2496(%rax), %r11
@@ -11263,12 +11272,12 @@ glEdgeFlagPointer:
 	movq	2496(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEdgeFlagPointer, .-glEdgeFlagPointer
+	.size	GL_PREFIX(EdgeFlagPointer), .-GL_PREFIX(EdgeFlagPointer)
 
 	.p2align	4,,15
-	.globl	glEnableClientState
-	.type	glEnableClientState, @function
-glEnableClientState:
+	.globl	GL_PREFIX(EnableClientState)
+	.type	GL_PREFIX(EnableClientState), @function
+GL_PREFIX(EnableClientState):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2504(%rax), %r11
@@ -11292,12 +11301,12 @@ glEnableClientState:
 	movq	2504(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEnableClientState, .-glEnableClientState
+	.size	GL_PREFIX(EnableClientState), .-GL_PREFIX(EnableClientState)
 
 	.p2align	4,,15
-	.globl	glIndexPointer
-	.type	glIndexPointer, @function
-glIndexPointer:
+	.globl	GL_PREFIX(IndexPointer)
+	.type	GL_PREFIX(IndexPointer), @function
+GL_PREFIX(IndexPointer):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2512(%rax), %r11
@@ -11329,12 +11338,12 @@ glIndexPointer:
 	movq	2512(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIndexPointer, .-glIndexPointer
+	.size	GL_PREFIX(IndexPointer), .-GL_PREFIX(IndexPointer)
 
 	.p2align	4,,15
-	.globl	glIndexub
-	.type	glIndexub, @function
-glIndexub:
+	.globl	GL_PREFIX(Indexub)
+	.type	GL_PREFIX(Indexub), @function
+GL_PREFIX(Indexub):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2520(%rax), %r11
@@ -11358,12 +11367,12 @@ glIndexub:
 	movq	2520(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIndexub, .-glIndexub
+	.size	GL_PREFIX(Indexub), .-GL_PREFIX(Indexub)
 
 	.p2align	4,,15
-	.globl	glIndexubv
-	.type	glIndexubv, @function
-glIndexubv:
+	.globl	GL_PREFIX(Indexubv)
+	.type	GL_PREFIX(Indexubv), @function
+GL_PREFIX(Indexubv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2528(%rax), %r11
@@ -11387,12 +11396,12 @@ glIndexubv:
 	movq	2528(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIndexubv, .-glIndexubv
+	.size	GL_PREFIX(Indexubv), .-GL_PREFIX(Indexubv)
 
 	.p2align	4,,15
-	.globl	glInterleavedArrays
-	.type	glInterleavedArrays, @function
-glInterleavedArrays:
+	.globl	GL_PREFIX(InterleavedArrays)
+	.type	GL_PREFIX(InterleavedArrays), @function
+GL_PREFIX(InterleavedArrays):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2536(%rax), %r11
@@ -11424,12 +11433,12 @@ glInterleavedArrays:
 	movq	2536(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glInterleavedArrays, .-glInterleavedArrays
+	.size	GL_PREFIX(InterleavedArrays), .-GL_PREFIX(InterleavedArrays)
 
 	.p2align	4,,15
-	.globl	glNormalPointer
-	.type	glNormalPointer, @function
-glNormalPointer:
+	.globl	GL_PREFIX(NormalPointer)
+	.type	GL_PREFIX(NormalPointer), @function
+GL_PREFIX(NormalPointer):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2544(%rax), %r11
@@ -11461,12 +11470,12 @@ glNormalPointer:
 	movq	2544(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glNormalPointer, .-glNormalPointer
+	.size	GL_PREFIX(NormalPointer), .-GL_PREFIX(NormalPointer)
 
 	.p2align	4,,15
-	.globl	glPolygonOffset
-	.type	glPolygonOffset, @function
-glPolygonOffset:
+	.globl	GL_PREFIX(PolygonOffset)
+	.type	GL_PREFIX(PolygonOffset), @function
+GL_PREFIX(PolygonOffset):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2552(%rax), %r11
@@ -11498,12 +11507,12 @@ glPolygonOffset:
 	movq	2552(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPolygonOffset, .-glPolygonOffset
+	.size	GL_PREFIX(PolygonOffset), .-GL_PREFIX(PolygonOffset)
 
 	.p2align	4,,15
-	.globl	glTexCoordPointer
-	.type	glTexCoordPointer, @function
-glTexCoordPointer:
+	.globl	GL_PREFIX(TexCoordPointer)
+	.type	GL_PREFIX(TexCoordPointer), @function
+GL_PREFIX(TexCoordPointer):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2560(%rax), %r11
@@ -11543,12 +11552,12 @@ glTexCoordPointer:
 	movq	2560(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoordPointer, .-glTexCoordPointer
+	.size	GL_PREFIX(TexCoordPointer), .-GL_PREFIX(TexCoordPointer)
 
 	.p2align	4,,15
-	.globl	glVertexPointer
-	.type	glVertexPointer, @function
-glVertexPointer:
+	.globl	GL_PREFIX(VertexPointer)
+	.type	GL_PREFIX(VertexPointer), @function
+GL_PREFIX(VertexPointer):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2568(%rax), %r11
@@ -11588,12 +11597,12 @@ glVertexPointer:
 	movq	2568(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexPointer, .-glVertexPointer
+	.size	GL_PREFIX(VertexPointer), .-GL_PREFIX(VertexPointer)
 
 	.p2align	4,,15
-	.globl	glAreTexturesResident
-	.type	glAreTexturesResident, @function
-glAreTexturesResident:
+	.globl	GL_PREFIX(AreTexturesResident)
+	.type	GL_PREFIX(AreTexturesResident), @function
+GL_PREFIX(AreTexturesResident):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2576(%rax), %r11
@@ -11625,12 +11634,12 @@ glAreTexturesResident:
 	movq	2576(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glAreTexturesResident, .-glAreTexturesResident
+	.size	GL_PREFIX(AreTexturesResident), .-GL_PREFIX(AreTexturesResident)
 
 	.p2align	4,,15
-	.globl	glCopyTexImage1D
-	.type	glCopyTexImage1D, @function
-glCopyTexImage1D:
+	.globl	GL_PREFIX(CopyTexImage1D)
+	.type	GL_PREFIX(CopyTexImage1D), @function
+GL_PREFIX(CopyTexImage1D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2584(%rax), %r11
@@ -11678,12 +11687,12 @@ glCopyTexImage1D:
 	movq	2584(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCopyTexImage1D, .-glCopyTexImage1D
+	.size	GL_PREFIX(CopyTexImage1D), .-GL_PREFIX(CopyTexImage1D)
 
 	.p2align	4,,15
-	.globl	glCopyTexImage2D
-	.type	glCopyTexImage2D, @function
-glCopyTexImage2D:
+	.globl	GL_PREFIX(CopyTexImage2D)
+	.type	GL_PREFIX(CopyTexImage2D), @function
+GL_PREFIX(CopyTexImage2D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2592(%rax), %r11
@@ -11731,12 +11740,12 @@ glCopyTexImage2D:
 	movq	2592(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCopyTexImage2D, .-glCopyTexImage2D
+	.size	GL_PREFIX(CopyTexImage2D), .-GL_PREFIX(CopyTexImage2D)
 
 	.p2align	4,,15
-	.globl	glCopyTexSubImage1D
-	.type	glCopyTexSubImage1D, @function
-glCopyTexSubImage1D:
+	.globl	GL_PREFIX(CopyTexSubImage1D)
+	.type	GL_PREFIX(CopyTexSubImage1D), @function
+GL_PREFIX(CopyTexSubImage1D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2600(%rax), %r11
@@ -11784,12 +11793,12 @@ glCopyTexSubImage1D:
 	movq	2600(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCopyTexSubImage1D, .-glCopyTexSubImage1D
+	.size	GL_PREFIX(CopyTexSubImage1D), .-GL_PREFIX(CopyTexSubImage1D)
 
 	.p2align	4,,15
-	.globl	glCopyTexSubImage2D
-	.type	glCopyTexSubImage2D, @function
-glCopyTexSubImage2D:
+	.globl	GL_PREFIX(CopyTexSubImage2D)
+	.type	GL_PREFIX(CopyTexSubImage2D), @function
+GL_PREFIX(CopyTexSubImage2D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2608(%rax), %r11
@@ -11837,12 +11846,12 @@ glCopyTexSubImage2D:
 	movq	2608(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCopyTexSubImage2D, .-glCopyTexSubImage2D
+	.size	GL_PREFIX(CopyTexSubImage2D), .-GL_PREFIX(CopyTexSubImage2D)
 
 	.p2align	4,,15
-	.globl	glDeleteTextures
-	.type	glDeleteTextures, @function
-glDeleteTextures:
+	.globl	GL_PREFIX(DeleteTextures)
+	.type	GL_PREFIX(DeleteTextures), @function
+GL_PREFIX(DeleteTextures):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2616(%rax), %r11
@@ -11874,12 +11883,12 @@ glDeleteTextures:
 	movq	2616(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDeleteTextures, .-glDeleteTextures
+	.size	GL_PREFIX(DeleteTextures), .-GL_PREFIX(DeleteTextures)
 
 	.p2align	4,,15
-	.globl	glGenTextures
-	.type	glGenTextures, @function
-glGenTextures:
+	.globl	GL_PREFIX(GenTextures)
+	.type	GL_PREFIX(GenTextures), @function
+GL_PREFIX(GenTextures):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2624(%rax), %r11
@@ -11911,12 +11920,12 @@ glGenTextures:
 	movq	2624(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGenTextures, .-glGenTextures
+	.size	GL_PREFIX(GenTextures), .-GL_PREFIX(GenTextures)
 
 	.p2align	4,,15
-	.globl	glGetPointerv
-	.type	glGetPointerv, @function
-glGetPointerv:
+	.globl	GL_PREFIX(GetPointerv)
+	.type	GL_PREFIX(GetPointerv), @function
+GL_PREFIX(GetPointerv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2632(%rax), %r11
@@ -11948,12 +11957,12 @@ glGetPointerv:
 	movq	2632(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetPointerv, .-glGetPointerv
+	.size	GL_PREFIX(GetPointerv), .-GL_PREFIX(GetPointerv)
 
 	.p2align	4,,15
-	.globl	glIsTexture
-	.type	glIsTexture, @function
-glIsTexture:
+	.globl	GL_PREFIX(IsTexture)
+	.type	GL_PREFIX(IsTexture), @function
+GL_PREFIX(IsTexture):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2640(%rax), %r11
@@ -11977,12 +11986,12 @@ glIsTexture:
 	movq	2640(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIsTexture, .-glIsTexture
+	.size	GL_PREFIX(IsTexture), .-GL_PREFIX(IsTexture)
 
 	.p2align	4,,15
-	.globl	glPrioritizeTextures
-	.type	glPrioritizeTextures, @function
-glPrioritizeTextures:
+	.globl	GL_PREFIX(PrioritizeTextures)
+	.type	GL_PREFIX(PrioritizeTextures), @function
+GL_PREFIX(PrioritizeTextures):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2648(%rax), %r11
@@ -12014,12 +12023,12 @@ glPrioritizeTextures:
 	movq	2648(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPrioritizeTextures, .-glPrioritizeTextures
+	.size	GL_PREFIX(PrioritizeTextures), .-GL_PREFIX(PrioritizeTextures)
 
 	.p2align	4,,15
-	.globl	glTexSubImage1D
-	.type	glTexSubImage1D, @function
-glTexSubImage1D:
+	.globl	GL_PREFIX(TexSubImage1D)
+	.type	GL_PREFIX(TexSubImage1D), @function
+GL_PREFIX(TexSubImage1D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2656(%rax), %r11
@@ -12067,12 +12076,12 @@ glTexSubImage1D:
 	movq	2656(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexSubImage1D, .-glTexSubImage1D
+	.size	GL_PREFIX(TexSubImage1D), .-GL_PREFIX(TexSubImage1D)
 
 	.p2align	4,,15
-	.globl	glTexSubImage2D
-	.type	glTexSubImage2D, @function
-glTexSubImage2D:
+	.globl	GL_PREFIX(TexSubImage2D)
+	.type	GL_PREFIX(TexSubImage2D), @function
+GL_PREFIX(TexSubImage2D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2664(%rax), %r11
@@ -12120,12 +12129,12 @@ glTexSubImage2D:
 	movq	2664(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexSubImage2D, .-glTexSubImage2D
+	.size	GL_PREFIX(TexSubImage2D), .-GL_PREFIX(TexSubImage2D)
 
 	.p2align	4,,15
-	.globl	glPopClientAttrib
-	.type	glPopClientAttrib, @function
-glPopClientAttrib:
+	.globl	GL_PREFIX(PopClientAttrib)
+	.type	GL_PREFIX(PopClientAttrib), @function
+GL_PREFIX(PopClientAttrib):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2672(%rax), %r11
@@ -12149,12 +12158,12 @@ glPopClientAttrib:
 	movq	2672(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPopClientAttrib, .-glPopClientAttrib
+	.size	GL_PREFIX(PopClientAttrib), .-GL_PREFIX(PopClientAttrib)
 
 	.p2align	4,,15
-	.globl	glPushClientAttrib
-	.type	glPushClientAttrib, @function
-glPushClientAttrib:
+	.globl	GL_PREFIX(PushClientAttrib)
+	.type	GL_PREFIX(PushClientAttrib), @function
+GL_PREFIX(PushClientAttrib):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2680(%rax), %r11
@@ -12178,12 +12187,12 @@ glPushClientAttrib:
 	movq	2680(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPushClientAttrib, .-glPushClientAttrib
+	.size	GL_PREFIX(PushClientAttrib), .-GL_PREFIX(PushClientAttrib)
 
 	.p2align	4,,15
-	.globl	glBlendColor
-	.type	glBlendColor, @function
-glBlendColor:
+	.globl	GL_PREFIX(BlendColor)
+	.type	GL_PREFIX(BlendColor), @function
+GL_PREFIX(BlendColor):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2688(%rax), %r11
@@ -12223,12 +12232,12 @@ glBlendColor:
 	movq	2688(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBlendColor, .-glBlendColor
+	.size	GL_PREFIX(BlendColor), .-GL_PREFIX(BlendColor)
 
 	.p2align	4,,15
-	.globl	glBlendEquation
-	.type	glBlendEquation, @function
-glBlendEquation:
+	.globl	GL_PREFIX(BlendEquation)
+	.type	GL_PREFIX(BlendEquation), @function
+GL_PREFIX(BlendEquation):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2696(%rax), %r11
@@ -12252,12 +12261,12 @@ glBlendEquation:
 	movq	2696(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBlendEquation, .-glBlendEquation
+	.size	GL_PREFIX(BlendEquation), .-GL_PREFIX(BlendEquation)
 
 	.p2align	4,,15
-	.globl	glDrawRangeElements
-	.type	glDrawRangeElements, @function
-glDrawRangeElements:
+	.globl	GL_PREFIX(DrawRangeElements)
+	.type	GL_PREFIX(DrawRangeElements), @function
+GL_PREFIX(DrawRangeElements):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2704(%rax), %r11
@@ -12305,12 +12314,12 @@ glDrawRangeElements:
 	movq	2704(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDrawRangeElements, .-glDrawRangeElements
+	.size	GL_PREFIX(DrawRangeElements), .-GL_PREFIX(DrawRangeElements)
 
 	.p2align	4,,15
-	.globl	glColorTable
-	.type	glColorTable, @function
-glColorTable:
+	.globl	GL_PREFIX(ColorTable)
+	.type	GL_PREFIX(ColorTable), @function
+GL_PREFIX(ColorTable):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2712(%rax), %r11
@@ -12358,12 +12367,12 @@ glColorTable:
 	movq	2712(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColorTable, .-glColorTable
+	.size	GL_PREFIX(ColorTable), .-GL_PREFIX(ColorTable)
 
 	.p2align	4,,15
-	.globl	glColorTableParameterfv
-	.type	glColorTableParameterfv, @function
-glColorTableParameterfv:
+	.globl	GL_PREFIX(ColorTableParameterfv)
+	.type	GL_PREFIX(ColorTableParameterfv), @function
+GL_PREFIX(ColorTableParameterfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2720(%rax), %r11
@@ -12395,12 +12404,12 @@ glColorTableParameterfv:
 	movq	2720(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColorTableParameterfv, .-glColorTableParameterfv
+	.size	GL_PREFIX(ColorTableParameterfv), .-GL_PREFIX(ColorTableParameterfv)
 
 	.p2align	4,,15
-	.globl	glColorTableParameteriv
-	.type	glColorTableParameteriv, @function
-glColorTableParameteriv:
+	.globl	GL_PREFIX(ColorTableParameteriv)
+	.type	GL_PREFIX(ColorTableParameteriv), @function
+GL_PREFIX(ColorTableParameteriv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2728(%rax), %r11
@@ -12432,12 +12441,12 @@ glColorTableParameteriv:
 	movq	2728(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColorTableParameteriv, .-glColorTableParameteriv
+	.size	GL_PREFIX(ColorTableParameteriv), .-GL_PREFIX(ColorTableParameteriv)
 
 	.p2align	4,,15
-	.globl	glCopyColorTable
-	.type	glCopyColorTable, @function
-glCopyColorTable:
+	.globl	GL_PREFIX(CopyColorTable)
+	.type	GL_PREFIX(CopyColorTable), @function
+GL_PREFIX(CopyColorTable):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2736(%rax), %r11
@@ -12477,12 +12486,12 @@ glCopyColorTable:
 	movq	2736(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCopyColorTable, .-glCopyColorTable
+	.size	GL_PREFIX(CopyColorTable), .-GL_PREFIX(CopyColorTable)
 
 	.p2align	4,,15
-	.globl	glGetColorTable
-	.type	glGetColorTable, @function
-glGetColorTable:
+	.globl	GL_PREFIX(GetColorTable)
+	.type	GL_PREFIX(GetColorTable), @function
+GL_PREFIX(GetColorTable):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2744(%rax), %r11
@@ -12522,12 +12531,12 @@ glGetColorTable:
 	movq	2744(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetColorTable, .-glGetColorTable
+	.size	GL_PREFIX(GetColorTable), .-GL_PREFIX(GetColorTable)
 
 	.p2align	4,,15
-	.globl	glGetColorTableParameterfv
-	.type	glGetColorTableParameterfv, @function
-glGetColorTableParameterfv:
+	.globl	GL_PREFIX(GetColorTableParameterfv)
+	.type	GL_PREFIX(GetColorTableParameterfv), @function
+GL_PREFIX(GetColorTableParameterfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2752(%rax), %r11
@@ -12559,12 +12568,12 @@ glGetColorTableParameterfv:
 	movq	2752(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetColorTableParameterfv, .-glGetColorTableParameterfv
+	.size	GL_PREFIX(GetColorTableParameterfv), .-GL_PREFIX(GetColorTableParameterfv)
 
 	.p2align	4,,15
-	.globl	glGetColorTableParameteriv
-	.type	glGetColorTableParameteriv, @function
-glGetColorTableParameteriv:
+	.globl	GL_PREFIX(GetColorTableParameteriv)
+	.type	GL_PREFIX(GetColorTableParameteriv), @function
+GL_PREFIX(GetColorTableParameteriv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2760(%rax), %r11
@@ -12596,12 +12605,12 @@ glGetColorTableParameteriv:
 	movq	2760(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetColorTableParameteriv, .-glGetColorTableParameteriv
+	.size	GL_PREFIX(GetColorTableParameteriv), .-GL_PREFIX(GetColorTableParameteriv)
 
 	.p2align	4,,15
-	.globl	glColorSubTable
-	.type	glColorSubTable, @function
-glColorSubTable:
+	.globl	GL_PREFIX(ColorSubTable)
+	.type	GL_PREFIX(ColorSubTable), @function
+GL_PREFIX(ColorSubTable):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2768(%rax), %r11
@@ -12649,12 +12658,12 @@ glColorSubTable:
 	movq	2768(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColorSubTable, .-glColorSubTable
+	.size	GL_PREFIX(ColorSubTable), .-GL_PREFIX(ColorSubTable)
 
 	.p2align	4,,15
-	.globl	glCopyColorSubTable
-	.type	glCopyColorSubTable, @function
-glCopyColorSubTable:
+	.globl	GL_PREFIX(CopyColorSubTable)
+	.type	GL_PREFIX(CopyColorSubTable), @function
+GL_PREFIX(CopyColorSubTable):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2776(%rax), %r11
@@ -12694,12 +12703,12 @@ glCopyColorSubTable:
 	movq	2776(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCopyColorSubTable, .-glCopyColorSubTable
+	.size	GL_PREFIX(CopyColorSubTable), .-GL_PREFIX(CopyColorSubTable)
 
 	.p2align	4,,15
-	.globl	glConvolutionFilter1D
-	.type	glConvolutionFilter1D, @function
-glConvolutionFilter1D:
+	.globl	GL_PREFIX(ConvolutionFilter1D)
+	.type	GL_PREFIX(ConvolutionFilter1D), @function
+GL_PREFIX(ConvolutionFilter1D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2784(%rax), %r11
@@ -12747,12 +12756,12 @@ glConvolutionFilter1D:
 	movq	2784(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glConvolutionFilter1D, .-glConvolutionFilter1D
+	.size	GL_PREFIX(ConvolutionFilter1D), .-GL_PREFIX(ConvolutionFilter1D)
 
 	.p2align	4,,15
-	.globl	glConvolutionFilter2D
-	.type	glConvolutionFilter2D, @function
-glConvolutionFilter2D:
+	.globl	GL_PREFIX(ConvolutionFilter2D)
+	.type	GL_PREFIX(ConvolutionFilter2D), @function
+GL_PREFIX(ConvolutionFilter2D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2792(%rax), %r11
@@ -12800,12 +12809,12 @@ glConvolutionFilter2D:
 	movq	2792(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glConvolutionFilter2D, .-glConvolutionFilter2D
+	.size	GL_PREFIX(ConvolutionFilter2D), .-GL_PREFIX(ConvolutionFilter2D)
 
 	.p2align	4,,15
-	.globl	glConvolutionParameterf
-	.type	glConvolutionParameterf, @function
-glConvolutionParameterf:
+	.globl	GL_PREFIX(ConvolutionParameterf)
+	.type	GL_PREFIX(ConvolutionParameterf), @function
+GL_PREFIX(ConvolutionParameterf):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2800(%rax), %r11
@@ -12841,12 +12850,12 @@ glConvolutionParameterf:
 	movq	2800(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glConvolutionParameterf, .-glConvolutionParameterf
+	.size	GL_PREFIX(ConvolutionParameterf), .-GL_PREFIX(ConvolutionParameterf)
 
 	.p2align	4,,15
-	.globl	glConvolutionParameterfv
-	.type	glConvolutionParameterfv, @function
-glConvolutionParameterfv:
+	.globl	GL_PREFIX(ConvolutionParameterfv)
+	.type	GL_PREFIX(ConvolutionParameterfv), @function
+GL_PREFIX(ConvolutionParameterfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2808(%rax), %r11
@@ -12878,12 +12887,12 @@ glConvolutionParameterfv:
 	movq	2808(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glConvolutionParameterfv, .-glConvolutionParameterfv
+	.size	GL_PREFIX(ConvolutionParameterfv), .-GL_PREFIX(ConvolutionParameterfv)
 
 	.p2align	4,,15
-	.globl	glConvolutionParameteri
-	.type	glConvolutionParameteri, @function
-glConvolutionParameteri:
+	.globl	GL_PREFIX(ConvolutionParameteri)
+	.type	GL_PREFIX(ConvolutionParameteri), @function
+GL_PREFIX(ConvolutionParameteri):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2816(%rax), %r11
@@ -12915,12 +12924,12 @@ glConvolutionParameteri:
 	movq	2816(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glConvolutionParameteri, .-glConvolutionParameteri
+	.size	GL_PREFIX(ConvolutionParameteri), .-GL_PREFIX(ConvolutionParameteri)
 
 	.p2align	4,,15
-	.globl	glConvolutionParameteriv
-	.type	glConvolutionParameteriv, @function
-glConvolutionParameteriv:
+	.globl	GL_PREFIX(ConvolutionParameteriv)
+	.type	GL_PREFIX(ConvolutionParameteriv), @function
+GL_PREFIX(ConvolutionParameteriv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2824(%rax), %r11
@@ -12952,12 +12961,12 @@ glConvolutionParameteriv:
 	movq	2824(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glConvolutionParameteriv, .-glConvolutionParameteriv
+	.size	GL_PREFIX(ConvolutionParameteriv), .-GL_PREFIX(ConvolutionParameteriv)
 
 	.p2align	4,,15
-	.globl	glCopyConvolutionFilter1D
-	.type	glCopyConvolutionFilter1D, @function
-glCopyConvolutionFilter1D:
+	.globl	GL_PREFIX(CopyConvolutionFilter1D)
+	.type	GL_PREFIX(CopyConvolutionFilter1D), @function
+GL_PREFIX(CopyConvolutionFilter1D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2832(%rax), %r11
@@ -12997,12 +13006,12 @@ glCopyConvolutionFilter1D:
 	movq	2832(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCopyConvolutionFilter1D, .-glCopyConvolutionFilter1D
+	.size	GL_PREFIX(CopyConvolutionFilter1D), .-GL_PREFIX(CopyConvolutionFilter1D)
 
 	.p2align	4,,15
-	.globl	glCopyConvolutionFilter2D
-	.type	glCopyConvolutionFilter2D, @function
-glCopyConvolutionFilter2D:
+	.globl	GL_PREFIX(CopyConvolutionFilter2D)
+	.type	GL_PREFIX(CopyConvolutionFilter2D), @function
+GL_PREFIX(CopyConvolutionFilter2D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2840(%rax), %r11
@@ -13050,12 +13059,12 @@ glCopyConvolutionFilter2D:
 	movq	2840(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCopyConvolutionFilter2D, .-glCopyConvolutionFilter2D
+	.size	GL_PREFIX(CopyConvolutionFilter2D), .-GL_PREFIX(CopyConvolutionFilter2D)
 
 	.p2align	4,,15
-	.globl	glGetConvolutionFilter
-	.type	glGetConvolutionFilter, @function
-glGetConvolutionFilter:
+	.globl	GL_PREFIX(GetConvolutionFilter)
+	.type	GL_PREFIX(GetConvolutionFilter), @function
+GL_PREFIX(GetConvolutionFilter):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2848(%rax), %r11
@@ -13095,12 +13104,12 @@ glGetConvolutionFilter:
 	movq	2848(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetConvolutionFilter, .-glGetConvolutionFilter
+	.size	GL_PREFIX(GetConvolutionFilter), .-GL_PREFIX(GetConvolutionFilter)
 
 	.p2align	4,,15
-	.globl	glGetConvolutionParameterfv
-	.type	glGetConvolutionParameterfv, @function
-glGetConvolutionParameterfv:
+	.globl	GL_PREFIX(GetConvolutionParameterfv)
+	.type	GL_PREFIX(GetConvolutionParameterfv), @function
+GL_PREFIX(GetConvolutionParameterfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2856(%rax), %r11
@@ -13132,12 +13141,12 @@ glGetConvolutionParameterfv:
 	movq	2856(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetConvolutionParameterfv, .-glGetConvolutionParameterfv
+	.size	GL_PREFIX(GetConvolutionParameterfv), .-GL_PREFIX(GetConvolutionParameterfv)
 
 	.p2align	4,,15
-	.globl	glGetConvolutionParameteriv
-	.type	glGetConvolutionParameteriv, @function
-glGetConvolutionParameteriv:
+	.globl	GL_PREFIX(GetConvolutionParameteriv)
+	.type	GL_PREFIX(GetConvolutionParameteriv), @function
+GL_PREFIX(GetConvolutionParameteriv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2864(%rax), %r11
@@ -13169,12 +13178,12 @@ glGetConvolutionParameteriv:
 	movq	2864(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetConvolutionParameteriv, .-glGetConvolutionParameteriv
+	.size	GL_PREFIX(GetConvolutionParameteriv), .-GL_PREFIX(GetConvolutionParameteriv)
 
 	.p2align	4,,15
-	.globl	glGetSeparableFilter
-	.type	glGetSeparableFilter, @function
-glGetSeparableFilter:
+	.globl	GL_PREFIX(GetSeparableFilter)
+	.type	GL_PREFIX(GetSeparableFilter), @function
+GL_PREFIX(GetSeparableFilter):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2872(%rax), %r11
@@ -13222,12 +13231,12 @@ glGetSeparableFilter:
 	movq	2872(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetSeparableFilter, .-glGetSeparableFilter
+	.size	GL_PREFIX(GetSeparableFilter), .-GL_PREFIX(GetSeparableFilter)
 
 	.p2align	4,,15
-	.globl	glSeparableFilter2D
-	.type	glSeparableFilter2D, @function
-glSeparableFilter2D:
+	.globl	GL_PREFIX(SeparableFilter2D)
+	.type	GL_PREFIX(SeparableFilter2D), @function
+GL_PREFIX(SeparableFilter2D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2880(%rax), %r11
@@ -13275,12 +13284,12 @@ glSeparableFilter2D:
 	movq	2880(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSeparableFilter2D, .-glSeparableFilter2D
+	.size	GL_PREFIX(SeparableFilter2D), .-GL_PREFIX(SeparableFilter2D)
 
 	.p2align	4,,15
-	.globl	glGetHistogram
-	.type	glGetHistogram, @function
-glGetHistogram:
+	.globl	GL_PREFIX(GetHistogram)
+	.type	GL_PREFIX(GetHistogram), @function
+GL_PREFIX(GetHistogram):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2888(%rax), %r11
@@ -13320,12 +13329,12 @@ glGetHistogram:
 	movq	2888(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetHistogram, .-glGetHistogram
+	.size	GL_PREFIX(GetHistogram), .-GL_PREFIX(GetHistogram)
 
 	.p2align	4,,15
-	.globl	glGetHistogramParameterfv
-	.type	glGetHistogramParameterfv, @function
-glGetHistogramParameterfv:
+	.globl	GL_PREFIX(GetHistogramParameterfv)
+	.type	GL_PREFIX(GetHistogramParameterfv), @function
+GL_PREFIX(GetHistogramParameterfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2896(%rax), %r11
@@ -13357,12 +13366,12 @@ glGetHistogramParameterfv:
 	movq	2896(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetHistogramParameterfv, .-glGetHistogramParameterfv
+	.size	GL_PREFIX(GetHistogramParameterfv), .-GL_PREFIX(GetHistogramParameterfv)
 
 	.p2align	4,,15
-	.globl	glGetHistogramParameteriv
-	.type	glGetHistogramParameteriv, @function
-glGetHistogramParameteriv:
+	.globl	GL_PREFIX(GetHistogramParameteriv)
+	.type	GL_PREFIX(GetHistogramParameteriv), @function
+GL_PREFIX(GetHistogramParameteriv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2904(%rax), %r11
@@ -13394,12 +13403,12 @@ glGetHistogramParameteriv:
 	movq	2904(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetHistogramParameteriv, .-glGetHistogramParameteriv
+	.size	GL_PREFIX(GetHistogramParameteriv), .-GL_PREFIX(GetHistogramParameteriv)
 
 	.p2align	4,,15
-	.globl	glGetMinmax
-	.type	glGetMinmax, @function
-glGetMinmax:
+	.globl	GL_PREFIX(GetMinmax)
+	.type	GL_PREFIX(GetMinmax), @function
+GL_PREFIX(GetMinmax):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2912(%rax), %r11
@@ -13439,12 +13448,12 @@ glGetMinmax:
 	movq	2912(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetMinmax, .-glGetMinmax
+	.size	GL_PREFIX(GetMinmax), .-GL_PREFIX(GetMinmax)
 
 	.p2align	4,,15
-	.globl	glGetMinmaxParameterfv
-	.type	glGetMinmaxParameterfv, @function
-glGetMinmaxParameterfv:
+	.globl	GL_PREFIX(GetMinmaxParameterfv)
+	.type	GL_PREFIX(GetMinmaxParameterfv), @function
+GL_PREFIX(GetMinmaxParameterfv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2920(%rax), %r11
@@ -13476,12 +13485,12 @@ glGetMinmaxParameterfv:
 	movq	2920(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetMinmaxParameterfv, .-glGetMinmaxParameterfv
+	.size	GL_PREFIX(GetMinmaxParameterfv), .-GL_PREFIX(GetMinmaxParameterfv)
 
 	.p2align	4,,15
-	.globl	glGetMinmaxParameteriv
-	.type	glGetMinmaxParameteriv, @function
-glGetMinmaxParameteriv:
+	.globl	GL_PREFIX(GetMinmaxParameteriv)
+	.type	GL_PREFIX(GetMinmaxParameteriv), @function
+GL_PREFIX(GetMinmaxParameteriv):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2928(%rax), %r11
@@ -13513,12 +13522,12 @@ glGetMinmaxParameteriv:
 	movq	2928(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetMinmaxParameteriv, .-glGetMinmaxParameteriv
+	.size	GL_PREFIX(GetMinmaxParameteriv), .-GL_PREFIX(GetMinmaxParameteriv)
 
 	.p2align	4,,15
-	.globl	glHistogram
-	.type	glHistogram, @function
-glHistogram:
+	.globl	GL_PREFIX(Histogram)
+	.type	GL_PREFIX(Histogram), @function
+GL_PREFIX(Histogram):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2936(%rax), %r11
@@ -13558,12 +13567,12 @@ glHistogram:
 	movq	2936(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glHistogram, .-glHistogram
+	.size	GL_PREFIX(Histogram), .-GL_PREFIX(Histogram)
 
 	.p2align	4,,15
-	.globl	glMinmax
-	.type	glMinmax, @function
-glMinmax:
+	.globl	GL_PREFIX(Minmax)
+	.type	GL_PREFIX(Minmax), @function
+GL_PREFIX(Minmax):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2944(%rax), %r11
@@ -13595,12 +13604,12 @@ glMinmax:
 	movq	2944(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMinmax, .-glMinmax
+	.size	GL_PREFIX(Minmax), .-GL_PREFIX(Minmax)
 
 	.p2align	4,,15
-	.globl	glResetHistogram
-	.type	glResetHistogram, @function
-glResetHistogram:
+	.globl	GL_PREFIX(ResetHistogram)
+	.type	GL_PREFIX(ResetHistogram), @function
+GL_PREFIX(ResetHistogram):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2952(%rax), %r11
@@ -13624,12 +13633,12 @@ glResetHistogram:
 	movq	2952(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glResetHistogram, .-glResetHistogram
+	.size	GL_PREFIX(ResetHistogram), .-GL_PREFIX(ResetHistogram)
 
 	.p2align	4,,15
-	.globl	glResetMinmax
-	.type	glResetMinmax, @function
-glResetMinmax:
+	.globl	GL_PREFIX(ResetMinmax)
+	.type	GL_PREFIX(ResetMinmax), @function
+GL_PREFIX(ResetMinmax):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2960(%rax), %r11
@@ -13653,12 +13662,12 @@ glResetMinmax:
 	movq	2960(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glResetMinmax, .-glResetMinmax
+	.size	GL_PREFIX(ResetMinmax), .-GL_PREFIX(ResetMinmax)
 
 	.p2align	4,,15
-	.globl	glTexImage3D
-	.type	glTexImage3D, @function
-glTexImage3D:
+	.globl	GL_PREFIX(TexImage3D)
+	.type	GL_PREFIX(TexImage3D), @function
+GL_PREFIX(TexImage3D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2968(%rax), %r11
@@ -13706,12 +13715,12 @@ glTexImage3D:
 	movq	2968(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexImage3D, .-glTexImage3D
+	.size	GL_PREFIX(TexImage3D), .-GL_PREFIX(TexImage3D)
 
 	.p2align	4,,15
-	.globl	glTexSubImage3D
-	.type	glTexSubImage3D, @function
-glTexSubImage3D:
+	.globl	GL_PREFIX(TexSubImage3D)
+	.type	GL_PREFIX(TexSubImage3D), @function
+GL_PREFIX(TexSubImage3D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2976(%rax), %r11
@@ -13759,12 +13768,12 @@ glTexSubImage3D:
 	movq	2976(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexSubImage3D, .-glTexSubImage3D
+	.size	GL_PREFIX(TexSubImage3D), .-GL_PREFIX(TexSubImage3D)
 
 	.p2align	4,,15
-	.globl	glCopyTexSubImage3D
-	.type	glCopyTexSubImage3D, @function
-glCopyTexSubImage3D:
+	.globl	GL_PREFIX(CopyTexSubImage3D)
+	.type	GL_PREFIX(CopyTexSubImage3D), @function
+GL_PREFIX(CopyTexSubImage3D):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2984(%rax), %r11
@@ -13812,12 +13821,12 @@ glCopyTexSubImage3D:
 	movq	2984(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCopyTexSubImage3D, .-glCopyTexSubImage3D
+	.size	GL_PREFIX(CopyTexSubImage3D), .-GL_PREFIX(CopyTexSubImage3D)
 
 	.p2align	4,,15
-	.globl	glActiveTextureARB
-	.type	glActiveTextureARB, @function
-glActiveTextureARB:
+	.globl	GL_PREFIX(ActiveTextureARB)
+	.type	GL_PREFIX(ActiveTextureARB), @function
+GL_PREFIX(ActiveTextureARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	2992(%rax), %r11
@@ -13841,12 +13850,12 @@ glActiveTextureARB:
 	movq	2992(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glActiveTextureARB, .-glActiveTextureARB
+	.size	GL_PREFIX(ActiveTextureARB), .-GL_PREFIX(ActiveTextureARB)
 
 	.p2align	4,,15
-	.globl	glClientActiveTextureARB
-	.type	glClientActiveTextureARB, @function
-glClientActiveTextureARB:
+	.globl	GL_PREFIX(ClientActiveTextureARB)
+	.type	GL_PREFIX(ClientActiveTextureARB), @function
+GL_PREFIX(ClientActiveTextureARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3000(%rax), %r11
@@ -13870,12 +13879,12 @@ glClientActiveTextureARB:
 	movq	3000(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glClientActiveTextureARB, .-glClientActiveTextureARB
+	.size	GL_PREFIX(ClientActiveTextureARB), .-GL_PREFIX(ClientActiveTextureARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord1dARB
-	.type	glMultiTexCoord1dARB, @function
-glMultiTexCoord1dARB:
+	.globl	GL_PREFIX(MultiTexCoord1dARB)
+	.type	GL_PREFIX(MultiTexCoord1dARB), @function
+GL_PREFIX(MultiTexCoord1dARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3008(%rax), %r11
@@ -13907,12 +13916,12 @@ glMultiTexCoord1dARB:
 	movq	3008(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord1dARB, .-glMultiTexCoord1dARB
+	.size	GL_PREFIX(MultiTexCoord1dARB), .-GL_PREFIX(MultiTexCoord1dARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord1dvARB
-	.type	glMultiTexCoord1dvARB, @function
-glMultiTexCoord1dvARB:
+	.globl	GL_PREFIX(MultiTexCoord1dvARB)
+	.type	GL_PREFIX(MultiTexCoord1dvARB), @function
+GL_PREFIX(MultiTexCoord1dvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3016(%rax), %r11
@@ -13944,12 +13953,12 @@ glMultiTexCoord1dvARB:
 	movq	3016(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord1dvARB, .-glMultiTexCoord1dvARB
+	.size	GL_PREFIX(MultiTexCoord1dvARB), .-GL_PREFIX(MultiTexCoord1dvARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord1fARB
-	.type	glMultiTexCoord1fARB, @function
-glMultiTexCoord1fARB:
+	.globl	GL_PREFIX(MultiTexCoord1fARB)
+	.type	GL_PREFIX(MultiTexCoord1fARB), @function
+GL_PREFIX(MultiTexCoord1fARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3024(%rax), %r11
@@ -13981,12 +13990,12 @@ glMultiTexCoord1fARB:
 	movq	3024(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord1fARB, .-glMultiTexCoord1fARB
+	.size	GL_PREFIX(MultiTexCoord1fARB), .-GL_PREFIX(MultiTexCoord1fARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord1fvARB
-	.type	glMultiTexCoord1fvARB, @function
-glMultiTexCoord1fvARB:
+	.globl	GL_PREFIX(MultiTexCoord1fvARB)
+	.type	GL_PREFIX(MultiTexCoord1fvARB), @function
+GL_PREFIX(MultiTexCoord1fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3032(%rax), %r11
@@ -14018,12 +14027,12 @@ glMultiTexCoord1fvARB:
 	movq	3032(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord1fvARB, .-glMultiTexCoord1fvARB
+	.size	GL_PREFIX(MultiTexCoord1fvARB), .-GL_PREFIX(MultiTexCoord1fvARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord1iARB
-	.type	glMultiTexCoord1iARB, @function
-glMultiTexCoord1iARB:
+	.globl	GL_PREFIX(MultiTexCoord1iARB)
+	.type	GL_PREFIX(MultiTexCoord1iARB), @function
+GL_PREFIX(MultiTexCoord1iARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3040(%rax), %r11
@@ -14055,12 +14064,12 @@ glMultiTexCoord1iARB:
 	movq	3040(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord1iARB, .-glMultiTexCoord1iARB
+	.size	GL_PREFIX(MultiTexCoord1iARB), .-GL_PREFIX(MultiTexCoord1iARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord1ivARB
-	.type	glMultiTexCoord1ivARB, @function
-glMultiTexCoord1ivARB:
+	.globl	GL_PREFIX(MultiTexCoord1ivARB)
+	.type	GL_PREFIX(MultiTexCoord1ivARB), @function
+GL_PREFIX(MultiTexCoord1ivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3048(%rax), %r11
@@ -14092,12 +14101,12 @@ glMultiTexCoord1ivARB:
 	movq	3048(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord1ivARB, .-glMultiTexCoord1ivARB
+	.size	GL_PREFIX(MultiTexCoord1ivARB), .-GL_PREFIX(MultiTexCoord1ivARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord1sARB
-	.type	glMultiTexCoord1sARB, @function
-glMultiTexCoord1sARB:
+	.globl	GL_PREFIX(MultiTexCoord1sARB)
+	.type	GL_PREFIX(MultiTexCoord1sARB), @function
+GL_PREFIX(MultiTexCoord1sARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3056(%rax), %r11
@@ -14129,12 +14138,12 @@ glMultiTexCoord1sARB:
 	movq	3056(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord1sARB, .-glMultiTexCoord1sARB
+	.size	GL_PREFIX(MultiTexCoord1sARB), .-GL_PREFIX(MultiTexCoord1sARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord1svARB
-	.type	glMultiTexCoord1svARB, @function
-glMultiTexCoord1svARB:
+	.globl	GL_PREFIX(MultiTexCoord1svARB)
+	.type	GL_PREFIX(MultiTexCoord1svARB), @function
+GL_PREFIX(MultiTexCoord1svARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3064(%rax), %r11
@@ -14166,12 +14175,12 @@ glMultiTexCoord1svARB:
 	movq	3064(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord1svARB, .-glMultiTexCoord1svARB
+	.size	GL_PREFIX(MultiTexCoord1svARB), .-GL_PREFIX(MultiTexCoord1svARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord2dARB
-	.type	glMultiTexCoord2dARB, @function
-glMultiTexCoord2dARB:
+	.globl	GL_PREFIX(MultiTexCoord2dARB)
+	.type	GL_PREFIX(MultiTexCoord2dARB), @function
+GL_PREFIX(MultiTexCoord2dARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3072(%rax), %r11
@@ -14207,12 +14216,12 @@ glMultiTexCoord2dARB:
 	movq	3072(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord2dARB, .-glMultiTexCoord2dARB
+	.size	GL_PREFIX(MultiTexCoord2dARB), .-GL_PREFIX(MultiTexCoord2dARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord2dvARB
-	.type	glMultiTexCoord2dvARB, @function
-glMultiTexCoord2dvARB:
+	.globl	GL_PREFIX(MultiTexCoord2dvARB)
+	.type	GL_PREFIX(MultiTexCoord2dvARB), @function
+GL_PREFIX(MultiTexCoord2dvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3080(%rax), %r11
@@ -14244,12 +14253,12 @@ glMultiTexCoord2dvARB:
 	movq	3080(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord2dvARB, .-glMultiTexCoord2dvARB
+	.size	GL_PREFIX(MultiTexCoord2dvARB), .-GL_PREFIX(MultiTexCoord2dvARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord2fARB
-	.type	glMultiTexCoord2fARB, @function
-glMultiTexCoord2fARB:
+	.globl	GL_PREFIX(MultiTexCoord2fARB)
+	.type	GL_PREFIX(MultiTexCoord2fARB), @function
+GL_PREFIX(MultiTexCoord2fARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3088(%rax), %r11
@@ -14285,12 +14294,12 @@ glMultiTexCoord2fARB:
 	movq	3088(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord2fARB, .-glMultiTexCoord2fARB
+	.size	GL_PREFIX(MultiTexCoord2fARB), .-GL_PREFIX(MultiTexCoord2fARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord2fvARB
-	.type	glMultiTexCoord2fvARB, @function
-glMultiTexCoord2fvARB:
+	.globl	GL_PREFIX(MultiTexCoord2fvARB)
+	.type	GL_PREFIX(MultiTexCoord2fvARB), @function
+GL_PREFIX(MultiTexCoord2fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3096(%rax), %r11
@@ -14322,12 +14331,12 @@ glMultiTexCoord2fvARB:
 	movq	3096(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord2fvARB, .-glMultiTexCoord2fvARB
+	.size	GL_PREFIX(MultiTexCoord2fvARB), .-GL_PREFIX(MultiTexCoord2fvARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord2iARB
-	.type	glMultiTexCoord2iARB, @function
-glMultiTexCoord2iARB:
+	.globl	GL_PREFIX(MultiTexCoord2iARB)
+	.type	GL_PREFIX(MultiTexCoord2iARB), @function
+GL_PREFIX(MultiTexCoord2iARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3104(%rax), %r11
@@ -14359,12 +14368,12 @@ glMultiTexCoord2iARB:
 	movq	3104(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord2iARB, .-glMultiTexCoord2iARB
+	.size	GL_PREFIX(MultiTexCoord2iARB), .-GL_PREFIX(MultiTexCoord2iARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord2ivARB
-	.type	glMultiTexCoord2ivARB, @function
-glMultiTexCoord2ivARB:
+	.globl	GL_PREFIX(MultiTexCoord2ivARB)
+	.type	GL_PREFIX(MultiTexCoord2ivARB), @function
+GL_PREFIX(MultiTexCoord2ivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3112(%rax), %r11
@@ -14396,12 +14405,12 @@ glMultiTexCoord2ivARB:
 	movq	3112(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord2ivARB, .-glMultiTexCoord2ivARB
+	.size	GL_PREFIX(MultiTexCoord2ivARB), .-GL_PREFIX(MultiTexCoord2ivARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord2sARB
-	.type	glMultiTexCoord2sARB, @function
-glMultiTexCoord2sARB:
+	.globl	GL_PREFIX(MultiTexCoord2sARB)
+	.type	GL_PREFIX(MultiTexCoord2sARB), @function
+GL_PREFIX(MultiTexCoord2sARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3120(%rax), %r11
@@ -14433,12 +14442,12 @@ glMultiTexCoord2sARB:
 	movq	3120(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord2sARB, .-glMultiTexCoord2sARB
+	.size	GL_PREFIX(MultiTexCoord2sARB), .-GL_PREFIX(MultiTexCoord2sARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord2svARB
-	.type	glMultiTexCoord2svARB, @function
-glMultiTexCoord2svARB:
+	.globl	GL_PREFIX(MultiTexCoord2svARB)
+	.type	GL_PREFIX(MultiTexCoord2svARB), @function
+GL_PREFIX(MultiTexCoord2svARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3128(%rax), %r11
@@ -14470,12 +14479,12 @@ glMultiTexCoord2svARB:
 	movq	3128(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord2svARB, .-glMultiTexCoord2svARB
+	.size	GL_PREFIX(MultiTexCoord2svARB), .-GL_PREFIX(MultiTexCoord2svARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord3dARB
-	.type	glMultiTexCoord3dARB, @function
-glMultiTexCoord3dARB:
+	.globl	GL_PREFIX(MultiTexCoord3dARB)
+	.type	GL_PREFIX(MultiTexCoord3dARB), @function
+GL_PREFIX(MultiTexCoord3dARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3136(%rax), %r11
@@ -14515,12 +14524,12 @@ glMultiTexCoord3dARB:
 	movq	3136(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord3dARB, .-glMultiTexCoord3dARB
+	.size	GL_PREFIX(MultiTexCoord3dARB), .-GL_PREFIX(MultiTexCoord3dARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord3dvARB
-	.type	glMultiTexCoord3dvARB, @function
-glMultiTexCoord3dvARB:
+	.globl	GL_PREFIX(MultiTexCoord3dvARB)
+	.type	GL_PREFIX(MultiTexCoord3dvARB), @function
+GL_PREFIX(MultiTexCoord3dvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3144(%rax), %r11
@@ -14552,12 +14561,12 @@ glMultiTexCoord3dvARB:
 	movq	3144(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord3dvARB, .-glMultiTexCoord3dvARB
+	.size	GL_PREFIX(MultiTexCoord3dvARB), .-GL_PREFIX(MultiTexCoord3dvARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord3fARB
-	.type	glMultiTexCoord3fARB, @function
-glMultiTexCoord3fARB:
+	.globl	GL_PREFIX(MultiTexCoord3fARB)
+	.type	GL_PREFIX(MultiTexCoord3fARB), @function
+GL_PREFIX(MultiTexCoord3fARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3152(%rax), %r11
@@ -14597,12 +14606,12 @@ glMultiTexCoord3fARB:
 	movq	3152(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord3fARB, .-glMultiTexCoord3fARB
+	.size	GL_PREFIX(MultiTexCoord3fARB), .-GL_PREFIX(MultiTexCoord3fARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord3fvARB
-	.type	glMultiTexCoord3fvARB, @function
-glMultiTexCoord3fvARB:
+	.globl	GL_PREFIX(MultiTexCoord3fvARB)
+	.type	GL_PREFIX(MultiTexCoord3fvARB), @function
+GL_PREFIX(MultiTexCoord3fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3160(%rax), %r11
@@ -14634,12 +14643,12 @@ glMultiTexCoord3fvARB:
 	movq	3160(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord3fvARB, .-glMultiTexCoord3fvARB
+	.size	GL_PREFIX(MultiTexCoord3fvARB), .-GL_PREFIX(MultiTexCoord3fvARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord3iARB
-	.type	glMultiTexCoord3iARB, @function
-glMultiTexCoord3iARB:
+	.globl	GL_PREFIX(MultiTexCoord3iARB)
+	.type	GL_PREFIX(MultiTexCoord3iARB), @function
+GL_PREFIX(MultiTexCoord3iARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3168(%rax), %r11
@@ -14679,12 +14688,12 @@ glMultiTexCoord3iARB:
 	movq	3168(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord3iARB, .-glMultiTexCoord3iARB
+	.size	GL_PREFIX(MultiTexCoord3iARB), .-GL_PREFIX(MultiTexCoord3iARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord3ivARB
-	.type	glMultiTexCoord3ivARB, @function
-glMultiTexCoord3ivARB:
+	.globl	GL_PREFIX(MultiTexCoord3ivARB)
+	.type	GL_PREFIX(MultiTexCoord3ivARB), @function
+GL_PREFIX(MultiTexCoord3ivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3176(%rax), %r11
@@ -14716,12 +14725,12 @@ glMultiTexCoord3ivARB:
 	movq	3176(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord3ivARB, .-glMultiTexCoord3ivARB
+	.size	GL_PREFIX(MultiTexCoord3ivARB), .-GL_PREFIX(MultiTexCoord3ivARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord3sARB
-	.type	glMultiTexCoord3sARB, @function
-glMultiTexCoord3sARB:
+	.globl	GL_PREFIX(MultiTexCoord3sARB)
+	.type	GL_PREFIX(MultiTexCoord3sARB), @function
+GL_PREFIX(MultiTexCoord3sARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3184(%rax), %r11
@@ -14761,12 +14770,12 @@ glMultiTexCoord3sARB:
 	movq	3184(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord3sARB, .-glMultiTexCoord3sARB
+	.size	GL_PREFIX(MultiTexCoord3sARB), .-GL_PREFIX(MultiTexCoord3sARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord3svARB
-	.type	glMultiTexCoord3svARB, @function
-glMultiTexCoord3svARB:
+	.globl	GL_PREFIX(MultiTexCoord3svARB)
+	.type	GL_PREFIX(MultiTexCoord3svARB), @function
+GL_PREFIX(MultiTexCoord3svARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3192(%rax), %r11
@@ -14798,12 +14807,12 @@ glMultiTexCoord3svARB:
 	movq	3192(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord3svARB, .-glMultiTexCoord3svARB
+	.size	GL_PREFIX(MultiTexCoord3svARB), .-GL_PREFIX(MultiTexCoord3svARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord4dARB
-	.type	glMultiTexCoord4dARB, @function
-glMultiTexCoord4dARB:
+	.globl	GL_PREFIX(MultiTexCoord4dARB)
+	.type	GL_PREFIX(MultiTexCoord4dARB), @function
+GL_PREFIX(MultiTexCoord4dARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3200(%rax), %r11
@@ -14847,12 +14856,12 @@ glMultiTexCoord4dARB:
 	movq	3200(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord4dARB, .-glMultiTexCoord4dARB
+	.size	GL_PREFIX(MultiTexCoord4dARB), .-GL_PREFIX(MultiTexCoord4dARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord4dvARB
-	.type	glMultiTexCoord4dvARB, @function
-glMultiTexCoord4dvARB:
+	.globl	GL_PREFIX(MultiTexCoord4dvARB)
+	.type	GL_PREFIX(MultiTexCoord4dvARB), @function
+GL_PREFIX(MultiTexCoord4dvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3208(%rax), %r11
@@ -14884,12 +14893,12 @@ glMultiTexCoord4dvARB:
 	movq	3208(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord4dvARB, .-glMultiTexCoord4dvARB
+	.size	GL_PREFIX(MultiTexCoord4dvARB), .-GL_PREFIX(MultiTexCoord4dvARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord4fARB
-	.type	glMultiTexCoord4fARB, @function
-glMultiTexCoord4fARB:
+	.globl	GL_PREFIX(MultiTexCoord4fARB)
+	.type	GL_PREFIX(MultiTexCoord4fARB), @function
+GL_PREFIX(MultiTexCoord4fARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3216(%rax), %r11
@@ -14933,12 +14942,12 @@ glMultiTexCoord4fARB:
 	movq	3216(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord4fARB, .-glMultiTexCoord4fARB
+	.size	GL_PREFIX(MultiTexCoord4fARB), .-GL_PREFIX(MultiTexCoord4fARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord4fvARB
-	.type	glMultiTexCoord4fvARB, @function
-glMultiTexCoord4fvARB:
+	.globl	GL_PREFIX(MultiTexCoord4fvARB)
+	.type	GL_PREFIX(MultiTexCoord4fvARB), @function
+GL_PREFIX(MultiTexCoord4fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3224(%rax), %r11
@@ -14970,12 +14979,12 @@ glMultiTexCoord4fvARB:
 	movq	3224(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord4fvARB, .-glMultiTexCoord4fvARB
+	.size	GL_PREFIX(MultiTexCoord4fvARB), .-GL_PREFIX(MultiTexCoord4fvARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord4iARB
-	.type	glMultiTexCoord4iARB, @function
-glMultiTexCoord4iARB:
+	.globl	GL_PREFIX(MultiTexCoord4iARB)
+	.type	GL_PREFIX(MultiTexCoord4iARB), @function
+GL_PREFIX(MultiTexCoord4iARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3232(%rax), %r11
@@ -15015,12 +15024,12 @@ glMultiTexCoord4iARB:
 	movq	3232(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord4iARB, .-glMultiTexCoord4iARB
+	.size	GL_PREFIX(MultiTexCoord4iARB), .-GL_PREFIX(MultiTexCoord4iARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord4ivARB
-	.type	glMultiTexCoord4ivARB, @function
-glMultiTexCoord4ivARB:
+	.globl	GL_PREFIX(MultiTexCoord4ivARB)
+	.type	GL_PREFIX(MultiTexCoord4ivARB), @function
+GL_PREFIX(MultiTexCoord4ivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3240(%rax), %r11
@@ -15052,12 +15061,12 @@ glMultiTexCoord4ivARB:
 	movq	3240(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord4ivARB, .-glMultiTexCoord4ivARB
+	.size	GL_PREFIX(MultiTexCoord4ivARB), .-GL_PREFIX(MultiTexCoord4ivARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord4sARB
-	.type	glMultiTexCoord4sARB, @function
-glMultiTexCoord4sARB:
+	.globl	GL_PREFIX(MultiTexCoord4sARB)
+	.type	GL_PREFIX(MultiTexCoord4sARB), @function
+GL_PREFIX(MultiTexCoord4sARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3248(%rax), %r11
@@ -15097,12 +15106,12 @@ glMultiTexCoord4sARB:
 	movq	3248(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord4sARB, .-glMultiTexCoord4sARB
+	.size	GL_PREFIX(MultiTexCoord4sARB), .-GL_PREFIX(MultiTexCoord4sARB)
 
 	.p2align	4,,15
-	.globl	glMultiTexCoord4svARB
-	.type	glMultiTexCoord4svARB, @function
-glMultiTexCoord4svARB:
+	.globl	GL_PREFIX(MultiTexCoord4svARB)
+	.type	GL_PREFIX(MultiTexCoord4svARB), @function
+GL_PREFIX(MultiTexCoord4svARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3256(%rax), %r11
@@ -15134,12 +15143,12 @@ glMultiTexCoord4svARB:
 	movq	3256(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiTexCoord4svARB, .-glMultiTexCoord4svARB
+	.size	GL_PREFIX(MultiTexCoord4svARB), .-GL_PREFIX(MultiTexCoord4svARB)
 
 	.p2align	4,,15
-	.globl	glLoadTransposeMatrixfARB
-	.type	glLoadTransposeMatrixfARB, @function
-glLoadTransposeMatrixfARB:
+	.globl	GL_PREFIX(LoadTransposeMatrixfARB)
+	.type	GL_PREFIX(LoadTransposeMatrixfARB), @function
+GL_PREFIX(LoadTransposeMatrixfARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3264(%rax), %r11
@@ -15163,12 +15172,12 @@ glLoadTransposeMatrixfARB:
 	movq	3264(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLoadTransposeMatrixfARB, .-glLoadTransposeMatrixfARB
+	.size	GL_PREFIX(LoadTransposeMatrixfARB), .-GL_PREFIX(LoadTransposeMatrixfARB)
 
 	.p2align	4,,15
-	.globl	glLoadTransposeMatrixdARB
-	.type	glLoadTransposeMatrixdARB, @function
-glLoadTransposeMatrixdARB:
+	.globl	GL_PREFIX(LoadTransposeMatrixdARB)
+	.type	GL_PREFIX(LoadTransposeMatrixdARB), @function
+GL_PREFIX(LoadTransposeMatrixdARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3272(%rax), %r11
@@ -15192,12 +15201,12 @@ glLoadTransposeMatrixdARB:
 	movq	3272(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLoadTransposeMatrixdARB, .-glLoadTransposeMatrixdARB
+	.size	GL_PREFIX(LoadTransposeMatrixdARB), .-GL_PREFIX(LoadTransposeMatrixdARB)
 
 	.p2align	4,,15
-	.globl	glMultTransposeMatrixfARB
-	.type	glMultTransposeMatrixfARB, @function
-glMultTransposeMatrixfARB:
+	.globl	GL_PREFIX(MultTransposeMatrixfARB)
+	.type	GL_PREFIX(MultTransposeMatrixfARB), @function
+GL_PREFIX(MultTransposeMatrixfARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3280(%rax), %r11
@@ -15221,12 +15230,12 @@ glMultTransposeMatrixfARB:
 	movq	3280(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultTransposeMatrixfARB, .-glMultTransposeMatrixfARB
+	.size	GL_PREFIX(MultTransposeMatrixfARB), .-GL_PREFIX(MultTransposeMatrixfARB)
 
 	.p2align	4,,15
-	.globl	glMultTransposeMatrixdARB
-	.type	glMultTransposeMatrixdARB, @function
-glMultTransposeMatrixdARB:
+	.globl	GL_PREFIX(MultTransposeMatrixdARB)
+	.type	GL_PREFIX(MultTransposeMatrixdARB), @function
+GL_PREFIX(MultTransposeMatrixdARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3288(%rax), %r11
@@ -15250,12 +15259,12 @@ glMultTransposeMatrixdARB:
 	movq	3288(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultTransposeMatrixdARB, .-glMultTransposeMatrixdARB
+	.size	GL_PREFIX(MultTransposeMatrixdARB), .-GL_PREFIX(MultTransposeMatrixdARB)
 
 	.p2align	4,,15
-	.globl	glSampleCoverageARB
-	.type	glSampleCoverageARB, @function
-glSampleCoverageARB:
+	.globl	GL_PREFIX(SampleCoverageARB)
+	.type	GL_PREFIX(SampleCoverageARB), @function
+GL_PREFIX(SampleCoverageARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3296(%rax), %r11
@@ -15287,12 +15296,12 @@ glSampleCoverageARB:
 	movq	3296(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSampleCoverageARB, .-glSampleCoverageARB
+	.size	GL_PREFIX(SampleCoverageARB), .-GL_PREFIX(SampleCoverageARB)
 
 	.p2align	4,,15
-	.globl	glDrawBuffersARB
-	.type	glDrawBuffersARB, @function
-glDrawBuffersARB:
+	.globl	GL_PREFIX(DrawBuffersARB)
+	.type	GL_PREFIX(DrawBuffersARB), @function
+GL_PREFIX(DrawBuffersARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3304(%rax), %r11
@@ -15324,12 +15333,12 @@ glDrawBuffersARB:
 	movq	3304(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDrawBuffersARB, .-glDrawBuffersARB
+	.size	GL_PREFIX(DrawBuffersARB), .-GL_PREFIX(DrawBuffersARB)
 
 	.p2align	4,,15
-	.globl	glPolygonOffsetEXT
-	.type	glPolygonOffsetEXT, @function
-glPolygonOffsetEXT:
+	.globl	GL_PREFIX(PolygonOffsetEXT)
+	.type	GL_PREFIX(PolygonOffsetEXT), @function
+GL_PREFIX(PolygonOffsetEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3312(%rax), %r11
@@ -15361,12 +15370,12 @@ glPolygonOffsetEXT:
 	movq	3312(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPolygonOffsetEXT, .-glPolygonOffsetEXT
+	.size	GL_PREFIX(PolygonOffsetEXT), .-GL_PREFIX(PolygonOffsetEXT)
 
 	.p2align	4,,15
-	.globl	glGetTexFilterFuncSGIS
-	.type	glGetTexFilterFuncSGIS, @function
-glGetTexFilterFuncSGIS:
+	.globl	GL_PREFIX(GetTexFilterFuncSGIS)
+	.type	GL_PREFIX(GetTexFilterFuncSGIS), @function
+GL_PREFIX(GetTexFilterFuncSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3320(%rax), %r11
@@ -15398,12 +15407,12 @@ glGetTexFilterFuncSGIS:
 	movq	3320(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetTexFilterFuncSGIS, .-glGetTexFilterFuncSGIS
+	.size	GL_PREFIX(GetTexFilterFuncSGIS), .-GL_PREFIX(GetTexFilterFuncSGIS)
 
 	.p2align	4,,15
-	.globl	glTexFilterFuncSGIS
-	.type	glTexFilterFuncSGIS, @function
-glTexFilterFuncSGIS:
+	.globl	GL_PREFIX(TexFilterFuncSGIS)
+	.type	GL_PREFIX(TexFilterFuncSGIS), @function
+GL_PREFIX(TexFilterFuncSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3328(%rax), %r11
@@ -15443,12 +15452,12 @@ glTexFilterFuncSGIS:
 	movq	3328(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexFilterFuncSGIS, .-glTexFilterFuncSGIS
+	.size	GL_PREFIX(TexFilterFuncSGIS), .-GL_PREFIX(TexFilterFuncSGIS)
 
 	.p2align	4,,15
-	.globl	glGetHistogramEXT
-	.type	glGetHistogramEXT, @function
-glGetHistogramEXT:
+	.globl	GL_PREFIX(GetHistogramEXT)
+	.type	GL_PREFIX(GetHistogramEXT), @function
+GL_PREFIX(GetHistogramEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3336(%rax), %r11
@@ -15488,12 +15497,12 @@ glGetHistogramEXT:
 	movq	3336(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetHistogramEXT, .-glGetHistogramEXT
+	.size	GL_PREFIX(GetHistogramEXT), .-GL_PREFIX(GetHistogramEXT)
 
 	.p2align	4,,15
-	.globl	glGetHistogramParameterfvEXT
-	.type	glGetHistogramParameterfvEXT, @function
-glGetHistogramParameterfvEXT:
+	.globl	GL_PREFIX(GetHistogramParameterfvEXT)
+	.type	GL_PREFIX(GetHistogramParameterfvEXT), @function
+GL_PREFIX(GetHistogramParameterfvEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3344(%rax), %r11
@@ -15525,12 +15534,12 @@ glGetHistogramParameterfvEXT:
 	movq	3344(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetHistogramParameterfvEXT, .-glGetHistogramParameterfvEXT
+	.size	GL_PREFIX(GetHistogramParameterfvEXT), .-GL_PREFIX(GetHistogramParameterfvEXT)
 
 	.p2align	4,,15
-	.globl	glGetHistogramParameterivEXT
-	.type	glGetHistogramParameterivEXT, @function
-glGetHistogramParameterivEXT:
+	.globl	GL_PREFIX(GetHistogramParameterivEXT)
+	.type	GL_PREFIX(GetHistogramParameterivEXT), @function
+GL_PREFIX(GetHistogramParameterivEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3352(%rax), %r11
@@ -15562,12 +15571,12 @@ glGetHistogramParameterivEXT:
 	movq	3352(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetHistogramParameterivEXT, .-glGetHistogramParameterivEXT
+	.size	GL_PREFIX(GetHistogramParameterivEXT), .-GL_PREFIX(GetHistogramParameterivEXT)
 
 	.p2align	4,,15
-	.globl	glGetMinmaxEXT
-	.type	glGetMinmaxEXT, @function
-glGetMinmaxEXT:
+	.globl	GL_PREFIX(GetMinmaxEXT)
+	.type	GL_PREFIX(GetMinmaxEXT), @function
+GL_PREFIX(GetMinmaxEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3360(%rax), %r11
@@ -15607,12 +15616,12 @@ glGetMinmaxEXT:
 	movq	3360(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetMinmaxEXT, .-glGetMinmaxEXT
+	.size	GL_PREFIX(GetMinmaxEXT), .-GL_PREFIX(GetMinmaxEXT)
 
 	.p2align	4,,15
-	.globl	glGetMinmaxParameterfvEXT
-	.type	glGetMinmaxParameterfvEXT, @function
-glGetMinmaxParameterfvEXT:
+	.globl	GL_PREFIX(GetMinmaxParameterfvEXT)
+	.type	GL_PREFIX(GetMinmaxParameterfvEXT), @function
+GL_PREFIX(GetMinmaxParameterfvEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3368(%rax), %r11
@@ -15644,12 +15653,12 @@ glGetMinmaxParameterfvEXT:
 	movq	3368(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetMinmaxParameterfvEXT, .-glGetMinmaxParameterfvEXT
+	.size	GL_PREFIX(GetMinmaxParameterfvEXT), .-GL_PREFIX(GetMinmaxParameterfvEXT)
 
 	.p2align	4,,15
-	.globl	glGetMinmaxParameterivEXT
-	.type	glGetMinmaxParameterivEXT, @function
-glGetMinmaxParameterivEXT:
+	.globl	GL_PREFIX(GetMinmaxParameterivEXT)
+	.type	GL_PREFIX(GetMinmaxParameterivEXT), @function
+GL_PREFIX(GetMinmaxParameterivEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3376(%rax), %r11
@@ -15681,12 +15690,12 @@ glGetMinmaxParameterivEXT:
 	movq	3376(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetMinmaxParameterivEXT, .-glGetMinmaxParameterivEXT
+	.size	GL_PREFIX(GetMinmaxParameterivEXT), .-GL_PREFIX(GetMinmaxParameterivEXT)
 
 	.p2align	4,,15
-	.globl	glGetConvolutionFilterEXT
-	.type	glGetConvolutionFilterEXT, @function
-glGetConvolutionFilterEXT:
+	.globl	GL_PREFIX(GetConvolutionFilterEXT)
+	.type	GL_PREFIX(GetConvolutionFilterEXT), @function
+GL_PREFIX(GetConvolutionFilterEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3384(%rax), %r11
@@ -15726,12 +15735,12 @@ glGetConvolutionFilterEXT:
 	movq	3384(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetConvolutionFilterEXT, .-glGetConvolutionFilterEXT
+	.size	GL_PREFIX(GetConvolutionFilterEXT), .-GL_PREFIX(GetConvolutionFilterEXT)
 
 	.p2align	4,,15
-	.globl	glGetConvolutionParameterfvEXT
-	.type	glGetConvolutionParameterfvEXT, @function
-glGetConvolutionParameterfvEXT:
+	.globl	GL_PREFIX(GetConvolutionParameterfvEXT)
+	.type	GL_PREFIX(GetConvolutionParameterfvEXT), @function
+GL_PREFIX(GetConvolutionParameterfvEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3392(%rax), %r11
@@ -15763,12 +15772,12 @@ glGetConvolutionParameterfvEXT:
 	movq	3392(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetConvolutionParameterfvEXT, .-glGetConvolutionParameterfvEXT
+	.size	GL_PREFIX(GetConvolutionParameterfvEXT), .-GL_PREFIX(GetConvolutionParameterfvEXT)
 
 	.p2align	4,,15
-	.globl	glGetConvolutionParameterivEXT
-	.type	glGetConvolutionParameterivEXT, @function
-glGetConvolutionParameterivEXT:
+	.globl	GL_PREFIX(GetConvolutionParameterivEXT)
+	.type	GL_PREFIX(GetConvolutionParameterivEXT), @function
+GL_PREFIX(GetConvolutionParameterivEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3400(%rax), %r11
@@ -15800,12 +15809,12 @@ glGetConvolutionParameterivEXT:
 	movq	3400(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetConvolutionParameterivEXT, .-glGetConvolutionParameterivEXT
+	.size	GL_PREFIX(GetConvolutionParameterivEXT), .-GL_PREFIX(GetConvolutionParameterivEXT)
 
 	.p2align	4,,15
-	.globl	glGetSeparableFilterEXT
-	.type	glGetSeparableFilterEXT, @function
-glGetSeparableFilterEXT:
+	.globl	GL_PREFIX(GetSeparableFilterEXT)
+	.type	GL_PREFIX(GetSeparableFilterEXT), @function
+GL_PREFIX(GetSeparableFilterEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3408(%rax), %r11
@@ -15853,12 +15862,12 @@ glGetSeparableFilterEXT:
 	movq	3408(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetSeparableFilterEXT, .-glGetSeparableFilterEXT
+	.size	GL_PREFIX(GetSeparableFilterEXT), .-GL_PREFIX(GetSeparableFilterEXT)
 
 	.p2align	4,,15
-	.globl	glGetColorTableSGI
-	.type	glGetColorTableSGI, @function
-glGetColorTableSGI:
+	.globl	GL_PREFIX(GetColorTableSGI)
+	.type	GL_PREFIX(GetColorTableSGI), @function
+GL_PREFIX(GetColorTableSGI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3416(%rax), %r11
@@ -15898,12 +15907,12 @@ glGetColorTableSGI:
 	movq	3416(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetColorTableSGI, .-glGetColorTableSGI
+	.size	GL_PREFIX(GetColorTableSGI), .-GL_PREFIX(GetColorTableSGI)
 
 	.p2align	4,,15
-	.globl	glGetColorTableParameterfvSGI
-	.type	glGetColorTableParameterfvSGI, @function
-glGetColorTableParameterfvSGI:
+	.globl	GL_PREFIX(GetColorTableParameterfvSGI)
+	.type	GL_PREFIX(GetColorTableParameterfvSGI), @function
+GL_PREFIX(GetColorTableParameterfvSGI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3424(%rax), %r11
@@ -15935,12 +15944,12 @@ glGetColorTableParameterfvSGI:
 	movq	3424(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetColorTableParameterfvSGI, .-glGetColorTableParameterfvSGI
+	.size	GL_PREFIX(GetColorTableParameterfvSGI), .-GL_PREFIX(GetColorTableParameterfvSGI)
 
 	.p2align	4,,15
-	.globl	glGetColorTableParameterivSGI
-	.type	glGetColorTableParameterivSGI, @function
-glGetColorTableParameterivSGI:
+	.globl	GL_PREFIX(GetColorTableParameterivSGI)
+	.type	GL_PREFIX(GetColorTableParameterivSGI), @function
+GL_PREFIX(GetColorTableParameterivSGI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3432(%rax), %r11
@@ -15972,12 +15981,12 @@ glGetColorTableParameterivSGI:
 	movq	3432(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetColorTableParameterivSGI, .-glGetColorTableParameterivSGI
+	.size	GL_PREFIX(GetColorTableParameterivSGI), .-GL_PREFIX(GetColorTableParameterivSGI)
 
 	.p2align	4,,15
-	.globl	glPixelTexGenSGIX
-	.type	glPixelTexGenSGIX, @function
-glPixelTexGenSGIX:
+	.globl	GL_PREFIX(PixelTexGenSGIX)
+	.type	GL_PREFIX(PixelTexGenSGIX), @function
+GL_PREFIX(PixelTexGenSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3440(%rax), %r11
@@ -16001,12 +16010,12 @@ glPixelTexGenSGIX:
 	movq	3440(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPixelTexGenSGIX, .-glPixelTexGenSGIX
+	.size	GL_PREFIX(PixelTexGenSGIX), .-GL_PREFIX(PixelTexGenSGIX)
 
 	.p2align	4,,15
-	.globl	glPixelTexGenParameteriSGIS
-	.type	glPixelTexGenParameteriSGIS, @function
-glPixelTexGenParameteriSGIS:
+	.globl	GL_PREFIX(PixelTexGenParameteriSGIS)
+	.type	GL_PREFIX(PixelTexGenParameteriSGIS), @function
+GL_PREFIX(PixelTexGenParameteriSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3448(%rax), %r11
@@ -16038,12 +16047,12 @@ glPixelTexGenParameteriSGIS:
 	movq	3448(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPixelTexGenParameteriSGIS, .-glPixelTexGenParameteriSGIS
+	.size	GL_PREFIX(PixelTexGenParameteriSGIS), .-GL_PREFIX(PixelTexGenParameteriSGIS)
 
 	.p2align	4,,15
-	.globl	glPixelTexGenParameterivSGIS
-	.type	glPixelTexGenParameterivSGIS, @function
-glPixelTexGenParameterivSGIS:
+	.globl	GL_PREFIX(PixelTexGenParameterivSGIS)
+	.type	GL_PREFIX(PixelTexGenParameterivSGIS), @function
+GL_PREFIX(PixelTexGenParameterivSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3456(%rax), %r11
@@ -16075,12 +16084,12 @@ glPixelTexGenParameterivSGIS:
 	movq	3456(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPixelTexGenParameterivSGIS, .-glPixelTexGenParameterivSGIS
+	.size	GL_PREFIX(PixelTexGenParameterivSGIS), .-GL_PREFIX(PixelTexGenParameterivSGIS)
 
 	.p2align	4,,15
-	.globl	glPixelTexGenParameterfSGIS
-	.type	glPixelTexGenParameterfSGIS, @function
-glPixelTexGenParameterfSGIS:
+	.globl	GL_PREFIX(PixelTexGenParameterfSGIS)
+	.type	GL_PREFIX(PixelTexGenParameterfSGIS), @function
+GL_PREFIX(PixelTexGenParameterfSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3464(%rax), %r11
@@ -16112,12 +16121,12 @@ glPixelTexGenParameterfSGIS:
 	movq	3464(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPixelTexGenParameterfSGIS, .-glPixelTexGenParameterfSGIS
+	.size	GL_PREFIX(PixelTexGenParameterfSGIS), .-GL_PREFIX(PixelTexGenParameterfSGIS)
 
 	.p2align	4,,15
-	.globl	glPixelTexGenParameterfvSGIS
-	.type	glPixelTexGenParameterfvSGIS, @function
-glPixelTexGenParameterfvSGIS:
+	.globl	GL_PREFIX(PixelTexGenParameterfvSGIS)
+	.type	GL_PREFIX(PixelTexGenParameterfvSGIS), @function
+GL_PREFIX(PixelTexGenParameterfvSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3472(%rax), %r11
@@ -16149,12 +16158,12 @@ glPixelTexGenParameterfvSGIS:
 	movq	3472(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPixelTexGenParameterfvSGIS, .-glPixelTexGenParameterfvSGIS
+	.size	GL_PREFIX(PixelTexGenParameterfvSGIS), .-GL_PREFIX(PixelTexGenParameterfvSGIS)
 
 	.p2align	4,,15
-	.globl	glGetPixelTexGenParameterivSGIS
-	.type	glGetPixelTexGenParameterivSGIS, @function
-glGetPixelTexGenParameterivSGIS:
+	.globl	GL_PREFIX(GetPixelTexGenParameterivSGIS)
+	.type	GL_PREFIX(GetPixelTexGenParameterivSGIS), @function
+GL_PREFIX(GetPixelTexGenParameterivSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3480(%rax), %r11
@@ -16186,12 +16195,12 @@ glGetPixelTexGenParameterivSGIS:
 	movq	3480(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetPixelTexGenParameterivSGIS, .-glGetPixelTexGenParameterivSGIS
+	.size	GL_PREFIX(GetPixelTexGenParameterivSGIS), .-GL_PREFIX(GetPixelTexGenParameterivSGIS)
 
 	.p2align	4,,15
-	.globl	glGetPixelTexGenParameterfvSGIS
-	.type	glGetPixelTexGenParameterfvSGIS, @function
-glGetPixelTexGenParameterfvSGIS:
+	.globl	GL_PREFIX(GetPixelTexGenParameterfvSGIS)
+	.type	GL_PREFIX(GetPixelTexGenParameterfvSGIS), @function
+GL_PREFIX(GetPixelTexGenParameterfvSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3488(%rax), %r11
@@ -16223,12 +16232,12 @@ glGetPixelTexGenParameterfvSGIS:
 	movq	3488(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetPixelTexGenParameterfvSGIS, .-glGetPixelTexGenParameterfvSGIS
+	.size	GL_PREFIX(GetPixelTexGenParameterfvSGIS), .-GL_PREFIX(GetPixelTexGenParameterfvSGIS)
 
 	.p2align	4,,15
-	.globl	glTexImage4DSGIS
-	.type	glTexImage4DSGIS, @function
-glTexImage4DSGIS:
+	.globl	GL_PREFIX(TexImage4DSGIS)
+	.type	GL_PREFIX(TexImage4DSGIS), @function
+GL_PREFIX(TexImage4DSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3496(%rax), %r11
@@ -16276,12 +16285,12 @@ glTexImage4DSGIS:
 	movq	3496(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexImage4DSGIS, .-glTexImage4DSGIS
+	.size	GL_PREFIX(TexImage4DSGIS), .-GL_PREFIX(TexImage4DSGIS)
 
 	.p2align	4,,15
-	.globl	glTexSubImage4DSGIS
-	.type	glTexSubImage4DSGIS, @function
-glTexSubImage4DSGIS:
+	.globl	GL_PREFIX(TexSubImage4DSGIS)
+	.type	GL_PREFIX(TexSubImage4DSGIS), @function
+GL_PREFIX(TexSubImage4DSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3504(%rax), %r11
@@ -16329,12 +16338,12 @@ glTexSubImage4DSGIS:
 	movq	3504(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexSubImage4DSGIS, .-glTexSubImage4DSGIS
+	.size	GL_PREFIX(TexSubImage4DSGIS), .-GL_PREFIX(TexSubImage4DSGIS)
 
 	.p2align	4,,15
-	.globl	glAreTexturesResidentEXT
-	.type	glAreTexturesResidentEXT, @function
-glAreTexturesResidentEXT:
+	.globl	GL_PREFIX(AreTexturesResidentEXT)
+	.type	GL_PREFIX(AreTexturesResidentEXT), @function
+GL_PREFIX(AreTexturesResidentEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3512(%rax), %r11
@@ -16366,12 +16375,12 @@ glAreTexturesResidentEXT:
 	movq	3512(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glAreTexturesResidentEXT, .-glAreTexturesResidentEXT
+	.size	GL_PREFIX(AreTexturesResidentEXT), .-GL_PREFIX(AreTexturesResidentEXT)
 
 	.p2align	4,,15
-	.globl	glGenTexturesEXT
-	.type	glGenTexturesEXT, @function
-glGenTexturesEXT:
+	.globl	GL_PREFIX(GenTexturesEXT)
+	.type	GL_PREFIX(GenTexturesEXT), @function
+GL_PREFIX(GenTexturesEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3520(%rax), %r11
@@ -16403,12 +16412,12 @@ glGenTexturesEXT:
 	movq	3520(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGenTexturesEXT, .-glGenTexturesEXT
+	.size	GL_PREFIX(GenTexturesEXT), .-GL_PREFIX(GenTexturesEXT)
 
 	.p2align	4,,15
-	.globl	glIsTextureEXT
-	.type	glIsTextureEXT, @function
-glIsTextureEXT:
+	.globl	GL_PREFIX(IsTextureEXT)
+	.type	GL_PREFIX(IsTextureEXT), @function
+GL_PREFIX(IsTextureEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3528(%rax), %r11
@@ -16432,12 +16441,12 @@ glIsTextureEXT:
 	movq	3528(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIsTextureEXT, .-glIsTextureEXT
+	.size	GL_PREFIX(IsTextureEXT), .-GL_PREFIX(IsTextureEXT)
 
 	.p2align	4,,15
-	.globl	glDetailTexFuncSGIS
-	.type	glDetailTexFuncSGIS, @function
-glDetailTexFuncSGIS:
+	.globl	GL_PREFIX(DetailTexFuncSGIS)
+	.type	GL_PREFIX(DetailTexFuncSGIS), @function
+GL_PREFIX(DetailTexFuncSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3536(%rax), %r11
@@ -16469,12 +16478,12 @@ glDetailTexFuncSGIS:
 	movq	3536(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDetailTexFuncSGIS, .-glDetailTexFuncSGIS
+	.size	GL_PREFIX(DetailTexFuncSGIS), .-GL_PREFIX(DetailTexFuncSGIS)
 
 	.p2align	4,,15
-	.globl	glGetDetailTexFuncSGIS
-	.type	glGetDetailTexFuncSGIS, @function
-glGetDetailTexFuncSGIS:
+	.globl	GL_PREFIX(GetDetailTexFuncSGIS)
+	.type	GL_PREFIX(GetDetailTexFuncSGIS), @function
+GL_PREFIX(GetDetailTexFuncSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3544(%rax), %r11
@@ -16506,12 +16515,12 @@ glGetDetailTexFuncSGIS:
 	movq	3544(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetDetailTexFuncSGIS, .-glGetDetailTexFuncSGIS
+	.size	GL_PREFIX(GetDetailTexFuncSGIS), .-GL_PREFIX(GetDetailTexFuncSGIS)
 
 	.p2align	4,,15
-	.globl	glSharpenTexFuncSGIS
-	.type	glSharpenTexFuncSGIS, @function
-glSharpenTexFuncSGIS:
+	.globl	GL_PREFIX(SharpenTexFuncSGIS)
+	.type	GL_PREFIX(SharpenTexFuncSGIS), @function
+GL_PREFIX(SharpenTexFuncSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3552(%rax), %r11
@@ -16543,12 +16552,12 @@ glSharpenTexFuncSGIS:
 	movq	3552(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSharpenTexFuncSGIS, .-glSharpenTexFuncSGIS
+	.size	GL_PREFIX(SharpenTexFuncSGIS), .-GL_PREFIX(SharpenTexFuncSGIS)
 
 	.p2align	4,,15
-	.globl	glGetSharpenTexFuncSGIS
-	.type	glGetSharpenTexFuncSGIS, @function
-glGetSharpenTexFuncSGIS:
+	.globl	GL_PREFIX(GetSharpenTexFuncSGIS)
+	.type	GL_PREFIX(GetSharpenTexFuncSGIS), @function
+GL_PREFIX(GetSharpenTexFuncSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3560(%rax), %r11
@@ -16580,12 +16589,12 @@ glGetSharpenTexFuncSGIS:
 	movq	3560(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetSharpenTexFuncSGIS, .-glGetSharpenTexFuncSGIS
+	.size	GL_PREFIX(GetSharpenTexFuncSGIS), .-GL_PREFIX(GetSharpenTexFuncSGIS)
 
 	.p2align	4,,15
-	.globl	glSampleMaskSGIS
-	.type	glSampleMaskSGIS, @function
-glSampleMaskSGIS:
+	.globl	GL_PREFIX(SampleMaskSGIS)
+	.type	GL_PREFIX(SampleMaskSGIS), @function
+GL_PREFIX(SampleMaskSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3568(%rax), %r11
@@ -16617,12 +16626,12 @@ glSampleMaskSGIS:
 	movq	3568(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSampleMaskSGIS, .-glSampleMaskSGIS
+	.size	GL_PREFIX(SampleMaskSGIS), .-GL_PREFIX(SampleMaskSGIS)
 
 	.p2align	4,,15
-	.globl	glSamplePatternSGIS
-	.type	glSamplePatternSGIS, @function
-glSamplePatternSGIS:
+	.globl	GL_PREFIX(SamplePatternSGIS)
+	.type	GL_PREFIX(SamplePatternSGIS), @function
+GL_PREFIX(SamplePatternSGIS):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3576(%rax), %r11
@@ -16646,12 +16655,12 @@ glSamplePatternSGIS:
 	movq	3576(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSamplePatternSGIS, .-glSamplePatternSGIS
+	.size	GL_PREFIX(SamplePatternSGIS), .-GL_PREFIX(SamplePatternSGIS)
 
 	.p2align	4,,15
-	.globl	glColorPointerEXT
-	.type	glColorPointerEXT, @function
-glColorPointerEXT:
+	.globl	GL_PREFIX(ColorPointerEXT)
+	.type	GL_PREFIX(ColorPointerEXT), @function
+GL_PREFIX(ColorPointerEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3584(%rax), %r11
@@ -16691,12 +16700,12 @@ glColorPointerEXT:
 	movq	3584(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColorPointerEXT, .-glColorPointerEXT
+	.size	GL_PREFIX(ColorPointerEXT), .-GL_PREFIX(ColorPointerEXT)
 
 	.p2align	4,,15
-	.globl	glEdgeFlagPointerEXT
-	.type	glEdgeFlagPointerEXT, @function
-glEdgeFlagPointerEXT:
+	.globl	GL_PREFIX(EdgeFlagPointerEXT)
+	.type	GL_PREFIX(EdgeFlagPointerEXT), @function
+GL_PREFIX(EdgeFlagPointerEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3592(%rax), %r11
@@ -16728,12 +16737,12 @@ glEdgeFlagPointerEXT:
 	movq	3592(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEdgeFlagPointerEXT, .-glEdgeFlagPointerEXT
+	.size	GL_PREFIX(EdgeFlagPointerEXT), .-GL_PREFIX(EdgeFlagPointerEXT)
 
 	.p2align	4,,15
-	.globl	glIndexPointerEXT
-	.type	glIndexPointerEXT, @function
-glIndexPointerEXT:
+	.globl	GL_PREFIX(IndexPointerEXT)
+	.type	GL_PREFIX(IndexPointerEXT), @function
+GL_PREFIX(IndexPointerEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3600(%rax), %r11
@@ -16773,12 +16782,12 @@ glIndexPointerEXT:
 	movq	3600(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIndexPointerEXT, .-glIndexPointerEXT
+	.size	GL_PREFIX(IndexPointerEXT), .-GL_PREFIX(IndexPointerEXT)
 
 	.p2align	4,,15
-	.globl	glNormalPointerEXT
-	.type	glNormalPointerEXT, @function
-glNormalPointerEXT:
+	.globl	GL_PREFIX(NormalPointerEXT)
+	.type	GL_PREFIX(NormalPointerEXT), @function
+GL_PREFIX(NormalPointerEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3608(%rax), %r11
@@ -16818,12 +16827,12 @@ glNormalPointerEXT:
 	movq	3608(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glNormalPointerEXT, .-glNormalPointerEXT
+	.size	GL_PREFIX(NormalPointerEXT), .-GL_PREFIX(NormalPointerEXT)
 
 	.p2align	4,,15
-	.globl	glTexCoordPointerEXT
-	.type	glTexCoordPointerEXT, @function
-glTexCoordPointerEXT:
+	.globl	GL_PREFIX(TexCoordPointerEXT)
+	.type	GL_PREFIX(TexCoordPointerEXT), @function
+GL_PREFIX(TexCoordPointerEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3616(%rax), %r11
@@ -16863,12 +16872,12 @@ glTexCoordPointerEXT:
 	movq	3616(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTexCoordPointerEXT, .-glTexCoordPointerEXT
+	.size	GL_PREFIX(TexCoordPointerEXT), .-GL_PREFIX(TexCoordPointerEXT)
 
 	.p2align	4,,15
-	.globl	glVertexPointerEXT
-	.type	glVertexPointerEXT, @function
-glVertexPointerEXT:
+	.globl	GL_PREFIX(VertexPointerEXT)
+	.type	GL_PREFIX(VertexPointerEXT), @function
+GL_PREFIX(VertexPointerEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3624(%rax), %r11
@@ -16908,12 +16917,12 @@ glVertexPointerEXT:
 	movq	3624(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexPointerEXT, .-glVertexPointerEXT
+	.size	GL_PREFIX(VertexPointerEXT), .-GL_PREFIX(VertexPointerEXT)
 
 	.p2align	4,,15
-	.globl	glSpriteParameterfSGIX
-	.type	glSpriteParameterfSGIX, @function
-glSpriteParameterfSGIX:
+	.globl	GL_PREFIX(SpriteParameterfSGIX)
+	.type	GL_PREFIX(SpriteParameterfSGIX), @function
+GL_PREFIX(SpriteParameterfSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3632(%rax), %r11
@@ -16945,12 +16954,12 @@ glSpriteParameterfSGIX:
 	movq	3632(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSpriteParameterfSGIX, .-glSpriteParameterfSGIX
+	.size	GL_PREFIX(SpriteParameterfSGIX), .-GL_PREFIX(SpriteParameterfSGIX)
 
 	.p2align	4,,15
-	.globl	glSpriteParameterfvSGIX
-	.type	glSpriteParameterfvSGIX, @function
-glSpriteParameterfvSGIX:
+	.globl	GL_PREFIX(SpriteParameterfvSGIX)
+	.type	GL_PREFIX(SpriteParameterfvSGIX), @function
+GL_PREFIX(SpriteParameterfvSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3640(%rax), %r11
@@ -16982,12 +16991,12 @@ glSpriteParameterfvSGIX:
 	movq	3640(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSpriteParameterfvSGIX, .-glSpriteParameterfvSGIX
+	.size	GL_PREFIX(SpriteParameterfvSGIX), .-GL_PREFIX(SpriteParameterfvSGIX)
 
 	.p2align	4,,15
-	.globl	glSpriteParameteriSGIX
-	.type	glSpriteParameteriSGIX, @function
-glSpriteParameteriSGIX:
+	.globl	GL_PREFIX(SpriteParameteriSGIX)
+	.type	GL_PREFIX(SpriteParameteriSGIX), @function
+GL_PREFIX(SpriteParameteriSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3648(%rax), %r11
@@ -17019,12 +17028,12 @@ glSpriteParameteriSGIX:
 	movq	3648(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSpriteParameteriSGIX, .-glSpriteParameteriSGIX
+	.size	GL_PREFIX(SpriteParameteriSGIX), .-GL_PREFIX(SpriteParameteriSGIX)
 
 	.p2align	4,,15
-	.globl	glSpriteParameterivSGIX
-	.type	glSpriteParameterivSGIX, @function
-glSpriteParameterivSGIX:
+	.globl	GL_PREFIX(SpriteParameterivSGIX)
+	.type	GL_PREFIX(SpriteParameterivSGIX), @function
+GL_PREFIX(SpriteParameterivSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3656(%rax), %r11
@@ -17056,12 +17065,12 @@ glSpriteParameterivSGIX:
 	movq	3656(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSpriteParameterivSGIX, .-glSpriteParameterivSGIX
+	.size	GL_PREFIX(SpriteParameterivSGIX), .-GL_PREFIX(SpriteParameterivSGIX)
 
 	.p2align	4,,15
-	.globl	glPointParameterfEXT
-	.type	glPointParameterfEXT, @function
-glPointParameterfEXT:
+	.globl	GL_PREFIX(PointParameterfEXT)
+	.type	GL_PREFIX(PointParameterfEXT), @function
+GL_PREFIX(PointParameterfEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3664(%rax), %r11
@@ -17093,12 +17102,12 @@ glPointParameterfEXT:
 	movq	3664(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPointParameterfEXT, .-glPointParameterfEXT
+	.size	GL_PREFIX(PointParameterfEXT), .-GL_PREFIX(PointParameterfEXT)
 
 	.p2align	4,,15
-	.globl	glPointParameterfvEXT
-	.type	glPointParameterfvEXT, @function
-glPointParameterfvEXT:
+	.globl	GL_PREFIX(PointParameterfvEXT)
+	.type	GL_PREFIX(PointParameterfvEXT), @function
+GL_PREFIX(PointParameterfvEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3672(%rax), %r11
@@ -17130,12 +17139,12 @@ glPointParameterfvEXT:
 	movq	3672(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPointParameterfvEXT, .-glPointParameterfvEXT
+	.size	GL_PREFIX(PointParameterfvEXT), .-GL_PREFIX(PointParameterfvEXT)
 
 	.p2align	4,,15
-	.globl	glGetInstrumentsSGIX
-	.type	glGetInstrumentsSGIX, @function
-glGetInstrumentsSGIX:
+	.globl	GL_PREFIX(GetInstrumentsSGIX)
+	.type	GL_PREFIX(GetInstrumentsSGIX), @function
+GL_PREFIX(GetInstrumentsSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3680(%rax), %r11
@@ -17159,12 +17168,12 @@ glGetInstrumentsSGIX:
 	movq	3680(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetInstrumentsSGIX, .-glGetInstrumentsSGIX
+	.size	GL_PREFIX(GetInstrumentsSGIX), .-GL_PREFIX(GetInstrumentsSGIX)
 
 	.p2align	4,,15
-	.globl	glInstrumentsBufferSGIX
-	.type	glInstrumentsBufferSGIX, @function
-glInstrumentsBufferSGIX:
+	.globl	GL_PREFIX(InstrumentsBufferSGIX)
+	.type	GL_PREFIX(InstrumentsBufferSGIX), @function
+GL_PREFIX(InstrumentsBufferSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3688(%rax), %r11
@@ -17196,12 +17205,12 @@ glInstrumentsBufferSGIX:
 	movq	3688(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glInstrumentsBufferSGIX, .-glInstrumentsBufferSGIX
+	.size	GL_PREFIX(InstrumentsBufferSGIX), .-GL_PREFIX(InstrumentsBufferSGIX)
 
 	.p2align	4,,15
-	.globl	glPollInstrumentsSGIX
-	.type	glPollInstrumentsSGIX, @function
-glPollInstrumentsSGIX:
+	.globl	GL_PREFIX(PollInstrumentsSGIX)
+	.type	GL_PREFIX(PollInstrumentsSGIX), @function
+GL_PREFIX(PollInstrumentsSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3696(%rax), %r11
@@ -17225,12 +17234,12 @@ glPollInstrumentsSGIX:
 	movq	3696(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPollInstrumentsSGIX, .-glPollInstrumentsSGIX
+	.size	GL_PREFIX(PollInstrumentsSGIX), .-GL_PREFIX(PollInstrumentsSGIX)
 
 	.p2align	4,,15
-	.globl	glReadInstrumentsSGIX
-	.type	glReadInstrumentsSGIX, @function
-glReadInstrumentsSGIX:
+	.globl	GL_PREFIX(ReadInstrumentsSGIX)
+	.type	GL_PREFIX(ReadInstrumentsSGIX), @function
+GL_PREFIX(ReadInstrumentsSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3704(%rax), %r11
@@ -17254,12 +17263,12 @@ glReadInstrumentsSGIX:
 	movq	3704(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glReadInstrumentsSGIX, .-glReadInstrumentsSGIX
+	.size	GL_PREFIX(ReadInstrumentsSGIX), .-GL_PREFIX(ReadInstrumentsSGIX)
 
 	.p2align	4,,15
-	.globl	glStartInstrumentsSGIX
-	.type	glStartInstrumentsSGIX, @function
-glStartInstrumentsSGIX:
+	.globl	GL_PREFIX(StartInstrumentsSGIX)
+	.type	GL_PREFIX(StartInstrumentsSGIX), @function
+GL_PREFIX(StartInstrumentsSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3712(%rax), %r11
@@ -17283,12 +17292,12 @@ glStartInstrumentsSGIX:
 	movq	3712(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glStartInstrumentsSGIX, .-glStartInstrumentsSGIX
+	.size	GL_PREFIX(StartInstrumentsSGIX), .-GL_PREFIX(StartInstrumentsSGIX)
 
 	.p2align	4,,15
-	.globl	glStopInstrumentsSGIX
-	.type	glStopInstrumentsSGIX, @function
-glStopInstrumentsSGIX:
+	.globl	GL_PREFIX(StopInstrumentsSGIX)
+	.type	GL_PREFIX(StopInstrumentsSGIX), @function
+GL_PREFIX(StopInstrumentsSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3720(%rax), %r11
@@ -17312,12 +17321,12 @@ glStopInstrumentsSGIX:
 	movq	3720(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glStopInstrumentsSGIX, .-glStopInstrumentsSGIX
+	.size	GL_PREFIX(StopInstrumentsSGIX), .-GL_PREFIX(StopInstrumentsSGIX)
 
 	.p2align	4,,15
-	.globl	glFrameZoomSGIX
-	.type	glFrameZoomSGIX, @function
-glFrameZoomSGIX:
+	.globl	GL_PREFIX(FrameZoomSGIX)
+	.type	GL_PREFIX(FrameZoomSGIX), @function
+GL_PREFIX(FrameZoomSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3728(%rax), %r11
@@ -17341,12 +17350,12 @@ glFrameZoomSGIX:
 	movq	3728(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFrameZoomSGIX, .-glFrameZoomSGIX
+	.size	GL_PREFIX(FrameZoomSGIX), .-GL_PREFIX(FrameZoomSGIX)
 
 	.p2align	4,,15
-	.globl	glTagSampleBufferSGIX
-	.type	glTagSampleBufferSGIX, @function
-glTagSampleBufferSGIX:
+	.globl	GL_PREFIX(TagSampleBufferSGIX)
+	.type	GL_PREFIX(TagSampleBufferSGIX), @function
+GL_PREFIX(TagSampleBufferSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3736(%rax), %r11
@@ -17370,12 +17379,12 @@ glTagSampleBufferSGIX:
 	movq	3736(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTagSampleBufferSGIX, .-glTagSampleBufferSGIX
+	.size	GL_PREFIX(TagSampleBufferSGIX), .-GL_PREFIX(TagSampleBufferSGIX)
 
 	.p2align	4,,15
-	.globl	glReferencePlaneSGIX
-	.type	glReferencePlaneSGIX, @function
-glReferencePlaneSGIX:
+	.globl	GL_PREFIX(ReferencePlaneSGIX)
+	.type	GL_PREFIX(ReferencePlaneSGIX), @function
+GL_PREFIX(ReferencePlaneSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3744(%rax), %r11
@@ -17399,12 +17408,12 @@ glReferencePlaneSGIX:
 	movq	3744(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glReferencePlaneSGIX, .-glReferencePlaneSGIX
+	.size	GL_PREFIX(ReferencePlaneSGIX), .-GL_PREFIX(ReferencePlaneSGIX)
 
 	.p2align	4,,15
-	.globl	glFlushRasterSGIX
-	.type	glFlushRasterSGIX, @function
-glFlushRasterSGIX:
+	.globl	GL_PREFIX(FlushRasterSGIX)
+	.type	GL_PREFIX(FlushRasterSGIX), @function
+GL_PREFIX(FlushRasterSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3752(%rax), %r11
@@ -17428,12 +17437,12 @@ glFlushRasterSGIX:
 	movq	3752(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFlushRasterSGIX, .-glFlushRasterSGIX
+	.size	GL_PREFIX(FlushRasterSGIX), .-GL_PREFIX(FlushRasterSGIX)
 
 	.p2align	4,,15
-	.globl	glGetListParameterfvSGIX
-	.type	glGetListParameterfvSGIX, @function
-glGetListParameterfvSGIX:
+	.globl	GL_PREFIX(GetListParameterfvSGIX)
+	.type	GL_PREFIX(GetListParameterfvSGIX), @function
+GL_PREFIX(GetListParameterfvSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3760(%rax), %r11
@@ -17465,12 +17474,12 @@ glGetListParameterfvSGIX:
 	movq	3760(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetListParameterfvSGIX, .-glGetListParameterfvSGIX
+	.size	GL_PREFIX(GetListParameterfvSGIX), .-GL_PREFIX(GetListParameterfvSGIX)
 
 	.p2align	4,,15
-	.globl	glGetListParameterivSGIX
-	.type	glGetListParameterivSGIX, @function
-glGetListParameterivSGIX:
+	.globl	GL_PREFIX(GetListParameterivSGIX)
+	.type	GL_PREFIX(GetListParameterivSGIX), @function
+GL_PREFIX(GetListParameterivSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3768(%rax), %r11
@@ -17502,12 +17511,12 @@ glGetListParameterivSGIX:
 	movq	3768(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetListParameterivSGIX, .-glGetListParameterivSGIX
+	.size	GL_PREFIX(GetListParameterivSGIX), .-GL_PREFIX(GetListParameterivSGIX)
 
 	.p2align	4,,15
-	.globl	glListParameterfSGIX
-	.type	glListParameterfSGIX, @function
-glListParameterfSGIX:
+	.globl	GL_PREFIX(ListParameterfSGIX)
+	.type	GL_PREFIX(ListParameterfSGIX), @function
+GL_PREFIX(ListParameterfSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3776(%rax), %r11
@@ -17543,12 +17552,12 @@ glListParameterfSGIX:
 	movq	3776(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glListParameterfSGIX, .-glListParameterfSGIX
+	.size	GL_PREFIX(ListParameterfSGIX), .-GL_PREFIX(ListParameterfSGIX)
 
 	.p2align	4,,15
-	.globl	glListParameterfvSGIX
-	.type	glListParameterfvSGIX, @function
-glListParameterfvSGIX:
+	.globl	GL_PREFIX(ListParameterfvSGIX)
+	.type	GL_PREFIX(ListParameterfvSGIX), @function
+GL_PREFIX(ListParameterfvSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3784(%rax), %r11
@@ -17580,12 +17589,12 @@ glListParameterfvSGIX:
 	movq	3784(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glListParameterfvSGIX, .-glListParameterfvSGIX
+	.size	GL_PREFIX(ListParameterfvSGIX), .-GL_PREFIX(ListParameterfvSGIX)
 
 	.p2align	4,,15
-	.globl	glListParameteriSGIX
-	.type	glListParameteriSGIX, @function
-glListParameteriSGIX:
+	.globl	GL_PREFIX(ListParameteriSGIX)
+	.type	GL_PREFIX(ListParameteriSGIX), @function
+GL_PREFIX(ListParameteriSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3792(%rax), %r11
@@ -17617,12 +17626,12 @@ glListParameteriSGIX:
 	movq	3792(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glListParameteriSGIX, .-glListParameteriSGIX
+	.size	GL_PREFIX(ListParameteriSGIX), .-GL_PREFIX(ListParameteriSGIX)
 
 	.p2align	4,,15
-	.globl	glListParameterivSGIX
-	.type	glListParameterivSGIX, @function
-glListParameterivSGIX:
+	.globl	GL_PREFIX(ListParameterivSGIX)
+	.type	GL_PREFIX(ListParameterivSGIX), @function
+GL_PREFIX(ListParameterivSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3800(%rax), %r11
@@ -17654,12 +17663,12 @@ glListParameterivSGIX:
 	movq	3800(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glListParameterivSGIX, .-glListParameterivSGIX
+	.size	GL_PREFIX(ListParameterivSGIX), .-GL_PREFIX(ListParameterivSGIX)
 
 	.p2align	4,,15
-	.globl	glFragmentColorMaterialSGIX
-	.type	glFragmentColorMaterialSGIX, @function
-glFragmentColorMaterialSGIX:
+	.globl	GL_PREFIX(FragmentColorMaterialSGIX)
+	.type	GL_PREFIX(FragmentColorMaterialSGIX), @function
+GL_PREFIX(FragmentColorMaterialSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3808(%rax), %r11
@@ -17691,12 +17700,12 @@ glFragmentColorMaterialSGIX:
 	movq	3808(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFragmentColorMaterialSGIX, .-glFragmentColorMaterialSGIX
+	.size	GL_PREFIX(FragmentColorMaterialSGIX), .-GL_PREFIX(FragmentColorMaterialSGIX)
 
 	.p2align	4,,15
-	.globl	glFragmentLightfSGIX
-	.type	glFragmentLightfSGIX, @function
-glFragmentLightfSGIX:
+	.globl	GL_PREFIX(FragmentLightfSGIX)
+	.type	GL_PREFIX(FragmentLightfSGIX), @function
+GL_PREFIX(FragmentLightfSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3816(%rax), %r11
@@ -17732,12 +17741,12 @@ glFragmentLightfSGIX:
 	movq	3816(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFragmentLightfSGIX, .-glFragmentLightfSGIX
+	.size	GL_PREFIX(FragmentLightfSGIX), .-GL_PREFIX(FragmentLightfSGIX)
 
 	.p2align	4,,15
-	.globl	glFragmentLightfvSGIX
-	.type	glFragmentLightfvSGIX, @function
-glFragmentLightfvSGIX:
+	.globl	GL_PREFIX(FragmentLightfvSGIX)
+	.type	GL_PREFIX(FragmentLightfvSGIX), @function
+GL_PREFIX(FragmentLightfvSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3824(%rax), %r11
@@ -17769,12 +17778,12 @@ glFragmentLightfvSGIX:
 	movq	3824(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFragmentLightfvSGIX, .-glFragmentLightfvSGIX
+	.size	GL_PREFIX(FragmentLightfvSGIX), .-GL_PREFIX(FragmentLightfvSGIX)
 
 	.p2align	4,,15
-	.globl	glFragmentLightiSGIX
-	.type	glFragmentLightiSGIX, @function
-glFragmentLightiSGIX:
+	.globl	GL_PREFIX(FragmentLightiSGIX)
+	.type	GL_PREFIX(FragmentLightiSGIX), @function
+GL_PREFIX(FragmentLightiSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3832(%rax), %r11
@@ -17806,12 +17815,12 @@ glFragmentLightiSGIX:
 	movq	3832(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFragmentLightiSGIX, .-glFragmentLightiSGIX
+	.size	GL_PREFIX(FragmentLightiSGIX), .-GL_PREFIX(FragmentLightiSGIX)
 
 	.p2align	4,,15
-	.globl	glFragmentLightivSGIX
-	.type	glFragmentLightivSGIX, @function
-glFragmentLightivSGIX:
+	.globl	GL_PREFIX(FragmentLightivSGIX)
+	.type	GL_PREFIX(FragmentLightivSGIX), @function
+GL_PREFIX(FragmentLightivSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3840(%rax), %r11
@@ -17843,12 +17852,12 @@ glFragmentLightivSGIX:
 	movq	3840(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFragmentLightivSGIX, .-glFragmentLightivSGIX
+	.size	GL_PREFIX(FragmentLightivSGIX), .-GL_PREFIX(FragmentLightivSGIX)
 
 	.p2align	4,,15
-	.globl	glFragmentLightModelfSGIX
-	.type	glFragmentLightModelfSGIX, @function
-glFragmentLightModelfSGIX:
+	.globl	GL_PREFIX(FragmentLightModelfSGIX)
+	.type	GL_PREFIX(FragmentLightModelfSGIX), @function
+GL_PREFIX(FragmentLightModelfSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3848(%rax), %r11
@@ -17880,12 +17889,12 @@ glFragmentLightModelfSGIX:
 	movq	3848(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFragmentLightModelfSGIX, .-glFragmentLightModelfSGIX
+	.size	GL_PREFIX(FragmentLightModelfSGIX), .-GL_PREFIX(FragmentLightModelfSGIX)
 
 	.p2align	4,,15
-	.globl	glFragmentLightModelfvSGIX
-	.type	glFragmentLightModelfvSGIX, @function
-glFragmentLightModelfvSGIX:
+	.globl	GL_PREFIX(FragmentLightModelfvSGIX)
+	.type	GL_PREFIX(FragmentLightModelfvSGIX), @function
+GL_PREFIX(FragmentLightModelfvSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3856(%rax), %r11
@@ -17917,12 +17926,12 @@ glFragmentLightModelfvSGIX:
 	movq	3856(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFragmentLightModelfvSGIX, .-glFragmentLightModelfvSGIX
+	.size	GL_PREFIX(FragmentLightModelfvSGIX), .-GL_PREFIX(FragmentLightModelfvSGIX)
 
 	.p2align	4,,15
-	.globl	glFragmentLightModeliSGIX
-	.type	glFragmentLightModeliSGIX, @function
-glFragmentLightModeliSGIX:
+	.globl	GL_PREFIX(FragmentLightModeliSGIX)
+	.type	GL_PREFIX(FragmentLightModeliSGIX), @function
+GL_PREFIX(FragmentLightModeliSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3864(%rax), %r11
@@ -17954,12 +17963,12 @@ glFragmentLightModeliSGIX:
 	movq	3864(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFragmentLightModeliSGIX, .-glFragmentLightModeliSGIX
+	.size	GL_PREFIX(FragmentLightModeliSGIX), .-GL_PREFIX(FragmentLightModeliSGIX)
 
 	.p2align	4,,15
-	.globl	glFragmentLightModelivSGIX
-	.type	glFragmentLightModelivSGIX, @function
-glFragmentLightModelivSGIX:
+	.globl	GL_PREFIX(FragmentLightModelivSGIX)
+	.type	GL_PREFIX(FragmentLightModelivSGIX), @function
+GL_PREFIX(FragmentLightModelivSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3872(%rax), %r11
@@ -17991,12 +18000,12 @@ glFragmentLightModelivSGIX:
 	movq	3872(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFragmentLightModelivSGIX, .-glFragmentLightModelivSGIX
+	.size	GL_PREFIX(FragmentLightModelivSGIX), .-GL_PREFIX(FragmentLightModelivSGIX)
 
 	.p2align	4,,15
-	.globl	glFragmentMaterialfSGIX
-	.type	glFragmentMaterialfSGIX, @function
-glFragmentMaterialfSGIX:
+	.globl	GL_PREFIX(FragmentMaterialfSGIX)
+	.type	GL_PREFIX(FragmentMaterialfSGIX), @function
+GL_PREFIX(FragmentMaterialfSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3880(%rax), %r11
@@ -18032,12 +18041,12 @@ glFragmentMaterialfSGIX:
 	movq	3880(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFragmentMaterialfSGIX, .-glFragmentMaterialfSGIX
+	.size	GL_PREFIX(FragmentMaterialfSGIX), .-GL_PREFIX(FragmentMaterialfSGIX)
 
 	.p2align	4,,15
-	.globl	glFragmentMaterialfvSGIX
-	.type	glFragmentMaterialfvSGIX, @function
-glFragmentMaterialfvSGIX:
+	.globl	GL_PREFIX(FragmentMaterialfvSGIX)
+	.type	GL_PREFIX(FragmentMaterialfvSGIX), @function
+GL_PREFIX(FragmentMaterialfvSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3888(%rax), %r11
@@ -18069,12 +18078,12 @@ glFragmentMaterialfvSGIX:
 	movq	3888(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFragmentMaterialfvSGIX, .-glFragmentMaterialfvSGIX
+	.size	GL_PREFIX(FragmentMaterialfvSGIX), .-GL_PREFIX(FragmentMaterialfvSGIX)
 
 	.p2align	4,,15
-	.globl	glFragmentMaterialiSGIX
-	.type	glFragmentMaterialiSGIX, @function
-glFragmentMaterialiSGIX:
+	.globl	GL_PREFIX(FragmentMaterialiSGIX)
+	.type	GL_PREFIX(FragmentMaterialiSGIX), @function
+GL_PREFIX(FragmentMaterialiSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3896(%rax), %r11
@@ -18106,12 +18115,12 @@ glFragmentMaterialiSGIX:
 	movq	3896(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFragmentMaterialiSGIX, .-glFragmentMaterialiSGIX
+	.size	GL_PREFIX(FragmentMaterialiSGIX), .-GL_PREFIX(FragmentMaterialiSGIX)
 
 	.p2align	4,,15
-	.globl	glFragmentMaterialivSGIX
-	.type	glFragmentMaterialivSGIX, @function
-glFragmentMaterialivSGIX:
+	.globl	GL_PREFIX(FragmentMaterialivSGIX)
+	.type	GL_PREFIX(FragmentMaterialivSGIX), @function
+GL_PREFIX(FragmentMaterialivSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3904(%rax), %r11
@@ -18143,12 +18152,12 @@ glFragmentMaterialivSGIX:
 	movq	3904(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFragmentMaterialivSGIX, .-glFragmentMaterialivSGIX
+	.size	GL_PREFIX(FragmentMaterialivSGIX), .-GL_PREFIX(FragmentMaterialivSGIX)
 
 	.p2align	4,,15
-	.globl	glGetFragmentLightfvSGIX
-	.type	glGetFragmentLightfvSGIX, @function
-glGetFragmentLightfvSGIX:
+	.globl	GL_PREFIX(GetFragmentLightfvSGIX)
+	.type	GL_PREFIX(GetFragmentLightfvSGIX), @function
+GL_PREFIX(GetFragmentLightfvSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3912(%rax), %r11
@@ -18180,12 +18189,12 @@ glGetFragmentLightfvSGIX:
 	movq	3912(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetFragmentLightfvSGIX, .-glGetFragmentLightfvSGIX
+	.size	GL_PREFIX(GetFragmentLightfvSGIX), .-GL_PREFIX(GetFragmentLightfvSGIX)
 
 	.p2align	4,,15
-	.globl	glGetFragmentLightivSGIX
-	.type	glGetFragmentLightivSGIX, @function
-glGetFragmentLightivSGIX:
+	.globl	GL_PREFIX(GetFragmentLightivSGIX)
+	.type	GL_PREFIX(GetFragmentLightivSGIX), @function
+GL_PREFIX(GetFragmentLightivSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3920(%rax), %r11
@@ -18217,12 +18226,12 @@ glGetFragmentLightivSGIX:
 	movq	3920(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetFragmentLightivSGIX, .-glGetFragmentLightivSGIX
+	.size	GL_PREFIX(GetFragmentLightivSGIX), .-GL_PREFIX(GetFragmentLightivSGIX)
 
 	.p2align	4,,15
-	.globl	glGetFragmentMaterialfvSGIX
-	.type	glGetFragmentMaterialfvSGIX, @function
-glGetFragmentMaterialfvSGIX:
+	.globl	GL_PREFIX(GetFragmentMaterialfvSGIX)
+	.type	GL_PREFIX(GetFragmentMaterialfvSGIX), @function
+GL_PREFIX(GetFragmentMaterialfvSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3928(%rax), %r11
@@ -18254,12 +18263,12 @@ glGetFragmentMaterialfvSGIX:
 	movq	3928(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetFragmentMaterialfvSGIX, .-glGetFragmentMaterialfvSGIX
+	.size	GL_PREFIX(GetFragmentMaterialfvSGIX), .-GL_PREFIX(GetFragmentMaterialfvSGIX)
 
 	.p2align	4,,15
-	.globl	glGetFragmentMaterialivSGIX
-	.type	glGetFragmentMaterialivSGIX, @function
-glGetFragmentMaterialivSGIX:
+	.globl	GL_PREFIX(GetFragmentMaterialivSGIX)
+	.type	GL_PREFIX(GetFragmentMaterialivSGIX), @function
+GL_PREFIX(GetFragmentMaterialivSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3936(%rax), %r11
@@ -18291,12 +18300,12 @@ glGetFragmentMaterialivSGIX:
 	movq	3936(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetFragmentMaterialivSGIX, .-glGetFragmentMaterialivSGIX
+	.size	GL_PREFIX(GetFragmentMaterialivSGIX), .-GL_PREFIX(GetFragmentMaterialivSGIX)
 
 	.p2align	4,,15
-	.globl	glLightEnviSGIX
-	.type	glLightEnviSGIX, @function
-glLightEnviSGIX:
+	.globl	GL_PREFIX(LightEnviSGIX)
+	.type	GL_PREFIX(LightEnviSGIX), @function
+GL_PREFIX(LightEnviSGIX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3944(%rax), %r11
@@ -18328,12 +18337,12 @@ glLightEnviSGIX:
 	movq	3944(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLightEnviSGIX, .-glLightEnviSGIX
+	.size	GL_PREFIX(LightEnviSGIX), .-GL_PREFIX(LightEnviSGIX)
 
 	.p2align	4,,15
-	.globl	glVertexWeightfEXT
-	.type	glVertexWeightfEXT, @function
-glVertexWeightfEXT:
+	.globl	GL_PREFIX(VertexWeightfEXT)
+	.type	GL_PREFIX(VertexWeightfEXT), @function
+GL_PREFIX(VertexWeightfEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3952(%rax), %r11
@@ -18361,12 +18370,12 @@ glVertexWeightfEXT:
 	movq	3952(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexWeightfEXT, .-glVertexWeightfEXT
+	.size	GL_PREFIX(VertexWeightfEXT), .-GL_PREFIX(VertexWeightfEXT)
 
 	.p2align	4,,15
-	.globl	glVertexWeightfvEXT
-	.type	glVertexWeightfvEXT, @function
-glVertexWeightfvEXT:
+	.globl	GL_PREFIX(VertexWeightfvEXT)
+	.type	GL_PREFIX(VertexWeightfvEXT), @function
+GL_PREFIX(VertexWeightfvEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3960(%rax), %r11
@@ -18390,12 +18399,12 @@ glVertexWeightfvEXT:
 	movq	3960(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexWeightfvEXT, .-glVertexWeightfvEXT
+	.size	GL_PREFIX(VertexWeightfvEXT), .-GL_PREFIX(VertexWeightfvEXT)
 
 	.p2align	4,,15
-	.globl	glVertexWeightPointerEXT
-	.type	glVertexWeightPointerEXT, @function
-glVertexWeightPointerEXT:
+	.globl	GL_PREFIX(VertexWeightPointerEXT)
+	.type	GL_PREFIX(VertexWeightPointerEXT), @function
+GL_PREFIX(VertexWeightPointerEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3968(%rax), %r11
@@ -18435,12 +18444,12 @@ glVertexWeightPointerEXT:
 	movq	3968(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexWeightPointerEXT, .-glVertexWeightPointerEXT
+	.size	GL_PREFIX(VertexWeightPointerEXT), .-GL_PREFIX(VertexWeightPointerEXT)
 
 	.p2align	4,,15
-	.globl	glFlushVertexArrayRangeNV
-	.type	glFlushVertexArrayRangeNV, @function
-glFlushVertexArrayRangeNV:
+	.globl	GL_PREFIX(FlushVertexArrayRangeNV)
+	.type	GL_PREFIX(FlushVertexArrayRangeNV), @function
+GL_PREFIX(FlushVertexArrayRangeNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3976(%rax), %r11
@@ -18464,12 +18473,12 @@ glFlushVertexArrayRangeNV:
 	movq	3976(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFlushVertexArrayRangeNV, .-glFlushVertexArrayRangeNV
+	.size	GL_PREFIX(FlushVertexArrayRangeNV), .-GL_PREFIX(FlushVertexArrayRangeNV)
 
 	.p2align	4,,15
-	.globl	glVertexArrayRangeNV
-	.type	glVertexArrayRangeNV, @function
-glVertexArrayRangeNV:
+	.globl	GL_PREFIX(VertexArrayRangeNV)
+	.type	GL_PREFIX(VertexArrayRangeNV), @function
+GL_PREFIX(VertexArrayRangeNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3984(%rax), %r11
@@ -18501,12 +18510,12 @@ glVertexArrayRangeNV:
 	movq	3984(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexArrayRangeNV, .-glVertexArrayRangeNV
+	.size	GL_PREFIX(VertexArrayRangeNV), .-GL_PREFIX(VertexArrayRangeNV)
 
 	.p2align	4,,15
-	.globl	glCombinerParameterfvNV
-	.type	glCombinerParameterfvNV, @function
-glCombinerParameterfvNV:
+	.globl	GL_PREFIX(CombinerParameterfvNV)
+	.type	GL_PREFIX(CombinerParameterfvNV), @function
+GL_PREFIX(CombinerParameterfvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	3992(%rax), %r11
@@ -18538,12 +18547,12 @@ glCombinerParameterfvNV:
 	movq	3992(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCombinerParameterfvNV, .-glCombinerParameterfvNV
+	.size	GL_PREFIX(CombinerParameterfvNV), .-GL_PREFIX(CombinerParameterfvNV)
 
 	.p2align	4,,15
-	.globl	glCombinerParameterfNV
-	.type	glCombinerParameterfNV, @function
-glCombinerParameterfNV:
+	.globl	GL_PREFIX(CombinerParameterfNV)
+	.type	GL_PREFIX(CombinerParameterfNV), @function
+GL_PREFIX(CombinerParameterfNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4000(%rax), %r11
@@ -18575,12 +18584,12 @@ glCombinerParameterfNV:
 	movq	4000(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCombinerParameterfNV, .-glCombinerParameterfNV
+	.size	GL_PREFIX(CombinerParameterfNV), .-GL_PREFIX(CombinerParameterfNV)
 
 	.p2align	4,,15
-	.globl	glCombinerParameterivNV
-	.type	glCombinerParameterivNV, @function
-glCombinerParameterivNV:
+	.globl	GL_PREFIX(CombinerParameterivNV)
+	.type	GL_PREFIX(CombinerParameterivNV), @function
+GL_PREFIX(CombinerParameterivNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4008(%rax), %r11
@@ -18612,12 +18621,12 @@ glCombinerParameterivNV:
 	movq	4008(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCombinerParameterivNV, .-glCombinerParameterivNV
+	.size	GL_PREFIX(CombinerParameterivNV), .-GL_PREFIX(CombinerParameterivNV)
 
 	.p2align	4,,15
-	.globl	glCombinerParameteriNV
-	.type	glCombinerParameteriNV, @function
-glCombinerParameteriNV:
+	.globl	GL_PREFIX(CombinerParameteriNV)
+	.type	GL_PREFIX(CombinerParameteriNV), @function
+GL_PREFIX(CombinerParameteriNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4016(%rax), %r11
@@ -18649,12 +18658,12 @@ glCombinerParameteriNV:
 	movq	4016(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCombinerParameteriNV, .-glCombinerParameteriNV
+	.size	GL_PREFIX(CombinerParameteriNV), .-GL_PREFIX(CombinerParameteriNV)
 
 	.p2align	4,,15
-	.globl	glCombinerInputNV
-	.type	glCombinerInputNV, @function
-glCombinerInputNV:
+	.globl	GL_PREFIX(CombinerInputNV)
+	.type	GL_PREFIX(CombinerInputNV), @function
+GL_PREFIX(CombinerInputNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4024(%rax), %r11
@@ -18702,12 +18711,12 @@ glCombinerInputNV:
 	movq	4024(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCombinerInputNV, .-glCombinerInputNV
+	.size	GL_PREFIX(CombinerInputNV), .-GL_PREFIX(CombinerInputNV)
 
 	.p2align	4,,15
-	.globl	glCombinerOutputNV
-	.type	glCombinerOutputNV, @function
-glCombinerOutputNV:
+	.globl	GL_PREFIX(CombinerOutputNV)
+	.type	GL_PREFIX(CombinerOutputNV), @function
+GL_PREFIX(CombinerOutputNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4032(%rax), %r11
@@ -18755,12 +18764,12 @@ glCombinerOutputNV:
 	movq	4032(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCombinerOutputNV, .-glCombinerOutputNV
+	.size	GL_PREFIX(CombinerOutputNV), .-GL_PREFIX(CombinerOutputNV)
 
 	.p2align	4,,15
-	.globl	glFinalCombinerInputNV
-	.type	glFinalCombinerInputNV, @function
-glFinalCombinerInputNV:
+	.globl	GL_PREFIX(FinalCombinerInputNV)
+	.type	GL_PREFIX(FinalCombinerInputNV), @function
+GL_PREFIX(FinalCombinerInputNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4040(%rax), %r11
@@ -18800,12 +18809,12 @@ glFinalCombinerInputNV:
 	movq	4040(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFinalCombinerInputNV, .-glFinalCombinerInputNV
+	.size	GL_PREFIX(FinalCombinerInputNV), .-GL_PREFIX(FinalCombinerInputNV)
 
 	.p2align	4,,15
-	.globl	glGetCombinerInputParameterfvNV
-	.type	glGetCombinerInputParameterfvNV, @function
-glGetCombinerInputParameterfvNV:
+	.globl	GL_PREFIX(GetCombinerInputParameterfvNV)
+	.type	GL_PREFIX(GetCombinerInputParameterfvNV), @function
+GL_PREFIX(GetCombinerInputParameterfvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4048(%rax), %r11
@@ -18845,12 +18854,12 @@ glGetCombinerInputParameterfvNV:
 	movq	4048(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetCombinerInputParameterfvNV, .-glGetCombinerInputParameterfvNV
+	.size	GL_PREFIX(GetCombinerInputParameterfvNV), .-GL_PREFIX(GetCombinerInputParameterfvNV)
 
 	.p2align	4,,15
-	.globl	glGetCombinerInputParameterivNV
-	.type	glGetCombinerInputParameterivNV, @function
-glGetCombinerInputParameterivNV:
+	.globl	GL_PREFIX(GetCombinerInputParameterivNV)
+	.type	GL_PREFIX(GetCombinerInputParameterivNV), @function
+GL_PREFIX(GetCombinerInputParameterivNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4056(%rax), %r11
@@ -18890,12 +18899,12 @@ glGetCombinerInputParameterivNV:
 	movq	4056(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetCombinerInputParameterivNV, .-glGetCombinerInputParameterivNV
+	.size	GL_PREFIX(GetCombinerInputParameterivNV), .-GL_PREFIX(GetCombinerInputParameterivNV)
 
 	.p2align	4,,15
-	.globl	glGetCombinerOutputParameterfvNV
-	.type	glGetCombinerOutputParameterfvNV, @function
-glGetCombinerOutputParameterfvNV:
+	.globl	GL_PREFIX(GetCombinerOutputParameterfvNV)
+	.type	GL_PREFIX(GetCombinerOutputParameterfvNV), @function
+GL_PREFIX(GetCombinerOutputParameterfvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4064(%rax), %r11
@@ -18935,12 +18944,12 @@ glGetCombinerOutputParameterfvNV:
 	movq	4064(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetCombinerOutputParameterfvNV, .-glGetCombinerOutputParameterfvNV
+	.size	GL_PREFIX(GetCombinerOutputParameterfvNV), .-GL_PREFIX(GetCombinerOutputParameterfvNV)
 
 	.p2align	4,,15
-	.globl	glGetCombinerOutputParameterivNV
-	.type	glGetCombinerOutputParameterivNV, @function
-glGetCombinerOutputParameterivNV:
+	.globl	GL_PREFIX(GetCombinerOutputParameterivNV)
+	.type	GL_PREFIX(GetCombinerOutputParameterivNV), @function
+GL_PREFIX(GetCombinerOutputParameterivNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4072(%rax), %r11
@@ -18980,12 +18989,12 @@ glGetCombinerOutputParameterivNV:
 	movq	4072(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetCombinerOutputParameterivNV, .-glGetCombinerOutputParameterivNV
+	.size	GL_PREFIX(GetCombinerOutputParameterivNV), .-GL_PREFIX(GetCombinerOutputParameterivNV)
 
 	.p2align	4,,15
-	.globl	glGetFinalCombinerInputParameterfvNV
-	.type	glGetFinalCombinerInputParameterfvNV, @function
-glGetFinalCombinerInputParameterfvNV:
+	.globl	GL_PREFIX(GetFinalCombinerInputParameterfvNV)
+	.type	GL_PREFIX(GetFinalCombinerInputParameterfvNV), @function
+GL_PREFIX(GetFinalCombinerInputParameterfvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4080(%rax), %r11
@@ -19017,12 +19026,12 @@ glGetFinalCombinerInputParameterfvNV:
 	movq	4080(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetFinalCombinerInputParameterfvNV, .-glGetFinalCombinerInputParameterfvNV
+	.size	GL_PREFIX(GetFinalCombinerInputParameterfvNV), .-GL_PREFIX(GetFinalCombinerInputParameterfvNV)
 
 	.p2align	4,,15
-	.globl	glGetFinalCombinerInputParameterivNV
-	.type	glGetFinalCombinerInputParameterivNV, @function
-glGetFinalCombinerInputParameterivNV:
+	.globl	GL_PREFIX(GetFinalCombinerInputParameterivNV)
+	.type	GL_PREFIX(GetFinalCombinerInputParameterivNV), @function
+GL_PREFIX(GetFinalCombinerInputParameterivNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4088(%rax), %r11
@@ -19054,12 +19063,12 @@ glGetFinalCombinerInputParameterivNV:
 	movq	4088(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetFinalCombinerInputParameterivNV, .-glGetFinalCombinerInputParameterivNV
+	.size	GL_PREFIX(GetFinalCombinerInputParameterivNV), .-GL_PREFIX(GetFinalCombinerInputParameterivNV)
 
 	.p2align	4,,15
-	.globl	glResizeBuffersMESA
-	.type	glResizeBuffersMESA, @function
-glResizeBuffersMESA:
+	.globl	GL_PREFIX(ResizeBuffersMESA)
+	.type	GL_PREFIX(ResizeBuffersMESA), @function
+GL_PREFIX(ResizeBuffersMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4096(%rax), %r11
@@ -19083,12 +19092,12 @@ glResizeBuffersMESA:
 	movq	4096(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glResizeBuffersMESA, .-glResizeBuffersMESA
+	.size	GL_PREFIX(ResizeBuffersMESA), .-GL_PREFIX(ResizeBuffersMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos2dMESA
-	.type	glWindowPos2dMESA, @function
-glWindowPos2dMESA:
+	.globl	GL_PREFIX(WindowPos2dMESA)
+	.type	GL_PREFIX(WindowPos2dMESA), @function
+GL_PREFIX(WindowPos2dMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4104(%rax), %r11
@@ -19120,12 +19129,12 @@ glWindowPos2dMESA:
 	movq	4104(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos2dMESA, .-glWindowPos2dMESA
+	.size	GL_PREFIX(WindowPos2dMESA), .-GL_PREFIX(WindowPos2dMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos2dvMESA
-	.type	glWindowPos2dvMESA, @function
-glWindowPos2dvMESA:
+	.globl	GL_PREFIX(WindowPos2dvMESA)
+	.type	GL_PREFIX(WindowPos2dvMESA), @function
+GL_PREFIX(WindowPos2dvMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4112(%rax), %r11
@@ -19149,12 +19158,12 @@ glWindowPos2dvMESA:
 	movq	4112(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos2dvMESA, .-glWindowPos2dvMESA
+	.size	GL_PREFIX(WindowPos2dvMESA), .-GL_PREFIX(WindowPos2dvMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos2fMESA
-	.type	glWindowPos2fMESA, @function
-glWindowPos2fMESA:
+	.globl	GL_PREFIX(WindowPos2fMESA)
+	.type	GL_PREFIX(WindowPos2fMESA), @function
+GL_PREFIX(WindowPos2fMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4120(%rax), %r11
@@ -19186,12 +19195,12 @@ glWindowPos2fMESA:
 	movq	4120(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos2fMESA, .-glWindowPos2fMESA
+	.size	GL_PREFIX(WindowPos2fMESA), .-GL_PREFIX(WindowPos2fMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos2fvMESA
-	.type	glWindowPos2fvMESA, @function
-glWindowPos2fvMESA:
+	.globl	GL_PREFIX(WindowPos2fvMESA)
+	.type	GL_PREFIX(WindowPos2fvMESA), @function
+GL_PREFIX(WindowPos2fvMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4128(%rax), %r11
@@ -19215,12 +19224,12 @@ glWindowPos2fvMESA:
 	movq	4128(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos2fvMESA, .-glWindowPos2fvMESA
+	.size	GL_PREFIX(WindowPos2fvMESA), .-GL_PREFIX(WindowPos2fvMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos2iMESA
-	.type	glWindowPos2iMESA, @function
-glWindowPos2iMESA:
+	.globl	GL_PREFIX(WindowPos2iMESA)
+	.type	GL_PREFIX(WindowPos2iMESA), @function
+GL_PREFIX(WindowPos2iMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4136(%rax), %r11
@@ -19252,12 +19261,12 @@ glWindowPos2iMESA:
 	movq	4136(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos2iMESA, .-glWindowPos2iMESA
+	.size	GL_PREFIX(WindowPos2iMESA), .-GL_PREFIX(WindowPos2iMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos2ivMESA
-	.type	glWindowPos2ivMESA, @function
-glWindowPos2ivMESA:
+	.globl	GL_PREFIX(WindowPos2ivMESA)
+	.type	GL_PREFIX(WindowPos2ivMESA), @function
+GL_PREFIX(WindowPos2ivMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4144(%rax), %r11
@@ -19281,12 +19290,12 @@ glWindowPos2ivMESA:
 	movq	4144(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos2ivMESA, .-glWindowPos2ivMESA
+	.size	GL_PREFIX(WindowPos2ivMESA), .-GL_PREFIX(WindowPos2ivMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos2sMESA
-	.type	glWindowPos2sMESA, @function
-glWindowPos2sMESA:
+	.globl	GL_PREFIX(WindowPos2sMESA)
+	.type	GL_PREFIX(WindowPos2sMESA), @function
+GL_PREFIX(WindowPos2sMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4152(%rax), %r11
@@ -19318,12 +19327,12 @@ glWindowPos2sMESA:
 	movq	4152(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos2sMESA, .-glWindowPos2sMESA
+	.size	GL_PREFIX(WindowPos2sMESA), .-GL_PREFIX(WindowPos2sMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos2svMESA
-	.type	glWindowPos2svMESA, @function
-glWindowPos2svMESA:
+	.globl	GL_PREFIX(WindowPos2svMESA)
+	.type	GL_PREFIX(WindowPos2svMESA), @function
+GL_PREFIX(WindowPos2svMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4160(%rax), %r11
@@ -19347,12 +19356,12 @@ glWindowPos2svMESA:
 	movq	4160(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos2svMESA, .-glWindowPos2svMESA
+	.size	GL_PREFIX(WindowPos2svMESA), .-GL_PREFIX(WindowPos2svMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos3dMESA
-	.type	glWindowPos3dMESA, @function
-glWindowPos3dMESA:
+	.globl	GL_PREFIX(WindowPos3dMESA)
+	.type	GL_PREFIX(WindowPos3dMESA), @function
+GL_PREFIX(WindowPos3dMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4168(%rax), %r11
@@ -19388,12 +19397,12 @@ glWindowPos3dMESA:
 	movq	4168(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos3dMESA, .-glWindowPos3dMESA
+	.size	GL_PREFIX(WindowPos3dMESA), .-GL_PREFIX(WindowPos3dMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos3dvMESA
-	.type	glWindowPos3dvMESA, @function
-glWindowPos3dvMESA:
+	.globl	GL_PREFIX(WindowPos3dvMESA)
+	.type	GL_PREFIX(WindowPos3dvMESA), @function
+GL_PREFIX(WindowPos3dvMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4176(%rax), %r11
@@ -19417,12 +19426,12 @@ glWindowPos3dvMESA:
 	movq	4176(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos3dvMESA, .-glWindowPos3dvMESA
+	.size	GL_PREFIX(WindowPos3dvMESA), .-GL_PREFIX(WindowPos3dvMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos3fMESA
-	.type	glWindowPos3fMESA, @function
-glWindowPos3fMESA:
+	.globl	GL_PREFIX(WindowPos3fMESA)
+	.type	GL_PREFIX(WindowPos3fMESA), @function
+GL_PREFIX(WindowPos3fMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4184(%rax), %r11
@@ -19458,12 +19467,12 @@ glWindowPos3fMESA:
 	movq	4184(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos3fMESA, .-glWindowPos3fMESA
+	.size	GL_PREFIX(WindowPos3fMESA), .-GL_PREFIX(WindowPos3fMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos3fvMESA
-	.type	glWindowPos3fvMESA, @function
-glWindowPos3fvMESA:
+	.globl	GL_PREFIX(WindowPos3fvMESA)
+	.type	GL_PREFIX(WindowPos3fvMESA), @function
+GL_PREFIX(WindowPos3fvMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4192(%rax), %r11
@@ -19487,12 +19496,12 @@ glWindowPos3fvMESA:
 	movq	4192(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos3fvMESA, .-glWindowPos3fvMESA
+	.size	GL_PREFIX(WindowPos3fvMESA), .-GL_PREFIX(WindowPos3fvMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos3iMESA
-	.type	glWindowPos3iMESA, @function
-glWindowPos3iMESA:
+	.globl	GL_PREFIX(WindowPos3iMESA)
+	.type	GL_PREFIX(WindowPos3iMESA), @function
+GL_PREFIX(WindowPos3iMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4200(%rax), %r11
@@ -19524,12 +19533,12 @@ glWindowPos3iMESA:
 	movq	4200(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos3iMESA, .-glWindowPos3iMESA
+	.size	GL_PREFIX(WindowPos3iMESA), .-GL_PREFIX(WindowPos3iMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos3ivMESA
-	.type	glWindowPos3ivMESA, @function
-glWindowPos3ivMESA:
+	.globl	GL_PREFIX(WindowPos3ivMESA)
+	.type	GL_PREFIX(WindowPos3ivMESA), @function
+GL_PREFIX(WindowPos3ivMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4208(%rax), %r11
@@ -19553,12 +19562,12 @@ glWindowPos3ivMESA:
 	movq	4208(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos3ivMESA, .-glWindowPos3ivMESA
+	.size	GL_PREFIX(WindowPos3ivMESA), .-GL_PREFIX(WindowPos3ivMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos3sMESA
-	.type	glWindowPos3sMESA, @function
-glWindowPos3sMESA:
+	.globl	GL_PREFIX(WindowPos3sMESA)
+	.type	GL_PREFIX(WindowPos3sMESA), @function
+GL_PREFIX(WindowPos3sMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4216(%rax), %r11
@@ -19590,12 +19599,12 @@ glWindowPos3sMESA:
 	movq	4216(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos3sMESA, .-glWindowPos3sMESA
+	.size	GL_PREFIX(WindowPos3sMESA), .-GL_PREFIX(WindowPos3sMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos3svMESA
-	.type	glWindowPos3svMESA, @function
-glWindowPos3svMESA:
+	.globl	GL_PREFIX(WindowPos3svMESA)
+	.type	GL_PREFIX(WindowPos3svMESA), @function
+GL_PREFIX(WindowPos3svMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4224(%rax), %r11
@@ -19619,12 +19628,12 @@ glWindowPos3svMESA:
 	movq	4224(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos3svMESA, .-glWindowPos3svMESA
+	.size	GL_PREFIX(WindowPos3svMESA), .-GL_PREFIX(WindowPos3svMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos4dMESA
-	.type	glWindowPos4dMESA, @function
-glWindowPos4dMESA:
+	.globl	GL_PREFIX(WindowPos4dMESA)
+	.type	GL_PREFIX(WindowPos4dMESA), @function
+GL_PREFIX(WindowPos4dMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4232(%rax), %r11
@@ -19664,12 +19673,12 @@ glWindowPos4dMESA:
 	movq	4232(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos4dMESA, .-glWindowPos4dMESA
+	.size	GL_PREFIX(WindowPos4dMESA), .-GL_PREFIX(WindowPos4dMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos4dvMESA
-	.type	glWindowPos4dvMESA, @function
-glWindowPos4dvMESA:
+	.globl	GL_PREFIX(WindowPos4dvMESA)
+	.type	GL_PREFIX(WindowPos4dvMESA), @function
+GL_PREFIX(WindowPos4dvMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4240(%rax), %r11
@@ -19693,12 +19702,12 @@ glWindowPos4dvMESA:
 	movq	4240(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos4dvMESA, .-glWindowPos4dvMESA
+	.size	GL_PREFIX(WindowPos4dvMESA), .-GL_PREFIX(WindowPos4dvMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos4fMESA
-	.type	glWindowPos4fMESA, @function
-glWindowPos4fMESA:
+	.globl	GL_PREFIX(WindowPos4fMESA)
+	.type	GL_PREFIX(WindowPos4fMESA), @function
+GL_PREFIX(WindowPos4fMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4248(%rax), %r11
@@ -19738,12 +19747,12 @@ glWindowPos4fMESA:
 	movq	4248(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos4fMESA, .-glWindowPos4fMESA
+	.size	GL_PREFIX(WindowPos4fMESA), .-GL_PREFIX(WindowPos4fMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos4fvMESA
-	.type	glWindowPos4fvMESA, @function
-glWindowPos4fvMESA:
+	.globl	GL_PREFIX(WindowPos4fvMESA)
+	.type	GL_PREFIX(WindowPos4fvMESA), @function
+GL_PREFIX(WindowPos4fvMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4256(%rax), %r11
@@ -19767,12 +19776,12 @@ glWindowPos4fvMESA:
 	movq	4256(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos4fvMESA, .-glWindowPos4fvMESA
+	.size	GL_PREFIX(WindowPos4fvMESA), .-GL_PREFIX(WindowPos4fvMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos4iMESA
-	.type	glWindowPos4iMESA, @function
-glWindowPos4iMESA:
+	.globl	GL_PREFIX(WindowPos4iMESA)
+	.type	GL_PREFIX(WindowPos4iMESA), @function
+GL_PREFIX(WindowPos4iMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4264(%rax), %r11
@@ -19812,12 +19821,12 @@ glWindowPos4iMESA:
 	movq	4264(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos4iMESA, .-glWindowPos4iMESA
+	.size	GL_PREFIX(WindowPos4iMESA), .-GL_PREFIX(WindowPos4iMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos4ivMESA
-	.type	glWindowPos4ivMESA, @function
-glWindowPos4ivMESA:
+	.globl	GL_PREFIX(WindowPos4ivMESA)
+	.type	GL_PREFIX(WindowPos4ivMESA), @function
+GL_PREFIX(WindowPos4ivMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4272(%rax), %r11
@@ -19841,12 +19850,12 @@ glWindowPos4ivMESA:
 	movq	4272(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos4ivMESA, .-glWindowPos4ivMESA
+	.size	GL_PREFIX(WindowPos4ivMESA), .-GL_PREFIX(WindowPos4ivMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos4sMESA
-	.type	glWindowPos4sMESA, @function
-glWindowPos4sMESA:
+	.globl	GL_PREFIX(WindowPos4sMESA)
+	.type	GL_PREFIX(WindowPos4sMESA), @function
+GL_PREFIX(WindowPos4sMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4280(%rax), %r11
@@ -19886,12 +19895,12 @@ glWindowPos4sMESA:
 	movq	4280(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos4sMESA, .-glWindowPos4sMESA
+	.size	GL_PREFIX(WindowPos4sMESA), .-GL_PREFIX(WindowPos4sMESA)
 
 	.p2align	4,,15
-	.globl	glWindowPos4svMESA
-	.type	glWindowPos4svMESA, @function
-glWindowPos4svMESA:
+	.globl	GL_PREFIX(WindowPos4svMESA)
+	.type	GL_PREFIX(WindowPos4svMESA), @function
+GL_PREFIX(WindowPos4svMESA):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4288(%rax), %r11
@@ -19915,12 +19924,12 @@ glWindowPos4svMESA:
 	movq	4288(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glWindowPos4svMESA, .-glWindowPos4svMESA
+	.size	GL_PREFIX(WindowPos4svMESA), .-GL_PREFIX(WindowPos4svMESA)
 
 	.p2align	4,,15
-	.globl	glBlendFuncSeparateEXT
-	.type	glBlendFuncSeparateEXT, @function
-glBlendFuncSeparateEXT:
+	.globl	GL_PREFIX(BlendFuncSeparateEXT)
+	.type	GL_PREFIX(BlendFuncSeparateEXT), @function
+GL_PREFIX(BlendFuncSeparateEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4296(%rax), %r11
@@ -19960,12 +19969,12 @@ glBlendFuncSeparateEXT:
 	movq	4296(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBlendFuncSeparateEXT, .-glBlendFuncSeparateEXT
+	.size	GL_PREFIX(BlendFuncSeparateEXT), .-GL_PREFIX(BlendFuncSeparateEXT)
 
 	.p2align	4,,15
-	.globl	glIndexMaterialEXT
-	.type	glIndexMaterialEXT, @function
-glIndexMaterialEXT:
+	.globl	GL_PREFIX(IndexMaterialEXT)
+	.type	GL_PREFIX(IndexMaterialEXT), @function
+GL_PREFIX(IndexMaterialEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4304(%rax), %r11
@@ -19997,12 +20006,12 @@ glIndexMaterialEXT:
 	movq	4304(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIndexMaterialEXT, .-glIndexMaterialEXT
+	.size	GL_PREFIX(IndexMaterialEXT), .-GL_PREFIX(IndexMaterialEXT)
 
 	.p2align	4,,15
-	.globl	glIndexFuncEXT
-	.type	glIndexFuncEXT, @function
-glIndexFuncEXT:
+	.globl	GL_PREFIX(IndexFuncEXT)
+	.type	GL_PREFIX(IndexFuncEXT), @function
+GL_PREFIX(IndexFuncEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4312(%rax), %r11
@@ -20034,12 +20043,12 @@ glIndexFuncEXT:
 	movq	4312(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIndexFuncEXT, .-glIndexFuncEXT
+	.size	GL_PREFIX(IndexFuncEXT), .-GL_PREFIX(IndexFuncEXT)
 
 	.p2align	4,,15
-	.globl	glLockArraysEXT
-	.type	glLockArraysEXT, @function
-glLockArraysEXT:
+	.globl	GL_PREFIX(LockArraysEXT)
+	.type	GL_PREFIX(LockArraysEXT), @function
+GL_PREFIX(LockArraysEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4320(%rax), %r11
@@ -20071,12 +20080,12 @@ glLockArraysEXT:
 	movq	4320(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLockArraysEXT, .-glLockArraysEXT
+	.size	GL_PREFIX(LockArraysEXT), .-GL_PREFIX(LockArraysEXT)
 
 	.p2align	4,,15
-	.globl	glUnlockArraysEXT
-	.type	glUnlockArraysEXT, @function
-glUnlockArraysEXT:
+	.globl	GL_PREFIX(UnlockArraysEXT)
+	.type	GL_PREFIX(UnlockArraysEXT), @function
+GL_PREFIX(UnlockArraysEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4328(%rax), %r11
@@ -20100,12 +20109,12 @@ glUnlockArraysEXT:
 	movq	4328(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUnlockArraysEXT, .-glUnlockArraysEXT
+	.size	GL_PREFIX(UnlockArraysEXT), .-GL_PREFIX(UnlockArraysEXT)
 
 	.p2align	4,,15
-	.globl	glCullParameterdvEXT
-	.type	glCullParameterdvEXT, @function
-glCullParameterdvEXT:
+	.globl	GL_PREFIX(CullParameterdvEXT)
+	.type	GL_PREFIX(CullParameterdvEXT), @function
+GL_PREFIX(CullParameterdvEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4336(%rax), %r11
@@ -20137,12 +20146,12 @@ glCullParameterdvEXT:
 	movq	4336(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCullParameterdvEXT, .-glCullParameterdvEXT
+	.size	GL_PREFIX(CullParameterdvEXT), .-GL_PREFIX(CullParameterdvEXT)
 
 	.p2align	4,,15
-	.globl	glCullParameterfvEXT
-	.type	glCullParameterfvEXT, @function
-glCullParameterfvEXT:
+	.globl	GL_PREFIX(CullParameterfvEXT)
+	.type	GL_PREFIX(CullParameterfvEXT), @function
+GL_PREFIX(CullParameterfvEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4344(%rax), %r11
@@ -20174,12 +20183,12 @@ glCullParameterfvEXT:
 	movq	4344(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCullParameterfvEXT, .-glCullParameterfvEXT
+	.size	GL_PREFIX(CullParameterfvEXT), .-GL_PREFIX(CullParameterfvEXT)
 
 	.p2align	4,,15
-	.globl	glHintPGI
-	.type	glHintPGI, @function
-glHintPGI:
+	.globl	GL_PREFIX(HintPGI)
+	.type	GL_PREFIX(HintPGI), @function
+GL_PREFIX(HintPGI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4352(%rax), %r11
@@ -20211,12 +20220,12 @@ glHintPGI:
 	movq	4352(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glHintPGI, .-glHintPGI
+	.size	GL_PREFIX(HintPGI), .-GL_PREFIX(HintPGI)
 
 	.p2align	4,,15
-	.globl	glFogCoordfEXT
-	.type	glFogCoordfEXT, @function
-glFogCoordfEXT:
+	.globl	GL_PREFIX(FogCoordfEXT)
+	.type	GL_PREFIX(FogCoordfEXT), @function
+GL_PREFIX(FogCoordfEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4360(%rax), %r11
@@ -20244,12 +20253,12 @@ glFogCoordfEXT:
 	movq	4360(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFogCoordfEXT, .-glFogCoordfEXT
+	.size	GL_PREFIX(FogCoordfEXT), .-GL_PREFIX(FogCoordfEXT)
 
 	.p2align	4,,15
-	.globl	glFogCoordfvEXT
-	.type	glFogCoordfvEXT, @function
-glFogCoordfvEXT:
+	.globl	GL_PREFIX(FogCoordfvEXT)
+	.type	GL_PREFIX(FogCoordfvEXT), @function
+GL_PREFIX(FogCoordfvEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4368(%rax), %r11
@@ -20273,12 +20282,12 @@ glFogCoordfvEXT:
 	movq	4368(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFogCoordfvEXT, .-glFogCoordfvEXT
+	.size	GL_PREFIX(FogCoordfvEXT), .-GL_PREFIX(FogCoordfvEXT)
 
 	.p2align	4,,15
-	.globl	glFogCoorddEXT
-	.type	glFogCoorddEXT, @function
-glFogCoorddEXT:
+	.globl	GL_PREFIX(FogCoorddEXT)
+	.type	GL_PREFIX(FogCoorddEXT), @function
+GL_PREFIX(FogCoorddEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4376(%rax), %r11
@@ -20306,12 +20315,12 @@ glFogCoorddEXT:
 	movq	4376(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFogCoorddEXT, .-glFogCoorddEXT
+	.size	GL_PREFIX(FogCoorddEXT), .-GL_PREFIX(FogCoorddEXT)
 
 	.p2align	4,,15
-	.globl	glFogCoorddvEXT
-	.type	glFogCoorddvEXT, @function
-glFogCoorddvEXT:
+	.globl	GL_PREFIX(FogCoorddvEXT)
+	.type	GL_PREFIX(FogCoorddvEXT), @function
+GL_PREFIX(FogCoorddvEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4384(%rax), %r11
@@ -20335,12 +20344,12 @@ glFogCoorddvEXT:
 	movq	4384(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFogCoorddvEXT, .-glFogCoorddvEXT
+	.size	GL_PREFIX(FogCoorddvEXT), .-GL_PREFIX(FogCoorddvEXT)
 
 	.p2align	4,,15
-	.globl	glFogCoordPointerEXT
-	.type	glFogCoordPointerEXT, @function
-glFogCoordPointerEXT:
+	.globl	GL_PREFIX(FogCoordPointerEXT)
+	.type	GL_PREFIX(FogCoordPointerEXT), @function
+GL_PREFIX(FogCoordPointerEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4392(%rax), %r11
@@ -20372,12 +20381,12 @@ glFogCoordPointerEXT:
 	movq	4392(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFogCoordPointerEXT, .-glFogCoordPointerEXT
+	.size	GL_PREFIX(FogCoordPointerEXT), .-GL_PREFIX(FogCoordPointerEXT)
 
 	.p2align	4,,15
-	.globl	glGetColorTableEXT
-	.type	glGetColorTableEXT, @function
-glGetColorTableEXT:
+	.globl	GL_PREFIX(GetColorTableEXT)
+	.type	GL_PREFIX(GetColorTableEXT), @function
+GL_PREFIX(GetColorTableEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4400(%rax), %r11
@@ -20417,12 +20426,12 @@ glGetColorTableEXT:
 	movq	4400(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetColorTableEXT, .-glGetColorTableEXT
+	.size	GL_PREFIX(GetColorTableEXT), .-GL_PREFIX(GetColorTableEXT)
 
 	.p2align	4,,15
-	.globl	glGetColorTableParameterivEXT
-	.type	glGetColorTableParameterivEXT, @function
-glGetColorTableParameterivEXT:
+	.globl	GL_PREFIX(GetColorTableParameterivEXT)
+	.type	GL_PREFIX(GetColorTableParameterivEXT), @function
+GL_PREFIX(GetColorTableParameterivEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4408(%rax), %r11
@@ -20454,12 +20463,12 @@ glGetColorTableParameterivEXT:
 	movq	4408(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetColorTableParameterivEXT, .-glGetColorTableParameterivEXT
+	.size	GL_PREFIX(GetColorTableParameterivEXT), .-GL_PREFIX(GetColorTableParameterivEXT)
 
 	.p2align	4,,15
-	.globl	glGetColorTableParameterfvEXT
-	.type	glGetColorTableParameterfvEXT, @function
-glGetColorTableParameterfvEXT:
+	.globl	GL_PREFIX(GetColorTableParameterfvEXT)
+	.type	GL_PREFIX(GetColorTableParameterfvEXT), @function
+GL_PREFIX(GetColorTableParameterfvEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4416(%rax), %r11
@@ -20491,12 +20500,12 @@ glGetColorTableParameterfvEXT:
 	movq	4416(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetColorTableParameterfvEXT, .-glGetColorTableParameterfvEXT
+	.size	GL_PREFIX(GetColorTableParameterfvEXT), .-GL_PREFIX(GetColorTableParameterfvEXT)
 
 	.p2align	4,,15
-	.globl	glTbufferMask3DFX
-	.type	glTbufferMask3DFX, @function
-glTbufferMask3DFX:
+	.globl	GL_PREFIX(TbufferMask3DFX)
+	.type	GL_PREFIX(TbufferMask3DFX), @function
+GL_PREFIX(TbufferMask3DFX):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4424(%rax), %r11
@@ -20520,12 +20529,12 @@ glTbufferMask3DFX:
 	movq	4424(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTbufferMask3DFX, .-glTbufferMask3DFX
+	.size	GL_PREFIX(TbufferMask3DFX), .-GL_PREFIX(TbufferMask3DFX)
 
 	.p2align	4,,15
-	.globl	glCompressedTexImage3DARB
-	.type	glCompressedTexImage3DARB, @function
-glCompressedTexImage3DARB:
+	.globl	GL_PREFIX(CompressedTexImage3DARB)
+	.type	GL_PREFIX(CompressedTexImage3DARB), @function
+GL_PREFIX(CompressedTexImage3DARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4432(%rax), %r11
@@ -20573,12 +20582,12 @@ glCompressedTexImage3DARB:
 	movq	4432(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCompressedTexImage3DARB, .-glCompressedTexImage3DARB
+	.size	GL_PREFIX(CompressedTexImage3DARB), .-GL_PREFIX(CompressedTexImage3DARB)
 
 	.p2align	4,,15
-	.globl	glCompressedTexImage2DARB
-	.type	glCompressedTexImage2DARB, @function
-glCompressedTexImage2DARB:
+	.globl	GL_PREFIX(CompressedTexImage2DARB)
+	.type	GL_PREFIX(CompressedTexImage2DARB), @function
+GL_PREFIX(CompressedTexImage2DARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4440(%rax), %r11
@@ -20626,12 +20635,12 @@ glCompressedTexImage2DARB:
 	movq	4440(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCompressedTexImage2DARB, .-glCompressedTexImage2DARB
+	.size	GL_PREFIX(CompressedTexImage2DARB), .-GL_PREFIX(CompressedTexImage2DARB)
 
 	.p2align	4,,15
-	.globl	glCompressedTexImage1DARB
-	.type	glCompressedTexImage1DARB, @function
-glCompressedTexImage1DARB:
+	.globl	GL_PREFIX(CompressedTexImage1DARB)
+	.type	GL_PREFIX(CompressedTexImage1DARB), @function
+GL_PREFIX(CompressedTexImage1DARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4448(%rax), %r11
@@ -20679,12 +20688,12 @@ glCompressedTexImage1DARB:
 	movq	4448(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCompressedTexImage1DARB, .-glCompressedTexImage1DARB
+	.size	GL_PREFIX(CompressedTexImage1DARB), .-GL_PREFIX(CompressedTexImage1DARB)
 
 	.p2align	4,,15
-	.globl	glCompressedTexSubImage3DARB
-	.type	glCompressedTexSubImage3DARB, @function
-glCompressedTexSubImage3DARB:
+	.globl	GL_PREFIX(CompressedTexSubImage3DARB)
+	.type	GL_PREFIX(CompressedTexSubImage3DARB), @function
+GL_PREFIX(CompressedTexSubImage3DARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4456(%rax), %r11
@@ -20732,12 +20741,12 @@ glCompressedTexSubImage3DARB:
 	movq	4456(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCompressedTexSubImage3DARB, .-glCompressedTexSubImage3DARB
+	.size	GL_PREFIX(CompressedTexSubImage3DARB), .-GL_PREFIX(CompressedTexSubImage3DARB)
 
 	.p2align	4,,15
-	.globl	glCompressedTexSubImage2DARB
-	.type	glCompressedTexSubImage2DARB, @function
-glCompressedTexSubImage2DARB:
+	.globl	GL_PREFIX(CompressedTexSubImage2DARB)
+	.type	GL_PREFIX(CompressedTexSubImage2DARB), @function
+GL_PREFIX(CompressedTexSubImage2DARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4464(%rax), %r11
@@ -20785,12 +20794,12 @@ glCompressedTexSubImage2DARB:
 	movq	4464(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCompressedTexSubImage2DARB, .-glCompressedTexSubImage2DARB
+	.size	GL_PREFIX(CompressedTexSubImage2DARB), .-GL_PREFIX(CompressedTexSubImage2DARB)
 
 	.p2align	4,,15
-	.globl	glCompressedTexSubImage1DARB
-	.type	glCompressedTexSubImage1DARB, @function
-glCompressedTexSubImage1DARB:
+	.globl	GL_PREFIX(CompressedTexSubImage1DARB)
+	.type	GL_PREFIX(CompressedTexSubImage1DARB), @function
+GL_PREFIX(CompressedTexSubImage1DARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4472(%rax), %r11
@@ -20838,12 +20847,12 @@ glCompressedTexSubImage1DARB:
 	movq	4472(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCompressedTexSubImage1DARB, .-glCompressedTexSubImage1DARB
+	.size	GL_PREFIX(CompressedTexSubImage1DARB), .-GL_PREFIX(CompressedTexSubImage1DARB)
 
 	.p2align	4,,15
-	.globl	glGetCompressedTexImageARB
-	.type	glGetCompressedTexImageARB, @function
-glGetCompressedTexImageARB:
+	.globl	GL_PREFIX(GetCompressedTexImageARB)
+	.type	GL_PREFIX(GetCompressedTexImageARB), @function
+GL_PREFIX(GetCompressedTexImageARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4480(%rax), %r11
@@ -20875,12 +20884,12 @@ glGetCompressedTexImageARB:
 	movq	4480(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetCompressedTexImageARB, .-glGetCompressedTexImageARB
+	.size	GL_PREFIX(GetCompressedTexImageARB), .-GL_PREFIX(GetCompressedTexImageARB)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3bEXT
-	.type	glSecondaryColor3bEXT, @function
-glSecondaryColor3bEXT:
+	.globl	GL_PREFIX(SecondaryColor3bEXT)
+	.type	GL_PREFIX(SecondaryColor3bEXT), @function
+GL_PREFIX(SecondaryColor3bEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4488(%rax), %r11
@@ -20912,12 +20921,12 @@ glSecondaryColor3bEXT:
 	movq	4488(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3bEXT, .-glSecondaryColor3bEXT
+	.size	GL_PREFIX(SecondaryColor3bEXT), .-GL_PREFIX(SecondaryColor3bEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3bvEXT
-	.type	glSecondaryColor3bvEXT, @function
-glSecondaryColor3bvEXT:
+	.globl	GL_PREFIX(SecondaryColor3bvEXT)
+	.type	GL_PREFIX(SecondaryColor3bvEXT), @function
+GL_PREFIX(SecondaryColor3bvEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4496(%rax), %r11
@@ -20941,12 +20950,12 @@ glSecondaryColor3bvEXT:
 	movq	4496(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3bvEXT, .-glSecondaryColor3bvEXT
+	.size	GL_PREFIX(SecondaryColor3bvEXT), .-GL_PREFIX(SecondaryColor3bvEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3dEXT
-	.type	glSecondaryColor3dEXT, @function
-glSecondaryColor3dEXT:
+	.globl	GL_PREFIX(SecondaryColor3dEXT)
+	.type	GL_PREFIX(SecondaryColor3dEXT), @function
+GL_PREFIX(SecondaryColor3dEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4504(%rax), %r11
@@ -20982,12 +20991,12 @@ glSecondaryColor3dEXT:
 	movq	4504(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3dEXT, .-glSecondaryColor3dEXT
+	.size	GL_PREFIX(SecondaryColor3dEXT), .-GL_PREFIX(SecondaryColor3dEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3dvEXT
-	.type	glSecondaryColor3dvEXT, @function
-glSecondaryColor3dvEXT:
+	.globl	GL_PREFIX(SecondaryColor3dvEXT)
+	.type	GL_PREFIX(SecondaryColor3dvEXT), @function
+GL_PREFIX(SecondaryColor3dvEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4512(%rax), %r11
@@ -21011,12 +21020,12 @@ glSecondaryColor3dvEXT:
 	movq	4512(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3dvEXT, .-glSecondaryColor3dvEXT
+	.size	GL_PREFIX(SecondaryColor3dvEXT), .-GL_PREFIX(SecondaryColor3dvEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3fEXT
-	.type	glSecondaryColor3fEXT, @function
-glSecondaryColor3fEXT:
+	.globl	GL_PREFIX(SecondaryColor3fEXT)
+	.type	GL_PREFIX(SecondaryColor3fEXT), @function
+GL_PREFIX(SecondaryColor3fEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4520(%rax), %r11
@@ -21052,12 +21061,12 @@ glSecondaryColor3fEXT:
 	movq	4520(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3fEXT, .-glSecondaryColor3fEXT
+	.size	GL_PREFIX(SecondaryColor3fEXT), .-GL_PREFIX(SecondaryColor3fEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3fvEXT
-	.type	glSecondaryColor3fvEXT, @function
-glSecondaryColor3fvEXT:
+	.globl	GL_PREFIX(SecondaryColor3fvEXT)
+	.type	GL_PREFIX(SecondaryColor3fvEXT), @function
+GL_PREFIX(SecondaryColor3fvEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4528(%rax), %r11
@@ -21081,12 +21090,12 @@ glSecondaryColor3fvEXT:
 	movq	4528(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3fvEXT, .-glSecondaryColor3fvEXT
+	.size	GL_PREFIX(SecondaryColor3fvEXT), .-GL_PREFIX(SecondaryColor3fvEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3iEXT
-	.type	glSecondaryColor3iEXT, @function
-glSecondaryColor3iEXT:
+	.globl	GL_PREFIX(SecondaryColor3iEXT)
+	.type	GL_PREFIX(SecondaryColor3iEXT), @function
+GL_PREFIX(SecondaryColor3iEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4536(%rax), %r11
@@ -21118,12 +21127,12 @@ glSecondaryColor3iEXT:
 	movq	4536(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3iEXT, .-glSecondaryColor3iEXT
+	.size	GL_PREFIX(SecondaryColor3iEXT), .-GL_PREFIX(SecondaryColor3iEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3ivEXT
-	.type	glSecondaryColor3ivEXT, @function
-glSecondaryColor3ivEXT:
+	.globl	GL_PREFIX(SecondaryColor3ivEXT)
+	.type	GL_PREFIX(SecondaryColor3ivEXT), @function
+GL_PREFIX(SecondaryColor3ivEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4544(%rax), %r11
@@ -21147,12 +21156,12 @@ glSecondaryColor3ivEXT:
 	movq	4544(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3ivEXT, .-glSecondaryColor3ivEXT
+	.size	GL_PREFIX(SecondaryColor3ivEXT), .-GL_PREFIX(SecondaryColor3ivEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3sEXT
-	.type	glSecondaryColor3sEXT, @function
-glSecondaryColor3sEXT:
+	.globl	GL_PREFIX(SecondaryColor3sEXT)
+	.type	GL_PREFIX(SecondaryColor3sEXT), @function
+GL_PREFIX(SecondaryColor3sEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4552(%rax), %r11
@@ -21184,12 +21193,12 @@ glSecondaryColor3sEXT:
 	movq	4552(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3sEXT, .-glSecondaryColor3sEXT
+	.size	GL_PREFIX(SecondaryColor3sEXT), .-GL_PREFIX(SecondaryColor3sEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3svEXT
-	.type	glSecondaryColor3svEXT, @function
-glSecondaryColor3svEXT:
+	.globl	GL_PREFIX(SecondaryColor3svEXT)
+	.type	GL_PREFIX(SecondaryColor3svEXT), @function
+GL_PREFIX(SecondaryColor3svEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4560(%rax), %r11
@@ -21213,12 +21222,12 @@ glSecondaryColor3svEXT:
 	movq	4560(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3svEXT, .-glSecondaryColor3svEXT
+	.size	GL_PREFIX(SecondaryColor3svEXT), .-GL_PREFIX(SecondaryColor3svEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3ubEXT
-	.type	glSecondaryColor3ubEXT, @function
-glSecondaryColor3ubEXT:
+	.globl	GL_PREFIX(SecondaryColor3ubEXT)
+	.type	GL_PREFIX(SecondaryColor3ubEXT), @function
+GL_PREFIX(SecondaryColor3ubEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4568(%rax), %r11
@@ -21250,12 +21259,12 @@ glSecondaryColor3ubEXT:
 	movq	4568(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3ubEXT, .-glSecondaryColor3ubEXT
+	.size	GL_PREFIX(SecondaryColor3ubEXT), .-GL_PREFIX(SecondaryColor3ubEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3ubvEXT
-	.type	glSecondaryColor3ubvEXT, @function
-glSecondaryColor3ubvEXT:
+	.globl	GL_PREFIX(SecondaryColor3ubvEXT)
+	.type	GL_PREFIX(SecondaryColor3ubvEXT), @function
+GL_PREFIX(SecondaryColor3ubvEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4576(%rax), %r11
@@ -21279,12 +21288,12 @@ glSecondaryColor3ubvEXT:
 	movq	4576(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3ubvEXT, .-glSecondaryColor3ubvEXT
+	.size	GL_PREFIX(SecondaryColor3ubvEXT), .-GL_PREFIX(SecondaryColor3ubvEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3uiEXT
-	.type	glSecondaryColor3uiEXT, @function
-glSecondaryColor3uiEXT:
+	.globl	GL_PREFIX(SecondaryColor3uiEXT)
+	.type	GL_PREFIX(SecondaryColor3uiEXT), @function
+GL_PREFIX(SecondaryColor3uiEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4584(%rax), %r11
@@ -21316,12 +21325,12 @@ glSecondaryColor3uiEXT:
 	movq	4584(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3uiEXT, .-glSecondaryColor3uiEXT
+	.size	GL_PREFIX(SecondaryColor3uiEXT), .-GL_PREFIX(SecondaryColor3uiEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3uivEXT
-	.type	glSecondaryColor3uivEXT, @function
-glSecondaryColor3uivEXT:
+	.globl	GL_PREFIX(SecondaryColor3uivEXT)
+	.type	GL_PREFIX(SecondaryColor3uivEXT), @function
+GL_PREFIX(SecondaryColor3uivEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4592(%rax), %r11
@@ -21345,12 +21354,12 @@ glSecondaryColor3uivEXT:
 	movq	4592(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3uivEXT, .-glSecondaryColor3uivEXT
+	.size	GL_PREFIX(SecondaryColor3uivEXT), .-GL_PREFIX(SecondaryColor3uivEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3usEXT
-	.type	glSecondaryColor3usEXT, @function
-glSecondaryColor3usEXT:
+	.globl	GL_PREFIX(SecondaryColor3usEXT)
+	.type	GL_PREFIX(SecondaryColor3usEXT), @function
+GL_PREFIX(SecondaryColor3usEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4600(%rax), %r11
@@ -21382,12 +21391,12 @@ glSecondaryColor3usEXT:
 	movq	4600(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3usEXT, .-glSecondaryColor3usEXT
+	.size	GL_PREFIX(SecondaryColor3usEXT), .-GL_PREFIX(SecondaryColor3usEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColor3usvEXT
-	.type	glSecondaryColor3usvEXT, @function
-glSecondaryColor3usvEXT:
+	.globl	GL_PREFIX(SecondaryColor3usvEXT)
+	.type	GL_PREFIX(SecondaryColor3usvEXT), @function
+GL_PREFIX(SecondaryColor3usvEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4608(%rax), %r11
@@ -21411,12 +21420,12 @@ glSecondaryColor3usvEXT:
 	movq	4608(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColor3usvEXT, .-glSecondaryColor3usvEXT
+	.size	GL_PREFIX(SecondaryColor3usvEXT), .-GL_PREFIX(SecondaryColor3usvEXT)
 
 	.p2align	4,,15
-	.globl	glSecondaryColorPointerEXT
-	.type	glSecondaryColorPointerEXT, @function
-glSecondaryColorPointerEXT:
+	.globl	GL_PREFIX(SecondaryColorPointerEXT)
+	.type	GL_PREFIX(SecondaryColorPointerEXT), @function
+GL_PREFIX(SecondaryColorPointerEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4616(%rax), %r11
@@ -21456,12 +21465,12 @@ glSecondaryColorPointerEXT:
 	movq	4616(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSecondaryColorPointerEXT, .-glSecondaryColorPointerEXT
+	.size	GL_PREFIX(SecondaryColorPointerEXT), .-GL_PREFIX(SecondaryColorPointerEXT)
 
 	.p2align	4,,15
-	.globl	glAreProgramsResidentNV
-	.type	glAreProgramsResidentNV, @function
-glAreProgramsResidentNV:
+	.globl	GL_PREFIX(AreProgramsResidentNV)
+	.type	GL_PREFIX(AreProgramsResidentNV), @function
+GL_PREFIX(AreProgramsResidentNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4624(%rax), %r11
@@ -21493,12 +21502,12 @@ glAreProgramsResidentNV:
 	movq	4624(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glAreProgramsResidentNV, .-glAreProgramsResidentNV
+	.size	GL_PREFIX(AreProgramsResidentNV), .-GL_PREFIX(AreProgramsResidentNV)
 
 	.p2align	4,,15
-	.globl	glBindProgramNV
-	.type	glBindProgramNV, @function
-glBindProgramNV:
+	.globl	GL_PREFIX(BindProgramNV)
+	.type	GL_PREFIX(BindProgramNV), @function
+GL_PREFIX(BindProgramNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4632(%rax), %r11
@@ -21530,12 +21539,12 @@ glBindProgramNV:
 	movq	4632(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBindProgramNV, .-glBindProgramNV
+	.size	GL_PREFIX(BindProgramNV), .-GL_PREFIX(BindProgramNV)
 
 	.p2align	4,,15
-	.globl	glDeleteProgramsNV
-	.type	glDeleteProgramsNV, @function
-glDeleteProgramsNV:
+	.globl	GL_PREFIX(DeleteProgramsNV)
+	.type	GL_PREFIX(DeleteProgramsNV), @function
+GL_PREFIX(DeleteProgramsNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4640(%rax), %r11
@@ -21567,12 +21576,12 @@ glDeleteProgramsNV:
 	movq	4640(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDeleteProgramsNV, .-glDeleteProgramsNV
+	.size	GL_PREFIX(DeleteProgramsNV), .-GL_PREFIX(DeleteProgramsNV)
 
 	.p2align	4,,15
-	.globl	glExecuteProgramNV
-	.type	glExecuteProgramNV, @function
-glExecuteProgramNV:
+	.globl	GL_PREFIX(ExecuteProgramNV)
+	.type	GL_PREFIX(ExecuteProgramNV), @function
+GL_PREFIX(ExecuteProgramNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4648(%rax), %r11
@@ -21604,12 +21613,12 @@ glExecuteProgramNV:
 	movq	4648(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glExecuteProgramNV, .-glExecuteProgramNV
+	.size	GL_PREFIX(ExecuteProgramNV), .-GL_PREFIX(ExecuteProgramNV)
 
 	.p2align	4,,15
-	.globl	glGenProgramsNV
-	.type	glGenProgramsNV, @function
-glGenProgramsNV:
+	.globl	GL_PREFIX(GenProgramsNV)
+	.type	GL_PREFIX(GenProgramsNV), @function
+GL_PREFIX(GenProgramsNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4656(%rax), %r11
@@ -21641,12 +21650,12 @@ glGenProgramsNV:
 	movq	4656(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGenProgramsNV, .-glGenProgramsNV
+	.size	GL_PREFIX(GenProgramsNV), .-GL_PREFIX(GenProgramsNV)
 
 	.p2align	4,,15
-	.globl	glGetProgramParameterdvNV
-	.type	glGetProgramParameterdvNV, @function
-glGetProgramParameterdvNV:
+	.globl	GL_PREFIX(GetProgramParameterdvNV)
+	.type	GL_PREFIX(GetProgramParameterdvNV), @function
+GL_PREFIX(GetProgramParameterdvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4664(%rax), %r11
@@ -21686,12 +21695,12 @@ glGetProgramParameterdvNV:
 	movq	4664(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetProgramParameterdvNV, .-glGetProgramParameterdvNV
+	.size	GL_PREFIX(GetProgramParameterdvNV), .-GL_PREFIX(GetProgramParameterdvNV)
 
 	.p2align	4,,15
-	.globl	glGetProgramParameterfvNV
-	.type	glGetProgramParameterfvNV, @function
-glGetProgramParameterfvNV:
+	.globl	GL_PREFIX(GetProgramParameterfvNV)
+	.type	GL_PREFIX(GetProgramParameterfvNV), @function
+GL_PREFIX(GetProgramParameterfvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4672(%rax), %r11
@@ -21731,12 +21740,12 @@ glGetProgramParameterfvNV:
 	movq	4672(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetProgramParameterfvNV, .-glGetProgramParameterfvNV
+	.size	GL_PREFIX(GetProgramParameterfvNV), .-GL_PREFIX(GetProgramParameterfvNV)
 
 	.p2align	4,,15
-	.globl	glGetProgramivNV
-	.type	glGetProgramivNV, @function
-glGetProgramivNV:
+	.globl	GL_PREFIX(GetProgramivNV)
+	.type	GL_PREFIX(GetProgramivNV), @function
+GL_PREFIX(GetProgramivNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4680(%rax), %r11
@@ -21768,12 +21777,12 @@ glGetProgramivNV:
 	movq	4680(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetProgramivNV, .-glGetProgramivNV
+	.size	GL_PREFIX(GetProgramivNV), .-GL_PREFIX(GetProgramivNV)
 
 	.p2align	4,,15
-	.globl	glGetProgramStringNV
-	.type	glGetProgramStringNV, @function
-glGetProgramStringNV:
+	.globl	GL_PREFIX(GetProgramStringNV)
+	.type	GL_PREFIX(GetProgramStringNV), @function
+GL_PREFIX(GetProgramStringNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4688(%rax), %r11
@@ -21805,12 +21814,12 @@ glGetProgramStringNV:
 	movq	4688(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetProgramStringNV, .-glGetProgramStringNV
+	.size	GL_PREFIX(GetProgramStringNV), .-GL_PREFIX(GetProgramStringNV)
 
 	.p2align	4,,15
-	.globl	glGetTrackMatrixivNV
-	.type	glGetTrackMatrixivNV, @function
-glGetTrackMatrixivNV:
+	.globl	GL_PREFIX(GetTrackMatrixivNV)
+	.type	GL_PREFIX(GetTrackMatrixivNV), @function
+GL_PREFIX(GetTrackMatrixivNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4696(%rax), %r11
@@ -21850,12 +21859,12 @@ glGetTrackMatrixivNV:
 	movq	4696(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetTrackMatrixivNV, .-glGetTrackMatrixivNV
+	.size	GL_PREFIX(GetTrackMatrixivNV), .-GL_PREFIX(GetTrackMatrixivNV)
 
 	.p2align	4,,15
-	.globl	glGetVertexAttribdvARB
-	.type	glGetVertexAttribdvARB, @function
-glGetVertexAttribdvARB:
+	.globl	GL_PREFIX(GetVertexAttribdvARB)
+	.type	GL_PREFIX(GetVertexAttribdvARB), @function
+GL_PREFIX(GetVertexAttribdvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4704(%rax), %r11
@@ -21887,12 +21896,12 @@ glGetVertexAttribdvARB:
 	movq	4704(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetVertexAttribdvARB, .-glGetVertexAttribdvARB
+	.size	GL_PREFIX(GetVertexAttribdvARB), .-GL_PREFIX(GetVertexAttribdvARB)
 
 	.p2align	4,,15
-	.globl	glGetVertexAttribfvARB
-	.type	glGetVertexAttribfvARB, @function
-glGetVertexAttribfvARB:
+	.globl	GL_PREFIX(GetVertexAttribfvARB)
+	.type	GL_PREFIX(GetVertexAttribfvARB), @function
+GL_PREFIX(GetVertexAttribfvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4712(%rax), %r11
@@ -21924,12 +21933,12 @@ glGetVertexAttribfvARB:
 	movq	4712(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetVertexAttribfvARB, .-glGetVertexAttribfvARB
+	.size	GL_PREFIX(GetVertexAttribfvARB), .-GL_PREFIX(GetVertexAttribfvARB)
 
 	.p2align	4,,15
-	.globl	glGetVertexAttribivARB
-	.type	glGetVertexAttribivARB, @function
-glGetVertexAttribivARB:
+	.globl	GL_PREFIX(GetVertexAttribivARB)
+	.type	GL_PREFIX(GetVertexAttribivARB), @function
+GL_PREFIX(GetVertexAttribivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4720(%rax), %r11
@@ -21961,12 +21970,12 @@ glGetVertexAttribivARB:
 	movq	4720(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetVertexAttribivARB, .-glGetVertexAttribivARB
+	.size	GL_PREFIX(GetVertexAttribivARB), .-GL_PREFIX(GetVertexAttribivARB)
 
 	.p2align	4,,15
-	.globl	glGetVertexAttribPointervNV
-	.type	glGetVertexAttribPointervNV, @function
-glGetVertexAttribPointervNV:
+	.globl	GL_PREFIX(GetVertexAttribPointervNV)
+	.type	GL_PREFIX(GetVertexAttribPointervNV), @function
+GL_PREFIX(GetVertexAttribPointervNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4728(%rax), %r11
@@ -21998,12 +22007,12 @@ glGetVertexAttribPointervNV:
 	movq	4728(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetVertexAttribPointervNV, .-glGetVertexAttribPointervNV
+	.size	GL_PREFIX(GetVertexAttribPointervNV), .-GL_PREFIX(GetVertexAttribPointervNV)
 
 	.p2align	4,,15
-	.globl	glIsProgramNV
-	.type	glIsProgramNV, @function
-glIsProgramNV:
+	.globl	GL_PREFIX(IsProgramNV)
+	.type	GL_PREFIX(IsProgramNV), @function
+GL_PREFIX(IsProgramNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4736(%rax), %r11
@@ -22027,12 +22036,12 @@ glIsProgramNV:
 	movq	4736(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIsProgramNV, .-glIsProgramNV
+	.size	GL_PREFIX(IsProgramNV), .-GL_PREFIX(IsProgramNV)
 
 	.p2align	4,,15
-	.globl	glLoadProgramNV
-	.type	glLoadProgramNV, @function
-glLoadProgramNV:
+	.globl	GL_PREFIX(LoadProgramNV)
+	.type	GL_PREFIX(LoadProgramNV), @function
+GL_PREFIX(LoadProgramNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4744(%rax), %r11
@@ -22072,12 +22081,12 @@ glLoadProgramNV:
 	movq	4744(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLoadProgramNV, .-glLoadProgramNV
+	.size	GL_PREFIX(LoadProgramNV), .-GL_PREFIX(LoadProgramNV)
 
 	.p2align	4,,15
-	.globl	glProgramParameter4dNV
-	.type	glProgramParameter4dNV, @function
-glProgramParameter4dNV:
+	.globl	GL_PREFIX(ProgramParameter4dNV)
+	.type	GL_PREFIX(ProgramParameter4dNV), @function
+GL_PREFIX(ProgramParameter4dNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4752(%rax), %r11
@@ -22125,12 +22134,12 @@ glProgramParameter4dNV:
 	movq	4752(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramParameter4dNV, .-glProgramParameter4dNV
+	.size	GL_PREFIX(ProgramParameter4dNV), .-GL_PREFIX(ProgramParameter4dNV)
 
 	.p2align	4,,15
-	.globl	glProgramParameter4dvNV
-	.type	glProgramParameter4dvNV, @function
-glProgramParameter4dvNV:
+	.globl	GL_PREFIX(ProgramParameter4dvNV)
+	.type	GL_PREFIX(ProgramParameter4dvNV), @function
+GL_PREFIX(ProgramParameter4dvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4760(%rax), %r11
@@ -22162,12 +22171,12 @@ glProgramParameter4dvNV:
 	movq	4760(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramParameter4dvNV, .-glProgramParameter4dvNV
+	.size	GL_PREFIX(ProgramParameter4dvNV), .-GL_PREFIX(ProgramParameter4dvNV)
 
 	.p2align	4,,15
-	.globl	glProgramParameter4fNV
-	.type	glProgramParameter4fNV, @function
-glProgramParameter4fNV:
+	.globl	GL_PREFIX(ProgramParameter4fNV)
+	.type	GL_PREFIX(ProgramParameter4fNV), @function
+GL_PREFIX(ProgramParameter4fNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4768(%rax), %r11
@@ -22215,12 +22224,12 @@ glProgramParameter4fNV:
 	movq	4768(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramParameter4fNV, .-glProgramParameter4fNV
+	.size	GL_PREFIX(ProgramParameter4fNV), .-GL_PREFIX(ProgramParameter4fNV)
 
 	.p2align	4,,15
-	.globl	glProgramParameter4fvNV
-	.type	glProgramParameter4fvNV, @function
-glProgramParameter4fvNV:
+	.globl	GL_PREFIX(ProgramParameter4fvNV)
+	.type	GL_PREFIX(ProgramParameter4fvNV), @function
+GL_PREFIX(ProgramParameter4fvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4776(%rax), %r11
@@ -22252,12 +22261,12 @@ glProgramParameter4fvNV:
 	movq	4776(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramParameter4fvNV, .-glProgramParameter4fvNV
+	.size	GL_PREFIX(ProgramParameter4fvNV), .-GL_PREFIX(ProgramParameter4fvNV)
 
 	.p2align	4,,15
-	.globl	glProgramParameters4dvNV
-	.type	glProgramParameters4dvNV, @function
-glProgramParameters4dvNV:
+	.globl	GL_PREFIX(ProgramParameters4dvNV)
+	.type	GL_PREFIX(ProgramParameters4dvNV), @function
+GL_PREFIX(ProgramParameters4dvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4784(%rax), %r11
@@ -22297,12 +22306,12 @@ glProgramParameters4dvNV:
 	movq	4784(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramParameters4dvNV, .-glProgramParameters4dvNV
+	.size	GL_PREFIX(ProgramParameters4dvNV), .-GL_PREFIX(ProgramParameters4dvNV)
 
 	.p2align	4,,15
-	.globl	glProgramParameters4fvNV
-	.type	glProgramParameters4fvNV, @function
-glProgramParameters4fvNV:
+	.globl	GL_PREFIX(ProgramParameters4fvNV)
+	.type	GL_PREFIX(ProgramParameters4fvNV), @function
+GL_PREFIX(ProgramParameters4fvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4792(%rax), %r11
@@ -22342,12 +22351,12 @@ glProgramParameters4fvNV:
 	movq	4792(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramParameters4fvNV, .-glProgramParameters4fvNV
+	.size	GL_PREFIX(ProgramParameters4fvNV), .-GL_PREFIX(ProgramParameters4fvNV)
 
 	.p2align	4,,15
-	.globl	glRequestResidentProgramsNV
-	.type	glRequestResidentProgramsNV, @function
-glRequestResidentProgramsNV:
+	.globl	GL_PREFIX(RequestResidentProgramsNV)
+	.type	GL_PREFIX(RequestResidentProgramsNV), @function
+GL_PREFIX(RequestResidentProgramsNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4800(%rax), %r11
@@ -22379,12 +22388,12 @@ glRequestResidentProgramsNV:
 	movq	4800(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRequestResidentProgramsNV, .-glRequestResidentProgramsNV
+	.size	GL_PREFIX(RequestResidentProgramsNV), .-GL_PREFIX(RequestResidentProgramsNV)
 
 	.p2align	4,,15
-	.globl	glTrackMatrixNV
-	.type	glTrackMatrixNV, @function
-glTrackMatrixNV:
+	.globl	GL_PREFIX(TrackMatrixNV)
+	.type	GL_PREFIX(TrackMatrixNV), @function
+GL_PREFIX(TrackMatrixNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4808(%rax), %r11
@@ -22424,12 +22433,12 @@ glTrackMatrixNV:
 	movq	4808(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTrackMatrixNV, .-glTrackMatrixNV
+	.size	GL_PREFIX(TrackMatrixNV), .-GL_PREFIX(TrackMatrixNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttribPointerNV
-	.type	glVertexAttribPointerNV, @function
-glVertexAttribPointerNV:
+	.globl	GL_PREFIX(VertexAttribPointerNV)
+	.type	GL_PREFIX(VertexAttribPointerNV), @function
+GL_PREFIX(VertexAttribPointerNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4816(%rax), %r11
@@ -22469,12 +22478,12 @@ glVertexAttribPointerNV:
 	movq	4816(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttribPointerNV, .-glVertexAttribPointerNV
+	.size	GL_PREFIX(VertexAttribPointerNV), .-GL_PREFIX(VertexAttribPointerNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib1dARB
-	.type	glVertexAttrib1dARB, @function
-glVertexAttrib1dARB:
+	.globl	GL_PREFIX(VertexAttrib1dARB)
+	.type	GL_PREFIX(VertexAttrib1dARB), @function
+GL_PREFIX(VertexAttrib1dARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4824(%rax), %r11
@@ -22506,12 +22515,12 @@ glVertexAttrib1dARB:
 	movq	4824(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib1dARB, .-glVertexAttrib1dARB
+	.size	GL_PREFIX(VertexAttrib1dARB), .-GL_PREFIX(VertexAttrib1dARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib1dvARB
-	.type	glVertexAttrib1dvARB, @function
-glVertexAttrib1dvARB:
+	.globl	GL_PREFIX(VertexAttrib1dvARB)
+	.type	GL_PREFIX(VertexAttrib1dvARB), @function
+GL_PREFIX(VertexAttrib1dvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4832(%rax), %r11
@@ -22543,12 +22552,12 @@ glVertexAttrib1dvARB:
 	movq	4832(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib1dvARB, .-glVertexAttrib1dvARB
+	.size	GL_PREFIX(VertexAttrib1dvARB), .-GL_PREFIX(VertexAttrib1dvARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib1fARB
-	.type	glVertexAttrib1fARB, @function
-glVertexAttrib1fARB:
+	.globl	GL_PREFIX(VertexAttrib1fARB)
+	.type	GL_PREFIX(VertexAttrib1fARB), @function
+GL_PREFIX(VertexAttrib1fARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4840(%rax), %r11
@@ -22580,12 +22589,12 @@ glVertexAttrib1fARB:
 	movq	4840(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib1fARB, .-glVertexAttrib1fARB
+	.size	GL_PREFIX(VertexAttrib1fARB), .-GL_PREFIX(VertexAttrib1fARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib1fvARB
-	.type	glVertexAttrib1fvARB, @function
-glVertexAttrib1fvARB:
+	.globl	GL_PREFIX(VertexAttrib1fvARB)
+	.type	GL_PREFIX(VertexAttrib1fvARB), @function
+GL_PREFIX(VertexAttrib1fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4848(%rax), %r11
@@ -22617,12 +22626,12 @@ glVertexAttrib1fvARB:
 	movq	4848(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib1fvARB, .-glVertexAttrib1fvARB
+	.size	GL_PREFIX(VertexAttrib1fvARB), .-GL_PREFIX(VertexAttrib1fvARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib1sARB
-	.type	glVertexAttrib1sARB, @function
-glVertexAttrib1sARB:
+	.globl	GL_PREFIX(VertexAttrib1sARB)
+	.type	GL_PREFIX(VertexAttrib1sARB), @function
+GL_PREFIX(VertexAttrib1sARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4856(%rax), %r11
@@ -22654,12 +22663,12 @@ glVertexAttrib1sARB:
 	movq	4856(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib1sARB, .-glVertexAttrib1sARB
+	.size	GL_PREFIX(VertexAttrib1sARB), .-GL_PREFIX(VertexAttrib1sARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib1svARB
-	.type	glVertexAttrib1svARB, @function
-glVertexAttrib1svARB:
+	.globl	GL_PREFIX(VertexAttrib1svARB)
+	.type	GL_PREFIX(VertexAttrib1svARB), @function
+GL_PREFIX(VertexAttrib1svARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4864(%rax), %r11
@@ -22691,12 +22700,12 @@ glVertexAttrib1svARB:
 	movq	4864(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib1svARB, .-glVertexAttrib1svARB
+	.size	GL_PREFIX(VertexAttrib1svARB), .-GL_PREFIX(VertexAttrib1svARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib2dARB
-	.type	glVertexAttrib2dARB, @function
-glVertexAttrib2dARB:
+	.globl	GL_PREFIX(VertexAttrib2dARB)
+	.type	GL_PREFIX(VertexAttrib2dARB), @function
+GL_PREFIX(VertexAttrib2dARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4872(%rax), %r11
@@ -22732,12 +22741,12 @@ glVertexAttrib2dARB:
 	movq	4872(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib2dARB, .-glVertexAttrib2dARB
+	.size	GL_PREFIX(VertexAttrib2dARB), .-GL_PREFIX(VertexAttrib2dARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib2dvARB
-	.type	glVertexAttrib2dvARB, @function
-glVertexAttrib2dvARB:
+	.globl	GL_PREFIX(VertexAttrib2dvARB)
+	.type	GL_PREFIX(VertexAttrib2dvARB), @function
+GL_PREFIX(VertexAttrib2dvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4880(%rax), %r11
@@ -22769,12 +22778,12 @@ glVertexAttrib2dvARB:
 	movq	4880(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib2dvARB, .-glVertexAttrib2dvARB
+	.size	GL_PREFIX(VertexAttrib2dvARB), .-GL_PREFIX(VertexAttrib2dvARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib2fARB
-	.type	glVertexAttrib2fARB, @function
-glVertexAttrib2fARB:
+	.globl	GL_PREFIX(VertexAttrib2fARB)
+	.type	GL_PREFIX(VertexAttrib2fARB), @function
+GL_PREFIX(VertexAttrib2fARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4888(%rax), %r11
@@ -22810,12 +22819,12 @@ glVertexAttrib2fARB:
 	movq	4888(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib2fARB, .-glVertexAttrib2fARB
+	.size	GL_PREFIX(VertexAttrib2fARB), .-GL_PREFIX(VertexAttrib2fARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib2fvARB
-	.type	glVertexAttrib2fvARB, @function
-glVertexAttrib2fvARB:
+	.globl	GL_PREFIX(VertexAttrib2fvARB)
+	.type	GL_PREFIX(VertexAttrib2fvARB), @function
+GL_PREFIX(VertexAttrib2fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4896(%rax), %r11
@@ -22847,12 +22856,12 @@ glVertexAttrib2fvARB:
 	movq	4896(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib2fvARB, .-glVertexAttrib2fvARB
+	.size	GL_PREFIX(VertexAttrib2fvARB), .-GL_PREFIX(VertexAttrib2fvARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib2sARB
-	.type	glVertexAttrib2sARB, @function
-glVertexAttrib2sARB:
+	.globl	GL_PREFIX(VertexAttrib2sARB)
+	.type	GL_PREFIX(VertexAttrib2sARB), @function
+GL_PREFIX(VertexAttrib2sARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4904(%rax), %r11
@@ -22884,12 +22893,12 @@ glVertexAttrib2sARB:
 	movq	4904(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib2sARB, .-glVertexAttrib2sARB
+	.size	GL_PREFIX(VertexAttrib2sARB), .-GL_PREFIX(VertexAttrib2sARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib2svARB
-	.type	glVertexAttrib2svARB, @function
-glVertexAttrib2svARB:
+	.globl	GL_PREFIX(VertexAttrib2svARB)
+	.type	GL_PREFIX(VertexAttrib2svARB), @function
+GL_PREFIX(VertexAttrib2svARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4912(%rax), %r11
@@ -22921,12 +22930,12 @@ glVertexAttrib2svARB:
 	movq	4912(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib2svARB, .-glVertexAttrib2svARB
+	.size	GL_PREFIX(VertexAttrib2svARB), .-GL_PREFIX(VertexAttrib2svARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib3dARB
-	.type	glVertexAttrib3dARB, @function
-glVertexAttrib3dARB:
+	.globl	GL_PREFIX(VertexAttrib3dARB)
+	.type	GL_PREFIX(VertexAttrib3dARB), @function
+GL_PREFIX(VertexAttrib3dARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4920(%rax), %r11
@@ -22966,12 +22975,12 @@ glVertexAttrib3dARB:
 	movq	4920(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib3dARB, .-glVertexAttrib3dARB
+	.size	GL_PREFIX(VertexAttrib3dARB), .-GL_PREFIX(VertexAttrib3dARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib3dvARB
-	.type	glVertexAttrib3dvARB, @function
-glVertexAttrib3dvARB:
+	.globl	GL_PREFIX(VertexAttrib3dvARB)
+	.type	GL_PREFIX(VertexAttrib3dvARB), @function
+GL_PREFIX(VertexAttrib3dvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4928(%rax), %r11
@@ -23003,12 +23012,12 @@ glVertexAttrib3dvARB:
 	movq	4928(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib3dvARB, .-glVertexAttrib3dvARB
+	.size	GL_PREFIX(VertexAttrib3dvARB), .-GL_PREFIX(VertexAttrib3dvARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib3fARB
-	.type	glVertexAttrib3fARB, @function
-glVertexAttrib3fARB:
+	.globl	GL_PREFIX(VertexAttrib3fARB)
+	.type	GL_PREFIX(VertexAttrib3fARB), @function
+GL_PREFIX(VertexAttrib3fARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4936(%rax), %r11
@@ -23048,12 +23057,12 @@ glVertexAttrib3fARB:
 	movq	4936(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib3fARB, .-glVertexAttrib3fARB
+	.size	GL_PREFIX(VertexAttrib3fARB), .-GL_PREFIX(VertexAttrib3fARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib3fvARB
-	.type	glVertexAttrib3fvARB, @function
-glVertexAttrib3fvARB:
+	.globl	GL_PREFIX(VertexAttrib3fvARB)
+	.type	GL_PREFIX(VertexAttrib3fvARB), @function
+GL_PREFIX(VertexAttrib3fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4944(%rax), %r11
@@ -23085,12 +23094,12 @@ glVertexAttrib3fvARB:
 	movq	4944(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib3fvARB, .-glVertexAttrib3fvARB
+	.size	GL_PREFIX(VertexAttrib3fvARB), .-GL_PREFIX(VertexAttrib3fvARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib3sARB
-	.type	glVertexAttrib3sARB, @function
-glVertexAttrib3sARB:
+	.globl	GL_PREFIX(VertexAttrib3sARB)
+	.type	GL_PREFIX(VertexAttrib3sARB), @function
+GL_PREFIX(VertexAttrib3sARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4952(%rax), %r11
@@ -23130,12 +23139,12 @@ glVertexAttrib3sARB:
 	movq	4952(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib3sARB, .-glVertexAttrib3sARB
+	.size	GL_PREFIX(VertexAttrib3sARB), .-GL_PREFIX(VertexAttrib3sARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib3svARB
-	.type	glVertexAttrib3svARB, @function
-glVertexAttrib3svARB:
+	.globl	GL_PREFIX(VertexAttrib3svARB)
+	.type	GL_PREFIX(VertexAttrib3svARB), @function
+GL_PREFIX(VertexAttrib3svARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4960(%rax), %r11
@@ -23167,12 +23176,12 @@ glVertexAttrib3svARB:
 	movq	4960(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib3svARB, .-glVertexAttrib3svARB
+	.size	GL_PREFIX(VertexAttrib3svARB), .-GL_PREFIX(VertexAttrib3svARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4dARB
-	.type	glVertexAttrib4dARB, @function
-glVertexAttrib4dARB:
+	.globl	GL_PREFIX(VertexAttrib4dARB)
+	.type	GL_PREFIX(VertexAttrib4dARB), @function
+GL_PREFIX(VertexAttrib4dARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4968(%rax), %r11
@@ -23216,12 +23225,12 @@ glVertexAttrib4dARB:
 	movq	4968(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4dARB, .-glVertexAttrib4dARB
+	.size	GL_PREFIX(VertexAttrib4dARB), .-GL_PREFIX(VertexAttrib4dARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4dvARB
-	.type	glVertexAttrib4dvARB, @function
-glVertexAttrib4dvARB:
+	.globl	GL_PREFIX(VertexAttrib4dvARB)
+	.type	GL_PREFIX(VertexAttrib4dvARB), @function
+GL_PREFIX(VertexAttrib4dvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4976(%rax), %r11
@@ -23253,12 +23262,12 @@ glVertexAttrib4dvARB:
 	movq	4976(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4dvARB, .-glVertexAttrib4dvARB
+	.size	GL_PREFIX(VertexAttrib4dvARB), .-GL_PREFIX(VertexAttrib4dvARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4fARB
-	.type	glVertexAttrib4fARB, @function
-glVertexAttrib4fARB:
+	.globl	GL_PREFIX(VertexAttrib4fARB)
+	.type	GL_PREFIX(VertexAttrib4fARB), @function
+GL_PREFIX(VertexAttrib4fARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4984(%rax), %r11
@@ -23302,12 +23311,12 @@ glVertexAttrib4fARB:
 	movq	4984(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4fARB, .-glVertexAttrib4fARB
+	.size	GL_PREFIX(VertexAttrib4fARB), .-GL_PREFIX(VertexAttrib4fARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4fvARB
-	.type	glVertexAttrib4fvARB, @function
-glVertexAttrib4fvARB:
+	.globl	GL_PREFIX(VertexAttrib4fvARB)
+	.type	GL_PREFIX(VertexAttrib4fvARB), @function
+GL_PREFIX(VertexAttrib4fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	4992(%rax), %r11
@@ -23339,12 +23348,12 @@ glVertexAttrib4fvARB:
 	movq	4992(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4fvARB, .-glVertexAttrib4fvARB
+	.size	GL_PREFIX(VertexAttrib4fvARB), .-GL_PREFIX(VertexAttrib4fvARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4sARB
-	.type	glVertexAttrib4sARB, @function
-glVertexAttrib4sARB:
+	.globl	GL_PREFIX(VertexAttrib4sARB)
+	.type	GL_PREFIX(VertexAttrib4sARB), @function
+GL_PREFIX(VertexAttrib4sARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5000(%rax), %r11
@@ -23384,12 +23393,12 @@ glVertexAttrib4sARB:
 	movq	5000(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4sARB, .-glVertexAttrib4sARB
+	.size	GL_PREFIX(VertexAttrib4sARB), .-GL_PREFIX(VertexAttrib4sARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4svARB
-	.type	glVertexAttrib4svARB, @function
-glVertexAttrib4svARB:
+	.globl	GL_PREFIX(VertexAttrib4svARB)
+	.type	GL_PREFIX(VertexAttrib4svARB), @function
+GL_PREFIX(VertexAttrib4svARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5008(%rax), %r11
@@ -23421,12 +23430,12 @@ glVertexAttrib4svARB:
 	movq	5008(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4svARB, .-glVertexAttrib4svARB
+	.size	GL_PREFIX(VertexAttrib4svARB), .-GL_PREFIX(VertexAttrib4svARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4NubARB
-	.type	glVertexAttrib4NubARB, @function
-glVertexAttrib4NubARB:
+	.globl	GL_PREFIX(VertexAttrib4NubARB)
+	.type	GL_PREFIX(VertexAttrib4NubARB), @function
+GL_PREFIX(VertexAttrib4NubARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5016(%rax), %r11
@@ -23466,12 +23475,12 @@ glVertexAttrib4NubARB:
 	movq	5016(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4NubARB, .-glVertexAttrib4NubARB
+	.size	GL_PREFIX(VertexAttrib4NubARB), .-GL_PREFIX(VertexAttrib4NubARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4NubvARB
-	.type	glVertexAttrib4NubvARB, @function
-glVertexAttrib4NubvARB:
+	.globl	GL_PREFIX(VertexAttrib4NubvARB)
+	.type	GL_PREFIX(VertexAttrib4NubvARB), @function
+GL_PREFIX(VertexAttrib4NubvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5024(%rax), %r11
@@ -23503,12 +23512,12 @@ glVertexAttrib4NubvARB:
 	movq	5024(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4NubvARB, .-glVertexAttrib4NubvARB
+	.size	GL_PREFIX(VertexAttrib4NubvARB), .-GL_PREFIX(VertexAttrib4NubvARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttribs1dvNV
-	.type	glVertexAttribs1dvNV, @function
-glVertexAttribs1dvNV:
+	.globl	GL_PREFIX(VertexAttribs1dvNV)
+	.type	GL_PREFIX(VertexAttribs1dvNV), @function
+GL_PREFIX(VertexAttribs1dvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5032(%rax), %r11
@@ -23540,12 +23549,12 @@ glVertexAttribs1dvNV:
 	movq	5032(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttribs1dvNV, .-glVertexAttribs1dvNV
+	.size	GL_PREFIX(VertexAttribs1dvNV), .-GL_PREFIX(VertexAttribs1dvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttribs1fvNV
-	.type	glVertexAttribs1fvNV, @function
-glVertexAttribs1fvNV:
+	.globl	GL_PREFIX(VertexAttribs1fvNV)
+	.type	GL_PREFIX(VertexAttribs1fvNV), @function
+GL_PREFIX(VertexAttribs1fvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5040(%rax), %r11
@@ -23577,12 +23586,12 @@ glVertexAttribs1fvNV:
 	movq	5040(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttribs1fvNV, .-glVertexAttribs1fvNV
+	.size	GL_PREFIX(VertexAttribs1fvNV), .-GL_PREFIX(VertexAttribs1fvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttribs1svNV
-	.type	glVertexAttribs1svNV, @function
-glVertexAttribs1svNV:
+	.globl	GL_PREFIX(VertexAttribs1svNV)
+	.type	GL_PREFIX(VertexAttribs1svNV), @function
+GL_PREFIX(VertexAttribs1svNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5048(%rax), %r11
@@ -23614,12 +23623,12 @@ glVertexAttribs1svNV:
 	movq	5048(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttribs1svNV, .-glVertexAttribs1svNV
+	.size	GL_PREFIX(VertexAttribs1svNV), .-GL_PREFIX(VertexAttribs1svNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttribs2dvNV
-	.type	glVertexAttribs2dvNV, @function
-glVertexAttribs2dvNV:
+	.globl	GL_PREFIX(VertexAttribs2dvNV)
+	.type	GL_PREFIX(VertexAttribs2dvNV), @function
+GL_PREFIX(VertexAttribs2dvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5056(%rax), %r11
@@ -23651,12 +23660,12 @@ glVertexAttribs2dvNV:
 	movq	5056(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttribs2dvNV, .-glVertexAttribs2dvNV
+	.size	GL_PREFIX(VertexAttribs2dvNV), .-GL_PREFIX(VertexAttribs2dvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttribs2fvNV
-	.type	glVertexAttribs2fvNV, @function
-glVertexAttribs2fvNV:
+	.globl	GL_PREFIX(VertexAttribs2fvNV)
+	.type	GL_PREFIX(VertexAttribs2fvNV), @function
+GL_PREFIX(VertexAttribs2fvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5064(%rax), %r11
@@ -23688,12 +23697,12 @@ glVertexAttribs2fvNV:
 	movq	5064(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttribs2fvNV, .-glVertexAttribs2fvNV
+	.size	GL_PREFIX(VertexAttribs2fvNV), .-GL_PREFIX(VertexAttribs2fvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttribs2svNV
-	.type	glVertexAttribs2svNV, @function
-glVertexAttribs2svNV:
+	.globl	GL_PREFIX(VertexAttribs2svNV)
+	.type	GL_PREFIX(VertexAttribs2svNV), @function
+GL_PREFIX(VertexAttribs2svNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5072(%rax), %r11
@@ -23725,12 +23734,12 @@ glVertexAttribs2svNV:
 	movq	5072(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttribs2svNV, .-glVertexAttribs2svNV
+	.size	GL_PREFIX(VertexAttribs2svNV), .-GL_PREFIX(VertexAttribs2svNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttribs3dvNV
-	.type	glVertexAttribs3dvNV, @function
-glVertexAttribs3dvNV:
+	.globl	GL_PREFIX(VertexAttribs3dvNV)
+	.type	GL_PREFIX(VertexAttribs3dvNV), @function
+GL_PREFIX(VertexAttribs3dvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5080(%rax), %r11
@@ -23762,12 +23771,12 @@ glVertexAttribs3dvNV:
 	movq	5080(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttribs3dvNV, .-glVertexAttribs3dvNV
+	.size	GL_PREFIX(VertexAttribs3dvNV), .-GL_PREFIX(VertexAttribs3dvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttribs3fvNV
-	.type	glVertexAttribs3fvNV, @function
-glVertexAttribs3fvNV:
+	.globl	GL_PREFIX(VertexAttribs3fvNV)
+	.type	GL_PREFIX(VertexAttribs3fvNV), @function
+GL_PREFIX(VertexAttribs3fvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5088(%rax), %r11
@@ -23799,12 +23808,12 @@ glVertexAttribs3fvNV:
 	movq	5088(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttribs3fvNV, .-glVertexAttribs3fvNV
+	.size	GL_PREFIX(VertexAttribs3fvNV), .-GL_PREFIX(VertexAttribs3fvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttribs3svNV
-	.type	glVertexAttribs3svNV, @function
-glVertexAttribs3svNV:
+	.globl	GL_PREFIX(VertexAttribs3svNV)
+	.type	GL_PREFIX(VertexAttribs3svNV), @function
+GL_PREFIX(VertexAttribs3svNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5096(%rax), %r11
@@ -23836,12 +23845,12 @@ glVertexAttribs3svNV:
 	movq	5096(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttribs3svNV, .-glVertexAttribs3svNV
+	.size	GL_PREFIX(VertexAttribs3svNV), .-GL_PREFIX(VertexAttribs3svNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttribs4dvNV
-	.type	glVertexAttribs4dvNV, @function
-glVertexAttribs4dvNV:
+	.globl	GL_PREFIX(VertexAttribs4dvNV)
+	.type	GL_PREFIX(VertexAttribs4dvNV), @function
+GL_PREFIX(VertexAttribs4dvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5104(%rax), %r11
@@ -23873,12 +23882,12 @@ glVertexAttribs4dvNV:
 	movq	5104(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttribs4dvNV, .-glVertexAttribs4dvNV
+	.size	GL_PREFIX(VertexAttribs4dvNV), .-GL_PREFIX(VertexAttribs4dvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttribs4fvNV
-	.type	glVertexAttribs4fvNV, @function
-glVertexAttribs4fvNV:
+	.globl	GL_PREFIX(VertexAttribs4fvNV)
+	.type	GL_PREFIX(VertexAttribs4fvNV), @function
+GL_PREFIX(VertexAttribs4fvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5112(%rax), %r11
@@ -23910,12 +23919,12 @@ glVertexAttribs4fvNV:
 	movq	5112(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttribs4fvNV, .-glVertexAttribs4fvNV
+	.size	GL_PREFIX(VertexAttribs4fvNV), .-GL_PREFIX(VertexAttribs4fvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttribs4svNV
-	.type	glVertexAttribs4svNV, @function
-glVertexAttribs4svNV:
+	.globl	GL_PREFIX(VertexAttribs4svNV)
+	.type	GL_PREFIX(VertexAttribs4svNV), @function
+GL_PREFIX(VertexAttribs4svNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5120(%rax), %r11
@@ -23947,12 +23956,12 @@ glVertexAttribs4svNV:
 	movq	5120(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttribs4svNV, .-glVertexAttribs4svNV
+	.size	GL_PREFIX(VertexAttribs4svNV), .-GL_PREFIX(VertexAttribs4svNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttribs4ubvNV
-	.type	glVertexAttribs4ubvNV, @function
-glVertexAttribs4ubvNV:
+	.globl	GL_PREFIX(VertexAttribs4ubvNV)
+	.type	GL_PREFIX(VertexAttribs4ubvNV), @function
+GL_PREFIX(VertexAttribs4ubvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5128(%rax), %r11
@@ -23984,12 +23993,12 @@ glVertexAttribs4ubvNV:
 	movq	5128(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttribs4ubvNV, .-glVertexAttribs4ubvNV
+	.size	GL_PREFIX(VertexAttribs4ubvNV), .-GL_PREFIX(VertexAttribs4ubvNV)
 
 	.p2align	4,,15
-	.globl	glPointParameteriNV
-	.type	glPointParameteriNV, @function
-glPointParameteriNV:
+	.globl	GL_PREFIX(PointParameteriNV)
+	.type	GL_PREFIX(PointParameteriNV), @function
+GL_PREFIX(PointParameteriNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5136(%rax), %r11
@@ -24021,12 +24030,12 @@ glPointParameteriNV:
 	movq	5136(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPointParameteriNV, .-glPointParameteriNV
+	.size	GL_PREFIX(PointParameteriNV), .-GL_PREFIX(PointParameteriNV)
 
 	.p2align	4,,15
-	.globl	glPointParameterivNV
-	.type	glPointParameterivNV, @function
-glPointParameterivNV:
+	.globl	GL_PREFIX(PointParameterivNV)
+	.type	GL_PREFIX(PointParameterivNV), @function
+GL_PREFIX(PointParameterivNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5144(%rax), %r11
@@ -24058,12 +24067,12 @@ glPointParameterivNV:
 	movq	5144(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPointParameterivNV, .-glPointParameterivNV
+	.size	GL_PREFIX(PointParameterivNV), .-GL_PREFIX(PointParameterivNV)
 
 	.p2align	4,,15
-	.globl	glMultiDrawArraysEXT
-	.type	glMultiDrawArraysEXT, @function
-glMultiDrawArraysEXT:
+	.globl	GL_PREFIX(MultiDrawArraysEXT)
+	.type	GL_PREFIX(MultiDrawArraysEXT), @function
+GL_PREFIX(MultiDrawArraysEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5152(%rax), %r11
@@ -24103,12 +24112,12 @@ glMultiDrawArraysEXT:
 	movq	5152(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiDrawArraysEXT, .-glMultiDrawArraysEXT
+	.size	GL_PREFIX(MultiDrawArraysEXT), .-GL_PREFIX(MultiDrawArraysEXT)
 
 	.p2align	4,,15
-	.globl	glMultiDrawElementsEXT
-	.type	glMultiDrawElementsEXT, @function
-glMultiDrawElementsEXT:
+	.globl	GL_PREFIX(MultiDrawElementsEXT)
+	.type	GL_PREFIX(MultiDrawElementsEXT), @function
+GL_PREFIX(MultiDrawElementsEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5160(%rax), %r11
@@ -24148,12 +24157,12 @@ glMultiDrawElementsEXT:
 	movq	5160(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiDrawElementsEXT, .-glMultiDrawElementsEXT
+	.size	GL_PREFIX(MultiDrawElementsEXT), .-GL_PREFIX(MultiDrawElementsEXT)
 
 	.p2align	4,,15
-	.globl	glActiveStencilFaceEXT
-	.type	glActiveStencilFaceEXT, @function
-glActiveStencilFaceEXT:
+	.globl	GL_PREFIX(ActiveStencilFaceEXT)
+	.type	GL_PREFIX(ActiveStencilFaceEXT), @function
+GL_PREFIX(ActiveStencilFaceEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5168(%rax), %r11
@@ -24177,12 +24186,12 @@ glActiveStencilFaceEXT:
 	movq	5168(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glActiveStencilFaceEXT, .-glActiveStencilFaceEXT
+	.size	GL_PREFIX(ActiveStencilFaceEXT), .-GL_PREFIX(ActiveStencilFaceEXT)
 
 	.p2align	4,,15
-	.globl	glDeleteFencesNV
-	.type	glDeleteFencesNV, @function
-glDeleteFencesNV:
+	.globl	GL_PREFIX(DeleteFencesNV)
+	.type	GL_PREFIX(DeleteFencesNV), @function
+GL_PREFIX(DeleteFencesNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5176(%rax), %r11
@@ -24214,12 +24223,12 @@ glDeleteFencesNV:
 	movq	5176(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDeleteFencesNV, .-glDeleteFencesNV
+	.size	GL_PREFIX(DeleteFencesNV), .-GL_PREFIX(DeleteFencesNV)
 
 	.p2align	4,,15
-	.globl	glGenFencesNV
-	.type	glGenFencesNV, @function
-glGenFencesNV:
+	.globl	GL_PREFIX(GenFencesNV)
+	.type	GL_PREFIX(GenFencesNV), @function
+GL_PREFIX(GenFencesNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5184(%rax), %r11
@@ -24251,12 +24260,12 @@ glGenFencesNV:
 	movq	5184(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGenFencesNV, .-glGenFencesNV
+	.size	GL_PREFIX(GenFencesNV), .-GL_PREFIX(GenFencesNV)
 
 	.p2align	4,,15
-	.globl	glIsFenceNV
-	.type	glIsFenceNV, @function
-glIsFenceNV:
+	.globl	GL_PREFIX(IsFenceNV)
+	.type	GL_PREFIX(IsFenceNV), @function
+GL_PREFIX(IsFenceNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5192(%rax), %r11
@@ -24280,12 +24289,12 @@ glIsFenceNV:
 	movq	5192(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIsFenceNV, .-glIsFenceNV
+	.size	GL_PREFIX(IsFenceNV), .-GL_PREFIX(IsFenceNV)
 
 	.p2align	4,,15
-	.globl	glTestFenceNV
-	.type	glTestFenceNV, @function
-glTestFenceNV:
+	.globl	GL_PREFIX(TestFenceNV)
+	.type	GL_PREFIX(TestFenceNV), @function
+GL_PREFIX(TestFenceNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5200(%rax), %r11
@@ -24309,12 +24318,12 @@ glTestFenceNV:
 	movq	5200(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glTestFenceNV, .-glTestFenceNV
+	.size	GL_PREFIX(TestFenceNV), .-GL_PREFIX(TestFenceNV)
 
 	.p2align	4,,15
-	.globl	glGetFenceivNV
-	.type	glGetFenceivNV, @function
-glGetFenceivNV:
+	.globl	GL_PREFIX(GetFenceivNV)
+	.type	GL_PREFIX(GetFenceivNV), @function
+GL_PREFIX(GetFenceivNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5208(%rax), %r11
@@ -24346,12 +24355,12 @@ glGetFenceivNV:
 	movq	5208(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetFenceivNV, .-glGetFenceivNV
+	.size	GL_PREFIX(GetFenceivNV), .-GL_PREFIX(GetFenceivNV)
 
 	.p2align	4,,15
-	.globl	glFinishFenceNV
-	.type	glFinishFenceNV, @function
-glFinishFenceNV:
+	.globl	GL_PREFIX(FinishFenceNV)
+	.type	GL_PREFIX(FinishFenceNV), @function
+GL_PREFIX(FinishFenceNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5216(%rax), %r11
@@ -24375,12 +24384,12 @@ glFinishFenceNV:
 	movq	5216(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFinishFenceNV, .-glFinishFenceNV
+	.size	GL_PREFIX(FinishFenceNV), .-GL_PREFIX(FinishFenceNV)
 
 	.p2align	4,,15
-	.globl	glSetFenceNV
-	.type	glSetFenceNV, @function
-glSetFenceNV:
+	.globl	GL_PREFIX(SetFenceNV)
+	.type	GL_PREFIX(SetFenceNV), @function
+GL_PREFIX(SetFenceNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5224(%rax), %r11
@@ -24412,12 +24421,12 @@ glSetFenceNV:
 	movq	5224(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSetFenceNV, .-glSetFenceNV
+	.size	GL_PREFIX(SetFenceNV), .-GL_PREFIX(SetFenceNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4bvARB
-	.type	glVertexAttrib4bvARB, @function
-glVertexAttrib4bvARB:
+	.globl	GL_PREFIX(VertexAttrib4bvARB)
+	.type	GL_PREFIX(VertexAttrib4bvARB), @function
+GL_PREFIX(VertexAttrib4bvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5232(%rax), %r11
@@ -24449,12 +24458,12 @@ glVertexAttrib4bvARB:
 	movq	5232(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4bvARB, .-glVertexAttrib4bvARB
+	.size	GL_PREFIX(VertexAttrib4bvARB), .-GL_PREFIX(VertexAttrib4bvARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4ivARB
-	.type	glVertexAttrib4ivARB, @function
-glVertexAttrib4ivARB:
+	.globl	GL_PREFIX(VertexAttrib4ivARB)
+	.type	GL_PREFIX(VertexAttrib4ivARB), @function
+GL_PREFIX(VertexAttrib4ivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5240(%rax), %r11
@@ -24486,12 +24495,12 @@ glVertexAttrib4ivARB:
 	movq	5240(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4ivARB, .-glVertexAttrib4ivARB
+	.size	GL_PREFIX(VertexAttrib4ivARB), .-GL_PREFIX(VertexAttrib4ivARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4ubvARB
-	.type	glVertexAttrib4ubvARB, @function
-glVertexAttrib4ubvARB:
+	.globl	GL_PREFIX(VertexAttrib4ubvARB)
+	.type	GL_PREFIX(VertexAttrib4ubvARB), @function
+GL_PREFIX(VertexAttrib4ubvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5248(%rax), %r11
@@ -24523,12 +24532,12 @@ glVertexAttrib4ubvARB:
 	movq	5248(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4ubvARB, .-glVertexAttrib4ubvARB
+	.size	GL_PREFIX(VertexAttrib4ubvARB), .-GL_PREFIX(VertexAttrib4ubvARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4usvARB
-	.type	glVertexAttrib4usvARB, @function
-glVertexAttrib4usvARB:
+	.globl	GL_PREFIX(VertexAttrib4usvARB)
+	.type	GL_PREFIX(VertexAttrib4usvARB), @function
+GL_PREFIX(VertexAttrib4usvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5256(%rax), %r11
@@ -24560,12 +24569,12 @@ glVertexAttrib4usvARB:
 	movq	5256(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4usvARB, .-glVertexAttrib4usvARB
+	.size	GL_PREFIX(VertexAttrib4usvARB), .-GL_PREFIX(VertexAttrib4usvARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4uivARB
-	.type	glVertexAttrib4uivARB, @function
-glVertexAttrib4uivARB:
+	.globl	GL_PREFIX(VertexAttrib4uivARB)
+	.type	GL_PREFIX(VertexAttrib4uivARB), @function
+GL_PREFIX(VertexAttrib4uivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5264(%rax), %r11
@@ -24597,12 +24606,12 @@ glVertexAttrib4uivARB:
 	movq	5264(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4uivARB, .-glVertexAttrib4uivARB
+	.size	GL_PREFIX(VertexAttrib4uivARB), .-GL_PREFIX(VertexAttrib4uivARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4NbvARB
-	.type	glVertexAttrib4NbvARB, @function
-glVertexAttrib4NbvARB:
+	.globl	GL_PREFIX(VertexAttrib4NbvARB)
+	.type	GL_PREFIX(VertexAttrib4NbvARB), @function
+GL_PREFIX(VertexAttrib4NbvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5272(%rax), %r11
@@ -24634,12 +24643,12 @@ glVertexAttrib4NbvARB:
 	movq	5272(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4NbvARB, .-glVertexAttrib4NbvARB
+	.size	GL_PREFIX(VertexAttrib4NbvARB), .-GL_PREFIX(VertexAttrib4NbvARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4NsvARB
-	.type	glVertexAttrib4NsvARB, @function
-glVertexAttrib4NsvARB:
+	.globl	GL_PREFIX(VertexAttrib4NsvARB)
+	.type	GL_PREFIX(VertexAttrib4NsvARB), @function
+GL_PREFIX(VertexAttrib4NsvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5280(%rax), %r11
@@ -24671,12 +24680,12 @@ glVertexAttrib4NsvARB:
 	movq	5280(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4NsvARB, .-glVertexAttrib4NsvARB
+	.size	GL_PREFIX(VertexAttrib4NsvARB), .-GL_PREFIX(VertexAttrib4NsvARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4NivARB
-	.type	glVertexAttrib4NivARB, @function
-glVertexAttrib4NivARB:
+	.globl	GL_PREFIX(VertexAttrib4NivARB)
+	.type	GL_PREFIX(VertexAttrib4NivARB), @function
+GL_PREFIX(VertexAttrib4NivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5288(%rax), %r11
@@ -24708,12 +24717,12 @@ glVertexAttrib4NivARB:
 	movq	5288(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4NivARB, .-glVertexAttrib4NivARB
+	.size	GL_PREFIX(VertexAttrib4NivARB), .-GL_PREFIX(VertexAttrib4NivARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4NusvARB
-	.type	glVertexAttrib4NusvARB, @function
-glVertexAttrib4NusvARB:
+	.globl	GL_PREFIX(VertexAttrib4NusvARB)
+	.type	GL_PREFIX(VertexAttrib4NusvARB), @function
+GL_PREFIX(VertexAttrib4NusvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5296(%rax), %r11
@@ -24745,12 +24754,12 @@ glVertexAttrib4NusvARB:
 	movq	5296(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4NusvARB, .-glVertexAttrib4NusvARB
+	.size	GL_PREFIX(VertexAttrib4NusvARB), .-GL_PREFIX(VertexAttrib4NusvARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4NuivARB
-	.type	glVertexAttrib4NuivARB, @function
-glVertexAttrib4NuivARB:
+	.globl	GL_PREFIX(VertexAttrib4NuivARB)
+	.type	GL_PREFIX(VertexAttrib4NuivARB), @function
+GL_PREFIX(VertexAttrib4NuivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5304(%rax), %r11
@@ -24782,12 +24791,12 @@ glVertexAttrib4NuivARB:
 	movq	5304(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4NuivARB, .-glVertexAttrib4NuivARB
+	.size	GL_PREFIX(VertexAttrib4NuivARB), .-GL_PREFIX(VertexAttrib4NuivARB)
 
 	.p2align	4,,15
-	.globl	glVertexAttribPointerARB
-	.type	glVertexAttribPointerARB, @function
-glVertexAttribPointerARB:
+	.globl	GL_PREFIX(VertexAttribPointerARB)
+	.type	GL_PREFIX(VertexAttribPointerARB), @function
+GL_PREFIX(VertexAttribPointerARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5312(%rax), %r11
@@ -24835,12 +24844,12 @@ glVertexAttribPointerARB:
 	movq	5312(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttribPointerARB, .-glVertexAttribPointerARB
+	.size	GL_PREFIX(VertexAttribPointerARB), .-GL_PREFIX(VertexAttribPointerARB)
 
 	.p2align	4,,15
-	.globl	glEnableVertexAttribArrayARB
-	.type	glEnableVertexAttribArrayARB, @function
-glEnableVertexAttribArrayARB:
+	.globl	GL_PREFIX(EnableVertexAttribArrayARB)
+	.type	GL_PREFIX(EnableVertexAttribArrayARB), @function
+GL_PREFIX(EnableVertexAttribArrayARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5320(%rax), %r11
@@ -24864,12 +24873,12 @@ glEnableVertexAttribArrayARB:
 	movq	5320(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEnableVertexAttribArrayARB, .-glEnableVertexAttribArrayARB
+	.size	GL_PREFIX(EnableVertexAttribArrayARB), .-GL_PREFIX(EnableVertexAttribArrayARB)
 
 	.p2align	4,,15
-	.globl	glDisableVertexAttribArrayARB
-	.type	glDisableVertexAttribArrayARB, @function
-glDisableVertexAttribArrayARB:
+	.globl	GL_PREFIX(DisableVertexAttribArrayARB)
+	.type	GL_PREFIX(DisableVertexAttribArrayARB), @function
+GL_PREFIX(DisableVertexAttribArrayARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5328(%rax), %r11
@@ -24893,12 +24902,12 @@ glDisableVertexAttribArrayARB:
 	movq	5328(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDisableVertexAttribArrayARB, .-glDisableVertexAttribArrayARB
+	.size	GL_PREFIX(DisableVertexAttribArrayARB), .-GL_PREFIX(DisableVertexAttribArrayARB)
 
 	.p2align	4,,15
-	.globl	glProgramStringARB
-	.type	glProgramStringARB, @function
-glProgramStringARB:
+	.globl	GL_PREFIX(ProgramStringARB)
+	.type	GL_PREFIX(ProgramStringARB), @function
+GL_PREFIX(ProgramStringARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5336(%rax), %r11
@@ -24938,12 +24947,12 @@ glProgramStringARB:
 	movq	5336(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramStringARB, .-glProgramStringARB
+	.size	GL_PREFIX(ProgramStringARB), .-GL_PREFIX(ProgramStringARB)
 
 	.p2align	4,,15
-	.globl	glProgramEnvParameter4dARB
-	.type	glProgramEnvParameter4dARB, @function
-glProgramEnvParameter4dARB:
+	.globl	GL_PREFIX(ProgramEnvParameter4dARB)
+	.type	GL_PREFIX(ProgramEnvParameter4dARB), @function
+GL_PREFIX(ProgramEnvParameter4dARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5344(%rax), %r11
@@ -24991,12 +25000,12 @@ glProgramEnvParameter4dARB:
 	movq	5344(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramEnvParameter4dARB, .-glProgramEnvParameter4dARB
+	.size	GL_PREFIX(ProgramEnvParameter4dARB), .-GL_PREFIX(ProgramEnvParameter4dARB)
 
 	.p2align	4,,15
-	.globl	glProgramEnvParameter4dvARB
-	.type	glProgramEnvParameter4dvARB, @function
-glProgramEnvParameter4dvARB:
+	.globl	GL_PREFIX(ProgramEnvParameter4dvARB)
+	.type	GL_PREFIX(ProgramEnvParameter4dvARB), @function
+GL_PREFIX(ProgramEnvParameter4dvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5352(%rax), %r11
@@ -25028,12 +25037,12 @@ glProgramEnvParameter4dvARB:
 	movq	5352(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramEnvParameter4dvARB, .-glProgramEnvParameter4dvARB
+	.size	GL_PREFIX(ProgramEnvParameter4dvARB), .-GL_PREFIX(ProgramEnvParameter4dvARB)
 
 	.p2align	4,,15
-	.globl	glProgramEnvParameter4fARB
-	.type	glProgramEnvParameter4fARB, @function
-glProgramEnvParameter4fARB:
+	.globl	GL_PREFIX(ProgramEnvParameter4fARB)
+	.type	GL_PREFIX(ProgramEnvParameter4fARB), @function
+GL_PREFIX(ProgramEnvParameter4fARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5360(%rax), %r11
@@ -25081,12 +25090,12 @@ glProgramEnvParameter4fARB:
 	movq	5360(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramEnvParameter4fARB, .-glProgramEnvParameter4fARB
+	.size	GL_PREFIX(ProgramEnvParameter4fARB), .-GL_PREFIX(ProgramEnvParameter4fARB)
 
 	.p2align	4,,15
-	.globl	glProgramEnvParameter4fvARB
-	.type	glProgramEnvParameter4fvARB, @function
-glProgramEnvParameter4fvARB:
+	.globl	GL_PREFIX(ProgramEnvParameter4fvARB)
+	.type	GL_PREFIX(ProgramEnvParameter4fvARB), @function
+GL_PREFIX(ProgramEnvParameter4fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5368(%rax), %r11
@@ -25118,12 +25127,12 @@ glProgramEnvParameter4fvARB:
 	movq	5368(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramEnvParameter4fvARB, .-glProgramEnvParameter4fvARB
+	.size	GL_PREFIX(ProgramEnvParameter4fvARB), .-GL_PREFIX(ProgramEnvParameter4fvARB)
 
 	.p2align	4,,15
-	.globl	glProgramLocalParameter4dARB
-	.type	glProgramLocalParameter4dARB, @function
-glProgramLocalParameter4dARB:
+	.globl	GL_PREFIX(ProgramLocalParameter4dARB)
+	.type	GL_PREFIX(ProgramLocalParameter4dARB), @function
+GL_PREFIX(ProgramLocalParameter4dARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5376(%rax), %r11
@@ -25171,12 +25180,12 @@ glProgramLocalParameter4dARB:
 	movq	5376(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramLocalParameter4dARB, .-glProgramLocalParameter4dARB
+	.size	GL_PREFIX(ProgramLocalParameter4dARB), .-GL_PREFIX(ProgramLocalParameter4dARB)
 
 	.p2align	4,,15
-	.globl	glProgramLocalParameter4dvARB
-	.type	glProgramLocalParameter4dvARB, @function
-glProgramLocalParameter4dvARB:
+	.globl	GL_PREFIX(ProgramLocalParameter4dvARB)
+	.type	GL_PREFIX(ProgramLocalParameter4dvARB), @function
+GL_PREFIX(ProgramLocalParameter4dvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5384(%rax), %r11
@@ -25208,12 +25217,12 @@ glProgramLocalParameter4dvARB:
 	movq	5384(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramLocalParameter4dvARB, .-glProgramLocalParameter4dvARB
+	.size	GL_PREFIX(ProgramLocalParameter4dvARB), .-GL_PREFIX(ProgramLocalParameter4dvARB)
 
 	.p2align	4,,15
-	.globl	glProgramLocalParameter4fARB
-	.type	glProgramLocalParameter4fARB, @function
-glProgramLocalParameter4fARB:
+	.globl	GL_PREFIX(ProgramLocalParameter4fARB)
+	.type	GL_PREFIX(ProgramLocalParameter4fARB), @function
+GL_PREFIX(ProgramLocalParameter4fARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5392(%rax), %r11
@@ -25261,12 +25270,12 @@ glProgramLocalParameter4fARB:
 	movq	5392(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramLocalParameter4fARB, .-glProgramLocalParameter4fARB
+	.size	GL_PREFIX(ProgramLocalParameter4fARB), .-GL_PREFIX(ProgramLocalParameter4fARB)
 
 	.p2align	4,,15
-	.globl	glProgramLocalParameter4fvARB
-	.type	glProgramLocalParameter4fvARB, @function
-glProgramLocalParameter4fvARB:
+	.globl	GL_PREFIX(ProgramLocalParameter4fvARB)
+	.type	GL_PREFIX(ProgramLocalParameter4fvARB), @function
+GL_PREFIX(ProgramLocalParameter4fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5400(%rax), %r11
@@ -25298,12 +25307,12 @@ glProgramLocalParameter4fvARB:
 	movq	5400(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramLocalParameter4fvARB, .-glProgramLocalParameter4fvARB
+	.size	GL_PREFIX(ProgramLocalParameter4fvARB), .-GL_PREFIX(ProgramLocalParameter4fvARB)
 
 	.p2align	4,,15
-	.globl	glGetProgramEnvParameterdvARB
-	.type	glGetProgramEnvParameterdvARB, @function
-glGetProgramEnvParameterdvARB:
+	.globl	GL_PREFIX(GetProgramEnvParameterdvARB)
+	.type	GL_PREFIX(GetProgramEnvParameterdvARB), @function
+GL_PREFIX(GetProgramEnvParameterdvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5408(%rax), %r11
@@ -25335,12 +25344,12 @@ glGetProgramEnvParameterdvARB:
 	movq	5408(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetProgramEnvParameterdvARB, .-glGetProgramEnvParameterdvARB
+	.size	GL_PREFIX(GetProgramEnvParameterdvARB), .-GL_PREFIX(GetProgramEnvParameterdvARB)
 
 	.p2align	4,,15
-	.globl	glGetProgramEnvParameterfvARB
-	.type	glGetProgramEnvParameterfvARB, @function
-glGetProgramEnvParameterfvARB:
+	.globl	GL_PREFIX(GetProgramEnvParameterfvARB)
+	.type	GL_PREFIX(GetProgramEnvParameterfvARB), @function
+GL_PREFIX(GetProgramEnvParameterfvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5416(%rax), %r11
@@ -25372,12 +25381,12 @@ glGetProgramEnvParameterfvARB:
 	movq	5416(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetProgramEnvParameterfvARB, .-glGetProgramEnvParameterfvARB
+	.size	GL_PREFIX(GetProgramEnvParameterfvARB), .-GL_PREFIX(GetProgramEnvParameterfvARB)
 
 	.p2align	4,,15
-	.globl	glGetProgramLocalParameterdvARB
-	.type	glGetProgramLocalParameterdvARB, @function
-glGetProgramLocalParameterdvARB:
+	.globl	GL_PREFIX(GetProgramLocalParameterdvARB)
+	.type	GL_PREFIX(GetProgramLocalParameterdvARB), @function
+GL_PREFIX(GetProgramLocalParameterdvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5424(%rax), %r11
@@ -25409,12 +25418,12 @@ glGetProgramLocalParameterdvARB:
 	movq	5424(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetProgramLocalParameterdvARB, .-glGetProgramLocalParameterdvARB
+	.size	GL_PREFIX(GetProgramLocalParameterdvARB), .-GL_PREFIX(GetProgramLocalParameterdvARB)
 
 	.p2align	4,,15
-	.globl	glGetProgramLocalParameterfvARB
-	.type	glGetProgramLocalParameterfvARB, @function
-glGetProgramLocalParameterfvARB:
+	.globl	GL_PREFIX(GetProgramLocalParameterfvARB)
+	.type	GL_PREFIX(GetProgramLocalParameterfvARB), @function
+GL_PREFIX(GetProgramLocalParameterfvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5432(%rax), %r11
@@ -25446,12 +25455,12 @@ glGetProgramLocalParameterfvARB:
 	movq	5432(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetProgramLocalParameterfvARB, .-glGetProgramLocalParameterfvARB
+	.size	GL_PREFIX(GetProgramLocalParameterfvARB), .-GL_PREFIX(GetProgramLocalParameterfvARB)
 
 	.p2align	4,,15
-	.globl	glGetProgramivARB
-	.type	glGetProgramivARB, @function
-glGetProgramivARB:
+	.globl	GL_PREFIX(GetProgramivARB)
+	.type	GL_PREFIX(GetProgramivARB), @function
+GL_PREFIX(GetProgramivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5440(%rax), %r11
@@ -25483,12 +25492,12 @@ glGetProgramivARB:
 	movq	5440(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetProgramivARB, .-glGetProgramivARB
+	.size	GL_PREFIX(GetProgramivARB), .-GL_PREFIX(GetProgramivARB)
 
 	.p2align	4,,15
-	.globl	glGetProgramStringARB
-	.type	glGetProgramStringARB, @function
-glGetProgramStringARB:
+	.globl	GL_PREFIX(GetProgramStringARB)
+	.type	GL_PREFIX(GetProgramStringARB), @function
+GL_PREFIX(GetProgramStringARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5448(%rax), %r11
@@ -25520,12 +25529,12 @@ glGetProgramStringARB:
 	movq	5448(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetProgramStringARB, .-glGetProgramStringARB
+	.size	GL_PREFIX(GetProgramStringARB), .-GL_PREFIX(GetProgramStringARB)
 
 	.p2align	4,,15
-	.globl	glProgramNamedParameter4fNV
-	.type	glProgramNamedParameter4fNV, @function
-glProgramNamedParameter4fNV:
+	.globl	GL_PREFIX(ProgramNamedParameter4fNV)
+	.type	GL_PREFIX(ProgramNamedParameter4fNV), @function
+GL_PREFIX(ProgramNamedParameter4fNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5456(%rax), %r11
@@ -25577,12 +25586,12 @@ glProgramNamedParameter4fNV:
 	movq	5456(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramNamedParameter4fNV, .-glProgramNamedParameter4fNV
+	.size	GL_PREFIX(ProgramNamedParameter4fNV), .-GL_PREFIX(ProgramNamedParameter4fNV)
 
 	.p2align	4,,15
-	.globl	glProgramNamedParameter4dNV
-	.type	glProgramNamedParameter4dNV, @function
-glProgramNamedParameter4dNV:
+	.globl	GL_PREFIX(ProgramNamedParameter4dNV)
+	.type	GL_PREFIX(ProgramNamedParameter4dNV), @function
+GL_PREFIX(ProgramNamedParameter4dNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5464(%rax), %r11
@@ -25634,12 +25643,12 @@ glProgramNamedParameter4dNV:
 	movq	5464(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramNamedParameter4dNV, .-glProgramNamedParameter4dNV
+	.size	GL_PREFIX(ProgramNamedParameter4dNV), .-GL_PREFIX(ProgramNamedParameter4dNV)
 
 	.p2align	4,,15
-	.globl	glProgramNamedParameter4fvNV
-	.type	glProgramNamedParameter4fvNV, @function
-glProgramNamedParameter4fvNV:
+	.globl	GL_PREFIX(ProgramNamedParameter4fvNV)
+	.type	GL_PREFIX(ProgramNamedParameter4fvNV), @function
+GL_PREFIX(ProgramNamedParameter4fvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5472(%rax), %r11
@@ -25679,12 +25688,12 @@ glProgramNamedParameter4fvNV:
 	movq	5472(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramNamedParameter4fvNV, .-glProgramNamedParameter4fvNV
+	.size	GL_PREFIX(ProgramNamedParameter4fvNV), .-GL_PREFIX(ProgramNamedParameter4fvNV)
 
 	.p2align	4,,15
-	.globl	glProgramNamedParameter4dvNV
-	.type	glProgramNamedParameter4dvNV, @function
-glProgramNamedParameter4dvNV:
+	.globl	GL_PREFIX(ProgramNamedParameter4dvNV)
+	.type	GL_PREFIX(ProgramNamedParameter4dvNV), @function
+GL_PREFIX(ProgramNamedParameter4dvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5480(%rax), %r11
@@ -25724,12 +25733,12 @@ glProgramNamedParameter4dvNV:
 	movq	5480(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glProgramNamedParameter4dvNV, .-glProgramNamedParameter4dvNV
+	.size	GL_PREFIX(ProgramNamedParameter4dvNV), .-GL_PREFIX(ProgramNamedParameter4dvNV)
 
 	.p2align	4,,15
-	.globl	glGetProgramNamedParameterfvNV
-	.type	glGetProgramNamedParameterfvNV, @function
-glGetProgramNamedParameterfvNV:
+	.globl	GL_PREFIX(GetProgramNamedParameterfvNV)
+	.type	GL_PREFIX(GetProgramNamedParameterfvNV), @function
+GL_PREFIX(GetProgramNamedParameterfvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5488(%rax), %r11
@@ -25769,12 +25778,12 @@ glGetProgramNamedParameterfvNV:
 	movq	5488(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetProgramNamedParameterfvNV, .-glGetProgramNamedParameterfvNV
+	.size	GL_PREFIX(GetProgramNamedParameterfvNV), .-GL_PREFIX(GetProgramNamedParameterfvNV)
 
 	.p2align	4,,15
-	.globl	glGetProgramNamedParameterdvNV
-	.type	glGetProgramNamedParameterdvNV, @function
-glGetProgramNamedParameterdvNV:
+	.globl	GL_PREFIX(GetProgramNamedParameterdvNV)
+	.type	GL_PREFIX(GetProgramNamedParameterdvNV), @function
+GL_PREFIX(GetProgramNamedParameterdvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5496(%rax), %r11
@@ -25814,12 +25823,12 @@ glGetProgramNamedParameterdvNV:
 	movq	5496(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetProgramNamedParameterdvNV, .-glGetProgramNamedParameterdvNV
+	.size	GL_PREFIX(GetProgramNamedParameterdvNV), .-GL_PREFIX(GetProgramNamedParameterdvNV)
 
 	.p2align	4,,15
-	.globl	glBindBufferARB
-	.type	glBindBufferARB, @function
-glBindBufferARB:
+	.globl	GL_PREFIX(BindBufferARB)
+	.type	GL_PREFIX(BindBufferARB), @function
+GL_PREFIX(BindBufferARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5504(%rax), %r11
@@ -25851,12 +25860,12 @@ glBindBufferARB:
 	movq	5504(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBindBufferARB, .-glBindBufferARB
+	.size	GL_PREFIX(BindBufferARB), .-GL_PREFIX(BindBufferARB)
 
 	.p2align	4,,15
-	.globl	glBufferDataARB
-	.type	glBufferDataARB, @function
-glBufferDataARB:
+	.globl	GL_PREFIX(BufferDataARB)
+	.type	GL_PREFIX(BufferDataARB), @function
+GL_PREFIX(BufferDataARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5512(%rax), %r11
@@ -25896,12 +25905,12 @@ glBufferDataARB:
 	movq	5512(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBufferDataARB, .-glBufferDataARB
+	.size	GL_PREFIX(BufferDataARB), .-GL_PREFIX(BufferDataARB)
 
 	.p2align	4,,15
-	.globl	glBufferSubDataARB
-	.type	glBufferSubDataARB, @function
-glBufferSubDataARB:
+	.globl	GL_PREFIX(BufferSubDataARB)
+	.type	GL_PREFIX(BufferSubDataARB), @function
+GL_PREFIX(BufferSubDataARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5520(%rax), %r11
@@ -25941,12 +25950,12 @@ glBufferSubDataARB:
 	movq	5520(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBufferSubDataARB, .-glBufferSubDataARB
+	.size	GL_PREFIX(BufferSubDataARB), .-GL_PREFIX(BufferSubDataARB)
 
 	.p2align	4,,15
-	.globl	glDeleteBuffersARB
-	.type	glDeleteBuffersARB, @function
-glDeleteBuffersARB:
+	.globl	GL_PREFIX(DeleteBuffersARB)
+	.type	GL_PREFIX(DeleteBuffersARB), @function
+GL_PREFIX(DeleteBuffersARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5528(%rax), %r11
@@ -25978,12 +25987,12 @@ glDeleteBuffersARB:
 	movq	5528(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDeleteBuffersARB, .-glDeleteBuffersARB
+	.size	GL_PREFIX(DeleteBuffersARB), .-GL_PREFIX(DeleteBuffersARB)
 
 	.p2align	4,,15
-	.globl	glGenBuffersARB
-	.type	glGenBuffersARB, @function
-glGenBuffersARB:
+	.globl	GL_PREFIX(GenBuffersARB)
+	.type	GL_PREFIX(GenBuffersARB), @function
+GL_PREFIX(GenBuffersARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5536(%rax), %r11
@@ -26015,12 +26024,12 @@ glGenBuffersARB:
 	movq	5536(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGenBuffersARB, .-glGenBuffersARB
+	.size	GL_PREFIX(GenBuffersARB), .-GL_PREFIX(GenBuffersARB)
 
 	.p2align	4,,15
-	.globl	glGetBufferParameterivARB
-	.type	glGetBufferParameterivARB, @function
-glGetBufferParameterivARB:
+	.globl	GL_PREFIX(GetBufferParameterivARB)
+	.type	GL_PREFIX(GetBufferParameterivARB), @function
+GL_PREFIX(GetBufferParameterivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5544(%rax), %r11
@@ -26052,12 +26061,12 @@ glGetBufferParameterivARB:
 	movq	5544(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetBufferParameterivARB, .-glGetBufferParameterivARB
+	.size	GL_PREFIX(GetBufferParameterivARB), .-GL_PREFIX(GetBufferParameterivARB)
 
 	.p2align	4,,15
-	.globl	glGetBufferPointervARB
-	.type	glGetBufferPointervARB, @function
-glGetBufferPointervARB:
+	.globl	GL_PREFIX(GetBufferPointervARB)
+	.type	GL_PREFIX(GetBufferPointervARB), @function
+GL_PREFIX(GetBufferPointervARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5552(%rax), %r11
@@ -26089,12 +26098,12 @@ glGetBufferPointervARB:
 	movq	5552(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetBufferPointervARB, .-glGetBufferPointervARB
+	.size	GL_PREFIX(GetBufferPointervARB), .-GL_PREFIX(GetBufferPointervARB)
 
 	.p2align	4,,15
-	.globl	glGetBufferSubDataARB
-	.type	glGetBufferSubDataARB, @function
-glGetBufferSubDataARB:
+	.globl	GL_PREFIX(GetBufferSubDataARB)
+	.type	GL_PREFIX(GetBufferSubDataARB), @function
+GL_PREFIX(GetBufferSubDataARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5560(%rax), %r11
@@ -26134,12 +26143,12 @@ glGetBufferSubDataARB:
 	movq	5560(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetBufferSubDataARB, .-glGetBufferSubDataARB
+	.size	GL_PREFIX(GetBufferSubDataARB), .-GL_PREFIX(GetBufferSubDataARB)
 
 	.p2align	4,,15
-	.globl	glIsBufferARB
-	.type	glIsBufferARB, @function
-glIsBufferARB:
+	.globl	GL_PREFIX(IsBufferARB)
+	.type	GL_PREFIX(IsBufferARB), @function
+GL_PREFIX(IsBufferARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5568(%rax), %r11
@@ -26163,12 +26172,12 @@ glIsBufferARB:
 	movq	5568(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIsBufferARB, .-glIsBufferARB
+	.size	GL_PREFIX(IsBufferARB), .-GL_PREFIX(IsBufferARB)
 
 	.p2align	4,,15
-	.globl	glMapBufferARB
-	.type	glMapBufferARB, @function
-glMapBufferARB:
+	.globl	GL_PREFIX(MapBufferARB)
+	.type	GL_PREFIX(MapBufferARB), @function
+GL_PREFIX(MapBufferARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5576(%rax), %r11
@@ -26200,12 +26209,12 @@ glMapBufferARB:
 	movq	5576(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMapBufferARB, .-glMapBufferARB
+	.size	GL_PREFIX(MapBufferARB), .-GL_PREFIX(MapBufferARB)
 
 	.p2align	4,,15
-	.globl	glUnmapBufferARB
-	.type	glUnmapBufferARB, @function
-glUnmapBufferARB:
+	.globl	GL_PREFIX(UnmapBufferARB)
+	.type	GL_PREFIX(UnmapBufferARB), @function
+GL_PREFIX(UnmapBufferARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5584(%rax), %r11
@@ -26229,12 +26238,12 @@ glUnmapBufferARB:
 	movq	5584(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUnmapBufferARB, .-glUnmapBufferARB
+	.size	GL_PREFIX(UnmapBufferARB), .-GL_PREFIX(UnmapBufferARB)
 
 	.p2align	4,,15
-	.globl	glDepthBoundsEXT
-	.type	glDepthBoundsEXT, @function
-glDepthBoundsEXT:
+	.globl	GL_PREFIX(DepthBoundsEXT)
+	.type	GL_PREFIX(DepthBoundsEXT), @function
+GL_PREFIX(DepthBoundsEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5592(%rax), %r11
@@ -26266,12 +26275,12 @@ glDepthBoundsEXT:
 	movq	5592(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDepthBoundsEXT, .-glDepthBoundsEXT
+	.size	GL_PREFIX(DepthBoundsEXT), .-GL_PREFIX(DepthBoundsEXT)
 
 	.p2align	4,,15
-	.globl	glGenQueriesARB
-	.type	glGenQueriesARB, @function
-glGenQueriesARB:
+	.globl	GL_PREFIX(GenQueriesARB)
+	.type	GL_PREFIX(GenQueriesARB), @function
+GL_PREFIX(GenQueriesARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5600(%rax), %r11
@@ -26303,12 +26312,12 @@ glGenQueriesARB:
 	movq	5600(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGenQueriesARB, .-glGenQueriesARB
+	.size	GL_PREFIX(GenQueriesARB), .-GL_PREFIX(GenQueriesARB)
 
 	.p2align	4,,15
-	.globl	glDeleteQueriesARB
-	.type	glDeleteQueriesARB, @function
-glDeleteQueriesARB:
+	.globl	GL_PREFIX(DeleteQueriesARB)
+	.type	GL_PREFIX(DeleteQueriesARB), @function
+GL_PREFIX(DeleteQueriesARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5608(%rax), %r11
@@ -26340,12 +26349,12 @@ glDeleteQueriesARB:
 	movq	5608(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDeleteQueriesARB, .-glDeleteQueriesARB
+	.size	GL_PREFIX(DeleteQueriesARB), .-GL_PREFIX(DeleteQueriesARB)
 
 	.p2align	4,,15
-	.globl	glIsQueryARB
-	.type	glIsQueryARB, @function
-glIsQueryARB:
+	.globl	GL_PREFIX(IsQueryARB)
+	.type	GL_PREFIX(IsQueryARB), @function
+GL_PREFIX(IsQueryARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5616(%rax), %r11
@@ -26369,12 +26378,12 @@ glIsQueryARB:
 	movq	5616(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIsQueryARB, .-glIsQueryARB
+	.size	GL_PREFIX(IsQueryARB), .-GL_PREFIX(IsQueryARB)
 
 	.p2align	4,,15
-	.globl	glBeginQueryARB
-	.type	glBeginQueryARB, @function
-glBeginQueryARB:
+	.globl	GL_PREFIX(BeginQueryARB)
+	.type	GL_PREFIX(BeginQueryARB), @function
+GL_PREFIX(BeginQueryARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5624(%rax), %r11
@@ -26406,12 +26415,12 @@ glBeginQueryARB:
 	movq	5624(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBeginQueryARB, .-glBeginQueryARB
+	.size	GL_PREFIX(BeginQueryARB), .-GL_PREFIX(BeginQueryARB)
 
 	.p2align	4,,15
-	.globl	glEndQueryARB
-	.type	glEndQueryARB, @function
-glEndQueryARB:
+	.globl	GL_PREFIX(EndQueryARB)
+	.type	GL_PREFIX(EndQueryARB), @function
+GL_PREFIX(EndQueryARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5632(%rax), %r11
@@ -26435,12 +26444,12 @@ glEndQueryARB:
 	movq	5632(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEndQueryARB, .-glEndQueryARB
+	.size	GL_PREFIX(EndQueryARB), .-GL_PREFIX(EndQueryARB)
 
 	.p2align	4,,15
-	.globl	glGetQueryivARB
-	.type	glGetQueryivARB, @function
-glGetQueryivARB:
+	.globl	GL_PREFIX(GetQueryivARB)
+	.type	GL_PREFIX(GetQueryivARB), @function
+GL_PREFIX(GetQueryivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5640(%rax), %r11
@@ -26472,12 +26481,12 @@ glGetQueryivARB:
 	movq	5640(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetQueryivARB, .-glGetQueryivARB
+	.size	GL_PREFIX(GetQueryivARB), .-GL_PREFIX(GetQueryivARB)
 
 	.p2align	4,,15
-	.globl	glGetQueryObjectivARB
-	.type	glGetQueryObjectivARB, @function
-glGetQueryObjectivARB:
+	.globl	GL_PREFIX(GetQueryObjectivARB)
+	.type	GL_PREFIX(GetQueryObjectivARB), @function
+GL_PREFIX(GetQueryObjectivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5648(%rax), %r11
@@ -26509,12 +26518,12 @@ glGetQueryObjectivARB:
 	movq	5648(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetQueryObjectivARB, .-glGetQueryObjectivARB
+	.size	GL_PREFIX(GetQueryObjectivARB), .-GL_PREFIX(GetQueryObjectivARB)
 
 	.p2align	4,,15
-	.globl	glGetQueryObjectuivARB
-	.type	glGetQueryObjectuivARB, @function
-glGetQueryObjectuivARB:
+	.globl	GL_PREFIX(GetQueryObjectuivARB)
+	.type	GL_PREFIX(GetQueryObjectuivARB), @function
+GL_PREFIX(GetQueryObjectuivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5656(%rax), %r11
@@ -26546,12 +26555,12 @@ glGetQueryObjectuivARB:
 	movq	5656(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetQueryObjectuivARB, .-glGetQueryObjectuivARB
+	.size	GL_PREFIX(GetQueryObjectuivARB), .-GL_PREFIX(GetQueryObjectuivARB)
 
 	.p2align	4,,15
-	.globl	glMultiModeDrawArraysIBM
-	.type	glMultiModeDrawArraysIBM, @function
-glMultiModeDrawArraysIBM:
+	.globl	GL_PREFIX(MultiModeDrawArraysIBM)
+	.type	GL_PREFIX(MultiModeDrawArraysIBM), @function
+GL_PREFIX(MultiModeDrawArraysIBM):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5664(%rax), %r11
@@ -26591,12 +26600,12 @@ glMultiModeDrawArraysIBM:
 	movq	5664(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiModeDrawArraysIBM, .-glMultiModeDrawArraysIBM
+	.size	GL_PREFIX(MultiModeDrawArraysIBM), .-GL_PREFIX(MultiModeDrawArraysIBM)
 
 	.p2align	4,,15
-	.globl	glMultiModeDrawElementsIBM
-	.type	glMultiModeDrawElementsIBM, @function
-glMultiModeDrawElementsIBM:
+	.globl	GL_PREFIX(MultiModeDrawElementsIBM)
+	.type	GL_PREFIX(MultiModeDrawElementsIBM), @function
+GL_PREFIX(MultiModeDrawElementsIBM):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5672(%rax), %r11
@@ -26644,12 +26653,12 @@ glMultiModeDrawElementsIBM:
 	movq	5672(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glMultiModeDrawElementsIBM, .-glMultiModeDrawElementsIBM
+	.size	GL_PREFIX(MultiModeDrawElementsIBM), .-GL_PREFIX(MultiModeDrawElementsIBM)
 
 	.p2align	4,,15
-	.globl	glBlendEquationSeparateEXT
-	.type	glBlendEquationSeparateEXT, @function
-glBlendEquationSeparateEXT:
+	.globl	GL_PREFIX(BlendEquationSeparateEXT)
+	.type	GL_PREFIX(BlendEquationSeparateEXT), @function
+GL_PREFIX(BlendEquationSeparateEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5680(%rax), %r11
@@ -26681,12 +26690,12 @@ glBlendEquationSeparateEXT:
 	movq	5680(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBlendEquationSeparateEXT, .-glBlendEquationSeparateEXT
+	.size	GL_PREFIX(BlendEquationSeparateEXT), .-GL_PREFIX(BlendEquationSeparateEXT)
 
 	.p2align	4,,15
-	.globl	glDeleteObjectARB
-	.type	glDeleteObjectARB, @function
-glDeleteObjectARB:
+	.globl	GL_PREFIX(DeleteObjectARB)
+	.type	GL_PREFIX(DeleteObjectARB), @function
+GL_PREFIX(DeleteObjectARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5688(%rax), %r11
@@ -26710,12 +26719,12 @@ glDeleteObjectARB:
 	movq	5688(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDeleteObjectARB, .-glDeleteObjectARB
+	.size	GL_PREFIX(DeleteObjectARB), .-GL_PREFIX(DeleteObjectARB)
 
 	.p2align	4,,15
-	.globl	glGetHandleARB
-	.type	glGetHandleARB, @function
-glGetHandleARB:
+	.globl	GL_PREFIX(GetHandleARB)
+	.type	GL_PREFIX(GetHandleARB), @function
+GL_PREFIX(GetHandleARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5696(%rax), %r11
@@ -26739,12 +26748,12 @@ glGetHandleARB:
 	movq	5696(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetHandleARB, .-glGetHandleARB
+	.size	GL_PREFIX(GetHandleARB), .-GL_PREFIX(GetHandleARB)
 
 	.p2align	4,,15
-	.globl	glDetachObjectARB
-	.type	glDetachObjectARB, @function
-glDetachObjectARB:
+	.globl	GL_PREFIX(DetachObjectARB)
+	.type	GL_PREFIX(DetachObjectARB), @function
+GL_PREFIX(DetachObjectARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5704(%rax), %r11
@@ -26776,12 +26785,12 @@ glDetachObjectARB:
 	movq	5704(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDetachObjectARB, .-glDetachObjectARB
+	.size	GL_PREFIX(DetachObjectARB), .-GL_PREFIX(DetachObjectARB)
 
 	.p2align	4,,15
-	.globl	glCreateShaderObjectARB
-	.type	glCreateShaderObjectARB, @function
-glCreateShaderObjectARB:
+	.globl	GL_PREFIX(CreateShaderObjectARB)
+	.type	GL_PREFIX(CreateShaderObjectARB), @function
+GL_PREFIX(CreateShaderObjectARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5712(%rax), %r11
@@ -26805,12 +26814,12 @@ glCreateShaderObjectARB:
 	movq	5712(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCreateShaderObjectARB, .-glCreateShaderObjectARB
+	.size	GL_PREFIX(CreateShaderObjectARB), .-GL_PREFIX(CreateShaderObjectARB)
 
 	.p2align	4,,15
-	.globl	glShaderSourceARB
-	.type	glShaderSourceARB, @function
-glShaderSourceARB:
+	.globl	GL_PREFIX(ShaderSourceARB)
+	.type	GL_PREFIX(ShaderSourceARB), @function
+GL_PREFIX(ShaderSourceARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5720(%rax), %r11
@@ -26850,12 +26859,12 @@ glShaderSourceARB:
 	movq	5720(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glShaderSourceARB, .-glShaderSourceARB
+	.size	GL_PREFIX(ShaderSourceARB), .-GL_PREFIX(ShaderSourceARB)
 
 	.p2align	4,,15
-	.globl	glCompileShaderARB
-	.type	glCompileShaderARB, @function
-glCompileShaderARB:
+	.globl	GL_PREFIX(CompileShaderARB)
+	.type	GL_PREFIX(CompileShaderARB), @function
+GL_PREFIX(CompileShaderARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5728(%rax), %r11
@@ -26879,12 +26888,12 @@ glCompileShaderARB:
 	movq	5728(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCompileShaderARB, .-glCompileShaderARB
+	.size	GL_PREFIX(CompileShaderARB), .-GL_PREFIX(CompileShaderARB)
 
 	.p2align	4,,15
-	.globl	glCreateProgramObjectARB
-	.type	glCreateProgramObjectARB, @function
-glCreateProgramObjectARB:
+	.globl	GL_PREFIX(CreateProgramObjectARB)
+	.type	GL_PREFIX(CreateProgramObjectARB), @function
+GL_PREFIX(CreateProgramObjectARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5736(%rax), %r11
@@ -26908,12 +26917,12 @@ glCreateProgramObjectARB:
 	movq	5736(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCreateProgramObjectARB, .-glCreateProgramObjectARB
+	.size	GL_PREFIX(CreateProgramObjectARB), .-GL_PREFIX(CreateProgramObjectARB)
 
 	.p2align	4,,15
-	.globl	glAttachObjectARB
-	.type	glAttachObjectARB, @function
-glAttachObjectARB:
+	.globl	GL_PREFIX(AttachObjectARB)
+	.type	GL_PREFIX(AttachObjectARB), @function
+GL_PREFIX(AttachObjectARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5744(%rax), %r11
@@ -26945,12 +26954,12 @@ glAttachObjectARB:
 	movq	5744(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glAttachObjectARB, .-glAttachObjectARB
+	.size	GL_PREFIX(AttachObjectARB), .-GL_PREFIX(AttachObjectARB)
 
 	.p2align	4,,15
-	.globl	glLinkProgramARB
-	.type	glLinkProgramARB, @function
-glLinkProgramARB:
+	.globl	GL_PREFIX(LinkProgramARB)
+	.type	GL_PREFIX(LinkProgramARB), @function
+GL_PREFIX(LinkProgramARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5752(%rax), %r11
@@ -26974,12 +26983,12 @@ glLinkProgramARB:
 	movq	5752(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glLinkProgramARB, .-glLinkProgramARB
+	.size	GL_PREFIX(LinkProgramARB), .-GL_PREFIX(LinkProgramARB)
 
 	.p2align	4,,15
-	.globl	glUseProgramObjectARB
-	.type	glUseProgramObjectARB, @function
-glUseProgramObjectARB:
+	.globl	GL_PREFIX(UseProgramObjectARB)
+	.type	GL_PREFIX(UseProgramObjectARB), @function
+GL_PREFIX(UseProgramObjectARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5760(%rax), %r11
@@ -27003,12 +27012,12 @@ glUseProgramObjectARB:
 	movq	5760(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUseProgramObjectARB, .-glUseProgramObjectARB
+	.size	GL_PREFIX(UseProgramObjectARB), .-GL_PREFIX(UseProgramObjectARB)
 
 	.p2align	4,,15
-	.globl	glValidateProgramARB
-	.type	glValidateProgramARB, @function
-glValidateProgramARB:
+	.globl	GL_PREFIX(ValidateProgramARB)
+	.type	GL_PREFIX(ValidateProgramARB), @function
+GL_PREFIX(ValidateProgramARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5768(%rax), %r11
@@ -27032,12 +27041,12 @@ glValidateProgramARB:
 	movq	5768(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glValidateProgramARB, .-glValidateProgramARB
+	.size	GL_PREFIX(ValidateProgramARB), .-GL_PREFIX(ValidateProgramARB)
 
 	.p2align	4,,15
-	.globl	glUniform1fARB
-	.type	glUniform1fARB, @function
-glUniform1fARB:
+	.globl	GL_PREFIX(Uniform1fARB)
+	.type	GL_PREFIX(Uniform1fARB), @function
+GL_PREFIX(Uniform1fARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5776(%rax), %r11
@@ -27069,12 +27078,12 @@ glUniform1fARB:
 	movq	5776(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform1fARB, .-glUniform1fARB
+	.size	GL_PREFIX(Uniform1fARB), .-GL_PREFIX(Uniform1fARB)
 
 	.p2align	4,,15
-	.globl	glUniform2fARB
-	.type	glUniform2fARB, @function
-glUniform2fARB:
+	.globl	GL_PREFIX(Uniform2fARB)
+	.type	GL_PREFIX(Uniform2fARB), @function
+GL_PREFIX(Uniform2fARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5784(%rax), %r11
@@ -27110,12 +27119,12 @@ glUniform2fARB:
 	movq	5784(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform2fARB, .-glUniform2fARB
+	.size	GL_PREFIX(Uniform2fARB), .-GL_PREFIX(Uniform2fARB)
 
 	.p2align	4,,15
-	.globl	glUniform3fARB
-	.type	glUniform3fARB, @function
-glUniform3fARB:
+	.globl	GL_PREFIX(Uniform3fARB)
+	.type	GL_PREFIX(Uniform3fARB), @function
+GL_PREFIX(Uniform3fARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5792(%rax), %r11
@@ -27155,12 +27164,12 @@ glUniform3fARB:
 	movq	5792(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform3fARB, .-glUniform3fARB
+	.size	GL_PREFIX(Uniform3fARB), .-GL_PREFIX(Uniform3fARB)
 
 	.p2align	4,,15
-	.globl	glUniform4fARB
-	.type	glUniform4fARB, @function
-glUniform4fARB:
+	.globl	GL_PREFIX(Uniform4fARB)
+	.type	GL_PREFIX(Uniform4fARB), @function
+GL_PREFIX(Uniform4fARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5800(%rax), %r11
@@ -27204,12 +27213,12 @@ glUniform4fARB:
 	movq	5800(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform4fARB, .-glUniform4fARB
+	.size	GL_PREFIX(Uniform4fARB), .-GL_PREFIX(Uniform4fARB)
 
 	.p2align	4,,15
-	.globl	glUniform1iARB
-	.type	glUniform1iARB, @function
-glUniform1iARB:
+	.globl	GL_PREFIX(Uniform1iARB)
+	.type	GL_PREFIX(Uniform1iARB), @function
+GL_PREFIX(Uniform1iARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5808(%rax), %r11
@@ -27241,12 +27250,12 @@ glUniform1iARB:
 	movq	5808(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform1iARB, .-glUniform1iARB
+	.size	GL_PREFIX(Uniform1iARB), .-GL_PREFIX(Uniform1iARB)
 
 	.p2align	4,,15
-	.globl	glUniform2iARB
-	.type	glUniform2iARB, @function
-glUniform2iARB:
+	.globl	GL_PREFIX(Uniform2iARB)
+	.type	GL_PREFIX(Uniform2iARB), @function
+GL_PREFIX(Uniform2iARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5816(%rax), %r11
@@ -27278,12 +27287,12 @@ glUniform2iARB:
 	movq	5816(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform2iARB, .-glUniform2iARB
+	.size	GL_PREFIX(Uniform2iARB), .-GL_PREFIX(Uniform2iARB)
 
 	.p2align	4,,15
-	.globl	glUniform3iARB
-	.type	glUniform3iARB, @function
-glUniform3iARB:
+	.globl	GL_PREFIX(Uniform3iARB)
+	.type	GL_PREFIX(Uniform3iARB), @function
+GL_PREFIX(Uniform3iARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5824(%rax), %r11
@@ -27323,12 +27332,12 @@ glUniform3iARB:
 	movq	5824(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform3iARB, .-glUniform3iARB
+	.size	GL_PREFIX(Uniform3iARB), .-GL_PREFIX(Uniform3iARB)
 
 	.p2align	4,,15
-	.globl	glUniform4iARB
-	.type	glUniform4iARB, @function
-glUniform4iARB:
+	.globl	GL_PREFIX(Uniform4iARB)
+	.type	GL_PREFIX(Uniform4iARB), @function
+GL_PREFIX(Uniform4iARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5832(%rax), %r11
@@ -27368,12 +27377,12 @@ glUniform4iARB:
 	movq	5832(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform4iARB, .-glUniform4iARB
+	.size	GL_PREFIX(Uniform4iARB), .-GL_PREFIX(Uniform4iARB)
 
 	.p2align	4,,15
-	.globl	glUniform1fvARB
-	.type	glUniform1fvARB, @function
-glUniform1fvARB:
+	.globl	GL_PREFIX(Uniform1fvARB)
+	.type	GL_PREFIX(Uniform1fvARB), @function
+GL_PREFIX(Uniform1fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5840(%rax), %r11
@@ -27405,12 +27414,12 @@ glUniform1fvARB:
 	movq	5840(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform1fvARB, .-glUniform1fvARB
+	.size	GL_PREFIX(Uniform1fvARB), .-GL_PREFIX(Uniform1fvARB)
 
 	.p2align	4,,15
-	.globl	glUniform2fvARB
-	.type	glUniform2fvARB, @function
-glUniform2fvARB:
+	.globl	GL_PREFIX(Uniform2fvARB)
+	.type	GL_PREFIX(Uniform2fvARB), @function
+GL_PREFIX(Uniform2fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5848(%rax), %r11
@@ -27442,12 +27451,12 @@ glUniform2fvARB:
 	movq	5848(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform2fvARB, .-glUniform2fvARB
+	.size	GL_PREFIX(Uniform2fvARB), .-GL_PREFIX(Uniform2fvARB)
 
 	.p2align	4,,15
-	.globl	glUniform3fvARB
-	.type	glUniform3fvARB, @function
-glUniform3fvARB:
+	.globl	GL_PREFIX(Uniform3fvARB)
+	.type	GL_PREFIX(Uniform3fvARB), @function
+GL_PREFIX(Uniform3fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5856(%rax), %r11
@@ -27479,12 +27488,12 @@ glUniform3fvARB:
 	movq	5856(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform3fvARB, .-glUniform3fvARB
+	.size	GL_PREFIX(Uniform3fvARB), .-GL_PREFIX(Uniform3fvARB)
 
 	.p2align	4,,15
-	.globl	glUniform4fvARB
-	.type	glUniform4fvARB, @function
-glUniform4fvARB:
+	.globl	GL_PREFIX(Uniform4fvARB)
+	.type	GL_PREFIX(Uniform4fvARB), @function
+GL_PREFIX(Uniform4fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5864(%rax), %r11
@@ -27516,12 +27525,12 @@ glUniform4fvARB:
 	movq	5864(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform4fvARB, .-glUniform4fvARB
+	.size	GL_PREFIX(Uniform4fvARB), .-GL_PREFIX(Uniform4fvARB)
 
 	.p2align	4,,15
-	.globl	glUniform1ivARB
-	.type	glUniform1ivARB, @function
-glUniform1ivARB:
+	.globl	GL_PREFIX(Uniform1ivARB)
+	.type	GL_PREFIX(Uniform1ivARB), @function
+GL_PREFIX(Uniform1ivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5872(%rax), %r11
@@ -27553,12 +27562,12 @@ glUniform1ivARB:
 	movq	5872(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform1ivARB, .-glUniform1ivARB
+	.size	GL_PREFIX(Uniform1ivARB), .-GL_PREFIX(Uniform1ivARB)
 
 	.p2align	4,,15
-	.globl	glUniform2ivARB
-	.type	glUniform2ivARB, @function
-glUniform2ivARB:
+	.globl	GL_PREFIX(Uniform2ivARB)
+	.type	GL_PREFIX(Uniform2ivARB), @function
+GL_PREFIX(Uniform2ivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5880(%rax), %r11
@@ -27590,12 +27599,12 @@ glUniform2ivARB:
 	movq	5880(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform2ivARB, .-glUniform2ivARB
+	.size	GL_PREFIX(Uniform2ivARB), .-GL_PREFIX(Uniform2ivARB)
 
 	.p2align	4,,15
-	.globl	glUniform3ivARB
-	.type	glUniform3ivARB, @function
-glUniform3ivARB:
+	.globl	GL_PREFIX(Uniform3ivARB)
+	.type	GL_PREFIX(Uniform3ivARB), @function
+GL_PREFIX(Uniform3ivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5888(%rax), %r11
@@ -27627,12 +27636,12 @@ glUniform3ivARB:
 	movq	5888(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform3ivARB, .-glUniform3ivARB
+	.size	GL_PREFIX(Uniform3ivARB), .-GL_PREFIX(Uniform3ivARB)
 
 	.p2align	4,,15
-	.globl	glUniform4ivARB
-	.type	glUniform4ivARB, @function
-glUniform4ivARB:
+	.globl	GL_PREFIX(Uniform4ivARB)
+	.type	GL_PREFIX(Uniform4ivARB), @function
+GL_PREFIX(Uniform4ivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5896(%rax), %r11
@@ -27664,12 +27673,12 @@ glUniform4ivARB:
 	movq	5896(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniform4ivARB, .-glUniform4ivARB
+	.size	GL_PREFIX(Uniform4ivARB), .-GL_PREFIX(Uniform4ivARB)
 
 	.p2align	4,,15
-	.globl	glUniformMatrix2fvARB
-	.type	glUniformMatrix2fvARB, @function
-glUniformMatrix2fvARB:
+	.globl	GL_PREFIX(UniformMatrix2fvARB)
+	.type	GL_PREFIX(UniformMatrix2fvARB), @function
+GL_PREFIX(UniformMatrix2fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5904(%rax), %r11
@@ -27709,12 +27718,12 @@ glUniformMatrix2fvARB:
 	movq	5904(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniformMatrix2fvARB, .-glUniformMatrix2fvARB
+	.size	GL_PREFIX(UniformMatrix2fvARB), .-GL_PREFIX(UniformMatrix2fvARB)
 
 	.p2align	4,,15
-	.globl	glUniformMatrix3fvARB
-	.type	glUniformMatrix3fvARB, @function
-glUniformMatrix3fvARB:
+	.globl	GL_PREFIX(UniformMatrix3fvARB)
+	.type	GL_PREFIX(UniformMatrix3fvARB), @function
+GL_PREFIX(UniformMatrix3fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5912(%rax), %r11
@@ -27754,12 +27763,12 @@ glUniformMatrix3fvARB:
 	movq	5912(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniformMatrix3fvARB, .-glUniformMatrix3fvARB
+	.size	GL_PREFIX(UniformMatrix3fvARB), .-GL_PREFIX(UniformMatrix3fvARB)
 
 	.p2align	4,,15
-	.globl	glUniformMatrix4fvARB
-	.type	glUniformMatrix4fvARB, @function
-glUniformMatrix4fvARB:
+	.globl	GL_PREFIX(UniformMatrix4fvARB)
+	.type	GL_PREFIX(UniformMatrix4fvARB), @function
+GL_PREFIX(UniformMatrix4fvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5920(%rax), %r11
@@ -27799,12 +27808,12 @@ glUniformMatrix4fvARB:
 	movq	5920(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glUniformMatrix4fvARB, .-glUniformMatrix4fvARB
+	.size	GL_PREFIX(UniformMatrix4fvARB), .-GL_PREFIX(UniformMatrix4fvARB)
 
 	.p2align	4,,15
-	.globl	glGetObjectParameterfvARB
-	.type	glGetObjectParameterfvARB, @function
-glGetObjectParameterfvARB:
+	.globl	GL_PREFIX(GetObjectParameterfvARB)
+	.type	GL_PREFIX(GetObjectParameterfvARB), @function
+GL_PREFIX(GetObjectParameterfvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5928(%rax), %r11
@@ -27836,12 +27845,12 @@ glGetObjectParameterfvARB:
 	movq	5928(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetObjectParameterfvARB, .-glGetObjectParameterfvARB
+	.size	GL_PREFIX(GetObjectParameterfvARB), .-GL_PREFIX(GetObjectParameterfvARB)
 
 	.p2align	4,,15
-	.globl	glGetObjectParameterivARB
-	.type	glGetObjectParameterivARB, @function
-glGetObjectParameterivARB:
+	.globl	GL_PREFIX(GetObjectParameterivARB)
+	.type	GL_PREFIX(GetObjectParameterivARB), @function
+GL_PREFIX(GetObjectParameterivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5936(%rax), %r11
@@ -27873,12 +27882,12 @@ glGetObjectParameterivARB:
 	movq	5936(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetObjectParameterivARB, .-glGetObjectParameterivARB
+	.size	GL_PREFIX(GetObjectParameterivARB), .-GL_PREFIX(GetObjectParameterivARB)
 
 	.p2align	4,,15
-	.globl	glGetInfoLogARB
-	.type	glGetInfoLogARB, @function
-glGetInfoLogARB:
+	.globl	GL_PREFIX(GetInfoLogARB)
+	.type	GL_PREFIX(GetInfoLogARB), @function
+GL_PREFIX(GetInfoLogARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5944(%rax), %r11
@@ -27918,12 +27927,12 @@ glGetInfoLogARB:
 	movq	5944(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetInfoLogARB, .-glGetInfoLogARB
+	.size	GL_PREFIX(GetInfoLogARB), .-GL_PREFIX(GetInfoLogARB)
 
 	.p2align	4,,15
-	.globl	glGetAttachedObjectsARB
-	.type	glGetAttachedObjectsARB, @function
-glGetAttachedObjectsARB:
+	.globl	GL_PREFIX(GetAttachedObjectsARB)
+	.type	GL_PREFIX(GetAttachedObjectsARB), @function
+GL_PREFIX(GetAttachedObjectsARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5952(%rax), %r11
@@ -27963,12 +27972,12 @@ glGetAttachedObjectsARB:
 	movq	5952(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetAttachedObjectsARB, .-glGetAttachedObjectsARB
+	.size	GL_PREFIX(GetAttachedObjectsARB), .-GL_PREFIX(GetAttachedObjectsARB)
 
 	.p2align	4,,15
-	.globl	glGetUniformLocationARB
-	.type	glGetUniformLocationARB, @function
-glGetUniformLocationARB:
+	.globl	GL_PREFIX(GetUniformLocationARB)
+	.type	GL_PREFIX(GetUniformLocationARB), @function
+GL_PREFIX(GetUniformLocationARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5960(%rax), %r11
@@ -28000,12 +28009,12 @@ glGetUniformLocationARB:
 	movq	5960(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetUniformLocationARB, .-glGetUniformLocationARB
+	.size	GL_PREFIX(GetUniformLocationARB), .-GL_PREFIX(GetUniformLocationARB)
 
 	.p2align	4,,15
-	.globl	glGetActiveUniformARB
-	.type	glGetActiveUniformARB, @function
-glGetActiveUniformARB:
+	.globl	GL_PREFIX(GetActiveUniformARB)
+	.type	GL_PREFIX(GetActiveUniformARB), @function
+GL_PREFIX(GetActiveUniformARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5968(%rax), %r11
@@ -28053,12 +28062,12 @@ glGetActiveUniformARB:
 	movq	5968(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetActiveUniformARB, .-glGetActiveUniformARB
+	.size	GL_PREFIX(GetActiveUniformARB), .-GL_PREFIX(GetActiveUniformARB)
 
 	.p2align	4,,15
-	.globl	glGetUniformfvARB
-	.type	glGetUniformfvARB, @function
-glGetUniformfvARB:
+	.globl	GL_PREFIX(GetUniformfvARB)
+	.type	GL_PREFIX(GetUniformfvARB), @function
+GL_PREFIX(GetUniformfvARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5976(%rax), %r11
@@ -28090,12 +28099,12 @@ glGetUniformfvARB:
 	movq	5976(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetUniformfvARB, .-glGetUniformfvARB
+	.size	GL_PREFIX(GetUniformfvARB), .-GL_PREFIX(GetUniformfvARB)
 
 	.p2align	4,,15
-	.globl	glGetUniformivARB
-	.type	glGetUniformivARB, @function
-glGetUniformivARB:
+	.globl	GL_PREFIX(GetUniformivARB)
+	.type	GL_PREFIX(GetUniformivARB), @function
+GL_PREFIX(GetUniformivARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5984(%rax), %r11
@@ -28127,12 +28136,12 @@ glGetUniformivARB:
 	movq	5984(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetUniformivARB, .-glGetUniformivARB
+	.size	GL_PREFIX(GetUniformivARB), .-GL_PREFIX(GetUniformivARB)
 
 	.p2align	4,,15
-	.globl	glGetShaderSourceARB
-	.type	glGetShaderSourceARB, @function
-glGetShaderSourceARB:
+	.globl	GL_PREFIX(GetShaderSourceARB)
+	.type	GL_PREFIX(GetShaderSourceARB), @function
+GL_PREFIX(GetShaderSourceARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	5992(%rax), %r11
@@ -28172,12 +28181,12 @@ glGetShaderSourceARB:
 	movq	5992(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetShaderSourceARB, .-glGetShaderSourceARB
+	.size	GL_PREFIX(GetShaderSourceARB), .-GL_PREFIX(GetShaderSourceARB)
 
 	.p2align	4,,15
-	.globl	glBindAttribLocationARB
-	.type	glBindAttribLocationARB, @function
-glBindAttribLocationARB:
+	.globl	GL_PREFIX(BindAttribLocationARB)
+	.type	GL_PREFIX(BindAttribLocationARB), @function
+GL_PREFIX(BindAttribLocationARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6000(%rax), %r11
@@ -28209,12 +28218,12 @@ glBindAttribLocationARB:
 	movq	6000(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBindAttribLocationARB, .-glBindAttribLocationARB
+	.size	GL_PREFIX(BindAttribLocationARB), .-GL_PREFIX(BindAttribLocationARB)
 
 	.p2align	4,,15
-	.globl	glGetActiveAttribARB
-	.type	glGetActiveAttribARB, @function
-glGetActiveAttribARB:
+	.globl	GL_PREFIX(GetActiveAttribARB)
+	.type	GL_PREFIX(GetActiveAttribARB), @function
+GL_PREFIX(GetActiveAttribARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6008(%rax), %r11
@@ -28262,12 +28271,12 @@ glGetActiveAttribARB:
 	movq	6008(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetActiveAttribARB, .-glGetActiveAttribARB
+	.size	GL_PREFIX(GetActiveAttribARB), .-GL_PREFIX(GetActiveAttribARB)
 
 	.p2align	4,,15
-	.globl	glGetAttribLocationARB
-	.type	glGetAttribLocationARB, @function
-glGetAttribLocationARB:
+	.globl	GL_PREFIX(GetAttribLocationARB)
+	.type	GL_PREFIX(GetAttribLocationARB), @function
+GL_PREFIX(GetAttribLocationARB):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6016(%rax), %r11
@@ -28299,12 +28308,12 @@ glGetAttribLocationARB:
 	movq	6016(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetAttribLocationARB, .-glGetAttribLocationARB
+	.size	GL_PREFIX(GetAttribLocationARB), .-GL_PREFIX(GetAttribLocationARB)
 
 	.p2align	4,,15
-	.globl	glGetVertexAttribdvNV
-	.type	glGetVertexAttribdvNV, @function
-glGetVertexAttribdvNV:
+	.globl	GL_PREFIX(GetVertexAttribdvNV)
+	.type	GL_PREFIX(GetVertexAttribdvNV), @function
+GL_PREFIX(GetVertexAttribdvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6024(%rax), %r11
@@ -28336,12 +28345,12 @@ glGetVertexAttribdvNV:
 	movq	6024(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetVertexAttribdvNV, .-glGetVertexAttribdvNV
+	.size	GL_PREFIX(GetVertexAttribdvNV), .-GL_PREFIX(GetVertexAttribdvNV)
 
 	.p2align	4,,15
-	.globl	glGetVertexAttribfvNV
-	.type	glGetVertexAttribfvNV, @function
-glGetVertexAttribfvNV:
+	.globl	GL_PREFIX(GetVertexAttribfvNV)
+	.type	GL_PREFIX(GetVertexAttribfvNV), @function
+GL_PREFIX(GetVertexAttribfvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6032(%rax), %r11
@@ -28373,12 +28382,12 @@ glGetVertexAttribfvNV:
 	movq	6032(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetVertexAttribfvNV, .-glGetVertexAttribfvNV
+	.size	GL_PREFIX(GetVertexAttribfvNV), .-GL_PREFIX(GetVertexAttribfvNV)
 
 	.p2align	4,,15
-	.globl	glGetVertexAttribivNV
-	.type	glGetVertexAttribivNV, @function
-glGetVertexAttribivNV:
+	.globl	GL_PREFIX(GetVertexAttribivNV)
+	.type	GL_PREFIX(GetVertexAttribivNV), @function
+GL_PREFIX(GetVertexAttribivNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6040(%rax), %r11
@@ -28410,12 +28419,12 @@ glGetVertexAttribivNV:
 	movq	6040(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetVertexAttribivNV, .-glGetVertexAttribivNV
+	.size	GL_PREFIX(GetVertexAttribivNV), .-GL_PREFIX(GetVertexAttribivNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib1dNV
-	.type	glVertexAttrib1dNV, @function
-glVertexAttrib1dNV:
+	.globl	GL_PREFIX(VertexAttrib1dNV)
+	.type	GL_PREFIX(VertexAttrib1dNV), @function
+GL_PREFIX(VertexAttrib1dNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6048(%rax), %r11
@@ -28447,12 +28456,12 @@ glVertexAttrib1dNV:
 	movq	6048(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib1dNV, .-glVertexAttrib1dNV
+	.size	GL_PREFIX(VertexAttrib1dNV), .-GL_PREFIX(VertexAttrib1dNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib1dvNV
-	.type	glVertexAttrib1dvNV, @function
-glVertexAttrib1dvNV:
+	.globl	GL_PREFIX(VertexAttrib1dvNV)
+	.type	GL_PREFIX(VertexAttrib1dvNV), @function
+GL_PREFIX(VertexAttrib1dvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6056(%rax), %r11
@@ -28484,12 +28493,12 @@ glVertexAttrib1dvNV:
 	movq	6056(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib1dvNV, .-glVertexAttrib1dvNV
+	.size	GL_PREFIX(VertexAttrib1dvNV), .-GL_PREFIX(VertexAttrib1dvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib1fNV
-	.type	glVertexAttrib1fNV, @function
-glVertexAttrib1fNV:
+	.globl	GL_PREFIX(VertexAttrib1fNV)
+	.type	GL_PREFIX(VertexAttrib1fNV), @function
+GL_PREFIX(VertexAttrib1fNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6064(%rax), %r11
@@ -28521,12 +28530,12 @@ glVertexAttrib1fNV:
 	movq	6064(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib1fNV, .-glVertexAttrib1fNV
+	.size	GL_PREFIX(VertexAttrib1fNV), .-GL_PREFIX(VertexAttrib1fNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib1fvNV
-	.type	glVertexAttrib1fvNV, @function
-glVertexAttrib1fvNV:
+	.globl	GL_PREFIX(VertexAttrib1fvNV)
+	.type	GL_PREFIX(VertexAttrib1fvNV), @function
+GL_PREFIX(VertexAttrib1fvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6072(%rax), %r11
@@ -28558,12 +28567,12 @@ glVertexAttrib1fvNV:
 	movq	6072(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib1fvNV, .-glVertexAttrib1fvNV
+	.size	GL_PREFIX(VertexAttrib1fvNV), .-GL_PREFIX(VertexAttrib1fvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib1sNV
-	.type	glVertexAttrib1sNV, @function
-glVertexAttrib1sNV:
+	.globl	GL_PREFIX(VertexAttrib1sNV)
+	.type	GL_PREFIX(VertexAttrib1sNV), @function
+GL_PREFIX(VertexAttrib1sNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6080(%rax), %r11
@@ -28595,12 +28604,12 @@ glVertexAttrib1sNV:
 	movq	6080(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib1sNV, .-glVertexAttrib1sNV
+	.size	GL_PREFIX(VertexAttrib1sNV), .-GL_PREFIX(VertexAttrib1sNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib1svNV
-	.type	glVertexAttrib1svNV, @function
-glVertexAttrib1svNV:
+	.globl	GL_PREFIX(VertexAttrib1svNV)
+	.type	GL_PREFIX(VertexAttrib1svNV), @function
+GL_PREFIX(VertexAttrib1svNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6088(%rax), %r11
@@ -28632,12 +28641,12 @@ glVertexAttrib1svNV:
 	movq	6088(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib1svNV, .-glVertexAttrib1svNV
+	.size	GL_PREFIX(VertexAttrib1svNV), .-GL_PREFIX(VertexAttrib1svNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib2dNV
-	.type	glVertexAttrib2dNV, @function
-glVertexAttrib2dNV:
+	.globl	GL_PREFIX(VertexAttrib2dNV)
+	.type	GL_PREFIX(VertexAttrib2dNV), @function
+GL_PREFIX(VertexAttrib2dNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6096(%rax), %r11
@@ -28673,12 +28682,12 @@ glVertexAttrib2dNV:
 	movq	6096(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib2dNV, .-glVertexAttrib2dNV
+	.size	GL_PREFIX(VertexAttrib2dNV), .-GL_PREFIX(VertexAttrib2dNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib2dvNV
-	.type	glVertexAttrib2dvNV, @function
-glVertexAttrib2dvNV:
+	.globl	GL_PREFIX(VertexAttrib2dvNV)
+	.type	GL_PREFIX(VertexAttrib2dvNV), @function
+GL_PREFIX(VertexAttrib2dvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6104(%rax), %r11
@@ -28710,12 +28719,12 @@ glVertexAttrib2dvNV:
 	movq	6104(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib2dvNV, .-glVertexAttrib2dvNV
+	.size	GL_PREFIX(VertexAttrib2dvNV), .-GL_PREFIX(VertexAttrib2dvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib2fNV
-	.type	glVertexAttrib2fNV, @function
-glVertexAttrib2fNV:
+	.globl	GL_PREFIX(VertexAttrib2fNV)
+	.type	GL_PREFIX(VertexAttrib2fNV), @function
+GL_PREFIX(VertexAttrib2fNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6112(%rax), %r11
@@ -28751,12 +28760,12 @@ glVertexAttrib2fNV:
 	movq	6112(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib2fNV, .-glVertexAttrib2fNV
+	.size	GL_PREFIX(VertexAttrib2fNV), .-GL_PREFIX(VertexAttrib2fNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib2fvNV
-	.type	glVertexAttrib2fvNV, @function
-glVertexAttrib2fvNV:
+	.globl	GL_PREFIX(VertexAttrib2fvNV)
+	.type	GL_PREFIX(VertexAttrib2fvNV), @function
+GL_PREFIX(VertexAttrib2fvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6120(%rax), %r11
@@ -28788,12 +28797,12 @@ glVertexAttrib2fvNV:
 	movq	6120(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib2fvNV, .-glVertexAttrib2fvNV
+	.size	GL_PREFIX(VertexAttrib2fvNV), .-GL_PREFIX(VertexAttrib2fvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib2sNV
-	.type	glVertexAttrib2sNV, @function
-glVertexAttrib2sNV:
+	.globl	GL_PREFIX(VertexAttrib2sNV)
+	.type	GL_PREFIX(VertexAttrib2sNV), @function
+GL_PREFIX(VertexAttrib2sNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6128(%rax), %r11
@@ -28825,12 +28834,12 @@ glVertexAttrib2sNV:
 	movq	6128(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib2sNV, .-glVertexAttrib2sNV
+	.size	GL_PREFIX(VertexAttrib2sNV), .-GL_PREFIX(VertexAttrib2sNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib2svNV
-	.type	glVertexAttrib2svNV, @function
-glVertexAttrib2svNV:
+	.globl	GL_PREFIX(VertexAttrib2svNV)
+	.type	GL_PREFIX(VertexAttrib2svNV), @function
+GL_PREFIX(VertexAttrib2svNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6136(%rax), %r11
@@ -28862,12 +28871,12 @@ glVertexAttrib2svNV:
 	movq	6136(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib2svNV, .-glVertexAttrib2svNV
+	.size	GL_PREFIX(VertexAttrib2svNV), .-GL_PREFIX(VertexAttrib2svNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib3dNV
-	.type	glVertexAttrib3dNV, @function
-glVertexAttrib3dNV:
+	.globl	GL_PREFIX(VertexAttrib3dNV)
+	.type	GL_PREFIX(VertexAttrib3dNV), @function
+GL_PREFIX(VertexAttrib3dNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6144(%rax), %r11
@@ -28907,12 +28916,12 @@ glVertexAttrib3dNV:
 	movq	6144(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib3dNV, .-glVertexAttrib3dNV
+	.size	GL_PREFIX(VertexAttrib3dNV), .-GL_PREFIX(VertexAttrib3dNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib3dvNV
-	.type	glVertexAttrib3dvNV, @function
-glVertexAttrib3dvNV:
+	.globl	GL_PREFIX(VertexAttrib3dvNV)
+	.type	GL_PREFIX(VertexAttrib3dvNV), @function
+GL_PREFIX(VertexAttrib3dvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6152(%rax), %r11
@@ -28944,12 +28953,12 @@ glVertexAttrib3dvNV:
 	movq	6152(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib3dvNV, .-glVertexAttrib3dvNV
+	.size	GL_PREFIX(VertexAttrib3dvNV), .-GL_PREFIX(VertexAttrib3dvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib3fNV
-	.type	glVertexAttrib3fNV, @function
-glVertexAttrib3fNV:
+	.globl	GL_PREFIX(VertexAttrib3fNV)
+	.type	GL_PREFIX(VertexAttrib3fNV), @function
+GL_PREFIX(VertexAttrib3fNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6160(%rax), %r11
@@ -28989,12 +28998,12 @@ glVertexAttrib3fNV:
 	movq	6160(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib3fNV, .-glVertexAttrib3fNV
+	.size	GL_PREFIX(VertexAttrib3fNV), .-GL_PREFIX(VertexAttrib3fNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib3fvNV
-	.type	glVertexAttrib3fvNV, @function
-glVertexAttrib3fvNV:
+	.globl	GL_PREFIX(VertexAttrib3fvNV)
+	.type	GL_PREFIX(VertexAttrib3fvNV), @function
+GL_PREFIX(VertexAttrib3fvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6168(%rax), %r11
@@ -29026,12 +29035,12 @@ glVertexAttrib3fvNV:
 	movq	6168(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib3fvNV, .-glVertexAttrib3fvNV
+	.size	GL_PREFIX(VertexAttrib3fvNV), .-GL_PREFIX(VertexAttrib3fvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib3sNV
-	.type	glVertexAttrib3sNV, @function
-glVertexAttrib3sNV:
+	.globl	GL_PREFIX(VertexAttrib3sNV)
+	.type	GL_PREFIX(VertexAttrib3sNV), @function
+GL_PREFIX(VertexAttrib3sNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6176(%rax), %r11
@@ -29071,12 +29080,12 @@ glVertexAttrib3sNV:
 	movq	6176(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib3sNV, .-glVertexAttrib3sNV
+	.size	GL_PREFIX(VertexAttrib3sNV), .-GL_PREFIX(VertexAttrib3sNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib3svNV
-	.type	glVertexAttrib3svNV, @function
-glVertexAttrib3svNV:
+	.globl	GL_PREFIX(VertexAttrib3svNV)
+	.type	GL_PREFIX(VertexAttrib3svNV), @function
+GL_PREFIX(VertexAttrib3svNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6184(%rax), %r11
@@ -29108,12 +29117,12 @@ glVertexAttrib3svNV:
 	movq	6184(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib3svNV, .-glVertexAttrib3svNV
+	.size	GL_PREFIX(VertexAttrib3svNV), .-GL_PREFIX(VertexAttrib3svNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4dNV
-	.type	glVertexAttrib4dNV, @function
-glVertexAttrib4dNV:
+	.globl	GL_PREFIX(VertexAttrib4dNV)
+	.type	GL_PREFIX(VertexAttrib4dNV), @function
+GL_PREFIX(VertexAttrib4dNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6192(%rax), %r11
@@ -29157,12 +29166,12 @@ glVertexAttrib4dNV:
 	movq	6192(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4dNV, .-glVertexAttrib4dNV
+	.size	GL_PREFIX(VertexAttrib4dNV), .-GL_PREFIX(VertexAttrib4dNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4dvNV
-	.type	glVertexAttrib4dvNV, @function
-glVertexAttrib4dvNV:
+	.globl	GL_PREFIX(VertexAttrib4dvNV)
+	.type	GL_PREFIX(VertexAttrib4dvNV), @function
+GL_PREFIX(VertexAttrib4dvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6200(%rax), %r11
@@ -29194,12 +29203,12 @@ glVertexAttrib4dvNV:
 	movq	6200(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4dvNV, .-glVertexAttrib4dvNV
+	.size	GL_PREFIX(VertexAttrib4dvNV), .-GL_PREFIX(VertexAttrib4dvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4fNV
-	.type	glVertexAttrib4fNV, @function
-glVertexAttrib4fNV:
+	.globl	GL_PREFIX(VertexAttrib4fNV)
+	.type	GL_PREFIX(VertexAttrib4fNV), @function
+GL_PREFIX(VertexAttrib4fNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6208(%rax), %r11
@@ -29243,12 +29252,12 @@ glVertexAttrib4fNV:
 	movq	6208(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4fNV, .-glVertexAttrib4fNV
+	.size	GL_PREFIX(VertexAttrib4fNV), .-GL_PREFIX(VertexAttrib4fNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4fvNV
-	.type	glVertexAttrib4fvNV, @function
-glVertexAttrib4fvNV:
+	.globl	GL_PREFIX(VertexAttrib4fvNV)
+	.type	GL_PREFIX(VertexAttrib4fvNV), @function
+GL_PREFIX(VertexAttrib4fvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6216(%rax), %r11
@@ -29280,12 +29289,12 @@ glVertexAttrib4fvNV:
 	movq	6216(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4fvNV, .-glVertexAttrib4fvNV
+	.size	GL_PREFIX(VertexAttrib4fvNV), .-GL_PREFIX(VertexAttrib4fvNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4sNV
-	.type	glVertexAttrib4sNV, @function
-glVertexAttrib4sNV:
+	.globl	GL_PREFIX(VertexAttrib4sNV)
+	.type	GL_PREFIX(VertexAttrib4sNV), @function
+GL_PREFIX(VertexAttrib4sNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6224(%rax), %r11
@@ -29325,12 +29334,12 @@ glVertexAttrib4sNV:
 	movq	6224(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4sNV, .-glVertexAttrib4sNV
+	.size	GL_PREFIX(VertexAttrib4sNV), .-GL_PREFIX(VertexAttrib4sNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4svNV
-	.type	glVertexAttrib4svNV, @function
-glVertexAttrib4svNV:
+	.globl	GL_PREFIX(VertexAttrib4svNV)
+	.type	GL_PREFIX(VertexAttrib4svNV), @function
+GL_PREFIX(VertexAttrib4svNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6232(%rax), %r11
@@ -29362,12 +29371,12 @@ glVertexAttrib4svNV:
 	movq	6232(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4svNV, .-glVertexAttrib4svNV
+	.size	GL_PREFIX(VertexAttrib4svNV), .-GL_PREFIX(VertexAttrib4svNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4ubNV
-	.type	glVertexAttrib4ubNV, @function
-glVertexAttrib4ubNV:
+	.globl	GL_PREFIX(VertexAttrib4ubNV)
+	.type	GL_PREFIX(VertexAttrib4ubNV), @function
+GL_PREFIX(VertexAttrib4ubNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6240(%rax), %r11
@@ -29407,12 +29416,12 @@ glVertexAttrib4ubNV:
 	movq	6240(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4ubNV, .-glVertexAttrib4ubNV
+	.size	GL_PREFIX(VertexAttrib4ubNV), .-GL_PREFIX(VertexAttrib4ubNV)
 
 	.p2align	4,,15
-	.globl	glVertexAttrib4ubvNV
-	.type	glVertexAttrib4ubvNV, @function
-glVertexAttrib4ubvNV:
+	.globl	GL_PREFIX(VertexAttrib4ubvNV)
+	.type	GL_PREFIX(VertexAttrib4ubvNV), @function
+GL_PREFIX(VertexAttrib4ubvNV):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6248(%rax), %r11
@@ -29444,12 +29453,12 @@ glVertexAttrib4ubvNV:
 	movq	6248(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glVertexAttrib4ubvNV, .-glVertexAttrib4ubvNV
+	.size	GL_PREFIX(VertexAttrib4ubvNV), .-GL_PREFIX(VertexAttrib4ubvNV)
 
 	.p2align	4,,15
-	.globl	glGenFragmentShadersATI
-	.type	glGenFragmentShadersATI, @function
-glGenFragmentShadersATI:
+	.globl	GL_PREFIX(GenFragmentShadersATI)
+	.type	GL_PREFIX(GenFragmentShadersATI), @function
+GL_PREFIX(GenFragmentShadersATI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6256(%rax), %r11
@@ -29473,12 +29482,12 @@ glGenFragmentShadersATI:
 	movq	6256(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGenFragmentShadersATI, .-glGenFragmentShadersATI
+	.size	GL_PREFIX(GenFragmentShadersATI), .-GL_PREFIX(GenFragmentShadersATI)
 
 	.p2align	4,,15
-	.globl	glBindFragmentShaderATI
-	.type	glBindFragmentShaderATI, @function
-glBindFragmentShaderATI:
+	.globl	GL_PREFIX(BindFragmentShaderATI)
+	.type	GL_PREFIX(BindFragmentShaderATI), @function
+GL_PREFIX(BindFragmentShaderATI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6264(%rax), %r11
@@ -29502,12 +29511,12 @@ glBindFragmentShaderATI:
 	movq	6264(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBindFragmentShaderATI, .-glBindFragmentShaderATI
+	.size	GL_PREFIX(BindFragmentShaderATI), .-GL_PREFIX(BindFragmentShaderATI)
 
 	.p2align	4,,15
-	.globl	glDeleteFragmentShaderATI
-	.type	glDeleteFragmentShaderATI, @function
-glDeleteFragmentShaderATI:
+	.globl	GL_PREFIX(DeleteFragmentShaderATI)
+	.type	GL_PREFIX(DeleteFragmentShaderATI), @function
+GL_PREFIX(DeleteFragmentShaderATI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6272(%rax), %r11
@@ -29531,12 +29540,12 @@ glDeleteFragmentShaderATI:
 	movq	6272(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDeleteFragmentShaderATI, .-glDeleteFragmentShaderATI
+	.size	GL_PREFIX(DeleteFragmentShaderATI), .-GL_PREFIX(DeleteFragmentShaderATI)
 
 	.p2align	4,,15
-	.globl	glBeginFragmentShaderATI
-	.type	glBeginFragmentShaderATI, @function
-glBeginFragmentShaderATI:
+	.globl	GL_PREFIX(BeginFragmentShaderATI)
+	.type	GL_PREFIX(BeginFragmentShaderATI), @function
+GL_PREFIX(BeginFragmentShaderATI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6280(%rax), %r11
@@ -29560,12 +29569,12 @@ glBeginFragmentShaderATI:
 	movq	6280(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBeginFragmentShaderATI, .-glBeginFragmentShaderATI
+	.size	GL_PREFIX(BeginFragmentShaderATI), .-GL_PREFIX(BeginFragmentShaderATI)
 
 	.p2align	4,,15
-	.globl	glEndFragmentShaderATI
-	.type	glEndFragmentShaderATI, @function
-glEndFragmentShaderATI:
+	.globl	GL_PREFIX(EndFragmentShaderATI)
+	.type	GL_PREFIX(EndFragmentShaderATI), @function
+GL_PREFIX(EndFragmentShaderATI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6288(%rax), %r11
@@ -29589,12 +29598,12 @@ glEndFragmentShaderATI:
 	movq	6288(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glEndFragmentShaderATI, .-glEndFragmentShaderATI
+	.size	GL_PREFIX(EndFragmentShaderATI), .-GL_PREFIX(EndFragmentShaderATI)
 
 	.p2align	4,,15
-	.globl	glPassTexCoordATI
-	.type	glPassTexCoordATI, @function
-glPassTexCoordATI:
+	.globl	GL_PREFIX(PassTexCoordATI)
+	.type	GL_PREFIX(PassTexCoordATI), @function
+GL_PREFIX(PassTexCoordATI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6296(%rax), %r11
@@ -29626,12 +29635,12 @@ glPassTexCoordATI:
 	movq	6296(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glPassTexCoordATI, .-glPassTexCoordATI
+	.size	GL_PREFIX(PassTexCoordATI), .-GL_PREFIX(PassTexCoordATI)
 
 	.p2align	4,,15
-	.globl	glSampleMapATI
-	.type	glSampleMapATI, @function
-glSampleMapATI:
+	.globl	GL_PREFIX(SampleMapATI)
+	.type	GL_PREFIX(SampleMapATI), @function
+GL_PREFIX(SampleMapATI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6304(%rax), %r11
@@ -29663,12 +29672,12 @@ glSampleMapATI:
 	movq	6304(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSampleMapATI, .-glSampleMapATI
+	.size	GL_PREFIX(SampleMapATI), .-GL_PREFIX(SampleMapATI)
 
 	.p2align	4,,15
-	.globl	glColorFragmentOp1ATI
-	.type	glColorFragmentOp1ATI, @function
-glColorFragmentOp1ATI:
+	.globl	GL_PREFIX(ColorFragmentOp1ATI)
+	.type	GL_PREFIX(ColorFragmentOp1ATI), @function
+GL_PREFIX(ColorFragmentOp1ATI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6312(%rax), %r11
@@ -29716,12 +29725,12 @@ glColorFragmentOp1ATI:
 	movq	6312(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColorFragmentOp1ATI, .-glColorFragmentOp1ATI
+	.size	GL_PREFIX(ColorFragmentOp1ATI), .-GL_PREFIX(ColorFragmentOp1ATI)
 
 	.p2align	4,,15
-	.globl	glColorFragmentOp2ATI
-	.type	glColorFragmentOp2ATI, @function
-glColorFragmentOp2ATI:
+	.globl	GL_PREFIX(ColorFragmentOp2ATI)
+	.type	GL_PREFIX(ColorFragmentOp2ATI), @function
+GL_PREFIX(ColorFragmentOp2ATI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6320(%rax), %r11
@@ -29769,12 +29778,12 @@ glColorFragmentOp2ATI:
 	movq	6320(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColorFragmentOp2ATI, .-glColorFragmentOp2ATI
+	.size	GL_PREFIX(ColorFragmentOp2ATI), .-GL_PREFIX(ColorFragmentOp2ATI)
 
 	.p2align	4,,15
-	.globl	glColorFragmentOp3ATI
-	.type	glColorFragmentOp3ATI, @function
-glColorFragmentOp3ATI:
+	.globl	GL_PREFIX(ColorFragmentOp3ATI)
+	.type	GL_PREFIX(ColorFragmentOp3ATI), @function
+GL_PREFIX(ColorFragmentOp3ATI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6328(%rax), %r11
@@ -29822,12 +29831,12 @@ glColorFragmentOp3ATI:
 	movq	6328(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glColorFragmentOp3ATI, .-glColorFragmentOp3ATI
+	.size	GL_PREFIX(ColorFragmentOp3ATI), .-GL_PREFIX(ColorFragmentOp3ATI)
 
 	.p2align	4,,15
-	.globl	glAlphaFragmentOp1ATI
-	.type	glAlphaFragmentOp1ATI, @function
-glAlphaFragmentOp1ATI:
+	.globl	GL_PREFIX(AlphaFragmentOp1ATI)
+	.type	GL_PREFIX(AlphaFragmentOp1ATI), @function
+GL_PREFIX(AlphaFragmentOp1ATI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6336(%rax), %r11
@@ -29875,12 +29884,12 @@ glAlphaFragmentOp1ATI:
 	movq	6336(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glAlphaFragmentOp1ATI, .-glAlphaFragmentOp1ATI
+	.size	GL_PREFIX(AlphaFragmentOp1ATI), .-GL_PREFIX(AlphaFragmentOp1ATI)
 
 	.p2align	4,,15
-	.globl	glAlphaFragmentOp2ATI
-	.type	glAlphaFragmentOp2ATI, @function
-glAlphaFragmentOp2ATI:
+	.globl	GL_PREFIX(AlphaFragmentOp2ATI)
+	.type	GL_PREFIX(AlphaFragmentOp2ATI), @function
+GL_PREFIX(AlphaFragmentOp2ATI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6344(%rax), %r11
@@ -29928,12 +29937,12 @@ glAlphaFragmentOp2ATI:
 	movq	6344(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glAlphaFragmentOp2ATI, .-glAlphaFragmentOp2ATI
+	.size	GL_PREFIX(AlphaFragmentOp2ATI), .-GL_PREFIX(AlphaFragmentOp2ATI)
 
 	.p2align	4,,15
-	.globl	glAlphaFragmentOp3ATI
-	.type	glAlphaFragmentOp3ATI, @function
-glAlphaFragmentOp3ATI:
+	.globl	GL_PREFIX(AlphaFragmentOp3ATI)
+	.type	GL_PREFIX(AlphaFragmentOp3ATI), @function
+GL_PREFIX(AlphaFragmentOp3ATI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6352(%rax), %r11
@@ -29981,12 +29990,12 @@ glAlphaFragmentOp3ATI:
 	movq	6352(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glAlphaFragmentOp3ATI, .-glAlphaFragmentOp3ATI
+	.size	GL_PREFIX(AlphaFragmentOp3ATI), .-GL_PREFIX(AlphaFragmentOp3ATI)
 
 	.p2align	4,,15
-	.globl	glSetFragmentShaderConstantATI
-	.type	glSetFragmentShaderConstantATI, @function
-glSetFragmentShaderConstantATI:
+	.globl	GL_PREFIX(SetFragmentShaderConstantATI)
+	.type	GL_PREFIX(SetFragmentShaderConstantATI), @function
+GL_PREFIX(SetFragmentShaderConstantATI):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6360(%rax), %r11
@@ -30018,12 +30027,12 @@ glSetFragmentShaderConstantATI:
 	movq	6360(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glSetFragmentShaderConstantATI, .-glSetFragmentShaderConstantATI
+	.size	GL_PREFIX(SetFragmentShaderConstantATI), .-GL_PREFIX(SetFragmentShaderConstantATI)
 
 	.p2align	4,,15
-	.globl	glIsRenderbufferEXT
-	.type	glIsRenderbufferEXT, @function
-glIsRenderbufferEXT:
+	.globl	GL_PREFIX(IsRenderbufferEXT)
+	.type	GL_PREFIX(IsRenderbufferEXT), @function
+GL_PREFIX(IsRenderbufferEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6368(%rax), %r11
@@ -30047,12 +30056,12 @@ glIsRenderbufferEXT:
 	movq	6368(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIsRenderbufferEXT, .-glIsRenderbufferEXT
+	.size	GL_PREFIX(IsRenderbufferEXT), .-GL_PREFIX(IsRenderbufferEXT)
 
 	.p2align	4,,15
-	.globl	glBindRenderbufferEXT
-	.type	glBindRenderbufferEXT, @function
-glBindRenderbufferEXT:
+	.globl	GL_PREFIX(BindRenderbufferEXT)
+	.type	GL_PREFIX(BindRenderbufferEXT), @function
+GL_PREFIX(BindRenderbufferEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6376(%rax), %r11
@@ -30084,12 +30093,12 @@ glBindRenderbufferEXT:
 	movq	6376(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBindRenderbufferEXT, .-glBindRenderbufferEXT
+	.size	GL_PREFIX(BindRenderbufferEXT), .-GL_PREFIX(BindRenderbufferEXT)
 
 	.p2align	4,,15
-	.globl	glDeleteRenderbuffersEXT
-	.type	glDeleteRenderbuffersEXT, @function
-glDeleteRenderbuffersEXT:
+	.globl	GL_PREFIX(DeleteRenderbuffersEXT)
+	.type	GL_PREFIX(DeleteRenderbuffersEXT), @function
+GL_PREFIX(DeleteRenderbuffersEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6384(%rax), %r11
@@ -30121,12 +30130,12 @@ glDeleteRenderbuffersEXT:
 	movq	6384(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDeleteRenderbuffersEXT, .-glDeleteRenderbuffersEXT
+	.size	GL_PREFIX(DeleteRenderbuffersEXT), .-GL_PREFIX(DeleteRenderbuffersEXT)
 
 	.p2align	4,,15
-	.globl	glGenRenderbuffersEXT
-	.type	glGenRenderbuffersEXT, @function
-glGenRenderbuffersEXT:
+	.globl	GL_PREFIX(GenRenderbuffersEXT)
+	.type	GL_PREFIX(GenRenderbuffersEXT), @function
+GL_PREFIX(GenRenderbuffersEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6392(%rax), %r11
@@ -30158,12 +30167,12 @@ glGenRenderbuffersEXT:
 	movq	6392(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGenRenderbuffersEXT, .-glGenRenderbuffersEXT
+	.size	GL_PREFIX(GenRenderbuffersEXT), .-GL_PREFIX(GenRenderbuffersEXT)
 
 	.p2align	4,,15
-	.globl	glRenderbufferStorageEXT
-	.type	glRenderbufferStorageEXT, @function
-glRenderbufferStorageEXT:
+	.globl	GL_PREFIX(RenderbufferStorageEXT)
+	.type	GL_PREFIX(RenderbufferStorageEXT), @function
+GL_PREFIX(RenderbufferStorageEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6400(%rax), %r11
@@ -30203,12 +30212,12 @@ glRenderbufferStorageEXT:
 	movq	6400(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glRenderbufferStorageEXT, .-glRenderbufferStorageEXT
+	.size	GL_PREFIX(RenderbufferStorageEXT), .-GL_PREFIX(RenderbufferStorageEXT)
 
 	.p2align	4,,15
-	.globl	glGetRenderbufferParameterivEXT
-	.type	glGetRenderbufferParameterivEXT, @function
-glGetRenderbufferParameterivEXT:
+	.globl	GL_PREFIX(GetRenderbufferParameterivEXT)
+	.type	GL_PREFIX(GetRenderbufferParameterivEXT), @function
+GL_PREFIX(GetRenderbufferParameterivEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6408(%rax), %r11
@@ -30240,12 +30249,12 @@ glGetRenderbufferParameterivEXT:
 	movq	6408(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetRenderbufferParameterivEXT, .-glGetRenderbufferParameterivEXT
+	.size	GL_PREFIX(GetRenderbufferParameterivEXT), .-GL_PREFIX(GetRenderbufferParameterivEXT)
 
 	.p2align	4,,15
-	.globl	glIsFramebufferEXT
-	.type	glIsFramebufferEXT, @function
-glIsFramebufferEXT:
+	.globl	GL_PREFIX(IsFramebufferEXT)
+	.type	GL_PREFIX(IsFramebufferEXT), @function
+GL_PREFIX(IsFramebufferEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6416(%rax), %r11
@@ -30269,12 +30278,12 @@ glIsFramebufferEXT:
 	movq	6416(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glIsFramebufferEXT, .-glIsFramebufferEXT
+	.size	GL_PREFIX(IsFramebufferEXT), .-GL_PREFIX(IsFramebufferEXT)
 
 	.p2align	4,,15
-	.globl	glBindFramebufferEXT
-	.type	glBindFramebufferEXT, @function
-glBindFramebufferEXT:
+	.globl	GL_PREFIX(BindFramebufferEXT)
+	.type	GL_PREFIX(BindFramebufferEXT), @function
+GL_PREFIX(BindFramebufferEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6424(%rax), %r11
@@ -30306,12 +30315,12 @@ glBindFramebufferEXT:
 	movq	6424(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glBindFramebufferEXT, .-glBindFramebufferEXT
+	.size	GL_PREFIX(BindFramebufferEXT), .-GL_PREFIX(BindFramebufferEXT)
 
 	.p2align	4,,15
-	.globl	glDeleteFramebuffersEXT
-	.type	glDeleteFramebuffersEXT, @function
-glDeleteFramebuffersEXT:
+	.globl	GL_PREFIX(DeleteFramebuffersEXT)
+	.type	GL_PREFIX(DeleteFramebuffersEXT), @function
+GL_PREFIX(DeleteFramebuffersEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6432(%rax), %r11
@@ -30343,12 +30352,12 @@ glDeleteFramebuffersEXT:
 	movq	6432(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glDeleteFramebuffersEXT, .-glDeleteFramebuffersEXT
+	.size	GL_PREFIX(DeleteFramebuffersEXT), .-GL_PREFIX(DeleteFramebuffersEXT)
 
 	.p2align	4,,15
-	.globl	glGenFramebuffersEXT
-	.type	glGenFramebuffersEXT, @function
-glGenFramebuffersEXT:
+	.globl	GL_PREFIX(GenFramebuffersEXT)
+	.type	GL_PREFIX(GenFramebuffersEXT), @function
+GL_PREFIX(GenFramebuffersEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6440(%rax), %r11
@@ -30380,12 +30389,12 @@ glGenFramebuffersEXT:
 	movq	6440(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGenFramebuffersEXT, .-glGenFramebuffersEXT
+	.size	GL_PREFIX(GenFramebuffersEXT), .-GL_PREFIX(GenFramebuffersEXT)
 
 	.p2align	4,,15
-	.globl	glCheckFramebufferStatusEXT
-	.type	glCheckFramebufferStatusEXT, @function
-glCheckFramebufferStatusEXT:
+	.globl	GL_PREFIX(CheckFramebufferStatusEXT)
+	.type	GL_PREFIX(CheckFramebufferStatusEXT), @function
+GL_PREFIX(CheckFramebufferStatusEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6448(%rax), %r11
@@ -30409,12 +30418,12 @@ glCheckFramebufferStatusEXT:
 	movq	6448(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glCheckFramebufferStatusEXT, .-glCheckFramebufferStatusEXT
+	.size	GL_PREFIX(CheckFramebufferStatusEXT), .-GL_PREFIX(CheckFramebufferStatusEXT)
 
 	.p2align	4,,15
-	.globl	glFramebufferTexture1DEXT
-	.type	glFramebufferTexture1DEXT, @function
-glFramebufferTexture1DEXT:
+	.globl	GL_PREFIX(FramebufferTexture1DEXT)
+	.type	GL_PREFIX(FramebufferTexture1DEXT), @function
+GL_PREFIX(FramebufferTexture1DEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6456(%rax), %r11
@@ -30454,12 +30463,12 @@ glFramebufferTexture1DEXT:
 	movq	6456(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFramebufferTexture1DEXT, .-glFramebufferTexture1DEXT
+	.size	GL_PREFIX(FramebufferTexture1DEXT), .-GL_PREFIX(FramebufferTexture1DEXT)
 
 	.p2align	4,,15
-	.globl	glFramebufferTexture2DEXT
-	.type	glFramebufferTexture2DEXT, @function
-glFramebufferTexture2DEXT:
+	.globl	GL_PREFIX(FramebufferTexture2DEXT)
+	.type	GL_PREFIX(FramebufferTexture2DEXT), @function
+GL_PREFIX(FramebufferTexture2DEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6464(%rax), %r11
@@ -30499,12 +30508,12 @@ glFramebufferTexture2DEXT:
 	movq	6464(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFramebufferTexture2DEXT, .-glFramebufferTexture2DEXT
+	.size	GL_PREFIX(FramebufferTexture2DEXT), .-GL_PREFIX(FramebufferTexture2DEXT)
 
 	.p2align	4,,15
-	.globl	glFramebufferTexture3DEXT
-	.type	glFramebufferTexture3DEXT, @function
-glFramebufferTexture3DEXT:
+	.globl	GL_PREFIX(FramebufferTexture3DEXT)
+	.type	GL_PREFIX(FramebufferTexture3DEXT), @function
+GL_PREFIX(FramebufferTexture3DEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6472(%rax), %r11
@@ -30552,12 +30561,12 @@ glFramebufferTexture3DEXT:
 	movq	6472(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFramebufferTexture3DEXT, .-glFramebufferTexture3DEXT
+	.size	GL_PREFIX(FramebufferTexture3DEXT), .-GL_PREFIX(FramebufferTexture3DEXT)
 
 	.p2align	4,,15
-	.globl	glFramebufferRenderbufferEXT
-	.type	glFramebufferRenderbufferEXT, @function
-glFramebufferRenderbufferEXT:
+	.globl	GL_PREFIX(FramebufferRenderbufferEXT)
+	.type	GL_PREFIX(FramebufferRenderbufferEXT), @function
+GL_PREFIX(FramebufferRenderbufferEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6480(%rax), %r11
@@ -30597,12 +30606,12 @@ glFramebufferRenderbufferEXT:
 	movq	6480(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glFramebufferRenderbufferEXT, .-glFramebufferRenderbufferEXT
+	.size	GL_PREFIX(FramebufferRenderbufferEXT), .-GL_PREFIX(FramebufferRenderbufferEXT)
 
 	.p2align	4,,15
-	.globl	glGetFramebufferAttachmentParameterivEXT
-	.type	glGetFramebufferAttachmentParameterivEXT, @function
-glGetFramebufferAttachmentParameterivEXT:
+	.globl	GL_PREFIX(GetFramebufferAttachmentParameterivEXT)
+	.type	GL_PREFIX(GetFramebufferAttachmentParameterivEXT), @function
+GL_PREFIX(GetFramebufferAttachmentParameterivEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6488(%rax), %r11
@@ -30642,12 +30651,12 @@ glGetFramebufferAttachmentParameterivEXT:
 	movq	6488(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGetFramebufferAttachmentParameterivEXT, .-glGetFramebufferAttachmentParameterivEXT
+	.size	GL_PREFIX(GetFramebufferAttachmentParameterivEXT), .-GL_PREFIX(GetFramebufferAttachmentParameterivEXT)
 
 	.p2align	4,,15
-	.globl	glGenerateMipmapEXT
-	.type	glGenerateMipmapEXT, @function
-glGenerateMipmapEXT:
+	.globl	GL_PREFIX(GenerateMipmapEXT)
+	.type	GL_PREFIX(GenerateMipmapEXT), @function
+GL_PREFIX(GenerateMipmapEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6496(%rax), %r11
@@ -30671,12 +30680,12 @@ glGenerateMipmapEXT:
 	movq	6496(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glGenerateMipmapEXT, .-glGenerateMipmapEXT
+	.size	GL_PREFIX(GenerateMipmapEXT), .-GL_PREFIX(GenerateMipmapEXT)
 
 	.p2align	4,,15
-	.globl	glStencilFuncSeparate
-	.type	glStencilFuncSeparate, @function
-glStencilFuncSeparate:
+	.globl	GL_PREFIX(StencilFuncSeparate)
+	.type	GL_PREFIX(StencilFuncSeparate), @function
+GL_PREFIX(StencilFuncSeparate):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6504(%rax), %r11
@@ -30716,12 +30725,12 @@ glStencilFuncSeparate:
 	movq	6504(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glStencilFuncSeparate, .-glStencilFuncSeparate
+	.size	GL_PREFIX(StencilFuncSeparate), .-GL_PREFIX(StencilFuncSeparate)
 
 	.p2align	4,,15
-	.globl	glStencilOpSeparate
-	.type	glStencilOpSeparate, @function
-glStencilOpSeparate:
+	.globl	GL_PREFIX(StencilOpSeparate)
+	.type	GL_PREFIX(StencilOpSeparate), @function
+GL_PREFIX(StencilOpSeparate):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6512(%rax), %r11
@@ -30761,12 +30770,12 @@ glStencilOpSeparate:
 	movq	6512(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glStencilOpSeparate, .-glStencilOpSeparate
+	.size	GL_PREFIX(StencilOpSeparate), .-GL_PREFIX(StencilOpSeparate)
 
 	.p2align	4,,15
-	.globl	glStencilMaskSeparate
-	.type	glStencilMaskSeparate, @function
-glStencilMaskSeparate:
+	.globl	GL_PREFIX(StencilMaskSeparate)
+	.type	GL_PREFIX(StencilMaskSeparate), @function
+GL_PREFIX(StencilMaskSeparate):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6520(%rax), %r11
@@ -30798,186 +30807,186 @@ glStencilMaskSeparate:
 	movq	6520(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	glStencilMaskSeparate, .-glStencilMaskSeparate
+	.size	GL_PREFIX(StencilMaskSeparate), .-GL_PREFIX(StencilMaskSeparate)
 
-	.globl glArrayElementEXT ; .set glArrayElementEXT, glArrayElement
-	.globl glBindTextureEXT ; .set glBindTextureEXT, glBindTexture
-	.globl glDrawArraysEXT ; .set glDrawArraysEXT, glDrawArrays
-	.globl glCopyTexImage1DEXT ; .set glCopyTexImage1DEXT, glCopyTexImage1D
-	.globl glCopyTexImage2DEXT ; .set glCopyTexImage2DEXT, glCopyTexImage2D
-	.globl glCopyTexSubImage1DEXT ; .set glCopyTexSubImage1DEXT, glCopyTexSubImage1D
-	.globl glCopyTexSubImage2DEXT ; .set glCopyTexSubImage2DEXT, glCopyTexSubImage2D
-	.globl glDeleteTexturesEXT ; .set glDeleteTexturesEXT, glDeleteTextures
-	.globl glGetPointervEXT ; .set glGetPointervEXT, glGetPointerv
-	.globl glPrioritizeTexturesEXT ; .set glPrioritizeTexturesEXT, glPrioritizeTextures
-	.globl glTexSubImage1DEXT ; .set glTexSubImage1DEXT, glTexSubImage1D
-	.globl glTexSubImage2DEXT ; .set glTexSubImage2DEXT, glTexSubImage2D
-	.globl glBlendColorEXT ; .set glBlendColorEXT, glBlendColor
-	.globl glBlendEquationEXT ; .set glBlendEquationEXT, glBlendEquation
-	.globl glDrawRangeElementsEXT ; .set glDrawRangeElementsEXT, glDrawRangeElements
-	.globl glColorTableSGI ; .set glColorTableSGI, glColorTable
-	.globl glColorTableEXT ; .set glColorTableEXT, glColorTable
-	.globl glColorTableParameterfvSGI ; .set glColorTableParameterfvSGI, glColorTableParameterfv
-	.globl glColorTableParameterivSGI ; .set glColorTableParameterivSGI, glColorTableParameteriv
-	.globl glCopyColorTableSGI ; .set glCopyColorTableSGI, glCopyColorTable
-	.globl glColorSubTableEXT ; .set glColorSubTableEXT, glColorSubTable
-	.globl glCopyColorSubTableEXT ; .set glCopyColorSubTableEXT, glCopyColorSubTable
-	.globl glConvolutionFilter1DEXT ; .set glConvolutionFilter1DEXT, glConvolutionFilter1D
-	.globl glConvolutionFilter2DEXT ; .set glConvolutionFilter2DEXT, glConvolutionFilter2D
-	.globl glConvolutionParameterfEXT ; .set glConvolutionParameterfEXT, glConvolutionParameterf
-	.globl glConvolutionParameterfvEXT ; .set glConvolutionParameterfvEXT, glConvolutionParameterfv
-	.globl glConvolutionParameteriEXT ; .set glConvolutionParameteriEXT, glConvolutionParameteri
-	.globl glConvolutionParameterivEXT ; .set glConvolutionParameterivEXT, glConvolutionParameteriv
-	.globl glCopyConvolutionFilter1DEXT ; .set glCopyConvolutionFilter1DEXT, glCopyConvolutionFilter1D
-	.globl glCopyConvolutionFilter2DEXT ; .set glCopyConvolutionFilter2DEXT, glCopyConvolutionFilter2D
-	.globl glSeparableFilter2DEXT ; .set glSeparableFilter2DEXT, glSeparableFilter2D
-	.globl glHistogramEXT ; .set glHistogramEXT, glHistogram
-	.globl glMinmaxEXT ; .set glMinmaxEXT, glMinmax
-	.globl glResetHistogramEXT ; .set glResetHistogramEXT, glResetHistogram
-	.globl glResetMinmaxEXT ; .set glResetMinmaxEXT, glResetMinmax
-	.globl glTexImage3DEXT ; .set glTexImage3DEXT, glTexImage3D
-	.globl glTexSubImage3DEXT ; .set glTexSubImage3DEXT, glTexSubImage3D
-	.globl glCopyTexSubImage3DEXT ; .set glCopyTexSubImage3DEXT, glCopyTexSubImage3D
-	.globl glActiveTexture ; .set glActiveTexture, glActiveTextureARB
-	.globl glClientActiveTexture ; .set glClientActiveTexture, glClientActiveTextureARB
-	.globl glMultiTexCoord1d ; .set glMultiTexCoord1d, glMultiTexCoord1dARB
-	.globl glMultiTexCoord1dv ; .set glMultiTexCoord1dv, glMultiTexCoord1dvARB
-	.globl glMultiTexCoord1f ; .set glMultiTexCoord1f, glMultiTexCoord1fARB
-	.globl glMultiTexCoord1fv ; .set glMultiTexCoord1fv, glMultiTexCoord1fvARB
-	.globl glMultiTexCoord1i ; .set glMultiTexCoord1i, glMultiTexCoord1iARB
-	.globl glMultiTexCoord1iv ; .set glMultiTexCoord1iv, glMultiTexCoord1ivARB
-	.globl glMultiTexCoord1s ; .set glMultiTexCoord1s, glMultiTexCoord1sARB
-	.globl glMultiTexCoord1sv ; .set glMultiTexCoord1sv, glMultiTexCoord1svARB
-	.globl glMultiTexCoord2d ; .set glMultiTexCoord2d, glMultiTexCoord2dARB
-	.globl glMultiTexCoord2dv ; .set glMultiTexCoord2dv, glMultiTexCoord2dvARB
-	.globl glMultiTexCoord2f ; .set glMultiTexCoord2f, glMultiTexCoord2fARB
-	.globl glMultiTexCoord2fv ; .set glMultiTexCoord2fv, glMultiTexCoord2fvARB
-	.globl glMultiTexCoord2i ; .set glMultiTexCoord2i, glMultiTexCoord2iARB
-	.globl glMultiTexCoord2iv ; .set glMultiTexCoord2iv, glMultiTexCoord2ivARB
-	.globl glMultiTexCoord2s ; .set glMultiTexCoord2s, glMultiTexCoord2sARB
-	.globl glMultiTexCoord2sv ; .set glMultiTexCoord2sv, glMultiTexCoord2svARB
-	.globl glMultiTexCoord3d ; .set glMultiTexCoord3d, glMultiTexCoord3dARB
-	.globl glMultiTexCoord3dv ; .set glMultiTexCoord3dv, glMultiTexCoord3dvARB
-	.globl glMultiTexCoord3f ; .set glMultiTexCoord3f, glMultiTexCoord3fARB
-	.globl glMultiTexCoord3fv ; .set glMultiTexCoord3fv, glMultiTexCoord3fvARB
-	.globl glMultiTexCoord3i ; .set glMultiTexCoord3i, glMultiTexCoord3iARB
-	.globl glMultiTexCoord3iv ; .set glMultiTexCoord3iv, glMultiTexCoord3ivARB
-	.globl glMultiTexCoord3s ; .set glMultiTexCoord3s, glMultiTexCoord3sARB
-	.globl glMultiTexCoord3sv ; .set glMultiTexCoord3sv, glMultiTexCoord3svARB
-	.globl glMultiTexCoord4d ; .set glMultiTexCoord4d, glMultiTexCoord4dARB
-	.globl glMultiTexCoord4dv ; .set glMultiTexCoord4dv, glMultiTexCoord4dvARB
-	.globl glMultiTexCoord4f ; .set glMultiTexCoord4f, glMultiTexCoord4fARB
-	.globl glMultiTexCoord4fv ; .set glMultiTexCoord4fv, glMultiTexCoord4fvARB
-	.globl glMultiTexCoord4i ; .set glMultiTexCoord4i, glMultiTexCoord4iARB
-	.globl glMultiTexCoord4iv ; .set glMultiTexCoord4iv, glMultiTexCoord4ivARB
-	.globl glMultiTexCoord4s ; .set glMultiTexCoord4s, glMultiTexCoord4sARB
-	.globl glMultiTexCoord4sv ; .set glMultiTexCoord4sv, glMultiTexCoord4svARB
-	.globl glLoadTransposeMatrixf ; .set glLoadTransposeMatrixf, glLoadTransposeMatrixfARB
-	.globl glLoadTransposeMatrixd ; .set glLoadTransposeMatrixd, glLoadTransposeMatrixdARB
-	.globl glMultTransposeMatrixf ; .set glMultTransposeMatrixf, glMultTransposeMatrixfARB
-	.globl glMultTransposeMatrixd ; .set glMultTransposeMatrixd, glMultTransposeMatrixdARB
-	.globl glSampleCoverage ; .set glSampleCoverage, glSampleCoverageARB
-	.globl glDrawBuffersATI ; .set glDrawBuffersATI, glDrawBuffersARB
-	.globl glSampleMaskEXT ; .set glSampleMaskEXT, glSampleMaskSGIS
-	.globl glSamplePatternEXT ; .set glSamplePatternEXT, glSamplePatternSGIS
-	.globl glPointParameterf ; .set glPointParameterf, glPointParameterfEXT
-	.globl glPointParameterfARB ; .set glPointParameterfARB, glPointParameterfEXT
-	.globl glPointParameterfSGIS ; .set glPointParameterfSGIS, glPointParameterfEXT
-	.globl glPointParameterfv ; .set glPointParameterfv, glPointParameterfvEXT
-	.globl glPointParameterfvARB ; .set glPointParameterfvARB, glPointParameterfvEXT
-	.globl glPointParameterfvSGIS ; .set glPointParameterfvSGIS, glPointParameterfvEXT
-	.globl glWindowPos2d ; .set glWindowPos2d, glWindowPos2dMESA
-	.globl glWindowPos2dARB ; .set glWindowPos2dARB, glWindowPos2dMESA
-	.globl glWindowPos2dv ; .set glWindowPos2dv, glWindowPos2dvMESA
-	.globl glWindowPos2dvARB ; .set glWindowPos2dvARB, glWindowPos2dvMESA
-	.globl glWindowPos2f ; .set glWindowPos2f, glWindowPos2fMESA
-	.globl glWindowPos2fARB ; .set glWindowPos2fARB, glWindowPos2fMESA
-	.globl glWindowPos2fv ; .set glWindowPos2fv, glWindowPos2fvMESA
-	.globl glWindowPos2fvARB ; .set glWindowPos2fvARB, glWindowPos2fvMESA
-	.globl glWindowPos2i ; .set glWindowPos2i, glWindowPos2iMESA
-	.globl glWindowPos2iARB ; .set glWindowPos2iARB, glWindowPos2iMESA
-	.globl glWindowPos2iv ; .set glWindowPos2iv, glWindowPos2ivMESA
-	.globl glWindowPos2ivARB ; .set glWindowPos2ivARB, glWindowPos2ivMESA
-	.globl glWindowPos2s ; .set glWindowPos2s, glWindowPos2sMESA
-	.globl glWindowPos2sARB ; .set glWindowPos2sARB, glWindowPos2sMESA
-	.globl glWindowPos2sv ; .set glWindowPos2sv, glWindowPos2svMESA
-	.globl glWindowPos2svARB ; .set glWindowPos2svARB, glWindowPos2svMESA
-	.globl glWindowPos3d ; .set glWindowPos3d, glWindowPos3dMESA
-	.globl glWindowPos3dARB ; .set glWindowPos3dARB, glWindowPos3dMESA
-	.globl glWindowPos3dv ; .set glWindowPos3dv, glWindowPos3dvMESA
-	.globl glWindowPos3dvARB ; .set glWindowPos3dvARB, glWindowPos3dvMESA
-	.globl glWindowPos3f ; .set glWindowPos3f, glWindowPos3fMESA
-	.globl glWindowPos3fARB ; .set glWindowPos3fARB, glWindowPos3fMESA
-	.globl glWindowPos3fv ; .set glWindowPos3fv, glWindowPos3fvMESA
-	.globl glWindowPos3fvARB ; .set glWindowPos3fvARB, glWindowPos3fvMESA
-	.globl glWindowPos3i ; .set glWindowPos3i, glWindowPos3iMESA
-	.globl glWindowPos3iARB ; .set glWindowPos3iARB, glWindowPos3iMESA
-	.globl glWindowPos3iv ; .set glWindowPos3iv, glWindowPos3ivMESA
-	.globl glWindowPos3ivARB ; .set glWindowPos3ivARB, glWindowPos3ivMESA
-	.globl glWindowPos3s ; .set glWindowPos3s, glWindowPos3sMESA
-	.globl glWindowPos3sARB ; .set glWindowPos3sARB, glWindowPos3sMESA
-	.globl glWindowPos3sv ; .set glWindowPos3sv, glWindowPos3svMESA
-	.globl glWindowPos3svARB ; .set glWindowPos3svARB, glWindowPos3svMESA
-	.globl glBlendFuncSeparate ; .set glBlendFuncSeparate, glBlendFuncSeparateEXT
-	.globl glBlendFuncSeparateINGR ; .set glBlendFuncSeparateINGR, glBlendFuncSeparateEXT
-	.globl glFogCoordf ; .set glFogCoordf, glFogCoordfEXT
-	.globl glFogCoordfv ; .set glFogCoordfv, glFogCoordfvEXT
-	.globl glFogCoordd ; .set glFogCoordd, glFogCoorddEXT
-	.globl glFogCoorddv ; .set glFogCoorddv, glFogCoorddvEXT
-	.globl glFogCoordPointer ; .set glFogCoordPointer, glFogCoordPointerEXT
-	.globl glCompressedTexImage3D ; .set glCompressedTexImage3D, glCompressedTexImage3DARB
-	.globl glCompressedTexImage2D ; .set glCompressedTexImage2D, glCompressedTexImage2DARB
-	.globl glCompressedTexImage1D ; .set glCompressedTexImage1D, glCompressedTexImage1DARB
-	.globl glCompressedTexSubImage3D ; .set glCompressedTexSubImage3D, glCompressedTexSubImage3DARB
-	.globl glCompressedTexSubImage2D ; .set glCompressedTexSubImage2D, glCompressedTexSubImage2DARB
-	.globl glCompressedTexSubImage1D ; .set glCompressedTexSubImage1D, glCompressedTexSubImage1DARB
-	.globl glGetCompressedTexImage ; .set glGetCompressedTexImage, glGetCompressedTexImageARB
-	.globl glSecondaryColor3b ; .set glSecondaryColor3b, glSecondaryColor3bEXT
-	.globl glSecondaryColor3bv ; .set glSecondaryColor3bv, glSecondaryColor3bvEXT
-	.globl glSecondaryColor3d ; .set glSecondaryColor3d, glSecondaryColor3dEXT
-	.globl glSecondaryColor3dv ; .set glSecondaryColor3dv, glSecondaryColor3dvEXT
-	.globl glSecondaryColor3f ; .set glSecondaryColor3f, glSecondaryColor3fEXT
-	.globl glSecondaryColor3fv ; .set glSecondaryColor3fv, glSecondaryColor3fvEXT
-	.globl glSecondaryColor3i ; .set glSecondaryColor3i, glSecondaryColor3iEXT
-	.globl glSecondaryColor3iv ; .set glSecondaryColor3iv, glSecondaryColor3ivEXT
-	.globl glSecondaryColor3s ; .set glSecondaryColor3s, glSecondaryColor3sEXT
-	.globl glSecondaryColor3sv ; .set glSecondaryColor3sv, glSecondaryColor3svEXT
-	.globl glSecondaryColor3ub ; .set glSecondaryColor3ub, glSecondaryColor3ubEXT
-	.globl glSecondaryColor3ubv ; .set glSecondaryColor3ubv, glSecondaryColor3ubvEXT
-	.globl glSecondaryColor3ui ; .set glSecondaryColor3ui, glSecondaryColor3uiEXT
-	.globl glSecondaryColor3uiv ; .set glSecondaryColor3uiv, glSecondaryColor3uivEXT
-	.globl glSecondaryColor3us ; .set glSecondaryColor3us, glSecondaryColor3usEXT
-	.globl glSecondaryColor3usv ; .set glSecondaryColor3usv, glSecondaryColor3usvEXT
-	.globl glSecondaryColorPointer ; .set glSecondaryColorPointer, glSecondaryColorPointerEXT
-	.globl glBindProgramARB ; .set glBindProgramARB, glBindProgramNV
-	.globl glDeleteProgramsARB ; .set glDeleteProgramsARB, glDeleteProgramsNV
-	.globl glGenProgramsARB ; .set glGenProgramsARB, glGenProgramsNV
-	.globl glGetVertexAttribPointervARB ; .set glGetVertexAttribPointervARB, glGetVertexAttribPointervNV
-	.globl glIsProgramARB ; .set glIsProgramARB, glIsProgramNV
-	.globl glPointParameteri ; .set glPointParameteri, glPointParameteriNV
-	.globl glPointParameteriv ; .set glPointParameteriv, glPointParameterivNV
-	.globl glMultiDrawArrays ; .set glMultiDrawArrays, glMultiDrawArraysEXT
-	.globl glMultiDrawElements ; .set glMultiDrawElements, glMultiDrawElementsEXT
-	.globl glBindBuffer ; .set glBindBuffer, glBindBufferARB
-	.globl glBufferData ; .set glBufferData, glBufferDataARB
-	.globl glBufferSubData ; .set glBufferSubData, glBufferSubDataARB
-	.globl glDeleteBuffers ; .set glDeleteBuffers, glDeleteBuffersARB
-	.globl glGenBuffers ; .set glGenBuffers, glGenBuffersARB
-	.globl glGetBufferParameteriv ; .set glGetBufferParameteriv, glGetBufferParameterivARB
-	.globl glGetBufferPointerv ; .set glGetBufferPointerv, glGetBufferPointervARB
-	.globl glGetBufferSubData ; .set glGetBufferSubData, glGetBufferSubDataARB
-	.globl glIsBuffer ; .set glIsBuffer, glIsBufferARB
-	.globl glMapBuffer ; .set glMapBuffer, glMapBufferARB
-	.globl glUnmapBuffer ; .set glUnmapBuffer, glUnmapBufferARB
-	.globl glGenQueries ; .set glGenQueries, glGenQueriesARB
-	.globl glDeleteQueries ; .set glDeleteQueries, glDeleteQueriesARB
-	.globl glIsQuery ; .set glIsQuery, glIsQueryARB
-	.globl glBeginQuery ; .set glBeginQuery, glBeginQueryARB
-	.globl glEndQuery ; .set glEndQuery, glEndQueryARB
-	.globl glGetQueryiv ; .set glGetQueryiv, glGetQueryivARB
-	.globl glGetQueryObjectiv ; .set glGetQueryObjectiv, glGetQueryObjectivARB
-	.globl glGetQueryObjectuiv ; .set glGetQueryObjectuiv, glGetQueryObjectuivARB
-	.globl glBlendEquationSeparateATI ; .set glBlendEquationSeparateATI, glBlendEquationSeparateEXT
+	.globl GL_PREFIX(ArrayElementEXT) ; .set GL_PREFIX(ArrayElementEXT), GL_PREFIX(ArrayElement)
+	.globl GL_PREFIX(BindTextureEXT) ; .set GL_PREFIX(BindTextureEXT), GL_PREFIX(BindTexture)
+	.globl GL_PREFIX(DrawArraysEXT) ; .set GL_PREFIX(DrawArraysEXT), GL_PREFIX(DrawArrays)
+	.globl GL_PREFIX(CopyTexImage1DEXT) ; .set GL_PREFIX(CopyTexImage1DEXT), GL_PREFIX(CopyTexImage1D)
+	.globl GL_PREFIX(CopyTexImage2DEXT) ; .set GL_PREFIX(CopyTexImage2DEXT), GL_PREFIX(CopyTexImage2D)
+	.globl GL_PREFIX(CopyTexSubImage1DEXT) ; .set GL_PREFIX(CopyTexSubImage1DEXT), GL_PREFIX(CopyTexSubImage1D)
+	.globl GL_PREFIX(CopyTexSubImage2DEXT) ; .set GL_PREFIX(CopyTexSubImage2DEXT), GL_PREFIX(CopyTexSubImage2D)
+	.globl GL_PREFIX(DeleteTexturesEXT) ; .set GL_PREFIX(DeleteTexturesEXT), GL_PREFIX(DeleteTextures)
+	.globl GL_PREFIX(GetPointervEXT) ; .set GL_PREFIX(GetPointervEXT), GL_PREFIX(GetPointerv)
+	.globl GL_PREFIX(PrioritizeTexturesEXT) ; .set GL_PREFIX(PrioritizeTexturesEXT), GL_PREFIX(PrioritizeTextures)
+	.globl GL_PREFIX(TexSubImage1DEXT) ; .set GL_PREFIX(TexSubImage1DEXT), GL_PREFIX(TexSubImage1D)
+	.globl GL_PREFIX(TexSubImage2DEXT) ; .set GL_PREFIX(TexSubImage2DEXT), GL_PREFIX(TexSubImage2D)
+	.globl GL_PREFIX(BlendColorEXT) ; .set GL_PREFIX(BlendColorEXT), GL_PREFIX(BlendColor)
+	.globl GL_PREFIX(BlendEquationEXT) ; .set GL_PREFIX(BlendEquationEXT), GL_PREFIX(BlendEquation)
+	.globl GL_PREFIX(DrawRangeElementsEXT) ; .set GL_PREFIX(DrawRangeElementsEXT), GL_PREFIX(DrawRangeElements)
+	.globl GL_PREFIX(ColorTableSGI) ; .set GL_PREFIX(ColorTableSGI), GL_PREFIX(ColorTable)
+	.globl GL_PREFIX(ColorTableEXT) ; .set GL_PREFIX(ColorTableEXT), GL_PREFIX(ColorTable)
+	.globl GL_PREFIX(ColorTableParameterfvSGI) ; .set GL_PREFIX(ColorTableParameterfvSGI), GL_PREFIX(ColorTableParameterfv)
+	.globl GL_PREFIX(ColorTableParameterivSGI) ; .set GL_PREFIX(ColorTableParameterivSGI), GL_PREFIX(ColorTableParameteriv)
+	.globl GL_PREFIX(CopyColorTableSGI) ; .set GL_PREFIX(CopyColorTableSGI), GL_PREFIX(CopyColorTable)
+	.globl GL_PREFIX(ColorSubTableEXT) ; .set GL_PREFIX(ColorSubTableEXT), GL_PREFIX(ColorSubTable)
+	.globl GL_PREFIX(CopyColorSubTableEXT) ; .set GL_PREFIX(CopyColorSubTableEXT), GL_PREFIX(CopyColorSubTable)
+	.globl GL_PREFIX(ConvolutionFilter1DEXT) ; .set GL_PREFIX(ConvolutionFilter1DEXT), GL_PREFIX(ConvolutionFilter1D)
+	.globl GL_PREFIX(ConvolutionFilter2DEXT) ; .set GL_PREFIX(ConvolutionFilter2DEXT), GL_PREFIX(ConvolutionFilter2D)
+	.globl GL_PREFIX(ConvolutionParameterfEXT) ; .set GL_PREFIX(ConvolutionParameterfEXT), GL_PREFIX(ConvolutionParameterf)
+	.globl GL_PREFIX(ConvolutionParameterfvEXT) ; .set GL_PREFIX(ConvolutionParameterfvEXT), GL_PREFIX(ConvolutionParameterfv)
+	.globl GL_PREFIX(ConvolutionParameteriEXT) ; .set GL_PREFIX(ConvolutionParameteriEXT), GL_PREFIX(ConvolutionParameteri)
+	.globl GL_PREFIX(ConvolutionParameterivEXT) ; .set GL_PREFIX(ConvolutionParameterivEXT), GL_PREFIX(ConvolutionParameteriv)
+	.globl GL_PREFIX(CopyConvolutionFilter1DEXT) ; .set GL_PREFIX(CopyConvolutionFilter1DEXT), GL_PREFIX(CopyConvolutionFilter1D)
+	.globl GL_PREFIX(CopyConvolutionFilter2DEXT) ; .set GL_PREFIX(CopyConvolutionFilter2DEXT), GL_PREFIX(CopyConvolutionFilter2D)
+	.globl GL_PREFIX(SeparableFilter2DEXT) ; .set GL_PREFIX(SeparableFilter2DEXT), GL_PREFIX(SeparableFilter2D)
+	.globl GL_PREFIX(HistogramEXT) ; .set GL_PREFIX(HistogramEXT), GL_PREFIX(Histogram)
+	.globl GL_PREFIX(MinmaxEXT) ; .set GL_PREFIX(MinmaxEXT), GL_PREFIX(Minmax)
+	.globl GL_PREFIX(ResetHistogramEXT) ; .set GL_PREFIX(ResetHistogramEXT), GL_PREFIX(ResetHistogram)
+	.globl GL_PREFIX(ResetMinmaxEXT) ; .set GL_PREFIX(ResetMinmaxEXT), GL_PREFIX(ResetMinmax)
+	.globl GL_PREFIX(TexImage3DEXT) ; .set GL_PREFIX(TexImage3DEXT), GL_PREFIX(TexImage3D)
+	.globl GL_PREFIX(TexSubImage3DEXT) ; .set GL_PREFIX(TexSubImage3DEXT), GL_PREFIX(TexSubImage3D)
+	.globl GL_PREFIX(CopyTexSubImage3DEXT) ; .set GL_PREFIX(CopyTexSubImage3DEXT), GL_PREFIX(CopyTexSubImage3D)
+	.globl GL_PREFIX(ActiveTexture) ; .set GL_PREFIX(ActiveTexture), GL_PREFIX(ActiveTextureARB)
+	.globl GL_PREFIX(ClientActiveTexture) ; .set GL_PREFIX(ClientActiveTexture), GL_PREFIX(ClientActiveTextureARB)
+	.globl GL_PREFIX(MultiTexCoord1d) ; .set GL_PREFIX(MultiTexCoord1d), GL_PREFIX(MultiTexCoord1dARB)
+	.globl GL_PREFIX(MultiTexCoord1dv) ; .set GL_PREFIX(MultiTexCoord1dv), GL_PREFIX(MultiTexCoord1dvARB)
+	.globl GL_PREFIX(MultiTexCoord1f) ; .set GL_PREFIX(MultiTexCoord1f), GL_PREFIX(MultiTexCoord1fARB)
+	.globl GL_PREFIX(MultiTexCoord1fv) ; .set GL_PREFIX(MultiTexCoord1fv), GL_PREFIX(MultiTexCoord1fvARB)
+	.globl GL_PREFIX(MultiTexCoord1i) ; .set GL_PREFIX(MultiTexCoord1i), GL_PREFIX(MultiTexCoord1iARB)
+	.globl GL_PREFIX(MultiTexCoord1iv) ; .set GL_PREFIX(MultiTexCoord1iv), GL_PREFIX(MultiTexCoord1ivARB)
+	.globl GL_PREFIX(MultiTexCoord1s) ; .set GL_PREFIX(MultiTexCoord1s), GL_PREFIX(MultiTexCoord1sARB)
+	.globl GL_PREFIX(MultiTexCoord1sv) ; .set GL_PREFIX(MultiTexCoord1sv), GL_PREFIX(MultiTexCoord1svARB)
+	.globl GL_PREFIX(MultiTexCoord2d) ; .set GL_PREFIX(MultiTexCoord2d), GL_PREFIX(MultiTexCoord2dARB)
+	.globl GL_PREFIX(MultiTexCoord2dv) ; .set GL_PREFIX(MultiTexCoord2dv), GL_PREFIX(MultiTexCoord2dvARB)
+	.globl GL_PREFIX(MultiTexCoord2f) ; .set GL_PREFIX(MultiTexCoord2f), GL_PREFIX(MultiTexCoord2fARB)
+	.globl GL_PREFIX(MultiTexCoord2fv) ; .set GL_PREFIX(MultiTexCoord2fv), GL_PREFIX(MultiTexCoord2fvARB)
+	.globl GL_PREFIX(MultiTexCoord2i) ; .set GL_PREFIX(MultiTexCoord2i), GL_PREFIX(MultiTexCoord2iARB)
+	.globl GL_PREFIX(MultiTexCoord2iv) ; .set GL_PREFIX(MultiTexCoord2iv), GL_PREFIX(MultiTexCoord2ivARB)
+	.globl GL_PREFIX(MultiTexCoord2s) ; .set GL_PREFIX(MultiTexCoord2s), GL_PREFIX(MultiTexCoord2sARB)
+	.globl GL_PREFIX(MultiTexCoord2sv) ; .set GL_PREFIX(MultiTexCoord2sv), GL_PREFIX(MultiTexCoord2svARB)
+	.globl GL_PREFIX(MultiTexCoord3d) ; .set GL_PREFIX(MultiTexCoord3d), GL_PREFIX(MultiTexCoord3dARB)
+	.globl GL_PREFIX(MultiTexCoord3dv) ; .set GL_PREFIX(MultiTexCoord3dv), GL_PREFIX(MultiTexCoord3dvARB)
+	.globl GL_PREFIX(MultiTexCoord3f) ; .set GL_PREFIX(MultiTexCoord3f), GL_PREFIX(MultiTexCoord3fARB)
+	.globl GL_PREFIX(MultiTexCoord3fv) ; .set GL_PREFIX(MultiTexCoord3fv), GL_PREFIX(MultiTexCoord3fvARB)
+	.globl GL_PREFIX(MultiTexCoord3i) ; .set GL_PREFIX(MultiTexCoord3i), GL_PREFIX(MultiTexCoord3iARB)
+	.globl GL_PREFIX(MultiTexCoord3iv) ; .set GL_PREFIX(MultiTexCoord3iv), GL_PREFIX(MultiTexCoord3ivARB)
+	.globl GL_PREFIX(MultiTexCoord3s) ; .set GL_PREFIX(MultiTexCoord3s), GL_PREFIX(MultiTexCoord3sARB)
+	.globl GL_PREFIX(MultiTexCoord3sv) ; .set GL_PREFIX(MultiTexCoord3sv), GL_PREFIX(MultiTexCoord3svARB)
+	.globl GL_PREFIX(MultiTexCoord4d) ; .set GL_PREFIX(MultiTexCoord4d), GL_PREFIX(MultiTexCoord4dARB)
+	.globl GL_PREFIX(MultiTexCoord4dv) ; .set GL_PREFIX(MultiTexCoord4dv), GL_PREFIX(MultiTexCoord4dvARB)
+	.globl GL_PREFIX(MultiTexCoord4f) ; .set GL_PREFIX(MultiTexCoord4f), GL_PREFIX(MultiTexCoord4fARB)
+	.globl GL_PREFIX(MultiTexCoord4fv) ; .set GL_PREFIX(MultiTexCoord4fv), GL_PREFIX(MultiTexCoord4fvARB)
+	.globl GL_PREFIX(MultiTexCoord4i) ; .set GL_PREFIX(MultiTexCoord4i), GL_PREFIX(MultiTexCoord4iARB)
+	.globl GL_PREFIX(MultiTexCoord4iv) ; .set GL_PREFIX(MultiTexCoord4iv), GL_PREFIX(MultiTexCoord4ivARB)
+	.globl GL_PREFIX(MultiTexCoord4s) ; .set GL_PREFIX(MultiTexCoord4s), GL_PREFIX(MultiTexCoord4sARB)
+	.globl GL_PREFIX(MultiTexCoord4sv) ; .set GL_PREFIX(MultiTexCoord4sv), GL_PREFIX(MultiTexCoord4svARB)
+	.globl GL_PREFIX(LoadTransposeMatrixf) ; .set GL_PREFIX(LoadTransposeMatrixf), GL_PREFIX(LoadTransposeMatrixfARB)
+	.globl GL_PREFIX(LoadTransposeMatrixd) ; .set GL_PREFIX(LoadTransposeMatrixd), GL_PREFIX(LoadTransposeMatrixdARB)
+	.globl GL_PREFIX(MultTransposeMatrixf) ; .set GL_PREFIX(MultTransposeMatrixf), GL_PREFIX(MultTransposeMatrixfARB)
+	.globl GL_PREFIX(MultTransposeMatrixd) ; .set GL_PREFIX(MultTransposeMatrixd), GL_PREFIX(MultTransposeMatrixdARB)
+	.globl GL_PREFIX(SampleCoverage) ; .set GL_PREFIX(SampleCoverage), GL_PREFIX(SampleCoverageARB)
+	.globl GL_PREFIX(DrawBuffersATI) ; .set GL_PREFIX(DrawBuffersATI), GL_PREFIX(DrawBuffersARB)
+	.globl GL_PREFIX(SampleMaskEXT) ; .set GL_PREFIX(SampleMaskEXT), GL_PREFIX(SampleMaskSGIS)
+	.globl GL_PREFIX(SamplePatternEXT) ; .set GL_PREFIX(SamplePatternEXT), GL_PREFIX(SamplePatternSGIS)
+	.globl GL_PREFIX(PointParameterf) ; .set GL_PREFIX(PointParameterf), GL_PREFIX(PointParameterfEXT)
+	.globl GL_PREFIX(PointParameterfARB) ; .set GL_PREFIX(PointParameterfARB), GL_PREFIX(PointParameterfEXT)
+	.globl GL_PREFIX(PointParameterfSGIS) ; .set GL_PREFIX(PointParameterfSGIS), GL_PREFIX(PointParameterfEXT)
+	.globl GL_PREFIX(PointParameterfv) ; .set GL_PREFIX(PointParameterfv), GL_PREFIX(PointParameterfvEXT)
+	.globl GL_PREFIX(PointParameterfvARB) ; .set GL_PREFIX(PointParameterfvARB), GL_PREFIX(PointParameterfvEXT)
+	.globl GL_PREFIX(PointParameterfvSGIS) ; .set GL_PREFIX(PointParameterfvSGIS), GL_PREFIX(PointParameterfvEXT)
+	.globl GL_PREFIX(WindowPos2d) ; .set GL_PREFIX(WindowPos2d), GL_PREFIX(WindowPos2dMESA)
+	.globl GL_PREFIX(WindowPos2dARB) ; .set GL_PREFIX(WindowPos2dARB), GL_PREFIX(WindowPos2dMESA)
+	.globl GL_PREFIX(WindowPos2dv) ; .set GL_PREFIX(WindowPos2dv), GL_PREFIX(WindowPos2dvMESA)
+	.globl GL_PREFIX(WindowPos2dvARB) ; .set GL_PREFIX(WindowPos2dvARB), GL_PREFIX(WindowPos2dvMESA)
+	.globl GL_PREFIX(WindowPos2f) ; .set GL_PREFIX(WindowPos2f), GL_PREFIX(WindowPos2fMESA)
+	.globl GL_PREFIX(WindowPos2fARB) ; .set GL_PREFIX(WindowPos2fARB), GL_PREFIX(WindowPos2fMESA)
+	.globl GL_PREFIX(WindowPos2fv) ; .set GL_PREFIX(WindowPos2fv), GL_PREFIX(WindowPos2fvMESA)
+	.globl GL_PREFIX(WindowPos2fvARB) ; .set GL_PREFIX(WindowPos2fvARB), GL_PREFIX(WindowPos2fvMESA)
+	.globl GL_PREFIX(WindowPos2i) ; .set GL_PREFIX(WindowPos2i), GL_PREFIX(WindowPos2iMESA)
+	.globl GL_PREFIX(WindowPos2iARB) ; .set GL_PREFIX(WindowPos2iARB), GL_PREFIX(WindowPos2iMESA)
+	.globl GL_PREFIX(WindowPos2iv) ; .set GL_PREFIX(WindowPos2iv), GL_PREFIX(WindowPos2ivMESA)
+	.globl GL_PREFIX(WindowPos2ivARB) ; .set GL_PREFIX(WindowPos2ivARB), GL_PREFIX(WindowPos2ivMESA)
+	.globl GL_PREFIX(WindowPos2s) ; .set GL_PREFIX(WindowPos2s), GL_PREFIX(WindowPos2sMESA)
+	.globl GL_PREFIX(WindowPos2sARB) ; .set GL_PREFIX(WindowPos2sARB), GL_PREFIX(WindowPos2sMESA)
+	.globl GL_PREFIX(WindowPos2sv) ; .set GL_PREFIX(WindowPos2sv), GL_PREFIX(WindowPos2svMESA)
+	.globl GL_PREFIX(WindowPos2svARB) ; .set GL_PREFIX(WindowPos2svARB), GL_PREFIX(WindowPos2svMESA)
+	.globl GL_PREFIX(WindowPos3d) ; .set GL_PREFIX(WindowPos3d), GL_PREFIX(WindowPos3dMESA)
+	.globl GL_PREFIX(WindowPos3dARB) ; .set GL_PREFIX(WindowPos3dARB), GL_PREFIX(WindowPos3dMESA)
+	.globl GL_PREFIX(WindowPos3dv) ; .set GL_PREFIX(WindowPos3dv), GL_PREFIX(WindowPos3dvMESA)
+	.globl GL_PREFIX(WindowPos3dvARB) ; .set GL_PREFIX(WindowPos3dvARB), GL_PREFIX(WindowPos3dvMESA)
+	.globl GL_PREFIX(WindowPos3f) ; .set GL_PREFIX(WindowPos3f), GL_PREFIX(WindowPos3fMESA)
+	.globl GL_PREFIX(WindowPos3fARB) ; .set GL_PREFIX(WindowPos3fARB), GL_PREFIX(WindowPos3fMESA)
+	.globl GL_PREFIX(WindowPos3fv) ; .set GL_PREFIX(WindowPos3fv), GL_PREFIX(WindowPos3fvMESA)
+	.globl GL_PREFIX(WindowPos3fvARB) ; .set GL_PREFIX(WindowPos3fvARB), GL_PREFIX(WindowPos3fvMESA)
+	.globl GL_PREFIX(WindowPos3i) ; .set GL_PREFIX(WindowPos3i), GL_PREFIX(WindowPos3iMESA)
+	.globl GL_PREFIX(WindowPos3iARB) ; .set GL_PREFIX(WindowPos3iARB), GL_PREFIX(WindowPos3iMESA)
+	.globl GL_PREFIX(WindowPos3iv) ; .set GL_PREFIX(WindowPos3iv), GL_PREFIX(WindowPos3ivMESA)
+	.globl GL_PREFIX(WindowPos3ivARB) ; .set GL_PREFIX(WindowPos3ivARB), GL_PREFIX(WindowPos3ivMESA)
+	.globl GL_PREFIX(WindowPos3s) ; .set GL_PREFIX(WindowPos3s), GL_PREFIX(WindowPos3sMESA)
+	.globl GL_PREFIX(WindowPos3sARB) ; .set GL_PREFIX(WindowPos3sARB), GL_PREFIX(WindowPos3sMESA)
+	.globl GL_PREFIX(WindowPos3sv) ; .set GL_PREFIX(WindowPos3sv), GL_PREFIX(WindowPos3svMESA)
+	.globl GL_PREFIX(WindowPos3svARB) ; .set GL_PREFIX(WindowPos3svARB), GL_PREFIX(WindowPos3svMESA)
+	.globl GL_PREFIX(BlendFuncSeparate) ; .set GL_PREFIX(BlendFuncSeparate), GL_PREFIX(BlendFuncSeparateEXT)
+	.globl GL_PREFIX(BlendFuncSeparateINGR) ; .set GL_PREFIX(BlendFuncSeparateINGR), GL_PREFIX(BlendFuncSeparateEXT)
+	.globl GL_PREFIX(FogCoordf) ; .set GL_PREFIX(FogCoordf), GL_PREFIX(FogCoordfEXT)
+	.globl GL_PREFIX(FogCoordfv) ; .set GL_PREFIX(FogCoordfv), GL_PREFIX(FogCoordfvEXT)
+	.globl GL_PREFIX(FogCoordd) ; .set GL_PREFIX(FogCoordd), GL_PREFIX(FogCoorddEXT)
+	.globl GL_PREFIX(FogCoorddv) ; .set GL_PREFIX(FogCoorddv), GL_PREFIX(FogCoorddvEXT)
+	.globl GL_PREFIX(FogCoordPointer) ; .set GL_PREFIX(FogCoordPointer), GL_PREFIX(FogCoordPointerEXT)
+	.globl GL_PREFIX(CompressedTexImage3D) ; .set GL_PREFIX(CompressedTexImage3D), GL_PREFIX(CompressedTexImage3DARB)
+	.globl GL_PREFIX(CompressedTexImage2D) ; .set GL_PREFIX(CompressedTexImage2D), GL_PREFIX(CompressedTexImage2DARB)
+	.globl GL_PREFIX(CompressedTexImage1D) ; .set GL_PREFIX(CompressedTexImage1D), GL_PREFIX(CompressedTexImage1DARB)
+	.globl GL_PREFIX(CompressedTexSubImage3D) ; .set GL_PREFIX(CompressedTexSubImage3D), GL_PREFIX(CompressedTexSubImage3DARB)
+	.globl GL_PREFIX(CompressedTexSubImage2D) ; .set GL_PREFIX(CompressedTexSubImage2D), GL_PREFIX(CompressedTexSubImage2DARB)
+	.globl GL_PREFIX(CompressedTexSubImage1D) ; .set GL_PREFIX(CompressedTexSubImage1D), GL_PREFIX(CompressedTexSubImage1DARB)
+	.globl GL_PREFIX(GetCompressedTexImage) ; .set GL_PREFIX(GetCompressedTexImage), GL_PREFIX(GetCompressedTexImageARB)
+	.globl GL_PREFIX(SecondaryColor3b) ; .set GL_PREFIX(SecondaryColor3b), GL_PREFIX(SecondaryColor3bEXT)
+	.globl GL_PREFIX(SecondaryColor3bv) ; .set GL_PREFIX(SecondaryColor3bv), GL_PREFIX(SecondaryColor3bvEXT)
+	.globl GL_PREFIX(SecondaryColor3d) ; .set GL_PREFIX(SecondaryColor3d), GL_PREFIX(SecondaryColor3dEXT)
+	.globl GL_PREFIX(SecondaryColor3dv) ; .set GL_PREFIX(SecondaryColor3dv), GL_PREFIX(SecondaryColor3dvEXT)
+	.globl GL_PREFIX(SecondaryColor3f) ; .set GL_PREFIX(SecondaryColor3f), GL_PREFIX(SecondaryColor3fEXT)
+	.globl GL_PREFIX(SecondaryColor3fv) ; .set GL_PREFIX(SecondaryColor3fv), GL_PREFIX(SecondaryColor3fvEXT)
+	.globl GL_PREFIX(SecondaryColor3i) ; .set GL_PREFIX(SecondaryColor3i), GL_PREFIX(SecondaryColor3iEXT)
+	.globl GL_PREFIX(SecondaryColor3iv) ; .set GL_PREFIX(SecondaryColor3iv), GL_PREFIX(SecondaryColor3ivEXT)
+	.globl GL_PREFIX(SecondaryColor3s) ; .set GL_PREFIX(SecondaryColor3s), GL_PREFIX(SecondaryColor3sEXT)
+	.globl GL_PREFIX(SecondaryColor3sv) ; .set GL_PREFIX(SecondaryColor3sv), GL_PREFIX(SecondaryColor3svEXT)
+	.globl GL_PREFIX(SecondaryColor3ub) ; .set GL_PREFIX(SecondaryColor3ub), GL_PREFIX(SecondaryColor3ubEXT)
+	.globl GL_PREFIX(SecondaryColor3ubv) ; .set GL_PREFIX(SecondaryColor3ubv), GL_PREFIX(SecondaryColor3ubvEXT)
+	.globl GL_PREFIX(SecondaryColor3ui) ; .set GL_PREFIX(SecondaryColor3ui), GL_PREFIX(SecondaryColor3uiEXT)
+	.globl GL_PREFIX(SecondaryColor3uiv) ; .set GL_PREFIX(SecondaryColor3uiv), GL_PREFIX(SecondaryColor3uivEXT)
+	.globl GL_PREFIX(SecondaryColor3us) ; .set GL_PREFIX(SecondaryColor3us), GL_PREFIX(SecondaryColor3usEXT)
+	.globl GL_PREFIX(SecondaryColor3usv) ; .set GL_PREFIX(SecondaryColor3usv), GL_PREFIX(SecondaryColor3usvEXT)
+	.globl GL_PREFIX(SecondaryColorPointer) ; .set GL_PREFIX(SecondaryColorPointer), GL_PREFIX(SecondaryColorPointerEXT)
+	.globl GL_PREFIX(BindProgramARB) ; .set GL_PREFIX(BindProgramARB), GL_PREFIX(BindProgramNV)
+	.globl GL_PREFIX(DeleteProgramsARB) ; .set GL_PREFIX(DeleteProgramsARB), GL_PREFIX(DeleteProgramsNV)
+	.globl GL_PREFIX(GenProgramsARB) ; .set GL_PREFIX(GenProgramsARB), GL_PREFIX(GenProgramsNV)
+	.globl GL_PREFIX(GetVertexAttribPointervARB) ; .set GL_PREFIX(GetVertexAttribPointervARB), GL_PREFIX(GetVertexAttribPointervNV)
+	.globl GL_PREFIX(IsProgramARB) ; .set GL_PREFIX(IsProgramARB), GL_PREFIX(IsProgramNV)
+	.globl GL_PREFIX(PointParameteri) ; .set GL_PREFIX(PointParameteri), GL_PREFIX(PointParameteriNV)
+	.globl GL_PREFIX(PointParameteriv) ; .set GL_PREFIX(PointParameteriv), GL_PREFIX(PointParameterivNV)
+	.globl GL_PREFIX(MultiDrawArrays) ; .set GL_PREFIX(MultiDrawArrays), GL_PREFIX(MultiDrawArraysEXT)
+	.globl GL_PREFIX(MultiDrawElements) ; .set GL_PREFIX(MultiDrawElements), GL_PREFIX(MultiDrawElementsEXT)
+	.globl GL_PREFIX(BindBuffer) ; .set GL_PREFIX(BindBuffer), GL_PREFIX(BindBufferARB)
+	.globl GL_PREFIX(BufferData) ; .set GL_PREFIX(BufferData), GL_PREFIX(BufferDataARB)
+	.globl GL_PREFIX(BufferSubData) ; .set GL_PREFIX(BufferSubData), GL_PREFIX(BufferSubDataARB)
+	.globl GL_PREFIX(DeleteBuffers) ; .set GL_PREFIX(DeleteBuffers), GL_PREFIX(DeleteBuffersARB)
+	.globl GL_PREFIX(GenBuffers) ; .set GL_PREFIX(GenBuffers), GL_PREFIX(GenBuffersARB)
+	.globl GL_PREFIX(GetBufferParameteriv) ; .set GL_PREFIX(GetBufferParameteriv), GL_PREFIX(GetBufferParameterivARB)
+	.globl GL_PREFIX(GetBufferPointerv) ; .set GL_PREFIX(GetBufferPointerv), GL_PREFIX(GetBufferPointervARB)
+	.globl GL_PREFIX(GetBufferSubData) ; .set GL_PREFIX(GetBufferSubData), GL_PREFIX(GetBufferSubDataARB)
+	.globl GL_PREFIX(IsBuffer) ; .set GL_PREFIX(IsBuffer), GL_PREFIX(IsBufferARB)
+	.globl GL_PREFIX(MapBuffer) ; .set GL_PREFIX(MapBuffer), GL_PREFIX(MapBufferARB)
+	.globl GL_PREFIX(UnmapBuffer) ; .set GL_PREFIX(UnmapBuffer), GL_PREFIX(UnmapBufferARB)
+	.globl GL_PREFIX(GenQueries) ; .set GL_PREFIX(GenQueries), GL_PREFIX(GenQueriesARB)
+	.globl GL_PREFIX(DeleteQueries) ; .set GL_PREFIX(DeleteQueries), GL_PREFIX(DeleteQueriesARB)
+	.globl GL_PREFIX(IsQuery) ; .set GL_PREFIX(IsQuery), GL_PREFIX(IsQueryARB)
+	.globl GL_PREFIX(BeginQuery) ; .set GL_PREFIX(BeginQuery), GL_PREFIX(BeginQueryARB)
+	.globl GL_PREFIX(EndQuery) ; .set GL_PREFIX(EndQuery), GL_PREFIX(EndQueryARB)
+	.globl GL_PREFIX(GetQueryiv) ; .set GL_PREFIX(GetQueryiv), GL_PREFIX(GetQueryivARB)
+	.globl GL_PREFIX(GetQueryObjectiv) ; .set GL_PREFIX(GetQueryObjectiv), GL_PREFIX(GetQueryObjectivARB)
+	.globl GL_PREFIX(GetQueryObjectuiv) ; .set GL_PREFIX(GetQueryObjectuiv), GL_PREFIX(GetQueryObjectuivARB)
+	.globl GL_PREFIX(BlendEquationSeparateATI) ; .set GL_PREFIX(BlendEquationSeparateATI), GL_PREFIX(BlendEquationSeparateEXT)
 
 #if defined(GLX_USE_TLS) && defined(__linux__)
 	.section ".note.ABI-tag", "a"
