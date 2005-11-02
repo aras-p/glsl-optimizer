@@ -163,7 +163,7 @@ void radeonGetLock(radeonContextPtr radeon, GLuint flags)
 	if (sarea->ctx_owner != radeon->dri.hwContext)
 		sarea->ctx_owner = radeon->dri.hwContext;
 
-	if (IS_FAMILY_R300(radeon))
+	if (IS_R300_CLASS(radeon->radeonScreen))
 		r300RegainedLock(radeon);
 #if R200_MERGED
 	else

@@ -1678,7 +1678,7 @@ void r200UpdateTextureState( GLcontext *ctx )
       r200ChooseVertexState( ctx );
 
 
-   if (rmesa->r200Screen->chipset & R200_CHIPSET_REAL_R200) {
+   if (rmesa->r200Screen->chip_family == CHIP_FAMILY_R200) {
 
       /*
        * T0 hang workaround -------------

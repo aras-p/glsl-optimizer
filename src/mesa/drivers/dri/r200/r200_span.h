@@ -41,6 +41,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern void r200InitSpanFuncs( GLcontext *ctx );
 
 extern void
-r200SetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis);
+radeonSetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis);
 
 #endif

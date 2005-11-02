@@ -253,7 +253,7 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( zbs, always, ZBS_STATE_SIZE, "ZBS/zbias", 0 );
    ALLOC_STATE( tf, tf, TF_STATE_SIZE, "TF/tfactor", 0 );
    if (rmesa->r200Screen->drmSupportsFragShader) {
-      if (rmesa->r200Screen->chipset & R200_CHIPSET_REAL_R200) {
+      if (rmesa->r200Screen->chip_family == CHIP_FAMILY_R200) {
       /* make sure texture units 0/1 are emitted pair-wise for r200 t0 hang workaround */
 	 ALLOC_STATE( tex[0], tex_pair, TEX_STATE_SIZE_NEWDRM, "TEX/tex-0", 0 );
 	 ALLOC_STATE( tex[1], tex_pair, TEX_STATE_SIZE_NEWDRM, "TEX/tex-1", 1 );
@@ -273,7 +273,7 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( afs[1], afs, AFS_STATE_SIZE, "AFS/afsinst-1", 1 );
    }
    else {
-      if (rmesa->r200Screen->chipset & R200_CHIPSET_REAL_R200) {
+      if (rmesa->r200Screen->chip_family == CHIP_FAMILY_R200) {
 	 ALLOC_STATE( tex[0], tex_pair, TEX_STATE_SIZE_OLDDRM, "TEX/tex-0", 0 );
 	 ALLOC_STATE( tex[1], tex_pair, TEX_STATE_SIZE_OLDDRM, "TEX/tex-1", 1 );
 	 ALLOC_STATE( tam, tex_any, TAM_STATE_SIZE, "TAM/tam", 0 );
@@ -536,7 +536,7 @@ void r200InitState( r200ContextPtr rmesa )
    if (rmesa->using_hyperz) {
       rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= R200_Z_COMPRESSION_ENABLE |
 						  R200_Z_DECOMPRESSION_ENABLE;
-/*      if (rmesa->r200Screen->chipset & R200_CHIPSET_REAL_R200)
+/*      if (rmesa->r200Screen->chip_family == CHIP_FAMILY_R200)
 	 rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_Z_HIERARCHY_ENABLE;*/
    }
 
@@ -640,7 +640,7 @@ void r200InitState( r200ContextPtr rmesa )
 						R200_VC_NO_SWAP;
 #endif
 
-   if (!(rmesa->r200Screen->chipset & R200_CHIPSET_TCL)) {
+   if (!(rmesa->r200Screen->chip_flags & RADEON_CHIPSET_TCL)) {
       /* Bypass TCL */
       rmesa->hw.cst.cmd[CST_SE_VAP_CNTL_STATUS] |= (1<<8);
    }

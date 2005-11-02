@@ -163,7 +163,7 @@ void radeonCopyBuffer(const __DRIdrawablePrivate * dPriv)
 			(void *)radeon->glCtx);
 	}
 
-	if (IS_FAMILY_R200(radeon))
+	if (IS_R200_CLASS(radeon->radeonScreen))
 		R200_FIREVERTICES((r200ContextPtr)radeon);
 	else
 		r300Flush(radeon->glCtx);
@@ -205,7 +205,7 @@ void radeonCopyBuffer(const __DRIdrawablePrivate * dPriv)
 
 	UNLOCK_HARDWARE(radeon);
 
-	if (IS_FAMILY_R200(radeon))
+	if (IS_R200_CLASS(radeon->radeonScreen))
 		((r200ContextPtr)radeon)->hw.all_dirty = GL_TRUE;
 	else
 		((r300ContextPtr)radeon)->hw.all_dirty = GL_TRUE;
@@ -239,7 +239,7 @@ void radeonPageFlip(const __DRIdrawablePrivate * dPriv)
 			radeon->sarea->pfCurrentPage);
 	}
 
-	if (IS_FAMILY_R200(radeon))
+	if (IS_R200_CLASS(radeon->radeonScreen))
 		R200_FIREVERTICES((r200ContextPtr)radeon);
 	else
 		r300Flush(radeon->glCtx);
@@ -296,7 +296,7 @@ void radeonPageFlip(const __DRIdrawablePrivate * dPriv)
 		radeon->state.color.drawPitch = radeon->radeonScreen->backPitch;
 	}
 
-	if (IS_FAMILY_R200(radeon)) {
+	if (IS_R200_CLASS(radeon->radeonScreen)) {
 		r200ContextPtr r200 = (r200ContextPtr)radeon;
 
 		R200_STATECHANGE(r200, ctx);
@@ -304,7 +304,7 @@ void radeonPageFlip(const __DRIdrawablePrivate * dPriv)
 			+ radeon->radeonScreen->fbLocation;
 		r200->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = radeon->state.color.drawPitch;
 	}
-	if (IS_FAMILY_R300(radeon)) {
+	if (IS_R300_CLASS(radeon->radeonScreen)) {
 		r300ContextPtr r300 = (r300ContextPtr)radeon;
 		R300_STATECHANGE(r300, cb);
 		r300->hw.cb.cmd[R300_CB_OFFSET] = r300->radeon.state.color.drawOffset + 
@@ -350,7 +350,7 @@ void radeonFlush(GLcontext * ctx)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 
-	if (IS_FAMILY_R300(radeon))
+	if (IS_R300_CLASS(radeon->radeonScreen))
 		r300Flush(ctx);
 #if R200_MERGED
 	else

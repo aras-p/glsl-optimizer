@@ -65,6 +65,8 @@ C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 X86_SOURCES = 
 #r200_vtxtmp_x86.S
 
+DEFINES += -DRADEON_COMMON=1 -DRADEON_COMMON_FOR_R300
+
 SYMLINKS = \
 	server/radeon_dri.c \
 	server/radeon_dri.h \
@@ -72,6 +74,11 @@ SYMLINKS = \
 	server/radeon_macros.h \
 	server/radeon_reg.h \
 	server/radeon_egl.c
+
+COMMON_SYMLINKS = \
+	radeon_chipset.h \
+	radeon_screen.c \
+	radeon_screen.h
 
 ##### TARGETS #####
 
@@ -82,5 +89,8 @@ $(SYMLINKS):
 	mkdir -p server
 	for i in $(SYMLINKS) ; do rm -f $$i && test -f ../radeon/$$i && ln -s ../../radeon/$$i $$i ; done
 
-symlinks: $(SYMLINKS)
+$(COMMON_SYMLINKS):
+	@[ -e $@ ] || ln -sf ../radeon/$@ ./
+
+symlinks: $(SYMLINKS) $(COMMON_SYMLINKS)
 

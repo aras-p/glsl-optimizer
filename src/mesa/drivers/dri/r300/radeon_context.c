@@ -78,7 +78,7 @@ static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
 			radeon->radeonScreen->AGPMode;
 		const char* chipname;
 
-		if (IS_FAMILY_R300(radeon))
+		if (IS_R300_CLASS(radeon->radeonScreen))
 			chipname = "R300";
 		else
 			chipname = "R200";
@@ -261,7 +261,7 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 			radeon->dri.drawable = driDrawPriv;
 			
 #if R200_MERGED
-			if (IS_FAMILY_R200(radeon)) {
+			if (IS_R200_CLASS(radeon->radeonScreen)) {
 				r200UpdateWindow(radeon->glCtx);
 				r200UpdateViewportOffset(radeon->glCtx);
 			}
@@ -282,7 +282,7 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 		_mesa_update_state(radeon->glCtx);
 
 #if R200_MERGED
-		if (IS_FAMILY_R200(radeon))
+		if (IS_R200_CLASS(radeon->radeonScreen))
 			r200ValidateState(radeon->glCtx);
 #endif
 		

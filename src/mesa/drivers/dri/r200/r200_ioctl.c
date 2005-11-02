@@ -635,7 +635,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 
    if (rmesa->using_hyperz) {
       flags |= RADEON_USE_COMP_ZBUF;
-/*      if (rmesa->r200Screen->chipset & R200_CHIPSET_REAL_R200)
+/*      if (rmesa->r200Screen->chip_family == CHIP_FAMILY_R200)
 	 flags |= RADEON_USE_HIERZ; */
       if (!(rmesa->state.stencil.hwBuffer) ||
 	 ((flags & RADEON_DEPTH) && (flags & RADEON_STENCIL) &&

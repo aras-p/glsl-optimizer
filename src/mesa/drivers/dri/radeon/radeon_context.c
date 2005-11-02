@@ -464,15 +464,15 @@ radeonCreateContext( const __GLcontextModes *glVisual,
       fprintf(stderr, "disabling 3D acceleration\n");
       FALLBACK(rmesa, RADEON_FALLBACK_DISABLE, 1);
    } else if (tcl_mode == DRI_CONF_TCL_SW ||
-	      !(rmesa->radeonScreen->chipset & RADEON_CHIPSET_TCL)) {
-      if (rmesa->radeonScreen->chipset & RADEON_CHIPSET_TCL) {
-	 rmesa->radeonScreen->chipset &= ~RADEON_CHIPSET_TCL;
+	      !(rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
+      if (rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
+	 rmesa->radeonScreen->chip_flags &= ~RADEON_CHIPSET_TCL;
 	 fprintf(stderr, "Disabling HW TCL support\n");
       }
       TCL_FALLBACK(rmesa->glCtx, RADEON_TCL_FALLBACK_TCL_DISABLE, 1);
    }
 
-   if (rmesa->radeonScreen->chipset & RADEON_CHIPSET_TCL) {
+   if (rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
       if (tcl_mode >= DRI_CONF_TCL_VTXFMT)
 	 radeonVtxfmtInit( ctx, tcl_mode >= DRI_CONF_TCL_CODEGEN );
 

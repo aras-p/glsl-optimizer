@@ -210,7 +210,7 @@ void radeonEmitState( radeonContextPtr rmesa )
    foreach(atom, &rmesa->hw.atomlist) {
       if (rmesa->hw.all_dirty)
 	 atom->dirty = GL_TRUE;
-      if (!(rmesa->radeonScreen->chipset & RADEON_CHIPSET_TCL) &&
+      if (!(rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_TCL) &&
 	   atom->is_tcl)
 	 atom->dirty = GL_FALSE;
       if (atom->dirty) {

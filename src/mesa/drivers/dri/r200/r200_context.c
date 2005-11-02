@@ -263,7 +263,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 			     void *sharedContextPrivate)
 {
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
-   r200ScreenPtr screen = (r200ScreenPtr)(sPriv->private);
+   radeonScreenPtr screen = (radeonScreenPtr)(sPriv->private);
    struct dd_function_table functions;
    r200ContextPtr rmesa;
    GLcontext *ctx, *shareCtx;
@@ -344,7 +344,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    make_empty_list( & rmesa->swapped );
 
    rmesa->nr_heaps = 1 /* screen->numTexHeaps */ ;
-   assert(rmesa->nr_heaps < R200_NR_TEX_HEAPS);
+   assert(rmesa->nr_heaps < RADEON_NR_TEX_HEAPS);
    for ( i = 0 ; i < rmesa->nr_heaps ; i++ ) {
       rmesa->texture_heaps[i] = driCreateTextureHeap( i, rmesa,
 	    screen->texSize[i],
@@ -455,7 +455,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    _math_matrix_set_identity( &rmesa->tmpmat );
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
-   if (!(rmesa->r200Screen->chipset & R200_CHIPSET_YCBCR_BROKEN)) {
+   if (!(rmesa->r200Screen->chip_flags & R200_CHIPSET_YCBCR_BROKEN)) {
      /* yuv textures don't work with some chips - R200 / rv280 okay so far
 	others get the bit ordering right but don't actually do YUV-RGB conversion */
       _mesa_enable_extension( ctx, "GL_MESA_ycbcr_texture" );
@@ -533,15 +533,15 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
       FALLBACK(rmesa, R200_FALLBACK_DISABLE, 1);
    }
    else if (tcl_mode == DRI_CONF_TCL_SW || getenv("R200_NO_TCL") ||
-	    !(rmesa->r200Screen->chipset & R200_CHIPSET_TCL)) {
-      if (rmesa->r200Screen->chipset & R200_CHIPSET_TCL) {
-	 rmesa->r200Screen->chipset &= ~R200_CHIPSET_TCL;
+	    !(rmesa->r200Screen->chip_flags & RADEON_CHIPSET_TCL)) {
+      if (rmesa->r200Screen->chip_flags & RADEON_CHIPSET_TCL) {
+	 rmesa->r200Screen->chip_flags &= ~RADEON_CHIPSET_TCL;
 	 fprintf(stderr, "Disabling HW TCL support\n");
       }
       TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, 1);
    }
 
-   if (rmesa->r200Screen->chipset & R200_CHIPSET_TCL) {
+   if (rmesa->r200Screen->chip_flags & RADEON_CHIPSET_TCL) {
       if (tcl_mode >= DRI_CONF_TCL_VTXFMT)
 	 r200VtxfmtInit( ctx, tcl_mode >= DRI_CONF_TCL_CODEGEN );
 

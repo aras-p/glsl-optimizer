@@ -32,6 +32,7 @@ C_SOURCES = \
 	$(COMMON_SOURCES) \
 	$(DRIVER_SOURCES) 
 
+DEFINES += -DRADEON_COMMON=0
 
 X86_SOURCES = \
 	radeon_vtxtmp_x86.S 

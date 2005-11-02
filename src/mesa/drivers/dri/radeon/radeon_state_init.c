@@ -376,7 +376,7 @@ void radeonInitState( radeonContextPtr rmesa )
    if (rmesa->using_hyperz) {
        rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_Z_COMPRESSION_ENABLE |
 						   RADEON_Z_DECOMPRESSION_ENABLE;
-      if (rmesa->radeonScreen->chipset & RADEON_CHIPSET_TCL) {
+      if (rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
 	 /* works for q3, but slight rendering errors with glxgears ? */
 /*	 rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_Z_HIERARCHY_ENABLE;*/
 	 /* need this otherwise get lots of lockups with q3 ??? */
@@ -446,7 +446,7 @@ void radeonInitState( radeonContextPtr rmesa )
   					    RADEON_VC_NO_SWAP;
 #endif
 
-   if (!(rmesa->radeonScreen->chipset & RADEON_CHIPSET_TCL)) {
+   if (!(rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
      rmesa->hw.set.cmd[SET_SE_CNTL_STATUS] |= RADEON_TCL_BYPASS;
    }
 

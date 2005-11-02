@@ -14,7 +14,6 @@ endif
 DRIVER_SOURCES = r200_context.c \
 		 r200_ioctl.c \
 		 r200_lock.c \
-		 r200_screen.c \
 		 r200_state.c \
 		 r200_state_init.c \
 		 r200_cmdbuf.c \
@@ -32,11 +31,14 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_vtxfmt_sse.c \
 		 r200_vtxfmt_x86.c \
 		 r200_fragshader.c \
+		 radeon_screen.c \
 		 $(EGL_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 
 X86_SOURCES = r200_vtxtmp_x86.S
+
+DEFINES += -DRADEON_COMMON=1 -DRADEON_COMMON_FOR_R200
 
 SYMLINKS = \
 	server/radeon_egl.c  \
@@ -45,6 +47,11 @@ SYMLINKS = \
 	server/radeon.h \
 	server/radeon_macros.h \
 	server/radeon_reg.h
+
+COMMON_SYMLINKS = \
+	radeon_chipset.h \
+	radeon_screen.c \
+	radeon_screen.h
 
 ##### TARGETS #####
 
@@ -59,5 +66,9 @@ server:
 $(SYMLINKS): server
 	@[ -e $@ ] || ln -sf ../../radeon/$@ server/
 
-symlinks: $(SYMLINKS)
+
+$(COMMON_SYMLINKS):
+	@[ -e $@ ] || ln -sf ../radeon/$@ ./
+
+symlinks: $(SYMLINKS) $(COMMON_SYMLINKS)
 

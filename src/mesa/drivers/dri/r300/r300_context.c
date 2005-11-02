@@ -218,7 +218,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	make_empty_list(&r300->swapped);
 
 	r300->nr_heaps = 1 /* screen->numTexHeaps */ ;
-	assert(r300->nr_heaps < R200_NR_TEX_HEAPS);
+	assert(r300->nr_heaps < RADEON_NR_TEX_HEAPS);
 	for (i = 0; i < r300->nr_heaps; i++) {
 		r300->texture_heaps[i] = driCreateTextureHeap(i, r300,
 							       screen->
@@ -355,9 +355,9 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 #endif
 	}
 	if (tcl_mode == DRI_CONF_TCL_SW ||
-	    !(r300->radeon.radeonScreen->chipset & RADEON_CHIPSET_TCL)) {
-		if (r300->radeon.radeonScreen->chipset & RADEON_CHIPSET_TCL) {
-			r300->radeon.radeonScreen->chipset &= ~RADEON_CHIPSET_TCL;
+	    !(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
+		if (r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
+			r300->radeon.radeonScreen->chip_flags &= ~RADEON_CHIPSET_TCL;
 			fprintf(stderr, "Disabling HW TCL support\n");
 		}
 		TCL_FALLBACK(r300->radeon.glCtx, RADEON_TCL_FALLBACK_TCL_DISABLE, 1);

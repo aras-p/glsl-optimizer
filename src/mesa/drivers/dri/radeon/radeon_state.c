@@ -1348,7 +1348,7 @@ static void radeonStencilOpSeparate( GLcontext *ctx, GLenum face, GLenum fail,
    GLuint tempRADEON_STENCIL_ZPASS_DEC_WRAP;
    GLuint tempRADEON_STENCIL_ZPASS_INC_WRAP;
    
-   if (rmesa->radeonScreen->chipset & RADEON_CHIPSET_BROKEN_STENCIL) {
+   if (rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_BROKEN_STENCIL) {
       tempRADEON_STENCIL_FAIL_DEC_WRAP = RADEON_STENCIL_FAIL_DEC;
       tempRADEON_STENCIL_FAIL_INC_WRAP = RADEON_STENCIL_FAIL_INC;
       tempRADEON_STENCIL_ZFAIL_DEC_WRAP = RADEON_STENCIL_ZFAIL_DEC;

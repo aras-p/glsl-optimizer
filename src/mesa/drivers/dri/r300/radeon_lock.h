@@ -103,7 +103,7 @@ extern int prevLockLine;
 			(radeon)->dri.hwLock,				\
 			(radeon)->dri.hwContext );			\
 		DEBUG_RESET();						\
-		if (IS_FAMILY_R200((radeon))) {				\
+		if (IS_R200_CLASS(radeon->radeonScreen)) {		\
 			r200ContextPtr __r200 = (r200ContextPtr)(radeon); \
 			if (__r200->save_on_next_unlock)		\
 				r200SaveHwState( __r200 );		\

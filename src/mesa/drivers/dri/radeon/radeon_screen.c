@@ -43,10 +43,20 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "renderbuffer.h"
 
 #define STANDALONE_MMIO
-#include "radeon_context.h"
-#include "radeon_screen.h"
+#include "radeon_chipset.h"
 #include "radeon_macros.h"
+#include "radeon_screen.h"
+#if !RADEON_COMMON
+#include "radeon_context.h"
 #include "radeon_span.h"
+#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+#include "r200_context.h"
+#include "r200_ioctl.h"
+#include "r200_span.h"
+#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+#include "r300_context.h"
+#include "radeon_span.h"
+#endif
 
 #include "utils.h"
 #include "context.h"
@@ -59,6 +69,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "xmlpool.h"
 
+#if !RADEON_COMMON	/* R100 */
 PUBLIC const char __driConfigOptions[] =
 DRI_CONF_BEGIN
     DRI_CONF_SECTION_PERFORMANCE
@@ -84,40 +95,117 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 static const GLuint __driNConfigOptions = 14;
 
+#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+
+PUBLIC const char __driConfigOptions[] =
+DRI_CONF_BEGIN
+    DRI_CONF_SECTION_PERFORMANCE
+        DRI_CONF_TCL_MODE(DRI_CONF_TCL_CODEGEN)
+        DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
+        DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+        DRI_CONF_MAX_TEXTURE_UNITS(4,2,6)
+        DRI_CONF_HYPERZ(false)
+    DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_QUALITY
+        DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
+        DRI_CONF_DEF_MAX_ANISOTROPY(1.0,"1.0,2.0,4.0,8.0,16.0")
+        DRI_CONF_NO_NEG_LOD_BIAS(false)
+        DRI_CONF_FORCE_S3TC_ENABLE(false)
+        DRI_CONF_COLOR_REDUCTION(DRI_CONF_COLOR_REDUCTION_DITHER)
+        DRI_CONF_ROUND_MODE(DRI_CONF_ROUND_TRUNC)
+        DRI_CONF_DITHER_MODE(DRI_CONF_DITHER_XERRORDIFF)
+        DRI_CONF_TEXTURE_LEVEL_HACK(false)
+        DRI_CONF_TEXTURE_BLEND_QUALITY(1.0,"0.0:1.0")
+    DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_DEBUG
+        DRI_CONF_NO_RAST(false)
+    DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_SOFTWARE
+        DRI_CONF_ARB_VERTEX_PROGRAM(false)
+        DRI_CONF_NV_VERTEX_PROGRAM(false)
+    DRI_CONF_SECTION_END
+DRI_CONF_END;
+static const GLuint __driNConfigOptions = 17;
+
+extern const struct dri_extension blend_extensions[];
+extern const struct dri_extension ARB_vp_extension[];
+extern const struct dri_extension NV_vp_extension[];
+extern const struct dri_extension ATI_fs_extension[];
+
+#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+
+/* TODO: integrate these into xmlpool.h! */
+#define DRI_CONF_MAX_TEXTURE_IMAGE_UNITS(def,min,max) \
+DRI_CONF_OPT_BEGIN_V(texture_image_units,int,def, # min ":" # max ) \
+        DRI_CONF_DESC(en,"Number of texture image units") \
+        DRI_CONF_DESC(de,"Anzahl der Textureinheiten") \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_MAX_TEXTURE_COORD_UNITS(def,min,max) \
+DRI_CONF_OPT_BEGIN_V(texture_coord_units,int,def, # min ":" # max ) \
+        DRI_CONF_DESC(en,"Number of texture coordinate units") \
+        DRI_CONF_DESC(de,"Anzahl der Texturkoordinateneinheiten") \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_COMMAND_BUFFER_SIZE(def,min,max) \
+DRI_CONF_OPT_BEGIN_V(command_buffer_size,int,def, # min ":" # max ) \
+        DRI_CONF_DESC(en,"Size of command buffer (in KB)") \
+        DRI_CONF_DESC(de,"Grösse des Befehlspuffers (in KB)") \
+DRI_CONF_OPT_END
+
+const char __driConfigOptions[] =
+DRI_CONF_BEGIN
+	DRI_CONF_SECTION_PERFORMANCE
+		DRI_CONF_TCL_MODE(DRI_CONF_TCL_CODEGEN)
+		DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
+		DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+		DRI_CONF_MAX_TEXTURE_IMAGE_UNITS(16, 2, 16)
+		DRI_CONF_MAX_TEXTURE_COORD_UNITS(8, 2, 8)
+		DRI_CONF_COMMAND_BUFFER_SIZE(8, 8, 32)
+	DRI_CONF_SECTION_END
+	DRI_CONF_SECTION_QUALITY
+		DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
+		DRI_CONF_DEF_MAX_ANISOTROPY(1.0, "1.0,2.0,4.0,8.0,16.0")
+		DRI_CONF_NO_NEG_LOD_BIAS(false)
+                DRI_CONF_FORCE_S3TC_ENABLE(false)
+		DRI_CONF_COLOR_REDUCTION(DRI_CONF_COLOR_REDUCTION_DITHER)
+		DRI_CONF_ROUND_MODE(DRI_CONF_ROUND_TRUNC)
+		DRI_CONF_DITHER_MODE(DRI_CONF_DITHER_XERRORDIFF)
+	DRI_CONF_SECTION_END
+	DRI_CONF_SECTION_DEBUG
+		DRI_CONF_NO_RAST(false)
+	DRI_CONF_SECTION_END
+DRI_CONF_END;
+static const GLuint __driNConfigOptions = 14;
+
+#ifndef RADEON_DEBUG
+int RADEON_DEBUG = 0;
+
+static const struct dri_debug_control debug_control[] = {
+	{"fall", DEBUG_FALLBACKS},
+	{"tex", DEBUG_TEXTURE},
+	{"ioctl", DEBUG_IOCTL},
+	{"prim", DEBUG_PRIMS},
+	{"vert", DEBUG_VERTS},
+	{"state", DEBUG_STATE},
+	{"code", DEBUG_CODEGEN},
+	{"vfmt", DEBUG_VFMT},
+	{"vtxf", DEBUG_VFMT},
+	{"verb", DEBUG_VERBOSE},
+	{"dri", DEBUG_DRI},
+	{"dma", DEBUG_DMA},
+	{"san", DEBUG_SANITY},
+	{"sync", DEBUG_SYNC},
+	{"pix", DEBUG_PIXEL},
+	{"mem", DEBUG_MEMORY},
+	{"allmsg", ~DEBUG_SYNC}, /* avoid the term "sync" because the parser uses strstr */
+	{NULL, 0}
+};
+#endif /* RADEON_DEBUG */
+
+#endif /* RADEON_COMMON && defined(RADEON_COMMON_FOR_R300) */
+
 extern const struct dri_extension card_extensions[];
-
-#if 1
-/* Including xf86PciInfo.h introduces a bunch of errors...
- */
-#define PCI_CHIP_RADEON_QD	0x5144
-#define PCI_CHIP_RADEON_QE	0x5145
-#define PCI_CHIP_RADEON_QF	0x5146
-#define PCI_CHIP_RADEON_QG	0x5147
-
-#define PCI_CHIP_RADEON_QY	0x5159
-#define PCI_CHIP_RADEON_QZ	0x515A
-
-#define PCI_CHIP_RN50_515E	0x515E
-#define PCI_CHIP_RN50_5969	0x5969
-
-#define PCI_CHIP_RADEON_LW	0x4C57 /* mobility 7 - has tcl */
-#define PCI_CHIP_RADEON_LX	0x4C58 /* mobility FireGL 7800 m7 */
-
-#define PCI_CHIP_RADEON_LY	0x4C59
-#define PCI_CHIP_RADEON_LZ	0x4C5A
-
-#define PCI_CHIP_RV200_QW	0x5157 /* Radeon 7500 - not an R200 at all */
-#define PCI_CHIP_RV200_QX	0x5158
-
-/* IGP Chipsets */
-#define PCI_CHIP_RS100_4136     0x4136
-#define PCI_CHIP_RS200_4137     0x4137
-#define PCI_CHIP_RS250_4237     0x4237
-#define PCI_CHIP_RS100_4336     0x4336
-#define PCI_CHIP_RS200_4337     0x4337
-#define PCI_CHIP_RS250_4437     0x4437
-#endif
-
 
 static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
 
@@ -227,6 +315,10 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       return NULL;
    }
 
+#if DO_DEBUG && RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+	RADEON_DEBUG = driParseDebugString(getenv("RADEON_DEBUG"), debug_control);
+#endif
+
    /* parse information in __driConfigOptions */
    driParseOptionInfo (&screen->optionCache,
 		       __driConfigOptions, __driNConfigOptions);
@@ -252,6 +344,17 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       }
 
       if (sPriv->drmMinor >= 6) {
+	 gp.param = RADEON_PARAM_GART_BASE;
+	 gp.value = &screen->gart_base;
+
+	 ret = drmCommandWriteRead( sPriv->fd, DRM_RADEON_GETPARAM,
+				    &gp, sizeof(gp));
+	 if (ret) {
+	    FREE( screen );
+	    fprintf(stderr, "drmR200GetParam (RADEON_PARAM_GART_BASE): %d\n", ret);
+	    return NULL;
+	 }
+
 	 gp.param = RADEON_PARAM_IRQ_NR;
 	 gp.value = &screen->irq;
 
@@ -262,7 +365,11 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	    fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_IRQ_NR): %d\n", ret);
 	    return NULL;
 	 }
-	 screen->drmSupportsCubeMaps = (sPriv->drmMinor >= 15);
+	 screen->drmSupportsCubeMaps = (sPriv->drmMinor >= 7);
+	 screen->drmSupportsBlendColor = (sPriv->drmMinor >= 11);
+	 screen->drmSupportsTriPerf = (sPriv->drmMinor >= 16);
+	 screen->drmSupportsFragShader = (sPriv->drmMinor >= 18);
+	 screen->drmSupportsPointSprites = (sPriv->drmMinor >= 13);
       }
    }
 
@@ -322,35 +429,167 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 		: ( ( INREG( RADEON_MC_AGP_LOCATION ) & 0x0ffffU ) << 16 ) );
    }
 
-   screen->chipset = 0;
+   screen->chip_flags = 0;
+   /* XXX: add more chipsets */
    switch ( dri_priv->deviceID ) {
-   default:
-      fprintf(stderr, "unknown chip id, assuming full radeon support\n");
+   case PCI_CHIP_RADEON_LY:
+   case PCI_CHIP_RADEON_LZ:
+   case PCI_CHIP_RADEON_QY:
+   case PCI_CHIP_RADEON_QZ:
+   case PCI_CHIP_RN50_515E:
+   case PCI_CHIP_RN50_5969:
+      screen->chip_family = CHIP_FAMILY_RV100;
+      break;
+
+   case PCI_CHIP_RS100_4136:
+   case PCI_CHIP_RS100_4336:
+      screen->chip_family = CHIP_FAMILY_RS100;
+      break;
+
+   case PCI_CHIP_RS200_4137:
+   case PCI_CHIP_RS200_4337:
+   case PCI_CHIP_RS250_4237:
+   case PCI_CHIP_RS250_4437:
+      screen->chip_family = CHIP_FAMILY_RS200;
+      break;
+
    case PCI_CHIP_RADEON_QD:
    case PCI_CHIP_RADEON_QE:
    case PCI_CHIP_RADEON_QF:
    case PCI_CHIP_RADEON_QG:
       /* all original radeons (7200) presumably have a stencil op bug */
-      screen->chipset |= RADEON_CHIPSET_BROKEN_STENCIL;
+      screen->chip_family = CHIP_FAMILY_R100;
+      screen->chip_flags = RADEON_CHIPSET_TCL | RADEON_CHIPSET_BROKEN_STENCIL;
+      break;
+
    case PCI_CHIP_RV200_QW:
    case PCI_CHIP_RV200_QX:
    case PCI_CHIP_RADEON_LW:
    case PCI_CHIP_RADEON_LX:
-      screen->chipset |= RADEON_CHIPSET_TCL;
-   case PCI_CHIP_RADEON_QY:
-   case PCI_CHIP_RADEON_QZ:
-   case PCI_CHIP_RN50_515E:
-   case PCI_CHIP_RN50_5969:
-   case PCI_CHIP_RADEON_LY:
-   case PCI_CHIP_RADEON_LZ:
-   case PCI_CHIP_RS100_4136: /* IGPs don't have TCL */
-   case PCI_CHIP_RS200_4137:
-   case PCI_CHIP_RS250_4237:
-   case PCI_CHIP_RS100_4336:
-   case PCI_CHIP_RS200_4337:
-   case PCI_CHIP_RS250_4437:
+      screen->chip_family = CHIP_FAMILY_RV200;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
+
+   case PCI_CHIP_R200_BB:
+   case PCI_CHIP_R200_BC:
+   case PCI_CHIP_R200_QH:
+   case PCI_CHIP_R200_QI:
+   case PCI_CHIP_R200_QJ:
+   case PCI_CHIP_R200_QK:
+   case PCI_CHIP_R200_QL:
+   case PCI_CHIP_R200_QM:
+   case PCI_CHIP_R200_QN:
+   case PCI_CHIP_R200_QO:
+      screen->chip_family = CHIP_FAMILY_R200;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
+      break;
+
+   case PCI_CHIP_RV250_Id:
+   case PCI_CHIP_RV250_Ie:
+   case PCI_CHIP_RV250_If:
+   case PCI_CHIP_RV250_Ig:
+   case PCI_CHIP_RV250_Ld:
+   case PCI_CHIP_RV250_Le:
+   case PCI_CHIP_RV250_Lf:
+   case PCI_CHIP_RV250_Lg:
+      screen->chip_family = CHIP_FAMILY_RV250;
+      screen->chip_flags = R200_CHIPSET_YCBCR_BROKEN | RADEON_CHIPSET_TCL;
+      break;
+
+   case PCI_CHIP_RV280_5960:
+   case PCI_CHIP_RV280_5961:
+   case PCI_CHIP_RV280_5962:
+   case PCI_CHIP_RV280_5964:
+   case PCI_CHIP_RV280_5965:
+   case PCI_CHIP_RV280_5C61:
+   case PCI_CHIP_RV280_5C63:
+      screen->chip_family = CHIP_FAMILY_RV280;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
+      break;
+
+   case PCI_CHIP_RS300_5834:
+   case PCI_CHIP_RS300_5835:
+   case PCI_CHIP_RS300_5836:
+   case PCI_CHIP_RS300_5837:
+      screen->chip_family = CHIP_FAMILY_RS300;
+      break;
+
+   case PCI_CHIP_R300_AD:
+   case PCI_CHIP_R300_AE:
+   case PCI_CHIP_R300_AF:
+   case PCI_CHIP_R300_AG:
+   case PCI_CHIP_R300_ND:
+   case PCI_CHIP_R300_NE:
+   case PCI_CHIP_R300_NF:
+   case PCI_CHIP_R300_NG:
+      screen->chip_family = CHIP_FAMILY_R300;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
+      break;
+
+   case PCI_CHIP_RV350_AP:
+   case PCI_CHIP_RV350_AQ:
+   case PCI_CHIP_RV350_AR:
+   case PCI_CHIP_RV350_AS:
+   case PCI_CHIP_RV350_AT:
+   case PCI_CHIP_RV350_AV:
+   case PCI_CHIP_RV350_AU:
+   case PCI_CHIP_RV350_NP:
+   case PCI_CHIP_RV350_NQ:
+   case PCI_CHIP_RV350_NR:
+   case PCI_CHIP_RV350_NS:
+   case PCI_CHIP_RV350_NT:
+   case PCI_CHIP_RV350_NV:
+      screen->chip_family = CHIP_FAMILY_RV350;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
+      break;
+
+   case PCI_CHIP_R350_AH:
+   case PCI_CHIP_R350_AI:
+   case PCI_CHIP_R350_AJ:
+   case PCI_CHIP_R350_AK:
+   case PCI_CHIP_R350_NH:
+   case PCI_CHIP_R350_NI:
+   case PCI_CHIP_R360_NJ:
+   case PCI_CHIP_R350_NK:
+      screen->chip_family = CHIP_FAMILY_R350;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
+      break;
+
+   case PCI_CHIP_RV370_5460:
+   case PCI_CHIP_RV370_5464:
+   case PCI_CHIP_RV370_5B60:
+   case PCI_CHIP_RV370_5B62:
+   case PCI_CHIP_RV370_5B64:
+   case PCI_CHIP_RV370_5B65:
+      screen->chip_family = CHIP_FAMILY_RV380;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
+      break;
+
+   case PCI_CHIP_R420_JN:
+   case PCI_CHIP_R420_JH:
+   case PCI_CHIP_R420_JI:
+   case PCI_CHIP_R420_JJ:
+   case PCI_CHIP_R420_JK:
+   case PCI_CHIP_R420_JL:
+   case PCI_CHIP_R420_JM:
+   case PCI_CHIP_R420_JO:
+   case PCI_CHIP_R420_JP:
+      screen->chip_family = CHIP_FAMILY_R420;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
+      break;
+
+   default:
+      fprintf(stderr, "unknown chip id 0x%x, can't guess.\n",
+	      dri_priv->deviceID);
+      return NULL;
    }
+
+   if (screen->chip_family <= CHIP_FAMILY_RS200)
+      screen->chip_flags |= RADEON_CLASS_R200;
+   else if (screen->chip_family <= CHIP_FAMILY_RV280)
+      screen->chip_flags |= RADEON_CLASS_R200;
+   else
+      screen->chip_flags |= RADEON_CLASS_R300;
 
    screen->cpp = dri_priv->bpp / 8;
    screen->AGPMode = dri_priv->AGPMode;
@@ -376,7 +615,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 
    /* Check if ddx has set up a surface reg to cover depth buffer */
    screen->depthHasSurface = ((sPriv->ddxMajor > 4) &&
-      (screen->chipset & RADEON_CHIPSET_TCL));
+      (screen->chip_flags & RADEON_CHIPSET_TCL));
 
    screen->texOffset[RADEON_LOCAL_TEX_HEAP] = dri_priv->textureOffset
 				       + screen->fbLocation;
@@ -406,7 +645,17 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       }
 
       (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+      if (IS_R200_CLASS(screen))
+	 (*glx_enable_extension)( psc, "GLX_MESA_allocate_memory" );
    }
+
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+   if (IS_R200_CLASS(screen)) {
+      sPriv->psc->allocateMemory = (void *) r200AllocateMemoryMESA;
+      sPriv->psc->freeMemory     = (void *) r200FreeMemoryMESA;
+      sPriv->psc->memoryOffset   = (void *) r200GetMemoryOffsetMESA;
+   }
+#endif
 
    screen->driScreen = sPriv;
    screen->sarea_priv_offset = dri_priv->sarea_priv_offset;
@@ -559,6 +808,38 @@ radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
    _mesa_destroy_framebuffer((GLframebuffer *) (driDrawPriv->driverPrivate));
 }
 
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+/**
+ * Choose the appropriate CreateContext function based on the chipset.
+ * Eventually, all drivers will go through this process.
+ */
+static GLboolean radeonCreateContext(const __GLcontextModes * glVisual,
+				     __DRIcontextPrivate * driContextPriv,
+				     void *sharedContextPriv)
+{
+	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
+
+	if (IS_R300_CLASS(screen))
+		return r300CreateContext(glVisual, driContextPriv, sharedContextPriv);
+        return GL_FALSE;
+}
+
+/**
+ * Choose the appropriate DestroyContext function based on the chipset.
+ */
+static void radeonDestroyContext(__DRIcontextPrivate * driContextPriv)
+{
+	radeonContextPtr radeon = (radeonContextPtr) driContextPriv->driverPrivate;
+
+	if (IS_R300_CLASS(radeon->radeonScreen))
+		return r300DestroyContext(driContextPriv);
+}
+
+
+#endif
+
+#if !RADEON_COMMON || (RADEON_COMMON && defined(RADEON_COMMON_FOR_R300))
 static struct __DriverAPIRec radeonAPI = {
    .InitDriver      = radeonInitDriver,
    .DestroyScreen   = radeonDestroyScreen,
@@ -575,7 +856,24 @@ static struct __DriverAPIRec radeonAPI = {
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL
 };
-
+#else
+static const struct __DriverAPIRec r200API = {
+   .InitDriver      = radeonInitDriver,
+   .DestroyScreen   = radeonDestroyScreen,
+   .CreateContext   = r200CreateContext,
+   .DestroyContext  = r200DestroyContext,
+   .CreateBuffer    = radeonCreateBuffer,
+   .DestroyBuffer   = radeonDestroyBuffer,
+   .SwapBuffers     = r200SwapBuffers,
+   .MakeCurrent     = r200MakeCurrent,
+   .UnbindContext   = r200UnbindContext,
+   .GetSwapInfo     = getSwapInfo,
+   .GetMSC          = driGetMSC32,
+   .WaitForMSC      = driWaitForMSC32,
+   .WaitForSBC      = NULL,
+   .SwapBuffersMSC  = NULL
+};
+#endif
 
 /**
  * This is the bootstrap function for the driver.  libGL supplies all of the
@@ -601,23 +899,43 @@ __driCreateNewScreen_20050727( __DRInativeDisplay *dpy,
 			     __GLcontextModes ** driver_modes )
 {
    __DRIscreenPrivate *psp;
+#if !RADEON_COMMON
+   static const char *driver_name = "Radeon";
    static const __DRIutilversion2 ddx_expected = { 4, 5, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 3, 0 };
+#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+   static const char *driver_name = "R200";
+   static const __DRIutilversion2 ddx_expected = { 4, 5, 0, 0 };
+   static const __DRIversion dri_expected = { 4, 0, 0 };
+   static const __DRIversion drm_expected = { 1, 5, 0 };
+#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+   static const char *driver_name = "R300";
+   static const __DRIutilversion2 ddx_expected = { 4, 5, 0, 0 };
+   static const __DRIversion dri_expected = { 4, 0, 0 };
+   static const __DRIversion drm_expected = { 1, 17, 0 };
+#endif
 
    dri_interface = interface;
 
-   if ( ! driCheckDriDdxDrmVersions3( "Radeon",
+   if ( ! driCheckDriDdxDrmVersions3( driver_name,
 				      dri_version, & dri_expected,
 				      ddx_version, & ddx_expected,
 				      drm_version, & drm_expected ) ) {
       return NULL;
    }
-
+#if !RADEON_COMMON || (RADEON_COMMON && defined(RADEON_COMMON_FOR_R300))
    psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
 				  ddx_version, dri_version, drm_version,
 				  frame_buffer, pSAREA, fd,
 				  internal_api_version, &radeonAPI);
+#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+   psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
+				  ddx_version, dri_version, drm_version,
+				  frame_buffer, pSAREA, fd,
+				  internal_api_version, &r200API);
+#endif
+
    if ( psp != NULL ) {
       RADEONDRIPtr dri_priv = (RADEONDRIPtr) psp->pDevPriv;
       *driver_modes = radeonFillInModes( dri_priv->bpp,
@@ -636,6 +954,12 @@ __driCreateNewScreen_20050727( __DRInativeDisplay *dpy,
        * Hello chicken.  Hello egg.  How are you two today?
        */
       driInitExtensions( NULL, card_extensions, GL_FALSE );
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+      driInitExtensions( NULL, blend_extensions, GL_FALSE );
+      driInitSingleExtension( NULL, ARB_vp_extension );
+      driInitSingleExtension( NULL, NV_vp_extension );
+      driInitSingleExtension( NULL, ATI_fs_extension );
+#endif
    }
 
    return (void *) psp;
@@ -648,7 +972,11 @@ __driCreateNewScreen_20050727( __DRInativeDisplay *dpy,
 static int
 getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
 {
+#if !RADEON_COMMON || (RADEON_COMMON && defined(RADEON_COMMON_FOR_R300))
    radeonContextPtr  rmesa;
+#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+   r200ContextPtr  rmesa;
+#endif
 
    if ( (dPriv == NULL) || (dPriv->driContextPriv == NULL)
 	|| (dPriv->driContextPriv->driverPrivate == NULL)
@@ -656,7 +984,7 @@ getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
       return -1;
    }
 
-   rmesa = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
+   rmesa = dPriv->driContextPriv->driverPrivate;
    sInfo->swap_count = rmesa->swap_count;
    sInfo->swap_ust = rmesa->swap_ust;
    sInfo->swap_missed_count = rmesa->swap_missed_count;

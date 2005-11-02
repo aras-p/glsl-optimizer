@@ -54,7 +54,7 @@ typedef struct r200_context r200ContextRec;
 typedef struct r200_context *r200ContextPtr;
 
 #include "r200_lock.h"
-#include "r200_screen.h"
+#include "radeon_screen.h"
 #include "mm.h"
 
 /* Flags for software fallback cases */
@@ -883,7 +883,7 @@ struct r200_context {
    /* Texture object bookkeeping
     */
    unsigned              nr_heaps;
-   driTexHeap          * texture_heaps[ R200_NR_TEX_HEAPS ];
+   driTexHeap          * texture_heaps[ RADEON_NR_TEX_HEAPS ];
    driTextureObject      swapped;
    int                   texture_depth;
    float                 initialMaxAnisotropy;
@@ -927,7 +927,7 @@ struct r200_context {
    unsigned int lastStamp;
    GLboolean lost_context;
    GLboolean save_on_next_emit;
-   r200ScreenPtr r200Screen;	/* Screen private DRI data */
+   radeonScreenPtr r200Screen;	/* Screen private DRI data */
    drm_radeon_sarea_t *sarea;		/* Private SAREA data */
 
    /* TCL stuff

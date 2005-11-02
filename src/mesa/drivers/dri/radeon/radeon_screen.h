@@ -41,8 +41,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * IMPORTS: these headers contain all the DRI, X and kernel-related
  * definitions that we need.
  */
-/* #include "dri_util.h" */
+#include "dri_util.h"
 #include "radeon_dri.h"
+#include "radeon_chipset.h"
 #include "radeon_reg.h"
 #include "drm_sarea.h"
 #include "xmlconfig.h"
@@ -54,13 +55,9 @@ typedef struct {
    drmAddress map;			/* Mapping of the DRM region */
 } radeonRegionRec, *radeonRegionPtr;
 
-/* chipset features */
-#define RADEON_CHIPSET_TCL	(1 << 0)
-#define RADEON_CHIPSET_BROKEN_STENCIL (1 << 1)
-
 typedef struct {
-
-   int chipset;
+   int chip_family;
+   int chip_flags;
    int cpp;
    int IsPCI;				/* Current card is a PCI card */
    int AGPMode;
@@ -93,12 +90,24 @@ typedef struct {
    unsigned int sarea_priv_offset;
    unsigned int gart_buffer_offset;	/* offset in card memory space */
    unsigned int gart_texture_offset;	/* offset in card memory space */
+   unsigned int gart_base;
 
+   GLboolean drmSupportsCubeMaps;       /* need radeon kernel module >= 1.7 */
+   GLboolean drmSupportsBlendColor;     /* need radeon kernel module >= 1.11 */
+   GLboolean drmSupportsTriPerf;        /* need radeon kernel module >= 1.16 */
+   GLboolean drmSupportsFragShader;     /* need radeon kernel module >= 1.18 */
+   GLboolean drmSupportsPointSprites;   /* need radeon kernel module >= 1.13 */
    GLboolean depthHasSurface;
 
    /* Configuration cache with default values for all contexts */
    driOptionCache optionCache;
-   GLboolean drmSupportsCubeMaps;
 } radeonScreenRec, *radeonScreenPtr;
+
+#define IS_R100_CLASS(screen) \
+	((screen->chip_flags & RADEON_CLASS_MASK) == RADEON_CLASS_R100)
+#define IS_R200_CLASS(screen) \
+	((screen->chip_flags & RADEON_CLASS_MASK) == RADEON_CLASS_R200)
+#define IS_R300_CLASS(screen) \
+	((screen->chip_flags & RADEON_CLASS_MASK) == RADEON_CLASS_R300)
 
 #endif /* __RADEON_SCREEN_H__ */
