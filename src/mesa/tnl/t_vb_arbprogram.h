@@ -158,7 +158,7 @@ struct arb_vp_machine {
    struct input input[_TNL_ATTRIB_MAX];
    GLuint nr_inputs;
 
-   struct output output[15];
+   struct output output[VERT_RESULT_MAX];
    GLuint nr_outputs;
 
    GLvector4f attribs[VERT_RESULT_MAX]; /**< result vectors. */
