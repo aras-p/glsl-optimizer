@@ -249,7 +249,7 @@ _mesa_add_unnamed_constant(struct program_parameter_list *paramList,
 
 extern GLint
 _mesa_add_state_reference(struct program_parameter_list *paramList,
-                          GLint *stateTokens);
+                          const GLint *stateTokens);
 
 extern GLfloat *
 _mesa_lookup_parameter_value(struct program_parameter_list *paramList,

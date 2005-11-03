@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -383,6 +383,7 @@ _mesa_free_parameters(struct program_parameter_list *paramList)
 
 /**
  * Helper function used by the functions below.
+ * \return  index of new parameter in the list, or -1 if error (out of mem)
  */
 static GLint
 add_parameter(struct program_parameter_list *paramList,
@@ -483,19 +484,22 @@ _mesa_add_unnamed_constant(struct program_parameter_list *paramList,
  */
 GLint
 _mesa_add_state_reference(struct program_parameter_list *paramList,
-                          GLint *stateTokens)
+                          const GLint *stateTokens)
 {
-   /* XXX Should we parse <stateString> here and produce the parameter's
-    * list of STATE_* tokens here, or in the parser?
+   /* XXX we should probably search the current parameter list to see if
+    * the new state reference is already present.
     */
-   GLint a, idx;
+   GLint index;
 
-   idx = add_parameter(paramList, NULL, NULL, STATE);
-	
-   for (a=0; a<6; a++)
-      paramList->Parameters[idx].StateIndexes[a] = (enum state_index) stateTokens[a];
+   index = add_parameter(paramList, NULL, NULL, STATE);
+   if (index >= 0) {
+      GLuint i;
+      for (i = 0; i < 6; i++)
+         paramList->Parameters[index].StateIndexes[i]
+            = (enum state_index) stateTokens[i];
+   }
 
-   return idx;
+   return index;
 }
 
 
