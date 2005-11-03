@@ -190,6 +190,7 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
 {
    GLuint i;
    struct arb_program ap;
+   struct fp_instruction *newInstructions;
    (void) target;
 
    /* set the program target before parsing */
@@ -203,6 +204,18 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
    /* Copy the relevant contents of the arb_program struct into the
     * fragment_program struct.
     */
+   /* copy instruction buffer */
+   newInstructions = (struct fp_instruction *)
+      _mesa_malloc(ap.Base.NumInstructions * sizeof(struct fp_instruction));
+   if (!newInstructions) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
+      return;
+   }
+   _mesa_memcpy(newInstructions, ap.FPInstructions,
+                ap.Base.NumInstructions * sizeof(struct fp_instruction));
+   if (program->Instructions)
+      _mesa_free(program->Instructions);
+   program->Instructions = newInstructions;
    program->Base.String          = ap.Base.String;
    program->Base.NumInstructions = ap.Base.NumInstructions;
    program->Base.NumTemporaries  = ap.Base.NumTemporaries;
@@ -212,7 +225,6 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
    program->NumAluInstructions = ap.NumAluInstructions;
    program->NumTexInstructions = ap.NumTexInstructions;
    program->NumTexIndirections = ap.NumTexIndirections;
-
    program->InputsRead     = ap.InputsRead;
    program->OutputsWritten = ap.OutputsWritten;
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
@@ -228,6 +240,4 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
 #if DEBUG_FP
    _mesa_debug_fp_inst(ap.Base.NumInstructions, ap.FPInstructions);
 #endif
-
-   program->Instructions   = ap.FPInstructions;
 }

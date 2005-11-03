@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -31,25 +31,29 @@
 #include "nvvertprog.h"
 #include "nvfragprog.h"
 
+
+#define MAX_INSTRUCTIONS 256
+
+
 /**
  * This is basically a union of the vertex_program and fragment_program
  * structs that we can use to parse the program into
  *
- * XXX: this should go into mtypes.h?
+ * XXX we can probably get rid of this entirely someday.
  */
 struct arb_program
 {
    struct program Base;
    struct program_parameter_list *Parameters; 
-   GLuint InputsRead;
-   GLuint OutputsWritten;
+   GLbitfield InputsRead;
+   GLbitfield OutputsWritten;
 
    GLuint Position;       /* Just used for error reporting while parsing */
    GLuint MajorVersion;
    GLuint MinorVersion;
 
    /* ARB_vertex_program specifics */ 
-   struct vp_instruction *VPInstructions;
+   struct vp_instruction VPInstructions[MAX_INSTRUCTIONS];
 
    /* Options currently recognized by the parser */
    /* ARB_fp */
@@ -60,8 +64,8 @@ struct arb_program
    GLboolean HintPositionInvariant;
 
    /* ARB_fragment_program specifics */
-   struct fp_instruction *FPInstructions;
-   GLuint TexturesUsed[MAX_TEXTURE_IMAGE_UNITS]; 
+   struct fp_instruction FPInstructions[MAX_INSTRUCTIONS];
+   GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS]; 
    GLuint NumAluInstructions; 
    GLuint NumTexInstructions;
    GLuint NumTexIndirections;

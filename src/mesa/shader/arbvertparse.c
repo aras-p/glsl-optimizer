@@ -169,6 +169,7 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
 {
    struct arb_program ap;
    (void) target;
+   struct vp_instruction *newInstructions;
 
    /* set the program target before parsing */
    ap.Base.Target = GL_VERTEX_PROGRAM_ARB;
@@ -181,13 +182,24 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
    /* Copy the relevant contents of the arb_program struct into the 
     * vertex_program struct.
     */
+   /* copy instruction buffer */
+   newInstructions = (struct vp_instruction *)
+      _mesa_malloc(ap.Base.NumInstructions * sizeof(struct vp_instruction));
+   if (!newInstructions) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
+      return;
+   }
+   _mesa_memcpy(newInstructions, ap.VPInstructions,
+                ap.Base.NumInstructions * sizeof(struct vp_instruction));
+   if (program->Instructions)
+      _mesa_free(program->Instructions);
+   program->Instructions = newInstructions;
    program->Base.String          = ap.Base.String;
    program->Base.NumInstructions = ap.Base.NumInstructions;
    program->Base.NumTemporaries  = ap.Base.NumTemporaries;
    program->Base.NumParameters   = ap.Base.NumParameters;
    program->Base.NumAttributes   = ap.Base.NumAttributes;
    program->Base.NumAddressRegs  = ap.Base.NumAddressRegs;
-
    program->IsPositionInvariant = ap.HintPositionInvariant;
    program->InputsRead     = ap.InputsRead;
    program->OutputsWritten = ap.OutputsWritten;
@@ -198,10 +210,7 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
    }
    program->Parameters     = ap.Parameters; 
 
-   program->Instructions   = ap.VPInstructions;
-
 #if DEBUG_VP
    _mesa_debug_vp_inst(ap.Base.NumInstructions, ap.VPInstructions);
 #endif
-
 }

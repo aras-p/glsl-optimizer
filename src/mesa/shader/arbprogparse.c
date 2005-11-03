@@ -3594,46 +3594,24 @@ debug_variables (GLcontext * ctx, struct var_cache *vc_head,
    }
 }
 
-#endif
-
-
-/**
- * Grow an array of fragment program instructions.
- */
-static struct fp_instruction *
-realloc_fp_instructions(struct fp_instruction *oldArray, GLuint oldSize)
-{
-   struct fp_instruction *array = (struct fp_instruction *)
-      _mesa_realloc(oldArray,
-                    oldSize * sizeof(struct fp_instruction),
-                    (oldSize + 1) * sizeof(struct fp_instruction));
-   return array;
-}
-
-/**
- * Grow an array of vertex program instructions.
- */
-static struct vp_instruction *
-realloc_vp_instructions(struct vp_instruction *oldArray, GLuint oldSize)
-{
-   struct vp_instruction *array = (struct vp_instruction *)
-      _mesa_realloc(oldArray,
-                    oldSize * sizeof(struct vp_instruction),
-                    (oldSize + 1) * sizeof(struct vp_instruction));
-   return array;
-}
+#endif /* DEBUG_PARSING */
 
 
 /**
  * The main loop for parsing a fragment or vertex program
  *
- * \return GL_TRUE on success, GL_FALSE on error.
+ * \return 1 on error, 0 on success
  */
-static GLboolean
+static GLint
 parse_arb_program(GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
                   struct arb_program *Program)
 {
+   const GLuint maxInst = (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB)
+      ? ctx->Const.FragmentProgram.MaxInstructions
+      : ctx->Const.VertexProgram.MaxInstructions;
    GLint err = 0;
+
+   ASSERT(MAX_INSTRUCTIONS >= maxInst);
 
    Program->MajorVersion = (GLuint) * inst++;
    Program->MinorVersion = (GLuint) * inst++;
@@ -3683,44 +3661,25 @@ parse_arb_program(GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
             break;
 
          case INSTRUCTION:
+            /* check length */
+            if (Program->Base.NumInstructions + 1 >= maxInst) {
+               const char *msg = "Max instruction count exceeded";
+               _mesa_set_program_error(ctx, Program->Position, msg);
+               _mesa_error(ctx, GL_INVALID_OPERATION, msg);
+               return 1;
+            }
             Program->Position = parse_position (&inst);
-
+            /* parse the current instruction */
             if (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
-               /* Check instruction count.  END counts as an instruction. */
-               if (Program->Base.NumInstructions + 1
-                   == MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS) {
-                  const char *msg = "Max instruction count exceeded";
-                  _mesa_set_program_error(ctx, Program->Position, msg);
-                  _mesa_error(ctx, GL_INVALID_OPERATION, msg);
-               }
-
-               /* grow instruction list */
-               Program->FPInstructions
-                  = realloc_fp_instructions(Program->FPInstructions,
-                                            Program->Base.NumInstructions);
-               /* parse the current instruction */
                err = parse_fp_instruction (ctx, &inst, vc_head, Program,
                       &Program->FPInstructions[Program->Base.NumInstructions]);
             }
             else {
-               /* Check instruction count.  END counts as an instruction. */
-               if (Program->Base.NumInstructions + 1
-                   == MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS) {
-                  const char *msg = "Max instruction count exceeded";
-                  _mesa_set_program_error(ctx, Program->Position, msg);
-                  _mesa_error(ctx, GL_INVALID_OPERATION, msg);
-               }
-
-               /* grow instruction list */
-               Program->VPInstructions
-                  = realloc_vp_instructions(Program->VPInstructions,
-                                            Program->Base.NumInstructions);
-               /* parse the current instruction */
                err = parse_vp_instruction (ctx, &inst, vc_head, Program,
                       &Program->VPInstructions[Program->Base.NumInstructions]);
             }
 
-            /* increment Program->Base.NumInstructions */
+            /* increment instuction count */
             Program->Base.NumInstructions++;
             break;
 
@@ -3739,8 +3698,6 @@ parse_arb_program(GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
    /* Finally, tag on an OPCODE_END instruction */
    if (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
       const GLuint numInst = Program->Base.NumInstructions;
-      Program->FPInstructions
-         = realloc_fp_instructions(Program->FPInstructions, numInst);
       _mesa_init_fp_instruction(Program->FPInstructions + numInst);
       Program->FPInstructions[numInst].Opcode = FP_OPCODE_END;
       /* YYY Wrong Position in program, whatever, at least not random -> crash
@@ -3750,8 +3707,6 @@ parse_arb_program(GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
    }
    else {
       const GLuint numInst = Program->Base.NumInstructions;
-      Program->VPInstructions
-         = realloc_vp_instructions(Program->VPInstructions, numInst);
       _mesa_init_vp_instruction(Program->VPInstructions + numInst);
       Program->VPInstructions[numInst].Opcode = VP_OPCODE_END;
       /* YYY Wrong Position in program, whatever, at least not random -> crash
@@ -4016,9 +3971,6 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    program->NumTexIndirections = 0;
 
    program->UsesKill = 0;
-
-   program->FPInstructions = NULL;
-   program->VPInstructions = NULL;
 
    vc_head = NULL;
    err = GL_FALSE;
