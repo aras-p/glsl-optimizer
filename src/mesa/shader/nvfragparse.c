@@ -1705,15 +1705,15 @@ PrintDstReg(const struct fp_dst_register *dst)
       _mesa_printf("???");
    }
 
-   if (dst->WriteMask != 0 && dst->WriteMask != 0xf) {
+   if (dst->WriteMask != 0 && dst->WriteMask != WRITEMASK_XYZW) {
       _mesa_printf(".");
-      if (dst->WriteMask & 0x1)
+      if (dst->WriteMask & WRITEMASK_X)
          _mesa_printf("x");
-      if (dst->WriteMask & 0x2)
+      if (dst->WriteMask & WRITEMASK_Y)
          _mesa_printf("y");
-      if (dst->WriteMask & 0x4)
+      if (dst->WriteMask & WRITEMASK_Z)
          _mesa_printf("z");
-      if (dst->WriteMask & 0x8)
+      if (dst->WriteMask & WRITEMASK_W)
          _mesa_printf("w");
    }
 
@@ -1834,7 +1834,7 @@ _mesa_init_fp_instruction(struct fp_instruction *inst)
    inst->SrcReg[2].File = PROGRAM_UNDEFINED;
    inst->SrcReg[2].Swizzle = SWIZZLE_NOOP;
    inst->DstReg.File = PROGRAM_UNDEFINED;
-   inst->DstReg.WriteMask = 0xf;
+   inst->DstReg.WriteMask = WRITEMASK_XYZW;
    inst->DstReg.CondSwizzle = SWIZZLE_NOOP;
    inst->Precision = FLOAT32;
    inst->DstReg.CondMask = COND_TR;
