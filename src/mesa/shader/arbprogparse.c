@@ -3665,7 +3665,7 @@ parse_arb_program(GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
 
                case ARB_POSITION_INVARIANT:
                   if (Program->Base.Target == GL_VERTEX_PROGRAM_ARB)
-                     Program->HintPositionInvariant = 1;
+                     Program->HintPositionInvariant = GL_TRUE;
                   break;
 
                case ARB_FRAGMENT_PROGRAM_SHADOW:
@@ -4002,15 +4002,15 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    program->Base.NumParameters =
    program->Base.NumAttributes = program->Base.NumAddressRegs = 0;
    program->Parameters = _mesa_new_parameter_list ();
-   program->InputsRead = 0;
-   program->OutputsWritten = 0;
+   program->InputsRead = 0x0;
+   program->OutputsWritten = 0x0;
    program->Position = 0;
    program->MajorVersion = program->MinorVersion = 0;
    program->PrecisionOption = GL_DONT_CARE;
    program->FogOption = GL_NONE;
    program->HintPositionInvariant = GL_FALSE;
    for (a = 0; a < MAX_TEXTURE_IMAGE_UNITS; a++)
-      program->TexturesUsed[a] = 0;
+      program->TexturesUsed[a] = 0x0;
    program->NumAluInstructions =
    program->NumTexInstructions =
    program->NumTexIndirections = 0;
@@ -4030,7 +4030,7 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    if (*inst++ != REVISION) {
       _mesa_set_program_error (ctx, 0, "Grammar version mismatch");
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glProgramStringARB(Grammar verison mismatch)");
+                  "glProgramStringARB(Grammar version mismatch)");
       err = GL_TRUE;
    }
    else {
