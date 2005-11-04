@@ -535,12 +535,26 @@ int
 _mesa_ffs(int i)
 {
 #if defined(_WIN32) && !defined(__MINGW32__)
-   int bit;
-   if (i == 0)
-      return 0;
-   for (bit = 1; !(i & 1); bit++)
-      i >>= 1;
-   return bit;
+   register int bit = 0;
+   if (i != 0) {
+      if ((i & 0xffff) == 0) {
+         bit += 16;
+         i >>= 16;
+      }
+      if ((i & 0xff) == 0) {
+         bit += 8;
+         i >>= 8;
+      }
+      if ((i & 0xf) == 0) {
+         bit += 4;
+         i >>= 4;
+      }
+      while ((i & 1) == 0) {
+         bit++;
+         i >>= 1;
+      }
+      return bit;
+   }
 #elif defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86ffs(i);
 #else
