@@ -1136,9 +1136,9 @@ static void userclip( GLcontext *ctx,
 }
 
 
-static GLboolean do_ndc_cliptest( struct arb_vp_machine *m )
+static GLboolean
+do_ndc_cliptest(GLcontext *ctx, struct arb_vp_machine *m)
 {
-   GLcontext *ctx = m->ctx;
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = m->VB;
 
@@ -1353,7 +1353,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 
    /* Perform NDC and cliptest operations:
     */
-   return do_ndc_cliptest(m);
+   return do_ndc_cliptest(ctx, m);
 }
 
 
@@ -1411,7 +1411,6 @@ static GLboolean init_vertex_program( GLcontext *ctx,
    /* arb_vertex_machine struct should subsume the VB:
     */
    m->VB = VB;
-   m->ctx = ctx;
 
    m->File[0] = ALIGN_MALLOC(REG_MAX * sizeof(GLfloat) * 4, 16);
 
