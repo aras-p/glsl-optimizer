@@ -386,16 +386,16 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
 
    ctx->_CurrentProgram = GL_VERTEX_PROGRAM_ARB; /* or NV, doesn't matter */
 
-   /* If the program is position invariant, multiply the input
-    * position and the MVP matrix and stick it into the output pos slot
+   /* If the program is position invariant, multiply the input position
+    * by the MVP matrix and store in the vertex position result register.
     */
    if (ctx->VertexProgram.Current->IsPositionInvariant) {
-      TRANSFORM_POINT( ctx->VertexProgram.Outputs[0], 
+      TRANSFORM_POINT( ctx->VertexProgram.Outputs[VERT_RESULT_HPOS], 
                        ctx->_ModelProjectMatrix.m, 
-                       ctx->VertexProgram.Inputs[0]);
+                       ctx->VertexProgram.Inputs[VERT_ATTRIB_POS]);
 
       /* XXX: This could go elsewhere */
-      ctx->VertexProgram.Current->OutputsWritten |= 0x1;
+      ctx->VertexProgram.Current->OutputsWritten |= VERT_BIT_POS;
    }
    for (inst = program->Instructions; ; inst++) {
 
