@@ -379,6 +379,18 @@ default_depth_bits(void)
 }
 
 static GLint
+default_alpha_bits(void)
+{
+   int aBits;
+   const char *aEnv = _mesa_getenv("MESA_GLX_ALPHA_BITS");
+   if (aEnv)
+      aBits = _mesa_atoi(aEnv);
+   else
+      aBits = 0;
+   return aBits;
+}
+
+static GLint
 default_accum_bits(void)
 {
    return 16;
@@ -400,6 +412,7 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
    int vislevel;
    GLint zBits = default_depth_bits();
    GLint accBits = default_accum_bits();
+   GLboolean alphaFlag = default_alpha_bits() > 0;
 
    vislevel = level_of_visual( dpy, visinfo );
    if (vislevel) {
@@ -437,7 +450,7 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
          /* can be done?  They should use glXChooseVisual(). */
          return save_glx_visual( dpy, visinfo,
                                  GL_TRUE,   /* rgb */
-                                 GL_FALSE,  /* alpha */
+                                 alphaFlag, /* alpha */
                                  GL_TRUE,   /* double */
                                  GL_FALSE,  /* stereo */
                                  zBits,
@@ -1013,7 +1026,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
 	    parselist++;
             {
                GLint size = *parselist++;
-               alpha_flag = size>0 ? 1 : 0;
+               alpha_flag = size ? GL_TRUE : GL_FALSE;
             }
 	    break;
 	 case GLX_DEPTH_SIZE:
@@ -1221,6 +1234,10 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
          depth_size = 24;
       else if (depth_size > 0) {
          depth_size = default_depth_bits();
+      }
+
+      if (!alpha_flag) {
+         alpha_flag = default_alpha_bits() > 0;
       }
 
       /* we only support one size of stencil and accum buffers. */
