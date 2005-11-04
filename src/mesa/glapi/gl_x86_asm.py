@@ -52,18 +52,6 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 		print '#include "assyntax.h"'
 		print '#include "glapioffsets.h"'
 		print ''
-		print "/* If we build with gcc's -fvisibility=hidden flag, we'll need to change"
-		print "* the symbol visibility mode to 'default'."
-		print '*/'
-		print '#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303'
-		print '#  pragma GCC visibility push(default)'
-		print '#  define HIDDEN(x) .hidden x'
-		print '#else'
-		print '#  define HIDDEN(x)'
-		print '#endif'
-		print ''
-		print '#ifndef __WIN32__'
-		print ''	
 		print '#if defined(STDCALL_API)'
 		print '# if defined(USE_MGL_NAMESPACE)'
 		print '#  define GL_PREFIX(n,n2) GLNAME(CONCAT(mgl,n2))'
@@ -200,8 +188,6 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 		print '	.long	2,4,20    /* Minimum kernel version w/TLS */'
 		print '3:	.p2align 2        /* pad out section */'
 		print '#endif /* GLX_USE_TLS */'
-		print ''
-		print '#endif  /* __WIN32__ */'
 		return
 
 

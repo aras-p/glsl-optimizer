@@ -29,18 +29,6 @@
 #include "assyntax.h"
 #include "glapioffsets.h"
 
-/* If we build with gcc's -fvisibility=hidden flag, we'll need to change
-* the symbol visibility mode to 'default'.
-*/
-#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
-#  pragma GCC visibility push(default)
-#  define HIDDEN(x) .hidden x
-#else
-#  define HIDDEN(x)
-#endif
-
-#ifndef __WIN32__
-
 #if defined(STDCALL_API)
 # if defined(USE_MGL_NAMESPACE)
 #  define GL_PREFIX(n,n2) GLNAME(CONCAT(mgl,n2))
@@ -1165,5 +1153,3 @@ GLNAME(gl_dispatch_functions_end):
 	.long	2,4,20    /* Minimum kernel version w/TLS */
 3:	.p2align 2        /* pad out section */
 #endif /* GLX_USE_TLS */
-
-#endif  /* __WIN32__ */
