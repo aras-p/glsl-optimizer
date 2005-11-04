@@ -57,6 +57,9 @@
 .INTERMEDIATE: x86/gen_matypes.exe
 .SUFFIXES: .rc .res
 
+# Set this to the prefix of your build tools, i.e. mingw32-
+TOOLS_PREFIX = mingw32-
+
 TOP = ../..
 GLIDE ?= $(TOP)/glide3
 LIBDIR = $(TOP)/lib
@@ -70,7 +73,7 @@ endif
 
 LDLIBS = -lgdi32
 
-CC = mingw32-gcc
+CC = $(TOOLS_PREFIX)gcc
 CFLAGS += -DBUILD_GL32 -D_OPENGL32_
 CFLAGS += $(INCLUDE_DIRS)
 CFLAGS += -DUSE_EXTERNAL_DXTN_LIB=1
@@ -91,9 +94,11 @@ endif
 AR = ar
 ARFLAGS = crus
 
-ifeq ($(wildcard $(addsuffix /rm.exe,$(subst ;, ,$(PATH)))),)
 UNLINK = del $(subst /,\,$(1))
-else
+ifneq ($(wildcard $(addsuffix /rm.exe,$(subst ;, ,$(PATH)))),)
+UNLINK = $(RM) $(1)
+endif
+ifneq ($(wildcard $(addsuffix /rm,$(subst :, ,$(PATH)))),)
 UNLINK = $(RM) $(1)
 endif
 
@@ -142,10 +147,15 @@ RESOURCE = $(GL_RES:.rc=.res)
 .rc.res:
 	windres -o $@ -Irc -Ocoff $<
 
-all: $(LIBDIR)/$(GL_DLL) $(LIBDIR)/$(GL_IMP)
+all: $(LIBDIR) $(LIBDIR)/$(GL_DLL) $(LIBDIR)/$(GL_IMP)
+
+$(LIBDIR):
+	mkdir -p $(LIBDIR)
 
 $(LIBDIR)/$(GL_DLL) $(LIBDIR)/$(GL_IMP): $(OBJECTS) $(RESOURCE)
-	dllwrap -o $(LIBDIR)/$(GL_DLL) --output-lib $(LIBDIR)/$(GL_IMP) --target i386-mingw32 --def $(GL_DEF) $^ $(LDLIBS)
+	$(TOOLS_PREFIX)dllwrap -o $(LIBDIR)/$(GL_DLL) --output-lib $(LIBDIR)/$(GL_IMP) \
+	                       --target i386-mingw32 --def $(GL_DEF) -Wl,-enable-stdcall-fixup \
+	                       $^ $(LDLIBS)
 
 $(X86_OBJECTS): x86/matypes.h
 
@@ -163,7 +173,7 @@ x86/gen_matypes.exe: x86/gen_matypes.c
 # with USE_X86_ASM (useful for trace/debug)
 ifeq (1,1)
 x86/glapi_x86.o: x86/glapi_x86.S
-	$(CC) -o $@ $(CFLAGS) -U__WIN32__ -DSTDCALL_API -c $<
+	$(CC) -o $@ $(CFLAGS) -DSTDCALL_API -c $<
 else
 main/dispatch.o: main/dispatch.c
 	$(CC) -o $@ $(CFLAGS) -UUSE_X86_ASM -c $<

@@ -71,7 +71,7 @@
 
 
 /* Get typedefs for uintptr_t and friends */
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__MINGW32__)
 #include <BaseTsd.h>
 #if _MSC_VER == 1200
 typedef UINT_PTR uintptr_t;
