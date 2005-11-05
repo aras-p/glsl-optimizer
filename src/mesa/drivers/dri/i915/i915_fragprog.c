@@ -36,7 +36,7 @@
 #include "i915_context.h"
 #include "i915_program.h"
 
-#include "nvfragprog.h"
+#include "program_instruction.h"
 #include "program.h"
 #include "arbfragparse.h"
 
@@ -63,7 +63,7 @@ static const GLfloat cos_constants[4] = {  1.0,
  * constants, apply swizzling and negation as needed.
  */
 static GLuint src_vector( struct i915_fragment_program *p,
-			  const struct fp_src_register *source,
+			  const struct prog_src_register *source,
 			  const struct fragment_program *program )
 {
    GLuint src;
@@ -156,7 +156,7 @@ static GLuint src_vector( struct i915_fragment_program *p,
 
 
 static GLuint get_result_vector( struct i915_fragment_program *p,
-				 const struct fp_instruction *inst )
+				 const struct prog_instruction *inst )
 {
    switch (inst->DstReg.File) {
    case PROGRAM_OUTPUT:
@@ -178,7 +178,7 @@ static GLuint get_result_vector( struct i915_fragment_program *p,
    }
 }
    
-static GLuint get_result_flags( const struct fp_instruction *inst )
+static GLuint get_result_flags( const struct prog_instruction *inst )
 {
    GLuint flags = 0;
 
@@ -250,7 +250,7 @@ do {									\
 static void upload_program( struct i915_fragment_program *p )
 {
    const struct fragment_program *program = p->ctx->FragmentProgram._Current;
-   const struct fp_instruction *inst = program->Instructions;
+   const struct prog_instruction *inst = program->Instructions;
 
 /*    _mesa_debug_fp_inst(program->Base.NumInstructions, inst); */
 
@@ -258,7 +258,7 @@ static void upload_program( struct i915_fragment_program *p )
     * loaded, as the flagging of an error isn't sufficient to stop
     * this being uploaded to hardware.
     */
-   if (inst[0].Opcode == FP_OPCODE_END) {
+   if (inst[0].Opcode == OPCODE_END) {
       GLuint tmp = i915_get_utemp( p );
       i915_emit_arith( p,
 		      A0_MOV,
@@ -273,7 +273,7 @@ static void upload_program( struct i915_fragment_program *p )
       GLuint tmp = 0;
 
       switch (inst->Opcode) {
-      case FP_OPCODE_ABS: 
+      case OPCODE_ABS: 
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 	 i915_emit_arith( p, 
 			 A0_MAX,
@@ -282,11 +282,11 @@ static void upload_program( struct i915_fragment_program *p )
 			 src0, negate(src0, 1,1,1,1), 0);
 	 break;
 
-      case FP_OPCODE_ADD: 
+      case OPCODE_ADD: 
 	 EMIT_2ARG_ARITH( A0_ADD );
 	 break;
 
-      case FP_OPCODE_CMP: 
+      case OPCODE_CMP: 
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 	 src1 = src_vector( p, &inst->SrcReg[1], program);
 	 src2 = src_vector( p, &inst->SrcReg[2], program);
@@ -297,7 +297,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 src0, src2, src1);	/* NOTE: order of src2, src1 */
 	 break;
 
-      case FP_OPCODE_COS:
+      case OPCODE_COS:
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 	 tmp = i915_get_utemp( p );
 
@@ -356,15 +356,15 @@ static void upload_program( struct i915_fragment_program *p )
 
 	 break;
 
-      case FP_OPCODE_DP3: 
+      case OPCODE_DP3: 
 	 EMIT_2ARG_ARITH( A0_DP3 );
 	 break;
 
-      case FP_OPCODE_DP4: 
+      case OPCODE_DP4: 
 	 EMIT_2ARG_ARITH( A0_DP4 );
 	 break;
 
-      case FP_OPCODE_DPH:  
+      case OPCODE_DPH:  
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 	 src1 = src_vector( p, &inst->SrcReg[1], program);
 
@@ -375,7 +375,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 swizzle(src0, X,Y,Z,ONE), src1, 0);
 	 break;
 
-      case FP_OPCODE_DST: 
+      case OPCODE_DST: 
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 	 src1 = src_vector( p, &inst->SrcReg[1], program);
 
@@ -393,7 +393,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 0);
 	 break;
 
-      case FP_OPCODE_EX2: 
+      case OPCODE_EX2: 
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 
 	 i915_emit_arith( p, 
@@ -403,15 +403,15 @@ static void upload_program( struct i915_fragment_program *p )
 			 swizzle(src0,X,X,X,X), 0, 0);
 	 break;
 
-      case FP_OPCODE_FLR: 
+      case OPCODE_FLR: 
 	 EMIT_1ARG_ARITH( A0_FLR );
 	 break;
 
-      case FP_OPCODE_FRC: 
+      case OPCODE_FRC: 
 	 EMIT_1ARG_ARITH( A0_FRC );
 	 break;
 
-      case FP_OPCODE_KIL:
+      case OPCODE_KIL:
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 	 tmp = i915_get_utemp( p );
 
@@ -422,7 +422,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 T0_TEXKILL );
 	 break;
 
-      case FP_OPCODE_LG2: 
+      case OPCODE_LG2: 
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 
 	 i915_emit_arith( p, 
@@ -432,7 +432,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 swizzle(src0,X,X,X,X), 0, 0);
 	 break;
 
-      case FP_OPCODE_LIT: 
+      case OPCODE_LIT: 
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 	 tmp = i915_get_utemp( p );
 
@@ -465,7 +465,7 @@ static void upload_program( struct i915_fragment_program *p )
 		     
 	 break;
 
-      case FP_OPCODE_LRP: 
+      case OPCODE_LRP: 
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 	 src1 = src_vector( p, &inst->SrcReg[1], program);
 	 src2 = src_vector( p, &inst->SrcReg[2], program);
@@ -489,15 +489,15 @@ static void upload_program( struct i915_fragment_program *p )
 			 negate(src2, 1,1,1,1), src0, tmp );
 	 break;
 
-      case FP_OPCODE_MAD:
+      case OPCODE_MAD:
 	 EMIT_3ARG_ARITH( A0_MAD );
 	 break;
 
-      case FP_OPCODE_MAX:
+      case OPCODE_MAX:
 	 EMIT_2ARG_ARITH( A0_MAX );
 	 break;
 
-      case FP_OPCODE_MIN: 
+      case OPCODE_MIN: 
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 	 src1 = src_vector( p, &inst->SrcReg[1], program);
 	 tmp = i915_get_utemp( p );
@@ -516,15 +516,15 @@ static void upload_program( struct i915_fragment_program *p )
 			 negate(tmp, 1,1,1,1), 0, 0);
 	 break;
 
-      case FP_OPCODE_MOV: 
+      case OPCODE_MOV: 
 	 EMIT_1ARG_ARITH( A0_MOV );
 	 break;
 
-      case FP_OPCODE_MUL: 
+      case OPCODE_MUL: 
 	 EMIT_2ARG_ARITH( A0_MUL );
 	 break;
 
-      case FP_OPCODE_POW: 
+      case OPCODE_POW: 
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 	 src1 = src_vector( p, &inst->SrcReg[1], program);
 	 tmp = i915_get_utemp( p );
@@ -551,7 +551,7 @@ static void upload_program( struct i915_fragment_program *p )
 
 	 break;
 
-      case FP_OPCODE_RCP: 
+      case OPCODE_RCP: 
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 
 	 i915_emit_arith( p, 
@@ -561,7 +561,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 swizzle(src0,X,X,X,X), 0, 0);
 	 break;
 
-      case FP_OPCODE_RSQ: 
+      case OPCODE_RSQ: 
 
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 
@@ -572,7 +572,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 swizzle(src0,X,X,X,X), 0, 0);
 	 break;
 	 
-      case FP_OPCODE_SCS:
+      case OPCODE_SCS:
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 	 tmp = i915_get_utemp( p );
 
@@ -634,11 +634,11 @@ static void upload_program( struct i915_fragment_program *p )
 	 }
 	 break;
 
-      case FP_OPCODE_SGE: 
+      case OPCODE_SGE: 
 	 EMIT_2ARG_ARITH( A0_SGE );
 	 break;
 
-      case FP_OPCODE_SIN:
+      case OPCODE_SIN:
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 	 tmp = i915_get_utemp( p );
 
@@ -696,11 +696,11 @@ static void upload_program( struct i915_fragment_program *p )
 			 i915_emit_const4fv( p, sin_constants ), 0);
 	 break;
 
-      case FP_OPCODE_SLT: 
+      case OPCODE_SLT: 
 	 EMIT_2ARG_ARITH( A0_SLT );
 	 break;
 
-      case FP_OPCODE_SUB: 
+      case OPCODE_SUB: 
 	 src0 = src_vector( p, &inst->SrcReg[0], program);
 	 src1 = src_vector( p, &inst->SrcReg[1], program);
 
@@ -711,23 +711,23 @@ static void upload_program( struct i915_fragment_program *p )
 			 src0, negate(src1, 1,1,1,1), 0);
 	 break;
 
-      case FP_OPCODE_SWZ: 
+      case OPCODE_SWZ: 
 	 EMIT_1ARG_ARITH( A0_MOV ); /* extended swizzle handled natively */
 	 break;
 
-      case FP_OPCODE_TEX: 
+      case OPCODE_TEX: 
 	 EMIT_TEX( T0_TEXLD );
 	 break;
 
-      case FP_OPCODE_TXB:
+      case OPCODE_TXB:
 	 EMIT_TEX( T0_TEXLDB );
 	 break;
 
-      case FP_OPCODE_TXP:
+      case OPCODE_TXP:
 	 EMIT_TEX( T0_TEXLDP );
 	 break;
 
-      case FP_OPCODE_XPD:
+      case OPCODE_XPD:
 	 /* Cross product:
 	  *      result.x = src0.y * src1.z - src0.z * src1.y;
 	  *      result.y = src0.z * src1.x - src0.x * src1.z;
@@ -753,7 +753,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 negate(tmp,1,1,1,0));
 	 break;
 
-      case FP_OPCODE_END:
+      case OPCODE_END:
 	 return;
 	 
       default:

@@ -7,7 +7,7 @@
 
 #include "program.h"
 #include "r300_context.h"
-#include "nvfragprog.h"
+#include "program_instruction.h"
 
 /* representation of a register for emit_arith/swizzle */
 typedef struct _pfs_reg_t {

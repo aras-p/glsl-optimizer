@@ -36,12 +36,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "program.h"
 #include "r300_context.h"
 #include "r300_program.h"
-#include "nvvertprog.h"
+#include "program_instruction.h"
 
 #define SCALAR_FLAG (1<<31)
 #define FLAG_MASK (1<<31)
 #define OP_MASK	(0xf)  /* we are unlikely to have more than 15 */
-#define OPN(operator, ip, op) {#operator, VP_OPCODE_##operator, ip, op}
+#define OPN(operator, ip, op) {#operator, OPCODE_##operator, ip, op}
 
 static struct{
 	char *name;
@@ -186,7 +186,7 @@ void dump_program_params(GLcontext *ctx, struct vertex_program *vp)
 
 void debug_vp(GLcontext *ctx, struct vertex_program *vp)
 {
-	struct vp_instruction *vpi;
+	struct prog_instruction *vpi;
 	int i, operand_index;
 	int operator_index;
 	
@@ -195,7 +195,7 @@ void debug_vp(GLcontext *ctx, struct vertex_program *vp)
 	vpi=vp->Instructions;
 	
 	for(;; vpi++){
-		if(vpi->Opcode == VP_OPCODE_END)
+		if(vpi->Opcode == OPCODE_END)
 			break;
 		
 		for(i=0; i < sizeof(op_names) / sizeof(*op_names); i++){
@@ -315,7 +315,7 @@ static unsigned long t_dst_class(enum register_file file)
 	}
 }
 
-static unsigned long t_dst_index(struct r300_vertex_program *vp, struct vp_dst_register *dst)
+static unsigned long t_dst_index(struct r300_vertex_program *vp, struct prog_dst_register *dst)
 {
 	if(dst->File == PROGRAM_OUTPUT) {
 		if (vp->outputs[dst->Index] != -1)
@@ -385,7 +385,7 @@ static void vp_dump_inputs(struct r300_vertex_program *vp, char *caller)
 	
 }
 
-static unsigned long t_src_index(struct r300_vertex_program *vp, struct vp_src_register *src)
+static unsigned long t_src_index(struct r300_vertex_program *vp, struct prog_src_register *src)
 {
 	int i;
 	int max_reg=-1;
@@ -408,7 +408,7 @@ static unsigned long t_src_index(struct r300_vertex_program *vp, struct vp_src_r
 	}
 }
 
-static unsigned long t_src(struct r300_vertex_program *vp, struct vp_src_register *src)
+static unsigned long t_src(struct r300_vertex_program *vp, struct prog_src_register *src)
 {
 	
 	return MAKE_VSF_SOURCE(t_src_index(vp, src),
@@ -420,7 +420,7 @@ static unsigned long t_src(struct r300_vertex_program *vp, struct vp_src_registe
 				src->Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 }
 
-static unsigned long t_src_scalar(struct r300_vertex_program *vp, struct vp_src_register *src)
+static unsigned long t_src_scalar(struct r300_vertex_program *vp, struct prog_src_register *src)
 {
 			
 	return MAKE_VSF_SOURCE(t_src_index(vp, src),
@@ -436,21 +436,21 @@ static unsigned long t_opcode(enum vp_opcode opcode)
 {
 
 	switch(opcode){
-		case VP_OPCODE_DST: return R300_VPI_OUT_OP_DST;
-		case VP_OPCODE_EX2: return R300_VPI_OUT_OP_EX2;
-		case VP_OPCODE_EXP: return R300_VPI_OUT_OP_EXP;
-		case VP_OPCODE_FRC: return R300_VPI_OUT_OP_FRC;
-		case VP_OPCODE_LG2: return R300_VPI_OUT_OP_LG2;
-		case VP_OPCODE_LOG: return R300_VPI_OUT_OP_LOG;
-		case VP_OPCODE_MAX: return R300_VPI_OUT_OP_MAX;
-		case VP_OPCODE_MIN: return R300_VPI_OUT_OP_MIN;
-		case VP_OPCODE_MUL: return R300_VPI_OUT_OP_MUL;
-		case VP_OPCODE_POW: return R300_VPI_OUT_OP_POW;
-		case VP_OPCODE_RCP: return R300_VPI_OUT_OP_RCP;
-		case VP_OPCODE_RSQ: return R300_VPI_OUT_OP_RSQ;
-		case VP_OPCODE_SGE: return R300_VPI_OUT_OP_SGE;
-		case VP_OPCODE_SLT: return R300_VPI_OUT_OP_SLT;
-		case VP_OPCODE_DP4: return R300_VPI_OUT_OP_DOT;
+		case OPCODE_DST: return R300_VPI_OUT_OP_DST;
+		case OPCODE_EX2: return R300_VPI_OUT_OP_EX2;
+		case OPCODE_EXP: return R300_VPI_OUT_OP_EXP;
+		case OPCODE_FRC: return R300_VPI_OUT_OP_FRC;
+		case OPCODE_LG2: return R300_VPI_OUT_OP_LG2;
+		case OPCODE_LOG: return R300_VPI_OUT_OP_LOG;
+		case OPCODE_MAX: return R300_VPI_OUT_OP_MAX;
+		case OPCODE_MIN: return R300_VPI_OUT_OP_MIN;
+		case OPCODE_MUL: return R300_VPI_OUT_OP_MUL;
+		case OPCODE_POW: return R300_VPI_OUT_OP_POW;
+		case OPCODE_RCP: return R300_VPI_OUT_OP_RCP;
+		case OPCODE_RSQ: return R300_VPI_OUT_OP_RSQ;
+		case OPCODE_SGE: return R300_VPI_OUT_OP_SGE;
+		case OPCODE_SLT: return R300_VPI_OUT_OP_SLT;
+		case OPCODE_DP4: return R300_VPI_OUT_OP_DOT;
 		
 		default: 
 			fprintf(stderr, "%s: Should not be called with opcode %d!", __FUNCTION__, opcode);
@@ -484,7 +484,7 @@ static unsigned long op_operands(enum vp_opcode opcode)
 void translate_vertex_shader(struct r300_vertex_program *vp)
 {
 	struct vertex_program *mesa_vp=(void *)vp;
-	struct vp_instruction *vpi;
+	struct prog_instruction *vpi;
 	int i, cur_reg=0;
 	VERTEX_SHADER_INSTRUCTION *o_inst;
 	unsigned long operands;
@@ -495,7 +495,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 	   Smart enough to realize that it doesnt need it? */
 	int u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1;
 #ifdef SRCS_WRITABLE
-	struct vp_src_register src[3];
+	struct prog_src_register src[3];
 #else	
 #define src	vpi->SrcReg	
 #endif			
@@ -541,7 +541,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			vp->outputs[i] = cur_reg++;
 	
 	o_inst=vp->program.body.i;
-	for(vpi=mesa_vp->Instructions; vpi->Opcode != VP_OPCODE_END; vpi++, o_inst++){
+	for(vpi=mesa_vp->Instructions; vpi->Opcode != OPCODE_END; vpi++, o_inst++){
 		
 		operands=op_operands(vpi->Opcode);
 		are_srcs_scalar=operands & SCALAR_FLAG;
@@ -599,7 +599,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 		/* these ops need special handling.
 		   Ops that need temp vars should probably be given reg indexes starting at the end of tmp area. */
 		switch(vpi->Opcode){
-		case VP_OPCODE_MOV://ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO} 
+		case OPCODE_MOV://ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO} 
 #if 1
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, t_dst_index(vp, &vpi->DstReg),
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
@@ -630,7 +630,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 
 			goto next;
 			
-		case VP_OPCODE_ADD:
+		case OPCODE_ADD:
 			hw_op=(src[0].File == PROGRAM_TEMPORARY &&
 				src[1].File == PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 : R300_VPI_OUT_OP_MAD;
 			
@@ -644,7 +644,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			o_inst->src3=t_src(vp, &src[1]);
 			goto next;
 			
-		case VP_OPCODE_MAD:
+		case OPCODE_MAD:
 			hw_op=(src[0].File == PROGRAM_TEMPORARY &&
 				src[1].File == PROGRAM_TEMPORARY &&
 				src[2].File == PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 : R300_VPI_OUT_OP_MAD;
@@ -656,7 +656,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			o_inst->src3=t_src(vp, &src[2]);
 			goto next;
 			
-		case VP_OPCODE_MUL: /* HW mul can take third arg but appears to have some other limitations. */
+		case OPCODE_MUL: /* HW mul can take third arg but appears to have some other limitations. */
 			hw_op=(src[0].File == PROGRAM_TEMPORARY &&
 				src[1].File == PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 : R300_VPI_OUT_OP_MAD;
 			
@@ -671,7 +671,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 					t_src_class(src[1].File), VSF_FLAG_NONE);
 			goto next;
 			
-		case VP_OPCODE_DP3://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ZERO} PARAM 0{} {X Y Z ZERO} 
+		case OPCODE_DP3://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ZERO} PARAM 0{} {X Y Z ZERO} 
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_DOT, t_dst_index(vp, &vpi->DstReg),
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
@@ -694,7 +694,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			o_inst->src3=0;
 			goto next;
 
-		case VP_OPCODE_SUB://ADD RESULT 1.X Y Z W TMP 0{} {X Y Z W} PARAM 1{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
+		case OPCODE_SUB://ADD RESULT 1.X Y Z W TMP 0{} {X Y Z W} PARAM 1{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
 #if 1
 			hw_op=(src[0].File == PROGRAM_TEMPORARY &&
 				src[1].File == PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 : R300_VPI_OUT_OP_MAD;
@@ -729,7 +729,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 #endif
 			goto next;
 			
-		case VP_OPCODE_ABS://MAX RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
+		case OPCODE_ABS://MAX RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_MAX, t_dst_index(vp, &vpi->DstReg),
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
@@ -744,7 +744,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			o_inst->src3=0;
 			goto next;
 			
-		case VP_OPCODE_FLR:
+		case OPCODE_FLR:
 		/* FRC TMP 0.X Y Z W PARAM 0{} {X Y Z W} 
 		   ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} TMP 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W */
 
@@ -773,7 +773,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			u_temp_i--;
 			goto next;
 			
-		case VP_OPCODE_LG2:// LG2 RESULT 1.X Y Z W PARAM 0{} {X X X X}
+		case OPCODE_LG2:// LG2 RESULT 1.X Y Z W PARAM 0{} {X X X X}
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_LG2, t_dst_index(vp, &vpi->DstReg),
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
@@ -788,7 +788,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			o_inst->src3=0;
 			goto next;
 			
-		case VP_OPCODE_LIT://LIT TMP 1.Y Z TMP 1{} {X W Z Y} TMP 1{} {Y W Z X} TMP 1{} {Y X Z W} 
+		case OPCODE_LIT://LIT TMP 1.Y Z TMP 1{} {X W Z Y} TMP 1{} {Y W Z X} TMP 1{} {Y X Z W} 
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_LIT, t_dst_index(vp, &vpi->DstReg),
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			/* NOTE: Users swizzling might not work. */
@@ -815,7 +815,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 					src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			goto next;
 			
-		case VP_OPCODE_DPH://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ONE} PARAM 0{} {X Y Z W} 
+		case OPCODE_DPH://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ONE} PARAM 0{} {X Y Z W} 
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_DOT, t_dst_index(vp, &vpi->DstReg),
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
@@ -830,7 +830,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			o_inst->src3=0;
 			goto next;
 			
-		case VP_OPCODE_XPD:
+		case OPCODE_XPD:
 			/* mul r0, r1.yzxw, r2.zxyw
 			   mad r0, -r2.yzxw, r1.zxyw, r0
 			   NOTE: might need MAD_2
@@ -892,15 +892,15 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 		
 			goto next;
 
-		case VP_OPCODE_ARL:
-		case VP_OPCODE_SWZ:
-		case VP_OPCODE_RCC:
-		case VP_OPCODE_PRINT:
+		case OPCODE_ARL:
+		case OPCODE_SWZ:
+		case OPCODE_RCC:
+		case OPCODE_PRINT:
 			//vp->num_temporaries++;
 			fprintf(stderr, "Dont know how to handle op %d yet\n", vpi->Opcode);
 			exit(-1);
 		break;
-		case VP_OPCODE_END:
+		case OPCODE_END:
 			break;
 		default:
 			break;

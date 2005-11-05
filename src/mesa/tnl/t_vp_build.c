@@ -37,7 +37,7 @@
 #include "t_vp_build.h"
 
 #include "shader/program.h"
-#include "shader/nvvertprog.h"
+#include "shader/program_instruction.h"
 #include "shader/arbvertparse.h"
 
 struct state_key {
@@ -455,28 +455,32 @@ static void register_matrix_param6( struct tnl_program *p,
 }
 
 
-static void emit_arg( struct vp_src_register *src,
+static void emit_arg( struct prog_src_register *src,
 		      struct ureg reg )
 {
    src->File = reg.file;
    src->Index = reg.idx;
    src->Swizzle = reg.swz;
-   src->Negate = reg.negate;
+   src->NegateBase = reg.negate;
+   src->Abs = 0;
+   src->NegateAbs = 0;
    src->RelAddr = 0;
-   src->pad = 0;
 }
 
-static void emit_dst( struct vp_dst_register *dst,
+static void emit_dst( struct prog_dst_register *dst,
 		      struct ureg reg, GLuint mask )
 {
    dst->File = reg.file;
    dst->Index = reg.idx;
    /* allow zero as a shorthand for xyzw */
    dst->WriteMask = mask ? mask : WRITEMASK_XYZW; 
+   dst->CondMask = COND_TR;
+   dst->CondSwizzle = 0;
+   dst->CondSrc = 0;
    dst->pad = 0;
 }
 
-static void debug_insn( struct vp_instruction *inst, const char *fn,
+static void debug_insn( struct prog_instruction *inst, const char *fn,
 			GLuint line )
 {
    if (DISASSEM) {
@@ -504,7 +508,7 @@ static void emit_op3fn(struct tnl_program *p,
 		       GLuint line)
 {
    GLuint nr = p->program->Base.NumInstructions++;
-   struct vp_instruction *inst = &p->program->Instructions[nr];
+   struct prog_instruction *inst = &p->program->Instructions[nr];
       
    if (p->program->Base.NumInstructions > MAX_INSN) {
       _mesa_problem(0, "Out of instructions in emit_op3fn\n");
@@ -542,7 +546,7 @@ static struct ureg make_temp( struct tnl_program *p, struct ureg reg )
       return reg;
    else {
       struct ureg temp = get_temp(p);
-      emit_op1(p, VP_OPCODE_MOV, temp, 0, reg);
+      emit_op1(p, OPCODE_MOV, temp, 0, reg);
       return temp;
    }
 }
@@ -557,10 +561,10 @@ static void emit_matrix_transform_vec4( struct tnl_program *p,
 					const struct ureg *mat,
 					struct ureg src)
 {
-   emit_op2(p, VP_OPCODE_DP4, dest, WRITEMASK_X, src, mat[0]);
-   emit_op2(p, VP_OPCODE_DP4, dest, WRITEMASK_Y, src, mat[1]);
-   emit_op2(p, VP_OPCODE_DP4, dest, WRITEMASK_Z, src, mat[2]);
-   emit_op2(p, VP_OPCODE_DP4, dest, WRITEMASK_W, src, mat[3]);
+   emit_op2(p, OPCODE_DP4, dest, WRITEMASK_X, src, mat[0]);
+   emit_op2(p, OPCODE_DP4, dest, WRITEMASK_Y, src, mat[1]);
+   emit_op2(p, OPCODE_DP4, dest, WRITEMASK_Z, src, mat[2]);
+   emit_op2(p, OPCODE_DP4, dest, WRITEMASK_W, src, mat[3]);
 }
 
 /* This version is much easier to implement if writemasks are not
@@ -579,10 +583,10 @@ static void emit_transpose_matrix_transform_vec4( struct tnl_program *p,
    else
       tmp = dest;
 
-   emit_op2(p, VP_OPCODE_MUL, tmp, 0, swizzle1(src,X), mat[0]);
-   emit_op3(p, VP_OPCODE_MAD, tmp, 0, swizzle1(src,Y), mat[1], tmp);
-   emit_op3(p, VP_OPCODE_MAD, tmp, 0, swizzle1(src,Z), mat[2], tmp);
-   emit_op3(p, VP_OPCODE_MAD, dest, 0, swizzle1(src,W), mat[3], tmp);
+   emit_op2(p, OPCODE_MUL, tmp, 0, swizzle1(src,X), mat[0]);
+   emit_op3(p, OPCODE_MAD, tmp, 0, swizzle1(src,Y), mat[1], tmp);
+   emit_op3(p, OPCODE_MAD, tmp, 0, swizzle1(src,Z), mat[2], tmp);
+   emit_op3(p, OPCODE_MAD, dest, 0, swizzle1(src,W), mat[3], tmp);
 
    if (dest.file != PROGRAM_TEMPORARY)
       release_temp(p, tmp);
@@ -593,9 +597,9 @@ static void emit_matrix_transform_vec3( struct tnl_program *p,
 					const struct ureg *mat,
 					struct ureg src)
 {
-   emit_op2(p, VP_OPCODE_DP3, dest, WRITEMASK_X, src, mat[0]);
-   emit_op2(p, VP_OPCODE_DP3, dest, WRITEMASK_Y, src, mat[1]);
-   emit_op2(p, VP_OPCODE_DP3, dest, WRITEMASK_Z, src, mat[2]);
+   emit_op2(p, OPCODE_DP3, dest, WRITEMASK_X, src, mat[0]);
+   emit_op2(p, OPCODE_DP3, dest, WRITEMASK_Y, src, mat[1]);
+   emit_op2(p, OPCODE_DP3, dest, WRITEMASK_Z, src, mat[2]);
 }
 
 
@@ -604,9 +608,9 @@ static void emit_normalize_vec3( struct tnl_program *p,
 				 struct ureg src )
 {
    struct ureg tmp = get_temp(p);
-   emit_op2(p, VP_OPCODE_DP3, tmp, 0, src, src);
-   emit_op1(p, VP_OPCODE_RSQ, tmp, 0, tmp);
-   emit_op2(p, VP_OPCODE_MUL, dest, 0, src, tmp);
+   emit_op2(p, OPCODE_DP3, tmp, 0, src, src);
+   emit_op1(p, OPCODE_RSQ, tmp, 0, tmp);
+   emit_op2(p, OPCODE_MUL, dest, 0, src, tmp);
    release_temp(p, tmp);
 }
 
@@ -615,7 +619,7 @@ static void emit_passthrough( struct tnl_program *p,
 			      GLuint output )
 {
    struct ureg out = register_output(p, output);
-   emit_op1(p, VP_OPCODE_MOV, out, 0, register_input(p, input)); 
+   emit_op1(p, OPCODE_MOV, out, 0, register_input(p, input)); 
 }
 
 static struct ureg get_eye_position( struct tnl_program *p )
@@ -680,7 +684,7 @@ static struct ureg get_eye_normal( struct tnl_program *p )
 	 struct ureg rescale = register_param2(p, STATE_INTERNAL,
 					       STATE_NORMAL_SCALE);
 
-	 emit_op2( p, VP_OPCODE_MUL, p->eye_normal, 0, normal, 
+	 emit_op2( p, OPCODE_MUL, p->eye_normal, 0, normal, 
 		   swizzle1(rescale, X));
       }
    }
@@ -766,7 +770,7 @@ static struct ureg get_scenecolor( struct tnl_program *p, GLuint side )
       struct ureg material_ambient = get_material(p, side, STATE_AMBIENT);
       struct ureg material_diffuse = get_material(p, side, STATE_DIFFUSE);
       struct ureg tmp = make_temp(p, material_diffuse);
-      emit_op3(p, VP_OPCODE_MAD, tmp,  WRITEMASK_XYZ, lm_ambient, 
+      emit_op3(p, OPCODE_MAD, tmp,  WRITEMASK_XYZ, lm_ambient, 
 	       material_ambient, material_emission);
       return tmp;
    }
@@ -784,7 +788,7 @@ static struct ureg get_lightprod( struct tnl_program *p, GLuint light,
 	 register_param3(p, STATE_LIGHT, light, property);
       struct ureg material_value = get_material(p, side, property);
       struct ureg tmp = get_temp(p);
-      emit_op2(p, VP_OPCODE_MUL, tmp,  0, light_value, material_value);
+      emit_op2(p, OPCODE_MUL, tmp,  0, light_value, material_value);
       return tmp;
    }
    else
@@ -809,10 +813,10 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
       struct ureg slt = get_temp(p);
 	       
       emit_normalize_vec3( p, spot, spot_dir ); /* XXX: precompute! */
-      emit_op2(p, VP_OPCODE_DP3, spot, 0, negate(VPpli), spot);
-      emit_op2(p, VP_OPCODE_SLT, slt, 0, swizzle1(spot_dir,W), spot);
-      emit_op2(p, VP_OPCODE_POW, spot, 0, spot, swizzle1(attenuation, W));
-      emit_op2(p, VP_OPCODE_MUL, att, 0, slt, spot);
+      emit_op2(p, OPCODE_DP3, spot, 0, negate(VPpli), spot);
+      emit_op2(p, OPCODE_SLT, slt, 0, swizzle1(spot_dir,W), spot);
+      emit_op2(p, OPCODE_POW, spot, 0, spot, swizzle1(attenuation, W));
+      emit_op2(p, OPCODE_MUL, att, 0, slt, spot);
 
       release_temp(p, spot);
       release_temp(p, slt);
@@ -823,20 +827,20 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
    if (p->state->unit[i].light_attenuated) {
 
       /* 1/d,d,d,1/d */
-      emit_op1(p, VP_OPCODE_RCP, dist, WRITEMASK_YZ, dist); 
+      emit_op1(p, OPCODE_RCP, dist, WRITEMASK_YZ, dist); 
       /* 1,d,d*d,1/d */
-      emit_op2(p, VP_OPCODE_MUL, dist, WRITEMASK_XZ, dist, swizzle1(dist,Y)); 
+      emit_op2(p, OPCODE_MUL, dist, WRITEMASK_XZ, dist, swizzle1(dist,Y)); 
       /* 1/dist-atten */
-      emit_op2(p, VP_OPCODE_DP3, dist, 0, attenuation, dist); 
+      emit_op2(p, OPCODE_DP3, dist, 0, attenuation, dist); 
 
       if (!p->state->unit[i].light_spotcutoff_is_180) {
 	 /* dist-atten */
-	 emit_op1(p, VP_OPCODE_RCP, dist, 0, dist); 
+	 emit_op1(p, OPCODE_RCP, dist, 0, dist); 
 	 /* spot-atten * dist-atten */
-	 emit_op2(p, VP_OPCODE_MUL, att, 0, dist, att);	
+	 emit_op2(p, OPCODE_MUL, att, 0, dist, att);	
       } else {
 	 /* dist-atten */
-	 emit_op1(p, VP_OPCODE_RCP, att, 0, dist); 
+	 emit_op1(p, OPCODE_RCP, att, 0, dist); 
       }
    }
 
@@ -871,7 +875,7 @@ static void build_lighting( struct tnl_program *p )
 
    {
       struct ureg shininess = get_material(p, 0, STATE_SHININESS);
-      emit_op1(p, VP_OPCODE_MOV, dots,  WRITEMASK_W, swizzle1(shininess,X));
+      emit_op1(p, OPCODE_MOV, dots,  WRITEMASK_W, swizzle1(shininess,X));
       release_temp(p, shininess);
 
       _col0 = make_temp(p, get_scenecolor(p, 0));
@@ -884,7 +888,7 @@ static void build_lighting( struct tnl_program *p )
 
    if (twoside) {
       struct ureg shininess = get_material(p, 1, STATE_SHININESS);
-      emit_op1(p, VP_OPCODE_MOV, dots, WRITEMASK_Z, 
+      emit_op1(p, OPCODE_MOV, dots, WRITEMASK_Z, 
 	       negate(swizzle1(shininess,X)));
       release_temp(p, shininess);
 
@@ -900,22 +904,22 @@ static void build_lighting( struct tnl_program *p )
     */
       {
 	 struct ureg res0 = register_output( p, VERT_RESULT_COL0 );
-	 emit_op1(p, VP_OPCODE_MOV, res0, 0, _col0);
+	 emit_op1(p, OPCODE_MOV, res0, 0, _col0);
       }
 
       if (separate) {
 	 struct ureg res1 = register_output( p, VERT_RESULT_COL1 );
-	 emit_op1(p, VP_OPCODE_MOV, res1, 0, _col1);
+	 emit_op1(p, OPCODE_MOV, res1, 0, _col1);
       }
 
       if (twoside) {
 	 struct ureg res0 = register_output( p, VERT_RESULT_BFC0 );
-	 emit_op1(p, VP_OPCODE_MOV, res0, 0, _bfc0);
+	 emit_op1(p, OPCODE_MOV, res0, 0, _bfc0);
       }
       
       if (twoside && separate) {
 	 struct ureg res1 = register_output( p, VERT_RESULT_BFC1 );
-	 emit_op1(p, VP_OPCODE_MOV, res1, 0, _bfc1);
+	 emit_op1(p, OPCODE_MOV, res1, 0, _bfc1);
       }
       
    if (nr_lights == 0) {
@@ -950,14 +954,14 @@ static void build_lighting( struct tnl_program *p )
  
 	    /* Calulate VPpli vector
 	     */
-	    emit_op2(p, VP_OPCODE_SUB, VPpli, 0, Ppli, V); 
+	    emit_op2(p, OPCODE_SUB, VPpli, 0, Ppli, V); 
 
 	    /* Normalize VPpli.  The dist value also used in
 	     * attenuation below.
 	     */
-	    emit_op2(p, VP_OPCODE_DP3, dist, 0, VPpli, VPpli);
-	    emit_op1(p, VP_OPCODE_RSQ, dist, 0, dist);
-	    emit_op2(p, VP_OPCODE_MUL, VPpli, 0, VPpli, dist);
+	    emit_op2(p, OPCODE_DP3, dist, 0, VPpli, VPpli);
+	    emit_op1(p, OPCODE_RSQ, dist, 0, dist);
+	    emit_op2(p, OPCODE_MUL, VPpli, 0, VPpli, dist);
 
 
 	    /* Calculate  attenuation:
@@ -972,11 +976,11 @@ static void build_lighting( struct tnl_program *p )
 	     */
 	    if (p->state->light_local_viewer) {
 	       struct ureg eye_hat = get_eye_position_normalized(p);
-	       emit_op2(p, VP_OPCODE_SUB, half, 0, VPpli, eye_hat);
+	       emit_op2(p, OPCODE_SUB, half, 0, VPpli, eye_hat);
 	    }
 	    else {
 	       struct ureg z_dir = swizzle(get_identity_param(p),X,Y,W,Z); 
-	       emit_op2(p, VP_OPCODE_ADD, half, 0, VPpli, z_dir);
+	       emit_op2(p, OPCODE_ADD, half, 0, VPpli, z_dir);
 	    }
 
 	    emit_normalize_vec3(p, half, half);
@@ -986,8 +990,8 @@ static void build_lighting( struct tnl_program *p )
 
 	 /* Calculate dot products:
 	  */
-	 emit_op2(p, VP_OPCODE_DP3, dots, WRITEMASK_X, normal, VPpli);
-	 emit_op2(p, VP_OPCODE_DP3, dots, WRITEMASK_Y, normal, half);
+	 emit_op2(p, OPCODE_DP3, dots, WRITEMASK_X, normal, VPpli);
+	 emit_op2(p, OPCODE_DP3, dots, WRITEMASK_Y, normal, half);
 
 	
 	 /* Front face lighting:
@@ -999,10 +1003,10 @@ static void build_lighting( struct tnl_program *p )
 	    struct ureg res0, res1;
 	    GLuint mask0, mask1;
 
-	    emit_op1(p, VP_OPCODE_LIT, lit, 0, dots);
+	    emit_op1(p, OPCODE_LIT, lit, 0, dots);
    
 	    if (!is_undef(att)) 
-	       emit_op2(p, VP_OPCODE_MUL, lit, 0, lit, att);
+	       emit_op2(p, OPCODE_MUL, lit, 0, lit, att);
    
 	    
 	    if (count == nr_lights) {
@@ -1025,9 +1029,9 @@ static void build_lighting( struct tnl_program *p )
 	       res1 = _col1;
 	    }
 
-	    emit_op3(p, VP_OPCODE_MAD, _col0, 0, swizzle1(lit,X), ambient, _col0);
-	    emit_op3(p, VP_OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _col0);
-	    emit_op3(p, VP_OPCODE_MAD, res1, mask1, swizzle1(lit,Z), specular, _col1);
+	    emit_op3(p, OPCODE_MAD, _col0, 0, swizzle1(lit,X), ambient, _col0);
+	    emit_op3(p, OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _col0);
+	    emit_op3(p, OPCODE_MAD, res1, mask1, swizzle1(lit,Z), specular, _col1);
       
 	    release_temp(p, ambient);
 	    release_temp(p, diffuse);
@@ -1043,10 +1047,10 @@ static void build_lighting( struct tnl_program *p )
 	    struct ureg res0, res1;
 	    GLuint mask0, mask1;
 	       
-	    emit_op1(p, VP_OPCODE_LIT, lit, 0, negate(swizzle(dots,X,Y,W,Z)));
+	    emit_op1(p, OPCODE_LIT, lit, 0, negate(swizzle(dots,X,Y,W,Z)));
 
 	    if (!is_undef(att)) 
-	       emit_op2(p, VP_OPCODE_MUL, lit, 0, lit, att);
+	       emit_op2(p, OPCODE_MUL, lit, 0, lit, att);
 
 	    if (count == nr_lights) {
 	       if (separate) {
@@ -1068,9 +1072,9 @@ static void build_lighting( struct tnl_program *p )
 	       mask1 = 0;
 	    }
 
-	    emit_op3(p, VP_OPCODE_MAD, _bfc0, 0, swizzle1(lit,X), ambient, _bfc0);
-	    emit_op3(p, VP_OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _bfc0);
-	    emit_op3(p, VP_OPCODE_MAD, res1, mask1, swizzle1(lit,Z), specular, _bfc1);
+	    emit_op3(p, OPCODE_MAD, _bfc0, 0, swizzle1(lit,X), ambient, _bfc0);
+	    emit_op3(p, OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _bfc0);
+	    emit_op3(p, OPCODE_MAD, res1, mask1, swizzle1(lit,Z), specular, _bfc1);
 
 	    release_temp(p, ambient);
 	    release_temp(p, diffuse);
@@ -1106,22 +1110,22 @@ static void build_fog( struct tnl_program *p )
       switch (p->state->fog_mode) {
       case FOG_LINEAR: {
 	 struct ureg id = get_identity_param(p);
-	 emit_op2(p, VP_OPCODE_SUB, tmp, 0, swizzle1(params,Z), input); 
-	 emit_op2(p, VP_OPCODE_MUL, tmp, 0, tmp, swizzle1(params,W)); 
-	 emit_op2(p, VP_OPCODE_MAX, tmp, 0, tmp, swizzle1(id,X)); /* saturate */
-	 emit_op2(p, VP_OPCODE_MIN, fog, WRITEMASK_X, tmp, swizzle1(id,W));
+	 emit_op2(p, OPCODE_SUB, tmp, 0, swizzle1(params,Z), input); 
+	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, swizzle1(params,W)); 
+	 emit_op2(p, OPCODE_MAX, tmp, 0, tmp, swizzle1(id,X)); /* saturate */
+	 emit_op2(p, OPCODE_MIN, fog, WRITEMASK_X, tmp, swizzle1(id,W));
 	 break;
       }
       case FOG_EXP:
-	 emit_op1(p, VP_OPCODE_ABS, tmp, 0, input); 
-	 emit_op2(p, VP_OPCODE_MUL, tmp, 0, tmp, swizzle1(params,X)); 
-	 emit_op2(p, VP_OPCODE_POW, fog, WRITEMASK_X, 
+	 emit_op1(p, OPCODE_ABS, tmp, 0, input); 
+	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, swizzle1(params,X)); 
+	 emit_op2(p, OPCODE_POW, fog, WRITEMASK_X, 
 		  register_const1f(p, M_E), negate(tmp)); 
 	 break;
       case FOG_EXP2:
-	 emit_op2(p, VP_OPCODE_MUL, tmp, 0, input, swizzle1(params,X)); 
-	 emit_op2(p, VP_OPCODE_MUL, tmp, 0, tmp, tmp); 
-	 emit_op2(p, VP_OPCODE_POW, fog, WRITEMASK_X, 
+	 emit_op2(p, OPCODE_MUL, tmp, 0, input, swizzle1(params,X)); 
+	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, tmp); 
+	 emit_op2(p, OPCODE_POW, fog, WRITEMASK_X, 
 		  register_const1f(p, M_E), negate(tmp)); 
 	 break;
       }
@@ -1133,7 +1137,7 @@ static void build_fog( struct tnl_program *p )
        *
        * KW:  Is it really necessary to do anything in this case?
        */
-      emit_op1(p, VP_OPCODE_MOV, fog, WRITEMASK_X, input);
+      emit_op1(p, OPCODE_MOV, fog, WRITEMASK_X, input);
    }
 }
  
@@ -1146,11 +1150,11 @@ static void build_reflect_texgen( struct tnl_program *p,
    struct ureg tmp = get_temp(p);
 
    /* n.u */
-   emit_op2(p, VP_OPCODE_DP3, tmp, 0, normal, eye_hat); 
+   emit_op2(p, OPCODE_DP3, tmp, 0, normal, eye_hat); 
    /* 2n.u */
-   emit_op2(p, VP_OPCODE_ADD, tmp, 0, tmp, tmp); 
+   emit_op2(p, OPCODE_ADD, tmp, 0, tmp, tmp); 
    /* (-2n.u)n + u */
-   emit_op3(p, VP_OPCODE_MAD, dest, writemask, negate(tmp), normal, eye_hat);
+   emit_op3(p, OPCODE_MAD, dest, writemask, negate(tmp), normal, eye_hat);
 }
 
 static void build_sphere_texgen( struct tnl_program *p,
@@ -1174,21 +1178,21 @@ static void build_sphere_texgen( struct tnl_program *p,
     */
 
    /* n.u */
-   emit_op2(p, VP_OPCODE_DP3, tmp, 0, normal, eye_hat); 
+   emit_op2(p, OPCODE_DP3, tmp, 0, normal, eye_hat); 
    /* 2n.u */
-   emit_op2(p, VP_OPCODE_ADD, tmp, 0, tmp, tmp); 
+   emit_op2(p, OPCODE_ADD, tmp, 0, tmp, tmp); 
    /* (-2n.u)n + u */
-   emit_op3(p, VP_OPCODE_MAD, r, 0, negate(tmp), normal, eye_hat); 
+   emit_op3(p, OPCODE_MAD, r, 0, negate(tmp), normal, eye_hat); 
    /* r + 0,0,1 */
-   emit_op2(p, VP_OPCODE_ADD, tmp, 0, r, swizzle(id,X,Y,W,Z)); 
+   emit_op2(p, OPCODE_ADD, tmp, 0, r, swizzle(id,X,Y,W,Z)); 
    /* rx^2 + ry^2 + (rz+1)^2 */
-   emit_op2(p, VP_OPCODE_DP3, tmp, 0, tmp, tmp); 
+   emit_op2(p, OPCODE_DP3, tmp, 0, tmp, tmp); 
    /* 2/m */
-   emit_op1(p, VP_OPCODE_RSQ, tmp, 0, tmp); 
+   emit_op1(p, OPCODE_RSQ, tmp, 0, tmp); 
    /* 1/m */
-   emit_op2(p, VP_OPCODE_MUL, inv_m, 0, tmp, half); 
+   emit_op2(p, OPCODE_MUL, inv_m, 0, tmp, half); 
    /* r/m + 1/2 */
-   emit_op3(p, VP_OPCODE_MAD, dest, writemask, r, inv_m, half); 
+   emit_op3(p, OPCODE_MAD, dest, writemask, r, inv_m, half); 
 	       
    release_temp(p, tmp);
    release_temp(p, r);
@@ -1237,7 +1241,7 @@ static void build_texture_transform( struct tnl_program *p )
 		     register_param3(p, STATE_TEXGEN, i,
 				     STATE_TEXGEN_OBJECT_S + j);
 
-		  emit_op2(p, VP_OPCODE_DP4, out_texgen, WRITEMASK_X << j, 
+		  emit_op2(p, OPCODE_DP4, out_texgen, WRITEMASK_X << j, 
 			   obj, plane );
 		  break;
 	       }
@@ -1247,7 +1251,7 @@ static void build_texture_transform( struct tnl_program *p )
 		     register_param3(p, STATE_TEXGEN, i, 
 				     STATE_TEXGEN_EYE_S + j);
 
-		  emit_op2(p, VP_OPCODE_DP4, out_texgen, WRITEMASK_X << j, 
+		  emit_op2(p, OPCODE_DP4, out_texgen, WRITEMASK_X << j, 
 			   eye, plane );
 		  break;
 	       }
@@ -1277,12 +1281,12 @@ static void build_texture_transform( struct tnl_program *p )
 
 	    if (normal_mask) {
 	       struct ureg normal = get_eye_normal(p);
-	       emit_op1(p, VP_OPCODE_MOV, out_texgen, normal_mask, normal );
+	       emit_op1(p, OPCODE_MOV, out_texgen, normal_mask, normal );
 	    }
 
 	    if (copy_mask) {
 	       struct ureg in = register_input(p, VERT_ATTRIB_TEX0+i);
-	       emit_op1(p, VP_OPCODE_MOV, out_texgen, copy_mask, in );
+	       emit_op1(p, OPCODE_MOV, out_texgen, copy_mask, in );
 	    }
 	 }
 
@@ -1323,19 +1327,19 @@ static void build_pointsize( struct tnl_program *p )
    struct ureg ut = get_temp(p);
 
    /* 1, -Z, Z * Z, 1 */      
-   emit_op1(p, VP_OPCODE_MOV, ut, 0, swizzle1(get_identity_param(p), W));
-   emit_op2(p, VP_OPCODE_MUL, ut, WRITEMASK_YZ, ut, negate(swizzle1(eye, Z)));
-   emit_op2(p, VP_OPCODE_MUL, ut, WRITEMASK_Z, ut, negate(swizzle1(eye, Z)));
+   emit_op1(p, OPCODE_MOV, ut, 0, swizzle1(get_identity_param(p), W));
+   emit_op2(p, OPCODE_MUL, ut, WRITEMASK_YZ, ut, negate(swizzle1(eye, Z)));
+   emit_op2(p, OPCODE_MUL, ut, WRITEMASK_Z, ut, negate(swizzle1(eye, Z)));
 
 
    /* p1 +  p2 * dist + p3 * dist * dist, 0 */
-   emit_op2(p, VP_OPCODE_DP3, ut, 0, ut, state_attenuation);
+   emit_op2(p, OPCODE_DP3, ut, 0, ut, state_attenuation);
 
    /* 1 / factor */
-   emit_op1(p, VP_OPCODE_RCP, ut, 0, ut ); 
+   emit_op1(p, OPCODE_RCP, ut, 0, ut ); 
 
    /* out = pointSize / factor */
-   emit_op2(p, VP_OPCODE_MUL, out, WRITEMASK_X, ut, state_size); 
+   emit_op2(p, OPCODE_MUL, out, WRITEMASK_X, ut, state_size); 
 
    release_temp(p, ut);
 }
@@ -1371,7 +1375,7 @@ static void build_tnl_program( struct tnl_program *p )
 
    /* Finish up:
     */
-   emit_op1(p, VP_OPCODE_END, undef, 0, undef);
+   emit_op1(p, OPCODE_END, undef, 0, undef);
 
    /* Disassemble:
     */
@@ -1402,7 +1406,7 @@ create_new_program( const struct state_key *key,
    else
       p.temp_reserved = ~((1<<max_temps)-1);
 
-   p.program->Instructions = MALLOC(sizeof(struct vp_instruction) * MAX_INSN);
+   p.program->Instructions = MALLOC(sizeof(struct prog_instruction) * MAX_INSN);
    p.program->Base.String = 0;
    p.program->Base.NumInstructions =
    p.program->Base.NumTemporaries =

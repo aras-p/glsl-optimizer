@@ -28,8 +28,7 @@
 
 #include "context.h"
 #include "mtypes.h"
-#include "nvvertprog.h"
-#include "nvfragprog.h"
+#include "program_instruction.h"
 
 
 #define MAX_INSTRUCTIONS 256
@@ -53,7 +52,7 @@ struct arb_program
    GLuint MinorVersion;
 
    /* ARB_vertex_program specifics */ 
-   struct vp_instruction VPInstructions[MAX_INSTRUCTIONS];
+   struct prog_instruction VPInstructions[MAX_INSTRUCTIONS];
 
    /* Options currently recognized by the parser */
    /* ARB_fp */
@@ -64,7 +63,7 @@ struct arb_program
    GLboolean HintPositionInvariant;
 
    /* ARB_fragment_program specifics */
-   struct fp_instruction FPInstructions[MAX_INSTRUCTIONS];
+   struct prog_instruction FPInstructions[MAX_INSTRUCTIONS];
    GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS]; 
    GLuint NumAluInstructions; 
    GLuint NumTexInstructions;

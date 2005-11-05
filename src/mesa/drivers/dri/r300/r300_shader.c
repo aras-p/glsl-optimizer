@@ -4,7 +4,7 @@
 
 #include "program.h"
 #include "r300_context.h"
-#include "nvvertprog.h"
+#include "program_instruction.h"
 #if USE_ARB_F_P == 1
 #include "r300_fragprog.h"
 #endif

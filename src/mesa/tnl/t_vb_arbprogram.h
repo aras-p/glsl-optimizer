@@ -36,9 +36,9 @@
 
 /* New, internal instructions:
  */
-#define RSW        (VP_MAX_OPCODE)
-#define MSK        (VP_MAX_OPCODE+1)
-#define REL        (VP_MAX_OPCODE+2)
+#define RSW        (MAX_OPCODE)
+#define MSK        (MAX_OPCODE+1)
+#define REL        (MAX_OPCODE+2)
 
 /**
  * Register files for vertex programs

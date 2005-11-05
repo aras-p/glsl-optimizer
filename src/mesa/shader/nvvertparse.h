@@ -36,7 +36,7 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum target,
                               struct vertex_program *program);
 
 extern void
-_mesa_print_nv_vertex_instruction(const struct vp_instruction *inst);
+_mesa_print_nv_vertex_instruction(const struct prog_instruction *inst);
 
 extern void
 _mesa_print_nv_vertex_program(const struct vertex_program *program);

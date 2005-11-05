@@ -614,15 +614,15 @@ static void print_NOP( union instruction op, const struct opcode_info *info )
 {
 }
 
-#define NOP 0
-#define ALU 1
-#define SWZ 2
-
-static const struct opcode_info opcode_info[] = 
+static const struct opcode_info opcode_info[MAX_OPCODE + 3] = 
 {
    { 1, "ABS", print_ALU },
    { 2, "ADD", print_ALU },
    { 1, "ARL", print_NOP },
+   {-1, "CMP", NULL },
+   {-1, "COS", NULL },
+   {-1, "DDX", NULL },
+   {-1, "DDY", NULL },
    { 2, "DP3", print_ALU },
    { 2, "DP4", print_ALU },
    { 2, "DPH", print_ALU },
@@ -632,23 +632,49 @@ static const struct opcode_info opcode_info[] =
    { 1, "EXP", print_ALU },
    { 1, "FLR", print_ALU },
    { 1, "FRC", print_ALU },
+   {-1, "KIL", NULL },
+   {-1, "KIL_NV", NULL },
    { 1, "LG2", print_ALU },
    { 1, "LIT", print_ALU },
    { 1, "LOG", print_ALU },
+   {-1, "LRP", NULL },
    { 3, "MAD", print_NOP },
    { 2, "MAX", print_ALU },
    { 2, "MIN", print_ALU },
    { 1, "MOV", print_ALU },
    { 2, "MUL", print_ALU },
+   {-1, "PK2H", NULL },
+   {-1, "PK2US", NULL },
+   {-1, "PK4B", NULL },
+   {-1, "PK4UB", NULL },
    { 2, "POW", print_ALU },
    { 1, "PRT", print_ALU }, /* PRINT */
    { 1, "RCC", print_NOP },
    { 1, "RCP", print_ALU },
+   {-1, "RFL", NULL },
    { 1, "RSQ", print_ALU },
+   {-1, "SCS", NULL },
+   {-1, "SEQ", NULL },
+   {-1, "SFL", NULL },
    { 2, "SGE", print_ALU },
+   {-1, "SGT", NULL },
+   {-1, "SIN", NULL },
+   {-1, "SLE", NULL },
    { 2, "SLT", print_ALU },
+   {-1, "SNE", NULL },
+   {-1, "STR", NULL },
    { 2, "SUB", print_ALU },
    { 1, "SWZ", print_NOP },
+   {-1, "TEX", NULL },
+   {-1, "TXB", NULL },
+   {-1, "TXD", NULL },
+   {-1, "TXP", NULL },
+   {-1, "TXP_NV", NULL },
+   {-1, "UP2H", NULL },
+   {-1, "UP2US", NULL },
+   {-1, "UP4B", NULL },
+   {-1, "UP4UB", NULL },
+   {-1, "X2d", NULL },
    { 2, "XPD", print_ALU },
    { 1, "RSW", print_RSW },
    { 2, "MSK", print_MSK },
@@ -662,11 +688,15 @@ void _tnl_disassem_vba_insn( union instruction op )
 }
 
 
-static void (* const opcode_func[])(struct arb_vp_machine *, union instruction) = 
+static void (* const opcode_func[MAX_OPCODE+3])(struct arb_vp_machine *, union instruction) = 
 {
    do_ABS,
    do_ADD,
-   do_NOP,
+   do_NOP,/*ARL*/
+   do_NOP,/*CMP*/
+   do_NOP,/*COS*/
+   do_NOP,/*DDX*/
+   do_NOP,/*DDY*/
    do_DP3,
    do_DP4,
    do_DPH,
@@ -676,23 +706,49 @@ static void (* const opcode_func[])(struct arb_vp_machine *, union instruction) 
    do_EXP,
    do_FLR,
    do_FRC,
+   do_NOP,/*KIL*/
+   do_NOP,/*KIL_NV*/
    do_LG2,
    do_LIT,
    do_LOG,
-   do_NOP,
+   do_NOP,/*LRP*/
+   do_NOP,/*MAD*/
    do_MAX,
    do_MIN,
    do_MOV,
    do_MUL,
+   do_NOP,/*PK2H*/
+   do_NOP,/*PK2US*/
+   do_NOP,/*PK4B*/
+   do_NOP,/*PK4UB*/
    do_POW,
    do_PRT,
-   do_NOP,
-   do_RCP,
+   do_NOP,/*RCC*/
+   do_RCP,/*RCP*/
+   do_NOP,/*RFL*/
    do_RSQ,
+   do_NOP,/*SCS*/
+   do_NOP,/*SEQ*/
+   do_NOP,/*SFL*/
    do_SGE,
+   do_NOP,/*SGT*/
+   do_NOP,/*SIN*/
+   do_NOP,/*SLE*/
    do_SLT,
+   do_NOP,/*SNE*/
+   do_NOP,/*STR*/
    do_SUB,
-   do_RSW,
+   do_RSW,/*SWZ*/
+   do_NOP,/*TEX*/
+   do_NOP,/*TXB*/
+   do_NOP,/*TXD*/
+   do_NOP,/*TXP*/
+   do_NOP,/*TXP_NV*/
+   do_NOP,/*UP2H*/
+   do_NOP,/*UP2US*/
+   do_NOP,/*UP4B*/
+   do_NOP,/*UP4UB*/
+   do_NOP,/*X2D*/
    do_XPD,
    do_RSW,
    do_MSK,
@@ -774,13 +830,14 @@ static struct reg cvp_load_reg( struct compilation *cp,
    case PROGRAM_WRITE_ONLY:
    case PROGRAM_ADDRESS:
    default:
+      _mesa_problem(NULL, "Invalid register file %d in cvp_load_reg()");
       assert(0);
       return tmpreg;		/* can't happen */
    }
 }
 
 static struct reg cvp_emit_arg( struct compilation *cp,
-				const struct vp_src_register *src,
+				const struct prog_src_register *src,
 				GLuint arg )
 {
    struct reg reg = cvp_load_reg( cp, src->File, src->Index, src->RelAddr, arg );
@@ -789,7 +846,7 @@ static struct reg cvp_emit_arg( struct compilation *cp,
    /* Emit any necessary swizzling.  
     */
    rsw.dword = 0;
-   rsw.rsw.neg = src->Negate ? WRITEMASK_XYZW : 0;
+   rsw.rsw.neg = src->NegateBase ? WRITEMASK_XYZW : 0;
 
    /* we're expecting 2-bit swizzles below... */
    ASSERT(GET_SWZ(src->Swizzle, 0) < 4);
@@ -821,7 +878,7 @@ static struct reg cvp_emit_arg( struct compilation *cp,
 }
 
 static GLuint cvp_choose_result( struct compilation *cp,
-				 const struct vp_dst_register *dst,
+				 const struct prog_dst_register *dst,
 				 union instruction *fixup )
 {
    GLuint mask = dst->WriteMask;
@@ -884,7 +941,7 @@ static struct reg cvp_emit_rsw( struct compilation *cp,
       /* Oops.  Degenerate case:
        */
       union instruction *op = cvp_next_instruction(cp);
-      op->alu.opcode = VP_OPCODE_MOV;
+      op->alu.opcode = OPCODE_MOV;
       op->alu.dst = dst;
       op->alu.file0 = src.file;
       op->alu.idx0 = src.idx;
@@ -900,7 +957,7 @@ static struct reg cvp_emit_rsw( struct compilation *cp,
 
 
 static void cvp_emit_inst( struct compilation *cp,
-			   const struct vp_instruction *inst )
+			   const struct prog_instruction *inst )
 {
    const struct opcode_info *info = &opcode_info[inst->Opcode];
    union instruction *op;
@@ -915,13 +972,13 @@ static void cvp_emit_inst( struct compilation *cp,
    switch (inst->Opcode) {
       /* Split into mul and add:
        */
-   case VP_OPCODE_MAD:
+   case OPCODE_MAD:
       result = cvp_choose_result( cp, &inst->DstReg, &fixup );
       for (i = 0; i < 3; i++) 
 	 reg[i] = cvp_emit_arg( cp, &inst->SrcReg[i], REG_ARG0+i );
 
       op = cvp_next_instruction(cp);
-      op->alu.opcode = VP_OPCODE_MUL;
+      op->alu.opcode = OPCODE_MUL;
       op->alu.file0 = reg[0].file;
       op->alu.idx0 = reg[0].idx;
       op->alu.file1 = reg[1].file;
@@ -929,7 +986,7 @@ static void cvp_emit_inst( struct compilation *cp,
       op->alu.dst = REG_ARG0;
 
       op = cvp_next_instruction(cp);
-      op->alu.opcode = VP_OPCODE_ADD;
+      op->alu.opcode = OPCODE_ADD;
       op->alu.file0 = FILE_REG;
       op->alu.idx0 = REG_ARG0;
       op->alu.file1 = reg[2].file;
@@ -942,17 +999,17 @@ static void cvp_emit_inst( struct compilation *cp,
       }
       break;
 
-   case VP_OPCODE_ARL:
+   case OPCODE_ARL:
       reg[0] = cvp_emit_arg( cp, &inst->SrcReg[0], REG_ARG0 );
 
       op = cvp_next_instruction(cp);
-      op->alu.opcode = VP_OPCODE_FLR;
+      op->alu.opcode = OPCODE_FLR;
       op->alu.dst = REG_ADDR;
       op->alu.file0 = reg[0].file;
       op->alu.idx0 = reg[0].idx;
       break;
 
-   case VP_OPCODE_SWZ: {
+   case OPCODE_SWZ: {
       GLuint swz0 = 0, swz1 = 0;
       GLuint neg0 = 0, neg1 = 0;
       GLuint mask = 0;
@@ -964,7 +1021,7 @@ static void cvp_emit_inst( struct compilation *cp,
       for (i = 0; i < 4; i++) {
 	 GLuint swzelt = GET_SWZ(inst->SrcReg[0].Swizzle, i);
 	 if (swzelt >= SWIZZLE_ZERO) {
-	    neg0 |= inst->SrcReg[0].Negate & (1<<i);
+	    neg0 |= inst->SrcReg[0].NegateBase & (1<<i);
 	    if (swzelt == SWIZZLE_ONE)
 	       swz0 |= SWIZZLE_W << (i*2);
 	    else if (i < SWIZZLE_W)
@@ -972,7 +1029,7 @@ static void cvp_emit_inst( struct compilation *cp,
 	 }
 	 else {
 	    mask |= 1<<i;
-	    neg1 |= inst->SrcReg[0].Negate & (1<<i);
+	    neg1 |= inst->SrcReg[0].NegateBase & (1<<i);
 	    swz1 |= swzelt << (i*2);
 	 }
       }
@@ -1008,7 +1065,7 @@ static void cvp_emit_inst( struct compilation *cp,
       break;
    }
 
-   case VP_OPCODE_END:
+   case OPCODE_END:
       break;
 
    default:

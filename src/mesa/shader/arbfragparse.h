@@ -33,7 +33,7 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
                                  struct fragment_program *program);
 
 extern void
-_mesa_debug_fp_inst(GLint num, struct fp_instruction *fp);
+_mesa_debug_fp_inst(GLint num, struct prog_instruction *fp);
 
 
 #endif

@@ -1744,8 +1744,7 @@ enum register_file
 
 
 /** Vertex and fragment instructions */
-struct vp_instruction;
-struct fp_instruction;
+struct prog_instruction;
 struct atifs_instruction;
 struct atifs_setupinst;
 struct program_parameter_list;
@@ -1781,7 +1780,7 @@ struct program
 struct vertex_program
 {
    struct program Base;   /* base class */
-   struct vp_instruction *Instructions;  /* Compiled instructions */
+   struct prog_instruction *Instructions;  /* Compiled instructions */
    GLboolean IsNVProgram; /* GL_NV_vertex_program ? */
    GLboolean IsPositionInvariant;  /* GL_NV_vertex_program1_1 */
    GLbitfield InputsRead;     /* Bitmask of which input regs are read */
@@ -1795,7 +1794,7 @@ struct vertex_program
 struct fragment_program
 {
    struct program Base;   /**< base class */
-   struct fp_instruction *Instructions;  /**< Compiled instructions */
+   struct prog_instruction *Instructions;  /**< Compiled instructions */
    GLbitfield InputsRead;     /**< Bitmask of which input regs are read */
    GLbitfield OutputsWritten; /**< Bitmask of which output regs are written to */
    GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /**< TEXTURE_x_INDEX bitmask */

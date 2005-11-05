@@ -37,8 +37,7 @@
 #include "imports.h"
 #include "macros.h"
 #include "program.h"
-#include "nvvertprog.h"
-#include "nvfragprog.h"
+#include "program_instruction.h"
 #include "arbprogparse.h"
 #include "grammar_mesa.h"
 #include "program.h"
@@ -2573,7 +2572,7 @@ static GLuint
 parse_fp_vector_src_reg(GLcontext * ctx, GLubyte ** inst,
                         struct var_cache **vc_head,
                         struct arb_program *program,
-                        struct fp_src_register *reg)
+                        struct prog_src_register *reg)
 {
    enum register_file file;
    GLint index;
@@ -2604,7 +2603,7 @@ parse_fp_vector_src_reg(GLcontext * ctx, GLubyte ** inst,
 static GLuint 
 parse_fp_dst_reg(GLcontext * ctx, GLubyte ** inst,
 		 struct var_cache **vc_head, struct arb_program *Program,
-		 struct fp_dst_register *reg )
+		 struct prog_dst_register *reg )
 {
    GLint mask;
    GLuint idx;
@@ -2629,7 +2628,7 @@ static GLuint
 parse_fp_scalar_src_reg (GLcontext * ctx, GLubyte ** inst,
 			 struct var_cache **vc_head,
                          struct arb_program *Program,
-			 struct fp_src_register *reg )
+			 struct prog_src_register *reg )
 {
    enum register_file File;
    GLint Index;
@@ -2665,14 +2664,14 @@ parse_fp_scalar_src_reg (GLcontext * ctx, GLubyte ** inst,
 static GLuint
 parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
                       struct var_cache **vc_head, struct arb_program *Program,
-                      struct fp_instruction *fp)
+                      struct prog_instruction *fp)
 {
    GLint a;
    GLuint texcoord;
    GLubyte instClass, type, code;
    GLboolean rel;
 
-   _mesa_init_fp_instruction(fp);
+   _mesa_init_instruction(fp);
 
    /* Record the position in the program string for debugging */
    fp->StringPos = Program->Position;
@@ -2704,31 +2703,31 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
             case OP_ABS_SAT:
                fp->Saturate = 1;
             case OP_ABS:
-               fp->Opcode = FP_OPCODE_ABS;
+               fp->Opcode = OPCODE_ABS;
                break;
 
             case OP_FLR_SAT:
                fp->Saturate = 1;
             case OP_FLR:
-               fp->Opcode = FP_OPCODE_FLR;
+               fp->Opcode = OPCODE_FLR;
                break;
 
             case OP_FRC_SAT:
                fp->Saturate = 1;
             case OP_FRC:
-               fp->Opcode = FP_OPCODE_FRC;
+               fp->Opcode = OPCODE_FRC;
                break;
 
             case OP_LIT_SAT:
                fp->Saturate = 1;
             case OP_LIT:
-               fp->Opcode = FP_OPCODE_LIT;
+               fp->Opcode = OPCODE_LIT;
                break;
 
             case OP_MOV_SAT:
                fp->Saturate = 1;
             case OP_MOV:
-               fp->Opcode = FP_OPCODE_MOV;
+               fp->Opcode = OPCODE_MOV;
                break;
          }
 
@@ -2744,44 +2743,44 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
             case OP_COS_SAT:
                fp->Saturate = 1;
             case OP_COS:
-               fp->Opcode = FP_OPCODE_COS;
+               fp->Opcode = OPCODE_COS;
                break;
 
             case OP_EX2_SAT:
                fp->Saturate = 1;
             case OP_EX2:
-               fp->Opcode = FP_OPCODE_EX2;
+               fp->Opcode = OPCODE_EX2;
                break;
 
             case OP_LG2_SAT:
                fp->Saturate = 1;
             case OP_LG2:
-               fp->Opcode = FP_OPCODE_LG2;
+               fp->Opcode = OPCODE_LG2;
                break;
 
             case OP_RCP_SAT:
                fp->Saturate = 1;
             case OP_RCP:
-               fp->Opcode = FP_OPCODE_RCP;
+               fp->Opcode = OPCODE_RCP;
                break;
 
             case OP_RSQ_SAT:
                fp->Saturate = 1;
             case OP_RSQ:
-               fp->Opcode = FP_OPCODE_RSQ;
+               fp->Opcode = OPCODE_RSQ;
                break;
 
             case OP_SIN_SAT:
                fp->Saturate = 1;
             case OP_SIN:
-               fp->Opcode = FP_OPCODE_SIN;
+               fp->Opcode = OPCODE_SIN;
                break;
 
             case OP_SCS_SAT:
                fp->Saturate = 1;
             case OP_SCS:
 
-               fp->Opcode = FP_OPCODE_SCS;
+               fp->Opcode = OPCODE_SCS;
                break;
          }
 
@@ -2797,7 +2796,7 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
             case OP_POW_SAT:
                fp->Saturate = 1;
             case OP_POW:
-               fp->Opcode = FP_OPCODE_POW;
+               fp->Opcode = OPCODE_POW;
                break;
          }
 
@@ -2816,73 +2815,73 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
             case OP_ADD_SAT:
                fp->Saturate = 1;
             case OP_ADD:
-               fp->Opcode = FP_OPCODE_ADD;
+               fp->Opcode = OPCODE_ADD;
                break;
 
             case OP_DP3_SAT:
                fp->Saturate = 1;
             case OP_DP3:
-               fp->Opcode = FP_OPCODE_DP3;
+               fp->Opcode = OPCODE_DP3;
                break;
 
             case OP_DP4_SAT:
                fp->Saturate = 1;
             case OP_DP4:
-               fp->Opcode = FP_OPCODE_DP4;
+               fp->Opcode = OPCODE_DP4;
                break;
 
             case OP_DPH_SAT:
                fp->Saturate = 1;
             case OP_DPH:
-               fp->Opcode = FP_OPCODE_DPH;
+               fp->Opcode = OPCODE_DPH;
                break;
 
             case OP_DST_SAT:
                fp->Saturate = 1;
             case OP_DST:
-               fp->Opcode = FP_OPCODE_DST;
+               fp->Opcode = OPCODE_DST;
                break;
 
             case OP_MAX_SAT:
                fp->Saturate = 1;
             case OP_MAX:
-               fp->Opcode = FP_OPCODE_MAX;
+               fp->Opcode = OPCODE_MAX;
                break;
 
             case OP_MIN_SAT:
                fp->Saturate = 1;
             case OP_MIN:
-               fp->Opcode = FP_OPCODE_MIN;
+               fp->Opcode = OPCODE_MIN;
                break;
 
             case OP_MUL_SAT:
                fp->Saturate = 1;
             case OP_MUL:
-               fp->Opcode = FP_OPCODE_MUL;
+               fp->Opcode = OPCODE_MUL;
                break;
 
             case OP_SGE_SAT:
                fp->Saturate = 1;
             case OP_SGE:
-               fp->Opcode = FP_OPCODE_SGE;
+               fp->Opcode = OPCODE_SGE;
                break;
 
             case OP_SLT_SAT:
                fp->Saturate = 1;
             case OP_SLT:
-               fp->Opcode = FP_OPCODE_SLT;
+               fp->Opcode = OPCODE_SLT;
                break;
 
             case OP_SUB_SAT:
                fp->Saturate = 1;
             case OP_SUB:
-               fp->Opcode = FP_OPCODE_SUB;
+               fp->Opcode = OPCODE_SUB;
                break;
 
             case OP_XPD_SAT:
                fp->Saturate = 1;
             case OP_XPD:
-               fp->Opcode = FP_OPCODE_XPD;
+               fp->Opcode = OPCODE_XPD;
                break;
          }
 
@@ -2899,19 +2898,19 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
             case OP_CMP_SAT:
                fp->Saturate = 1;
             case OP_CMP:
-               fp->Opcode = FP_OPCODE_CMP;
+               fp->Opcode = OPCODE_CMP;
                break;
 
             case OP_LRP_SAT:
                fp->Saturate = 1;
             case OP_LRP:
-               fp->Opcode = FP_OPCODE_LRP;
+               fp->Opcode = OPCODE_LRP;
                break;
 
             case OP_MAD_SAT:
                fp->Saturate = 1;
             case OP_MAD:
-               fp->Opcode = FP_OPCODE_MAD;
+               fp->Opcode = OPCODE_MAD;
                break;
          }
 
@@ -2929,7 +2928,7 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
             case OP_SWZ_SAT:
                fp->Saturate = 1;
             case OP_SWZ:
-               fp->Opcode = FP_OPCODE_SWZ;
+               fp->Opcode = OPCODE_SWZ;
                break;
          }
          if (parse_fp_dst_reg (ctx, inst, vc_head, Program, &fp->DstReg))
@@ -2959,19 +2958,19 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
             case OP_TEX_SAT:
                fp->Saturate = 1;
             case OP_TEX:
-               fp->Opcode = FP_OPCODE_TEX;
+               fp->Opcode = OPCODE_TEX;
                break;
 
             case OP_TXP_SAT:
                fp->Saturate = 1;
             case OP_TXP:
-               fp->Opcode = FP_OPCODE_TXP;
+               fp->Opcode = OPCODE_TXP;
                break;
 
             case OP_TXB_SAT:
                fp->Saturate = 1;
             case OP_TXB:
-               fp->Opcode = FP_OPCODE_TXB;
+               fp->Opcode = OPCODE_TXB;
                break;
          }
 
@@ -2989,19 +2988,19 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
          /* texTarget */
          switch (*(*inst)++) {
             case TEXTARGET_1D:
-               fp->TexSrcIdx = TEXTURE_1D_INDEX;
+               fp->TexSrcTarget = TEXTURE_1D_INDEX;
                break;
             case TEXTARGET_2D:
-               fp->TexSrcIdx = TEXTURE_2D_INDEX;
+               fp->TexSrcTarget = TEXTURE_2D_INDEX;
                break;
             case TEXTARGET_3D:
-               fp->TexSrcIdx = TEXTURE_3D_INDEX;
+               fp->TexSrcTarget = TEXTURE_3D_INDEX;
                break;
             case TEXTARGET_RECT:
-               fp->TexSrcIdx = TEXTURE_RECT_INDEX;
+               fp->TexSrcTarget = TEXTURE_RECT_INDEX;
                break;
             case TEXTARGET_CUBE:
-               fp->TexSrcIdx = TEXTURE_CUBE_INDEX;
+               fp->TexSrcTarget = TEXTURE_CUBE_INDEX;
                break;
 	    case TEXTARGET_SHADOW1D:
 	    case TEXTARGET_SHADOW2D:
@@ -3009,14 +3008,14 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
 	       /* TODO ARB_fragment_program_shadow code */
 	       break;
          }
-         Program->TexturesUsed[texcoord] |= (1<<fp->TexSrcIdx);
+         Program->TexturesUsed[texcoord] |= (1<<fp->TexSrcTarget);
          break;
 
       case OP_TEX_KIL:
          Program->UsesKill = 1;
 	 if (parse_fp_vector_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[0]))
             return 1;
-         fp->Opcode = FP_OPCODE_KIL;
+         fp->Opcode = OPCODE_KIL;
          break;
    }
 
@@ -3026,7 +3025,7 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
 static GLuint 
 parse_vp_dst_reg(GLcontext * ctx, GLubyte ** inst,
 		 struct var_cache **vc_head, struct arb_program *Program,
-		 struct vp_dst_register *reg )
+		 struct prog_dst_register *reg )
 {
    GLint mask;
    GLuint idx;
@@ -3053,7 +3052,7 @@ static GLuint
 parse_vp_address_reg (GLcontext * ctx, GLubyte ** inst,
 		      struct var_cache **vc_head,
 		      struct arb_program *Program,
-		      struct vp_dst_register *reg)
+		      struct prog_dst_register *reg)
 {
    GLint idx;
 
@@ -3078,7 +3077,7 @@ static GLuint
 parse_vp_vector_src_reg(GLcontext * ctx, GLubyte ** inst,
                         struct var_cache **vc_head,
                         struct arb_program *program,
-                        struct vp_src_register *reg )
+                        struct prog_src_register *reg )
 {
    enum register_file file;
    GLint index;
@@ -3100,7 +3099,7 @@ parse_vp_vector_src_reg(GLcontext * ctx, GLubyte ** inst,
    reg->Index = index;
    reg->Swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
                                 swizzle[2], swizzle[3]);
-   reg->Negate = negateMask;
+   reg->NegateBase = negateMask;
    reg->RelAddr = isRelOffset;
    return 0;
 }
@@ -3110,7 +3109,7 @@ static GLuint
 parse_vp_scalar_src_reg (GLcontext * ctx, GLubyte ** inst,
 			 struct var_cache **vc_head,
                          struct arb_program *Program,
-			 struct vp_src_register *reg )
+			 struct prog_src_register *reg )
 {
    enum register_file File;
    GLint Index;
@@ -3131,7 +3130,7 @@ parse_vp_scalar_src_reg (GLcontext * ctx, GLubyte ** inst,
    reg->File = File;
    reg->Index = Index;
    reg->Swizzle = (Swizzle[0] << 0);
-   reg->Negate = Negate;
+   reg->NegateBase = Negate;
    reg->RelAddr = IsRelOffset;
    return 0;
 }
@@ -3144,7 +3143,7 @@ parse_vp_scalar_src_reg (GLcontext * ctx, GLubyte ** inst,
 static GLuint
 parse_vp_instruction (GLcontext * ctx, GLubyte ** inst,
                       struct var_cache **vc_head, struct arb_program *Program,
-                      struct vp_instruction *vp)
+                      struct prog_instruction *vp)
 {
    GLint a;
    GLubyte type, code;
@@ -3155,14 +3154,14 @@ parse_vp_instruction (GLcontext * ctx, GLubyte ** inst,
    /* The actual opcode name */
    code = *(*inst)++;
 
-   _mesa_init_vp_instruction(vp);
+   _mesa_init_instruction(vp);
    /* Record the position in the program string for debugging */
    vp->StringPos = Program->Position;
 
    switch (type) {
          /* XXX: */
       case OP_ALU_ARL:
-         vp->Opcode = VP_OPCODE_ARL;
+         vp->Opcode = OPCODE_ARL;
 
          /* Remember to set SrcReg.RelAddr; */
 
@@ -3181,19 +3180,19 @@ parse_vp_instruction (GLcontext * ctx, GLubyte ** inst,
       case OP_ALU_VECTOR:
          switch (code) {
             case OP_ABS:
-               vp->Opcode = VP_OPCODE_ABS;
+               vp->Opcode = OPCODE_ABS;
                break;
             case OP_FLR:
-               vp->Opcode = VP_OPCODE_FLR;
+               vp->Opcode = OPCODE_FLR;
                break;
             case OP_FRC:
-               vp->Opcode = VP_OPCODE_FRC;
+               vp->Opcode = OPCODE_FRC;
                break;
             case OP_LIT:
-               vp->Opcode = VP_OPCODE_LIT;
+               vp->Opcode = OPCODE_LIT;
                break;
             case OP_MOV:
-               vp->Opcode = VP_OPCODE_MOV;
+               vp->Opcode = OPCODE_MOV;
                break;
          }
 
@@ -3207,22 +3206,22 @@ parse_vp_instruction (GLcontext * ctx, GLubyte ** inst,
       case OP_ALU_SCALAR:
          switch (code) {
             case OP_EX2:
-               vp->Opcode = VP_OPCODE_EX2;
+               vp->Opcode = OPCODE_EX2;
                break;
             case OP_EXP:
-               vp->Opcode = VP_OPCODE_EXP;
+               vp->Opcode = OPCODE_EXP;
                break;
             case OP_LG2:
-               vp->Opcode = VP_OPCODE_LG2;
+               vp->Opcode = OPCODE_LG2;
                break;
             case OP_LOG:
-               vp->Opcode = VP_OPCODE_LOG;
+               vp->Opcode = OPCODE_LOG;
                break;
             case OP_RCP:
-               vp->Opcode = VP_OPCODE_RCP;
+               vp->Opcode = OPCODE_RCP;
                break;
             case OP_RSQ:
-               vp->Opcode = VP_OPCODE_RSQ;
+               vp->Opcode = OPCODE_RSQ;
                break;
          }
          if (parse_vp_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
@@ -3235,7 +3234,7 @@ parse_vp_instruction (GLcontext * ctx, GLubyte ** inst,
       case OP_ALU_BINSC:
          switch (code) {
             case OP_POW:
-               vp->Opcode = VP_OPCODE_POW;
+               vp->Opcode = OPCODE_POW;
                break;
          }
          if (parse_vp_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
@@ -3250,40 +3249,40 @@ parse_vp_instruction (GLcontext * ctx, GLubyte ** inst,
       case OP_ALU_BIN:
          switch (code) {
             case OP_ADD:
-               vp->Opcode = VP_OPCODE_ADD;
+               vp->Opcode = OPCODE_ADD;
                break;
             case OP_DP3:
-               vp->Opcode = VP_OPCODE_DP3;
+               vp->Opcode = OPCODE_DP3;
                break;
             case OP_DP4:
-               vp->Opcode = VP_OPCODE_DP4;
+               vp->Opcode = OPCODE_DP4;
                break;
             case OP_DPH:
-               vp->Opcode = VP_OPCODE_DPH;
+               vp->Opcode = OPCODE_DPH;
                break;
             case OP_DST:
-               vp->Opcode = VP_OPCODE_DST;
+               vp->Opcode = OPCODE_DST;
                break;
             case OP_MAX:
-               vp->Opcode = VP_OPCODE_MAX;
+               vp->Opcode = OPCODE_MAX;
                break;
             case OP_MIN:
-               vp->Opcode = VP_OPCODE_MIN;
+               vp->Opcode = OPCODE_MIN;
                break;
             case OP_MUL:
-               vp->Opcode = VP_OPCODE_MUL;
+               vp->Opcode = OPCODE_MUL;
                break;
             case OP_SGE:
-               vp->Opcode = VP_OPCODE_SGE;
+               vp->Opcode = OPCODE_SGE;
                break;
             case OP_SLT:
-               vp->Opcode = VP_OPCODE_SLT;
+               vp->Opcode = OPCODE_SLT;
                break;
             case OP_SUB:
-               vp->Opcode = VP_OPCODE_SUB;
+               vp->Opcode = OPCODE_SUB;
                break;
             case OP_XPD:
-               vp->Opcode = VP_OPCODE_XPD;
+               vp->Opcode = OPCODE_XPD;
                break;
          }
          if (parse_vp_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
@@ -3298,7 +3297,7 @@ parse_vp_instruction (GLcontext * ctx, GLubyte ** inst,
       case OP_ALU_TRI:
          switch (code) {
             case OP_MAD:
-               vp->Opcode = VP_OPCODE_MAD;
+               vp->Opcode = OPCODE_MAD;
                break;
          }
 
@@ -3314,7 +3313,7 @@ parse_vp_instruction (GLcontext * ctx, GLubyte ** inst,
       case OP_ALU_SWZ:
          switch (code) {
             case OP_SWZ:
-               vp->Opcode = VP_OPCODE_SWZ;
+               vp->Opcode = OPCODE_SWZ;
                break;
          }
 	 {
@@ -3332,7 +3331,7 @@ parse_vp_instruction (GLcontext * ctx, GLubyte ** inst,
 	    parse_extended_swizzle_mask (inst, swizzle, &negateMask);
 	    vp->SrcReg[0].File = file;
 	    vp->SrcReg[0].Index = index;
-	    vp->SrcReg[0].Negate = negateMask;
+	    vp->SrcReg[0].NegateBase = negateMask;
 	    vp->SrcReg[0].Swizzle = MAKE_SWIZZLE4(swizzle[0],
                                                   swizzle[1],
                                                   swizzle[2],
@@ -3698,8 +3697,8 @@ parse_arb_program(GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
    /* Finally, tag on an OPCODE_END instruction */
    if (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
       const GLuint numInst = Program->Base.NumInstructions;
-      _mesa_init_fp_instruction(Program->FPInstructions + numInst);
-      Program->FPInstructions[numInst].Opcode = FP_OPCODE_END;
+      _mesa_init_instruction(Program->FPInstructions + numInst);
+      Program->FPInstructions[numInst].Opcode = OPCODE_END;
       /* YYY Wrong Position in program, whatever, at least not random -> crash
 	 Program->Position = parse_position (&inst);
       */
@@ -3707,8 +3706,8 @@ parse_arb_program(GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
    }
    else {
       const GLuint numInst = Program->Base.NumInstructions;
-      _mesa_init_vp_instruction(Program->VPInstructions + numInst);
-      Program->VPInstructions[numInst].Opcode = VP_OPCODE_END;
+      _mesa_init_instruction(Program->VPInstructions + numInst);
+      Program->VPInstructions[numInst].Opcode = OPCODE_END;
       /* YYY Wrong Position in program, whatever, at least not random -> crash
 	 Program->Position = parse_position (&inst);
       */

@@ -30,7 +30,7 @@
 #include "glheader.h"
 #include "colormac.h"
 #include "context.h"
-#include "nvfragprog.h"
+#include "program_instruction.h"
 #include "macros.h"
 #include "program.h"
 
@@ -179,7 +179,7 @@ static INLINE void emit_char( struct fragment_program *p, char c )
  * Retrieve a ureg for the given source register.  Will emit
  * constants, apply swizzling and negation as needed.
  */
-static GLuint src_vector( const struct fp_src_register *source )
+static GLuint src_vector( const struct prog_src_register *source )
 {
    GLuint src;
 
@@ -262,7 +262,7 @@ static void print_footer( struct fragment_program *p )
 }
 
 static void print_dest_reg( struct fragment_program *p, 
-			    const struct fp_instruction *inst )
+			    const struct prog_instruction *inst )
 {
    switch (inst->DstReg.File) {
    case PROGRAM_OUTPUT:
@@ -277,7 +277,7 @@ static void print_dest_reg( struct fragment_program *p,
 }
 
 static void print_dest( struct fragment_program *p,
-			const struct fp_instruction *inst,
+			const struct prog_instruction *inst,
 			GLuint idx )
 {
    print_dest_reg(p, inst);
@@ -369,7 +369,7 @@ static void print_expression( struct fragment_program *p,
 }
 
 static void do_tex_kill( struct fragment_program *p,
-			 const struct fp_instruction *inst,
+			 const struct prog_instruction *inst,
 			 GLuint arg )
 {
    GLuint i;
@@ -389,7 +389,7 @@ static void do_tex_kill( struct fragment_program *p,
 }
 
 static void do_tex_simple( struct fragment_program *p,
-			   const struct fp_instruction *inst,
+			   const struct prog_instruction *inst,
 			   const char *fn, GLuint texunit, GLuint arg )
 {
    emit(p, "   %s( ctx, ", fn);
@@ -401,7 +401,7 @@ static void do_tex_simple( struct fragment_program *p,
 
 
 static void do_tex( struct fragment_program *p,
-		    const struct fp_instruction *inst,
+		    const struct prog_instruction *inst,
 		    const char *fn, GLuint texunit, GLuint arg )
 {
    GLuint i;
@@ -444,7 +444,7 @@ static void do_tex( struct fragment_program *p,
 
 
 static void saturate( struct fragment_program *p,
-		      const struct fp_instruction *inst,
+		      const struct prog_instruction *inst,
 		      GLuint i )
 {
    emit(p, "   ");
@@ -456,7 +456,7 @@ static void saturate( struct fragment_program *p,
 		     
 static void assign_single( GLuint i,
 			   struct fragment_program *p,
-			   const struct fp_instruction *inst,
+			   const struct prog_instruction *inst,
 			   const char *fmt,
 			   ... )
 {
@@ -476,7 +476,7 @@ static void assign_single( GLuint i,
 }
 
 static void assign4( struct fragment_program *p,
-		     const struct fp_instruction *inst,
+		     const struct prog_instruction *inst,
 		     const char *fmt,
 		     ... )
 {
@@ -498,7 +498,7 @@ static void assign4( struct fragment_program *p,
 }
 
 static void assign4_replicate( struct fragment_program *p,
-			       const struct fp_instruction *inst,
+			       const struct prog_instruction *inst,
 			       const char *fmt,
 			       ... )
 {
@@ -537,44 +537,45 @@ static void assign4_replicate( struct fragment_program *p,
 }
 	 
 
-
-
+/**
+ * XXX This should go away.
+ */
 static GLuint nr_args( GLuint opcode )
 {
    switch (opcode) {
-   case FP_OPCODE_ABS: return 1;
-   case FP_OPCODE_ADD: return 2;
-   case FP_OPCODE_CMP: return 3;
-   case FP_OPCODE_COS: return 1;
-   case FP_OPCODE_DP3: return 2;
-   case FP_OPCODE_DP4: return 2;
-   case FP_OPCODE_DPH: return 2;
-   case FP_OPCODE_DST: return 2;
-   case FP_OPCODE_EX2: return 1;
-   case FP_OPCODE_FLR: return 1;
-   case FP_OPCODE_FRC: return 1;
-   case FP_OPCODE_KIL: return 1;
-   case FP_OPCODE_LG2: return 1;
-   case FP_OPCODE_LIT: return 1;
-   case FP_OPCODE_LRP: return 3;
-   case FP_OPCODE_MAD: return 3;
-   case FP_OPCODE_MAX: return 2;
-   case FP_OPCODE_MIN: return 2;
-   case FP_OPCODE_MOV: return 1;
-   case FP_OPCODE_MUL: return 2;
-   case FP_OPCODE_POW: return 2;
-   case FP_OPCODE_RCP: return 1;
-   case FP_OPCODE_RSQ: return 1;
-   case FP_OPCODE_SCS: return 1;
-   case FP_OPCODE_SGE: return 2;
-   case FP_OPCODE_SIN: return 1;
-   case FP_OPCODE_SLT: return 2;
-   case FP_OPCODE_SUB: return 2;
-   case FP_OPCODE_SWZ: return 1;
-   case FP_OPCODE_TEX: return 1;
-   case FP_OPCODE_TXB: return 1;
-   case FP_OPCODE_TXP: return 1;
-   case FP_OPCODE_XPD: return 2;
+   case OPCODE_ABS: return 1;
+   case OPCODE_ADD: return 2;
+   case OPCODE_CMP: return 3;
+   case OPCODE_COS: return 1;
+   case OPCODE_DP3: return 2;
+   case OPCODE_DP4: return 2;
+   case OPCODE_DPH: return 2;
+   case OPCODE_DST: return 2;
+   case OPCODE_EX2: return 1;
+   case OPCODE_FLR: return 1;
+   case OPCODE_FRC: return 1;
+   case OPCODE_KIL: return 1;
+   case OPCODE_LG2: return 1;
+   case OPCODE_LIT: return 1;
+   case OPCODE_LRP: return 3;
+   case OPCODE_MAD: return 3;
+   case OPCODE_MAX: return 2;
+   case OPCODE_MIN: return 2;
+   case OPCODE_MOV: return 1;
+   case OPCODE_MUL: return 2;
+   case OPCODE_POW: return 2;
+   case OPCODE_RCP: return 1;
+   case OPCODE_RSQ: return 1;
+   case OPCODE_SCS: return 1;
+   case OPCODE_SGE: return 2;
+   case OPCODE_SIN: return 1;
+   case OPCODE_SLT: return 2;
+   case OPCODE_SUB: return 2;
+   case OPCODE_SWZ: return 1;
+   case OPCODE_TEX: return 1;
+   case OPCODE_TXB: return 1;
+   case OPCODE_TXP: return 1;
+   case OPCODE_XPD: return 2;
    default: return 0;
    }
 }
@@ -583,9 +584,9 @@ static GLuint nr_args( GLuint opcode )
 
 static void translate_program( struct fragment_program *p )
 {
-   const struct fp_instruction *inst = p->Instructions;
+   const struct prog_instruction *inst = p->Instructions;
 
-   for (; inst->Opcode != FP_OPCODE_END; inst++) {
+   for (; inst->Opcode != OPCODE_END; inst++) {
 
       GLuint src[3], i;
       GLuint nr = nr_args( inst->Opcode );
@@ -606,23 +607,23 @@ static void translate_program( struct fragment_program *p )
       }
 
       switch (inst->Opcode) {
-      case FP_OPCODE_ABS: 
+      case OPCODE_ABS: 
 	 assign4(p, inst, "fabsf(%s)", src[0]);
 	 break;
 
-      case FP_OPCODE_ADD: 
+      case OPCODE_ADD: 
 	 assign4(p, inst, "%s + %s", src[0], src[1]);
 	 break;
 
-      case FP_OPCODE_CMP: 
+      case OPCODE_CMP: 
 	 assign4(p, inst, "%s < 0.0F ? %s : %s", src[0], src[1], src[2]);
 	 break;
 
-      case FP_OPCODE_COS:
+      case OPCODE_COS:
 	 assign4_replicate(p, inst, "COS(%s)", src[0]);
 	 break;
 
-      case FP_OPCODE_DP3: 
+      case OPCODE_DP3: 
 	 assign4_replicate(p, inst, 
 			   "%s*%s + %s*%s + %s*%s", 
 			   deref(src[0],_X),
@@ -633,7 +634,7 @@ static void translate_program( struct fragment_program *p )
 			   deref(src[1],_Z));
 	 break;
 
-      case FP_OPCODE_DP4: 
+      case OPCODE_DP4: 
 	 assign4_replicate(p, inst, 
 			   "%s*%s + %s*%s + %s*%s + %s*%s", 
 			   deref(src[0],_X),
@@ -644,7 +645,7 @@ static void translate_program( struct fragment_program *p )
 			   deref(src[1],_Z));
 	 break;
 
-      case FP_OPCODE_DPH:  
+      case OPCODE_DPH:  
 	 assign4_replicate(p, inst, 
 			   "%s*%s + %s*%s + %s*%s + %s", 
 			   deref(src[0],_X),
@@ -654,7 +655,7 @@ static void translate_program( struct fragment_program *p )
 			   deref(src[1],_Z));
 	 break;
 
-      case FP_OPCODE_DST: 
+      case OPCODE_DST: 
 	 /* result[0] = 1    * 1;
 	  * result[1] = a[1] * b[1];
 	  * result[2] = a[2] * 1;
@@ -669,27 +670,27 @@ static void translate_program( struct fragment_program *p )
 	 assign_single(3, p, inst, "%s", deref(src[1], _W));
 	 break;
 
-      case FP_OPCODE_EX2: 
+      case OPCODE_EX2: 
 	 assign4_replicate(p, inst, "powf(2.0, %s)", src[0]);
 	 break;
 
-      case FP_OPCODE_FLR: 
+      case OPCODE_FLR: 
 	 assign4_replicate(p, inst, "floorf(%s)", src[0]);
 	 break;
 
-      case FP_OPCODE_FRC: 
+      case OPCODE_FRC: 
 	 assign4_replicate(p, inst, "%s - floorf(%s)", src[0], src[0]);
 	 break;
 
-      case FP_OPCODE_KIL:
+      case OPCODE_KIL:
 	 do_tex_kill(p, inst, src[0]);
 	 break;
 
-      case FP_OPCODE_LG2: 
+      case OPCODE_LG2: 
 	 assign4_replicate(p, inst, "LOG2(%s)", src[0]);
 	 break;
 
-      case FP_OPCODE_LIT: 
+      case OPCODE_LIT: 
 	 assign_single(0, p, inst, "1.0");
 	 assign_single(1, p, inst, "MIN2(%s, 0)", deref(src[0], _X));
 	 assign_single(2, p, inst, "(%s > 0.0) ? expf(%s * MIN2(%s, 0)) : 0.0",
@@ -699,45 +700,45 @@ static void translate_program( struct fragment_program *p )
 	 assign_single(3, p, inst, "1.0");
 	 break;
 
-      case FP_OPCODE_LRP: 
+      case OPCODE_LRP: 
 	 assign4(p, inst, 
 		 "%s * %s + (1.0 - %s) * %s", 
 		 src[0], src[1], src[0], src[2]);
 	 break;
 
-      case FP_OPCODE_MAD:
+      case OPCODE_MAD:
 	 assign4(p, inst, "%s * %s + %s", src[0], src[1], src[2]);
 	 break;
 
-      case FP_OPCODE_MAX:
+      case OPCODE_MAX:
 	 assign4(p, inst, "MAX2(%s, %s)", src[0], src[1]);
 	 break;
 
-      case FP_OPCODE_MIN: 
+      case OPCODE_MIN: 
 	 assign4(p, inst, "MIN2(%s, %s)", src[0], src[1]);
 	 break;
 
-      case FP_OPCODE_MOV: 
+      case OPCODE_MOV: 
 	 assign4(p, inst, "%s", src[0]);
 	 break;
 
-      case FP_OPCODE_MUL: 
+      case OPCODE_MUL: 
 	 assign4(p, inst, "%s * %s", src[0], src[1]);
 	 break;
 
-      case FP_OPCODE_POW: 
+      case OPCODE_POW: 
 	 assign4_replicate(p, inst, "powf(%s, %s)", src[0], src[1]);
 	 break;
 
-      case FP_OPCODE_RCP: 
+      case OPCODE_RCP: 
 	 assign4_replicate(p, inst, "1.0/%s", src[0]);
 	 break;
 
-      case FP_OPCODE_RSQ: 
+      case OPCODE_RSQ: 
 	 assign4_replicate(p, inst, "_mesa_inv_sqrtf(%s)", src[0]);
 	 break;
 	 
-      case FP_OPCODE_SCS:
+      case OPCODE_SCS:
 	 if (inst->DstReg.WriteMask[0]) {
 	    assign_single(0, p, inst, "cosf(%s)", deref(src[0], _X));
 	 }
@@ -747,39 +748,39 @@ static void translate_program( struct fragment_program *p )
 	 }
 	 break;
 
-      case FP_OPCODE_SGE: 
+      case OPCODE_SGE: 
 	 assign4(p, inst, "%s >= %s ? 1.0 : 0.0", src[0], src[1]);
 	 break;
 
-      case FP_OPCODE_SIN:
+      case OPCODE_SIN:
 	 assign4_replicate(p, inst, "sinf(%s)", src[0]);
 	 break;
 
-      case FP_OPCODE_SLT: 
+      case OPCODE_SLT: 
 	 assign4(p, inst, "%s < %s ? 1.0 : 0.0", src[0], src[1]);
 	 break;
 
-      case FP_OPCODE_SUB: 
+      case OPCODE_SUB: 
 	 assign4(p, inst, "%s - %s", src[0], src[1]);
 	 break;
 
-      case FP_OPCODE_SWZ: 	/* same implementation as MOV: */
+      case OPCODE_SWZ: 	/* same implementation as MOV: */
 	 assign4(p, inst, "%s", src[0]);
 	 break;
 
-      case FP_OPCODE_TEX: 
+      case OPCODE_TEX: 
 	 do_tex(p, inst, "TEX", inst->TexSrcUnit, src[0]);
 	 break;
 
-      case FP_OPCODE_TXB:
+      case OPCODE_TXB:
 	 do_tex(p, inst, "TXB", inst->TexSrcUnit, src[0]);
 	 break;
 
-      case FP_OPCODE_TXP:
+      case OPCODE_TXP:
 	 do_tex(p, inst, "TXP", inst->TexSrcUnit, src[0]);
 	 break;
 
-      case FP_OPCODE_XPD:
+      case OPCODE_XPD:
 	 /* Cross product:
 	  *      result.x = src[0].y * src[1].z - src[0].z * src[1].y;
 	  *      result.y = src[0].z * src[1].x - src[0].x * src[1].z;

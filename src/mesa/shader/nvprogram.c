@@ -44,10 +44,9 @@
 #include "macros.h"
 #include "mtypes.h"
 #include "nvfragparse.h"
-#include "nvfragprog.h"
+#include "program_instruction.h"
 #include "nvvertexec.h"
 #include "nvvertparse.h"
-#include "nvvertprog.h"
 #include "nvprogram.h"
 #include "program.h"
 

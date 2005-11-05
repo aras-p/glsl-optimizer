@@ -40,7 +40,7 @@
 #include "program.h"
 #include "nvprogram.h"
 #include "nvvertparse.h"
-#include "nvvertprog.h"
+#include "program_instruction.h"
 
 #include "arbprogparse.h"
 
@@ -49,7 +49,7 @@
  * XXX this is probably redundant.  We've already got code like this
  * in the nvvertparse.c file.  Combine/clean-up someday.
  */
-void _mesa_debug_vp_inst(GLint num, struct vp_instruction *vp)
+void _mesa_debug_vp_inst(GLint num, struct prog_instruction *vp)
 {
    GLint a;
    static const char *opcode_string[] = {
@@ -115,9 +115,9 @@ void _mesa_debug_vp_inst(GLint num, struct vp_instruction *vp)
 
       if (vp[a].SrcReg[0].File != 0xf) {
 	 if (vp[a].SrcReg[0].Swizzle != SWIZZLE_NOOP ||
-	     vp[a].SrcReg[0].Negate)
+	     vp[a].SrcReg[0].NegateBase)
 	    _mesa_printf("%s[%d].%s%c%c%c%c ", file_string[vp[a].SrcReg[0].File], vp[a].SrcReg[0].Index,
-			 vp[a].SrcReg[0].Negate ? "-" : "",
+			 vp[a].SrcReg[0].NegateBase ? "-" : "",
 			 swz[GET_SWZ(vp[a].SrcReg[0].Swizzle, 0)],
 			 swz[GET_SWZ(vp[a].SrcReg[0].Swizzle, 1)],
 			 swz[GET_SWZ(vp[a].SrcReg[0].Swizzle, 2)],
@@ -128,9 +128,9 @@ void _mesa_debug_vp_inst(GLint num, struct vp_instruction *vp)
 
       if (vp[a].SrcReg[1].File != 0xf) {
 	 if (vp[a].SrcReg[1].Swizzle != SWIZZLE_NOOP ||
-	     vp[a].SrcReg[1].Negate)
+	     vp[a].SrcReg[1].NegateBase)
 	    _mesa_printf("%s[%d].%s%c%c%c%c ", file_string[vp[a].SrcReg[1].File], vp[a].SrcReg[1].Index,
-			 vp[a].SrcReg[1].Negate ? "-" : "",
+			 vp[a].SrcReg[1].NegateBase ? "-" : "",
 			 swz[GET_SWZ(vp[a].SrcReg[1].Swizzle, 0)],
 			 swz[GET_SWZ(vp[a].SrcReg[1].Swizzle, 1)],
 			 swz[GET_SWZ(vp[a].SrcReg[1].Swizzle, 2)],
@@ -141,9 +141,9 @@ void _mesa_debug_vp_inst(GLint num, struct vp_instruction *vp)
 
       if (vp[a].SrcReg[2].File != 0xf) {
 	 if (vp[a].SrcReg[2].Swizzle != SWIZZLE_NOOP ||
-	     vp[a].SrcReg[2].Negate)
+	     vp[a].SrcReg[2].NegateBase)
 	    _mesa_printf("%s[%d].%s%c%c%c%c ", file_string[vp[a].SrcReg[2].File], vp[a].SrcReg[2].Index,
-			 vp[a].SrcReg[2].Negate ? "-" : "",
+			 vp[a].SrcReg[2].NegateBase ? "-" : "",
 			 swz[GET_SWZ(vp[a].SrcReg[2].Swizzle, 0)],
 			 swz[GET_SWZ(vp[a].SrcReg[2].Swizzle, 1)],
 			 swz[GET_SWZ(vp[a].SrcReg[2].Swizzle, 2)],
@@ -169,7 +169,7 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
 {
    struct arb_program ap;
    (void) target;
-   struct vp_instruction *newInstructions;
+   struct prog_instruction *newInstructions;
 
    /* set the program target before parsing */
    ap.Base.Target = GL_VERTEX_PROGRAM_ARB;
@@ -183,14 +183,14 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
     * vertex_program struct.
     */
    /* copy instruction buffer */
-   newInstructions = (struct vp_instruction *)
-      _mesa_malloc(ap.Base.NumInstructions * sizeof(struct vp_instruction));
+   newInstructions = (struct prog_instruction *)
+      _mesa_malloc(ap.Base.NumInstructions * sizeof(struct prog_instruction));
    if (!newInstructions) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
       return;
    }
    _mesa_memcpy(newInstructions, ap.VPInstructions,
-                ap.Base.NumInstructions * sizeof(struct vp_instruction));
+                ap.Base.NumInstructions * sizeof(struct prog_instruction));
    if (program->Instructions)
       _mesa_free(program->Instructions);
    program->Instructions = newInstructions;

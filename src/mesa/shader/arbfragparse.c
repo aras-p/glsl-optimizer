@@ -40,7 +40,7 @@
 #include "arbfragparse.h"
 
 void
-_mesa_debug_fp_inst(GLint num, struct fp_instruction *fp)
+_mesa_debug_fp_inst(GLint num, struct prog_instruction *fp)
 {
    GLint a;
 
@@ -190,7 +190,7 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
 {
    GLuint i;
    struct arb_program ap;
-   struct fp_instruction *newInstructions;
+   struct prog_instruction *newInstructions;
    (void) target;
 
    /* set the program target before parsing */
@@ -205,14 +205,14 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
     * fragment_program struct.
     */
    /* copy instruction buffer */
-   newInstructions = (struct fp_instruction *)
-      _mesa_malloc(ap.Base.NumInstructions * sizeof(struct fp_instruction));
+   newInstructions = (struct prog_instruction *)
+      _mesa_malloc(ap.Base.NumInstructions * sizeof(struct prog_instruction));
    if (!newInstructions) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
       return;
    }
    _mesa_memcpy(newInstructions, ap.FPInstructions,
-                ap.Base.NumInstructions * sizeof(struct fp_instruction));
+                ap.Base.NumInstructions * sizeof(struct prog_instruction));
    if (program->Instructions)
       _mesa_free(program->Instructions);
    program->Instructions = newInstructions;

@@ -41,7 +41,7 @@
 #include "imports.h"
 #include "simple_list.h"
 #include "mtypes.h"
-#include "nvvertprog.h"
+#include "program_instruction.h"
 #include "nvvertexec.h"
 #include "nvprogram.h"
 

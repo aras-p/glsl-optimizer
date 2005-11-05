@@ -37,9 +37,8 @@
 #include "mtypes.h"
 #include "program.h"
 #include "nvfragparse.h"
-#include "nvfragprog.h"
+#include "program_instruction.h"
 #include "nvvertparse.h"
-#include "nvvertprog.h"
 #include "atifragshader.h"
 
 

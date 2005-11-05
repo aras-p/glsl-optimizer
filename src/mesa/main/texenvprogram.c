@@ -31,7 +31,7 @@
 #include "texenvprogram.h"
 
 #include "shader/program.h"
-#include "shader/nvfragprog.h"
+#include "shader/program_instruction.h"
 #include "shader/arbfragparse.h"
 
 
@@ -446,7 +446,7 @@ static struct ureg register_input( struct texenv_fragment_program *p, GLuint inp
 }
 
 
-static void emit_arg( struct fp_src_register *reg,
+static void emit_arg( struct prog_src_register *reg,
 		      struct ureg ureg )
 {
    reg->File = ureg.file;
@@ -457,7 +457,7 @@ static void emit_arg( struct fp_src_register *reg,
    reg->NegateAbs = ureg.negateabs;
 }
 
-static void emit_dst( struct fp_dst_register *dst,
+static void emit_dst( struct prog_dst_register *dst,
 		      struct ureg ureg, GLuint mask )
 {
    dst->File = ureg.file;
@@ -467,7 +467,7 @@ static void emit_dst( struct fp_dst_register *dst,
    dst->CondSwizzle = 0;
 }
 
-static struct fp_instruction *
+static struct prog_instruction *
 emit_op(struct texenv_fragment_program *p,
 	GLuint op,
 	struct ureg dest,
@@ -478,7 +478,7 @@ emit_op(struct texenv_fragment_program *p,
 	struct ureg src2 )
 {
    GLuint nr = p->program->Base.NumInstructions++;
-   struct fp_instruction *inst = &p->program->Instructions[nr];
+   struct prog_instruction *inst = &p->program->Instructions[nr];
       
    _mesa_memset(inst, 0, sizeof(*inst));
    inst->Opcode = op;
@@ -537,14 +537,14 @@ static struct ureg emit_texld( struct texenv_fragment_program *p,
 			       GLuint tex_idx,
 			       struct ureg coord )
 {
-   struct fp_instruction *inst = emit_op( p, op, 
+   struct prog_instruction *inst = emit_op( p, op, 
 					  dest, destmask, 
 					  0,		/* don't saturate? */
 					  coord, 	/* arg 0? */
 					  undef,
 					  undef);
    
-   inst->TexSrcIdx = tex_idx;
+   inst->TexSrcTarget = tex_idx;
    inst->TexSrcUnit = tex_unit;
 
    p->program->NumTexInstructions++;
@@ -671,7 +671,7 @@ static struct ureg emit_combine_source( struct texenv_fragment_program *p,
        */
       arg = get_temp( p );
       one = get_one( p );
-      return emit_arith( p, FP_OPCODE_SUB, arg, mask, 0, one, src, undef);
+      return emit_arith( p, OPCODE_SUB, arg, mask, 0, one, src, undef);
 
    case OPR_SRC_ALPHA: 
       if (mask == WRITEMASK_W)
@@ -684,7 +684,7 @@ static struct ureg emit_combine_source( struct texenv_fragment_program *p,
        */
       arg = get_temp(p);
       one = get_one(p);
-      return emit_arith(p, FP_OPCODE_SUB, arg, mask, 0,
+      return emit_arith(p, OPCODE_SUB, arg, mask, 0,
 			one, swizzle1(src, W), undef);
    case OPR_ZERO:
       return get_zero(p);
@@ -752,28 +752,28 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
       if (mask == WRITEMASK_XYZW && !saturate)
 	 return src[0];
       else
-	 return emit_arith( p, FP_OPCODE_MOV, dest, mask, saturate, src[0], undef, undef );
+	 return emit_arith( p, OPCODE_MOV, dest, mask, saturate, src[0], undef, undef );
    case MODE_MODULATE: 
-      return emit_arith( p, FP_OPCODE_MUL, dest, mask, saturate,
+      return emit_arith( p, OPCODE_MUL, dest, mask, saturate,
 			 src[0], src[1], undef );
    case MODE_ADD: 
-      return emit_arith( p, FP_OPCODE_ADD, dest, mask, saturate, 
+      return emit_arith( p, OPCODE_ADD, dest, mask, saturate, 
 			 src[0], src[1], undef );
    case MODE_ADD_SIGNED:
       /* tmp = arg0 + arg1
        * result = tmp - .5
        */
       half = get_half(p);
-      emit_arith( p, FP_OPCODE_ADD, tmp, mask, 0, src[0], src[1], undef );
-      emit_arith( p, FP_OPCODE_SUB, dest, mask, saturate, tmp, half, undef );
+      emit_arith( p, OPCODE_ADD, tmp, mask, 0, src[0], src[1], undef );
+      emit_arith( p, OPCODE_SUB, dest, mask, saturate, tmp, half, undef );
       return dest;
    case MODE_INTERPOLATE: 
       /* Arg0 * (Arg2) + Arg1 * (1-Arg2) -- note arguments are reordered:
        */
-      return emit_arith( p, FP_OPCODE_LRP, dest, mask, saturate, src[2], src[0], src[1] );
+      return emit_arith( p, OPCODE_LRP, dest, mask, saturate, src[2], src[0], src[1] );
 
    case MODE_SUBTRACT: 
-      return emit_arith( p, FP_OPCODE_SUB, dest, mask, saturate, src[0], src[1], undef );
+      return emit_arith( p, OPCODE_SUB, dest, mask, saturate, src[0], src[1], undef );
 
    case MODE_DOT3_RGBA:
    case MODE_DOT3_RGBA_EXT: 
@@ -789,32 +789,32 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
        *
        * dst = tmp0 dot3 tmp1 
        */
-      emit_arith( p, FP_OPCODE_MAD, tmp0, WRITEMASK_XYZW, 0, 
+      emit_arith( p, OPCODE_MAD, tmp0, WRITEMASK_XYZW, 0, 
 		  two, src[0], neg1);
 
       if (_mesa_memcmp(&src[0], &src[1], sizeof(struct ureg)) == 0)
 	 tmp1 = tmp0;
       else
-	 emit_arith( p, FP_OPCODE_MAD, tmp1, WRITEMASK_XYZW, 0, 
+	 emit_arith( p, OPCODE_MAD, tmp1, WRITEMASK_XYZW, 0, 
 		     two, src[1], neg1);
-      emit_arith( p, FP_OPCODE_DP3, dest, mask, saturate, tmp0, tmp1, undef);
+      emit_arith( p, OPCODE_DP3, dest, mask, saturate, tmp0, tmp1, undef);
       return dest;
    }
    case MODE_MODULATE_ADD_ATI:
       /* Arg0 * Arg2 + Arg1 */
-      return emit_arith( p, FP_OPCODE_MAD, dest, mask, saturate,
+      return emit_arith( p, OPCODE_MAD, dest, mask, saturate,
 			 src[0], src[2], src[1] );
    case MODE_MODULATE_SIGNED_ADD_ATI: {
       /* Arg0 * Arg2 + Arg1 - 0.5 */
       struct ureg tmp0 = get_temp(p);
       half = get_half(p);
-      emit_arith( p, FP_OPCODE_MAD, tmp0, mask, 0, src[0], src[2], src[1] );
-      emit_arith( p, FP_OPCODE_SUB, dest, mask, saturate, tmp0, half, undef );
+      emit_arith( p, OPCODE_MAD, tmp0, mask, 0, src[0], src[2], src[1] );
+      emit_arith( p, OPCODE_SUB, dest, mask, saturate, tmp0, half, undef );
       return dest;
    }
    case MODE_MODULATE_SUBTRACT_ATI:
       /* Arg0 * Arg2 - Arg1 */
-      emit_arith( p, FP_OPCODE_MAD, dest, mask, 0, src[0], src[2], negate(src[1]) );
+      emit_arith( p, OPCODE_MAD, dest, mask, 0, src[0], src[2], negate(src[1]) );
       return dest;
    default: 
       return src[0];
@@ -907,7 +907,7 @@ static struct ureg emit_texenv( struct texenv_fragment_program *p, int unit )
 				  1<<rgb_shift,
 				  1<<alpha_shift);
       }
-      return emit_arith( p, FP_OPCODE_MUL, dest, WRITEMASK_XYZW, 
+      return emit_arith( p, OPCODE_MUL, dest, WRITEMASK_XYZW, 
 			 saturate, out, shift, undef );
    }
    else
@@ -928,7 +928,7 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
 			  
       /* TODO: Use D0_MASK_XY where possible.
        */
-      p->src_texture[unit] = emit_texld( p, FP_OPCODE_TXP,
+      p->src_texture[unit] = emit_texld( p, OPCODE_TXP,
 					 tmp, WRITEMASK_XYZW, 
 					 unit, dim, texcoord );
    }
@@ -986,7 +986,7 @@ static void create_new_program(struct state_key *key, GLcontext *ctx,
    p.state = key;
    p.program = program;
 
-   p.program->Instructions = MALLOC(sizeof(struct fp_instruction) * 100);
+   p.program->Instructions = MALLOC(sizeof(struct prog_instruction) * 100);
    p.program->Base.NumInstructions = 0;
    p.program->Base.Target = GL_FRAGMENT_PROGRAM_ARB;
    p.program->NumTexIndirections = 1;	/* correct? */
@@ -1036,19 +1036,19 @@ static void create_new_program(struct state_key *key, GLcontext *ctx,
       /* Emit specular add.
        */
       struct ureg s = register_input(&p, FRAG_ATTRIB_COL1);
-      emit_arith( &p, FP_OPCODE_ADD, out, WRITEMASK_XYZ, 0, cf, s, undef );
-      emit_arith( &p, FP_OPCODE_MOV, out, WRITEMASK_W, 0, cf, undef, undef );
+      emit_arith( &p, OPCODE_ADD, out, WRITEMASK_XYZ, 0, cf, s, undef );
+      emit_arith( &p, OPCODE_MOV, out, WRITEMASK_W, 0, cf, undef, undef );
    }
    else if (_mesa_memcmp(&cf, &out, sizeof(cf)) != 0) {
       /* Will wind up in here if no texture enabled or a couple of
        * other scenarios (GL_REPLACE for instance).
        */
-      emit_arith( &p, FP_OPCODE_MOV, out, WRITEMASK_XYZW, 0, cf, undef, undef );
+      emit_arith( &p, OPCODE_MOV, out, WRITEMASK_XYZW, 0, cf, undef, undef );
    }
 
    /* Finish up:
     */
-   emit_arith( &p, FP_OPCODE_END, undef, WRITEMASK_XYZW, 0, undef, undef, undef);
+   emit_arith( &p, OPCODE_END, undef, WRITEMASK_XYZW, 0, undef, undef, undef);
 
    if (key->fog_enabled) {
       /* Pull fog mode from GLcontext, the value in the state key is

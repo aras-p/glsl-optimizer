@@ -39,9 +39,8 @@
 #include "mtypes.h"
 #include "nvprogram.h"
 #include "nvfragparse.h"
-#include "nvfragprog.h"
+#include "program_instruction.h"
 #include "nvvertparse.h"
-#include "nvvertprog.h"
 
 
 void GLAPIENTRY

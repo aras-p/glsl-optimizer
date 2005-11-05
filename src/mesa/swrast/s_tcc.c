@@ -33,7 +33,7 @@
 #include "imports.h"
 #include "colormac.h"
 #include "context.h"
-#include "nvfragprog.h"
+#include "program_instruction.h"
 #include "macros.h"
 #include "program.h"
 
