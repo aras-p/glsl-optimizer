@@ -700,7 +700,7 @@ Parse_CondCodeMask(struct parse_state *parseState,
       if (!Parse_SwizzleSuffix(token, swz))
          RETURN_ERROR1("Invalid swizzle suffix");
 
-      dstReg->CondSwizzle = MAKE_SWIZZLE(swz);
+      dstReg->CondSwizzle = MAKE_SWIZZLE4(swz[0], swz[1], swz[2], swz[3]);
    }
 
    return GL_TRUE;
@@ -1073,7 +1073,7 @@ Parse_VectorSrc(struct parse_state *parseState,
       if (!Parse_SwizzleSuffix(token, swz))
          RETURN_ERROR1("Invalid swizzle suffix");
 
-      srcReg->Swizzle = MAKE_SWIZZLE(swz);
+      srcReg->Swizzle = MAKE_SWIZZLE4(swz[0], swz[1], swz[2], swz[3]);
    }
 
    /* Finish absolute value */

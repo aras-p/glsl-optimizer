@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -52,7 +52,6 @@
 #define SWIZZLE_ONE  5		/* keep these values together: KW */
 
 #define MAKE_SWIZZLE4(a,b,c,d) (((a)<<0) | ((b)<<3) | ((c)<<6) | ((d)<<9))
-#define MAKE_SWIZZLE(x)        MAKE_SWIZZLE4((x)[0], (x)[1], (x)[2], (x)[3])
 #define SWIZZLE_NOOP           MAKE_SWIZZLE4(0,1,2,3)
 #define GET_SWZ(swz, idx)      (((swz) >> ((idx)*3)) & 0x7)
 #define GET_BIT(msk, idx)      (((msk) >> (idx)) & 0x1)
@@ -119,7 +118,7 @@ _mesa_delete_program(GLcontext *ctx, struct program *prog);
 
 
 
-/*
+/**
  * Used for describing GL state referenced from inside ARB vertex and
  * fragment programs.
  * A string such as "state.light[0].ambient" gets translated into a
@@ -185,7 +184,7 @@ enum state_index {
 
    STATE_INTERNAL,		/* Mesa additions */
    STATE_NORMAL_SCALE,
-   STATE_POSITION_NORMALIZED
+   STATE_POSITION_NORMALIZED    /* normalized light position */
 };
 
 
@@ -256,7 +255,7 @@ _mesa_load_state_parameters(GLcontext *ctx,
 
 
 /*
- * API functions
+ * API functions common to ARB/NV_vertex/fragment_program
  */
 
 extern void GLAPIENTRY
