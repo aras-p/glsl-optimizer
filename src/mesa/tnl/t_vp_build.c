@@ -492,7 +492,7 @@ static void debug_insn( struct prog_instruction *inst, const char *fn,
       }
 	 
       _mesa_printf("%d:\t", line);
-      _mesa_debug_vp_inst(1, inst);
+      _mesa_print_program(1, inst);
    }
 }
 
