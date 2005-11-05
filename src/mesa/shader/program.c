@@ -961,6 +961,116 @@ _mesa_load_state_parameters(GLcontext *ctx,
 }
 
 
+/**
+ * Basic info about each instruction
+ */
+struct instruction_info
+{
+   enum prog_opcode Opcode;
+   const char *Name;
+   GLuint NumSrcRegs;
+};
+
+/**
+ * Instruction info
+ * \note Opcode should equal array index!
+ */
+static const struct instruction_info InstInfo[MAX_OPCODE] = {
+   { OPCODE_ABS,    "ABS",   1 },
+   { OPCODE_ADD,    "ADD",   2 },
+   { OPCODE_ARL,    "ARL",   1 },
+   { OPCODE_CMP,    "CMP",   3 },
+   { OPCODE_COS,    "COS",   1 },
+   { OPCODE_DDX,    "DDX",   1 },
+   { OPCODE_DDY,    "DDY",   1 },
+   { OPCODE_DP3,    "DP3",   2 },
+   { OPCODE_DP4,    "DP4",   2 },
+   { OPCODE_DPH,    "DPH",   2 },
+   { OPCODE_DST,    "DST",   2 },
+   { OPCODE_END,    "END",   0 },
+   { OPCODE_EX2,    "EX2",   1 },
+   { OPCODE_EXP,    "EXP",   1 },
+   { OPCODE_FLR,    "FLR",   1 },
+   { OPCODE_FRC,    "FRC",   1 },
+   { OPCODE_KIL,    "KIL",   1 },
+   { OPCODE_KIL_NV, "KIL",   0 },
+   { OPCODE_LG2,    "LG2",   1 },
+   { OPCODE_LIT,    "LIT",   1 },
+   { OPCODE_LOG,    "LOG",   1 },
+   { OPCODE_LRP,    "LRP",   3 },
+   { OPCODE_MAD,    "MAD",   3 },
+   { OPCODE_MAX,    "MAX",   2 },
+   { OPCODE_MIN,    "MIN",   2 },
+   { OPCODE_MOV,    "MOV",   1 },
+   { OPCODE_MUL,    "MUL",   2 },
+   { OPCODE_PK2H,   "PK2H",  1 },
+   { OPCODE_PK2US,  "PK2US", 1 },
+   { OPCODE_PK4B,   "PK4B",  1 },
+   { OPCODE_PK4UB,  "PK4UB", 1 },
+   { OPCODE_POW,    "POW",   2 },
+   { OPCODE_PRINT,  "PRINT", 1 },
+   { OPCODE_RCC,    "RCC",   1 },
+   { OPCODE_RCP,    "RCP",   1 },
+   { OPCODE_RFL,    "RFL",   1 },
+   { OPCODE_RSQ,    "RSQ",   1 },
+   { OPCODE_SCS,    "SCS",   1 },
+   { OPCODE_SEQ,    "SEQ",   2 },
+   { OPCODE_SFL,    "SFL",   0 },
+   { OPCODE_SGE,    "SGE",   2 },
+   { OPCODE_SGT,    "SGT",   2 },
+   { OPCODE_SIN,    "SIN",   1 },
+   { OPCODE_SLE,    "SLE",   2 },
+   { OPCODE_SLT,    "SLT",   2 },
+   { OPCODE_SNE,    "SNE",   2 },
+   { OPCODE_STR,    "STR",   0 },
+   { OPCODE_SUB,    "SUB",   2 },
+   { OPCODE_SWZ,    "SWZ",   1 },
+   { OPCODE_TEX,    "TEX",   1 },
+   { OPCODE_TXB,    "TXB",   1 },
+   { OPCODE_TXD,    "TXD",   3 },
+   { OPCODE_TXP,    "TXP",   1 },
+   { OPCODE_TXP_NV, "TXP",   1 },
+   { OPCODE_UP2H,   "UP2H",  1 },
+   { OPCODE_UP2US,  "UP2US", 1 },
+   { OPCODE_UP4B,   "UP4B",  1 },
+   { OPCODE_UP4UB,  "UP4UB", 1 },
+   { OPCODE_X2D,    "X2D",   3 },
+   { OPCODE_XPD,    "XPD",   2 }
+};
+
+
+/**
+ * Return the number of src registers for the given instruction/opcode.
+ */
+GLuint
+_mesa_num_inst_src_regs(enum prog_opcode opcode)
+{
+   GLuint i;
+#ifdef DEBUG
+   for (i = 0; i < MAX_OPCODE; i++) {
+      ASSERT(i == InstInfo[i].Opcode);
+   }
+#endif
+   for (i = 0; i < MAX_OPCODE; i++) {
+      if (InstInfo[i].Opcode == opcode) {
+         return InstInfo[i].NumSrcRegs;
+      }
+   }
+   _mesa_problem(NULL, "invalid opcode in _mesa_num_inst_src_regs");
+   return 0;
+}
+
+
+/**
+ * Return string name for given program opcode.
+ */
+const char *
+_mesa_opcode_string(enum prog_opcode opcode)
+{
+   ASSERT(opcode < MAX_OPCODE);
+   return InstInfo[opcode].Name;
+}
+
 
 /**********************************************************************/
 /* API functions                                                      */

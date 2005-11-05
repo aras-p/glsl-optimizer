@@ -340,5 +340,11 @@ struct prog_instruction
 extern void
 _mesa_init_instruction(struct prog_instruction *inst);
 
+extern GLuint
+_mesa_num_inst_src_regs(enum prog_opcode opcode);
+
+extern const char *
+_mesa_opcode_string(enum prog_opcode opcode);
+
 
 #endif /* PROG_INSTRUCTION_H */
