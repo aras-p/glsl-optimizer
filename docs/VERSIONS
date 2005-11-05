@@ -1419,6 +1419,7 @@ Mesa Version History
 	- added fast XOR-mode line drawing optimization
 	- radeon: add support for all 3 tmus, GL_ARB_texture_cube_map
 	  and GL_EXT_fog_coord
+	- MESA_GLX_ALPHA_BITS env var for xlib driver
     Changes:
 	- removed GL_HP_occlusion_test (use GL_ARB_occlusion_query instead)
     Bug fixes:
