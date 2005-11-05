@@ -190,35 +190,26 @@ enum state_index {
 
 
 
-/*
+/**
  * Named program parameters 
  * Used for NV_fragment_program "DEFINE"d constants and "DECLARE"d parameters,
  * and ARB_fragment_program global state references.  For the later, Name
  * might be "state.light[0].diffuse", for example.
  */
-
-enum parameter_type
-{
-   NAMED_PARAMETER,
-   CONSTANT,
-   STATE
-};
-
-
 struct program_parameter
 {
    const char *Name;                   /* Null-terminated */
-   enum parameter_type Type;
+   enum register_file Type; /** PROGRAM_NAMED_PARAM, CONSTANT or STATE_VAR */
    enum state_index StateIndexes[6];   /* Global state reference */
 };
 
 
 struct program_parameter_list
 {
-   GLuint Size;
-   GLuint NumParameters;
-   struct program_parameter *Parameters;
-   GLfloat (*ParameterValues)[4];
+   GLuint Size;           /** allocated size of Parameters, ParameterValues */
+   GLuint NumParameters;  /** number of parameters in arrays */
+   struct program_parameter *Parameters; /** Array [Size] */
+   GLfloat (*ParameterValues)[4];        /** Array [Size] */
 };
 
 

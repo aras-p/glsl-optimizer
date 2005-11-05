@@ -388,7 +388,7 @@ _mesa_free_parameters(struct program_parameter_list *paramList)
 static GLint
 add_parameter(struct program_parameter_list *paramList,
               const char *name, const GLfloat values[4],
-              enum parameter_type type)
+              enum register_file type)
 {
    const GLuint n = paramList->NumParameters;
 
@@ -443,7 +443,7 @@ GLint
 _mesa_add_named_parameter(struct program_parameter_list *paramList,
                           const char *name, const GLfloat values[4])
 {
-   return add_parameter(paramList, name, values, NAMED_PARAMETER);
+   return add_parameter(paramList, name, values, PROGRAM_NAMED_PARAM);
 }
 
 
@@ -457,7 +457,7 @@ GLint
 _mesa_add_named_constant(struct program_parameter_list *paramList,
                          const char *name, const GLfloat values[4])
 {
-   return add_parameter(paramList, name, values, CONSTANT);
+   return add_parameter(paramList, name, values, PROGRAM_CONSTANT);
 }
 
 
@@ -471,7 +471,7 @@ GLint
 _mesa_add_unnamed_constant(struct program_parameter_list *paramList,
                            const GLfloat values[4])
 {
-   return add_parameter(paramList, NULL, values, CONSTANT);
+   return add_parameter(paramList, NULL, values, PROGRAM_CONSTANT);
 }
 
 
@@ -491,7 +491,7 @@ _mesa_add_state_reference(struct program_parameter_list *paramList,
     */
    GLint index;
 
-   index = add_parameter(paramList, NULL, NULL, STATE);
+   index = add_parameter(paramList, NULL, NULL, PROGRAM_STATE_VAR);
    if (index >= 0) {
       GLuint i;
       for (i = 0; i < 6; i++)
@@ -953,7 +953,7 @@ _mesa_load_state_parameters(GLcontext *ctx,
       return;
 
    for (i = 0; i < paramList->NumParameters; i++) {
-      if (paramList->Parameters[i].Type == STATE) {
+      if (paramList->Parameters[i].Type == PROGRAM_STATE_VAR) {
          _mesa_fetch_state(ctx, 
 			   paramList->Parameters[i].StateIndexes,
                            paramList->ParameterValues[i]);

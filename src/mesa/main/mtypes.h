@@ -1723,20 +1723,23 @@ struct atifs_machine
 
 
 /**
- * Names of the various vertex/fragment register files
+ * Names of the various vertex/fragment program register files, etc.
+ * NOTE: first four tokens must fit into 2 bits (see t_vb_arbprogram.c)
+ * All values should fit in a 4-bit field.
  */
 enum register_file
 {
-   PROGRAM_TEMPORARY,
-   PROGRAM_INPUT,
-   PROGRAM_OUTPUT,
-   PROGRAM_LOCAL_PARAM,
-   PROGRAM_ENV_PARAM,
-   PROGRAM_NAMED_PARAM,
-   PROGRAM_STATE_VAR,
-   PROGRAM_WRITE_ONLY,
-   PROGRAM_ADDRESS,
-   PROGRAM_UNDEFINED   /* invalid value */
+   PROGRAM_TEMPORARY = 0,
+   PROGRAM_LOCAL_PARAM = 1,
+   PROGRAM_ENV_PARAM = 2,
+   PROGRAM_STATE_VAR = 3,
+   PROGRAM_INPUT = 4,
+   PROGRAM_OUTPUT = 5,
+   PROGRAM_NAMED_PARAM = 6,
+   PROGRAM_CONSTANT = 7,
+   PROGRAM_WRITE_ONLY = 8,
+   PROGRAM_ADDRESS = 9,
+   PROGRAM_UNDEFINED = 15  /* invalid value */
 };
 
 

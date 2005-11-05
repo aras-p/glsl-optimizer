@@ -1582,7 +1582,7 @@ PrintSrcReg(const struct fragment_program *program,
       _mesa_printf("-");
    }
    if (src->File == PROGRAM_NAMED_PARAM) {
-      if (program->Parameters->Parameters[src->Index].Type == CONSTANT) {
+      if (program->Parameters->Parameters[src->Index].Type == PROGRAM_CONSTANT) {
          _mesa_printf("{%g, %g, %g, %g}",
                 program->Parameters->ParameterValues[src->Index][0],
                 program->Parameters->ParameterValues[src->Index][1],
@@ -1591,7 +1591,7 @@ PrintSrcReg(const struct fragment_program *program,
       }
       else {
          ASSERT(program->Parameters->Parameters[src->Index].Type
-                == NAMED_PARAMETER);
+                == PROGRAM_NAMED_PARAM);
          _mesa_printf("%s", program->Parameters->Parameters[src->Index].Name);
       }
    }
