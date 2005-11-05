@@ -158,19 +158,22 @@ void dump_program_params(GLcontext *ctx, struct vertex_program *vp)
 		
 		switch(vp->Parameters->Parameters[pi].Type){
 			
-		case NAMED_PARAMETER:
+		case PROGRAM_NAMED_PARAM:
 			fprintf(stderr, "%s", vp->Parameters->Parameters[pi].Name);
 			fprintf(stderr, "(NAMED_PARAMETER)");
 		break;
 		
-		case CONSTANT:
+		case PROGRAM_CONSTANT:
 			fprintf(stderr, "(CONSTANT)");
 		break;
 		
-		case STATE:
+		case PROGRAM_STATE_VAR:
 			fprintf(stderr, "(STATE)\n");
 		break;
-
+		
+		default:
+			fprintf(stderr, "(UNK)\n");
+		break;
 		}
 		
 		fprintf(stderr, "{ ");
@@ -259,10 +262,10 @@ int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp, f
 	for(pi=0; pi < mesa_vp->Parameters->NumParameters; pi++){
 		switch(mesa_vp->Parameters->Parameters[pi].Type){
 			
-		case STATE:
-		case NAMED_PARAMETER:
+		case PROGRAM_STATE_VAR:
+		case PROGRAM_NAMED_PARAM:
 			//fprintf(stderr, "%s", vp->Parameters->Parameters[pi].Name);
-		case CONSTANT:
+		case PROGRAM_CONSTANT:
 			*dst++=mesa_vp->Parameters->ParameterValues[pi][0];
 			*dst++=mesa_vp->Parameters->ParameterValues[pi][1];
 			*dst++=mesa_vp->Parameters->ParameterValues[pi][2];
@@ -962,9 +965,10 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 	
 	vp->program.length=(o_inst - vp->program.body.i) * 4;
 	
-	if(u_temp_i < vp->num_temporaries)
-		vp->translated=GL_FALSE; /* temps exhausted - program cannot be run */
-	else
+	if(u_temp_i < vp->num_temporaries){
+		WARN_ONCE("Ran out of temps, num temps %d, us %d\n", vp->num_temporaries, u_temp_i);
+		vp->translated=GL_TRUE; //GL_FALSE; /* temps exhausted - program cannot be run */
+	}else
 		vp->translated=GL_TRUE;
 }
 
