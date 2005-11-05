@@ -191,7 +191,7 @@ static GLuint get_result_flags( const struct prog_instruction *inst )
    return flags;
 }
 
-static GLuint translate_tex_src_idx( struct i915_fragment_program *p,
+static GLuint translate_tex_src_target( struct i915_fragment_program *p,
 				     GLubyte bit )
 {
    switch (bit) {
@@ -206,7 +206,7 @@ static GLuint translate_tex_src_idx( struct i915_fragment_program *p,
 
 #define EMIT_TEX( OP )						\
 do {								\
-   GLuint dim = translate_tex_src_idx( p, inst->TexSrcIdx );	\
+   GLuint dim = translate_tex_src_target( p, inst->TexSrcTarget );	\
    GLuint sampler = i915_emit_decl(p, REG_TYPE_S,		\
 				  inst->TexSrcUnit, dim);	\
    GLuint coord = src_vector( p, &inst->SrcReg[0], program);	\
