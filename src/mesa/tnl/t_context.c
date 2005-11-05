@@ -35,7 +35,6 @@
 #include "dlist.h"
 #include "light.h"
 #include "vtxfmt.h"
-#include "nvfragprog.h"
 
 #include "tnl.h"
 #include "t_array_api.h"

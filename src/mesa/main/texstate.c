@@ -33,16 +33,13 @@
 #include "colortab.h"
 #include "context.h"
 #include "enums.h"
-#include "extensions.h"
 #include "macros.h"
-#include "nvfragprog.h"
 #include "texobj.h"
 #include "teximage.h"
 #include "texstate.h"
 #include "texenvprogram.h"
 #include "mtypes.h"
 #include "math/m_xform.h"
-#include "math/m_matrix.h"
 
 
 

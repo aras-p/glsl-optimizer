@@ -87,7 +87,6 @@
 #include "nvprogram.h"
 #endif
 #if FEATURE_NV_fragment_program
-#include "nvfragprog.h"
 #include "nvprogram.h"
 #include "program.h"
 #include "texenvprogram.h"
