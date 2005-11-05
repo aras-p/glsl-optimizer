@@ -1074,8 +1074,8 @@ _mesa_opcode_string(enum prog_opcode opcode)
 /**
  * Return string name for given program/register file.
  */
-const char *
-_mesa_program_file_string(enum register_file f)
+static const char *
+program_file_string(enum register_file f)
 {
    switch (f) {
    case PROGRAM_TEMPORARY:
@@ -1102,6 +1102,125 @@ _mesa_program_file_string(enum register_file f)
       return "!unkown!";
    }
 }
+
+
+/**
+ * Return a string representation of the given swizzle word.
+ */
+static const char *
+swizzle_string(GLuint swizzle, GLuint negateBase)
+{
+   static const char swz[] = "xyzw01";
+   static char s[20];
+   GLuint i = 0;
+
+   if (swizzle == SWIZZLE_NOOP && negateBase == 0)
+      return ""; /* no swizzle/negation */
+
+   s[i++] = '.';
+
+   if (negateBase & 0x1)
+      s[i++] = '-';
+   s[i++] = swz[GET_SWZ(swizzle, 0)];
+
+   if (negateBase & 0x2)
+      s[i++] = '-';
+   s[i++] = swz[GET_SWZ(swizzle, 1)];
+
+   if (negateBase & 0x4)
+      s[i++] = '-';
+   s[i++] = swz[GET_SWZ(swizzle, 2)];
+
+   if (negateBase & 0x8)
+      s[i++] = '-';
+   s[i++] = swz[GET_SWZ(swizzle, 3)];
+
+   s[i] = 0;
+   return s;
+}
+
+
+static const char *
+writemask_string(GLuint writeMask)
+{
+   static char s[10];
+   GLuint i = 0;
+
+   if (writeMask == WRITEMASK_XYZW)
+      return "";
+
+   s[i++] = '.';
+   if (writeMask & WRITEMASK_X)
+      s[i++] = 'x';
+   if (writeMask & WRITEMASK_Y)
+      s[i++] = 'y';
+   if (writeMask & WRITEMASK_Z)
+      s[i++] = 'z';
+   if (writeMask & WRITEMASK_W)
+      s[i++] = 'w';
+
+   s[i] = 0;
+   return s;
+}
+
+
+/**
+ * Print a vertx/fragment program to stdout.
+ * XXX this function could be greatly improved.
+ */
+void
+_mesa_print_program(GLuint count, const struct prog_instruction *inst)
+{
+   GLuint i;
+
+   for (i = 0; i < count; i++) {
+      /* inst number */
+      _mesa_printf("%3d: ", i);
+
+      switch (inst[i].Opcode) {
+      case OPCODE_PRINT:
+         _mesa_printf("PRINT %s\n", inst->Data);
+         break;
+      /* XXX check for a bunch of other special-case instructions */
+      default:
+         /* typical alu instruction */
+         {
+            const GLuint numRegs = _mesa_num_inst_src_regs(inst[i].Opcode);
+            GLuint j;
+
+            _mesa_printf("%s", _mesa_opcode_string(inst[i].Opcode));
+
+            /* frag prog only */
+            if (inst[i].Saturate)
+               _mesa_printf("_SAT");
+
+            if (inst[i].DstReg.File != PROGRAM_UNDEFINED) {
+               _mesa_printf(" %s[%d]%s",
+                            program_file_string(inst[i].DstReg.File),
+                            inst[i].DstReg.Index,
+                            writemask_string(inst[i].DstReg.WriteMask));
+            }
+
+            if (numRegs > 0)
+               _mesa_printf(", ");
+
+            for (j = 0; j < numRegs; j++) {
+               _mesa_printf("%s[%d]%s",
+                            program_file_string(inst[i].SrcReg[j].File),
+                            inst[i].SrcReg[j].Index,
+                            swizzle_string(inst[i].SrcReg[j].Swizzle,
+                                           inst[i].SrcReg[j].NegateBase));
+               if (j + 1 < numRegs)
+                  _mesa_printf(", ");
+            }
+
+            _mesa_printf(";\n");
+         }
+      }
+   }
+}
+
+
 
 
 /**********************************************************************/

@@ -46,89 +46,6 @@
 
 
 /**
- * XXX this is probably redundant.  We've already got code like this
- * in the nvvertparse.c file.  Combine/clean-up someday.
- */
-void _mesa_debug_vp_inst(GLint num, struct prog_instruction *vp)
-{
-   GLint a;
-   static const char swz[] = "xyzw01??";
-
-   for (a=0; a<num; a++) {
-      _mesa_printf("%s", _mesa_opcode_string(vp[a].Opcode));
-
-      if (vp[a].DstReg.File != 0xf) {
-	 if (vp[a].DstReg.WriteMask != 0xf)
-	    _mesa_printf(" %s[%d].%s%s%s%s ",
-                         _mesa_program_file_string(vp[a].DstReg.File),
-                         vp[a].DstReg.Index,
-			 GET_BIT(vp[a].DstReg.WriteMask, 0) ? "x" : "",
-			 GET_BIT(vp[a].DstReg.WriteMask, 1) ? "y" : "",
-			 GET_BIT(vp[a].DstReg.WriteMask, 2) ? "z" : "",
-			 GET_BIT(vp[a].DstReg.WriteMask, 3) ? "w" : "");
-	 else
-	    _mesa_printf(" %s[%d] ",
-                         _mesa_program_file_string(vp[a].DstReg.File),
-                         vp[a].DstReg.Index);
-      }
-
-      if (vp[a].SrcReg[0].File != 0xf) {
-	 if (vp[a].SrcReg[0].Swizzle != SWIZZLE_NOOP ||
-	     vp[a].SrcReg[0].NegateBase)
-	    _mesa_printf("%s[%d].%s%c%c%c%c ",
-                         _mesa_program_file_string(vp[a].SrcReg[0].File),
-                         vp[a].SrcReg[0].Index,
-			 vp[a].SrcReg[0].NegateBase ? "-" : "",
-			 swz[GET_SWZ(vp[a].SrcReg[0].Swizzle, 0)],
-			 swz[GET_SWZ(vp[a].SrcReg[0].Swizzle, 1)],
-			 swz[GET_SWZ(vp[a].SrcReg[0].Swizzle, 2)],
-			 swz[GET_SWZ(vp[a].SrcReg[0].Swizzle, 3)]);
-	 else
-	    _mesa_printf("%s[%d] ",
-                         _mesa_program_file_string(vp[a].SrcReg[0].File),
-                         vp[a].SrcReg[0].Index);
-      }
-
-      if (vp[a].SrcReg[1].File != 0xf) {
-	 if (vp[a].SrcReg[1].Swizzle != SWIZZLE_NOOP ||
-	     vp[a].SrcReg[1].NegateBase)
-	    _mesa_printf("%s[%d].%s%c%c%c%c ",
-                         _mesa_program_file_string(vp[a].SrcReg[1].File),
-                         vp[a].SrcReg[1].Index,
-			 vp[a].SrcReg[1].NegateBase ? "-" : "",
-			 swz[GET_SWZ(vp[a].SrcReg[1].Swizzle, 0)],
-			 swz[GET_SWZ(vp[a].SrcReg[1].Swizzle, 1)],
-			 swz[GET_SWZ(vp[a].SrcReg[1].Swizzle, 2)],
-			 swz[GET_SWZ(vp[a].SrcReg[1].Swizzle, 3)]);
-	 else
-	    _mesa_printf("%s[%d] ",
-                         _mesa_program_file_string(vp[a].SrcReg[1].File),
-                         vp[a].SrcReg[1].Index);
-      }
-
-      if (vp[a].SrcReg[2].File != 0xf) {
-	 if (vp[a].SrcReg[2].Swizzle != SWIZZLE_NOOP ||
-	     vp[a].SrcReg[2].NegateBase)
-	    _mesa_printf("%s[%d].%s%c%c%c%c ",
-                         _mesa_program_file_string(vp[a].SrcReg[2].File),
-                         vp[a].SrcReg[2].Index,
-			 vp[a].SrcReg[2].NegateBase ? "-" : "",
-			 swz[GET_SWZ(vp[a].SrcReg[2].Swizzle, 0)],
-			 swz[GET_SWZ(vp[a].SrcReg[2].Swizzle, 1)],
-			 swz[GET_SWZ(vp[a].SrcReg[2].Swizzle, 2)],
-			 swz[GET_SWZ(vp[a].SrcReg[2].Swizzle, 3)]);
-	 else
-	    _mesa_printf("%s[%d] ",
-                         _mesa_program_file_string(vp[a].SrcReg[2].File),
-                         vp[a].SrcReg[2].Index);
-      }
-
-      _mesa_printf("\n");
-   }
-}
-
-
-/**
  * Parse the vertex program string.  If success, update the given
  * vertex_program object with the new program.  Else, leave the vertex_program
  * object unchanged.
@@ -181,7 +98,7 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
    }
    program->Parameters     = ap.Parameters; 
 
-#if DEBUG_VP
-   _mesa_debug_vp_inst(ap.Base.NumInstructions, ap.VPInstructions);
+#if 1/*DEBUG_VP*/
+   _mesa_print_program(ap.Base.NumInstructions, ap.VPInstructions);
 #endif
 }

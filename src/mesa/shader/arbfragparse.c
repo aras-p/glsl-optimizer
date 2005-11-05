@@ -39,93 +39,6 @@
 #include "arbprogparse.h"
 #include "arbfragparse.h"
 
-void
-_mesa_debug_fp_inst(GLint num, struct prog_instruction *fp)
-{
-   GLint a;
-   static const char swz[] = "xyzw01??";
-
-   for (a=0; a<num; a++) {
-      _mesa_printf("%s", _mesa_opcode_string(fp[a].Opcode));
-
-      if (fp[a].Saturate)
-	 _mesa_printf("_SAT");
-
-      if (fp[a].DstReg.File != 0xf) {
-	 if (fp[a].DstReg.WriteMask != 0xf)
-	    _mesa_printf(" %s[%d].%s%s%s%s ",
-                         _mesa_program_file_string(fp[a].DstReg.File),
-                         fp[a].DstReg.Index,
-			 GET_BIT(fp[a].DstReg.WriteMask, 0) ? "x" : "",
-			 GET_BIT(fp[a].DstReg.WriteMask, 1) ? "y" : "",
-			 GET_BIT(fp[a].DstReg.WriteMask, 2) ? "z" : "",
-			 GET_BIT(fp[a].DstReg.WriteMask, 3) ? "w" : "");
-	 else
-	    _mesa_printf(" %s[%d] ",
-                         _mesa_program_file_string(fp[a].DstReg.File),
-                         fp[a].DstReg.Index);
-      }
-
-      /* Examine each bit of negatebase here as this may be a SWZ instruction
-       */
-      if (fp[a].SrcReg[0].File != 0xf) {
-	 if (fp[a].SrcReg[0].Swizzle != SWIZZLE_NOOP ||
-	     fp[a].SrcReg[0].NegateBase)
-	    _mesa_printf("%s[%d].%s%c%s%c%s%c%s%c ",
-                         _mesa_program_file_string(fp[a].SrcReg[0].File),
-                         fp[a].SrcReg[0].Index,
-			 GET_BIT(fp[a].SrcReg[0].NegateBase, 0) ? "-" : "",
-			 swz[GET_SWZ(fp[a].SrcReg[0].Swizzle, 0)],
-			 GET_BIT(fp[a].SrcReg[0].NegateBase, 0) ? "-" : "",
-			 swz[GET_SWZ(fp[a].SrcReg[0].Swizzle, 1)],
-			 GET_BIT(fp[a].SrcReg[0].NegateBase, 0) ? "-" : "",
-			 swz[GET_SWZ(fp[a].SrcReg[0].Swizzle, 2)],
-			 GET_BIT(fp[a].SrcReg[0].NegateBase, 0) ? "-" : "",
-			 swz[GET_SWZ(fp[a].SrcReg[0].Swizzle, 3)]);
-	 else
-	    _mesa_printf("%s[%d] ",
-                         _mesa_program_file_string(fp[a].SrcReg[0].File),
-                         fp[a].SrcReg[0].Index);
-      }
-
-      if (fp[a].SrcReg[1].File != 0xf) {
-	 if (fp[a].SrcReg[1].Swizzle != SWIZZLE_NOOP ||
-	     fp[a].SrcReg[1].NegateBase)
-	    _mesa_printf("%s[%d].%s%c%c%c%c ",
-                         _mesa_program_file_string(fp[a].SrcReg[1].File),
-                         fp[a].SrcReg[1].Index,
-			 fp[a].SrcReg[1].NegateBase ? "-" : "",
-			 swz[GET_SWZ(fp[a].SrcReg[1].Swizzle, 0)],
-			 swz[GET_SWZ(fp[a].SrcReg[1].Swizzle, 1)],
-			 swz[GET_SWZ(fp[a].SrcReg[1].Swizzle, 2)],
-			 swz[GET_SWZ(fp[a].SrcReg[1].Swizzle, 3)]);
-	 else
-	    _mesa_printf("%s[%d] ",
-                         _mesa_program_file_string(fp[a].SrcReg[1].File),
-                         fp[a].SrcReg[1].Index);
-      }
-
-      if (fp[a].SrcReg[2].File != 0xf) {
-	 if (fp[a].SrcReg[2].Swizzle != SWIZZLE_NOOP ||
-	     fp[a].SrcReg[2].NegateBase)
-	    _mesa_printf("%s[%d].%s%c%c%c%c ",
-                         _mesa_program_file_string(fp[a].SrcReg[2].File),
-                         fp[a].SrcReg[2].Index,
-			 fp[a].SrcReg[1].NegateBase ? "-" : "",
-			 swz[GET_SWZ(fp[a].SrcReg[2].Swizzle, 0)],
-			 swz[GET_SWZ(fp[a].SrcReg[2].Swizzle, 1)],
-			 swz[GET_SWZ(fp[a].SrcReg[2].Swizzle, 2)],
-			 swz[GET_SWZ(fp[a].SrcReg[2].Swizzle, 3)]);
-	 else
-	    _mesa_printf("%s[%d] ",
-                         _mesa_program_file_string(fp[a].SrcReg[2].File),
-                         fp[a].SrcReg[2].Index);
-      }
-
-      _mesa_printf("\n");
-   }
-}
-
 
 void
 _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
@@ -182,6 +95,6 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
    program->FogOption          = ap.FogOption;
 
 #if DEBUG_FP
-   _mesa_debug_fp_inst(ap.Base.NumInstructions, ap.FPInstructions);
+   _mesa_print_program(ap.Base.NumInstructions, ap.FPInstructions);
 #endif
 }

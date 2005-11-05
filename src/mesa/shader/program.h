@@ -254,6 +254,11 @@ _mesa_load_state_parameters(GLcontext *ctx,
                             struct program_parameter_list *paramList);
 
 
+
+extern void
+_mesa_print_program(GLuint count, const struct prog_instruction *inst);
+
+
 /*
  * API functions common to ARB/NV_vertex/fragment_program
  */
