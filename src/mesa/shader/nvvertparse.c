@@ -293,18 +293,6 @@ static const char *OutputRegisters[MAX_NV_VERTEX_PROGRAM_OUTPUTS + 1] = {
    "PSIZ", "BFC0", "BFC1", NULL
 };
 
-/* NOTE: the order here must match opcodes in program_instruction.h */
-static const char *Opcodes[] = {
-   "MOV", "LIT", "RCP", "RSQ", "EXP", "LOG", "MUL", "ADD", "DP3", "DP4",
-   "DST", "MIN", "MAX", "SLT", "SGE", "MAD", "ARL", "DPH", "RCC", "SUB",
-   "ABS", "END",
-   /* GL_ARB_vertex_program */
-   "FLR", "FRC", "EX2", "LG2", "POW", "XPD", "SWZ",
-   /* Mesa-specific */
-   "PRINT",
-   NULL
-};
-
 
 
 /**
@@ -1502,6 +1490,8 @@ PrintDstReg(const struct prog_dst_register *dst)
 void
 _mesa_print_nv_vertex_instruction(const struct prog_instruction *inst)
 {
+   GLuint i, n;
+
    switch (inst->Opcode) {
       case OPCODE_MOV:
       case OPCODE_LIT:
@@ -1511,12 +1501,6 @@ _mesa_print_nv_vertex_instruction(const struct prog_instruction *inst)
       case OPCODE_LOG:
       case OPCODE_RCC:
       case OPCODE_ABS:
-         _mesa_printf("%s ", Opcodes[(int) inst->Opcode]);
-         PrintDstReg(&inst->DstReg);
-         _mesa_printf(", ");
-         PrintSrcReg(&inst->SrcReg[0]);
-         _mesa_printf(";\n");
-         break;
       case OPCODE_MUL:
       case OPCODE_ADD:
       case OPCODE_DP3:
@@ -1528,23 +1512,16 @@ _mesa_print_nv_vertex_instruction(const struct prog_instruction *inst)
       case OPCODE_SGE:
       case OPCODE_DPH:
       case OPCODE_SUB:
-         _mesa_printf("%s ", Opcodes[(int) inst->Opcode]);
-         PrintDstReg(&inst->DstReg);
-         _mesa_printf(", ");
-         PrintSrcReg(&inst->SrcReg[0]);
-         _mesa_printf(", ");
-         PrintSrcReg(&inst->SrcReg[1]);
-         _mesa_printf(";\n");
-         break;
       case OPCODE_MAD:
-         _mesa_printf("MAD ");
+         _mesa_printf("%s ", _mesa_opcode_string(inst->Opcode));
          PrintDstReg(&inst->DstReg);
          _mesa_printf(", ");
-         PrintSrcReg(&inst->SrcReg[0]);
-         _mesa_printf(", ");
-         PrintSrcReg(&inst->SrcReg[1]);
-         _mesa_printf(", ");
-         PrintSrcReg(&inst->SrcReg[2]);
+         n = _mesa_num_inst_src_regs(inst->Opcode);
+         for (i = 0; i < n; i++) {
+            PrintSrcReg(&inst->SrcReg[i]);
+            if (i + 1 < n)
+               _mesa_printf(", ");
+         }
          _mesa_printf(";\n");
          break;
       case OPCODE_ARL:
