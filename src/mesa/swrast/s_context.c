@@ -32,9 +32,6 @@
 #include "colormac.h"
 #include "mtypes.h"
 #include "program.h"
-#include "texobj.h"
-#include "nvfragprog.h"
-
 #include "swrast.h"
 #include "s_blend.h"
 #include "s_context.h"

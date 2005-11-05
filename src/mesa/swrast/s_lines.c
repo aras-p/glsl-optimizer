@@ -27,7 +27,6 @@
 #include "context.h"
 #include "colormac.h"
 #include "macros.h"
-#include "nvfragprog.h"
 #include "s_aaline.h"
 #include "s_context.h"
 #include "s_depth.h"
