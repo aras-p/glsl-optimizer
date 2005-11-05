@@ -47,13 +47,6 @@
 
 #define DISASSEM 0
 
-/*--------------------------------------------------------------------------- */
-
-struct opcode_info {
-   GLuint nr_args;
-   const char *string;
-   void (*print)( union instruction , const struct opcode_info * );
-};
 
 struct compilation {
    GLuint reg_active;
@@ -565,13 +558,13 @@ static void print_reg( GLuint file, GLuint reg )
 }
 
 
-static void print_RSW( union instruction op, const struct opcode_info *info )
+static void print_RSW( union instruction op )
 {
    GLuint swz = op.rsw.swz;
    GLuint neg = op.rsw.neg;
    GLuint i;
 
-   _mesa_printf("%s ", info->string);
+   _mesa_printf("RSW ");
    print_reg(0, op.rsw.dst);
    _mesa_printf(", ");
    print_reg(op.rsw.file0, op.rsw.idx0);
@@ -586,22 +579,22 @@ static void print_RSW( union instruction op, const struct opcode_info *info )
 }
 
 
-static void print_ALU( union instruction op, const struct opcode_info *info )
+static void print_ALU( union instruction op )
 {
-   _mesa_printf("%s ", info->string);
+   _mesa_printf("%s ", _mesa_opcode_string(op.alu.opcode));
    print_reg(0, op.alu.dst);
    _mesa_printf(", ");
    print_reg(op.alu.file0, op.alu.idx0);
-   if (info->nr_args > 1) {
+   if (_mesa_num_inst_src_regs(op.alu.opcode) > 1) {
       _mesa_printf(", ");
       print_reg(op.alu.file1, op.alu.idx1);
    }
    _mesa_printf("\n");
 }
 
-static void print_MSK( union instruction op, const struct opcode_info *info )
+static void print_MSK( union instruction op )
 {
-   _mesa_printf("%s ", info->string);
+   _mesa_printf("MSK ");
    print_reg(0, op.msk.dst);
    print_mask(op.msk.mask);
    _mesa_printf(", ");
@@ -609,82 +602,60 @@ static void print_MSK( union instruction op, const struct opcode_info *info )
    _mesa_printf("\n");
 }
 
-
-static void print_NOP( union instruction op, const struct opcode_info *info )
+static void print_NOP( union instruction op )
 {
 }
 
-static const struct opcode_info opcode_info[MAX_OPCODE + 3] = 
+void
+_tnl_disassem_vba_insn( union instruction op )
 {
-   { 1, "ABS", print_ALU },
-   { 2, "ADD", print_ALU },
-   { 1, "ARL", print_NOP },
-   {-1, "CMP", NULL },
-   {-1, "COS", NULL },
-   {-1, "DDX", NULL },
-   {-1, "DDY", NULL },
-   { 2, "DP3", print_ALU },
-   { 2, "DP4", print_ALU },
-   { 2, "DPH", print_ALU },
-   { 2, "DST", print_ALU },
-   { 0, "END", print_NOP },
-   { 1, "EX2", print_ALU },
-   { 1, "EXP", print_ALU },
-   { 1, "FLR", print_ALU },
-   { 1, "FRC", print_ALU },
-   {-1, "KIL", NULL },
-   {-1, "KIL_NV", NULL },
-   { 1, "LG2", print_ALU },
-   { 1, "LIT", print_ALU },
-   { 1, "LOG", print_ALU },
-   {-1, "LRP", NULL },
-   { 3, "MAD", print_NOP },
-   { 2, "MAX", print_ALU },
-   { 2, "MIN", print_ALU },
-   { 1, "MOV", print_ALU },
-   { 2, "MUL", print_ALU },
-   {-1, "PK2H", NULL },
-   {-1, "PK2US", NULL },
-   {-1, "PK4B", NULL },
-   {-1, "PK4UB", NULL },
-   { 2, "POW", print_ALU },
-   { 1, "PRT", print_ALU }, /* PRINT */
-   { 1, "RCC", print_NOP },
-   { 1, "RCP", print_ALU },
-   {-1, "RFL", NULL },
-   { 1, "RSQ", print_ALU },
-   {-1, "SCS", NULL },
-   {-1, "SEQ", NULL },
-   {-1, "SFL", NULL },
-   { 2, "SGE", print_ALU },
-   {-1, "SGT", NULL },
-   {-1, "SIN", NULL },
-   {-1, "SLE", NULL },
-   { 2, "SLT", print_ALU },
-   {-1, "SNE", NULL },
-   {-1, "STR", NULL },
-   { 2, "SUB", print_ALU },
-   { 1, "SWZ", print_NOP },
-   {-1, "TEX", NULL },
-   {-1, "TXB", NULL },
-   {-1, "TXD", NULL },
-   {-1, "TXP", NULL },
-   {-1, "TXP_NV", NULL },
-   {-1, "UP2H", NULL },
-   {-1, "UP2US", NULL },
-   {-1, "UP4B", NULL },
-   {-1, "UP4UB", NULL },
-   {-1, "X2d", NULL },
-   { 2, "XPD", print_ALU },
-   { 1, "RSW", print_RSW },
-   { 2, "MSK", print_MSK },
-   { 1, "REL", print_ALU },
-};
-
-void _tnl_disassem_vba_insn( union instruction op )
-{
-   const struct opcode_info *info = &opcode_info[op.alu.opcode];
-   info->print( op, info );
+   switch (op.alu.opcode) {
+   case OPCODE_ABS:
+   case OPCODE_ADD:
+   case OPCODE_DP3:
+   case OPCODE_DP4:
+   case OPCODE_DPH:
+   case OPCODE_DST:
+   case OPCODE_EX2:
+   case OPCODE_EXP:
+   case OPCODE_FLR:
+   case OPCODE_FRC:
+   case OPCODE_LG2:
+   case OPCODE_LIT:
+   case OPCODE_LOG:
+   case OPCODE_MAX:
+   case OPCODE_MIN:
+   case OPCODE_MOV:
+   case OPCODE_MUL:
+   case OPCODE_POW:
+   case OPCODE_PRINT:
+   case OPCODE_RCP:
+   case OPCODE_RSQ:
+   case OPCODE_SGE:
+   case OPCODE_SLT:
+   case OPCODE_SUB:
+   case OPCODE_XPD:
+      print_ALU(op);
+      break;
+   case OPCODE_ARL:
+   case OPCODE_END:
+   case OPCODE_MAD:
+   case OPCODE_RCC:
+   case OPCODE_SWZ:
+      print_NOP(op);
+      break;
+   case RSW:
+      print_RSW(op);
+      break;
+   case MSK:
+      print_MSK(op);
+      break;
+   case REL:
+      print_ALU(op);
+      break;
+   default:
+      _mesa_problem(NULL, "Bad opcode in _tnl_disassem_vba_insn()");
+   }
 }
 
 
@@ -959,11 +930,10 @@ static struct reg cvp_emit_rsw( struct compilation *cp,
 static void cvp_emit_inst( struct compilation *cp,
 			   const struct prog_instruction *inst )
 {
-   const struct opcode_info *info = &opcode_info[inst->Opcode];
    union instruction *op;
    union instruction fixup;
    struct reg reg[3];
-   GLuint result, i;
+   GLuint result, nr_args, i;
 
    assert(sizeof(*op) == sizeof(GLuint));
 
@@ -1070,7 +1040,8 @@ static void cvp_emit_inst( struct compilation *cp,
 
    default:
       result = cvp_choose_result( cp, &inst->DstReg, &fixup );
-      for (i = 0; i < info->nr_args; i++) 
+      nr_args = _mesa_num_inst_src_regs(inst->Opcode);
+      for (i = 0; i < nr_args; i++) 
 	 reg[i] = cvp_emit_arg( cp, &inst->SrcReg[i], REG_ARG0 + i );
 
       op = cvp_next_instruction(cp);
