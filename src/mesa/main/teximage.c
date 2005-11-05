@@ -1089,18 +1089,18 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
    img->Height = height;
    img->Depth = depth;
    img->RowStride = width;
-   img->WidthLog2 = logbase2(width - 2 * border);
+   img->Width2 = width - 2 * border;   /* == 1 << img->WidthLog2; */
+   img->Height2 = height - 2 * border; /* == 1 << img->HeightLog2; */
+   img->Depth2 = depth - 2 * border;   /* == 1 << img->DepthLog2; */
+   img->WidthLog2 = logbase2(img->Width2);
    if (height == 1)  /* 1-D texture */
       img->HeightLog2 = 0;
    else
-      img->HeightLog2 = logbase2(height - 2 * border);
+      img->HeightLog2 = logbase2(img->Height2);
    if (depth == 1)   /* 2-D texture */
       img->DepthLog2 = 0;
    else
-      img->DepthLog2 = logbase2(depth - 2 * border);
-   img->Width2 = width - 2 * border; /*1 << img->WidthLog2;*/
-   img->Height2 = height - 2 * border; /*1 << img->HeightLog2;*/
-   img->Depth2 = depth - 2 * border; /*1 << img->DepthLog2;*/
+      img->DepthLog2 = logbase2(img->Depth2);
    img->MaxLog2 = MAX2(img->WidthLog2, img->HeightLog2);
    img->IsCompressed = is_compressed_format(ctx, internalFormat);
    if (img->IsCompressed)
@@ -1109,9 +1109,9 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
    else
       img->CompressedSize = 0;
 
-   if ((width == 1 || _mesa_bitcount(width - 2 * border) == 1) &&
-       (height == 1 || _mesa_bitcount(height - 2 * border) == 1) &&
-       (depth == 1 || _mesa_bitcount(depth - 2 * border) == 1))
+   if ((width == 1 || _mesa_bitcount(img->Width2) == 1) &&
+       (height == 1 || _mesa_bitcount(img->Height2) == 1) &&
+       (depth == 1 || _mesa_bitcount(img->Depth2) == 1))
       img->_IsPowerOfTwo = GL_TRUE;
    else
       img->_IsPowerOfTwo = GL_FALSE;
