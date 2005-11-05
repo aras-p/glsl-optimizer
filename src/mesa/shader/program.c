@@ -1071,6 +1071,38 @@ _mesa_opcode_string(enum prog_opcode opcode)
    return InstInfo[opcode].Name;
 }
 
+/**
+ * Return string name for given program/register file.
+ */
+const char *
+_mesa_program_file_string(enum register_file f)
+{
+   switch (f) {
+   case PROGRAM_TEMPORARY:
+      return "TEMP";
+   case PROGRAM_LOCAL_PARAM:
+      return "LOCAL";
+   case PROGRAM_ENV_PARAM:
+      return "ENV";
+   case PROGRAM_STATE_VAR:
+      return "STATE";
+   case PROGRAM_INPUT:
+      return "INPUT";
+   case PROGRAM_OUTPUT:
+      return "OUTPUT";
+   case PROGRAM_NAMED_PARAM:
+      return "NAMED";
+   case PROGRAM_CONSTANT:
+      return "CONST";
+   case PROGRAM_WRITE_ONLY:
+      return "WRITE_ONLY";
+   case PROGRAM_ADDRESS:
+      return "ADDR";
+   default:
+      return "!unkown!";
+   }
+}
+
 
 /**********************************************************************/
 /* API functions                                                      */
