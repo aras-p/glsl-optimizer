@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -537,51 +537,6 @@ static void assign4_replicate( struct fragment_program *p,
 }
 	 
 
-/**
- * XXX This should go away.
- */
-static GLuint nr_args( GLuint opcode )
-{
-   switch (opcode) {
-   case OPCODE_ABS: return 1;
-   case OPCODE_ADD: return 2;
-   case OPCODE_CMP: return 3;
-   case OPCODE_COS: return 1;
-   case OPCODE_DP3: return 2;
-   case OPCODE_DP4: return 2;
-   case OPCODE_DPH: return 2;
-   case OPCODE_DST: return 2;
-   case OPCODE_EX2: return 1;
-   case OPCODE_FLR: return 1;
-   case OPCODE_FRC: return 1;
-   case OPCODE_KIL: return 1;
-   case OPCODE_LG2: return 1;
-   case OPCODE_LIT: return 1;
-   case OPCODE_LRP: return 3;
-   case OPCODE_MAD: return 3;
-   case OPCODE_MAX: return 2;
-   case OPCODE_MIN: return 2;
-   case OPCODE_MOV: return 1;
-   case OPCODE_MUL: return 2;
-   case OPCODE_POW: return 2;
-   case OPCODE_RCP: return 1;
-   case OPCODE_RSQ: return 1;
-   case OPCODE_SCS: return 1;
-   case OPCODE_SGE: return 2;
-   case OPCODE_SIN: return 1;
-   case OPCODE_SLT: return 2;
-   case OPCODE_SUB: return 2;
-   case OPCODE_SWZ: return 1;
-   case OPCODE_TEX: return 1;
-   case OPCODE_TXB: return 1;
-   case OPCODE_TXP: return 1;
-   case OPCODE_XPD: return 2;
-   default: return 0;
-   }
-}
-
-
-
 static void translate_program( struct fragment_program *p )
 {
    const struct prog_instruction *inst = p->Instructions;
@@ -589,7 +544,7 @@ static void translate_program( struct fragment_program *p )
    for (; inst->Opcode != OPCODE_END; inst++) {
 
       GLuint src[3], i;
-      GLuint nr = nr_args( inst->Opcode );
+      GLuint nr = _mesa_num_inst_src_regs( inst->Opcode );
       
       for (i = 0; i < nr; i++) 
 	 src[i] = src_vector( &inst->SrcReg[i] );
