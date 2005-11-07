@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,18 +31,10 @@
  */
 
 #include "glheader.h"
-#include "context.h"
-#include "arbvertparse.h"
-#include "hash.h"
 #include "imports.h"
-#include "macros.h"
-#include "mtypes.h"
 #include "program.h"
-#include "nvprogram.h"
-#include "nvvertparse.h"
-#include "program_instruction.h"
-
 #include "arbprogparse.h"
+#include "arbvertparse.h"
 
 
 /**
@@ -98,7 +90,7 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
    }
    program->Parameters     = ap.Parameters; 
 
-#if 1/*DEBUG_VP*/
+#if DEBUG_VP
    _mesa_print_program(ap.Base.NumInstructions, ap.VPInstructions);
 #endif
 }
