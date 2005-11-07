@@ -1054,9 +1054,9 @@ static void dump_program(struct r300_fragment_program *rp)
 			
 	fprintf(stderr, "Mesa program:\n");
 	fprintf(stderr, "-------------\n");
-		_mesa_debug_fp_inst(rp->mesa_program.NumTexInstructions +
-						rp->mesa_program.NumAluInstructions,
-		                rp->mesa_program.Instructions);
+		_mesa_print_program(rp->mesa_program.NumTexInstructions +
+                                    rp->mesa_program.NumAluInstructions,
+                                    rp->mesa_program.Instructions);
 	fflush(stdout);
 
 	fprintf(stderr, "Hardware program\n");
