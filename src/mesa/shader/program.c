@@ -1179,7 +1179,16 @@ _mesa_print_program(GLuint count, const struct prog_instruction *inst)
 
       switch (inst[i].Opcode) {
       case OPCODE_PRINT:
-         _mesa_printf("PRINT %s\n", inst->Data);
+         _mesa_printf("PRINT '%s'", inst[i].Data);
+         if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
+            _mesa_printf(", ");
+            _mesa_printf("%s[%d]%s",
+                         program_file_string(inst[i].SrcReg[0].File),
+                         inst[i].SrcReg[0].Index,
+                         swizzle_string(inst[i].SrcReg[0].Swizzle,
+                                        inst[i].SrcReg[0].NegateBase));
+         }
+         _mesa_printf(";\n");
          break;
       /* XXX check for a bunch of other special-case instructions */
       default:
