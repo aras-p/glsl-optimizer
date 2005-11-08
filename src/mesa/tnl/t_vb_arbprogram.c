@@ -637,10 +637,19 @@ _tnl_disassem_vba_insn( union instruction op )
    case OPCODE_XPD:
       print_ALU(op);
       break;
+   case OPCODE_ARA:
    case OPCODE_ARL:
+   case OPCODE_ARL_NV:
+   case OPCODE_ARR:
+   case OPCODE_BRA:
+   case OPCODE_CAL:
    case OPCODE_END:
    case OPCODE_MAD:
+   case OPCODE_POPA:
+   case OPCODE_PUSHA:
    case OPCODE_RCC:
+   case OPCODE_RET:
+   case OPCODE_SSG:
    case OPCODE_SWZ:
       print_NOP(op);
       break;
@@ -663,7 +672,12 @@ static void (* const opcode_func[MAX_OPCODE+3])(struct arb_vp_machine *, union i
 {
    do_ABS,
    do_ADD,
+   do_NOP,/*ARA*/
    do_NOP,/*ARL*/
+   do_NOP,/*ARL_NV*/
+   do_NOP,/*ARR*/
+   do_NOP,/*BRA*/
+   do_NOP,/*CAL*/
    do_NOP,/*CMP*/
    do_NOP,/*COS*/
    do_NOP,/*DDX*/
@@ -693,9 +707,12 @@ static void (* const opcode_func[MAX_OPCODE+3])(struct arb_vp_machine *, union i
    do_NOP,/*PK4B*/
    do_NOP,/*PK4UB*/
    do_POW,
+   do_NOP,/*POPA*/
    do_PRT,
+   do_NOP,/*PUSHA*/
    do_NOP,/*RCC*/
    do_RCP,/*RCP*/
+   do_NOP,/*RET*/
    do_NOP,/*RFL*/
    do_RSQ,
    do_NOP,/*SCS*/
@@ -707,12 +724,14 @@ static void (* const opcode_func[MAX_OPCODE+3])(struct arb_vp_machine *, union i
    do_NOP,/*SLE*/
    do_SLT,
    do_NOP,/*SNE*/
+   do_NOP,/*SSG*/
    do_NOP,/*STR*/
    do_SUB,
    do_RSW,/*SWZ*/
    do_NOP,/*TEX*/
    do_NOP,/*TXB*/
    do_NOP,/*TXD*/
+   do_NOP,/*TXL*/
    do_NOP,/*TXP*/
    do_NOP,/*TXP_NV*/
    do_NOP,/*UP2H*/
@@ -935,7 +954,7 @@ static void cvp_emit_inst( struct compilation *cp,
    struct reg reg[3];
    GLuint result, nr_args, i;
 
-   assert(sizeof(*op) == sizeof(GLuint));
+   assert(sizeof(*op) == sizeof(long long));
 
    /* Need to handle SWZ, ARL specially.
     */

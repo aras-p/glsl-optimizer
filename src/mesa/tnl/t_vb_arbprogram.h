@@ -71,7 +71,7 @@
 #define REG_INVALID ~0
 
 /* ARB_vp instructions are broken down into one or more of the
- * following micro-instructions, each representable in a 32 bit packed
+ * following micro-instructions, each representable in a 64 bit packed
  * structure.
  */
 struct reg {
@@ -82,17 +82,18 @@ struct reg {
 
 union instruction {
    struct {
-      GLuint opcode:6;
+      GLuint opcode:7;
       GLuint dst:5;
       GLuint file0:2;
       GLuint idx0:7;
       GLuint file1:2;
       GLuint idx1:7;
-      GLuint pad:3;
+      GLuint pad:2;
+      GLuint pad2;
    } alu;
 
    struct {
-      GLuint opcode:6;
+      GLuint opcode:7;
       GLuint dst:5;
       GLuint file0:2;
       GLuint idx0:7;
@@ -101,15 +102,16 @@ union instruction {
    } rsw;
 
    struct {
-      GLuint opcode:6;
+      GLuint opcode:7;
       GLuint dst:5;
       GLuint file:2;
       GLuint idx:7;
       GLuint mask:4;
-      GLuint pad:1;
+      GLuint pad:7;
+      GLuint pad2;
    } msk;
 
-   GLuint dword;
+   long long dword;
 };
 
 

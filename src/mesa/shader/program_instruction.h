@@ -70,17 +70,22 @@
  */
                      /* ARB_vp   ARB_fp   NV_vp   NV_fp */
 enum prog_opcode {   /*---------------------------------*/
-   OPCODE_ABS,       /*            X       1.1          */
+   OPCODE_ABS,       /*   X        X       1.1          */
    OPCODE_ADD,       /*   X        X       X       X    */
+   OPCODE_ARA,       /*                    2            */
    OPCODE_ARL,       /*   X                X            */
+   OPCODE_ARL_NV,    /*                    2            */
+   OPCODE_ARR,       /*                    2            */
+   OPCODE_BRA,       /*                    2            */
+   OPCODE_CAL,       /*                    2       2    */
    OPCODE_CMP,       /*            X                    */
-   OPCODE_COS,       /*   X                2            */
+   OPCODE_COS,       /*            X       2       X    */
    OPCODE_DDX,       /*                            X    */
    OPCODE_DDY,       /*                            X    */
    OPCODE_DP3,       /*   X        X       X       X    */
    OPCODE_DP4,       /*   X        X       X       X    */
    OPCODE_DPH,       /*   X        X       1.1          */
-   OPCODE_DST,       /*   X        X       X            */
+   OPCODE_DST,       /*   X        X       X       X    */
    OPCODE_END,       /*   X        X       X       X    */
    OPCODE_EX2,       /*   X        X       2       X    */
    OPCODE_EXP,       /*   X                X            */
@@ -90,7 +95,7 @@ enum prog_opcode {   /*---------------------------------*/
    OPCODE_KIL_NV,    /*                            X    */
    OPCODE_LG2,       /*   X        X       2       X    */
    OPCODE_LIT,       /*   X        X       X       X    */
-   OPCODE_LOG,       /*   X                X       X    */
+   OPCODE_LOG,       /*   X                X            */
    OPCODE_LRP,       /*            X               X    */
    OPCODE_MAD,       /*   X        X       X       X    */
    OPCODE_MAX,       /*   X        X       X       X    */
@@ -102,9 +107,12 @@ enum prog_opcode {   /*---------------------------------*/
    OPCODE_PK4B,      /*                            X    */
    OPCODE_PK4UB,     /*                            X    */
    OPCODE_POW,       /*   X        X               X    */
+   OPCODE_POPA,      /*                    3            */
    OPCODE_PRINT,     /*                    X       X    */
+   OPCODE_PUSHA,     /*                    3            */
    OPCODE_RCC,       /*                    1.1          */
    OPCODE_RCP,       /*   X        X       X       X    */
+   OPCODE_RET,       /*                    2       2    */
    OPCODE_RFL,       /*            X               X    */
    OPCODE_RSQ,       /*   X        X       X       X    */
    OPCODE_SCS,       /*            X                    */
@@ -116,48 +124,22 @@ enum prog_opcode {   /*---------------------------------*/
    OPCODE_SLE,       /*                    2       X    */
    OPCODE_SLT,       /*   X        X       X       X    */
    OPCODE_SNE,       /*                    2       X    */
-   OPCODE_STR,       /*            X       2       X    */
+   OPCODE_SSG,       /*                    2            */
+   OPCODE_STR,       /*                    2       X    */
    OPCODE_SUB,       /*   X        X       1.1     X    */
    OPCODE_SWZ,       /*   X        X                    */
-   OPCODE_TEX,       /*            X               X    */
-   OPCODE_TXB,       /*            X                    */
-   OPCODE_TXD,       /*            X               X    */
+   OPCODE_TEX,       /*            X       3       X    */
+   OPCODE_TXB,       /*            X       3            */
+   OPCODE_TXD,       /*                            X    */
+   OPCODE_TXL,       /*                    3       2    */
    OPCODE_TXP,       /*            X                    */
-   OPCODE_TXP_NV,    /*                            X    */
+   OPCODE_TXP_NV,    /*                    3       X    */
    OPCODE_UP2H,      /*                            X    */
    OPCODE_UP2US,     /*                            X    */
    OPCODE_UP4B,      /*                            X    */
    OPCODE_UP4UB,     /*                            X    */
    OPCODE_X2D,       /*                            X    */
    OPCODE_XPD,       /*   X        X                    */
-#if 0
-   OPCODE_ARA,		/* NV_vertex_program2 */
-   OPCODE_ARL_NV,		/* NV_vertex_program2 */
-   OPCODE_ARR,		/* NV_vertex_program2 */
-
-   OPCODE_SEQ,		/* NV_vertex_program2 */
-   OPCODE_SFL,		/* NV_vertex_program2 */
-   OPCODE_SGT,		/* NV_vertex_program2 */
-   OPCODE_SLE,		/* NV_vertex_program2 */
-   OPCODE_SNE,		/* NV_vertex_program2 */
-   OPCODE_STR,		/* NV_vertex_program2 */
-
-   OPCODE_SSG,		/* NV_vertex_program2 */
-   OPCODE_COS,		/* NV_vertex_program2 */
-   OPCODE_SIN,		/* NV_vertex_program2 */
-
-   OPCODE_BRA,		/* NV_vertex_program2 */
-   OPCODE_CAL,		/* NV_vertex_program2 */
-   OPCODE_RET,		/* NV_vertex_program2 */
-
-   OPCODE_PUSHA,		/* NV_vertex_program3 */
-   OPCODE_POPA,		/* NV_vertex_program3 */
-
-   OPCODE_TEX,		/* NV_vertex_program3 */
-   OPCODE_TXB,		/* NV_vertex_program3 */
-   OPCODE_TXL,		/* NV_vertex_program3 */
-   OPCODE_TXP,		/* NV_vertex_program3 */
-#endif
    MAX_OPCODE
 };
 
