@@ -1076,7 +1076,7 @@ static void create_new_program(struct state_key *key, GLcontext *ctx,
 					  &p.program->Base );
 
       if (DISASSEM) {
-	 _mesa_debug_fp_inst(p.program->NumTexInstructions + p.program->NumAluInstructions,
+	 _mesa_print_program(p.program->NumTexInstructions + p.program->NumAluInstructions,
 			     p.program->Instructions);
 	 _mesa_printf("\n");
       }
