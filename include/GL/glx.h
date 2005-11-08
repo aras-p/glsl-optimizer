@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  * 
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  * 
@@ -302,138 +302,6 @@ extern void (*glXGetProcAddress(const GLubyte *procname))( void );
 #else
 
 
-/*
- * 28. GLX_EXT_visual_info extension
- */
-#ifndef GLX_EXT_visual_info
-#define GLX_EXT_visual_info		1
-
-#define GLX_X_VISUAL_TYPE_EXT		0x22
-#define GLX_TRANSPARENT_TYPE_EXT	0x23
-#define GLX_TRANSPARENT_INDEX_VALUE_EXT	0x24
-#define GLX_TRANSPARENT_RED_VALUE_EXT	0x25
-#define GLX_TRANSPARENT_GREEN_VALUE_EXT	0x26
-#define GLX_TRANSPARENT_BLUE_VALUE_EXT	0x27
-#define GLX_TRANSPARENT_ALPHA_VALUE_EXT	0x28
-#define GLX_TRUE_COLOR_EXT		0x8002
-#define GLX_DIRECT_COLOR_EXT		0x8003
-#define GLX_PSEUDO_COLOR_EXT		0x8004
-#define GLX_STATIC_COLOR_EXT		0x8005
-#define GLX_GRAY_SCALE_EXT		0x8006
-#define GLX_STATIC_GRAY_EXT		0x8007
-#define GLX_NONE_EXT			0x8000
-#define GLX_TRANSPARENT_RGB_EXT		0x8008
-#define GLX_TRANSPARENT_INDEX_EXT	0x8009
-
-#endif /* 28. GLX_EXT_visual_info extension */
-
-
-
-/*
- * 41. GLX_SGI_video_sync
- */
-#ifndef GLX_SGI_video_sync
-#define GLX_SGI_video_sync 1
-
-extern int glXGetVideoSyncSGI(unsigned int *count);
-extern int glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count);
-
-#endif /* GLX_SGI_video_sync */
-
-
-
-/*
- * 42. GLX_EXT_visual_rating
- */
-#ifndef GLX_EXT_visual_rating
-#define GLX_EXT_visual_rating		1
-
-#define GLX_VISUAL_CAVEAT_EXT		0x20
-/*#define GLX_NONE_EXT			0x8000*/
-#define GLX_SLOW_VISUAL_EXT		0x8001
-#define GLX_NON_CONFORMANT_VISUAL_EXT	0x800D
-
-#endif /* GLX_EXT_visual_rating	*/
-
-
-
-/*
- * 47. GLX_EXT_import_context
- */
-#ifndef GLX_EXT_import_context
-#define GLX_EXT_import_context 1
-
-#define GLX_SHARE_CONTEXT_EXT		0x800A
-#define GLX_VISUAL_ID_EXT		0x800B
-#define GLX_SCREEN_EXT			0x800C
-
-extern void glXFreeContextEXT(Display *dpy, GLXContext context);
-
-extern GLXContextID glXGetContextIDEXT(const GLXContext context);
-
-extern Display *glXGetCurrentDisplayEXT(void);
-
-extern GLXContext glXImportContextEXT(Display *dpy, GLXContextID contextID);
-
-extern int glXQueryContextInfoEXT(Display *dpy, GLXContext context,
-                                  int attribute,int *value);
-
-#endif /* GLX_EXT_import_context */
-
-
-
-/*
- * 215. GLX_MESA_copy_sub_buffer
- */
-#ifndef GLX_MESA_copy_sub_buffer
-#define GLX_MESA_copy_sub_buffer 1
-
-extern void glXCopySubBufferMESA( Display *dpy, GLXDrawable drawable,
-                                  int x, int y, int width, int height );
-
-#endif
-
-
-
-/*
- * 216. GLX_MESA_pixmap_colormap
- */
-#ifndef GLX_MESA_pixmap_colormap
-#define GLX_MESA_pixmap_colormap 1
-
-extern GLXPixmap glXCreateGLXPixmapMESA( Display *dpy, XVisualInfo *visual,
-                                         Pixmap pixmap, Colormap cmap );
-
-#endif /* GLX_MESA_pixmap_colormap */
-
-
-
-/*
- * 217. GLX_MESA_release_buffers
- */
-#ifndef GLX_MESA_release_buffers
-#define GLX_MESA_release_buffers 1
-
-extern Bool glXReleaseBuffersMESA( Display *dpy, GLXDrawable d );
-
-#endif /* GLX_MESA_release_buffers */
-
-
-
-/*
- * 218. GLX_MESA_set_3dfx_mode
- */
-#ifndef GLX_MESA_set_3dfx_mode
-#define GLX_MESA_set_3dfx_mode 1
-
-#define GLX_3DFX_WINDOW_MODE_MESA       0x1
-#define GLX_3DFX_FULLSCREEN_MODE_MESA   0x2
-
-extern Bool glXSet3DfxModeMESA( int mode );
-
-#endif /* GLX_MESA_set_3dfx_mode */
-
-
 
 /*
  * ARB 2. GLX_ARB_get_proc_address
@@ -441,7 +309,8 @@ extern Bool glXSet3DfxModeMESA( int mode );
 #ifndef GLX_ARB_get_proc_address
 #define GLX_ARB_get_proc_address 1
 
-extern void (*glXGetProcAddressARB(const GLubyte *procName))();
+typedef void (*__GLXextFuncPtr)(void);
+extern __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *);
 
 #endif /* GLX_ARB_get_proc_address */
 
@@ -469,19 +338,6 @@ typedef void ( * PFNGLXFREEMEMORYNVPROC) (GLvoid *pointer);
 #endif /* GLX_NV_vertex_array_range */
 
 
-
-/*
- * ???. GLX_MESA_agp_offset
- */ 
-#ifndef GLX_MESA_agp_offset
-#define GLX_MESA_agp_offset 1
-
-extern GLuint glXGetAGPOffsetMESA(const GLvoid *pointer);
-typedef GLuint (* PFNGLXGETAGPOFFSETMESAPROC) (const GLvoid *pointer);
-
-#endif /* GLX_MESA_agp_offset */
-
-
 /*
  * ???. GLX_MESA_allocate_memory
  */ 
@@ -497,8 +353,10 @@ typedef GLuint (* PFNGLXGETMEMORYOFFSETMESAPROC) (Display *dpy, int scrn, const 
 
 #endif /* GLX_MESA_allocate_memory */
 
+
 /*
  * ARB ?. GLX_ARB_render_texture
+ * XXX This was never finalized!
  */
 #ifndef GLX_ARB_render_texture
 #define GLX_ARB_render_texture 1
