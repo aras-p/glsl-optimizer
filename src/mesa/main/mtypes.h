@@ -1807,11 +1807,6 @@ struct fragment_program
    GLenum FogOption;
    struct program_parameter_list *Parameters; /**< array [NumParameters] */
    GLboolean UsesKill;
-
-#ifdef USE_TCC
-   char c_str[4096];		/* experimental... */
-   int c_strlen;
-#endif
 };
 
 struct ati_fragment_shader

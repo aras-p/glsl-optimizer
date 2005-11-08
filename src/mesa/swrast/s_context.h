@@ -391,18 +391,4 @@ _swrast_validate_derived( GLcontext *ctx );
 #define FixedToChan(X)  FixedToInt(X)
 #endif
 
-
-
-extern void 
-_swrast_translate_program( GLcontext *ctx );
-
-extern GLboolean 
-_swrast_execute_codegen_program(GLcontext *ctx,
-				const struct fragment_program *program, 
-				GLuint maxInst,
-				struct fp_machine *machine, 
-				const struct sw_span *span,
-				GLuint column );
-
-
 #endif

@@ -1466,20 +1466,11 @@ _swrast_exec_fragment_program( GLcontext *ctx, struct sw_span *span )
          init_machine(ctx, &ctx->FragmentProgram.Machine,
                       ctx->FragmentProgram._Current, span, i);
 
-#ifdef USE_TCC
-         if (!_swrast_execute_codegen_program(ctx, program, ~0,
-					      &ctx->FragmentProgram.Machine,
-					      span, i)) {
-            span->array->mask[i] = GL_FALSE;  /* killed fragment */
-            span->writeAll = GL_FALSE;
-         }
-#else
          if (!execute_program(ctx, program, ~0,
                               &ctx->FragmentProgram.Machine, span, i)) {
             span->array->mask[i] = GL_FALSE;  /* killed fragment */
             span->writeAll = GL_FALSE;
          }
-#endif
 
          /* Store output registers */
          {
