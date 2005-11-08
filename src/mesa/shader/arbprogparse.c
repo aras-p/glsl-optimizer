@@ -30,18 +30,12 @@
  * \author Karl Rasche
  */
 
-#include "mtypes.h"
 #include "glheader.h"
-#include "context.h"
-#include "hash.h"
 #include "imports.h"
-#include "macros.h"
-#include "program.h"
-#include "program_instruction.h"
 #include "arbprogparse.h"
 #include "grammar_mesa.h"
 #include "program.h"
-#include "dispatch.h"
+#include "get.h"
 
 #ifndef __extension__
 #if !defined(__GNUC__) || (__GNUC__ < 2) || \
@@ -3757,7 +3751,7 @@ static int set_reg8 (GLcontext *ctx, grammar id, const byte *name, byte value)
 
 static int extension_is_supported (const GLubyte *ext)
 {
-   const GLubyte *extensions = CALL_GetString(GET_DISPATCH(), (GL_EXTENSIONS));
+   const GLubyte *extensions = _mesa_GetString(GL_EXTENSIONS);
    const GLubyte *end = extensions + _mesa_strlen ((const char *) extensions);
    const GLint ext_len = (GLint)_mesa_strlen ((const char *) ext);
 
