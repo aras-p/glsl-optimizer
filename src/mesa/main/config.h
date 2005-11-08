@@ -302,6 +302,7 @@
 #define FEATURE_ARB_shading_language_100 FEATURE_ARB_shader_objects
 #define FEATURE_ATI_fragment_shader _HAVE_FULL_GL
 #define FEATURE_EXT_framebuffer_object _HAVE_FULL_GL
+#define FEATURE_EXT_framebuffer_blit _HAVE_FULL_GL
 /*@}*/
 
 

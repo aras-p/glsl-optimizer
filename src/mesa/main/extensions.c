@@ -92,6 +92,7 @@ static const struct {
    { OFF, "GL_EXT_depth_bounds_test",          F(EXT_depth_bounds_test) },
    { ON,  "GL_EXT_draw_range_elements",        F(EXT_draw_range_elements) },
    { OFF, "GL_EXT_framebuffer_object",         F(EXT_framebuffer_object) },
+   { OFF, "GL_EXT_framebuffer_blit",           F(EXT_framebuffer_blit) },
    { OFF, "GL_EXT_fog_coord",                  F(EXT_fog_coord) },
    { OFF, "GL_EXT_histogram",                  F(EXT_histogram) },
    { OFF, "GL_EXT_multi_draw_arrays",          F(EXT_multi_draw_arrays) },
@@ -230,6 +231,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_fog_coord = GL_TRUE;
 #if FEATURE_EXT_framebuffer_object
    ctx->Extensions.EXT_framebuffer_object = GL_TRUE;
+   ctx->Extensions.EXT_framebuffer_blit = GL_TRUE;
 #endif
    ctx->Extensions.EXT_histogram = GL_TRUE;
    ctx->Extensions.EXT_multi_draw_arrays = GL_TRUE;

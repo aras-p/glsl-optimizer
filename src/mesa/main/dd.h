@@ -807,6 +807,12 @@ struct dd_function_table {
                                GLenum texTarget, GLuint level, GLuint zoffset);
    /*@}*/
 #endif
+#if FEATURE_EXT_framebuffer_blit
+   void (*BlitFramebuffer)(GLcontext *ctx,
+                           GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+                           GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
+                           GLbitfield mask, GLenum filter);
+#endif
 
    /**
     * \name Query objects

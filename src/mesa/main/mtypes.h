@@ -2377,6 +2377,7 @@ struct gl_extensions
    GLboolean EXT_draw_range_elements;
    GLboolean EXT_framebuffer_object;
    GLboolean EXT_fog_coord;
+   GLboolean EXT_framebuffer_blit;
    GLboolean EXT_histogram;
    GLboolean EXT_multi_draw_arrays;
    GLboolean EXT_paletted_texture;
