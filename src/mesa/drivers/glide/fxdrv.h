@@ -60,6 +60,8 @@
 #include "math/m_vector.h"
 
 
+#define COPY_FLOAT(dst, src)    (dst) = (src)
+
 /* Define some shorter names for these things.
  */
 #define XCOORD   GR_VERTEX_X_OFFSET

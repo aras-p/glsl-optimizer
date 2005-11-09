@@ -495,12 +495,6 @@ static INLINE int iceil(float f)
 
 
 /***
- *** COPY_FLOAT: copy a float from src to dest.
- ***/
-#define COPY_FLOAT( dst, src )		(dst) = (src)
-
-
-/***
  *** START_FAST_MATH: Set x86 FPU to faster, 32-bit precision mode (and save
  ***                  original mode to a temporary).
  *** END_FAST_MATH: Restore x86 FPU to original mode.
