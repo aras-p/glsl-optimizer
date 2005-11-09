@@ -1042,10 +1042,11 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLuint transferOps,
 
 
 
-/*
+/**
  * Used to pack an array [][4] of RGBA float colors as specified
  * by the dstFormat, dstType and dstPacking.  Used by glReadPixels,
  * glGetConvolutionFilter(), etc.
+ * NOTE: it's assumed the incoming float colors are all in [0,1].
  */
 void
 _mesa_pack_rgba_span_float( GLcontext *ctx,
@@ -1246,66 +1247,66 @@ _mesa_pack_rgba_span_float( GLcontext *ctx,
             switch (dstFormat) {
                case GL_RED:
                   for (i=0;i<n;i++)
-                     dst[i] = FLOAT_TO_USHORT(rgba[i][RCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i], rgba[i][RCOMP]);
                   break;
                case GL_GREEN:
                   for (i=0;i<n;i++)
-                     dst[i] = FLOAT_TO_USHORT(rgba[i][GCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i], rgba[i][GCOMP]);
                   break;
                case GL_BLUE:
                   for (i=0;i<n;i++)
-                     dst[i] = FLOAT_TO_USHORT(rgba[i][BCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i], rgba[i][BCOMP]);
                   break;
                case GL_ALPHA:
                   for (i=0;i<n;i++)
-                     dst[i] = FLOAT_TO_USHORT(rgba[i][ACOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i], rgba[i][ACOMP]);
                   break;
                case GL_LUMINANCE:
                   for (i=0;i<n;i++)
-                     dst[i] = FLOAT_TO_USHORT(luminance[i]);
+                     UNCLAMPED_FLOAT_TO_USHORT(dst[i], luminance[i]);
                   break;
                case GL_LUMINANCE_ALPHA:
                   for (i=0;i<n;i++) {
-                     dst[i*2+0] = FLOAT_TO_USHORT(luminance[i]);
-                     dst[i*2+1] = FLOAT_TO_USHORT(rgba[i][ACOMP]);
+                     UNCLAMPED_FLOAT_TO_USHORT(dst[i*2+0], luminance[i]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*2+1], rgba[i][ACOMP]);
                   }
                   break;
                case GL_RGB:
                   for (i=0;i<n;i++) {
-                     dst[i*3+0] = FLOAT_TO_USHORT(rgba[i][RCOMP]);
-                     dst[i*3+1] = FLOAT_TO_USHORT(rgba[i][GCOMP]);
-                     dst[i*3+2] = FLOAT_TO_USHORT(rgba[i][BCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*3+0], rgba[i][RCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*3+1], rgba[i][GCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*3+2], rgba[i][BCOMP]);
                   }
                   break;
                case GL_RGBA:
                   for (i=0;i<n;i++) {
-                     dst[i*4+0] = FLOAT_TO_USHORT(rgba[i][RCOMP]);
-                     dst[i*4+1] = FLOAT_TO_USHORT(rgba[i][GCOMP]);
-                     dst[i*4+2] = FLOAT_TO_USHORT(rgba[i][BCOMP]);
-                     dst[i*4+3] = FLOAT_TO_USHORT(rgba[i][ACOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*4+0], rgba[i][RCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*4+1], rgba[i][GCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*4+2], rgba[i][BCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*4+3], rgba[i][ACOMP]);
                   }
                   break;
                case GL_BGR:
                   for (i=0;i<n;i++) {
-                     dst[i*3+0] = FLOAT_TO_USHORT(rgba[i][BCOMP]);
-                     dst[i*3+1] = FLOAT_TO_USHORT(rgba[i][GCOMP]);
-                     dst[i*3+2] = FLOAT_TO_USHORT(rgba[i][RCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*3+0], rgba[i][BCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*3+1], rgba[i][GCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*3+2], rgba[i][RCOMP]);
                   }
                   break;
                case GL_BGRA:
                   for (i=0;i<n;i++) {
-                     dst[i*4+0] = FLOAT_TO_USHORT(rgba[i][BCOMP]);
-                     dst[i*4+1] = FLOAT_TO_USHORT(rgba[i][GCOMP]);
-                     dst[i*4+2] = FLOAT_TO_USHORT(rgba[i][RCOMP]);
-                     dst[i*4+3] = FLOAT_TO_USHORT(rgba[i][ACOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*4+0], rgba[i][BCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*4+1], rgba[i][GCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*4+2], rgba[i][RCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*4+3], rgba[i][ACOMP]);
                   }
                   break;
                case GL_ABGR_EXT:
                   for (i=0;i<n;i++) {
-                     dst[i*4+0] = FLOAT_TO_USHORT(rgba[i][ACOMP]);
-                     dst[i*4+1] = FLOAT_TO_USHORT(rgba[i][BCOMP]);
-                     dst[i*4+2] = FLOAT_TO_USHORT(rgba[i][GCOMP]);
-                     dst[i*4+3] = FLOAT_TO_USHORT(rgba[i][RCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*4+0], rgba[i][ACOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*4+1], rgba[i][BCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*4+2], rgba[i][GCOMP]);
+                     CLAMPED_FLOAT_TO_USHORT(dst[i*4+3], rgba[i][RCOMP]);
                   }
                   break;
                default:
@@ -4011,7 +4012,7 @@ _mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLvoid *dest,
          GLushort *dst = (GLushort *) dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            dst[i] = FLOAT_TO_USHORT( depthSpan[i] );
+            CLAMPED_FLOAT_TO_USHORT(dst[i], depthSpan[i]);
          }
          if (dstPacking->SwapBytes) {
             _mesa_swap2( (GLushort *) dst, n );

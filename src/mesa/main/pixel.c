@@ -795,52 +795,52 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
    switch (map) {
       case GL_PIXEL_MAP_I_TO_I:
 	 for (i = 0; i < mapsize; i++) {
-	    values[i] = FLOAT_TO_USHORT(ctx->Pixel.MapItoI[i]);
+            values[i] = (GLushort) CLAMP(ctx->Pixel.MapItoI[i], 0.0, 65535.0);
 	 }
 	 break;
       case GL_PIXEL_MAP_S_TO_S:
 	 for (i = 0; i < mapsize; i++) {
-	    values[i] = (GLushort) ctx->Pixel.MapStoS[i];
+            values[i] = (GLushort) CLAMP(ctx->Pixel.MapStoS[i], 0.0, 65535.0);
 	 }
 	 break;
       case GL_PIXEL_MAP_I_TO_R:
 	 for (i = 0; i < mapsize; i++) {
-	    values[i] = FLOAT_TO_USHORT( ctx->Pixel.MapItoR[i] );
+	    CLAMPED_FLOAT_TO_USHORT(values[i] , ctx->Pixel.MapItoR[i] );
 	 }
 	 break;
       case GL_PIXEL_MAP_I_TO_G:
 	 for (i = 0; i < mapsize; i++) {
-	    values[i] = FLOAT_TO_USHORT( ctx->Pixel.MapItoG[i] );
+	    CLAMPED_FLOAT_TO_USHORT(values[i] , ctx->Pixel.MapItoG[i] );
 	 }
 	 break;
       case GL_PIXEL_MAP_I_TO_B:
 	 for (i = 0; i < mapsize; i++) {
-	    values[i] = FLOAT_TO_USHORT( ctx->Pixel.MapItoB[i] );
+	    CLAMPED_FLOAT_TO_USHORT(values[i] , ctx->Pixel.MapItoB[i] );
 	 }
 	 break;
       case GL_PIXEL_MAP_I_TO_A:
 	 for (i = 0; i < mapsize; i++) {
-	    values[i] = FLOAT_TO_USHORT( ctx->Pixel.MapItoA[i] );
+	    CLAMPED_FLOAT_TO_USHORT(values[i] , ctx->Pixel.MapItoA[i] );
 	 }
 	 break;
       case GL_PIXEL_MAP_R_TO_R:
 	 for (i = 0; i < mapsize; i++) {
-	    values[i] = FLOAT_TO_USHORT( ctx->Pixel.MapRtoR[i] );
+	    CLAMPED_FLOAT_TO_USHORT(values[i] , ctx->Pixel.MapRtoR[i] );
 	 }
 	 break;
       case GL_PIXEL_MAP_G_TO_G:
 	 for (i = 0; i < mapsize; i++) {
-	    values[i] = FLOAT_TO_USHORT( ctx->Pixel.MapGtoG[i] );
+	    CLAMPED_FLOAT_TO_USHORT(values[i] , ctx->Pixel.MapGtoG[i] );
 	 }
 	 break;
       case GL_PIXEL_MAP_B_TO_B:
 	 for (i = 0; i < mapsize; i++) {
-	    values[i] = FLOAT_TO_USHORT( ctx->Pixel.MapBtoB[i] );
+	    CLAMPED_FLOAT_TO_USHORT(values[i] , ctx->Pixel.MapBtoB[i] );
 	 }
 	 break;
       case GL_PIXEL_MAP_A_TO_A:
 	 for (i = 0; i < mapsize; i++) {
-	    values[i] = FLOAT_TO_USHORT( ctx->Pixel.MapAtoA[i] );
+	    CLAMPED_FLOAT_TO_USHORT(values[i] , ctx->Pixel.MapAtoA[i] );
 	 }
 	 break;
       default:

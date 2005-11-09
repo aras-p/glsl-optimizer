@@ -78,7 +78,7 @@ sisUpdateZStencilPattern( sisContextPtr smesa, GLclampd z, GLint stencil )
    switch (smesa->zFormat)
    {
    case SiS_ZFORMAT_Z16:
-      zPattern = FLOAT_TO_USHORT(z);
+      CLAMPED_FLOAT_TO_USHORT(zPattern, z);
       zPattern |= zPattern << 16;
       break;
    case SiS_ZFORMAT_S8Z24:

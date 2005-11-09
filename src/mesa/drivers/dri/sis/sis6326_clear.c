@@ -65,7 +65,7 @@ set_color_pattern( sisContextPtr smesa, GLubyte red, GLubyte green,
 void
 sis6326UpdateZPattern(sisContextPtr smesa, GLclampd z)
 {
-   smesa->clearZStencilPattern = FLOAT_TO_USHORT(z * 65535.0);
+   CLAMPED_FLOAT_TO_USHORT(smesa->clearZStencilPattern, z * 65535.0);
 }
 
 void
