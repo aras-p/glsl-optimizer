@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.4.1
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -618,18 +618,18 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
 
       _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + u);
       _mesa_set_enable(ctx, GL_TEXTURE_1D,
-              (GLboolean) (unit->Enabled & TEXTURE_1D_BIT ? GL_TRUE : GL_FALSE));
+                       (unit->Enabled & TEXTURE_1D_BIT) ? GL_TRUE : GL_FALSE);
       _mesa_set_enable(ctx, GL_TEXTURE_2D,
-              (GLboolean) (unit->Enabled & TEXTURE_2D_BIT ? GL_TRUE : GL_FALSE));
+                       (unit->Enabled & TEXTURE_2D_BIT) ? GL_TRUE : GL_FALSE);
       _mesa_set_enable(ctx, GL_TEXTURE_3D,
-              (GLboolean) (unit->Enabled & TEXTURE_3D_BIT ? GL_TRUE : GL_FALSE));
+                       (unit->Enabled & TEXTURE_3D_BIT) ? GL_TRUE : GL_FALSE);
       if (ctx->Extensions.ARB_texture_cube_map) {
          _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP_ARB,
-             (GLboolean) (unit->Enabled & TEXTURE_CUBE_BIT ? GL_TRUE : GL_FALSE));
+                     (unit->Enabled & TEXTURE_CUBE_BIT) ? GL_TRUE : GL_FALSE);
       }
       if (ctx->Extensions.NV_texture_rectangle) {
          _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE_NV,
-             (GLboolean) (unit->Enabled & TEXTURE_RECT_BIT ? GL_TRUE : GL_FALSE));
+                     (unit->Enabled & TEXTURE_RECT_BIT) ? GL_TRUE : GL_FALSE);
       }
       if (ctx->Extensions.SGI_texture_color_table) {
          _mesa_set_enable(ctx, GL_TEXTURE_COLOR_TABLE_SGI,
@@ -645,10 +645,20 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
       _mesa_TexGenfv(GL_T, GL_OBJECT_PLANE, unit->ObjectPlaneT);
       _mesa_TexGenfv(GL_R, GL_OBJECT_PLANE, unit->ObjectPlaneR);
       _mesa_TexGenfv(GL_Q, GL_OBJECT_PLANE, unit->ObjectPlaneQ);
-      _mesa_TexGenfv(GL_S, GL_EYE_PLANE, unit->EyePlaneS);
-      _mesa_TexGenfv(GL_T, GL_EYE_PLANE, unit->EyePlaneT);
-      _mesa_TexGenfv(GL_R, GL_EYE_PLANE, unit->EyePlaneR);
-      _mesa_TexGenfv(GL_Q, GL_EYE_PLANE, unit->EyePlaneQ);
+      /* Eye plane done differently to avoid re-transformation */
+      {
+         struct gl_texture_unit *destUnit = &ctx->Texture.Unit[u];
+         COPY_4FV(destUnit->EyePlaneS, unit->EyePlaneS);
+         COPY_4FV(destUnit->EyePlaneT, unit->EyePlaneT);
+         COPY_4FV(destUnit->EyePlaneR, unit->EyePlaneR);
+         COPY_4FV(destUnit->EyePlaneQ, unit->EyePlaneQ);
+         if (ctx->Driver.TexGen) {
+            ctx->Driver.TexGen(ctx, GL_S, GL_EYE_PLANE, unit->EyePlaneS);
+            ctx->Driver.TexGen(ctx, GL_T, GL_EYE_PLANE, unit->EyePlaneT);
+            ctx->Driver.TexGen(ctx, GL_R, GL_EYE_PLANE, unit->EyePlaneR);
+            ctx->Driver.TexGen(ctx, GL_Q, GL_EYE_PLANE, unit->EyePlaneQ);
+         }
+      }
       _mesa_set_enable(ctx, GL_TEXTURE_GEN_S,
                        ((unit->TexGenEnabled & S_BIT) ? GL_TRUE : GL_FALSE));
       _mesa_set_enable(ctx, GL_TEXTURE_GEN_T,
