@@ -22,6 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/** XXX This file should be named s_clear.c */
 
 #include "glheader.h"
 #include "colormac.h"
@@ -123,17 +124,17 @@ clear_rgba_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 
    switch (rb->DataType) {
       case GL_UNSIGNED_BYTE:
-         clear8[0] = FLOAT_TO_UBYTE(ctx->Color.ClearColor[0]);
-         clear8[1] = FLOAT_TO_UBYTE(ctx->Color.ClearColor[1]);
-         clear8[2] = FLOAT_TO_UBYTE(ctx->Color.ClearColor[2]);
-         clear8[3] = FLOAT_TO_UBYTE(ctx->Color.ClearColor[3]);
+         UNCLAMPED_FLOAT_TO_UBYTE(clear8[0], ctx->Color.ClearColor[0]);
+         UNCLAMPED_FLOAT_TO_UBYTE(clear8[1], ctx->Color.ClearColor[1]);
+         UNCLAMPED_FLOAT_TO_UBYTE(clear8[2], ctx->Color.ClearColor[2]);
+         UNCLAMPED_FLOAT_TO_UBYTE(clear8[3], ctx->Color.ClearColor[3]);
          clearVal = clear8;
          break;
       case GL_UNSIGNED_SHORT:
-         clear16[0] = FLOAT_TO_USHORT(ctx->Color.ClearColor[0]);
-         clear16[1] = FLOAT_TO_USHORT(ctx->Color.ClearColor[1]);
-         clear16[2] = FLOAT_TO_USHORT(ctx->Color.ClearColor[2]);
-         clear16[3] = FLOAT_TO_USHORT(ctx->Color.ClearColor[3]);
+         UNCLAMPED_FLOAT_TO_USHORT(clear16[0], ctx->Color.ClearColor[0]);
+         UNCLAMPED_FLOAT_TO_USHORT(clear16[1], ctx->Color.ClearColor[1]);
+         UNCLAMPED_FLOAT_TO_USHORT(clear16[2], ctx->Color.ClearColor[2]);
+         UNCLAMPED_FLOAT_TO_USHORT(clear16[3], ctx->Color.ClearColor[3]);
          clearVal = clear16;
          break;
       case GL_FLOAT:
