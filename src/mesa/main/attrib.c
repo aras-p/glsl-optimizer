@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.4.1
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -50,7 +50,7 @@
 #include "math/m_xform.h"
 
 
-/*
+/**
  * Allocate a new attribute state node.  These nodes have a
  * "kind" value and a pointer to a struct of state data.
  */
@@ -147,7 +147,7 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->DepthTest = ctx->Depth.Test;
       attr->Dither = ctx->Color.DitherFlag;
       attr->Fog = ctx->Fog.Enabled;
-      for (i=0;i<MAX_LIGHTS;i++) {
+      for (i = 0; i < ctx->Const.MaxLights; i++) {
          attr->Light[i] = ctx->Light.Light[i].Enabled;
       }
       attr->Lighting = ctx->Light.Enabled;
@@ -950,7 +950,7 @@ _mesa_PopAttrib(void)
                if (_math_matrix_is_dirty(ctx->ModelviewMatrixStack.Top))
                   _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
 	       
-               for (i = 0; i < MAX_LIGHTS; i++) {
+               for (i = 0; i < ctx->Const.MaxLights; i++) {
                   GLenum lgt = (GLenum) (GL_LIGHT0 + i);
 		  const struct gl_light *l = &light->Light[i];
 		  GLfloat tmp[4];

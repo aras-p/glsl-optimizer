@@ -946,14 +946,13 @@ _mesa_validate_all_lighting_tables( GLcontext *ctx )
    if (!ctx->_ShineTable[1] || ctx->_ShineTable[1]->shininess != shininess)
       validate_shine_table( ctx, 1, shininess );
 
-   for (i = 0 ; i < MAX_LIGHTS ; i++)
+   for (i = 0; i < ctx->Const.MaxLights; i++)
       if (ctx->Light.Light[i]._SpotExpTable[0][0] == -1)
 	 validate_spot_exp_table( &ctx->Light.Light[i] );
 }
 
 
-
-/*
+/**
  * Examine current lighting parameters to determine if the optimized lighting
  * function can be used.
  * Also, precompute some lighting values such as the products of light
@@ -981,15 +980,12 @@ _mesa_update_lighting( GLcontext *ctx )
    ctx->Light._NeedEyeCoords = ((ctx->Light._Flags & LIGHT_POSITIONAL) ||
 				ctx->Light.Model.LocalViewer);
 
-
-
    /* XXX: This test is overkill & needs to be fixed both for software and
     * hardware t&l drivers.  The above should be sufficient & should
     * be tested to verify this.
     */
    if (ctx->Light._NeedVertices)
       ctx->Light._NeedEyeCoords = GL_TRUE;
-
 
    /* Precompute some shading values.  Although we reference
     * Light.Material here, we can get away without flushing
@@ -1024,9 +1020,12 @@ _mesa_update_lighting( GLcontext *ctx )
 }
 
 
-/* _NEW_MODELVIEW
- * _NEW_LIGHT
- * _TNL_NEW_NEED_EYE_COORDS
+/**
+ * Update state derived from light position, spot direction.
+ * Called upon:
+ *   _NEW_MODELVIEW
+ *   _NEW_LIGHT
+ *   _TNL_NEW_NEED_EYE_COORDS
  *
  * Update on (_NEW_MODELVIEW | _NEW_LIGHT) when lighting is enabled.
  * Also update on lighting space changes.
@@ -1050,9 +1049,11 @@ compute_light_positions( GLcontext *ctx )
    foreach (light, &ctx->Light.EnabledList) {
 
       if (ctx->_NeedEyeCoords) {
+         /* _Position is in eye coordinate space */
 	 COPY_4FV( light->_Position, light->EyePosition );
       }
       else {
+         /* _Position is in object coordinate space */
 	 TRANSFORM_POINT( light->_Position, ctx->ModelviewMatrixStack.Top->inv,
 			  light->EyePosition );
       }
@@ -1119,7 +1120,8 @@ update_modelview_scale( GLcontext *ctx )
 }
 
 
-/* Bring uptodate any state that relies on _NeedEyeCoords.
+/**
+ * Bring up to date any state that relies on _NeedEyeCoords.
  */
 void
 _mesa_update_tnl_spaces( GLcontext *ctx, GLuint new_state )
@@ -1138,7 +1140,6 @@ _mesa_update_tnl_spaces( GLcontext *ctx, GLuint new_state )
    if (ctx->Light.Enabled &&
        !_math_matrix_is_length_preserving(ctx->ModelviewMatrixStack.Top))
       ctx->_NeedEyeCoords = GL_TRUE;
-
 
    /* Check if the truth-value interpretations of the bitfields have
     * changed:
@@ -1167,7 +1168,8 @@ _mesa_update_tnl_spaces( GLcontext *ctx, GLuint new_state )
 }
 
 
-/* Drivers may need this if the hardware tnl unit doesn't support the
+/**
+ * Drivers may need this if the hardware tnl unit doesn't support the
  * light-in-modelspace optimization.  It's also useful for debugging.
  */
 void
@@ -1258,6 +1260,9 @@ init_material( struct gl_material *m )
 }
 
 
+/**
+ * Initialize all lighting state for the given context.
+ */
 void
 _mesa_init_lighting( GLcontext *ctx )
 {
@@ -1300,6 +1305,9 @@ _mesa_init_lighting( GLcontext *ctx )
 }
 
 
+/**
+ * Deallocate malloc'd lighting state attached to given context.
+ */
 void
 _mesa_free_lighting_data( GLcontext *ctx )
 {
@@ -1307,7 +1315,7 @@ _mesa_free_lighting_data( GLcontext *ctx )
 
    /* Free lighting shininess exponentiation table */
    foreach_s( s, tmps, ctx->_ShineTabList ) {
-      FREE( s );
+      _mesa_free( s );
    }
-   FREE( ctx->_ShineTabList );
+   _mesa_free( ctx->_ShineTabList );
 }
