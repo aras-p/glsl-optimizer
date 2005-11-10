@@ -1265,20 +1265,6 @@ _mesa_init_default_imports(__GLimports *imports, void *driverCtx)
    static GLboolean initialized = GL_FALSE;
    if (!initialized) {
       init_sqrt_table();
-
-#if defined(_FPU_GETCW) && defined(_FPU_SETCW)
-      {
-         const char *debug = _mesa_getenv("MESA_DEBUG");
-         if (debug && _mesa_strcmp(debug, "FP")==0) {
-            /* die on FP exceptions */
-            fpu_control_t mask;
-            _FPU_GETCW(mask);
-            mask &= ~(_FPU_MASK_IM | _FPU_MASK_DM | _FPU_MASK_ZM
-                      | _FPU_MASK_OM | _FPU_MASK_UM);
-            _FPU_SETCW(mask);
-         }
-      }
-#endif
       initialized = GL_TRUE;
    }
 

@@ -2929,7 +2929,7 @@ struct __GLcontextRec
 extern const char *_mesa_prim_name[GL_POLYGON+4];
 
 
-#ifdef MESA_DEBUG
+#ifdef DEBUG
 extern int MESA_VERBOSE;
 extern int MESA_DEBUG_FLAGS;
 # define MESA_FUNCTION __FUNCTION__

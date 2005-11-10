@@ -149,7 +149,7 @@ void _mesa_print_info( void )
  */
 static void add_debug_flags( const char *debug )
 {
-#ifdef MESA_DEBUG
+#ifdef DEBUG
    if (_mesa_strstr(debug, "varray")) 
       MESA_VERBOSE |= VERBOSE_VARRAY;
 
@@ -184,6 +184,18 @@ static void add_debug_flags( const char *debug )
     */
    if (_mesa_strstr(debug, "flush")) 
       MESA_DEBUG_FLAGS |= DEBUG_ALWAYS_FLUSH;
+
+#if defined(_FPU_GETCW) && defined(_FPU_SETCW)
+   if (_mesa_strstr(debug, "fpexceptions")) {
+      /* raise FP exceptions */
+      fpu_control_t mask;
+      _FPU_GETCW(mask);
+      mask &= ~(_FPU_MASK_IM | _FPU_MASK_DM | _FPU_MASK_ZM
+                | _FPU_MASK_OM | _FPU_MASK_UM);
+      _FPU_SETCW(mask);
+   }
+#endif
+
 #else
    (void) debug;
 #endif
