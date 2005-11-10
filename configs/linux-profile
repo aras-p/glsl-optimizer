@@ -8,9 +8,9 @@ CONFIG_NAME = linux-profile
 CC = gcc
 CXX = g++
 
-CFLAGS = -pg -O -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG
+CFLAGS = -pg -O -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG
 
-CXXFLAGS = -pg -O -ansi -pedantic -Wall -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -DDEBUG -DMESA_DEBUG
+CXXFLAGS = -pg -O -ansi -pedantic -Wall -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -DDEBUG
 
 GLUT_CFLAGS = -fexceptions
 

@@ -5,4 +5,4 @@ include $(TOP)/configs/linux
 CONFIG_NAME = linux-debug
 
 OPT_FLAGS = -g
-DEFINES += -DDEBUG -DMESA_DEBUG -DDEBUG_MATH
+DEFINES += -DDEBUG -DDEBUG_MATH
