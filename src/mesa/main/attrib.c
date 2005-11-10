@@ -960,7 +960,7 @@ _mesa_PopAttrib(void)
 		  _mesa_Lightfv( lgt, GL_SPECULAR, l->Specular );
 		  TRANSFORM_POINT( tmp, ctx->ModelviewMatrixStack.Top->inv, l->EyePosition );
 		  _mesa_Lightfv( lgt, GL_POSITION, tmp );
-		  TRANSFORM_POINT( tmp, ctx->ModelviewMatrixStack.Top->m, l->EyeDirection );
+		  TRANSFORM_NORMAL( tmp, l->EyeDirection, ctx->ModelviewMatrixStack.Top->m );
 		  _mesa_Lightfv( lgt, GL_SPOT_DIRECTION, tmp );
 		  _mesa_Lightfv( lgt, GL_SPOT_EXPONENT, &l->SpotExponent );
 		  _mesa_Lightfv( lgt, GL_SPOT_CUTOFF, &l->SpotCutoff );
