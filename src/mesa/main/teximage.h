@@ -5,7 +5,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -49,13 +49,16 @@ extern GLint
 _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat );
 
 
+extern GLboolean
+_mesa_is_proxy_texture(GLenum target);
+
+
 extern struct gl_texture_image *
 _mesa_new_texture_image( GLcontext *ctx );
 
 
 extern void
 _mesa_delete_texture_image( GLcontext *ctx, struct gl_texture_image *teximage );
-
 
 extern void
 _mesa_free_texture_image_data( GLcontext *ctx, 

@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,13 +25,7 @@
 
 /**
  * \file teximage.c
- * Texture images manipulation functions.
- *
- * \note Mesa's native texture data type is GLchan.  Native formats are
- * GL_ALPHA, GL_LUMINANCE, GL_LUMANCE_ALPHA, GL_INTENSITY, GL_RGB, GL_RGBA, and
- * GL_COLOR_INDEX.
- *
- * \note Device drivers are free to implement any internal format they want.
+ * Texture image-related functions.
  */
 
 
@@ -667,8 +661,8 @@ _mesa_delete_texture_image( GLcontext *ctx, struct gl_texture_image *texImage )
  *
  * \return GL_TRUE if the target is a proxy target, GL_FALSE otherwise.
  */
-static GLboolean
-is_proxy_target(GLenum target)
+GLboolean
+_mesa_is_proxy_texture(GLenum target)
 {
    return (target == GL_PROXY_TEXTURE_1D ||
            target == GL_PROXY_TEXTURE_2D ||
@@ -1259,7 +1253,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
                      GLint width, GLint height,
                      GLint depth, GLint border )
 {
-   const GLboolean isProxy = is_proxy_target(target);
+   const GLboolean isProxy = _mesa_is_proxy_texture(target);
    GLboolean sizeOK;
    GLboolean colorFormat, indexFormat;
 
@@ -2019,7 +2013,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 
    texUnit = &(ctx->Texture.Unit[ctx->Texture.CurrentUnit]);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
-   if (!texObj || is_proxy_target(target)) {
+   if (!texObj || _mesa_is_proxy_texture(target)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(target)");
       return;
    }
@@ -3343,7 +3337,7 @@ _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
       return;
    }
 
-   if (is_proxy_target(target)) {
+   if (_mesa_is_proxy_texture(target)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetCompressedTexImageARB(target)");
       return;
    }

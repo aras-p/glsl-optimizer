@@ -43,15 +43,9 @@
 
 
 
-#ifdef SPECIALCAST
-/* Needed for an Amiga compiler */
 #define ENUM_TO_FLOAT(X) ((GLfloat)(GLint)(X))
 #define ENUM_TO_DOUBLE(X) ((GLdouble)(GLint)(X))
-#else
-/* all other compilers */
-#define ENUM_TO_FLOAT(X) ((GLfloat)(X))
-#define ENUM_TO_DOUBLE(X) ((GLdouble)(X))
-#endif
+
 
 /**
  * Default texture combine environment state.  This is used to initialize
@@ -1653,32 +1647,10 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       return;
    }
 
-   switch (target) {
-   case GL_TEXTURE_1D:
-   case GL_PROXY_TEXTURE_1D:
-   case GL_TEXTURE_2D:
-   case GL_PROXY_TEXTURE_2D:
-      maxLevels = ctx->Const.MaxTextureLevels;
-      break;
-   case GL_TEXTURE_3D:
-   case GL_PROXY_TEXTURE_3D:
-      maxLevels = ctx->Const.Max3DTextureLevels;
-      break;
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-   case GL_PROXY_TEXTURE_CUBE_MAP:
-      maxLevels = ctx->Const.MaxCubeTextureLevels;
-      break;
-   case GL_TEXTURE_RECTANGLE_NV:
-   case GL_PROXY_TEXTURE_RECTANGLE_NV:
-      maxLevels = 1;
-      break;
-   default:
-      _mesa_problem(ctx, "switch in _mesa_GetTexLevelParameter");
+   maxLevels = _mesa_max_texture_levels(ctx, target);
+   if (maxLevels == 0) {
+      /* should not happen since <target> was just checked above */
+      _mesa_problem(ctx, "maxLevels=0 in _mesa_GetTexLevelParameter");
       return;
    }
 
@@ -1697,11 +1669,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       return;
    }
 
-   isProxy = (target == GL_PROXY_TEXTURE_1D) ||
-             (target == GL_PROXY_TEXTURE_2D) ||
-             (target == GL_PROXY_TEXTURE_3D) ||
-             (target == GL_PROXY_TEXTURE_CUBE_MAP) ||
-             (target == GL_PROXY_TEXTURE_RECTANGLE_NV);
+   isProxy = _mesa_is_proxy_texture(target);
 
    switch (pname) {
       case GL_TEXTURE_WIDTH:
@@ -2194,14 +2162,10 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	    if (TEST_EQ_4V(texUnit->ObjectPlaneS, params))
 		return;
 	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-	    texUnit->ObjectPlaneS[0] = params[0];
-	    texUnit->ObjectPlaneS[1] = params[1];
-	    texUnit->ObjectPlaneS[2] = params[2];
-	    texUnit->ObjectPlaneS[3] = params[3];
+            COPY_4FV(texUnit->ObjectPlaneS, params);
 	 }
 	 else if (pname==GL_EYE_PLANE) {
 	    GLfloat tmp[4];
-
             /* Transform plane equation by the inverse modelview matrix */
             if (_math_matrix_is_dirty(ctx->ModelviewMatrixStack.Top)) {
                _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
@@ -2251,10 +2215,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	    if (TEST_EQ_4V(texUnit->ObjectPlaneT, params))
 		return;
 	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-	    texUnit->ObjectPlaneT[0] = params[0];
-	    texUnit->ObjectPlaneT[1] = params[1];
-	    texUnit->ObjectPlaneT[2] = params[2];
-	    texUnit->ObjectPlaneT[3] = params[3];
+            COPY_4FV(texUnit->ObjectPlaneT, params);
 	 }
 	 else if (pname==GL_EYE_PLANE) {
 	    GLfloat tmp[4];
@@ -2304,10 +2265,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	    if (TEST_EQ_4V(texUnit->ObjectPlaneR, params))
 		return;
 	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-	    texUnit->ObjectPlaneR[0] = params[0];
-	    texUnit->ObjectPlaneR[1] = params[1];
-	    texUnit->ObjectPlaneR[2] = params[2];
-	    texUnit->ObjectPlaneR[3] = params[3];
+	    COPY_4FV(texUnit->ObjectPlaneR, params);
 	 }
 	 else if (pname==GL_EYE_PLANE) {
 	    GLfloat tmp[4];
@@ -2351,10 +2309,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	    if (TEST_EQ_4V(texUnit->ObjectPlaneQ, params))
 		return;
 	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-	    texUnit->ObjectPlaneQ[0] = params[0];
-	    texUnit->ObjectPlaneQ[1] = params[1];
-	    texUnit->ObjectPlaneQ[2] = params[2];
-	    texUnit->ObjectPlaneQ[3] = params[3];
+            COPY_4FV(texUnit->ObjectPlaneQ, params);
 	 }
 	 else if (pname==GL_EYE_PLANE) {
 	    GLfloat tmp[4];
@@ -2915,8 +2870,6 @@ update_texture_matrices( GLcontext *ctx )
 }
 
 
-
-
 /**
  * \note This routine refers to derived texture matrix values to
  * compute the ENABLE_TEXMAT flags, but is only called on
@@ -3133,6 +3086,7 @@ void _mesa_update_texture( GLcontext *ctx, GLuint new_state )
       update_texture_state( ctx );
 }
 
+
 /**********************************************************************/
 /*****                      Initialization                        *****/
 /**********************************************************************/
@@ -3233,9 +3187,13 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
 }
 
 
-GLboolean _mesa_init_texture( GLcontext * ctx )
+/**
+ * Initialize texture state for the given context.
+ */
+GLboolean
+_mesa_init_texture(GLcontext *ctx)
 {
-   int i;
+   GLuint i;
 
    assert(MAX_TEXTURE_LEVELS >= MAX_3D_TEXTURE_LEVELS);
    assert(MAX_TEXTURE_LEVELS >= MAX_CUBE_TEXTURE_LEVELS);
@@ -3262,9 +3220,14 @@ GLboolean _mesa_init_texture( GLcontext * ctx )
    return GL_TRUE;
 }
 
-void _mesa_free_texture_data( GLcontext *ctx )
+
+/**
+ * Free dynamically-allocted texture data attached to the given context.
+ */
+void
+_mesa_free_texture_data(GLcontext *ctx)
 {
-   int i;
+   GLuint i;
 
    /* Free proxy texture objects */
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy1D );
