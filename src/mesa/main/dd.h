@@ -658,7 +658,10 @@ struct dd_function_table {
    void (*Hint)(GLcontext *ctx, GLenum target, GLenum mode);
    /** Control the writing of individual bits in the color index buffers */
    void (*IndexMask)(GLcontext *ctx, GLuint mask);
-   /** Set light source parameters */
+   /** Set light source parameters.
+    * Note: for GL_POSITION and GL_SPOT_DIRECTION, params will have already
+    * been transformed to eye-space.
+    */
    void (*Lightfv)(GLcontext *ctx, GLenum light,
 		   GLenum pname, const GLfloat *params );
    /** Set the lighting model parameters */

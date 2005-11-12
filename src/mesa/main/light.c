@@ -59,6 +59,112 @@ _mesa_ShadeModel( GLenum mode )
 }
 
 
+/**
+ * Helper function called by _mesa_Lightfv and _mesa_PopAttrib to set
+ * per-light state.
+ * For GL_POSITION and GL_SPOT_DIRECTION the params position/direction
+ * will have already been transformed by the modelview matrix!
+ * Also, all error checking should have already been done.
+ */
+void
+_mesa_light(GLcontext *ctx, GLuint lnum, GLenum pname, const GLfloat *params)
+{
+   struct gl_light *light;
+
+   ASSERT(lnum < MAX_LIGHTS);
+   light = &ctx->Light.Light[lnum];
+
+   switch (pname) {
+   case GL_AMBIENT:
+      if (TEST_EQ_4V(light->Ambient, params))
+	 return;
+      FLUSH_VERTICES(ctx, _NEW_LIGHT);
+      COPY_4V( light->Ambient, params );
+      break;
+   case GL_DIFFUSE:
+      if (TEST_EQ_4V(light->Diffuse, params))
+	 return;
+      FLUSH_VERTICES(ctx, _NEW_LIGHT);
+      COPY_4V( light->Diffuse, params );
+      break;
+   case GL_SPECULAR:
+      if (TEST_EQ_4V(light->Specular, params))
+	 return;
+      FLUSH_VERTICES(ctx, _NEW_LIGHT);
+      COPY_4V( light->Specular, params );
+      break;
+   case GL_POSITION:
+      /* NOTE: position has already been transformed by ModelView! */
+      if (TEST_EQ_4V(light->EyePosition, params))
+	 return;
+      FLUSH_VERTICES(ctx, _NEW_LIGHT);
+      COPY_4V(light->EyePosition, params);
+      if (light->EyePosition[3] != 0.0F)
+	 light->_Flags |= LIGHT_POSITIONAL;
+      else
+	 light->_Flags &= ~LIGHT_POSITIONAL;
+      break;
+   case GL_SPOT_DIRECTION:
+      /* NOTE: Direction already transformed by inverse ModelView! */
+      if (TEST_EQ_3V(light->EyeDirection, params))
+	 return;
+      FLUSH_VERTICES(ctx, _NEW_LIGHT);
+      COPY_3V(light->EyeDirection, params);
+      break;
+   case GL_SPOT_EXPONENT:
+      ASSERT(params[0] >= 0.0);
+      ASSERT(params[0] <= ctx->Const.MaxSpotExponent);
+      if (light->SpotExponent == params[0])
+	 return;
+      FLUSH_VERTICES(ctx, _NEW_LIGHT);
+      light->SpotExponent = params[0];
+      _mesa_invalidate_spot_exp_table(light);
+      break;
+   case GL_SPOT_CUTOFF:
+      ASSERT(params[0] == 180.0 || (params[0] >= 0.0 && params[0] <= 90.0));
+      if (light->SpotCutoff == params[0])
+	 return;
+      FLUSH_VERTICES(ctx, _NEW_LIGHT);
+      light->SpotCutoff = params[0];
+      light->_CosCutoff = (GLfloat) _mesa_cos(params[0]*DEG2RAD);
+      if (light->_CosCutoff < 0)
+	 light->_CosCutoff = 0;
+      if (light->SpotCutoff != 180.0F)
+	 light->_Flags |= LIGHT_SPOT;
+      else
+	 light->_Flags &= ~LIGHT_SPOT;
+      break;
+   case GL_CONSTANT_ATTENUATION:
+      ASSERT(params[0] >= 0.0);
+      if (light->ConstantAttenuation == params[0])
+	 return;
+      FLUSH_VERTICES(ctx, _NEW_LIGHT);
+      light->ConstantAttenuation = params[0];
+      break;
+   case GL_LINEAR_ATTENUATION:
+      ASSERT(params[0] >= 0.0);
+      if (light->LinearAttenuation == params[0])
+	 return;
+      FLUSH_VERTICES(ctx, _NEW_LIGHT);
+      light->LinearAttenuation = params[0];
+      break;
+   case GL_QUADRATIC_ATTENUATION:
+      ASSERT(params[0] >= 0.0);
+      if (light->QuadraticAttenuation == params[0])
+	 return;
+      FLUSH_VERTICES(ctx, _NEW_LIGHT);
+      light->QuadraticAttenuation = params[0];
+      break;
+   default:
+      _mesa_problem(ctx, "Unexpected pname in _mesa_light()");
+      return;
+   }
+
+   if (ctx->Driver.Lightfv)
+      ctx->Driver.Lightfv( ctx, GL_LIGHT0 + lnum, pname, params );
+}
+
+
 void GLAPIENTRY
 _mesa_Lightf( GLenum light, GLenum pname, GLfloat param )
 {
@@ -71,124 +177,69 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i = (GLint) (light - GL_LIGHT0);
-   struct gl_light *l = &ctx->Light.Light[i];
+   GLfloat temp[4];
 
    if (i < 0 || i >= (GLint) ctx->Const.MaxLights) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glLight(light=0x%x)", light );
       return;
    }
 
+   /* do particular error checks, transformations */
    switch (pname) {
    case GL_AMBIENT:
-      if (TEST_EQ_4V(l->Ambient, params))
-	 return;
-      FLUSH_VERTICES(ctx, _NEW_LIGHT);
-      COPY_4V( l->Ambient, params );
-      break;
    case GL_DIFFUSE:
-      if (TEST_EQ_4V(l->Diffuse, params))
-	 return;
-      FLUSH_VERTICES(ctx, _NEW_LIGHT);
-      COPY_4V( l->Diffuse, params );
-      break;
    case GL_SPECULAR:
-      if (TEST_EQ_4V(l->Specular, params))
-	 return;
-      FLUSH_VERTICES(ctx, _NEW_LIGHT);
-      COPY_4V( l->Specular, params );
+      /* nothing */
       break;
-   case GL_POSITION: {
-      GLfloat tmp[4];
+   case GL_POSITION:
       /* transform position by ModelView matrix */
-      TRANSFORM_POINT( tmp, ctx->ModelviewMatrixStack.Top->m, params );
-      if (TEST_EQ_4V(l->EyePosition, tmp))
-	 return;
-      FLUSH_VERTICES(ctx, _NEW_LIGHT);
-      COPY_4V(l->EyePosition, tmp);
-      if (l->EyePosition[3] != 0.0F)
-	 l->_Flags |= LIGHT_POSITIONAL;
-      else
-	 l->_Flags &= ~LIGHT_POSITIONAL;
+      TRANSFORM_POINT(temp, ctx->ModelviewMatrixStack.Top->m, params);
+      params = temp;
       break;
-   }
-   case GL_SPOT_DIRECTION: {
-      GLfloat tmp[4];
+   case GL_SPOT_DIRECTION:
       /* transform direction by inverse modelview */
       if (_math_matrix_is_dirty(ctx->ModelviewMatrixStack.Top)) {
-	 _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
+	 _math_matrix_analyse(ctx->ModelviewMatrixStack.Top);
       }
-      TRANSFORM_NORMAL( tmp, params, ctx->ModelviewMatrixStack.Top->inv );
-      if (TEST_EQ_3V(l->EyeDirection, tmp))
-	 return;
-      FLUSH_VERTICES(ctx, _NEW_LIGHT);
-      COPY_3V(l->EyeDirection, tmp);
+      TRANSFORM_NORMAL(temp, params, ctx->ModelviewMatrixStack.Top->inv);
+      params = temp;
       break;
-   }
    case GL_SPOT_EXPONENT:
-      if (params[0]<0.0 || params[0]>ctx->Const.MaxSpotExponent) {
-	 _mesa_error( ctx, GL_INVALID_VALUE, "glLight" );
+      if (params[0] < 0.0 || params[0] > ctx->Const.MaxSpotExponent) {
+	 _mesa_error(ctx, GL_INVALID_VALUE, "glLight");
 	 return;
       }
-      if (l->SpotExponent == params[0])
-	 return;
-      FLUSH_VERTICES(ctx, _NEW_LIGHT);
-      l->SpotExponent = params[0];
-      _mesa_invalidate_spot_exp_table( l );
       break;
    case GL_SPOT_CUTOFF:
-      if ((params[0]<0.0 || params[0]>90.0) && params[0]!=180.0) {
-	 _mesa_error( ctx, GL_INVALID_VALUE, "glLight" );
+      if ((params[0] < 0.0 || params[0] > 90.0) && params[0] != 180.0) {
+	 _mesa_error(ctx, GL_INVALID_VALUE, "glLight");
 	 return;
       }
-      if (l->SpotCutoff == params[0])
-	 return;
-      FLUSH_VERTICES(ctx, _NEW_LIGHT);
-      l->SpotCutoff = params[0];
-      l->_CosCutoff = (GLfloat) _mesa_cos(params[0]*DEG2RAD);
-      if (l->_CosCutoff < 0)
-	 l->_CosCutoff = 0;
-      if (l->SpotCutoff != 180.0F)
-	 l->_Flags |= LIGHT_SPOT;
-      else
-	 l->_Flags &= ~LIGHT_SPOT;
       break;
    case GL_CONSTANT_ATTENUATION:
-      if (params[0]<0.0) {
-	 _mesa_error( ctx, GL_INVALID_VALUE, "glLight" );
+      if (params[0] < 0.0) {
+	 _mesa_error(ctx, GL_INVALID_VALUE, "glLight");
 	 return;
       }
-      if (l->ConstantAttenuation == params[0])
-	 return;
-      FLUSH_VERTICES(ctx, _NEW_LIGHT);
-      l->ConstantAttenuation = params[0];
       break;
    case GL_LINEAR_ATTENUATION:
-      if (params[0]<0.0) {
-	 _mesa_error( ctx, GL_INVALID_VALUE, "glLight" );
+      if (params[0] < 0.0) {
+	 _mesa_error(ctx, GL_INVALID_VALUE, "glLight");
 	 return;
       }
-      if (l->LinearAttenuation == params[0])
-	 return;
-      FLUSH_VERTICES(ctx, _NEW_LIGHT);
-      l->LinearAttenuation = params[0];
       break;
    case GL_QUADRATIC_ATTENUATION:
-      if (params[0]<0.0) {
-	 _mesa_error( ctx, GL_INVALID_VALUE, "glLight" );
+      if (params[0] < 0.0) {
+	 _mesa_error(ctx, GL_INVALID_VALUE, "glLight");
 	 return;
       }
-      if (l->QuadraticAttenuation == params[0])
-	 return;
-      FLUSH_VERTICES(ctx, _NEW_LIGHT);
-      l->QuadraticAttenuation = params[0];
       break;
    default:
-      _mesa_error( ctx, GL_INVALID_ENUM, "glLight(pname=0x%x)", pname );
+      _mesa_error(ctx, GL_INVALID_ENUM, "glLight(pname=0x%x)", pname);
       return;
    }
 
-   if (ctx->Driver.Lightfv)
-      ctx->Driver.Lightfv( ctx, light, pname, params );
+   _mesa_light(ctx, i, pname, params);
 }
 
 

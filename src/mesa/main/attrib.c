@@ -951,25 +951,21 @@ _mesa_PopAttrib(void)
                   _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
 	       
                for (i = 0; i < ctx->Const.MaxLights; i++) {
-                  GLenum lgt = (GLenum) (GL_LIGHT0 + i);
 		  const struct gl_light *l = &light->Light[i];
-		  GLfloat tmp[4];
-                  _mesa_set_enable(ctx, lgt, l->Enabled);
-		  _mesa_Lightfv( lgt, GL_AMBIENT, l->Ambient );
-		  _mesa_Lightfv( lgt, GL_DIFFUSE, l->Diffuse );
-		  _mesa_Lightfv( lgt, GL_SPECULAR, l->Specular );
-		  TRANSFORM_POINT( tmp, ctx->ModelviewMatrixStack.Top->inv, l->EyePosition );
-		  _mesa_Lightfv( lgt, GL_POSITION, tmp );
-		  TRANSFORM_NORMAL( tmp, l->EyeDirection, ctx->ModelviewMatrixStack.Top->m );
-		  _mesa_Lightfv( lgt, GL_SPOT_DIRECTION, tmp );
-		  _mesa_Lightfv( lgt, GL_SPOT_EXPONENT, &l->SpotExponent );
-		  _mesa_Lightfv( lgt, GL_SPOT_CUTOFF, &l->SpotCutoff );
-		  _mesa_Lightfv( lgt, GL_CONSTANT_ATTENUATION, 
-				 &l->ConstantAttenuation );
-		  _mesa_Lightfv( lgt, GL_LINEAR_ATTENUATION, 
-				 &l->LinearAttenuation );
-		  _mesa_Lightfv( lgt, GL_QUADRATIC_ATTENUATION, 
-				 &l->QuadraticAttenuation );
+                  _mesa_set_enable(ctx, GL_LIGHT0 + i, l->Enabled);
+		  _mesa_light(ctx, i, GL_AMBIENT, l->Ambient);
+		  _mesa_light(ctx, i, GL_DIFFUSE, l->Diffuse);
+		  _mesa_light(ctx, i, GL_SPECULAR, l->Specular );
+		  _mesa_light(ctx, i, GL_POSITION, l->EyePosition);
+		  _mesa_light(ctx, i, GL_SPOT_DIRECTION, l->EyeDirection);
+		  _mesa_light(ctx, i, GL_SPOT_EXPONENT, &l->SpotExponent);
+		  _mesa_light(ctx, i, GL_SPOT_CUTOFF, &l->SpotCutoff);
+		  _mesa_light(ctx, i, GL_CONSTANT_ATTENUATION,
+                              &l->ConstantAttenuation);
+		  _mesa_light(ctx, i, GL_LINEAR_ATTENUATION,
+                              &l->LinearAttenuation);
+		  _mesa_light(ctx, i, GL_QUADRATIC_ATTENUATION,
+                              &l->QuadraticAttenuation);
                }
                /* light model */
                _mesa_LightModelfv(GL_LIGHT_MODEL_AMBIENT,
