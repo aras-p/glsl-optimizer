@@ -1255,3 +1255,19 @@ OSMesaGetProcAddress( const char *funcName )
    }
    return _glapi_get_proc_address(funcName);
 }
+
+
+GLAPI void GLAPIENTRY
+OSMesaColorClamp(GLboolean enable)
+{
+   OSMesaContext osmesa = OSMesaGetCurrentContext();
+
+   if (enable == GL_TRUE) {
+      osmesa->mesa.Color.ClampFragmentColor = GL_TRUE;
+   }
+   else {
+      osmesa->mesa.Color.ClampFragmentColor = GL_FIXED_ONLY_ARB;
+   }
+}
+
+

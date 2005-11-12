@@ -1276,6 +1276,20 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
       }
    }
 
+   /* Clamp color/alpha values over the range [0.0, 1.0] before storage */
+#if CHAN_TYPE == GL_FLOAT
+   if (ctx->Color.ClampFragmentColor) {
+      GLchan (*rgba)[4] = span->array->rgba;
+      GLuint i;
+      for (i = 0; i < span->end; i++) {
+         rgba[i][RCOMP] = CLAMP(rgba[i][RCOMP], 0.0, CHAN_MAXF);
+         rgba[i][GCOMP] = CLAMP(rgba[i][GCOMP], 0.0, CHAN_MAXF);
+         rgba[i][BCOMP] = CLAMP(rgba[i][BCOMP], 0.0, CHAN_MAXF);
+         rgba[i][ACOMP] = CLAMP(rgba[i][ACOMP], 0.0, CHAN_MAXF);
+      }
+   }
+#endif
+
    if (swrast->_RasterMask & MULTI_DRAW_BIT) {
       /* need to do blend/logicop separately for each color buffer */
       multi_write_rgba_span(ctx, span);

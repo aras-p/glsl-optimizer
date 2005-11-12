@@ -105,6 +105,12 @@ _swrast_update_rasterflags( GLcontext *ctx )
       rasterMask |= ATIFRAGSHADER_BIT;
    }
 
+#if CHAN_TYPE == GL_FLOAT
+   if (ctx->Color.ClampFragmentColor == GL_TRUE) {
+      rasterMask |= CLAMPING_BIT;
+   }
+#endif
+
    SWRAST_CONTEXT(ctx)->_RasterMask = rasterMask;
 }
 

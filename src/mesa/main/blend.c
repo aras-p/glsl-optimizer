@@ -574,6 +574,9 @@ void _mesa_init_color( GLcontext * ctx )
    else {
       ctx->Color.DrawBuffer[0] = GL_FRONT;
    }
+
+   ctx->Color.ClampFragmentColor = GL_FIXED_ONLY_ARB;
+   ctx->Color.ClampReadColor = GL_FIXED_ONLY_ARB;
 }
 
 /*@}*/

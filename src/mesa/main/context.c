@@ -1090,12 +1090,6 @@ init_attrib_groups( GLcontext *ctx )
    ctx->NewState = _NEW_ALL;
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
    ctx->_Facing = 0;
-#if CHAN_TYPE == GL_FLOAT
-   ctx->ClampFragmentColors = GL_FALSE; /* XXX temporary */
-#else
-   ctx->ClampFragmentColors = GL_TRUE;
-#endif
-   ctx->ClampVertexColors = GL_TRUE;
 
    return GL_TRUE;
 }

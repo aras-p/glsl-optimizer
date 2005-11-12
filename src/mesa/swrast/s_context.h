@@ -245,6 +245,7 @@ typedef void (*swrast_tri_func)( GLcontext *ctx, const SWvertex *,
 #define TEXTURE_BIT		0x1000	/**< Texturing really enabled */
 #define FRAGPROG_BIT            0x2000  /**< Fragment program enabled */
 #define ATIFRAGSHADER_BIT       0x4000  /**< ATI Fragment shader enabled */
+#define CLAMPING_BIT            0x8000  /**< Clamp colors to [0,1] */
 /*@}*/
 
 #define _SWRAST_NEW_RASTERMASK (_NEW_BUFFERS|	\
