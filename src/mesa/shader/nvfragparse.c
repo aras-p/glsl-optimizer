@@ -1589,7 +1589,7 @@ PrintSrcReg(const struct fragment_program *program,
          _mesa_printf("{%g, %g, %g, %g}", v[0], v[1], v[2], v[3]);
       }
       else {
-         ASSERT(program->Parameters->Parameters[src->Index].Type
+         ASSERT(program->Base.Parameters->Parameters[src->Index].Type
                 == PROGRAM_NAMED_PARAM);
          _mesa_printf("%s", program->Base.Parameters->Parameters[src->Index].Name);
       }

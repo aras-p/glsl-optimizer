@@ -260,7 +260,7 @@ get_register_pointer( const struct prog_src_register *source,
             ASSERT(source->Index < MAX_NV_VERTEX_PROGRAM_PARAMS);
             return state->Parameters[source->Index];
          case PROGRAM_STATE_VAR:
-            ASSERT(source->Index < state->Current->Parameters->NumParameters);
+            ASSERT(source->Index < state->Current->Base.Parameters->NumParameters);
             return state->Current->Base.Parameters->ParameterValues[source->Index];
          default:
             _mesa_problem(NULL,
