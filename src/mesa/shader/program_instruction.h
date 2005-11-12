@@ -311,8 +311,7 @@ struct prog_instruction
    GLuint TexSrcUnit:5;
    
    /**
-    * Source texture target (e.g., GL_TEXTURE_1D, GL_TEXTURE_2D,
-    * GL_TEXTURE_3D, GL_TEXTURE_CUBE, GL_TEXTURE_RECTANGLE_ARB).
+    * Source texture target, one of TEXTURE_{1D,2D,3D,CUBE,RECT}_INDEX.
     */
    GLuint TexSrcTarget:3;
    /*@}*/
