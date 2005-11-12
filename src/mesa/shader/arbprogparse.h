@@ -43,9 +43,11 @@
 struct arb_program
 {
    struct program Base;
+#if 0
    struct program_parameter_list *Parameters; 
    GLbitfield InputsRead;
    GLbitfield OutputsWritten;
+#endif
 
    GLuint Position;       /* Just used for error reporting while parsing */
    GLuint MajorVersion;

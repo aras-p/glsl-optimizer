@@ -71,9 +71,9 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
    }
    _mesa_memcpy(newInstructions, ap.VPInstructions,
                 ap.Base.NumInstructions * sizeof(struct prog_instruction));
-   if (program->Instructions)
-      _mesa_free(program->Instructions);
-   program->Instructions = newInstructions;
+   if (program->Base.Instructions)
+      _mesa_free(program->Base.Instructions);
+   program->Base.Instructions = newInstructions;
    program->Base.String          = ap.Base.String;
    program->Base.NumInstructions = ap.Base.NumInstructions;
    program->Base.NumTemporaries  = ap.Base.NumTemporaries;
@@ -81,16 +81,16 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
    program->Base.NumAttributes   = ap.Base.NumAttributes;
    program->Base.NumAddressRegs  = ap.Base.NumAddressRegs;
    program->IsPositionInvariant = ap.HintPositionInvariant;
-   program->InputsRead     = ap.InputsRead;
-   program->OutputsWritten = ap.OutputsWritten;
+   program->Base.InputsRead     = ap.Base.InputsRead;
+   program->Base.OutputsWritten = ap.Base.OutputsWritten;
 
-   if (program->Parameters) {
+   if (program->Base.Parameters) {
       /* free previous program's parameters */
-      _mesa_free_parameter_list(program->Parameters);
+      _mesa_free_parameter_list(program->Base.Parameters);
    }
-   program->Parameters     = ap.Parameters; 
+   program->Base.Parameters = ap.Base.Parameters; 
 
 #if DEBUG_VP
-   _mesa_print_program(ap.Base.NumInstructions, ap.VPInstructions);
+   _mesa_print_program(&program->Base);
 #endif
 }

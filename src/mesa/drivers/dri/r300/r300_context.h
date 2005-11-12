@@ -598,7 +598,7 @@ struct r300_vertex_program {
 	struct r300_vertex_shader_fragment params;
 	
 	int pos_end;
-	unsigned long num_temporaries; /* Number of temp vars used by program */
+	int num_temporaries; /* Number of temp vars used by program */
 	int inputs[VERT_ATTRIB_MAX];
 	int outputs[VERT_RESULT_MAX];
 };

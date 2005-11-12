@@ -421,7 +421,7 @@ static pfs_reg_t t_src(struct r300_fragment_program *rp,
 		break;
 	case PROGRAM_STATE_VAR:
 	case PROGRAM_NAMED_PARAM:
-		r = emit_param4fv(rp, rp->mesa_program.Parameters->ParameterValues[fpsrc.Index]);
+		r = emit_param4fv(rp, rp->mesa_program.Base.Parameters->ParameterValues[fpsrc.Index]);
 		break;
 	default:
 		ERROR("unknown SrcReg->File %x\n", fpsrc.File);
@@ -747,7 +747,7 @@ static void emit_arith(struct r300_fragment_program *rp, int op,
 static GLboolean parse_program(struct r300_fragment_program *rp)
 {	
 	struct fragment_program *mp = &rp->mesa_program;
-	const struct prog_instruction *inst = mp->Instructions;
+	const struct prog_instruction *inst = mp->Base.Instructions;
 	struct prog_instruction *fpi;
 	pfs_reg_t src0, src1, src2, dest, temp;
 	int flags = 0;
@@ -757,7 +757,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 		return GL_FALSE;
 	}
 
-	for (fpi=mp->Instructions; fpi->Opcode != OPCODE_END; fpi++) {
+	for (fpi=mp->Base.Instructions; fpi->Opcode != OPCODE_END; fpi++) {
 		if (fpi->Saturate) {
 			flags = PFS_FLAG_SAT;
 		}
@@ -910,7 +910,7 @@ static void init_program(struct r300_fragment_program *rp)
 {
 	struct fragment_program *mp = &rp->mesa_program;	
 	struct prog_instruction *fpi;
-	GLuint InputsRead = mp->InputsRead;
+	GLuint InputsRead = mp->Base.InputsRead;
 	GLuint temps_used = 0; /* for rp->temps[] */
 	int i;
 
@@ -979,11 +979,11 @@ static void init_program(struct r300_fragment_program *rp)
 	 * Possibly not too bad actually, as we could add to this later and
 	 * find out when inputs are last used so we can reuse them as temps.
 	 */
-	if (!mp->Instructions) {
+	if (!mp->Base.Instructions) {
 		ERROR("No instructions found in program\n");
 		return;
 	}	
-	for (fpi=mp->Instructions;fpi->Opcode != OPCODE_END; fpi++) {
+	for (fpi=mp->Base.Instructions;fpi->Opcode != OPCODE_END; fpi++) {
 		for (i=0;i<3;i++) {
 			if (fpi->SrcReg[i].File == PROGRAM_TEMPORARY) {
 				if (!(temps_used & (1 << fpi->SrcReg[i].Index))) {
@@ -1009,7 +1009,7 @@ static void update_params(struct r300_fragment_program *rp) {
 
 	/* Ask Mesa nicely to fill in ParameterValues for us */
 	if (rp->param_nr)
-		_mesa_load_state_parameters(rp->ctx, mp->Parameters);
+		_mesa_load_state_parameters(rp->ctx, mp->Base.Parameters);
 
 	for (i=0;i<rp->param_nr;i++)
 		COPY_4V(rp->constant[rp->param[i].idx], rp->param[i].values);
@@ -1054,9 +1054,7 @@ static void dump_program(struct r300_fragment_program *rp)
 			
 	fprintf(stderr, "Mesa program:\n");
 	fprintf(stderr, "-------------\n");
-		_mesa_print_program(rp->mesa_program.NumTexInstructions +
-                                    rp->mesa_program.NumAluInstructions,
-                                    rp->mesa_program.Instructions);
+        _mesa_print_program(&rp->mesa_program.Base);
 	fflush(stdout);
 
 	fprintf(stderr, "Hardware program\n");

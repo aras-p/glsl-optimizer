@@ -67,31 +67,31 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
    }
    _mesa_memcpy(newInstructions, ap.FPInstructions,
                 ap.Base.NumInstructions * sizeof(struct prog_instruction));
-   if (program->Instructions)
-      _mesa_free(program->Instructions);
-   program->Instructions = newInstructions;
+   if (program->Base.Instructions)
+      _mesa_free(program->Base.Instructions);
+   program->Base.Instructions = newInstructions;
    program->Base.String          = ap.Base.String;
    program->Base.NumInstructions = ap.Base.NumInstructions;
    program->Base.NumTemporaries  = ap.Base.NumTemporaries;
    program->Base.NumParameters   = ap.Base.NumParameters;
    program->Base.NumAttributes   = ap.Base.NumAttributes;
    program->Base.NumAddressRegs  = ap.Base.NumAddressRegs;
-   program->NumAluInstructions = ap.NumAluInstructions;
-   program->NumTexInstructions = ap.NumTexInstructions;
-   program->NumTexIndirections = ap.NumTexIndirections;
-   program->InputsRead     = ap.InputsRead;
-   program->OutputsWritten = ap.OutputsWritten;
+   program->NumAluInstructions   = ap.NumAluInstructions;
+   program->NumTexInstructions   = ap.NumTexInstructions;
+   program->NumTexIndirections   = ap.NumTexIndirections;
+   program->Base.InputsRead      = ap.Base.InputsRead;
+   program->Base.OutputsWritten  = ap.Base.OutputsWritten;
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
       program->TexturesUsed[i] = ap.TexturesUsed[i];
 
-   if (program->Parameters) {
+   if (program->Base.Parameters) {
       /* free previous program's parameters */
-      _mesa_free_parameter_list(program->Parameters);
+      _mesa_free_parameter_list(program->Base.Parameters);
    }
-   program->Parameters         = ap.Parameters;
+   program->Base.Parameters    = ap.Base.Parameters;
    program->FogOption          = ap.FogOption;
 
 #if DEBUG_FP
-   _mesa_print_program(ap.Base.NumInstructions, ap.FPInstructions);
+   _mesa_print_program(&program.Base);
 #endif
 }

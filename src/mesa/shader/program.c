@@ -294,35 +294,20 @@ _mesa_delete_program(GLcontext *ctx, struct program *prog)
 
    if (prog->String)
       _mesa_free(prog->String);
-   if (prog->Target == GL_VERTEX_PROGRAM_NV ||
-       prog->Target == GL_VERTEX_STATE_PROGRAM_NV) {
-      struct vertex_program *vprog = (struct vertex_program *) prog;
-      if (vprog->Instructions) {
-         GLuint i;
-         for (i = 0; i < vprog->Base.NumInstructions; i++) {
-            if (vprog->Instructions[i].Data)
-               _mesa_free(vprog->Instructions[i].Data);
-         }
-         _mesa_free(vprog->Instructions);
+
+   if (prog->Instructions) {
+      GLuint i;
+      for (i = 0; i < prog->NumInstructions; i++) {
+         if (prog->Instructions[i].Data)
+            _mesa_free(prog->Instructions[i].Data);
       }
-      if (vprog->Parameters)
-         _mesa_free_parameter_list(vprog->Parameters);
+      _mesa_free(prog->Instructions);
    }
-   else if (prog->Target == GL_FRAGMENT_PROGRAM_NV ||
-            prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
-      struct fragment_program *fprog = (struct fragment_program *) prog;
-      if (fprog->Instructions) {
-         GLuint i;
-         for (i = 0; i < fprog->Base.NumInstructions; i++) {
-            if (fprog->Instructions[i].Data)
-               _mesa_free(fprog->Instructions[i].Data);
-         }
-         _mesa_free(fprog->Instructions);
-      }
-      if (fprog->Parameters)
-         _mesa_free_parameter_list(fprog->Parameters);
-   }
-   else if (prog->Target == GL_FRAGMENT_SHADER_ATI) {
+
+   if (prog->Parameters)
+      _mesa_free_parameter_list(prog->Parameters);
+
+   if (prog->Target == GL_FRAGMENT_SHADER_ATI) {
       struct ati_fragment_shader *atifs = (struct ati_fragment_shader *)prog;
       GLuint i;
       for (i = 0; i < MAX_NUM_PASSES_ATI; i++) {
@@ -1175,70 +1160,125 @@ writemask_string(GLuint writeMask)
 
 
 /**
- * Print a vertx/fragment program to stdout.
- * XXX this function could be greatly improved.
+ * Print a single vertex/fragment program instruction.
  */
 void
-_mesa_print_program(GLuint count, const struct prog_instruction *inst)
+_mesa_print_instruction(const struct prog_instruction *inst)
 {
-   GLuint i;
+   switch (inst->Opcode) {
+   case OPCODE_PRINT:
+      _mesa_printf("PRINT '%s'", inst->Data);
+      if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
+         _mesa_printf(", ");
+         _mesa_printf("%s[%d]%s",
+                      program_file_string(inst->SrcReg[0].File),
+                      inst->SrcReg[0].Index,
+                      swizzle_string(inst->SrcReg[0].Swizzle,
+                                     inst->SrcReg[0].NegateBase));
+      }
+      _mesa_printf(";\n");
+      break;
+   /* XXX check for a bunch of other special-case instructions */
+   default:
+      /* typical alu instruction */
+      {
+         const GLuint numRegs = _mesa_num_inst_src_regs(inst->Opcode);
+         GLuint j;
 
-   for (i = 0; i < count; i++) {
-      /* inst number */
-      _mesa_printf("%3d: ", i);
+         _mesa_printf("%s", _mesa_opcode_string(inst->Opcode));
 
-      switch (inst[i].Opcode) {
-      case OPCODE_PRINT:
-         _mesa_printf("PRINT '%s'", inst[i].Data);
-         if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
+         /* frag prog only */
+         if (inst->Saturate)
+            _mesa_printf("_SAT");
+
+         if (inst->DstReg.File != PROGRAM_UNDEFINED) {
+            _mesa_printf(" %s[%d]%s",
+                         program_file_string(inst->DstReg.File),
+                         inst->DstReg.Index,
+                         writemask_string(inst->DstReg.WriteMask));
+         }
+
+         if (numRegs > 0)
             _mesa_printf(", ");
+
+         for (j = 0; j < numRegs; j++) {
             _mesa_printf("%s[%d]%s",
-                         program_file_string(inst[i].SrcReg[0].File),
-                         inst[i].SrcReg[0].Index,
-                         swizzle_string(inst[i].SrcReg[0].Swizzle,
-                                        inst[i].SrcReg[0].NegateBase));
-         }
-         _mesa_printf(";\n");
-         break;
-      /* XXX check for a bunch of other special-case instructions */
-      default:
-         /* typical alu instruction */
-         {
-            const GLuint numRegs = _mesa_num_inst_src_regs(inst[i].Opcode);
-            GLuint j;
-
-            _mesa_printf("%s", _mesa_opcode_string(inst[i].Opcode));
-
-            /* frag prog only */
-            if (inst[i].Saturate)
-               _mesa_printf("_SAT");
-
-            if (inst[i].DstReg.File != PROGRAM_UNDEFINED) {
-               _mesa_printf(" %s[%d]%s",
-                            program_file_string(inst[i].DstReg.File),
-                            inst[i].DstReg.Index,
-                            writemask_string(inst[i].DstReg.WriteMask));
-            }
-
-            if (numRegs > 0)
+                         program_file_string(inst->SrcReg[j].File),
+                         inst->SrcReg[j].Index,
+                         swizzle_string(inst->SrcReg[j].Swizzle,
+                                        inst->SrcReg[j].NegateBase));
+            if (j + 1 < numRegs)
                _mesa_printf(", ");
-
-            for (j = 0; j < numRegs; j++) {
-               _mesa_printf("%s[%d]%s",
-                            program_file_string(inst[i].SrcReg[j].File),
-                            inst[i].SrcReg[j].Index,
-                            swizzle_string(inst[i].SrcReg[j].Swizzle,
-                                           inst[i].SrcReg[j].NegateBase));
-               if (j + 1 < numRegs)
-                  _mesa_printf(", ");
-            }
-
-            _mesa_printf(";\n");
          }
+
+         _mesa_printf(";\n");
       }
    }
 }
 
+
+/**
+ * Print a vertx/fragment program to stdout.
+ * XXX this function could be greatly improved.
+ */
+void
+_mesa_print_program(const struct program *prog)
+{
+   GLuint i;
+   for (i = 0; i < prog->NumInstructions; i++) {
+      _mesa_printf("%3d: ", i);
+      _mesa_print_instruction(prog->Instructions + i);
+   }
+}
+
+
+/**
+ * Print all of a program's parameters.
+ */
+void
+_mesa_print_program_parameters(GLcontext *ctx, const struct program *prog)
+{
+   GLint i;
+
+   _mesa_printf("NumInstructions=%d\n", prog->NumInstructions);
+   _mesa_printf("NumTemporaries=%d\n", prog->NumTemporaries);
+   _mesa_printf("NumParameters=%d\n", prog->NumParameters);
+   _mesa_printf("NumAttributes=%d\n", prog->NumAttributes);
+   _mesa_printf("NumAddressRegs=%d\n", prog->NumAddressRegs);
+	
+   _mesa_load_state_parameters(ctx, prog->Parameters);
+			
+#if 0	
+   _mesa_printf("Local Params:\n");
+   for (i = 0; i < MAX_PROGRAM_LOCAL_PARAMS; i++){
+      const GLfloat *p = prog->LocalParams[i];
+      _mesa_printf("%2d: %f, %f, %f, %f\n", i, p[0], p[1], p[2], p[3]);
+   }
+#endif	
+
+   for (i = 0; i < prog->Parameters->NumParameters; i++){
+      const GLfloat *p = prog->Parameters->ParameterValues[i];
+      _mesa_printf("param %02d:", i);
+		
+      switch (prog->Parameters->Parameters[i].Type) {
+      case PROGRAM_NAMED_PARAM:
+         _mesa_printf("%s", prog->Parameters->Parameters[i].Name);
+         _mesa_printf("(NAMED_PARAMETER)");
+         break;
+      case PROGRAM_CONSTANT:
+         _mesa_printf("(CONSTANT)");
+         break;
+      case PROGRAM_STATE_VAR:
+         _mesa_printf("(STATE)\n");
+         break;
+      default:
+         _mesa_printf("(UNK)\n");
+         break;
+      }
+      
+      _mesa_printf("{ %f, %f, %f, %f }\n", p[0], p[1], p[2], p[3]);
+   }
+}
 
 
 
@@ -1674,7 +1714,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
          else {
             /* try user-defined identifiers */
             const GLfloat *value = _mesa_lookup_parameter_value(
-                       ctx->FragmentProgram.Current->Parameters, -1, reg);
+                       ctx->FragmentProgram.Current->Base.Parameters, -1, reg);
             if (value) {
                COPY_4V(v, value);
             }

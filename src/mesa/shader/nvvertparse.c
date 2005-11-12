@@ -1367,28 +1367,28 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
       /* copy the compiled instructions */
       assert(parseState.numInst <= MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS);
       newInst = (struct prog_instruction *)
-         MALLOC(parseState.numInst * sizeof(struct prog_instruction));
+         _mesa_malloc(parseState.numInst * sizeof(struct prog_instruction));
       if (!newInst) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
-         FREE(programString);
+         _mesa_free(programString);
          return;  /* out of memory */
       }
-      MEMCPY(newInst, instBuffer,
-             parseState.numInst * sizeof(struct prog_instruction));
+      _mesa_memcpy(newInst, instBuffer,
+                   parseState.numInst * sizeof(struct prog_instruction));
 
       /* install the program */
       program->Base.Target = target;
       if (program->Base.String) {
-         FREE(program->Base.String);
+         _mesa_free(program->Base.String);
       }
       program->Base.String = programString;
       program->Base.Format = GL_PROGRAM_FORMAT_ASCII_ARB;
-      if (program->Instructions) {
-         FREE(program->Instructions);
+      if (program->Base.Instructions) {
+         _mesa_free(program->Base.Instructions);
       }
-      program->Instructions = newInst;
-      program->InputsRead = parseState.inputsRead;
-      program->OutputsWritten = parseState.outputsWritten;
+      program->Base.Instructions = newInst;
+      program->Base.InputsRead = parseState.inputsRead;
+      program->Base.OutputsWritten = parseState.outputsWritten;
       program->IsPositionInvariant = parseState.isPositionInvariant;
       program->IsNVProgram = GL_TRUE;
 
@@ -1531,7 +1531,7 @@ _mesa_print_nv_vertex_instruction(const struct prog_instruction *inst)
          break;
       case OPCODE_PRINT:
          _mesa_printf("PRINT '%s'", inst->Data);
-         if (inst->SrcReg[0].File) {
+         if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
             _mesa_printf(", ");
             PrintSrcReg(&inst->SrcReg[0]);
             _mesa_printf(";\n");
@@ -1557,7 +1557,7 @@ _mesa_print_nv_vertex_program(const struct vertex_program *program)
 {
    const struct prog_instruction *inst;
 
-   for (inst = program->Instructions; ; inst++) {
+   for (inst = program->Base.Instructions; ; inst++) {
       _mesa_print_nv_vertex_instruction(inst);
       if (inst->Opcode == OPCODE_END)
          return;

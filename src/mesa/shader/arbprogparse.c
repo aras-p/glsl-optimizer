@@ -1518,7 +1518,7 @@ parse_attrib_binding(GLcontext * ctx, GLubyte ** inst,
       _mesa_error(ctx, GL_INVALID_OPERATION, msg);
    }
 
-   Program->InputsRead |= (1 << *inputReg);
+   Program->Base.InputsRead |= (1 << *inputReg);
 
    return err;
 }
@@ -1609,7 +1609,7 @@ parse_result_binding(GLcontext *ctx, GLubyte **inst,
          break;
    }
 
-   Program->OutputsWritten |= (1 << *outputReg);
+   Program->Base.OutputsWritten |= (1 << *outputReg);
 
    return 0;
 }
@@ -1698,9 +1698,8 @@ parse_param_elements (GLcontext * ctx, GLubyte ** inst,
             for (row = first_row; row <= last_row; row++) {
                state_tokens[3] = state_tokens[4] = row;
 
-               idx =
-                  _mesa_add_state_reference (Program->Parameters,
-                                             state_tokens);
+               idx = _mesa_add_state_reference(Program->Base.Parameters,
+                                               state_tokens);
                if (param_var->param_binding_begin == ~0U)
                   param_var->param_binding_begin = idx;
                param_var->param_binding_length++;
@@ -1708,8 +1707,8 @@ parse_param_elements (GLcontext * ctx, GLubyte ** inst,
             }
          }
          else {
-            idx =
-               _mesa_add_state_reference (Program->Parameters, state_tokens);
+            idx = _mesa_add_state_reference(Program->Base.Parameters,
+                                            state_tokens);
             if (param_var->param_binding_begin == ~0U)
                param_var->param_binding_begin = idx;
             param_var->param_binding_length++;
@@ -1720,7 +1719,7 @@ parse_param_elements (GLcontext * ctx, GLubyte ** inst,
       case PARAM_PROGRAM_ELEMENT:
          if (parse_program_single_item (ctx, inst, Program, state_tokens))
             return 1;
-         idx = _mesa_add_state_reference (Program->Parameters, state_tokens);
+         idx = _mesa_add_state_reference (Program->Base.Parameters, state_tokens);
          if (param_var->param_binding_begin == ~0U)
             param_var->param_binding_begin = idx;
          param_var->param_binding_length++;
@@ -1759,9 +1758,8 @@ parse_param_elements (GLcontext * ctx, GLubyte ** inst,
 
             for (new_idx = start_idx; new_idx <= end_idx; new_idx++) {
                state_tokens[2] = new_idx;
-               idx =
-                  _mesa_add_state_reference (Program->Parameters,
-                                             state_tokens);
+               idx = _mesa_add_state_reference(Program->Base.Parameters,
+                                               state_tokens);
                param_var->param_binding_length++;
                Program->Base.NumParameters++;
             }
@@ -1773,9 +1771,9 @@ parse_param_elements (GLcontext * ctx, GLubyte ** inst,
 
       case PARAM_CONSTANT:
          parse_constant (inst, const_values, Program, use);
-         idx =
-            _mesa_add_named_constant (Program->Parameters,
-                                      (char *) param_var->name, const_values);
+         idx = _mesa_add_named_constant(Program->Base.Parameters,
+                                        (char *) param_var->name,
+                                        const_values);
          if (param_var->param_binding_begin == ~0U)
             param_var->param_binding_begin = idx;
          param_var->param_binding_length++;
@@ -3949,9 +3947,9 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    program->Base.NumTemporaries =
    program->Base.NumParameters =
    program->Base.NumAttributes = program->Base.NumAddressRegs = 0;
-   program->Parameters = _mesa_new_parameter_list ();
-   program->InputsRead = 0x0;
-   program->OutputsWritten = 0x0;
+   program->Base.Parameters = _mesa_new_parameter_list ();
+   program->Base.InputsRead = 0x0;
+   program->Base.OutputsWritten = 0x0;
    program->Position = 0;
    program->MajorVersion = program->MinorVersion = 0;
    program->PrecisionOption = GL_DONT_CARE;

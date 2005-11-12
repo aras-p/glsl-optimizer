@@ -130,7 +130,7 @@ static GLuint src_vector( struct i915_fragment_program *p,
       case PROGRAM_STATE_VAR:
       case PROGRAM_NAMED_PARAM:
          src = i915_emit_param4fv( 
-	    p, program->Parameters->ParameterValues[source->Index] );
+	    p, program->Base.Parameters->ParameterValues[source->Index] );
 	 break;
 
       default:
@@ -250,7 +250,7 @@ do {									\
 static void upload_program( struct i915_fragment_program *p )
 {
    const struct fragment_program *program = p->ctx->FragmentProgram._Current;
-   const struct prog_instruction *inst = program->Instructions;
+   const struct prog_instruction *inst = program->Base.Instructions;
 
 /*    _mesa_debug_fp_inst(program->Base.NumInstructions, inst); */
 
@@ -789,7 +789,7 @@ static void fixup_depth_write( struct i915_fragment_program *p )
 
 static void check_wpos( struct i915_fragment_program *p )
 {
-   GLuint inputs = p->FragProg.InputsRead;
+   GLuint inputs = p->FragProg.Base.InputsRead;
    GLint i;
 
    p->wpos_tex = -1;
@@ -828,7 +828,7 @@ static void track_params( struct i915_fragment_program *p )
    GLint i;
 
    if (p->nr_params)
-      _mesa_load_state_parameters(p->ctx, p->FragProg.Parameters); 
+      _mesa_load_state_parameters(p->ctx, p->FragProg.Base.Parameters); 
 
    for (i = 0; i < p->nr_params; i++) {
       GLint reg = p->param[i].reg;
@@ -955,7 +955,7 @@ void i915ValidateFragmentProgram( i915ContextPtr i915 )
    struct i915_fragment_program *p = 
       (struct i915_fragment_program *)ctx->FragmentProgram._Current;
 
-   GLuint inputsRead = p->FragProg.InputsRead;
+   const GLuint inputsRead = p->FragProg.Base.InputsRead;
    GLuint s4 = i915->state.Ctx[I915_CTXREG_LIS4] & ~S4_VFMT_MASK;
    GLuint s2 = S2_TEXCOORD_NONE;
    int i, offset = 0;

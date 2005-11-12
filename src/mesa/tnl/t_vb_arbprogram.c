@@ -1109,7 +1109,7 @@ static void compile_vertex_program( struct vertex_program *program,
    /* Compile instructions:
     */
    for (i = 0; i < program->Base.NumInstructions; i++) {
-      cvp_emit_inst(&cp, &program->Instructions[i]);
+      cvp_emit_inst(&cp, &program->Base.Instructions[i]);
    }
 
    /* Finish up:
@@ -1269,8 +1269,8 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    if (!program || program->IsNVProgram)
       return GL_TRUE;   
 
-   if (program->Parameters) {
-      _mesa_load_state_parameters(ctx, program->Parameters);
+   if (program->Base.Parameters) {
+      _mesa_load_state_parameters(ctx, program->Base.Parameters);
    }   
    
    p = (struct tnl_compiled_program *)program->TnlData;
@@ -1280,7 +1280,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    m->nr_inputs = m->nr_outputs = 0;
 
    for (i = 0; i < _TNL_ATTRIB_MAX; i++) {
-      if (program->InputsRead & (1<<i)) {
+      if (program->Base.InputsRead & (1<<i)) {
 	 GLuint j = m->nr_inputs++;
 	 m->input[j].idx = i;
 	 m->input[j].data = (GLfloat *)m->VB->AttribPtr[i]->data;
@@ -1291,7 +1291,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    }     
 
    for (i = 0; i < VERT_RESULT_MAX; i++) {
-      if (program->OutputsWritten & (1<<i)) {
+      if (program->Base.OutputsWritten & (1 << i)) {
 	 GLuint j = m->nr_outputs++;
 	 m->output[j].idx = i;
 	 m->output[j].data = (GLfloat *)m->attribs[i].data;
@@ -1347,7 +1347,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    VB->ClipPtr = &m->attribs[VERT_RESULT_HPOS];
    VB->ClipPtr->count = VB->Count;
 
-   outputs = program->OutputsWritten;
+   outputs = program->Base.OutputsWritten;
 
    if (outputs & (1<<VERT_RESULT_COL0)) {
       VB->ColorPtr[0] = &m->attribs[VERT_RESULT_COL0];
@@ -1424,8 +1424,8 @@ validate_vertex_program( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       m->File[FILE_LOCAL_PARAM] = program->Base.LocalParams;
       m->File[FILE_ENV_PARAM] = ctx->VertexProgram.Parameters;
       /* GL_NV_vertex_programs can't reference GL state */
-      if (program->Parameters)
-         m->File[FILE_STATE_PARAM] = program->Parameters->ParameterValues;
+      if (program->Base.Parameters)
+         m->File[FILE_STATE_PARAM] = program->Base.Parameters->ParameterValues;
       else
          m->File[FILE_STATE_PARAM] = NULL;
    }

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3.1
+ * Version:  6.5
  *
  * Copyright (C) 2005  Tungsten Graphics   All Rights Reserved.
  *
@@ -124,7 +124,7 @@ static struct state_key *make_state_key( GLcontext *ctx )
     */
    assert(fp);
 
-   key->fragprog_inputs_read = fp->InputsRead;
+   key->fragprog_inputs_read = fp->Base.InputsRead;
 
    key->separate_specular = (ctx->Light.Model.ColorControl ==
 			     GL_SEPARATE_SPECULAR_COLOR);
@@ -365,13 +365,13 @@ static void release_temps( struct tnl_program *p )
 
 static struct ureg register_input( struct tnl_program *p, GLuint input )
 {
-   p->program->InputsRead |= (1<<input);
+   p->program->Base.InputsRead |= (1<<input);
    return make_ureg(PROGRAM_INPUT, input);
 }
 
 static struct ureg register_output( struct tnl_program *p, GLuint output )
 {
-   p->program->OutputsWritten |= (1<<output);
+   p->program->Base.OutputsWritten |= (1<<output);
    return make_ureg(PROGRAM_OUTPUT, output);
 }
 
@@ -387,7 +387,7 @@ static struct ureg register_const4f( struct tnl_program *p,
    values[1] = s1;
    values[2] = s2;
    values[3] = s3;
-   idx = _mesa_add_unnamed_constant( p->program->Parameters, values );
+   idx = _mesa_add_unnamed_constant( p->program->Base.Parameters, values );
    return make_ureg(PROGRAM_STATE_VAR, idx);
 }
 
@@ -425,7 +425,7 @@ static struct ureg register_param6( struct tnl_program *p,
    tokens[3] = s3;
    tokens[4] = s4;
    tokens[5] = s5;
-   idx = _mesa_add_state_reference( p->program->Parameters, tokens );
+   idx = _mesa_add_state_reference( p->program->Base.Parameters, tokens );
    return make_ureg(PROGRAM_STATE_VAR, idx);
 }
 
@@ -492,7 +492,7 @@ static void debug_insn( struct prog_instruction *inst, const char *fn,
       }
 	 
       _mesa_printf("%d:\t", line);
-      _mesa_print_program(1, inst);
+      _mesa_print_instruction(inst);
    }
 }
 
@@ -508,7 +508,7 @@ static void emit_op3fn(struct tnl_program *p,
 		       GLuint line)
 {
    GLuint nr = p->program->Base.NumInstructions++;
-   struct prog_instruction *inst = &p->program->Instructions[nr];
+   struct prog_instruction *inst = &p->program->Base.Instructions[nr];
       
    if (p->program->Base.NumInstructions > MAX_INSN) {
       _mesa_problem(0, "Out of instructions in emit_op3fn\n");
@@ -1406,15 +1406,16 @@ create_new_program( const struct state_key *key,
    else
       p.temp_reserved = ~((1<<max_temps)-1);
 
-   p.program->Instructions = MALLOC(sizeof(struct prog_instruction) * MAX_INSN);
+   p.program->Base.Instructions
+      = MALLOC(sizeof(struct prog_instruction) * MAX_INSN);
    p.program->Base.String = 0;
    p.program->Base.NumInstructions =
    p.program->Base.NumTemporaries =
    p.program->Base.NumParameters =
    p.program->Base.NumAttributes = p.program->Base.NumAddressRegs = 0;
-   p.program->Parameters = _mesa_new_parameter_list();
-   p.program->InputsRead = 0;
-   p.program->OutputsWritten = 0;
+   p.program->Base.Parameters = _mesa_new_parameter_list();
+   p.program->Base.InputsRead = 0;
+   p.program->Base.OutputsWritten = 0;
 
    build_tnl_program( &p );
 }

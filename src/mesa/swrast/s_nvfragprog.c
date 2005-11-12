@@ -135,7 +135,7 @@ get_register_pointer( GLcontext *ctx,
          /* Fallthrough */
       case PROGRAM_NAMED_PARAM:
          ASSERT(source->Index < (GLint) program->Parameters->NumParameters);
-         src = program->Parameters->ParameterValues[source->Index];
+         src = program->Base.Parameters->ParameterValues[source->Index];
          break;
       default:
          _mesa_problem(ctx, "Invalid input register file %d in fetch_vector4", source->File);
@@ -495,7 +495,7 @@ init_machine_deriv( GLcontext *ctx,
    }
 
    /* Add derivatives */
-   if (program->InputsRead & (1 << FRAG_ATTRIB_WPOS)) {
+   if (program->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS)) {
       GLfloat *wpos = (GLfloat*) machine->Inputs[FRAG_ATTRIB_WPOS];
       if (xOrY == 'X') {
          wpos[0] += 1.0F;
@@ -510,7 +510,7 @@ init_machine_deriv( GLcontext *ctx,
          wpos[3] += span->dwdy;
       }
    }
-   if (program->InputsRead & (1 << FRAG_ATTRIB_COL0)) {
+   if (program->Base.InputsRead & (1 << FRAG_ATTRIB_COL0)) {
       GLfloat *col0 = (GLfloat*) machine->Inputs[FRAG_ATTRIB_COL0];
       if (xOrY == 'X') {
          col0[0] += span->drdx * (1.0F / CHAN_MAXF);
@@ -525,7 +525,7 @@ init_machine_deriv( GLcontext *ctx,
          col0[3] += span->dady * (1.0F / CHAN_MAXF);
       }
    }
-   if (program->InputsRead & (1 << FRAG_ATTRIB_COL1)) {
+   if (program->Base.InputsRead & (1 << FRAG_ATTRIB_COL1)) {
       GLfloat *col1 = (GLfloat*) machine->Inputs[FRAG_ATTRIB_COL1];
       if (xOrY == 'X') {
          col1[0] += span->dsrdx * (1.0F / CHAN_MAXF);
@@ -540,7 +540,7 @@ init_machine_deriv( GLcontext *ctx,
          col1[3] += 0.0; /*XXX fix */
       }
    }
-   if (program->InputsRead & (1 << FRAG_ATTRIB_FOGC)) {
+   if (program->Base.InputsRead & (1 << FRAG_ATTRIB_FOGC)) {
       GLfloat *fogc = (GLfloat*) machine->Inputs[FRAG_ATTRIB_FOGC];
       if (xOrY == 'X') {
          fogc[0] += span->dfogdx;
@@ -550,7 +550,7 @@ init_machine_deriv( GLcontext *ctx,
       }
    }
    for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
-      if (program->InputsRead & (1 << (FRAG_ATTRIB_TEX0 + u))) {
+      if (program->Base.InputsRead & (1 << (FRAG_ATTRIB_TEX0 + u))) {
          GLfloat *tex = (GLfloat*) machine->Inputs[FRAG_ATTRIB_TEX0 + u];
          /* XXX perspective-correct interpolation */
          if (xOrY == 'X') {
@@ -599,7 +599,7 @@ execute_program( GLcontext *ctx,
 #endif
 
    for (pc = 0; pc < maxInst; pc++) {
-      const struct prog_instruction *inst = program->Instructions + pc;
+      const struct prog_instruction *inst = program->Base.Instructions + pc;
 
       if (ctx->FragmentProgram.CallbackEnabled &&
           ctx->FragmentProgram.Callback) {
@@ -1384,7 +1384,7 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
               const struct fragment_program *program,
               const struct sw_span *span, GLuint col )
 {
-   GLuint inputsRead = program->InputsRead;
+   GLuint inputsRead = program->Base.InputsRead;
    GLuint u;
 
    if (ctx->FragmentProgram.CallbackEnabled)
@@ -1457,8 +1457,8 @@ _swrast_exec_fragment_program( GLcontext *ctx, struct sw_span *span )
 
    ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
 
-   if (program->Parameters) {
-      _mesa_load_state_parameters(ctx, program->Parameters);
+   if (program->Base.Parameters) {
+      _mesa_load_state_parameters(ctx, program->Base.Parameters);
    }   
 
    for (i = 0; i < span->end; i++) {
@@ -1482,7 +1482,7 @@ _swrast_exec_fragment_program( GLcontext *ctx, struct sw_span *span )
             UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][ACOMP], colOut[3]);
          }
          /* depth value */
-         if (program->OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
+         if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
             const GLfloat depth
                = ctx->FragmentProgram.Machine.Outputs[FRAG_RESULT_DEPR][2];
             span->array->z[i] = IROUND(depth * ctx->DrawBuffer->_DepthMaxF);
@@ -1490,7 +1490,7 @@ _swrast_exec_fragment_program( GLcontext *ctx, struct sw_span *span )
       }
    }
 
-   if (program->OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
+   if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
       span->interpMask &= ~SPAN_Z;
       span->arrayMask |= SPAN_Z;
    }

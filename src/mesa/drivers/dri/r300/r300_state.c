@@ -1012,7 +1012,7 @@ void r300_setup_textures(GLcontext *ctx)
 	GLuint OutputsWritten;
 	
 	if(hw_tcl_on)
-		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->OutputsWritten;
+		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->Base.OutputsWritten;
 
 	R300_STATECHANGE(r300, txe);
 	R300_STATECHANGE(r300, tex.filter);
@@ -1110,12 +1110,12 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	int i;
 
 	if(hw_tcl_on)
-		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->OutputsWritten;
+		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->Base.OutputsWritten;
 	else
 		OutputsWritten = r300->state.render_inputs;
 
 	if (ctx->FragmentProgram._Current)
-		InputsRead = ctx->FragmentProgram._Current->InputsRead;
+		InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
 	else {
 		fprintf(stderr, "No ctx->FragmentProgram._Current!!\n");
 		return; /* This should only ever happen once.. */
@@ -1213,7 +1213,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	GLuint OutputsWritten;
 	
 	if(hw_tcl_on)
-		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->OutputsWritten;
+		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->Base.OutputsWritten;
 	
 	/* This needs to be rewritten - it is a hack at best */
 

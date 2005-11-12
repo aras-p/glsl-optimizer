@@ -1761,18 +1761,33 @@ struct program
    GLenum Target;
    GLenum Format;            /**< String encoding format */
    GLboolean Resident;
+
+   struct prog_instruction *Instructions;
+
+   GLbitfield InputsRead;     /* Bitmask of which input regs are read */
+   GLbitfield OutputsWritten; /* Bitmask of which output regs are written to */
+
+   /** Named parameters, constants, etc. from program text */
+   struct program_parameter_list *Parameters;
+   /** Numbered local parameters */
    GLfloat LocalParams[MAX_PROGRAM_LOCAL_PARAMS][4];
-   GLuint NumInstructions;  /* GL_ARB_vertex/fragment_program */
+
+   /** Logical counts */
+   /*@{*/
+   GLuint NumInstructions;
    GLuint NumTemporaries;
    GLuint NumParameters;
    GLuint NumAttributes;
    GLuint NumAddressRegs;
-   /* native, h/w counts */
+   /*@}*/
+   /** Native, actual h/w counts */
+   /*@{*/
    GLuint NumNativeInstructions;
    GLuint NumNativeTemporaries;
    GLuint NumNativeParameters;
    GLuint NumNativeAttributes;
    GLuint NumNativeAddressRegs;
+   /*@}*/
 };
 
 
@@ -1780,12 +1795,8 @@ struct program
 struct vertex_program
 {
    struct program Base;   /* base class */
-   struct prog_instruction *Instructions;  /* Compiled instructions */
    GLboolean IsNVProgram; /* GL_NV_vertex_program ? */
    GLboolean IsPositionInvariant;  /* GL_NV_vertex_program1_1 */
-   GLbitfield InputsRead;     /* Bitmask of which input regs are read */
-   GLbitfield OutputsWritten; /* Bitmask of which output regs are written to */
-   struct program_parameter_list *Parameters; /**< array [NumParameters] */
    void *TnlData;		/* should probably use Base.DriverData */
 };
 
@@ -1794,10 +1805,7 @@ struct vertex_program
 struct fragment_program
 {
    struct program Base;   /**< base class */
-   struct prog_instruction *Instructions;  /**< Compiled instructions */
-   GLbitfield InputsRead;     /**< Bitmask of which input regs are read */
-   GLbitfield OutputsWritten; /**< Bitmask of which output regs are written to */
-   GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /**< TEXTURE_x_INDEX bitmask */
+   GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /**< TEXTURE_x_BIT bitmask */
    GLuint NumAluInstructions; /**< GL_ARB_fragment_program */
    GLuint NumTexInstructions;
    GLuint NumTexIndirections;
@@ -1805,7 +1813,6 @@ struct fragment_program
    GLuint NumNativeTexInstructions;
    GLuint NumNativeTexIndirections;
    GLenum FogOption;
-   struct program_parameter_list *Parameters; /**< array [NumParameters] */
    GLboolean UsesKill;
 };
 

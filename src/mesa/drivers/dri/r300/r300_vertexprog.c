@@ -132,67 +132,18 @@ static char *dst_mask_names[4]={ "X", "Y", "Z", "W" };
       XPD            v,v     v        cross product
 */
 
-void dump_program_params(GLcontext *ctx, struct vertex_program *vp)
-{
-	int i;
-	int pi;
-
-	fprintf(stderr, "NumInstructions=%d\n", vp->Base.NumInstructions);
-	fprintf(stderr, "NumTemporaries=%d\n", vp->Base.NumTemporaries);
-	fprintf(stderr, "NumParameters=%d\n", vp->Base.NumParameters);
-	fprintf(stderr, "NumAttributes=%d\n", vp->Base.NumAttributes);
-	fprintf(stderr, "NumAddressRegs=%d\n", vp->Base.NumAddressRegs);
-	
-	_mesa_load_state_parameters(ctx, vp->Parameters);
-			
-#if 0	
-	for(pi=0; pi < vp->Base.NumParameters; pi++){
-		fprintf(stderr, "{ ");
-		for(i=0; i < 4; i++)
-			fprintf(stderr, "%f ", vp->Base.LocalParams[pi][i]);
-		fprintf(stderr, "}\n");
-	}
-#endif	
-	for(pi=0; pi < vp->Parameters->NumParameters; pi++){
-		fprintf(stderr, "param %02d:", pi);
-		
-		switch(vp->Parameters->Parameters[pi].Type){
-			
-		case PROGRAM_NAMED_PARAM:
-			fprintf(stderr, "%s", vp->Parameters->Parameters[pi].Name);
-			fprintf(stderr, "(NAMED_PARAMETER)");
-		break;
-		
-		case PROGRAM_CONSTANT:
-			fprintf(stderr, "(CONSTANT)");
-		break;
-		
-		case PROGRAM_STATE_VAR:
-			fprintf(stderr, "(STATE)\n");
-		break;
-		
-		default:
-			fprintf(stderr, "(UNK)\n");
-		break;
-		}
-		
-		fprintf(stderr, "{ ");
-		for(i=0; i < 4; i++)
-			fprintf(stderr, "%f ", vp->Parameters->ParameterValues[pi][i]);
-		fprintf(stderr, "}\n");
-		
-	}
-}
-
+/*
+ * XXX get rid of this function.  Use _mesa_print_program() instead.
+ */
 void debug_vp(GLcontext *ctx, struct vertex_program *vp)
 {
 	struct prog_instruction *vpi;
 	int i, operand_index;
 	int operator_index;
 	
-	dump_program_params(ctx, vp);
+	_mesa_print_program_parameters(ctx, &vp->Base);
 
-	vpi=vp->Instructions;
+	vpi=vp->Base.Instructions;
 	
 	for(;; vpi++){
 		if(vpi->Opcode == OPCODE_END)
@@ -250,26 +201,28 @@ int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp, f
 	int pi;
 	struct vertex_program *mesa_vp=(void *)vp;
 	float *dst_o=dst;
+        struct program_parameter_list *paramList;
 	
-	_mesa_load_state_parameters(ctx, mesa_vp->Parameters);
+	_mesa_load_state_parameters(ctx, mesa_vp->Base.Parameters);
 	
 	//debug_vp(ctx, mesa_vp);
-	if(mesa_vp->Parameters->NumParameters * 4 > VSF_MAX_FRAGMENT_LENGTH){
+	if(mesa_vp->Base.Parameters->NumParameters * 4 > VSF_MAX_FRAGMENT_LENGTH){
 		fprintf(stderr, "%s:Params exhausted\n", __FUNCTION__);
 		exit(-1);
 	}
 	
-	for(pi=0; pi < mesa_vp->Parameters->NumParameters; pi++){
-		switch(mesa_vp->Parameters->Parameters[pi].Type){
+        paramList = mesa_vp->Base.Parameters;
+	for(pi=0; pi < paramList->NumParameters; pi++){
+		switch(paramList->Parameters[pi].Type){
 			
 		case PROGRAM_STATE_VAR:
 		case PROGRAM_NAMED_PARAM:
 			//fprintf(stderr, "%s", vp->Parameters->Parameters[pi].Name);
 		case PROGRAM_CONSTANT:
-			*dst++=mesa_vp->Parameters->ParameterValues[pi][0];
-			*dst++=mesa_vp->Parameters->ParameterValues[pi][1];
-			*dst++=mesa_vp->Parameters->ParameterValues[pi][2];
-			*dst++=mesa_vp->Parameters->ParameterValues[pi][3];
+			*dst++=paramList->ParameterValues[pi][0];
+			*dst++=paramList->ParameterValues[pi][1];
+			*dst++=paramList->ParameterValues[pi][2];
+			*dst++=paramList->ParameterValues[pi][3];
 		break;
 		
 		default: _mesa_problem(NULL, "Bad param type in %s", __FUNCTION__);
@@ -509,39 +462,39 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 	for(i=0; i < VERT_RESULT_MAX; i++)
 		vp->outputs[i] = -1;
 	
-	assert(mesa_vp->OutputsWritten & (1 << VERT_RESULT_HPOS));
-	assert(mesa_vp->OutputsWritten & (1 << VERT_RESULT_COL0));
+	assert(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS));
+	assert(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_COL0));
 	
 	/* Assign outputs */
-	if(mesa_vp->OutputsWritten & (1 << VERT_RESULT_HPOS))
+	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))
 		vp->outputs[VERT_RESULT_HPOS] = cur_reg++;
 	
-	if(mesa_vp->OutputsWritten & (1 << VERT_RESULT_PSIZ))
+	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_PSIZ))
 		vp->outputs[VERT_RESULT_PSIZ] = cur_reg++;
 	
-	if(mesa_vp->OutputsWritten & (1 << VERT_RESULT_COL0))
+	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_COL0))
 		vp->outputs[VERT_RESULT_COL0] = cur_reg++;
 	
 #if 0 /* Not supported yet */
-	if(mesa_vp->OutputsWritten & (1 << VERT_RESULT_BFC0))
+	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_BFC0))
 		vp->outputs[VERT_RESULT_BFC0] = cur_reg++;
 	
-	if(mesa_vp->OutputsWritten & (1 << VERT_RESULT_COL1))
+	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_COL1))
 		vp->outputs[VERT_RESULT_COL1] = cur_reg++;
 	
-	if(mesa_vp->OutputsWritten & (1 << VERT_RESULT_BFC1))
+	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_BFC1))
 		vp->outputs[VERT_RESULT_BFC1] = cur_reg++;
 	
-	if(mesa_vp->OutputsWritten & (1 << VERT_RESULT_FOGC))
+	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_FOGC))
 		vp->outputs[VERT_RESULT_FOGC] = cur_reg++;
 #endif
 	
 	for(i=VERT_RESULT_TEX0; i <= VERT_RESULT_TEX7; i++)
-		if(mesa_vp->OutputsWritten & (1 << i))
+		if(mesa_vp->Base.OutputsWritten & (1 << i))
 			vp->outputs[i] = cur_reg++;
 	
 	o_inst=vp->program.body.i;
-	for(vpi=mesa_vp->Instructions; vpi->Opcode != OPCODE_END; vpi++, o_inst++){
+	for(vpi=mesa_vp->Base.Instructions; vpi->Opcode != OPCODE_END; vpi++, o_inst++){
 		
 		operands=op_operands(vpi->Opcode);
 		are_srcs_scalar=operands & SCALAR_FLAG;

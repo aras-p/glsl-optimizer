@@ -1535,17 +1535,17 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
       }
       program->Base.String = programString;
       program->Base.Format = GL_PROGRAM_FORMAT_ASCII_ARB;
-      if (program->Instructions) {
-         FREE(program->Instructions);
+      if (program->Base.Instructions) {
+         _mesa_free(program->Base.Instructions);
       }
-      program->Instructions = newInst;
-      program->InputsRead = parseState.inputsRead;
-      program->OutputsWritten = parseState.outputsWritten;
+      program->Base.Instructions = newInst;
+      program->Base.InputsRead = parseState.inputsRead;
+      program->Base.OutputsWritten = parseState.outputsWritten;
       for (u = 0; u < ctx->Const.MaxTextureImageUnits; u++)
          program->TexturesUsed[u] = parseState.texturesUsed[u];
 
       /* save program parameters */
-      program->Parameters = parseState.parameters;
+      program->Base.Parameters = parseState.parameters;
 
       /* allocate registers for declared program parameters */
 #if 00
@@ -1582,17 +1582,16 @@ PrintSrcReg(const struct fragment_program *program,
       _mesa_printf("-");
    }
    if (src->File == PROGRAM_NAMED_PARAM) {
-      if (program->Parameters->Parameters[src->Index].Type == PROGRAM_CONSTANT) {
-         _mesa_printf("{%g, %g, %g, %g}",
-                program->Parameters->ParameterValues[src->Index][0],
-                program->Parameters->ParameterValues[src->Index][1],
-                program->Parameters->ParameterValues[src->Index][2],
-                program->Parameters->ParameterValues[src->Index][3]);
+      if (program->Base.Parameters->Parameters[src->Index].Type
+          == PROGRAM_CONSTANT) {
+         const GLfloat *v;
+         v = program->Base.Parameters->ParameterValues[src->Index];
+         _mesa_printf("{%g, %g, %g, %g}", v[0], v[1], v[2], v[3]);
       }
       else {
          ASSERT(program->Parameters->Parameters[src->Index].Type
                 == PROGRAM_NAMED_PARAM);
-         _mesa_printf("%s", program->Parameters->Parameters[src->Index].Name);
+         _mesa_printf("%s", program->Base.Parameters->Parameters[src->Index].Name);
       }
    }
    else if (src->File == PROGRAM_OUTPUT) {
@@ -1734,7 +1733,7 @@ _mesa_print_nv_fragment_program(const struct fragment_program *program)
 {
    const struct prog_instruction *inst;
 
-   for (inst = program->Instructions; inst->Opcode != OPCODE_END; inst++) {
+   for (inst = program->Base.Instructions; inst->Opcode != OPCODE_END; inst++) {
       int i;
       for (i = 0; Instructions[i].name; i++) {
          if (inst->Opcode == Instructions[i].opcode) {

@@ -930,11 +930,11 @@ update_program(GLcontext *ctx)
     * have a runable program or shader.
     */
    ctx->VertexProgram._Enabled = ctx->VertexProgram.Enabled
-      && ctx->VertexProgram.Current->Instructions;
+      && ctx->VertexProgram.Current->Base.Instructions;
    ctx->FragmentProgram._Enabled = ctx->FragmentProgram.Enabled
-      && ctx->FragmentProgram.Current->Instructions;
+      && ctx->FragmentProgram.Current->Base.Instructions;
    ctx->ATIFragmentShader._Enabled = ctx->ATIFragmentShader.Enabled
-      && ctx->ATIFragmentShader.Current->Instructions;
+      && ctx->ATIFragmentShader.Current->Base.Instructions;
       
    ctx->FragmentProgram._Current = ctx->FragmentProgram.Current;
    ctx->FragmentProgram._Active = ctx->FragmentProgram._Enabled;

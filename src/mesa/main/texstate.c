@@ -3072,7 +3072,7 @@ update_texture_state( GLcontext *ctx )
     */
    if (ctx->FragmentProgram._Enabled) {
       ctx->Texture._EnabledCoordUnits |=
-         (ctx->FragmentProgram.Current->InputsRead >> FRAG_ATTRIB_TEX0);
+         (ctx->FragmentProgram.Current->Base.InputsRead >> FRAG_ATTRIB_TEX0);
    }
 }
 

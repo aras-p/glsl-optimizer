@@ -256,7 +256,13 @@ _mesa_load_state_parameters(GLcontext *ctx,
 
 
 extern void
-_mesa_print_program(GLuint count, const struct prog_instruction *inst);
+_mesa_print_instruction(const struct prog_instruction *inst);
+
+extern void
+_mesa_print_program(const struct program *prog);
+
+extern void
+_mesa_print_program_parameters(GLcontext *ctx, const struct program *prog);
 
 
 /*

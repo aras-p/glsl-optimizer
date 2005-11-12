@@ -428,7 +428,7 @@ static struct ureg register_param6( struct texenv_fragment_program *p,
    tokens[3] = s3;
    tokens[4] = s4;
    tokens[5] = s5;
-   idx = _mesa_add_state_reference( p->program->Parameters, tokens );
+   idx = _mesa_add_state_reference( p->program->Base.Parameters, tokens );
    return make_ureg(PROGRAM_STATE_VAR, idx);
 }
 
@@ -441,7 +441,7 @@ static struct ureg register_param6( struct texenv_fragment_program *p,
 
 static struct ureg register_input( struct texenv_fragment_program *p, GLuint input )
 {
-   p->program->InputsRead |= (1<<input);
+   p->program->Base.InputsRead |= (1 << input);
    return make_ureg(PROGRAM_INPUT, input);
 }
 
@@ -478,7 +478,7 @@ emit_op(struct texenv_fragment_program *p,
 	struct ureg src2 )
 {
    GLuint nr = p->program->Base.NumInstructions++;
-   struct prog_instruction *inst = &p->program->Instructions[nr];
+   struct prog_instruction *inst = &p->program->Base.Instructions[nr];
       
    _mesa_memset(inst, 0, sizeof(*inst));
    inst->Opcode = op;
@@ -577,7 +577,7 @@ static struct ureg register_const4f( struct texenv_fragment_program *p,
    values[1] = s1;
    values[2] = s2;
    values[3] = s3;
-   idx = _mesa_add_unnamed_constant( p->program->Parameters, values );
+   idx = _mesa_add_unnamed_constant( p->program->Base.Parameters, values );
    return make_ureg(PROGRAM_STATE_VAR, idx);
 }
 
@@ -986,7 +986,7 @@ static void create_new_program(struct state_key *key, GLcontext *ctx,
    p.state = key;
    p.program = program;
 
-   p.program->Instructions = MALLOC(sizeof(struct prog_instruction) * 100);
+   p.program->Base.Instructions = MALLOC(sizeof(struct prog_instruction) * 100);
    p.program->Base.NumInstructions = 0;
    p.program->Base.Target = GL_FRAGMENT_PROGRAM_ARB;
    p.program->NumTexIndirections = 1;	/* correct? */
@@ -997,10 +997,10 @@ static void create_new_program(struct state_key *key, GLcontext *ctx,
       p.program->Base.NumTemporaries =
       p.program->Base.NumParameters =
       p.program->Base.NumAttributes = p.program->Base.NumAddressRegs = 0;
-   p.program->Parameters = _mesa_new_parameter_list();
+   p.program->Base.Parameters = _mesa_new_parameter_list();
 
-   p.program->InputsRead = 0;
-   p.program->OutputsWritten = 1 << FRAG_RESULT_COLR;
+   p.program->Base.InputsRead = 0;
+   p.program->Base.OutputsWritten = 1 << FRAG_RESULT_COLR;
 
    for (unit = 0; unit < MAX_TEXTURE_UNITS; unit++)
       p.src_texture[unit] = undef;
@@ -1076,8 +1076,7 @@ static void create_new_program(struct state_key *key, GLcontext *ctx,
 					  &p.program->Base );
 
       if (DISASSEM) {
-	 _mesa_print_program(p.program->NumTexInstructions + p.program->NumAluInstructions,
-			     p.program->Instructions);
+	 _mesa_print_program(&p.program->Base);
 	 _mesa_printf("\n");
       }
       

@@ -162,10 +162,10 @@ _mesa_init_vp_per_primitive_registers(GLcontext *ctx)
    }
    else {
       /* Using and ARB vertex program */
-      if (ctx->VertexProgram.Current->Parameters) {
+      if (ctx->VertexProgram.Current->Base.Parameters) {
          /* Grab the state GL state and put into registers */
          _mesa_load_state_parameters(ctx,
-                                     ctx->VertexProgram.Current->Parameters);
+                                 ctx->VertexProgram.Current->Base.Parameters);
       }
    }
 }
@@ -239,7 +239,7 @@ get_register_pointer( const struct prog_src_register *source,
       else if (source->File == PROGRAM_ENV_PARAM)
          return state->Parameters[reg];
       else
-         return state->Current->Parameters->ParameterValues[reg];
+         return state->Current->Base.Parameters->ParameterValues[reg];
    }
    else {
       switch (source->File) {
@@ -261,7 +261,7 @@ get_register_pointer( const struct prog_src_register *source,
             return state->Parameters[source->Index];
          case PROGRAM_STATE_VAR:
             ASSERT(source->Index < state->Current->Parameters->NumParameters);
-            return state->Current->Parameters->ParameterValues[source->Index];
+            return state->Current->Base.Parameters->ParameterValues[source->Index];
          default:
             _mesa_problem(NULL,
                           "Bad source register file in get_register_pointer");
@@ -395,9 +395,10 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
                        ctx->VertexProgram.Inputs[VERT_ATTRIB_POS]);
 
       /* XXX: This could go elsewhere */
-      ctx->VertexProgram.Current->OutputsWritten |= VERT_BIT_POS;
+      ctx->VertexProgram.Current->Base.OutputsWritten |= VERT_BIT_POS;
    }
-   for (inst = program->Instructions; ; inst++) {
+
+   for (inst = program->Base.Instructions; ; inst++) {
 
       if (ctx->VertexProgram.CallbackEnabled &&
           ctx->VertexProgram.Callback) {

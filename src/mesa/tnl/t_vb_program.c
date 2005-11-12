@@ -112,7 +112,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 
       /* the vertex array case */
       for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
-	 if (program->InputsRead & (1 << attr)) {
+	 if (program->Base.InputsRead & (1 << attr)) {
 	    const GLubyte *ptr = (const GLubyte*) VB->AttribPtr[attr]->data;
 	    const GLuint size = VB->AttribPtr[attr]->size;
 	    const GLuint stride = VB->AttribPtr[attr]->stride;
@@ -127,12 +127,12 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 
       /* Fixup fog an point size results if needed */
       if (ctx->Fog.Enabled &&
-          (program->OutputsWritten & (1 << VERT_RESULT_FOGC)) == 0) {
+          (program->Base.OutputsWritten & (1 << VERT_RESULT_FOGC)) == 0) {
          ctx->VertexProgram.Outputs[VERT_RESULT_FOGC][0] = 1.0;
       }
 
       if (ctx->VertexProgram.PointSizeEnabled &&
-          (program->OutputsWritten & (1 << VERT_RESULT_PSIZ)) == 0) {
+          (program->Base.OutputsWritten & (1 << VERT_RESULT_PSIZ)) == 0) {
          ctx->VertexProgram.Outputs[VERT_RESULT_PSIZ][0] = ctx->Point.Size;
       }
 
