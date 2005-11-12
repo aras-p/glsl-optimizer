@@ -134,7 +134,7 @@ get_register_pointer( GLcontext *ctx,
       case PROGRAM_STATE_VAR:
          /* Fallthrough */
       case PROGRAM_NAMED_PARAM:
-         ASSERT(source->Index < (GLint) program->Parameters->NumParameters);
+         ASSERT(source->Index < (GLint) program->Base.Parameters->NumParameters);
          src = program->Base.Parameters->ParameterValues[source->Index];
          break;
       default:
