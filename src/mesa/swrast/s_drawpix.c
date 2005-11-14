@@ -58,10 +58,6 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
 
-   if (!ctx->Current.RasterPosValid) {
-      return GL_TRUE;      /* no-op */
-   }
-   
    if (swrast->_RasterMask & MULTI_DRAW_BIT)
       return GL_FALSE;
 
