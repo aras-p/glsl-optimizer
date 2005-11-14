@@ -35,6 +35,7 @@ SOURCES = antialias.c \
 	fptest1.c \
 	fptexture.c \
 	getprocaddress.c \
+	interleave.c \
 	invert.c \
 	manytex.c \
 	multipal.c \
