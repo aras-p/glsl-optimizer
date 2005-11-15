@@ -280,12 +280,15 @@ static void Display( void )
 
    glTranslatef(3.0, 0, 0);
 
+   /* The masking with ~0x2A00 is a bit of a hack to make sure that format
+    * ends up with an invalid value no matter what rand() returns.
+    */
    format = (use_invalid_mode)
      ? (rand() & ~0x2A00) : GL_V2F + interleave_mode;
    stride = (use_invalid_stride) ? -abs(rand()) : 0;
 
    (void) glGetError();
-   glInterleavedArrays( format, 0, data );
+   glInterleavedArrays( format, stride, data );
    err = glGetError();
    if ( err ) {
       printf("glInterleavedArrays(0x%04x, %d, %p) generated the error 0x%04x\n",
