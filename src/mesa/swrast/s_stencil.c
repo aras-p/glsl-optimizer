@@ -25,9 +25,7 @@
 
 #include "glheader.h"
 #include "context.h"
-#include "macros.h"
 #include "imports.h"
-#include "fbobject.h"
 
 #include "s_context.h"
 #include "s_depth.h"
@@ -441,6 +439,10 @@ stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span, GLuint face)
    if (do_stencil_test( ctx, face, n, stencil, mask ) == GL_FALSE) {
       /* all fragments failed the stencil test, we're done. */
       span->writeAll = GL_FALSE;
+      if (!rb->GetPointer(ctx, rb, 0, 0)) {
+         /* put updated stencil values into buffer */
+         rb->PutRow(ctx, rb, n, x, y, stencil, NULL);
+      }
       return GL_FALSE;
    }
 
@@ -498,7 +500,7 @@ stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span, GLuint face)
     * Write updated stencil values back into hardware stencil buffer.
     */
    if (!rb->GetPointer(ctx, rb, 0, 0)) {
-      rb->PutRow(ctx, rb, n, x, y, stencil, mask);
+      rb->PutRow(ctx, rb, n, x, y, stencil, NULL);
    }
    
    span->writeAll = GL_FALSE;
@@ -1191,7 +1193,7 @@ _swrast_clear_stencil_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
          /* no bit masking */
          if (width == rb->Width && rb->DataType == GL_UNSIGNED_BYTE) {
             /* optimized case */
-            /* XXX bottom-to-op raster assumed! */
+            /* Note: bottom-to-top raster assumed! */
             GLubyte *stencil = rb->GetPointer(ctx, rb, x, y);
             GLuint len = width * height * sizeof(GLubyte);
             _mesa_memset(stencil, clearVal, len);
