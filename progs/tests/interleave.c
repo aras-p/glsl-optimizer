@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <GL/glut.h>
 
 static int Width = 400;
@@ -125,7 +126,9 @@ struct interleave_info {
    unsigned stride;
 };
 
-#define NUM_MODES 14
+#define NUM_MODES      14
+#define INVALID_MODE   14
+#define INVALID_STRIDE 15
 
 struct interleave_info info[ NUM_MODES ][4] = {
    { NONE, NONE, NONE, V2F },
@@ -164,7 +167,9 @@ const char * const mode_names[ NUM_MODES ] = {
    "GL_T4F_C4F_N3F_V4F",
 };
 
-unsigned interleave_mode = 0;
+static unsigned interleave_mode = 0;
+static GLboolean use_invalid_mode = GL_FALSE;
+static GLboolean use_invalid_stride = GL_FALSE;
 
 #define DEREF(item,idx) (void *) & ((char *)curr_info[item].data)[idx * curr_info[item].stride]
 
@@ -178,6 +183,9 @@ static void Display( void )
 
    unsigned i;
    unsigned offset;
+   GLenum err;
+   GLenum format;
+   GLsizei stride;
 
 
    glClearColor(0.2, 0.2, 0.8, 0);
@@ -271,8 +279,21 @@ static void Display( void )
 
 
    glTranslatef(3.0, 0, 0);
-   glInterleavedArrays( GL_V2F + interleave_mode, 0, data );
-   glDrawArrays( GL_TRIANGLES, 0, 12 );
+
+   format = (use_invalid_mode)
+     ? (rand() & ~0x2A00) : GL_V2F + interleave_mode;
+   stride = (use_invalid_stride) ? -abs(rand()) : 0;
+
+   (void) glGetError();
+   glInterleavedArrays( format, 0, data );
+   err = glGetError();
+   if ( err ) {
+      printf("glInterleavedArrays(0x%04x, %d, %p) generated the error 0x%04x\n",
+	     format, stride, data, err );
+   }
+   else {
+      glDrawArrays( GL_TRIANGLES, 0, 12 );
+   }
 
    glPopMatrix();
 
@@ -310,7 +331,19 @@ static void Key( unsigned char key, int x, int y )
 
 static void ModeMenu( int entry )
 {
-   interleave_mode = entry;
+   if ( entry == INVALID_MODE ) {
+      use_invalid_mode = GL_TRUE;
+      use_invalid_stride = GL_FALSE;
+   }
+   else if ( entry == INVALID_STRIDE ) {
+      use_invalid_mode = GL_FALSE;
+      use_invalid_stride = GL_TRUE;
+   }
+   else {
+      use_invalid_mode = GL_FALSE;
+      use_invalid_stride = GL_FALSE;
+      interleave_mode = entry;
+   }
 }
 
 static void Init( void )
@@ -343,6 +376,8 @@ int main( int argc, char *argv[] )
 {
    unsigned i;
 
+   srand( time( NULL ) );
+
    glutInit( &argc, argv );
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( Width, Height );
@@ -356,6 +391,9 @@ int main( int argc, char *argv[] )
    for ( i = 0 ; i < NUM_MODES ; i++ ) {
       glutAddMenuEntry( mode_names[i], i);
    }
+
+   glutAddMenuEntry( "Random invalid mode",   INVALID_MODE);
+   glutAddMenuEntry( "Random invalid stride", INVALID_STRIDE);
 
    glutAttachMenu(GLUT_RIGHT_BUTTON);
 
