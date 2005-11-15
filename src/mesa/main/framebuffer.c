@@ -226,7 +226,8 @@ _mesa_resize_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb,
    fb->Height = height;
 
    /* to update scissor / window bounds */
-   ctx->NewState |= _NEW_BUFFERS;
+   if (ctx)
+      ctx->NewState |= _NEW_BUFFERS;
 }
 
 
