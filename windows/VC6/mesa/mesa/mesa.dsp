@@ -173,6 +173,10 @@ SOURCE=..\..\..\..\src\mesa\main\depth.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\main\depthstencil.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\main\dispatch.c
 # End Source File
 # Begin Source File
@@ -800,6 +804,10 @@ SOURCE=..\..\..\..\src\mesa\main\debug.h
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\main\depth.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\main\depthstencil.h
 # End Source File
 # Begin Source File
 
