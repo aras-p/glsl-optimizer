@@ -16,6 +16,7 @@ MAIN_SOURCES = \
 	main/convolve.c \
 	main/debug.c \
 	main/depth.c \
+	main/depthstencil.c \
 	main/dlist.c \
 	main/drawpix.c \
 	main/enable.c \
