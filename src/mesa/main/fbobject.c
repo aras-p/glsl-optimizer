@@ -38,7 +38,6 @@
 #include "texstore.h"
 
 
-
 /* XXX temporarily here */
 #define GL_READ_FRAMEBUFFER_EXT                0x90
 #define GL_DRAW_FRAMEBUFFER_EXT                0x9a
@@ -108,8 +107,9 @@ lookup_framebuffer(GLcontext *ctx, GLuint id)
  * Given a GL_*_ATTACHMENTn token, return a pointer to the corresponding
  * gl_renderbuffer_attachment object.
  */
-static struct gl_renderbuffer_attachment *
-get_attachment(GLcontext *ctx, struct gl_framebuffer *fb, GLenum attachment)
+struct gl_renderbuffer_attachment *
+_mesa_get_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
+                     GLenum attachment)
 {
    GLuint i;
 
@@ -232,15 +232,17 @@ _mesa_set_renderbuffer_attachment(GLcontext *ctx,
 
 /**
  * Fallback for ctx->Driver.FramebufferRenderbuffer()
- * Sets a framebuffer attachment to a particular renderbuffer.
- * The framebuffer in question is ctx->DrawBuffer.
- * \sa _mesa_renderbuffer_texture
+ * Attach a renderbuffer object to a framebuffer object.
  */
 void
-_mesa_framebuffer_renderbuffer(GLcontext *ctx,
-                               struct gl_renderbuffer_attachment *att,
-                               struct gl_renderbuffer *rb)
+_mesa_framebuffer_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
+                               GLenum attachment, struct gl_renderbuffer *rb)
 {
+   struct gl_renderbuffer_attachment *att;
+
+   att = _mesa_get_attachment(ctx, fb, attachment);
+   ASSERT(att);
+
    if (rb) {
       _mesa_set_renderbuffer_attachment(ctx, att, rb);
    }
@@ -461,7 +463,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
    for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
       if (fb->ColorDrawBuffer[i] != GL_NONE) {
          const struct gl_renderbuffer_attachment *att
-            = get_attachment(ctx, fb, fb->ColorDrawBuffer[i]);
+            = _mesa_get_attachment(ctx, fb, fb->ColorDrawBuffer[i]);
          assert(att);
          if (att->Type == GL_NONE) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT;
@@ -473,7 +475,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
    /* Check that the ReadBuffer is present */
    if (fb->ColorReadBuffer != GL_NONE) {
       const struct gl_renderbuffer_attachment *att
-         = get_attachment(ctx, fb, fb->ColorReadBuffer);
+         = _mesa_get_attachment(ctx, fb, fb->ColorReadBuffer);
       assert(att);
       if (att->Type == GL_NONE) {
          fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT;
@@ -1151,7 +1153,7 @@ _mesa_FramebufferTexture1DEXT(GLenum target, GLenum attachment,
    ASSERT(textarget == GL_TEXTURE_1D);
 
    /* XXX read blit */
-   att = get_attachment(ctx, ctx->DrawBuffer, attachment);
+   att = _mesa_get_attachment(ctx, ctx->DrawBuffer, attachment);
    if (att == NULL) {
       _mesa_error(ctx, GL_INVALID_ENUM,
 		  "glFramebufferTexture1DEXT(attachment)");
@@ -1200,7 +1202,7 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
 	  textarget == GL_TEXTURE_RECTANGLE_ARB ||
 	  IS_CUBE_FACE(textarget));
 
-   att = get_attachment(ctx, ctx->DrawBuffer, attachment);
+   att = _mesa_get_attachment(ctx, ctx->DrawBuffer, attachment);
    if (att == NULL) {
       _mesa_error(ctx, GL_INVALID_ENUM,
 		  "glFramebufferTexture2DEXT(attachment)");
@@ -1252,7 +1254,7 @@ _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
 
    ASSERT(textarget == GL_TEXTURE_3D);
 
-   att = get_attachment(ctx, ctx->DrawBuffer, attachment);
+   att = _mesa_get_attachment(ctx, ctx->DrawBuffer, attachment);
    if (att == NULL) {
       _mesa_error(ctx, GL_INVALID_ENUM,
 		  "glFramebufferTexture1DEXT(attachment)");
@@ -1342,7 +1344,7 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
       return;
    }
 
-   att = get_attachment(ctx, fb, attachment);
+   att = _mesa_get_attachment(ctx, fb, attachment);
    if (att == NULL) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                  "glFramebufferRenderbufferEXT(attachment)");
@@ -1365,7 +1367,7 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    assert(ctx->Driver.FramebufferRenderbuffer);
-   ctx->Driver.FramebufferRenderbuffer(ctx, att, rb);
+   ctx->Driver.FramebufferRenderbuffer(ctx, fb, attachment, rb);
 }
 
 
@@ -1413,7 +1415,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
       return;
    }
 
-   att = get_attachment(ctx, buffer, attachment);
+   att = _mesa_get_attachment(ctx, buffer, attachment);
    if (att == NULL) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glGetFramebufferAttachmentParameterivEXT(attachment)");

@@ -802,7 +802,8 @@ struct dd_function_table {
    struct gl_framebuffer * (*NewFramebuffer)(GLcontext *ctx, GLuint name);
    struct gl_renderbuffer * (*NewRenderbuffer)(GLcontext *ctx, GLuint name);
    void (*FramebufferRenderbuffer)(GLcontext *ctx, 
-                                   struct gl_renderbuffer_attachment *att,
+                                   struct gl_framebuffer *fb,
+                                   GLenum attachment,
                                    struct gl_renderbuffer *rb);
    void (*RenderbufferTexture)(GLcontext *ctx,
                                struct gl_renderbuffer_attachment *att,

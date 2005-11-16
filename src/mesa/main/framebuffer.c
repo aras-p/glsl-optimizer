@@ -33,6 +33,7 @@
 #include "glheader.h"
 #include "imports.h"
 #include "context.h"
+#include "depthstencil.h"
 #include "mtypes.h"
 #include "fbobject.h"
 #include "framebuffer.h"
@@ -159,7 +160,7 @@ _mesa_destroy_framebuffer(struct gl_framebuffer *fb)
 {
    if (fb) {
       _mesa_free_framebuffer_data(fb);
-      FREE(fb);
+      _mesa_free(fb);
    }
 }
 
@@ -187,6 +188,23 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
       att->Type = GL_NONE;
       att->Renderbuffer = NULL;
    }
+
+   if (fb->_DepthBuffer) {
+      struct gl_renderbuffer *rb = fb->_DepthBuffer;
+      rb->RefCount--;
+      if (rb->RefCount <= 0) {
+         rb->Delete(rb);
+      }
+      fb->_DepthBuffer = NULL;
+   }
+   if (fb->_StencilBuffer) {
+      struct gl_renderbuffer *rb = fb->_StencilBuffer;
+      rb->RefCount--;
+      if (rb->RefCount <= 0) {
+         rb->Delete(rb);
+      }
+      fb->_StencilBuffer = NULL;
+   }
 }
 
 
@@ -194,7 +212,11 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
  * Resize the given framebuffer's renderbuffers to the new width and height.
  * This should only be used for window-system framebuffers, not
  * user-created renderbuffers (i.e. made with GL_EXT_framebuffer_object).
- * This will typically be called via ctx->Driver.ResizeBuffers()
+ * This will typically be called via ctx->Driver.ResizeBuffers() or directly
+ * from a device driver.
+ *
+ * \note it's possible for ctx to be null since a window can be resized
+ * without a currently bound rendering context.
  */
 void
 _mesa_resize_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb,
@@ -378,6 +400,45 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
 
 
 /**
+ * Helper function for _mesa_update_framebuffer().
+ * Set the actual depth renderbuffer for the given framebuffer.
+ * Take care of reference counts, etc.
+ */
+static void
+set_depth_renderbuffer(struct gl_framebuffer *fb,
+                       struct gl_renderbuffer *rb)
+{
+   if (fb->_DepthBuffer) {
+      fb->_DepthBuffer->RefCount--;
+      if (fb->_DepthBuffer->RefCount <= 0) {
+         fb->_DepthBuffer->Delete(fb->_DepthBuffer);
+      }
+   }
+   fb->_DepthBuffer = rb;
+   if (rb)
+      rb->RefCount++;
+}
+
+/**
+ * \sa set_depth_renderbuffer.
+ */
+static void
+set_stencil_renderbuffer(struct gl_framebuffer *fb,
+                         struct gl_renderbuffer *rb)
+{
+   if (fb->_StencilBuffer) {
+      fb->_StencilBuffer->RefCount--;
+      if (fb->_StencilBuffer->RefCount <= 0) {
+         fb->_StencilBuffer->Delete(fb->_StencilBuffer);
+      }
+   }
+   fb->_StencilBuffer = rb;
+   if (rb)
+      rb->RefCount++;
+}
+
+
+/**
  * Update state related to the current draw/read framebuffers.
  * Specifically, update these framebuffer fields:
  *    _ColorDrawBuffers
@@ -440,5 +501,45 @@ _mesa_update_framebuffer(GLcontext *ctx)
       fb->_ColorReadBuffer
          = fb->Attachment[fb->_ColorReadBufferIndex].Renderbuffer;
    }
+
+   /*
+    * Deal with GL_DEPTH_STENCIL renderbuffer(s) attached to the depth
+    * and/or stencil attachment points.
+    */
+   {
+      struct gl_renderbuffer *depthRb
+         = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+      struct gl_renderbuffer *stencilRb
+         = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+
+      if (depthRb && depthRb->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+         if (!fb->_DepthBuffer || fb->_DepthBuffer->Wrapped != depthRb) {
+            /* need to update wrapper */
+            struct gl_renderbuffer *wrapper
+               = _mesa_new_z24_renderbuffer_wrapper(ctx, depthRb);
+            set_depth_renderbuffer(fb, wrapper);
+            assert(fb->_DepthBuffer->Wrapped == depthRb);
+         }
+      }
+      else {
+         /* depthRb may be null */
+         set_depth_renderbuffer(fb, depthRb);
+      }
+
+      if (stencilRb && stencilRb->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+         if (!fb->_StencilBuffer || fb->_StencilBuffer->Wrapped != stencilRb) {
+            /* need to update wrapper */
+            struct gl_renderbuffer *wrapper
+               = _mesa_new_s8_renderbuffer_wrapper(ctx, stencilRb);
+            set_stencil_renderbuffer(fb, wrapper);
+            assert(fb->_StencilBuffer->Wrapped == stencilRb);
+         }
+      }
+      else {
+         /* stencilRb may be null */
+         set_stencil_renderbuffer(fb, stencilRb);
+      }
+   }
+
    compute_depth_max(fb);
 }

@@ -2243,6 +2243,11 @@ struct gl_framebuffer
    struct gl_renderbuffer *_ColorDrawBuffers[MAX_DRAW_BUFFERS][4];
    struct gl_renderbuffer *_ColorReadBuffer;
 
+   /** The Actual depth/stencil buffers to use.  May be wrappers around the
+    * depth/stencil buffers attached above. */
+   struct gl_renderbuffer *_DepthBuffer;
+   struct gl_renderbuffer *_StencilBuffer;
+
    /** Delete this framebuffer */
    void (*Delete)(struct gl_framebuffer *fb);
 };

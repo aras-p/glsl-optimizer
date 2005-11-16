@@ -27,6 +27,11 @@
 #define FBOBJECT_H
 
 
+extern struct gl_renderbuffer_attachment *
+_mesa_get_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
+                     GLenum attachment);
+
+
 extern void
 _mesa_remove_attachment(GLcontext *ctx,
                         struct gl_renderbuffer_attachment *att);
@@ -43,9 +48,8 @@ _mesa_set_renderbuffer_attachment(GLcontext *ctx,
                                   struct gl_renderbuffer *rb);
 
 extern void
-_mesa_framebuffer_renderbuffer(GLcontext *ctx,
-                               struct gl_renderbuffer_attachment *att,
-                               struct gl_renderbuffer *rb);
+_mesa_framebuffer_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
+                               GLenum attachment, struct gl_renderbuffer *rb);
 
 extern void
 _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb);
