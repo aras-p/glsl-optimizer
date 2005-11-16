@@ -90,4 +90,9 @@ extern void
 _mesa_add_renderbuffer(struct gl_framebuffer *fb,
                        GLuint bufferName, struct gl_renderbuffer *rb);
 
+
+extern struct gl_renderbuffer *
+_mesa_new_depthstencil_renderbuffer(GLcontext *ctx, GLuint name);
+
+
 #endif /* RENDERBUFFER_H */

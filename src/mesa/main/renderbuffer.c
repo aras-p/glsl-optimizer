@@ -313,11 +313,12 @@ put_mono_values_ushort(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 static void *
 get_pointer_uint(GLcontext *ctx, struct gl_renderbuffer *rb,
-                    GLint x, GLint y)
+                 GLint x, GLint y)
 {
    if (!rb->Data)
       return NULL;
-   ASSERT(rb->DataType == GL_UNSIGNED_INT);
+   ASSERT(rb->DataType == GL_UNSIGNED_INT ||
+          rb->DataType == GL_UNSIGNED_INT_24_8_EXT);
    return (GLuint *) rb->Data + y * rb->Width + x;
 }
 
@@ -327,7 +328,8 @@ get_row_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
              GLint x, GLint y, void *values)
 {
    const void *src = rb->GetPointer(ctx, rb, x, y);
-   ASSERT(rb->DataType == GL_UNSIGNED_INT);
+   ASSERT(rb->DataType == GL_UNSIGNED_INT ||
+          rb->DataType == GL_UNSIGNED_INT_24_8_EXT);
    _mesa_memcpy(values, src, count * sizeof(GLuint));
 }
 
@@ -338,7 +340,8 @@ get_values_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 {
    GLuint *dst = (GLuint *) values;
    GLuint i;
-   ASSERT(rb->DataType == GL_UNSIGNED_INT);
+   ASSERT(rb->DataType == GL_UNSIGNED_INT ||
+          rb->DataType == GL_UNSIGNED_INT_24_8_EXT);
    for (i = 0; i < count; i++) {
       const GLuint *src = (GLuint *) rb->Data + y[i] * rb->Width + x[i];
       dst[i] = *src;
@@ -352,7 +355,8 @@ put_row_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 {
    const GLuint *src = (const GLuint *) values;
    GLuint *dst = (GLuint *) rb->Data + y * rb->Width + x;
-   ASSERT(rb->DataType == GL_UNSIGNED_INT);
+   ASSERT(rb->DataType == GL_UNSIGNED_INT ||
+          rb->DataType == GL_UNSIGNED_INT_24_8_EXT);
    if (mask) {
       GLuint i;
       for (i = 0; i < count; i++) {
@@ -373,7 +377,8 @@ put_mono_row_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 {
    const GLuint val = *((const GLuint *) value);
    GLuint *dst = (GLuint *) rb->Data + y * rb->Width + x;
-   ASSERT(rb->DataType == GL_UNSIGNED_INT);
+   ASSERT(rb->DataType == GL_UNSIGNED_INT ||
+          rb->DataType == GL_UNSIGNED_INT_24_8_EXT);
    if (mask) {
       GLuint i;
       for (i = 0; i < count; i++) {
@@ -398,7 +403,8 @@ put_values_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 {
    const GLuint *src = (const GLuint *) values;
    GLuint i;
-   ASSERT(rb->DataType == GL_UNSIGNED_INT);
+   ASSERT(rb->DataType == GL_UNSIGNED_INT ||
+          rb->DataType == GL_UNSIGNED_INT_24_8_EXT);
    for (i = 0; i < count; i++) {
       if (!mask || mask[i]) {
          GLuint *dst = (GLuint *) rb->Data + y[i] * rb->Width + x[i];
@@ -415,7 +421,8 @@ put_mono_values_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 {
    const GLuint val = *((const GLuint *) value);
    GLuint i;
-   ASSERT(rb->DataType == GL_UNSIGNED_INT);
+   ASSERT(rb->DataType == GL_UNSIGNED_INT ||
+          rb->DataType == GL_UNSIGNED_INT_24_8_EXT);
    for (i = 0; i < count; i++) {
       if (!mask || mask[i]) {
          GLuint *dst = (GLuint *) rb->Data + y[i] * rb->Width + x[i];
@@ -1064,6 +1071,22 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
          rb->DepthBits = 24;
       else
          rb->DepthBits = 32;
+      pixelSize = sizeof(GLuint);
+      break;
+   case GL_DEPTH_STENCIL_EXT:
+   case GL_DEPTH24_STENCIL8_EXT:
+      rb->_BaseFormat = GL_DEPTH_STENCIL_EXT;
+      rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
+      rb->GetPointer = get_pointer_uint;
+      rb->GetRow = get_row_uint;
+      rb->GetValues = get_values_uint;
+      rb->PutRow = put_row_uint;
+      rb->PutRowRGB = NULL;
+      rb->PutMonoRow = put_mono_row_uint;
+      rb->PutValues = put_values_uint;
+      rb->PutMonoValues = put_mono_values_uint;
+      rb->DepthBits = 24;
+      rb->StencilBits = 8;
       pixelSize = sizeof(GLuint);
       break;
    case GL_COLOR_INDEX8_EXT:
@@ -1966,3 +1989,26 @@ _mesa_add_renderbuffer(struct gl_framebuffer *fb,
    fb->Attachment[bufferName].Complete = GL_TRUE;
    fb->Attachment[bufferName].Renderbuffer = rb;
 }
+
+
+/**
+ * Create a new combined depth/stencil renderbuffer for implementing
+ * the GL_EXT_packed_depth_stencil extension.
+ * \return new depth/stencil renderbuffer
+ */
+struct gl_renderbuffer *
+_mesa_new_depthstencil_renderbuffer(GLcontext *ctx, GLuint name)
+{
+   struct gl_renderbuffer *dsrb;
+
+   dsrb = _mesa_new_renderbuffer(ctx, name);
+   if (!dsrb)
+      return NULL;
+
+   /* init fields not covered by _mesa_new_renderbuffer() */
+   dsrb->InternalFormat = GL_DEPTH24_STENCIL8_EXT;
+   dsrb->AllocStorage = soft_renderbuffer_storage;
+
+   return dsrb;
+}
+
