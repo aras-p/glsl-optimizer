@@ -429,7 +429,9 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn,
 			     
 {
    __DRIscreenPrivate *psp;
-   static const __DRIversion ddx_expected = { 4, 0, 0 };
+   static const __DRIversion ddx_expected = { VIA_DRIDDX_VERSION_MAJOR,
+                                              VIA_DRIDDX_VERSION_MINOR,
+                                              VIA_DRIDDX_VERSION_PATCH };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 2, 3, 0 };
 

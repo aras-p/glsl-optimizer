@@ -37,8 +37,8 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dpriv);
 void viaPageFlip(const __DRIdrawablePrivate *dpriv);
 void viaCheckDma(struct via_context *vmesa, GLuint bytes);
 void viaResetPageFlippingLocked(struct via_context *vmesa);
-void viaWaitIdle(struct via_context *vmesa);
-void viaWaitIdleLocked(struct via_context *vmesa);
+void viaWaitIdle(struct via_context *vmesa, GLboolean light);
+void viaWaitIdleLocked(struct via_context *vmesa, GLboolean light);
 
 GLboolean viaCheckBreadcrumb( struct via_context *vmesa, GLuint value );
 void viaEmitBreadcrumb( struct via_context *vmesa );
@@ -127,7 +127,7 @@ static GLuint __inline__ *viaExtendPrimitive(struct via_context *vmesa, int byte
    }						\
 } while (0)
 
-
-
-
+#define VIA_GEQ_WRAP(left, right) \
+    (((left) - (right)) < ( 1 << 23))
+      
 #endif

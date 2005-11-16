@@ -839,7 +839,7 @@ static void viaTexSubImage2D(GLcontext *ctx,
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
   
-   VIA_FLUSH_DMA(vmesa);
+   viaWaitIdle(vmesa, GL_TRUE);
    vmesa->clearTexCache = 1;
 
    _mesa_store_texsubimage2d(ctx, target, level, xoffset, yoffset, width,
@@ -875,7 +875,7 @@ static void viaTexSubImage1D(GLcontext *ctx,
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
 
-   VIA_FLUSH_DMA(vmesa);
+   viaWaitIdle(vmesa, GL_TRUE); 
    vmesa->clearTexCache = 1;
 
    _mesa_store_texsubimage1d(ctx, target, level, xoffset, width,

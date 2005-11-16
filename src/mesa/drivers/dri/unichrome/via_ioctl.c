@@ -412,9 +412,9 @@ GLboolean viaCheckBreadcrumb( struct via_context *vmesa, GLuint value )
    if (VIA_DEBUG & DEBUG_IOCTL) 
       fprintf(stderr, "%s %d < %d: %d\n", __FUNCTION__, value, 
 	      vmesa->lastBreadcrumbRead,
-	      value < vmesa->lastBreadcrumbRead);
+	      !VIA_GEQ_WRAP(value, vmesa->lastBreadcrumbRead));
 
-   return value < vmesa->lastBreadcrumbRead;
+   return !VIA_GEQ_WRAP(value, vmesa->lastBreadcrumbRead);
 }
 
 static void viaWaitBreadcrumb( struct via_context *vmesa, GLuint value )
@@ -422,7 +422,7 @@ static void viaWaitBreadcrumb( struct via_context *vmesa, GLuint value )
    if (VIA_DEBUG & DEBUG_IOCTL) 
       fprintf(stderr, "%s %d\n", __FUNCTION__, value);
 
-   assert(value < vmesa->lastBreadcrumbWrite);
+   assert(!VIA_GEQ_WRAP(value, vmesa->lastBreadcrumbWrite));
 
    while (!viaCheckBreadcrumb( vmesa, value )) {
       viaSwapOutWork( vmesa );
@@ -431,7 +431,7 @@ static void viaWaitBreadcrumb( struct via_context *vmesa, GLuint value )
 }
 
 
-void viaWaitIdle( struct via_context *vmesa )
+void viaWaitIdle( struct via_context *vmesa, GLboolean light )
 {
    VIA_FLUSH_DMA(vmesa);
 
@@ -449,17 +449,20 @@ void viaWaitIdle( struct via_context *vmesa )
 
    /* Need to wait?
     */
-   if (vmesa->lastDma >= vmesa->lastBreadcrumbRead) 
+   if (VIA_GEQ_WRAP(vmesa->lastDma, vmesa->lastBreadcrumbRead)) 
       viaWaitBreadcrumb( vmesa, vmesa->lastDma );
 
+   if (light) return;
+
+   LOCK_HARDWARE(vmesa);
    while(!viaCheckIdle(vmesa))
       ;
-
+   UNLOCK_HARDWARE(vmesa);
    via_release_pending_textures(vmesa);
 }
 
 
-void viaWaitIdleLocked( struct via_context *vmesa )
+void viaWaitIdleLocked( struct via_context *vmesa, GLboolean light )
 {
    if (vmesa->dmaLow) 
       viaFlushDmaLocked(vmesa, 0);
@@ -478,6 +481,8 @@ void viaWaitIdleLocked( struct via_context *vmesa )
     */
    if (vmesa->lastDma >= vmesa->lastBreadcrumbRead) 
       viaWaitBreadcrumb( vmesa, vmesa->lastDma );
+
+   if (light) return;
 
    while(!viaCheckIdle(vmesa))
       ;
@@ -702,7 +707,7 @@ static int fire_buffer(struct via_context *vmesa)
 
       /* Fall through to PCI handling?!?
        */
-      viaWaitIdleLocked(vmesa);
+      viaWaitIdleLocked(vmesa, GL_FALSE);
    }
 	    
    ret = drmCommandWrite(vmesa->driFd, DRM_VIA_PCICMD, &bufI, sizeof(bufI));
@@ -946,7 +951,7 @@ static void viaFinish(GLcontext *ctx)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
     VIA_FLUSH_DMA(vmesa);
-    viaWaitIdle(vmesa);
+    viaWaitIdle(vmesa, GL_FALSE);
 }
 
 static void viaClearStencil(GLcontext *ctx,  int s)

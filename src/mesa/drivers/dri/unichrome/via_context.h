@@ -35,7 +35,7 @@
 
 #include "via_screen.h"
 #include "via_tex.h"
-#include "via_common.h"
+#include "via_drm.h"
 
 struct via_context;
 
