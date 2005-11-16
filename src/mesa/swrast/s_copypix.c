@@ -501,7 +501,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_framebuffer *fb = ctx->ReadBuffer;
-   struct gl_renderbuffer *readRb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   struct gl_renderbuffer *readRb = fb->_DepthBuffer;
    const GLfloat depthMax = fb->_DepthMaxF;
    GLfloat *p, *tmpImage;
    GLint sy, dy, stepy;
@@ -610,7 +610,7 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
                      GLint destx, GLint desty )
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
-   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   struct gl_renderbuffer *rb = fb->_StencilBuffer;
    GLint sy, dy, stepy;
    GLint j;
    GLstencil *p, *tmpImage;
@@ -724,9 +724,9 @@ copy_depth_stencil_pixels(GLcontext *ctx,
       = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
    GLint overlapping;
 
-   depthDrawRb = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
-   depthReadRb = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
-   stencilReadRb = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+   depthDrawRb = ctx->DrawBuffer->_DepthBuffer;
+   depthReadRb = ctx->ReadBuffer->_DepthBuffer;
+   stencilReadRb = ctx->ReadBuffer->_StencilBuffer;
 
    ASSERT(depthDrawRb);
    ASSERT(depthReadRb);

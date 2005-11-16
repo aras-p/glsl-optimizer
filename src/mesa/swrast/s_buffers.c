@@ -293,19 +293,14 @@ _swrast_Clear(GLcontext *ctx, GLbitfield mask,
          clear_color_buffers(ctx);
       }
       if (mask & BUFFER_BIT_DEPTH) {
-         struct gl_renderbuffer *rb
-            = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
-         _swrast_clear_depth_buffer(ctx, rb);
+         _swrast_clear_depth_buffer(ctx, ctx->DrawBuffer->_DepthBuffer);
       }
       if (mask & BUFFER_BIT_ACCUM) {
-         struct gl_renderbuffer *rb
-            = ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer;
-         _swrast_clear_accum_buffer(ctx, rb);
+         _swrast_clear_accum_buffer(ctx,
+                       ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
       }
       if (mask & BUFFER_BIT_STENCIL) {
-         struct gl_renderbuffer *rb
-            = ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
-         _swrast_clear_stencil_buffer(ctx, rb);
+         _swrast_clear_stencil_buffer(ctx, ctx->DrawBuffer->_StencilBuffer);
       }
    }
 

@@ -842,8 +842,8 @@ draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    struct gl_pixelstore_attrib clippedUnpack = *unpack;
    GLint i;
 
-   depthRb = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
-   stencilRb = ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+   depthRb = ctx->DrawBuffer->_DepthBuffer;
+   stencilRb = ctx->DrawBuffer->_StencilBuffer;
 
    ASSERT(depthRb);
    ASSERT(stencilRb);

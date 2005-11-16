@@ -506,7 +506,7 @@ static GLuint
 depth_test_span( GLcontext *ctx, struct sw_span *span)
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   struct gl_renderbuffer *rb = fb->_DepthBuffer;
    const GLint x = span->x;
    const GLint y = span->y;
    const GLuint count = span->end;
@@ -1053,7 +1053,7 @@ static GLuint
 depth_test_pixels( GLcontext *ctx, struct sw_span *span )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   struct gl_renderbuffer *rb = fb->_DepthBuffer;
    const GLuint count = span->end;
    const GLint *x = span->array->x;
    const GLint *y = span->array->y;
@@ -1119,7 +1119,7 @@ GLboolean
 _swrast_depth_bounds_test( GLcontext *ctx, struct sw_span *span )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   struct gl_renderbuffer *rb = fb->_DepthBuffer;
    GLuint zMin = (GLuint) (ctx->Depth.BoundsMin * fb->_DepthMaxF + 0.5F);
    GLuint zMax = (GLuint) (ctx->Depth.BoundsMax * fb->_DepthMaxF + 0.5F);
    GLubyte *mask = span->array->mask;

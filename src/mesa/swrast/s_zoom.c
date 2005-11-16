@@ -355,8 +355,7 @@ _swrast_write_zoomed_z_span(GLcontext *ctx, GLint imgX, GLint imgY,
                             GLint width, GLint spanX, GLint spanY,
                             const GLvoid *z)
 {
-   struct gl_renderbuffer *rb
-      = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_DepthBuffer;
    GLushort zoomedVals16[MAX_WIDTH];
    GLuint zoomedVals32[MAX_WIDTH];
    GLint x0, x1, y0, y1, y;

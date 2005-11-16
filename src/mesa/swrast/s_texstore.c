@@ -94,8 +94,7 @@ static GLfloat *
 read_depth_image( GLcontext *ctx, GLint x, GLint y,
                   GLsizei width, GLsizei height )
 {
-   struct gl_renderbuffer *rb
-      = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   struct gl_renderbuffer *rb = ctx->ReadBuffer->_DepthBuffer;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLfloat *image, *dst;
    GLint i;
@@ -125,10 +124,8 @@ static GLuint *
 read_depth_stencil_image(GLcontext *ctx, GLint x, GLint y,
                          GLsizei width, GLsizei height)
 {
-   struct gl_renderbuffer *depthRb
-      = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
-   struct gl_renderbuffer *stencilRb
-      = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+   struct gl_renderbuffer *depthRb = ctx->ReadBuffer->_DepthBuffer;
+   struct gl_renderbuffer *stencilRb = ctx->ReadBuffer->_StencilBuffer;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint *image, *dst;
    GLint i;

@@ -409,7 +409,7 @@ static GLboolean
 stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span, GLuint face)
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   struct gl_renderbuffer *rb = fb->_StencilBuffer;
    GLstencil stencilRow[MAX_WIDTH];
    GLstencil *stencil;
    const GLuint n = span->end;
@@ -532,7 +532,7 @@ apply_stencil_op_to_pixels( GLcontext *ctx,
                             GLenum oper, GLuint face, const GLubyte mask[] )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   struct gl_renderbuffer *rb = fb->_StencilBuffer;
    const GLstencil stencilMax = (1 << fb->Visual.stencilBits) - 1;
    const GLstencil ref = ctx->Stencil.Ref[face];
    const GLstencil wrtmask = ctx->Stencil.WriteMask[face];
@@ -705,7 +705,7 @@ stencil_test_pixels( GLcontext *ctx, GLuint face, GLuint n,
                      const GLint x[], const GLint y[], GLubyte mask[] )
 {
    const struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   struct gl_renderbuffer *rb = fb->_StencilBuffer;
    GLubyte fail[MAX_WIDTH];
    GLstencil r, s;
    GLuint i;
@@ -903,7 +903,7 @@ static GLboolean
 stencil_and_ztest_pixels( GLcontext *ctx, struct sw_span *span, GLuint face )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   struct gl_renderbuffer *rb = fb->_StencilBuffer;
    const GLuint n = span->end;
    const GLint *x = span->array->x;
    const GLint *y = span->array->y;
@@ -1099,7 +1099,7 @@ _swrast_write_stencil_span(GLcontext *ctx, GLint n, GLint x, GLint y,
                            const GLstencil stencil[] )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   struct gl_renderbuffer *rb = fb->_StencilBuffer;
    const GLuint stencilMax = (1 << fb->Visual.stencilBits) - 1;
    const GLuint stencilMask = ctx->Stencil.WriteMask[0];
 

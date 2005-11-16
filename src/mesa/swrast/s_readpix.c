@@ -86,7 +86,7 @@ read_depth_pixels( GLcontext *ctx,
                    const struct gl_pixelstore_attrib *packing )
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
-   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   struct gl_renderbuffer *rb = fb->_DepthBuffer;
    GLboolean bias_or_scale;
 
    /* clipping should have been done already */
@@ -168,7 +168,7 @@ read_stencil_pixels( GLcontext *ctx,
                      const struct gl_pixelstore_attrib *packing )
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
-   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   struct gl_renderbuffer *rb = fb->_StencilBuffer;
    GLint j;
 
    ASSERT(rb);
@@ -422,8 +422,8 @@ read_depth_stencil_pixels(GLcontext *ctx,
    struct gl_renderbuffer *depthRb, *stencilRb;
    GLint i;
 
-   depthRb = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
-   stencilRb = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+   depthRb = ctx->ReadBuffer->_DepthBuffer;
+   stencilRb = ctx->ReadBuffer->_StencilBuffer;
 
    ASSERT(depthRb);
    ASSERT(stencilRb);

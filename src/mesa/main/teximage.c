@@ -1792,7 +1792,7 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
    }
    else if (is_depth_format(internalFormat)) {
       /* make sure we have depth/stencil buffers */
-      if (!ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer) {
+      if (!ctx->ReadBuffer->_DepthBuffer) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glCopyTexImage%D(no depth)", dimensions);
          return GL_TRUE;
@@ -1800,8 +1800,7 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
    }
    else if (is_depthstencil_format(internalFormat)) {
       /* make sure we have depth/stencil buffers */
-      if (!ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer ||
-          !ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer) {
+      if (!ctx->ReadBuffer->_DepthBuffer || !ctx->ReadBuffer->_StencilBuffer) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glCopyTexImage%D(no depth/stencil buffer)", dimensions);
          return GL_TRUE;
@@ -1969,7 +1968,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
    }
 
    if (teximage->_BaseFormat == GL_DEPTH_COMPONENT) {
-      if (!ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer) {
+      if (!ctx->ReadBuffer->_DepthBuffer) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glCopyTexSubImage%D(no depth buffer)",
                      dimensions);
@@ -1977,8 +1976,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
       }
    }
    else if (teximage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
-      if (!ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer ||
-          !ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer) {
+      if (!ctx->ReadBuffer->_DepthBuffer || !ctx->ReadBuffer->_StencilBuffer) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glCopyTexSubImage%D(no depth/stencil buffer)",
                      dimensions);

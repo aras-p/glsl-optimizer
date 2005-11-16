@@ -905,8 +905,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
 #define NAME occlusion_zless_triangle
 #define INTERP_Z 1
 #define SETUP_CODE							\
-   struct gl_renderbuffer *rb						\
-      = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;		\
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_DepthBuffer;		\
    struct gl_query_object *q = ctx->Query.CurrentOcclusionObject;	\
    ASSERT(ctx->Depth.Test);						\
    ASSERT(!ctx->Depth.Mask);						\
