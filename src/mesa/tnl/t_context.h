@@ -782,6 +782,12 @@ typedef struct
 
    GLboolean _DoVertexFog;  /* eval fog function at each vertex? */
 
+   /* If True, it means we started a glBegin/End primtive with an invalid
+    * vertex/fragment program or incomplete framebuffer.  In that case,
+    * discard any buffered vertex data.
+    */
+   GLboolean DiscardPrimitive;
+
    GLuint render_inputs;
 
    GLvertexformat exec_vtxfmt;
