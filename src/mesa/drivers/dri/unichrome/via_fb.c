@@ -142,12 +142,12 @@ via_alloc_texture(struct via_context *vmesa,
       t->index = fb.index;
       
       if (t->memType == VIA_MEM_AGP) {
-	 t->bufAddr = (GLubyte *)((GLuint)vmesa->viaScreen->agpLinearStart +
+	 t->bufAddr = (GLubyte *)((unsigned long)vmesa->viaScreen->agpLinearStart +
 				  fb.offset); 	
-	 t->texBase = (GLuint)vmesa->agpBase + fb.offset;
+	 t->texBase = vmesa->agpBase + fb.offset;
       }
       else {
-	 t->bufAddr = (GLubyte *)(fb.offset + (GLuint)vmesa->driScreen->pFB);
+	 t->bufAddr = (GLubyte *)((unsigned long)vmesa->driScreen->pFB + fb.offset);
 	 t->texBase = fb.offset;
       }
 

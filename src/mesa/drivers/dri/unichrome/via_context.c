@@ -675,12 +675,13 @@ viaCreateContext(const __GLcontextModes *visual,
     (*dri_interface->getUST)( &vmesa->swap_ust );
 
 
-    vmesa->regMMIOBase = (GLuint *)((GLuint)viaScreen->reg);
-    vmesa->pnGEMode = (GLuint *)((GLuint)viaScreen->reg + 0x4);
-    vmesa->regEngineStatus = (GLuint *)((GLuint)viaScreen->reg + 0x400);
-    vmesa->regTranSet = (GLuint *)((GLuint)viaScreen->reg + 0x43C);
-    vmesa->regTranSpace = (GLuint *)((GLuint)viaScreen->reg + 0x440);
+    vmesa->regMMIOBase = (GLuint *)((unsigned long)viaScreen->reg);
+    vmesa->pnGEMode = (GLuint *)((unsigned long)viaScreen->reg + 0x4);
+    vmesa->regEngineStatus = (GLuint *)((unsigned long)viaScreen->reg + 0x400);
+    vmesa->regTranSet = (GLuint *)((unsigned long)viaScreen->reg + 0x43C);
+    vmesa->regTranSpace = (GLuint *)((unsigned long)viaScreen->reg + 0x440);
     vmesa->agpBase = viaScreen->agpBase;
+
 
     return GL_TRUE;
 }
@@ -797,9 +798,9 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
                __DRIdrawablePrivate *driReadPriv)
 {
     if (VIA_DEBUG & DEBUG_DRI) {
-	fprintf(stderr, "driContextPriv = %08x\n", (GLuint)driContextPriv);
-	fprintf(stderr, "driDrawPriv = %08x\n", (GLuint)driDrawPriv);    
-	fprintf(stderr, "driReadPriv = %08x\n", (GLuint)driReadPriv);
+	fprintf(stderr, "driContextPriv = %016lx\n", (unsigned long)driContextPriv);
+	fprintf(stderr, "driDrawPriv = %016lx\n", (unsigned long)driDrawPriv);    
+	fprintf(stderr, "driReadPriv = %016lx\n", (unsigned long)driReadPriv);
     }	
 
     if (driContextPriv) {

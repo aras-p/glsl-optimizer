@@ -59,7 +59,7 @@ typedef struct {
     
     drmAddress reg;
     drmAddress agpLinearStart;
-    GLuint* agpBase;
+    GLuint agpBase;
 
     __DRIscreenPrivate *driScrnPriv;
     drmBufMapPtr bufs;

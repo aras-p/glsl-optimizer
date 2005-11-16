@@ -168,8 +168,14 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 	    sPriv->private = NULL;
 	    __driUtilMessage("viaInitDriver: drmMap agp failed");
 	    return GL_FALSE;
-	}	    
-	viaScreen->agpBase = (GLuint *)gDRIPriv->agp.handle;
+	}
+	    
+	/*
+	 * FIXME: This is an invalid assumption that works until handle is
+	 * changed to mean something else than the 32-bit physical AGP address.
+	 */
+
+	viaScreen->agpBase = gDRIPriv->agp.handle;
     } else
 	viaScreen->agpLinearStart = 0;
 

@@ -89,8 +89,8 @@ struct via_renderbuffer {
    struct gl_renderbuffer Base;  /* must be first! */
    drm_handle_t handle;
    drmSize size;
-   GLuint offset;
-   GLuint index;
+   unsigned long offset;
+   unsigned long index;
    GLuint pitch;
    GLuint bpp;
    char *map;
@@ -106,8 +106,8 @@ struct via_renderbuffer {
 struct via_tex_buffer {
    struct via_tex_buffer *next, *prev;
    struct via_texture_image *image;
-   GLuint index;
-   GLuint offset;
+   unsigned long index;
+   unsigned long offset;
    GLuint size;
    GLuint memType;    
    unsigned char *bufAddr;
@@ -303,7 +303,7 @@ struct via_context {
    volatile GLuint* regEngineStatus;
    volatile GLuint* regTranSet;
    volatile GLuint* regTranSpace;
-   GLuint* agpBase;
+   GLuint agpBase;
    GLuint drawType;
 
    GLuint nDoneFirstFlip;
