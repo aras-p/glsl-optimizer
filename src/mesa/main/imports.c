@@ -1064,6 +1064,9 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
          case GL_TABLE_TOO_LARGE:
             errstr = "GL_TABLE_TOO_LARGE";
             break;
+         case GL_INVALID_FRAMEBUFFER_OPERATION_EXT:
+            errstr = "GL_INVALID_FRAMEBUFFER_OPERATION";
+            break;
 	 default:
 	    errstr = "unknown";
 	    break;
