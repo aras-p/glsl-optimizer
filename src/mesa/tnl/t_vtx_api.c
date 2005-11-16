@@ -68,7 +68,7 @@ static void _tnl_wrap_buffers( GLcontext *ctx )
       GLuint last_prim = tnl->vtx.prim[tnl->vtx.prim_count-1].mode;
       GLuint last_count;
 
-      if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {
+      if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
 	 GLint i = tnl->vtx.prim_count - 1;
 	 assert(i >= 0);
 	 tnl->vtx.prim[i].count = ((tnl->vtx.initial_counter - 
@@ -91,7 +91,7 @@ static void _tnl_wrap_buffers( GLcontext *ctx )
        */
       assert(tnl->vtx.prim_count == 0);
 
-      if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {
+      if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
 	 tnl->vtx.prim[0].mode = ctx->Driver.CurrentExecPrimitive;
 	 tnl->vtx.prim[0].start = 0;
 	 tnl->vtx.prim[0].count = 0;
@@ -735,7 +735,8 @@ static void GLAPIENTRY _tnl_Begin( GLenum mode )
 {
    GET_CURRENT_CONTEXT( ctx ); 
 
-   if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1) {
+   if (ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END) {
+      /* we're not inside a glBegin/End pair */
       TNLcontext *tnl = TNL_CONTEXT(ctx); 
       int i;
 
@@ -768,16 +769,18 @@ static void GLAPIENTRY _tnl_Begin( GLenum mode )
 
       ctx->Driver.CurrentExecPrimitive = mode;
    }
-   else 
+   else {
+      /* already inside glBegin/End */
       _mesa_error( ctx, GL_INVALID_OPERATION, "glBegin" );
-      
+   }      
 }
+
 
 static void GLAPIENTRY _tnl_End( void )
 {
    GET_CURRENT_CONTEXT( ctx ); 
 
-   if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {
+   if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
       TNLcontext *tnl = TNL_CONTEXT(ctx); 
       int idx = tnl->vtx.initial_counter - tnl->vtx.counter;
       int i = tnl->vtx.prim_count - 1;
@@ -785,7 +788,7 @@ static void GLAPIENTRY _tnl_End( void )
       tnl->vtx.prim[i].mode |= PRIM_END; 
       tnl->vtx.prim[i].count = idx - tnl->vtx.prim[i].start;
 
-      ctx->Driver.CurrentExecPrimitive = GL_POLYGON+1;
+      ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
 
       /* Two choices which effect the way vertex attributes are
        * carried over (or not) between adjacent primitives.

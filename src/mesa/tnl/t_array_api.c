@@ -51,7 +51,7 @@ static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
    GLint i;
 
    assert(!ctx->CompileFlag);
-   assert(ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1);
+   assert(ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END);
 
    CALL_Begin(GET_DISPATCH(), (mode));
    for (i = 0; i < count; i++) 
@@ -66,7 +66,7 @@ static void fallback_drawelements( GLcontext *ctx, GLenum mode, GLsizei count,
    GLint i;
 
    assert(!ctx->CompileFlag);
-   assert(ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1);
+   assert(ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END);
 
    /* Here, indices will already reflect the buffer object if active */
 

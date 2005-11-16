@@ -248,7 +248,7 @@ static GLuint _tnl_copy_vertices( GLcontext *ctx )
       for (i = 0 ; i < ovf ; i++)
 	 _mesa_memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
       return i;
-   case GL_POLYGON+1:
+   case PRIM_OUTSIDE_BEGIN_END:
       return 0;
    default:
       assert(0);
