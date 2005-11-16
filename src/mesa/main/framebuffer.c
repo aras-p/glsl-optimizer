@@ -444,9 +444,12 @@ set_stencil_renderbuffer(struct gl_framebuffer *fb,
  *    _ColorDrawBuffers
  *    _NumColorDrawBuffers
  *    _ColorReadBuffer
+ *    _DepthBuffer
+ *    _StencilBuffer
  * If the current framebuffer is user-created, make sure it's complete.
  * The following functions can effect this state:  glReadBuffer,
- * glDrawBuffer, glDrawBuffersARB, glFramebufferRenderbufferEXT.
+ * glDrawBuffer, glDrawBuffersARB, glFramebufferRenderbufferEXT,
+ * glRenderbufferStorageEXT.
  */
 void
 _mesa_update_framebuffer(GLcontext *ctx)
@@ -504,7 +507,9 @@ _mesa_update_framebuffer(GLcontext *ctx)
 
    /*
     * Deal with GL_DEPTH_STENCIL renderbuffer(s) attached to the depth
-    * and/or stencil attachment points.
+    * and/or stencil attachment points.  If either of the DEPTH or STENCIL
+    * renderbuffer attachments are GL_DEPTH_STENCIL buffers, we need to set
+    * up depth/stencil renderbuffer wrappers.
     */
    {
       struct gl_renderbuffer *depthRb
@@ -513,6 +518,7 @@ _mesa_update_framebuffer(GLcontext *ctx)
          = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
 
       if (depthRb && depthRb->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+         /* The attached depth buffer is a GL_DEPTH_STENCIL renderbuffer */
          if (!fb->_DepthBuffer || fb->_DepthBuffer->Wrapped != depthRb) {
             /* need to update wrapper */
             struct gl_renderbuffer *wrapper
@@ -527,6 +533,7 @@ _mesa_update_framebuffer(GLcontext *ctx)
       }
 
       if (stencilRb && stencilRb->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+         /* The attached stencil buffer is a GL_DEPTH_STENCIL renderbuffer */
          if (!fb->_StencilBuffer || fb->_StencilBuffer->Wrapped != stencilRb) {
             /* need to update wrapper */
             struct gl_renderbuffer *wrapper
