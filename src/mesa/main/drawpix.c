@@ -149,13 +149,13 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       return;
    }
 
+   if (ctx->NewState) {
+      _mesa_update_state(ctx);
+   }
+
    if (error_check_format_type(ctx, format, type, GL_TRUE)) {
       /* found an error */
       return;
-   }
-
-   if (ctx->NewState) {
-      _mesa_update_state(ctx);
    }
 
    if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
@@ -198,6 +198,10 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (ctx->NewState) {
+      _mesa_update_state(ctx);
+   }
 
    if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -247,10 +251,6 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glCopyPixels");
       return;
-   }
-
-   if (ctx->NewState) {
-      _mesa_update_state(ctx);
    }
 
    if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT ||
@@ -304,13 +304,13 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
       return;
    }
 
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
    if (error_check_format_type(ctx, format, type, GL_FALSE)) {
       /* found an error */
       return;
    }
-
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
 
    if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
