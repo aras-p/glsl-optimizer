@@ -420,7 +420,6 @@ read_depth_stencil_pixels(GLcontext *ctx,
    const GLboolean stencilTransfer = ctx->Pixel.IndexShift
       || ctx->Pixel.IndexOffset || ctx->Pixel.MapStencilFlag;
    struct gl_renderbuffer *depthRb, *stencilRb;
-   GLint i;
 
    depthRb = ctx->ReadBuffer->_DepthBuffer;
    stencilRb = ctx->ReadBuffer->_StencilBuffer;
@@ -428,34 +427,68 @@ read_depth_stencil_pixels(GLcontext *ctx,
    ASSERT(depthRb);
    ASSERT(stencilRb);
 
-   for (i = 0; i < height; i++) {
-      GLstencil stencilVals[MAX_WIDTH];
+   depthRb = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   stencilRb = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
 
-      GLuint *depthStencilDst = (GLuint *)
-         _mesa_image_address2d(packing, pixels, width, height,
-                               GL_DEPTH_STENCIL_EXT, type, i, 0);
-
-      _swrast_read_stencil_span(ctx, stencilRb, width, x, y + i, stencilVals);
-
-      if (!scaleOrBias && !stencilTransfer
-          && ctx->ReadBuffer->Visual.depthBits == 24) {
-         /* ideal case */
-         GLuint zVals[MAX_WIDTH]; /* 24-bit values! */
-         GLint j;
-         ASSERT(depthRb->DataType == GL_UNSIGNED_INT);
-         /* note, we've already been clipped */
-         depthRb->GetRow(ctx, depthRb, width, x, y + i, zVals);
-         for (j = 0; j < width; j++) {
-            depthStencilDst[j] = (zVals[j] << 8) | (stencilVals[j] & 0xff);
-         }
+   if (depthRb->_BaseFormat == GL_DEPTH_STENCIL_EXT &&
+       stencilRb->_BaseFormat == GL_DEPTH_STENCIL_EXT &&
+       depthRb == stencilRb &&
+       !scaleOrBias &&
+       !stencilTransfer) {
+      /* This is the ideal case.
+       * Reading GL_DEPTH_STENCIL pixels from combined depth/stencil buffer.
+       * Plus, no pixel transfer ops to worry about!
+       */
+      GLint i;
+      GLint dstStride = _mesa_image_row_stride(packing, width,
+                                               GL_DEPTH_STENCIL_EXT, type);
+      GLubyte *dst = (GLubyte *) _mesa_image_address2d(packing, pixels,
+                                                       width, height,
+                                                       GL_DEPTH_STENCIL_EXT,
+                                                       type, 0, 0);
+      for (i = 0; i < height; i++) {
+         depthRb->GetRow(ctx, depthRb, width, x, y + i, dst);
+         dst += dstStride;
       }
-      else {
-         /* general case */
-         GLfloat depthVals[MAX_WIDTH];
-         _swrast_read_depth_span_float(ctx, depthRb, width, x, y + i,
-                                       depthVals);
-         _mesa_pack_depth_stencil_span(ctx, width, depthStencilDst,
-                                       depthVals, stencilVals, packing);
+   }
+   else {
+      /* Reading GL_DEPTH_STENCIL pixels from separate depth/stencil buffers,
+       * or we need pixel transfer.
+       */
+      GLint i;
+      depthRb = ctx->ReadBuffer->_DepthBuffer;
+      stencilRb = ctx->ReadBuffer->_StencilBuffer;
+
+      for (i = 0; i < height; i++) {
+         GLstencil stencilVals[MAX_WIDTH];
+
+         GLuint *depthStencilDst = (GLuint *)
+            _mesa_image_address2d(packing, pixels, width, height,
+                                  GL_DEPTH_STENCIL_EXT, type, i, 0);
+
+         _swrast_read_stencil_span(ctx, stencilRb, width,
+                                   x, y + i, stencilVals);
+
+         if (!scaleOrBias && !stencilTransfer
+             && ctx->ReadBuffer->Visual.depthBits == 24) {
+            /* ideal case */
+            GLuint zVals[MAX_WIDTH]; /* 24-bit values! */
+            GLint j;
+            ASSERT(depthRb->DataType == GL_UNSIGNED_INT);
+            /* note, we've already been clipped */
+            depthRb->GetRow(ctx, depthRb, width, x, y + i, zVals);
+            for (j = 0; j < width; j++) {
+               depthStencilDst[j] = (zVals[j] << 8) | (stencilVals[j] & 0xff);
+            }
+         }
+         else {
+            /* general case */
+            GLfloat depthVals[MAX_WIDTH];
+            _swrast_read_depth_span_float(ctx, depthRb, width, x, y + i,
+                                          depthVals);
+            _mesa_pack_depth_stencil_span(ctx, width, depthStencilDst,
+                                          depthVals, stencilVals, packing);
+         }
       }
    }
 }
