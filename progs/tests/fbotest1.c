@@ -14,7 +14,7 @@
 #include <GL/glut.h>
 
 static int Width = 400, Height = 400;
-static GLuint MyFB;
+static GLuint MyFB, MyRB;
 
 
 static void
@@ -65,6 +65,7 @@ Display( void )
 
    free(buffer);
    glutSwapBuffers();
+   CheckError(__LINE__);
 }
 
 
@@ -92,13 +93,24 @@ Reshape( int width, int height )
 
 
 static void
+CleanUp(void)
+{
+   glDeleteFramebuffersEXT(1, &MyFB);
+   glDeleteRenderbuffersEXT(1, &MyRB);
+   assert(!glIsFramebufferEXT(MyFB));
+   assert(!glIsRenderbufferEXT(MyRB));
+   exit(0);
+}
+
+
+static void
 Key( unsigned char key, int x, int y )
 {
    (void) x;
    (void) y;
    switch (key) {
       case 27:
-         exit(0);
+         CleanUp();
          break;
    }
    glutPostRedisplay();
@@ -108,7 +120,6 @@ Key( unsigned char key, int x, int y )
 static void
 Init( void )
 {
-   GLuint rb;
    GLint i;
 
    if (!glutExtensionSupported("GL_EXT_framebuffer_object")) {
@@ -124,28 +135,31 @@ Init( void )
    assert(!glIsFramebufferEXT(MyFB));
    /* Note, continue to use MyFB below */
 
-   glGenRenderbuffersEXT(1, &rb);
-   assert(rb);
-   assert(!glIsRenderbufferEXT(rb));
-   glDeleteRenderbuffersEXT(1, &rb);
-   assert(!glIsRenderbufferEXT(rb));
-   rb = 42; /* an arbitrary ID */
+   glGenRenderbuffersEXT(1, &MyRB);
+   assert(MyRB);
+   assert(!glIsRenderbufferEXT(MyRB));
+   glDeleteRenderbuffersEXT(1, &MyRB);
+   assert(!glIsRenderbufferEXT(MyRB));
+   MyRB = 42; /* an arbitrary ID */
 
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, MyFB);
    assert(glIsFramebufferEXT(MyFB));
-   glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rb);
-   assert(glIsRenderbufferEXT(rb));
+   glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, MyRB);
+   assert(glIsRenderbufferEXT(MyRB));
 
    glGetIntegerv(GL_RENDERBUFFER_BINDING_EXT, &i);
-   assert(i == rb);
+   assert(i == MyRB);
 
    glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &i);
    assert(i == MyFB);
 
+   CheckError(__LINE__);
    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT1_EXT,
-                                GL_RENDERBUFFER_EXT, rb);
+                                GL_RENDERBUFFER_EXT, MyRB);
 
    glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGB, Width, Height);
+
+   CheckError(__LINE__);
 
    {
       GLint r, g, b, a;
@@ -157,6 +171,7 @@ Init( void )
                                       GL_RENDERBUFFER_BLUE_SIZE_EXT, &b);
       glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT,
                                       GL_RENDERBUFFER_ALPHA_SIZE_EXT, &a);
+      CheckError(__LINE__);
       printf("renderbuffer RGBA sizes = %d %d %d %d\n", r, g, b, a);
 
       glGetIntegerv(GL_RED_BITS, &r);
@@ -166,10 +181,9 @@ Init( void )
       printf("Visual RGBA sizes = %d %d %d %d\n", r, g, b, a);
    }
 
-   CheckError(__LINE__);
-
    /* restore to default */
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+   CheckError(__LINE__);
 }
 
 
