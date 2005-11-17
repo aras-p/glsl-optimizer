@@ -607,7 +607,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
             _mesa_image_address2d(unpack, pixels, width, height,
                                   GL_DEPTH_COMPONENT, type, row, 0);
          if (shift == 0) {
-            MEMCPY(span.array->z, zSrc, width * sizeof(GLuint));
+            _mesa_memcpy(span.array->z, zSrc, width * sizeof(GLuint));
          }
          else {
             GLint col;
@@ -823,7 +823,14 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
 }
 
 
-
+/**
+ * This is a bit different from drawing GL_DEPTH_COMPONENT pixels.
+ * The only per-pixel operations that apply are depth scale/bias,
+ * stencil offset/shift, GL_DEPTH_WRITEMASK and GL_STENCIL_WRITEMASK,
+ * and pixel zoom.
+ * Also, only the depth buffer and stencil buffers are touched, not the
+ * color buffer(s).
+ */
 static void
 draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                           GLsizei width, GLsizei height, GLenum type,
@@ -840,13 +847,6 @@ draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
    struct gl_renderbuffer *depthRb, *stencilRb;
    struct gl_pixelstore_attrib clippedUnpack = *unpack;
-   GLint i;
-
-   depthRb = ctx->DrawBuffer->_DepthBuffer;
-   stencilRb = ctx->DrawBuffer->_StencilBuffer;
-
-   ASSERT(depthRb);
-   ASSERT(stencilRb);
 
    if (!zoom) {
       if (!_mesa_clip_drawpixels(ctx, &x, &y, &width, &height,
@@ -855,72 +855,104 @@ draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
          return;
       }
    }
+   
+   depthRb = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   stencilRb = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+   ASSERT(depthRb);
+   ASSERT(stencilRb);
 
-   /* XXX need to handle very wide images (skippixels) */
+   if (depthRb->_BaseFormat == GL_DEPTH_STENCIL_EXT &&
+       stencilRb->_BaseFormat == GL_DEPTH_STENCIL_EXT &&
+       depthRb == stencilRb &&
+       !scaleOrBias &&
+       !zoom &&
+       ctx->Depth.Mask &&
+       (stencilMask & 0xff) == 0xff) {
+      /* This is the ideal case.
+       * Drawing GL_DEPTH_STENCIL pixels into a combined depth/stencil buffer.
+       * Plus, no pixel transfer ops, zooming, or masking needed.
+       */
+      GLint i;
+      for (i = 0; i < height; i++) {
+         const GLuint *src = (const GLuint *) 
+            _mesa_image_address2d(&clippedUnpack, pixels, width, height,
+                                  GL_DEPTH_STENCIL_EXT, type, i, 0);
+         depthRb->PutRow(ctx, depthRb, width, x, y + i, src, NULL);
+      }
+   }
+   else {
+      /* sub-optimal cases:
+       * Separate depth/stencil buffers, or pixel transfer ops required.
+       */
+      /* XXX need to handle very wide images (skippixels) */
+      GLint i;
 
-   for (i = 0; i < height; i++) {
-      const GLuint *depthStencilSrc = (const GLuint *)
-         _mesa_image_address2d(&clippedUnpack, pixels, width, height,
-                               GL_DEPTH_STENCIL_EXT, type, i, 0);
+      depthRb = ctx->DrawBuffer->_DepthBuffer;
+      stencilRb = ctx->DrawBuffer->_StencilBuffer;
 
-      if (ctx->Depth.Mask) {
-         if (!scaleOrBias && ctx->DrawBuffer->Visual.depthBits == 24) {
-            /* fast path 24-bit zbuffer */
-            GLuint zValues[MAX_WIDTH];
-            GLint j;
-            ASSERT(depthRb->DataType == GL_UNSIGNED_INT);
-            for (j = 0; j < width; j++) {
-               zValues[j] = depthStencilSrc[j] >> 8;
+      for (i = 0; i < height; i++) {
+         const GLuint *depthStencilSrc = (const GLuint *)
+            _mesa_image_address2d(&clippedUnpack, pixels, width, height,
+                                  GL_DEPTH_STENCIL_EXT, type, i, 0);
+
+         if (ctx->Depth.Mask) {
+            if (!scaleOrBias && ctx->DrawBuffer->Visual.depthBits == 24) {
+               /* fast path 24-bit zbuffer */
+               GLuint zValues[MAX_WIDTH];
+               GLint j;
+               ASSERT(depthRb->DataType == GL_UNSIGNED_INT);
+               for (j = 0; j < width; j++) {
+                  zValues[j] = depthStencilSrc[j] >> 8;
+               }
+               if (zoom)
+                  _swrast_write_zoomed_z_span(ctx, imgX, imgY, width,
+                                              x, y + i, zValues);
+               else
+                  depthRb->PutRow(ctx, depthRb, width, x, y + i, zValues,NULL);
             }
-            if (zoom)
-               _swrast_write_zoomed_z_span(ctx, imgX, imgY, width,
-                                           x, y + i, zValues);
-            else
-               depthRb->PutRow(ctx, depthRb, width, x, y + i, zValues, NULL);
-         }
-         else if (!scaleOrBias && ctx->DrawBuffer->Visual.depthBits == 16) {
-            /* fast path 16-bit zbuffer */
-            GLushort zValues[MAX_WIDTH];
-            GLint j;
-            ASSERT(depthRb->DataType == GL_UNSIGNED_SHORT);
-            for (j = 0; j < width; j++) {
-               zValues[j] = depthStencilSrc[j] >> 16;
-            }
-            if (zoom)
-               _swrast_write_zoomed_z_span(ctx, imgX, imgY, width,
-                                           x, y + i, zValues);
-            else
-               depthRb->PutRow(ctx, depthRb, width, x, y + i, zValues, NULL);
-         }
-         else {
-            /* general case */
-            GLuint zValues[MAX_WIDTH];  /* 16 or 32-bit Z value storage */
-            _mesa_unpack_depth_span(ctx, width,
-                                    depthRb->DataType, zValues, depthScale,
-                                    type, depthStencilSrc, &clippedUnpack);
-            if (zoom) {
-               _swrast_write_zoomed_z_span(ctx, imgX, imgY, width, x,
-                                           y + i, zValues);
+            else if (!scaleOrBias && ctx->DrawBuffer->Visual.depthBits == 16) {
+               /* fast path 16-bit zbuffer */
+               GLushort zValues[MAX_WIDTH];
+               GLint j;
+               ASSERT(depthRb->DataType == GL_UNSIGNED_SHORT);
+               for (j = 0; j < width; j++) {
+                  zValues[j] = depthStencilSrc[j] >> 16;
+               }
+               if (zoom)
+                  _swrast_write_zoomed_z_span(ctx, imgX, imgY, width,
+                                              x, y + i, zValues);
+               else
+                  depthRb->PutRow(ctx, depthRb, width, x, y + i, zValues,NULL);
             }
             else {
-               depthRb->PutRow(ctx, depthRb, width, x, y + i, zValues, NULL);
+               /* general case */
+               GLuint zValues[MAX_WIDTH];  /* 16 or 32-bit Z value storage */
+               _mesa_unpack_depth_span(ctx, width,
+                                       depthRb->DataType, zValues, depthScale,
+                                       type, depthStencilSrc, &clippedUnpack);
+               if (zoom) {
+                  _swrast_write_zoomed_z_span(ctx, imgX, imgY, width, x,
+                                              y + i, zValues);
+               }
+               else {
+                  depthRb->PutRow(ctx, depthRb, width, x, y + i, zValues,NULL);
+               }
             }
          }
-      }
 
-      if (stencilMask != 0x0) {
-         GLstencil stencilValues[MAX_WIDTH];
-         /* get stencil values, with shift/offset/mapping */
-         _mesa_unpack_stencil_span(ctx, width, stencilType, stencilValues,
-                                   type, depthStencilSrc, &clippedUnpack,
-                                   ctx->_ImageTransferState);
-         if (zoom)
-            _swrast_write_zoomed_stencil_span(ctx, imgX, imgY, width,
-                                               x, y + i, stencilValues);
-         else
-            _swrast_write_stencil_span(ctx, width, x, y + i, stencilValues);
+         if (stencilMask != 0x0) {
+            GLstencil stencilValues[MAX_WIDTH];
+            /* get stencil values, with shift/offset/mapping */
+            _mesa_unpack_stencil_span(ctx, width, stencilType, stencilValues,
+                                      type, depthStencilSrc, &clippedUnpack,
+                                      ctx->_ImageTransferState);
+            if (zoom)
+               _swrast_write_zoomed_stencil_span(ctx, imgX, imgY, width,
+                                                  x, y + i, stencilValues);
+            else
+               _swrast_write_stencil_span(ctx, width, x, y + i, stencilValues);
+         }
       }
-
    }
 }
 
