@@ -353,6 +353,14 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 				     (log2Width << R200_FACE_WIDTH_4_SHIFT) |
 				     (log2Height << R200_FACE_HEIGHT_4_SHIFT));
 	}
+	
+	if (!baseImage->IsCompressed) {
+		int vv;
+		vv = (tObj->Image[0][t->base.firstLevel]->Width * 4) % 64;
+		if (vv >= 4 && vv <= 32) {
+			WARN_ONCE("Corrupted texture ahead!\n");
+		}
+	}
 
 	t->size = (((tObj->Image[0][t->base.firstLevel]->Width - 1) << R300_TX_WIDTHMASK_SHIFT)
 			|((tObj->Image[0][t->base.firstLevel]->Height - 1) << R300_TX_HEIGHTMASK_SHIFT)
