@@ -1359,7 +1359,7 @@ static void build_tnl_program( struct tnl_program *p )
 	    emit_passthrough(p, VERT_ATTRIB_COLOR0, VERT_RESULT_COL0);
 
 	 if (p->state->fragprog_inputs_read & FRAG_BIT_COL1)
-	    emit_passthrough(p, VERT_ATTRIB_COLOR0, VERT_RESULT_COL1);
+	    emit_passthrough(p, VERT_ATTRIB_COLOR1, VERT_RESULT_COL1);
       }
    }
 
