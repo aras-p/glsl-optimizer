@@ -744,6 +744,13 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
 
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
+   if (rb->InternalFormat == internalFormat &&
+       rb->Width == width &&
+       rb->Height == height) {
+      /* no change in allocation needed */
+      return;
+   }
+
    /* Now allocate the storage */
    ASSERT(rb->AllocStorage);
    if (rb->AllocStorage(ctx, rb, internalFormat, width, height)) {
@@ -802,60 +809,23 @@ _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
       *params = ctx->CurrentRenderbuffer->InternalFormat;
       return;
    case GL_RENDERBUFFER_RED_SIZE_EXT:
-      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_RGB ||
-          ctx->CurrentRenderbuffer->_BaseFormat == GL_RGBA) {
-         *params = ctx->CurrentRenderbuffer->RedBits;
-      }
-      else {
-         *params = 0;
-      }
+      *params = ctx->CurrentRenderbuffer->RedBits;
       break;
    case GL_RENDERBUFFER_GREEN_SIZE_EXT:
-      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_RGB ||
-          ctx->CurrentRenderbuffer->_BaseFormat == GL_RGBA) {
-         *params = ctx->CurrentRenderbuffer->GreenBits;
-      }
-      else {
-         *params = 0;
-      }
+      *params = ctx->CurrentRenderbuffer->GreenBits;
       break;
    case GL_RENDERBUFFER_BLUE_SIZE_EXT:
-      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_RGB ||
-          ctx->CurrentRenderbuffer->_BaseFormat == GL_RGBA) {
-         *params = ctx->CurrentRenderbuffer->BlueBits;
-      }
-      else {
-         *params = 0;
-      }
+      *params = ctx->CurrentRenderbuffer->BlueBits;
       break;
    case GL_RENDERBUFFER_ALPHA_SIZE_EXT:
-      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_RGB ||
-          ctx->CurrentRenderbuffer->_BaseFormat == GL_RGBA) {
-         *params = ctx->CurrentRenderbuffer->AlphaBits;
-      }
-      else {
-         *params = 0;
-      }
+      *params = ctx->CurrentRenderbuffer->AlphaBits;
       break;
    case GL_RENDERBUFFER_DEPTH_SIZE_EXT:
-      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_DEPTH_COMPONENT ||
-          ctx->CurrentRenderbuffer->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
-         *params = ctx->CurrentRenderbuffer->DepthBits;
-      }
-      else {
-         *params = 0;
-      }
+      *params = ctx->CurrentRenderbuffer->DepthBits;
       break;
    case GL_RENDERBUFFER_STENCIL_SIZE_EXT:
-      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_STENCIL_INDEX ||
-          ctx->CurrentRenderbuffer->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
-         *params = ctx->CurrentRenderbuffer->StencilBits;
-      }
-      else {
-         *params = 0;
-      }
+      *params = ctx->CurrentRenderbuffer->StencilBits;
       break;
-
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glGetRenderbufferParameterivEXT(target)");
