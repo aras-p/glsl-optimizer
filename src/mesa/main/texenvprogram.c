@@ -1140,7 +1140,7 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
 	 search_cache(ctx->Texture.env_fp_cache, hash, key, sizeof(*key));
 	
       if (!ctx->_TexEnvProgram) {
-	 if (1) _mesa_printf("Building new texenv proggy for key %x\n", hash);
+	 if (0) _mesa_printf("Building new texenv proggy for key %x\n", hash);
 		
 	 ctx->FragmentProgram._Current = ctx->_TexEnvProgram = 
 	    (struct fragment_program *) 
@@ -1151,7 +1151,7 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
 	 cache_item(&ctx->Texture.env_fp_cache, hash, key, ctx->_TexEnvProgram);
       } else {
 	 FREE(key);
-	 if (1) _mesa_printf("Found existing texenv program for key %x\n", hash);
+	 if (0) _mesa_printf("Found existing texenv program for key %x\n", hash);
       }
    } 
    else {
