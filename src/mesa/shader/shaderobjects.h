@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 2004-2005  Brian Paul   All Rights Reserved.
  *
@@ -26,10 +26,6 @@
 #define SHADEROBJECTS_H
 
 #include "mtypes.h"
-
-/**
- ** XXX do these gl2 structs really neeed to be here?
- **/
 
 /**
  * gl2 unique interface identifier.
@@ -239,12 +235,11 @@ _mesa_GetActiveAttribARB (GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLen
 extern GLint GLAPIENTRY
 _mesa_GetAttribLocationARB (GLhandleARB, const GLcharARB *);
 
-#endif
+#endif /* FEATURE_ARB_vertex_shader */
 
 extern void
 _mesa_init_shaderobjects (GLcontext *ctx);
 
-#endif
+#endif /* FEATURE_ARB_shader_objects */
 
-#endif
-
+#endif /* SHADEROBJECTS_H */
