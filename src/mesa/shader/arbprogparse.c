@@ -3914,7 +3914,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
    }
 
    /* Set program_target register value */
-   if (set_reg8 (ctx, arbprogram_syn_id, (byte *) "program_target",
+   if (set_reg8 (ctx, arbprogram_syn_id, "program_target",
       program->Base.Target == GL_FRAGMENT_PROGRAM_ARB ? 0x10 : 0x20)) {
       grammar_destroy (arbprogram_syn_id);
       return GL_FALSE;
