@@ -27,6 +27,88 @@
 
 #include "mtypes.h"
 
+/**
+ ** XXX do these gl2 structs really neeed to be here?
+ **/
+
+/**
+ * gl2 unique interface identifier.
+ * Each gl2 interface has its own interface id used for object queries.
+ */
+enum gl2_uiid
+{
+   UIID_UNKNOWN,		/* supported by all objects */
+   UIID_GENERIC,		/* generic object */
+   UIID_CONTAINER,		/* contains generic objects */
+   UIID_SHADER,			/* shader object */
+   UIID_FRAGMENT_SHADER,	/* fragment shader */
+   UIID_VERTEX_SHADER,		/* vertex shader */
+   UIID_PROGRAM,		/* program object */
+   UIID_3DLABS_SHHANDLE		/* encapsulates 3dlabs' ShHandle */
+};
+
+struct gl2_unknown_intf
+{
+   GLvoid (* AddRef) (struct gl2_unknown_intf **);
+   GLvoid (* Release) (struct gl2_unknown_intf **);
+   struct gl2_unknown_intf **(* QueryInterface) (struct gl2_unknown_intf **, enum gl2_uiid uiid);
+};
+
+struct gl2_generic_intf
+{
+   struct gl2_unknown_intf _unknown;
+   GLvoid (* Delete) (struct gl2_generic_intf **);
+   GLenum (* GetType) (struct gl2_generic_intf **);
+   GLhandleARB (* GetName) (struct gl2_generic_intf **);
+   GLboolean (* GetDeleteStatus) (struct gl2_generic_intf **);
+   const GLcharARB *(* GetInfoLog) (struct gl2_generic_intf **);
+};
+
+struct gl2_container_intf
+{
+   struct gl2_generic_intf _generic;
+   GLboolean (* Attach) (struct gl2_container_intf **, struct gl2_generic_intf **);
+   GLboolean (* Detach) (struct gl2_container_intf **, struct gl2_generic_intf **);
+   GLsizei (* GetAttachedCount) (struct gl2_container_intf **);
+   struct gl2_generic_intf **(* GetAttached) (struct gl2_container_intf **, GLuint);
+};
+
+struct gl2_shader_intf
+{
+   struct gl2_generic_intf _generic;
+   GLenum (* GetSubType) (struct gl2_shader_intf **);
+   GLboolean (* GetCompileStatus) (struct gl2_shader_intf **);
+   GLvoid (* SetSource) (struct gl2_shader_intf **, GLcharARB *, GLint *, GLsizei);
+   const GLcharARB *(* GetSource) (struct gl2_shader_intf **);
+   GLvoid (* Compile) (struct gl2_shader_intf **);
+};
+
+struct gl2_program_intf
+{
+   struct gl2_container_intf _container;
+   GLboolean (* GetLinkStatus) (struct gl2_program_intf **);
+   GLboolean (* GetValidateStatus) (struct gl2_program_intf **);
+   GLvoid (* Link) (struct gl2_program_intf **);
+   GLvoid (* Validate) (struct gl2_program_intf **);
+};
+
+struct gl2_fragment_shader_intf
+{
+   struct gl2_shader_intf _shader;
+};
+
+struct gl2_vertex_shader_intf
+{
+   struct gl2_shader_intf _shader;
+};
+
+struct gl2_3dlabs_shhandle_intf
+{
+   struct gl2_unknown_intf _unknown;
+   GLvoid *(* GetShHandle) (struct gl2_3dlabs_shhandle_intf **);
+};
+
+
 #if FEATURE_ARB_shader_objects
 
 extern void GLAPIENTRY
