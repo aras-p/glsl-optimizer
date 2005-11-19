@@ -181,7 +181,12 @@ static GLuint translate_tex_src_bit( GLbitfield bit )
    }
 }
 
-static struct state_key *make_state_key( GLcontext *ctx )
+/**
+ * Examine current texture environment state and generate a unique
+ * key to identify it.
+ */
+static struct state_key *
+make_state_key(GLcontext *ctx)
 {
    struct state_key *key = CALLOC_STRUCT(state_key);
    GLuint i, j;
@@ -264,10 +269,6 @@ const static struct ureg undef = {
    0
 };
 
-#define X    0
-#define Y    1
-#define Z    2
-#define W    3
 
 /* State used to build the fragment program:
  */
@@ -470,7 +471,7 @@ emit_op(struct texenv_fragment_program *p,
 	enum prog_opcode op,
 	struct ureg dest,
 	GLuint mask,
-	GLuint saturate,
+	GLboolean saturate,
 	struct ureg src0,
 	struct ureg src1,
 	struct ureg src2 )
@@ -502,7 +503,7 @@ static struct ureg emit_arith( struct texenv_fragment_program *p,
 			       enum prog_opcode op,
 			       struct ureg dest,
 			       GLuint mask,
-			       GLuint saturate,
+			       GLboolean saturate,
 			       struct ureg src0,
 			       struct ureg src1,
 			       struct ureg src2 )
@@ -537,7 +538,7 @@ static struct ureg emit_texld( struct texenv_fragment_program *p,
 {
    struct prog_instruction *inst = emit_op( p, op, 
 					  dest, destmask, 
-					  0,		/* don't saturate? */
+					  GL_FALSE,	/* don't saturate? */
 					  coord, 	/* arg 0? */
 					  undef,
 					  undef);
@@ -607,7 +608,6 @@ static struct ureg get_zero( struct texenv_fragment_program *p )
 }
 
 
-
 static void program_error( struct texenv_fragment_program *p, const char *msg )
 {
    _mesa_problem(NULL, msg);
@@ -671,7 +671,7 @@ static struct ureg emit_combine_source( struct texenv_fragment_program *p,
       if (mask == WRITEMASK_W)
 	 return src;
       else
-	 return swizzle1( src, W );
+	 return swizzle1( src, SWIZZLE_W );
    case OPR_ONE_MINUS_SRC_ALPHA: 
       /* Get unused tmp,
        * Emit tmp = 1.0 - arg.wwww
@@ -679,7 +679,7 @@ static struct ureg emit_combine_source( struct texenv_fragment_program *p,
       arg = get_temp(p);
       one = get_one(p);
       return emit_arith(p, OPCODE_SUB, arg, mask, 0,
-			one, swizzle1(src, W), undef);
+			one, swizzle1(src, SWIZZLE_W), undef);
    case OPR_ZERO:
       return get_zero(p);
    case OPR_ONE:
@@ -692,7 +692,7 @@ static struct ureg emit_combine_source( struct texenv_fragment_program *p,
 
 static GLboolean args_match( struct state_key *key, GLuint unit )
 {
-   int i, nr = key->unit[unit].NumArgsRGB;
+   GLuint i, nr = key->unit[unit].NumArgsRGB;
 
    for (i = 0 ; i < nr ; i++) {
       if (key->unit[unit].OptA[i].Source != key->unit[unit].OptRGB[i].Source) 
@@ -728,7 +728,7 @@ static GLboolean args_match( struct state_key *key, GLuint unit )
 static struct ureg emit_combine( struct texenv_fragment_program *p,
 				 struct ureg dest,
 				 GLuint mask,
-				 GLuint saturate,
+				 GLboolean saturate,
 				 GLuint unit,
 				 GLuint nr,
 				 GLuint mode,
@@ -736,7 +736,7 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
 {
    struct ureg src[3];
    struct ureg tmp, half;
-   int i;
+   GLuint i;
 
    for (i = 0; i < nr; i++)
       src[i] = emit_combine_source( p, mask, unit, opt[i].Source, opt[i].Operand );
@@ -816,10 +816,14 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
 }
 
 
-static struct ureg emit_texenv( struct texenv_fragment_program *p, int unit )
+/**
+ * Generate instructions for one texture unit's env/combiner mode.
+ */
+static struct ureg
+emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 {
    struct state_key *key = p->state;
-   GLuint saturate = (unit < p->last_tex_stage);
+   GLboolean saturate = (unit < p->last_tex_stage);
    GLuint rgb_shift, alpha_shift;
    struct ureg out, shift;
    struct ureg dest;
@@ -909,7 +913,9 @@ static struct ureg emit_texenv( struct texenv_fragment_program *p, int unit )
 }
 
 
-
+/**
+ * Generate instruction for getting a texture source term.
+ */
 static void load_texture( struct texenv_fragment_program *p, GLuint unit )
 {
    if (is_undef(p->src_texture[unit])) {
@@ -956,7 +962,12 @@ static GLboolean load_texenv_source( struct texenv_fragment_program *p,
    return GL_TRUE;
 }
 
-static GLboolean load_texunit_sources( struct texenv_fragment_program *p, int unit )
+
+/**
+ * Generate instructions for loading all texture source terms.
+ */
+static GLboolean
+load_texunit_sources( struct texenv_fragment_program *p, int unit )
 {
    struct state_key *key = p->state;
    int i, nr = key->unit[unit].NumArgsRGB;
@@ -968,8 +979,14 @@ static GLboolean load_texunit_sources( struct texenv_fragment_program *p, int un
    return GL_TRUE;
 }
 
-static void create_new_program(struct state_key *key, GLcontext *ctx,
-			       struct fragment_program *program)
+
+/**
+ * Generate a new fragment program which implements the context's
+ * current texture env/combine mode.
+ */
+static void
+create_new_program(struct state_key *key, GLcontext *ctx,
+                   struct fragment_program *program)
 {
    struct texenv_fragment_program p;
    GLuint unit;
@@ -1099,7 +1116,7 @@ static void cache_item( struct texenvprog_cache **cache,
 			void *key,
 			void *data )
 {
-   struct texenvprog_cache *c = MALLOC(sizeof(*c));
+   struct texenvprog_cache *c = CALLOC_STRUCT(texenvprog_cache);
    c->hash = hash;
    c->key = key;
    c->data = data;
