@@ -46,7 +46,6 @@
 #include "glheader.h"
 #include "macros.h"
 #include "enums.h"
-#include "arbfragparse.h"
 
 #include "program.h"
 #include "program_instruction.h"
