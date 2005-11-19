@@ -284,7 +284,7 @@ struct prog_instruction
     * \since
     * NV_fragment_program, NV_fragment_program_option, NV_vertex_program3.
     */
-   GLuint Saturate:2;
+   GLuint Saturate:1;
    
    /**
     * Per-instruction selectable precision.
