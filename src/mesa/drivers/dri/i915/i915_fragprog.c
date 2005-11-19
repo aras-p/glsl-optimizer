@@ -38,12 +38,7 @@
 
 #include "program_instruction.h"
 #include "program.h"
-#include "arbfragparse.h"
 
-
-
-#undef  PI
-#define PI 3.141592
 
 
 /* 1, -1/3!, 1/5!, -1/7! */
@@ -305,7 +300,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 A0_MUL,
 			 tmp, A0_DEST_CHANNEL_X, 0,
 			 src0, 
-			 i915_emit_const1f(p, 1.0/(PI * 2)),
+			 i915_emit_const1f(p, 1.0/(M_PI * 2)),
 			 0);
 
 	 i915_emit_arith( p, 
@@ -320,7 +315,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 A0_MUL,
 			 tmp, A0_DEST_CHANNEL_X, 0,
 			 tmp, 
-			 i915_emit_const1f(p, (PI * 2)),
+			 i915_emit_const1f(p, (M_PI * 2)),
 			 0);
 
 	 /* 
@@ -646,7 +641,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 A0_MUL,
 			 tmp, A0_DEST_CHANNEL_X, 0,
 			 src0, 
-			 i915_emit_const1f(p, 1.0/(PI * 2)),
+			 i915_emit_const1f(p, 1.0/(M_PI * 2)),
 			 0);
 
 	 i915_emit_arith( p, 
@@ -661,7 +656,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 A0_MUL,
 			 tmp, A0_DEST_CHANNEL_X, 0,
 			 tmp, 
-			 i915_emit_const1f(p, (PI * 2)),
+			 i915_emit_const1f(p, (M_PI * 2)),
 			 0);
 
 	 /* 
