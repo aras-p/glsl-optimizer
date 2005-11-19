@@ -181,6 +181,8 @@ MakeObjects(GLuint *objects_list)
    glMaterialfv( GL_FRONT, GL_EMISSION, black );
    gluCylinder( q, 1.5, 0.0,  2.5, 15, 1 );
    glEndList();
+
+   gluDeleteQuadric(q);
 }
 
 
