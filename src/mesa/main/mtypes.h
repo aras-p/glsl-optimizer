@@ -1699,7 +1699,7 @@ struct gl_evaluators
 
 
 /**
- * NV_fragment_program runtime state
+ * State used during execution of fragment programs.
  */
 struct fp_machine
 {
@@ -1707,21 +1707,6 @@ struct fp_machine
    GLfloat Inputs[MAX_NV_FRAGMENT_PROGRAM_INPUTS][4];
    GLfloat Outputs[MAX_NV_FRAGMENT_PROGRAM_OUTPUTS][4];
    GLuint CondCodes[4];
-};
-
-/**
- * ATI_fragment_shader runtime state
- */
-#define ATI_FS_INPUT_PRIMARY 0
-#define ATI_FS_INPUT_SECONDARY 1
-
-/* 6 register sets - 2 inputs (primary, secondary) */
-struct atifs_machine
-{
-   GLfloat Registers[6][4];
-   GLfloat PrevPassRegisters[6][4];
-   GLfloat Inputs[2][4];
-   GLuint pass;
 };
 
 
@@ -1748,8 +1733,6 @@ enum register_file
 
 /** Vertex and fragment instructions */
 struct prog_instruction;
-struct atifs_instruction;
-struct atifs_setupinst;
 struct program_parameter_list;
 
 
@@ -1819,22 +1802,6 @@ struct fragment_program
    GLboolean UsesKill;
 };
 
-struct ati_fragment_shader
-{
-   struct program Base;
-   struct atifs_instruction *Instructions[2];
-   struct atifs_setupinst *SetupInst[2];
-   GLfloat Constants[8][4];
-   GLuint localConstDef;
-   GLubyte numArithInstr[2];
-   GLubyte regsAssigned[2];
-   GLubyte NumPasses;
-   GLubyte cur_pass;
-   GLubyte last_optype;
-   GLboolean interpinp1;
-   GLboolean isValid;
-   GLuint swizzlerq;
-};
 
 /**
  * State common to vertex and fragment programs.
@@ -1852,7 +1819,7 @@ struct gl_program_state
 struct gl_vertex_program_state
 {
    GLboolean Enabled;                  /**< GL_VERTEX_PROGRAM_NV */
-   GLboolean _Enabled;                 /**< Really enabled? */
+   GLboolean _Enabled;                 /**< Enabled and valid program? */
    GLboolean PointSizeEnabled;         /**< GL_VERTEX_PROGRAM_POINT_SIZE_NV */
    GLboolean TwoSideEnabled;           /**< GL_VERTEX_PROGRAM_TWO_SIDE_NV */
    struct vertex_program *Current;     /**< ptr to currently bound program */
@@ -1881,13 +1848,13 @@ struct gl_vertex_program_state
 
 
 /**
- * State for GL_ARB/NV_fragment_program
+ * Context state for GL_ARB/NV_fragment_program
  */
 struct gl_fragment_program_state
 {
    GLboolean Enabled;                    /* GL_VERTEX_PROGRAM_NV */
-   GLboolean _Enabled;                   /* Really enabled? */
-   GLboolean _Active;                    /* Really really enabled? */
+   GLboolean _Enabled;                   /* Enabled and valid program? */
+   GLboolean _Active;
    struct fragment_program *Current;     /* ptr to currently bound program */
    struct fragment_program *_Current;    /* ptr to currently active program 
 					    (including internal programs) */
@@ -1904,19 +1871,63 @@ struct gl_fragment_program_state
 
 
 /**
- * State for GL_ATI_fragment_shader
+ * ATI_fragment_shader runtime state
+ */
+#define ATI_FS_INPUT_PRIMARY 0
+#define ATI_FS_INPUT_SECONDARY 1
+
+struct atifs_instruction;
+struct atifs_setupinst;
+
+/**
+ * State for executing ATI fragment shader.
+ */
+struct atifs_machine
+{
+   GLfloat Registers[6][4];         /** six temporary registers */
+   GLfloat PrevPassRegisters[6][4];
+   GLfloat Inputs[2][4];   /** Primary, secondary input colors */
+};
+
+
+/**
+ * ATI fragment shader
+ */
+struct ati_fragment_shader
+{
+   GLuint Id;
+   GLint RefCount;
+   struct atifs_instruction *Instructions[2];
+   struct atifs_setupinst *SetupInst[2];
+   GLfloat Constants[8][4];
+   GLbitfield LocalConstDef;  /** Indicates which constants have been set */
+   GLubyte numArithInstr[2];
+   GLubyte regsAssigned[2];
+   GLubyte NumPasses;         /** 1 or 2 */
+   GLubyte cur_pass;
+   GLubyte last_optype;
+   GLboolean interpinp1;
+   GLboolean isValid;
+   GLuint swizzlerq;
+};
+
+/**
+ * Context state for GL_ATI_fragment_shader
  */
 struct gl_ati_fragment_shader_state
 {
    GLboolean Enabled;
-   GLboolean _Enabled;
+   GLboolean _Enabled;                      /** enabled and valid shader? */
    GLboolean Compiling;
-   GLfloat globalConstants[8][4];
+   GLfloat GlobalConstants[8][4];
    struct atifs_machine Machine;            /* machine state */
    struct ati_fragment_shader *Current;
 };
 
 
+/**
+ * Occlusion/timer query object.
+ */
 struct gl_query_object
 {
    GLuint Id;
@@ -1926,6 +1937,9 @@ struct gl_query_object
 };
 
 
+/**
+ * Context state for query objects.
+ */
 struct gl_query_state
 {
    struct _mesa_HashTable *QueryObjects;
@@ -1934,6 +1948,9 @@ struct gl_query_state
 };
 
 
+/**
+ * Context state for vertex/fragment shaders.
+ */
 struct gl_shader_objects_state
 {
    struct gl2_program_intf **current_program;
@@ -1972,10 +1989,12 @@ struct gl_shared_state
 #if FEATURE_ARB_fragment_program
    struct program *DefaultFragmentProgram;
 #endif
-#if FEATURE_ATI_fragment_shader
-   struct program *DefaultFragmentShader;
-#endif
    /*@}*/
+
+#if FEATURE_ATI_fragment_shader
+   struct _mesa_HashTable *ATIShaders;
+   struct ati_fragment_shader *DefaultFragmentShader;
+#endif
 
 #if FEATURE_ARB_vertex_buffer_object || FEATURE_ARB_pixel_buffer_object
    struct _mesa_HashTable *BufferObjects;

@@ -57,6 +57,15 @@ struct atifs_setupinst
    GLenum swizzle;
 };
 
+
+extern struct ati_fragment_shader *
+_mesa_new_ati_fragment_shader(GLcontext *ctx, GLuint id);
+
+extern void
+_mesa_delete_ati_fragment_shader(GLcontext *ctx,
+                                 struct ati_fragment_shader *s);
+
+
 extern GLuint GLAPIENTRY _mesa_GenFragmentShadersATI(GLuint range);
 
 extern void GLAPIENTRY _mesa_BindFragmentShaderATI(GLuint id);

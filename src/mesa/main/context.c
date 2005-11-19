@@ -100,6 +100,7 @@
 #include "histogram.h"
 #include "hint.h"
 #include "hash.h"
+#include "atifragshader.h"
 #include "light.h"
 #include "lines.h"
 #include "macros.h"
@@ -692,7 +693,8 @@ alloc_shared_state( GLcontext *ctx )
       goto cleanup;
 #endif
 #if FEATURE_ATI_fragment_shader
-   ss->DefaultFragmentShader = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_SHADER_ATI, 0);
+   ss->ATIShaders = _mesa_NewHashTable();
+   ss->DefaultFragmentShader = _mesa_new_ati_fragment_shader(ctx, 0);
    if (!ss->DefaultFragmentShader)
       goto cleanup;
 #endif
@@ -760,7 +762,7 @@ alloc_shared_state( GLcontext *ctx )
 #endif
 #if FEATURE_ATI_fragment_shader
    if (ss->DefaultFragmentShader)
-      ctx->Driver.DeleteProgram(ctx, ss->DefaultFragmentShader);
+      _mesa_delete_ati_fragment_shader(ctx, ss->DefaultFragmentShader);
 #endif
 #if FEATURE_ARB_vertex_buffer_object
    if (ss->BufferObjects)
@@ -867,7 +869,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_delete_program(ctx, ss->DefaultFragmentProgram);
 #endif
 #if FEATURE_ATI_fragment_shader
-   _mesa_delete_program(ctx, ss->DefaultFragmentShader);
+   _mesa_free(ss->DefaultFragmentShader);
 #endif
 
 #if FEATURE_ARB_vertex_buffer_object

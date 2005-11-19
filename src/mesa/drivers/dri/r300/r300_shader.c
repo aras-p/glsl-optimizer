@@ -61,9 +61,12 @@ static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 			fp=CALLOC_STRUCT(fragment_program);
 			return _mesa_init_fragment_program(ctx, fp, target, id);
 #endif
+#if 00
+                /* _mesa_new_ati_fragment_shader() is now called instead */
 		case GL_FRAGMENT_SHADER_ATI:
 			afs=CALLOC_STRUCT(ati_fragment_shader);
 			return _mesa_init_ati_fragment_shader(ctx, afs, target, id);
+#endif
 		default:
 			_mesa_problem(ctx, "Bad target in r300NewProgram");
 	}

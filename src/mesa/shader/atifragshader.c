@@ -32,7 +32,42 @@
 
 #define MESA_DEBUG_ATI_FS 0
 
-extern struct program _mesa_DummyProgram;
+static struct ati_fragment_shader DummyShader;
+
+
+/**
+ * Allocate and initialize a new ATI fragment shader object.
+ */
+struct ati_fragment_shader *
+_mesa_new_ati_fragment_shader(GLcontext *ctx, GLuint id)
+{
+   struct ati_fragment_shader *s = CALLOC_STRUCT(ati_fragment_shader);
+   (void) ctx;
+   if (s) {
+      s->Id = id;
+      s->RefCount = 1;
+   }
+   return s;
+}
+
+
+/**
+ * Delete the given ati fragment shader
+ */
+void
+_mesa_delete_ati_fragment_shader(GLcontext *ctx, struct ati_fragment_shader *s)
+{
+   GLuint i;
+   for (i = 0; i < MAX_NUM_PASSES_ATI; i++) {
+      if (s->Instructions[i])
+         _mesa_free(s->Instructions[i]);
+      if (s->SetupInst[i])
+         _mesa_free(s->SetupInst[i]);
+   }
+   _mesa_free(s);
+}
+
+
 
 static void
 new_arith_inst(struct ati_fragment_shader *prog)
@@ -165,9 +200,9 @@ _mesa_GenFragmentShadersATI(GLuint range)
       return 0;
    }
 
-   first = _mesa_HashFindFreeKeyBlock(ctx->Shared->Programs, range);
+   first = _mesa_HashFindFreeKeyBlock(ctx->Shared->ATIShaders, range);
    for (i = 0; i < range; i++) {
-      _mesa_HashInsert(ctx->Shared->Programs, first + i, &_mesa_DummyProgram);
+      _mesa_HashInsert(ctx->Shared->ATIShaders, first + i, &DummyShader);
    }
 
    return first;
@@ -176,9 +211,9 @@ _mesa_GenFragmentShadersATI(GLuint range)
 void GLAPIENTRY
 _mesa_BindFragmentShaderATI(GLuint id)
 {
-   struct program *prog;
    GET_CURRENT_CONTEXT(ctx);
    struct ati_fragment_shader *curProg = ctx->ATIFragmentShader.Current;
+   struct ati_fragment_shader *newProg;
 
    if (ctx->ATIFragmentShader.Compiling) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBindFragmentShaderATI(insideShader)");
@@ -187,41 +222,43 @@ _mesa_BindFragmentShaderATI(GLuint id)
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   if (curProg->Base.Id == id) {
+   if (curProg->Id == id) {
       return;
    }
 
-   if (curProg->Base.Id != 0) {
-      curProg->Base.RefCount--;
-      if (curProg->Base.RefCount <= 0) {
-	 _mesa_HashRemove(ctx->Shared->Programs, id);
+   /* unbind current */
+   if (curProg->Id != 0) {
+      curProg->RefCount--;
+      if (curProg->RefCount <= 0) {
+	 _mesa_HashRemove(ctx->Shared->ATIShaders, id);
       }
    }
 
-   /* Go bind */
+   /* find new shader */
    if (id == 0) {
-      prog = ctx->Shared->DefaultFragmentShader;
+      newProg = ctx->Shared->DefaultFragmentShader;
    }
    else {
-      prog = (struct program *) _mesa_HashLookup(ctx->Shared->Programs, id);
-      if (!prog || prog == &_mesa_DummyProgram) {
+      newProg = (struct ati_fragment_shader *)
+         _mesa_HashLookup(ctx->Shared->ATIShaders, id);
+      if (!newProg || newProg == &DummyShader) {
 	 /* allocate a new program now */
-	 prog = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_SHADER_ATI, id);
-	 if (!prog) {
+	 newProg = _mesa_new_ati_fragment_shader(ctx, id);
+	 if (!newProg) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindFragmentShaderATI");
 	    return;
 	 }
-	 _mesa_HashInsert(ctx->Shared->Programs, id, prog);
+	 _mesa_HashInsert(ctx->Shared->ATIShaders, id, newProg);
       }
 
    }
 
    /* do actual bind */
-   ctx->ATIFragmentShader.Current = (struct ati_fragment_shader *) prog;
+   ctx->ATIFragmentShader.Current = newProg;
 
    ASSERT(ctx->ATIFragmentShader.Current);
-   if (prog)
-      prog->RefCount++;
+   if (newProg)
+      newProg->RefCount++;
 
    /*if (ctx->Driver.BindProgram)
       ctx->Driver.BindProgram(ctx, target, prog); */
@@ -238,37 +275,28 @@ _mesa_DeleteFragmentShaderATI(GLuint id)
    }
 
    if (id != 0) {
-      struct program *prog = (struct program *)
-	 _mesa_HashLookup(ctx->Shared->Programs, id);
-      if (prog == &_mesa_DummyProgram) {
-	 _mesa_HashRemove(ctx->Shared->Programs, id);
+      struct ati_fragment_shader *prog = (struct ati_fragment_shader *)
+	 _mesa_HashLookup(ctx->Shared->ATIShaders, id);
+      if (prog == &DummyShader) {
+	 _mesa_HashRemove(ctx->Shared->ATIShaders, id);
       }
       else if (prog) {
 	 if (ctx->ATIFragmentShader.Current &&
-	     ctx->ATIFragmentShader.Current->Base.Id == id) {
+	     ctx->ATIFragmentShader.Current->Id == id) {
 	     FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 	    _mesa_BindFragmentShaderATI(0);
 	 }
       }
-#if 0
-      if (!prog->DeletePending) {
-	 prog->DeletePending = GL_TRUE;
-	 prog->RefCount--;
-      }
-      if (prog->RefCount <= 0) {
-	 _mesa_HashRemove(ctx->Shared->Programs, id);
-	 ctx->Driver.DeleteProgram(ctx, prog);
-      }
-#else
+
       /* The ID is immediately available for re-use now */
-      _mesa_HashRemove(ctx->Shared->Programs, id);
+      _mesa_HashRemove(ctx->Shared->ATIShaders, id);
       prog->RefCount--;
       if (prog->RefCount <= 0) {
-	 ctx->Driver.DeleteProgram(ctx, prog);
+         _mesa_free(prog);
       }
-#endif
    }
 }
+
 
 void GLAPIENTRY
 _mesa_BeginFragmentShaderATI(void)
@@ -307,7 +335,7 @@ _mesa_BeginFragmentShaderATI(void)
    }
 
 /* can't rely on calloc for initialization as it's possible to redefine a shader (?) */
-   ctx->ATIFragmentShader.Current->localConstDef = 0;
+   ctx->ATIFragmentShader.Current->LocalConstDef = 0;
    ctx->ATIFragmentShader.Current->numArithInstr[0] = 0;
    ctx->ATIFragmentShader.Current->numArithInstr[1] = 0;
    ctx->ATIFragmentShader.Current->regsAssigned[0] = 0;
@@ -720,10 +748,10 @@ _mesa_SetFragmentShaderConstantATI(GLuint dst, const GLfloat * value)
    if (ctx->ATIFragmentShader.Compiling) {
       struct ati_fragment_shader *curProg = ctx->ATIFragmentShader.Current;
       COPY_4V(curProg->Constants[dstindex], value);
-      curProg->localConstDef |= 1 << dstindex;
+      curProg->LocalConstDef |= 1 << dstindex;
    }
    else {
       FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-      COPY_4V(ctx->ATIFragmentShader.globalConstants[dstindex], value);
+      COPY_4V(ctx->ATIFragmentShader.GlobalConstants[dstindex], value);
    }
 }

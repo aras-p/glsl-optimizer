@@ -28,8 +28,6 @@
 #include "program.h"
 
 #include "s_atifragshader.h"
-#include "s_nvfragprog.h"
-#include "s_span.h"
 
 
 /**
@@ -346,12 +344,12 @@ execute_shader(GLcontext * ctx,
 		  SETUP_SRC_REG(optype, i,
 				machine->Registers[index - GL_REG_0_ATI]);
 	       else if (index >= GL_CON_0_ATI && index <= GL_CON_7_ATI) {
-		  if (shader->localConstDef & (1 << (index - GL_CON_0_ATI))) {
+		  if (shader->LocalConstDef & (1 << (index - GL_CON_0_ATI))) {
 		     SETUP_SRC_REG(optype, i,
 				shader->Constants[index - GL_CON_0_ATI]);
 		  } else {
 		     SETUP_SRC_REG(optype, i,
-				ctx->ATIFragmentShader.globalConstants[index - GL_CON_0_ATI]);
+				ctx->ATIFragmentShader.GlobalConstants[index - GL_CON_0_ATI]);
 		  }
 	       }
 	       else if (index == GL_ONE)
@@ -557,7 +555,6 @@ init_machine(GLcontext * ctx, struct atifs_machine *machine,
    for (i = 0; i < 6; i++) {
       for (j = 0; j < 4; j++)
 	 ctx->ATIFragmentShader.Machine.Registers[i][j] = 0.0;
-
    }
 
    ctx->ATIFragmentShader.Machine.Inputs[ATI_FS_INPUT_PRIMARY][0] =
@@ -577,8 +574,6 @@ init_machine(GLcontext * ctx, struct atifs_machine *machine,
       CHAN_TO_FLOAT(span->array->spec[col][2]);
    ctx->ATIFragmentShader.Machine.Inputs[ATI_FS_INPUT_SECONDARY][3] =
       CHAN_TO_FLOAT(span->array->spec[col][3]);
-
-   ctx->ATIFragmentShader.Machine.pass = 0;
 }
 
 
@@ -615,10 +610,7 @@ _swrast_exec_fragment_shader(GLcontext * ctx, struct sw_span *span)
 	    UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][ACOMP], colOut[3]);
 	 }
       }
-
    }
 
-
    ctx->_CurrentProgram = 0;
-
 }

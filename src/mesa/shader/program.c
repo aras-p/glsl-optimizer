@@ -88,11 +88,12 @@ _mesa_init_program(GLcontext *ctx)
    ctx->FragmentProgram.Current->Base.RefCount++;
 #endif
 
+   /* XXX probably move this stuff */
 #if FEATURE_ATI_fragment_shader
    ctx->ATIFragmentShader.Enabled = GL_FALSE;
    ctx->ATIFragmentShader.Current = (struct ati_fragment_shader *) ctx->Shared->DefaultFragmentShader;
    assert(ctx->ATIFragmentShader.Current);
-   ctx->ATIFragmentShader.Current->Base.RefCount++;
+   ctx->ATIFragmentShader.Current->RefCount++;
 #endif
 }
 
@@ -117,11 +118,13 @@ _mesa_free_program_data(GLcontext *ctx)
          ctx->Driver.DeleteProgram(ctx, &(ctx->FragmentProgram.Current->Base));
    }
 #endif
+   /* XXX probably move this stuff */
 #if FEATURE_ATI_fragment_shader
    if (ctx->ATIFragmentShader.Current) {
-      ctx->ATIFragmentShader.Current->Base.RefCount--;
-      if (ctx->ATIFragmentShader.Current->Base.RefCount <= 0)
-	ctx->Driver.DeleteProgram(ctx, &(ctx->ATIFragmentShader.Current->Base));
+      ctx->ATIFragmentShader.Current->RefCount--;
+      if (ctx->ATIFragmentShader.Current->RefCount <= 0) {
+         _mesa_free(ctx->ATIFragmentShader.Current);
+      }
    }
 #endif
    _mesa_free((void *) ctx->Program.ErrorString);
@@ -234,21 +237,6 @@ _mesa_init_vertex_program( GLcontext *ctx, struct vertex_program *prog,
       return NULL;
 }
 
-/**
- * Initialize a new ATI fragment shader object.
- */
-struct program *
-_mesa_init_ati_fragment_shader( GLcontext *ctx,
-                                struct ati_fragment_shader *prog,
-                                GLenum target, GLuint id )
-{
-   if (prog) 
-      return _mesa_init_program_struct( ctx, &prog->Base, target, id );
-   else
-      return NULL;
-}
-
-
 
 /**
  * Allocate and initialize a new fragment/vertex program object but
@@ -273,10 +261,6 @@ _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id)
    case GL_FRAGMENT_PROGRAM_ARB:
       return _mesa_init_fragment_program( ctx, CALLOC_STRUCT(fragment_program),
 					  target, id );
-   case GL_FRAGMENT_SHADER_ATI:
-      return _mesa_init_ati_fragment_shader( ctx, CALLOC_STRUCT(ati_fragment_shader),
-					  target, id );
-
    default:
       _mesa_problem(ctx, "bad target in _mesa_new_program");
       return NULL;
@@ -310,17 +294,6 @@ _mesa_delete_program(GLcontext *ctx, struct program *prog)
 
    if (prog->Parameters)
       _mesa_free_parameter_list(prog->Parameters);
-
-   if (prog->Target == GL_FRAGMENT_SHADER_ATI) {
-      struct ati_fragment_shader *atifs = (struct ati_fragment_shader *)prog;
-      GLuint i;
-      for (i = 0; i < MAX_NUM_PASSES_ATI; i++) {
-	 if (atifs->Instructions[i])
-	    _mesa_free(atifs->Instructions[i]);
-	 if (atifs->SetupInst[i])
-	    _mesa_free(atifs->SetupInst[i]);
-      }
-   }
 
    _mesa_free(prog);
 }

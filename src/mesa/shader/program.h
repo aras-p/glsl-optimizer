@@ -106,11 +106,6 @@ _mesa_init_fragment_program(GLcontext *ctx,
                             GLenum target, GLuint id);
 
 extern struct program *
-_mesa_init_ati_fragment_shader(GLcontext *ctx,
-                               struct ati_fragment_shader *prog,
-                               GLenum target, GLuint id );
-
-extern struct program *
 _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id);
 
 extern void
