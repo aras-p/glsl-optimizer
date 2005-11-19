@@ -33,32 +33,33 @@
 #include "shader/program.h"
 #include "shader/program_instruction.h"
 
+#define MAX_INSTRUCTIONS 100
 
 #define DISASSEM (MESA_VERBOSE & VERBOSE_DISASSEM)
 
 struct mode_opt {
-   unsigned Source:4;
-   unsigned Operand:3;
+   GLuint Source:4;
+   GLuint Operand:3;
 };
 
 struct state_key {
-   GLuint enabled_units;
-   unsigned separate_specular:1;
-   unsigned fog_enabled:1;
-   unsigned fog_mode:2;
+   GLbitfield enabled_units;
+   GLuint separate_specular:1;
+   GLuint fog_enabled:1;
+   GLuint fog_mode:2;
 
    struct {
-      unsigned enabled:1;
-      unsigned source_index:3;
-      unsigned ScaleShiftRGB:2;
-      unsigned ScaleShiftA:2;
+      GLuint enabled:1;
+      GLuint source_index:3;   /* one of TEXTURE_1D/2D/3D/CUBE/RECT_INDEX */
+      GLuint ScaleShiftRGB:2;
+      GLuint ScaleShiftA:2;
 
-      unsigned NumArgsRGB:2;
-      unsigned ModeRGB:4;
+      GLuint NumArgsRGB:2;
+      GLuint ModeRGB:4;
       struct mode_opt OptRGB[3];
 
-      unsigned NumArgsA:2;
-      unsigned ModeA:4;
+      GLuint NumArgsA:2;
+      GLuint ModeA:4;
       struct mode_opt OptA[3];
    } unit[8];
 };
@@ -281,8 +282,6 @@ struct texenv_fragment_program {
    GLuint temp_in_use;		/* Tracks temporary regs which are in
 				 * use.
 				 */
-
-
    GLboolean error;
 
    struct ureg src_texture[MAX_TEXTURE_UNITS];   
@@ -468,7 +467,7 @@ static void emit_dst( struct prog_dst_register *dst,
 
 static struct prog_instruction *
 emit_op(struct texenv_fragment_program *p,
-	GLuint op,
+	enum prog_opcode op,
 	struct ureg dest,
 	GLuint mask,
 	GLuint saturate,
@@ -479,7 +478,7 @@ emit_op(struct texenv_fragment_program *p,
    GLuint nr = p->program->Base.NumInstructions++;
    struct prog_instruction *inst = &p->program->Base.Instructions[nr];
       
-   _mesa_memset(inst, 0, sizeof(*inst));
+   _mesa_init_instruction(inst);
    inst->Opcode = op;
    
    emit_arg( &inst->SrcReg[0], src0 );
@@ -500,7 +499,7 @@ emit_op(struct texenv_fragment_program *p,
    
 
 static struct ureg emit_arith( struct texenv_fragment_program *p,
-			       GLuint op,
+			       enum prog_opcode op,
 			       struct ureg dest,
 			       GLuint mask,
 			       GLuint saturate,
@@ -529,7 +528,7 @@ static struct ureg emit_arith( struct texenv_fragment_program *p,
 }
 
 static struct ureg emit_texld( struct texenv_fragment_program *p,
-			       GLuint op,
+			       enum prog_opcode op,
 			       struct ureg dest,
 			       GLuint destmask,
 			       GLuint tex_unit,
@@ -586,8 +585,6 @@ static struct ureg register_const4f( struct texenv_fragment_program *p,
 #define register_const3f(p, s0, s1, s2) register_const4f(p, s0, s1, s2, 1)
 
 
-
-
 static struct ureg get_one( struct texenv_fragment_program *p )
 {
    if (is_undef(p->one)) 
@@ -608,8 +605,6 @@ static struct ureg get_zero( struct texenv_fragment_program *p )
       p->one = register_scalar_const(p, 0.0);
    return p->zero;
 }
-
-
 
 
 
@@ -985,7 +980,8 @@ static void create_new_program(struct state_key *key, GLcontext *ctx,
    p.state = key;
    p.program = program;
 
-   p.program->Base.Instructions = MALLOC(sizeof(struct prog_instruction) * 100);
+   p.program->Base.Instructions =
+      _mesa_malloc(sizeof(struct prog_instruction) * MAX_INSTRUCTIONS);
    p.program->Base.NumInstructions = 0;
    p.program->Base.Target = GL_FRAGMENT_PROGRAM_ARB;
    p.program->NumTexIndirections = 1;	/* correct? */
@@ -1066,6 +1062,7 @@ static void create_new_program(struct state_key *key, GLcontext *ctx,
    if (p.program->NumAluInstructions > ctx->Const.FragmentProgram.MaxAluInstructions)
       program_error(&p, "Exceeded max ALU instructions");
 
+   ASSERT(p.program->Base.NumInstructions <= MAX_INSTRUCTIONS);
 
    /* Notify driver the fragment program has (actually) changed.
     */
@@ -1078,10 +1075,9 @@ static void create_new_program(struct state_key *key, GLcontext *ctx,
 	 _mesa_print_program(&p.program->Base);
 	 _mesa_printf("\n");
       }
-      
    }
-
 }
+
 
 static void *search_cache( struct texenvprog_cache *cache,
 			   GLuint hash,
@@ -1149,7 +1145,7 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
 
 	 cache_item(&ctx->Texture.env_fp_cache, hash, key, ctx->_TexEnvProgram);
       } else {
-	 FREE(key);
+	 _mesa_free(key);
 	 if (0) _mesa_printf("Found existing texenv program for key %x\n", hash);
       }
    } 
@@ -1160,9 +1156,10 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    /* Tell the driver about the change.  Could define a new target for
     * this?
     */
-   if (ctx->FragmentProgram._Current != prev)
-      ctx->Driver.BindProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, (struct program *)
-			      ctx->FragmentProgram._Current);   
+   if (ctx->FragmentProgram._Current != prev && ctx->Driver.BindProgram) {
+      ctx->Driver.BindProgram(ctx, GL_FRAGMENT_PROGRAM_ARB,
+                             (struct program *) ctx->FragmentProgram._Current);
+   }
 }
 
 void _mesa_TexEnvProgramCacheDestroy( GLcontext *ctx )
@@ -1171,9 +1168,8 @@ void _mesa_TexEnvProgramCacheDestroy( GLcontext *ctx )
 
    for (a = ctx->Texture.env_fp_cache; a; a = tmp) {
       tmp = a->next;
-      FREE(a->key);
-      FREE(a->data);
-      FREE(a);
+      _mesa_free(a->key);
+      ctx->Driver.DeleteProgram(ctx, (struct program *) a->data);
+      _mesa_free(a);
    }
 }
-
