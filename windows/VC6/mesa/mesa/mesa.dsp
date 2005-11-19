@@ -113,19 +113,11 @@ SOURCE=..\..\..\..\src\mesa\main\api_validate.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\shader\arbfragparse.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\mesa\shader\arbprogparse.c
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\shader\arbprogram.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\mesa\shader\arbvertparse.c
 # End Source File
 # Begin Source File
 
@@ -731,10 +723,6 @@ SOURCE=..\..\..\..\src\mesa\main\api_validate.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\shader\arbfragparse.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\mesa\shader\arbprogparse.h
 # End Source File
 # Begin Source File
@@ -744,10 +732,6 @@ SOURCE=..\..\..\..\src\mesa\shader\arbprogram.h
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\shader\arbprogram_syn.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\mesa\shader\arbvertparse.h
 # End Source File
 # Begin Source File
 
