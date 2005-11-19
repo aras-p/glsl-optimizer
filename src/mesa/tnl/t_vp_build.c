@@ -38,7 +38,6 @@
 
 #include "shader/program.h"
 #include "shader/program_instruction.h"
-#include "shader/arbvertparse.h"
 
 struct state_key {
    unsigned light_global_enabled:1;

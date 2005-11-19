@@ -35,7 +35,44 @@
 #include "arbprogparse.h"
 #include "grammar_mesa.h"
 #include "program.h"
-#include "get.h"
+#include "context.h"
+#include "mtypes.h"
+#include "program_instruction.h"
+
+
+#define MAX_INSTRUCTIONS 256
+
+
+/**
+ * This is basically a union of the vertex_program and fragment_program
+ * structs that we can use to parse the program into
+ *
+ * XXX we can probably get rid of this entirely someday.
+ */
+struct arb_program
+{
+   struct program Base;
+
+   GLuint Position;       /* Just used for error reporting while parsing */
+   GLuint MajorVersion;
+   GLuint MinorVersion;
+
+   /* ARB_vertex_progmra options */
+   GLboolean HintPositionInvariant;
+
+   /* ARB_fragment_progmra options */
+   GLenum PrecisionOption; /* GL_DONT_CARE, GL_NICEST or GL_FASTEST */
+   GLenum FogOption;       /* GL_NONE, GL_LINEAR, GL_EXP or GL_EXP2 */
+
+   /* ARB_fragment_program specifics */
+   GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS]; 
+   GLuint NumAluInstructions; 
+   GLuint NumTexInstructions;
+   GLuint NumTexIndirections;
+
+   GLboolean UsesKill;
+};
+
 
 #ifndef __extension__
 #if !defined(__GNUC__) || (__GNUC__ < 2) || \
@@ -3594,7 +3631,7 @@ debug_variables (GLcontext * ctx, struct var_cache *vc_head,
  * \return 1 on error, 0 on success
  */
 static GLint
-parse_arb_program(GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
+parse_instructions(GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
                   struct arb_program *Program)
 {
    const GLuint maxInst = (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB)
@@ -3663,11 +3700,11 @@ parse_arb_program(GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
             /* parse the current instruction */
             if (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
                err = parse_fp_instruction (ctx, &inst, vc_head, Program,
-                      &Program->FPInstructions[Program->Base.NumInstructions]);
+                      &Program->Base.Instructions[Program->Base.NumInstructions]);
             }
             else {
                err = parse_vp_instruction (ctx, &inst, vc_head, Program,
-                      &Program->VPInstructions[Program->Base.NumInstructions]);
+                      &Program->Base.Instructions[Program->Base.NumInstructions]);
             }
 
             /* increment instuction count */
@@ -3687,23 +3724,14 @@ parse_arb_program(GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
    }
 
    /* Finally, tag on an OPCODE_END instruction */
-   if (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
+   {
       const GLuint numInst = Program->Base.NumInstructions;
-      _mesa_init_instruction(Program->FPInstructions + numInst);
-      Program->FPInstructions[numInst].Opcode = OPCODE_END;
+      _mesa_init_instruction(Program->Base.Instructions + numInst);
+      Program->Base.Instructions[numInst].Opcode = OPCODE_END;
       /* YYY Wrong Position in program, whatever, at least not random -> crash
 	 Program->Position = parse_position (&inst);
       */
-      Program->FPInstructions[numInst].StringPos = Program->Position;
-   }
-   else {
-      const GLuint numInst = Program->Base.NumInstructions;
-      _mesa_init_instruction(Program->VPInstructions + numInst);
-      Program->VPInstructions[numInst].Opcode = OPCODE_END;
-      /* YYY Wrong Position in program, whatever, at least not random -> crash
-	 Program->Position = parse_position (&inst);
-      */
-      Program->VPInstructions[numInst].StringPos = Program->Position;
+      Program->Base.Instructions[numInst].StringPos = Program->Position;
    }
    Program->Base.NumInstructions++;
 
@@ -3733,12 +3761,19 @@ __extension__ static char core_grammar_text[] =
 ;
 
 
-static int set_reg8 (GLcontext *ctx, grammar id, const byte *name, byte value)
+/**
+ * Set a grammar parameter.
+ * \param name the grammar parameter
+ * \param value the new parameter value
+ * \return 0 if OK, 1 if error
+ */
+static int
+set_reg8 (GLcontext *ctx, grammar id, const char *name, GLubyte value)
 {
    char error_msg[300];
    GLint error_pos;
 
-   if (grammar_set_reg8 (id, name, value))
+   if (grammar_set_reg8 (id, (const byte *) name, value))
       return 0;
 
    grammar_get_last_error ((byte *) error_msg, 300, &error_pos);
@@ -3747,33 +3782,59 @@ static int set_reg8 (GLcontext *ctx, grammar id, const byte *name, byte value)
    return 1;
 }
 
-static int extension_is_supported (const GLubyte *ext)
+
+/**
+ * Enable support for the given language option in the parser.
+ * \return 1 if OK, 0 if error
+ */
+static int
+enable_ext(GLcontext *ctx, grammar id, const char *name)
 {
-   const GLubyte *extensions = _mesa_GetString(GL_EXTENSIONS);
-   const GLubyte *end = extensions + _mesa_strlen ((const char *) extensions);
-   const GLint ext_len = (GLint)_mesa_strlen ((const char *) ext);
-
-   while (extensions < end)
-   {
-      const GLubyte *name_end = (const GLubyte *) _mesa_strstr ((const char *) extensions, " ");
-      if (name_end == NULL)
-         name_end = end;
-      if (name_end - extensions == ext_len && _mesa_strncmp ((const char *) ext,
-         (const char *) extensions, ext_len) == 0)
-         return 1;
-      extensions = name_end + 1;
-   }
-
-   return 0;
+   return !set_reg8(ctx, id, name, 1);
 }
 
-static int enable_ext (GLcontext *ctx, grammar id, const byte *name, const byte *extname)
+
+/**
+ * Enable parser extensions based on which OpenGL extensions are supported
+ * by this rendering context.
+ *
+ * \return GL_TRUE if OK, GL_FALSE if error.
+ */
+static GLboolean
+enable_parser_extensions(GLcontext *ctx, grammar id)
 {
-   if (extension_is_supported (extname))
-      if (set_reg8 (ctx, id, name, 0x01))
-         return 1;
-   return 0;
+#if 0
+   /* These are not supported at this time */
+   if ((ctx->Extensions.ARB_vertex_blend ||
+        ctx->Extensions.EXT_vertex_weighting)
+       && !enable_ext(ctx, id, "point_parameters"))
+      return GL_FALSE;
+   if (ctx->Extensions.ARB_matrix_palette
+       && !enable_ext(ctx, id, "matrix_palette"))
+      return GL_FALSE;
+   if (ctx->Extensions.ARB_fragment_program_shadow
+       && !enable_ext(ctx, id, "fragment_program_shadow"))
+      return GL_FALSE;
+#endif
+   if (ctx->Extensions.EXT_point_parameters
+       && !enable_ext(ctx, id, "point_parameters"))
+      return GL_FALSE;
+   if (ctx->Extensions.EXT_secondary_color
+       && !enable_ext(ctx, id, "secondary_color"))
+      return GL_FALSE;
+   if (ctx->Extensions.EXT_fog_coord
+       && !enable_ext(ctx, id, "fog_coord"))
+      return GL_FALSE;
+   if (ctx->Extensions.NV_texture_rectangle
+       && !enable_ext(ctx, id, "texture_rectangle"))
+      return GL_FALSE;
+   if (ctx->Extensions.ARB_draw_buffers
+       && !enable_ext(ctx, id, "draw_buffers"))
+      return GL_FALSE;
+
+   return GL_TRUE;
 }
+
 
 /**
  * This kicks everything off.
@@ -3784,9 +3845,10 @@ static int enable_ext (GLcontext *ctx, grammar id, const byte *name, const byte 
  * \param program - The arb_program struct to return all the parsed info in
  * \return GL_TRUE on sucess, GL_FALSE on error
  */
-GLboolean
-_mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
-                         struct arb_program * program)
+static GLboolean
+_mesa_parse_arb_program(GLcontext *ctx, GLenum target,
+                        const GLubyte *str, GLsizei len,
+                        struct arb_program *program)
 {
    GLint a, err, error_pos;
    char error_msg[300];
@@ -3797,39 +3859,40 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    GLubyte *strz = NULL;
    static int arbprogram_syn_is_ok = 0;		/* XXX temporary */
 
+   /* set the program target before parsing */
+   program->Base.Target = target;
+
    /* Reset error state */
    _mesa_set_program_error(ctx, -1, NULL);
 
-#if DEBUG_PARSING
-   fprintf (stderr, "Loading grammar text!\n");
-#endif
-
-   /* check if the arb_grammar_text (arbprogram.syn) is syntactically correct */
+   /* check if arb_grammar_text (arbprogram.syn) is syntactically correct */
    if (!arbprogram_syn_is_ok) {
+      /* One-time initialization of parsing system */
       grammar grammar_syn_id;
-      GLint err;
       GLuint parsed_len;
-      byte *parsed;
 
       grammar_syn_id = grammar_load_from_text ((byte *) core_grammar_text);
       if (grammar_syn_id == 0) {
          grammar_get_last_error ((byte *) error_msg, 300, &error_pos);
+         /* XXX this is not a GL error - it's an implementation bug! - FIX */
          _mesa_set_program_error (ctx, error_pos, error_msg);
          _mesa_error (ctx, GL_INVALID_OPERATION,
-                      "Error loading grammar rule set");
+                      "glProgramStringARB(Error loading grammar rule set)");
          return GL_FALSE;
       }
 
-      err = grammar_check (grammar_syn_id, (byte *) arb_grammar_text, &parsed, &parsed_len);
+      err = !grammar_check(grammar_syn_id, (byte *) arb_grammar_text,
+                           &parsed, &parsed_len);
 
       /* NOTE: we can't destroy grammar_syn_id right here because
        * grammar_destroy() can reset the last error
        */
-      if (err == 0) {
+      if (err) {
+         /* XXX this is not a GL error - it's an implementation bug! - FIX */
          grammar_get_last_error ((byte *) error_msg, 300, &error_pos);
          _mesa_set_program_error (ctx, error_pos, error_msg);
-         _mesa_error (ctx, GL_INVALID_OPERATION, "Error loading grammar rule set");
-
+         _mesa_error (ctx, GL_INVALID_OPERATION,
+                      "glProgramString(Error loading grammar rule set");
          grammar_destroy (grammar_syn_id);
          return GL_FALSE;
       }
@@ -3842,10 +3905,11 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    /* create the grammar object */
    arbprogram_syn_id = grammar_load_from_text ((byte *) arb_grammar_text);
    if (arbprogram_syn_id == 0) {
+      /* XXX this is not a GL error - it's an implementation bug! - FIX */
       grammar_get_last_error ((GLubyte *) error_msg, 300, &error_pos);
       _mesa_set_program_error (ctx, error_pos, error_msg);
       _mesa_error (ctx, GL_INVALID_OPERATION,
-                   "Error loading grammer rule set");
+                   "glProgramString(Error loading grammer rule set)");
       return GL_FALSE;
    }
 
@@ -3856,69 +3920,46 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
       return GL_FALSE;
    }
 
-   /* Enable all active extensions */
-   if (enable_ext (ctx, arbprogram_syn_id,
-          (byte *) "vertex_blend", (byte *) "GL_ARB_vertex_blend") ||
-       enable_ext (ctx, arbprogram_syn_id,
-          (byte *) "vertex_blend", (byte *) "GL_EXT_vertex_weighting") ||
-       enable_ext (ctx, arbprogram_syn_id,
-          (byte *) "matrix_palette", (byte *) "GL_ARB_matrix_palette") ||
-       enable_ext (ctx, arbprogram_syn_id,
-          (byte *) "point_parameters", (byte *) "GL_ARB_point_parameters") ||
-       enable_ext (ctx, arbprogram_syn_id,
-          (byte *) "point_parameters", (byte *) "GL_EXT_point_parameters") ||
-       enable_ext (ctx, arbprogram_syn_id,
-          (byte *) "secondary_color", (byte *) "GL_EXT_secondary_color") ||
-       enable_ext (ctx, arbprogram_syn_id,
-          (byte *) "fog_coord", (byte *) "GL_EXT_fog_coord") ||
-       enable_ext (ctx, arbprogram_syn_id,
-          (byte *) "texture_rectangle", (byte *) "GL_ARB_texture_rectangle") ||
-       enable_ext (ctx, arbprogram_syn_id,
-          (byte *) "texture_rectangle", (byte *) "GL_EXT_texture_rectangle") ||
-       enable_ext (ctx, arbprogram_syn_id,
-          (byte *) "texture_rectangle", (byte *) "GL_NV_texture_rectangle") ||
-       enable_ext (ctx, arbprogram_syn_id,
-          (byte *) "fragment_program_shadow", (byte *) "GL_ARB_fragment_program_shadow") ||
-       enable_ext (ctx, arbprogram_syn_id,
-          (byte *) "draw_buffers", (byte *) "GL_ARB_draw_buffers")) {
-      grammar_destroy (arbprogram_syn_id);
+   if (!enable_parser_extensions(ctx, arbprogram_syn_id)) {
+      grammar_destroy(arbprogram_syn_id);
       return GL_FALSE;
    }
 
    /* check for NULL character occurences */
    {
-      int i;
-      for (i = 0; i < len; i++)
+      GLint i;
+      for (i = 0; i < len; i++) {
          if (str[i] == '\0') {
             _mesa_set_program_error (ctx, i, "invalid character");
-            _mesa_error (ctx, GL_INVALID_OPERATION, "Lexical Error");
-
+            _mesa_error (ctx, GL_INVALID_OPERATION,
+                         "glProgramStringARB(illegal character)");
             grammar_destroy (arbprogram_syn_id);
             return GL_FALSE;
          }
+      }
    }
 
    /* copy the program string to a null-terminated string */
    strz = (GLubyte *) _mesa_malloc (len + 1);
    if (!strz) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glprogramStringARB");
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
+      grammar_destroy (arbprogram_syn_id);
       return GL_FALSE;
    }
    _mesa_memcpy (strz, str, len);
    strz[len] = '\0';
 
-#if DEBUG_PARSING
-   fprintf (stderr, "Checking Grammar!\n");
-#endif
    /* do a fast check on program string - initial production buffer is 4K */
-   err = grammar_fast_check (arbprogram_syn_id, strz, &parsed, &parsed_len, 0x1000);
+   err = !grammar_fast_check(arbprogram_syn_id, strz,
+                             &parsed, &parsed_len, 0x1000);
 
    /* Syntax parse error */
-   if (err == 0) {
-      _mesa_free (strz);
+   if (err) {
+      _mesa_free(strz);
       grammar_get_last_error ((GLubyte *) error_msg, 300, &error_pos);
       _mesa_set_program_error (ctx, error_pos, error_msg);
-      _mesa_error (ctx, GL_INVALID_OPERATION, "glprogramStringARB(syntax error)");
+      _mesa_error (ctx, GL_INVALID_OPERATION,
+                   "glProgramStringARB(syntax error)");
 
       /* useful for debugging */
 #if DEBUG_PARSING
@@ -3936,13 +3977,18 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
       return GL_FALSE;
    }
 
-#if DEBUG_PARSING
-   fprintf (stderr, "Destroying grammer dict [parse retval: %d]\n", err);
-#endif
    grammar_destroy (arbprogram_syn_id);
+
+   /*
+    * Program string is syntactically correct at this point
+    * Parse the tokenized version of the program now, generating
+    * vertex/fragment program instructions.
+    */
 
    /* Initialize the arb_program struct */
    program->Base.String = strz;
+   program->Base.Instructions = (struct prog_instruction *)
+      _mesa_malloc(MAX_INSTRUCTIONS * sizeof(struct prog_instruction));
    program->Base.NumInstructions =
    program->Base.NumTemporaries =
    program->Base.NumParameters =
@@ -3960,7 +4006,6 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    program->NumAluInstructions =
    program->NumTexInstructions =
    program->NumTexIndirections = 0;
-
    program->UsesKill = 0;
 
    vc_head = NULL;
@@ -3979,11 +4024,7 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    else {
       /* ignore program target */
       inst++;
-
-      err = parse_arb_program (ctx, inst, &vc_head, program);
-#if DEBUG_PARSING
-      fprintf (stderr, "Symantic analysis returns %d [1 is bad!]\n", err);
-#endif
+      err = parse_instructions(ctx, inst, &vc_head, program);
    }
 
    /*debug_variables(ctx, vc_head, program); */
@@ -3992,9 +4033,108 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    var_cache_destroy (&vc_head);
 
    _mesa_free (parsed);
-#if DEBUG_PARSING
-   fprintf (stderr, "_mesa_parse_arb_program() done\n");
-#endif
 
+   /* Reallocate the instruction array from size [MAX_INSTRUCTIONS]
+    * to size [ap.Base.NumInstructions].
+    */
+   program->Base.Instructions = (struct prog_instruction *)
+      _mesa_realloc(program->Base.Instructions,
+             MAX_INSTRUCTIONS * sizeof(struct prog_instruction),/*orig*/
+             program->Base.NumInstructions * sizeof(struct prog_instruction));
+   
    return !err;
+}
+
+
+
+void
+_mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
+                                 const GLvoid *str, GLsizei len,
+                                 struct fragment_program *program)
+{
+   struct arb_program ap;
+   GLuint i;
+
+   ASSERT(target == GL_FRAGMENT_PROGRAM_ARB);
+   if (!_mesa_parse_arb_program(ctx, target, str, len, &ap)) {
+      /* Error in the program. Just return. */
+      return;
+   }
+
+   /* Copy the relevant contents of the arb_program struct into the
+    * fragment_program struct.
+    */
+   program->Base.String          = ap.Base.String;
+   program->Base.NumInstructions = ap.Base.NumInstructions;
+   program->Base.NumTemporaries  = ap.Base.NumTemporaries;
+   program->Base.NumParameters   = ap.Base.NumParameters;
+   program->Base.NumAttributes   = ap.Base.NumAttributes;
+   program->Base.NumAddressRegs  = ap.Base.NumAddressRegs;
+   program->NumAluInstructions   = ap.NumAluInstructions;
+   program->NumTexInstructions   = ap.NumTexInstructions;
+   program->NumTexIndirections   = ap.NumTexIndirections;
+   program->Base.InputsRead      = ap.Base.InputsRead;
+   program->Base.OutputsWritten  = ap.Base.OutputsWritten;
+   for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
+      program->TexturesUsed[i] = ap.TexturesUsed[i];
+   program->FogOption          = ap.FogOption;
+
+   if (program->Base.Instructions)
+      _mesa_free(program->Base.Instructions);
+   program->Base.Instructions = ap.Base.Instructions;
+
+   if (program->Base.Parameters)
+      _mesa_free_parameter_list(program->Base.Parameters);
+   program->Base.Parameters    = ap.Base.Parameters;
+
+#if DEBUG_FP
+   _mesa_print_program(&program.Base);
+#endif
+}
+
+
+
+/**
+ * Parse the vertex program string.  If success, update the given
+ * vertex_program object with the new program.  Else, leave the vertex_program
+ * object unchanged.
+ */
+void
+_mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
+			       const GLvoid *str, GLsizei len,
+			       struct vertex_program *program)
+{
+   struct arb_program ap;
+
+   ASSERT(target == GL_VERTEX_PROGRAM_ARB);
+
+   if (!_mesa_parse_arb_program(ctx, target, str, len, &ap)) {
+      /* Error in the program. Just return. */
+      return;
+   }
+
+   /* Copy the relevant contents of the arb_program struct into the 
+    * vertex_program struct.
+    */
+   program->Base.String          = ap.Base.String;
+   program->Base.NumInstructions = ap.Base.NumInstructions;
+   program->Base.NumTemporaries  = ap.Base.NumTemporaries;
+   program->Base.NumParameters   = ap.Base.NumParameters;
+   program->Base.NumAttributes   = ap.Base.NumAttributes;
+   program->Base.NumAddressRegs  = ap.Base.NumAddressRegs;
+   program->Base.InputsRead     = ap.Base.InputsRead;
+   program->Base.OutputsWritten = ap.Base.OutputsWritten;
+   program->IsPositionInvariant = ap.HintPositionInvariant;
+
+   if (program->Base.Instructions)
+      _mesa_free(program->Base.Instructions);
+   program->Base.Instructions = ap.Base.Instructions;
+
+   if (program->Base.Parameters)
+      _mesa_free_parameter_list(program->Base.Parameters);
+   program->Base.Parameters = ap.Base.Parameters; 
+
+#if DEBUG_VP
+   _mesa_print_program(&program->Base);
+#endif
 }

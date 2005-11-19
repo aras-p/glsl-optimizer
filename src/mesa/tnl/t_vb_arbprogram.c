@@ -43,6 +43,7 @@
 #include "t_pipeline.h"
 #include "t_vb_arbprogram.h"
 #include "tnl.h"
+#include "program_instruction.h"
 
 
 #define DISASSEM 0

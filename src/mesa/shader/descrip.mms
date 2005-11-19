@@ -20,10 +20,8 @@ CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)/float=ie
 
 SOURCES = \
 	atifragshader.c \
-	arbfragparse.c \
 	arbprogparse.c \
 	arbprogram.c \
-	arbvertparse.c \
 	nvfragparse.c \
 	nvprogram.c \
 	nvvertexec.c \
@@ -34,10 +32,8 @@ SOURCES = \
 
 OBJECTS = \
 	atifragshader.obj,\
-	arbfragparse.obj,\
 	arbprogparse.obj,\
 	arbprogram.obj,\
-	arbvertparse.obj,\
 	nvfragparse.obj,\
 	nvprogram.obj,\
 	nvvertexec.obj,\
@@ -69,10 +65,8 @@ clean :
 	delete *.obj;*
 
 atifragshader.obj : atifragshader.c
-arbfragparse.obj : arbfragparse.c
 arbprogparse.obj : arbprogparse.c
 arbprogram.obj : arbprogram.c
-arbvertparse.obj : arbvertparse.c
 nvfragparse.obj : nvfragparse.c
 nvprogram.obj : nvprogram.c
 nvvertexec.obj : nvvertexec.c

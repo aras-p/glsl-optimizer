@@ -32,7 +32,6 @@
 
 #include "shader/program.h"
 #include "shader/program_instruction.h"
-#include "shader/arbfragparse.h"
 
 
 #define DISASSEM (MESA_VERBOSE & VERBOSE_DISASSEM)

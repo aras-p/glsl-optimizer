@@ -147,10 +147,8 @@ TNL_SOURCES = \
 
 
 SHADER_SOURCES = \
-	shader/arbfragparse.c \
 	shader/arbprogparse.c \
 	shader/arbprogram.c \
-	shader/arbvertparse.c \
 	shader/atifragshader.c \
 	shader/grammar/grammar_mesa.c \
 	shader/nvfragparse.c \

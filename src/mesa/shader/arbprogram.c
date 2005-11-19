@@ -31,16 +31,11 @@
 
 #include "glheader.h"
 #include "arbprogram.h"
-#include "arbfragparse.h"
-#include "arbvertparse.h"
+#include "arbprogparse.h"
 #include "context.h"
 #include "imports.h"
 #include "macros.h"
 #include "mtypes.h"
-#include "nvprogram.h"
-#include "nvfragparse.h"
-#include "program_instruction.h"
-#include "nvvertparse.h"
 
 
 void GLAPIENTRY
@@ -195,15 +190,15 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
+   if (format != GL_PROGRAM_FORMAT_ASCII_ARB) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramStringARB(format)");
+      return;
+   }
+
    if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
       struct vertex_program *prog = ctx->VertexProgram.Current;
-      if (format != GL_PROGRAM_FORMAT_ASCII_ARB) {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glProgramStringARB(format)");
-         return;
-      }
-      _mesa_parse_arb_vertex_program(ctx, target, (const GLubyte *) string,
-                                     len, prog);
+      _mesa_parse_arb_vertex_program(ctx, target, string, len, prog);
       
       if (ctx->Driver.ProgramStringNotify)
 	 ctx->Driver.ProgramStringNotify( ctx, target, &prog->Base );
@@ -211,12 +206,7 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
    else if (target == GL_FRAGMENT_PROGRAM_ARB
             && ctx->Extensions.ARB_fragment_program) {
       struct fragment_program *prog = ctx->FragmentProgram.Current;
-      if (format != GL_PROGRAM_FORMAT_ASCII_ARB) {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glProgramStringARB(format)");
-         return;
-      }
-      _mesa_parse_arb_fragment_program(ctx, target, (const GLubyte *) string,
-                                       len, prog);
+      _mesa_parse_arb_fragment_program(ctx, target, string, len, prog);
 
       if (ctx->Driver.ProgramStringNotify)
 	 ctx->Driver.ProgramStringNotify( ctx, target, &prog->Base );

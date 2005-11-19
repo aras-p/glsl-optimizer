@@ -26,57 +26,16 @@
 #ifndef ARBPROGPARSE_H
 #define ARBPROGPARSE_H
 
-#include "context.h"
 #include "mtypes.h"
-#include "program_instruction.h"
 
+extern void
+_mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
+			       const GLvoid *str, GLsizei len,
+			       struct vertex_program *program);
 
-#define MAX_INSTRUCTIONS 256
-
-
-/**
- * This is basically a union of the vertex_program and fragment_program
- * structs that we can use to parse the program into
- *
- * XXX we can probably get rid of this entirely someday.
- */
-struct arb_program
-{
-   struct program Base;
-#if 0
-   struct program_parameter_list *Parameters; 
-   GLbitfield InputsRead;
-   GLbitfield OutputsWritten;
-#endif
-
-   GLuint Position;       /* Just used for error reporting while parsing */
-   GLuint MajorVersion;
-   GLuint MinorVersion;
-
-   /* ARB_vertex_program specifics */ 
-   struct prog_instruction VPInstructions[MAX_INSTRUCTIONS];
-
-   /* Options currently recognized by the parser */
-   /* ARB_fp */
-   GLenum PrecisionOption; /* GL_DONT_CARE, GL_NICEST or GL_FASTEST */
-   GLenum FogOption;       /* GL_NONE, GL_LINEAR, GL_EXP or GL_EXP2 */
-
-   /* ARB_fp & _vp */
-   GLboolean HintPositionInvariant;
-
-   /* ARB_fragment_program specifics */
-   struct prog_instruction FPInstructions[MAX_INSTRUCTIONS];
-   GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS]; 
-   GLuint NumAluInstructions; 
-   GLuint NumTexInstructions;
-   GLuint NumTexIndirections;
-
-   GLboolean UsesKill;
-};
-
-
-extern GLboolean
-_mesa_parse_arb_program( GLcontext *ctx, const GLubyte *str, GLsizei len, 
-                         struct arb_program *program );
+extern void
+_mesa_parse_arb_fragment_program(GLcontext *ctx, GLenum target,
+                                 const GLvoid *str, GLsizei len,
+                                 struct fragment_program *program);
 
 #endif
