@@ -505,17 +505,17 @@ static void r200UpdateFSConstants( GLcontext *ctx )
    for (i = 0; i < 8; i++)
    {
       GLubyte con_byte[4];
-      if ((shader->localConstDef >> i) & 1) {
+      if ((shader->LocalConstDef >> i) & 1) {
 	 CLAMPED_FLOAT_TO_UBYTE(con_byte[0], shader->Constants[i][0]);
 	 CLAMPED_FLOAT_TO_UBYTE(con_byte[1], shader->Constants[i][1]);
 	 CLAMPED_FLOAT_TO_UBYTE(con_byte[2], shader->Constants[i][2]);
 	 CLAMPED_FLOAT_TO_UBYTE(con_byte[3], shader->Constants[i][3]);
       }
       else {
-	 CLAMPED_FLOAT_TO_UBYTE(con_byte[0], ctx->ATIFragmentShader.globalConstants[i][0]);
-	 CLAMPED_FLOAT_TO_UBYTE(con_byte[1], ctx->ATIFragmentShader.globalConstants[i][1]);
-	 CLAMPED_FLOAT_TO_UBYTE(con_byte[2], ctx->ATIFragmentShader.globalConstants[i][2]);
-	 CLAMPED_FLOAT_TO_UBYTE(con_byte[3], ctx->ATIFragmentShader.globalConstants[i][3]);
+	 CLAMPED_FLOAT_TO_UBYTE(con_byte[0], ctx->ATIFragmentShader.GlobalConstants[i][0]);
+	 CLAMPED_FLOAT_TO_UBYTE(con_byte[1], ctx->ATIFragmentShader.GlobalConstants[i][1]);
+	 CLAMPED_FLOAT_TO_UBYTE(con_byte[2], ctx->ATIFragmentShader.GlobalConstants[i][2]);
+	 CLAMPED_FLOAT_TO_UBYTE(con_byte[3], ctx->ATIFragmentShader.GlobalConstants[i][3]);
       }
       rmesa->hw.atf.cmd[ATF_TFACTOR_0 + i] = r200PackColor (
 	 4, con_byte[0], con_byte[1], con_byte[2], con_byte[3] );
