@@ -246,57 +246,59 @@ static GLboolean run_texnorm_stage( GLcontext *ctx,
       return GL_TRUE;
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
-      GLuint reallyEnabled = ctx->Texture.Unit[i]._ReallyEnabled;
-      struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
-      GLboolean normalizeS = (texObj->WrapS == GL_REPEAT);
-      GLboolean normalizeT = (reallyEnabled & TEXTURE_2D_BIT) &&
-	 (texObj->WrapT == GL_REPEAT);
-      GLfloat *in = (GLfloat *)VB->TexCoordPtr[i]->data;
-      GLint instride = VB->TexCoordPtr[i]->stride;
-      GLfloat (*out)[4] = store->texcoord[i].data;
-      GLint j;
+      const GLbitfield reallyEnabled = ctx->Texture.Unit[i]._ReallyEnabled;
+      if (reallyEnabled) {
+         const struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
+         const GLboolean normalizeS = (texObj->WrapS == GL_REPEAT);
+         const GLboolean normalizeT = (reallyEnabled & TEXTURE_2D_BIT) &&
+            (texObj->WrapT == GL_REPEAT);
+         const GLfloat *in = (GLfloat *)VB->TexCoordPtr[i]->data;
+         const GLint instride = VB->TexCoordPtr[i]->stride;
+         GLfloat (*out)[4] = store->texcoord[i].data;
+         GLint j;
 
-      if (!ctx->Texture.Unit[i]._ReallyEnabled ||
-	  VB->TexCoordPtr[i]->size == 4)
-	 /* Never try to normalize homogenous tex coords! */
-	 continue;
+         if (!ctx->Texture.Unit[i]._ReallyEnabled ||
+             VB->TexCoordPtr[i]->size == 4)
+            /* Never try to normalize homogenous tex coords! */
+            continue;
 
-      if (normalizeS && normalizeT) {
-	 /* take first texcoords as rough estimate of mean value */
-	 GLfloat correctionS = -floor(in[0]+0.5);
-	 GLfloat correctionT = -floor(in[1]+0.5);
-	 for (j = 0; j < VB->Count; ++j) {
-	    out[j][0] = in[0] + correctionS;
-	    out[j][1] = in[1] + correctionT;
-	    in = (GLfloat *)((GLubyte *)in + instride);
-	 }
-      } else if (normalizeS) {
-	 /* take first texcoords as rough estimate of mean value */
-	 GLfloat correctionS = -floor(in[0]+0.5);
-	 if (reallyEnabled & TEXTURE_2D_BIT) {
-	    for (j = 0; j < VB->Count; ++j) {
-	       out[j][0] = in[0] + correctionS;
-	       out[j][1] = in[1];
-	       in = (GLfloat *)((GLubyte *)in + instride);
-	    }
-	 } else {
-	    for (j = 0; j < VB->Count; ++j) {
-	       out[j][0] = in[0] + correctionS;
-	       in = (GLfloat *)((GLubyte *)in + instride);
-	    }
-	 }
-      } else if (normalizeT) {
-	 /* take first texcoords as rough estimate of mean value */
-	 GLfloat correctionT = -floor(in[1]+0.5);
-	 for (j = 0; j < VB->Count; ++j) {
-	    out[j][0] = in[0];
-	    out[j][1] = in[1] + correctionT;
-	    in = (GLfloat *)((GLubyte *)in + instride);
-	 }
+         if (normalizeS && normalizeT) {
+            /* take first texcoords as rough estimate of mean value */
+            GLfloat correctionS = -floor(in[0]+0.5);
+            GLfloat correctionT = -floor(in[1]+0.5);
+            for (j = 0; j < VB->Count; ++j) {
+               out[j][0] = in[0] + correctionS;
+               out[j][1] = in[1] + correctionT;
+               in = (GLfloat *)((GLubyte *)in + instride);
+            }
+         } else if (normalizeS) {
+            /* take first texcoords as rough estimate of mean value */
+            GLfloat correctionS = -floor(in[0]+0.5);
+            if (reallyEnabled & TEXTURE_2D_BIT) {
+               for (j = 0; j < VB->Count; ++j) {
+                  out[j][0] = in[0] + correctionS;
+                  out[j][1] = in[1];
+                  in = (GLfloat *)((GLubyte *)in + instride);
+               }
+            } else {
+               for (j = 0; j < VB->Count; ++j) {
+                  out[j][0] = in[0] + correctionS;
+                  in = (GLfloat *)((GLubyte *)in + instride);
+               }
+            }
+         } else if (normalizeT) {
+            /* take first texcoords as rough estimate of mean value */
+            GLfloat correctionT = -floor(in[1]+0.5);
+            for (j = 0; j < VB->Count; ++j) {
+               out[j][0] = in[0];
+               out[j][1] = in[1] + correctionT;
+               in = (GLfloat *)((GLubyte *)in + instride);
+            }
+         }
+
+         if (normalizeS || normalizeT)
+            VB->AttribPtr[VERT_ATTRIB_TEX0+i] = VB->TexCoordPtr[i] = &store->texcoord[i];
       }
-
-      if (normalizeS || normalizeT)
-	 VB->AttribPtr[VERT_ATTRIB_TEX0+i] = VB->TexCoordPtr[i] = &store->texcoord[i];
    }
 
    return GL_TRUE;
