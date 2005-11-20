@@ -1458,7 +1458,7 @@ _mesa_print_instruction(const struct prog_instruction *inst)
       break;
    case OPCODE_SWZ:
       _mesa_printf("SWZ");
-      if (inst->Saturate)
+      if (inst->SaturateMode == SATURATE_ZERO_ONE)
          _mesa_printf("_SAT");
       print_dst_reg(&inst->DstReg);
       _mesa_printf("%s[%d], %s;\n",
@@ -1471,7 +1471,7 @@ _mesa_print_instruction(const struct prog_instruction *inst)
    case OPCODE_TXP:
    case OPCODE_TXB:
       _mesa_printf("%s", _mesa_opcode_string(inst->Opcode));
-      if (inst->Saturate)
+      if (inst->SaturateMode == SATURATE_ZERO_ONE)
          _mesa_printf("_SAT");
       _mesa_printf(" ");
       print_dst_reg(&inst->DstReg);
@@ -1504,7 +1504,7 @@ _mesa_print_instruction(const struct prog_instruction *inst)
          _mesa_printf("%s", _mesa_opcode_string(inst->Opcode));
 
          /* frag prog only */
-         if (inst->Saturate)
+         if (inst->SaturateMode == SATURATE_ZERO_ONE)
             _mesa_printf("_SAT");
 
          if (inst->DstReg.File != PROGRAM_UNDEFINED) {

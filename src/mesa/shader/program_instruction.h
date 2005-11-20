@@ -54,13 +54,23 @@
 /*@}*/
 
 
-/*
+/**
  * Instruction precision for GL_NV_fragment_program
  */
 /*@{*/
 #define FLOAT32  0x1
 #define FLOAT16  0x2
 #define FIXED12  0x4
+/*@}*/
+
+
+/**
+ * Saturation modes when storing values.
+ */
+/*@{*/
+#define SATURATE_OFF            0
+#define SATURATE_ZERO_ONE       1
+#define SATURATE_PLUS_MINUS_ONE 2
 /*@}*/
 
 
@@ -267,8 +277,8 @@ struct prog_instruction
     * condition code register that is to be updated.
     *
     * In GL_NV_fragment_program or GL_NV_vertex_program2 mode, only condition
-    * code register 0 is available.  In GL_NV_vertex_program3 mode, condition code registers
-    * 0 and 1 are available.
+    * code register 0 is available.  In GL_NV_vertex_program3 mode, condition
+    * code registers 0 and 1 are available.
     *
     * \since
     * NV_fragment_program, NV_fragment_program_option, NV_vertex_program2,
@@ -280,11 +290,12 @@ struct prog_instruction
     * Saturate each value of the vectored result to the range [0,1] or the
     * range [-1,1].  \c SSAT mode (i.e., saturation to the range [-1,1]) is
     * only available in NV_fragment_program2 mode.
+    * Value is one of the SATURATE_* tokens.
     *
     * \since
     * NV_fragment_program, NV_fragment_program_option, NV_vertex_program3.
     */
-   GLuint Saturate:1;
+   GLuint SaturateMode:2;
    
    /**
     * Per-instruction selectable precision.

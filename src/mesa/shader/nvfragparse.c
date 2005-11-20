@@ -1327,7 +1327,8 @@ Parse_InstructionSequence(struct parse_state *parseState,
 
          inst->Opcode = instMatch.opcode;
          inst->Precision = instMatch.suffixes & (_R | _H | _X);
-         inst->Saturate = (instMatch.suffixes & (_S)) ? GL_TRUE : GL_FALSE;
+         inst->SaturateMode = (instMatch.suffixes & (_S))
+            ? SATURATE_ZERO_ONE : SATURATE_OFF;
          inst->CondUpdate = (instMatch.suffixes & (_C)) ? GL_TRUE : GL_FALSE;
          inst->StringPos = parseState->curLine - parseState->start;
          assert(inst->StringPos >= 0);
@@ -1745,7 +1746,7 @@ _mesa_print_nv_fragment_program(const struct fragment_program *program)
                _mesa_printf("X");
             if (inst->CondUpdate)
                _mesa_printf("C");
-            if (inst->Saturate)
+            if (inst->SaturateMode == SATURATE_ZERO_ONE)
                _mesa_printf("_SAT");
             _mesa_printf(" ");
 

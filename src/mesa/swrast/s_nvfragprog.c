@@ -390,7 +390,7 @@ store_vector4( const struct prog_instruction *inst,
                const GLfloat value[4] )
 {
    const struct prog_dst_register *dest = &(inst->DstReg);
-   const GLboolean clamp = inst->Saturate;
+   const GLboolean clamp = inst->SaturateMode == SATURATE_ZERO_ONE;
    const GLboolean updateCC = inst->CondUpdate;
    GLfloat *dstReg;
    GLfloat dummyReg[4];

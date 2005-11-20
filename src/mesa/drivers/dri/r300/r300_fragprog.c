@@ -757,7 +757,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 	}
 
 	for (fpi=mp->Base.Instructions; fpi->Opcode != OPCODE_END; fpi++) {
-		if (fpi->Saturate) {
+		if (fpi->SaturateMode == SATURATE_ZERO_ONE) {
 			flags = PFS_FLAG_SAT;
 		}
 		

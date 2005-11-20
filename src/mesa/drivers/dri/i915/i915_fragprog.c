@@ -177,7 +177,7 @@ static GLuint get_result_flags( const struct prog_instruction *inst )
 {
    GLuint flags = 0;
 
-   if (inst->Saturate) flags |= A0_DEST_SATURATE;
+   if (inst->Saturate == SATURATE_ZERO_ONE) flags |= A0_DEST_SATURATE;
    if (inst->DstReg.WriteMask & WRITEMASK_X) flags |= A0_DEST_CHANNEL_X;
    if (inst->DstReg.WriteMask & WRITEMASK_Y) flags |= A0_DEST_CHANNEL_Y;
    if (inst->DstReg.WriteMask & WRITEMASK_Z) flags |= A0_DEST_CHANNEL_Z;

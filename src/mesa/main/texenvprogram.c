@@ -486,7 +486,7 @@ emit_op(struct texenv_fragment_program *p,
    emit_arg( &inst->SrcReg[1], src1 );
    emit_arg( &inst->SrcReg[2], src2 );
    
-   inst->Saturate = saturate;
+   inst->SaturateMode = saturate ? SATURATE_ZERO_ONE : SATURATE_OFF;
 
    emit_dst( &inst->DstReg, dest, mask );
 
