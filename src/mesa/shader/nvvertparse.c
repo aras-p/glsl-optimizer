@@ -1580,26 +1580,3 @@ _mesa_nv_vertex_output_register_name(GLuint i)
    return OutputRegisters[i];
 }
 
-
-/**
- * Initialize program instruction fields to defaults.
- */
-void
-_mesa_init_instruction(struct prog_instruction *inst)
-{
-   _mesa_bzero(inst, sizeof(struct prog_instruction));
-
-   inst->SrcReg[0].File = PROGRAM_UNDEFINED;
-   inst->SrcReg[0].Swizzle = SWIZZLE_NOOP;
-   inst->SrcReg[1].File = PROGRAM_UNDEFINED;
-   inst->SrcReg[1].Swizzle = SWIZZLE_NOOP;
-   inst->SrcReg[2].File = PROGRAM_UNDEFINED;
-   inst->SrcReg[2].Swizzle = SWIZZLE_NOOP;
-
-   inst->DstReg.File = PROGRAM_UNDEFINED;
-   inst->DstReg.WriteMask = WRITEMASK_XYZW;
-   inst->DstReg.CondMask = COND_TR;
-   inst->DstReg.CondSwizzle = SWIZZLE_NOOP;
-   
-   inst->Precision = FLOAT32;
-}

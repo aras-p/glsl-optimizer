@@ -1192,6 +1192,31 @@ _mesa_load_state_parameters(GLcontext *ctx,
 
 
 /**
+ * Initialize program instruction fields to defaults.
+ */
+void
+_mesa_init_instruction(struct prog_instruction *inst)
+{
+   _mesa_bzero(inst, sizeof(struct prog_instruction));
+
+   inst->SrcReg[0].File = PROGRAM_UNDEFINED;
+   inst->SrcReg[0].Swizzle = SWIZZLE_NOOP;
+   inst->SrcReg[1].File = PROGRAM_UNDEFINED;
+   inst->SrcReg[1].Swizzle = SWIZZLE_NOOP;
+   inst->SrcReg[2].File = PROGRAM_UNDEFINED;
+   inst->SrcReg[2].Swizzle = SWIZZLE_NOOP;
+
+   inst->DstReg.File = PROGRAM_UNDEFINED;
+   inst->DstReg.WriteMask = WRITEMASK_XYZW;
+   inst->DstReg.CondMask = COND_TR;
+   inst->DstReg.CondSwizzle = SWIZZLE_NOOP;
+
+   inst->SaturateMode = SATURATE_OFF;
+   inst->Precision = FLOAT32;
+}
+
+
+/**
  * Basic info about each instruction
  */
 struct instruction_info
