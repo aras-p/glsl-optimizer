@@ -1030,7 +1030,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_FPI0_OUTC_FRC                (9 << 23)
 #       define R300_FPI0_OUTC_REPL_ALPHA         (10 << 23)
 #       define R300_FPI0_OUTC_SAT                (1 << 30)
-#       define R300_FPI0_UNKNOWN_31              (1 << 31)
+#       define R300_FPI0_INSERT_NOP              (1 << 31)
 
 #define R300_PFS_INSTR2_0                   0x49C0
 #       define R300_FPI2_ARGA_SRC0C_X            0
