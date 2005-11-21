@@ -420,7 +420,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.tex.filter.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FILTER_0, 0);
 
 	ALLOC_STATE( tex.unknown1, variable, mtu+1, "tex_unknown1", 0 );
-		r300->hw.tex.unknown1.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_UNK1_0, 0);
+		r300->hw.tex.unknown1.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FILTER1_0, 0);
 
 	ALLOC_STATE( tex.size, variable, mtu+1, "tex_size", 0 );
 		r300->hw.tex.size.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_SIZE_0, 0);
@@ -432,7 +432,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.tex.offset.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_OFFSET_0, 0);
 
 	ALLOC_STATE( tex.unknown4, variable, mtu+1, "tex_unknown4", 0 );
-		r300->hw.tex.unknown4.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_UNK4_0, 0);
+		r300->hw.tex.unknown4.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_CHROMA_KEY_0, 0);
 
 	ALLOC_STATE( tex.border_color, variable, mtu+1, "tex_border_color", 0 );
 		r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_BORDER_COLOR_0, 0);

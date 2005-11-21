@@ -687,8 +687,22 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #	define R300_TX_MAX_ANISO_16_TO_1 (8 << 21)
 #	define R300_TX_MAX_ANISO_MASK    (14 << 21)
 
-#define R300_TX_UNK1_0                      0x4440
+#define R300_TX_FILTER1_0                      0x4440
+#	define R300_CHROMA_KEY_MODE_DISABLE    0
+#	define R300_CHROMA_KEY_FORCE	       1
+#	define R300_CHROMA_KEY_BLEND           2
+#	define R300_MC_ROUND_NORMAL            (0<<2)
+#	define R300_MC_ROUND_MPEG4             (1<<2)
 #	define R300_LOD_BIAS_MASK	    0x1fff
+#	define R300_EDGE_ANISO_EDGE_DIAG       (0<<13)
+#	define R300_EDGE_ANISO_EDGE_ONLY       (1<<13)
+#	define R300_MC_COORD_TRUNCATE_DISABLE  (0<<14)
+#	define R300_MC_COORD_TRUNCATE_MPEG     (1<<14)
+#	define R300_TX_TRI_PERF_0_8            (0<<15)
+#	define R300_TX_TRI_PERF_1_8            (1<<15)
+#	define R300_TX_TRI_PERF_1_4            (2<<15)
+#	define R300_TX_TRI_PERF_3_8            (3<<15)
+#	define R300_ANISO_THRESHOLD_MASK       (7<<17)
 
 #define R300_TX_SIZE_0                      0x4480
 #       define R300_TX_WIDTHMASK_SHIFT           0
@@ -698,7 +712,8 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_TX_UNK23                     (1 << 23)
 #       define R300_TX_SIZE_SHIFT                26 /* largest of width, height */
 #       define R300_TX_SIZE_MASK                 (15 << 26)
-#       define R300_TX_SIZE_UNK31                     (1<<31)
+#       define R300_TX_SIZE_PROJECTED                     (1<<30)
+#       define R300_TX_SIZE_TXPITCH_EN                     (1<<31)
 #define R300_TX_FORMAT_0                    0x44C0
 	/* The interpretation of the format word by Wladimir van der Laan */
 	/* The X, Y, Z and W refer to the layout of the components.
@@ -789,7 +804,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_TXO_OFFSET_MASK              0xffffffe0
 #       define R300_TXO_OFFSET_SHIFT             5
 /* END */
-#define R300_TX_UNK4_0                      0x4580
+#define R300_TX_CHROMA_KEY_0                      0x4580 /* 32 bit chroma key */
 #define R300_TX_BORDER_COLOR_0              0x45C0 //ff00ff00 == { 0, 1.0, 0, 1.0 }
 
 /* END */
