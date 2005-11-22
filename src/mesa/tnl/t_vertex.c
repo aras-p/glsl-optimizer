@@ -494,7 +494,14 @@ void _tnl_free_vertices( GLcontext *ctx )
    for (fp = vtx->fastpath ; fp ; fp = tmp) {
       tmp = fp->next;
       FREE(fp->attr);
-      FREE((void *)fp->func);
+      /* XXX Can we be sure that fp->func points to memory that was
+       * allocated with _mesa_exec_malloc()?  I think it's possible that
+       * the pointer can point to an ordinary C function.
+       * Just disable this for the time being.
+       */
+#if 0
+      _mesa_exec_free((void *) fp->func);
+#endif
       FREE(fp);
    }
    
