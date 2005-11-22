@@ -273,6 +273,9 @@ _tnl_allow_vertex_fog( GLcontext *ctx, GLboolean value )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tnl->AllowVertexFog = value;
+   tnl->_DoVertexFog = (tnl->AllowVertexFog && (ctx->Hint.Fog != GL_NICEST))
+      || !tnl->AllowPixelFog;
+
 }
 
 void
@@ -280,5 +283,7 @@ _tnl_allow_pixel_fog( GLcontext *ctx, GLboolean value )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tnl->AllowPixelFog = value;
+   tnl->_DoVertexFog = (tnl->AllowVertexFog && (ctx->Hint.Fog != GL_NICEST))
+      || !tnl->AllowPixelFog;
 }
 
