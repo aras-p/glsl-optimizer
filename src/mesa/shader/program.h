@@ -204,6 +204,9 @@ struct program_parameter_list
    GLuint NumParameters;  /** number of parameters in arrays */
    struct program_parameter *Parameters; /** Array [Size] */
    GLfloat (*ParameterValues)[4];        /** Array [Size] */
+   GLuint StateFlags;		/** _NEW_* flags indicating which
+				    statechanges might invalidate
+				    ParameterValues[]  */
 };
 
 

@@ -45,6 +45,9 @@
 static const char *
 make_state_string(const GLint stateTokens[6]);
 
+static GLuint 
+make_state_flags(const GLint state[]);
+
 
 /**********************************************************************/
 /* Utility functions                                                  */
@@ -459,6 +462,9 @@ _mesa_add_state_reference(struct program_parameter_list *paramList,
       for (i = 0; i < 6; i++)
          paramList->Parameters[index].StateIndexes[i]
             = (enum state_index) stateTokens[i];
+
+	 paramList->StateFlags |= 
+	    make_state_flags(stateTokens);
    }
 
    return index;
@@ -897,6 +903,77 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
       return;
    }
 }
+
+
+/* Return a bit mask of the Mesa state flags under which a parameter's
+ * value might change.
+ */
+static GLuint make_state_flags(const GLint state[])
+{
+   switch (state[0]) {
+   case STATE_MATERIAL:
+   case STATE_LIGHT:
+   case STATE_LIGHTMODEL_AMBIENT:
+   case STATE_LIGHTMODEL_SCENECOLOR:
+   case STATE_LIGHTPROD:
+      return _NEW_LIGHT;
+
+   case STATE_TEXGEN:
+   case STATE_TEXENV_COLOR:
+      return _NEW_TEXTURE;
+
+   case STATE_FOG_COLOR:
+   case STATE_FOG_PARAMS:
+      return _NEW_FOG;
+
+   case STATE_CLIPPLANE:
+      return _NEW_TRANSFORM;
+
+   case STATE_POINT_SIZE:
+   case STATE_POINT_ATTENUATION:
+      return _NEW_POINT;
+
+   case STATE_MATRIX:
+      switch (state[1]) {
+      case STATE_MODELVIEW:
+	 return _NEW_MODELVIEW;
+      case STATE_PROJECTION:
+	 return _NEW_PROJECTION;
+      case STATE_MVP:
+	 return _NEW_MODELVIEW | _NEW_PROJECTION;
+      case STATE_TEXTURE:
+	 return _NEW_TEXTURE_MATRIX;
+      case STATE_PROGRAM:
+	 return _NEW_TRACK_MATRIX;
+      default:
+	 assert(0);
+	 return 0;
+      }
+
+   case STATE_DEPTH_RANGE:
+      return _NEW_VIEWPORT;
+
+   case STATE_FRAGMENT_PROGRAM:
+   case STATE_VERTEX_PROGRAM:
+      return _NEW_PROGRAM;
+
+   case STATE_INTERNAL:
+      switch (state[1]) {
+      case STATE_NORMAL_SCALE:
+	 return _NEW_MODELVIEW;
+      default:
+	 assert(0);
+	 return 0;
+      }
+
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
+
+
 
 
 static void
