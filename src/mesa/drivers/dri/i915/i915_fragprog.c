@@ -156,9 +156,9 @@ static GLuint get_result_vector( struct i915_fragment_program *p,
    switch (inst->DstReg.File) {
    case PROGRAM_OUTPUT:
       switch (inst->DstReg.Index) {
-      case 0: 
+      case FRAG_RESULT_COLR: 
 	 return UREG(REG_TYPE_OC, 0);
-      case 1: 
+      case FRAG_RESULT_DEPR: 
 	 p->depth_written = 1;
 	 return UREG(REG_TYPE_OD, 0);
       default: 
