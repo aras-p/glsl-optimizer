@@ -910,8 +910,8 @@ static EGLBoolean
 radeonShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
                     EGLSurface surface, EGLModeMESA m)
 {
-   _eglDRIShowSurfaceMESA(drv, dpy, screen, surface, m);
-   return EGL_FALSE;
+   EGLBoolean b = _eglDRIShowSurfaceMESA(drv, dpy, screen, surface, m);
+   return b;
 }
 
 static EGLBoolean
