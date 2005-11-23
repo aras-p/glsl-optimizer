@@ -35,6 +35,8 @@
 #include <GLES/egl.h>
 #include <assert.h>
 
+#define MAX_CONFIGS 10
+#define MAX_MODES 100
 
 #define BENCHMARK
 
@@ -87,9 +89,11 @@ static GLfloat view_rotx = 20.0, view_roty = 30.0, view_rotz = 0.0;
 static GLint gear1, gear2, gear3;
 static GLfloat angle = 0.0;
 
-//static GLfloat eyesep = 5.0;		/* Eye separation. */
-//static GLfloat fix_point = 40.0;	/* Fixation point distance.  */
-//static GLfloat left, right, asp;	/* Stereo frustum params.  */
+#if 0
+static GLfloat eyesep = 5.0;		/* Eye separation. */
+static GLfloat fix_point = 40.0;	/* Fixation point distance.  */
+static GLfloat left, right, asp;	/* Stereo frustum params.  */
+#endif
 
 
 /*
@@ -339,7 +343,6 @@ static void run_gears(EGLDisplay dpy, EGLSurface surf, int ttr)
 		
 		draw();
 		
-		// DBR : Swap the Buffers
 		eglSwapBuffers(dpy, surf);
 	
 		
@@ -359,21 +362,18 @@ main(int argc, char *argv[])
 	int maj, min;
 	EGLContext ctx;
 	EGLSurface screen_surf;
-	EGLConfig configs[10];
+	EGLConfig configs[MAX_CONFIGS];
 	EGLint numConfigs, i;
 	EGLBoolean b;
-	
-	const EGLint screenAttribs[] = {
-		EGL_WIDTH, 1024,
-		EGL_HEIGHT, 768,
-		EGL_NONE
-	};
-	
-	EGLModeMESA mode;
+	EGLDisplay d;
+	EGLint screenAttribs[10];
+	EGLModeMESA mode[MAX_MODES];
 	EGLScreenMESA screen;
-	EGLint count;	
+	EGLint count, chosenMode;
 	GLboolean printInfo = GL_FALSE;
+	EGLint width = 0, height = 0;
 	
+        /* parse cmd line args */
 	for (i = 1; i < argc; i++)
 	{
 		if (strcmp(argv[i], "-info") == 0)
@@ -384,42 +384,73 @@ main(int argc, char *argv[])
 			printf("Warning: unknown parameter: %s\n", argv[i]);
 	}
 	
-	// DBR : Create EGL context/surface etc
-	EGLDisplay d = eglGetDisplay(":0");
+	/* DBR : Create EGL context/surface etc */
+        d = eglGetDisplay(":0");
 	assert(d);
 
 	if (!eglInitialize(d, &maj, &min)) {
-		printf("demo: eglInitialize failed\n");
+		printf("eglgears: eglInitialize failed\n");
 		exit(1);
 	}
 	
-	printf("EGL version = %d.%d\n", maj, min);
-	printf("EGL_VENDOR = %s\n", eglQueryString(d, EGL_VENDOR));
+	printf("eglgears: EGL version = %d.%d\n", maj, min);
+	printf("eglgears: EGL_VENDOR = %s\n", eglQueryString(d, EGL_VENDOR));
 	
-	eglGetConfigs(d, configs, 10, &numConfigs);
+        /* XXX use ChooseConfig */
+	eglGetConfigs(d, configs, MAX_CONFIGS, &numConfigs);
 	eglGetScreensMESA(d, &screen, 1, &count);
-	eglGetModesMESA(d, screen, &mode, 1, &count);
+
+	if (!eglGetModesMESA(d, screen, mode, MAX_MODES, &count) || count == 0) {
+		printf("eglgears: eglGetModesMESA failed!\n");
+		return 0;
+	}
+
+        /* Print list of modes, and find the one to use */
+	printf("eglgears: Found %d modes:\n", count);
+	for (i = 0; i < count; i++) {
+		EGLint w, h;
+		eglGetModeAttribMESA(d, mode[i], EGL_WIDTH, &w);
+		eglGetModeAttribMESA(d, mode[i], EGL_HEIGHT, &h);
+		printf("%3d: %d x %d\n", i, w, h);
+		if (w > width && h > height && w <= 1280 && h <= 1024) {
+			width = w;
+			height = h;
+                        chosenMode = i;
+		}
+	}
+	printf("eglgears: Using screen mode/size %d: %d x %d\n", chosenMode, width, height);
 
 	ctx = eglCreateContext(d, configs[0], EGL_NO_CONTEXT, NULL);
 	if (ctx == EGL_NO_CONTEXT) {
-		printf("failed to create context\n");
+		printf("eglgears: failed to create context\n");
 		return 0;
 	}
 	
+	/* build up screenAttribs array */
+	i = 0;
+	screenAttribs[i++] = EGL_WIDTH;
+	screenAttribs[i++] = width;
+	screenAttribs[i++] = EGL_HEIGHT;
+	screenAttribs[i++] = height;
+	screenAttribs[i++] = EGL_NONE;
+
 	screen_surf = eglCreateScreenSurfaceMESA(d, configs[0], screenAttribs);
 	if (screen_surf == EGL_NO_SURFACE) {
-		printf("failed to create screen surface\n");
+		printf("eglgears: failed to create screen surface\n");
 		return 0;
 	}
 	
-	eglShowSurfaceMESA(d, screen, screen_surf, mode);
-	
+	b = eglShowSurfaceMESA(d, screen, screen_surf, mode[chosenMode]);
+	if (!b) {
+		printf("eglgears: show surface failed\n");
+		return 0;
+	}
+
 	b = eglMakeCurrent(d, screen_surf, screen_surf, ctx);
 	if (!b) {
-		printf("make current failed\n");
+		printf("eglgears: make current failed\n");
 		return 0;
 	}
-	// DBR
 	
 	if (printInfo)
 	{
@@ -429,20 +460,16 @@ main(int argc, char *argv[])
 		printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
 	}
 	
-	init();			// Initialise the GL visual
-	reshape(1024,768);
+	init();
+	reshape(width, height);
 
-   glDrawBuffer( GL_BACK );
+        glDrawBuffer( GL_BACK );
 
-	// DBR : Run the simulation
 	run_gears(d, screen_surf, 5.0);
 	
-	
-	// DBR : Destroy EGL context/surface etc
 	eglDestroySurface(d, screen_surf);
 	eglDestroyContext(d, ctx);
 	eglTerminate(d);
-	// DBR
 	
 	return 0;
 }
