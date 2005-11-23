@@ -12,6 +12,7 @@ HEADERS = \
 	egldisplay.h \
 	egldriver.h \
 	eglglobals.h \
+	egllog.h \
 	eglhash.h \
 	eglmode.h \
 	eglscreen.h \
@@ -24,6 +25,7 @@ SOURCES = \
 	egldisplay.c \
 	egldriver.c \
 	eglglobals.c \
+	egllog.c \
 	eglhash.c \
 	eglmode.c \
 	eglscreen.c \
