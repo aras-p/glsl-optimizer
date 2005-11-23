@@ -48,9 +48,9 @@ PrintConfigs(EGLDisplay d)
    eglGetConfigs(d, configs, MAX_CONFIGS, &numConfigs);
 
    printf("Configurations:\n");
-   printf("     bf lv d st colorbuffer dp st   supported \n");
+   printf("     bf lv d st colorbuffer dp st   supported\n");
    printf("  id sz  l b ro  r  g  b  a th cl   surfaces  \n");
-   printf("----------------------------------------------\n");
+   printf("---------------------------------------------------\n");
    for (i = 0; i < numConfigs; i++) {
       EGLint id, size, level;
       EGLint red, green, blue, alpha;
@@ -77,6 +77,10 @@ PrintConfigs(EGLDisplay d)
          strcat(surfString, "pb,");
       if (surfaces & EGL_PIXMAP_BIT)
          strcat(surfString, "pix,");
+#ifdef EGL_MESA_screen_surface
+      if (surfaces & EGL_SCREEN_BIT_MESA)
+         strcat(surfString, "scrn,");
+#endif
       if (strlen(surfString) > 0)
          surfString[strlen(surfString) - 1] = 0;
 
@@ -136,7 +140,7 @@ main(int argc, char *argv[])
 {
    int maj, min;
    /*EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);*/
-   EGLDisplay d = eglGetDisplay("!r200_dri");
+   EGLDisplay d = eglGetDisplay(":0");
 
    if (!eglInitialize(d, &maj, &min)) {
       printf("eglinfo: eglInitialize failed\n");
