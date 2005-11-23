@@ -47,9 +47,10 @@ _eglError(EGLint errCode, const char *msg)
    if (_eglGlobal.LastError == EGL_SUCCESS) {
       _eglGlobal.LastError = errCode;
       /* XXX temporary */
-      fprintf(stderr, "EGL Error 0x%x in %s\n", errCode, msg);
+      fprintf(stderr, "EGL user error 0x%x in %s\n", errCode, msg);
    }
 }
+
 
 
 /**
