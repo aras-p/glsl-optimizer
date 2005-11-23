@@ -596,7 +596,7 @@ void r300EmitArraysVtx(GLcontext * ctx, GLboolean immd)
 }
 
 	if (hw_tcl_on) {
-		GLuint InputsRead = CURRENT_VERTEX_SHADER(ctx)->InputsRead;
+		GLuint InputsRead = CURRENT_VERTEX_SHADER(ctx)->Base.InputsRead;
 		struct r300_vertex_program *prog=(struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 		if (InputsRead & (1<<VERT_ATTRIB_POS)) {
 			inputs |= _TNL_BIT_POS;
@@ -837,7 +837,7 @@ void r300EmitArraysVtx(GLcontext * ctx, GLboolean immd)
 	r300->hw.vof.cmd[R300_VOF_CNTL_0]=0;
 	r300->hw.vof.cmd[R300_VOF_CNTL_1]=0;
 	if (hw_tcl_on){
-		GLuint OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->OutputsWritten;
+		GLuint OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->Base.OutputsWritten;
 		
 		if(OutputsWritten & (1<<VERT_RESULT_HPOS))
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
