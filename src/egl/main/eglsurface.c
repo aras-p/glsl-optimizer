@@ -68,7 +68,9 @@ _eglGetCurrentSurface(EGLint readdraw)
 EGLBoolean
 _eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 {
-   /* Basically just do error checking */
+   /* Basically just do error checking here.  Drivers have to do the
+    * actual buffer swap.
+    */
    _EGLContext *context = _eglGetCurrentContext();
    _EGLSurface *surface = _eglLookupSurface(draw);
    if (context && context->DrawSurface != surface) {
@@ -86,7 +88,8 @@ _eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 EGLBoolean
 _eglCopyBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, NativePixmapType target)
 {
-   /* XXX unfinished */
+   /* copy surface to native pixmap */
+   /* All implementation burdon for this is in the device driver */
    return EGL_FALSE;
 }
 
