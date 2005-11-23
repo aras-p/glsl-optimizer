@@ -11,6 +11,7 @@
 #include "egldisplay.h"
 #include "egldriver.h"
 #include "eglglobals.h"
+#include "egllog.h"
 
 
 #define MIN2(A, B)  (((A) < (B)) ? (A) : (B))
@@ -515,8 +516,9 @@ _eglFillInConfigs(_EGLConfig * configs,
    unsigned k;
 
    if ( bytes_per_pixel[index] == 0 ) {
-      fprintf(stderr, "[%s:%u] Framebuffer type 0x%04x has 0 bytes per pixel.\n",
-               __FUNCTION__, __LINE__, fb_type);
+      _eglLog(_EGL_INFO,
+              "[%s:%u] Framebuffer type 0x%04x has 0 bytes per pixel.",
+              __FUNCTION__, __LINE__, fb_type);
       return GL_FALSE;
    }
 
@@ -547,8 +549,9 @@ _eglFillInConfigs(_EGLConfig * configs,
       break;
 
    default:
-      fprintf(stderr, "[%s:%u] Framebuffer format 0x%04x is not GL_RGB, GL_RGBA, GL_BGR, or GL_BGRA.\n",
-               __FUNCTION__, __LINE__, fb_format);
+      _eglLog(_EGL_WARNING,
+              "[%s:%u] Framebuffer format 0x%04x is not GL_RGB, GL_RGBA, GL_BGR, or GL_BGRA.",
+              __FUNCTION__, __LINE__, fb_format);
       return GL_FALSE;
    }
 

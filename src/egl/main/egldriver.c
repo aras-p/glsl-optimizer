@@ -7,6 +7,7 @@
 #include "egldisplay.h"
 #include "egldriver.h"
 #include "eglglobals.h"
+#include "egllog.h"
 #include "eglmode.h"
 #include "eglscreen.h"
 #include "eglsurface.h"
@@ -43,19 +44,19 @@ _eglChooseDriver(EGLDisplay display)
       /* use default */
    }
    else if (name[0] == ':' && (name[1] >= '0' && name[1] <= '9') && !name[2]) {
-      printf("EGL: Use driver for screen: %s\n", name);
       /* XXX probe hardware here to determine which driver to open */
       driverName = "libEGLdri";
    }
    else if (name[0] == '!') {
       /* use specified driver name */
       driverName = name + 1;
-      printf("EGL: Use driver named %s\n", driverName);
    }
    else {
       /* Maybe display was returned by XOpenDisplay? */
-      printf("EGL: can't parse display pointer\n");
+      _eglLog(_EGL_FATAL, "eglChooseDriver() bad name");
    }
+
+   _eglLog(_EGL_INFO, "eglChooseDriver() choosing %s", driverName);
 
    drv = _eglOpenDriver(dpy, driverName);
    dpy->Driver = drv;
@@ -79,15 +80,17 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName)
    /* XXX also prepend a directory path??? */
    sprintf(driverFilename, "%s.so", driverName);
 
+   _eglLog(_EGL_DEBUG, "dlopen(%s)", driverFilename);
    lib = dlopen(driverFilename, RTLD_NOW);
    if (!lib) {
-      fprintf(stderr, "EGLdebug: Error opening %s: %s\n", driverFilename, dlerror());
+      _eglLog(_EGL_WARNING, "Could not open %s (%s)",
+              driverFilename, dlerror());
       return NULL;
    }
 
    mainFunc = (_EGLMain_t) dlsym(lib, "_eglMain");
    if (!mainFunc) {
-      fprintf(stderr, "_eglMain not found in %s", (char *) driverFilename);
+      _eglLog(_EGL_WARNING, "_eglMain not found in %s", driverFilename);
       dlclose(lib);
       return NULL;
    }
@@ -113,7 +116,8 @@ _eglCloseDriver(_EGLDriver *drv, EGLDisplay dpy)
 {
    void *handle = drv->LibHandle;
    EGLBoolean b;
-   fprintf(stderr, "EGL debug: Closing driver\n");
+
+   _eglLog(_EGL_INFO, "Closing driver");
 
    /*
     * XXX check for currently bound context/surfaces and delete them?
