@@ -123,7 +123,7 @@ _eglCloseDriver(_EGLDriver *drv, EGLDisplay dpy)
     * XXX check for currently bound context/surfaces and delete them?
     */
 
-   b = drv->Terminate(drv, dpy);
+   b = drv->API.Terminate(drv, dpy);
    dlclose(handle);
    return b;
 }
@@ -153,46 +153,46 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
    /* If a pointer is set to NULL, then the device driver _really_ has
     * to implement it.
     */
-   drv->Initialize = NULL;
-   drv->Terminate = NULL;
+   drv->API.Initialize = NULL;
+   drv->API.Terminate = NULL;
 
-   drv->GetConfigs = _eglGetConfigs;
-   drv->ChooseConfig = _eglChooseConfig;
-   drv->GetConfigAttrib = _eglGetConfigAttrib;
+   drv->API.GetConfigs = _eglGetConfigs;
+   drv->API.ChooseConfig = _eglChooseConfig;
+   drv->API.GetConfigAttrib = _eglGetConfigAttrib;
 
-   drv->CreateContext = _eglCreateContext;
-   drv->DestroyContext = _eglDestroyContext;
-   drv->MakeCurrent = _eglMakeCurrent;
-   drv->QueryContext = _eglQueryContext;
+   drv->API.CreateContext = _eglCreateContext;
+   drv->API.DestroyContext = _eglDestroyContext;
+   drv->API.MakeCurrent = _eglMakeCurrent;
+   drv->API.QueryContext = _eglQueryContext;
 
-   drv->CreateWindowSurface = _eglCreateWindowSurface;
-   drv->CreatePixmapSurface = _eglCreatePixmapSurface;
-   drv->CreatePbufferSurface = _eglCreatePbufferSurface;
-   drv->DestroySurface = _eglDestroySurface;
-   drv->QuerySurface = _eglQuerySurface;
-   drv->SurfaceAttrib = _eglSurfaceAttrib;
-   drv->BindTexImage = _eglBindTexImage;
-   drv->ReleaseTexImage = _eglReleaseTexImage;
-   drv->SwapInterval = _eglSwapInterval;
-   drv->SwapBuffers = _eglSwapBuffers;
-   drv->CopyBuffers = _eglCopyBuffers;
+   drv->API.CreateWindowSurface = _eglCreateWindowSurface;
+   drv->API.CreatePixmapSurface = _eglCreatePixmapSurface;
+   drv->API.CreatePbufferSurface = _eglCreatePbufferSurface;
+   drv->API.DestroySurface = _eglDestroySurface;
+   drv->API.QuerySurface = _eglQuerySurface;
+   drv->API.SurfaceAttrib = _eglSurfaceAttrib;
+   drv->API.BindTexImage = _eglBindTexImage;
+   drv->API.ReleaseTexImage = _eglReleaseTexImage;
+   drv->API.SwapInterval = _eglSwapInterval;
+   drv->API.SwapBuffers = _eglSwapBuffers;
+   drv->API.CopyBuffers = _eglCopyBuffers;
 
-   drv->QueryString = _eglQueryString;
-   drv->WaitGL = _eglWaitGL;
-   drv->WaitNative = _eglWaitNative;
+   drv->API.QueryString = _eglQueryString;
+   drv->API.WaitGL = _eglWaitGL;
+   drv->API.WaitNative = _eglWaitNative;
 
    /* EGL_MESA_screen */
-   drv->ChooseModeMESA = _eglChooseModeMESA; 
-   drv->GetModesMESA = _eglGetModesMESA;
-   drv->GetModeAttribMESA = _eglGetModeAttribMESA;
-   drv->GetScreensMESA = _eglGetScreensMESA;
-   drv->CreateScreenSurfaceMESA = _eglCreateScreenSurfaceMESA;
-   drv->ShowSurfaceMESA = _eglShowSurfaceMESA;
-   drv->ScreenPositionMESA = _eglScreenPositionMESA;
-   drv->QueryScreenMESA = _eglQueryScreenMESA;
-   drv->QueryScreenSurfaceMESA = _eglQueryScreenSurfaceMESA;
-   drv->QueryScreenModeMESA = _eglQueryScreenModeMESA;
-   drv->QueryModeStringMESA = _eglQueryModeStringMESA;
+   drv->API.ChooseModeMESA = _eglChooseModeMESA; 
+   drv->API.GetModesMESA = _eglGetModesMESA;
+   drv->API.GetModeAttribMESA = _eglGetModeAttribMESA;
+   drv->API.GetScreensMESA = _eglGetScreensMESA;
+   drv->API.CreateScreenSurfaceMESA = _eglCreateScreenSurfaceMESA;
+   drv->API.ShowSurfaceMESA = _eglShowSurfaceMESA;
+   drv->API.ScreenPositionMESA = _eglScreenPositionMESA;
+   drv->API.QueryScreenMESA = _eglQueryScreenMESA;
+   drv->API.QueryScreenSurfaceMESA = _eglQueryScreenSurfaceMESA;
+   drv->API.QueryScreenModeMESA = _eglQueryScreenModeMESA;
+   drv->API.QueryModeStringMESA = _eglQueryModeStringMESA;
 }
 
 

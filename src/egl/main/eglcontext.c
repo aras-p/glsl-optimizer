@@ -181,7 +181,7 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d, EGLSurface r, EGL
             draw = NULL;
          }
          /* really delete surface now */
-         drv->DestroySurface(drv, dpy, oldDrawSurface->Handle);
+         drv->API.DestroySurface(drv, dpy, oldDrawSurface->Handle);
       }
    }
    if (oldReadSurface != NULL && oldReadSurface != oldDrawSurface) {
@@ -192,7 +192,7 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d, EGLSurface r, EGL
             read = NULL;
          }
          /* really delete surface now */
-         drv->DestroySurface(drv, dpy, oldReadSurface->Handle);
+         drv->API.DestroySurface(drv, dpy, oldReadSurface->Handle);
       }
    }
    if (oldContext != NULL) {
@@ -203,7 +203,7 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d, EGLSurface r, EGL
             ctx = NULL;
          }
          /* really delete context now */
-         drv->DestroyContext(drv, dpy, oldContext->Handle);
+         drv->API.DestroyContext(drv, dpy, oldContext->Handle);
       }
    }
 

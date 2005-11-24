@@ -5,6 +5,8 @@
 #include <GLES/egl.h>
 
 
+typedef struct _egl_api _EGLAPI;
+
 typedef struct _egl_config _EGLConfig;
 
 typedef struct _egl_context _EGLContext;
