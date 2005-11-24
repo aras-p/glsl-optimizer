@@ -44,10 +44,59 @@ _eglDestroyGlobals(void)
 void
 _eglError(EGLint errCode, const char *msg)
 {
+   const char *s;
+
    if (_eglGlobal.LastError == EGL_SUCCESS) {
       _eglGlobal.LastError = errCode;
+
+      switch (errCode) {
+      case EGL_BAD_ACCESS:
+         s = "EGL_BAD_ACCESS";
+         break;
+      case EGL_BAD_ALLOC:
+         s = "EGL_BAD_ALLOC";
+         break;
+      case EGL_BAD_ATTRIBUTE:
+         s = "EGL_BAD_ATTRIBUTE";
+         break;
+      case EGL_BAD_CONFIG:
+         s = "EGL_BAD_CONFIG";
+         break;
+      case EGL_BAD_CONTEXT:
+         s = "EGL_BAD_CONTEXT";
+         break;
+      case EGL_BAD_CURRENT_SURFACE:
+         s = "EGL_BAD_CURRENT_SURFACE";
+         break;
+      case EGL_BAD_DISPLAY:
+         s = "EGL_BAD_DISPLAY";
+         break;
+      case EGL_BAD_MATCH:
+         s = "EGL_BAD_MATCH";
+         break;
+      case EGL_BAD_NATIVE_PIXMAP:
+         s = "EGL_BAD_NATIVE_PIXMAP";
+         break;
+      case EGL_BAD_NATIVE_WINDOW:
+         s = "EGL_BAD_NATIVE_WINDOW";
+         break;
+      case EGL_BAD_PARAMETER:
+         s = "EGL_BAD_PARAMETER";
+         break;
+      case EGL_BAD_SURFACE:
+         s = "EGL_BAD_SURFACE";
+         break;
+      case EGL_BAD_SCREEN_MESA:
+         s = "EGL_BAD_SCREEN_MESA";
+         break;
+      case EGL_BAD_MODE_MESA:
+         s = "EGL_BAD_MODE_MESA";
+         break;
+      default:
+         s = "other";
+      }
       /* XXX temporary */
-      fprintf(stderr, "EGL user error 0x%x in %s\n", errCode, msg);
+      fprintf(stderr, "EGL user error 0x%x (%s) in %s\n", errCode, s, msg);
    }
 }
 
