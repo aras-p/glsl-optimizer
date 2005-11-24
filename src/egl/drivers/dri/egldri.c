@@ -673,7 +673,7 @@ static __DRIfuncPtr get_proc_address( const char * proc_name )
  * \param modes  Linked list of structures to be destroyed.  All structres
  *               in the list will be freed.
  */
-void
+static void
 __egl_context_modes_destroy( __GLcontextModes * modes )
 {
    while ( modes != NULL ) {
@@ -711,7 +711,7 @@ __egl_context_modes_destroy( __GLcontextModes * modes )
  *          then propagated to drivers.  Drivers should \b never arbitrarilly
  *          extend the \c __GLcontextModes data-structure.
  */
-__GLcontextModes *
+static __GLcontextModes *
 __egl_context_modes_create( unsigned count, size_t minimum_size )
 {
    const size_t size = (minimum_size > sizeof( __GLcontextModes ))
@@ -750,7 +750,8 @@ __egl_context_modes_create( unsigned count, size_t minimum_size )
 }
 
 
-GLboolean __eglWindowExists(__DRInativeDisplay *dpy, __DRIid draw)
+static GLboolean
+__eglWindowExists(__DRInativeDisplay *dpy, __DRIid draw)
 {
     return EGL_TRUE;
 }
@@ -770,7 +771,8 @@ GLboolean __eglWindowExists(__DRInativeDisplay *dpy, __DRIid draw)
  *
  * \since Internal API version 20030317.
  */
-int __eglGetUST( int64_t * ust )
+static int
+__eglGetUST( int64_t * ust )
 {
     struct timeval  tv;
     
@@ -801,10 +803,13 @@ int __eglGetUST( int64_t * ust )
  *       XFree86 this function can be called for direct-rendering contexts
  *       when GLX_OML_sync_control appears in the client extension string.
  */
-GLboolean __eglGetMSCRate(__DRInativeDisplay * dpy, __DRIid drawable, int32_t * numerator, int32_t * denominator)
+static GLboolean
+__eglGetMSCRate(__DRInativeDisplay * dpy, __DRIid drawable,
+                int32_t * numerator, int32_t * denominator)
 {
    return EGL_TRUE;
 }
+
 
 /**
  * Table of functions exported by the loader to the driver.
@@ -981,18 +986,18 @@ _eglDRIInitDriverFallbacks(_EGLDriver *drv)
 {
    _eglInitDriverFallbacks(drv);
 
-   drv->Initialize = _eglDRIInitialize;
-   drv->Terminate = _eglDRITerminate;
-   drv->CreateContext = _eglDRICreateContext;
-   drv->MakeCurrent = _eglDRIMakeCurrent;
-   drv->CreateWindowSurface = _eglDRICreateWindowSurface;
-   drv->CreatePixmapSurface = _eglDRICreatePixmapSurface;
-   drv->CreatePbufferSurface = _eglDRICreatePbufferSurface;
-   drv->DestroySurface = _eglDRIDestroySurface;
-   drv->DestroyContext = _eglDRIDestroyContext;
-   drv->CreateScreenSurfaceMESA = _eglDRICreateScreenSurfaceMESA;
-   drv->ShowSurfaceMESA = _eglDRIShowSurfaceMESA;
-   drv->SwapBuffers = _eglDRISwapBuffers;
+   drv->API.Initialize = _eglDRIInitialize;
+   drv->API.Terminate = _eglDRITerminate;
+   drv->API.CreateContext = _eglDRICreateContext;
+   drv->API.MakeCurrent = _eglDRIMakeCurrent;
+   drv->API.CreateWindowSurface = _eglDRICreateWindowSurface;
+   drv->API.CreatePixmapSurface = _eglDRICreatePixmapSurface;
+   drv->API.CreatePbufferSurface = _eglDRICreatePbufferSurface;
+   drv->API.DestroySurface = _eglDRIDestroySurface;
+   drv->API.DestroyContext = _eglDRIDestroyContext;
+   drv->API.CreateScreenSurfaceMESA = _eglDRICreateScreenSurfaceMESA;
+   drv->API.ShowSurfaceMESA = _eglDRIShowSurfaceMESA;
+   drv->API.SwapBuffers = _eglDRISwapBuffers;
 
    /* enable supported extensions */
    drv->MESA_screen_surface = EGL_TRUE;
