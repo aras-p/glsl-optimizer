@@ -153,8 +153,11 @@ _eglParseConfigAttribs(_EGLConfig *config, const EGLint *attrib_list)
    }
 
    for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
-      EGLint k = attrib_list[i] - FIRST_ATTRIB;
-      if (k >= 0 && k < MAX_ATTRIBS) {
+      if (attrib_list[i] >= EGL_BUFFER_SIZE &&
+          attrib_list[i] <= EGL_MAX_SWAP_INTERVAL) {
+         EGLint k = attrib_list[i] - FIRST_ATTRIB;
+         assert(k >= 0);
+         assert(k < MAX_ATTRIBS);
          config->Attrib[k] = attrib_list[++i];
       }
       else {
