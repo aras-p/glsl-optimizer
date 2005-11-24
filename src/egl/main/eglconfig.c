@@ -147,7 +147,10 @@ _eglParseConfigAttribs(_EGLConfig *config, const EGLint *attrib_list)
 {
    EGLint i;
 
-   /* XXX set all config attribs to EGL_DONT_CARE */
+   /* set all config attribs to EGL_DONT_CARE */
+   for (i = 0; i < MAX_ATTRIBS; i++) {
+      config->Attrib[i] = EGL_DONT_CARE;
+   }
 
    for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
       EGLint k = attrib_list[i] - FIRST_ATTRIB;
