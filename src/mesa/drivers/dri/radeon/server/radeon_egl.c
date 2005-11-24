@@ -553,7 +553,9 @@ static void RADEONDRIAgpHeapInit(driDisplay *disp,
  * Setups a RADEONDRIRec structure to be passed to radeon_dri.so for its
  * initialization.
  */
-static int RADEONScreenInit( driDisplay *disp, RADEONInfoPtr info, RADEONDRIPtr pRADEONDRI)
+static int
+RADEONScreenInit( driDisplay *disp, RADEONInfoPtr info,
+                  RADEONDRIPtr pRADEONDRI)
 {
    int i, err;
 
@@ -971,8 +973,8 @@ _eglMain(_EGLDisplay *dpy)
    _eglDRIInitDriverFallbacks(&radeon->Base);
 
    /* then plug in our radeon-specific functions */
-   radeon->Base.Initialize = radeonInitialize;
-   radeon->Base.ShowSurfaceMESA = radeonShowSurfaceMESA;
+   radeon->Base.API.Initialize = radeonInitialize;
+   radeon->Base.API.ShowSurfaceMESA = radeonShowSurfaceMESA;
 
    return &radeon->Base;
 }
