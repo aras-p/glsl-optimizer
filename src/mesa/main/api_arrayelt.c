@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -773,17 +773,17 @@ void GLAPIENTRY _ae_loopback_array_elt( GLint elt )
 
    /* generic attributes */
    for (at = actx->attribs; at->func; at++) {
-      const GLubyte *src = at->array->BufferObj->Data
-                         + (uintptr_t) at->array->Ptr
-                         + elt * at->array->StrideB;
+      const GLubyte *src
+         = ADD_POINTERS(at->array->BufferObj->Data, at->array->Ptr)
+         + elt * at->array->StrideB;
       at->func( at->index, src );
    }
 
    /* conventional arrays */
    for (aa = actx->arrays; aa->offset != -1 ; aa++) {
-      const GLubyte *src = aa->array->BufferObj->Data
-                         + (uintptr_t) aa->array->Ptr
-                         + elt * aa->array->StrideB;
+      const GLubyte *src
+         = ADD_POINTERS(aa->array->BufferObj->Data, aa->array->Ptr)
+         + elt * aa->array->StrideB;
       CALL_by_offset( disp, (array_func), aa->offset, 
 		      ((const void *) src) );
    }
