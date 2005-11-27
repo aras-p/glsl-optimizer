@@ -25,8 +25,9 @@ struct _egl_context
 };
 
 
-extern void
-_eglInitContext(_EGLContext *ctx);
+extern EGLBoolean
+_eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
+                EGLConfig config, const EGLint *attrib_list);
 
 
 extern void

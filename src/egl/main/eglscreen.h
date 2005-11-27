@@ -6,6 +6,16 @@
  * an integer.
  */
 
+
+/**
+ * Per-screen information.
+ * Note that an EGL screen doesn't have a size.  A screen may be set to
+ * one of several display modes (width/height/scanrate).  The screen
+ * then displays a drawing surface.  The drawing surface must be at least
+ * as large as the display mode's resolution.  If it's larger, the
+ * OriginX and OriginY fields control what part of the surface is visible
+ * on the screen.
+ */
 struct _egl_screen
 {
    EGLScreenMESA Handle; /* The public/opaque handle which names this object */
@@ -35,10 +45,6 @@ extern EGLBoolean
 _eglGetScreensMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA *screens, EGLint max_screens, EGLint *num_screens);
 
 
-extern EGLSurface
-_eglInitScreenSurface(_EGLSurface *surf, _EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list);
-
-                            
 extern EGLSurface
 _eglCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list);
 

@@ -106,67 +106,30 @@ _eglGetScreensMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA *screens,
 
 
 /**
- * Initialize the given _EGLSurface object.  Do error checking.
- * Assign it an EGLSurface handle and insert into hash table.
- * \return EGLSurface handle or EGL_NO_SURFACE if error.
- */
-EGLSurface
-_eglInitScreenSurface(_EGLSurface *surf, _EGLDriver *drv, EGLDisplay dpy,
-                      EGLConfig config, const EGLint *attrib_list)
-{
-   EGLint width = 0, height = 0;
-   EGLint i;
-
-   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
-      switch (attrib_list[i]) {
-      case EGL_WIDTH:
-         width = attrib_list[++i];
-         break;
-      case EGL_HEIGHT:
-         height = attrib_list[++i];
-         break;
-      default:
-         _eglError(EGL_BAD_ATTRIBUTE, "eglCreateScreenSurfaceMESA");
-         return EGL_NO_SURFACE;
-      }
-   }
-
-   if (width <= 0 || height <= 0) {
-      _eglError(EGL_BAD_ATTRIBUTE,
-                "eglCreateScreenSurfaceMESA(width or height)");
-      return EGL_NO_SURFACE;
-   }
-
-   _eglInitSurface(surf);
-   surf->Width = width;
-   surf->Height = height;
-   surf->Type = EGL_SCREEN_BIT_MESA;
-   surf->Config =  _eglLookupConfig(drv, dpy, config);
-
-   /* insert into hash table */
-   _eglSaveSurface(surf);
-   assert(surf->Handle);
-
-   return surf->Handle;
-}
-
-
-/**
- * Create a drawing surface which can be directly displayed on a screen.
+ * Example function - drivers should do a proper implementation.
  */
 EGLSurface
 _eglCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
                             const EGLint *attrib_list)
 {
+#if 0 /* THIS IS JUST EXAMPLE CODE */
    _EGLSurface *surf;
-   EGLSurface surface;
-   
-   surf = (_EGLSurface *) malloc(sizeof(_EGLSurface));
-   surface = _eglInitScreenSurface(surf, drv, dpy, config, attrib_list);
-   if (surface == EGL_NO_SURFACE)
-      free(surf);
 
-   return surface;
+   surf = (_EGLSurface *) calloc(1, sizeof(_EGLSurface));
+   if (!surf)
+      return EGL_NO_SURFACE;
+
+   if (!_eglInitSurface(drv, dpy, surf, EGL_SCREEN_BIT_MESA,
+                        config, attrib_list)) {
+      free(surf);
+      return EGL_NO_SURFACE;
+   }
+
+   _eglSaveSurface(surf);
+
+   return surf->Handle;
+#endif
+   return EGL_NO_SURFACE;
 }
 
 

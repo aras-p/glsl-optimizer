@@ -3,6 +3,7 @@
 #include <string.h>
 #include "eglconfig.h"
 #include "eglcontext.h"
+#include "egldisplay.h"
 #include "egldriver.h"
 #include "eglglobals.h"
 #include "eglhash.h"
@@ -12,11 +13,36 @@
 /**
  * Initialize the given _EGLContext object to defaults.
  */
-void
-_eglInitContext(_EGLContext *ctx)
+EGLBoolean
+_eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
+                EGLConfig config, const EGLint *attrib_list)
 {
-   /* just init to zero for now */
+   _EGLConfig *conf;
+   _EGLDisplay *display = _eglLookupDisplay(dpy);
+   EGLint i;
+
+   conf = _eglLookupConfig(drv, dpy, config);
+   if (!conf) {
+      _eglError(EGL_BAD_CONFIG, "eglCreateContext");
+      return EGL_FALSE;
+   }
+
+   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
+      switch (attrib_list[i]) {
+         /* no attribs defined for now */
+      default:
+         _eglError(EGL_BAD_ATTRIBUTE, "eglCreateContext");
+         return EGL_NO_CONTEXT;
+      }
+   }
+
    memset(ctx, 0, sizeof(_EGLContext));
+   ctx->Display = display;
+   ctx->Config = conf;
+   ctx->DrawSurface = EGL_NO_SURFACE;
+   ctx->ReadSurface = EGL_NO_SURFACE;
+
+   return EGL_TRUE;
 }
 
 
@@ -70,22 +96,24 @@ _eglGetCurrentContext(void)
  * Just a placeholder/demo function.  Real driver will never use this!
  */
 EGLContext
-_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext share_list, const EGLint *attrib_list)
+_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+                  EGLContext share_list, const EGLint *attrib_list)
 {
-   _EGLConfig *conf = _eglLookupConfig(drv, dpy, config);
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, "eglCreateContext");
+#if 0 /* example code */
+   _EGLContext *context;
+
+   context = (_EGLContext *) calloc(1, sizeof(_EGLContext));
+   if (!context)
+      return EGL_NO_CONTEXT;
+
+   if (!_eglInitContext(drv, dpy, context, config, attrib_list)) {
+      free(context);
       return EGL_NO_CONTEXT;
    }
 
-   if (share_list != EGL_NO_CONTEXT) {
-      _EGLContext *shareCtx = _eglLookupContext(share_list);
-      if (!shareCtx) {
-         _eglError(EGL_BAD_CONTEXT, "eglCreateContext(share_list)");
-         return EGL_NO_CONTEXT;
-      }
-   }
-
+   _eglSaveContext(context);
+   return context->Handle;
+#endif
    return EGL_NO_CONTEXT;
 }
 
@@ -115,7 +143,8 @@ _eglDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx)
 
 
 EGLBoolean
-_eglQueryContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx, EGLint attribute, EGLint *value)
+_eglQueryContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx,
+                 EGLint attribute, EGLint *value)
 {
    _EGLContext *c = _eglLookupContext(ctx);
 
@@ -144,7 +173,8 @@ _eglQueryContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx, EGLint attribu
  * Then, the driver will do its device-dependent Make-Current stuff.
  */
 EGLBoolean
-_eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d, EGLSurface r, EGLContext context)
+_eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
+                EGLSurface r, EGLContext context)
 {
    _EGLContext *ctx = _eglLookupContext(context);
    _EGLSurface *draw = _eglLookupSurface(d);

@@ -28,8 +28,10 @@ struct _egl_surface
 };
 
 
-extern void
-_eglInitSurface(_EGLSurface *surf);
+extern EGLBoolean
+_eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
+                _EGLSurface *surf, EGLint type, EGLConfig config,
+                const EGLint *attrib_list);
 
 
 extern void
@@ -91,10 +93,5 @@ _eglReleaseTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, EGLint 
 extern EGLBoolean
 _eglSwapInterval(_EGLDriver *drv, EGLDisplay dpy, EGLint interval);
 
-
-
-extern EGLSurface
-_eglInitPbufferSurface(_EGLSurface *surface, _EGLDriver *drv, EGLDisplay dpy,
-                       EGLConfig config, const EGLint *attrib_list);
 
 #endif /* EGLSURFACE_INCLUDED */

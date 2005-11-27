@@ -303,7 +303,8 @@ _eglCompareConfigs(const _EGLConfig *a, const _EGLConfig *b)
  * Typical fallback routine for eglChooseConfig
  */
 EGLBoolean
-_eglChooseConfig(_EGLDriver *drv, EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config)
+_eglChooseConfig(_EGLDriver *drv, EGLDisplay dpy, const EGLint *attrib_list,
+                 EGLConfig *configs, EGLint config_size, EGLint *num_config)
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLConfig criteria;
@@ -339,7 +340,8 @@ _eglChooseConfig(_EGLDriver *drv, EGLDisplay dpy, const EGLint *attrib_list, EGL
  * Fallback for eglGetConfigAttrib.
  */
 EGLBoolean
-_eglGetConfigAttrib(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLint attribute, EGLint *value)
+_eglGetConfigAttrib(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+                    EGLint attribute, EGLint *value)
 {
    const _EGLConfig *conf = _eglLookupConfig(drv, dpy, config);
    const EGLint k = attribute - FIRST_ATTRIB;
@@ -358,7 +360,8 @@ _eglGetConfigAttrib(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLint at
  * Fallback for eglGetConfigs.
  */
 EGLBoolean
-_eglGetConfigs(_EGLDriver *drv, EGLDisplay dpy, EGLConfig *configs, EGLint config_size, EGLint *num_config)
+_eglGetConfigs(_EGLDriver *drv, EGLDisplay dpy, EGLConfig *configs,
+               EGLint config_size, EGLint *num_config)
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
 
@@ -449,11 +452,12 @@ _eglGetConfigs(_EGLDriver *drv, EGLDisplay dpy, EGLConfig *configs, EGLint confi
  */
 GLboolean
 _eglFillInConfigs(_EGLConfig * configs,
-                GLenum fb_format, GLenum fb_type,
-                const u_int8_t * depth_bits, const u_int8_t * stencil_bits,
-                unsigned num_depth_stencil_bits,
-                const GLenum * db_modes, unsigned num_db_modes,
-                int visType) {
+                  GLenum fb_format, GLenum fb_type,
+                  const u_int8_t * depth_bits, const u_int8_t * stencil_bits,
+                  unsigned num_depth_stencil_bits,
+                  const GLenum * db_modes, unsigned num_db_modes,
+                  int visType)
+{
    static const u_int8_t bits_table[3][4] = {
             /* R  G  B  A */
             { 5, 6, 5, 0 },  /* Any GL_UNSIGNED_SHORT_5_6_5 */
