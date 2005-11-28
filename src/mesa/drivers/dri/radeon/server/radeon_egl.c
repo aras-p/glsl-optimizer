@@ -17,6 +17,7 @@
 #include "egldisplay.h"
 #include "egldriver.h"
 #include "eglglobals.h"
+#include "egllog.h"
 #include "eglmode.h"
 #include "eglscreen.h"
 #include "eglsurface.h"
@@ -41,8 +42,9 @@ typedef struct radeon_driver
    GLuint radeonStuff;
 } radeonDriver;
 
-static int RADEONCheckDRMVersion( driDisplay *disp,
-                                  RADEONInfoPtr info )
+
+static int
+RADEONCheckDRMVersion(driDisplay *disp, RADEONInfoPtr info)
 {
    drmVersionPtr  version;
 
@@ -117,7 +119,7 @@ static int RADEONDRIPciInit(driDisplay *disp, RADEONInfoPtr info)
     }
     fprintf(stderr,
                "[pci] %d kB allocated with handle 0x%04lx\n",
-               info->gartSize*1024, info->gartMemHandle);
+            info->gartSize*1024, (long) info->gartMemHandle);
 
    info->gartOffset = 0;
 
@@ -309,7 +311,12 @@ static int RADEONDRIAgpInit( driDisplay *disp, RADEONInfoPtr info)
 }
 
 
-static int RADEONMemoryInit( driDisplay *disp, RADEONInfoPtr info )
+/**
+ * Initialize all the memory-related fields of the RADEONInfo object.
+ * This includes the various 'offset' and 'size' fields.
+ */
+static int
+RADEONMemoryInit(driDisplay *disp, RADEONInfoPtr info)
 {
    int        width_bytes = disp->virtualWidth * disp->cpp;
    int        cpp         = disp->cpp;
@@ -323,15 +330,6 @@ static int RADEONMemoryInit( driDisplay *disp, RADEONInfoPtr info )
 
    info->frontOffset = 0;
    info->frontPitch = disp->virtualWidth;
-
-   fprintf(stderr,
-           "Using %d MB AGP aperture\n", info->gartSize);
-   fprintf(stderr,
-           "Using %d MB for the ring buffer\n", info->ringSize);
-   fprintf(stderr,
-           "Using %d MB for vertex/indirect buffers\n", info->bufSize);
-   fprintf(stderr,
-           "Using %d MB for AGP textures\n", info->gartTexSize);
 
    /* Front, back and depth buffers - everything else texture??
     */
@@ -378,15 +376,17 @@ static int RADEONMemoryInit( driDisplay *disp, RADEONInfoPtr info )
 
 
    fprintf(stderr,
-           "Will use back buffer at offset 0x%x\n",
-           info->backOffset);
+           "Will use back buffer at offset 0x%x, pitch %d\n",
+           info->backOffset, info->backPitch);
    fprintf(stderr,
-           "Will use depth buffer at offset 0x%x\n",
-           info->depthOffset);
+           "Will use depth buffer at offset 0x%x, pitch %d\n",
+           info->depthOffset, info->depthPitch);
    fprintf(stderr,
            "Will use %d kb for textures at offset 0x%x\n",
            info->textureSize/1024, info->textureOffset);
 
+   /* XXX I don't think these are needed. */
+#if 0
    info->frontPitchOffset = (((info->frontPitch * cpp / 64) << 22) |
                              (info->frontOffset >> 10));
 
@@ -395,6 +395,7 @@ static int RADEONMemoryInit( driDisplay *disp, RADEONInfoPtr info )
 
    info->depthPitchOffset = (((info->depthPitch * cpp / 64) << 22) |
                              (info->depthOffset >> 10));
+#endif
 
    return 1;
 }
@@ -429,6 +430,13 @@ static int RADEONDRIKernelInit( driDisplay *disp,
       drmInfo.func             = RADEON_INIT_CP;
 
    /* This is the struct passed to the kernel module for its initialization */
+   /* XXX problem here:
+    * The front/back/depth_offset/pitch fields may change depending upon
+    * which drawing surface we're using!!!  They can't be set just once
+    * during initialization.
+    * Looks like we'll need a new ioctl to update these fields for drawing
+    * to other surfaces...
+    */
    drmInfo.sarea_priv_offset   = sizeof(drm_sarea_t);
    drmInfo.cp_mode             = RADEON_DEFAULT_CP_BM_MODE;
    drmInfo.gart_size            = info->gartSize*1024*1024;
@@ -559,13 +567,13 @@ RADEONScreenInit( driDisplay *disp, RADEONInfoPtr info,
 {
    int i, err;
 
+   /* XXX this probably isn't needed here */
    {
       int  width_bytes = (disp->virtualWidth * disp->cpp);
       int  maxy        = disp->fbSize / width_bytes;
 
-
       if (maxy <= disp->virtualHeight * 3) {
-         fprintf(stderr,
+         _eglLog(_EGL_WARNING,
                  "Static buffer allocation failed -- "
                  "need at least %d kB video memory (have %d kB)\n",
                  (disp->virtualWidth * disp->virtualHeight *
@@ -573,30 +581,6 @@ RADEONScreenInit( driDisplay *disp, RADEONInfoPtr info,
                  disp->fbSize / 1024);
          return 0;
       }
-   }
-   if (info->ChipFamily >= CHIP_FAMILY_R300) {
-      fprintf(stderr,
-              "Direct rendering not yet supported on "
-              "Radeon 9700 and newer cards\n");
-      return 0;
-   }
-
-   radeon_drm_page_size = getpagesize();
-
-   /* Check the radeon DRM version */
-   if (!RADEONCheckDRMVersion(disp, info)) {
-      return 0;
-   }
-
-   if (disp->isPCI) {
-      /* Initialize PCI */
-      if (!RADEONDRIPciInit(disp, info))
-         return 0;
-   }
-   else {
-      /* Initialize AGP */
-      if (!RADEONDRIAgpInit(disp, info))
-         return 0;
    }
 
    /* Memory manager setup */
@@ -608,7 +592,8 @@ RADEONScreenInit( driDisplay *disp, RADEONInfoPtr info,
     * initialization ioctls.
     */
    if ((err = drmCreateContext(disp->drmFD, &disp->serverContext)) != 0) {
-      fprintf(stderr, "%s: drmCreateContext failed %d\n", __FUNCTION__, err);
+      _eglLog(_EGL_WARNING, "%s: drmCreateContext failed %d\n",
+              __FUNCTION__, err);
       return 0;
    }
 
@@ -616,7 +601,7 @@ RADEONScreenInit( driDisplay *disp, RADEONInfoPtr info,
 
    /* Initialize the kernel data structures */
    if (!RADEONDRIKernelInit(disp, info)) {
-      fprintf(stderr, "RADEONDRIKernelInit failed\n");
+      _eglLog(_EGL_WARNING, "RADEONDRIKernelInit failed\n");
       DRM_UNLOCK(disp->drmFD, disp->pSAREA, disp->serverContext);
       return 0;
    }
@@ -634,7 +619,6 @@ RADEONScreenInit( driDisplay *disp, RADEONInfoPtr info,
    /* Initialize kernel gart memory manager */
    RADEONDRIAgpHeapInit(disp, info);
 
-   fprintf(stderr,"page flipping %sabled\n", info->page_flip_enable?"en":"dis");
    /* Initialize the SAREA private data structure */
    {
       drm_radeon_sarea_t *pSAREAPriv;
@@ -808,6 +792,17 @@ static int radeonInitFBDev( driDisplay *disp, RADEONDRIPtr pRADEONDRI )
    info->ringSize      = RADEON_DEFAULT_RING_SIZE;
    info->page_flip_enable = RADEON_DEFAULT_PAGE_FLIP;
 
+   fprintf(stderr,
+           "Using %d MB AGP aperture\n", info->gartSize);
+   fprintf(stderr,
+           "Using %d MB for the ring buffer\n", info->ringSize);
+   fprintf(stderr,
+           "Using %d MB for vertex/indirect buffers\n", info->bufSize);
+   fprintf(stderr,
+           "Using %d MB for AGP textures\n", info->gartTexSize);
+   fprintf(stderr,
+           "page flipping %sabled\n", info->page_flip_enable?"en":"dis");
+
    info->Chipset = disp->chipset;
 
    if (!get_chipfamily_from_chipset( info )) {
@@ -815,8 +810,33 @@ static int radeonInitFBDev( driDisplay *disp, RADEONDRIPtr pRADEONDRI )
       fprintf(stderr, "==> Verify PCI BusID is correct in miniglx.conf\n");
       return 0;
    }
+   if (info->ChipFamily >= CHIP_FAMILY_R300) {
+      fprintf(stderr,
+              "Direct rendering not yet supported on "
+              "Radeon 9700 and newer cards\n");
+      return 0;
+   }
 
+#if 00
+   /* don't seem to need this here */
    info->frontPitch = disp->virtualWidth;
+#endif
+
+   /* Check the radeon DRM version */
+   if (!RADEONCheckDRMVersion(disp, info)) {
+      return 0;
+   }
+
+   if (disp->isPCI) {
+      /* Initialize PCI */
+      if (!RADEONDRIPciInit(disp, info))
+         return 0;
+   }
+   else {
+      /* Initialize AGP */
+      if (!RADEONDRIAgpInit(disp, info))
+         return 0;
+   }
 
    if (!RADEONScreenInit( disp, info, pRADEONDRI))
       return 0;
@@ -830,9 +850,15 @@ static int radeonInitFBDev( driDisplay *disp, RADEONDRIPtr pRADEONDRI )
    return 1;
 }
 
+
+/**
+ * Create list of all supported surface configs, attach list to the display.
+ */
 static EGLBoolean
-radeonFillInConfigs(_EGLDisplay *disp, unsigned pixel_bits, unsigned depth_bits,
-               unsigned stencil_bits, GLboolean have_back_buffer) {
+radeonFillInConfigs(_EGLDisplay *disp, unsigned pixel_bits,
+                    unsigned depth_bits,
+                    unsigned stencil_bits, GLboolean have_back_buffer)
+{
    _EGLConfig *configs;
    _EGLConfig *c;
    unsigned int i, num_configs;
@@ -879,7 +905,8 @@ radeonFillInConfigs(_EGLDisplay *disp, unsigned pixel_bits, unsigned depth_bits,
    configs = calloc(sizeof(*configs), num_configs);
    c = configs;
    if (!_eglFillInConfigs(c, fb_format, fb_type,
-                          depth_bits_array, stencil_bits_array, depth_buffer_factor,
+                          depth_bits_array, stencil_bits_array,
+                          depth_buffer_factor,
                           back_buffer_modes, back_buffer_factor,
                           GLX_TRUE_COLOR)) {
       fprintf(stderr, "[%s:%u] Error creating FBConfig!\n",
@@ -904,23 +931,31 @@ radeonFillInConfigs(_EGLDisplay *disp, unsigned pixel_bits, unsigned depth_bits,
    return EGL_TRUE;
 }
 
+
 /**
  * Show the given surface on the named screen.
  * If surface is EGL_NO_SURFACE, disable the screen's output.
  */
 static EGLBoolean
 radeonShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
-                    EGLSurface surface, EGLModeMESA m)
+                      EGLSurface surface, EGLModeMESA m)
 {
    EGLBoolean b = _eglDRIShowSurfaceMESA(drv, dpy, screen, surface, m);
    return b;
 }
 
+
+/**
+ * Called via eglInitialize() by user.
+ */
 static EGLBoolean
 radeonInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 {
    __DRIframebuffer framebuffer;
    driDisplay *display;
+
+   /* one-time init */
+   radeon_drm_page_size = getpagesize();
 
    if (!_eglDRIInitialize(drv, dpy, major, minor))
       return EGL_FALSE;
@@ -930,8 +965,17 @@ radeonInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
    framebuffer.dev_priv_size = sizeof(RADEONDRIRec);
    framebuffer.dev_priv = malloc(sizeof(RADEONDRIRec));
 
+   /* XXX we shouldn't hard-code values here! */
+   /* we won't know the screen surface size until the user calls
+    * eglCreateScreenSurfaceMESA().
+    */
+#if 0
    display->virtualWidth = 1024;
    display->virtualHeight = 768;
+#else
+   display->virtualWidth = 1280;
+   display->virtualHeight = 1024;
+#endif
    display->bpp = 32;
    display->cpp = 4;
 
@@ -944,11 +988,12 @@ radeonInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
    if (!_eglDRICreateDisplay(display, &framebuffer))
       return EGL_FALSE;
 
-   if (!_eglDRICreateScreen(display))
+   if (!_eglDRICreateScreens(display))
       return EGL_FALSE;
 
-   radeonFillInConfigs(&display->Base, 32, 24, 8, 1);
-   radeonFillInConfigs(&display->Base, 16, 16, 0, 1);
+   /* create a variety of both 32 and 16-bit configurations */
+   radeonFillInConfigs(&display->Base, 32, 24, 8, GL_TRUE);
+   radeonFillInConfigs(&display->Base, 16, 16, 0, GL_TRUE);
 
    drv->Initialized = EGL_TRUE;
    return EGL_TRUE;
