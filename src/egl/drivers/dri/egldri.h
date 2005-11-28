@@ -36,10 +36,10 @@ typedef struct dri_display
    void *driverPrivate;
    drm_magic_t magic;
 
-   __GLcontextModes *driver_modes;
    __DRIscreen driScreen;
 
 } driDisplay;
+
 
 /**
  * dri driver-specific screen class derived from _EGLScreen
@@ -47,7 +47,7 @@ typedef struct dri_display
 typedef struct dri_screen
 {
    _EGLScreen Base;
-   char fb[NAME_MAX];
+   char fb[NAME_MAX];   /** the screen name, like "fb0" */
 } driScreen;
 
 
@@ -108,6 +108,6 @@ extern EGLBoolean _eglDRIShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScr
 extern EGLBoolean _eglDRIInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor);
 extern EGLBoolean _eglDRIGetDisplayInfo(driDisplay *dpy);
 extern EGLBoolean _eglDRICreateDisplay(driDisplay *dpy, __DRIframebuffer *framebuffer);
-extern EGLBoolean _eglDRICreateScreen(driDisplay *dpy);
+extern EGLBoolean _eglDRICreateScreens(driDisplay *dpy);
 
 #endif /* EGLDRI_INCLUDED */

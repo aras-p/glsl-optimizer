@@ -1,6 +1,13 @@
-/*
- * Generic EGL driver for DRI
+/**
+ * Generic EGL driver for DRI.
+ *
+ * This file contains all the code needed to interface DRI-based drivers
+ * with libEGL.
+ *
+ * There's a lot of dependencies on fbdev and the /sys/ filesystem.
  */
+
+
 #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
@@ -19,6 +26,7 @@
 #include "eglsurface.h"
 #include "eglscreen.h"
 #include "eglglobals.h"
+#include "egllog.h"
 #include "eglmode.h"
 
 #include "egldri.h"
@@ -27,9 +35,11 @@ const char *sysfs = "/sys/class";
 #define None 0
 static const int empty_attribute_list[1] = { None };
 
+
 /**
- * The bootstrap function.  Return a new driDriver object and
- * plug in API functions.
+ * The bootstrap function.
+ * Return a new driDriver object and plug in API functions.
+ * This function, in turn, loads a specific DRI driver (ex: r200_dri.so).
  */
 _EGLDriver *
 _eglMain(_EGLDisplay *dpy)
@@ -37,13 +47,15 @@ _eglMain(_EGLDisplay *dpy)
    int length;
    char path[NAME_MAX];
    struct dirent *dirent;
+#if 1
    FILE *file;
+#endif
    DIR *dir;
    _EGLDriver *driver = NULL;;
 
    snprintf(path, sizeof(path), "%s/drm", sysfs);
    if (!(dir = opendir(path))) {
-      printf("EGL - %s DRM devices not found.", path);
+      _eglLog(_EGL_WARNING, "%s DRM devices not found.", path);
       return EGL_FALSE;
    }
    while ((dirent = readdir(dir))) {
@@ -54,10 +66,18 @@ _eglMain(_EGLDisplay *dpy)
          continue;
 
       snprintf(path, sizeof(path), "%s/drm/card%s/dri_library_name", sysfs, &dpy->Name[1]);
+      _eglLog(_EGL_INFO, "Opening %s", path);
+#if 1
       file = fopen(path, "r");
+      if (!file) {
+         _eglLog(_EGL_WARNING, "Failed to open %s", path);
+         return NULL;
+      }
       fgets(path, sizeof(path), file);
       fclose(file);
-
+#else
+      strcpy(path, "r200\n");
+#endif
       if ((length = strlen(path)) > 0)
          path[length - 1] = '\0';  /* remove the trailing newline from sysfs */
       strncat(path, "_dri", sizeof(path));
@@ -72,52 +92,47 @@ _eglMain(_EGLDisplay *dpy)
 }
 
 
+/**
+ * Called by eglCreateContext via drv->API.CreateContext().
+ */
 static EGLContext
-_eglDRICreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext share_list, const EGLint *attrib_list)
+_eglDRICreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+                     EGLContext share_list, const EGLint *attrib_list)
 {
-   _EGLConfig *conf;
-   driContext *c;
    driDisplay *disp = Lookup_driDisplay(dpy);
-   driContext *share = Lookup_driContext(share_list);
+   driContext *c, *share;
    void *sharePriv;
-   __GLcontextModes mode;
-   int i;
-
-   conf = _eglLookupConfig(drv, dpy, config);
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, "eglCreateContext");
-      return EGL_NO_CONTEXT;
-   }
-
-   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
-      switch (attrib_list[i]) {
-         /* no attribs defined for now */
-      default:
-         _eglError(EGL_BAD_ATTRIBUTE, "eglCreateContext");
-         return EGL_NO_CONTEXT;
-      }
-   }
+   _EGLConfig *conf;
+   __GLcontextModes visMode;
 
    c = (driContext *) calloc(1, sizeof(*c));
    if (!c)
       return EGL_NO_CONTEXT;
 
-   _eglInitContext(&c->Base);
-   c->Base.Display = &disp->Base;
-   c->Base.Config = conf;
-   c->Base.DrawSurface = EGL_NO_SURFACE;
-   c->Base.ReadSurface = EGL_NO_SURFACE;
+   if (!_eglInitContext(drv, dpy, &c->Base, config, attrib_list)) {
+      free(c);
+      return EGL_NO_CONTEXT;
+   }
 
-   _eglConfigToContextModesRec(conf, &mode);
-
+   if (share_list != EGL_NO_CONTEXT) {
+      _EGLContext *shareCtx = _eglLookupContext(share_list);
+      if (!shareCtx) {
+         _eglError(EGL_BAD_CONTEXT, "eglCreateContext(share_list)");
+         return EGL_FALSE;
+      }
+   }
+   share = Lookup_driContext(share_list);
    if (share)
       sharePriv = share->driContext.private;
    else
       sharePriv = NULL;
 
-   c->driContext.private = disp->driScreen.createNewContext(disp, &mode,
-           GLX_WINDOW_BIT, sharePriv, &c->driContext);
+   conf = _eglLookupConfig(drv, dpy, config);
+   assert(conf);
+   _eglConfigToContextModesRec(conf, &visMode);
 
+   c->driContext.private = disp->driScreen.createNewContext(disp, &visMode,
+           GLX_WINDOW_BIT, sharePriv, &c->driContext);
    if (!c->driContext.private) {
       free(c);
       return EGL_FALSE;
@@ -125,14 +140,14 @@ _eglDRICreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLConte
 
    /* generate handle and insert into hash table */
    _eglSaveContext(&c->Base);
-   assert(c->Base.Handle);
 
    return c->Base.Handle;
 }
 
 
 static EGLBoolean
-_eglDRIMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext context)
+_eglDRIMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw,
+                   EGLSurface read, EGLContext context)
 {
    driDisplay *disp = Lookup_driDisplay(dpy);
    driContext *ctx = Lookup_driContext(context);
@@ -144,65 +159,18 @@ _eglDRIMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface 
 
    if (ctx) {
       ctx->driContext.bindContext(disp, 0, read, draw, &ctx->driContext);
-   } else {
-//      _mesa_make_current( NULL, NULL, NULL );
+   }
+   else {
+      /* what's this??? */
+      /*      _mesa_make_current( NULL, NULL, NULL );*/
    }
    return EGL_TRUE;
 }
 
 
 static EGLSurface
-_eglDRICreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, NativeWindowType window, const EGLint *attrib_list)
-{
-   int i;
-   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
-      switch (attrib_list[i]) {
-         /* no attribs at this time */
-      default:
-         _eglError(EGL_BAD_ATTRIBUTE, "eglCreateWindowSurface");
-         return EGL_NO_SURFACE;
-      }
-   }
-   printf("eglCreateWindowSurface()\n");
-   /* XXX unfinished */
-
-   return EGL_NO_SURFACE;
-}
-
-
-static EGLSurface
-_eglDRICreatePixmapSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, NativePixmapType pixmap, const EGLint *attrib_list)
-{
-   _EGLConfig *conf;
-   EGLint i;
-
-   conf = _eglLookupConfig(drv, dpy, config);
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, "eglCreatePixmapSurface");
-      return EGL_NO_SURFACE;
-   }
-
-   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
-      switch (attrib_list[i]) {
-         /* no attribs at this time */
-      default:
-         _eglError(EGL_BAD_ATTRIBUTE, "eglCreatePixmapSurface");
-         return EGL_NO_SURFACE;
-      }
-   }
-
-   if (conf->Attrib[EGL_SURFACE_TYPE - FIRST_ATTRIB] == 0) {
-      _eglError(EGL_BAD_MATCH, "eglCreatePixmapSurface");
-      return EGL_NO_SURFACE;
-   }
-
-   printf("eglCreatePixmapSurface()\n");
-   return EGL_NO_SURFACE;
-}
-
-
-static EGLSurface
-_eglDRICreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list)
+_eglDRICreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+                            const EGLint *attrib_list)
 {
    driSurface *surf;
 
@@ -211,26 +179,29 @@ _eglDRICreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, c
       return EGL_NO_SURFACE;
    }
 
-   if (_eglInitPbufferSurface(&surf->Base, drv, dpy, config, attrib_list) == EGL_NO_SURFACE) {
+   if (!_eglInitSurface(drv, dpy, &surf->Base, EGL_PBUFFER_BIT,
+                        config, attrib_list)) {
       free(surf);
       return EGL_NO_SURFACE;
    }
 
    /* create software-based pbuffer */
    {
-//      GLcontext *ctx = NULL; /* this _should_ be OK */
-      GLvisual vis;
+#if 0
+      GLcontext *ctx = NULL; /* this _should_ be OK */
+#endif
+      GLvisual visMode;
       _EGLConfig *conf = _eglLookupConfig(drv, dpy, config);
       assert(conf); /* bad config should be caught earlier */
-      _eglConfigToContextModesRec(conf, &vis);
+      _eglConfigToContextModesRec(conf, &visMode);
 
 #if 0
-      surf->mesa_framebuffer = _mesa_create_framebuffer(&vis);
+      surf->mesa_framebuffer = _mesa_create_framebuffer(&visMode);
       _mesa_add_soft_renderbuffers(surf->mesa_framebuffer,
                                    GL_TRUE, /* color bufs */
-                                   vis.haveDepthBuffer,
-                                   vis.haveStencilBuffer,
-                                   vis.haveAccumBuffer,
+                                   visMode.haveDepthBuffer,
+                                   visMode.haveStencilBuffer,
+                                   visMode.haveAccumBuffer,
                                    GL_FALSE, /* alpha */
                                    GL_FALSE /* aux */ );
 
@@ -239,6 +210,8 @@ _eglDRICreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, c
                                surf->Base.Width, surf->Base.Height);
 #endif
    }
+
+   _eglSaveSurface(&surf->Base);
 
    return surf->Base.Handle;
 }
@@ -249,6 +222,7 @@ _eglDRIDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
    driDisplay *disp = Lookup_driDisplay(dpy);
    driSurface *fs = Lookup_driSurface(surface);
+
    _eglRemoveSurface(&fs->Base);
 
    fs->drawable.destroyDrawable(disp, fs->drawable.private);
@@ -275,7 +249,8 @@ _eglDRIDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
 
    if (fc->Base.IsBound) {
       fc->Base.DeletePending = EGL_TRUE;
-   } else {
+   }
+   else {
       free(fc);
    }
    return EGL_TRUE;
@@ -287,139 +262,201 @@ _eglDRIDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
  */
 static EGLSurface
 _eglDRICreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
-                          const EGLint *attrib_list)
+                               const EGLint *attrib_list)
 {
    _EGLConfig *config = _eglLookupConfig(drv, dpy, cfg);
    driDisplay *disp = Lookup_driDisplay(dpy);
    driSurface *surface;
-   EGLSurface surf;
-   GLvisual vis;
+   GLvisual visMode;
 
-   surface = (driSurface *) malloc(sizeof(*surface));
+   surface = (driSurface *) calloc(1, sizeof(*surface));
    if (!surface) {
       return EGL_NO_SURFACE;
    }
 
-   /* init base class, error check, etc. */
-   surf = _eglInitScreenSurface(&surface->Base, drv, dpy, cfg, attrib_list);
-   if (surf == EGL_NO_SURFACE) {
+   /* init base class, do error checking, etc. */
+   if (!_eglInitSurface(drv, dpy, &surface->Base, EGL_SCREEN_BIT_MESA,
+                        cfg, attrib_list)) {
       free(surface);
       return EGL_NO_SURFACE;
    }
+
+   _eglSaveSurface(&surface->Base);
+
+
+   /*
+    * XXX this is where we should allocate video memory for the surface!
+    */
+
 
    /* convert EGLConfig to GLvisual */
-   _eglConfigToContextModesRec(config, &vis);
+   _eglConfigToContextModesRec(config, &visMode);
 
-   /* Create a new drawable */
-   if (!disp->driScreen.createNewDrawable(disp, &vis, surf, &surface->drawable,
-                           GLX_WINDOW_BIT, empty_attribute_list)) {
-      free(surface);
+   /* Create a new DRI drawable */
+   if (!disp->driScreen.createNewDrawable(disp, &visMode, surface->Base.Handle,
+                                          &surface->drawable, GLX_WINDOW_BIT,
+                                          empty_attribute_list)) {
       _eglRemoveSurface(&surface->Base);
+      free(surface);
       return EGL_NO_SURFACE;
    }
-   return surf;
+
+   return surface->Base.Handle;
 }
 
 
 /**
  * Show the given surface on the named screen.
  * If surface is EGL_NO_SURFACE, disable the screen's output.
+ * Called via eglShowSurfaceMESA().
  */
 EGLBoolean
 _eglDRIShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
-                    EGLSurface surface, EGLModeMESA m)
+                       EGLSurface surface, EGLModeMESA m)
 {
    driDisplay *display = Lookup_driDisplay(dpy);
    driScreen *scrn = Lookup_driScreen(dpy, screen);
    driSurface *surf = Lookup_driSurface(surface);
-   FILE *file;
-   char buffer[NAME_MAX];
    _EGLMode *mode = _eglLookupMode(dpy, m);
-   int width, height, temp;
+   FILE *file;
+   char fname[NAME_MAX], buffer[1000];
+   int temp;
 
-   _eglQuerySurface(drv, dpy, surface, EGL_WIDTH, &width);
-   _eglQuerySurface(drv, dpy, surface, EGL_HEIGHT, &height);
-
+   /* This will check that surface, screen, and mode are valid.
+    * Also, it checks that the surface is large enough for the mode, etc.
+    */
    if (!_eglShowSurfaceMESA(drv, dpy, screen, surface, m))
       return EGL_FALSE;
 
-   snprintf(buffer, sizeof(buffer), "%s/graphics/%s/blank", sysfs, scrn->fb);
+   assert(surface == EGL_NO_SURFACE || surf);
+   assert(m == EGL_NO_MODE_MESA || mode);
+   assert(scrn);
 
-   file = fopen(buffer, "r+");
+   /*
+    * Blank/unblank screen depending on if m == EGL_NO_MODE_MESA
+    */
+   snprintf(fname, sizeof(fname), "%s/graphics/%s/blank", sysfs, scrn->fb);
+   file = fopen(fname, "r+");
    if (!file) {
-err:
-      printf("kernel patch?? chown all fb sysfs attrib to allow write - %s\n", buffer);
-      _eglError(EGL_BAD_SURFACE, "eglShowSurfaceMESA");
+      _eglLog(_EGL_WARNING, "kernel patch?? chown all fb sysfs attrib to allow"
+              " write - %s\n", fname);
       return EGL_FALSE;
    }
-   snprintf(buffer, sizeof(buffer), "%d", (m == EGL_NO_MODE_MESA ? VESA_POWERDOWN : VESA_VSYNC_SUSPEND));
+   snprintf(buffer, sizeof(buffer), "%d",
+            (m == EGL_NO_MODE_MESA ? VESA_POWERDOWN : VESA_VSYNC_SUSPEND));
    fputs(buffer, file);
    fclose(file);
 
-   if (m == EGL_NO_MODE_MESA)
+   if (m == EGL_NO_MODE_MESA) {
+      /* all done! */
       return EGL_TRUE;
+   }
 
-   snprintf(buffer, sizeof(buffer), "%s/graphics/%s/mode", sysfs, scrn->fb);
+   _eglLog(_EGL_INFO, "Setting display mode to %d x %d, %d bpp",
+           mode->Width, mode->Height, display->bpp);
 
-   file = fopen(buffer, "r+");
-   if (!file)
-      goto err;
-   fputs(mode->Name, file);
+   /*
+    * Set the display mode
+    */
+   snprintf(fname, sizeof(fname), "%s/graphics/%s/mode", sysfs, scrn->fb);
+   file = fopen(fname, "r+");
+   if (!file) {
+      _eglLog(_EGL_WARNING, "Failed to open %s to set mode", fname);
+      return EGL_FALSE;
+   }
+   /* note: nothing happens without the \n! */
+   snprintf(buffer, sizeof(buffer), "%s\n", mode->Name);
+   fputs(buffer, file);
    fclose(file);
+   _eglLog(_EGL_INFO, "Set mode to %s in %s", mode->Name, fname);
 
-   snprintf(buffer, sizeof(buffer), "%s/graphics/%s/bits_per_pixel", sysfs, scrn->fb);
-
-   file = fopen(buffer, "r+");
-   if (!file)
-      goto err;
+   /*
+    * Set display bpp
+    */
+   snprintf(fname, sizeof(fname), "%s/graphics/%s/bits_per_pixel",
+            sysfs, scrn->fb);
+   file = fopen(fname, "r+");
+   if (!file) {
+      _eglLog(_EGL_WARNING, "Failed to open %s to set bpp", fname);
+      return EGL_FALSE;
+   }
    display->bpp = GET_CONFIG_ATTRIB(surf->Base.Config, EGL_BUFFER_SIZE);
    display->cpp = display->bpp / 8;
    snprintf(buffer, sizeof(buffer), "%d", display->bpp);
    fputs(buffer, file);
    fclose(file);
 
-   snprintf(buffer, sizeof(buffer), "%s/graphics/%s/blank", sysfs, scrn->fb);
-
-   file = fopen(buffer, "r+");
-   if (!file)
-      goto err;
-
+   /*
+    * Unblank display
+    */
+   snprintf(fname, sizeof(fname), "%s/graphics/%s/blank", sysfs, scrn->fb);
+   file = fopen(fname, "r+");
+   if (!file) {
+      _eglLog(_EGL_WARNING, "Failed to open %s", fname);
+      return EGL_FALSE;
+   }
    snprintf(buffer, sizeof(buffer), "%d", VESA_NO_BLANKING);
    fputs(buffer, file);
    fclose(file);
 
-   snprintf(buffer, sizeof(buffer), "%s/graphics/%s/virtual_size", sysfs, scrn->fb);
-   file = fopen(buffer, "r+");
-   snprintf(buffer, sizeof(buffer), "%d,%d", width, height);
+   /*
+    * Set fbdev buffer virtual size to surface's size.
+    */
+   snprintf(fname, sizeof(fname), "%s/graphics/%s/virtual_size", sysfs, scrn->fb);
+   file = fopen(fname, "r+");
+   snprintf(buffer, sizeof(buffer), "%d,%d", surf->Base.Width, surf->Base.Height);
    fputs(buffer, file);
    rewind(file);
    fgets(buffer, sizeof(buffer), file);
    sscanf(buffer, "%d,%d", &display->virtualWidth, &display->virtualHeight);
    fclose(file);
 
+   /*
+    * round up pitch as needed
+    */
    temp = display->virtualWidth;
    switch (display->bpp / 8) {
    case 1: temp = (display->virtualWidth + 127) & ~127; break;
    case 2: temp = (display->virtualWidth +  31) &  ~31; break;
    case 3:
    case 4: temp = (display->virtualWidth +  15) &  ~15; break;
+   default:
+      _eglLog(_EGL_WARNING, "Bad display->bpp = %d in _eglDRIShowSurface");
    }
    display->virtualWidth = temp;
 
-   if ((width != display->virtualWidth) || (height != display->virtualHeight))
-      goto err;
+   /*
+    * sanity check
+    */
+   if (surf->Base.Width < display->virtualWidth ||
+       surf->Base.Height < display->virtualHeight) {
+      /* this case _should_ have been caught at the top of this function */
+      _eglLog(_EGL_WARNING, "too small of surface in _eglDRIShowSurfaceMESA "
+              "%d x %d < %d x %d", 
+              surf->Base.Width,
+              surf->Base.Height,
+              display->virtualWidth,
+              display->virtualHeight);
+      /*
+      return EGL_FALSE;
+      */
+   }
 
    return EGL_TRUE;
 }
 
 
-/* If the backbuffer is on a videocard, this is extraordinarily slow!
+/**
+ * Called by eglSwapBuffers via the drv->API.SwapBuffers() pointer.
+ *
+ * If the backbuffer is on a videocard, this is extraordinarily slow!
  */
 static EGLBoolean
 _eglDRISwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 {
    driSurface *drawable = Lookup_driSurface(draw);
 
+   /* this does error checking */
    if (!_eglSwapBuffers(drv, dpy, draw))
       return EGL_FALSE;
 
@@ -430,7 +467,8 @@ _eglDRISwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 
 
 EGLBoolean
-_eglDRIGetDisplayInfo( driDisplay *dpy) {
+_eglDRIGetDisplayInfo(driDisplay *dpy)
+{
    char path[ NAME_MAX ];
    FILE *file;
    int rc, mtrr;
@@ -444,13 +482,17 @@ _eglDRIGetDisplayInfo( driDisplay *dpy) {
 
    snprintf( path, sizeof( path ), "%s/graphics/fb%d/device/device", sysfs, dpy->minor );
    file = fopen( path, "r" );
+   if (!file) {
+      _eglLog(_EGL_WARNING, "Unable to open %s", path);
+      return EGL_FALSE;
+   }
    fgets( path, sizeof( path ), file );
    sscanf( path, "%x", &dpy->chipset );
    fclose( file );
 
    sprintf(path, DRM_DEV_NAME, DRM_DIR_NAME, dpy->minor);
    if ( ( dpy->drmFD = open(path, O_RDWR, 0) ) < 0 ) {
-      fprintf( stderr, "[drm] drmOpen failed\n" );
+      _eglLog(_EGL_WARNING, "drmOpen failed.");
       return EGL_FALSE;
    }
 
@@ -468,17 +510,24 @@ _eglDRIGetDisplayInfo( driDisplay *dpy) {
       return EGL_FALSE;
 
    for ( i = 0;; i++ ) {
-      if ( ( rc = drmGetMap( dpy->drmFD, i, &offset, &size, &type, &flags, &handle, &mtrr ) ) != 0 )
+      if ( ( rc = drmGetMap( dpy->drmFD, i, &offset, &size, &type, &flags, &handle, &mtrr ) ) != 0 ) {
+         _eglLog(_EGL_WARNING, "drmGetMap failed (%s)", strerror(errno)); 
          break;
+      }
       if ( type == DRM_FRAME_BUFFER ) {
-         if ( ( rc = drmMap( dpy->drmFD, offset, size, ( drmAddressPtr ) & dpy->pFB ) ) < 0 )
+         if ( ( rc = drmMap( dpy->drmFD, offset, size, ( drmAddressPtr ) & dpy->pFB ) ) < 0 ) {
+            _eglLog(_EGL_WARNING, "drmMap failed");
             return EGL_FALSE;
+         }
          dpy->fbSize = size;
          break;
       }
+      _eglLog(_EGL_INFO, "Map %d offset=0x%x", i, (int) offset);
    }
-   if ( !dpy->pFB )
+   if ( !dpy->pFB ) {
+      _eglLog(_EGL_WARNING, "failed to map framebuffer");
       return EGL_FALSE;
+   }
 
    dpy->SAREASize = SAREA_MAX;
 
@@ -487,7 +536,7 @@ _eglDRIGetDisplayInfo( driDisplay *dpy) {
          break;
       if ( type == DRM_SHM ) {
          if ( drmMap( dpy->drmFD, offset, size, ( drmAddressPtr ) ( &dpy->pSAREA ) ) < 0 ) {
-            fprintf( stderr, "[drm] drmMap failed\n" );
+            _eglLog(_EGL_WARNING, "drmMap failed.");
             return 0;
          }
          break;
@@ -497,20 +546,28 @@ _eglDRIGetDisplayInfo( driDisplay *dpy) {
       return 0;
 
    memset( dpy->pSAREA, 0, dpy->SAREASize );
-   fprintf( stderr, "[drm] mapped SAREA 0x%08lx to %p, size %d\n",
-            offset, dpy->pSAREA, dpy->SAREASize );
+
+   _eglLog(_EGL_INFO, "Found framebuffer size: %d", dpy->fbSize);
+   _eglLog(_EGL_DEBUG, "mapped SAREA 0x%08lx to %p, size %d",
+           (unsigned long) offset, dpy->pSAREA, dpy->SAREASize );
+
    return EGL_TRUE;
 }
 
 
  /* Return the DRI per screen structure */
-static __DRIscreen *__eglFindDRIScreen(__DRInativeDisplay *ndpy, int scrn)
+static __DRIscreen *
+__eglFindDRIScreen(__DRInativeDisplay *ndpy, int scrn)
 {
    driDisplay *disp = (driDisplay *)ndpy;
    return &disp->driScreen;
 }
 
-static GLboolean __eglCreateContextWithConfig(__DRInativeDisplay* ndpy, int screen, int configID, void* context, drm_context_t * hHWContext)
+
+static GLboolean
+__eglCreateContextWithConfig(__DRInativeDisplay* ndpy, int screen,
+                             int configID, void* context,
+                             drm_context_t * hHWContext)
 {
     __DRIscreen *pDRIScreen;
     __DRIscreenPrivate *psp;
@@ -522,7 +579,7 @@ static GLboolean __eglCreateContextWithConfig(__DRInativeDisplay* ndpy, int scre
     psp = (__DRIscreenPrivate *) pDRIScreen->private;
     if (psp->fd) {
         if (drmCreateContext(psp->fd, hHWContext)) {
-            fprintf(stderr, ">>> drmCreateContext failed\n");
+            _eglLog(_EGL_WARNING, "drmCreateContext failed.");
             return GL_FALSE;
         }
         *(void**)context = (void*) *hHWContext;
@@ -540,7 +597,7 @@ static GLboolean __eglCreateContextWithConfig(__DRInativeDisplay* ndpy, int scre
 
     if (psp->fd) {
         if (drmCreateContext(psp->fd, hHWContext)) {
-            fprintf(stderr, ">>> drmCreateContext failed\n");
+            _eglLog(_EGL_WARNING, "drmCreateContext failed.");
             return GL_FALSE;
         }
         *(void**)contextID = (void*) *hHWContext;
@@ -549,7 +606,9 @@ static GLboolean __eglCreateContextWithConfig(__DRInativeDisplay* ndpy, int scre
     return GL_TRUE;
 }
 
-static GLboolean __eglDestroyContext( __DRInativeDisplay * ndpy, int screen,  __DRIid context )
+
+static GLboolean
+__eglDestroyContext( __DRInativeDisplay * ndpy, int screen,  __DRIid context )
 {
     __DRIscreen *pDRIScreen;
     __DRIscreenPrivate *psp;
@@ -565,7 +624,10 @@ static GLboolean __eglDestroyContext( __DRInativeDisplay * ndpy, int screen,  __
    return GL_TRUE;
 }
 
-static GLboolean __eglCreateDrawable( __DRInativeDisplay * ndpy, int screen, __DRIid drawable, drm_drawable_t * hHWDrawable )
+
+static GLboolean
+__eglCreateDrawable(__DRInativeDisplay * ndpy, int screen,
+                    __DRIid drawable, drm_drawable_t * hHWDrawable)
 {
     __DRIscreen *pDRIScreen;
     __DRIscreenPrivate *psp;
@@ -577,14 +639,16 @@ static GLboolean __eglCreateDrawable( __DRInativeDisplay * ndpy, int screen, __D
     psp = (__DRIscreenPrivate *) pDRIScreen->private;
     if (psp->fd) {
         if (drmCreateDrawable(psp->fd, hHWDrawable)) {
-            fprintf(stderr, ">>> drmCreateDrawable failed\n");
+            _eglLog(_EGL_WARNING, "drmCreateDrawable failed.");
             return GL_FALSE;
         }
     }
     return GL_TRUE;
 }
 
-static GLboolean __eglDestroyDrawable( __DRInativeDisplay * ndpy, int screen, __DRIid drawable )
+
+static GLboolean
+__eglDestroyDrawable( __DRInativeDisplay * ndpy, int screen, __DRIid drawable )
 {
     __DRIscreen *pDRIScreen;
     __DRIscreenPrivate *psp;
@@ -600,12 +664,13 @@ static GLboolean __eglDestroyDrawable( __DRInativeDisplay * ndpy, int screen, __
    return GL_TRUE;
 }
 
-static GLboolean __eglGetDrawableInfo(__DRInativeDisplay * ndpy, int screen, __DRIid drawable,
-    unsigned int* index, unsigned int* stamp,
-    int* X, int* Y, int* W, int* H,
-    int* numClipRects, drm_clip_rect_t ** pClipRects,
-    int* backX, int* backY,
-    int* numBackClipRects, drm_clip_rect_t ** pBackClipRects )
+static GLboolean
+__eglGetDrawableInfo(__DRInativeDisplay * ndpy, int screen, __DRIid drawable,
+                     unsigned int* index, unsigned int* stamp,
+                     int* X, int* Y, int* W, int* H,
+                     int* numClipRects, drm_clip_rect_t ** pClipRects,
+                     int* backX, int* backY,
+                     int* numBackClipRects, drm_clip_rect_t ** pBackClipRects )
 {
    driSurface *surf = Lookup_driSurface(drawable);
 
@@ -652,16 +717,13 @@ static GLboolean __eglGetDrawableInfo(__DRInativeDisplay * ndpy, int screen, __D
    return GL_TRUE;
 }
 
+
 /**
  * Implement \c __DRIinterfaceMethods::getProcAddress.
  */
-static __DRIfuncPtr get_proc_address( const char * proc_name )
+static __DRIfuncPtr
+get_proc_address(const char * proc_name)
 {
-#if 0
-   if (strcmp( proc_name, "glxEnableExtension" ) == 0) {
-      return (__DRIfuncPtr) __glXScrEnableExtension;
-   }
-#endif
    return NULL;
 }
 
@@ -674,7 +736,7 @@ static __DRIfuncPtr get_proc_address( const char * proc_name )
  *               in the list will be freed.
  */
 static void
-__egl_context_modes_destroy( __GLcontextModes * modes )
+__egl_context_modes_destroy(__GLcontextModes *modes)
 {
    while ( modes != NULL ) {
       __GLcontextModes * const next = modes->next;
@@ -712,7 +774,7 @@ __egl_context_modes_destroy( __GLcontextModes * modes )
  *          extend the \c __GLcontextModes data-structure.
  */
 static __GLcontextModes *
-__egl_context_modes_create( unsigned count, size_t minimum_size )
+__egl_context_modes_create(unsigned count, size_t minimum_size)
 {
    const size_t size = (minimum_size > sizeof( __GLcontextModes ))
        ? minimum_size : sizeof( __GLcontextModes );
@@ -772,7 +834,7 @@ __eglWindowExists(__DRInativeDisplay *dpy, __DRIid draw)
  * \since Internal API version 20030317.
  */
 static int
-__eglGetUST( int64_t * ust )
+__eglGetUST(int64_t *ust)
 {
     struct timeval  tv;
     
@@ -783,7 +845,8 @@ __eglGetUST( int64_t * ust )
     if ( gettimeofday( & tv, NULL ) == 0 ) {
 	ust[0] = (tv.tv_sec * 1000000) + tv.tv_usec;
 	return 0;
-    } else {
+    }
+    else {
 	return -errno;
     }
 }
@@ -835,15 +898,21 @@ static const __DRIinterfaceMethods interface_methods = {
 };
 
 
-int __glXGetInternalVersion(void)
+static int
+__glXGetInternalVersion(void)
 {
     return 20050725;
 }
 
 static const char createNewScreenName[] = "__driCreateNewScreen_20050727";
 
+
+/**
+ * Do per-display initialization.
+ */
 EGLBoolean
-_eglDRICreateDisplay( driDisplay *dpy, __DRIframebuffer *framebuffer) {
+_eglDRICreateDisplay(driDisplay *dpy, __DRIframebuffer *framebuffer)
+{
    PFNCREATENEWSCREENFUNC createNewScreen;
     int api_ver = __glXGetInternalVersion();
    __DRIversion ddx_version;
@@ -857,7 +926,8 @@ _eglDRICreateDisplay( driDisplay *dpy, __DRIframebuffer *framebuffer) {
       drm_version.minor = version->version_minor;
       drm_version.patch = version->version_patchlevel;
       drmFreeVersion( version );
-   } else {
+   }
+   else {
       drm_version.major = -1;
       drm_version.minor = -1;
       drm_version.patch = -1;
@@ -881,7 +951,8 @@ _eglDRICreateDisplay( driDisplay *dpy, __DRIframebuffer *framebuffer) {
 
    createNewScreen = ( PFNCREATENEWSCREENFUNC ) dlsym( dpy->Base.Driver->LibHandle, createNewScreenName );
    if ( !createNewScreen ) {
-      fprintf( stderr, "Couldn't find %s in CallCreateNewScreen\n", createNewScreenName );
+      _eglLog(_EGL_WARNING, "Couldn't find %s function in the driver.",
+              createNewScreenName );
       return EGL_FALSE;
    }
 
@@ -891,7 +962,7 @@ _eglDRICreateDisplay( driDisplay *dpy, __DRIframebuffer *framebuffer) {
                             dpy->pSAREA, dpy->drmFD,
                             api_ver,
                             & interface_methods,
-                            ( __GLcontextModes ** ) & dpy->driver_modes );
+                            NULL);
    if (!dpy->driScreen.private)
       return EGL_FALSE;
 
@@ -901,60 +972,83 @@ _eglDRICreateDisplay( driDisplay *dpy, __DRIframebuffer *framebuffer) {
 }
 
 
+/**
+ * Create all the EGL screens for the given display.
+ */
 EGLBoolean
-_eglDRICreateScreen( driDisplay *dpy) {
-   char c, *buffer, path[ NAME_MAX ];
-   unsigned int i, x, y, r;
-   int fd;
-   FILE *file;
-   driScreen *s;
-   _EGLScreen *scrn;
+_eglDRICreateScreens(driDisplay *dpy)
+{
+   const int numScreens = 1;  /* XXX fix this someday */
+   int i;
 
-   /* Create a screen */
-   if ( !( s = ( driScreen * ) calloc( 1, sizeof( *s ) ) ) )
-      return EGL_FALSE;
+   for (i = 0; i < numScreens; i++) {
+      char path[ NAME_MAX ];
+      FILE *file;
+      driScreen *s;
 
-   snprintf( s->fb, NAME_MAX, "fb%d", dpy->minor );
-   scrn = &s->Base;
-   _eglInitScreen( scrn );
-   _eglAddScreen( &dpy->Base, scrn );
+      /* Create a screen */
+      if ( !( s = ( driScreen * ) calloc( 1, sizeof( *s ) ) ) )
+         return EGL_FALSE;
 
-   snprintf( path, sizeof( path ), "%s/graphics/%s/modes", sysfs, s->fb );
-   file = fopen( path, "r" );
-   while ( fgets( path, sizeof( path ), file ) ) {
-      path[ strlen( path ) - 1 ] = '\0';  /* strip off \n from sysfs */
-      sscanf( path, "%c:%ux%u-%u", &c, &x, &y, &r );
-      _eglAddMode( scrn, x, y, r * 1000, path );
+      snprintf( s->fb, NAME_MAX, "fb%d", dpy->minor );
+      _eglInitScreen( &s->Base );
+
+      _eglAddScreen( &dpy->Base, &s->Base );
+
+      /* Create the screen's mode list */
+      snprintf( path, sizeof( path ), "%s/graphics/%s/modes", sysfs, s->fb );
+      file = fopen( path, "r" );
+      while ( fgets( path, sizeof( path ), file ) ) {
+         unsigned int x, y, r;
+         char c;
+         path[ strlen( path ) - 1 ] = '\0';  /* strip off \n from sysfs */
+         sscanf( path, "%c:%ux%u-%u", &c, &x, &y, &r );
+         _eglAddMode( &s->Base, x, y, r * 1000, path );
+      }
+      fclose( file );
+
+      /*
+       * Initialize the colormap.  XXX is this per-screen?
+       */
+      {
+         char *buffer;
+         int i, fd;
+
+         /* cmap attribute uses 256 lines of 16 bytes */
+         if ( !( buffer = malloc( 256 * 16 ) ) )
+            return EGL_FALSE;
+
+         /* cmap attribute uses 256 lines of 16 bytes */
+         for ( i = 0; i < 256; i++ )
+            sprintf( &buffer[ i * 16 ], "%02x%c%4x%4x%4x\n",
+                     i, ' ', 256 * i, 256 * i, 256 * i );
+
+         snprintf(path, sizeof(path), "%s/graphics/%s/color_map", sysfs,s->fb);
+         if ( !( fd = open( path, O_RDWR ) ) )
+            return EGL_FALSE;
+         write( fd, buffer, 256 * 16 );
+         close( fd );
+
+         free( buffer );
+      }
    }
-   fclose( file );
-
-   /* cmap attribute uses 256 lines of 16 bytes */
-   if ( !( buffer = malloc( 256 * 16 ) ) )
-      return EGL_FALSE;
-
-   /* cmap attribute uses 256 lines of 16 bytes */
-   for ( i = 0; i < 256; i++ )
-      sprintf( &buffer[ i * 16 ], "%02x%c%4x%4x%4x\n",
-               i, ' ', 256 * i, 256 * i, 256 * i );
-
-   snprintf( path, sizeof( path ), "%s/graphics/%s/color_map", sysfs, s->fb );
-   if ( !( fd = open( path, O_RDWR ) ) )
-      return EGL_FALSE;
-   write( fd, buffer, 256 * 16 );
-   close( fd );
-
-   free( buffer );
 
    return EGL_TRUE;
 }
 
+
 EGLBoolean
-_eglDRIInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
+_eglDRIInitialize(_EGLDriver *drv, EGLDisplay dpy,
+                  EGLint *major, EGLint *minor)
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    driDisplay *display;
 
-   /* Switch display structure to one with our private fields */
+   assert(disp);
+
+   /* Create new driDisplay object to replace the _EGLDisplay that was
+    * previously created.
+    */
    display = calloc(1, sizeof(*display));
    display->Base = *disp;
    _eglHashInsert(_eglGlobal.Displays, disp->Handle, display);
@@ -974,13 +1068,17 @@ static EGLBoolean
 _eglDRITerminate(_EGLDriver *drv, EGLDisplay dpy)
 {
    driDisplay *display = Lookup_driDisplay(dpy);
-   _eglCleanupDisplay(&display->Base);
+   _eglCleanupDisplay(&display->Base);/*rename that function*/
    free(display);
    free(drv);
    return EGL_TRUE;
 }
 
 
+/**
+ * Plug in the DRI-specific functions into the driver's dispatch table.
+ * Also, enable some EGL extensions.
+ */
 void
 _eglDRIInitDriverFallbacks(_EGLDriver *drv)
 {
@@ -990,8 +1088,6 @@ _eglDRIInitDriverFallbacks(_EGLDriver *drv)
    drv->API.Terminate = _eglDRITerminate;
    drv->API.CreateContext = _eglDRICreateContext;
    drv->API.MakeCurrent = _eglDRIMakeCurrent;
-   drv->API.CreateWindowSurface = _eglDRICreateWindowSurface;
-   drv->API.CreatePixmapSurface = _eglDRICreatePixmapSurface;
    drv->API.CreatePbufferSurface = _eglDRICreatePbufferSurface;
    drv->API.DestroySurface = _eglDRIDestroySurface;
    drv->API.DestroyContext = _eglDRIDestroyContext;
@@ -1002,5 +1098,4 @@ _eglDRIInitDriverFallbacks(_EGLDriver *drv)
    /* enable supported extensions */
    drv->MESA_screen_surface = EGL_TRUE;
    drv->MESA_copy_context = EGL_TRUE;
-
 }
