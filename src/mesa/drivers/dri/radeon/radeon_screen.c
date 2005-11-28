@@ -938,10 +938,12 @@ __driCreateNewScreen_20050727( __DRInativeDisplay *dpy,
 
    if ( psp != NULL ) {
       RADEONDRIPtr dri_priv = (RADEONDRIPtr) psp->pDevPriv;
-      *driver_modes = radeonFillInModes( dri_priv->bpp,
-					 (dri_priv->bpp == 16) ? 16 : 24,
-					 (dri_priv->bpp == 16) ? 0  : 8,
-					 (dri_priv->backOffset != dri_priv->depthOffset) );
+      if (driver_modes) {
+         *driver_modes = radeonFillInModes( dri_priv->bpp,
+                                            (dri_priv->bpp == 16) ? 16 : 24,
+                                            (dri_priv->bpp == 16) ? 0  : 8,
+                                            (dri_priv->backOffset != dri_priv->depthOffset) );
+      }
 
       /* Calling driInitExtensions here, with a NULL context pointer,
        * does not actually enable the extensions.  It just makes sure
