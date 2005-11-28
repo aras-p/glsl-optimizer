@@ -197,7 +197,7 @@ struct trident_context {
    	struct gamma_texture_object_t SwappedOut; 
 	GLenum TexEnvImageFmt[2];
 
-	memHeap_t *texHeap;
+	struct mem_block *texHeap;
 
    	int lastSwap;
    	int texAge;

@@ -144,7 +144,7 @@ struct gamma_texture_object_t {
    int totalSize;
    int bound;
 
-   PMemBlock MemBlock;   
+   struct mem_block *MemBlock;   
    char * BufAddr;
    
    GLuint min_level;
@@ -291,7 +291,7 @@ struct gamma_context {
    	struct gamma_texture_object_t SwappedOut; 
 	GLenum TexEnvImageFmt[2];
 
-	memHeap_t *texHeap;
+	struct mem_block *texHeap;
 
    	unsigned int lastSwap;
    	int texAge;

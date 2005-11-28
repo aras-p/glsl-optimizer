@@ -164,7 +164,7 @@ struct mach64_texture_object {
    struct mach64_texture_object *prev;
    struct gl_texture_object *tObj;
 
-   PMemBlock memBlock;
+   struct mem_block *memBlock;
    GLuint offset;
    GLuint size;
 
@@ -236,7 +236,7 @@ struct mach64_context {
 #else
    mach64TexObj TexObjList[MACH64_NR_TEX_HEAPS];
    mach64TexObj SwappedOut;
-   memHeap_t *texHeap[MACH64_NR_TEX_HEAPS];
+   struct mem_block *texHeap[MACH64_NR_TEX_HEAPS];
    GLuint lastTexAge[MACH64_NR_TEX_HEAPS];
    GLint firstTexHeap, lastTexHeap;
 #endif

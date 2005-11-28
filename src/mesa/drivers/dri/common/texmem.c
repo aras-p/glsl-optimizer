@@ -1138,7 +1138,7 @@ driValidateTextureHeaps( driTexHeap * const * texture_heaps,
       unsigned textures_in_heap = 0;
       unsigned blocks_in_mempool = 0;
       const driTexHeap * heap = texture_heaps[i];
-      const memHeap_t * p = heap->memory_heap;
+      const struct mem_block *p = heap->memory_heap;
 
       /* Check each texture object has a MemBlock, and is linked into
        * the correct heap.  

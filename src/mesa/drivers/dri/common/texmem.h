@@ -66,7 +66,7 @@ struct dri_texture_object {
 					 * texture memory in use by another context.
 					 * A placeholder should have a heap and a memBlock.
 					 */
-	PMemBlock   memBlock;		/**< Memory block containing texture */
+	struct mem_block *memBlock;	/**< Memory block containing texture */
 
         unsigned    reserved;	        /**< Cannot be swapped out by user contexts.  */
 
@@ -176,7 +176,7 @@ struct dri_tex_heap {
 	/** Memory heap used to manage texture memory represented by
 	 * this texture heap.
 	 */
-	memHeap_t    * memory_heap;
+	struct mem_block * memory_heap;
 
 	/** List of objects that we currently believe to be in texture
 	 * memory.

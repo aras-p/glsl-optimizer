@@ -52,7 +52,7 @@
 
 _glthread_DECLARE_STATIC_MUTEX(exec_mutex);
 
-static memHeap_t *exec_heap = NULL;
+static struct mem_block *exec_heap = NULL;
 static unsigned char *exec_mem = NULL;
 
 
@@ -72,7 +72,7 @@ init_heap(void)
 void *
 _mesa_exec_malloc(GLuint size)
 {
-   PMemBlock block = NULL;
+   struct mem_block *block = NULL;
    void *addr = NULL;
 
    _glthread_LOCK_MUTEX(exec_mutex);
@@ -99,7 +99,7 @@ _mesa_exec_free(void *addr)
    _glthread_LOCK_MUTEX(exec_mutex);
 
    if (exec_heap) {
-      PMemBlock block = mmFindBlock(exec_heap, (unsigned char *)addr - exec_mem);
+      struct mem_block *block = mmFindBlock(exec_heap, (unsigned char *)addr - exec_mem);
    
       if (block)
 	 mmFreeMem(block);
