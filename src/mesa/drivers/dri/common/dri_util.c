@@ -133,9 +133,8 @@ static void __driGarbageCollectDrawables(void *drawHash)
 	    __DRIdrawablePrivate *pdp = (__DRIdrawablePrivate *)pdraw->private;
 	    dpy = pdp->driScreenPriv->display;
 	    if (! (*dri_interface->windowExists)(dpy, draw)) {
-		/* Destroy the local drawable data in the hash table, if the
-		   drawable no longer exists in the Xserver */
-	        drmHashDelete(drawHash, draw);
+		/* Destroy the local drawable data, if the drawable no
+		   longer exists in the Xserver */
 		(*pdraw->destroyDrawable)(dpy, pdraw->private);
 		_mesa_free(pdraw);
 	    }
@@ -667,6 +666,7 @@ driDestroyDrawable(__DRInativeDisplay *dpy, void *drawablePrivate)
         (*psp->DriverAPI.DestroyBuffer)(pdp);
 	if ((*dri_interface->windowExists)(dpy, pdp->draw))
 	    (void)(*dri_interface->destroyDrawable)(dpy, scrn, pdp->draw);
+	drmHashDelete(psp->drawHash, pdp->draw);
 	if (pdp->pClipRects) {
 	    _mesa_free(pdp->pClipRects);
 	    pdp->pClipRects = NULL;

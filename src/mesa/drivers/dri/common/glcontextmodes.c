@@ -157,8 +157,8 @@ _gl_copy_visual_to_context_mode( __GLcontextModes * mode,
     mode->greenMask = config->greenMask;
     mode->blueMask = config->blueMask;
     mode->alphaMask = config->alphaMask;
-    mode->rgbBits = config->bufferSize;
-    mode->indexBits = config->bufferSize;
+    mode->rgbBits = mode->rgbMode ? config->bufferSize : 0;
+    mode->indexBits = mode->colorIndexMode ? config->bufferSize : 0;
 
     mode->accumRedBits = config->accumRedSize;
     mode->accumGreenBits = config->accumGreenSize;

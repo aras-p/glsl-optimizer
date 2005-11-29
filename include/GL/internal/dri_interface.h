@@ -39,7 +39,6 @@
 #define DRI_INTERFACE_H
 
 #include <GL/internal/glcore.h>
-#include <xf86drm.h>
 #include <drm.h>
 
 /**
