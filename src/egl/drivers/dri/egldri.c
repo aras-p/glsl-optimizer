@@ -306,6 +306,42 @@ _eglDRICreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
 
 
 /**
+ * Set the fbdev colormap to a simple linear ramp.
+ */
+static void
+_eglDRILoadColormap(driScreen *scrn)
+{
+   char path[ NAME_MAX ];
+   char *buffer;
+   int i, fd;
+
+   /* cmap attribute uses 256 lines of 16 bytes.
+    * Allocate one extra char for the \0 added by sprintf()
+    */
+   if ( !( buffer = malloc( 256 * 16 + 1 ) ) ) {
+      _eglLog(_EGL_WARNING, "Out of memory in _eglDRILoadColormap");
+      return;
+   }
+
+   /* cmap attribute uses 256 lines of 16 bytes */
+   for ( i = 0; i < 256; i++ ) {
+      int c = (i << 8) | i; /* expand to 16-bit value */
+      sprintf(&buffer[i * 16], "%02x%c%04x%04x%04x\n", i, ' ', c, c, c);
+   }
+
+   snprintf(path, sizeof(path), "%s/graphics/%s/color_map", sysfs, scrn->fb);
+   if ( !( fd = open( path, O_RDWR ) ) ) {
+      _eglLog(_EGL_WARNING, "Unable to open %s to set colormap", path);
+      return;
+   }
+   write( fd, buffer, 256 * 16 );
+   close( fd );
+
+   free( buffer );
+}
+
+
+/**
  * Show the given surface on the named screen.
  * If surface is EGL_NO_SURFACE, disable the screen's output.
  * Called via eglShowSurfaceMESA().
@@ -321,6 +357,8 @@ _eglDRIShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
    FILE *file;
    char fname[NAME_MAX], buffer[1000];
    int temp;
+
+   _eglLog(_EGL_DEBUG, "Enter _eglDRIShowSurface");
 
    /* This will check that surface, screen, and mode are valid.
     * Also, it checks that the surface is large enough for the mode, etc.
@@ -442,6 +480,9 @@ _eglDRIShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
       */
    }
 
+   /* This used to be done in the _eglDRICreateScreens routine. */
+   _eglDRILoadColormap(scrn);
+
    return EGL_TRUE;
 }
 
@@ -536,14 +577,17 @@ _eglDRIGetDisplayInfo(driDisplay *dpy)
          break;
       if ( type == DRM_SHM ) {
          if ( drmMap( dpy->drmFD, offset, size, ( drmAddressPtr ) ( &dpy->pSAREA ) ) < 0 ) {
-            _eglLog(_EGL_WARNING, "drmMap failed.");
-            return 0;
+            _eglLog(_EGL_WARNING, "drmMap DRM_SHM failed.");
+            return EGL_FALSE;
          }
          break;
       }
    }
-   if ( !dpy->pSAREA )
+   if ( !dpy->pSAREA ) {
+      /* if this happens, make sure you're using the most recent DRM modules */
+      _eglLog(_EGL_WARNING, "Unable to map SAREA");
       return 0;
+   }
 
    memset( dpy->pSAREA, 0, dpy->SAREASize );
 
@@ -1008,29 +1052,10 @@ _eglDRICreateScreens(driDisplay *dpy)
       fclose( file );
 
       /*
-       * Initialize the colormap.  XXX is this per-screen?
+       * NOTE: we used to set the colormap here, but that didn't work reliably.
+       * Some entries near the start of the table would get corrupted by later
+       * mode changes.
        */
-      {
-         char *buffer;
-         int i, fd;
-
-         /* cmap attribute uses 256 lines of 16 bytes */
-         if ( !( buffer = malloc( 256 * 16 ) ) )
-            return EGL_FALSE;
-
-         /* cmap attribute uses 256 lines of 16 bytes */
-         for ( i = 0; i < 256; i++ )
-            sprintf( &buffer[ i * 16 ], "%02x%c%4x%4x%4x\n",
-                     i, ' ', 256 * i, 256 * i, 256 * i );
-
-         snprintf(path, sizeof(path), "%s/graphics/%s/color_map", sysfs,s->fb);
-         if ( !( fd = open( path, O_RDWR ) ) )
-            return EGL_FALSE;
-         write( fd, buffer, 256 * 16 );
-         close( fd );
-
-         free( buffer );
-      }
    }
 
    return EGL_TRUE;
