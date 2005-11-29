@@ -5,8 +5,20 @@
 #include "egltypedefs.h"
 #include "eglapi.h"
 
-/* should probably use a dynamic-lengh string, but this will do */
+/* should probably use a dynamic-length string, but this will do */
 #define MAX_EXTENSIONS_LEN 1000
+
+
+/**
+ * Optional EGL extensions info.
+ */
+struct _egl_extensions
+{
+   EGLBoolean MESA_screen_surface;
+   EGLBoolean MESA_copy_context;
+
+   char String[MAX_EXTENSIONS_LEN];
+};
 
 
 /**
@@ -25,12 +37,7 @@ struct _egl_driver
 
    _EGLAPI API;
 
-   /* Extension enable flags */
-   EGLBoolean MESA_screen_surface;
-   EGLBoolean MESA_copy_context;
-
-   /* Extensions string */
-   char Extensions[MAX_EXTENSIONS_LEN];
+   _EGLExtensions Extensions;
 };
 
 

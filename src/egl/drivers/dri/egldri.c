@@ -1117,6 +1117,6 @@ _eglDRIInitDriverFallbacks(_EGLDriver *drv)
    drv->API.SwapBuffers = _eglDRISwapBuffers;
 
    /* enable supported extensions */
-   drv->MESA_screen_surface = EGL_TRUE;
-   drv->MESA_copy_context = EGL_TRUE;
+   drv->Extensions.MESA_screen_surface = EGL_TRUE;
+   drv->Extensions.MESA_copy_context = EGL_TRUE;
 }
