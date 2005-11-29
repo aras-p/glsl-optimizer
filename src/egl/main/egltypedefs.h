@@ -15,6 +15,8 @@ typedef struct _egl_display _EGLDisplay;
 
 typedef struct _egl_driver _EGLDriver;
 
+typedef struct _egl_extensions _EGLExtensions;
+
 typedef struct _egl_mode _EGLMode;
 
 typedef struct _egl_screen _EGLScreen;
