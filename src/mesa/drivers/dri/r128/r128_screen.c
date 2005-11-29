@@ -198,11 +198,19 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
    r128Screen->depthPitch	= r128DRIPriv->depthPitch;
    r128Screen->spanOffset	= r128DRIPriv->spanOffset;
 
-   r128Screen->texOffset[R128_LOCAL_TEX_HEAP] = r128DRIPriv->textureOffset;
-   r128Screen->texSize[R128_LOCAL_TEX_HEAP] = r128DRIPriv->textureSize;
-   r128Screen->logTexGranularity[R128_LOCAL_TEX_HEAP] = r128DRIPriv->log2TexGran;
+   if ( r128DRIPriv->textureSize == 0 ) {
+      r128Screen->texOffset[R128_LOCAL_TEX_HEAP] =
+	 r128DRIPriv->agpTexOffset + R128_AGP_TEX_OFFSET;
+      r128Screen->texSize[R128_LOCAL_TEX_HEAP] = r128DRIPriv->agpTexMapSize;
+      r128Screen->logTexGranularity[R128_LOCAL_TEX_HEAP] =
+	 r128DRIPriv->log2AGPTexGran;
+   } else {
+      r128Screen->texOffset[R128_LOCAL_TEX_HEAP] = r128DRIPriv->textureOffset;
+      r128Screen->texSize[R128_LOCAL_TEX_HEAP] = r128DRIPriv->textureSize;
+      r128Screen->logTexGranularity[R128_LOCAL_TEX_HEAP] = r128DRIPriv->log2TexGran;
+   }
 
-   if ( r128Screen->IsPCI ) {
+   if ( !r128Screen->agpTextures.map || r128DRIPriv->textureSize == 0 ) {
       r128Screen->numTexHeaps = R128_NR_TEX_HEAPS - 1;
       r128Screen->texOffset[R128_AGP_TEX_HEAP] = 0;
       r128Screen->texSize[R128_AGP_TEX_HEAP] = 0;
