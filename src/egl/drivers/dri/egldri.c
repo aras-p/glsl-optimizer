@@ -512,12 +512,7 @@ _eglDRIGetDisplayInfo(driDisplay *dpy)
 {
    char path[ NAME_MAX ];
    FILE *file;
-   int rc, mtrr;
-   unsigned int i;
-   drmMapType type;
-   drmMapFlags flags;
-   drm_handle_t handle, offset;
-   drmSize size;
+   int i, rc;
    drmSetVersion sv;
    drm_magic_t magic;
 
@@ -550,50 +545,51 @@ _eglDRIGetDisplayInfo(driDisplay *dpy)
    if (drmAuthMagic(dpy->drmFD, magic))
       return EGL_FALSE;
 
-   for ( i = 0;; i++ ) {
-      if ( ( rc = drmGetMap( dpy->drmFD, i, &offset, &size, &type, &flags, &handle, &mtrr ) ) != 0 ) {
-         _eglLog(_EGL_WARNING, "drmGetMap failed (%s)", strerror(errno)); 
+   /* Map framebuffer and SAREA */
+   for (i = 0; ; i++) {
+      drm_handle_t handle, offset;
+      drmSize size;
+      drmMapType type;
+      drmMapFlags flags;
+      int mtrr;
+
+      if (drmGetMap(dpy->drmFD, i, &offset, &size, &type, &flags,
+                    &handle, &mtrr))
          break;
-      }
-      if ( type == DRM_FRAME_BUFFER ) {
-         if ( ( rc = drmMap( dpy->drmFD, offset, size, ( drmAddressPtr ) & dpy->pFB ) ) < 0 ) {
-            _eglLog(_EGL_WARNING, "drmMap failed");
+
+      if (type == DRM_FRAME_BUFFER) {
+         rc = drmMap( dpy->drmFD, offset, size, (drmAddressPtr) &dpy->pFB);
+         if (rc < 0) {
+            _eglLog(_EGL_WARNING, "drmMap DRM_FAME_BUFFER failed");
             return EGL_FALSE;
          }
          dpy->fbSize = size;
-         break;
+         _eglLog(_EGL_INFO, "Found framebuffer size: %d", dpy->fbSize);
       }
-      _eglLog(_EGL_INFO, "Map %d offset=0x%x", i, (int) offset);
+      else if (type == DRM_SHM) {
+         rc = drmMap(dpy->drmFD, offset, size, (drmAddressPtr) &dpy->pSAREA);
+         if (rc < 0 ) {
+            _eglLog(_EGL_WARNING, "drmMap DRM_SHM failed.");
+            return EGL_FALSE;
+         }
+         dpy->SAREASize = SAREA_MAX;
+         _eglLog(_EGL_DEBUG, "mapped SAREA 0x%08lx to %p, size %d",
+                 (unsigned long) offset, dpy->pSAREA, dpy->SAREASize );
+      }
    }
-   if ( !dpy->pFB ) {
+
+   if (!dpy->pFB) {
       _eglLog(_EGL_WARNING, "failed to map framebuffer");
       return EGL_FALSE;
    }
 
-   dpy->SAREASize = SAREA_MAX;
-
-   for ( i = 0;; i++ ) {
-      if ( drmGetMap( dpy->drmFD, i, &offset, &size, &type, &flags, &handle, &mtrr ) != 0 )
-         break;
-      if ( type == DRM_SHM ) {
-         if ( drmMap( dpy->drmFD, offset, size, ( drmAddressPtr ) ( &dpy->pSAREA ) ) < 0 ) {
-            _eglLog(_EGL_WARNING, "drmMap DRM_SHM failed.");
-            return EGL_FALSE;
-         }
-         break;
-      }
-   }
-   if ( !dpy->pSAREA ) {
+   if (!dpy->pSAREA) {
       /* if this happens, make sure you're using the most recent DRM modules */
-      _eglLog(_EGL_WARNING, "Unable to map SAREA");
-      return 0;
+      _eglLog(_EGL_WARNING, "failed to map SAREA");
+      return EGL_FALSE;
    }
 
    memset( dpy->pSAREA, 0, dpy->SAREASize );
-
-   _eglLog(_EGL_INFO, "Found framebuffer size: %d", dpy->fbSize);
-   _eglLog(_EGL_DEBUG, "mapped SAREA 0x%08lx to %p, size %d",
-           (unsigned long) offset, dpy->pSAREA, dpy->SAREASize );
 
    return EGL_TRUE;
 }
