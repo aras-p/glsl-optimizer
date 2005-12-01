@@ -58,7 +58,7 @@ void
 _swrast_span_default_z( GLcontext *ctx, struct sw_span *span )
 {
    const GLfloat depthMax = ctx->DrawBuffer->_DepthMaxF;
-   if (ctx->Visual.depthBits <= 16)
+   if (ctx->DrawBuffer->Visual.depthBits <= 16)
       span->z = FloatToFixed(ctx->Current.RasterPos[2] * depthMax + 0.5F);
    else
       span->z = (GLint) (ctx->Current.RasterPos[2] * depthMax + 0.5F);
@@ -311,7 +311,7 @@ _swrast_span_interpolate_z( const GLcontext *ctx, struct sw_span *span )
    ASSERT((span->interpMask & SPAN_Z)  &&
 	  !(span->arrayMask & SPAN_Z));
 
-   if (ctx->Visual.depthBits <= 16) {
+   if (ctx->DrawBuffer->Visual.depthBits <= 16) {
       GLfixed zval = span->z;
       GLuint *z = span->array->z; 
       for (i = 0; i < n; i++) {
@@ -803,7 +803,7 @@ _swrast_write_index_span( GLcontext *ctx, struct sw_span *span)
    }
 
    /* Depth bounds test */
-   if (ctx->Depth.BoundsTest && ctx->Visual.depthBits > 0) {
+   if (ctx->Depth.BoundsTest && ctx->DrawBuffer->Visual.depthBits > 0) {
       if (!_swrast_depth_bounds_test(ctx, span)) {
          return;
       }
