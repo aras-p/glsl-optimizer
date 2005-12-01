@@ -809,6 +809,9 @@ struct dd_function_table {
                                struct gl_renderbuffer_attachment *att,
                                struct gl_texture_object *texObj,
                                GLenum texTarget, GLuint level, GLuint zoffset);
+   void (*FinishRenderTexture)(GLcontext *ctx,
+                               struct gl_texture_object *texObj,
+                               GLuint face, GLuint level);
    /*@}*/
 #endif
 #if FEATURE_EXT_framebuffer_blit

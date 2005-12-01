@@ -124,6 +124,7 @@ texture_put_mono_values(GLcontext *ctx, struct gl_renderbuffer *rb,
 static void
 delete_texture_wrapper(struct gl_renderbuffer *rb)
 {
+   ASSERT(rb->RefCount == 0);
    _mesa_free(rb);
 }
 
@@ -162,6 +163,7 @@ wrap_texture(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
 
    trb->Zoffset = att->Zoffset;
 
+   trb->Base.RefCount = 1;
    trb->Base.Width = trb->TexImage->Width;
    trb->Base.Height = trb->TexImage->Height;
    trb->Base.InternalFormat = trb->TexImage->InternalFormat; /* XXX fix? */
@@ -213,8 +215,8 @@ _mesa_renderbuffer_texture(GLcontext *ctx,
    if (texObj) {
       _mesa_set_texture_attachment(ctx, att, texObj,
                                    texTarget, level, zoffset);
-
-      wrap_texture(ctx, att);
+      if (!att->Renderbuffer)
+         wrap_texture(ctx, att);
    }
    else {
       _mesa_remove_attachment(ctx, att);

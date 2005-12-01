@@ -154,19 +154,21 @@ _mesa_remove_attachment(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
 {
    if (att->Type == GL_TEXTURE) {
       ASSERT(att->Texture);
-      if (att->Renderbuffer) {
-         /* delete/remove the 'wrapper' renderbuffer */
-         /* XXX do we really want to do this??? */
-         att->Renderbuffer->Delete(att->Renderbuffer);
-         att->Renderbuffer = NULL;
-      }
       att->Texture->RefCount--;
       if (att->Texture->RefCount == 0) {
 	 ctx->Driver.DeleteTexture(ctx, att->Texture);
       }
+      else {
+         /* tell driver that we're done rendering to this texture. */
+         if (ctx->Driver.FinishRenderTexture) {
+            ctx->Driver.FinishRenderTexture(ctx, att->Texture,
+                                            att->CubeMapFace,
+                                            att->TextureLevel);
+         }
+      }
       att->Texture = NULL;
    }
-   else if (att->Type == GL_RENDERBUFFER_EXT) {
+   if (att->Type == GL_TEXTURE || att->Type == GL_RENDERBUFFER_EXT) {
       ASSERT(att->Renderbuffer);
       ASSERT(!att->Texture);
       att->Renderbuffer->RefCount--;
@@ -190,9 +192,19 @@ _mesa_set_texture_attachment(GLcontext *ctx,
                              struct gl_texture_object *texObj,
                              GLenum texTarget, GLuint level, GLuint zoffset)
 {
-   _mesa_remove_attachment(ctx, att);
-   att->Type = GL_TEXTURE;
-   att->Texture = texObj;
+   if (att->Texture == texObj) {
+      /* re-attaching same texture */
+      ASSERT(att->Type == GL_TEXTURE);
+   }
+   else {
+      /* new attachment */
+      _mesa_remove_attachment(ctx, att);
+      att->Type = GL_TEXTURE;
+      att->Texture = texObj;
+      texObj->RefCount++;
+   }
+
+   /* always update these fields */
    att->TextureLevel = level;
    if (IS_CUBE_FACE(texTarget)) {
       att->CubeMapFace = texTarget - GL_TEXTURE_CUBE_MAP_POSITIVE_X;
@@ -202,13 +214,6 @@ _mesa_set_texture_attachment(GLcontext *ctx,
    }
    att->Zoffset = zoffset;
    att->Complete = GL_FALSE;
-
-   texObj->RefCount++;
-
-   /* XXX when we attach to a texture, we should probably set the
-    * att->Renderbuffer pointer to a "wrapper renderbuffer" which
-    * makes the texture image look like renderbuffer.
-    */
 }
 
 
@@ -758,6 +763,8 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
       assert(rb->Width == width);
       assert(rb->Height == height);
       assert(rb->InternalFormat);
+      assert(rb->RedBits || rb->GreenBits || rb->BlueBits || rb->AlphaBits ||
+             rb->DepthBits || rb->StencilBits || rb->IndexBits);
       rb->_BaseFormat = baseFormat;
    }
    else {
@@ -766,6 +773,13 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
       rb->Height = 0;
       rb->InternalFormat = GL_NONE;
       rb->_BaseFormat = GL_NONE;
+      rb->RedBits =
+      rb->GreenBits =
+      rb->BlueBits =
+      rb->AlphaBits =
+      rb->IndexBits =
+      rb->DepthBits =
+      rb->StencilBits = 0;
    }
 
    /*
@@ -845,6 +859,28 @@ _mesa_IsFramebufferEXT(GLuint framebuffer)
          return GL_TRUE;
    }
    return GL_FALSE;
+}
+
+
+/**
+ * Examine all the framebuffer's attachments to see if any are textures.
+ * If so, call ctx->Driver.FinishRenderTexture() for each texture to
+ * notify the device driver that the texture image may have changed.
+ */
+static void
+check_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
+{
+   if (ctx->Driver.FinishRenderTexture) {
+      GLuint i;
+      for (i = 0; i < BUFFER_COUNT; i++) {
+         struct gl_renderbuffer_attachment *att = fb->Attachment + i;
+         struct gl_texture_object *texObj = att->Texture;
+         if (texObj) {
+            ctx->Driver.FinishRenderTexture(ctx, texObj, att->CubeMapFace,
+                                            att->TextureLevel);
+         }
+      }
+   }
 }
 
 
@@ -931,6 +967,11 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    if (bindDrawBuf) {
       oldFb = ctx->DrawBuffer;
       if (oldFb && oldFb->Name != 0) {
+         /* check if old FB had any texture attachments */
+         if (ctx->Driver.FinishRenderTexture) {
+            check_texture_render(ctx, oldFb);
+         }
+         /* check if time to delete this framebuffer */
          oldFb->RefCount--;
          if (oldFb->RefCount == 0) {
             oldFb->Delete(oldFb);
