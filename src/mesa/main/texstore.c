@@ -2165,7 +2165,7 @@ _mesa_validate_pbo_compressed_teximage(GLcontext *ctx,
       return pixels;
    }
    if ((const GLubyte *) pixels + imageSize >
-       (const GLubyte *)(uintptr_t) packing->BufferObj->Size) {
+       ((const GLubyte *) 0) + packing->BufferObj->Size) {
       /* out of bounds read! */
       _mesa_error(ctx, GL_INVALID_OPERATION, funcName, "(invalid PBO access");
       return NULL;
