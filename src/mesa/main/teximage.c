@@ -2246,6 +2246,12 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                                 width, height, border, format, type, pixels,
                                 &ctx->Unpack, texObj, texImage);
 
+      /*
+       * XXX if this texture image is currently bound to a user-created
+       * framebuffer object, we have to invalidate that framebuffer's
+       * completeness state.
+       */
+
       ASSERT(texImage->TexFormat);
 
       /* state update */
