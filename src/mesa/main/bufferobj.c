@@ -433,6 +433,7 @@ _mesa_validate_pbo_access(GLuint dimensions,
                           GLenum format, GLenum type, const GLvoid *ptr)
 {
    GLvoid *start, *end;
+   const GLubyte *sizeAddr; /* buffer size, cast to a pointer */
 
    ASSERT(pack->BufferObj->Name != 0);
 
@@ -449,11 +450,13 @@ _mesa_validate_pbo_access(GLuint dimensions,
                               format, type, depth-1, height-1, width);
 
 
-   if ((const GLubyte *) start > (const GLubyte *)(uintptr_t) pack->BufferObj->Size) {
+   sizeAddr = ((const GLubyte *) 0) + pack->BufferObj->Size;
+
+   if ((const GLubyte *) start > sizeAddr) {
       /* This will catch negative values / wrap-around */
       return GL_FALSE;
    }
-   if ((const GLubyte *) end > (const GLubyte *)(uintptr_t) pack->BufferObj->Size) {
+   if ((const GLubyte *) end > sizeAddr) {
       /* Image read goes beyond end of buffer */
       return GL_FALSE;
    }
