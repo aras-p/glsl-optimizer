@@ -140,7 +140,6 @@ int main( int argc, char **argv )
    OFFSET( "VB_POINT_SIZE_PTR      ", struct vertex_buffer, PointSizePtr );
    OFFSET( "VB_PRIMITIVE           ", struct vertex_buffer, Primitive );
    printf( "\n" );
-   OFFSET( "VB_LAST_CLIPPED        ", struct vertex_buffer, LastClipped );
 
    DEFINE_HEADER( "struct vertex_buffer" );
 
