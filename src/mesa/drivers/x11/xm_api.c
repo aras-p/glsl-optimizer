@@ -509,7 +509,7 @@ alloc_shm_back_buffer(XMesaBuffer b, GLuint width, GLuint height)
                                         ZPixmap, NULL, &b->shminfo,
                                         width, height);
    if (b->backxrb->ximage == NULL) {
-      _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (XShmCreateImage), disabling.");
+      _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (XShmCreateImage), disabling.\n");
       b->shm = 0;
       return GL_FALSE;
    }
@@ -517,10 +517,10 @@ alloc_shm_back_buffer(XMesaBuffer b, GLuint width, GLuint height)
    b->shminfo.shmid = shmget( IPC_PRIVATE, b->backxrb->ximage->bytes_per_line
 			     * b->backxrb->ximage->height, IPC_CREAT|0777 );
    if (b->shminfo.shmid < 0) {
-      _mesa_warning(NULL, "shmget failed while allocating back buffer");
+      _mesa_warning(NULL, "shmget failed while allocating back buffer.\n");
       XDestroyImage( b->backxrb->ximage );
       b->backxrb->ximage = NULL;
-      _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (shmget), disabling.");
+      _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (shmget), disabling.\n");
       b->shm = 0;
       return GL_FALSE;
    }
@@ -528,11 +528,11 @@ alloc_shm_back_buffer(XMesaBuffer b, GLuint width, GLuint height)
    b->shminfo.shmaddr = b->backxrb->ximage->data
                       = (char*)shmat( b->shminfo.shmid, 0, 0 );
    if (b->shminfo.shmaddr == (char *) -1) {
-      _mesa_warning(NULL, "shmat() failed while allocating back buffer");
+      _mesa_warning(NULL, "shmat() failed while allocating back buffer.\n");
       XDestroyImage( b->backxrb->ximage );
       shmctl( b->shminfo.shmid, IPC_RMID, 0 );
       b->backxrb->ximage = NULL;
-      _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (shmat), disabling.");
+      _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (shmat), disabling.\n");
       b->shm = 0;
       return GL_FALSE;
    }
@@ -631,21 +631,23 @@ xmesa_alloc_back_buffer( XMesaBuffer b, GLuint width, GLuint height )
 				      8, 0 );  /* pad, bytes_per_line */
 #endif
 	 if (!b->backxrb->ximage) {
-	    _mesa_warning(NULL, "alloc_back_buffer: XCreateImage failed.");
+	    _mesa_warning(NULL, "alloc_back_buffer: XCreateImage failed.\n");
             return;
 	 }
          b->backxrb->ximage->data = (char *) MALLOC( b->backxrb->ximage->height
                                         * b->backxrb->ximage->bytes_per_line );
          if (!b->backxrb->ximage->data) {
-            _mesa_warning(NULL, "alloc_back_buffer: MALLOC failed.");
+            _mesa_warning(NULL, "alloc_back_buffer: MALLOC failed.\n");
             XMesaDestroyImage( b->backxrb->ximage );
             b->backxrb->ximage = NULL;
          }
-         /* this call just updates the width/origin fields in the xrb */
-         b->backxrb->Base.AllocStorage(NULL, &b->backxrb->Base, 
-                                       b->backxrb->Base.InternalFormat,
-                                       b->backxrb->ximage->width,
-                                       b->backxrb->ximage->height);
+         else {
+            /* this call just updates the width/origin fields in the xrb */
+            b->backxrb->Base.AllocStorage(NULL, &b->backxrb->Base, 
+                                          b->backxrb->Base.InternalFormat,
+                                          b->backxrb->ximage->width,
+                                          b->backxrb->ximage->height);
+         }
       }
       b->backxrb->pixmap = None;
    }
@@ -1252,7 +1254,7 @@ static GLboolean initialize_visual_and_buffer( int client,
          }
       }
       else {
-	 _mesa_warning(NULL, "XMesa: RGB mode rendering not supported in given visual.");
+	 _mesa_warning(NULL, "XMesa: RGB mode rendering not supported in given visual.\n");
 	 return GL_FALSE;
       }
       v->mesa_visual.indexBits = 0;

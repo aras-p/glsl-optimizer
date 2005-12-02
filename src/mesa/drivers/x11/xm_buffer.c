@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -98,7 +98,8 @@ xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       xrb->origin4 = (GLuint *) xrb->ximage->data + xrb->width4 * (height - 1);
    }
    else {
-      assert(xrb->pixmap);
+      /* this assertion will fail if we happend to run out of memory */
+      /*assert(xrb->pixmap);*/
    }
 
    return GL_TRUE;
