@@ -36,6 +36,7 @@
 #define PCI_CHIP_RV250_Ie		0x4965
 #define PCI_CHIP_RV250_If		0x4966
 #define PCI_CHIP_RV250_Ig		0x4967
+#define PCI_CHIP_RV410_5E4B             0x5E4B
 #define PCI_CHIP_R420_JH                0x4A48
 #define PCI_CHIP_R420_JI                0x4A49
 #define PCI_CHIP_R420_JJ                0x4A4A
@@ -119,6 +120,7 @@ enum {
    CHIP_FAMILY_RV350,
    CHIP_FAMILY_RV380,
    CHIP_FAMILY_R420,
+   CHIP_FAMILY_RV410,
    CHIP_FAMILY_LAST
 };
 
