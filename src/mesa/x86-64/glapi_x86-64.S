@@ -29,7 +29,7 @@
  * the symbol visibility mode to 'default'.
  */
 
-#include "assyntax.h"
+#include "../x86/assyntax.h"
 
 #if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
 #  pragma GCC visibility push(default)
