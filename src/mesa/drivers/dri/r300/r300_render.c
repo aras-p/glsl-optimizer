@@ -882,3 +882,108 @@ const struct tnl_pipeline_stage _r300_tcl_stage = {
 	NULL,
 	r300_run_tcl_render	/* run */
 };
+
+/* R300 texture rectangle expects coords in 0..1 range, not 0..dimension
+ * as in the extension spec.  Need to translate here.
+ *
+ * Note that swrast expects 0..dimension, so if a fallback is active,
+ * don't do anything.  (Maybe need to configure swrast to match hw)
+ */
+struct texrect_stage_data {
+   GLvector4f texcoord[MAX_TEXTURE_UNITS];
+};
+
+#define TEXRECT_STAGE_DATA(stage) ((struct texrect_stage_data *)stage->privatePtr)
+
+
+static GLboolean run_texrect_stage( GLcontext *ctx,
+				    struct tnl_pipeline_stage *stage )
+{
+   struct texrect_stage_data *store = TEXRECT_STAGE_DATA(stage);
+   r300ContextPtr rmesa = R300_CONTEXT(ctx);
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   GLuint i;
+
+   if (rmesa->radeon.Fallback)
+      return GL_TRUE;
+
+   for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
+      if (ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_RECT_BIT) {
+	 struct gl_texture_object *texObj = ctx->Texture.Unit[i].CurrentRect;
+	 struct gl_texture_image *texImage = texObj->Image[0][texObj->BaseLevel];
+	 const GLfloat iw = 1.0/texImage->Width;
+	 const GLfloat ih = 1.0/texImage->Height;
+	 GLfloat *in = (GLfloat *)VB->TexCoordPtr[i]->data;
+	 GLint instride = VB->TexCoordPtr[i]->stride;
+	 GLfloat (*out)[4] = store->texcoord[i].data;
+	 GLint j;
+
+	 store->texcoord[i].size = VB->TexCoordPtr[i]->size;
+	 for (j = 0 ; j < VB->Count ; j++) {
+	    switch (VB->TexCoordPtr[i]->size) {
+	    case 4:
+	       out[j][3] = in[3];
+	    /* fallthrough */
+	    case 3:
+	       out[j][2] = in[2];
+	    /* fallthrough */
+	    default:
+	       out[j][0] = in[0] * iw;
+	       out[j][1] = in[1] * ih;
+	    }
+	    in = (GLfloat *)((GLubyte *)in + instride);
+	 }
+
+	 VB->AttribPtr[VERT_ATTRIB_TEX0+i] = VB->TexCoordPtr[i] = &store->texcoord[i];
+      }
+   }
+
+   return GL_TRUE;
+}
+
+
+/* Called the first time stage->run() is invoked.
+ */
+static GLboolean alloc_texrect_data( GLcontext *ctx,
+				     struct tnl_pipeline_stage *stage )
+{
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   struct texrect_stage_data *store;
+   GLuint i;
+
+   stage->privatePtr = CALLOC(sizeof(*store));
+   store = TEXRECT_STAGE_DATA(stage);
+   if (!store)
+      return GL_FALSE;
+
+   for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
+      _mesa_vector4f_alloc( &store->texcoord[i], 0, VB->Size, 32 );
+
+   return GL_TRUE;
+}
+
+static void free_texrect_data( struct tnl_pipeline_stage *stage )
+{
+   struct texrect_stage_data *store = TEXRECT_STAGE_DATA(stage);
+   GLuint i;
+
+   if (store) {
+      for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)
+	 if (store->texcoord[i].data)
+	    _mesa_vector4f_free( &store->texcoord[i] );
+      FREE( store );
+      stage->privatePtr = NULL;
+   }
+}
+
+const struct tnl_pipeline_stage _r300_texrect_stage =
+{
+   "r300 texrect stage",			/* name */
+   NULL,
+   alloc_texrect_data,
+   free_texrect_data,
+   NULL,
+   run_texrect_stage
+};
+

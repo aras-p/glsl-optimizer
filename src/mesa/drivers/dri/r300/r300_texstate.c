@@ -243,6 +243,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	    
 	  } else if (tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
 	    size = ((texImage->Width * texelBytes + 63) & ~63) * texImage->Height;
+	    blitWidth = 64 / texelBytes;
 	  } else {
 	    int w = (texImage->Width * texelBytes + 31) & ~31;
 	    size = w * texImage->Height * texImage->Depth;
@@ -363,8 +364,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	}
 
 	t->size = (((tObj->Image[0][t->base.firstLevel]->Width - 1) << R300_TX_WIDTHMASK_SHIFT)
-			|((tObj->Image[0][t->base.firstLevel]->Height - 1) << R300_TX_HEIGHTMASK_SHIFT)
-		        |((log2Width>log2Height)?log2Width:log2Height)<<R300_TX_SIZE_SHIFT);
+			|((tObj->Image[0][t->base.firstLevel]->Height - 1) << R300_TX_HEIGHTMASK_SHIFT));
 
 	/* Only need to round to nearest 32 for textures, but the blitter
 	 * requires 64-byte aligned pitches, and we may/may not need the
@@ -373,11 +373,19 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	if (baseImage->IsCompressed)
 		t->pitch =
 		    (tObj->Image[0][t->base.firstLevel]->Width + 63) & ~(63);
-	else
+	else if (tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
+		unsigned int align = blitWidth - 1;
+		t->pitch = ((tObj->Image[0][t->base.firstLevel]->Width *
+		      texelBytes) + 63) & ~(63);
+		t->size |= R300_TX_SIZE_TXPITCH_EN;
+		t->pitch_reg = (((tObj->Image[0][t->base.firstLevel]->Width) + align) & ~align) - 1;
+	}
+	else {
+		t->size |= ((log2Width>log2Height)?log2Width:log2Height)<<R300_TX_SIZE_SHIFT;
 		t->pitch =
 		    ((tObj->Image[0][t->base.firstLevel]->Width *
 		      texelBytes) + 63) & ~(63);
-	t->pitch -= 32;
+	}
 
 	t->dirty_state = TEX_ALL;
 

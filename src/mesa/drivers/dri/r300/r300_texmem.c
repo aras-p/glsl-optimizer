@@ -183,7 +183,7 @@ static void r300UploadRectSubImage(r300ContextPtr rmesa,
 	 */
 	width = texImage->Width;
 	height = texImage->Height;
-	dstPitch = t->pitch + 32;
+	dstPitch = t->pitch;
 
 	if (rmesa->prefer_gart_client_texturing && texImage->IsClientData) {
 		/* In this case, could also use GART texturing.  This is

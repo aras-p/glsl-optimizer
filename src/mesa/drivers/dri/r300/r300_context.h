@@ -177,10 +177,11 @@ struct r300_tex_obj {
 	/* Six, for the cube faces */
 
 
+	GLuint pitch; /* this isn't sent to hardware just used in calculations */
 	/* hardware register values */
 	/* Note that R200 has 8 registers per texture and R300 only 7 */
 	GLuint filter;
-	GLuint pitch; /* one of the unknown registers.. unknown 1 ?*/
+	GLuint pitch_reg;
 	GLuint size;	/* npot only */
 	GLuint format;
 	GLuint offset;	/* Image location in the card's address space.
@@ -481,6 +482,7 @@ struct r300_hw_state {
 		struct r300_state_atom unknown1;
 		struct r300_state_atom size;
 		struct r300_state_atom format;
+		struct r300_state_atom pitch;
 		struct r300_state_atom offset;
 		struct r300_state_atom unknown4;
 		struct r300_state_atom border_color;

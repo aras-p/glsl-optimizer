@@ -123,6 +123,7 @@ const struct dri_extension card_extensions[] = {
 
 extern struct tnl_pipeline_stage _r300_render_stage;
 extern struct tnl_pipeline_stage _r300_tcl_stage;
+extern const struct tnl_pipeline_stage _r300_texrect_stage;
 
 static const struct tnl_pipeline_stage *r300_pipeline[] = {
 
@@ -153,6 +154,8 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 
 	/* Else do them here.
 	 */
+	/* scale texture rectangle to 0..1. */
+	&_r300_texrect_stage,
 	&_r300_render_stage,
 	&_tnl_render_stage,	/* FALLBACK  */
 	0,

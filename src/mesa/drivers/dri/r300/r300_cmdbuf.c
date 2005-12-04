@@ -428,6 +428,9 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE( tex.format, variable, mtu+1, "tex_format", 0 );
 		r300->hw.tex.format.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FORMAT_0, 0);
 
+	ALLOC_STATE( tex.pitch, variable, mtu+1, "tex_pitch", 0 );
+		r300->hw.tex.pitch.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_PITCH_0, 0);
+
 	ALLOC_STATE( tex.offset, variable, mtu+1, "tex_offset", 0 );
 		r300->hw.tex.offset.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_OFFSET_0, 0);
 
@@ -513,6 +516,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.unknown1);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.size);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.format);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.pitch);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.offset);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.unknown4);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.border_color);
