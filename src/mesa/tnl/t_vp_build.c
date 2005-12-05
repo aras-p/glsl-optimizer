@@ -1536,7 +1536,8 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
    /* Tell the driver about the change.  Could define a new target for
     * this?
     */
-   if (ctx->VertexProgram._Current != prev) 
+   if (ctx->VertexProgram._Current != prev &&
+       ctx->Driver.BindProgram) 
       ctx->Driver.BindProgram(ctx, GL_VERTEX_PROGRAM_ARB, (struct program *)
 			      ctx->VertexProgram._Current);   
 }
