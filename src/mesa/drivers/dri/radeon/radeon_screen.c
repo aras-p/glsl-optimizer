@@ -921,7 +921,7 @@ __driCreateNewScreen_20050727( __DRInativeDisplay *dpy,
    static const char *driver_name = "R300";
    static const __DRIutilversion2 ddx_expected = { 4, 5, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
-   static const __DRIversion drm_expected = { 1, 17, 0 };
+   static const __DRIversion drm_expected = { 1, 20, 0 };
 #endif
 
    dri_interface = interface;
