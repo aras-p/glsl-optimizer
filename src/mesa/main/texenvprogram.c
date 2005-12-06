@@ -998,7 +998,7 @@ create_new_program(struct state_key *key, GLcontext *ctx,
    p.program = program;
 
    p.program->Base.Instructions =
-      _mesa_malloc(sizeof(struct prog_instruction) * MAX_INSTRUCTIONS);
+      (struct prog_instruction*) _mesa_malloc(sizeof(struct prog_instruction) * MAX_INSTRUCTIONS);
    p.program->Base.NumInstructions = 0;
    p.program->Base.Target = GL_FRAGMENT_PROGRAM_ARB;
    p.program->NumTexIndirections = 1;	/* correct? */

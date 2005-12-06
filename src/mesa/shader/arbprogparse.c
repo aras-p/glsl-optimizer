@@ -2488,7 +2488,7 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
                   return 1;
                }
 
-               *File = src->param_binding_type;
+               *File = (enum register_file) src->param_binding_type;
 
                switch (*(*inst)++) {
                   case ARRAY_INDEX_ABSOLUTE:
@@ -2536,7 +2536,7 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
                if (parse_param_use (ctx, inst, vc_head, Program, &src))
                   return 1;
 
-               *File = src->param_binding_type;
+               *File = (enum register_file) src->param_binding_type;
                *Index = src->param_binding_begin;
                break;
          }
@@ -2563,7 +2563,7 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
 
                /* XXX: We have to handle offsets someplace in here!  -- or are those above? */
             case vt_param:
-               *File = src->param_binding_type;
+               *File = (enum register_file) src->param_binding_type;
                *Index = src->param_binding_begin;
                break;
 
@@ -4056,7 +4056,7 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    GLuint i;
 
    ASSERT(target == GL_FRAGMENT_PROGRAM_ARB);
-   if (!_mesa_parse_arb_program(ctx, target, str, len, &ap)) {
+   if (!_mesa_parse_arb_program(ctx, target, (const GLubyte*) str, len, &ap)) {
       /* Error in the program. Just return. */
       return;
    }
@@ -4108,7 +4108,7 @@ _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
 
    ASSERT(target == GL_VERTEX_PROGRAM_ARB);
 
-   if (!_mesa_parse_arb_program(ctx, target, str, len, &ap)) {
+   if (!_mesa_parse_arb_program(ctx, target, (const GLubyte*) str, len, &ap)) {
       /* Error in the program. Just return. */
       return;
    }

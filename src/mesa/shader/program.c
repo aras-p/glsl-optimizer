@@ -369,7 +369,7 @@ add_parameter(struct program_parameter_list *paramList,
 		       paramList->Size * sizeof(struct program_parameter));
 
       tmp = paramList->ParameterValues;
-      paramList->ParameterValues = ALIGN_MALLOC(paramList->Size * 4 * sizeof(GLfloat), 16);
+      paramList->ParameterValues = (GLfloat(*)[4]) ALIGN_MALLOC(paramList->Size * 4 * sizeof(GLfloat), 16);
       if (tmp) {
 	 _mesa_memcpy(paramList->ParameterValues, tmp, 
 		      n * 4 * sizeof(GLfloat));
@@ -1153,17 +1153,17 @@ make_state_string(const GLint state[6])
    char tmp[30];
 
    append(str, "state.");
-   append_token(str, state[0]);
+   append_token(str, (enum state_index) state[0]);
 
    switch (state[0]) {
    case STATE_MATERIAL:
       append_face(str, state[1]);
-      append_token(str, state[2]);
+      append_token(str, (enum state_index) state[2]);
       break;
    case STATE_LIGHT:
       append(str, "light");
       append_index(str, state[1]); /* light number [i]. */
-      append_token(str, state[2]); /* coefficients */
+      append_token(str, (enum state_index) state[2]); /* coefficients */
       break;
    case STATE_LIGHTMODEL_AMBIENT:
       append(str, "lightmodel.ambient");
@@ -1179,11 +1179,11 @@ make_state_string(const GLint state[6])
    case STATE_LIGHTPROD:
       append_index(str, state[1]); /* light number [i]. */
       append_face(str, state[2]);
-      append_token(str, state[3]);
+      append_token(str, (enum state_index) state[3]);
       break;
    case STATE_TEXGEN:
       append_index(str, state[1]); /* tex unit [i] */
-      append_token(str, state[2]); /* plane coef */
+      append_token(str, (enum state_index) state[2]); /* plane coef */
       break;
    case STATE_TEXENV_COLOR:
       append_index(str, state[1]); /* tex unit [i] */
@@ -1206,11 +1206,11 @@ make_state_string(const GLint state[6])
          /* state[3] = first column to fetch */
          /* state[4] = last column to fetch */
          /* state[5] = transpose, inverse or invtrans */
-         const enum state_index mat = state[1];
+         const enum state_index mat = (enum state_index) state[1];
          const GLuint index = (GLuint) state[2];
          const GLuint first = (GLuint) state[3];
          const GLuint last = (GLuint) state[4];
-         const enum state_index modifier = state[5];
+         const enum state_index modifier = (enum state_index) state[5];
          append_token(str, mat);
          if (index)
             append_index(str, index);
@@ -1229,7 +1229,7 @@ make_state_string(const GLint state[6])
    case STATE_VERTEX_PROGRAM:
       /* state[1] = {STATE_ENV, STATE_LOCAL} */
       /* state[2] = parameter index          */
-      append_token(str, state[1]);
+      append_token(str, (enum state_index) state[1]);
       append_index(str, state[2]);
       break;
    case STATE_INTERNAL:
@@ -1523,7 +1523,7 @@ static void
 print_dst_reg(const struct prog_dst_register *dstReg)
 {
    _mesa_printf(" %s[%d]%s",
-                program_file_string(dstReg->File),
+                program_file_string((enum register_file) dstReg->File),
                 dstReg->Index,
                 writemask_string(dstReg->WriteMask));
 }
@@ -1532,7 +1532,7 @@ static void
 print_src_reg(const struct prog_src_register *srcReg)
 {
    _mesa_printf("%s[%d]%s",
-                program_file_string(srcReg->File),
+                program_file_string((enum register_file) srcReg->File),
                 srcReg->Index,
                 swizzle_string(srcReg->Swizzle,
                                srcReg->NegateBase, GL_FALSE));
@@ -1551,7 +1551,7 @@ _mesa_print_instruction(const struct prog_instruction *inst)
       if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
          _mesa_printf(", ");
          _mesa_printf("%s[%d]%s",
-                      program_file_string(inst->SrcReg[0].File),
+                      program_file_string((enum register_file) inst->SrcReg[0].File),
                       inst->SrcReg[0].Index,
                       swizzle_string(inst->SrcReg[0].Swizzle,
                                      inst->SrcReg[0].NegateBase, GL_FALSE));
@@ -1564,7 +1564,7 @@ _mesa_print_instruction(const struct prog_instruction *inst)
          _mesa_printf("_SAT");
       print_dst_reg(&inst->DstReg);
       _mesa_printf("%s[%d], %s;\n",
-                   program_file_string(inst->SrcReg[0].File),
+                   program_file_string((enum register_file) inst->SrcReg[0].File),
                    inst->SrcReg[0].Index,
                    swizzle_string(inst->SrcReg[0].Swizzle,
                                   inst->SrcReg[0].NegateBase, GL_TRUE));
@@ -1611,7 +1611,7 @@ _mesa_print_instruction(const struct prog_instruction *inst)
 
          if (inst->DstReg.File != PROGRAM_UNDEFINED) {
             _mesa_printf(" %s[%d]%s",
-                         program_file_string(inst->DstReg.File),
+                         program_file_string((enum register_file) inst->DstReg.File),
                          inst->DstReg.Index,
                          writemask_string(inst->DstReg.WriteMask));
          }

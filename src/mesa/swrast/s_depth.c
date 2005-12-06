@@ -1136,7 +1136,7 @@ _swrast_depth_bounds_test( GLcontext *ctx, struct sw_span *span )
          zbuffer = zbuffer16;
       }
       else {
-         zbuffer = rb->GetPointer(ctx, rb, span->x, span->y);
+         zbuffer = (GLushort*) rb->GetPointer(ctx, rb, span->x, span->y);
          if (!zbuffer) {
             rb->GetRow(ctx, rb, count, span->x, span->y, zbuffer16);
             zbuffer = zbuffer16;
@@ -1163,7 +1163,7 @@ _swrast_depth_bounds_test( GLcontext *ctx, struct sw_span *span )
          zbuffer = zbuffer32;
       }
       else {
-         zbuffer = rb->GetPointer(ctx, rb, span->x, span->y);
+         zbuffer = (GLuint*) rb->GetPointer(ctx, rb, span->x, span->y);
          if (!zbuffer) {
             rb->GetRow(ctx, rb, count, span->x, span->y, zbuffer32);
             zbuffer = zbuffer32;

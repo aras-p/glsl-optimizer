@@ -563,7 +563,7 @@ struct tnl_clipspace_fastpath {
    GLuint attr_count;
    GLboolean match_strides;
 
-   struct {
+   struct attr_type {
       GLuint format;
       GLuint size;
       GLuint stride;

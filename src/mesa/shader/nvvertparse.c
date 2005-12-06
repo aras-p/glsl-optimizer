@@ -1048,7 +1048,7 @@ Parse_PrintInstruction(struct parse_state *parseState, struct prog_instruction *
    for (len = 0; str[len] != '\''; len++) /* find closing quote */
       ;
    parseState->pos += len + 1;
-   msg = _mesa_malloc(len + 1);
+   msg = (GLubyte*) _mesa_malloc(len + 1);
 
    _mesa_memcpy(msg, str, len);
    msg[len] = 0;

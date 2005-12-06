@@ -87,7 +87,8 @@ void _tnl_register_fastpath( struct tnl_clipspace *vtx,
    fastpath->attr_count = vtx->attr_count;
    fastpath->match_strides = match_strides;
    fastpath->func = vtx->emit;
-   fastpath->attr = MALLOC(vtx->attr_count * sizeof(fastpath->attr[0]));
+   fastpath->attr = (struct attr_type *)
+      _mesa_malloc(vtx->attr_count * sizeof(fastpath->attr[0]));
 
    for (i = 0; i < vtx->attr_count; i++) {
       fastpath->attr[i].format = vtx->attr[i].format;
@@ -425,7 +426,7 @@ void *_tnl_emit_vertices_to_buffer( GLcontext *ctx,
 
    /* Note: dest should not be adjusted for non-zero 'start' values:
     */
-   vtx->emit( ctx, end - start, dest );	
+   vtx->emit( ctx, end - start, (GLubyte*) dest );	
    return (void *)((GLubyte *)dest + vtx->vertex_size * (end - start));
 }
 

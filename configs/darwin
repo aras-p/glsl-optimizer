@@ -5,10 +5,12 @@ include $(TOP)/configs/default
 CONFIG_NAME = darwin
 
 # Compiler and flags
-CC = cc
-CXX = cc
+CC = c++
+CXX = c++
 CFLAGS = -I/usr/X11R6/include -O3 -fPIC -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
 CXXFLAGS = -I/usr/X11R6/include -O3 -fPIC -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
+
+MKLIB_OPTIONS = -cplusplus
 
 # Library names (actual file names)
 GL_LIB_NAME = libGL.dylib

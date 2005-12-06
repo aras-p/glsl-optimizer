@@ -582,11 +582,11 @@ static void print_RSW( union instruction op )
 
 static void print_ALU( union instruction op )
 {
-   _mesa_printf("%s ", _mesa_opcode_string(op.alu.opcode));
+   _mesa_printf("%s ", _mesa_opcode_string((enum prog_opcode) op.alu.opcode));
    print_reg(0, op.alu.dst);
    _mesa_printf(", ");
    print_reg(op.alu.file0, op.alu.idx0);
-   if (_mesa_num_inst_src_regs(op.alu.opcode) > 1) {
+   if (_mesa_num_inst_src_regs((enum prog_opcode) op.alu.opcode) > 1) {
       _mesa_printf(", ");
       print_reg(op.alu.file1, op.alu.idx1);
    }
@@ -1082,7 +1082,7 @@ static void cvp_emit_inst( struct compilation *cp,
 
 static void free_tnl_data( struct vertex_program *program  )
 {
-   struct tnl_compiled_program *p = program->TnlData;
+   struct tnl_compiled_program *p = (struct tnl_compiled_program *) program->TnlData;
    if (p->compiled_func)
       _mesa_free((void *)p->compiled_func);
    _mesa_free(p);
@@ -1460,7 +1460,7 @@ static GLboolean init_vertex_program( GLcontext *ctx,
     */
    m->VB = VB;
 
-   m->File[0] = ALIGN_MALLOC(REG_MAX * sizeof(GLfloat) * 4, 16);
+   m->File[0] = (GLfloat(*)[4])ALIGN_MALLOC(REG_MAX * sizeof(GLfloat) * 4, 16);
 
    /* Initialize regs where necessary:
     */

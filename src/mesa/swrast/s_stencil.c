@@ -426,7 +426,7 @@ stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span, GLuint face)
    }
 #endif
 
-   stencil = rb->GetPointer(ctx, rb, x, y);
+   stencil = (GLstencil *) rb->GetPointer(ctx, rb, x, y);
    if (!stencil) {
       rb->GetRow(ctx, rb, n, x, y, stencilRow);
       stencil = stencilRow;
@@ -1173,7 +1173,7 @@ _swrast_clear_stencil_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
          if (rb->DataType == GL_UNSIGNED_BYTE) {
             GLint i, j;
             for (i = 0; i < height; i++) {
-               GLubyte *stencil = rb->GetPointer(ctx, rb, x, y + i);
+               GLubyte *stencil = (GLubyte*) rb->GetPointer(ctx, rb, x, y + i);
                for (j = 0; j < width; j++) {
                   stencil[j] = (stencil[j] & invMask) | clearVal;
                }
@@ -1182,7 +1182,7 @@ _swrast_clear_stencil_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
          else {
             GLint i, j;
             for (i = 0; i < height; i++) {
-               GLushort *stencil = rb->GetPointer(ctx, rb, x, y + i);
+               GLushort *stencil = (GLushort*) rb->GetPointer(ctx, rb, x, y + i);
                for (j = 0; j < width; j++) {
                   stencil[j] = (stencil[j] & invMask) | clearVal;
                }
@@ -1194,7 +1194,7 @@ _swrast_clear_stencil_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
          if (width == rb->Width && rb->DataType == GL_UNSIGNED_BYTE) {
             /* optimized case */
             /* Note: bottom-to-top raster assumed! */
-            GLubyte *stencil = rb->GetPointer(ctx, rb, x, y);
+            GLubyte *stencil = (GLubyte *) rb->GetPointer(ctx, rb, x, y);
             GLuint len = width * height * sizeof(GLubyte);
             _mesa_memset(stencil, clearVal, len);
          }
@@ -1207,7 +1207,7 @@ _swrast_clear_stencil_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
                   _mesa_memset(stencil, clearVal, width);
                }
                else {
-                  _mesa_memset16(stencil, clearVal, width);
+                  _mesa_memset16((short unsigned int*) stencil, clearVal, width);
                }
             }
          }
