@@ -61,6 +61,7 @@
 
 #define need_GL_ARB_multisample
 #define need_GL_ARB_texture_compression
+#define need_GL_EXT_secondary_color
 #include "extension_helper.h"
 
 #include "xmlpool.h"
@@ -136,6 +137,7 @@ static const struct dri_extension card_extensions[] =
     { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
     { "GL_EXT_stencil_wrap",               NULL },
     { "GL_EXT_texture_lod_bias",           NULL },
+    { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
     { NULL,                                NULL }
 };
 

@@ -866,40 +866,28 @@ static void savageDDColorMask_s3d(GLcontext *ctx,
 	FALLBACK (ctx, SAVAGE_FALLBACK_COLORMASK, !(r && g && b));
 }
 
-/* Seperate specular not fully implemented in hardware...  Needs
- * some interaction with material state?  Just punt to software
- * in all cases?
- * FK: Don't fall back for now. Let's see the failure cases and
- *     fix them the right way. I don't see how this could be a
- *     hardware limitation.
- */
 static void savageUpdateSpecular_s4(GLcontext *ctx) {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
     u_int32_t drawLocalCtrl = imesa->regs.s4.drawLocalCtrl.ui;
 
-    if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR &&
-	ctx->Light.Enabled) {
+    if (NEED_SECONDARY_COLOR(ctx)) {
 	imesa->regs.s4.drawLocalCtrl.ni.specShadeEn = GL_TRUE;
-	/*FALLBACK (ctx, SAVAGE_FALLBACK_SPECULAR, GL_TRUE);*/
     } else {
 	imesa->regs.s4.drawLocalCtrl.ni.specShadeEn = GL_FALSE;
-	/*FALLBACK (ctx, SAVAGE_FALLBACK_SPECULAR, GL_FALSE);*/
     }
 
     if (drawLocalCtrl != imesa->regs.s4.drawLocalCtrl.ui)
 	imesa->dirty |= SAVAGE_UPLOAD_LOCAL;
 }
+
 static void savageUpdateSpecular_s3d(GLcontext *ctx) {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
     u_int32_t drawCtrl = imesa->regs.s3d.drawCtrl.ui;
 
-    if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR &&
-	ctx->Light.Enabled) {
+    if (NEED_SECONDARY_COLOR(ctx)) {
 	imesa->regs.s3d.drawCtrl.ni.specShadeEn = GL_TRUE;
-	/*FALLBACK (ctx, SAVAGE_FALLBACK_SPECULAR, GL_TRUE);*/
     } else {
 	imesa->regs.s3d.drawCtrl.ni.specShadeEn = GL_FALSE;
-	/*FALLBACK (ctx, SAVAGE_FALLBACK_SPECULAR, GL_FALSE);*/
     }
 
     if (drawCtrl != imesa->regs.s3d.drawCtrl.ui)
