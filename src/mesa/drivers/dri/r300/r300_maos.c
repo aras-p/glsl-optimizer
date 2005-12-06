@@ -523,9 +523,9 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
 		if(OutputsWritten & (1<<VERT_RESULT_COL0))
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
-		/*if(OutputsWritten & (1<<VERT_RESULT_COL1))
+		if(OutputsWritten & (1<<VERT_RESULT_COL1))
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
-		if(OutputsWritten & (1<<VERT_RESULT_BFC0))
+		/*if(OutputsWritten & (1<<VERT_RESULT_BFC0))
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT;
 		if(OutputsWritten & (1<<VERT_RESULT_BFC1))
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;*/
@@ -843,9 +843,9 @@ void r300EmitArraysVtx(GLcontext * ctx, GLboolean immd)
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
 		if(OutputsWritten & (1<<VERT_RESULT_COL0))
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
-		/*if(OutputsWritten & (1<<VERT_RESULT_COL1))
+		if(OutputsWritten & (1<<VERT_RESULT_COL1))
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
-		if(OutputsWritten & (1<<VERT_RESULT_BFC0))
+		/*if(OutputsWritten & (1<<VERT_RESULT_BFC0))
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT;
 		if(OutputsWritten & (1<<VERT_RESULT_BFC1))
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;*/
