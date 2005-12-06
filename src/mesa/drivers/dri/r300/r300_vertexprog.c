@@ -463,7 +463,6 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 		vp->outputs[i] = -1;
 	
 	assert(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS));
-	assert(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_COL0));
 	
 	/* Assign outputs */
 	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))

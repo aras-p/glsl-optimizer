@@ -1152,10 +1152,9 @@ void r300_setup_rs_unit(GLcontext *ctx)
 			if (OutputsWritten & (hw_tcl_on ? (1 << (VERT_RESULT_TEX0+i)) : (_TNL_BIT_TEX0<<i))) {
 				vp_reg++;
 			} else {
-				/* Unsure of how to handle this situation, for now print errors and
-				 * the program will just recieve bogus data
-				 */
+				/* Passing invalid data here can lock the GPU. */
 				fprintf(stderr, "fragprog wants coords for tex%d, vp doesn't provide them!\n", i);
+				exit(-1);
 			}
 			InputsRead &= ~(FRAG_BIT_TEX0<<i);
 			fp_reg++;
@@ -1163,8 +1162,10 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	}
 
 	if (InputsRead & FRAG_BIT_COL0) {
-		if (!(OutputsWritten & (hw_tcl_on ? (1<<VERT_RESULT_COL0) : _TNL_BIT_COLOR0)))
+		if (!(OutputsWritten & (hw_tcl_on ? (1<<VERT_RESULT_COL0) : _TNL_BIT_COLOR0))) {
 			fprintf(stderr, "fragprog wants col0, vp doesn't provide it\n");
+			exit(-1);
+		}
 
 		r300->hw.rr.cmd[R300_RR_ROUTE_0] |= 0
 				| R300_RS_ROUTE_0_COLOR
@@ -1174,8 +1175,10 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	}
 	
 	if (InputsRead & FRAG_BIT_COL1) {
-		if (!(OutputsWritten & (hw_tcl_on ? (1<<VERT_RESULT_COL1) : _TNL_BIT_COLOR1)))
+		if (!(OutputsWritten & (hw_tcl_on ? (1<<VERT_RESULT_COL1) : _TNL_BIT_COLOR1))) {
 			fprintf(stderr, "fragprog wants col1, vp doesn't provide it\n");
+			exit(-1);
+		}
 
 		r300->hw.rr.cmd[R300_RR_ROUTE_1] |= R300_RS_ROUTE_1_UNKNOWN11
 				| R300_RS_ROUTE_1_COLOR1
@@ -1575,6 +1578,36 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 	
 #ifdef CB_DPATH
 	r300UpdateTextureState(ctx);
+#endif
+
+#if 0
+#define B_FLAG(x) ((x)?1:0)
+
+	if(hw_tcl_on){
+		int i;
+		GLuint InputsRead;
+		GLuint OutputsWritten;
+		
+		InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
+		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->Base.OutputsWritten;
+		
+		for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
+			/*if(B_FLAG(OutputsWritten & (1 << (VERT_RESULT_TEX0+i))) != B_FLAG(InputsRead & (FRAG_BIT_TEX0<<i))){
+				fprintf(stderr, "vp_out != fp_in fails for unit %d\n", i);
+				exit(1);
+			}*/
+			/*
+			if(B_FLAG(ctx->Texture.Unit[i]._ReallyEnabled) != B_FLAG(InputsRead & (FRAG_BIT_TEX0<<i))){
+				fprintf(stderr, "re != fp_in fails for unit %d\n", i);
+				exit(1);
+			}
+			
+			if(B_FLAG(ctx->Texture.Unit[i]._ReallyEnabled) != B_FLAG(OutputsWritten & (1 << (VERT_RESULT_TEX0+i)))){
+				fprintf(stderr, "re != vp_out fails for unit %d\n", i);
+				exit(1);
+			}*/
+		}
+	}
 #endif
 	
 	r300_setup_textures(ctx);
