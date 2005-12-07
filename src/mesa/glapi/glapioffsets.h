@@ -848,7 +848,9 @@
 #define _gloffset_StencilFuncSeparate 813
 #define _gloffset_StencilOpSeparate 814
 #define _gloffset_StencilMaskSeparate 815
-#define _gloffset_FIRST_DYNAMIC 816
+#define _gloffset_GetQueryObjecti64vEXT 816
+#define _gloffset_GetQueryObjectui64vEXT 817
+#define _gloffset_FIRST_DYNAMIC 818
 
 #else
 
@@ -1260,6 +1262,8 @@
 #define _gloffset_StencilFuncSeparate driDispatchRemapTable[StencilFuncSeparate_remap_index]
 #define _gloffset_StencilOpSeparate driDispatchRemapTable[StencilOpSeparate_remap_index]
 #define _gloffset_StencilMaskSeparate driDispatchRemapTable[StencilMaskSeparate_remap_index]
+#define _gloffset_GetQueryObjecti64vEXT driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index]
+#define _gloffset_GetQueryObjectui64vEXT driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index]
 
 #endif /* !defined(IN_DRI_DRIVER) */
 

@@ -1931,7 +1931,7 @@ struct gl_ati_fragment_shader_state
 struct gl_query_object
 {
    GLuint Id;
-   GLuint Result;      /* the counter */
+   GLuint64EXT Result; /* the counter */
    GLboolean Active;   /* inside Begin/EndQuery */
    GLboolean Ready;    /* result is ready */
 };

@@ -11482,4 +11482,20 @@
     </function>
 </category>
 
+<category name="GL_EXT_timer_query" number="310">
+    <enum name="GL_TIME_ELAPSED_EXT" value="0x88BF"/>
+    <type name="int64EXT"                  size="8"/>
+    <type name="uint64EXT" unsigned="true" size="8"/>
+    <function name="GetQueryObjecti64vEXT" offset="816">
+        <param name="id" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint64EXT *"/>
+    </function>
+    <function name="GetQueryObjectui64vEXT" offset="817">
+        <param name="id" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLuint64EXT *"/>
+    </function>
+</category>
+
 </OpenGLAPI>

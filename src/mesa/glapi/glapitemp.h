@@ -5040,6 +5040,16 @@ KEYWORD1 void KEYWORD2 NAME(StencilMaskSeparate)(GLenum face, GLuint mask)
    DISPATCH(StencilMaskSeparate, (face, mask), (F, "glStencilMaskSeparate(0x%x, %d);\n", face, mask));
 }
 
+KEYWORD1 void KEYWORD2 NAME(GetQueryObjecti64vEXT)(GLuint id, GLenum pname, GLint64EXT * params)
+{
+   DISPATCH(GetQueryObjecti64vEXT, (id, pname, params), (F, "glGetQueryObjecti64vEXT(%d, 0x%x, %p);\n", id, pname, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetQueryObjectui64vEXT)(GLuint id, GLenum pname, GLuint64EXT * params)
+{
+   DISPATCH(GetQueryObjectui64vEXT, (id, pname, params), (F, "glGetQueryObjectui64vEXT(%d, 0x%x, %p);\n", id, pname, (const void *) params));
+}
+
 
 #endif /* defined( NAME ) */
 
@@ -5870,6 +5880,8 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(StencilFuncSeparate),
    TABLE_ENTRY(StencilOpSeparate),
    TABLE_ENTRY(StencilMaskSeparate),
+   TABLE_ENTRY(GetQueryObjecti64vEXT),
+   TABLE_ENTRY(GetQueryObjectui64vEXT),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.

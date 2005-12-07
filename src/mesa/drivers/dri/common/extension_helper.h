@@ -1421,6 +1421,13 @@ static const char VertexAttribs2dvNV_names[] =
     "";
 #endif
 
+#if defined(need_GL_EXT_timer_query)
+static const char GetQueryObjectui64vEXT_names[] = 
+    "iip\0" /* Parameter signature */
+    "glGetQueryObjectui64vEXT\0"
+    "";
+#endif
+
 #if defined(need_GL_VERSION_1_3)
 static const char MultiTexCoord3fvARB_names[] = 
     "ip\0" /* Parameter signature */
@@ -1954,6 +1961,13 @@ static const char WindowPos3dvMESA_names[] =
     "glWindowPos3dv\0"
     "glWindowPos3dvARB\0"
     "glWindowPos3dvMESA\0"
+    "";
+#endif
+
+#if defined(need_GL_EXT_timer_query)
+static const char GetQueryObjecti64vEXT_names[] = 
+    "iip\0" /* Parameter signature */
+    "glGetQueryObjecti64vEXT\0"
     "";
 #endif
 
@@ -5175,6 +5189,14 @@ static const struct dri_extension_function GL_EXT_texture_object_functions[] = {
 #if defined(need_GL_EXT_texture_perturb_normal)
 static const struct dri_extension_function GL_EXT_texture_perturb_normal_functions[] = {
     { TextureNormalEXT_names, TextureNormalEXT_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_EXT_timer_query)
+static const struct dri_extension_function GL_EXT_timer_query_functions[] = {
+    { GetQueryObjectui64vEXT_names, GetQueryObjectui64vEXT_remap_index, 817 },
+    { GetQueryObjecti64vEXT_names, GetQueryObjecti64vEXT_remap_index, 816 },
     { NULL, 0, 0 }
 };
 #endif

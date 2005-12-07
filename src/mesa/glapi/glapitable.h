@@ -853,6 +853,8 @@ struct _glapi_table
    void (GLAPIENTRYP StencilFuncSeparate)(GLenum face, GLenum func, GLint ref, GLuint mask); /* 813 */
    void (GLAPIENTRYP StencilOpSeparate)(GLenum face, GLenum fail, GLenum zfail, GLenum zpass); /* 814 */
    void (GLAPIENTRYP StencilMaskSeparate)(GLenum face, GLuint mask); /* 815 */
+   void (GLAPIENTRYP GetQueryObjecti64vEXT)(GLuint id, GLenum pname, GLint64EXT * params); /* 816 */
+   void (GLAPIENTRYP GetQueryObjectui64vEXT)(GLuint id, GLenum pname, GLuint64EXT * params); /* 817 */
 };
 
 #endif /* !defined( _GLAPI_TABLE_H_ ) */

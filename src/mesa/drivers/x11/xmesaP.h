@@ -551,8 +551,10 @@ extern void XMesaReset( void );
 
 #ifdef XFree86Server
 #define ENABLE_EXT_timer_query 0
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#define ENABLE_EXT_timer_query 1 /* should have 64-bit GLuint64EXT */
 #else
-#define ENABLE_EXT_timer_query 1
+#define ENABLE_EXT_timer_query 0 /* may not have 64-bit GLuint64EXT */
 #endif
 
 #endif

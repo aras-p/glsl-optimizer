@@ -60,5 +60,11 @@ _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params);
 extern void GLAPIENTRY
 _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params);
 
+extern void GLAPIENTRY
+_mesa_GetQueryObjecti64vEXT(GLuint id, GLenum pname, GLint64EXT *params);
+
+extern void GLAPIENTRY
+_mesa_GetQueryObjectui64vEXT(GLuint id, GLenum pname, GLuint64EXT *params);
+
 
 #endif /* OCCLUDE_H */

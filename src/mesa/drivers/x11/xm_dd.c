@@ -1183,14 +1183,14 @@ xmesa_begin_query(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 #ifdef __VMS
 #define suseconds_t unsigned int
 #endif
-static unsigned int
+static GLuint64EXT
 time_diff(const struct timeval *t0, const struct timeval *t1)
 {
-   time_t seconds0 = t0->tv_sec & 0xff;  /* 0 .. 255 seconds */
-   time_t seconds1 = t1->tv_sec & 0xff;  /* 0 .. 255 seconds */
-   suseconds_t useconds0 = seconds0 * 1000000 + t0->tv_usec;
-   suseconds_t useconds1 = seconds1 * 1000000 + t1->tv_usec;
-   return useconds1 - useconds0;
+   GLuint64EXT seconds0 = t0->tv_sec & 0xff;  /* 0 .. 255 seconds */
+   GLuint64EXT seconds1 = t1->tv_sec & 0xff;  /* 0 .. 255 seconds */
+   GLuint64EXT nanosec0 = (seconds0 * 1000000 + t0->tv_usec) * 1000;
+   GLuint64EXT nanosec1 = (seconds1 * 1000000 + t1->tv_usec) * 1000;
+   return nanosec1 - nanosec0;
 }
 
 
@@ -1200,14 +1200,9 @@ xmesa_end_query(GLcontext *ctx, GLenum target, struct gl_query_object *q)
    if (target == GL_TIME_ELAPSED_EXT) {
       struct xmesa_query_object *xq = (struct xmesa_query_object *) q;
       struct timeval endTime;
-      unsigned int dt;
       (void) gettimeofday(&endTime, NULL);
-      dt = time_diff(&xq->StartTime, &endTime);
-      /* clamp if we'd overflow a 32-bit unsigned int */
-      if (dt >= 0xffffffffU / 1000U)
-         q->Result = 0xffffffffU;
-      else
-         q->Result = dt * 1000; /* result is in nanoseconds! */
+      /* result is in nanoseconds! */
+      q->Result = time_diff(&xq->StartTime, &endTime);
    }
    q->Ready = GL_TRUE;
 }

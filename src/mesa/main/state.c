@@ -797,6 +797,10 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_GetFramebufferAttachmentParameterivEXT(exec, _mesa_GetFramebufferAttachmentParameterivEXT);
    SET_GenerateMipmapEXT(exec, _mesa_GenerateMipmapEXT);
 #endif
+
+   /* GL_EXT_timer_query */
+   SET_GetQueryObjecti64vEXT(exec, _mesa_GetQueryObjecti64vEXT);
+   SET_GetQueryObjectui64vEXT(exec, _mesa_GetQueryObjectui64vEXT);
 }
 
 

@@ -2231,12 +2231,30 @@ typedef void (APIENTRYP PFNGLBLENDEQUATIONSEPARATEATIPROC) (GLenum modeRGB, GLen
 #endif /* GL_ATI_blend_equation_separate */
 
 
+
 #ifndef GL_EXT_timer_query
 #define GL_EXT_timer_query 1
 
+/* Define 64-bit types */
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+   typedef long long int GLint64EXT;
+   typedef unsigned long long int GLuint64EXT;
+#else
+   /* this might actually be a 32-bit type */
+   typedef long int GLint64_EXT;
+   typedef unsigned long int GLuint64_EXT;
+#endif
+
 #define GL_TIME_ELAPSED_EXT  0x88BF
 
+GLAPI void GLAPIENTRY glGetQueryObjecti64vEXT(GLuint id, GLenum pname, GLint64EXT *params);
+GLAPI void GLAPIENTRY glGetQueryObjectui64vEXT(GLuint id, GLenum pname, GLuint64EXT *params);
+
+typedef void (APIENTRYP PFNGLGETQUERYOBJECTI64VEXTPROC) (GLuint id, GLenum pname, GLint64EXT *params);
+typedef void (APIENTRYP PFNGLGETQUERYOBJECTUI64VEXTPROC) (GLuint id, GLenum pname, GLuint64EXT *params);
+
 #endif /* GL_EXT_timer_query */
+
 
 
 #ifndef GL_EXT_packed_depth_stencil

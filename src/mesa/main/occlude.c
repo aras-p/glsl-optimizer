@@ -331,7 +331,7 @@ _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
 
    if (!q || q->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetQueryObjectivARB(id=%d is active)", id);
+                  "glGetQueryObjectivARB(id=%d is invalid or active)", id);
       return;
    }
 
@@ -344,7 +344,13 @@ _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
              */
             ASSERT(ctx->Driver.EndQuery);
          }
-         *params = q->Result;
+         /* if result is too large for returned type, clamp to max value */
+         if (q->Result > 0x7fffffff) {
+            *params = 0x7fffffff;
+         }
+         else {
+            *params = q->Result;
+         }
          break;
       case GL_QUERY_RESULT_AVAILABLE_ARB:
          /* XXX revisit when we have a hardware implementation! */
@@ -369,7 +375,54 @@ _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
 
    if (!q || q->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetQueryObjectuivARB(id=%d is active)", id);
+                  "glGetQueryObjectuivARB(id=%d is invalid or active)", id);
+      return;
+   }
+
+   switch (pname) {
+      case GL_QUERY_RESULT_ARB:
+         while (!q->Ready) {
+            /* Wait for the query to finish! */
+            /* If using software rendering, the result will always be ready
+             * by time we get here.  Otherwise, we must be using hardware!
+             */
+            ASSERT(ctx->Driver.EndQuery);
+         }
+         /* if result is too large for returned type, clamp to max value */
+         if (q->Result > 0xffffffff) {
+            *params = 0xffffffff;
+         }
+         else {
+            *params = q->Result;
+         }
+         break;
+      case GL_QUERY_RESULT_AVAILABLE_ARB:
+         /* XXX revisit when we have a hardware implementation! */
+         *params = q->Ready;
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetQueryObjectuivARB(pname)");
+         return;
+   }
+}
+
+
+/**
+ * New with GL_EXT_timer_query
+ */
+void GLAPIENTRY
+_mesa_GetQueryObjecti64vEXT(GLuint id, GLenum pname, GLint64EXT *params)
+{
+   struct gl_query_object *q = NULL;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (id)
+      q = lookup_query_object(ctx, id);
+
+   if (!q || q->Active) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGetQueryObjectui64vARB(id=%d is invalid or active)", id);
       return;
    }
 
@@ -389,11 +442,51 @@ _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
          *params = q->Ready;
          break;
       default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetQueryObjectuivARB(pname)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetQueryObjecti64vARB(pname)");
          return;
    }
 }
 
+
+/**
+ * New with GL_EXT_timer_query
+ */
+void GLAPIENTRY
+_mesa_GetQueryObjectui64vEXT(GLuint id, GLenum pname, GLuint64EXT *params)
+{
+   struct gl_query_object *q = NULL;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (id)
+      q = lookup_query_object(ctx, id);
+
+   if (!q || q->Active) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGetQueryObjectuui64vARB(id=%d is invalid or active)", id);
+      return;
+   }
+
+   switch (pname) {
+      case GL_QUERY_RESULT_ARB:
+         while (!q->Ready) {
+            /* Wait for the query to finish! */
+            /* If using software rendering, the result will always be ready
+             * by time we get here.  Otherwise, we must be using hardware!
+             */
+            ASSERT(ctx->Driver.EndQuery);
+         }
+         *params = q->Result;
+         break;
+      case GL_QUERY_RESULT_AVAILABLE_ARB:
+         /* XXX revisit when we have a hardware implementation! */
+         *params = q->Ready;
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetQueryObjectui64vARB(pname)");
+         return;
+   }
+}
 
 
 /**
