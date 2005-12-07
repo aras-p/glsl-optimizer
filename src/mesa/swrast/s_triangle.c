@@ -162,7 +162,7 @@ _swrast_culltriangle( GLcontext *ctx,
       return;								\
    }
 
-#define RENDER_SPAN( span  )						\
+#define RENDER_SPAN( span  ) {						\
    GLuint i;								\
    span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
    span.intTex[1] -= FIXED_HALF;					\
@@ -177,7 +177,7 @@ _swrast_culltriangle( GLcontext *ctx,
       span.intTex[0] += span.intTexStep[0];				\
       span.intTex[1] += span.intTexStep[1];				\
    }									\
-   rb->PutRowRGB(ctx, rb, span.end, span.x, span.y, span.array->rgb, NULL);
+   rb->PutRowRGB(ctx, rb, span.end, span.x, span.y, span.array->rgb, NULL); }
 
 #include "s_tritemp.h"
 
@@ -213,7 +213,7 @@ _swrast_culltriangle( GLcontext *ctx,
       return;								\
    }
 
-#define RENDER_SPAN( span )						\
+#define RENDER_SPAN( span ) {						\
    GLuint i;				    				\
    span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
    span.intTex[1] -= FIXED_HALF;					\
@@ -238,7 +238,7 @@ _swrast_culltriangle( GLcontext *ctx,
       span.z += span.zStep;						\
    }									\
    rb->PutRowRGB(ctx, rb, span.end, span.x, span.y,			\
-                 span.array->rgb, span.array->mask);
+                 span.array->rgb, span.array->mask); }
 
 #include "s_tritemp.h"
 
