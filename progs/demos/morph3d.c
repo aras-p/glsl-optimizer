@@ -176,6 +176,7 @@ So the angle is:
 
 static int       mono=0;
 static int       smooth=1;
+static int       anim=1;
 static GLint     WindH, WindW;
 static GLfloat   step=0;
 static GLfloat   seno;
@@ -660,13 +661,6 @@ static void draw_ico( void )
 }
 
 static void draw ( void ) {
-  static double t0 = -1.;
-  double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-  if (t0 < 0.0)
-     t0 = t;
-  dt = t - t0;
-  t0 = t;
-
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
   glPushMatrix();
@@ -688,11 +682,19 @@ static void draw ( void ) {
 
   glutSwapBuffers();
 
-  step += dt;
 }
 
 static void idle_( void )
 {
+  static double t0 = -1.;
+  double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+  if (t0 < 0.0)
+     t0 = t;
+  dt = t - t0;
+  t0 = t;
+
+  step += dt;
+
    glutPostRedisplay();
 }
 
@@ -718,11 +720,19 @@ static void key( unsigned char k, int x, int y )
     case '4': object=4; break;
     case '5': object=5; break;
     case ' ': mono^=1; break;
-    case 13: smooth^=1; break;
+    case 's': smooth^=1; break;
+    case 'a':
+       anim^=1;
+       if (anim)
+          glutIdleFunc( idle_ );
+       else
+          glutIdleFunc(NULL);
+       break;
     case 27:
        exit(0);
   }
   pinit();
+  glutPostRedisplay();
 }
 
 static void pinit(void)
