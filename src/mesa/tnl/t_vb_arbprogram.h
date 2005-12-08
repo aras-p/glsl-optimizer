@@ -111,7 +111,7 @@ union instruction {
       GLuint pad2;
    } msk;
 
-   long long dword;
+   MESA_LONGLONG dword;
 };
 
 

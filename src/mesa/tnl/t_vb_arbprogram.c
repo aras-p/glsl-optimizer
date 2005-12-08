@@ -955,7 +955,7 @@ static void cvp_emit_inst( struct compilation *cp,
    struct reg reg[3];
    GLuint result, nr_args, i;
 
-   assert(sizeof(*op) == sizeof(long long));
+   assert(sizeof(*op) == sizeof(MESA_LONGLONG));
 
    /* Need to handle SWZ, ARL specially.
     */
