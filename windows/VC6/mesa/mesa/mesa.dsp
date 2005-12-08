@@ -193,11 +193,11 @@ SOURCE=..\..\..\..\src\mesa\main\eval.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\main\extensions.c
+SOURCE=..\..\..\..\src\mesa\main\execmem.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\main\execmem.c
+SOURCE=..\..\..\..\src\mesa\main\extensions.c
 # End Source File
 # Begin Source File
 
@@ -450,15 +450,15 @@ SOURCE=..\..\..\..\src\mesa\swrast\s_stencil.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\swrast\s_texstore.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\mesa\swrast\s_texcombine.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\swrast\s_texfiltere.c
+SOURCE=..\..\..\..\src\mesa\swrast\s_texfilter.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\swrast\s_texstore.c
 # End Source File
 # Begin Source File
 
