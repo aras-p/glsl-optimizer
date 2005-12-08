@@ -1016,6 +1016,7 @@ EXPORTS
 	_mesa_new_buffer_object
 	_mesa_new_framebuffer
 	_mesa_new_program
+	_mesa_new_query_object
 	_mesa_new_soft_renderbuffer
 	_mesa_new_texture_image
 	_mesa_new_texture_object
@@ -1069,5 +1070,5 @@ EXPORTS
 	_tnl_CreateContext
 	_tnl_DestroyContext
 	_tnl_InvalidateState
-	_tnl_MakeCurrent
 	_tnl_run_pipeline
+	_tnl_program_string
