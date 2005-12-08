@@ -2244,8 +2244,8 @@ typedef void (APIENTRYP PFNGLBLENDEQUATIONSEPARATEATIPROC) (GLenum modeRGB, GLen
    typedef unsigned __int64 GLuint64EXT;
 #else
    /* this might actually be a 32-bit type */
-   typedef long int GLint64_EXT;
-   typedef unsigned long int GLuint64_EXT;
+   typedef long int GLint64EXT;
+   typedef unsigned long int GLuint64EXT;
 #endif
 
 #define GL_TIME_ELAPSED_EXT  0x88BF
