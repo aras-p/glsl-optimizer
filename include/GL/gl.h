@@ -2239,6 +2239,9 @@ typedef void (APIENTRYP PFNGLBLENDEQUATIONSEPARATEATIPROC) (GLenum modeRGB, GLen
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
    typedef long long int GLint64EXT;
    typedef unsigned long long int GLuint64EXT;
+#elif defined(_WIN32)
+   typedef __int64 GLint64EXT;
+   typedef unsigned __int64 GLuint64EXT;
 #else
    /* this might actually be a 32-bit type */
    typedef long int GLint64_EXT;
