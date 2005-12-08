@@ -147,13 +147,6 @@
 #define CAPI _cdecl
 #endif
 
-#if defined(__WIN32__)
-     typedef __int64 MESA_LONGLONG;
-     typedef unsigned __int64 MESA_ULONGLONG;
-#else
-     typedef long long MESA_LONGLONG;
-     typedef unsigned long long MESA_ULONGLONG;
-#endif
 
 /* This is a macro on IRIX */
 #ifdef _P
