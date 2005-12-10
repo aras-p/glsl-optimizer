@@ -104,7 +104,7 @@ Lookup_driSurface(EGLSurface surf)
 }
 
 extern void _eglDRIInitDriverFallbacks(_EGLDriver *drv);
-extern EGLBoolean _eglDRIShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLSurface surface, EGLModeMESA m);
+extern EGLBoolean _eglDRIShowScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLSurface surface, EGLModeMESA m);
 extern EGLBoolean _eglDRIInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor);
 extern EGLBoolean _eglDRIGetDisplayInfo(driDisplay *dpy);
 extern EGLBoolean _eglDRICreateDisplay(driDisplay *dpy, __DRIframebuffer *framebuffer);

@@ -347,8 +347,9 @@ _eglDRILoadColormap(driScreen *scrn)
  * Called via eglShowSurfaceMESA().
  */
 EGLBoolean
-_eglDRIShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
-                       EGLSurface surface, EGLModeMESA m)
+_eglDRIShowScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy,
+                             EGLScreenMESA screen,
+                             EGLSurface surface, EGLModeMESA m)
 {
    driDisplay *display = Lookup_driDisplay(dpy);
    driScreen *scrn = Lookup_driScreen(dpy, screen);
@@ -358,12 +359,12 @@ _eglDRIShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
    char fname[NAME_MAX], buffer[1000];
    int temp;
 
-   _eglLog(_EGL_DEBUG, "Enter _eglDRIShowSurface");
+   _eglLog(_EGL_DEBUG, "Enter _eglDRIShowScreenSurface");
 
    /* This will check that surface, screen, and mode are valid.
     * Also, it checks that the surface is large enough for the mode, etc.
     */
-   if (!_eglShowSurfaceMESA(drv, dpy, screen, surface, m))
+   if (!_eglShowScreenSurfaceMESA(drv, dpy, screen, surface, m))
       return EGL_FALSE;
 
    assert(surface == EGL_NO_SURFACE || surf);
@@ -459,7 +460,7 @@ _eglDRIShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
    case 3:
    case 4: temp = (display->virtualWidth +  15) &  ~15; break;
    default:
-      _eglLog(_EGL_WARNING, "Bad display->bpp = %d in _eglDRIShowSurface");
+      _eglLog(_EGL_WARNING, "Bad display->bpp = %d in _eglDRIShowScreenSurface");
    }
    display->virtualWidth = temp;
 
@@ -469,7 +470,7 @@ _eglDRIShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
    if (surf->Base.Width < display->virtualWidth ||
        surf->Base.Height < display->virtualHeight) {
       /* this case _should_ have been caught at the top of this function */
-      _eglLog(_EGL_WARNING, "too small of surface in _eglDRIShowSurfaceMESA "
+      _eglLog(_EGL_WARNING, "too small of surface in _eglDRIShowScreenSurfaceMESA "
               "%d x %d < %d x %d", 
               surf->Base.Width,
               surf->Base.Height,
@@ -1043,7 +1044,7 @@ _eglDRICreateScreens(driDisplay *dpy)
          char c;
          path[ strlen( path ) - 1 ] = '\0';  /* strip off \n from sysfs */
          sscanf( path, "%c:%ux%u-%u", &c, &x, &y, &r );
-         _eglAddMode( &s->Base, x, y, r * 1000, path );
+         _eglAddNewMode( &s->Base, x, y, r * 1000, path );
       }
       fclose( file );
 
@@ -1113,7 +1114,7 @@ _eglDRIInitDriverFallbacks(_EGLDriver *drv)
    drv->API.DestroySurface = _eglDRIDestroySurface;
    drv->API.DestroyContext = _eglDRIDestroyContext;
    drv->API.CreateScreenSurfaceMESA = _eglDRICreateScreenSurfaceMESA;
-   drv->API.ShowSurfaceMESA = _eglDRIShowSurfaceMESA;
+   drv->API.ShowScreenSurfaceMESA = _eglDRIShowScreenSurfaceMESA;
    drv->API.SwapBuffers = _eglDRISwapBuffers;
 
    /* enable supported extensions */
