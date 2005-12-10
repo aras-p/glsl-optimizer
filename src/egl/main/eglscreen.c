@@ -29,8 +29,9 @@
 void
 _eglInitScreen(_EGLScreen *screen)
 {
-   /* just init to zero for now */
    memset(screen, 0, sizeof(_EGLScreen));
+   screen->StepX = 1;
+   screen->StepY = 1;
 }
 
 
@@ -141,8 +142,9 @@ _eglCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
  * this with code that _really_ shows the surface.
  */
 EGLBoolean
-_eglShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
-                    EGLSurface surface, EGLModeMESA m)
+_eglShowScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy,
+                          EGLScreenMESA screen, EGLSurface surface,
+                          EGLModeMESA m)
 {
    _EGLScreen *scrn = _eglLookupScreen(dpy, screen);
    _EGLMode *mode = _eglLookupMode(dpy, m);
@@ -158,7 +160,8 @@ _eglShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
 
    if (surface == EGL_NO_SURFACE) {
       scrn->CurrentSurface = NULL;
-   } else {
+   }
+   else {
       _EGLSurface *surf = _eglLookupSurface(surface);
       if (!surf || surf->Type != EGL_SCREEN_BIT_MESA) {
          _eglError(EGL_BAD_SURFACE, "eglShowSurfaceMESA");
@@ -269,6 +272,10 @@ _eglQueryScreenMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
       value[0] = scrn->OriginX;
       value[1] = scrn->OriginY;
       break;
+   case EGL_SCREEN_POSITION_GRANULARITY_MESA:
+      value[0] = scrn->StepX;
+      value[1] = scrn->StepY;
+      break;
    default:
       _eglError(EGL_BAD_ATTRIBUTE, "eglQueryScreenMESA");
       return EGL_FALSE;
@@ -278,10 +285,21 @@ _eglQueryScreenMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
 }
 
 
+/**
+ * Delete the modes associated with given screen.
+ */
 void
 _eglDestroyScreenModes(_EGLScreen *scrn)
 {
-   free(scrn->Modes);
+   EGLint i;
+   for (i = 0; i < scrn->NumModes; i++) {
+      if (scrn->Modes[i].Name)
+         free((char *) scrn->Modes[i].Name); /* cast away const */
+   }
+   if (scrn->Modes)
+      free(scrn->Modes);
+   scrn->Modes = NULL;
+   scrn->NumModes = 0;
 }
 
       
