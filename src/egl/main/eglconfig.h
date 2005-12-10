@@ -38,14 +38,6 @@ _eglParseConfigAttribs(_EGLConfig *config, const EGLint *attrib_list);
 
 
 extern EGLBoolean
-_eglConfigQualifies(const _EGLConfig *c, const _EGLConfig *min);
-
-
-extern EGLint
-_eglCompareConfigs(const _EGLConfig *a, const _EGLConfig *b);
-
-
-extern EGLBoolean
 _eglChooseConfig(_EGLDriver *drv, EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config);
 
 

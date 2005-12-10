@@ -113,7 +113,7 @@ _eglLookupConfig(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config)
 
 
 /**
- * Add the given _EGLConifg to the given display.
+ * Add the given _EGLConfig to the given display.
  */
 _EGLConfig *
 _eglAddConfig(_EGLDisplay *display, const _EGLConfig *config)
@@ -139,7 +139,7 @@ _eglAddConfig(_EGLDisplay *display, const _EGLConfig *config)
 
 
 /**
- * Parse the attrib_list to fill in the fields of the given _egl_config
+ * Parse the attrib_list to fill in the fields of the given _eglConfig
  * Return EGL_FALSE if any errors, EGL_TRUE otherwise.
  */
 EGLBoolean
@@ -217,7 +217,7 @@ static struct sort_info SortInfo[] = {
  * Return EGL_TRUE if the attributes of c meet or exceed the minimums
  * specified by min.
  */
-EGLBoolean
+static EGLBoolean
 _eglConfigQualifies(const _EGLConfig *c, const _EGLConfig *min)
 {
    EGLint i;
@@ -250,43 +250,47 @@ _eglConfigQualifies(const _EGLConfig *c, const _EGLConfig *min)
 /**
  * Compare configs 'a' and 'b' and return -1 if a belongs before b,
  * 1 if a belongs after b, or 0 if they're equal.
+ * Used by qsort().
  */
-EGLint
-_eglCompareConfigs(const _EGLConfig *a, const _EGLConfig *b)
+static int
+_eglCompareConfigs(const void *a, const void *b)
 {
+   const _EGLConfig *aConfig = (const _EGLConfig *) a;
+   const _EGLConfig *bConfig = (const _EGLConfig *) b;
    EGLint i;
+
    for (i = 0; SortInfo[i].Attribute != 0; i++) {
-      const EGLint av = GET_CONFIG_ATTRIB(a, SortInfo[i].Attribute);
-      const EGLint bv = GET_CONFIG_ATTRIB(b, SortInfo[i].Attribute);
+      const EGLint aVal = GET_CONFIG_ATTRIB(aConfig, SortInfo[i].Attribute);
+      const EGLint bVal = GET_CONFIG_ATTRIB(bConfig, SortInfo[i].Attribute);
       if (SortInfo[i].SortOrder == SMALLER) {
-         if (av < bv)
+         if (aVal < bVal)
             return -1;
-         else if (av > bv)
+         else if (aVal > bVal)
             return 1;
          /* else, continue examining attribute values */
       }
       else if (SortInfo[i].SortOrder == SPECIAL) {
          if (SortInfo[i].Attribute == EGL_CONFIG_CAVEAT) {
             /* values are EGL_NONE, SLOW_CONFIG, or NON_CONFORMANT_CONFIG */
-            if (av < bv)
+            if (aVal < bVal)
                return -1;
-            else if (av > bv)
+            else if (aVal > bVal)
                return 1;
          }
          else if (SortInfo[i].Attribute == EGL_RED_SIZE ||
                   SortInfo[i].Attribute == EGL_GREEN_SIZE ||
                   SortInfo[i].Attribute == EGL_BLUE_SIZE ||
                   SortInfo[i].Attribute == EGL_ALPHA_SIZE) {
-            if (av > bv)
+            if (aVal > bVal)
                return -1;
-            else if (av < bv)
+            else if (aVal < bVal)
                return 1;
          }
          else {
             assert(SortInfo[i].Attribute == EGL_NATIVE_VISUAL_TYPE);
-            if (av < bv)
+            if (aVal < bVal)
                return -1;
-            else if (av > bv)
+            else if (aVal > bVal)
                return 1;
          }
       }
@@ -295,6 +299,8 @@ _eglCompareConfigs(const _EGLConfig *a, const _EGLConfig *b)
          /* continue examining attribute values */
       }
    }
+
+   /* all attributes identical */
    return 0;
 }
 
@@ -304,33 +310,42 @@ _eglCompareConfigs(const _EGLConfig *a, const _EGLConfig *b)
  */
 EGLBoolean
 _eglChooseConfig(_EGLDriver *drv, EGLDisplay dpy, const EGLint *attrib_list,
-                 EGLConfig *configs, EGLint config_size, EGLint *num_config)
+                 EGLConfig *configs, EGLint config_size, EGLint *num_configs)
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
-   _EGLConfig criteria;
-   EGLint i;
+   _EGLConfig **configList, criteria;
+   EGLint i, count;
 
    /* parse the attrib_list to initialize criteria */
    if (!_eglParseConfigAttribs(&criteria, attrib_list)) {
       return EGL_FALSE;
    }
 
-   *num_config = 0;
-   for (i = 0; i < disp->NumConfigs; i++) {
-      const _EGLConfig *conf = disp->Configs + i;
-      if (_eglConfigQualifies(conf, &criteria)) {
-         if (*num_config < config_size) {
-            /* save */
-            configs[*num_config] = conf->Handle;
-            (*num_config)++;
-         }
-         else {
-            break;
-         }
+   /* allocate array of config pointers */
+   configList = (_EGLConfig **) malloc(config_size * sizeof(_EGLConfig *));
+   if (!configList) {
+      _eglError(EGL_BAD_CONFIG, "eglChooseConfig(out of memory)");
+      return EGL_FALSE;
+   }
+
+   /* make array of pointers to qualifying configs */
+   for (i = count = 0; i < disp->NumConfigs && count < config_size; i++) {
+      if (_eglConfigQualifies(disp->Configs + i, &criteria)) {
+         configList[count++] = disp->Configs + i;
       }
    }
 
-   /* XXX sort the list here */
+   /* sort array of pointers */
+   qsort(configList, count, sizeof(_EGLConfig *), _eglCompareConfigs);
+
+   /* copy config handles to output array */
+   for (i = 0; i < count; i++) {
+      configs[i] = configList[i]->Handle;
+   }
+
+   free(configList);
+
+   *num_configs = count;
 
    return EGL_TRUE;
 }
@@ -376,9 +391,12 @@ _eglGetConfigs(_EGLDriver *drv, EGLDisplay dpy, EGLConfig *configs,
       for (i = 0; i < *num_config; i++) {
          configs[i] = disp->Configs[i].Handle;
       }
-   } else
+   }
+   else {
+      /* just return total number of supported configs */
       *num_config = disp->NumConfigs;
-      
+   }
+
    return EGL_TRUE;
 }
 
