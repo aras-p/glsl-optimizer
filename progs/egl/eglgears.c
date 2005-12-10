@@ -440,7 +440,7 @@ main(int argc, char *argv[])
 		return 0;
 	}
 	
-	b = eglShowSurfaceMESA(d, screen, screen_surf, mode[chosenMode]);
+	b = eglShowScreenSurfaceMESA(d, screen, screen_surf, mode[chosenMode]);
 	if (!b) {
 		printf("eglgears: show surface failed\n");
 		return 0;
