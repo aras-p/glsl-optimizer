@@ -187,7 +187,7 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
    drv->API.GetModeAttribMESA = _eglGetModeAttribMESA;
    drv->API.GetScreensMESA = _eglGetScreensMESA;
    drv->API.CreateScreenSurfaceMESA = _eglCreateScreenSurfaceMESA;
-   drv->API.ShowSurfaceMESA = _eglShowSurfaceMESA;
+   drv->API.ShowScreenSurfaceMESA = _eglShowScreenSurfaceMESA;
    drv->API.ScreenPositionMESA = _eglScreenPositionMESA;
    drv->API.QueryScreenMESA = _eglQueryScreenMESA;
    drv->API.QueryScreenSurfaceMESA = _eglQueryScreenSurfaceMESA;

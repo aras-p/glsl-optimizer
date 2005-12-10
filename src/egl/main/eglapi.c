@@ -300,8 +300,9 @@ eglGetCurrentSurface(EGLint readdraw)
 EGLint APIENTRY
 eglGetError(void)
 {
-   EGLint e = _eglGlobal.LastError;
-   _eglGlobal.LastError = EGL_SUCCESS;
+   _EGLThreadInfo *t = _eglGetCurrentThread();
+   EGLint e = t->LastError;
+   t->LastError = EGL_SUCCESS;
    return e;
 }
 
@@ -351,7 +352,7 @@ void (* APIENTRY eglGetProcAddress(const char *procname))()
       { "eglCopyContextMESA", (_EGLProc) eglCopyContextMESA },
       { "eglGetScreensMESA", (_EGLProc) eglGetScreensMESA },
       { "eglCreateScreenSurfaceMESA", (_EGLProc) eglCreateScreenSurfaceMESA },
-      { "eglShowSurfaceMESA", (_EGLProc) eglShowSurfaceMESA },
+      { "eglShowScreenSurfaceMESA", (_EGLProc) eglShowScreenSurfaceMESA },
       { "eglScreenPositionMESA", (_EGLProc) eglScreenPositionMESA },
       { "eglQueryScreenMESA", (_EGLProc) eglQueryScreenMESA },
       { "eglQueryScreenSurfaceMESA", (_EGLProc) eglQueryScreenSurfaceMESA },
@@ -444,10 +445,10 @@ eglCreateScreenSurfaceMESA(EGLDisplay dpy, EGLConfig config, const EGLint *attri
 
 
 EGLBoolean
-eglShowSurfaceMESA(EGLDisplay dpy, EGLint screen, EGLSurface surface, EGLModeMESA mode)
+eglShowScreenSurfaceMESA(EGLDisplay dpy, EGLint screen, EGLSurface surface, EGLModeMESA mode)
 {
    _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.ShowSurfaceMESA(drv, dpy, screen, surface, mode);
+   return drv->API.ShowScreenSurfaceMESA(drv, dpy, screen, surface, mode);
 }
 
 

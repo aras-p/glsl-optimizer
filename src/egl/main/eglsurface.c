@@ -1,7 +1,5 @@
 /**
  * Surface-related functions.
- *
- * See the eglcontext.c file for comments that also apply here.
  */
 
 

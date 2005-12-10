@@ -87,8 +87,8 @@ _eglLookupContext(EGLContext ctx)
 _EGLContext *
 _eglGetCurrentContext(void)
 {
-   /* XXX this should be per-thread someday */
-   return _eglGlobal.CurrentContext;
+   _EGLThreadInfo *t = _eglGetCurrentThread();
+   return t->CurrentContext;
 }
 
 
@@ -176,6 +176,7 @@ EGLBoolean
 _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
                 EGLSurface r, EGLContext context)
 {
+   _EGLThreadInfo *t = _eglGetCurrentThread();
    _EGLContext *ctx = _eglLookupContext(context);
    _EGLSurface *draw = _eglLookupSurface(d);
    _EGLSurface *read = _eglLookupSurface(r);
@@ -250,7 +251,7 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
       read->IsBound = EGL_TRUE;
    }
 
-   _eglGlobal.CurrentContext = ctx;
+   t->CurrentContext = ctx;
 
    return EGL_TRUE;
 }

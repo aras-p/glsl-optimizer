@@ -23,6 +23,8 @@ typedef struct _egl_screen _EGLScreen;
 
 typedef struct _egl_surface _EGLSurface;
 
+typedef struct _egl_thread_info _EGLThreadInfo;
+
 
 typedef void (*_EGLProc)();
 

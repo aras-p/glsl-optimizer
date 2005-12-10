@@ -2,7 +2,7 @@
 #include "eglglobals.h"
 
 
-struct _egl_global _eglGlobal = { EGL_FALSE };
+struct _egl_global _eglGlobal = { .Initialized = EGL_FALSE };
 
 
 /**
@@ -17,9 +17,10 @@ _eglInitGlobals(void)
       _eglGlobal.Contexts = _eglNewHashTable();
       _eglGlobal.Surfaces = _eglNewHashTable();
       _eglGlobal.FreeScreenHandle = 1;
-      _eglGlobal.CurrentContext = EGL_NO_CONTEXT;
-      _eglGlobal.LastError = EGL_SUCCESS;
       _eglGlobal.Initialized = EGL_TRUE;
+      /* XXX temporary */
+      _eglGlobal.ThreadInfo.CurrentContext = EGL_NO_CONTEXT;
+      _eglGlobal.ThreadInfo.LastError = EGL_SUCCESS;
    }
 }
 
@@ -37,6 +38,18 @@ _eglDestroyGlobals(void)
 }
 
 
+/**
+ * Return pointer to calling thread's _EGLThreadInfo object.
+ * Create a new one if needed.
+ * Should never return NULL.
+ */
+_EGLThreadInfo *
+_eglGetCurrentThread(void)
+{
+   /* XXX temporary */
+   return &_eglGlobal.ThreadInfo;
+}
+
 
 /**
  * Record EGL error code.
@@ -44,10 +57,11 @@ _eglDestroyGlobals(void)
 void
 _eglError(EGLint errCode, const char *msg)
 {
+   _EGLThreadInfo *t = _eglGetCurrentThread();
    const char *s;
 
-   if (_eglGlobal.LastError == EGL_SUCCESS) {
-      _eglGlobal.LastError = errCode;
+   if (t->LastError == EGL_SUCCESS) {
+      t->LastError = errCode;
 
       switch (errCode) {
       case EGL_BAD_ACCESS:

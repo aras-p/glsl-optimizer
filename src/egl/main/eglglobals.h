@@ -5,6 +5,19 @@
 #include "eglhash.h"
 
 
+/**
+ * Per-thread info
+ */
+struct _egl_thread_info
+{
+   EGLint LastError;
+   _EGLContext *CurrentContext;
+};
+
+
+/**
+ * Global library data
+ */
 struct _egl_global
 {
    EGLBoolean Initialized;
@@ -15,10 +28,8 @@ struct _egl_global
 
    EGLScreenMESA FreeScreenHandle;
 
-   EGLint LastError;
-
-   /* XXX this should be per-thread someday */
-   _EGLContext *CurrentContext;
+   /* XXX temporary */
+   _EGLThreadInfo ThreadInfo;
 };
 
 
@@ -31,6 +42,10 @@ _eglInitGlobals(void);
 
 extern void
 _eglDestroyGlobals(void);
+
+
+extern _EGLThreadInfo *
+_eglGetCurrentThread(void);
 
 
 extern void
