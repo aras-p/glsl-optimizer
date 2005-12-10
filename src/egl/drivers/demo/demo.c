@@ -60,10 +60,10 @@ demoInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
    _eglAddScreen(disp, scrn);
 
    /* Create the screen's modes - silly example */
-   _eglAddMode(scrn, 1600, 1200, 72 * 1000, "1600x1200-72");
-   _eglAddMode(scrn, 1280, 1024, 72 * 1000, "1280x1024-70");
-   _eglAddMode(scrn, 1280, 1024, 70 * 1000, "1280x1024-70");
-   _eglAddMode(scrn, 1024,  768, 72 * 1000, "1024x768-72");
+   _eglAddNewMode(scrn, 1600, 1200, 72 * 1000, "1600x1200-72");
+   _eglAddNewMode(scrn, 1280, 1024, 72 * 1000, "1280x1024-70");
+   _eglAddNewMode(scrn, 1280, 1024, 70 * 1000, "1280x1024-70");
+   _eglAddNewMode(scrn, 1024,  768, 72 * 1000, "1024x768-72");
 
    /* Create the display's visual configs - silly example */
    for (i = 0; i < 4; i++) {
@@ -125,7 +125,6 @@ demoCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext 
 {
    _EGLConfig *conf;
    DemoContext *c;
-   _EGLDisplay *disp = _eglLookupDisplay(dpy);
    int i;
 
    conf = _eglLookupConfig(drv, dpy, config);
@@ -147,11 +146,7 @@ demoCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext 
    if (!c)
       return EGL_NO_CONTEXT;
 
-   _eglInitContext(&c->Base);
-   c->Base.Display = disp;
-   c->Base.Config = conf;
-   c->Base.DrawSurface = EGL_NO_SURFACE;
-   c->Base.ReadSurface = EGL_NO_SURFACE;
+   _eglInitContext(drv, dpy, &c->Base, config, attrib_list);
    c->DemoStuff = 1;
    printf("demoCreateContext\n");
 
@@ -221,8 +216,8 @@ demoCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    if (!surf)
       return EGL_NO_SURFACE;
 
-   if (_eglInitPbufferSurface(&surf->Base, drv, dpy, config, attrib_list)
-       == EGL_NO_SURFACE) {
+   if (!_eglInitSurface(drv, dpy, &surf->Base, EGL_PBUFFER_BIT,
+                        config, attrib_list)) {
       free(surf);
       return EGL_NO_SURFACE;
    }
@@ -303,19 +298,19 @@ _eglMain(_EGLDisplay *dpy)
    /* First fill in the dispatch table with defaults */
    _eglInitDriverFallbacks(&demo->Base);
    /* then plug in our Demo-specific functions */
-   demo->Base.Initialize = demoInitialize;
-   demo->Base.Terminate = demoTerminate;
-   demo->Base.CreateContext = demoCreateContext;
-   demo->Base.MakeCurrent = demoMakeCurrent;
-   demo->Base.CreateWindowSurface = demoCreateWindowSurface;
-   demo->Base.CreatePixmapSurface = demoCreatePixmapSurface;
-   demo->Base.CreatePbufferSurface = demoCreatePbufferSurface;
-   demo->Base.DestroySurface = demoDestroySurface;
-   demo->Base.DestroyContext = demoDestroyContext;
+   demo->Base.API.Initialize = demoInitialize;
+   demo->Base.API.Terminate = demoTerminate;
+   demo->Base.API.CreateContext = demoCreateContext;
+   demo->Base.API.MakeCurrent = demoMakeCurrent;
+   demo->Base.API.CreateWindowSurface = demoCreateWindowSurface;
+   demo->Base.API.CreatePixmapSurface = demoCreatePixmapSurface;
+   demo->Base.API.CreatePbufferSurface = demoCreatePbufferSurface;
+   demo->Base.API.DestroySurface = demoDestroySurface;
+   demo->Base.API.DestroyContext = demoDestroyContext;
 
    /* enable supported extensions */
-   demo->Base.MESA_screen_surface = EGL_TRUE;
-   demo->Base.MESA_copy_context = EGL_TRUE;
+   demo->Base.Extensions.MESA_screen_surface = EGL_TRUE;
+   demo->Base.Extensions.MESA_copy_context = EGL_TRUE;
 
    return &demo->Base;
 }
