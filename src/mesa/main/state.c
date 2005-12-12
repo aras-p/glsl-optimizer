@@ -949,7 +949,9 @@ update_program(GLcontext *ctx)
 	    ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
 
       ctx->FragmentProgram._Current = ctx->_TexEnvProgram;
-      ctx->FragmentProgram._Active = GL_TRUE;
+
+      if (ctx->_UseTexEnvProgram)
+	 ctx->FragmentProgram._Active = GL_TRUE;
    }
 }
 

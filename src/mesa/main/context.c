@@ -1237,7 +1237,11 @@ _mesa_initialize_context( GLcontext *ctx,
 #endif
 
    ctx->_MaintainTexEnvProgram = (_mesa_getenv("MESA_TEX_PROG") != NULL);
+   ctx->_UseTexEnvProgram = ctx->_MaintainTexEnvProgram;
+
    ctx->_MaintainTnlProgram = (_mesa_getenv("MESA_TNL_PROG") != NULL);
+   if (ctx->_MaintainTnlProgram)
+      ctx->_MaintainTexEnvProgram = 1; /* this is required... */
 
    ctx->FirstTimeCurrent = GL_TRUE;
 

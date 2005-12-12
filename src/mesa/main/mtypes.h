@@ -2803,8 +2803,9 @@ struct __GLcontextRec
    struct fragment_program *_TexEnvProgram;     /**< Texture state as fragment program */
    struct vertex_program *_TnlProgram;          /**< Fixed func TNL state as vertex program */
 
-   GLboolean _MaintainTexEnvProgram;
    GLboolean _MaintainTnlProgram;
+   GLboolean _MaintainTexEnvProgram;
+   GLboolean _UseTexEnvProgram;
 
    struct gl_query_state Query;  /**< GL_ARB_occlusion_query */
 
