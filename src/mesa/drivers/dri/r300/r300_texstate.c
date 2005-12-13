@@ -226,7 +226,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	  /* find image size in bytes */
 	  if (texImage->IsCompressed) {
 	    if ((t->format & R300_TX_FORMAT_DXT1) == R300_TX_FORMAT_DXT1) {
-	      fprintf(stderr,"DXT 1 %d %08X\n", texImage->Width, t->format);
+	     // fprintf(stderr,"DXT 1 %d %08X\n", texImage->Width, t->format);
 	      if ((texImage->Width + 3) < 8) /* width one block */
 		size = texImage->CompressedSize * 4;
 	      else if ((texImage->Width + 3) < 16)
@@ -235,7 +235,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	    }
 	    else /* DXT3/5, 16 bytes per block */
 	    {
-	      fprintf(stderr,"DXT 3/5 %d\n", texImage->Width);
+	     // fprintf(stderr,"DXT 3/5 %d\n", texImage->Width);
 	      if ((texImage->Width + 3) < 8)
 		size = texImage->CompressedSize * 2;
 	      else size = texImage->CompressedSize;
@@ -370,9 +370,11 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	 * requires 64-byte aligned pitches, and we may/may not need the
 	 * blitter.   NPOT only!
 	 */
-	if (baseImage->IsCompressed)
+	if (baseImage->IsCompressed) {
 		t->pitch =
 		    (tObj->Image[0][t->base.firstLevel]->Width + 63) & ~(63);
+		t->size |= ((log2Width>log2Height)?log2Width:log2Height)<<R300_TX_SIZE_SHIFT;
+	}
 	else if (tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
 		unsigned int align = blitWidth - 1;
 		t->pitch = ((tObj->Image[0][t->base.firstLevel]->Width *
