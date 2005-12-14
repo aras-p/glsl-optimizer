@@ -575,7 +575,7 @@ void GLAPIENTRY _mesa_noop_Materialfv( GLenum face, GLenum pname, const GLfloat 
    if (bitmask == 0)
       return;
 
-   switch (face) {
+   switch (pname) {
    case GL_SHININESS: nr = 1; break;
    case GL_COLOR_INDEXES: nr = 3; break;
    default: nr = 4 ; break;
