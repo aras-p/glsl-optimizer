@@ -35,7 +35,6 @@
 
 #include "s_context.h"
 #include "s_depth.h"
-#include "s_pixeltex.h"
 #include "s_span.h"
 #include "s_stencil.h"
 #include "s_zoom.h"
@@ -216,13 +215,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* convert floats back to chan */
       float_span_to_chan(width, (const GLfloat (*)[4]) src, span.array->rgba);
 
-      if (ctx->Pixel.PixelTextureEnabled && ctx->Texture._EnabledUnits) {
-         span.end = width;
-         _swrast_pixel_texture(ctx, &span);
-      }
-
       /* write row to framebuffer */
-
       dy = desty + row;
       if (quick_draw && dy >= 0 && dy < (GLint) ctx->DrawBuffer->Height) {
          drawRb->PutRow(ctx, drawRb, width, destx, dy, span.array->rgba, NULL);
@@ -357,11 +350,6 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          _mesa_apply_rgba_transfer_ops(ctx, transferOps, width, rgbaFloat);
          float_span_to_chan(width, (CONST GLfloat (*)[4]) rgbaFloat,
                             span.array->rgba);
-      }
-
-      if (ctx->Pixel.PixelTextureEnabled && ctx->Texture._EnabledUnits) {
-         span.end = width;
-         _swrast_pixel_texture(ctx, &span);
       }
 
       /* Write color span */

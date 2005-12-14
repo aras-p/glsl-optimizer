@@ -285,9 +285,6 @@ typedef enum {
 	OPCODE_WINDOW_POS,
         /* GL_ARB_multitexture */
         OPCODE_ACTIVE_TEXTURE,
-        /* GL_SGIX/SGIS_pixel_texture */
-        OPCODE_PIXEL_TEXGEN_SGIX,
-        OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS,
         /* GL_ARB_texture_compression */
         OPCODE_COMPRESSED_TEX_IMAGE_1D,
         OPCODE_COMPRESSED_TEX_IMAGE_2D,
@@ -769,9 +766,6 @@ _mesa_init_lists( void )
       InstSize[OPCODE_CONTINUE] = 2;
       InstSize[OPCODE_ERROR] = 3;
       InstSize[OPCODE_END_OF_LIST] = 1;
-      /* GL_SGIX/SGIS_pixel_texture */
-      InstSize[OPCODE_PIXEL_TEXGEN_SGIX] = 2;
-      InstSize[OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS] = 3;
       /* GL_ARB_texture_compression */
       InstSize[OPCODE_COMPRESSED_TEX_IMAGE_1D] = 8;
       InstSize[OPCODE_COMPRESSED_TEX_IMAGE_2D] = 9;
@@ -3943,22 +3937,6 @@ save_MultTransposeMatrixfARB( const GLfloat m[16] )
 }
 
 
-static void GLAPIENTRY
-save_PixelTexGenSGIX(GLenum mode)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_PIXEL_TEXGEN_SGIX, 1 );
-   if (n) {
-      n[1].e = mode;
-   }
-   if (ctx->ExecuteFlag) {
-      CALL_PixelTexGenSGIX(ctx->Exec, ( mode ));
-   }
-}
-
-
 /* GL_ARB_texture_compression */
 static void GLAPIENTRY
 save_CompressedTexImage1DARB(GLenum target, GLint level,
@@ -4232,46 +4210,6 @@ save_SampleCoverageARB(GLclampf value, GLboolean invert)
    if (ctx->ExecuteFlag) {
       CALL_SampleCoverageARB(ctx->Exec, ( value, invert ));
    }
-}
-
-
-/* GL_SGIS_pixel_texture */
-
-static void GLAPIENTRY
-save_PixelTexGenParameteriSGIS(GLenum target, GLint value)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS, 2 );
-   if (n) {
-      n[1].e = target;
-      n[2].i = value;
-   }
-   if (ctx->ExecuteFlag) {
-      CALL_PixelTexGenParameteriSGIS(ctx->Exec, ( target, value ));
-   }
-}
-
-
-static void GLAPIENTRY
-save_PixelTexGenParameterfSGIS(GLenum target, GLfloat value)
-{
-   save_PixelTexGenParameteriSGIS(target, (GLint) value);
-}
-
-
-static void GLAPIENTRY
-save_PixelTexGenParameterivSGIS(GLenum target, const GLint *value)
-{
-   save_PixelTexGenParameteriSGIS(target, *value);
-}
-
-
-static void GLAPIENTRY
-save_PixelTexGenParameterfvSGIS(GLenum target, const GLfloat *value)
-{
-   save_PixelTexGenParameteriSGIS(target, (GLint) *value);
 }
 
 
@@ -6268,12 +6206,6 @@ execute_list( GLcontext *ctx, GLuint list )
          case OPCODE_ACTIVE_TEXTURE:  /* GL_ARB_multitexture */
             CALL_ActiveTextureARB(ctx->Exec, ( n[1].e ));
             break;
-         case OPCODE_PIXEL_TEXGEN_SGIX:  /* GL_SGIX_pixel_texture */
-            CALL_PixelTexGenSGIX(ctx->Exec, ( n[1].e ));
-            break;
-         case OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS:  /* GL_SGIS_pixel_texture */
-            CALL_PixelTexGenParameteriSGIS(ctx->Exec, ( n[1].e, n[2].i ));
-            break;
          case OPCODE_COMPRESSED_TEX_IMAGE_1D: /* GL_ARB_texture_compression */
             CALL_CompressedTexImage1DARB(ctx->Exec, (n[1].e, n[2].i, n[3].e,
                                             n[4].i, n[5].i, n[6].i, n[7].data));
@@ -7346,20 +7278,6 @@ static void GLAPIENTRY exec_SeparableFilter2D(GLenum target, GLenum internalForm
 				 type, row, column));
 }
 
-static void GLAPIENTRY exec_GetPixelTexGenParameterivSGIS(GLenum target, GLint *value)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VERTICES(ctx, 0);
-   CALL_GetPixelTexGenParameterivSGIS(ctx->Exec, ( target, value));
-}
-
-static void GLAPIENTRY exec_GetPixelTexGenParameterfvSGIS(GLenum target, GLfloat *value)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VERTICES(ctx, 0);
-   CALL_GetPixelTexGenParameterfvSGIS(ctx->Exec, ( target, value));
-}
-
 static void GLAPIENTRY exec_ColorPointerEXT(GLint size, GLenum type, GLsizei stride,
 				 GLsizei count, const GLvoid *ptr)
 {
@@ -7783,17 +7701,6 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    SET_TexImage3DEXT(table, save_TexImage3DEXT);
    SET_TexSubImage3DEXT(table, save_TexSubImage3D);
 #endif
-
-   /* 15. GL_SGIX_pixel_texture */
-   SET_PixelTexGenSGIX(table, save_PixelTexGenSGIX);
-
-   /* 15. GL_SGIS_pixel_texture */
-   SET_PixelTexGenParameteriSGIS(table, save_PixelTexGenParameteriSGIS);
-   SET_PixelTexGenParameterfSGIS(table, save_PixelTexGenParameterfSGIS);
-   SET_PixelTexGenParameterivSGIS(table, save_PixelTexGenParameterivSGIS);
-   SET_PixelTexGenParameterfvSGIS(table, save_PixelTexGenParameterfvSGIS);
-   SET_GetPixelTexGenParameterivSGIS(table, exec_GetPixelTexGenParameterivSGIS);
-   SET_GetPixelTexGenParameterfvSGIS(table, exec_GetPixelTexGenParameterfvSGIS);
 
    /* 30. GL_EXT_vertex_array */
    SET_ColorPointerEXT(table, exec_ColorPointerEXT);

@@ -430,10 +430,6 @@ SOURCE=..\..\..\..\src\mesa\swrast\s_nvfragprog.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\swrast\s_pixeltex.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\mesa\swrast\s_points.c
 # End Source File
 # Begin Source File
@@ -1100,10 +1096,6 @@ SOURCE=..\..\..\..\src\mesa\swrast\s_masking.h
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\swrast\s_nvfragprog.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\mesa\swrast\s_pixeltex.h
 # End Source File
 # Begin Source File
 

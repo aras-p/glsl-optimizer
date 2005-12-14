@@ -53,30 +53,6 @@
    CHECK1(EXTNAME, "Float", PNAME )
 
 
-/**
- * Helper routine.
- */
-static GLenum
-pixel_texgen_mode(const GLcontext *ctx)
-{
-   if (ctx->Pixel.FragmentRgbSource == GL_CURRENT_RASTER_POSITION) {
-      if (ctx->Pixel.FragmentAlphaSource == GL_CURRENT_RASTER_POSITION) {
-         return GL_RGBA;
-      }
-      else {
-         return GL_RGB;
-      }
-   }
-   else {
-      if (ctx->Pixel.FragmentAlphaSource == GL_CURRENT_RASTER_POSITION) {
-         return GL_ALPHA;
-      }
-      else {
-         return GL_NONE;
-      }
-   }
-}
-
 void GLAPIENTRY
 _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 {
@@ -1182,18 +1158,6 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[14] = FLOAT_TO_BOOLEAN(matrix[11]);
          params[15] = FLOAT_TO_BOOLEAN(matrix[15]);
          }
-         break;
-      case GL_PIXEL_TEXTURE_SGIS:
-         CHECK_EXTENSION_B(SGIS_pixel_texture, pname);
-         params[0] = ctx->Pixel.PixelTextureEnabled;
-         break;
-      case GL_PIXEL_TEX_GEN_SGIX:
-         CHECK_EXTENSION_B(SGIX_pixel_texture, pname);
-         params[0] = ctx->Pixel.PixelTextureEnabled;
-         break;
-      case GL_PIXEL_TEX_GEN_MODE_SGIX:
-         CHECK_EXTENSION_B(SGIX_pixel_texture, pname);
-         params[0] = ENUM_TO_BOOLEAN(pixel_texgen_mode(ctx));
          break;
       case GL_COLOR_MATRIX_SGI:
          {
@@ -3013,18 +2977,6 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[15] = matrix[15];
          }
          break;
-      case GL_PIXEL_TEXTURE_SGIS:
-         CHECK_EXTENSION_F(SGIS_pixel_texture, pname);
-         params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.PixelTextureEnabled);
-         break;
-      case GL_PIXEL_TEX_GEN_SGIX:
-         CHECK_EXTENSION_F(SGIX_pixel_texture, pname);
-         params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.PixelTextureEnabled);
-         break;
-      case GL_PIXEL_TEX_GEN_MODE_SGIX:
-         CHECK_EXTENSION_F(SGIX_pixel_texture, pname);
-         params[0] = ENUM_TO_FLOAT(pixel_texgen_mode(ctx));
-         break;
       case GL_COLOR_MATRIX_SGI:
          {
          const GLfloat *matrix = ctx->ColorMatrixStack.Top->m;
@@ -4842,18 +4794,6 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[14] = IROUND(matrix[11]);
          params[15] = IROUND(matrix[15]);
          }
-         break;
-      case GL_PIXEL_TEXTURE_SGIS:
-         CHECK_EXTENSION_I(SGIS_pixel_texture, pname);
-         params[0] = BOOLEAN_TO_INT(ctx->Pixel.PixelTextureEnabled);
-         break;
-      case GL_PIXEL_TEX_GEN_SGIX:
-         CHECK_EXTENSION_I(SGIX_pixel_texture, pname);
-         params[0] = BOOLEAN_TO_INT(ctx->Pixel.PixelTextureEnabled);
-         break;
-      case GL_PIXEL_TEX_GEN_MODE_SGIX:
-         CHECK_EXTENSION_I(SGIX_pixel_texture, pname);
-         params[0] = ENUM_TO_INT(pixel_texgen_mode(ctx));
          break;
       case GL_COLOR_MATRIX_SGI:
          {

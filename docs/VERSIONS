@@ -1422,5 +1422,6 @@ Mesa Version History
 	- MESA_GLX_ALPHA_BITS env var for xlib driver
     Changes:
 	- removed GL_HP_occlusion_test (use GL_ARB_occlusion_query instead)
+	- removed GL_SGIX/SGIS_pixel_texture extensions
     Bug fixes:
 

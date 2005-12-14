@@ -687,24 +687,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          client_state( ctx, cap, state );
          return;
 
-      /* GL_SGIS_pixel_texture */
-      case GL_PIXEL_TEXTURE_SGIS:
-         CHECK_EXTENSION(SGIS_pixel_texture, cap);
-         if (ctx->Pixel.PixelTextureEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.PixelTextureEnabled = state;
-         break;
-
-      /* GL_SGIX_pixel_texture */
-      case GL_PIXEL_TEX_GEN_SGIX:
-         CHECK_EXTENSION(SGIX_pixel_texture, cap);
-         if (ctx->Pixel.PixelTextureEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.PixelTextureEnabled = state;
-         break;
-
       /* GL_SGI_color_table */
       case GL_COLOR_TABLE_SGI:
          CHECK_EXTENSION(SGI_color_table, cap);
@@ -1241,16 +1223,6 @@ _mesa_IsEnabled( GLenum cap )
       case GL_MINMAX:
          CHECK_EXTENSION(EXT_histogram);
          return ctx->Pixel.MinMaxEnabled;
-
-      /* GL_SGIS_pixel_texture */
-      case GL_PIXEL_TEXTURE_SGIS:
-         CHECK_EXTENSION(SGIS_pixel_texture);
-         return ctx->Pixel.PixelTextureEnabled;
-
-      /* GL_SGIX_pixel_texture */
-      case GL_PIXEL_TEX_GEN_SGIX:
-         CHECK_EXTENSION(SGIX_pixel_texture);
-         return ctx->Pixel.PixelTextureEnabled;
 
       /* GL_SGI_color_table */
       case GL_COLOR_TABLE_SGI:

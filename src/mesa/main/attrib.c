@@ -179,7 +179,6 @@ _mesa_PushAttrib(GLbitfield mask)
       MEMCPY(attr->Map2Attrib, ctx->Eval.Map2Attrib, sizeof(ctx->Eval.Map2Attrib));
       attr->Normalize = ctx->Transform.Normalize;
       attr->RasterPositionUnclipped = ctx->Transform.RasterPositionUnclipped;
-      attr->PixelTexture = ctx->Pixel.PixelTextureEnabled;
       attr->PointSmooth = ctx->Point.SmoothFlag;
       attr->PointSprite = ctx->Point.PointSprite;
       attr->PolygonOffsetPoint = ctx->Polygon.OffsetPoint;
@@ -499,8 +498,6 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
    TEST_AND_UPDATE(ctx->Transform.RasterPositionUnclipped,
                    enable->RasterPositionUnclipped,
                    GL_RASTER_POSITION_UNCLIPPED_IBM);
-   TEST_AND_UPDATE(ctx->Pixel.PixelTextureEnabled, enable->PixelTexture,
-                   GL_POINT_SMOOTH);
    TEST_AND_UPDATE(ctx->Point.SmoothFlag, enable->PointSmooth,
                    GL_POINT_SMOOTH);
    if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite) {

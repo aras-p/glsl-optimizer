@@ -419,21 +419,6 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_GetMinmaxParameterivEXT(exec, _mesa_GetMinmaxParameteriv);
 #endif
 
-   /* ?. GL_SGIX_pixel_texture */
-#if _HAVE_FULL_GL
-   SET_PixelTexGenSGIX(exec, _mesa_PixelTexGenSGIX);
-#endif
-
-   /* 15. GL_SGIS_pixel_texture */
-#if _HAVE_FULL_GL
-   SET_PixelTexGenParameteriSGIS(exec, _mesa_PixelTexGenParameteriSGIS);
-   SET_PixelTexGenParameterivSGIS(exec, _mesa_PixelTexGenParameterivSGIS);
-   SET_PixelTexGenParameterfSGIS(exec, _mesa_PixelTexGenParameterfSGIS);
-   SET_PixelTexGenParameterfvSGIS(exec, _mesa_PixelTexGenParameterfvSGIS);
-   SET_GetPixelTexGenParameterivSGIS(exec, _mesa_GetPixelTexGenParameterivSGIS);
-   SET_GetPixelTexGenParameterfvSGIS(exec, _mesa_GetPixelTexGenParameterfvSGIS);
-#endif
-
    /* 30. GL_EXT_vertex_array */
 #if _HAVE_FULL_GL
    SET_ColorPointerEXT(exec, _mesa_ColorPointerEXT);

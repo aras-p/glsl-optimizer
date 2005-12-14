@@ -99,7 +99,6 @@ SWRAST_SOURCES = \
 	swrast/s_logic.c \
 	swrast/s_masking.c \
 	swrast/s_nvfragprog.c \
-	swrast/s_pixeltex.c \
 	swrast/s_points.c \
 	swrast/s_readpix.c \
 	swrast/s_span.c \

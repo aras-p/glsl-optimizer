@@ -558,16 +558,6 @@ StateVars = [
 	   "matrix[3]", "matrix[7]", "matrix[11]", "matrix[15]"],
 	  "const GLfloat *matrix = ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Top->m;", None ),
 
-	# GL_SGIS_pixel_texture
-	( "GL_PIXEL_TEXTURE_SGIS", GLboolean, ["ctx->Pixel.PixelTextureEnabled"],
-	  "", "SGIS_pixel_texture" ),
-
-	# GL_SGIX_pixel_texture
-	( "GL_PIXEL_TEX_GEN_SGIX", GLboolean, ["ctx->Pixel.PixelTextureEnabled"],
-	  "", "SGIX_pixel_texture" ),
-	( "GL_PIXEL_TEX_GEN_MODE_SGIX", GLenum, ["pixel_texgen_mode(ctx)"],
-	  "", "SGIX_pixel_texture" ),
-
 	# GL_SGI_color_matrix (also in 1.2 imaging)
 	( "GL_COLOR_MATRIX_SGI", GLfloat,
 	  ["matrix[0]", "matrix[1]", "matrix[2]", "matrix[3]",
@@ -1119,30 +1109,6 @@ def EmitHeader():
 #define CHECK_EXTENSION_F(EXTNAME, PNAME)      \\
    CHECK1(EXTNAME, "Float", PNAME )
 
-
-/**
- * Helper routine.
- */
-static GLenum
-pixel_texgen_mode(const GLcontext *ctx)
-{
-   if (ctx->Pixel.FragmentRgbSource == GL_CURRENT_RASTER_POSITION) {
-      if (ctx->Pixel.FragmentAlphaSource == GL_CURRENT_RASTER_POSITION) {
-         return GL_RGBA;
-      }
-      else {
-         return GL_RGB;
-      }
-   }
-   else {
-      if (ctx->Pixel.FragmentAlphaSource == GL_CURRENT_RASTER_POSITION) {
-         return GL_ALPHA;
-      }
-      else {
-         return GL_NONE;
-      }
-   }
-}
 """
 	return
 

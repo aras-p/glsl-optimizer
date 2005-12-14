@@ -34,7 +34,6 @@
 
 #include "s_context.h"
 #include "s_drawpix.h"
-#include "s_pixeltex.h"
 #include "s_span.h"
 #include "s_stencil.h"
 #include "s_zoom.h"
@@ -794,10 +793,6 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
             if ((ctx->Pixel.MinMaxEnabled && ctx->MinMax.Sink) ||
                 (ctx->Pixel.HistogramEnabled && ctx->Histogram.Sink))
                continue;
-
-            if (ctx->Pixel.PixelTextureEnabled && ctx->Texture._EnabledUnits) {
-               _swrast_pixel_texture(ctx, &span);
-            }
 
             /* draw the span */
             if (quickDraw) {

@@ -941,10 +941,6 @@ struct gl_pixel_attrib
    /** GL_EXT_histogram */
    GLboolean HistogramEnabled;
    GLboolean MinMaxEnabled;
-   /** GL_SGIS_pixel_texture */
-   GLboolean PixelTextureEnabled;
-   GLenum FragmentRgbSource;
-   GLenum FragmentAlphaSource;
    /** GL_SGI_color_matrix */
    GLfloat PostColorMatrixScale[4];  /**< RGBA */
    GLfloat PostColorMatrixBias[4];   /**< RGBA */
@@ -2381,11 +2377,9 @@ struct gl_extensions
    GLboolean SGI_color_table;
    GLboolean SGI_texture_color_table;
    GLboolean SGIS_generate_mipmap;
-   GLboolean SGIS_pixel_texture;
    GLboolean SGIS_texture_edge_clamp;
    GLboolean SGIS_texture_lod;
    GLboolean SGIX_depth_texture;
-   GLboolean SGIX_pixel_texture;
    GLboolean SGIX_shadow;
    GLboolean SGIX_shadow_ambient; /* or GL_ARB_shadow_ambient */
    GLboolean TDFX_texture_compression_FXT1;

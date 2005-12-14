@@ -37,7 +37,6 @@ PROGS = \
 	multiarb \
 	occlude \
 	paltex \
-	pixeltex \
 	pointblast \
 	ray \
 	readpix \

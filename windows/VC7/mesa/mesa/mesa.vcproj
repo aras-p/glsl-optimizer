@@ -378,9 +378,6 @@
 				RelativePath="..\..\..\..\src\mesa\swrast\s_nvfragprog.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\swrast\s_pixeltex.c">
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_points.c">
 			</File>
 			<File
@@ -893,9 +890,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_nvfragprog.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\swrast\s_pixeltex.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_points.h">

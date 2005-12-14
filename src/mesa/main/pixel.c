@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -2038,9 +2038,6 @@ _mesa_init_pixel( GLcontext *ctx )
    ctx->Pixel.MapAtoA[0] = 0.0;
    ctx->Pixel.HistogramEnabled = GL_FALSE;
    ctx->Pixel.MinMaxEnabled = GL_FALSE;
-   ctx->Pixel.PixelTextureEnabled = GL_FALSE;
-   ctx->Pixel.FragmentRgbSource = GL_PIXEL_GROUP_COLOR_SGIS;
-   ctx->Pixel.FragmentAlphaSource = GL_PIXEL_GROUP_COLOR_SGIS;
    ASSIGN_4V(ctx->Pixel.PostColorMatrixScale, 1.0, 1.0, 1.0, 1.0);
    ASSIGN_4V(ctx->Pixel.PostColorMatrixBias, 0.0, 0.0, 0.0, 0.0);
    ASSIGN_4V(ctx->Pixel.ColorTableScale, 1.0, 1.0, 1.0, 1.0);
