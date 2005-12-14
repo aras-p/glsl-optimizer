@@ -277,12 +277,9 @@ struct texenv_fragment_program {
    GLcontext *ctx;
    struct state_key *state;
 
-   GLuint alu_temps;		/* Track texture indirections, see spec. */
-   GLuint temps_output;		/* Track texture indirections, see spec. */
-
-   GLuint temp_in_use;		/* Tracks temporary regs which are in
-				 * use.
-				 */
+   GLbitfield alu_temps;	/* Track texture indirections, see spec. */
+   GLbitfield temps_output;	/* Track texture indirections, see spec. */
+   GLbitfield temp_in_use;	/* Tracks temporary regs which are in use. */
    GLboolean error;
 
    struct ureg src_texture[MAX_TEXTURE_UNITS];   
