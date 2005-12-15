@@ -889,12 +889,12 @@ _mesa_sprintf( char *str, const char *fmt, ... )
    int r;
    va_list args;
    va_start( args, fmt );  
-   va_end( args );
 #if defined(XFree86LOADER) && defined(IN_MODULE)
    r = xf86vsprintf( str, fmt, args );
 #else
    r = vsprintf( str, fmt, args );
 #endif
+   va_end( args );
    return r;
 }
 
