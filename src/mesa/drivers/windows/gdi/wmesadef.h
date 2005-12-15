@@ -19,7 +19,9 @@ typedef struct wmesa_context{
     GLuint		width;
     GLuint		height;
     GLuint		ScanWidth;
+    GLboolean		rgb_flag;
     GLboolean		db_flag;
+    GLboolean		alpha_flag;
     WMDIBSECTION	dib;
     BITMAPINFO          bmi;
     HBITMAP             hbmDIB;

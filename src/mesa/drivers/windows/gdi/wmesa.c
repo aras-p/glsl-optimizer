@@ -40,7 +40,7 @@ static void wmSetPixelFormat(PWMC pwc, HDC hDC)
 {
     pwc->cColorBits = GetDeviceCaps(hDC, BITSPIXEL);
 
-    // TEMP - only 16 and 32 bit targets are supported now
+    // Only 16 and 32 bit targets are supported now
     assert(pwc->cColorBits == 16 || 
 	   pwc->cColorBits == 32);
 
@@ -323,7 +323,7 @@ static void clear(GLcontext* ctx,
 	HBRUSH Old_Brush = SelectObject(DC, Current->clearBrush);
 	Rectangle(DC,
 		  x,
-		  FLIP(y),
+		  FLIP(y) + 1,
 		  x + width + 1,
 		  FLIP(y) - height + 1);
 	SelectObject(DC, Old_Pen); 
@@ -882,6 +882,46 @@ wmesa_renderbuffer_storage(GLcontext *ctx,
     return GL_TRUE;
 }
 
+void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
+                                  int double_buffer)
+{
+    if (double_buffer) {
+	/* Picking the correct span functions is important because
+	 * the DIB was allocated with the indicated depth. */
+	switch(pixelformat) {
+	case PF_5R6G5B:
+	    rb->PutRow = write_rgba_span_16;
+	    rb->PutRowRGB = write_rgb_span_16;
+	    rb->PutMonoRow = write_mono_rgba_span_16;
+	    rb->PutValues = write_rgba_pixels_16;
+	    rb->PutMonoValues = write_mono_rgba_pixels_16;
+	    rb->GetRow = read_rgba_span_16;
+	    rb->GetValues = read_rgba_pixels_16;
+	    break;
+	case PF_8R8G8B:
+	    rb->PutRow = write_rgba_span_32;
+	    rb->PutRowRGB = write_rgb_span_32;
+	    rb->PutMonoRow = write_mono_rgba_span_32;
+	    rb->PutValues = write_rgba_pixels_32;
+	    rb->PutMonoValues = write_mono_rgba_pixels_32;
+	    rb->GetRow = read_rgba_span_32;
+	    rb->GetValues = read_rgba_pixels_32;
+	    break;
+	default:
+	    break;
+	}
+    }
+    else { /* single buffer */
+	rb->PutRow = write_rgba_span_single;
+	rb->PutRowRGB = write_rgb_span_single;
+	rb->PutMonoRow = write_mono_rgba_span_single;
+	rb->PutValues = write_rgba_pixels_single;
+	rb->PutMonoValues = write_mono_rgba_pixels_single;
+	rb->GetRow = read_rgba_span_single;
+	rb->GetValues = read_rgba_pixels_single;
+    }
+}
+
 /**
  * Called by ctx->Driver.ResizeBuffers()
  * Resize the front/back colorbuffers to match the latest window size.
@@ -940,6 +980,21 @@ static void wmesa_update_state(GLcontext *ctx, GLuint new_state)
     /* TODO - need code to update the span functions in case the
      * renderer changes the target buffer (like a DB app writing to
      * the front buffer). */
+
+#if 0
+    {  /* could check _NEW_BUFFERS bit flag here  in new_state */
+	/* In progress - Need to make the wmesa context inherit (by containment)
+	the gl_context, so I can get access to the pixel format */
+	struct gl_renderbuffer *rb;
+	int pixelformat, double_buffer;
+
+	rb = ctx->DrawBuffer->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+	pixelformat = PF_5R6G5B;  // hard code for now - see note above
+        double_buffer = ctx->DrawBuffer->ColorDrawBuffer[0] == GL_BACK ? 1 : 0;
+	if (rb)
+        wmesa_set_renderbuffer_funcs(rb, pixelformat, double_buffer);
+    }
+#endif
 }
 
 
@@ -958,7 +1013,7 @@ WMesaContext WMesaCreateContext(HDC hDC,
 {
     WMesaContext c;
     struct dd_function_table functions;
-    struct gl_renderbuffer *rb;
+    GLint red_bits, green_bits, blue_bits, alpha_bits;
 
     (void) Pal;
     
@@ -966,43 +1021,61 @@ WMesaContext WMesaCreateContext(HDC hDC,
     if (!rgb_flag)
 	return NULL;
 
+    /* Allocate wmesa context */
     c = CALLOC_STRUCT(wmesa_context);
     if (!c)
 	return NULL;
 
+#if 0
+    /* I do not understand this contributed code */
     /* Support memory and device contexts */
-    if(WindowFromDC(hDC) != NULL)
-    {
-      c->hDC = GetDC(WindowFromDC(hDC));
+    if(WindowFromDC(hDC) != NULL) {
+	c->hDC = GetDC(WindowFromDC(hDC)); // huh ????
     }
-    else
-    {
-      c->hDC = hDC;
+    else {
+	c->hDC = hDC;
     }
-    c->width = GetDeviceCaps(c->hDC, HORZRES);
-    c->height = GetDeviceCaps(c->hDC, VERTRES);
+#else
+    c->hDC = hDC;
+#endif
 
-    c->clearPen = CreatePen(PS_SOLID, 1, 0); 
-    c->clearBrush = CreateSolidBrush(0); 
+    /* rememember DC and flag settings */
+    c->rgb_flag = rgb_flag;
+    c->db_flag = db_flag;
+    c->alpha_flag = alpha_flag;
 
-    /* Create back buffer if double buffered */
-    if (db_flag) {
-	c->db_flag = 1; 	
-	wmCreateBackingStore(c, c->width, c->height);
-		
+    /* Get data for visual */
+    /* Dealing with this is actually a bit of overkill because Mesa will end
+     * up treating all color component size requests less than 8 by using 
+     * a single byte per channel.  In addition, the interface to the span
+     * routines passes colors as an entire byte per channel anyway, so there
+     * is nothing to be saved by telling the visual to be 16 bits if the device
+     * is 16 bits.  That is, Mesa is going to compute colors down to 8 bits per
+     * channel anyway.
+     * But we go through the motions here anyway.
+     */
+    switch (GetDeviceCaps(c->hDC, BITSPIXEL)) {
+    case 16:
+	red_bits = green_bits = blue_bits = 5;
+	alpha_bits = 0;
+	break;
+    default:
+	red_bits = green_bits = blue_bits = 8;
+	alpha_bits = 8;
+	break;
     }
-    
+    /* Create visual based on flags */
     c->gl_visual = _mesa_create_visual(rgb_flag,
 				       db_flag,    /* db_flag */
 				       GL_FALSE,   /* stereo */
-				       8,8,8,      /* color RGB */
-				       alpha_flag ? 8 : 0, /* color A */
+				       red_bits, green_bits, blue_bits, /* color RGB */
+				       alpha_flag ? alpha_bits : 0, /* color A */
 				       0,          /* index bits */
-				       DEFAULT_SOFTWARE_DEPTH_BITS,         /* depth_bits */
+				       DEFAULT_SOFTWARE_DEPTH_BITS, /* depth_bits */
 				       8,          /* stencil_bits */
 				       16,16,16,   /* accum RGB */
 				       alpha_flag ? 16 : 0, /* accum A */
-				       1);
+				       1);         /* num samples */
     
     if (!c->gl_visual) {
 	_mesa_free(c);
@@ -1011,16 +1084,13 @@ WMesaContext WMesaCreateContext(HDC hDC,
 
     /* Set up driver functions */
     _mesa_init_driver_functions(&functions);
-    /* Fill in required functions */
     functions.GetString = wmesa_get_string;
     functions.UpdateState = wmesa_update_state;
     functions.GetBufferSize = wmesa_get_buffer_size;
     functions.Flush = wmesa_flush;
-
     functions.Clear = clear;
     functions.ClearIndex = clear_index;
     functions.ClearColor = clear_color;
-
     functions.ResizeBuffers = wmesa_resize_buffers;
     functions.Viewport = wmesa_viewport;
 
@@ -1038,77 +1108,7 @@ WMesaContext WMesaCreateContext(HDC hDC,
     _mesa_enable_1_4_extensions(c->gl_ctx);
     _mesa_enable_1_5_extensions(c->gl_ctx);
     _mesa_enable_2_0_extensions(c->gl_ctx);
-    
-    c->gl_buffer = _mesa_create_framebuffer(c->gl_visual);
-    if (!c->gl_buffer) {
-	_mesa_destroy_visual(c->gl_visual);
-	_mesa_free_context_data(c->gl_ctx);
-	_mesa_free(c);
-	return NULL;
-    }
-    
-    rb = CALLOC_STRUCT(gl_renderbuffer);
-
-    if (!rb) {
-	_mesa_destroy_visual(c->gl_visual);
-	_mesa_destroy_framebuffer(c->gl_buffer);
-	_mesa_free_context_data(c->gl_ctx);
-	_mesa_free(c);
-	return NULL;
-    }
-
-    _mesa_init_renderbuffer(rb, (GLuint)0);
-    
-    rb->_BaseFormat = GL_RGBA;
-    rb->InternalFormat = GL_RGBA;
-    rb->DataType = CHAN_TYPE;
-    rb->Delete = wmesa_delete_renderbuffer;
-    rb->AllocStorage = wmesa_renderbuffer_storage;
-
-    if (db_flag) {
-	switch(c->cColorBits) {
-	case 16:
-	    rb->PutRow = write_rgba_span_16;
-	    rb->PutRowRGB = write_rgb_span_16;
-	    rb->PutMonoRow = write_mono_rgba_span_16;
-	    rb->PutValues = write_rgba_pixels_16;
-	    rb->PutMonoValues = write_mono_rgba_pixels_16;
-	    rb->GetRow = read_rgba_span_16;
-	    rb->GetValues = read_rgba_pixels_16;
-	    break;
-	case 32:
-	    rb->PutRow = write_rgba_span_32;
-	    rb->PutRowRGB = write_rgb_span_32;
-	    rb->PutMonoRow = write_mono_rgba_span_32;
-	    rb->PutValues = write_rgba_pixels_32;
-	    rb->PutMonoValues = write_mono_rgba_pixels_32;
-	    rb->GetRow = read_rgba_span_32;
-	    rb->GetValues = read_rgba_pixels_32;
-	    break;
-	default:
-	    break;
-	}
-	_mesa_add_renderbuffer(c->gl_buffer, BUFFER_BACK_LEFT, rb);
-    }
-    else { /* single buffer */
-	rb->PutRow = write_rgba_span_single;
-	rb->PutRowRGB = write_rgb_span_single;
-	rb->PutMonoRow = write_mono_rgba_span_single;
-	rb->PutValues = write_rgba_pixels_single;
-	rb->PutMonoValues = write_mono_rgba_pixels_single;
-	rb->GetRow = read_rgba_span_single;
-	rb->GetValues = read_rgba_pixels_single;
-	_mesa_add_renderbuffer(c->gl_buffer, BUFFER_FRONT_LEFT, rb);
-    }
-
-    _mesa_add_soft_renderbuffers(c->gl_buffer,
-				 GL_FALSE, /* color */
-				 c->gl_visual->depthBits > 0,
-				 c->gl_visual->stencilBits > 0,
-				 c->gl_visual->accumRedBits > 0,
-				 alpha_flag, 
-				 GL_FALSE);
-
+  
     /* Initialize the software rasterizer and helper modules. */
     if (!_swrast_CreateContext(c->gl_ctx) ||
         !_ac_CreateContext(c->gl_ctx) ||
@@ -1120,9 +1120,7 @@ WMesaContext WMesaCreateContext(HDC hDC,
 	_mesa_free(c);
 	return NULL;
     }
-    
     _swsetup_Wakeup(c->gl_ctx);
-    
     TNL_CONTEXT(c->gl_ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 
     return c;
@@ -1161,9 +1159,71 @@ void WMesaDestroyContext( void )
 void WMesaMakeCurrent(WMesaContext c)
 {
     /* return if already current */
-    if (Current == c)
+    if (Current == c || c == NULL)
 	return;
+
+    /* Lazy creation of buffers */
+    if (!c->gl_buffer) {
+        struct gl_renderbuffer *rb;
+        RECT rect;
+	
+	/* Determine window size */
+	if (WindowFromDC(c->hDC)) {
+	    GetClientRect(WindowFromDC(c->hDC), &rect);
+	    c->width = rect.right - rect.left;
+	    c->height = rect.top = rect.bottom;
+	}
+	else { /* Memory context */
+	    /* From contributed code - use the size of the desktop
+	     * for the size of a memory context (?) */
+	    c->width = GetDeviceCaps(c->hDC, HORZRES);
+	    c->height = GetDeviceCaps(c->hDC, VERTRES);
+	}
+	c->clearPen = CreatePen(PS_SOLID, 1, 0); 
+	c->clearBrush = CreateSolidBrush(0); 
+
+	/* Create back buffer if double buffered */
+	if (c->db_flag) {
+	    wmCreateBackingStore(c, c->width, c->height);
+		    
+	}
+	
+	c->gl_buffer = _mesa_create_framebuffer(c->gl_visual);
+	if (!c->gl_buffer)
+	    return;
     
+	rb = CALLOC_STRUCT(gl_renderbuffer);
+
+	if (!rb)
+	    return;
+
+	_mesa_init_renderbuffer(rb, (GLuint)0);
+    
+	rb->_BaseFormat = GL_RGBA;
+	rb->InternalFormat = GL_RGBA;
+	rb->DataType = CHAN_TYPE;
+	rb->Delete = wmesa_delete_renderbuffer;
+	rb->AllocStorage = wmesa_renderbuffer_storage;
+
+	if (c->db_flag)
+	    _mesa_add_renderbuffer(c->gl_buffer, BUFFER_BACK_LEFT, rb);
+	else
+	    _mesa_add_renderbuffer(c->gl_buffer, BUFFER_FRONT_LEFT, rb);
+	wmesa_set_renderbuffer_funcs(rb, c->pixelformat, c->db_flag);
+
+	/* Let Mesa own the Depth, Stencil, and Accum buffers */
+	_mesa_add_soft_renderbuffers(c->gl_buffer,
+				     GL_FALSE, /* color */
+				     c->gl_visual->depthBits > 0,
+				     c->gl_visual->stencilBits > 0,
+				     c->gl_visual->accumRedBits > 0,
+				     c->alpha_flag, 
+				     GL_FALSE);
+    }
+
+
+
+
     if (Current = c)
 	_mesa_make_current(c->gl_ctx, c->gl_buffer, c->gl_buffer);
 }
