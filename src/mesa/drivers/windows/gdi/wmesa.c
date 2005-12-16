@@ -1171,7 +1171,7 @@ void WMesaMakeCurrent(WMesaContext c)
 	if (WindowFromDC(c->hDC)) {
 	    GetClientRect(WindowFromDC(c->hDC), &rect);
 	    c->width = rect.right - rect.left;
-	    c->height = rect.top = rect.bottom;
+	    c->height = rect.bottom - rect.top;
 	}
 	else { /* Memory context */
 	    /* From contributed code - use the size of the desktop
