@@ -456,10 +456,10 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 		break;
 
 	case GL_STENCIL_TEST:
-		WARN_ONCE("TODO - double side stencil !\n");
 		if (r300->state.stencil.hw_stencil) {
 			R300_STATECHANGE(r300, zs);
 			if (state) {
+				WARN_ONCE("TODO - double side stencil !\n");
 				r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
 				    R300_RB3D_STENCIL_ENABLE;
 			} else {
