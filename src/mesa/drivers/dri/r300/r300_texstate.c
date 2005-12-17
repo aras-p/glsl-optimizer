@@ -300,6 +300,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 
 	/* Setup remaining cube face blits, if needed */
 	if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
+		WARN_ONCE("Cube map faces arent currently correctly positioned.\n");
 		/* Round totalSize up to multiple of BLIT_WIDTH_BYTES */
 		const GLuint faceSize =
 		    (t->base.totalSize + BLIT_WIDTH_BYTES - 1)

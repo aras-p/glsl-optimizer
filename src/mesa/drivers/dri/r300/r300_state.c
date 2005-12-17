@@ -67,6 +67,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_tex.h"
 #include "r300_maos.h"
 
+#include "drirenderbuffer.h"
+
 static void r300AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -826,7 +828,7 @@ static void r300ClearStencil(GLcontext * ctx, GLint s)
 #define SUBPIXEL_X 0.125
 #define SUBPIXEL_Y 0.125
 
-static void r300UpdateWindow(GLcontext * ctx)
+void r300UpdateWindow(GLcontext * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
@@ -866,6 +868,88 @@ static void r300Viewport(GLcontext * ctx, GLint x, GLint y,
 static void r300DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
 {
 	r300UpdateWindow(ctx);
+}
+
+void r300UpdateViewportOffset( GLcontext *ctx )
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	__DRIdrawablePrivate *dPriv = ((radeonContextPtr)rmesa)->dri.drawable;
+	GLfloat xoffset = (GLfloat)dPriv->x;
+	GLfloat yoffset = (GLfloat)dPriv->y + dPriv->h;
+	const GLfloat *v = ctx->Viewport._WindowMap.m;
+
+	GLfloat tx = v[MAT_TX] + xoffset + SUBPIXEL_X;
+	GLfloat ty = (- v[MAT_TY]) + yoffset + SUBPIXEL_Y;
+
+	if ( rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] != *(GLuint *)&tx ||
+		rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] != *(GLuint *)&ty )
+	{
+	/* Note: this should also modify whatever data the context reset
+	 * code uses...
+	 */
+	rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] = *(GLuint *)&tx;
+	rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] = *(GLuint *)&ty;
+      
+	}
+
+	radeonUpdateScissor( ctx );
+}
+
+/**
+ * Tell the card where to render (offset, pitch).
+ * Effected by glDrawBuffer, etc
+ */
+void
+r300UpdateDrawBuffer(GLcontext *ctx)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	r300ContextPtr r300 = rmesa;
+	struct gl_framebuffer *fb = ctx->DrawBuffer;
+	driRenderbuffer *drb;
+
+	if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT) {
+		/* draw to front */
+		drb = (driRenderbuffer *) fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+	}
+	else if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT) {
+		/* draw to back */
+		drb = (driRenderbuffer *) fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+	}
+	else {
+		/* drawing to multiple buffers, or none */
+		return;
+	}
+
+	assert(drb);
+	assert(drb->flippedPitch);
+
+
+	R300_STATECHANGE( rmesa, cb );
+	
+	r300->hw.cb.cmd[R300_CB_OFFSET] = drb->flippedOffset + //r300->radeon.state.color.drawOffset +
+		r300->radeon.radeonScreen->fbLocation;
+	r300->hw.cb.cmd[R300_CB_PITCH] = drb->flippedPitch;//r300->radeon.state.color.drawPitch;
+	
+	if (r300->radeon.radeonScreen->cpp == 4)
+		r300->hw.cb.cmd[R300_CB_PITCH] |= R300_COLOR_FORMAT_ARGB8888;
+	else
+		r300->hw.cb.cmd[R300_CB_PITCH] |= R300_COLOR_FORMAT_RGB565;
+	
+	if (r300->radeon.sarea->tiling_enabled)
+		r300->hw.cb.cmd[R300_CB_PITCH] |= R300_COLOR_TILE_ENABLE;
+#if 0
+	R200_STATECHANGE( rmesa, ctx );
+
+	/* Note: we used the (possibly) page-flipped values */
+	rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET]
+		= ((drb->flippedOffset + rmesa->r200Screen->fbLocation)
+		& R200_COLOROFFSET_MASK);
+	rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = drb->flippedPitch;
+	
+	if (rmesa->sarea->tiling_enabled) {
+		rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
+	}
+#endif
 }
 
 /* =============================================================
@@ -1908,6 +1992,9 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 	_tnl_InvalidateState(ctx, new_state);
 	_ae_invalidate_state(ctx, new_state);
 
+	if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
+		r300UpdateDrawBuffer(ctx);
+	}
 #ifndef CB_DPATH
 	/* Go inefficiency! */
 	r300ResetHwState(r300);

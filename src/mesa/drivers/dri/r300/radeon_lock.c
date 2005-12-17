@@ -125,7 +125,12 @@ static void r300RegainedLock(radeonContextPtr radeon)
 		else
 			radeonSetCliprects(radeon, GL_FRONT_LEFT);
 
+#if 1
+		r300UpdateViewportOffset( radeon->glCtx );
+		driUpdateFramebufferSize(radeon->glCtx, dPriv);
+#else
 		radeonUpdateScissor(radeon->glCtx);
+#endif
 		radeon->lastStamp = dPriv->lastStamp;
 	}
 

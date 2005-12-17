@@ -260,6 +260,8 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 					      radeon->vblank_flags);
 			radeon->dri.drawable = driDrawPriv;
 			
+			r300UpdateWindow(radeon->glCtx);
+			r300UpdateViewportOffset(radeon->glCtx);
 #if R200_MERGED
 			if (IS_R200_CLASS(radeon->radeonScreen)) {
 				r200UpdateWindow(radeon->glCtx);
