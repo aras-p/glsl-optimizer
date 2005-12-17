@@ -2167,7 +2167,7 @@ void r300ResetHwState(r300ContextPtr r300)
 					     (6 << R300_POINTSIZE_Y_SHIFT);
 #endif
 
-	r300->hw.unk4230.cmd[1] = 0x01800000;//18000006;
+	r300->hw.unk4230.cmd[1] = 0x18000006;
 	r300->hw.unk4230.cmd[2] = 0x00020006;
 	r300->hw.unk4230.cmd[3] = r300PackFloat32(1.0 / 192.0);
 
