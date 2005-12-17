@@ -586,8 +586,10 @@ extern int hw_tcl_on;
 
 //#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && (OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit)))) : 
 //	(r300->state.render_inputs & (_TNL_BIT_TEX0<<(unit))))
-#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit))) : \
-	ctx->Texture.Unit[unit]._ReallyEnabled && r300->state.render_inputs & (_TNL_BIT_TEX0<<(unit)))
+//#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit))) : 
+//	ctx->Texture.Unit[unit]._ReallyEnabled && r300->state.render_inputs & (_TNL_BIT_TEX0<<(unit)))
+
+#define TMU_ENABLED(ctx, unit) (ctx->Texture.Unit[unit]._ReallyEnabled)
 
 /* r300_vertex_shader_state and r300_vertex_program should probably be merged together someday.
  * Keeping them them seperate for now should ensure fixed pipeline keeps functioning properly.
