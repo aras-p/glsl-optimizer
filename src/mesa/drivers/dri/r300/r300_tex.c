@@ -932,21 +932,6 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 	 * between them according to _ReallyEnabled.
 	 */
 	switch (pname) {
-	case GL_TEXTURE_ENV_COLOR:{
-		WARN_ONCE("I am broken - Fixme !\n");
-		/*
-			GLubyte c[4];
-			GLuint envColor;
-			UNCLAMPED_FLOAT_TO_RGBA_CHAN(c, texUnit->EnvColor);
-			envColor = radeonPackColor(4, c[0], c[1], c[2], c[3]);
-			if (rmesa->hw.tf.cmd[TF_TFACTOR_0 + unit] != envColor) {
-				R200_STATECHANGE(rmesa, tf);
-				rmesa->hw.tf.cmd[TF_TFACTOR_0 + unit] =
-				    envColor;
-			}*/
-			break;
-		}
-
 	case GL_TEXTURE_LOD_BIAS_EXT:{
 			GLfloat bias, min;
 			GLuint b;
