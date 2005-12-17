@@ -113,17 +113,3 @@ _eglError(EGLint errCode, const char *msg)
       fprintf(stderr, "EGL user error 0x%x (%s) in %s\n", errCode, s, msg);
    }
 }
-
-
-
-/**
- * Return a new screen handle/ID.
- * NOTE: we never reuse these!
- */
-EGLScreenMESA
-_eglAllocScreenHandle(void)
-{
-   EGLScreenMESA s = _eglGlobal.FreeScreenHandle;
-   _eglGlobal.FreeScreenHandle++;
-   return s;
-}

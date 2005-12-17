@@ -52,8 +52,4 @@ extern void
 _eglError(EGLint errCode, const char *msg);
 
 
-extern EGLScreenMESA
-_eglAllocScreenHandle(void);
-
-
 #endif /* EGLGLOBALS_INCLUDED */

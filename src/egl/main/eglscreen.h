@@ -2,11 +2,6 @@
 #define EGLSCREEN_INCLUDED
 
 
-/* NOTE: there is no public EGLScreen type, we refers to screens with
- * an integer.
- */
-
-
 /**
  * Per-screen information.
  * Note that an EGL screen doesn't have a size.  A screen may be set to
@@ -29,6 +24,10 @@ struct _egl_screen
    EGLint NumModes;
    _EGLMode *Modes;  /**< array [NumModes] */
 };
+
+
+extern EGLScreenMESA
+_eglAllocScreenHandle(void);
 
 
 extern void

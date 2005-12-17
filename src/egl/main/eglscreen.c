@@ -24,6 +24,19 @@
 
 
 /**
+ * Return a new screen handle/ID.
+ * NOTE: we never reuse these!
+ */
+EGLScreenMESA
+_eglAllocScreenHandle(void)
+{
+   EGLScreenMESA s = _eglGlobal.FreeScreenHandle;
+   _eglGlobal.FreeScreenHandle++;
+   return s;
+}
+
+
+/**
  * Initialize an _EGLScreen object to default values.
  */
 void
