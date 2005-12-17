@@ -511,7 +511,6 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 	for(i=0; i < num_verts; i++)
 		e32(rmesa->state.Elts[start+i]); /* start ? */
 #else
-	WARN_ONCE("Rendering with elt buffers\n");
 	if(num_verts == 1){
 		start_index32_packet(num_verts, type);
 		e32(rmesa->state.Elts[start]);
@@ -615,7 +614,6 @@ static void r300_render_vb_primitive_vtxfmt_a(r300ContextPtr rmesa,
 	for(i=0; i < num_verts; i++)
 		e32(((unsigned long *)rmesa->state.VB.Elts)[i]/*rmesa->state.Elts[start+i]*/); /* start ? */
 #else
-	WARN_ONCE("Rendering with elt buffers\n");
 	if(num_verts == 1){
 		//start_index32_packet(num_verts, type);
 		//e32(rmesa->state.Elts[start]);
