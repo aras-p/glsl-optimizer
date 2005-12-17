@@ -552,6 +552,9 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	swapped = r300->radeon.doPageFlip && (r300->radeon.sarea->pfCurrentPage == 1);
 
 #ifdef CB_DPATH
+	WARN_ONCE("CB_DPATH has been enabled.\nPlease let me know if this introduces new instabilities.\n");
+	/* Make sure it fits there. */
+	r300EnsureCmdBufSpace(r300, 419*3, __FUNCTION__);
 	if(flags || bits)
 		r300EmitClearState(ctx);
 #endif
