@@ -1093,10 +1093,6 @@ void r300_setup_textures(GLcontext *ctx)
 	struct r300_tex_obj *t;
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int max_texture_unit=-1; /* -1 translates into no setup costs for fields */
-	GLuint OutputsWritten;
-	
-	if(hw_tcl_on)
-		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->Base.OutputsWritten;
 
 	R300_STATECHANGE(r300, txe);
 	R300_STATECHANGE(r300, tex.filter);
@@ -1269,6 +1265,14 @@ void r300_setup_rs_unit(GLcontext *ctx)
 				| (fp_reg++ << R300_RS_ROUTE_1_COLOR1_DEST_SHIFT);
 		InputsRead &= ~FRAG_BIT_COL1;
 		if (high_rr < 1) high_rr = 1;
+		col_interp_nr++;
+	}
+	
+	/* Need at least one. This might still lock as the values are undefined... */
+	if (in_texcoords == 0 && col_interp_nr == 0) {
+		r300->hw.rr.cmd[R300_RR_ROUTE_0] |= 0
+				| R300_RS_ROUTE_0_COLOR
+				| (fp_reg++ << R300_RS_ROUTE_0_COLOR_DEST_SHIFT);
 		col_interp_nr++;
 	}
 	
