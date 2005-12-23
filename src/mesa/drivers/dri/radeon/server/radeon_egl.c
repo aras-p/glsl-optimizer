@@ -937,10 +937,10 @@ radeonFillInConfigs(_EGLDisplay *disp, unsigned pixel_bits,
  * If surface is EGL_NO_SURFACE, disable the screen's output.
  */
 static EGLBoolean
-radeonShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
+radeonShowScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
                       EGLSurface surface, EGLModeMESA m)
 {
-   EGLBoolean b = _eglDRIShowSurfaceMESA(drv, dpy, screen, surface, m);
+   EGLBoolean b = _eglDRIShowScreenSurfaceMESA(drv, dpy, screen, surface, m);
    return b;
 }
 
@@ -1019,7 +1019,7 @@ _eglMain(_EGLDisplay *dpy)
 
    /* then plug in our radeon-specific functions */
    radeon->Base.API.Initialize = radeonInitialize;
-   radeon->Base.API.ShowSurfaceMESA = radeonShowSurfaceMESA;
+   radeon->Base.API.ShowScreenSurfaceMESA = radeonShowScreenSurfaceMESA;
 
    return &radeon->Base;
 }
