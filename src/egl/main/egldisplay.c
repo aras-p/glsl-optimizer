@@ -24,7 +24,7 @@ my_strdup(const char *s)
 _EGLDisplay *
 _eglNewDisplay(NativeDisplayType displayName)
 {
-   _EGLDisplay *dpy = (_EGLDisplay *) malloc(sizeof(_EGLDisplay));
+   _EGLDisplay *dpy = (_EGLDisplay *) calloc(1, sizeof(_EGLDisplay));
    if (dpy) {
       dpy->Handle = _eglHashGenKey(_eglGlobal.Displays);
       _eglHashInsert(_eglGlobal.Displays, dpy->Handle, dpy);
