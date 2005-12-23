@@ -603,7 +603,7 @@ main(int argc, char *argv[])
       return 0;
    }
 
-   eglShowSurfaceMESA(d, screen, screen_surf, mode);
+   eglShowScreenSurfaceMESA(d, screen, screen_surf, mode);
 
    b = eglMakeCurrent(d, screen_surf, screen_surf, ctx);
    if (!b) {
