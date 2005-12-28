@@ -82,6 +82,7 @@
 #define PCI_CHIP_RADEON_QY		0x5159
 #define PCI_CHIP_RADEON_QZ		0x515A
 #define PCI_CHIP_R200_Ql		0x516C
+#define PCI_CHIP_RV350_5460             0x5460
 #define PCI_CHIP_RV280_Y_		0x5960
 #define PCI_CHIP_RV280_Ya		0x5961
 #define PCI_CHIP_RV280_Yb		0x5962
@@ -104,7 +105,11 @@ typedef enum {
     CHIP_FAMILY_RV250,
     CHIP_FAMILY_M9,
     CHIP_FAMILY_RV280,
-    CHIP_FAMILY_R300
+    CHIP_FAMILY_R300,
+    CHIP_FAMILY_R350,
+    CHIP_FAMILY_RV350,
+    CHIP_FAMILY_RV380,  /* RV370/RV380/M22/M24 */
+    CHIP_FAMILY_R420,   /* R420/R423/M18 */
 } RADEONChipFamily;
 
 
@@ -196,6 +201,7 @@ typedef struct {
    unsigned int      gen_int_cntl;
    unsigned int      crtc_offset_cntl;
 
+   unsigned long     pcieGartTableOffset;
 } RADEONInfoRec, *RADEONInfoPtr;
 
 
