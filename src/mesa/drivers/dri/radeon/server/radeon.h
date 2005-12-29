@@ -82,7 +82,7 @@
 #define PCI_CHIP_RADEON_QY		0x5159
 #define PCI_CHIP_RADEON_QZ		0x515A
 #define PCI_CHIP_R200_Ql		0x516C
-#define PCI_CHIP_RV350_5460             0x5460
+#define PCI_CHIP_RV370_5460             0x5460
 #define PCI_CHIP_RV280_Y_		0x5960
 #define PCI_CHIP_RV280_Ya		0x5961
 #define PCI_CHIP_RV280_Yb		0x5962
