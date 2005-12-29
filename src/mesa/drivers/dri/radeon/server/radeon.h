@@ -52,6 +52,7 @@
 #       define RADEON_CSQ_PRIBM_INDBM          (4    << 28)
 #       define RADEON_CSQ_PRIPIO_INDPIO        (15   << 28)
 
+#define RADEON_PCIGART_TABLE_SIZE       32768
 
 #define PCI_CHIP_R200_BB                0x4242
 #define PCI_CHIP_RV250_Id               0x4964

@@ -342,13 +342,17 @@ RADEONMemoryInit(driDisplay *disp, RADEONInfoPtr info)
                               + RADEON_BUFFER_ALIGN)
                              & ~RADEON_BUFFER_ALIGN);
    int        l;
+   int        pcie_gart_table_size = 0;
 
    info->frontOffset = 0;
    info->frontPitch = disp->virtualWidth;
 
+   if (disp->card_type==RADEON_CARD_PCIE)
+     pcie_gart_table_size  = RADEON_PCIGART_TABLE_SIZE;
+
    /* Front, back and depth buffers - everything else texture??
     */
-   info->textureSize = disp->fbSize - 2 * bufferSize - depthSize;
+   info->textureSize = disp->fbSize - pcie_gart_table_size - 2 * bufferSize - depthSize;
 
    if (info->textureSize < 0)
       return 0;
@@ -372,7 +376,7 @@ RADEONMemoryInit(driDisplay *disp, RADEONInfoPtr info)
    }
 
    /* Reserve space for textures */
-   info->textureOffset = ((disp->fbSize - info->textureSize +
+   info->textureOffset = ((disp->fbSize - pcie_gart_table_size - info->textureSize +
                            RADEON_BUFFER_ALIGN) &
                           ~RADEON_BUFFER_ALIGN);
 
@@ -389,6 +393,8 @@ RADEONMemoryInit(driDisplay *disp, RADEONInfoPtr info)
                        ~RADEON_BUFFER_ALIGN);
    info->backPitch = disp->virtualWidth;
 
+   if (pcie_gart_table_size)
+     info->pcieGartTableOffset = disp->fbSize - pcie_gart_table_size;
 
    fprintf(stderr,
            "Will use back buffer at offset 0x%x, pitch %d\n",
@@ -399,6 +405,12 @@ RADEONMemoryInit(driDisplay *disp, RADEONInfoPtr info)
    fprintf(stderr,
            "Will use %d kb for textures at offset 0x%x\n",
            info->textureSize/1024, info->textureOffset);
+   if (pcie_gart_table_size)
+   { 
+     fprintf(stderr,
+	     "Will use %d kb for PCIE GART Table at offset 0x%x\n",
+	     pcie_gart_table_size/1024, info->pcieGartTableOffset);
+   }
 
    /* XXX I don't think these are needed. */
 #if 0
@@ -411,6 +423,9 @@ RADEONMemoryInit(driDisplay *disp, RADEONInfoPtr info)
    info->depthPitchOffset = (((info->depthPitch * cpp / 64) << 22) |
                              (info->depthOffset >> 10));
 #endif
+
+   if (pcie_gart_table_size)
+     RADEONSetParam(disp, RADEON_SETPARAM_PCIGART_LOCATION, info->pcieGartTableOffset);
 
    return 1;
 }
