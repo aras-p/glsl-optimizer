@@ -42,6 +42,21 @@ typedef struct radeon_driver
    GLuint radeonStuff;
 } radeonDriver;
 
+static int
+RADEONSetParam(driDisplay  *disp, int param, int value)
+{
+   drm_radeon_setparam_t sp;
+   
+   memset(&sp, 0, sizeof(sp));
+   sp.param = param;
+   sp.value = value;
+
+   if (drmCommandWrite(disp->drmFD, DRM_RADEON_SETPARAM, &sp, sizeof(sp))) {
+      return -1;
+   }
+
+   return 0;
+
 
 static int
 RADEONCheckDRMVersion(driDisplay *disp, RADEONInfoPtr info)
@@ -52,9 +67,9 @@ RADEONCheckDRMVersion(driDisplay *disp, RADEONInfoPtr info)
    if (version) {
       int req_minor, req_patch;
 
-      /* Need 1.8.x for proper cleanup-on-client-exit behaviour.
+      /* Need 1.21.x for card type detection getparam
        */
-      req_minor = 8;
+      req_minor = 21;
       req_patch = 0;
 
       if (version->version_major != 1 ||
@@ -421,7 +436,9 @@ static int RADEONDRIKernelInit( driDisplay *disp,
 
    memset(&drmInfo, 0, sizeof(drmInfo));
 
-   if ( (info->ChipFamily == CHIP_FAMILY_R200) ||
+   if ( (info->ChipFamily >= CHIP_FAMILY_R300) )
+      drmInfo.func            = RADEON_INIT_R300_CP;
+   else if ( (info->ChipFamily == CHIP_FAMILY_R200) ||
         (info->ChipFamily == CHIP_FAMILY_RV250) ||
         (info->ChipFamily == CHIP_FAMILY_M9) ||
         (info->ChipFamily == CHIP_FAMILY_RV280) )
@@ -479,7 +496,7 @@ static int RADEONDRIBufInit( driDisplay *disp, RADEONInfoPtr info )
    info->bufNumBufs = drmAddBufs(disp->drmFD,
                                  info->bufMapSize / RADEON_BUFFER_SIZE,
                                  RADEON_BUFFER_SIZE,
-                                 disp->isPCI ? DRM_SG_BUFFER : DRM_AGP_BUFFER,
+				 (disp->card_type!=RADEON_CARD_AGP) ? DRM_SG_BUFFER : DRM_AGP_BUFFER,
                                  info->bufStart);
 
    if (info->bufNumBufs <= 0) {
@@ -543,6 +560,22 @@ static void RADEONDRIAgpHeapInit(driDisplay *disp,
    }
 }
 
+static int RADEONGetCardType(driDisplay *disp, RADEONInfoPtr info)
+{
+   drm_radeon_getparam_t gp;  
+   int ret;
+ 
+   gp.param = RADEON_PARAM_CARD_TYPE;
+   gp.value = &disp->card_type;
+
+   ret=drmCommandWriteRead(disp->drmFD, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
+   if (ret) {
+     fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_CARD_TYPE) : %d\n", ret);
+     return -1;
+   }
+
+   return disp->card_type;
+}
 
 /**
  * Called at the start of each server generation.
@@ -662,7 +695,7 @@ RADEONScreenInit( driDisplay *disp, RADEONInfoPtr info,
    pRADEONDRI->height            = disp->virtualHeight;
    pRADEONDRI->depth             = disp->bpp; /* XXX: depth */
    pRADEONDRI->bpp               = disp->bpp;
-   pRADEONDRI->IsPCI             = disp->isPCI;
+   pRADEONDRI->IsPCI             = (disp->card_type != RADEON_CARD_AGP);;
    pRADEONDRI->frontOffset       = info->frontOffset;
    pRADEONDRI->frontPitch        = info->frontPitch;
    pRADEONDRI->backOffset        = info->backOffset;
@@ -757,6 +790,10 @@ static int get_chipfamily_from_chipset( RADEONInfoPtr info )
         info->ChipFamily = CHIP_FAMILY_R300;
         break;
 
+    case PCI_CHIP_RV370_5460:
+        info->ChipFamily = CHIP_FAMILY_RV380;
+	break;
+
     default:
         /* Original Radeon/7200 */
         info->ChipFamily = CHIP_FAMILY_RADEON;
@@ -827,7 +864,10 @@ static int radeonInitFBDev( driDisplay *disp, RADEONDRIPtr pRADEONDRI )
       return 0;
    }
 
-   if (disp->isPCI) {
+   if (RADEONGetCardType(disp, info)<0)
+      return 0;
+
+   if (disp->card_type!=RADEON_CARD_AGP) {
       /* Initialize PCI */
       if (!RADEONDRIPciInit(disp, info))
          return 0;
