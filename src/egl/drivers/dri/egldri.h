@@ -25,7 +25,7 @@ typedef struct dri_display
    int fbSize;
    int bpp;
    int cpp;
-   int isPCI;
+   int card_type;
    int SAREASize;
    drm_sarea_t *pSAREA;
    unsigned int serverContext;	/**< \brief DRM context only active on server */
