@@ -9,6 +9,10 @@ DEFINES += -DCOMPILE_R300 -DGLX_DIRECT_RENDERING -DR200_MERGED=0
 
 MINIGLX_SOURCES = server/radeon_dri.c
 
+ifeq ($(USING_EGL), 1)
+EGL_SOURCES = server/radeon_egl.c
+endif
+
 COMMON_SOURCES = \
 	../../common/driverfuncs.c \
 	../common/mm.c \
@@ -40,7 +44,9 @@ DRIVER_SOURCES = \
 		 r300_vertexprog.c \
 		 r300_fragprog.c \
 		 r300_shader.c \
-		 r300_maos.c 
+		 r300_maos.c \
+		 $(EGL_SOURCES)
+
 #		 \
 #		 r200_context.c \
 #		 r200_ioctl.c \
