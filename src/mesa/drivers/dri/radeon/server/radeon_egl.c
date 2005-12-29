@@ -56,7 +56,7 @@ RADEONSetParam(driDisplay  *disp, int param, int value)
    }
 
    return 0;
-
+}
 
 static int
 RADEONCheckDRMVersion(driDisplay *disp, RADEONInfoPtr info)
