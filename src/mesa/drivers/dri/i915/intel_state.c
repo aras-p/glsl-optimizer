@@ -230,6 +230,10 @@ static void intelCalcViewport( GLcontext *ctx )
    intelContextPtr intel = INTEL_CONTEXT(ctx);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
    GLfloat *m = intel->ViewportMatrix.m;
+   GLint h = 0;
+
+   if (intel->driDrawable) 
+      h = intel->driDrawable->h + SUBPIXEL_Y;
 
    /* See also intel_translate_vertex.  SUBPIXEL adjustments can be done
     * via state vars, too.
@@ -237,7 +241,7 @@ static void intelCalcViewport( GLcontext *ctx )
    m[MAT_SX] =   v[MAT_SX];
    m[MAT_TX] =   v[MAT_TX] + SUBPIXEL_X;
    m[MAT_SY] = - v[MAT_SY];
-   m[MAT_TY] = - v[MAT_TY] + intel->driDrawable->h + SUBPIXEL_Y;
+   m[MAT_TY] = - v[MAT_TY] + h;
    m[MAT_SZ] =   v[MAT_SZ] * intel->depth_scale;
    m[MAT_TZ] =   v[MAT_TZ] * intel->depth_scale;
 }

@@ -140,8 +140,14 @@ static void intelBufferSize(GLframebuffer *buffer,
     * to be correct.
     */
    LOCK_HARDWARE(intel);
-   *width = intel->driDrawable->w;
-   *height = intel->driDrawable->h;
+   if (intel->driDrawable) {
+      *width = intel->driDrawable->w;
+      *height = intel->driDrawable->h;
+   }
+   else {
+      *width = 0;
+      *height = 0;
+   }
    UNLOCK_HARDWARE(intel);
 }
 
@@ -527,6 +533,19 @@ void intelWindowMoved( intelContextPtr intel )
 	 /* glDrawBuffer(GL_NONE or GL_FRONT_AND_BACK): software fallback */
 	 intelSetFrontClipRects( intel );
       }
+   }
+
+   /* Set state we know depends on drawable parameters:
+    */
+   {
+      GLcontext *ctx = &intel->ctx;
+
+      ctx->Driver.Scissor( ctx, ctx->Scissor.X, ctx->Scissor.Y,
+			   ctx->Scissor.Width, ctx->Scissor.Height );
+      
+      ctx->Driver.DepthRange( ctx, 
+			      ctx->Viewport.Near,
+			      ctx->Viewport.Far );
    }
 }
 
