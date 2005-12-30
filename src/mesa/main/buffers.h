@@ -74,5 +74,8 @@ _mesa_init_scissor(GLcontext *ctx);
 extern void 
 _mesa_init_multisample(GLcontext *ctx);
 
+extern void _mesa_set_scissor( GLcontext *ctx, 
+			       GLint x, GLint y, GLsizei width, GLsizei height );
+
 
 #endif

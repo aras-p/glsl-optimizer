@@ -669,20 +669,9 @@ _mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
  * change flushes the vertices and notifies the driver via
  * the dd_function_table::Scissor callback.
  */
-void GLAPIENTRY
-_mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
+void _mesa_set_scissor( GLcontext *ctx, 
+			GLint x, GLint y, GLsizei width, GLsizei height )
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
-   if (width < 0 || height < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glScissor" );
-      return;
-   }
-
-   if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glScissor %d %d %d %d\n", x, y, width, height);
-
    if (x == ctx->Scissor.X &&
        y == ctx->Scissor.Y &&
        width == ctx->Scissor.Width &&
@@ -697,6 +686,24 @@ _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
 
    if (ctx->Driver.Scissor)
       ctx->Driver.Scissor( ctx, x, y, width, height );
+}
+
+
+void GLAPIENTRY
+_mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (width < 0 || height < 0) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glScissor" );
+      return;
+   }
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glScissor %d %d %d %d\n", x, y, width, height);
+
+   _mesa_set_scissor(ctx, x, y, width, height);
 }
 
 
