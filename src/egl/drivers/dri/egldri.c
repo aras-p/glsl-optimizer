@@ -713,17 +713,32 @@ __eglGetDrawableInfo(__DRInativeDisplay * ndpy, int screen, __DRIid drawable,
                      int* backX, int* backY,
                      int* numBackClipRects, drm_clip_rect_t ** pBackClipRects )
 {
+    __DRIscreen *pDRIScreen;
+    __DRIscreenPrivate *psp;
    driSurface *surf = Lookup_driSurface(drawable);
 
+   pDRIScreen = __eglFindDRIScreen(ndpy, screen);
+
+   if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
+       return GL_FALSE;
+   }
+   psp = (__DRIscreenPrivate *) pDRIScreen->private;
    *X = 0;
    *Y = 0;
    *W = surf->Base.Width;
    *H = surf->Base.Height;
 
+   *backX = 0;
+   *backY = 0;
+   *numBackClipRects = 0;
+   *pBackClipRects = NULL;
+
    *numClipRects = 1;
    *pClipRects = malloc(sizeof(**pClipRects));
    **pClipRects = (drm_clip_rect_t){0, 0, surf->Base.Width, surf->Base.Height};
 
+   psp->pSAREA->drawableTable[0].stamp = 1;
+   *stamp = 1;
 #if 0
     GLXDrawable drawable = (GLXDrawable) draw;
     drm_clip_rect_t * cliprect;
