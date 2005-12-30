@@ -46,12 +46,14 @@ static int
 RADEONSetParam(driDisplay  *disp, int param, int value)
 {
    drm_radeon_setparam_t sp;
-   
+   int ret;
+
    memset(&sp, 0, sizeof(sp));
    sp.param = param;
    sp.value = value;
 
-   if (drmCommandWrite(disp->drmFD, DRM_RADEON_SETPARAM, &sp, sizeof(sp))) {
+   if ((ret=drmCommandWrite(disp->drmFD, DRM_RADEON_SETPARAM, &sp, sizeof(sp)))) {
+     fprintf(stderr,"Set param failed\n", ret);
       return -1;
    }
 
@@ -862,12 +864,14 @@ static int radeonInitFBDev( driDisplay *disp, RADEONDRIPtr pRADEONDRI )
       fprintf(stderr, "==> Verify PCI BusID is correct in miniglx.conf\n");
       return 0;
    }
+#if 0
    if (info->ChipFamily >= CHIP_FAMILY_R300) {
       fprintf(stderr,
               "Direct rendering not yet supported on "
               "Radeon 9700 and newer cards\n");
       return 0;
    }
+#endif
 
 #if 00
    /* don't seem to need this here */
@@ -1038,6 +1042,10 @@ radeonInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
       return EGL_FALSE;
 
    framebuffer.base = display->pFB;
+   framebuffer.width = display->virtualWidth;
+   framebuffer.height = display->virtualHeight;
+   framebuffer.stride = display->virtualWidth;
+   framebuffer.size = display->fbSize;
    radeonInitFBDev( display, framebuffer.dev_priv );
 
    if (!_eglDRICreateDisplay(display, &framebuffer))
