@@ -7,7 +7,7 @@ MAJOR = 1
 MINOR = 0
 TINY = 0
 
-INCDIRS = -I$(TOP)/include -I/usr/include/Motif1.2 -I/usr/contrib/X11R6/include -I/usr/X11R6/include
+INCDIRS = -I$(TOP)/include -I/usr/include/Motif1.2 $(X11_INCLUDES)
 
 
 OBJECTS = $(GLW_SOURCES:.c=.o)

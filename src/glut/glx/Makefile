@@ -79,7 +79,7 @@ OBJECTS = $(SOURCES:.c=.o)
 ##### RULES #####
 
 .c.o:
-	$(CC) -c -I$(TOP)/include $(CFLAGS) $(GLUT_CFLAGS) $<
+	$(CC) -c -I$(TOP)/include $(X11_INCLUDES) $(CFLAGS) $(GLUT_CFLAGS) $<
 
 
 
