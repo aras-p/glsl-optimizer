@@ -51,6 +51,8 @@ fi
 
 if [ `uname` = "FreeBSD" ] ; then
 	CP_FLAGS="-f"
+elif [ `uname` = "Darwin" ] ; then
+	CP_FLAGS="-f"
 else
 	CP_FLAGS="-fd"
 fi
