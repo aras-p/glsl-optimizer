@@ -32,6 +32,7 @@ SOURCES = \
 	tri-mov.c \
 	tri-mul.c \
 	tri-pow.c \
+	tri-param.c \
 	tri-rcp.c \
 	tri-rsq.c \
 	tri-scs.c \
