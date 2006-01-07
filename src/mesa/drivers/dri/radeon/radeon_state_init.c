@@ -238,7 +238,7 @@ void radeonInitState( radeonContextPtr rmesa )
    ALLOC_STATE( tex[0], tex0, TEX_STATE_SIZE, "TEX/tex-0", 0 );
    ALLOC_STATE( tex[1], tex1, TEX_STATE_SIZE, "TEX/tex-1", 0 );
    ALLOC_STATE( tex[2], tex2, TEX_STATE_SIZE, "TEX/tex-2", 0 );
-   if (rmesa->radeonScreen->drmSupportsCubeMaps)
+   if (rmesa->radeonScreen->drmSupportsCubeMapsR100)
    {
       ALLOC_STATE( cube[0], cube0, CUBE_STATE_SIZE, "CUBE/cube-0", 0 );
       ALLOC_STATE( cube[1], cube1, CUBE_STATE_SIZE, "CUBE/cube-1", 0 );

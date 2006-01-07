@@ -417,7 +417,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    }
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
-   if (rmesa->radeonScreen->drmSupportsCubeMaps)
+   if (rmesa->radeonScreen->drmSupportsCubeMapsR100)
       _mesa_enable_extension( ctx, "GL_ARB_texture_cube_map" );
    if (rmesa->glCtx->Mesa_DXTn) {
       _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );

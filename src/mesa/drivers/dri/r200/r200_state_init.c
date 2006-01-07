@@ -291,7 +291,7 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( afs[0], never, AFS_STATE_SIZE, "AFS/afsinst-0", 0 );
       ALLOC_STATE( afs[1], never, AFS_STATE_SIZE, "AFS/afsinst-1", 1 );
    }
-   if (rmesa->r200Screen->drmSupportsCubeMaps) {
+   if (rmesa->r200Screen->drmSupportsCubeMapsR200) {
       ALLOC_STATE( cube[0], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
       ALLOC_STATE( cube[1], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );
       ALLOC_STATE( cube[2], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-2", 2 );

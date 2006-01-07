@@ -468,7 +468,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
       _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
    }
 
-   if (rmesa->r200Screen->drmSupportsCubeMaps)
+   if (rmesa->r200Screen->drmSupportsCubeMapsR200)
       _mesa_enable_extension( ctx, "GL_ARB_texture_cube_map" );
    if (rmesa->r200Screen->drmSupportsBlendColor) {
        driInitExtensions( ctx, blend_extensions, GL_FALSE );
