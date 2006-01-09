@@ -300,25 +300,17 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 
 	/* Setup remaining cube face blits, if needed */
 	if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
-		WARN_ONCE("Cube map faces arent currently correctly positioned.\n");
-		/* Round totalSize up to multiple of BLIT_WIDTH_BYTES */
-		const GLuint faceSize =
-		    (t->base.totalSize + BLIT_WIDTH_BYTES - 1)
-		    & ~(BLIT_WIDTH_BYTES - 1);
-		const GLuint lines = faceSize / BLIT_WIDTH_BYTES;
 		GLuint face;
-		/* reuse face 0 x/y/width/height - just adjust y */
 		for (face = 1; face < 6; face++) {
 			for (i = 0; i < numLevels; i++) {
 				t->image[face][i].x = t->image[0][i].x;
-				t->image[face][i].y =
-				    t->image[0][i].y + face * lines;
+				t->image[face][i].y = t->image[0][i].y;
 				t->image[face][i].width = t->image[0][i].width;
 				t->image[face][i].height =
 				    t->image[0][i].height;
 			}
 		}
-		t->base.totalSize = 6 * faceSize;	/* total texmem needed */
+		t->base.totalSize *= 6;	/* total texmem needed */
 	}
 
 	/* Hardware state:
