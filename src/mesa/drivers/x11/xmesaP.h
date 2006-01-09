@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -513,7 +513,7 @@ extern void xmesa_resize_buffers(GLcontext *ctx, GLframebuffer *buffer,
 extern void xmesa_init_driver_functions( XMesaVisual xmvisual,
                                          struct dd_function_table *driver );
 
-extern void xmesa_update_state( GLcontext *ctx, GLuint new_state );
+extern void xmesa_update_state( GLcontext *ctx, GLbitfield new_state );
 
 extern void
 xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
