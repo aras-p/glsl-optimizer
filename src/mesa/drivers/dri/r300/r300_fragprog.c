@@ -531,7 +531,9 @@ static void emit_tex(struct r300_fragment_program *rp,
 
 		/* Finish off current node */
 		sync_streams(rp);
-		rp->node[rp->cur_node].alu_end = rp->v_pos - 1;
+		rp->node[rp->cur_node].alu_end = 
+				rp->v_pos - rp->node[rp->cur_node].alu_offset - 1;
+
 
 		/* Start new node */
 		rp->cur_node++;
@@ -1029,7 +1031,8 @@ void translate_fragment_shader(struct r300_fragment_program *rp)
 		
 		/* Finish off */
 		sync_streams(rp);
-		rp->node[rp->cur_node].alu_end	= rp->v_pos - 1;
+		rp->node[rp->cur_node].alu_end	= 
+				rp->v_pos - rp->node[rp->cur_node].alu_offset - 1;
 		rp->alu_offset					= 0;
 		rp->alu_end						= rp->v_pos - 1;
 		rp->tex_offset					= 0;
@@ -1057,7 +1060,14 @@ static void dump_program(struct r300_fragment_program *rp)
 	fflush(stdout);
 
 	fprintf(stderr, "Hardware program\n");
-	fprintf(stderr, "----------------\n");	
+	fprintf(stderr, "----------------\n");
+	
+	fprintf(stderr, "tex:\n");
+	
+	for(i=0;i<rp->tex.length;i++) {
+		fprintf(stderr, "%08x\n", rp->tex.inst[i]);
+	}
+	
 	for (i=0;i<(rp->cur_node+1);i++) {
 		fprintf(stderr, "NODE %d: alu_offset: %d, tex_offset: %d, alu_end: %d, tex_end: %d\n", i,
 						rp->node[i].alu_offset,
@@ -1070,15 +1080,19 @@ static void dump_program(struct r300_fragment_program *rp)
     fprintf(stderr, "%08x\n", ((rp->alu_end << 16) | (R300_PFS_INSTR0_0 >> 2)));
     for (i=0;i<=rp->alu_end;i++)
         fprintf(stderr, "%08x\n", rp->alu.inst[i].inst0);
+    
     fprintf(stderr, "%08x\n", ((rp->alu_end << 16) | (R300_PFS_INSTR1_0 >> 2)));
     for (i=0;i<=rp->alu_end;i++)
         fprintf(stderr, "%08x\n", rp->alu.inst[i].inst1);
+    
     fprintf(stderr, "%08x\n", ((rp->alu_end << 16) | (R300_PFS_INSTR2_0 >> 2)));
     for (i=0;i<=rp->alu_end;i++)
         fprintf(stderr, "%08x\n", rp->alu.inst[i].inst2);
+    
     fprintf(stderr, "%08x\n", ((rp->alu_end << 16) | (R300_PFS_INSTR3_0 >> 2)));
     for (i=0;i<=rp->alu_end;i++)
         fprintf(stderr, "%08x\n", rp->alu.inst[i].inst3);
+    
     fprintf(stderr, "00000000\n");
 	
 }
