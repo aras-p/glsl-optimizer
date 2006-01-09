@@ -64,7 +64,7 @@ struct dd_function_table {
     * This is in addition to any state change callbacks Mesa may already have
     * made.
     */
-   void (*UpdateState)( GLcontext *ctx, GLuint new_state );
+   void (*UpdateState)( GLcontext *ctx, GLbitfield new_state );
 
    /**
     * Get the width and height of the named buffer/window.

@@ -957,7 +957,7 @@ update_program(GLcontext *ctx)
 void
 _mesa_update_state( GLcontext *ctx )
 {
-   GLuint new_state = ctx->NewState;
+   GLbitfield new_state = ctx->NewState;
 
    if (MESA_VERBOSE & VERBOSE_STATE)
       _mesa_print_state("_mesa_update_state", new_state);
