@@ -1233,8 +1233,8 @@ void r300_setup_rs_unit(GLcontext *ctx)
 				vp_reg++;
 			} else {
 				/* Passing invalid data here can lock the GPU. */
-				fprintf(stderr, "fragprog wants coords for tex%d, vp doesn't provide them!\n", i);
-				exit(-1);
+				WARN_ONCE("fragprog wants coords for tex%d, vp doesn't provide them!\n", i);
+				//exit(-1);
 			}
 			InputsRead &= ~(FRAG_BIT_TEX0<<i);
 			fp_reg++;
@@ -1243,8 +1243,8 @@ void r300_setup_rs_unit(GLcontext *ctx)
 
 	if (InputsRead & FRAG_BIT_COL0) {
 		if (!(OutputsWritten & (hw_tcl_on ? (1<<VERT_RESULT_COL0) : _TNL_BIT_COLOR0))) {
-			fprintf(stderr, "fragprog wants col0, vp doesn't provide it\n");
-			exit(-1);
+			WARN_ONCE("fragprog wants col0, vp doesn't provide it\n");
+			//exit(-1);
 		}
 
 		r300->hw.rr.cmd[R300_RR_ROUTE_0] |= 0
@@ -1256,8 +1256,8 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	
 	if (InputsRead & FRAG_BIT_COL1) {
 		if (!(OutputsWritten & (hw_tcl_on ? (1<<VERT_RESULT_COL1) : _TNL_BIT_COLOR1))) {
-			fprintf(stderr, "fragprog wants col1, vp doesn't provide it\n");
-			exit(-1);
+			WARN_ONCE("fragprog wants col1, vp doesn't provide it\n");
+			//exit(-1);
 		}
 
 		r300->hw.rr.cmd[R300_RR_ROUTE_1] |= R300_RS_ROUTE_1_UNKNOWN11
@@ -1649,7 +1649,7 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 			translate_vertex_shader(vp);
 		if (vp->translated == GL_FALSE) {
 			fprintf(stderr, "Failing back to sw-tcl\n");
-			debug_vp(ctx, &vp->mesa_program);
+//			debug_vp(ctx, &vp->mesa_program);
 			hw_tcl_on = future_hw_tcl_on = 0;
 			r300ResetHwState(rmesa);
 
@@ -1739,8 +1739,7 @@ static unsigned int r300PackFloat24(float f)
 void r300SetupPixelShader(r300ContextPtr rmesa)
 {
 	GLcontext *ctx = rmesa->radeon.glCtx;
-	struct r300_fragment_program *rp =
-	    (struct r300_fragment_program *)ctx->FragmentProgram._Current;
+	struct r300_fragment_program *rp = ctx->FragmentProgram._Current;
 	int i,k;
 
 	if (!rp)	/* should only happenen once, just after context is created */
@@ -1778,7 +1777,7 @@ void r300SetupPixelShader(r300ContextPtr rmesa)
 				| (rp->node[i].alu_end  << R300_PFS_NODE_ALU_END_SHIFT)
 				| (rp->node[i].tex_offset << R300_PFS_NODE_TEX_OFFSET_SHIFT)
 				| (rp->node[i].tex_end  << R300_PFS_NODE_TEX_END_SHIFT)
-				| ( (k==3) ? R300_PFS_NODE_LAST_NODE : 0);
+				| rp->node[i].flags; /*  ( (k==3) ? R300_PFS_NODE_LAST_NODE : 0); */
 		} else {
 			rmesa->hw.fp.cmd[R300_FP_NODE0+(3-i)] = 0;
 		}

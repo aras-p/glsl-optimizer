@@ -863,7 +863,9 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_PFS_NODE_TEX_OFFSET_MASK     (31 << 12)
 #       define R300_PFS_NODE_TEX_END_SHIFT       17
 #       define R300_PFS_NODE_TEX_END_MASK        (31 << 17)
-#       define R300_PFS_NODE_LAST_NODE           (1 << 22)
+/*#       define R300_PFS_NODE_LAST_NODE           (1 << 22) */
+#		define R300_PFS_NODE_OUTPUT_COLOR        (1 << 22)
+#		define R300_PFS_NODE_OUTPUT_DEPTH        (1 << 23)
 
 /* TEX
 // As far as I can tell, texture instructions cannot write into output
@@ -882,6 +884,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
  */
 #		define R300_FPITX_OPCODE_SHIFT			15
 #			define R300_FPITX_OP_TEX			1
+#			define R300_FPITX_OP_KIL			2
 #			define R300_FPITX_OP_TXP			3
 #			define R300_FPITX_OP_TXB			4
 
@@ -957,9 +960,11 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_FPI1_SRC2C_CONST             (1 << 17)
 #       define R300_FPI1_DSTC_SHIFT              18
 #       define R300_FPI1_DSTC_MASK               (31 << 18)
+#		define R300_FPI1_DSTC_REG_MASK_SHIFT     23
 #       define R300_FPI1_DSTC_REG_X              (1 << 23)
 #       define R300_FPI1_DSTC_REG_Y              (1 << 24)
 #       define R300_FPI1_DSTC_REG_Z              (1 << 25)
+#		define R300_FPI1_DSTC_OUTPUT_MASK_SHIFT  26
 #       define R300_FPI1_DSTC_OUTPUT_X           (1 << 26)
 #       define R300_FPI1_DSTC_OUTPUT_Y           (1 << 27)
 #       define R300_FPI1_DSTC_OUTPUT_Z           (1 << 28)
@@ -978,6 +983,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_FPI3_DSTA_MASK               (31 << 18)
 #       define R300_FPI3_DSTA_REG                (1 << 23)
 #       define R300_FPI3_DSTA_OUTPUT             (1 << 24)
+#		define R300_FPI3_DSTA_DEPTH              (1 << 27)
 
 #define R300_PFS_INSTR0_0                   0x48C0
 #       define R300_FPI0_ARGC_SRC0C_XYZ          0

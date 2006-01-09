@@ -455,7 +455,8 @@ static void r300EmitClearState(GLcontext * ctx)
 	e32(0);
 	e32(0);
 	e32(0);
-	e32(R300_PFS_NODE_LAST_NODE);
+//	e32(R300_PFS_NODE_LAST_NODE);
+	e32(R300_PFS_NODE_OUTPUT_COLOR);
 	
 	R300_STATECHANGE(r300, fpi[0]);
 	R300_STATECHANGE(r300, fpi[1]);
