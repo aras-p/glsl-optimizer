@@ -109,14 +109,23 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    winheight = MIN2(xmBuffer->frontxrb->drawable->height, MAX_HEIGHT);
 #else
    Window root;
+   Status stat;
    int winx, winy;
    unsigned int bw, d;
 
    _glthread_LOCK_MUTEX(_xmesa_lock);
    XSync(xmBuffer->xm_visual->display, 0); /* added for Chromium */
-   XGetGeometry( xmBuffer->xm_visual->display, xmBuffer->frontxrb->pixmap,
+
+   stat = XGetGeometry( xmBuffer->xm_visual->display, xmBuffer->frontxrb->pixmap,
                  &root, &winx, &winy, &winwidth, &winheight, &bw, &d );
    _glthread_UNLOCK_MUTEX(_xmesa_lock);
+
+   if (!stat) {
+      /* probably querying a window that's recently been destroyed */
+      _mesa_warning(NULL, "XGetGeometry failed!\n");
+      *width = *height = 1;
+      return;
+   }
 #endif
 
    *width = winwidth;
@@ -452,6 +461,9 @@ clear_32bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint pixel = (GLuint) xmesa->clearpixel;
+
+   if (!xrb->ximage)
+      return;
 
    if (xmesa->swapbytes) {
       pixel = ((pixel >> 24) & 0x000000ff)
