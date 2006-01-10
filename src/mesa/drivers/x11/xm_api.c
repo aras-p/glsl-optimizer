@@ -253,6 +253,7 @@ static int bits_per_pixel( XMesaVisual xmv )
 {
    const int depth = xmv->nplanes;
    int i;
+   assert(depth > 0);
    for (i = 0; i < screenInfo.numPixmapFormats; i++) {
       if (screenInfo.formats[i].depth == depth)
          return screenInfo.formats[i].bitsPerPixel;
@@ -1563,6 +1564,7 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
     * ColormapEntries is either (1U << index_bits) or
     * (1U << max(redBits, greenBits, blueBits)).
     */
+   assert(visinfo->nplanes > 0);
    v->nplanes = visinfo->nplanes;
    v->ColormapEntries = visinfo->ColormapEntries;
 
