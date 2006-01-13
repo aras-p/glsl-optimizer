@@ -1747,7 +1747,7 @@ void r300SetupPixelShader(r300ContextPtr rmesa)
 	if (!rp)	/* should only happenen once, just after context is created */
 		return;
 	
-	translate_fragment_shader(rp);
+	r300_translate_fragment_shader(rp);
 	if (!rp->translated) {
 		fprintf(stderr, "%s: No valid fragment shader, exiting\n", __func__);
 		exit(-1);

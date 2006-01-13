@@ -898,7 +898,7 @@ static void emit_arith(struct r300_fragment_program *rp, int op,
 	return;
 };
 
-pfs_reg_t get_attrib(struct r300_fragment_program *rp, GLuint attr) {
+static pfs_reg_t get_attrib(struct r300_fragment_program *rp, GLuint attr) {
 	struct fragment_program *mp = &rp->mesa_program;
 	pfs_reg_t r = undef;
 
@@ -1232,7 +1232,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 /* - Init structures
  * - Determine what hwregs each input corresponds to
  */
-void init_program(struct r300_fragment_program *rp)
+static void init_program(struct r300_fragment_program *rp)
 {
 	struct r300_pfs_compile_state *cs = NULL;
 	struct fragment_program *mp = &rp->mesa_program;	
@@ -1345,7 +1345,7 @@ void init_program(struct r300_fragment_program *rp)
 
 }
 
-void update_params(struct r300_fragment_program *rp) {
+static void update_params(struct r300_fragment_program *rp) {
 	struct fragment_program *mp = &rp->mesa_program;
 	int i;
 
@@ -1359,7 +1359,7 @@ void update_params(struct r300_fragment_program *rp) {
 	rp->params_uptodate = GL_TRUE;
 }
 
-void translate_fragment_shader(struct r300_fragment_program *rp)
+void r300_translate_fragment_shader(struct r300_fragment_program *rp)
 {
 	struct r300_pfs_compile_state *cs = NULL;
 
