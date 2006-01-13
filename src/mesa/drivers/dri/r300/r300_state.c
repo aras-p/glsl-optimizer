@@ -1188,7 +1188,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	};
 	GLuint OutputsWritten;
 	GLuint InputsRead;
-	int vp_reg, fp_reg, high_rr;
+	int fp_reg, high_rr;
 	int in_texcoords, col_interp_nr;
 	int i;
 
@@ -1208,17 +1208,14 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	R300_STATECHANGE(r300, rc);
 	R300_STATECHANGE(r300, rr);
 	
-	vp_reg = fp_reg = in_texcoords = col_interp_nr = high_rr = 0;
+	fp_reg = in_texcoords = col_interp_nr = high_rr = 0;
 	r300->hw.rr.cmd[R300_RR_ROUTE_0] = 0;
 	r300->hw.rr.cmd[R300_RR_ROUTE_1] = 0;
 
 	for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
-		if (OutputsWritten & (hw_tcl_on ? (1 << (VERT_RESULT_TEX0+i)) : (_TNL_BIT_TEX0<<i)))
-			in_texcoords++;
-		
 		r300->hw.ri.cmd[R300_RI_INTERP_0+i] = 0
 				| R300_RS_INTERP_USED
-				| (vp_reg << R300_RS_INTERP_SRC_SHIFT)
+				| (in_texcoords << R300_RS_INTERP_SRC_SHIFT)
 				| interp_magic[i];
 
 		if (InputsRead & (FRAG_BIT_TEX0<<i)) {
@@ -1229,21 +1226,25 @@ void r300_setup_rs_unit(GLcontext *ctx)
 					| (fp_reg << R300_RS_ROUTE_DEST_SHIFT);
 			high_rr = fp_reg;
 
-			if (OutputsWritten & (hw_tcl_on ? (1 << (VERT_RESULT_TEX0+i)) : (_TNL_BIT_TEX0<<i))) {
-				vp_reg++;
-			} else {
+			if (!(OutputsWritten & (hw_tcl_on ? (1 << (VERT_RESULT_TEX0+i)) : (_TNL_BIT_TEX0<<i)))) {
 				/* Passing invalid data here can lock the GPU. */
 				WARN_ONCE("fragprog wants coords for tex%d, vp doesn't provide them!\n", i);
+				//_mesa_print_program(&CURRENT_VERTEX_SHADER(ctx)->Base);
 				//exit(-1);
 			}
 			InputsRead &= ~(FRAG_BIT_TEX0<<i);
 			fp_reg++;
 		} 
+		/* Need to count all coords enabled at vof */
+		if (OutputsWritten & (hw_tcl_on ? (1 << (VERT_RESULT_TEX0+i)) : (_TNL_BIT_TEX0<<i)))
+			in_texcoords++;
 	}
 
 	if (InputsRead & FRAG_BIT_COL0) {
 		if (!(OutputsWritten & (hw_tcl_on ? (1<<VERT_RESULT_COL0) : _TNL_BIT_COLOR0))) {
 			WARN_ONCE("fragprog wants col0, vp doesn't provide it\n");
+			goto out; /* FIXME */
+			//_mesa_print_program(&CURRENT_VERTEX_SHADER(ctx)->Base);
 			//exit(-1);
 		}
 
@@ -1253,6 +1254,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 		InputsRead &= ~FRAG_BIT_COL0;
 		col_interp_nr++;
 	}
+	out:
 	
 	if (InputsRead & FRAG_BIT_COL1) {
 		if (!(OutputsWritten & (hw_tcl_on ? (1<<VERT_RESULT_COL1) : _TNL_BIT_COLOR1))) {
@@ -1641,8 +1643,8 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 	
 	if (rmesa->NewGLState && hw_tcl_on) {
 		rmesa->NewGLState = 0;
-		if (ctx->VertexProgram._Enabled == GL_FALSE)
-			_tnl_UpdateFixedFunctionProgram(ctx);
+		
+		_tnl_UpdateFixedFunctionProgram(ctx);
 	
 		vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 		if (vp->translated == GL_FALSE)
@@ -1699,10 +1701,10 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 #endif
 	
 	r300_setup_textures(ctx);
-	r300_setup_rs_unit(ctx);
 
-	r300SetupVertexShader(rmesa);
 	r300SetupPixelShader(rmesa);
+	r300SetupVertexShader(rmesa);
+	r300_setup_rs_unit(ctx);
 }
 
 /* This is probably wrong for some values, I need to test this
