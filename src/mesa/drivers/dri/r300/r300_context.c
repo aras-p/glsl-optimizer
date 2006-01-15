@@ -375,6 +375,7 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 {
 	GET_CURRENT_CONTEXT(ctx);
 	r300ContextPtr r300 = (r300ContextPtr) driContextPriv->driverPrivate;
+	radeonContextPtr radeon = (radeonContextPtr) r300;
 	radeonContextPtr current = ctx ? RADEON_CONTEXT(ctx) : NULL;
 
 	if (RADEON_DEBUG & DEBUG_DRI) {
@@ -398,8 +399,33 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 		_tnl_DestroyContext(r300->radeon.glCtx);
 		_ac_DestroyContext(r300->radeon.glCtx);
 		_swrast_DestroyContext(r300->radeon.glCtx);
-
+		
+		r300ReleaseArrays(r300->radeon.glCtx);
+		if (r300->dma.current.buf) {
+			r300ReleaseDmaRegion(r300, &r300->dma.current, __FUNCTION__ );
+			r300FlushCmdBuf(r300, __FUNCTION__ );
+		}
+				
 		r300DestroyCmdBuf(r300);
+
+		if (radeon->state.scissor.pClipRects) {
+			FREE(radeon->state.scissor.pClipRects);
+			radeon->state.scissor.pClipRects = NULL;
+		}
+
+		if (release_texture_heaps) {
+			/* This share group is about to go away, free our private
+			 * texture object data.
+			 */
+			int i;
+
+			for (i = 0; i < r300->nr_heaps; i++) {
+				driDestroyTextureHeap(r300->texture_heaps[i]);
+				r300->texture_heaps[i] = NULL;
+			}
+
+			assert(is_empty_list(&r300->swapped));
+		}
 
 		radeonCleanupContext(&r300->radeon);
 
