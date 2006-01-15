@@ -351,6 +351,24 @@ static unsigned long op_operands(enum prog_opcode opcode)
 				   SWIZZLE_ZERO, SWIZZLE_ZERO, \
 				   t_src_class(src[2].File), VSF_FLAG_NONE)
 				   
+#define ONE_SRC_0 MAKE_VSF_SOURCE(t_src_index(vp, &src[0]), \
+				   SWIZZLE_ONE, SWIZZLE_ONE, \
+				   SWIZZLE_ONE, SWIZZLE_ONE, \
+				   t_src_class(src[0].File), VSF_FLAG_NONE)
+				   
+#define ONE_SRC_1 MAKE_VSF_SOURCE(t_src_index(vp, &src[1]), \
+				   SWIZZLE_ONE, SWIZZLE_ONE, \
+				   SWIZZLE_ONE, SWIZZLE_ONE, \
+				   t_src_class(src[1].File), VSF_FLAG_NONE)
+
+#define ONE_SRC_2 MAKE_VSF_SOURCE(t_src_index(vp, &src[2]), \
+				   SWIZZLE_ONE, SWIZZLE_ONE, \
+				   SWIZZLE_ONE, SWIZZLE_ONE, \
+				   t_src_class(src[2].File), VSF_FLAG_NONE)
+				   
+/* DP4 version seems to trigger some hw peculiarity */
+//#define PREFER_DP4
+				   
 void translate_vertex_shader(struct r300_vertex_program *vp)
 {
 	struct vertex_program *mesa_vp=(void *)vp;
@@ -365,6 +383,92 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 	   Smart enough to realize that it doesnt need it? */
 	int u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1;
 	struct prog_src_register src[3];
+
+	if (mesa_vp->IsPositionInvariant) {
+		struct program_parameter_list *paramList;
+		GLint tokens[6] = { STATE_MATRIX, STATE_MVP, 0, 0, 0, STATE_MATRIX };
+
+#ifdef PREFER_DP4
+		tokens[5] = STATE_MATRIX;
+#else
+		tokens[5] = STATE_MATRIX_TRANSPOSE;
+#endif
+		paramList = mesa_vp->Base.Parameters;
+		
+		vpi = malloc((mesa_vp->Base.NumInstructions + 4) * sizeof(struct prog_instruction));
+		memset(vpi, 0, 4 * sizeof(struct prog_instruction));
+		
+		for (i=0; i < 4; i++) {
+			GLint idx;
+			tokens[3] = tokens[4] = i;
+			idx = _mesa_add_state_reference(paramList, tokens);
+#ifdef PREFER_DP4
+			vpi[i].Opcode = OPCODE_DP4;
+			vpi[i].StringPos = 0;
+			vpi[i].Data = 0;
+			
+			vpi[i].DstReg.File = PROGRAM_OUTPUT;
+			vpi[i].DstReg.Index = VERT_RESULT_HPOS;
+			vpi[i].DstReg.WriteMask = 1 << i;
+			vpi[i].DstReg.CondMask = COND_TR;
+					
+			vpi[i].SrcReg[0].File = PROGRAM_STATE_VAR;
+			vpi[i].SrcReg[0].Index = idx;
+			vpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+			
+			vpi[i].SrcReg[1].File = PROGRAM_INPUT;
+			vpi[i].SrcReg[1].Index = VERT_ATTRIB_POS;
+			vpi[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+#else
+			if (i == 0)
+				vpi[i].Opcode = OPCODE_MUL;
+			else
+				vpi[i].Opcode = OPCODE_MAD;
+			
+			vpi[i].StringPos = 0;
+			vpi[i].Data = 0;
+			
+			if (i == 3)
+				vpi[i].DstReg.File = PROGRAM_OUTPUT;
+			else
+				vpi[i].DstReg.File = PROGRAM_TEMPORARY;
+			vpi[i].DstReg.Index = 0;
+			vpi[i].DstReg.WriteMask = 0xf;
+			vpi[i].DstReg.CondMask = COND_TR;
+					
+			vpi[i].SrcReg[0].File = PROGRAM_STATE_VAR;
+			vpi[i].SrcReg[0].Index = idx;
+			vpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+			
+			vpi[i].SrcReg[1].File = PROGRAM_INPUT;
+			vpi[i].SrcReg[1].Index = VERT_ATTRIB_POS;
+			vpi[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(i, i, i, i);
+			
+			if (i > 0) {
+				vpi[i].SrcReg[2].File = PROGRAM_TEMPORARY;
+				vpi[i].SrcReg[2].Index = 0;
+				vpi[i].SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+			}
+#endif					
+		}
+		
+		memcpy(&vpi[i], mesa_vp->Base.Instructions, mesa_vp->Base.NumInstructions * sizeof(struct prog_instruction));
+		
+		free(mesa_vp->Base.Instructions);
+		
+		mesa_vp->Base.Instructions = vpi;
+		
+		mesa_vp->Base.NumInstructions += 4;
+		vpi = &mesa_vp->Base.Instructions[mesa_vp->Base.NumInstructions-1];
+		
+		assert(vpi->Opcode == OPCODE_END);
+		
+		mesa_vp->Base.InputsRead |= (1 << VERT_ATTRIB_POS);
+		mesa_vp->Base.OutputsWritten |= (1 << VERT_RESULT_HPOS);
+		
+		//fprintf(stderr, "IsPositionInvariant is set!\n");
+		//_mesa_print_program(&mesa_vp->Base);
+	}
 	
 	vp->pos_end=0; /* Not supported yet */
 	vp->program.length=0;
@@ -376,7 +480,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 	for(i=0; i < VERT_RESULT_MAX; i++)
 		vp->outputs[i] = -1;
 	
-	//assert(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS));
+	assert(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS));
 	
 	/* Assign outputs */
 	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))
@@ -492,17 +596,23 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			goto next;
 			
 		case OPCODE_ADD:
+#if 1
 			hw_op=(src[0].File == PROGRAM_TEMPORARY &&
 				src[1].File == PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 : R300_VPI_OUT_OP_MAD;
 			
 			o_inst->op=MAKE_VSF_OP(hw_op, t_dst_index(vp, &vpi->DstReg),
 				t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
-			o_inst->src1=t_src(vp, &src[0]);
-			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
-						SWIZZLE_ONE, SWIZZLE_ONE,
-						SWIZZLE_ONE, SWIZZLE_ONE,
-						t_src_class(src[0].File), VSF_FLAG_NONE);
+			o_inst->src1=ONE_SRC_0;
+			o_inst->src2=t_src(vp, &src[0]);
 			o_inst->src3=t_src(vp, &src[1]);
+#else
+			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, t_dst_index(vp, &vpi->DstReg),
+					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
+			o_inst->src1=t_src(vp, &src[0]);
+			o_inst->src2=t_src(vp, &src[1]);
+			o_inst->src3=ZERO_SRC_1;
+			
+#endif
 			goto next;
 			
 		case OPCODE_MAD:
