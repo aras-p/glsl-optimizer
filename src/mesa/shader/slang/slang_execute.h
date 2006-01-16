@@ -29,7 +29,15 @@
 extern "C" {
 #endif
 
+typedef union slang_machine_slot_
+{
+	GLfloat _float;
+	GLuint _addr;
+} slang_machine_slot;
+
+#define SLANG_MACHINE_GLOBAL_SIZE 3072
 #define SLANG_MACHINE_STACK_SIZE 1024
+#define SLANG_MACHINE_MEMORY_SIZE (SLANG_MACHINE_GLOBAL_SIZE + SLANG_MACHINE_STACK_SIZE)
 
 typedef struct slang_machine_
 {
@@ -38,13 +46,9 @@ typedef struct slang_machine_
 	GLuint bp;					/* base pointer, for local variable access */
 	GLuint kill;				/* discard the fragment */
 	GLuint exit;				/* terminate the shader */
-	union stack_
-	{
-		GLfloat _float[SLANG_MACHINE_STACK_SIZE];
-		GLfloat *_floatp[SLANG_MACHINE_STACK_SIZE];
-		GLuint _addr[SLANG_MACHINE_STACK_SIZE];
-		GLuint *_addrp[SLANG_MACHINE_STACK_SIZE];
-	} stack;
+	slang_machine_slot mem[SLANG_MACHINE_MEMORY_SIZE];
+	slang_machine_slot *global;
+	slang_machine_slot *stack;
 } slang_machine;
 
 int _slang_execute (const slang_assembly_file *);

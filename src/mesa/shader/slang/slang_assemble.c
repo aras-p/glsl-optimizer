@@ -1186,23 +1186,3 @@ int _slang_assemble_operation (slang_assembly_file *file, slang_operation *op, i
 	return 1;
 }
 
-
-
-
-
-
-
-
-
-void xxx_first (slang_assembly_file *file)
-{
-	slang_assembly_file_push (file, slang_asm_jump);
-}
-
-void xxx_prolog (slang_assembly_file *file, unsigned int addr)
-{
-	file->code[0].param[0] = file->count;
-	slang_assembly_file_push_label (file, slang_asm_call, addr);
-	slang_assembly_file_push (file, slang_asm_exit);
-}
-

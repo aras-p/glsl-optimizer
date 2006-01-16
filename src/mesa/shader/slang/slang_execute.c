@@ -34,9 +34,10 @@
 #include "slang_storage.h"
 #include "slang_execute.h"
 
-#define DEBUG_SLANG
+#define DEBUG_SLANG 1
 
-#ifdef DEBUG_SLANG
+#if DEBUG_SLANG
+
 static void dump_instruction (FILE *f, slang_assembly *a, unsigned int i)
 {
 	fprintf (f, "%.5u:\t", i);
@@ -182,52 +183,52 @@ static void dump (const slang_assembly_file *file)
 
 	fclose (f);
 }
+
 #endif
 
 int _slang_execute (const slang_assembly_file *file)
 {
 	slang_machine mach;
+
 #ifdef DEBUG_SLANG
 	FILE *f;
 #endif
+
+	/* assume 32-bit floats and uints; should work fine also on 64-bit platforms */
+	static_assert(sizeof (GLfloat) == 4);
+	static_assert(sizeof (GLuint) == 4);
 
 	mach.ip = 0;
 	mach.sp = SLANG_MACHINE_STACK_SIZE;
 	mach.bp = 0;
 	mach.kill = 0;
 	mach.exit = 0;
+	mach.global = mach.mem;
+	mach.stack = mach.global + SLANG_MACHINE_GLOBAL_SIZE;
 
-	/* assume 32-bit machine */
-	/* XXX why???, disabling the pointer size assertions here.
-	 * See bug 4021.
-	 */
-	static_assert(sizeof (GLfloat) == 4);
-	/*static_assert(sizeof (GLfloat *) == 4);*/
-	static_assert(sizeof (GLuint) == 4);
-	/*static_assert(sizeof (GLuint *) == 4);*/
-
-#ifdef DEBUG_SLANG
+#if DEBUG_SLANG
 	dump (file);
-#endif
-
-#ifdef DEBUG_SLANG
 	f = fopen ("~mesa-slang-assembly-execution.txt", "w");
 #endif
 
 	while (!mach.exit)
 	{
-		slang_assembly *a = file->code + mach.ip;
-#ifdef DEBUG_SLANG
+		slang_assembly *a;
+
+#if DEBUG_SLANG
 		if (f != NULL)
 		{
 			unsigned int i;
-			dump_instruction (f, a, mach.ip);
+
+			dump_instruction (f, file->code + mach.ip, mach.ip);
 			fprintf (f, "\t\tsp=%u bp=%u\n", mach.sp, mach.bp);
 			for (i = mach.sp; i < SLANG_MACHINE_STACK_SIZE; i++)
-				fprintf (f, "\t%.5u\t%6f\t%u\n", i, mach.stack._float[i], mach.stack._addr[i]);
+				fprintf (f, "\t%.5u\t%6f\t%u\n", i, mach.stack[i]._float, mach.stack[i]._addr);
 			fflush (f);
 		}
 #endif
+
+		a = file->code + mach.ip;
 		mach.ip++;
 
 		switch (a->type)
@@ -237,94 +238,94 @@ int _slang_execute (const slang_assembly_file *file)
 		case slang_asm_float_copy:
 		case slang_asm_int_copy:
 		case slang_asm_bool_copy:
-			*(mach.stack._floatp[mach.sp + a->param[0] / 4] + a->param[1] / 4) =
-				mach.stack._float[mach.sp];
+			mach.mem[mach.stack[mach.sp + a->param[0] / 4]._addr + a->param[1] / 4]._float =
+				mach.stack[mach.sp]._float;
 			mach.sp++;
 			break;
 		case slang_asm_float_move:
 		case slang_asm_int_move:
 		case slang_asm_bool_move:
-			mach.stack._float[mach.sp + a->param[0] / 4] =
-				mach.stack._float[mach.sp + (mach.stack._addr[mach.sp] + a->param[1]) / 4];
+			mach.stack[mach.sp + a->param[0] / 4]._float =
+				mach.stack[mach.sp + (mach.stack[mach.sp]._addr + a->param[1]) / 4]._float;
 			break;
 		case slang_asm_float_push:
 		case slang_asm_int_push:
 		case slang_asm_bool_push:
 			mach.sp--;
-			mach.stack._float[mach.sp] = a->literal;
+			mach.stack[mach.sp]._float = a->literal;
 			break;
 		case slang_asm_float_deref:
 		case slang_asm_int_deref:
 		case slang_asm_bool_deref:
-			mach.stack._float[mach.sp] = *mach.stack._floatp[mach.sp];
+			mach.stack[mach.sp]._float = mach.mem[mach.stack[mach.sp]._addr]._float;
 			break;
 		case slang_asm_float_add:
-			mach.stack._float[mach.sp + 1] += mach.stack._float[mach.sp];
+			mach.stack[mach.sp + 1]._float += mach.stack[mach.sp]._float;
 			mach.sp++;
 			break;
 		case slang_asm_float_multiply:
-			mach.stack._float[mach.sp + 1] *= mach.stack._float[mach.sp];
+			mach.stack[mach.sp + 1]._float *= mach.stack[mach.sp]._float;
 			mach.sp++;
 			break;
 		case slang_asm_float_divide:
-			mach.stack._float[mach.sp + 1] /= mach.stack._float[mach.sp];
+			mach.stack[mach.sp + 1]._float /= mach.stack[mach.sp]._float;
 			mach.sp++;
 			break;
 		case slang_asm_float_negate:
-			mach.stack._float[mach.sp] = -mach.stack._float[mach.sp];
+			mach.stack[mach.sp]._float = -mach.stack[mach.sp]._float;
 			break;
 		case slang_asm_float_less:
-			mach.stack._float[mach.sp + 1] =
-				mach.stack._float[mach.sp + 1] < mach.stack._float[mach.sp] ? 1.0f : 0.0f;
+			mach.stack[mach.sp + 1]._float =
+				mach.stack[mach.sp + 1]._float < mach.stack[mach.sp]._float ? 1.0f : 0.0f;
 			mach.sp++;
 			break;
 		case slang_asm_float_equal:
 			mach.sp--;
-			mach.stack._float[mach.sp] = mach.stack._float[mach.sp + 1 + a->param[0] / 4] ==
-				mach.stack._float[mach.sp + 1 + a->param[1] / 4] ? 1.0f : 0.0f;
+			mach.stack[mach.sp]._float = mach.stack[mach.sp + 1 + a->param[0] / 4]._float ==
+				mach.stack[mach.sp + 1 + a->param[1] / 4]._float ? 1.0f : 0.0f;
 			break;
 		case slang_asm_float_to_int:
-			mach.stack._float[mach.sp] = (GLfloat) (GLint) mach.stack._float[mach.sp];
+			mach.stack[mach.sp]._float = (GLfloat) (GLint) mach.stack[mach.sp]._float;
 			break;
 		case slang_asm_int_to_float:
 			break;
 		case slang_asm_int_to_addr:
-			mach.stack._addr[mach.sp] = (GLuint) (GLint) mach.stack._float[mach.sp];
+			mach.stack[mach.sp]._addr = (GLuint) (GLint) mach.stack[mach.sp]._float;
 			break;
 		case slang_asm_addr_copy:
-			*mach.stack._addrp[mach.sp + 1] = mach.stack._addr[mach.sp];
+			mach.mem[mach.stack[mach.sp + 1]._addr]._addr = mach.stack[mach.sp]._addr;
 			mach.sp++;
 			break;
 		case slang_asm_addr_push:
 			mach.sp--;
-			mach.stack._addr[mach.sp] = a->param[0];
+			mach.stack[mach.sp]._addr = a->param[0];
 			break;
 		case slang_asm_addr_deref:
-			mach.stack._addr[mach.sp] = *mach.stack._addrp[mach.sp];
+			mach.stack[mach.sp]._addr = mach.mem[mach.stack[mach.sp]._addr]._addr;
 			break;
 		case slang_asm_addr_add:
-			mach.stack._addr[mach.sp + 1] += mach.stack._addr[mach.sp];
+			mach.stack[mach.sp + 1]._addr += mach.stack[mach.sp]._addr;
 			mach.sp++;
 			break;
 		case slang_asm_addr_multiply:
-			mach.stack._addr[mach.sp + 1] *= mach.stack._addr[mach.sp];
+			mach.stack[mach.sp + 1]._addr *= mach.stack[mach.sp]._addr;
 			mach.sp++;
 			break;
 		case slang_asm_jump:
 			mach.ip = a->param[0];
 			break;
 		case slang_asm_jump_if_zero:
-			if (mach.stack._float[mach.sp] == 0.0f)
+			if (mach.stack[mach.sp]._float == 0.0f)
 				mach.ip = a->param[0];
 			mach.sp++;
 			break;
 		case slang_asm_enter:
 			mach.sp--;
-			mach.stack._addr[mach.sp] = mach.bp;
+			mach.stack[mach.sp]._addr = mach.bp;
 			mach.bp = mach.sp + a->param[0] / 4;
 			break;
 		case slang_asm_leave:
-			mach.bp = mach.stack._addr[mach.sp];
+			mach.bp = mach.stack[mach.sp]._addr;
 			mach.sp++;
 			break;
 		case slang_asm_local_alloc:
@@ -335,16 +336,16 @@ int _slang_execute (const slang_assembly_file *file)
 			break;
 		case slang_asm_local_addr:
 			mach.sp--;
-			mach.stack._addr[mach.sp] = (GLuint) mach.stack._addr + mach.bp * 4 -
+			mach.stack[mach.sp]._addr = SLANG_MACHINE_GLOBAL_SIZE * 4 + mach.bp * 4 -
 				(a->param[0] + a->param[1]) + 4;
 			break;
 		case slang_asm_call:
 			mach.sp--;
-			mach.stack._addr[mach.sp] = mach.ip;
+			mach.stack[mach.sp]._addr = mach.ip;
 			mach.ip = a->param[0];
 			break;
 		case slang_asm_return:
-			mach.ip = mach.stack._addr[mach.sp];
+			mach.ip = mach.stack[mach.sp]._addr;
 			mach.sp++;
 			break;
 		case slang_asm_discard:
@@ -356,7 +357,7 @@ int _slang_execute (const slang_assembly_file *file)
 		}
 	}
 
-#ifdef DEBUG_SLANG
+#if DEBUG_SLANG
 	if (f != NULL)
 		fclose (f);
 #endif

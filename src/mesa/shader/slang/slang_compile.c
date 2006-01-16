@@ -2093,31 +2093,20 @@ static int parse_function (slang_parse_ctx *C, int definition, slang_struct_scop
 	/* assemble the parsed function */
 	if (definition)
 	{
-static int x = 0;
-static
 		slang_assembly_file file;
 		slang_assembly_name_space space;
-x++;
-if (x == 1)
+
 		slang_assembly_file_construct (&file);
 		space.funcs = funcs;
 		space.structs = structs;
 		space.vars = scope;
-if (x == 1)
-xxx_first (&file);
+
 		(**parsed_func_ret).address = file.count;
 		if (!_slang_assemble_function (&file, *parsed_func_ret, &space))
 		{
 			slang_assembly_file_destruct (&file);
 			return 0;
 		}
-if (slang_string_compare ("main", (**parsed_func_ret).header.name) == 0)
-{
-xxx_prolog (&file, (**parsed_func_ret).address);
-_slang_execute (&file);
-slang_assembly_file_destruct (&file);
-_mesa_exit (0);
-}
 	}
 	return 1;
 }
@@ -2251,120 +2240,110 @@ static int compile_with_grammar (grammar id, const char *source, slang_translati
 static const char *slang_shader_syn =
 #include "library/slang_shader_syn.h"
 ;
-/*
-static const byte slang_core_gc_bin[] = {
-#include "library/slang_core_gc_bin.h"
-};*/
+
 static const byte slang_core_gc[] = {
 #include "library/slang_core_gc.h"
 };
 
-static const byte slang_common_builtin_gc_bin[] = {
-#include "library/slang_common_builtin_gc_bin.h"
+static const byte slang_common_builtin_gc[] = {
+#include "library/slang_common_builtin_gc.h"
 };
 
-static const byte slang_fragment_builtin_gc_bin[] = {
-#include "library/slang_fragment_builtin_gc_bin.h"
+static const byte slang_fragment_builtin_gc[] = {
+#include "library/slang_fragment_builtin_gc.h"
 };
 
-static const byte slang_vertex_builtin_gc_bin[] = {
-#include "library/slang_vertex_builtin_gc_bin.h"
+static const byte slang_vertex_builtin_gc[] = {
+#include "library/slang_vertex_builtin_gc.h"
 };
 
-int _slang_compile (const char *source, slang_translation_unit *unit, slang_unit_type type,
-	slang_info_log *log)
+int compile (grammar *id, slang_translation_unit builtin_units[3], int compiled[3],
+	const char *source, slang_translation_unit *unit, slang_unit_type type, slang_info_log *log)
 {
-	grammar id;
-	slang_translation_unit builtin_units[3];
 	slang_translation_unit *builtins = NULL;
 
 	/* load slang grammar */
-	id = grammar_load_from_text ((const byte *) slang_shader_syn);
-	if (id == 0)
+	*id = grammar_load_from_text ((const byte *) (slang_shader_syn));
+	if (*id == 0)
 	{
-		char buf[1024];
-		unsigned int pos;
-		grammar_get_last_error ( (unsigned char*) buf, 1024, (int*) &pos);
-		slang_info_log_error (log, buf);
+		byte buf[1024];
+		int pos;
+
+		grammar_get_last_error (buf, 1024, &pos);
+		slang_info_log_error (log, (const char *) (buf));
 		return 0;
 	}
 
 	/* set shader type - the syntax is slightly different for different shaders */
 	if (type == slang_unit_fragment_shader || type == slang_unit_fragment_builtin)
-		grammar_set_reg8 (id, (const byte *) "shader_type", 1);
+		grammar_set_reg8 (*id, (const byte *) "shader_type", 1);
 	else
-		grammar_set_reg8 (id, (const byte *) "shader_type", 2);
+		grammar_set_reg8 (*id, (const byte *) "shader_type", 2);
 
 	/* enable language extensions */
-	grammar_set_reg8 (id, (const byte *) "parsing_builtin", 1);
+	grammar_set_reg8 (*id, (const byte *) "parsing_builtin", 1);
 
 	/* if parsing user-specified shader, load built-in library */
 	if (type == slang_unit_fragment_shader || type == slang_unit_vertex_shader)
 	{
-		/*if (!compile_binary (slang_core_gc_bin, builtin_units,
-			slang_unit_fragment_builtin, log, NULL))*/
-		if (!compile_with_grammar (id, (const char*) slang_core_gc, builtin_units, slang_unit_fragment_builtin,
-			log, NULL))
-		{
-			grammar_destroy (id);
+		if (!compile_binary (slang_core_gc, &builtin_units[0], slang_unit_fragment_builtin, log,
+				NULL))
 			return 0;
-		}
-		if (!compile_binary (slang_common_builtin_gc_bin, builtin_units + 1,
-			slang_unit_fragment_builtin, log, NULL))
-		{
-			slang_translation_unit_destruct (builtin_units);
-			grammar_destroy (id);
+		compiled[0] = 1;
+
+		if (!compile_binary (slang_common_builtin_gc, &builtin_units[1],
+				slang_unit_fragment_builtin, log, NULL))
 			return 0;
-		}
+		compiled[1] = 1;
+
 		if (type == slang_unit_fragment_shader)
 		{
-			if (!compile_binary (slang_fragment_builtin_gc_bin, builtin_units + 2,
-				slang_unit_fragment_builtin, log, NULL))
-			{
-				slang_translation_unit_destruct (builtin_units);
-				slang_translation_unit_destruct (builtin_units + 1);
-				grammar_destroy (id);
+			if (!compile_binary (slang_fragment_builtin_gc, &builtin_units[2],
+					slang_unit_fragment_builtin, log, NULL))
 				return 0;
-			}
 		}
 		else if (type == slang_unit_vertex_shader)
 		{
-			if (!compile_binary (slang_vertex_builtin_gc_bin, builtin_units + 2,
-				slang_unit_vertex_builtin, log, NULL))
-			{
-				slang_translation_unit_destruct (builtin_units);
-				slang_translation_unit_destruct (builtin_units + 1);
-				grammar_destroy (id);
+			if (!compile_binary (slang_vertex_builtin_gc, &builtin_units[2],
+					slang_unit_vertex_builtin, log, NULL))
 				return 0;
-			}
 		}
+		compiled[2] = 1;
 
 		/* disable language extensions */
-		grammar_set_reg8 (id, (const byte *) "parsing_builtin", 0);
+		grammar_set_reg8 (*id, (const byte *) "parsing_builtin", 0);
 		builtins = builtin_units;
 	}
 
 	/* compile the actual shader - pass-in built-in library for external shader */
-	if (!compile_with_grammar (id, source, unit, type, log, builtins))
-	{
-		if (type == slang_unit_fragment_shader || type == slang_unit_vertex_shader)
-		{
-			slang_translation_unit_destruct (builtin_units);
-			slang_translation_unit_destruct (builtin_units + 1);
-			slang_translation_unit_destruct (builtin_units + 2);
-		}
-		grammar_destroy (id);
+	if (!compile_with_grammar (*id, source, unit, type, log, builtins))
 		return 0;
-	}
+
+	return 1;
+}
+
+int _slang_compile (const char *source, slang_translation_unit *unit, slang_unit_type type,
+	slang_info_log *log)
+{
+	int success;
+	grammar id = 0;
+	slang_translation_unit builtin_units[3];
+	int compiled[3] = { 0 };
+
+	success = compile (&id, builtin_units, compiled, source, unit, type, log);
 
 	/* destroy built-in library */
 	if (type == slang_unit_fragment_shader || type == slang_unit_vertex_shader)
 	{
-		slang_translation_unit_destruct (builtin_units);
-		slang_translation_unit_destruct (builtin_units + 1);
-		slang_translation_unit_destruct (builtin_units + 2);
+		int i;
+
+		for (i = 0; i < 3; i++)
+			if (compiled[i] != 0)
+				slang_translation_unit_destruct (&builtin_units[i]);
 	}
-	grammar_destroy (id);
-	return 1;
+	if (id != 0)
+		grammar_destroy (id);
+
+	return success;
 }
 
