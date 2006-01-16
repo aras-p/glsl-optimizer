@@ -262,6 +262,7 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
    ctx = glXCreateContext( dpy, visinfo, NULL, allowDirect );
    if (!ctx) {
       fprintf(stderr, "Error: glXCreateContext failed\n");
+      XFree(visinfo);
       XDestroyWindow(dpy, win);
       return;
    }
@@ -336,6 +337,7 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
    }
 
    glXDestroyContext(dpy, ctx);
+   XFree(visinfo);
    XDestroyWindow(dpy, win);
 }
 
