@@ -1,1410 +1,677 @@
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"const int gl_MaxLights = 8;\n"
-"const int gl_MaxClipPlanes = 6;\n"
-"const int gl_MaxTextureUnits = 2;\n"
-"const int gl_MaxTextureCoords = 2;\n"
-"const int gl_MaxVertexAttribs = 16;\n"
-"const int gl_MaxVertexUniformComponents = 512;\n"
-"const int gl_MaxVaryingFloats = 32;\n"
-"const int gl_MaxVertexTextureImageUnits = 0;\n"
-"const int gl_MaxCombinedTextureImageUnits = 2;\n"
-"const int gl_MaxTextureImageUnits = 2;\n"
-"const int gl_MaxFragmentUniformComponents = 64;\n"
-"const int gl_MaxDrawBuffers = 1;\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"uniform mat4 gl_ModelViewMatrix;\n"
-"uniform mat4 gl_ProjectionMatrix;\n"
-"uniform mat4 gl_ModelViewProjectionMatrix;\n"
-"uniform mat4 gl_TextureMatrix[gl_MaxTextureCoords];\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"uniform mat3 gl_NormalMatrix;\n"
-"\n"
-"\n"
-"uniform mat4 gl_ModelViewMatrixInverse;\n"
-"uniform mat4 gl_ProjectionMatrixInverse;\n"
-"uniform mat4 gl_ModelViewProjectionMatrixInverse;\n"
-"uniform mat4 gl_TextureMatrixInverse[gl_MaxTextureCoords];\n"
-"\n"
-"uniform mat4 gl_ModelViewMatrixTranspose;\n"
-"uniform mat4 gl_ProjectionMatrixTranspose;\n"
-"uniform mat4 gl_ModelViewProjectionMatrixTranspose;\n"
-"uniform mat4 gl_TextureMatrixTranspose[gl_MaxTextureCoords];\n"
-"\n"
-"uniform mat4 gl_ModelViewMatrixInverseTranspose;\n"
-"uniform mat4 gl_ProjectionMatrixInverseTranspose;\n"
-"uniform mat4 gl_ModelViewProjectionMatrixInverseTranspose;\n"
-"uniform mat4 gl_TextureMatrixInverseTranspose[gl_MaxTextureCoords];\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"uniform float gl_NormalScale;\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"struct gl_DepthRangeParameters {\n"
-"    float near;\n"
-"    float far;\n"
-"    float diff;\n"
-"};\n"
-"\n"
-"uniform gl_DepthRangeParameters gl_DepthRange;\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"uniform vec4 gl_ClipPlane[gl_MaxClipPlanes];\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"struct gl_PointParameters {\n"
-"    float size;\n"
-"    float sizeMin;\n"
-"    float sizeMax;\n"
-"    float fadeThresholdSize;\n"
-"    float distanceConstantAttenuation;\n"
-"    float distanceLinearAttenuation;\n"
-"    float distanceQuadraticAttenuation;\n"
-"};\n"
-"\n"
-"uniform gl_PointParameters gl_Point;\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"struct gl_MaterialParameters {\n"
-"    vec4 emission;\n"
-"    vec4 ambient;\n"
-"    vec4 diffuse;\n"
-"    vec4 specular;\n"
-"    float shininess;\n"
-"};\n"
-"\n"
-"uniform gl_MaterialParameters gl_FrontMaterial;\n"
-"uniform gl_MaterialParameters gl_BackMaterial;\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"struct gl_LightSourceParameters {\n"
-"    vec4 ambient;\n"
-"    vec4 diffuse;\n"
-"    vec4 specular;\n"
-"    vec4 position;\n"
-"    vec4 halfVector;\n"
-"    vec3 spotDirection;\n"
-"    float spotExponent;\n"
-"    float spotCutoff;\n"
-"\n"
-"    float spotCosCutoff;\n"
-"\n"
-"    float constantAttenuation;\n"
-"    float linearAttenuation;\n"
-"    float quadraticAttenuation;\n"
-"};\n"
-"\n"
-"uniform gl_LightSourceParameters gl_LightSource[gl_MaxLights];\n"
-"\n"
-"struct gl_LightModelParameters {\n"
-"    vec4 ambient;\n"
-"};\n"
-"\n"
-"uniform gl_LightModelParameters gl_LightModel;\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"struct gl_LightModelProducts {\n"
-"    vec4 sceneColor;\n"
-"};\n"
-"\n"
-"uniform gl_LightModelProducts gl_FrontLightModelProduct;\n"
-"uniform gl_LightModelProducts gl_BackLightModelProduct;\n"
-"\n"
-"struct gl_LightProducts {\n"
-"    vec4 ambient;\n"
-"    vec4 diffuse;\n"
-"    vec4 specular;\n"
-"};\n"
-"\n"
-"uniform gl_LightProducts gl_FrontLightProduct[gl_MaxLights];\n"
-"uniform gl_LightProducts gl_BackLightProduct[gl_MaxLights];\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"uniform vec4 gl_TextureEnvColor[gl_MaxTextureImageUnits];\n"
-"uniform vec4 gl_EyePlaneS[gl_MaxTextureCoords];\n"
-"uniform vec4 gl_EyePlaneT[gl_MaxTextureCoords];\n"
-"uniform vec4 gl_EyePlaneR[gl_MaxTextureCoords];\n"
-"uniform vec4 gl_EyePlaneQ[gl_MaxTextureCoords];\n"
-"uniform vec4 gl_ObjectPlaneS[gl_MaxTextureCoords];\n"
-"uniform vec4 gl_ObjectPlaneT[gl_MaxTextureCoords];\n"
-"uniform vec4 gl_ObjectPlaneR[gl_MaxTextureCoords];\n"
-"uniform vec4 gl_ObjectPlaneQ[gl_MaxTextureCoords];\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"struct gl_FogParameters {\n"
-"    vec4 color;\n"
-"    float density;\n"
-"    float start;\n"
-"    float end;\n"
-"    float scale;\n"
-"};\n"
-"\n"
-"uniform gl_FogParameters gl_Fog;\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float radians (float deg) {\n"
-"    return 3.141593 * deg / 180.0;\n"
-"}\n"
-"vec2 radians (vec2 deg) {\n"
-"    return vec2 (radians (deg.x), radians (deg.y));\n"
-"}\n"
-"vec3 radians (vec3 deg) {\n"
-"    return vec3 (radians (deg.x), radians (deg.y), radians (deg.z));\n"
-"}\n"
-"vec4 radians (vec4 deg) {\n"
-"    return vec4 (radians (deg.x), radians (deg.y), radians (deg.z), radians (deg.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float degrees (float rad) {\n"
-"    return 180.0 * rad / 3.141593;\n"
-"}\n"
-"vec2 degrees (vec2 rad) {\n"
-"    return vec2 (degrees (rad.x), degrees (rad.y));\n"
-"}\n"
-"vec3 degrees (vec3 rad) {\n"
-"    return vec3 (degrees (rad.x), degrees (rad.y), degrees (rad.z));\n"
-"}\n"
-"vec4 degrees (vec4 rad) {\n"
-"    return vec4 (degrees (rad.x), degrees (rad.y), degrees (rad.z), degrees (rad.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float sin (float angle) {\n"
-"    return 0.0;\n"
-"}\n"
-"vec2 sin (vec2 angle) {\n"
-"    return vec2 (sin (angle.x), sin (angle.y));\n"
-"}\n"
-"vec3 sin (vec3 angle) {\n"
-"    return vec3 (sin (angle.x), sin (angle.y), sin (angle.z));\n"
-"}\n"
-"vec4 sin (vec4 angle) {\n"
-"    return vec4 (sin (angle.x), sin (angle.y), sin (angle.z), sin (angle.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float cos (float angle) {\n"
-"    return sin (angle + 1.5708);\n"
-"}\n"
-"vec2 cos (vec2 angle) {\n"
-"    return vec2 (cos (angle.x), cos (angle.y));\n"
-"}\n"
-"vec3 cos (vec3 angle) {\n"
-"    return vec3 (cos (angle.x), cos (angle.y), cos (angle.z));\n"
-"}\n"
-"vec4 cos (vec4 angle) {\n"
-"    return vec4 (cos (angle.x), cos (angle.y), cos (angle.z), cos (angle.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float tan (float angle) {\n"
-"    return sin (angle) / cos (angle);\n"
-"}\n"
-"vec2 tan (vec2 angle) {\n"
-"    return vec2 (tan (angle.x), tan (angle.y));\n"
-"}\n"
-"vec3 tan (vec3 angle) {\n"
-"    return vec3 (tan (angle.x), tan (angle.y), tan (angle.z));\n"
-"}\n"
-"vec4 tan (vec4 angle) {\n"
-"    return vec4 (tan (angle.x), tan (angle.y), tan (angle.z), tan (angle.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float asin (float x) {\n"
-"    return 0.0;\n"
-"}\n"
-"vec2 asin (vec2 x) {\n"
-"    return vec2 (asin (x.x), asin (x.y));\n"
-"}\n"
-"vec3 asin (vec3 x) {\n"
-"    return vec3 (asin (x.x), asin (x.y), asin (x.z));\n"
-"}\n"
-"vec4 asin (vec4 x) {\n"
-"    return vec4 (asin (x.x), asin (x.y), asin (x.z), asin (x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float acos (float x) {\n"
-"    return 0.0;\n"
-"}\n"
-"vec2 acos (vec2 x) {\n"
-"    return vec2 (acos (x.x), acos (x.y));\n"
-"}\n"
-"vec3 acos (vec3 x) {\n"
-"    return vec3 (acos (x.x), acos (x.y), acos (x.z));\n"
-"}\n"
-"vec4 acos (vec4 x) {\n"
-"    return vec4 (acos (x.x), acos (x.y), acos (x.z), acos (x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float atan (float x, float y) {\n"
-"    return 0.0;\n"
-"}\n"
-"vec2 atan (vec2 x, vec2 y) {\n"
-"    return vec2 (atan (x.x, y.x), atan (x.y, y.y));\n"
-"}\n"
-"vec3 atan (vec3 x, vec3 y) {\n"
-"    return vec3 (atan (x.x, y.x), atan (x.y, y.y), atan (x.z, y.z));\n"
-"}\n"
-"vec4 atan (vec4 x, vec4 y) {\n"
-"    return vec4 (atan (x.x, y.x), atan (x.y, y.y), atan (x.z, y.z), atan (x.w, y.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float atan (float y_over_x) {\n"
-"    return 0.0;\n"
-"}\n"
-"vec2 atan (vec2 y_over_x) {\n"
-"    return vec2 (atan (y_over_x.x), atan (y_over_x.y));\n"
-"}\n"
-"vec3 atan (vec3 y_over_x) {\n"
-"    return vec3 (atan (y_over_x.x), atan (y_over_x.y), atan (y_over_x.z));\n"
-"}\n"
-"vec4 atan (vec4 y_over_x) {\n"
-"    return vec4 (atan (y_over_x.x), atan (y_over_x.y), atan (y_over_x.z), atan (y_over_x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float pow (float x, float y) {\n"
-"    return 0.0;\n"
-"}\n"
-"vec2 pow (vec2 x, vec2 y) {\n"
-"    return vec2 (pow (x.x, y.x), pow (x.y, y.y));\n"
-"}\n"
-"vec3 pow (vec3 x, vec3 y) {\n"
-"    return vec3 (pow (x.x, y.x), pow (x.y, y.y), pow (x.z, y.z));\n"
-"}\n"
-"vec4 pow (vec4 x, vec4 y) {\n"
-"    return vec4 (pow (x.x, y.x), pow (x.y, y.y), pow (x.z, y.z), pow (x.w, y.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float exp (float x) {\n"
-"    return pow (2.71828183, x);\n"
-"}\n"
-"vec2 exp (vec2 x) {\n"
-"    return vec2 (exp (x.x), exp (x.y));\n"
-"}\n"
-"vec3 exp (vec3 x) {\n"
-"    return vec3 (exp (x.x), exp (x.y), exp (x.z));\n"
-"}\n"
-"vec4 exp (vec4 x) {\n"
-"    return vec4 (exp (x.x), exp (x.y), exp (x.z), exp (x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float log (float x) {\n"
-"    return log2 (x) / log2 (2.71828183);\n"
-"}\n"
-"vec2 log (vec2 x) {\n"
-"    return vec2 (log (x.x), log (x.y));\n"
-"}\n"
-"vec3 log (vec3 x) {\n"
-"    return vec3 (log (x.x), log (x.y), log (x.z));\n"
-"}\n"
-"vec4 log (vec4 x) {\n"
-"    return vec4 (log (x.x), log (x.y), log (x.z), log (x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float exp2 (float x) {\n"
-"    return pow (2.0, x);\n"
-"}\n"
-"vec2 exp2 (vec2 x) {\n"
-"    return vec2 (exp2 (x.x), exp2 (x.y));\n"
-"}\n"
-"vec3 exp2 (vec3 x) {\n"
-"    return vec3 (exp2 (x.x), exp2 (x.y), exp2 (x.z));\n"
-"}\n"
-"vec4 exp2 (vec4 x) {\n"
-"    return vec4 (exp2 (x.x), exp2 (x.y), exp2 (x.z), exp2 (x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float log2 (float x) {\n"
-"    return 0.0;\n"
-"}\n"
-"vec2 log2 (vec2 x) {\n"
-"    return vec2 (log2 (x.x), log2 (x.y));\n"
-"}\n"
-"vec3 log2 (vec3 x) {\n"
-"    return vec3 (log2 (x.x), log2 (x.y), log2 (x.z));\n"
-"}\n"
-"vec4 log2 (vec4 x) {\n"
-"    return vec4 (log2 (x.x), log2 (x.y), log2 (x.z), log2 (x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float sqrt (float x) {\n"
-"    return pow (x, 0.5);\n"
-"}\n"
-"vec2 sqrt (vec2 x) {\n"
-"    return vec2 (sqrt (x.x), sqrt (x.y));\n"
-"}\n"
-"vec3 sqrt (vec3 x) {\n"
-"    return vec3 (sqrt (x.x), sqrt (x.y), sqrt (x.z));\n"
-"}\n"
-"vec4 sqrt (vec4 x) {\n"
-"    return vec4 (sqrt (x.x), sqrt (x.y), sqrt (x.z), sqrt (x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float inversesqrt (float x) {\n"
-"    return 1.0 / sqrt (x);\n"
-"}\n"
-"vec2 inversesqrt (vec2 x) {\n"
-"    return vec2 (inversesqrt (x.x), inversesqrt (x.y));\n"
-"}\n"
-"vec3 inversesqrt (vec3 x) {\n"
-"    return vec3 (inversesqrt (x.x), inversesqrt (x.y), inversesqrt (x.z));\n"
-"}\n"
-"vec4 inversesqrt (vec4 x) {\n"
-"    return vec4 (inversesqrt (x.x), inversesqrt (x.y), inversesqrt (x.z), inversesqrt (x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float abs (float x) {\n"
-"    return x >= 0.0 ? x : -x;\n"
-"}\n"
-"vec2 abs (vec2 x) {\n"
-"    return vec2 (abs (x.x), abs (x.y));\n"
-"}\n"
-"vec3 abs (vec3 x) {\n"
-"    return vec3 (abs (x.x), abs (x.y), abs (x.z));\n"
-"}\n"
-"vec4 abs (vec4 x) {\n"
-"    return vec4 (abs (x.x), abs (x.y), abs (x.z), abs (x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float sign (float x) {\n"
-"    return x > 0.0 ? 1.0 : x < 0.0 ? -1.0 : 0.0;\n"
-"}\n"
-"vec2 sign (vec2 x) {\n"
-"    return vec2 (sign (x.x), sign (x.y));\n"
-"}\n"
-"vec3 sign (vec3 x) {\n"
-"    return vec3 (sign (x.x), sign (x.y), sign (x.z));\n"
-"}\n"
-"vec4 sign (vec4 x) {\n"
-"    return vec4 (sign (x.x), sign (x.y), sign (x.z), sign (x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float floor (float x) {\n"
-"    return 0.0;\n"
-"}\n"
-"vec2 floor (vec2 x) {\n"
-"    return vec2 (floor (x.x), floor (x.y));\n"
-"}\n"
-"vec3 floor (vec3 x) {\n"
-"    return vec3 (floor (x.x), floor (x.y), floor (x.z));\n"
-"}\n"
-"vec4 floor (vec4 x) {\n"
-"    return vec4 (floor (x.x), floor (x.y), floor (x.z), floor (x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float ceil (float x) {\n"
-"    return 0.0;\n"
-"}\n"
-"vec2 ceil (vec2 x) {\n"
-"    return vec2 (ceil (x.x), ceil (x.y));\n"
-"}\n"
-"vec3 ceil (vec3 x) {\n"
-"    return vec3 (ceil (x.x), ceil (x.y), ceil (x.z));\n"
-"}\n"
-"vec4 ceil (vec4 x) {\n"
-"    return vec4 (ceil (x.x), ceil (x.y), ceil (x.z), ceil (x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float fract (float x) {\n"
-"    return x - floor (x);\n"
-"}\n"
-"vec2 fract (vec2 x) {\n"
-"    return vec2 (fract (x.x), fract (x.y));\n"
-"}\n"
-"vec3 fract (vec3 x) {\n"
-"    return vec3 (fract (x.x), fract (x.y), fract (x.z));\n"
-"}\n"
-"vec4 fract (vec4 x) {\n"
-"    return vec4 (fract (x.x), fract (x.y), fract (x.z), fract (x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float mod (float x, float y) {\n"
-"    return x - y * floor (x / y);\n"
-"}\n"
-"vec2 mod (vec2 x, float y) {\n"
-"    return vec2 (mod (x.x, y), mod (x.y, y));\n"
-"}\n"
-"vec3 mod (vec3 x, float y) {\n"
-"    return vec3 (mod (x.x, y), mod (x.y, y), mod (x.z, y));\n"
-"}\n"
-"vec4 mod (vec4 x, float y) {\n"
-"    return vec4 (mod (x.x, y), mod (x.y, y), mod (x.z, y), mod (x.w, y));\n"
-"}\n"
-"vec2 mod (vec2 x, vec2 y) {\n"
-"    return vec2 (mod (x.x, y.x), mod (x.y, y.y));\n"
-"}\n"
-"vec3 mod (vec3 x, vec3 y) {\n"
-"    return vec3 (mod (x.x, y.x), mod (x.y, y.y), mod (x.z, y.z));\n"
-"}\n"
-"vec4 mod (vec4 x, vec4 y) {\n"
-"    return vec4 (mod (x.x, y.x), mod (x.y, y.y), mod (x.z, y.z), mod (x.w, y.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float min (float x, float y) {\n"
-"    return y < x ? y : x;\n"
-"}\n"
-"vec2 min (vec2 x, float y) {\n"
-"    return vec2 (min (x.x, y), min (x.y, y));\n"
-"}\n"
-"vec3 min (vec3 x, float y) {\n"
-"    return vec3 (min (x.x, y), min (x.y, y), min (x.z, y));\n"
-"}\n"
-"vec4 min (vec4 x, float y) {\n"
-"    return vec4 (min (x.x, y), min (x.y, y), min (x.z, y), min (x.w, y));\n"
-"}\n"
-"vec2 min (vec2 x, vec2 y) {\n"
-"    return vec2 (min (x.x, y.x), min (x.y, y.y));\n"
-"}\n"
-"vec3 min (vec3 x, vec3 y) {\n"
-"    return vec3 (min (x.x, y.x), min (x.y, y.y), min (x.z, y.z));\n"
-"}\n"
-"vec4 min (vec4 x, vec4 y) {\n"
-"    return vec4 (min (x.x, y.x), min (x.y, y.y), min (x.z, y.z), min (x.w, y.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float max (float x, float y) {\n"
-"    return min (y, x);\n"
-"}\n"
-"vec2 max (vec2 x, float y) {\n"
-"    return vec2 (max (x.x, y), max (x.y, y));\n"
-"}\n"
-"vec3 max (vec3 x, float y) {\n"
-"    return vec3 (max (x.x, y), max (x.y, y), max (x.z, y));\n"
-"}\n"
-"vec4 max (vec4 x, float y) {\n"
-"    return vec4 (max (x.x, y), max (x.y, y), max (x.z, y), max (x.w, y));\n"
-"}\n"
-"vec2 max (vec2 x, vec2 y) {\n"
-"    return vec2 (max (x.x, y.x), max (x.y, y.y));\n"
-"}\n"
-"vec3 max (vec3 x, vec3 y) {\n"
-"    return vec3 (max (x.x, y.x), max (x.y, y.y), max (x.z, y.z));\n"
-"}\n"
-"vec4 max (vec4 x, vec4 y) {\n"
-"    return vec4 (max (x.x, y.x), max (x.y, y.y), max (x.z, y.z), max (x.w, y.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float clamp (float x, float minVal, float maxVal) {\n"
-"    return min (max (x, minVal), maxVal);\n"
-"}\n"
-"vec2 clamp (vec2 x, float minVal, float maxVal) {\n"
-"    return vec2 (clamp (x.x, minVal, maxVal), clamp (x.y, minVal, maxVal));\n"
-"}\n"
-"vec3 clamp (vec3 x, float minVal, float maxVal) {\n"
-"    return vec3 (clamp (x.x, minVal, maxVal), clamp (x.y, minVal, maxVal),\n"
-"        clamp (x.z, minVal, maxVal));\n"
-"}\n"
-"vec4 clamp (vec4 x, float minVal, float maxVal) {\n"
-"    return vec4 (clamp (x.x, minVal, maxVal), clamp (x.y, minVal, maxVal),\n"
-"        clamp (x.z, minVal, maxVal), clamp (x.w, minVal, maxVal));\n"
-"}\n"
-"vec2 clamp (vec2 x, vec2 minVal, vec2 maxVal) {\n"
-"    return vec2 (clamp (x.x, minVal.x, maxVal.x), clamp (x.y, minVal.y, maxVal.y));\n"
-"}\n"
-"vec3 clamp (vec3 x, vec3 minVal, vec3 maxVal) {\n"
-"    return vec3 (clamp (x.x, minVal.x, maxVal.x), clamp (x.y, minVal.y, maxVal.y),\n"
-"        clamp (x.z, minVal.z, maxVal.z));\n"
-"}\n"
-"vec4 clamp (vec4 x, vec4 minVal, vec4 maxVal) {\n"
-"    return vec4 (clamp (x.x, minVal.x, maxVal.y), clamp (x.y, minVal.y, maxVal.y),\n"
-"        clamp (x.z, minVal.z, maxVal.z), clamp (x.w, minVal.w, maxVal.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float mix (float x, float y, float a) {\n"
-"    return x * (1.0 - a) + y * a;\n"
-"}\n"
-"vec2 mix (vec2 x, vec2 y, float a) {\n"
-"    return vec2 (mix (x.x, y.x, a), mix (x.y, y.y, a));\n"
-"}\n"
-"vec3 mix (vec3 x, vec3 y, float a) {\n"
-"    return vec3 (mix (x.x, y.x, a), mix (x.y, y.y, a), mix (x.z, y.z, a));\n"
-"}\n"
-"vec4 mix (vec4 x, vec4 y, float a) {\n"
-"    return vec4 (mix (x.x, y.x, a), mix (x.y, y.y, a), mix (x.z, y.z, a), mix (x.w, y.w, a));\n"
-"}\n"
-"vec2 mix (vec2 x, vec2 y, vec2 a) {\n"
-"    return vec2 (mix (x.x, y.x, a.x), mix (x.y, y.y, a.y));\n"
-"}\n"
-"vec3 mix (vec3 x, vec3 y, vec3 a) {\n"
-"    return vec3 (mix (x.x, y.x, a.x), mix (x.y, y.y, a.y), mix (x.z, y.z, a.z));\n"
-"}\n"
-"vec4 mix (vec4 x, vec4 y, vec4 a) {\n"
-"    return vec4 (mix (x.x, y.x, a.x), mix (x.y, y.y, a.y), mix (x.z, y.z, a.z),\n"
-"        mix (x.w, y.w, a.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float step (float edge, float x) {\n"
-"    return x < edge ? 0.0 : 1.0;\n"
-"}\n"
-"vec2 step (float edge, vec2 x) {\n"
-"    return vec2 (step (edge, x.x), step (edge, x.y));\n"
-"}\n"
-"vec3 step (float edge, vec3 x) {\n"
-"    return vec3 (step (edge, x.x), step (edge, x.y), step (edge, x.z));\n"
-"}\n"
-"vec4 step (float edge, vec4 x) {\n"
-"    return vec4 (step (edge, x.x), step (edge, x.y), step (edge, x.z), step (edge, x.w));\n"
-"}\n"
-"vec2 step (vec2 edge, vec2 x) {\n"
-"    return vec2 (step (edge.x, x.x), step (edge.y, x.y));\n"
-"}\n"
-"vec3 step (vec3 edge, vec3 x) {\n"
-"    return vec3 (step (edge.x, x.x), step (edge.y, x.y), step (edge.z, x.z));\n"
-"}\n"
-"vec4 step (vec4 edge, vec4 x) {\n"
-"    return vec4 (step (edge.x, x.x), step (edge.y, x.y), step (edge.z, x.z), step (edge.w, x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float smoothstep (float edge0, float edge1, float x) {\n"
-"    const float t = clamp ((x - edge0) / (edge1 - edge0), 0.0, 1.0);\n"
-"    return t * t * (3.0 - 2.0 * t);\n"
-"}\n"
-"vec2 smoothstep (float edge0, float edge1, vec2 x) {\n"
-"    return vec2 (smoothstep (edge0, edge1, x.x), smoothstep (edge0, edge1, x.y));\n"
-"}\n"
-"vec3 smoothstep (float edge0, float edge1, vec3 x) {\n"
-"    return vec3 (smoothstep (edge0, edge1, x.x), smoothstep (edge0, edge1, x.y),\n"
-"        smoothstep (edge0, edge1, x.z));\n"
-"}\n"
-"vec4 smoothstep (float edge0, float edge1, vec4 x) {\n"
-"    return vec4 (smoothstep (edge0, edge1, x.x), smoothstep (edge0, edge1, x.y),\n"
-"        smoothstep (edge0, edge1, x.z), smoothstep (edge0, edge1, x.w));\n"
-"}\n"
-"vec2 smoothstep (vec2 edge0, vec2 edge1, vec2 x) {\n"
-"    return vec2 (smoothstep (edge0.x, edge1.x, x.x), smoothstep (edge0.y, edge1.y, x.y));\n"
-"}\n"
-"vec3 smoothstep (vec3 edge0, vec3 edge1, vec3 x) {\n"
-"    return vec3 (smoothstep (edge0.x, edge1.x, x.x), smoothstep (edge0.y, edge1.y, x.y),\n"
-"        smoothstep (edge0.z, edge1.z, x.z));\n"
-"}\n"
-"vec4 smoothstep (vec4 edge0, vec4 edge1, vec4 x) {\n"
-"    return vec4 (smoothstep (edge0.x, edge1.x, x.x), smoothstep (edge0.y, edge1.y, x.y),\n"
-"        smoothstep (edge0.z, edge1.z, x.z), smoothstep (edge0.w, edge1.w, x.w));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float dot (float x, float y) {\n"
-"    return x * y;\n"
-"}\n"
-"float dot (vec2 x, vec2 y) {\n"
-"    return dot (x.x, y.x) + dot (x.y, y.y);\n"
-"}\n"
-"float dot (vec3 x, vec3 y) {\n"
-"    return dot (x.x, y.x) + dot (x.y, y.y) + dot (x.z, y.z);\n"
-"}\n"
-"float dot (vec4 x, vec4 y) {\n"
-"    return dot (x.x, y.x) + dot (x.y, y.y) + dot (x.z, y.z) + dot (x.w, y.w);\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float length (float x) {\n"
-"    return sqrt (dot (x, x));\n"
-"}\n"
-"float length (vec2 x) {\n"
-"    return sqrt (dot (x, x));\n"
-"}\n"
-"float length (vec3 x) {\n"
-"    return sqrt (dot (x, x));\n"
-"}\n"
-"float length (vec4 x) {\n"
-"    return sqrt (dot (x, x));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float distance (float x, float y) {\n"
-"    return length (x - y);\n"
-"}\n"
-"float distance (vec2 x, vec2 y) {\n"
-"    return length (x - y);\n"
-"}\n"
-"float distance (vec3 x, vec3 y) {\n"
-"    return length (x - y);\n"
-"}\n"
-"float distance (vec4 x, vec4 y) {\n"
-"    return length (x - y);\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"vec3 cross (vec3 x, vec3 y) {\n"
-"    return vec3 (x.y * y.z - y.y * x.z, x.z * y.x - y.z * x.x, x.x * y.y - y.x * x.y);\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float normalize (float x) {\n"
-"    return 1.0;\n"
-"}\n"
-"vec2 normalize (vec2 x) {\n"
-"    return x / length (x);\n"
-"}\n"
-"vec3 normalize (vec3 x) {\n"
-"    return x / length (x);\n"
-"}\n"
-"vec4 normalize (vec4 x) {\n"
-"    return x / length (x);\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float faceforward (float N, float I, float Nref) {\n"
-"    return dot (Nref, I) < 0.0 ? N : -N;\n"
-"}\n"
-"vec2 faceforward (vec2 N, vec2 I, vec2 Nref) {\n"
-"    return dot (Nref, I) < 0.0 ? N : -N;\n"
-"}\n"
-"vec3 faceforward (vec3 N, vec3 I, vec3 Nref) {\n"
-"    return dot (Nref, I) < 0.0 ? N : -N;\n"
-"}\n"
-"vec4 faceforward (vec4 N, vec4 I, vec4 Nref) {\n"
-"    return dot (Nref, I) < 0.0 ? N : -N;\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float reflect (float I, float N) {\n"
-"    return I - 2.0 * dot (N, I) * N;\n"
-"}\n"
-"vec2 reflect (vec2 I, vec2 N) {\n"
-"    return I - 2.0 * dot (N, I) * N;\n"
-"}\n"
-"vec3 reflect (vec3 I, vec3 N) {\n"
-"    return I - 2.0 * dot (N, I) * N;\n"
-"}\n"
-"vec4 reflect (vec4 I, vec4 N) {\n"
-"    return I - 2.0 * dot (N, I) * N;\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float refract (float I, float N, float eta) {\n"
-"    const float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));\n"
-"    if (k < 0.0)\n"
-"        return 0.0;\n"
-"    return eta * I - (eta * dot (N, I) + sqrt (k)) * N;\n"
-"}\n"
-"vec2 refract (vec2 I, vec2 N, float eta) {\n"
-"    const float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));\n"
-"    if (k < 0.0)\n"
-"        return vec2 (0.0);\n"
-"    return eta * I - (eta * dot (N, I) + sqrt (k)) * N;\n"
-"}\n"
-"vec3 refract (vec3 I, vec3 N, float eta) {\n"
-"    const float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));\n"
-"    if (k < 0.0)\n"
-"        return vec3 (0.0);\n"
-"    return eta * I - (eta * dot (N, I) + sqrt (k)) * N;\n"
-"}\n"
-"vec4 refract (vec4 I, vec4 N, float eta) {\n"
-"    const float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));\n"
-"    if (k < 0.0)\n"
-"        return vec4 (0.0);\n"
-"    return eta * I - (eta * dot (N, I) + sqrt (k)) * N;\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"mat2 matrixCompMult (mat2 x, mat2 y) {\n"
-"    return mat2 (\n"
-"        x[0].x * y[0].x, x[0].y * y[0].y,\n"
-"        x[1].x * y[1].x, x[1].y * y[1].y\n"
-"    );\n"
-"}\n"
-"mat3 matrixCompMult (mat3 x, mat3 y) {\n"
-"    return mat4 (\n"
-"        x[0].x * y[0].x, x[0].y * y[0].y, x[0].z * y[0].z,\n"
-"        x[1].x * y[1].x, x[1].y * y[1].y, x[1].z * y[1].z,\n"
-"        x[2].x * y[2].x, x[2].y * y[2].y, x[2].z * y[2].z\n"
-"    );\n"
-"}\n"
-"mat4 matrixCompMult (mat4 x, mat4 y) {\n"
-"    return mat4 (\n"
-"        x[0].x * y[0].x, x[0].y * y[0].y, x[0].z * y[0].z + x[0].w * y[0].w,\n"
-"        x[1].x * y[1].x, x[1].y * y[1].y, x[1].z * y[1].z + x[1].w * y[1].w,\n"
-"        x[2].x * y[2].x, x[2].y * y[2].y, x[2].z * y[2].z + x[2].w * y[2].w,\n"
-"        x[3].x * y[3].x, x[3].y * y[3].y, x[3].z * y[3].z + x[3].w * y[3].w\n"
-"    );\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"bvec2 lessThan (vec2 x, vec2 y) {\n"
-"    return bvec2 (x.x < y.x, x.y < y.y);\n"
-"}\n"
-"bvec3 lessThan (vec3 x, vec3 y) {\n"
-"    return bvec3 (x.x < y.x, x.y < y.y, x.z < y.z);\n"
-"}\n"
-"bvec4 lessThan (vec4 x, vec4 y) {\n"
-"    return bvec4 (x.x < y.x, x.y < y.y, x.z < y.z, x.w < y.w);\n"
-"}\n"
-"bvec2 lessThan (ivec2 x, ivec2 y) {\n"
-"    return bvec2 (x.x < y.x, x.y < y.y);\n"
-"}\n"
-"bvec3 lessThan (ivec3 x, ivec3 y) {\n"
-"    return bvec3 (x.x < y.x, x.y < y.y, x.z < y.z);\n"
-"}\n"
-"bvec4 lessThan (ivec4 x, ivec4 y) {\n"
-"    return bvec4 (x.x < y.x, x.y < y.y, x.z < y.z, x.w < y.w);\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"bvec2 lessThanEqual (vec2 x, vec2 y) {\n"
-"    return bvec2 (x.x <= y.x, x.y <= y.y);\n"
-"}\n"
-"bvec3 lessThanEqual (vec3 x, vec3 y) {\n"
-"    return bvec3 (x.x <= y.x, x.y <= y.y, x.z <= y.z);\n"
-"}\n"
-"bvec4 lessThanEqual (vec4 x, vec4 y) {\n"
-"    return bvec4 (x.x <= y.x, x.y <= y.y, x.z <= y.z, x.w <= y.w);\n"
-"}\n"
-"bvec2 lessThanEqual (ivec2 x, ivec2 y) {\n"
-"    return bvec2 (x.x <= y.x, x.y <= y.y);\n"
-"}\n"
-"bvec3 lessThanEqual (ivec3 x, ivec3 y) {\n"
-"    return bvec3 (x.x <= y.x, x.y <= y.y, x.z <= y.z);\n"
-"}\n"
-"bvec4 lessThanEqual (ivec4 x, ivec4 y) {\n"
-"    return bvec4 (x.x <= y.x, x.y <= y.y, x.z <= y.z, x.w <= y.w);\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"bvec2 greaterThan (vec2 x, vec2 y) {\n"
-"    return bvec2 (x.x > y.x, x.y > y.y);\n"
-"}\n"
-"bvec3 greaterThan (vec3 x, vec3 y) {\n"
-"    return bvec3 (x.x > y.x, x.y > y.y, x.z > y.z);\n"
-"}\n"
-"bvec4 greaterThan (vec4 x, vec4 y) {\n"
-"    return bvec4 (x.x > y.x, x.y > y.y, x.z > y.z, x.w > y.w);\n"
-"}\n"
-"bvec2 greaterThan (ivec2 x, ivec2 y) {\n"
-"    return bvec2 (x.x > y.x, x.y > y.y);\n"
-"}\n"
-"bvec3 greaterThan (ivec3 x, ivec3 y) {\n"
-"    return bvec3 (x.x > y.x, x.y > y.y, x.z > y.z);\n"
-"}\n"
-"bvec4 greaterThan (ivec4 x, ivec4 y) {\n"
-"    return bvec4 (x.x > y.x, x.y > y.y, x.z > y.z, x.w > y.w);\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"bvec2 greaterThanEqual (vec2 x, vec2 y) {\n"
-"    return bvec2 (x.x >= y.x, x.y >= y.y);\n"
-"}\n"
-"bvec3 greaterThanEqual (vec3 x, vec3 y) {\n"
-"    return bvec3 (x.x >= y.x, x.y >= y.y, x.z >= y.z);\n"
-"}\n"
-"bvec4 greaterThanEqual (vec4 x, vec4 y) {\n"
-"    return bvec4 (x.x >= y.x, x.y >= y.y, x.z >= y.z, x.w >= y.w);\n"
-"}\n"
-"bvec2 greaterThanEqual (ivec2 x, ivec2 y) {\n"
-"    return bvec2 (x.x >= y.x, x.y >= y.y);\n"
-"}\n"
-"bvec3 greaterThanEqual (ivec3 x, ivec3 y) {\n"
-"    return bvec3 (x.x >= y.x, x.y >= y.y, x.z >= y.z);\n"
-"}\n"
-"bvec4 greaterThanEqual (ivec4 x, ivec4 y) {\n"
-"    return bvec4 (x.x >= y.x, x.y >= y.y, x.z >= y.z, x.w >= y.w);\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"bvec2 equal (vec2 x, vec2 y) {\n"
-"    return bvec2 (x.x == y.x, x.y == y.y);\n"
-"}\n"
-"bvec3 equal (vec3 x, vec3 y) {\n"
-"    return bvec3 (x.x == y.x, x.y == y.y, x.z == y.z);\n"
-"}\n"
-"bvec4 equal (vec4 x, vec4 y) {\n"
-"    return bvec4 (x.x == y.x, x.y == y.y, x.z == y.z, x.w == y.w);\n"
-"}\n"
-"bvec2 equal (ivec2 x, ivec2 y) {\n"
-"    return bvec2 (x.x == y.x, x.y == y.y);\n"
-"}\n"
-"bvec3 equal (ivec3 x, ivec3 y) {\n"
-"    return bvec3 (x.x == y.x, x.y == y.y, x.z == y.z);\n"
-"}\n"
-"bvec4 equal (ivec4 x, ivec4 y) {\n"
-"    return bvec4 (x.x == y.x, x.y == y.y, x.z == y.z, x.w == y.w);\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"bvec2 notEqual (vec2 x, vec2 y) {\n"
-"    return bvec2 (x.x != y.x, x.y != y.y);\n"
-"}\n"
-"bvec3 notEqual (vec3 x, vec3 y) {\n"
-"    return bvec3 (x.x != y.x, x.y != y.y, x.z != y.z);\n"
-"}\n"
-"bvec4 notEqual (vec4 x, vec4 y) {\n"
-"    return bvec4 (x.x != y.x, x.y != y.y, x.z != y.z, x.w != y.w);\n"
-"}\n"
-"bvec2 notEqual (ivec2 x, ivec2 y) {\n"
-"    return bvec2 (x.x != y.x, x.y != y.y);\n"
-"}\n"
-"bvec3 notEqual (ivec3 x, ivec3 y) {\n"
-"    return bvec3 (x.x != y.x, x.y != y.y, x.z != y.z);\n"
-"}\n"
-"bvec4 notEqual (ivec4 x, ivec4 y) {\n"
-"    return bvec4 (x.x != y.x, x.y != y.y, x.z != y.z, x.w != y.w);\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"bool any (bvec2 x) {\n"
-"    return x.x || x.y;\n"
-"}\n"
-"bool any (bvec3 x) {\n"
-"    return x.x || x.y || x.z;\n"
-"}\n"
-"bool any (bvec4 x) {\n"
-"    return x.x || x.y || x.z || x.w;\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"bool all (bvec2 x) {\n"
-"    return x.x && x.y;\n"
-"}\n"
-"bool all (bvec3 x) {\n"
-"    return x.x && x.y && x.z;\n"
-"}\n"
-"bool all (bvec4 x) {\n"
-"    return x.x && x.y && x.z && x.w;\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"bvec2 not (bvec2 x) {\n"
-"    return bvec2 (!x.x, !x.y);\n"
-"}\n"
-"bvec3 not (bvec3 x) {\n"
-"    return bvec3 (!x.x, !x.y, !x.z);\n"
-"}\n"
-"bvec4 not (bvec4 x) {\n"
-"    return bvec4 (!x.x, !x.y, !x.z, !x.w);\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"vec4 texture1D (sampler1D sampler, float coord) {\n"
-"    return vec4 (0.0);\n"
-"}\n"
-"vec4 texture1DProj (sampler1D sampler, vec2 coord) {\n"
-"    return texture1D (sampler, coord.s / coord.t);\n"
-"}\n"
-"vec4 texture1DProj (sampler1D sampler, vec4 coord) {\n"
-"    return texture1D (sampler, coord.s / coord.q);\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"vec4 texture2D (sampler2D sampler, vec2 coord) {\n"
-"    return vec4 (0.0);\n"
-"}\n"
-"vec4 texture2DProj (sampler2D sampler, vec3 coord) {\n"
-"    return texture2D (sampler, vec2 (coord.s / coord.p, coord.t / coord.p));\n"
-"}\n"
-"vec4 texture2DProj (sampler2D sampler, vec4 coord) {\n"
-"    return texture2D (sampler, vec2 (coord.s / coord.q, coord.t / coord.q));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"vec4 texture3D (sampler3D sampler, vec3 coord) {\n"
-"    return vec4 (0.0);\n"
-"}\n"
-"vec4 texture3DProj (sampler3D sampler, vec4 coord) {\n"
-"    return texture3D (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"vec4 textureCube (samplerCube sampler, vec3 coord) {\n"
-"    return vec4 (0.0);\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"vec4 shadow1D (sampler1DShadow sampler, vec3 coord) {\n"
-"    return vec4 (0.0);\n"
-"}\n"
-"\n"
-"vec4 shadow2D (sampler2DShadow sampler, vec3 coord) {\n"
-"    return vec4 (0.0);\n"
-"}\n"
-"vec4 shadow1DProj (sampler1DShadow sampler, vec4 coord) {\n"
-"    return shadow1D (sampler, vec3 (coord.s / coord.q, 0.0, coord.p / coord.q));\n"
-"}\n"
-"vec4 shadow2DProj (sampler2DShadow sampler, vec4 coord) {\n"
-"    return shadow2D (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q));\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"float noise1 (float x) {\n"
-"    return 0.0;\n"
-"}\n"
-"\n"
-"float noise1 (vec2 x) {\n"
-"    return 0.0;\n"
-"}\n"
-"\n"
-"float noise1 (vec3 x) {\n"
-"    return 0.0;\n"
-"}\n"
-"\n"
-"float noise1 (vec4 x) {\n"
-"    return 0.0;\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"vec2 noise2 (float x) {\n"
-"    return vec2 (0.0);\n"
-"}\n"
-"\n"
-"vec2 noise2 (vec2 x) {\n"
-"    return vec2 (0.0);\n"
-"}\n"
-"\n"
-"vec2 noise2 (vec3 x) {\n"
-"    return vec2 (0.0);\n"
-"}\n"
-"\n"
-"vec2 noise2 (vec4 x) {\n"
-"    return vec2 (0.0);\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"vec3 noise3 (float x) {\n"
-"    return vec3 (0.0);\n"
-"}\n"
-"\n"
-"vec3 noise3 (vec2 x) {\n"
-"    return vec3 (0.0);\n"
-"}\n"
-"\n"
-"vec3 noise3 (vec3 x) {\n"
-"    return vec3 (0.0);\n"
-"}\n"
-"\n"
-"vec3 noise3 (vec4 x) {\n"
-"    return vec3 (0.0);\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"vec4 noise4 (float x) {\n"
-"    return vec4 (0.0);\n"
-"}\n"
-"\n"
-"vec4 noise4 (vec2 x) {\n"
-"    return vec4 (0.0);\n"
-"}\n"
-"\n"
-"vec4 noise4 (vec3 x) {\n"
-"    return vec4 (0.0);\n"
-"}\n"
-"\n"
-"vec4 noise4 (vec4 x) {\n"
-"    return vec4 (0.0);\n"
-"}\n"
-"\n"
+
+/* DO NOT EDIT - THIS FILE AUTOMATICALLY GENERATED FROM THE FOLLOWING FILE: */
+/* slang_common_builtin.gc */
+
+2,2,2,1,5,1,103,108,95,77,97,120,76,105,103,104,116,115,0,2,16,10,56,0,0,0,2,2,1,5,1,103,108,95,77,
+97,120,67,108,105,112,80,108,97,110,101,115,0,2,16,10,54,0,0,0,2,2,1,5,1,103,108,95,77,97,120,84,
+101,120,116,117,114,101,85,110,105,116,115,0,2,16,10,50,0,0,0,2,2,1,5,1,103,108,95,77,97,120,84,
+101,120,116,117,114,101,67,111,111,114,100,115,0,2,16,10,50,0,0,0,2,2,1,5,1,103,108,95,77,97,120,
+86,101,114,116,101,120,65,116,116,114,105,98,115,0,2,16,10,49,54,0,0,0,2,2,1,5,1,103,108,95,77,97,
+120,86,101,114,116,101,120,85,110,105,102,111,114,109,67,111,109,112,111,110,101,110,116,115,0,2,
+16,10,53,49,50,0,0,0,2,2,1,5,1,103,108,95,77,97,120,86,97,114,121,105,110,103,70,108,111,97,116,
+115,0,2,16,10,51,50,0,0,0,2,2,1,5,1,103,108,95,77,97,120,86,101,114,116,101,120,84,101,120,116,117,
+114,101,73,109,97,103,101,85,110,105,116,115,0,2,16,8,48,0,0,0,2,2,1,5,1,103,108,95,77,97,120,67,
+111,109,98,105,110,101,100,84,101,120,116,117,114,101,73,109,97,103,101,85,110,105,116,115,0,2,16,
+10,50,0,0,0,2,2,1,5,1,103,108,95,77,97,120,84,101,120,116,117,114,101,73,109,97,103,101,85,110,105,
+116,115,0,2,16,10,50,0,0,0,2,2,1,5,1,103,108,95,77,97,120,70,114,97,103,109,101,110,116,85,110,105,
+102,111,114,109,67,111,109,112,111,110,101,110,116,115,0,2,16,10,54,52,0,0,0,2,2,1,5,1,103,108,95,
+77,97,120,68,114,97,119,66,117,102,102,101,114,115,0,2,16,10,49,0,0,0,2,2,4,15,1,103,108,95,77,111,
+100,101,108,86,105,101,119,77,97,116,114,105,120,0,0,0,2,2,4,15,1,103,108,95,80,114,111,106,101,99,
+116,105,111,110,77,97,116,114,105,120,0,0,0,2,2,4,15,1,103,108,95,77,111,100,101,108,86,105,101,
+119,80,114,111,106,101,99,116,105,111,110,77,97,116,114,105,120,0,0,0,2,2,4,15,1,103,108,95,84,101,
+120,116,117,114,101,77,97,116,114,105,120,0,3,18,103,108,95,77,97,120,84,101,120,116,117,114,101,
+67,111,111,114,100,115,0,0,0,2,2,4,14,1,103,108,95,78,111,114,109,97,108,77,97,116,114,105,120,0,0,
+0,2,2,4,15,1,103,108,95,77,111,100,101,108,86,105,101,119,77,97,116,114,105,120,73,110,118,101,114,
+115,101,0,0,0,2,2,4,15,1,103,108,95,80,114,111,106,101,99,116,105,111,110,77,97,116,114,105,120,73,
+110,118,101,114,115,101,0,0,0,2,2,4,15,1,103,108,95,77,111,100,101,108,86,105,101,119,80,114,111,
+106,101,99,116,105,111,110,77,97,116,114,105,120,73,110,118,101,114,115,101,0,0,0,2,2,4,15,1,103,
+108,95,84,101,120,116,117,114,101,77,97,116,114,105,120,73,110,118,101,114,115,101,0,3,18,103,108,
+95,77,97,120,84,101,120,116,117,114,101,67,111,111,114,100,115,0,0,0,2,2,4,15,1,103,108,95,77,111,
+100,101,108,86,105,101,119,77,97,116,114,105,120,84,114,97,110,115,112,111,115,101,0,0,0,2,2,4,15,
+1,103,108,95,80,114,111,106,101,99,116,105,111,110,77,97,116,114,105,120,84,114,97,110,115,112,111,
+115,101,0,0,0,2,2,4,15,1,103,108,95,77,111,100,101,108,86,105,101,119,80,114,111,106,101,99,116,
+105,111,110,77,97,116,114,105,120,84,114,97,110,115,112,111,115,101,0,0,0,2,2,4,15,1,103,108,95,84,
+101,120,116,117,114,101,77,97,116,114,105,120,84,114,97,110,115,112,111,115,101,0,3,18,103,108,95,
+77,97,120,84,101,120,116,117,114,101,67,111,111,114,100,115,0,0,0,2,2,4,15,1,103,108,95,77,111,100,
+101,108,86,105,101,119,77,97,116,114,105,120,73,110,118,101,114,115,101,84,114,97,110,115,112,111,
+115,101,0,0,0,2,2,4,15,1,103,108,95,80,114,111,106,101,99,116,105,111,110,77,97,116,114,105,120,73,
+110,118,101,114,115,101,84,114,97,110,115,112,111,115,101,0,0,0,2,2,4,15,1,103,108,95,77,111,100,
+101,108,86,105,101,119,80,114,111,106,101,99,116,105,111,110,77,97,116,114,105,120,73,110,118,101,
+114,115,101,84,114,97,110,115,112,111,115,101,0,0,0,2,2,4,15,1,103,108,95,84,101,120,116,117,114,
+101,77,97,116,114,105,120,73,110,118,101,114,115,101,84,114,97,110,115,112,111,115,101,0,3,18,103,
+108,95,77,97,120,84,101,120,116,117,114,101,67,111,111,114,100,115,0,0,0,2,2,4,9,1,103,108,95,78,
+111,114,109,97,108,83,99,97,108,101,0,0,0,2,2,0,22,103,108,95,68,101,112,116,104,82,97,110,103,101,
+80,97,114,97,109,101,116,101,114,115,0,9,110,101,97,114,0,0,0,1,9,102,97,114,0,0,0,1,9,100,105,102,
+102,0,0,0,0,0,0,2,2,4,23,103,108,95,68,101,112,116,104,82,97,110,103,101,80,97,114,97,109,101,116,
+101,114,115,0,1,103,108,95,68,101,112,116,104,82,97,110,103,101,0,0,0,2,2,4,12,1,103,108,95,67,108,
+105,112,80,108,97,110,101,0,3,18,103,108,95,77,97,120,67,108,105,112,80,108,97,110,101,115,0,0,0,2,
+2,0,22,103,108,95,80,111,105,110,116,80,97,114,97,109,101,116,101,114,115,0,9,115,105,122,101,0,0,
+0,1,9,115,105,122,101,77,105,110,0,0,0,1,9,115,105,122,101,77,97,120,0,0,0,1,9,102,97,100,101,84,
+104,114,101,115,104,111,108,100,83,105,122,101,0,0,0,1,9,100,105,115,116,97,110,99,101,67,111,110,
+115,116,97,110,116,65,116,116,101,110,117,97,116,105,111,110,0,0,0,1,9,100,105,115,116,97,110,99,
+101,76,105,110,101,97,114,65,116,116,101,110,117,97,116,105,111,110,0,0,0,1,9,100,105,115,116,97,
+110,99,101,81,117,97,100,114,97,116,105,99,65,116,116,101,110,117,97,116,105,111,110,0,0,0,0,0,0,2,
+2,4,23,103,108,95,80,111,105,110,116,80,97,114,97,109,101,116,101,114,115,0,1,103,108,95,80,111,
+105,110,116,0,0,0,2,2,0,22,103,108,95,77,97,116,101,114,105,97,108,80,97,114,97,109,101,116,101,
+114,115,0,12,101,109,105,115,115,105,111,110,0,0,0,1,12,97,109,98,105,101,110,116,0,0,0,1,12,100,
+105,102,102,117,115,101,0,0,0,1,12,115,112,101,99,117,108,97,114,0,0,0,1,9,115,104,105,110,105,110,
+101,115,115,0,0,0,0,0,0,2,2,4,23,103,108,95,77,97,116,101,114,105,97,108,80,97,114,97,109,101,116,
+101,114,115,0,1,103,108,95,70,114,111,110,116,77,97,116,101,114,105,97,108,0,0,0,2,2,4,23,103,108,
+95,77,97,116,101,114,105,97,108,80,97,114,97,109,101,116,101,114,115,0,1,103,108,95,66,97,99,107,
+77,97,116,101,114,105,97,108,0,0,0,2,2,0,22,103,108,95,76,105,103,104,116,83,111,117,114,99,101,80,
+97,114,97,109,101,116,101,114,115,0,12,97,109,98,105,101,110,116,0,0,0,1,12,100,105,102,102,117,
+115,101,0,0,0,1,12,115,112,101,99,117,108,97,114,0,0,0,1,12,112,111,115,105,116,105,111,110,0,0,0,
+1,12,104,97,108,102,86,101,99,116,111,114,0,0,0,1,11,115,112,111,116,68,105,114,101,99,116,105,111,
+110,0,0,0,1,9,115,112,111,116,69,120,112,111,110,101,110,116,0,0,0,1,9,115,112,111,116,67,117,116,
+111,102,102,0,0,0,1,9,115,112,111,116,67,111,115,67,117,116,111,102,102,0,0,0,1,9,99,111,110,115,
+116,97,110,116,65,116,116,101,110,117,97,116,105,111,110,0,0,0,1,9,108,105,110,101,97,114,65,116,
+116,101,110,117,97,116,105,111,110,0,0,0,1,9,113,117,97,100,114,97,116,105,99,65,116,116,101,110,
+117,97,116,105,111,110,0,0,0,0,0,0,2,2,4,23,103,108,95,76,105,103,104,116,83,111,117,114,99,101,80,
+97,114,97,109,101,116,101,114,115,0,1,103,108,95,76,105,103,104,116,83,111,117,114,99,101,0,3,18,
+103,108,95,77,97,120,76,105,103,104,116,115,0,0,0,2,2,0,22,103,108,95,76,105,103,104,116,77,111,
+100,101,108,80,97,114,97,109,101,116,101,114,115,0,12,97,109,98,105,101,110,116,0,0,0,0,0,0,2,2,4,
+23,103,108,95,76,105,103,104,116,77,111,100,101,108,80,97,114,97,109,101,116,101,114,115,0,1,103,
+108,95,76,105,103,104,116,77,111,100,101,108,0,0,0,2,2,0,22,103,108,95,76,105,103,104,116,77,111,
+100,101,108,80,114,111,100,117,99,116,115,0,12,115,99,101,110,101,67,111,108,111,114,0,0,0,0,0,0,2,
+2,4,23,103,108,95,76,105,103,104,116,77,111,100,101,108,80,114,111,100,117,99,116,115,0,1,103,108,
+95,70,114,111,110,116,76,105,103,104,116,77,111,100,101,108,80,114,111,100,117,99,116,0,0,0,2,2,4,
+23,103,108,95,76,105,103,104,116,77,111,100,101,108,80,114,111,100,117,99,116,115,0,1,103,108,95,
+66,97,99,107,76,105,103,104,116,77,111,100,101,108,80,114,111,100,117,99,116,0,0,0,2,2,0,22,103,
+108,95,76,105,103,104,116,80,114,111,100,117,99,116,115,0,12,97,109,98,105,101,110,116,0,0,0,1,12,
+100,105,102,102,117,115,101,0,0,0,1,12,115,112,101,99,117,108,97,114,0,0,0,0,0,0,2,2,4,23,103,108,
+95,76,105,103,104,116,80,114,111,100,117,99,116,115,0,1,103,108,95,70,114,111,110,116,76,105,103,
+104,116,80,114,111,100,117,99,116,0,3,18,103,108,95,77,97,120,76,105,103,104,116,115,0,0,0,2,2,4,
+23,103,108,95,76,105,103,104,116,80,114,111,100,117,99,116,115,0,1,103,108,95,66,97,99,107,76,105,
+103,104,116,80,114,111,100,117,99,116,0,3,18,103,108,95,77,97,120,76,105,103,104,116,115,0,0,0,2,2,
+4,12,1,103,108,95,84,101,120,116,117,114,101,69,110,118,67,111,108,111,114,0,3,18,103,108,95,77,97,
+120,84,101,120,116,117,114,101,73,109,97,103,101,85,110,105,116,115,0,0,0,2,2,4,12,1,103,108,95,69,
+121,101,80,108,97,110,101,83,0,3,18,103,108,95,77,97,120,84,101,120,116,117,114,101,67,111,111,114,
+100,115,0,0,0,2,2,4,12,1,103,108,95,69,121,101,80,108,97,110,101,84,0,3,18,103,108,95,77,97,120,84,
+101,120,116,117,114,101,67,111,111,114,100,115,0,0,0,2,2,4,12,1,103,108,95,69,121,101,80,108,97,
+110,101,82,0,3,18,103,108,95,77,97,120,84,101,120,116,117,114,101,67,111,111,114,100,115,0,0,0,2,2,
+4,12,1,103,108,95,69,121,101,80,108,97,110,101,81,0,3,18,103,108,95,77,97,120,84,101,120,116,117,
+114,101,67,111,111,114,100,115,0,0,0,2,2,4,12,1,103,108,95,79,98,106,101,99,116,80,108,97,110,101,
+83,0,3,18,103,108,95,77,97,120,84,101,120,116,117,114,101,67,111,111,114,100,115,0,0,0,2,2,4,12,1,
+103,108,95,79,98,106,101,99,116,80,108,97,110,101,84,0,3,18,103,108,95,77,97,120,84,101,120,116,
+117,114,101,67,111,111,114,100,115,0,0,0,2,2,4,12,1,103,108,95,79,98,106,101,99,116,80,108,97,110,
+101,82,0,3,18,103,108,95,77,97,120,84,101,120,116,117,114,101,67,111,111,114,100,115,0,0,0,2,2,4,
+12,1,103,108,95,79,98,106,101,99,116,80,108,97,110,101,81,0,3,18,103,108,95,77,97,120,84,101,120,
+116,117,114,101,67,111,111,114,100,115,0,0,0,2,2,0,22,103,108,95,70,111,103,80,97,114,97,109,101,
+116,101,114,115,0,12,99,111,108,111,114,0,0,0,1,9,100,101,110,115,105,116,121,0,0,0,1,9,115,116,97,
+114,116,0,0,0,1,9,101,110,100,0,0,0,1,9,115,99,97,108,101,0,0,0,0,0,0,2,2,4,23,103,108,95,70,111,
+103,80,97,114,97,109,101,116,101,114,115,0,1,103,108,95,70,111,103,0,0,0,1,0,9,0,114,97,100,105,97,
+110,115,0,1,0,0,9,100,101,103,0,0,0,1,8,17,51,0,49,52,49,53,57,51,0,0,18,100,101,103,0,48,17,49,56,
+48,0,48,0,0,49,0,0,1,0,10,0,114,97,100,105,97,110,115,0,1,0,0,10,100,101,103,0,0,0,1,8,58,118,101,
+99,50,0,58,114,97,100,105,97,110,115,0,18,100,101,103,0,59,120,0,0,0,0,58,114,97,100,105,97,110,
+115,0,18,100,101,103,0,59,121,0,0,0,0,0,0,0,1,0,11,0,114,97,100,105,97,110,115,0,1,0,0,11,100,101,
+103,0,0,0,1,8,58,118,101,99,51,0,58,114,97,100,105,97,110,115,0,18,100,101,103,0,59,120,0,0,0,0,58,
+114,97,100,105,97,110,115,0,18,100,101,103,0,59,121,0,0,0,0,58,114,97,100,105,97,110,115,0,18,100,
+101,103,0,59,122,0,0,0,0,0,0,0,1,0,12,0,114,97,100,105,97,110,115,0,1,0,0,12,100,101,103,0,0,0,1,8,
+58,118,101,99,52,0,58,114,97,100,105,97,110,115,0,18,100,101,103,0,59,120,0,0,0,0,58,114,97,100,
+105,97,110,115,0,18,100,101,103,0,59,121,0,0,0,0,58,114,97,100,105,97,110,115,0,18,100,101,103,0,
+59,122,0,0,0,0,58,114,97,100,105,97,110,115,0,18,100,101,103,0,59,119,0,0,0,0,0,0,0,1,0,9,0,100,
+101,103,114,101,101,115,0,1,0,0,9,114,97,100,0,0,0,1,8,17,49,56,48,0,48,0,0,18,114,97,100,0,48,17,
+51,0,49,52,49,53,57,51,0,0,49,0,0,1,0,10,0,100,101,103,114,101,101,115,0,1,0,0,10,114,97,100,0,0,0,
+1,8,58,118,101,99,50,0,58,100,101,103,114,101,101,115,0,18,114,97,100,0,59,120,0,0,0,0,58,100,101,
+103,114,101,101,115,0,18,114,97,100,0,59,121,0,0,0,0,0,0,0,1,0,11,0,100,101,103,114,101,101,115,0,
+1,0,0,11,114,97,100,0,0,0,1,8,58,118,101,99,51,0,58,100,101,103,114,101,101,115,0,18,114,97,100,0,
+59,120,0,0,0,0,58,100,101,103,114,101,101,115,0,18,114,97,100,0,59,121,0,0,0,0,58,100,101,103,114,
+101,101,115,0,18,114,97,100,0,59,122,0,0,0,0,0,0,0,1,0,12,0,100,101,103,114,101,101,115,0,1,0,0,12,
+114,97,100,0,0,0,1,8,58,118,101,99,52,0,58,100,101,103,114,101,101,115,0,18,114,97,100,0,59,120,0,
+0,0,0,58,100,101,103,114,101,101,115,0,18,114,97,100,0,59,121,0,0,0,0,58,100,101,103,114,101,101,
+115,0,18,114,97,100,0,59,122,0,0,0,0,58,100,101,103,114,101,101,115,0,18,114,97,100,0,59,119,0,0,0,
+0,0,0,0,1,0,9,0,115,105,110,0,1,0,0,9,97,110,103,108,101,0,0,0,1,8,17,48,0,48,0,0,0,0,1,0,10,0,115,
+105,110,0,1,0,0,10,97,110,103,108,101,0,0,0,1,8,58,118,101,99,50,0,58,115,105,110,0,18,97,110,103,
+108,101,0,59,120,0,0,0,0,58,115,105,110,0,18,97,110,103,108,101,0,59,121,0,0,0,0,0,0,0,1,0,11,0,
+115,105,110,0,1,0,0,11,97,110,103,108,101,0,0,0,1,8,58,118,101,99,51,0,58,115,105,110,0,18,97,110,
+103,108,101,0,59,120,0,0,0,0,58,115,105,110,0,18,97,110,103,108,101,0,59,121,0,0,0,0,58,115,105,
+110,0,18,97,110,103,108,101,0,59,122,0,0,0,0,0,0,0,1,0,12,0,115,105,110,0,1,0,0,12,97,110,103,108,
+101,0,0,0,1,8,58,118,101,99,52,0,58,115,105,110,0,18,97,110,103,108,101,0,59,120,0,0,0,0,58,115,
+105,110,0,18,97,110,103,108,101,0,59,121,0,0,0,0,58,115,105,110,0,18,97,110,103,108,101,0,59,122,0,
+0,0,0,58,115,105,110,0,18,97,110,103,108,101,0,59,119,0,0,0,0,0,0,0,1,0,9,0,99,111,115,0,1,0,0,9,
+97,110,103,108,101,0,0,0,1,8,58,115,105,110,0,18,97,110,103,108,101,0,17,49,0,53,55,48,56,0,0,46,0,
+0,0,0,1,0,10,0,99,111,115,0,1,0,0,10,97,110,103,108,101,0,0,0,1,8,58,118,101,99,50,0,58,99,111,115,
+0,18,97,110,103,108,101,0,59,120,0,0,0,0,58,99,111,115,0,18,97,110,103,108,101,0,59,121,0,0,0,0,0,
+0,0,1,0,11,0,99,111,115,0,1,0,0,11,97,110,103,108,101,0,0,0,1,8,58,118,101,99,51,0,58,99,111,115,0,
+18,97,110,103,108,101,0,59,120,0,0,0,0,58,99,111,115,0,18,97,110,103,108,101,0,59,121,0,0,0,0,58,
+99,111,115,0,18,97,110,103,108,101,0,59,122,0,0,0,0,0,0,0,1,0,12,0,99,111,115,0,1,0,0,12,97,110,
+103,108,101,0,0,0,1,8,58,118,101,99,52,0,58,99,111,115,0,18,97,110,103,108,101,0,59,120,0,0,0,0,58,
+99,111,115,0,18,97,110,103,108,101,0,59,121,0,0,0,0,58,99,111,115,0,18,97,110,103,108,101,0,59,122,
+0,0,0,0,58,99,111,115,0,18,97,110,103,108,101,0,59,119,0,0,0,0,0,0,0,1,0,9,0,116,97,110,0,1,0,0,9,
+97,110,103,108,101,0,0,0,1,8,58,115,105,110,0,18,97,110,103,108,101,0,0,0,58,99,111,115,0,18,97,
+110,103,108,101,0,0,0,49,0,0,1,0,10,0,116,97,110,0,1,0,0,10,97,110,103,108,101,0,0,0,1,8,58,118,
+101,99,50,0,58,116,97,110,0,18,97,110,103,108,101,0,59,120,0,0,0,0,58,116,97,110,0,18,97,110,103,
+108,101,0,59,121,0,0,0,0,0,0,0,1,0,11,0,116,97,110,0,1,0,0,11,97,110,103,108,101,0,0,0,1,8,58,118,
+101,99,51,0,58,116,97,110,0,18,97,110,103,108,101,0,59,120,0,0,0,0,58,116,97,110,0,18,97,110,103,
+108,101,0,59,121,0,0,0,0,58,116,97,110,0,18,97,110,103,108,101,0,59,122,0,0,0,0,0,0,0,1,0,12,0,116,
+97,110,0,1,0,0,12,97,110,103,108,101,0,0,0,1,8,58,118,101,99,52,0,58,116,97,110,0,18,97,110,103,
+108,101,0,59,120,0,0,0,0,58,116,97,110,0,18,97,110,103,108,101,0,59,121,0,0,0,0,58,116,97,110,0,18,
+97,110,103,108,101,0,59,122,0,0,0,0,58,116,97,110,0,18,97,110,103,108,101,0,59,119,0,0,0,0,0,0,0,1,
+0,9,0,97,115,105,110,0,1,0,0,9,120,0,0,0,1,8,17,48,0,48,0,0,0,0,1,0,10,0,97,115,105,110,0,1,0,0,10,
+120,0,0,0,1,8,58,118,101,99,50,0,58,97,115,105,110,0,18,120,0,59,120,0,0,0,0,58,97,115,105,110,0,
+18,120,0,59,121,0,0,0,0,0,0,0,1,0,11,0,97,115,105,110,0,1,0,0,11,120,0,0,0,1,8,58,118,101,99,51,0,
+58,97,115,105,110,0,18,120,0,59,120,0,0,0,0,58,97,115,105,110,0,18,120,0,59,121,0,0,0,0,58,97,115,
+105,110,0,18,120,0,59,122,0,0,0,0,0,0,0,1,0,12,0,97,115,105,110,0,1,0,0,12,120,0,0,0,1,8,58,118,
+101,99,52,0,58,97,115,105,110,0,18,120,0,59,120,0,0,0,0,58,97,115,105,110,0,18,120,0,59,121,0,0,0,
+0,58,97,115,105,110,0,18,120,0,59,122,0,0,0,0,58,97,115,105,110,0,18,120,0,59,119,0,0,0,0,0,0,0,1,
+0,9,0,97,99,111,115,0,1,0,0,9,120,0,0,0,1,8,17,48,0,48,0,0,0,0,1,0,10,0,97,99,111,115,0,1,0,0,10,
+120,0,0,0,1,8,58,118,101,99,50,0,58,97,99,111,115,0,18,120,0,59,120,0,0,0,0,58,97,99,111,115,0,18,
+120,0,59,121,0,0,0,0,0,0,0,1,0,11,0,97,99,111,115,0,1,0,0,11,120,0,0,0,1,8,58,118,101,99,51,0,58,
+97,99,111,115,0,18,120,0,59,120,0,0,0,0,58,97,99,111,115,0,18,120,0,59,121,0,0,0,0,58,97,99,111,
+115,0,18,120,0,59,122,0,0,0,0,0,0,0,1,0,12,0,97,99,111,115,0,1,0,0,12,120,0,0,0,1,8,58,118,101,99,
+52,0,58,97,99,111,115,0,18,120,0,59,120,0,0,0,0,58,97,99,111,115,0,18,120,0,59,121,0,0,0,0,58,97,
+99,111,115,0,18,120,0,59,122,0,0,0,0,58,97,99,111,115,0,18,120,0,59,119,0,0,0,0,0,0,0,1,0,9,0,97,
+116,97,110,0,1,0,0,9,120,0,0,1,0,0,9,121,0,0,0,1,8,17,48,0,48,0,0,0,0,1,0,10,0,97,116,97,110,0,1,0,
+0,10,120,0,0,1,0,0,10,121,0,0,0,1,8,58,118,101,99,50,0,58,97,116,97,110,0,18,120,0,59,120,0,0,18,
+121,0,59,120,0,0,0,0,58,97,116,97,110,0,18,120,0,59,121,0,0,18,121,0,59,121,0,0,0,0,0,0,0,1,0,11,0,
+97,116,97,110,0,1,0,0,11,120,0,0,1,0,0,11,121,0,0,0,1,8,58,118,101,99,51,0,58,97,116,97,110,0,18,
+120,0,59,120,0,0,18,121,0,59,120,0,0,0,0,58,97,116,97,110,0,18,120,0,59,121,0,0,18,121,0,59,121,0,
+0,0,0,58,97,116,97,110,0,18,120,0,59,122,0,0,18,121,0,59,122,0,0,0,0,0,0,0,1,0,12,0,97,116,97,110,
+0,1,0,0,12,120,0,0,1,0,0,12,121,0,0,0,1,8,58,118,101,99,52,0,58,97,116,97,110,0,18,120,0,59,120,0,
+0,18,121,0,59,120,0,0,0,0,58,97,116,97,110,0,18,120,0,59,121,0,0,18,121,0,59,121,0,0,0,0,58,97,116,
+97,110,0,18,120,0,59,122,0,0,18,121,0,59,122,0,0,0,0,58,97,116,97,110,0,18,120,0,59,119,0,0,18,121,
+0,59,119,0,0,0,0,0,0,0,1,0,9,0,97,116,97,110,0,1,0,0,9,121,95,111,118,101,114,95,120,0,0,0,1,8,17,
+48,0,48,0,0,0,0,1,0,10,0,97,116,97,110,0,1,0,0,10,121,95,111,118,101,114,95,120,0,0,0,1,8,58,118,
+101,99,50,0,58,97,116,97,110,0,18,121,95,111,118,101,114,95,120,0,59,120,0,0,0,0,58,97,116,97,110,
+0,18,121,95,111,118,101,114,95,120,0,59,121,0,0,0,0,0,0,0,1,0,11,0,97,116,97,110,0,1,0,0,11,121,95,
+111,118,101,114,95,120,0,0,0,1,8,58,118,101,99,51,0,58,97,116,97,110,0,18,121,95,111,118,101,114,
+95,120,0,59,120,0,0,0,0,58,97,116,97,110,0,18,121,95,111,118,101,114,95,120,0,59,121,0,0,0,0,58,97,
+116,97,110,0,18,121,95,111,118,101,114,95,120,0,59,122,0,0,0,0,0,0,0,1,0,12,0,97,116,97,110,0,1,0,
+0,12,121,95,111,118,101,114,95,120,0,0,0,1,8,58,118,101,99,52,0,58,97,116,97,110,0,18,121,95,111,
+118,101,114,95,120,0,59,120,0,0,0,0,58,97,116,97,110,0,18,121,95,111,118,101,114,95,120,0,59,121,0,
+0,0,0,58,97,116,97,110,0,18,121,95,111,118,101,114,95,120,0,59,122,0,0,0,0,58,97,116,97,110,0,18,
+121,95,111,118,101,114,95,120,0,59,119,0,0,0,0,0,0,0,1,0,9,0,112,111,119,0,1,0,0,9,120,0,0,1,0,0,9,
+121,0,0,0,1,8,17,48,0,48,0,0,0,0,1,0,10,0,112,111,119,0,1,0,0,10,120,0,0,1,0,0,10,121,0,0,0,1,8,58,
+118,101,99,50,0,58,112,111,119,0,18,120,0,59,120,0,0,18,121,0,59,120,0,0,0,0,58,112,111,119,0,18,
+120,0,59,121,0,0,18,121,0,59,121,0,0,0,0,0,0,0,1,0,11,0,112,111,119,0,1,0,0,11,120,0,0,1,0,0,11,
+121,0,0,0,1,8,58,118,101,99,51,0,58,112,111,119,0,18,120,0,59,120,0,0,18,121,0,59,120,0,0,0,0,58,
+112,111,119,0,18,120,0,59,121,0,0,18,121,0,59,121,0,0,0,0,58,112,111,119,0,18,120,0,59,122,0,0,18,
+121,0,59,122,0,0,0,0,0,0,0,1,0,12,0,112,111,119,0,1,0,0,12,120,0,0,1,0,0,12,121,0,0,0,1,8,58,118,
+101,99,52,0,58,112,111,119,0,18,120,0,59,120,0,0,18,121,0,59,120,0,0,0,0,58,112,111,119,0,18,120,0,
+59,121,0,0,18,121,0,59,121,0,0,0,0,58,112,111,119,0,18,120,0,59,122,0,0,18,121,0,59,122,0,0,0,0,58,
+112,111,119,0,18,120,0,59,119,0,0,18,121,0,59,119,0,0,0,0,0,0,0,1,0,9,0,101,120,112,0,1,0,0,9,120,
+0,0,0,1,8,58,112,111,119,0,17,50,0,55,49,56,50,56,49,56,51,0,0,0,18,120,0,0,0,0,0,1,0,10,0,101,120,
+112,0,1,0,0,10,120,0,0,0,1,8,58,118,101,99,50,0,58,101,120,112,0,18,120,0,59,120,0,0,0,0,58,101,
+120,112,0,18,120,0,59,121,0,0,0,0,0,0,0,1,0,11,0,101,120,112,0,1,0,0,11,120,0,0,0,1,8,58,118,101,
+99,51,0,58,101,120,112,0,18,120,0,59,120,0,0,0,0,58,101,120,112,0,18,120,0,59,121,0,0,0,0,58,101,
+120,112,0,18,120,0,59,122,0,0,0,0,0,0,0,1,0,12,0,101,120,112,0,1,0,0,12,120,0,0,0,1,8,58,118,101,
+99,52,0,58,101,120,112,0,18,120,0,59,120,0,0,0,0,58,101,120,112,0,18,120,0,59,121,0,0,0,0,58,101,
+120,112,0,18,120,0,59,122,0,0,0,0,58,101,120,112,0,18,120,0,59,119,0,0,0,0,0,0,0,1,0,9,0,108,111,
+103,0,1,0,0,9,120,0,0,0,1,8,58,108,111,103,50,0,18,120,0,0,0,58,108,111,103,50,0,17,50,0,55,49,56,
+50,56,49,56,51,0,0,0,0,49,0,0,1,0,10,0,108,111,103,0,1,0,0,10,120,0,0,0,1,8,58,118,101,99,50,0,58,
+108,111,103,0,18,120,0,59,120,0,0,0,0,58,108,111,103,0,18,120,0,59,121,0,0,0,0,0,0,0,1,0,11,0,108,
+111,103,0,1,0,0,11,120,0,0,0,1,8,58,118,101,99,51,0,58,108,111,103,0,18,120,0,59,120,0,0,0,0,58,
+108,111,103,0,18,120,0,59,121,0,0,0,0,58,108,111,103,0,18,120,0,59,122,0,0,0,0,0,0,0,1,0,12,0,108,
+111,103,0,1,0,0,12,120,0,0,0,1,8,58,118,101,99,52,0,58,108,111,103,0,18,120,0,59,120,0,0,0,0,58,
+108,111,103,0,18,120,0,59,121,0,0,0,0,58,108,111,103,0,18,120,0,59,122,0,0,0,0,58,108,111,103,0,18,
+120,0,59,119,0,0,0,0,0,0,0,1,0,9,0,101,120,112,50,0,1,0,0,9,120,0,0,0,1,8,58,112,111,119,0,17,50,0,
+48,0,0,0,18,120,0,0,0,0,0,1,0,10,0,101,120,112,50,0,1,0,0,10,120,0,0,0,1,8,58,118,101,99,50,0,58,
+101,120,112,50,0,18,120,0,59,120,0,0,0,0,58,101,120,112,50,0,18,120,0,59,121,0,0,0,0,0,0,0,1,0,11,
+0,101,120,112,50,0,1,0,0,11,120,0,0,0,1,8,58,118,101,99,51,0,58,101,120,112,50,0,18,120,0,59,120,0,
+0,0,0,58,101,120,112,50,0,18,120,0,59,121,0,0,0,0,58,101,120,112,50,0,18,120,0,59,122,0,0,0,0,0,0,
+0,1,0,12,0,101,120,112,50,0,1,0,0,12,120,0,0,0,1,8,58,118,101,99,52,0,58,101,120,112,50,0,18,120,0,
+59,120,0,0,0,0,58,101,120,112,50,0,18,120,0,59,121,0,0,0,0,58,101,120,112,50,0,18,120,0,59,122,0,0,
+0,0,58,101,120,112,50,0,18,120,0,59,119,0,0,0,0,0,0,0,1,0,9,0,108,111,103,50,0,1,0,0,9,120,0,0,0,1,
+8,17,48,0,48,0,0,0,0,1,0,10,0,108,111,103,50,0,1,0,0,10,120,0,0,0,1,8,58,118,101,99,50,0,58,108,
+111,103,50,0,18,120,0,59,120,0,0,0,0,58,108,111,103,50,0,18,120,0,59,121,0,0,0,0,0,0,0,1,0,11,0,
+108,111,103,50,0,1,0,0,11,120,0,0,0,1,8,58,118,101,99,51,0,58,108,111,103,50,0,18,120,0,59,120,0,0,
+0,0,58,108,111,103,50,0,18,120,0,59,121,0,0,0,0,58,108,111,103,50,0,18,120,0,59,122,0,0,0,0,0,0,0,
+1,0,12,0,108,111,103,50,0,1,0,0,12,120,0,0,0,1,8,58,118,101,99,52,0,58,108,111,103,50,0,18,120,0,
+59,120,0,0,0,0,58,108,111,103,50,0,18,120,0,59,121,0,0,0,0,58,108,111,103,50,0,18,120,0,59,122,0,0,
+0,0,58,108,111,103,50,0,18,120,0,59,119,0,0,0,0,0,0,0,1,0,9,0,115,113,114,116,0,1,0,0,9,120,0,0,0,
+1,8,58,112,111,119,0,18,120,0,0,17,48,0,53,0,0,0,0,0,0,1,0,10,0,115,113,114,116,0,1,0,0,10,120,0,0,
+0,1,8,58,118,101,99,50,0,58,115,113,114,116,0,18,120,0,59,120,0,0,0,0,58,115,113,114,116,0,18,120,
+0,59,121,0,0,0,0,0,0,0,1,0,11,0,115,113,114,116,0,1,0,0,11,120,0,0,0,1,8,58,118,101,99,51,0,58,115,
+113,114,116,0,18,120,0,59,120,0,0,0,0,58,115,113,114,116,0,18,120,0,59,121,0,0,0,0,58,115,113,114,
+116,0,18,120,0,59,122,0,0,0,0,0,0,0,1,0,12,0,115,113,114,116,0,1,0,0,12,120,0,0,0,1,8,58,118,101,
+99,52,0,58,115,113,114,116,0,18,120,0,59,120,0,0,0,0,58,115,113,114,116,0,18,120,0,59,121,0,0,0,0,
+58,115,113,114,116,0,18,120,0,59,122,0,0,0,0,58,115,113,114,116,0,18,120,0,59,119,0,0,0,0,0,0,0,1,
+0,9,0,105,110,118,101,114,115,101,115,113,114,116,0,1,0,0,9,120,0,0,0,1,8,17,49,0,48,0,0,58,115,
+113,114,116,0,18,120,0,0,0,49,0,0,1,0,10,0,105,110,118,101,114,115,101,115,113,114,116,0,1,0,0,10,
+120,0,0,0,1,8,58,118,101,99,50,0,58,105,110,118,101,114,115,101,115,113,114,116,0,18,120,0,59,120,
+0,0,0,0,58,105,110,118,101,114,115,101,115,113,114,116,0,18,120,0,59,121,0,0,0,0,0,0,0,1,0,11,0,
+105,110,118,101,114,115,101,115,113,114,116,0,1,0,0,11,120,0,0,0,1,8,58,118,101,99,51,0,58,105,110,
+118,101,114,115,101,115,113,114,116,0,18,120,0,59,120,0,0,0,0,58,105,110,118,101,114,115,101,115,
+113,114,116,0,18,120,0,59,121,0,0,0,0,58,105,110,118,101,114,115,101,115,113,114,116,0,18,120,0,59,
+122,0,0,0,0,0,0,0,1,0,12,0,105,110,118,101,114,115,101,115,113,114,116,0,1,0,0,12,120,0,0,0,1,8,58,
+118,101,99,52,0,58,105,110,118,101,114,115,101,115,113,114,116,0,18,120,0,59,120,0,0,0,0,58,105,
+110,118,101,114,115,101,115,113,114,116,0,18,120,0,59,121,0,0,0,0,58,105,110,118,101,114,115,101,
+115,113,114,116,0,18,120,0,59,122,0,0,0,0,58,105,110,118,101,114,115,101,115,113,114,116,0,18,120,
+0,59,119,0,0,0,0,0,0,0,1,0,9,0,97,98,115,0,1,0,0,9,120,0,0,0,1,8,18,120,0,17,48,0,48,0,0,43,18,120,
+0,18,120,0,54,31,0,0,1,0,10,0,97,98,115,0,1,0,0,10,120,0,0,0,1,8,58,118,101,99,50,0,58,97,98,115,0,
+18,120,0,59,120,0,0,0,0,58,97,98,115,0,18,120,0,59,121,0,0,0,0,0,0,0,1,0,11,0,97,98,115,0,1,0,0,11,
+120,0,0,0,1,8,58,118,101,99,51,0,58,97,98,115,0,18,120,0,59,120,0,0,0,0,58,97,98,115,0,18,120,0,59,
+121,0,0,0,0,58,97,98,115,0,18,120,0,59,122,0,0,0,0,0,0,0,1,0,12,0,97,98,115,0,1,0,0,12,120,0,0,0,1,
+8,58,118,101,99,52,0,58,97,98,115,0,18,120,0,59,120,0,0,0,0,58,97,98,115,0,18,120,0,59,121,0,0,0,0,
+58,97,98,115,0,18,120,0,59,122,0,0,0,0,58,97,98,115,0,18,120,0,59,119,0,0,0,0,0,0,0,1,0,9,0,115,
+105,103,110,0,1,0,0,9,120,0,0,0,1,8,18,120,0,17,48,0,48,0,0,41,17,49,0,48,0,0,18,120,0,17,48,0,48,
+0,0,40,17,49,0,48,0,0,54,17,48,0,48,0,0,31,31,0,0,1,0,10,0,115,105,103,110,0,1,0,0,10,120,0,0,0,1,
+8,58,118,101,99,50,0,58,115,105,103,110,0,18,120,0,59,120,0,0,0,0,58,115,105,103,110,0,18,120,0,59,
+121,0,0,0,0,0,0,0,1,0,11,0,115,105,103,110,0,1,0,0,11,120,0,0,0,1,8,58,118,101,99,51,0,58,115,105,
+103,110,0,18,120,0,59,120,0,0,0,0,58,115,105,103,110,0,18,120,0,59,121,0,0,0,0,58,115,105,103,110,
+0,18,120,0,59,122,0,0,0,0,0,0,0,1,0,12,0,115,105,103,110,0,1,0,0,12,120,0,0,0,1,8,58,118,101,99,52,
+0,58,115,105,103,110,0,18,120,0,59,120,0,0,0,0,58,115,105,103,110,0,18,120,0,59,121,0,0,0,0,58,115,
+105,103,110,0,18,120,0,59,122,0,0,0,0,58,115,105,103,110,0,18,120,0,59,119,0,0,0,0,0,0,0,1,0,9,0,
+102,108,111,111,114,0,1,0,0,9,120,0,0,0,1,8,17,48,0,48,0,0,0,0,1,0,10,0,102,108,111,111,114,0,1,0,
+0,10,120,0,0,0,1,8,58,118,101,99,50,0,58,102,108,111,111,114,0,18,120,0,59,120,0,0,0,0,58,102,108,
+111,111,114,0,18,120,0,59,121,0,0,0,0,0,0,0,1,0,11,0,102,108,111,111,114,0,1,0,0,11,120,0,0,0,1,8,
+58,118,101,99,51,0,58,102,108,111,111,114,0,18,120,0,59,120,0,0,0,0,58,102,108,111,111,114,0,18,
+120,0,59,121,0,0,0,0,58,102,108,111,111,114,0,18,120,0,59,122,0,0,0,0,0,0,0,1,0,12,0,102,108,111,
+111,114,0,1,0,0,12,120,0,0,0,1,8,58,118,101,99,52,0,58,102,108,111,111,114,0,18,120,0,59,120,0,0,0,
+0,58,102,108,111,111,114,0,18,120,0,59,121,0,0,0,0,58,102,108,111,111,114,0,18,120,0,59,122,0,0,0,
+0,58,102,108,111,111,114,0,18,120,0,59,119,0,0,0,0,0,0,0,1,0,9,0,99,101,105,108,0,1,0,0,9,120,0,0,
+0,1,8,17,48,0,48,0,0,0,0,1,0,10,0,99,101,105,108,0,1,0,0,10,120,0,0,0,1,8,58,118,101,99,50,0,58,99,
+101,105,108,0,18,120,0,59,120,0,0,0,0,58,99,101,105,108,0,18,120,0,59,121,0,0,0,0,0,0,0,1,0,11,0,
+99,101,105,108,0,1,0,0,11,120,0,0,0,1,8,58,118,101,99,51,0,58,99,101,105,108,0,18,120,0,59,120,0,0,
+0,0,58,99,101,105,108,0,18,120,0,59,121,0,0,0,0,58,99,101,105,108,0,18,120,0,59,122,0,0,0,0,0,0,0,
+1,0,12,0,99,101,105,108,0,1,0,0,12,120,0,0,0,1,8,58,118,101,99,52,0,58,99,101,105,108,0,18,120,0,
+59,120,0,0,0,0,58,99,101,105,108,0,18,120,0,59,121,0,0,0,0,58,99,101,105,108,0,18,120,0,59,122,0,0,
+0,0,58,99,101,105,108,0,18,120,0,59,119,0,0,0,0,0,0,0,1,0,9,0,102,114,97,99,116,0,1,0,0,9,120,0,0,
+0,1,8,18,120,0,58,102,108,111,111,114,0,18,120,0,0,0,47,0,0,1,0,10,0,102,114,97,99,116,0,1,0,0,10,
+120,0,0,0,1,8,58,118,101,99,50,0,58,102,114,97,99,116,0,18,120,0,59,120,0,0,0,0,58,102,114,97,99,
+116,0,18,120,0,59,121,0,0,0,0,0,0,0,1,0,11,0,102,114,97,99,116,0,1,0,0,11,120,0,0,0,1,8,58,118,101,
+99,51,0,58,102,114,97,99,116,0,18,120,0,59,120,0,0,0,0,58,102,114,97,99,116,0,18,120,0,59,121,0,0,
+0,0,58,102,114,97,99,116,0,18,120,0,59,122,0,0,0,0,0,0,0,1,0,12,0,102,114,97,99,116,0,1,0,0,12,120,
+0,0,0,1,8,58,118,101,99,52,0,58,102,114,97,99,116,0,18,120,0,59,120,0,0,0,0,58,102,114,97,99,116,0,
+18,120,0,59,121,0,0,0,0,58,102,114,97,99,116,0,18,120,0,59,122,0,0,0,0,58,102,114,97,99,116,0,18,
+120,0,59,119,0,0,0,0,0,0,0,1,0,9,0,109,111,100,0,1,0,0,9,120,0,0,1,0,0,9,121,0,0,0,1,8,18,120,0,18,
+121,0,58,102,108,111,111,114,0,18,120,0,18,121,0,49,0,0,48,47,0,0,1,0,10,0,109,111,100,0,1,0,0,10,
+120,0,0,1,0,0,9,121,0,0,0,1,8,58,118,101,99,50,0,58,109,111,100,0,18,120,0,59,120,0,0,18,121,0,0,0,
+0,58,109,111,100,0,18,120,0,59,121,0,0,18,121,0,0,0,0,0,0,0,1,0,11,0,109,111,100,0,1,0,0,11,120,0,
+0,1,0,0,9,121,0,0,0,1,8,58,118,101,99,51,0,58,109,111,100,0,18,120,0,59,120,0,0,18,121,0,0,0,0,58,
+109,111,100,0,18,120,0,59,121,0,0,18,121,0,0,0,0,58,109,111,100,0,18,120,0,59,122,0,0,18,121,0,0,0,
+0,0,0,0,1,0,12,0,109,111,100,0,1,0,0,12,120,0,0,1,0,0,9,121,0,0,0,1,8,58,118,101,99,52,0,58,109,
+111,100,0,18,120,0,59,120,0,0,18,121,0,0,0,0,58,109,111,100,0,18,120,0,59,121,0,0,18,121,0,0,0,0,
+58,109,111,100,0,18,120,0,59,122,0,0,18,121,0,0,0,0,58,109,111,100,0,18,120,0,59,119,0,0,18,121,0,
+0,0,0,0,0,0,1,0,10,0,109,111,100,0,1,0,0,10,120,0,0,1,0,0,10,121,0,0,0,1,8,58,118,101,99,50,0,58,
+109,111,100,0,18,120,0,59,120,0,0,18,121,0,59,120,0,0,0,0,58,109,111,100,0,18,120,0,59,121,0,0,18,
+121,0,59,121,0,0,0,0,0,0,0,1,0,11,0,109,111,100,0,1,0,0,11,120,0,0,1,0,0,11,121,0,0,0,1,8,58,118,
+101,99,51,0,58,109,111,100,0,18,120,0,59,120,0,0,18,121,0,59,120,0,0,0,0,58,109,111,100,0,18,120,0,
+59,121,0,0,18,121,0,59,121,0,0,0,0,58,109,111,100,0,18,120,0,59,122,0,0,18,121,0,59,122,0,0,0,0,0,
+0,0,1,0,12,0,109,111,100,0,1,0,0,12,120,0,0,1,0,0,12,121,0,0,0,1,8,58,118,101,99,52,0,58,109,111,
+100,0,18,120,0,59,120,0,0,18,121,0,59,120,0,0,0,0,58,109,111,100,0,18,120,0,59,121,0,0,18,121,0,59,
+121,0,0,0,0,58,109,111,100,0,18,120,0,59,122,0,0,18,121,0,59,122,0,0,0,0,58,109,111,100,0,18,120,0,
+59,119,0,0,18,121,0,59,119,0,0,0,0,0,0,0,1,0,9,0,109,105,110,0,1,0,0,9,120,0,0,1,0,0,9,121,0,0,0,1,
+8,18,121,0,18,120,0,40,18,121,0,18,120,0,31,0,0,1,0,10,0,109,105,110,0,1,0,0,10,120,0,0,1,0,0,9,
+121,0,0,0,1,8,58,118,101,99,50,0,58,109,105,110,0,18,120,0,59,120,0,0,18,121,0,0,0,0,58,109,105,
+110,0,18,120,0,59,121,0,0,18,121,0,0,0,0,0,0,0,1,0,11,0,109,105,110,0,1,0,0,11,120,0,0,1,0,0,9,121,
+0,0,0,1,8,58,118,101,99,51,0,58,109,105,110,0,18,120,0,59,120,0,0,18,121,0,0,0,0,58,109,105,110,0,
+18,120,0,59,121,0,0,18,121,0,0,0,0,58,109,105,110,0,18,120,0,59,122,0,0,18,121,0,0,0,0,0,0,0,1,0,
+12,0,109,105,110,0,1,0,0,12,120,0,0,1,0,0,9,121,0,0,0,1,8,58,118,101,99,52,0,58,109,105,110,0,18,
+120,0,59,120,0,0,18,121,0,0,0,0,58,109,105,110,0,18,120,0,59,121,0,0,18,121,0,0,0,0,58,109,105,110,
+0,18,120,0,59,122,0,0,18,121,0,0,0,0,58,109,105,110,0,18,120,0,59,119,0,0,18,121,0,0,0,0,0,0,0,1,0,
+10,0,109,105,110,0,1,0,0,10,120,0,0,1,0,0,10,121,0,0,0,1,8,58,118,101,99,50,0,58,109,105,110,0,18,
+120,0,59,120,0,0,18,121,0,59,120,0,0,0,0,58,109,105,110,0,18,120,0,59,121,0,0,18,121,0,59,121,0,0,
+0,0,0,0,0,1,0,11,0,109,105,110,0,1,0,0,11,120,0,0,1,0,0,11,121,0,0,0,1,8,58,118,101,99,51,0,58,109,
+105,110,0,18,120,0,59,120,0,0,18,121,0,59,120,0,0,0,0,58,109,105,110,0,18,120,0,59,121,0,0,18,121,
+0,59,121,0,0,0,0,58,109,105,110,0,18,120,0,59,122,0,0,18,121,0,59,122,0,0,0,0,0,0,0,1,0,12,0,109,
+105,110,0,1,0,0,12,120,0,0,1,0,0,12,121,0,0,0,1,8,58,118,101,99,52,0,58,109,105,110,0,18,120,0,59,
+120,0,0,18,121,0,59,120,0,0,0,0,58,109,105,110,0,18,120,0,59,121,0,0,18,121,0,59,121,0,0,0,0,58,
+109,105,110,0,18,120,0,59,122,0,0,18,121,0,59,122,0,0,0,0,58,109,105,110,0,18,120,0,59,119,0,0,18,
+121,0,59,119,0,0,0,0,0,0,0,1,0,9,0,109,97,120,0,1,0,0,9,120,0,0,1,0,0,9,121,0,0,0,1,8,58,109,105,
+110,0,18,121,0,0,18,120,0,0,0,0,0,1,0,10,0,109,97,120,0,1,0,0,10,120,0,0,1,0,0,9,121,0,0,0,1,8,58,
+118,101,99,50,0,58,109,97,120,0,18,120,0,59,120,0,0,18,121,0,0,0,0,58,109,97,120,0,18,120,0,59,121,
+0,0,18,121,0,0,0,0,0,0,0,1,0,11,0,109,97,120,0,1,0,0,11,120,0,0,1,0,0,9,121,0,0,0,1,8,58,118,101,
+99,51,0,58,109,97,120,0,18,120,0,59,120,0,0,18,121,0,0,0,0,58,109,97,120,0,18,120,0,59,121,0,0,18,
+121,0,0,0,0,58,109,97,120,0,18,120,0,59,122,0,0,18,121,0,0,0,0,0,0,0,1,0,12,0,109,97,120,0,1,0,0,
+12,120,0,0,1,0,0,9,121,0,0,0,1,8,58,118,101,99,52,0,58,109,97,120,0,18,120,0,59,120,0,0,18,121,0,0,
+0,0,58,109,97,120,0,18,120,0,59,121,0,0,18,121,0,0,0,0,58,109,97,120,0,18,120,0,59,122,0,0,18,121,
+0,0,0,0,58,109,97,120,0,18,120,0,59,119,0,0,18,121,0,0,0,0,0,0,0,1,0,10,0,109,97,120,0,1,0,0,10,
+120,0,0,1,0,0,10,121,0,0,0,1,8,58,118,101,99,50,0,58,109,97,120,0,18,120,0,59,120,0,0,18,121,0,59,
+120,0,0,0,0,58,109,97,120,0,18,120,0,59,121,0,0,18,121,0,59,121,0,0,0,0,0,0,0,1,0,11,0,109,97,120,
+0,1,0,0,11,120,0,0,1,0,0,11,121,0,0,0,1,8,58,118,101,99,51,0,58,109,97,120,0,18,120,0,59,120,0,0,
+18,121,0,59,120,0,0,0,0,58,109,97,120,0,18,120,0,59,121,0,0,18,121,0,59,121,0,0,0,0,58,109,97,120,
+0,18,120,0,59,122,0,0,18,121,0,59,122,0,0,0,0,0,0,0,1,0,12,0,109,97,120,0,1,0,0,12,120,0,0,1,0,0,
+12,121,0,0,0,1,8,58,118,101,99,52,0,58,109,97,120,0,18,120,0,59,120,0,0,18,121,0,59,120,0,0,0,0,58,
+109,97,120,0,18,120,0,59,121,0,0,18,121,0,59,121,0,0,0,0,58,109,97,120,0,18,120,0,59,122,0,0,18,
+121,0,59,122,0,0,0,0,58,109,97,120,0,18,120,0,59,119,0,0,18,121,0,59,119,0,0,0,0,0,0,0,1,0,9,0,99,
+108,97,109,112,0,1,0,0,9,120,0,0,1,0,0,9,109,105,110,86,97,108,0,0,1,0,0,9,109,97,120,86,97,108,0,
+0,0,1,8,58,109,105,110,0,58,109,97,120,0,18,120,0,0,18,109,105,110,86,97,108,0,0,0,0,18,109,97,120,
+86,97,108,0,0,0,0,0,1,0,10,0,99,108,97,109,112,0,1,0,0,10,120,0,0,1,0,0,9,109,105,110,86,97,108,0,
+0,1,0,0,9,109,97,120,86,97,108,0,0,0,1,8,58,118,101,99,50,0,58,99,108,97,109,112,0,18,120,0,59,120,
+0,0,18,109,105,110,86,97,108,0,0,18,109,97,120,86,97,108,0,0,0,0,58,99,108,97,109,112,0,18,120,0,
+59,121,0,0,18,109,105,110,86,97,108,0,0,18,109,97,120,86,97,108,0,0,0,0,0,0,0,1,0,11,0,99,108,97,
+109,112,0,1,0,0,11,120,0,0,1,0,0,9,109,105,110,86,97,108,0,0,1,0,0,9,109,97,120,86,97,108,0,0,0,1,
+8,58,118,101,99,51,0,58,99,108,97,109,112,0,18,120,0,59,120,0,0,18,109,105,110,86,97,108,0,0,18,
+109,97,120,86,97,108,0,0,0,0,58,99,108,97,109,112,0,18,120,0,59,121,0,0,18,109,105,110,86,97,108,0,
+0,18,109,97,120,86,97,108,0,0,0,0,58,99,108,97,109,112,0,18,120,0,59,122,0,0,18,109,105,110,86,97,
+108,0,0,18,109,97,120,86,97,108,0,0,0,0,0,0,0,1,0,12,0,99,108,97,109,112,0,1,0,0,12,120,0,0,1,0,0,
+9,109,105,110,86,97,108,0,0,1,0,0,9,109,97,120,86,97,108,0,0,0,1,8,58,118,101,99,52,0,58,99,108,97,
+109,112,0,18,120,0,59,120,0,0,18,109,105,110,86,97,108,0,0,18,109,97,120,86,97,108,0,0,0,0,58,99,
+108,97,109,112,0,18,120,0,59,121,0,0,18,109,105,110,86,97,108,0,0,18,109,97,120,86,97,108,0,0,0,0,
+58,99,108,97,109,112,0,18,120,0,59,122,0,0,18,109,105,110,86,97,108,0,0,18,109,97,120,86,97,108,0,
+0,0,0,58,99,108,97,109,112,0,18,120,0,59,119,0,0,18,109,105,110,86,97,108,0,0,18,109,97,120,86,97,
+108,0,0,0,0,0,0,0,1,0,10,0,99,108,97,109,112,0,1,0,0,10,120,0,0,1,0,0,10,109,105,110,86,97,108,0,0,
+1,0,0,10,109,97,120,86,97,108,0,0,0,1,8,58,118,101,99,50,0,58,99,108,97,109,112,0,18,120,0,59,120,
+0,0,18,109,105,110,86,97,108,0,59,120,0,0,18,109,97,120,86,97,108,0,59,120,0,0,0,0,58,99,108,97,
+109,112,0,18,120,0,59,121,0,0,18,109,105,110,86,97,108,0,59,121,0,0,18,109,97,120,86,97,108,0,59,
+121,0,0,0,0,0,0,0,1,0,11,0,99,108,97,109,112,0,1,0,0,11,120,0,0,1,0,0,11,109,105,110,86,97,108,0,0,
+1,0,0,11,109,97,120,86,97,108,0,0,0,1,8,58,118,101,99,51,0,58,99,108,97,109,112,0,18,120,0,59,120,
+0,0,18,109,105,110,86,97,108,0,59,120,0,0,18,109,97,120,86,97,108,0,59,120,0,0,0,0,58,99,108,97,
+109,112,0,18,120,0,59,121,0,0,18,109,105,110,86,97,108,0,59,121,0,0,18,109,97,120,86,97,108,0,59,
+121,0,0,0,0,58,99,108,97,109,112,0,18,120,0,59,122,0,0,18,109,105,110,86,97,108,0,59,122,0,0,18,
+109,97,120,86,97,108,0,59,122,0,0,0,0,0,0,0,1,0,12,0,99,108,97,109,112,0,1,0,0,12,120,0,0,1,0,0,12,
+109,105,110,86,97,108,0,0,1,0,0,12,109,97,120,86,97,108,0,0,0,1,8,58,118,101,99,52,0,58,99,108,97,
+109,112,0,18,120,0,59,120,0,0,18,109,105,110,86,97,108,0,59,120,0,0,18,109,97,120,86,97,108,0,59,
+121,0,0,0,0,58,99,108,97,109,112,0,18,120,0,59,121,0,0,18,109,105,110,86,97,108,0,59,121,0,0,18,
+109,97,120,86,97,108,0,59,121,0,0,0,0,58,99,108,97,109,112,0,18,120,0,59,122,0,0,18,109,105,110,86,
+97,108,0,59,122,0,0,18,109,97,120,86,97,108,0,59,122,0,0,0,0,58,99,108,97,109,112,0,18,120,0,59,
+119,0,0,18,109,105,110,86,97,108,0,59,119,0,0,18,109,97,120,86,97,108,0,59,119,0,0,0,0,0,0,0,1,0,9,
+0,109,105,120,0,1,0,0,9,120,0,0,1,0,0,9,121,0,0,1,0,0,9,97,0,0,0,1,8,18,120,0,17,49,0,48,0,0,18,97,
+0,47,48,18,121,0,18,97,0,48,46,0,0,1,0,10,0,109,105,120,0,1,0,0,10,120,0,0,1,0,0,10,121,0,0,1,0,0,
+9,97,0,0,0,1,8,58,118,101,99,50,0,58,109,105,120,0,18,120,0,59,120,0,0,18,121,0,59,120,0,0,18,97,0,
+0,0,0,58,109,105,120,0,18,120,0,59,121,0,0,18,121,0,59,121,0,0,18,97,0,0,0,0,0,0,0,1,0,11,0,109,
+105,120,0,1,0,0,11,120,0,0,1,0,0,11,121,0,0,1,0,0,9,97,0,0,0,1,8,58,118,101,99,51,0,58,109,105,120,
+0,18,120,0,59,120,0,0,18,121,0,59,120,0,0,18,97,0,0,0,0,58,109,105,120,0,18,120,0,59,121,0,0,18,
+121,0,59,121,0,0,18,97,0,0,0,0,58,109,105,120,0,18,120,0,59,122,0,0,18,121,0,59,122,0,0,18,97,0,0,
+0,0,0,0,0,1,0,12,0,109,105,120,0,1,0,0,12,120,0,0,1,0,0,12,121,0,0,1,0,0,9,97,0,0,0,1,8,58,118,101,
+99,52,0,58,109,105,120,0,18,120,0,59,120,0,0,18,121,0,59,120,0,0,18,97,0,0,0,0,58,109,105,120,0,18,
+120,0,59,121,0,0,18,121,0,59,121,0,0,18,97,0,0,0,0,58,109,105,120,0,18,120,0,59,122,0,0,18,121,0,
+59,122,0,0,18,97,0,0,0,0,58,109,105,120,0,18,120,0,59,119,0,0,18,121,0,59,119,0,0,18,97,0,0,0,0,0,
+0,0,1,0,10,0,109,105,120,0,1,0,0,10,120,0,0,1,0,0,10,121,0,0,1,0,0,10,97,0,0,0,1,8,58,118,101,99,
+50,0,58,109,105,120,0,18,120,0,59,120,0,0,18,121,0,59,120,0,0,18,97,0,59,120,0,0,0,0,58,109,105,
+120,0,18,120,0,59,121,0,0,18,121,0,59,121,0,0,18,97,0,59,121,0,0,0,0,0,0,0,1,0,11,0,109,105,120,0,
+1,0,0,11,120,0,0,1,0,0,11,121,0,0,1,0,0,11,97,0,0,0,1,8,58,118,101,99,51,0,58,109,105,120,0,18,120,
+0,59,120,0,0,18,121,0,59,120,0,0,18,97,0,59,120,0,0,0,0,58,109,105,120,0,18,120,0,59,121,0,0,18,
+121,0,59,121,0,0,18,97,0,59,121,0,0,0,0,58,109,105,120,0,18,120,0,59,122,0,0,18,121,0,59,122,0,0,
+18,97,0,59,122,0,0,0,0,0,0,0,1,0,12,0,109,105,120,0,1,0,0,12,120,0,0,1,0,0,12,121,0,0,1,0,0,12,97,
+0,0,0,1,8,58,118,101,99,52,0,58,109,105,120,0,18,120,0,59,120,0,0,18,121,0,59,120,0,0,18,97,0,59,
+120,0,0,0,0,58,109,105,120,0,18,120,0,59,121,0,0,18,121,0,59,121,0,0,18,97,0,59,121,0,0,0,0,58,109,
+105,120,0,18,120,0,59,122,0,0,18,121,0,59,122,0,0,18,97,0,59,122,0,0,0,0,58,109,105,120,0,18,120,0,
+59,119,0,0,18,121,0,59,119,0,0,18,97,0,59,119,0,0,0,0,0,0,0,1,0,9,0,115,116,101,112,0,1,0,0,9,101,
+100,103,101,0,0,1,0,0,9,120,0,0,0,1,8,18,120,0,18,101,100,103,101,0,40,17,48,0,48,0,0,17,49,0,48,0,
+0,31,0,0,1,0,10,0,115,116,101,112,0,1,0,0,9,101,100,103,101,0,0,1,0,0,10,120,0,0,0,1,8,58,118,101,
+99,50,0,58,115,116,101,112,0,18,101,100,103,101,0,0,18,120,0,59,120,0,0,0,0,58,115,116,101,112,0,
+18,101,100,103,101,0,0,18,120,0,59,121,0,0,0,0,0,0,0,1,0,11,0,115,116,101,112,0,1,0,0,9,101,100,
+103,101,0,0,1,0,0,11,120,0,0,0,1,8,58,118,101,99,51,0,58,115,116,101,112,0,18,101,100,103,101,0,0,
+18,120,0,59,120,0,0,0,0,58,115,116,101,112,0,18,101,100,103,101,0,0,18,120,0,59,121,0,0,0,0,58,115,
+116,101,112,0,18,101,100,103,101,0,0,18,120,0,59,122,0,0,0,0,0,0,0,1,0,12,0,115,116,101,112,0,1,0,
+0,9,101,100,103,101,0,0,1,0,0,12,120,0,0,0,1,8,58,118,101,99,52,0,58,115,116,101,112,0,18,101,100,
+103,101,0,0,18,120,0,59,120,0,0,0,0,58,115,116,101,112,0,18,101,100,103,101,0,0,18,120,0,59,121,0,
+0,0,0,58,115,116,101,112,0,18,101,100,103,101,0,0,18,120,0,59,122,0,0,0,0,58,115,116,101,112,0,18,
+101,100,103,101,0,0,18,120,0,59,119,0,0,0,0,0,0,0,1,0,10,0,115,116,101,112,0,1,0,0,10,101,100,103,
+101,0,0,1,0,0,10,120,0,0,0,1,8,58,118,101,99,50,0,58,115,116,101,112,0,18,101,100,103,101,0,59,120,
+0,0,18,120,0,59,120,0,0,0,0,58,115,116,101,112,0,18,101,100,103,101,0,59,121,0,0,18,120,0,59,121,0,
+0,0,0,0,0,0,1,0,11,0,115,116,101,112,0,1,0,0,11,101,100,103,101,0,0,1,0,0,11,120,0,0,0,1,8,58,118,
+101,99,51,0,58,115,116,101,112,0,18,101,100,103,101,0,59,120,0,0,18,120,0,59,120,0,0,0,0,58,115,
+116,101,112,0,18,101,100,103,101,0,59,121,0,0,18,120,0,59,121,0,0,0,0,58,115,116,101,112,0,18,101,
+100,103,101,0,59,122,0,0,18,120,0,59,122,0,0,0,0,0,0,0,1,0,12,0,115,116,101,112,0,1,0,0,12,101,100,
+103,101,0,0,1,0,0,12,120,0,0,0,1,8,58,118,101,99,52,0,58,115,116,101,112,0,18,101,100,103,101,0,59,
+120,0,0,18,120,0,59,120,0,0,0,0,58,115,116,101,112,0,18,101,100,103,101,0,59,121,0,0,18,120,0,59,
+121,0,0,0,0,58,115,116,101,112,0,18,101,100,103,101,0,59,122,0,0,18,120,0,59,122,0,0,0,0,58,115,
+116,101,112,0,18,101,100,103,101,0,59,119,0,0,18,120,0,59,119,0,0,0,0,0,0,0,1,0,9,0,115,109,111,
+111,116,104,115,116,101,112,0,1,0,0,9,101,100,103,101,48,0,0,1,0,0,9,101,100,103,101,49,0,0,1,0,0,
+9,120,0,0,0,1,3,2,1,9,1,116,0,2,58,99,108,97,109,112,0,18,120,0,18,101,100,103,101,48,0,47,18,101,
+100,103,101,49,0,18,101,100,103,101,48,0,47,49,0,17,48,0,48,0,0,0,17,49,0,48,0,0,0,0,0,0,8,18,116,
+0,18,116,0,48,17,51,0,48,0,0,17,50,0,48,0,0,18,116,0,48,47,48,0,0,1,0,10,0,115,109,111,111,116,104,
+115,116,101,112,0,1,0,0,9,101,100,103,101,48,0,0,1,0,0,9,101,100,103,101,49,0,0,1,0,0,10,120,0,0,0,
+1,8,58,118,101,99,50,0,58,115,109,111,111,116,104,115,116,101,112,0,18,101,100,103,101,48,0,0,18,
+101,100,103,101,49,0,0,18,120,0,59,120,0,0,0,0,58,115,109,111,111,116,104,115,116,101,112,0,18,101,
+100,103,101,48,0,0,18,101,100,103,101,49,0,0,18,120,0,59,121,0,0,0,0,0,0,0,1,0,11,0,115,109,111,
+111,116,104,115,116,101,112,0,1,0,0,9,101,100,103,101,48,0,0,1,0,0,9,101,100,103,101,49,0,0,1,0,0,
+11,120,0,0,0,1,8,58,118,101,99,51,0,58,115,109,111,111,116,104,115,116,101,112,0,18,101,100,103,
+101,48,0,0,18,101,100,103,101,49,0,0,18,120,0,59,120,0,0,0,0,58,115,109,111,111,116,104,115,116,
+101,112,0,18,101,100,103,101,48,0,0,18,101,100,103,101,49,0,0,18,120,0,59,121,0,0,0,0,58,115,109,
+111,111,116,104,115,116,101,112,0,18,101,100,103,101,48,0,0,18,101,100,103,101,49,0,0,18,120,0,59,
+122,0,0,0,0,0,0,0,1,0,12,0,115,109,111,111,116,104,115,116,101,112,0,1,0,0,9,101,100,103,101,48,0,
+0,1,0,0,9,101,100,103,101,49,0,0,1,0,0,12,120,0,0,0,1,8,58,118,101,99,52,0,58,115,109,111,111,116,
+104,115,116,101,112,0,18,101,100,103,101,48,0,0,18,101,100,103,101,49,0,0,18,120,0,59,120,0,0,0,0,
+58,115,109,111,111,116,104,115,116,101,112,0,18,101,100,103,101,48,0,0,18,101,100,103,101,49,0,0,
+18,120,0,59,121,0,0,0,0,58,115,109,111,111,116,104,115,116,101,112,0,18,101,100,103,101,48,0,0,18,
+101,100,103,101,49,0,0,18,120,0,59,122,0,0,0,0,58,115,109,111,111,116,104,115,116,101,112,0,18,101,
+100,103,101,48,0,0,18,101,100,103,101,49,0,0,18,120,0,59,119,0,0,0,0,0,0,0,1,0,10,0,115,109,111,
+111,116,104,115,116,101,112,0,1,0,0,10,101,100,103,101,48,0,0,1,0,0,10,101,100,103,101,49,0,0,1,0,
+0,10,120,0,0,0,1,8,58,118,101,99,50,0,58,115,109,111,111,116,104,115,116,101,112,0,18,101,100,103,
+101,48,0,59,120,0,0,18,101,100,103,101,49,0,59,120,0,0,18,120,0,59,120,0,0,0,0,58,115,109,111,111,
+116,104,115,116,101,112,0,18,101,100,103,101,48,0,59,121,0,0,18,101,100,103,101,49,0,59,121,0,0,18,
+120,0,59,121,0,0,0,0,0,0,0,1,0,11,0,115,109,111,111,116,104,115,116,101,112,0,1,0,0,11,101,100,103,
+101,48,0,0,1,0,0,11,101,100,103,101,49,0,0,1,0,0,11,120,0,0,0,1,8,58,118,101,99,51,0,58,115,109,
+111,111,116,104,115,116,101,112,0,18,101,100,103,101,48,0,59,120,0,0,18,101,100,103,101,49,0,59,
+120,0,0,18,120,0,59,120,0,0,0,0,58,115,109,111,111,116,104,115,116,101,112,0,18,101,100,103,101,48,
+0,59,121,0,0,18,101,100,103,101,49,0,59,121,0,0,18,120,0,59,121,0,0,0,0,58,115,109,111,111,116,104,
+115,116,101,112,0,18,101,100,103,101,48,0,59,122,0,0,18,101,100,103,101,49,0,59,122,0,0,18,120,0,
+59,122,0,0,0,0,0,0,0,1,0,12,0,115,109,111,111,116,104,115,116,101,112,0,1,0,0,12,101,100,103,101,
+48,0,0,1,0,0,12,101,100,103,101,49,0,0,1,0,0,12,120,0,0,0,1,8,58,118,101,99,52,0,58,115,109,111,
+111,116,104,115,116,101,112,0,18,101,100,103,101,48,0,59,120,0,0,18,101,100,103,101,49,0,59,120,0,
+0,18,120,0,59,120,0,0,0,0,58,115,109,111,111,116,104,115,116,101,112,0,18,101,100,103,101,48,0,59,
+121,0,0,18,101,100,103,101,49,0,59,121,0,0,18,120,0,59,121,0,0,0,0,58,115,109,111,111,116,104,115,
+116,101,112,0,18,101,100,103,101,48,0,59,122,0,0,18,101,100,103,101,49,0,59,122,0,0,18,120,0,59,
+122,0,0,0,0,58,115,109,111,111,116,104,115,116,101,112,0,18,101,100,103,101,48,0,59,119,0,0,18,101,
+100,103,101,49,0,59,119,0,0,18,120,0,59,119,0,0,0,0,0,0,0,1,0,9,0,100,111,116,0,1,0,0,9,120,0,0,1,
+0,0,9,121,0,0,0,1,8,18,120,0,18,121,0,48,0,0,1,0,9,0,100,111,116,0,1,0,0,10,120,0,0,1,0,0,10,121,0,
+0,0,1,8,58,100,111,116,0,18,120,0,59,120,0,0,18,121,0,59,120,0,0,0,58,100,111,116,0,18,120,0,59,
+121,0,0,18,121,0,59,121,0,0,0,46,0,0,1,0,9,0,100,111,116,0,1,0,0,11,120,0,0,1,0,0,11,121,0,0,0,1,8,
+58,100,111,116,0,18,120,0,59,120,0,0,18,121,0,59,120,0,0,0,58,100,111,116,0,18,120,0,59,121,0,0,18,
+121,0,59,121,0,0,0,46,58,100,111,116,0,18,120,0,59,122,0,0,18,121,0,59,122,0,0,0,46,0,0,1,0,9,0,
+100,111,116,0,1,0,0,12,120,0,0,1,0,0,12,121,0,0,0,1,8,58,100,111,116,0,18,120,0,59,120,0,0,18,121,
+0,59,120,0,0,0,58,100,111,116,0,18,120,0,59,121,0,0,18,121,0,59,121,0,0,0,46,58,100,111,116,0,18,
+120,0,59,122,0,0,18,121,0,59,122,0,0,0,46,58,100,111,116,0,18,120,0,59,119,0,0,18,121,0,59,119,0,0,
+0,46,0,0,1,0,9,0,108,101,110,103,116,104,0,1,0,0,9,120,0,0,0,1,8,58,115,113,114,116,0,58,100,111,
+116,0,18,120,0,0,18,120,0,0,0,0,0,0,0,1,0,9,0,108,101,110,103,116,104,0,1,0,0,10,120,0,0,0,1,8,58,
+115,113,114,116,0,58,100,111,116,0,18,120,0,0,18,120,0,0,0,0,0,0,0,1,0,9,0,108,101,110,103,116,104,
+0,1,0,0,11,120,0,0,0,1,8,58,115,113,114,116,0,58,100,111,116,0,18,120,0,0,18,120,0,0,0,0,0,0,0,1,0,
+9,0,108,101,110,103,116,104,0,1,0,0,12,120,0,0,0,1,8,58,115,113,114,116,0,58,100,111,116,0,18,120,
+0,0,18,120,0,0,0,0,0,0,0,1,0,9,0,100,105,115,116,97,110,99,101,0,1,0,0,9,120,0,0,1,0,0,9,121,0,0,0,
+1,8,58,108,101,110,103,116,104,0,18,120,0,18,121,0,47,0,0,0,0,1,0,9,0,100,105,115,116,97,110,99,
+101,0,1,0,0,10,120,0,0,1,0,0,10,121,0,0,0,1,8,58,108,101,110,103,116,104,0,18,120,0,18,121,0,47,0,
+0,0,0,1,0,9,0,100,105,115,116,97,110,99,101,0,1,0,0,11,120,0,0,1,0,0,11,121,0,0,0,1,8,58,108,101,
+110,103,116,104,0,18,120,0,18,121,0,47,0,0,0,0,1,0,9,0,100,105,115,116,97,110,99,101,0,1,0,0,12,
+120,0,0,1,0,0,12,121,0,0,0,1,8,58,108,101,110,103,116,104,0,18,120,0,18,121,0,47,0,0,0,0,1,0,11,0,
+99,114,111,115,115,0,1,0,0,11,120,0,0,1,0,0,11,121,0,0,0,1,8,58,118,101,99,51,0,18,120,0,59,121,0,
+18,121,0,59,122,0,48,18,121,0,59,121,0,18,120,0,59,122,0,48,47,0,18,120,0,59,122,0,18,121,0,59,120,
+0,48,18,121,0,59,122,0,18,120,0,59,120,0,48,47,0,18,120,0,59,120,0,18,121,0,59,121,0,48,18,121,0,
+59,120,0,18,120,0,59,121,0,48,47,0,0,0,0,1,0,9,0,110,111,114,109,97,108,105,122,101,0,1,0,0,9,120,
+0,0,0,1,8,17,49,0,48,0,0,0,0,1,0,10,0,110,111,114,109,97,108,105,122,101,0,1,0,0,10,120,0,0,0,1,8,
+18,120,0,58,108,101,110,103,116,104,0,18,120,0,0,0,49,0,0,1,0,11,0,110,111,114,109,97,108,105,122,
+101,0,1,0,0,11,120,0,0,0,1,8,18,120,0,58,108,101,110,103,116,104,0,18,120,0,0,0,49,0,0,1,0,12,0,
+110,111,114,109,97,108,105,122,101,0,1,0,0,12,120,0,0,0,1,8,18,120,0,58,108,101,110,103,116,104,0,
+18,120,0,0,0,49,0,0,1,0,9,0,102,97,99,101,102,111,114,119,97,114,100,0,1,0,0,9,78,0,0,1,0,0,9,73,0,
+0,1,0,0,9,78,114,101,102,0,0,0,1,8,58,100,111,116,0,18,78,114,101,102,0,0,18,73,0,0,0,17,48,0,48,0,
+0,40,18,78,0,18,78,0,54,31,0,0,1,0,10,0,102,97,99,101,102,111,114,119,97,114,100,0,1,0,0,10,78,0,0,
+1,0,0,10,73,0,0,1,0,0,10,78,114,101,102,0,0,0,1,8,58,100,111,116,0,18,78,114,101,102,0,0,18,73,0,0,
+0,17,48,0,48,0,0,40,18,78,0,18,78,0,54,31,0,0,1,0,11,0,102,97,99,101,102,111,114,119,97,114,100,0,
+1,0,0,11,78,0,0,1,0,0,11,73,0,0,1,0,0,11,78,114,101,102,0,0,0,1,8,58,100,111,116,0,18,78,114,101,
+102,0,0,18,73,0,0,0,17,48,0,48,0,0,40,18,78,0,18,78,0,54,31,0,0,1,0,12,0,102,97,99,101,102,111,114,
+119,97,114,100,0,1,0,0,12,78,0,0,1,0,0,12,73,0,0,1,0,0,12,78,114,101,102,0,0,0,1,8,58,100,111,116,
+0,18,78,114,101,102,0,0,18,73,0,0,0,17,48,0,48,0,0,40,18,78,0,18,78,0,54,31,0,0,1,0,9,0,114,101,
+102,108,101,99,116,0,1,0,0,9,73,0,0,1,0,0,9,78,0,0,0,1,8,18,73,0,17,50,0,48,0,0,58,100,111,116,0,
+18,78,0,0,18,73,0,0,0,48,18,78,0,48,47,0,0,1,0,10,0,114,101,102,108,101,99,116,0,1,0,0,10,73,0,0,1,
+0,0,10,78,0,0,0,1,8,18,73,0,17,50,0,48,0,0,58,100,111,116,0,18,78,0,0,18,73,0,0,0,48,18,78,0,48,47,
+0,0,1,0,11,0,114,101,102,108,101,99,116,0,1,0,0,11,73,0,0,1,0,0,11,78,0,0,0,1,8,18,73,0,17,50,0,48,
+0,0,58,100,111,116,0,18,78,0,0,18,73,0,0,0,48,18,78,0,48,47,0,0,1,0,12,0,114,101,102,108,101,99,
+116,0,1,0,0,12,73,0,0,1,0,0,12,78,0,0,0,1,8,18,73,0,17,50,0,48,0,0,58,100,111,116,0,18,78,0,0,18,
+73,0,0,0,48,18,78,0,48,47,0,0,1,0,9,0,114,101,102,114,97,99,116,0,1,0,0,9,73,0,0,1,0,0,9,78,0,0,1,
+0,0,9,101,116,97,0,0,0,1,3,2,1,9,1,107,0,2,17,49,0,48,0,0,18,101,116,97,0,18,101,116,97,0,48,17,49,
+0,48,0,0,58,100,111,116,0,18,78,0,0,18,73,0,0,0,58,100,111,116,0,18,78,0,0,18,73,0,0,0,48,47,48,47,
+0,0,10,18,107,0,17,48,0,48,0,0,40,0,8,17,48,0,48,0,0,0,9,14,0,8,18,101,116,97,0,18,73,0,48,18,101,
+116,97,0,58,100,111,116,0,18,78,0,0,18,73,0,0,0,48,58,115,113,114,116,0,18,107,0,0,0,46,18,78,0,48,
+47,0,0,1,0,10,0,114,101,102,114,97,99,116,0,1,0,0,10,73,0,0,1,0,0,10,78,0,0,1,0,0,9,101,116,97,0,0,
+0,1,3,2,1,9,1,107,0,2,17,49,0,48,0,0,18,101,116,97,0,18,101,116,97,0,48,17,49,0,48,0,0,58,100,111,
+116,0,18,78,0,0,18,73,0,0,0,58,100,111,116,0,18,78,0,0,18,73,0,0,0,48,47,48,47,0,0,10,18,107,0,17,
+48,0,48,0,0,40,0,8,58,118,101,99,50,0,17,48,0,48,0,0,0,0,0,9,14,0,8,18,101,116,97,0,18,73,0,48,18,
+101,116,97,0,58,100,111,116,0,18,78,0,0,18,73,0,0,0,48,58,115,113,114,116,0,18,107,0,0,0,46,18,78,
+0,48,47,0,0,1,0,11,0,114,101,102,114,97,99,116,0,1,0,0,11,73,0,0,1,0,0,11,78,0,0,1,0,0,9,101,116,
+97,0,0,0,1,3,2,1,9,1,107,0,2,17,49,0,48,0,0,18,101,116,97,0,18,101,116,97,0,48,17,49,0,48,0,0,58,
+100,111,116,0,18,78,0,0,18,73,0,0,0,58,100,111,116,0,18,78,0,0,18,73,0,0,0,48,47,48,47,0,0,10,18,
+107,0,17,48,0,48,0,0,40,0,8,58,118,101,99,51,0,17,48,0,48,0,0,0,0,0,9,14,0,8,18,101,116,97,0,18,73,
+0,48,18,101,116,97,0,58,100,111,116,0,18,78,0,0,18,73,0,0,0,48,58,115,113,114,116,0,18,107,0,0,0,
+46,18,78,0,48,47,0,0,1,0,12,0,114,101,102,114,97,99,116,0,1,0,0,12,73,0,0,1,0,0,12,78,0,0,1,0,0,9,
+101,116,97,0,0,0,1,3,2,1,9,1,107,0,2,17,49,0,48,0,0,18,101,116,97,0,18,101,116,97,0,48,17,49,0,48,
+0,0,58,100,111,116,0,18,78,0,0,18,73,0,0,0,58,100,111,116,0,18,78,0,0,18,73,0,0,0,48,47,48,47,0,0,
+10,18,107,0,17,48,0,48,0,0,40,0,8,58,118,101,99,52,0,17,48,0,48,0,0,0,0,0,9,14,0,8,18,101,116,97,0,
+18,73,0,48,18,101,116,97,0,58,100,111,116,0,18,78,0,0,18,73,0,0,0,48,58,115,113,114,116,0,18,107,0,
+0,0,46,18,78,0,48,47,0,0,1,0,13,0,109,97,116,114,105,120,67,111,109,112,77,117,108,116,0,1,0,0,13,
+120,0,0,1,0,0,13,121,0,0,0,1,8,58,109,97,116,50,0,18,120,0,16,8,48,0,57,59,120,0,18,121,0,16,8,48,
+0,57,59,120,0,48,0,18,120,0,16,8,48,0,57,59,121,0,18,121,0,16,8,48,0,57,59,121,0,48,0,18,120,0,16,
+10,49,0,57,59,120,0,18,121,0,16,10,49,0,57,59,120,0,48,0,18,120,0,16,10,49,0,57,59,121,0,18,121,0,
+16,10,49,0,57,59,121,0,48,0,0,0,0,1,0,14,0,109,97,116,114,105,120,67,111,109,112,77,117,108,116,0,
+1,0,0,14,120,0,0,1,0,0,14,121,0,0,0,1,8,58,109,97,116,52,0,18,120,0,16,8,48,0,57,59,120,0,18,121,0,
+16,8,48,0,57,59,120,0,48,0,18,120,0,16,8,48,0,57,59,121,0,18,121,0,16,8,48,0,57,59,121,0,48,0,18,
+120,0,16,8,48,0,57,59,122,0,18,121,0,16,8,48,0,57,59,122,0,48,0,18,120,0,16,10,49,0,57,59,120,0,18,
+121,0,16,10,49,0,57,59,120,0,48,0,18,120,0,16,10,49,0,57,59,121,0,18,121,0,16,10,49,0,57,59,121,0,
+48,0,18,120,0,16,10,49,0,57,59,122,0,18,121,0,16,10,49,0,57,59,122,0,48,0,18,120,0,16,10,50,0,57,
+59,120,0,18,121,0,16,10,50,0,57,59,120,0,48,0,18,120,0,16,10,50,0,57,59,121,0,18,121,0,16,10,50,0,
+57,59,121,0,48,0,18,120,0,16,10,50,0,57,59,122,0,18,121,0,16,10,50,0,57,59,122,0,48,0,0,0,0,1,0,15,
+0,109,97,116,114,105,120,67,111,109,112,77,117,108,116,0,1,0,0,15,120,0,0,1,0,0,15,121,0,0,0,1,8,
+58,109,97,116,52,0,18,120,0,16,8,48,0,57,59,120,0,18,121,0,16,8,48,0,57,59,120,0,48,0,18,120,0,16,
+8,48,0,57,59,121,0,18,121,0,16,8,48,0,57,59,121,0,48,0,18,120,0,16,8,48,0,57,59,122,0,18,121,0,16,
+8,48,0,57,59,122,0,48,18,120,0,16,8,48,0,57,59,119,0,18,121,0,16,8,48,0,57,59,119,0,48,46,0,18,120,
+0,16,10,49,0,57,59,120,0,18,121,0,16,10,49,0,57,59,120,0,48,0,18,120,0,16,10,49,0,57,59,121,0,18,
+121,0,16,10,49,0,57,59,121,0,48,0,18,120,0,16,10,49,0,57,59,122,0,18,121,0,16,10,49,0,57,59,122,0,
+48,18,120,0,16,10,49,0,57,59,119,0,18,121,0,16,10,49,0,57,59,119,0,48,46,0,18,120,0,16,10,50,0,57,
+59,120,0,18,121,0,16,10,50,0,57,59,120,0,48,0,18,120,0,16,10,50,0,57,59,121,0,18,121,0,16,10,50,0,
+57,59,121,0,48,0,18,120,0,16,10,50,0,57,59,122,0,18,121,0,16,10,50,0,57,59,122,0,48,18,120,0,16,10,
+50,0,57,59,119,0,18,121,0,16,10,50,0,57,59,119,0,48,46,0,18,120,0,16,10,51,0,57,59,120,0,18,121,0,
+16,10,51,0,57,59,120,0,48,0,18,120,0,16,10,51,0,57,59,121,0,18,121,0,16,10,51,0,57,59,121,0,48,0,
+18,120,0,16,10,51,0,57,59,122,0,18,121,0,16,10,51,0,57,59,122,0,48,18,120,0,16,10,51,0,57,59,119,0,
+18,121,0,16,10,51,0,57,59,119,0,48,46,0,0,0,0,1,0,2,0,108,101,115,115,84,104,97,110,0,1,0,0,10,120,
+0,0,1,0,0,10,121,0,0,0,1,8,58,98,118,101,99,50,0,18,120,0,59,120,0,18,121,0,59,120,0,40,0,18,120,0,
+59,121,0,18,121,0,59,121,0,40,0,0,0,0,1,0,3,0,108,101,115,115,84,104,97,110,0,1,0,0,11,120,0,0,1,0,
+0,11,121,0,0,0,1,8,58,98,118,101,99,51,0,18,120,0,59,120,0,18,121,0,59,120,0,40,0,18,120,0,59,121,
+0,18,121,0,59,121,0,40,0,18,120,0,59,122,0,18,121,0,59,122,0,40,0,0,0,0,1,0,4,0,108,101,115,115,84,
+104,97,110,0,1,0,0,12,120,0,0,1,0,0,12,121,0,0,0,1,8,58,98,118,101,99,52,0,18,120,0,59,120,0,18,
+121,0,59,120,0,40,0,18,120,0,59,121,0,18,121,0,59,121,0,40,0,18,120,0,59,122,0,18,121,0,59,122,0,
+40,0,18,120,0,59,119,0,18,121,0,59,119,0,40,0,0,0,0,1,0,2,0,108,101,115,115,84,104,97,110,0,1,0,0,
+6,120,0,0,1,0,0,6,121,0,0,0,1,8,58,98,118,101,99,50,0,18,120,0,59,120,0,18,121,0,59,120,0,40,0,18,
+120,0,59,121,0,18,121,0,59,121,0,40,0,0,0,0,1,0,3,0,108,101,115,115,84,104,97,110,0,1,0,0,7,120,0,
+0,1,0,0,7,121,0,0,0,1,8,58,98,118,101,99,51,0,18,120,0,59,120,0,18,121,0,59,120,0,40,0,18,120,0,59,
+121,0,18,121,0,59,121,0,40,0,18,120,0,59,122,0,18,121,0,59,122,0,40,0,0,0,0,1,0,4,0,108,101,115,
+115,84,104,97,110,0,1,0,0,8,120,0,0,1,0,0,8,121,0,0,0,1,8,58,98,118,101,99,52,0,18,120,0,59,120,0,
+18,121,0,59,120,0,40,0,18,120,0,59,121,0,18,121,0,59,121,0,40,0,18,120,0,59,122,0,18,121,0,59,122,
+0,40,0,18,120,0,59,119,0,18,121,0,59,119,0,40,0,0,0,0,1,0,2,0,108,101,115,115,84,104,97,110,69,113,
+117,97,108,0,1,0,0,10,120,0,0,1,0,0,10,121,0,0,0,1,8,58,98,118,101,99,50,0,18,120,0,59,120,0,18,
+121,0,59,120,0,42,0,18,120,0,59,121,0,18,121,0,59,121,0,42,0,0,0,0,1,0,3,0,108,101,115,115,84,104,
+97,110,69,113,117,97,108,0,1,0,0,11,120,0,0,1,0,0,11,121,0,0,0,1,8,58,98,118,101,99,51,0,18,120,0,
+59,120,0,18,121,0,59,120,0,42,0,18,120,0,59,121,0,18,121,0,59,121,0,42,0,18,120,0,59,122,0,18,121,
+0,59,122,0,42,0,0,0,0,1,0,4,0,108,101,115,115,84,104,97,110,69,113,117,97,108,0,1,0,0,12,120,0,0,1,
+0,0,12,121,0,0,0,1,8,58,98,118,101,99,52,0,18,120,0,59,120,0,18,121,0,59,120,0,42,0,18,120,0,59,
+121,0,18,121,0,59,121,0,42,0,18,120,0,59,122,0,18,121,0,59,122,0,42,0,18,120,0,59,119,0,18,121,0,
+59,119,0,42,0,0,0,0,1,0,2,0,108,101,115,115,84,104,97,110,69,113,117,97,108,0,1,0,0,6,120,0,0,1,0,
+0,6,121,0,0,0,1,8,58,98,118,101,99,50,0,18,120,0,59,120,0,18,121,0,59,120,0,42,0,18,120,0,59,121,0,
+18,121,0,59,121,0,42,0,0,0,0,1,0,3,0,108,101,115,115,84,104,97,110,69,113,117,97,108,0,1,0,0,7,120,
+0,0,1,0,0,7,121,0,0,0,1,8,58,98,118,101,99,51,0,18,120,0,59,120,0,18,121,0,59,120,0,42,0,18,120,0,
+59,121,0,18,121,0,59,121,0,42,0,18,120,0,59,122,0,18,121,0,59,122,0,42,0,0,0,0,1,0,4,0,108,101,115,
+115,84,104,97,110,69,113,117,97,108,0,1,0,0,8,120,0,0,1,0,0,8,121,0,0,0,1,8,58,98,118,101,99,52,0,
+18,120,0,59,120,0,18,121,0,59,120,0,42,0,18,120,0,59,121,0,18,121,0,59,121,0,42,0,18,120,0,59,122,
+0,18,121,0,59,122,0,42,0,18,120,0,59,119,0,18,121,0,59,119,0,42,0,0,0,0,1,0,2,0,103,114,101,97,116,
+101,114,84,104,97,110,0,1,0,0,10,120,0,0,1,0,0,10,121,0,0,0,1,8,58,98,118,101,99,50,0,18,120,0,59,
+120,0,18,121,0,59,120,0,41,0,18,120,0,59,121,0,18,121,0,59,121,0,41,0,0,0,0,1,0,3,0,103,114,101,97,
+116,101,114,84,104,97,110,0,1,0,0,11,120,0,0,1,0,0,11,121,0,0,0,1,8,58,98,118,101,99,51,0,18,120,0,
+59,120,0,18,121,0,59,120,0,41,0,18,120,0,59,121,0,18,121,0,59,121,0,41,0,18,120,0,59,122,0,18,121,
+0,59,122,0,41,0,0,0,0,1,0,4,0,103,114,101,97,116,101,114,84,104,97,110,0,1,0,0,12,120,0,0,1,0,0,12,
+121,0,0,0,1,8,58,98,118,101,99,52,0,18,120,0,59,120,0,18,121,0,59,120,0,41,0,18,120,0,59,121,0,18,
+121,0,59,121,0,41,0,18,120,0,59,122,0,18,121,0,59,122,0,41,0,18,120,0,59,119,0,18,121,0,59,119,0,
+41,0,0,0,0,1,0,2,0,103,114,101,97,116,101,114,84,104,97,110,0,1,0,0,6,120,0,0,1,0,0,6,121,0,0,0,1,
+8,58,98,118,101,99,50,0,18,120,0,59,120,0,18,121,0,59,120,0,41,0,18,120,0,59,121,0,18,121,0,59,121,
+0,41,0,0,0,0,1,0,3,0,103,114,101,97,116,101,114,84,104,97,110,0,1,0,0,7,120,0,0,1,0,0,7,121,0,0,0,
+1,8,58,98,118,101,99,51,0,18,120,0,59,120,0,18,121,0,59,120,0,41,0,18,120,0,59,121,0,18,121,0,59,
+121,0,41,0,18,120,0,59,122,0,18,121,0,59,122,0,41,0,0,0,0,1,0,4,0,103,114,101,97,116,101,114,84,
+104,97,110,0,1,0,0,8,120,0,0,1,0,0,8,121,0,0,0,1,8,58,98,118,101,99,52,0,18,120,0,59,120,0,18,121,
+0,59,120,0,41,0,18,120,0,59,121,0,18,121,0,59,121,0,41,0,18,120,0,59,122,0,18,121,0,59,122,0,41,0,
+18,120,0,59,119,0,18,121,0,59,119,0,41,0,0,0,0,1,0,2,0,103,114,101,97,116,101,114,84,104,97,110,69,
+113,117,97,108,0,1,0,0,10,120,0,0,1,0,0,10,121,0,0,0,1,8,58,98,118,101,99,50,0,18,120,0,59,120,0,
+18,121,0,59,120,0,43,0,18,120,0,59,121,0,18,121,0,59,121,0,43,0,0,0,0,1,0,3,0,103,114,101,97,116,
+101,114,84,104,97,110,69,113,117,97,108,0,1,0,0,11,120,0,0,1,0,0,11,121,0,0,0,1,8,58,98,118,101,99,
+51,0,18,120,0,59,120,0,18,121,0,59,120,0,43,0,18,120,0,59,121,0,18,121,0,59,121,0,43,0,18,120,0,59,
+122,0,18,121,0,59,122,0,43,0,0,0,0,1,0,4,0,103,114,101,97,116,101,114,84,104,97,110,69,113,117,97,
+108,0,1,0,0,12,120,0,0,1,0,0,12,121,0,0,0,1,8,58,98,118,101,99,52,0,18,120,0,59,120,0,18,121,0,59,
+120,0,43,0,18,120,0,59,121,0,18,121,0,59,121,0,43,0,18,120,0,59,122,0,18,121,0,59,122,0,43,0,18,
+120,0,59,119,0,18,121,0,59,119,0,43,0,0,0,0,1,0,2,0,103,114,101,97,116,101,114,84,104,97,110,69,
+113,117,97,108,0,1,0,0,6,120,0,0,1,0,0,6,121,0,0,0,1,8,58,98,118,101,99,50,0,18,120,0,59,120,0,18,
+121,0,59,120,0,43,0,18,120,0,59,121,0,18,121,0,59,121,0,43,0,0,0,0,1,0,3,0,103,114,101,97,116,101,
+114,84,104,97,110,69,113,117,97,108,0,1,0,0,7,120,0,0,1,0,0,7,121,0,0,0,1,8,58,98,118,101,99,51,0,
+18,120,0,59,120,0,18,121,0,59,120,0,43,0,18,120,0,59,121,0,18,121,0,59,121,0,43,0,18,120,0,59,122,
+0,18,121,0,59,122,0,43,0,0,0,0,1,0,4,0,103,114,101,97,116,101,114,84,104,97,110,69,113,117,97,108,
+0,1,0,0,8,120,0,0,1,0,0,8,121,0,0,0,1,8,58,98,118,101,99,52,0,18,120,0,59,120,0,18,121,0,59,120,0,
+43,0,18,120,0,59,121,0,18,121,0,59,121,0,43,0,18,120,0,59,122,0,18,121,0,59,122,0,43,0,18,120,0,59,
+119,0,18,121,0,59,119,0,43,0,0,0,0,1,0,2,0,101,113,117,97,108,0,1,0,0,10,120,0,0,1,0,0,10,121,0,0,
+0,1,8,58,98,118,101,99,50,0,18,120,0,59,120,0,18,121,0,59,120,0,38,0,18,120,0,59,121,0,18,121,0,59,
+121,0,38,0,0,0,0,1,0,3,0,101,113,117,97,108,0,1,0,0,11,120,0,0,1,0,0,11,121,0,0,0,1,8,58,98,118,
+101,99,51,0,18,120,0,59,120,0,18,121,0,59,120,0,38,0,18,120,0,59,121,0,18,121,0,59,121,0,38,0,18,
+120,0,59,122,0,18,121,0,59,122,0,38,0,0,0,0,1,0,4,0,101,113,117,97,108,0,1,0,0,12,120,0,0,1,0,0,12,
+121,0,0,0,1,8,58,98,118,101,99,52,0,18,120,0,59,120,0,18,121,0,59,120,0,38,0,18,120,0,59,121,0,18,
+121,0,59,121,0,38,0,18,120,0,59,122,0,18,121,0,59,122,0,38,0,18,120,0,59,119,0,18,121,0,59,119,0,
+38,0,0,0,0,1,0,2,0,101,113,117,97,108,0,1,0,0,6,120,0,0,1,0,0,6,121,0,0,0,1,8,58,98,118,101,99,50,
+0,18,120,0,59,120,0,18,121,0,59,120,0,38,0,18,120,0,59,121,0,18,121,0,59,121,0,38,0,0,0,0,1,0,3,0,
+101,113,117,97,108,0,1,0,0,7,120,0,0,1,0,0,7,121,0,0,0,1,8,58,98,118,101,99,51,0,18,120,0,59,120,0,
+18,121,0,59,120,0,38,0,18,120,0,59,121,0,18,121,0,59,121,0,38,0,18,120,0,59,122,0,18,121,0,59,122,
+0,38,0,0,0,0,1,0,4,0,101,113,117,97,108,0,1,0,0,8,120,0,0,1,0,0,8,121,0,0,0,1,8,58,98,118,101,99,
+52,0,18,120,0,59,120,0,18,121,0,59,120,0,38,0,18,120,0,59,121,0,18,121,0,59,121,0,38,0,18,120,0,59,
+122,0,18,121,0,59,122,0,38,0,18,120,0,59,119,0,18,121,0,59,119,0,38,0,0,0,0,1,0,2,0,110,111,116,69,
+113,117,97,108,0,1,0,0,10,120,0,0,1,0,0,10,121,0,0,0,1,8,58,98,118,101,99,50,0,18,120,0,59,120,0,
+18,121,0,59,120,0,39,0,18,120,0,59,121,0,18,121,0,59,121,0,39,0,0,0,0,1,0,3,0,110,111,116,69,113,
+117,97,108,0,1,0,0,11,120,0,0,1,0,0,11,121,0,0,0,1,8,58,98,118,101,99,51,0,18,120,0,59,120,0,18,
+121,0,59,120,0,39,0,18,120,0,59,121,0,18,121,0,59,121,0,39,0,18,120,0,59,122,0,18,121,0,59,122,0,
+39,0,0,0,0,1,0,4,0,110,111,116,69,113,117,97,108,0,1,0,0,12,120,0,0,1,0,0,12,121,0,0,0,1,8,58,98,
+118,101,99,52,0,18,120,0,59,120,0,18,121,0,59,120,0,39,0,18,120,0,59,121,0,18,121,0,59,121,0,39,0,
+18,120,0,59,122,0,18,121,0,59,122,0,39,0,18,120,0,59,119,0,18,121,0,59,119,0,39,0,0,0,0,1,0,2,0,
+110,111,116,69,113,117,97,108,0,1,0,0,6,120,0,0,1,0,0,6,121,0,0,0,1,8,58,98,118,101,99,50,0,18,120,
+0,59,120,0,18,121,0,59,120,0,39,0,18,120,0,59,121,0,18,121,0,59,121,0,39,0,0,0,0,1,0,3,0,110,111,
+116,69,113,117,97,108,0,1,0,0,7,120,0,0,1,0,0,7,121,0,0,0,1,8,58,98,118,101,99,51,0,18,120,0,59,
+120,0,18,121,0,59,120,0,39,0,18,120,0,59,121,0,18,121,0,59,121,0,39,0,18,120,0,59,122,0,18,121,0,
+59,122,0,39,0,0,0,0,1,0,4,0,110,111,116,69,113,117,97,108,0,1,0,0,8,120,0,0,1,0,0,8,121,0,0,0,1,8,
+58,98,118,101,99,52,0,18,120,0,59,120,0,18,121,0,59,120,0,39,0,18,120,0,59,121,0,18,121,0,59,121,0,
+39,0,18,120,0,59,122,0,18,121,0,59,122,0,39,0,18,120,0,59,119,0,18,121,0,59,119,0,39,0,0,0,0,1,0,1,
+0,97,110,121,0,1,0,0,2,120,0,0,0,1,8,18,120,0,59,120,0,18,120,0,59,121,0,32,0,0,1,0,1,0,97,110,121,
+0,1,0,0,3,120,0,0,0,1,8,18,120,0,59,120,0,18,120,0,59,121,0,32,18,120,0,59,122,0,32,0,0,1,0,1,0,97,
+110,121,0,1,0,0,4,120,0,0,0,1,8,18,120,0,59,120,0,18,120,0,59,121,0,32,18,120,0,59,122,0,32,18,120,
+0,59,119,0,32,0,0,1,0,1,0,97,108,108,0,1,0,0,2,120,0,0,0,1,8,18,120,0,59,120,0,18,120,0,59,121,0,
+34,0,0,1,0,1,0,97,108,108,0,1,0,0,3,120,0,0,0,1,8,18,120,0,59,120,0,18,120,0,59,121,0,34,18,120,0,
+59,122,0,34,0,0,1,0,1,0,97,108,108,0,1,0,0,4,120,0,0,0,1,8,18,120,0,59,120,0,18,120,0,59,121,0,34,
+18,120,0,59,122,0,34,18,120,0,59,119,0,34,0,0,1,0,2,0,110,111,116,0,1,0,0,2,120,0,0,0,1,8,58,98,
+118,101,99,50,0,18,120,0,59,120,0,56,0,18,120,0,59,121,0,56,0,0,0,0,1,0,3,0,110,111,116,0,1,0,0,3,
+120,0,0,0,1,8,58,98,118,101,99,51,0,18,120,0,59,120,0,56,0,18,120,0,59,121,0,56,0,18,120,0,59,122,
+0,56,0,0,0,0,1,0,4,0,110,111,116,0,1,0,0,4,120,0,0,0,1,8,58,98,118,101,99,52,0,18,120,0,59,120,0,
+56,0,18,120,0,59,121,0,56,0,18,120,0,59,122,0,56,0,18,120,0,59,119,0,56,0,0,0,0,1,0,12,0,116,101,
+120,116,117,114,101,49,68,0,1,0,0,16,115,97,109,112,108,101,114,0,0,1,0,0,9,99,111,111,114,100,0,0,
+0,1,8,58,118,101,99,52,0,17,48,0,48,0,0,0,0,0,0,1,0,12,0,116,101,120,116,117,114,101,49,68,80,114,
+111,106,0,1,0,0,16,115,97,109,112,108,101,114,0,0,1,0,0,10,99,111,111,114,100,0,0,0,1,8,58,116,101,
+120,116,117,114,101,49,68,0,18,115,97,109,112,108,101,114,0,0,18,99,111,111,114,100,0,59,115,0,18,
+99,111,111,114,100,0,59,116,0,49,0,0,0,0,1,0,12,0,116,101,120,116,117,114,101,49,68,80,114,111,106,
+0,1,0,0,16,115,97,109,112,108,101,114,0,0,1,0,0,12,99,111,111,114,100,0,0,0,1,8,58,116,101,120,116,
+117,114,101,49,68,0,18,115,97,109,112,108,101,114,0,0,18,99,111,111,114,100,0,59,115,0,18,99,111,
+111,114,100,0,59,113,0,49,0,0,0,0,1,0,12,0,116,101,120,116,117,114,101,50,68,0,1,0,0,17,115,97,109,
+112,108,101,114,0,0,1,0,0,10,99,111,111,114,100,0,0,0,1,8,58,118,101,99,52,0,17,48,0,48,0,0,0,0,0,
+0,1,0,12,0,116,101,120,116,117,114,101,50,68,80,114,111,106,0,1,0,0,17,115,97,109,112,108,101,114,
+0,0,1,0,0,11,99,111,111,114,100,0,0,0,1,8,58,116,101,120,116,117,114,101,50,68,0,18,115,97,109,112,
+108,101,114,0,0,58,118,101,99,50,0,18,99,111,111,114,100,0,59,115,0,18,99,111,111,114,100,0,59,112,
+0,49,0,18,99,111,111,114,100,0,59,116,0,18,99,111,111,114,100,0,59,112,0,49,0,0,0,0,0,0,1,0,12,0,
+116,101,120,116,117,114,101,50,68,80,114,111,106,0,1,0,0,17,115,97,109,112,108,101,114,0,0,1,0,0,
+12,99,111,111,114,100,0,0,0,1,8,58,116,101,120,116,117,114,101,50,68,0,18,115,97,109,112,108,101,
+114,0,0,58,118,101,99,50,0,18,99,111,111,114,100,0,59,115,0,18,99,111,111,114,100,0,59,113,0,49,0,
+18,99,111,111,114,100,0,59,116,0,18,99,111,111,114,100,0,59,113,0,49,0,0,0,0,0,0,1,0,12,0,116,101,
+120,116,117,114,101,51,68,0,1,0,0,18,115,97,109,112,108,101,114,0,0,1,0,0,11,99,111,111,114,100,0,
+0,0,1,8,58,118,101,99,52,0,17,48,0,48,0,0,0,0,0,0,1,0,12,0,116,101,120,116,117,114,101,51,68,80,
+114,111,106,0,1,0,0,18,115,97,109,112,108,101,114,0,0,1,0,0,12,99,111,111,114,100,0,0,0,1,8,58,116,
+101,120,116,117,114,101,51,68,0,18,115,97,109,112,108,101,114,0,0,58,118,101,99,51,0,18,99,111,111,
+114,100,0,59,115,0,18,99,111,111,114,100,0,59,113,0,49,0,18,99,111,111,114,100,0,59,116,0,18,99,
+111,111,114,100,0,59,113,0,49,0,18,99,111,111,114,100,0,59,112,0,18,99,111,111,114,100,0,59,113,0,
+49,0,0,0,0,0,0,1,0,12,0,116,101,120,116,117,114,101,67,117,98,101,0,1,0,0,19,115,97,109,112,108,
+101,114,0,0,1,0,0,11,99,111,111,114,100,0,0,0,1,8,58,118,101,99,52,0,17,48,0,48,0,0,0,0,0,0,1,0,12,
+0,115,104,97,100,111,119,49,68,0,1,0,0,20,115,97,109,112,108,101,114,0,0,1,0,0,11,99,111,111,114,
+100,0,0,0,1,8,58,118,101,99,52,0,17,48,0,48,0,0,0,0,0,0,1,0,12,0,115,104,97,100,111,119,50,68,0,1,
+0,0,21,115,97,109,112,108,101,114,0,0,1,0,0,11,99,111,111,114,100,0,0,0,1,8,58,118,101,99,52,0,17,
+48,0,48,0,0,0,0,0,0,1,0,12,0,115,104,97,100,111,119,49,68,80,114,111,106,0,1,0,0,20,115,97,109,112,
+108,101,114,0,0,1,0,0,12,99,111,111,114,100,0,0,0,1,8,58,115,104,97,100,111,119,49,68,0,18,115,97,
+109,112,108,101,114,0,0,58,118,101,99,51,0,18,99,111,111,114,100,0,59,115,0,18,99,111,111,114,100,
+0,59,113,0,49,0,17,48,0,48,0,0,0,18,99,111,111,114,100,0,59,112,0,18,99,111,111,114,100,0,59,113,0,
+49,0,0,0,0,0,0,1,0,12,0,115,104,97,100,111,119,50,68,80,114,111,106,0,1,0,0,21,115,97,109,112,108,
+101,114,0,0,1,0,0,12,99,111,111,114,100,0,0,0,1,8,58,115,104,97,100,111,119,50,68,0,18,115,97,109,
+112,108,101,114,0,0,58,118,101,99,51,0,18,99,111,111,114,100,0,59,115,0,18,99,111,111,114,100,0,59,
+113,0,49,0,18,99,111,111,114,100,0,59,116,0,18,99,111,111,114,100,0,59,113,0,49,0,18,99,111,111,
+114,100,0,59,112,0,18,99,111,111,114,100,0,59,113,0,49,0,0,0,0,0,0,1,0,9,0,110,111,105,115,101,49,
+0,1,0,0,9,120,0,0,0,1,8,17,48,0,48,0,0,0,0,1,0,9,0,110,111,105,115,101,49,0,1,0,0,10,120,0,0,0,1,8,
+17,48,0,48,0,0,0,0,1,0,9,0,110,111,105,115,101,49,0,1,0,0,11,120,0,0,0,1,8,17,48,0,48,0,0,0,0,1,0,
+9,0,110,111,105,115,101,49,0,1,0,0,12,120,0,0,0,1,8,17,48,0,48,0,0,0,0,1,0,10,0,110,111,105,115,
+101,50,0,1,0,0,9,120,0,0,0,1,8,58,118,101,99,50,0,17,48,0,48,0,0,0,0,0,0,1,0,10,0,110,111,105,115,
+101,50,0,1,0,0,10,120,0,0,0,1,8,58,118,101,99,50,0,17,48,0,48,0,0,0,0,0,0,1,0,10,0,110,111,105,115,
+101,50,0,1,0,0,11,120,0,0,0,1,8,58,118,101,99,50,0,17,48,0,48,0,0,0,0,0,0,1,0,10,0,110,111,105,115,
+101,50,0,1,0,0,12,120,0,0,0,1,8,58,118,101,99,50,0,17,48,0,48,0,0,0,0,0,0,1,0,11,0,110,111,105,115,
+101,51,0,1,0,0,9,120,0,0,0,1,8,58,118,101,99,51,0,17,48,0,48,0,0,0,0,0,0,1,0,11,0,110,111,105,115,
+101,51,0,1,0,0,10,120,0,0,0,1,8,58,118,101,99,51,0,17,48,0,48,0,0,0,0,0,0,1,0,11,0,110,111,105,115,
+101,51,0,1,0,0,11,120,0,0,0,1,8,58,118,101,99,51,0,17,48,0,48,0,0,0,0,0,0,1,0,11,0,110,111,105,115,
+101,51,0,1,0,0,12,120,0,0,0,1,8,58,118,101,99,51,0,17,48,0,48,0,0,0,0,0,0,1,0,12,0,110,111,105,115,
+101,52,0,1,0,0,9,120,0,0,0,1,8,58,118,101,99,52,0,17,48,0,48,0,0,0,0,0,0,1,0,12,0,110,111,105,115,
+101,52,0,1,0,0,10,120,0,0,0,1,8,58,118,101,99,52,0,17,48,0,48,0,0,0,0,0,0,1,0,12,0,110,111,105,115,
+101,52,0,1,0,0,11,120,0,0,0,1,8,58,118,101,99,52,0,17,48,0,48,0,0,0,0,0,0,1,0,12,0,110,111,105,115,
+101,52,0,1,0,0,12,120,0,0,0,1,8,58,118,101,99,52,0,17,48,0,48,0,0,0,0,0,0,0
