@@ -845,8 +845,8 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    }
    _mesa_DeleteHashTable(ss->TexObjects);
 
-#if FEATURE_NV_vertex_program
-   /* Free vertex programs */
+#if defined(FEATURE_NV_vertex_program) || defined(FEATURE_NV_fragment_program)
+   /* Free vertex/fragment programs */
    while (1) {
       GLuint prog = _mesa_HashFirstEntry(ss->Programs);
       if (prog) {
@@ -868,15 +868,33 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
 #if FEATURE_ARB_fragment_program
    _mesa_delete_program(ctx, ss->DefaultFragmentProgram);
 #endif
+
 #if FEATURE_ATI_fragment_shader
-   _mesa_free(ss->DefaultFragmentShader);
+   /* Free ATI fragment shaders */
+   while (1) {
+      GLuint prog = _mesa_HashFirstEntry(ss->ATIShaders);
+      if (prog) {
+         struct ati_fragment_shader *s = (struct ati_fragment_shader *)
+            _mesa_HashLookup(ss->ATIShaders, prog);
+         ASSERT(s);
+         _mesa_delete_ati_fragment_shader(ctx, s);
+         _mesa_HashRemove(ss->ATIShaders, prog);
+      }
+      else {
+         break;
+      }
+   }
+   _mesa_DeleteHashTable(ss->ATIShaders);
+   _mesa_delete_ati_fragment_shader(ctx, ss->DefaultFragmentShader);
 #endif
 
 #if FEATURE_ARB_vertex_buffer_object
    _mesa_DeleteHashTable(ss->BufferObjects);
 #endif
 
+#if FEATURE_ARB_shader_objects
    _mesa_DeleteHashTable (ss->GL2Objects);
+#endif
 
 #if FEATURE_EXT_framebuffer_object
    _mesa_DeleteHashTable(ss->FrameBuffers);
