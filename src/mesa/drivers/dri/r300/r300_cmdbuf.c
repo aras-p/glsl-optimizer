@@ -169,16 +169,24 @@ static __inline__ void r300DoEmitState(r300ContextPtr r300, GLboolean dirty)
 		}
 	}
 
-
 	/* Emit WAIT */
 	*dest = cmdwait(R300_WAIT_3D | R300_WAIT_3D_CLEAN);
 	dest ++;
 	r300->cmdbuf.count_used ++;
 
+	*dest = cmdpacket0(R300_TX_CNTL, 1);
+	dest ++;
+	r300->cmdbuf.count_used ++;
+	
+	*dest = 0x0;
+	dest ++;
+	r300->cmdbuf.count_used ++;
+	
 	/* Emit END3D */
 	*dest = cmdpacify();
 	dest ++;
 	r300->cmdbuf.count_used ++;
+	
 
 	/* Emit actual atoms */
 
@@ -273,7 +281,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 {
 	int size, mtu;
 	
-	r300->hw.max_state_size = 2; /* reserve extra space for WAIT_IDLE */
+	r300->hw.max_state_size = 2+2; /* reserve extra space for WAIT_IDLE and tex cache flush */
 
 	mtu = r300->radeon.glCtx->Const.MaxTextureUnits;
 	if (RADEON_DEBUG & DEBUG_TEXTURE) {
