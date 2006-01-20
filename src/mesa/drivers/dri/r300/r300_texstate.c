@@ -128,8 +128,8 @@ static const struct {
 	    _ASSIGN(RGB565_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
 	    _ASSIGN(ARGB4444, R300_EASY_TX_FORMAT(X, Y, Z, W, W4Z4Y4X4)),
 	    _ASSIGN(ARGB4444_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W4Z4Y4X4)),
-	    _ASSIGN(ARGB1555, R300_EASY_TX_FORMAT(Z, Y, X, W, W1Z5Y5X5)),
-	    _ASSIGN(ARGB1555_REV, R300_EASY_TX_FORMAT(Z, Y, X, W, W1Z5Y5X5)),
+	    _ASSIGN(ARGB1555, R300_EASY_TX_FORMAT(X, Y, Z, W, W1Z5Y5X5)),
+	    _ASSIGN(ARGB1555_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W1Z5Y5X5)),
 	    _ASSIGN(AL88, R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8)),
 	    _ASSIGN(AL88_REV, R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8)),
 	    _ASSIGN(RGB332, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z3Y3X2)),
@@ -226,7 +226,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	  /* find image size in bytes */
 	  if (texImage->IsCompressed) {
 	    if ((t->format & R300_TX_FORMAT_DXT1) == R300_TX_FORMAT_DXT1) {
-	     // fprintf(stderr,"DXT 1 %d %08X\n", texImage->Width, t->format);
+	      // fprintf(stderr,"DXT 1 %d %08X\n", texImage->Width, t->format);
 	      if ((texImage->Width + 3) < 8) /* width one block */
 		size = texImage->CompressedSize * 4;
 	      else if ((texImage->Width + 3) < 16)
@@ -235,7 +235,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	    }
 	    else /* DXT3/5, 16 bytes per block */
 	    {
-	     // fprintf(stderr,"DXT 3/5 %d\n", texImage->Width);
+	      // fprintf(stderr,"DXT 3/5 %d\n", texImage->Width);
 	      if ((texImage->Width + 3) < 8)
 		size = texImage->CompressedSize * 2;
 	      else size = texImage->CompressedSize;
