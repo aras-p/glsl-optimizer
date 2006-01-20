@@ -1,3 +1,28 @@
+/**************************************************************************
+
+Copyright (C) 2004-2005 Nicolai Haehnle et al.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+on the rights to use, copy, modify, merge, publish, distribute, sub
+license, and/or sell copies of the Software, and to permit persons to whom
+the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice (including the next
+paragraph) shall be included in all copies or substantial portions of the
+Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
+THE AUTHOR(S) AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+**************************************************************************/
+
 #ifndef _R300_REG_H
 #define _R300_REG_H
 
@@ -429,6 +454,9 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 /* END */
 
 /* gap */
+/* Zero to flush caches. */
+#define R300_TX_CNTL                        0x4100
+
 /* The upper enable bits are guessed, based on fglrx reported limits. */
 #define R300_TX_ENABLE                      0x4104
 #       define R300_TX_ENABLE_0                  (1 << 0)
