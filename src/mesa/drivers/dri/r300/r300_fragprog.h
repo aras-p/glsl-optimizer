@@ -26,6 +26,12 @@ typedef struct _pfs_reg_t {
 	GLboolean valid:1;
 } pfs_reg_t;
 
+typedef struct r300_fragment_program_swizzle {
+	GLuint length;
+	GLuint src[4];
+	GLuint inst[8];
+} r300_fragment_program_swizzle_t;
+
 /* supported hw opcodes */
 #define PFS_OP_MAD 0
 #define PFS_OP_DP3 1
