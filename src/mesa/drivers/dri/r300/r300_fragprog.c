@@ -360,39 +360,90 @@ static __inline pfs_reg_t absolute(pfs_reg_t r)
 }
 
 static int swz_native(struct r300_fragment_program *rp,
-		      pfs_reg_t src, pfs_reg_t *r)
+		      pfs_reg_t src, pfs_reg_t *r, GLuint arbneg)
 {
 	/* Native swizzle, nothing to see here */
-	*r = src;
+	src.negate_s = (arbneg >> 3) & 1;
+
+	if ((arbneg & 0x7) == 0x0) {
+		src.negate_v = 0;
+		*r = src;
+	} else if ((arbneg & 0x7) == 0x7) {
+		src.negate_v = 1;
+		*r = src;
+	} else {
+		if (!r->valid)
+			*r = get_temp_reg(rp);
+		src.negate_v = 1;
+		emit_arith(rp, PFS_OP_MAD, *r, arbneg & 0x7,
+			   keep(src), pfs_one, pfs_zero, 0);
+		src.negate_v = 0;
+		emit_arith(rp, PFS_OP_MAD, *r,
+			   (arbneg ^ 0x7) | WRITEMASK_W,
+			   src, pfs_one, pfs_zero, 0);
+	}
+
 	return 3;
 }
 
 static int swz_emit_partial(struct r300_fragment_program *rp, pfs_reg_t src,
-			    pfs_reg_t *r, int mask, int mc)
+			    pfs_reg_t *r, int mask, int mc, GLuint arbneg)
 {
+	GLuint tmp;
+	GLuint wmask = 0;
+
 	if (!r->valid)
 		*r = get_temp_reg(rp);
 
 	/* A partial match, src.v_swz/mask define what parts of the
 	 * desired swizzle we match */
-	if (mc + s_mask[mask].count == 3)
-		emit_arith(rp, PFS_OP_MAD, *r, s_mask[mask].mask|WRITEMASK_W,
+	if (mc + s_mask[mask].count == 3) {
+		wmask = WRITEMASK_W;
+		src.negate_s = (arbneg >> 3) & 1;
+	}
+
+	tmp = arbneg & s_mask[mask].mask;
+	if (tmp) {
+		tmp = tmp ^ s_mask[mask].mask;
+		if (tmp) {
+			src.negate_v = 1;
+			emit_arith(rp, PFS_OP_MAD, *r,
+				   arbneg & s_mask[mask].mask,
+				   keep(src), pfs_one, pfs_zero, 0);
+			src.negate_v = 0;
+			if (!wmask) src.no_use = GL_TRUE;
+			else        src.no_use = GL_FALSE;
+			emit_arith(rp, PFS_OP_MAD, *r, tmp | wmask,
+				   src, pfs_one, pfs_zero, 0);
+		} else {
+			src.negate_v = 1;
+			if (!wmask) src.no_use = GL_TRUE;
+			else        src.no_use = GL_FALSE;
+			emit_arith(rp, PFS_OP_MAD, *r,
+				   (arbneg & s_mask[mask].mask) | wmask,
+				   src, pfs_one, pfs_zero, 0);
+			src.negate_v = 0;
+		}
+	} else {
+		if (!wmask) src.no_use = GL_TRUE;
+		else        src.no_use = GL_FALSE;
+		emit_arith(rp, PFS_OP_MAD, *r,
+			   s_mask[mask].mask | wmask,
 			   src, pfs_one, pfs_zero, 0);
-	else
-		emit_arith(rp, PFS_OP_MAD, *r, s_mask[mask].mask, keep(src),
-			   pfs_one, pfs_zero, 0);
+	}
+
 	return s_mask[mask].count;
 }
 
 #define swizzle(r, x, y, z, w) do_swizzle(rp, r, \
-				((SWIZZLE_##x<<0)| \
-				 (SWIZZLE_##y<<3)| \
-				 (SWIZZLE_##z<<6)| \
-				 (SWIZZLE_##w<<9)))
+					  ((SWIZZLE_##x<<0)|	\
+					   (SWIZZLE_##y<<3)|	\
+					   (SWIZZLE_##z<<6)|	\
+					   (SWIZZLE_##w<<9)),	\
+					  0)
 
 static pfs_reg_t do_swizzle(struct r300_fragment_program *rp,
-			    pfs_reg_t src, 
-			    GLuint arbswz)
+			    pfs_reg_t src, GLuint arbswz, GLuint arbneg)
 {
 	pfs_reg_t r = undef;
 	
@@ -415,12 +466,14 @@ static pfs_reg_t do_swizzle(struct r300_fragment_program *rp,
 #define CUR_HASH (v_swiz[src.v_swz].hash & s_mask[c_mask].hash)
 			if (CUR_HASH == (arbswz & s_mask[c_mask].hash)) {
 				if (s_mask[c_mask].count == 3)
-					v_matched += swz_native(rp, src, &r);
+					v_matched += swz_native(rp, src, &r,
+								arbneg);
 				else
 					v_matched += swz_emit_partial(rp, src,
 								      &r,
 								      c_mask,
-								      v_matched);
+								      v_matched,
+								      arbneg);
 
 				if (v_matched == 3)
 					return r;
@@ -455,14 +508,17 @@ static pfs_reg_t t_src(struct r300_fragment_program *rp,
 		r.valid = GL_TRUE;
 		break;
 	case PROGRAM_LOCAL_PARAM:
-		r = emit_param4fv(rp, rp->mesa_program.Base.LocalParams[fpsrc.Index]);
+		r = emit_param4fv(rp,
+				  rp->mesa_program.Base.LocalParams[fpsrc.Index]);
 		break;
 	case PROGRAM_ENV_PARAM:
-		r = emit_param4fv(rp, rp->ctx->FragmentProgram.Parameters[fpsrc.Index]);
+		r = emit_param4fv(rp,
+				  rp->ctx->FragmentProgram.Parameters[fpsrc.Index]);
 		break;
 	case PROGRAM_STATE_VAR:
 	case PROGRAM_NAMED_PARAM:
-		r = emit_param4fv(rp, rp->mesa_program.Base.Parameters->ParameterValues[fpsrc.Index]);
+		r = emit_param4fv(rp,
+				  rp->mesa_program.Base.Parameters->ParameterValues[fpsrc.Index]);
 		break;
 	default:
 		ERROR("unknown SrcReg->File %x\n", fpsrc.File);
@@ -471,14 +527,14 @@ static pfs_reg_t t_src(struct r300_fragment_program *rp,
 
 	/* no point swizzling ONE/ZERO/HALF constants... */
 	if (r.v_swz < SWIZZLE_111 && r.s_swz < SWIZZLE_ZERO)
-		r = do_swizzle(rp, r, fpsrc.Swizzle);
+		r = do_swizzle(rp, r, fpsrc.Swizzle, fpsrc.NegateBase);
 #if 0
 	/* WRONG! Need to be able to do individual component negation,
 	 * should probably handle this in the swizzling code unless
 	 * all components are negated, then we can do this natively */
 	if ((fpsrc.NegateBase & 0xf) == 0xf)
 		r.negate = GL_TRUE;
-#endif
+
 	r.negate_s = (fpsrc.NegateBase >> 3) & 1;
 
 	if ((fpsrc.NegateBase & 0x7) == 0x0) {
@@ -504,6 +560,7 @@ static pfs_reg_t t_src(struct r300_fragment_program *rp,
 			r.negate_v = 0;
 		}
 	}
+#endif
 
 	return r;
 }
