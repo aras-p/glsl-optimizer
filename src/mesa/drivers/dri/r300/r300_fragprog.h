@@ -20,7 +20,8 @@ typedef struct _pfs_reg_t {
 	GLuint index:6;
 	GLuint v_swz:5;
 	GLuint s_swz:5;
-	GLuint negate:1;    //XXX: we need to handle negate individually
+	GLuint negate_v:1;
+	GLuint negate_s:1;
 	GLuint absolute:1;
 	GLboolean no_use:1;
 	GLboolean valid:1;

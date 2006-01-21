@@ -174,7 +174,8 @@ static const pfs_reg_t undef = {
 	index: 0,
 	v_swz: SWIZZLE_XYZ,
 	s_swz: SWIZZLE_W,
-	negate: 0,
+	negate_v: 0,
+	negate_s: 0,
 	absolute: 0,
 	no_use: GL_FALSE,
 	valid: GL_FALSE
@@ -336,7 +337,8 @@ static pfs_reg_t emit_const4fv(struct r300_fragment_program *rp, GLfloat *cp)
 
 static __inline pfs_reg_t negate(pfs_reg_t r)
 {
-	r.negate = 1;
+	r.negate_v = 1;
+	r.negate_s = 1;
 	return r;
 }
 
@@ -429,6 +431,7 @@ static pfs_reg_t do_swizzle(struct r300_fragment_program *rp,
 static pfs_reg_t t_src(struct r300_fragment_program *rp,
 						struct prog_src_register fpsrc) {
 	pfs_reg_t r = undef;
+	pfs_reg_t n = undef;
 
 	switch (fpsrc.File) {
 	case PROGRAM_TEMPORARY:
@@ -454,16 +457,42 @@ static pfs_reg_t t_src(struct r300_fragment_program *rp,
 		ERROR("unknown SrcReg->File %x\n", fpsrc.File);
 		return r;
 	}
-	
+
 	/* no point swizzling ONE/ZERO/HALF constants... */
 	if (r.v_swz < SWIZZLE_111 && r.s_swz < SWIZZLE_ZERO)
 		r = do_swizzle(rp, r, fpsrc.Swizzle);
-	
+#if 0
 	/* WRONG! Need to be able to do individual component negation,
 	 * should probably handle this in the swizzling code unless
 	 * all components are negated, then we can do this natively */
 	if ((fpsrc.NegateBase & 0xf) == 0xf)
 		r.negate = GL_TRUE;
+#endif
+	r.negate_s = (fpsrc.NegateBase >> 3) & 1;
+
+	if ((fpsrc.NegateBase & 0x7) == 0x0) {
+		r.negate_v = 0;
+	} else if ((fpsrc.NegateBase & 0x7) == 0x7) {
+		r.negate_v = 1;
+	} else {
+		if (r.type != REG_TYPE_TEMP) {
+			n = get_temp_reg(rp);
+			emit_arith(rp, PFS_OP_MAD, n, 0x7 ^ fpsrc.NegateBase,
+				   keep(r), pfs_one, pfs_zero, 0);
+			r.negate_v = 1;
+			emit_arith(rp, PFS_OP_MAD, n,
+				   fpsrc.NegateBase & 0x7 | WRITEMASK_W,
+				   keep(r), pfs_one, pfs_zero, 0);
+			r.negate_v = 0;
+			r = n;
+		} else {
+			r.negate_v = 1;
+			emit_arith(rp, PFS_OP_MAD, r,
+				   fpsrc.NegateBase & 0x7 | WRITEMASK_W,
+				   r, pfs_one, pfs_zero, 0);
+			r.negate_v = 0;
+		}
+	}
 
 	return r;
 }
@@ -824,14 +853,14 @@ static void emit_arith(struct r300_fragment_program *rp, int op,
 		if (emit_vop && vop != R300_FPI0_OUTC_REPL_ALPHA) {
 			srcpos = add_src(rp, hwsrc[i], vpos, v_swiz[src[i].v_swz].flags);	
 			vswz[i] = (v_swiz[src[i].v_swz].base + (srcpos * v_swiz[src[i].v_swz].stride)) |
-						(src[i].negate	 ? ARG_NEG : 0) |
+						(src[i].negate_v ? ARG_NEG : 0) |
 						(src[i].absolute ? ARG_ABS : 0);
 		} else vswz[i] = R300_FPI0_ARGC_ZERO;
 		
 		if (emit_sop) {
 			srcpos = add_src(rp, hwsrc[i], spos, s_swiz[src[i].s_swz].flags);
 			sswz[i] = (s_swiz[src[i].s_swz].base + (srcpos * s_swiz[src[i].s_swz].stride)) |
-						(src[i].negate	 ? ARG_NEG : 0) |
+						(src[i].negate_s ? ARG_NEG : 0) |
 						(src[i].absolute ? ARG_ABS : 0);	
 		} else sswz[i] = R300_FPI2_ARGA_ZERO;
 	}
