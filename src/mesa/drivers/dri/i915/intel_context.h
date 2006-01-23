@@ -111,9 +111,12 @@ struct intel_context
       void (*update_texture_state)( intelContextPtr intel );
 
       void (*render_start)( intelContextPtr intel );
-      void (*set_draw_offset)( intelContextPtr intel, int offset );
+      void (*set_color_region)( intelContextPtr intel, const intelRegion *reg );
+      void (*set_z_region)( intelContextPtr intel, const intelRegion *reg );
+      void (*update_color_z_regions)(intelContextPtr intel,
+                                     const intelRegion *colorRegion,
+                                     const intelRegion *depthRegion);
       void (*emit_flush)( intelContextPtr intel );
-
       void (*reduced_primitive_state)( intelContextPtr intel, GLenum rprim );
 
       GLboolean (*check_vertex_size)( intelContextPtr intel, GLuint expected );
@@ -121,6 +124,9 @@ struct intel_context
       void (*clear_with_tris)( intelContextPtr intel, GLbitfield mask,
 			       GLboolean all, 
 			       GLint cx, GLint cy, GLint cw, GLint ch);
+
+      void (*rotate_window)( intelContextPtr intel,
+                             __DRIdrawablePrivate *dPriv, GLuint srcBuf);
 
       intelTextureObjectPtr (*alloc_tex_obj)( struct gl_texture_object *tObj );
 
@@ -135,6 +141,11 @@ struct intel_context
       GLint size;
       GLint space;
       GLubyte *ptr;
+      GLuint counter;
+      GLuint last_emit_state;
+      GLboolean contains_geometry;
+      const char *func;
+      GLuint last_swap;
    } batch;
       
    struct {
@@ -204,9 +215,11 @@ struct intel_context
    intel_line_func draw_line;
    intel_tri_func draw_tri;
 
-   /* These refer to the current draw (front vs. back) buffer:
+   /* Drawing buffer state
     */
-   GLuint drawOffset;		/* agp offset of drawbuffer */
+   intelRegion *drawRegion;  /* current drawing buffer */
+   intelRegion *readRegion;  /* current reading buffer */
+
    int drawX;			/* origin of drawable in draw buffer */
    int drawY;
    GLuint numClipRects;		/* cliprects for that buffer */
@@ -411,6 +424,7 @@ extern int INTEL_DEBUG;
 #define PCI_CHIP_I915_G			0x2582
 #define PCI_CHIP_I915_GM		0x2592
 #define PCI_CHIP_I945_G			0x2772
+#define PCI_CHIP_I945_GM		0x27A2
 
 
 /* ================================================================

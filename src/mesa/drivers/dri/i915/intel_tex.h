@@ -39,4 +39,7 @@ void intelDestroyTexObj( intelContextPtr intel, intelTextureObjectPtr t );
 int intelUploadTexImages( intelContextPtr intel, intelTextureObjectPtr t,
 			  GLuint face );
 
+GLboolean 
+intel_driReinitTextureHeap( driTexHeap *heap,
+			    unsigned size );
 #endif

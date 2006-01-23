@@ -45,7 +45,7 @@
 static int intelEmitIrqLocked( intelContextPtr intel )
 {
    drmI830IrqEmit ie;
-   int ret, seq = 0;
+   int ret, seq;
       
    assert(((*(int *)intel->driHwLock) & ~DRM_LOCK_CONT) == 
 	  (DRM_LOCK_HELD|intel->hHWContext));
@@ -130,7 +130,7 @@ void intelRefillBatchLocked( intelContextPtr intel, GLboolean allow_unlock )
       fprintf(stderr, "%s: now using half %d\n", __FUNCTION__, buf);
 
    intel->batch.start_offset = intel->alloc.offset + buf * half;
-   intel->batch.ptr = (GLubyte *)intel->alloc.ptr + buf * half;
+   intel->batch.ptr = (char *)intel->alloc.ptr + buf * half;
    intel->batch.size = half - 8;
    intel->batch.space = half - 8;
    assert(intel->batch.space >= 0);
@@ -149,14 +149,15 @@ void intelFlushBatchLocked( intelContextPtr intel,
    assert(intel->locked);
 
    if (0)
-      fprintf(stderr, "%s used %d of %d offset %x..%x refill %d\n",
+      fprintf(stderr, "%s used %d of %d offset %x..%x refill %d (started in %s)\n",
 	      __FUNCTION__, 
 	      (intel->batch.size - intel->batch.space), 
 	      intel->batch.size,
 	      intel->batch.start_offset,
 	      intel->batch.start_offset + 
 	      (intel->batch.size - intel->batch.space), 
-	      refill);
+	      refill,
+	      intel->batch.func);
 
    /* Throw away non-effective packets.  Won't work once we have
     * hardware contexts which would preserve statechanges beyond a
@@ -183,6 +184,12 @@ void intelFlushBatchLocked( intelContextPtr intel,
    }
 
    if (intel->batch.space != intel->batch.size) {
+
+      if (intel->sarea->ctxOwner != intel->hHWContext) {
+	 intel->perf_boxes |= I830_BOX_LOST_CONTEXT;
+	 intel->sarea->ctxOwner = intel->hHWContext;
+      }
+
       batch.start = intel->batch.start_offset;
       batch.used = intel->batch.size - intel->batch.space;
       batch.cliprects = intel->pClipRects;
@@ -209,13 +216,6 @@ void intelFlushBatchLocked( intelContextPtr intel,
  	 intel_dump_batchbuffer( batch.start,
 				 (int *)(intel->batch.ptr - batch.used),
 				 batch.used );
-
-      if (0)
-	 fprintf(stderr, "%s: 0x%x..0x%x DR4: %x cliprects: %d\n",
-		 __FUNCTION__, 
-		 batch.start, 
-		 batch.start + batch.used,
-		 batch.DR4, batch.num_cliprects);
 
       intel->batch.start_offset += batch.used;
       intel->batch.size -= batch.used;
@@ -268,6 +268,12 @@ void intelFlushBatchLocked( intelContextPtr intel,
       /* FIXME: use hardware contexts to avoid 'losing' hardware after
        * each buffer flush.
        */
+      if (intel->batch.contains_geometry) 
+	 assert(intel->batch.last_emit_state == intel->batch.counter);
+
+      intel->batch.counter++;
+      intel->batch.contains_geometry = 0;
+      intel->batch.func = 0;
       intel->vtbl.lost_hardware( intel );
    }
 
@@ -288,11 +294,6 @@ void intelFlushBatch( intelContextPtr intel, GLboolean refill )
 }
 
 
-
-
-
-
-
 void intelWaitForIdle( intelContextPtr intel )
 {   
    if (0)
@@ -309,7 +310,28 @@ void intelWaitForIdle( intelContextPtr intel )
 }
 
 
+/**
+ * Check if we need to rotate/warp the front color buffer to the
+ * rotated screen.  We generally need to do this when we get a glFlush
+ * or glFinish after drawing to the front color buffer.
+ */
+static void
+intelCheckFrontRotate(GLcontext *ctx)
+{
+   intelContextPtr intel = INTEL_CONTEXT( ctx );
+   if (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT) {
+      intelScreenPrivate *screen = intel->intelScreen;
+      if (screen->current_rotation != 0) {
+         __DRIdrawablePrivate *dPriv = intel->driDrawable;
+         intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
+      }
+   }
+}
 
+
+/**
+ * NOT directly called via glFlush.
+ */
 void intelFlush( GLcontext *ctx )
 {
    intelContextPtr intel = INTEL_CONTEXT( ctx );
@@ -323,11 +345,23 @@ void intelFlush( GLcontext *ctx )
       intelFlushBatch( intel, GL_FALSE );
 }
 
+
+/**
+ * Called via glFlush.
+ */
+void intelglFlush( GLcontext *ctx )
+{
+   intelFlush(ctx);
+   intelCheckFrontRotate(ctx);
+}
+
+
 void intelFinish( GLcontext *ctx  ) 
 {
    intelContextPtr intel = INTEL_CONTEXT( ctx );
    intelFlush( ctx );
    intelWaitForIdle( intel );
+   intelCheckFrontRotate(ctx);
 }
 
 
@@ -395,10 +429,19 @@ void intelClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 }
 
 
+void
+intelRotateWindow(intelContextPtr intel, __DRIdrawablePrivate *dPriv,
+                  GLuint srcBuffer)
+{
+   if (intel->vtbl.rotate_window) {
+      intel->vtbl.rotate_window(intel, dPriv, srcBuffer);
+   }
+}
+
 
 void *intelAllocateAGP( intelContextPtr intel, GLsizei size )
 {
-   int region_offset = 0;
+   int region_offset;
    drmI830MemAlloc alloc;
    int ret;
 

@@ -27,10 +27,12 @@ DRIVER_SOURCES = \
 	intel_ioctl.c \
 	intel_pixel.c \
 	intel_render.c \
+	intel_rotate.c \
 	intel_screen.c \
 	intel_span.c \
 	intel_state.c \
 	intel_tex.c \
+	intel_texmem.c \
 	intel_tris.c 
 
 C_SOURCES = \

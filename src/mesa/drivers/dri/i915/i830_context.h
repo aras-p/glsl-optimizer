@@ -209,7 +209,9 @@ extern void
 i830ClearWithTris( intelContextPtr intel, GLbitfield mask,
 		   GLboolean all, GLint cx, GLint cy, GLint cw, GLint ch);
 
+extern void
+i830RotateWindow(intelContextPtr intel, __DRIdrawablePrivate *dPriv,
+                 GLuint srcBuf);
 
-	
 #endif
 

@@ -167,7 +167,6 @@ int intel_translate_logic_op( GLenum opcode )
 static void intelDrawBuffer(GLcontext *ctx, GLenum mode )
 {
    intelContextPtr intel = INTEL_CONTEXT(ctx);
-   intelScreenPrivate *screen = intel->intelScreen;
    int front = 0;
  
    if (!ctx->DrawBuffer)
@@ -193,12 +192,14 @@ static void intelDrawBuffer(GLcontext *ctx, GLenum mode )
    intelSetFrontClipRects( intel );
 
    if (front) {
-      intel->drawOffset = screen->front.offset;
+      intel->drawRegion = &intel->intelScreen->front;
+      intel->readRegion = &intel->intelScreen->front;
    } else {
-      intel->drawOffset = screen->back.offset;
+      intel->drawRegion = &intel->intelScreen->back;
+      intel->readRegion = &intel->intelScreen->back;
    }
 
-   intel->vtbl.set_draw_offset( intel, intel->drawOffset );
+   intel->vtbl.set_color_region( intel, intel->drawRegion );
 }
 
 static void intelReadBuffer( GLcontext *ctx, GLenum mode )

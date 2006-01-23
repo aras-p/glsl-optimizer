@@ -36,6 +36,8 @@
 #define I915_FALLBACK_STIPPLE		 0x8000
 #define I915_FALLBACK_PROGRAM		 0x10000
 #define I915_FALLBACK_LOGICOP		 0x20000
+#define I915_FALLBACK_POLYGON_SMOOTH	 0x40000
+#define I915_FALLBACK_POINT_SMOOTH	 0x80000
 
 #define I915_UPLOAD_CTX              0x1
 #define I915_UPLOAD_BUFFERS          0x2
@@ -309,7 +311,6 @@ extern void i915_print_ureg( const char *msg, GLuint ureg );
  */
 extern void i915InitStateFunctions( struct dd_function_table *functions );
 extern void i915InitState( i915ContextPtr i915 );
-extern void i915_update_fog( GLcontext *ctx );
 
 
 /*======================================================================
@@ -340,6 +341,10 @@ extern void
 i915ClearWithTris( intelContextPtr intel, GLbitfield mask,
 		   GLboolean all, GLint cx, GLint cy, GLint cw, GLint ch);
 
+
+extern void
+i915RotateWindow(intelContextPtr intel, __DRIdrawablePrivate *dPriv,
+                 GLuint srcBuf);
 
 /*======================================================================
  * i915_fragprog.c

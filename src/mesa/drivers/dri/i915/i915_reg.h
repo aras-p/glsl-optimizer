@@ -749,6 +749,8 @@
 #define MS4_MAX_LOD_SHIFT		9
 #define MS4_MAX_LOD_MASK		(0x3f<<9)
 #define MS4_MIP_LAYOUT_LEGACY           (0<<8)
+#define MS4_MIP_LAYOUT_BELOW_LPT        (0<<8)
+#define MS4_MIP_LAYOUT_RIGHT_LPT        (1<<8)
 #define MS4_VOLUME_DEPTH_SHIFT          0    
 #define MS4_VOLUME_DEPTH_MASK           (0xff<<0)
 

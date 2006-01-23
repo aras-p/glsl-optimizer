@@ -49,13 +49,19 @@ static void intel_fill_box( intelContextPtr intel,
 			    GLshort w, GLshort h,
 			    GLubyte r, GLubyte g, GLubyte b )
 {
-   intelEmitFillBlitLocked( intel, 
-			    intel->intelScreen->cpp,
-			    intel->intelScreen->back.pitch,
-			    intel->intelScreen->front.offset,
-			    x, y, w, h,
-			    INTEL_PACKCOLOR(intel->intelScreen->fbFormat,
-					    r,g,b,0xff));
+   x += intel->drawX;
+   y += intel->drawY;
+
+   if (x >= 0 && y >= 0 &&
+       x+w < intel->intelScreen->width &&
+       y+h < intel->intelScreen->height)
+      intelEmitFillBlitLocked( intel, 
+			       intel->intelScreen->cpp,
+			       intel->intelScreen->back.pitch,
+			       intel->intelScreen->back.offset,
+			       x, y, w, h,
+			       INTEL_PACKCOLOR(intel->intelScreen->fbFormat,
+					       r,g,b,0xff));
 }
 
 static void intel_draw_performance_boxes( intelContextPtr intel )
@@ -203,9 +209,10 @@ void intelStartInlinePrimitive( intelContextPtr intel, GLuint prim )
    
    /* Make sure there is some space in this buffer:
     */
-   if (intel->vertex_size * 10 * sizeof(GLuint) >= intel->batch.space)
+   if (intel->vertex_size * 10 * sizeof(GLuint) >= intel->batch.space) {
       intelFlushBatch(intel, GL_TRUE); 
-
+      intel->vtbl.emit_state( intel );
+   }
 
 #if 1
    if (((int)intel->batch.ptr) & 0x4) {
@@ -224,6 +231,7 @@ void intelStartInlinePrimitive( intelContextPtr intel, GLuint prim )
    intel->prim.start_ptr = batch_ptr;
    intel->prim.primitive = prim;
    intel->prim.flush = intel_flush_inline_primitive;
+   intel->batch.contains_geometry = 1;
 
    OUT_BATCH( 0 );
    ADVANCE_BATCH();
@@ -270,6 +278,11 @@ GLuint *intelEmitInlinePrimitiveLocked(intelContextPtr intel,
     */
    intel->vtbl.emit_state( intel );
 
+   if ((1+dwords)*4 >= intel->batch.space) {
+      intelFlushBatch(intel, GL_TRUE); 
+      intel->vtbl.emit_state( intel );
+   }
+
 
    if (1) {
       int used = dwords * 4;
@@ -309,6 +322,8 @@ GLuint *intelEmitInlinePrimitiveLocked(intelContextPtr intel,
 
    ADVANCE_BATCH();
 
+   intel->batch.contains_geometry = 1;
+
  do_discard:
    return tmp;
 }
@@ -334,33 +349,33 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv )
    intelFlush( &intel->ctx );
    LOCK_HARDWARE( intel );
    {
-      intelScreenPrivate *intelScreen = intel->intelScreen;
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
-      int nbox = dPriv->numClipRects;
-      drm_clip_rect_t *pbox = dPriv->pClipRects;
-      int pitch = intelScreen->front.pitch;
-      int cpp = intelScreen->cpp;
+      const intelScreenPrivate *intelScreen = intel->intelScreen;
+      const __DRIdrawablePrivate *dPriv = intel->driDrawable;
+      const int nbox = dPriv->numClipRects;
+      const drm_clip_rect_t *pbox = dPriv->pClipRects;
+      const int cpp = intelScreen->cpp;
+      const int pitch = intelScreen->front.pitch; /* in bytes */
       int i;
       GLuint CMD, BR13;
       BATCH_LOCALS;
 
       switch(cpp) {
       case 2: 
-	 BR13 = (pitch * cpp) | (0xCC << 16) | (1<<24);
+	 BR13 = (pitch) | (0xCC << 16) | (1<<24);
 	 CMD = XY_SRC_COPY_BLT_CMD;
 	 break;
       case 4:
-	 BR13 = (pitch * cpp) | (0xCC << 16) | (1<<24) | (1<<25);
+	 BR13 = (pitch) | (0xCC << 16) | (1<<24) | (1<<25);
 	 CMD = (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
 		XY_SRC_COPY_BLT_WRITE_RGB);
 	 break;
       default:
-	 BR13 = (pitch * cpp) | (0xCC << 16) | (1<<24);
+	 BR13 = (pitch) | (0xCC << 16) | (1<<24);
 	 CMD = XY_SRC_COPY_BLT_CMD;
 	 break;
       }
-
-      if (0)
+   
+      if (0) 
 	 intel_draw_performance_boxes( intel );
 
       for (i = 0 ; i < nbox; i++, pbox++) 
@@ -368,9 +383,11 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv )
 	 if (pbox->x1 > pbox->x2 ||
 	     pbox->y1 > pbox->y2 ||
 	     pbox->x2 > intelScreen->width ||
-	     pbox->y2 > intelScreen->height)
+	     pbox->y2 > intelScreen->height) {
+            _mesa_warning(&intel->ctx, "Bad cliprect in intelCopyBuffer()");
 	    continue;
- 
+         }
+
 	 BEGIN_BATCH( 8);
 	 OUT_BATCH( CMD );
 	 OUT_BATCH( BR13 );
@@ -402,7 +419,7 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv )
 
 void intelEmitFillBlitLocked( intelContextPtr intel,
 			      GLuint cpp,
-			      GLshort dst_pitch,
+			      GLshort dst_pitch,  /* in bytes */
 			      GLuint dst_offset,
 			      GLshort x, GLshort y, 
 			      GLshort w, GLshort h,
@@ -410,8 +427,6 @@ void intelEmitFillBlitLocked( intelContextPtr intel,
 {
    GLuint BR13, CMD;
    BATCH_LOCALS;
-
-   dst_pitch *= cpp;
 
    switch(cpp) {
    case 1: 
@@ -502,13 +517,17 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
    intelScreenPrivate *intelScreen = intel->intelScreen;
    GLuint clear_depth, clear_color;
    GLint cx, cy;
-   GLint pitch = intelScreen->front.pitch;
+   GLint pitch;
    GLint cpp = intelScreen->cpp;
    GLint i;
    GLuint BR13, CMD, D_CMD;
    BATCH_LOCALS;
 
-   
+   intelFlush( &intel->ctx );
+   LOCK_HARDWARE( intel );
+
+   pitch = intelScreen->front.pitch;
+
    clear_color = intel->ClearColor;
    clear_depth = 0;
 
@@ -522,11 +541,11 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
 
    switch(cpp) {
    case 2: 
-      BR13 = (0xF0 << 16) | (pitch * cpp) | (1<<24);
+      BR13 = (0xF0 << 16) | (pitch) | (1<<24);
       D_CMD = CMD = XY_COLOR_BLT_CMD;
       break;
    case 4:
-      BR13 = (0xF0 << 16) | (pitch * cpp) | (1<<24) | (1<<25);
+      BR13 = (0xF0 << 16) | (pitch) | (1<<24) | (1<<25);
       CMD = (XY_COLOR_BLT_CMD |
 	     XY_COLOR_BLT_WRITE_ALPHA | 
 	     XY_COLOR_BLT_WRITE_RGB);
@@ -535,13 +554,11 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
       if (flags & BUFFER_BIT_STENCIL) D_CMD |= XY_COLOR_BLT_WRITE_ALPHA;
       break;
    default:
-      BR13 = (0xF0 << 16) | (pitch * cpp) | (1<<24);
+      BR13 = (0xF0 << 16) | (pitch) | (1<<24);
       D_CMD = CMD = XY_COLOR_BLT_CMD;
       break;
    }
 
-   intelFlush( &intel->ctx );
-   LOCK_HARDWARE( intel );
    {
       /* flip top to bottom */
       cy = intel->driDrawable->h-cy1-ch;
@@ -635,10 +652,17 @@ void intelDestroyBatchBuffer( GLcontext *ctx )
 {
    intelContextPtr intel = INTEL_CONTEXT(ctx);
 
-   if (intel->alloc.ptr) {
+   if (intel->alloc.offset) {
       intelFreeAGP( intel, intel->alloc.ptr );
-      intel->alloc.ptr = 0;
+      intel->alloc.ptr = NULL;
+      intel->alloc.offset = 0;
    }
+   else if (intel->alloc.ptr) {
+      free(intel->alloc.ptr);
+      intel->alloc.ptr = NULL;
+   }
+
+   memset(&intel->batch, 0, sizeof(intel->batch));
 }
 
 
@@ -646,12 +670,9 @@ void intelInitBatchBuffer( GLcontext *ctx )
 {
    intelContextPtr intel = INTEL_CONTEXT(ctx);
 
-   if (!intel->intelScreen->allow_batchbuffer || getenv("INTEL_NO_BATCH")) {
-      intel->alloc.size = 8 * 1024;
-      intel->alloc.ptr = malloc( intel->alloc.size );
-      intel->alloc.offset = 0;
-   }
-   else {
+   /* This path isn't really safe with rotate:
+    */
+   if (getenv("INTEL_BATCH") && intel->intelScreen->allow_batchbuffer) {      
       switch (intel->intelScreen->deviceID) {
       case PCI_CHIP_I865_G:
 	 /* HW bug?  Seems to crash if batchbuffer crosses 4k boundary.
@@ -666,23 +687,28 @@ void intelInitBatchBuffer( GLcontext *ctx )
 	 break;
       }
 
+      /* KW: temporary - this make crashes & lockups more frequent, so
+       * leave in until they are solved.
+       */
+      intel->alloc.size = 8 * 1024; 
+
       intel->alloc.ptr = intelAllocateAGP( intel, intel->alloc.size );
       if (intel->alloc.ptr)
 	 intel->alloc.offset = 
 	    intelAgpOffsetFromVirtual( intel, intel->alloc.ptr );
+      else
+         intel->alloc.offset = 0; /* OK? */
    }
 
+   /* The default is now to use a local buffer and pass that to the
+    * kernel.  This is also a fallback if allocation fails on the
+    * above path:
+    */
    if (!intel->alloc.ptr) {
-      FALLBACK(intel, INTEL_FALLBACK_NO_BATCHBUFFER, 1);
+      intel->alloc.size = 8 * 1024;
+      intel->alloc.ptr = malloc( intel->alloc.size );
+      intel->alloc.offset = 0;
    }
-   else {
-      intel->prim.flush = 0;
-      intel->vtbl.emit_invarient_state( intel );
 
-      /* Make sure this gets to the hardware, even if we have no cliprects:
-       */
-      LOCK_HARDWARE( intel );
-      intelFlushBatchLocked( intel, GL_TRUE, GL_FALSE, GL_TRUE );
-      UNLOCK_HARDWARE( intel );
-   }
+   assert(intel->alloc.ptr);
 }

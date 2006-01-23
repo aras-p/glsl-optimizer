@@ -118,6 +118,8 @@ const GLubyte *intelGetString( GLcontext *ctx, GLenum name )
 	 chipset = "Intel(R) 915GM"; break;
       case PCI_CHIP_I945_G:
 	 chipset = "Intel(R) 945G"; break;
+      case PCI_CHIP_I945_GM:
+	 chipset = "Intel(R) 945GM"; break;
       default:
 	 chipset = "Unknown Intel Chipset"; break;
       }
@@ -256,8 +258,8 @@ void intelInitDriverFunctions( struct dd_function_table *functions )
 {
    _mesa_init_driver_functions( functions );
 
-   functions->Flush = intelFlush;
    functions->Clear = intelClear;
+   functions->Flush = intelglFlush;
    functions->Finish = intelFinish;
    functions->GetBufferSize = intelBufferSize;
    functions->ResizeBuffers = _mesa_resize_framebuffer;
@@ -271,6 +273,20 @@ void intelInitDriverFunctions( struct dd_function_table *functions )
    intelInitTextureFuncs( functions );
    intelInitPixelFuncs( functions );
    intelInitStateFuncs( functions );
+}
+
+static void intel_emit_invarient_state( GLcontext *ctx )
+{
+   intelContextPtr intel = INTEL_CONTEXT(ctx);
+
+   intel->vtbl.emit_invarient_state( intel );
+   intel->prim.flush = 0;
+
+   /* Make sure this gets to the hardware, even if we have no cliprects:
+    */
+   LOCK_HARDWARE( intel );
+   intelFlushBatchLocked( intel, GL_TRUE, GL_FALSE, GL_TRUE );
+   UNLOCK_HARDWARE( intel );
 }
 
 
@@ -387,7 +403,8 @@ GLboolean intelInitContext( intelContextPtr intel,
 /* 			  DRI_TEXMGR_DO_TEXTURE_RECT ); */
 
 
-   intel->prim.flush = intelInitBatchBuffer;
+   intelInitBatchBuffer(&intel->ctx);
+   intel->prim.flush = intel_emit_invarient_state;
    intel->prim.primitive = ~0;
 
 
@@ -580,12 +597,40 @@ GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
    return GL_TRUE;
 }
 
+/**
+ * Use the information in the sarea to update the screen parameters
+ * related to screen rotation.
+ */
+static void
+intelUpdateScreenRotation(intelContextPtr intel,
+                          __DRIscreenPrivate *sPriv,
+                          drmI830Sarea *sarea)
+{
+   intelScreenPrivate *intelScreen = (intelScreenPrivate *)sPriv->private;
+   intelRegion *colorBuf;
+
+   intelUnmapScreenRegions(intelScreen);
+
+   intelUpdateScreenFromSAREA(intelScreen, sarea);
+
+   /* update the current hw offsets for the color and depth buffers */
+   if (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT)
+      colorBuf = &intelScreen->back;
+   else
+      colorBuf = &intelScreen->front;
+   intel->vtbl.update_color_z_regions(intel, colorBuf, &intelScreen->depth);
+
+   if (!intelMapScreenRegions(sPriv)) {
+      fprintf(stderr, "ERROR Remapping screen regions!!!\n");
+   }
+}
+
 void intelGetLock( intelContextPtr intel, GLuint flags )
 {
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    __DRIscreenPrivate *sPriv = intel->driScreen;
+   intelScreenPrivate *intelScreen = (intelScreenPrivate *)sPriv->private;
    drmI830Sarea * sarea = intel->sarea;
-   int me = intel->hHWContext;
    unsigned   i;
 
    drmGetLock(intel->driFd, intel->hHWContext, flags);
@@ -598,31 +643,53 @@ void intelGetLock( intelContextPtr intel, GLuint flags )
    if (dPriv)
       DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
 
+   if (dPriv && intel->lastStamp != dPriv->lastStamp) {
+      intelWindowMoved( intel );
+      intel->lastStamp = dPriv->lastStamp;
+   }
+
    /* If we lost context, need to dump all registers to hardware.
     * Note that we don't care about 2d contexts, even if they perform
     * accelerated commands, so the DRI locking in the X server is even
     * more broken than usual.
     */
 
-   if (sarea->ctxOwner != me) {
-      intel->perf_boxes |= I830_BOX_LOST_CONTEXT;
-      sarea->ctxOwner = me;
+   if (sarea->width != intelScreen->width ||
+       sarea->height != intelScreen->height ||
+       sarea->rotation != intelScreen->current_rotation) {
+      intelUpdateScreenRotation(intel, sPriv, sarea);
+
+      /* This will drop the outstanding batchbuffer on the floor */
+      intel->batch.ptr -= (intel->batch.size - intel->batch.space);
+      intel->batch.space = intel->batch.size;
+      /* lose all primitives */
+      intel->prim.primitive = ~0;
+      intel->prim.start_ptr = 0;
+      intel->prim.flush = 0;
+      intel->vtbl.lost_hardware( intel ); 
+
+      intel->lastStamp = 0; /* force window update */
+
+      /* Release batch buffer
+       */
+      intelDestroyBatchBuffer(&intel->ctx);
+      intelInitBatchBuffer(&intel->ctx);
+      intel->prim.flush = intel_emit_invarient_state;
+
+      /* Still need to reset the global LRU?
+       */
+      intel_driReinitTextureHeap( intel->texture_heaps[0], intel->intelScreen->tex.size );
    }
 
    /* Shared texture managment - if another client has played with
     * texture space, figure out which if any of our textures have been
     * ejected, and update our global LRU.
     */
-
    for ( i = 0 ; i < intel->nr_heaps ; i++ ) {
       DRI_AGE_TEXTURES( intel->texture_heaps[ i ] );
    }
-
-   if (dPriv && intel->lastStamp != dPriv->lastStamp) {
-      intelWindowMoved( intel );
-      intel->lastStamp = dPriv->lastStamp;
-   }
 }
+
 
 void intelSwapBuffers( __DRIdrawablePrivate *dPriv )
 {
@@ -632,12 +699,16 @@ void intelSwapBuffers( __DRIdrawablePrivate *dPriv )
       intel = (intelContextPtr) dPriv->driContextPriv->driverPrivate;
       ctx = &intel->ctx;
       if (ctx->Visual.doubleBufferMode) {
+         intelScreenPrivate *screen = intel->intelScreen;
 	 _mesa_notifySwapBuffers( ctx );  /* flush pending rendering comands */
 	 if ( 0 /*intel->doPageFlip*/ ) { /* doPageFlip is never set !!! */
 	    intelPageFlip( dPriv );
 	 } else {
 	    intelCopyBuffer( dPriv );
 	 }
+         if (screen->current_rotation != 0) {
+            intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
+         }
       }
    } else {
       /* XXX this shouldn't be an error but we can't handle it for now */

@@ -14,9 +14,6 @@
 
 #define I830_REG_SIZE 0x80000
 
-/* Note: This structure has changed slightly from what is expected by
- * the i830_drv.o driver.  Maybe that should be reverted.
- */
 typedef struct _I830DRIRec {
    drm_handle_t regs;
    drmSize regsSize;
@@ -26,6 +23,9 @@ typedef struct _I830DRIRec {
 
    drmSize depthbufferSize;
    drm_handle_t depthbuffer;
+
+   drmSize rotatedSize;
+   drm_handle_t rotatedbuffer;
 
    drm_handle_t textures;
    int textureSize;
@@ -39,6 +39,7 @@ typedef struct _I830DRIRec {
    int mem;
    int cpp;
    int bitsPerPixel;
+
    int fbOffset;
    int fbStride;
 
@@ -47,6 +48,9 @@ typedef struct _I830DRIRec {
 
    int depthOffset;
    int depthPitch;
+
+   int rotatedOffset;
+   int rotatedPitch;
 
    int logTextureGranularity;
    int textureOffset;

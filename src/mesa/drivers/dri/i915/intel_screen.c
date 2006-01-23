@@ -42,39 +42,211 @@
 #include "intel_tris.h"
 #include "intel_ioctl.h"
 
-
-
 #include "i830_dri.h"
 
 PUBLIC const char __driConfigOptions[] =
 DRI_CONF_BEGIN
-    DRI_CONF_SECTION_PERFORMANCE
-       DRI_CONF_FORCE_S3TC_ENABLE(false)
-    DRI_CONF_SECTION_END
+   DRI_CONF_SECTION_PERFORMANCE
+      DRI_CONF_FORCE_S3TC_ENABLE(false)
+   DRI_CONF_SECTION_END
 DRI_CONF_END;
 const GLuint __driNConfigOptions = 1;
 
+#ifdef USE_NEW_INTERFACE
+static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
+#endif /*USE_NEW_INTERFACE*/
+
 extern const struct dri_extension card_extensions[];
 
-static void intelPrintDRIInfo(intelScreenPrivate *intelScreen,
-			     __DRIscreenPrivate *sPriv,
-			    I830DRIPtr gDRIPriv)
+/**
+ * Map all the memory regions described by the screen.
+ * \return GL_TRUE if success, GL_FALSE if error.
+ */
+GLboolean
+intelMapScreenRegions(__DRIscreenPrivate *sPriv)
 {
-   fprintf(stderr, "Front size : 0x%x\n", sPriv->fbSize);
-   fprintf(stderr, "Front offset : 0x%x\n", intelScreen->front.offset);
-   fprintf(stderr, "Back size : 0x%x\n", intelScreen->back.size);
-   fprintf(stderr, "Back offset : 0x%x\n", intelScreen->back.offset);
-   fprintf(stderr, "Depth size : 0x%x\n", intelScreen->depth.size);
-   fprintf(stderr, "Depth offset : 0x%x\n", intelScreen->depth.offset);
-   fprintf(stderr, "Texture size : 0x%x\n", intelScreen->tex.size);
-   fprintf(stderr, "Texture offset : 0x%x\n", intelScreen->tex.offset);
-   fprintf(stderr, "Memory : 0x%x\n", gDRIPriv->mem);
+   intelScreenPrivate *intelScreen = (intelScreenPrivate *)sPriv->private;
+
+   if (intelScreen->front.handle) {
+      if (drmMap(sPriv->fd,
+                 intelScreen->front.handle,
+                 intelScreen->front.size,
+                 (drmAddress *)&intelScreen->front.map) != 0) {
+         _mesa_problem(NULL, "drmMap(frontbuffer) failed!");
+         return GL_FALSE;
+      }
+   }
+   else {
+      _mesa_warning(NULL, "no front buffer handle in intelMapScreenRegions!");
+   }
+
+   if (drmMap(sPriv->fd,
+              intelScreen->back.handle,
+              intelScreen->back.size,
+              (drmAddress *)&intelScreen->back.map) != 0) {
+      intelUnmapScreenRegions(intelScreen);
+      return GL_FALSE;
+   }
+
+   if (drmMap(sPriv->fd,
+              intelScreen->depth.handle,
+              intelScreen->depth.size,
+              (drmAddress *)&intelScreen->depth.map) != 0) {
+      intelUnmapScreenRegions(intelScreen);
+      return GL_FALSE;
+   }
+
+   if (drmMap(sPriv->fd,
+              intelScreen->tex.handle,
+              intelScreen->tex.size,
+              (drmAddress *)&intelScreen->tex.map) != 0) {
+      intelUnmapScreenRegions(intelScreen);
+      return GL_FALSE;
+   }
+
+   if (0)
+      printf("Mappings:  front: %p  back: %p  depth: %p  tex: %p\n",
+          intelScreen->front.map,
+          intelScreen->back.map,
+          intelScreen->depth.map,
+          intelScreen->tex.map);
+   return GL_TRUE;
 }
+
+
+void
+intelUnmapScreenRegions(intelScreenPrivate *intelScreen)
+{
+#define REALLY_UNMAP 1
+   if (intelScreen->front.map) {
+#if REALLY_UNMAP
+      if (drmUnmap(intelScreen->front.map, intelScreen->front.size) != 0)
+         printf("drmUnmap front failed!\n");
+#endif
+      intelScreen->front.map = NULL;
+   }
+   if (intelScreen->back.map) {
+#if REALLY_UNMAP
+      if (drmUnmap(intelScreen->back.map, intelScreen->back.size) != 0)
+         printf("drmUnmap back failed!\n");
+#endif
+      intelScreen->back.map = NULL;
+   }
+   if (intelScreen->depth.map) {
+#if REALLY_UNMAP
+      drmUnmap(intelScreen->depth.map, intelScreen->depth.size);
+      intelScreen->depth.map = NULL;
+#endif
+   }
+   if (intelScreen->tex.map) {
+#if REALLY_UNMAP
+      drmUnmap(intelScreen->tex.map, intelScreen->tex.size);
+      intelScreen->tex.map = NULL;
+#endif
+   }
+}
+
+
+static void
+intelPrintDRIInfo(intelScreenPrivate *intelScreen,
+                  __DRIscreenPrivate *sPriv,
+                  I830DRIPtr gDRIPriv)
+{
+   fprintf(stderr, "*** Front size:   0x%x  offset: 0x%x  pitch: %d\n",
+           sPriv->fbSize, intelScreen->front.offset,
+           intelScreen->front.pitch);
+   fprintf(stderr, "*** Back size:    0x%x  offset: 0x%x  pitch: %d\n",
+           intelScreen->back.size, intelScreen->back.offset,
+           intelScreen->back.pitch);
+   fprintf(stderr, "*** Depth size:   0x%x  offset: 0x%x  pitch: %d\n",
+           intelScreen->depth.size, intelScreen->depth.offset,
+           intelScreen->depth.pitch);
+   fprintf(stderr, "*** Rotated size: 0x%x  offset: 0x%x  pitch: %d\n",
+           intelScreen->rotated.size, intelScreen->rotated.offset,
+           intelScreen->rotated.pitch);
+   fprintf(stderr, "*** Texture size: 0x%x  offset: 0x%x\n",
+           intelScreen->tex.size, intelScreen->tex.offset);
+   fprintf(stderr, "*** Memory : 0x%x\n", gDRIPriv->mem);
+}
+
+
+static void
+intelPrintSAREA(const drmI830Sarea *sarea)
+{
+   fprintf(stderr, "SAREA: sarea width %d  height %d\n", sarea->width, sarea->height);
+   fprintf(stderr, "SAREA: pitch: %d\n", sarea->pitch);
+   fprintf(stderr,
+           "SAREA: front offset: 0x%08x  size: 0x%x  handle: 0x%x\n",
+           sarea->front_offset, sarea->front_size,
+           (unsigned) sarea->front_handle);
+   fprintf(stderr,
+           "SAREA: back  offset: 0x%08x  size: 0x%x  handle: 0x%x\n",
+           sarea->back_offset, sarea->back_size,
+           (unsigned) sarea->back_handle);
+   fprintf(stderr, "SAREA: depth offset: 0x%08x  size: 0x%x  handle: 0x%x\n",
+           sarea->depth_offset, sarea->depth_size,
+           (unsigned) sarea->depth_handle);
+   fprintf(stderr, "SAREA: tex   offset: 0x%08x  size: 0x%x  handle: 0x%x\n",
+           sarea->tex_offset, sarea->tex_size,
+           (unsigned) sarea->tex_handle);
+   fprintf(stderr, "SAREA: rotation: %d\n", sarea->rotation);
+   fprintf(stderr,
+           "SAREA: rotated offset: 0x%08x  size: 0x%x\n",
+           sarea->rotated_offset, sarea->rotated_size);
+   fprintf(stderr, "SAREA: rotated pitch: %d\n", sarea->rotated_pitch);
+}
+
+
+/**
+ * A number of the screen parameters are obtained/computed from
+ * information in the SAREA.  This function updates those parameters.
+ */
+void
+intelUpdateScreenFromSAREA(intelScreenPrivate *intelScreen,
+                           drmI830Sarea *sarea)
+{
+   intelScreen->width = sarea->width;
+   intelScreen->height = sarea->height;
+
+   intelScreen->front.offset = sarea->front_offset;
+   intelScreen->front.pitch = sarea->pitch * intelScreen->cpp;
+   intelScreen->front.handle = sarea->front_handle;
+   intelScreen->front.size = sarea->front_size;
+
+   intelScreen->back.offset = sarea->back_offset;
+   intelScreen->back.pitch = sarea->pitch * intelScreen->cpp;
+   intelScreen->back.handle = sarea->back_handle;
+   intelScreen->back.size = sarea->back_size;
+			 
+   intelScreen->depth.offset = sarea->depth_offset;
+   intelScreen->depth.pitch = sarea->pitch * intelScreen->cpp;
+   intelScreen->depth.handle = sarea->depth_handle;
+   intelScreen->depth.size = sarea->depth_size;
+
+   intelScreen->tex.offset = sarea->tex_offset;
+   intelScreen->logTextureGranularity = sarea->log_tex_granularity;
+   intelScreen->tex.handle = sarea->tex_handle;
+   intelScreen->tex.size = sarea->tex_size;
+
+   intelScreen->rotated.offset = sarea->rotated_offset;
+   intelScreen->rotated.pitch = sarea->rotated_pitch * intelScreen->cpp;
+   intelScreen->rotated.size = sarea->rotated_size;
+   intelScreen->current_rotation = sarea->rotation;
+   matrix23Rotate(&intelScreen->rotMatrix,
+                  sarea->width, sarea->height, sarea->rotation);
+   intelScreen->rotatedWidth = sarea->virtualX;
+   intelScreen->rotatedHeight = sarea->virtualY;
+
+   if (0)
+      intelPrintSAREA(sarea);
+}
+
 
 static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
 {
    intelScreenPrivate *intelScreen;
    I830DRIPtr         gDRIPriv = (I830DRIPtr)sPriv->pDevPriv;
+   drmI830Sarea *sarea;
    PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
      (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
    void * const psc = sPriv->psc->screenConfigs;
@@ -96,80 +268,35 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
 
    intelScreen->driScrnPriv = sPriv;
    sPriv->private = (void *)intelScreen;
+   intelScreen->sarea_priv_offset = gDRIPriv->sarea_priv_offset;
+   sarea = (drmI830Sarea *)
+         (((GLubyte *)sPriv->pSAREA)+intelScreen->sarea_priv_offset);
 
    intelScreen->deviceID = gDRIPriv->deviceID;
-   intelScreen->width = gDRIPriv->width;
-   intelScreen->height = gDRIPriv->height;
    intelScreen->mem = gDRIPriv->mem;
    intelScreen->cpp = gDRIPriv->cpp;
-			 
+
    switch (gDRIPriv->bitsPerPixel) {
    case 15: intelScreen->fbFormat = DV_PF_555; break;
    case 16: intelScreen->fbFormat = DV_PF_565; break;
    case 32: intelScreen->fbFormat = DV_PF_8888; break;
    }
-
-   intelScreen->front.pitch = gDRIPriv->fbStride;
-   intelScreen->front.offset = gDRIPriv->fbOffset;
-   intelScreen->front.map = sPriv->pFB;
-
-   intelScreen->back.offset = gDRIPriv->backOffset;
-   intelScreen->back.pitch = gDRIPriv->backPitch;
-   intelScreen->back.handle = gDRIPriv->backbuffer;
-   intelScreen->back.size = gDRIPriv->backbufferSize;
 			 
-   if (drmMap(sPriv->fd,
-	      intelScreen->back.handle,
-	      intelScreen->back.size,
-	      (drmAddress *)&intelScreen->back.map) != 0) {
-      fprintf(stderr, "\nERROR: line %d, Function %s, File %s\n",
-	      __LINE__, __FUNCTION__, __FILE__);
-      FREE(intelScreen);
+   intelUpdateScreenFromSAREA(intelScreen, sarea);
+
+   if (0)
+      intelPrintDRIInfo(intelScreen, sPriv, gDRIPriv);
+
+   if (!intelMapScreenRegions(sPriv)) {
+      fprintf(stderr,"\nERROR!  mapping regions\n");
+      _mesa_free(intelScreen);
       sPriv->private = NULL;
       return GL_FALSE;
    }
-
-   intelScreen->depth.offset = gDRIPriv->depthOffset;
-   intelScreen->depth.pitch = gDRIPriv->depthPitch;
-   intelScreen->depth.handle = gDRIPriv->depthbuffer;
-   intelScreen->depth.size = gDRIPriv->depthbufferSize;
-
-   if (drmMap(sPriv->fd, 
-	      intelScreen->depth.handle,
-	      intelScreen->depth.size,
-	      (drmAddress *)&intelScreen->depth.map) != 0) {
-      fprintf(stderr, "\nERROR: line %d, Function %s, File %s\n", 
-	      __LINE__, __FUNCTION__, __FILE__);
-      FREE(intelScreen);
-      drmUnmap(intelScreen->back.map, intelScreen->back.size);
-      sPriv->private = NULL;
-      return GL_FALSE;
-   }
-
-   intelScreen->tex.offset = gDRIPriv->textureOffset;
-   intelScreen->logTextureGranularity = gDRIPriv->logTextureGranularity;
-   intelScreen->tex.handle = gDRIPriv->textures;
-   intelScreen->tex.size = gDRIPriv->textureSize;
-
-   if (drmMap(sPriv->fd,
-	      intelScreen->tex.handle,
-	      intelScreen->tex.size,
-	      (drmAddress *)&intelScreen->tex.map) != 0) {
-      fprintf(stderr, "\nERROR: line %d, Function %s, File %s\n",
-	      __LINE__, __FUNCTION__, __FILE__);
-      FREE(intelScreen);
-      drmUnmap(intelScreen->back.map, intelScreen->back.size);
-      drmUnmap(intelScreen->depth.map, intelScreen->depth.size);
-      sPriv->private = NULL;
-      return GL_FALSE;
-   }
-			 
-   intelScreen->sarea_priv_offset = gDRIPriv->sarea_priv_offset;
-   
-   if (0) intelPrintDRIInfo(intelScreen, sPriv, gDRIPriv);
 
    intelScreen->drmMinor = sPriv->drmMinor;
 
+   /* Determine if IRQs are active? */
    {
       int ret;
       drmI830GetParam gp;
@@ -185,6 +312,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
       }
    }
 
+   /* Determine if batchbuffers are allowed */
    {
       int ret;
       drmI830GetParam gp;
@@ -217,11 +345,7 @@ static void intelDestroyScreen(__DRIscreenPrivate *sPriv)
 {
    intelScreenPrivate *intelScreen = (intelScreenPrivate *)sPriv->private;
 
-   /* Need to unmap all the bufs and maps here:
-    */
-   drmUnmap(intelScreen->back.map, intelScreen->back.size);
-   drmUnmap(intelScreen->depth.map, intelScreen->depth.size);
-   drmUnmap(intelScreen->tex.map, intelScreen->tex.size);
+   intelUnmapScreenRegions(intelScreen);
    FREE(intelScreen);
    sPriv->private = NULL;
 }
@@ -348,6 +472,7 @@ static GLboolean intelCreateContext( const __GLcontextModes *mesaVis,
    case PCI_CHIP_I915_G:
    case PCI_CHIP_I915_GM:
    case PCI_CHIP_I945_G:
+   case PCI_CHIP_I945_GM:
       return i915CreateContext( mesaVis, driContextPriv, 
 			       sharedContextPrivate );
  
@@ -482,7 +607,7 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
    __DRIscreenPrivate *psp;
    static const __DRIversion ddx_expected = { 1, 4, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
-   static const __DRIversion drm_expected = { 1, 1, 0 };
+   static const __DRIversion drm_expected = { 1, 4, 0 };
 
    dri_interface = interface;
 

@@ -335,11 +335,22 @@ static void i830TexEnv( GLcontext *ctx, GLenum target,
    }
 }
 
+static void i830BindTexture( GLcontext *ctx, GLenum target,
+			    struct gl_texture_object *texObj )
+{
+   i830TextureObjectPtr tex;
+   
+   if (!texObj->DriverData)
+      i830AllocTexObj( texObj );
+   
+   tex = (i830TextureObjectPtr)texObj->DriverData;
+}
 
 
 
 void i830InitTextureFuncs( struct dd_function_table *functions )
 {
+   functions->BindTexture 		= i830BindTexture;
    functions->TexEnv                    = i830TexEnv;
    functions->TexParameter              = i830TexParameter;
 }

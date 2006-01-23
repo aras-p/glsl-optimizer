@@ -47,6 +47,7 @@ do {									\
 			(n), __FUNCTION__, intel->batch.space/4);	\
    if (intel->batch.space < (n)*4)					\
       intelFlushBatch(intel, GL_TRUE);					\
+   if (intel->batch.space == intel->batch.size)	intel->batch.func = __FUNCTION__;			\
    batch_ptr = intel->batch.ptr;					\
 } while (0)
 

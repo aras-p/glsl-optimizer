@@ -49,9 +49,10 @@
 
 #define SET_STATE( i830, STATE )		\
 do {						\
-   i830->current->emitted &= ~ACTIVE;			\
+   assert(!i830->intel.prim.flush); \
+   i830->current->emitted = 0;			\
    i830->current = &i830->STATE;		\
-   i830->current->emitted &= ~ACTIVE;			\
+   i830->current->emitted = 0;			\
 } while (0)
 
 /* Operations where the 3D engine is decoupled temporarily from the
@@ -147,13 +148,12 @@ static void set_color_mask( i830ContextPtr i830, GLboolean state )
 			(1 << WRITEMASK_BLUE_SHIFT) |
 			(1 << WRITEMASK_ALPHA_SHIFT));
 
+   i830->meta.Ctx[I830_CTXREG_ENABLES_2] &= ~mask;
+
    if (state) {
-      i830->meta.Ctx[I830_CTXREG_ENABLES_2] &= ~mask;
       i830->meta.Ctx[I830_CTXREG_ENABLES_2] |= 
 	 (i830->state.Ctx[I830_CTXREG_ENABLES_2] & mask);
    }
-   else 
-      i830->meta.Ctx[I830_CTXREG_ENABLES_2] |= mask;
       
    i830->meta.emitted &= ~I830_UPLOAD_CTX;
 }
@@ -181,13 +181,12 @@ static void set_no_texture( i830ContextPtr i830 )
 /* Set up a single element blend stage for 'replace' texturing with no
  * funny ops.
  */
-static void enable_texture_blend_replace( i830ContextPtr i830,
-					  GLenum format )
+static void enable_texture_blend_replace( i830ContextPtr i830 )
 {
    static const struct gl_tex_env_combine_state comb = {
       GL_REPLACE, GL_REPLACE,
-      { GL_TEXTURE, 0, 0, }, { GL_TEXTURE, 0, 0, },
-      { GL_SRC_COLOR, 0, 0 }, { GL_SRC_ALPHA, 0, 0 },
+      { GL_TEXTURE, GL_TEXTURE, GL_TEXTURE }, { GL_TEXTURE, GL_TEXTURE, GL_TEXTURE, },
+      { GL_SRC_COLOR, GL_SRC_COLOR, GL_SRC_COLOR }, { GL_SRC_ALPHA, GL_SRC_ALPHA, GL_SRC_ALPHA },
       0, 0, 1, 1
    };
 
@@ -211,13 +210,11 @@ static void set_tex_rect_source( i830ContextPtr i830,
 				 GLuint offset,
 				 GLuint width, 
 				 GLuint height,
-				 GLuint pitch,
+				 GLuint pitch, /* in bytes */
 				 GLuint textureFormat )
 {
    GLint numLevels = 1;
    GLuint *setup = i830->meta.Tex[0];
-
-   pitch *= i830->intel.intelScreen->cpp;
 
 /*    fprintf(stderr, "%s: offset: %x w: %d h: %d pitch %d format %x\n", */
 /* 	   __FUNCTION__, offset, width, height, pitch, textureFormat ); */
@@ -249,16 +246,19 @@ static void set_tex_rect_source( i830ContextPtr i830,
 
 /* Select between front and back draw buffers.
  */
-static void set_draw_offset( i830ContextPtr i830,
-			     GLuint offset )
+static void set_draw_region( i830ContextPtr i830,
+			      const intelRegion *region )
 {
-   i830->meta.Buffer[I830_DESTREG_CBUFADDR2] = offset;
+   i830->meta.Buffer[I830_DESTREG_CBUFADDR1] =
+      (BUF_3D_ID_COLOR_BACK | BUF_3D_PITCH(region->pitch) | BUF_3D_USE_FENCE);
+   i830->meta.Buffer[I830_DESTREG_CBUFADDR2] = region->offset;
    i830->meta.emitted &= ~I830_UPLOAD_BUFFERS;
 }
 
 /* Setup an arbitary draw format, useful for targeting
  * texture or agp memory.
  */
+#if 0
 static void set_draw_format( i830ContextPtr i830,
 			     GLuint format,
 			     GLuint depth_format)
@@ -269,6 +269,7 @@ static void set_draw_format( i830ContextPtr i830,
 					  DEPTH_IS_Z |
 					  depth_format);
 }
+#endif
 
 
 static void set_vertex_format( i830ContextPtr i830 )
@@ -352,6 +353,45 @@ static void draw_quad(i830ContextPtr i830,
 /* 	   __FUNCTION__, i830->meta.Buffer[I830_DESTREG_DV1]); */
 }
 
+static void draw_poly(i830ContextPtr i830, 
+		      GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha,
+                      GLuint numVerts,
+                      GLfloat verts[][2],
+                      GLfloat texcoords[][2])
+{
+   GLuint vertex_size = 8;
+   GLuint *vb = intelEmitInlinePrimitiveLocked( &i830->intel, 
+						PRIM3D_TRIFAN, 
+						numVerts * vertex_size,
+						vertex_size );
+   intelVertex tmp;
+   int i, k;
+
+   /* initial constant vertex fields */
+   tmp.v.z = 1.0;
+   tmp.v.w = 1.0; 
+   tmp.v.color.red = red;
+   tmp.v.color.green = green;
+   tmp.v.color.blue = blue;
+   tmp.v.color.alpha = alpha;
+   tmp.v.specular.red = 0;
+   tmp.v.specular.green = 0;
+   tmp.v.specular.blue = 0;
+   tmp.v.specular.alpha = 0;
+
+   for (k = 0; k < numVerts; k++) {
+      tmp.v.x = verts[k][0];
+      tmp.v.y = verts[k][1];
+      tmp.v.u0 = texcoords[k][0];
+      tmp.v.v0 = texcoords[k][1];
+
+      for (i = 0 ; i < vertex_size ; i++)
+         vb[i] = tmp.ui[i];
+
+      vb += vertex_size;
+   }
+}
+
 void 
 i830ClearWithTris(intelContextPtr intel, GLbitfield mask,
 		  GLboolean all,
@@ -362,10 +402,10 @@ i830ClearWithTris(intelContextPtr intel, GLbitfield mask,
    intelScreenPrivate *screen = intel->intelScreen;
    int x0, y0, x1, y1;
 
-
+   INTEL_FIREVERTICES(intel);
    SET_STATE( i830, meta );
    set_initial_state( i830 );
-   set_no_texture( i830 );
+/*    set_no_texture( i830 ); */
    set_vertex_format( i830 ); 
 
    LOCK_HARDWARE(intel);
@@ -389,7 +429,7 @@ i830ClearWithTris(intelContextPtr intel, GLbitfield mask,
    if(mask & BUFFER_BIT_FRONT_LEFT) {
       set_no_depth_stencil_write( i830 );
       set_color_mask( i830, GL_TRUE );
-      set_draw_offset( i830, screen->front.offset );
+      set_draw_region( i830, &screen->front );
       draw_quad(i830, x0, x1, y0, y1,
 		intel->clear_red, intel->clear_green,
 		intel->clear_blue, intel->clear_alpha,
@@ -399,7 +439,7 @@ i830ClearWithTris(intelContextPtr intel, GLbitfield mask,
    if(mask & BUFFER_BIT_BACK_LEFT) {
       set_no_depth_stencil_write( i830 );
       set_color_mask( i830, GL_TRUE );
-      set_draw_offset( i830, screen->back.offset );
+      set_draw_region( i830, &screen->back );
 
       draw_quad(i830, x0, x1, y0, y1,
 		intel->clear_red, intel->clear_green,
@@ -413,17 +453,18 @@ i830ClearWithTris(intelContextPtr intel, GLbitfield mask,
 			   intel->ctx.Stencil.Clear);
 
       set_color_mask( i830, GL_FALSE );
-      set_draw_offset( i830, screen->front.offset );
+      set_draw_region( i830, &screen->front );
       draw_quad( i830, x0, x1, y0, y1, 0, 0, 0, 0, 0, 0, 0, 0 );
    }
 
    UNLOCK_HARDWARE(intel);
 
+   INTEL_FIREVERTICES(intel);
    SET_STATE( i830, state );
 }
 
 
-
+#if 0
 
 GLboolean
 i830TryTextureReadPixels( GLcontext *ctx,
@@ -546,13 +587,13 @@ i830TryTextureReadPixels( GLcontext *ctx,
 			   textureFormat ); 
    
    
-      enable_texture_blend_replace( i830, glTextureFormat ); 
+      enable_texture_blend_replace( i830 ); 
 
 
       /* Set the 3d engine to draw into the agp memory
        */
 
-      set_draw_offset( i830, destOffset ); 
+      set_draw_region( i830, destOffset ); 
       set_draw_format( i830, destFormat, depthFormat );  
 
 
@@ -624,7 +665,8 @@ i830TryTextureDrawPixels( GLcontext *ctx,
 	!ctx->Color.ColorMask[2] ||
 	!ctx->Color.ColorMask[3] ||
 	ctx->Color.ColorLogicOpEnabled ||
-	ctx->Texture._EnabledUnits) {
+	ctx->Texture._EnabledUnits ||
+	ctx->Depth.OcclusionTest) {
       fprintf(stderr, "%s: other tests failed\n", __FUNCTION__);
       return GL_FALSE;
    }
@@ -704,7 +746,7 @@ i830TryTextureDrawPixels( GLcontext *ctx,
 			   textureFormat ); 
    
    
-      enable_texture_blend_replace( i830, glTextureFormat ); 
+      enable_texture_blend_replace( i830 ); 
 
    
       /* Draw to the current draw buffer:
@@ -728,5 +770,144 @@ i830TryTextureDrawPixels( GLcontext *ctx,
    SET_STATE(i830, state);
 
    return GL_TRUE;
+}
+
+#endif
+
+/**
+ * Copy the window contents named by dPriv to the rotated (or reflected)
+ * color buffer.
+ * srcBuf is BUFFER_BIT_FRONT_LEFT or BUFFER_BIT_BACK_LEFT to indicate the source.
+ */
+void
+i830RotateWindow(intelContextPtr intel, __DRIdrawablePrivate *dPriv,
+                 GLuint srcBuf)
+{
+   i830ContextPtr i830 = I830_CONTEXT( intel );
+   intelScreenPrivate *screen = intel->intelScreen;
+   const GLuint cpp = screen->cpp;
+   drm_clip_rect_t fullRect;
+   GLuint textureFormat, srcOffset, srcPitch;
+   const drm_clip_rect_t *clipRects;
+   int numClipRects;
+   int i;
+
+   int xOrig, yOrig;
+   int origNumClipRects;
+   drm_clip_rect_t *origRects;
+
+   /*
+    * set up hardware state
+    */
+   intelFlush( &intel->ctx );
+
+   SET_STATE( i830, meta ); 
+   set_initial_state( i830 ); 
+   set_no_texture( i830 ); 
+   set_vertex_format( i830 ); 
+   set_no_depth_stencil_write( i830 );
+   set_color_mask( i830, GL_FALSE );
+
+   LOCK_HARDWARE(intel);
+
+   /* save current drawing origin and cliprects (restored at end) */
+   xOrig = intel->drawX;
+   yOrig = intel->drawY;
+   origNumClipRects = intel->numClipRects;
+   origRects = intel->pClipRects;
+
+   if (!intel->numClipRects)
+      goto done;
+
+   /*
+    * set drawing origin, cliprects for full-screen access to rotated screen
+    */
+   fullRect.x1 = 0;
+   fullRect.y1 = 0;
+   fullRect.x2 = screen->rotatedWidth;
+   fullRect.y2 = screen->rotatedHeight;
+   intel->drawX = 0;
+   intel->drawY = 0;
+   intel->numClipRects = 1;
+   intel->pClipRects = &fullRect;
+
+   set_draw_region( i830, &screen->rotated );
+
+   if (cpp == 4)
+      textureFormat = MAPSURF_32BIT | MT_32BIT_ARGB8888;
+   else
+      textureFormat = MAPSURF_16BIT | MT_16BIT_RGB565;
+
+   if (srcBuf == BUFFER_BIT_FRONT_LEFT) {
+      srcPitch = screen->front.pitch;   /* in bytes */
+      srcOffset = screen->front.offset; /* bytes */
+      clipRects = dPriv->pClipRects;
+      numClipRects = dPriv->numClipRects;
+   }
+   else {
+      srcPitch = screen->back.pitch;   /* in bytes */
+      srcOffset = screen->back.offset; /* bytes */
+      clipRects = dPriv->pBackClipRects;
+      numClipRects = dPriv->numBackClipRects;
+   }
+
+   /* set the whole screen up as a texture to avoid alignment issues */
+   set_tex_rect_source(i830,
+                       srcOffset,
+                       screen->width,
+                       screen->height,
+                       srcPitch,
+                       textureFormat);
+
+   enable_texture_blend_replace(i830);
+
+   /*
+    * loop over the source window's cliprects
+    */
+   for (i = 0; i < numClipRects; i++) {
+      int srcX0 = clipRects[i].x1;
+      int srcY0 = clipRects[i].y1;
+      int srcX1 = clipRects[i].x2;
+      int srcY1 = clipRects[i].y2;
+      GLfloat verts[4][2], tex[4][2];
+      int j;
+
+      /* build vertices for four corners of clip rect */
+      verts[0][0] = srcX0;  verts[0][1] = srcY0;
+      verts[1][0] = srcX1;  verts[1][1] = srcY0;
+      verts[2][0] = srcX1;  verts[2][1] = srcY1;
+      verts[3][0] = srcX0;  verts[3][1] = srcY1;
+
+      /* .. and texcoords */
+      tex[0][0] = srcX0;  tex[0][1] = srcY0;
+      tex[1][0] = srcX1;  tex[1][1] = srcY0;
+      tex[2][0] = srcX1;  tex[2][1] = srcY1;
+      tex[3][0] = srcX0;  tex[3][1] = srcY1;
+
+      /* transform coords to rotated screen coords */
+
+      for (j = 0; j < 4; j++) {
+         matrix23TransformCoordf(&screen->rotMatrix,
+                                 &verts[j][0], &verts[j][1]);
+      }
+
+      /* draw polygon to map source image to dest region */
+      draw_poly(i830, 255, 255, 255, 255, 4, verts, tex);
+
+   } /* cliprect loop */
+
+   assert(!intel->prim.flush); 
+   intelFlushBatchLocked( intel, GL_FALSE, GL_FALSE, GL_FALSE );
+
+ done:
+   /* restore original drawing origin and cliprects */
+   intel->drawX = xOrig;
+   intel->drawY = yOrig;
+   intel->numClipRects = origNumClipRects;
+   intel->pClipRects = origRects;
+
+   UNLOCK_HARDWARE(intel);
+
+   SET_STATE( i830, state );
 }
 

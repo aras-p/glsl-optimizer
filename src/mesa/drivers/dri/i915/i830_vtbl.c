@@ -361,6 +361,32 @@ do {							\
    ADVANCE_BATCH();					\
 } while (0);
 
+static GLuint get_state_size( struct i830_hw_state *state )
+{
+   GLuint dirty = state->active & ~state->emitted;
+   GLuint sz = 0;
+   GLuint i;
+
+   if (dirty & I830_UPLOAD_CTX) 
+      sz += sizeof(state->Ctx);
+
+   if (dirty & I830_UPLOAD_BUFFERS) 
+      sz += sizeof(state->Buffer);
+
+   if (dirty & I830_UPLOAD_STIPPLE) 
+      sz += sizeof(state->Stipple);
+
+   for (i = 0; i < I830_TEX_UNITS; i++) {
+      if ((dirty & I830_UPLOAD_TEX(i)))  
+	 sz += sizeof(state->Tex[i]); 
+
+      if (dirty & I830_UPLOAD_TEXBLEND(i)) 
+	 sz += state->TexBlendWordsUsed[i] * 4;
+   }
+
+   return sz;
+}
+
 
 /* Push the state into the sarea and/or texture memory.
  */
@@ -369,10 +395,15 @@ static void i830_emit_state( intelContextPtr intel )
    i830ContextPtr i830 = I830_CONTEXT(intel);
    struct i830_hw_state *state = i830->current;
    int i;
-   GLuint dirty;
+   GLuint dirty = state->active & ~state->emitted;
+   GLuint counter = intel->batch.counter;
    BATCH_LOCALS;
 
-   dirty = state->active & ~state->emitted;
+   if (intel->batch.space < get_state_size(state)) {
+      intelFlushBatch(intel, GL_TRUE);
+      dirty = state->active & ~state->emitted;
+      counter = intel->batch.counter;
+   }
 
    if (dirty & I830_UPLOAD_CTX) {
       if (VERBOSE) fprintf(stderr, "I830_UPLOAD_CTX:\n"); 
@@ -403,6 +434,8 @@ static void i830_emit_state( intelContextPtr intel )
    }
 
    state->emitted |= dirty;
+   intel->batch.last_emit_state = counter;
+   assert(counter == intel->batch.counter);
 }
 
 static void i830_destroy_context( intelContextPtr intel )
@@ -410,12 +443,44 @@ static void i830_destroy_context( intelContextPtr intel )
    _tnl_free_vertices(&intel->ctx);
 }
 
-static void i830_set_draw_offset( intelContextPtr intel, int offset )
+static void
+i830_set_color_region(intelContextPtr intel, const intelRegion *region)
 {
    i830ContextPtr i830 = I830_CONTEXT(intel);
    I830_STATECHANGE( i830, I830_UPLOAD_BUFFERS );
-   i830->state.Buffer[I830_DESTREG_CBUFADDR2] = offset;
+   i830->state.Buffer[I830_DESTREG_CBUFADDR1] =
+      (BUF_3D_ID_COLOR_BACK | BUF_3D_PITCH(region->pitch) | BUF_3D_USE_FENCE);
+   i830->state.Buffer[I830_DESTREG_CBUFADDR2] = region->offset;
 }
+
+
+static void
+i830_set_z_region(intelContextPtr intel, const intelRegion *region)
+{
+   i830ContextPtr i830 = I830_CONTEXT(intel);
+   I830_STATECHANGE( i830, I830_UPLOAD_BUFFERS );
+   i830->state.Buffer[I830_DESTREG_DBUFADDR1] =
+      (BUF_3D_ID_DEPTH | BUF_3D_PITCH(region->pitch) | BUF_3D_USE_FENCE);
+   i830->state.Buffer[I830_DESTREG_DBUFADDR2] = region->offset;
+}
+
+
+static void
+i830_update_color_z_regions(intelContextPtr intel,
+                            const intelRegion *colorRegion,
+                            const intelRegion *depthRegion)
+{
+   i830ContextPtr i830 = I830_CONTEXT(intel);
+
+   i830->state.Buffer[I830_DESTREG_CBUFADDR1] =
+      (BUF_3D_ID_COLOR_BACK | BUF_3D_PITCH(colorRegion->pitch) | BUF_3D_USE_FENCE);
+   i830->state.Buffer[I830_DESTREG_CBUFADDR2] = colorRegion->offset;
+
+   i830->state.Buffer[I830_DESTREG_DBUFADDR1] =
+      (BUF_3D_ID_DEPTH | BUF_3D_PITCH(depthRegion->pitch) | BUF_3D_USE_FENCE);
+   i830->state.Buffer[I830_DESTREG_DBUFADDR2] = depthRegion->offset;
+}
+
 
 /* This isn't really handled at the moment.
  */
@@ -444,12 +509,15 @@ void i830InitVtbl( i830ContextPtr i830 )
    i830->intel.vtbl.alloc_tex_obj = i830AllocTexObj;
    i830->intel.vtbl.check_vertex_size = i830_check_vertex_size;
    i830->intel.vtbl.clear_with_tris = i830ClearWithTris;
+   i830->intel.vtbl.rotate_window = i830RotateWindow;
    i830->intel.vtbl.destroy = i830_destroy_context;
    i830->intel.vtbl.emit_invarient_state = i830_emit_invarient_state;
    i830->intel.vtbl.emit_state = i830_emit_state;
    i830->intel.vtbl.lost_hardware = i830_lost_hardware;
    i830->intel.vtbl.reduced_primitive_state = i830_reduced_primitive_state;
-   i830->intel.vtbl.set_draw_offset = i830_set_draw_offset;
+   i830->intel.vtbl.set_color_region = i830_set_color_region;
+   i830->intel.vtbl.set_z_region = i830_set_z_region;
+   i830->intel.vtbl.update_color_z_regions = i830_update_color_z_regions;
    i830->intel.vtbl.update_texture_state = i830UpdateTextureState;
    i830->intel.vtbl.emit_flush = i830_emit_flush;
    i830->intel.vtbl.render_start = i830_render_start;

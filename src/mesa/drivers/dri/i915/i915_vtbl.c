@@ -213,6 +213,58 @@ do {							\
    ADVANCE_BATCH();					\
 } while (0);
 
+static GLuint get_dirty( struct i915_hw_state *state )
+{
+   GLuint dirty;
+
+   /* Workaround the multitex hang - if one texture unit state is
+    * modified, emit all texture units.
+    */
+   dirty = state->active & ~state->emitted;
+   if (dirty & I915_UPLOAD_TEX_ALL)
+      state->emitted &= ~I915_UPLOAD_TEX_ALL;
+   dirty = state->active & ~state->emitted;
+
+   return dirty;
+}
+
+
+static GLuint get_state_size( struct i915_hw_state *state )
+{
+   GLuint dirty = get_dirty(state);
+   GLuint i;
+   GLuint sz = 0;
+
+   if (dirty & I915_UPLOAD_CTX)
+      sz += sizeof(state->Ctx);
+
+   if (dirty & I915_UPLOAD_BUFFERS) 
+      sz += sizeof(state->Buffer);
+
+   if (dirty & I915_UPLOAD_STIPPLE)
+      sz += sizeof(state->Stipple);
+
+   if (dirty & I915_UPLOAD_FOG) 
+      sz += sizeof(state->Fog);
+
+   if (dirty & I915_UPLOAD_TEX_ALL) {
+      int nr = 0;
+      for (i = 0; i < I915_TEX_UNITS; i++) 
+	 if (dirty & I915_UPLOAD_TEX(i)) 
+	    nr++;
+
+      sz += (2+nr*3) * sizeof(GLuint) * 2;
+   }
+
+   if (dirty & I915_UPLOAD_CONSTANTS) 
+      sz += state->ConstantSize * sizeof(GLuint);
+
+   if (dirty & I915_UPLOAD_PROGRAM) 
+      sz += state->ProgramSize * sizeof(GLuint);
+
+   return sz;
+}
+
 
 /* Push the state into the sarea and/or texture memory.
  */
@@ -221,17 +273,15 @@ static void i915_emit_state( intelContextPtr intel )
    i915ContextPtr i915 = I915_CONTEXT(intel);
    struct i915_hw_state *state = i915->current;
    int i;
-   GLuint dirty;
+   GLuint dirty = get_dirty(state);
+   GLuint counter = intel->batch.counter;
    BATCH_LOCALS;
 
-   /* More to workaround the multitex hang - if one texture unit state
-    * is modified, emit all texture units.
-    */
-   dirty = state->active & ~state->emitted;
-   if (dirty & I915_UPLOAD_TEX_ALL)
-      state->emitted &= ~I915_UPLOAD_TEX_ALL;
-   dirty = state->active & ~state->emitted;
-
+   if (intel->batch.space < get_state_size(state)) {
+      intelFlushBatch(intel, GL_TRUE);
+      dirty = get_dirty(state);
+      counter = intel->batch.counter;
+   }
 
    if (VERBOSE) 
       fprintf(stderr, "%s dirty: %x\n", __FUNCTION__, dirty);
@@ -305,6 +355,8 @@ static void i915_emit_state( intelContextPtr intel )
    }
 
    state->emitted |= dirty;
+   intel->batch.last_emit_state = counter;
+   assert(counter == intel->batch.counter);
 }
 
 static void i915_destroy_context( intelContextPtr intel )
@@ -312,12 +364,57 @@ static void i915_destroy_context( intelContextPtr intel )
    _tnl_free_vertices(&intel->ctx);
 }
 
-static void i915_set_draw_offset( intelContextPtr intel, int offset )
+
+/**
+ * Set the color buffer drawing region.
+ */
+static void
+i915_set_color_region( intelContextPtr intel, const intelRegion *region)
 {
    i915ContextPtr i915 = I915_CONTEXT(intel);
    I915_STATECHANGE( i915, I915_UPLOAD_BUFFERS );
-   i915->state.Buffer[I915_DESTREG_CBUFADDR2] = offset;
+   i915->state.Buffer[I915_DESTREG_CBUFADDR1] =
+      (BUF_3D_ID_COLOR_BACK | BUF_3D_PITCH(region->pitch) | BUF_3D_USE_FENCE);
+   i915->state.Buffer[I915_DESTREG_CBUFADDR2] = region->offset;
 }
+
+
+/**
+ * specify the z-buffer/stencil region
+ */
+static void
+i915_set_z_region( intelContextPtr intel, const intelRegion *region)
+{
+   i915ContextPtr i915 = I915_CONTEXT(intel);
+   I915_STATECHANGE( i915, I915_UPLOAD_BUFFERS );
+   i915->state.Buffer[I915_DESTREG_DBUFADDR1] =
+      (BUF_3D_ID_DEPTH | BUF_3D_PITCH(region->pitch) | BUF_3D_USE_FENCE);
+   i915->state.Buffer[I915_DESTREG_DBUFADDR2] = region->offset;
+}
+
+
+/**
+ * Set both the color and Z/stencil drawing regions.
+ * Similar to two previous functions, but don't use I915_STATECHANGE()
+ */
+static void
+i915_update_color_z_regions(intelContextPtr intel,
+                            const intelRegion *colorRegion,
+                            const intelRegion *depthRegion)
+{
+   i915ContextPtr i915 = I915_CONTEXT(intel);
+
+   i915->state.Buffer[I915_DESTREG_CBUFADDR1] =
+      (BUF_3D_ID_COLOR_BACK | BUF_3D_PITCH(colorRegion->pitch) | BUF_3D_USE_FENCE);
+   i915->state.Buffer[I915_DESTREG_CBUFADDR2] = colorRegion->offset;
+
+   i915->state.Buffer[I915_DESTREG_DBUFADDR1] =
+      (BUF_3D_ID_DEPTH |
+       BUF_3D_PITCH(depthRegion->pitch) |  /* pitch in bytes */
+       BUF_3D_USE_FENCE);
+   i915->state.Buffer[I915_DESTREG_DBUFADDR2] = depthRegion->offset;
+}
+
 
 static void i915_lost_hardware( intelContextPtr intel )
 {
@@ -340,13 +437,16 @@ void i915InitVtbl( i915ContextPtr i915 )
    i915->intel.vtbl.alloc_tex_obj = i915AllocTexObj;
    i915->intel.vtbl.check_vertex_size = i915_check_vertex_size;
    i915->intel.vtbl.clear_with_tris = i915ClearWithTris;
+   i915->intel.vtbl.rotate_window = i915RotateWindow;
    i915->intel.vtbl.destroy = i915_destroy_context;
    i915->intel.vtbl.emit_invarient_state = i915_emit_invarient_state;
    i915->intel.vtbl.emit_state = i915_emit_state;
    i915->intel.vtbl.lost_hardware = i915_lost_hardware;
    i915->intel.vtbl.reduced_primitive_state = i915_reduced_primitive_state;
    i915->intel.vtbl.render_start = i915_render_start;
-   i915->intel.vtbl.set_draw_offset = i915_set_draw_offset;
+   i915->intel.vtbl.set_color_region = i915_set_color_region;
+   i915->intel.vtbl.set_z_region = i915_set_z_region;
+   i915->intel.vtbl.update_color_z_regions = i915_update_color_z_regions;
    i915->intel.vtbl.update_texture_state = i915UpdateTextureState;
    i915->intel.vtbl.emit_flush = i915_emit_flush;
 }

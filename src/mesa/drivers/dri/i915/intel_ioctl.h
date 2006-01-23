@@ -36,6 +36,10 @@ extern void intelClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 		       GLint cx, GLint cy, GLint cw, GLint ch);
 
 extern void intelPageFlip( const __DRIdrawablePrivate *dpriv );
+
+extern void intelRotateWindow(intelContextPtr intel,
+                              __DRIdrawablePrivate *dPriv, GLuint srcBuffer);
+
 extern void intelWaitForIdle( intelContextPtr intel );
 extern void intelFlushBatch( intelContextPtr intel, GLboolean refill );
 extern void intelFlushBatchLocked( intelContextPtr intel,
@@ -45,6 +49,7 @@ extern void intelFlushBatchLocked( intelContextPtr intel,
 extern void intelRefillBatchLocked( intelContextPtr intel, GLboolean allow_unlock );
 extern void intelFinish( GLcontext *ctx );
 extern void intelFlush( GLcontext *ctx );
+extern void intelglFlush( GLcontext *ctx );
 
 extern void *intelAllocateAGP( intelContextPtr intel, GLsizei size );
 extern void intelFreeAGP( intelContextPtr intel, void *pointer );

@@ -51,6 +51,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define DRM_I830_FREE                     0x09
 #define DRM_I830_INIT_HEAP                0x0a
 #define DRM_I830_CMDBUFFER                0x0b
+#define DRM_I830_DESTROY_HEAP             0x0c
 
 typedef struct {
    enum {
@@ -87,6 +88,30 @@ typedef struct {
         int pf_active;               
         int pf_current_page;	/* which buffer is being displayed? */
         int perf_boxes;	        /* performance boxes to be displayed */   
+	int width, height;      /* screen size in pixels */
+
+	drm_handle_t front_handle;
+	int front_offset;
+	int front_size;
+
+	drm_handle_t back_handle;
+	int back_offset;
+	int back_size;
+
+	drm_handle_t depth_handle;
+	int depth_offset;
+	int depth_size;
+
+	drm_handle_t tex_handle;
+	int tex_offset;
+	int tex_size;
+	int log_tex_granularity;
+	int pitch;
+	int rotation;           /* 0, 90, 180 or 270 */
+	int rotated_offset;
+	int rotated_size;
+	int rotated_pitch;
+	int virtualX, virtualY;
 } drmI830Sarea;
 
 /* Flags for perf_boxes
@@ -115,8 +140,7 @@ typedef struct {
 	int num_cliprects;	/* mulitpass with multiple cliprects? */
         drm_clip_rect_t *cliprects; /* pointer to userspace cliprects */
 } drmI830CmdBuffer;
-
-
+ 
 typedef struct {
 	int *irq_seq;
 } drmI830IrqEmit;
@@ -164,6 +188,10 @@ typedef struct {
 	int size;
 	int start;	
 } drmI830MemInitHeap;
+
+typedef struct {
+	int region;
+} drmI830MemDestroyHeap;
 
 
 #endif /* _I830_DRM_H_ */

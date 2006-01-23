@@ -672,6 +672,46 @@ static void intelUploadTexImage( intelContextPtr intel,
 	  break;
       }
    }
+   /* Time for another vtbl entry:
+    */
+   else if (intel->intelScreen->deviceID == PCI_CHIP_I945_G ||
+            intel->intelScreen->deviceID == PCI_CHIP_I945_GM) {
+      GLuint row_len = image->Width * image->TexFormat->TexelBytes;
+      GLubyte *dst = (GLubyte *)(t->BufAddr + offset);
+      GLubyte *src = (GLubyte *)image->Data;
+      GLuint d, j;
+
+      if (INTEL_DEBUG & DEBUG_TEXTURE)
+	 fprintf(stderr, 
+		 "Upload image %dx%dx%d offset %xm row_len %x "
+		 "pitch %x depth_pitch %x\n",
+		 image->Width, image->Height, image->Depth, offset,
+		 row_len, t->Pitch, t->depth_pitch);
+
+      if (row_len == t->Pitch) {
+	 memcpy( dst, src, row_len * image->Height * image->Depth );
+      }
+      else { 
+	 GLuint x = 0, y = 0;
+
+	 for (d = 0 ; d < image->Depth ; d++) {
+	    GLubyte *dst0 = dst + x + y * t->Pitch;
+
+	    for (j = 0 ; j < image->Height ; j++) {
+	       __memcpy(dst0, src, row_len );
+	       src += row_len;
+	       dst0 += t->Pitch;
+	    }
+
+	    x += MIN2(4, row_len); /* Guess: 4 byte minimum alignment */
+	    if (x > t->Pitch) {
+	       x = 0;
+	       y += image->Height;
+	    }
+	 }
+      }
+
+   }
    else {
       GLuint row_len = image->Width * image->TexFormat->TexelBytes;
       GLubyte *dst = (GLubyte *)(t->BufAddr + offset);

@@ -779,6 +779,14 @@ static void i915Enable(GLcontext *ctx, GLenum cap, GLboolean state)
       }
       break;
 
+   case GL_POLYGON_SMOOTH:
+      FALLBACK( &i915->intel, I915_FALLBACK_POLYGON_SMOOTH, state );
+      break;
+
+   case GL_POINT_SMOOTH:
+      FALLBACK( &i915->intel, I915_FALLBACK_POINT_SMOOTH, state );
+      break;
+
    default:
       ;
    }
@@ -856,23 +864,27 @@ static void i915_init_packets( i915ContextPtr i915 )
 
    {
       I915_STATECHANGE(i915, I915_UPLOAD_BUFFERS);
+      /* color buffer offset/stride */
       i915->state.Buffer[I915_DESTREG_CBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
       i915->state.Buffer[I915_DESTREG_CBUFADDR1] = 
 	 (BUF_3D_ID_COLOR_BACK | 
-	  BUF_3D_PITCH(screen->front.pitch * screen->cpp) |
+	  BUF_3D_PITCH(screen->front.pitch) |  /* pitch in bytes */
 	  BUF_3D_USE_FENCE);
+      /*i915->state.Buffer[I915_DESTREG_CBUFADDR2] is the offset */
 
 
+      /* depth/Z buffer offset/stride */
       i915->state.Buffer[I915_DESTREG_DBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
       i915->state.Buffer[I915_DESTREG_DBUFADDR1] = 
 	 (BUF_3D_ID_DEPTH |
-	  BUF_3D_PITCH(screen->depth.pitch * screen->cpp) |
+	  BUF_3D_PITCH(screen->depth.pitch) |  /* pitch in bytes */
 	  BUF_3D_USE_FENCE);
       i915->state.Buffer[I915_DESTREG_DBUFADDR2] = screen->depth.offset;
 
 
       i915->state.Buffer[I915_DESTREG_DV0] = _3DSTATE_DST_BUF_VARS_CMD;
 
+      /* color/depth pixel format */
       switch (screen->fbFormat) {
       case DV_PF_555:
       case DV_PF_565:
@@ -893,6 +905,8 @@ static void i915_init_packets( i915ContextPtr i915 )
 					       DEPTH_FRMT_24_FIXED_8_OTHER);
 	 break;
       }
+
+      /* scissor */
       i915->state.Buffer[I915_DESTREG_SENABLE] = (_3DSTATE_SCISSOR_ENABLE_CMD |
 						DISABLE_SCISSOR_RECT);
       i915->state.Buffer[I915_DESTREG_SR0] = _3DSTATE_SCISSOR_RECT_0_CMD;

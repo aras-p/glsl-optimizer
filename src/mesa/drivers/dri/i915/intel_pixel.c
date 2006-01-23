@@ -94,16 +94,20 @@ check_color_per_fragment_ops( const GLcontext *ctx )
 }
 
 
-
+/**
+ * Clip the given rectangle against the buffer's bounds (including scissor).
+ * \param size returns the 
+ * \return GL_TRUE if any pixels remain, GL_FALSE if totally clipped.
+ *
+ * XXX Replace this with _mesa_clip_drawpixels() and _mesa_clip_readpixels()
+ * from Mesa 6.4.  We shouldn't apply scissor for ReadPixels.
+ */
 static GLboolean
 clip_pixelrect( const GLcontext *ctx,
 		const GLframebuffer *buffer,
 		GLint *x, GLint *y,
-		GLsizei *width, GLsizei *height,
-		GLint *size )
+		GLsizei *width, GLsizei *height)
 {
-   intelContextPtr intel = INTEL_CONTEXT(ctx);
-
    /* left clipping */
    if (*x < buffer->_Xmin) {
       *width -= (buffer->_Xmin - *x);
@@ -130,11 +134,40 @@ clip_pixelrect( const GLcontext *ctx,
    if (*height <= 0)
       return GL_FALSE;
 
-   *size = ((*y + *height - 1) * intel->intelScreen->front.pitch +
-	    (*x + *width - 1) * intel->intelScreen->cpp);
-
    return GL_TRUE;
 }
+
+
+/**
+ * Compute intersection of a clipping rectangle and pixel rectangle,
+ * returning results in x/y/w/hOut vars.
+ * \return GL_TRUE if there's intersection, GL_FALSE if disjoint.
+ */
+static INLINE GLboolean
+intersect_region(const drm_clip_rect_t *box,
+		 GLint x, GLint y, GLsizei width, GLsizei height,
+		 GLint *xOut, GLint *yOut, GLint *wOut, GLint *hOut)
+{
+   GLint bx = box->x1;
+   GLint by = box->y1;
+   GLint bw = box->x2 - bx;
+   GLint bh = box->y2 - by;
+
+   if (bx < x) bw -= x - bx, bx = x;
+   if (by < y) bh -= y - by, by = y;
+   if (bx + bw > x + width) bw = x + width - bx;
+   if (by + bh > y + height) bh = y + height - by;
+   if (bw <= 0) return GL_FALSE;
+   if (bh <= 0) return GL_FALSE;
+
+   *xOut = bx;
+   *yOut = by;
+   *wOut = bw;
+   *hOut = bh;
+   return GL_TRUE;
+}
+
+
 
 static GLboolean
 intelTryReadPixels( GLcontext *ctx,
@@ -144,7 +177,7 @@ intelTryReadPixels( GLcontext *ctx,
 		  GLvoid *pixels )
 {
    intelContextPtr intel = INTEL_CONTEXT(ctx);
-   GLint size = 0;
+   GLint size = 0; /* not really used */
    GLint pitch = pack->RowLength ? pack->RowLength : width;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
@@ -180,7 +213,7 @@ intelTryReadPixels( GLcontext *ctx,
 
 
    /* Although the blits go on the command buffer, need to do this and
-    * fire with lock held to guarentee cliprects and drawOffset are
+    * fire with lock held to guarentee cliprects and drawing offset are
     * correct.
     *
     * This is an unusual situation however, as the code which flushes
@@ -192,14 +225,15 @@ intelTryReadPixels( GLcontext *ctx,
    {
       __DRIdrawablePrivate *dPriv = intel->driDrawable;
       int nbox = dPriv->numClipRects;
-      int src_offset = intel->drawOffset;
+      int src_offset = intel->readRegion->offset;
       int src_pitch = intel->intelScreen->front.pitch;
       int dst_offset = intelAgpOffsetFromVirtual( intel, pixels);
       drm_clip_rect_t *box = dPriv->pClipRects;
       int i;
 
-      if (!clip_pixelrect(ctx, ctx->ReadBuffer, &x, &y, &width, &height,
-			  &size)) {
+      assert(dst_offset != ~0);  /* should have been caught above */
+
+      if (!clip_pixelrect(ctx, ctx->ReadBuffer, &x, &y, &width, &height)) {
 	 UNLOCK_HARDWARE( intel );
 	 if (INTEL_DEBUG & DEBUG_PIXEL)
 	    fprintf(stderr, "%s totally clipped -- nothing to do\n",
@@ -207,37 +241,32 @@ intelTryReadPixels( GLcontext *ctx,
 	 return GL_TRUE;
       }
 
-
+      /* convert to screen coords (y=0=top) */
       y = dPriv->h - y - height;
       x += dPriv->x;
       y += dPriv->y;
-
 
       if (INTEL_DEBUG & DEBUG_PIXEL)
 	 fprintf(stderr, "readpixel blit src_pitch %d dst_pitch %d\n",
 		 src_pitch, pitch);
 
+      /* We don't really have to do window clipping for readpixels.
+       * The OpenGL spec says that pixels read from outside the
+       * visible window region (pixel ownership) have undefined value.
+       */
       for (i = 0 ; i < nbox ; i++)
       {
-	 GLint bx = box[i].x1;
-	 GLint by = box[i].y1;
-	 GLint bw = box[i].x2 - bx;
-	 GLint bh = box[i].y2 - by;
-	 
-	 if (bx < x) bw -= x - bx, bx = x;
-	 if (by < y) bh -= y - by, by = y;
-	 if (bx + bw > x + width) bw = x + width - bx;
-	 if (by + bh > y + height) bh = y + height - by;
-	 if (bw <= 0) continue;
-	 if (bh <= 0) continue;
-
-	 intelEmitCopyBlitLocked( intel,
-			    intel->intelScreen->cpp,
-			    src_pitch, src_offset,
-			    pitch, dst_offset,
-			    bx, by,
-			    bx - x, by - y,
-			    bw, bh );
+         GLint bx, by, bw, bh;
+         if (intersect_region(box+i, x, y, width, height,
+                              &bx, &by, &bw, &bh)) {
+            intelEmitCopyBlitLocked( intel,
+                                     intel->intelScreen->cpp,
+                                     src_pitch, src_offset,
+                                     pitch, dst_offset,
+                                     bx, by,
+                                     bx - x, by - y,
+                                     bw, bh );
+         }
       }
    }
    UNLOCK_HARDWARE( intel );
@@ -257,7 +286,7 @@ intelReadPixels( GLcontext *ctx,
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    if (!intelTryReadPixels( ctx, x, y, width, height, format, type, pack, 
-			   pixels))
+                            pixels))
       _swrast_ReadPixels( ctx, x, y, width, height, format, type, pack, 
 			  pixels);
 }
@@ -276,9 +305,10 @@ static void do_draw_pix( GLcontext *ctx,
    drm_clip_rect_t *box = dPriv->pClipRects;
    int nbox = dPriv->numClipRects;
    int i;
-   int size;
    int src_offset = intelAgpOffsetFromVirtual( intel, pixels);
    int src_pitch = pitch;
+
+   assert(src_offset != ~0);  /* should be caught earlier */
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
@@ -290,8 +320,7 @@ static void do_draw_pix( GLcontext *ctx,
       y -= height;			/* cope with pixel zoom */
    
       if (!clip_pixelrect(ctx, ctx->DrawBuffer,
-			  &x, &y, &width, &height,
-			  &size)) {
+			  &x, &y, &width, &height)) {
 	 UNLOCK_HARDWARE( intel );
 	 return;
       }
@@ -300,35 +329,25 @@ static void do_draw_pix( GLcontext *ctx,
       x += dPriv->x;
       y += dPriv->y;
 
-
       for (i = 0 ; i < nbox ; i++ )
       {
-	 GLint bx = box[i].x1;
-	 GLint by = box[i].y1;
-	 GLint bw = box[i].x2 - bx;
-	 GLint bh = box[i].y2 - by;
-
-	 if (bx < x) bw -= x - bx, bx = x;
-	 if (by < y) bh -= y - by, by = y;
-	 if (bx + bw > x + width) bw = x + width - bx;
-	 if (by + bh > y + height) bh = y + height - by;
-	 if (bw <= 0) continue;
-	 if (bh <= 0) continue;
-
-	 intelEmitCopyBlitLocked( intel,
-			    intel->intelScreen->cpp,
-			    src_pitch, src_offset,
-			    intel->intelScreen->front.pitch,
-			      intel->drawOffset,
-			    bx - x, by - y,
-			    bx, by,
-			    bw, bh );
+	 GLint bx, by, bw, bh;
+	 if (intersect_region(box + i, x, y, width, height,
+			      &bx, &by, &bw, &bh)) {
+            intelEmitCopyBlitLocked( intel,
+                                     intel->intelScreen->cpp,
+                                     src_pitch, src_offset,
+                                     intel->intelScreen->front.pitch,
+                                     intel->drawRegion->offset,
+                                     bx - x, by - y,
+                                     bx, by,
+                                     bw, bh );
+         }
       }
    }
    UNLOCK_HARDWARE( intel );
    intelFinish( &intel->ctx );
 }
-
 
 
 
@@ -352,7 +371,7 @@ intelTryDrawPixels( GLcontext *ctx,
    case GL_RGB:
    case GL_RGBA:
    case GL_BGRA:
-      dest = intel->drawOffset;
+      dest = intel->drawRegion->offset;
 
       /* Planemask doesn't have full support in blits.
        */
@@ -391,8 +410,7 @@ intelTryDrawPixels( GLcontext *ctx,
 
    if ( intelIsAgpMemory(intel, pixels, size) )
    {
-      do_draw_pix( ctx, x, y, width, height, pitch, pixels,
-		   dest );
+      do_draw_pix( ctx, x, y, width, height, pitch, pixels, dest );
       return GL_TRUE;
    }
    else if (0)
@@ -418,7 +436,7 @@ intelDrawPixels( GLcontext *ctx,
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    if (!intelTryDrawPixels( ctx, x, y, width, height, format, type,
-			  unpack, pixels ))
+                            unpack, pixels ))
       _swrast_DrawPixels( ctx, x, y, width, height, format, type,
 			  unpack, pixels );
 }

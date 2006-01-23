@@ -29,21 +29,26 @@
 #define _INTEL_INIT_H_
 
 #include <sys/time.h>
-#include "dri_util.h"
 #include "xmlconfig.h"
+#include "dri_util.h"
+#include "intel_rotate.h"
+#include "i830_common.h"
 
+
+/* This roughly corresponds to a gl_renderbuffer (Mesa 6.4) */
 typedef struct {
    drm_handle_t handle;
    drmSize size;        /* region size in bytes */
    char *map;           /* memory map */
    int offset;          /* from start of video mem, in bytes */
-   int pitch;           /* row stride, in pixels */
+   int pitch;           /* row stride, in bytes */
 } intelRegion;
 
 typedef struct 
 {
    intelRegion front;
    intelRegion back;
+   intelRegion rotated;
    intelRegion depth;
    intelRegion tex;
    
@@ -51,9 +56,8 @@ typedef struct
    int width;
    int height;
    int mem;         /* unused */
-
+   
    int cpp;         /* for front and back buffers */
-   int bitsPerPixel;  /* unused */
    int fbFormat;
 
    int logTextureGranularity;
@@ -66,12 +70,27 @@ typedef struct
    int irq_active;
    int allow_batchbuffer;
 
+   struct matrix23 rotMatrix;
+
+   int current_rotation;  /* 0, 90, 180 or 270 */
+   int rotatedWidth, rotatedHeight;
+
    /**
-    * Configuration cache with default values for all contexts 
-    */
+   * Configuration cache with default values for all contexts
+   */
    driOptionCache optionCache;
 } intelScreenPrivate;
 
+
+extern GLboolean
+intelMapScreenRegions(__DRIscreenPrivate *sPriv);
+
+extern void
+intelUnmapScreenRegions(intelScreenPrivate *intelScreen);
+
+extern void
+intelUpdateScreenFromSAREA(intelScreenPrivate *intelScreen,
+                           drmI830Sarea *sarea);
 
 extern void
 intelDestroyContext(__DRIcontextPrivate *driContextPriv);
@@ -81,10 +100,10 @@ intelUnbindContext(__DRIcontextPrivate *driContextPriv);
 
 extern GLboolean
 intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
-                __DRIdrawablePrivate *driDrawPriv,
-                __DRIdrawablePrivate *driReadPriv);
+                 __DRIdrawablePrivate *driDrawPriv,
+                 __DRIdrawablePrivate *driReadPriv);
 
 extern void
-intelSwapBuffers( __DRIdrawablePrivate *dPriv);
+intelSwapBuffers(__DRIdrawablePrivate *dPriv);
 
 #endif

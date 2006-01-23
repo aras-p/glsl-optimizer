@@ -158,7 +158,12 @@ static void i915TexEnv( GLcontext *ctx, GLenum target,
 static void i915BindTexture( GLcontext *ctx, GLenum target,
 			    struct gl_texture_object *texObj )
 {
-   i915TextureObjectPtr tex = (i915TextureObjectPtr)texObj->DriverData;
+   i915TextureObjectPtr tex;
+   
+   if (!texObj->DriverData)
+      i915AllocTexObj( texObj );
+   
+   tex = (i915TextureObjectPtr)texObj->DriverData;
 
    if (tex->lastTarget != texObj->Target) {
       tex->intel.dirty = I915_UPLOAD_TEX_ALL;
