@@ -369,7 +369,7 @@ static GLboolean intelCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       {
          driRenderbuffer *frontRb
             = driNewRenderbuffer(GL_RGBA,
-                                 driScrnPriv->pFB,
+                                 screen->front.map,
                                  screen->cpp,
                                  screen->front.offset, screen->front.pitch,
                                  driDrawPriv);
