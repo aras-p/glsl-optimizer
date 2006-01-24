@@ -153,7 +153,7 @@ intelPrintDRIInfo(intelScreenPrivate *intelScreen,
                   I830DRIPtr gDRIPriv)
 {
    fprintf(stderr, "*** Front size:   0x%x  offset: 0x%x  pitch: %d\n",
-           sPriv->fbSize, intelScreen->front.offset,
+           intelScreen->front.size, intelScreen->front.offset,
            intelScreen->front.pitch);
    fprintf(stderr, "*** Back size:    0x%x  offset: 0x%x  pitch: %d\n",
            intelScreen->back.size, intelScreen->back.offset,
