@@ -36,13 +36,12 @@
 
 
 
-#ifdef __linux__
+#if defined(__linux__) && !defined(XFree86Server)
 
 /*
  * Allocate a large block of memory which can hold code then dole it out
  * in pieces by means of the generic memory manager code.
 */
-
 
 #include <unistd.h>
 #include <sys/mman.h>
