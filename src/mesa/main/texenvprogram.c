@@ -757,6 +757,7 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
        * result = tmp - .5
        */
       half = get_half(p);
+      tmp = get_temp( p );
       emit_arith( p, OPCODE_ADD, tmp, mask, 0, src[0], src[1], undef );
       emit_arith( p, OPCODE_SUB, dest, mask, saturate, tmp, half, undef );
       return dest;
