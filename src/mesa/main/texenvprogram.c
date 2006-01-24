@@ -593,14 +593,14 @@ static struct ureg get_one( struct texenv_fragment_program *p )
 static struct ureg get_half( struct texenv_fragment_program *p )
 {
    if (is_undef(p->half)) 
-      p->one = register_scalar_const(p, 0.5);
+      p->half = register_scalar_const(p, 0.5);
    return p->half;
 }
 
 static struct ureg get_zero( struct texenv_fragment_program *p )
 {
    if (is_undef(p->zero)) 
-      p->one = register_scalar_const(p, 0.0);
+      p->zero = register_scalar_const(p, 0.0);
    return p->zero;
 }
 
@@ -937,7 +937,7 @@ static GLboolean load_texenv_source( struct texenv_fragment_program *p,
 				     GLuint src, GLuint unit )
 {
    switch (src) {
-   case SRC_TEXTURE: 
+   case SRC_TEXTURE:
       load_texture(p, unit);
       break;
 
@@ -949,7 +949,7 @@ static GLboolean load_texenv_source( struct texenv_fragment_program *p,
    case SRC_TEXTURE5:
    case SRC_TEXTURE6:
    case SRC_TEXTURE7:       
-      if (!p->state->unit[src - SRC_TEXTURE0].enabled) 
+      if (!p->state->unit[src - SRC_TEXTURE0].enabled)
 	 return GL_FALSE;
       load_texture(p, src - SRC_TEXTURE0);
       break;
