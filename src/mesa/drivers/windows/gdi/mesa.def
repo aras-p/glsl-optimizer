@@ -969,6 +969,7 @@ EXPORTS
 	wglUseFontBitmapsW
 	wglUseFontOutlinesA
 	wglUseFontOutlinesW
+	wglGetExtensionsStringARB
 ;
 ; Mesa internals - mostly for OSMESA
 	_ac_CreateContext
