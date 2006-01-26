@@ -1700,36 +1700,6 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 	r300UpdateTextureState(ctx);
 #endif
 
-#if 0
-#define B_FLAG(x) ((x)?1:0)
-
-	if(hw_tcl_on){
-		int i;
-		GLuint InputsRead;
-		GLuint OutputsWritten;
-		
-		InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
-		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->Base.OutputsWritten;
-		
-		for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
-			/*if(B_FLAG(OutputsWritten & (1 << (VERT_RESULT_TEX0+i))) != B_FLAG(InputsRead & (FRAG_BIT_TEX0<<i))){
-				fprintf(stderr, "vp_out != fp_in fails for unit %d\n", i);
-				exit(1);
-			}*/
-			/*
-			if(B_FLAG(ctx->Texture.Unit[i]._ReallyEnabled) != B_FLAG(InputsRead & (FRAG_BIT_TEX0<<i))){
-				fprintf(stderr, "re != fp_in fails for unit %d\n", i);
-				exit(1);
-			}
-			
-			if(B_FLAG(ctx->Texture.Unit[i]._ReallyEnabled) != B_FLAG(OutputsWritten & (1 << (VERT_RESULT_TEX0+i)))){
-				fprintf(stderr, "re != vp_out fails for unit %d\n", i);
-				exit(1);
-			}*/
-		}
-	}
-#endif
-	
 	r300SetupPixelShader(rmesa);
 	r300_setup_textures(ctx);
 	
