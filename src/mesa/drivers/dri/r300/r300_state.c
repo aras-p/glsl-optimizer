@@ -1092,7 +1092,10 @@ void r300_setup_textures(GLcontext *ctx)
 	int i, mtu;
 	struct r300_tex_obj *t;
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	int max_texture_unit=-1; /* -1 translates into no setup costs for fields */
+	int hw_tmu=0;
+	int first_hw_tmu=0, last_hw_tmu=-1; /* -1 translates into no setup costs for fields */
+	int tmu_mappings[R300_MAX_TEXTURE_UNITS] = { -1 };
+	struct r300_fragment_program *rp = ctx->FragmentProgram._Current;
 
 	R300_STATECHANGE(r300, txe);
 	R300_STATECHANGE(r300, tex.filter);
@@ -1115,14 +1118,16 @@ void r300_setup_textures(GLcontext *ctx)
 			mtu, R300_MAX_TEXTURE_UNITS);
 		exit(-1);
 	}
-	
+
+	/* We cannot let disabled tmu offsets pass DRM */
 	for(i=0; i < mtu; i++) {
-		/*if( ((r300->state.render_inputs & (_TNL_BIT_TEX0<<i))!=0) != ((ctx->Texture.Unit[i].Enabled)!=0) ) {
-			WARN_ONCE("Mismatch between render_inputs and ctx->Texture.Unit[i].Enabled value(%d vs %d).\n",
-					((r300->state.render_inputs & (_TNL_BIT_TEX0<<i))!=0), ((ctx->Texture.Unit[i].Enabled)!=0));
-		}*/
-		
 		if(TMU_ENABLED(ctx, i)) {
+			
+#if 0 /* Enables old behaviour */
+			hw_tmu = i;
+#endif
+			tmu_mappings[i] = hw_tmu;
+			
 			t=r300->state.texture.unit[i].texobj;
 			//fprintf(stderr, "format=%08x\n", r300->state.texture.unit[i].format);
 			
@@ -1140,35 +1145,60 @@ void r300_setup_textures(GLcontext *ctx)
 			
 			if (RADEON_DEBUG & DEBUG_STATE)
 				fprintf(stderr, "Activating texture unit %d\n", i);
-			max_texture_unit=i;
-			r300->hw.txe.cmd[R300_TXE_ENABLE]|=(1<<i);
 			
-			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=gen_fixed_filter(t->filter) | (i << 28); 
-			//r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=0x0; /* move lod bias here? */
+			r300->hw.txe.cmd[R300_TXE_ENABLE] |= (1 << hw_tmu);
 			
-			/* No idea why linear filtered textures shake when puting random data */
-			/*r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=(rand()%0xffffffff) & (~0x1fff);*/
-			r300->hw.tex.size.cmd[R300_TEX_VALUE_0+i]=t->size;
-			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=t->format;
-			//fprintf(stderr, "t->format=%08x\n", t->format);
-			r300->hw.tex.pitch.cmd[R300_TEX_VALUE_0+i]=t->pitch_reg;
-			r300->hw.tex.offset.cmd[R300_TEX_VALUE_0+i]=t->offset;
-			r300->hw.tex.unknown4.cmd[R300_TEX_VALUE_0+i]=0x0;
-			r300->hw.tex.border_color.cmd[R300_TEX_VALUE_0+i]=t->pp_border_color;
+			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0 + hw_tmu] = gen_fixed_filter(t->filter) | (hw_tmu << 28);
+			/* Currently disabled! */
+			r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0 + hw_tmu] = 0x0;
+			r300->hw.tex.size.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->size;
+			r300->hw.tex.format.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->format;
+			r300->hw.tex.pitch.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->pitch_reg;
+			r300->hw.tex.offset.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->offset;
+			r300->hw.tex.unknown4.cmd[R300_TEX_VALUE_0 + hw_tmu] = 0x0;
+			r300->hw.tex.border_color.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->pp_border_color;
+			
+			last_hw_tmu = hw_tmu;
+			
+			hw_tmu++;
 		}
 	}
 	
-	((drm_r300_cmd_header_t*)r300->hw.tex.filter.cmd)->packet0.count = max_texture_unit+1;
-	((drm_r300_cmd_header_t*)r300->hw.tex.unknown1.cmd)->packet0.count = max_texture_unit+1;
-	((drm_r300_cmd_header_t*)r300->hw.tex.size.cmd)->packet0.count = max_texture_unit+1;
-	((drm_r300_cmd_header_t*)r300->hw.tex.format.cmd)->packet0.count = max_texture_unit+1;
-	((drm_r300_cmd_header_t*)r300->hw.tex.pitch.cmd)->packet0.count = max_texture_unit+1;
-	((drm_r300_cmd_header_t*)r300->hw.tex.offset.cmd)->packet0.count = max_texture_unit+1;
-	((drm_r300_cmd_header_t*)r300->hw.tex.unknown4.cmd)->packet0.count = max_texture_unit+1;
-	((drm_r300_cmd_header_t*)r300->hw.tex.border_color.cmd)->packet0.count = max_texture_unit+1;
-
+	r300->hw.tex.filter.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FILTER_0, last_hw_tmu + 1);
+	r300->hw.tex.unknown1.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FILTER1_0, last_hw_tmu + 1);
+	r300->hw.tex.size.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_SIZE_0, last_hw_tmu + 1);
+	r300->hw.tex.format.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FORMAT_0, last_hw_tmu + 1);
+	r300->hw.tex.pitch.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_PITCH_0, last_hw_tmu + 1);
+	r300->hw.tex.offset.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_OFFSET_0, last_hw_tmu + 1);
+	r300->hw.tex.unknown4.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_CHROMA_KEY_0, last_hw_tmu + 1);
+	r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_BORDER_COLOR_0, last_hw_tmu + 1);
+	
+	
+	if (!rp)	/* should only happenen once, just after context is created */
+		return;
+	
+	R300_STATECHANGE(r300, fpt);
+	
+	for(i = 0; i < rp->tex.length; i++){
+		int unit;
+		unsigned long val;
+		
+		unit = rp->tex.inst[i] >> R300_FPITX_IMAGE_SHIFT;
+		unit &= 15;
+		
+		val = rp->tex.inst[i];
+		val &= ~R300_FPITX_IMAGE_MASK;
+		
+		assert(tmu_mappings[unit] >= 0);
+		
+		val |= tmu_mappings[unit] << R300_FPITX_IMAGE_SHIFT;
+		r300->hw.fpt.cmd[R300_FPT_INSTR_0+i] = val;
+	}
+	
+	r300->hw.fpt.cmd[R300_FPT_CMD_0] = cmdpacket0(R300_PFS_TEXI_0, rp->tex.length);
+	
 	if (RADEON_DEBUG & DEBUG_STATE)
-		fprintf(stderr, "TX_ENABLE: %08x  max_texture_unit=%d\n", r300->hw.txe.cmd[R300_TXE_ENABLE], max_texture_unit);
+		fprintf(stderr, "TX_ENABLE: %08x  last_hw_tmu=%d\n", r300->hw.txe.cmd[R300_TXE_ENABLE], last_hw_tmu);
 }
 
 #if USE_ARB_F_P == 1
@@ -1700,9 +1730,9 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 	}
 #endif
 	
-	r300_setup_textures(ctx);
-
 	r300SetupPixelShader(rmesa);
+	r300_setup_textures(ctx);
+	
 	r300SetupVertexShader(rmesa);
 	r300_setup_rs_unit(ctx);
 }
@@ -1753,11 +1783,6 @@ void r300SetupPixelShader(r300ContextPtr rmesa)
 		exit(-1);
 	}
 	
-	R300_STATECHANGE(rmesa, fpt);
-	for(i=0;i<rp->tex.length;i++)
-		rmesa->hw.fpt.cmd[R300_FPT_INSTR_0+i]=rp->tex.inst[i];
-	rmesa->hw.fpt.cmd[R300_FPT_CMD_0]=cmdpacket0(R300_PFS_TEXI_0, rp->tex.length);
-
 #define OUTPUT_FIELD(st, reg, field)  \
 		R300_STATECHANGE(rmesa, st); \
 		for(i=0;i<=rp->alu_end;i++) \
@@ -2064,6 +2089,8 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300UpdateTextureState(ctx);
 
 //	r300_setup_routing(ctx, GL_TRUE);
+	
+#if 0 /* Done in prior to rendering */
 	if(hw_tcl_on == GL_FALSE){
 		r300EmitArrays(ctx, GL_TRUE); /* Just do the routing */
 		r300_setup_textures(ctx);
@@ -2072,6 +2099,7 @@ void r300ResetHwState(r300ContextPtr r300)
 		r300SetupVertexShader(r300);
 		r300SetupPixelShader(r300);
 	}
+#endif
 
 	r300_set_blend_state(ctx);
 
@@ -2081,7 +2109,7 @@ void r300ResetHwState(r300ContextPtr r300)
 		/* Initialize magic registers
 		 TODO : learn what they really do, or get rid of
 		 those we don't have to touch */
-	r300->hw.unk2080.cmd[1] = 0x0030045A; /* Dangerous */
+	r300->hw.unk2080.cmd[1] = 0x0030045A; //0x0030065a /* Dangerous */
 
 	r300->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
 				| R300_VPORT_X_OFFSET_ENA

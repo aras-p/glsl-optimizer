@@ -933,6 +933,7 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 	 */
 	switch (pname) {
 	case GL_TEXTURE_LOD_BIAS_EXT:{
+#if 0 /* Needs to be relocated in order to make sure we got the right tmu */
 			GLfloat bias, min;
 			GLuint b;
 
@@ -957,6 +958,7 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 				rmesa->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+unit] &= ~R300_LOD_BIAS_MASK;
 				rmesa->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+unit] |= b;
 			}
+#endif
 			break;
 		}
 
@@ -1084,6 +1086,7 @@ static struct gl_texture_object *r300NewTextureObject(GLcontext * ctx,
 	r300AllocTexObj(obj);
 	return obj;
 }
+
 
 void r300InitTextureFuncs(struct dd_function_table *functions)
 {
