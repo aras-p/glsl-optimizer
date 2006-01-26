@@ -299,23 +299,32 @@ typedef struct
    GLuint StateChanges;
    GLenum Primitive;    /* current primitive being drawn (ala glBegin) */
 
-   /** Mechanism to allow driver (like X11) to register further
-    * software rasterization routines.
+   void (*InvalidateState)( GLcontext *ctx, GLbitfield new_state );
+
+   /**
+    * When the NewState mask intersects these masks, we invalidate the
+    * Point/Line/Triangle function pointers below.
+    */
+   /*@{*/
+   GLbitfield InvalidatePointMask;
+   GLbitfield InvalidateLineMask;
+   GLbitfield InvalidateTriangleMask;
+   /*@}*/
+
+   /**
+    * Device drivers plug in functions for these callbacks.
+    * Will be called when the GL state change mask intersects the above masks.
     */
    /*@{*/
    void (*choose_point)( GLcontext * );
    void (*choose_line)( GLcontext * );
    void (*choose_triangle)( GLcontext * );
-
-   GLbitfield invalidate_point;
-   GLbitfield invalidate_line;
-   GLbitfield invalidate_triangle;
    /*@}*/
 
-   /** Function pointers for dispatch behind public entrypoints. */
+   /**
+    * Current point, line and triangle drawing functions.
+    */
    /*@{*/
-   void (*InvalidateState)( GLcontext *ctx, GLbitfield new_state );
-
    swrast_point_func Point;
    swrast_line_func Line;
    swrast_tri_func Triangle;

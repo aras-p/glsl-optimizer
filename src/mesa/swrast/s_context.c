@@ -392,13 +392,13 @@ _swrast_invalidate_state( GLcontext *ctx, GLbitfield new_state )
       new_state = ~0;
    }
 
-   if (new_state & swrast->invalidate_triangle)
+   if (new_state & swrast->InvalidateTriangleMask)
       swrast->Triangle = _swrast_validate_triangle;
 
-   if (new_state & swrast->invalidate_line)
+   if (new_state & swrast->InvalidateLineMask)
       swrast->Line = _swrast_validate_line;
 
-   if (new_state & swrast->invalidate_point)
+   if (new_state & swrast->InvalidatePointMask)
       swrast->Point = _swrast_validate_point;
 
    if (new_state & _SWRAST_NEW_BLEND_FUNC)
@@ -570,9 +570,9 @@ _swrast_CreateContext( GLcontext *ctx )
    swrast->choose_line = _swrast_choose_line;
    swrast->choose_triangle = _swrast_choose_triangle;
 
-   swrast->invalidate_point = _SWRAST_NEW_POINT;
-   swrast->invalidate_line = _SWRAST_NEW_LINE;
-   swrast->invalidate_triangle = _SWRAST_NEW_TRIANGLE;
+   swrast->InvalidatePointMask = _SWRAST_NEW_POINT;
+   swrast->InvalidateLineMask = _SWRAST_NEW_LINE;
+   swrast->InvalidateTriangleMask = _SWRAST_NEW_TRIANGLE;
 
    swrast->Point = _swrast_validate_point;
    swrast->Line = _swrast_validate_line;

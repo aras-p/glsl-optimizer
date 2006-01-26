@@ -1293,8 +1293,10 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
                             _SWRAST_NEW_RASTERMASK)
 
 
-/* Extend the software rasterizer with our line/point/triangle
+/**
+ * Extend the software rasterizer with our line/point/triangle
  * functions.
+ * Called during context creation only.
  */
 void xmesa_register_swrast_functions( GLcontext *ctx )
 {
@@ -1304,7 +1306,8 @@ void xmesa_register_swrast_functions( GLcontext *ctx )
    swrast->choose_line = xmesa_choose_line;
    swrast->choose_triangle = xmesa_choose_triangle;
 
-   swrast->invalidate_point |= XMESA_NEW_POINT;
-   swrast->invalidate_line |= XMESA_NEW_LINE;
-   swrast->invalidate_triangle |= XMESA_NEW_TRIANGLE;
+   /* XXX these lines have no net effect.  Remove??? */
+   swrast->InvalidatePointMask |= XMESA_NEW_POINT;
+   swrast->InvalidateLineMask |= XMESA_NEW_LINE;
+   swrast->InvalidateTriangleMask |= XMESA_NEW_TRIANGLE;
 }

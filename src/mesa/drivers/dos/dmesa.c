@@ -868,8 +868,8 @@ dmesa_register_swrast_functions (GLcontext *ctx)
    swrast->choose_line = dmesa_choose_line;
    swrast->choose_triangle = dmesa_choose_tri;
 
-   swrast->invalidate_line |= DMESA_NEW_LINE;
-   swrast->invalidate_triangle |= DMESA_NEW_TRIANGLE;
+   swrast->InvalidateLineMask |= DMESA_NEW_LINE;
+   swrast->InvalidateTriangleMask |= DMESA_NEW_TRIANGLE;
 }
 
 
