@@ -24,6 +24,7 @@ SOURCES = antialias.c \
 	bufferobj.c \
 	bug_3101.c \
 	bug_3195.c \
+	copypixrate.c \
 	crossbar.c \
 	cva.c \
 	dinoshade.c \
