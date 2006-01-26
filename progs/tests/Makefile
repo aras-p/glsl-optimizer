@@ -48,6 +48,7 @@ SOURCES = antialias.c \
 	sharedtex.c \
 	stencilwrap.c \
 	stencil_wrap.c \
+	subtexrate.c \
 	tex1d.c \
 	texfilt.c \
 	texline.c \
