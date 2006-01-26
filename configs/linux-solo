@@ -40,4 +40,4 @@ DRIVER_DIRS = dri
 PROGRAM_DIRS = miniglx
 
 #DRI_DIRS = ffb gamma sis savage
-DRI_DIRS = i810 i830 i915 mach64 mga r128 r200 radeon tdfx unichrome fb
+DRI_DIRS = i810 i915 mach64 mga r128 r200 radeon tdfx unichrome fb

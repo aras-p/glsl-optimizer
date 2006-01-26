@@ -17,7 +17,7 @@ LIB_DIR = $(TOP)/lib64
 EXTRA_LIB_PATH=-L/usr/X11R6/lib64
 
 # ffb, gamma, and sis are missing because they have not be converted to use
-# the new interface.  i810 and i830 are missing because there is no x86-64
+# the new interface.  i810 are missing because there is no x86-64
 # system where they could *ever* be used.
 #
 DRI_DIRS = i915 mach64 mga r128 r200 radeon tdfx unichrome savage r300
