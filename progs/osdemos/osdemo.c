@@ -82,59 +82,11 @@ static void render_image( void )
    glutSolidCone(1.0, 2.0, 16, 1);
    glPopMatrix();
 
-#ifdef GL_HP_occlusion_test
-   if (perf == 0) {
-      GLboolean bRet;
-      glDepthMask(GL_FALSE);
-      glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-      glEnable(GL_OCCLUSION_TEST_HP);
-      glGetBooleanv(GL_OCCLUSION_TEST_RESULT_HP,&bRet);
-
-      glPushMatrix();
-      glTranslatef(0.75, 0.0, -1.0);
-      glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, blue_mat );
-      glutSolidSphere(1.0, 20, 20);
-      glPopMatrix();
-
-      glGetBooleanv(GL_OCCLUSION_TEST_RESULT_HP,&bRet);
-      printf("Occlusion test 1 (result should be 1): %d\n",bRet);
-
-      glDepthMask(GL_TRUE);
-      glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-      glDisable(GL_OCCLUSION_TEST_HP);
-   }
-#endif
-
    glPushMatrix();
    glTranslatef(0.75, 0.0, -1.0); 
    glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, blue_mat );
    glutSolidSphere(1.0, 20, 20);
    glPopMatrix();
-
-#ifdef GL_HP_occlusion_test
-   if (perf == 0){
-      GLboolean bRet;
-
-      glDepthMask(GL_FALSE);
-      glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-      glEnable(GL_OCCLUSION_TEST_HP);
-      glGetBooleanv(GL_OCCLUSION_TEST_RESULT_HP,&bRet);
-
-      /* draw a sphere inside the previous sphere */
-      glPushMatrix();
-      glTranslatef(0.75, 0.0, -1.0);
-      glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, blue_mat );
-      glutSolidSphere(0.5, 20, 20);
-      glPopMatrix();
-
-      glGetBooleanv(GL_OCCLUSION_TEST_RESULT_HP,&bRet);
-      printf("Occlusion test 2 (result should be 0): %d\n",bRet);
-
-      glDepthMask(GL_TRUE);
-      glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-      glDisable(GL_OCCLUSION_TEST_HP);
-   }
-#endif
 
    glPopMatrix();
 
