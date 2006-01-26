@@ -580,21 +580,6 @@ osmesa_choose_line( GLcontext *ctx )
 }
 
 
-#define OSMESA_NEW_LINE   (_NEW_LINE | \
-                           _NEW_TEXTURE | \
-                           _NEW_LIGHT | \
-                           _NEW_DEPTH | \
-                           _NEW_RENDERMODE | \
-                           _SWRAST_NEW_RASTERMASK)
-
-#define OSMESA_NEW_TRIANGLE (_NEW_POLYGON | \
-                             _NEW_TEXTURE | \
-                             _NEW_LIGHT | \
-                             _NEW_DEPTH | \
-                             _NEW_RENDERMODE | \
-                             _SWRAST_NEW_RASTERMASK)
-
-
 /**
  * Don't use _mesa_delete_renderbuffer since we can't free rb->Data.
  */
@@ -941,8 +926,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
          swrast = SWRAST_CONTEXT( ctx );
          swrast->choose_line = osmesa_choose_line;
          swrast->choose_triangle = osmesa_choose_triangle;
-         swrast->invalidate_line |= OSMESA_NEW_LINE;
-         swrast->invalidate_triangle |= OSMESA_NEW_TRIANGLE;
       }
    }
    return osmesa;
