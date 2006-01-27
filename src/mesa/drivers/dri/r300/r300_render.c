@@ -856,6 +856,11 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 	if(hw_tcl_on == GL_FALSE)
 		return GL_TRUE;
 	
+	if (r300Fallback(ctx)) {
+		hw_tcl_on = GL_FALSE;
+		return GL_TRUE;
+	}
+	
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
 		if (ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_RECT_BIT) {
 			hw_tcl_on = GL_FALSE;
