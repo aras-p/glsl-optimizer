@@ -120,8 +120,6 @@ void radeonUpdateScissor(GLcontext* ctx)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 
-	assert(radeon->state.scissor.enabled == ctx->Scissor.Enabled);
-
 	if (radeon->dri.drawable) {
 		__DRIdrawablePrivate *dPriv = radeon->dri.drawable;
 		int x1 = dPriv->x + ctx->Scissor.X;
