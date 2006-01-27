@@ -122,7 +122,7 @@ const struct dri_extension card_extensions[] = {
 };
 
 extern struct tnl_pipeline_stage _r300_render_stage;
-extern struct tnl_pipeline_stage _r300_tcl_stage;
+extern const struct tnl_pipeline_stage _r300_tcl_stage;
 extern const struct tnl_pipeline_stage _r300_texrect_stage;
 
 static const struct tnl_pipeline_stage *r300_pipeline[] = {
@@ -308,7 +308,8 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	/* currently bogus data */
 	ctx->Const.VertexProgram.MaxNativeInstructions=VSF_MAX_FRAGMENT_LENGTH;
 	ctx->Const.VertexProgram.MaxNativeAttribs=16; /* r420 */
-	ctx->Const.VertexProgram.MaxNativeTemps=VSF_MAX_FRAGMENT_TEMPS;
+	ctx->Const.VertexProgram.MaxTemps=32;
+	ctx->Const.VertexProgram.MaxNativeTemps=/*VSF_MAX_FRAGMENT_TEMPS*/32;
 	ctx->Const.VertexProgram.MaxNativeParameters=256; /* r420 */
 	ctx->Const.VertexProgram.MaxNativeAddressRegs=1;
 
