@@ -23,16 +23,17 @@ generate exceptions.
 </ul>
 
 <p>
-The following environment variables are only applicable to the Xlib/X11
-software driver:
+The following are only applicable to the Xlib software driver.
+See <A HREF="README.X11">README.X11</A> for details.
 </p>
 <ul>
-<li>MESA_RGB_VISUAL - specifies the X visual and depth for RGB mode (X only)
-<li>MESA_CI_VISUAL - specifies the X visual and depth for CI mode (X only)
-<li>MESA_BACK_BUFFER - specifies how to implement the back color buffer (X only)
-<li>MESA_GAMMA - gamma correction coefficients (X only)
-<li>MESA_XSYNC - enable synchronous X behavior (for X debugging only)
-<li>MESA_GLX_FORCE_CI - if set, force GLX to treak 8bpp visuals as CI visuals
+<li>MESA_RGB_VISUAL - specifies the X visual and depth for RGB mode
+<li>MESA_CI_VISUAL - specifies the X visual and depth for CI mode
+<li>MESA_BACK_BUFFER - specifies how to implement the back color buffer,
+    either "pixmap" or "ximage"
+<li>MESA_GAMMA - gamma correction coefficients for red, green, blue channels
+<li>MESA_XSYNC - enable synchronous X behavior (for debugging only)
+<li>MESA_GLX_FORCE_CI - if set, force GLX to treat 8bpp visuals as CI visuals
 <li>MESA_GLX_FX - set to either "fullscreen" for full-screen rendering,
   "window" to render into a window, or "disable" to disable the Glide driver.
 <li>MESA_GLX_FORCE_ALPHA - if set, forces RGB windows to have an alpha channel.
