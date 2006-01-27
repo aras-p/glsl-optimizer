@@ -95,9 +95,7 @@ const struct dri_extension card_extensions[] = {
   {"GL_ARB_texture_mirrored_repeat",	NULL},
   {"GL_ARB_vertex_buffer_object",	GL_ARB_vertex_buffer_object_functions},
   {"GL_ARB_vertex_program",		GL_ARB_vertex_program_functions},
-#if USE_ARB_F_P == 1
   {"GL_ARB_fragment_program",		NULL},
-#endif
   {"GL_EXT_blend_equation_separate",	GL_EXT_blend_equation_separate_functions},
   {"GL_EXT_blend_func_separate",	GL_EXT_blend_func_separate_functions},
   {"GL_EXT_blend_minmax",		GL_EXT_blend_minmax_functions},
@@ -313,7 +311,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->Const.VertexProgram.MaxNativeParameters=256; /* r420 */
 	ctx->Const.VertexProgram.MaxNativeAddressRegs=1;
 
-#if USE_ARB_F_P
 	ctx->Const.FragmentProgram.MaxNativeTemps = PFS_NUM_TEMP_REGS;
 	ctx->Const.FragmentProgram.MaxNativeAttribs = 11; /* copy i915... */
 	ctx->Const.FragmentProgram.MaxNativeParameters = PFS_NUM_CONST_REGS;
@@ -323,7 +320,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->Const.FragmentProgram.MaxNativeTexIndirections = PFS_MAX_TEX_INDIRECT;
 	ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0; /* and these are?? */
 	ctx->_MaintainTexEnvProgram = GL_TRUE;
-#endif
 
 	driInitExtensions(ctx, card_extensions, GL_TRUE);
 	

@@ -27,10 +27,7 @@ static void r300BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
 		}
 #endif
 		
-#if USE_ARB_F_P == 1
 		case GL_FRAGMENT_PROGRAM_ARB:
-#endif
-			//rmesa->current_vp = vp;
 		break;
 		default:
 			WARN_ONCE("Target not supported yet!\n");
@@ -41,11 +38,7 @@ static void r300BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
 static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 {
 	struct r300_vertex_program *vp;
-#if USE_ARB_F_P == 1
 	struct r300_fragment_program *fp;
-#else
-	struct fragment_program *fp;
-#endif
 	struct ati_fragment_shader *afs;
 	
 	switch(target){
@@ -54,22 +47,12 @@ static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 			vp=CALLOC_STRUCT(r300_vertex_program);
 			return _mesa_init_vertex_program(ctx, &vp->mesa_program, target, id);
 		case GL_FRAGMENT_PROGRAM_ARB:
-#if USE_ARB_F_P == 1
 			fp=CALLOC_STRUCT(r300_fragment_program);
 			fp->ctx = ctx;
 			return _mesa_init_fragment_program(ctx, &fp->mesa_program, target, id);
-#else
-			fp=CALLOC_STRUCT(fragment_program);
-			return _mesa_init_fragment_program(ctx, fp, target, id);
-#endif	
 		case GL_FRAGMENT_PROGRAM_NV:
-#if USE_ARB_F_P == 1
 			fp=CALLOC_STRUCT(r300_fragment_program);
 			return _mesa_init_fragment_program(ctx, &fp->mesa_program, target, id);
-#else
-			fp=CALLOC_STRUCT(fragment_program);
-			return _mesa_init_fragment_program(ctx, fp, target, id);
-#endif
 #if 00
                 /* _mesa_new_ati_fragment_shader() is now called instead */
 		case GL_FRAGMENT_SHADER_ATI:
@@ -99,9 +82,7 @@ static void r300ProgramStringNotify(GLcontext *ctx, GLenum target,
 				struct program *prog)
 {
 	struct r300_vertex_program *vp=(void *)prog;
-#if USE_ARB_F_P == 1
 	struct r300_fragment_program *fp = (struct r300_fragment_program *) prog;
-#endif
 	
 	switch(target) {
 	case GL_VERTEX_PROGRAM_ARB:
@@ -110,9 +91,7 @@ static void r300ProgramStringNotify(GLcontext *ctx, GLenum target,
 		/*translate_vertex_shader(vp);*/
 	break;
 	case GL_FRAGMENT_PROGRAM_ARB:
-#if USE_ARB_F_P == 1
 		fp->translated = GL_FALSE;
-#endif
 	break;
 	}
 }

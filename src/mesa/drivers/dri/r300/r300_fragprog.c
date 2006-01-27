@@ -48,7 +48,6 @@
 #include "program.h"
 #include "program_instruction.h"
 #include "r300_context.h"
-#if USE_ARB_F_P == 1
 #include "r300_fragprog.h"
 #include "r300_reg.h"
 
@@ -1568,4 +1567,3 @@ static void dump_program(struct r300_fragment_program *rp)
 
 	fprintf(stderr, "00000000\n");
 }
-#endif // USE_ARB_F_P == 1
