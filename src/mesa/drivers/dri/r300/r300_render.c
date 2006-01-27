@@ -543,7 +543,7 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 		fprintf(stderr, "%s\n", __FUNCTION__);
 	
 	
-	r300UpdateShaders(rmesa);
+	//r300UpdateShaders(rmesa);
 	
    	r300ReleaseArrays(ctx);
 	r300EmitArrays(ctx, GL_FALSE);
@@ -567,13 +567,13 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 		
 		r300_render_vb_primitive(rmesa, ctx, start, start + length, prim);
 	}
-
+	
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
 
 	reg_start(0x4f18,0);
 	e32(0x00000003);
-
+		
 #ifdef USER_BUFFERS
 	r300UseArrays(ctx);
 #endif
@@ -690,6 +690,7 @@ void dump_dt(struct dt *dt, int count)
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 	
+	r300UpdateShaders(rmesa);
 	if (rmesa->state.VB.LockCount == 0) {
  	  	r300ReleaseArrays(ctx);
 		r300EmitArraysVtx(ctx, GL_FALSE);
@@ -845,6 +846,7 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	struct r300_vertex_program *vp;
    
    	hw_tcl_on=future_hw_tcl_on;
    
@@ -853,23 +855,21 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 	if(hw_tcl_on == GL_FALSE)
 		return GL_TRUE;
 	
-	//r300UpdateShaders(rmesa);
+	r300UpdateShaders(rmesa);
+
+	vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
+#if 0 /* Draw every second request with software arb vp */
+	vp->native++;
+	vp->native &= 1;
+	//vp->native = GL_FALSE;
+#endif
+	if (vp->native == GL_FALSE) {
+		hw_tcl_on = GL_FALSE;
+		return GL_TRUE;
+	}
 	//r300UpdateShaderStates(rmesa);
 	
 	return r300_run_vb_render(ctx, stage);
-}
-
-static void r300_check_tcl_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
-{
-
-	if (RADEON_DEBUG & DEBUG_STATE)
-		fprintf(stderr, "%s\n", __FUNCTION__);
-
-	/* We only support rendering in hardware for now */
-	if (ctx->RenderMode != GL_RENDER) {
-		//stage->active = GL_FALSE;
-		return;
-	}
 }
 
 const struct tnl_pipeline_stage _r300_tcl_stage = {

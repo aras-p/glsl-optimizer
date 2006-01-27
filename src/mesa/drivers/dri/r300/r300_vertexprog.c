@@ -934,7 +934,10 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 	if(u_temp_i < vp->num_temporaries){
 		WARN_ONCE("Ran out of temps, num temps %d, us %d\n", vp->num_temporaries, u_temp_i);
 		vp->translated=GL_TRUE; //GL_FALSE; /* temps exhausted - program cannot be run */
-	}else
+		vp->native = GL_FALSE;
+	}else{
 		vp->translated=GL_TRUE;
+		vp->native = GL_TRUE;
+	}
 }
 

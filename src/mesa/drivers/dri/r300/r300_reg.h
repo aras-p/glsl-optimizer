@@ -1275,6 +1275,8 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_RB3D_ZSTENCIL_FORMAT                   0x4F10
 #	define R300_DEPTH_FORMAT_16BIT_INT_Z     (0 << 0)
 #	define R300_DEPTH_FORMAT_24BIT_INT_Z     (2 << 0)
+ /* 16 bit format or some aditional bit ? */
+#	define R300_DEPTH_FORMAT_UNK32          (32 << 0)
 
 /* gap */
 #define R300_RB3D_DEPTHOFFSET               0x4F20

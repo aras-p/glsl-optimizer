@@ -583,6 +583,9 @@ extern int hw_tcl_on;
 
 #define CURRENT_VERTEX_SHADER(ctx) (ctx->VertexProgram._Current)
 
+/* Should but doesnt work */
+//#define CURRENT_VERTEX_SHADER(ctx) (R300_CONTEXT(ctx)->curr_vp)
+
 //#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && (OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit)))) : 
 //	(r300->state.render_inputs & (_TNL_BIT_TEX0<<(unit))))
 //#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit))) : 
@@ -604,6 +607,9 @@ struct r300_vertex_program {
 	int num_temporaries; /* Number of temp vars used by program */
 	int inputs[VERT_ATTRIB_MAX];
 	int outputs[VERT_RESULT_MAX];
+	int native;
+	int ref_count;
+	int use_ref_count;
 };
 
 #if USE_ARB_F_P == 1
@@ -852,6 +858,7 @@ struct r300_context {
 	struct r300_hw_state hw;
 	struct r300_cmdbuf cmdbuf;
 	struct r300_state state;
+	struct vertex_program *curr_vp;
 
 	/* Vertex buffers
 	 */
@@ -916,5 +923,10 @@ extern void radeon_init_vtxfmt_a(r300ContextPtr rmesa);
 #ifdef HW_VBOS
 extern void r300_init_vbo_funcs(struct dd_function_table *functions);
 #endif
+
+#define RADEON_D_CAPTURE 0
+#define RADEON_D_PLAYBACK 1
+#define RADEON_D_PLAYBACK_RAW 2
+#define RADEON_D_T 3
 
 #endif				/* __R300_CONTEXT_H__ */
