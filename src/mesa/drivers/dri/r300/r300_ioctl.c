@@ -176,7 +176,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	r300->hw.fp.cmd[R300_FP_NODE0] = 0;
 	r300->hw.fp.cmd[R300_FP_NODE1] = 0;
 	r300->hw.fp.cmd[R300_FP_NODE2] = 0;
-	r300->hw.fp.cmd[R300_FP_NODE3] = R300_PFS_NODE_LAST_NODE;
+	r300->hw.fp.cmd[R300_FP_NODE3] = R300_PFS_NODE_OUTPUT_COLOR;
 
 	R300_STATECHANGE(r300, fpi[0]);
 	R300_STATECHANGE(r300, fpi[1]);
@@ -455,7 +455,6 @@ static void r300EmitClearState(GLcontext * ctx)
 	e32(0);
 	e32(0);
 	e32(0);
-//	e32(R300_PFS_NODE_LAST_NODE);
 	e32(R300_PFS_NODE_OUTPUT_COLOR);
 	
 	R300_STATECHANGE(r300, fpi[0]);
