@@ -8,105 +8,15 @@
 #include "radeon_mm.h"
 
 #ifdef USER_BUFFERS
-void radeon_mm_reset(r300ContextPtr rmesa)
-{
-	drm_r300_cmd_header_t *cmd;
-	int ret;
-	
-	memset(rmesa->rmm, 0, sizeof(struct radeon_memory_manager));
-		
-	rmesa->rmm->u_size = 1024; //2048;
-	//rmesa->radeon.radeonScreen->scratch[2] = rmesa->rmm->vb_age;
-#if 0 /* FIXME */
-	cmd = r300AllocCmdBuf(rmesa, 4, __FUNCTION__);
-	cmd[0].scratch.cmd_type = R300_CMD_SCRATCH;
-	cmd[0].scratch.reg = 2;
-	cmd[0].scratch.n_bufs = 1;
-	cmd[0].scratch.flags = 0;
-	cmd[1].u = (unsigned long)(&rmesa->rmm->vb_age);
-	cmd[2].u = (unsigned long)(&rmesa->rmm->u_list[0].age);
-	cmd[3].u = /*id*/0;
-
-	/* Protect from DRM. */	
-	LOCK_HARDWARE(&rmesa->radeon);
-	rmesa->rmm->u_list[0].h_pending ++;
-	ret = r300FlushCmdBufLocked(rmesa, __FUNCTION__);
-	UNLOCK_HARDWARE(&rmesa->radeon);
-
-	if (ret) {
-		WARN_ONCE("r300FlushCmdBufLocked\n");
-		exit(1);
-	}
-#endif
-}
 
 void radeon_mm_init(r300ContextPtr rmesa)
 {
+	rmesa->rmm = malloc(sizeof(struct radeon_memory_manager));
+	memset(rmesa->rmm, 0, sizeof(struct radeon_memory_manager));
+	rmesa->rmm->u_size = 512; //2048;
 	
-	rmesa->mm_ipc_key = 0xdeadbeed; //ftok("/tmp/.r300.mm_lock", "x");
-	if(rmesa->mm_ipc_key == -1){
-		perror("ftok");
-		exit(1);
-	}
-	
-	rmesa->mm_shm_id = shmget(rmesa->mm_ipc_key, sizeof(struct radeon_memory_manager), 0644);
-	if (rmesa->mm_shm_id == -1) {
-		rmesa->mm_shm_id = shmget(rmesa->mm_ipc_key, sizeof(struct radeon_memory_manager), 0644 | IPC_CREAT);
-		
-		rmesa->rmm = shmat(rmesa->mm_shm_id, (void *)0, 0);
-		if (rmesa->rmm == (char *)(-1)) {
-			perror("shmat");
-			exit(1);
-		}
-		
-		radeon_mm_reset(rmesa);
-		
-		rmesa->mm_sem_id = semget(rmesa->mm_ipc_key, 2, 0666 | IPC_CREAT);
-		if (rmesa->mm_sem_id == -1) {
-			perror("semget");
-			exit(1);
-		}
-		
-		return ;
-	}
-	
-	rmesa->rmm = shmat(rmesa->mm_shm_id, (void *)0, 0);
-	if (rmesa->rmm == (char *)(-1)) {
-		perror("shmat");
-		exit(1);
-	}
-	/* FIXME */
-	radeon_mm_reset(rmesa);
-			
-	rmesa->mm_sem_id = semget(rmesa->mm_ipc_key, 2, 0666);
-	if (rmesa->mm_sem_id == -1) {
-		perror("semget");
-		exit(1);
-	}
-}
-
-static void radeon_mm_lock(r300ContextPtr rmesa, int sem)
-{
-	struct sembuf sb = { 0, 1, 0 };
-	
-	sb.sem_num = sem;
-	
-	if (semop(rmesa->mm_sem_id, &sb, 1) == -1) {
-		perror("semop");
-		exit(1);
-	}
-}
-
-static void radeon_mm_unlock(r300ContextPtr rmesa, int sem)
-{
-	struct sembuf sb = { 0, -1, 0 };
-	
-	sb.sem_num = sem;
-			
-	if (semop(rmesa->mm_sem_id, &sb, 1) == -1) {
-		perror("semop");
-		exit(1);
-	}	
+	rmesa->rmm->u_list = malloc(rmesa->rmm->u_size *sizeof(*rmesa->rmm->u_list));
+	memset(rmesa->rmm->u_list, 0, rmesa->rmm->u_size*sizeof(*rmesa->rmm->u_list));
 }
 
 void *radeon_mm_ptr(r300ContextPtr rmesa, int id)
@@ -114,32 +24,56 @@ void *radeon_mm_ptr(r300ContextPtr rmesa, int id)
 	return rmesa->rmm->u_list[id].ptr;
 }
 
+int radeon_mm_find(r300ContextPtr rmesa, void *ptr)
+{
+	int i;
+	int id = 0;
+	
+	for (i=1; i < rmesa->rmm->u_size+1; i++)
+		if(rmesa->rmm->u_list[i].ptr &&
+		   ptr >= rmesa->rmm->u_list[i].ptr &&
+	    	   ptr < rmesa->rmm->u_list[i].ptr + rmesa->rmm->u_list[i].size)
+			break;
+	
+	if (i < rmesa->rmm->u_size + 1)
+		return i;
+	
+	fprintf(stderr, "%p failed\n", ptr);
+	return 0;
+}
+
 //#define MM_DEBUG
 int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 {
 	drm_radeon_mem_alloc_t alloc;
 	int offset, ret;
-	int i, end, free=-1;
+	int i, free=-1;
 	int done_age;
 	drm_radeon_mem_free_t memfree;
 	int tries=0, tries2=0;
+	static int t=0;
+	static int bytes_wasted=0, allocated=0;
+	
+	if(size < 4096)
+		bytes_wasted += 4096 - size;
+	
+	allocated += size;
+	
+#if 0
+	if (t != time(NULL)) {
+		t = time(NULL);
+		fprintf(stderr, "slots used %d, wasted %d kb, allocated %d\n", rmesa->rmm->u_last, bytes_wasted/1024, allocated/1024);
+	}
+#endif
 	
 	memfree.region = RADEON_MEM_REGION_GART;
 			
-	radeon_mm_lock(rmesa, RADEON_MM_UL);
-	
 	again:
 	
 	done_age = rmesa->radeon.radeonScreen->scratch[2];
 	
-	i = 1; //rmesa->rmm->u_head + 1;
-	//i &= rmesa->rmm->u_size - 1;
-	
-	end = i + rmesa->rmm->u_size;
-	//end &= rmesa->rmm->u_size - 1;
-	
-	for (; i != end; i ++/*, i &= rmesa->rmm->u_size-1*/) {
-		if (rmesa->rmm->u_list[i].ptr == NULL){
+	for (i = rmesa->rmm->u_last + 1; i > 0; i --) {
+		if (rmesa->rmm->u_list[i].ptr == NULL) {
 			free = i;
 			continue;
 		}
@@ -153,17 +87,33 @@ int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 					      DRM_RADEON_FREE, &memfree, sizeof(memfree));
 
 			if (ret) {
-				//fprintf(stderr, "Failed to free at %p\n", rmesa->rmm->u_list[i].ptr);
-				//fprintf(stderr, "ret = %s\n", strerror(-ret));
-				
-				//radeon_mm_unlock(rmesa, RADEON_MM_UL);
-				//exit(1);
+				fprintf(stderr, "Failed to free at %p\n", rmesa->rmm->u_list[i].ptr);
+				fprintf(stderr, "ret = %s\n", strerror(-ret));
+				exit(1);
 			} else {
 #ifdef MM_DEBUG
 				fprintf(stderr, "really freed %d at age %x\n", i, rmesa->radeon.radeonScreen->scratch[2]);
 #endif
+				if (i == rmesa->rmm->u_last)
+					rmesa->rmm->u_last --;
+				
+					if(rmesa->rmm->u_list[i].size < 4096)
+						bytes_wasted -= 4096 - rmesa->rmm->u_list[i].size;
+
+				allocated -= rmesa->rmm->u_list[i].size;
 				rmesa->rmm->u_list[i].pending = 0;
 				rmesa->rmm->u_list[i].ptr = NULL;
+				
+				if (rmesa->rmm->u_list[i].fb) {
+					LOCK_HARDWARE(&(rmesa->radeon));
+					ret = mmFreeMem(rmesa->rmm->u_list[i].fb);
+					UNLOCK_HARDWARE(&(rmesa->radeon));
+					
+					if (ret != 0)
+						fprintf(stderr, "failed to free!\n");
+					rmesa->rmm->u_list[i].fb = NULL;
+				}
+				rmesa->rmm->u_list[i].ref_count = 0;
 				free = i;
 			}
 		}
@@ -172,6 +122,7 @@ int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 	rmesa->rmm->u_head = i;
 	
 	if (free == -1) {
+		WARN_ONCE("Ran out of slots!\n");
 		//usleep(100);
 		r300FlushCmdBuf(rmesa, __FUNCTION__);
 		tries++;
@@ -189,6 +140,7 @@ int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 
 	ret = drmCommandWriteRead( rmesa->radeon.dri.fd, DRM_RADEON_ALLOC, &alloc, sizeof(alloc));
    	if (ret) {
+		WARN_ONCE("Ran out of mem!\n");
 		r300FlushCmdBuf(rmesa, __FUNCTION__);
 		//usleep(100);
 		tries2++;
@@ -201,17 +153,76 @@ int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 	}
 	
 	i = free;
+	
+	if (i > rmesa->rmm->u_last)
+		rmesa->rmm->u_last = i;
+	
 	rmesa->rmm->u_list[i].ptr = ((GLubyte *)rmesa->radeon.radeonScreen->gartTextures.map) + offset;
 	rmesa->rmm->u_list[i].size = size;
 	rmesa->rmm->u_list[i].age = 0;
+	rmesa->rmm->u_list[i].fb = NULL;
+	//fprintf(stderr, "alloc %p at id %d\n", rmesa->rmm->u_list[i].ptr, i);
 	
 #ifdef MM_DEBUG
 	fprintf(stderr, "allocated %d at age %x\n", i, rmesa->radeon.radeonScreen->scratch[2]);
 #endif
 	
-	radeon_mm_unlock(rmesa, RADEON_MM_UL);
-	
 	return i;
+}
+
+#include "r300_emit.h"
+void emit_lin_cp(r300ContextPtr rmesa, unsigned long dst, unsigned long src, unsigned long size)
+{
+	LOCAL_VARS
+	int cp_size;
+	
+	
+	while (size > 0){
+		cp_size = size;
+		if(cp_size > /*8190*/4096)
+			cp_size = /*8190*/4096;
+		
+		reg_start(0x146c,1);
+		e32(0x52cc32fb);
+	
+		reg_start(0x15ac,1);
+		e32(src);
+		e32(cp_size);
+	
+		reg_start(0x1704,0);
+		e32(0x0);
+
+		reg_start(0x1404,1);
+		e32(dst);
+		e32(cp_size);
+	
+		reg_start(0x1700,0);
+		e32(0x0);
+	
+		reg_start(0x1640,3);
+		e32(0x00000000);
+		e32(0x00001fff);
+		e32(0x00000000);
+		e32(0x00001fff);
+
+		start_packet3(RADEON_CP_PACKET3_UNK1B, 2);
+		e32(0 << 16 | 0);
+		e32(0 << 16 | 0);
+		e32(cp_size << 16 | 0x1);
+		
+		dst += cp_size;
+		src += cp_size;
+		size -= cp_size;
+	}
+	
+	reg_start(0x4e4c,0);
+	e32(0x0000000a);
+	
+	reg_start(0x342c,0);
+	e32(0x00000005);
+	
+	reg_start(0x1720,0);
+	e32(0x00010000);
 }
 
 void radeon_mm_use(r300ContextPtr rmesa, int id)
@@ -224,7 +235,38 @@ void radeon_mm_use(r300ContextPtr rmesa, int id)
 	if(id == 0)
 		return;
 	
-	radeon_mm_lock(rmesa, RADEON_MM_UL);
+#if 0 /* FB VBOs. Needs further changes... */
+	rmesa->rmm->u_list[id].ref_count ++;
+	if (rmesa->rmm->u_list[id].ref_count > 100 && rmesa->rmm->u_list[id].fb == NULL &&
+		rmesa->rmm->u_list[id].size != RADEON_BUFFER_SIZE*16 /*&& rmesa->rmm->u_list[id].size > 40*/) {
+		driTexHeap *heap;
+		struct mem_block *mb;
+				
+		LOCK_HARDWARE(&(rmesa->radeon));
+	
+		heap = rmesa->texture_heaps[0];
+			
+		mb = mmAllocMem(heap->memory_heap, rmesa->rmm->u_list[id].size, heap->alignmentShift, 0);
+	
+		UNLOCK_HARDWARE(&(rmesa->radeon));
+	
+		if (mb) {
+			rmesa->rmm->u_list[id].fb = mb;
+			
+			emit_lin_cp(rmesa, rmesa->radeon.radeonScreen->texOffset[0] + rmesa->rmm->u_list[id].fb->ofs,
+					r300GartOffsetFromVirtual(rmesa, rmesa->rmm->u_list[id].ptr),
+					rmesa->rmm->u_list[id].size);
+		} else {
+			WARN_ONCE("Upload to fb failed, %d, %d\n", rmesa->rmm->u_list[id].size, id);
+		}
+		//fprintf(stderr, "Upload to fb! %d, %d\n", rmesa->rmm->u_list[id].ref_count, id);
+	}
+	/*if (rmesa->rmm->u_list[id].fb) {
+		emit_lin_cp(rmesa, rmesa->radeon.radeonScreen->texOffset[0] + rmesa->rmm->u_list[id].fb->ofs,
+				r300GartOffsetFromVirtual(rmesa, rmesa->rmm->u_list[id].ptr),
+				rmesa->rmm->u_list[id].size);
+	}*/
+#endif
 		
 	cmd = r300AllocCmdBuf(rmesa, 4, __FUNCTION__);
 	cmd[0].scratch.cmd_type = R300_CMD_SCRATCH;
@@ -238,10 +280,31 @@ void radeon_mm_use(r300ContextPtr rmesa, int id)
 	LOCK_HARDWARE(&rmesa->radeon); /* Protect from DRM. */
 	rmesa->rmm->u_list[id].h_pending ++;
 	UNLOCK_HARDWARE(&rmesa->radeon);
-			
-	radeon_mm_unlock(rmesa, RADEON_MM_UL);
 }
 
+unsigned long radeon_mm_offset(r300ContextPtr rmesa, int id)
+{
+	unsigned long offset;
+	
+	if (rmesa->rmm->u_list[id].fb) {
+		offset = rmesa->radeon.radeonScreen->texOffset[0] + rmesa->rmm->u_list[id].fb->ofs;
+	} else {
+		offset = (char *)rmesa->rmm->u_list[id].ptr -
+			(char *)rmesa->radeon.radeonScreen->gartTextures.map;
+		offset += rmesa->radeon.radeonScreen->gart_texture_offset;
+	}
+	
+	return offset;
+}
+
+int radeon_mm_on_card(r300ContextPtr rmesa, int id)
+{
+	if (rmesa->rmm->u_list[id].fb)
+		return GL_TRUE;
+	
+	return GL_FALSE;
+}
+		
 void *radeon_mm_map(r300ContextPtr rmesa, int id, int access)
 {
 #ifdef MM_DEBUG
@@ -250,8 +313,12 @@ void *radeon_mm_map(r300ContextPtr rmesa, int id, int access)
 	void *ptr;
 	int tries = 0;
 	
-	if (access == RADEON_MM_R) {
-		radeon_mm_lock(rmesa, RADEON_MM_UL);
+	rmesa->rmm->u_list[id].ref_count = 0;
+	if (rmesa->rmm->u_list[id].fb) {
+		WARN_ONCE("Mapping fb!\n");
+		/* Idle gart only and do upload on unmap */
+		//rmesa->rmm->u_list[id].fb = NULL;
+		
 		
 		if(rmesa->rmm->u_list[id].mapped == 1)
 			WARN_ONCE("buffer %d already mapped\n", id);
@@ -259,18 +326,25 @@ void *radeon_mm_map(r300ContextPtr rmesa, int id, int access)
 		rmesa->rmm->u_list[id].mapped = 1;
 		ptr = radeon_mm_ptr(rmesa, id);
 		
-		radeon_mm_unlock(rmesa, RADEON_MM_UL);
+		return ptr;
+	}
+	
+	if (access == RADEON_MM_R) {
+		
+		if(rmesa->rmm->u_list[id].mapped == 1)
+			WARN_ONCE("buffer %d already mapped\n", id);
+	
+		rmesa->rmm->u_list[id].mapped = 1;
+		ptr = radeon_mm_ptr(rmesa, id);
 		
 		return ptr;
 	}
 	
-	radeon_mm_lock(rmesa, RADEON_MM_UL);
 	
 	if (rmesa->rmm->u_list[id].h_pending)
 		r300FlushCmdBuf(rmesa, __FUNCTION__);
 	
 	if (rmesa->rmm->u_list[id].h_pending) {
-		radeon_mm_unlock(rmesa, RADEON_MM_UL);
 		return NULL;
 	}
 	
@@ -280,7 +354,6 @@ void *radeon_mm_map(r300ContextPtr rmesa, int id, int access)
 	if (tries >= 1000) {
 		fprintf(stderr, "Idling failed (%x vs %x)\n",
 				rmesa->rmm->u_list[id].age, rmesa->radeon.radeonScreen->scratch[2]);
-		radeon_mm_unlock(rmesa, RADEON_MM_UL);
 		return NULL;
 	}
 	
@@ -289,8 +362,6 @@ void *radeon_mm_map(r300ContextPtr rmesa, int id, int access)
 	
 	rmesa->rmm->u_list[id].mapped = 1;
 	ptr = radeon_mm_ptr(rmesa, id);
-	
-	radeon_mm_unlock(rmesa, RADEON_MM_UL);
 	
 	return ptr;
 }
@@ -301,14 +372,15 @@ void radeon_mm_unmap(r300ContextPtr rmesa, int id)
 	fprintf(stderr, "%s: %d at age %x\n", __FUNCTION__, id, rmesa->radeon.radeonScreen->scratch[2]);
 #endif	
 	
-	radeon_mm_lock(rmesa, RADEON_MM_UL);
-	
 	if(rmesa->rmm->u_list[id].mapped == 0)
 		WARN_ONCE("buffer %d not mapped\n", id);
 	
 	rmesa->rmm->u_list[id].mapped = 0;
 	
-	radeon_mm_unlock(rmesa, RADEON_MM_UL);
+	if (rmesa->rmm->u_list[id].fb)
+		emit_lin_cp(rmesa, rmesa->radeon.radeonScreen->texOffset[0] + rmesa->rmm->u_list[id].fb->ofs,
+				r300GartOffsetFromVirtual(rmesa, rmesa->rmm->u_list[id].ptr),
+				rmesa->rmm->u_list[id].size);
 }
 
 void radeon_mm_free(r300ContextPtr rmesa, int id)
@@ -320,20 +392,16 @@ void radeon_mm_free(r300ContextPtr rmesa, int id)
 	if(id == 0)
 		return;
 	
-	radeon_mm_lock(rmesa, RADEON_MM_UL);
 	if(rmesa->rmm->u_list[id].ptr == NULL){
-		radeon_mm_unlock(rmesa, RADEON_MM_UL);
 		WARN_ONCE("Not allocated!\n");
 		return ;
 	}
 	
 	if(rmesa->rmm->u_list[id].pending){
-		radeon_mm_unlock(rmesa, RADEON_MM_UL);
 		WARN_ONCE("%p already pended!\n", rmesa->rmm->u_list[id].ptr);
 		return ;
 	}
 			
 	rmesa->rmm->u_list[id].pending = 1;
-	radeon_mm_unlock(rmesa, RADEON_MM_UL);
 }
 #endif
