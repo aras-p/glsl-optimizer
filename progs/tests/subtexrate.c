@@ -146,7 +146,7 @@ SubTex(GLboolean doSubRect, const GLubyte *image)
 static void
 RunTest(GLboolean copyTex, GLboolean doSubRect)
 {
-   double t1, t0 = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+   double t0, t1;
    int iters = 0;
    float copyRate, mbRate;
    float rot = 0.0;
@@ -170,6 +170,8 @@ RunTest(GLboolean copyTex, GLboolean doSubRect)
 
    glEnable(GL_TEXTURE_2D);
    glViewport(WinWidth / 2, 0, WinWidth / 2, WinHeight);
+
+   t0 = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
 
    do {
       if (copyTex)
@@ -198,7 +200,9 @@ RunTest(GLboolean copyTex, GLboolean doSubRect)
       rot += 2.0;
 
       t1 = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-      glutSwapBuffers();
+      if (DrawQuad) {
+         glutSwapBuffers();
+      }
    } while (t1 - t0 < 5.0);
 
    glDisable(GL_TEXTURE_2D);
@@ -234,6 +238,9 @@ Draw(void)
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
    DrawTestImage();
+   if (!DrawQuad) {
+      glutSwapBuffers();
+   }
 
    RunTest(GL_FALSE, GL_FALSE);
    RunTest(GL_FALSE, GL_TRUE);
