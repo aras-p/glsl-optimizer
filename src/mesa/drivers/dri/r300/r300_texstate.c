@@ -1124,7 +1124,7 @@ static GLboolean update_tex_common(GLcontext * ctx, int unit)
 		rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
 	}
 #endif
-
+#if 0
 	format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
 	if (rmesa->state.texture.unit[unit].format != format ||
 	    rmesa->state.texture.unit[unit].envMode != texUnit->EnvMode) {
@@ -1134,7 +1134,7 @@ static GLboolean update_tex_common(GLcontext * ctx, int unit)
 			return GL_FALSE;
 		}
 	}
-
+#endif
 #if R200_MERGED
 	FALLBACK(&rmesa->radeon, RADEON_FALLBACK_BORDER_MODE, t->border_fallback);
 #endif
