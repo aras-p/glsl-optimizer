@@ -68,8 +68,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
 /* hw_tcl_on derives from future_hw_tcl_on when its safe to change it. */
-int future_hw_tcl_on=0;
-int hw_tcl_on=0;
+int future_hw_tcl_on=1;
+int hw_tcl_on=1;
 
 #define need_GL_ARB_multisample
 #define need_GL_ARB_texture_compression

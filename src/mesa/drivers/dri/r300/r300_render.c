@@ -847,6 +847,7 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct r300_vertex_program *vp;
+	int i;
    
    	hw_tcl_on=future_hw_tcl_on;
    
@@ -854,6 +855,12 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 		fprintf(stderr, "%s\n", __FUNCTION__);
 	if(hw_tcl_on == GL_FALSE)
 		return GL_TRUE;
+	
+	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
+		if (ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_RECT_BIT) {
+			hw_tcl_on = GL_FALSE;
+			return GL_TRUE;
+		}
 	
 	r300UpdateShaders(rmesa);
 
