@@ -24,6 +24,7 @@ PROGS = \
 	fogcoord \
 	fplight \
 	gamma \
+	gearbox \
 	gears \
 	geartrain \
 	glinfo \
