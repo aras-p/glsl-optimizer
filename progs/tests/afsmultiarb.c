@@ -1,13 +1,9 @@
-
 /*
- * GL_ARB_multitexture demo
+ * GL_ATI_fragment_shader test
+ * Roland Scheidegger
  *
  * Command line options:
  *    -info      print GL implementation information
- *
- *
- * Brian Paul  November 1998  This program is in the public domain.
- * Modified on 12 Feb 2002 for > 2 texture units.
  */
 
 
