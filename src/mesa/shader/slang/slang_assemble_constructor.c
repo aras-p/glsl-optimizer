@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -158,7 +158,8 @@ static int constructor_aggregate (slang_assembly_file *file, const slang_storage
 		goto end1;
 
 	slang_storage_aggregate_construct (&agg);
-	if (!(result = _slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs)))
+	if (!(result = _slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs,
+			space->vars)))
 		goto end2;
 
 	slang_storage_aggregate_construct (&flat_agg);
@@ -205,7 +206,8 @@ int _slang_assemble_constructor (slang_assembly_file *file, slang_operation *op,
 		goto end1;
 
 	slang_storage_aggregate_construct (&agg);
-	if (!(result = _slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs)))
+	if (!(result = _slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs,
+			space->vars)))
 		goto end2;
 
 	size = _slang_sizeof_aggregate (&agg);

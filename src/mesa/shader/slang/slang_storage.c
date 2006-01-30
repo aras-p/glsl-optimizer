@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -112,19 +112,20 @@ static int aggregate_matrix (slang_storage_aggregate *agg, slang_storage_type ba
 	return 1;
 }
 
-static int aggregate_variables (slang_storage_aggregate *agg, const slang_variable_scope *vars,
-	slang_function_scope *funcs, slang_struct_scope *structs)
+static int aggregate_variables (slang_storage_aggregate *agg, slang_variable_scope *vars,
+	slang_function_scope *funcs, slang_struct_scope *structs, slang_variable_scope *globals)
 {
 	unsigned int i;
 	for (i = 0; i < vars->num_variables; i++)
 		if (!_slang_aggregate_variable (agg, &vars->variables[i].type.specifier,
-			vars->variables[i].array_size, funcs, structs))
+				vars->variables[i].array_size, funcs, structs, globals))
 			return 0;
 	return 1;
 }
 
 int _slang_aggregate_variable (slang_storage_aggregate *agg, slang_type_specifier *spec,
-	slang_operation *array_size, slang_function_scope *funcs, slang_struct_scope *structs)
+	slang_operation *array_size, slang_function_scope *funcs, slang_struct_scope *structs,
+	slang_variable_scope *vars)
 {
 	switch (spec->type)
 	{
@@ -166,7 +167,7 @@ int _slang_aggregate_variable (slang_storage_aggregate *agg, slang_type_specifie
 	case slang_spec_sampler2DShadow:
 		return aggregate_vector (agg, slang_stor_int, 1);
 	case slang_spec_struct:
-		return aggregate_variables (agg, spec->_struct->fields, funcs, structs);
+		return aggregate_variables (agg, spec->_struct->fields, funcs, structs, vars);
 	case slang_spec_array:
 		{
 			slang_storage_array *arr;
@@ -185,13 +186,12 @@ int _slang_aggregate_variable (slang_storage_aggregate *agg, slang_type_specifie
 			if (arr->aggregate == NULL)
 				return 0;
 			slang_storage_aggregate_construct (arr->aggregate);
-			if (!_slang_aggregate_variable (arr->aggregate, spec->_array, NULL, funcs, structs))
+			if (!_slang_aggregate_variable (arr->aggregate, spec->_array, NULL, funcs, structs, vars))
 				return 0;
 			slang_assembly_file_construct (&file);
 			space.funcs = funcs;
 			space.structs = structs;
-			/* XXX: vars! */
-			space.vars = NULL;
+			space.vars = vars;
 			if (!_slang_assemble_operation (&file, array_size, 0, &flow, &space, &info, &stk))
 			{
 				slang_assembly_file_destruct (&file);

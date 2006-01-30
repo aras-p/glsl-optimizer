@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -115,7 +115,7 @@ int _slang_assemble_assignment (slang_assembly_file *file, slang_operation *op,
 	}
 
 	slang_storage_aggregate_construct (&agg);
-	if (!_slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs))
+	if (!_slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs, space->vars))
 	{
 		slang_storage_aggregate_destruct (&agg);
 		slang_assembly_typeinfo_destruct (&ti);

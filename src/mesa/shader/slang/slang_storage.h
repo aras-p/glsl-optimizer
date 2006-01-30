@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -85,7 +85,8 @@ void slang_storage_aggregate_construct (slang_storage_aggregate *);
 void slang_storage_aggregate_destruct (slang_storage_aggregate *);
 
 int _slang_aggregate_variable (slang_storage_aggregate *, struct slang_type_specifier_ *,
-	struct slang_operation_ *, struct slang_function_scope_ *, slang_struct_scope *);
+	struct slang_operation_ *, struct slang_function_scope_ *, slang_struct_scope *,
+	slang_variable_scope *);
 
 /*
 	returns total size (in machine units) of the given aggregate

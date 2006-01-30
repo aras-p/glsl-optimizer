@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -124,7 +124,7 @@ static int sizeof_variable (slang_type_specifier *spec, slang_type_qualifier qua
 	slang_storage_aggregate agg;
 
 	slang_storage_aggregate_construct (&agg);
-	if (!_slang_aggregate_variable (&agg, spec, array_size, space->funcs, space->structs))
+	if (!_slang_aggregate_variable (&agg, spec, array_size, space->funcs, space->structs, space->vars))
 	{
 		slang_storage_aggregate_destruct (&agg);
 		return 0;
@@ -404,7 +404,7 @@ int dereference (slang_assembly_file *file, slang_operation *op,
 	}
 
 	slang_storage_aggregate_construct (&agg);
-	if (!_slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs))
+	if (!_slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs, space->vars))
 	{
 		slang_storage_aggregate_destruct (&agg);
 		slang_assembly_typeinfo_destruct (&ti);
@@ -518,7 +518,7 @@ static int call_function_name_dummyint (slang_assembly_file *file, const char *n
 	int result;
 
 	p2[0] = *params;
-	if (!slang_operation_construct_a (p2 + 1))
+	if (!slang_operation_construct (p2 + 1))
 		return 0;
 	p2[1].type = slang_oper_literal_int;
 	result = call_function_name (file, name, p2, 2, 0, space, info);
@@ -618,7 +618,8 @@ static int equality (slang_assembly_file *file, slang_operation *op,
 
 	/* convert it to an aggregate */
 	slang_storage_aggregate_construct (&agg);
-	if (!(result = _slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs)))
+	if (!(result = _slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs,
+			space->vars)))
 		goto end;
 
 	/* compute the size of the agregate - there are two such aggregates on the stack */
