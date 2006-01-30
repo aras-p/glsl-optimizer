@@ -193,6 +193,10 @@ SLANG_SOURCES =	\
 	shader/slang/slang_assemble_constructor.c	\
 	shader/slang/slang_assemble_typeinfo.c	\
 	shader/slang/slang_compile.c	\
+	shader/slang/slang_compile_function.c	\
+	shader/slang/slang_compile_operation.c	\
+	shader/slang/slang_compile_struct.c	\
+	shader/slang/slang_compile_variable.c	\
 	shader/slang/slang_execute.c	\
 	shader/slang/slang_preprocess.c	\
 	shader/slang/slang_storage.c	\

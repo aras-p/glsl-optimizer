@@ -498,6 +498,22 @@ SOURCE=..\..\..\..\src\mesa\shader\slang\slang_compile.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_compile_function.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_compile_operation.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_compile_struct.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_compile_variable.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\shader\slang\slang_execute.c
 # End Source File
 # Begin Source File
@@ -1176,6 +1192,22 @@ SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble_typeinfo.h
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\shader\slang\slang_compile.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_compile_function.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_compile_operation.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_compile_struct.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_compile_variable.h
 # End Source File
 # Begin Source File
 
