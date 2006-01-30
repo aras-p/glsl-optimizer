@@ -92,9 +92,15 @@ driNewRenderbuffer(GLenum format, GLvoid *addr,
          /* we always Get/Put 32-bit Z values */
          drb->Base.DataType = GL_UNSIGNED_INT;
       }
+      else if (format == GL_DEPTH_COMPONENT32) {
+         /* Depth */
+         drb->Base._BaseFormat = GL_DEPTH_COMPONENT;
+         /* we always Get/Put 32-bit Z values */
+         drb->Base.DataType = GL_UNSIGNED_INT;
+      }
       else {
          /* Stencil */
-         ASSERT(format == GL_STENCIL_INDEX8);
+         ASSERT(format == GL_STENCIL_INDEX8_EXT);
          drb->Base._BaseFormat = GL_STENCIL_INDEX;
          drb->Base.DataType = GL_UNSIGNED_BYTE;
       }

@@ -160,7 +160,7 @@ sisInitRenderbuffer(struct gl_renderbuffer *rb, GLenum format)
    }
    else {
       /* Stencil */
-      ASSERT(format == GL_STENCIL_INDEX8);
+      ASSERT(format == GL_STENCIL_INDEX8_EXT);
       rb->_BaseFormat = GL_STENCIL_INDEX;
       rb->DataType = GL_UNSIGNED_BYTE;
    }
