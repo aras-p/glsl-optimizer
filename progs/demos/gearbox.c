@@ -325,10 +325,9 @@ idle(void)
   dt = t - t0;
   t0 = t;
 
-  GearRot += 70.0 * dt;  /* 70 degrees per second */
-  GearRot = fmod(GearRot, 360.0); /* prevents eventual overflow */
-
-  CubeRot += 15.0 * dt;
+  /* fmod to prevent overflow */
+  GearRot = fmod(GearRot + 70.0 * dt, 360.0);  /* 70 deg/sec */
+  CubeRot = fmod(CubeRot + 15.0 * dt, 360.0);  /* 15 deg/sec */
 
   glutPostRedisplay();
 }
