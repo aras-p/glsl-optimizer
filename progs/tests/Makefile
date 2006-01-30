@@ -10,11 +10,14 @@ include $(TOP)/configs/current
 
 LIBS = $(APP_LIB_DEPS)
 
-SOURCES = antialias.c \
+SOURCES = \
+	afsmultiarb.c \
+	antialias.c \
 	arbfpspec.c \
 	arbfptest1.c \
 	arbfptexture.c \
 	arbfptrig.c \
+	arbnpot.c \
 	arbvptest1.c \
 	arbvptest3.c \
 	arbvptorus.c \
@@ -38,6 +41,7 @@ SOURCES = antialias.c \
 	getprocaddress.c \
 	interleave.c \
 	invert.c \
+	jkrahntest.c \
 	manytex.c \
 	multipal.c \
 	no_s3tc.c \
