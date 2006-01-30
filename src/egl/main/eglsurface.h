@@ -25,6 +25,15 @@ struct _egl_surface
 
    /* If type == EGL_SCREEN_BIT: */
    EGLint VisibleRefCount; /* number of screens I'm displayed on */
+
+#ifdef EGL_VERSION_1_2
+   EGLint SwapBehavior; /* one of EGL_BUFFER_PRESERVED/DESTROYED */
+   EGLint HorizontalResolution, VerticalResolution;
+   EGLint AspectRatio;
+   EGLint RenderBuffer; /* EGL_BACK_BUFFER or EGL_SINGLE_BUFFER */
+   EGLint AlphaFormat; /* EGL_ALPHA_FORMAT_NONPRE or EGL_ALPHA_FORMAT_PRE */
+   EGLint Colorspace; /* EGL_COLORSPACE_sRGB or EGL_COLORSPACE_LINEAR */
+#endif /* EGL_VERSION_1_2 */
 };
 
 
@@ -92,6 +101,17 @@ _eglReleaseTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, EGLint 
 
 extern EGLBoolean
 _eglSwapInterval(_EGLDriver *drv, EGLDisplay dpy, EGLint interval);
+
+
+#ifdef EGL_VERSION_1_2
+
+extern EGLSurface
+_eglCreatePbufferFromClientBuffer(_EGLDriver *drv, EGLDisplay dpy,
+                                  EGLenum buftype, EGLClientBuffer buffer,
+                                  EGLConfig config, const EGLint *attrib_list);
+
+#endif /* EGL_VERSION_1_2 */
+
 
 
 #endif /* EGLSURFACE_INCLUDED */

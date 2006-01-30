@@ -12,6 +12,7 @@ struct _egl_thread_info
 {
    EGLint LastError;
    _EGLContext *CurrentContext;
+   EGLenum CurrentAPI;
 };
 
 
@@ -28,8 +29,12 @@ struct _egl_global
 
    EGLScreenMESA FreeScreenHandle;
 
-   /* XXX temporary */
-   _EGLThreadInfo ThreadInfo;
+   /* XXX these may be temporary */
+   EGLBoolean OpenGLESAPISupported;
+   EGLBoolean OpenVGAPISupported;
+
+   /* XXX temporary - should be thread-specific data (TSD) */
+   _EGLThreadInfo *ThreadInfo;
 };
 
 
@@ -42,6 +47,14 @@ _eglInitGlobals(void);
 
 extern void
 _eglDestroyGlobals(void);
+
+
+extern _EGLThreadInfo *
+_eglNewThreadInfo(void);
+
+
+extern void
+_eglDeleteThreadData(_EGLThreadInfo *t);
 
 
 extern _EGLThreadInfo *

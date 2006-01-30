@@ -22,6 +22,9 @@ struct _egl_context
 
    EGLBoolean IsBound;
    EGLBoolean DeletePending;
+#ifdef EGL_VERSION_1_2
+   EGLint ClientAPI;  /* Either EGL_OPENGL_ES_API or EGL_OPENVG_API */
+#endif /* EGL_VERSION_1_2 */
 };
 
 

@@ -92,6 +92,10 @@ _eglInitConfig(_EGLConfig *config, EGLint id)
    _eglSetConfigAttrib(config, EGL_TRANSPARENT_RED_VALUE,   EGL_DONT_CARE);
    _eglSetConfigAttrib(config, EGL_TRANSPARENT_GREEN_VALUE, EGL_DONT_CARE);
    _eglSetConfigAttrib(config, EGL_TRANSPARENT_BLUE_VALUE,  EGL_DONT_CARE);
+#ifdef EGL_VERSION_1_2
+   _eglSetConfigAttrib(config, EGL_COLOR_BUFFER_TYPE,       EGL_RGB_BUFFER);
+   _eglSetConfigAttrib(config, EGL_RENDERABLE_TYPE,         EGL_OPENGL_ES_BIT);
+#endif /* EGL_VERSION_1_2 */
 }
 
 
@@ -153,13 +157,37 @@ _eglParseConfigAttribs(_EGLConfig *config, const EGLint *attrib_list)
    }
 
    for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
-      if (attrib_list[i] >= EGL_BUFFER_SIZE &&
-          attrib_list[i] <= EGL_MAX_SWAP_INTERVAL) {
-         EGLint k = attrib_list[i] - FIRST_ATTRIB;
+      const EGLint attr = attrib_list[i];
+      if (attr >= EGL_BUFFER_SIZE &&
+          attr <= EGL_MAX_SWAP_INTERVAL) {
+         EGLint k = attr - FIRST_ATTRIB;
          assert(k >= 0);
          assert(k < MAX_ATTRIBS);
          config->Attrib[k] = attrib_list[++i];
       }
+#ifdef EGL_VERSION_1_2
+      else if (attr == EGL_COLOR_BUFFER_TYPE) {
+         EGLint bufType = attrib_list[++i];
+         if (bufType != EGL_RGB_BUFFER && bufType != EGL_LUMINANCE_BUFFER) {
+            _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
+            return EGL_FALSE;
+         }
+         _eglSetConfigAttrib(config, EGL_COLOR_BUFFER_TYPE, bufType);
+      }
+      else if (attr == EGL_RENDERABLE_TYPE) {
+         EGLint renType = attrib_list[++i];
+         if (renType & ~(EGL_OPENGL_ES_BIT | EGL_OPENVG_BIT)) {
+            _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
+            return EGL_FALSE;
+         }
+         _eglSetConfigAttrib(config, EGL_RENDERABLE_TYPE, renType);
+      }
+      else if (attr == EGL_ALPHA_MASK_SIZE ||
+               attr == EGL_LUMINANCE_SIZE) {
+         EGLint value = attrib_list[++i];
+         _eglSetConfigAttrib(config, attr, value);
+      }
+#endif /* EGL_VERSION_1_2 */
       else {
          _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
          return EGL_FALSE;
@@ -184,6 +212,8 @@ struct sort_info {
 
 /* This encodes the info from Table 3.5 of the EGL spec, ordered by
  * Sort Priority.
+ *
+ * XXX To do: EGL 1.2 attribs
  */
 static struct sort_info SortInfo[] = {
    { EGL_CONFIG_CAVEAT,           EXACT,   SPECIAL },

@@ -40,7 +40,7 @@ typedef EGLBoolean (*WaitGL_t)(_EGLDriver *drv, EGLDisplay dpy);
 typedef EGLBoolean (*WaitNative_t)(_EGLDriver *drv, EGLDisplay dpy, EGLint engine);
 
 
-/* EGL_MESA_screen extension */
+#ifdef EGL_MESA_screen_surface
 typedef EGLBoolean (*ChooseModeMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, const EGLint *attrib_list, EGLModeMESA *modes, EGLint modes_size, EGLint *num_modes);
 typedef EGLBoolean (*GetModesMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *modes, EGLint mode_size, EGLint *num_mode);
 typedef EGLBoolean (*GetModeAttribMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLModeMESA mode, EGLint attribute, EGLint *value);
@@ -53,6 +53,14 @@ typedef EGLBoolean (*QueryScreenMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScre
 typedef EGLBoolean (*QueryScreenSurfaceMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLSurface *surface);
 typedef EGLBoolean (*QueryScreenModeMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *mode);
 typedef const char * (*QueryModeStringMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLModeMESA mode);
+#endif /* EGL_MESA_screen_surface */
+
+
+#ifdef EGL_VERSION_1_2
+typedef EGLBoolean (*WaitClient_t)(_EGLDriver *drv, EGLDisplay dpy);
+typedef EGLSurface (*CreatePbufferFromClientBuffer_t)(_EGLDriver *drv, EGLDisplay dpy, EGLenum buftype, EGLClientBuffer buffer, EGLConfig config, const EGLint *attrib_list);
+#endif /* EGL_VERSION_1_2 */
+
 
 
 /**
@@ -101,6 +109,11 @@ struct _egl_api
    QueryScreenSurfaceMESA_t QueryScreenSurfaceMESA;
    QueryScreenModeMESA_t QueryScreenModeMESA;
    QueryModeStringMESA_t QueryModeStringMESA;
+
+#ifdef EGL_VERSION_1_2
+   WaitClient_t WaitClient;
+   CreatePbufferFromClientBuffer_t CreatePbufferFromClientBuffer;
+#endif
 };
 
 #endif /* EGLAPI_INCLUDED */

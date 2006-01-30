@@ -160,6 +160,11 @@ _eglQueryContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx,
    case EGL_CONFIG_ID:
       *value = GET_CONFIG_ATTRIB(c->Config, EGL_CONFIG_ID);
       return EGL_TRUE;
+#ifdef EGL_VERSION_1_2
+   case EGL_CONTEXT_CLIENT_TYPE:
+      *value = c->ClientAPI;
+      return EGL_FALSE;
+#endif /* EGL_VERSION_1_2 */
    default:
       _eglError(EGL_BAD_ATTRIBUTE, "eglQueryContext");
       return EGL_FALSE;

@@ -31,6 +31,7 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "eglcontext.h"
 #include "egldisplay.h"
@@ -346,6 +347,7 @@ void (* APIENTRY eglGetProcAddress(const char *procname))()
       { "eglWaitGL", (_EGLProc) eglWaitGL },
       { "eglWaitNative", (_EGLProc) eglWaitNative },
       /* Extensions */
+#ifdef EGL_MESA_screen_surface
       { "eglChooseModeMESA", (_EGLProc) eglChooseModeMESA },
       { "eglGetModesMESA", (_EGLProc) eglGetModesMESA },
       { "eglGetModeAttribMESA", (_EGLProc) eglGetModeAttribMESA },
@@ -358,6 +360,14 @@ void (* APIENTRY eglGetProcAddress(const char *procname))()
       { "eglQueryScreenSurfaceMESA", (_EGLProc) eglQueryScreenSurfaceMESA },
       { "eglQueryScreenModeMESA", (_EGLProc) eglQueryScreenModeMESA },
       { "eglQueryModeStringMESA", (_EGLProc) eglQueryModeStringMESA },
+#endif /* EGL_MESA_screen_surface */
+#ifdef EGL_VERSION_1_2
+      { "eglBindAPI", (_EGLProc) eglBindAPI },
+      { "eglCreatePbufferFromClientBuffer", (_EGLProc) eglCreatePbufferFromClientBuffer },
+      { "eglQueryAPI", (_EGLProc) eglQueryAPI },
+      { "eglReleaseThread", (_EGLProc) eglReleaseThread },
+      { "eglWaitClient", (_EGLProc) eglWaitClient },
+#endif /* EGL_VERSION_1_2 */
       { NULL, NULL }
    };
    EGLint i;
@@ -492,6 +502,85 @@ eglQueryModeStringMESA(EGLDisplay dpy, EGLModeMESA mode)
 }
 
 
+/**
+ ** EGL 1.2
+ **/
+
+#ifdef EGL_VERSION_1_2
+
+EGLBoolean
+eglBindAPI(EGLenum api)
+{
+   _EGLThreadInfo *t = _eglGetCurrentThread();
+
+   switch (api) {
+   case EGL_OPENGL_ES_API:
+      if (_eglGlobal.OpenGLESAPISupported) {
+         t->CurrentAPI = api;
+         return EGL_TRUE;
+      }
+      _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
+      return EGL_FALSE;
+   case EGL_OPENVG_API:
+      if (_eglGlobal.OpenVGAPISupported) {
+         t->CurrentAPI = api;
+         return EGL_TRUE;
+      }
+      _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
+      return EGL_FALSE;
+   default:
+      return EGL_FALSE;
+   }
+   return EGL_TRUE;
+}
 
 
+EGLSurface
+eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype,
+                                 EGLClientBuffer buffer, EGLConfig config,
+                                 const EGLint *attrib_list)
+{
+   _EGLDriver *drv = _eglLookupDriver(dpy);
+   return drv->API.CreatePbufferFromClientBuffer(drv, dpy, buftype, buffer,
+                                                 config, attrib_list);
+}
 
+
+EGLenum
+eglQueryAPI(void)
+{
+   /* returns one of EGL_OPENGL_ES_API or EGL_OPENVG_API */
+   _EGLThreadInfo *t = _eglGetCurrentThread();
+   return t->CurrentAPI;
+}
+
+
+EGLBoolean
+eglReleaseThread(void)
+{
+   _EGLThreadInfo *t = _eglGetCurrentThread();
+   EGLDisplay dpy = eglGetCurrentDisplay();
+   if (dpy) {
+      _EGLDriver *drv = _eglLookupDriver(dpy);
+      /* unbind context */
+      (void) drv->API.MakeCurrent(drv, dpy, EGL_NO_SURFACE,
+                                  EGL_NO_SURFACE, EGL_NO_CONTEXT);
+   }
+   _eglDeleteThreadData(t);
+   return EGL_TRUE;
+}
+
+
+EGLBoolean
+eglWaitClient(void)
+{
+   EGLDisplay dpy = eglGetCurrentDisplay();
+   if (dpy != EGL_NO_DISPLAY) {
+      _EGLDriver *drv = _eglLookupDriver(dpy);
+      return drv->API.WaitClient(drv, dpy);
+   }
+   else
+      return EGL_FALSE;
+}
+
+#endif /* EGL_VERSION_1_2 */

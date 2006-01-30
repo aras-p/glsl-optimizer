@@ -34,6 +34,7 @@ struct _egl_driver
 
    int ABIversion;
    int APImajor, APIminor; /* returned through eglInitialize */
+   const char *ClientAPIs;
 
    _EGLAPI API;
 

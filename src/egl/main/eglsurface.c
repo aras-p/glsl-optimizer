@@ -27,6 +27,11 @@ _eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
    _EGLConfig *conf;
    EGLint width = 0, height = 0, largest = 0;
    EGLint texFormat = 0, texTarget = 0, mipmapTex = 0;
+   EGLint renderBuffer = EGL_BACK_BUFFER;
+#ifdef EGL_VERSION_1_2
+   EGLint colorspace = EGL_COLORSPACE_sRGB;
+   EGLint alphaFormat = EGL_ALPHA_FORMAT_NONPRE;
+#endif
    EGLint i;
 
    switch (type) {
@@ -35,12 +40,14 @@ _eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
       break;
    case EGL_PIXMAP_BIT:
       func = "eglCreatePixmapSurface";
+      renderBuffer = EGL_SINGLE_BUFFER;
       break;
    case EGL_PBUFFER_BIT:
       func = "eglCreatePBufferSurface";
       break;
    case EGL_SCREEN_BIT_MESA:
       func = "eglCreateScreenSurface";
+      renderBuffer = EGL_SINGLE_BUFFER; /* XXX correct? */
       break;
    default:
       _eglLog(_EGL_WARNING, "Bad type in _eglInitSurface");
@@ -113,6 +120,55 @@ _eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
             return EGL_FALSE;
          }
          break;
+#ifdef EGL_VERSION_1_2
+      case EGL_RENDER_BUFFER:
+         if (type == EGL_WINDOW_BIT) {
+            renderBuffer = attrib_list[++i];
+            if (renderBuffer != EGL_BACK_BUFFER &&
+                renderBuffer != EGL_SINGLE_BUFFER) {
+               _eglError(EGL_BAD_ATTRIBUTE, func);
+               return EGL_FALSE;
+            }
+         }
+         else {
+            _eglError(EGL_BAD_ATTRIBUTE, func);
+            return EGL_FALSE;
+         }
+         break;
+      case EGL_COLORSPACE:
+         if (type == EGL_WINDOW_BIT ||
+             type == EGL_PBUFFER_BIT ||
+             type == EGL_PIXMAP_BIT) {
+            colorspace = attrib_list[++i];
+            if (colorspace != EGL_COLORSPACE_sRGB &&
+                colorspace != EGL_COLORSPACE_LINEAR) {
+               _eglError(EGL_BAD_ATTRIBUTE, func);
+               return EGL_FALSE;
+            }
+         }
+         else {
+            _eglError(EGL_BAD_ATTRIBUTE, func);
+            return EGL_FALSE;
+         }
+         break;
+      case EGL_ALPHA_FORMAT:
+         if (type == EGL_WINDOW_BIT ||
+             type == EGL_PBUFFER_BIT ||
+             type == EGL_PIXMAP_BIT) {
+            alphaFormat = attrib_list[++i];
+            if (alphaFormat != EGL_ALPHA_FORMAT_NONPRE &&
+                alphaFormat != EGL_ALPHA_FORMAT_PRE) {
+               _eglError(EGL_BAD_ATTRIBUTE, func);
+               return EGL_FALSE;
+            }
+         }
+         else {
+            _eglError(EGL_BAD_ATTRIBUTE, func);
+            return EGL_FALSE;
+         }
+         break;
+
+#endif /* EGL_VERSION_1_2 */
       default:
          _eglError(EGL_BAD_ATTRIBUTE, func);
          return EGL_FALSE;
@@ -134,6 +190,15 @@ _eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
    surf->MipmapTexture = mipmapTex;
    surf->MipmapLevel = 0;
    surf->SwapInterval = 0;
+#ifdef EGL_VERSION_1_2
+   surf->SwapBehavior = EGL_BUFFER_DESTROYED; /* XXX ok? */
+   surf->HorizontalResolution = EGL_UNKNOWN; /* set by caller */
+   surf->VerticalResolution = EGL_UNKNOWN; /* set by caller */
+   surf->AspectRatio = EGL_UNKNOWN; /* set by caller */
+   surf->RenderBuffer = renderBuffer;
+   surf->AlphaFormat = alphaFormat;
+   surf->Colorspace = colorspace;
+#endif
 
    return EGL_TRUE;
 }
@@ -232,6 +297,11 @@ _eglQuerySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
    case EGL_CONFIG_ID:
       *value = GET_CONFIG_ATTRIB(surface->Config, EGL_CONFIG_ID);
       return EGL_TRUE;
+   /*XXX case EGL_LARGEST_PBUFFER:*/
+   case EGL_SURFACE_TYPE:
+      *value = surface->Type;
+      return EGL_TRUE;
+#ifdef EGL_VERSION_1_1
    case EGL_TEXTURE_FORMAT:
       /* texture attributes: only for pbuffers, no error otherwise */
       if (surface->Type == EGL_PBUFFER_BIT)
@@ -249,9 +319,30 @@ _eglQuerySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
       if (surface->Type == EGL_PBUFFER_BIT)
          *value = surface->MipmapLevel;
       return EGL_TRUE;
-   case EGL_SURFACE_TYPE:
-      *value = surface->Type;
+#endif /* EGL_VERSION_1_1 */
+#ifdef EGL_VERSION_1_2
+   case EGL_SWAP_BEHAVIOR:
+      *value = surface->SwapBehavior;
       return EGL_TRUE;
+   case EGL_RENDER_BUFFER:
+      *value = surface->RenderBuffer;
+      return EGL_TRUE;
+   case EGL_PIXEL_ASPECT_RATIO:
+      *value = surface->AspectRatio;
+      return EGL_TRUE;
+   case EGL_HORIZONTAL_RESOLUTION:
+      *value = surface->HorizontalResolution;
+      return EGL_TRUE;
+   case EGL_VERTICAL_RESOLUTION:
+      *value = surface->VerticalResolution;
+      return EGL_TRUE;
+   case EGL_ALPHA_FORMAT:
+      *value = surface->AlphaFormat;
+      return EGL_TRUE;
+   case EGL_COLORSPACE:
+      *value = surface->Colorspace;
+      return EGL_TRUE;
+#endif /* EGL_VERSION_1_2 */
    default:
       _eglError(EGL_BAD_ATTRIBUTE, "eglQuerySurface");
       return EGL_FALSE;
@@ -416,3 +507,24 @@ _eglSwapInterval(_EGLDriver *drv, EGLDisplay dpy, EGLint interval)
    surf->SwapInterval = interval;
    return EGL_TRUE;
 }
+
+
+#ifdef EGL_VERSION_1_2
+
+/**
+ * Example function - drivers should do a proper implementation.
+ */
+EGLSurface
+_eglCreatePbufferFromClientBuffer(_EGLDriver *drv, EGLDisplay dpy,
+                                  EGLenum buftype, EGLClientBuffer buffer,
+                                  EGLConfig config, const EGLint *attrib_list)
+{
+   if (buftype != EGL_OPENVG_IMAGE) {
+      _eglError(EGL_BAD_PARAMETER, "eglCreatePbufferFromClientBuffer");
+      return ELG_NO_SURFACE;
+   }
+
+   return EGL_NO_SURFACE;
+}
+
+#endif /* EGL_VERSION_1_2 */

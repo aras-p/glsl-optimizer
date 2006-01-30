@@ -181,7 +181,7 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
    drv->API.WaitGL = _eglWaitGL;
    drv->API.WaitNative = _eglWaitNative;
 
-   /* EGL_MESA_screen */
+#ifdef EGL_MESA_screen_surface
    drv->API.ChooseModeMESA = _eglChooseModeMESA; 
    drv->API.GetModesMESA = _eglGetModesMESA;
    drv->API.GetModeAttribMESA = _eglGetModeAttribMESA;
@@ -193,6 +193,11 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
    drv->API.QueryScreenSurfaceMESA = _eglQueryScreenSurfaceMESA;
    drv->API.QueryScreenModeMESA = _eglQueryScreenModeMESA;
    drv->API.QueryModeStringMESA = _eglQueryModeStringMESA;
+#endif /* EGL_MESA_screen_surface */
+
+#ifdef EGL_VERSION_1_2
+   drv->API.CreatePbufferFromClientBuffer = _eglCreatePbufferFromClientBuffer;
+#endif /* EGL_VERSION_1_2 */
 }
 
 
@@ -227,6 +232,11 @@ _eglQueryString(_EGLDriver *drv, EGLDisplay dpy, EGLint name)
    case EGL_EXTENSIONS:
       _eglUpdateExtensionsString(drv);
       return drv->Extensions.String;
+#ifdef EGL_VERSION_1_2
+   case EGL_CLIENT_APIS:
+      /* XXX need to initialize somewhere */
+      return drv->ClientAPIs;
+#endif
    default:
       _eglError(EGL_BAD_PARAMETER, "eglQueryString");
       return NULL;
@@ -250,6 +260,13 @@ _eglWaitNative(_EGLDriver *drv, EGLDisplay dpy, EGLint engine)
    /* just a placeholder */
    (void) drv;
    (void) dpy;
-   (void) engine;
+   switch (engine) {
+   case EGL_CORE_NATIVE_ENGINE:
+      break;
+   default:
+      _eglError(EGL_BAD_PARAMETER, "eglWaitNative(engine)");
+      return EGL_FALSE;
+   }
+
    return EGL_TRUE;
 }

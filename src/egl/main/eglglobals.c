@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "eglglobals.h"
 
 
@@ -18,9 +19,12 @@ _eglInitGlobals(void)
       _eglGlobal.Surfaces = _eglNewHashTable();
       _eglGlobal.FreeScreenHandle = 1;
       _eglGlobal.Initialized = EGL_TRUE;
+
+      _eglGlobal.OpenGLESAPISupported = EGL_TRUE;
+      _eglGlobal.OpenVGAPISupported = EGL_FALSE;
+
       /* XXX temporary */
-      _eglGlobal.ThreadInfo.CurrentContext = EGL_NO_CONTEXT;
-      _eglGlobal.ThreadInfo.LastError = EGL_SUCCESS;
+      _eglGlobal.ThreadInfo = _eglNewThreadInfo();
    }
 }
 
@@ -39,6 +43,33 @@ _eglDestroyGlobals(void)
 
 
 /**
+ * Allocate and init a new _EGLThreadInfo object.
+ */
+_EGLThreadInfo *
+_eglNewThreadInfo(void)
+{
+   _EGLThreadInfo *t = (_EGLThreadInfo *) calloc(1, sizeof(_EGLThreadInfo));
+   if (t) {
+      t->CurrentContext = EGL_NO_CONTEXT;
+      t->LastError = EGL_SUCCESS;
+      t->CurrentAPI = EGL_NONE;
+   }
+   return t;
+}
+
+
+/**
+ * Delete/free a _EGLThreadInfo object.
+ */
+void
+_eglDeleteThreadData(_EGLThreadInfo *t)
+{
+   free(t);
+}
+
+
+
+/**
  * Return pointer to calling thread's _EGLThreadInfo object.
  * Create a new one if needed.
  * Should never return NULL.
@@ -46,8 +77,10 @@ _eglDestroyGlobals(void)
 _EGLThreadInfo *
 _eglGetCurrentThread(void)
 {
+   _eglInitGlobals();
+
    /* XXX temporary */
-   return &_eglGlobal.ThreadInfo;
+   return _eglGlobal.ThreadInfo;
 }
 
 
