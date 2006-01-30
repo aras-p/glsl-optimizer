@@ -1,4 +1,4 @@
-/* $Id: jkrahntest.c,v 1.1 2002/06/16 03:57:48 brianp Exp $ */
+/* $Id: jkrahntest.c,v 1.2 2006/01/30 17:12:10 brianp Exp $ */
 
 /* This is a good test for glXSwapBuffers on non-current windows,
  * and the glXCopyContext function.  Fixed several Mesa/DRI bugs with
@@ -25,7 +25,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
+
+#ifndef M_PI
 #define M_PI 3.14159
+#endif
+
 #define DEGTOR (M_PI/180.0)
 
 static int AttributeList[] = { GLX_RGBA, GLX_DOUBLEBUFFER, None };
