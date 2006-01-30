@@ -859,7 +859,7 @@ static void import_tex_obj_state( radeonContextPtr rmesa,
    if (texobj->base.tObj->Target == GL_TEXTURE_CUBE_MAP) {
       GLuint *cube_cmd = RADEON_DB_STATE( cube[unit] );
       GLuint bytesPerFace = texobj->base.totalSize / 6;
-      ASSERT(texobj->totalSize % 6 == 0);
+      ASSERT(texobj->base.totalSize % 6 == 0);
 
       cube_cmd[CUBE_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
       /* dont know if this setup conforms to OpenGL.. 
