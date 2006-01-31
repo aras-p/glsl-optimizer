@@ -97,7 +97,7 @@ static rawImageRec *RawImageOpen(const char *fileName)
       swapFlag = GL_FALSE;
    }
 
-   raw = (rawImageRec *)malloc(sizeof(rawImageRec));
+   raw = (rawImageRec *)calloc(1, sizeof(rawImageRec));
    if (raw == NULL) {
       fprintf(stderr, "Out of memory!\n");
       return NULL;
@@ -148,12 +148,15 @@ static rawImageRec *RawImageOpen(const char *fileName)
 
 static void RawImageClose(rawImageRec *raw)
 {
-
    fclose(raw->file);
    free(raw->tmp);
    free(raw->tmpR);
    free(raw->tmpG);
    free(raw->tmpB);
+   if (raw->rowStart)
+      free(raw->rowStart);
+   if (raw->rowSize)
+      free(raw->rowSize);
    if (raw->sizeZ>3) {
       free(raw->tmpA);
    }
