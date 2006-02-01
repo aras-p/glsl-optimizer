@@ -278,7 +278,7 @@ import_texcoord( GLcontext *ctx, GLuint unit, GLenum type, GLuint stride )
    struct gl_client_array *to = &ac->Cache.TexCoord[unit];
    (void) type; (void) stride;
 
-   ASSERT(unit < MAX_TEXTURE_COORD_UNITS);
+   ASSERT(unit < ctx->Const.MaxTextureCoordUnits);
 
    /* Limited choices at this stage:
     */
@@ -501,7 +501,7 @@ _ac_import_texcoord( GLcontext *ctx,
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
-   ASSERT(unit < ctx->Const.MaxTextureCoordUnits);
+   ASSERT(unit < MAX_TEXTURE_COORD_UNITS);
 
    /* Can we keep the existing version?
     */
