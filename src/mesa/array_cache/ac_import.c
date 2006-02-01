@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -278,7 +278,7 @@ import_texcoord( GLcontext *ctx, GLuint unit, GLenum type, GLuint stride )
    struct gl_client_array *to = &ac->Cache.TexCoord[unit];
    (void) type; (void) stride;
 
-   ASSERT(unit < ctx->Const.MaxTextureCoordUnits);
+   ASSERT(unit < MAX_TEXTURE_COORD_UNITS);
 
    /* Limited choices at this stage:
     */
