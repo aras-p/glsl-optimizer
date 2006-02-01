@@ -2692,7 +2692,7 @@ _mesa_ClientActiveTextureARB( GLenum target )
    GLuint texUnit = target - GL_TEXTURE0;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (texUnit > ctx->Const.MaxTextureUnits) {
+   if (texUnit >= ctx->Const.MaxTextureUnits) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glClientActiveTexture(target)");
       return;
    }
