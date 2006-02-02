@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1450,7 +1450,7 @@ static GLboolean init_vertex_program( GLcontext *ctx,
    const GLuint size = VB->Size;
    GLuint i;
 
-   stage->privatePtr = _mesa_malloc(sizeof(*m));
+   stage->privatePtr = _mesa_calloc(sizeof(*m));
    m = ARB_VP_MACHINE(stage);
    if (!m)
       return GL_FALSE;
@@ -1471,7 +1471,7 @@ static GLboolean init_vertex_program( GLcontext *ctx,
    ASSIGN_4V(m->File[0][REG_LIT2], 1, .5, .2, 1); /* debug value */
 
    if (_mesa_getenv("MESA_EXPERIMENTAL"))
-      m->try_codegen = 1;
+      m->try_codegen = GL_TRUE;
 
    /* Allocate arrays of vertex output values */
    for (i = 0; i < VERT_RESULT_MAX; i++) {
