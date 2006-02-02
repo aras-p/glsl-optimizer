@@ -43,6 +43,7 @@
 #include "mtypes.h"
 #include "arbprogparse.h"
 #include "program.h"
+#include "program_instruction.h"
 #include "math/m_matrix.h"
 #include "math/m_translate.h"
 #include "t_context.h"
@@ -1181,6 +1182,11 @@ _tnl_sse_codegen_vertex_program(struct tnl_compiled_program *p)
 {
    struct compilation cp;
    
+   /* sanity checks */
+   assert(emit_func[OPCODE_ABS] == emit_ABS);
+   assert(emit_func[OPCODE_MUL] == emit_MUL);
+   assert(emit_func[OPCODE_XPD] == emit_XPD);
+
    _mesa_memset(&cp, 0, sizeof(cp));
    cp.p = p;
    cp.have_sse2 = 1;
