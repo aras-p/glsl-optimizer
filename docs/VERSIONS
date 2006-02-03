@@ -1407,6 +1407,33 @@ Mesa Version History
 	- fragment programs that wrote result.depth.z didn't work
 
 
+6.4.1  November 30, 2005
+    Bug fixes:
+	- redefining a vertex program string didn't take effect in TNL module
+	- fixed occasional segfault upon vertex/fragment parsing error
+	- vertex program LIT instruction didn't handle 0^0=1 correctly
+	- fragment program fog option didn't work with glDrawPixels, glBitmap
+	- USE_MGL_NAMESPACE didn't work for x86-64
+	- OSMesa demos were missing from previous release tarballs
+	- fixed problem with float->ushort conversion in glClear (bug 4992)
+	- popping of GL_EYE_PLANE texgen state was broken (bug 4996)
+	- popping of GL_SPOT_DIRECTION light state was broken (bug 5005)
+	- fixed occasional triangle color interpolation problem on VMS
+	- work around invalid free() call (bug 5131)
+	- fixed BSD X server compilation problem by including stdint.h
+
+
+6.4.2  February 2, 2006
+    New:
+	- added OSMesaColorClamp() function/feature
+	- added wglGetExtensionStringARB() function
+    Bug fixes:
+	- fixed some problems when building on Windows
+	- GLw header files weren't installed by installmesa script (bug 5396)
+	- GL/glfbdev.h file was missing from tarballs
+	- fixed TNL initialization bug which could lead to crash (bug 5791)
+
+
 6.5  month, day, 2005
     New:
 	- GL_EXT_packed_depth_stencil extension
