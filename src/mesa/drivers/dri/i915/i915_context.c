@@ -102,6 +102,7 @@ GLboolean i915CreateContext( const __GLcontextModes *mesaVis,
    i915ContextPtr i915 = (i915ContextPtr) CALLOC_STRUCT(i915_context);
    intelContextPtr intel = &i915->intel;
    GLcontext *ctx = &intel->ctx;
+   GLuint i;
 
    if (!i915) return GL_FALSE;
 
@@ -135,7 +136,8 @@ GLboolean i915CreateContext( const __GLcontextModes *mesaVis,
     * tightly packed, but they're not in Intel graphics
     * hardware.
     */
-   ctx->Const.MaxTextureUnits = 1;
+   ctx->Const.MaxTextureUnits = I915_TEX_UNITS;
+   i = driQueryOptioni( &intel->intelScreen->optionCache, "allow_large_textures");
    driCalculateMaxTextureLevels( intel->texture_heaps,
 				 intel->nr_heaps,
 				 &intel->ctx.Const,
@@ -145,8 +147,8 @@ GLboolean i915CreateContext( const __GLcontextModes *mesaVis,
 				 11, /* cube texture. */
 				 11, /* rect texture */
 				 12,
-				 GL_FALSE );
-   ctx->Const.MaxTextureUnits = I915_TEX_UNITS;
+				 GL_FALSE,
+				 i );
 
    /* GL_ARB_fragment_program limits - don't think Mesa actually
     * validates programs against these, and in any case one ARB

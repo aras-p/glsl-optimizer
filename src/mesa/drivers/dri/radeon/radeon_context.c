@@ -327,8 +327,9 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    rmesa->hw.all_dirty = GL_TRUE;
 
    /* Set the maximum texture size small enough that we can guarentee that
-    * all texture units can bind a maximal texture and have them both in
-    * texturable memory at once.
+    * all texture units can bind a maximal texture and have all of them in
+    * texturable memory at once. Depending on the allow_large_textures driconf
+    * setting allow larger textures.
     */
 
    ctx = rmesa->glCtx;
@@ -337,23 +338,20 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
    ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
 
+   i = driQueryOptioni( &rmesa->optionCache, "allow_large_textures");
+
    driCalculateMaxTextureLevels( rmesa->texture_heaps,
 				 rmesa->nr_heaps,
 				 & ctx->Const,
 				 4,
 				 11, /* max 2D texture size is 2048x2048 */
-				 0,  /* 3D textures unsupported. */
+				 8,  /* 256^3 */
 				 9,  /* \todo: max cube texture size seems to be 512x512(x6) */
 				 11, /* max rect texture size is 2048x2048. */
 				 12,
-				 GL_FALSE );
+				 GL_FALSE,
+				 i );
 
-   /* adjust max texture size a bit. Hack, but I really want to use larger textures
-      which will work just fine in 99.999999% of all cases, especially with texture compression... */
-   if (driQueryOptionb( &rmesa->optionCache, "texture_level_hack" ))
-   {
-     if (ctx->Const.MaxTextureLevels < 12) ctx->Const.MaxTextureLevels += 1;
-   }
 
    ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 

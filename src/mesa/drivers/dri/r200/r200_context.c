@@ -366,8 +366,9 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    rmesa->hw.all_dirty = 1;
 
    /* Set the maximum texture size small enough that we can guarentee that
-    * all texture units can bind a maximal texture and have them both in
-    * texturable memory at once.
+    * all texture units can bind a maximal texture and have all of them in
+    * texturable memory at once. Depending on the allow_large_textures driconf
+    * setting allow larger textures.
     */
 
    ctx = rmesa->glCtx;
@@ -375,6 +376,8 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 						 "texture_units");
    ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
    ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
+
+   i = driQueryOptioni( &rmesa->optionCache, "allow_large_textures");
 
    driCalculateMaxTextureLevels( rmesa->texture_heaps,
 				 rmesa->nr_heaps,
@@ -389,14 +392,8 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 				 11, /* max cube texture size is 2048x2048 */
 				 11, /* max texture rectangle size is 2048x2048 */
 				 12,
-				 GL_FALSE );
-
-   /* adjust max texture size a bit. Hack, but I really want to use larger textures
-      which will work just fine in 99.999999% of all cases, especially with texture compression... */
-   if (driQueryOptionb( &rmesa->optionCache, "texture_level_hack" ))
-   {
-     if (ctx->Const.MaxTextureLevels < 12) ctx->Const.MaxTextureLevels += 1;
-   }
+				 GL_FALSE,
+				 i );
 
    ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 

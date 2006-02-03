@@ -540,7 +540,8 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
 				 0,  /* cube textures unsupported. */
 				 11, /* max texture rect size is 2048x2048 */
 				 maxlevels,
-				 GL_FALSE );
+				 GL_FALSE,
+				 0 );
 
    ctx->Const.MinLineWidth = 1.0;
    ctx->Const.MinLineWidthAA = 1.0;

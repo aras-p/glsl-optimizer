@@ -210,7 +210,8 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
 				 0,  /* cube textures unsupported. */
 				 0,  /* texture rectangles unsupported. */
 				 11,
-				 GL_FALSE );
+				 GL_FALSE,
+				 0 );
 
    /* No wide points.
     */

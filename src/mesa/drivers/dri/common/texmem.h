@@ -291,13 +291,14 @@ void
 driCalculateMaxTextureLevels( driTexHeap * const * heaps,
 			      unsigned nr_heaps,
 			      struct gl_constants * limits,
-			      unsigned max_bytes_per_texel, 
+			      unsigned max_bytes_per_texel,
 			      unsigned max_2D_size,
 			      unsigned max_3D_size,
 			      unsigned max_cube_size,
 			      unsigned max_rect_size,
 			      unsigned mipmaps_at_once,
-			      int all_textures_one_heap );
+			      int all_textures_one_heap,
+			      int allow_larger_textures );
 
 void
 driSetTextureSwapCounterLocation( driTexHeap * heap, unsigned * counter );

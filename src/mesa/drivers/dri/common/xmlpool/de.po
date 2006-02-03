@@ -178,8 +178,8 @@ msgid ""
 "Always synchronize with vertical refresh, application chooses the minimum "
 "swap interval"
 msgstr ""
-"Immer mit der Bildwiederholung synchronisieren, Anwendung wählt das minmale "
-"Bildinterval"
+"Immer mit der Bildwiederholung synchronisieren, Anwendung wählt das minimale "
+"Bildintervall"
 
 #: t_options.h:186
 msgid "Use HyperZ to boost performance"
@@ -190,42 +190,51 @@ msgid "Number of texture units used"
 msgstr "Anzahl der benutzten Textureinheiten"
 
 #: t_options.h:196
-msgid ""
-"Enable hack to allow larger textures with texture compression on radeon/r200"
-msgstr ""
-"Hack aktivieren, der mit Texturkompression auf radeon/r200 größere Texturen "
-"erlaubt"
+msgid "Support larger textures not guaranteed to fit into graphics memory"
+msgstr "Unterstütze grosse Texturen die evtl. nicht in den Grafikspeicher passen"
 
-#: t_options.h:201
+#: t_options.h:197
+msgid "No"
+msgstr "Nein"
+
+#: t_options.h:198
+msgid "At least 1 texture must fit under worst-case assumptions"
+msgstr "Mindestens 1 Textur muss auch im schlechtesten Fall Platz haben"
+
+#: t_options.h:199
+msgid "Announce hardware limits"
+msgstr "Benutze Hardware-Limits"
+
+#: t_options.h:205
 msgid "Texture filtering quality vs. speed, AKA “brilinear” texture filtering"
 msgstr ""
 "Texturfilterqualität versus -geschwindigkeit, auch bekannt als „brilineare“ "
 "Texturfilterung"
 
-#: t_options.h:209
+#: t_options.h:213
 msgid "Used types of texture memory"
 msgstr "Benutzte Arten von Texturspeicher"
 
-#: t_options.h:210
+#: t_options.h:214
 msgid "All available memory"
 msgstr "Aller verfügbarer Speicher"
 
-#: t_options.h:211
+#: t_options.h:215
 msgid "Only card memory (if available)"
 msgstr "Nur Grafikspeicher (falls verfügbar)"
 
-#: t_options.h:212
+#: t_options.h:216
 msgid "Only GART (AGP/PCIE) memory (if available)"
 msgstr "Nur GART-Speicher (AGP/PCIE) (falls verfügbar)"
 
-#: t_options.h:220
+#: t_options.h:224
 msgid "Features that are not hardware-accelerated"
 msgstr "Funktionalität, die nicht hardwarebeschleunigt ist"
 
-#: t_options.h:224
+#: t_options.h:228
 msgid "Enable extension GL_ARB_vertex_program"
 msgstr "Erweiterung GL_ARB_vertex_program aktivieren"
 
-#: t_options.h:229
+#: t_options.h:233
 msgid "Enable extension GL_NV_vertex_program"
 msgstr "Erweiterung GL_NV_vertex_program aktivieren"

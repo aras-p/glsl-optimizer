@@ -456,7 +456,8 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 				 0,  /* cube textures unsupported. */
 				 0,  /* texture rectangles unsupported. */
 				 12,
-				 GL_FALSE );
+				 GL_FALSE,
+				 0 );
    if (ctx->Const.MaxTextureLevels <= 6) { /*spec requires at least 64x64*/
        __driUtilMessage("Not enough texture memory. "
 			"Falling back to indirect rendering.");

@@ -971,19 +971,22 @@ get_max_size( unsigned nr_heaps,
  *     For hardware that does not support mipmapping, this will be 1.
  * \param all_textures_one_heap True if the hardware requires that all
  *     textures be in a single texture heap for multitexturing.
+ * \param allow_larger_textures 0 conservative, 1 calculate limits
+ *     so at least one worst-case texture can fit, 2 just use hw limits.
  */
 
 void
 driCalculateMaxTextureLevels( driTexHeap * const * heaps,
 			      unsigned nr_heaps,
 			      struct gl_constants * limits,
-			      unsigned max_bytes_per_texel, 
+			      unsigned max_bytes_per_texel,
 			      unsigned max_2D_size,
 			      unsigned max_3D_size,
 			      unsigned max_cube_size,
 			      unsigned max_rect_size,
 			      unsigned mipmaps_at_once,
-			      int all_textures_one_heap )
+			      int all_textures_one_heap,
+			      int allow_larger_textures )
 {
    struct maps_per_heap  max_textures[8];
    unsigned         i;
@@ -1012,17 +1015,21 @@ driCalculateMaxTextureLevels( driTexHeap * const * heaps,
     */
 
    for ( i = 0 ; i < 4 ; i++ ) {
-      if ( max_sizes[ i ] != 0 ) {
-	 fill_in_maximums( heaps, nr_heaps, max_bytes_per_texel, 
+      if ( (allow_larger_textures != 2) && (max_sizes[ i ] != 0) ) {
+	 fill_in_maximums( heaps, nr_heaps, max_bytes_per_texel,
 			   max_sizes[ i ], mipmaps[ i ],
 			   dimensions[ i ], faces[ i ],
 			   max_textures );
 
-	 max_sizes[ i ] = get_max_size( nr_heaps, 
-					limits->MaxTextureUnits,
+	 max_sizes[ i ] = get_max_size( nr_heaps,
+					allow_larger_textures == 1 ?
+					1 : limits->MaxTextureUnits,
 					max_sizes[ i ],
 					all_textures_one_heap,
 					max_textures );
+      }
+      else if (max_sizes[ i ] != 0) {
+	 max_sizes[ i ] += 1;
       }
    }
 

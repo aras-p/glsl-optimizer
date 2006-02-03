@@ -61,6 +61,7 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
    i830ContextPtr i830 = (i830ContextPtr) CALLOC_STRUCT(i830_context);
    intelContextPtr intel = &i830->intel;
    GLcontext *ctx = &intel->ctx;
+   GLuint i;
    if (!i830) return GL_FALSE;
 
    i830InitVtbl( i830 );
@@ -91,7 +92,8 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
    /* FIXME: driCalculateMaxTextureLevels assumes that mipmaps are tightly
     * FIXME: packed, but they're not in Intel graphics hardware.
     */
-   intel->ctx.Const.MaxTextureUnits = 1;
+   intel->ctx.Const.MaxTextureUnits = I830_TEX_UNITS;
+   i = driQueryOptioni( &intel->intelScreen->optionCache, "allow_large_textures");
    driCalculateMaxTextureLevels( intel->texture_heaps,
 				 intel->nr_heaps,
 				 &intel->ctx.Const,
@@ -101,8 +103,8 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
 				 10, /* max CUBE texture size is 1024x1024 */
 				 11, /* max RECT. supported */
 				 12,
-				 GL_FALSE );
-   intel->ctx.Const.MaxTextureUnits = I830_TEX_UNITS;
+				 GL_FALSE,
+				 i );
 
    _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
 		       18 * sizeof(GLfloat) );

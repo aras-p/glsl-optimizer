@@ -48,9 +48,10 @@ PUBLIC const char __driConfigOptions[] =
 DRI_CONF_BEGIN
    DRI_CONF_SECTION_PERFORMANCE
       DRI_CONF_FORCE_S3TC_ENABLE(false)
+      DRI_CONF_ALLOW_LARGE_TEXTURES(1)
    DRI_CONF_SECTION_END
 DRI_CONF_END;
-const GLuint __driNConfigOptions = 1;
+const GLuint __driNConfigOptions = 2;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;

@@ -341,7 +341,7 @@ DRI_CONF_OPT_BEGIN_V(vblank_mode,enum,def,"0:3") \
                 DRI_CONF_ENUM(0,"Niemals mit der Bildwiederholung synchronisieren, Anweisungen der Anwendung ignorieren") \
                 DRI_CONF_ENUM(1,"Initiales Bildinterval 0, Anweisungen der Anwendung gehorchen") \
                 DRI_CONF_ENUM(2,"Initiales Bildinterval 1, Anweisungen der Anwendung gehorchen") \
-                DRI_CONF_ENUM(3,"Immer mit der Bildwiederholung synchronisieren, Anwendung wählt das minmale Bildinterval") \
+                DRI_CONF_ENUM(3,"Immer mit der Bildwiederholung synchronisieren, Anwendung wählt das minimale Bildintervall") \
         DRI_CONF_DESC_END \
         DRI_CONF_DESC_BEGIN(es,"Sincronización con el refresco vertical (intervalos de intercambio)") \
                 DRI_CONF_ENUM(0,"No sincronizar nunca con el refresco vertical, ignorar la elección de la aplicación") \
@@ -383,13 +383,33 @@ DRI_CONF_OPT_BEGIN_V(texture_units,int,def, # min ":" # max ) \
         DRI_CONF_DESC(fr,"Nombre d'unités de texture") \
 DRI_CONF_OPT_END
 
-#define DRI_CONF_TEXTURE_LEVEL_HACK(def) \
-DRI_CONF_OPT_BEGIN(texture_level_hack,bool,def) \
-        DRI_CONF_DESC(en,"Enable hack to allow larger textures with texture compression on radeon/r200") \
-        DRI_CONF_DESC(de,"Hack aktivieren, der mit Texturkompression auf radeon/r200 größere Texturen erlaubt") \
-        DRI_CONF_DESC(es,"Activar ”hack“ para permitir texturas más grandes con compresión de textura activada en la Radeon/r200") \
-        DRI_CONF_DESC(nl,"Schakel hack in om met textuurcompressie grotere texturen toe te staan op een radeon/r200") \
-        DRI_CONF_DESC(fr,"Activer le hack permettant l'utilisation de textures de grande taille avec la compression de textures sur radeon/r200") \
+#define DRI_CONF_ALLOW_LARGE_TEXTURES(def) \
+DRI_CONF_OPT_BEGIN_V(allow_large_textures,enum,def,"0:2") \
+	DRI_CONF_DESC_BEGIN(en,"Support larger textures not guaranteed to fit into graphics memory") \
+		DRI_CONF_ENUM(0,"No") \
+		DRI_CONF_ENUM(1,"At least 1 texture must fit under worst-case assumptions") \
+		DRI_CONF_ENUM(2,"Announce hardware limits") \
+	DRI_CONF_DESC_END \
+	DRI_CONF_DESC_BEGIN(de,"Unterstütze grosse Texturen die evtl. nicht in den Grafikspeicher passen") \
+		DRI_CONF_ENUM(0,"Nein") \
+		DRI_CONF_ENUM(1,"Mindestens 1 Textur muss auch im schlechtesten Fall Platz haben") \
+		DRI_CONF_ENUM(2,"Benutze Hardware-Limits") \
+	DRI_CONF_DESC_END \
+	DRI_CONF_DESC_BEGIN(es,"Support larger textures not guaranteed to fit into graphics memory") \
+		DRI_CONF_ENUM(0,"No") \
+		DRI_CONF_ENUM(1,"At least 1 texture must fit under worst-case assumptions") \
+		DRI_CONF_ENUM(2,"Announce hardware limits") \
+	DRI_CONF_DESC_END \
+	DRI_CONF_DESC_BEGIN(nl,"Support larger textures not guaranteed to fit into graphics memory") \
+		DRI_CONF_ENUM(0,"No") \
+		DRI_CONF_ENUM(1,"At least 1 texture must fit under worst-case assumptions") \
+		DRI_CONF_ENUM(2,"Announce hardware limits") \
+	DRI_CONF_DESC_END \
+	DRI_CONF_DESC_BEGIN(fr,"Support larger textures not guaranteed to fit into graphics memory") \
+		DRI_CONF_ENUM(0,"No") \
+		DRI_CONF_ENUM(1,"At least 1 texture must fit under worst-case assumptions") \
+		DRI_CONF_ENUM(2,"Announce hardware limits") \
+	DRI_CONF_DESC_END \
 DRI_CONF_OPT_END
 
 #define DRI_CONF_TEXTURE_BLEND_QUALITY(def,range) \

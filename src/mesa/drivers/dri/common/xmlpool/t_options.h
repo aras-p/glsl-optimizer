@@ -191,9 +191,13 @@ DRI_CONF_OPT_BEGIN_V(texture_units,int,def, # min ":" # max ) \
         DRI_CONF_DESC(en,gettext("Number of texture units used")) \
 DRI_CONF_OPT_END
 
-#define DRI_CONF_TEXTURE_LEVEL_HACK(def) \
-DRI_CONF_OPT_BEGIN(texture_level_hack,bool,def) \
-        DRI_CONF_DESC(en,gettext("Enable hack to allow larger textures with texture compression on radeon/r200")) \
+#define DRI_CONF_ALLOW_LARGE_TEXTURES(def) \
+DRI_CONF_OPT_BEGIN_V(allow_large_textures,enum,def,"0:2") \
+	DRI_CONF_DESC_BEGIN(en,gettext("Support larger textures not guaranteed to fit into graphics memory")) \
+		DRI_CONF_ENUM(0,gettext("No")) \
+		DRI_CONF_ENUM(1,gettext("At least 1 texture must fit under worst-case assumptions")) \
+		DRI_CONF_ENUM(2,gettext("Announce hardware limits")) \
+	DRI_CONF_DESC_END \
 DRI_CONF_OPT_END
 
 #define DRI_CONF_TEXTURE_BLEND_QUALITY(def,range) \

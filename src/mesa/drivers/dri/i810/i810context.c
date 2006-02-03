@@ -260,7 +260,8 @@ i810CreateContext( const __GLcontextModes *mesaVis,
 				 0,  /* cube textures unsupported. */
 				 0,  /* texture rectangles unsupported. */
 				 12,
-				 GL_FALSE );
+				 GL_FALSE,
+				 0 );
 
    ctx->Const.MinLineWidth = 1.0;
    ctx->Const.MinLineWidthAA = 1.0;
