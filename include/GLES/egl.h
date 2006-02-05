@@ -64,9 +64,7 @@
 ** Versioning and extensions
 */
 #define EGL_VERSION_1_0		       1
-#if 0
 #define EGL_VERSION_1_1		       1
-#endif
 
 /*
 ** Boolean
@@ -267,6 +265,56 @@ GLAPI const char * APIENTRY eglQueryModeStringMESA(EGLDisplay dpy, EGLModeMESA m
 GLAPI EGLBoolean APIENTRY eglCopyContextMESA(EGLDisplay dpy, EGLContext source, EGLContext dest, EGLint mask);
 
 #endif /* EGL_MESA_copy_context */
+
+
+/* XXX this is preliminary! */
+#ifndef EGL_VERSION_1_2
+#define EGL_VERSION_1_2 1
+
+typedef int EGLenum;
+typedef int EGLClientBuffer;
+
+#define EGL_DISPLAY_SCALING		10000
+#define EGL_UNKNOWN			((EGLint)-1)
+
+#define EGL_OPENGL_ES_BIT               0x1
+#define EGL_OPENVG_BIT                  0x2
+
+#define EGL_OPENGL_ES_API               0x30A0
+#define EGL_OPENVG_API                  0x30A1
+
+#define EGL_LUMINANCE_SIZE		0x303D
+#define EGL_ALPHA_MASK_SIZE		0x303E
+#define EGL_COLOR_BUFFER_TYPE		0x303F
+#define EGL_RENDERABLE_TYPE		0x3040
+
+#define EGL_SINGLE_BUFFER		0x3085
+#define EGL_RENDER_BUFFER		0x3086
+#define EGL_COLORSPACE			0x3087
+#define EGL_ALPHA_FORMAT		0x3088
+#define EGL_COLORSPACE_sRGB		0x3089
+#define EGL_COLORSPACE_LINEAR		0x308A
+#define EGL_ALPHA_FORMAT_NONPRE		0x308B
+#define EGL_ALPHA_FORMAT_PRE		0x308C
+#define EGL_CLIENT_APIS			0x308D
+#define EGL_RGB_BUFFER			0x308E
+#define EGL_LUMINANCE_BUFFER		0x308F
+#define EGL_HORIZONTAL_RESOLUTION	0x3090
+#define EGL_VERTICAL_RESOLUTION		0x3091
+#define EGL_PIXEL_ASPECT_RATIO		0x3092
+#define EGL_SWAP_BEHAVIOR		0x3093
+#define EGL_BUFFER_PRESERVED		0x3094
+#define EGL_BUFFER_DESTROYED		0x3095
+#define EGL_OPENVG_IMAGE		0x3096
+#define EGL_CONTEXT_CLIENT_TYPE		0x3097
+
+GLAPI EGLBoolean APIENTRY eglBindAPI(EGLenum api);
+GLAPI EGLenum APIENTRY eglQueryAPI(void);
+GLAPI EGLBoolean APIENTRY eglWaitClient(void);
+GLAPI EGLBoolean APIENTRY eglReleaseThread(void);
+GLAPI EGLSurface APIENTRY eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype, EGLClientBuffer buffer, EGLConfig config, const EGLint *attrib_list);
+
+#endif /* EGL_VERSION_1_2 */
 
 
 #ifdef __cplusplus
