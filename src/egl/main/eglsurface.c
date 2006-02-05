@@ -521,7 +521,7 @@ _eglCreatePbufferFromClientBuffer(_EGLDriver *drv, EGLDisplay dpy,
 {
    if (buftype != EGL_OPENVG_IMAGE) {
       _eglError(EGL_BAD_PARAMETER, "eglCreatePbufferFromClientBuffer");
-      return ELG_NO_SURFACE;
+      return EGL_NO_SURFACE;
    }
 
    return EGL_NO_SURFACE;
