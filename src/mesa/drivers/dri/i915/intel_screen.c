@@ -32,6 +32,7 @@
 #include "renderbuffer.h"
 #include "simple_list.h"
 #include "utils.h"
+#include "vblank.h"
 #include "xmlpool.h"
 
 
@@ -46,12 +47,16 @@
 
 PUBLIC const char __driConfigOptions[] =
 DRI_CONF_BEGIN
-   DRI_CONF_SECTION_PERFORMANCE
-      DRI_CONF_FORCE_S3TC_ENABLE(false)
-      DRI_CONF_ALLOW_LARGE_TEXTURES(1)
-   DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_PERFORMANCE
+       DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS) 
+       DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+    DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_QUALITY
+       DRI_CONF_FORCE_S3TC_ENABLE(false)
+       DRI_CONF_ALLOW_LARGE_TEXTURES(1)
+      DRI_CONF_SECTION_END
 DRI_CONF_END;
-const GLuint __driNConfigOptions = 2;
+const GLuint __driNConfigOptions = 4;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
@@ -330,6 +335,10 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
    }
 
    if (glx_enable_extension != NULL) {
+      (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+      (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+      (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
+      (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
       (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
       (*glx_enable_extension)( psc, "GLX_MESA_allocate_memory" );
    }
@@ -440,6 +449,33 @@ static void intelDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 }
 
 
+/**
+ * Get information about previous buffer swaps.
+ */
+static int
+intelGetSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
+{
+   intelContextPtr intel;
+
+   if ( (dPriv == NULL) || (dPriv->driContextPriv == NULL)
+	|| (dPriv->driContextPriv->driverPrivate == NULL)
+	|| (sInfo == NULL) ) {
+      return -1;
+   }
+
+   intel = dPriv->driContextPriv->driverPrivate;
+   sInfo->swap_count = intel->swap_count;
+   sInfo->swap_ust = intel->swap_ust;
+   sInfo->swap_missed_count = intel->swap_missed_count;
+
+   sInfo->swap_missed_usage = (sInfo->swap_missed_count != 0)
+       ? driCalculateSwapUsage( dPriv, 0, intel->swap_missed_ust )
+       : 0.0;
+
+   return 0;
+}
+
+
 /* There are probably better ways to do this, such as an
  * init-designated function to register chipids and createcontext
  * functions.
@@ -494,9 +530,9 @@ static const struct __DriverAPIRec intelAPI = {
    .SwapBuffers     = intelSwapBuffers,
    .MakeCurrent     = intelMakeCurrent,
    .UnbindContext   = intelUnbindContext,
-   .GetSwapInfo     = NULL,
-   .GetMSC          = NULL,
-   .WaitForMSC      = NULL,
+   .GetSwapInfo     = intelGetSwapInfo,
+   .GetMSC          = driGetMSC32,
+   .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL
 };

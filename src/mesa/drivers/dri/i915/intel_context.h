@@ -36,6 +36,7 @@
 #include "texmem.h"
 
 #include "intel_screen.h"
+#include "i915_drm.h"
 #include "i830_common.h"
 #include "tnl/t_vertex.h"
 
@@ -227,7 +228,11 @@ struct intel_context
 
    int dirtyAge;
    int perf_boxes;
+
+   GLuint do_usleeps;
    int do_irqs;
+   GLuint irqsEmitted;
+   drm_i915_irq_wait_t iw;
 
    GLboolean scissor;
    drm_clip_rect_t draw_rect;
@@ -246,6 +251,17 @@ struct intel_context
     * Configuration cache
     */
    driOptionCache optionCache;
+
+   /* VBI
+    */
+   GLuint vbl_seq;
+   GLuint vblank_flags;
+
+   int64_t swap_ust;
+   int64_t swap_missed_ust;
+
+   GLuint swap_count;
+   GLuint swap_missed_count;
 };
 
 

@@ -55,7 +55,9 @@
 #include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
 
+#include "vblank.h"
 #include "utils.h"
+#include "xmlpool.h" /* for symbolic values of enum-type options */
 #ifndef INTEL_DEBUG
 int INTEL_DEBUG = (0);
 #endif
@@ -303,6 +305,7 @@ GLboolean intelInitContext( intelContextPtr intel,
    intelScreenPrivate *intelScreen = (intelScreenPrivate *)sPriv->private;
    drmI830Sarea *saPriv = (drmI830Sarea *)
       (((GLubyte *)sPriv->pSAREA)+intelScreen->sarea_priv_offset);
+   int fthrottle_mode;
 
    if (!_mesa_initialize_context(&intel->ctx,
 				 mesaVis, shareCtx, 
@@ -318,6 +321,9 @@ GLboolean intelInitContext( intelContextPtr intel,
 
    (void) memset( intel->texture_heaps, 0, sizeof( intel->texture_heaps ) );
    make_empty_list( & intel->swapped );
+
+   driParseConfigFiles (&intel->optionCache, &intelScreen->optionCache,
+			intel->driScreen->myNum, "i915");
 
    ctx->Const.MaxTextureMaxAnisotropy = 2.0;
 
@@ -382,9 +388,19 @@ GLboolean intelInitContext( intelContextPtr intel,
 
    intel->RenderIndex = ~0;
 
-   intel->do_irqs = (intel->intelScreen->irq_active &&
-		     !getenv("INTEL_NO_IRQS"));
+   fthrottle_mode = driQueryOptioni(&intel->optionCache, "fthrottle_mode");
+   intel->iw.irq_seq = -1;
+   intel->irqsEmitted = 0;
 
+   intel->do_irqs = (intel->intelScreen->irq_active &&
+		     fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS);
+
+   intel->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
+
+   intel->vblank_flags = (intel->intelScreen->irq_active != 0)
+       ? driGetDefaultVBlankFlags(&intelScreen->optionCache) : VBLANK_FLAG_NO_IRQ;
+
+   (*dri_interface->getUST)(&intel->swap_ust);
    _math_matrix_ctr (&intel->ViewportMatrix);
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
@@ -581,6 +597,8 @@ GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
 
       if ( intel->driDrawable != driDrawPriv ) {
 	 /* Shouldn't the readbuffer be stored also? */
+	 driDrawableInitVBlank( driDrawPriv, intel->vblank_flags );
+
 	 intel->driDrawable = driDrawPriv;
 	 intelWindowMoved( intel );
       }
@@ -809,3 +827,5 @@ void intelInitState( GLcontext *ctx )
 
    ctx->Driver.DrawBuffer( ctx, ctx->Color.DrawBuffer[0] );
 }
+
+

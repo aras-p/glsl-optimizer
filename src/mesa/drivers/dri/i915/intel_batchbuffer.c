@@ -32,6 +32,7 @@
 #include "mtypes.h"
 #include "context.h"
 #include "enums.h"
+#include "vblank.h"
 
 #include "intel_reg.h"
 #include "intel_batchbuffer.h"
@@ -329,6 +330,38 @@ GLuint *intelEmitInlinePrimitiveLocked(intelContextPtr intel,
 }
 
 
+static void intelWaitForFrameCompletion( intelContextPtr intel )
+{
+  drm_i915_sarea_t *sarea = (drm_i915_sarea_t *)intel->sarea;
+
+   if (intel->do_irqs) {
+      if (intelGetLastFrame(intel) < sarea->last_dispatch) {
+	 if (!intel->irqsEmitted) {
+	    while (intelGetLastFrame (intel) < sarea->last_dispatch)
+	       ;
+	 }
+	 else {
+	    UNLOCK_HARDWARE( intel ); 
+	    intelWaitIrq( intel, intel->alloc.irq_emitted );	
+	    LOCK_HARDWARE( intel ); 
+	 }
+	 intel->irqsEmitted = 10;
+      }
+
+      if (intel->irqsEmitted) {
+	 intelEmitIrqLocked( intel );
+	 intel->irqsEmitted--;
+      }
+   } 
+   else {
+      while (intelGetLastFrame (intel) < sarea->last_dispatch) {
+	 UNLOCK_HARDWARE( intel ); 
+	 if (intel->do_usleeps) 
+	    DO_USLEEP( 1 );
+	 LOCK_HARDWARE( intel ); 
+      }
+   }
+}
 
 /*
  * Copy the back buffer to the front buffer. 
@@ -336,6 +369,8 @@ GLuint *intelEmitInlinePrimitiveLocked(intelContextPtr intel,
 void intelCopyBuffer( const __DRIdrawablePrivate *dPriv ) 
 {
    intelContextPtr intel;
+   GLboolean   missed_target;
+   int64_t ust;
 
    if (0)
       fprintf(stderr, "%s\n", __FUNCTION__);
@@ -347,6 +382,12 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv )
    intel = (intelContextPtr) dPriv->driContextPriv->driverPrivate;
 
    intelFlush( &intel->ctx );
+   
+   LOCK_HARDWARE( intel );
+   intelWaitForFrameCompletion( intel );
+   UNLOCK_HARDWARE( intel );
+   driWaitForVBlank( dPriv, &intel->vbl_seq, intel->vblank_flags, & missed_target );
+
    LOCK_HARDWARE( intel );
    {
       const intelScreenPrivate *intelScreen = intel->intelScreen;
@@ -412,6 +453,15 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv )
    }
    intelFlushBatchLocked( intel, GL_TRUE, GL_TRUE, GL_TRUE );
    UNLOCK_HARDWARE( intel );
+
+   intel->swap_count++;
+   (*dri_interface->getUST)(&ust);
+   if (missed_target) {
+     intel->swap_missed_count++;
+     intel->swap_missed_ust = ust -  intel->swap_ust;
+   }
+   
+   intel->swap_ust = ust;
 }
 
 

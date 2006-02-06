@@ -40,9 +40,20 @@
 #include "intel_batchbuffer.h"
 #include "drm.h"
 
+u_int32_t intelGetLastFrame (intelContextPtr intel) 
+{
+   int ret;
+   u_int32_t frame;
+   drm_i915_getparam_t gp;
+   
+   gp.param = I915_PARAM_LAST_DISPATCH;
+   gp.value = (int *)&frame;
+   ret = drmCommandWriteRead( intel->driFd, DRM_I915_GETPARAM,
+			      &gp, sizeof(gp) );
+   return frame;
+}
 
-
-static int intelEmitIrqLocked( intelContextPtr intel )
+int intelEmitIrqLocked( intelContextPtr intel )
 {
    drmI830IrqEmit ie;
    int ret, seq;
@@ -65,18 +76,17 @@ static int intelEmitIrqLocked( intelContextPtr intel )
    return seq;
 }
 
-static void intelWaitIrq( intelContextPtr intel, int seq )
+void intelWaitIrq( intelContextPtr intel, int seq )
 {
-   drmI830IrqWait iw;
    int ret;
       
    if (0)
       fprintf(stderr, "%s %d\n", __FUNCTION__, seq );
 
-   iw.irq_seq = seq;
+   intel->iw.irq_seq = seq;
 	 
    do {
-      ret = drmCommandWrite( intel->driFd, DRM_I830_IRQ_WAIT, &iw, sizeof(iw) );
+     ret = drmCommandWrite( intel->driFd, DRM_I830_IRQ_WAIT, &intel->iw, sizeof(intel->iw) );
    } while (ret == -EAGAIN || ret == -EINTR);
 
    if ( ret ) {
