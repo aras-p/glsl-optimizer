@@ -107,6 +107,7 @@ static const struct extension_info known_glx_extensions[] = {
    { GLX(SGIX_video_source),           VER(0,0), N, N, N, N },
    { GLX(SGIX_visual_select_group),    VER(0,0), Y, Y, N, N },
    { GLX(SUN_get_transparent_index),   VER(0,0), N, N, N, N },
+   { GLX(EXT_texture_from_pixmap),     VER(0,0), Y, N, N, N },
    { NULL }
 };
 

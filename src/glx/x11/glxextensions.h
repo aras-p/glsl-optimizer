@@ -69,7 +69,8 @@ enum {
    SGIX_video_resize_bit,
    SGIX_video_source_bit,
    SGIX_visual_select_group_bit,
-   SUN_get_transparent_index_bit
+   SUN_get_transparent_index_bit,
+   EXT_texture_from_pixmap_bit
 };
 
 enum {

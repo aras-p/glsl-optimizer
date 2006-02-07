@@ -2589,7 +2589,87 @@ PUBLIC Bool glXSet3DfxModeMESA( int mode )
 }
 /*@}*/
 
+PUBLIC Bool glXBindTexImageEXT(Display *dpy,
+			       GLXDrawable drawable,
+			       int buffer)
+{
+    xGLXVendorPrivateReq *req;
+    GLXContext gc = __glXGetCurrentContext();
+    CARD32 *drawable_ptr;
+    INT32 *buffer_ptr;
+    CARD8 opcode;
 
+    if (gc == NULL)
+	return False;
+
+#ifdef GLX_DIRECT_RENDERING
+    if (gc->isDirect)
+	return False;
+#endif
+
+    opcode = __glXSetupForCommand(dpy);
+    if (!opcode)
+	return False;
+
+    LockDisplay(dpy);
+    GetReqExtra(GLXVendorPrivate, sizeof(CARD32)+sizeof(INT32),req);
+    req->reqType = opcode;
+    req->glxCode = X_GLXVendorPrivate;
+    req->vendorCode = X_GLXvop_BindTexImageEXT;
+    req->contextTag = gc->currentContextTag;
+
+    drawable_ptr = (CARD32 *) (req + 1);
+    buffer_ptr = (INT32 *) (drawable_ptr + 1);
+
+    *drawable_ptr = drawable;
+    *buffer_ptr = buffer;
+
+    UnlockDisplay(dpy);
+    SyncHandle();
+
+    return True;
+}
+
+PUBLIC Bool glXReleaseTexImageEXT(Display *dpy,
+				  GLXDrawable drawable,
+				  int buffer)
+{
+    xGLXVendorPrivateReq *req;
+    GLXContext gc = __glXGetCurrentContext();
+    CARD32 *drawable_ptr;
+    INT32 *buffer_ptr;
+    CARD8 opcode;
+
+    if (gc == NULL)
+	return False;
+
+#ifdef GLX_DIRECT_RENDERING
+    if (gc->isDirect)
+	return False;
+#endif
+
+    opcode = __glXSetupForCommand(dpy);
+    if (!opcode)
+	return False;
+
+    LockDisplay(dpy);
+    GetReqExtra(GLXVendorPrivate, sizeof(CARD32)+sizeof(INT32),req);
+    req->reqType = opcode;
+    req->glxCode = X_GLXVendorPrivate;
+    req->vendorCode = X_GLXvop_ReleaseTexImageEXT;
+    req->contextTag = gc->currentContextTag;
+
+    drawable_ptr = (CARD32 *) (req + 1);
+    buffer_ptr = (INT32 *) (drawable_ptr + 1);
+
+    *drawable_ptr = drawable;
+    *buffer_ptr = buffer;
+
+    UnlockDisplay(dpy);
+    SyncHandle();
+
+    return True;
+}
 
 /**
  * \c strdup is actually not a standard ANSI C or POSIX routine.
@@ -2770,6 +2850,10 @@ static const struct name_address_pair GLX_functions[] = {
    GLX_FUNCTION( glXSwapBuffersMscOML ),
    GLX_FUNCTION( glXGetMscRateOML ),
    GLX_FUNCTION( glXGetSyncValuesOML ),
+
+   /*** GLX_EXT_texture_from_pixmap ***/
+   GLX_FUNCTION( glXBindTexImageEXT ),
+   GLX_FUNCTION( glXReleaseTexImageEXT ),
 
 #ifdef GLX_DIRECT_RENDERING
    /*** DRI configuration ***/

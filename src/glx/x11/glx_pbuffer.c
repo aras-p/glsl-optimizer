@@ -200,6 +200,7 @@ GetDrawableAttribute( Display *dpy, GLXDrawable drawable,
    GLboolean use_glx_1_3 = ((priv->majorVersion > 1)
 			    || (priv->minorVersion >= 3));
 
+   *value = 0;
 
    if ( (dpy == NULL) || (drawable == 0) ) {
       return 0;
@@ -230,32 +231,40 @@ GetDrawableAttribute( Display *dpy, GLXDrawable drawable,
 
    _XReply(dpy, (xReply*) &reply, 0, False);
 
+   if (reply.type == X_Error)
+   {
+       UnlockDisplay(dpy);
+       SyncHandle();
+       return 0;
+   }
+
    length = reply.length;
-   num_attributes = (use_glx_1_3) ? reply.numAttribs : length / 2;
-   data = (CARD32 *) Xmalloc( length * sizeof(CARD32) );
-   if ( data == NULL ) {
-      /* Throw data on the floor */
-      _XEatData(dpy, length);
-   } else {
-      _XRead(dpy, (char *)data, length * sizeof(CARD32) );
+   if (length)
+   {
+       num_attributes = (use_glx_1_3) ? reply.numAttribs : length / 2;
+       data = (CARD32 *) Xmalloc( length * sizeof(CARD32) );
+       if ( data == NULL ) {
+	   /* Throw data on the floor */
+	   _XEatData(dpy, length);
+       } else {
+	   _XRead(dpy, (char *)data, length * sizeof(CARD32) );
+
+	   /* Search the set of returned attributes for the attribute requested by
+	    * the caller.
+	    */
+	   for ( i = 0 ; i < num_attributes ; i++ ) {
+	       if ( data[i*2] == attribute ) {
+		   *value = data[ (i*2) + 1 ];
+		   break;
+	       }
+	   }
+
+	   Xfree( data );
+       }
    }
 
    UnlockDisplay(dpy);
    SyncHandle();
-
-
-   /* Search the set of returned attributes for the attribute requested by
-    * the caller.
-    */
-
-   for ( i = 0 ; i < num_attributes ; i++ ) {
-      if ( data[i*2] == attribute ) {
-	 *value = data[ (i*2) + 1 ];
-	 break;
-      }
-   }
-
-   Xfree( data );
 
    return 0;
 }
