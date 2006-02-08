@@ -39,6 +39,9 @@
 # include "imports.h"
 # define __glXMemset  memset
 #else
+# if defined(XFree86Server) && defined (HAVE_DIX_CONFIG_H)
+#  include <dix-config.h>
+# endif
 # include <X11/X.h>
 # include <GL/glx.h>
 # include "GL/glxint.h"
