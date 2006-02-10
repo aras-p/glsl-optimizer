@@ -50,6 +50,14 @@
 
 typedef void (*_glapi_warning_func)(void *ctx, const char *str, ...);
 
+#if defined(USE_MGL_NAMESPACE)
+#define _glapi_set_dispatch _mglapi_set_dispatch
+#define _glapi_get_dispatch _mglapi_get_dispatch
+#define _glapi_set_context _mglapi_set_context
+#define _glapi_get_context _mglapi_get_context
+#define _glapi_Context _mglapi_Context
+#define _glapi_Dispatch _mglapi_Dispatch
+#endif
 
 #if defined (GLX_USE_TLS)
 

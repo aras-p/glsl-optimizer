@@ -343,7 +343,7 @@ _glapi_get_dispatch(void)
 }
 
 
-#if !defined( USE_X86_ASM ) && !defined( XFree86Server )
+#if !defined( USE_X86_ASM ) && !defined( XFree86Server ) && !defined ( XGLServer )
 #define NEED_FUNCTION_POINTER
 #endif
 
@@ -388,7 +388,7 @@ get_static_proc_offset(const char *funcName)
 }
 
 
-#if !defined( XFree86Server )
+#if !defined( XFree86Server ) && !defined( XGLServer )
 #ifdef USE_X86_ASM
 
 #if defined( GLX_USE_TLS )
@@ -763,14 +763,8 @@ _glapi_add_dispatch( const char * const * function_names,
       /* Do some trivial validation on the name of the function.
        */
 
-#ifdef MANGLE
-      if (!function_names[i] || function_names[i][0] != 'm' || function_names[i][1] != 'g' || function_names[i][2] != 'l')
-	return GL_FALSE;
-#else
       if (!function_names[i] || function_names[i][0] != 'g' || function_names[i][1] != 'l')
 	return GL_FALSE;
-#endif
-   
    
       /* Determine if the named function already exists.  If the function does
        * exist, it must have the same parameter signature as the function
@@ -892,7 +886,7 @@ _glapi_get_proc_address(const char *funcName)
       }
    }
 
-#if !defined( XFree86Server )
+#if !defined( XFree86Server ) && !defined( XGLServer )
    /* search static functions */
    {
       const _glapi_proc func = get_static_proc_address(funcName);
