@@ -108,8 +108,18 @@ int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp, f
         struct program_parameter_list *paramList;
 	
 	_mesa_load_state_parameters(ctx, mesa_vp->Base.Parameters);
+	if (mesa_vp->Base.Parameters == NULL) {
+		static int once=0;
+		
+		WARN_ONCE("mesa_vp->Base.Parameters NULL\n");
+		
+		if (once == 0) {
+			_mesa_print_program(&vp->mesa_program.Base);
+			once++;
+		}
+		return 0;
+	}
 	
-	//debug_vp(ctx, mesa_vp);
 	if(mesa_vp->Base.Parameters->NumParameters * 4 > VSF_MAX_FRAGMENT_LENGTH){
 		fprintf(stderr, "%s:Params exhausted\n", __FUNCTION__);
 		exit(-1);
