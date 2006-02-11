@@ -47,7 +47,7 @@
 #define GLHEADER_H
 
 
-#if defined(XFree86LOADER) && defined(IN_MODULE)
+#if defined(XFree86LOADER) && defined(IN_MODULE) && !defined(NO_LIBCWRAPPER)
 #include "xf86_ansic.h"
 #else
 #include <assert.h>

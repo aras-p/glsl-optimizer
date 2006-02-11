@@ -71,6 +71,14 @@ extern int vsnprintf(char *str, size_t count, const char *fmt, va_list arg);
 #endif
 #endif
 
+/* If we don't actually want to use the libcwrapper junk (even though we're
+ * building an Xorg server module), then just undef IN_MODULE to signal that to
+ * the following code.  It's left around for now to allow compiling of newish
+ * Mesa with older servers, but this whole mess should go away at some point.
+ */
+#ifdef NO_LIBCWRAPPER
+#undef IN_MODULE
+#endif
 
 /**********************************************************************/
 /** \name Memory */

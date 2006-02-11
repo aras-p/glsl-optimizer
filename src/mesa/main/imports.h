@@ -161,7 +161,7 @@ typedef union { GLfloat f; GLint i; } fi_type;
  ***/
 #if 0 /* _mesa_sqrtf() not accurate enough - temporarily disabled */
 #  define SQRTF(X)  _mesa_sqrtf(X)
-#elif defined(XFree86LOADER) && defined(IN_MODULE)
+#elif defined(XFree86LOADER) && defined(IN_MODULE) && !defined(NO_LIBCWRAPPER)
 #  define SQRTF(X)  (float) xf86sqrt((float) (X))
 #else
 #  define SQRTF(X)  (float) sqrt((float) (X))
@@ -209,7 +209,7 @@ static INLINE GLfloat LOG2(GLfloat val)
    num.f = ((-1.0f/3) * num.f + 2) * num.f - 2.0f/3;
    return num.f + log_2;
 }
-#elif defined(XFree86LOADER) && defined(IN_MODULE)
+#elif defined(XFree86LOADER) && defined(IN_MODULE) && !defined(NO_LIBCWRAPPER)
 #define LOG2(x) ((GLfloat) (xf86log(x) * 1.442695))
 #else
 /*
@@ -281,7 +281,7 @@ static INLINE int GET_FLOAT_BITS( float x )
  *** LDEXPF: multiply value by an integral power of two
  *** FREXPF: extract mantissa and exponent from value
  ***/
-#if defined(XFree86LOADER) && defined(IN_MODULE)
+#if defined(XFree86LOADER) && defined(IN_MODULE) && !defined(NO_LIBCWRAPPER)
 #define CEILF(x)   ((GLfloat) xf86ceil(x))
 #define FLOORF(x)  ((GLfloat) xf86floor(x))
 #define FABSF(x)   ((GLfloat) xf86fabs(x))
