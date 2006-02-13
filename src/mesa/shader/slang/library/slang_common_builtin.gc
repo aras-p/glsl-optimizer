@@ -1,58 +1,34 @@
 
-// 
+//
 // TODO:
-// - implement sin, asin, acos, atan, pow, log2, floor, ceil,
 // - implement texture1D, texture2D, texture3D, textureCube,
 // - implement shadow1D, shadow2D,
 // - implement noise1, noise2, noise3, noise4,
-// 
+//
 
-// 
+//
 // From Shader Spec, ver. 1.10, rev. 59
-// 
-// The following built-in constants are provided to vertex and fragment shaders.
-// 
+//
 
-// 
-// Implementation dependent constants. The example values below
-// are the minimum values allowed for these maximums.
-// 
-
-const int gl_MaxLights = 8;                             // GL 1.0
-const int gl_MaxClipPlanes = 6;                         // GL 1.0
-const int gl_MaxTextureUnits = 2;                       // GL 1.3
-const int gl_MaxTextureCoords = 2;                      // ARB_fragment_program
-const int gl_MaxVertexAttribs = 16;                     // ARB_vertex_shader
-const int gl_MaxVertexUniformComponents = 512;          // ARB_vertex_shader
-const int gl_MaxVaryingFloats = 32;                     // ARB_vertex_shader
-const int gl_MaxVertexTextureImageUnits = 0;            // ARB_vertex_shader
-const int gl_MaxCombinedTextureImageUnits = 2;          // ARB_vertex_shader
-const int gl_MaxTextureImageUnits = 2;                  // ARB_fragment_shader
-const int gl_MaxFragmentUniformComponents = 64;         // ARB_fragment_shader
-const int gl_MaxDrawBuffers = 1;                        // proposed ARB_draw_buffers
-
-// 
-// As an aid to accessing OpenGL processing state, the following uniform variables are built into
-// the OpenGL Shading Language. All page numbers and notations are references to the 1.4
-// specification.
-// 
-
-// 
-// Matrix state. p. 31, 32, 37, 39, 40.
-// 
+const int gl_MaxLights = 8;
+const int gl_MaxClipPlanes = 6;
+const int gl_MaxTextureUnits = 8;
+const int gl_MaxTextureCoords = 8;
+const int gl_MaxVertexAttribs = 16;
+const int gl_MaxVertexUniformComponents = 512;
+const int gl_MaxVaryingFloats = 32;
+const int gl_MaxVertexTextureImageUnits = 0;
+const int gl_MaxCombinedTextureImageUnits = 2;
+const int gl_MaxTextureImageUnits = 2;
+const int gl_MaxFragmentUniformComponents = 64;
+const int gl_MaxDrawBuffers = 1;
 
 uniform mat4 gl_ModelViewMatrix;
 uniform mat4 gl_ProjectionMatrix;
 uniform mat4 gl_ModelViewProjectionMatrix;
 uniform mat4 gl_TextureMatrix[gl_MaxTextureCoords];
 
-//
-// Derived matrix state that provides inverse and transposed versions
-// of the matrices above. Poorly conditioned matrices may result
-// in unpredictable values in their inverse forms.
-//
-uniform mat3 gl_NormalMatrix; // transpose of the inverse of the
-                              // upper leftmost 3x3 of gl_ModelViewMatrix
+uniform mat3 gl_NormalMatrix;
 
 uniform mat4 gl_ModelViewMatrixInverse;
 uniform mat4 gl_ProjectionMatrixInverse;
@@ -69,33 +45,17 @@ uniform mat4 gl_ProjectionMatrixInverseTranspose;
 uniform mat4 gl_ModelViewProjectionMatrixInverseTranspose;
 uniform mat4 gl_TextureMatrixInverseTranspose[gl_MaxTextureCoords];
 
-// 
-// Normal scaling p. 39.
-// 
-
 uniform float gl_NormalScale;
 
-// 
-// Depth range in window coordinates, p. 33
-// 
-
 struct gl_DepthRangeParameters {
-    float near;                                         // n
-    float far;                                          // f
-    float diff;                                         // f - n
+    float near;
+    float far;
+    float diff;
 };
 
 uniform gl_DepthRangeParameters gl_DepthRange;
 
-// 
-// Clip planes p. 42.
-// 
-
 uniform vec4 gl_ClipPlane[gl_MaxClipPlanes];
-
-// 
-// Point Size, p. 66, 67.
-// 
 
 struct gl_PointParameters {
     float size;
@@ -109,73 +69,55 @@ struct gl_PointParameters {
 
 uniform gl_PointParameters gl_Point;
 
-// 
-// Material State p. 50, 55.
-// 
-
 struct gl_MaterialParameters {
-    vec4 emission;                                      // Ecm
-    vec4 ambient;                                       // Acm
-    vec4 diffuse;                                       // Dcm
-    vec4 specular;                                      // Scm
-    float shininess;                                    // Srm
+    vec4 emission;
+    vec4 ambient;
+    vec4 diffuse;
+    vec4 specular;
+    float shininess;
 };
 
 uniform gl_MaterialParameters gl_FrontMaterial;
 uniform gl_MaterialParameters gl_BackMaterial;
 
-// 
-// Light State p 50, 53, 55.
-// 
-
 struct gl_LightSourceParameters {
-    vec4 ambient;                                       // Acli
-    vec4 diffuse;                                       // Dcli
-    vec4 specular;                                      // Scli
-    vec4 position;                                      // Ppli
-    vec4 halfVector;                                    // Derived: Hi
-    vec3 spotDirection;                                 // Sdli
-    float spotExponent;                                 // Srli
-    float spotCutoff;                                   // Crli
-                                                        // (range: [0.0,90.0], 180.0)
-    float spotCosCutoff;                                // Derived: cos(Crli)
-                                                        // (range: [1.0,0.0],-1.0)
-    float constantAttenuation;                          // K0
-    float linearAttenuation;                            // K1
-    float quadraticAttenuation;                         // K2
+    vec4 ambient;
+    vec4 diffuse;
+    vec4 specular;
+    vec4 position;
+    vec4 halfVector;
+    vec3 spotDirection;
+    float spotExponent;
+    float spotCutoff;
+    float spotCosCutoff;
+    float constantAttenuation;
+    float linearAttenuation;
+    float quadraticAttenuation;
 };
 
 uniform gl_LightSourceParameters gl_LightSource[gl_MaxLights];
 
 struct gl_LightModelParameters {
-    vec4 ambient;                                       // Acs
+    vec4 ambient;
 };
 
 uniform gl_LightModelParameters gl_LightModel;
 
-// 
-// Derived state from products of light and material.
-// 
-
 struct gl_LightModelProducts {
-    vec4 sceneColor;                                    // Derived. Ecm + Acm * Acs
+    vec4 sceneColor;
 };
 
 uniform gl_LightModelProducts gl_FrontLightModelProduct;
 uniform gl_LightModelProducts gl_BackLightModelProduct;
 
 struct gl_LightProducts {
-    vec4 ambient;                                       // Acm * Acli
-    vec4 diffuse;                                       // Dcm * Dcli
-    vec4 specular;                                      // Scm * Scli
+    vec4 ambient;
+    vec4 diffuse;
+    vec4 specular;
 };
 
 uniform gl_LightProducts gl_FrontLightProduct[gl_MaxLights];
 uniform gl_LightProducts gl_BackLightProduct[gl_MaxLights];
-
-// 
-// Texture Environment and Generation, p. 152, p. 40-42.
-// 
 
 uniform vec4 gl_TextureEnvColor[gl_MaxTextureImageUnits];
 uniform vec4 gl_EyePlaneS[gl_MaxTextureCoords];
@@ -187,1224 +129,1469 @@ uniform vec4 gl_ObjectPlaneT[gl_MaxTextureCoords];
 uniform vec4 gl_ObjectPlaneR[gl_MaxTextureCoords];
 uniform vec4 gl_ObjectPlaneQ[gl_MaxTextureCoords];
 
-// 
-// Fog p. 161
-// 
-
 struct gl_FogParameters {
     vec4 color;
     float density;
     float start;
     float end;
-    float scale;    // Derived:    1.0 / (end - start)
+    float scale;
 };
 
 uniform gl_FogParameters gl_Fog;
 
-// 
-// The OpenGL Shading Language defines an assortment of built-in convenience functions for scalar
-// and vector operations. Many of these built-in functions can be used in more than one type
-// of shader, but some are intended to provide a direct mapping to hardware and so are available
-// only for a specific type of shader.
-// 
-// The built-in functions basically fall into three categories:
-// 
-// * They expose some necessary hardware functionality in a convenient way such as accessing
-//   a texture map. There is no way in the language for these functions to be emulated by a shader.
-// 
-// * They represent a trivial operation (clamp, mix, etc.) that is very simple for the user
-//   to write, but they are very common and may have direct hardware support. It is a very hard
-//   problem for the compiler to map expressions to complex assembler instructions.
-// 
-// * They represent an operation graphics hardware is likely to accelerate at some point. The
-//   trigonometry functions fall into this category.
-// 
-// Many of the functions are similar to the same named ones in common C libraries, but they support
-// vector input as well as the more traditional scalar input.
-// 
-// Applications should be encouraged to use the built-in functions rather than do the equivalent
-// computations in their own shader code since the built-in functions are assumed to be optimal
-// (e.g., perhaps supported directly in hardware).
-// 
-// User code can replace built-in functions with their own if they choose, by simply re-declaring
-// and defining the same name and argument list.
-// 
-
-// 
+//
 // 8.1 Angle and Trigonometry Functions
-// 
-// Function parameters specified as angle are assumed to be in units of radians. In no case will
-// any of these functions result in a divide by zero error. If the divisor of a ratio is 0, then
-// results will be undefined.
-// 
-// These all operate component-wise. The description is per component.
-// 
-
-// 
-// Converts degrees to radians and returns the result, i.e., result = PI*deg/180.
-// 
+//
 
 float radians (float deg) {
     return 3.141593 * deg / 180.0;
 }
+
 vec2 radians (vec2 deg) {
-    return vec2 (radians (deg.x), radians (deg.y));
-}
-vec3 radians (vec3 deg) {
-    return vec3 (radians (deg.x), radians (deg.y), radians (deg.z));
-}
-vec4 radians (vec4 deg) {
-    return vec4 (radians (deg.x), radians (deg.y), radians (deg.z), radians (deg.w));
+    return vec2 (3.141593) * deg / vec2 (180.0);
 }
 
-// 
-// Converts radians to degrees and returns the result, i.e., result = 180*rad/PI.
-// 
+vec3 radians (vec3 deg) {
+    return vec3 (3.141593) * deg / vec3 (180.0);
+}
+
+vec4 radians (vec4 deg) {
+    return vec4 (3.141593) * deg / vec4 (180.0);
+}
 
 float degrees (float rad) {
     return 180.0 * rad / 3.141593;
 }
+
 vec2 degrees (vec2 rad) {
-    return vec2 (degrees (rad.x), degrees (rad.y));
+    return vec2 (180.0) * rad / vec2 (3.141593);
 }
+
 vec3 degrees (vec3 rad) {
-    return vec3 (degrees (rad.x), degrees (rad.y), degrees (rad.z));
+    return vec3 (180.0) * rad / vec3 (3.141593);
 }
+
 vec4 degrees (vec4 rad) {
-    return vec4 (degrees (rad.x), degrees (rad.y), degrees (rad.z), degrees (rad.w));
+    return vec4 (180.0) * rad / vec4 (3.141593);
 }
 
-// 
-// The standard trigonometric sine function.
-// 
-// XXX
 float sin (float angle) {
-    return 0.0;
-}
-vec2 sin (vec2 angle) {
-    return vec2 (sin (angle.x), sin (angle.y));
-}
-vec3 sin (vec3 angle) {
-    return vec3 (sin (angle.x), sin (angle.y), sin (angle.z));
-}
-vec4 sin (vec4 angle) {
-    return vec4 (sin (angle.x), sin (angle.y), sin (angle.z), sin (angle.w));
+    float x;
+    __asm float_sine x, angle;
+    return x;
 }
 
-// 
-// The standard trigonometric cosine function.
-// 
+vec2 sin (vec2 angle) {
+    vec2 u;
+    u.x = sin (angle.x);
+    u.y = sin (angle.y);
+    return u;
+}
+
+vec3 sin (vec3 angle) {
+    vec3 u;
+    u.x = sin (angle.x);
+    u.y = sin (angle.y);
+    u.z = sin (angle.z);
+    return u;
+}
+
+vec4 sin (vec4 angle) {
+    vec4 u;
+    u.x = sin (angle.x);
+    u.y = sin (angle.y);
+    u.z = sin (angle.z);
+    u.w = sin (angle.w);
+    return u;
+}
 
 float cos (float angle) {
     return sin (angle + 1.5708);
 }
+
 vec2 cos (vec2 angle) {
-    return vec2 (cos (angle.x), cos (angle.y));
-}
-vec3 cos (vec3 angle) {
-    return vec3 (cos (angle.x), cos (angle.y), cos (angle.z));
-}
-vec4 cos (vec4 angle) {
-    return vec4 (cos (angle.x), cos (angle.y), cos (angle.z), cos (angle.w));
+    vec2 u;
+    u.x = cos (angle.x);
+    u.y = cos (angle.y);
+    return u;
 }
 
-// 
-// The standard trigonometric tangent.
-// 
+vec3 cos (vec3 angle) {
+    vec3 u;
+    u.x = cos (angle.x);
+    u.y = cos (angle.y);
+    u.z = cos (angle.z);
+    return u;
+}
+
+vec4 cos (vec4 angle) {
+    vec4 u;
+    u.x = cos (angle.x);
+    u.y = cos (angle.y);
+    u.z = cos (angle.z);
+    u.w = cos (angle.w);
+    return u;
+}
 
 float tan (float angle) {
     return sin (angle) / cos (angle);
 }
+
 vec2 tan (vec2 angle) {
-    return vec2 (tan (angle.x), tan (angle.y));
+    vec2 u;
+    u.x = tan (angle.x);
+    u.y = tan (angle.y);
+    return u;
 }
+
 vec3 tan (vec3 angle) {
-    return vec3 (tan (angle.x), tan (angle.y), tan (angle.z));
+    vec3 u;
+    u.x = tan (angle.x);
+    u.y = tan (angle.y);
+    u.z = tan (angle.z);
+    return u;
 }
+
 vec4 tan (vec4 angle) {
-    return vec4 (tan (angle.x), tan (angle.y), tan (angle.z), tan (angle.w));
+    vec4 u;
+    u.x = tan (angle.x);
+    u.y = tan (angle.y);
+    u.z = tan (angle.z);
+    u.w = tan (angle.w);
+    return u;
 }
 
-// 
-// Arc sine. Returns an angle whose sine is x. The range of values returned by this function is
-// [–PI/2, PI/2]. Results are undefined if |x| > 1.
-// 
-// XXX
 float asin (float x) {
-    return 0.0;
-}
-vec2 asin (vec2 x) {
-    return vec2 (asin (x.x), asin (x.y));
-}
-vec3 asin (vec3 x) {
-    return vec3 (asin (x.x), asin (x.y), asin (x.z));
-}
-vec4 asin (vec4 x) {
-    return vec4 (asin (x.x), asin (x.y), asin (x.z), asin (x.w));
+    float y;
+    __asm float_arcsine y, x;
+    return y;
 }
 
-// 
-// Arc cosine. Returns an angle whose cosine is x. The range of values returned by this function is
-// [0, PI]. Results are undefined if |x| > 1.
-// 
-// XXX
+vec2 asin (vec2 v) {
+    vec2 u;
+    u.x = asin (v.x);
+    u.y = asin (v.y);
+    return u;
+}
+
+vec3 asin (vec3 v) {
+    vec3 u;
+    u.x = asin (v.x);
+    u.y = asin (v.y);
+    u.z = asin (v.z);
+    return u;
+}
+
+vec4 asin (vec4 v) {
+    vec4 u;
+    u.x = asin (v.x);
+    u.y = asin (v.y);
+    u.z = asin (v.z);
+    u.w = asin (v.w);
+    return u;
+}
+
 float acos (float x) {
-    return 0.0;
-}
-vec2 acos (vec2 x) {
-    return vec2 (acos (x.x), acos (x.y));
-}
-vec3 acos (vec3 x) {
-    return vec3 (acos (x.x), acos (x.y), acos (x.z));
-}
-vec4 acos (vec4 x) {
-    return vec4 (acos (x.x), acos (x.y), acos (x.z), acos (x.w));
+    return 1.5708 - asin (x);
 }
 
-// 
-// Arc tangent. Returns an angle whose tangent is y/x. The signs of x and y are used to determine
-// what quadrant the angle is in. The range of values returned by this function is [–PI, PI].
-// Results are undefined if x and y are both 0.
-// 
-// XXX
-float atan (float x, float y) {
-    return 0.0;
-}
-vec2 atan (vec2 x, vec2 y) {
-    return vec2 (atan (x.x, y.x), atan (x.y, y.y));
-}
-vec3 atan (vec3 x, vec3 y) {
-    return vec3 (atan (x.x, y.x), atan (x.y, y.y), atan (x.z, y.z));
-}
-vec4 atan (vec4 x, vec4 y) {
-    return vec4 (atan (x.x, y.x), atan (x.y, y.y), atan (x.z, y.z), atan (x.w, y.w));
+vec2 acos (vec2 v) {
+    vec2 u;
+    u.x = acos (v.x);
+    u.y = acos (v.y);
+    return u;
 }
 
-// 
-// Arc tangent. Returns an angle whose tangent is y_over_x. The range of values returned by this
-// function is [–PI/2, PI/2].
-// 
-// XXX
+vec3 acos (vec3 v) {
+    vec3 u;
+    u.x = acos (v.x);
+    u.y = acos (v.y);
+    u.z = acos (v.z);
+    return u;
+}
+
+vec4 acos (vec4 v) {
+    vec4 u;
+    u.x = acos (v.x);
+    u.y = acos (v.y);
+    u.z = acos (v.z);
+    u.w = acos (v.w);
+    return u;
+}
+
 float atan (float y_over_x) {
-    return 0.0;
+    float z;
+    __asm float_arctan z, y_over_x;
+    return z;
 }
+
 vec2 atan (vec2 y_over_x) {
-    return vec2 (atan (y_over_x.x), atan (y_over_x.y));
+    vec2 u;
+    u.x = atan (y_over_x.x);
+    u.y = atan (y_over_x.y);
+    return u;
 }
+
 vec3 atan (vec3 y_over_x) {
-    return vec3 (atan (y_over_x.x), atan (y_over_x.y), atan (y_over_x.z));
+    vec3 u;
+    u.x = atan (y_over_x.x);
+    u.y = atan (y_over_x.y);
+    u.z = atan (y_over_x.z);
+    return u;
 }
+
 vec4 atan (vec4 y_over_x) {
-    return vec4 (atan (y_over_x.x), atan (y_over_x.y), atan (y_over_x.z), atan (y_over_x.w));
+    vec4 u;
+    u.x = atan (y_over_x.x);
+    u.y = atan (y_over_x.y);
+    u.z = atan (y_over_x.z);
+    u.w = atan (y_over_x.w);
+    return u;
 }
 
-// 
+float atan (float y, float x) {
+    float z;
+	z = atan (y / x);
+    if (x < 0.0)
+	{
+		if (y < 0.0)
+			return z - 3.141593;
+		return z + 3.141593;
+	}
+	return z;
+}
+
+vec2 atan (vec2 u, vec2 v) {
+    vec2 t;
+    t.x = atan (u.x, v.x);
+    t.y = atan (u.y, v.y);
+    return t;
+}
+
+vec3 atan (vec3 u, vec3 v) {
+    vec3 t;
+    t.x = atan (u.x, v.x);
+    t.y = atan (u.y, v.y);
+    t.z = atan (u.z, v.z);
+    return t;
+}
+
+vec4 atan (vec4 u, vec4 v) {
+    vec4 t;
+    t.x = atan (u.x, v.x);
+    t.y = atan (u.y, v.y);
+    t.z = atan (u.z, v.z);
+    t.w = atan (u.w, v.w);
+    return t;
+}
+
+//
 // 8.2 Exponential Functions
-// 
-// These all operate component-wise. The description is per component.
-// 
+//
 
-// 
-// Returns x raised to the y power, i.e., x^y.
-// Results are undefined if x < 0.
-// Results are undefined if x = 0 and y <= 0.
-// 
-// XXX
 float pow (float x, float y) {
-    return 0.0;
-}
-vec2 pow (vec2 x, vec2 y) {
-    return vec2 (pow (x.x, y.x), pow (x.y, y.y));
-}
-vec3 pow (vec3 x, vec3 y) {
-    return vec3 (pow (x.x, y.x), pow (x.y, y.y), pow (x.z, y.z));
-}
-vec4 pow (vec4 x, vec4 y) {
-    return vec4 (pow (x.x, y.x), pow (x.y, y.y), pow (x.z, y.z), pow (x.w, y.w));
+    float p;
+    __asm float_power p, x, y;
+    return p;
 }
 
-// 
-// Returns the natural exponentiation of x, i.e., e^x.
-// 
+vec2 pow (vec2 v, vec2 u) {
+    vec2 t;
+    t.x = pow (v.x, u.x);
+    t.y = pow (v.y, u.y);
+    return t;
+}
+
+vec3 pow (vec3 v, vec3 u) {
+    vec3 t;
+    t.x = pow (v.x, u.x);
+    t.y = pow (v.y, u.y);
+    t.z = pow (v.z, u.z);
+    return t;
+}
+
+vec4 pow (vec4 v, vec4 u) {
+    vec4 t;
+    t.x = pow (v.x, u.x);
+    t.y = pow (v.y, u.y);
+    t.z = pow (v.z, u.z);
+    t.w = pow (v.w, u.w);
+    return t;
+}
 
 float exp (float x) {
     return pow (2.71828183, x);
 }
-vec2 exp (vec2 x) {
-    return vec2 (exp (x.x), exp (x.y));
-}
-vec3 exp (vec3 x) {
-    return vec3 (exp (x.x), exp (x.y), exp (x.z));
-}
-vec4 exp (vec4 x) {
-    return vec4 (exp (x.x), exp (x.y), exp (x.z), exp (x.w));
+
+vec2 exp (vec2 v) {
+    return pow (vec2 (2.71828183), v);
 }
 
-// 
-// Returns the natural logarithm of x, i.e., returns the value y which satisfies the equation
-// x = e^y.
-// Results are undefined if x <= 0.
-// 
+vec3 exp (vec3 v) {
+    return pow (vec3 (2.71828183), v);
+}
+
+vec4 exp (vec4 v) {
+    return pow (vec4 (2.71828183), v);
+}
+
+float log2 (float x) {
+    float y;
+    __asm float_log2 y, x;
+    return y;
+}
+
+vec2 log2 (vec2 v) {
+    vec2 u;
+    u.x = log2 (v.x);
+    u.y = log2 (v.y);
+    return u;
+}
+
+vec3 log2 (vec3 v) {
+    vec3 u;
+    u.x = log2 (v.x);
+    u.y = log2 (v.y);
+    u.z = log2 (v.z);
+    return u;
+}
+
+vec4 log2 (vec4 v) {
+    vec4 u;
+    u.x = log2 (v.x);
+    u.y = log2 (v.y);
+    u.z = log2 (v.z);
+    u.w = log2 (v.w);
+    return u;
+}
 
 float log (float x) {
     return log2 (x) / log2 (2.71828183);
 }
-vec2 log (vec2 x) {
-    return vec2 (log (x.x), log (x.y));
-}
-vec3 log (vec3 x) {
-    return vec3 (log (x.x), log (x.y), log (x.z));
-}
-vec4 log (vec4 x) {
-    return vec4 (log (x.x), log (x.y), log (x.z), log (x.w));
+
+vec2 log (vec2 v) {
+    return log2 (v) / log2 (vec2 (2.71828183));
 }
 
-// 
-// Returns 2 raised to the x power, i.e., 2^x
-// 
+vec3 log (vec3 v) {
+    return log2 (v) / log2 (vec3 (2.71828183));
+}
+
+vec4 log (vec4 v) {
+    return log2 (v) / log2 (vec4 (2.71828183));
+}
 
 float exp2 (float x) {
     return pow (2.0, x);
 }
-vec2 exp2 (vec2 x) {
-    return vec2 (exp2 (x.x), exp2 (x.y));
-}
-vec3 exp2 (vec3 x) {
-    return vec3 (exp2 (x.x), exp2 (x.y), exp2 (x.z));
-}
-vec4 exp2 (vec4 x) {
-    return vec4 (exp2 (x.x), exp2 (x.y), exp2 (x.z), exp2 (x.w));
+
+vec2 exp2 (vec2 v) {
+    return pow (vec2 (2.0), v);
 }
 
-// 
-// Returns the base 2 logarithm of x, i.e., returns the value y which satisfies the equation
-// x = 2^y.
-// Results are undefined if x <= 0.
-// 
-// XXX
-float log2 (float x) {
-    return 0.0;
-}
-vec2 log2 (vec2 x) {
-    return vec2 (log2 (x.x), log2 (x.y));
-}
-vec3 log2 (vec3 x) {
-    return vec3 (log2 (x.x), log2 (x.y), log2 (x.z));
-}
-vec4 log2 (vec4 x) {
-    return vec4 (log2 (x.x), log2 (x.y), log2 (x.z), log2 (x.w));
+vec3 exp2 (vec3 v) {
+    return pow (vec3 (2.0), v);
 }
 
-// 
-// Returns the positive square root of x.
-// Results are undefined if x < 0.
-// 
+vec4 exp2 (vec4 v) {
+    return pow (vec4 (2.0), v);
+}
 
 float sqrt (float x) {
     return pow (x, 0.5);
 }
-vec2 sqrt (vec2 x) {
-    return vec2 (sqrt (x.x), sqrt (x.y));
-}
-vec3 sqrt (vec3 x) {
-    return vec3 (sqrt (x.x), sqrt (x.y), sqrt (x.z));
-}
-vec4 sqrt (vec4 x) {
-    return vec4 (sqrt (x.x), sqrt (x.y), sqrt (x.z), sqrt (x.w));
+
+vec2 sqrt (vec2 v) {
+    return pow (v, vec2 (0.5));
 }
 
-// 
-// Returns the reciprocal of the positive square root of x.
-// Results are undefined if x <= 0.
-// 
+vec3 sqrt (vec3 v) {
+    return pow (v, vec3 (0.5));
+}
+
+vec4 sqrt (vec4 v) {
+    return pow (v, vec4 (0.5));
+}
 
 float inversesqrt (float x) {
     return 1.0 / sqrt (x);
 }
-vec2 inversesqrt (vec2 x) {
-    return vec2 (inversesqrt (x.x), inversesqrt (x.y));
-}
-vec3 inversesqrt (vec3 x) {
-    return vec3 (inversesqrt (x.x), inversesqrt (x.y), inversesqrt (x.z));
-}
-vec4 inversesqrt (vec4 x) {
-    return vec4 (inversesqrt (x.x), inversesqrt (x.y), inversesqrt (x.z), inversesqrt (x.w));
+
+vec2 inversesqrt (vec2 v) {
+    return vec2 (1.0) / sqrt (v);
 }
 
-// 
+vec3 inversesqrt (vec3 v) {
+    return vec3 (1.0) / sqrt (v);
+}
+
+vec4 inversesqrt (vec4 v) {
+    return vec4 (1.0) / sqrt (v);
+}
+
+//
 // 8.3 Common Functions
-// 
-// These all operate component-wise. The description is per component.
-// 
-
-// 
-// Returns x if x >= 0, otherwise it returns –x
-// 
+//
 
 float abs (float x) {
     return x >= 0.0 ? x : -x;
 }
-vec2 abs (vec2 x) {
-    return vec2 (abs (x.x), abs (x.y));
-}
-vec3 abs (vec3 x) {
-    return vec3 (abs (x.x), abs (x.y), abs (x.z));
-}
-vec4 abs (vec4 x) {
-    return vec4 (abs (x.x), abs (x.y), abs (x.z), abs (x.w));
+
+vec2 abs (vec2 v) {
+	vec2 u;
+	u.x = abs (v.x);
+	u.y = abs (v.y);
+    return u;
 }
 
-// 
-// Returns 1.0 if x > 0, 0.0 if x = 0, or –1.0 if x < 0
-// 
+vec3 abs (vec3 v) {
+    vec3 u;
+	u.x = abs (v.x);
+	u.y = abs (v.y);
+	u.z = abs (v.z);
+    return u;
+}
+
+vec4 abs (vec4 v) {
+    vec4 u;
+	u.x = abs (v.x);
+	u.y = abs (v.y);
+	u.z = abs (v.z);
+	u.w = abs (v.w);
+    return u;
+}
 
 float sign (float x) {
     return x > 0.0 ? 1.0 : x < 0.0 ? -1.0 : 0.0;
 }
-vec2 sign (vec2 x) {
-    return vec2 (sign (x.x), sign (x.y));
-}
-vec3 sign (vec3 x) {
-    return vec3 (sign (x.x), sign (x.y), sign (x.z));
-}
-vec4 sign (vec4 x) {
-    return vec4 (sign (x.x), sign (x.y), sign (x.z), sign (x.w));
+
+vec2 sign (vec2 v) {
+    vec2 u;
+	u.x = sign (v.x);
+	u.y = sign (v.y);
+    return u;
 }
 
-// 
-// Returns a value equal to the nearest integer that is less than or equal to x
-// 
-// XXX
+vec3 sign (vec3 v) {
+    vec3 u;
+	u.x = sign (v.x);
+	u.y = sign (v.y);
+	u.z = sign (v.z);
+    return u;
+}
+
+vec4 sign (vec4 v) {
+    vec4 u;
+	u.x = sign (v.x);
+	u.y = sign (v.y);
+	u.z = sign (v.z);
+	u.w = sign (v.w);
+    return u;
+}
+
 float floor (float x) {
-    return 0.0;
-}
-vec2 floor (vec2 x) {
-    return vec2 (floor (x.x), floor (x.y));
-}
-vec3 floor (vec3 x) {
-    return vec3 (floor (x.x), floor (x.y), floor (x.z));
-}
-vec4 floor (vec4 x) {
-    return vec4 (floor (x.x), floor (x.y), floor (x.z), floor (x.w));
+    float y;
+	__asm float_floor y, x;
+	return y;
 }
 
-// 
-// Returns a value equal to the nearest integer that is greater than or equal to x
-// 
-// XXX
+vec2 floor (vec2 v) {
+    vec2 u;
+	u.x = floor (v.x);
+	u.y = floor (v.y);
+    return u;
+}
+
+vec3 floor (vec3 v) {
+    vec3 u;
+	u.x = floor (v.x);
+	u.y = floor (v.y);
+	u.z = floor (v.z);
+    return u;
+}
+
+vec4 floor (vec4 v) {
+    vec4 u;
+	u.x = floor (v.x);
+	u.y = floor (v.y);
+	u.z = floor (v.z);
+	u.w = floor (v.w);
+    return u;
+}
+
 float ceil (float x) {
-    return 0.0;
-}
-vec2 ceil (vec2 x) {
-    return vec2 (ceil (x.x), ceil (x.y));
-}
-vec3 ceil (vec3 x) {
-    return vec3 (ceil (x.x), ceil (x.y), ceil (x.z));
-}
-vec4 ceil (vec4 x) {
-    return vec4 (ceil (x.x), ceil (x.y), ceil (x.z), ceil (x.w));
+    float y;
+	__asm float_ceil y, x;
+	return y;
 }
 
-// 
-// Returns x – floor (x)
-// 
+vec2 ceil (vec2 v) {
+    vec2 u;
+	u.x = ceil (v.x);
+	u.y = ceil (v.y);
+    return u;
+}
+
+vec3 ceil (vec3 v) {
+    vec3 u;
+	u.x = ceil (v.x);
+	u.y = ceil (v.y);
+	u.z = ceil (v.z);
+    return u;
+}
+
+vec4 ceil (vec4 v) {
+    vec4 u;
+	u.x = ceil (v.x);
+	u.y = ceil (v.y);
+	u.z = ceil (v.z);
+	u.w = ceil (v.w);
+    return u;
+}
 
 float fract (float x) {
     return x - floor (x);
 }
-vec2 fract (vec2 x) {
-    return vec2 (fract (x.x), fract (x.y));
-}
-vec3 fract (vec3 x) {
-    return vec3 (fract (x.x), fract (x.y), fract (x.z));
-}
-vec4 fract (vec4 x) {
-    return vec4 (fract (x.x), fract (x.y), fract (x.z), fract (x.w));
+
+vec2 fract (vec2 v) {
+    return v - floor (v);
 }
 
-// 
-// Modulus. Returns x – y * floor (x/y)
-// 
+vec3 fract (vec3 v) {
+    return v - floor (v);
+}
+
+vec4 fract (vec4 v) {
+    return v - floor (v);
+}
 
 float mod (float x, float y) {
     return x - y * floor (x / y);
 }
-vec2 mod (vec2 x, float y) {
-    return vec2 (mod (x.x, y), mod (x.y, y));
-}
-vec3 mod (vec3 x, float y) {
-    return vec3 (mod (x.x, y), mod (x.y, y), mod (x.z, y));
-}
-vec4 mod (vec4 x, float y) {
-    return vec4 (mod (x.x, y), mod (x.y, y), mod (x.z, y), mod (x.w, y));
-}
-vec2 mod (vec2 x, vec2 y) {
-    return vec2 (mod (x.x, y.x), mod (x.y, y.y));
-}
-vec3 mod (vec3 x, vec3 y) {
-    return vec3 (mod (x.x, y.x), mod (x.y, y.y), mod (x.z, y.z));
-}
-vec4 mod (vec4 x, vec4 y) {
-    return vec4 (mod (x.x, y.x), mod (x.y, y.y), mod (x.z, y.z), mod (x.w, y.w));
+
+vec2 mod (vec2 v, float u) {
+    return v - u * floor (v / u);
 }
 
-// 
-// Returns y if y < x, otherwise it returns x
-// 
+vec3 mod (vec3 v, float u) {
+    return v - u * floor (v / u);
+}
+
+vec4 mod (vec4 v, float u) {
+    return v - u * floor (v / u);
+}
+
+vec2 mod (vec2 v, vec2 u) {
+    return v - u * floor (v / u);
+}
+
+vec3 mod (vec3 v, vec3 u) {
+    return v - u * floor (v / u);
+}
+
+vec4 mod (vec4 v, vec4 u) {
+    return v - u * floor (v / u);
+}
 
 float min (float x, float y) {
-    return y < x ? y : x;
-}
-vec2 min (vec2 x, float y) {
-    return vec2 (min (x.x, y), min (x.y, y));
-}
-vec3 min (vec3 x, float y) {
-    return vec3 (min (x.x, y), min (x.y, y), min (x.z, y));
-}
-vec4 min (vec4 x, float y) {
-    return vec4 (min (x.x, y), min (x.y, y), min (x.z, y), min (x.w, y));
-}
-vec2 min (vec2 x, vec2 y) {
-    return vec2 (min (x.x, y.x), min (x.y, y.y));
-}
-vec3 min (vec3 x, vec3 y) {
-    return vec3 (min (x.x, y.x), min (x.y, y.y), min (x.z, y.z));
-}
-vec4 min (vec4 x, vec4 y) {
-    return vec4 (min (x.x, y.x), min (x.y, y.y), min (x.z, y.z), min (x.w, y.w));
+    return x < y ? x : y;
 }
 
-// 
-// Returns y if x < y, otherwise it returns x
-// 
+vec2 min (vec2 v, vec2 u) {
+    vec2 t;
+	t.x = min (v.x, u.x);
+	t.y = min (v.y, u.y);
+	return t;
+}
+
+vec3 min (vec3 v, vec3 u) {
+    vec3 t;
+	t.x = min (v.x, u.x);
+	t.y = min (v.y, u.y);
+	t.z = min (v.z, u.z);
+	return t;
+}
+
+vec4 min (vec4 v, vec4 u) {
+    vec4 t;
+	t.x = min (v.x, u.x);
+	t.y = min (v.y, u.y);
+	t.z = min (v.z, u.z);
+	t.w = min (v.w, u.w);
+	return t;
+}
+
+vec2 min (vec2 v, float y) {
+    return min (v, vec2 (y));
+}
+
+vec3 min (vec3 v, float y) {
+    return min (v, vec3 (y));
+}
+
+vec4 min (vec4 v, float y) {
+    return min (v, vec4 (y));
+}
 
 float max (float x, float y) {
-    return min (y, x);
-}
-vec2 max (vec2 x, float y) {
-    return vec2 (max (x.x, y), max (x.y, y));
-}
-vec3 max (vec3 x, float y) {
-    return vec3 (max (x.x, y), max (x.y, y), max (x.z, y));
-}
-vec4 max (vec4 x, float y) {
-    return vec4 (max (x.x, y), max (x.y, y), max (x.z, y), max (x.w, y));
-}
-vec2 max (vec2 x, vec2 y) {
-    return vec2 (max (x.x, y.x), max (x.y, y.y));
-}
-vec3 max (vec3 x, vec3 y) {
-    return vec3 (max (x.x, y.x), max (x.y, y.y), max (x.z, y.z));
-}
-vec4 max (vec4 x, vec4 y) {
-    return vec4 (max (x.x, y.x), max (x.y, y.y), max (x.z, y.z), max (x.w, y.w));
+    return x < y ? y : x;
 }
 
-// 
-// Returns min (max (x, minVal), maxVal)
-// 
-// Note that colors and depths written by fragment shaders will be clamped by the implementation
-// after the fragment shader runs.
-// 
+vec2 max (vec2 v, vec2 u) {
+    vec2 t;
+	t.x = max (v.x, u.x);
+	t.y = max (v.y, u.y);
+	return t;
+}
+
+vec3 max (vec3 v, vec3 u) {
+    vec3 t;
+	t.x = max (v.x, u.x);
+	t.y = max (v.y, u.y);
+	t.z = max (v.z, u.z);
+	return t;
+}
+
+vec4 max (vec4 v, vec4 u) {
+    vec4 t;
+	t.x = max (v.x, u.x);
+	t.y = max (v.y, u.y);
+	t.z = max (v.z, u.z);
+	t.w = max (v.w, u.w);
+	return t;
+}
+
+vec2 max (vec2 v, float y) {
+    return max (v, vec2 (y));
+}
+
+vec3 max (vec3 v, float y) {
+    return max (v, vec3 (y));
+}
+
+vec4 max (vec4 v, float y) {
+    return max (v, vec4 (y));
+}
 
 float clamp (float x, float minVal, float maxVal) {
     return min (max (x, minVal), maxVal);
 }
+
 vec2 clamp (vec2 x, float minVal, float maxVal) {
-    return vec2 (clamp (x.x, minVal, maxVal), clamp (x.y, minVal, maxVal));
-}
-vec3 clamp (vec3 x, float minVal, float maxVal) {
-    return vec3 (clamp (x.x, minVal, maxVal), clamp (x.y, minVal, maxVal),
-        clamp (x.z, minVal, maxVal));
-}
-vec4 clamp (vec4 x, float minVal, float maxVal) {
-    return vec4 (clamp (x.x, minVal, maxVal), clamp (x.y, minVal, maxVal),
-        clamp (x.z, minVal, maxVal), clamp (x.w, minVal, maxVal));
-}
-vec2 clamp (vec2 x, vec2 minVal, vec2 maxVal) {
-    return vec2 (clamp (x.x, minVal.x, maxVal.x), clamp (x.y, minVal.y, maxVal.y));
-}
-vec3 clamp (vec3 x, vec3 minVal, vec3 maxVal) {
-    return vec3 (clamp (x.x, minVal.x, maxVal.x), clamp (x.y, minVal.y, maxVal.y),
-        clamp (x.z, minVal.z, maxVal.z));
-}
-vec4 clamp (vec4 x, vec4 minVal, vec4 maxVal) {
-    return vec4 (clamp (x.x, minVal.x, maxVal.y), clamp (x.y, minVal.y, maxVal.y),
-        clamp (x.z, minVal.z, maxVal.z), clamp (x.w, minVal.w, maxVal.w));
+    return min (max (x, minVal), maxVal);
 }
 
-// 
-// Returns x * (1 – a) + y * a, i.e., the linear blend of x and y
-// 
+vec3 clamp (vec3 x, float minVal, float maxVal) {
+    return min (max (x, minVal), maxVal);
+}
+
+vec4 clamp (vec4 x, float minVal, float maxVal) {
+    return min (max (x, minVal), maxVal);
+}
+
+vec2 clamp (vec2 x, vec2 minVal, vec2 maxVal) {
+    return min (max (x, minVal), maxVal);
+}
+
+vec3 clamp (vec3 x, vec3 minVal, vec3 maxVal) {
+    return min (max (x, minVal), maxVal);
+}
+
+vec4 clamp (vec4 x, vec4 minVal, vec4 maxVal) {
+    return min (max (x, minVal), maxVal);
+}
 
 float mix (float x, float y, float a) {
     return x * (1.0 - a) + y * a;
 }
+
 vec2 mix (vec2 x, vec2 y, float a) {
-    return vec2 (mix (x.x, y.x, a), mix (x.y, y.y, a));
-}
-vec3 mix (vec3 x, vec3 y, float a) {
-    return vec3 (mix (x.x, y.x, a), mix (x.y, y.y, a), mix (x.z, y.z, a));
-}
-vec4 mix (vec4 x, vec4 y, float a) {
-    return vec4 (mix (x.x, y.x, a), mix (x.y, y.y, a), mix (x.z, y.z, a), mix (x.w, y.w, a));
-}
-vec2 mix (vec2 x, vec2 y, vec2 a) {
-    return vec2 (mix (x.x, y.x, a.x), mix (x.y, y.y, a.y));
-}
-vec3 mix (vec3 x, vec3 y, vec3 a) {
-    return vec3 (mix (x.x, y.x, a.x), mix (x.y, y.y, a.y), mix (x.z, y.z, a.z));
-}
-vec4 mix (vec4 x, vec4 y, vec4 a) {
-    return vec4 (mix (x.x, y.x, a.x), mix (x.y, y.y, a.y), mix (x.z, y.z, a.z),
-        mix (x.w, y.w, a.w));
+    return x * (1.0 - a) + y * a;
 }
 
-// 
-// Returns 0.0 if x < edge, otherwise it returns 1.0
-// 
+vec3 mix (vec3 x, vec3 y, float a) {
+    return x * (1.0 - a) + y * a;
+}
+
+vec4 mix (vec4 x, vec4 y, float a) {
+    return x * (1.0 - a) + y * a;
+}
+
+vec2 mix (vec2 x, vec2 y, vec2 a) {
+    return x * (1.0 - a) + y * a;
+}
+
+vec3 mix (vec3 x, vec3 y, vec3 a) {
+    return x * (1.0 - a) + y * a;
+}
+
+vec4 mix (vec4 x, vec4 y, vec4 a) {
+    return x * (1.0 - a) + y * a;
+}
 
 float step (float edge, float x) {
     return x < edge ? 0.0 : 1.0;
 }
-vec2 step (float edge, vec2 x) {
-    return vec2 (step (edge, x.x), step (edge, x.y));
-}
-vec3 step (float edge, vec3 x) {
-    return vec3 (step (edge, x.x), step (edge, x.y), step (edge, x.z));
-}
-vec4 step (float edge, vec4 x) {
-    return vec4 (step (edge, x.x), step (edge, x.y), step (edge, x.z), step (edge, x.w));
-}
-vec2 step (vec2 edge, vec2 x) {
-    return vec2 (step (edge.x, x.x), step (edge.y, x.y));
-}
-vec3 step (vec3 edge, vec3 x) {
-    return vec3 (step (edge.x, x.x), step (edge.y, x.y), step (edge.z, x.z));
-}
-vec4 step (vec4 edge, vec4 x) {
-    return vec4 (step (edge.x, x.x), step (edge.y, x.y), step (edge.z, x.z), step (edge.w, x.w));
+
+vec2 step (vec2 edge, vec2 v) {
+    vec2 u;
+	u.x = step (edge.x, v.x);
+	u.y = step (edge.y, v.y);
+	return u;
 }
 
-// 
-// Returns 0.0 if x <= edge0 and 1.0 if x >= edge1 and performs smooth Hermite interpolation
-// between 0 and 1 when edge0 < x < edge1. This is useful in cases where you would want a threshold
-// function with a smooth transition. This is equivalent to:
-// <type> t;
-// t = clamp ((x – edge0) / (edge1 – edge0), 0, 1);
-// return t * t * (3 – 2 * t);
-// 
+vec3 step (vec3 edge, vec3 v) {
+    vec3 u;
+	u.x = step (edge.x, v.x);
+	u.y = step (edge.y, v.y);
+	u.z = step (edge.z, v.z);
+	return u;
+}
+
+vec4 step (vec4 edge, vec4 v) {
+    vec4 u;
+	u.x = step (edge.x, v.x);
+	u.y = step (edge.y, v.y);
+	u.z = step (edge.z, v.z);
+	u.w = step (edge.w, v.w);
+	return u;
+}
+
+vec2 step (float edge, vec2 v) {
+    return step (vec2 (edge), v);
+}
+
+vec3 step (float edge, vec3 v) {
+    return step (vec3 (edge), v);
+}
+
+vec4 step (float edge, vec4 v) {
+    return step (vec4 (edge), v);
+}
 
 float smoothstep (float edge0, float edge1, float x) {
-    const float t = clamp ((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+    float t;
+	t = clamp ((x - edge0) / (edge1 - edge0), 0.0, 1.0);
     return t * t * (3.0 - 2.0 * t);
 }
-vec2 smoothstep (float edge0, float edge1, vec2 x) {
-    return vec2 (smoothstep (edge0, edge1, x.x), smoothstep (edge0, edge1, x.y));
-}
-vec3 smoothstep (float edge0, float edge1, vec3 x) {
-    return vec3 (smoothstep (edge0, edge1, x.x), smoothstep (edge0, edge1, x.y),
-        smoothstep (edge0, edge1, x.z));
-}
-vec4 smoothstep (float edge0, float edge1, vec4 x) {
-    return vec4 (smoothstep (edge0, edge1, x.x), smoothstep (edge0, edge1, x.y),
-        smoothstep (edge0, edge1, x.z), smoothstep (edge0, edge1, x.w));
-}
-vec2 smoothstep (vec2 edge0, vec2 edge1, vec2 x) {
-    return vec2 (smoothstep (edge0.x, edge1.x, x.x), smoothstep (edge0.y, edge1.y, x.y));
-}
-vec3 smoothstep (vec3 edge0, vec3 edge1, vec3 x) {
-    return vec3 (smoothstep (edge0.x, edge1.x, x.x), smoothstep (edge0.y, edge1.y, x.y),
-        smoothstep (edge0.z, edge1.z, x.z));
-}
-vec4 smoothstep (vec4 edge0, vec4 edge1, vec4 x) {
-    return vec4 (smoothstep (edge0.x, edge1.x, x.x), smoothstep (edge0.y, edge1.y, x.y),
-        smoothstep (edge0.z, edge1.z, x.z), smoothstep (edge0.w, edge1.w, x.w));
+
+vec2 smoothstep (vec2 edge0, vec2 edge1, vec2 v) {
+    vec2 u;
+	u.x = smoothstep (edge0.x, edge1.x, v.x);
+	u.y = smoothstep (edge0.y, edge1.y, v.y);
+	return u;
 }
 
-// 
+vec3 smoothstep (vec3 edge0, vec3 edge1, vec3 v) {
+    vec3 u;
+	u.x = smoothstep (edge0.x, edge1.x, v.x);
+	u.y = smoothstep (edge0.y, edge1.y, v.y);
+	u.z = smoothstep (edge0.z, edge1.z, v.z);
+	return u;
+}
+
+vec4 smoothstep (vec4 edge0, vec4 edge1, vec4 v) {
+    vec4 u;
+	u.x = smoothstep (edge0.x, edge1.x, v.x);
+	u.y = smoothstep (edge0.y, edge1.y, v.y);
+	u.z = smoothstep (edge0.z, edge1.z, v.z);
+	u.w = smoothstep (edge0.w, edge1.w, v.w);
+	return u;
+}
+
+vec2 smoothstep (float edge0, float edge1, vec2 v) {
+    vec2 u;
+	u.x = smoothstep (edge0, edge1, v.x);
+	u.y = smoothstep (edge0, edge1, v.y);
+	return u;
+}
+
+vec3 smoothstep (float edge0, float edge1, vec3 v) {
+    vec3 u;
+	u.x = smoothstep (edge0, edge1, v.x);
+	u.y = smoothstep (edge0, edge1, v.y);
+	u.z = smoothstep (edge0, edge1, v.z);
+	return u;
+}
+
+vec4 smoothstep (float edge0, float edge1, vec4 v) {
+    vec4 u;
+	u.x = smoothstep (edge0, edge1, v.x);
+	u.y = smoothstep (edge0, edge1, v.y);
+	u.z = smoothstep (edge0, edge1, v.z);
+	u.w = smoothstep (edge0, edge1, v.w);
+	return u;
+}
+
+//
 // 8.4 Geometric Functions
-// 
-// These operate on vectors as vectors, not component-wise.
-// 
-
-// 
-// Returns the dot product of x and y, i.e., result = x[0] * y[0] + x[1] * y[1] + ...
-// 
+//
 
 float dot (float x, float y) {
     return x * y;
 }
-float dot (vec2 x, vec2 y) {
-    return dot (x.x, y.x) + dot (x.y, y.y);
-}
-float dot (vec3 x, vec3 y) {
-    return dot (x.x, y.x) + dot (x.y, y.y) + dot (x.z, y.z);
-}
-float dot (vec4 x, vec4 y) {
-    return dot (x.x, y.x) + dot (x.y, y.y) + dot (x.z, y.z) + dot (x.w, y.w);
+
+float dot (vec2 v, vec2 u) {
+    return v.x * u.x + v.y * u.y;
 }
 
-// 
-// Returns the length of vector x, i.e., sqrt (x[0] * x[0] + x[1] * x[1] + ...)
-// 
+float dot (vec3 v, vec3 u) {
+    return v.x * u.x + v.y * u.y + v.z * u.z;
+}
+
+float dot (vec4 v, vec4 u) {
+    return v.x * u.x + v.y * u.y + v.z * u.z + v.w * u.w;
+}
 
 float length (float x) {
     return sqrt (dot (x, x));
 }
-float length (vec2 x) {
-    return sqrt (dot (x, x));
-}
-float length (vec3 x) {
-    return sqrt (dot (x, x));
-}
-float length (vec4 x) {
-    return sqrt (dot (x, x));
+
+float length (vec2 v) {
+    return sqrt (dot (v, v));
 }
 
-// 
-// Returns the distance between p0 and p1, i.e. length (p0 – p1)
-// 
+float length (vec3 v) {
+    return sqrt (dot (v, v));
+}
+
+float length (vec4 v) {
+    return sqrt (dot (v, v));
+}
 
 float distance (float x, float y) {
     return length (x - y);
 }
-float distance (vec2 x, vec2 y) {
-    return length (x - y);
-}
-float distance (vec3 x, vec3 y) {
-    return length (x - y);
-}
-float distance (vec4 x, vec4 y) {
-    return length (x - y);
+
+float distance (vec2 v, vec2 u) {
+    return length (v - u);
 }
 
-// 
-// Returns the cross product of x and y, i.e.
-// result.0 = x[1] * y[2] - y[1] * x[2]
-// result.1 = x[2] * y[0] - y[2] * x[0]
-// result.2 = x[0] * y[1] - y[0] * x[1]
-// 
-
-vec3 cross (vec3 x, vec3 y) {
-    return vec3 (x.y * y.z - y.y * x.z, x.z * y.x - y.z * x.x, x.x * y.y - y.x * x.y);
+float distance (vec3 v, vec3 u) {
+    return length (v - u);
 }
 
-// 
-// Returns a vector in the same direction as x but with a length of 1.
-// 
+float distance (vec4 v, vec4 u) {
+    return length (v - u);
+}
+
+vec3 cross (vec3 v, vec3 u) {
+    vec3 t;
+    t.x = v.y * u.z - u.y * v.z;
+    t.y = v.z * u.x - u.z * v.x;
+    t.z = v.x * u.y - u.x * v.y;
+    return t;
+}
 
 float normalize (float x) {
     return 1.0;
 }
-vec2 normalize (vec2 x) {
-    return x / length (x);
-}
-vec3 normalize (vec3 x) {
-    return x / length (x);
-}
-vec4 normalize (vec4 x) {
-    return x / length (x);
+
+vec2 normalize (vec2 v) {
+    return v / length (v);
 }
 
-// 
-// If dot (Nref, I) < 0 return N otherwise return –N
-// 
+vec3 normalize (vec3 v) {
+    return v / length (v);
+}
+
+vec4 normalize (vec4 v) {
+    return v / length (v);
+}
 
 float faceforward (float N, float I, float Nref) {
     return dot (Nref, I) < 0.0 ? N : -N;
 }
+
 vec2 faceforward (vec2 N, vec2 I, vec2 Nref) {
     return dot (Nref, I) < 0.0 ? N : -N;
 }
+
 vec3 faceforward (vec3 N, vec3 I, vec3 Nref) {
     return dot (Nref, I) < 0.0 ? N : -N;
 }
+
 vec4 faceforward (vec4 N, vec4 I, vec4 Nref) {
     return dot (Nref, I) < 0.0 ? N : -N;
 }
 
-// 
-// For the incident vector I and surface orientation N, returns the reflection direction:
-// result = I - 2 * dot (N, I) * N
-// N must already be normalized in order to achieve the desired result.
-//
-
 float reflect (float I, float N) {
     return I - 2.0 * dot (N, I) * N;
 }
+
 vec2 reflect (vec2 I, vec2 N) {
     return I - 2.0 * dot (N, I) * N;
 }
+
 vec3 reflect (vec3 I, vec3 N) {
     return I - 2.0 * dot (N, I) * N;
 }
+
 vec4 reflect (vec4 I, vec4 N) {
     return I - 2.0 * dot (N, I) * N;
 }
 
-//
-// For the incident vector I and surface normal N, and the ratio of inidices of refraction eta,
-// return the refraction vector. The returned result is computed by
-//
-// k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I))
-// if (k < 0.0)
-//   result = genType (0.0)
-// else
-//   result = eta * I - (eta * dot (N, I) + sqrt (k)) * N
-//
-// The input parameters for the incident vector I and the surface normal N must already be
-// normalized to get the desired results.
-//
-
 float refract (float I, float N, float eta) {
-    const float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
+    float k;
+	k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
     if (k < 0.0)
         return 0.0;
     return eta * I - (eta * dot (N, I) + sqrt (k)) * N;
 }
+
 vec2 refract (vec2 I, vec2 N, float eta) {
-    const float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
+    float k;
+	k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
     if (k < 0.0)
-        return vec2 (0.0);
+        return 0.0;
     return eta * I - (eta * dot (N, I) + sqrt (k)) * N;
 }
+
 vec3 refract (vec3 I, vec3 N, float eta) {
-    const float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
+    float k;
+	k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
     if (k < 0.0)
-        return vec3 (0.0);
+        return 0.0;
     return eta * I - (eta * dot (N, I) + sqrt (k)) * N;
 }
+
 vec4 refract (vec4 I, vec4 N, float eta) {
-    const float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
+    float k;
+	k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
     if (k < 0.0)
-        return vec4 (0.0);
+        return 0.0;
     return eta * I - (eta * dot (N, I) + sqrt (k)) * N;
 }
 
-// 
+//
 // 8.5 Matrix Functions
-// 
+//
 
-// 
-// Multiply matrix x by matrix y component-wise, i.e., result[i][j] is the scalar product
-// of x[i][j] and y[i][j].
-// Note: to get linear algebraic matrix multiplication, use the multiply operator (*).
-// 
-
-mat2 matrixCompMult (mat2 x, mat2 y) {
-    return mat2 (
-        x[0].x * y[0].x, x[0].y * y[0].y,
-        x[1].x * y[1].x, x[1].y * y[1].y
-    );
-}
-mat3 matrixCompMult (mat3 x, mat3 y) {
-    return mat4 (
-        x[0].x * y[0].x, x[0].y * y[0].y, x[0].z * y[0].z,
-        x[1].x * y[1].x, x[1].y * y[1].y, x[1].z * y[1].z,
-        x[2].x * y[2].x, x[2].y * y[2].y, x[2].z * y[2].z
-    );
-}
-mat4 matrixCompMult (mat4 x, mat4 y) {
-    return mat4 (
-        x[0].x * y[0].x, x[0].y * y[0].y, x[0].z * y[0].z + x[0].w * y[0].w,
-        x[1].x * y[1].x, x[1].y * y[1].y, x[1].z * y[1].z + x[1].w * y[1].w,
-        x[2].x * y[2].x, x[2].y * y[2].y, x[2].z * y[2].z + x[2].w * y[2].w,
-        x[3].x * y[3].x, x[3].y * y[3].y, x[3].z * y[3].z + x[3].w * y[3].w
-    );
+mat2 matrixCompMult (mat2 m, mat2 n) {
+    mat2 o;
+    o[0] = m[0] * n[0];
+    o[1] = m[1] * n[1];
+    return o;
 }
 
-// 
+mat3 matrixCompMult (mat3 m, mat3 n) {
+    mat3 o;
+    o[0] = m[0] * n[0];
+    o[1] = m[1] * n[1];
+    o[2] = m[2] * n[2];
+    return o;
+}
+
+mat4 matrixCompMult (mat4 m, mat4 n) {
+    mat4 o;
+    o[0] = m[0] * n[0];
+    o[1] = m[1] * n[1];
+    o[2] = m[2] * n[2];
+    o[3] = m[3] * n[3];
+    return o;
+}
+
+//
 // 8.6 Vector Relational Functions
-// 
-// Relational and equality operators (<, <=, >, >=, ==, !=) are defined (or reserved) to produce
-// scalar Boolean results.
-// 
+//
 
-// 
-// Returns the component-wise compare of x < y.
-// 
-
-bvec2 lessThan (vec2 x, vec2 y) {
-    return bvec2 (x.x < y.x, x.y < y.y);
-}
-bvec3 lessThan (vec3 x, vec3 y) {
-    return bvec3 (x.x < y.x, x.y < y.y, x.z < y.z);
-}
-bvec4 lessThan (vec4 x, vec4 y) {
-    return bvec4 (x.x < y.x, x.y < y.y, x.z < y.z, x.w < y.w);
-}
-bvec2 lessThan (ivec2 x, ivec2 y) {
-    return bvec2 (x.x < y.x, x.y < y.y);
-}
-bvec3 lessThan (ivec3 x, ivec3 y) {
-    return bvec3 (x.x < y.x, x.y < y.y, x.z < y.z);
-}
-bvec4 lessThan (ivec4 x, ivec4 y) {
-    return bvec4 (x.x < y.x, x.y < y.y, x.z < y.z, x.w < y.w);
+bvec2 lessThan (vec2 v, vec2 u) {
+	bvec2 b;
+	b.x = v.x < u.x;
+	b.y = v.y < u.y;
+	return b;
 }
 
-// 
-// Returns the component-wise compare of x <= y.
-// 
-
-bvec2 lessThanEqual (vec2 x, vec2 y) {
-    return bvec2 (x.x <= y.x, x.y <= y.y);
-}
-bvec3 lessThanEqual (vec3 x, vec3 y) {
-    return bvec3 (x.x <= y.x, x.y <= y.y, x.z <= y.z);
-}
-bvec4 lessThanEqual (vec4 x, vec4 y) {
-    return bvec4 (x.x <= y.x, x.y <= y.y, x.z <= y.z, x.w <= y.w);
-}
-bvec2 lessThanEqual (ivec2 x, ivec2 y) {
-    return bvec2 (x.x <= y.x, x.y <= y.y);
-}
-bvec3 lessThanEqual (ivec3 x, ivec3 y) {
-    return bvec3 (x.x <= y.x, x.y <= y.y, x.z <= y.z);
-}
-bvec4 lessThanEqual (ivec4 x, ivec4 y) {
-    return bvec4 (x.x <= y.x, x.y <= y.y, x.z <= y.z, x.w <= y.w);
+bvec3 lessThan (vec3 v, vec3 u) {
+    bvec3 b;
+	b.x = v.x < u.x;
+	b.y = v.y < u.y;
+	b.z = v.z < u.z;
+	return b;
 }
 
-// 
-// Returns the component-wise compare of x > y.
-// 
-
-bvec2 greaterThan (vec2 x, vec2 y) {
-    return bvec2 (x.x > y.x, x.y > y.y);
-}
-bvec3 greaterThan (vec3 x, vec3 y) {
-    return bvec3 (x.x > y.x, x.y > y.y, x.z > y.z);
-}
-bvec4 greaterThan (vec4 x, vec4 y) {
-    return bvec4 (x.x > y.x, x.y > y.y, x.z > y.z, x.w > y.w);
-}
-bvec2 greaterThan (ivec2 x, ivec2 y) {
-    return bvec2 (x.x > y.x, x.y > y.y);
-}
-bvec3 greaterThan (ivec3 x, ivec3 y) {
-    return bvec3 (x.x > y.x, x.y > y.y, x.z > y.z);
-}
-bvec4 greaterThan (ivec4 x, ivec4 y) {
-    return bvec4 (x.x > y.x, x.y > y.y, x.z > y.z, x.w > y.w);
+bvec4 lessThan (vec4 v, vec4 u) {
+    bvec4 b;
+	b.x = v.x < u.x;
+	b.y = v.y < u.y;
+	b.z = v.z < u.z;
+	b.w = v.w < u.w;
+	return b;
 }
 
-// 
-// Returns the component-wise compare of x >= y.
-// 
-
-bvec2 greaterThanEqual (vec2 x, vec2 y) {
-    return bvec2 (x.x >= y.x, x.y >= y.y);
-}
-bvec3 greaterThanEqual (vec3 x, vec3 y) {
-    return bvec3 (x.x >= y.x, x.y >= y.y, x.z >= y.z);
-}
-bvec4 greaterThanEqual (vec4 x, vec4 y) {
-    return bvec4 (x.x >= y.x, x.y >= y.y, x.z >= y.z, x.w >= y.w);
-}
-bvec2 greaterThanEqual (ivec2 x, ivec2 y) {
-    return bvec2 (x.x >= y.x, x.y >= y.y);
-}
-bvec3 greaterThanEqual (ivec3 x, ivec3 y) {
-    return bvec3 (x.x >= y.x, x.y >= y.y, x.z >= y.z);
-}
-bvec4 greaterThanEqual (ivec4 x, ivec4 y) {
-    return bvec4 (x.x >= y.x, x.y >= y.y, x.z >= y.z, x.w >= y.w);
+bvec2 lessThan (ivec2 v, ivec2 u) {
+    bvec2 b;
+	b.x = v.x < u.x;
+	b.y = v.y < u.y;
+	return b;
 }
 
-// 
-// Returns the component-wise compare of x == y.
-// 
-
-bvec2 equal (vec2 x, vec2 y) {
-    return bvec2 (x.x == y.x, x.y == y.y);
-}
-bvec3 equal (vec3 x, vec3 y) {
-    return bvec3 (x.x == y.x, x.y == y.y, x.z == y.z);
-}
-bvec4 equal (vec4 x, vec4 y) {
-    return bvec4 (x.x == y.x, x.y == y.y, x.z == y.z, x.w == y.w);
-}
-bvec2 equal (ivec2 x, ivec2 y) {
-    return bvec2 (x.x == y.x, x.y == y.y);
-}
-bvec3 equal (ivec3 x, ivec3 y) {
-    return bvec3 (x.x == y.x, x.y == y.y, x.z == y.z);
-}
-bvec4 equal (ivec4 x, ivec4 y) {
-    return bvec4 (x.x == y.x, x.y == y.y, x.z == y.z, x.w == y.w);
+bvec3 lessThan (ivec3 v, ivec3 u) {
+    bvec3 b;
+	b.x = v.x < u.x;
+	b.y = v.y < u.y;
+	b.z = v.z < u.z;
+	return b;
 }
 
-// 
-// Returns the component-wise compare of x != y.
-// 
-
-bvec2 notEqual (vec2 x, vec2 y) {
-    return bvec2 (x.x != y.x, x.y != y.y);
-}
-bvec3 notEqual (vec3 x, vec3 y) {
-    return bvec3 (x.x != y.x, x.y != y.y, x.z != y.z);
-}
-bvec4 notEqual (vec4 x, vec4 y) {
-    return bvec4 (x.x != y.x, x.y != y.y, x.z != y.z, x.w != y.w);
-}
-bvec2 notEqual (ivec2 x, ivec2 y) {
-    return bvec2 (x.x != y.x, x.y != y.y);
-}
-bvec3 notEqual (ivec3 x, ivec3 y) {
-    return bvec3 (x.x != y.x, x.y != y.y, x.z != y.z);
-}
-bvec4 notEqual (ivec4 x, ivec4 y) {
-    return bvec4 (x.x != y.x, x.y != y.y, x.z != y.z, x.w != y.w);
+bvec4 lessThan (ivec4 v, ivec4 u) {
+    bvec4 b;
+	b.x = v.x < u.x;
+	b.y = v.y < u.y;
+	b.z = v.z < u.z;
+	b.w = v.w < u.w;
+	return b;
 }
 
-// 
-// Returns true if any component of x is true.
-// 
-
-bool any (bvec2 x) {
-    return x.x || x.y;
-}
-bool any (bvec3 x) {
-    return x.x || x.y || x.z;
-}
-bool any (bvec4 x) {
-    return x.x || x.y || x.z || x.w;
+bvec2 lessThanEqual (vec2 v, vec2 u) {
+    bvec2 b;
+	b.x = v.x <= u.x;
+	b.y = v.y <= u.y;
+	return b;
 }
 
-// 
-// Returns true only if all components of x are true.
-// 
-
-bool all (bvec2 x) {
-    return x.x && x.y;
-}
-bool all (bvec3 x) {
-    return x.x && x.y && x.z;
-}
-bool all (bvec4 x) {
-    return x.x && x.y && x.z && x.w;
+bvec3 lessThanEqual (vec3 v, vec3 u) {
+    bvec3 b;
+	b.x = v.x <= u.x;
+	b.y = v.y <= u.y;
+	b.z = v.z <= u.z;
+	return b;
 }
 
-// 
-// Returns the component-wise logical complement of x.
-// 
-
-bvec2 not (bvec2 x) {
-    return bvec2 (!x.x, !x.y);
-}
-bvec3 not (bvec3 x) {
-    return bvec3 (!x.x, !x.y, !x.z);
-}
-bvec4 not (bvec4 x) {
-    return bvec4 (!x.x, !x.y, !x.z, !x.w);
+bvec4 lessThanEqual (vec4 v, vec4 u) {
+    bvec4 b;
+	b.x = v.x <= u.x;
+	b.y = v.y <= u.y;
+	b.z = v.z <= u.z;
+	b.w = v.w <= u.w;
+	return b;
 }
 
-// 
+bvec2 lessThanEqual (ivec2 v, ivec2 u) {
+    bvec2 b;
+	b.x = v.x <= u.x;
+	b.y = v.y <= u.y;
+	return b;
+}
+
+bvec3 lessThanEqual (ivec3 v, ivec3 u) {
+    bvec3 b;
+	b.x = v.x <= u.x;
+	b.y = v.y <= u.y;
+	b.z = v.z <= u.z;
+	return b;
+}
+
+bvec4 lessThanEqual (ivec4 v, ivec4 u) {
+    bvec4 b;
+	b.x = v.x <= u.x;
+	b.y = v.y <= u.y;
+	b.z = v.z <= u.z;
+	b.w = v.w <= u.w;
+	return b;
+}
+
+bvec2 greaterThan (vec2 v, vec2 u) {
+    bvec2 b;
+	b.x = v.x > u.x;
+	b.y = v.y > u.y;
+	return b;
+}
+
+bvec3 greaterThan (vec3 v, vec3 u) {
+    bvec3 b;
+	b.x = v.x > u.x;
+	b.y = v.y > u.y;
+	b.z = v.z > u.z;
+	return b;
+}
+
+bvec4 greaterThan (vec4 v, vec4 u) {
+    bvec4 b;
+	b.x = v.x > u.x;
+	b.y = v.y > u.y;
+	b.z = v.z > u.z;
+	b.w = v.w > u.w;
+	return b;
+}
+
+bvec2 greaterThan (ivec2 v, ivec2 u) {
+    bvec2 b;
+	b.x = v.x > u.x;
+	b.y = v.y > u.y;
+	return b;
+}
+
+bvec3 greaterThan (ivec3 v, ivec3 u) {
+    bvec3 b;
+	b.x = v.x > u.x;
+	b.y = v.y > u.y;
+	b.z = v.z > u.z;
+	return b;
+}
+
+bvec4 greaterThan (ivec4 v, ivec4 u) {
+    bvec4 b;
+	b.x = v.x > u.x;
+	b.y = v.y > u.y;
+	b.z = v.z > u.z;
+	b.w = v.w > u.w;
+	return b;
+}
+
+bvec2 greaterThanEqual (vec2 v, vec2 u) {
+    bvec2 b;
+	b.x = v.x >= u.x;
+	b.y = v.y >= u.y;
+	return b;
+}
+
+bvec3 greaterThanEqual (vec3 v, vec3 u) {
+    bvec3 b;
+	b.x = v.x >= u.x;
+	b.y = v.y >= u.y;
+	b.z = v.z >= u.z;
+	return b;
+}
+
+bvec4 greaterThanEqual (vec4 v, vec4 u) {
+    bvec4 b;
+	b.x = v.x >= u.x;
+	b.y = v.y >= u.y;
+	b.z = v.z >= u.z;
+	b.w = v.w >= u.w;
+	return b;
+}
+
+bvec2 greaterThanEqual (ivec2 v, ivec2 u) {
+    bvec2 b;
+	b.x = v.x >= u.x;
+	b.y = v.y >= u.y;
+	return b;
+}
+
+bvec3 greaterThanEqual (ivec3 v, ivec3 u) {
+    bvec3 b;
+	b.x = v.x >= u.x;
+	b.y = v.y >= u.y;
+	b.z = v.z >= u.z;
+	return b;
+}
+
+bvec4 greaterThanEqual (ivec4 v, ivec4 u) {
+    bvec4 b;
+	b.x = v.x >= u.x;
+	b.y = v.y >= u.y;
+	b.z = v.z >= u.z;
+	b.w = v.w >= u.w;
+	return b;
+}
+
+bvec2 equal (vec2 v, vec2 u) {
+    bvec2 b;
+	b.x = v.x == u.x;
+	b.y = v.y == u.y;
+	return b;
+}
+
+bvec3 equal (vec3 v, vec3 u) {
+    bvec3 b;
+	b.x = v.x == u.x;
+	b.y = v.y == u.y;
+	b.z = v.z == u.z;
+	return b;
+}
+
+bvec4 equal (vec4 v, vec4 u) {
+    bvec4 b;
+	b.x = v.x == u.x;
+	b.y = v.y == u.y;
+	b.z = v.z == u.z;
+	b.w = v.w == u.w;
+	return b;
+}
+
+bvec2 equal (ivec2 v, ivec2 u) {
+    bvec2 b;
+	b.x = v.x == u.x;
+	b.y = v.y == u.y;
+	return b;
+}
+
+bvec3 equal (ivec3 v, ivec3 u) {
+    bvec3 b;
+	b.x = v.x == u.x;
+	b.y = v.y == u.y;
+	b.z = v.z == u.z;
+	return b;
+}
+
+bvec4 equal (ivec4 v, ivec4 u) {
+    bvec4 b;
+	b.x = v.x == u.x;
+	b.y = v.y == u.y;
+	b.z = v.z == u.z;
+	b.w = v.w == u.w;
+	return b;
+}
+
+bvec2 notEqual (vec2 v, vec2 u) {
+    bvec2 b;
+	b.x = v.x != u.x;
+	b.y = v.y != u.y;
+	return b;
+}
+
+bvec3 notEqual (vec3 v, vec3 u) {
+    bvec3 b;
+	b.x = v.x != u.x;
+	b.y = v.y != u.y;
+	b.z = v.z != u.z;
+	return b;
+}
+
+bvec4 notEqual (vec4 v, vec4 u) {
+    bvec4 b;
+	b.x = v.x != u.x;
+	b.y = v.y != u.y;
+	b.z = v.z != u.z;
+	b.w = v.w != u.w;
+	return b;
+}
+
+bvec2 notEqual (ivec2 v, ivec2 u) {
+    bvec2 b;
+	b.x = v.x != u.x;
+	b.y = v.y != u.y;
+	return b;
+}
+
+bvec3 notEqual (ivec3 v, ivec3 u) {
+    bvec3 b;
+	b.x = v.x != u.x;
+	b.y = v.y != u.y;
+	b.z = v.z != u.z;
+	return b;
+}
+
+bvec4 notEqual (ivec4 v, ivec4 u) {
+    bvec4 b;
+	b.x = v.x != u.x;
+	b.y = v.y != u.y;
+	b.z = v.z != u.z;
+	b.w = v.w != u.w;
+	return b;
+}
+
+bool any (bvec2 v) {
+    return v.x || v.y;
+}
+
+bool any (bvec3 v) {
+    return v.x || v.y || v.z;
+}
+
+bool any (bvec4 v) {
+    return v.x || v.y || v.z || v.w;
+}
+
+bool all (bvec2 v) {
+    return v.x && v.y;
+}
+
+bool all (bvec3 v) {
+    return v.x && v.y && v.z;
+}
+
+bool all (bvec4 v) {
+    return v.x && v.y && v.z && v.w;
+}
+
+bvec2 not (bvec2 v) {
+	bvec2 u;
+	u.x = !v.x;
+	u.y = !v.y;
+    return u;
+}
+
+bvec3 not (bvec3 v) {
+    bvec3 u;
+	u.x = !v.x;
+	u.y = !v.y;
+	u.z = !v.z;
+    return u;
+}
+
+bvec4 not (bvec4 v) {
+    bvec4 u;
+	u.x = !v.x;
+	u.y = !v.y;
+	u.z = !v.z;
+	u.w = !v.w;
+    return u;
+}
+
+//
 // 8.7 Texture Lookup Functions
-// 
-// Texture lookup functions are available to both vertex and fragment shaders. However, level
-// of detail is not computed by fixed functionality for vertex shaders, so there are some
-// differences in operation between vertex and fragment texture lookups. The functions in the table
-// below provide access to textures through samplers, as set up through the OpenGL API. Texture
-// properties such as size, pixel format, number of dimensions, filtering method, number of mip-map
-// levels, depth comparison, and so on are also defined by OpenGL API calls. Such properties are
-// taken into account as the texture is accessed via the built-in functions defined below.
-// 
-// If a non-shadow texture call is made to a sampler that represents a depth texture with depth
-// comparisons turned on, then results are undefined. If a shadow texture call is made to a sampler
-// that represents a depth texture with depth comparisions turned off, the results are undefined.
-// If a shadow texture call is made to a sampler that does not represent a depth texture, then
-// results are undefined.
-// 
-// In all functions below, the bias parameter is optional for fragment shaders. The bias parameter
-// is not accepted in a vertex shader. For a fragment shader, if bias is present, it is added to
-// the calculated level of detail prior to performing the texture access operation. If the bias
-// parameter is not provided, then the implementation automatically selects level of detail:
-// For a texture that is not mip-mapped, the texture is used directly. If it is mip-mapped and
-// running in a fragment shader, the LOD computed by the implementation is used to do the texture
-// lookup. If it is mip-mapped and running on the vertex shader, then the base texture is used.
-// 
-// The built-ins suffixed with "Lod" are allowed only in a vertex shader. For the "Lod" functions,
-// lod is directly used as the level of detail.
-// 
+//
 
-// 
-// Use the texture coordinate coord to do a texture lookup in the 1D texture currently bound
-// to sampler. For the projective ("Proj") versions, the texture coordinate coord.s is divided by
-// the last component of coord.
-// 
-// XXX
 vec4 texture1D (sampler1D sampler, float coord) {
+    // XXX:
     return vec4 (0.0);
 }
+
 vec4 texture1DProj (sampler1D sampler, vec2 coord) {
     return texture1D (sampler, coord.s / coord.t);
 }
+
 vec4 texture1DProj (sampler1D sampler, vec4 coord) {
     return texture1D (sampler, coord.s / coord.q);
 }
 
-// 
-// Use the texture coordinate coord to do a texture lookup in the 2D texture currently bound
-// to sampler. For the projective ("Proj") versions, the texture coordinate (coord.s, coord.t) is
-// divided by the last component of coord. The third component of coord is ignored for the vec4
-// coord variant.
-// 
-// XXX
 vec4 texture2D (sampler2D sampler, vec2 coord) {
+    // XXX:
     return vec4 (0.0);
 }
+
 vec4 texture2DProj (sampler2D sampler, vec3 coord) {
-    return texture2D (sampler, vec2 (coord.s / coord.p, coord.t / coord.p));
+    vec2 u;
+    u.s = coord.s / coord.p;
+    u.t = coord.t / coord.p;
+    return texture2D (sampler, u);
 }
+
 vec4 texture2DProj (sampler2D sampler, vec4 coord) {
-    return texture2D (sampler, vec2 (coord.s / coord.q, coord.t / coord.q));
+    vec2 u;
+    u.s = coord.s / coord.q;
+    u.t = coord.t / coord.q;
+    return texture2D (sampler, u);
 }
 
-// 
-// Use the texture coordinate coord to do a texture lookup in the 3D texture currently bound
-// to sampler. For the projective ("Proj") versions, the texture coordinate is divided by coord.q.
-// 
-// XXX
 vec4 texture3D (sampler3D sampler, vec3 coord) {
+    // XXX:
     return vec4 (0.0);
 }
+
 vec4 texture3DProj (sampler3D sampler, vec4 coord) {
-    return texture3D (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q));
+    vec3 u;
+    u.s = coord.s / coord.q;
+    u.t = coord.t / coord.q;
+    u.p = coord.p / coord.q;
+    return texture3D (sampler, u);
 }
 
-// 
-// Use the texture coordinate coord to do a texture lookup in the cube map texture currently bound
-// to sampler. The direction of coord is used to select which face to do a 2-dimensional texture
-// lookup in, as described in section 3.8.6 in version 1.4 of the OpenGL specification.
-// 
-// XXX
 vec4 textureCube (samplerCube sampler, vec3 coord) {
+    // XXX:
     return vec4 (0.0);
 }
 
-// 
-// Use texture coordinate coord to do a depth comparison lookup on the depth texture bound
-// to sampler, as described in section 3.8.14 of version 1.4 of the OpenGL specification. The 3rd
-// component of coord (coord.p) is used as the R value. The texture bound to sampler must be a
-// depth texture, or results are undefined. For the projective ("Proj") version of each built-in,
-// the texture coordinate is divide by coord.q, giving a depth value R of coord.p/coord.q. The
-// second component of coord is ignored for the "1D" variants.
-// 
-// XXX
 vec4 shadow1D (sampler1DShadow sampler, vec3 coord) {
+    // XXX:
     return vec4 (0.0);
 }
-// XXX
+
 vec4 shadow2D (sampler2DShadow sampler, vec3 coord) {
+    // XXX:
     return vec4 (0.0);
 }
+
 vec4 shadow1DProj (sampler1DShadow sampler, vec4 coord) {
-    return shadow1D (sampler, vec3 (coord.s / coord.q, 0.0, coord.p / coord.q));
+    vec3 u;
+    u.s = coord.s / coord.q;
+    u.t = 0.0;
+    u.p = coord.p / coord.q;
+    return shadow1D (sampler, u);
 }
+
 vec4 shadow2DProj (sampler2DShadow sampler, vec4 coord) {
-    return shadow2D (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q));
+    vec3 u;
+    u.s = coord.s / coord.q;
+    u.t = coord.t / coord.q;
+    u.p = coord.p / coord.q;
+    return shadow2D (sampler, u);
 }
 
-// 
+//
 // 8.9 Noise Functions
-// 
-// Noise functions are available to both fragment and vertex shaders. They are stochastic functions
-// that can be used to increase visual complexity. Values returned by the following noise functions
-// give the appearance of randomness, but are not truly random. The noise functions below are
-// defined to have the following characteristics:
-// 
-// - The return value(s) are always in the range [-1,1], and cover at least the range [-0.6, 0.6],
-//   with a gaussian-like distribution.
-// * The return value(s) have an overall average of 0.0
-// * They are repeatable, in that a particular input value will always produce the same return value
-// * They are statistically invariant under rotation (i.e., no matter how the domain is rotated, it
-//   has the same statistical character)
-// * They have a statistical invariance under translation (i.e., no matter how the domain is
-//   translated, it has the same statistical character)
-// * They typically give different results under translation.
-// - The spatial frequency is narrowly concentrated, centered somewhere between 0.5 to 1.0.
-// 
+//
 
-// 
-// Returns a 1D noise value based on the input value x.
-// 
-// XXX
 float noise1 (float x) {
+    // XXX:
     return 0.0;
 }
-// XXX
+
 float noise1 (vec2 x) {
+    // XXX:
     return 0.0;
 }
-// XXX
+
 float noise1 (vec3 x) {
+    // XXX:
     return 0.0;
 }
-// XXX
+
 float noise1 (vec4 x) {
+    // XXX:
     return 0.0;
 }
 
-// 
-// Returns a 2D noise value based on the input value x.
-// 
-// XXX
 vec2 noise2 (float x) {
+    // XXX:
     return vec2 (0.0);
 }
-// XXX
+
 vec2 noise2 (vec2 x) {
+    // XXX:
     return vec2 (0.0);
 }
-// XXX
+
 vec2 noise2 (vec3 x) {
+    // XXX:
     return vec2 (0.0);
 }
-// XXX
+
 vec2 noise2 (vec4 x) {
+    // XXX:
     return vec2 (0.0);
 }
 
-// 
-// Returns a 3D noise value based on the input value x.
-// 
-// XXX
 vec3 noise3 (float x) {
-    return vec3 (0.0);
-}
-// XXX
-vec3 noise3 (vec2 x) {
-    return vec3 (0.0);
-}
-// XXX
-vec3 noise3 (vec3 x) {
-    return vec3 (0.0);
-}
-// XXX
-vec3 noise3 (vec4 x) {
+    // XXX:
     return vec3 (0.0);
 }
 
-// 
-// Returns a 4D noise value based on the input value x.
-// 
-// XXX
+vec3 noise3 (vec2 x) {
+    // XXX:
+    return vec3 (0.0);
+}
+
+vec3 noise3 (vec3 x) {
+    // XXX:
+    return vec3 (0.0);
+}
+
+vec3 noise3 (vec4 x) {
+    // XXX:
+    return vec3 (0.0);
+}
+
 vec4 noise4 (float x) {
+    // XXX:
     return vec4 (0.0);
 }
-// XXX
+
 vec4 noise4 (vec2 x) {
+    // XXX:
     return vec4 (0.0);
 }
-// XXX
+
 vec4 noise4 (vec3 x) {
+    // XXX:
     return vec4 (0.0);
 }
-// XXX
+
 vec4 noise4 (vec4 x) {
+    // XXX:
     return vec4 (0.0);
 }
 
