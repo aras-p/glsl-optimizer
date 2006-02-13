@@ -32,14 +32,16 @@
 #include "slang_utility.h"
 #include "slang_storage.h"
 #include "slang_assemble.h"
+#include "slang_execute.h"
 
 /* slang_storage_array */
 
-void slang_storage_array_construct (slang_storage_array *arr)
+int slang_storage_array_construct (slang_storage_array *arr)
 {
 	arr->type = slang_stor_aggregate;
 	arr->aggregate = NULL;
 	arr->length = 0;
+	return 1;
 }
 
 void slang_storage_array_destruct (slang_storage_array *arr)
@@ -53,15 +55,17 @@ void slang_storage_array_destruct (slang_storage_array *arr)
 
 /* slang_storage_aggregate */
 
-void slang_storage_aggregate_construct (slang_storage_aggregate *agg)
+int slang_storage_aggregate_construct (slang_storage_aggregate *agg)
 {
 	agg->arrays = NULL;
 	agg->count = 0;
+	return 1;
 }
 
 void slang_storage_aggregate_destruct (slang_storage_aggregate *agg)
 {
 	unsigned int i;
+
 	for (i = 0; i < agg->count; i++)
 		slang_storage_array_destruct (agg->arrays + i);
 	slang_alloc_free (agg->arrays);
@@ -75,7 +79,8 @@ static slang_storage_array *slang_storage_aggregate_push_new (slang_storage_aggr
 	if (agg->arrays != NULL)
 	{
 		arr = agg->arrays + agg->count;
-		slang_storage_array_construct (arr);
+		if (!slang_storage_array_construct (arr))
+			return NULL;
 		agg->count++;
 	}
 	return arr;
@@ -106,26 +111,80 @@ static int aggregate_matrix (slang_storage_aggregate *agg, slang_storage_type ba
 		slang_storage_aggregate));
 	if (arr->aggregate == NULL)
 		return 0;
-	slang_storage_aggregate_construct (arr->aggregate);
+	if (!slang_storage_aggregate_construct (arr->aggregate))
+	{
+		slang_alloc_free (arr->aggregate);
+		arr->aggregate = NULL;
+		return 0;
+	}
 	if (!aggregate_vector (arr->aggregate, basic_type, dimension))
 		return 0;
 	return 1;
 }
 
 static int aggregate_variables (slang_storage_aggregate *agg, slang_variable_scope *vars,
-	slang_function_scope *funcs, slang_struct_scope *structs, slang_variable_scope *globals)
+	slang_function_scope *funcs, slang_struct_scope *structs, slang_variable_scope *globals,
+	slang_machine *mach, slang_assembly_file *file, slang_atom_pool *atoms)
 {
 	unsigned int i;
 	for (i = 0; i < vars->num_variables; i++)
 		if (!_slang_aggregate_variable (agg, &vars->variables[i].type.specifier,
-				vars->variables[i].array_size, funcs, structs, globals))
+				vars->variables[i].array_size, funcs, structs, globals, mach, file, atoms))
 			return 0;
+	return 1;
+}
+
+static int eval_array_size (slang_assembly_file *file, slang_machine *pmach,
+	slang_assembly_name_space *space, slang_operation *array_size, GLuint *plength,
+	slang_atom_pool *atoms)
+{
+	slang_assembly_file_restore_point point;
+	slang_assembly_local_info info;
+	slang_assembly_flow_control flow;
+	slang_assembly_stack_info stk;
+	slang_machine mach;
+
+	/* save the current assembly */
+	if (!slang_assembly_file_restore_point_save (file, &point))
+		return 0;
+
+	/* setup the machine */
+	mach = *pmach;
+	mach.ip = file->count;
+
+	/* allocate local storage for expression */
+	info.ret_size = 0;
+	info.addr_tmp = 0;
+	info.swizzle_tmp = 4;
+	if (!slang_assembly_file_push_label (file, slang_asm_local_alloc, 20))
+		return 0;
+	if (!slang_assembly_file_push_label (file, slang_asm_enter, 20))
+		return 0;
+
+	/* insert the actual expression */
+	if (!_slang_assemble_operation (file, array_size, 0, &flow, space, &info, &stk, pmach, atoms))
+		return 0;
+	if (!slang_assembly_file_push (file, slang_asm_exit))
+		return 0;
+
+	/* execute the expression */
+	if (!_slang_execute2 (file, &mach))
+		return 0;
+
+	/* the evaluated expression is on top of the stack */
+	*plength = (GLuint) mach.mem[mach.sp + SLANG_MACHINE_GLOBAL_SIZE]._float;
+	/* TODO: check if 0 < arr->length <= 65535 */
+
+	/* restore the old assembly */
+	if (!slang_assembly_file_restore_point_load (file, &point))
+		return 0;
 	return 1;
 }
 
 int _slang_aggregate_variable (slang_storage_aggregate *agg, slang_type_specifier *spec,
 	slang_operation *array_size, slang_function_scope *funcs, slang_struct_scope *structs,
-	slang_variable_scope *vars)
+	slang_variable_scope *vars, slang_machine *mach, slang_assembly_file *file,
+	slang_atom_pool *atoms)
 {
 	switch (spec->type)
 	{
@@ -167,15 +226,12 @@ int _slang_aggregate_variable (slang_storage_aggregate *agg, slang_type_specifie
 	case slang_spec_sampler2DShadow:
 		return aggregate_vector (agg, slang_stor_int, 1);
 	case slang_spec_struct:
-		return aggregate_variables (agg, spec->_struct->fields, funcs, structs, vars);
+		return aggregate_variables (agg, spec->_struct->fields, funcs, structs, vars, mach,
+			file, atoms);
 	case slang_spec_array:
 		{
 			slang_storage_array *arr;
-			slang_assembly_file file;
-			slang_assembly_flow_control flow;
 			slang_assembly_name_space space;
-			slang_assembly_local_info info;
-			slang_assembly_stack_info stk;
 
 			arr = slang_storage_aggregate_push_new (agg);
 			if (arr == NULL)
@@ -185,21 +241,20 @@ int _slang_aggregate_variable (slang_storage_aggregate *agg, slang_type_specifie
 				slang_storage_aggregate));
 			if (arr->aggregate == NULL)
 				return 0;
-			slang_storage_aggregate_construct (arr->aggregate);
-			if (!_slang_aggregate_variable (arr->aggregate, spec->_array, NULL, funcs, structs, vars))
+			if (!slang_storage_aggregate_construct (arr->aggregate))
+			{
+				slang_alloc_free (arr->aggregate);
+				arr->aggregate = NULL;
 				return 0;
-			slang_assembly_file_construct (&file);
+			}
+			if (!_slang_aggregate_variable (arr->aggregate, spec->_array, NULL, funcs, structs,
+					vars, mach, file, atoms))
+				return 0;
 			space.funcs = funcs;
 			space.structs = structs;
 			space.vars = vars;
-			if (!_slang_assemble_operation (&file, array_size, 0, &flow, &space, &info, &stk))
-			{
-				slang_assembly_file_destruct (&file);
+			if (!eval_array_size (file, mach, &space, array_size, &arr->length, atoms))
 				return 0;
-			}
-			/* TODO: evaluate array size */
-			slang_assembly_file_destruct (&file);
-			arr->length = 256;
 		}
 		return 1;
 	default:
@@ -212,9 +267,11 @@ int _slang_aggregate_variable (slang_storage_aggregate *agg, slang_type_specifie
 unsigned int _slang_sizeof_aggregate (const slang_storage_aggregate *agg)
 {
 	unsigned int i, size = 0;
+
 	for (i = 0; i < agg->count; i++)
 	{
 		unsigned int element_size;
+
 		if (agg->arrays[i].type == slang_stor_aggregate)
 			element_size = _slang_sizeof_aggregate (agg->arrays[i].aggregate);
 		else
@@ -229,9 +286,11 @@ unsigned int _slang_sizeof_aggregate (const slang_storage_aggregate *agg)
 int _slang_flatten_aggregate (slang_storage_aggregate *flat, const slang_storage_aggregate *agg)
 {
 	unsigned int i;
+
 	for (i = 0; i < agg->count; i++)
 	{
 		unsigned int j;
+
 		for (j = 0; j < agg->arrays[i].length; j++)
 		{
 			if (agg->arrays[i].type == slang_stor_aggregate)
@@ -242,6 +301,7 @@ int _slang_flatten_aggregate (slang_storage_aggregate *flat, const slang_storage
 			else
 			{
 				slang_storage_array *arr;
+
 				arr = slang_storage_aggregate_push_new (flat);
 				if (arr == NULL)
 					return 0;

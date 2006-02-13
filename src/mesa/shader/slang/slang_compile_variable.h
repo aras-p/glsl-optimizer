@@ -109,17 +109,19 @@ int slang_variable_scope_copy (slang_variable_scope *, const slang_variable_scop
 typedef struct slang_variable_
 {
 	slang_fully_specified_type type;
-	char *name;
+	slang_atom a_name;
 	struct slang_operation_ *array_size;	/* type: spec_array */
 	struct slang_operation_ *initializer;
 	unsigned int address;
+	unsigned int size;
+	int global;
 } slang_variable;
 
 int slang_variable_construct (slang_variable *);
 void slang_variable_destruct (slang_variable *);
 int slang_variable_copy (slang_variable *, const slang_variable *);
 
-slang_variable *_slang_locate_variable (slang_variable_scope *scope, const char *name, int all);
+slang_variable *_slang_locate_variable (slang_variable_scope *scope, slang_atom a_name, int all);
 
 #ifdef __cplusplus
 }

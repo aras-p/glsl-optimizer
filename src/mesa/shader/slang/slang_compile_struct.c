@@ -32,8 +32,6 @@
 #include "slang_utility.h"
 #include "slang_compile_variable.h"
 #include "slang_compile_struct.h"
-#include "slang_compile_operation.h"
-#include "slang_compile_function.h"
 
 /* slang_struct_scope */
 
@@ -86,15 +84,15 @@ int slang_struct_scope_copy (slang_struct_scope *x, const slang_struct_scope *y)
 	return 1;
 }
 
-slang_struct *slang_struct_scope_find (slang_struct_scope *stru, const char *name, int all_scopes)
+slang_struct *slang_struct_scope_find (slang_struct_scope *stru, slang_atom a_name, int all_scopes)
 {
 	unsigned int i;
 
 	for (i = 0; i < stru->num_structs; i++)
-		if (slang_string_compare (name, stru->structs[i].name) == 0)
-			return stru->structs + i;
+		if (a_name == stru->structs[i].a_name)
+			return &stru->structs[i];
 	if (all_scopes && stru->outer_scope != NULL)
-		return slang_struct_scope_find (stru->outer_scope, name, 1);
+		return slang_struct_scope_find (stru->outer_scope, a_name, 1);
 	return NULL;
 }
 
@@ -102,7 +100,7 @@ slang_struct *slang_struct_scope_find (slang_struct_scope *stru, const char *nam
 
 int slang_struct_construct (slang_struct *stru)
 {
-	stru->name = NULL;
+	stru->a_name = SLANG_ATOM_NULL;
 	stru->fields = (slang_variable_scope *) slang_alloc_malloc (sizeof (slang_variable_scope));
 	if (stru->fields == NULL)
 		return 0;
@@ -130,7 +128,6 @@ int slang_struct_construct (slang_struct *stru)
 
 void slang_struct_destruct (slang_struct *stru)
 {
-	slang_alloc_free (stru->name);
 	slang_variable_scope_destruct (stru->fields);
 	slang_alloc_free (stru->fields);
 	slang_struct_scope_destruct (stru->structs);
@@ -143,15 +140,7 @@ int slang_struct_copy (slang_struct *x, const slang_struct *y)
 
 	if (!slang_struct_construct (&z))
 		return 0;
-	if (y->name != NULL)
-	{
-		z.name = slang_string_duplicate (y->name);
-		if (z.name == NULL)
-		{
-			slang_struct_destruct (&z);
-			return 0;
-		}
-	}
+	z.a_name = y->a_name;
 	if (!slang_variable_scope_copy (z.fields, y->fields))
 	{
 		slang_struct_destruct (&z);
@@ -175,15 +164,16 @@ int slang_struct_equal (const slang_struct *x, const slang_struct *y)
 		return 0;
 	for (i = 0; i < x->fields->num_variables; i++)
 	{
-		slang_variable *varx = x->fields->variables + i;
-		slang_variable *vary = y->fields->variables + i;
-		if (slang_string_compare (varx->name, vary->name) != 0)
+		slang_variable *varx = &x->fields->variables[i];
+		slang_variable *vary = &y->fields->variables[i];
+
+		if (varx->a_name != vary->a_name)
 			return 0;
 		if (!slang_type_specifier_equal (&varx->type.specifier, &vary->type.specifier))
 			return 0;
 		if (varx->type.specifier.type == slang_spec_array)
 		{
-			/* TODO compare array sizes */
+			/* TODO: compare array sizes */
 		}
 	}
 	return 1;

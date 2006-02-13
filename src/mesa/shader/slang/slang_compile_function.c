@@ -31,7 +31,6 @@
 #include "imports.h"
 #include "slang_utility.h"
 #include "slang_compile_variable.h"
-#include "slang_compile_struct.h"
 #include "slang_compile_operation.h"
 #include "slang_compile_function.h"
 
@@ -91,15 +90,15 @@ void slang_function_scope_destruct (slang_function_scope *scope)
 	slang_alloc_free (scope->functions);
 }
 
-int slang_function_scope_find_by_name (slang_function_scope *funcs, const char *name, int all_scopes)
+int slang_function_scope_find_by_name (slang_function_scope *funcs, slang_atom a_name, int all_scopes)
 {
 	unsigned int i;
 
 	for (i = 0; i < funcs->num_functions; i++)
-		if (slang_string_compare (name, funcs->functions[i].header.name) == 0)
+		if (a_name == funcs->functions[i].header.a_name)
 			return 1;
 	if (all_scopes && funcs->outer_scope != NULL)
-		return slang_function_scope_find_by_name (funcs->outer_scope, name, 1);
+		return slang_function_scope_find_by_name (funcs->outer_scope, a_name, 1);
 	return 0;
 }
 
@@ -110,10 +109,10 @@ slang_function *slang_function_scope_find (slang_function_scope *funcs, slang_fu
 
 	for (i = 0; i < funcs->num_functions; i++)
 	{
-		slang_function *f = funcs->functions + i;
+		slang_function *f = &funcs->functions[i];
 		unsigned int j;
 
-		if (slang_string_compare (fun->header.name, f->header.name) != 0)
+		if (fun->header.a_name != f->header.a_name)
 			continue;
 		if (fun->param_count != f->param_count)
 			continue;

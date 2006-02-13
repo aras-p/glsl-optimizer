@@ -58,7 +58,7 @@ typedef struct slang_function_scope_
 
 int slang_function_scope_construct (slang_function_scope *);
 void slang_function_scope_destruct (slang_function_scope *);
-int slang_function_scope_find_by_name (slang_function_scope *, const char *, int);
+int slang_function_scope_find_by_name (slang_function_scope *, slang_atom, int);
 slang_function *slang_function_scope_find (slang_function_scope *, slang_function *, int);
 
 #ifdef __cplusplus

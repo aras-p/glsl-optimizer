@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,43 +31,82 @@
 #include "imports.h"
 #include "slang_utility.h"
 
-void slang_alloc_free (void *ptr)
-{
-	_mesa_free (ptr);
-}
-
-void *slang_alloc_malloc (unsigned int size)
-{
-	return _mesa_malloc (size);
-}
-
-void *slang_alloc_realloc (void *ptr, unsigned int old_size, unsigned int size)
-{
-	return _mesa_realloc (ptr, old_size, size);
-}
-
-int slang_string_compare (const char *str1, const char *str2)
-{
-	return _mesa_strcmp (str1, str2);
-}
-
-char *slang_string_copy (char *dst, const char *src)
-{
-	return _mesa_strcpy (dst, src);
-}
-
 char *slang_string_concat (char *dst, const char *src)
 {
 	return _mesa_strcpy (dst + _mesa_strlen (dst), src);
 }
 
-char *slang_string_duplicate (const char *src)
+/* slang_atom_pool */
+
+void slang_atom_pool_construct (slang_atom_pool *pool)
 {
-	return _mesa_strdup (src);
+	GLuint i;
+
+	for (i = 0; i < SLANG_ATOM_POOL_SIZE; i++)
+		pool->entries[i] = NULL;
 }
 
-unsigned int slang_string_length (const char *str)
+void slang_atom_pool_destruct (slang_atom_pool *pool)
 {
-	return _mesa_strlen (str);
+	GLuint i;
+
+	for (i = 0; i < SLANG_ATOM_POOL_SIZE; i++)
+	{
+		slang_atom_entry *entry;
+		
+		entry = pool->entries[i];
+		while (entry != NULL)
+		{
+			slang_atom_entry *next;
+
+			next = entry->next;
+			slang_alloc_free (entry->id);
+			slang_alloc_free (entry);
+			entry = next;
+		}
+	}
+}
+
+slang_atom slang_atom_pool_atom (slang_atom_pool *pool, const char *id)
+{
+	GLuint hash;
+	const char *p = id;
+	slang_atom_entry **entry;
+
+	hash = 0;
+	while (*p != '\0')
+	{
+		GLuint g;
+
+		hash = (hash << 4) + (GLuint) *p++;
+		g = hash & 0xf0000000;
+		if (g != 0)
+			hash ^= g >> 24;
+		hash &= ~g;
+	}
+	hash %= SLANG_ATOM_POOL_SIZE;
+
+	entry = &pool->entries[hash];
+	while (*entry != NULL)
+	{
+		if (slang_string_compare ((**entry).id, id) == 0)
+			return (slang_atom) (**entry).id;
+		entry = &(**entry).next;
+	}
+
+	*entry = (slang_atom_entry *) slang_alloc_malloc (sizeof (slang_atom_entry));
+	if (*entry == NULL)
+		return SLANG_ATOM_NULL;
+
+	(**entry).next = NULL;
+	(**entry).id = slang_string_duplicate (id);
+	if ((**entry).id == NULL)
+		return SLANG_ATOM_NULL;
+	return (slang_atom) (**entry).id;
+}
+
+const char *slang_atom_pool_id (slang_atom_pool *pool, slang_atom atom)
+{
+	return (const char *) atom;
 }
 

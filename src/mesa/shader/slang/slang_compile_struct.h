@@ -39,11 +39,11 @@ typedef struct slang_struct_scope_
 int slang_struct_scope_construct (slang_struct_scope *);
 void slang_struct_scope_destruct (slang_struct_scope *);
 int slang_struct_scope_copy (slang_struct_scope *, const slang_struct_scope *);
-struct slang_struct_ *slang_struct_scope_find (slang_struct_scope *, const char *, int);
+struct slang_struct_ *slang_struct_scope_find (slang_struct_scope *, slang_atom, int);
 
 typedef struct slang_struct_
 {
-	char *name;
+	slang_atom a_name;
 	struct slang_variable_scope_ *fields;
 	slang_struct_scope *structs;
 } slang_struct;

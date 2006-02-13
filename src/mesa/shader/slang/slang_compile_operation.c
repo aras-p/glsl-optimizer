@@ -31,9 +31,7 @@
 #include "imports.h"
 #include "slang_utility.h"
 #include "slang_compile_variable.h"
-#include "slang_compile_struct.h"
 #include "slang_compile_operation.h"
-#include "slang_compile_function.h"
 
 /* slang_operation */
 
@@ -43,7 +41,7 @@ int slang_operation_construct (slang_operation *oper)
 	oper->children = NULL;
 	oper->num_children = 0;
 	oper->literal = (float) 0;
-	oper->identifier = NULL;
+	oper->a_id = SLANG_ATOM_NULL;
 	oper->locals = (slang_variable_scope *) slang_alloc_malloc (sizeof (slang_variable_scope));
 	if (oper->locals == NULL)
 		return 0;
@@ -62,7 +60,6 @@ void slang_operation_destruct (slang_operation *oper)
 	for (i = 0; i < oper->num_children; i++)
 		slang_operation_destruct (oper->children + i);
 	slang_alloc_free (oper->children);
-	slang_alloc_free (oper->identifier);
 	slang_variable_scope_destruct (oper->locals);
 	slang_alloc_free (oper->locals);
 }
@@ -94,15 +91,7 @@ int slang_operation_copy (slang_operation *x, const slang_operation *y)
 			return 0;
 		}
 	z.literal = y->literal;
-	if (y->identifier != NULL)
-	{
-		z.identifier = slang_string_duplicate (y->identifier);
-		if (z.identifier == NULL)
-		{
-			slang_operation_destruct (&z);
-			return 0;
-		}
-	}
+	z.a_id = y->a_id;
 	if (!slang_variable_scope_copy (z.locals, y->locals))
 	{
 		slang_operation_destruct (&z);

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,17 +33,6 @@ extern "C" {
 #endif
 
 /*
-	holds a complete information about vector swizzle - the <swizzle> array contains
-	vector component sources indices, where 0 is "x", 1 is "y", ...
-	example: "xwz" --> { 3, { 0, 3, 2, n/u } }
-*/
-typedef struct slang_swizzle_
-{
-	unsigned int num_components;
-	unsigned int swizzle[4];
-} slang_swizzle;
-
-/*
 	checks if a field selector is a general swizzle (an r-value swizzle with replicated
 	components or an l-value swizzle mask) for a vector
 	returns 1 if this is the case, <swz> is filled with swizzle information
@@ -67,7 +56,7 @@ void _slang_multiply_swizzles (slang_swizzle *, const slang_swizzle *, const sla
 
 int _slang_assemble_constructor (slang_assembly_file *file, slang_operation *op,
 	slang_assembly_flow_control *flow, slang_assembly_name_space *space,
-	slang_assembly_local_info *info);
+	slang_assembly_local_info *info, struct slang_machine_ *);
 
 int _slang_assemble_constructor_from_swizzle (slang_assembly_file *file, const slang_swizzle *swz,
 	slang_type_specifier *spec, slang_type_specifier *master_spec, slang_assembly_local_info *info);

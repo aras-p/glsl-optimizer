@@ -101,7 +101,7 @@ typedef struct slang_operation_
 	struct slang_operation_ *children;
 	unsigned int num_children;
 	float literal;		/* type: bool, literal_int, literal_float */
-	char *identifier;	/* type: asm, identifier, call, field */
+	slang_atom a_id;	/* type: asm, identifier, call, field */
 	slang_variable_scope *locals;
 } slang_operation;
 

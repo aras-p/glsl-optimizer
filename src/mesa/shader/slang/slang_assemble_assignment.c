@@ -29,10 +29,11 @@
  */
 
 #include "imports.h"
+#include "slang_utility.h"
 #include "slang_assemble_assignment.h"
 #include "slang_assemble_typeinfo.h"
 #include "slang_storage.h"
-#include "slang_utility.h"
+#include "slang_execute.h"
 
 /*
 	_slang_assemble_assignment()
@@ -54,27 +55,44 @@
 		| addr of variable |
 		+------------------+
 */
-/* TODO: add support for swizzle mask */
+
 static int assign_aggregate (slang_assembly_file *file, const slang_storage_aggregate *agg,
-	unsigned int *index, unsigned int size, slang_assembly_local_info *info)
+	unsigned int *index, unsigned int size, slang_assembly_local_info *info,
+	slang_assembly_stack_info *stk)
 {
 	unsigned int i;
 
 	for (i = 0; i < agg->count; i++)
 	{
-		const slang_storage_array *arr = agg->arrays + i;
+		const slang_storage_array *arr = &agg->arrays[i];
 		unsigned int j;
 
 		for (j = 0; j < arr->length; j++)
 		{
 			if (arr->type == slang_stor_aggregate)
 			{
-				if (!assign_aggregate (file, arr->aggregate, index, size, info))
+				if (!assign_aggregate (file, arr->aggregate, index, size, info, stk))
 					return 0;
 			}
 			else
 			{
+				unsigned int dst_addr_loc, dst_offset;
 				slang_assembly_type ty;
+
+				/* calculate the distance from top of the stack to the destination address */
+				dst_addr_loc = size - *index;
+
+				/* calculate the offset within destination variable to write */
+				if (stk->swizzle.num_components != 0)
+				{
+					/* swizzle the index to get the actual offset */
+					dst_offset = stk->swizzle.swizzle[*index / 4] * 4;
+				}
+				else
+				{
+					/* no swizzling - write sequentially */
+					dst_offset = *index;
+				}
 
 				switch (arr->type)
 				{
@@ -90,7 +108,7 @@ static int assign_aggregate (slang_assembly_file *file, const slang_storage_aggr
 				default:
 					break;
 				}
-				if (!slang_assembly_file_push_label2 (file, ty, size - *index, *index))
+				if (!slang_assembly_file_push_label2 (file, ty, dst_addr_loc, dst_offset))
 					return 0;
 				*index += 4;
 			}
@@ -100,22 +118,29 @@ static int assign_aggregate (slang_assembly_file *file, const slang_storage_aggr
 }
 
 int _slang_assemble_assignment (slang_assembly_file *file, slang_operation *op,
-	slang_assembly_name_space *space, slang_assembly_local_info *info)
+	slang_assembly_name_space *space, slang_assembly_local_info *info, slang_assembly_stack_info *stk,
+	struct slang_machine_ *mach, slang_atom_pool *atoms)
 {
 	slang_assembly_typeinfo ti;
 	int result;
 	slang_storage_aggregate agg;
 	unsigned int index, size;
 
-	slang_assembly_typeinfo_construct (&ti);
-	if (!_slang_typeof_operation (op, space, &ti))
+	if (!slang_assembly_typeinfo_construct (&ti))
+		return 0;
+	if (!_slang_typeof_operation (op, space, &ti, atoms))
 	{
 		slang_assembly_typeinfo_destruct (&ti);
 		return 0;
 	}
 
-	slang_storage_aggregate_construct (&agg);
-	if (!_slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs, space->vars))
+	if (!slang_storage_aggregate_construct (&agg))
+	{
+		slang_assembly_typeinfo_destruct (&ti);
+		return 0;
+	}
+	if (!_slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs,
+			space->vars, mach, file, atoms))
 	{
 		slang_storage_aggregate_destruct (&agg);
 		slang_assembly_typeinfo_destruct (&ti);
@@ -124,7 +149,7 @@ int _slang_assemble_assignment (slang_assembly_file *file, slang_operation *op,
 
 	index = 0;
 	size = _slang_sizeof_aggregate (&agg);
-	result = assign_aggregate (file, &agg, &index, size, info);
+	result = assign_aggregate (file, &agg, &index, size, info, stk);
 
 	slang_storage_aggregate_destruct (&agg);
 	slang_assembly_typeinfo_destruct (&ti);
@@ -138,17 +163,15 @@ int _slang_assemble_assignment (slang_assembly_file *file, slang_operation *op,
 	children
 */
 
-int dereference (slang_assembly_file *file, slang_operation *op,
-	slang_assembly_name_space *space, slang_assembly_local_info *info);
-
 int call_function_name (slang_assembly_file *file, const char *name, slang_operation *params,
 	unsigned int param_count, int assignment, slang_assembly_name_space *space,
-	slang_assembly_local_info *info);
+	slang_assembly_local_info *info, slang_machine *mach, slang_atom_pool *atoms);
 
 int _slang_assemble_assign (slang_assembly_file *file, slang_operation *op, const char *oper,
-	int ref, slang_assembly_name_space *space, slang_assembly_local_info *info)
+	int ref, slang_assembly_name_space *space, slang_assembly_local_info *info,
+	struct slang_machine_ *mach, slang_atom_pool *atoms)
 {
-	slang_assembly_stack_info stk;
+	slang_assembly_stack_info l_stk, r_stk;
 	slang_assembly_flow_control flow;
 
 	if (!ref)
@@ -159,16 +182,19 @@ int _slang_assemble_assign (slang_assembly_file *file, slang_operation *op, cons
 
 	if (slang_string_compare ("=", oper) == 0)
 	{
-		if (!_slang_assemble_operation (file, op->children, 1, &flow, space, info, &stk))
+		if (!_slang_assemble_operation (file, &op->children[0], 1, &flow, space, info, &l_stk, mach,
+				atoms))
 			return 0;
-		if (!_slang_assemble_operation (file, op->children + 1, 0, &flow, space, info, &stk))
+		if (!_slang_assemble_operation (file, &op->children[1], 0, &flow, space, info, &r_stk, mach,
+				atoms))
 			return 0;
-		if (!_slang_assemble_assignment (file, op->children, space, info))
+		if (!_slang_assemble_assignment (file, op->children, space, info, &l_stk, mach, atoms))
 			return 0;
 	}
 	else
 	{
-		if (!call_function_name (file, oper, op->children, op->num_children, 1, space, info))
+		if (!call_function_name (file, oper, op->children, op->num_children, 1, space, info, mach,
+				atoms))
 			return 0;
 	}
 
@@ -178,7 +204,7 @@ int _slang_assemble_assign (slang_assembly_file *file, slang_operation *op, cons
 			return 0;
 		if (!slang_assembly_file_push_label (file, slang_asm_local_free, 4))
 			return 0;
-		if (!dereference (file, op->children, space, info))
+		if (!_slang_dereference (file, op->children, space, info, mach, atoms))
 			return 0;
 	}
 

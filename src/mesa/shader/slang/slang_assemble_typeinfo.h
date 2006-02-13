@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,9 +38,10 @@ typedef struct slang_assembly_typeinfo_
 	int is_swizzled;
 	slang_swizzle swz;
 	slang_type_specifier spec;
+	slang_operation *array_size;
 } slang_assembly_typeinfo;
 
-void slang_assembly_typeinfo_construct (slang_assembly_typeinfo *);
+int slang_assembly_typeinfo_construct (slang_assembly_typeinfo *);
 void slang_assembly_typeinfo_destruct (slang_assembly_typeinfo *);
 
 /*
@@ -49,15 +50,20 @@ void slang_assembly_typeinfo_destruct (slang_assembly_typeinfo *);
 	returns 0 otherwise
 */
 int _slang_typeof_operation (slang_operation *, slang_assembly_name_space *,
-	slang_assembly_typeinfo *);
+	slang_assembly_typeinfo *, slang_atom_pool *);
 
 /*
 	retrieves type of a function prototype, if one exists
 	returns 1 on success, even if the function was not found
 	returns 0 otherwise
 */
-int _slang_typeof_function (const char *name, slang_operation *params, unsigned int num_params,
-	slang_assembly_name_space *space, slang_type_specifier *spec, int *exists);
+int _slang_typeof_function (slang_atom a_name, slang_operation *params, unsigned int num_params,
+	slang_assembly_name_space *space, slang_type_specifier *spec, int *exists, slang_atom_pool *);
+
+int _slang_type_is_matrix (slang_type_specifier_type);
+int _slang_type_is_vector (slang_type_specifier_type);
+slang_type_specifier_type _slang_type_base (slang_type_specifier_type);
+unsigned int _slang_type_dim (slang_type_specifier_type);
 
 #ifdef __cplusplus
 }

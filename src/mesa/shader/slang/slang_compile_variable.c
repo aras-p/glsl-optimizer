@@ -33,7 +33,6 @@
 #include "slang_compile_variable.h"
 #include "slang_compile_struct.h"
 #include "slang_compile_operation.h"
-#include "slang_compile_function.h"
 
 /* slang_type_specifier_type */
 
@@ -269,17 +268,18 @@ int slang_variable_construct (slang_variable *var)
 {
 	if (!slang_fully_specified_type_construct (&var->type))
 		return 0;
-	var->name = NULL;
+	var->a_name = SLANG_ATOM_NULL;
 	var->array_size = NULL;
 	var->initializer = NULL;
 	var->address = ~0;
+	var->size = 0;
+	var->global = 0;
 	return 1;
 }
 
 void slang_variable_destruct (slang_variable *var)
 {
 	slang_fully_specified_type_destruct (&var->type);
-	slang_alloc_free (var->name);
 	if (var->array_size != NULL)
 	{
 		slang_operation_destruct (var->array_size);
@@ -303,15 +303,7 @@ int slang_variable_copy (slang_variable *x, const slang_variable *y)
 		slang_variable_destruct (&z);
 		return 0;
 	}
-	if (y->name != NULL)
-	{
-		z.name = slang_string_duplicate (y->name);
-		if (z.name == NULL)
-		{
-			slang_variable_destruct (&z);
-			return 0;
-		}
-	}
+	z.a_name = y->a_name;
 	if (y->array_size != NULL)
 	{
 		z.array_size = (slang_operation *) slang_alloc_malloc (sizeof (slang_operation));
@@ -352,20 +344,23 @@ int slang_variable_copy (slang_variable *x, const slang_variable *y)
 			return 0;
 		}
 	}
+	z.address = y->address;
+	z.size = y->size;
+	z.global = y->global;
 	slang_variable_destruct (x);
 	*x = z;
 	return 1;
 }
 
-slang_variable *_slang_locate_variable (slang_variable_scope *scope, const char *name, int all)
+slang_variable *_slang_locate_variable (slang_variable_scope *scope, slang_atom a_name, int all)
 {
 	unsigned int i;
 
 	for (i = 0; i < scope->num_variables; i++)
-		if (slang_string_compare (name, scope->variables[i].name) == 0)
-			return scope->variables + i;
+		if (a_name == scope->variables[i].a_name)
+			return &scope->variables[i];
 	if (all && scope->outer_scope != NULL)
-		return _slang_locate_variable (scope->outer_scope, name, 1);
+		return _slang_locate_variable (scope->outer_scope, a_name, 1);
 	return NULL;
 }
 

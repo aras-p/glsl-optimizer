@@ -66,7 +66,7 @@ typedef struct slang_storage_array_
 	unsigned int length;
 } slang_storage_array;
 
-void slang_storage_array_construct (slang_storage_array *);
+int slang_storage_array_construct (slang_storage_array *);
 void slang_storage_array_destruct (slang_storage_array *);
 
 /*
@@ -81,12 +81,13 @@ typedef struct slang_storage_aggregate_
 	unsigned int count;
 } slang_storage_aggregate;
 
-void slang_storage_aggregate_construct (slang_storage_aggregate *);
+int slang_storage_aggregate_construct (slang_storage_aggregate *);
 void slang_storage_aggregate_destruct (slang_storage_aggregate *);
 
 int _slang_aggregate_variable (slang_storage_aggregate *, struct slang_type_specifier_ *,
 	struct slang_operation_ *, struct slang_function_scope_ *, slang_struct_scope *,
-	slang_variable_scope *);
+	slang_variable_scope *, struct slang_machine_ *, struct slang_assembly_file_ *,
+	slang_atom_pool *);
 
 /*
 	returns total size (in machine units) of the given aggregate

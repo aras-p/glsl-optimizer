@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,11 +47,12 @@ typedef struct slang_machine_
 	GLuint kill;				/* discard the fragment */
 	GLuint exit;				/* terminate the shader */
 	slang_machine_slot mem[SLANG_MACHINE_MEMORY_SIZE];
-	slang_machine_slot *global;
-	slang_machine_slot *stack;
 } slang_machine;
 
+void slang_machine_init (slang_machine *);
+
 int _slang_execute (const slang_assembly_file *);
+int _slang_execute2 (const slang_assembly_file *, slang_machine *);
 
 #ifdef __cplusplus
 }
