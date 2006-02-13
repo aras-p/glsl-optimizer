@@ -33,7 +33,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -305,6 +305,28 @@ _mesa_cos(double a)
    return xf86cos(a);
 #else
    return cos(a);
+#endif
+}
+
+/** Single precision wrapper around either asin() or xf86asin() */
+float
+_mesa_asinf(float x)
+{
+#if defined(XFree86LOADER) && defined(IN_MODULE)
+   return (float) xf86asin((double) x);
+#else
+   return (float) asin((double) x);
+#endif
+}
+
+/** Single precision wrapper around either atan() or xf86atan() */
+float
+_mesa_atanf(float x)
+{
+#if defined(XFree86LOADER) && defined(IN_MODULE)
+   return (float) xf86atan((double) x);
+#else
+   return (float) atan((double) x);
 #endif
 }
 
