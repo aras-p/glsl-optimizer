@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.5
  *
- * Copyright (C) 2004-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2004-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,7 +49,7 @@
 .syntax translation_unit;
 
 /* revision number - increment after each change affecting emitted output */
-.emtcode REVISION                                   2
+.emtcode REVISION                                   3
 
 /* external declaration */
 .emtcode EXTERNAL_NULL                              0
@@ -66,38 +66,35 @@
 .emtcode FUNCTION_OPERATOR                          2
 
 /* operator type */
-.emtcode OPERATOR_ASSIGN                            1
-.emtcode OPERATOR_ADDASSIGN                         2
-.emtcode OPERATOR_SUBASSIGN                         3
-.emtcode OPERATOR_MULASSIGN                         4
-.emtcode OPERATOR_DIVASSIGN                         5
-/*.emtcode OPERATOR_MODASSIGN                         6*/
-/*.emtcode OPERATOR_LSHASSIGN                         7*/
-/*.emtcode OPERATOR_RSHASSIGN                         8*/
-/*.emtcode OPERATOR_ORASSIGN                          9*/
-/*.emtcode OPERATOR_XORASSIGN                         10*/
-/*.emtcode OPERATOR_ANDASSIGN                         11*/
-.emtcode OPERATOR_LOGICALXOR                        12
-/*.emtcode OPERATOR_BITOR                             13*/
-/*.emtcode OPERATOR_BITXOR                            14*/
-/*.emtcode OPERATOR_BITAND                            15*/
-.emtcode OPERATOR_EQUAL                             16
-.emtcode OPERATOR_NOTEQUAL                          17
-.emtcode OPERATOR_LESS                              18
-.emtcode OPERATOR_GREATER                           19
-.emtcode OPERATOR_LESSEQUAL                         20
-.emtcode OPERATOR_GREATEREQUAL                      21
-/*.emtcode OPERATOR_LSHIFT                            22*/
-/*.emtcode OPERATOR_RSHIFT                            23*/
-.emtcode OPERATOR_MULTIPLY                          24
-.emtcode OPERATOR_DIVIDE                            25
-/*.emtcode OPERATOR_MODULUS                           26*/
-.emtcode OPERATOR_INCREMENT                         27
-.emtcode OPERATOR_DECREMENT                         28
-.emtcode OPERATOR_PLUS                              29
-.emtcode OPERATOR_MINUS                             30
-/*.emtcode OPERATOR_COMPLEMENT                        31*/
-.emtcode OPERATOR_NOT                               32
+.emtcode OPERATOR_ADDASSIGN                         1
+.emtcode OPERATOR_SUBASSIGN                         2
+.emtcode OPERATOR_MULASSIGN                         3
+.emtcode OPERATOR_DIVASSIGN                         4
+/*.emtcode OPERATOR_MODASSIGN                         5*/
+/*.emtcode OPERATOR_LSHASSIGN                         6*/
+/*.emtcode OPERATOR_RSHASSIGN                         7*/
+/*.emtcode OPERATOR_ORASSIGN                          8*/
+/*.emtcode OPERATOR_XORASSIGN                         9*/
+/*.emtcode OPERATOR_ANDASSIGN                         10*/
+.emtcode OPERATOR_LOGICALXOR                        11
+/*.emtcode OPERATOR_BITOR                             12*/
+/*.emtcode OPERATOR_BITXOR                            13*/
+/*.emtcode OPERATOR_BITAND                            14*/
+.emtcode OPERATOR_LESS                              15
+.emtcode OPERATOR_GREATER                           16
+.emtcode OPERATOR_LESSEQUAL                         17
+.emtcode OPERATOR_GREATEREQUAL                      18
+/*.emtcode OPERATOR_LSHIFT                            19*/
+/*.emtcode OPERATOR_RSHIFT                            20*/
+.emtcode OPERATOR_MULTIPLY                          21
+.emtcode OPERATOR_DIVIDE                            22
+/*.emtcode OPERATOR_MODULUS                           23*/
+.emtcode OPERATOR_INCREMENT                         24
+.emtcode OPERATOR_DECREMENT                         25
+.emtcode OPERATOR_PLUS                              26
+.emtcode OPERATOR_MINUS                             27
+/*.emtcode OPERATOR_COMPLEMENT                        28*/
+.emtcode OPERATOR_NOT                               29
 
 /* init declarator list */
 .emtcode DECLARATOR_NONE                            0
@@ -684,7 +681,6 @@ overriden_operator
     minusminus .emit OPERATOR_DECREMENT .or
     minusequals .emit OPERATOR_SUBASSIGN .or
     minus .emit OPERATOR_MINUS .or
-    bangequals .emit OPERATOR_NOTEQUAL .or
     bang .emit OPERATOR_NOT .or
     starequals .emit OPERATOR_MULASSIGN .or
     star .emit OPERATOR_MULTIPLY .or
@@ -698,8 +694,6 @@ overriden_operator
     /*greatergreaterequals .emit OPERATOR_RSHASSIGN .or*/
     /*greatergreater .emit OPERATOR_RSHIFT .or*/
     greater .emit OPERATOR_GREATER .or
-    equalsequals .emit OPERATOR_EQUAL .or
-    equals .emit OPERATOR_ASSIGN .or
     /*percentequals .emit OPERATOR_MODASSIGN .or*/
     /*percent .emit OPERATOR_MODULUS .or*/
     /*ampersandequals .emit OPERATOR_ANDASSIGN */
