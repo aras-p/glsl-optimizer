@@ -578,6 +578,10 @@ SOURCE=..\..\..\..\src\mesa\tnl\t_vb_arbprogram.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\tnl\t_vb_arbshader.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\tnl\t_vb_cull.c
 # End Source File
 # Begin Source File
