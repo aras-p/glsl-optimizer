@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,6 +47,9 @@ struct point_stage_data {
 static GLboolean
 run_point_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
+   if (ctx->ShaderObjects.CurrentProgram != NULL)
+      return GL_TRUE;
+
    if (ctx->Point._Attenuated && !ctx->VertexProgram._Enabled) {
       struct point_stage_data *store = POINT_STAGE_DATA(stage);
       struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;

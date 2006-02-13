@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -488,6 +488,9 @@ static GLboolean run_texgen_stage( GLcontext *ctx,
    struct texgen_stage_data *store = TEXGEN_STAGE_DATA(stage);
    GLuint i;
 
+   if (ctx->ShaderObjects.CurrentProgram != NULL)
+      return GL_TRUE;
+
    if (!ctx->Texture._TexGenEnabled || ctx->VertexProgram._Enabled) 
       return GL_TRUE;
 
@@ -512,6 +515,9 @@ static void validate_texgen_stage( GLcontext *ctx,
 {
    struct texgen_stage_data *store = TEXGEN_STAGE_DATA(stage);
    GLuint i;
+
+   if (ctx->ShaderObjects.CurrentProgram != NULL)
+      return;
 
    if (!ctx->Texture._TexGenEnabled || ctx->VertexProgram._Enabled) 
       return;

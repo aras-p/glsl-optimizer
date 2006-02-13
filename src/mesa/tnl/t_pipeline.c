@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -210,6 +210,9 @@ const struct tnl_pipeline_stage *_tnl_default_pipeline[] = {
 #if defined(FEATURE_NV_vertex_program) || defined(FEATURE_ARB_vertex_program)
    &_tnl_arb_vertex_program_stage,
    &_tnl_vertex_program_stage, 
+#endif
+#if FEATURE_ARB_vertex_shader
+   &_tnl_arb_vertex_shader_stage,
 #endif
    &_tnl_render_stage,
    NULL 

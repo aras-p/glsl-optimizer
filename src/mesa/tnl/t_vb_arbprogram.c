@@ -1257,15 +1257,17 @@ static INLINE void call_func( struct tnl_compiled_program *p,
 static GLboolean
 run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
-   struct vertex_program *program = (ctx->VertexProgram._Enabled ?
-				     ctx->VertexProgram.Current :
-				     ctx->_TnlProgram);
+   struct vertex_program *program;
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct arb_vp_machine *m = ARB_VP_MACHINE(stage);
    struct tnl_compiled_program *p;
    GLuint i, j;
    GLbitfield outputs;
 
+   if (ctx->ShaderObjects.CurrentProgram != NULL)
+      return GL_TRUE;
+
+   program = (ctx->VertexProgram._Enabled ? ctx->VertexProgram.Current : ctx->_TnlProgram);
    if (!program || program->IsNVProgram)
       return GL_TRUE;   
 
@@ -1408,9 +1410,12 @@ static void
 validate_vertex_program( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 {
    struct arb_vp_machine *m = ARB_VP_MACHINE(stage);
-   struct vertex_program *program = 
-      (ctx->VertexProgram._Enabled ? ctx->VertexProgram.Current : 0);
+   struct vertex_program *program;
 
+   if (ctx->ShaderObjects.CurrentProgram != NULL)
+      return;
+
+   program = (ctx->VertexProgram._Enabled ? ctx->VertexProgram.Current : 0);
    if (!program && ctx->_MaintainTnlProgram) {
       program = ctx->_TnlProgram;
    }
