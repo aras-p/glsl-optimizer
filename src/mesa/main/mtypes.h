@@ -1949,7 +1949,7 @@ struct gl_query_state
  */
 struct gl_shader_objects_state
 {
-   struct gl2_program_intf **current_program;
+   struct gl2_program_intf **CurrentProgram;
 };
 
 
