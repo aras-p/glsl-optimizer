@@ -73,9 +73,9 @@ _mesa_GetHandleARB (GLenum pname)
 	switch (pname)
 	{
 	case GL_PROGRAM_OBJECT_ARB:
-		if (ctx->ShaderObjects.current_program != NULL)
-			return (**ctx->ShaderObjects.current_program)._container._generic.GetName (
-				(struct gl2_generic_intf **) ctx->ShaderObjects.current_program);
+		if (ctx->ShaderObjects.CurrentProgram != NULL)
+			return (**ctx->ShaderObjects.CurrentProgram)._container._generic.GetName (
+				(struct gl2_generic_intf **) ctx->ShaderObjects.CurrentProgram);
 		break;
 	}
 
@@ -305,7 +305,7 @@ _mesa_LinkProgramARB (GLhandleARB programObj)
 		return;
 	}
 
-	if (pro == ctx->ShaderObjects.current_program)
+	if (pro == ctx->ShaderObjects.CurrentProgram)
 	{
 		/* TODO re-install executable program */
 	}
@@ -353,13 +353,13 @@ _mesa_UseProgramObjectARB (GLhandleARB programObj)
 		}
 	}
 
-	if (ctx->ShaderObjects.current_program != NULL)
+	if (ctx->ShaderObjects.CurrentProgram != NULL)
 	{
-		(**ctx->ShaderObjects.current_program)._container._generic._unknown.Release (
-			(struct gl2_unknown_intf **) ctx->ShaderObjects.current_program);
+		(**ctx->ShaderObjects.CurrentProgram)._container._generic._unknown.Release (
+			(struct gl2_unknown_intf **) ctx->ShaderObjects.CurrentProgram);
 	}
 
-	ctx->ShaderObjects.current_program = pro;
+	ctx->ShaderObjects.CurrentProgram = pro;
 }
 
 void GLAPIENTRY
@@ -418,7 +418,7 @@ _mesa_Uniform1fARB (GLint location, GLfloat v0)
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1fARB");
 		return;
@@ -430,7 +430,7 @@ _mesa_Uniform2fARB (GLint location, GLfloat v0, GLfloat v1)
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2fARB");
 		return;
@@ -442,7 +442,7 @@ _mesa_Uniform3fARB (GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3fARB");
 		return;
@@ -454,7 +454,7 @@ _mesa_Uniform4fARB (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat 
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4fARB");
 		return;
@@ -466,7 +466,7 @@ _mesa_Uniform1iARB (GLint location, GLint v0)
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1iARB");
 		return;
@@ -478,7 +478,7 @@ _mesa_Uniform2iARB (GLint location, GLint v0, GLint v1)
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2iARB");
 		return;
@@ -490,7 +490,7 @@ _mesa_Uniform3iARB (GLint location, GLint v0, GLint v1, GLint v2)
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3iARB");
 		return;
@@ -502,7 +502,7 @@ _mesa_Uniform4iARB (GLint location, GLint v0, GLint v1, GLint v2, GLint v3)
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4iARB");
 		return;
@@ -514,7 +514,7 @@ _mesa_Uniform1fvARB (GLint location, GLsizei count, const GLfloat *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1fvARB");
 		return;
@@ -526,7 +526,7 @@ _mesa_Uniform2fvARB (GLint location, GLsizei count, const GLfloat *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2fvARB");
 		return;
@@ -538,7 +538,7 @@ _mesa_Uniform3fvARB (GLint location, GLsizei count, const GLfloat *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3fvARB");
 		return;
@@ -550,7 +550,7 @@ _mesa_Uniform4fvARB (GLint location, GLsizei count, const GLfloat *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4fvARB");
 		return;
@@ -562,7 +562,7 @@ _mesa_Uniform1ivARB (GLint location, GLsizei count, const GLint *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1ivARB");
 		return;
@@ -574,7 +574,7 @@ _mesa_Uniform2ivARB (GLint location, GLsizei count, const GLint *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2ivARB");
 		return;
@@ -586,7 +586,7 @@ _mesa_Uniform3ivARB (GLint location, GLsizei count, const GLint *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3ivARB");
 		return;
@@ -598,7 +598,7 @@ _mesa_Uniform4ivARB (GLint location, GLsizei count, const GLint *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4ivARB");
 		return;
@@ -610,7 +610,7 @@ _mesa_UniformMatrix2fvARB (GLint location, GLsizei count, GLboolean transpose, c
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix2fvARB");
 		return;
@@ -622,7 +622,7 @@ _mesa_UniformMatrix3fvARB (GLint location, GLsizei count, GLboolean transpose, c
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix3fvARB");
 		return;
@@ -634,7 +634,7 @@ _mesa_UniformMatrix4fvARB (GLint location, GLsizei count, GLboolean transpose, c
 {
 	GET_CURRENT_CONTEXT(ctx);
 
-	if (ctx->ShaderObjects.current_program == NULL)
+	if (ctx->ShaderObjects.CurrentProgram == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix4fvARB");
 		return;
@@ -1175,7 +1175,7 @@ _mesa_GetAttribLocationARB (GLhandleARB programObj, const GLcharARB *name)
 void
 _mesa_init_shaderobjects (GLcontext *ctx)
 {
-	ctx->ShaderObjects.current_program = NULL;
+	ctx->ShaderObjects.CurrentProgram = NULL;
 
 	_mesa_init_shaderobjects_3dlabs (ctx);
 }

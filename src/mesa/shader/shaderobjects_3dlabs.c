@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,6 +42,7 @@
 #include "slang_mesa.h"
 #include "Public/ShaderLang.h"
 #else
+#include "slang_utility.h"
 #include "slang_compile.h"
 #endif
 
@@ -465,6 +466,7 @@ struct gl2_shader_obj
 	GLcharARB *source;
 	GLint *offsets;
 	GLsizei offset_count;
+	slang_translation_unit unit;
 };
 
 struct gl2_shader_impl
@@ -548,7 +550,6 @@ _shader_Compile (struct gl2_shader_intf **intf)
 	char **strings;
 	TBuiltInResource res;
 #else
-	slang_translation_unit unit;
 	slang_unit_type type;
 	slang_info_log info_log;
 #endif
@@ -627,7 +628,7 @@ _shader_Compile (struct gl2_shader_intf **intf)
 	else
 		type = slang_unit_vertex_shader;
 	slang_info_log_construct (&info_log);
-	if (_slang_compile (impl->_obj.source, &unit, type, &info_log))
+	if (_slang_compile (impl->_obj.source, &impl->_obj.unit, type, &info_log))
 	{
 		impl->_obj.compile_status = GL_TRUE;
 	}
@@ -794,6 +795,10 @@ _program_Link (struct gl2_program_intf **intf)
 		impl->_obj.link_status = GL_TRUE;
 
 	impl->_obj._container._generic.info_log = _mesa_strdup (ShGetInfoLog (impl->_obj.linker));
+#else
+	/* TODO: do the real linking */
+	impl->_obj.link_status = GL_TRUE;
+	impl->_obj._container._generic.info_log = _mesa_strdup ("Link OK.\n");
 #endif
 }
 
@@ -1039,6 +1044,109 @@ _mesa_3dlabs_create_program_object (void)
 	}
 
 	return 0;
+}
+
+#include "slang_assemble.h"
+#include "slang_execute.h"
+
+static GLubyte *get_address_of (struct gl2_vertex_shader_intf **vs, const char *name)
+{
+	struct gl2_vertex_shader_impl *impl = (struct gl2_vertex_shader_impl *) vs;
+	slang_translation_unit *unit;
+	slang_atom atom;
+	slang_variable *var;
+
+	impl = (struct gl2_vertex_shader_impl *) vs;
+	unit = &impl->_obj._shader.unit;
+	atom = slang_atom_pool_atom (unit->atom_pool, name);
+	var = _slang_locate_variable (&unit->globals, atom, 1);
+	if (var == NULL || var->address == ~0)
+		return NULL;
+	return (GLubyte *) unit->machine->mem + var->address;
+}
+
+static int fetch_mem (struct gl2_vertex_shader_intf **vs, const char *name, GLvoid *val,
+	GLuint size, GLuint index, int write)
+{
+	GLubyte *data;
+
+	data = get_address_of (vs, name) + index * size;
+	if (data == NULL)
+		return 0;
+	if (write)
+		_mesa_memcpy (data, val, size);
+	else
+		_mesa_memcpy (val, data, size);
+	return 1;
+}
+
+int _slang_fetch_float (struct gl2_vertex_shader_intf **vs, const char *name, GLfloat *val, int write)
+{
+	return fetch_mem (vs, name, val, 4, 0, write);
+}
+
+int _slang_fetch_vec3 (struct gl2_vertex_shader_intf **vs, const char *name, GLfloat *val, int write)
+{
+	return fetch_mem (vs, name, val, 12, 0, write);
+}
+
+int _slang_fetch_vec4 (struct gl2_vertex_shader_intf **vs, const char *name, GLfloat *val,
+	GLuint index, int write)
+{
+	return fetch_mem (vs, name, val, 16, index, write);
+}
+
+int _slang_fetch_mat4 (struct gl2_vertex_shader_intf **vs, const char *name, GLfloat *val,
+	GLuint index, int write)
+{
+	return fetch_mem (vs, name, val, 64, index, write);
+}
+
+/* XXX */
+int _slang_call_function (slang_assembly_file *file, slang_function *fun, slang_operation *params,
+	unsigned int param_count, int assignment, slang_assembly_name_space *space,
+	slang_assembly_local_info *info, struct slang_machine_ *pmach, slang_atom_pool *);
+
+void exec_vertex_shader (struct gl2_vertex_shader_intf **vs)
+{
+	struct gl2_vertex_shader_impl *impl = (struct gl2_vertex_shader_impl *) vs;
+	slang_translation_unit *unit;
+	slang_atom atom;
+	unsigned int i;
+
+	impl = (struct gl2_vertex_shader_impl *) vs;
+	unit = &impl->_obj._shader.unit;
+	atom = slang_atom_pool_atom (unit->atom_pool, "main");
+	for (i = 0; i < unit->functions.num_functions; i++)
+		if (atom == unit->functions.functions[i].header.a_name)
+			break;
+	if (i < unit->functions.num_functions)
+	{
+		slang_function *f;
+		slang_assembly_file_restore_point point;
+		slang_machine mach;
+		slang_assembly_local_info info;
+		slang_assembly_name_space space;
+
+		f = &unit->functions.functions[i];
+		slang_assembly_file_restore_point_save (unit->assembly, &point);
+		mach = *unit->machine;
+		mach.ip = unit->assembly->count;
+		info.ret_size = 0;
+		info.addr_tmp = 0;
+		info.swizzle_tmp = 4;
+		slang_assembly_file_push_label (unit->assembly, slang_asm_local_alloc, 20);
+		slang_assembly_file_push_label (unit->assembly, slang_asm_enter, 20);
+		space.funcs = &unit->functions;
+		space.structs = &unit->structs;
+		space.vars = &unit->globals;
+		_slang_call_function (unit->assembly, f, NULL, 0, 0, &space, &info, unit->machine,
+			unit->atom_pool);
+		slang_assembly_file_push (unit->assembly, slang_asm_exit);
+		_slang_execute2 (unit->assembly, &mach);
+		slang_assembly_file_restore_point_load (unit->assembly, &point);
+		_mesa_memcpy (unit->machine->mem, mach.mem, SLANG_MACHINE_MEMORY_SIZE * sizeof (slang_machine_slot));
+	}
 }
 
 void
