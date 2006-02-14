@@ -53,6 +53,8 @@ if [ `uname` = "FreeBSD" ] ; then
 	CP_FLAGS="-f"
 elif [ `uname` = "Darwin" ] ; then
 	CP_FLAGS="-f"
+elif [ `uname` = "AIX" ] ; then
+	CP_FLAGS="-fh"
 else
 	CP_FLAGS="-fd"
 fi

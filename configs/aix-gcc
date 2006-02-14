@@ -14,6 +14,6 @@ CXXFLAGS = -O2 -DAIXV3
 MKLIB_OPTIONS = -arch aix-gcc
 GL_LIB_DEPS = -lX11 -lXext -lm
 GLU_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -lm
-GLUT_LIB_DEPS = -L$(LIB_DIR -l$(GLU_LIB) -l$(GL_LIB) -lXi -lXmu
+GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lXi -lXmu
 APP_LIB_DEPS = -L$(LIB_DIR) -Wl,-brtl -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm -lX11 -lXext -lXmu -lXi
 
