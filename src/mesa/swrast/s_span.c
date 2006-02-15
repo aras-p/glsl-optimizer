@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,6 +38,7 @@
 
 #include "s_atifragshader.h"
 #include "s_alpha.h"
+#include "s_arbshader.h"
 #include "s_blend.h"
 #include "s_context.h"
 #include "s_depth.h"
@@ -1155,7 +1156,12 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
          interpolate_fog(ctx, span);
 
       /* Compute fragment colors with fragment program or texture lookups */
-      if (ctx->FragmentProgram._Active) {
+      if (ctx->ShaderObjects.CurrentProgram != NULL) {
+         if (span->interpMask & SPAN_Z)
+            _swrast_span_interpolate_z (ctx, span);
+         _swrast_exec_arbshader (ctx, span);
+      }
+      else if (ctx->FragmentProgram._Active) {
          /* frag prog may need Z values */
          if (span->interpMask & SPAN_Z)
             _swrast_span_interpolate_z(ctx, span);
@@ -1232,7 +1238,12 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
       if (span->interpMask & SPAN_FOG)
          interpolate_fog(ctx, span);
 
-      if (ctx->FragmentProgram._Active)
+      if (ctx->ShaderObjects.CurrentProgram != NULL) {
+         if (span->interpMask & SPAN_Z)
+            _swrast_span_interpolate_z (ctx, span);
+         _swrast_exec_arbshader (ctx, span);
+      }
+      else if (ctx->FragmentProgram._Active)
          _swrast_exec_fragment_program( ctx, span );
       else if (ctx->ATIFragmentShader._Enabled)
          _swrast_exec_fragment_shader( ctx, span );
