@@ -2938,7 +2938,10 @@ update_texture_state( GLcontext *ctx )
    /* Fragment programs may need texture coordinates but not the
     * corresponding texture images.
     */
-   if (ctx->FragmentProgram._Enabled) {
+   if (ctx->ShaderObjects.CurrentProgram != NULL) {
+      ctx->Texture._EnabledCoordUnits |= (1 << 8) - 1;
+   }
+   else if (ctx->FragmentProgram._Enabled) {
       ctx->Texture._EnabledCoordUnits |=
          (ctx->FragmentProgram.Current->Base.InputsRead >> FRAG_ATTRIB_TEX0);
    }
