@@ -179,7 +179,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #if FEATURE_ARB_fragment_program
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
 #endif
-#if 0 && FEATURE_ARB_fragment_shader
+#if FEATURE_ARB_fragment_shader
    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
 #endif
    /*ctx->Extensions.ARB_half_float_pixel = GL_TRUE;*/
@@ -365,7 +365,7 @@ void
 _mesa_enable_2_0_extensions(GLcontext *ctx)
 {
    ctx->Extensions.ARB_draw_buffers = GL_TRUE;
-#if 0 && FEATURE_ARB_fragment_shader
+#if FEATURE_ARB_fragment_shader
    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
 #endif
    ctx->Extensions.ARB_point_sprite = GL_TRUE;
