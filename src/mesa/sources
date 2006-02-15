@@ -84,6 +84,7 @@ SWRAST_SOURCES = \
 	swrast/s_aatriangle.c \
 	swrast/s_accum.c \
 	swrast/s_alpha.c \
+	swrast/s_arbshader.c \
 	swrast/s_atifragshader.c \
 	swrast/s_bitmap.c \
 	swrast/s_blend.c \
