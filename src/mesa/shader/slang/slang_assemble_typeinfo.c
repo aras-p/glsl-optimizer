@@ -329,6 +329,9 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 					case slang_spec_bool:
 						ti->spec.type = slang_spec_bvec2;
 						break;
+					default:
+						_mesa_problem(NULL, "unexepected base in _slang_typeof_operation");
+						ti->spec.type = slang_spec_void;
 					}
 					break;
 				case 3:
@@ -343,6 +346,9 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 					case slang_spec_bool:
 						ti->spec.type = slang_spec_bvec3;
 						break;
+					default:
+						_mesa_problem(NULL, "unexepected base in _slang_typeof_operation");
+						ti->spec.type = slang_spec_void;
 					}
 					break;
 				case 4:
@@ -357,6 +363,9 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 					case slang_spec_bool:
 						ti->spec.type = slang_spec_bvec4;
 						break;
+					default:
+						_mesa_problem(NULL, "unexepected base in _slang_typeof_operation");
+						ti->spec.type = slang_spec_void;
 					}
 					break;
 				default:

@@ -143,7 +143,7 @@ void _slang_multiply_swizzles (slang_swizzle *dst, const slang_swizzle *left,
 }
 
 /* _slang_assemble_constructor() */
-/*
+#if 0
 static int constructor_aggregate (slang_assembly_file *file, const slang_storage_aggregate *flat,
 	unsigned int *index, slang_operation *op, unsigned int size, slang_assembly_flow_control *flow,
 	slang_assembly_name_space *space, slang_assembly_local_info *info)
@@ -178,10 +178,10 @@ static int constructor_aggregate (slang_assembly_file *file, const slang_storage
 		if (arr1->type != arr2->type)
 		{
 			/* TODO: convert (generic) from arr1 to arr2 */
-/*		}
+		}
 		(*index)++;
 		/* TODO: watch the index, if it reaches the size, pop off the stack subsequent values */
-/*	}
+	}
 
 	result = 1;
 end:
@@ -192,8 +192,12 @@ end1:
 	slang_assembly_typeinfo_destruct (&ti);
 	return result;
 }
+#endif
+
 /* XXX: general swizzle! */
-/*int _slang_assemble_constructor (slang_assembly_file *file, slang_operation *op,
+
+#if 0
+int _slang_assemble_constructor (slang_assembly_file *file, slang_operation *op,
 	slang_assembly_flow_control *flow, slang_assembly_name_space *space,
 	slang_assembly_local_info *info, struct slang_machine_ *pmach)
 {
@@ -223,11 +227,11 @@ end1:
 	index = 0;
 	for (i = 0; i < op->num_children; i++)
 	{
-/*		if (!(result = constructor_aggregate (file, &flat, &index, op->children + i, size, flow,
+		if (!(result = constructor_aggregate (file, &flat, &index, op->children + i, size, flow,
 			space, info)))
 			goto end;
 		/* TODO: watch the index, if it reaches the size, raise an error */
-/*	}
+	}
 
 	result = 1;
 end:
@@ -238,6 +242,7 @@ end1:
 	slang_assembly_typeinfo_destruct (&ti);
 	return result;
 }
+#endif
 
 /* _slang_assemble_constructor_from_swizzle() */
 

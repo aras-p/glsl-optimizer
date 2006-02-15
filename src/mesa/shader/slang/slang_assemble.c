@@ -474,6 +474,9 @@ static int dereference_aggregate (slang_assembly_file *file, const slang_storage
 				case slang_stor_float:
 					ty = slang_asm_float_deref;
 					break;
+				default:
+					_mesa_problem(NULL, "Unexpected arr->type in dereference_aggregate");
+					ty = slang_asm_none;
 				}
 				if (!PUSH (file, ty))
 					return 0;
@@ -936,15 +939,17 @@ static int handle_field (slang_assembly_typeinfo *tia, slang_assembly_typeinfo *
 	{
 		if (reference)
 		{
-			/*if (tia->swz.num_components == 1)
+#if 0
+			if (tia->swz.num_components == 1)
 			{
 				/* simple case - adjust the vector's address to point to the selected component */
-			/*	if (!PLAB (file, slang_asm_addr_push, tia->swz.swizzle[0] * 4))
+				if (!PLAB (file, slang_asm_addr_push, tia->swz.swizzle[0] * 4))
 					return 0;
 				if (!PUSH (file, slang_asm_addr_add))
 					return 0;
 			}
-			else*/
+			else
+#endif
 			{
 				/* two or more vector components are being referenced - the so-called write mask
 				 * must be passed to the upper operations and applied when assigning value

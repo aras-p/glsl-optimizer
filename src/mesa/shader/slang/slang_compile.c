@@ -1652,9 +1652,10 @@ static int parse_init_declarator (slang_parse_ctx *C, slang_output_ctx *O,
 			return 0;
 		/* TODO: execute the initializer */
 		break;
-/*	case VARIABLE_ARRAY_UNKNOWN:
+#if 0
+	case VARIABLE_ARRAY_UNKNOWN:
 		/* unsized array - mark it as array and copy the specifier to the array element */
-/*		var->type.specifier.type = slang_spec_array;
+		var->type.specifier.type = slang_spec_array;
 		var->type.specifier._array = (slang_type_specifier *) slang_alloc_malloc (sizeof (
 			slang_type_specifier));
 		if (var->type.specifier._array == NULL)
@@ -1665,7 +1666,8 @@ static int parse_init_declarator (slang_parse_ctx *C, slang_output_ctx *O,
 		slang_type_specifier_construct (var->type.specifier._array);
 		if (!slang_type_specifier_copy (var->type.specifier._array, &type->specifier))
 			return 0;
-		break;*/
+		break;
+#endif
 	case VARIABLE_ARRAY_EXPLICIT:
 		/* sized array - mark it as array, copy the specifier to the array element and
 		 * parse the expression */
