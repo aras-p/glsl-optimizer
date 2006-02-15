@@ -1051,12 +1051,28 @@ _mesa_3dlabs_create_program_object (void)
 
 static GLubyte *get_address_of (struct gl2_vertex_shader_intf **vs, const char *name)
 {
-	struct gl2_vertex_shader_impl *impl = (struct gl2_vertex_shader_impl *) vs;
+	struct gl2_vertex_shader_impl *impl;
 	slang_translation_unit *unit;
 	slang_atom atom;
 	slang_variable *var;
 
 	impl = (struct gl2_vertex_shader_impl *) vs;
+	unit = &impl->_obj._shader.unit;
+	atom = slang_atom_pool_atom (unit->atom_pool, name);
+	var = _slang_locate_variable (&unit->globals, atom, 1);
+	if (var == NULL || var->address == ~0)
+		return NULL;
+	return (GLubyte *) unit->machine->mem + var->address;
+}
+
+static GLubyte *get_address_of_f (struct gl2_fragment_shader_intf **fs, const char *name)
+{
+	struct gl2_fragment_shader_impl *impl;
+	slang_translation_unit *unit;
+	slang_atom atom;
+	slang_variable *var;
+
+	impl = (struct gl2_fragment_shader_impl *) fs;
 	unit = &impl->_obj._shader.unit;
 	atom = slang_atom_pool_atom (unit->atom_pool, name);
 	var = _slang_locate_variable (&unit->globals, atom, 1);
@@ -1071,6 +1087,21 @@ static int fetch_mem (struct gl2_vertex_shader_intf **vs, const char *name, GLvo
 	GLubyte *data;
 
 	data = get_address_of (vs, name) + index * size;
+	if (data == NULL)
+		return 0;
+	if (write)
+		_mesa_memcpy (data, val, size);
+	else
+		_mesa_memcpy (val, data, size);
+	return 1;
+}
+
+static int fetch_mem_f (struct gl2_fragment_shader_intf **fs, const char *name, GLvoid *val,
+	GLuint size, GLuint index, int write)
+{
+	GLubyte *data;
+
+	data = get_address_of_f (fs, name) + index * size;
 	if (data == NULL)
 		return 0;
 	if (write)
@@ -1096,20 +1127,38 @@ int _slang_fetch_vec4 (struct gl2_vertex_shader_intf **vs, const char *name, GLf
 	return fetch_mem (vs, name, val, 16, index, write);
 }
 
+int _slang_fetch_vec4_f (struct gl2_fragment_shader_intf **fs, const char *name, GLfloat *val,
+	GLuint index, int write)
+{
+	return fetch_mem_f (fs, name, val, 16, index, write);
+}
+
+int _slang_fetch_mat3 (struct gl2_vertex_shader_intf **vs, const char *name, GLfloat *val,
+	GLuint index, int write)
+{
+	return fetch_mem (vs, name, val, 36, index, write);
+}
+
 int _slang_fetch_mat4 (struct gl2_vertex_shader_intf **vs, const char *name, GLfloat *val,
 	GLuint index, int write)
 {
 	return fetch_mem (vs, name, val, 64, index, write);
 }
 
-/* XXX */
-int _slang_call_function (slang_assembly_file *file, slang_function *fun, slang_operation *params,
-	unsigned int param_count, int assignment, slang_assembly_name_space *space,
-	slang_assembly_local_info *info, struct slang_machine_ *pmach, slang_atom_pool *);
+int _slang_fetch_discard (struct gl2_fragment_shader_intf **fs, GLboolean *val)
+{
+	struct gl2_fragment_shader_impl *impl;
+	slang_translation_unit *unit;
+
+	impl = (struct gl2_fragment_shader_impl *) fs;
+	unit = &impl->_obj._shader.unit;
+	*val = unit->machine->kill ? GL_TRUE : GL_FALSE;
+	return 1;
+}
 
 void exec_vertex_shader (struct gl2_vertex_shader_intf **vs)
 {
-	struct gl2_vertex_shader_impl *impl = (struct gl2_vertex_shader_impl *) vs;
+	struct gl2_vertex_shader_impl *impl;
 	slang_translation_unit *unit;
 	slang_atom atom;
 	unsigned int i;
@@ -1127,6 +1176,7 @@ void exec_vertex_shader (struct gl2_vertex_shader_intf **vs)
 		slang_machine mach;
 		slang_assembly_local_info info;
 		slang_assembly_name_space space;
+		slang_assemble_ctx A;
 
 		f = &unit->functions.functions[i];
 		slang_assembly_file_restore_point_save (unit->assembly, &point);
@@ -1140,12 +1190,63 @@ void exec_vertex_shader (struct gl2_vertex_shader_intf **vs)
 		space.funcs = &unit->functions;
 		space.structs = &unit->structs;
 		space.vars = &unit->globals;
-		_slang_call_function (unit->assembly, f, NULL, 0, 0, &space, &info, unit->machine,
-			unit->atom_pool);
+		A.file = unit->assembly;
+		A.mach = unit->machine;
+		A.atoms = unit->atom_pool;
+		A.space = space;
+		_slang_assemble_function_call (&A, f, NULL, 0, GL_FALSE);
 		slang_assembly_file_push (unit->assembly, slang_asm_exit);
 		_slang_execute2 (unit->assembly, &mach);
 		slang_assembly_file_restore_point_load (unit->assembly, &point);
 		_mesa_memcpy (unit->machine->mem, mach.mem, SLANG_MACHINE_MEMORY_SIZE * sizeof (slang_machine_slot));
+	}
+}
+
+void exec_fragment_shader (struct gl2_fragment_shader_intf **fs)
+{
+	struct gl2_fragment_shader_impl *impl;
+	slang_translation_unit *unit;
+	slang_atom atom;
+	unsigned int i;
+
+	impl = (struct gl2_fragment_shader_impl *) fs;
+	unit = &impl->_obj._shader.unit;
+	atom = slang_atom_pool_atom (unit->atom_pool, "main");
+	for (i = 0; i < unit->functions.num_functions; i++)
+		if (atom == unit->functions.functions[i].header.a_name)
+			break;
+	if (i < unit->functions.num_functions)
+	{
+		slang_function *f;
+		slang_assembly_file_restore_point point;
+		slang_machine mach;
+		slang_assembly_local_info info;
+		slang_assembly_name_space space;
+		slang_assemble_ctx A;
+
+		f = &unit->functions.functions[i];
+		slang_assembly_file_restore_point_save (unit->assembly, &point);
+		mach = *unit->machine;
+		mach.ip = unit->assembly->count;
+		mach.kill = 0;
+		info.ret_size = 0;
+		info.addr_tmp = 0;
+		info.swizzle_tmp = 4;
+		slang_assembly_file_push_label (unit->assembly, slang_asm_local_alloc, 20);
+		slang_assembly_file_push_label (unit->assembly, slang_asm_enter, 20);
+		space.funcs = &unit->functions;
+		space.structs = &unit->structs;
+		space.vars = &unit->globals;
+		A.file = unit->assembly;
+		A.mach = unit->machine;
+		A.atoms = unit->atom_pool;
+		A.space = space;
+		_slang_assemble_function_call (&A, f, NULL, 0, GL_FALSE);
+		slang_assembly_file_push (unit->assembly, slang_asm_exit);
+		_slang_execute2 (unit->assembly, &mach);
+		slang_assembly_file_restore_point_load (unit->assembly, &point);
+		_mesa_memcpy (unit->machine->mem, mach.mem, SLANG_MACHINE_MEMORY_SIZE * sizeof (slang_machine_slot));
+		unit->machine->kill = mach.kill;
 	}
 }
 
