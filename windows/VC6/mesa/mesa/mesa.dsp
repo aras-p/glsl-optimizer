@@ -370,6 +370,10 @@ SOURCE=..\..\..\..\src\mesa\swrast\s_alpha.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\swrast\s_arbshader.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\swrast\s_atifragshader.c
 # End Source File
 # Begin Source File
@@ -1068,6 +1072,10 @@ SOURCE=..\..\..\..\src\mesa\swrast\s_accum.h
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\swrast\s_alpha.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\swrast\s_arbshader.h
 # End Source File
 # Begin Source File
 
