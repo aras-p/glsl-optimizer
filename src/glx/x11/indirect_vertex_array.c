@@ -420,7 +420,6 @@ fill_array_info_cache( struct array_state_vector * arrays )
 	}
     }
     
-foo    
     if ( arrays->new_DrawArrays_possible ) {
 	assert( ! arrays->new_DrawArrays_possible );
     }
