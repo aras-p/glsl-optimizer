@@ -94,6 +94,7 @@ extern void exec_vertex_shader (struct gl2_vertex_shader_intf **vs);
 extern int _slang_fetch_float (struct gl2_vertex_shader_intf **, const char *, GLfloat *, int);
 extern int _slang_fetch_vec3 (struct gl2_vertex_shader_intf **, const char *, GLfloat *, int);
 extern int _slang_fetch_vec4 (struct gl2_vertex_shader_intf **, const char *, GLfloat *, GLuint, int);
+extern int _slang_fetch_mat3 (struct gl2_vertex_shader_intf **, const char *, GLfloat *, GLuint, int);
 extern int _slang_fetch_mat4 (struct gl2_vertex_shader_intf **, const char *, GLfloat *, GLuint, int);
 
 static void fetch_input_float (const char *name, GLuint attr, GLuint i, struct vertex_buffer *vb,
@@ -178,7 +179,26 @@ static void fetch_output_vec4 (const char *name, GLuint attr, GLuint i, GLuint i
 static void fetch_uniform_mat4 (const char *name, const GLmatrix *matrix, GLuint index,
 	struct gl2_vertex_shader_intf **vs)
 {
+	/* XXX: transpose? */
 	_slang_fetch_mat4 (vs, name, matrix->m, index, 1);
+}
+
+static void fetch_normal_matrix (const char *name, GLmatrix *matrix,
+	struct gl2_vertex_shader_intf **vs)
+{
+	GLfloat mat[9];
+
+	_math_matrix_analyse (matrix);
+	mat[0] = matrix->inv[0];
+	mat[1] = matrix->inv[1];
+	mat[2] = matrix->inv[2];
+	mat[3] = matrix->inv[4];
+	mat[4] = matrix->inv[5];
+	mat[5] = matrix->inv[6];
+	mat[6] = matrix->inv[8];
+	mat[7] = matrix->inv[9];
+	mat[8] = matrix->inv[10];
+	_slang_fetch_mat3 (vs, name, mat, 0, 1);
 }
 
 static GLboolean run_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stage *stage)
@@ -217,7 +237,7 @@ static GLboolean run_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stag
 	fetch_uniform_mat4 ("gl_ModelViewProjectionMatrix", &ctx->_ModelProjectMatrix, 0, vs);
 	for (j = 0; j < 8; j++)
 		fetch_uniform_mat4 ("gl_TextureMatrix", ctx->TextureMatrixStack[j].Top, j, vs);
-	/* XXX: fetch uniform mat3 gl_NormalMatrix */
+	fetch_normal_matrix ("gl_NormalMatrix", ctx->ModelviewMatrixStack.Top, vs);
 	/* XXX: fetch uniform mat4 gl_ModelViewMatrixInverse */
 	/* XXX: fetch uniform mat4 gl_ProjectionMatrixInverse */
 	/* XXX: fetch uniform mat4 gl_ModelViewProjectionMatrixInverse */
