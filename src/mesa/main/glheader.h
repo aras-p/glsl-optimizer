@@ -46,6 +46,9 @@
 #ifndef GLHEADER_H
 #define GLHEADER_H
 
+#ifdef HAVE_DIX_CONFIG_H
+#include "dix-config.h"
+#endif
 
 #if defined(XFree86LOADER) && defined(IN_MODULE) && !defined(NO_LIBCWRAPPER)
 #include "xf86_ansic.h"
