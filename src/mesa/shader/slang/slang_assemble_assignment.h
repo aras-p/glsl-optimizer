@@ -31,13 +31,9 @@
 extern "C" {
 #endif
 
-int _slang_assemble_assignment (slang_assembly_file *, slang_operation *,
-	slang_assembly_name_space *, slang_assembly_local_info *, slang_assembly_stack_info *,
-	struct slang_machine_ *, slang_atom_pool *);
+int _slang_assemble_assignment (slang_assemble_ctx *, slang_operation *);
 
-int _slang_assemble_assign (slang_assembly_file *, slang_operation *, const char *, int ref,
-	slang_assembly_name_space *, slang_assembly_local_info *, struct slang_machine_ *,
-	slang_atom_pool *);
+int _slang_assemble_assign (slang_assemble_ctx *, slang_operation *, const char *, slang_ref_type);
 
 #ifdef __cplusplus
 }

@@ -117,9 +117,7 @@ static int assign_aggregate (slang_assembly_file *file, const slang_storage_aggr
 	return 1;
 }
 
-int _slang_assemble_assignment (slang_assembly_file *file, slang_operation *op,
-	slang_assembly_name_space *space, slang_assembly_local_info *info, slang_assembly_stack_info *stk,
-	struct slang_machine_ *mach, slang_atom_pool *atoms)
+int _slang_assemble_assignment (slang_assemble_ctx *A, slang_operation *op)
 {
 	slang_assembly_typeinfo ti;
 	int result;
@@ -128,7 +126,7 @@ int _slang_assemble_assignment (slang_assembly_file *file, slang_operation *op,
 
 	if (!slang_assembly_typeinfo_construct (&ti))
 		return 0;
-	if (!_slang_typeof_operation (op, space, &ti, atoms))
+	if (!_slang_typeof_operation (op, &A->space, &ti, A->atoms))
 	{
 		slang_assembly_typeinfo_destruct (&ti);
 		return 0;
@@ -139,8 +137,8 @@ int _slang_assemble_assignment (slang_assembly_file *file, slang_operation *op,
 		slang_assembly_typeinfo_destruct (&ti);
 		return 0;
 	}
-	if (!_slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs,
-			space->vars, mach, file, atoms))
+	if (!_slang_aggregate_variable (&agg, &ti.spec, NULL, A->space.funcs, A->space.structs,
+			A->space.vars, A->mach, A->file, A->atoms))
 	{
 		slang_storage_aggregate_destruct (&agg);
 		slang_assembly_typeinfo_destruct (&ti);
@@ -149,7 +147,7 @@ int _slang_assemble_assignment (slang_assembly_file *file, slang_operation *op,
 
 	index = 0;
 	size = _slang_sizeof_aggregate (&agg);
-	result = assign_aggregate (file, &agg, &index, size, info, stk);
+	result = assign_aggregate (A->file, &agg, &index, size, &A->local, &A->swz);
 
 	slang_storage_aggregate_destruct (&agg);
 	slang_assembly_typeinfo_destruct (&ti);
@@ -163,48 +161,41 @@ int _slang_assemble_assignment (slang_assembly_file *file, slang_operation *op,
 	children
 */
 
-int call_function_name (slang_assembly_file *file, const char *name, slang_operation *params,
-	unsigned int param_count, int assignment, slang_assembly_name_space *space,
-	slang_assembly_local_info *info, slang_machine *mach, slang_atom_pool *atoms);
-
-int _slang_assemble_assign (slang_assembly_file *file, slang_operation *op, const char *oper,
-	int ref, slang_assembly_name_space *space, slang_assembly_local_info *info,
-	struct slang_machine_ *mach, slang_atom_pool *atoms)
+int _slang_assemble_assign (slang_assemble_ctx *A, slang_operation *op, const char *oper,
+	slang_ref_type ref)
 {
-	slang_assembly_stack_info l_stk, r_stk;
-	slang_assembly_flow_control flow;
+	slang_assembly_stack_info stk;
 
-	if (!ref)
+	if (ref == slang_ref_forbid)
 	{
-		if (!slang_assembly_file_push_label2 (file, slang_asm_local_addr, info->addr_tmp, 4))
+		if (!slang_assembly_file_push_label2 (A->file, slang_asm_local_addr, A->local.addr_tmp, 4))
 			return 0;
 	}
 
 	if (slang_string_compare ("=", oper) == 0)
 	{
-		if (!_slang_assemble_operation (file, &op->children[0], 1, &flow, space, info, &l_stk, mach,
-				atoms))
+		if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_force))
 			return 0;
-		if (!_slang_assemble_operation (file, &op->children[1], 0, &flow, space, info, &r_stk, mach,
-				atoms))
+		stk = A->swz;
+		if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
 			return 0;
-		if (!_slang_assemble_assignment (file, op->children, space, info, &l_stk, mach, atoms))
+		A->swz = stk;
+		if (!_slang_assemble_assignment (A, op->children))
 			return 0;
 	}
 	else
 	{
-		if (!call_function_name (file, oper, op->children, op->num_children, 1, space, info, mach,
-				atoms))
+		if (!_slang_assemble_function_call_name (A, oper, op->children, op->num_children, GL_TRUE))
 			return 0;
 	}
 
-	if (!ref)
+	if (ref == slang_ref_forbid)
 	{
-		if (!slang_assembly_file_push (file, slang_asm_addr_copy))
+		if (!slang_assembly_file_push (A->file, slang_asm_addr_copy))
 			return 0;
-		if (!slang_assembly_file_push_label (file, slang_asm_local_free, 4))
+		if (!slang_assembly_file_push_label (A->file, slang_asm_local_free, 4))
 			return 0;
-		if (!_slang_dereference (file, op->children, space, info, mach, atoms))
+		if (!_slang_dereference (A->file, op->children, &A->space, &A->local, A->mach, A->atoms))
 			return 0;
 	}
 

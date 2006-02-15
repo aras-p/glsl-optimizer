@@ -1489,8 +1489,7 @@ static int parse_function_definition (slang_parse_ctx *C, slang_output_ctx *O, s
 	return 1;
 }
 
-static int initialize_global (slang_assembly_file *file, slang_machine *pmach,
-	slang_assembly_name_space *space, slang_variable *var, slang_atom_pool *atoms)
+static int initialize_global (slang_assemble_ctx *A, slang_variable *var)
 {
 	slang_assembly_file_restore_point point;
 	slang_machine mach;
@@ -1501,20 +1500,20 @@ static int initialize_global (slang_assembly_file *file, slang_machine *pmach,
 	slang_assembly_stack_info stk;
 
 	/* save the current assembly */
-	if (!slang_assembly_file_restore_point_save (file, &point))
+	if (!slang_assembly_file_restore_point_save (A->file, &point))
 		return 0;
 
 	/* setup the machine */
-	mach = *pmach;
-	mach.ip = file->count;
+	mach = *A->mach;
+	mach.ip = A->file->count;
 
 	/* allocate local storage for expression */
 	info.ret_size = 0;
 	info.addr_tmp = 0;
 	info.swizzle_tmp = 4;
-	if (!slang_assembly_file_push_label (file, slang_asm_local_alloc, 20))
+	if (!slang_assembly_file_push_label (A->file, slang_asm_local_alloc, 20))
 		return 0;
-	if (!slang_assembly_file_push_label (file, slang_asm_enter, 20))
+	if (!slang_assembly_file_push_label (A->file, slang_asm_enter, 20))
 		return 0;
 
 	/* construct the left side of assignment */
@@ -1554,7 +1553,7 @@ static int initialize_global (slang_assembly_file *file, slang_machine *pmach,
 	op_assign.children[1] = *var->initializer;
 
 	/* insert the actual expression */
-	result = _slang_assemble_operation (file, &op_assign, 0, &flow, space, &info, &stk, pmach, atoms);
+	result = _slang_assemble_operation (A->file, &op_assign, 0, &flow, &A->space, &info, &stk, A->mach, A->atoms);
 
 	/* carefully destroy the operations */
 	op_assign.num_children = 0;
@@ -1566,19 +1565,19 @@ static int initialize_global (slang_assembly_file *file, slang_machine *pmach,
 
 	if (!result)
 		return 0;
-	if (!slang_assembly_file_push (file, slang_asm_exit))
+	if (!slang_assembly_file_push (A->file, slang_asm_exit))
 		return 0;
 
 	/* execute the expression */
-	if (!_slang_execute2 (file, &mach))
+	if (!_slang_execute2 (A->file, &mach))
 		return 0;
 
 	/* restore the old assembly */
-	if (!slang_assembly_file_restore_point_load (file, &point))
+	if (!slang_assembly_file_restore_point_load (A->file, &point))
 		return 0;
 
 	/* now we copy the contents of the initialized variable back to the original machine */
-	_mesa_memcpy ((GLubyte *) pmach->mem + var->address, (GLubyte *) mach.mem + var->address,
+	_mesa_memcpy ((GLubyte *) A->mach->mem + var->address, (GLubyte *) mach.mem + var->address,
 		var->size);
 
 	return 1;
@@ -1728,12 +1727,15 @@ static int parse_init_declarator (slang_parse_ctx *C, slang_output_ctx *O,
 	/* initialize global variable */
 	if (C->global_scope && var->initializer != NULL)
 	{
-		slang_assembly_name_space space;
+		slang_assemble_ctx A;
 
-		space.funcs = O->funs;
-		space.structs = O->structs;
-		space.vars = O->vars;
-		if (!initialize_global (O->assembly, O->machine, &space, var, C->atoms))
+		A.file = O->assembly;
+		A.mach = O->machine;
+		A.atoms = C->atoms;
+		A.space.funcs = O->funs;
+		A.space.structs = O->structs;
+		A.space.vars = O->vars;
+		if (!initialize_global (&A, var))
 			return 0;
 	}
 	return 1;
@@ -1783,7 +1785,7 @@ static int parse_function (slang_parse_ctx *C, slang_output_ctx *O, int definiti
 			return 0;
 		}
 	}
-/*	else
+	else
 	{
 		if (!parse_function_prototype (C, O, &parsed_func))
 		{
@@ -1813,45 +1815,48 @@ static int parse_function (slang_parse_ctx *C, slang_output_ctx *O, int definiti
 		/* return the newly parsed function */
 		*parsed_func_ret = &O->funs->functions[O->funs->num_functions - 1];
 	}
-/*	else
+	else
 	{
 		/* TODO: check function return type qualifiers and specifiers */
-/*		if (definition)
+		if (definition)
 		{
-			/* destroy the existing function declaration and replace it with the new one */
-/*			if (found_func->body != NULL)
+			if (found_func->body != NULL)
 			{
 				slang_info_log_error (C->L, "%s: function already has a body",
-					parsed_func.header.name);
+					slang_atom_pool_id (C->atoms, parsed_func.header.a_name));
 				slang_function_destruct (&parsed_func);
 				return 0;
 			}
+
+			/* destroy the existing function declaration and replace it with the new one,
+			 * remember to save the fixup table */
+			parsed_func.fixups = found_func->fixups;
+			slang_fixup_table_init (&found_func->fixups);
 			slang_function_destruct (found_func);
 			*found_func = parsed_func;
 		}
 		else
 		{
 			/* another declaration of the same function prototype - ignore it */
-/*			slang_function_destruct (&parsed_func);
+			slang_function_destruct (&parsed_func);
 		}
 
 		/* return the found function */
-/*		*parsed_func_ret = found_func;
+		*parsed_func_ret = found_func;
 	}
 
 	/* assemble the parsed function */
-	if (definition)
 	{
-		slang_assembly_name_space space;
+		slang_assemble_ctx A;
 
-		space.funcs = O->funs;
-		space.structs = O->structs;
-		space.vars = O->vars;
-		if (!_slang_assemble_function (O->assembly, *parsed_func_ret, &space, O->machine, C->atoms))
-		{
-			const char *name = slang_atom_pool_id (C->atoms, (**parsed_func_ret).header.a_name);
+		A.file = O->assembly;
+		A.mach = O->machine;
+		A.atoms = C->atoms;
+		A.space.funcs = O->funs;
+		A.space.structs = O->structs;
+		A.space.vars = O->vars;
+		if (!_slang_assemble_function (&A, *parsed_func_ret))
 			return 0;
-		}
 	}
 	return 1;
 }

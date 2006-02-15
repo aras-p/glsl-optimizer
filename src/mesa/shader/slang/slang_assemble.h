@@ -125,19 +125,19 @@ typedef struct slang_assembly_flow_control_
 	unsigned int function_end;			/* for "return" statement */
 } slang_assembly_flow_control;
 
-typedef struct slang_assembly_name_space_
+typedef struct slang_assembly_local_info_
 {
-	struct slang_function_scope_ *funcs;
-	struct slang_struct_scope_ *structs;
-	struct slang_variable_scope_ *vars;
-} slang_assembly_name_space;
+	unsigned int ret_size;
+	unsigned int addr_tmp;
+	unsigned int swizzle_tmp;
+} slang_assembly_local_info;
 
-slang_function *_slang_locate_function (slang_function_scope *funcs, slang_atom a_name,
-	slang_operation *params, unsigned int num_params, slang_assembly_name_space *space,
-	slang_atom_pool *);
-
-int _slang_assemble_function (slang_assembly_file *, struct slang_function_ *,
-	slang_assembly_name_space *, struct slang_machine_ *, slang_atom_pool *);
+typedef enum
+{
+	slang_ref_force,
+	slang_ref_forbid,
+	slang_ref_freelance
+} slang_ref_type;
 
 /*
 	holds a complete information about vector swizzle - the <swizzle> array contains
@@ -155,22 +155,48 @@ typedef struct slang_assembly_stack_info_
 	slang_swizzle swizzle;
 } slang_assembly_stack_info;
 
+typedef struct slang_assembly_name_space_
+{
+	struct slang_function_scope_ *funcs;
+	struct slang_struct_scope_ *structs;
+	struct slang_variable_scope_ *vars;
+} slang_assembly_name_space;
+
+typedef struct slang_assemble_ctx_
+{
+	slang_assembly_file *file;
+	struct slang_machine_ *mach;
+	slang_atom_pool *atoms;
+	slang_assembly_name_space space;
+	slang_assembly_flow_control flow;
+	slang_assembly_local_info local;
+	slang_ref_type ref;
+	slang_assembly_stack_info swz;
+} slang_assemble_ctx;
+
+slang_function *_slang_locate_function (slang_function_scope *funcs, slang_atom a_name,
+	slang_operation *params, unsigned int num_params, slang_assembly_name_space *space,
+	slang_atom_pool *);
+
+int _slang_assemble_function (slang_assemble_ctx *, struct slang_function_ *);
+
 int _slang_cleanup_stack (slang_assembly_file *, slang_operation *, int ref,
 	slang_assembly_name_space *, struct slang_machine_ *, slang_atom_pool *);
-
-typedef struct slang_assembly_local_info_
-{
-	unsigned int ret_size;
-	unsigned int addr_tmp;
-	unsigned int swizzle_tmp;
-} slang_assembly_local_info;
+int _slang_cleanup_stack_ (slang_assemble_ctx *, slang_operation *);
 
 int _slang_dereference (slang_assembly_file *, slang_operation *, slang_assembly_name_space *,
 	slang_assembly_local_info *, struct slang_machine_ *, slang_atom_pool *);
 
+int _slang_assemble_function_call (slang_assemble_ctx *, slang_function *,
+	slang_operation *, GLuint, GLboolean);
+
+int _slang_assemble_function_call_name (slang_assemble_ctx *, const char *,
+	slang_operation *, GLuint, GLboolean);
+
 int _slang_assemble_operation (slang_assembly_file *, struct slang_operation_ *, int reference,
 	slang_assembly_flow_control *, slang_assembly_name_space *, slang_assembly_local_info *,
 	slang_assembly_stack_info *, struct slang_machine_ *, slang_atom_pool *);
+int _slang_assemble_operation_ (slang_assemble_ctx *, struct slang_operation_ *, slang_ref_type);
 
 #ifdef __cplusplus
 }

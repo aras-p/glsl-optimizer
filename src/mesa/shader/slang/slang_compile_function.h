@@ -36,6 +36,15 @@ typedef enum slang_function_kind_
 	slang_func_operator
 } slang_function_kind;
 
+typedef struct slang_fixup_table_
+{
+	GLuint *table;
+	GLuint count;
+} slang_fixup_table;
+
+void slang_fixup_table_init (slang_fixup_table *);
+void slang_fixup_table_free (slang_fixup_table *);
+
 typedef struct slang_function_
 {
 	slang_function_kind kind;
@@ -44,6 +53,7 @@ typedef struct slang_function_
 	unsigned int param_count;
 	slang_operation *body;
 	unsigned int address;
+	slang_fixup_table fixups;
 } slang_function;
 
 int slang_function_construct (slang_function *);

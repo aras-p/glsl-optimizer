@@ -34,6 +34,20 @@
 #include "slang_compile_operation.h"
 #include "slang_compile_function.h"
 
+/* slang_fixup_table */
+
+void slang_fixup_table_init (slang_fixup_table *fix)
+{
+	fix->table = NULL;
+	fix->count = 0;
+}
+
+void slang_fixup_table_free (slang_fixup_table *fix)
+{
+	slang_alloc_free (fix->table);
+	slang_fixup_table_init (fix);
+}
+
 /* slang_function */
 
 int slang_function_construct (slang_function *func)
@@ -56,6 +70,7 @@ int slang_function_construct (slang_function *func)
 	func->param_count = 0;
 	func->body = NULL;
 	func->address = ~0;
+	slang_fixup_table_init (&func->fixups);
 	return 1;
 }
 
@@ -69,6 +84,7 @@ void slang_function_destruct (slang_function *func)
 		slang_operation_destruct (func->body);
 		slang_alloc_free (func->body);
 	}
+	slang_fixup_table_free (&func->fixups);
 }
 
 /* slang_function_scope */
