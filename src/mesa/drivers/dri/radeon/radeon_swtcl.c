@@ -936,6 +936,9 @@ void radeonFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	     * zero above. But not if it doesn't (RADEON_NO_TCL for
 	     * example?)
 	     */
+	    _tnl_invalidate_vertex_state( ctx, ~0 );
+	    _tnl_invalidate_vertices( ctx, ~0 );
+	    rmesa->tnl_index = 0;
 	    radeonChooseVertexState( ctx );
 	    radeonChooseRenderState( ctx );
 	 }
