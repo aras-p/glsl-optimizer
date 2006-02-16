@@ -107,18 +107,20 @@ int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp, f
 	float *dst_o=dst;
         struct program_parameter_list *paramList;
 	
-	_mesa_load_state_parameters(ctx, mesa_vp->Base.Parameters);
-	if (mesa_vp->Base.Parameters == NULL) {
-		static int once=0;
+	if (mesa_vp->IsNVProgram) {
+		_mesa_init_vp_per_primitive_registers(ctx);
 		
-		WARN_ONCE("mesa_vp->Base.Parameters NULL\n");
-		
-		if (once == 0) {
-			_mesa_print_program(&vp->mesa_program.Base);
-			once++;
+		for (pi=0; pi < MAX_NV_VERTEX_PROGRAM_PARAMS; pi++) {
+			*dst++=ctx->VertexProgram.Parameters[pi][0];
+			*dst++=ctx->VertexProgram.Parameters[pi][1];
+			*dst++=ctx->VertexProgram.Parameters[pi][2];
+			*dst++=ctx->VertexProgram.Parameters[pi][3];
 		}
-		return 0;
+		return dst - dst_o;
 	}
+	
+	assert(mesa_vp->Base.Parameters);
+	_mesa_load_state_parameters(ctx, mesa_vp->Base.Parameters);
 	
 	if(mesa_vp->Base.Parameters->NumParameters * 4 > VSF_MAX_FRAGMENT_LENGTH){
 		fprintf(stderr, "%s:Params exhausted\n", __FUNCTION__);
@@ -867,6 +869,9 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			goto next;
 
 		case OPCODE_ARL:
+			WARN_ONCE("ARL not implemented yet!\n");
+			goto next;
+			
 		case OPCODE_RCC:
 			fprintf(stderr, "Dont know how to handle op %d yet\n", vpi->Opcode);
 			exit(-1);
@@ -949,5 +954,8 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 		vp->translated=GL_TRUE;
 		vp->native = GL_TRUE;
 	}
+	
+	if (mesa_vp->IsNVProgram)
+		vp->native = GL_FALSE;
 }
 
