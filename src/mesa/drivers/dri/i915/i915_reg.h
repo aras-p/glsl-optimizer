@@ -438,7 +438,7 @@
 #define STENCIL_TEST_MASK(x)		((x)<<8)
 #define MODE4_ENABLE_STENCIL_WRITE_MASK	((1<<16)|(0x00ff))
 #define ENABLE_STENCIL_WRITE_MASK	(1<<16)
-#define STENCIL_WRITE_MASK(x)		(x)
+#define STENCIL_WRITE_MASK(x)		((x)&0xff)
 
 /* _3DSTATE_MODES_5, p220 */
 #define _3DSTATE_MODES_5_CMD		(CMD_3D|(0x0c<<24))
