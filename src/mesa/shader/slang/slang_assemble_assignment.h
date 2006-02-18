@@ -31,9 +31,10 @@
 extern "C" {
 #endif
 
-int _slang_assemble_assignment (slang_assemble_ctx *, slang_operation *);
+GLboolean _slang_assemble_assignment (slang_assemble_ctx *, slang_operation *);
 
-int _slang_assemble_assign (slang_assemble_ctx *, slang_operation *, const char *, slang_ref_type);
+GLboolean _slang_assemble_assign (slang_assemble_ctx *, slang_operation *, const char *,
+	slang_ref_type);
 
 #ifdef __cplusplus
 }

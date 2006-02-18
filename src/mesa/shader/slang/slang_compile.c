@@ -38,11 +38,11 @@
 #include "slang_execute.h"
 
 /*
-	This is a straightforward implementation of the slang front-end compiler.
-	Lots of error-checking functionality is missing but every well-formed shader source should
-	compile successfully and execute as expected. However, some semantically ill-formed shaders
-	may be accepted resulting in undefined behaviour.
-*/
+ * This is a straightforward implementation of the slang front-end compiler.
+ * Lots of error-checking functionality is missing but every well-formed shader source should
+ * compile successfully and execute as expected. However, some semantically ill-formed shaders
+ * may be accepted resulting in undefined behaviour.
+ */
 
 /* slang_var_pool */
 
@@ -1489,36 +1489,34 @@ static int parse_function_definition (slang_parse_ctx *C, slang_output_ctx *O, s
 	return 1;
 }
 
-static int initialize_global (slang_assemble_ctx *A, slang_variable *var)
+static GLboolean initialize_global (slang_assemble_ctx *A, slang_variable *var)
 {
 	slang_assembly_file_restore_point point;
 	slang_machine mach;
-	slang_assembly_local_info info;
+	slang_assembly_local_info save_local = A->local;
 	slang_operation op_id, op_assign;
-	int result;
-	slang_assembly_flow_control flow;
-	slang_assembly_stack_info stk;
+	GLboolean result;
 
 	/* save the current assembly */
 	if (!slang_assembly_file_restore_point_save (A->file, &point))
-		return 0;
+		return GL_FALSE;
 
 	/* setup the machine */
 	mach = *A->mach;
 	mach.ip = A->file->count;
 
 	/* allocate local storage for expression */
-	info.ret_size = 0;
-	info.addr_tmp = 0;
-	info.swizzle_tmp = 4;
+	A->local.ret_size = 0;
+	A->local.addr_tmp = 0;
+	A->local.swizzle_tmp = 4;
 	if (!slang_assembly_file_push_label (A->file, slang_asm_local_alloc, 20))
-		return 0;
+		return GL_FALSE;
 	if (!slang_assembly_file_push_label (A->file, slang_asm_enter, 20))
-		return 0;
+		return GL_FALSE;
 
 	/* construct the left side of assignment */
 	if (!slang_operation_construct (&op_id))
-		return 0;
+		return GL_FALSE;
 	op_id.type = slang_oper_identifier;
 	op_id.a_id = var->a_name;
 
@@ -1527,7 +1525,7 @@ static int initialize_global (slang_assemble_ctx *A, slang_variable *var)
 	if (op_id.locals->variables == NULL)
 	{
 		slang_operation_destruct (&op_id);
-		return 0;
+		return GL_FALSE;
 	}
 	op_id.locals->num_variables = 1;
 	op_id.locals->variables[0] = *var;
@@ -1537,7 +1535,7 @@ static int initialize_global (slang_assemble_ctx *A, slang_variable *var)
 	{
 		op_id.locals->num_variables = 0;
 		slang_operation_destruct (&op_id);
-		return 0;
+		return GL_FALSE;
 	}
 	op_assign.type = slang_oper_assign;
 	op_assign.children = (slang_operation *) slang_alloc_malloc (2 * sizeof (slang_operation));
@@ -1546,14 +1544,14 @@ static int initialize_global (slang_assemble_ctx *A, slang_variable *var)
 		slang_operation_destruct (&op_assign);
 		op_id.locals->num_variables = 0;
 		slang_operation_destruct (&op_id);
-		return 0;
+		return GL_FALSE;
 	}
 	op_assign.num_children = 2;
 	op_assign.children[0] = op_id;
 	op_assign.children[1] = *var->initializer;
 
 	/* insert the actual expression */
-	result = _slang_assemble_operation (A->file, &op_assign, 0, &flow, &A->space, &info, &stk, A->mach, A->atoms);
+	result = _slang_assemble_operation_ (A, &op_assign, slang_ref_forbid);
 
 	/* carefully destroy the operations */
 	op_assign.num_children = 0;
@@ -1564,23 +1562,24 @@ static int initialize_global (slang_assemble_ctx *A, slang_variable *var)
 	slang_operation_destruct (&op_id);
 
 	if (!result)
-		return 0;
+		return GL_FALSE;
 	if (!slang_assembly_file_push (A->file, slang_asm_exit))
-		return 0;
+		return GL_FALSE;
 
 	/* execute the expression */
 	if (!_slang_execute2 (A->file, &mach))
-		return 0;
+		return GL_FALSE;
 
 	/* restore the old assembly */
 	if (!slang_assembly_file_restore_point_load (A->file, &point))
-		return 0;
+		return GL_FALSE;
+	A->local = save_local;
 
 	/* now we copy the contents of the initialized variable back to the original machine */
 	_mesa_memcpy ((GLubyte *) A->mach->mem + var->address, (GLubyte *) mach.mem + var->address,
 		var->size);
 
-	return 1;
+	return GL_TRUE;
 }
 
 /* init declarator list */
@@ -2110,7 +2109,7 @@ int _slang_compile (const char *source, slang_translation_unit *unit, slang_unit
 {
 	int success;
 	grammar id = 0;
-//	slang_translation_unit builtin_units[BUILTIN_TOTAL];
+/*	slang_translation_unit builtin_units[BUILTIN_TOTAL];*/
 	slang_translation_unit *builtin_units;
 	int compiled[BUILTIN_TOTAL] = { 0 };
 

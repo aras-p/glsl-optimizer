@@ -34,15 +34,15 @@
 
 /* slang_assembly_typeinfo */
 
-int slang_assembly_typeinfo_construct (slang_assembly_typeinfo *ti)
+GLboolean slang_assembly_typeinfo_construct (slang_assembly_typeinfo *ti)
 {
 	if (!slang_type_specifier_construct (&ti->spec))
-		return 0;
+		return GL_FALSE;
 	ti->array_size = NULL;
-	return 1;
+	return GL_TRUE;
 }
 
-void slang_assembly_typeinfo_destruct (slang_assembly_typeinfo *ti)
+GLvoid slang_assembly_typeinfo_destruct (slang_assembly_typeinfo *ti)
 {
 	slang_type_specifier_destruct (&ti->spec);
 	/* do not free ti->array_size */
@@ -50,24 +50,24 @@ void slang_assembly_typeinfo_destruct (slang_assembly_typeinfo *ti)
 
 /* _slang_typeof_operation() */
 
-static int typeof_existing_function (const char *name, slang_operation *params,
-	unsigned int num_params, slang_assembly_name_space *space, slang_type_specifier *spec,
+static GLboolean typeof_existing_function (const char *name, slang_operation *params,
+	GLuint num_params, slang_assembly_name_space *space, slang_type_specifier *spec,
 	slang_atom_pool *atoms)
 {
 	slang_atom atom;
-	int exists;
+	GLboolean exists;
 
 	atom = slang_atom_pool_atom (atoms, name);
 	if (!_slang_typeof_function (atom, params, num_params, space, spec, &exists, atoms))
-		return 0;
+		return GL_FALSE;
 	return exists;
 }
 
-int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *space,
+GLboolean _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *space,
 	slang_assembly_typeinfo *ti, slang_atom_pool *atoms)
 {
-	ti->can_be_referenced = 0;
-	ti->is_swizzled = 0;
+	ti->can_be_referenced = GL_FALSE;
+	ti->is_swizzled = GL_FALSE;
 
 	switch (op->type)
 	{
@@ -120,21 +120,21 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 		{
 			slang_variable *var;
 
-			var = _slang_locate_variable (op->locals, op->a_id, 1);
+			var = _slang_locate_variable (op->locals, op->a_id, GL_TRUE);
 			if (var == NULL)
-				return 0;
+				return GL_FALSE;
 			if (!slang_type_specifier_copy (&ti->spec, &var->type.specifier))
-				return 0;
-			ti->can_be_referenced = 1;
+				return GL_FALSE;
+			ti->can_be_referenced = GL_TRUE;
 			ti->array_size = var->array_size;
 		}
 		break;
 	case slang_oper_sequence:
 		/* TODO: check [0] and [1] if they match */
 		if (!_slang_typeof_operation (&op->children[1], space, ti, atoms))
-			return 0;
-		ti->can_be_referenced = 0;
-		ti->is_swizzled = 0;
+			return GL_FALSE;
+		ti->can_be_referenced = GL_FALSE;
+		ti->is_swizzled = GL_FALSE;
 		break;
 	/*case slang_oper_modassign:*/
 	/*case slang_oper_lshassign:*/
@@ -145,9 +145,9 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 	case slang_oper_select:
 		/* TODO: check [1] and [2] if they match */
 		if (!_slang_typeof_operation (&op->children[1], space, ti, atoms))
-			return 0;
-		ti->can_be_referenced = 0;
-		ti->is_swizzled = 0;
+			return GL_FALSE;
+		ti->can_be_referenced = GL_FALSE;
+		ti->is_swizzled = GL_FALSE;
 		break;
 	/*case slang_oper_bitor:*/
 	/*case slang_oper_bitxor:*/
@@ -156,30 +156,30 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 	/*case slang_oper_rshift:*/
 	case slang_oper_add:
 		if (!typeof_existing_function ("+", op->children, 2, space, &ti->spec, atoms))
-			return 0;
+			return GL_FALSE;
 		break;
 	case slang_oper_subtract:
 		if (!typeof_existing_function ("-", op->children, 2, space, &ti->spec, atoms))
-			return 0;
+			return GL_FALSE;
 		break;
 	case slang_oper_multiply:
 		if (!typeof_existing_function ("*", op->children, 2, space, &ti->spec, atoms))
-			return 0;
+			return GL_FALSE;
 		break;
 	case slang_oper_divide:
 		if (!typeof_existing_function ("/", op->children, 2, space, &ti->spec, atoms))
-			return 0;
+			return GL_FALSE;
 		break;
 	/*case slang_oper_modulus:*/
 	case slang_oper_plus:
 		if (!_slang_typeof_operation (op->children, space, ti, atoms))
-			return 0;
-		ti->can_be_referenced = 0;
-		ti->is_swizzled = 0;
+			return GL_FALSE;
+		ti->can_be_referenced = GL_FALSE;
+		ti->is_swizzled = GL_FALSE;
 		break;
 	case slang_oper_minus:
 		if (!typeof_existing_function ("-", op->children, 1, space, &ti->spec, atoms))
-			return 0;
+			return GL_FALSE;
 		break;
 	/*case slang_oper_complement:*/
 	case slang_oper_subscript:
@@ -187,11 +187,11 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 			slang_assembly_typeinfo _ti;
 
 			if (!slang_assembly_typeinfo_construct (&_ti))
-				return 0;
+				return GL_FALSE;
 			if (!_slang_typeof_operation (op->children, space, &_ti, atoms))
 			{
 				slang_assembly_typeinfo_destruct (&_ti);
-				return 0;
+				return GL_FALSE;
 			}
 			ti->can_be_referenced = _ti.can_be_referenced;
 			if (_ti.spec.type == slang_spec_array)
@@ -199,7 +199,7 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 				if (!slang_type_specifier_copy (&ti->spec, _ti.spec._array))
 				{
 					slang_assembly_typeinfo_destruct (&_ti);
-					return 0;
+					return GL_FALSE;
 				}
 			}
 			else
@@ -207,7 +207,7 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 				if (!_slang_type_is_vector (_ti.spec.type) && !_slang_type_is_matrix (_ti.spec.type))
 				{
 					slang_assembly_typeinfo_destruct (&_ti);
-					return 0;
+					return GL_FALSE;
 				}
 				ti->spec.type = _slang_type_base (_ti.spec.type);
 			}
@@ -216,38 +216,38 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 		break;
 	case slang_oper_call:
 		{
-			int exists;
+			GLboolean exists;
 
 			if (!_slang_typeof_function (op->a_id, op->children, op->num_children, space, &ti->spec,
 					&exists, atoms))
-				return 0;
+				return GL_FALSE;
 			if (!exists)
 			{
-/*				slang_struct *s = slang_struct_scope_find (space->structs, op->identifier, 1);
+				slang_struct *s = slang_struct_scope_find (space->structs, op->a_id, GL_TRUE);
 				if (s != NULL)
 				{
 					ti->spec.type = slang_spec_struct;
 					ti->spec._struct = (slang_struct *) slang_alloc_malloc (sizeof (slang_struct));
 					if (ti->spec._struct == NULL)
-						return 0;
+						return GL_FALSE;
 					if (!slang_struct_construct (ti->spec._struct))
 					{
 						slang_alloc_free (ti->spec._struct);
 						ti->spec._struct = NULL;
-						return 0;
+						return GL_FALSE;
 					}
 					if (!slang_struct_copy (ti->spec._struct, s))
-						return 0;
+						return GL_FALSE;
 				}
 				else
-*/				{
+				{
 					const char *name;
 					slang_type_specifier_type type;
 
 					name = slang_atom_pool_id (atoms, op->a_id);
 					type = slang_type_specifier_type_from_string (name);
 					if (type == slang_spec_void)
-						return 0;
+						return GL_FALSE;
 					ti->spec.type = type;
 				}
 			}
@@ -258,32 +258,32 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 			slang_assembly_typeinfo _ti;
 
 			if (!slang_assembly_typeinfo_construct (&_ti))
-				return 0;
+				return GL_FALSE;
 			if (!_slang_typeof_operation (op->children, space, &_ti, atoms))
 			{
 				slang_assembly_typeinfo_destruct (&_ti);
-				return 0;
+				return GL_FALSE;
 			}
 			if (_ti.spec.type == slang_spec_struct)
 			{
 				slang_variable *field;
 				
-				field = _slang_locate_variable (_ti.spec._struct->fields, op->a_id, 0);
+				field = _slang_locate_variable (_ti.spec._struct->fields, op->a_id, GL_FALSE);
 				if (field == NULL)
 				{
 					slang_assembly_typeinfo_destruct (&_ti);
-					return 0;
+					return GL_FALSE;
 				}
 				if (!slang_type_specifier_copy (&ti->spec, &field->type.specifier))
 				{
 					slang_assembly_typeinfo_destruct (&_ti);
-					return 0;
+					return GL_FALSE;
 				}
 				ti->can_be_referenced = _ti.can_be_referenced;
 			}
 			else
 			{
-				unsigned int rows;
+				GLuint rows;
 				const char *swizzle;
 				slang_type_specifier_type base;
 
@@ -291,16 +291,16 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 				if (!_slang_type_is_vector (_ti.spec.type))
 				{
 					slang_assembly_typeinfo_destruct (&_ti);
-					return 0;
+					return GL_FALSE;
 				}
 				rows = _slang_type_dim (_ti.spec.type);
 				swizzle = slang_atom_pool_id (atoms, op->a_id);
 				if (!_slang_is_swizzle (swizzle, rows, &ti->swz))
 				{
 					slang_assembly_typeinfo_destruct (&_ti);
-					return 0;
+					return GL_FALSE;
 				}
-				ti->is_swizzled = 1;
+				ti->is_swizzled = GL_TRUE;
 				ti->can_be_referenced = _ti.can_be_referenced && _slang_is_swizzle_mask (&ti->swz,
 					rows);
 				if (_ti.is_swizzled)
@@ -330,8 +330,7 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 						ti->spec.type = slang_spec_bvec2;
 						break;
 					default:
-						_mesa_problem(NULL, "unexepected base in _slang_typeof_operation");
-						ti->spec.type = slang_spec_void;
+						break;
 					}
 					break;
 				case 3:
@@ -347,8 +346,7 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 						ti->spec.type = slang_spec_bvec3;
 						break;
 					default:
-						_mesa_problem(NULL, "unexepected base in _slang_typeof_operation");
-						ti->spec.type = slang_spec_void;
+						break;
 					}
 					break;
 				case 4:
@@ -364,8 +362,7 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 						ti->spec.type = slang_spec_bvec4;
 						break;
 					default:
-						_mesa_problem(NULL, "unexepected base in _slang_typeof_operation");
-						ti->spec.type = slang_spec_void;
+						break;
 					}
 					break;
 				default:
@@ -378,48 +375,50 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 	case slang_oper_postincrement:
 	case slang_oper_postdecrement:
 		if (!_slang_typeof_operation (op->children, space, ti, atoms))
-			return 0;
-		ti->can_be_referenced = 0;
-		ti->is_swizzled = 0;
+			return GL_FALSE;
+		ti->can_be_referenced = GL_FALSE;
+		ti->is_swizzled = GL_FALSE;
 		break;
 	default:
-		return 0;
+		return GL_FALSE;
 	}
-	return 1;
+
+	return GL_TRUE;
 }
 
 /* _slang_typeof_function() */
 
-int _slang_typeof_function (slang_atom a_name, slang_operation *params, unsigned int num_params,
-	slang_assembly_name_space *space, slang_type_specifier *spec, int *exists, slang_atom_pool *atoms)
+GLboolean _slang_typeof_function (slang_atom a_name, slang_operation *params, GLuint num_params,
+	slang_assembly_name_space *space, slang_type_specifier *spec, GLboolean *exists,
+	slang_atom_pool *atoms)
 {
 	slang_function *fun;
 	
 	fun = _slang_locate_function (space->funcs, a_name, params, num_params, space, atoms);
 	*exists = fun != NULL;
 	if (fun == NULL)
-		return 1;
+		return GL_TRUE;
 	return slang_type_specifier_copy (spec, &fun->header.type.specifier);
 }
 
 /* _slang_type_is_matrix() */
 
-int _slang_type_is_matrix (slang_type_specifier_type ty)
+GLboolean _slang_type_is_matrix (slang_type_specifier_type ty)
 {
 	switch (ty)
 	{
 	case slang_spec_mat2:
 	case slang_spec_mat3:
 	case slang_spec_mat4:
-		return 1;
+		return GL_TRUE;
 	default:
-		return 0;
+		return GL_FALSE;
 	}
 }
 
 /* _slang_type_is_vector() */
 
-int _slang_type_is_vector (slang_type_specifier_type ty)
+GLboolean _slang_type_is_vector (slang_type_specifier_type ty)
 {
 	switch (ty)
 	{
@@ -432,9 +431,9 @@ int _slang_type_is_vector (slang_type_specifier_type ty)
 	case slang_spec_bvec2:
 	case slang_spec_bvec3:
 	case slang_spec_bvec4:
-		return 1;
+		return GL_TRUE;
 	default:
-		return 0;
+		return GL_FALSE;
 	}
 }
 
@@ -472,7 +471,7 @@ slang_type_specifier_type _slang_type_base (slang_type_specifier_type ty)
 
 /* _slang_type_dim */
 
-unsigned int _slang_type_dim (slang_type_specifier_type ty)
+GLuint _slang_type_dim (slang_type_specifier_type ty)
 {
 	switch (ty)
 	{

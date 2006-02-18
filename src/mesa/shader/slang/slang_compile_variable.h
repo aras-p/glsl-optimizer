@@ -121,7 +121,7 @@ int slang_variable_construct (slang_variable *);
 void slang_variable_destruct (slang_variable *);
 int slang_variable_copy (slang_variable *, const slang_variable *);
 
-slang_variable *_slang_locate_variable (slang_variable_scope *scope, slang_atom a_name, int all);
+slang_variable *_slang_locate_variable (slang_variable_scope *, slang_atom a_name, GLboolean all);
 
 #ifdef __cplusplus
 }

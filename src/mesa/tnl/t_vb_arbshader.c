@@ -176,11 +176,41 @@ static void fetch_output_vec4 (const char *name, GLuint attr, GLuint i, GLuint i
 	_mesa_memcpy (&store->outputs[attr].data[i], vec, 16);
 }
 
-static void fetch_uniform_mat4 (const char *name, const GLmatrix *matrix, GLuint index,
+static void fetch_uniform_mat4 (const char *name, GLmatrix *matrix, GLuint index,
 	struct gl2_vertex_shader_intf **vs)
 {
-	/* XXX: transpose? */
+	GLuint len;
+	GLfloat mat[16];
+	char buffer[64];
+
+	_mesa_strcpy (buffer, name);
+	len = _mesa_strlen (name);
+
+	/* we want inverse matrix */
+	if (!matrix->inv)
+	{
+		/* allocate inverse matrix and make it dirty */
+		_math_matrix_alloc_inv (matrix);
+		_math_matrix_loadf (matrix, matrix->m);
+	}
+	_math_matrix_analyse (matrix);
+
+	/* identity */
 	_slang_fetch_mat4 (vs, name, matrix->m, index, 1);
+
+	/* transpose */
+	_mesa_strcpy (buffer + len, "Transpose");
+	_math_transposef (mat, matrix->m);
+	_slang_fetch_mat4 (vs, buffer, mat, index, 1);
+
+	/* inverse */
+	_mesa_strcpy (buffer + len, "Inverse");
+	_slang_fetch_mat4 (vs, buffer, matrix->inv, index, 1);
+
+	/* inverse transpose */
+	_mesa_strcpy (buffer + len, "InverseTranspose");
+	_math_transposef (mat, matrix->inv);
+	_slang_fetch_mat4 (vs, buffer, mat, index, 1);
 }
 
 static void fetch_normal_matrix (const char *name, GLmatrix *matrix,
@@ -189,14 +219,16 @@ static void fetch_normal_matrix (const char *name, GLmatrix *matrix,
 	GLfloat mat[9];
 
 	_math_matrix_analyse (matrix);
+
+	/* inverse transpose */
 	mat[0] = matrix->inv[0];
-	mat[1] = matrix->inv[1];
-	mat[2] = matrix->inv[2];
-	mat[3] = matrix->inv[4];
+	mat[1] = matrix->inv[4];
+	mat[2] = matrix->inv[8];
+	mat[3] = matrix->inv[1];
 	mat[4] = matrix->inv[5];
-	mat[5] = matrix->inv[6];
-	mat[6] = matrix->inv[8];
-	mat[7] = matrix->inv[9];
+	mat[5] = matrix->inv[9];
+	mat[6] = matrix->inv[2];
+	mat[7] = matrix->inv[6];
 	mat[8] = matrix->inv[10];
 	_slang_fetch_mat3 (vs, name, mat, 0, 1);
 }
@@ -238,18 +270,6 @@ static GLboolean run_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stag
 	for (j = 0; j < 8; j++)
 		fetch_uniform_mat4 ("gl_TextureMatrix", ctx->TextureMatrixStack[j].Top, j, vs);
 	fetch_normal_matrix ("gl_NormalMatrix", ctx->ModelviewMatrixStack.Top, vs);
-	/* XXX: fetch uniform mat4 gl_ModelViewMatrixInverse */
-	/* XXX: fetch uniform mat4 gl_ProjectionMatrixInverse */
-	/* XXX: fetch uniform mat4 gl_ModelViewProjectionMatrixInverse */
-	/* XXX: fetch uniform mat4 gl_TextureMatrixInverse */
-	/* XXX: fetch uniform mat4 gl_ModelViewMatrixTranspose */
-	/* XXX: fetch uniform mat4 gl_ProjectionMatrixTranspose */
-	/* XXX: fetch uniform mat4 gl_ModelViewProjectionMatrixTranspose */
-	/* XXX: fetch uniform mat4 gl_TextureMatrixTranspose */
-	/* XXX: fetch uniform mat4 gl_ModelViewMatrixInverseTranspose */
-	/* XXX: fetch uniform mat4 gl_ProjectionMatrixInverseTranspose */
-	/* XXX: fetch uniform mat4 gl_ModelViewProjectionMatrixInverseTranspose */
-	/* XXX: fetch uniform mat4 gl_TextureMatrixInverseTranspose */
 	/* XXX: fetch uniform float gl_NormalScale */
 	/* XXX: fetch uniform mat4 gl_ClipPlane */
 	/* XXX: fetch uniform mat4 gl_TextureEnvColor */

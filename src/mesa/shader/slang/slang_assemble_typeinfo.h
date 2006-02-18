@@ -34,36 +34,39 @@ extern "C" {
 
 typedef struct slang_assembly_typeinfo_
 {
-	int can_be_referenced;
-	int is_swizzled;
+	GLboolean can_be_referenced;
+	GLboolean is_swizzled;
 	slang_swizzle swz;
 	slang_type_specifier spec;
 	slang_operation *array_size;
 } slang_assembly_typeinfo;
 
-int slang_assembly_typeinfo_construct (slang_assembly_typeinfo *);
-void slang_assembly_typeinfo_destruct (slang_assembly_typeinfo *);
+GLboolean slang_assembly_typeinfo_construct (slang_assembly_typeinfo *);
+GLvoid slang_assembly_typeinfo_destruct (slang_assembly_typeinfo *);
 
 /*
-	retrieves type information about an operation
-	returns 1 on success
-	returns 0 otherwise
-*/
-int _slang_typeof_operation (slang_operation *, slang_assembly_name_space *,
+ * Retrieves type information about an operation.
+ * Returns GL_TRUE on success.
+ * Returns GL_FALSE otherwise.
+ */
+GLboolean _slang_typeof_operation (slang_operation *, slang_assembly_name_space *,
 	slang_assembly_typeinfo *, slang_atom_pool *);
 
 /*
-	retrieves type of a function prototype, if one exists
-	returns 1 on success, even if the function was not found
-	returns 0 otherwise
-*/
-int _slang_typeof_function (slang_atom a_name, slang_operation *params, unsigned int num_params,
-	slang_assembly_name_space *space, slang_type_specifier *spec, int *exists, slang_atom_pool *);
+ * Retrieves type of a function prototype, if one exists.
+ * Returns GL_TRUE on success, even if the function was not found.
+ * Returns GL_FALSE otherwise.
+ */
+GLboolean _slang_typeof_function (slang_atom a_name, slang_operation *params, GLuint num_params,
+	slang_assembly_name_space *, slang_type_specifier *spec, GLboolean *exists, slang_atom_pool *);
 
-int _slang_type_is_matrix (slang_type_specifier_type);
-int _slang_type_is_vector (slang_type_specifier_type);
+GLboolean _slang_type_is_matrix (slang_type_specifier_type);
+
+GLboolean _slang_type_is_vector (slang_type_specifier_type);
+
 slang_type_specifier_type _slang_type_base (slang_type_specifier_type);
-unsigned int _slang_type_dim (slang_type_specifier_type);
+
+GLuint _slang_type_dim (slang_type_specifier_type);
 
 #ifdef __cplusplus
 }

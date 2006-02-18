@@ -352,9 +352,9 @@ int slang_variable_copy (slang_variable *x, const slang_variable *y)
 	return 1;
 }
 
-slang_variable *_slang_locate_variable (slang_variable_scope *scope, slang_atom a_name, int all)
+slang_variable *_slang_locate_variable (slang_variable_scope *scope, slang_atom a_name, GLboolean all)
 {
-	unsigned int i;
+	GLuint i;
 
 	for (i = 0; i < scope->num_variables; i++)
 		if (a_name == scope->variables[i].a_name)

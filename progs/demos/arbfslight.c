@@ -3,16 +3,28 @@
  * simple per-pixel lighting.
  *
  * Michal Krol
- * 14 February 2006
+ * 17 February 2006
  *
  * Based on the original demo by:
  * Brian Paul
  * 17 April 2003
  */
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <GL/gl.h>
 #include <GL/glut.h>
+#include <GL/glext.h>
+
+#ifdef WIN32
+#define GETPROCADDRESS wglGetProcAddress
+#else
+#define GETPROCADDRESS glutGetProcAddress
+#endif
 
 static GLfloat diffuse[4] = { 0.5f, 0.5f, 1.0f, 1.0f };
 static GLfloat specular[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
@@ -178,23 +190,15 @@ static void Init (void)
 
 		/* XXX source from uniform diffuse */
 		"	vec4 diffuse;\n"
-		"	diffuse.xy = vec2 (0.5);\n"
-		"	diffuse.zw = vec2 (1.0);\n"
+		"	diffuse = vec4 (0.5, 0.5, 1.0, 1.0);\n"
 
 		/* XXX source from uniform specular */
 		"	vec4 specular;\n"
-		"	specular.xyz = vec3 (0.8);\n"
-		"	specular.w = 1.0;\n"
+		"	specular = vec4 (0.8, 0.8, 0.8, 1.0);\n"
 
-		"	// Compute normalized light direction\n"
-		"	vec4 lightDir;\n"
-		"	lightDir = lightPos / length (lightPos);\n"
-		"	// Compute normalized normal\n"
-		"	vec4 normal;\n"
-		"	normal = gl_TexCoord[0] / length (gl_TexCoord[0]);\n"
 		"	// Compute dot product of light direction and normal vector\n"
 		"	float dotProd;\n"
-		"	dotProd = clamp (dot (lightDir.xyz, normal.xyz), 0.0, 1.0);\n"
+		"	dotProd = clamp (dot (normalize (lightPos).xyz, normalize (gl_TexCoord[0]).xyz), 0.0, 1.0);\n"
 		"	// Compute diffuse and specular contributions\n"
 		"	gl_FragColor = diffuse * dotProd + specular * pow (dotProd, 20.0);\n"
 		"}\n"
@@ -202,8 +206,7 @@ static void Init (void)
 	static const char *vertShaderText =
 		"void main () {\n"
 		"	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
-		"	gl_TexCoord[0].xyz = gl_NormalMatrix * gl_Normal;\n"
-		"	gl_TexCoord[0].w = 1.0;\n"
+		"	gl_TexCoord[0] = vec4 (gl_NormalMatrix * gl_Normal, 1.0);\n"
 
 		/* XXX source from uniform lightPos */
 		"	gl_TexCoord[1] = gl_MultiTexCoord0;\n"
@@ -231,13 +234,13 @@ static void Init (void)
 		exit(1);
 	}
 
-	glCreateShaderObjectARB = (PFNGLCREATESHADEROBJECTARBPROC) glutGetProcAddress ("glCreateShaderObjectARB");
-	glShaderSourceARB = (PFNGLSHADERSOURCEARBPROC) glutGetProcAddress ("glShaderSourceARB");
-	glCompileShaderARB = (PFNGLCOMPILESHADERARBPROC) glutGetProcAddress ("glCompileShaderARB");
-	glCreateProgramObjectARB = (PFNGLCREATEPROGRAMOBJECTARBPROC) glutGetProcAddress ("glCreateProgramObjectARB");
-	glAttachObjectARB = (PFNGLATTACHOBJECTARBPROC) glutGetProcAddress ("glAttachObjectARB");
-	glLinkProgramARB = (PFNGLLINKPROGRAMARBPROC) glutGetProcAddress ("glLinkProgramARB");
-	glUseProgramObjectARB = (PFNGLUSEPROGRAMOBJECTARBPROC) glutGetProcAddress ("glUseProgramObjectARB");
+	glCreateShaderObjectARB = (PFNGLCREATESHADEROBJECTARBPROC) GETPROCADDRESS ("glCreateShaderObjectARB");
+	glShaderSourceARB = (PFNGLSHADERSOURCEARBPROC) GETPROCADDRESS ("glShaderSourceARB");
+	glCompileShaderARB = (PFNGLCOMPILESHADERARBPROC) GETPROCADDRESS ("glCompileShaderARB");
+	glCreateProgramObjectARB = (PFNGLCREATEPROGRAMOBJECTARBPROC) GETPROCADDRESS ("glCreateProgramObjectARB");
+	glAttachObjectARB = (PFNGLATTACHOBJECTARBPROC) GETPROCADDRESS ("glAttachObjectARB");
+	glLinkProgramARB = (PFNGLLINKPROGRAMARBPROC) GETPROCADDRESS ("glLinkProgramARB");
+	glUseProgramObjectARB = (PFNGLUSEPROGRAMOBJECTARBPROC) GETPROCADDRESS ("glUseProgramObjectARB");
 
 	fragShader = glCreateShaderObjectARB (GL_FRAGMENT_SHADER_ARB);
 	glShaderSourceARB (fragShader, 1, &fragShaderText, NULL);

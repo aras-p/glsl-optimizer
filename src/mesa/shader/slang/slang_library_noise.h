@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,28 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#if !defined SLANG_ASSEMBLE_CONDITIONAL_H
-#define SLANG_ASSEMBLE_CONDITIONAL_H
-
-#include "slang_assemble.h"
+#if !defined SLANG_LIBRARY_NOISE_H
+#define SLANG_LIBRARY_NOISE_H
 
 #if defined __cplusplus
 extern "C" {
 #endif
 
-GLboolean _slang_assemble_logicaland (slang_assemble_ctx *, slang_operation *);
-
-GLboolean _slang_assemble_logicalor (slang_assemble_ctx *, slang_operation *);
-
-GLboolean _slang_assemble_select (slang_assemble_ctx *, slang_operation *);
-
-GLboolean _slang_assemble_for (slang_assemble_ctx *, slang_operation *);
-
-GLboolean _slang_assemble_do (slang_assemble_ctx *, slang_operation *);
-
-GLboolean _slang_assemble_while (slang_assemble_ctx *, slang_operation *);
-
-GLboolean _slang_assemble_if (slang_assemble_ctx *, slang_operation *);
+GLfloat _slang_library_noise1 (GLfloat);
+GLfloat _slang_library_noise2 (GLfloat, GLfloat);
+GLfloat _slang_library_noise3 (GLfloat, GLfloat, GLfloat);
+GLfloat _slang_library_noise4 (GLfloat, GLfloat, GLfloat, GLfloat);
 
 #ifdef __cplusplus
 }

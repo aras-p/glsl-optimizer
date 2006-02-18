@@ -34,453 +34,417 @@
 #include "slang_assemble.h"
 #include "slang_execute.h"
 
-/* _slang_assemble_logicaland() */
+/*
+ * _slang_assemble_logicaland()
+ *
+ * and:
+ *    <left-expression>
+ *    jumpz zero
+ *    <right-expression>
+ *    jump end
+ *    zero:
+ *    push 0
+ * end:
+ */
 
-int _slang_assemble_logicaland (slang_assembly_file *file, slang_operation *op,
-	slang_assembly_flow_control *flow, slang_assembly_name_space *space,
-	slang_assembly_local_info *info, slang_machine *mach, slang_atom_pool *atoms)
+GLboolean _slang_assemble_logicaland (slang_assemble_ctx *A, slang_operation *op)
 {
-	/*
-		and:
-			<left-expression>
-			jumpz zero
-			<right-expression>
-			jump end
-		zero:
-			push 0
-		end:
-	*/
-
-	unsigned int zero_jump, end_jump;
-	slang_assembly_stack_info stk;
+	GLuint zero_jump, end_jump;
 
 	/* evaluate left expression */
-	if (!_slang_assemble_operation (file, &op->children[0], 0, flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: inspect stk */
+	if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid))
+		return GL_FALSE;
 
 	/* jump to pushing 0 if not true */
-	zero_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump_if_zero))
-		return 0;
+	zero_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump_if_zero))
+		return GL_FALSE;
 
 	/* evaluate right expression */
-	if (!_slang_assemble_operation (file, &op->children[1], 0, flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: inspect stk */
+	if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
+		return GL_FALSE;
 
 	/* jump to the end of the expression */
-	end_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump))
-		return 0;
+	end_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump))
+		return GL_FALSE;
 
 	/* push 0 on stack */
-	file->code[zero_jump].param[0] = file->count;
-	if (!slang_assembly_file_push_literal (file, slang_asm_bool_push, (GLfloat) 0))
-		return 0;
+	A->file->code[zero_jump].param[0] = A->file->count;
+	if (!slang_assembly_file_push_literal (A->file, slang_asm_bool_push, (GLfloat) 0))
+		return GL_FALSE;
 
 	/* the end of the expression */
-	file->code[end_jump].param[0] = file->count;
+	A->file->code[end_jump].param[0] = A->file->count;
 
-	return 1;
+	return GL_TRUE;
 }
 
-/* _slang_assemble_logicalor() */
+/*
+ * _slang_assemble_logicalor()
+ *
+ * or:
+ *    <left-expression>
+ *    jumpz right
+ *    push 1
+ *    jump end
+ * right:
+ *    <right-expression>
+ * end:
+ */
 
-int _slang_assemble_logicalor (slang_assembly_file *file, slang_operation *op,
-	slang_assembly_flow_control *flow, slang_assembly_name_space *space,
-	slang_assembly_local_info *info, slang_machine *mach, slang_atom_pool *atoms)
+GLboolean _slang_assemble_logicalor (slang_assemble_ctx *A, slang_operation *op)
 {
-	/*
-		or:
-			<left-expression>
-			jumpz right
-			push 1
-			jump end
-		right:
-			<right-expression>
-		end:
-	*/
-
-	unsigned int right_jump, end_jump;
-	slang_assembly_stack_info stk;
+	GLuint right_jump, end_jump;
 
 	/* evaluate left expression */
-	if (!_slang_assemble_operation (file, &op->children[0], 0, flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: inspect stk */
+	if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid))
+		return GL_FALSE;
 
 	/* jump to evaluation of right expression if not true */
-	right_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump_if_zero))
-		return 0;
+	right_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump_if_zero))
+		return GL_FALSE;
 
 	/* push 1 on stack */
-	if (!slang_assembly_file_push_literal (file, slang_asm_bool_push, (GLfloat) 1))
-		return 0;
+	if (!slang_assembly_file_push_literal (A->file, slang_asm_bool_push, (GLfloat) 1))
+		return GL_FALSE;
 
 	/* jump to the end of the expression */
-	end_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump))
-		return 0;
+	end_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump))
+		return GL_FALSE;
 
 	/* evaluate right expression */
-	file->code[right_jump].param[0] = file->count;
-	if (!_slang_assemble_operation (file, &op->children[1], 0, flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: inspect stk */
+	A->file->code[right_jump].param[0] = A->file->count;
+	if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
+		return GL_FALSE;
 
 	/* the end of the expression */
-	file->code[end_jump].param[0] = file->count;
+	A->file->code[end_jump].param[0] = A->file->count;
 
-	return 1;
+	return GL_TRUE;
 }
 
-/* _slang_assemble_select() */
+/*
+ * _slang_assemble_select()
+ *
+ * select:
+ *    <condition-expression>
+ *    jumpz false
+ *    <true-expression>
+ *    jump end
+ * false:
+ *    <false-expression>
+ * end:
+ */
 
-int _slang_assemble_select (slang_assembly_file *file, slang_operation *op,
-	slang_assembly_flow_control *flow, slang_assembly_name_space *space,
-	slang_assembly_local_info *info, slang_machine *mach, slang_atom_pool *atoms)
+GLboolean _slang_assemble_select (slang_assemble_ctx *A, slang_operation *op)
 {
-	/*
-		select:
-			<condition-expression>
-			jumpz false
-			<true-expression>
-			jump end
-		false:
-			<false-expression>
-		end:
-	*/
-
-	unsigned int cond_jump, end_jump;
-	slang_assembly_stack_info stk;
+	GLuint cond_jump, end_jump;
 
 	/* execute condition expression */
-	if (!_slang_assemble_operation (file, &op->children[0], 0, flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: inspect stk */
+	if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid))
+		return GL_FALSE;
 
 	/* jump to false expression if not true */
-	cond_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump_if_zero))
-		return 0;
+	cond_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump_if_zero))
+		return GL_FALSE;
 
 	/* execute true expression */
-	if (!_slang_assemble_operation (file, &op->children[1], 0, flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: inspect stk */
+	if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
+		return GL_FALSE;
 
 	/* jump to the end of the expression */
-	end_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump))
-		return 0;
+	end_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump))
+		return GL_FALSE;
 
 	/* resolve false point */
-	file->code[cond_jump].param[0] = file->count;
+	A->file->code[cond_jump].param[0] = A->file->count;
 
 	/* execute false expression */
-	if (!_slang_assemble_operation (file, &op->children[2], 0, flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: inspect stk */
+	if (!_slang_assemble_operation_ (A, &op->children[2], slang_ref_forbid))
+		return GL_FALSE;
 
 	/* resolve the end of the expression */
-	file->code[end_jump].param[0] = file->count;
+	A->file->code[end_jump].param[0] = A->file->count;
 
-	return 1;
+	return GL_TRUE;
 }
 
-/* _slang_assemble_for() */
+/*
+ * _slang_assemble_for()
+ *
+ * for:
+ *    <init-statement>
+ *    jump start
+ * break:
+ *    jump end
+ * continue:
+ *    <loop-increment>
+ * start:
+ *    <condition-statement>
+ *    jumpz end
+ *    <loop-body>
+ *    jump continue
+ * end:
+ */
 
-int _slang_assemble_for (slang_assembly_file *file, slang_operation *op,
-	slang_assembly_flow_control *flow, slang_assembly_name_space *space,
-	slang_assembly_local_info *info, slang_machine *mach, slang_atom_pool *atoms)
+GLboolean _slang_assemble_for (slang_assemble_ctx *A, slang_operation *op)
 {
-	/*
-		for:
-			<init-statement>
-			jump start
-		break:
-			jump end
-		continue:
-			<loop-increment>
-		start:
-			<condition-statement>
-			jumpz end
-			<loop-body>
-			jump continue
-		end:
-	*/
-
-	unsigned int start_jump, end_jump, cond_jump;
-	unsigned int break_label, cont_label;
-	slang_assembly_flow_control loop_flow = *flow;
-	slang_assembly_stack_info stk;
+	GLuint start_jump, end_jump, cond_jump;
+	GLuint break_label, cont_label;
+	slang_assembly_flow_control save_flow = A->flow;
 
 	/* execute initialization statement */
-	if (!_slang_assemble_operation (file, &op->children[0], 0, flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: pass-in stk to cleanup */
-	if (!_slang_cleanup_stack (file, &op->children[0], 0, space, mach, atoms))
-		return 0;
+	if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid/*slang_ref_freelance*/))
+		return GL_FALSE;
+	if (!_slang_cleanup_stack_ (A, &op->children[0]))
+		return GL_FALSE;
 
 	/* skip the "go to the end of the loop" and loop-increment statements */
-	start_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump))
-		return 0;
+	start_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump))
+		return GL_FALSE;
 
 	/* go to the end of the loop - break statements are directed here */
-	break_label = file->count;
-	end_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump))
-		return 0;
+	break_label = A->file->count;
+	end_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump))
+		return GL_FALSE;
 
 	/* resolve the beginning of the loop - continue statements are directed here */
-	cont_label = file->count;
+	cont_label = A->file->count;
 
 	/* execute loop-increment statement */
-	if (!_slang_assemble_operation (file, &op->children[2], 0, flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: pass-in stk to cleanup */
-	if (!_slang_cleanup_stack (file, &op->children[2], 0, space, mach, atoms))
-		return 0;
+	if (!_slang_assemble_operation_ (A, &op->children[2], slang_ref_forbid/*slang_ref_freelance*/))
+		return GL_FALSE;
+	if (!_slang_cleanup_stack_ (A, &op->children[2]))
+		return GL_FALSE;
 
 	/* resolve the condition point */
-	file->code[start_jump].param[0] = file->count;
+	A->file->code[start_jump].param[0] = A->file->count;
 
 	/* execute condition statement */
-	if (!_slang_assemble_operation (file, &op->children[1], 0, flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: inspect stk */
+	if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
+		return GL_FALSE;
 
 	/* jump to the end of the loop if not true */
-	cond_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump_if_zero))
-		return 0;
+	cond_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump_if_zero))
+		return GL_FALSE;
 
 	/* execute loop body */
-	loop_flow.loop_start = cont_label;
-	loop_flow.loop_end = break_label;
-	if (!_slang_assemble_operation (file, &op->children[3], 0, &loop_flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: pass-in stk to cleanup */
-	if (!_slang_cleanup_stack (file, &op->children[3], 0, space, mach, atoms))
-		return 0;
+	A->flow.loop_start = cont_label;
+	A->flow.loop_end = break_label;
+	if (!_slang_assemble_operation_ (A, &op->children[3], slang_ref_forbid/*slang_ref_freelance*/))
+		return GL_FALSE;
+	if (!_slang_cleanup_stack_ (A, &op->children[3]))
+		return GL_FALSE;
+	A->flow = save_flow;
 
 	/* go to the beginning of the loop */
-	if (!slang_assembly_file_push_label (file, slang_asm_jump, cont_label))
-		return 0;
+	if (!slang_assembly_file_push_label (A->file, slang_asm_jump, cont_label))
+		return GL_FALSE;
 
 	/* resolve the end of the loop */
-	file->code[end_jump].param[0] = file->count;
-	file->code[cond_jump].param[0] = file->count;
+	A->file->code[end_jump].param[0] = A->file->count;
+	A->file->code[cond_jump].param[0] = A->file->count;
 
-	return 1;
+	return GL_TRUE;
 }
 
-/* _slang_assemble_do() */
+/*
+ * _slang_assemble_do()
+ *
+ * do:
+ *    jump start
+ * break:
+ *    jump end
+ * continue:
+ *    jump condition
+ * start:
+ *    <loop-body>
+ * condition:
+ *    <condition-statement>
+ *    jumpz end
+ *    jump start
+ * end:
+ */
 
-int _slang_assemble_do (slang_assembly_file *file, slang_operation *op,
-	slang_assembly_flow_control *flow, slang_assembly_name_space *space,
-	slang_assembly_local_info *info, slang_machine *mach, slang_atom_pool *atoms)
+GLboolean _slang_assemble_do (slang_assemble_ctx *A, slang_operation *op)
 {
-	/*
-		do:
-			jump start
-		break:
-			jump end
-		continue:
-			jump condition
-		start:
-			<loop-body>
-		condition:
-			<condition-statement>
-			jumpz end
-			jump start
-		end:
-	*/
-
-	unsigned int skip_jump, end_jump, cont_jump, cond_jump;
-	unsigned int break_label, cont_label;
-	slang_assembly_flow_control loop_flow = *flow;
-	slang_assembly_stack_info stk;
+	GLuint skip_jump, end_jump, cont_jump, cond_jump;
+	GLuint break_label, cont_label;
+	slang_assembly_flow_control save_flow = A->flow;
 
 	/* skip the "go to the end of the loop" and "go to condition" statements */
-	skip_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump))
-		return 0;
+	skip_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump))
+		return GL_FALSE;
 
 	/* go to the end of the loop - break statements are directed here */
-	break_label = file->count;
-	end_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump))
-		return 0;
+	break_label = A->file->count;
+	end_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump))
+		return GL_FALSE;
 
 	/* go to condition - continue statements are directed here */
-	cont_label = file->count;
-	cont_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump))
-		return 0;
+	cont_label = A->file->count;
+	cont_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump))
+		return GL_FALSE;
 
 	/* resolve the beginning of the loop */
-	file->code[skip_jump].param[0] = file->count;
+	A->file->code[skip_jump].param[0] = A->file->count;
 
 	/* execute loop body */
-	loop_flow.loop_start = cont_label;
-	loop_flow.loop_end = break_label;
-	if (!_slang_assemble_operation (file, &op->children[0], 0, &loop_flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: pass-in stk to cleanup */
-	if (!_slang_cleanup_stack (file, &op->children[0], 0, space, mach, atoms))
-		return 0;
+	A->flow.loop_start = cont_label;
+	A->flow.loop_end = break_label;
+	if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid/*slang_ref_freelance*/))
+		return GL_FALSE;
+	if (!_slang_cleanup_stack_ (A, &op->children[0]))
+		return GL_FALSE;
+	A->flow = save_flow;
 
 	/* resolve condition point */
-	file->code[cont_jump].param[0] = file->count;
+	A->file->code[cont_jump].param[0] = A->file->count;
 
 	/* execute condition statement */
-	if (!_slang_assemble_operation (file, &op->children[1], 0, flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: pass-in stk to cleanup */
+	if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
+		return GL_FALSE;
 
 	/* jump to the end of the loop if not true */
-	cond_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump_if_zero))
-		return 0;
+	cond_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump_if_zero))
+		return GL_FALSE;
 
 	/* jump to the beginning of the loop */
-	if (!slang_assembly_file_push_label (file, slang_asm_jump, file->code[skip_jump].param[0]))
-		return 0;
+	if (!slang_assembly_file_push_label (A->file, slang_asm_jump, A->file->code[skip_jump].param[0]))
+		return GL_FALSE;
 
 	/* resolve the end of the loop */
-	file->code[end_jump].param[0] = file->count;
-	file->code[cond_jump].param[0] = file->count;
+	A->file->code[end_jump].param[0] = A->file->count;
+	A->file->code[cond_jump].param[0] = A->file->count;
 
-	return 1;
+	return GL_TRUE;
 }
 
-/* _slang_assemble_while() */
+/*
+ * _slang_assemble_while()
+ *
+ * while:
+ *    jump continue
+ * break:
+ *    jump end
+ * continue:
+ *    <condition-statement>
+ *    jumpz end
+ *    <loop-body>
+ *    jump continue
+ * end:
+ */
 
-int _slang_assemble_while (slang_assembly_file *file, slang_operation *op,
-	slang_assembly_flow_control *flow, slang_assembly_name_space *space,
-	slang_assembly_local_info *info, slang_machine *mach, slang_atom_pool *atoms)
+GLboolean _slang_assemble_while (slang_assemble_ctx *A, slang_operation *op)
 {
-	/*
-		while:
-			jump continue
-		break:
-			jump end
-		continue:
-			<condition-statement>
-			jumpz end
-			<loop-body>
-			jump continue
-		end:
-	*/
-
-	unsigned int skip_jump, end_jump, cond_jump;
-	unsigned int break_label;
-	slang_assembly_flow_control loop_flow = *flow;
-	slang_assembly_stack_info stk;
+	GLuint skip_jump, end_jump, cond_jump;
+	GLuint break_label;
+	slang_assembly_flow_control save_flow = A->flow;
 
 	/* skip the "go to the end of the loop" statement */
-	skip_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump))
-		return 0;
+	skip_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump))
+		return GL_FALSE;
 
 	/* go to the end of the loop - break statements are directed here */
-	break_label = file->count;
-	end_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump))
-		return 0;
+	break_label = A->file->count;
+	end_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump))
+		return GL_FALSE;
 
 	/* resolve the beginning of the loop - continue statements are directed here */
-	file->code[skip_jump].param[0] = file->count;
+	A->file->code[skip_jump].param[0] = A->file->count;
 
 	/* execute condition statement */
-	if (!_slang_assemble_operation (file, &op->children[0], 0, flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: pass-in stk to cleanup */
+	if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid))
+		return GL_FALSE;
 
 	/* jump to the end of the loop if not true */
-	cond_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump_if_zero))
-		return 0;
+	cond_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump_if_zero))
+		return GL_FALSE;
 
 	/* execute loop body */
-	loop_flow.loop_start = file->code[skip_jump].param[0];
-	loop_flow.loop_end = break_label;
-	if (!_slang_assemble_operation (file, &op->children[1], 0, &loop_flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: pass-in stk to cleanup */
-	if (!_slang_cleanup_stack (file, &op->children[1], 0, space, mach, atoms))
-		return 0;
+	A->flow.loop_start = A->file->code[skip_jump].param[0];
+	A->flow.loop_end = break_label;
+	if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid/*slang_ref_freelance*/))
+		return GL_FALSE;
+	if (!_slang_cleanup_stack_ (A, &op->children[1]))
+		return GL_FALSE;
+	A->flow = save_flow;
 
 	/* jump to the beginning of the loop */
-	if (!slang_assembly_file_push_label (file, slang_asm_jump, file->code[skip_jump].param[0]))
-		return 0;
+	if (!slang_assembly_file_push_label (A->file, slang_asm_jump, A->file->code[skip_jump].param[0]))
+		return GL_FALSE;
 
 	/* resolve the end of the loop */
-	file->code[end_jump].param[0] = file->count;
-	file->code[cond_jump].param[0] = file->count;
+	A->file->code[end_jump].param[0] = A->file->count;
+	A->file->code[cond_jump].param[0] = A->file->count;
 
-	return 1;
+	return GL_TRUE;
 }
 
-/* _slang_assemble_if() */
+/*
+ * _slang_assemble_if()
+ *
+ * if:
+ *    <condition-statement>
+ *    jumpz else
+ *    <true-statement>
+ *    jump end
+ * else:
+ *    <false-statement>
+ * end:
+ */
 
-int _slang_assemble_if (slang_assembly_file *file, slang_operation *op,
-	slang_assembly_flow_control *flow, slang_assembly_name_space *space,
-	slang_assembly_local_info *info, slang_machine *mach, slang_atom_pool *atoms)
+GLboolean _slang_assemble_if (slang_assemble_ctx *A, slang_operation *op)
 {
-	/*
-		if:
-			<condition-statement>
-			jumpz else
-			<true-statement>
-			jump end
-		else:
-			<false-statement>
-		end:
-	*/
-
-	unsigned int cond_jump, else_jump;
-	slang_assembly_stack_info stk;
+	GLuint cond_jump, else_jump;
 
 	/* execute condition statement */
-	if (!_slang_assemble_operation (file, &op->children[0], 0, flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: pass-in stk to cleanup */
+	if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid))
+		return GL_FALSE;
 
 	/* jump to false-statement if not true */
-	cond_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump_if_zero))
-		return 0;
+	cond_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump_if_zero))
+		return GL_FALSE;
 
 	/* execute true-statement */
-	if (!_slang_assemble_operation (file, &op->children[1], 0, flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: pass-in stk to cleanup */
-	if (!_slang_cleanup_stack (file, &op->children[1], 0, space, mach, atoms))
-		return 0;
+	if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid/*slang_ref_freelance*/))
+		return GL_FALSE;
+	if (!_slang_cleanup_stack_ (A, &op->children[1]))
+		return GL_FALSE;
 
 	/* skip if-false statement */
-	else_jump = file->count;
-	if (!slang_assembly_file_push (file, slang_asm_jump))
-		return 0;
+	else_jump = A->file->count;
+	if (!slang_assembly_file_push (A->file, slang_asm_jump))
+		return GL_FALSE;
 
 	/* resolve start of false-statement */
-	file->code[cond_jump].param[0] = file->count;
+	A->file->code[cond_jump].param[0] = A->file->count;
 
 	/* execute false-statement */
-	if (!_slang_assemble_operation (file, &op->children[2], 0, flow, space, info, &stk, mach, atoms))
-		return 0;
-	/* TODO: pass-in stk to cleanup */
-	if (!_slang_cleanup_stack (file, &op->children[2], 0, space, mach, atoms))
-		return 0;
+	if (!_slang_assemble_operation_ (A, &op->children[2], slang_ref_forbid/*slang_ref_freelance*/))
+		return GL_FALSE;
+	if (!_slang_cleanup_stack_ (A, &op->children[2]))
+		return GL_FALSE;
 
 	/* resolve end of if-false statement */
-	file->code[else_jump].param[0] = file->count;
+	A->file->code[else_jump].param[0] = A->file->count;
 
-	return 1;
+	return GL_TRUE;
 }
 

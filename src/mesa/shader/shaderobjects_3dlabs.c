@@ -1086,13 +1086,13 @@ static int fetch_mem (struct gl2_vertex_shader_intf **vs, const char *name, GLvo
 {
 	GLubyte *data;
 
-	data = get_address_of (vs, name) + index * size;
+	data = get_address_of (vs, name);
 	if (data == NULL)
 		return 0;
 	if (write)
-		_mesa_memcpy (data, val, size);
+		_mesa_memcpy (data + index * size, val, size);
 	else
-		_mesa_memcpy (val, data, size);
+		_mesa_memcpy (val, data + index * size, size);
 	return 1;
 }
 
@@ -1101,13 +1101,13 @@ static int fetch_mem_f (struct gl2_fragment_shader_intf **fs, const char *name, 
 {
 	GLubyte *data;
 
-	data = get_address_of_f (fs, name) + index * size;
+	data = get_address_of_f (fs, name);
 	if (data == NULL)
 		return 0;
 	if (write)
-		_mesa_memcpy (data, val, size);
+		_mesa_memcpy (data + index * size, val, size);
 	else
-		_mesa_memcpy (val, data, size);
+		_mesa_memcpy (val, data + index * size, size);
 	return 1;
 }
 
@@ -1174,28 +1174,24 @@ void exec_vertex_shader (struct gl2_vertex_shader_intf **vs)
 		slang_function *f;
 		slang_assembly_file_restore_point point;
 		slang_machine mach;
-		slang_assembly_local_info info;
-		slang_assembly_name_space space;
 		slang_assemble_ctx A;
 
 		f = &unit->functions.functions[i];
 		slang_assembly_file_restore_point_save (unit->assembly, &point);
 		mach = *unit->machine;
 		mach.ip = unit->assembly->count;
-		info.ret_size = 0;
-		info.addr_tmp = 0;
-		info.swizzle_tmp = 4;
-		slang_assembly_file_push_label (unit->assembly, slang_asm_local_alloc, 20);
-		slang_assembly_file_push_label (unit->assembly, slang_asm_enter, 20);
-		space.funcs = &unit->functions;
-		space.structs = &unit->structs;
-		space.vars = &unit->globals;
+
 		A.file = unit->assembly;
 		A.mach = unit->machine;
 		A.atoms = unit->atom_pool;
-		A.space = space;
+		A.space.funcs = &unit->functions;
+		A.space.structs = &unit->structs;
+		A.space.vars = &unit->globals;
+		slang_assembly_file_push_label (unit->assembly, slang_asm_local_alloc, 20);
+		slang_assembly_file_push_label (unit->assembly, slang_asm_enter, 20);
 		_slang_assemble_function_call (&A, f, NULL, 0, GL_FALSE);
 		slang_assembly_file_push (unit->assembly, slang_asm_exit);
+
 		_slang_execute2 (unit->assembly, &mach);
 		slang_assembly_file_restore_point_load (unit->assembly, &point);
 		_mesa_memcpy (unit->machine->mem, mach.mem, SLANG_MACHINE_MEMORY_SIZE * sizeof (slang_machine_slot));
@@ -1220,8 +1216,6 @@ void exec_fragment_shader (struct gl2_fragment_shader_intf **fs)
 		slang_function *f;
 		slang_assembly_file_restore_point point;
 		slang_machine mach;
-		slang_assembly_local_info info;
-		slang_assembly_name_space space;
 		slang_assemble_ctx A;
 
 		f = &unit->functions.functions[i];
@@ -1229,20 +1223,18 @@ void exec_fragment_shader (struct gl2_fragment_shader_intf **fs)
 		mach = *unit->machine;
 		mach.ip = unit->assembly->count;
 		mach.kill = 0;
-		info.ret_size = 0;
-		info.addr_tmp = 0;
-		info.swizzle_tmp = 4;
-		slang_assembly_file_push_label (unit->assembly, slang_asm_local_alloc, 20);
-		slang_assembly_file_push_label (unit->assembly, slang_asm_enter, 20);
-		space.funcs = &unit->functions;
-		space.structs = &unit->structs;
-		space.vars = &unit->globals;
+
 		A.file = unit->assembly;
 		A.mach = unit->machine;
 		A.atoms = unit->atom_pool;
-		A.space = space;
+		A.space.funcs = &unit->functions;
+		A.space.structs = &unit->structs;
+		A.space.vars = &unit->globals;
+		slang_assembly_file_push_label (unit->assembly, slang_asm_local_alloc, 20);
+		slang_assembly_file_push_label (unit->assembly, slang_asm_enter, 20);
 		_slang_assemble_function_call (&A, f, NULL, 0, GL_FALSE);
 		slang_assembly_file_push (unit->assembly, slang_asm_exit);
+
 		_slang_execute2 (unit->assembly, &mach);
 		slang_assembly_file_restore_point_load (unit->assembly, &point);
 		_mesa_memcpy (unit->machine->mem, mach.mem, SLANG_MACHINE_MEMORY_SIZE * sizeof (slang_machine_slot));

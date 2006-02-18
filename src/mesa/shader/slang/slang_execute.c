@@ -33,6 +33,7 @@
 #include "slang_assemble.h"
 #include "slang_storage.h"
 #include "slang_execute.h"
+#include "slang_library_noise.h"
 
 #define DEBUG_SLANG 0
 
@@ -121,6 +122,18 @@ static void dump_instruction (FILE *f, slang_assembly *a, unsigned int i)
 		break;
 	case slang_asm_float_ceil:
 		fprintf (f, "float_ceil");
+		break;
+	case slang_asm_float_noise1:
+		fprintf (f, "float_noise1");
+		break;
+	case slang_asm_float_noise2:
+		fprintf (f, "float_noise2");
+		break;
+	case slang_asm_float_noise3:
+		fprintf (f, "float_noise3");
+		break;
+	case slang_asm_float_noise4:
+		fprintf (f, "float_noise4");
 		break;
 	case slang_asm_int_copy:
 		fprintf (f, "int_copy\t%d, %d", a->param[0], a->param[1]);
@@ -365,6 +378,24 @@ int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
 		case slang_asm_float_ceil:
 			stack[mach->sp]._float = CEILF (stack[mach->sp]._float);
 			break;
+		case slang_asm_float_noise1:
+			stack[mach->sp]._float = _slang_library_noise1 (stack[mach->sp]._float);
+			break;
+		case slang_asm_float_noise2:
+			stack[mach->sp + 1]._float = _slang_library_noise2 (stack[mach->sp]._float,
+				stack[mach->sp + 1]._float);
+			mach->sp++;
+			break;
+		case slang_asm_float_noise3:
+			stack[mach->sp + 2]._float = _slang_library_noise3 (stack[mach->sp]._float,
+				stack[mach->sp + 1]._float, stack[mach->sp + 2]._float);
+			mach->sp += 2;
+			break;
+		case slang_asm_float_noise4:
+			stack[mach->sp + 3]._float = _slang_library_noise4 (stack[mach->sp]._float,
+				stack[mach->sp + 1]._float, stack[mach->sp + 2]._float, stack[mach->sp + 3]._float);
+			mach->sp += 3;
+			break;
 		case slang_asm_int_to_float:
 			break;
 		case slang_asm_int_to_addr:
@@ -442,6 +473,8 @@ int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
 		case slang_asm_bool_print:
 			_mesa_printf ("slang print: %s\n", (GLint) stack[mach->sp]._float ? "true" : "false");
 			break;
+		default:
+			assert (0);
 		}
 	}
 

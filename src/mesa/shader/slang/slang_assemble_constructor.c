@@ -36,15 +36,15 @@
 
 /* _slang_is_swizzle() */
 
-int _slang_is_swizzle (const char *field, unsigned int rows, slang_swizzle *swz)
+GLboolean _slang_is_swizzle (const char *field, GLuint rows, slang_swizzle *swz)
 {
-	unsigned int i;
-	int xyzw = 0, rgba = 0, stpq = 0;
+	GLuint i;
+	GLboolean xyzw = GL_FALSE, rgba = GL_FALSE, stpq = GL_FALSE;
 
 	/* the swizzle can be at most 4-component long */
 	swz->num_components = slang_string_length (field);
 	if (swz->num_components > 4)
-		return 0;
+		return GL_FALSE;
 
 	for (i = 0; i < swz->num_components; i++)
 	{
@@ -55,22 +55,22 @@ int _slang_is_swizzle (const char *field, unsigned int rows, slang_swizzle *swz)
 		case 'y':
 		case 'z':
 		case 'w':
-			xyzw = 1;
+			xyzw = GL_TRUE;
 			break;
 		case 'r':
 		case 'g':
 		case 'b':
 		case 'a':
-			rgba = 1;
+			rgba = GL_TRUE;
 			break;
 		case 's':
 		case 't':
 		case 'p':
 		case 'q':
-			stpq = 1;
+			stpq = GL_TRUE;
 			break;
 		default:
-			return 0;
+			return GL_FALSE;
 		}
 
 		/* collect swizzle component */
@@ -100,42 +100,43 @@ int _slang_is_swizzle (const char *field, unsigned int rows, slang_swizzle *swz)
 
 		/* check if the component is valid for given vector's row count */
 		if (rows <= swz->swizzle[i])
-			return 0;
+			return GL_FALSE;
 	}
 
 	/* only one swizzle group can be used */
 	if ((xyzw && rgba) || (xyzw && stpq) || (rgba && stpq))
-		return 0;
+		return GL_FALSE;
 
-	return 1;
+	return GL_TRUE;
 }
 
 /* _slang_is_swizzle_mask() */
 
-int _slang_is_swizzle_mask (const slang_swizzle *swz, unsigned int rows)
+GLboolean _slang_is_swizzle_mask (const slang_swizzle *swz, GLuint rows)
 {
-	unsigned int i, c = 0;
+	GLuint i, c = 0;
 
 	/* the swizzle may not be longer than the vector dim */
 	if (swz->num_components > rows)
-		return 0;
+		return GL_FALSE;
 
 	/* the swizzle components cannot be duplicated */
 	for (i = 0; i < swz->num_components; i++)
 	{
 		if ((c & (1 << swz->swizzle[i])) != 0)
-			return 0;
+			return GL_FALSE;
 		c |= 1 << swz->swizzle[i];
 	}
-	return 1;
+
+	return GL_TRUE;
 }
 
 /* _slang_multiply_swizzles() */
 
-void _slang_multiply_swizzles (slang_swizzle *dst, const slang_swizzle *left,
+GLvoid _slang_multiply_swizzles (slang_swizzle *dst, const slang_swizzle *left,
 	const slang_swizzle *right)
 {
-	unsigned int i;
+	GLuint i;
 
 	dst->num_components = right->num_components;
 	for (i = 0; i < right->num_components; i++)
@@ -143,37 +144,38 @@ void _slang_multiply_swizzles (slang_swizzle *dst, const slang_swizzle *left,
 }
 
 /* _slang_assemble_constructor() */
-#if 0
-static int constructor_aggregate (slang_assembly_file *file, const slang_storage_aggregate *flat,
-	unsigned int *index, slang_operation *op, unsigned int size, slang_assembly_flow_control *flow,
-	slang_assembly_name_space *space, slang_assembly_local_info *info)
+
+static GLboolean constructor_aggregate (slang_assemble_ctx *A, const slang_storage_aggregate *flat,
+	GLuint *index, slang_operation *op, GLuint size)
 {
 	slang_assembly_typeinfo ti;
-	int result;
+	GLboolean result = GL_FALSE;
 	slang_storage_aggregate agg, flat_agg;
-	slang_assembly_stack_info stk;
-	unsigned int i;
+	GLuint i;
 
-	slang_assembly_typeinfo_construct (&ti);
-	if (!(result = _slang_typeof_operation (op, space, &ti)))
+	if (!slang_assembly_typeinfo_construct (&ti))
+		return GL_FALSE;
+	if (!_slang_typeof_operation (op, &A->space, &ti, A->atoms))
 		goto end1;
 
-	slang_storage_aggregate_construct (&agg);
-	if (!(result = _slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs,
-			space->vars)))
+	if (!slang_storage_aggregate_construct (&agg))
+		goto end1;
+	if (!_slang_aggregate_variable (&agg, &ti.spec, NULL, A->space.funcs, A->space.structs,
+			A->space.vars, A->mach, A->file, A->atoms))
 		goto end2;
 
-	slang_storage_aggregate_construct (&flat_agg);
-	if (!(result = _slang_flatten_aggregate (&flat_agg, &agg)))
+	if (!slang_storage_aggregate_construct (&flat_agg))
+		goto end2;
+	if (!_slang_flatten_aggregate (&flat_agg, &agg))
 		goto end;
 
-	if (!(result = _slang_assemble_operation (file, op, 0, flow, space, info, &stk)))
+	if (!_slang_assemble_operation_ (A, op, slang_ref_forbid))
 		goto end;
 
 	for (i = 0; i < flat_agg.count; i++)
 	{
-		const slang_storage_array *arr1 = flat_agg.arrays + i;
-		const slang_storage_array *arr2 = flat->arrays + *index;
+		const slang_storage_array *arr1 = &flat_agg.arrays[i];
+		const slang_storage_array *arr2 = &flat->arrays[*index];
 
 		if (arr1->type != arr2->type)
 		{
@@ -183,7 +185,7 @@ static int constructor_aggregate (slang_assembly_file *file, const slang_storage
 		/* TODO: watch the index, if it reaches the size, pop off the stack subsequent values */
 	}
 
-	result = 1;
+	result = GL_TRUE;
 end:
 	slang_storage_aggregate_destruct (&flat_agg);
 end2:
@@ -192,48 +194,49 @@ end1:
 	slang_assembly_typeinfo_destruct (&ti);
 	return result;
 }
-#endif
 
-/* XXX: general swizzle! */
-
-#if 0
-int _slang_assemble_constructor (slang_assembly_file *file, slang_operation *op,
-	slang_assembly_flow_control *flow, slang_assembly_name_space *space,
-	slang_assembly_local_info *info, struct slang_machine_ *pmach)
+GLboolean _slang_assemble_constructor (slang_assemble_ctx *A, slang_operation *op)
 {
 	slang_assembly_typeinfo ti;
-	int result;
+	GLboolean result = GL_FALSE;
 	slang_storage_aggregate agg, flat;
-	unsigned int size, index, i;
+	GLuint size, index, i;
 
+	/* get typeinfo of the constructor (the result of constructor expression) */
 	if (!slang_assembly_typeinfo_construct (&ti))
-		return 0;
-	if (!(result = _slang_typeof_operation (op, space, &ti)))
+		return GL_FALSE;
+	if (!_slang_typeof_operation (op, &A->space, &ti, A->atoms))
 		goto end1;
 
-	if (!(result = slang_storage_aggregate_construct (&agg)))
+	/* create an aggregate of the constructor */
+	if (!slang_storage_aggregate_construct (&agg))
 		goto end1;
-	if (!(result = _slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs,
-			space->vars, pmach, file)))
+	if (!_slang_aggregate_variable (&agg, &ti.spec, NULL, A->space.funcs, A->space.structs,
+			A->space.vars, A->mach, A->file, A->atoms))
 		goto end2;
 
+	/* calculate size of the constructor */
 	size = _slang_sizeof_aggregate (&agg);
 
-	if (!(result = slang_storage_aggregate_construct (&flat)))
+	/* flatten the constructor */
+	if (!slang_storage_aggregate_construct (&flat))
 		goto end2;
-	if (!(result = _slang_flatten_aggregate (&flat, &agg)))
+	if (!_slang_flatten_aggregate (&flat, &agg))
 		goto end;
 
+	/* XXX: The children operations are traversed in a reversed order, so it poses a
+	 * problem when there is more data than the constructor needs. We must fix it! */
+
+	/* traverse the children that form the constructor expression */
 	index = 0;
-	for (i = 0; i < op->num_children; i++)
+	for (i = op->num_children; i > 0; i--)
 	{
-		if (!(result = constructor_aggregate (file, &flat, &index, op->children + i, size, flow,
-			space, info)))
+		if (!constructor_aggregate (A, &flat, &index, &op->children[i - 1], size))
 			goto end;
 		/* TODO: watch the index, if it reaches the size, raise an error */
 	}
 
-	result = 1;
+	result = GL_TRUE;
 end:
 	slang_storage_aggregate_destruct (&flat);
 end2:
@@ -242,14 +245,13 @@ end1:
 	slang_assembly_typeinfo_destruct (&ti);
 	return result;
 }
-#endif
 
 /* _slang_assemble_constructor_from_swizzle() */
 
-int _slang_assemble_constructor_from_swizzle (slang_assembly_file *file, const slang_swizzle *swz,
-	slang_type_specifier *spec, slang_type_specifier *master_spec, slang_assembly_local_info *info)
+GLboolean _slang_assemble_constructor_from_swizzle (slang_assemble_ctx *A, const slang_swizzle *swz,
+	slang_type_specifier *spec, slang_type_specifier *master_spec)
 {
-	unsigned int master_rows, i;
+	GLuint master_rows, i;
 
 	master_rows = _slang_type_dim (master_spec->type);
 	for (i = 0; i < master_rows; i++)
@@ -257,54 +259,55 @@ int _slang_assemble_constructor_from_swizzle (slang_assembly_file *file, const s
 		switch (_slang_type_base (master_spec->type))
 		{
 		case slang_spec_bool:
-			if (!slang_assembly_file_push_label2 (file, slang_asm_bool_copy,
+			if (!slang_assembly_file_push_label2 (A->file, slang_asm_bool_copy,
 					(master_rows - i) * 4, i * 4))
-				return 0;
+				return GL_FALSE;
 			break;
 		case slang_spec_int:
-			if (!slang_assembly_file_push_label2 (file, slang_asm_int_copy,
+			if (!slang_assembly_file_push_label2 (A->file, slang_asm_int_copy,
 					(master_rows - i) * 4, i * 4))
-				return 0;
+				return GL_FALSE;
 			break;
 		case slang_spec_float:
-			if (!slang_assembly_file_push_label2 (file, slang_asm_float_copy,
+			if (!slang_assembly_file_push_label2 (A->file, slang_asm_float_copy,
 					(master_rows - i) * 4, i * 4))
-				return 0;
+				return GL_FALSE;
 			break;
 		default:
 			break;
 		}
 	}
-	if (!slang_assembly_file_push_label (file, slang_asm_local_free, 4))
-		return 0;
+	if (!slang_assembly_file_push_label (A->file, slang_asm_local_free, 4))
+		return GL_FALSE;
 	for (i = swz->num_components; i > 0; i--)
 	{
-		unsigned int n = i - 1;
+		GLuint n = i - 1;
 
-		if (!slang_assembly_file_push_label2 (file, slang_asm_local_addr, info->swizzle_tmp, 16))
-			return 0;
-		if (!slang_assembly_file_push_label (file, slang_asm_addr_push, swz->swizzle[n] * 4))
-			return 0;
-		if (!slang_assembly_file_push (file, slang_asm_addr_add))
-			return 0;
+		if (!slang_assembly_file_push_label2 (A->file, slang_asm_local_addr, A->local.swizzle_tmp, 16))
+			return GL_FALSE;
+		if (!slang_assembly_file_push_label (A->file, slang_asm_addr_push, swz->swizzle[n] * 4))
+			return GL_FALSE;
+		if (!slang_assembly_file_push (A->file, slang_asm_addr_add))
+			return GL_FALSE;
 		switch (_slang_type_base (master_spec->type))
 		{
 		case slang_spec_bool:
-			if (!slang_assembly_file_push (file, slang_asm_bool_deref))
-				return 0;
+			if (!slang_assembly_file_push (A->file, slang_asm_bool_deref))
+				return GL_FALSE;
 			break;
 		case slang_spec_int:
-			if (!slang_assembly_file_push (file, slang_asm_int_deref))
-				return 0;
+			if (!slang_assembly_file_push (A->file, slang_asm_int_deref))
+				return GL_FALSE;
 			break;
 		case slang_spec_float:
-			if (!slang_assembly_file_push (file, slang_asm_float_deref))
-				return 0;
+			if (!slang_assembly_file_push (A->file, slang_asm_float_deref))
+				return GL_FALSE;
 			break;
 		default:
 			break;
 		}
 	}
-	return 1;
+
+	return GL_TRUE;
 }
 
