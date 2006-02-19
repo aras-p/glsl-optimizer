@@ -1,0 +1,67 @@
+# -*-makefile-*-
+# Configuration for linux-dri: Linux DRI hardware drivers for XFree86 & others
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = linux-dri-xcb
+
+# Compiler and flags
+CC = gcc
+CXX = g++
+
+#MKDEP = /usr/X11R6/bin/makedepend
+#MKDEP = gcc -M
+#MKDEP_OPTIONS = -MF depend
+
+OPT_FLAGS  = -g
+PIC_FLAGS  = -fPIC
+
+# Add '-DGLX_USE_TLS' to ARCH_FLAGS to enable TLS support.
+ARCH_FLAGS ?=
+
+DEFINES = -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE \
+	-D_BSD_SOURCE -D_GNU_SOURCE \
+	-DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER \
+	-DGLX_DIRECT_RENDERING -DHAVE_ALIAS -DUSE_XCB
+
+X11_INCLUDES = `pkg-config --cflags-only-I x11` `pkg-config --cflags-only-I xcb`
+
+CFLAGS = -Wall -Wmissing-prototypes $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) \
+	$(DEFINES) $(ASM_FLAGS) -std=c99 -ffast-math 
+
+CXXFLAGS = -Wall $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES)
+
+
+ASM_SOURCES = 
+
+# Library/program dependencies
+EXTRA_LIB_PATH=`pkg-config --libs-only-L x11`
+
+LIBDRM_LIB = `pkg-config --libs libdrm` -ldrm
+DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl $(LIBDRM_LIB)
+GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lm -lpthread -ldl \
+                $(LIBDRM_LIB) `pkg-config --libs xcb`
+
+
+# This is now 0 by default since it seems to confuse the hell out of people
+# and generate a lot of extra noise on bugzilla.  If you need to build with
+# EGL, do 'make linux-dri USING_EGL=1'
+
+USING_EGL=0
+
+# Directories
+ifeq ($(USING_EGL), 1)
+SRC_DIRS = egl glx/x11 mesa glu glut/glx glw
+PROGRAM_DIRS = egl
+else
+SRC_DIRS = glx/x11 mesa glu glut/glx glw
+PROGRAM_DIRS =
+endif
+
+DRIVER_DIRS = dri
+WINDOW_SYSTEM=dri
+
+# gamma are missing because they have not been converted to use the new
+# interface.
+DRI_DIRS = i810 i915 mach64 mga r128 r200 r300 radeon s3v \
+	savage sis tdfx trident unichrome ffb
