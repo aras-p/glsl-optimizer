@@ -89,6 +89,7 @@ linux-dri \
 linux-dri-x86 \
 linux-dri-x86-64 \
 linux-dri-ppc \
+linux-dri-xcb \
 linux-indirect \
 linux-fbdev \
 linux-glide \
@@ -113,7 +114,6 @@ linux-x86-32 \
 linux-x86-64 \
 linux-x86-64-debug \
 linux-x86-64-static \
-linux-x86-xcb \
 linux-x86-glide \
 linux-x86-static \
 netbsd \
