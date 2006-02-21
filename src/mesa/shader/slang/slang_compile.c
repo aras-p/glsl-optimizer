@@ -135,6 +135,8 @@ int slang_translation_unit_construct2 (slang_translation_unit *unit, slang_assem
 	unit->free_machine = 0;
 	unit->atom_pool = atoms;
 	unit->free_atom_pool = 0;
+	slang_export_data_table_ctr (&unit->exp_data);
+	slang_active_uniforms_ctr (&unit->uniforms);
 	return 1;
 }
 
@@ -157,6 +159,8 @@ void slang_translation_unit_destruct (slang_translation_unit *unit)
 		slang_atom_pool_destruct (unit->atom_pool);
 		slang_alloc_free (unit->atom_pool);
 	}
+	slang_active_uniforms_dtr (&unit->uniforms);
+	slang_export_data_table_dtr (&unit->exp_data);
 }
 
 /* slang_info_log */
@@ -351,42 +355,97 @@ static int parse_statement (slang_parse_ctx *, slang_output_ctx *, slang_operati
 static int parse_expression (slang_parse_ctx *, slang_output_ctx *, slang_operation *);
 static int parse_type_specifier (slang_parse_ctx *, slang_output_ctx *, slang_type_specifier *);
 
+static GLboolean parse_array_len (slang_parse_ctx *C, slang_output_ctx *O, GLuint *len)
+{
+	slang_operation array_size;
+	slang_assembly_name_space space;
+	GLboolean result;
+
+	if (!slang_operation_construct (&array_size))
+		return GL_FALSE;
+	if (!parse_expression (C, O, &array_size))
+	{
+		slang_operation_destruct (&array_size);
+		return GL_FALSE;
+	}
+
+	space.funcs = O->funs;
+	space.structs = O->structs;
+	space.vars = O->vars;
+	result = _slang_evaluate_int (O->assembly, O->machine, &space, &array_size, len, C->atoms);
+	slang_operation_destruct (&array_size);
+	return result;
+}
+
+static GLboolean calculate_var_size (slang_parse_ctx *C, slang_output_ctx *O, slang_variable *var)
+{
+	slang_storage_aggregate agg;
+
+	if (!slang_storage_aggregate_construct (&agg))
+		return GL_FALSE;
+	if (!_slang_aggregate_variable (&agg, &var->type.specifier, var->array_len, O->funs, O->structs,
+			O->vars, O->machine, O->assembly, C->atoms))
+	{
+		slang_storage_aggregate_destruct (&agg);
+		return GL_FALSE;
+	}
+	var->size = _slang_sizeof_aggregate (&agg);
+	slang_storage_aggregate_destruct (&agg);
+	return GL_TRUE;
+}
+
+static GLboolean convert_to_array (slang_parse_ctx *C, slang_variable *var,
+	const slang_type_specifier *sp)
+{
+	/* sized array - mark it as array, copy the specifier to the array element and
+	 * parse the expression */
+	var->type.specifier.type = slang_spec_array;
+	var->type.specifier._array = (slang_type_specifier *) slang_alloc_malloc (sizeof (
+		slang_type_specifier));
+	if (var->type.specifier._array == NULL)
+	{
+		slang_info_log_memory (C->L);
+		return GL_FALSE;
+	}
+	if (!slang_type_specifier_construct (var->type.specifier._array))
+	{
+		slang_alloc_free (var->type.specifier._array);
+		var->type.specifier._array = NULL;
+		slang_info_log_memory (C->L);
+		return GL_FALSE;
+	}
+	return slang_type_specifier_copy (var->type.specifier._array, sp);
+}
+
 /* structure field */
 #define FIELD_NONE 0
 #define FIELD_NEXT 1
 #define FIELD_ARRAY 2
 
-static int parse_struct_field_var (slang_parse_ctx *C, slang_output_ctx *O, slang_variable *var)
+static GLboolean parse_struct_field_var (slang_parse_ctx *C, slang_output_ctx *O, slang_variable *var,
+	const slang_type_specifier *sp)
 {
 	var->a_name = parse_identifier (C);
 	if (var->a_name == SLANG_ATOM_NULL)
-		return 0;
+		return GL_FALSE;
 
 	switch (*C->I++)
 	{
 	case FIELD_NONE:
+		if (!slang_type_specifier_copy (&var->type.specifier, sp))
+			return GL_FALSE;
 		break;
 	case FIELD_ARRAY:
-		var->array_size = (slang_operation *) slang_alloc_malloc (sizeof (slang_operation));
-		if (var->array_size == NULL)
-		{
-			slang_info_log_memory (C->L);
-			return 0;
-		}
-		if (!slang_operation_construct (var->array_size))
-		{
-			slang_alloc_free (var->array_size);
-			var->array_size = NULL;
-			return 0;
-		}
-		if (!parse_expression (C, O, var->array_size))
-			return 0;
+		if (!convert_to_array (C, var, sp))
+			return GL_FALSE;
+		if (!parse_array_len (C, O, &var->array_len))
+			return GL_FALSE;
 		break;
 	default:
-		return 0;
+		return GL_FALSE;
 	}
 
-	return 1;
+	return calculate_var_size (C, O, var);
 }
 
 static int parse_struct_field (slang_parse_ctx *C, slang_output_ctx *O, slang_struct *st,
@@ -413,9 +472,7 @@ static int parse_struct_field (slang_parse_ctx *C, slang_output_ctx *O, slang_st
 		if (!slang_variable_construct (var))
 			return 0;
 		st->fields->num_variables++;
-		if (!slang_type_specifier_copy (&var->type.specifier, sp))
-			return 0;
-		if (!parse_struct_field_var (C, &o, var))
+		if (!parse_struct_field_var (C, &o, var, sp))
 			return 0;
 	}
 	while (*C->I++ != FIELD_NONE);
@@ -468,6 +525,7 @@ static int parse_struct (slang_parse_ctx *C, slang_output_ctx *O, slang_struct *
 			slang_type_specifier_destruct (&sp);
 			return 0;
 		}
+		slang_type_specifier_destruct (&sp);
 	}
 	while (*C->I++ != FIELD_NONE);
 
@@ -1215,8 +1273,6 @@ static int parse_expression (slang_parse_ctx *C, slang_output_ctx *O, slang_oper
 static int parse_parameter_declaration (slang_parse_ctx *C, slang_output_ctx *O,
 	slang_variable *param)
 {
-	slang_storage_aggregate agg;
-
 	/* parse and validate the parameter's type qualifiers (there can be two at most) because
 	 * not all combinations are valid */
 	if (!parse_type_qualifier (C, &param->type.qualifier))
@@ -1262,35 +1318,29 @@ static int parse_parameter_declaration (slang_parse_ctx *C, slang_output_ctx *O,
 	/* if the parameter is an array, parse its size (the size must be explicitly defined */
 	if (*C->I++ == PARAMETER_ARRAY_PRESENT)
 	{
-		param->array_size = (slang_operation *) slang_alloc_malloc (sizeof (slang_operation));
-		if (param->array_size == NULL)
+		slang_type_specifier p;
+
+		if (!slang_type_specifier_construct (&p))
+			return GL_FALSE;
+		if (!slang_type_specifier_copy (&p, &param->type.specifier))
 		{
-			slang_info_log_memory (C->L);
-			return 0;
+			slang_type_specifier_destruct (&p);
+			return GL_FALSE;
 		}
-		if (!slang_operation_construct (param->array_size))
+		if (!convert_to_array (C, param, &p))
 		{
-			slang_alloc_free (param->array_size);
-			param->array_size = NULL;
-			slang_info_log_memory (C->L);
-			return 0;
+			slang_type_specifier_destruct (&p);
+			return GL_FALSE;
 		}
-		if (!parse_expression (C, O, param->array_size))
-			return 0;
-		/* TODO: execute the array_size */
+		slang_type_specifier_destruct (&p);
+		if (!parse_array_len (C, O, &param->array_len))
+			return GL_FALSE;
 	}
 
 	/* calculate the parameter size */
-	if (!slang_storage_aggregate_construct (&agg))
-		return 0;
-	if (!_slang_aggregate_variable (&agg, &param->type.specifier, param->array_size, O->funs,
-			O->structs, O->vars, O->machine, O->assembly, C->atoms))
-	{
-		slang_storage_aggregate_destruct (&agg);
-		return 0;
-	}
-	param->size = _slang_sizeof_aggregate (&agg);
-	slang_storage_aggregate_destruct (&agg);
+	if (!calculate_var_size (C, O, param))
+		return GL_FALSE;
+
 	/* TODO: allocate the local address here? */
 	return 1;
 }
@@ -1551,7 +1601,7 @@ static GLboolean initialize_global (slang_assemble_ctx *A, slang_variable *var)
 	op_assign.children[1] = *var->initializer;
 
 	/* insert the actual expression */
-	result = _slang_assemble_operation_ (A, &op_assign, slang_ref_forbid);
+	result = _slang_assemble_operation (A, &op_assign, slang_ref_forbid);
 
 	/* carefully destroy the operations */
 	op_assign.num_children = 0;
@@ -1649,79 +1699,29 @@ static int parse_init_declarator (slang_parse_ctx *C, slang_output_ctx *O,
 		}
 		if (!parse_expression (C, O, var->initializer))
 			return 0;
-		/* TODO: execute the initializer */
 		break;
 #if 0
 	case VARIABLE_ARRAY_UNKNOWN:
 		/* unsized array - mark it as array and copy the specifier to the array element */
-		var->type.specifier.type = slang_spec_array;
-		var->type.specifier._array = (slang_type_specifier *) slang_alloc_malloc (sizeof (
-			slang_type_specifier));
-		if (var->type.specifier._array == NULL)
-		{
-			slang_info_log_memory (C->L);
-			return 0;
-		}
-		slang_type_specifier_construct (var->type.specifier._array);
-		if (!slang_type_specifier_copy (var->type.specifier._array, &type->specifier))
-			return 0;
+		if (!convert_to_array (C, var, &type->specifier))
+			return GL_FALSE;
 		break;
 #endif
 	case VARIABLE_ARRAY_EXPLICIT:
-		/* sized array - mark it as array, copy the specifier to the array element and
-		 * parse the expression */
-		var->type.specifier.type = slang_spec_array;
-		var->type.specifier._array = (slang_type_specifier *) slang_alloc_malloc (sizeof (
-			slang_type_specifier));
-		if (var->type.specifier._array == NULL)
-		{
-			slang_info_log_memory (C->L);
-			return 0;
-		}
-		if (!slang_type_specifier_construct (var->type.specifier._array))
-		{
-			slang_alloc_free (var->type.specifier._array);
-			var->type.specifier._array = NULL;
-			slang_info_log_memory (C->L);
-			return 0;
-		}
-		if (!slang_type_specifier_copy (var->type.specifier._array, &type->specifier))
-			return 0;
-		var->array_size = (slang_operation *) slang_alloc_malloc (sizeof (slang_operation));
-		if (var->array_size == NULL)
-		{
-			slang_info_log_memory (C->L);
-			return 0;
-		}
-		if (!slang_operation_construct (var->array_size))
-		{
-			slang_alloc_free (var->array_size);
-			var->array_size = NULL;
-			slang_info_log_memory (C->L);
-			return 0;
-		}
-		if (!parse_expression (C, O, var->array_size))
-			return 0;
+		if (!convert_to_array (C, var, &type->specifier))
+			return GL_FALSE;
+		if (!parse_array_len (C, O, &var->array_len))
+			return GL_FALSE;
 		break;
 	default:
 		return 0;
 	}
 
 	/* allocate global address space for a variable with a known size */
-	if (C->global_scope && !(var->type.specifier.type == slang_spec_array && var->array_size == NULL))
+	if (C->global_scope && !(var->type.specifier.type == slang_spec_array && var->array_len == 0))
 	{
-		slang_storage_aggregate agg;
-
-		if (!slang_storage_aggregate_construct (&agg))
-			return 0;
-		if (!_slang_aggregate_variable (&agg, &var->type.specifier, var->array_size, O->funs,
-				O->structs, O->vars, O->machine, O->assembly, C->atoms))
-		{
-			slang_storage_aggregate_destruct (&agg);
-			return 0;
-		}
-		var->size = _slang_sizeof_aggregate (&agg);
-		slang_storage_aggregate_destruct (&agg);
+		if (!calculate_var_size (C, O, var))
+			return GL_FALSE;
 		var->address = slang_var_pool_alloc (O->global_pool, var->size);
 	}
 
@@ -2134,6 +2134,14 @@ int _slang_compile (const char *source, slang_translation_unit *unit, slang_unit
 	if (id != 0)
 		grammar_destroy (id);
 
-	return success;
+	if (!success)
+		return 0;
+	unit->exp_data.atoms = unit->atom_pool;
+	if (!_slang_build_export_data_table (&unit->exp_data, &unit->globals))
+		return 0;
+	if (!_slang_gather_active_uniforms (&unit->uniforms, &unit->exp_data))
+		return 0;
+
+	return 1;
 }
 

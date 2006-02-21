@@ -2,7 +2,7 @@
  * GLSL noise demo.
  *
  * Michal Krol
- * 17 February 2006
+ * 20 February 2006
  *
  * Based on the original demo by:
  * Stefan Gustavson (stegu@itn.liu.se) 2004, 2005
@@ -28,6 +28,8 @@ static GLhandleARB fragShader;
 static GLhandleARB vertShader;
 static GLhandleARB program;
 
+static GLint uTime;
+
 static GLfloat u_time = 0.0f;
 
 static PFNGLCREATESHADEROBJECTARBPROC glCreateShaderObjectARB = NULL;
@@ -37,13 +39,14 @@ static PFNGLCREATEPROGRAMOBJECTARBPROC glCreateProgramObjectARB = NULL;
 static PFNGLATTACHOBJECTARBPROC glAttachObjectARB = NULL;
 static PFNGLLINKPROGRAMARBPROC glLinkProgramARB = NULL;
 static PFNGLUSEPROGRAMOBJECTARBPROC glUseProgramObjectARB = NULL;
+static PFNGLGETUNIFORMLOCATIONARBPROC glGetUniformLocationARB = NULL;
+static PFNGLUNIFORM1FARBPROC glUniform1fARB = NULL;
 
 static void Redisplay (void)
 {
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	/* XXX source from uniform time */
-	glTexCoord1f (u_time);
+	glUniform1fARB (uTime, u_time);
 
 	glPushMatrix ();
 	glutSolidSphere (2.0, 20, 10);
@@ -86,15 +89,10 @@ static void Key (unsigned char key, int x, int y)
 static void Init (void)
 {
 	static const char *fragShaderText =
+		"uniform float time;\n"
 		"void main () {\n"
-
-		/* XXX source from uniform time */
-		"	float time;\n"
-		"	time = gl_TexCoord[1].x;\n"
-
-		"	vec4 v;\n"
-		"	v = vec4 (4.0 * gl_TexCoord[0].xyz, 0.5 * time);\n"
-		"	gl_FragColor = gl_Color * vec4 ((0.5 + 0.5 * vec3 (noise1 (v))), 1.0);\n"
+		"	gl_FragColor = gl_Color * vec4 ((0.5 + 0.5 * vec3 (noise1 (\n"
+		"		vec4 (4.0 * gl_TexCoord[0].xyz, 0.5 * time)))), 1.0);\n"
 		"}\n"
 	;
 	static const char *vertShaderText =
@@ -102,9 +100,6 @@ static void Init (void)
 		"	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
 		"	gl_TexCoord[0] = gl_Vertex;\n"
 		"	gl_FrontColor = gl_Color;\n"
-
-		/* XXX source from uniform time */
-		"	gl_TexCoord[1] = gl_MultiTexCoord0;\n"
 		"}\n"
 	;
 
@@ -136,6 +131,8 @@ static void Init (void)
 	glAttachObjectARB = (PFNGLATTACHOBJECTARBPROC) wglGetProcAddress ("glAttachObjectARB");
 	glLinkProgramARB = (PFNGLLINKPROGRAMARBPROC) wglGetProcAddress ("glLinkProgramARB");
 	glUseProgramObjectARB = (PFNGLUSEPROGRAMOBJECTARBPROC) wglGetProcAddress ("glUseProgramObjectARB");
+	glGetUniformLocationARB = (PFNGLGETUNIFORMLOCATIONARBPROC) GETPROCADDRESS ("glGetUniformLocationARB");
+	glUniform1fARB = (PFNGLUNIFORM1FARBPROC) GETPROCADDRESS ("glUniform1fARB");
 
 	fragShader = glCreateShaderObjectARB (GL_FRAGMENT_SHADER_ARB);
 	glShaderSourceARB (fragShader, 1, &fragShaderText, NULL);
@@ -150,6 +147,8 @@ static void Init (void)
 	glAttachObjectARB (program, vertShader);
 	glLinkProgramARB (program);
 	glUseProgramObjectARB (program);
+
+	uTime = glGetUniformLocationARB (program, "time");
 
 	glClearColor (0.0f, 0.1f, 0.3f, 1.0f);
 	glEnable (GL_CULL_FACE);

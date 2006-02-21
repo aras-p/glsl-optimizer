@@ -52,7 +52,7 @@ GLboolean _slang_assemble_logicaland (slang_assemble_ctx *A, slang_operation *op
 	GLuint zero_jump, end_jump;
 
 	/* evaluate left expression */
-	if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid))
+	if (!_slang_assemble_operation (A, &op->children[0], slang_ref_forbid))
 		return GL_FALSE;
 
 	/* jump to pushing 0 if not true */
@@ -61,7 +61,7 @@ GLboolean _slang_assemble_logicaland (slang_assemble_ctx *A, slang_operation *op
 		return GL_FALSE;
 
 	/* evaluate right expression */
-	if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
+	if (!_slang_assemble_operation (A, &op->children[1], slang_ref_forbid))
 		return GL_FALSE;
 
 	/* jump to the end of the expression */
@@ -98,7 +98,7 @@ GLboolean _slang_assemble_logicalor (slang_assemble_ctx *A, slang_operation *op)
 	GLuint right_jump, end_jump;
 
 	/* evaluate left expression */
-	if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid))
+	if (!_slang_assemble_operation (A, &op->children[0], slang_ref_forbid))
 		return GL_FALSE;
 
 	/* jump to evaluation of right expression if not true */
@@ -117,7 +117,7 @@ GLboolean _slang_assemble_logicalor (slang_assemble_ctx *A, slang_operation *op)
 
 	/* evaluate right expression */
 	A->file->code[right_jump].param[0] = A->file->count;
-	if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
+	if (!_slang_assemble_operation (A, &op->children[1], slang_ref_forbid))
 		return GL_FALSE;
 
 	/* the end of the expression */
@@ -144,7 +144,7 @@ GLboolean _slang_assemble_select (slang_assemble_ctx *A, slang_operation *op)
 	GLuint cond_jump, end_jump;
 
 	/* execute condition expression */
-	if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid))
+	if (!_slang_assemble_operation (A, &op->children[0], slang_ref_forbid))
 		return GL_FALSE;
 
 	/* jump to false expression if not true */
@@ -153,7 +153,7 @@ GLboolean _slang_assemble_select (slang_assemble_ctx *A, slang_operation *op)
 		return GL_FALSE;
 
 	/* execute true expression */
-	if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
+	if (!_slang_assemble_operation (A, &op->children[1], slang_ref_forbid))
 		return GL_FALSE;
 
 	/* jump to the end of the expression */
@@ -165,7 +165,7 @@ GLboolean _slang_assemble_select (slang_assemble_ctx *A, slang_operation *op)
 	A->file->code[cond_jump].param[0] = A->file->count;
 
 	/* execute false expression */
-	if (!_slang_assemble_operation_ (A, &op->children[2], slang_ref_forbid))
+	if (!_slang_assemble_operation (A, &op->children[2], slang_ref_forbid))
 		return GL_FALSE;
 
 	/* resolve the end of the expression */
@@ -199,9 +199,9 @@ GLboolean _slang_assemble_for (slang_assemble_ctx *A, slang_operation *op)
 	slang_assembly_flow_control save_flow = A->flow;
 
 	/* execute initialization statement */
-	if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid/*slang_ref_freelance*/))
+	if (!_slang_assemble_operation (A, &op->children[0], slang_ref_forbid/*slang_ref_freelance*/))
 		return GL_FALSE;
-	if (!_slang_cleanup_stack_ (A, &op->children[0]))
+	if (!_slang_cleanup_stack (A, &op->children[0]))
 		return GL_FALSE;
 
 	/* skip the "go to the end of the loop" and loop-increment statements */
@@ -219,16 +219,16 @@ GLboolean _slang_assemble_for (slang_assemble_ctx *A, slang_operation *op)
 	cont_label = A->file->count;
 
 	/* execute loop-increment statement */
-	if (!_slang_assemble_operation_ (A, &op->children[2], slang_ref_forbid/*slang_ref_freelance*/))
+	if (!_slang_assemble_operation (A, &op->children[2], slang_ref_forbid/*slang_ref_freelance*/))
 		return GL_FALSE;
-	if (!_slang_cleanup_stack_ (A, &op->children[2]))
+	if (!_slang_cleanup_stack (A, &op->children[2]))
 		return GL_FALSE;
 
 	/* resolve the condition point */
 	A->file->code[start_jump].param[0] = A->file->count;
 
 	/* execute condition statement */
-	if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
+	if (!_slang_assemble_operation (A, &op->children[1], slang_ref_forbid))
 		return GL_FALSE;
 
 	/* jump to the end of the loop if not true */
@@ -239,9 +239,9 @@ GLboolean _slang_assemble_for (slang_assemble_ctx *A, slang_operation *op)
 	/* execute loop body */
 	A->flow.loop_start = cont_label;
 	A->flow.loop_end = break_label;
-	if (!_slang_assemble_operation_ (A, &op->children[3], slang_ref_forbid/*slang_ref_freelance*/))
+	if (!_slang_assemble_operation (A, &op->children[3], slang_ref_forbid/*slang_ref_freelance*/))
 		return GL_FALSE;
-	if (!_slang_cleanup_stack_ (A, &op->children[3]))
+	if (!_slang_cleanup_stack (A, &op->children[3]))
 		return GL_FALSE;
 	A->flow = save_flow;
 
@@ -303,9 +303,9 @@ GLboolean _slang_assemble_do (slang_assemble_ctx *A, slang_operation *op)
 	/* execute loop body */
 	A->flow.loop_start = cont_label;
 	A->flow.loop_end = break_label;
-	if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid/*slang_ref_freelance*/))
+	if (!_slang_assemble_operation (A, &op->children[0], slang_ref_forbid/*slang_ref_freelance*/))
 		return GL_FALSE;
-	if (!_slang_cleanup_stack_ (A, &op->children[0]))
+	if (!_slang_cleanup_stack (A, &op->children[0]))
 		return GL_FALSE;
 	A->flow = save_flow;
 
@@ -313,7 +313,7 @@ GLboolean _slang_assemble_do (slang_assemble_ctx *A, slang_operation *op)
 	A->file->code[cont_jump].param[0] = A->file->count;
 
 	/* execute condition statement */
-	if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
+	if (!_slang_assemble_operation (A, &op->children[1], slang_ref_forbid))
 		return GL_FALSE;
 
 	/* jump to the end of the loop if not true */
@@ -368,7 +368,7 @@ GLboolean _slang_assemble_while (slang_assemble_ctx *A, slang_operation *op)
 	A->file->code[skip_jump].param[0] = A->file->count;
 
 	/* execute condition statement */
-	if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid))
+	if (!_slang_assemble_operation (A, &op->children[0], slang_ref_forbid))
 		return GL_FALSE;
 
 	/* jump to the end of the loop if not true */
@@ -379,9 +379,9 @@ GLboolean _slang_assemble_while (slang_assemble_ctx *A, slang_operation *op)
 	/* execute loop body */
 	A->flow.loop_start = A->file->code[skip_jump].param[0];
 	A->flow.loop_end = break_label;
-	if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid/*slang_ref_freelance*/))
+	if (!_slang_assemble_operation (A, &op->children[1], slang_ref_forbid/*slang_ref_freelance*/))
 		return GL_FALSE;
-	if (!_slang_cleanup_stack_ (A, &op->children[1]))
+	if (!_slang_cleanup_stack (A, &op->children[1]))
 		return GL_FALSE;
 	A->flow = save_flow;
 
@@ -414,7 +414,7 @@ GLboolean _slang_assemble_if (slang_assemble_ctx *A, slang_operation *op)
 	GLuint cond_jump, else_jump;
 
 	/* execute condition statement */
-	if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid))
+	if (!_slang_assemble_operation (A, &op->children[0], slang_ref_forbid))
 		return GL_FALSE;
 
 	/* jump to false-statement if not true */
@@ -423,9 +423,9 @@ GLboolean _slang_assemble_if (slang_assemble_ctx *A, slang_operation *op)
 		return GL_FALSE;
 
 	/* execute true-statement */
-	if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid/*slang_ref_freelance*/))
+	if (!_slang_assemble_operation (A, &op->children[1], slang_ref_forbid/*slang_ref_freelance*/))
 		return GL_FALSE;
-	if (!_slang_cleanup_stack_ (A, &op->children[1]))
+	if (!_slang_cleanup_stack (A, &op->children[1]))
 		return GL_FALSE;
 
 	/* skip if-false statement */
@@ -437,9 +437,9 @@ GLboolean _slang_assemble_if (slang_assemble_ctx *A, slang_operation *op)
 	A->file->code[cond_jump].param[0] = A->file->count;
 
 	/* execute false-statement */
-	if (!_slang_assemble_operation_ (A, &op->children[2], slang_ref_forbid/*slang_ref_freelance*/))
+	if (!_slang_assemble_operation (A, &op->children[2], slang_ref_forbid/*slang_ref_freelance*/))
 		return GL_FALSE;
-	if (!_slang_cleanup_stack_ (A, &op->children[2]))
+	if (!_slang_cleanup_stack (A, &op->children[2]))
 		return GL_FALSE;
 
 	/* resolve end of if-false statement */

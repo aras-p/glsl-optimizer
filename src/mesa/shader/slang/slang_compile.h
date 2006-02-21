@@ -61,6 +61,8 @@ typedef struct slang_translation_unit_
 	int free_machine;
 	slang_atom_pool *atom_pool;
 	int free_atom_pool;
+	slang_export_data_table exp_data;
+	slang_active_uniforms uniforms;
 } slang_translation_unit;
 
 int slang_translation_unit_construct (slang_translation_unit *);

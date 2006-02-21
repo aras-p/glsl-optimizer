@@ -25,6 +25,8 @@
 #if !defined SLANG_COMPILE_VARIABLE_H
 #define SLANG_COMPILE_VARIABLE_H
 
+#include "slang_export.h"
+
 #if defined __cplusplus
 extern "C" {
 #endif
@@ -110,7 +112,7 @@ typedef struct slang_variable_
 {
 	slang_fully_specified_type type;
 	slang_atom a_name;
-	struct slang_operation_ *array_size;	/* type: spec_array */
+	GLuint array_len;					/* type: spec_array */
 	struct slang_operation_ *initializer;
 	unsigned int address;
 	unsigned int size;
@@ -122,6 +124,27 @@ void slang_variable_destruct (slang_variable *);
 int slang_variable_copy (slang_variable *, const slang_variable *);
 
 slang_variable *_slang_locate_variable (slang_variable_scope *, slang_atom a_name, GLboolean all);
+
+typedef struct
+{
+	slang_export_data_quant *quant;
+	char *name;
+} slang_active_uniform;
+
+typedef struct
+{
+	slang_active_uniform *table;
+	GLuint count;
+} slang_active_uniforms;
+
+GLvoid slang_active_uniforms_ctr (slang_active_uniforms *);
+GLvoid slang_active_uniforms_dtr (slang_active_uniforms *);
+GLboolean slang_active_uniforms_add (slang_active_uniforms *, slang_export_data_quant *,
+	const char *);
+
+GLboolean _slang_build_export_data_table (slang_export_data_table *, slang_variable_scope *);
+
+GLboolean _slang_gather_active_uniforms (slang_active_uniforms *, slang_export_data_table *);
 
 #ifdef __cplusplus
 }

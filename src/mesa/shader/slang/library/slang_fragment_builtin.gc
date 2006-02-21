@@ -26,7 +26,7 @@ varying float gl_FogFragCoord;
 //
 
 vec4 texture1D (sampler1D sampler, float coord, float bias) {
-	// XXX:
+    // XXX:
     return vec4 (0.0);
 }
 
@@ -39,66 +39,48 @@ vec4 texture1DProj (sampler1D sampler, vec4 coord, float bias) {
 }
 
 vec4 texture2D (sampler2D sampler, vec2 coord, float bias) {
-	// XXX:
+    // XXX:
     return vec4 (0.0);
 }
 
 vec4 texture2DProj (sampler2D sampler, vec3 coord, float bias) {
-	vec2 u;
-	u.s = coord.s / coord.p;
-	u.t = coord.t / coord.p;
-    return texture2D (sampler, u, bias);
+    return texture2D (sampler, vec2 (coord.s / coord.p, coord.t / coord.p), bias);
 }
 
 vec4 texture2DProj (sampler2D sampler, vec4 coord, float bias) {
-	vec2 u;
-	u.s = coord.s / coord.q;
-	u.t = coord.t / coord.q;
-    return texture2D (sampler, u, bias);
+    return texture2D (sampler, vec2 (coord.s / coord.q, coord.t / coord.q), bias);
 }
 
 vec4 texture3D (sampler3D sampler, vec3 coord, float bias) {
-	// XXX:
+    // XXX:
     return vec4 (0.0);
 }
 
 vec4 texture3DProj (sampler3D sampler, vec4 coord, float bias) {
-	vec3 u;
-	u.s = coord.s / coord.q;
-	u.t = coord.t / coord.q;
-	u.p = coord.p / coord.q;
-    return texture3D (sampler, u, bias);
+    return texture3D (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q), bias);
 }
 
 vec4 textureCube (samplerCube sampler, vec3 coord, float bias) {
-	// XXX:
+    // XXX:
     return vec4 (0.0);
 }
 
 vec4 shadow1D (sampler1DShadow sampler, vec3 coord, float bias) {
-	// XXX:
+    // XXX:
     return vec4 (0.0);
 }
 
 vec4 shadow2D (sampler2DShadow sampler, vec3 coord, float bias) {
-	// XXX:
+    // XXX:
     return vec4 (0.0);
 }
 
 vec4 shadow1DProj (sampler1DShadow sampler, vec4 coord, float bias) {
-	vec3 u;
-	u.s = coord.s / coord.q;
-	u.t = 0.0;
-	u.p = coord.p / coord.q;
-    return shadow1D (sampler, u, bias);
+    return shadow1D (sampler, vec3 (coord.s / coord.q, 0.0, coord.p / coord.q), bias);
 }
 
 vec4 shadow2DProj (sampler2DShadow sampler, vec4 coord, float bias) {
-	vec3 u;
-	u.s = coord.s / coord.q;
-	u.t = coord.t / coord.q;
-	u.p = coord.p / coord.q;
-    return shadow2D (sampler, u, bias);
+    return shadow2D (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q), bias);
 }
 
 //
@@ -106,42 +88,42 @@ vec4 shadow2DProj (sampler2DShadow sampler, vec4 coord, float bias) {
 //
 
 float dFdx (float p) {
-	// XXX:
+    // XXX:
     return 0.0;
 }
 
 vec2 dFdx (vec2 p) {
-	// XXX:
+    // XXX:
     return vec2 (0.0);
 }
 
 vec3 dFdx (vec3 p) {
-	// XXX:
+    // XXX:
     return vec3 (0.0);
 }
 
 vec4 dFdx (vec4 p) {
-	// XXX:
+    // XXX:
     return vec4 (0.0);
 }
 
 float dFdy (float p) {
-	// XXX:
+    // XXX:
     return 0.0;
 }
 
 vec2 dFdy (vec2 p) {
-	// XXX:
+    // XXX:
     return vec2 (0.0);
 }
 
 vec3 dFdy (vec3 p) {
-	// XXX:
+    // XXX:
     return vec3 (0.0);
 }
 
 vec4 dFdy (vec4 p) {
-	// XXX:
+    // XXX:
     return vec4 (0.0);
 }
 

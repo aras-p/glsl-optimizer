@@ -130,13 +130,13 @@ static GLboolean aggregate_variables (slang_storage_aggregate *agg, slang_variab
 
 	for (i = 0; i < vars->num_variables; i++)
 		if (!_slang_aggregate_variable (agg, &vars->variables[i].type.specifier,
-				vars->variables[i].array_size, funcs, structs, globals, mach, file, atoms))
+				vars->variables[i].array_len, funcs, structs, globals, mach, file, atoms))
 			return GL_FALSE;
 	return GL_TRUE;
 }
 
-static GLboolean eval_array_size (slang_assembly_file *file, slang_machine *pmach,
-	slang_assembly_name_space *space, slang_operation *array_size, GLuint *plength,
+GLboolean _slang_evaluate_int (slang_assembly_file *file, slang_machine *pmach,
+	slang_assembly_name_space *space, slang_operation *array_size, GLuint *pint,
 	slang_atom_pool *atoms)
 {
 	slang_assembly_file_restore_point point;
@@ -166,7 +166,7 @@ static GLboolean eval_array_size (slang_assembly_file *file, slang_machine *pmac
 		return GL_FALSE;
 
 	/* insert the actual expression */
-	if (!_slang_assemble_operation_ (&A, array_size, slang_ref_forbid))
+	if (!_slang_assemble_operation (&A, array_size, slang_ref_forbid))
 		return GL_FALSE;
 	if (!slang_assembly_file_push (file, slang_asm_exit))
 		return GL_FALSE;
@@ -176,8 +176,7 @@ static GLboolean eval_array_size (slang_assembly_file *file, slang_machine *pmac
 		return GL_FALSE;
 
 	/* the evaluated expression is on top of the stack */
-	*plength = (GLuint) mach.mem[mach.sp + SLANG_MACHINE_GLOBAL_SIZE]._float;
-	/* TODO: check if 0 < arr->length <= 65535 */
+	*pint = (GLuint) mach.mem[mach.sp + SLANG_MACHINE_GLOBAL_SIZE]._float;
 
 	/* restore the old assembly */
 	if (!slang_assembly_file_restore_point_load (file, &point))
@@ -187,7 +186,7 @@ static GLboolean eval_array_size (slang_assembly_file *file, slang_machine *pmac
 }
 
 GLboolean _slang_aggregate_variable (slang_storage_aggregate *agg, slang_type_specifier *spec,
-	slang_operation *array_size, slang_function_scope *funcs, slang_struct_scope *structs,
+	GLuint array_len, slang_function_scope *funcs, slang_struct_scope *structs,
 	slang_variable_scope *vars, slang_machine *mach, slang_assembly_file *file,
 	slang_atom_pool *atoms)
 {
@@ -236,7 +235,6 @@ GLboolean _slang_aggregate_variable (slang_storage_aggregate *agg, slang_type_sp
 	case slang_spec_array:
 		{
 			slang_storage_array *arr;
-			slang_assembly_name_space space;
 
 			arr = slang_storage_aggregate_push_new (agg);
 			if (arr == NULL)
@@ -251,14 +249,11 @@ GLboolean _slang_aggregate_variable (slang_storage_aggregate *agg, slang_type_sp
 				arr->aggregate = NULL;
 				return GL_FALSE;
 			}
-			if (!_slang_aggregate_variable (arr->aggregate, spec->_array, NULL, funcs, structs,
+			if (!_slang_aggregate_variable (arr->aggregate, spec->_array, 0, funcs, structs,
 					vars, mach, file, atoms))
 				return GL_FALSE;
-			space.funcs = funcs;
-			space.structs = structs;
-			space.vars = vars;
-			if (!eval_array_size (file, mach, &space, array_size, &arr->length, atoms))
-				return GL_FALSE;
+			arr->length = array_len;
+			/* TODO: check if 0 < arr->length <= 65535 */
 		}
 		return GL_TRUE;
 	default:

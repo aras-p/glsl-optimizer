@@ -29,6 +29,9 @@
  */
 
 #include "imports.h"
+#include "context.h"
+#include "swrast/s_context.h"
+#include "colormac.h"
 #include "slang_utility.h"
 #include "slang_assemble.h"
 #include "slang_storage.h"
@@ -180,6 +183,9 @@ static void dump_instruction (FILE *f, slang_assembly *a, unsigned int i)
 	case slang_asm_addr_multiply:
 		fprintf (f, "addr_multiply");
 		break;
+	case slang_vec4_tex2d:
+		fprintf (f, "vec4_tex2d");
+		break;
 	case slang_asm_jump:
 		fprintf (f, "jump\t%u", a->param[0]);
 		break;
@@ -250,6 +256,21 @@ static void dump (const slang_assembly_file *file)
 }
 
 #endif
+
+static void fetch_texel (GLuint sampler, const GLfloat texcoord[4], GLfloat lambda, GLfloat color[4])
+{
+	GET_CURRENT_CONTEXT(ctx);
+	SWcontext *swrast = SWRAST_CONTEXT(ctx);
+	GLchan rgba[4];
+
+	/* XXX: the function pointer is NULL! */
+	swrast->TextureSample[sampler] (ctx, ctx->Texture.Unit[sampler]._Current, 1,
+		(const GLfloat (*)[4]) texcoord, &lambda, &rgba);
+	color[0] = CHAN_TO_FLOAT(rgba[0]);
+	color[1] = CHAN_TO_FLOAT(rgba[1]);
+	color[2] = CHAN_TO_FLOAT(rgba[2]);
+	color[3] = CHAN_TO_FLOAT(rgba[3]);
+}
 
 int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
 {
@@ -419,6 +440,16 @@ int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
 		case slang_asm_addr_multiply:
 			stack[mach->sp + 1]._addr *= stack[mach->sp]._addr;
 			mach->sp++;
+			break;
+		case slang_asm_vec4_tex2d:
+			{
+				GLfloat st[4] = { stack[mach->sp]._float, stack[mach->sp + 1]._float, 0.0f, 1.0f };
+				GLuint sampler = (GLuint) stack[mach->sp + 2]._float;
+				GLfloat *rgba = &mach->mem[stack[mach->sp + 3]._addr / 4]._float;
+
+				fetch_texel (sampler, st, 0.0f, rgba);
+			}
+			mach->sp += 3;
 			break;
 		case slang_asm_jump:
 			mach->ip = a->param[0];

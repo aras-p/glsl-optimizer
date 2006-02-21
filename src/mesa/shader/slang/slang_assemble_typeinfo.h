@@ -38,7 +38,7 @@ typedef struct slang_assembly_typeinfo_
 	GLboolean is_swizzled;
 	slang_swizzle swz;
 	slang_type_specifier spec;
-	slang_operation *array_size;
+	GLuint array_len;
 } slang_assembly_typeinfo;
 
 GLboolean slang_assembly_typeinfo_construct (slang_assembly_typeinfo *);
@@ -49,7 +49,8 @@ GLvoid slang_assembly_typeinfo_destruct (slang_assembly_typeinfo *);
  * Returns GL_TRUE on success.
  * Returns GL_FALSE otherwise.
  */
-GLboolean _slang_typeof_operation (slang_operation *, slang_assembly_name_space *,
+GLboolean _slang_typeof_operation (slang_assemble_ctx *, slang_operation *, slang_assembly_typeinfo *);
+GLboolean _slang_typeof_operation_ (slang_operation *, slang_assembly_name_space *,
 	slang_assembly_typeinfo *, slang_atom_pool *);
 
 /*

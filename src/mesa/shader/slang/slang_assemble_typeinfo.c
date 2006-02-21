@@ -38,14 +38,13 @@ GLboolean slang_assembly_typeinfo_construct (slang_assembly_typeinfo *ti)
 {
 	if (!slang_type_specifier_construct (&ti->spec))
 		return GL_FALSE;
-	ti->array_size = NULL;
+	ti->array_len = 0;
 	return GL_TRUE;
 }
 
 GLvoid slang_assembly_typeinfo_destruct (slang_assembly_typeinfo *ti)
 {
 	slang_type_specifier_destruct (&ti->spec);
-	/* do not free ti->array_size */
 }
 
 /* _slang_typeof_operation() */
@@ -63,7 +62,13 @@ static GLboolean typeof_existing_function (const char *name, slang_operation *pa
 	return exists;
 }
 
-GLboolean _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *space,
+GLboolean _slang_typeof_operation (slang_assemble_ctx *A, slang_operation *op,
+	slang_assembly_typeinfo *ti)
+{
+	return _slang_typeof_operation_ (op, &A->space, ti, A->atoms);
+}
+
+GLboolean _slang_typeof_operation_ (slang_operation *op, slang_assembly_name_space *space,
 	slang_assembly_typeinfo *ti, slang_atom_pool *atoms)
 {
 	ti->can_be_referenced = GL_FALSE;
@@ -94,7 +99,7 @@ GLboolean _slang_typeof_operation (slang_operation *op, slang_assembly_name_spac
 	case slang_oper_divassign:
 	case slang_oper_preincrement:
 	case slang_oper_predecrement:
-		if (!_slang_typeof_operation (op->children, space, ti, atoms))
+		if (!_slang_typeof_operation_ (op->children, space, ti, atoms))
 			return 0;
 		break;
 	case slang_oper_literal_bool:
@@ -126,12 +131,12 @@ GLboolean _slang_typeof_operation (slang_operation *op, slang_assembly_name_spac
 			if (!slang_type_specifier_copy (&ti->spec, &var->type.specifier))
 				return GL_FALSE;
 			ti->can_be_referenced = GL_TRUE;
-			ti->array_size = var->array_size;
+			ti->array_len = var->array_len;
 		}
 		break;
 	case slang_oper_sequence:
 		/* TODO: check [0] and [1] if they match */
-		if (!_slang_typeof_operation (&op->children[1], space, ti, atoms))
+		if (!_slang_typeof_operation_ (&op->children[1], space, ti, atoms))
 			return GL_FALSE;
 		ti->can_be_referenced = GL_FALSE;
 		ti->is_swizzled = GL_FALSE;
@@ -144,7 +149,7 @@ GLboolean _slang_typeof_operation (slang_operation *op, slang_assembly_name_spac
 	/*case slang_oper_andassign:*/
 	case slang_oper_select:
 		/* TODO: check [1] and [2] if they match */
-		if (!_slang_typeof_operation (&op->children[1], space, ti, atoms))
+		if (!_slang_typeof_operation_ (&op->children[1], space, ti, atoms))
 			return GL_FALSE;
 		ti->can_be_referenced = GL_FALSE;
 		ti->is_swizzled = GL_FALSE;
@@ -172,7 +177,7 @@ GLboolean _slang_typeof_operation (slang_operation *op, slang_assembly_name_spac
 		break;
 	/*case slang_oper_modulus:*/
 	case slang_oper_plus:
-		if (!_slang_typeof_operation (op->children, space, ti, atoms))
+		if (!_slang_typeof_operation_ (op->children, space, ti, atoms))
 			return GL_FALSE;
 		ti->can_be_referenced = GL_FALSE;
 		ti->is_swizzled = GL_FALSE;
@@ -188,7 +193,7 @@ GLboolean _slang_typeof_operation (slang_operation *op, slang_assembly_name_spac
 
 			if (!slang_assembly_typeinfo_construct (&_ti))
 				return GL_FALSE;
-			if (!_slang_typeof_operation (op->children, space, &_ti, atoms))
+			if (!_slang_typeof_operation_ (op->children, space, &_ti, atoms))
 			{
 				slang_assembly_typeinfo_destruct (&_ti);
 				return GL_FALSE;
@@ -259,7 +264,7 @@ GLboolean _slang_typeof_operation (slang_operation *op, slang_assembly_name_spac
 
 			if (!slang_assembly_typeinfo_construct (&_ti))
 				return GL_FALSE;
-			if (!_slang_typeof_operation (op->children, space, &_ti, atoms))
+			if (!_slang_typeof_operation_ (op->children, space, &_ti, atoms))
 			{
 				slang_assembly_typeinfo_destruct (&_ti);
 				return GL_FALSE;
@@ -374,7 +379,7 @@ GLboolean _slang_typeof_operation (slang_operation *op, slang_assembly_name_spac
 		break;
 	case slang_oper_postincrement:
 	case slang_oper_postdecrement:
-		if (!_slang_typeof_operation (op->children, space, ti, atoms))
+		if (!_slang_typeof_operation_ (op->children, space, ti, atoms))
 			return GL_FALSE;
 		ti->can_be_referenced = GL_FALSE;
 		ti->is_swizzled = GL_FALSE;

@@ -44,6 +44,7 @@
 #else
 #include "slang_utility.h"
 #include "slang_compile.h"
+#include "slang_link.h"
 #endif
 
 struct gl2_unknown_obj
@@ -683,6 +684,7 @@ struct gl2_program_obj
 	ShHandle linker;
 	ShHandle uniforms;
 #endif
+	slang_program prog;
 };
 
 struct gl2_program_impl
@@ -694,13 +696,13 @@ struct gl2_program_impl
 static void
 _program_destructor (struct gl2_unknown_intf **intf)
 {
-#if USE_3DLABS_FRONTEND
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
-
+#if USE_3DLABS_FRONTEND
 	ShDestruct (impl->_obj.linker);
 	ShDestruct (impl->_obj.uniforms);
 #endif
 	_container_destructor (intf);
+	slang_program_dtr (&impl->_obj.prog);
 }
 
 static struct gl2_unknown_intf **
@@ -759,12 +761,15 @@ _program_Link (struct gl2_program_intf **intf)
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
 #if USE_3DLABS_FRONTEND
 	ShHandle *handles;
-	GLuint i;
 #endif
+	GLuint i, count;
+	slang_translation_unit *units[2];
 
 	impl->_obj.link_status = GL_FALSE;
 	_mesa_free ((void *) impl->_obj._container._generic.info_log);
 	impl->_obj._container._generic.info_log = NULL;
+	slang_program_dtr (&impl->_obj.prog);
+	slang_program_ctr (&impl->_obj.prog);
 
 #if USE_3DLABS_FRONTEND
 	handles = (ShHandle *) _mesa_malloc (impl->_obj._container.attached_count * sizeof (ShHandle));
@@ -796,9 +801,30 @@ _program_Link (struct gl2_program_intf **intf)
 
 	impl->_obj._container._generic.info_log = _mesa_strdup (ShGetInfoLog (impl->_obj.linker));
 #else
-	/* TODO: do the real linking */
-	impl->_obj.link_status = GL_TRUE;
-	impl->_obj._container._generic.info_log = _mesa_strdup ("Link OK.\n");
+	count = impl->_obj._container.attached_count;
+	if (count == 0 || count > 2)
+		return;
+	for (i = 0; i < count; i++)
+	{
+		struct gl2_generic_intf **obj;
+		struct gl2_unknown_intf **unk;
+		struct gl2_shader_impl *sha;
+
+		obj = impl->_obj._container.attached[i];
+		unk = (**obj)._unknown.QueryInterface ((struct gl2_unknown_intf **) obj, UIID_SHADER);
+		(**obj)._unknown.Release ((struct gl2_unknown_intf **) obj);
+		if (unk == NULL)
+			return;
+		sha = (struct gl2_shader_impl *) unk;
+		units[i] = &sha->_obj.unit;
+		(**unk).Release (unk);
+	}
+
+	impl->_obj.link_status = _slang_link (&impl->_obj.prog, units, count);
+	if (impl->_obj.link_status)
+		impl->_obj._container._generic.info_log = _mesa_strdup ("Link OK.\n");
+	else
+		impl->_obj._container._generic.info_log = _mesa_strdup ("Link failed.\n");
 #endif
 }
 
@@ -851,6 +877,7 @@ _program_constructor (struct gl2_program_impl *impl)
 	impl->_obj.linker = ShConstructLinker (EShExVertexFragment, 0);
 	impl->_obj.uniforms = ShConstructUniformMap ();
 #endif
+	slang_program_ctr (&impl->_obj.prog);
 }
 
 struct gl2_fragment_shader_obj
@@ -1173,13 +1200,13 @@ void exec_vertex_shader (struct gl2_vertex_shader_intf **vs)
 	{
 		slang_function *f;
 		slang_assembly_file_restore_point point;
-		slang_machine mach;
 		slang_assemble_ctx A;
 
 		f = &unit->functions.functions[i];
 		slang_assembly_file_restore_point_save (unit->assembly, &point);
-		mach = *unit->machine;
-		mach.ip = unit->assembly->count;
+
+		slang_machine_init (unit->machine);
+		unit->machine->ip = unit->assembly->count;
 
 		A.file = unit->assembly;
 		A.mach = unit->machine;
@@ -1192,9 +1219,9 @@ void exec_vertex_shader (struct gl2_vertex_shader_intf **vs)
 		_slang_assemble_function_call (&A, f, NULL, 0, GL_FALSE);
 		slang_assembly_file_push (unit->assembly, slang_asm_exit);
 
-		_slang_execute2 (unit->assembly, &mach);
+		_slang_execute2 (unit->assembly, unit->machine);
+
 		slang_assembly_file_restore_point_load (unit->assembly, &point);
-		_mesa_memcpy (unit->machine->mem, mach.mem, SLANG_MACHINE_MEMORY_SIZE * sizeof (slang_machine_slot));
 	}
 }
 
@@ -1215,14 +1242,13 @@ void exec_fragment_shader (struct gl2_fragment_shader_intf **fs)
 	{
 		slang_function *f;
 		slang_assembly_file_restore_point point;
-		slang_machine mach;
 		slang_assemble_ctx A;
 
 		f = &unit->functions.functions[i];
 		slang_assembly_file_restore_point_save (unit->assembly, &point);
-		mach = *unit->machine;
-		mach.ip = unit->assembly->count;
-		mach.kill = 0;
+
+		slang_machine_init (unit->machine);
+		unit->machine->ip = unit->assembly->count;
 
 		A.file = unit->assembly;
 		A.mach = unit->machine;
@@ -1235,11 +1261,55 @@ void exec_fragment_shader (struct gl2_fragment_shader_intf **fs)
 		_slang_assemble_function_call (&A, f, NULL, 0, GL_FALSE);
 		slang_assembly_file_push (unit->assembly, slang_asm_exit);
 
-		_slang_execute2 (unit->assembly, &mach);
+		_slang_execute2 (unit->assembly, unit->machine);
+
 		slang_assembly_file_restore_point_load (unit->assembly, &point);
-		_mesa_memcpy (unit->machine->mem, mach.mem, SLANG_MACHINE_MEMORY_SIZE * sizeof (slang_machine_slot));
-		unit->machine->kill = mach.kill;
 	}
+}
+
+GLint _slang_get_uniform_location (struct gl2_program_intf **pro, const char *name)
+{
+	struct gl2_program_impl *impl;
+	slang_uniform_bindings *bind;
+	GLuint i;
+
+	impl = (struct gl2_program_impl *) pro;
+	bind = &impl->_obj.prog.uniforms;
+	for (i = 0; i < bind->count; i++)
+		if (_mesa_strcmp (bind->table[i].name, name) == 0)
+			return i;
+	return -1;
+}
+
+GLboolean _slang_write_uniform (struct gl2_program_intf **pro, GLint loc, GLsizei count,
+	const GLvoid *data, GLenum type)
+{
+	struct gl2_program_impl *impl;
+	slang_uniform_bindings *bind;
+	slang_uniform_binding *b;
+	GLuint i;
+
+	if (loc == -1)
+		return GL_TRUE;
+
+	impl = (struct gl2_program_impl *) pro;
+	bind = &impl->_obj.prog.uniforms;
+	if (loc >= bind->count)
+		return GL_FALSE;
+
+	b = &bind->table[loc];
+	/* TODO: check sizes */
+	/* TODO: check if not structure */
+	if (b->quant->u.basic_type != type)
+		return GL_FALSE;
+
+	for (i = 0; i < SLANG_UNIFORM_BINDING_MAX; i++)
+		if (b->address[i] != ~0)
+		{
+			_mesa_memcpy (&impl->_obj.prog.machines[i]->mem[b->address[i] / 4], data,
+				count * b->quant->size);
+		}
+	return GL_TRUE;
 }
 
 void

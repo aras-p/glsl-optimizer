@@ -48,7 +48,7 @@ vec4 ftransform () {
 //
 
 vec4 texture1DLod (sampler1D sampler, float coord, float lod) {
-	// XXX:
+    // XXX:
     return vec4 (0.0);
 }
 
@@ -61,64 +61,46 @@ vec4 texture1DProjLod (sampler1D sampler, vec4 coord, float lod) {
 }
 
 vec4 texture2DLod (sampler2D sampler, vec2 coord, float lod) {
-	// XXX:
+    // XXX:
     return vec4 (0.0);
 }
 
 vec4 texture2DProjLod (sampler2D sampler, vec3 coord, float lod) {
-	vec2 u;
-	u.s = coord.s / coord.p;
-	u.t = coord.t / coord.p;
-    return texture2DLod (sampler, u, lod);
+    return texture2DLod (sampler, vec2 (coord.s / coord.p, coord.t / coord.p), lod);
 }
 
 vec4 texture2DProjLod (sampler2D sampler, vec4 coord, float lod) {
-	vec2 u;
-	u.s = coord.s / coord.q;
-	u.t = coord.t / coord.q;
-    return texture2DLod (sampler, u, lod);
+    return texture2DLod (sampler, vec2 (coord.s / coord.q, coord.t / coord.q), lod);
 }
 
 vec4 texture3DLod (sampler3D sampler, vec3 coord, float lod) {
-	// XXX:
+    // XXX:
     return vec4 (0.0);
 }
 vec4 texture3DProjLod (sampler3D sampler, vec4 coord, float lod) {
-	vec3 u;
-	u.s = coord.s / coord.q;
-	u.t = coord.t / coord.q;
-	u.p = coord.p / coord.q;
-    return texture3DLod (sampler, u, lod);
+    return texture3DLod (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q), lod);
 }
 
 vec4 textureCubeLod (samplerCube sampler, vec3 coord, float lod) {
-	// XXX:
+    // XXX:
     return vec4 (0.0);
 }
 
 vec4 shadow1DLod (sampler1DShadow sampler, vec3 coord, float lod) {
-	// XXX:
+    // XXX:
     return vec4 (0.0);
 }
 
 vec4 shadow2DLod (sampler2DShadow sampler, vec3 coord, float lod) {
-	// XXX:
+    // XXX:
     return vec4 (0.0);
 }
 
 vec4 shadow1DProjLod (sampler1DShadow sampler, vec4 coord, float lod) {
-	vec3 u;
-	u.s = coord.s / coord.q;
-	u.t = 0.0;
-	u.p = coord.p / coord.q;
-    return shadow1DLod (sampler, u, lod);
+    return shadow1DLod (sampler, vec3 (coord.s / coord.q, 0.0, coord.p / coord.q), lod);
 }
 
 vec4 shadow2DProjLod (sampler2DShadow sampler, vec4 coord, float lod) {
-	vec3 u;
-	u.s = coord.s / coord.q;
-	u.t = coord.t / coord.q;
-	u.p = coord.p / coord.q;
-    return shadow2DLod (sampler, u, lod);
+    return shadow2DLod (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q), lod);
 }
 

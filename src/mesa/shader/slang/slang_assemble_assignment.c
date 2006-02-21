@@ -127,12 +127,12 @@ GLboolean _slang_assemble_assignment (slang_assemble_ctx *A, slang_operation *op
 
 	if (!slang_assembly_typeinfo_construct (&ti))
 		return GL_FALSE;
-	if (!_slang_typeof_operation (op, &A->space, &ti, A->atoms))
+	if (!_slang_typeof_operation (A, op, &ti))
 		goto end1;
 
 	if (!slang_storage_aggregate_construct (&agg))
 		goto end1;
-	if (!_slang_aggregate_variable (&agg, &ti.spec, NULL, A->space.funcs, A->space.structs,
+	if (!_slang_aggregate_variable (&agg, &ti.spec, 0, A->space.funcs, A->space.structs,
 			A->space.vars, A->mach, A->file, A->atoms))
 		goto end;
 
@@ -167,10 +167,10 @@ GLboolean _slang_assemble_assign (slang_assemble_ctx *A, slang_operation *op, co
 
 	if (slang_string_compare ("=", oper) == 0)
 	{
-		if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_force))
+		if (!_slang_assemble_operation (A, &op->children[0], slang_ref_force))
 			return GL_FALSE;
 		swz = A->swz;
-		if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
+		if (!_slang_assemble_operation (A, &op->children[1], slang_ref_forbid))
 			return GL_FALSE;
 		A->swz = swz;
 		if (!_slang_assemble_assignment (A, op->children))

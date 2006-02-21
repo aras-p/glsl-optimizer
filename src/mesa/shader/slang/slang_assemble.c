@@ -156,14 +156,14 @@ GLboolean slang_assembly_file_restore_point_load (slang_assembly_file *file,
 /* utility functions */
 
 static GLboolean sizeof_variable (slang_assemble_ctx *A, slang_type_specifier *spec,
-	slang_type_qualifier qual, slang_operation *array_size, GLuint *size)
+	slang_type_qualifier qual, GLuint array_len, GLuint *size)
 {
 	slang_storage_aggregate agg;
 
 	/* calculate the size of the variable's aggregate */
 	if (!slang_storage_aggregate_construct (&agg))
 		return GL_FALSE;
-	if (!_slang_aggregate_variable (&agg, spec, array_size, A->space.funcs, A->space.structs,
+	if (!_slang_aggregate_variable (&agg, spec, array_len, A->space.funcs, A->space.structs,
 			A->space.vars, A->mach, A->file, A->atoms))
 	{
 		slang_storage_aggregate_destruct (&agg);
@@ -184,7 +184,7 @@ static GLboolean sizeof_variable2 (slang_assemble_ctx *A, slang_variable *var, G
 	var->address = *size;
 	if (var->type.qualifier == slang_qual_out || var->type.qualifier == slang_qual_inout)
 		var->address += 4;
-	return sizeof_variable (A, &var->type.specifier, var->type.qualifier, var->array_size, size);
+	return sizeof_variable (A, &var->type.specifier, var->type.qualifier, var->array_len, size);
 }
 
 static GLboolean sizeof_variables (slang_assemble_ctx *A, slang_variable_scope *vars, GLuint start,
@@ -233,7 +233,7 @@ slang_function *_slang_locate_function (slang_function_scope *funcs, slang_atom 
 
 			if (!slang_assembly_typeinfo_construct (&ti))
 				return NULL;
-			if (!_slang_typeof_operation (&params[j], space, &ti, atoms))
+			if (!_slang_typeof_operation_ (&params[j], space, &ti, atoms))
 			{
 				slang_assembly_typeinfo_destruct (&ti);
 				return NULL;
@@ -301,7 +301,7 @@ GLboolean _slang_assemble_function (slang_assemble_ctx *A, slang_function *fun)
 	/* calculate return value size */
 	param_size = 0;
 	if (fun->header.type.specifier.type != slang_spec_void)
-		if (!sizeof_variable (A, &fun->header.type.specifier, slang_qual_none, NULL, &param_size))
+		if (!sizeof_variable (A, &fun->header.type.specifier, slang_qual_none, 0, &param_size))
 			return GL_FALSE;
 	A->local.ret_size = param_size;
 
@@ -344,7 +344,7 @@ GLboolean _slang_assemble_function (slang_assemble_ctx *A, slang_function *fun)
 
 	/* execute the function body */
 	A->file->code[skip].param[0] = A->file->count;
-	if (!_slang_assemble_operation_ (A, fun->body, /*slang_ref_freelance*/slang_ref_forbid))
+	if (!_slang_assemble_operation (A, fun->body, /*slang_ref_freelance*/slang_ref_forbid))
 		return GL_FALSE;
 
 	/* this is the end of the function - restore the old function frame */
@@ -363,7 +363,7 @@ GLboolean _slang_assemble_function (slang_assemble_ctx *A, slang_function *fun)
 	return GL_TRUE;
 }
 
-GLboolean _slang_cleanup_stack_ (slang_assemble_ctx *A, slang_operation *op)
+GLboolean _slang_cleanup_stack (slang_assemble_ctx *A, slang_operation *op)
 {
 	slang_assembly_typeinfo ti;
 	GLuint size = 0;
@@ -371,7 +371,7 @@ GLboolean _slang_cleanup_stack_ (slang_assemble_ctx *A, slang_operation *op)
 	/* get type info of the operation and calculate its size */
 	if (!slang_assembly_typeinfo_construct (&ti))
 		return GL_FALSE;
-	if (!_slang_typeof_operation (op, &A->space, &ti, A->atoms))
+	if (!_slang_typeof_operation (A, op, &ti))
 	{
 		slang_assembly_typeinfo_destruct (&ti);
 		return GL_FALSE;
@@ -379,7 +379,7 @@ GLboolean _slang_cleanup_stack_ (slang_assemble_ctx *A, slang_operation *op)
 	if (ti.spec.type != slang_spec_void)
 		if (A->ref == slang_ref_force)
 			size = 4;
-		else if (!sizeof_variable (A, &ti.spec, slang_qual_none, NULL, &size))
+		else if (!sizeof_variable (A, &ti.spec, slang_qual_none, 0, &size))
 		{
 			slang_assembly_typeinfo_destruct (&ti);
 			return GL_FALSE;
@@ -478,13 +478,13 @@ GLboolean _slang_dereference (slang_assemble_ctx *A, slang_operation *op)
 	/* get type information of the given operation */
 	if (!slang_assembly_typeinfo_construct (&ti))
 		return GL_FALSE;
-	if (!_slang_typeof_operation (op, &A->space, &ti, A->atoms))
+	if (!_slang_typeof_operation (A, op, &ti))
 		goto end1;
 
 	/* construct aggregate from the type info */
 	if (!slang_storage_aggregate_construct (&agg))
 		goto end1;
-	if (!_slang_aggregate_variable (&agg, &ti.spec, ti.array_size, A->space.funcs, A->space.structs,
+	if (!_slang_aggregate_variable (&agg, &ti.spec, ti.array_len, A->space.funcs, A->space.structs,
 			A->space.vars, A->mach, A->file, A->atoms))
 		goto end;
 
@@ -515,7 +515,7 @@ GLboolean _slang_assemble_function_call (slang_assemble_ctx *A, slang_function *
 	{
 		GLuint ret_size = 0;
 
-		if (!sizeof_variable (A, &fun->header.type.specifier, slang_qual_none, NULL, &ret_size))
+		if (!sizeof_variable (A, &fun->header.type.specifier, slang_qual_none, 0, &ret_size))
 			return GL_FALSE;
 		if (!PLAB (A->file, slang_asm_local_alloc, ret_size))
 			return GL_FALSE;
@@ -530,7 +530,7 @@ GLboolean _slang_assemble_function_call (slang_assemble_ctx *A, slang_function *
 			if (!PLAB2 (A->file, slang_asm_local_addr, A->local.addr_tmp, 4))
 				return GL_FALSE;
 			/* TODO: optimize the "out" parameter case */
-			if (!_slang_assemble_operation_ (A, &params[i], slang_ref_force))
+			if (!_slang_assemble_operation (A, &params[i], slang_ref_force))
 				return GL_FALSE;
 			p_swz[i] = A->swz;
 			p_ref[i] = A->ref;
@@ -551,7 +551,7 @@ GLboolean _slang_assemble_function_call (slang_assemble_ctx *A, slang_function *
 		}
 		else
 		{
-			if (!_slang_assemble_operation_ (A, &params[i], slang_ref_forbid))
+			if (!_slang_assemble_operation (A, &params[i], slang_ref_forbid))
 				return GL_FALSE;
 			p_swz[i] = A->swz;
 			p_ref[i] = A->ref;
@@ -583,7 +583,7 @@ GLboolean _slang_assemble_function_call (slang_assemble_ctx *A, slang_function *
 		else
 		{
 			/* pop the value of the parameter */
-			if (!_slang_cleanup_stack_ (A, &params[j]))
+			if (!_slang_cleanup_stack (A, &params[j]))
 				return GL_FALSE;
 		}
 	}
@@ -646,6 +646,7 @@ static const struct
 	{ "float_noise3",   slang_asm_float_noise3,   slang_asm_float_copy },
 	{ "float_noise4",   slang_asm_float_noise4,   slang_asm_float_copy },
 	{ "int_to_float",   slang_asm_int_to_float,   slang_asm_float_copy },
+	{ "vec4_tex2d",     slang_asm_vec4_tex2d,     slang_asm_none },
 	/* mesa-specific extensions */
 	{ "float_print",    slang_asm_float_deref,    slang_asm_float_print },
 	{ "int_print",      slang_asm_int_deref,      slang_asm_int_print },
@@ -721,13 +722,13 @@ static GLboolean equality (slang_assemble_ctx *A, slang_operation *op, GLboolean
 	/* get type of operation */
 	if (!slang_assembly_typeinfo_construct (&ti))
 		return GL_FALSE;
-	if (!_slang_typeof_operation (op, &A->space, &ti, A->atoms))
+	if (!_slang_typeof_operation (A, op, &ti))
 		goto end1;
 
 	/* convert it to an aggregate */
 	if (!slang_storage_aggregate_construct (&agg))
 		goto end1;
-	if (!_slang_aggregate_variable (&agg, &ti.spec, NULL, A->space.funcs, A->space.structs,
+	if (!_slang_aggregate_variable (&agg, &ti.spec, 0, A->space.funcs, A->space.structs,
 			A->space.vars, A->mach, A->file, A->atoms))
 		goto end;
 
@@ -784,19 +785,19 @@ static GLboolean handle_subscript (slang_assemble_ctx *A, slang_assembly_typeinf
 	GLuint asize = 0, esize = 0;
 
 	/* get type info of the master expression (matrix, vector or an array */
-	if (!_slang_typeof_operation (&op->children[0], &A->space, tia, A->atoms))
+	if (!_slang_typeof_operation (A, &op->children[0], tia))
 		return GL_FALSE;
-	if (!sizeof_variable (A, &tia->spec, slang_qual_none, tia->array_size, &asize))
+	if (!sizeof_variable (A, &tia->spec, slang_qual_none, tia->array_len, &asize))
 		return GL_FALSE;
 
 	/* get type info of the result (matrix column, vector row or array element) */
-	if (!_slang_typeof_operation (op, &A->space, tie, A->atoms))
+	if (!_slang_typeof_operation (A, op, tie))
 		return GL_FALSE;
-	if (!sizeof_variable (A, &tie->spec, slang_qual_none, NULL, &esize))
+	if (!sizeof_variable (A, &tie->spec, slang_qual_none, 0, &esize))
 		return GL_FALSE;
 
 	/* assemble the master expression */
-	if (!_slang_assemble_operation_ (A, &op->children[0], ref))
+	if (!_slang_assemble_operation (A, &op->children[0], ref))
 		return GL_FALSE;
 
 	/* when indexing an l-value swizzle, push the swizzle_tmp */
@@ -805,7 +806,7 @@ static GLboolean handle_subscript (slang_assemble_ctx *A, slang_assembly_typeinf
 			return GL_FALSE;
 
 	/* assemble the subscript expression */
-	if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
+	if (!_slang_assemble_operation (A, &op->children[1], slang_ref_forbid))
 		return GL_FALSE;
 
 	if (ref == slang_ref_force && tia->is_swizzled)
@@ -882,11 +883,11 @@ static GLboolean handle_field (slang_assemble_ctx *A, slang_assembly_typeinfo *t
 	slang_assembly_typeinfo *tib, slang_operation *op, slang_ref_type ref)
 {
 	/* get type info of the result (field or swizzle) */
-	if (!_slang_typeof_operation (op, &A->space, tia, A->atoms))
+	if (!_slang_typeof_operation (A, op, tia))
 		return GL_FALSE;
 
 	/* get type info of the master expression being accessed (struct or vector) */
-	if (!_slang_typeof_operation (&op->children[0], &A->space, tib, A->atoms))
+	if (!_slang_typeof_operation (A, &op->children[0], tib))
 		return GL_FALSE;
 
 	/* if swizzling a vector in-place, the swizzle temporary is needed */
@@ -895,7 +896,7 @@ static GLboolean handle_field (slang_assemble_ctx *A, slang_assembly_typeinfo *t
 			return GL_FALSE;
 
 	/* assemble the master expression */
-	if (!_slang_assemble_operation_ (A, &op->children[0], ref))
+	if (!_slang_assemble_operation (A, &op->children[0], ref))
 		return GL_FALSE;
 
 	/* assemble the field expression */
@@ -941,7 +942,7 @@ static GLboolean handle_field (slang_assemble_ctx *A, slang_assembly_typeinfo *t
 			field = &tib->spec._struct->fields->variables[i];
 			if (!slang_storage_aggregate_construct (&agg))
 				return GL_FALSE;
-			if (!_slang_aggregate_variable (&agg, &field->type.specifier, field->array_size,
+			if (!_slang_aggregate_variable (&agg, &field->type.specifier, field->array_len,
 					A->space.funcs, A->space.structs, A->space.vars, A->mach, A->file, A->atoms))
 			{
 				slang_storage_aggregate_destruct (&agg);
@@ -989,14 +990,8 @@ static GLboolean handle_field (slang_assemble_ctx *A, slang_assembly_typeinfo *t
 	return GL_TRUE;
 }
 
-GLboolean _slang_assemble_operation_ (slang_assemble_ctx *A, slang_operation *op, slang_ref_type ref)
+GLboolean _slang_assemble_operation (slang_assemble_ctx *A, slang_operation *op, slang_ref_type ref)
 {
-	GLuint assem;
-
-	assem = A->file->count;
-	if (!push_new (A->file))
-		return GL_FALSE;
-
 	/* set default results */
 	A->ref = /*(ref == slang_ref_freelance) ? slang_ref_force : */ref;
 	A->swz.num_components = 0;
@@ -1010,9 +1005,9 @@ GLboolean _slang_assemble_operation_ (slang_assemble_ctx *A, slang_operation *op
 
 			for (i = 0; i < op->num_children; i++)
 			{
-				if (!_slang_assemble_operation_ (A, &op->children[i], slang_ref_forbid/*slang_ref_freelance*/))
+				if (!_slang_assemble_operation (A, &op->children[i], slang_ref_forbid/*slang_ref_freelance*/))
 					return GL_FALSE;
-				if (!_slang_cleanup_stack_ (A, &op->children[i]))
+				if (!_slang_cleanup_stack (A, &op->children[i]))
 					return GL_FALSE;
 			}
 		}
@@ -1032,25 +1027,26 @@ GLboolean _slang_assemble_operation_ (slang_assemble_ctx *A, slang_operation *op
 		{
 			GLuint i;
 
-			if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_force))
+			if (!_slang_assemble_operation (A, &op->children[0], slang_ref_force))
 				return GL_FALSE;
 			for (i = 1; i < op->num_children; i++)
-				if (!_slang_assemble_operation_ (A, &op->children[i], slang_ref_forbid))
+				if (!_slang_assemble_operation (A, &op->children[i], slang_ref_forbid))
 					return GL_FALSE;
 			if (!call_asm_instruction (A, op->a_id))
 				return GL_FALSE;
 		}
 		break;
 	case slang_oper_break:
-		A->file->code[assem].type = slang_asm_jump;
-		A->file->code[assem].param[0] = A->flow.loop_end;
+		if (!PLAB (A->file, slang_asm_jump, A->flow.loop_end))
+			return GL_FALSE;
 		break;
 	case slang_oper_continue:
-		A->file->code[assem].type = slang_asm_jump;
-		A->file->code[assem].param[0] = A->flow.loop_start;
+		if (!PLAB (A->file, slang_asm_jump, A->flow.loop_start))
+			return GL_FALSE;
 		break;
 	case slang_oper_discard:
-		A->file->code[assem].type = slang_asm_discard;
+		if (!PUSH (A->file, slang_asm_discard))
+			return GL_FALSE;
 		if (!PUSH (A->file, slang_asm_exit))
 			return GL_FALSE;
 		break;
@@ -1060,7 +1056,7 @@ GLboolean _slang_assemble_operation_ (slang_assemble_ctx *A, slang_operation *op
 			/* push the result's address */
 			if (!PLAB2 (A->file, slang_asm_local_addr, 0, A->local.ret_size))
 				return GL_FALSE;
-			if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid))
+			if (!_slang_assemble_operation (A, &op->children[0], slang_ref_forbid))
 				return GL_FALSE;
 
 			A->swz.num_components = 0;
@@ -1077,7 +1073,7 @@ GLboolean _slang_assemble_operation_ (slang_assemble_ctx *A, slang_operation *op
 	case slang_oper_expression:
 		if (ref == slang_ref_force)
 			return GL_FALSE;
-		if (!_slang_assemble_operation_ (A, &op->children[0], ref))
+		if (!_slang_assemble_operation (A, &op->children[0], ref))
 			return GL_FALSE;
 		break;
 	case slang_oper_if:
@@ -1101,22 +1097,22 @@ GLboolean _slang_assemble_operation_ (slang_assemble_ctx *A, slang_operation *op
 	case slang_oper_literal_bool:
 		if (ref == slang_ref_force)
 			return GL_FALSE;
-		A->file->code[assem].type = slang_asm_bool_push;
-		A->file->code[assem].literal = op->literal;
+		if (!PLIT (A->file, slang_asm_bool_push, op->literal))
+			return GL_FALSE;
 		A->ref = slang_ref_forbid;
 		break;
 	case slang_oper_literal_int:
 		if (ref == slang_ref_force)
 			return GL_FALSE;
-		A->file->code[assem].type = slang_asm_int_push;
-		A->file->code[assem].literal = op->literal;
+		if (!PLIT (A->file, slang_asm_int_push, op->literal))
+			return GL_FALSE;
 		A->ref = slang_ref_forbid;
 		break;
 	case slang_oper_literal_float:
 		if (ref == slang_ref_force)
 			return GL_FALSE;
-		A->file->code[assem].type = slang_asm_float_push;
-		A->file->code[assem].literal = op->literal;
+		if (!PLIT (A->file, slang_asm_float_push, op->literal))
+			return GL_FALSE;
 		A->ref = slang_ref_forbid;
 		break;
 	case slang_oper_identifier:
@@ -1129,7 +1125,7 @@ GLboolean _slang_assemble_operation_ (slang_assemble_ctx *A, slang_operation *op
 			if (var == NULL)
 				return GL_FALSE;
 			size = 0;
-			if (!sizeof_variable (A, &var->type.specifier, slang_qual_none, var->array_size, &size))
+			if (!sizeof_variable (A, &var->type.specifier, slang_qual_none, var->array_len, &size))
 				return GL_FALSE;
 
 			/* prepare stack for dereferencing */
@@ -1164,11 +1160,11 @@ GLboolean _slang_assemble_operation_ (slang_assemble_ctx *A, slang_operation *op
 	case slang_oper_sequence:
 		if (ref == slang_ref_force)
 			return GL_FALSE;
-		if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid/*slang_ref_freelance*/))
+		if (!_slang_assemble_operation (A, &op->children[0], slang_ref_forbid/*slang_ref_freelance*/))
 			return GL_FALSE;
-		if (!_slang_cleanup_stack_ (A, &op->children[0]))
+		if (!_slang_cleanup_stack (A, &op->children[0]))
 			return GL_FALSE;
-		if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
+		if (!_slang_assemble_operation (A, &op->children[1], slang_ref_forbid))
 			return GL_FALSE;
 		A->ref = slang_ref_forbid;
 		break;
@@ -1265,18 +1261,18 @@ GLboolean _slang_assemble_operation_ (slang_assemble_ctx *A, slang_operation *op
 		A->ref = slang_ref_forbid;
 		break;
 	case slang_oper_equal:
-		if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid))
+		if (!_slang_assemble_operation (A, &op->children[0], slang_ref_forbid))
 			return GL_FALSE;
-		if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
+		if (!_slang_assemble_operation (A, &op->children[1], slang_ref_forbid))
 			return GL_FALSE;
 		if (!equality (A, op->children, GL_TRUE))
 			return GL_FALSE;
 		A->ref = slang_ref_forbid;
 		break;
 	case slang_oper_notequal:
-		if (!_slang_assemble_operation_ (A, &op->children[0], slang_ref_forbid))
+		if (!_slang_assemble_operation (A, &op->children[0], slang_ref_forbid))
 			return GL_FALSE;
-		if (!_slang_assemble_operation_ (A, &op->children[1], slang_ref_forbid))
+		if (!_slang_assemble_operation (A, &op->children[1], slang_ref_forbid))
 			return GL_FALSE;
 		if (!equality (A, op->children, GL_FALSE))
 			return GL_FALSE;

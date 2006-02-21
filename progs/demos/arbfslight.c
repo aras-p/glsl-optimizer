@@ -3,7 +3,7 @@
  * simple per-pixel lighting.
  *
  * Michal Krol
- * 17 February 2006
+ * 20 February 2006
  *
  * Based on the original demo by:
  * Brian Paul
@@ -35,6 +35,10 @@ static GLhandleARB fragShader;
 static GLhandleARB vertShader;
 static GLhandleARB program;
 
+static GLint uLightPos;
+static GLint uDiffuse;
+static GLint uSpecular;
+
 static GLboolean anim = GL_TRUE;
 static GLboolean wire = GL_FALSE;
 static GLboolean pixelLight = GL_TRUE;
@@ -51,6 +55,8 @@ static PFNGLCREATEPROGRAMOBJECTARBPROC glCreateProgramObjectARB = NULL;
 static PFNGLATTACHOBJECTARBPROC glAttachObjectARB = NULL;
 static PFNGLLINKPROGRAMARBPROC glLinkProgramARB = NULL;
 static PFNGLUSEPROGRAMOBJECTARBPROC glUseProgramObjectARB = NULL;
+static PFNGLGETUNIFORMLOCATIONARBPROC glGetUniformLocationARB = NULL;
+static PFNGLUNIFORM4FVARBPROC glUniform4fvARB = NULL;
 
 static void Redisplay (void)
 {
@@ -59,8 +65,7 @@ static void Redisplay (void)
 	if (pixelLight)
 	{
 		glUseProgramObjectARB (program);
-		/* XXX source from uniform lightPos */
-		glTexCoord4fv (lightPos);
+		glUniform4fvARB (uLightPos, 1, lightPos);
 		glDisable(GL_LIGHTING);
 	}
 	else
@@ -182,20 +187,10 @@ static void SpecialKey (int key, int x, int y)
 static void Init (void)
 {
 	static const char *fragShaderText =
+		"uniform vec4 lightPos;\n"
+		"uniform vec4 diffuse;\n"
+		"uniform vec4 specular;\n"
 		"void main () {\n"
-
-		/* XXX source from uniform lightPos */
-		"	vec4 lightPos;\n"
-		"	lightPos = gl_TexCoord[1];\n"
-
-		/* XXX source from uniform diffuse */
-		"	vec4 diffuse;\n"
-		"	diffuse = vec4 (0.5, 0.5, 1.0, 1.0);\n"
-
-		/* XXX source from uniform specular */
-		"	vec4 specular;\n"
-		"	specular = vec4 (0.8, 0.8, 0.8, 1.0);\n"
-
 		"	// Compute dot product of light direction and normal vector\n"
 		"	float dotProd;\n"
 		"	dotProd = clamp (dot (normalize (lightPos).xyz, normalize (gl_TexCoord[0]).xyz), 0.0, 1.0);\n"
@@ -207,9 +202,6 @@ static void Init (void)
 		"void main () {\n"
 		"	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
 		"	gl_TexCoord[0] = vec4 (gl_NormalMatrix * gl_Normal, 1.0);\n"
-
-		/* XXX source from uniform lightPos */
-		"	gl_TexCoord[1] = gl_MultiTexCoord0;\n"
 		"}\n"
 	;
 
@@ -241,6 +233,8 @@ static void Init (void)
 	glAttachObjectARB = (PFNGLATTACHOBJECTARBPROC) GETPROCADDRESS ("glAttachObjectARB");
 	glLinkProgramARB = (PFNGLLINKPROGRAMARBPROC) GETPROCADDRESS ("glLinkProgramARB");
 	glUseProgramObjectARB = (PFNGLUSEPROGRAMOBJECTARBPROC) GETPROCADDRESS ("glUseProgramObjectARB");
+	glGetUniformLocationARB = (PFNGLGETUNIFORMLOCATIONARBPROC) GETPROCADDRESS ("glGetUniformLocationARB");
+	glUniform4fvARB = (PFNGLUNIFORM4FVARBPROC) GETPROCADDRESS ("glUniform4fvARB");
 
 	fragShader = glCreateShaderObjectARB (GL_FRAGMENT_SHADER_ARB);
 	glShaderSourceARB (fragShader, 1, &fragShaderText, NULL);
@@ -255,6 +249,13 @@ static void Init (void)
 	glAttachObjectARB (program, vertShader);
 	glLinkProgramARB (program);
 	glUseProgramObjectARB (program);
+
+	uLightPos = glGetUniformLocationARB (program, "lightPos");
+	uDiffuse = glGetUniformLocationARB (program, "diffuse");
+	uSpecular = glGetUniformLocationARB (program, "specular");
+
+	glUniform4fvARB (uDiffuse, 1, diffuse);
+	glUniform4fvARB (uSpecular, 1, specular);
 
 	glClearColor (0.3f, 0.3f, 0.3f, 0.0f);
 	glEnable (GL_DEPTH_TEST);

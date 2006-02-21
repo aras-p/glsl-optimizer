@@ -320,6 +320,8 @@ _mesa_UseProgramObjectARB (GLhandleARB programObj)
 	GET_CURRENT_CONTEXT(ctx);
 	struct gl2_program_intf **pro;
 
+	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+
 	if (programObj == 0)
 	{
 		pro = NULL;
@@ -413,16 +415,69 @@ Errors TODO
 
 */
 
+#define _RELEASE_PROGRAM(obj)\
+	(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro)
+
+#define _LOOKUP_PROGRAM(obj, function)\
+	struct gl2_unknown_intf **unk;\
+	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);\
+	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, obj);\
+	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);\
+	if (unk == NULL) {\
+		_mesa_error (ctx, GL_INVALID_VALUE, function);\
+		break;\
+	}\
+	pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);\
+	if (pro == NULL) {\
+		_mesa_error (ctx, GL_INVALID_OPERATION, function);\
+		break;\
+	}
+
+#define _CURRENT_PROGRAM(function)\
+	if (ctx->ShaderObjects.CurrentProgram == NULL) {\
+		_mesa_error (ctx, GL_INVALID_OPERATION, function);\
+		break;\
+	}\
+	pro = ctx->ShaderObjects.CurrentProgram;
+
+#define _IS_LINKED(function)\
+	if ((**pro).GetLinkStatus (pro) == GL_FALSE) {\
+		_mesa_error (ctx, GL_INVALID_OPERATION, function);\
+		_RELEASE_PROGRAM(obj);\
+		break;\
+	}
+
+#define GET_PROGRAM(obj, function)\
+	struct gl2_program_intf **pro = NULL;\
+	do {\
+		_LOOKUP_PROGRAM(obj, function);\
+	} while (0)
+
+#define GET_LINKED_PROGRAM(obj, function)\
+	struct gl2_program_intf **pro = NULL;\
+	do {\
+		_LOOKUP_PROGRAM(obj, function);\
+		_IS_LINKED(function);\
+	} while (0)
+
+#define CURRENT_LINKED_PROGRAM(function)\
+	struct gl2_program_intf **pro = NULL;\
+	do {\
+		_CURRENT_PROGRAM(function);\
+		_IS_LINKED(function);\
+	} while (0)
+
+/* XXX */
+GLboolean _slang_write_uniform (struct gl2_program_intf **, GLint, GLsizei, const GLvoid *, GLenum);
+
 void GLAPIENTRY
 _mesa_Uniform1fARB (GLint location, GLfloat v0)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	CURRENT_LINKED_PROGRAM("glUniform1fARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
-	{
+	if (!_slang_write_uniform (pro, location, 1, &v0, GL_FLOAT))
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1fARB");
-		return;
-	}
 }
 
 void GLAPIENTRY
@@ -549,12 +604,10 @@ void GLAPIENTRY
 _mesa_Uniform4fvARB (GLint location, GLsizei count, const GLfloat *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	CURRENT_LINKED_PROGRAM("glUniform4fvARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
-	{
+	if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT_VEC4_ARB))
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4fvARB");
-		return;
-	}
 }
 
 void GLAPIENTRY
@@ -902,41 +955,21 @@ _mesa_GetAttachedObjectsARB (GLhandleARB containerObj, GLsizei maxCount, GLsizei
 		*count = cnt;
 }
 
+/* XXX */
+GLint _slang_get_uniform_location (struct gl2_program_intf **, const char *);
+
 GLint GLAPIENTRY
 _mesa_GetUniformLocationARB (GLhandleARB programObj, const GLcharARB *name)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_program_intf **pro;
 	GLint loc = -1;
+	GET_LINKED_PROGRAM(programObj, "glGetUniformLocationARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, programObj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetUniformLocationARB");
-		return -1;
-	}
-
-	pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);
 	if (pro == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetUniformLocationARB");
 		return -1;
-	}
 
-	if ((**pro).GetLinkStatus (pro) == GL_FALSE)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetUniformLocationARB");
-		(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
-		return -1;
-	}
-
-	/* TODO */
-
-	(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
+	loc = _slang_get_uniform_location (pro, name);
+	_RELEASE_PROGRAM(pro);
 	return loc;
 }
 

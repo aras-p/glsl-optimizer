@@ -85,9 +85,12 @@ GLboolean slang_storage_aggregate_construct (slang_storage_aggregate *);
 GLvoid slang_storage_aggregate_destruct (slang_storage_aggregate *);
 
 GLboolean _slang_aggregate_variable (slang_storage_aggregate *, struct slang_type_specifier_ *,
-	struct slang_operation_ *, struct slang_function_scope_ *, slang_struct_scope *,
+	GLuint, struct slang_function_scope_ *, slang_struct_scope *,
 	slang_variable_scope *, struct slang_machine_ *, struct slang_assembly_file_ *,
 	slang_atom_pool *);
+
+GLboolean _slang_evaluate_int (struct slang_assembly_file_ *, struct slang_machine_ *,
+	struct slang_assembly_name_space_ *, struct slang_operation_ *, GLuint *, slang_atom_pool *);
 
 /*
  * Returns total size (in machine units) of the given aggregate.

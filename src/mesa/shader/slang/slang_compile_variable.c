@@ -269,7 +269,7 @@ int slang_variable_construct (slang_variable *var)
 	if (!slang_fully_specified_type_construct (&var->type))
 		return 0;
 	var->a_name = SLANG_ATOM_NULL;
-	var->array_size = NULL;
+	var->array_len = 0;
 	var->initializer = NULL;
 	var->address = ~0;
 	var->size = 0;
@@ -280,11 +280,6 @@ int slang_variable_construct (slang_variable *var)
 void slang_variable_destruct (slang_variable *var)
 {
 	slang_fully_specified_type_destruct (&var->type);
-	if (var->array_size != NULL)
-	{
-		slang_operation_destruct (var->array_size);
-		slang_alloc_free (var->array_size);
-	}
 	if (var->initializer != NULL)
 	{
 		slang_operation_destruct (var->initializer);
@@ -304,26 +299,7 @@ int slang_variable_copy (slang_variable *x, const slang_variable *y)
 		return 0;
 	}
 	z.a_name = y->a_name;
-	if (y->array_size != NULL)
-	{
-		z.array_size = (slang_operation *) slang_alloc_malloc (sizeof (slang_operation));
-		if (z.array_size == NULL)
-		{
-			slang_variable_destruct (&z);
-			return 0;
-		}
-		if (!slang_operation_construct (z.array_size))
-		{
-			slang_alloc_free (z.array_size);
-			slang_variable_destruct (&z);
-			return 0;
-		}
-		if (!slang_operation_copy (z.array_size, y->array_size))
-		{
-			slang_variable_destruct (&z);
-			return 0;
-		}
-	}
+	z.array_len = y->array_len;
 	if (y->initializer != NULL)
 	{
 		z.initializer = (slang_operation *) slang_alloc_malloc (sizeof (slang_operation));
@@ -362,5 +338,194 @@ slang_variable *_slang_locate_variable (slang_variable_scope *scope, slang_atom 
 	if (all && scope->outer_scope != NULL)
 		return _slang_locate_variable (scope->outer_scope, a_name, 1);
 	return NULL;
+}
+
+/*
+ * slang_active_uniforms
+ */
+
+GLvoid slang_active_uniforms_ctr (slang_active_uniforms *self)
+{
+	self->table = NULL;
+	self->count = 0;
+}
+
+GLvoid slang_active_uniforms_dtr (slang_active_uniforms *self)
+{
+	GLuint i;
+
+	for (i = 0; i < self->count; i++)
+		slang_alloc_free (self->table[i].name);
+	slang_alloc_free (self->table);
+}
+
+GLboolean slang_active_uniforms_add (slang_active_uniforms *self, slang_export_data_quant *q,
+	const char *name)
+{
+	const GLuint n = self->count;
+
+	self->table = (slang_active_uniform *) slang_alloc_realloc (self->table,
+		n * sizeof (slang_active_uniform), (n + 1) * sizeof (slang_active_uniform));
+	if (self->table == NULL)
+		return GL_FALSE;
+	self->table[n].quant = q;
+	self->table[n].name = slang_string_duplicate (name);
+	if (self->table[n].name == NULL)
+		return GL_FALSE;
+	self->count++;
+	return GL_TRUE;
+}
+
+static GLenum gl_type_from_specifier (const slang_type_specifier *type)
+{
+	switch (type->type)
+	{
+	case slang_spec_bool:
+		return GL_BOOL_ARB;
+	case slang_spec_bvec2:
+		return GL_BOOL_VEC2_ARB;
+	case slang_spec_bvec3:
+		return GL_BOOL_VEC3_ARB;
+	case slang_spec_bvec4:
+		return GL_BOOL_VEC4_ARB;
+	case slang_spec_int:
+		return GL_INT;
+	case slang_spec_ivec2:
+		return GL_INT_VEC2_ARB;
+	case slang_spec_ivec3:
+		return GL_INT_VEC3_ARB;
+	case slang_spec_ivec4:
+		return GL_INT_VEC4_ARB;
+	case slang_spec_float:
+		return GL_FLOAT;
+	case slang_spec_vec2:
+		return GL_FLOAT_VEC2_ARB;
+	case slang_spec_vec3:
+		return GL_FLOAT_VEC3_ARB;
+	case slang_spec_vec4:
+		return GL_FLOAT_VEC4_ARB;
+	case slang_spec_mat2:
+		return GL_FLOAT_MAT2_ARB;
+	case slang_spec_mat3:
+		return GL_FLOAT_MAT3_ARB;
+	case slang_spec_mat4:
+		return GL_FLOAT_MAT4_ARB;
+	case slang_spec_sampler1D:
+		return GL_SAMPLER_1D_ARB;
+	case slang_spec_sampler2D:
+		return GL_SAMPLER_2D_ARB;
+	case slang_spec_sampler3D:
+		return GL_SAMPLER_3D_ARB;
+	case slang_spec_samplerCube:
+		return GL_SAMPLER_CUBE_ARB;
+	case slang_spec_sampler1DShadow:
+		return GL_SAMPLER_1D_SHADOW_ARB;
+	case slang_spec_sampler2DShadow:
+		return GL_SAMPLER_2D_SHADOW_ARB;
+	case slang_spec_array:
+		return gl_type_from_specifier (type->_array);
+	default:
+		return GL_FLOAT;
+	}
+}
+
+static GLboolean build_quant (slang_export_data_quant *q, slang_variable *var)
+{
+	slang_type_specifier *spec = &var->type.specifier;
+
+	q->name = var->a_name;
+	q->size = var->size;
+	if (spec->type == slang_spec_array)
+	{
+		q->array_len = var->array_len;
+		q->size /= var->array_len;
+		spec = spec->_array;
+	}
+	if (spec->type == slang_spec_struct)
+	{
+		GLuint i;
+
+		q->u.field_count = spec->_struct->fields->num_variables;
+		q->structure = (slang_export_data_quant *) slang_alloc_malloc (
+			q->u.field_count * sizeof (slang_export_data_quant));
+		if (q->structure == NULL)
+			return GL_FALSE;
+
+		for (i = 0; i < q->u.field_count; i++)
+			slang_export_data_quant_ctr (&q->structure[i]);
+		for (i = 0; i < q->u.field_count; i++)
+			if (!build_quant (&q->structure[i], &spec->_struct->fields->variables[i]))
+				return GL_FALSE;
+	}
+	else
+		q->u.basic_type = gl_type_from_specifier (spec);
+	return GL_TRUE;
+}
+
+GLboolean _slang_build_export_data_table (slang_export_data_table *tbl, slang_variable_scope *vars)
+{
+	GLuint i;
+
+	for (i = 0; i < vars->num_variables; i++)
+	{
+		slang_variable *var = &vars->variables[i];
+
+		if (var->type.qualifier == slang_qual_uniform)
+		{
+			slang_export_data_entry *e = slang_export_data_table_add (tbl);
+			if (e == NULL)
+				return GL_FALSE;
+			if (!build_quant (&e->quant, var))
+				return GL_FALSE;
+			e->access = slang_exp_uniform;
+			e->address = var->address;
+		}
+	}
+
+	if (vars->outer_scope != NULL)
+		return _slang_build_export_data_table (tbl, vars->outer_scope);
+	return GL_TRUE;
+}
+
+static GLboolean insert_uniform (slang_active_uniforms *u, slang_export_data_quant *q, char *name,
+	slang_atom_pool *atoms)
+{
+	slang_string_concat (name, slang_atom_pool_id (atoms, q->name));
+	if (q->array_len != 0)
+		slang_string_concat (name, "[0]");
+
+	if (q->structure != NULL)
+	{
+		GLuint save, i;
+
+		slang_string_concat (name, ".");
+		save = slang_string_length (name);
+
+		for (i = 0; i < q->u.field_count; i++)
+		{
+			if (!insert_uniform (u, &q->structure[i], name, atoms))
+				return GL_FALSE;
+			name[save] = '\0';
+		}
+
+		return GL_TRUE;
+	}
+
+	return slang_active_uniforms_add (u, q, name);
+}
+
+GLboolean _slang_gather_active_uniforms (slang_active_uniforms *u, slang_export_data_table *tbl)
+{
+	GLuint i;
+
+	for (i = 0; i < tbl->count; i++)
+	{
+		char name[1024] = "";
+
+		if (!insert_uniform (u, &tbl->entries[i].quant, name, tbl->atoms))
+			return GL_FALSE;
+	}
+
+	return GL_TRUE;
 }
 

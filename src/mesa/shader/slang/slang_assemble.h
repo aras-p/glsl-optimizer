@@ -73,6 +73,7 @@ typedef enum slang_assembly_type_
 	slang_asm_addr_deref,
 	slang_asm_addr_add,
 	slang_asm_addr_multiply,
+	slang_asm_vec4_tex2d,
 	slang_asm_jump,
 	slang_asm_jump_if_zero,
 	slang_asm_enter,
@@ -179,7 +180,7 @@ slang_function *_slang_locate_function (slang_function_scope *funcs, slang_atom 
 
 GLboolean _slang_assemble_function (slang_assemble_ctx *, struct slang_function_ *);
 
-GLboolean _slang_cleanup_stack_ (slang_assemble_ctx *, slang_operation *);
+GLboolean _slang_cleanup_stack (slang_assemble_ctx *, slang_operation *);
 
 GLboolean _slang_dereference (slang_assemble_ctx *, slang_operation *);
 
@@ -189,7 +190,7 @@ GLboolean _slang_assemble_function_call (slang_assemble_ctx *, slang_function *,
 GLboolean _slang_assemble_function_call_name (slang_assemble_ctx *, const char *, slang_operation *,
 	GLuint, GLboolean);
 
-GLboolean _slang_assemble_operation_ (slang_assemble_ctx *, struct slang_operation_ *, slang_ref_type);
+GLboolean _slang_assemble_operation (slang_assemble_ctx *, struct slang_operation_ *, slang_ref_type);
 
 #ifdef __cplusplus
 }

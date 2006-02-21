@@ -522,7 +522,15 @@ SOURCE=..\..\..\..\src\mesa\shader\slang\slang_execute.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_export.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\shader\slang\slang_library_noise.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_link.c
 # End Source File
 # Begin Source File
 
@@ -1231,7 +1239,15 @@ SOURCE=..\..\..\..\src\mesa\shader\slang\slang_execute.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_export.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\shader\slang\slang_library_noise.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_link.h
 # End Source File
 # Begin Source File
 
