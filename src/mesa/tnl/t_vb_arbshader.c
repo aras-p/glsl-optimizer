@@ -29,6 +29,7 @@
 #include "imports.h"
 #include "macros.h"
 #include "shaderobjects.h"
+#include "shaderobjects_3dlabs.h"
 #include "t_pipeline.h"
 #include "slang_utility.h"
 
@@ -89,19 +90,11 @@ static void validate_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stag
 {
 }
 
-/* XXX */
-extern void exec_vertex_shader (struct gl2_vertex_shader_intf **vs);
-extern int _slang_fetch_float (struct gl2_vertex_shader_intf **, const char *, GLfloat *, int);
-extern int _slang_fetch_vec3 (struct gl2_vertex_shader_intf **, const char *, GLfloat *, int);
-extern int _slang_fetch_vec4 (struct gl2_vertex_shader_intf **, const char *, GLfloat *, GLuint, int);
-extern int _slang_fetch_mat3 (struct gl2_vertex_shader_intf **, const char *, GLfloat *, GLuint, int);
-extern int _slang_fetch_mat4 (struct gl2_vertex_shader_intf **, const char *, GLfloat *, GLuint, int);
-
 static void fetch_input_float (const char *name, GLuint attr, GLuint i, struct vertex_buffer *vb,
 	struct gl2_vertex_shader_intf **vs)
 {
 	const GLubyte *ptr = (const GLubyte *) vb->AttribPtr[attr]->data;
-	const GLuint size = vb->AttribPtr[attr]->size;
+	/*const GLuint size = vb->AttribPtr[attr]->size;*/
 	const GLuint stride = vb->AttribPtr[attr]->stride;
 	const GLfloat *data = (const GLfloat *) (ptr + stride * i);
 	float vec[1];
@@ -114,7 +107,7 @@ static void fetch_input_vec3 (const char *name, GLuint attr, GLuint i, struct ve
 	struct gl2_vertex_shader_intf **vs)
 {
 	const GLubyte *ptr = (const GLubyte *) vb->AttribPtr[attr]->data;
-	const GLuint size = vb->AttribPtr[attr]->size;
+	/*const GLuint size = vb->AttribPtr[attr]->size;*/
 	const GLuint stride = vb->AttribPtr[attr]->stride;
 	const GLfloat *data = (const GLfloat *) (ptr + stride * i);
 	float vec[3];
@@ -298,7 +291,7 @@ static GLboolean run_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stag
 		fetch_input_vec4 ("gl_MultiTexCoord6", _TNL_ATTRIB_TEX6, i, vb, vs);
 		fetch_input_vec4 ("gl_MultiTexCoord7", _TNL_ATTRIB_TEX7, i, vb, vs);
 
-		exec_vertex_shader (vs);
+		_slang_exec_vertex_shader (vs);
 
 		fetch_output_vec4 ("gl_Position", VERT_RESULT_HPOS, i, 0, store, vs);
 		fetch_output_vec4 ("gl_FrontColor", VERT_RESULT_COL0, i, 0, store, vs);

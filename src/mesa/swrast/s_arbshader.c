@@ -31,11 +31,8 @@
 #include "s_arbshader.h"
 #include "s_context.h"
 #include "shaderobjects.h"
+#include "shaderobjects_3dlabs.h"
 
-int _slang_fetch_vec4_f (struct gl2_fragment_shader_intf **, const char *, GLfloat *,
-	GLuint, int);
-int _slang_fetch_discard (struct gl2_fragment_shader_intf **, GLboolean *);
-void exec_fragment_shader (struct gl2_fragment_shader_intf **);
 
 static void fetch_input_vec4 (const char *name, GLfloat *vec, GLuint index,
 	struct gl2_fragment_shader_intf **fs)
@@ -99,13 +96,13 @@ void _swrast_exec_arbshader (GLcontext *ctx, struct sw_span *span)
 			fetch_input_vec4 ("gl_TexCoord", vec, j, fs);
 		}
 
-		exec_fragment_shader (fs);
+		_slang_exec_fragment_shader (fs);
 
 		_slang_fetch_discard (fs, &kill);
 		if (kill)
 		{
 			span->array->mask[i] = GL_FALSE;
-            span->writeAll = GL_FALSE;
+			span->writeAll = GL_FALSE;
 		}
 		fetch_output_vec4 ("gl_FragColor", vec, 0, fs);
 		UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][RCOMP], vec[0]);
