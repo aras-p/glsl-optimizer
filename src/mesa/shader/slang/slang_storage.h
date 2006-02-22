@@ -26,6 +26,8 @@
 #define SLANG_STORAGE_H
 
 #include "slang_compile.h"
+#include "slang_assemble.h"
+#include "slang_execute.h"
 
 #if defined __cplusplus
 extern "C" {
@@ -81,18 +83,27 @@ typedef struct slang_storage_aggregate_
 	GLuint count;
 } slang_storage_aggregate;
 
-struct slang_assembly_name_space_;
-
 GLboolean slang_storage_aggregate_construct (slang_storage_aggregate *);
 GLvoid slang_storage_aggregate_destruct (slang_storage_aggregate *);
 
-GLboolean _slang_aggregate_variable (slang_storage_aggregate *, struct slang_type_specifier_ *,
-	GLuint, struct slang_function_scope_ *, slang_struct_scope *,
-	slang_variable_scope *, struct slang_machine_ *, struct slang_assembly_file_ *,
-	slang_atom_pool *);
+extern GLboolean
+_slang_aggregate_variable(slang_storage_aggregate *agg,
+                          slang_type_specifier *spec,
+                          GLuint array_len,
+                          slang_function_scope *funcs,
+                          slang_struct_scope *structs,
+                          slang_variable_scope *vars,
+                          slang_machine *mach,
+                          slang_assembly_file *file,
+                          slang_atom_pool *atoms);
 
-GLboolean _slang_evaluate_int (struct slang_assembly_file_ *, struct slang_machine_ *,
-	struct slang_assembly_name_space_ *, struct slang_operation_ *, GLuint *, slang_atom_pool *);
+extern GLboolean
+_slang_evaluate_int(slang_assembly_file *file,
+                    slang_machine *pmach,
+                    slang_assembly_name_space *space,
+                    slang_operation *array_size,
+                    GLuint *pint,
+                    slang_atom_pool *atoms);
 
 /*
  * Returns total size (in machine units) of the given aggregate.
