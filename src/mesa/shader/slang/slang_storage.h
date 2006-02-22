@@ -81,6 +81,8 @@ typedef struct slang_storage_aggregate_
 	GLuint count;
 } slang_storage_aggregate;
 
+struct slang_assembly_name_space_;
+
 GLboolean slang_storage_aggregate_construct (slang_storage_aggregate *);
 GLvoid slang_storage_aggregate_destruct (slang_storage_aggregate *);
 

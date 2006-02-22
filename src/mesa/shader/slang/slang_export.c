@@ -138,14 +138,14 @@ static GLuint extract_name (const char *name, char *parsed, GLuint *element, con
 {
 	GLuint i;
 
-	if (name[0] >= 'a' && name[0] <= 'z' || name[0] >= 'A' && name[0] <= 'Z' || name[0] == '_')
+	if ((name[0] >= 'a' && name[0] <= 'z') || (name[0] >= 'A' && name[0] <= 'Z') || name[0] == '_')
 	{
 		parsed[0] = name[0];
 
 		for (i = 1; i < EXTRACT_MAXLEN; i++)
 		{
-			if (name[i] >= 'a' && name[i] <= 'z' || name[i] >= 'A' && name[i] <= 'Z' ||
-				name[i] >= '0' && name[i] <= '9' || name[0] == '_')
+			if ((name[i] >= 'a' && name[i] <= 'z') || (name[i] >= 'A' && name[i] <= 'Z') ||
+				(name[i] >= '0' && name[i] <= '9') || name[0] == '_')
 			{
 				parsed[i] = name[i];
 			}

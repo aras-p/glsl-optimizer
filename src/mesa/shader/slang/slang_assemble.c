@@ -376,14 +376,16 @@ GLboolean _slang_cleanup_stack (slang_assemble_ctx *A, slang_operation *op)
 		slang_assembly_typeinfo_destruct (&ti);
 		return GL_FALSE;
 	}
-	if (ti.spec.type != slang_spec_void)
-		if (A->ref == slang_ref_force)
+	if (ti.spec.type != slang_spec_void) {
+		if (A->ref == slang_ref_force) {
 			size = 4;
+		}
 		else if (!sizeof_variable (A, &ti.spec, slang_qual_none, 0, &size))
 		{
 			slang_assembly_typeinfo_destruct (&ti);
 			return GL_FALSE;
 		}
+	}
 	slang_assembly_typeinfo_destruct (&ti);
 
 	/* if nonzero, free it from the stack */

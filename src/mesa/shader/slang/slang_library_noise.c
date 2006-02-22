@@ -23,6 +23,7 @@
  */
 
 #include "imports.h"
+#include "slang_library_noise.h"
 
 /*
  * SimplexNoise1234
