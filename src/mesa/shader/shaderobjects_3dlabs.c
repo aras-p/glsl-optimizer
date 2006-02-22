@@ -1183,7 +1183,7 @@ int _slang_fetch_discard (struct gl2_fragment_shader_intf **fs, GLboolean *val)
 	return 1;
 }
 
-void exec_vertex_shader (struct gl2_vertex_shader_intf **vs)
+void _slang_exec_vertex_shader (struct gl2_vertex_shader_intf **vs)
 {
 	struct gl2_vertex_shader_impl *impl;
 	slang_translation_unit *unit;
@@ -1225,7 +1225,7 @@ void exec_vertex_shader (struct gl2_vertex_shader_intf **vs)
 	}
 }
 
-void exec_fragment_shader (struct gl2_fragment_shader_intf **fs)
+void _slang_exec_fragment_shader (struct gl2_fragment_shader_intf **fs)
 {
 	struct gl2_fragment_shader_impl *impl;
 	slang_translation_unit *unit;
