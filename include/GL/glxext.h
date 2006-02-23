@@ -331,7 +331,7 @@ typedef struct {
 } GLXBufferClobberEventSGIX;
 #endif
 
-#if defined(__sun__)
+#if defined(__sun__) || defined(__osf__)
 #include <inttypes.h>
 #if defined(__STDC__)
 #if defined(__arch64__)
