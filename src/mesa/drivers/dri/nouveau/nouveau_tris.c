@@ -1,0 +1,126 @@
+/**************************************************************************
+
+Copyright 2006 Stephane Marchesin
+All Rights Reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+on the rights to use, copy, modify, merge, publish, distribute, sub
+license, and/or sell copies of the Software, and to permit persons to whom
+the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice (including the next
+paragraph) shall be included in all copies or substantial portions of the
+Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
+ERIC ANHOLT OR SILICON INTEGRATED SYSTEMS CORP BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+**************************************************************************/
+
+#include "nouveau_context.h"
+
+/* Common tri functions */
+
+/* The fallbacks */
+void nouveau_fallback_tri(struct nouveau_context *nmesa,
+		nouveauVertex *v0,
+		nouveauVertex *v1,
+		nouveauVertex *v2)
+{    
+	GLcontext *ctx = nmesa->glCtx;
+	SWvertex v[3];
+	_swsetup_Translate(ctx, v0, &v[0]);
+	_swsetup_Translate(ctx, v1, &v[1]);
+	_swsetup_Translate(ctx, v2, &v[2]);
+	nouveauSpanRenderStart( ctx );
+	_swrast_Triangle(ctx, &v[0], &v[1], &v[2]);
+	nouveauSpanRenderFinish( ctx );
+}
+
+
+void nouveau_fallback_line(struct nouveau_context *nmesa,
+		nouveauVertex *v0,
+		nouveauVertex *v1)
+{
+	GLcontext *ctx = nmesa->glCtx;
+	SWvertex v[2];
+	_swsetup_Translate(ctx, v0, &v[0]);
+	_swsetup_Translate(ctx, v1, &v[1]);
+	nouveauSpanRenderStart( ctx );
+	_swrast_Line(ctx, &v[0], &v[1]);
+	nouveauSpanRenderFinish( ctx );
+}
+
+
+void nouveau_fallback_point(struct nouveau_context *nmesa,
+		nouveauVertex *v0)
+{
+	GLcontext *ctx = nmesa->glCtx;
+	SWvertex v[1];
+	_swsetup_Translate(ctx, v0, &v[0]);
+	nouveauSpanRenderStart( ctx );
+	_swrast_Point(ctx, &v[0]);
+	nouveauSpanRenderFinish( ctx );
+}
+
+
+void nouveauFallback(struct nouveau_context *nmesa, GLuint bit, GLboolean mode)
+{
+	GLcontext *ctx = nmesa->glCtx;
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	GLuint oldfallback = nmesa->Fallback;
+
+	if (mode) {
+		nmesa->Fallback |= bit;
+		if (oldfallback == 0) {
+			nv40FinishPrimitive(nmesa);
+
+			_swsetup_Wakeup(ctx);
+			nmesa->renderIndex = ~0;
+		}
+	}
+	else {
+		nmesa->Fallback &= ~bit;
+		if (oldfallback == bit) {
+			_swrast_flush( ctx );
+
+			tnl->Driver.Render.Start = nouveauRenderStart;
+			tnl->Driver.Render.PrimitiveNotify = nouveauRenderPrimitive;
+			tnl->Driver.Render.Finish = nouveauRenderFinish;
+
+			tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
+			tnl->Driver.Render.CopyPV = _tnl_copy_pv;
+			tnl->Driver.Render.Interp = _tnl_interp;
+			tnl->Driver.Render.ResetLineStipple = nouveauResetLineStipple;
+
+			_tnl_invalidate_vertex_state( ctx, ~0 );
+			_tnl_invalidate_vertices( ctx, ~0 );
+			_tnl_install_attrs( ctx, 
+					nmesa->vertex_attrs, 
+					nmesa->vertex_attr_count,
+					nmesa->ViewportMatrix.m, 0 ); 
+		}
+	}    
+}
+
+
+void nouveauRunPipeline( GLcontext *ctx )
+{
+	struct nouveau_context *vmesa = NOUVEAU_CONTEXT(ctx);
+
+	if (vmesa->newState) {
+		vmesa->newRenderState |= vmesa->newState;
+		nouveauValidateState( ctx );
+	}
+
+	_tnl_run_pipeline( ctx );
+}
+
+
