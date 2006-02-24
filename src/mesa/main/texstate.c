@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -63,6 +63,35 @@ static const struct gl_tex_env_combine_state default_combine_state = {
 };
 
 
+/**
+ * Copy a texture binding.  Helper used by _mesa_copy_texture_state().
+ */
+static void
+copy_texture_binding(const GLcontext *ctx,
+                     struct gl_texture_object **dst,
+                     struct gl_texture_object *src)
+{
+   /* only copy if names differ (per OpenGL SI) */
+   if ((*dst)->Name != src->Name) {
+      /* unbind/delete dest binding which we're changing */
+      (*dst)->RefCount--;
+      if ((*dst)->RefCount == 0) {
+         /* time to delete this texture object */
+         ASSERT((*dst)->Name != 0);
+         ASSERT(ctx->Driver.DeleteTexture);
+         /* XXX cast-away const, unfortunately */
+         (*ctx->Driver.DeleteTexture)((GLcontext *) ctx, *dst);
+      }
+      /* make new binding, incrementing ref count */
+      *dst = src;
+      src->RefCount++;
+   }
+}
+
+
+/**
+ * Used by glXCopyContext to copy texture state from one context to another.
+ */
 void
 _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
 {
@@ -112,17 +141,17 @@ _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
       dst->Texture.Unit[i].Combine.ScaleShiftRGB = src->Texture.Unit[i].Combine.ScaleShiftRGB;
       dst->Texture.Unit[i].Combine.ScaleShiftA = src->Texture.Unit[i].Combine.ScaleShiftA;
 
-      /* texture object state */
-      _mesa_copy_texture_object(dst->Texture.Unit[i].Current1D,
-                                src->Texture.Unit[i].Current1D);
-      _mesa_copy_texture_object(dst->Texture.Unit[i].Current2D,
-                                src->Texture.Unit[i].Current2D);
-      _mesa_copy_texture_object(dst->Texture.Unit[i].Current3D,
-                                src->Texture.Unit[i].Current3D);
-      _mesa_copy_texture_object(dst->Texture.Unit[i].CurrentCubeMap,
-                                src->Texture.Unit[i].CurrentCubeMap);
-      _mesa_copy_texture_object(dst->Texture.Unit[i].CurrentRect,
-                                src->Texture.Unit[i].CurrentRect);
+      /* copy texture object bindings, not contents of texture objects */
+      copy_texture_binding(src, &dst->Texture.Unit[i].Current1D,
+                           src->Texture.Unit[i].Current1D);
+      copy_texture_binding(src, &dst->Texture.Unit[i].Current2D,
+                           src->Texture.Unit[i].Current2D);
+      copy_texture_binding(src, &dst->Texture.Unit[i].Current3D,
+                           src->Texture.Unit[i].Current3D);
+      copy_texture_binding(src, &dst->Texture.Unit[i].CurrentCubeMap,
+                           src->Texture.Unit[i].CurrentCubeMap);
+      copy_texture_binding(src, &dst->Texture.Unit[i].CurrentRect,
+                           src->Texture.Unit[i].CurrentRect);
    }
 }
 
