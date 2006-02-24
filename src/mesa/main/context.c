@@ -8,7 +8,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1422,7 +1422,7 @@ _mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
    if (mask & GL_LIGHTING_BIT) {
       GLuint i;
       /* begin with memcpy */
-      MEMCPY( &dst->Light, &src->Light, sizeof(struct gl_light) );
+      dst->Light = src->Light;
       /* fixup linked lists to prevent pointer insanity */
       make_empty_list( &(dst->Light.EnabledList) );
       for (i = 0; i < MAX_LIGHTS; i++) {
