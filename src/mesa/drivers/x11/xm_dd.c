@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -988,28 +988,24 @@ xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
       return;
 
    /*
-    * GL_DITHER and GL_READ/DRAW_BUFFER state effect renderbuffer funcs
+    * GL_DITHER, GL_READ/DRAW_BUFFER, buffer binding state, etc. effect
+    * renderbuffer span/clear funcs.
     */
-   if (new_state & (_NEW_COLOR | _NEW_PIXEL)) {
+   if (new_state & (_NEW_COLOR | _NEW_PIXEL | _NEW_BUFFERS)) {
       struct xmesa_renderbuffer *front_xrb, *back_xrb;
 
       front_xrb = XMESA_BUFFER(ctx->DrawBuffer)->frontxrb;
       if (front_xrb) {
-         /* XXX check for relevant new_state flags */
          xmesa_set_renderbuffer_funcs(front_xrb, xmesa->pixelformat,
                                       xmesa->xm_visual->BitsPerPixel);
-         /* setup pointers to front and back buffer clear functions */
          front_xrb->clearFunc = clear_pixmap;
       }
 
       back_xrb = XMESA_BUFFER(ctx->DrawBuffer)->backxrb;
       if (back_xrb) {
          XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
-
-         /* XXX check for relevant new_state flags */
          xmesa_set_renderbuffer_funcs(back_xrb, xmesa->pixelformat,
                                       xmesa->xm_visual->BitsPerPixel);
-
          if (xmbuf->backxrb->pixmap) {
             back_xrb->clearFunc = clear_pixmap;
          }
