@@ -474,23 +474,15 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_R200_BB:
    case PCI_CHIP_R200_BC:
    case PCI_CHIP_R200_QH:
-   case PCI_CHIP_R200_QI:
-   case PCI_CHIP_R200_QJ:
-   case PCI_CHIP_R200_QK:
    case PCI_CHIP_R200_QL:
    case PCI_CHIP_R200_QM:
-   case PCI_CHIP_R200_QN:
-   case PCI_CHIP_R200_QO:
       screen->chip_family = CHIP_FAMILY_R200;
       screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
 
-   case PCI_CHIP_RV250_Id:
-   case PCI_CHIP_RV250_Ie:
    case PCI_CHIP_RV250_If:
    case PCI_CHIP_RV250_Ig:
    case PCI_CHIP_RV250_Ld:
-   case PCI_CHIP_RV250_Le:
    case PCI_CHIP_RV250_Lf:
    case PCI_CHIP_RV250_Lg:
       screen->chip_family = CHIP_FAMILY_RV250;
@@ -510,8 +502,8 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 
    case PCI_CHIP_RS300_5834:
    case PCI_CHIP_RS300_5835:
-   case PCI_CHIP_RS300_5836:
-   case PCI_CHIP_RS300_5837:
+   case PCI_CHIP_RS350_7834:
+   case PCI_CHIP_RS350_7835:
       screen->chip_family = CHIP_FAMILY_RS300;
       break;
 
@@ -557,11 +549,18 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       break;
 
    case PCI_CHIP_RV370_5460:
+   case PCI_CHIP_RV370_5462:
    case PCI_CHIP_RV370_5464:
    case PCI_CHIP_RV370_5B60:
    case PCI_CHIP_RV370_5B62:
+   case PCI_CHIP_RV370_5B63:
    case PCI_CHIP_RV370_5B64:
    case PCI_CHIP_RV370_5B65:
+   case PCI_CHIP_RV380_3150:
+   case PCI_CHIP_RV380_3152:
+   case PCI_CHIP_RV380_3154:
+   case PCI_CHIP_RV380_3E50:
+   case PCI_CHIP_RV380_3E54:
       screen->chip_family = CHIP_FAMILY_RV380;
       screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
@@ -575,9 +574,62 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_R420_JM:
    case PCI_CHIP_R420_JO:
    case PCI_CHIP_R420_JP:
-   case PCI_CHIP_RV410_5E4B:
+   case PCI_CHIP_R420_JT:
+   case PCI_CHIP_R481_4B49:
+   case PCI_CHIP_R481_4B4A:
+   case PCI_CHIP_R481_4B4B:
+   case PCI_CHIP_R481_4B4C:
+   case PCI_CHIP_R423_UH:
+   case PCI_CHIP_R423_UI:
+   case PCI_CHIP_R423_UJ:
+   case PCI_CHIP_R423_UK:
+   case PCI_CHIP_R430_554C:
+   case PCI_CHIP_R430_554D:
+   case PCI_CHIP_R430_554E:
+   case PCI_CHIP_R430_554F:
+   case PCI_CHIP_R423_5550:
+   case PCI_CHIP_R423_UQ:
+   case PCI_CHIP_R423_UR:
+   case PCI_CHIP_R423_UT:
+   case PCI_CHIP_R430_5D48:
+   case PCI_CHIP_R430_5D49:
+   case PCI_CHIP_R430_5D4A:
+   case PCI_CHIP_R480_5D4C:
+   case PCI_CHIP_R480_5D4D:
+   case PCI_CHIP_R480_5D4E:
+   case PCI_CHIP_R480_5D4F:
+   case PCI_CHIP_R480_5D50:
+   case PCI_CHIP_R480_5D52:
+   case PCI_CHIP_R423_5D57:
       screen->chip_family = CHIP_FAMILY_R420;
       screen->chip_flags = RADEON_CHIPSET_TCL;
+      break;
+
+   case PCI_CHIP_RV410_564A:
+   case PCI_CHIP_RV410_564B:
+   case PCI_CHIP_RV410_564F:
+   case PCI_CHIP_RV410_5652:
+   case PCI_CHIP_RV410_5653:
+   case PCI_CHIP_RV410_5E48:
+   case PCI_CHIP_RV410_5E4A:
+   case PCI_CHIP_RV410_5E4B:
+   case PCI_CHIP_RV410_5E4C:
+   case PCI_CHIP_RV410_5E4D:
+   case PCI_CHIP_RV410_5E4F:
+      screen->chip_family = CHIP_FAMILY_RV410;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
+      break;
+
+   case PCI_CHIP_RS480_5954:
+   case PCI_CHIP_RS480_5955:
+   case PCI_CHIP_RS482_5974:
+   case PCI_CHIP_RS482_5975:
+   case PCI_CHIP_RS400_5A41:
+   case PCI_CHIP_RS400_5A42:
+   case PCI_CHIP_RC410_5A61:
+   case PCI_CHIP_RC410_5A62:
+      screen->chip_family = CHIP_FAMILY_RS400;
+      fprintf(stderr, "Warning, xpress200 detected. Probably won't work.\n");
       break;
 
    default:

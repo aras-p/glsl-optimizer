@@ -1864,6 +1864,7 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk2220.cmd[3] = r300PackFloat32(1.0);
 	r300->hw.unk2220.cmd[4] = r300PackFloat32(1.0);
 
+	/* what about other chips than r300 or rv350??? */
 	if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R300)
 		r300->hw.unk2288.cmd[1] = R300_2288_R300;
 	else
@@ -1886,9 +1887,14 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_0] = 0x66666666;
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_1] = 0x06666666;
-	if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R300)
+	if ((r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R300) || 
+	     (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R350))
 		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] = R300_GB_TILE_ENABLE
 							| R300_GB_TILE_PIPE_COUNT_R300
+							| R300_GB_TILE_SIZE_16;
+	else if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV410)
+		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] = R300_GB_TILE_ENABLE
+							| R300_GB_TILE_PIPE_COUNT_RV410
 							| R300_GB_TILE_SIZE_16;
 	else if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R420)
 		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] = R300_GB_TILE_ENABLE
