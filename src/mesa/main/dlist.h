@@ -69,7 +69,7 @@ extern void _mesa_save_error( GLcontext *ctx, GLenum error, const char *s );
 extern void _mesa_compile_error( GLcontext *ctx, GLenum error, const char *s );
 
 
-extern void *_mesa_alloc_instruction( GLcontext *ctx, int opcode, GLint sz );
+extern void *_mesa_alloc_instruction(GLcontext *ctx, GLuint opcode, GLuint sz);
 
 extern GLint _mesa_alloc_opcode( GLcontext *ctx, GLuint sz,
                                  void (*execute)( GLcontext *, void * ),

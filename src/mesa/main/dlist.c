@@ -647,197 +647,6 @@ static GLuint translate_id( GLsizei n, GLenum type, const GLvoid *list )
 
 
 /**
- * Initialize the InstSize[] array.  This only needs to be done once.
- */
-static void
-init_instruction_size_table(void)
-{
-   static GLboolean initialized = GL_FALSE;
-
-   if (!initialized) {
-      InstSize[OPCODE_ACCUM] = 3;
-      InstSize[OPCODE_ALPHA_FUNC] = 3;
-      InstSize[OPCODE_BIND_TEXTURE] = 3;
-      InstSize[OPCODE_BITMAP] = 8;
-      InstSize[OPCODE_BLEND_COLOR] = 5;
-      InstSize[OPCODE_BLEND_EQUATION] = 2;
-      InstSize[OPCODE_BLEND_EQUATION_SEPARATE] = 3;
-      InstSize[OPCODE_BLEND_FUNC_SEPARATE] = 5;
-      InstSize[OPCODE_CALL_LIST] = 2;
-      InstSize[OPCODE_CALL_LIST_OFFSET] = 3;
-      InstSize[OPCODE_CLEAR] = 2;
-      InstSize[OPCODE_CLEAR_ACCUM] = 5;
-      InstSize[OPCODE_CLEAR_COLOR] = 5;
-      InstSize[OPCODE_CLEAR_DEPTH] = 2;
-      InstSize[OPCODE_CLEAR_INDEX] = 2;
-      InstSize[OPCODE_CLEAR_STENCIL] = 2;
-      InstSize[OPCODE_CLIP_PLANE] = 6;
-      InstSize[OPCODE_COLOR_MASK] = 5;
-      InstSize[OPCODE_COLOR_MATERIAL] = 3;
-      InstSize[OPCODE_COLOR_TABLE] = 7;
-      InstSize[OPCODE_COLOR_TABLE_PARAMETER_FV] = 7;
-      InstSize[OPCODE_COLOR_TABLE_PARAMETER_IV] = 7;
-      InstSize[OPCODE_COLOR_SUB_TABLE] = 7;
-      InstSize[OPCODE_CONVOLUTION_FILTER_1D] = 7;
-      InstSize[OPCODE_CONVOLUTION_FILTER_2D] = 8;
-      InstSize[OPCODE_CONVOLUTION_PARAMETER_I] = 4;
-      InstSize[OPCODE_CONVOLUTION_PARAMETER_IV] = 7;
-      InstSize[OPCODE_CONVOLUTION_PARAMETER_F] = 4;
-      InstSize[OPCODE_CONVOLUTION_PARAMETER_FV] = 7;
-      InstSize[OPCODE_COPY_PIXELS] = 6;
-      InstSize[OPCODE_COPY_COLOR_SUB_TABLE] = 6;
-      InstSize[OPCODE_COPY_COLOR_TABLE] = 6;
-      InstSize[OPCODE_COPY_TEX_IMAGE1D] = 8;
-      InstSize[OPCODE_COPY_TEX_IMAGE2D] = 9;
-      InstSize[OPCODE_COPY_TEX_SUB_IMAGE1D] = 7;
-      InstSize[OPCODE_COPY_TEX_SUB_IMAGE2D] = 9;
-      InstSize[OPCODE_COPY_TEX_SUB_IMAGE3D] = 10;
-      InstSize[OPCODE_CULL_FACE] = 2;
-      InstSize[OPCODE_DEPTH_FUNC] = 2;
-      InstSize[OPCODE_DEPTH_MASK] = 2;
-      InstSize[OPCODE_DEPTH_RANGE] = 3;
-      InstSize[OPCODE_DISABLE] = 2;
-      InstSize[OPCODE_DRAW_BUFFER] = 2;
-      InstSize[OPCODE_DRAW_PIXELS] = 6;
-      InstSize[OPCODE_ENABLE] = 2;
-      InstSize[OPCODE_EVALMESH1] = 4;
-      InstSize[OPCODE_EVALMESH2] = 6;
-      InstSize[OPCODE_FOG] = 6;
-      InstSize[OPCODE_FRONT_FACE] = 2;
-      InstSize[OPCODE_FRUSTUM] = 7;
-      InstSize[OPCODE_HINT] = 3;
-      InstSize[OPCODE_HISTOGRAM] = 5;
-      InstSize[OPCODE_INDEX_MASK] = 2;
-      InstSize[OPCODE_INIT_NAMES] = 1;
-      InstSize[OPCODE_LIGHT] = 7;
-      InstSize[OPCODE_LIGHT_MODEL] = 6;
-      InstSize[OPCODE_LINE_STIPPLE] = 3;
-      InstSize[OPCODE_LINE_WIDTH] = 2;
-      InstSize[OPCODE_LIST_BASE] = 2;
-      InstSize[OPCODE_LOAD_IDENTITY] = 1;
-      InstSize[OPCODE_LOAD_MATRIX] = 17;
-      InstSize[OPCODE_LOAD_NAME] = 2;
-      InstSize[OPCODE_LOGIC_OP] = 2;
-      InstSize[OPCODE_MAP1] = 7;
-      InstSize[OPCODE_MAP2] = 11;
-      InstSize[OPCODE_MAPGRID1] = 4;
-      InstSize[OPCODE_MAPGRID2] = 7;
-      InstSize[OPCODE_MATRIX_MODE] = 2;
-      InstSize[OPCODE_MIN_MAX] = 4;
-      InstSize[OPCODE_MULT_MATRIX] = 17;
-      InstSize[OPCODE_ORTHO] = 7;
-      InstSize[OPCODE_PASSTHROUGH] = 2;
-      InstSize[OPCODE_PIXEL_MAP] = 4;
-      InstSize[OPCODE_PIXEL_TRANSFER] = 3;
-      InstSize[OPCODE_PIXEL_ZOOM] = 3;
-      InstSize[OPCODE_POINT_SIZE] = 2;
-      InstSize[OPCODE_POINT_PARAMETERS] = 5;
-      InstSize[OPCODE_POLYGON_MODE] = 3;
-      InstSize[OPCODE_POLYGON_STIPPLE] = 2;
-      InstSize[OPCODE_POLYGON_OFFSET] = 3;
-      InstSize[OPCODE_POP_ATTRIB] = 1;
-      InstSize[OPCODE_POP_MATRIX] = 1;
-      InstSize[OPCODE_POP_NAME] = 1;
-      InstSize[OPCODE_PRIORITIZE_TEXTURE] = 3;
-      InstSize[OPCODE_PUSH_ATTRIB] = 2;
-      InstSize[OPCODE_PUSH_MATRIX] = 1;
-      InstSize[OPCODE_PUSH_NAME] = 2;
-      InstSize[OPCODE_RASTER_POS] = 5;
-      InstSize[OPCODE_READ_BUFFER] = 2;
-      InstSize[OPCODE_RESET_HISTOGRAM] = 2;
-      InstSize[OPCODE_RESET_MIN_MAX] = 2;
-      InstSize[OPCODE_ROTATE] = 5;
-      InstSize[OPCODE_SCALE] = 4;
-      InstSize[OPCODE_SCISSOR] = 5;
-      InstSize[OPCODE_STENCIL_FUNC] = 4;
-      InstSize[OPCODE_STENCIL_MASK] = 2;
-      InstSize[OPCODE_STENCIL_OP] = 4;
-      InstSize[OPCODE_SHADE_MODEL] = 2;
-      InstSize[OPCODE_TEXENV] = 7;
-      InstSize[OPCODE_TEXGEN] = 7;
-      InstSize[OPCODE_TEXPARAMETER] = 7;
-      InstSize[OPCODE_TEX_IMAGE1D] = 9;
-      InstSize[OPCODE_TEX_IMAGE2D] = 10;
-      InstSize[OPCODE_TEX_IMAGE3D] = 11;
-      InstSize[OPCODE_TEX_SUB_IMAGE1D] = 8;
-      InstSize[OPCODE_TEX_SUB_IMAGE2D] = 10;
-      InstSize[OPCODE_TEX_SUB_IMAGE3D] = 12;
-      InstSize[OPCODE_TRANSLATE] = 4;
-      InstSize[OPCODE_VIEWPORT] = 5;
-      InstSize[OPCODE_WINDOW_POS] = 5;
-      InstSize[OPCODE_CONTINUE] = 2;
-      InstSize[OPCODE_ERROR] = 3;
-      InstSize[OPCODE_END_OF_LIST] = 1;
-      /* GL_ARB_texture_compression */
-      InstSize[OPCODE_COMPRESSED_TEX_IMAGE_1D] = 8;
-      InstSize[OPCODE_COMPRESSED_TEX_IMAGE_2D] = 9;
-      InstSize[OPCODE_COMPRESSED_TEX_IMAGE_3D] = 10;
-      InstSize[OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D] = 8;
-      InstSize[OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D] = 10;
-      InstSize[OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D] = 12;
-      /* GL_ARB_multisample */
-      InstSize[OPCODE_SAMPLE_COVERAGE] = 3;
-      /* GL_ARB_multitexture */
-      InstSize[OPCODE_ACTIVE_TEXTURE] = 2;
-      /* GL_ARB_window_pos */
-      InstSize[OPCODE_WINDOW_POS_ARB] = 4;
-      /* GL_NV_vertex_program */
-      InstSize[OPCODE_BIND_PROGRAM_NV] = 3;
-      InstSize[OPCODE_EXECUTE_PROGRAM_NV] = 7;
-      InstSize[OPCODE_REQUEST_RESIDENT_PROGRAMS_NV] = 2;
-      InstSize[OPCODE_LOAD_PROGRAM_NV] = 5;
-      InstSize[OPCODE_PROGRAM_PARAMETER4F_NV] = 7;
-      InstSize[OPCODE_TRACK_MATRIX_NV] = 5;
-      /* GL_NV_fragment_program */
-      InstSize[OPCODE_PROGRAM_LOCAL_PARAMETER_ARB] = 7;
-      InstSize[OPCODE_PROGRAM_NAMED_PARAMETER_NV] = 8;
-      /* GL_EXT_stencil_two_side */
-      InstSize[OPCODE_ACTIVE_STENCIL_FACE_EXT] = 2;
-      /* GL_EXT_depth_bounds_test */
-      InstSize[OPCODE_DEPTH_BOUNDS_EXT] = 3;
-#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
-      InstSize[OPCODE_PROGRAM_STRING_ARB] = 5;
-      InstSize[OPCODE_PROGRAM_ENV_PARAMETER_ARB] = 7;
-#endif
-#if FEATURE_ARB_occlusion_query
-      InstSize[OPCODE_BEGIN_QUERY_ARB] = 3;
-      InstSize[OPCODE_END_QUERY_ARB] = 2;
-#endif
-      InstSize[OPCODE_DRAW_BUFFERS_ARB] = 2 + MAX_DRAW_BUFFERS;
-#if FEATURE_ATI_fragment_shader
-      InstSize[OPCODE_BIND_FRAGMENT_SHADER_ATI] = 2;
-      InstSize[OPCODE_SET_FRAGMENT_SHADER_CONSTANTS_ATI] = 6;
-#endif
-      /* OpenGL 2.0 */
-      InstSize[OPCODE_STENCIL_FUNC_SEPARATE] = 5;
-      InstSize[OPCODE_STENCIL_MASK_SEPARATE] = 3;
-      InstSize[OPCODE_STENCIL_OP_SEPARATE] = 5;
-
-      InstSize[OPCODE_ATTR_1F_NV] = 3;
-      InstSize[OPCODE_ATTR_2F_NV] = 4;
-      InstSize[OPCODE_ATTR_3F_NV] = 5;
-      InstSize[OPCODE_ATTR_4F_NV] = 6;
-      InstSize[OPCODE_ATTR_1F_ARB] = 3;
-      InstSize[OPCODE_ATTR_2F_ARB] = 4;
-      InstSize[OPCODE_ATTR_3F_ARB] = 5;
-      InstSize[OPCODE_ATTR_4F_ARB] = 6;
-      InstSize[OPCODE_MATERIAL] = 7;
-      InstSize[OPCODE_INDEX] = 2;
-      InstSize[OPCODE_EDGEFLAG] = 2;
-      InstSize[OPCODE_BEGIN] = 2;
-      InstSize[OPCODE_END] = 1;
-      InstSize[OPCODE_RECTF] = 5;
-      InstSize[OPCODE_EVAL_C1] = 2;
-      InstSize[OPCODE_EVAL_C2] = 3;
-      InstSize[OPCODE_EVAL_P1] = 2;
-      InstSize[OPCODE_EVAL_P2] = 3;
-   }
-   initialized = GL_TRUE;
-}
-
-
-
-/**
  * Wrapper for _mesa_unpack_image() that handles pixel buffer objects.
  * \todo This won't suffice when the PBO is really in VRAM/GPU memory.
  */
@@ -862,27 +671,33 @@ unpack_image( GLuint dimensions, GLsizei width, GLsizei height, GLsizei depth,
 }
 
 
-/*
+/**
  * Allocate space for a display list instruction.
- * \param opcode - type of instruction
- *         argcount - size in bytes of data required.
+ * \param opcode  the instruction opcode (OPCODE_* value)
+ * \param size   instruction size in bytes, not counting opcode.
  * \return pointer to the usable data area (not including the internal
  *         opcode).
  */
 void *
-_mesa_alloc_instruction( GLcontext *ctx, int opcode, GLint sz )
+_mesa_alloc_instruction(GLcontext *ctx, GLuint opcode, GLuint bytes)
 {
-   Node *n, *newblock;
-   GLuint count = 1 + (sz + sizeof(Node) - 1) / sizeof(Node);
+   const GLuint numNodes = 1 + (bytes + sizeof(Node) - 1) / sizeof(Node);
+   Node *n;
 
-#ifdef DEBUG
-   if (opcode < (int) OPCODE_EXT_0) {
-      assert( count == InstSize[opcode] );
+   if (opcode < (GLuint) OPCODE_EXT_0) {
+      if (InstSize[opcode] == 0) {
+         /* save instruction size now */
+         InstSize[opcode] = numNodes;
+      }
+      else {
+         /* make sure instruction size agrees */
+         ASSERT(numNodes == InstSize[opcode]);
+      }
    }
-#endif
 
-   if (ctx->ListState.CurrentPos + count + 2 > BLOCK_SIZE) {
+   if (ctx->ListState.CurrentPos + numNodes + 2 > BLOCK_SIZE) {
       /* This block is full.  Allocate a new block and chain to it */
+      Node *newblock;
       n = ctx->ListState.CurrentBlock + ctx->ListState.CurrentPos;
       n[0].opcode = OPCODE_CONTINUE;
       newblock = (Node *) _mesa_malloc( sizeof(Node) * BLOCK_SIZE );
@@ -896,11 +711,11 @@ _mesa_alloc_instruction( GLcontext *ctx, int opcode, GLint sz )
    }
 
    n = ctx->ListState.CurrentBlock + ctx->ListState.CurrentPos;
-   ctx->ListState.CurrentPos += count;
+   ctx->ListState.CurrentPos += numNodes;
 
    n[0].opcode = (OpCode) opcode;
 
-   return (void *)&n[1];
+   return (void *) (n + 1); /* return ptr to node following opcode */
 }
 
 
@@ -934,13 +749,15 @@ _mesa_alloc_opcode( GLcontext *ctx,
 
 
 
-/* Mimic the old behaviour of alloc_instruction:
- *   - sz is in units of sizeof(Node)
+/**
+ * Allocate display list instruction.  Returns Node ptr to where the opcode
+ * is stored.
+ *   - nParams is the number of function parameters
  *   - return value a pointer to sizeof(Node) before the actual
  *     usable data area.
  */
-#define ALLOC_INSTRUCTION(ctx, opcode, sz) \
-        ((Node *)_mesa_alloc_instruction(ctx, opcode, sz*sizeof(Node)) - 1)
+#define ALLOC_INSTRUCTION(CTX, OPCODE, NPARAMS) \
+    ((Node *)_mesa_alloc_instruction(CTX, OPCODE, (NPARAMS)*sizeof(Node)) - 1)
 
 
 
@@ -7984,7 +7801,7 @@ static void GLAPIENTRY print_list( GLcontext *ctx, GLuint list )
       else {
 	 switch (opcode) {
          case OPCODE_ACCUM:
-            _mesa_printf("accum %s %g\n", enum_string(n[1].e), n[2].f );
+            _mesa_printf("Accum %s %g\n", enum_string(n[1].e), n[2].f );
 	    break;
 	 case OPCODE_BITMAP:
             _mesa_printf("Bitmap %d %d %g %g %g %g %p\n", n[1].i, n[2].i,
@@ -8327,7 +8144,13 @@ void _mesa_save_vtxfmt_init( GLvertexformat *vfmt )
 void
 _mesa_init_display_list(GLcontext *ctx)
 {
-   init_instruction_size_table();
+   static GLboolean tableInitialized = GL_FALSE;
+
+   /* zero-out the instruction size table, just once */
+   if (!tableInitialized) {
+      _mesa_bzero(InstSize, sizeof(InstSize));
+      tableInitialized = GL_TRUE;
+   }
 
    /* Display list */
    ctx->ListState.CallDepth = 0;
