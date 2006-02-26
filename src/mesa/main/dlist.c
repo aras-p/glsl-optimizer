@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -407,15 +407,16 @@ void mesa_print_display_list( GLuint list );
 /*****                           Private                          *****/
 /**********************************************************************/
 
-/*
+
+/**
  * Make an empty display list.  This is used by glGenLists() to
- * reserver display list IDs.
+ * reserve display list IDs.
  */
 static struct mesa_display_list *make_list( GLuint list, GLuint count )
 {
    struct mesa_display_list *dlist = CALLOC_STRUCT( mesa_display_list );
    dlist->id = list;
-   dlist->node = (Node *) MALLOC( sizeof(Node) * count );
+   dlist->node = (Node *) _mesa_malloc( sizeof(Node) * count );
    dlist->node[0].opcode = OPCODE_END_OF_LIST;
    return dlist;
 }
@@ -455,118 +456,118 @@ void _mesa_destroy_list( GLcontext *ctx, GLuint list )
 	 switch (n[0].opcode) {
          /* for some commands, we need to free malloc'd memory */
 	 case OPCODE_MAP1:
-            FREE(n[6].data);
+            _mesa_free(n[6].data);
 	    n += InstSize[n[0].opcode];
 	    break;
 	 case OPCODE_MAP2:
-            FREE(n[10].data);
+            _mesa_free(n[10].data);
 	    n += InstSize[n[0].opcode];
 	    break;
 	 case OPCODE_DRAW_PIXELS:
-	    FREE( n[5].data );
+	    _mesa_free( n[5].data );
 	    n += InstSize[n[0].opcode];
 	    break;
 	 case OPCODE_BITMAP:
-	    FREE( n[7].data );
+	    _mesa_free( n[7].data );
 	    n += InstSize[n[0].opcode];
 	    break;
          case OPCODE_COLOR_TABLE:
-            FREE( n[6].data );
+            _mesa_free( n[6].data );
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_COLOR_SUB_TABLE:
-            FREE( n[6].data );
+            _mesa_free( n[6].data );
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_CONVOLUTION_FILTER_1D:
-            FREE( n[6].data );
+            _mesa_free( n[6].data );
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_CONVOLUTION_FILTER_2D:
-            FREE( n[7].data );
+            _mesa_free( n[7].data );
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_POLYGON_STIPPLE:
-            FREE( n[1].data );
+            _mesa_free( n[1].data );
 	    n += InstSize[n[0].opcode];
             break;
 	 case OPCODE_TEX_IMAGE1D:
-            FREE(n[8].data);
+            _mesa_free(n[8].data);
             n += InstSize[n[0].opcode];
 	    break;
 	 case OPCODE_TEX_IMAGE2D:
-            FREE( n[9]. data );
+            _mesa_free( n[9]. data );
             n += InstSize[n[0].opcode];
 	    break;
 	 case OPCODE_TEX_IMAGE3D:
-            FREE( n[10]. data );
+            _mesa_free( n[10]. data );
             n += InstSize[n[0].opcode];
 	    break;
          case OPCODE_TEX_SUB_IMAGE1D:
-            FREE(n[7].data);
+            _mesa_free(n[7].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_TEX_SUB_IMAGE2D:
-            FREE(n[9].data);
+            _mesa_free(n[9].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_TEX_SUB_IMAGE3D:
-            FREE(n[11].data);
+            _mesa_free(n[11].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_COMPRESSED_TEX_IMAGE_1D:
-            FREE(n[7].data);
+            _mesa_free(n[7].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_COMPRESSED_TEX_IMAGE_2D:
-            FREE(n[8].data);
+            _mesa_free(n[8].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_COMPRESSED_TEX_IMAGE_3D:
-            FREE(n[9].data);
+            _mesa_free(n[9].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D:
-            FREE(n[7].data);
+            _mesa_free(n[7].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D:
-            FREE(n[9].data);
+            _mesa_free(n[9].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D:
-            FREE(n[11].data);
+            _mesa_free(n[11].data);
             n += InstSize[n[0].opcode];
             break;
 #if FEATURE_NV_vertex_program
          case OPCODE_LOAD_PROGRAM_NV:
-            FREE(n[4].data);  /* program string */
+            _mesa_free(n[4].data);  /* program string */
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_REQUEST_RESIDENT_PROGRAMS_NV:
-            FREE(n[2].data);  /* array of program ids */
+            _mesa_free(n[2].data);  /* array of program ids */
             n += InstSize[n[0].opcode];
             break;
 #endif
 #if FEATURE_NV_fragment_program
          case OPCODE_PROGRAM_NAMED_PARAMETER_NV:
-            FREE(n[3].data);  /* parameter name */
+            _mesa_free(n[3].data);  /* parameter name */
             n += InstSize[n[0].opcode];
             break;
 #endif
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
          case OPCODE_PROGRAM_STRING_ARB:
-            FREE(n[4].data);  /* program string */
+            _mesa_free(n[4].data);  /* program string */
             n += InstSize[n[0].opcode];
             break;
 #endif
 	 case OPCODE_CONTINUE:
 	    n = (Node *) n[1].next;
-	    FREE( block );
+	    _mesa_free( block );
 	    block = n;
 	    break;
 	 case OPCODE_END_OF_LIST:
-	    FREE( block );
+	    _mesa_free( block );
 	    done = GL_TRUE;
 	    break;
 	 default:
@@ -577,7 +578,7 @@ void _mesa_destroy_list( GLcontext *ctx, GLuint list )
       }
    }
 
-   FREE( dlist );
+   _mesa_free( dlist );
    _mesa_HashRemove(ctx->Shared->DisplayList, list);
 }
 
@@ -644,15 +645,16 @@ static GLuint translate_id( GLsizei n, GLenum type, const GLvoid *list )
 /*****                        Public                              *****/
 /**********************************************************************/
 
-/**
- * Do one-time initialiazations for display lists.
- */
-void
-_mesa_init_lists( void )
-{
-   static int init_flag = 0;
 
-   if (init_flag==0) {
+/**
+ * Initialize the InstSize[] array.  This only needs to be done once.
+ */
+static void
+init_instruction_size_table(void)
+{
+   static GLboolean initialized = GL_FALSE;
+
+   if (!initialized) {
       InstSize[OPCODE_ACCUM] = 3;
       InstSize[OPCODE_ALPHA_FUNC] = 3;
       InstSize[OPCODE_BIND_TEXTURE] = 3;
@@ -830,7 +832,7 @@ _mesa_init_lists( void )
       InstSize[OPCODE_EVAL_P1] = 2;
       InstSize[OPCODE_EVAL_P2] = 3;
    }
-   init_flag = 1;
+   initialized = GL_TRUE;
 }
 
 
@@ -883,7 +885,7 @@ _mesa_alloc_instruction( GLcontext *ctx, int opcode, GLint sz )
       /* This block is full.  Allocate a new block and chain to it */
       n = ctx->ListState.CurrentBlock + ctx->ListState.CurrentPos;
       n[0].opcode = OPCODE_CONTINUE;
-      newblock = (Node *) MALLOC( sizeof(Node) * BLOCK_SIZE );
+      newblock = (Node *) _mesa_malloc( sizeof(Node) * BLOCK_SIZE );
       if (!newblock) {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "Building display list" );
          return NULL;
@@ -1013,7 +1015,7 @@ static void GLAPIENTRY save_Bitmap( GLsizei width, GLsizei height,
       n[7].data = image;
    }
    else if (image) {
-      FREE(image);
+      _mesa_free(image);
    }
    if (ctx->ExecuteFlag) {
       CALL_Bitmap(ctx->Exec, ( width, height,
@@ -1337,7 +1339,7 @@ static void GLAPIENTRY save_ColorTable( GLenum target, GLenum internalFormat,
          n[6].data = image;
       }
       else if (image) {
-         FREE(image);
+         _mesa_free(image);
       }
       if (ctx->ExecuteFlag) {
          CALL_ColorTable(ctx->Exec, ( target, internalFormat, width,
@@ -1426,7 +1428,7 @@ static void GLAPIENTRY save_ColorSubTable( GLenum target, GLsizei start, GLsizei
       n[6].data = image;
    }
    else if (image) {
-      FREE(image);
+      _mesa_free(image);
    }
    if (ctx->ExecuteFlag) {
       CALL_ColorSubTable(ctx->Exec, (target, start, count, format, type, table));
@@ -1497,7 +1499,7 @@ save_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width,
       n[6].data = image;
    }
    else if (image) {
-      FREE(image);
+      _mesa_free(image);
    }
    if (ctx->ExecuteFlag) {
       CALL_ConvolutionFilter1D(ctx->Exec, ( target, internalFormat, width,
@@ -1527,7 +1529,7 @@ save_ConvolutionFilter2D(GLenum target, GLenum internalFormat,
       n[7].data = image;
    }
    else if (image) {
-      FREE(image);
+      _mesa_free(image);
    }
    if (ctx->ExecuteFlag) {
       CALL_ConvolutionFilter2D(ctx->Exec, ( target, internalFormat, width, height,
@@ -1890,7 +1892,7 @@ static void GLAPIENTRY save_DrawPixels( GLsizei width, GLsizei height,
       n[5].data = image;
    }
    else if (image) {
-      FREE(image);
+      _mesa_free(image);
    }
    if (ctx->ExecuteFlag) {
       CALL_DrawPixels(ctx->Exec, ( width, height, format, type, pixels ));
@@ -1915,7 +1917,7 @@ static void GLAPIENTRY save_Enable( GLenum cap )
 
 
 
-void GLAPIENTRY _mesa_save_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
+static void GLAPIENTRY _mesa_save_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1932,7 +1934,7 @@ void GLAPIENTRY _mesa_save_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 }
 
 
-void GLAPIENTRY _mesa_save_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
+static void GLAPIENTRY _mesa_save_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2647,7 +2649,7 @@ save_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
    if (n) {
       n[1].e = map;
       n[2].i = mapsize;
-      n[3].data  = (void *) MALLOC( mapsize * sizeof(GLfloat) );
+      n[3].data  = (void *) _mesa_malloc( mapsize * sizeof(GLfloat) );
       MEMCPY( n[3].data, (void *) values, mapsize * sizeof(GLfloat) );
    }
    if (ctx->ExecuteFlag) {
@@ -2814,7 +2816,7 @@ static void GLAPIENTRY save_PolygonStipple( const GLubyte *pattern )
    n = ALLOC_INSTRUCTION( ctx, OPCODE_POLYGON_STIPPLE, 1 );
    if (n) {
       void *data;
-      n[1].data = MALLOC( 32 * 4 );
+      n[1].data = _mesa_malloc( 32 * 4 );
       data = n[1].data;   /* This needed for Acorn compiler */
       MEMCPY( data, pattern, 32 * 4 );
    }
@@ -3517,7 +3519,7 @@ static void GLAPIENTRY save_TexImage1D( GLenum target,
          n[8].data = image;
       }
       else if (image) {
-         FREE(image);
+         _mesa_free(image);
       }
       if (ctx->ExecuteFlag) {
          CALL_TexImage1D(ctx->Exec, ( target, level, components, width,
@@ -3557,7 +3559,7 @@ static void GLAPIENTRY save_TexImage2D( GLenum target,
          n[9].data = image;
       }
       else if (image) {
-         FREE(image);
+         _mesa_free(image);
       }
       if (ctx->ExecuteFlag) {
          CALL_TexImage2D(ctx->Exec, ( target, level, components, width,
@@ -3599,7 +3601,7 @@ static void GLAPIENTRY save_TexImage3D( GLenum target,
          n[10].data = image;
       }
       else if (image) {
-         FREE(image);
+         _mesa_free(image);
       }
       if (ctx->ExecuteFlag) {
          CALL_TexImage3D(ctx->Exec, ( target, level, internalFormat, width,
@@ -3629,7 +3631,7 @@ static void GLAPIENTRY save_TexSubImage1D( GLenum target, GLint level, GLint xof
       n[7].data = image;
    }
    else if (image) {
-      FREE(image);
+      _mesa_free(image);
    }
    if (ctx->ExecuteFlag) {
       CALL_TexSubImage1D(ctx->Exec, ( target, level, xoffset, width,
@@ -3662,7 +3664,7 @@ static void GLAPIENTRY save_TexSubImage2D( GLenum target, GLint level,
       n[9].data = image;
    }
    else if (image) {
-      FREE(image);
+      _mesa_free(image);
    }
    if (ctx->ExecuteFlag) {
       CALL_TexSubImage2D(ctx->Exec, ( target, level, xoffset, yoffset,
@@ -3697,7 +3699,7 @@ static void GLAPIENTRY save_TexSubImage3D( GLenum target, GLint level,
       n[11].data = image;
    }
    else if (image) {
-      FREE(image);
+      _mesa_free(image);
    }
    if (ctx->ExecuteFlag) {
       CALL_TexSubImage3D(ctx->Exec, ( target, level,
@@ -3955,7 +3957,7 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
       GLvoid *image;
       ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       /* make copy of image */
-      image = MALLOC(imageSize);
+      image = _mesa_malloc(imageSize);
       if (!image) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage1DARB");
          return;
@@ -3972,7 +3974,7 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
          n[7].data = image;
       }
       else if (image) {
-         FREE(image);
+         _mesa_free(image);
       }
       if (ctx->ExecuteFlag) {
          CALL_CompressedTexImage1DARB(ctx->Exec, (target, level, internalFormat,
@@ -3999,7 +4001,7 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
       GLvoid *image;
       ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       /* make copy of image */
-      image = MALLOC(imageSize);
+      image = _mesa_malloc(imageSize);
       if (!image) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2DARB");
          return;
@@ -4017,7 +4019,7 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
          n[8].data = image;
       }
       else if (image) {
-         FREE(image);
+         _mesa_free(image);
       }
       if (ctx->ExecuteFlag) {
          CALL_CompressedTexImage2DARB(ctx->Exec, (target, level, internalFormat,
@@ -4044,7 +4046,7 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
       GLvoid *image;
       ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       /* make copy of image */
-      image = MALLOC(imageSize);
+      image = _mesa_malloc(imageSize);
       if (!image) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage3DARB");
          return;
@@ -4063,7 +4065,7 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
          n[9].data = image;
       }
       else if (image) {
-         FREE(image);
+         _mesa_free(image);
       }
       if (ctx->ExecuteFlag) {
          CALL_CompressedTexImage3DARB(ctx->Exec, (target, level, internalFormat,
@@ -4085,7 +4087,7 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
    /* make copy of image */
-   image = MALLOC(imageSize);
+   image = _mesa_malloc(imageSize);
    if (!image) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage1DARB");
       return;
@@ -4102,7 +4104,7 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
       n[7].data = image;
    }
    else if (image) {
-      FREE(image);
+      _mesa_free(image);
    }
    if (ctx->ExecuteFlag) {
       CALL_CompressedTexSubImage1DARB(ctx->Exec, (target, level, xoffset,
@@ -4124,7 +4126,7 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
    /* make copy of image */
-   image = MALLOC(imageSize);
+   image = _mesa_malloc(imageSize);
    if (!image) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage2DARB");
       return;
@@ -4143,7 +4145,7 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
       n[9].data = image;
    }
    else if (image) {
-      FREE(image);
+      _mesa_free(image);
    }
    if (ctx->ExecuteFlag) {
       CALL_CompressedTexSubImage2DARB(ctx->Exec, (target, level, xoffset, yoffset,
@@ -4165,7 +4167,7 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
    /* make copy of image */
-   image = MALLOC(imageSize);
+   image = _mesa_malloc(imageSize);
    if (!image) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage3DARB");
       return;
@@ -4186,7 +4188,7 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
       n[11].data = image;
    }
    else if (image) {
-      FREE(image);
+      _mesa_free(image);
    }
    if (ctx->ExecuteFlag) {
       CALL_CompressedTexSubImage3DARB(ctx->Exec, (target, level, xoffset, yoffset,
@@ -8319,9 +8321,14 @@ void _mesa_save_vtxfmt_init( GLvertexformat *vfmt )
 }
 
 
-
-void _mesa_init_display_list( GLcontext * ctx )
+/**
+ * Initialize display list state for given context.
+ */
+void
+_mesa_init_display_list(GLcontext *ctx)
 {
+   init_instruction_size_table();
+
    /* Display list */
    ctx->ListState.CallDepth = 0;
    ctx->ExecuteFlag = GL_TRUE;

@@ -38,8 +38,6 @@
 
 #if _HAVE_FULL_GL
 
-extern void _mesa_init_lists( void );
-
 extern void _mesa_destroy_list( GLcontext *ctx, GLuint list );
 
 extern void GLAPIENTRY _mesa_CallList( GLuint list );
@@ -58,6 +56,12 @@ extern void GLAPIENTRY _mesa_ListBase( GLuint base );
 
 extern void GLAPIENTRY _mesa_NewList( GLuint list, GLenum mode );
 
+extern void GLAPIENTRY _mesa_save_CallLists( GLsizei n, GLenum type, const GLvoid *lists );
+
+extern void GLAPIENTRY _mesa_save_CallList( GLuint list );
+
+
+
 extern void _mesa_init_dlist_table( struct _glapi_table *table );
 
 extern void _mesa_save_error( GLcontext *ctx, GLenum error, const char *s );
@@ -72,19 +76,12 @@ extern GLint _mesa_alloc_opcode( GLcontext *ctx, GLuint sz,
                                  void (*destroy)( GLcontext *, void * ),
                                  void (*print)( GLcontext *, void * ) );
 
-extern void GLAPIENTRY _mesa_save_EvalMesh2(GLenum mode, GLint i1, GLint i2,
-				 GLint j1, GLint j2 );
-extern void GLAPIENTRY _mesa_save_EvalMesh1( GLenum mode, GLint i1, GLint i2 );
-extern void GLAPIENTRY _mesa_save_CallLists( GLsizei n, GLenum type, const GLvoid *lists );
-extern void GLAPIENTRY _mesa_save_CallList( GLuint list );
 extern void _mesa_init_display_list( GLcontext * ctx );
+
 extern void _mesa_save_vtxfmt_init( GLvertexformat *vfmt );
 
 
 #else
-
-/** No-op */
-#define _mesa_init_lists() ((void)0)
 
 /** No-op */
 #define _mesa_destroy_list(c,l) ((void)0)

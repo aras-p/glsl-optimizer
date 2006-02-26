@@ -605,7 +605,7 @@ _glthread_DECLARE_STATIC_MUTEX(OneTimeLock);
  * and sets the glapi callbacks if the \c MESA_DEBUG environment variable is
  * defined.
  *
- * \sa _mesa_init_lists(), _math_init().
+ * \sa _math_init().
  */
 static void
 one_time_init( GLcontext *ctx )
@@ -623,8 +623,6 @@ one_time_init( GLcontext *ctx )
       assert( sizeof(GLushort) == 2 );
       assert( sizeof(GLint) == 4 );
       assert( sizeof(GLuint) == 4 );
-
-      _mesa_init_lists();
 
 #if _HAVE_FULL_GL
       _math_init();
