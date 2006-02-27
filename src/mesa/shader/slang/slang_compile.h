@@ -25,6 +25,8 @@
 #if !defined SLANG_COMPILE_H
 #define SLANG_COMPILE_H
 
+#include "slang_export.h"
+#include "slang_execute.h"
 #include "slang_compile_variable.h"
 #include "slang_compile_struct.h"
 #include "slang_compile_operation.h"
@@ -53,21 +55,21 @@ typedef struct slang_translation_unit_
 	slang_function_scope functions;
 	slang_struct_scope structs;
 	slang_unit_type type;
-	struct slang_assembly_file_ *assembly;
+	slang_assembly_file *assembly;
 	int free_assembly;
 	slang_var_pool *global_pool;
 	int free_global_pool;
-	struct slang_machine_ *machine;
+	slang_machine *machine;
 	int free_machine;
 	slang_atom_pool *atom_pool;
 	int free_atom_pool;
 	slang_export_data_table exp_data;
-	slang_active_uniforms uniforms;
+	slang_export_code_table exp_code;
 } slang_translation_unit;
 
 int slang_translation_unit_construct (slang_translation_unit *);
-int slang_translation_unit_construct2 (slang_translation_unit *, struct slang_assembly_file_ *,
-	slang_var_pool *, struct slang_machine_ *, slang_atom_pool *);
+int slang_translation_unit_construct2 (slang_translation_unit *, slang_assembly_file *,
+	slang_var_pool *, slang_machine *, slang_atom_pool *);
 void slang_translation_unit_destruct (slang_translation_unit *);
 
 typedef struct slang_info_log_

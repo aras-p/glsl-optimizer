@@ -25,7 +25,7 @@
 #ifndef SHADEROBJECTS_H
 #define SHADEROBJECTS_H
 
-#include "mtypes.h"
+#include "context.h"
 
 /**
  * gl2 unique interface identifier.
@@ -86,6 +86,11 @@ struct gl2_program_intf
    GLboolean (* GetValidateStatus) (struct gl2_program_intf **);
    GLvoid (* Link) (struct gl2_program_intf **);
    GLvoid (* Validate) (struct gl2_program_intf **);
+   GLvoid (* UpdateFixedUniforms) (struct gl2_program_intf **);
+   GLvoid (* UpdateFixedAttribute) (struct gl2_program_intf **, GLuint, GLvoid *, GLuint, GLuint,
+	   GLboolean);
+   GLvoid (* UpdateFixedVarying) (struct gl2_program_intf **, GLuint, GLvoid *, GLuint, GLuint,
+	   GLboolean);
 };
 
 struct gl2_fragment_shader_intf

@@ -29,10 +29,8 @@
  */
 
 #include "imports.h"
-#include "slang_utility.h"
-#include "slang_assemble_conditional.h"
 #include "slang_assemble.h"
-#include "slang_execute.h"
+#include "slang_compile.h"
 
 /*
  * _slang_assemble_logicaland()

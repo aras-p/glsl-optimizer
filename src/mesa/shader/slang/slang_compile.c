@@ -30,12 +30,9 @@
 
 #include "imports.h"
 #include "grammar_mesa.h"
-#include "slang_utility.h"
 #include "slang_compile.h"
 #include "slang_preprocess.h"
 #include "slang_storage.h"
-#include "slang_assemble.h"
-#include "slang_execute.h"
 
 /*
  * This is a straightforward implementation of the slang front-end compiler.
@@ -83,7 +80,7 @@ int slang_translation_unit_construct (slang_translation_unit *unit)
 		slang_alloc_free (unit->assembly);
 		return 0;
 	}
-	slang_machine_init (unit->machine);
+	slang_machine_ctr (unit->machine);
 	unit->atom_pool = (slang_atom_pool *) slang_alloc_malloc (sizeof (slang_atom_pool));
 	if (unit->atom_pool == NULL)
 	{
@@ -136,7 +133,7 @@ int slang_translation_unit_construct2 (slang_translation_unit *unit, slang_assem
 	unit->atom_pool = atoms;
 	unit->free_atom_pool = 0;
 	slang_export_data_table_ctr (&unit->exp_data);
-	slang_active_uniforms_ctr (&unit->uniforms);
+	slang_export_code_table_ctr (&unit->exp_code);
 	return 1;
 }
 
@@ -153,14 +150,17 @@ void slang_translation_unit_destruct (slang_translation_unit *unit)
 	if (unit->free_global_pool)
 		slang_alloc_free (unit->global_pool);
 	if (unit->free_machine)
+	{
+		slang_machine_dtr (unit->machine);
 		slang_alloc_free (unit->machine);
+	}
 	if (unit->free_atom_pool)
 	{
 		slang_atom_pool_destruct (unit->atom_pool);
 		slang_alloc_free (unit->atom_pool);
 	}
-	slang_active_uniforms_dtr (&unit->uniforms);
 	slang_export_data_table_dtr (&unit->exp_data);
+	slang_export_code_table_ctr (&unit->exp_code);
 }
 
 /* slang_info_log */
@@ -407,13 +407,7 @@ static GLboolean convert_to_array (slang_parse_ctx *C, slang_variable *var,
 		slang_info_log_memory (C->L);
 		return GL_FALSE;
 	}
-	if (!slang_type_specifier_construct (var->type.specifier._array))
-	{
-		slang_alloc_free (var->type.specifier._array);
-		var->type.specifier._array = NULL;
-		slang_info_log_memory (C->L);
-		return GL_FALSE;
-	}
+	slang_type_specifier_ctr (var->type.specifier._array);
 	return slang_type_specifier_copy (var->type.specifier._array, sp);
 }
 
@@ -518,14 +512,13 @@ static int parse_struct (slang_parse_ctx *C, slang_output_ctx *O, slang_struct *
 	{
 		slang_type_specifier sp;
 
-		if (!slang_type_specifier_construct (&sp))
-			return 0;
+		slang_type_specifier_ctr (&sp);
 		if (!parse_struct_field (C, O, *st, &sp))
 		{
-			slang_type_specifier_destruct (&sp);
+			slang_type_specifier_dtr (&sp);
 			return 0;
 		}
-		slang_type_specifier_destruct (&sp);
+		slang_type_specifier_dtr (&sp);
 	}
 	while (*C->I++ != FIELD_NONE);
 
@@ -1320,19 +1313,18 @@ static int parse_parameter_declaration (slang_parse_ctx *C, slang_output_ctx *O,
 	{
 		slang_type_specifier p;
 
-		if (!slang_type_specifier_construct (&p))
-			return GL_FALSE;
+		slang_type_specifier_ctr (&p);
 		if (!slang_type_specifier_copy (&p, &param->type.specifier))
 		{
-			slang_type_specifier_destruct (&p);
+			slang_type_specifier_dtr (&p);
 			return GL_FALSE;
 		}
 		if (!convert_to_array (C, param, &p))
 		{
-			slang_type_specifier_destruct (&p);
+			slang_type_specifier_dtr (&p);
 			return GL_FALSE;
 		}
-		slang_type_specifier_destruct (&p);
+		slang_type_specifier_dtr (&p);
 		if (!parse_array_len (C, O, &param->array_len))
 			return GL_FALSE;
 	}
@@ -2104,6 +2096,11 @@ static int compile (grammar *id, slang_translation_unit *builtin_units, int *com
 	return 1;
 }
 
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+/* XXX */
+GLboolean _slang_x86_codegen (slang_machine *, slang_assembly_file *, GLuint);
+#endif
+
 int _slang_compile (const char *source, slang_translation_unit *unit, slang_unit_type type,
 	slang_info_log *log)
 {
@@ -2136,11 +2133,20 @@ int _slang_compile (const char *source, slang_translation_unit *unit, slang_unit
 
 	if (!success)
 		return 0;
+
 	unit->exp_data.atoms = unit->atom_pool;
 	if (!_slang_build_export_data_table (&unit->exp_data, &unit->globals))
 		return 0;
-	if (!_slang_gather_active_uniforms (&unit->uniforms, &unit->exp_data))
+
+	unit->exp_code.atoms = unit->atom_pool;
+	if (!_slang_build_export_code_table (&unit->exp_code, &unit->functions, unit))
 		return 0;
+
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+	/* XXX: lookup the @main label */
+	if (!_slang_x86_codegen (unit->machine, unit->assembly, unit->exp_code.entries[0].address))
+		return 0;
+#endif
 
 	return 1;
 }

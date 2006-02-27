@@ -29,9 +29,7 @@
  */
 
 #include "imports.h"
-#include "slang_utility.h"
-#include "slang_compile_variable.h"
-#include "slang_compile_struct.h"
+#include "slang_compile.h"
 
 /* slang_struct_scope */
 

@@ -31,19 +31,14 @@
 /* Set this to 1 when we are ready to use 3dlabs' front-end */
 #define USE_3DLABS_FRONTEND 0
 
-#include "glheader.h"
-#include "shaderobjects.h"
-#include "shaderobjects_3dlabs.h"
-#include "context.h"
-#include "macros.h"
+#include "imports.h"
 #include "hash.h"
+#include "shaderobjects.h"
 
 #if USE_3DLABS_FRONTEND
 #include "slang_mesa.h"
 #include "Public/ShaderLang.h"
 #else
-#include "slang_utility.h"
-#include "slang_compile.h"
 #include "slang_link.h"
 #endif
 
@@ -840,6 +835,164 @@ _program_Validate (struct gl2_program_intf **intf)
 	/* TODO validate */
 }
 
+static GLvoid
+write_common_fixed (slang_program *pro, GLuint index, const GLvoid *src, GLuint off, GLuint size)
+{
+	GLuint i;
+
+	for (i = 0; i < SLANG_UNIFORM_BINDING_MAX; i++)
+	{
+		GLuint addr;
+
+		addr = pro->common_fixed_entries[i][index];
+		if (addr != ~0)
+		{
+			GLubyte *dst;
+
+			dst = (GLubyte *) pro->machines[i]->mem + addr + off * size;
+			_mesa_memcpy (dst, src, size);
+		}
+	}
+}
+
+static GLvoid
+write_common_fixed_mat4 (slang_program *pro, GLmatrix *matrix, GLuint off, GLuint i, GLuint ii,
+						 GLuint it, GLuint iit)
+{
+	GLfloat mat[16];
+
+	/* we want inverse matrix */
+	if (!matrix->inv)
+	{
+		/* allocate inverse matrix and make it dirty */
+		_math_matrix_alloc_inv (matrix);
+		_math_matrix_loadf (matrix, matrix->m);
+	}
+	_math_matrix_analyse (matrix);
+
+	write_common_fixed (pro, i, matrix->m, off, 16 * sizeof (GLfloat));
+
+	/* inverse */
+	write_common_fixed (pro, ii, matrix->inv, off, 16 * sizeof (GLfloat));
+
+	/* transpose */
+	_math_transposef (mat, matrix->m);
+	write_common_fixed (pro, it, mat, off, 16 * sizeof (GLfloat));
+
+	/* inverse transpose */
+	_math_transposef (mat, matrix->inv);
+	write_common_fixed (pro, iit, mat, off, 16 * sizeof (GLfloat));
+}
+
+static GLvoid
+_program_UpdateFixedUniforms (struct gl2_program_intf **intf)
+{
+	GET_CURRENT_CONTEXT(ctx);
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
+	slang_program *pro = &impl->_obj.prog;
+	GLuint i;
+	GLfloat v[9];
+	GLfloat *p;
+
+	/* MODELVIEW matrix */
+	write_common_fixed_mat4 (pro, ctx->ModelviewMatrixStack.Top, 0,
+		SLANG_COMMON_FIXED_MODELVIEWMATRIX,
+		SLANG_COMMON_FIXED_MODELVIEWMATRIXINVERSE,
+		SLANG_COMMON_FIXED_MODELVIEWMATRIXTRANSPOSE,
+		SLANG_COMMON_FIXED_MODELVIEWMATRIXINVERSETRANSPOSE);
+
+	/* PROJECTION matrix */
+	write_common_fixed_mat4 (pro, ctx->ProjectionMatrixStack.Top, 0,
+		SLANG_COMMON_FIXED_PROJECTIONMATRIX,
+		SLANG_COMMON_FIXED_PROJECTIONMATRIXINVERSE,
+		SLANG_COMMON_FIXED_PROJECTIONMATRIXTRANSPOSE,
+		SLANG_COMMON_FIXED_PROJECTIONMATRIXINVERSETRANSPOSE);
+
+	/* MVP matrix */
+	write_common_fixed_mat4 (pro, &ctx->_ModelProjectMatrix, 0,
+		SLANG_COMMON_FIXED_MODELVIEWPROJECTIONMATRIX,
+		SLANG_COMMON_FIXED_MODELVIEWPROJECTIONMATRIXINVERSE,
+		SLANG_COMMON_FIXED_MODELVIEWPROJECTIONMATRIXTRANSPOSE,
+		SLANG_COMMON_FIXED_MODELVIEWPROJECTIONMATRIXINVERSETRANSPOSE);
+
+	/* TEXTURE matrix */
+	for (i = 0; i < 8; i++)
+	{
+		write_common_fixed_mat4 (pro, ctx->TextureMatrixStack[i].Top, i,
+			SLANG_COMMON_FIXED_TEXTUREMATRIX,
+			SLANG_COMMON_FIXED_TEXTUREMATRIXINVERSE,
+			SLANG_COMMON_FIXED_TEXTUREMATRIXTRANSPOSE,
+			SLANG_COMMON_FIXED_TEXTUREMATRIXINVERSETRANSPOSE);
+	}
+
+	/* NORMAL matrix - upper 3x3 inverse transpose of MODELVIEW matrix */
+	p = ctx->ModelviewMatrixStack.Top->inv;
+	v[0] = p[0];
+	v[1] = p[4];
+	v[2] = p[8];
+	v[3] = p[1];
+	v[4] = p[5];
+	v[5] = p[9];
+	v[6] = p[2];
+	v[7] = p[6];
+	v[8] = p[10];
+	write_common_fixed (pro, SLANG_COMMON_FIXED_NORMALMATRIX, v, 0, 9 * sizeof (GLfloat));
+
+	/* XXX: fetch uniform float gl_NormalScale */
+	/* XXX: fetch uniform mat4 gl_ClipPlane */
+	/* XXX: fetch uniform mat4 gl_TextureEnvColor */
+	/* XXX: fetch uniform mat4 gl_EyePlaneS */
+	/* XXX: fetch uniform mat4 gl_EyePlaneT */
+	/* XXX: fetch uniform mat4 gl_EyePlaneR */
+	/* XXX: fetch uniform mat4 gl_EyePlaneQ */
+	/* XXX: fetch uniform mat4 gl_ObjectPlaneS */
+	/* XXX: fetch uniform mat4 gl_ObjectPlaneT */
+	/* XXX: fetch uniform mat4 gl_ObjectPlaneR */
+	/* XXX: fetch uniform mat4 gl_ObjectPlaneQ */
+}
+
+static GLvoid
+_program_UpdateFixedAttribute (struct gl2_program_intf **intf, GLuint index, GLvoid *data,
+							  GLuint offset, GLuint size, GLboolean write)
+{
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
+	slang_program *pro = &impl->_obj.prog;
+	GLuint addr;
+
+	addr = pro->vertex_fixed_entries[index];
+	if (addr != ~0)
+	{
+		GLubyte *mem;
+
+		mem = (GLubyte *) pro->machines[SLANG_UNIFORM_BINDING_VERTEX]->mem + addr + offset * size;
+		if (write)
+			_mesa_memcpy (mem, data, size);
+		else
+			_mesa_memcpy (data, mem, size);
+	}
+}
+
+static GLvoid
+_program_UpdateFixedVarying (struct gl2_program_intf **intf, GLuint index, GLvoid *data,
+							GLuint offset, GLuint size, GLboolean write)
+{
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
+	slang_program *pro = &impl->_obj.prog;
+	GLuint addr;
+
+	addr = pro->fragment_fixed_entries[index];
+	if (addr != ~0)
+	{
+		GLubyte *mem;
+
+		mem = (GLubyte *) pro->machines[SLANG_UNIFORM_BINDING_FRAGMENT]->mem + addr + offset * size;
+		if (write)
+			_mesa_memcpy (mem, data, size);
+		else
+			_mesa_memcpy (data, mem, size);
+	}
+}
+
 static struct gl2_program_intf _program_vftbl = {
 	{
 		{
@@ -862,7 +1015,10 @@ static struct gl2_program_intf _program_vftbl = {
 	_program_GetLinkStatus,
 	_program_GetValidateStatus,
 	_program_Link,
-	_program_Validate
+	_program_Validate,
+	_program_UpdateFixedUniforms,
+	_program_UpdateFixedAttribute,
+	_program_UpdateFixedVarying
 };
 
 static void
@@ -1076,195 +1232,37 @@ _mesa_3dlabs_create_program_object (void)
 #include "slang_assemble.h"
 #include "slang_execute.h"
 
-static GLubyte *get_address_of (struct gl2_vertex_shader_intf **vs, const char *name)
+int _slang_fetch_discard (struct gl2_program_intf **pro, GLboolean *val)
 {
-	struct gl2_vertex_shader_impl *impl;
-	slang_translation_unit *unit;
-	slang_atom atom;
-	slang_variable *var;
+	struct gl2_program_impl *impl;
 
-	impl = (struct gl2_vertex_shader_impl *) vs;
-	unit = &impl->_obj._shader.unit;
-	atom = slang_atom_pool_atom (unit->atom_pool, name);
-	var = _slang_locate_variable (&unit->globals, atom, 1);
-	if (var == NULL || var->address == ~0)
-		return NULL;
-	return (GLubyte *) unit->machine->mem + var->address;
-}
-
-static GLubyte *get_address_of_f (struct gl2_fragment_shader_intf **fs, const char *name)
-{
-	struct gl2_fragment_shader_impl *impl;
-	slang_translation_unit *unit;
-	slang_atom atom;
-	slang_variable *var;
-
-	impl = (struct gl2_fragment_shader_impl *) fs;
-	unit = &impl->_obj._shader.unit;
-	atom = slang_atom_pool_atom (unit->atom_pool, name);
-	var = _slang_locate_variable (&unit->globals, atom, 1);
-	if (var == NULL || var->address == ~0)
-		return NULL;
-	return (GLubyte *) unit->machine->mem + var->address;
-}
-
-static int fetch_mem (struct gl2_vertex_shader_intf **vs, const char *name, GLvoid *val,
-	GLuint size, GLuint index, int write)
-{
-	GLubyte *data;
-
-	data = get_address_of (vs, name);
-	if (data == NULL)
-		return 0;
-	if (write)
-		_mesa_memcpy (data + index * size, val, size);
-	else
-		_mesa_memcpy (val, data + index * size, size);
+	impl = (struct gl2_program_impl *) pro;
+	*val = impl->_obj.prog.machines[SLANG_UNIFORM_BINDING_FRAGMENT]->kill ? GL_TRUE : GL_FALSE;
 	return 1;
 }
 
-static int fetch_mem_f (struct gl2_fragment_shader_intf **fs, const char *name, GLvoid *val,
-	GLuint size, GLuint index, int write)
+static GLvoid exec_shader (struct gl2_program_intf **pro, GLuint i)
 {
-	GLubyte *data;
+	struct gl2_program_impl *impl;
+	slang_program *p;
 
-	data = get_address_of_f (fs, name);
-	if (data == NULL)
-		return 0;
-	if (write)
-		_mesa_memcpy (data + index * size, val, size);
-	else
-		_mesa_memcpy (val, data + index * size, size);
-	return 1;
+	impl = (struct gl2_program_impl *) pro;
+	p = &impl->_obj.prog;
+
+	slang_machine_init (p->machines[i]);
+	p->machines[i]->ip = p->code[i];
+
+	_slang_execute2 (p->assemblies[i], p->machines[i]);
 }
 
-int _slang_fetch_float (struct gl2_vertex_shader_intf **vs, const char *name, GLfloat *val, int write)
+GLvoid _slang_exec_fragment_shader (struct gl2_program_intf **pro)
 {
-	return fetch_mem (vs, name, val, 4, 0, write);
+	exec_shader (pro, SLANG_UNIFORM_BINDING_FRAGMENT);
 }
 
-int _slang_fetch_vec3 (struct gl2_vertex_shader_intf **vs, const char *name, GLfloat *val, int write)
+GLvoid _slang_exec_vertex_shader (struct gl2_program_intf **pro)
 {
-	return fetch_mem (vs, name, val, 12, 0, write);
-}
-
-int _slang_fetch_vec4 (struct gl2_vertex_shader_intf **vs, const char *name, GLfloat *val,
-	GLuint index, int write)
-{
-	return fetch_mem (vs, name, val, 16, index, write);
-}
-
-int _slang_fetch_vec4_f (struct gl2_fragment_shader_intf **fs, const char *name, GLfloat *val,
-	GLuint index, int write)
-{
-	return fetch_mem_f (fs, name, val, 16, index, write);
-}
-
-int _slang_fetch_mat3 (struct gl2_vertex_shader_intf **vs, const char *name, GLfloat *val,
-	GLuint index, int write)
-{
-	return fetch_mem (vs, name, val, 36, index, write);
-}
-
-int _slang_fetch_mat4 (struct gl2_vertex_shader_intf **vs, const char *name, GLfloat *val,
-	GLuint index, int write)
-{
-	return fetch_mem (vs, name, val, 64, index, write);
-}
-
-int _slang_fetch_discard (struct gl2_fragment_shader_intf **fs, GLboolean *val)
-{
-	struct gl2_fragment_shader_impl *impl;
-	slang_translation_unit *unit;
-
-	impl = (struct gl2_fragment_shader_impl *) fs;
-	unit = &impl->_obj._shader.unit;
-	*val = unit->machine->kill ? GL_TRUE : GL_FALSE;
-	return 1;
-}
-
-void _slang_exec_vertex_shader (struct gl2_vertex_shader_intf **vs)
-{
-	struct gl2_vertex_shader_impl *impl;
-	slang_translation_unit *unit;
-	slang_atom atom;
-	unsigned int i;
-
-	impl = (struct gl2_vertex_shader_impl *) vs;
-	unit = &impl->_obj._shader.unit;
-	atom = slang_atom_pool_atom (unit->atom_pool, "main");
-	for (i = 0; i < unit->functions.num_functions; i++)
-		if (atom == unit->functions.functions[i].header.a_name)
-			break;
-	if (i < unit->functions.num_functions)
-	{
-		slang_function *f;
-		slang_assembly_file_restore_point point;
-		slang_assemble_ctx A;
-
-		f = &unit->functions.functions[i];
-		slang_assembly_file_restore_point_save (unit->assembly, &point);
-
-		slang_machine_init (unit->machine);
-		unit->machine->ip = unit->assembly->count;
-
-		A.file = unit->assembly;
-		A.mach = unit->machine;
-		A.atoms = unit->atom_pool;
-		A.space.funcs = &unit->functions;
-		A.space.structs = &unit->structs;
-		A.space.vars = &unit->globals;
-		slang_assembly_file_push_label (unit->assembly, slang_asm_local_alloc, 20);
-		slang_assembly_file_push_label (unit->assembly, slang_asm_enter, 20);
-		_slang_assemble_function_call (&A, f, NULL, 0, GL_FALSE);
-		slang_assembly_file_push (unit->assembly, slang_asm_exit);
-
-		_slang_execute2 (unit->assembly, unit->machine);
-
-		slang_assembly_file_restore_point_load (unit->assembly, &point);
-	}
-}
-
-void _slang_exec_fragment_shader (struct gl2_fragment_shader_intf **fs)
-{
-	struct gl2_fragment_shader_impl *impl;
-	slang_translation_unit *unit;
-	slang_atom atom;
-	unsigned int i;
-
-	impl = (struct gl2_fragment_shader_impl *) fs;
-	unit = &impl->_obj._shader.unit;
-	atom = slang_atom_pool_atom (unit->atom_pool, "main");
-	for (i = 0; i < unit->functions.num_functions; i++)
-		if (atom == unit->functions.functions[i].header.a_name)
-			break;
-	if (i < unit->functions.num_functions)
-	{
-		slang_function *f;
-		slang_assembly_file_restore_point point;
-		slang_assemble_ctx A;
-
-		f = &unit->functions.functions[i];
-		slang_assembly_file_restore_point_save (unit->assembly, &point);
-
-		slang_machine_init (unit->machine);
-		unit->machine->ip = unit->assembly->count;
-
-		A.file = unit->assembly;
-		A.mach = unit->machine;
-		A.atoms = unit->atom_pool;
-		A.space.funcs = &unit->functions;
-		A.space.structs = &unit->structs;
-		A.space.vars = &unit->globals;
-		slang_assembly_file_push_label (unit->assembly, slang_asm_local_alloc, 20);
-		slang_assembly_file_push_label (unit->assembly, slang_asm_enter, 20);
-		_slang_assemble_function_call (&A, f, NULL, 0, GL_FALSE);
-		slang_assembly_file_push (unit->assembly, slang_asm_exit);
-
-		_slang_execute2 (unit->assembly, unit->machine);
-
-		slang_assembly_file_restore_point_load (unit->assembly, &point);
-	}
+	exec_shader (pro, SLANG_UNIFORM_BINDING_VERTEX);
 }
 
 GLint _slang_get_uniform_location (struct gl2_program_intf **pro, const char *name)
@@ -1310,6 +1308,53 @@ GLboolean _slang_write_uniform (struct gl2_program_intf **pro, GLint loc, GLsize
 				count * b->quant->size);
 		}
 	return GL_TRUE;
+}
+
+GLuint _slang_get_active_uniform_count (struct gl2_program_intf **pro)
+{
+	struct gl2_program_impl *impl;
+
+	impl = (struct gl2_program_impl *) pro;
+	return impl->_obj.prog.active_uniforms.count;
+}
+
+GLuint _slang_get_active_uniform_max_length (struct gl2_program_intf **pro)
+{
+	struct gl2_program_impl *impl;
+	GLuint i, len = 0;
+
+	impl = (struct gl2_program_impl *) pro;
+	for (i = 0; i < impl->_obj.prog.active_uniforms.count; i++)
+	{
+		GLuint n = _mesa_strlen (impl->_obj.prog.active_uniforms.table[i].name);
+		if (n > len)
+			len = n;
+	}
+	return len;
+}
+
+GLvoid _slang_get_active_uniform (struct gl2_program_intf **pro, GLuint index, GLsizei maxLength,
+	GLsizei *length, GLint *size, GLenum *type, char *name)
+{
+	struct gl2_program_impl *impl;
+	slang_active_uniform *u;
+	GLsizei len;
+
+	impl = (struct gl2_program_impl *) pro;
+	u = &impl->_obj.prog.active_uniforms.table[index];
+
+	len = _mesa_strlen (u->name);
+	if (len >= maxLength)
+		len = maxLength - 1;
+	_mesa_memcpy (name, u->name, len);
+	name[len] = '\0';
+	if (length != NULL)
+		*length = len;
+	*type = u->quant->u.basic_type;
+	if (u->quant->array_len == 0)
+		*size = 1;
+	else
+		*size = u->quant->array_len;
 }
 
 void

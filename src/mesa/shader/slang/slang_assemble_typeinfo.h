@@ -25,12 +25,49 @@
 #if !defined SLANG_ASSEMBLE_TYPEINFO_H
 #define SLANG_ASSEMBLE_TYPEINFO_H
 
-#include "slang_assemble_constructor.h"
-#include "slang_compile.h"
-
 #if defined __cplusplus
 extern "C" {
 #endif
+
+typedef enum slang_type_specifier_type_
+{
+	slang_spec_void,
+	slang_spec_bool,
+	slang_spec_bvec2,
+	slang_spec_bvec3,
+	slang_spec_bvec4,
+	slang_spec_int,
+	slang_spec_ivec2,
+	slang_spec_ivec3,
+	slang_spec_ivec4,
+	slang_spec_float,
+	slang_spec_vec2,
+	slang_spec_vec3,
+	slang_spec_vec4,
+	slang_spec_mat2,
+	slang_spec_mat3,
+	slang_spec_mat4,
+	slang_spec_sampler1D,
+	slang_spec_sampler2D,
+	slang_spec_sampler3D,
+	slang_spec_samplerCube,
+	slang_spec_sampler1DShadow,
+	slang_spec_sampler2DShadow,
+	slang_spec_struct,
+	slang_spec_array
+} slang_type_specifier_type;
+
+typedef struct slang_type_specifier_
+{
+	slang_type_specifier_type type;
+	struct slang_struct_ *_struct;			/* type: spec_struct */
+	struct slang_type_specifier_ *_array;	/* type: spec_array */
+} slang_type_specifier;
+
+GLvoid slang_type_specifier_ctr (slang_type_specifier *);
+GLvoid slang_type_specifier_dtr (slang_type_specifier *);
+GLboolean slang_type_specifier_copy (slang_type_specifier *, const slang_type_specifier *);
+GLboolean slang_type_specifier_equal (const slang_type_specifier *, const slang_type_specifier *);
 
 typedef struct slang_assembly_typeinfo_
 {
@@ -49,8 +86,9 @@ GLvoid slang_assembly_typeinfo_destruct (slang_assembly_typeinfo *);
  * Returns GL_TRUE on success.
  * Returns GL_FALSE otherwise.
  */
-GLboolean _slang_typeof_operation (slang_assemble_ctx *, slang_operation *, slang_assembly_typeinfo *);
-GLboolean _slang_typeof_operation_ (slang_operation *, slang_assembly_name_space *,
+GLboolean _slang_typeof_operation (slang_assemble_ctx *, struct slang_operation_ *,
+	slang_assembly_typeinfo *);
+GLboolean _slang_typeof_operation_ (struct slang_operation_ *, slang_assembly_name_space *,
 	slang_assembly_typeinfo *, slang_atom_pool *);
 
 /*
@@ -58,8 +96,9 @@ GLboolean _slang_typeof_operation_ (slang_operation *, slang_assembly_name_space
  * Returns GL_TRUE on success, even if the function was not found.
  * Returns GL_FALSE otherwise.
  */
-GLboolean _slang_typeof_function (slang_atom a_name, slang_operation *params, GLuint num_params,
-	slang_assembly_name_space *, slang_type_specifier *spec, GLboolean *exists, slang_atom_pool *);
+GLboolean _slang_typeof_function (slang_atom a_name, struct slang_operation_ *params,
+	GLuint num_params, slang_assembly_name_space *, slang_type_specifier *spec, GLboolean *exists,
+	slang_atom_pool *);
 
 GLboolean _slang_type_is_matrix (slang_type_specifier_type);
 

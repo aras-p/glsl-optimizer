@@ -25,9 +25,6 @@
 #if !defined SLANG_ASSEMBLE_CONSTRUCTOR_H
 #define SLANG_ASSEMBLE_CONSTRUCTOR_H
 
-#include "slang_assemble.h"
-#include "slang_compile.h"
-
 #if defined __cplusplus
 extern "C" {
 #endif
@@ -54,7 +51,7 @@ GLboolean _slang_is_swizzle_mask (const slang_swizzle *swz, GLuint rows);
  */
 GLvoid _slang_multiply_swizzles (slang_swizzle *, const slang_swizzle *, const slang_swizzle *);
 
-GLboolean _slang_assemble_constructor (slang_assemble_ctx *, slang_operation *);
+GLboolean _slang_assemble_constructor (slang_assemble_ctx *, struct slang_operation_ *);
 
 GLboolean _slang_assemble_constructor_from_swizzle (slang_assemble_ctx *, const slang_swizzle *,
 	slang_type_specifier *, slang_type_specifier *);

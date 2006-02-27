@@ -25,6 +25,8 @@
 #if !defined SLANG_EXPORT_H
 #define SLANG_EXPORT_H
 
+#include "slang_utility.h"
+
 #if defined __cplusplus
 extern "C" {
 #endif
@@ -82,7 +84,7 @@ GLvoid slang_export_data_entry_ctr (slang_export_data_entry *);
 GLvoid slang_export_data_entry_dtr (slang_export_data_entry *);
 
 /*
- * Data export table. Holds <count> elements in <entries> array.
+ * Data export table.
  */
 
 typedef struct
@@ -95,6 +97,31 @@ typedef struct
 GLvoid slang_export_data_table_ctr (slang_export_data_table *);
 GLvoid slang_export_data_table_dtr (slang_export_data_table *);
 slang_export_data_entry *slang_export_data_table_add (slang_export_data_table *);
+
+/*
+ * Code export entry. Contains label name and its entry point (label, address).
+ */
+
+typedef struct
+{
+	slang_atom name;
+	GLuint address;
+} slang_export_code_entry;
+
+/*
+ * Code export table.
+ */
+
+typedef struct
+{
+	slang_export_code_entry *entries;
+	GLuint count;
+	slang_atom_pool *atoms;
+} slang_export_code_table;
+
+GLvoid slang_export_code_table_ctr (slang_export_code_table *);
+GLvoid slang_export_code_table_dtr (slang_export_code_table *);
+slang_export_code_entry *slang_export_code_table_add (slang_export_code_table *);
 
 /*
  * _slang_find_exported_data()

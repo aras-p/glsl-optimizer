@@ -32,6 +32,7 @@
 #include "shaderobjects_3dlabs.h"
 #include "t_pipeline.h"
 #include "slang_utility.h"
+#include "slang_link.h"
 
 typedef struct
 {
@@ -90,42 +91,40 @@ static void validate_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stag
 {
 }
 
-static void fetch_input_float (const char *name, GLuint attr, GLuint i, struct vertex_buffer *vb,
-	struct gl2_vertex_shader_intf **vs)
+static GLvoid fetch_input_float (struct gl2_program_intf **pro, GLuint index, GLuint attr, GLuint i,
+	struct vertex_buffer *vb)
 {
 	const GLubyte *ptr = (const GLubyte *) vb->AttribPtr[attr]->data;
-	/*const GLuint size = vb->AttribPtr[attr]->size;*/
 	const GLuint stride = vb->AttribPtr[attr]->stride;
 	const GLfloat *data = (const GLfloat *) (ptr + stride * i);
-	float vec[1];
+	GLfloat vec[1];
 
 	vec[0] = data[0];
-	_slang_fetch_float (vs, name, vec, 1);
+	(**pro).UpdateFixedAttribute (pro, index, vec, 0, sizeof (GLfloat), GL_TRUE);
 }
 
-static void fetch_input_vec3 (const char *name, GLuint attr, GLuint i, struct vertex_buffer *vb,
-	struct gl2_vertex_shader_intf **vs)
+static GLvoid fetch_input_vec3 (struct gl2_program_intf **pro, GLuint index, GLuint attr, GLuint i,
+	struct vertex_buffer *vb)
 {
 	const GLubyte *ptr = (const GLubyte *) vb->AttribPtr[attr]->data;
-	/*const GLuint size = vb->AttribPtr[attr]->size;*/
 	const GLuint stride = vb->AttribPtr[attr]->stride;
 	const GLfloat *data = (const GLfloat *) (ptr + stride * i);
-	float vec[3];
+	GLfloat vec[3];
 
 	vec[0] = data[0];
 	vec[1] = data[1];
 	vec[2] = data[2];
-	_slang_fetch_vec3 (vs, name, vec, 1);
+	(**pro).UpdateFixedAttribute (pro, index, vec, 0, 3 * sizeof (GLfloat), GL_TRUE);
 }
 
-static void fetch_input_vec4 (const char *name, GLuint attr, GLuint i, struct vertex_buffer *vb,
-	struct gl2_vertex_shader_intf **vs)
+static void fetch_input_vec4 (struct gl2_program_intf **pro, GLuint index, GLuint attr, GLuint i,
+	struct vertex_buffer *vb)
 {
 	const GLubyte *ptr = (const GLubyte *) vb->AttribPtr[attr]->data;
 	const GLuint size = vb->AttribPtr[attr]->size;
 	const GLuint stride = vb->AttribPtr[attr]->stride;
 	const GLfloat *data = (const GLfloat *) (ptr + stride * i);
-	float vec[4];
+	GLfloat vec[4];
 
 	switch (size)
 	{
@@ -148,82 +147,21 @@ static void fetch_input_vec4 (const char *name, GLuint attr, GLuint i, struct ve
 		vec[3] = data[3];
 		break;
 	}
-	_slang_fetch_vec4 (vs, name, vec, 0, 1);
+	(**pro).UpdateFixedAttribute (pro, index, vec, 0, 4 * sizeof (GLfloat), GL_TRUE);
 }
 
-static void fetch_output_float (const char *name, GLuint attr, GLuint i, arbvs_stage_data *store,
-	struct gl2_vertex_shader_intf **vs)
+static GLvoid fetch_output_float (struct gl2_program_intf **pro, GLuint index, GLuint attr, GLuint i,
+	arbvs_stage_data *store)
 {
-	float vec[1];
-
-	_slang_fetch_float (vs, name, vec, 0);
-	_mesa_memcpy (&store->outputs[attr].data[i], vec, 4);
+	(**pro).UpdateFixedAttribute (pro, index, &store->outputs[attr].data[i], 0, sizeof (GLfloat),
+		GL_FALSE);
 }
 
-static void fetch_output_vec4 (const char *name, GLuint attr, GLuint i, GLuint index,
-	arbvs_stage_data *store, struct gl2_vertex_shader_intf **vs)
+static void fetch_output_vec4 (struct gl2_program_intf **pro, GLuint index, GLuint attr, GLuint i,
+	GLuint offset, arbvs_stage_data *store)
 {
-	float vec[4];
-
-	_slang_fetch_vec4 (vs, name, vec, index, 0);
-	_mesa_memcpy (&store->outputs[attr].data[i], vec, 16);
-}
-
-static void fetch_uniform_mat4 (const char *name, GLmatrix *matrix, GLuint index,
-	struct gl2_vertex_shader_intf **vs)
-{
-	GLuint len;
-	GLfloat mat[16];
-	char buffer[64];
-
-	_mesa_strcpy (buffer, name);
-	len = _mesa_strlen (name);
-
-	/* we want inverse matrix */
-	if (!matrix->inv)
-	{
-		/* allocate inverse matrix and make it dirty */
-		_math_matrix_alloc_inv (matrix);
-		_math_matrix_loadf (matrix, matrix->m);
-	}
-	_math_matrix_analyse (matrix);
-
-	/* identity */
-	_slang_fetch_mat4 (vs, name, matrix->m, index, 1);
-
-	/* transpose */
-	_mesa_strcpy (buffer + len, "Transpose");
-	_math_transposef (mat, matrix->m);
-	_slang_fetch_mat4 (vs, buffer, mat, index, 1);
-
-	/* inverse */
-	_mesa_strcpy (buffer + len, "Inverse");
-	_slang_fetch_mat4 (vs, buffer, matrix->inv, index, 1);
-
-	/* inverse transpose */
-	_mesa_strcpy (buffer + len, "InverseTranspose");
-	_math_transposef (mat, matrix->inv);
-	_slang_fetch_mat4 (vs, buffer, mat, index, 1);
-}
-
-static void fetch_normal_matrix (const char *name, GLmatrix *matrix,
-	struct gl2_vertex_shader_intf **vs)
-{
-	GLfloat mat[9];
-
-	_math_matrix_analyse (matrix);
-
-	/* inverse transpose */
-	mat[0] = matrix->inv[0];
-	mat[1] = matrix->inv[4];
-	mat[2] = matrix->inv[8];
-	mat[3] = matrix->inv[1];
-	mat[4] = matrix->inv[5];
-	mat[5] = matrix->inv[9];
-	mat[6] = matrix->inv[2];
-	mat[7] = matrix->inv[6];
-	mat[8] = matrix->inv[10];
-	_slang_fetch_mat3 (vs, name, mat, 0, 1);
+	(**pro).UpdateFixedAttribute (pro, index, &store->outputs[attr].data[i], offset,
+		4 * sizeof (GLfloat), GL_FALSE);
 }
 
 static GLboolean run_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stage *stage)
@@ -231,81 +169,44 @@ static GLboolean run_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stag
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *vb = &tnl->vb;
 	arbvs_stage_data *store = ARBVS_STAGE_DATA(stage);
-	struct gl2_program_intf **prog;
-	struct gl2_vertex_shader_intf **vs = NULL;
-	GLsizei count, i, j;
+	struct gl2_program_intf **pro;
+	GLsizei i, j;
 
-	prog = ctx->ShaderObjects.CurrentProgram;
-	if (prog == NULL)
+	pro = ctx->ShaderObjects.CurrentProgram;
+	if (pro == NULL)
 		return GL_TRUE;
 
-	count = (**prog)._container.GetAttachedCount ((struct gl2_container_intf **) prog);
-	for (i = 0; i < count; i++)
-	{
-		struct gl2_generic_intf **obj;
-		struct gl2_unknown_intf **unk;
-
-		obj = (**prog)._container.GetAttached ((struct gl2_container_intf **) prog, i);
-		unk = (**obj)._unknown.QueryInterface ((struct gl2_unknown_intf **) obj, UIID_VERTEX_SHADER);
-		(**obj)._unknown.Release ((struct gl2_unknown_intf **) obj);
-		if (unk != NULL)
-		{
-			vs = (struct gl2_vertex_shader_intf **) unk;
-			break;
-		}
-	}
-	if (vs == NULL)
-		return GL_TRUE;
-
-	fetch_uniform_mat4 ("gl_ModelViewMatrix", ctx->ModelviewMatrixStack.Top, 0, vs);
-	fetch_uniform_mat4 ("gl_ProjectionMatrix", ctx->ProjectionMatrixStack.Top, 0, vs);
-	fetch_uniform_mat4 ("gl_ModelViewProjectionMatrix", &ctx->_ModelProjectMatrix, 0, vs);
-	for (j = 0; j < 8; j++)
-		fetch_uniform_mat4 ("gl_TextureMatrix", ctx->TextureMatrixStack[j].Top, j, vs);
-	fetch_normal_matrix ("gl_NormalMatrix", ctx->ModelviewMatrixStack.Top, vs);
-	/* XXX: fetch uniform float gl_NormalScale */
-	/* XXX: fetch uniform mat4 gl_ClipPlane */
-	/* XXX: fetch uniform mat4 gl_TextureEnvColor */
-	/* XXX: fetch uniform mat4 gl_EyePlaneS */
-	/* XXX: fetch uniform mat4 gl_EyePlaneT */
-	/* XXX: fetch uniform mat4 gl_EyePlaneR */
-	/* XXX: fetch uniform mat4 gl_EyePlaneQ */
-	/* XXX: fetch uniform mat4 gl_ObjectPlaneS */
-	/* XXX: fetch uniform mat4 gl_ObjectPlaneT */
-	/* XXX: fetch uniform mat4 gl_ObjectPlaneR */
-	/* XXX: fetch uniform mat4 gl_ObjectPlaneQ */
+	(**pro).UpdateFixedUniforms (pro);
 
 	for (i = 0; i < vb->Count; i++)
 	{
-		fetch_input_vec4 ("gl_Vertex", _TNL_ATTRIB_POS, i, vb, vs);
-		fetch_input_vec3 ("gl_Normal", _TNL_ATTRIB_NORMAL, i, vb, vs);
-		fetch_input_vec4 ("gl_Color", _TNL_ATTRIB_COLOR0, i, vb, vs);
-		fetch_input_vec4 ("gl_SecondaryColor", _TNL_ATTRIB_COLOR1, i, vb, vs);
-		fetch_input_float ("gl_FogCoord", _TNL_ATTRIB_FOG, i, vb, vs);
-		fetch_input_vec4 ("gl_MultiTexCoord0", _TNL_ATTRIB_TEX0, i, vb, vs);
-		fetch_input_vec4 ("gl_MultiTexCoord1", _TNL_ATTRIB_TEX1, i, vb, vs);
-		fetch_input_vec4 ("gl_MultiTexCoord2", _TNL_ATTRIB_TEX2, i, vb, vs);
-		fetch_input_vec4 ("gl_MultiTexCoord3", _TNL_ATTRIB_TEX3, i, vb, vs);
-		fetch_input_vec4 ("gl_MultiTexCoord4", _TNL_ATTRIB_TEX4, i, vb, vs);
-		fetch_input_vec4 ("gl_MultiTexCoord5", _TNL_ATTRIB_TEX5, i, vb, vs);
-		fetch_input_vec4 ("gl_MultiTexCoord6", _TNL_ATTRIB_TEX6, i, vb, vs);
-		fetch_input_vec4 ("gl_MultiTexCoord7", _TNL_ATTRIB_TEX7, i, vb, vs);
+		fetch_input_vec4 (pro, SLANG_VERTEX_FIXED_VERTEX, _TNL_ATTRIB_POS, i, vb);
+		fetch_input_vec3 (pro, SLANG_VERTEX_FIXED_NORMAL, _TNL_ATTRIB_NORMAL, i, vb);
+		fetch_input_vec4 (pro, SLANG_VERTEX_FIXED_COLOR, _TNL_ATTRIB_COLOR0, i, vb);
+		fetch_input_vec4 (pro, SLANG_VERTEX_FIXED_SECONDARYCOLOR, _TNL_ATTRIB_COLOR1, i, vb);
+		fetch_input_float (pro, SLANG_VERTEX_FIXED_FOGCOORD, _TNL_ATTRIB_FOG, i, vb);
+		fetch_input_vec4 (pro, SLANG_VERTEX_FIXED_MULTITEXCOORD0, _TNL_ATTRIB_TEX0, i, vb);
+		fetch_input_vec4 (pro, SLANG_VERTEX_FIXED_MULTITEXCOORD1, _TNL_ATTRIB_TEX1, i, vb);
+		fetch_input_vec4 (pro, SLANG_VERTEX_FIXED_MULTITEXCOORD2, _TNL_ATTRIB_TEX2, i, vb);
+		fetch_input_vec4 (pro, SLANG_VERTEX_FIXED_MULTITEXCOORD3, _TNL_ATTRIB_TEX3, i, vb);
+		fetch_input_vec4 (pro, SLANG_VERTEX_FIXED_MULTITEXCOORD4, _TNL_ATTRIB_TEX4, i, vb);
+		fetch_input_vec4 (pro, SLANG_VERTEX_FIXED_MULTITEXCOORD5, _TNL_ATTRIB_TEX5, i, vb);
+		fetch_input_vec4 (pro, SLANG_VERTEX_FIXED_MULTITEXCOORD6, _TNL_ATTRIB_TEX6, i, vb);
+		fetch_input_vec4 (pro, SLANG_VERTEX_FIXED_MULTITEXCOORD7, _TNL_ATTRIB_TEX7, i, vb);
 
-		_slang_exec_vertex_shader (vs);
+		_slang_exec_vertex_shader (pro);
 
-		fetch_output_vec4 ("gl_Position", VERT_RESULT_HPOS, i, 0, store, vs);
-		fetch_output_vec4 ("gl_FrontColor", VERT_RESULT_COL0, i, 0, store, vs);
-		fetch_output_vec4 ("gl_FrontSecondaryColor", VERT_RESULT_COL1, i, 0, store, vs);
-		fetch_output_float ("gl_FogFragCoord", VERT_RESULT_FOGC, i, store, vs);
+		fetch_output_vec4 (pro, SLANG_VERTEX_FIXED_POSITION, VERT_RESULT_HPOS, i, 0, store);
+		fetch_output_vec4 (pro, SLANG_VERTEX_FIXED_FRONTCOLOR, VERT_RESULT_COL0, i, 0, store);
+		fetch_output_vec4 (pro, SLANG_VERTEX_FIXED_FRONTSECONDARYCOLOR, VERT_RESULT_COL1, i, 0, store);
+		fetch_output_float (pro, SLANG_VERTEX_FIXED_FOGFRAGCOORD, VERT_RESULT_FOGC, i, store);
 		for (j = 0; j < 8; j++)
-			fetch_output_vec4 ("gl_TexCoord", VERT_RESULT_TEX0 + j, i, j, store, vs);
-		fetch_output_float ("gl_PointSize", VERT_RESULT_PSIZ, i, store, vs);
-		fetch_output_vec4 ("gl_BackColor", VERT_RESULT_BFC0, i, 0, store, vs);
-		fetch_output_vec4 ("gl_BackSecondaryColor", VERT_RESULT_BFC1, i, 0, store, vs);
-		/* XXX: fetch output gl_ClipVertex */
+			fetch_output_vec4 (pro, SLANG_VERTEX_FIXED_TEXCOORD, VERT_RESULT_TEX0 + j, i, j, store);
+		fetch_output_float (pro, SLANG_VERTEX_FIXED_POINTSIZE, VERT_RESULT_PSIZ, i, store);
+		fetch_output_vec4 (pro, SLANG_VERTEX_FIXED_BACKCOLOR, VERT_RESULT_BFC0, i, 0, store);
+		fetch_output_vec4 (pro, SLANG_VERTEX_FIXED_BACKSECONDARYCOLOR, VERT_RESULT_BFC1, i, 0, store);
+		/* XXX: fetch output SLANG_VERTEX_FIXED_CLIPVERTEX */
 	}
-
-	(**vs)._shader._generic._unknown.Release ((struct gl2_unknown_intf **) vs);
 
 	vb->ClipPtr = &store->outputs[VERT_RESULT_HPOS];
 	vb->ClipPtr->count = vb->Count;

@@ -32,83 +32,63 @@
 #include "s_context.h"
 #include "shaderobjects.h"
 #include "shaderobjects_3dlabs.h"
-
-
-static void fetch_input_vec4 (const char *name, GLfloat *vec, GLuint index,
-	struct gl2_fragment_shader_intf **fs)
-{
-	_slang_fetch_vec4_f (fs, name, vec, index, 1);
-}
-
-static void fetch_output_vec4 (const char *name, GLfloat *vec, GLuint index,
-	struct gl2_fragment_shader_intf **fs)
-{
-	_slang_fetch_vec4_f (fs, name, vec, index, 0);
-}
+#include "slang_utility.h"
+#include "slang_link.h"
 
 void _swrast_exec_arbshader (GLcontext *ctx, struct sw_span *span)
 {
-	struct gl2_program_intf **prog;
-	struct gl2_fragment_shader_intf **fs = NULL;
-	GLuint count, i;
+	struct gl2_program_intf **pro;
+	GLuint i;
 
-	prog = ctx->ShaderObjects.CurrentProgram;
-	count = (**prog)._container.GetAttachedCount ((struct gl2_container_intf **) prog);
-	for (i = 0; i < count; i++)
-	{
-		struct gl2_generic_intf **obj;
-		struct gl2_unknown_intf **unk;
-
-		obj = (**prog)._container.GetAttached ((struct gl2_container_intf **) prog, i);
-		unk = (**obj)._unknown.QueryInterface ((struct gl2_unknown_intf **) obj, UIID_FRAGMENT_SHADER);
-		(**obj)._unknown.Release ((struct gl2_unknown_intf **) obj);
-		if (unk != NULL)
-		{
-			fs = (struct gl2_fragment_shader_intf **) unk;
-			break;
-		}
-	}
-	if (fs == NULL)
+	pro = ctx->ShaderObjects.CurrentProgram;
+	if (pro == NULL)
 		return;
 
 	for (i = span->start; i < span->end; i++)
 	{
 		GLfloat vec[4];
 		GLuint j;
-		GLboolean kill;
+		GLboolean discard;
 
 		vec[0] = (GLfloat) span->x + i;
 		vec[1] = (GLfloat) span->y;
 		vec[2] = (GLfloat) span->array->z[i] / ctx->DrawBuffer->_DepthMaxF;
 		vec[3] = span->w + span->dwdx * i;
-		fetch_input_vec4 ("gl_FragCoord", vec, 0, fs);
+		(**pro).UpdateFixedVarying (pro, SLANG_FRAGMENT_FIXED_FRAGCOORD, vec, 0,
+			4 * sizeof (GLfloat), GL_TRUE);
 		vec[0] = CHAN_TO_FLOAT(span->array->rgba[i][RCOMP]);
 		vec[1] = CHAN_TO_FLOAT(span->array->rgba[i][GCOMP]);
 		vec[2] = CHAN_TO_FLOAT(span->array->rgba[i][BCOMP]);
 		vec[3] = CHAN_TO_FLOAT(span->array->rgba[i][ACOMP]);
-		fetch_input_vec4 ("gl_Color", vec, 0, fs);
+		(**pro).UpdateFixedVarying (pro, SLANG_FRAGMENT_FIXED_COLOR, vec, 0, 4 * sizeof (GLfloat),
+			GL_TRUE);
 		for (j = 0; j < ctx->Const.MaxTextureCoordUnits; j++)
 		{
 			vec[0] = span->array->texcoords[j][i][0];
 			vec[1] = span->array->texcoords[j][i][1];
 			vec[2] = span->array->texcoords[j][i][2];
 			vec[3] = span->array->texcoords[j][i][3];
-			fetch_input_vec4 ("gl_TexCoord", vec, j, fs);
+			(**pro).UpdateFixedVarying (pro, SLANG_FRAGMENT_FIXED_TEXCOORD, vec, j,
+				4 * sizeof (GLfloat), GL_TRUE);
 		}
 
-		_slang_exec_fragment_shader (fs);
+		_slang_exec_fragment_shader (pro);
 
-		_slang_fetch_discard (fs, &kill);
-		if (kill)
+		_slang_fetch_discard (pro, &discard);
+		if (discard)
 		{
 			span->array->mask[i] = GL_FALSE;
 			span->writeAll = GL_FALSE;
 		}
-		fetch_output_vec4 ("gl_FragColor", vec, 0, fs);
-		UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][RCOMP], vec[0]);
-		UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][GCOMP], vec[1]);
-		UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][BCOMP], vec[2]);
-		UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][ACOMP], vec[3]);
+		else
+		{
+			(**pro).UpdateFixedVarying (pro, SLANG_FRAGMENT_FIXED_FRAGCOLOR, vec, 0,
+				4 * sizeof (GLfloat), GL_FALSE);
+			UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][RCOMP], vec[0]);
+			UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][GCOMP], vec[1]);
+			UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][BCOMP], vec[2]);
+			UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][ACOMP], vec[3]);
+		}
 	}
 }
 

@@ -25,15 +25,13 @@
 #if !defined SLANG_ASSEMBLE_ASSIGNMENT_H
 #define SLANG_ASSEMBLE_ASSIGNMENT_H
 
-#include "slang_assemble.h"
-
 #if defined __cplusplus
 extern "C" {
 #endif
 
-GLboolean _slang_assemble_assignment (slang_assemble_ctx *, slang_operation *);
+GLboolean _slang_assemble_assignment (slang_assemble_ctx *, struct slang_operation_ *);
 
-GLboolean _slang_assemble_assign (slang_assemble_ctx *, slang_operation *, const char *,
+GLboolean _slang_assemble_assign (slang_assemble_ctx *, struct slang_operation_ *, const char *,
 	slang_ref_type);
 
 #ifdef __cplusplus

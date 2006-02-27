@@ -3,7 +3,7 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
-Project: "gdi"=.\gdi\gdi.dsp - Package Owner=<4>
+Project: "gdi"=".\gdi\gdi.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -18,7 +18,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "glu"=.\glu\glu.dsp - Package Owner=<4>
+Project: "glu"=".\glu\glu.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -33,7 +33,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mesa"=.\mesa\mesa.dsp - Package Owner=<4>
+Project: "mesa"=".\mesa\mesa.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -45,7 +45,22 @@ Package=<4>
 
 ###############################################################################
 
-Project: "osmesa"=.\osmesa\osmesa.dsp - Package Owner=<4>
+Project: "osmesa"=".\osmesa\osmesa.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gdi
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "test"=".\test\test.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{

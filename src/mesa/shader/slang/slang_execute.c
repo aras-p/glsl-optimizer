@@ -32,13 +32,25 @@
 #include "context.h"
 #include "swrast/s_context.h"
 #include "colormac.h"
-#include "slang_utility.h"
-#include "slang_assemble.h"
-#include "slang_storage.h"
 #include "slang_execute.h"
 #include "slang_library_noise.h"
 
 #define DEBUG_SLANG 0
+
+GLvoid slang_machine_ctr (slang_machine *self)
+{
+	slang_machine_init (self);
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+	self->x86.compiled_func = NULL;
+#endif
+}
+
+GLvoid slang_machine_dtr (slang_machine *self)
+{
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+	/* TODO: free self->x86.compiled_func */
+#endif
+}
 
 void slang_machine_init (slang_machine *mach)
 {
@@ -53,7 +65,7 @@ int _slang_execute (const slang_assembly_file *file)
 {
 	slang_machine mach;
 
-	slang_machine_init (&mach);
+	slang_machine_ctr (&mach);
 	return _slang_execute2 (file, &mach);
 }
 
@@ -207,6 +219,9 @@ static void dump_instruction (FILE *f, slang_assembly *a, unsigned int i)
 	case slang_asm_local_addr:
 		fprintf (f, "local_addr\t%u, %u", a->param[0], a->param[1]);
 		break;
+	case slang_asm_global_addr:
+		fprintf (f, "global_addr\t%u", a->param[0]);
+		break;
 	case slang_asm_call:
 		fprintf (f, "call\t%u", a->param[0]);
 		break;
@@ -291,6 +306,14 @@ int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
 	counter++;
 	_mesa_sprintf (filename, "~mesa-slang-assembly-exec-(%u).txt", counter);
 	f = fopen (filename, "w");
+#endif
+
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+	if (mach->x86.compiled_func != NULL)
+	{
+		mach->x86.compiled_func (mach);
+		return 1;
+	}
 #endif
 
 	stack = mach->mem + SLANG_MACHINE_GLOBAL_SIZE;
@@ -427,6 +450,7 @@ int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
 			mach->sp++;
 			break;
 		case slang_asm_addr_push:
+		case slang_asm_global_addr:
 			mach->sp--;
 			stack[mach->sp]._addr = a->param[0];
 			break;

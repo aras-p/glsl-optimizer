@@ -29,7 +29,6 @@
  */
 
 #include "imports.h"
-#include "slang_utility.h"
 #include "slang_export.h"
 
 /*
@@ -118,6 +117,56 @@ slang_export_data_entry *slang_export_data_table_add (slang_export_data_table *s
 	if (self->entries == NULL)
 		return NULL;
 	slang_export_data_entry_ctr (&self->entries[n]);
+	self->count++;
+	return &self->entries[n];
+}
+
+/*
+ * slang_export_code_entry
+ */
+
+GLvoid slang_export_code_entry_ctr (slang_export_code_entry *self)
+{
+	self->name = SLANG_ATOM_NULL;
+	self->address = ~0;
+}
+
+GLvoid slang_export_code_entry_dtr (slang_export_code_entry *self)
+{
+}
+
+/*
+ * slang_export_code_table
+ */
+
+GLvoid slang_export_code_table_ctr (slang_export_code_table *self)
+{
+	self->entries = NULL;
+	self->count = 0;
+	self->atoms = NULL;
+}
+
+GLvoid slang_export_code_table_dtr (slang_export_code_table *self)
+{
+	if (self->entries != NULL)
+	{
+		GLuint i;
+
+		for (i = 0; i < self->count; i++)
+			slang_export_code_entry_dtr (&self->entries[i]);
+		slang_alloc_free (self->entries);
+	}
+}
+
+slang_export_code_entry *slang_export_code_table_add (slang_export_code_table *self)
+{
+	const GLuint n = self->count;
+
+	self->entries = (slang_export_code_entry *) slang_alloc_realloc (self->entries,
+		n * sizeof (slang_export_code_entry), (n + 1) * sizeof (slang_export_code_entry));
+	if (self->entries == NULL)
+		return NULL;
+	slang_export_code_entry_ctr (&self->entries[n]);
 	self->count++;
 	return &self->entries[n];
 }

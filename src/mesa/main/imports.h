@@ -573,6 +573,28 @@ do {                                                                    \
 } while (0)
 #endif
 #define END_FAST_MATH(x)  _watcom_end_fast_math(&x)
+
+#elif defined(_MSC_VER) && defined(_M_IX86)
+#define DEFAULT_X86_FPU		0x037f /* See GCC comments above */
+#define FAST_X86_FPU		0x003f /* See GCC comments above */
+#if defined(NO_FAST_MATH)
+#define START_FAST_MATH(x) do {\
+	static GLuint mask = DEFAULT_X86_FPU;\
+	__asm fnstcw word ptr [x]\
+	__asm fldcw word ptr [mask]\
+} while(0)
+#else
+#define START_FAST_MATH(x) do {\
+	static GLuint mask = FAST_X86_FPU;\
+	__asm fnstcw word ptr [x]\
+	__asm fldcw word ptr [mask]\
+} while(0)
+#endif
+#define END_FAST_MATH(x) do {\
+	__asm fnclex\
+	__asm fldcw word ptr [x]\
+} while(0)
+
 #else
 #define START_FAST_MATH(x)  x = 0
 #define END_FAST_MATH(x)  (void)(x)
@@ -628,6 +650,9 @@ _mesa_memcmp( const void *s1, const void *s2, size_t n );
 
 extern double
 _mesa_sin(double a);
+
+extern float
+_mesa_sinf(float a);
 
 extern double
 _mesa_cos(double a);

@@ -30,39 +30,116 @@
 
 
 #include "glheader.h"
+#include "context.h"
+#include "hash.h"
 #include "shaderobjects.h"
 #include "shaderobjects_3dlabs.h"
-#include "context.h"
-#include "macros.h"
-#include "hash.h"
 
 
-void GLAPIENTRY
+#define I_UNKNOWN struct gl2_unknown_intf **
+#define I_GENERIC struct gl2_generic_intf **
+#define I_CONTAINER struct gl2_container_intf **
+#define I_PROGRAM struct gl2_program_intf **
+#define I_SHADER struct gl2_shader_intf **
+
+#define RELEASE_GENERIC(x)\
+	(**x)._unknown.Release ((I_UNKNOWN) x)
+
+#define RELEASE_CONTAINER(x)\
+	(**x)._generic._unknown.Release ((I_UNKNOWN) x)
+
+#define RELEASE_PROGRAM(x)\
+	(**x)._container._generic._unknown.Release ((I_UNKNOWN) x)
+
+#define RELEASE_SHADER(x)\
+	(**x)._generic._unknown.Release ((I_UNKNOWN) x);
+
+#define _LOOKUP_HANDLE(handle, function)\
+	I_UNKNOWN unk;\
+	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);\
+	unk = (I_UNKNOWN) _mesa_HashLookup (ctx->Shared->GL2Objects, handle);\
+	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);\
+	if (unk == NULL) {\
+		_mesa_error (ctx, GL_INVALID_VALUE, function);\
+		break;\
+	}
+
+#define _QUERY_INTERFACE(x, type, uuid, function)\
+	x = (type) (**unk).QueryInterface (unk, uuid);\
+	if (x == NULL) {\
+		_mesa_error (ctx, GL_INVALID_OPERATION, function);\
+		break;\
+	}
+
+#define GET_GENERIC(x, handle, function)\
+	I_GENERIC x = NULL;\
+	do {\
+		_LOOKUP_HANDLE(handle, function);\
+		_QUERY_INTERFACE(x, I_GENERIC, UIID_GENERIC, function);\
+	} while (0)
+
+#define GET_CONTAINER(x, handle, function)\
+	I_CONTAINER x = NULL;\
+	do {\
+		_LOOKUP_HANDLE(handle, function);\
+		_QUERY_INTERFACE(x, I_CONTAINER, UIID_CONTAINER, function);\
+	} while (0)
+
+#define GET_PROGRAM(x, handle, function)\
+	I_PROGRAM x = NULL;\
+	do {\
+		_LOOKUP_HANDLE(handle, function);\
+		_QUERY_INTERFACE(x, I_PROGRAM, UIID_PROGRAM, function);\
+	} while (0)
+
+#define GET_SHADER(x, handle, function)\
+	I_SHADER x = NULL;\
+	do {\
+		_LOOKUP_HANDLE(handle, function);\
+		_QUERY_INTERFACE(x, I_SHADER, UIID_SHADER, function);\
+	} while (0)
+
+#define _LINKED_PROGRAM(x, function)\
+	if ((**x).GetLinkStatus (x) == GL_FALSE) {\
+		RELEASE_PROGRAM(x);\
+		_mesa_error (ctx, GL_INVALID_OPERATION, function);\
+		break;\
+	}
+
+#define GET_LINKED_PROGRAM(x, handle, function)\
+	I_PROGRAM x = NULL;\
+	do {\
+		_LOOKUP_HANDLE(handle, function);\
+		_QUERY_INTERFACE(x, I_PROGRAM, UIID_PROGRAM, function);\
+		_LINKED_PROGRAM(x, function);\
+	} while (0)
+
+#define _CURRENT_PROGRAM(x, function)\
+	if (ctx->ShaderObjects.CurrentProgram == NULL) {\
+		_mesa_error (ctx, GL_INVALID_OPERATION, function);\
+		break;\
+	}\
+	x = ctx->ShaderObjects.CurrentProgram;
+
+#define GET_CURRENT_LINKED_PROGRAM(x, function)\
+	I_PROGRAM x = NULL;\
+	do {\
+		_CURRENT_PROGRAM(x, function);\
+		_LINKED_PROGRAM(x, function);\
+	} while (0)
+
+
+GLvoid GLAPIENTRY
 _mesa_DeleteObjectARB (GLhandleARB obj)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_generic_intf **gen;
+	GET_GENERIC(gen, obj, "glDeleteObjectARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, obj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
+	if (gen != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glDeleteObjectARB");
-		return;
+		(**gen).Delete (gen);
+		RELEASE_GENERIC(gen);
 	}
-
-	gen = (struct gl2_generic_intf **) (**unk).QueryInterface (unk, UIID_GENERIC);
-	if (gen == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glDeleteObjectARB");
-		return;
-	}
-
-	(**gen).Delete (gen);
-	(**gen)._unknown.Release ((struct gl2_unknown_intf **) gen);
 }
 
 GLhandleARB GLAPIENTRY
@@ -73,58 +150,37 @@ _mesa_GetHandleARB (GLenum pname)
 	switch (pname)
 	{
 	case GL_PROGRAM_OBJECT_ARB:
-		if (ctx->ShaderObjects.CurrentProgram != NULL)
-			return (**ctx->ShaderObjects.CurrentProgram)._container._generic.GetName (
-				(struct gl2_generic_intf **) ctx->ShaderObjects.CurrentProgram);
+		{
+			I_PROGRAM pro = ctx->ShaderObjects.CurrentProgram;
+
+			if (pro != NULL)
+				return (**pro)._container._generic.GetName ((I_GENERIC) pro);
+		}
 		break;
+	default:
+		_mesa_error (ctx, GL_INVALID_ENUM, "glGetHandleARB");
 	}
 
 	return 0;
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_DetachObjectARB (GLhandleARB containerObj, GLhandleARB attachedObj)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unkc, **unka;
-	struct gl2_container_intf **con;
-	struct gl2_generic_intf **att;
+	GET_CONTAINER(con, containerObj, "glDetachObjectARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unkc = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, containerObj);
-	unka = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, attachedObj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unkc == NULL || unka == NULL)
+	if (con != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glDetachObjectARB");
-		return;
-	}
+		GET_GENERIC(att, attachedObj, "glDetachObjectARB");
 
-	con = (struct gl2_container_intf **) (**unkc).QueryInterface (unkc, UIID_CONTAINER);
-	if (con == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glDetachObjectARB");
-		return;
+		if (att != NULL)
+		{
+			(**con).Detach (con, att);
+			RELEASE_GENERIC(att);
+		}
+		RELEASE_CONTAINER(con);
 	}
-
-	att = (struct gl2_generic_intf **) (**unka).QueryInterface (unka, UIID_GENERIC);
-	if (att == NULL)
-	{
-		(**con)._generic._unknown.Release ((struct gl2_unknown_intf **) con);
-		_mesa_error (ctx, GL_INVALID_VALUE, "glDetachObjectARB");
-		return;
-	}
-
-	if ((**con).Detach (con, att) == GL_FALSE)
-	{
-		(**con)._generic._unknown.Release ((struct gl2_unknown_intf **) con);
-		(**att)._unknown.Release ((struct gl2_unknown_intf **) att);
-		return;
-	}
-
-	(**con)._generic._unknown.Release ((struct gl2_unknown_intf **) con);
-	(**att)._unknown.Release ((struct gl2_unknown_intf **) att);
 }
 
 GLhandleARB GLAPIENTRY
@@ -133,40 +189,27 @@ _mesa_CreateShaderObjectARB (GLenum shaderType)
 	return _mesa_3dlabs_create_shader_object (shaderType);
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_ShaderSourceARB (GLhandleARB shaderObj, GLsizei count, const GLcharARB **string,
 					   const GLint *length)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_shader_intf **sha;
 	GLint *offsets;
 	GLsizei i;
 	GLcharARB *source;
+	GET_SHADER(sha, shaderObj, "glShaderSourceARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, shaderObj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glShaderSourceARB");
-		return;
-	}
-
-	sha = (struct gl2_shader_intf **) (**unk).QueryInterface (unk, UIID_SHADER);
 	if (sha == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glShaderSourceARB");
 		return;
-	}
 
-	/* this array holds offsets of where the appropriate string ends, thus the last
-	element will be set to the total length of the source code */
+	/*
+	 * This array holds offsets of where the appropriate string ends, thus the last
+	 * element will be set to the total length of the source code.
+	 */
 	offsets = (GLint *) _mesa_malloc (count * sizeof (GLint));
 	if (offsets == NULL)
 	{
-		(**sha)._generic._unknown.Release ((struct gl2_unknown_intf **) sha);
+		RELEASE_SHADER(sha);
 		_mesa_error (ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
 		return;
 	}
@@ -185,8 +228,8 @@ _mesa_ShaderSourceARB (GLhandleARB shaderObj, GLsizei count, const GLcharARB **s
 	source = (GLcharARB *) _mesa_malloc ((offsets[count - 1] + 1) * sizeof (GLcharARB));
 	if (source == NULL)
 	{
-		_mesa_free ((void *) offsets);
-		(**sha)._generic._unknown.Release ((struct gl2_unknown_intf **) sha);
+		_mesa_free ((GLvoid *) offsets);
+		RELEASE_SHADER(sha);
 		_mesa_error (ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
 		return;
 	}
@@ -199,197 +242,105 @@ _mesa_ShaderSourceARB (GLhandleARB shaderObj, GLsizei count, const GLcharARB **s
 	source[offsets[count - 1]] = '\0';
 
 	(**sha).SetSource (sha, source, offsets, count);
-	(**sha)._generic._unknown.Release ((struct gl2_unknown_intf **) sha);
+	RELEASE_SHADER(sha);
 }
 
-void  GLAPIENTRY
+GLvoid  GLAPIENTRY
 _mesa_CompileShaderARB (GLhandleARB shaderObj)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_shader_intf **sha;
+	GET_SHADER(sha, shaderObj, "glCompileShaderARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, shaderObj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
+	if (sha != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glCompileShaderARB");
-		return;
+		(**sha).Compile (sha);
+		RELEASE_SHADER(sha);
 	}
-
-	sha = (struct gl2_shader_intf **) (**unk).QueryInterface (unk, UIID_SHADER);
-	if (sha == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glCompileShaderARB");
-		return;
-	}
-
-	(**sha).Compile (sha);
-	(**sha)._generic._unknown.Release ((struct gl2_unknown_intf **) sha);
 }
 
 GLhandleARB GLAPIENTRY
-_mesa_CreateProgramObjectARB (void)
+_mesa_CreateProgramObjectARB (GLvoid)
 {
 	return _mesa_3dlabs_create_program_object ();
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_AttachObjectARB (GLhandleARB containerObj, GLhandleARB obj)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unkc, **unka;
-	struct gl2_container_intf **con;
-	struct gl2_generic_intf **att;
+	GET_CONTAINER(con, containerObj, "glAttachObjectARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unkc = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, containerObj);
-	unka = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, obj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unkc == NULL || unka == NULL)
+	if (con != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glAttachObjectARB");
-		return;
-	}
+		GET_GENERIC(att, obj, "glAttachObjectARB");
 
-	con = (struct gl2_container_intf **) (**unkc).QueryInterface (unkc, UIID_CONTAINER);
-	if (con == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glAttachObjectARB");
-		return;
+		if (att != NULL)
+		{
+			(**con).Attach (con, att);
+			RELEASE_GENERIC(att);
+		}
+		RELEASE_CONTAINER(con);
 	}
-
-	att = (struct gl2_generic_intf **) (**unka).QueryInterface (unka, UIID_GENERIC);
-	if (att == NULL)
-	{
-		(**con)._generic._unknown.Release ((struct gl2_unknown_intf **) con);
-		_mesa_error (ctx, GL_INVALID_VALUE, "glAttachObjectARB");
-		return;
-	}
-
-	if (!(**con).Attach (con, att))
-	{
-		(**con)._generic._unknown.Release ((struct gl2_unknown_intf **) con);
-		(**att)._unknown.Release ((struct gl2_unknown_intf **) att);
-		return;
-	}
-
-	(**con)._generic._unknown.Release ((struct gl2_unknown_intf **) con);
-	(**att)._unknown.Release ((struct gl2_unknown_intf **) att);
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_LinkProgramARB (GLhandleARB programObj)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_program_intf **pro;
+	GET_PROGRAM(pro, programObj, "glLinkProgramARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, programObj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glLinkProgramARB");
-		return;
+		if (pro == ctx->ShaderObjects.CurrentProgram)
+		{
+			/* TODO re-install executable program */
+		}
+		(**pro).Link (pro);
+		RELEASE_PROGRAM(pro);
 	}
-
-	pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);
-	if (pro == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glLinkProgramARB");
-		return;
-	}
-
-	if (pro == ctx->ShaderObjects.CurrentProgram)
-	{
-		/* TODO re-install executable program */
-	}
-
-	(**pro).Link (pro);
-	(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_UseProgramObjectARB (GLhandleARB programObj)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_program_intf **pro;
+	I_PROGRAM program = NULL;
 
 	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-	if (programObj == 0)
+	if (programObj != 0)
 	{
-		pro = NULL;
-	}
-	else
-	{
-		struct gl2_unknown_intf **unk;
+		GET_PROGRAM(pro, programObj, "glUseProgramObjectARB");
 
-		_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-		unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, programObj);
-		_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-		if (unk == NULL)
-		{
-			_mesa_error (ctx, GL_INVALID_VALUE, "glUseProgramObjectARB");
-			return;
-		}
-
-		pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);
 		if (pro == NULL)
-		{
-			_mesa_error (ctx, GL_INVALID_OPERATION, "glUseProgramObjectARB");
 			return;
-		}
 
 		if ((**pro).GetLinkStatus (pro) == GL_FALSE)
 		{
-			(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
+			RELEASE_PROGRAM(pro);
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUseProgramObjectARB");
 			return;
 		}
+
+		program = pro;
 	}
 
 	if (ctx->ShaderObjects.CurrentProgram != NULL)
-	{
-		(**ctx->ShaderObjects.CurrentProgram)._container._generic._unknown.Release (
-			(struct gl2_unknown_intf **) ctx->ShaderObjects.CurrentProgram);
-	}
-
-	ctx->ShaderObjects.CurrentProgram = pro;
+		RELEASE_PROGRAM(ctx->ShaderObjects.CurrentProgram);
+	ctx->ShaderObjects.CurrentProgram = program;
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_ValidateProgramARB (GLhandleARB programObj)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_program_intf **pro;
+	GET_PROGRAM(pro, programObj, "glValidateProgramARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, programObj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glValidateProgramARB");
-		return;
+		(**pro).Validate (pro);
+		RELEASE_PROGRAM(pro);
 	}
-
-	pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);
-	if (pro == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glValidateProgramARB");
-		return;
-	}
-
-	(**pro).Validate (pro);
-	(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
 }
 
 /*
@@ -415,282 +366,339 @@ Errors TODO
 
 */
 
-#define _RELEASE_PROGRAM(obj)\
-	(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro)
-
-#define _LOOKUP_PROGRAM(obj, function)\
-	struct gl2_unknown_intf **unk;\
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);\
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, obj);\
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);\
-	if (unk == NULL) {\
-		_mesa_error (ctx, GL_INVALID_VALUE, function);\
-		break;\
-	}\
-	pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);\
-	if (pro == NULL) {\
-		_mesa_error (ctx, GL_INVALID_OPERATION, function);\
-		break;\
-	}
-
-#define _CURRENT_PROGRAM(function)\
-	if (ctx->ShaderObjects.CurrentProgram == NULL) {\
-		_mesa_error (ctx, GL_INVALID_OPERATION, function);\
-		break;\
-	}\
-	pro = ctx->ShaderObjects.CurrentProgram;
-
-#define _IS_LINKED(function)\
-	if ((**pro).GetLinkStatus (pro) == GL_FALSE) {\
-		_mesa_error (ctx, GL_INVALID_OPERATION, function);\
-		_RELEASE_PROGRAM(obj);\
-		break;\
-	}
-
-#define GET_PROGRAM(obj, function)\
-	struct gl2_program_intf **pro = NULL;\
-	do {\
-		_LOOKUP_PROGRAM(obj, function);\
-	} while (0)
-
-#define GET_LINKED_PROGRAM(obj, function)\
-	struct gl2_program_intf **pro = NULL;\
-	do {\
-		_LOOKUP_PROGRAM(obj, function);\
-		_IS_LINKED(function);\
-	} while (0)
-
-#define CURRENT_LINKED_PROGRAM(function)\
-	struct gl2_program_intf **pro = NULL;\
-	do {\
-		_CURRENT_PROGRAM(function);\
-		_IS_LINKED(function);\
-	} while (0)
-
-/* XXX */
-GLboolean _slang_write_uniform (struct gl2_program_intf **, GLint, GLsizei, const GLvoid *, GLenum);
-
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform1fARB (GLint location, GLfloat v0)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	CURRENT_LINKED_PROGRAM("glUniform1fARB");
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform1fARB");
 
-	if (!_slang_write_uniform (pro, location, 1, &v0, GL_FLOAT))
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1fARB");
+	if (pro != NULL)
+	{
+		if (!_slang_write_uniform (pro, location, 1, &v0, GL_FLOAT))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1fARB");
+	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform2fARB (GLint location, GLfloat v0, GLfloat v1)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform2fARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2fARB");
-		return;
+		GLfloat v[2] = { v0, v1 };
+
+		if (!_slang_write_uniform (pro, location, 1, v, GL_FLOAT_VEC2))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2fARB");
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform3fARB (GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform3fARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3fARB");
-		return;
+		GLfloat v[3] = { v0, v1, v2 };
+
+		if (!_slang_write_uniform (pro, location, 1, v, GL_FLOAT_VEC3))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3fARB");
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform4fARB (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform4fARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4fARB");
-		return;
+		GLfloat v[4] = { v0, v1, v2, v3 };
+
+		if (!_slang_write_uniform (pro, location, 1, v, GL_FLOAT_VEC4))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4fARB");
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform1iARB (GLint location, GLint v0)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform1iARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1iARB");
-		return;
+		if (!_slang_write_uniform (pro, location, 1, &v0, GL_INT))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1iARB");
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform2iARB (GLint location, GLint v0, GLint v1)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform2iARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2iARB");
-		return;
+		GLint v[2] = { v0, v1 };
+
+		if (!_slang_write_uniform (pro, location, 1, v, GL_INT_VEC2))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2iARB");
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform3iARB (GLint location, GLint v0, GLint v1, GLint v2)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform3iARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3iARB");
-		return;
+		GLint v[3] = { v0, v1, v2 };
+
+		if (!_slang_write_uniform (pro, location, 1, v, GL_INT_VEC3))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3iARB");
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform4iARB (GLint location, GLint v0, GLint v1, GLint v2, GLint v3)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform4iARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4iARB");
-		return;
+		GLint v[4] = { v0, v1, v2, v3 };
+
+		if (!_slang_write_uniform (pro, location, 1, v, GL_INT_VEC4))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4iARB");
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform1fvARB (GLint location, GLsizei count, const GLfloat *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform1fvARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1fvARB");
-		return;
+		if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1fvARB");
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform2fvARB (GLint location, GLsizei count, const GLfloat *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform2fvARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2fvARB");
-		return;
+		if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT_VEC2))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2fvARB");
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform3fvARB (GLint location, GLsizei count, const GLfloat *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform3fvARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3fvARB");
-		return;
+		if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT_VEC3))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3fvARB");
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform4fvARB (GLint location, GLsizei count, const GLfloat *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	CURRENT_LINKED_PROGRAM("glUniform4fvARB");
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform4fvARB");
 
-	if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT_VEC4_ARB))
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4fvARB");
+	if (pro != NULL)
+	{
+		if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT_VEC4))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4fvARB");
+	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform1ivARB (GLint location, GLsizei count, const GLint *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform1ivARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1ivARB");
-		return;
+		if (!_slang_write_uniform (pro, location, count, value, GL_INT))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1ivARB");
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform2ivARB (GLint location, GLsizei count, const GLint *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform2ivARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2ivARB");
-		return;
+		if (!_slang_write_uniform (pro, location, count, value, GL_INT_VEC2))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2ivARB");
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform3ivARB (GLint location, GLsizei count, const GLint *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform3ivARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3ivARB");
-		return;
+		if (!_slang_write_uniform (pro, location, count, value, GL_INT_VEC3))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3ivARB");
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_Uniform4ivARB (GLint location, GLsizei count, const GLint *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform4ivARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4ivARB");
-		return;
+		if (!_slang_write_uniform (pro, location, count, value, GL_INT_VEC4))
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4ivARB");
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_UniformMatrix2fvARB (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniformMatrix2fvARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix2fvARB");
-		return;
+		if (transpose)
+		{
+			GLfloat *trans, *pt;
+			const GLfloat *pv;
+
+			trans = (GLfloat *) _mesa_malloc (count * 4 * sizeof (GLfloat));
+			if (trans == NULL)
+			{
+				_mesa_error (ctx, GL_OUT_OF_MEMORY, "glUniformMatrix2fvARB");
+				return;
+			}
+			for (pt = trans, pv = value; pt != trans + count * 4; pt += 4, pv += 4)
+			{
+				pt[0] = pv[0];
+				pt[1] = pv[2];
+				pt[2] = pv[1];
+				pt[3] = pv[3];
+			}
+			if (!_slang_write_uniform (pro, location, count, trans, GL_FLOAT_MAT2))
+				_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix2fvARB");
+			_mesa_free (trans);
+		}
+		else
+		{
+			if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT_MAT2))
+				_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix2fvARB");
+		}
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_UniformMatrix3fvARB (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniformMatrix3fvARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix3fvARB");
-		return;
+		if (transpose)
+		{
+			GLfloat *trans, *pt;
+			const GLfloat *pv;
+
+			trans = (GLfloat *) _mesa_malloc (count * 9 * sizeof (GLfloat));
+			if (trans == NULL)
+			{
+				_mesa_error (ctx, GL_OUT_OF_MEMORY, "glUniformMatrix3fvARB");
+				return;
+			}
+			for (pt = trans, pv = value; pt != trans + count * 9; pt += 9, pv += 9)
+			{
+				pt[0] = pv[0];
+				pt[1] = pv[3];
+				pt[2] = pv[6];
+				pt[3] = pv[1];
+				pt[4] = pv[4];
+				pt[5] = pv[7];
+				pt[6] = pv[2];
+				pt[7] = pv[5];
+				pt[8] = pv[8];
+			}
+			if (!_slang_write_uniform (pro, location, count, trans, GL_FLOAT_MAT3))
+				_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix3fvARB");
+			_mesa_free (trans);
+		}
+		else
+		{
+			if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT_MAT3))
+				_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix3fvARB");
+		}
 	}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_UniformMatrix4fvARB (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
 {
 	GET_CURRENT_CONTEXT(ctx);
+	GET_CURRENT_LINKED_PROGRAM(pro, "glUniformMatrix4fvARB");
 
-	if (ctx->ShaderObjects.CurrentProgram == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix4fvARB");
-		return;
+		if (transpose)
+		{
+			GLfloat *trans, *pt;
+			const GLfloat *pv;
+
+			trans = (GLfloat *) _mesa_malloc (count * 16 * sizeof (GLfloat));
+			if (trans == NULL)
+			{
+				_mesa_error (ctx, GL_OUT_OF_MEMORY, "glUniformMatrix4fvARB");
+				return;
+			}
+			for (pt = trans, pv = value; pt != trans + count * 16; pt += 16, pv += 16)
+			{
+				_math_transposef (pt, pv);
+			}
+			if (!_slang_write_uniform (pro, location, count, trans, GL_FLOAT_MAT4))
+				_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix4fvARB");
+			_mesa_free (trans);
+		}
+		else
+		{
+			if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT_MAT4))
+				_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix4fvARB");
+		}
 	}
 }
 
@@ -699,513 +707,342 @@ _mesa_get_object_parameter (GLhandleARB obj, GLenum pname, GLvoid *params, GLboo
 	GLint *size)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_generic_intf **gen;
-	struct gl2_shader_intf **sha;
-	struct gl2_program_intf **pro;
 	GLint *ipar = (GLint *) params;
-	/*GLfloat *fpar = (GLfloat *) params;*/
-	GLboolean success = GL_TRUE;
-
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, obj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetObjectParameterivARB");
-		return GL_FALSE;
-	}
-
-	gen = (struct gl2_generic_intf **) (**unk).QueryInterface (unk, UIID_GENERIC);
-	if (gen == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
-		return GL_FALSE;
-	}
-
-	sha = (struct gl2_shader_intf **) (**unk).QueryInterface (unk, UIID_SHADER);
-	pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);
 
 	/* set default values */
 	*integral = GL_TRUE;	/* indicates param type, TRUE: GLint, FALSE: GLfloat */
-	*size = 1;				/* param array size */ 
+	*size = 1;				/* param array size */
 
 	switch (pname)
 	{
 	case GL_OBJECT_TYPE_ARB:
-		*ipar = (**gen).GetType (gen);
-		break;
-	case GL_OBJECT_SUBTYPE_ARB:
-		if (sha != NULL)
-			*ipar = (**sha).GetSubType (sha);
-		else {
-			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
-			success = GL_FALSE;
+	case GL_OBJECT_DELETE_STATUS_ARB:
+	case GL_OBJECT_INFO_LOG_LENGTH_ARB:
+		{
+			GET_GENERIC(gen, obj, "glGetObjectParameterivARB");
+
+			if (gen == NULL)
+				return GL_FALSE;
+
+			switch (pname)
+			{
+			case GL_OBJECT_TYPE_ARB:
+				*ipar = (**gen).GetType (gen);
+				break;
+			case GL_OBJECT_DELETE_STATUS_ARB:
+				*ipar = (**gen).GetDeleteStatus (gen);
+				break;
+			case GL_OBJECT_INFO_LOG_LENGTH_ARB:
+				{
+					const GLcharARB *info = (**gen).GetInfoLog (gen);
+
+					if (info == NULL)
+						*ipar = 0;
+					else
+						*ipar = _mesa_strlen (info) + 1;
+				}
+				break;
+			}
+
+			RELEASE_GENERIC(gen);
 		}
 		break;
-	case GL_OBJECT_DELETE_STATUS_ARB:
-		*ipar = (**gen).GetDeleteStatus (gen);
-		break;
+	case GL_OBJECT_SUBTYPE_ARB:
 	case GL_OBJECT_COMPILE_STATUS_ARB:
-		if (sha != NULL)
-			*ipar = (**sha).GetCompileStatus (sha);
-		else {
-			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
-			success = GL_FALSE;
+	case GL_OBJECT_SHADER_SOURCE_LENGTH_ARB:
+		{
+			GET_SHADER(sha, obj, "glGetObjectParameterivARB");
+
+			if (sha == NULL)
+				return GL_FALSE;
+
+			switch (pname)
+			{
+			case GL_OBJECT_SUBTYPE_ARB:
+				*ipar = (**sha).GetSubType (sha);
+				break;
+			case GL_OBJECT_COMPILE_STATUS_ARB:
+				*ipar = (**sha).GetCompileStatus (sha);
+				break;
+			case GL_OBJECT_SHADER_SOURCE_LENGTH_ARB:
+				{
+					const GLcharARB *src = (**sha).GetSource (sha);
+
+					if (src == NULL)
+						*ipar = 0;
+					else
+						*ipar = _mesa_strlen (src) + 1;
+				}
+				break;
+			}
+
+			RELEASE_SHADER(sha);
 		}
 		break;
 	case GL_OBJECT_LINK_STATUS_ARB:
-		if (pro != NULL)
-			*ipar = (**pro).GetLinkStatus (pro);
-		else {
-			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
-			success = GL_FALSE;
-		}
-		break;
 	case GL_OBJECT_VALIDATE_STATUS_ARB:
-		if (pro != NULL)
-			*ipar = (**pro).GetValidateStatus (pro);
-		else {
-			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
-			success = GL_FALSE;
-		}
-		break;
-	case GL_OBJECT_INFO_LOG_LENGTH_ARB:
-		{
-			const GLcharARB *info = (**gen).GetInfoLog (gen);
-			if (info == NULL)
-				*ipar = 0;
-			else
-				*ipar = _mesa_strlen (info) + 1;
-		}
-		break;
 	case GL_OBJECT_ATTACHED_OBJECTS_ARB:
-		if (pro != NULL)
-			*ipar = (**pro)._container.GetAttachedCount ((struct gl2_container_intf **) pro);
-		else {
-			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
-			success = GL_FALSE;
-		}
-		break;
 	case GL_OBJECT_ACTIVE_UNIFORMS_ARB:
-		if (pro != NULL)
-			*ipar = 0;	/* TODO */
-		else {
-			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
-			success = GL_FALSE;
-		}
-		break;
 	case GL_OBJECT_ACTIVE_UNIFORM_MAX_LENGTH_ARB:
-		if (pro != NULL)
-			*ipar = 0;	/* TODO */
-		else {
-			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
-			success = GL_FALSE;
-		}
-		break;
-	case GL_OBJECT_SHADER_SOURCE_LENGTH_ARB:
-		if (sha != NULL) {
-			const GLcharARB *src = (**sha).GetSource (sha);
-			if (src == NULL)
-				*ipar = 0;
-			else
-				*ipar = _mesa_strlen (src) + 1;
-		} else {
-			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
-			success = GL_FALSE;
+		{
+			GET_PROGRAM(pro, obj, "glGetObjectParameterivARB");
+
+			if (pro == NULL)
+				return GL_FALSE;
+
+			switch (pname)
+			{
+			case GL_OBJECT_LINK_STATUS_ARB:
+				*ipar = (**pro).GetLinkStatus (pro);
+				break;
+			case GL_OBJECT_VALIDATE_STATUS_ARB:
+				*ipar = (**pro).GetValidateStatus (pro);
+				break;
+			case GL_OBJECT_ATTACHED_OBJECTS_ARB:
+				*ipar = (**pro)._container.GetAttachedCount ((I_CONTAINER) pro);
+				break;
+			case GL_OBJECT_ACTIVE_UNIFORMS_ARB:
+				*ipar = _slang_get_active_uniform_count (pro);
+				break;
+			case GL_OBJECT_ACTIVE_UNIFORM_MAX_LENGTH_ARB:
+				*ipar = _slang_get_active_uniform_max_length (pro);
+				break;
+			}
+
+			RELEASE_PROGRAM(pro);
 		}
 		break;
 	default:
 		_mesa_error (ctx, GL_INVALID_ENUM, "glGetObjectParameterivARB");
-		success = GL_FALSE;
-		break;
+		return GL_FALSE;
 	}
 
-	(**gen)._unknown.Release ((struct gl2_unknown_intf **) gen);
-	if (sha != NULL)
-		(**sha)._generic._unknown.Release ((struct gl2_unknown_intf **) sha);
-	if (pro != NULL)
-		(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
-
-	return success;
+	return GL_TRUE;
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_GetObjectParameterfvARB (GLhandleARB obj, GLenum pname, GLfloat *params)
 {
 	GLboolean integral;
-	GLint size, i;
+	GLint size;
 
 	assert (sizeof (GLfloat) == sizeof (GLint));
 
-	if (_mesa_get_object_parameter (obj, pname, (GLvoid *) params, &integral, &size) != GL_FALSE)
-		if (integral != GL_FALSE)
+	if (_mesa_get_object_parameter (obj, pname, (GLvoid *) params, &integral, &size))
+		if (integral)
+		{
+			GLint i;
+
 			for (i = 0; i < size; i++)
 				params[i] = (GLfloat) ((GLint *) params)[i];
+		}
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_GetObjectParameterivARB (GLhandleARB obj, GLenum pname, GLint *params)
 {
 	GLboolean integral;
-	GLint size, i;
+	GLint size;
 
 	assert (sizeof (GLfloat) == sizeof (GLint));
 
-	if (_mesa_get_object_parameter (obj, pname, (GLvoid *) params, &integral, &size) != GL_FALSE)
-		if (integral == GL_FALSE)
+	if (_mesa_get_object_parameter (obj, pname, (GLvoid *) params, &integral, &size))
+		if (!integral)
+		{
+			GLint i;
+
 			for (i = 0; i < size; i++)
 				params[i] = (GLint) ((GLfloat *) params)[i];
+		}
 }
 
-static void
+static GLvoid
 _mesa_get_string (const GLcharARB *src, GLsizei maxLength, GLsizei *length, GLcharARB *str)
 {
 	GLsizei len;
+
+	if (maxLength == 0)
+	{
+		if (length != NULL)
+			*length = 0;
+		return;
+	}
 
 	if (src == NULL)
 		src = "";
 
 	len = _mesa_strlen (src);
-	if (len > maxLength)
-	{
-		len = maxLength;
-		/* allocate space for null termination */
-		if (len > 0)
-			len--;
-	}
+	if (len >= maxLength)
+		len = maxLength - 1;
 
 	_mesa_memcpy (str, src, len * sizeof (GLcharARB));
-	if (maxLength > 0)
-		str[len] = '\0';
-
+	str[len] = '\0';
 	if (length != NULL)
 		*length = len;
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_GetInfoLogARB (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *infoLog)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_generic_intf **gen;
+	GET_GENERIC(gen, obj, "glGetInfoLogARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, obj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
+	if (gen != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetInfoLogARB");
-		return;
+		_mesa_get_string ((**gen).GetInfoLog (gen), maxLength, length, infoLog);
+		RELEASE_GENERIC(gen);
 	}
-
-	gen = (struct gl2_generic_intf **) (**unk).QueryInterface (unk, UIID_GENERIC);
-	if (gen == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetInfoLogARB");
-		return;
-	}
-
-	_mesa_get_string ((**gen).GetInfoLog (gen), maxLength, length, infoLog);
-
-	(**gen)._unknown.Release ((struct gl2_unknown_intf **) gen);
 }
 
-void GLAPIENTRY
-_mesa_GetAttachedObjectsARB (GLhandleARB containerObj, GLsizei maxCount, GLsizei *count, GLhandleARB *obj)
+GLvoid GLAPIENTRY
+_mesa_GetAttachedObjectsARB (GLhandleARB containerObj, GLsizei maxCount, GLsizei *count,
+							 GLhandleARB *obj)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_container_intf **con;
 	GLsizei cnt, i;
+	GET_CONTAINER(con, containerObj, "glGetAttachedObjectsARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, containerObj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
+	if (con != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetAttachedObjectsARB");
-		return;
+		cnt = (**con).GetAttachedCount (con);
+		if (cnt > maxCount)
+			cnt = maxCount;
+		if (count != NULL)
+			*count = cnt;
+
+		for (i = 0; i < cnt; i++)
+		{
+			I_GENERIC x = (**con).GetAttached (con, i);
+			obj[i] = (**x).GetName (x);
+			RELEASE_GENERIC(x);
+		}
+		RELEASE_CONTAINER(con);
 	}
-
-	con = (struct gl2_container_intf **) (**unk).QueryInterface (unk, UIID_CONTAINER);
-	if (con == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetAttachedObjectsARB");
-		return;
-	}
-
-	cnt = (**con).GetAttachedCount (con);
-	if (cnt > maxCount)
-		cnt = maxCount;
-
-	for (i = 0; i < cnt; i++)
-	{
-		struct gl2_generic_intf **x = (**con).GetAttached (con, i);
-		obj[i] = (**x).GetName (x);
-		(**x)._unknown.Release ((struct gl2_unknown_intf **) x);
-	}
-
-	(**con)._generic._unknown.Release ((struct gl2_unknown_intf **) con);
-
-	if (count != NULL)
-		*count = cnt;
 }
-
-/* XXX */
-GLint _slang_get_uniform_location (struct gl2_program_intf **, const char *);
 
 GLint GLAPIENTRY
 _mesa_GetUniformLocationARB (GLhandleARB programObj, const GLcharARB *name)
 {
 	GET_CURRENT_CONTEXT(ctx);
 	GLint loc = -1;
-	GET_LINKED_PROGRAM(programObj, "glGetUniformLocationARB");
+	GET_LINKED_PROGRAM(pro, programObj, "glGetUniformLocationARB");
 
-	if (pro == NULL)
-		return -1;
-
-	loc = _slang_get_uniform_location (pro, name);
-	_RELEASE_PROGRAM(pro);
+	if (pro != NULL)
+	{
+		if (name != NULL && (name[0] != 'g' || name[1] != 'l' || name[2] != '_'))
+			loc = _slang_get_uniform_location (pro, name);
+		RELEASE_PROGRAM(pro);
+	}
 	return loc;
 }
 
-void GLAPIENTRY
-_mesa_GetActiveUniformARB (GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei *length, GLint *size, GLenum *type, GLcharARB *name)
+GLvoid GLAPIENTRY
+_mesa_GetActiveUniformARB (GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei *length,
+	GLint *size, GLenum *type, GLcharARB *name)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_program_intf **pro;
+	GET_PROGRAM(pro, programObj, "glGetActiveUniformARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, programObj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetActiveUniformARB");
-		return;
+		if (index < _slang_get_active_uniform_count (pro))
+			_slang_get_active_uniform (pro, index, maxLength, length, size, type, name);
+		else
+			_mesa_error (ctx, GL_INVALID_VALUE, "glGetActiveUniformARB");
+		RELEASE_PROGRAM(pro);
 	}
-
-	pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);
-	if (pro == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetActiveUniformARB");
-		return;
-	}
-
-/*	if (index >= val (OBJECT_ACTIVE_ATTRIBUTES_ARB))
-	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetActiveUniformARB");
-		(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
-		return;
-	}*/
-
-	/* TODO */
-
-	(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_GetUniformfvARB (GLhandleARB programObj, GLint location, GLfloat *params)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_program_intf **pro;
+	GET_LINKED_PROGRAM(pro, programObj, "glGetUniformfvARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, programObj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetUniformfvARB");
-		return;
+		/* TODO */
+		RELEASE_PROGRAM(pro);
 	}
-
-	pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);
-	if (pro == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetUniformfvARB");
-		return;
-	}
-
-	if ((**pro).GetLinkStatus (pro) == GL_FALSE)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetUniformfvARB");
-		(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
-		return;
-	}
-
-	/* TODO validate location (OPERATION) */
-
-	/* TODO */
-
-	(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_GetUniformivARB (GLhandleARB programObj, GLint location, GLint *params)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_program_intf **pro;
+	GET_LINKED_PROGRAM(pro, programObj, "glGetUniformivARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, programObj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetUniformivARB");
-		return;
+		/* TODO */
+		RELEASE_PROGRAM(pro);
 	}
-
-	pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);
-	if (pro == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetUniformivARB");
-		return;
-	}
-
-	if ((**pro).GetLinkStatus (pro) == GL_FALSE)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetUniformivARB");
-		(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
-		return;
-	}
-
-	/* TODO validate location (GL_INVALID_OPERATION) */
-
-	/* TODO */
-
-	(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
 }
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_GetShaderSourceARB (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *source)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_shader_intf **sha;
+	GET_SHADER(sha, obj, "glGetShaderSourceARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, obj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
+	if (sha != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetShaderSourceARB");
-		return;
+		_mesa_get_string ((**sha).GetSource (sha), maxLength, length, source);
+		RELEASE_SHADER(sha);
 	}
-
-	sha = (struct gl2_shader_intf **) (**unk).QueryInterface (unk, UIID_SHADER);
-	if (sha == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetShaderSourceARB");
-		return;
-	}
-
-	_mesa_get_string ((**sha).GetSource (sha), maxLength, length, source);
-
-	(**sha)._generic._unknown.Release ((struct gl2_unknown_intf **) sha);
 }
 
 /* GL_ARB_vertex_shader */
 
-void GLAPIENTRY
+GLvoid GLAPIENTRY
 _mesa_BindAttribLocationARB (GLhandleARB programObj, GLuint index, const GLcharARB *name)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_program_intf **pro;
+	GET_PROGRAM(pro, programObj, "glBindAttribLocationARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, programObj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glBindAttribLocationARB");
-		return;
+		if (name != NULL && (name[0] != 'g' || name[1] != 'l' || name[2] != '_'))
+		{
+			/* TODO */
+		}
+		RELEASE_PROGRAM(pro);
 	}
-
-	pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);
-	if (pro == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glBindAttribLocationARB");
-		return;
-	}
-
-	/* TODO */
-
-	(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
 }
 
-void GLAPIENTRY
-_mesa_GetActiveAttribARB (GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei *length, GLint *size, GLenum *type, GLcharARB *name)
+GLvoid GLAPIENTRY
+_mesa_GetActiveAttribARB (GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei *length,
+						  GLint *size, GLenum *type, GLcharARB *name)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_program_intf **pro;
+	GET_PROGRAM(pro, programObj, "glGetActiveAttribARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, programObj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetActiveAttribARB");
-		return;
+		/* TODO */
+		RELEASE_PROGRAM(pro);
 	}
-
-	pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);
-	if (pro == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetActiveAttribARB");
-		return;
-	}
-
-	/* TODO */
-
-	(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
 }
 
 GLint GLAPIENTRY
 _mesa_GetAttribLocationARB (GLhandleARB programObj, const GLcharARB *name)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_unknown_intf **unk;
-	struct gl2_program_intf **pro;
-	GLint loc = 0;
+	GLint loc = -1;
+	GET_PROGRAM(pro, programObj, "glGetAttribLocationARB");
 
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
-	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, programObj);
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
-
-	if (unk == NULL)
+	if (pro != NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetAttribLocationARB");
-		return 0;
+		if (name != NULL && (name[0] != 'g' || name[1] != 'l' || name[2] != '_'))
+		{
+			/* TODO */
+		}
+		RELEASE_PROGRAM(pro);
 	}
-
-	pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);
-	if (pro == NULL)
-	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetAttribLocationARB");
-		return 0;
-	}
-
-	/* TODO */
-
-	(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
 	return loc;
 }
 
-void
+GLvoid
 _mesa_init_shaderobjects (GLcontext *ctx)
 {
 	ctx->ShaderObjects.CurrentProgram = NULL;

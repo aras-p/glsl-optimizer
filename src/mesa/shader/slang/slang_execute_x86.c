@@ -1,0 +1,536 @@
+/*
+ * Mesa 3-D graphics library
+ * Version:  6.5
+ *
+ * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/**
+ * \file slang_execute_x86.c
+ * x86 back end compiler
+ * \author Michal Krol, Keith Whitwell
+ */
+
+#include "imports.h"
+#include "context.h"
+#include "colormac.h"
+#include "swrast/s_context.h"
+#include "slang_execute.h"
+#include "slang_library_noise.h"
+
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+
+#include "x86/rtasm/x86sse.h"
+
+typedef struct
+{
+	GLuint index;
+	GLubyte *csr;
+} fixup;
+
+typedef struct
+{
+	struct x86_function f;
+	struct x86_reg r_eax;
+	struct x86_reg r_ecx;
+	struct x86_reg r_edx;
+	struct x86_reg r_esp;
+	struct x86_reg r_ebp;
+	struct x86_reg r_st0;
+	struct x86_reg r_st1;
+	struct x86_reg r_st2;
+	struct x86_reg r_st3;
+	fixup *fixups;
+	GLuint fixup_count;
+	GLubyte **labels;
+	slang_machine *mach;
+	GLubyte *l_discard;
+	GLubyte *l_exit;
+	GLshort fpucntl;
+} codegen_ctx;
+
+static GLvoid add_fixup (codegen_ctx *G, GLuint index, GLubyte *csr)
+{
+	G->fixups = (fixup *) slang_alloc_realloc (G->fixups, G->fixup_count * sizeof (fixup),
+		(G->fixup_count + 1) * sizeof (fixup));
+	G->fixups[G->fixup_count].index = index;
+	G->fixups[G->fixup_count].csr = csr;
+	G->fixup_count++;
+}
+
+#ifdef NO_FAST_MATH
+#define RESTORE_FPU (DEFAULT_X86_FPU)
+#define RND_NEG_FPU (DEFAULT_X86_FPU | 0x400)
+#else
+#define RESTORE_FPU (FAST_X86_FPU)
+#define RND_NEG_FPU (FAST_X86_FPU | 0x400)
+#endif
+
+static void set_fpu_round_neg_inf (codegen_ctx *G)
+{
+	if (G->fpucntl != RND_NEG_FPU)
+	{
+		G->fpucntl = RND_NEG_FPU;
+		x87_fnclex (&G->f);
+		x86_mov_reg_imm (&G->f, G->r_eax, (GLint) &G->mach->x86.fpucntl_rnd_neg);
+		x87_fldcw (&G->f, x86_deref (G->r_eax));
+	}
+}
+
+static void emit_x87_ex2 (codegen_ctx *G)
+{
+	set_fpu_round_neg_inf (G);
+
+	x87_fld (&G->f, G->r_st0);	/* a a */
+	x87_fprndint (&G->f);		/* int(a) a */
+	x87_fld (&G->f, G->r_st0);	/* int(a) int(a) a */
+	x87_fstp (&G->f, G->r_st3);	/* int(a) a int(a)*/
+	x87_fsubp (&G->f, G->r_st1);/* frac(a) int(a) */
+	x87_f2xm1 (&G->f);			/* (2^frac(a))-1 int(a)*/
+	x87_fld1 (&G->f);			/* 1 (2^frac(a))-1 int(a)*/
+	x87_faddp (&G->f, G->r_st1);/* 2^frac(a) int(a) */
+	x87_fscale (&G->f);			/* 2^a */
+}
+
+static GLfloat do_ceilf (GLfloat x)
+{
+	return CEILF (x);
+}
+
+static void fetch_texel (GLuint sampler, const GLfloat texcoord[4], GLfloat lambda, GLfloat color[4])
+{
+	GET_CURRENT_CONTEXT(ctx);
+	SWcontext *swrast = SWRAST_CONTEXT(ctx);
+	GLchan rgba[4];
+
+	/* XXX: the function pointer is NULL! */
+	swrast->TextureSample[sampler] (ctx, ctx->Texture.Unit[sampler]._Current, 1,
+		(const GLfloat (*)[4]) texcoord, &lambda, &rgba);
+	color[0] = CHAN_TO_FLOAT(rgba[0]);
+	color[1] = CHAN_TO_FLOAT(rgba[1]);
+	color[2] = CHAN_TO_FLOAT(rgba[2]);
+	color[3] = CHAN_TO_FLOAT(rgba[3]);
+}
+
+static GLvoid do_vec4_tex2d (GLfloat s, GLfloat t, GLuint sampler, GLfloat *rgba)
+{
+	GLfloat st[4] = { s, t, 0.0f, 1.0f };
+
+	fetch_texel (sampler, st, 0.0f, rgba);
+}
+
+static GLvoid do_print_float (GLfloat x)
+{
+	_mesa_printf ("slang print: %f\n", x);
+}
+
+static GLvoid do_print_int (GLfloat x)
+{
+	_mesa_printf ("slang print: %d\n", (GLint) x);
+}
+
+static GLvoid do_print_bool (GLfloat x)
+{
+	_mesa_printf ("slang print: %s\n", (GLint) x ? "true" : "false");
+}
+
+static GLvoid codegen_assem (codegen_ctx *G, slang_assembly *a)
+{
+	GLint disp;
+
+	switch (a->type)
+	{
+	case slang_asm_none:
+		break;
+	case slang_asm_float_copy:
+	case slang_asm_int_copy:
+	case slang_asm_bool_copy:
+		x86_mov (&G->f, G->r_eax, x86_make_disp (G->r_esp, a->param[0]));
+		x86_pop (&G->f, G->r_ecx);
+		x86_mov (&G->f, x86_make_disp (G->r_eax, a->param[1]), G->r_ecx);
+		break;
+	case slang_asm_float_move:
+	case slang_asm_int_move:
+	case slang_asm_bool_move:
+		x86_lea (&G->f, G->r_eax, x86_make_disp (G->r_esp, a->param[1]));
+		x86_add (&G->f, G->r_eax, x86_deref (G->r_esp));
+		x86_mov (&G->f, G->r_eax, x86_deref (G->r_eax));
+		x86_mov (&G->f, x86_make_disp (G->r_esp, a->param[0]), G->r_eax);
+		break;
+	case slang_asm_float_push:
+	case slang_asm_int_push:
+	case slang_asm_bool_push:
+		/* TODO: use push imm32 */
+		x86_mov_reg_imm (&G->f, G->r_eax, *((GLint *) &a->literal));
+		x86_push (&G->f, G->r_eax);
+		break;
+	case slang_asm_float_deref:
+	case slang_asm_int_deref:
+	case slang_asm_bool_deref:
+	case slang_asm_addr_deref:
+		x86_mov (&G->f, G->r_eax, x86_deref (G->r_esp));
+		x86_mov (&G->f, G->r_eax, x86_deref (G->r_eax));
+		x86_mov (&G->f, x86_deref (G->r_esp), G->r_eax);
+		break;
+	case slang_asm_float_add:
+		x87_fld (&G->f, x86_make_disp (G->r_esp, 4));
+		x87_fld (&G->f, x86_deref (G->r_esp));
+		x87_faddp (&G->f, G->r_st1);
+		x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
+		x87_fstp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_float_multiply:
+		x87_fld (&G->f, x86_make_disp (G->r_esp, 4));
+		x87_fld (&G->f, x86_deref (G->r_esp));
+		x87_fmulp (&G->f, G->r_st1);
+		x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
+		x87_fstp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_float_divide:
+		x87_fld (&G->f, x86_make_disp (G->r_esp, 4));
+		x87_fld (&G->f, x86_deref (G->r_esp));
+		x87_fdivp (&G->f, G->r_st1);
+		x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
+		x87_fstp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_float_negate:
+		x87_fld (&G->f, x86_deref (G->r_esp));
+		x87_fchs (&G->f);
+		x87_fstp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_float_less:
+		x87_fld (&G->f, x86_make_disp (G->r_esp, 4));
+		x87_fcomp (&G->f, x86_deref (G->r_esp));
+		x87_fnstsw (&G->f, G->r_eax);
+		/* TODO: use test r8,imm8 */
+		x86_mov_reg_imm (&G->f, G->r_ecx, 0x100);
+		x86_test (&G->f, G->r_eax, G->r_ecx);
+		{
+			GLfloat one = 1.0f, zero = 0.0f;
+			GLubyte *lab0, *lab1;
+
+			/* TODO: use jcc rel8 */
+			lab0 = x86_jcc_forward (&G->f, cc_E);
+			x86_mov_reg_imm (&G->f, G->r_ecx, *((GLint *) &one));
+			/* TODO: use jmp rel8 */
+			lab1 = x86_jmp_forward (&G->f);
+			x86_fixup_fwd_jump (&G->f, lab0);
+			x86_mov_reg_imm (&G->f, G->r_ecx, *((GLint *) &zero));
+			x86_fixup_fwd_jump (&G->f, lab1);
+			x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
+			x86_mov (&G->f, x86_deref (G->r_esp), G->r_ecx);
+		}
+		break;
+	case slang_asm_float_equal_exp:
+		x87_fld (&G->f, x86_make_disp (G->r_esp, 4));
+		x87_fcomp (&G->f, x86_deref (G->r_esp));
+		x87_fnstsw (&G->f, G->r_eax);
+		/* TODO: use test r8,imm8 */
+		x86_mov_reg_imm (&G->f, G->r_ecx, 0x4000);
+		x86_test (&G->f, G->r_eax, G->r_ecx);
+		{
+			GLfloat one = 1.0f, zero = 0.0f;
+			GLubyte *lab0, *lab1;
+
+			/* TODO: use jcc rel8 */
+			lab0 = x86_jcc_forward (&G->f, cc_E);
+			x86_mov_reg_imm (&G->f, G->r_ecx, *((GLint *) &one));
+			/* TODO: use jmp rel8 */
+			lab1 = x86_jmp_forward (&G->f);
+			x86_fixup_fwd_jump (&G->f, lab0);
+			x86_mov_reg_imm (&G->f, G->r_ecx, *((GLint *) &zero));
+			x86_fixup_fwd_jump (&G->f, lab1);
+			x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
+			x86_mov (&G->f, x86_deref (G->r_esp), G->r_ecx);
+		}
+		break;
+	case slang_asm_float_equal_int:
+		x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, -4));
+		x87_fld (&G->f, x86_make_disp (G->r_esp, a->param[0] + 4));
+		x87_fcomp (&G->f, x86_make_disp (G->r_esp, a->param[1] + 4));
+		x87_fnstsw (&G->f, G->r_eax);
+		/* TODO: use test r8,imm8 */
+		x86_mov_reg_imm (&G->f, G->r_ecx, 0x4000);
+		x86_test (&G->f, G->r_eax, G->r_ecx);
+		{
+			GLfloat one = 1.0f, zero = 0.0f;
+			GLubyte *lab0, *lab1;
+
+			/* TODO: use jcc rel8 */
+			lab0 = x86_jcc_forward (&G->f, cc_E);
+			x86_mov_reg_imm (&G->f, G->r_ecx, *((GLint *) &one));
+			/* TODO: use jmp rel8 */
+			lab1 = x86_jmp_forward (&G->f);
+			x86_fixup_fwd_jump (&G->f, lab0);
+			x86_mov_reg_imm (&G->f, G->r_ecx, *((GLint *) &zero));
+			x86_fixup_fwd_jump (&G->f, lab1);
+			x86_mov (&G->f, x86_deref (G->r_esp), G->r_ecx);
+		}
+		break;
+	case slang_asm_float_to_int:
+		x87_fld (&G->f, x86_deref (G->r_esp));
+		x87_fistp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_float_sine:
+		/* TODO: use fsin */
+		x86_call (&G->f, (GLubyte *) _mesa_sinf);
+		x87_fstp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_float_arcsine:
+		/* TODO: use fpatan (?) */
+		x86_call (&G->f, (GLubyte *) _mesa_asinf);
+		x87_fstp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_float_arctan:
+		/* TODO: use fpatan */
+		x86_call (&G->f, (GLubyte *) _mesa_atanf);
+		x87_fstp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_float_power:
+		x87_fld (&G->f, x86_deref (G->r_esp));
+		x87_fld (&G->f, x86_make_disp (G->r_esp, 4));
+		x87_fyl2x (&G->f);
+		emit_x87_ex2 (G);
+		x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
+		x87_fstp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_float_log2:
+		x87_fld1 (&G->f);
+		x87_fld (&G->f, x86_deref (G->r_esp));
+		x87_fyl2x (&G->f);
+		x87_fstp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_float_floor:
+		set_fpu_round_neg_inf (G);
+		x87_fld (&G->f, x86_deref (G->r_esp));   
+		x87_fprndint (&G->f);   
+		x87_fstp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_float_ceil:
+		/* TODO: use frndint */
+		x86_call (&G->f, (GLubyte *) do_ceilf);
+		x87_fstp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_float_noise1:
+		x86_call (&G->f, (GLubyte *) _slang_library_noise1);
+		x87_fstp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_float_noise2:
+		x86_call (&G->f, (GLubyte *) _slang_library_noise2);
+		x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
+		x87_fstp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_float_noise3:
+		x86_call (&G->f, (GLubyte *) _slang_library_noise4);
+		x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 8));
+		x87_fstp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_float_noise4:
+		x86_call (&G->f, (GLubyte *) _slang_library_noise4);
+		x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 12));
+		x87_fstp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_int_to_float:
+		break;
+	case slang_asm_int_to_addr:
+		x87_fld (&G->f, x86_deref (G->r_esp));
+		x87_fistp (&G->f, x86_deref (G->r_esp));
+		break;
+	case slang_asm_addr_copy:
+		x86_pop (&G->f, G->r_eax);
+		x86_mov (&G->f, G->r_ecx, x86_deref (G->r_esp));
+		x86_mov (&G->f, x86_deref (G->r_ecx), G->r_eax);
+		break;
+	case slang_asm_addr_push:
+		/* TODO: use push imm32 */
+		x86_mov_reg_imm (&G->f, G->r_eax, (GLint) a->param[0]);
+		x86_push (&G->f, G->r_eax);
+		break;
+	case slang_asm_addr_add:
+		x86_pop (&G->f, G->r_eax);
+		x86_add (&G->f, x86_deref (G->r_esp), G->r_eax);
+		break;
+	case slang_asm_addr_multiply:
+		x86_pop (&G->f, G->r_ecx);
+		x86_mov (&G->f, G->r_eax, x86_deref (G->r_esp));
+		x86_mul (&G->f, G->r_ecx);
+		x86_mov (&G->f, x86_deref (G->r_esp), G->r_eax);
+		break;
+	case slang_asm_vec4_tex2d:
+		x86_call (&G->f, (GLubyte *) do_vec4_tex2d);
+		x86_lea (&G->f, G->r_ebp, x86_make_disp (G->r_esp, 12));
+		break;
+	case slang_asm_jump:
+		add_fixup (G, a->param[0], x86_jmp_forward (&G->f));
+		break;
+	case slang_asm_jump_if_zero:
+		x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
+		x86_xor (&G->f, G->r_eax, G->r_eax);
+		x86_cmp (&G->f, G->r_eax, x86_make_disp (G->r_esp, -4));
+		{
+			GLubyte *lab0;
+
+			/* TODO: use jcc rel8 */
+			lab0 = x86_jcc_forward (&G->f, cc_NE);
+			add_fixup (G, a->param[0], x86_jmp_forward (&G->f));
+			x86_fixup_fwd_jump (&G->f, lab0);
+		}
+		break;
+	case slang_asm_enter:
+		/* FIXME: x86_make_disp(esp, 0) + x86_lea() generates bogus code */
+		assert (a->param[0] != 0);
+		x86_push (&G->f, G->r_ebp);
+		x86_lea (&G->f, G->r_ebp, x86_make_disp (G->r_esp, (GLint) a->param[0]));
+		break;
+	case slang_asm_leave:
+		x86_pop (&G->f, G->r_ebp);
+		break;
+	case slang_asm_local_alloc:
+		/* FIXME: x86_make_disp(esp, 0) + x86_lea() generates bogus code */
+		assert (a->param[0] != 0);
+		x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, -(GLint) a->param[0]));
+		break;
+	case slang_asm_local_free:
+		/* FIXME: x86_make_disp(esp, 0) + x86_lea() generates bogus code */
+		assert (a->param[0] != 0);
+		x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, (GLint) a->param[0]));
+		break;
+	case slang_asm_local_addr:
+		disp = -(GLint) (a->param[0] + a->param[1]) + 4;
+		if (disp != 0)
+		{
+			x86_lea (&G->f, G->r_eax, x86_make_disp (G->r_ebp, disp));
+			x86_push (&G->f, G->r_eax);
+		}
+		else
+			x86_push (&G->f, G->r_ebp);
+		break;
+	case slang_asm_global_addr:
+		/* TODO: use push imm32 */
+		x86_mov_reg_imm (&G->f, G->r_eax, (GLint) &G->mach->mem + a->param[0]);
+		x86_push (&G->f, G->r_eax);
+		break;
+	case slang_asm_call:
+		add_fixup (G, a->param[0], x86_call_forward (&G->f));
+		break;
+	case slang_asm_return:
+		x86_ret (&G->f);
+		break;
+	case slang_asm_discard:
+		x86_jmp (&G->f, G->l_discard);
+		break;
+	case slang_asm_exit:
+		x86_jmp (&G->f, G->l_exit);
+		break;
+	/* mesa-specific extensions */
+	case slang_asm_float_print:
+		x86_call (&G->f, (GLubyte *) do_print_float);
+		break;
+	case slang_asm_int_print:
+		x86_call (&G->f, (GLubyte *) do_print_int);
+		break;
+	case slang_asm_bool_print:
+		x86_call (&G->f, (GLubyte *) do_print_bool);
+		break;
+	default:
+		assert (0);
+	}
+}
+
+GLboolean _slang_x86_codegen (slang_machine *mach, slang_assembly_file *file, GLuint start)
+{
+	codegen_ctx G;
+	GLubyte *j_body, *j_exit;
+	GLuint i;
+
+	x86_init_func_size (&G.f, 4*1048576);
+	G.r_eax = x86_make_reg (file_REG32, reg_AX);
+	G.r_ecx = x86_make_reg (file_REG32, reg_CX);
+	G.r_edx = x86_make_reg (file_REG32, reg_DX);
+	G.r_esp = x86_make_reg (file_REG32, reg_SP);
+	G.r_ebp = x86_make_reg (file_REG32, reg_BP);
+	G.r_st0 = x86_make_reg (file_x87, 0);
+	G.r_st1 = x86_make_reg (file_x87, 1);
+	G.r_st2 = x86_make_reg (file_x87, 2);
+	G.r_st3 = x86_make_reg (file_x87, 3);
+	G.fixups = NULL;
+	G.fixup_count = 0;
+	G.labels = (GLubyte **) slang_alloc_malloc (file->count * sizeof (GLubyte *));
+	G.mach = mach;
+	G.fpucntl = RESTORE_FPU;
+
+	mach->x86.fpucntl_rnd_neg = RND_NEG_FPU;
+	mach->x86.fpucntl_restore = RESTORE_FPU;
+
+	/* prepare stack and jump to start */
+	x86_push (&G.f, G.r_ebp);
+	x86_mov_reg_imm (&G.f, G.r_eax, (GLint) &mach->x86.esp_restore);
+	x86_push (&G.f, G.r_esp);
+	x86_pop (&G.f, G.r_ecx);
+	x86_mov (&G.f, x86_deref (G.r_eax), G.r_ecx);
+	j_body = x86_jmp_forward (&G.f);
+
+	/* discard keywords go here */
+	G.l_discard = x86_get_label (&G.f);
+	x86_mov_reg_imm (&G.f, G.r_eax, (GLint) &G.mach->kill);
+	x86_mov_reg_imm (&G.f, G.r_ecx, 1);
+	x86_mov (&G.f, x86_deref (G.r_eax), G.r_ecx);
+	G.l_exit = x86_get_label (&G.f);
+	j_exit = x86_jmp_forward (&G.f);
+
+	for (i = 0; i < file->count; i++)
+	{
+		G.labels[i] = x86_get_label (&G.f);
+		if (i == start)
+			x86_fixup_fwd_jump (&G.f, j_body);
+		codegen_assem (&G, &file->code[i]);
+	}
+
+	/* restore stack and return */
+	x86_fixup_fwd_jump (&G.f, j_exit);
+	x86_mov_reg_imm (&G.f, G.r_eax, (GLint) &mach->x86.esp_restore);
+	x86_mov (&G.f, G.r_esp, x86_deref (G.r_eax));
+	x86_pop (&G.f, G.r_ebp);
+	if (G.fpucntl != RESTORE_FPU)
+	{
+		x87_fnclex (&G.f);
+		x86_mov_reg_imm (&G.f, G.r_eax, (GLint) &G.mach->x86.fpucntl_restore);
+		x87_fldcw (&G.f, x86_deref (G.r_eax));
+	}
+	x86_ret (&G.f);
+
+	/* fixup forward labels */
+	for (i = 0; i < G.fixup_count; i++)
+	{
+		G.f.csr = G.labels[G.fixups[i].index];
+		x86_fixup_fwd_jump (&G.f, G.fixups[i].csr);
+	}
+
+	slang_alloc_free (G.fixups);
+	slang_alloc_free (G.labels);
+
+	/* TODO: free previous instance, if not NULL */
+	mach->x86.compiled_func = (GLvoid (*) (slang_machine *)) x86_get_func (&G.f);
+
+	return GL_TRUE;
+}
+
+#endif
+

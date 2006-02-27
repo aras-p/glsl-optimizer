@@ -29,10 +29,7 @@
  */
 
 #include "imports.h"
-#include "slang_utility.h"
-#include "slang_compile_variable.h"
-#include "slang_compile_operation.h"
-#include "slang_compile_function.h"
+#include "slang_compile.h"
 
 /* slang_fixup_table */
 
@@ -144,5 +141,50 @@ slang_function *slang_function_scope_find (slang_function_scope *funcs, slang_fu
 	if (all_scopes && funcs->outer_scope != NULL)
 		return slang_function_scope_find (funcs->outer_scope, fun, 1);
 	return NULL;
+}
+
+/*
+ * _slang_build_export_code_table()
+ */
+
+GLboolean _slang_build_export_code_table (slang_export_code_table *tbl, slang_function_scope *funs,
+	slang_translation_unit *unit)
+{
+	slang_atom main;
+	GLuint i;
+
+	main = slang_atom_pool_atom (tbl->atoms, "main");
+	if (main == SLANG_ATOM_NULL)
+		return GL_FALSE;
+
+	for (i = 0; i < funs->num_functions; i++)
+	{
+		if (funs->functions[i].header.a_name == main)
+		{
+			slang_function *fun = &funs->functions[i];
+			slang_export_code_entry *e;
+			slang_assemble_ctx A;
+
+			e = slang_export_code_table_add (tbl);
+			if (e == NULL)
+				return GL_FALSE;
+			e->address = unit->assembly->count;
+			e->name = slang_atom_pool_atom (tbl->atoms, "@main");
+			if (e->name == SLANG_ATOM_NULL)
+				return GL_FALSE;
+
+			A.file = unit->assembly;
+			A.mach = unit->machine;
+			A.atoms = unit->atom_pool;
+			A.space.funcs = &unit->functions;
+			A.space.structs = &unit->structs;
+			A.space.vars = &unit->globals;
+			slang_assembly_file_push_label (unit->assembly, slang_asm_local_alloc, 20);
+			slang_assembly_file_push_label (unit->assembly, slang_asm_enter, 20);
+			_slang_assemble_function_call (&A, fun, NULL, 0, GL_FALSE);
+			slang_assembly_file_push (unit->assembly, slang_asm_exit);
+		}
+	}
+	return GL_TRUE;
 }
 

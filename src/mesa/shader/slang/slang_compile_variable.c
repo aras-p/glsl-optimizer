@@ -29,10 +29,7 @@
  */
 
 #include "imports.h"
-#include "slang_utility.h"
-#include "slang_compile_variable.h"
-#include "slang_compile_struct.h"
-#include "slang_compile_operation.h"
+#include "slang_compile.h"
 
 /* slang_type_specifier_type */
 
@@ -92,106 +89,18 @@ const char *slang_type_specifier_type_to_string (slang_type_specifier_type type)
 	return p->name;
 }
 
-/* slang_type_specifier */
-
-int slang_type_specifier_construct (slang_type_specifier *spec)
-{
-	spec->type = slang_spec_void;
-	spec->_struct = NULL;
-	spec->_array = NULL;
-	return 1;
-}
-
-void slang_type_specifier_destruct (slang_type_specifier *spec)
-{
-	if (spec->_struct != NULL)
-	{
-		slang_struct_destruct (spec->_struct);
-		slang_alloc_free (spec->_struct);
-	}
-	if (spec->_array != NULL)
-	{
-		slang_type_specifier_destruct (spec->_array);
-		slang_alloc_free (spec->_array);
-	}
-}
-
-int slang_type_specifier_copy (slang_type_specifier *x, const slang_type_specifier *y)
-{
-	slang_type_specifier z;
-
-	if (!slang_type_specifier_construct (&z))
-		return 0;
-	z.type = y->type;
-	if (z.type == slang_spec_struct)
-	{
-		z._struct = (slang_struct *) slang_alloc_malloc (sizeof (slang_struct));
-		if (z._struct == NULL)
-		{
-			slang_type_specifier_destruct (&z);
-			return 0;
-		}
-		if (!slang_struct_construct (z._struct))
-		{
-			slang_alloc_free (z._struct);
-			slang_type_specifier_destruct (&z);
-			return 0;
-		}
-		if (!slang_struct_copy (z._struct, y->_struct))
-		{
-			slang_type_specifier_destruct (&z);
-			return 0;
-		}
-	}
-	else if (z.type == slang_spec_array)
-	{
-		z._array = (slang_type_specifier *) slang_alloc_malloc (sizeof (slang_type_specifier));
-		if (z._array == NULL)
-		{
-			slang_type_specifier_destruct (&z);
-			return 0;
-		}
-		if (!slang_type_specifier_construct (z._array))
-		{
-			slang_alloc_free (z._array);
-			slang_type_specifier_destruct (&z);
-			return 0;
-		}
-		if (!slang_type_specifier_copy (z._array, y->_array))
-		{
-			slang_type_specifier_destruct (&z);
-			return 0;
-		}
-	}
-	slang_type_specifier_destruct (x);
-	*x = z;
-	return 1;
-}
-
-int slang_type_specifier_equal (const slang_type_specifier *x, const slang_type_specifier *y)
-{
-	if (x->type != y->type)
-		return 0;
-	if (x->type == slang_spec_struct)
-		return slang_struct_equal (x->_struct, y->_struct);
-	if (x->type == slang_spec_array)
-		return slang_type_specifier_equal (x->_array, y->_array);
-	return 1;
-}
-
 /* slang_fully_specified_type */
 
 int slang_fully_specified_type_construct (slang_fully_specified_type *type)
 {
 	type->qualifier = slang_qual_none;
-	if (!slang_type_specifier_construct (&type->specifier))
-		return 0;
+	slang_type_specifier_ctr (&type->specifier);
 	return 1;
 }
 
 void slang_fully_specified_type_destruct (slang_fully_specified_type *type)
 {
-	slang_type_specifier_destruct (&type->specifier);
+	slang_type_specifier_dtr (&type->specifier);
 }
 
 int slang_fully_specified_type_copy (slang_fully_specified_type *x, const slang_fully_specified_type *y)
@@ -341,40 +250,8 @@ slang_variable *_slang_locate_variable (slang_variable_scope *scope, slang_atom 
 }
 
 /*
- * slang_active_uniforms
+ * _slang_build_export_data_table()
  */
-
-GLvoid slang_active_uniforms_ctr (slang_active_uniforms *self)
-{
-	self->table = NULL;
-	self->count = 0;
-}
-
-GLvoid slang_active_uniforms_dtr (slang_active_uniforms *self)
-{
-	GLuint i;
-
-	for (i = 0; i < self->count; i++)
-		slang_alloc_free (self->table[i].name);
-	slang_alloc_free (self->table);
-}
-
-GLboolean slang_active_uniforms_add (slang_active_uniforms *self, slang_export_data_quant *q,
-	const char *name)
-{
-	const GLuint n = self->count;
-
-	self->table = (slang_active_uniform *) slang_alloc_realloc (self->table,
-		n * sizeof (slang_active_uniform), (n + 1) * sizeof (slang_active_uniform));
-	if (self->table == NULL)
-		return GL_FALSE;
-	self->table[n].quant = q;
-	self->table[n].name = slang_string_duplicate (name);
-	if (self->table[n].name == NULL)
-		return GL_FALSE;
-	self->count++;
-	return GL_TRUE;
-}
 
 static GLenum gl_type_from_specifier (const slang_type_specifier *type)
 {
@@ -469,63 +346,24 @@ GLboolean _slang_build_export_data_table (slang_export_data_table *tbl, slang_va
 	for (i = 0; i < vars->num_variables; i++)
 	{
 		slang_variable *var = &vars->variables[i];
-
+		slang_export_data_entry *e;
+		
+		e = slang_export_data_table_add (tbl);
+		if (e == NULL)
+			return GL_FALSE;
+		if (!build_quant (&e->quant, var))
+			return GL_FALSE;
 		if (var->type.qualifier == slang_qual_uniform)
-		{
-			slang_export_data_entry *e = slang_export_data_table_add (tbl);
-			if (e == NULL)
-				return GL_FALSE;
-			if (!build_quant (&e->quant, var))
-				return GL_FALSE;
 			e->access = slang_exp_uniform;
-			e->address = var->address;
-		}
+		else if (var->type.qualifier == slang_qual_attribute)
+			e->access = slang_exp_attribute;
+		else
+			e->access = slang_exp_varying;
+		e->address = var->address;
 	}
 
 	if (vars->outer_scope != NULL)
 		return _slang_build_export_data_table (tbl, vars->outer_scope);
-	return GL_TRUE;
-}
-
-static GLboolean insert_uniform (slang_active_uniforms *u, slang_export_data_quant *q, char *name,
-	slang_atom_pool *atoms)
-{
-	slang_string_concat (name, slang_atom_pool_id (atoms, q->name));
-	if (q->array_len != 0)
-		slang_string_concat (name, "[0]");
-
-	if (q->structure != NULL)
-	{
-		GLuint save, i;
-
-		slang_string_concat (name, ".");
-		save = slang_string_length (name);
-
-		for (i = 0; i < q->u.field_count; i++)
-		{
-			if (!insert_uniform (u, &q->structure[i], name, atoms))
-				return GL_FALSE;
-			name[save] = '\0';
-		}
-
-		return GL_TRUE;
-	}
-
-	return slang_active_uniforms_add (u, q, name);
-}
-
-GLboolean _slang_gather_active_uniforms (slang_active_uniforms *u, slang_export_data_table *tbl)
-{
-	GLuint i;
-
-	for (i = 0; i < tbl->count; i++)
-	{
-		char name[1024] = "";
-
-		if (!insert_uniform (u, &tbl->entries[i].quant, name, tbl->atoms))
-			return GL_FALSE;
-	}
-
 	return GL_TRUE;
 }
 

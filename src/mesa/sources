@@ -215,7 +215,8 @@ ASM_C_SOURCES =	\
 	x86/rtasm/x86sse.c \
 	sparc/sparc.c \
 	ppc/common_ppc.c \
-	x86-64/x86-64.c
+	x86-64/x86-64.c \
+	shader/slang/slang_execute_x86.c
 
 X86_SOURCES =			\
 	x86/common_x86_asm.S	\

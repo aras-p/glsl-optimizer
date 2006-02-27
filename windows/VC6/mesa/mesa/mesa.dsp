@@ -4,7 +4,7 @@
 
 # TARGTYPE "Win32 (x86) Static Library" 0x0104
 
-CFG=mesa - Win32 Debug
+CFG=mesa - Win32 Debug x86
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
@@ -13,12 +13,14 @@ CFG=mesa - Win32 Debug
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "mesa.mak" CFG="mesa - Win32 Debug"
+!MESSAGE NMAKE /f "mesa.mak" CFG="mesa - Win32 Debug x86"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
 !MESSAGE "mesa - Win32 Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "mesa - Win32 Debug" (based on "Win32 (x86) Static Library")
+!MESSAGE "mesa - Win32 Release x86" (based on "Win32 (x86) Static Library")
+!MESSAGE "mesa - Win32 Debug x86" (based on "Win32 (x86) Static Library")
 !MESSAGE 
 
 # Begin Project
@@ -74,12 +76,60 @@ LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
 
+!ELSEIF  "$(CFG)" == "mesa - Win32 Release x86"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "mesa___Win32_Release_x86"
+# PROP BASE Intermediate_Dir "mesa___Win32_Release_x86"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "Release_x86"
+# PROP Intermediate_Dir "Release_x86"
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /W3 /GX /O2 /I "../../../../include" /I "../../../../src/mesa" /I "../../../../src/mesa/glapi" /I "../../../../src/mesa/main" /I "../../../../src/mesa/shader" /I "../../../../src/mesa/shader/slang" /I "../../../../src/mesa/shader/grammar" /D "NDEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /D "_DLL" /D "BUILD_GL32" /D "MESA_MINWARN" /YX /FD /Zm1000 /c
+# ADD CPP /nologo /W3 /GX /O2 /I "../../../../include" /I "../../../../src/mesa" /I "../../../../src/mesa/glapi" /I "../../../../src/mesa/main" /I "../../../../src/mesa/shader" /I "../../../../src/mesa/shader/slang" /I "../../../../src/mesa/shader/grammar" /D "NDEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /D "_DLL" /D "BUILD_GL32" /D "MESA_MINWARN" /D "SLANG_X86" /YX /FD /Zm1000 /c
+# ADD BASE RSC /l 0x409 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+
+!ELSEIF  "$(CFG)" == "mesa - Win32 Debug x86"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "mesa___Win32_Debug_x86"
+# PROP BASE Intermediate_Dir "mesa___Win32_Debug_x86"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "Debug_x86"
+# PROP Intermediate_Dir "Debug_x86"
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /I "../../../../include" /I "../../../../src/mesa" /I "../../../../src/mesa/glapi" /I "../../../../src/mesa/main" /I "../../../../src/mesa/shader" /I "../../../../src/mesa/shader/slang" /I "../../../../src/mesa/shader/grammar" /D "_DEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /D "_DLL" /D "BUILD_GL32" /D "MESA_MINWARN" /Fr /FD /GZ /Zm1000 /c
+# ADD CPP /nologo /W3 /Gm /GX /Zi /Od /I "../../../../include" /I "../../../../src/mesa" /I "../../../../src/mesa/glapi" /I "../../../../src/mesa/main" /I "../../../../src/mesa/shader" /I "../../../../src/mesa/shader/slang" /I "../../../../src/mesa/shader/grammar" /D "_DEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /D "_DLL" /D "BUILD_GL32" /D "MESA_MINWARN" /D "SLANG_X86" /Fr /FD /GZ /Zm1000 /c
+# ADD BASE RSC /l 0x409 /d "_DEBUG"
+# ADD RSC /l 0x409 /d "_DEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+
 !ENDIF 
 
 # Begin Target
 
 # Name "mesa - Win32 Release"
 # Name "mesa - Win32 Debug"
+# Name "mesa - Win32 Release x86"
+# Name "mesa - Win32 Debug x86"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
@@ -234,7 +284,27 @@ SOURCE=..\..\..\..\src\mesa\glapi\glthread.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\shader\grammar\grammar.c
+
+!IF  "$(CFG)" == "mesa - Win32 Release"
+
 # PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "mesa - Win32 Debug"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "mesa - Win32 Release x86"
+
+# PROP BASE Exclude_From_Build 1
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "mesa - Win32 Debug x86"
+
+# PROP BASE Exclude_From_Build 1
+# PROP Exclude_From_Build 1
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
@@ -522,6 +592,10 @@ SOURCE=..\..\..\..\src\mesa\shader\slang\slang_execute.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_execute_x86.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\shader\slang\slang_export.c
 # End Source File
 # Begin Source File
@@ -711,11 +785,52 @@ SOURCE=..\..\..\..\src\mesa\main\varray.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\main\vsnprintf.c
+
+!IF  "$(CFG)" == "mesa - Win32 Release"
+
 # PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "mesa - Win32 Debug"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "mesa - Win32 Release x86"
+
+# PROP BASE Exclude_From_Build 1
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "mesa - Win32 Debug x86"
+
+# PROP BASE Exclude_From_Build 1
+# PROP Exclude_From_Build 1
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\main\vtxfmt.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\x86\rtasm\x86sse.c
+
+!IF  "$(CFG)" == "mesa - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "mesa - Win32 Debug"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "mesa - Win32 Release x86"
+
+!ELSEIF  "$(CFG)" == "mesa - Win32 Debug x86"
+
+# PROP BASE Exclude_From_Build 1
+
+!ENDIF 
+
 # End Source File
 # End Group
 # Begin Group "Header Files"

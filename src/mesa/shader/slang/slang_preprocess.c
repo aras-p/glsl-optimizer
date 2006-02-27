@@ -30,8 +30,6 @@
 
 #include "imports.h"
 #include "grammar_mesa.h"
-#include "slang_utility.h"
-#include "slang_compile.h"
 #include "slang_preprocess.h"
 
 static const char *slang_version_syn =

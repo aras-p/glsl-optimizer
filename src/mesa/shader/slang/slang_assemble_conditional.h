@@ -25,25 +25,23 @@
 #if !defined SLANG_ASSEMBLE_CONDITIONAL_H
 #define SLANG_ASSEMBLE_CONDITIONAL_H
 
-#include "slang_assemble.h"
-
 #if defined __cplusplus
 extern "C" {
 #endif
 
-GLboolean _slang_assemble_logicaland (slang_assemble_ctx *, slang_operation *);
+GLboolean _slang_assemble_logicaland (slang_assemble_ctx *, struct slang_operation_ *);
 
-GLboolean _slang_assemble_logicalor (slang_assemble_ctx *, slang_operation *);
+GLboolean _slang_assemble_logicalor (slang_assemble_ctx *, struct slang_operation_ *);
 
-GLboolean _slang_assemble_select (slang_assemble_ctx *, slang_operation *);
+GLboolean _slang_assemble_select (slang_assemble_ctx *, struct slang_operation_ *);
 
-GLboolean _slang_assemble_for (slang_assemble_ctx *, slang_operation *);
+GLboolean _slang_assemble_for (slang_assemble_ctx *, struct slang_operation_ *);
 
-GLboolean _slang_assemble_do (slang_assemble_ctx *, slang_operation *);
+GLboolean _slang_assemble_do (slang_assemble_ctx *, struct slang_operation_ *);
 
-GLboolean _slang_assemble_while (slang_assemble_ctx *, slang_operation *);
+GLboolean _slang_assemble_while (slang_assemble_ctx *, struct slang_operation_ *);
 
-GLboolean _slang_assemble_if (slang_assemble_ctx *, slang_operation *);
+GLboolean _slang_assemble_if (slang_assemble_ctx *, struct slang_operation_ *);
 
 #ifdef __cplusplus
 }

@@ -29,22 +29,103 @@
  */
 
 #include "imports.h"
-#include "slang_utility.h"
-#include "slang_assemble_typeinfo.h"
+#include "slang_assemble.h"
+#include "slang_compile.h"
+
+/*
+ * slang_type_specifier
+ */
+
+GLvoid slang_type_specifier_ctr (slang_type_specifier *self)
+{
+	self->type = slang_spec_void;
+	self->_struct = NULL;
+	self->_array = NULL;
+}
+
+GLvoid slang_type_specifier_dtr (slang_type_specifier *self)
+{
+	if (self->_struct != NULL)
+	{
+		slang_struct_destruct (self->_struct);
+		slang_alloc_free (self->_struct);
+	}
+	if (self->_array != NULL)
+	{
+		slang_type_specifier_dtr (self->_array);
+		slang_alloc_free (self->_array);
+	}
+}
+
+GLboolean slang_type_specifier_copy (slang_type_specifier *x, const slang_type_specifier *y)
+{
+	slang_type_specifier z;
+
+	slang_type_specifier_ctr (&z);
+	z.type = y->type;
+	if (z.type == slang_spec_struct)
+	{
+		z._struct = (slang_struct *) slang_alloc_malloc (sizeof (slang_struct));
+		if (z._struct == NULL)
+		{
+			slang_type_specifier_dtr (&z);
+			return GL_FALSE;
+		}
+		if (!slang_struct_construct (z._struct))
+		{
+			slang_alloc_free (z._struct);
+			slang_type_specifier_dtr (&z);
+			return GL_FALSE;
+		}
+		if (!slang_struct_copy (z._struct, y->_struct))
+		{
+			slang_type_specifier_dtr (&z);
+			return GL_FALSE;
+		}
+	}
+	else if (z.type == slang_spec_array)
+	{
+		z._array = (slang_type_specifier *) slang_alloc_malloc (sizeof (slang_type_specifier));
+		if (z._array == NULL)
+		{
+			slang_type_specifier_dtr (&z);
+			return GL_FALSE;
+		}
+		slang_type_specifier_ctr (z._array);
+		if (!slang_type_specifier_copy (z._array, y->_array))
+		{
+			slang_type_specifier_dtr (&z);
+			return GL_FALSE;
+		}
+	}
+	slang_type_specifier_dtr (x);
+	*x = z;
+	return GL_TRUE;
+}
+
+GLboolean slang_type_specifier_equal (const slang_type_specifier *x, const slang_type_specifier *y)
+{
+	if (x->type != y->type)
+		return 0;
+	if (x->type == slang_spec_struct)
+		return slang_struct_equal (x->_struct, y->_struct);
+	if (x->type == slang_spec_array)
+		return slang_type_specifier_equal (x->_array, y->_array);
+	return 1;
+}
 
 /* slang_assembly_typeinfo */
 
 GLboolean slang_assembly_typeinfo_construct (slang_assembly_typeinfo *ti)
 {
-	if (!slang_type_specifier_construct (&ti->spec))
-		return GL_FALSE;
+	slang_type_specifier_ctr (&ti->spec);
 	ti->array_len = 0;
 	return GL_TRUE;
 }
 
 GLvoid slang_assembly_typeinfo_destruct (slang_assembly_typeinfo *ti)
 {
-	slang_type_specifier_destruct (&ti->spec);
+	slang_type_specifier_dtr (&ti->spec);
 }
 
 /* _slang_typeof_operation() */

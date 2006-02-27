@@ -297,6 +297,17 @@ _mesa_sin(double a)
 #endif
 }
 
+/** Single precision wrapper around either sin() or xf86sin() */
+float
+_mesa_sinf(float a)
+{
+#if defined(XFree86LOADER) && defined(IN_MODULE)
+   return (float) xf86sin((double) a);
+#else
+   return (float) sin((double) a);
+#endif
+}
+
 /** Wrapper around either cos() or xf86cos() */
 double
 _mesa_cos(double a)

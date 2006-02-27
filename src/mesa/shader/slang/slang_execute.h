@@ -25,6 +25,8 @@
 #if !defined SLANG_EXECUTE_H
 #define SLANG_EXECUTE_H
 
+#include "slang_assemble.h"
+
 #if defined __cplusplus
 extern "C" {
 #endif
@@ -39,6 +41,16 @@ typedef union slang_machine_slot_
 #define SLANG_MACHINE_STACK_SIZE 1024
 #define SLANG_MACHINE_MEMORY_SIZE (SLANG_MACHINE_GLOBAL_SIZE + SLANG_MACHINE_STACK_SIZE)
 
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+typedef struct
+{
+	GLvoid (* compiled_func) (struct slang_machine_ *);
+	GLuint esp_restore;
+	GLshort fpucntl_rnd_neg;
+	GLshort fpucntl_restore;
+} slang_machine_x86;
+#endif
+
 typedef struct slang_machine_
 {
 	GLuint ip;					/* instruction pointer, for flow control */
@@ -47,7 +59,13 @@ typedef struct slang_machine_
 	GLuint kill;				/* discard the fragment */
 	GLuint exit;				/* terminate the shader */
 	slang_machine_slot mem[SLANG_MACHINE_MEMORY_SIZE];
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+	slang_machine_x86 x86;
+#endif
 } slang_machine;
+
+GLvoid slang_machine_ctr (slang_machine *);
+GLvoid slang_machine_dtr (slang_machine *);
 
 void slang_machine_init (slang_machine *);
 

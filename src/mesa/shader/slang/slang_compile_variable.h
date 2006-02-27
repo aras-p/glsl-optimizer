@@ -25,8 +25,6 @@
 #if !defined SLANG_COMPILE_VARIABLE_H
 #define SLANG_COMPILE_VARIABLE_H
 
-#include "slang_export.h"
-
 #if defined __cplusplus
 extern "C" {
 #endif
@@ -44,48 +42,8 @@ typedef enum slang_type_qualifier_
 	slang_qual_fixedinput	/* internal */
 } slang_type_qualifier;
 
-typedef enum slang_type_specifier_type_
-{
-	slang_spec_void,
-	slang_spec_bool,
-	slang_spec_bvec2,
-	slang_spec_bvec3,
-	slang_spec_bvec4,
-	slang_spec_int,
-	slang_spec_ivec2,
-	slang_spec_ivec3,
-	slang_spec_ivec4,
-	slang_spec_float,
-	slang_spec_vec2,
-	slang_spec_vec3,
-	slang_spec_vec4,
-	slang_spec_mat2,
-	slang_spec_mat3,
-	slang_spec_mat4,
-	slang_spec_sampler1D,
-	slang_spec_sampler2D,
-	slang_spec_sampler3D,
-	slang_spec_samplerCube,
-	slang_spec_sampler1DShadow,
-	slang_spec_sampler2DShadow,
-	slang_spec_struct,
-	slang_spec_array
-} slang_type_specifier_type;
-
 slang_type_specifier_type slang_type_specifier_type_from_string (const char *);
 const char *slang_type_specifier_type_to_string (slang_type_specifier_type);
-
-typedef struct slang_type_specifier_
-{
-	slang_type_specifier_type type;
-	struct slang_struct_ *_struct;			/* type: spec_struct */
-	struct slang_type_specifier_ *_array;	/* type: spec_array */
-} slang_type_specifier;
-
-int slang_type_specifier_construct (slang_type_specifier *);
-void slang_type_specifier_destruct (slang_type_specifier *);
-int slang_type_specifier_copy (slang_type_specifier *, const slang_type_specifier *);
-int slang_type_specifier_equal (const slang_type_specifier *, const slang_type_specifier *);
 
 typedef struct slang_fully_specified_type_
 {
@@ -125,26 +83,7 @@ int slang_variable_copy (slang_variable *, const slang_variable *);
 
 slang_variable *_slang_locate_variable (slang_variable_scope *, slang_atom a_name, GLboolean all);
 
-typedef struct
-{
-	slang_export_data_quant *quant;
-	char *name;
-} slang_active_uniform;
-
-typedef struct
-{
-	slang_active_uniform *table;
-	GLuint count;
-} slang_active_uniforms;
-
-GLvoid slang_active_uniforms_ctr (slang_active_uniforms *);
-GLvoid slang_active_uniforms_dtr (slang_active_uniforms *);
-GLboolean slang_active_uniforms_add (slang_active_uniforms *, slang_export_data_quant *,
-	const char *);
-
 GLboolean _slang_build_export_data_table (slang_export_data_table *, slang_variable_scope *);
-
-GLboolean _slang_gather_active_uniforms (slang_active_uniforms *, slang_export_data_table *);
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,4 @@
-#if defined(USE_X86_ASM)
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
 
 #include "imports.h"
 #include "x86sse.h"
@@ -142,8 +142,8 @@ static void emit_op_modrm( struct x86_function *p,
 
 /* Create and manipulate registers and regmem values:
  */
-struct x86_reg x86_make_reg( GLuint file,
-			     GLuint idx )
+struct x86_reg x86_make_reg( enum x86_reg_file file,
+			     enum x86_reg_name idx )
 {
    struct x86_reg reg;
 
@@ -198,7 +198,7 @@ GLubyte *x86_get_label( struct x86_function *p )
 
 
 void x86_jcc( struct x86_function *p,
-	      GLuint cc,
+	      enum x86_cc cc,
 	      GLubyte *label )
 {
    GLint offset = label - (x86_get_label(p) + 2);
@@ -217,9 +217,23 @@ void x86_jcc( struct x86_function *p,
 /* Always use a 32bit offset for forward jumps:
  */
 GLubyte *x86_jcc_forward( struct x86_function *p,
-			  GLuint cc )
+			  enum x86_cc cc )
 {
    emit_2ub(p, 0x0f, 0x80 + cc);
+   emit_1i(p, 0);
+   return x86_get_label(p);
+}
+
+GLubyte *x86_jmp_forward( struct x86_function *p)
+{
+   emit_1ub(p, 0xe9);
+   emit_1i(p, 0);
+   return x86_get_label(p);
+}
+
+GLubyte *x86_call_forward( struct x86_function *p)
+{
+   emit_1ub(p, 0xe8);
    emit_1i(p, 0);
    return x86_get_label(p);
 }
@@ -230,6 +244,29 @@ void x86_fixup_fwd_jump( struct x86_function *p,
 			 GLubyte *fixup )
 {
    *(int *)(fixup - 4) = x86_get_label(p) - fixup;
+}
+
+void x86_jmp( struct x86_function *p, GLubyte *label)
+{
+   emit_1ub(p, 0xe9);
+   emit_1i(p, label - x86_get_label(p) - 4);
+}
+
+void x86_call( struct x86_function *p, GLubyte *label)
+{
+   emit_1ub(p, 0xe8);
+   emit_1i(p, label - x86_get_label(p) - 4);
+}
+
+/* michal:
+ * Temporary. As I need immediate operands, and dont want to mess with the codegen,
+ * I load the immediate into general purpose register and use it.
+ */
+void x86_mov_reg_imm( struct x86_function *p, struct x86_reg dst, GLint imm )
+{
+   assert(dst.mod == mod_REG);
+   emit_1ub(p, 0xb8 + dst.idx);
+   emit_1i(p, imm);
 }
 
 void x86_push( struct x86_function *p,
@@ -307,6 +344,27 @@ void x86_test( struct x86_function *p,
 {
    emit_1ub(p, 0x85);
    emit_modrm( p, dst, src );
+}
+
+void x86_add( struct x86_function *p,
+	       struct x86_reg dst,
+	       struct x86_reg src )
+{
+   emit_op_modrm(p, 0x03, 0x01, dst, src );
+}
+
+void x86_mul( struct x86_function *p,
+	       struct x86_reg src )
+{
+   assert (src.file == file_REG32 && src.mod == mod_REG);
+   emit_op_modrm(p, 0xf7, 0, x86_make_reg (file_REG32, reg_SP), src );
+}
+
+void x86_sub( struct x86_function *p,
+	       struct x86_reg dst,
+	       struct x86_reg src )
+{
+   emit_op_modrm(p, 0x2b, 0x29, dst, src );
 }
 
 
@@ -971,7 +1029,12 @@ struct x86_reg x86_fn_arg( struct x86_function *p,
 
 void x86_init_func( struct x86_function *p )
 {
-   p->store = _mesa_exec_malloc(1024);
+   x86_init_func_size(p, 1024);
+}
+
+void x86_init_func_size( struct x86_function *p, GLuint code_size )
+{
+   p->store = _mesa_exec_malloc(code_size);
    p->csr = p->store;
 }
 
@@ -985,7 +1048,7 @@ void (*x86_get_func( struct x86_function *p ))(void)
 {
    if (DISASSEM)
       _mesa_printf("disassemble %p %p\n", p->store, p->csr);
-   return (void (*)())p->store;
+   return (void (*)(void))p->store;
 }
 
 #else

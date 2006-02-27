@@ -25,7 +25,7 @@
 #if !defined SLANG_ASSEMBLE_H
 #define SLANG_ASSEMBLE_H
 
-#include "slang_compile.h"
+#include "slang_utility.h"
 
 #if defined __cplusplus
 extern "C" {
@@ -81,6 +81,7 @@ typedef enum slang_assembly_type_
 	slang_asm_local_alloc,
 	slang_asm_local_free,
 	slang_asm_local_addr,
+	slang_asm_global_addr,
 	slang_asm_call,
 	slang_asm_return,
 	slang_asm_discard,
@@ -174,27 +175,33 @@ typedef struct slang_assemble_ctx_
 	slang_swizzle swz;
 } slang_assemble_ctx;
 
-slang_function *_slang_locate_function (slang_function_scope *funcs, slang_atom a_name,
-	slang_operation *params, GLuint num_params, slang_assembly_name_space *space,
+struct slang_function_ *_slang_locate_function (struct slang_function_scope_ *funcs, slang_atom name,
+	struct slang_operation_ *params, GLuint num_params, slang_assembly_name_space *space,
 	slang_atom_pool *);
 
 GLboolean _slang_assemble_function (slang_assemble_ctx *, struct slang_function_ *);
 
-GLboolean _slang_cleanup_stack (slang_assemble_ctx *, slang_operation *);
+GLboolean _slang_cleanup_stack (slang_assemble_ctx *, struct slang_operation_ *);
 
-GLboolean _slang_dereference (slang_assemble_ctx *, slang_operation *);
+GLboolean _slang_dereference (slang_assemble_ctx *, struct slang_operation_ *);
 
-GLboolean _slang_assemble_function_call (slang_assemble_ctx *, slang_function *, slang_operation *,
-	GLuint, GLboolean);
+GLboolean _slang_assemble_function_call (slang_assemble_ctx *, struct slang_function_ *,
+	struct slang_operation_ *, GLuint, GLboolean);
 
-GLboolean _slang_assemble_function_call_name (slang_assemble_ctx *, const char *, slang_operation *,
-	GLuint, GLboolean);
+GLboolean _slang_assemble_function_call_name (slang_assemble_ctx *, const char *,
+	struct slang_operation_ *, GLuint, GLboolean);
 
-GLboolean _slang_assemble_operation (slang_assemble_ctx *, struct slang_operation_ *, slang_ref_type);
+GLboolean _slang_assemble_operation (slang_assemble_ctx *, struct slang_operation_ *,
+	slang_ref_type);
 
 #ifdef __cplusplus
 }
 #endif
+
+#include "slang_assemble_assignment.h"
+#include "slang_assemble_typeinfo.h"
+#include "slang_assemble_constructor.h"
+#include "slang_assemble_conditional.h"
 
 #endif
 

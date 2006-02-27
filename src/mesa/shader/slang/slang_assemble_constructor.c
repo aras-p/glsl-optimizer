@@ -29,9 +29,7 @@
  */
 
 #include "imports.h"
-#include "slang_utility.h"
-#include "slang_assemble_constructor.h"
-#include "slang_assemble_typeinfo.h"
+#include "slang_assemble.h"
 #include "slang_storage.h"
 
 /* _slang_is_swizzle() */

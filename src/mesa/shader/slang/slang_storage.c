@@ -29,10 +29,7 @@
  */
 
 #include "imports.h"
-#include "slang_utility.h"
 #include "slang_storage.h"
-#include "slang_assemble.h"
-#include "slang_execute.h"
 
 /* slang_storage_array */
 
