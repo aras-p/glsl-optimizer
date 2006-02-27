@@ -34,6 +34,7 @@
 #include "imports.h"
 #include "hash.h"
 #include "shaderobjects.h"
+#include "shaderobjects_3dlabs.h"
 
 #if USE_3DLABS_FRONTEND
 #include "slang_mesa.h"

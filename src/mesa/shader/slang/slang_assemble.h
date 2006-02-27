@@ -31,6 +31,8 @@
 extern "C" {
 #endif
 
+struct slang_operation_;
+
 typedef enum slang_assembly_type_
 {
 	/* core */

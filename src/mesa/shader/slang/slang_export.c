@@ -125,13 +125,13 @@ slang_export_data_entry *slang_export_data_table_add (slang_export_data_table *s
  * slang_export_code_entry
  */
 
-GLvoid slang_export_code_entry_ctr (slang_export_code_entry *self)
+static GLvoid slang_export_code_entry_ctr (slang_export_code_entry *self)
 {
 	self->name = SLANG_ATOM_NULL;
 	self->address = ~0;
 }
 
-GLvoid slang_export_code_entry_dtr (slang_export_code_entry *self)
+static GLvoid slang_export_code_entry_dtr (slang_export_code_entry *self)
 {
 }
 

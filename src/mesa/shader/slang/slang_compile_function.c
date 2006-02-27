@@ -150,16 +150,16 @@ slang_function *slang_function_scope_find (slang_function_scope *funcs, slang_fu
 GLboolean _slang_build_export_code_table (slang_export_code_table *tbl, slang_function_scope *funs,
 	slang_translation_unit *unit)
 {
-	slang_atom main;
+	slang_atom mainAtom;
 	GLuint i;
 
-	main = slang_atom_pool_atom (tbl->atoms, "main");
-	if (main == SLANG_ATOM_NULL)
+	mainAtom = slang_atom_pool_atom (tbl->atoms, "main");
+	if (mainAtom == SLANG_ATOM_NULL)
 		return GL_FALSE;
 
 	for (i = 0; i < funs->num_functions; i++)
 	{
-		if (funs->functions[i].header.a_name == main)
+		if (funs->functions[i].header.a_name == mainAtom)
 		{
 			slang_function *fun = &funs->functions[i];
 			slang_export_code_entry *e;

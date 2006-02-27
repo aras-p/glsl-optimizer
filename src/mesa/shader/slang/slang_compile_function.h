@@ -29,6 +29,8 @@
 extern "C" {
 #endif
 
+struct slang_translation_unit_;
+
 typedef enum slang_function_kind_
 {
 	slang_func_ordinary,

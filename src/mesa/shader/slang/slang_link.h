@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-typedef enum
+enum
 {
 	SLANG_UNIFORM_BINDING_VERTEX,
 	SLANG_UNIFORM_BINDING_FRAGMENT,
@@ -63,7 +63,7 @@ typedef struct
 	GLuint count;
 } slang_active_uniforms;
 
-typedef enum
+enum
 {
 	SLANG_COMMON_FIXED_MODELVIEWMATRIX,
 	SLANG_COMMON_FIXED_PROJECTIONMATRIX,
@@ -107,7 +107,7 @@ typedef enum
 	SLANG_COMMON_FIXED_MAX
 };
 
-typedef enum
+enum
 {
 	SLANG_VERTEX_FIXED_POSITION,
 	SLANG_VERTEX_FIXED_POINTSIZE,
@@ -134,7 +134,7 @@ typedef enum
 	SLANG_VERTEX_FIXED_MAX
 };
 
-typedef enum
+enum
 {
 	SLANG_FRAGMENT_FIXED_FRAGCOORD,
 	SLANG_FRAGMENT_FIXED_FRONTFACING,
