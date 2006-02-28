@@ -380,7 +380,16 @@ static unsigned long op_operands(enum prog_opcode opcode)
 				   
 /* DP4 version seems to trigger some hw peculiarity */
 //#define PREFER_DP4
-				   
+
+#define FREE_TEMPS() \
+	do { \
+		if(u_temp_i < vp->num_temporaries) { \
+			WARN_ONCE("Ran out of temps, num temps %d, us %d\n", vp->num_temporaries, u_temp_i); \
+			vp->native = GL_FALSE; \
+		} \
+		u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1; \
+	} while (0)
+
 void translate_vertex_shader(struct r300_vertex_program *vp)
 {
 	struct vertex_program *mesa_vp=(void *)vp;
@@ -522,8 +531,12 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 		if(mesa_vp->Base.OutputsWritten & (1 << i))
 			vp->outputs[i] = cur_reg++;
 	
+	vp->translated = GL_TRUE;
+	vp->native = GL_TRUE;
+	
 	o_inst=vp->program.body.i;
 	for(vpi=mesa_vp->Base.Instructions; vpi->Opcode != OPCODE_END; vpi++, o_inst++){
+		FREE_TEMPS();
 		
 		operands=op_operands(vpi->Opcode);
 		are_srcs_scalar=operands & SCALAR_FLAG;
@@ -552,6 +565,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			}
 			
 		}
+		
 		if(operands >= 2){
 			if( CMP_SRCS(src[1], src[0]) ){
 				o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, u_temp_i,
@@ -580,7 +594,6 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			o_inst->src1=t_src_scalar(vp, &src[0]);
 			o_inst->src2=ZERO_SRC_0;
 			o_inst->src3=t_src_scalar(vp, &src[1]);
-			WARN_ONCE("Inst was previously broken!\n");
 			goto next;
 			
 		case OPCODE_MOV://ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO} 
@@ -945,15 +958,6 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 	for(i=0; i < vp->program.length; i++)
 		fprintf(stderr, "%08x\n", vp->program.body.d[i]);
 #endif
-	
-	if(u_temp_i < vp->num_temporaries){
-		WARN_ONCE("Ran out of temps, num temps %d, us %d\n", vp->num_temporaries, u_temp_i);
-		vp->translated=GL_TRUE; //GL_FALSE; /* temps exhausted - program cannot be run */
-		vp->native = GL_FALSE;
-	}else{
-		vp->translated=GL_TRUE;
-		vp->native = GL_TRUE;
-	}
 	
 	if (mesa_vp->IsNVProgram)
 		vp->native = GL_FALSE;
