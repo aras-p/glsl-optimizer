@@ -1651,7 +1651,6 @@ static void r200Viewport( GLcontext *ctx, GLint x, GLint y,
     * setting below.  Could apply deltas to rescue pipelined viewport
     * values, or keep the originals hanging around.
     */
-   R200_FIREVERTICES( R200_CONTEXT(ctx) );
    r200UpdateWindow( ctx );
 }
 

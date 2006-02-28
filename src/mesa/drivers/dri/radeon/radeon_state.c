@@ -1511,7 +1511,6 @@ static void radeonViewport( GLcontext *ctx, GLint x, GLint y,
     * setting below.  Could apply deltas to rescue pipelined viewport
     * values, or keep the originals hanging around.
     */
-   RADEON_FIREVERTICES( RADEON_CONTEXT(ctx) );
    radeonUpdateWindow( ctx );
 }
 
