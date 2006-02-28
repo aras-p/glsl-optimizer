@@ -496,27 +496,27 @@ StateVars = [
 	# GL_ARB_multitexture
 	( "GL_MAX_TEXTURE_UNITS_ARB", GLint,
 	  ["MIN2(ctx->Const.MaxTextureImageUnits, ctx->Const.MaxTextureCoordUnits)"],
-	  "", "ARB_multitexture" ),
+	  "", ["ARB_multitexture"] ),
 	( "GL_ACTIVE_TEXTURE_ARB", GLint,
-	  [ "GL_TEXTURE0_ARB + ctx->Texture.CurrentUnit"], "", "ARB_multitexture" ),
+	  [ "GL_TEXTURE0_ARB + ctx->Texture.CurrentUnit"], "", ["ARB_multitexture"] ),
 	( "GL_CLIENT_ACTIVE_TEXTURE_ARB", GLint,
-	  ["GL_TEXTURE0_ARB + ctx->Array.ActiveTexture"], "", "ARB_multitexture" ),
+	  ["GL_TEXTURE0_ARB + ctx->Array.ActiveTexture"], "", ["ARB_multitexture"] ),
 
 	# GL_ARB_texture_cube_map
 	( "GL_TEXTURE_CUBE_MAP_ARB", GLboolean,
-	  ["_mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB)"], "", "ARB_texture_cube_map" ),
+	  ["_mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB)"], "", ["ARB_texture_cube_map"] ),
 	( "GL_TEXTURE_BINDING_CUBE_MAP_ARB", GLint,
 	  ["ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap->Name"],
-	  "", "ARB_texture_cube_map" ),
+	  "", ["ARB_texture_cube_map"] ),
 	( "GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB", GLint,
 	  ["(1 << (ctx->Const.MaxCubeTextureLevels - 1))"],
-	  "", "ARB_texture_cube_map"),
+	  "", ["ARB_texture_cube_map"]),
 
 	# GL_ARB_texture_compression */
 	( "GL_TEXTURE_COMPRESSION_HINT_ARB", GLint,
-	  ["ctx->Hint.TextureCompression"], "", "ARB_texture_compression" ),
+	  ["ctx->Hint.TextureCompression"], "", ["ARB_texture_compression"] ),
 	( "GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB", GLint,
-	  ["_mesa_get_compressed_formats(ctx, NULL)"], "", "ARB_texture_compression" ),
+	  ["_mesa_get_compressed_formats(ctx, NULL)"], "", ["ARB_texture_compression"] ),
 	( "GL_COMPRESSED_TEXTURE_FORMATS_ARB", GLenum,
 	  [],
 	  """GLint formats[100];
@@ -524,13 +524,13 @@ StateVars = [
          ASSERT(n <= 100);
          for (i = 0; i < n; i++)
             params[i] = ENUM_TO_INT(formats[i]);""",
-	  "ARB_texture_compression" ),
+	  ["ARB_texture_compression"] ),
 
 	# GL_EXT_compiled_vertex_array
 	( "GL_ARRAY_ELEMENT_LOCK_FIRST_EXT", GLint, ["ctx->Array.LockFirst"],
-	  "", "EXT_compiled_vertex_array" ),
+	  "", ["EXT_compiled_vertex_array"] ),
 	( "GL_ARRAY_ELEMENT_LOCK_COUNT_EXT", GLint, ["ctx->Array.LockCount"],
-	  "", "EXT_compiled_vertex_array" ),
+	  "", ["EXT_compiled_vertex_array"] ),
 
 	# GL_ARB_transpose_matrix
 	( "GL_TRANSPOSE_COLOR_MATRIX_ARB", GLfloat,
@@ -588,311 +588,315 @@ StateVars = [
 
 	# GL_EXT_convolution (also in 1.2 imaging)
 	( "GL_CONVOLUTION_1D_EXT", GLboolean,
-	  ["ctx->Pixel.Convolution1DEnabled"], "", "EXT_convolution" ),
+	  ["ctx->Pixel.Convolution1DEnabled"], "", ["EXT_convolution"] ),
 	( "GL_CONVOLUTION_2D_EXT", GLboolean,
-	  ["ctx->Pixel.Convolution2DEnabled"], "", "EXT_convolution" ),
+	  ["ctx->Pixel.Convolution2DEnabled"], "", ["EXT_convolution"] ),
 	( "GL_SEPARABLE_2D_EXT", GLboolean,
-	  ["ctx->Pixel.Separable2DEnabled"], "", "EXT_convolution" ),
+	  ["ctx->Pixel.Separable2DEnabled"], "", ["EXT_convolution"] ),
 	( "GL_POST_CONVOLUTION_RED_SCALE_EXT", GLfloat,
-	  ["ctx->Pixel.PostConvolutionScale[0]"], "", "EXT_convolution" ),
+	  ["ctx->Pixel.PostConvolutionScale[0]"], "", ["EXT_convolution"] ),
 	( "GL_POST_CONVOLUTION_GREEN_SCALE_EXT", GLfloat,
-	  ["ctx->Pixel.PostConvolutionScale[1]"], "", "EXT_convolution" ),
+	  ["ctx->Pixel.PostConvolutionScale[1]"], "", ["EXT_convolution"] ),
 	( "GL_POST_CONVOLUTION_BLUE_SCALE_EXT", GLfloat,
-	  ["ctx->Pixel.PostConvolutionScale[2]"], "", "EXT_convolution" ),
+	  ["ctx->Pixel.PostConvolutionScale[2]"], "", ["EXT_convolution"] ),
 	( "GL_POST_CONVOLUTION_ALPHA_SCALE_EXT", GLfloat,
-	  ["ctx->Pixel.PostConvolutionScale[3]"], "", "EXT_convolution" ),
+	  ["ctx->Pixel.PostConvolutionScale[3]"], "", ["EXT_convolution"] ),
 	( "GL_POST_CONVOLUTION_RED_BIAS_EXT", GLfloat,
-	  ["ctx->Pixel.PostConvolutionBias[0]"], "", "EXT_convolution" ),
+	  ["ctx->Pixel.PostConvolutionBias[0]"], "", ["EXT_convolution"] ),
 	( "GL_POST_CONVOLUTION_GREEN_BIAS_EXT", GLfloat,
-	  ["ctx->Pixel.PostConvolutionBias[1]"], "", "EXT_convolution" ),
+	  ["ctx->Pixel.PostConvolutionBias[1]"], "", ["EXT_convolution"] ),
 	( "GL_POST_CONVOLUTION_BLUE_BIAS_EXT", GLfloat,
-	  ["ctx->Pixel.PostConvolutionBias[2]"], "", "EXT_convolution" ),
+	  ["ctx->Pixel.PostConvolutionBias[2]"], "", ["EXT_convolution"] ),
 	( "GL_POST_CONVOLUTION_ALPHA_BIAS_EXT", GLfloat,
-	  ["ctx->Pixel.PostConvolutionBias[3]"], "", "EXT_convolution" ),
+	  ["ctx->Pixel.PostConvolutionBias[3]"], "", ["EXT_convolution"] ),
 
 	# GL_EXT_histogram / GL_ARB_imaging
 	( "GL_HISTOGRAM", GLboolean,
-	  [ "ctx->Pixel.HistogramEnabled" ], "", "EXT_histogram" ),
+	  [ "ctx->Pixel.HistogramEnabled" ], "", ["EXT_histogram"] ),
 	( "GL_MINMAX", GLboolean,
-	  [ "ctx->Pixel.MinMaxEnabled" ], "", "EXT_histogram" ),
+	  [ "ctx->Pixel.MinMaxEnabled" ], "", ["EXT_histogram"] ),
 
 	# GL_SGI_color_table / GL_ARB_imaging
 	( "GL_COLOR_TABLE_SGI", GLboolean,
-	  ["ctx->Pixel.ColorTableEnabled"], "", "SGI_color_table" ),
+	  ["ctx->Pixel.ColorTableEnabled"], "", ["SGI_color_table"] ),
 	( "GL_POST_CONVOLUTION_COLOR_TABLE_SGI", GLboolean,
-	  ["ctx->Pixel.PostConvolutionColorTableEnabled"], "", "SGI_color_table" ),
+	  ["ctx->Pixel.PostConvolutionColorTableEnabled"], "", ["SGI_color_table"] ),
 	( "GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI", GLboolean,
-	  ["ctx->Pixel.PostColorMatrixColorTableEnabled"], "", "SGI_color_table" ),
+	  ["ctx->Pixel.PostColorMatrixColorTableEnabled"], "", ["SGI_color_table"] ),
 
 	# GL_SGI_texture_color_table
 	( "GL_TEXTURE_COLOR_TABLE_SGI", GLboolean,
 	  ["ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled"],
-	  "", "SGI_texture_color_table" ),
+	  "", ["SGI_texture_color_table"] ),
 
 	# GL_EXT_secondary_color
 	( "GL_COLOR_SUM_EXT", GLboolean,
-	  ["ctx->Fog.ColorSumEnabled"], "", "EXT_secondary_color" ),
+	  ["ctx->Fog.ColorSumEnabled"], "", ["EXT_secondary_color"] ),
 	( "GL_CURRENT_SECONDARY_COLOR_EXT", GLfloatN,
 	  ["ctx->Current.Attrib[VERT_ATTRIB_COLOR1][0]",
 	   "ctx->Current.Attrib[VERT_ATTRIB_COLOR1][1]",
 	   "ctx->Current.Attrib[VERT_ATTRIB_COLOR1][2]",
 	   "ctx->Current.Attrib[VERT_ATTRIB_COLOR1][3]"],
-	  "FLUSH_CURRENT(ctx, 0);", "EXT_secondary_color" ),
+	  "FLUSH_CURRENT(ctx, 0);", ["EXT_secondary_color"] ),
 	( "GL_SECONDARY_COLOR_ARRAY_EXT", GLboolean,
-	  ["ctx->Array.SecondaryColor.Enabled"], "", "EXT_secondary_color" ),
+	  ["ctx->Array.SecondaryColor.Enabled"], "", ["EXT_secondary_color"] ),
 	( "GL_SECONDARY_COLOR_ARRAY_TYPE_EXT", GLenum,
-	  ["ctx->Array.SecondaryColor.Type"], "",  "EXT_secondary_color" ),
+	  ["ctx->Array.SecondaryColor.Type"], "",  ["EXT_secondary_color"] ),
 	( "GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT", GLint,
-	  ["ctx->Array.SecondaryColor.Stride"], "", "EXT_secondary_color" ),
+	  ["ctx->Array.SecondaryColor.Stride"], "", ["EXT_secondary_color"] ),
 	( "GL_SECONDARY_COLOR_ARRAY_SIZE_EXT", GLint,
-	  ["ctx->Array.SecondaryColor.Size"], "", "EXT_secondary_color" ),
+	  ["ctx->Array.SecondaryColor.Size"], "", ["EXT_secondary_color"] ),
 
 	# GL_EXT_fog_coord
 	( "GL_CURRENT_FOG_COORDINATE_EXT", GLfloat,
 	  ["ctx->Current.Attrib[VERT_ATTRIB_FOG][0]"],
-	  "FLUSH_CURRENT(ctx, 0);", "EXT_fog_coord" ),
+	  "FLUSH_CURRENT(ctx, 0);", ["EXT_fog_coord"] ),
 	( "GL_FOG_COORDINATE_ARRAY_EXT", GLboolean, ["ctx->Array.FogCoord.Enabled"],
-	  "",  "EXT_fog_coord" ),
+	  "",  ["EXT_fog_coord"] ),
 	( "GL_FOG_COORDINATE_ARRAY_TYPE_EXT", GLenum, ["ctx->Array.FogCoord.Type"],
-	  "", "EXT_fog_coord" ),
+	  "", ["EXT_fog_coord"] ),
 	( "GL_FOG_COORDINATE_ARRAY_STRIDE_EXT", GLint, ["ctx->Array.FogCoord.Stride"],
-	  "", "EXT_fog_coord" ),
+	  "", ["EXT_fog_coord"] ),
 	( "GL_FOG_COORDINATE_SOURCE_EXT", GLenum, ["ctx->Fog.FogCoordinateSource"],
-	  "", "EXT_fog_coord" ),
+	  "", ["EXT_fog_coord"] ),
 
 	# GL_EXT_texture_lod_bias
 	( "GL_MAX_TEXTURE_LOD_BIAS_EXT", GLfloat,
-	  ["ctx->Const.MaxTextureLodBias"], "", "EXT_texture_lod_bias"),
+	  ["ctx->Const.MaxTextureLodBias"], "", ["EXT_texture_lod_bias"]),
 
 	# GL_EXT_texture_filter_anisotropic
 	( "GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT", GLfloat,
-	  ["ctx->Const.MaxTextureMaxAnisotropy"], "", "EXT_texture_filter_anisotropic"),
+	  ["ctx->Const.MaxTextureMaxAnisotropy"], "", ["EXT_texture_filter_anisotropic"]),
 
 	# GL_ARB_multisample
 	( "GL_MULTISAMPLE_ARB", GLboolean,
-	  ["ctx->Multisample.Enabled"], "", "ARB_multisample" ),
+	  ["ctx->Multisample.Enabled"], "", ["ARB_multisample"] ),
 	( "GL_SAMPLE_ALPHA_TO_COVERAGE_ARB", GLboolean,
-	  ["ctx->Multisample.SampleAlphaToCoverage"], "", "ARB_multisample" ),
+	  ["ctx->Multisample.SampleAlphaToCoverage"], "", ["ARB_multisample"] ),
 	( "GL_SAMPLE_ALPHA_TO_ONE_ARB", GLboolean,
-	  ["ctx->Multisample.SampleAlphaToOne"], "", "ARB_multisample" ),
+	  ["ctx->Multisample.SampleAlphaToOne"], "", ["ARB_multisample"] ),
 	( "GL_SAMPLE_COVERAGE_ARB", GLboolean,
-	  ["ctx->Multisample.SampleCoverage"], "", "ARB_multisample" ),
+	  ["ctx->Multisample.SampleCoverage"], "", ["ARB_multisample"] ),
 	( "GL_SAMPLE_COVERAGE_VALUE_ARB", GLfloat,
-	  ["ctx->Multisample.SampleCoverageValue"], "", "ARB_multisample" ),
+	  ["ctx->Multisample.SampleCoverageValue"], "", ["ARB_multisample"] ),
 	( "GL_SAMPLE_COVERAGE_INVERT_ARB", GLboolean,
-	  ["ctx->Multisample.SampleCoverageInvert"], "", "ARB_multisample" ),
+	  ["ctx->Multisample.SampleCoverageInvert"], "", ["ARB_multisample"] ),
 	( "GL_SAMPLE_BUFFERS_ARB", GLint,
-	  ["ctx->DrawBuffer->Visual.sampleBuffers"], "", "ARB_multisample" ),
+	  ["ctx->DrawBuffer->Visual.sampleBuffers"], "", ["ARB_multisample"] ),
 	( "GL_SAMPLES_ARB", GLint,
-	  ["ctx->DrawBuffer->Visual.samples"], "", "ARB_multisample" ),
+	  ["ctx->DrawBuffer->Visual.samples"], "", ["ARB_multisample"] ),
 
 	# GL_IBM_rasterpos_clip
 	( "GL_RASTER_POSITION_UNCLIPPED_IBM", GLboolean,
-	  ["ctx->Transform.RasterPositionUnclipped"], "", "IBM_rasterpos_clip" ),
+	  ["ctx->Transform.RasterPositionUnclipped"], "", ["IBM_rasterpos_clip"] ),
 
 	# GL_NV_point_sprite
 	( "GL_POINT_SPRITE_NV", GLboolean, ["ctx->Point.PointSprite"],
-	  "", "NV_point_sprite" ), # OR ARB_point_sprite
+	  "", ["NV_point_sprite"] ), # OR ARB_point_sprite
 	( "GL_POINT_SPRITE_R_MODE_NV", GLenum, ["ctx->Point.SpriteRMode"],
-	  "", "NV_point_sprite" ), # OR ARB_point_sprite
+	  "", ["NV_point_sprite"] ), # OR ARB_point_sprite
 	( "GL_POINT_SPRITE_COORD_ORIGIN", GLenum, ["ctx->Point.SpriteOrigin"],
-	  "", "NV_point_sprite" ), # OR ARB_point_sprite
+	  "", ["NV_point_sprite"] ), # OR ARB_point_sprite
 
 	# GL_SGIS_generate_mipmap
 	( "GL_GENERATE_MIPMAP_HINT_SGIS", GLenum, ["ctx->Hint.GenerateMipmap"],
-	  "", "SGIS_generate_mipmap" ),
+	  "", ["SGIS_generate_mipmap"] ),
 
 	# GL_NV_vertex_program
 	( "GL_VERTEX_PROGRAM_NV", GLboolean,
-	  ["ctx->VertexProgram.Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->VertexProgram.Enabled"], "", ["NV_vertex_program", "ARB_vertex_program"] ),
 	( "GL_VERTEX_PROGRAM_POINT_SIZE_NV", GLboolean,
-	  ["ctx->VertexProgram.PointSizeEnabled"], "", "NV_vertex_program" ),
+	  ["ctx->VertexProgram.PointSizeEnabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_PROGRAM_TWO_SIDE_NV", GLboolean,
-	  ["ctx->VertexProgram.TwoSideEnabled"], "", "NV_vertex_program" ),
+	  ["ctx->VertexProgram.TwoSideEnabled"], "", ["NV_vertex_program"] ),
 	( "GL_MAX_TRACK_MATRIX_STACK_DEPTH_NV", GLint,
-	  ["ctx->Const.MaxProgramMatrixStackDepth"], "", "NV_vertex_program" ),
+	  ["ctx->Const.MaxProgramMatrixStackDepth"], "", ["NV_vertex_program"] ),
 	( "GL_MAX_TRACK_MATRICES_NV", GLint,
-	  ["ctx->Const.MaxProgramMatrices"], "", "NV_vertex_program" ),
+	  ["ctx->Const.MaxProgramMatrices"], "", ["NV_vertex_program"] ),
 	( "GL_CURRENT_MATRIX_STACK_DEPTH_NV", GLboolean,
-	  ["ctx->CurrentStack->Depth + 1"], "", "NV_vertex_program" ),
+	  ["ctx->CurrentStack->Depth + 1"], "", ["NV_vertex_program"] ),
 	( "GL_CURRENT_MATRIX_NV", GLfloat,
 	  ["matrix[0]", "matrix[1]", "matrix[2]", "matrix[3]",
 	   "matrix[4]", "matrix[5]", "matrix[6]", "matrix[7]",
 	   "matrix[8]", "matrix[9]", "matrix[10]", "matrix[11]",
 	   "matrix[12]", "matrix[13]", "matrix[14]", "matrix[15]" ],
-	  "const GLfloat *matrix = ctx->CurrentStack->Top->m;", "NV_vertex_program" ),
+	  "const GLfloat *matrix = ctx->CurrentStack->Top->m;",
+	  ["NV_vertex_program"] ),
 	( "GL_VERTEX_PROGRAM_BINDING_NV", GLint,
 	  ["(ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0)"],
-	  "", "NV_vertex_program" ),
+	  "", ["NV_vertex_program"] ),
 	( "GL_PROGRAM_ERROR_POSITION_NV", GLint,
-	  ["ctx->Program.ErrorPos"], "", "NV_vertex_program" ),
+	  ["ctx->Program.ErrorPos"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY0_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[0].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[0].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY1_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[1].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[1].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY2_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[2].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[2].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY3_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[3].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[3].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY4_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[4].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[4].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY5_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[5].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[5].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY6_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[6].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[6].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY7_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[7].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[7].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY8_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[8].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[8].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY9_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[9].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[9].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY10_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[10].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[10].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY11_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[11].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[11].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY12_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[12].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[12].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY13_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[13].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[13].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY14_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[14].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[14].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY15_NV", GLboolean,
-	  ["ctx->Array.VertexAttrib[15].Enabled"], "", "NV_vertex_program" ),
+	  ["ctx->Array.VertexAttrib[15].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB0_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[0]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[0]"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB1_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[1]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[1]"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB2_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[2]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[2]"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB3_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[3]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[3]"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB4_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[4]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[4]"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB5_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[5]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[5]"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB6_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[6]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[6]"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB7_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[7]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[7]"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB8_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[8]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[8]"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB9_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[9]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[9]"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB10_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[10]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[10]"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB11_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[11]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[11]"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB12_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[12]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[12]"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB13_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[13]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[13]"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB14_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[14]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[14]"], "", ["NV_vertex_program"] ),
 	( "GL_MAP1_VERTEX_ATTRIB15_4_NV", GLboolean,
-	  ["ctx->Eval.Map1Attrib[15]"], "", "NV_vertex_program" ),
+	  ["ctx->Eval.Map1Attrib[15]"], "", ["NV_vertex_program"] ),
 
 	# GL_NV_fragment_program
 	( "GL_FRAGMENT_PROGRAM_NV", GLboolean,
-	  ["ctx->FragmentProgram.Enabled"], "", "NV_fragment_program" ),
+	  ["ctx->FragmentProgram.Enabled"], "", ["NV_fragment_program"] ),
 	( "GL_MAX_TEXTURE_COORDS_NV", GLint,
-	  ["ctx->Const.MaxTextureCoordUnits"], "", "NV_fragment_program" ),
+	  ["ctx->Const.MaxTextureCoordUnits"], "", ["NV_fragment_program"] ),
 	( "GL_MAX_TEXTURE_IMAGE_UNITS_NV", GLint,
-	  ["ctx->Const.MaxTextureImageUnits"], "", "NV_fragment_program" ),
+	  ["ctx->Const.MaxTextureImageUnits"], "", ["NV_fragment_program"] ),
 	( "GL_FRAGMENT_PROGRAM_BINDING_NV", GLint,
 	  ["ctx->FragmentProgram.Current ? ctx->FragmentProgram.Current->Base.Id : 0"],
-	  "", "NV_fragment_program" ),
+	  "", ["NV_fragment_program"] ),
 	( "GL_MAX_FRAGMENT_PROGRAM_LOCAL_PARAMETERS_NV", GLint,
-	  ["MAX_NV_FRAGMENT_PROGRAM_PARAMS"], "", "NV_fragment_program" ),
+	  ["MAX_NV_FRAGMENT_PROGRAM_PARAMS"], "", ["NV_fragment_program"] ),
 
 	# GL_NV_texture_rectangle
 	( "GL_TEXTURE_RECTANGLE_NV", GLboolean,
-	  ["_mesa_IsEnabled(GL_TEXTURE_RECTANGLE_NV)"], "", "NV_texture_rectangle" ),
+	  ["_mesa_IsEnabled(GL_TEXTURE_RECTANGLE_NV)"], "", ["NV_texture_rectangle"] ),
 	( "GL_TEXTURE_BINDING_RECTANGLE_NV", GLint,
 	  ["ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentRect->Name"],
-	  "", "NV_texture_rectangle" ),
+	  "", ["NV_texture_rectangle"] ),
 	( "GL_MAX_RECTANGLE_TEXTURE_SIZE_NV", GLint,
-	  ["ctx->Const.MaxTextureRectSize"], "", "NV_texture_rectangle" ),
+	  ["ctx->Const.MaxTextureRectSize"], "", ["NV_texture_rectangle"] ),
 
 	# GL_EXT_stencil_two_side
 	( "GL_STENCIL_TEST_TWO_SIDE_EXT", GLboolean,
-	  ["ctx->Stencil.TestTwoSide"], "", "EXT_stencil_two_side" ),
+	  ["ctx->Stencil.TestTwoSide"], "", ["EXT_stencil_two_side"] ),
 	( "GL_ACTIVE_STENCIL_FACE_EXT", GLenum,
 	  ["ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT"],
-	  "", "EXT_stencil_two_side" ),
+	  "", ["EXT_stencil_two_side"] ),
 
 	# GL_NV_light_max_exponent
 	( "GL_MAX_SHININESS_NV", GLfloat,
-	  ["ctx->Const.MaxShininess"], "", "NV_light_max_exponent" ),
+	  ["ctx->Const.MaxShininess"], "", ["NV_light_max_exponent"] ),
 	( "GL_MAX_SPOT_EXPONENT_NV", GLfloat,
-	  ["ctx->Const.MaxSpotExponent"], "", "NV_light_max_exponent" ),
+	  ["ctx->Const.MaxSpotExponent"], "", ["NV_light_max_exponent"] ),
 
 	# GL_ARB_vertex_buffer_object
 	( "GL_ARRAY_BUFFER_BINDING_ARB", GLint,
-	  ["ctx->Array.ArrayBufferObj->Name"], "", "ARB_vertex_buffer_object" ),
+	  ["ctx->Array.ArrayBufferObj->Name"], "", ["ARB_vertex_buffer_object"] ),
 	( "GL_VERTEX_ARRAY_BUFFER_BINDING_ARB", GLint,
-	  ["ctx->Array.Vertex.BufferObj->Name"], "", "ARB_vertex_buffer_object" ),
+	  ["ctx->Array.Vertex.BufferObj->Name"], "", ["ARB_vertex_buffer_object"] ),
 	( "GL_NORMAL_ARRAY_BUFFER_BINDING_ARB", GLint,
-	  ["ctx->Array.Normal.BufferObj->Name"], "", "ARB_vertex_buffer_object" ),
+	  ["ctx->Array.Normal.BufferObj->Name"], "", ["ARB_vertex_buffer_object"] ),
 	( "GL_COLOR_ARRAY_BUFFER_BINDING_ARB", GLint,
-	  ["ctx->Array.Color.BufferObj->Name"], "", "ARB_vertex_buffer_object" ),
+	  ["ctx->Array.Color.BufferObj->Name"], "", ["ARB_vertex_buffer_object"] ),
 	( "GL_INDEX_ARRAY_BUFFER_BINDING_ARB", GLint,
-	  ["ctx->Array.Index.BufferObj->Name"], "", "ARB_vertex_buffer_object" ),
+	  ["ctx->Array.Index.BufferObj->Name"], "", ["ARB_vertex_buffer_object"] ),
 	( "GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB", GLint,
 	  ["ctx->Array.TexCoord[ctx->Array.ActiveTexture].BufferObj->Name"],
-	  "", "ARB_vertex_buffer_object" ),
+	  "", ["ARB_vertex_buffer_object"] ),
 	( "GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB", GLint,
-	  ["ctx->Array.EdgeFlag.BufferObj->Name"], "", "ARB_vertex_buffer_object" ),
+	  ["ctx->Array.EdgeFlag.BufferObj->Name"], "", ["ARB_vertex_buffer_object"] ),
 	( "GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB", GLint,
 	  ["ctx->Array.SecondaryColor.BufferObj->Name"],
-	  "", "ARB_vertex_buffer_object" ),
+	  "", ["ARB_vertex_buffer_object"] ),
 	( "GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB", GLint,
-	  ["ctx->Array.FogCoord.BufferObj->Name"], "", "ARB_vertex_buffer_object" ),
+	  ["ctx->Array.FogCoord.BufferObj->Name"],
+	  "", ["ARB_vertex_buffer_object"] ),
 	# GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB - not supported
 	( "GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB", GLint,
-	  ["ctx->Array.ElementArrayBufferObj->Name"], "", "ARB_vertex_buffer_object" ),
+	  ["ctx->Array.ElementArrayBufferObj->Name"],
+	  "", ["ARB_vertex_buffer_object"] ),
 
 	# GL_EXT_pixel_buffer_object
 	( "GL_PIXEL_PACK_BUFFER_BINDING_EXT", GLint,
-	  ["ctx->Pack.BufferObj->Name"], "", "EXT_pixel_buffer_object" ),
+	  ["ctx->Pack.BufferObj->Name"], "", ["EXT_pixel_buffer_object"] ),
 	( "GL_PIXEL_UNPACK_BUFFER_BINDING_EXT", GLint,
-	  ["ctx->Unpack.BufferObj->Name"], "", "EXT_pixel_buffer_object" ),
+	  ["ctx->Unpack.BufferObj->Name"], "", ["EXT_pixel_buffer_object"] ),
 
 	# GL_ARB_vertex_program
 	( "GL_MAX_VERTEX_ATTRIBS_ARB", GLint,
-	  ["ctx->Const.VertexProgram.MaxAttribs"], "", "ARB_vertex_program" ),
+	  ["ctx->Const.VertexProgram.MaxAttribs"], "", ["ARB_vertex_program"] ),
 
 	# GL_ARB_fragment_program
 	( "GL_FRAGMENT_PROGRAM_ARB", GLboolean,
-	  ["ctx->FragmentProgram.Enabled"], "", "ARB_fragment_program" ),
+	  ["ctx->FragmentProgram.Enabled"], "", ["ARB_fragment_program"] ),
 	( "GL_TRANSPOSE_CURRENT_MATRIX_ARB", GLfloat,
 	  ["matrix[0]", "matrix[4]", "matrix[8]", "matrix[12]",
 	   "matrix[1]", "matrix[5]", "matrix[9]", "matrix[13]",
 	   "matrix[2]", "matrix[6]", "matrix[10]", "matrix[14]",
 	   "matrix[3]", "matrix[7]", "matrix[11]", "matrix[15]"],
-	  "const GLfloat *matrix = ctx->CurrentStack->Top->m;", "ARB_fragment_program" ),
+	  "const GLfloat *matrix = ctx->CurrentStack->Top->m;",
+	  ["ARB_fragment_program"] ),
 
 	# GL_EXT_depth_bounds_test
 	( "GL_DEPTH_BOUNDS_TEST_EXT", GLboolean,
-	  ["ctx->Depth.BoundsTest"], "", "EXT_depth_bounds_test" ),
+	  ["ctx->Depth.BoundsTest"], "", ["EXT_depth_bounds_test"] ),
 	( "GL_DEPTH_BOUNDS_EXT", GLfloat,
 	  ["ctx->Depth.BoundsMin", "ctx->Depth.BoundsMax"],
-	  "", "EXT_depth_bounds_test" ),
+	  "", ["EXT_depth_bounds_test"] ),
 
 	# GL_MESA_program_debug
 	( "GL_FRAGMENT_PROGRAM_CALLBACK_MESA", GLboolean,
-	  ["ctx->FragmentProgram.CallbackEnabled"], "", "MESA_program_debug" ),
+	  ["ctx->FragmentProgram.CallbackEnabled"], "", ["MESA_program_debug"] ),
 	( "GL_VERTEX_PROGRAM_CALLBACK_MESA", GLboolean,
-	  ["ctx->VertexProgram.CallbackEnabled"], "", "MESA_program_debug" ),
+	  ["ctx->VertexProgram.CallbackEnabled"], "", ["MESA_program_debug"] ),
 	( "GL_FRAGMENT_PROGRAM_POSITION_MESA", GLint,
-	  ["ctx->FragmentProgram.CurrentPosition"], "", "MESA_program_debug" ),
+	  ["ctx->FragmentProgram.CurrentPosition"], "", ["MESA_program_debug"] ),
 	( "GL_VERTEX_PROGRAM_POSITION_MESA", GLint,
-	  ["ctx->VertexProgram.CurrentPosition"], "", "MESA_program_debug" ),
+	  ["ctx->VertexProgram.CurrentPosition"], "", ["MESA_program_debug"] ),
 
 	# GL_ARB_draw_buffers
 	( "GL_MAX_DRAW_BUFFERS_ARB", GLint,
-	  ["ctx->Const.MaxDrawBuffers"], "", "ARB_draw_buffers" ),
+	  ["ctx->Const.MaxDrawBuffers"], "", ["ARB_draw_buffers"] ),
 	( "GL_DRAW_BUFFER0_ARB", GLenum,
-	  ["ctx->Color.DrawBuffer[0]"], "", "ARB_draw_buffers" ),
+	  ["ctx->Color.DrawBuffer[0]"], "", ["ARB_draw_buffers"] ),
 	( "GL_DRAW_BUFFER1_ARB", GLenum,
 	  ["buffer"],
 	  """GLenum buffer;
@@ -900,7 +904,7 @@ StateVars = [
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->Color.DrawBuffer[1];""", "ARB_draw_buffers" ),
+         buffer = ctx->Color.DrawBuffer[1];""", ["ARB_draw_buffers"] ),
 	( "GL_DRAW_BUFFER2_ARB", GLenum,
 	  ["buffer"],
 	  """GLenum buffer;
@@ -908,7 +912,7 @@ StateVars = [
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->Color.DrawBuffer[2];""", "ARB_draw_buffers" ),
+         buffer = ctx->Color.DrawBuffer[2];""", ["ARB_draw_buffers"] ),
 	( "GL_DRAW_BUFFER3_ARB", GLenum,
 	  ["buffer"],
 	  """GLenum buffer;
@@ -916,24 +920,24 @@ StateVars = [
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->Color.DrawBuffer[3];""", "ARB_draw_buffers" ),
+         buffer = ctx->Color.DrawBuffer[3];""", ["ARB_draw_buffers"] ),
 	# XXX Add more GL_DRAW_BUFFERn_ARB entries as needed in the future
 
 	# GL_OES_read_format
 	( "GL_IMPLEMENTATION_COLOR_READ_TYPE_OES", GLint,
-	  ["ctx->Const.ColorReadType"], "", "OES_read_format" ),
+	  ["ctx->Const.ColorReadType"], "", ["OES_read_format"] ),
 	( "GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES", GLint,
-	  ["ctx->Const.ColorReadFormat"], "", "OES_read_format" ),
+	  ["ctx->Const.ColorReadFormat"], "", ["OES_read_format"] ),
 
 	# GL_ATI_fragment_shader
-	( "GL_NUM_FRAGMENT_REGISTERS_ATI", GLint, ["6"], "", "ATI_fragment_shader" ),
-	( "GL_NUM_FRAGMENT_CONSTANTS_ATI", GLint, ["8"], "", "ATI_fragment_shader" ),
-	( "GL_NUM_PASSES_ATI", GLint, ["2"], "", "ATI_fragment_shader" ),
-	( "GL_NUM_INSTRUCTIONS_PER_PASS_ATI", GLint, ["8"], "", "ATI_fragment_shader" ),
-	( "GL_NUM_INSTRUCTIONS_TOTAL_ATI", GLint, ["16"], "", "ATI_fragment_shader" ),
-	( "GL_COLOR_ALPHA_PAIRING_ATI", GLboolean, ["GL_TRUE"], "", "ATI_fragment_shader" ),
-	( "GL_NUM_LOOPBACK_COMPONENTS_ATI", GLint, ["3"], "", "ATI_fragment_shader" ),
-	( "GL_NUM_INPUT_INTERPOLATOR_COMPONENTS_ATI", GLint, ["3"], "", "ATI_fragment_shader" ),
+	( "GL_NUM_FRAGMENT_REGISTERS_ATI", GLint, ["6"], "", ["ATI_fragment_shader"] ),
+	( "GL_NUM_FRAGMENT_CONSTANTS_ATI", GLint, ["8"], "", ["ATI_fragment_shader"] ),
+	( "GL_NUM_PASSES_ATI", GLint, ["2"], "", ["ATI_fragment_shader"] ),
+	( "GL_NUM_INSTRUCTIONS_PER_PASS_ATI", GLint, ["8"], "", ["ATI_fragment_shader"] ),
+	( "GL_NUM_INSTRUCTIONS_TOTAL_ATI", GLint, ["16"], "", ["ATI_fragment_shader"] ),
+	( "GL_COLOR_ALPHA_PAIRING_ATI", GLboolean, ["GL_TRUE"], "", ["ATI_fragment_shader"] ),
+	( "GL_NUM_LOOPBACK_COMPONENTS_ATI", GLint, ["3"], "", ["ATI_fragment_shader"] ),
+	( "GL_NUM_INPUT_INTERPOLATOR_COMPONENTS_ATI", GLint, ["3"], "", ["ATI_fragment_shader"] ),
 
 	# OpenGL 2.0
 	( "GL_STENCIL_BACK_FUNC", GLenum, ["ctx->Stencil.Function[1]"], "", None ),
@@ -945,31 +949,32 @@ StateVars = [
 
 	# GL_EXT_framebuffer_object
 	( "GL_FRAMEBUFFER_BINDING_EXT", GLint, ["ctx->DrawBuffer->Name"], "",
-	  "EXT_framebuffer_object" ),
+	  ["EXT_framebuffer_object"] ),
 	( "GL_RENDERBUFFER_BINDING_EXT", GLint,
 	  ["ctx->CurrentRenderbuffer ? ctx->CurrentRenderbuffer->Name : 0"], "",
-	  "EXT_framebuffer_object" ),
+	  ["EXT_framebuffer_object"] ),
 	( "GL_MAX_COLOR_ATTACHMENTS_EXT", GLint,
 	  ["ctx->Const.MaxColorAttachments"], "",
-	  "EXT_framebuffer_object" ),
+	  ["EXT_framebuffer_object"] ),
 	( "GL_MAX_RENDERBUFFER_SIZE_EXT", GLint,
 	  ["ctx->Const.MaxRenderbufferSize"], "",
-	  "EXT_framebuffer_object" ),
+	  ["EXT_framebuffer_object"] ),
 
 	# GL_ARB_fragment_shader
-	( "GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB", GLint, ["MAX_FRAGMENT_UNIFORM_COMPONENTS"], "",
-	"ARB_fragment_shader" ),
-	( "GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB", GLenum, ["ctx->Hint.FragmentShaderDerivative"], "",
-	"ARB_fragment_shader" ),
+	( "GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB", GLint,
+	  ["MAX_FRAGMENT_UNIFORM_COMPONENTS"], "", ["ARB_fragment_shader"] ),
+	( "GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB", GLenum,
+	  ["ctx->Hint.FragmentShaderDerivative"], "", ["ARB_fragment_shader"] ),
 
 	# GL_ARB_vertex_shader
-	( "GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB", GLint, ["MAX_VERTEX_UNIFORM_COMPONENTS"], "",
-	"ARB_vertex_shader" ),
-	( "GL_MAX_VARYING_FLOATS_ARB", GLint, ["MAX_VARYING_FLOATS"], "", "ARB_vertex_shader" ),
-	( "GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB", GLint, ["MAX_VERTEX_TEXTURE_IMAGE_UNITS"], "",
-	"ARB_vertex_shader" ),
-	( "GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB", GLint, ["MAX_COMBINED_TEXTURE_IMAGE_UNITS"], "",
-	"ARB_vertex_shader" )
+	( "GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB", GLint,
+	  ["MAX_VERTEX_UNIFORM_COMPONENTS"], "", ["ARB_vertex_shader"] ),
+	( "GL_MAX_VARYING_FLOATS_ARB", GLint,
+	  ["MAX_VARYING_FLOATS"], "", ["ARB_vertex_shader"] ),
+	( "GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB", GLint,
+	  ["MAX_VERTEX_TEXTURE_IMAGE_UNITS"], "", ["ARB_vertex_shader"] ),
+	( "GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB", GLint,
+	  ["MAX_COMBINED_TEXTURE_IMAGE_UNITS"], "", ["ARB_vertex_shader"] )
 ]
 
 
@@ -1003,11 +1008,15 @@ def EmitGetFunction(stateVars, returnType):
 	# Capitalize first letter of return type
 	if returnType == GLint:
 		function = "GetIntegerv"
+	elif returnType == GLboolean:
+		function = "GetBooleanv"
+	elif returnType == GLfloat:
+		function = "GetFloatv"
 	else:
-		function = "Get" + string.upper(strType[2]) + strType[3:] + "v"
-	
+		abort()
+
 	print "void GLAPIENTRY"
-	print "_mesa_%s( GLenum pname, %s *params )" % (function, TypeStrings[returnType])
+	print "_mesa_%s( GLenum pname, %s *params )" % (function, strType)
 	print "{"
 	print "   GET_CURRENT_CONTEXT(ctx);"
 	print "   ASSERT_OUTSIDE_BEGIN_END(ctx);"
@@ -1024,12 +1033,16 @@ def EmitGetFunction(stateVars, returnType):
 	print ""
 	print "   switch (pname) {"
 
-	extCheck = "CHECK_EXTENSION_%s" % string.upper(TypeStrings[returnType][2])
-
-	for (name, varType, state, optionalCode, extension) in stateVars:
+	for (name, varType, state, optionalCode, extensions) in stateVars:
 		print "      case " + name + ":"
-		if extension:
-			print "         %s(%s, pname);" % (extCheck, extension)
+		if extensions:
+			if len(extensions) == 1:
+				print ('         CHECK_EXT1(%s, "%s");' %
+					   (extensions[0], function))
+			else:
+				assert len(extensions) == 2
+				print ('         CHECK_EXT2(%s, %s, "%s");' %
+					   (extensions[0], extensions[1], function))
 		if optionalCode:
 			print "         {"
 			print "         " + optionalCode
@@ -1084,30 +1097,24 @@ def EmitHeader():
 #define BOOLEAN_TO_FLOAT(B)   ( (B) ? 1.0F : 0.0F )
 
 
-/* Check if named extension is enabled, if not generate error and return */
-
-#define CHECK1(E1, str, PNAME)                         \\
-   if (!ctx->Extensions.E1) {                          \\
-      _mesa_error(ctx, GL_INVALID_VALUE,               \\
-                  "glGet" str "v(0x%x)", (int) PNAME); \\
-      return;                                          \\
+/*
+ * Check if named extension is enabled, if not generate error and return.
+ */
+#define CHECK_EXT1(EXT1, FUNC)                                         \\
+   if (!ctx->Extensions.EXT1) {                                        \\
+      _mesa_error(ctx, GL_INVALID_VALUE, FUNC "(0x%x)", (int) pname);  \\
+      return;                                                          \\
    }
-    
-#define CHECK2(E1, E2, str, PNAME)                     \\
-   if (!ctx->Extensions.E1 && !ctx->Extensions.E2) {   \\
-      _mesa_error(ctx, GL_INVALID_VALUE,               \\
-                  "glGet" str "v(0x%x)", (int) PNAME); \\
-      return;                                          \\
+
+/*
+ * Check if either of two extensions is enabled.
+ */
+#define CHECK_EXT2(EXT1, EXT2, FUNC)                                   \\
+   if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2) {               \\
+      _mesa_error(ctx, GL_INVALID_VALUE, FUNC "(0x%x)", (int) pname);  \\
+      return;                                                          \\
    }
-    
-#define CHECK_EXTENSION_B(EXTNAME, PNAME)      \\
-   CHECK1(EXTNAME, "Boolean", PNAME )
 
-#define CHECK_EXTENSION_I(EXTNAME, PNAME)      \\
-   CHECK1(EXTNAME, "Integer", PNAME )
-
-#define CHECK_EXTENSION_F(EXTNAME, PNAME)      \\
-   CHECK1(EXTNAME, "Float", PNAME )
 
 """
 	return
