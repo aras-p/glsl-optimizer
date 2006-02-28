@@ -617,7 +617,6 @@ static void r300DepthFunc(GLcontext* ctx, GLenum func)
  */
 static void r300DepthMask(GLcontext* ctx, GLboolean mask)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	r300Enable(ctx, GL_DEPTH_TEST, ctx->Depth.Test);
 }
 
@@ -856,7 +855,6 @@ static void r300Viewport(GLcontext * ctx, GLint x, GLint y,
 	 * setting below.  Could apply deltas to rescue pipelined viewport
 	 * values, or keep the originals hanging around.
 	 */
-	R300_FIREVERTICES(R300_CONTEXT(ctx));
 	r300UpdateWindow(ctx);
 }
 
@@ -876,14 +874,14 @@ void r300UpdateViewportOffset( GLcontext *ctx )
 	GLfloat tx = v[MAT_TX] + xoffset + SUBPIXEL_X;
 	GLfloat ty = (- v[MAT_TY]) + yoffset + SUBPIXEL_Y;
 
-	if ( rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] != *(GLuint *)&tx ||
-		rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] != *(GLuint *)&ty )
+	if ( rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] != r300PackFloat32(tx) ||
+		rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] != r300PackFloat32(ty))
 	{
 	/* Note: this should also modify whatever data the context reset
 	 * code uses...
 	 */
-	rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] = *(GLuint *)&tx;
-	rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] = *(GLuint *)&ty;
+	rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] = r300PackFloat32(tx);
+	rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] = r300PackFloat32(ty);
       
 	}
 
@@ -1090,7 +1088,9 @@ void r300_setup_textures(GLcontext *ctx)
 	int hw_tmu=0;
 	int first_hw_tmu=0, last_hw_tmu=-1; /* -1 translates into no setup costs for fields */
 	int tmu_mappings[R300_MAX_TEXTURE_UNITS] = { -1 };
-	struct r300_fragment_program *rp = ctx->FragmentProgram._Current;
+	struct r300_fragment_program *rp =
+		(struct r300_fragment_program *)
+		(char *)ctx->FragmentProgram._Current;
 
 	R300_STATECHANGE(r300, txe);
 	R300_STATECHANGE(r300, tex.filter);
@@ -1663,7 +1663,9 @@ static unsigned int r300PackFloat24(float f)
 void r300SetupPixelShader(r300ContextPtr rmesa)
 {
 	GLcontext *ctx = rmesa->radeon.glCtx;
-	struct r300_fragment_program *rp = ctx->FragmentProgram._Current;
+	struct r300_fragment_program *rp =
+		(struct r300_fragment_program *)
+		(char *)ctx->FragmentProgram._Current;
 	int i,k;
 
 	if (!rp)	/* should only happenen once, just after context is created */
