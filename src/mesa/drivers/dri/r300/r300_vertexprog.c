@@ -775,21 +775,21 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
 					t_swizzle(GET_SWZ(src[0].Swizzle, 0)), // x
 					t_swizzle(GET_SWZ(src[0].Swizzle, 3)), // w
-					t_swizzle(GET_SWZ(src[0].Swizzle, 2)), // z
+					VSF_IN_COMPONENT_ZERO, // z
 					t_swizzle(GET_SWZ(src[0].Swizzle, 1)), // y
 					t_src_class(src[0].File),
 					src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
 					t_swizzle(GET_SWZ(src[0].Swizzle, 1)), // y
 					t_swizzle(GET_SWZ(src[0].Swizzle, 3)), // w
-					t_swizzle(GET_SWZ(src[0].Swizzle, 2)), // z
+					VSF_IN_COMPONENT_ZERO, // z
 					t_swizzle(GET_SWZ(src[0].Swizzle, 0)), // x
 					t_src_class(src[0].File),
 					src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			o_inst->src3=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
 					t_swizzle(GET_SWZ(src[0].Swizzle, 1)), // y
 					t_swizzle(GET_SWZ(src[0].Swizzle, 0)), // x
-					t_swizzle(GET_SWZ(src[0].Swizzle, 2)), // z
+					VSF_IN_COMPONENT_ZERO, // z
 					t_swizzle(GET_SWZ(src[0].Swizzle, 3)), // w
 					t_src_class(src[0].File),
 					src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE);
