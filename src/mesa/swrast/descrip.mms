@@ -19,14 +19,15 @@ LIBDIR = [---.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)/float=ieee/ieee=denorm
 
 SOURCES = s_aaline.c s_aatriangle.c s_accum.c s_alpha.c \
-	s_bitmap.c s_blend.c s_buffers.c s_context.c s_copypix.c s_depth.c \
+	s_bitmap.c s_blend.c s_blit.c s_buffers.c s_context.c \
+	s_copypix.c s_depth.c \
         s_drawpix.c s_feedback.c s_fog.c s_imaging.c s_lines.c s_logic.c \
 	s_masking.c s_nvfragprog.c s_points.c s_readpix.c \
 	s_span.c s_stencil.c s_texstore.c s_texcombine.c s_texfilter.c \
 	s_triangle.c s_zoom.c s_atifragshader.c s_arbshader.c
  
 OBJECTS = s_aaline.obj,s_aatriangle.obj,s_accum.obj,s_alpha.obj,\
-	s_bitmap.obj,s_blend.obj,s_arbshader.obj,\
+	s_bitmap.obj,s_blend.obj,s_blit.obj,s_arbshader.obj,\
 	s_buffers.obj,s_context.obj,s_atifragshader.obj,\
 	s_copypix.obj,s_depth.obj,s_drawpix.obj,s_feedback.obj,s_fog.obj,\
 	s_imaging.obj,s_lines.obj,s_logic.obj,s_masking.obj,s_nvfragprog.obj,\
@@ -54,6 +55,7 @@ s_accum.obj : s_accum.c
 s_alpha.obj : s_alpha.c
 s_bitmap.obj : s_bitmap.c
 s_blend.obj : s_blend.c
+s_blit.obj : s_blit.c
 s_buffers.obj : s_buffers.c
 s_context.obj : s_context.c
 s_copypix.obj : s_copypix.c

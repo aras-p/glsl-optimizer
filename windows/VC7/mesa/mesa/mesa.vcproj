@@ -342,6 +342,9 @@
 				RelativePath="..\..\..\..\src\mesa\swrast\s_blend.c">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\swrast\s_blit.c">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_buffers.c">
 			</File>
 			<File

@@ -456,6 +456,10 @@ SOURCE=..\..\..\..\src\mesa\swrast\s_blend.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\swrast\s_blit.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\swrast\s_buffers.c
 # End Source File
 # Begin Source File
