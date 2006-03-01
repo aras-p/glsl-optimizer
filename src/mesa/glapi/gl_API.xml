@@ -11498,4 +11498,23 @@
     </function>
 </category>
 
+<category name="GL_EXT_framebuffer_blit" number="316">
+    <enum name="GL_READ_FRAMEBUFFER_EXT" value="0x8CA8"/>
+    <enum name="GL_DRAW_FRAMEBUFFER_EXT" value="0x8CA9"/>
+    <enum name="GL_DRAW_FRAMEBUFFER_BINDING_EXT" value="0x8CA6"/>
+    <enum name="GL_READ_FRAMEBUFFER_BINDING_EXT" value="0x8CAA"/>
+    <function name="BlitFramebufferEXT" offset="818">
+        <param name="srcX0" type="GLint"/>
+        <param name="srcY0" type="GLint"/>
+        <param name="srcX1" type="GLint"/>
+        <param name="srcY1" type="GLint"/>
+        <param name="dstX0" type="GLint"/>
+        <param name="dstY0" type="GLint"/>
+        <param name="dstX1" type="GLint"/>
+        <param name="dstY1" type="GLint"/>
+        <param name="mask" type="GLbitfield"/>
+        <param name="filter" type="GLenum"/>
+    </function>
+</category>
+
 </OpenGLAPI>

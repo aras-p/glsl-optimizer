@@ -5050,6 +5050,11 @@ KEYWORD1 void KEYWORD2 NAME(GetQueryObjectui64vEXT)(GLuint id, GLenum pname, GLu
    DISPATCH(GetQueryObjectui64vEXT, (id, pname, params), (F, "glGetQueryObjectui64vEXT(%d, 0x%x, %p);\n", id, pname, (const void *) params));
 }
 
+KEYWORD1 void KEYWORD2 NAME(BlitFramebufferEXT)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter)
+{
+   DISPATCH(BlitFramebufferEXT, (srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter), (F, "glBlitFramebufferEXT(%d, %d, %d, %d, %d, %d, %d, %d, %d, 0x%x);\n", srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter));
+}
+
 
 #endif /* defined( NAME ) */
 
@@ -5882,6 +5887,7 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(StencilMaskSeparate),
    TABLE_ENTRY(GetQueryObjecti64vEXT),
    TABLE_ENTRY(GetQueryObjectui64vEXT),
+   TABLE_ENTRY(BlitFramebufferEXT),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.

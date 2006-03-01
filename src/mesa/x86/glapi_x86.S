@@ -959,6 +959,7 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB(StencilMaskSeparate, _gloffset_StencilMaskSeparate, StencilMaskSeparate@8)
 	GL_STUB(GetQueryObjecti64vEXT, _gloffset_GetQueryObjecti64vEXT, GetQueryObjecti64vEXT@12)
 	GL_STUB(GetQueryObjectui64vEXT, _gloffset_GetQueryObjectui64vEXT, GetQueryObjectui64vEXT@12)
+	GL_STUB(BlitFramebufferEXT, _gloffset_BlitFramebufferEXT, BlitFramebufferEXT@40)
 	GL_STUB_ALIAS(ArrayElementEXT, _gloffset_ArrayElement, ArrayElementEXT@4, ArrayElement, ArrayElement@4)
 	GL_STUB_ALIAS(BindTextureEXT, _gloffset_BindTexture, BindTextureEXT@8, BindTexture, BindTexture@8)
 	GL_STUB_ALIAS(DrawArraysEXT, _gloffset_DrawArrays, DrawArraysEXT@12, DrawArrays, DrawArrays@12)

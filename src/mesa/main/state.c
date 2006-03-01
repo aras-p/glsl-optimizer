@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -786,6 +786,10 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    /* GL_EXT_timer_query */
    SET_GetQueryObjecti64vEXT(exec, _mesa_GetQueryObjecti64vEXT);
    SET_GetQueryObjectui64vEXT(exec, _mesa_GetQueryObjectui64vEXT);
+
+#if FEATURE_EXT_framebuffer_blit
+   SET_BlitFramebufferEXT(exec, _mesa_BlitFramebufferEXT);
+#endif
 }
 
 

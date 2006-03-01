@@ -118,6 +118,13 @@ static const char ActiveTextureARB_names[] =
     "";
 #endif
 
+#if defined(need_GL_EXT_framebuffer_blit)
+static const char BlitFramebufferEXT_names[] = 
+    "iiiiiiiiii\0" /* Parameter signature */
+    "glBlitFramebufferEXT\0"
+    "";
+#endif
+
 #if defined(need_GL_NV_vertex_program)
 static const char VertexAttrib4ubvNV_names[] = 
     "ip\0" /* Parameter signature */
@@ -5011,6 +5018,13 @@ static const struct dri_extension_function GL_EXT_fog_coord_functions[] = {
     { FogCoordPointerEXT_names, FogCoordPointerEXT_remap_index, 549 },
     { FogCoordfvEXT_names, FogCoordfvEXT_remap_index, 546 },
     { FogCoorddvEXT_names, FogCoorddvEXT_remap_index, 548 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_EXT_framebuffer_blit)
+static const struct dri_extension_function GL_EXT_framebuffer_blit_functions[] = {
+    { BlitFramebufferEXT_names, BlitFramebufferEXT_remap_index, 818 },
     { NULL, 0, 0 }
 };
 #endif

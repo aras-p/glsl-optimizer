@@ -30883,6 +30883,59 @@ GL_PREFIX(GetQueryObjectui64vEXT):
 #endif /* defined(GLX_USE_TLS) */
 	.size	GL_PREFIX(GetQueryObjectui64vEXT), .-GL_PREFIX(GetQueryObjectui64vEXT)
 
+	.p2align	4,,15
+	.globl	GL_PREFIX(BlitFramebufferEXT)
+	.type	GL_PREFIX(BlitFramebufferEXT), @function
+GL_PREFIX(BlitFramebufferEXT):
+#if defined(GLX_USE_TLS)
+	call	_x86_64_get_dispatch@PLT
+	movq	6544(%rax), %r11
+	jmp	*%r11
+#elif defined(PTHREADS)
+	pushq	%rdi
+	pushq	%rsi
+	pushq	%rdx
+	pushq	%rcx
+	pushq	%r8
+	pushq	%r9
+	pushq	%rbp
+	call	_x86_64_get_dispatch@PLT
+	popq	%rbp
+	popq	%r9
+	popq	%r8
+	popq	%rcx
+	popq	%rdx
+	popq	%rsi
+	popq	%rdi
+	movq	6544(%rax), %r11
+	jmp	*%r11
+#else
+	movq	_glapi_Dispatch(%rip), %rax
+	testq	%rax, %rax
+	je	1f
+	movq	6544(%rax), %r11
+	jmp	*%r11
+1:
+	pushq	%rdi
+	pushq	%rsi
+	pushq	%rdx
+	pushq	%rcx
+	pushq	%r8
+	pushq	%r9
+	pushq	%rbp
+	call	_glapi_get_dispatch
+	popq	%rbp
+	popq	%r9
+	popq	%r8
+	popq	%rcx
+	popq	%rdx
+	popq	%rsi
+	popq	%rdi
+	movq	6544(%rax), %r11
+	jmp	*%r11
+#endif /* defined(GLX_USE_TLS) */
+	.size	GL_PREFIX(BlitFramebufferEXT), .-GL_PREFIX(BlitFramebufferEXT)
+
 	.globl GL_PREFIX(ArrayElementEXT) ; .set GL_PREFIX(ArrayElementEXT), GL_PREFIX(ArrayElement)
 	.globl GL_PREFIX(BindTextureEXT) ; .set GL_PREFIX(BindTextureEXT), GL_PREFIX(BindTexture)
 	.globl GL_PREFIX(DrawArraysEXT) ; .set GL_PREFIX(DrawArraysEXT), GL_PREFIX(DrawArrays)

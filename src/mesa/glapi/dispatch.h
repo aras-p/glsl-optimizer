@@ -2512,10 +2512,13 @@
 #define CALL_GetQueryObjectui64vEXT(disp, parameters) (*((disp)->GetQueryObjectui64vEXT)) parameters
 #define GET_GetQueryObjectui64vEXT(disp) ((disp)->GetQueryObjectui64vEXT)
 #define SET_GetQueryObjectui64vEXT(disp, fn) ((disp)->GetQueryObjectui64vEXT = fn)
+#define CALL_BlitFramebufferEXT(disp, parameters) (*((disp)->BlitFramebufferEXT)) parameters
+#define GET_BlitFramebufferEXT(disp) ((disp)->BlitFramebufferEXT)
+#define SET_BlitFramebufferEXT(disp, fn) ((disp)->BlitFramebufferEXT = fn)
 
 #else
 
-#define driDispatchRemapTable_size 410
+#define driDispatchRemapTable_size 411
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define LoadTransposeMatrixfARB_remap_index 0
@@ -2928,6 +2931,7 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define StencilMaskSeparate_remap_index 407
 #define GetQueryObjecti64vEXT_remap_index 408
 #define GetQueryObjectui64vEXT_remap_index 409
+#define BlitFramebufferEXT_remap_index 410
 
 #define CALL_LoadTransposeMatrixfARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), driDispatchRemapTable[LoadTransposeMatrixfARB_remap_index], parameters)
 #define GET_LoadTransposeMatrixfARB(disp) GET_by_offset(disp, driDispatchRemapTable[LoadTransposeMatrixfARB_remap_index])
@@ -4159,6 +4163,9 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_GetQueryObjectui64vEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLuint64EXT *)), driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], parameters)
 #define GET_GetQueryObjectui64vEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index])
 #define SET_GetQueryObjectui64vEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], fn)
+#define CALL_BlitFramebufferEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum)), driDispatchRemapTable[BlitFramebufferEXT_remap_index], parameters)
+#define GET_BlitFramebufferEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BlitFramebufferEXT_remap_index])
+#define SET_BlitFramebufferEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BlitFramebufferEXT_remap_index], fn)
 
 #endif /* !defined(IN_DRI_DRIVER) */
 

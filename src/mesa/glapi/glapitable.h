@@ -855,6 +855,7 @@ struct _glapi_table
    void (GLAPIENTRYP StencilMaskSeparate)(GLenum face, GLuint mask); /* 815 */
    void (GLAPIENTRYP GetQueryObjecti64vEXT)(GLuint id, GLenum pname, GLint64EXT * params); /* 816 */
    void (GLAPIENTRYP GetQueryObjectui64vEXT)(GLuint id, GLenum pname, GLuint64EXT * params); /* 817 */
+   void (GLAPIENTRYP BlitFramebufferEXT)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter); /* 818 */
 };
 
 #endif /* !defined( _GLAPI_TABLE_H_ ) */
