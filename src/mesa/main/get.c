@@ -32,7 +32,7 @@
  */
 #define CHECK_EXT1(EXT1, FUNC)                                         \
    if (!ctx->Extensions.EXT1) {                                        \
-      _mesa_error(ctx, GL_INVALID_VALUE, FUNC "(0x%x)", (int) pname);  \
+      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \
       return;                                                          \
    }
 
@@ -41,10 +41,29 @@
  */
 #define CHECK_EXT2(EXT1, EXT2, FUNC)                                   \
    if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2) {               \
-      _mesa_error(ctx, GL_INVALID_VALUE, FUNC "(0x%x)", (int) pname);  \
+      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \
       return;                                                          \
    }
 
+/*
+ * Check if either of three extensions is enabled.
+ */
+#define CHECK_EXT3(EXT1, EXT2, EXT3, FUNC)                             \
+   if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2 &&               \
+       !ctx->Extensions.EXT3) {                                        \
+      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \
+      return;                                                          \
+   }
+
+/*
+ * Check if either of four extensions is enabled.
+ */
+#define CHECK_EXT4(EXT1, EXT2, EXT3, EXT4, FUNC)                       \
+   if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2 &&               \
+       !ctx->Extensions.EXT3 && !ctx->Extensions.EXT4) {               \
+      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \
+      return;                                                          \
+   }
 
 
 void GLAPIENTRY
@@ -1390,27 +1409,27 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ctx->VertexProgram.Enabled;
          break;
       case GL_VERTEX_PROGRAM_POINT_SIZE_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT2(NV_vertex_program, ARB_vertex_program, "GetBooleanv");
          params[0] = ctx->VertexProgram.PointSizeEnabled;
          break;
       case GL_VERTEX_PROGRAM_TWO_SIDE_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT2(NV_vertex_program, ARB_vertex_program, "GetBooleanv");
          params[0] = ctx->VertexProgram.TwoSideEnabled;
          break;
       case GL_MAX_TRACK_MATRIX_STACK_DEPTH_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT3(NV_vertex_program, ARB_vertex_program, ARB_fragment_program, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxProgramMatrixStackDepth);
          break;
       case GL_MAX_TRACK_MATRICES_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT3(NV_vertex_program, ARB_vertex_program, ARB_fragment_program, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxProgramMatrices);
          break;
       case GL_CURRENT_MATRIX_STACK_DEPTH_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT3(NV_vertex_program, ARB_vertex_program, ARB_fragment_program, "GetBooleanv");
          params[0] = ctx->CurrentStack->Depth + 1;
          break;
       case GL_CURRENT_MATRIX_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT3(NV_vertex_program, ARB_vertex_program, ARB_fragment_program, "GetBooleanv");
          {
          const GLfloat *matrix = ctx->CurrentStack->Top->m;
          params[0] = FLOAT_TO_BOOLEAN(matrix[0]);
@@ -1436,7 +1455,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = INT_TO_BOOLEAN((ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0));
          break;
       case GL_PROGRAM_ERROR_POSITION_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT4(NV_vertex_program, ARB_vertex_program, NV_fragment_program, ARB_fragment_program, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Program.ErrorPos);
          break;
       case GL_VERTEX_ATTRIB_ARRAY0_NV:
@@ -1572,11 +1591,11 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ctx->FragmentProgram.Enabled;
          break;
       case GL_MAX_TEXTURE_COORDS_NV:
-         CHECK_EXT1(NV_fragment_program, "GetBooleanv");
+         CHECK_EXT2(NV_fragment_program, ARB_fragment_program, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxTextureCoordUnits);
          break;
       case GL_MAX_TEXTURE_IMAGE_UNITS_NV:
-         CHECK_EXT1(NV_fragment_program, "GetBooleanv");
+         CHECK_EXT2(NV_fragment_program, ARB_fragment_program, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxTextureImageUnits);
          break;
       case GL_FRAGMENT_PROGRAM_BINDING_NV:
@@ -3208,27 +3227,27 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = BOOLEAN_TO_FLOAT(ctx->VertexProgram.Enabled);
          break;
       case GL_VERTEX_PROGRAM_POINT_SIZE_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT2(NV_vertex_program, ARB_vertex_program, "GetFloatv");
          params[0] = BOOLEAN_TO_FLOAT(ctx->VertexProgram.PointSizeEnabled);
          break;
       case GL_VERTEX_PROGRAM_TWO_SIDE_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT2(NV_vertex_program, ARB_vertex_program, "GetFloatv");
          params[0] = BOOLEAN_TO_FLOAT(ctx->VertexProgram.TwoSideEnabled);
          break;
       case GL_MAX_TRACK_MATRIX_STACK_DEPTH_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT3(NV_vertex_program, ARB_vertex_program, ARB_fragment_program, "GetFloatv");
          params[0] = (GLfloat)(ctx->Const.MaxProgramMatrixStackDepth);
          break;
       case GL_MAX_TRACK_MATRICES_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT3(NV_vertex_program, ARB_vertex_program, ARB_fragment_program, "GetFloatv");
          params[0] = (GLfloat)(ctx->Const.MaxProgramMatrices);
          break;
       case GL_CURRENT_MATRIX_STACK_DEPTH_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT3(NV_vertex_program, ARB_vertex_program, ARB_fragment_program, "GetFloatv");
          params[0] = BOOLEAN_TO_FLOAT(ctx->CurrentStack->Depth + 1);
          break;
       case GL_CURRENT_MATRIX_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT3(NV_vertex_program, ARB_vertex_program, ARB_fragment_program, "GetFloatv");
          {
          const GLfloat *matrix = ctx->CurrentStack->Top->m;
          params[0] = matrix[0];
@@ -3254,7 +3273,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)((ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0));
          break;
       case GL_PROGRAM_ERROR_POSITION_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT4(NV_vertex_program, ARB_vertex_program, NV_fragment_program, ARB_fragment_program, "GetFloatv");
          params[0] = (GLfloat)(ctx->Program.ErrorPos);
          break;
       case GL_VERTEX_ATTRIB_ARRAY0_NV:
@@ -3390,11 +3409,11 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = BOOLEAN_TO_FLOAT(ctx->FragmentProgram.Enabled);
          break;
       case GL_MAX_TEXTURE_COORDS_NV:
-         CHECK_EXT1(NV_fragment_program, "GetFloatv");
+         CHECK_EXT2(NV_fragment_program, ARB_fragment_program, "GetFloatv");
          params[0] = (GLfloat)(ctx->Const.MaxTextureCoordUnits);
          break;
       case GL_MAX_TEXTURE_IMAGE_UNITS_NV:
-         CHECK_EXT1(NV_fragment_program, "GetFloatv");
+         CHECK_EXT2(NV_fragment_program, ARB_fragment_program, "GetFloatv");
          params[0] = (GLfloat)(ctx->Const.MaxTextureImageUnits);
          break;
       case GL_FRAGMENT_PROGRAM_BINDING_NV:
@@ -5026,27 +5045,27 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = BOOLEAN_TO_INT(ctx->VertexProgram.Enabled);
          break;
       case GL_VERTEX_PROGRAM_POINT_SIZE_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT2(NV_vertex_program, ARB_vertex_program, "GetIntegerv");
          params[0] = BOOLEAN_TO_INT(ctx->VertexProgram.PointSizeEnabled);
          break;
       case GL_VERTEX_PROGRAM_TWO_SIDE_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT2(NV_vertex_program, ARB_vertex_program, "GetIntegerv");
          params[0] = BOOLEAN_TO_INT(ctx->VertexProgram.TwoSideEnabled);
          break;
       case GL_MAX_TRACK_MATRIX_STACK_DEPTH_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT3(NV_vertex_program, ARB_vertex_program, ARB_fragment_program, "GetIntegerv");
          params[0] = ctx->Const.MaxProgramMatrixStackDepth;
          break;
       case GL_MAX_TRACK_MATRICES_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT3(NV_vertex_program, ARB_vertex_program, ARB_fragment_program, "GetIntegerv");
          params[0] = ctx->Const.MaxProgramMatrices;
          break;
       case GL_CURRENT_MATRIX_STACK_DEPTH_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT3(NV_vertex_program, ARB_vertex_program, ARB_fragment_program, "GetIntegerv");
          params[0] = BOOLEAN_TO_INT(ctx->CurrentStack->Depth + 1);
          break;
       case GL_CURRENT_MATRIX_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT3(NV_vertex_program, ARB_vertex_program, ARB_fragment_program, "GetIntegerv");
          {
          const GLfloat *matrix = ctx->CurrentStack->Top->m;
          params[0] = IROUND(matrix[0]);
@@ -5072,7 +5091,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = (ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0);
          break;
       case GL_PROGRAM_ERROR_POSITION_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT4(NV_vertex_program, ARB_vertex_program, NV_fragment_program, ARB_fragment_program, "GetIntegerv");
          params[0] = ctx->Program.ErrorPos;
          break;
       case GL_VERTEX_ATTRIB_ARRAY0_NV:
@@ -5208,11 +5227,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = BOOLEAN_TO_INT(ctx->FragmentProgram.Enabled);
          break;
       case GL_MAX_TEXTURE_COORDS_NV:
-         CHECK_EXT1(NV_fragment_program, "GetIntegerv");
+         CHECK_EXT2(NV_fragment_program, ARB_fragment_program, "GetIntegerv");
          params[0] = ctx->Const.MaxTextureCoordUnits;
          break;
       case GL_MAX_TEXTURE_IMAGE_UNITS_NV:
-         CHECK_EXT1(NV_fragment_program, "GetIntegerv");
+         CHECK_EXT2(NV_fragment_program, ARB_fragment_program, "GetIntegerv");
          params[0] = ctx->Const.MaxTextureImageUnits;
          break;
       case GL_FRAGMENT_PROGRAM_BINDING_NV:

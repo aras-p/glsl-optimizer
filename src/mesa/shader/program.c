@@ -107,14 +107,14 @@ _mesa_init_program(GLcontext *ctx)
 void
 _mesa_free_program_data(GLcontext *ctx)
 {
-#if FEATURE_NV_vertex_program
+#if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
    if (ctx->VertexProgram.Current) {
       ctx->VertexProgram.Current->Base.RefCount--;
       if (ctx->VertexProgram.Current->Base.RefCount <= 0)
          ctx->Driver.DeleteProgram(ctx, &(ctx->VertexProgram.Current->Base));
    }
 #endif
-#if FEATURE_NV_fragment_program
+#if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program
    if (ctx->FragmentProgram.Current) {
       ctx->FragmentProgram.Current->Base.RefCount--;
       if (ctx->FragmentProgram.Current->Base.RefCount <= 0)

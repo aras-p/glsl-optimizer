@@ -704,29 +704,36 @@ StateVars = [
 
 	# GL_NV_vertex_program
 	( "GL_VERTEX_PROGRAM_NV", GLboolean,
-	  ["ctx->VertexProgram.Enabled"], "", ["NV_vertex_program", "ARB_vertex_program"] ),
+	  ["ctx->VertexProgram.Enabled"], "",
+	  ["NV_vertex_program", "ARB_vertex_program"] ),
 	( "GL_VERTEX_PROGRAM_POINT_SIZE_NV", GLboolean,
-	  ["ctx->VertexProgram.PointSizeEnabled"], "", ["NV_vertex_program"] ),
+	  ["ctx->VertexProgram.PointSizeEnabled"], "",
+	  ["NV_vertex_program", "ARB_vertex_program"] ),
 	( "GL_VERTEX_PROGRAM_TWO_SIDE_NV", GLboolean,
-	  ["ctx->VertexProgram.TwoSideEnabled"], "", ["NV_vertex_program"] ),
+	  ["ctx->VertexProgram.TwoSideEnabled"], "",
+	  ["NV_vertex_program", "ARB_vertex_program"] ),
 	( "GL_MAX_TRACK_MATRIX_STACK_DEPTH_NV", GLint,
-	  ["ctx->Const.MaxProgramMatrixStackDepth"], "", ["NV_vertex_program"] ),
+	  ["ctx->Const.MaxProgramMatrixStackDepth"], "",
+	  ["NV_vertex_program", "ARB_vertex_program", "ARB_fragment_program"] ),
 	( "GL_MAX_TRACK_MATRICES_NV", GLint,
-	  ["ctx->Const.MaxProgramMatrices"], "", ["NV_vertex_program"] ),
+	  ["ctx->Const.MaxProgramMatrices"], "",
+	  ["NV_vertex_program", "ARB_vertex_program", "ARB_fragment_program"] ),
 	( "GL_CURRENT_MATRIX_STACK_DEPTH_NV", GLboolean,
-	  ["ctx->CurrentStack->Depth + 1"], "", ["NV_vertex_program"] ),
+	  ["ctx->CurrentStack->Depth + 1"], "",
+	  ["NV_vertex_program", "ARB_vertex_program", "ARB_fragment_program"] ),
 	( "GL_CURRENT_MATRIX_NV", GLfloat,
 	  ["matrix[0]", "matrix[1]", "matrix[2]", "matrix[3]",
 	   "matrix[4]", "matrix[5]", "matrix[6]", "matrix[7]",
 	   "matrix[8]", "matrix[9]", "matrix[10]", "matrix[11]",
 	   "matrix[12]", "matrix[13]", "matrix[14]", "matrix[15]" ],
 	  "const GLfloat *matrix = ctx->CurrentStack->Top->m;",
-	  ["NV_vertex_program"] ),
+	  ["NV_vertex_program", "ARB_vertex_program", "ARB_fragment_program"] ),
 	( "GL_VERTEX_PROGRAM_BINDING_NV", GLint,
 	  ["(ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0)"],
 	  "", ["NV_vertex_program"] ),
 	( "GL_PROGRAM_ERROR_POSITION_NV", GLint,
-	  ["ctx->Program.ErrorPos"], "", ["NV_vertex_program"] ),
+	  ["ctx->Program.ErrorPos"], "", ["NV_vertex_program",
+	   "ARB_vertex_program", "NV_fragment_program", "ARB_fragment_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY0_NV", GLboolean,
 	  ["ctx->Array.VertexAttrib[0].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY1_NV", GLboolean,
@@ -796,9 +803,11 @@ StateVars = [
 	( "GL_FRAGMENT_PROGRAM_NV", GLboolean,
 	  ["ctx->FragmentProgram.Enabled"], "", ["NV_fragment_program"] ),
 	( "GL_MAX_TEXTURE_COORDS_NV", GLint,
-	  ["ctx->Const.MaxTextureCoordUnits"], "", ["NV_fragment_program"] ),
+	  ["ctx->Const.MaxTextureCoordUnits"], "",
+	  ["NV_fragment_program", "ARB_fragment_program"] ),
 	( "GL_MAX_TEXTURE_IMAGE_UNITS_NV", GLint,
-	  ["ctx->Const.MaxTextureImageUnits"], "", ["NV_fragment_program"] ),
+	  ["ctx->Const.MaxTextureImageUnits"], "",
+	  ["NV_fragment_program", "ARB_fragment_program"] ),
 	( "GL_FRAGMENT_PROGRAM_BINDING_NV", GLint,
 	  ["ctx->FragmentProgram.Current ? ctx->FragmentProgram.Current->Base.Id : 0"],
 	  "", ["NV_fragment_program"] ),
@@ -1039,10 +1048,16 @@ def EmitGetFunction(stateVars, returnType):
 			if len(extensions) == 1:
 				print ('         CHECK_EXT1(%s, "%s");' %
 					   (extensions[0], function))
-			else:
-				assert len(extensions) == 2
+			elif len(extensions) == 2:
 				print ('         CHECK_EXT2(%s, %s, "%s");' %
 					   (extensions[0], extensions[1], function))
+			elif len(extensions) == 3:
+				print ('         CHECK_EXT3(%s, %s, %s, "%s");' %
+					   (extensions[0], extensions[1], extensions[2], function))
+			else:
+				assert len(extensions) == 4
+				print ('         CHECK_EXT4(%s, %s, %s, %s, "%s");' %
+					   (extensions[0], extensions[1], extensions[2], extensions[3], function))
 		if optionalCode:
 			print "         {"
 			print "         " + optionalCode
@@ -1102,7 +1117,7 @@ def EmitHeader():
  */
 #define CHECK_EXT1(EXT1, FUNC)                                         \\
    if (!ctx->Extensions.EXT1) {                                        \\
-      _mesa_error(ctx, GL_INVALID_VALUE, FUNC "(0x%x)", (int) pname);  \\
+      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \\
       return;                                                          \\
    }
 
@@ -1111,10 +1126,29 @@ def EmitHeader():
  */
 #define CHECK_EXT2(EXT1, EXT2, FUNC)                                   \\
    if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2) {               \\
-      _mesa_error(ctx, GL_INVALID_VALUE, FUNC "(0x%x)", (int) pname);  \\
+      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \\
       return;                                                          \\
    }
 
+/*
+ * Check if either of three extensions is enabled.
+ */
+#define CHECK_EXT3(EXT1, EXT2, EXT3, FUNC)                             \\
+   if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2 &&               \\
+       !ctx->Extensions.EXT3) {                                        \\
+      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \\
+      return;                                                          \\
+   }
+
+/*
+ * Check if either of four extensions is enabled.
+ */
+#define CHECK_EXT4(EXT1, EXT2, EXT3, EXT4, FUNC)                       \\
+   if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2 &&               \\
+       !ctx->Extensions.EXT3 && !ctx->Extensions.EXT4) {               \\
+      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \\
+      return;                                                          \\
+   }
 
 """
 	return

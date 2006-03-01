@@ -821,7 +821,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          ctx->Point.PointSprite = state;
          break;
 
-#if FEATURE_NV_vertex_program
+#if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
       case GL_VERTEX_PROGRAM_NV:
          CHECK_EXTENSION2(NV_vertex_program, ARB_vertex_program, cap);
          if (ctx->VertexProgram.Enabled == state)
@@ -843,6 +843,8 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          FLUSH_VERTICES(ctx, _NEW_PROGRAM); 
          ctx->VertexProgram.TwoSideEnabled = state;
          break;
+#endif
+#if FEATURE_NV_vertex_program
       case GL_MAP1_VERTEX_ATTRIB0_4_NV:
       case GL_MAP1_VERTEX_ATTRIB1_4_NV:
       case GL_MAP1_VERTEX_ATTRIB2_4_NV:
@@ -1286,7 +1288,7 @@ _mesa_IsEnabled( GLenum cap )
       case GL_POINT_SPRITE_NV:
          return ctx->Point.PointSprite;
 
-#if FEATURE_NV_vertex_program
+#if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
       case GL_VERTEX_PROGRAM_NV:
          CHECK_EXTENSION(NV_vertex_program);
          return ctx->VertexProgram.Enabled;
@@ -1296,6 +1298,8 @@ _mesa_IsEnabled( GLenum cap )
       case GL_VERTEX_PROGRAM_TWO_SIDE_NV:
          CHECK_EXTENSION(NV_vertex_program);
          return ctx->VertexProgram.TwoSideEnabled;
+#endif
+#if FEATURE_NV_vertex_program
       case GL_VERTEX_ATTRIB_ARRAY0_NV:
       case GL_VERTEX_ATTRIB_ARRAY1_NV:
       case GL_VERTEX_ATTRIB_ARRAY2_NV:
