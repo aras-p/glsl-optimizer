@@ -34,15 +34,9 @@
 #include "framebuffer.h"
 #include "hash.h"
 #include "renderbuffer.h"
+#include "state.h"
 #include "teximage.h"
 #include "texstore.h"
-
-
-/* XXX temporarily here */
-#define GL_READ_FRAMEBUFFER_EXT                0x90
-#define GL_DRAW_FRAMEBUFFER_EXT                0x9a
-#define GL_DRAW_FRAMEBUFFER_BINDING_EXT        GL_FRAMEBUFFER_BINDING_EXT
-#define GL_READ_FRAMEBUFFER_BINDING_EXT        0x9b
 
 
 /**
@@ -1527,11 +1521,31 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    ASSERT_OUTSIDE_BEGIN_END(ctx);
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
+   if (ctx->NewState) {
+      _mesa_update_state(ctx);
+   }
+
+   if (!ctx->ReadBuffer) {
+      /* XXX */
+   }
+
    /* check for complete framebuffers */
    if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT ||
        ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
                   "glBlitFramebufferEXT(incomplete draw/read buffers)");
+      return;
+   }
+
+   if (filter != GL_NEAREST && filter != GL_LINEAR) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBlitFramebufferEXT(filter)");
+      return;
+   }
+
+   if (mask & ~(GL_COLOR_BUFFER_BIT |
+                GL_DEPTH_BUFFER_BIT |
+                GL_STENCIL_BUFFER_BIT)) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glBlitFramebufferEXT(mask)");
       return;
    }
 
@@ -1543,11 +1557,24 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       return;
    }
 
-   if (mask & ~(GL_COLOR_BUFFER_BIT |
-                GL_DEPTH_BUFFER_BIT |
-                GL_STENCIL_BUFFER_BIT)) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glBlitFramebufferEXT(mask)");
-      return;
+   if (mask & GL_STENCIL_BUFFER_BIT) {
+      struct gl_renderbuffer *readRb = ctx->ReadBuffer->_StencilBuffer;
+      struct gl_renderbuffer *drawRb = ctx->DrawBuffer->_StencilBuffer;
+      if (readRb->StencilBits != drawRb->StencilBits) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glBlitFramebufferEXT(stencil buffer size mismatch");
+         return;
+      }
+   }
+
+   if (mask & GL_DEPTH_BUFFER_BIT) {
+      struct gl_renderbuffer *readRb = ctx->ReadBuffer->_DepthBuffer;
+      struct gl_renderbuffer *drawRb = ctx->DrawBuffer->_DepthBuffer;
+      if (readRb->DepthBits != drawRb->DepthBits) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glBlitFramebufferEXT(depth buffer size mismatch");
+         return;
+      }
    }
 
    if (!ctx->Extensions.EXT_framebuffer_blit) {
