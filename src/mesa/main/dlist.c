@@ -5413,12 +5413,17 @@ save_MultiTexCoord4fv(GLenum target, const GLfloat * v)
 }
 
 
+/**
+ * Record a GL_INVALID_VALUE error when a invalid vertex attribute
+ * index is found.
+ */
 static void
-enum_error(void)
+index_error(void)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_error(ctx, GL_INVALID_ENUM, "VertexAttribfNV");
+   _mesa_error(ctx, GL_INVALID_VALUE, "VertexAttribf(index)");
 }
+
 
 /* First level for NV_vertex_program:
  *
@@ -5430,7 +5435,7 @@ save_VertexAttrib1fNV(GLuint index, GLfloat x)
    if (index < VERT_ATTRIB_MAX)
       save_Attr1fNV(index, x);
    else
-      enum_error();
+      index_error();
 }
 
 static void GLAPIENTRY
@@ -5439,7 +5444,7 @@ save_VertexAttrib1fvNV(GLuint index, const GLfloat * v)
    if (index < VERT_ATTRIB_MAX)
       save_Attr1fNV(index, v[0]);
    else
-      enum_error();
+      index_error();
 }
 
 static void GLAPIENTRY
@@ -5448,7 +5453,7 @@ save_VertexAttrib2fNV(GLuint index, GLfloat x, GLfloat y)
    if (index < VERT_ATTRIB_MAX)
       save_Attr2fNV(index, x, y);
    else
-      enum_error();
+      index_error();
 }
 
 static void GLAPIENTRY
@@ -5457,7 +5462,7 @@ save_VertexAttrib2fvNV(GLuint index, const GLfloat * v)
    if (index < VERT_ATTRIB_MAX)
       save_Attr2fNV(index, v[0], v[1]);
    else
-      enum_error();
+      index_error();
 }
 
 static void GLAPIENTRY
@@ -5466,7 +5471,7 @@ save_VertexAttrib3fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z)
    if (index < VERT_ATTRIB_MAX)
       save_Attr3fNV(index, x, y, z);
    else
-      enum_error();
+      index_error();
 }
 
 static void GLAPIENTRY
@@ -5475,7 +5480,7 @@ save_VertexAttrib3fvNV(GLuint index, const GLfloat * v)
    if (index < VERT_ATTRIB_MAX)
       save_Attr3fNV(index, v[0], v[1], v[2]);
    else
-      enum_error();
+      index_error();
 }
 
 static void GLAPIENTRY
@@ -5485,7 +5490,7 @@ save_VertexAttrib4fNV(GLuint index, GLfloat x, GLfloat y,
    if (index < VERT_ATTRIB_MAX)
       save_Attr4fNV(index, x, y, z, w);
    else
-      enum_error();
+      index_error();
 }
 
 static void GLAPIENTRY
@@ -5494,7 +5499,7 @@ save_VertexAttrib4fvNV(GLuint index, const GLfloat * v)
    if (index < VERT_ATTRIB_MAX)
       save_Attr4fNV(index, v[0], v[1], v[2], v[3]);
    else
-      enum_error();
+      index_error();
 }
 
 
@@ -5506,7 +5511,7 @@ save_VertexAttrib1fARB(GLuint index, GLfloat x)
    if (index < VERT_ATTRIB_MAX)
       save_Attr1fARB(index, x);
    else
-      enum_error();
+      index_error();
 }
 
 static void GLAPIENTRY
@@ -5515,7 +5520,7 @@ save_VertexAttrib1fvARB(GLuint index, const GLfloat * v)
    if (index < VERT_ATTRIB_MAX)
       save_Attr1fARB(index, v[0]);
    else
-      enum_error();
+      index_error();
 }
 
 static void GLAPIENTRY
@@ -5524,7 +5529,7 @@ save_VertexAttrib2fARB(GLuint index, GLfloat x, GLfloat y)
    if (index < VERT_ATTRIB_MAX)
       save_Attr2fARB(index, x, y);
    else
-      enum_error();
+      index_error();
 }
 
 static void GLAPIENTRY
@@ -5533,7 +5538,7 @@ save_VertexAttrib2fvARB(GLuint index, const GLfloat * v)
    if (index < VERT_ATTRIB_MAX)
       save_Attr2fARB(index, v[0], v[1]);
    else
-      enum_error();
+      index_error();
 }
 
 static void GLAPIENTRY
@@ -5542,7 +5547,7 @@ save_VertexAttrib3fARB(GLuint index, GLfloat x, GLfloat y, GLfloat z)
    if (index < VERT_ATTRIB_MAX)
       save_Attr3fARB(index, x, y, z);
    else
-      enum_error();
+      index_error();
 }
 
 static void GLAPIENTRY
@@ -5551,7 +5556,7 @@ save_VertexAttrib3fvARB(GLuint index, const GLfloat * v)
    if (index < VERT_ATTRIB_MAX)
       save_Attr3fARB(index, v[0], v[1], v[2]);
    else
-      enum_error();
+      index_error();
 }
 
 static void GLAPIENTRY
@@ -5561,7 +5566,7 @@ save_VertexAttrib4fARB(GLuint index, GLfloat x, GLfloat y, GLfloat z,
    if (index < VERT_ATTRIB_MAX)
       save_Attr4fARB(index, x, y, z, w);
    else
-      enum_error();
+      index_error();
 }
 
 static void GLAPIENTRY
@@ -5570,7 +5575,7 @@ save_VertexAttrib4fvARB(GLuint index, const GLfloat * v)
    if (index < VERT_ATTRIB_MAX)
       save_Attr4fARB(index, v[0], v[1], v[2], v[3]);
    else
-      enum_error();
+      index_error();
 }
 
 
@@ -5605,13 +5610,14 @@ save_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
 #endif
 
 
-/* KW: Compile commands
+/**
+ * Save an error-generating command into display list.
  *
- * Will appear in the list before the vertex buffer containing the
+ * KW: Will appear in the list before the vertex buffer containing the
  * command that provoked the error.  I don't see this as a problem.
  */
-void
-_mesa_save_error(GLcontext *ctx, GLenum error, const char *s)
+static void
+save_error(GLcontext *ctx, GLenum error, const char *s)
 {
    Node *n;
    n = ALLOC_INSTRUCTION(ctx, OPCODE_ERROR, 2);
@@ -5619,25 +5625,25 @@ _mesa_save_error(GLcontext *ctx, GLenum error, const char *s)
       n[1].e = error;
       n[2].data = (void *) s;
    }
-   /* execute already done */
 }
 
 
-/*
+/**
  * Compile an error into current display list.
  */
 void
 _mesa_compile_error(GLcontext *ctx, GLenum error, const char *s)
 {
    if (ctx->CompileFlag)
-      _mesa_save_error(ctx, error, s);
-
+      save_error(ctx, error, s);
    if (ctx->ExecuteFlag)
       _mesa_error(ctx, error, s);
 }
 
 
-
+/**
+ * Test if ID names a display list.
+ */
 static GLboolean
 islist(GLcontext *ctx, GLuint list)
 {
@@ -5662,7 +5668,7 @@ islist(GLcontext *ctx, GLuint list)
  * the absolute list number, not relative to ListBase.
  * \param list - display list number
  */
-static void GLAPIENTRY
+static void
 execute_list(GLcontext *ctx, GLuint list)
 {
    struct mesa_display_list *dlist;
@@ -8152,14 +8158,13 @@ print_list(GLcontext *ctx, GLuint list)
    Node *n;
    GLboolean done;
 
-   if (!CALL_IsList(GET_DISPATCH(), (list))) {
+   if (!islist(ctx, list)) {
       _mesa_printf("%u is not a display list ID\n", list);
       return;
    }
 
-   dlist =
-      (struct mesa_display_list *) _mesa_HashLookup(ctx->Shared->DisplayList,
-                                                    list);
+   dlist = (struct mesa_display_list *)
+      _mesa_HashLookup(ctx->Shared->DisplayList, list);
    if (!dlist)
       return;
 

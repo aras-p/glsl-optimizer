@@ -64,8 +64,6 @@ extern void GLAPIENTRY _mesa_save_CallList( GLuint list );
 
 extern void _mesa_init_dlist_table( struct _glapi_table *table );
 
-extern void _mesa_save_error( GLcontext *ctx, GLenum error, const char *s );
-
 extern void _mesa_compile_error( GLcontext *ctx, GLenum error, const char *s );
 
 
