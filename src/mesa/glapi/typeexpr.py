@@ -29,20 +29,21 @@ import string, copy
 
 class type_node:
 	def __init__(self):
-		self.pointer = 0
-		self.const = 0
-		self.signed = 1
-		self.integer = 1
+		self.pointer = 0  # bool
+		self.const = 0    # bool
+		self.signed = 1   # bool
+		self.integer = 1  # bool
 
 		# If elements is set to non-zero, then field is an array.
 		self.elements = 0
 
 		self.name = None
-		self.size = 0
+		self.size = 0     # type's size in bytes
 		return
 
 
 	def string(self):
+		"""Return string representation of this type_node."""
 		s = ""
 		
 		if self.pointer:
@@ -85,16 +86,17 @@ class type_table:
 def create_initial_types():
 	tt = type_table()
 
-	basic_types = [ ["char",   1, 1], \
-	                ["short",  2, 1], \
-	                ["int",    4, 1], \
-	                ["long",   4, 1], \
-			["float",  4, 0], \
-			["double", 8, 0], \
-			["enum",   4, 1] ]
+	basic_types = [
+		("char",   1, 1),
+		("short",  2, 1),
+		("int",    4, 1),
+		("long",   4, 1),
+		("float",  4, 0),
+		("double", 8, 0),
+		("enum",   4, 1)
+	]
 
-
-	for [type_name, type_size, integer] in basic_types:
+	for (type_name, type_size, integer) in basic_types:
 		te = type_expression(None)
 		tn = type_node()
 		tn.name = type_name
@@ -113,22 +115,24 @@ class type_expression:
 	def __init__(self, type_string, extra_types = None):
 		self.expr = []
 
-		if not type_string: return
+		if not type_string:
+			return
 
 		self.original_string = type_string
 
 		if not type_expression.built_in_types:
 			raise RuntimeError("create_initial_types must be called before creating type_expression objects.")
 
-		
-		elements = string.split( string.replace( type_string, "*", " * " ) )
+		# Replace '*' with ' * ' in type_string.  Then, split the string
+		# into tokens, separated by spaces.
+		tokens = string.split( string.replace( type_string, "*", " * " ) )
 
 		const = 0
 		t = None
 		signed = 0
 		unsigned = 0
 
-		for i in elements:
+		for i in tokens:
 			if i == "const":
 				if t and t.pointer:
 					t.const = 1
