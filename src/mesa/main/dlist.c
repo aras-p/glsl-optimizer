@@ -327,6 +327,9 @@ typedef enum
    OPCODE_STENCIL_OP_SEPARATE,
    OPCODE_STENCIL_MASK_SEPARATE,
 
+   /* GL_EXT_framebuffer_blit */
+   OPCODE_BLIT_FRAMEBUFFER,
+
    /* Vertex attributes -- fallback for when optimized display
     * list build isn't active.
     */
@@ -648,7 +651,6 @@ translate_id(GLsizei n, GLenum type, const GLvoid * list)
 /**********************************************************************/
 /*****                        Public                              *****/
 /**********************************************************************/
-
 
 /**
  * Wrapper for _mesa_unpack_image() that handles pixel buffer objects.
@@ -5572,7 +5574,35 @@ save_VertexAttrib4fvARB(GLuint index, const GLfloat * v)
 }
 
 
-
+#if FEATURE_EXT_framebuffer_blit
+static void GLAPIENTRY
+save_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+                        GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
+                        GLbitfield mask, GLenum filter)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION(ctx, OPCODE_BLIT_FRAMEBUFFER, 10);
+   if (n) {
+      n[1].i = srcX0;
+      n[2].i = srcY0;
+      n[3].i = srcX1;
+      n[4].i = srcY1;
+      n[5].i = dstX0;
+      n[6].i = dstY0;
+      n[7].i = dstX1;
+      n[8].i = dstY1;
+      n[9].i = mask;
+      n[10].e = filter;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_BlitFramebufferEXT(ctx->Exec, (srcX0, srcY0, srcX1, srcY1,
+                                          dstX0, dstY0, dstX1, dstY1,
+                                          mask, filter));
+   }
+}
+#endif
 
 
 /* KW: Compile commands
@@ -6398,6 +6428,13 @@ execute_list(GLcontext *ctx, GLuint list)
                CALL_DrawBuffersARB(ctx->Exec, (n[1].i, buffers));
             }
             break;
+#if FEATURE_EXT_framebuffer_blit
+	 case OPCODE_BLIT_FRAMEBUFFER:
+	    CALL_BlitFramebufferEXT(ctx->Exec, (n[1].i, n[2].i, n[3].i, n[4].i,
+                                                n[5].i, n[6].i, n[7].i, n[8].i,
+                                                n[9].i, n[10].e));
+	    break;
+#endif
 #if FEATURE_ATI_fragment_shader
          case OPCODE_BIND_FRAGMENT_SHADER_ATI:
             CALL_BindFragmentShaderATI(ctx->Exec, (n[1].i));
@@ -8086,6 +8123,10 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_GetQueryObjectuivARB(table, _mesa_GetQueryObjectuivARB);
 #endif
    SET_DrawBuffersARB(table, save_DrawBuffersARB);
+
+#if FEATURE_EXT_framebuffer_blit
+   SET_BlitFramebufferEXT(table, save_BlitFramebufferEXT);
+#endif
 
    /* 299. GL_EXT_blend_equation_separate */
    SET_BlendEquationSeparateEXT(table, save_BlendEquationSeparateEXT);
