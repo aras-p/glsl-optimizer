@@ -76,7 +76,9 @@ _mesa_Accum( GLenum op, GLfloat value )
    }
 
    if (ctx->DrawBuffer != ctx->ReadBuffer) {
-      /* See GLX_SGI_make_current_read or WGL_ARB_make_current_read */
+      /* See GLX_SGI_make_current_read or WGL_ARB_make_current_read,
+       * or GL_EXT_framebuffer_blit.
+       */
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glAccum(different read/draw buffers)");
       return;
