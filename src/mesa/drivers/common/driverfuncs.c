@@ -210,6 +210,10 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->FramebufferRenderbuffer = _mesa_framebuffer_renderbuffer;
 #endif
 
+#if FEATURE_EXT_framebuffer_blit
+   driver->BlitFramebuffer = _swrast_BlitFramebuffer;
+#endif
+
    /* query objects */
    driver->NewQueryObject = _mesa_new_query_object;
    driver->BeginQuery = NULL;
