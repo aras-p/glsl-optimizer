@@ -123,10 +123,10 @@ _swrast_ReadPixels( GLcontext *ctx,
 		    GLvoid *pixels );
 
 extern void
-_swrast_blit_framebuffer(GLcontext *ctx,
-                         GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
-                         GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
-                         GLbitfield mask, GLenum filter);
+_swrast_BlitFramebuffer(GLcontext *ctx,
+                        GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+                        GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
+                        GLbitfield mask, GLenum filter);
 
 extern void
 _swrast_Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
