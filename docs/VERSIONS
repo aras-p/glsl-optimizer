@@ -1438,6 +1438,7 @@ Mesa Version History
     New:
 	- GL_EXT_packed_depth_stencil extension
 	- GL_EXT_timer_query extension
+	- GL_EXT_framebuffer_blit extension
 	- reflect demo improved to support multiple windows
 	- singlebuffer demo (shows no/little-flicker single-buffered rendering)
 	- r200: enable GL_ARB_texture_env_crossbar, separate the texture
@@ -1447,6 +1448,8 @@ Mesa Version History
 	- radeon: add support for all 3 tmus, GL_ARB_texture_cube_map
 	  and GL_EXT_fog_coord
 	- MESA_GLX_ALPHA_BITS env var for xlib driver
+	- many DRI driver updates (including screen rotation support
+	  for the Intel DRI driver)
     Changes:
 	- removed GL_HP_occlusion_test (use GL_ARB_occlusion_query instead)
 	- removed GL_SGIX/SGIS_pixel_texture extensions
