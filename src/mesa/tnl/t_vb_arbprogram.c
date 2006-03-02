@@ -1282,7 +1282,8 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    m->nr_inputs = m->nr_outputs = 0;
 
    for (i = 0; i < _TNL_ATTRIB_MAX; i++) {
-      if (program->Base.InputsRead & (1<<i)) {
+      if (program->Base.InputsRead & (1<<i) ||
+	  (i == VERT_ATTRIB_POS && program->IsPositionInvariant)) {
 	 GLuint j = m->nr_inputs++;
 	 m->input[j].idx = i;
 	 m->input[j].data = (GLfloat *)m->VB->AttribPtr[i]->data;
@@ -1293,7 +1294,8 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    }     
 
    for (i = 0; i < VERT_RESULT_MAX; i++) {
-      if (program->Base.OutputsWritten & (1 << i)) {
+      if (program->Base.OutputsWritten & (1 << i) ||
+	  (i == VERT_RESULT_HPOS && program->IsPositionInvariant)) {
 	 GLuint j = m->nr_outputs++;
 	 m->output[j].idx = i;
 	 m->output[j].data = (GLfloat *)m->attribs[i].data;
@@ -1316,6 +1318,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	 STRIDE_F(m->input[j].data, m->input[j].stride);
       }
 
+
       if (p->compiled_func) {
 	 call_func( p, m );
       }
@@ -1326,6 +1329,15 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	 }
       }
 
+      /* If the program is position invariant, multiply the input position
+       * by the MVP matrix and store in the vertex position result register.
+       */
+      if (program->IsPositionInvariant) {
+	 TRANSFORM_POINT( m->File[0][REG_OUT0+0], 
+			  ctx->_ModelProjectMatrix.m, 
+			  m->File[0][REG_IN0+0]);
+      }
+
       for (j = 0; j < m->nr_outputs; j++) {
 	 GLuint idx = REG_OUT0 + m->output[j].idx;
 	 m->output[j].data[0] = m->File[0][idx][0];
@@ -1334,6 +1346,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	 m->output[j].data[3] = m->File[0][idx][3];
 	 m->output[j].data += 4;
       }
+
    }
 
    /* Setup the VB pointers so that the next pipeline stages get
@@ -1350,6 +1363,8 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    VB->ClipPtr->count = VB->Count;
 
    outputs = program->Base.OutputsWritten;
+   if (program->IsPositionInvariant) 
+      outputs |= (1<<VERT_RESULT_HPOS);
 
    if (outputs & (1<<VERT_RESULT_COL0)) {
       VB->ColorPtr[0] = &m->attribs[VERT_RESULT_COL0];
