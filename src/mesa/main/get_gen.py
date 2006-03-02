@@ -51,7 +51,7 @@ TypeStrings = {
 #  - the state datatype, one of GLint, GLfloat, GLboolean or GLenum
 #  - list of code fragments to get the state, such as ["ctx->Foo.Bar"]
 #  - optional extra code or empty string
-#  - optional extension to check, or None  (XXX this should be a list!)
+#  - optional extensions to check, or None
 #
 StateVars = [
 	( "GL_ACCUM_RED_BITS", GLint, ["ctx->DrawBuffer->Visual.accumRedBits"],
@@ -631,7 +631,8 @@ StateVars = [
 
 	# GL_EXT_secondary_color
 	( "GL_COLOR_SUM_EXT", GLboolean,
-	  ["ctx->Fog.ColorSumEnabled"], "", ["EXT_secondary_color"] ),
+	  ["ctx->Fog.ColorSumEnabled"], "",
+	  ["EXT_secondary_color", "ARB_vertex_program"] ),
 	( "GL_CURRENT_SECONDARY_COLOR_EXT", GLfloatN,
 	  ["ctx->Current.Attrib[VERT_ATTRIB_COLOR1][0]",
 	   "ctx->Current.Attrib[VERT_ATTRIB_COLOR1][1]",
@@ -691,12 +692,12 @@ StateVars = [
 	  ["ctx->Transform.RasterPositionUnclipped"], "", ["IBM_rasterpos_clip"] ),
 
 	# GL_NV_point_sprite
-	( "GL_POINT_SPRITE_NV", GLboolean, ["ctx->Point.PointSprite"],
-	  "", ["NV_point_sprite"] ), # OR ARB_point_sprite
+	( "GL_POINT_SPRITE_NV", GLboolean, ["ctx->Point.PointSprite"], # == GL_POINT_SPRITE_ARB
+	  "", ["NV_point_sprite", "ARB_point_sprite"] ),
 	( "GL_POINT_SPRITE_R_MODE_NV", GLenum, ["ctx->Point.SpriteRMode"],
-	  "", ["NV_point_sprite"] ), # OR ARB_point_sprite
+	  "", ["NV_point_sprite"] ),
 	( "GL_POINT_SPRITE_COORD_ORIGIN", GLenum, ["ctx->Point.SpriteOrigin"],
-	  "", ["NV_point_sprite"] ), # OR ARB_point_sprite
+	  "", ["NV_point_sprite", "ARB_point_sprite"] ),
 
 	# GL_SGIS_generate_mipmap
 	( "GL_GENERATE_MIPMAP_HINT_SGIS", GLenum, ["ctx->Hint.GenerateMipmap"],
@@ -872,17 +873,17 @@ StateVars = [
 	# GL_ARB_vertex_program
 	( "GL_MAX_VERTEX_ATTRIBS_ARB", GLint,
 	  ["ctx->Const.VertexProgram.MaxAttribs"], "", ["ARB_vertex_program"] ),
-
-	# GL_ARB_fragment_program
-	( "GL_FRAGMENT_PROGRAM_ARB", GLboolean,
-	  ["ctx->FragmentProgram.Enabled"], "", ["ARB_fragment_program"] ),
 	( "GL_TRANSPOSE_CURRENT_MATRIX_ARB", GLfloat,
 	  ["matrix[0]", "matrix[4]", "matrix[8]", "matrix[12]",
 	   "matrix[1]", "matrix[5]", "matrix[9]", "matrix[13]",
 	   "matrix[2]", "matrix[6]", "matrix[10]", "matrix[14]",
 	   "matrix[3]", "matrix[7]", "matrix[11]", "matrix[15]"],
 	  "const GLfloat *matrix = ctx->CurrentStack->Top->m;",
-	  ["ARB_fragment_program"] ),
+	  ["ARB_vertex_program", "ARB_fragment_program"] ),
+
+	# GL_ARB_fragment_program
+	( "GL_FRAGMENT_PROGRAM_ARB", GLboolean,
+	  ["ctx->FragmentProgram.Enabled"], "", ["ARB_fragment_program"] ),
 
 	# GL_EXT_depth_bounds_test
 	( "GL_DEPTH_BOUNDS_TEST_EXT", GLboolean,

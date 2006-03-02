@@ -1292,7 +1292,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled;
          break;
       case GL_COLOR_SUM_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetBooleanv");
+         CHECK_EXT2(EXT_secondary_color, ARB_vertex_program, "GetBooleanv");
          params[0] = ctx->Fog.ColorSumEnabled;
          break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
@@ -1389,7 +1389,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ctx->Transform.RasterPositionUnclipped;
          break;
       case GL_POINT_SPRITE_NV:
-         CHECK_EXT1(NV_point_sprite, "GetBooleanv");
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetBooleanv");
          params[0] = ctx->Point.PointSprite;
          break;
       case GL_POINT_SPRITE_R_MODE_NV:
@@ -1397,7 +1397,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ENUM_TO_BOOLEAN(ctx->Point.SpriteRMode);
          break;
       case GL_POINT_SPRITE_COORD_ORIGIN:
-         CHECK_EXT1(NV_point_sprite, "GetBooleanv");
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetBooleanv");
          params[0] = ENUM_TO_BOOLEAN(ctx->Point.SpriteOrigin);
          break;
       case GL_GENERATE_MIPMAP_HINT_SGIS:
@@ -1686,12 +1686,8 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          CHECK_EXT1(ARB_vertex_program, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Const.VertexProgram.MaxAttribs);
          break;
-      case GL_FRAGMENT_PROGRAM_ARB:
-         CHECK_EXT1(ARB_fragment_program, "GetBooleanv");
-         params[0] = ctx->FragmentProgram.Enabled;
-         break;
       case GL_TRANSPOSE_CURRENT_MATRIX_ARB:
-         CHECK_EXT1(ARB_fragment_program, "GetBooleanv");
+         CHECK_EXT2(ARB_vertex_program, ARB_fragment_program, "GetBooleanv");
          {
          const GLfloat *matrix = ctx->CurrentStack->Top->m;
          params[0] = FLOAT_TO_BOOLEAN(matrix[0]);
@@ -1711,6 +1707,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[14] = FLOAT_TO_BOOLEAN(matrix[11]);
          params[15] = FLOAT_TO_BOOLEAN(matrix[15]);
          }
+         break;
+      case GL_FRAGMENT_PROGRAM_ARB:
+         CHECK_EXT1(ARB_fragment_program, "GetBooleanv");
+         params[0] = ctx->FragmentProgram.Enabled;
          break;
       case GL_DEPTH_BOUNDS_TEST_EXT:
          CHECK_EXT1(EXT_depth_bounds_test, "GetBooleanv");
@@ -3110,7 +3110,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = BOOLEAN_TO_FLOAT(ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled);
          break;
       case GL_COLOR_SUM_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetFloatv");
+         CHECK_EXT2(EXT_secondary_color, ARB_vertex_program, "GetFloatv");
          params[0] = BOOLEAN_TO_FLOAT(ctx->Fog.ColorSumEnabled);
          break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
@@ -3207,7 +3207,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = BOOLEAN_TO_FLOAT(ctx->Transform.RasterPositionUnclipped);
          break;
       case GL_POINT_SPRITE_NV:
-         CHECK_EXT1(NV_point_sprite, "GetFloatv");
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetFloatv");
          params[0] = BOOLEAN_TO_FLOAT(ctx->Point.PointSprite);
          break;
       case GL_POINT_SPRITE_R_MODE_NV:
@@ -3215,7 +3215,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ENUM_TO_FLOAT(ctx->Point.SpriteRMode);
          break;
       case GL_POINT_SPRITE_COORD_ORIGIN:
-         CHECK_EXT1(NV_point_sprite, "GetFloatv");
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetFloatv");
          params[0] = ENUM_TO_FLOAT(ctx->Point.SpriteOrigin);
          break;
       case GL_GENERATE_MIPMAP_HINT_SGIS:
@@ -3504,12 +3504,8 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          CHECK_EXT1(ARB_vertex_program, "GetFloatv");
          params[0] = (GLfloat)(ctx->Const.VertexProgram.MaxAttribs);
          break;
-      case GL_FRAGMENT_PROGRAM_ARB:
-         CHECK_EXT1(ARB_fragment_program, "GetFloatv");
-         params[0] = BOOLEAN_TO_FLOAT(ctx->FragmentProgram.Enabled);
-         break;
       case GL_TRANSPOSE_CURRENT_MATRIX_ARB:
-         CHECK_EXT1(ARB_fragment_program, "GetFloatv");
+         CHECK_EXT2(ARB_vertex_program, ARB_fragment_program, "GetFloatv");
          {
          const GLfloat *matrix = ctx->CurrentStack->Top->m;
          params[0] = matrix[0];
@@ -3529,6 +3525,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[14] = matrix[11];
          params[15] = matrix[15];
          }
+         break;
+      case GL_FRAGMENT_PROGRAM_ARB:
+         CHECK_EXT1(ARB_fragment_program, "GetFloatv");
+         params[0] = BOOLEAN_TO_FLOAT(ctx->FragmentProgram.Enabled);
          break;
       case GL_DEPTH_BOUNDS_TEST_EXT:
          CHECK_EXT1(EXT_depth_bounds_test, "GetFloatv");
@@ -4928,7 +4928,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = BOOLEAN_TO_INT(ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled);
          break;
       case GL_COLOR_SUM_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetIntegerv");
+         CHECK_EXT2(EXT_secondary_color, ARB_vertex_program, "GetIntegerv");
          params[0] = BOOLEAN_TO_INT(ctx->Fog.ColorSumEnabled);
          break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
@@ -5025,7 +5025,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = BOOLEAN_TO_INT(ctx->Transform.RasterPositionUnclipped);
          break;
       case GL_POINT_SPRITE_NV:
-         CHECK_EXT1(NV_point_sprite, "GetIntegerv");
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetIntegerv");
          params[0] = BOOLEAN_TO_INT(ctx->Point.PointSprite);
          break;
       case GL_POINT_SPRITE_R_MODE_NV:
@@ -5033,7 +5033,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ENUM_TO_INT(ctx->Point.SpriteRMode);
          break;
       case GL_POINT_SPRITE_COORD_ORIGIN:
-         CHECK_EXT1(NV_point_sprite, "GetIntegerv");
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetIntegerv");
          params[0] = ENUM_TO_INT(ctx->Point.SpriteOrigin);
          break;
       case GL_GENERATE_MIPMAP_HINT_SGIS:
@@ -5322,12 +5322,8 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          CHECK_EXT1(ARB_vertex_program, "GetIntegerv");
          params[0] = ctx->Const.VertexProgram.MaxAttribs;
          break;
-      case GL_FRAGMENT_PROGRAM_ARB:
-         CHECK_EXT1(ARB_fragment_program, "GetIntegerv");
-         params[0] = BOOLEAN_TO_INT(ctx->FragmentProgram.Enabled);
-         break;
       case GL_TRANSPOSE_CURRENT_MATRIX_ARB:
-         CHECK_EXT1(ARB_fragment_program, "GetIntegerv");
+         CHECK_EXT2(ARB_vertex_program, ARB_fragment_program, "GetIntegerv");
          {
          const GLfloat *matrix = ctx->CurrentStack->Top->m;
          params[0] = IROUND(matrix[0]);
@@ -5347,6 +5343,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[14] = IROUND(matrix[11]);
          params[15] = IROUND(matrix[15]);
          }
+         break;
+      case GL_FRAGMENT_PROGRAM_ARB:
+         CHECK_EXT1(ARB_fragment_program, "GetIntegerv");
+         params[0] = BOOLEAN_TO_INT(ctx->FragmentProgram.Enabled);
          break;
       case GL_DEPTH_BOUNDS_TEST_EXT:
          CHECK_EXT1(EXT_depth_bounds_test, "GetIntegerv");
