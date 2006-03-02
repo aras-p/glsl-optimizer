@@ -70,7 +70,7 @@
 	} while (0)
 #endif
 
-/* the free room we want before we start a vertex batch */
+/* the free room we want before we start a vertex batch. this is a performance-tunable */
 #define NV40_MIN_PRIM_SIZE (32/4)
 
 static inline void nv40StartPrimitive(struct nouveau_context* nmesa)
@@ -304,7 +304,20 @@ GLuint specoffset = nmesa->specoffset;                       \
  *                Helpers for rendering unfilled primitives            *
  ***********************************************************************/
 
-#define RASTERIZE(x) nv40RasterPrimitive( ctx, x, x )
+static const GLenum hwPrim[GL_POLYGON+1] = {
+    GL_POINTS,
+    GL_LINES,
+    GL_LINES,
+    GL_LINES,
+    GL_TRIANGLES,
+    GL_TRIANGLES,
+    GL_TRIANGLES,
+    GL_TRIANGLES,
+    GL_TRIANGLES,
+    GL_TRIANGLES
+};
+
+#define RASTERIZE(x) nv40RasterPrimitive( ctx, x, hwPrim[x] )
 #define RENDER_PRIMITIVE nmesa->renderPrimitive
 #define TAG(x) x
 #define IND NOUVEAU_FALLBACK_BIT
@@ -432,7 +445,7 @@ static void init_rast_tab(void)
 #define RENDER_LINE(v0, v1)         LINE(V(v0), V(v1))
 #define RENDER_TRI( v0, v1, v2)     TRI( V(v0), V(v1), V(v2))
 #define RENDER_QUAD(v0, v1, v2, v3) QUAD(V(v0), V(v1), V(v2), V(v3))
-#define INIT(x) nv40RasterPrimitive(ctx, x, x)
+#define INIT(x) nv40RasterPrimitive(ctx, x, hwPrim[x])
 #undef LOCAL_VARS
 #define LOCAL_VARS                                              \
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);                     \
@@ -613,7 +626,8 @@ static inline void nv40OutputVertexFormat(struct nouveau_context* mesa, GLuint i
 	for(i=0;i<slots;i++)
 		if (index&(1<<i))
 		{
-			/* XXX for now we only emit 3-sized attributes */
+			/* XXX for now we only emit 3-sized attributes 
+			 * Where can we get the attribute size ? */
 			int size=3;
 			OUR_RING(0x00000002|(size*0x10));
 		}
@@ -699,7 +713,7 @@ void nv40RasterPrimitive(GLcontext *ctx,
  */
 static void nv40RenderPrimitive( GLcontext *ctx, GLuint prim )
 {
-	nv40RasterPrimitive( ctx, prim, prim );
+	nv40RasterPrimitive( ctx, prim, hwPrim[prim] );
 }
 
 
