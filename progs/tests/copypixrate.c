@@ -17,6 +17,9 @@ static GLint ImgWidth, ImgHeight;
 
 static GLenum Buffer = GL_FRONT;
 static GLenum AlphaTest = GL_FALSE;
+static GLboolean UseBlit = GL_FALSE;
+
+static PFNGLBLITFRAMEBUFFEREXTPROC glBlitFramebufferEXT_func = NULL;
 
 
 /**
@@ -98,8 +101,19 @@ RunTest(void)
       y = Rand(WinHeight);
 
       if (x > ImgWidth || y > ImgHeight) {
-         glWindowPos2iARB(x, y);
-         glCopyPixels(0, 0, ImgWidth, ImgHeight, GL_COLOR);
+#ifdef GL_EXT_framebuffer_blit
+         if (UseBlit)
+         {
+            glBlitFramebufferEXT_func(0, 0, ImgWidth, ImgHeight,
+                                      x, y, x + ImgWidth, y + ImgHeight,
+                                      GL_COLOR_BUFFER_BIT, GL_LINEAR);
+         }
+         else
+#endif
+         {
+            glWindowPos2iARB(x, y);
+            glCopyPixels(0, 0, ImgWidth, ImgHeight, GL_COLOR);
+         }
          glFinish(); /* XXX OK? */
 
          iters++;
@@ -197,6 +211,22 @@ ParseArgs(int argc, char *argv[])
          Buffer = GL_BACK;
       else if (strcmp(argv[i], "-alpha") == 0)
          AlphaTest = GL_TRUE;
+      else if (strcmp(argv[i], "-blit") == 0)
+         UseBlit = GL_TRUE;
+   }
+}
+
+
+static void
+Init(void)
+{
+   if (glutExtensionSupported("GL_EXT_framebuffer_blit")) {
+      glBlitFramebufferEXT_func = (PFNGLBLITFRAMEBUFFEREXTPROC)
+         glutGetProcAddress("glBlitFramebufferEXT");
+   }
+   else if (UseBlit) {
+      printf("Warning: GL_EXT_framebuffer_blit not supported.\n");
+      UseBlit = GL_FALSE;
    }
 }
 
@@ -222,6 +252,7 @@ main(int argc, char *argv[])
 
    printf("GL_RENDERER: %s\n", (char *) glGetString(GL_RENDERER));
    printf("Draw Buffer: %s\n", (Buffer == GL_BACK) ? "Back" : "Front");
+   Init();
 
    glutMainLoop();
    return 0;
