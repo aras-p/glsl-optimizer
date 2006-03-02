@@ -229,6 +229,8 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_fog_coord = GL_TRUE;
 #if FEATURE_EXT_framebuffer_object
    ctx->Extensions.EXT_framebuffer_object = GL_TRUE;
+#endif
+#if FEATURE_EXT_framebuffer_blit
    ctx->Extensions.EXT_framebuffer_blit = GL_TRUE;
 #endif
    ctx->Extensions.EXT_histogram = GL_TRUE;
