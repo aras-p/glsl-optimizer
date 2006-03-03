@@ -593,10 +593,11 @@ _swrast_exec_fragment_shader(GLcontext * ctx, struct sw_span *span)
       if (span->array->mask[i]) {
 	 init_machine(ctx, &ctx->ATIFragmentShader.Machine,
 		      ctx->ATIFragmentShader.Current, span, i);
-
-	 if (execute_shader(ctx, shader, ~0,
+	 /* can't really happen... */
+	 if (!execute_shader(ctx, shader, ~0,
 			    &ctx->ATIFragmentShader.Machine, span, i)) {
 	    span->array->mask[i] = GL_FALSE;
+            span->writeAll = GL_FALSE;
 	 }
 
 	 {

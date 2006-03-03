@@ -1084,7 +1084,6 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
    const GLbitfield origArrayMask = span->arrayMask;
    const GLboolean deferredTexture = !(ctx->Color.AlphaEnabled ||
                                        ctx->FragmentProgram._Active ||
-                                       ctx->ATIFragmentShader._Enabled ||
                                        ctx->ShaderObjects.CurrentProgram);
 
    ASSERT(span->primitive == GL_POINT  ||  span->primitive == GL_LINE ||
@@ -1174,9 +1173,11 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
          _swrast_texture_span( ctx, span );
 
       /* Do the alpha test */
-      if (!_swrast_alpha_test(ctx, span)) {
-         span->arrayMask = origArrayMask;
-	 return;
+      if (ctx->Color.AlphaEnabled) {
+         if (!_swrast_alpha_test(ctx, span)) {
+            span->arrayMask = origArrayMask;
+	    return;
+	 }
       }
    }
 
