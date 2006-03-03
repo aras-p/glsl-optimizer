@@ -822,22 +822,22 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          break;
 
 #if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
-      case GL_VERTEX_PROGRAM_NV:
-         CHECK_EXTENSION2(NV_vertex_program, ARB_vertex_program, cap);
+      case GL_VERTEX_PROGRAM_ARB:
+         CHECK_EXTENSION2(ARB_vertex_program, NV_vertex_program, cap);
          if (ctx->VertexProgram.Enabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_PROGRAM); 
          ctx->VertexProgram.Enabled = state;
          break;
-      case GL_VERTEX_PROGRAM_POINT_SIZE_NV:
-         CHECK_EXTENSION2(NV_vertex_program, ARB_vertex_program, cap);
+      case GL_VERTEX_PROGRAM_POINT_SIZE_ARB:
+         CHECK_EXTENSION2(ARB_vertex_program, NV_vertex_program, cap);
          if (ctx->VertexProgram.PointSizeEnabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_PROGRAM);
          ctx->VertexProgram.PointSizeEnabled = state;
          break;
-      case GL_VERTEX_PROGRAM_TWO_SIDE_NV:
-         CHECK_EXTENSION2(NV_vertex_program, ARB_vertex_program, cap);
+      case GL_VERTEX_PROGRAM_TWO_SIDE_ARB:
+         CHECK_EXTENSION2(ARB_vertex_program, NV_vertex_program, cap);
          if (ctx->VertexProgram.TwoSideEnabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_PROGRAM); 

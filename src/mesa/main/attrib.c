@@ -533,16 +533,16 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
    TEST_AND_UPDATE(ctx->Multisample.SampleCoverageInvert,
                    enable->SampleCoverageInvert,
                    GL_SAMPLE_COVERAGE_INVERT_ARB);
-   /* GL_NV_vertex_program */
+   /* GL_ARB_vertex_program, GL_NV_vertex_program */
    TEST_AND_UPDATE(ctx->VertexProgram.Enabled,
                    enable->VertexProgram,
-                   GL_VERTEX_PROGRAM_NV);
+                   GL_VERTEX_PROGRAM_ARB);
    TEST_AND_UPDATE(ctx->VertexProgram.PointSizeEnabled,
                    enable->VertexProgramPointSize,
-                   GL_VERTEX_PROGRAM_POINT_SIZE_NV);
+                   GL_VERTEX_PROGRAM_POINT_SIZE_ARB);
    TEST_AND_UPDATE(ctx->VertexProgram.TwoSideEnabled,
                    enable->VertexProgramTwoSide,
-                   GL_VERTEX_PROGRAM_TWO_SIDE_NV);
+                   GL_VERTEX_PROGRAM_TWO_SIDE_ARB);
 
 #undef TEST_AND_UPDATE
 

@@ -704,37 +704,9 @@ StateVars = [
 	  "", ["SGIS_generate_mipmap"] ),
 
 	# GL_NV_vertex_program
-	( "GL_VERTEX_PROGRAM_NV", GLboolean,
-	  ["ctx->VertexProgram.Enabled"], "",
-	  ["NV_vertex_program", "ARB_vertex_program"] ),
-	( "GL_VERTEX_PROGRAM_POINT_SIZE_NV", GLboolean,
-	  ["ctx->VertexProgram.PointSizeEnabled"], "",
-	  ["NV_vertex_program", "ARB_vertex_program"] ),
-	( "GL_VERTEX_PROGRAM_TWO_SIDE_NV", GLboolean,
-	  ["ctx->VertexProgram.TwoSideEnabled"], "",
-	  ["NV_vertex_program", "ARB_vertex_program"] ),
-	( "GL_MAX_TRACK_MATRIX_STACK_DEPTH_NV", GLint,
-	  ["ctx->Const.MaxProgramMatrixStackDepth"], "",
-	  ["NV_vertex_program", "ARB_vertex_program", "ARB_fragment_program"] ),
-	( "GL_MAX_TRACK_MATRICES_NV", GLint,
-	  ["ctx->Const.MaxProgramMatrices"], "",
-	  ["NV_vertex_program", "ARB_vertex_program", "ARB_fragment_program"] ),
-	( "GL_CURRENT_MATRIX_STACK_DEPTH_NV", GLboolean,
-	  ["ctx->CurrentStack->Depth + 1"], "",
-	  ["NV_vertex_program", "ARB_vertex_program", "ARB_fragment_program"] ),
-	( "GL_CURRENT_MATRIX_NV", GLfloat,
-	  ["matrix[0]", "matrix[1]", "matrix[2]", "matrix[3]",
-	   "matrix[4]", "matrix[5]", "matrix[6]", "matrix[7]",
-	   "matrix[8]", "matrix[9]", "matrix[10]", "matrix[11]",
-	   "matrix[12]", "matrix[13]", "matrix[14]", "matrix[15]" ],
-	  "const GLfloat *matrix = ctx->CurrentStack->Top->m;",
-	  ["NV_vertex_program", "ARB_vertex_program", "ARB_fragment_program"] ),
 	( "GL_VERTEX_PROGRAM_BINDING_NV", GLint,
 	  ["(ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0)"],
 	  "", ["NV_vertex_program"] ),
-	( "GL_PROGRAM_ERROR_POSITION_NV", GLint,
-	  ["ctx->Program.ErrorPos"], "", ["NV_vertex_program",
-	   "ARB_vertex_program", "NV_fragment_program", "ARB_fragment_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY0_NV", GLboolean,
 	  ["ctx->Array.VertexAttrib[0].Enabled"], "", ["NV_vertex_program"] ),
 	( "GL_VERTEX_ATTRIB_ARRAY1_NV", GLboolean,
@@ -803,12 +775,6 @@ StateVars = [
 	# GL_NV_fragment_program
 	( "GL_FRAGMENT_PROGRAM_NV", GLboolean,
 	  ["ctx->FragmentProgram.Enabled"], "", ["NV_fragment_program"] ),
-	( "GL_MAX_TEXTURE_COORDS_NV", GLint,
-	  ["ctx->Const.MaxTextureCoordUnits"], "",
-	  ["NV_fragment_program", "ARB_fragment_program"] ),
-	( "GL_MAX_TEXTURE_IMAGE_UNITS_NV", GLint,
-	  ["ctx->Const.MaxTextureImageUnits"], "",
-	  ["NV_fragment_program", "ARB_fragment_program"] ),
 	( "GL_FRAGMENT_PROGRAM_BINDING_NV", GLint,
 	  ["ctx->FragmentProgram.Current ? ctx->FragmentProgram.Current->Base.Id : 0"],
 	  "", ["NV_fragment_program"] ),
@@ -871,8 +837,31 @@ StateVars = [
 	  ["ctx->Unpack.BufferObj->Name"], "", ["EXT_pixel_buffer_object"] ),
 
 	# GL_ARB_vertex_program
-	( "GL_MAX_VERTEX_ATTRIBS_ARB", GLint,
-	  ["ctx->Const.VertexProgram.MaxAttribs"], "", ["ARB_vertex_program"] ),
+	( "GL_VERTEX_PROGRAM_ARB", GLboolean, # == GL_VERTEX_PROGRAM_NV
+	  ["ctx->VertexProgram.Enabled"], "",
+	  ["ARB_vertex_program", "NV_vertex_program"] ),
+	( "GL_VERTEX_PROGRAM_POINT_SIZE_ARB", GLboolean, # == GL_VERTEX_PROGRAM_POINT_SIZE_NV
+	  ["ctx->VertexProgram.PointSizeEnabled"], "",
+	  ["ARB_vertex_program", "NV_vertex_program"] ),
+	( "GL_VERTEX_PROGRAM_TWO_SIDE_ARB", GLboolean, # == GL_VERTEX_PROGRAM_TWO_SIDE_NV
+	  ["ctx->VertexProgram.TwoSideEnabled"], "",
+	  ["ARB_vertex_program", "NV_vertex_program"] ),
+	( "GL_MAX_PROGRAM_MATRIX_STACK_DEPTH_ARB", GLint, # == GL_MAX_TRACK_MATRIX_STACK_DEPTH_NV
+	  ["ctx->Const.MaxProgramMatrixStackDepth"], "",
+	  ["ARB_vertex_program", "ARB_fragment_program", "NV_vertex_program"] ),
+	( "GL_MAX_PROGRAM_MATRICES_ARB", GLint, # == GL_MAX_TRACK_MATRICES_NV
+	  ["ctx->Const.MaxProgramMatrices"], "",
+	  ["ARB_vertex_program", "ARB_fragment_program", "NV_vertex_program"] ),
+	( "GL_CURRENT_MATRIX_STACK_DEPTH_ARB", GLboolean, # == GL_CURRENT_MATRIX_STACK_DEPTH_NV
+	  ["ctx->CurrentStack->Depth + 1"], "",
+	  ["ARB_vertex_program", "ARB_fragment_program", "NV_vertex_program"] ),
+	( "GL_CURRENT_MATRIX_ARB", GLfloat, # == GL_CURRENT_MATRIX_NV
+	  ["matrix[0]", "matrix[1]", "matrix[2]", "matrix[3]",
+	   "matrix[4]", "matrix[5]", "matrix[6]", "matrix[7]",
+	   "matrix[8]", "matrix[9]", "matrix[10]", "matrix[11]",
+	   "matrix[12]", "matrix[13]", "matrix[14]", "matrix[15]" ],
+	  "const GLfloat *matrix = ctx->CurrentStack->Top->m;",
+	  ["ARB_vertex_program", "ARB_fragment_program", "NV_fragment_program"] ),
 	( "GL_TRANSPOSE_CURRENT_MATRIX_ARB", GLfloat,
 	  ["matrix[0]", "matrix[4]", "matrix[8]", "matrix[12]",
 	   "matrix[1]", "matrix[5]", "matrix[9]", "matrix[13]",
@@ -880,10 +869,21 @@ StateVars = [
 	   "matrix[3]", "matrix[7]", "matrix[11]", "matrix[15]"],
 	  "const GLfloat *matrix = ctx->CurrentStack->Top->m;",
 	  ["ARB_vertex_program", "ARB_fragment_program"] ),
+	( "GL_MAX_VERTEX_ATTRIBS_ARB", GLint,
+	  ["ctx->Const.VertexProgram.MaxAttribs"], "", ["ARB_vertex_program"] ),
+	( "GL_PROGRAM_ERROR_POSITION_ARB", GLint, # == GL_PROGRAM_ERROR_POSITION_NV
+	  ["ctx->Program.ErrorPos"], "", ["NV_vertex_program",
+	   "ARB_vertex_program", "NV_fragment_program", "ARB_fragment_program"] ),
 
 	# GL_ARB_fragment_program
 	( "GL_FRAGMENT_PROGRAM_ARB", GLboolean,
 	  ["ctx->FragmentProgram.Enabled"], "", ["ARB_fragment_program"] ),
+	( "GL_MAX_TEXTURE_COORDS_ARB", GLint, # == GL_MAX_TEXTURE_COORDS_NV
+	  ["ctx->Const.MaxTextureCoordUnits"], "",
+	  ["ARB_fragment_program", "NV_fragment_program"] ),
+	( "GL_MAX_TEXTURE_IMAGE_UNITS_ARB", GLint, # == GL_MAX_TEXTURE_IMAGE_UNITS_NV
+	  ["ctx->Const.MaxTextureImageUnits"], "",
+	  ["ARB_fragment_program", "NV_fragment_program"] ),
 
 	# GL_EXT_depth_bounds_test
 	( "GL_DEPTH_BOUNDS_TEST_EXT", GLboolean,

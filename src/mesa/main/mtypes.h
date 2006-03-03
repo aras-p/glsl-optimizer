@@ -659,7 +659,7 @@ struct gl_enable_attrib
    GLuint TexGen[MAX_TEXTURE_COORD_UNITS];
    /* SGI_texture_color_table */
    GLboolean TextureColorTable[MAX_TEXTURE_IMAGE_UNITS];
-   /* GL_NV_vertex_program */
+   /* GL_ARB_vertex_program / GL_NV_vertex_program */
    GLboolean VertexProgram;
    GLboolean VertexProgramPointSize;
    GLboolean VertexProgramTwoSide;
@@ -1778,7 +1778,7 @@ struct vertex_program
 {
    struct program Base;   /* base class */
    GLboolean IsNVProgram; /* GL_NV_vertex_program ? */
-   GLboolean IsPositionInvariant;  /* GL_NV_vertex_program1_1 */
+   GLboolean IsPositionInvariant;  /* GL_ARB_vertex_program / GL_NV_vertex_program1_1 */
    void *TnlData;		/* should probably use Base.DriverData */
 };
 
@@ -1804,8 +1804,8 @@ struct fragment_program
  */
 struct gl_program_state
 {
-   GLint ErrorPos;                       /* GL_PROGRAM_ERROR_POSITION_NV */
-   const char *ErrorString;              /* GL_PROGRAM_ERROR_STRING_NV */
+   GLint ErrorPos;                       /* GL_PROGRAM_ERROR_POSITION_ARB/NV */
+   const char *ErrorString;              /* GL_PROGRAM_ERROR_STRING_ARB/NV */
 };
 
 
@@ -1814,10 +1814,10 @@ struct gl_program_state
  */
 struct gl_vertex_program_state
 {
-   GLboolean Enabled;                  /**< GL_VERTEX_PROGRAM_NV */
+   GLboolean Enabled;                  /**< GL_VERTEX_PROGRAM_ARB/NV */
    GLboolean _Enabled;                 /**< Enabled and valid program? */
-   GLboolean PointSizeEnabled;         /**< GL_VERTEX_PROGRAM_POINT_SIZE_NV */
-   GLboolean TwoSideEnabled;           /**< GL_VERTEX_PROGRAM_TWO_SIDE_NV */
+   GLboolean PointSizeEnabled;         /**< GL_VERTEX_PROGRAM_POINT_SIZE_ARB/NV */
+   GLboolean TwoSideEnabled;           /**< GL_VERTEX_PROGRAM_TWO_SIDE_ARB/NV */
    struct vertex_program *Current;     /**< ptr to currently bound program */
    struct vertex_program *_Current;    /**< ptr to currently bound
 					   program, including internal
@@ -2790,8 +2790,8 @@ struct __GLcontextRec
    struct gl_color_table ProxyPostColorMatrixColorTable;
 
    struct gl_program_state Program;        /**< for vertex or fragment progs */
-   struct gl_vertex_program_state VertexProgram;   /**< GL_NV_vertex_program */
-   struct gl_fragment_program_state FragmentProgram;  /**< GL_NV_fragment_program */
+   struct gl_vertex_program_state VertexProgram;   /**< GL_ARB/NV_vertex_program */
+   struct gl_fragment_program_state FragmentProgram;  /**< GL_ARB/NV_vertex_program */
    struct gl_ati_fragment_shader_state ATIFragmentShader;  /**< GL_ATI_fragment_shader */
 
    struct fragment_program *_TexEnvProgram;     /**< Texture state as fragment program */
