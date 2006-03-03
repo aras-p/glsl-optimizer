@@ -1077,33 +1077,73 @@ static GLboolean (* const emit_func[])(struct compilation *, union instruction) 
 {
    emit_ABS,
    emit_ADD,
-   emit_NOP,
+   emit_NOP, /* ARA */
+   emit_NOP, /* ARL */
+   emit_NOP, /* ARL_NV */
+   emit_NOP, /* ARR */
+   emit_NOP, /* BRA */
+   emit_NOP, /* CAL */
+   emit_NOP, /* CMP */
+   emit_NOP, /* COS */
+   emit_NOP, /* DDX */
+   emit_NOP, /* DDY */
    emit_DP3,
    emit_DP4,
    emit_DPH,
    emit_DST,
-   emit_NOP,
+   emit_NOP, /* END */
    emit_EX2,
    emit_EXP,
    emit_FLR,
    emit_FRC,
+   emit_NOP, /* KIL */
+   emit_NOP, /* KIL_NV */
    emit_LG2,
    emit_LIT,
    emit_LOG,
-   emit_NOP,
+   emit_NOP, /* LRP */
+   emit_NOP, /* MAD */
    emit_MAX,
    emit_MIN,
    emit_MOV,
    emit_MUL,
+   emit_NOP, /* PK2H */
+   emit_NOP, /* PK2US */
+   emit_NOP, /* PK4B */
+   emit_NOP, /* PK4UB */
    emit_POW,
+   emit_NOP, /* POPA */
    emit_PRT,
-   emit_NOP,
+   emit_NOP, /* PUSHA */
+   emit_NOP, /* RCC */
    emit_RCP,
+   emit_NOP, /* RET */
+   emit_NOP, /* RFL */
    emit_RSQ,
+   emit_NOP, /* SCS */
+   emit_NOP, /* SEQ */
+   emit_NOP, /* SFL */
    emit_SGE,
+   emit_NOP, /* SGT */
+   emit_NOP, /* SIN */
+   emit_NOP, /* SLE */
    emit_SLT,
+   emit_NOP, /* SNE */
+   emit_NOP, /* SSG */
+   emit_NOP, /* STR */
    emit_SUB,
-   emit_RSW,
+   emit_RSW, /* SWZ */
+   emit_NOP, /* TEX */
+   emit_NOP, /* TXB */
+   emit_NOP, /* TXD */
+   emit_NOP, /* TXL */
+   emit_NOP, /* TXP */
+   emit_NOP, /* TXP_NV */
+   emit_NOP, /* UP2H */
+   emit_NOP, /* UP2US */
+   emit_NOP, /* UP4B */
+   emit_NOP, /* UP4UB */
+   emit_NOP, /* X2D */
    emit_XPD,
    emit_RSW,
    emit_MSK,
