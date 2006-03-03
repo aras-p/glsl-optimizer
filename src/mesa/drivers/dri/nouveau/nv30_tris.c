@@ -46,7 +46,7 @@
 #include "nouveau_state.h"
 #include "nouveau_span.h"
 #include "nouveau_ioctl.h"
-#include "nouveau_3d_reg.h"
+#include "nouveau_reg.h"
 #include "nouveau_tex.h"
 
 /* hack for now */
