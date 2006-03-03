@@ -23,6 +23,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+/* Triangles for NV30, NV40, G70 */
+
 #include <stdio.h>
 #include <math.h>
 
@@ -39,7 +41,7 @@
 #include "tnl/t_pipeline.h"
 
 #include "nouveau_tris.h"
-#include "nv40_tris.h"
+#include "nv30_tris.h"
 #include "nouveau_context.h"
 #include "nouveau_state.h"
 #include "nouveau_span.h"
@@ -71,16 +73,16 @@
 #endif
 
 /* the free room we want before we start a vertex batch. this is a performance-tunable */
-#define NV40_MIN_PRIM_SIZE (32/4)
+#define NV30_MIN_PRIM_SIZE (32/4)
 
-static inline void nv40StartPrimitive(struct nouveau_context* nmesa)
+static inline void nv30StartPrimitive(struct nouveau_context* nmesa)
 {
 	BEGIN_RING_SIZE(channel,0x1808,1);
 	OUT_RING(nmesa->current_primitive);
-	BEGIN_RING_PRIM(channel,0x1818,NV40_MIN_PRIM_SIZE);
+	BEGIN_RING_PRIM(channel,0x1818,NV30_MIN_PRIM_SIZE);
 }
 
-static inline void nv40FinishPrimitive(struct nouveau_context *nmesa)
+static inline void nv30FinishPrimitive(struct nouveau_context *nmesa)
 {
 	FINISH_RING_PRIM();
 	BEGIN_RING_SIZE(channel,0x1808,1);
@@ -89,13 +91,13 @@ static inline void nv40FinishPrimitive(struct nouveau_context *nmesa)
 }
 
 
-static inline void nv40ExtendPrimitive(struct nouveau_context* nmesa, int size)
+static inline void nv30ExtendPrimitive(struct nouveau_context* nmesa, int size)
 {
 	/* when the fifo has enough stuff (2048 bytes) or there is not enough room, fire */
 	if ((RING_AHEAD()>=2048/4)||(RING_AVAILABLE()<size/4))
 	{
-		nv40FinishPrimitive(nmesa);
-		nv40StartPrimitive(nmesa);
+		nv30FinishPrimitive(nmesa);
+		nv30StartPrimitive(nmesa);
 	}
 
 	/* make sure there's enough room. if not, wait */
@@ -105,14 +107,14 @@ static inline void nv40ExtendPrimitive(struct nouveau_context* nmesa, int size)
 	}
 }
 
-static inline void nv40_draw_quad(struct nouveau_context *nmesa,
+static inline void nv30_draw_quad(struct nouveau_context *nmesa,
 		nouveauVertexPtr v0,
 		nouveauVertexPtr v1,
 		nouveauVertexPtr v2,
 		nouveauVertexPtr v3)
 {
 	GLuint vertsize = nmesa->vertexSize;
-	GLuint *vb = nv40ExtendPrimitive(nmesa, 4 * 4 * vertsize);
+	GLuint *vb = nv30ExtendPrimitive(nmesa, 4 * 4 * vertsize);
 
 	COPY_DWORDS(vb, vertsize, v0);
 	COPY_DWORDS(vb, vertsize, v1);
@@ -120,13 +122,13 @@ static inline void nv40_draw_quad(struct nouveau_context *nmesa,
 	COPY_DWORDS(vb, vertsize, v3);
 }
 
-static inline void nv40_draw_triangle(struct nouveau_context *nmesa,
+static inline void nv30_draw_triangle(struct nouveau_context *nmesa,
 		nouveauVertexPtr v0,
 		nouveauVertexPtr v1,
 		nouveauVertexPtr v2)
 {
 	GLuint vertsize = nmesa->vertexSize;
-	GLuint *vb = nv40ExtendPrimitive(nmesa, 3 * 4 * vertsize);
+	GLuint *vb = nv30ExtendPrimitive(nmesa, 3 * 4 * vertsize);
 
 	COPY_DWORDS(vb, vertsize, v0);
 	COPY_DWORDS(vb, vertsize, v1);
@@ -138,7 +140,7 @@ static inline void nouveau_draw_line(struct nouveau_context *nmesa,
 		nouveauVertexPtr v1)
 {
 	GLuint vertsize = nmesa->vertexSize;
-	GLuint *vb = nv40ExtendPrimitive(nmesa, 2 * 4 * vertsize);
+	GLuint *vb = nv30ExtendPrimitive(nmesa, 2 * 4 * vertsize);
 	COPY_DWORDS(vb, vertsize, v0);
 	COPY_DWORDS(vb, vertsize, v1);
 }
@@ -147,7 +149,7 @@ static inline void nouveau_draw_point(struct nouveau_context *nmesa,
 		nouveauVertexPtr v0)
 {
 	GLuint vertsize = nmesa->vertexSize;
-	GLuint *vb = nv40ExtendPrimitive(nmesa, 4 * vertsize);
+	GLuint *vb = nv30ExtendPrimitive(nmesa, 4 * vertsize);
 	COPY_DWORDS(vb, vertsize, v0);
 }
 
@@ -317,7 +319,7 @@ static const GLenum hwPrim[GL_POLYGON+1] = {
     GL_TRIANGLES
 };
 
-#define RASTERIZE(x) nv40RasterPrimitive( ctx, x, hwPrim[x] )
+#define RASTERIZE(x) nv30RasterPrimitive( ctx, x, hwPrim[x] )
 #define RENDER_PRIMITIVE nmesa->renderPrimitive
 #define TAG(x) x
 #define IND NOUVEAU_FALLBACK_BIT
@@ -445,7 +447,7 @@ static void init_rast_tab(void)
 #define RENDER_LINE(v0, v1)         LINE(V(v0), V(v1))
 #define RENDER_TRI( v0, v1, v2)     TRI( V(v0), V(v1), V(v2))
 #define RENDER_QUAD(v0, v1, v2, v3) QUAD(V(v0), V(v1), V(v2), V(v3))
-#define INIT(x) nv40RasterPrimitive(ctx, x, hwPrim[x])
+#define INIT(x) nv30RasterPrimitive(ctx, x, hwPrim[x])
 #undef LOCAL_VARS
 #define LOCAL_VARS                                              \
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);                     \
@@ -547,7 +549,7 @@ static void nouveauFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
 		_NEW_POLYGONSTIPPLE)
 
 
-static void nv40ChooseRenderState(GLcontext *ctx)
+static void nv30ChooseRenderState(GLcontext *ctx)
 {
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
@@ -607,7 +609,7 @@ static void nv40ChooseRenderState(GLcontext *ctx)
 
 
 
-static inline void nv40OutputVertexFormat(struct nouveau_context* mesa, GLuint index)
+static inline void nv30OutputVertexFormat(struct nouveau_context* mesa, GLuint index)
 {
 	/*
 	 * Determine how many inputs we need in the vertex format.
@@ -644,7 +646,7 @@ static inline void nv40OutputVertexFormat(struct nouveau_context* mesa, GLuint i
 }
 
 
-static void nv40ChooseVertexState( GLcontext *ctx )
+static void nv30ChooseVertexState( GLcontext *ctx )
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -653,7 +655,7 @@ static void nv40ChooseVertexState( GLcontext *ctx )
 	if (index!=nmesa->render_inputs)
 	{
 		nmesa->render_inputs=index;
-		nv40OutputVertexFormat(nmesa,index);
+		nv30OutputVertexFormat(nmesa,index);
 	}
 }
 
@@ -663,7 +665,7 @@ static void nv40ChooseVertexState( GLcontext *ctx )
 /**********************************************************************/
 
 
-static void nv40RenderStart(GLcontext *ctx)
+static void nv30RenderStart(GLcontext *ctx)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 
@@ -678,23 +680,23 @@ static void nv40RenderStart(GLcontext *ctx)
 	}
 
 	if (nmesa->newRenderState) {
-		nv40ChooseVertexState(ctx);
-		nv40ChooseRenderState(ctx);
+		nv30ChooseVertexState(ctx);
+		nv30ChooseRenderState(ctx);
 		nmesa->newRenderState = 0;
 	}
 }
 
-static void nv40RenderFinish(GLcontext *ctx)
+static void nv30RenderFinish(GLcontext *ctx)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	nv40FinishPrimitive(nmesa);
+	nv30FinishPrimitive(nmesa);
 }
 
 
 /* System to flush dma and emit state changes based on the rasterized
  * primitive.
  */
-void nv40RasterPrimitive(GLcontext *ctx,
+void nv30RasterPrimitive(GLcontext *ctx,
 		GLenum glprim,
 		GLenum hwprim)
 {
@@ -711,9 +713,9 @@ void nv40RasterPrimitive(GLcontext *ctx,
 
 /* Callback for mesa:
  */
-static void nv40RenderPrimitive( GLcontext *ctx, GLuint prim )
+static void nv30RenderPrimitive( GLcontext *ctx, GLuint prim )
 {
-	nv40RasterPrimitive( ctx, prim, hwPrim[prim] );
+	nv30RasterPrimitive( ctx, prim, hwPrim[prim] );
 }
 
 
@@ -735,9 +737,9 @@ void nouveauInitTriFuncs(GLcontext *ctx)
 	}
 
 	tnl->Driver.RunPipeline = nouveauRunPipeline;
-	tnl->Driver.Render.Start = nv40RenderStart;
-	tnl->Driver.Render.Finish = nv40RenderFinish;
-	tnl->Driver.Render.PrimitiveNotify = nv40RenderPrimitive;
+	tnl->Driver.Render.Start = nv30RenderStart;
+	tnl->Driver.Render.Finish = nv30RenderFinish;
+	tnl->Driver.Render.PrimitiveNotify = nv30RenderPrimitive;
 	tnl->Driver.Render.ResetLineStipple = nouveauResetLineStipple;
 	tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
 	tnl->Driver.Render.CopyPV = _tnl_copy_pv;
