@@ -25,6 +25,7 @@ SOURCES = \
 	blendminmax.c \
 	blendsquare.c \
 	bufferobj.c \
+	bug_3050.c \
 	bug_3101.c \
 	bug_3195.c \
 	copypixrate.c \
