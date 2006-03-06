@@ -185,8 +185,8 @@ static void Init( void )
    printf("\nThis program should function nearly identically to Mesa's lodbias demo.\n"
 	  "It should cycle through the complet LOD bias range once and exit.  If bug\n"
 	  "#3195 still exists, the demo should crash almost immediatly.\n");
-   printf("This is a regression test for bug #3101.\n");
-   printf("https://bugs.freedesktop.org/show_bug.cgi?id=3101\n");
+   printf("This is a regression test for bug #3195.\n");
+   printf("https://bugs.freedesktop.org/show_bug.cgi?id=3195\n");
 
    if (!glutExtensionSupported("GL_EXT_texture_lod_bias")) {
       printf("Sorry, GL_EXT_texture_lod_bias not supported by this renderer.\n");
