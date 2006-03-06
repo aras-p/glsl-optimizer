@@ -48,7 +48,7 @@ class glx_proto_type(gl_XML.gl_type):
 
 
 class glx_print_proto(gl_XML.gl_print_base):
-	def size_call(self, func):
+	def size_call(self, func, outputs_also = 0):
 		"""Create C code to calculate 'compsize'.
 
 		Creates code to calculate 'compsize'.  If the function does
@@ -58,7 +58,7 @@ class glx_print_proto(gl_XML.gl_print_base):
 		compsize = None
 
 		for param in func.parameterIterator():
-			if not param.is_output:
+			if outputs_also or not param.is_output:
 				if param.is_image():
 					[dim, w, h, d, junk] = param.get_dimensions()
 

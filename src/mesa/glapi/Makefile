@@ -18,10 +18,20 @@ OUTPUTS = glprocs.h glapitemp.h glapioffsets.h glapitable.h dispatch.h \
 	../../glx/x11/indirect_size.h \
 	../../glx/x11/indirect_size.c
 
+
+#XORG_BASE = /home/idr/devel/graphics/Xorg/xserver/xorg
+GLX_DIR   = $(XORG_BASE)/GL/glx
+
+SERVER_OUTPUTS = $(GLX_DIR)/indirect_dispatch.c \
+	$(GLX_DIR)/indirect_dispatch_swap.c \
+	$(GLX_DIR)/indirect_dispatch.h
+
 COMMON = gl_XML.py license.py gl_API.xml typeexpr.py
 COMMON_GLX = $(COMMON) glX_XML.py glX_proto_common.py
 
 all: $(OUTPUTS)
+
+server: $(SERVER_OUTPUTS)
 
 glprocs.h: $(COMMON) gl_procs.py
 	$(PYTHON2) $(PYTHON_FLAGS) gl_procs.py > glprocs.h
@@ -64,6 +74,21 @@ dispatch.h: $(COMMON) gl_table.py
 
 ../../glx/x11/indirect_size.c: $(COMMON_GLX) glX_proto_size.py
 	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_c --only-set > ../../glx/x11/indirect_size.c
+
+$(GLX_DIR)/indirect_dispatch.c: $(COMMON_GLX) glX_proto_recv.py
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_recv.py -m dispatch_c > $@
+
+$(GLX_DIR)/indirect_dispatch_swap.c: $(COMMON_GLX) glX_proto_recv.py
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_recv.py -m dispatch_c -s > $@
+
+$(GLX_DIR)/indirect_dispatch.h: $(COMMON_GLX) glX_proto_recv.py
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_recv.py -m dispatch_h -s > $@
+
+$(GLX_DIR)/indirect_size_get.h: $(COMMON_GLX) glX_proto_size.py
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_h --only-get -h '_INDIRECT_SIZE_GET_H_' > $@
+
+$(GLX_DIR)/indirect_size_get.c: $(COMMON_GLX) glX_proto_size.py
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_c > $@
 
 clean:
 	rm -f *~ *.pyo
