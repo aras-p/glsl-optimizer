@@ -673,18 +673,38 @@ static inline void nv30OutputVertexFormat(struct nouveau_context* nmesa, GLuint 
 	/* 
 	 * Tell the hardware about the vertex format
 	 */
-	BEGIN_RING_SIZE(channel,0x1740,slots);
-	for(i=0;i<slots;i++)
+	switch(nmesa->screen->card_type)
 	{
-		int size=attr_size[i];
-		OUT_RING(0x00000002|(size*0x10));
+		case NV_20:
+			{
+				for(i=0;i<16;i++)
+				{
+					int size=attr_size[i];
+					BEGIN_RING_SIZE(channel,0x1760+i*4,1);
+					OUT_RING(0x00000002|(size*0x10));
+				}
+			}
+			break;
+		case NV_30:
+		case NV_40:
+		case G_70:
+			{
+				BEGIN_RING_SIZE(channel,0x1740,slots);
+				for(i=0;i<slots;i++)
+				{
+					int size=attr_size[i];
+					OUT_RING(0x00000002|(size*0x10));
+				}
+				BEGIN_RING_SIZE(channel,0x1718,1);
+				OUT_RING(0);
+				BEGIN_RING_SIZE(channel,0x1718,1);
+				OUT_RING(0);
+				BEGIN_RING_SIZE(channel,0x1718,1);
+				OUT_RING(0);
+			}
+			break;
+		
 	}
-	BEGIN_RING_SIZE(channel,0x1718,1);
-	OUT_RING(0);
-	BEGIN_RING_SIZE(channel,0x1718,1);
-	OUT_RING(0);
-	BEGIN_RING_SIZE(channel,0x1718,1);
-	OUT_RING(0);
 }
 
 
