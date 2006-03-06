@@ -879,7 +879,7 @@ __GLapi * __glXNewIndirectAPI( void )
 				if first:
 					print ''
 					if show_num:
-						print '    /* % 3u. %s */' % (cat_num, cat_name)
+						print '    /* %3u. %s */' % (cat_num, cat_name)
 					else:
 						print '    /* %s */' % (cat_name)
 					print ''

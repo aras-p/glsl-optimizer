@@ -161,7 +161,7 @@ int _mesa_lookup_enum_by_name( const char *symbol )
 		print 'static const enum_elt all_enums[%u] =' % (len(name_table))
 		print '{'
 		for [name, enum] in name_table:
-			print '   { % 5u, 0x%08X }, /* %s */' % (string_offsets[name], enum, name)
+			print '   { %5u, 0x%08X }, /* %s */' % (string_offsets[name], enum, name)
 		print '};'
 		print ''
 
@@ -174,7 +174,7 @@ int _mesa_lookup_enum_by_name( const char *symbol )
 			else:
 				i = name_table.index( [name, enum] )
 
-				print '      % 4u, /* %s */' % (i, name)
+				print '      %4u, /* %s */' % (i, name)
 		print '};'
 
 

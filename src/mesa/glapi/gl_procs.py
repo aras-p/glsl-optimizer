@@ -113,7 +113,7 @@ class PrintGlProcs(gl_XML.gl_print_base):
 		print 'static const glprocs_table_t static_functions[] = {'
 
 		for (offset, disp_name, real_name) in table:
-			print '    NAME_FUNC_OFFSET( % 5u, gl%s, _gloffset_%s ),' % (offset, disp_name, real_name)
+			print '    NAME_FUNC_OFFSET( %5u, gl%s, _gloffset_%s ),' % (offset, disp_name, real_name)
 
 		print '    NAME_FUNC_OFFSET( -1, NULL, 0 )'
 		print '};'
