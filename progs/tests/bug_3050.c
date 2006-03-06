@@ -71,7 +71,6 @@ static void Key( unsigned char key, int x, int y )
 
 static void Init( void )
 {
-   GLint temp[ 256 ];
    unsigned i;
    static const GLenum pnames[] = {
       GL_TEXTURE_RED_SIZE,
@@ -107,10 +106,9 @@ static void Init( void )
    }
 	
 
-   (void) memset( temp, 0x00, sizeof( temp ) );
-   glBindTexture( GL_PROXY_TEXTURE_RECTANGLE_NV, 1 );
+   glBindTexture( GL_TEXTURE_RECTANGLE_NV, 1 );
    glTexImage2D( GL_PROXY_TEXTURE_RECTANGLE_NV, 0, GL_RGBA, 8, 8, 0,
-		 GL_RGBA, GL_UNSIGNED_BYTE, temp );
+		 GL_RGBA, GL_UNSIGNED_BYTE, NULL );
 
    for ( i = 0 ; pnames[i] != ~0 ; i++ ) {
       GLint param_i;
@@ -137,7 +135,7 @@ static void Init( void )
 
       if ( err ) {
 	 printf("glGetTexLevelParameterfv(GL_PROXY_TEXTURE_RECTANGLE_NV, 0, 0x%04x, & param) generated a GL\n"
-		"error of 0x%04x!",
+		"error of 0x%04x!\n",
 		pnames[i], err );
 	 exit( 1 );
       }
