@@ -261,8 +261,11 @@ static void r300UploadRectSubImage(r300ContextPtr rmesa,
 			r300EmitBlit(rmesa,
 				     blit_format,
 				     dstPitch, GET_START(&region),
-				     dstPitch, t->bufAddr,
-				     0, 0, 0, done, width, lines);
+				     dstPitch | (t->tile_bits >> 16),
+				     t->bufAddr,
+				     0, 0,
+				     0, done,
+				     width, lines);
 
 			r300EmitWait(rmesa, R300_WAIT_2D);
 
@@ -390,8 +393,8 @@ static void uploadSubImage( r300ContextPtr rmesa, r300TexObjPtr t,
       tex.pitch = MAX2((texImage->Width * texImage->TexFormat->TexelBytes) / 64, 1);
       tex.offset += tmp.x & ~1023;
       tmp.x = tmp.x % 1024;
-#if 0
-      if (t->tile_bits & R200_TXO_MICRO_TILE) {
+#if 1
+      if (t->tile_bits & R300_TXO_MICRO_TILE) {
 	 /* need something like "tiled coordinates" ? */
 	 tmp.y = tmp.x / (tex.pitch * 128) * 2;
 	 tmp.x = tmp.x % (tex.pitch * 128) / 2 / texImage->TexFormat->TexelBytes;
@@ -402,10 +405,10 @@ static void uploadSubImage( r300ContextPtr rmesa, r300TexObjPtr t,
       {
 	 tmp.x = tmp.x >> (texImage->TexFormat->TexelBytes >> 1);
       }
-#if 0
-      if ((t->tile_bits & R200_TXO_MACRO_TILE) &&
+#if 1
+      if ((t->tile_bits & R300_TXO_MACRO_TILE) &&
 	 (texImage->Width * texImage->TexFormat->TexelBytes >= 256) &&
-	 ((!(t->tile_bits & R200_TXO_MICRO_TILE) && (texImage->Height >= 8)) ||
+	 ((!(t->tile_bits & R300_TXO_MICRO_TILE) && (texImage->Height >= 8)) ||
 	    (texImage->Height >= 16))) {
 	 /* weird: R200 disables macro tiling if mip width is smaller than 256 bytes,
 	    OR if height is smaller than 8 automatically, but if micro tiling is active
@@ -501,6 +504,11 @@ int r300UploadTexImages(r300ContextPtr rmesa, r300TexObjPtr t, GLuint face)
 		t->bufAddr = rmesa->radeon.radeonScreen->texOffset[heap]
 		    + t->base.memBlock->ofs;
 		t->offset = t->bufAddr;
+
+		if (!(t->base.tObj->Image[0][0]->IsClientData)) {
+			/* hope it's safe to add that here... */
+			t->offset |= t->tile_bits;
+		}
 
 		/* Mark this texobj as dirty on all units:
 		 */

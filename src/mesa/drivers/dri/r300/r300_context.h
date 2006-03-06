@@ -199,6 +199,8 @@ struct r300_tex_obj {
 
 
 	GLboolean border_fallback;
+
+	GLuint tile_bits; /* hw texture tile bits used on this texture */
 };
 
 struct r300_texture_env_state {
@@ -884,6 +886,8 @@ struct r300_context {
 	int mm_sem_id;
 	struct radeon_memory_manager *rmm;
 #endif
+
+	GLboolean texmicrotile;
 };
 
 struct r300_buffer_object {

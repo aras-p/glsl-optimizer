@@ -76,6 +76,7 @@ int hw_tcl_on=1;
 #define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_vertex_program
 #define need_GL_EXT_blend_minmax
+//#define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
 #define need_GL_EXT_blend_equation_separate
 #define need_GL_EXT_blend_func_separate
@@ -100,6 +101,7 @@ const struct dri_extension card_extensions[] = {
   {"GL_EXT_blend_func_separate",	GL_EXT_blend_func_separate_functions},
   {"GL_EXT_blend_minmax",		GL_EXT_blend_minmax_functions},
   {"GL_EXT_blend_subtract",		NULL},
+//  {"GL_EXT_fog_coord",			GL_EXT_fog_coord_functions },
   {"GL_EXT_secondary_color", 		GL_EXT_secondary_color_functions},
   {"GL_EXT_stencil_wrap",		NULL},
   {"GL_EXT_texture_edge_clamp",		NULL},
@@ -189,6 +191,8 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	driParseConfigFiles(&r300->radeon.optionCache, &screen->optionCache,
 			    screen->driScreen->myNum, "r300");
 
+	//r300->texmicrotile = GL_TRUE;
+	
 	/* Init default driver functions then plug in our R300-specific functions
 	 * (the texture functions are especially important)
 	 */

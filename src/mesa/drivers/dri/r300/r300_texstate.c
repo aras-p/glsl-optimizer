@@ -214,6 +214,31 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	 */
 	curOffset = 0;
 	blitWidth = BLIT_WIDTH_BYTES;
+	t->tile_bits = 0;
+
+	/* figure out if this texture is suitable for tiling. */
+#if 0 /* Disabled for now */
+	if (texelBytes) {
+		if (rmesa->texmicrotile  && (tObj->Target != GL_TEXTURE_RECTANGLE_NV) &&
+		   /* texrect might be able to use micro tiling too in theory? */
+		   (baseImage->Height > 1)) {
+			
+			/* allow 32 (bytes) x 1 mip (which will use two times the space
+			   the non-tiled version would use) max if base texture is large enough */
+			if ((numLevels == 1) ||
+				(((baseImage->Width * texelBytes / baseImage->Height) <= 32) &&
+				(baseImage->Width * texelBytes > 64)) ||
+				((baseImage->Width * texelBytes / baseImage->Height) <= 16)) {
+				t->tile_bits |= R300_TXO_MICRO_TILE;
+			}
+		}
+		
+		if (tObj->Target != GL_TEXTURE_RECTANGLE_NV) {
+			/* we can set macro tiling even for small textures, they will be untiled anyway */
+			t->tile_bits |= R300_TXO_MACRO_TILE;
+		}
+	}
+#endif
 
 	for (i = 0; i < numLevels; i++) {
 	  const struct gl_texture_image *texImage;
@@ -244,6 +269,13 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	  } else if (tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
 	    size = ((texImage->Width * texelBytes + 63) & ~63) * texImage->Height;
 	    blitWidth = 64 / texelBytes;
+	  } else if (t->tile_bits & R300_TXO_MICRO_TILE) {
+		/* tile pattern is 16 bytes x2. mipmaps stay 32 byte aligned,
+		   though the actual offset may be different (if texture is less than
+		   32 bytes width) to the untiled case */
+		int w = (texImage->Width * texelBytes * 2 + 31) & ~31;
+		size = (w * ((texImage->Height + 1) / 2)) * texImage->Depth;
+		blitWidth = MAX2(texImage->Width, 64 / texelBytes);
 	  } else {
 	    int w = (texImage->Width * texelBytes + 31) & ~31;
 	    size = w * texImage->Height * texImage->Depth;
