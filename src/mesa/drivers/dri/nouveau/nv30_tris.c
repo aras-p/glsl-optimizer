@@ -23,7 +23,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-/* Triangles for NV30, NV40, G70 */
+/* Software TCL for NV30, NV40, G70 */
 
 #include <stdio.h>
 #include <math.h>
@@ -43,14 +43,17 @@
 #include "nouveau_tris.h"
 #include "nv30_tris.h"
 #include "nouveau_context.h"
-#include "nouveau_state.h"
 #include "nouveau_span.h"
 #include "nouveau_ioctl.h"
 #include "nouveau_reg.h"
 #include "nouveau_tex.h"
+#include "nouveau_fifo.h"
 
-/* hack for now */
+/* XXX hack for now */
 #define channel 1
+
+static void nv30RenderPrimitive( GLcontext *ctx, GLenum prim );
+static void nv30RasterPrimitive( GLcontext *ctx, GLenum rprim, GLuint hwprim );
 
 
 /***********************************************************************
@@ -62,15 +65,6 @@
 #define ANY_FALLBACK_FLAGS (POINT_FALLBACK|LINE_FALLBACK|TRI_FALLBACK)
 #define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET|DD_TRI_UNFILLED)
 
-
-#define COPY_DWORDS(vb, vertsize, v)		\
-	do {					\
-		int j;					\
-		for (j = 0; j < vertsize; j++)		\
-		vb[j] = ((GLuint *)v)[j];		\
-		vb += vertsize;				\
-	} while (0)
-#endif
 
 /* the free room we want before we start a vertex batch. this is a performance-tunable */
 #define NV30_MIN_PRIM_SIZE (32/4)
@@ -107,89 +101,90 @@ static inline void nv30ExtendPrimitive(struct nouveau_context* nmesa, int size)
 	}
 }
 
-static inline void nv30_draw_quad(struct nouveau_context *nmesa,
+static inline void nv30_draw_quad(nouveauContextPtr nmesa,
 		nouveauVertexPtr v0,
 		nouveauVertexPtr v1,
 		nouveauVertexPtr v2,
 		nouveauVertexPtr v3)
 {
-	GLuint vertsize = nmesa->vertexSize;
-	GLuint *vb = nv30ExtendPrimitive(nmesa, 4 * 4 * vertsize);
+	GLuint vertsize = nmesa->vertex_size;
+	nv30ExtendPrimitive(nmesa, 4 * 4 * vertsize);
 
-	COPY_DWORDS(vb, vertsize, v0);
-	COPY_DWORDS(vb, vertsize, v1);
-	COPY_DWORDS(vb, vertsize, v2);
-	COPY_DWORDS(vb, vertsize, v3);
+	OUT_RINGp(v0,vertsize);
+	OUT_RINGp(v1,vertsize);
+	OUT_RINGp(v2,vertsize);
+	OUT_RINGp(v3,vertsize);
 }
 
-static inline void nv30_draw_triangle(struct nouveau_context *nmesa,
+static inline void nv30_draw_triangle(nouveauContextPtr nmesa,
 		nouveauVertexPtr v0,
 		nouveauVertexPtr v1,
 		nouveauVertexPtr v2)
 {
-	GLuint vertsize = nmesa->vertexSize;
-	GLuint *vb = nv30ExtendPrimitive(nmesa, 3 * 4 * vertsize);
+	GLuint vertsize = nmesa->vertex_size;
+	nv30ExtendPrimitive(nmesa, 3 * 4 * vertsize);
 
-	COPY_DWORDS(vb, vertsize, v0);
-	COPY_DWORDS(vb, vertsize, v1);
-	COPY_DWORDS(vb, vertsize, v2);
+	OUT_RINGp(v0,vertsize);
+	OUT_RINGp(v1,vertsize);
+	OUT_RINGp(v2,vertsize);
 }
 
-static inline void nouveau_draw_line(struct nouveau_context *nmesa,
+static inline void nv30_draw_line(nouveauContextPtr nmesa,
 		nouveauVertexPtr v0,
 		nouveauVertexPtr v1)
 {
-	GLuint vertsize = nmesa->vertexSize;
-	GLuint *vb = nv30ExtendPrimitive(nmesa, 2 * 4 * vertsize);
-	COPY_DWORDS(vb, vertsize, v0);
-	COPY_DWORDS(vb, vertsize, v1);
+	GLuint vertsize = nmesa->vertex_size;
+	nv30ExtendPrimitive(nmesa, 2 * 4 * vertsize);
+	OUT_RINGp(v0,vertsize);
+	OUT_RINGp(v1,vertsize);
 }
 
-static inline void nouveau_draw_point(struct nouveau_context *nmesa,
+static inline void nv30_draw_point(nouveauContextPtr nmesa,
 		nouveauVertexPtr v0)
 {
-	GLuint vertsize = nmesa->vertexSize;
-	GLuint *vb = nv30ExtendPrimitive(nmesa, 4 * vertsize);
-	COPY_DWORDS(vb, vertsize, v0);
+	GLuint vertsize = nmesa->vertex_size;
+	nv30ExtendPrimitive(nmesa, 1 * 4 * vertsize);
+	OUT_RINGp(v0,vertsize);
 }
+
 
 
 /***********************************************************************
  *          Macros for nouveau_dd_tritmp.h to draw basic primitives        *
  ***********************************************************************/
 
-#define TRI(a, b, c)                                \
-	do {                                            \
+#define TRI(a, b, c)                                        \
+	do {                                                \
 		if (DO_FALLBACK)                            \
-		nmesa->draw_tri(nmesa, a, b, c);         \
+		nmesa->draw_tri(nmesa, a, b, c);            \
 		else                                        \
-		nouveau_draw_triangle(nmesa, a, b, c);      \
+		nv30_draw_triangle(nmesa, a, b, c);         \
 	} while (0)
 
-#define QUAD(a, b, c, d)                            \
-	do {                                            \
+#define QUAD(a, b, c, d)                                    \
+	do {                                                \
 		if (DO_FALLBACK) {                          \
-			nmesa->draw_tri(nmesa, a, b, d);         \
-			nmesa->draw_tri(nmesa, b, c, d);         \
+			nmesa->draw_tri(nmesa, a, b, d);    \
+			nmesa->draw_tri(nmesa, b, c, d);    \
 		}                                           \
 		else                                        \
-		nouveau_draw_quad(nmesa, a, b, c, d);       \
+		nv30_draw_quad(nmesa, a, b, c, d);          \
 	} while (0)
 
-#define LINE(v0, v1)                                \
-	do {                                            \
+#define LINE(v0, v1)                                        \
+	do {                                                \
 		if (DO_FALLBACK)                            \
-		nmesa->draw_line(nmesa, v0, v1);         \
+		nmesa->draw_line(nmesa, v0, v1);            \
 		else                                        \
-		nouveau_draw_line(nmesa, v0, v1);           \
+		nv30_draw_line(nmesa, v0, v1);              \
 	} while (0)
 
-#define POINT(v0)                                    \
-	do {                                             \
-		if (DO_FALLBACK)                             \
-		nmesa->draw_point(nmesa, v0);             \
-		else                                         \
-		nouveau_draw_point(nmesa, v0);               \
+#define POINT(v0)                                           \
+	do {                                                \
+		if (DO_FALLBACK)                            \
+		nmesa->draw_point(nmesa, v0);               \
+		else                                        \
+		nv30_draw_point(nmesa, v0);                 \
 	} while (0)
 
 
@@ -230,49 +225,39 @@ static struct {
 #define VERTEX            nouveauVertex
 #define TAB               rast_tab
 
-/* Only used to pull back colors into vertices (ie, we know color is
- * floating point).
- */
-#define NOUVEAU_COLOR(dst, src)                     \
-	do {                                        \
-		dst[0] = src[2];                        \
-		dst[1] = src[1];                        \
-		dst[2] = src[0];                        \
-		dst[3] = src[3];                        \
-	} while (0)
 
-#define NOUVEAU_SPEC(dst, src)                      \
-	do {                                        \
-		dst[0] = src[2];                        \
-		dst[1] = src[1];                        \
-		dst[2] = src[0];                        \
-	} while (0)
-
-
-#define DEPTH_SCALE nmesa->polygon_offset_scale
+#define DEPTH_SCALE 1.0
 #define UNFILLED_TRI unfilled_tri
 #define UNFILLED_QUAD unfilled_quad
 #define VERT_X(_v) _v->v.x
 #define VERT_Y(_v) _v->v.y
 #define VERT_Z(_v) _v->v.z
 #define AREA_IS_CCW(a) (a > 0)
-#define GET_VERTEX(e) (nmesa->verts + (e * nmesa->vertexSize * sizeof(int)))
+#define GET_VERTEX(e) (nmesa->verts + (e * nmesa->vertex_size * sizeof(int)))
 
 #define VERT_SET_RGBA( v, c )  					\
 	do {								\
-		nouveau_color_t *color = (nouveau_color_t *)&((v)->ui[coloroffset]);	\
-		UNCLAMPED_FLOAT_TO_UBYTE(color->red, (c)[0]);		\
-		UNCLAMPED_FLOAT_TO_UBYTE(color->green, (c)[1]);		\
-		UNCLAMPED_FLOAT_TO_UBYTE(color->blue, (c)[2]);		\
-		UNCLAMPED_FLOAT_TO_UBYTE(color->alpha, (c)[3]);		\
+		nouveau_color_t *color = (nouveau_color_t *)&((v)->f[coloroffset]);	\
+		color->red=(c)[0];					\
+		color->green=(c)[1];					\
+		color->blue=(c)[2];					\
+		color->alpha=(c)[3];					\
 	} while (0)
 
-#define VERT_COPY_RGBA( v0, v1 ) v0->ui[coloroffset] = v1->ui[coloroffset]
-
-#define VERT_SET_SPEC( v, c )					\
+#define VERT_COPY_RGBA( v0, v1 )					\
 	do {								\
+		if (coloroffset) {					\
+			v0->f[coloroffset][0] = v1->f[coloroffset][0];	\
+			v0->f[coloroffset][1] = v1->f[coloroffset][1];	\
+			v0->f[coloroffset][2] = v1->f[coloroffset][2];	\
+			v0->f[coloroffset][3] = v1->f[coloroffset][3];	\
+		}							\
+	} while (0)
+
+#define VERT_SET_SPEC( v, c )							\
+	do {									\
 		if (specoffset) {						\
-			nouveau_color_t *color = (nouveau_color_t *)&((v)->ui[specoffset]);	\
+			nouveau_color_t *color = (nouveau_color_t *)&((v)->f[specoffset]);	\
 			UNCLAMPED_FLOAT_TO_UBYTE(color->red, (c)[0]);		\
 			UNCLAMPED_FLOAT_TO_UBYTE(color->green, (c)[1]);		\
 			UNCLAMPED_FLOAT_TO_UBYTE(color->blue, (c)[2]);		\
@@ -281,24 +266,24 @@ static struct {
 #define VERT_COPY_SPEC( v0, v1 )			\
 	do {							\
 		if (specoffset) {					\
-			v0->ub4[specoffset][0] = v1->ub4[specoffset][0];	\
-			v0->ub4[specoffset][1] = v1->ub4[specoffset][1];	\
-			v0->ub4[specoffset][2] = v1->ub4[specoffset][2];	\
+			v0->f[specoffset][0] = v1->f[specoffset][0];	\
+			v0->f[specoffset][1] = v1->f[specoffset][1];	\
+			v0->f[specoffset][2] = v1->f[specoffset][2];	\
 		}							\
 	} while (0)
 
 
-#define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->ui[coloroffset]
-#define VERT_RESTORE_RGBA( idx ) v[idx]->ui[coloroffset] = color[idx]
-#define VERT_SAVE_SPEC( idx )    if (specoffset) spec[idx] = v[idx]->ui[specoffset]
-#define VERT_RESTORE_SPEC( idx ) if (specoffset) v[idx]->ui[specoffset] = spec[idx]
+#define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->f[coloroffset]
+#define VERT_RESTORE_RGBA( idx ) v[idx]->f[coloroffset] = color[idx]
+#define VERT_SAVE_SPEC( idx )    if (specoffset) spec[idx] = v[idx]->f[specoffset]
+#define VERT_RESTORE_SPEC( idx ) if (specoffset) v[idx]->f[specoffset] = spec[idx]
 
 
-#define LOCAL_VARS(n)                                                   \
-	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);                             \
-GLuint color[n], spec[n];                                           \
-GLuint coloroffset = nmesa->coloroffset;              \
-GLuint specoffset = nmesa->specoffset;                       \
+#define LOCAL_VARS(n)                                                          \
+	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);                  \
+GLuint color[n], spec[n];                                                      \
+GLuint coloroffset = nmesa->color_offset;                                      \
+GLuint specoffset = nmesa->specular_offset;                                    \
 (void)color; (void)spec; (void)coloroffset; (void)specoffset;
 
 
@@ -306,20 +291,20 @@ GLuint specoffset = nmesa->specoffset;                       \
  *                Helpers for rendering unfilled primitives            *
  ***********************************************************************/
 
-static const GLenum hwPrim[GL_POLYGON+1] = {
-    GL_POINTS,
-    GL_LINES,
-    GL_LINES,
-    GL_LINES,
-    GL_TRIANGLES,
-    GL_TRIANGLES,
-    GL_TRIANGLES,
-    GL_TRIANGLES,
-    GL_TRIANGLES,
-    GL_TRIANGLES
+static const GLuint hw_prim[GL_POLYGON+1] = {
+	GL_POINTS+1,
+	GL_LINES+1,
+	GL_LINES+1,
+	GL_LINES+1,
+	GL_TRIANGLES+1,
+	GL_TRIANGLES+1,
+	GL_TRIANGLES+1,
+	GL_QUADS+1,
+	GL_QUADS+1,
+	GL_TRIANGLES+1
 };
 
-#define RASTERIZE(x) nv30RasterPrimitive( ctx, x, hwPrim[x] )
+#define RASTERIZE(x) nv30RasterPrimitive( ctx, x, hw_prim[x] )
 #define RENDER_PRIMITIVE nmesa->renderPrimitive
 #define TAG(x) x
 #define IND NOUVEAU_FALLBACK_BIT
@@ -447,12 +432,12 @@ static void init_rast_tab(void)
 #define RENDER_LINE(v0, v1)         LINE(V(v0), V(v1))
 #define RENDER_TRI( v0, v1, v2)     TRI( V(v0), V(v1), V(v2))
 #define RENDER_QUAD(v0, v1, v2, v3) QUAD(V(v0), V(v1), V(v2), V(v3))
-#define INIT(x) nv30RasterPrimitive(ctx, x, hwPrim[x])
+#define INIT(x) nv30RasterPrimitive(ctx, x, hw_prim[x])
 #undef LOCAL_VARS
 #define LOCAL_VARS                                              \
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);                     \
 GLubyte *vertptr = (GLubyte *)nmesa->verts;                 \
-const GLuint vertsize = nmesa->vertexSize;          \
+const GLuint vertsize = nmesa->vertex_size;          \
 const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;       \
 const GLboolean stipple = ctx->Line.StippleFlag;		\
 (void) elt; (void) stipple;
@@ -515,16 +500,16 @@ static void nouveauFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
 		GLuint n)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	GLuint vertsize = nmesa->vertexSize;
-	GLuint *vb = nouveauExtendPrimitive(nmesa, (n - 2) * 3 * 4 * vertsize);
+	GLuint vertsize = nmesa->vertex_size;
+	nv30ExtendPrimitive(nmesa, (n - 2) * 3 * 4 * vertsize);
 	GLubyte *vertptr = (GLubyte *)nmesa->verts;
 	const GLuint *start = (const GLuint *)V(elts[0]);
 	int i;
 
 	for (i = 2; i < n; i++) {
-		COPY_DWORDS(vb, vertsize, V(elts[i - 1]));
-		COPY_DWORDS(vb, vertsize, V(elts[i]));
-		COPY_DWORDS(vb, vertsize, start);	
+		OUT_RINGp(V(elts[i-1]),vertsize);
+		OUT_RINGp(V(elts[i]),vertsize);
+		OUT_RINGp(start,vertsize);
 	}
 }
 
@@ -548,6 +533,13 @@ static void nouveauFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
 		_DD_NEW_TRI_STIPPLE |             \
 		_NEW_POLYGONSTIPPLE)
 
+#define EMIT_ATTR( ATTR, STYLE )					\
+do {									\
+   nmesa->vertex_attrs[nmesa->vertex_attr_count].attrib = (ATTR);	\
+   nmesa->vertex_attrs[nmesa->vertex_attr_count].format = (STYLE);	\
+   nmesa->vertex_attr_count++;						\
+} while (0)
+
 
 static void nv30ChooseRenderState(GLcontext *ctx)
 {
@@ -556,9 +548,9 @@ static void nv30ChooseRenderState(GLcontext *ctx)
 	GLuint flags = ctx->_TriangleCaps;
 	GLuint index = 0;
 
-	nmesa->draw_point = nouveau_draw_point;
-	nmesa->draw_line = nouveau_draw_line;
-	nmesa->draw_tri = nouveau_draw_triangle;
+	nmesa->draw_point = nv30_draw_point;
+	nmesa->draw_line = nv30_draw_line;
+	nmesa->draw_tri = nv30_draw_triangle;
 
 	if (flags & (ANY_FALLBACK_FLAGS|ANY_RASTER_FLAGS)) {
 		if (flags & DD_TRI_LIGHT_TWOSIDE)    index |= NOUVEAU_TWOSIDE_BIT;
@@ -609,34 +601,84 @@ static void nv30ChooseRenderState(GLcontext *ctx)
 
 
 
-static inline void nv30OutputVertexFormat(struct nouveau_context* mesa, GLuint index)
+static inline void nv30OutputVertexFormat(struct nouveau_context* nmesa, GLuint index)
 {
-	/*
-	 * Determine how many inputs we need in the vertex format.
-	 * We need to find & setup the right input "slots"
-	 * 
-	 * The hw attribute order matches nv_vertex_program, and _TNL_BIT_* 
-	 * also matches this order, so we can take shortcuts...
-	 */
+	GLcontext* ctx=nmesa->glCtx;
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	struct vertex_buffer *VB = &tnl->vb;
+	int attr_size[16];
+	int default_attr_size[8]={3,3,3,4,3,1,4,4};
 	int i;
 	int slots=0;
-	for(i=0;i<16;i++)
-		if (index&(1<<i))
-			slots=i+1;
+	int total_size=0;
 
+	/*
+	 * Determine attribute sizes
+	 */
+	for(i=0;i<8;i++)
+	{
+		if (index&(1<<i))
+			attr_size[i]=default_attr_size[i];
+		else
+			attr_size[i]=0;
+	}
+	for(i=8;i<16;i++)
+	{
+		if (index&(1<<i))
+			attr_size[i]=VB->TexCoordPtr[i];
+		else
+			attr_size[i]=0;
+	}
+
+	/*
+	 * Tell t_vertex about the vertex format
+	 */
+	for(i=0;i<16;i++)
+	{
+		if (index&(1<<i))
+		{
+			slots=i+1;
+			if (i==0)
+			{
+				/* special-case POS */
+				EMIT_ATTR(_TNL_ATTRIB_POS,EMIT_3F_VIEWPORT);
+			}
+			else
+			{
+				switch(attr_size[i])
+				{
+					case 1:
+						EMIT_ATTR(i,EMIT_1F);
+						break;
+					case 2:
+						EMIT_ATTR(i,EMIT_2F);
+						break;
+					case 3:
+						EMIT_ATTR(i,EMIT_3F);
+						break;
+					case 4:
+						EMIT_ATTR(i,EMIT_4F);
+						break;
+				}
+			}
+			if (i==_TNL_ATTRIB_COLOR0)
+				nmesa->color_offset=total_size;
+			if (i==_TNL_ATTRIB_COLOR1)
+				nmesa->specular_offset=total_size;
+			total_size+=attr_size[i];
+		}
+	}
+	nmesa->vertex_size=total_size;
+
+	/* 
+	 * Tell the hardware about the vertex format
+	 */
 	BEGIN_RING_SIZE(channel,0x1740,slots);
 	for(i=0;i<slots;i++)
-		if (index&(1<<i))
-		{
-			/* XXX for now we only emit 3-sized attributes 
-			 * Where can we get the attribute size ? */
-			int size=3;
-			OUR_RING(0x00000002|(size*0x10));
-		}
-		else
-		{
-			OUR_RING(0x00000002);
-		}
+	{
+		int size=attr_size[i];
+		OUT_RING(0x00000002|(size*0x10));
+	}
 	BEGIN_RING_SIZE(channel,0x1718,1);
 	OUT_RING(0);
 	BEGIN_RING_SIZE(channel,0x1718,1);
@@ -698,12 +740,12 @@ static void nv30RenderFinish(GLcontext *ctx)
  */
 void nv30RasterPrimitive(GLcontext *ctx,
 		GLenum glprim,
-		GLenum hwprim)
+		GLuint hwprim)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 
 	assert (!nmesa->newState);
-	
+
 	if (hwprim != nmesa->current_primitive)
 	{
 		nmesa->current_primitive=hwprim;
@@ -715,7 +757,7 @@ void nv30RasterPrimitive(GLcontext *ctx,
  */
 static void nv30RenderPrimitive( GLcontext *ctx, GLuint prim )
 {
-	nv30RasterPrimitive( ctx, prim, hwPrim[prim] );
+	nv30RasterPrimitive( ctx, prim, hw_prim[prim] );
 }
 
 

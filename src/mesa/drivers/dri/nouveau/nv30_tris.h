@@ -26,14 +26,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 
-#ifndef __NV40_TRIS_H__
-#define __NV40_TRIS_H__
+#ifndef __NV30_TRIS_H__
+#define __NV30_TRIS_H__
 
 #include "mtypes.h"
 
-extern void nv40TriInitFunctions( GLcontext *ctx );
-extern void nv40Fallback( GLcontext *ctx, GLuint bit, GLboolean mode );
+extern void nv30TriInitFunctions( GLcontext *ctx );
+extern void nv30Fallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 #define FALLBACK( nmesa, bit, mode ) nouveauFallback( nmesa->glCtx, bit, mode )
 
-#endif /* __NV40_TRIS_H__ */
+#endif /* __NV30_TRIS_H__ */
 

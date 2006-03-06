@@ -54,6 +54,7 @@ nouveau_fifo;
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
 
+struct nouveau_context;
 
 typedef void (*nouveau_tri_func)( struct nouveau_context*, 
 		nouveauVertex *,
@@ -80,6 +81,11 @@ typedef struct nouveau_context {
 
 	/* The read-only regs */
 	volatile unsigned char* mmio;
+
+	/* State for tris */
+	GLuint vertex_size;
+	GLuint color_offset;
+	GLuint specular_offset;
 
 	/* The drawing fallbacks */
 	nouveau_tri_func* draw_tri;
