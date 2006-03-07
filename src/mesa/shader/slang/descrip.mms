@@ -28,7 +28,7 @@ OBJECTS = \
 	slang_storage.obj,slang_assemble_assignment.obj,\
 	slang_compile_function.obj,slang_compile_struct.obj,\
 	slang_compile_variable.obj,slang_compile_operation.obj,\
-	slang_library_noise.obj
+	slang_library_noise.obj,slang_link.obj,slang_export.obj
 
 ##### RULES #####
 
@@ -58,3 +58,5 @@ slang_compile_struct.obj : slang_compile_struct.c
 slang_compile_variable.obj : slang_compile_variable.c
 slang_compile_operation.obj : slang_compile_operation.c
 slang_library_noise.obj : slang_library_noise.c
+slang_link.obj : slang_link.c
+slang_export.obj : slang_export.c

@@ -14,7 +14,7 @@
 
 VPATH = RCS
 
-INCDIR = [---.include],[-.main],[-.glapi],[-.shader]
+INCDIR = [---.include],[-.main],[-.glapi],[-.shader],[-.shader.slang]
 LIBDIR = [---.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)/float=ieee/ieee=denorm
 
