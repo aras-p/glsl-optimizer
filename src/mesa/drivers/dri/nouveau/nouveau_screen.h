@@ -45,6 +45,7 @@ typedef struct {
 	GLuint spanOffset;
 
 	__DRIscreenPrivate *driScreen;
+	unsigned int sarea_priv_offset;
 
 	/* Configuration cache with default values for all contexts */
 	driOptionCache optionCache;
