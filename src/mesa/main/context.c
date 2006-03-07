@@ -1495,6 +1495,11 @@ _mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
 /**
  * Check if the given context can render into the given framebuffer
  * by checking visual attributes.
+ *
+ * XXX this may go away someday because we're moving toward more freedom
+ * in binding contexts to drawables with different visual attributes.
+ * The GL_EXT_f_b_o extension is prompting some of that.
+ *
  * \return GL_TRUE if compatible, GL_FALSE otherwise.
  */
 static GLboolean 
