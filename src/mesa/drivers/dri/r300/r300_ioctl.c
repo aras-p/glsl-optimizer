@@ -625,6 +625,10 @@ void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
 	dmabuf->refcount = 1;
 
 	dmabuf->id = radeon_mm_alloc(rmesa, 4, RADEON_BUFFER_SIZE*16);
+	if (dmabuf->id == 0) {
+		WARN_ONCE("Whops! Dont know how to evict VBOs yet.\n");
+		exit(1);
+	}
 			
 	rmesa->dma.current.buf = dmabuf;
 	rmesa->dma.current.address = radeon_mm_ptr(rmesa, dmabuf->id);

@@ -885,6 +885,8 @@ struct r300_context {
 	int mm_shm_id;
 	int mm_sem_id;
 	struct radeon_memory_manager *rmm;
+	GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
+	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
 #endif
 
 	GLboolean texmicrotile;
