@@ -1508,8 +1508,11 @@ check_compatible(const GLcontext *ctx, const GLframebuffer *buffer)
 
    if (ctxvis->rgbMode != bufvis->rgbMode)
       return GL_FALSE;
+#if 0
+   /* disabling this fixes the fgl_glxgears pbuffer demo */
    if (ctxvis->doubleBufferMode && !bufvis->doubleBufferMode)
       return GL_FALSE;
+#endif
    if (ctxvis->stereoMode && !bufvis->stereoMode)
       return GL_FALSE;
    if (ctxvis->haveAccumBuffer && !bufvis->haveAccumBuffer)
@@ -1575,12 +1578,18 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
    /* Check that the context's and framebuffer's visuals are compatible.
     */
    if (newCtx && drawBuffer && newCtx->DrawBuffer != drawBuffer) {
-      if (!check_compatible(newCtx, drawBuffer))
+      if (!check_compatible(newCtx, drawBuffer)) {
+         _mesa_warning(newCtx,
+              "MakeCurrent: incompatible visuals for context and drawbuffer");
          return;
+      }
    }
    if (newCtx && readBuffer && newCtx->ReadBuffer != readBuffer) {
-      if (!check_compatible(newCtx, readBuffer))
+      if (!check_compatible(newCtx, readBuffer)) {
+         _mesa_warning(newCtx,
+              "MakeCurrent: incompatible visuals for context and readbuffer");
          return;
+      }
    }
 
 #if !defined(IN_DRI_DRIVER)
