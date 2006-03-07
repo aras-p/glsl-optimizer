@@ -148,7 +148,7 @@ void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *
 	struct tnl_prim prim;
 	static void *ptr = NULL;
 	static struct r300_dma_region rvb;
-	GLvoid *indices;
+	GLvoid *indices = c_indices;
 	
 	if (count > 65535) {
 		WARN_ONCE("Too many verts!\n");
@@ -162,7 +162,7 @@ void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *
 			return;
 		}
 		/* actual address is the sum of pointers */
-		indices = (const GLvoid *)
+		indices = (GLvoid *)
 		ADD_POINTERS(ctx->Array.ElementArrayBufferObj->Data, (const GLubyte *) c_indices);
 	}
 	
@@ -327,7 +327,7 @@ void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei count,
 	int i;
 	void *ptr = NULL;
 	static struct r300_dma_region rvb;
-	GLvoid *indices;
+	GLvoid *indices = c_indices;
 	
 	if (count > 65535) {
 		WARN_ONCE("Too many verts!\n");
@@ -341,7 +341,7 @@ void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei count,
 			return;
 		}
 		/* actual address is the sum of pointers */
-		indices = (const GLvoid *)
+		indices = (GLvoid *)
 		ADD_POINTERS(ctx->Array.ElementArrayBufferObj->Data, (const GLubyte *) c_indices);
 	}
 	
