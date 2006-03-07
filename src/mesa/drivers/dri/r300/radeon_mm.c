@@ -1,7 +1,34 @@
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <sys/types.h>
-#include <sys/sem.h>
+/*
+ * Copyright (C) 2005 Aapo Tahkola.
+ *
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
+ 
+/*
+ * Authors:
+ *   Aapo Tahkola <aet@rasterburn.org>
+ */
 
 #include "r300_context.h"
 #include "r300_cmdbuf.h"
@@ -13,7 +40,7 @@ void radeon_mm_init(r300ContextPtr rmesa)
 {
 	rmesa->rmm = malloc(sizeof(struct radeon_memory_manager));
 	memset(rmesa->rmm, 0, sizeof(struct radeon_memory_manager));
-	rmesa->rmm->u_size = 512; //2048;
+	rmesa->rmm->u_size = 512*8; //2048;
 	
 	rmesa->rmm->u_list = malloc(rmesa->rmm->u_size *sizeof(*rmesa->rmm->u_list));
 	memset(rmesa->rmm->u_list, 0, rmesa->rmm->u_size*sizeof(*rmesa->rmm->u_list));
@@ -140,6 +167,7 @@ int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 
 	ret = drmCommandWriteRead( rmesa->radeon.dri.fd, DRM_RADEON_ALLOC, &alloc, sizeof(alloc));
    	if (ret) {
+#if 0
 		WARN_ONCE("Ran out of mem!\n");
 		r300FlushCmdBuf(rmesa, __FUNCTION__);
 		//usleep(100);
@@ -150,6 +178,10 @@ int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 			exit(1);
 		}
 		goto again;
+#else
+		WARN_ONCE("Ran out of GART memory!\nPlease consider adjusting GARTSize option.\n");
+		return 0;
+#endif
 	}
 	
 	i = free;
@@ -227,6 +259,7 @@ void emit_lin_cp(r300ContextPtr rmesa, unsigned long dst, unsigned long src, uns
 
 void radeon_mm_use(r300ContextPtr rmesa, int id)
 {
+	unsigned long long ull;
 #ifdef MM_DEBUG
 	fprintf(stderr, "%s: %d at age %x\n", __FUNCTION__, id, rmesa->radeon.radeonScreen->scratch[2]);
 #endif	
@@ -268,14 +301,18 @@ void radeon_mm_use(r300ContextPtr rmesa, int id)
 	}*/
 #endif
 		
-	cmd = r300AllocCmdBuf(rmesa, 4, __FUNCTION__);
+	cmd = r300AllocCmdBuf(rmesa, 2 + sizeof(ull) / 4, __FUNCTION__);
 	cmd[0].scratch.cmd_type = R300_CMD_SCRATCH;
 	cmd[0].scratch.reg = 2;
 	cmd[0].scratch.n_bufs = 1;
 	cmd[0].scratch.flags = 0;
-	cmd[1].u = (unsigned long)(&rmesa->rmm->vb_age);
-	cmd[2].u = (unsigned long)(&rmesa->rmm->u_list[id].age);
-	cmd[3].u = /*id*/0;
+	cmd ++;
+	
+	ull = (unsigned long long)&rmesa->rmm->u_list[id].age;
+	_mesa_memcpy(cmd, &ull, sizeof(ull));
+	cmd += sizeof(ull) / 4;
+	
+	cmd[0].u = /*id*/0;
 	
 	LOCK_HARDWARE(&rmesa->radeon); /* Protect from DRM. */
 	rmesa->rmm->u_list[id].h_pending ++;

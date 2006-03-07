@@ -9,8 +9,6 @@
 #define RADEON_MM_RW (RADEON_MM_R | RADEON_MM_W)
     
 struct radeon_memory_manager {
-	uint32_t vb_age;
-	
 	struct {
 		void *ptr;
 		uint32_t size;
