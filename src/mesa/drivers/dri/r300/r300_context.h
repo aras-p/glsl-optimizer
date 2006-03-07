@@ -48,9 +48,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_context.h"
 
 #define USE_ARB_F_P 1
-//#define USER_BUFFERS
-//#define RADEON_VTXFMT_A
-//#define HW_VBOS
+
+/* PPC doesnt support 16 bit elts ... */
+#ifndef MESA_BIG_ENDIAN
+#define USER_BUFFERS
+#define RADEON_VTXFMT_A
+#define HW_VBOS
+#endif
+
 //#define OPTIMIZE_ELTS
 #define CB_DPATH
 
