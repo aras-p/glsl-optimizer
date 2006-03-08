@@ -345,7 +345,7 @@ static void init_regs( void )
    struct reg_names *tmp;
    int i;
 
-   for (i = 0 ; i < Elements(regs) ; i++) {
+   for (i = 0 ; i < Elements(regs)-1 ; i++) {
       regs[i].idx = reg_names[i].idx;
       regs[i].closest = &reg_names[i];
       regs[i].flags = 0;
