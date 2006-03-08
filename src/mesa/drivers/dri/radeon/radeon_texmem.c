@@ -332,7 +332,10 @@ static void uploadSubImage( radeonContextPtr rmesa, radeonTexObjPtr t,
 
 int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t, GLuint face )
 {
-   const int numLevels = t->base.lastLevel - t->base.firstLevel + 1;
+   int numLevels;
+
+   if ( !t || t->base.totalSize == 0 )
+      return 0;
 
    if ( RADEON_DEBUG & (DEBUG_TEXTURE|DEBUG_IOCTL) ) {
       fprintf( stderr, "%s( %p, %p ) sz=%d lvls=%d-%d\n", __FUNCTION__,
@@ -340,8 +343,7 @@ int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t, GLuint fac
 	       t->base.firstLevel, t->base.lastLevel );
    }
 
-   if ( !t || t->base.totalSize == 0 )
-      return 0;
+   numLevels = t->base.lastLevel - t->base.firstLevel + 1;
 
    if (RADEON_DEBUG & DEBUG_SYNC) {
       fprintf(stderr, "%s: Syncing\n", __FUNCTION__ );
