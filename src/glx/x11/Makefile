@@ -1,7 +1,7 @@
 TOP = ../../..
 include $(TOP)/configs/current
 
-DEFINES += -DXF86VIDMODE -D_REENTRANT -UIN_DRI_DRIVER
+EXTRA_DEFINES = -DXF86VIDMODE -D_REENTRANT -UIN_DRI_DRIVER
 
 SOURCES = \
 	  glcontextmodes.c \
@@ -53,10 +53,10 @@ INCLUDES = -I. \
 ##### RULES #####
 
 .c.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(EXTRA_DEFINES) $< -o $@
 
 .S.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(EXTRA_DEFINES)  $< -o $@
 
 ##### TARGETS #####
 
