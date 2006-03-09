@@ -626,8 +626,19 @@ void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
 
 	dmabuf->id = radeon_mm_alloc(rmesa, 4, RADEON_BUFFER_SIZE*16);
 	if (dmabuf->id == 0) {
-		WARN_ONCE("Whops! Dont know how to evict VBOs yet.\n");
-		exit(1);
+		LOCK_HARDWARE(&rmesa->radeon);	/* no need to validate */
+		
+		r300FlushCmdBufLocked(rmesa, __FUNCTION__);
+		radeonWaitForIdleLocked(&rmesa->radeon);
+		
+		dmabuf->id = radeon_mm_alloc(rmesa, 4, RADEON_BUFFER_SIZE*16);
+		
+		UNLOCK_HARDWARE(&rmesa->radeon);
+		
+		if (dmabuf->id == 0) {
+			WARN_ONCE("Whops! Dont know how to evict VBOs yet.\n");
+			exit(1);
+		}
 	}
 			
 	rmesa->dma.current.buf = dmabuf;
