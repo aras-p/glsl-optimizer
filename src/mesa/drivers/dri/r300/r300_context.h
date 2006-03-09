@@ -933,6 +933,7 @@ extern void radeon_init_vtxfmt_a(r300ContextPtr rmesa);
 
 #ifdef HW_VBOS
 extern void r300_init_vbo_funcs(struct dd_function_table *functions);
+extern void r300_evict_vbos(GLcontext *ctx, int amount);
 #endif
 
 #define RADEON_D_CAPTURE 0

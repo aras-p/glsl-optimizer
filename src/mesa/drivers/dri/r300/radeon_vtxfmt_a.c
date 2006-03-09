@@ -776,6 +776,38 @@ void r300DeleteBuffer(GLcontext *ctx, struct gl_buffer_object *obj)
 	_mesa_delete_buffer_object(ctx, obj);
 }
 
+void r300_evict_vbos(GLcontext *ctx, int amount)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	const struct _mesa_HashTable *hash = ctx->Shared->BufferObjects;
+	GLuint k = _mesa_HashFirstEntry(hash);
+	struct gl_buffer_object *obj;
+	struct r300_buffer_object *r300_obj;
+	GLvoid *data;
+	
+	while (amount > 0 && k) {
+		obj = (struct gl_buffer_object *) _mesa_HashLookup(hash, k);
+		r300_obj = (struct r300_buffer_object *) obj;
+		
+		if (obj->OnCard && obj->Size) {
+			obj->Data = _mesa_malloc(obj->Size);
+			
+			data = radeon_mm_map(rmesa, r300_obj->id, RADEON_MM_R);
+			_mesa_memcpy(obj->Data, data, obj->Size);
+			radeon_mm_unmap(rmesa, r300_obj->id);
+			
+			radeon_mm_free(rmesa, r300_obj->id);
+			r300_obj->id = 0;
+			obj->OnCard = GL_FALSE;
+			
+			amount -= obj->Size;
+		}
+		
+		k = _mesa_HashNextEntry(hash, k);
+	}
+	
+}
+
 void r300_init_vbo_funcs(struct dd_function_table *functions)
 {
 	functions->NewBufferObject = r300NewBufferObject;

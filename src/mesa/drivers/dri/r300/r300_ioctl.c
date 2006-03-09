@@ -632,12 +632,19 @@ void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
 		radeonWaitForIdleLocked(&rmesa->radeon);
 		
 		dmabuf->id = radeon_mm_alloc(rmesa, 4, RADEON_BUFFER_SIZE*16);
-		
+
+#ifdef HW_VBOS
+		if (dmabuf->id == 0) {
+			/* Just kick all */
+			r300_evict_vbos(rmesa->radeon.glCtx, /*RADEON_BUFFER_SIZE*16*/1<<30);
+			dmabuf->id = radeon_mm_alloc(rmesa, 4, RADEON_BUFFER_SIZE*16);
+		}
+#endif
 		UNLOCK_HARDWARE(&rmesa->radeon);
 		
 		if (dmabuf->id == 0) {
-			WARN_ONCE("Whops! Dont know how to evict VBOs yet.\n");
-			exit(1);
+			fprintf(stderr, "Error: Could not get dma buffer... exiting\n");
+			exit(-1);
 		}
 	}
 			
