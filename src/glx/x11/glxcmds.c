@@ -1722,7 +1722,7 @@ PUBLIC int glXSwapIntervalSGI(int interval)
 /*
 ** GLX_MESA_swap_control
 */
-PUBLIC GLint glXSwapIntervalMESA(unsigned interval)
+PUBLIC int glXSwapIntervalMESA(unsigned int interval)
 {
 #ifdef GLX_DIRECT_RENDERING
    GLXContext gc = __glXGetCurrentContext();
@@ -1754,7 +1754,8 @@ PUBLIC GLint glXSwapIntervalMESA(unsigned interval)
    return GLX_BAD_CONTEXT;
 }
  
-PUBLIC GLint glXGetSwapIntervalMESA( void )
+
+PUBLIC int glXGetSwapIntervalMESA(void)
 {
 #ifdef GLX_DIRECT_RENDERING
    GLXContext gc = __glXGetCurrentContext();
