@@ -379,6 +379,60 @@ extern Bool glXDrawableAttribARB(Display *dpy, GLXDrawable draw, const int *attr
 #endif /* GLX_NV_float_buffer */
 
 
+
+/*
+ * #?. GLX_MESA_swap_frame_usage
+ */
+#ifndef GLX_MESA_swap_frame_usage
+#define GLX_MESA_swap_frame_usage 1
+
+extern int glXGetFrameUsageMESA(Display *dpy, GLXDrawable drawable, float *usage);
+extern int glXBeginFrameTrackingMESA(Display *dpy, GLXDrawable drawable);
+extern int glXEndFrameTrackingMESA(Display *dpy, GLXDrawable drawable);
+extern int glXQueryFrameTrackingMESA(Display *dpy, GLXDrawable drawable, int64_t *swapCount, int64_t *missedFrames, float *lastMissedUsage);
+
+typedef int (*PFNGLXGETFRAMEUSAGEMESAPROC) (Display *dpy, GLXDrawable drawable, float *usage);
+typedef int (*PFNGLXBEGINFRAMETRACKINGMESA)(Display *dpy, GLXDrawable drawable);
+typedef int (*PFNGLXENDFRAMETRACKINGMESA)(Display *dpy, GLXDrawable drawable);
+typedef int (*PFNGLXQUERYFRAMETRACKINGMESA)(Display *dpy, GLXDrawable drawable, int64_t *swapCount, int64_t *missedFrames, float *lastMissedUsage);
+
+#endif /* GLX_MESA_swap_frame_usage */
+
+
+
+/*
+ * #?. GLX_MESA_swap_control
+ */
+#ifndef GLX_MESA_swap_control
+#define GLX_MESA_swap_control 1
+
+extern int glXSwapIntervalMESA(unsigned int interval);
+extern int glXGetSwapIntervalMESA(void);
+
+typedef int (*PFNGLXSWAPINTERVALMESA)(unsigned int interval);
+typedef int (*PFNGLXGETSWAPINTERVALMESA)(void);
+
+#endif /* GLX_MESA_swap_control */
+
+
+
+/*
+ * #?. GLX_EXT_texture_from_pixmap
+ * XXX not finished?
+ */
+#ifndef GLX_EXT_texture_from_pixmap
+#define GLX_EXT_texture_from_pixmap 1
+
+/* XXX need enums/tokens! */
+
+extern Bool glXBindTexImageEXT(Display *dpy, GLXDrawable drawable, int buffer);
+extern Bool glXReleaseTexImageEXT(Display *dpy, GLXDrawable drawable, int buffer);
+
+#endif /* GLX_EXT_texture_from_pixmap */
+
+
+
+
 /*** Should these go here, or in another header? */
 /*
 ** GLX Events
