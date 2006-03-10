@@ -405,6 +405,39 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 	int u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1;
 	struct prog_src_register src[3];
 
+	if (getenv("R300_VP_SAFETY")) {
+		WARN_ONCE("R300_VP_SAFETY enabled.\n");
+		
+		vpi = malloc((mesa_vp->Base.NumInstructions + VSF_MAX_FRAGMENT_TEMPS) * sizeof(struct prog_instruction));
+		memset(vpi, 0, VSF_MAX_FRAGMENT_TEMPS * sizeof(struct prog_instruction));
+		
+		for (i=0; i < VSF_MAX_FRAGMENT_TEMPS; i++) {
+			vpi[i].Opcode = OPCODE_MOV;
+			vpi[i].StringPos = 0;
+			vpi[i].Data = 0;
+			
+			vpi[i].DstReg.File = PROGRAM_TEMPORARY;
+			vpi[i].DstReg.Index = i;
+			vpi[i].DstReg.WriteMask = WRITEMASK_XYZW;
+			vpi[i].DstReg.CondMask = COND_TR;
+					
+			vpi[i].SrcReg[0].File = PROGRAM_STATE_VAR;
+			vpi[i].SrcReg[0].Index = 0;
+			vpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE);
+		}
+		
+		memcpy(&vpi[i], mesa_vp->Base.Instructions, mesa_vp->Base.NumInstructions * sizeof(struct prog_instruction));
+		
+		free(mesa_vp->Base.Instructions);
+		
+		mesa_vp->Base.Instructions = vpi;
+		
+		mesa_vp->Base.NumInstructions += VSF_MAX_FRAGMENT_TEMPS;
+		vpi = &mesa_vp->Base.Instructions[mesa_vp->Base.NumInstructions-1];
+		
+		assert(vpi->Opcode == OPCODE_END);
+	}
+	
 	if (mesa_vp->IsPositionInvariant) {
 		struct program_parameter_list *paramList;
 		GLint tokens[6] = { STATE_MATRIX, STATE_MVP, 0, 0, 0, STATE_MATRIX };
@@ -952,6 +985,12 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 		next: ;
 	}
 	
+	/* Will most likely segfault before we get here... fix later. */
+	if(o_inst - vp->program.body.i >= VSF_MAX_FRAGMENT_LENGTH/4) {
+		vp->program.length = 0;
+		vp->native = GL_FALSE;
+		return ;
+	}
 	vp->program.length=(o_inst - vp->program.body.i) * 4;
 #if 0
 	fprintf(stderr, "hw program:\n");
