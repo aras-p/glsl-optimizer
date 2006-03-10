@@ -58,14 +58,20 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NV03_FIFO_CMD_JUMP_OFFSET_MASK                     0x1ffffffc
 #define NV03_FIFO_CMD_REWIND                               (NV03_FIFO_CMD_JUMP | (0 & NV03_FIFO_CMD_JUMP_OFFSET_MASK))
 
+/* Vertex attributes */
+#define NV30_UNKNOWN_0                                     0x00001718
+#define NV30_VERTEX_ATTRIBUTES                             0x00001740
+#define NV20_VERTEX_ATTRIBUTE(i)                           (0x00001760+i*4)
+#define NV20_VERTEX_ATTRIBUTE_TYPE_MASK                    0x0000000f
+#define NV20_VERTEX_ATTRIBUTE_TYPE_FLOAT                   0x00000002
+#define NV20_VERTEX_ATTRIBUTE_SIZE_MASK                    0x000000f0
+
 /* Rendering commands */
+#define NV10_PRIMITIVE                                     0x00000dfc
 #define NV20_PRIMITIVE                                     0x000017fc
 #define NV30_PRIMITIVE                                     0x00001808
+#define NV10_BEGIN_VERTICES                                0x00001800
 #define NV20_BEGIN_VERTICES                                0x00001818
 
-/* Vertex attributes */
-#define NV20_VERTEX_ATTRIBUTE(i)                           (0x00001760+i*4)
-#define NV30_VERTEX_ATTRIBUTES                             0x00001740
-#define NV30_UNKNOWN_0                                     0x00001718
 
 

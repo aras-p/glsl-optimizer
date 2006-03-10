@@ -23,7 +23,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-/* Software TCL for NV20, NV30, NV40, G70 */
+/* Software TCL for NV10, NV20, NV30, NV40, G70 */
 
 #include <stdio.h>
 #include <math.h>
@@ -67,24 +67,32 @@ static void nv20RasterPrimitive( GLcontext *ctx, GLenum rprim, GLuint hwprim );
 
 
 /* the free room we want before we start a vertex batch. this is a performance-tunable */
-#define NV20_MIN_PRIM_SIZE (32/4)
+#define NOUVEAU_MIN_PRIM_SIZE (32/4)
 /* the size above which we fire the ring. this is a performance-tunable */
-#define NV20_FIRE_SIZE (2048/4)
+#define NOUVEAU_FIRE_SIZE (2048/4)
 
 static inline void nv20StartPrimitive(struct nouveau_context* nmesa)
 {
-	if (nmesa->screen->card_type==NV20)
+	if (nmesa->screen->card_type==NV_10)
+		BEGIN_RING_SIZE(channel,NV10_PRIMITIVE,1);
+	else if (nmesa->screen->card_type==NV_20)
 		BEGIN_RING_SIZE(channel,NV20_PRIMITIVE,1);
 	else
 		BEGIN_RING_SIZE(channel,NV30_PRIMITIVE,1);
 	OUT_RING(nmesa->current_primitive);
-	BEGIN_RING_PRIM(channel,NV20_BEGIN_VERTICES,NV20_MIN_PRIM_SIZE);
+
+	if (nmesa->screen->card_type==NV_10)
+		BEGIN_RING_PRIM(channel,NV10_BEGIN_VERTICES,NOUVEAU_MIN_PRIM_SIZE);
+	else
+		BEGIN_RING_PRIM(channel,NV20_BEGIN_VERTICES,NOUVEAU_MIN_PRIM_SIZE);
 }
 
 static inline void nv20FinishPrimitive(struct nouveau_context *nmesa)
 {
 	FINISH_RING_PRIM();
-	if (nmesa->screen->card_type==NV20)
+	if (nmesa->screen->card_type==NV_10)
+		BEGIN_RING_SIZE(channel,NV10_PRIMITIVE,1);
+	else if (nmesa->screen->card_type==NV_20)
 		BEGIN_RING_SIZE(channel,NV20_PRIMITIVE,1);
 	else
 		BEGIN_RING_SIZE(channel,NV30_PRIMITIVE,1);
@@ -96,7 +104,7 @@ static inline void nv20FinishPrimitive(struct nouveau_context *nmesa)
 static inline void nv20ExtendPrimitive(struct nouveau_context* nmesa, int size)
 {
 	/* when the fifo has enough stuff (2048 bytes) or there is not enough room, fire */
-	if ((RING_AHEAD()>=NV20_FIRE_SIZE)||(RING_AVAILABLE()<size/4))
+	if ((RING_AHEAD()>=NOUVEAU_FIRE_SIZE)||(RING_AVAILABLE()<size/4))
 	{
 		nv20FinishPrimitive(nmesa);
 		nv20StartPrimitive(nmesa);
@@ -681,19 +689,21 @@ static inline void nv20OutputVertexFormat(struct nouveau_context* nmesa, GLuint 
 	/* 
 	 * Tell the hardware about the vertex format
 	 */
-	if (nmesa->screen->card_type==NV_20) {
+	if (nmesa->screen->card_type==NV_10) {
+		// XXX needs some love
+	} else if (nmesa->screen->card_type==NV_20) {
 		for(i=0;i<16;i++)
 		{
 			int size=attr_size[i];
 			BEGIN_RING_SIZE(channel,NV20_VERTEX_ATTRIBUTE(i),1);
-			OUT_RING(0x00000002|(size*0x10));
+			OUT_RING(NV20_VERTEX_ATTRIBUTE_TYPE_FLOAT|(size*0x10));
 		}
 	} else {
 		BEGIN_RING_SIZE(channel,NV30_VERTEX_ATTRIBUTES,slots);
 		for(i=0;i<slots;i++)
 		{
 			int size=attr_size[i];
-			OUT_RING(0x00000002|(size*0x10));
+			OUT_RING(NV20_VERTEX_ATTRIBUTE_TYPE_FLOAT|(size*0x10));
 		}
 		BEGIN_RING_SIZE(channel,NV30_UNKNOWN_0,1);
 		OUT_RING(0);

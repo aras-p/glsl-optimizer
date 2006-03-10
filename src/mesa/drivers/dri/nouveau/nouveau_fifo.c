@@ -26,6 +26,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 #include "nouveau_fifo.h"
+#include "nouveau_lock.h"
 #include "vblank.h"
 
 #define RING_SKIPS 8
@@ -46,7 +47,7 @@ void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size)
 					do { fifo_get = NV_FIFO_READ(NV03_FIFO_REGS_DMAGET); }
 					while(fifo_get <= RING_SKIPS);
 				}
-				NV03_FIFO_REGS_DMAPUT(NV03_FIFO_REGS_DMAPUT, RING_SKIPS);
+				NV_FIFO_WRITE(NV03_FIFO_REGS_DMAPUT, RING_SKIPS);
 				nmesa->fifo.current = nmesa->fifo.put = RING_SKIPS;
 				nmesa->fifo.free = fifo_get - (RING_SKIPS + 1);
 			}
@@ -59,7 +60,7 @@ void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size)
  * Wait for the card to be idle 
  * XXX we should also wait for an empty fifo
  */
-void nouveauWaitForIdleLocked(nouveauContextPtr *nmesa)
+void nouveauWaitForIdleLocked(nouveauContextPtr nmesa)
 {
 	int i,status;
 
@@ -82,12 +83,12 @@ void nouveauWaitForIdleLocked(nouveauContextPtr *nmesa)
 				break;
 		}
 		if (status)
-			return 0;
+			return;
 		DO_USLEEP(1);
 	}
 }
 
-void nouveauWaitForIdle(nouveauContextPtr *nmesa)
+void nouveauWaitForIdle(nouveauContextPtr nmesa)
 {
 	LOCK_HARDWARE(nmesa);
 	nouveauWaitForIdleLocked(nmesa);
