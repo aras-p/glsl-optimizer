@@ -975,46 +975,6 @@ static void r300PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units)
 
 /* Routing and texture-related */
 
-static r300TexObj default_tex_obj={
-	filter:R300_TX_MAG_FILTER_LINEAR | R300_TX_MIN_FILTER_LINEAR,
-	pitch: 0x8000,
-	size: (0xff << R300_TX_WIDTHMASK_SHIFT)
-	      | (0xff << R300_TX_HEIGHTMASK_SHIFT)
-	      | (0x8 << R300_TX_SIZE_SHIFT),
-	format: 0x88a0c,
-	offset: 0x0,
-	unknown4: 0x0,
-	unknown5: 0x0
-	};
-
-	/* there is probably a system to these value, but, for now,
-	   we just try by hand */
-
-static int inline translate_src(int src)
-{
-	switch (src) {
-	case GL_TEXTURE:
-		return 1;
-		break;
-	case GL_CONSTANT:
-		return 2;
-		break;
-	case GL_PRIMARY_COLOR:
-		return 3;
-		break;
-	case GL_PREVIOUS:
-		return 4;
-		break;
-	case GL_ZERO:
-		return 5;
-		break;
-	case GL_ONE:
-		return 6;
-		break;
-	default:
-		return 0;
-	}
-}
 
 /* r300 doesnt handle GL_CLAMP and GL_MIRROR_CLAMP_EXT correctly when filter is NEAREST.
  * Since texwrap produces same results for GL_CLAMP and GL_CLAMP_TO_EDGE we use them instead.
@@ -1124,18 +1084,9 @@ void r300_setup_textures(GLcontext *ctx)
 			tmu_mappings[i] = hw_tmu;
 			
 			t=r300->state.texture.unit[i].texobj;
-			//fprintf(stderr, "format=%08x\n", r300->state.texture.unit[i].format);
 			
-			if(t == NULL){
-				fprintf(stderr, "Texture unit %d enabled, but corresponding texobj is NULL, using default object.\n", i);
-				exit(-1);
-				t=&default_tex_obj;
-			}
-			
-			//fprintf(stderr, "t->format=%08x\n", t->format);
 			if((t->format & 0xffffff00)==0xffffff00) {
 				WARN_ONCE("unknown texture format (entry %x) encountered. Help me !\n", t->format & 0xff);
-				//fprintf(stderr, "t->format=%08x\n", t->format);
 			}
 			
 			if (RADEON_DEBUG & DEBUG_STATE)
@@ -1145,11 +1096,20 @@ void r300_setup_textures(GLcontext *ctx)
 			
 			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0 + hw_tmu] = gen_fixed_filter(t->filter) | (hw_tmu << 28);
 			/* Currently disabled! */
-			r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0 + hw_tmu] = 0x0;
+			r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0 + hw_tmu] = 0x0; //0x20501f80;
 			r300->hw.tex.size.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->size;
 			r300->hw.tex.format.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->format;
 			r300->hw.tex.pitch.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->pitch_reg;
 			r300->hw.tex.offset.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->offset;
+			
+			if(t->offset & R300_TXO_MACRO_TILE) {
+				WARN_ONCE("macro tiling enabled!\n");
+			}
+			
+			if(t->offset & R300_TXO_MICRO_TILE) {
+				WARN_ONCE("micro tiling enabled!\n");
+			}
+			
 			r300->hw.tex.unknown4.cmd[R300_TEX_VALUE_0 + hw_tmu] = 0x0;
 			r300->hw.tex.border_color.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->pp_border_color;
 			
@@ -1885,7 +1845,7 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.gb_enable.cmd[1] = R300_GB_POINT_STUFF_ENABLE
 		| R300_GB_LINE_STUFF_ENABLE
-		| R300_GB_TRIANGLE_STUFF_ENABLE /*| R300_GB_UNK30*/;
+		| R300_GB_TRIANGLE_STUFF_ENABLE /*| R300_GB_UNK31*/;
 
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_0] = 0x66666666;
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_1] = 0x06666666;
@@ -2048,6 +2008,9 @@ void r300ResetHwState(r300ContextPtr r300)
 		exit(-1);
 			
 	}
+	/* z compress? */
+	//r300->hw.unk4F10.cmd[1] |= R300_DEPTH_FORMAT_UNK32;
+	
 	r300->hw.unk4F10.cmd[3] = 0x00000003;
 	r300->hw.unk4F10.cmd[4] = 0x00000000;
 

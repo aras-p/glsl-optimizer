@@ -350,7 +350,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #	define R300_GB_LINE_STUFF_ENABLE	(1<<1)
 #	define R300_GB_TRIANGLE_STUFF_ENABLE	(1<<2)
 #	define R300_GB_STENCIL_AUTO_ENABLE	(1<<4)
-#	define R300_GB_UNK30			(1<<30)
+#	define R300_GB_UNK31			(1<<31)
 	/* each of the following is 2 bits wide */
 #define R300_GB_TEX_REPLICATE	0
 #define R300_GB_TEX_ST		1
@@ -552,7 +552,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_RS_CNTL_0                      0x4300
 #       define R300_RS_CNTL_TC_CNT_SHIFT         2
 #       define R300_RS_CNTL_TC_CNT_MASK          (7 << 2)
-#		define R300_RS_CNTL_CI_CNT_SHIFT         7 /* number of color interpolators used */
+#	define R300_RS_CNTL_CI_CNT_SHIFT         7 /* number of color interpolators used */
 #       define R300_RS_CNTL_0_UNKNOWN_18         (1 << 18)
 /* Guess: RS_CNTL_1 holds the index of the highest used RS_ROUTE_n register. */
 #define R300_RS_CNTL_1                      0x4304
@@ -739,8 +739,8 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_TX_HEIGHTMASK_SHIFT          11
 #       define R300_TX_HEIGHTMASK_MASK           (2047 << 11)
 #       define R300_TX_UNK23                     (1 << 23)
-#       define R300_TX_SIZE_SHIFT                26 /* largest of width, height */
-#       define R300_TX_SIZE_MASK                 (15 << 26)
+#       define R300_TX_MAX_MIP_LEVEL_SHIFT       26
+#       define R300_TX_MAX_MIP_LEVEL_MASK        (0xf << 26)
 #       define R300_TX_SIZE_PROJECTED                     (1<<30)
 #       define R300_TX_SIZE_TXPITCH_EN                     (1<<31)
 #define R300_TX_FORMAT_0                    0x44C0
