@@ -78,6 +78,11 @@ typedef struct r300_fragment_program_swizzle {
 		((0 | SRC_CONST) << R300_FPI3_SRC1A_SHIFT) | \
 		((0 | SRC_CONST) << R300_FPI3_SRC2A_SHIFT))
 
+#include "r300_context.h"
+
+struct r300_fragment_program;
+
+extern void r300_translate_fragment_shader(struct r300_fragment_program *rp);
 
 #endif
 

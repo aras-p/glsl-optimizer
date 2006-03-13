@@ -1046,7 +1046,7 @@ void r300_setup_textures(GLcontext *ctx)
 	struct r300_tex_obj *t;
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int hw_tmu=0;
-	int first_hw_tmu=0, last_hw_tmu=-1; /* -1 translates into no setup costs for fields */
+	int last_hw_tmu=-1; /* -1 translates into no setup costs for fields */
 	int tmu_mappings[R300_MAX_TEXTURE_UNITS] = { -1 };
 	struct r300_fragment_program *rp =
 		(struct r300_fragment_program *)
@@ -1561,10 +1561,9 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 	
 		vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 		if (vp->translated == GL_FALSE)
-			translate_vertex_shader(vp);
+			r300_translate_vertex_shader(vp);
 		if (vp->translated == GL_FALSE) {
 			fprintf(stderr, "Failing back to sw-tcl\n");
-//			debug_vp(ctx, &vp->mesa_program);
 			hw_tcl_on = future_hw_tcl_on = 0;
 			r300ResetHwState(rmesa);
 

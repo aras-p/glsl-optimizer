@@ -568,7 +568,7 @@ void r300EmitArraysVtx(GLcontext * ctx, GLboolean immd)
 	GLuint i;
 	GLuint inputs = 0;
 	
-
+#undef CONFIGURE_AOS
 #define CONFIGURE_AOS(r, f, v, sz, cn) { \
 		if (RADEON_DEBUG & DEBUG_STATE) \
 			fprintf(stderr, "Enabling "#v "\n"); \

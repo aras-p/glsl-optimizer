@@ -93,10 +93,10 @@ int r300FlushCmdBufLocked(r300ContextPtr r300, const char* caller)
 		cmd.nbox = r300->radeon.numClipRects;
 		cmd.boxes = (drm_clip_rect_t *)r300->radeon.pClipRects;
 	}
-
+		
 	ret = drmCommandWrite(r300->radeon.dri.fd,
 			DRM_RADEON_CMDBUF, &cmd, sizeof(cmd));
-
+	
 	if (RADEON_DEBUG & DEBUG_SYNC) {
 		fprintf(stderr, "Syncing in %s (from %s)\n\n", __FUNCTION__, caller);
 		radeonWaitForIdleLocked(&r300->radeon);

@@ -53,6 +53,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_reg.h"
 #include "r200_state.h"
 
+#include "r300_state.h"
+
 #include "utils.h"
 #include "vblank.h"
 #include "xmlpool.h"		/* for symbolic values of enum-type options */

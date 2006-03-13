@@ -33,15 +33,25 @@
 #include "context.h"
 #include "r300_context.h"
 #include "r300_cmdbuf.h"
+#include "r300_ioctl.h"
+#include "r300_maos.h"
+#include "r300_state.h"
 #include "radeon_mm.h"
 
+#include "hash.h"
 #include "dispatch.h"
+#include "bufferobj.h"
+#include "vtxfmt.h"
+#include "api_validate.h"
+#include "state.h"
 
 #ifdef RADEON_VTXFMT_A
 
+extern void _tnl_array_init( GLcontext *ctx );
+
 #define CONV(a, b) rmesa->state.VB.AttribPtr[(a)].size = ctx->Array.b.Size, \
 			rmesa->state.VB.AttribPtr[(a)].data = ctx->Array.b.BufferObj->Name ? \
-			ADD_POINTERS(ctx->Array.b.Ptr, ctx->Array.b.BufferObj->Data) : ctx->Array.b.Ptr, \
+			(void *)ADD_POINTERS(ctx->Array.b.Ptr, ctx->Array.b.BufferObj->Data) : (void *)ctx->Array.b.Ptr, \
 			rmesa->state.VB.AttribPtr[(a)].stride = ctx->Array.b.StrideB, \
 			rmesa->state.VB.AttribPtr[(a)].type = ctx->Array.b.Type
 
@@ -138,7 +148,7 @@ static int setup_arrays(r300ContextPtr rmesa, GLint start)
 
 void radeon_init_vtxfmt_a(r300ContextPtr rmesa);
 
-void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *c_indices )
+static void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *c_indices )
 {
 	GET_CURRENT_CONTEXT(ctx);
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -148,7 +158,7 @@ void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *
 	struct tnl_prim prim;
 	static void *ptr = NULL;
 	static struct r300_dma_region rvb;
-	GLvoid *indices = c_indices;
+	const GLvoid *indices = c_indices;
 	
 	if (count > 65535) {
 		WARN_ONCE("Too many verts!\n");
@@ -318,7 +328,7 @@ void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *
 	_mesa_install_exec_vtxfmt( ctx, &TNL_CONTEXT(ctx)->exec_vtxfmt );
 }
 
-void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei count, GLenum type, const GLvoid *c_indices)
+static void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei count, GLenum type, const GLvoid *c_indices)
 {
 	GET_CURRENT_CONTEXT(ctx);
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -327,7 +337,7 @@ void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei count,
 	int i;
 	void *ptr = NULL;
 	static struct r300_dma_region rvb;
-	GLvoid *indices = c_indices;
+	const GLvoid *indices = c_indices;
 	
 	if (count > 65535) {
 		WARN_ONCE("Too many verts!\n");
@@ -482,7 +492,7 @@ void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei count,
 	_mesa_install_exec_vtxfmt( ctx, &TNL_CONTEXT(ctx)->exec_vtxfmt );
 }
 
-void radeonDrawArrays( GLenum mode, GLint start, GLsizei count )
+static void radeonDrawArrays( GLenum mode, GLint start, GLsizei count )
 {
 	GET_CURRENT_CONTEXT(ctx);
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -578,7 +588,7 @@ void radeon_init_vtxfmt_a(r300ContextPtr rmesa)
 	GLvertexformat *vfmt;
 	
 	ctx = rmesa->radeon.glCtx; 
-	vfmt = ctx->TnlModule.Current;
+	vfmt = (GLvertexformat *)ctx->TnlModule.Current;
    
 	vfmt->DrawElements = radeonDrawElements;
 	vfmt->DrawArrays = radeonDrawArrays;
@@ -589,10 +599,10 @@ void radeon_init_vtxfmt_a(r300ContextPtr rmesa)
 
 #ifdef HW_VBOS
 
-void radeonLockArraysEXT(GLcontext *ctx, GLint first, GLsizei count)
+#if 0
+static void radeonLockArraysEXT(GLcontext *ctx, GLint first, GLsizei count)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	int i;
 	
 	/* Only when CB_DPATH is defined.
 	   r300Clear tampers over the aos setup without it.
@@ -614,7 +624,7 @@ void radeonLockArraysEXT(GLcontext *ctx, GLint first, GLsizei count)
 	rmesa->state.VB.lock_uptodate = GL_FALSE;
 }
 
-void radeonUnlockArraysEXT(GLcontext *ctx)
+static void radeonUnlockArraysEXT(GLcontext *ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	
@@ -622,8 +632,9 @@ void radeonUnlockArraysEXT(GLcontext *ctx)
 	rmesa->state.VB.LockCount = 0;
 	rmesa->state.VB.lock_uptodate = GL_FALSE;
 }
+#endif
 
-struct gl_buffer_object *
+static struct gl_buffer_object *
 r300NewBufferObject(GLcontext *ctx, GLuint name, GLenum target )
 {
 	struct r300_buffer_object *obj;
@@ -635,13 +646,11 @@ r300NewBufferObject(GLcontext *ctx, GLuint name, GLenum target )
 	return &obj->mesa_obj;
 }
 
-void r300BufferData(GLcontext *ctx, GLenum target, GLsizeiptrARB size,
+static void r300BufferData(GLcontext *ctx, GLenum target, GLsizeiptrARB size,
 		const GLvoid *data, GLenum usage, struct gl_buffer_object *obj)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct r300_buffer_object *r300_obj = (struct r300_buffer_object *)obj;
-	drm_radeon_mem_alloc_t alloc;
-	int offset, ret;
 
 	/* Free previous buffer */
 	if (obj->OnCard) {
@@ -681,7 +690,7 @@ void r300BufferData(GLcontext *ctx, GLenum target, GLsizeiptrARB size,
 	obj->Usage = usage;
 }
 
-void r300BufferSubData(GLcontext *ctx, GLenum target, GLintptrARB offset,
+static void r300BufferSubData(GLcontext *ctx, GLenum target, GLintptrARB offset,
 		GLsizeiptrARB size, const GLvoid * data, struct gl_buffer_object * bufObj)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -702,7 +711,7 @@ void r300BufferSubData(GLcontext *ctx, GLenum target, GLintptrARB offset,
 	}
 }
 
-void *r300MapBuffer(GLcontext *ctx, GLenum target, GLenum access,
+static void *r300MapBuffer(GLcontext *ctx, GLenum target, GLenum access,
 		struct gl_buffer_object *bufObj)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -745,7 +754,7 @@ void *r300MapBuffer(GLcontext *ctx, GLenum target, GLenum access,
 	return bufObj->Pointer;
 }
 
-GLboolean r300UnmapBuffer(GLcontext *ctx, GLenum target, struct gl_buffer_object *bufObj)
+static GLboolean r300UnmapBuffer(GLcontext *ctx, GLenum target, struct gl_buffer_object *bufObj)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct r300_buffer_object *r300_obj = (struct r300_buffer_object *)bufObj;
@@ -764,7 +773,7 @@ GLboolean r300UnmapBuffer(GLcontext *ctx, GLenum target, struct gl_buffer_object
 	return GL_TRUE;
 }
 
-void r300DeleteBuffer(GLcontext *ctx, struct gl_buffer_object *obj)
+static void r300DeleteBuffer(GLcontext *ctx, struct gl_buffer_object *obj)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct r300_buffer_object *r300_obj = (struct r300_buffer_object *)obj;
@@ -779,7 +788,7 @@ void r300DeleteBuffer(GLcontext *ctx, struct gl_buffer_object *obj)
 void r300_evict_vbos(GLcontext *ctx, int amount)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	const struct _mesa_HashTable *hash = ctx->Shared->BufferObjects;
+	struct _mesa_HashTable *hash = ctx->Shared->BufferObjects;
 	GLuint k = _mesa_HashFirstEntry(hash);
 	struct gl_buffer_object *obj;
 	struct r300_buffer_object *r300_obj;

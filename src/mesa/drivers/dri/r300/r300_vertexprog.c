@@ -32,8 +32,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "glheader.h"
 #include "macros.h"
 #include "enums.h"
-
 #include "program.h"
+#include "nvvertexec.h"
+
 #include "r300_context.h"
 #include "r300_program.h"
 #include "program_instruction.h"
@@ -81,25 +82,7 @@ static struct{
 	OPN(END, 0, 0),
 };
 #undef OPN
-#define OPN(rf) {#rf, PROGRAM_##rf}
-
-static struct{
-	char *name;
-	int id;
-}register_file_names[]={
-	OPN(TEMPORARY),
-	OPN(INPUT),
-	OPN(OUTPUT),
-	OPN(LOCAL_PARAM),
-	OPN(ENV_PARAM),
-	OPN(NAMED_PARAM),
-	OPN(STATE_VAR),
-	OPN(WRITE_ONLY),
-	OPN(ADDRESS),
-};
 	
-static char *dst_mask_names[4]={ "X", "Y", "Z", "W" };
-
 int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp, float *dst)
 {
 	int pi;
@@ -238,6 +221,7 @@ static unsigned long t_swizzle(GLubyte swizzle)
 	}
 }
 
+#if 0
 static void vp_dump_inputs(struct r300_vertex_program *vp, char *caller)
 {
 	int i;
@@ -253,6 +237,7 @@ static void vp_dump_inputs(struct r300_vertex_program *vp, char *caller)
 	fprintf(stderr, ">\n");
 	
 }
+#endif
 
 static unsigned long t_src_index(struct r300_vertex_program *vp, struct prog_src_register *src)
 {
@@ -390,7 +375,7 @@ static unsigned long op_operands(enum prog_opcode opcode)
 		u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1; \
 	} while (0)
 
-void translate_vertex_shader(struct r300_vertex_program *vp)
+void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 {
 	struct vertex_program *mesa_vp=(void *)vp;
 	struct prog_instruction *vpi;

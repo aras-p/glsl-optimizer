@@ -63,7 +63,9 @@ extern void r300ResetHwState(r300ContextPtr r300);
 
 extern void r300InitState(r300ContextPtr r300);
 extern void r300InitStateFuncs(struct dd_function_table* functions);
+extern void r300UpdateViewportOffset( GLcontext *ctx );
 extern void r300UpdateWindow(GLcontext * ctx);
+extern void r300UpdateDrawBuffer(GLcontext *ctx);
 extern void r300SetupVertexShader(r300ContextPtr rmesa);
 extern void r300SetupPixelShader(r300ContextPtr rmesa);
 

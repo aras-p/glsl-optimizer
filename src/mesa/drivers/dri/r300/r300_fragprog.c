@@ -319,6 +319,7 @@ static pfs_reg_t emit_param4fv(struct r300_fragment_program *rp,
 	return r;
 }
 
+#if 0
 static pfs_reg_t emit_const4fv(struct r300_fragment_program *rp, GLfloat *cp)
 { 
 	pfs_reg_t r = undef;
@@ -335,6 +336,7 @@ static pfs_reg_t emit_const4fv(struct r300_fragment_program *rp, GLfloat *cp)
 	r.valid = GL_TRUE;
 	return r;
 }
+#endif
 
 static __inline pfs_reg_t negate(pfs_reg_t r)
 {
@@ -494,7 +496,9 @@ static pfs_reg_t t_src(struct r300_fragment_program *rp,
 		       struct prog_src_register fpsrc)
 {
 	pfs_reg_t r = undef;
+#if 0
 	pfs_reg_t n = undef;
+#endif
 
 	switch (fpsrc.File) {
 	case PROGRAM_TEMPORARY:
@@ -1011,6 +1015,7 @@ static void emit_arith(struct r300_fragment_program *rp, int op,
 	return;
 };
 
+#if 0
 static pfs_reg_t get_attrib(struct r300_fragment_program *rp, GLuint attr)
 {
 	struct fragment_program *mp = &rp->mesa_program;
@@ -1026,6 +1031,7 @@ static pfs_reg_t get_attrib(struct r300_fragment_program *rp, GLuint attr)
 	r.valid = GL_TRUE;
 	return r;
 }
+#endif
 
 static GLboolean parse_program(struct r300_fragment_program *rp)
 {	

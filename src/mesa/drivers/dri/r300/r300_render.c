@@ -192,221 +192,7 @@ static int r300_get_num_verts(r300ContextPtr rmesa,
 	return num_verts - verts_off;
 }
 
-/* This function compiles GL context into state registers that
-   describe data routing inside of R300 pipeline.
-
-   In particular, it programs input_route, output_vtx_fmt, texture
-   unit configuration and gb_output_vtx_fmt
-
-   This function encompasses setup_AOS() from r300_lib.c
-*/
-
-
-
-
-/* Immediate implementation - vertex data is sent via command stream */
-
-static GLfloat default_vector[4]={0.0, 0.0, 0.0, 1.0};
-
-#define output_vector(v, i) { \
-	int _i; \
-	for(_i=0;_i<v->size;_i++){ \
-		if(VB->Elts){ \
-			efloat(VEC_ELT(v, GLfloat, VB->Elts[i])[_i]); \
-		}else{ \
-			efloat(VEC_ELT(v, GLfloat, i)[_i]); \
-		} \
-	} \
-	for(_i=v->size;_i<4;_i++){ \
-		efloat(default_vector[_i]); \
-	} \
-}
-
-/* Immediate implementation - vertex data is sent via command stream */
-
-static void r300_render_immediate_primitive(r300ContextPtr rmesa,
-	GLcontext *ctx,
-	int start,
-	int end,
-	int prim)
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   GLuint i, render_inputs;
-   int k, type, num_verts;
-   LOCAL_VARS
-
-   type=r300_get_primitive_type(rmesa, ctx, prim);
-   num_verts=r300_get_num_verts(rmesa, ctx, end-start, prim);
-
-#if 0
-		fprintf(stderr,"ObjPtr: size=%d stride=%d\n",
-			VB->ObjPtr->size, VB->ObjPtr->stride);
-		fprintf(stderr,"ColorPtr[0]: size=%d stride=%d\n",
-			VB->ColorPtr[0]->size, VB->ColorPtr[0]->stride);
-		fprintf(stderr,"TexCoordPtr[0]: size=%d stride=%d\n",
-			VB->TexCoordPtr[0]->size, VB->TexCoordPtr[0]->stride);
-#endif
-
-   if(type<0 || num_verts <= 0)return;
-
-   if(!VB->ObjPtr){
-   	WARN_ONCE("FIXME: Don't know how to handle GL_ARB_vertex_buffer_object correctly\n");
-   	return;
-   }
-   /* A packet cannot have more than 16383 data words.. */
-   if((num_verts*4*rmesa->state.aos_count)>16380){
-   	WARN_ONCE("Too many vertices to paint. Fix me !\n");
-	return;
-	}
-
-   //fprintf(stderr, "aos_count=%d start=%d end=%d\n", rmesa->state.aos_count, start, end);
-
-   if(rmesa->state.aos_count==0){
-   	WARN_ONCE("Aeiee ! aos_count==0, while it shouldn't. Skipping rendering\n");
-	return;
-   	}
-
-   render_inputs = rmesa->state.render_inputs;
-
-   if(!render_inputs){
-   	WARN_ONCE("Aeiee ! render_inputs==0. Skipping rendering.\n");
-	return;
-   	}
-
-
-   start_immediate_packet(num_verts, type, 4*rmesa->state.aos_count);
-
-	for(i=start;i<start+num_verts;i++){
-#if 0
-		fprintf(stderr, "* (%f %f %f %f) (%f %f %f %f)\n",
-			VEC_ELT(VB->ObjPtr, GLfloat, i)[0],
-			VEC_ELT(VB->ObjPtr, GLfloat, i)[1],
-			VEC_ELT(VB->ObjPtr, GLfloat, i)[2],
-			VEC_ELT(VB->ObjPtr, GLfloat, i)[3],
-
-			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[0],
-			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[1],
-			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[2],
-			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[3]
-			);
-#endif
-
-
-		/* coordinates */
-		if(render_inputs & _TNL_BIT_POS)
-			output_vector(VB->ObjPtr, i);
-		if(render_inputs & _TNL_BIT_NORMAL)
-			output_vector(VB->NormalPtr, i);
-
-		/* color components */
-		if(render_inputs & _TNL_BIT_COLOR0)
-			output_vector(VB->ColorPtr[0], i);
-		if(render_inputs & _TNL_BIT_COLOR1)
-			output_vector(VB->SecondaryColorPtr[0], i);
-
-/*		if(render_inputs & _TNL_BIT_FOG) // Causes lock ups when immediate mode is on
-			output_vector(VB->FogCoordPtr, i);*/
-
-		/* texture coordinates */
-		for(k=0;k < ctx->Const.MaxTextureUnits;k++)
-			if(render_inputs & (_TNL_BIT_TEX0<<k))
-				output_vector(VB->TexCoordPtr[k], i);
-
-		if(render_inputs & _TNL_BIT_INDEX)
-			output_vector(VB->IndexPtr[0], i);
-		if(render_inputs & _TNL_BIT_POINTSIZE)
-			output_vector(VB->PointSizePtr, i);
-		}
-
-}
-
-
-static GLboolean r300_run_immediate_render(GLcontext *ctx,
-				 struct tnl_pipeline_stage *stage)
-{
-   r300ContextPtr rmesa = R300_CONTEXT(ctx);
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   GLuint i;
-   LOCAL_VARS
-
-
-   /* Update texture state - needs to be done only when actually changed..
-      All the time for now.. */
-
-
-	if (RADEON_DEBUG == DEBUG_PRIMS)
-		fprintf(stderr, "%s\n", __FUNCTION__);
-
-#if 1 /* we need this, somehow */
-   /* Flush state - make sure command buffer is nice and large */
-   r300Flush(ctx);
-   /* Make sure we have enough space */
-#else
-   /* Count is very imprecize, but should be good upper bound */
-   r300EnsureCmdBufSpace(rmesa, rmesa->hw.max_state_size + 4+2+30
-   	+VB->PrimitiveCount*(1+8)+VB->Count*4*rmesa->state.texture.tc_count+4, __FUNCTION__);
-#endif
-
-   /* needed before starting 3d operation .. */
-   reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
-	e32(0x0000000a);
-
-   reg_start(0x4f18,0);
-	e32(0x00000003);
-
-
-#if 0 /* looks like the Z offset issue got fixed */
-   rmesa->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
-				| R300_VPORT_X_OFFSET_ENA
-				| R300_VPORT_Y_SCALE_ENA
-				| R300_VPORT_Y_OFFSET_ENA
-				| R300_VTX_W0_FMT;
-   R300_STATECHANGE(rmesa, vte);
-#endif
-
-
-
-   /* Magic register - note it is right after 20b0 */
-
-
-   if(rmesa->state.texture.tc_count>0){
-   	reg_start(0x20b4,0);
-		e32(0x0000000c);
-
-	}
-
-   r300EmitState(rmesa);
-
-/* Setup INPUT_ROUTE and INPUT_CNTL */
-	r300EmitArrays(ctx, GL_TRUE);
-
-/* Why do we need this for immediate mode?? Vertex processor needs it to know proper regs */
-//	r300EmitLOAD_VBPNTR(rmesa, 0);
-/* Okay, it seems I misunderstood something, EmitAOS does the same thing */
-	r300EmitAOS(rmesa, rmesa->state.aos_count, 0);
-
-   for(i=0; i < VB->PrimitiveCount; i++){
-       GLuint prim = VB->Primitive[i].mode;
-       GLuint start = VB->Primitive[i].start;
-       GLuint length = VB->Primitive[i].count;
-
-	r300_render_immediate_primitive(rmesa, ctx, start, start + length, prim);
-   	}
-
-    /* This sequence is required after any 3d drawing packet
-      I suspect it work arounds a bug (or deficiency) in hardware */
-
-   reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
-	e32(0x0000000a);
-
-   reg_start(0x4f18,0);
-	e32(0x00000003);
-
-   return GL_FALSE;
-}
-
+/* Immediate implementation has been removed from CVS. */
 
 /* vertex buffer implementation */
 
@@ -549,7 +335,6 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 	r300EmitArrays(ctx, GL_FALSE);
 	
 	r300UpdateShaderStates(rmesa);
-//	LOCK_HARDWARE(&(rmesa->radeon));
 
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
@@ -577,13 +362,7 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 #ifdef USER_BUFFERS
 	r300UseArrays(ctx);
 #endif
-//	end_3d(PASS_PREFIX_VOID);
 
-   /* Flush state - we are done drawing.. */
-//	r300FlushCmdBufLocked(rmesa, __FUNCTION__);
-//	radeonWaitForIdleLocked(&(rmesa->radeon));
-
-//	UNLOCK_HARDWARE(&(rmesa->radeon));
 	return GL_FALSE;
 }
 
@@ -596,11 +375,6 @@ static void r300_render_vb_primitive_vtxfmt_a(r300ContextPtr rmesa,
 	int prim)
 {
    int type, num_verts;
-   radeonScreenPtr rsp=rmesa->radeon.radeonScreen;
-   LOCAL_VARS
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   int i;
 
    type=r300_get_primitive_type(rmesa, ctx, prim);
    num_verts=r300_get_num_verts(rmesa, ctx, end-start, prim);
@@ -610,6 +384,8 @@ static void r300_render_vb_primitive_vtxfmt_a(r300ContextPtr rmesa,
    if(rmesa->state.VB.Elts){
 	r300EmitAOS(rmesa, rmesa->state.aos_count, /*0*/start);
 #if 0
+	LOCAL_VARS
+	int i;
 	start_index32_packet(num_verts, type);
 	for(i=0; i < num_verts; i++)
 		e32(((unsigned long *)rmesa->state.VB.Elts)[i]/*rmesa->state.Elts[start+i]*/); /* start ? */
@@ -634,6 +410,7 @@ static void r300_render_vb_primitive_vtxfmt_a(r300ContextPtr rmesa,
    }
 }
 
+#if 0
 void dump_array(struct r300_dma_region *rvb, int count)
 {
 	int *out = (int *)(rvb->address + rvb->start);
@@ -672,11 +449,12 @@ void dump_dt(struct dt *dt, int count)
 				fprintf(stderr, "%d ", ((unsigned char *)out)[ci]);
 		fprintf(stderr, "}");
 		
-		out = (char *)out + dt->stride;
+		out = (int *)((char *)out + dt->stride);
 	}
 	
 	fprintf(stderr, "\n");
 }
+#endif
 
 /*static */GLboolean r300_run_vb_render_vtxfmt_a(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
@@ -684,14 +462,14 @@ void dump_dt(struct dt *dt, int count)
    r300ContextPtr rmesa = R300_CONTEXT(ctx);
    //TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct radeon_vertex_buffer *VB = &rmesa->state.VB; //&tnl->vb;
-   int i, j;
+   int i;
    LOCAL_VARS
    
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 	
 	r300UpdateShaders(rmesa);
-	if (rmesa->state.VB.LockCount == 0) {
+	if (rmesa->state.VB.LockCount == 0 || 1) {
  	  	r300ReleaseArrays(ctx);
 		r300EmitArraysVtx(ctx, GL_FALSE);
 		
@@ -728,8 +506,6 @@ void dump_dt(struct dt *dt, int count)
 #endif
 	}
 	
-//	LOCK_HARDWARE(&(rmesa->radeon));
-
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
 
@@ -758,13 +534,6 @@ void dump_dt(struct dt *dt, int count)
 #ifdef USER_BUFFERS
 	r300UseArrays(ctx);
 #endif
-//	end_3d(PASS_PREFIX_VOID);
-
-   /* Flush state - we are done drawing.. */
-//	r300FlushCmdBufLocked(rmesa, __FUNCTION__);
-//	radeonWaitForIdleLocked(&(rmesa->radeon));
-
-//	UNLOCK_HARDWARE(&(rmesa->radeon));
 	return GL_FALSE;
 }
 #endif
@@ -781,7 +550,7 @@ do {										\
 GLboolean r300Fallback(GLcontext *ctx)
 {
 
-	FALLBACK_IF(ctx->RenderMode != GL_RENDER);  // We do not do SELECT or FEEDBACK (yet ?)
+	//FALLBACK_IF(ctx->RenderMode != GL_RENDER);  // We do not do SELECT or FEEDBACK (yet ?)
 	
 #if 0 /* These should work now.. */
 	FALLBACK_IF(ctx->Color.DitherFlag);
@@ -826,11 +595,8 @@ static GLboolean r300_run_render(GLcontext *ctx,
 
 	if (r300Fallback(ctx))
 		return GL_TRUE;
-#if 0
-		return r300_run_immediate_render(ctx, stage);
-#else
-		return r300_run_vb_render(ctx, stage);
-#endif
+	
+	return r300_run_vb_render(ctx, stage);
 }
 
 const struct tnl_pipeline_stage _r300_render_stage = {
@@ -861,7 +627,7 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 		return GL_TRUE;
 	}
 	
-	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
+	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) /* XXX: Needs to be part of r300Fallback */
 		if (ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_RECT_BIT) {
 			hw_tcl_on = GL_FALSE;
 			return GL_TRUE;
@@ -874,6 +640,22 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 	vp->native++;
 	vp->native &= 1;
 	//vp->native = GL_FALSE;
+#endif
+
+#if 0 /* You dont want to know what this does... */
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	struct tnl_cache *cache;
+	struct tnl_cache_item *c;
+	
+	cache = tnl->vp_cache;
+	c = cache->items[0xc000cc0e % cache->size];
+	
+	if(c && c->data == vp)
+		vp->native = GL_FALSE;
+	
+#endif
+#if 0
+	vp->native = GL_FALSE;
 #endif
 	if (vp->native == GL_FALSE) {
 		hw_tcl_on = GL_FALSE;

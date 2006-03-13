@@ -601,11 +601,6 @@ void r300Flush(GLcontext * ctx)
 void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
 {
 	struct r300_dma_buffer *dmabuf;
-	int fd = rmesa->radeon.dri.fd;
-	int index = 0;
-	int size = 0;
-	drmDMAReq dma;
-	int ret;
 	
 	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA))
 		fprintf(stderr, "%s\n", __FUNCTION__);

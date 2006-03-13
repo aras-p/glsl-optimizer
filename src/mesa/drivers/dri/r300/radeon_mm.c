@@ -29,9 +29,11 @@
  * Authors:
  *   Aapo Tahkola <aet@rasterburn.org>
  */
+#include <unistd.h>
 
 #include "r300_context.h"
 #include "r300_cmdbuf.h"
+#include "r300_ioctl.h"
 #include "radeon_mm.h"
 
 #ifdef USER_BUFFERS
@@ -54,7 +56,6 @@ void *radeon_mm_ptr(r300ContextPtr rmesa, int id)
 int radeon_mm_find(r300ContextPtr rmesa, void *ptr)
 {
 	int i;
-	int id = 0;
 	
 	for (i=1; i < rmesa->rmm->u_size+1; i++)
 		if(rmesa->rmm->u_list[i].ptr &&
@@ -77,8 +78,7 @@ int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 	int i, free=-1;
 	int done_age;
 	drm_radeon_mem_free_t memfree;
-	int tries=0, tries2=0;
-	static int t=0;
+	int tries=0;
 	static int bytes_wasted=0, allocated=0;
 	
 	if(size < 4096)
@@ -87,6 +87,7 @@ int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 	allocated += size;
 	
 #if 0
+	static int t=0;
 	if (t != time(NULL)) {
 		t = time(NULL);
 		fprintf(stderr, "slots used %d, wasted %d kb, allocated %d\n", rmesa->rmm->u_last, bytes_wasted/1024, allocated/1024);
@@ -145,7 +146,6 @@ int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 			}
 		}
 	}
-	done:
 	rmesa->rmm->u_head = i;
 	
 	if (free == -1) {
@@ -203,7 +203,7 @@ int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 }
 
 #include "r300_emit.h"
-void emit_lin_cp(r300ContextPtr rmesa, unsigned long dst, unsigned long src, unsigned long size)
+static void emit_lin_cp(r300ContextPtr rmesa, unsigned long dst, unsigned long src, unsigned long size)
 {
 	LOCAL_VARS
 	int cp_size;
@@ -259,7 +259,7 @@ void emit_lin_cp(r300ContextPtr rmesa, unsigned long dst, unsigned long src, uns
 
 void radeon_mm_use(r300ContextPtr rmesa, int id)
 {
-	unsigned long long ull;
+	uint64_t ull;
 #ifdef MM_DEBUG
 	fprintf(stderr, "%s: %d at age %x\n", __FUNCTION__, id, rmesa->radeon.radeonScreen->scratch[RADEON_MM_SCRATCH]);
 #endif	
@@ -301,14 +301,14 @@ void radeon_mm_use(r300ContextPtr rmesa, int id)
 	}*/
 #endif
 		
-	cmd = r300AllocCmdBuf(rmesa, 2 + sizeof(ull) / 4, __FUNCTION__);
+	cmd = (drm_r300_cmd_header_t *)r300AllocCmdBuf(rmesa, 2 + sizeof(ull) / 4, __FUNCTION__);
 	cmd[0].scratch.cmd_type = R300_CMD_SCRATCH;
 	cmd[0].scratch.reg = RADEON_MM_SCRATCH;
 	cmd[0].scratch.n_bufs = 1;
 	cmd[0].scratch.flags = 0;
 	cmd ++;
 	
-	ull = (unsigned long long)&rmesa->rmm->u_list[id].age;
+	ull = (uint64_t)(intptr_t)&rmesa->rmm->u_list[id].age;
 	_mesa_memcpy(cmd, &ull, sizeof(ull));
 	cmd += sizeof(ull) / 4;
 	

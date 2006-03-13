@@ -919,9 +919,6 @@ r300TexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 static void r300TexEnv(GLcontext * ctx, GLenum target,
 		       GLenum pname, const GLfloat * param)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	GLuint unit = ctx->Texture.CurrentUnit;
-
 	if (RADEON_DEBUG & DEBUG_STATE) {
 		fprintf(stderr, "%s( %s )\n",
 			__FUNCTION__, _mesa_lookup_enum_by_nr(pname));
