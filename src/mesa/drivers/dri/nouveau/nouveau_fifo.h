@@ -90,6 +90,7 @@ extern void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size);
 	}\
 }while(0)
 
+extern void nouveauWaitForIdle(nouveauContextPtr nmesa);
 
 #endif /* __NOUVEAU_FIFO_H__ */
 

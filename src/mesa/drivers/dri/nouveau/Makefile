@@ -16,7 +16,7 @@ DRIVER_SOURCES = \
 	nouveau_span.c           \
 	nouveau_tex.c            \
 	nouveau_tris.c           \
-	nv20_swtcl.c
+	nv10_swtcl.c
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \

@@ -26,14 +26,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 
-#ifndef __NV20_SWTCL_H__
-#define __NV20_SWTCL_H__
+#ifndef __NV10_SWTCL_H__
+#define __NV10_SWTCL_H__
 
 #include "mtypes.h"
 
-extern void nv20TriInitFunctions( GLcontext *ctx );
-extern void nv20Fallback( GLcontext *ctx, GLuint bit, GLboolean mode );
+extern void nv10TriInitFunctions( GLcontext *ctx );
+extern void nv10Fallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 #define FALLBACK( nmesa, bit, mode ) nouveauFallback( nmesa->glCtx, bit, mode )
 
-#endif /* __NV20_SWTCL_H__ */
+#endif /* __NV10_SWTCL_H__ */
 

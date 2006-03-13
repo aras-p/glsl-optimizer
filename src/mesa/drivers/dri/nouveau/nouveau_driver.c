@@ -27,6 +27,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_context.h"
 #include "nouveau_ioctl.h"
 //#include "nouveau_state.h"
+#include "nouveau_lock.h"
+#include "nouveau_fifo.h"
 #include "nouveau_driver.h"
 #include "swrast/swrast.h"
 
@@ -100,7 +102,7 @@ static const GLubyte *nouveauGetString( GLcontext *ctx, GLenum name )
 					agp_mode=0;
 					break;
 				case NV_AGP:
-					nmesa->screen->agp_mode;
+					agp_mode=nmesa->screen->agp_mode;
 					break;
 			}
 			driGetRendererString( buffer, card_name, DRIVER_DATE,
@@ -115,7 +117,7 @@ static const GLubyte *nouveauGetString( GLcontext *ctx, GLenum name )
 static void nouveauFlush( GLcontext *ctx )
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	FIRE_RING( nmesa );
+	FIRE_RING();
 }
 
 /* glFinish */

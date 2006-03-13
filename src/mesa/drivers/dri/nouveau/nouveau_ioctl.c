@@ -24,6 +24,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
+#include <errno.h>
+#include "mtypes.h"
+#include "macros.h"
+#include "dd.h"
+#include "swrast/swrast.h"
 
 
 #include "nouveau_ioctl.h"
@@ -46,7 +51,7 @@ void nouveauIoctlInitFifo()
 	// XXX needs more stuff
 }
 
-void nouveauIoctlInitFunctions( struct dd_function_table *functions )
+void nouveauIoctlInitFunctions(struct dd_function_table *functions)
 {
 	// nothing for now
 }

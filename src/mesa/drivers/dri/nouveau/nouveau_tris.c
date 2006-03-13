@@ -117,7 +117,6 @@ void nouveauRunPipeline( GLcontext *ctx )
 
 	if (vmesa->newState) {
 		vmesa->newRenderState |= vmesa->newState;
-		nouveauValidateState( ctx );
 	}
 
 	_tnl_run_pipeline( ctx );

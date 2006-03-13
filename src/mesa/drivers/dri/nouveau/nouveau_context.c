@@ -44,7 +44,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 //#include "nouveau_state.h"
 #include "nouveau_span.h"
 #include "nouveau_tex.h"
-#include "nv20_swtcl.h"
+#include "nv10_swtcl.h"
 
 #include "vblank.h"
 #include "utils.h"
@@ -131,14 +131,14 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 		case NV_03:
 		case NV_04:
 		case NV_05:
-		case NV_10:
 		default:
 			break;
+		case NV_10:
 		case NV_20:
 		case NV_30:
 		case NV_40:
 		case G_70:
-			nv20TriInitFunctions( ctx );
+			nv10TriInitFunctions( ctx );
 			break;
 	}
 	nouveauDDInitStateFuncs( ctx );
