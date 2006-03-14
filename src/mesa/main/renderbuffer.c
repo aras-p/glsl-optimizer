@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -924,6 +924,15 @@ soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
                           GLenum internalFormat, GLuint width, GLuint height)
 {
    GLuint pixelSize;
+
+   /* first clear these fields */
+   rb->RedBits =
+   rb->GreenBits =
+   rb->BlueBits =
+   rb->AlphaBits =
+   rb->IndexBits =
+   rb->DepthBits =
+   rb->StencilBits = 0;
 
    switch (internalFormat) {
    case GL_RGB:
