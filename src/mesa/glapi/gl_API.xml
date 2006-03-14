@@ -10447,8 +10447,8 @@
     <function name="GenProgramsNV" offset="582">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="programs" type="GLuint *" output="true" count="n"/>
-        <glx vendorpriv="1295"/>
-    </function>
+        <glx vendorpriv="1295" always_array="true"/>
+     </function>
 
     <!-- This isn't 100% correct.  Currently, the only valid value of pname
          is GL_PROGRAM_PARAMETER_NV, and the count for that pname is always

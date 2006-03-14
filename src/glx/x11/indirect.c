@@ -6321,7 +6321,7 @@ __indirect_glGenProgramsNV(GLsizei n, GLuint * programs)
     if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
         GLubyte const * pc = __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply, X_GLvop_GenProgramsNV, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&n), 4);
-        (void) __glXReadReply(dpy, 4, programs, GL_FALSE);
+        (void) __glXReadReply(dpy, 4, programs, GL_TRUE);
         UnlockDisplay(dpy); SyncHandle();
     }
     return;
