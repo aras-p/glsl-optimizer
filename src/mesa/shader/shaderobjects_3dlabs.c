@@ -841,7 +841,7 @@ write_common_fixed (slang_program *pro, GLuint index, const GLvoid *src, GLuint 
 {
 	GLuint i;
 
-	for (i = 0; i < SLANG_UNIFORM_BINDING_MAX; i++)
+	for (i = 0; i < SLANG_SHADER_MAX; i++)
 	{
 		GLuint addr;
 
@@ -965,7 +965,7 @@ _program_UpdateFixedAttribute (struct gl2_program_intf **intf, GLuint index, GLv
 	{
 		GLubyte *mem;
 
-		mem = (GLubyte *) pro->machines[SLANG_UNIFORM_BINDING_VERTEX]->mem + addr + offset * size;
+		mem = (GLubyte *) pro->machines[SLANG_SHADER_VERTEX]->mem + addr + offset * size;
 		if (write)
 			_mesa_memcpy (mem, data, size);
 		else
@@ -986,12 +986,64 @@ _program_UpdateFixedVarying (struct gl2_program_intf **intf, GLuint index, GLvoi
 	{
 		GLubyte *mem;
 
-		mem = (GLubyte *) pro->machines[SLANG_UNIFORM_BINDING_FRAGMENT]->mem + addr + offset * size;
+		mem = (GLubyte *) pro->machines[SLANG_SHADER_FRAGMENT]->mem + addr + offset * size;
 		if (write)
 			_mesa_memcpy (mem, data, size);
 		else
 			_mesa_memcpy (data, mem, size);
 	}
+}
+
+static GLvoid
+_program_GetTextureImageUsage (struct gl2_program_intf **intf, GLbitfield *teximageusage)
+{
+	GET_CURRENT_CONTEXT(ctx);
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
+	slang_program *pro = &impl->_obj.prog;
+	GLuint i;
+
+	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++)
+		teximageusage[i] = 0;
+
+	for (i = 0; i < pro->texture_usage.count; i++)
+	{
+		GLuint n, addr, j;
+
+		n = pro->texture_usage.table[i].quant->array_len;
+		if (n == 0)
+			n = 1;
+		addr = pro->texture_usage.table[i].frag_address;
+		for (j = 0; j < n; j++)
+		{
+			GLubyte *mem;
+			GLuint image;
+
+			mem = (GLubyte *) pro->machines[SLANG_SHADER_FRAGMENT]->mem + addr + j * 4;
+			image = (GLuint) *((GLfloat *) mem);
+			if (image >= 0 && image < ctx->Const.MaxTextureImageUnits)
+			{
+				switch (pro->texture_usage.table[i].quant->u.basic_type)
+				{
+				case GL_SAMPLER_1D_ARB:
+				case GL_SAMPLER_1D_SHADOW_ARB:
+					teximageusage[image] |= TEXTURE_1D_BIT;
+					break;
+				case GL_SAMPLER_2D_ARB:
+				case GL_SAMPLER_2D_SHADOW_ARB:
+					teximageusage[image] |= TEXTURE_2D_BIT;
+					break;
+				case GL_SAMPLER_3D_ARB:
+					teximageusage[image] |= TEXTURE_3D_BIT;
+					break;
+				case GL_SAMPLER_CUBE_ARB:
+					teximageusage[image] |= TEXTURE_CUBE_BIT;
+					break;
+				}
+			}
+		}
+	}
+
+	/* TODO: make sure that for 0<=i<=MaxTextureImageUint bitcount(teximageuint[i])<=0 */
 }
 
 static struct gl2_program_intf _program_vftbl = {
@@ -1019,7 +1071,8 @@ static struct gl2_program_intf _program_vftbl = {
 	_program_Validate,
 	_program_UpdateFixedUniforms,
 	_program_UpdateFixedAttribute,
-	_program_UpdateFixedVarying
+	_program_UpdateFixedVarying,
+	_program_GetTextureImageUsage
 };
 
 static void
@@ -1238,7 +1291,7 @@ int _slang_fetch_discard (struct gl2_program_intf **pro, GLboolean *val)
 	struct gl2_program_impl *impl;
 
 	impl = (struct gl2_program_impl *) pro;
-	*val = impl->_obj.prog.machines[SLANG_UNIFORM_BINDING_FRAGMENT]->kill ? GL_TRUE : GL_FALSE;
+	*val = impl->_obj.prog.machines[SLANG_SHADER_FRAGMENT]->kill ? GL_TRUE : GL_FALSE;
 	return 1;
 }
 
@@ -1251,19 +1304,19 @@ static GLvoid exec_shader (struct gl2_program_intf **pro, GLuint i)
 	p = &impl->_obj.prog;
 
 	slang_machine_init (p->machines[i]);
-	p->machines[i]->ip = p->code[i];
+	p->machines[i]->ip = p->code[i][SLANG_COMMON_CODE_MAIN];
 
 	_slang_execute2 (p->assemblies[i], p->machines[i]);
 }
 
 GLvoid _slang_exec_fragment_shader (struct gl2_program_intf **pro)
 {
-	exec_shader (pro, SLANG_UNIFORM_BINDING_FRAGMENT);
+	exec_shader (pro, SLANG_SHADER_FRAGMENT);
 }
 
 GLvoid _slang_exec_vertex_shader (struct gl2_program_intf **pro)
 {
-	exec_shader (pro, SLANG_UNIFORM_BINDING_VERTEX);
+	exec_shader (pro, SLANG_SHADER_VERTEX);
 }
 
 GLint _slang_get_uniform_location (struct gl2_program_intf **pro, const char *name)
@@ -1287,6 +1340,10 @@ GLboolean _slang_write_uniform (struct gl2_program_intf **pro, GLint loc, GLsize
 	slang_uniform_bindings *bind;
 	slang_uniform_binding *b;
 	GLuint i;
+	GLboolean convert_float_to_bool = GL_FALSE;
+	GLboolean convert_int_to_bool = GL_FALSE;
+	GLboolean convert_int_to_float = GL_FALSE;
+	GLboolean types_match = GL_FALSE;
 
 	if (loc == -1)
 		return GL_TRUE;
@@ -1298,16 +1355,113 @@ GLboolean _slang_write_uniform (struct gl2_program_intf **pro, GLint loc, GLsize
 
 	b = &bind->table[loc];
 	/* TODO: check sizes */
-	/* TODO: check if not structure */
-	if (b->quant->u.basic_type != type)
+	if (b->quant->structure != NULL)
 		return GL_FALSE;
 
-	for (i = 0; i < SLANG_UNIFORM_BINDING_MAX; i++)
-		if (b->address[i] != ~0)
-		{
-			_mesa_memcpy (&impl->_obj.prog.machines[i]->mem[b->address[i] / 4], data,
-				count * b->quant->size);
-		}
+	switch (b->quant->u.basic_type)
+	{
+	case GL_BOOL_ARB:
+		types_match = (type == GL_FLOAT) || (type == GL_INT);
+		if (type == GL_FLOAT)
+			convert_float_to_bool = GL_TRUE;
+		else
+			convert_int_to_bool = GL_TRUE;
+		break;
+	case GL_BOOL_VEC2_ARB:
+		types_match = (type == GL_FLOAT_VEC2_ARB) || (type == GL_INT_VEC2_ARB);
+		if (type == GL_FLOAT_VEC2_ARB)
+			convert_float_to_bool = GL_TRUE;
+		else
+			convert_int_to_bool = GL_TRUE;
+		break;
+	case GL_BOOL_VEC3_ARB:
+		types_match = (type == GL_FLOAT_VEC3_ARB) || (type == GL_INT_VEC3_ARB);
+		if (type == GL_FLOAT_VEC3_ARB)
+			convert_float_to_bool = GL_TRUE;
+		else
+			convert_int_to_bool = GL_TRUE;
+		break;
+	case GL_BOOL_VEC4_ARB:
+		types_match = (type == GL_FLOAT_VEC4_ARB) || (type == GL_INT_VEC4_ARB);
+		if (type == GL_FLOAT_VEC4_ARB)
+			convert_float_to_bool = GL_TRUE;
+		else
+			convert_int_to_bool = GL_TRUE;
+		break;
+	case GL_SAMPLER_1D_ARB:
+	case GL_SAMPLER_2D_ARB:
+	case GL_SAMPLER_3D_ARB:
+	case GL_SAMPLER_CUBE_ARB:
+	case GL_SAMPLER_1D_SHADOW_ARB:
+	case GL_SAMPLER_2D_SHADOW_ARB:
+		types_match = (type == GL_INT);
+		break;
+	default:
+		types_match = (type == b->quant->u.basic_type);
+		break;
+	}
+
+	if (!types_match)
+		return GL_FALSE;
+
+	switch (type)
+	{
+	case GL_INT:
+	case GL_INT_VEC2_ARB:
+	case GL_INT_VEC3_ARB:
+	case GL_INT_VEC4_ARB:
+		convert_int_to_float = GL_TRUE;
+		break;
+	}
+
+	if (convert_float_to_bool)
+	{
+		for (i = 0; i < SLANG_SHADER_MAX; i++)
+			if (b->address[i] != ~0)
+			{
+				const GLfloat *src = (GLfloat *) (data);
+				GLfloat *dst = (GLfloat *) (&impl->_obj.prog.machines[i]->mem[b->address[i] / 4]);
+				GLuint j;
+
+				for (j = 0; j < count * b->quant->size / 4; j++)
+					dst[j] = src[j] != 0.0f ? 1.0f : 0.0f;
+			}
+	}
+	else if (convert_int_to_bool)
+	{
+		for (i = 0; i < SLANG_SHADER_MAX; i++)
+			if (b->address[i] != ~0)
+			{
+				const GLuint *src = (GLuint *) (data);
+				GLfloat *dst = (GLfloat *) (&impl->_obj.prog.machines[i]->mem[b->address[i] / 4]);
+				GLuint j;
+
+				for (j = 0; j < count * b->quant->size / 4; j++)
+					dst[j] = src[j] ? 1.0f : 0.0f;
+			}
+	}
+	else if (convert_int_to_float)
+	{
+		for (i = 0; i < SLANG_SHADER_MAX; i++)
+			if (b->address[i] != ~0)
+			{
+				const GLuint *src = (GLuint *) (data);
+				GLfloat *dst = (GLfloat *) (&impl->_obj.prog.machines[i]->mem[b->address[i] / 4]);
+				GLuint j;
+
+				for (j = 0; j < count * b->quant->size / 4; j++)
+					dst[j] = (GLfloat) src[j];
+			}
+	}
+	else
+	{
+		for (i = 0; i < SLANG_SHADER_MAX; i++)
+			if (b->address[i] != ~0)
+			{
+				_mesa_memcpy (&impl->_obj.prog.machines[i]->mem[b->address[i] / 4], data,
+					count * b->quant->size);
+			}
+	}
 	return GL_TRUE;
 }
 

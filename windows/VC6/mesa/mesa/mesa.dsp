@@ -329,6 +329,19 @@ SOURCE=..\..\..\..\src\mesa\main\image.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\main\imports.c
+
+!IF  "$(CFG)" == "mesa - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "mesa - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "mesa - Win32 Release x86"
+
+# ADD CPP /YX
+
+!ELSEIF  "$(CFG)" == "mesa - Win32 Debug x86"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
@@ -552,6 +565,10 @@ SOURCE=..\..\..\..\src\mesa\shader\shaderobjects_3dlabs.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_analyse.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble.c
 # End Source File
 # Begin Source File
@@ -605,6 +622,10 @@ SOURCE=..\..\..\..\src\mesa\shader\slang\slang_export.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\shader\slang\slang_library_noise.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_library_texsample.c
 # End Source File
 # Begin Source File
 
@@ -1314,6 +1335,10 @@ SOURCE=..\..\..\..\src\mesa\main\simple_list.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_analyse.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble.h
 # End Source File
 # Begin Source File
@@ -1363,6 +1388,10 @@ SOURCE=..\..\..\..\src\mesa\shader\slang\slang_export.h
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\shader\slang\slang_library_noise.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_library_texsample.h
 # End Source File
 # Begin Source File
 

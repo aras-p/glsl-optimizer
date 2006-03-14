@@ -42,7 +42,7 @@ typedef struct
 {
 	slang_export_data_quant *quant;
 	char *name;
-	GLuint address[SLANG_UNIFORM_BINDING_MAX];
+	GLuint address[SLANG_SHADER_MAX];
 } slang_uniform_binding;
 
 typedef struct
@@ -62,6 +62,21 @@ typedef struct
 	slang_active_uniform *table;
 	GLuint count;
 } slang_active_uniforms;
+
+typedef struct
+{
+	slang_export_data_quant *quant;
+	GLuint frag_address;
+} slang_texture_usage;
+
+typedef struct
+{
+	slang_texture_usage *table;
+	GLuint count;
+} slang_texture_usages;
+
+GLvoid slang_texture_usages_ctr (slang_texture_usages *);
+GLvoid slang_texture_usages_dtr (slang_texture_usages *);
 
 enum
 {
@@ -148,16 +163,23 @@ enum
 	SLANG_FRAGMENT_FIXED_MAX
 };
 
+enum
+{
+	SLANG_COMMON_CODE_MAIN,
+	SLANG_COMMON_CODE_MAX
+};
+
 typedef struct
 {
 	slang_uniform_bindings uniforms;
 	slang_active_uniforms active_uniforms;
-	GLuint common_fixed_entries[SLANG_UNIFORM_BINDING_MAX][SLANG_COMMON_FIXED_MAX];
+	slang_texture_usages texture_usage;
+	GLuint common_fixed_entries[SLANG_SHADER_MAX][SLANG_COMMON_FIXED_MAX];
 	GLuint vertex_fixed_entries[SLANG_VERTEX_FIXED_MAX];
 	GLuint fragment_fixed_entries[SLANG_FRAGMENT_FIXED_MAX];
-	GLuint code[SLANG_UNIFORM_BINDING_MAX];
-	slang_machine *machines[SLANG_UNIFORM_BINDING_MAX];
-	slang_assembly_file *assemblies[SLANG_UNIFORM_BINDING_MAX];
+	GLuint code[SLANG_SHADER_MAX][SLANG_COMMON_CODE_MAX];
+	slang_machine *machines[SLANG_SHADER_MAX];
+	slang_assembly_file *assemblies[SLANG_SHADER_MAX];
 } slang_program;
 
 GLvoid slang_program_ctr (slang_program *);

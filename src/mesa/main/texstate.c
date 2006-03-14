@@ -40,6 +40,7 @@
 #include "texenvprogram.h"
 #include "mtypes.h"
 #include "math/m_xform.h"
+#include "shaderobjects.h"
 
 
 
@@ -2767,6 +2768,21 @@ update_texture_matrices( GLcontext *ctx )
 }
 
 
+static void
+texture_override( struct gl_texture_object *texObj, GLuint textureBit, GLcontext *ctx,
+                GLbitfield enableBits, struct gl_texture_unit *texUnit )
+{
+   if (!texUnit->_ReallyEnabled && (enableBits & textureBit)) {
+      if (!texObj->Complete) {
+         _mesa_test_texobj_completeness(ctx, texObj);
+      }
+      if (texObj->Complete) {
+         texUnit->_ReallyEnabled = textureBit;
+         texUnit->_Current = texObj;
+      }
+   }
+}
+
 /**
  * \note This routine refers to derived texture matrix values to
  * compute the ENABLE_TEXMAT flags, but is only called on
@@ -2779,6 +2795,8 @@ static void
 update_texture_state( GLcontext *ctx )
 {
    GLuint unit;
+   struct gl2_program_intf **prog = ctx->ShaderObjects.CurrentProgram;
+   GLbitfield progteximageusage[MAX_TEXTURE_IMAGE_UNITS];
 
    ctx->NewState |= _NEW_TEXTURE; /* TODO: only set this if there are 
 				   * actual changes. 
@@ -2788,6 +2806,15 @@ update_texture_state( GLcontext *ctx )
    ctx->Texture._GenFlags = 0;
    ctx->Texture._TexMatEnabled = 0;
    ctx->Texture._TexGenEnabled = 0;
+
+   /*
+    * Grab texture image usage state from shader program. It must be grabbed every time
+    * uniform sampler changes, so maybe there is a better place to perform these rather
+    * expensive computations.
+    */
+   if (prog != NULL) {
+      (**prog).GetTextureImageUsage (prog, progteximageusage);
+   }
 
    /* Update texture unit state.
     * XXX this loop should probably be broken into separate loops for
@@ -2802,7 +2829,10 @@ update_texture_state( GLcontext *ctx )
       texUnit->_GenFlags = 0;
 
       /* Get the bitmask of texture enables */
-      if (ctx->FragmentProgram._Enabled) {
+      if (prog != NULL) {
+         enableBits = progteximageusage[unit];
+      }
+      else if (ctx->FragmentProgram._Enabled) {
          enableBits = ctx->FragmentProgram.Current->TexturesUsed[unit];
       }
       else {
@@ -2815,60 +2845,11 @@ update_texture_state( GLcontext *ctx )
        * complete.  That's the one we'll use for texturing.  If we're using
        * a fragment program we're guaranteed that bitcount(enabledBits) <= 1.
        */
-      if (enableBits & TEXTURE_CUBE_BIT) {
-         struct gl_texture_object *texObj = texUnit->CurrentCubeMap;
-         if (!texObj->Complete) {
-            _mesa_test_texobj_completeness(ctx, texObj);
-         }
-         if (texObj->Complete) {
-            texUnit->_ReallyEnabled = TEXTURE_CUBE_BIT;
-            texUnit->_Current = texObj;
-         }
-      }
-
-      if (!texUnit->_ReallyEnabled && (enableBits & TEXTURE_3D_BIT)) {
-         struct gl_texture_object *texObj = texUnit->Current3D;
-         if (!texObj->Complete) {
-            _mesa_test_texobj_completeness(ctx, texObj);
-         }
-         if (texObj->Complete) {
-            texUnit->_ReallyEnabled = TEXTURE_3D_BIT;
-            texUnit->_Current = texObj;
-         }
-      }
-
-      if (!texUnit->_ReallyEnabled && (enableBits & TEXTURE_RECT_BIT)) {
-         struct gl_texture_object *texObj = texUnit->CurrentRect;
-         if (!texObj->Complete) {
-            _mesa_test_texobj_completeness(ctx, texObj);
-         }
-         if (texObj->Complete) {
-            texUnit->_ReallyEnabled = TEXTURE_RECT_BIT;
-            texUnit->_Current = texObj;
-         }
-      }
-
-      if (!texUnit->_ReallyEnabled && (enableBits & TEXTURE_2D_BIT)) {
-         struct gl_texture_object *texObj = texUnit->Current2D;
-         if (!texObj->Complete) {
-            _mesa_test_texobj_completeness(ctx, texObj);
-         }
-         if (texObj->Complete) {
-            texUnit->_ReallyEnabled = TEXTURE_2D_BIT;
-            texUnit->_Current = texObj;
-         }
-      }
-
-      if (!texUnit->_ReallyEnabled && (enableBits & TEXTURE_1D_BIT)) {
-         struct gl_texture_object *texObj = texUnit->Current1D;
-         if (!texObj->Complete) {
-            _mesa_test_texobj_completeness(ctx, texObj);
-         }
-         if (texObj->Complete) {
-            texUnit->_ReallyEnabled = TEXTURE_1D_BIT;
-            texUnit->_Current = texObj;
-         }
-      }
+      texture_override(texUnit->CurrentCubeMap, TEXTURE_CUBE_BIT, ctx, enableBits, texUnit);
+      texture_override(texUnit->Current3D, TEXTURE_3D_BIT, ctx, enableBits, texUnit);
+      texture_override(texUnit->CurrentRect, TEXTURE_RECT_BIT, ctx, enableBits, texUnit);
+      texture_override(texUnit->Current2D, TEXTURE_2D_BIT, ctx, enableBits, texUnit);
+      texture_override(texUnit->Current1D, TEXTURE_1D_BIT, ctx, enableBits, texUnit);
 
       if (!texUnit->_ReallyEnabled) {
          continue;
@@ -2967,8 +2948,8 @@ update_texture_state( GLcontext *ctx )
    /* Fragment programs may need texture coordinates but not the
     * corresponding texture images.
     */
-   if (ctx->ShaderObjects.CurrentProgram != NULL) {
-      ctx->Texture._EnabledCoordUnits |= (1 << 8) - 1;
+   if (prog != NULL) {
+      ctx->Texture._EnabledCoordUnits |= (1 << ctx->Const.MaxTextureCoordUnits) - 1;
    }
    else if (ctx->FragmentProgram._Enabled) {
       ctx->Texture._EnabledCoordUnits |=

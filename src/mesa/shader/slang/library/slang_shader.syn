@@ -1168,16 +1168,26 @@ __asm_statement
     "__asm" .and space .and identifier .and space .and asm_arguments .and semicolon .emit OP_END;
 
 /*
-    <asm_arguments>                     ::= <identifier>
-                                          | <asm_arguments> "," <identifier>
+    <asm_arguments>                     ::= <asm_argument>
+                                          | <asm_arguments> "," <asm_argument>
 
 note: this is an extension to the standard language specification - normally slang disallows
       __asm statements
 */
 asm_arguments
-    variable_identifier .and .true .emit OP_END .and .loop asm_arguments_1;
+    asm_argument .and .true .emit OP_END .and .loop asm_arguments_1;
 asm_arguments_1
-    comma .and variable_identifier .and .true .emit OP_END;
+    comma .and asm_argument .and .true .emit OP_END;
+
+/*
+    <asm_argument>                      ::= <variable_identifier>
+                                          | <floatconstant>
+
+note: this is an extension to the standard language specification - normally slang disallows
+      __asm statements
+*/
+asm_argument
+    variable_identifier .or floatconstant;
 
 /*
     <translation_unit>                  ::= <external_declaration>

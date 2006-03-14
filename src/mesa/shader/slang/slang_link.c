@@ -30,6 +30,7 @@
 
 #include "imports.h"
 #include "slang_link.h"
+#include "slang_analyse.h"
 
 /*
  * slang_uniform_bindings
@@ -69,7 +70,7 @@ static GLboolean slang_uniform_bindings_add (slang_uniform_bindings *self, slang
 		return GL_FALSE;
 	self->table[n].quant = q;
 	self->table[n].name = slang_string_duplicate (name);
-	for (i = 0; i < SLANG_UNIFORM_BINDING_MAX; i++)
+	for (i = 0; i < SLANG_SHADER_MAX; i++)
 		self->table[n].address[i] = ~0;
 	self->table[n].address[index] = address;
 	if (self->table[n].name == NULL)
@@ -223,6 +224,21 @@ static GLboolean gather_active_uniforms (slang_active_uniforms *u, slang_export_
 }
 
 /*
+ * slang_texture_bindings
+ */
+
+GLvoid slang_texture_usages_ctr (slang_texture_usages *self)
+{
+	self->table = NULL;
+	self->count = 0;
+}
+
+GLvoid slang_texture_usages_dtr (slang_texture_usages *self)
+{
+	slang_alloc_free (self->table);
+}
+
+/*
  * slang_program
  */
 
@@ -232,13 +248,15 @@ GLvoid slang_program_ctr (slang_program *self)
 
 	slang_uniform_bindings_ctr (&self->uniforms);
 	slang_active_uniforms_ctr (&self->active_uniforms);
-	for (i = 0; i < SLANG_UNIFORM_BINDING_MAX; i++)
+	slang_texture_usages_ctr (&self->texture_usage);
+	for (i = 0; i < SLANG_SHADER_MAX; i++)
 	{
 		GLuint j;
 
 		for (j = 0; j < SLANG_COMMON_FIXED_MAX; j++)
 			self->common_fixed_entries[i][j] = ~0;
-		self->code[i] = ~0;
+		for (j = 0; j < SLANG_COMMON_CODE_MAX; j++)
+			self->code[i][j] = ~0;
 		self->machines[i] = NULL;
 		self->assemblies[i] = NULL;
 	}
@@ -252,6 +270,7 @@ GLvoid slang_program_dtr (slang_program *self)
 {
 	slang_uniform_bindings_dtr (&self->uniforms);
 	slang_active_uniforms_dtr (&self->active_uniforms);
+	slang_texture_usages_dtr (&self->texture_usage);
 }
 
 /*
@@ -273,7 +292,7 @@ static GLuint gd (slang_export_data_table *tbl, const char *name)
 	return ~0;
 }
 
-static GLvoid fill_common_fixed_entries (GLuint e[], slang_export_data_table *tbl)
+static GLvoid resolve_common_fixed (GLuint e[], slang_export_data_table *tbl)
 {
 	e[SLANG_COMMON_FIXED_MODELVIEWMATRIX] = gd (tbl, "gl_ModelViewMatrix");
 	e[SLANG_COMMON_FIXED_PROJECTIONMATRIX] = gd (tbl, "gl_ProjectionMatrix");
@@ -322,7 +341,7 @@ static GLvoid fill_common_fixed_entries (GLuint e[], slang_export_data_table *tb
 	e[SLANG_COMMON_FIXED_FOG] = gd (tbl, "gl_Fog");
 }
 
-static GLvoid fill_vertex_fixed_entries (GLuint e[], slang_export_data_table *tbl)
+static GLvoid resolve_vertex_fixed (GLuint e[], slang_export_data_table *tbl)
 {
 	e[SLANG_VERTEX_FIXED_POSITION] = gd (tbl, "gl_Position");
 	e[SLANG_VERTEX_FIXED_POINTSIZE] = gd (tbl,  "gl_PointSize");
@@ -348,7 +367,7 @@ static GLvoid fill_vertex_fixed_entries (GLuint e[], slang_export_data_table *tb
 	e[SLANG_VERTEX_FIXED_FOGFRAGCOORD] = gd (tbl, "gl_FogFragCoord");
 }
 
-static GLvoid fill_fragment_fixed_entries (GLuint e[], slang_export_data_table *tbl)
+static GLvoid resolve_fragment_fixed (GLuint e[], slang_export_data_table *tbl)
 {
 	e[SLANG_FRAGMENT_FIXED_FRAGCOORD] = gd (tbl, "gl_FragCoord");
 	e[SLANG_FRAGMENT_FIXED_FRONTFACING] = gd (tbl, "gl_FrontFacing");
@@ -376,9 +395,9 @@ static GLuint gc (slang_export_code_table *tbl, const char *name)
 	return ~0;
 }
 
-static GLvoid resolve_code (GLuint code[], slang_export_code_table *tbl)
+static GLvoid resolve_common_code (GLuint code[], slang_export_code_table *tbl)
 {
-	code[0] = gc (tbl, "@main");
+	code[SLANG_COMMON_CODE_MAIN] = gc (tbl, "@main");
 }
 
 GLboolean _slang_link (slang_program *prog, slang_translation_unit **units, GLuint count)
@@ -391,24 +410,27 @@ GLboolean _slang_link (slang_program *prog, slang_translation_unit **units, GLui
 
 		if (units[i]->type == slang_unit_fragment_shader)
 		{
-			index = SLANG_UNIFORM_BINDING_FRAGMENT;
-			fill_fragment_fixed_entries (prog->fragment_fixed_entries, &units[i]->exp_data);
+			index = SLANG_SHADER_FRAGMENT;
+			resolve_fragment_fixed (prog->fragment_fixed_entries, &units[i]->exp_data);
 		}
 		else
 		{
-			index = SLANG_UNIFORM_BINDING_VERTEX;
-			fill_vertex_fixed_entries (prog->vertex_fixed_entries, &units[i]->exp_data);
+			index = SLANG_SHADER_VERTEX;
+			resolve_vertex_fixed (prog->vertex_fixed_entries, &units[i]->exp_data);
 		}
 
 		if (!gather_uniform_bindings (&prog->uniforms, &units[i]->exp_data, index))
 			return GL_FALSE;
 		if (!gather_active_uniforms (&prog->active_uniforms, &units[i]->exp_data))
 			return GL_FALSE;
-		fill_common_fixed_entries (prog->common_fixed_entries[index], &units[i]->exp_data);
-		resolve_code (&prog->code[index], &units[i]->exp_code);
+		resolve_common_fixed (prog->common_fixed_entries[index], &units[i]->exp_data);
+		resolve_common_code (prog->code[index], &units[i]->exp_code);
 		prog->machines[index] = units[i]->machine;
 		prog->assemblies[index] = units[i]->assembly;
 	}
+
+	if (!_slang_analyse_texture_usage (prog))
+		return GL_FALSE;
 
 	return GL_TRUE;
 }

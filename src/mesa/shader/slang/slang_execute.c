@@ -29,11 +29,9 @@
  */
 
 #include "imports.h"
-#include "context.h"
-#include "swrast/s_context.h"
-#include "colormac.h"
 #include "slang_execute.h"
 #include "slang_library_noise.h"
+#include "slang_library_texsample.h"
 
 #define DEBUG_SLANG 0
 
@@ -48,7 +46,8 @@ GLvoid slang_machine_ctr (slang_machine *self)
 GLvoid slang_machine_dtr (slang_machine *self)
 {
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
-	/* TODO: free self->x86.compiled_func */
+	if (self->x86.compiled_func != NULL)
+		_mesa_exec_free (self->x86.compiled_func);
 #endif
 }
 
@@ -195,8 +194,23 @@ static void dump_instruction (FILE *f, slang_assembly *a, unsigned int i)
 	case slang_asm_addr_multiply:
 		fprintf (f, "addr_multiply");
 		break;
-	case slang_vec4_tex2d:
+	case slang_asm_vec4_tex1d:
+		fprintf (f, "vec4_tex1d");
+		break;
+	case slang_asm_vec4_tex2d:
 		fprintf (f, "vec4_tex2d");
+		break;
+	case slang_asm_vec4_tex3d:
+		fprintf (f, "vec4_tex3d");
+		break;
+	case slang_asm_vec4_texcube:
+		fprintf (f, "vec4_texcube");
+		break;
+	case slang_asm_vec4_shad1d:
+		fprintf (f, "vec4_shad1d");
+		break;
+	case slang_asm_vec4_shad2d:
+		fprintf (f, "vec4_shad2d");
 		break;
 	case slang_asm_jump:
 		fprintf (f, "jump\t%u", a->param[0]);
@@ -271,21 +285,6 @@ static void dump (const slang_assembly_file *file)
 }
 
 #endif
-
-static void fetch_texel (GLuint sampler, const GLfloat texcoord[4], GLfloat lambda, GLfloat color[4])
-{
-	GET_CURRENT_CONTEXT(ctx);
-	SWcontext *swrast = SWRAST_CONTEXT(ctx);
-	GLchan rgba[4];
-
-	/* XXX: the function pointer is NULL! */
-	swrast->TextureSample[sampler] (ctx, ctx->Texture.Unit[sampler]._Current, 1,
-		(const GLfloat (*)[4]) texcoord, &lambda, &rgba);
-	color[0] = CHAN_TO_FLOAT(rgba[0]);
-	color[1] = CHAN_TO_FLOAT(rgba[1]);
-	color[2] = CHAN_TO_FLOAT(rgba[2]);
-	color[3] = CHAN_TO_FLOAT(rgba[3]);
-}
 
 int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
 {
@@ -465,15 +464,40 @@ int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
 			stack[mach->sp + 1]._addr *= stack[mach->sp]._addr;
 			mach->sp++;
 			break;
-		case slang_asm_vec4_tex2d:
-			{
-				GLfloat st[4] = { stack[mach->sp]._float, stack[mach->sp + 1]._float, 0.0f, 1.0f };
-				GLuint sampler = (GLuint) stack[mach->sp + 2]._float;
-				GLfloat *rgba = &mach->mem[stack[mach->sp + 3]._addr / 4]._float;
-
-				fetch_texel (sampler, st, 0.0f, rgba);
-			}
+		case slang_asm_vec4_tex1d:
+			_slang_library_tex1d (stack[mach->sp]._float, stack[mach->sp + 1]._float,
+				stack[mach->sp + 2]._float, &mach->mem[stack[mach->sp + 3]._addr / 4]._float);
 			mach->sp += 3;
+			break;
+		case slang_asm_vec4_tex2d:
+			_slang_library_tex2d (stack[mach->sp]._float, stack[mach->sp + 1]._float,
+				stack[mach->sp + 2]._float, stack[mach->sp + 3]._float,
+				&mach->mem[stack[mach->sp + 4]._addr / 4]._float);
+			mach->sp += 4;
+			break;
+		case slang_asm_vec4_tex3d:
+			_slang_library_tex3d (stack[mach->sp]._float, stack[mach->sp + 1]._float,
+				stack[mach->sp + 2]._float, stack[mach->sp + 3]._float, stack[mach->sp + 4]._float,
+				&mach->mem[stack[mach->sp + 5]._addr / 4]._float);
+			mach->sp += 5;
+			break;
+		case slang_asm_vec4_texcube:
+			_slang_library_texcube (stack[mach->sp]._float, stack[mach->sp + 1]._float,
+				stack[mach->sp + 2]._float, stack[mach->sp + 3]._float, stack[mach->sp + 4]._float,
+				&mach->mem[stack[mach->sp + 5]._addr / 4]._float);
+			mach->sp += 5;
+			break;
+		case slang_asm_vec4_shad1d:
+			_slang_library_shad1d (stack[mach->sp]._float, stack[mach->sp + 1]._float,
+				stack[mach->sp + 2]._float, stack[mach->sp + 3]._float, stack[mach->sp + 4]._float,
+				&mach->mem[stack[mach->sp + 5]._addr / 4]._float);
+			mach->sp += 5;
+			break;
+		case slang_asm_vec4_shad2d:
+			_slang_library_shad2d (stack[mach->sp]._float, stack[mach->sp + 1]._float,
+				stack[mach->sp + 2]._float, stack[mach->sp + 3]._float, stack[mach->sp + 4]._float,
+				&mach->mem[stack[mach->sp + 5]._addr / 4]._float);
+			mach->sp += 5;
 			break;
 		case slang_asm_jump:
 			mach->ip = a->param[0];
