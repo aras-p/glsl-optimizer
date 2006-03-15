@@ -148,11 +148,12 @@ read_depth_stencil_image(GLcontext *ctx, GLint x, GLint y,
       }
    }
    else {
-      GLuint z16[MAX_WIDTH];
+      GLushort z16[MAX_WIDTH];
       ASSERT(depthRb->DataType == GL_UNSIGNED_SHORT);
       for (i = 0; i < height; i++) {
          GLint j;
          _swrast_get_row(ctx, depthRb, width, x, y + i, z16, sizeof(GLushort));
+         /* convert GLushorts to GLuints */
          for (j = 0; j < width; j++) {
             dst[j] = z16[j];
          }
