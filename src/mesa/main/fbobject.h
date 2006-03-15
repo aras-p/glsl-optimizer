@@ -54,6 +54,9 @@ _mesa_framebuffer_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
 extern void
 _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb);
 
+extern GLenum
+_mesa_base_fbo_format(GLcontext *ctx, GLenum internalFormat);
+
 extern GLboolean GLAPIENTRY
 _mesa_IsRenderbufferEXT(GLuint renderbuffer);
 

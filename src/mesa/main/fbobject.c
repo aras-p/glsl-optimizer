@@ -653,11 +653,14 @@ _mesa_GenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers)
 /**
  * Given an internal format token for a render buffer, return the
  * corresponding base format.
+ * This is very similar to _mesa_base_tex_format() but the set of valid
+ * internal formats is somewhat different.
+ *
  * \return one of GL_RGB, GL_RGBA, GL_STENCIL_INDEX, GL_DEPTH_COMPONENT
  *  GL_DEPTH_STENCIL_EXT or zero if error.
  */
-static GLenum
-base_internal_format(GLcontext *ctx, GLenum internalFormat)
+GLenum
+_mesa_base_fbo_format(GLcontext *ctx, GLenum internalFormat)
 {
    switch (internalFormat) {
    case GL_RGB:
@@ -717,7 +720,7 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
       return;
    }
 
-   baseFormat = base_internal_format(ctx, internalFormat);
+   baseFormat = _mesa_base_fbo_format(ctx, internalFormat);
    if (baseFormat == 0) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glRenderbufferStorageEXT(internalFormat)");
@@ -972,6 +975,10 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
          }
       }
       ctx->DrawBuffer = newFb;
+   }
+
+   if (ctx->Driver.BindFramebuffer) {
+      ctx->Driver.BindFramebuffer(ctx, target, newFb);
    }
 }
 
