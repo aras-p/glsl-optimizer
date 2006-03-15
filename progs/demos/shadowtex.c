@@ -41,7 +41,6 @@
 #undef GL_ARB_shadow_ambient
 #endif
 
-
 #define DEG_TO_RAD (3.14159 / 180.0)
 
 static GLint WindowWidth = 450, WindowHeight = 300;
@@ -67,6 +66,7 @@ static GLfloat Bias = -0.06;
 
 static GLboolean Anim = GL_TRUE;
 
+static GLboolean UsePackedDepthStencil = GL_FALSE;
 static GLboolean HaveEXTshadowFuncs = GL_FALSE;
 static GLint Operator = 0;
 static const GLenum OperatorFunc[8] = {
@@ -266,7 +266,7 @@ Display(void)
              0, 1, 0); /* up */
 
    glViewport(0, 0, ShadowTexWidth, ShadowTexHeight);
-   glClear(GL_DEPTH_BUFFER_BIT);
+   glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
    DrawScene();
 
    /*
@@ -274,9 +274,21 @@ Display(void)
     */
    if (DisplayMode == SHOW_DEPTH_MAPPING) {
       /* load depth image as gray-scale luminance texture */
-      GLfloat *depth = (GLfloat *) malloc(ShadowTexWidth * ShadowTexHeight
-                                          * sizeof(GLfloat));
-      if (depth) {
+      if (UsePackedDepthStencil) {
+         GLuint *depth = (GLuint *) malloc(ShadowTexWidth * ShadowTexHeight
+                                           * sizeof(GLuint));
+         assert(depth);
+         glReadPixels(0, 0, ShadowTexWidth, ShadowTexHeight,
+                      GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT, depth);
+         glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,
+                      ShadowTexWidth, ShadowTexHeight, 0,
+                      GL_LUMINANCE, GL_UNSIGNED_INT, depth);
+         free(depth);
+      }
+      else {
+         GLfloat *depth = (GLfloat *) malloc(ShadowTexWidth * ShadowTexHeight
+                                             * sizeof(GLfloat));
+         assert(depth);
          glReadPixels(0, 0, ShadowTexWidth, ShadowTexHeight,
                       GL_DEPTH_COMPONENT, GL_FLOAT, depth);
          glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,
@@ -287,8 +299,18 @@ Display(void)
    }
    else {
       /* The normal shadow case */
-      glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-                       0, 0, ShadowTexWidth, ShadowTexHeight, 0);
+      if (UsePackedDepthStencil) {
+         GLint intFormat;
+         glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_STENCIL_EXT,
+                          0, 0, ShadowTexWidth, ShadowTexHeight, 0);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0,
+                                  GL_TEXTURE_INTERNAL_FORMAT, &intFormat);
+         assert(intFormat == GL_DEPTH_STENCIL_EXT);
+      }
+      else {
+         glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+                          0, 0, ShadowTexWidth, ShadowTexHeight, 0);
+      }
    }
 
    /*
@@ -447,6 +469,17 @@ Key(unsigned char key, int x, int y)
                             OperatorFunc[Operator]);
          }
          break;
+      case 'p':
+         UsePackedDepthStencil = !UsePackedDepthStencil;
+         if (UsePackedDepthStencil
+             && !glutExtensionSupported("GL_EXT_packed_depth_stencil")) {
+            printf("Sorry, GL_EXT_packed_depth_stencil not supported\n");
+            UsePackedDepthStencil = GL_FALSE;
+         }
+         else {
+            printf("Use GL_DEPTH_STENCIL_EXT: %d\n", UsePackedDepthStencil);
+         }
+         break;
       case 'z':
          Zrot -= step;
          break;
@@ -572,6 +605,7 @@ PrintHelp(void)
    printf("  n = show normal, shadowed image\n");
    printf("  f = toggle nearest/bilinear texture filtering\n");
    printf("  b/B = decrease/increase shadow map Z bias\n");
+   printf("  p = toggle use of packed depth/stencil\n");
    printf("  cursor keys = rotate scene\n");
    printf("  <shift> + cursor keys = rotate light source\n");
    if (HaveEXTshadowFuncs)
@@ -585,7 +619,7 @@ main(int argc, char *argv[])
    glutInit(&argc, argv);
    glutInitWindowPosition(0, 0);
    glutInitWindowSize(WindowWidth, WindowHeight);
-   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_STENCIL);
    glutCreateWindow(argv[0]);
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
