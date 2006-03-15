@@ -175,6 +175,10 @@ draw_loop(struct winthread *wt)
       glXSwapBuffers(wt->Dpy, wt->Win);
 
       wt->Angle += 1.0;
+
+      /* XXX Calling sched_yield() here smooths out performance a lot! */
+      /* Not sure how portable it is though, so leave out for now. */
+      /*sched_yield();*/
    }
 }
 
@@ -334,9 +338,9 @@ main(int argc, char *argv[])
    Status threadStat;
 
    if (argc == 1) {
-      printf("threadgl: test of GL thread safety (any key = exit)\n");
+      printf("glthreads: test of GL thread safety (any key = exit)\n");
       printf("Usage:\n");
-      printf("  threadgl [-display dpyName] [-n numthreads]\n");
+      printf("  glthreads [-display dpyName] [-n numthreads]\n");
    }
    else {
       int i;
@@ -387,7 +391,7 @@ main(int argc, char *argv[])
    for (i = 0; i < numThreads; i++) {
       pthread_create(&WinThreads[i].Thread, NULL, thread_function,
                      (void*) &WinThreads[i]);
-      printf("Created Thread %d\n", (int) WinThreads[i].Thread);
+      printf("Created Thread %u\n", (unsigned int) WinThreads[i].Thread);
    }
 
    event_loop(dpy);
