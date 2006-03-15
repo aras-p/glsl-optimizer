@@ -337,7 +337,6 @@ _glapi_get_dispatch(void)
    api = _glapi_Dispatch;
 #endif
 
-   assert( api != NULL );
    return api;
 }
 
