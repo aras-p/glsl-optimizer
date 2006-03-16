@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1948,6 +1948,7 @@ _mesa_texstore_z24_s8(STORE_PARAMS)
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes) {
+      /* simple path */
       memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
@@ -1955,7 +1956,44 @@ _mesa_texstore_z24_s8(STORE_PARAMS)
                      srcAddr, srcPacking);
    }
    else {
-      _mesa_problem(ctx, "_mesa_texstore_z24_s8 not finished");
+      /* general path */
+      const GLint srcRowStride
+         = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType)
+         / sizeof(GLuint);
+      GLuint *dstImage = (GLuint *) dstAddr;
+      GLint img, row;
+
+      for (img = 0; img < srcDepth; img++) {
+         GLuint *dst = dstImage;
+         const GLuint *src
+            = (const GLuint *) _mesa_image_address(dims, srcPacking, srcAddr,
+                                                   srcWidth, srcHeight,
+                                                   srcFormat, srcType,
+                                                   img, 0, 0);
+         for (row = 0; row < srcHeight; row++) {
+            GLubyte stencil[MAX_WIDTH];
+            GLint i;
+            /* the 24 depth bits will be in the high position: */
+            _mesa_unpack_depth_span(ctx, srcWidth,
+                                    GL_UNSIGNED_INT, /* dst type */
+                                    dst, /* dst addr */
+                                    (GLfloat) 0xffffff, /* depthScale */
+                                    srcType, src, srcPacking);
+            /* get the 8-bit stencil values */
+            _mesa_unpack_stencil_span(ctx, srcWidth,
+                                      GL_UNSIGNED_BYTE, /* dst type */
+                                      stencil, /* dst addr */
+                                      srcType, src, srcPacking,
+                                      ctx->_ImageTransferState);
+            /* merge stencil values into depth values */
+            for (i = 0; i < srcWidth; i++)
+               dst[i] |= stencil[i];
+
+            src += srcRowStride;
+            dst += dstRowStride / sizeof(GLuint);
+         }
+         dstImage += dstImageStride / sizeof(GLuint);
+      }
    }
 
 
