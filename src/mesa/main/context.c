@@ -1597,14 +1597,7 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
       }
    }
 
-#if !defined(IN_DRI_DRIVER)
-   /* We call this function periodically (just here for now) in
-    * order to detect when multithreading has begun.  In a DRI driver, this
-    * step is done by the driver loader (e.g., libGL).
-    */
-   _glapi_check_multithread();
-#endif /* !defined(IN_DRI_DRIVER) */
-
+   /* We used to call _glapi_check_multithread() here.  Now do it in drivers */
    _glapi_set_context((void *) newCtx);
    ASSERT(_mesa_get_current_context() == newCtx);
 

@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1051,6 +1051,12 @@ OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
    ctx->height = height;
 
    osmesa_update_state( &ctx->mesa, 0 );
+
+   /* Call this periodically to detect when the user has begun using
+    * GL rendering from multiple threads.
+    */
+   _glapi_check_multithread();
+
    _mesa_make_current( &ctx->mesa, ctx->gl_buffer, ctx->gl_buffer );
 
    if (ctx->userRowLength)
