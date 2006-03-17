@@ -145,41 +145,9 @@ static const int NormalFuncs[8] = {
    _gloffset_Normal3dv,
 };
 
-#if defined(IN_DRI_DRIVER)
+/* Note: _gloffset_* for these may not be a compile-time constant. */
 static int SecondaryColorFuncs[8];
-static int FogCoordFuncs[8] = {
-   -1,
-   -1,
-   -1,
-   -1,
-   -1,
-   -1,
-    0,
-    0,
-};
-#else
-static const int SecondaryColorFuncs[8] = {
-   _gloffset_SecondaryColor3bvEXT,
-   _gloffset_SecondaryColor3ubvEXT,
-   _gloffset_SecondaryColor3svEXT,
-   _gloffset_SecondaryColor3usvEXT,
-   _gloffset_SecondaryColor3ivEXT,
-   _gloffset_SecondaryColor3uivEXT,
-   _gloffset_SecondaryColor3fvEXT,
-   _gloffset_SecondaryColor3dvEXT,
-};
-
-static const int FogCoordFuncs[8] = {
-   -1,
-   -1,
-   -1,
-   -1,
-   -1,
-   -1,
-   _gloffset_FogCoordfvEXT,
-   _gloffset_FogCoorddvEXT
-};
-#endif
+static int FogCoordFuncs[8];
 
 /**********************************************************************/
 
@@ -622,7 +590,7 @@ GLboolean _ae_create_context( GLcontext *ctx )
    if (ctx->aelt_context)
       return GL_TRUE;
 
-#if defined(IN_DRI_DRIVER)
+   /* These _gloffset_* values may not be compile-time constants */
    SecondaryColorFuncs[0] = _gloffset_SecondaryColor3bvEXT;
    SecondaryColorFuncs[1] = _gloffset_SecondaryColor3ubvEXT;
    SecondaryColorFuncs[2] = _gloffset_SecondaryColor3svEXT;
@@ -634,7 +602,6 @@ GLboolean _ae_create_context( GLcontext *ctx )
 
    FogCoordFuncs[6] = _gloffset_FogCoordfvEXT;
    FogCoordFuncs[7] = _gloffset_FogCoorddvEXT;
-#endif
 
    ctx->aelt_context = MALLOC( sizeof(AEcontext) );
    if (!ctx->aelt_context)
