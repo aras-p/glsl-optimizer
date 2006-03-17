@@ -1,6 +1,6 @@
 # Makefile for core library for VMS
 # contributed by Jouk Jansen  joukj@hrem.nano.tudelft.nl
-# Last revision : 21 February 2006
+# Last revision : 17 March 2006
 
 .first
 	define gl [----.include.gl]
@@ -28,7 +28,8 @@ OBJECTS = \
 	slang_storage.obj,slang_assemble_assignment.obj,\
 	slang_compile_function.obj,slang_compile_struct.obj,\
 	slang_compile_variable.obj,slang_compile_operation.obj,\
-	slang_library_noise.obj,slang_link.obj,slang_export.obj
+	slang_library_noise.obj,slang_link.obj,slang_export.obj,\
+	slang_analyse.obj,slang_library_texsample.obj
 
 ##### RULES #####
 
@@ -60,3 +61,5 @@ slang_compile_operation.obj : slang_compile_operation.c
 slang_library_noise.obj : slang_library_noise.c
 slang_link.obj : slang_link.c
 slang_export.obj : slang_export.c
+slang_analyse.obj : slang_analyse.c
+slang_library_texsample.obj : slang_library_texsample.c
