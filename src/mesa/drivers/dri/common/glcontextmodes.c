@@ -37,7 +37,7 @@
 # include <GL/gl.h>
 # include "GL/internal/dri_interface.h"
 # include "imports.h"
-# define __glXMemset  memset
+# define _mesa_memset  memset
 #else
 # if defined(HAVE_DIX_CONFIG_H)
 #  include <dix-config.h>
@@ -47,14 +47,14 @@
 # include "GL/glxint.h"
 
 # ifdef XFree86Server
-#  include "GL/glx_ansic.h"
-extern void * __glXMalloc( size_t size );
-extern void __glXFree( void * ptr );
-#  define _mesa_malloc(b) __glXMalloc(b)
-#  define _mesa_free(m)   __glXFree(m)
+# include <os.h>
+# include <string.h>
+#  define _mesa_malloc(b) xalloc(b)
+#  define _mesa_free(m)   xfree(m)
+#  define _mesa_memset   memset
 # else
 #  include <X11/Xlibint.h>
-#  define __glXMemset  memset
+#  define _mesa_memset memset
 #  define _mesa_malloc(b) Xmalloc(b)
 #  define _mesa_free(m) Xfree(m)
 # endif /* XFree86Server */
@@ -129,7 +129,7 @@ _gl_copy_visual_to_context_mode( __GLcontextModes * mode,
 {
     __GLcontextModes * const next = mode->next;
 
-    (void) __glXMemset( mode, 0, sizeof( __GLcontextModes ) );
+    (void) _mesa_memset( mode, 0, sizeof( __GLcontextModes ) );
     mode->next = next;
 
     mode->visualID = config->vid;
@@ -370,7 +370,7 @@ _gl_context_modes_create( unsigned count, size_t minimum_size )
 	 break;
       }
       
-      (void) __glXMemset( *next, 0, size );
+      (void) _mesa_memset( *next, 0, size );
       (*next)->visualID = GLX_DONT_CARE;
       (*next)->visualType = GLX_DONT_CARE;
       (*next)->visualRating = GLX_NONE;
