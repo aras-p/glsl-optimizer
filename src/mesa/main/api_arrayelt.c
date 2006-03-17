@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,10 +29,8 @@
 #include "glheader.h"
 #include "api_arrayelt.h"
 #include "context.h"
-#include "glapi.h"
 #include "imports.h"
 #include "macros.h"
-#include "mtypes.h"
 #include "glapioffsets.h"
 #include "dispatch.h"
 
@@ -600,6 +598,12 @@ GLboolean _ae_create_context( GLcontext *ctx )
    SecondaryColorFuncs[6] = _gloffset_SecondaryColor3fvEXT;
    SecondaryColorFuncs[7] = _gloffset_SecondaryColor3dvEXT;
 
+   FogCoordFuncs[0] = -1;
+   FogCoordFuncs[1] = -1;
+   FogCoordFuncs[2] = -1;
+   FogCoordFuncs[3] = -1;
+   FogCoordFuncs[4] = -1;
+   FogCoordFuncs[5] = -1;
    FogCoordFuncs[6] = _gloffset_FogCoordfvEXT;
    FogCoordFuncs[7] = _gloffset_FogCoorddvEXT;
 
