@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -67,9 +67,9 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
    if (ctx->Texture._EnabledCoordUnits)
       _swrast_span_default_texcoords(ctx, &span);
 
-   if ((SWRAST_CONTEXT(ctx)->_RasterMask & ~CLIP_BIT) == 0
+   if ((swrast->_RasterMask & ~CLIP_BIT) == 0
        && ctx->Texture._EnabledCoordUnits == 0
-       && unpack->Alignment == 1
+       && unpack->Alignment == 1 /* XXX may not really need this */
        && !unpack->SwapBytes
        && !unpack->LsbFirst) {
 
@@ -694,7 +694,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    if (ctx->Texture._EnabledCoordUnits)
       _swrast_span_default_texcoords(ctx, &span);
 
-   if (SWRAST_CONTEXT(ctx)->_RasterMask == 0 && !zoom && x >= 0 && y >= 0
+   if (swrast->_RasterMask == 0 && !zoom && x >= 0 && y >= 0
        && x + width <= (GLint) ctx->DrawBuffer->Width
        && y + height <= (GLint) ctx->DrawBuffer->Height
        && ctx->DrawBuffer->_NumColorDrawBuffers[0] == 1) {
