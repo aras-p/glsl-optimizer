@@ -282,99 +282,6 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 	int prim)
 {
    int type, num_verts;
-   LOCAL_VARS
-
-   type=r300_get_primitive_type(rmesa, ctx, prim);
-   num_verts=r300_get_num_verts(rmesa, ctx, end-start, prim);
-
-   if(type<0 || num_verts <= 0)return;
-
-   if(rmesa->state.Elts){
-	r300EmitAOS(rmesa, rmesa->state.aos_count, 0);
-#if 0
-	int i;
-	start_index32_packet(num_verts, type);
-	for(i=0; i < num_verts; i++)
-		e32(rmesa->state.Elts[start+i]); /* start ? */
-#else
-	if(num_verts == 1){
-		start_index32_packet(num_verts, type);
-		e32(rmesa->state.Elts[start]);
-		return;
-	}
-	
-	if(num_verts > 65535){ /* not implemented yet */
-		WARN_ONCE("Too many elts\n");
-		return;
-	}
-	r300EmitElts(ctx, rmesa->state.Elts+start, num_verts, 4);
-	fire_EB(PASS_PREFIX GET_START(&(rmesa->state.elt_dma)), num_verts, type, 4);
-#endif
-   }else{
-	   r300EmitAOS(rmesa, rmesa->state.aos_count, start);
-	   fire_AOS(PASS_PREFIX num_verts, type);
-   }
-}
-
-static GLboolean r300_run_vb_render(GLcontext *ctx,
-				 struct tnl_pipeline_stage *stage)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct vertex_buffer *VB = &tnl->vb;
-	int i;
-	LOCAL_VARS
-   
-	if (RADEON_DEBUG & DEBUG_PRIMS)
-		fprintf(stderr, "%s\n", __FUNCTION__);
-	
-	
-	//r300UpdateShaders(rmesa);
-	
-   	r300ReleaseArrays(ctx);
-	r300EmitArrays(ctx, GL_FALSE);
-	
-	r300UpdateShaderStates(rmesa);
-
-	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
-	e32(0x0000000a);
-
-	reg_start(0x4f18,0);
-	e32(0x00000003);
-	r300EmitState(rmesa);
-	
-	rmesa->state.Elts = VB->Elts;
-
-	for(i=0; i < VB->PrimitiveCount; i++){
-		GLuint prim = VB->Primitive[i].mode;
-		GLuint start = VB->Primitive[i].start;
-		GLuint length = VB->Primitive[i].count;
-		
-		r300_render_vb_primitive(rmesa, ctx, start, start + length, prim);
-	}
-	
-	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
-	e32(0x0000000a);
-
-	reg_start(0x4f18,0);
-	e32(0x00000003);
-		
-#ifdef USER_BUFFERS
-	r300UseArrays(ctx);
-#endif
-
-	return GL_FALSE;
-}
-
-#ifdef RADEON_VTXFMT_A
-
-static void r300_render_vb_primitive_vtxfmt_a(r300ContextPtr rmesa,
-	GLcontext *ctx,
-	int start,
-	int end,
-	int prim)
-{
-   int type, num_verts;
 
    type=r300_get_primitive_type(rmesa, ctx, prim);
    num_verts=r300_get_num_verts(rmesa, ctx, end-start, prim);
@@ -416,6 +323,7 @@ void dump_array(struct r300_dma_region *rvb, int count)
 	int *out = (int *)(rvb->address + rvb->start);
 	int i, ci;
 	
+	fprintf(stderr, "stride %d:", rvb->aos_stride);
 	for (i=0; i < count; i++) {
 		fprintf(stderr, "{");
 		if (rvb->aos_format == AOS_FORMAT_FLOAT)
@@ -437,7 +345,7 @@ void dump_dt(struct dt *dt, int count)
 	int *out = dt->data;
 	int i, ci;
 	
-	fprintf(stderr, "base at %p ", out);
+	fprintf(stderr, "stride %d", dt->stride);
 	
 	for (i=0; i < count; i++){
 		fprintf(stderr, "{");
@@ -456,23 +364,27 @@ void dump_dt(struct dt *dt, int count)
 }
 #endif
 
-/*static */GLboolean r300_run_vb_render_vtxfmt_a(GLcontext *ctx,
+GLboolean r300_run_vb_render(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
-   r300ContextPtr rmesa = R300_CONTEXT(ctx);
-   //TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct radeon_vertex_buffer *VB = &rmesa->state.VB; //&tnl->vb;
-   int i;
-   LOCAL_VARS
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	struct radeon_vertex_buffer *VB = &rmesa->state.VB;
+	int i;
+	LOCAL_VARS
    
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
+
+	if (stage) {
+ 		TNLcontext *tnl = TNL_CONTEXT(ctx);
+		radeon_vb_to_rvb(rmesa, VB, &tnl->vb);
+	}
 	
 	r300UpdateShaders(rmesa);
 	if (rmesa->state.VB.LockCount == 0 || 1) {
  	  	r300ReleaseArrays(ctx);
-		r300EmitArraysVtx(ctx, GL_FALSE);
-		
+		r300EmitArrays(ctx, GL_FALSE);
+
 		r300UpdateShaderStates(rmesa);
 	} else {
 		/* TODO: Figure out why do we need these. */
@@ -496,7 +408,7 @@ void dump_dt(struct dt *dt, int count)
 #endif
 #if 0
  	  	r300ReleaseArrays(ctx);
-		r300EmitArraysVtx(ctx, GL_FALSE);
+		r300EmitArrays(ctx, GL_FALSE);
 			
 		fprintf(stderr, "after:\n");
 		for(i=0; i < rmesa->state.aos_count; i++){
@@ -522,7 +434,7 @@ void dump_dt(struct dt *dt, int count)
 		GLuint start = VB->Primitive[i].start;
 		GLuint length = VB->Primitive[i].count;
 		
-		r300_render_vb_primitive_vtxfmt_a(rmesa, ctx, start, start + length, prim);
+		r300_render_vb_primitive(rmesa, ctx, start, start + length, prim);
 	}
 
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
@@ -536,19 +448,19 @@ void dump_dt(struct dt *dt, int count)
 #endif
 	return GL_FALSE;
 }
-#endif
 
 #define FALLBACK_IF(expr) \
 do {										\
 	if (expr) {								\
 		if (1 || RADEON_DEBUG & DEBUG_FALLBACKS)			\
 			WARN_ONCE("fallback:%s\n", #expr);			\
-		return GL_TRUE;							\
+		return R300_FALLBACK_RAST;							\
 	}									\
 } while(0)
 
-GLboolean r300Fallback(GLcontext *ctx)
+int r300Fallback(GLcontext *ctx)
 {
+	int i;
 
 	//FALLBACK_IF(ctx->RenderMode != GL_RENDER);  // We do not do SELECT or FEEDBACK (yet ?)
 	
@@ -576,8 +488,12 @@ GLboolean r300Fallback(GLcontext *ctx)
 	/* Rest could be done with vertex fragments */
 	if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite)
 		FALLBACK_IF(ctx->Point.PointSprite); // GL_POINT_SPRITE_NV
-	
-	return GL_FALSE;
+
+	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
+		if (ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_RECT_BIT)
+			return R300_FALLBACK_TCL;
+		
+	return R300_FALLBACK_NONE;
 }
 
 /**
@@ -593,9 +509,9 @@ static GLboolean r300_run_render(GLcontext *ctx,
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	if (r300Fallback(ctx))
+	if (r300Fallback(ctx) >= R300_FALLBACK_RAST)
 		return GL_TRUE;
-	
+
 	return r300_run_vb_render(ctx, stage);
 }
 
@@ -613,7 +529,6 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct r300_vertex_program *vp;
-	int i;
    
    	hw_tcl_on=future_hw_tcl_on;
    
@@ -622,16 +537,10 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 	if(hw_tcl_on == GL_FALSE)
 		return GL_TRUE;
 	
-	if (r300Fallback(ctx)) {
+	if (r300Fallback(ctx) >= R300_FALLBACK_TCL) {
 		hw_tcl_on = GL_FALSE;
 		return GL_TRUE;
 	}
-	
-	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) /* XXX: Needs to be part of r300Fallback */
-		if (ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_RECT_BIT) {
-			hw_tcl_on = GL_FALSE;
-			return GL_TRUE;
-		}
 	
 	r300UpdateShaders(rmesa);
 

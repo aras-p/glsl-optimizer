@@ -714,7 +714,6 @@ struct r300_fragment_program {
 #define REG_COLOR0	1
 #define REG_TEX0	2
 
-#ifdef USER_BUFFERS
 struct dt {
 	GLint size;
 	GLenum type;
@@ -736,7 +735,6 @@ struct radeon_vertex_buffer {
 	GLsizei LockCount;
 	int lock_uptodate;
 };
-#endif
 
 struct r300_aos_rec {
 	GLuint offset;
@@ -759,9 +757,7 @@ struct r300_state {
 	struct r300_pfs_compile_state pfs_compile;
 	struct r300_dma_region aos[R300_MAX_AOS_ARRAYS];
 	int aos_count;
-#ifdef USER_BUFFERS
 	struct radeon_vertex_buffer VB;
-#endif
 
 	GLuint *Elts;
 	struct r300_dma_region elt_dma;
@@ -777,6 +773,9 @@ struct r300_state {
 	
 };
 
+#define R300_FALLBACK_NONE 0
+#define R300_FALLBACK_TCL 1
+#define R300_FALLBACK_RAST 2
 
 /**
  * R300 context structure.
@@ -808,9 +807,6 @@ struct r300_context {
 	GLuint prefer_gart_client_texturing;
 
 #ifdef USER_BUFFERS
-	key_t mm_ipc_key;
-	int mm_shm_id;
-	int mm_sem_id;
 	struct radeon_memory_manager *rmm;
 	GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
 	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
@@ -847,11 +843,13 @@ extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 void r300_translate_vertex_shader(struct r300_vertex_program *vp);
 extern void r300InitShaderFuncs(struct dd_function_table *functions);
 extern int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp, float *dst);
-extern GLboolean r300Fallback(GLcontext *ctx);
+extern int r300Fallback(GLcontext *ctx);
+
+extern void radeon_vb_to_rvb(r300ContextPtr rmesa, struct radeon_vertex_buffer *rvb, struct vertex_buffer *vb);
+extern GLboolean r300_run_vb_render(GLcontext *ctx, struct tnl_pipeline_stage *stage);
 
 #ifdef RADEON_VTXFMT_A
 extern void radeon_init_vtxfmt_a(r300ContextPtr rmesa);
-extern GLboolean r300_run_vb_render_vtxfmt_a(GLcontext *ctx, struct tnl_pipeline_stage *stage);
 #endif
 
 #ifdef HW_VBOS

@@ -45,15 +45,55 @@
 #include "api_validate.h"
 #include "state.h"
 
+#define CONV_VB(a, b) rvb->AttribPtr[(a)].size = vb->b->size, \
+			rvb->AttribPtr[(a)].type = GL_FLOAT, \
+			rvb->AttribPtr[(a)].stride = vb->b->stride, \
+			rvb->AttribPtr[(a)].data = vb->b->data
+
+void radeon_vb_to_rvb(r300ContextPtr rmesa, struct radeon_vertex_buffer *rvb, struct vertex_buffer *vb)
+{
+	int i;
+	GLcontext *ctx;
+	ctx = rmesa->radeon.glCtx;
+	
+	memset(rvb, 0, sizeof(*rvb));
+	
+	rvb->Elts = vb->Elts;
+	rvb->elt_size = 4;
+	rvb->elt_min = 0;
+	rvb->elt_max = vb->Count;
+	
+	rvb->Count = vb->Count;
+	
+	CONV_VB(VERT_ATTRIB_POS, ObjPtr);
+	CONV_VB(VERT_ATTRIB_NORMAL, NormalPtr);
+	CONV_VB(VERT_ATTRIB_COLOR0, ColorPtr[0]);
+	CONV_VB(VERT_ATTRIB_COLOR1, SecondaryColorPtr[0]);
+	CONV_VB(VERT_ATTRIB_FOG, FogCoordPtr);
+	
+	for (i=0; i < MAX_TEXTURE_COORD_UNITS; i++)
+		CONV_VB(VERT_ATTRIB_TEX0 + i, TexCoordPtr[i]);
+	
+	rvb->Primitive = vb->Primitive;
+	rvb->PrimitiveCount = vb->PrimitiveCount;
+	rvb->LockFirst = rvb->LockCount = 0;
+	rvb->lock_uptodate = GL_FALSE;
+}
+
 #ifdef RADEON_VTXFMT_A
 
 extern void _tnl_array_init( GLcontext *ctx );
 
-#define CONV(a, b) rmesa->state.VB.AttribPtr[(a)].size = ctx->Array.b.Size, \
-			rmesa->state.VB.AttribPtr[(a)].data = ctx->Array.b.BufferObj->Name ? \
-			(void *)ADD_POINTERS(ctx->Array.b.Ptr, ctx->Array.b.BufferObj->Data) : (void *)ctx->Array.b.Ptr, \
-			rmesa->state.VB.AttribPtr[(a)].stride = ctx->Array.b.StrideB, \
-			rmesa->state.VB.AttribPtr[(a)].type = ctx->Array.b.Type
+#define CONV(a, b) do { \
+			if (ctx->Array.b.Enabled) { \
+				rmesa->state.VB.AttribPtr[(a)].size = ctx->Array.b.Size; \
+				rmesa->state.VB.AttribPtr[(a)].data = ctx->Array.b.BufferObj->Name ? \
+				(void *)ADD_POINTERS(ctx->Array.b.Ptr, ctx->Array.b.BufferObj->Data) : (void *)ctx->Array.b.Ptr; \
+				rmesa->state.VB.AttribPtr[(a)].stride = ctx->Array.b.StrideB; \
+				rmesa->state.VB.AttribPtr[(a)].type = ctx->Array.b.Type; \
+				enabled |= 1 << (a); \
+			} \
+		   } while (0)
 
 static int setup_arrays(r300ContextPtr rmesa, GLint start)
 {
@@ -63,40 +103,25 @@ static int setup_arrays(r300ContextPtr rmesa, GLint start)
 	GLuint enabled = 0;
 	
 	ctx = rmesa->radeon.glCtx;
-	if (r300Fallback(ctx))
-		return -1;
+	i = r300Fallback(ctx);
+	if (i)
+		return i;
 
 	memset(rmesa->state.VB.AttribPtr, 0, VERT_ATTRIB_MAX*sizeof(struct dt));
 	
 	CONV(VERT_ATTRIB_POS, Vertex);
-	if (ctx->Array.Vertex.Enabled)
-		enabled |= 1 << VERT_ATTRIB_POS;
-	
 	CONV(VERT_ATTRIB_NORMAL, Normal);
-	if (ctx->Array.Normal.Enabled)
-		enabled |= 1 << VERT_ATTRIB_NORMAL;
-	
 	CONV(VERT_ATTRIB_COLOR0, Color);
-	if (ctx->Array.Color.Enabled)
-		enabled |= 1 << VERT_ATTRIB_COLOR0;
-	
 	CONV(VERT_ATTRIB_COLOR1, SecondaryColor);
-	if (ctx->Array.SecondaryColor.Enabled)
-		enabled |= 1 << VERT_ATTRIB_COLOR1;
-	
 	CONV(VERT_ATTRIB_FOG, FogCoord);
-	if (ctx->Array.FogCoord.Enabled)
-		enabled |= 1 << VERT_ATTRIB_FOG;
 	
-	for (i=0; i < MAX_TEXTURE_COORD_UNITS; i++) {
+	for (i=0; i < MAX_TEXTURE_COORD_UNITS; i++)
 		CONV(VERT_ATTRIB_TEX0 + i, TexCoord[i]);
-		
-		if(ctx->Array.TexCoord[i].Enabled) {
-			enabled |= 1 << (VERT_ATTRIB_TEX0+i);
-		}
-		
-	}
-
+	
+	if (ctx->VertexProgram._Enabled)
+		for (i=0; i < VERT_ATTRIB_MAX; i++)
+			CONV(i, VertexAttrib[i]);
+	
 	for (i=0; i < VERT_ATTRIB_MAX; i++) {
 		if (enabled & (1 << i)) {
 			rmesa->state.VB.AttribPtr[i].data += rmesa->state.VB.AttribPtr[i].stride * start;
@@ -113,12 +138,12 @@ static int setup_arrays(r300ContextPtr rmesa, GLint start)
 		if(rmesa->state.VB.AttribPtr[i].type != GL_UNSIGNED_BYTE &&
 			rmesa->state.VB.AttribPtr[i].type != GL_FLOAT){
 			WARN_ONCE("Unsupported format %d at index %d\n", rmesa->state.VB.AttribPtr[i].type, i);
-			return -1;
+			return R300_FALLBACK_TCL;
 		}
 		if(rmesa->state.VB.AttribPtr[i].type == GL_UNSIGNED_BYTE &&
 			rmesa->state.VB.AttribPtr[i].size != 4){
 			WARN_ONCE("Unsupported component count for ub colors\n");
-			return -1;
+			return R300_FALLBACK_TCL;
 		}
 		
 		/*fprintf(stderr, "%d: ", i);
@@ -143,7 +168,7 @@ static int setup_arrays(r300ContextPtr rmesa, GLint start)
 		fprintf(stderr, "Stride %d ", rmesa->state.VB.AttribPtr[i].stride);
 		fprintf(stderr, "\n");*/
 	}
-	return 0;
+	return R300_FALLBACK_NONE;
 }
 
 void radeon_init_vtxfmt_a(r300ContextPtr rmesa);
@@ -180,12 +205,6 @@ static void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const G
 		return;
 	
 	FLUSH_CURRENT( ctx, 0 );
-	/*
-		fprintf(stderr, "dt at %s:\n", __FUNCTION__);
-		for(i=0; i < VERT_ATTRIB_MAX; i++){
-			fprintf(stderr, "dt %d:", i);
-			dump_dt(&rmesa->state.VB.AttribPtr[i], rmesa->state.VB.Count);
-		}*/
 	r300ReleaseDmaRegion(rmesa, &rvb, __FUNCTION__);
 	
 	switch (type) {
@@ -276,7 +295,7 @@ static void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const G
 			rmesa->state.VB.Count = rmesa->state.VB.LockCount;
 			
 			r300ReleaseArrays(ctx);
-			r300EmitArraysVtx(ctx, GL_FALSE);
+			r300EmitArrays(ctx, GL_FALSE);
 			
 			rmesa->state.VB.lock_uptodate = GL_TRUE;
 		}
@@ -292,7 +311,7 @@ static void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const G
 			return;
 		}
 	} else {
-		if (setup_arrays(rmesa, min))
+		if (setup_arrays(rmesa, min) >= R300_FALLBACK_TCL)
 			goto fallback;
 		
 		rmesa->state.VB.Count = max - min + 1;
@@ -313,7 +332,7 @@ static void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const G
 	rmesa->state.VB.Elts = ptr;
 	rmesa->state.VB.elt_size = elt_size;
 	
-	r300_run_vb_render_vtxfmt_a(ctx, NULL);
+	r300_run_vb_render(ctx, NULL);
 	
 	if(rvb.buf)
 		radeon_mm_use(rmesa, rvb.buf->id);
@@ -438,7 +457,7 @@ static void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei
 			rmesa->state.VB.Count = rmesa->state.VB.LockCount;
 			
 			r300ReleaseArrays(ctx);
-			r300EmitArraysVtx(ctx, GL_FALSE);
+			r300EmitArrays(ctx, GL_FALSE);
 			
 			rmesa->state.VB.lock_uptodate = GL_TRUE;
 		}
@@ -454,7 +473,7 @@ static void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei
 			return;
 		}*/
 	} else {
-		if (setup_arrays(rmesa, min))
+		if (setup_arrays(rmesa, min) >= R300_FALLBACK_TCL)
 			goto fallback;
 		
 		rmesa->state.VB.Count = max - min + 1;
@@ -477,7 +496,7 @@ static void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei
 	rmesa->state.VB.elt_min = min;
 	rmesa->state.VB.elt_max = max;
 	
-	r300_run_vb_render_vtxfmt_a(ctx, NULL);
+	r300_run_vb_render(ctx, NULL);
 	
 	if(rvb.buf)
 		radeon_mm_use(rmesa, rvb.buf->id);
@@ -531,7 +550,7 @@ static void radeonDrawArrays( GLenum mode, GLint start, GLsizei count )
 			rmesa->state.VB.Count = rmesa->state.VB.LockCount;
 			
 			r300ReleaseArrays(ctx);
-			r300EmitArraysVtx(ctx, GL_FALSE);
+			r300EmitArrays(ctx, GL_FALSE);
 			
 			rmesa->state.VB.lock_uptodate = GL_TRUE;
 		}
@@ -547,7 +566,7 @@ static void radeonDrawArrays( GLenum mode, GLint start, GLsizei count )
 			goto fallback;
 		}
 	} else {
-		if (setup_arrays(rmesa, start))
+		if (setup_arrays(rmesa, start) >= R300_FALLBACK_TCL)
 			goto fallback;
 		
 		rmesa->state.VB.Count = count;
@@ -570,7 +589,7 @@ static void radeonDrawArrays( GLenum mode, GLint start, GLsizei count )
 	rmesa->state.VB.elt_min = 0;
 	rmesa->state.VB.elt_max = 0;
 	
-	r300_run_vb_render_vtxfmt_a(ctx, NULL);
+	r300_run_vb_render(ctx, NULL);
 
 	return ;
 	
