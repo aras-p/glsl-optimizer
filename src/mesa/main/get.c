@@ -312,7 +312,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ctx->DrawBuffer->Visual.doubleBufferMode;
          break;
       case GL_DRAW_BUFFER:
-         params[0] = ENUM_TO_BOOLEAN(ctx->Color.DrawBuffer[0]);
+         params[0] = ENUM_TO_BOOLEAN(ctx->DrawBuffer->ColorDrawBuffer[0]);
          break;
       case GL_EDGE_FLAG:
          {
@@ -781,7 +781,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = INT_TO_BOOLEAN(ctx->ProjectionMatrixStack.Depth + 1);
          break;
       case GL_READ_BUFFER:
-         params[0] = ENUM_TO_BOOLEAN(ctx->Pixel.ReadBuffer);
+         params[0] = ENUM_TO_BOOLEAN(ctx->ReadBuffer->ColorReadBuffer);
          break;
       case GL_RED_BIAS:
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.RedBias);
@@ -1743,7 +1743,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_DRAW_BUFFER0_ARB:
          CHECK_EXT1(ARB_draw_buffers, "GetBooleanv");
-         params[0] = ENUM_TO_BOOLEAN(ctx->Color.DrawBuffer[0]);
+         params[0] = ENUM_TO_BOOLEAN(ctx->DrawBuffer->ColorDrawBuffer[0]);
          break;
       case GL_DRAW_BUFFER1_ARB:
          CHECK_EXT1(ARB_draw_buffers, "GetBooleanv");
@@ -1753,7 +1753,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->Color.DrawBuffer[1];
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[1];
          params[0] = ENUM_TO_BOOLEAN(buffer);
          }
          break;
@@ -1765,7 +1765,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->Color.DrawBuffer[2];
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[2];
          params[0] = ENUM_TO_BOOLEAN(buffer);
          }
          break;
@@ -1777,7 +1777,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->Color.DrawBuffer[3];
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[3];
          params[0] = ENUM_TO_BOOLEAN(buffer);
          }
          break;
@@ -2130,7 +2130,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = BOOLEAN_TO_FLOAT(ctx->DrawBuffer->Visual.doubleBufferMode);
          break;
       case GL_DRAW_BUFFER:
-         params[0] = ENUM_TO_FLOAT(ctx->Color.DrawBuffer[0]);
+         params[0] = ENUM_TO_FLOAT(ctx->DrawBuffer->ColorDrawBuffer[0]);
          break;
       case GL_EDGE_FLAG:
          {
@@ -2599,7 +2599,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)(ctx->ProjectionMatrixStack.Depth + 1);
          break;
       case GL_READ_BUFFER:
-         params[0] = ENUM_TO_FLOAT(ctx->Pixel.ReadBuffer);
+         params[0] = ENUM_TO_FLOAT(ctx->ReadBuffer->ColorReadBuffer);
          break;
       case GL_RED_BIAS:
          params[0] = ctx->Pixel.RedBias;
@@ -3561,7 +3561,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_DRAW_BUFFER0_ARB:
          CHECK_EXT1(ARB_draw_buffers, "GetFloatv");
-         params[0] = ENUM_TO_FLOAT(ctx->Color.DrawBuffer[0]);
+         params[0] = ENUM_TO_FLOAT(ctx->DrawBuffer->ColorDrawBuffer[0]);
          break;
       case GL_DRAW_BUFFER1_ARB:
          CHECK_EXT1(ARB_draw_buffers, "GetFloatv");
@@ -3571,7 +3571,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->Color.DrawBuffer[1];
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[1];
          params[0] = ENUM_TO_FLOAT(buffer);
          }
          break;
@@ -3583,7 +3583,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->Color.DrawBuffer[2];
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[2];
          params[0] = ENUM_TO_FLOAT(buffer);
          }
          break;
@@ -3595,7 +3595,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->Color.DrawBuffer[3];
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[3];
          params[0] = ENUM_TO_FLOAT(buffer);
          }
          break;
@@ -3948,7 +3948,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = BOOLEAN_TO_INT(ctx->DrawBuffer->Visual.doubleBufferMode);
          break;
       case GL_DRAW_BUFFER:
-         params[0] = ENUM_TO_INT(ctx->Color.DrawBuffer[0]);
+         params[0] = ENUM_TO_INT(ctx->DrawBuffer->ColorDrawBuffer[0]);
          break;
       case GL_EDGE_FLAG:
          {
@@ -4417,7 +4417,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ctx->ProjectionMatrixStack.Depth + 1;
          break;
       case GL_READ_BUFFER:
-         params[0] = ENUM_TO_INT(ctx->Pixel.ReadBuffer);
+         params[0] = ENUM_TO_INT(ctx->ReadBuffer->ColorReadBuffer);
          break;
       case GL_RED_BIAS:
          params[0] = IROUND(ctx->Pixel.RedBias);
@@ -5379,7 +5379,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_DRAW_BUFFER0_ARB:
          CHECK_EXT1(ARB_draw_buffers, "GetIntegerv");
-         params[0] = ENUM_TO_INT(ctx->Color.DrawBuffer[0]);
+         params[0] = ENUM_TO_INT(ctx->DrawBuffer->ColorDrawBuffer[0]);
          break;
       case GL_DRAW_BUFFER1_ARB:
          CHECK_EXT1(ARB_draw_buffers, "GetIntegerv");
@@ -5389,7 +5389,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->Color.DrawBuffer[1];
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[1];
          params[0] = ENUM_TO_INT(buffer);
          }
          break;
@@ -5401,7 +5401,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->Color.DrawBuffer[2];
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[2];
          params[0] = ENUM_TO_INT(buffer);
          }
          break;
@@ -5413,7 +5413,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->Color.DrawBuffer[3];
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[3];
          params[0] = ENUM_TO_INT(buffer);
          }
          break;

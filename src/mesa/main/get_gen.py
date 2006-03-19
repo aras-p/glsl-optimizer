@@ -183,7 +183,7 @@ StateVars = [
 	( "GL_DITHER", GLboolean, ["ctx->Color.DitherFlag"], "", None ),
 	( "GL_DOUBLEBUFFER", GLboolean,
 	  ["ctx->DrawBuffer->Visual.doubleBufferMode"], "", None ),
-	( "GL_DRAW_BUFFER", GLenum, ["ctx->Color.DrawBuffer[0]"], "", None ),
+	( "GL_DRAW_BUFFER", GLenum, ["ctx->DrawBuffer->ColorDrawBuffer[0]"], "", None ),
 	( "GL_EDGE_FLAG", GLboolean, ["ctx->Current.EdgeFlag"],
 	  "FLUSH_CURRENT(ctx, 0);", None ),
 	( "GL_FEEDBACK_BUFFER_SIZE", GLint, ["ctx->Feedback.BufferSize"], "", None ),
@@ -377,7 +377,7 @@ StateVars = [
 	  "const GLfloat *matrix = ctx->ProjectionMatrixStack.Top->m;", None ),
 	( "GL_PROJECTION_STACK_DEPTH", GLint,
 	  ["ctx->ProjectionMatrixStack.Depth + 1"], "", None ),
-	( "GL_READ_BUFFER", GLenum, ["ctx->Pixel.ReadBuffer"], "", None ),
+	( "GL_READ_BUFFER", GLenum, ["ctx->ReadBuffer->ColorReadBuffer"], "", None ),
 	( "GL_RED_BIAS", GLfloat, ["ctx->Pixel.RedBias"], "", None ),
 	( "GL_RED_BITS", GLint, [" ctx->DrawBuffer->Visual.redBits "], "", None ),
 	( "GL_RED_SCALE", GLfloat, ["ctx->Pixel.RedScale"], "", None ),
@@ -906,7 +906,7 @@ StateVars = [
 	( "GL_MAX_DRAW_BUFFERS_ARB", GLint,
 	  ["ctx->Const.MaxDrawBuffers"], "", ["ARB_draw_buffers"] ),
 	( "GL_DRAW_BUFFER0_ARB", GLenum,
-	  ["ctx->Color.DrawBuffer[0]"], "", ["ARB_draw_buffers"] ),
+	  ["ctx->DrawBuffer->ColorDrawBuffer[0]"], "", ["ARB_draw_buffers"] ),
 	( "GL_DRAW_BUFFER1_ARB", GLenum,
 	  ["buffer"],
 	  """GLenum buffer;
@@ -914,7 +914,7 @@ StateVars = [
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->Color.DrawBuffer[1];""", ["ARB_draw_buffers"] ),
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[1];""", ["ARB_draw_buffers"] ),
 	( "GL_DRAW_BUFFER2_ARB", GLenum,
 	  ["buffer"],
 	  """GLenum buffer;
@@ -922,7 +922,7 @@ StateVars = [
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->Color.DrawBuffer[2];""", ["ARB_draw_buffers"] ),
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[2];""", ["ARB_draw_buffers"] ),
 	( "GL_DRAW_BUFFER3_ARB", GLenum,
 	  ["buffer"],
 	  """GLenum buffer;
@@ -930,7 +930,7 @@ StateVars = [
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->Color.DrawBuffer[3];""", ["ARB_draw_buffers"] ),
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[3];""", ["ARB_draw_buffers"] ),
 	# XXX Add more GL_DRAW_BUFFERn_ARB entries as needed in the future
 
 	# GL_OES_read_format
