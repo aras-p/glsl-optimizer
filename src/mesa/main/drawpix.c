@@ -27,6 +27,7 @@
 #include "context.h"
 #include "drawpix.h"
 #include "feedback.h"
+#include "framebuffer.h"
 #include "image.h"
 #include "state.h"
 
@@ -43,7 +44,6 @@ error_check_format_type(GLcontext *ctx, GLenum format, GLenum type,
                         GLboolean drawing)
 {
    const char *readDraw = drawing ? "Draw" : "Read";
-   struct gl_framebuffer *fb = drawing ? ctx->DrawBuffer : ctx->ReadBuffer;
 
    if (ctx->Extensions.EXT_packed_depth_stencil
        && type == GL_UNSIGNED_INT_24_8_EXT
@@ -78,23 +78,35 @@ error_check_format_type(GLcontext *ctx, GLenum format, GLenum type,
                    "glDrawPixels(drawing RGB pixels into color index buffer)");
          return GL_TRUE;
       }
+      if (!drawing && !_mesa_dest_buffer_exists(ctx, GL_COLOR)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glReadPixels(no color buffer)");
+         return GL_TRUE;
+      }
       break;
    case GL_COLOR_INDEX:
       if (!drawing && ctx->Visual.rgbMode) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                    "glReadPixels(reading color index format from RGB buffer");
+                    "glReadPixels(reading color index format from RGB buffer)");
+         return GL_TRUE;
+      }
+      if (!drawing && !_mesa_dest_buffer_exists(ctx, GL_COLOR)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glReadPixels(no color buffer)");
          return GL_TRUE;
       }
       break;
    case GL_STENCIL_INDEX:
-      if (fb->Visual.stencilBits == 0) {
+      if ((drawing && !_mesa_dest_buffer_exists(ctx, format)) ||
+          (!drawing && !_mesa_source_buffer_exists(ctx, format))) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "gl%sPixels(no stencil buffer)", readDraw);
          return GL_TRUE;
       }
       break;
    case GL_DEPTH_COMPONENT:
-      if (fb->Visual.depthBits == 0) {
+      if ((drawing && !_mesa_dest_buffer_exists(ctx, format)) ||
+          (!drawing && !_mesa_source_buffer_exists(ctx, format))) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "gl%sPixels(no depth buffer)", readDraw);
          return GL_TRUE;
@@ -106,13 +118,12 @@ error_check_format_type(GLcontext *ctx, GLenum format, GLenum type,
          _mesa_error(ctx, GL_INVALID_ENUM, "gl%sPixels(type)", readDraw);
          return GL_TRUE;
       }
-      if (fb->Visual.depthBits == 0 || fb->Visual.stencilBits == 0) {
+      if ((drawing && !_mesa_dest_buffer_exists(ctx, format)) ||
+          (!drawing && !_mesa_source_buffer_exists(ctx, format))) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "gl%sPixels(no depth or stencil buffer)", readDraw);
          return GL_TRUE;
       }
-      ASSERT(fb->Attachment[BUFFER_DEPTH].Renderbuffer);
-      ASSERT(fb->Attachment[BUFFER_STENCIL].Renderbuffer);
       break;
    default:
       /* this should have been caught in _mesa_is_legal_format_type() */
@@ -214,49 +225,17 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
       return;
    }
 
-   switch (type) {
-   case GL_COLOR:
-      /* OK */
-      break;
-   case GL_DEPTH:
-      if (ctx->DrawBuffer->Visual.depthBits == 0 ||
-          ctx->ReadBuffer->Visual.depthBits == 0) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glCopyPixels(no depth buffer)");
-         return;
-      }
-      break;
-   case GL_STENCIL:
-      if (ctx->DrawBuffer->Visual.stencilBits == 0 ||
-          ctx->ReadBuffer->Visual.stencilBits == 0) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glCopyPixels(no stencil buffer)");
-         return;
-      }
-      break;
-   case GL_DEPTH_STENCIL_EXT:
-      if (!ctx->Extensions.EXT_packed_depth_stencil) {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glCopyPixels");
-         return;
-      }
-      if (ctx->DrawBuffer->Visual.depthBits == 0 ||
-          ctx->ReadBuffer->Visual.depthBits == 0 ||
-          ctx->DrawBuffer->Visual.stencilBits == 0 ||
-          ctx->ReadBuffer->Visual.stencilBits == 0) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glCopyPixels(no depth or stencil buffer)");
-         return;
-      }
-      break;
-   default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "glCopyPixels");
-      return;
-   }
-
    if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT ||
        ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
                   "glCopyPixels(incomplete framebuffer)" );
+      return;
+   }
+
+   if (!_mesa_source_buffer_exists(ctx, type) ||
+       !_mesa_dest_buffer_exists(ctx, type)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glCopyPixels(missing source or dest buffer)");
       return;
    }
 
@@ -295,7 +274,6 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
 		  GLenum format, GLenum type, GLvoid *pixels )
 {
    GET_CURRENT_CONTEXT(ctx);
-   const struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (width < 0 || height < 0) {
@@ -318,7 +296,7 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
       return;
    }
 
-   if (!rb) {
+   if (!_mesa_source_buffer_exists(ctx, format)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(no readbuffer)");
       return;
    }
