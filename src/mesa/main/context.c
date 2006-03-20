@@ -1582,14 +1582,14 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
 
    /* Check that the context's and framebuffer's visuals are compatible.
     */
-   if (newCtx && drawBuffer && newCtx->DrawBuffer != drawBuffer) {
+   if (newCtx && drawBuffer && newCtx->WinSysDrawBuffer != drawBuffer) {
       if (!check_compatible(newCtx, drawBuffer)) {
          _mesa_warning(newCtx,
               "MakeCurrent: incompatible visuals for context and drawbuffer");
          return;
       }
    }
-   if (newCtx && readBuffer && newCtx->ReadBuffer != readBuffer) {
+   if (newCtx && readBuffer && newCtx->WinSysReadBuffer != readBuffer) {
       if (!check_compatible(newCtx, readBuffer)) {
          _mesa_warning(newCtx,
               "MakeCurrent: incompatible visuals for context and readbuffer");
@@ -1614,9 +1614,15 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
          ASSERT(readBuffer->Name == 0);
          newCtx->WinSysDrawBuffer = drawBuffer;
          newCtx->WinSysReadBuffer = readBuffer;
-         /* don't replace user-buffer bindings with window system buffer */
+
+         /*
+          * Only set the context's Draw/ReadBuffer fields if they're NULL
+          * or not bound to a user-created FBO.
+          */
          if (!newCtx->DrawBuffer || newCtx->DrawBuffer->Name == 0) {
             newCtx->DrawBuffer = drawBuffer;
+         }
+         if (!newCtx->ReadBuffer || newCtx->ReadBuffer->Name == 0) {
             newCtx->ReadBuffer = readBuffer;
          }
 
