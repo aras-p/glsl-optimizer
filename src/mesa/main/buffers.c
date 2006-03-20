@@ -547,12 +547,12 @@ _mesa_ReadBuffer(GLenum buffer)
       /* general case / window-system framebuffer */
       srcBuffer = read_buffer_enum_to_index(buffer);
       if (srcBuffer == -1) {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glReadBuffer(buffer)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glReadBuffer(buffer=0x%x)", buffer);
          return;
       }
       supportedMask = supported_buffer_bitmask(ctx, bufferID);
       if (((1 << srcBuffer) & supportedMask) == 0) {
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glReadBuffer(buffer)");
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glReadBuffer(buffer=0x%x)", buffer);
          return;
       }
    }
