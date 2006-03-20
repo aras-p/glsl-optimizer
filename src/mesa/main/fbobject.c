@@ -317,18 +317,25 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
       }
    }
    else if (att->Type == GL_RENDERBUFFER_EXT) {
-      if (att->Renderbuffer->Width < 1 || att->Renderbuffer->Height < 1) {
+      ASSERT(att->Renderbuffer);
+      if (!att->Renderbuffer->InternalFormat ||
+          att->Renderbuffer->Width < 1 ||
+          att->Renderbuffer->Height < 1) {
          att->Complete = GL_FALSE;
          return;
       }
       if (format == GL_COLOR) {
          if (att->Renderbuffer->_BaseFormat != GL_RGB &&
              att->Renderbuffer->_BaseFormat != GL_RGBA) {
+            ASSERT(att->Renderbuffer->RedBits);
+            ASSERT(att->Renderbuffer->GreenBits);
+            ASSERT(att->Renderbuffer->BlueBits);
             att->Complete = GL_FALSE;
             return;
          }
       }
       else if (format == GL_DEPTH) {
+         ASSERT(att->Renderbuffer->DepthBits);
          if (att->Renderbuffer->_BaseFormat == GL_DEPTH_COMPONENT) {
             /* OK */
          }
@@ -343,6 +350,7 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
       }
       else {
          assert(format == GL_STENCIL);
+         ASSERT(att->Renderbuffer->StencilBits);
          if (att->Renderbuffer->_BaseFormat == GL_STENCIL_INDEX) {
             /* OK */
          }
@@ -361,6 +369,18 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
       /* complete */
       return;
    }
+}
+
+
+/**
+ * Helpful for debugging
+ */
+static void
+fbo_incomplete(const char *msg, int index)
+{
+   /*
+   _mesa_debug(NULL, "FBO Incomplete: %s [%d]\n", msg, index);
+   */
 }
 
 
@@ -394,6 +414,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          test_attachment_completeness(ctx, GL_DEPTH, att);
          if (!att->Complete) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT;
+            fbo_incomplete("depth attachment incomplete", -1);
             return;
          }
       }
@@ -402,6 +423,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          test_attachment_completeness(ctx, GL_STENCIL, att);
          if (!att->Complete) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT;
+            fbo_incomplete("stencil attachment incomplete", -1);
             return;
          }
       }
@@ -410,6 +432,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          test_attachment_completeness(ctx, GL_COLOR, att);
          if (!att->Complete) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT;
+            fbo_incomplete("color attachment incomplete", i);
             return;
          }
       }
@@ -424,6 +447,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          if (f != GL_RGB && f != GL_RGBA && f != GL_DEPTH_COMPONENT) {
             /* XXX need GL_DEPTH_STENCIL_EXT test? */
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT;
+            fbo_incomplete("texture attachment incomplete", -1);
             return;
          }
       }
@@ -449,10 +473,12 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          /* check that width, height, format are same */
          if (w != width || h != height) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT;
+            fbo_incomplete("width or height mismatch", -1);
             return;
          }
          if (intFormat != GL_NONE && f != intFormat) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT;
+            fbo_incomplete("format mismatch", -1);
             return;
          }
       }
@@ -466,6 +492,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          assert(att);
          if (att->Type == GL_NONE) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT;
+            fbo_incomplete("missing drawbuffer", i);
             return;
          }
       }
@@ -478,6 +505,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
       assert(att);
       if (att->Type == GL_NONE) {
          fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT;
+            fbo_incomplete("missing readbuffer", -1);
          return;
       }
    }
@@ -494,6 +522,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
             struct gl_renderbuffer *rb_j = fb->Attachment[j].Renderbuffer;
             if (rb_i == rb_j && rb_i->_BaseFormat != GL_DEPTH_STENCIL_EXT) {
                fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT_EXT;
+               fbo_incomplete("multiply bound renderbuffer", -1);
                return;
             }
          }
@@ -503,6 +532,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
 
    if (numImages == 0) {
       fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT;
+      fbo_incomplete("no attachments", -1);
       return;
    }
 
