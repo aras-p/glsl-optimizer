@@ -56,6 +56,10 @@ SOFTWARE.
 #include "r300_ioctl.h"
 #include <unistd.h>		/* for usleep() */
 
+#ifdef USER_BUFFERS
+#include "radeon_mm.h"
+#endif
+
 /**
  * Destroy any device-dependent state associated with the texture.  This may
  * include NULLing out hardware state that points to the texture.
@@ -268,6 +272,9 @@ static void r300UploadRectSubImage(r300ContextPtr rmesa,
 				     width, lines);
 
 			r300EmitWait(rmesa, R300_WAIT_2D);
+#ifdef USER_BUFFERS
+			radeon_mm_use(rmesa, region.buf->id);
+#endif
 
 			r300ReleaseDmaRegion(rmesa, &region, __FUNCTION__);
 			done += lines;
