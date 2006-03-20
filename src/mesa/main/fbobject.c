@@ -155,9 +155,7 @@ _mesa_remove_attachment(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
       else {
          /* tell driver that we're done rendering to this texture. */
          if (ctx->Driver.FinishRenderTexture) {
-            ctx->Driver.FinishRenderTexture(ctx, att->Texture,
-                                            att->CubeMapFace,
-                                            att->TextureLevel);
+            ctx->Driver.FinishRenderTexture(ctx, att);
          }
       }
       att->Texture = NULL;
@@ -182,6 +180,7 @@ _mesa_remove_attachment(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
  */
 void
 _mesa_set_texture_attachment(GLcontext *ctx,
+                             struct gl_framebuffer *fb,
                              struct gl_renderbuffer_attachment *att,
                              struct gl_texture_object *texObj,
                              GLenum texTarget, GLuint level, GLuint zoffset)
@@ -208,6 +207,10 @@ _mesa_set_texture_attachment(GLcontext *ctx,
    }
    att->Zoffset = zoffset;
    att->Complete = GL_FALSE;
+
+   if (att->Texture->Image[att->CubeMapFace][att->TextureLevel]) {
+      ctx->Driver.RenderbufferTexture(ctx, fb, att);
+   }
 }
 
 
@@ -903,8 +906,7 @@ check_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
          struct gl_renderbuffer_attachment *att = fb->Attachment + i;
          struct gl_texture_object *texObj = att->Texture;
          if (texObj) {
-            ctx->Driver.FinishRenderTexture(ctx, texObj, att->CubeMapFace,
-                                            att->TextureLevel);
+            ctx->Driver.FinishRenderTexture(ctx, att);
          }
       }
    }
@@ -1178,12 +1180,15 @@ error_check_framebuffer_texture(GLcontext *ctx, GLuint dims,
 }
 
 
+/**
+ * XXX The code in _mesa_FramebufferTexture1/2/3DEXT could be probably
+ * be combined into one function.
+ */
 void GLAPIENTRY
 _mesa_FramebufferTexture1DEXT(GLenum target, GLenum attachment,
                               GLenum textarget, GLuint texture, GLint level)
 {
    struct gl_renderbuffer_attachment *att;
-   struct gl_texture_object *texObj;
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -1205,7 +1210,7 @@ _mesa_FramebufferTexture1DEXT(GLenum target, GLenum attachment,
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    if (texture) {
-      texObj = (struct gl_texture_object *)
+      struct gl_texture_object *texObj = (struct gl_texture_object *)
 	 _mesa_HashLookup(ctx->Shared->TexObjects, texture);
       if (!texObj) {
 	 _mesa_error(ctx, GL_INVALID_VALUE,
@@ -1217,12 +1222,12 @@ _mesa_FramebufferTexture1DEXT(GLenum target, GLenum attachment,
 		     "glFramebufferTexture1DEXT(texture target)");
 	 return;
       }
+      _mesa_set_texture_attachment(ctx, ctx->DrawBuffer, att,
+                                   texObj, textarget, level, 0);
    }
    else {
-      /* remove texture attachment */
-      texObj = NULL;
+      _mesa_remove_attachment(ctx, att);
    }
-   ctx->Driver.RenderbufferTexture(ctx, att, texObj, textarget, level, 0);
 }
 
 
@@ -1231,7 +1236,6 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
                               GLenum textarget, GLuint texture, GLint level)
 {
    struct gl_renderbuffer_attachment *att;
-   struct gl_texture_object *texObj;
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -1254,7 +1258,7 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    if (texture) {
-      texObj = (struct gl_texture_object *)
+      struct gl_texture_object *texObj = (struct gl_texture_object *)
 	 _mesa_HashLookup(ctx->Shared->TexObjects, texture);
       if (!texObj) {
 	 _mesa_error(ctx, GL_INVALID_VALUE,
@@ -1270,12 +1274,12 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
 		     "glFramebufferTexture2DEXT(texture target)");
 	 return;
       }
+      _mesa_set_texture_attachment(ctx, ctx->DrawBuffer, att,
+                                   texObj, textarget, level, 0);
    }
    else {
-      /* remove texture attachment */
-      texObj = NULL;
+      _mesa_remove_attachment(ctx, att);
    }
-   ctx->Driver.RenderbufferTexture(ctx, att, texObj, textarget, level, 0);
 }
 
 
@@ -1285,7 +1289,6 @@ _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
                               GLint level, GLint zoffset)
 {
    struct gl_renderbuffer_attachment *att;
-   struct gl_texture_object *texObj;
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -1307,7 +1310,7 @@ _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
 
    if (texture) {
       const GLint maxSize = 1 << (ctx->Const.Max3DTextureLevels - 1);
-      texObj = (struct gl_texture_object *)
+      struct gl_texture_object *texObj = (struct gl_texture_object *)
 	 _mesa_HashLookup(ctx->Shared->TexObjects, texture);
       if (!texObj) {
 	 _mesa_error(ctx, GL_INVALID_VALUE,
@@ -1324,13 +1327,12 @@ _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
 		     "glFramebufferTexture3DEXT(zoffset)");
 	 return;
       }
+      _mesa_set_texture_attachment(ctx, ctx->DrawBuffer, att,
+                                   texObj, textarget, level,zoffset);
    }
    else {
-      /* remove texture attachment */
-      texObj = NULL;
+      _mesa_remove_attachment(ctx, att);
    }
-   ctx->Driver.RenderbufferTexture(ctx, att, texObj, textarget,
-                                   level, zoffset);
 }
 
 

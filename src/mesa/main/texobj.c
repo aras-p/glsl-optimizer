@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,7 @@
 #include "colortab.h"
 #include "context.h"
 #include "enums.h"
+#include "fbobject.h"
 #include "hash.h"
 #include "imports.h"
 #include "macros.h"
@@ -39,6 +40,7 @@
 #include "texstate.h"
 #include "texobj.h"
 #include "mtypes.h"
+
 
 #ifdef __VMS
 #define _mesa_sprintf sprintf
@@ -579,6 +581,82 @@ _mesa_GenTextures( GLsizei n, GLuint *textures )
 
 
 /**
+ * Check if the given texture object is bound to the current draw or
+ * read framebuffer.  If so, Unbind it.
+ */
+static void
+unbind_texobj_from_fbo(GLcontext *ctx, struct gl_texture_object *texObj)
+{
+   const GLuint n = (ctx->DrawBuffer == ctx->ReadBuffer) ? 1 : 2;
+   GLuint i;
+
+   for (i = 0; i < n; i++) {
+      struct gl_framebuffer *fb = (i == 0) ? ctx->DrawBuffer : ctx->ReadBuffer;
+      if (fb->Name) {
+         GLuint j;
+         for (j = 0; j < BUFFER_COUNT; j++) {
+            if (fb->Attachment[j].Type == GL_TEXTURE &&
+                fb->Attachment[j].Texture == texObj) {
+               _mesa_remove_attachment(ctx, fb->Attachment + j);         
+            }
+         }
+      }
+   }
+}
+
+
+/**
+ * Check if the given texture object is bound to any texture image units and
+ * unbind it if so.
+ * XXX all RefCount accesses should be protected by a mutex.
+ */
+static void
+unbind_texobj_from_texunits(GLcontext *ctx, struct gl_texture_object *texObj)
+{
+   GLuint u;
+
+   for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++) {
+      struct gl_texture_unit *unit = &ctx->Texture.Unit[u];
+      if (texObj == unit->Current1D) {
+         unit->Current1D = ctx->Shared->Default1D;
+         ctx->Shared->Default1D->RefCount++;
+         texObj->RefCount--;
+         if (texObj == unit->_Current)
+            unit->_Current = unit->Current1D;
+      }
+      else if (texObj == unit->Current2D) {
+         unit->Current2D = ctx->Shared->Default2D;
+         ctx->Shared->Default2D->RefCount++;
+         texObj->RefCount--;
+         if (texObj == unit->_Current)
+            unit->_Current = unit->Current2D;
+      }
+      else if (texObj == unit->Current3D) {
+         unit->Current3D = ctx->Shared->Default3D;
+         ctx->Shared->Default3D->RefCount++;
+         texObj->RefCount--;
+         if (texObj == unit->_Current)
+            unit->_Current = unit->Current3D;
+      }
+      else if (texObj == unit->CurrentCubeMap) {
+         unit->CurrentCubeMap = ctx->Shared->DefaultCubeMap;
+         ctx->Shared->DefaultCubeMap->RefCount++;
+         texObj->RefCount--;
+         if (texObj == unit->_Current)
+            unit->_Current = unit->CurrentCubeMap;
+      }
+      else if (texObj == unit->CurrentRect) {
+         unit->CurrentRect = ctx->Shared->DefaultRect;
+         ctx->Shared->DefaultRect->RefCount++;
+         texObj->RefCount--;
+         if (texObj == unit->_Current)
+            unit->_Current = unit->CurrentRect;
+      }
+   }
+}
+
+
+/**
  * Delete named textures.
  *
  * \param n number of textures to be deleted.
@@ -607,49 +685,18 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
          struct gl_texture_object *delObj = (struct gl_texture_object *)
             _mesa_HashLookup(ctx->Shared->TexObjects, textures[i]);
          if (delObj) {
-            /* First check if this texture is currently bound.
-             * If so, unbind it and decrement the reference count.
-             * XXX all RefCount accesses should be protected by a mutex.
+
+            /* Check if texture is bound to any framebuffer objects.
+             * If so, unbind.
+             * See section 4.4.2.3 of GL_EXT_framebuffer_object.
              */
-            GLuint u;
-            for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++) {
-               struct gl_texture_unit *unit = &ctx->Texture.Unit[u];
-               if (delObj == unit->Current1D) {
-                  unit->Current1D = ctx->Shared->Default1D;
-                  ctx->Shared->Default1D->RefCount++;
-                  delObj->RefCount--;
-                  if (delObj == unit->_Current)
-                     unit->_Current = unit->Current1D;
-               }
-               else if (delObj == unit->Current2D) {
-                  unit->Current2D = ctx->Shared->Default2D;
-                  ctx->Shared->Default2D->RefCount++;
-                  delObj->RefCount--;
-                  if (delObj == unit->_Current)
-                     unit->_Current = unit->Current2D;
-               }
-               else if (delObj == unit->Current3D) {
-                  unit->Current3D = ctx->Shared->Default3D;
-                  ctx->Shared->Default3D->RefCount++;
-                  delObj->RefCount--;
-                  if (delObj == unit->_Current)
-                     unit->_Current = unit->Current3D;
-               }
-               else if (delObj == unit->CurrentCubeMap) {
-                  unit->CurrentCubeMap = ctx->Shared->DefaultCubeMap;
-                  ctx->Shared->DefaultCubeMap->RefCount++;
-                  delObj->RefCount--;
-                  if (delObj == unit->_Current)
-                     unit->_Current = unit->CurrentCubeMap;
-               }
-               else if (delObj == unit->CurrentRect) {
-                  unit->CurrentRect = ctx->Shared->DefaultRect;
-                  ctx->Shared->DefaultRect->RefCount++;
-                  delObj->RefCount--;
-                  if (delObj == unit->_Current)
-                     unit->_Current = unit->CurrentRect;
-               }
-            }
+            unbind_texobj_from_fbo(ctx, delObj);
+
+            /* Check if this texture is currently bound to any texture units.
+             * If so, unbind it and decrement the reference count.
+             */
+            unbind_texobj_from_texunits(ctx, delObj);
+
             ctx->NewState |= _NEW_TEXTURE;
 
             /* The texture _name_ is now free for re-use.

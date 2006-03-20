@@ -551,6 +551,18 @@ is_compressed_format(GLcontext *ctx, GLenum internalFormat)
 }
 
 
+static GLuint
+texture_face(GLenum target)
+{
+   if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
+       target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)
+      return (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+   else
+      return 0;
+}
+
+
+
 /**
  * Store a gl_texture_image pointer in a gl_texture_object structure
  * according to the target and level parameters.
@@ -2135,6 +2147,36 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 
 
 
+/**
+ * Check if the given texture image is bound to any framebuffer objects
+ * and update/invalidate them.
+ * XXX We're only checking the currently bound framebuffer object for now.
+ * In the future, perhaps struct gl_texture_image should have a pointer (or
+ * list of pointers (yikes)) to the gl_framebuffer(s) which it's bound to.
+ */
+static void
+update_fbo_texture(GLcontext *ctx, struct gl_texture_object *texObj,
+                   GLuint face, GLuint level)
+{
+   if (ctx->DrawBuffer->Name) {
+      GLuint i;
+      for (i = 0; i < BUFFER_COUNT; i++) {
+         struct gl_renderbuffer_attachment *att = 
+            ctx->DrawBuffer->Attachment + i;
+         if (att->Type == GL_TEXTURE &&
+             att->Texture == texObj &&
+             att->TextureLevel == level &&
+             att->CubeMapFace == face) {
+            ASSERT(att->Texture->Image[att->CubeMapFace][att->TextureLevel]);
+            /* Tell driver about the new renderbuffer texture */
+            ctx->Driver.RenderbufferTexture(ctx, ctx->DrawBuffer, att);
+         }
+      }
+   }
+}
+
+
+
 /*
  * Called from the API.  Note that width includes the border.
  */
@@ -2156,6 +2198,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       struct gl_texture_unit *texUnit;
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
+      const GLuint face = texture_face(target);
 
       if (texture_error_check(ctx, target, level, internalFormat,
                               format, type, 1, postConvWidth, 1, 1, border)) {
@@ -2190,6 +2233,8 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
                                 &ctx->Unpack, texObj, texImage);
 
       ASSERT(texImage->TexFormat);
+
+      update_fbo_texture(ctx, texObj, face, level);
 
       /* state update */
       texObj->Complete = GL_FALSE;
@@ -2247,6 +2292,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       struct gl_texture_unit *texUnit;
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
+      const GLuint face = texture_face(target);
 
       if (texture_error_check(ctx, target, level, internalFormat,
                               format, type, 2, postConvWidth, postConvHeight,
@@ -2280,13 +2326,9 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                                 width, height, border, format, type, pixels,
                                 &ctx->Unpack, texObj, texImage);
 
-      /*
-       * XXX if this texture image is currently bound to a user-created
-       * framebuffer object, we have to invalidate that framebuffer's
-       * completeness state.
-       */
-
       ASSERT(texImage->TexFormat);
+
+      update_fbo_texture(ctx, texObj, face, level);
 
       /* state update */
       texObj->Complete = GL_FALSE;
@@ -2337,10 +2379,11 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (target == GL_TEXTURE_3D) {
+      /* non-proxy target */
       struct gl_texture_unit *texUnit;
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
-      /* non-proxy target */
+      const GLuint face = texture_face(target);
 
       if (texture_error_check(ctx, target, level, (GLint) internalFormat,
                               format, type, 3, width, height, depth, border)) {
@@ -2374,6 +2417,8 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
                                 pixels, &ctx->Unpack, texObj, texImage);
 
       ASSERT(texImage->TexFormat);
+
+      update_fbo_texture(ctx, texObj, face, level);
 
       /* state update */
       texObj->Complete = GL_FALSE;
@@ -2565,6 +2610,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLsizei postConvWidth = width;
+   const GLuint face = texture_face(target);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -2602,6 +2648,8 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
 
    ASSERT(texImage->TexFormat);
 
+   update_fbo_texture(ctx, texObj, face, level);
+
    /* state update */
    texObj->Complete = GL_FALSE;
    ctx->NewState |= _NEW_TEXTURE;
@@ -2618,6 +2666,7 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLsizei postConvWidth = width, postConvHeight = height;
+   const GLuint face = texture_face(target);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -2655,6 +2704,8 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
                                  x, y, width, height, border);
 
    ASSERT(texImage->TexFormat);
+
+   update_fbo_texture(ctx, texObj, face, level);
 
    /* state update */
    texObj->Complete = GL_FALSE;

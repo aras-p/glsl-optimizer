@@ -200,25 +200,44 @@ wrap_texture(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
 
 
 /**
- * Software fallback for ctx->Driver.RenderbufferTexture.
- * This is called via the glRenderbufferTexture1D/2D/3D() functions.
- * If we're unbinding a texture, texObj will be NULL.
- * The framebuffer of interest is ctx->DrawBuffer.
+ * Called when rendering to a texture image begins.
+ * This is a fallback routine for software render-to-texture.
+ *
+ * Called via the glRenderbufferTexture1D/2D/3D() functions
+ * and elsewhere (such as glTexImage2D).
+ *
+ * The image we're rendering into is
+ * att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+ * It'll never be NULL.
+ *
+ * \param fb  the framebuffer object the texture is being bound to
+ * \param att  the fb attachment point of the texture
+ *
  * \sa _mesa_framebuffer_renderbuffer
  */
 void
 _mesa_renderbuffer_texture(GLcontext *ctx,
-                           struct gl_renderbuffer_attachment *att,
-                           struct gl_texture_object *texObj,
-                           GLenum texTarget, GLuint level, GLuint zoffset)
+                           struct gl_framebuffer *fb,
+                           struct gl_renderbuffer_attachment *att)
 {
-   if (texObj) {
-      _mesa_set_texture_attachment(ctx, att, texObj,
-                                   texTarget, level, zoffset);
-      if (!att->Renderbuffer)
-         wrap_texture(ctx, att);
-   }
-   else {
-      _mesa_remove_attachment(ctx, att);
+   struct gl_texture_image *newImage
+      = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+   struct texture_renderbuffer *trb
+      = (struct texture_renderbuffer *) att->Renderbuffer;
+   struct gl_texture_image *oldImage = trb ? trb->TexImage : NULL;
+
+   (void) fb;
+
+   ASSERT(newImage);
+
+   if (oldImage != newImage) {
+      if (trb) {
+         /* get rid of old wrapper */
+         /* XXX also if Zoffset changes? */
+         trb->Base.Delete(&trb->Base);
+      }
+      wrap_texture(ctx, att);
    }
 }
+
+

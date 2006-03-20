@@ -38,6 +38,7 @@ _mesa_remove_attachment(GLcontext *ctx,
 
 extern void
 _mesa_set_texture_attachment(GLcontext *ctx,
+                             struct gl_framebuffer *fb,
                              struct gl_renderbuffer_attachment *att,
                              struct gl_texture_object *texObj,
                              GLenum texTarget, GLuint level, GLuint zoffset);

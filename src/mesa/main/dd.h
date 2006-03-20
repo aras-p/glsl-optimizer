@@ -808,12 +808,10 @@ struct dd_function_table {
                                    GLenum attachment,
                                    struct gl_renderbuffer *rb);
    void (*RenderbufferTexture)(GLcontext *ctx,
-                               struct gl_renderbuffer_attachment *att,
-                               struct gl_texture_object *texObj,
-                               GLenum texTarget, GLuint level, GLuint zoffset);
+                               struct gl_framebuffer *fb,
+                               struct gl_renderbuffer_attachment *att);
    void (*FinishRenderTexture)(GLcontext *ctx,
-                               struct gl_texture_object *texObj,
-                               GLuint face, GLuint level);
+                               struct gl_renderbuffer_attachment *att);
    /*@}*/
 #endif
 #if FEATURE_EXT_framebuffer_blit
