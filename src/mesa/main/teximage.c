@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,6 +33,8 @@
 #include "bufferobj.h"
 #include "context.h"
 #include "convolve.h"
+#include "fbobject.h"
+#include "framebuffer.h"
 #include "image.h"
 #include "imports.h"
 #include "macros.h"
@@ -1687,6 +1689,16 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
 
    /* Basic level check (more checking in ctx->Driver.TestProxyTexImage) */
    if (level < 0 || level >= MAX_TEXTURE_LEVELS) {
+   /* Check that the source buffer is complete */
+   if (ctx->ReadBuffer->Name) {
+      _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
+      if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+         _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
+                     "glCopyTexImage%dD(invalid readbuffer)", dimensions);
+         return GL_TRUE;
+      }
+   }
+
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glCopyTexImage%dD(level=%d)", dimensions, level);
       return GL_TRUE;
@@ -1708,6 +1720,12 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
 
    /* NOTE: the format and type aren't really significant for
     * TestProxyTexImage().  Only the internalformat really matters.
+   if (!_mesa_source_buffer_exists(ctx, format)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glCopyTexImage%dD(missing readbuffer)", dimensions);
+      return GL_TRUE;
+   }
+
     */
    type = GL_FLOAT;
 
@@ -1813,7 +1831,7 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
 
 
 /**
- * Test glCopyTexImage[12]D() parameters for errors.
+ * Test glCopyTexSubImage[12]D() parameters for errors.
  * 
  * \param ctx GL context.
  * \param dimensions texture image dimensions (must be 1, 2 or 3).
@@ -1841,6 +1859,16 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
    struct gl_texture_image *teximage;
 
    /* Check target */
+   /* Check that the source buffer is complete */
+   if (ctx->ReadBuffer->Name) {
+      _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
+      if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+         _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
+                     "glCopyTexImage%dD(invalid readbuffer)", dimensions);
+         return GL_TRUE;
+      }
+   }
+
    if (dimensions == 1) {
       if (target != GL_TEXTURE_1D) {
          _mesa_error( ctx, GL_INVALID_ENUM, "glCopyTexSubImage1D(target)" );
@@ -1938,6 +1966,12 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
    }
 
    if (teximage->IsCompressed) {
+   if (!_mesa_source_buffer_exists(ctx, teximage->_BaseFormat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glCopyTexSubImage%dD(missing readbuffer)", dimensions);
+      return GL_TRUE;
+   }
+
       if (target != GL_TEXTURE_2D) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glCopyTexSubImage%d(target)", dimensions);
