@@ -92,6 +92,7 @@ struct gl2_program_intf
    GLvoid (* UpdateFixedVarying) (struct gl2_program_intf **, GLuint, GLvoid *, GLuint, GLuint,
       GLboolean);
    GLvoid (* GetTextureImageUsage) (struct gl2_program_intf **, GLbitfield *);
+   GLboolean (* IsShaderPresent) (struct gl2_program_intf **, GLenum);
 };
 
 struct gl2_fragment_shader_intf

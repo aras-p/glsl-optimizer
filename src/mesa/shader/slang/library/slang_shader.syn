@@ -583,9 +583,14 @@ declaration_2
     init_declarator_list .emit DECLARATION_INIT_DECLARATOR_LIST .and semicolon;
 
 /*
-    <function_prototype>                ::= <function_declarator> ")"
+    <function_prototype>                ::= <function_header> "void" ")"
+                                          | <function_declarator> ")"
 */
 function_prototype
+    function_prototype_1 .or function_prototype_2;
+function_prototype_1
+    function_header .and "void" .and rparen .error RPAREN_EXPECTED .emit PARAMETER_NONE;
+function_prototype_2
     function_declarator .and rparen .error RPAREN_EXPECTED .emit PARAMETER_NONE;
 
 /*

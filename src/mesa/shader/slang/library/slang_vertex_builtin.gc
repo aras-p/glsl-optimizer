@@ -1,10 +1,26 @@
-
-//
-// TODO:
-// - what to do with ftransform? can it stay in the current form?
-// - implement texture1DLod, texture2DLod, texture3DLod, textureCubeLod,
-// - implement shadow1DLod, shadow2DLod,
-//
+/*
+ * Mesa 3-D graphics library
+ * Version:  6.5
+ *
+ * Copyright (C) 2006  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 
 //
 // From Shader Spec, ver. 1.10, rev. 59
@@ -48,8 +64,9 @@ vec4 ftransform () {
 //
 
 vec4 texture1DLod (sampler1D sampler, float coord, float lod) {
-    // XXX:
-    return vec4 (0.0);
+    vec4 texel;
+    __asm vec4_tex1d texel, sampler, coord, lod;
+    return texel;
 }
 
 vec4 texture1DProjLod (sampler1D sampler, vec2 coord, float lod) {
@@ -61,8 +78,9 @@ vec4 texture1DProjLod (sampler1D sampler, vec4 coord, float lod) {
 }
 
 vec4 texture2DLod (sampler2D sampler, vec2 coord, float lod) {
-    // XXX:
-    return vec4 (0.0);
+    vec4 texel;
+    __asm vec4_tex2d texel, sampler, coord, lod;
+    return texel;
 }
 
 vec4 texture2DProjLod (sampler2D sampler, vec3 coord, float lod) {
@@ -74,30 +92,34 @@ vec4 texture2DProjLod (sampler2D sampler, vec4 coord, float lod) {
 }
 
 vec4 texture3DLod (sampler3D sampler, vec3 coord, float lod) {
-    // XXX:
-    return vec4 (0.0);
+    vec4 texel;
+    __asm vec4_tex3d texel, sampler, coord, lod;
+    return texel;
 }
 vec4 texture3DProjLod (sampler3D sampler, vec4 coord, float lod) {
     return texture3DLod (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q), lod);
 }
 
 vec4 textureCubeLod (samplerCube sampler, vec3 coord, float lod) {
-    // XXX:
-    return vec4 (0.0);
+    vec4 texel;
+    __asm vec4_texcube texel, sampler, coord, lod;
+    return texel;
 }
 
 vec4 shadow1DLod (sampler1DShadow sampler, vec3 coord, float lod) {
-    // XXX:
-    return vec4 (0.0);
-}
-
-vec4 shadow2DLod (sampler2DShadow sampler, vec3 coord, float lod) {
-    // XXX:
-    return vec4 (0.0);
+    vec4 texel;
+    __asm vec4_shad1d texel, sampler, coord, lod;
+    return texel;
 }
 
 vec4 shadow1DProjLod (sampler1DShadow sampler, vec4 coord, float lod) {
     return shadow1DLod (sampler, vec3 (coord.s / coord.q, 0.0, coord.p / coord.q), lod);
+}
+
+vec4 shadow2DLod (sampler2DShadow sampler, vec3 coord, float lod) {
+    vec4 texel;
+    __asm vec4_shad2d texel, sampler, coord, lod;
+    return texel;
 }
 
 vec4 shadow2DProjLod (sampler2DShadow sampler, vec4 coord, float lod) {

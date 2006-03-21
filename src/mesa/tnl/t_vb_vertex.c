@@ -126,7 +126,7 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
 
-   if (ctx->ShaderObjects.CurrentProgram != NULL)
+   if (ctx->ShaderObjects._VertexShaderPresent)
       return GL_TRUE;
 
    if (ctx->VertexProgram._Enabled) 

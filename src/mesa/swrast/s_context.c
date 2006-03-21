@@ -101,8 +101,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
       rasterMask |= FRAGPROG_BIT;
    }
 
-   if (ctx->ShaderObjects.CurrentProgram) {
-      /* XXX Vertex and/or fragment shader (what if no fragment shader??) */
+   if (ctx->ShaderObjects._FragmentShaderPresent) {
       rasterMask |= FRAGPROG_BIT;
    }
 

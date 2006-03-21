@@ -80,7 +80,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    struct vertex_program *program = ctx->VertexProgram.Current;
    GLuint i;
 
-   if (ctx->ShaderObjects.CurrentProgram != NULL)
+   if (ctx->ShaderObjects._VertexShaderPresent)
       return GL_TRUE;
 
    if (!ctx->VertexProgram._Enabled ||

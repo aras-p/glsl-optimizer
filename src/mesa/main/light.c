@@ -123,16 +123,18 @@ _mesa_light(GLcontext *ctx, GLuint lnum, GLenum pname, const GLfloat *params)
    case GL_SPOT_CUTOFF:
       ASSERT(params[0] == 180.0 || (params[0] >= 0.0 && params[0] <= 90.0));
       if (light->SpotCutoff == params[0])
-	 return;
+         return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       light->SpotCutoff = params[0];
-      light->_CosCutoff = (GLfloat) _mesa_cos(params[0]*DEG2RAD);
-      if (light->_CosCutoff < 0)
-	 light->_CosCutoff = 0;
-      if (light->SpotCutoff != 180.0F)
-	 light->_Flags |= LIGHT_SPOT;
+      light->_CosCutoffNeg = (GLfloat) (_mesa_cos(light->SpotCutoff * DEG2RAD));
+      if (light->_CosCutoffNeg < 0)
+         light->_CosCutoff = 0;
       else
-	 light->_Flags &= ~LIGHT_SPOT;
+         light->_CosCutoff = light->_CosCutoffNeg;
+      if (light->SpotCutoff != 180.0F)
+         light->_Flags |= LIGHT_SPOT;
+      else
+         light->_Flags &= ~LIGHT_SPOT;
       break;
    case GL_CONSTANT_ATTENUATION:
       ASSERT(params[0] >= 0.0);
@@ -1264,6 +1266,7 @@ init_light( struct gl_light *l, GLuint n )
    l->SpotExponent = 0.0;
    _mesa_invalidate_spot_exp_table( l );
    l->SpotCutoff = 180.0;
+   l->_CosCutoffNeg = -1.0f;
    l->_CosCutoff = 0.0;		/* KW: -ve values not admitted */
    l->ConstantAttenuation = 1.0;
    l->LinearAttenuation = 0.0;

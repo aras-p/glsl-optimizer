@@ -233,7 +233,7 @@ vec2 cos (vec2 angle) {
 }
 
 vec3 cos (vec3 angle) {
-    return vec2 (
+    return vec3 (
         cos (angle.x),
         cos (angle.y),
         cos (angle.z)
@@ -366,8 +366,7 @@ vec4 atan (vec4 y_over_x) {
 }
 
 float atan (float y, float x) {
-    float z;
-    z = atan (y / x);
+    float z = atan (y / x);
     if (x < 0.0)
     {
         if (y < 0.0)
@@ -721,7 +720,7 @@ vec2 min (vec2 v, vec2 u) {
 }
 
 vec3 min (vec3 v, vec3 u) {
-    return vec2 (
+    return vec3 (
         min (v.x, u.x),
         min (v.y, u.y),
         min (v.z, u.z)
@@ -886,8 +885,7 @@ vec4 step (float edge, vec4 v) {
 }
 
 float smoothstep (float edge0, float edge1, float x) {
-    float t;
-    t = clamp ((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+    float t = clamp ((x - edge0) / (edge1 - edge0), 0.0, 1.0);
     return t * t * (3.0 - 2.0 * t);
 }
 
@@ -1048,32 +1046,28 @@ vec4 reflect (vec4 I, vec4 N) {
 }
 
 float refract (float I, float N, float eta) {
-    float k;
-    k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
+    float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
     if (k < 0.0)
         return 0.0;
     return eta * I - (eta * dot (N, I) + sqrt (k)) * N;
 }
 
 vec2 refract (vec2 I, vec2 N, float eta) {
-    float k;
-    k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
+    float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
     if (k < 0.0)
         return 0.0;
     return eta * I - (eta * dot (N, I) + sqrt (k)) * N;
 }
 
 vec3 refract (vec3 I, vec3 N, float eta) {
-    float k;
-    k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
+    float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
     if (k < 0.0)
         return 0.0;
     return eta * I - (eta * dot (N, I) + sqrt (k)) * N;
 }
 
 vec4 refract (vec4 I, vec4 N, float eta) {
-    float k;
-    k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
+    float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
     if (k < 0.0)
         return 0.0;
     return eta * I - (eta * dot (N, I) + sqrt (k)) * N;

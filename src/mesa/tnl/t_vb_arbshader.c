@@ -172,10 +172,10 @@ static GLboolean run_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stag
 	struct gl2_program_intf **pro;
 	GLsizei i, j;
 
-	pro = ctx->ShaderObjects.CurrentProgram;
-	if (pro == NULL)
+	if (!ctx->ShaderObjects._VertexShaderPresent)
 		return GL_TRUE;
 
+	pro = ctx->ShaderObjects.CurrentProgram;
 	(**pro).UpdateFixedUniforms (pro);
 
 	for (i = 0; i < vb->Count; i++)

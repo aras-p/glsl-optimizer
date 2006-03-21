@@ -61,7 +61,7 @@ static GLboolean run_texmat_stage( GLcontext *ctx,
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLuint i;
 
-   if (ctx->ShaderObjects.CurrentProgram != NULL)
+   if (ctx->ShaderObjects._VertexShaderPresent)
       return GL_TRUE;
 
    if (!ctx->Texture._TexMatEnabled || ctx->VertexProgram._Enabled) 

@@ -112,6 +112,11 @@ static GLfloat do_ceilf (GLfloat x)
 	return CEILF (x);
 }
 
+static GLfloat do_floorf (GLfloat x)
+{
+	return FLOORF (x);
+}
+
 static GLvoid do_print_float (GLfloat x)
 {
 	_mesa_printf ("slang print: %f\n", x);
@@ -294,13 +299,10 @@ static GLvoid codegen_assem (codegen_ctx *G, slang_assembly *a)
 		x87_fstp (&G->f, x86_deref (G->r_esp));
 		break;
 	case slang_asm_float_floor:
-		set_fpu_round_neg_inf (G);
-		x87_fld (&G->f, x86_deref (G->r_esp));   
-		x87_fprndint (&G->f);   
+		x86_call (&G->f, (GLubyte *) do_floorf);
 		x87_fstp (&G->f, x86_deref (G->r_esp));
 		break;
 	case slang_asm_float_ceil:
-		/* TODO: use frndint */
 		x86_call (&G->f, (GLubyte *) do_ceilf);
 		x87_fstp (&G->f, x86_deref (G->r_esp));
 		break;

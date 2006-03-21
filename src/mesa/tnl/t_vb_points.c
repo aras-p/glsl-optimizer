@@ -47,7 +47,7 @@ struct point_stage_data {
 static GLboolean
 run_point_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
-   if (ctx->ShaderObjects.CurrentProgram != NULL)
+   if (ctx->ShaderObjects._VertexShaderPresent)
       return GL_TRUE;
 
    if (ctx->Point._Attenuated && !ctx->VertexProgram._Enabled) {

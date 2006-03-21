@@ -1264,7 +1264,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    GLuint i, j;
    GLbitfield outputs;
 
-   if (ctx->ShaderObjects.CurrentProgram != NULL)
+   if (ctx->ShaderObjects._VertexShaderPresent)
       return GL_TRUE;
 
    program = (ctx->VertexProgram._Enabled ? ctx->VertexProgram.Current : ctx->_TnlProgram);
@@ -1427,7 +1427,7 @@ validate_vertex_program( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    struct arb_vp_machine *m = ARB_VP_MACHINE(stage);
    struct vertex_program *program;
 
-   if (ctx->ShaderObjects.CurrentProgram != NULL)
+   if (ctx->ShaderObjects._VertexShaderPresent)
       return;
 
    program = (ctx->VertexProgram._Enabled ? ctx->VertexProgram.Current : 0);

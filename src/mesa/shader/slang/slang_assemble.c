@@ -999,9 +999,12 @@ static GLboolean handle_field (slang_assemble_ctx *A, slang_assembly_typeinfo *t
 			{
 				GLuint i;
 
-				/* move the selected element to the beginning of the master expression */
-				for (i = 0; i < field_size; i += 4)
-					if (!PLAB2 (A->file, slang_asm_float_move, struct_size - field_size + i + 4, i + 4))
+				/*
+				 * Move the selected element to the end of the master expression.
+				 * Do it in reverse order to avoid overwriting itself.
+				 */
+				for (i = field_size; i > 0; i -= 4)
+					if (!PLAB2 (A->file, slang_asm_float_move, struct_size - field_size + i, i))
 						return GL_FALSE;
 				free_b += 4;
 			}
@@ -1048,12 +1051,52 @@ GLboolean _slang_assemble_operation (slang_assemble_ctx *A, slang_operation *op,
 	case slang_oper_variable_decl:
 		{
 			GLuint i;
+			slang_operation assign;
+			GLboolean result;
 
+			/* Construct assignment expression placeholder. */
+			if (!slang_operation_construct (&assign))
+				return GL_FALSE;
+			assign.type = slang_oper_assign;
+			assign.children = (slang_operation *) slang_alloc_malloc (2 * sizeof (slang_operation));
+			if (assign.children == NULL)
+			{
+				slang_operation_destruct (&assign);
+				return GL_FALSE;
+			}
+			for (assign.num_children = 0; assign.num_children < 2; assign.num_children++)
+				if (!slang_operation_construct (&assign.children[assign.num_children]))
+				{
+					slang_operation_destruct (&assign);
+					return GL_FALSE;
+				}
+
+			result = GL_TRUE;
 			for (i = 0; i < op->num_children; i++)
 			{
-				/* TODO: perform initialization of op->children[i] */
-				/* TODO: clean-up stack */
+				slang_variable *var;
+
+				var = _slang_locate_variable (op->children[i].locals, op->children[i].a_id, GL_TRUE);
+				if (var == NULL)
+				{
+					result = GL_FALSE;
+					break;
+				}
+				if (var->initializer == NULL)
+					continue;
+
+				if (!slang_operation_copy (&assign.children[0], &op->children[i]) ||
+					!slang_operation_copy (&assign.children[1], var->initializer) ||
+					!_slang_assemble_assign (A, &assign, "=", slang_ref_forbid) ||
+					!_slang_cleanup_stack (A, &assign))
+				{
+					result = GL_FALSE;
+					break;
+				}
 			}
+			slang_operation_destruct (&assign);
+			if (!result)
+				return GL_FALSE;
 		}
 		break;
 	case slang_oper_asm:

@@ -430,6 +430,7 @@ struct gl_light
    GLfloat EyeDirection[4];	/**< spotlight dir in eye coordinates */
    GLfloat SpotExponent;
    GLfloat SpotCutoff;		/**< in degrees */
+   GLfloat _CosCutoffNeg;	/**< = cos(SpotCutoff) */
    GLfloat _CosCutoff;		/**< = MAX(0, cos(SpotCutoff)) */
    GLfloat ConstantAttenuation;
    GLfloat LinearAttenuation;
@@ -728,6 +729,7 @@ struct gl_fog_attrib
    GLenum Mode;			/**< Fog mode */
    GLboolean ColorSumEnabled;
    GLenum FogCoordinateSource;  /**< GL_EXT_fog_coord */
+   GLfloat _Scale;		/**< (End == Start) ? 1.0 : 1.0 / (End - Start) */
 };
 
 
@@ -1950,6 +1952,8 @@ struct gl_query_state
 struct gl_shader_objects_state
 {
    struct gl2_program_intf **CurrentProgram;
+   GLboolean _VertexShaderPresent;
+   GLboolean _FragmentShaderPresent;
 };
 
 

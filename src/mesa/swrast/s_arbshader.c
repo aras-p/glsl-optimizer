@@ -40,14 +40,16 @@ void _swrast_exec_arbshader (GLcontext *ctx, struct sw_span *span)
 	struct gl2_program_intf **pro;
 	GLuint i;
 
-	pro = ctx->ShaderObjects.CurrentProgram;
-	if (pro == NULL)
+	if (!ctx->ShaderObjects._FragmentShaderPresent)
 		return;
+	pro = ctx->ShaderObjects.CurrentProgram;
+	if (!ctx->ShaderObjects._VertexShaderPresent)
+		(**pro).UpdateFixedUniforms (pro);
 
 	for (i = span->start; i < span->end; i++)
 	{
-            /* only run shader on active fragments */
-            if (span->array->mask[i]) {
+		/* only run shader on active fragments */
+		if (span->array->mask[i]) {
 		GLfloat vec[4];
 		GLuint j;
 		GLboolean discard;
@@ -91,7 +93,7 @@ void _swrast_exec_arbshader (GLcontext *ctx, struct sw_span *span)
 			UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][BCOMP], vec[2]);
 			UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][ACOMP], vec[3]);
 		}
-            }
+		}
 	}
 }
 

@@ -33,8 +33,8 @@
 
 #include "imports.h"
 #include "hash.h"
+#include "macros.h"
 #include "shaderobjects.h"
-#include "shaderobjects_3dlabs.h"
 
 #if USE_3DLABS_FRONTEND
 #include "slang_mesa.h"
@@ -858,7 +858,7 @@ write_common_fixed (slang_program *pro, GLuint index, const GLvoid *src, GLuint 
 
 static GLvoid
 write_common_fixed_mat4 (slang_program *pro, GLmatrix *matrix, GLuint off, GLuint i, GLuint ii,
-						 GLuint it, GLuint iit)
+                         GLuint it, GLuint iit)
 {
 	GLfloat mat[16];
 
@@ -886,13 +886,50 @@ write_common_fixed_mat4 (slang_program *pro, GLmatrix *matrix, GLuint off, GLuin
 }
 
 static GLvoid
+write_common_fixed_material (GLcontext *ctx, slang_program *pro, GLuint i, GLuint e, GLuint a,
+                             GLuint d, GLuint sp, GLuint sh)
+{
+	GLfloat v[17];
+
+	COPY_4FV(v, ctx->Light.Material.Attrib[e]);
+	COPY_4FV((v + 4), ctx->Light.Material.Attrib[a]);
+	COPY_4FV((v + 8), ctx->Light.Material.Attrib[d]);
+	COPY_4FV((v + 12), ctx->Light.Material.Attrib[sp]);
+	v[16] = ctx->Light.Material.Attrib[sh][0];
+	write_common_fixed (pro, i, v, 0, 17 * sizeof (GLfloat));
+}
+
+static GLvoid
+write_common_fixed_light_model_product (GLcontext *ctx, slang_program *pro, GLuint i, GLuint e,
+                                        GLuint a)
+{
+	GLfloat v[4];
+
+	SCALE_4V(v,	ctx->Light.Material.Attrib[a], ctx->Light.Model.Ambient);
+	ACC_4V(v, ctx->Light.Material.Attrib[e]);
+	write_common_fixed (pro, i, v, 0, 4 * sizeof (GLfloat));
+}
+
+static GLvoid
+write_common_fixed_light_product (GLcontext *ctx, slang_program *pro, GLuint off, GLuint i, GLuint a,
+                                  GLuint d, GLuint s)
+{
+	GLfloat v[12];
+
+	SCALE_4V(v, ctx->Light.Light[off].Ambient, ctx->Light.Material.Attrib[a]);
+	SCALE_4V((v + 4), ctx->Light.Light[off].Diffuse, ctx->Light.Material.Attrib[d]);
+	SCALE_4V((v + 8), ctx->Light.Light[off].Specular, ctx->Light.Material.Attrib[s]);
+	write_common_fixed (pro, i, v, off, 12 * sizeof (GLfloat));
+}
+
+static GLvoid
 _program_UpdateFixedUniforms (struct gl2_program_intf **intf)
 {
 	GET_CURRENT_CONTEXT(ctx);
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
 	slang_program *pro = &impl->_obj.prog;
 	GLuint i;
-	GLfloat v[9];
+	GLfloat v[29];
 	GLfloat *p;
 
 	/* MODELVIEW matrix */
@@ -916,14 +953,34 @@ _program_UpdateFixedUniforms (struct gl2_program_intf **intf)
 		SLANG_COMMON_FIXED_MODELVIEWPROJECTIONMATRIXTRANSPOSE,
 		SLANG_COMMON_FIXED_MODELVIEWPROJECTIONMATRIXINVERSETRANSPOSE);
 
-	/* TEXTURE matrix */
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++)
 	{
+		/* TEXTURE matrix */
 		write_common_fixed_mat4 (pro, ctx->TextureMatrixStack[i].Top, i,
 			SLANG_COMMON_FIXED_TEXTUREMATRIX,
 			SLANG_COMMON_FIXED_TEXTUREMATRIXINVERSE,
 			SLANG_COMMON_FIXED_TEXTUREMATRIXTRANSPOSE,
 			SLANG_COMMON_FIXED_TEXTUREMATRIXINVERSETRANSPOSE);
+
+		/* EYE_PLANE texture-coordinate generation */
+		write_common_fixed (pro, SLANG_COMMON_FIXED_EYEPLANES, ctx->Texture.Unit[i].EyePlaneS,
+			i, 4 * sizeof (GLfloat));
+		write_common_fixed (pro, SLANG_COMMON_FIXED_EYEPLANET, ctx->Texture.Unit[i].EyePlaneT,
+			i, 4 * sizeof (GLfloat));
+		write_common_fixed (pro, SLANG_COMMON_FIXED_EYEPLANER, ctx->Texture.Unit[i].EyePlaneR,
+			i, 4 * sizeof (GLfloat));
+		write_common_fixed (pro, SLANG_COMMON_FIXED_EYEPLANEQ, ctx->Texture.Unit[i].EyePlaneQ,
+			i, 4 * sizeof (GLfloat));
+
+		/* OBJECT_PLANE texture-coordinate generation */
+		write_common_fixed (pro, SLANG_COMMON_FIXED_OBJECTPLANES, ctx->Texture.Unit[i].ObjectPlaneS,
+			i, 4 * sizeof (GLfloat));
+		write_common_fixed (pro, SLANG_COMMON_FIXED_OBJECTPLANET, ctx->Texture.Unit[i].ObjectPlaneT,
+			i, 4 * sizeof (GLfloat));
+		write_common_fixed (pro, SLANG_COMMON_FIXED_OBJECTPLANER, ctx->Texture.Unit[i].ObjectPlaneR,
+			i, 4 * sizeof (GLfloat));
+		write_common_fixed (pro, SLANG_COMMON_FIXED_OBJECTPLANEQ, ctx->Texture.Unit[i].ObjectPlaneQ,
+			i, 4 * sizeof (GLfloat));
 	}
 
 	/* NORMAL matrix - upper 3x3 inverse transpose of MODELVIEW matrix */
@@ -939,17 +996,100 @@ _program_UpdateFixedUniforms (struct gl2_program_intf **intf)
 	v[8] = p[10];
 	write_common_fixed (pro, SLANG_COMMON_FIXED_NORMALMATRIX, v, 0, 9 * sizeof (GLfloat));
 
-	/* XXX: fetch uniform float gl_NormalScale */
-	/* XXX: fetch uniform mat4 gl_ClipPlane */
-	/* XXX: fetch uniform mat4 gl_TextureEnvColor */
-	/* XXX: fetch uniform mat4 gl_EyePlaneS */
-	/* XXX: fetch uniform mat4 gl_EyePlaneT */
-	/* XXX: fetch uniform mat4 gl_EyePlaneR */
-	/* XXX: fetch uniform mat4 gl_EyePlaneQ */
-	/* XXX: fetch uniform mat4 gl_ObjectPlaneS */
-	/* XXX: fetch uniform mat4 gl_ObjectPlaneT */
-	/* XXX: fetch uniform mat4 gl_ObjectPlaneR */
-	/* XXX: fetch uniform mat4 gl_ObjectPlaneQ */
+	/* normal scale */
+	write_common_fixed (pro, SLANG_COMMON_FIXED_NORMALSCALE, &ctx->_ModelViewInvScale, 0, sizeof (GLfloat));
+
+	/* depth range parameters */
+	v[0] = ctx->Viewport.Near;
+	v[1] = ctx->Viewport.Far;
+	v[2] = ctx->Viewport.Far - ctx->Viewport.Near;
+	write_common_fixed (pro, SLANG_COMMON_FIXED_DEPTHRANGE, v, 0, 3 * sizeof (GLfloat));
+
+	/* CLIP_PLANEi */
+	for (i = 0; i < ctx->Const.MaxClipPlanes; i++)
+	{
+		write_common_fixed (pro, SLANG_COMMON_FIXED_CLIPPLANE, ctx->Transform.EyeUserPlane[i], i,
+			4 * sizeof (GLfloat));
+	}
+
+	/* point parameters */
+	v[0] = ctx->Point.Size;
+	v[1] = ctx->Point.MinSize;
+	v[2] = ctx->Point.MaxSize;
+	v[3] = ctx->Point.Threshold;
+	COPY_3FV((v + 4), ctx->Point.Params);
+	write_common_fixed (pro, SLANG_COMMON_FIXED_POINT, v, 0, 7 * sizeof (GLfloat));
+
+	/* material parameters */
+	write_common_fixed_material (ctx, pro, SLANG_COMMON_FIXED_FRONTMATERIAL,
+		MAT_ATTRIB_FRONT_EMISSION,
+		MAT_ATTRIB_FRONT_AMBIENT,
+		MAT_ATTRIB_FRONT_DIFFUSE,
+		MAT_ATTRIB_FRONT_SPECULAR,
+		MAT_ATTRIB_FRONT_SHININESS);
+	write_common_fixed_material (ctx, pro, SLANG_COMMON_FIXED_BACKMATERIAL,
+		MAT_ATTRIB_BACK_EMISSION,
+		MAT_ATTRIB_BACK_AMBIENT,
+		MAT_ATTRIB_BACK_DIFFUSE,
+		MAT_ATTRIB_BACK_SPECULAR,
+		MAT_ATTRIB_BACK_SHININESS);
+
+	for (i = 0; i < ctx->Const.MaxLights; i++)
+	{
+		/* light source parameters */
+		COPY_4FV(v, ctx->Light.Light[i].Ambient);
+		COPY_4FV((v + 4), ctx->Light.Light[i].Diffuse);
+		COPY_4FV((v + 8), ctx->Light.Light[i].Specular);
+		COPY_4FV((v + 12), ctx->Light.Light[i].EyePosition);
+		COPY_2FV((v + 16), ctx->Light.Light[i].EyePosition);
+		v[18] = ctx->Light.Light[i].EyePosition[2] + 1.0f;
+		NORMALIZE_3FV((v + 16));
+		v[19] = 0.0f;
+		COPY_3V((v + 20), ctx->Light.Light[i].EyeDirection);
+		v[23] = ctx->Light.Light[i].SpotExponent;
+		v[24] = ctx->Light.Light[i].SpotCutoff;
+		v[25] = ctx->Light.Light[i]._CosCutoffNeg;
+		v[26] = ctx->Light.Light[i].ConstantAttenuation;
+		v[27] = ctx->Light.Light[i].LinearAttenuation;
+		v[28] = ctx->Light.Light[i].QuadraticAttenuation;
+		write_common_fixed (pro, SLANG_COMMON_FIXED_LIGHTSOURCE, v, i, 29 * sizeof (GLfloat));
+
+		/* light product */
+		write_common_fixed_light_product (ctx, pro, i, SLANG_COMMON_FIXED_FRONTLIGHTPRODUCT,
+			MAT_ATTRIB_FRONT_AMBIENT,
+			MAT_ATTRIB_FRONT_DIFFUSE,
+			MAT_ATTRIB_FRONT_SPECULAR);
+		write_common_fixed_light_product (ctx, pro, i, SLANG_COMMON_FIXED_BACKLIGHTPRODUCT,
+			MAT_ATTRIB_BACK_AMBIENT,
+			MAT_ATTRIB_BACK_DIFFUSE,
+			MAT_ATTRIB_BACK_SPECULAR);
+	}
+
+	/* light model parameters */
+	write_common_fixed (pro, SLANG_COMMON_FIXED_LIGHTMODEL, ctx->Light.Model.Ambient, 0, 4 * sizeof (GLfloat));
+
+	/* light model product */
+	write_common_fixed_light_model_product (ctx, pro, SLANG_COMMON_FIXED_FRONTLIGHTMODELPRODUCT,
+		MAT_ATTRIB_FRONT_EMISSION,
+		MAT_ATTRIB_FRONT_AMBIENT);
+	write_common_fixed_light_model_product (ctx, pro, SLANG_COMMON_FIXED_BACKLIGHTMODELPRODUCT,
+		MAT_ATTRIB_BACK_EMISSION,
+		MAT_ATTRIB_BACK_AMBIENT);
+
+	/* TEXTURE_ENV_COLOR */
+	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++)
+	{
+		write_common_fixed (pro, SLANG_COMMON_FIXED_TEXTUREENVCOLOR, ctx->Texture.Unit[i].EnvColor,
+			i, 4 * sizeof (GLfloat));
+	}
+
+	/* fog parameters */
+	COPY_4FV(v, ctx->Fog.Color);
+	v[4] = ctx->Fog.Density;
+	v[5] = ctx->Fog.Start;
+	v[6] = ctx->Fog.End;
+	v[7] = ctx->Fog._Scale;
+	write_common_fixed (pro, SLANG_COMMON_FIXED_FOG, v, 0, 8 * sizeof (GLfloat));
 }
 
 static GLvoid
@@ -1046,6 +1186,24 @@ _program_GetTextureImageUsage (struct gl2_program_intf **intf, GLbitfield *texim
 	/* TODO: make sure that for 0<=i<=MaxTextureImageUint bitcount(teximageuint[i])<=0 */
 }
 
+static GLboolean
+_program_IsShaderPresent (struct gl2_program_intf **intf, GLenum subtype)
+{
+	GET_CURRENT_CONTEXT(ctx);
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
+	slang_program *pro = &impl->_obj.prog;
+
+	switch (subtype)
+	{
+	case GL_VERTEX_SHADER_ARB:
+		return pro->machines[SLANG_SHADER_VERTEX] != NULL;
+	case GL_FRAGMENT_SHADER_ARB:
+		return pro->machines[SLANG_SHADER_FRAGMENT] != NULL;
+	default:
+		return GL_FALSE;
+	}
+}
+
 static struct gl2_program_intf _program_vftbl = {
 	{
 		{
@@ -1072,7 +1230,8 @@ static struct gl2_program_intf _program_vftbl = {
 	_program_UpdateFixedUniforms,
 	_program_UpdateFixedAttribute,
 	_program_UpdateFixedVarying,
-	_program_GetTextureImageUsage
+	_program_GetTextureImageUsage,
+	_program_IsShaderPresent
 };
 
 static void

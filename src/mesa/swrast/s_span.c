@@ -1084,7 +1084,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
    const GLbitfield origArrayMask = span->arrayMask;
    const GLboolean deferredTexture = !(ctx->Color.AlphaEnabled ||
                                        ctx->FragmentProgram._Active ||
-                                       ctx->ShaderObjects.CurrentProgram);
+                                       ctx->ShaderObjects._FragmentShaderPresent);
 
    ASSERT(span->primitive == GL_POINT  ||  span->primitive == GL_LINE ||
 	  span->primitive == GL_POLYGON  ||  span->primitive == GL_BITMAP);
@@ -1156,7 +1156,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
          interpolate_fog(ctx, span);
 
       /* Compute fragment colors with fragment program or texture lookups */
-      if (ctx->ShaderObjects.CurrentProgram != NULL) {
+      if (ctx->ShaderObjects._FragmentShaderPresent) {
          if (span->interpMask & SPAN_Z)
             _swrast_span_interpolate_z (ctx, span);
          _swrast_exec_arbshader (ctx, span);
@@ -1240,7 +1240,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
       if (span->interpMask & SPAN_FOG)
          interpolate_fog(ctx, span);
 
-      if (ctx->ShaderObjects.CurrentProgram != NULL) {
+      if (ctx->ShaderObjects._FragmentShaderPresent) {
          if (span->interpMask & SPAN_Z)
             _swrast_span_interpolate_z (ctx, span);
          _swrast_exec_arbshader (ctx, span);

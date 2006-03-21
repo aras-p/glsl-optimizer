@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 2004-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2004-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -202,6 +202,13 @@ _mesa_ShaderSourceARB (GLhandleARB shaderObj, GLsizei count, const GLcharARB **s
 	if (sha == NULL)
 		return;
 
+	if (string == NULL)
+	{
+		RELEASE_SHADER(sha);
+		_mesa_error (ctx, GL_INVALID_VALUE, "glShaderSourceARB");
+		return;
+	}
+
 	/*
 	 * This array holds offsets of where the appropriate string ends, thus the last
 	 * element will be set to the total length of the source code.
@@ -216,6 +223,13 @@ _mesa_ShaderSourceARB (GLhandleARB shaderObj, GLsizei count, const GLcharARB **s
 
 	for (i = 0; i < count; i++)
 	{
+		if (string[i] == NULL)
+		{
+			_mesa_free ((GLvoid *) offsets);
+			RELEASE_SHADER(sha);
+			_mesa_error (ctx, GL_INVALID_VALUE, "glShaderSourceARB");
+			return;
+		}
 		if (length == NULL || length[i] < 0)
 			offsets[i] = _mesa_strlen (string[i]);
 		else
@@ -291,11 +305,14 @@ _mesa_LinkProgramARB (GLhandleARB programObj)
 
 	if (pro != NULL)
 	{
+		(**pro).Link (pro);
 		if (pro == ctx->ShaderObjects.CurrentProgram)
 		{
-			/* TODO re-install executable program */
+			if ((**pro).GetLinkStatus (pro))
+				_mesa_UseProgramObjectARB (programObj);
+			else
+				_mesa_UseProgramObjectARB (0);
 		}
-		(**pro).Link (pro);
 		RELEASE_PROGRAM(pro);
 	}
 }
@@ -323,6 +340,15 @@ _mesa_UseProgramObjectARB (GLhandleARB programObj)
 		}
 
 		program = pro;
+
+		ctx->ShaderObjects._VertexShaderPresent = (**pro).IsShaderPresent (pro, GL_VERTEX_SHADER_ARB);
+		ctx->ShaderObjects._FragmentShaderPresent = (**pro).IsShaderPresent (pro,
+			GL_FRAGMENT_SHADER_ARB);
+	}
+	else
+	{
+		ctx->ShaderObjects._VertexShaderPresent = GL_FALSE;
+		ctx->ShaderObjects._FragmentShaderPresent = GL_FALSE;
 	}
 
 	if (ctx->ShaderObjects.CurrentProgram != NULL)
@@ -1061,6 +1087,8 @@ GLvoid
 _mesa_init_shaderobjects (GLcontext *ctx)
 {
 	ctx->ShaderObjects.CurrentProgram = NULL;
+	ctx->ShaderObjects._FragmentShaderPresent = GL_FALSE;
+	ctx->ShaderObjects._VertexShaderPresent = GL_FALSE;
 
 	_mesa_init_shaderobjects_3dlabs (ctx);
 }

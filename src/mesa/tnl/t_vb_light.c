@@ -203,7 +203,7 @@ static GLboolean run_lighting( GLcontext *ctx,
    GLvector4f *input = ctx->_NeedEyeCoords ? VB->EyePtr : VB->ObjPtr;
    GLuint idx;
 
-   if (ctx->ShaderObjects.CurrentProgram != NULL)
+   if (ctx->ShaderObjects._VertexShaderPresent)
       return GL_TRUE;
 
    if (!ctx->Light.Enabled || ctx->VertexProgram._Enabled)
@@ -264,7 +264,7 @@ static void validate_lighting( GLcontext *ctx,
 {
    light_func *tab;
 
-   if (ctx->ShaderObjects.CurrentProgram != NULL)
+   if (ctx->ShaderObjects._VertexShaderPresent)
       return;
 
    if (!ctx->Light.Enabled || ctx->VertexProgram._Enabled)

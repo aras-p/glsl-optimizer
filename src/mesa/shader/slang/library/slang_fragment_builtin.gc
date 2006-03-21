@@ -116,42 +116,42 @@ vec4 shadow2DProj (sampler2DShadow sampler, vec4 coord, float bias) {
 
 float dFdx (float p) {
     // XXX:
-    return 0.0;
+    return 0.001;
 }
 
 vec2 dFdx (vec2 p) {
     // XXX:
-    return vec2 (0.0);
+    return vec2 (0.001);
 }
 
 vec3 dFdx (vec3 p) {
     // XXX:
-    return vec3 (0.0);
+    return vec3 (0.001);
 }
 
 vec4 dFdx (vec4 p) {
     // XXX:
-    return vec4 (0.0);
+    return vec4 (0.001);
 }
 
 float dFdy (float p) {
     // XXX:
-    return 0.0;
+    return 0.001;
 }
 
 vec2 dFdy (vec2 p) {
     // XXX:
-    return vec2 (0.0);
+    return vec2 (0.001);
 }
 
 vec3 dFdy (vec3 p) {
     // XXX:
-    return vec3 (0.0);
+    return vec3 (0.001);
 }
 
 vec4 dFdy (vec4 p) {
     // XXX:
-    return vec4 (0.0);
+    return vec4 (0.001);
 }
 
 float fwidth (float p) {

@@ -143,13 +143,46 @@ GLvoid _slang_multiply_swizzles (slang_swizzle *dst, const slang_swizzle *left,
 
 /* _slang_assemble_constructor() */
 
-static GLboolean constructor_aggregate (slang_assemble_ctx *A, const slang_storage_aggregate *flat,
-	GLuint *index, slang_operation *op, GLuint size)
+static GLboolean sizeof_argument (slang_assemble_ctx *A, GLuint *size, slang_operation *op)
 {
 	slang_assembly_typeinfo ti;
 	GLboolean result = GL_FALSE;
 	slang_storage_aggregate agg, flat_agg;
-	GLuint i;
+
+	if (!slang_assembly_typeinfo_construct (&ti))
+		return GL_FALSE;
+	if (!_slang_typeof_operation (A, op, &ti))
+		goto end1;
+
+	if (!slang_storage_aggregate_construct (&agg))
+		goto end1;
+	if (!_slang_aggregate_variable (&agg, &ti.spec, 0, A->space.funcs, A->space.structs,
+			A->space.vars, A->mach, A->file, A->atoms))
+		goto end2;
+
+	if (!slang_storage_aggregate_construct (&flat_agg))
+		goto end2;
+	if (!_slang_flatten_aggregate (&flat_agg, &agg))
+		goto end;
+
+	*size = flat_agg.count * 4;
+
+	result = GL_TRUE;
+end:
+	slang_storage_aggregate_destruct (&flat_agg);
+end2:
+	slang_storage_aggregate_destruct (&agg);
+end1:
+	slang_assembly_typeinfo_destruct (&ti);
+	return result;
+}
+
+static GLboolean constructor_aggregate (slang_assemble_ctx *A, const slang_storage_aggregate *flat,
+	slang_operation *op, GLuint garbage_size)
+{
+	slang_assembly_typeinfo ti;
+	GLboolean result = GL_FALSE;
+	slang_storage_aggregate agg, flat_agg;
 
 	if (!slang_assembly_typeinfo_construct (&ti))
 		return GL_FALSE;
@@ -170,17 +203,26 @@ static GLboolean constructor_aggregate (slang_assemble_ctx *A, const slang_stora
 	if (!_slang_assemble_operation (A, op, slang_ref_forbid))
 		goto end;
 
-	for (i = 0; i < flat_agg.count; i++)
-	{
-		const slang_storage_array *arr1 = &flat_agg.arrays[i];
-		const slang_storage_array *arr2 = &flat->arrays[*index];
+	/* TODO: convert (generic) elements */
 
-		if (arr1->type != arr2->type)
+	/* free the garbage */
+	if (garbage_size != 0)
+	{
+		GLuint i;
+
+		/* move the non-garbage part to the end of the argument */
+		if (!slang_assembly_file_push_label (A->file, slang_asm_addr_push, 0))
+			goto end;
+		for (i = flat_agg.count * 4 - garbage_size; i > 0; i -= 4)
 		{
-			/* TODO: convert (generic) from arr1 to arr2 */
+			if (!slang_assembly_file_push_label2 (A->file, slang_asm_float_move,
+				garbage_size + i, i))
+			{
+				goto end;
+			}
 		}
-		(*index)++;
-		/* TODO: watch the index, if it reaches the size, pop off the stack subsequent values */
+		if (!slang_assembly_file_push_label (A->file, slang_asm_local_free, garbage_size + 4))
+			goto end;
 	}
 
 	result = GL_TRUE;
@@ -198,7 +240,8 @@ GLboolean _slang_assemble_constructor (slang_assemble_ctx *A, slang_operation *o
 	slang_assembly_typeinfo ti;
 	GLboolean result = GL_FALSE;
 	slang_storage_aggregate agg, flat;
-	GLuint size, index, i;
+	GLuint size, i;
+	GLuint arg_sums[2];
 
 	/* get typeinfo of the constructor (the result of constructor expression) */
 	if (!slang_assembly_typeinfo_construct (&ti))
@@ -222,16 +265,47 @@ GLboolean _slang_assemble_constructor (slang_assemble_ctx *A, slang_operation *o
 	if (!_slang_flatten_aggregate (&flat, &agg))
 		goto end;
 
-	/* XXX: The children operations are traversed in a reversed order, so it poses a
-	 * problem when there is more data than the constructor needs. We must fix it! */
+	/* collect the last two constructor's argument size sums */
+	arg_sums[0] = 0;	/* will hold all but the last argument's size sum */
+	arg_sums[1] = 0;	/* will hold all argument's size sum */
+	for (i = 0; i < op->num_children; i++)
+	{
+		GLuint arg_size;
+
+		if (!sizeof_argument (A, &arg_size, &op->children[i]))
+			goto end;
+		if (i > 0)
+			arg_sums[0] = arg_sums[1];
+		arg_sums[1] += arg_size;
+	}
+
+	/* check if there are too many arguments */
+	if (arg_sums[0] >= size)
+	{
+		/* TODO: info log: too many arguments in constructor list */
+		goto end;
+	}
+
+	/* check if there are too few arguments */
+	if (arg_sums[1] < size)
+	{
+		/* TODO: info log: too few arguments in constructor list */
+		goto end;
+	}
 
 	/* traverse the children that form the constructor expression */
-	index = 0;
 	for (i = op->num_children; i > 0; i--)
 	{
-		if (!constructor_aggregate (A, &flat, &index, &op->children[i - 1], size))
+		GLuint garbage_size;
+
+		/* the last argument may be too big - calculate the unnecessary data size */
+		if (i == op->num_children)
+			garbage_size = arg_sums[1] - size;
+		else
+			garbage_size = 0;
+
+		if (!constructor_aggregate (A, &flat, &op->children[i - 1], garbage_size))
 			goto end;
-		/* TODO: watch the index, if it reaches the size, raise an error */
 	}
 
 	result = GL_TRUE;

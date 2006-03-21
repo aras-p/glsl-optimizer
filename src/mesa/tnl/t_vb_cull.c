@@ -57,7 +57,7 @@ static GLboolean run_cull_stage( GLcontext *ctx,
    GLuint count = VB->Count;
    GLuint i;
 
-   if (ctx->ShaderObjects.CurrentProgram != NULL)
+   if (ctx->ShaderObjects._VertexShaderPresent)
       return GL_TRUE;
 
    if (ctx->VertexProgram._Enabled ||
