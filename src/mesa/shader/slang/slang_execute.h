@@ -72,6 +72,10 @@ void slang_machine_init (slang_machine *);
 int _slang_execute (const slang_assembly_file *);
 int _slang_execute2 (const slang_assembly_file *, slang_machine *);
 
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+GLboolean _slang_x86_codegen (slang_machine *, slang_assembly_file *, GLuint);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

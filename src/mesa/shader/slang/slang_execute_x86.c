@@ -132,6 +132,9 @@ static GLvoid do_print_bool (GLfloat x)
 	_mesa_printf ("slang print: %s\n", (GLint) x ? "true" : "false");
 }
 
+#define FLOAT_ONE 0x3f800000
+#define FLOAT_ZERO 0
+
 static GLvoid codegen_assem (codegen_ctx *G, slang_assembly *a)
 {
 	GLint disp;
@@ -204,16 +207,15 @@ static GLvoid codegen_assem (codegen_ctx *G, slang_assembly *a)
 		x86_mov_reg_imm (&G->f, G->r_ecx, 0x100);
 		x86_test (&G->f, G->r_eax, G->r_ecx);
 		{
-			GLfloat one = 1.0f, zero = 0.0f;
 			GLubyte *lab0, *lab1;
 
 			/* TODO: use jcc rel8 */
 			lab0 = x86_jcc_forward (&G->f, cc_E);
-			x86_mov_reg_imm (&G->f, G->r_ecx, *((GLint *) &one));
+			x86_mov_reg_imm (&G->f, G->r_ecx, FLOAT_ONE);
 			/* TODO: use jmp rel8 */
 			lab1 = x86_jmp_forward (&G->f);
 			x86_fixup_fwd_jump (&G->f, lab0);
-			x86_mov_reg_imm (&G->f, G->r_ecx, *((GLint *) &zero));
+			x86_mov_reg_imm (&G->f, G->r_ecx, FLOAT_ZERO);
 			x86_fixup_fwd_jump (&G->f, lab1);
 			x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
 			x86_mov (&G->f, x86_deref (G->r_esp), G->r_ecx);
@@ -227,16 +229,15 @@ static GLvoid codegen_assem (codegen_ctx *G, slang_assembly *a)
 		x86_mov_reg_imm (&G->f, G->r_ecx, 0x4000);
 		x86_test (&G->f, G->r_eax, G->r_ecx);
 		{
-			GLfloat one = 1.0f, zero = 0.0f;
 			GLubyte *lab0, *lab1;
 
 			/* TODO: use jcc rel8 */
 			lab0 = x86_jcc_forward (&G->f, cc_E);
-			x86_mov_reg_imm (&G->f, G->r_ecx, *((GLint *) &one));
+			x86_mov_reg_imm (&G->f, G->r_ecx, FLOAT_ONE);
 			/* TODO: use jmp rel8 */
 			lab1 = x86_jmp_forward (&G->f);
 			x86_fixup_fwd_jump (&G->f, lab0);
-			x86_mov_reg_imm (&G->f, G->r_ecx, *((GLint *) &zero));
+			x86_mov_reg_imm (&G->f, G->r_ecx, FLOAT_ZERO);
 			x86_fixup_fwd_jump (&G->f, lab1);
 			x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
 			x86_mov (&G->f, x86_deref (G->r_esp), G->r_ecx);
@@ -251,16 +252,15 @@ static GLvoid codegen_assem (codegen_ctx *G, slang_assembly *a)
 		x86_mov_reg_imm (&G->f, G->r_ecx, 0x4000);
 		x86_test (&G->f, G->r_eax, G->r_ecx);
 		{
-			GLfloat one = 1.0f, zero = 0.0f;
 			GLubyte *lab0, *lab1;
 
 			/* TODO: use jcc rel8 */
 			lab0 = x86_jcc_forward (&G->f, cc_E);
-			x86_mov_reg_imm (&G->f, G->r_ecx, *((GLint *) &one));
+			x86_mov_reg_imm (&G->f, G->r_ecx, FLOAT_ONE);
 			/* TODO: use jmp rel8 */
 			lab1 = x86_jmp_forward (&G->f);
 			x86_fixup_fwd_jump (&G->f, lab0);
-			x86_mov_reg_imm (&G->f, G->r_ecx, *((GLint *) &zero));
+			x86_mov_reg_imm (&G->f, G->r_ecx, FLOAT_ZERO);
 			x86_fixup_fwd_jump (&G->f, lab1);
 			x86_mov (&G->f, x86_deref (G->r_esp), G->r_ecx);
 		}

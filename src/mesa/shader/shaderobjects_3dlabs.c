@@ -35,6 +35,7 @@
 #include "hash.h"
 #include "macros.h"
 #include "shaderobjects.h"
+#include "shaderobjects_3dlabs.h"
 
 #if USE_3DLABS_FRONTEND
 #include "slang_mesa.h"
@@ -1189,7 +1190,6 @@ _program_GetTextureImageUsage (struct gl2_program_intf **intf, GLbitfield *texim
 static GLboolean
 _program_IsShaderPresent (struct gl2_program_intf **intf, GLenum subtype)
 {
-	GET_CURRENT_CONTEXT(ctx);
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
 	slang_program *pro = &impl->_obj.prog;
 

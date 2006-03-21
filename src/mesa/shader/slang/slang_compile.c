@@ -2096,11 +2096,6 @@ static int compile (grammar *id, slang_translation_unit *builtin_units, int *com
 	return 1;
 }
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
-/* XXX */
-GLboolean _slang_x86_codegen (slang_machine *, slang_assembly_file *, GLuint);
-#endif
-
 int _slang_compile (const char *source, slang_translation_unit *unit, slang_unit_type type,
 	slang_info_log *log)
 {
