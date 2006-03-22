@@ -1328,6 +1328,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_VPI_OUT_OP_SGE                     (9 << 0)
 #define R300_VPI_OUT_OP_SLT                     (10 << 0)
 #define R300_VPI_OUT_OP_UNK12                   (12 << 0) /* Used in GL_POINT_DISTANCE_ATTENUATION_ARB, vector(scalar, vector) */
+#define R300_VPI_OUT_OP_ARL                     (13 << 0)
 #define R300_VPI_OUT_OP_EXP                     (65 << 0)
 #define R300_VPI_OUT_OP_LOG                     (66 << 0)
 #define R300_VPI_OUT_OP_UNK67                   (67 << 0) /* Used in fog computations, scalar(scalar) */
@@ -1342,6 +1343,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_VPI_OUT_OP_UNK129                  (129 << 0) /* all temps, vector(scalar, vector, vector) */
 
 #define R300_VPI_OUT_REG_CLASS_TEMPORARY        (0 << 8)
+#define R300_VPI_OUT_REG_CLASS_ADDR             (1 << 8)
 #define R300_VPI_OUT_REG_CLASS_RESULT           (2 << 8)
 #define R300_VPI_OUT_REG_CLASS_MASK             (31 << 8)
 

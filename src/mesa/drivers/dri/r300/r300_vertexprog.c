@@ -152,6 +152,8 @@ static unsigned long t_dst_class(enum register_file file)
 			return VSF_OUT_CLASS_TMP;
 		case PROGRAM_OUTPUT:
 			return VSF_OUT_CLASS_RESULT;
+		case PROGRAM_ADDRESS:
+			return VSF_OUT_CLASS_ADDR;
 		/*	
 		case PROGRAM_INPUT:
 		case PROGRAM_LOCAL_PARAM:
@@ -176,7 +178,10 @@ static unsigned long t_dst_index(struct r300_vertex_program *vp, struct prog_dst
 			WARN_ONCE("Unknown output %d\n", dst->Index);
 			return 10;
 		}
+	}else if(dst->File == PROGRAM_ADDRESS) {
+		assert(dst->Index == 0);
 	}
+	
 	return dst->Index;
 }
 
@@ -271,7 +276,7 @@ static unsigned long t_src(struct r300_vertex_program *vp, struct prog_src_regis
 				t_swizzle(GET_SWZ(src->Swizzle, 2)),
 				t_swizzle(GET_SWZ(src->Swizzle, 3)),
 				t_src_class(src->File),
-				src->NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+				src->NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src->RelAddr << 4);
 }
 
 static unsigned long t_src_scalar(struct r300_vertex_program *vp, struct prog_src_register *src)
@@ -606,6 +611,14 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 		
 		/* These ops need special handling. */
 		switch(vpi->Opcode){
+		case OPCODE_ARL:
+			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ARL, t_dst_index(vp, &vpi->DstReg),
+					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
+			o_inst->src1=t_src_scalar(vp, &src[0]);
+			o_inst->src2=ZERO_SRC_0;
+			o_inst->src3=ZERO_SRC_0;
+			goto next;
+			
 		case OPCODE_POW:
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_POW, t_dst_index(vp, &vpi->DstReg),
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
@@ -899,10 +912,6 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 		
 			goto next;
 
-		case OPCODE_ARL:
-			WARN_ONCE("ARL not implemented yet!\n");
-			goto next;
-			
 		case OPCODE_RCC:
 			fprintf(stderr, "Dont know how to handle op %d yet\n", vpi->Opcode);
 			exit(-1);
@@ -982,8 +991,5 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 	for(i=0; i < vp->program.length; i++)
 		fprintf(stderr, "%08x\n", vp->program.body.d[i]);
 #endif
-	
-	if (mesa_vp->IsNVProgram)
-		vp->native = GL_FALSE;
 }
 

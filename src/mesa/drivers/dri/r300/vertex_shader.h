@@ -19,6 +19,7 @@ typedef struct {
 #define VSF_FLAG_NONE  0
 
 #define VSF_OUT_CLASS_TMP	0
+#define VSF_OUT_CLASS_ADDR	1
 #define VSF_OUT_CLASS_RESULT	2
 
 
