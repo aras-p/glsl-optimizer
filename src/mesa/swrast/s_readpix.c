@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,6 +33,7 @@
 #include "macros.h"
 #include "imports.h"
 #include "pixel.h"
+#include "state.h"
 
 #include "s_context.h"
 #include "s_depth.h"
@@ -509,6 +510,15 @@ _swrast_ReadPixels( GLcontext *ctx,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_pixelstore_attrib clippedPacking = *packing;
 
+   /* Need to do RENDER_START before clipping or anything else since this
+    * is where a driver may grab the hw lock and get an updated window
+    * size.
+    */
+   RENDER_START(swrast, ctx);
+
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
@@ -525,7 +535,7 @@ _swrast_ReadPixels( GLcontext *ctx,
                                      format, type, pixels)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glReadPixels(invalid PBO access)");
-         return;
+         goto end;
       }
       buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
                                               GL_WRITE_ONLY_ARB,
@@ -533,12 +543,10 @@ _swrast_ReadPixels( GLcontext *ctx,
       if (!buf) {
          /* buffer is already mapped - that's an error */
          _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(PBO is mapped)");
-         return;
+         goto end;
       }
       pixels = ADD_POINTERS(buf, pixels);
    }
-
-   RENDER_START(swrast, ctx);
 
    switch (format) {
       case GL_COLOR_INDEX:
@@ -576,6 +584,8 @@ _swrast_ReadPixels( GLcontext *ctx,
          /* don't return yet, clean-up */
    }
 
+
+end:
    RENDER_FINISH(swrast, ctx);
 
    if (clippedPacking.BufferObj->Name) {
