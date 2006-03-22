@@ -2296,7 +2296,8 @@ parse_address_reg (GLcontext * ctx, GLubyte ** inst,
 {
    struct var_cache *dst;
    GLuint result;
-   (void) Index;
+
+   *Index = 0; /* XXX */
 
    dst = parse_string (inst, vc_head, Program, &result);
    Program->Position = parse_position (inst);
