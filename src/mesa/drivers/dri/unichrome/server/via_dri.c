@@ -38,7 +38,6 @@
 #include "via_context.h"
 #include "via_dri.h"
 #include "via_driver.h"
-#include "via_common.h"
 #include "xf86drm.h"
 
 static void VIAEnableMMIO(DRIDriverContext * ctx);
