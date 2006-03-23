@@ -23,6 +23,7 @@
 /*
  * This program tests GLX thread safety.
  * Command line options:
+ *  -p                       Open a display connection for each thread
  *  -n <num threads>         Number of threads to create (default is 2)
  *  -display <display name>  Specify X display (default is :0.0)
  *
@@ -32,6 +33,7 @@
 
 #if defined(PTHREADS)   /* defined by Mesa on Linux and other platforms */
 
+#include <assert.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
 #include <stdio.h>
@@ -61,6 +63,7 @@ static struct winthread WinThreads[MAX_WINTHREADS];
 static int NumWinThreads = 0;
 static volatile GLboolean ExitFlag = GL_FALSE;
 
+static GLboolean MultiDisplays = 0;
 
 
 static void
@@ -174,23 +177,23 @@ draw_loop(struct winthread *wt)
 
       glXSwapBuffers(wt->Dpy, wt->Win);
 
+      usleep(5000);
       wt->Angle += 1.0;
-
-      /* XXX Calling sched_yield() here smooths out performance a lot! */
-      /* Not sure how portable it is though, so leave out for now. */
-      /*sched_yield();*/
    }
 }
 
 
 /*
  * The main process thread runs this loop.
+ * Single display connection for all threads.
  */
 static void
 event_loop(Display *dpy)
 {
    XEvent event;
    int i;
+
+   assert(!MultiDisplays);
 
    while (!ExitFlag) {
       XNextEvent(dpy, &event);
@@ -216,6 +219,41 @@ event_loop(Display *dpy)
       }
    }
 }
+
+
+/*
+ * Separate display connection for each thread.
+ */
+static void
+event_loop_multi(void)
+{
+   XEvent event;
+   int w = 0;
+
+   assert(MultiDisplays);
+
+   while (!ExitFlag) {
+      struct winthread *wt = &WinThreads[w];
+      if (XPending(wt->Dpy)) {
+         XNextEvent(wt->Dpy, &event);
+         switch (event.type) {
+         case ConfigureNotify:
+            resize(wt, event.xconfigure.width, event.xconfigure.height);
+            break;
+         case KeyPress:
+            /* tell all threads to exit */
+            ExitFlag = GL_TRUE;
+            /*printf("exit draw_loop %d\n", wt->Index);*/
+            return;
+         default:
+            /*no-op*/ ;
+         }
+      }
+      w = (w + 1) % NumWinThreads;
+      usleep(5000);
+   }
+}
+
 
 
 /*
@@ -333,14 +371,14 @@ main(int argc, char *argv[])
 {
    char *displayName = ":0.0";
    int numThreads = 2;
-   Display *dpy;
+   Display *dpy = NULL;
    int i;
    Status threadStat;
 
    if (argc == 1) {
-      printf("glthreads: test of GL thread safety (any key = exit)\n");
+      printf("threadgl: test of GL thread safety (any key = exit)\n");
       printf("Usage:\n");
-      printf("  glthreads [-display dpyName] [-n numthreads]\n");
+      printf("  threadgl [-display dpyName] [-n numthreads]\n");
    }
    else {
       int i;
@@ -348,6 +386,9 @@ main(int argc, char *argv[])
          if (strcmp(argv[i], "-display") == 0 && i + 1 < argc) {
             displayName = argv[i + 1];
             i++;
+         }
+         else if (strcmp(argv[i], "-p") == 0) {
+            MultiDisplays = 1;
          }
          else if (strcmp(argv[i], "-n") == 0 && i + 1 < argc) {
             numThreads = atoi(argv[i + 1]);
@@ -357,48 +398,72 @@ main(int argc, char *argv[])
                numThreads = MAX_WINTHREADS;
             i++;
          }
+         else {
+            fprintf(stderr, "glthreads: unexpected flag: %s\n", argv[i]);
+         }
       }
    }
    
    /*
     * VERY IMPORTANT: call XInitThreads() before any other Xlib functions.
     */
-   threadStat = XInitThreads();
-   if (threadStat) {
-      printf("XInitThreads() returned %d (success)\n", (int) threadStat);
-   }
-   else {
-      printf("XInitThreads() returned 0 (failure- this program may fail)\n");
+   if (!MultiDisplays) {
+      threadStat = XInitThreads();
+      if (threadStat) {
+         printf("XInitThreads() returned %d (success)\n", (int) threadStat);
+      }
+      else {
+         printf("XInitThreads() returned 0 (failure- this program may fail)\n");
+      }
+
+      dpy = XOpenDisplay(displayName);
+      if (!dpy) {
+         fprintf(stderr, "Unable to open display %s\n", displayName);
+         return -1;
+      }
    }
 
-
-   dpy = XOpenDisplay(displayName);
-   if (!dpy) {
-      fprintf(stderr, "Unable to open display %s\n", displayName);
-      return -1;
-   }
+   printf("glthreads: creating windows\n");
 
    NumWinThreads = numThreads;
 
    /* Create the GLX windows and contexts */
    for (i = 0; i < numThreads; i++) {
-      WinThreads[i].Dpy = dpy;
+      if (MultiDisplays) {
+         WinThreads[i].Dpy = XOpenDisplay(displayName);
+         assert(WinThreads[i].Dpy);
+      }
+      else {
+         WinThreads[i].Dpy = dpy;
+      }
       WinThreads[i].Index = i;
       create_window(&WinThreads[i]);
    }
+
+   printf("glthreads: creating threads\n");
 
    /* Create the threads */
    for (i = 0; i < numThreads; i++) {
       pthread_create(&WinThreads[i].Thread, NULL, thread_function,
                      (void*) &WinThreads[i]);
-      printf("Created Thread %u\n", (unsigned int) WinThreads[i].Thread);
+      printf("Created Thread %d\n", (int) WinThreads[i].Thread);
    }
 
-   event_loop(dpy);
+   if (MultiDisplays)
+      event_loop_multi();
+   else
+      event_loop(dpy);
 
    clean_up();
 
-   XCloseDisplay(dpy);
+   if (MultiDisplays) {
+      for (i = 0; i < numThreads; i++) {
+         XCloseDisplay(WinThreads[i].Dpy);
+      }
+   }
+   else {
+      XCloseDisplay(dpy);
+   }
 
    return 0;
 }
