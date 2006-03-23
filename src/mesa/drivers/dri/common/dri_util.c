@@ -659,10 +659,12 @@ static void
 driDestroyDrawable(__DRInativeDisplay *dpy, void *drawablePrivate)
 {
     __DRIdrawablePrivate *pdp = (__DRIdrawablePrivate *) drawablePrivate;
-    __DRIscreenPrivate *psp = pdp->driScreenPriv;
-    int scrn = psp->myNum;
+    __DRIscreenPrivate *psp;
+    int scrn;
 
     if (pdp) {
+	psp = pdp->driScreenPriv;
+	scrn = psp->myNum;
         (*psp->DriverAPI.DestroyBuffer)(pdp);
 	if ((*dri_interface->windowExists)(dpy, pdp->draw))
 	    (void)(*dri_interface->destroyDrawable)(dpy, scrn, pdp->draw);
