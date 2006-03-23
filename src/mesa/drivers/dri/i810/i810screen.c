@@ -302,9 +302,9 @@ i810InitDriver(__DRIscreenPrivate *sPriv)
 	      i810Screen->tex.handle,
 	      i810Screen->tex.size,
 	      (drmAddress *)&i810Screen->tex.map) != 0) {
-      FREE(i810Screen);
       drmUnmap(i810Screen->back.map, i810Screen->back.size);
       drmUnmap(i810Screen->depth.map, i810Screen->depth.size);
+      FREE(i810Screen);
       sPriv->private = NULL;
       __driUtilMessage("i810InitDriver: drmMap (3) failed");
       return GL_FALSE;
