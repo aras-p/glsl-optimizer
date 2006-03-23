@@ -64,6 +64,9 @@ static int NumWinThreads = 0;
 static volatile GLboolean ExitFlag = GL_FALSE;
 
 static GLboolean MultiDisplays = 0;
+static GLboolean Locking = 0;
+
+static pthread_mutex_t Mutex;
 
 
 static void
@@ -148,9 +151,22 @@ resize(struct winthread *wt, int w, int h)
 static void
 draw_loop(struct winthread *wt)
 {
+   GLboolean firstIter = GL_TRUE;
+
    while (!ExitFlag) {
 
+      if (Locking)
+         pthread_mutex_lock(&Mutex);
+
       glXMakeCurrent(wt->Dpy, wt->Win, wt->Context);
+      if (firstIter) {
+         printf("glthreads: %d: GL_RENDERER = %s\n", wt->Index,
+                (char *) glGetString(GL_RENDERER));
+         firstIter = GL_FALSE;
+      }
+
+      if (Locking)
+         pthread_mutex_unlock(&Mutex);
 
       glEnable(GL_DEPTH_TEST);
 
@@ -175,7 +191,13 @@ draw_loop(struct winthread *wt)
          draw_object();
       glPopMatrix();
 
+      if (Locking)
+         pthread_mutex_lock(&Mutex);
+
       glXSwapBuffers(wt->Dpy, wt->Win);
+
+      if (Locking)
+         pthread_mutex_unlock(&Mutex);
 
       usleep(5000);
       wt->Angle += 1.0;
@@ -196,7 +218,25 @@ event_loop(Display *dpy)
    assert(!MultiDisplays);
 
    while (!ExitFlag) {
-      XNextEvent(dpy, &event);
+
+      if (Locking) {
+         while (1) {
+            int k;
+            pthread_mutex_lock(&Mutex);
+            k = XPending(dpy);
+            if (k) {
+               XNextEvent(dpy, &event);
+               pthread_mutex_unlock(&Mutex);
+               break;
+            }
+            pthread_mutex_unlock(&Mutex);
+            usleep(5000);
+         }
+      }
+      else {
+         XNextEvent(dpy, &event);
+      }
+
       switch (event.type) {
          case ConfigureNotify:
             /* Find winthread for this event's window */
@@ -376,9 +416,9 @@ main(int argc, char *argv[])
    Status threadStat;
 
    if (argc == 1) {
-      printf("threadgl: test of GL thread safety (any key = exit)\n");
+      printf("glthreads: test of GL thread safety (any key = exit)\n");
       printf("Usage:\n");
-      printf("  threadgl [-display dpyName] [-n numthreads]\n");
+      printf("  glthreads [-display dpyName] [-n numthreads]\n");
    }
    else {
       int i;
@@ -389,6 +429,9 @@ main(int argc, char *argv[])
          }
          else if (strcmp(argv[i], "-p") == 0) {
             MultiDisplays = 1;
+         }
+         else if (strcmp(argv[i], "-l") == 0) {
+            Locking = 1;
          }
          else if (strcmp(argv[i], "-n") == 0 && i + 1 < argc) {
             numThreads = atoi(argv[i + 1]);
@@ -404,16 +447,28 @@ main(int argc, char *argv[])
       }
    }
    
+   if (Locking)
+      printf("glthreads: Using explict locks around Xlib calls.\n");
+   else
+      printf("glthreads: No explict locking.\n");
+
+   if (MultiDisplays)
+      printf("glthreads: Per-thread display connections.\n");
+   else
+      printf("glthreads: Single display connection.\n");
+
    /*
     * VERY IMPORTANT: call XInitThreads() before any other Xlib functions.
     */
    if (!MultiDisplays) {
-      threadStat = XInitThreads();
+      if (!Locking) {
+         threadStat = XInitThreads();
       if (threadStat) {
          printf("XInitThreads() returned %d (success)\n", (int) threadStat);
       }
       else {
          printf("XInitThreads() returned 0 (failure- this program may fail)\n");
+      }
       }
 
       dpy = XOpenDisplay(displayName);
@@ -421,6 +476,10 @@ main(int argc, char *argv[])
          fprintf(stderr, "Unable to open display %s\n", displayName);
          return -1;
       }
+   }
+
+   if (Locking) {
+      pthread_mutex_init(&Mutex, NULL);
    }
 
    printf("glthreads: creating windows\n");
@@ -446,7 +505,7 @@ main(int argc, char *argv[])
    for (i = 0; i < numThreads; i++) {
       pthread_create(&WinThreads[i].Thread, NULL, thread_function,
                      (void*) &WinThreads[i]);
-      printf("Created Thread %d\n", (int) WinThreads[i].Thread);
+      printf("glthreads: Created thread %u\n", (unsigned int) WinThreads[i].Thread);
    }
 
    if (MultiDisplays)
