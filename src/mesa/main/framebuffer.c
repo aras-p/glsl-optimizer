@@ -571,12 +571,18 @@ _mesa_source_buffer_exists(GLcontext *ctx, GLenum format)
 
    switch (format) {
    case GL_COLOR:
+   case GL_RED:
+   case GL_GREEN:
+   case GL_BLUE:
    case GL_ALPHA:
    case GL_LUMINANCE:
    case GL_LUMINANCE_ALPHA:
    case GL_INTENSITY:
    case GL_RGB:
+   case GL_BGR:
    case GL_RGBA:
+   case GL_BGRA:
+   case GL_ABGR_EXT:
    case GL_COLOR_INDEX:
       if (ctx->ReadBuffer->_ColorReadBuffer == NULL) {
          return GL_FALSE;
@@ -606,7 +612,8 @@ _mesa_source_buffer_exists(GLcontext *ctx, GLenum format)
       break;
    default:
       _mesa_problem(ctx,
-                    "Unexpected format 0x%x in _mesa_source_buffer_exists");
+                    "Unexpected format 0x%x in _mesa_source_buffer_exists",
+                    format);
       return GL_FALSE;
    }
 
@@ -631,12 +638,18 @@ _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format)
 
    switch (format) {
    case GL_COLOR:
+   case GL_RED:
+   case GL_GREEN:
+   case GL_BLUE:
    case GL_ALPHA:
    case GL_LUMINANCE:
    case GL_LUMINANCE_ALPHA:
    case GL_INTENSITY:
    case GL_RGB:
+   case GL_BGR:
    case GL_RGBA:
+   case GL_BGRA:
+   case GL_ABGR_EXT:
    case GL_COLOR_INDEX:
       /* nothing special */
       break;
@@ -664,7 +677,8 @@ _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format)
       break;
    default:
       _mesa_problem(ctx,
-                    "Unexpected format 0x%x in _mesa_source_buffer_exists");
+                    "Unexpected format 0x%x in _mesa_source_buffer_exists",
+                    format);
       return GL_FALSE;
    }
 
