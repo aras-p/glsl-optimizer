@@ -978,6 +978,11 @@ Parse_AddressInstruction(struct parse_state *parseState, struct prog_instruction
    inst->Opcode = OPCODE_ARL;
    inst->StringPos = parseState->curLine - parseState->start;
 
+   /* Make ARB_vp backends happy */
+   inst->DstReg.File = PROGRAM_ADDRESS;
+   inst->DstReg.WriteMask = WRITEMASK_X;
+   inst->DstReg.Index = 0;
+
    /* dest A0 reg */
    if (!Parse_AddrReg(parseState))
       RETURN_ERROR;
