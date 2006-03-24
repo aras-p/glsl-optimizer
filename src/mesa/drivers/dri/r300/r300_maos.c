@@ -377,7 +377,21 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 	}
 
 	if (inputs & _TNL_BIT_COLOR1) {
-		CONFIGURE_AOS(i_color[1], AOS_FORMAT_FLOAT_COLOR,
+		int emitsize=4;
+
+		if (!immd) {
+			if (VB->AttribPtr[VERT_ATTRIB_COLOR1].size == 4 &&
+			    (VB->AttribPtr[VERT_ATTRIB_COLOR1].stride != 0 ||
+			     ((float*)VB->AttribPtr[VERT_ATTRIB_COLOR1].data)[3] != 1.0)) {
+				emitsize = 4;
+			} else {
+				emitsize = 3;
+			}//emitsize = VB->AttribPtr[VERT_ATTRIB_COLOR1].size;
+		}
+		if(VB->AttribPtr[VERT_ATTRIB_COLOR1].type == GL_UNSIGNED_BYTE)
+			emitsize = 1;
+
+		CONFIGURE_AOS(i_color[1], VB->AttribPtr[VERT_ATTRIB_COLOR1].type == GL_UNSIGNED_BYTE ? AOS_FORMAT_UBYTE : AOS_FORMAT_FLOAT_COLOR,
 						VB->AttribPtr[VERT_ATTRIB_COLOR1],
 						immd ? 4 : VB->AttribPtr[VERT_ATTRIB_COLOR1].size,
 						count);
