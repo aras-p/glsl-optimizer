@@ -178,7 +178,7 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
 
    for (i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
-      if (att->Type == GL_RENDERBUFFER_EXT && att->Renderbuffer) {
+      if (att->Renderbuffer) {
          struct gl_renderbuffer *rb = att->Renderbuffer;
          rb->RefCount--;
          if (rb->RefCount == 0) {
