@@ -250,6 +250,10 @@ _swrast_copy_texsubimage3d(GLcontext *ctx,
                            GLint x, GLint y, GLsizei width, GLsizei height);
 
 
+extern void
+_swrast_eject_texture_images(GLcontext *ctx);
+
+
 /**
  * The driver interface for the software rasterizer.
  * XXX this may go away.

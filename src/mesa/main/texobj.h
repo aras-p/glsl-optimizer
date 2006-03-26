@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,6 +39,9 @@
  * \name Internal functions
  */
 /*@{*/
+
+extern struct gl_texture_object *
+_mesa_lookup_texture(GLcontext *ctx, GLuint id);
 
 extern struct gl_texture_object *
 _mesa_new_texture_object( GLcontext *ctx, GLuint name, GLenum target );

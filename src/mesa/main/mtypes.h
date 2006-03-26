@@ -319,6 +319,28 @@ enum {
 #define BUFFER_BIT_COLOR6       (1 << BUFFER_COLOR6)
 #define BUFFER_BIT_COLOR7       (1 << BUFFER_COLOR7)
 
+/**
+ * Mask of all the color buffer bits (but not accum).
+ */
+#define BUFFER_BITS_COLOR  (BUFFER_BIT_FRONT_LEFT | \
+                            BUFFER_BIT_BACK_LEFT | \
+                            BUFFER_BIT_FRONT_RIGHT | \
+                            BUFFER_BIT_BACK_RIGHT | \
+                            BUFFER_BIT_AUX0 | \
+                            BUFFER_BIT_AUX1 | \
+                            BUFFER_BIT_AUX2 | \
+                            BUFFER_BIT_AUX3 | \
+                            BUFFER_BIT_COLOR0 | \
+                            BUFFER_BIT_COLOR1 | \
+                            BUFFER_BIT_COLOR2 | \
+                            BUFFER_BIT_COLOR3 | \
+                            BUFFER_BIT_COLOR4 | \
+                            BUFFER_BIT_COLOR5 | \
+                            BUFFER_BIT_COLOR6 | \
+                            BUFFER_BIT_COLOR7)
+
+
+
 
 /**
  * Data structure for color tables
@@ -1232,6 +1254,7 @@ struct gl_texture_image
    GLuint Height;		/**< = 2^HeightLog2 + 2*Border */
    GLuint Depth;		/**< = 2^DepthLog2 + 2*Border */
    GLuint RowStride;		/**< == Width unless IsClientData and padded */
+   GLuint ImageStride;          /**< Stride between images, in texels */
    GLuint Width2;		/**< = Width - 2*Border */
    GLuint Height2;		/**< = Height - 2*Border */
    GLuint Depth2;		/**< = Depth - 2*Border */
@@ -2024,14 +2047,17 @@ struct gl_shared_state
  */
 struct gl_renderbuffer
 {
+   _glthread_Mutex Mutex;		   /**< for thread safety */
+   GLuint ClassID;        /**< Useful for drivers */
    GLuint Name;
    GLint RefCount;
    GLuint Width, Height;
-   GLenum InternalFormat; /* The user-specified value */
-   GLenum _BaseFormat;    /* Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or */
-                          /* GL_STENCIL_INDEX. */
-   GLenum DataType;       /* Type of values passed to the Get/Put functions */
-   GLubyte RedBits;       /**< Bits per image component */
+   GLenum InternalFormat; /**< The user-specified format */
+   GLenum _ActualFormat;  /**< The driver-chosen format */
+   GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
+                               GL_STENCIL_INDEX. */
+   GLenum DataType;      /**< Type of values passed to the Get/Put functions */
+   GLubyte RedBits;      /**< Bits of red per pixel */
    GLubyte GreenBits;
    GLubyte BlueBits;
    GLubyte AlphaBits;
@@ -2139,6 +2165,7 @@ struct gl_renderbuffer_attachment
  */
 struct gl_framebuffer
 {
+   _glthread_Mutex Mutex;		   /**< for thread safety */
    GLuint Name;      /* if zero, this is a window system framebuffer */
    GLint RefCount;
 

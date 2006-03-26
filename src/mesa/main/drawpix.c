@@ -149,12 +149,6 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glDrawPixels (invalid fragment program)");
-      return;
-   }
-
    if (width < 0 || height < 0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glDrawPixels(width or height < 0" );
       return;
@@ -162,6 +156,12 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
 
    if (ctx->NewState) {
       _mesa_update_state(ctx);
+   }
+
+   if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glDrawPixels (invalid fragment program)");
+      return;
    }
 
    if (error_check_format_type(ctx, format, type, GL_TRUE)) {
@@ -315,12 +315,6 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glBitmap (invalid fragment program)");
-      return;
-   }
-
    if (width < 0 || height < 0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glBitmap(width or height < 0)" );
       return;
@@ -332,6 +326,12 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
 
    if (ctx->NewState) {
       _mesa_update_state(ctx);
+   }
+
+   if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glBitmap (invalid fragment program)");
+      return;
    }
 
    if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {

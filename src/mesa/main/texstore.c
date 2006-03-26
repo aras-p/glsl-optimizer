@@ -1226,6 +1226,43 @@ _mesa_texstore_argb8888(STORE_PARAMS)
             !srcPacking->SwapBytes &&
 	    dstFormat == &_mesa_texformat_argb8888 &&
             srcFormat == GL_RGBA &&
+            (srcType == GL_UNSIGNED_BYTE && littleEndian)) {
+
+      int img, row, col;
+      GLubyte *dstImage = (GLubyte *) dstAddr
+                        + dstZoffset * dstImageStride
+                        + dstYoffset * dstRowStride
+                        + dstXoffset * dstFormat->TexelBytes;
+
+      /* For some reason, streaming copies to write-combined regions
+       * are extremely sensitive to the characteristics of how the
+       * source data is retrieved.  By reordering the source reads to
+       * be in-order, the speed of this operation increases by half.
+       * Strangely the same isn't required for the RGB path, above.
+       */
+      for (img = 0; img < srcDepth; img++) {
+         const GLint srcRowStride = _mesa_image_row_stride(srcPacking,
+                                                 srcWidth, srcFormat, srcType);
+         GLubyte *srcRow = (GLubyte *) _mesa_image_address(dims, srcPacking,
+                  srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, 0, 0);
+         GLubyte *dstRow = dstImage;
+         for (row = 0; row < srcHeight; row++) {
+            for (col = 0; col < srcWidth; col++) {
+               *(GLuint *)(dstRow + col * 4)  = (srcRow[col * 4 + RCOMP] << 16 |
+						 srcRow[col * 4 + GCOMP] << 8 |
+						 srcRow[col * 4 + BCOMP] << 0 |
+						 srcRow[col * 4 + ACOMP] << 24);
+            }
+            dstRow += dstRowStride;
+            srcRow += srcRowStride;
+         }
+         dstImage += dstImageStride;
+      }
+   }
+   else if (!ctx->_ImageTransferState &&
+            !srcPacking->SwapBytes &&
+	    dstFormat == &_mesa_texformat_argb8888 &&
+            srcFormat == GL_RGBA &&
             srcType == GL_UNSIGNED_BYTE) {
 
       int img, row, col;
@@ -4039,8 +4076,8 @@ _mesa_upscale_teximage2d (GLsizei inWidth, GLsizei inHeight,
 void
 _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                    GLenum format, GLenum type, GLvoid *pixels,
-                   const struct gl_texture_object *texObj,
-                   const struct gl_texture_image *texImage)
+                   struct gl_texture_object *texObj,
+                   struct gl_texture_image *texImage)
 {
    GLuint dimensions = (target == GL_TEXTURE_3D) ? 3 : 2;
 

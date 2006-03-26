@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,18 +38,19 @@ _mesa_new_s8_renderbuffer_wrapper(GLcontext *ctx,
 
 
 extern void
-_mesa_merge_depth_stencil_buffers(GLcontext *ctx,
-                                  struct gl_renderbuffer *dest,
-                                  struct gl_renderbuffer *depth,
-                                  struct gl_renderbuffer *stencil);
+_mesa_extract_stencil(GLcontext *ctx,
+                      struct gl_renderbuffer *dsRb,
+                      struct gl_renderbuffer *stencilRb);
 
 
 extern void
-_mesa_split_depth_stencil_buffer(GLcontext *ctx,
-                                 struct gl_renderbuffer *source,
-                                 struct gl_renderbuffer *depth,
-                                 struct gl_renderbuffer *stencil);
+_mesa_insert_stencil(GLcontext *ctx,
+                     struct gl_renderbuffer *dsRb,
+                     struct gl_renderbuffer *stencilRb);
 
+
+extern void
+_mesa_promote_stencil(GLcontext *ctx, struct gl_renderbuffer *stencilRb);
 
 
 #endif /* DEPTHSTENCIL_H */

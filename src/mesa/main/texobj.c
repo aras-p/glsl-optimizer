@@ -50,6 +50,19 @@
 /** \name Internal functions */
 /*@{*/
 
+
+/**
+ * Return the gl_texture_object for a given ID.
+ */
+struct gl_texture_object *
+_mesa_lookup_texture(GLcontext *ctx, GLuint id)
+{
+   return (struct gl_texture_object *)
+      _mesa_HashLookup(ctx->Shared->TexObjects, id);
+}
+
+
+
 /**
  * Allocate and initialize a new texture object.  But don't put it into the
  * texture object hash table.
@@ -682,8 +695,8 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
 
    for (i = 0; i < n; i++) {
       if (textures[i] > 0) {
-         struct gl_texture_object *delObj = (struct gl_texture_object *)
-            _mesa_HashLookup(ctx->Shared->TexObjects, textures[i]);
+         struct gl_texture_object *delObj
+            = _mesa_lookup_texture(ctx, textures[i]);
          if (delObj) {
 
             /* Check if texture is bound to any framebuffer objects.
@@ -817,8 +830,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    }
    else {
       /* non-default texture object */
-      const struct _mesa_HashTable *hash = ctx->Shared->TexObjects;
-      newTexObj = (struct gl_texture_object *) _mesa_HashLookup(hash, texName);
+      newTexObj = _mesa_lookup_texture(ctx, texName);
       if (newTexObj) {
          /* error checking */
          if (newTexObj->Target != 0 && newTexObj->Target != target) {
@@ -935,8 +947,7 @@ _mesa_PrioritizeTextures( GLsizei n, const GLuint *texName,
 
    for (i = 0; i < n; i++) {
       if (texName[i] > 0) {
-         struct gl_texture_object *t = (struct gl_texture_object *)
-            _mesa_HashLookup(ctx->Shared->TexObjects, texName[i]);
+         struct gl_texture_object *t = _mesa_lookup_texture(ctx, texName[i]);
          if (t) {
             t->Priority = CLAMP( priorities[i], 0.0F, 1.0F );
 	    if (ctx->Driver.PrioritizeTexture)
@@ -985,8 +996,7 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
          _mesa_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident");
          return GL_FALSE;
       }
-      t = (struct gl_texture_object *)
-         _mesa_HashLookup(ctx->Shared->TexObjects, texName[i]);
+      t = _mesa_lookup_texture(ctx, texName[i]);
       if (!t) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident");
          return GL_FALSE;
@@ -1033,8 +1043,7 @@ _mesa_IsTexture( GLuint texture )
    if (!texture)
       return GL_FALSE;
 
-   t = (struct gl_texture_object *)
-      _mesa_HashLookup(ctx->Shared->TexObjects, texture);
+   t = _mesa_lookup_texture(ctx, texture);
 
    /* IsTexture is true only after object has been bound once. */
    return t && t->Target;

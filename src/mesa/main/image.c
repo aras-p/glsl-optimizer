@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -4312,3 +4312,43 @@ _mesa_clip_readpixels(const GLcontext *ctx,
    return GL_TRUE;
 }
 
+
+/**
+ * Clip the rectangle defined by (x, y, width, height) against the bounds
+ * specified by [xmin, xmax) and [ymin, ymax).
+ * \return GL_FALSE if rect is totally clipped, GL_TRUE otherwise.
+ */
+GLboolean
+_mesa_clip_to_region(GLint xmin, GLint ymin,
+                     GLint xmax, GLint ymax,
+                     GLint *x, GLint *y,
+                     GLsizei *width, GLsizei *height )
+{
+   /* left clipping */
+   if (*x < xmin) {
+      *width -= (xmin - *x);
+      *x = xmin;
+   }
+
+   /* right clipping */
+   if (*x + *width > xmax)
+      *width -= (*x + *width - xmax - 1);
+
+   if (*width <= 0)
+      return GL_FALSE;
+
+   /* bottom (or top) clipping */
+   if (*y < ymin) {
+      *height -= (ymin - *y);
+      *y = ymin;
+   }
+
+   /* top (or bottom) clipping */
+   if (*y + *height > ymax)
+      *height -= (*y + *height - ymax - 1);
+
+   if (*height <= 0)
+      return GL_FALSE;
+
+   return GL_TRUE;
+}

@@ -42,6 +42,11 @@ _mesa_new_soft_renderbuffer(GLcontext *ctx, GLuint name);
 
 
 extern GLboolean
+_mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+                                GLenum internalFormat,
+                                GLuint width, GLuint height);
+
+extern GLboolean
 _mesa_add_color_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
                               GLuint rgbBits, GLuint alphaBits,
                               GLboolean frontLeft, GLboolean backLeft,

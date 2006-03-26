@@ -117,6 +117,7 @@ static void PrintTexture(GLcontext *ctx, const struct gl_texture_image *img)
             _mesa_printf("%02x%02x%02x%02x  ", data[0], data[1], data[2], data[3]);
          data += (img->RowStride - img->Width) * c;
       }
+      /* XXX use img->ImageStride here */
       _mesa_printf("\n");
    }
 #endif
@@ -1052,6 +1053,7 @@ clear_teximage_fields(struct gl_texture_image *img)
    img->Height = 0;
    img->Depth = 0;
    img->RowStride = 0;
+   img->ImageStride = 0;
    img->Width2 = 0;
    img->Height2 = 0;
    img->Depth2 = 0;
@@ -1097,6 +1099,7 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
    img->Height = height;
    img->Depth = depth;
    img->RowStride = width;
+   img->ImageStride = width * height;
    img->Width2 = width - 2 * border;   /* == 1 << img->WidthLog2; */
    img->Height2 = height - 2 * border; /* == 1 << img->HeightLog2; */
    img->Depth2 = depth - 2 * border;   /* == 1 << img->DepthLog2; */
@@ -2049,8 +2052,8 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                    GLenum type, GLvoid *pixels )
 {
    const struct gl_texture_unit *texUnit;
-   const struct gl_texture_object *texObj;
-   const struct gl_texture_image *texImage;
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
    GLint maxLevels = 0;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
@@ -2169,7 +2172,7 @@ update_fbo_texture(GLcontext *ctx, struct gl_texture_object *texObj,
              att->CubeMapFace == face) {
             ASSERT(att->Texture->Image[att->CubeMapFace][att->TextureLevel]);
             /* Tell driver about the new renderbuffer texture */
-            ctx->Driver.RenderbufferTexture(ctx, ctx->DrawBuffer, att);
+            ctx->Driver.RenderTexture(ctx, ctx->DrawBuffer, att);
          }
       }
    }

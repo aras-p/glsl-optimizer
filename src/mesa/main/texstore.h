@@ -231,8 +231,8 @@ _mesa_upscale_teximage2d(GLsizei inWidth, GLsizei inHeight,
 extern void
 _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                    GLenum format, GLenum type, GLvoid *pixels,
-                   const struct gl_texture_object *texObj,
-                   const struct gl_texture_image *texImage);
+                   struct gl_texture_object *texObj,
+                   struct gl_texture_image *texImage);
 
 
 extern void

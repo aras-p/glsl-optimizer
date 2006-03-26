@@ -56,6 +56,8 @@ driNewRenderbuffer(GLenum format, GLvoid *addr,
    driRenderbuffer *drb;
 
    assert(format == GL_RGBA ||
+          format == GL_RGB5 ||
+          format == GL_RGBA8 ||
           format == GL_DEPTH_COMPONENT16 ||
           format == GL_DEPTH_COMPONENT24 ||
           format == GL_DEPTH_COMPONENT32 ||
@@ -75,7 +77,7 @@ driNewRenderbuffer(GLenum format, GLvoid *addr,
 
       drb->Base.InternalFormat = format;
 
-      if (format == GL_RGBA) {
+      if (format == GL_RGBA || format == GL_RGB5 || format == GL_RGBA8) {
          /* Color */
          drb->Base._BaseFormat = GL_RGBA;
          drb->Base.DataType = GL_UNSIGNED_BYTE;

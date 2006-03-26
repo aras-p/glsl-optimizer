@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -216,5 +216,10 @@ _mesa_clip_readpixels(const GLcontext *ctx,
                       GLsizei *width, GLsizei *height,
                       struct gl_pixelstore_attrib *pack);
 
+extern GLboolean
+_mesa_clip_to_region(GLint xmin, GLint ymin,
+                     GLint xmax, GLint ymax,
+                     GLint *x, GLint *y,
+                     GLsizei *width, GLsizei *height );
 
 #endif

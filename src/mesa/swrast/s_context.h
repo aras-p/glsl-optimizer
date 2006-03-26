@@ -226,6 +226,11 @@ typedef void (*swrast_tri_func)( GLcontext *ctx, const SWvertex *,
                                  const SWvertex *, const SWvertex *);
 
 
+typedef void (*validate_texture_image_func)(GLcontext *ctx,
+                                            struct gl_texture_object *texObj,
+                                            GLuint face, GLuint level);
+
+
 /** \defgroup Bitmasks
  * Bitmasks to indicate which rasterization options are enabled
  * (RasterMask)
@@ -362,6 +367,8 @@ typedef struct
     * Needed for GL_ARB_texture_env_crossbar implementation.
     */
    GLchan *TexelBuffer;
+
+   validate_texture_image_func ValidateTextureImage;
 
 } SWcontext;
 

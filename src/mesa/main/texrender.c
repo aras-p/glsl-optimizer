@@ -163,7 +163,6 @@ wrap_texture(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
 
    trb->Zoffset = att->Zoffset;
 
-   trb->Base.RefCount = 1;
    trb->Base.Width = trb->TexImage->Width;
    trb->Base.Height = trb->TexImage->Height;
    trb->Base.InternalFormat = trb->TexImage->InternalFormat; /* XXX fix? */
@@ -195,12 +194,14 @@ wrap_texture(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
    trb->Base.DepthBits = trb->TexImage->TexFormat->DepthBits;
 
    att->Renderbuffer = &(trb->Base);
+   trb->Base.RefCount++;
 }
 
 
 
 /**
- * Called when rendering to a texture image begins.
+ * Called when rendering to a texture image begins, or when changing
+ * the dest mipmap level, cube face, etc.
  * This is a fallback routine for software render-to-texture.
  *
  * Called via the glRenderbufferTexture1D/2D/3D() functions
@@ -216,9 +217,9 @@ wrap_texture(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
  * \sa _mesa_framebuffer_renderbuffer
  */
 void
-_mesa_renderbuffer_texture(GLcontext *ctx,
-                           struct gl_framebuffer *fb,
-                           struct gl_renderbuffer_attachment *att)
+_mesa_render_texture(GLcontext *ctx,
+                     struct gl_framebuffer *fb,
+                     struct gl_renderbuffer_attachment *att)
 {
    struct gl_texture_image *newImage
       = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
@@ -241,3 +242,12 @@ _mesa_renderbuffer_texture(GLcontext *ctx,
 }
 
 
+void
+_mesa_finish_render_texture(GLcontext *ctx,
+                            struct gl_renderbuffer_attachment *att)
+{
+   /* do nothing */
+   /* The renderbuffer texture wrapper will get deleted by the
+    * normal mechanism for deleting renderbuffers.
+    */
+}
