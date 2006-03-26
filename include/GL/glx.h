@@ -392,9 +392,9 @@ extern int glXEndFrameTrackingMESA(Display *dpy, GLXDrawable drawable);
 extern int glXQueryFrameTrackingMESA(Display *dpy, GLXDrawable drawable, int64_t *swapCount, int64_t *missedFrames, float *lastMissedUsage);
 
 typedef int (*PFNGLXGETFRAMEUSAGEMESAPROC) (Display *dpy, GLXDrawable drawable, float *usage);
-typedef int (*PFNGLXBEGINFRAMETRACKINGMESA)(Display *dpy, GLXDrawable drawable);
-typedef int (*PFNGLXENDFRAMETRACKINGMESA)(Display *dpy, GLXDrawable drawable);
-typedef int (*PFNGLXQUERYFRAMETRACKINGMESA)(Display *dpy, GLXDrawable drawable, int64_t *swapCount, int64_t *missedFrames, float *lastMissedUsage);
+typedef int (*PFNGLXBEGINFRAMETRACKINGMESAPROC)(Display *dpy, GLXDrawable drawable);
+typedef int (*PFNGLXENDFRAMETRACKINGMESAPROC)(Display *dpy, GLXDrawable drawable);
+typedef int (*PFNGLXQUERYFRAMETRACKINGMESAPROC)(Display *dpy, GLXDrawable drawable, int64_t *swapCount, int64_t *missedFrames, float *lastMissedUsage);
 
 #endif /* GLX_MESA_swap_frame_usage */
 
@@ -409,8 +409,8 @@ typedef int (*PFNGLXQUERYFRAMETRACKINGMESA)(Display *dpy, GLXDrawable drawable, 
 extern int glXSwapIntervalMESA(unsigned int interval);
 extern int glXGetSwapIntervalMESA(void);
 
-typedef int (*PFNGLXSWAPINTERVALMESA)(unsigned int interval);
-typedef int (*PFNGLXGETSWAPINTERVALMESA)(void);
+typedef int (*PFNGLXSWAPINTERVALMESAPROC)(unsigned int interval);
+typedef int (*PFNGLXGETSWAPINTERVALMESAPROC)(void);
 
 #endif /* GLX_MESA_swap_control */
 
