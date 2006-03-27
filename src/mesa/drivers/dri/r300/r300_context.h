@@ -86,9 +86,6 @@ typedef struct r300_context *r300ContextPtr;
 #define WARN_ONCE(a, ...) {}
 #endif
 
-typedef GLuint uint32_t;
-typedef GLubyte uint8_t;
-
   /* We should probably change types within vertex_shader
       and pixel_shader structure later on */
 #define CARD32 GLuint
