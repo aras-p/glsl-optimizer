@@ -76,7 +76,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_NV_vertex_program
 #include "extension_helper.h"
 
-#define DRIVER_DATE	"20050831"
+#define DRIVER_DATE	"20060327"
 
 #include "vblank.h"
 #include "utils.h"
