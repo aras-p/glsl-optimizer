@@ -214,9 +214,14 @@ color_mask(GLcontext *ctx,
            GLboolean rmask, GLboolean gmask, GLboolean bmask, GLboolean amask)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
+   XMesaBuffer xmbuf;
    const int xclass = xmesa->xm_visual->mesa_visual.visualType;
    (void) amask;
+
+   if (ctx->DrawBuffer->Name != 0)
+      return;
+
+   xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
 
    if (xclass == GLX_TRUE_COLOR || xclass == GLX_DIRECT_COLOR) {
       unsigned long m;

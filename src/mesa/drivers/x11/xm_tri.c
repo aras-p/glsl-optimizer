@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1425,12 +1425,17 @@ do {                                   \
 #endif
 
 
-static swrast_tri_func get_triangle_func( GLcontext *ctx )
+/**
+ * Return pointer to line drawing function, or NULL if we should use a
+ * swrast fallback.
+ */
+static swrast_tri_func
+get_triangle_func(GLcontext *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    XMesaContext xmesa = XMESA_CONTEXT(ctx);
    int depth = GET_VISUAL_DEPTH(xmesa->xm_visual);
-   GET_XRB(xrb);
+   struct xmesa_renderbuffer *xrb;
 
 #ifdef DEBUG
    triFuncName = NULL;
@@ -1446,6 +1451,9 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
    if (ctx->Polygon.CullFlag && 
        ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
                                         return (swrast_tri_func) NULL;
+
+   xrb = (struct xmesa_renderbuffer *)
+      ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped;
 
    if (xrb->ximage) {
       if (   ctx->Light.ShadeModel==GL_SMOOTH

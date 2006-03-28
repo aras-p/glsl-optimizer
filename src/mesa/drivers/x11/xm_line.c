@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -69,7 +69,7 @@ static void draw_points_ANY_pixmap( GLcontext *ctx, const SWvertex *vert )
 						  color[2], color[3],
 						  xmesa->pixelformat);
       XMesaSetForeground( dpy, gc, pixel );
-      x =                         (GLint) vert->win[0];
+      x = (GLint) vert->win[0];
       y = YFLIP( xrb, (GLint) vert->win[1] );
       XMesaDrawPoint( dpy, buffer, gc, x, y);
    }
@@ -577,7 +577,7 @@ get_line_func(GLcontext *ctx)
    XMesaContext xmesa = XMESA_CONTEXT(ctx);
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    int depth = GET_VISUAL_DEPTH(xmesa->xm_visual);
-   GET_XRB(xrb);
+   struct xmesa_renderbuffer *xrb;
 
    if ((ctx->DrawBuffer->_ColorDrawBufferMask[0]
         & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT)) == 0)
@@ -588,6 +588,9 @@ get_line_func(GLcontext *ctx)
    if (ctx->Light.ShadeModel != GL_FLAT)  return (swrast_line_func) NULL;
    if (ctx->Line.StippleFlag)             return (swrast_line_func) NULL;
    if (swrast->_RasterMask & MULTI_DRAW_BIT) return (swrast_line_func) NULL;
+
+   xrb = (struct xmesa_renderbuffer *)
+      ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped;
 
    if (xrb->ximage
        && swrast->_RasterMask==DEPTH_BIT
