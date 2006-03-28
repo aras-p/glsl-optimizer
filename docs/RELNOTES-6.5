@@ -19,7 +19,16 @@ GL_EXT_timer_query  - used to get elapsed time information from the renderer.
 
 GL_EXT_packed_depth_stencil  - defines a new GL_DEPTH_STENCIL_EXT pixel format.
 
-GL_EXT_framebuffer_blit extension  - simplified glCopyPixels-like feature
+GL_EXT_framebuffer_blit  - simplified glCopyPixels-like feature
+
+
+
+Known Issues
+------------
+
+Rendering to depth or depth/stencil textures will not work, results in
+failed assertions, etc.
+
 
 
 Driver Interface Changes
@@ -72,4 +81,4 @@ D3D			needs updating
 
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-6.5,v 3.2 2006/03/02 04:12:34 brianp Exp $
+$Id: RELNOTES-6.5,v 3.3 2006/03/28 15:25:44 brianp Exp $
