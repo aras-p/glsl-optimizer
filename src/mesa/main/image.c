@@ -3849,6 +3849,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
       depthValues = depthTemp;
    }
 
+   /* XXX we need to obey srcPacking->SwapBytes here!!! */
    (void) srcPacking;
 
    switch (srcType) {
