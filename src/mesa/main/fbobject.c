@@ -457,8 +457,8 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          h = texImg->Height;
          f = texImg->_BaseFormat;
          numImages++;
-         if (f != GL_RGB && f != GL_RGBA && f != GL_DEPTH_COMPONENT) {
-            /* XXX need GL_DEPTH_STENCIL_EXT test? */
+         if (f != GL_RGB && f != GL_RGBA && f != GL_DEPTH_COMPONENT
+             && f != GL_DEPTH_STENCIL_EXT) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT;
             fbo_incomplete("texture attachment incomplete", -1);
             return;
@@ -922,7 +922,8 @@ check_begin_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
    for (i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = fb->Attachment + i;
       struct gl_texture_object *texObj = att->Texture;
-      if (texObj) {
+      if (texObj
+          && att->Texture->Image[att->CubeMapFace][att->TextureLevel]) {
          ctx->Driver.RenderTexture(ctx, fb, att);
       }
    }
