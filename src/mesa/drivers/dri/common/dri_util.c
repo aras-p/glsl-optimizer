@@ -831,7 +831,7 @@ static void driDestroyScreen(__DRInativeDisplay *dpy, int scrn, void *screenPriv
 	(void)drmUnmap((drmAddress)psp->pSAREA, SAREA_MAX);
 	(void)drmUnmap((drmAddress)psp->pFB, psp->fbSize);
 	_mesa_free(psp->pDevPriv);
-	(void)drmCloseOnce(psp->fd);
+	(void)drmClose(psp->fd);
 	if ( psp->modes != NULL ) {
 	    (*dri_interface->destroyContextModes)( psp->modes );
 	}
