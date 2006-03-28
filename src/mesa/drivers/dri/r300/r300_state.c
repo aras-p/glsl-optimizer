@@ -880,6 +880,7 @@ void r300UpdateViewportOffset( GLcontext *ctx )
 	/* Note: this should also modify whatever data the context reset
 	 * code uses...
 	 */
+	R300_STATECHANGE( rmesa, vpt );
 	rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] = r300PackFloat32(tx);
 	rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] = r300PackFloat32(ty);
       

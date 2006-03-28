@@ -762,16 +762,17 @@ static void r200PolygonOffset( GLcontext *ctx,
 			       GLfloat factor, GLfloat units )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLfloat constant = units * rmesa->state.depth.scale;
+   float_ui32_type constant =  { units * rmesa->state.depth.scale };
+   float_ui32_type factoru = { factor };
 
 /*    factor *= 2; */
 /*    constant *= 2; */
-   
+
 /*    fprintf(stderr, "%s f:%f u:%f\n", __FUNCTION__, factor, constant); */
 
    R200_STATECHANGE( rmesa, zbs );
-   rmesa->hw.zbs.cmd[ZBS_SE_ZBIAS_FACTOR]   = *(GLuint *)&factor;
-   rmesa->hw.zbs.cmd[ZBS_SE_ZBIAS_CONSTANT] = *(GLuint *)&constant;
+   rmesa->hw.zbs.cmd[ZBS_SE_ZBIAS_FACTOR]   = factoru.ui32;
+   rmesa->hw.zbs.cmd[ZBS_SE_ZBIAS_CONSTANT] = constant.ui32;
 }
 
 static void r200PolygonStipple( GLcontext *ctx, const GLubyte *mask )
@@ -1624,22 +1625,22 @@ void r200UpdateWindow( GLcontext *ctx )
    GLfloat yoffset = (GLfloat)dPriv->y + dPriv->h;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
 
-   GLfloat sx = v[MAT_SX];
-   GLfloat tx = v[MAT_TX] + xoffset + SUBPIXEL_X;
-   GLfloat sy = - v[MAT_SY];
-   GLfloat ty = (- v[MAT_TY]) + yoffset + SUBPIXEL_Y;
-   GLfloat sz = v[MAT_SZ] * rmesa->state.depth.scale;
-   GLfloat tz = v[MAT_TZ] * rmesa->state.depth.scale;
+   float_ui32_type sx = { v[MAT_SX] };
+   float_ui32_type tx = { v[MAT_TX] + xoffset + SUBPIXEL_X };
+   float_ui32_type sy = { - v[MAT_SY] };
+   float_ui32_type ty = { (- v[MAT_TY]) + yoffset + SUBPIXEL_Y };
+   float_ui32_type sz = { v[MAT_SZ] * rmesa->state.depth.scale };
+   float_ui32_type tz = { v[MAT_TZ] * rmesa->state.depth.scale };
 
    R200_FIREVERTICES( rmesa );
    R200_STATECHANGE( rmesa, vpt );
 
-   rmesa->hw.vpt.cmd[VPT_SE_VPORT_XSCALE]  = *(GLuint *)&sx;
-   rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] = *(GLuint *)&tx;
-   rmesa->hw.vpt.cmd[VPT_SE_VPORT_YSCALE]  = *(GLuint *)&sy;
-   rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] = *(GLuint *)&ty;
-   rmesa->hw.vpt.cmd[VPT_SE_VPORT_ZSCALE]  = *(GLuint *)&sz;
-   rmesa->hw.vpt.cmd[VPT_SE_VPORT_ZOFFSET] = *(GLuint *)&tz;
+   rmesa->hw.vpt.cmd[VPT_SE_VPORT_XSCALE]  = sx.ui32;
+   rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] = tx.ui32;
+   rmesa->hw.vpt.cmd[VPT_SE_VPORT_YSCALE]  = sy.ui32;
+   rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] = ty.ui32;
+   rmesa->hw.vpt.cmd[VPT_SE_VPORT_ZSCALE]  = sz.ui32;
+   rmesa->hw.vpt.cmd[VPT_SE_VPORT_ZOFFSET] = tz.ui32;
 }
 
 
@@ -1668,18 +1669,22 @@ void r200UpdateViewportOffset( GLcontext *ctx )
    GLfloat yoffset = (GLfloat)dPriv->y + dPriv->h;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
 
-   GLfloat tx = v[MAT_TX] + xoffset + SUBPIXEL_X;
-   GLfloat ty = (- v[MAT_TY]) + yoffset + SUBPIXEL_Y;
+   float_ui32_type tx;
+   float_ui32_type ty;
 
-   if ( rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] != *(GLuint *)&tx ||
-	rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] != *(GLuint *)&ty )
+   tx.f = v[MAT_TX] + xoffset + SUBPIXEL_X;
+   ty.f = (- v[MAT_TY]) + yoffset + SUBPIXEL_Y;
+
+   if ( rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] != tx.ui32 ||
+	rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] != ty.ui32 )
    {
       /* Note: this should also modify whatever data the context reset
        * code uses...
        */
-      rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] = *(GLuint *)&tx;
-      rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] = *(GLuint *)&ty;
-      
+      R200_STATECHANGE( rmesa, vpt );
+      rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] = tx.ui32;
+      rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] = ty.ui32;
+
       /* update polygon stipple x/y screen offset */
       {
          GLuint stx, sty;

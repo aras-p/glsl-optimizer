@@ -487,9 +487,11 @@ static int print_float_reg_assignment( struct reg *reg, float data )
 
 static int print_reg_assignment( struct reg *reg, int data )
 {
+   float_ui32_type datau;
+   datau.ui32 = data;
    reg->flags |= TOUCHED;
    if (reg->flags & ISFLOAT)
-      return print_float_reg_assignment( reg, *(float *)&data );
+      return print_float_reg_assignment( reg, datau.f );
    else
       return print_int_reg_assignment( reg, data );
 }
