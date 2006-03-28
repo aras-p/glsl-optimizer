@@ -235,7 +235,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 #define SPAN_VARS \
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLchan *P = osmesa->rowaddr[Y] + 4 * (X)
+   GLchan *P = osmesa->rowaddr[Y] + 3 * (X)
 #define INC_PIXEL_PTR(P) P += 3
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    DST[0] = VALUE[RCOMP];  \
@@ -254,7 +254,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 #define SPAN_VARS \
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLchan *P = osmesa->rowaddr[Y] + 4 * (X)
+   GLchan *P = osmesa->rowaddr[Y] + 3 * (X)
 #define INC_PIXEL_PTR(P) P += 3
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    DST[2] = VALUE[RCOMP];  \
