@@ -14,8 +14,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <GL/glut.h>
-#include <sys/time.h>
-#include <time.h>
 
 #define COS(X)   cos( (X) * 3.14159/180.0 )
 #define SIN(X)   sin( (X) * 3.14159/180.0 )
