@@ -575,17 +575,27 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
       return;
    }
 
-   /* clamp width, and height to implementation dependent range */
-   width  = CLAMP( width,  1, ctx->Const.MaxViewportWidth );
-   height = CLAMP( height, 1, ctx->Const.MaxViewportHeight );
+   /* clamp width and height to the implementation dependent range */
+   width  = CLAMP(width,  1, ctx->Const.MaxViewportWidth);
+   height = CLAMP(height, 1, ctx->Const.MaxViewportHeight);
 
-   /* Save viewport */
    ctx->Viewport.X = x;
    ctx->Viewport.Width = width;
    ctx->Viewport.Y = y;
    ctx->Viewport.Height = height;
-
    ctx->NewState |= _NEW_VIEWPORT;
+
+#if 1
+   /* XXX remove this someday.  Currently the DRI drivers rely on
+    * the WindowMap matrix being up to date in the driver's Viewport
+    * and DepthRange functions.
+    */
+   _math_matrix_viewport(&ctx->Viewport._WindowMap,
+                         ctx->Viewport.X, ctx->Viewport.Y,
+                         ctx->Viewport.Width, ctx->Viewport.Height,
+                         ctx->Viewport.Near, ctx->Viewport.Far,
+                         ctx->DrawBuffer->_DepthMaxF);
+#endif
 
    if (ctx->Driver.Viewport) {
       /* Many drivers will use this call to check for window size changes
@@ -597,7 +607,6 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
 
 
 #if _HAVE_FULL_GL
-void GLAPIENTRY
 /**
  * Called by glDepthRange
  *
@@ -606,6 +615,7 @@ void GLAPIENTRY
  * \param farval  specifies the Z buffer value which should correspond to
  *                the far clip plane
  */
+void GLAPIENTRY
 _mesa_DepthRange( GLclampd nearval, GLclampd farval )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -617,6 +627,18 @@ _mesa_DepthRange( GLclampd nearval, GLclampd farval )
    ctx->Viewport.Near = (GLfloat) CLAMP( nearval, 0.0, 1.0 );
    ctx->Viewport.Far = (GLfloat) CLAMP( farval, 0.0, 1.0 );
    ctx->NewState |= _NEW_VIEWPORT;
+
+#if 1
+   /* XXX remove this someday.  Currently the DRI drivers rely on
+    * the WindowMap matrix being up to date in the driver's Viewport
+    * and DepthRange functions.
+    */
+   _math_matrix_viewport(&ctx->Viewport._WindowMap,
+                         ctx->Viewport.X, ctx->Viewport.Y,
+                         ctx->Viewport.Width, ctx->Viewport.Height,
+                         ctx->Viewport.Near, ctx->Viewport.Far,
+                         ctx->DrawBuffer->_DepthMaxF);
+#endif
 
    if (ctx->Driver.DepthRange) {
       (*ctx->Driver.DepthRange)( ctx, nearval, farval );
