@@ -2283,7 +2283,8 @@ FetchTexelFloatToChan( const struct gl_texture_image *texImage,
    GLfloat temp[4];
    ASSERT(texImage->FetchTexelf);
    texImage->FetchTexelf(texImage, i, j, k, temp);
-   if (texImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT) {
+   if (texImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT ||
+       texImage->TexFormat->BaseFormat == GL_DEPTH_STENCIL_EXT) {
       /* just one channel */
       UNCLAMPED_FLOAT_TO_CHAN(texelOut[0], temp[0]);
    }
@@ -2307,7 +2308,8 @@ FetchTexelChanToFloat( const struct gl_texture_image *texImage,
    GLchan temp[4];
    ASSERT(texImage->FetchTexelc);
    texImage->FetchTexelc(texImage, i, j, k, temp);
-   if (texImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT) {
+   if (texImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT ||
+       texImage->TexFormat->BaseFormat == GL_DEPTH_STENCIL_EXT) {
       /* just one channel */
       texelOut[0] = CHAN_TO_FLOAT(temp[0]);
    }
