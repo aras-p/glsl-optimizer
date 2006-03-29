@@ -945,6 +945,26 @@ update_program(GLcontext *ctx)
 }
 
 
+static void
+update_viewport_matrix(GLcontext *ctx)
+{
+   const GLfloat depthMax = ctx->DrawBuffer->_DepthMaxF;
+
+   ASSERT(depthMax > 0);
+
+   /* Compute scale and bias values. This is really driver-specific
+    * and should be maintained elsewhere if at all.
+    * NOTE: RasterPos uses this.
+    */
+   _math_matrix_viewport(&ctx->Viewport._WindowMap,
+                         ctx->Viewport.X, ctx->Viewport.Y,
+                         ctx->Viewport.Width, ctx->Viewport.Height,
+                         ctx->Viewport.Near, ctx->Viewport.Far,
+                         depthMax);
+}
+
+
+
 /**
  * If __GLcontextRec::NewState is non-zero then this function \b must be called
  * before rendering any primitive.  Basically, function pointers and
@@ -1001,6 +1021,9 @@ _mesa_update_state( GLcontext *ctx )
 
    if (new_state & (_NEW_ARRAY | _NEW_PROGRAM))
       update_arrays( ctx );
+
+   if (new_state & (_NEW_BUFFERS | _NEW_VIEWPORT))
+      update_viewport_matrix(ctx);
 
    if (ctx->_MaintainTexEnvProgram) {
       if (new_state & (_NEW_TEXTURE | _DD_NEW_SEPARATE_SPECULAR | _NEW_FOG))

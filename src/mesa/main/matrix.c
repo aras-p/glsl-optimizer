@@ -552,6 +552,7 @@ _mesa_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
    _mesa_set_viewport(ctx, x, y, width, height);
 }
 
+
 /**
  * Set new viewport parameters and update derived state (the _WindowMap
  * matrix).  Usually called from _mesa_Viewport().
@@ -560,22 +561,11 @@ _mesa_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
  * \param x, y coordinates of the lower left corner of the viewport rectangle.
  * \param width width of the viewport rectangle.
  * \param height height of the viewport rectangle.
- *
- * Verifies the parameters, clamps them to the implementation dependent range
- * and updates __GLcontextRec::Viewport. Computes the scale and bias values for
- * the drivers and notifies the driver via the dd_function_table::Viewport
- * callback.
  */
 void
 _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
                     GLsizei width, GLsizei height )
 {
-   const GLfloat depthMax = ctx->DrawBuffer->_DepthMaxF;
-   const GLfloat n = ctx->Viewport.Near;
-   const GLfloat f = ctx->Viewport.Far;
-
-   ASSERT(depthMax > 0);
-
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glViewport %d %d %d %d\n", x, y, width, height);
 
@@ -595,20 +585,6 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
    ctx->Viewport.Y = y;
    ctx->Viewport.Height = height;
 
-   /* XXX send transposed width/height to Driver.Viewport() below??? */
-   if (ctx->_RotateMode) {
-      GLint tmp, tmps;
-      tmp = x; x = y; y = tmp;
-      tmps = width; width = height; height = tmps;
-   }
-
-   /* Compute scale and bias values. This is really driver-specific
-    * and should be maintained elsewhere if at all.
-    * NOTE: RasterPos uses this.
-    */
-   _math_matrix_viewport(&ctx->Viewport._WindowMap, x, y, width, height,
-                         n, f, depthMax);
-
    ctx->NewState |= _NEW_VIEWPORT;
 
    if (ctx->Driver.Viewport) {
@@ -622,36 +598,24 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
 
 #if _HAVE_FULL_GL
 void GLAPIENTRY
+/**
+ * Called by glDepthRange
+ *
+ * \param nearval  specifies the Z buffer value which should correspond to
+ *                 the near clip plane
+ * \param farval  specifies the Z buffer value which should correspond to
+ *                the far clip plane
+ */
 _mesa_DepthRange( GLclampd nearval, GLclampd farval )
 {
-   /*
-    * nearval - specifies mapping of the near clipping plane to window
-    *   coordinates, default is 0
-    * farval - specifies mapping of the far clipping plane to window
-    *   coordinates, default is 1
-    *
-    * After clipping and div by w, z coords are in -1.0 to 1.0,
-    * corresponding to near and far clipping planes.  glDepthRange
-    * specifies a linear mapping of the normalized z coords in
-    * this range to window z coords.
-    */
-   GLfloat depthMax;
-   GLfloat n, f;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-
-   depthMax = ctx->DrawBuffer->_DepthMaxF;
 
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glDepthRange %f %f\n", nearval, farval);
 
-   n = (GLfloat) CLAMP( nearval, 0.0, 1.0 );
-   f = (GLfloat) CLAMP( farval, 0.0, 1.0 );
-
-   ctx->Viewport.Near = n;
-   ctx->Viewport.Far = f;
-   ctx->Viewport._WindowMap.m[MAT_SZ] = depthMax * ((f - n) / 2.0F);
-   ctx->Viewport._WindowMap.m[MAT_TZ] = depthMax * ((f - n) / 2.0F + n);
+   ctx->Viewport.Near = (GLfloat) CLAMP( nearval, 0.0, 1.0 );
+   ctx->Viewport.Far = (GLfloat) CLAMP( farval, 0.0, 1.0 );
    ctx->NewState |= _NEW_VIEWPORT;
 
    if (ctx->Driver.DepthRange) {

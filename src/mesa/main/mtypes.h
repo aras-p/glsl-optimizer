@@ -2855,7 +2855,6 @@ struct __GLcontextRec
    GLfloat _ModelViewInvScale;
    GLboolean _NeedEyeCoords;
    GLboolean _ForceEyeCoords; 
-   GLboolean _RotateMode;
    GLenum _CurrentProgram;    /* currently executing program */
 
    struct gl_shine_tab *_ShineTable[2]; /**< Active shine tables */
