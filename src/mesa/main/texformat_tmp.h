@@ -1224,6 +1224,9 @@ static void FETCH(f_z24_s8)( const struct gl_texture_image *texImage,
    const GLuint *src = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
    const GLfloat scale = 1.0F / (GLfloat) 0xffffff;
    texel[0] = ((*src) >> 8) * scale;
+   ASSERT(texImage->TexFormat->MesaFormat == MESA_FORMAT_Z24_S8);
+   ASSERT(texel[0] >= 0.0F);
+   ASSERT(texel[0] <= 1.0F);
 }
 
 #if DIM == 3
