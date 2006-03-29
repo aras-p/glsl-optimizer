@@ -42,6 +42,9 @@
 #define INIT_WIDTH 400
 #define INIT_HEIGHT 300
 
+#ifdef _WIN32
+#undef CreateWindowA
+#endif
 
 struct window {
    int id;               /* returned by glutCreateWindow() */
