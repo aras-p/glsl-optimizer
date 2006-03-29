@@ -333,6 +333,9 @@
 				RelativePath="..\..\..\..\src\mesa\swrast\s_alpha.c">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\swrast\s_arbshader.c">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_atifragshader.c">
 			</File>
 			<File
@@ -393,13 +396,13 @@
 				RelativePath="..\..\..\..\src\mesa\swrast\s_stencil.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\swrast\s_texstore.c">
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_texcombine.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_texfilter.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\swrast\s_texstore.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_triangle.c">
@@ -412,6 +415,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\shaderobjects_3dlabs.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_analyse.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_assemble.c">
@@ -432,7 +438,34 @@
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_compile.c">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_compile_function.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_compile_operation.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_compile_struct.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_compile_variable.c">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_execute.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_execute_x86.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_export.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_library_noise.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_library_texsample.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_link.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_preprocess.c">
@@ -478,6 +511,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\tnl\t_vb_arbprogram.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\tnl\t_vb_arbshader.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\tnl\t_vb_cull.c">
