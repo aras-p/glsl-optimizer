@@ -24,7 +24,9 @@ GLX_DIR   = $(XORG_BASE)/GL/glx
 
 SERVER_OUTPUTS = $(GLX_DIR)/indirect_dispatch.c \
 	$(GLX_DIR)/indirect_dispatch_swap.c \
-	$(GLX_DIR)/indirect_dispatch.h
+	$(GLX_DIR)/indirect_dispatch.h \
+	$(GLX_DIR)/indirect_size_get.c \
+	$(GLX_DIR)/indirect_size_get.h
 
 COMMON = gl_XML.py license.py gl_API.xml typeexpr.py
 COMMON_GLX = $(COMMON) glX_XML.py glX_proto_common.py

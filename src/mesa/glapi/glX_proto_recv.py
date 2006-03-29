@@ -237,7 +237,7 @@ class PrintGlxDispatchFunctions(glX_proto_common.glx_print_proto):
 
 		for param in f.parameterIterator():
 
-			if param.is_counter or param.is_image() or param.is_output or len(param.count_parameter_list):
+			if param.is_counter or param.is_image() or param.is_output or param.name in f.count_parameter_list or len(param.count_parameter_list):
 				location = param.name
 			else:
 				location = self.fetch_param(param)
@@ -360,6 +360,8 @@ class PrintGlxDispatchFunctions(glX_proto_common.glx_print_proto):
 							else:
 								swap_func = self.swap_name(sub[0])
 								print '        %s = (%s) %s( (%s *) (pc + %s), %s ); break;' % (param.name, param.type_string(), swap_func, self.real_types[sub[0]], o, count_name)
+						print '    default:'
+						print '        return;'
 						print '    }'
 					else:
 						swap_func = self.swap_name(type_size)

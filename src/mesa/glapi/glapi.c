@@ -60,7 +60,9 @@
 static GLboolean WarnFlag = GL_FALSE;
 static _glapi_warning_func warning_func;
 
+#if defined(PTHREADS) || defined(GLX_USE_TLS)
 static void init_glapi_relocs(void);
+#endif
 
 static _glapi_proc generate_entrypoint(GLuint functionOffset);
 static void fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset);
@@ -1013,6 +1015,7 @@ _glapi_check_table(const struct _glapi_table *table)
 }
 
 
+#if defined(PTHREADS) || defined(GLX_USE_TLS)
 /**
  * Perform platform-specific GL API entry-point fixups.
  * 
@@ -1033,3 +1036,4 @@ init_glapi_relocs( void )
     }
 #endif /* defined( USE_X86_ASM ) && defined( GLX_USE_TLS ) */
 }
+#endif

@@ -316,6 +316,8 @@ class PrintGlxSizeStubs_c(PrintGlxSizeStubs_common):
 		print '#include <GL/gl.h>'
 		if self.emit_get:
 			print '#include "indirect_size_get.h"'
+			print '#include "glxserver.h"'
+			print '#include "indirect_util.h"'
 		
 		print '#include "indirect_size.h"'
 
