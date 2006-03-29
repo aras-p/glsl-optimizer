@@ -615,7 +615,7 @@ struct r300_vertex_program {
 #define PFS_MAX_TEX_INST	64
 #define PFS_MAX_TEX_INDIRECT 4
 #define PFS_NUM_TEMP_REGS	32
-#define PFS_NUM_CONST_REGS	32
+#define PFS_NUM_CONST_REGS	16
 
 /* Tracking data for Mesa registers */
 struct reg_acc {

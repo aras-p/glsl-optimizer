@@ -116,6 +116,7 @@ const struct dri_extension card_extensions[] = {
   {"GL_ATI_texture_mirror_once",	NULL},
   {"GL_MESA_pack_invert",		NULL},
   {"GL_MESA_ycbcr_texture",		NULL},
+  {"GL_MESAX_texture_float",		NULL},
   {"GL_NV_blend_square",		NULL},
   {"GL_NV_vertex_program",		GL_NV_vertex_program_functions},
   {"GL_SGIS_generate_mipmap",		NULL},

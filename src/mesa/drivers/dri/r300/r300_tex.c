@@ -442,6 +442,31 @@ static const struct gl_texture_format *r300ChooseTextureFormat(GLcontext * ctx,
 	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
 	  return &_mesa_texformat_rgba_dxt5;
 	  
+ 	case GL_ALPHA16F_ARB:
+	  return &_mesa_texformat_alpha_float16;
+	case GL_ALPHA32F_ARB:
+	  return &_mesa_texformat_alpha_float32;
+	case GL_LUMINANCE16F_ARB:
+	  return &_mesa_texformat_luminance_float16;
+	case GL_LUMINANCE32F_ARB:
+	  return &_mesa_texformat_luminance_float32;
+	case GL_LUMINANCE_ALPHA16F_ARB:
+	  return &_mesa_texformat_luminance_alpha_float16;
+	case GL_LUMINANCE_ALPHA32F_ARB:
+	  return &_mesa_texformat_luminance_alpha_float32;
+	case GL_INTENSITY16F_ARB:
+	  return &_mesa_texformat_intensity_float16;
+	case GL_INTENSITY32F_ARB:
+	  return &_mesa_texformat_intensity_float32;
+	case GL_RGB16F_ARB:
+	  return &_mesa_texformat_rgba_float16;
+	case GL_RGB32F_ARB:
+	  return &_mesa_texformat_rgba_float32;
+	case GL_RGBA16F_ARB:
+	  return &_mesa_texformat_rgba_float16;
+	case GL_RGBA32F_ARB:
+	  return &_mesa_texformat_rgba_float32;
+
 	default:
 		_mesa_problem(ctx,
 			      "unexpected internalFormat 0x%x in r300ChooseTextureFormat",

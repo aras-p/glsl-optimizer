@@ -382,7 +382,17 @@ static void uploadSubImage( r300ContextPtr rmesa, r300TexObjPtr t,
    /* copy (x,y,width,height,data) */
    memcpy( &tmp, &t->image[face][hwlevel], sizeof(tmp) );
    
-   if (texImage->TexFormat->TexelBytes) {
+   if (texImage->TexFormat->TexelBytes > 4) {
+      const int log2TexelBytes = (3 + (texImage->TexFormat->TexelBytes >> 4));
+      tex.format = RADEON_TXFORMAT_I8; /* any 1-byte texel format */
+      tex.pitch = MAX2((texImage->Width * texImage->TexFormat->TexelBytes) / 64, 1);
+      tex.height = imageHeight;
+      tex.width = imageWidth << log2TexelBytes;
+      tex.offset += (tmp.x << log2TexelBytes) & ~1023;
+      tmp.x = tmp.x % (1024 >> log2TexelBytes);
+      tmp.width = tmp.width << log2TexelBytes;
+   }
+   else if (texImage->TexFormat->TexelBytes) {
       /* use multi-byte upload scheme */
       tex.height = imageHeight;
       tex.width = imageWidth;

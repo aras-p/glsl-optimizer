@@ -886,7 +886,7 @@ static void emit_arith(struct r300_fragment_program *rp, int op,
 	sop = r300_fpop[op].s_op;
 	argc = r300_fpop[op].argc;	
 
-	if (mask & WRITEMASK_XYZ)
+	if ((mask & WRITEMASK_XYZ) || vop == R300_FPI0_OUTC_DP3)
 		emit_vop = GL_TRUE;
 	if ((mask & WRITEMASK_W) || vop == R300_FPI0_OUTC_REPL_ALPHA)
 		emit_sop = GL_TRUE;
