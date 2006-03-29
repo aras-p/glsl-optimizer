@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1159,7 +1159,9 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #ifdef INTERP_INDEX
                   CLAMP_INTERPOLANT(index, indexStep, len);
 #endif
-                  RENDER_SPAN( span );
+                  {
+                     RENDER_SPAN( span );
+                  }
                }
 
                /*
