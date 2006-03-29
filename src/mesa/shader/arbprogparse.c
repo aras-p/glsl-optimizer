@@ -3745,12 +3745,6 @@ parse_instructions(GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
    Program->Base.NumNativeParameters = Program->Base.NumParameters;
    Program->Base.NumNativeAttributes = Program->Base.NumAttributes;
    Program->Base.NumNativeAddressRegs = Program->Base.NumAddressRegs;
-   if (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
-      struct fragment_program *fp = (struct fragment_program *) Program;
-      fp->NumNativeAluInstructions = fp->NumAluInstructions;
-      fp->NumNativeTexInstructions = fp->NumTexInstructions;
-      fp->NumNativeTexIndirections = fp->NumTexIndirections;
-   }
 
    return err;
 }
@@ -4074,6 +4068,9 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    program->NumAluInstructions   = ap.NumAluInstructions;
    program->NumTexInstructions   = ap.NumTexInstructions;
    program->NumTexIndirections   = ap.NumTexIndirections;
+   program->NumNativeAluInstructions = ap.NumAluInstructions;
+   program->NumNativeTexInstructions = ap.NumTexInstructions;
+   program->NumNativeTexIndirections = ap.NumTexIndirections;
    program->Base.InputsRead      = ap.Base.InputsRead;
    program->Base.OutputsWritten  = ap.Base.OutputsWritten;
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
