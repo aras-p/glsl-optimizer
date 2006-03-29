@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2005/10/28 13:09:23 $ $Revision: 1.4 $
+** $Date: 2006/03/29 18:46:46 $ $Revision: 1.5 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/monoTriangulation.cc,v 1.4 2005/10/28 13:09:23 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/monoTriangulation.cc,v 1.5 2006/03/29 18:46:46 brianp Exp $
 */
 
 #include <stdlib.h>
@@ -619,8 +619,10 @@ void monoTriangulationFun(directedLine* monoPolygon, Int (*compFun)(Real*, Real*
     dec_chain.appendVertex(tempV->getVertex(i));
   }
   
-  monoTriangulationRecFun(topV->head(), botV->head(), &inc_chain, 0, &dec_chain, 0, compFun, pStream);
-
+  if (!(0 == inc_chain.getNumElements() && 0 == dec_chain.getNumElements())) {
+     monoTriangulationRecFun(topV->head(), botV->head(), &inc_chain, 0,
+                             &dec_chain, 0, compFun, pStream);
+  }
 }  
 
 void monoTriangulation(directedLine* monoPolygon, primStream* pStream)
