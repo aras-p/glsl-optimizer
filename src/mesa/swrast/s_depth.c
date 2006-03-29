@@ -519,12 +519,13 @@ depth_test_span( GLcontext *ctx, struct sw_span *span)
    
    if (rb->GetPointer(ctx, rb, 0, 0)) {
       /* Directly access buffer */
-      if (ctx->DrawBuffer->Visual.depthBits <= 16) {
+      if (rb->DataType == GL_UNSIGNED_SHORT) {
          GLushort *zbuffer = (GLushort *) rb->GetPointer(ctx, rb, x, y);
          passed = depth_test_span16(ctx, count, zbuffer, zValues, mask);
       }
       else {
          GLuint *zbuffer = (GLuint *) rb->GetPointer(ctx, rb, x, y);
+         ASSERT(rb->DataType == GL_UNSIGNED_INT);
          passed = depth_test_span32(ctx, count, zbuffer, zValues, mask);
       }
    }
@@ -1070,6 +1071,7 @@ depth_test_pixels( GLcontext *ctx, struct sw_span *span )
       else {
          GLuint *zStart = (GLuint *) rb->Data;
          GLuint stride = rb->Width;
+         ASSERT(rb->DataType == GL_UNSIGNED_INT);
          direct_depth_test_pixels32(ctx, zStart, stride, count, x, y, z, mask);
       }
    }
@@ -1157,6 +1159,7 @@ _swrast_depth_bounds_test( GLcontext *ctx, struct sw_span *span )
    else {
       /* get 32-bit values */
       GLuint zbuffer32[MAX_WIDTH], *zbuffer;
+      ASSERT(rb->DataType == GL_UNSIGNED_INT);
       if (span->arrayMask & SPAN_XY) {
          _swrast_get_values(ctx, rb, count, span->array->x, span->array->y,
                             zbuffer32, sizeof(GLuint));
