@@ -19,9 +19,9 @@
 #include <GL/glext.h>
 
 #ifdef WIN32
-#define GETPROCADDRESS wglGetProcAddress
+#define GETPROCADDRESS(F) wglGetProcAddress(F)
 #else
-#define GETPROCADDRESS glutGetProcAddress
+#define GETPROCADDRESS(F) glutGetProcAddress(F)
 #endif
 
 static GLhandleARB fragShader;
@@ -124,15 +124,25 @@ static void Init (void)
 		exit(1);
 	}
 
-	glCreateShaderObjectARB = (PFNGLCREATESHADEROBJECTARBPROC) wglGetProcAddress ("glCreateShaderObjectARB");
-	glShaderSourceARB = (PFNGLSHADERSOURCEARBPROC) wglGetProcAddress ("glShaderSourceARB");
-	glCompileShaderARB = (PFNGLCOMPILESHADERARBPROC) wglGetProcAddress ("glCompileShaderARB");
-	glCreateProgramObjectARB = (PFNGLCREATEPROGRAMOBJECTARBPROC) wglGetProcAddress ("glCreateProgramObjectARB");
-	glAttachObjectARB = (PFNGLATTACHOBJECTARBPROC) wglGetProcAddress ("glAttachObjectARB");
-	glLinkProgramARB = (PFNGLLINKPROGRAMARBPROC) wglGetProcAddress ("glLinkProgramARB");
-	glUseProgramObjectARB = (PFNGLUSEPROGRAMOBJECTARBPROC) wglGetProcAddress ("glUseProgramObjectARB");
-	glGetUniformLocationARB = (PFNGLGETUNIFORMLOCATIONARBPROC) GETPROCADDRESS ("glGetUniformLocationARB");
-	glUniform1fARB = (PFNGLUNIFORM1FARBPROC) GETPROCADDRESS ("glUniform1fARB");
+	glCreateShaderObjectARB = (PFNGLCREATESHADEROBJECTARBPROC)
+		GETPROCADDRESS("glCreateShaderObjectARB");
+ 	glShaderSourceARB = (PFNGLSHADERSOURCEARBPROC)
+		GETPROCADDRESS("glShaderSourceARB");
+ 	glCompileShaderARB = (PFNGLCOMPILESHADERARBPROC)
+		GETPROCADDRESS("glCompileShaderARB");
+ 	glCreateProgramObjectARB = (PFNGLCREATEPROGRAMOBJECTARBPROC)
+		GETPROCADDRESS("glCreateProgramObjectARB");
+ 	glAttachObjectARB = (PFNGLATTACHOBJECTARBPROC)
+		GETPROCADDRESS("glAttachObjectARB");
+ 	glLinkProgramARB = (PFNGLLINKPROGRAMARBPROC)
+		GETPROCADDRESS ("glLinkProgramARB");
+ 	glUseProgramObjectARB = (PFNGLUSEPROGRAMOBJECTARBPROC)
+		GETPROCADDRESS("glUseProgramObjectARB");          
+
+	glGetUniformLocationARB = (PFNGLGETUNIFORMLOCATIONARBPROC)
+		GETPROCADDRESS("glGetUniformLocationARB");
+	glUniform1fARB = (PFNGLUNIFORM1FARBPROC)
+		GETPROCADDRESS("glUniform1fARB");
 
 	fragShader = glCreateShaderObjectARB (GL_FRAGMENT_SHADER_ARB);
 	glShaderSourceARB (fragShader, 1, &fragShaderText, NULL);
