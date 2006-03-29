@@ -675,8 +675,9 @@ _mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
  * change flushes the vertices and notifies the driver via
  * the dd_function_table::Scissor callback.
  */
-void _mesa_set_scissor( GLcontext *ctx, 
-			GLint x, GLint y, GLsizei width, GLsizei height )
+void
+_mesa_set_scissor(GLcontext *ctx, 
+                  GLint x, GLint y, GLsizei width, GLsizei height)
 {
    if (x == ctx->Scissor.X &&
        y == ctx->Scissor.Y &&
