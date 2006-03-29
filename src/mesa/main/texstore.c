@@ -2051,7 +2051,7 @@ _mesa_texstore_z24_s8(STORE_PARAMS)
 GLboolean
 _mesa_texstore_rgba_float32(STORE_PARAMS)
 {
-   const GLint components = _mesa_components_in_format(baseInternalFormat);
+   const GLint components = _mesa_components_in_format(dstFormat->BaseFormat);
 
    ASSERT(dstFormat == &_mesa_texformat_rgba_float32 ||
           dstFormat == &_mesa_texformat_rgb_float32 ||
@@ -2119,7 +2119,7 @@ _mesa_texstore_rgba_float32(STORE_PARAMS)
 GLboolean
 _mesa_texstore_rgba_float16(STORE_PARAMS)
 {
-   const GLint components = _mesa_components_in_format(baseInternalFormat);
+   const GLint components = _mesa_components_in_format(dstFormat->BaseFormat);
 
    ASSERT(dstFormat == &_mesa_texformat_rgba_float16 ||
           dstFormat == &_mesa_texformat_rgb_float16 ||
