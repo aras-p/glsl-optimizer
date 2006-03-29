@@ -1434,11 +1434,15 @@ Mesa Version History
 	- fixed TNL initialization bug which could lead to crash (bug 5791)
 
 
-6.5  month, day, 2005
+6.5  March, day, 2006
     New:
+	- OpenGL Shading Language support through GL_ARB_shader_objects,
+	  GL_ARB_shading_language_100, GL_ARB_vertex_shader and
+	  GL_ARB_fragment_shader (done by Michal Krol)
 	- GL_EXT_packed_depth_stencil extension
 	- GL_EXT_timer_query extension
 	- GL_EXT_framebuffer_blit extension
+	- GL_ARB_half_float_pixel
 	- reflect demo improved to support multiple windows
 	- singlebuffer demo (shows no/little-flicker single-buffered rendering)
 	- r200: enable GL_ARB_texture_env_crossbar, separate the texture
@@ -1454,4 +1458,12 @@ Mesa Version History
 	- removed GL_HP_occlusion_test (use GL_ARB_occlusion_query instead)
 	- removed GL_SGIX/SGIS_pixel_texture extensions
     Bug fixes:
-
+	- fixed glxcontextmodes.c datatype problem (bug 5835)
+	- fixed aix-gcc build/install bugs (bug 5874)
+	- fixed some bugs in texture env program generation
+	- glXCopyContext() didn't handle texture object bindings properly
+	- glXCopyContext() didn't copy all lighting state
+	- fixed FreeBSD config (Pedro Giffuni)
+	- fixed some minor framebuffer object bugs
+	- replaced dprintf() with _glu_printf() in GLU (bug 6244)
+	- fixed a number of thread safety bugs/regressions
