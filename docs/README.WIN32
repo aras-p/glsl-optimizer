@@ -1,15 +1,15 @@
 File: docs/README.WIN32
 
-Last updated: Jul 01, 2005 - Karl Schultz - kschultz@users.sourceforge.net
+Last updated: Mar 29, 2006 - Karl Schultz - kschultz@users.sourceforge.net
 
 Quick Start
 ----- -----
 
-Unzip both ZIP files (MesaLib and MesaDemos) into the same directory.
-The libs and demos build separately, so if you do not care about the
-demos, you do not have to unzip that zip file.  But if you do, it does
-need to be unzipped into the same directory as the lib zip file
-because the demos depend on the libs.
+Unzip the MesaLib, MesaGLUT, and MesaDemos ZIP files into the same
+directory.  The libs and demos build separately, so if you do not care
+about the demos or GLUT, you only need to unzip MesaLib.  If you unzip
+more than one ZIP file, they all need to be unzipped into the same
+directory.  Don't worry, you will not overwrite anything.
 
 The Windows build system uses Microsoft Visual Studio.  Project files
 for a specific version of Visual Studio are in their own directory in
@@ -22,6 +22,10 @@ of Version 8 and it runs on 64-bit Windows.  If you want to try this,
 start by importing the VC7 files and create the 64-bit targets in the
 configuration manager.
 
+It is likely that the new and free Visual Studio Express can be used
+to build Mesa, but it hasn't been tried yet.  Start with the VC7
+project files.
+
 The project files to build the core Mesa library, Windows Mesa
 drivers, OSMesa, and GLU are in the mesa directory.  The project files
 to build GLUT and some demo programs are in the progs directory.
@@ -33,10 +37,13 @@ from the projects using Visual Studio.
 Windows Drivers
 ------- -------
 
-At this time, only the GDI driver is known to work, as it has been
-ported and rewritten to the latest Mesa DD interfaces.  Source code
-also exists in the tree for other drivers in src/mesa/drivers/windows,
-but the status of this code is unknown.
+At this time, only the GDI driver is known to partially work, as it is
+in the process of being ported and rewritten to the latest Mesa DD
+interfaces.  Most of the demos in progs/demos work, but some do not.
+We hope to finish this driver work in the near future.
+
+Source code also exists in the tree for other drivers in
+src/mesa/drivers/windows, but the status of this code is unknown.
 
 The GDI driver operates basically by writing pixel spans into a DIB
 section and then blitting the DIB to the window.  The driver was
@@ -86,6 +93,14 @@ simply run the demo executables from the demo directory.
 If you want to run the demos from the Visual Studio, you may have to
 change the startup directory and explicitly state where the executables are.
 
+You may also build all the demo programs by using a makefile.  Go to
+the progs/demos directory and make sure you have executed VCVARS32.BAT
+or whatever setup script is appropriate for your compiler.  Then,
+
+	nmake -f Makefile.win
+
+should build all the demos.
+
 
 Build System Notes
 ----- ------ -----
@@ -98,6 +113,9 @@ language files, without a lot of unnatural tweaking.  So, the VC6
 build process uses custom build steps to compile these files in the
 GLU library.
 
+Two additional configurations are provided, Debug x86 and Release x86
+that activate the shader code compilation by defining SLANG_86.  It is
+unknown if and how this works.
 
 VC7
 ---
