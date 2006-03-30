@@ -34,7 +34,7 @@ wmesa_new_framebuffer(HDC hdc, GLvisual *visual)
         = (WMesaFramebuffer) malloc(sizeof(struct wmesa_framebuffer));
     if (pwfb) {
         _mesa_initialize_framebuffer(&pwfb->Base, visual);
-        pwfb->hdc = hdc;
+        pwfb->hDC = hdc;
         /* insert at head of list */
         pwfb->next = FirstFramebuffer;
         FirstFramebuffer = pwfb;
@@ -42,6 +42,26 @@ wmesa_new_framebuffer(HDC hdc, GLvisual *visual)
     return pwfb;
 }
 
+/**
+ * Given an hdc, free the corresponding WMesaFramebuffer
+ */
+void
+wmesa_free_framebuffer(HDC hdc)
+{
+    WMesaFramebuffer pwfb, prev;
+    for (pwfb = FirstFramebuffer; pwfb; pwfb = pwfb->next) {
+        if (pwfb->hDC == hdc)
+            break;
+	prev = pwfb;
+    }
+    if (pwfb) {
+	if (pwfb == FirstFramebuffer)
+	    FirstFramebuffer = pwfb->next;
+	else
+	    prev->next = pwfb->next;
+	free(pwfb);
+    }
+}
 
 /**
  * Given an hdc, return the corresponding WMesaFramebuffer
@@ -51,7 +71,7 @@ wmesa_lookup_framebuffer(HDC hdc)
 {
     WMesaFramebuffer pwfb;
     for (pwfb = FirstFramebuffer; pwfb; pwfb = pwfb->next) {
-        if (pwfb->hdc == hdc)
+        if (pwfb->hDC == hdc)
             return pwfb;
     }
     return NULL;
@@ -90,27 +110,27 @@ static const GLubyte *wmesa_get_string(GLcontext *ctx, GLenum name)
 /*
  * Determine the pixel format based on the pixel size.
  */
-static void wmSetPixelFormat(WMesaContext pwc, HDC hDC)
+static void wmSetPixelFormat(WMesaFramebuffer pwfb, HDC hDC)
 {
-    pwc->cColorBits = GetDeviceCaps(hDC, BITSPIXEL);
+    pwfb->cColorBits = GetDeviceCaps(hDC, BITSPIXEL);
 
     // Only 16 and 32 bit targets are supported now
-    assert(pwc->cColorBits == 0 ||
-	   pwc->cColorBits == 16 || 
-	   pwc->cColorBits == 32);
+    assert(pwfb->cColorBits == 0 ||
+	   pwfb->cColorBits == 16 || 
+	   pwfb->cColorBits == 32);
 
-    switch(pwc->cColorBits){
+    switch(pwfb->cColorBits){
     case 8:
-	pwc->pixelformat = PF_INDEX8;
+	pwfb->pixelformat = PF_INDEX8;
 	break;
     case 16:
-	pwc->pixelformat = PF_5R6G5B;
+	pwfb->pixelformat = PF_5R6G5B;
 	break;
     case 32:
-	pwc->pixelformat = PF_8R8G8B;
+	pwfb->pixelformat = PF_8R8G8B;
 	break;
     default:
-	pwc->pixelformat = PF_BADFORMAT;
+	pwfb->pixelformat = PF_BADFORMAT;
     }
 }
 
@@ -119,22 +139,18 @@ static void wmSetPixelFormat(WMesaContext pwc, HDC hDC)
  * Create DIB for back buffer.
  * We write into this memory with the span routines and then blit it
  * to the window on a buffer swap.
- *
- * XXX we should probably pass a WMesaFramebuffer ptr, not a WMesaContext!
  */
-BOOL wmCreateBackingStore(WMesaContext pwc, long lxSize, long lySize)
+BOOL wmCreateBackingStore(WMesaFramebuffer pwfb, long lxSize, long lySize)
 {
-    HDC          hdc = pwc->hDC;
-    LPBITMAPINFO pbmi = &(pwc->bmi);
+    HDC          hdc = pwfb->hDC;
+    LPBITMAPINFO pbmi = &(pwfb->bmi);
     HDC          hic;
-
-    assert(pwc->db_flag == GL_TRUE);
 
     pbmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     pbmi->bmiHeader.biWidth = lxSize;
     pbmi->bmiHeader.biHeight= -lySize;
     pbmi->bmiHeader.biPlanes = 1;
-    pbmi->bmiHeader.biBitCount = GetDeviceCaps(pwc->hDC, BITSPIXEL);
+    pbmi->bmiHeader.biBitCount = GetDeviceCaps(pwfb->hDC, BITSPIXEL);
     pbmi->bmiHeader.biCompression = BI_RGB;
     pbmi->bmiHeader.biSizeImage = 0;
     pbmi->bmiHeader.biXPelsPerMeter = 0;
@@ -142,35 +158,33 @@ BOOL wmCreateBackingStore(WMesaContext pwc, long lxSize, long lySize)
     pbmi->bmiHeader.biClrUsed = 0;
     pbmi->bmiHeader.biClrImportant = 0;
     
-    pwc->cColorBits = pbmi->bmiHeader.biBitCount;
-    pwc->ScanWidth = (lxSize * (pwc->cColorBits / 8) + 3) & ~3;
+    pwfb->cColorBits = pbmi->bmiHeader.biBitCount;
+    pwfb->ScanWidth = (lxSize * (pwfb->cColorBits / 8) + 3) & ~3;
     
     hic = CreateIC("display", NULL, NULL, NULL);
-    pwc->dib.hDC = CreateCompatibleDC(hic);
+    pwfb->dib_hDC = CreateCompatibleDC(hic);
     
-    pwc->hbmDIB = CreateDIBSection(hic,
-				   &pwc->bmi,
+    pwfb->hbmDIB = CreateDIBSection(hic,
+				   &pwfb->bmi,
 				   DIB_RGB_COLORS,
-				   (void **)&(pwc->pbPixels),
+				   (void **)&(pwfb->pbPixels),
 				   0,
 				   0);
-    pwc->hOldBitmap = SelectObject(pwc->dib.hDC, pwc->hbmDIB);
+    pwfb->hOldBitmap = SelectObject(pwfb->dib_hDC, pwfb->hbmDIB);
     
     DeleteDC(hic);
 
-    wmSetPixelFormat(pwc, pwc->hDC);
+    wmSetPixelFormat(pwfb, pwfb->hDC);
     return TRUE;
 }
 
 
-/* XXX pass WMesaFramebuffer, not WMesaContext.
- */
-static wmDeleteBackingStore(WMesaContext pwc)
+static wmDeleteBackingStore(WMesaFramebuffer pwfb)
 {
-    if (pwc->hbmDIB) {
-	SelectObject(pwc->dib.hDC, pwc->hOldBitmap);
-	DeleteDC(pwc->dib.hDC);
-	DeleteObject(pwc->hbmDIB);
+    if (pwfb->hbmDIB) {
+	SelectObject(pwfb->dib_hDC, pwfb->hOldBitmap);
+	DeleteDC(pwfb->dib_hDC);
+	DeleteObject(pwfb->hbmDIB);
     }
 }
 
@@ -200,7 +214,7 @@ static void
 wmesa_get_buffer_size(GLframebuffer *buffer, GLuint *width, GLuint *height)
 {
     WMesaFramebuffer pwfb = wmesa_framebuffer(buffer);
-    get_window_size(pwfb->hdc, width, height);
+    get_window_size(pwfb->hDC, width, height);
 }
 
 
@@ -209,13 +223,9 @@ static void wmesa_flush(GLcontext *ctx)
     WMesaContext pwc = wmesa_context(ctx);
     WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->WinSysDrawBuffer);
 
-    /* XXX I guess we're _always_ double buffered and render to the back
-     * buffer.  So flushing involves copying the back color buffer to
-     * the front.
-     */
-    if (pwc->db_flag) {
-	BitBlt(pwc->hDC, 0, 0, pwfb->Base.Width, pwfb->Base.Height,
-	       pwc->dib.hDC, 0, 0, SRCCOPY);
+    if (ctx->Visual.doubleBufferMode == 1) {
+	BitBlt(pwfb->hDC, 0, 0, pwfb->Base.Width, pwfb->Base.Height,
+	       pwfb->dib_hDC, 0, 0, SRCCOPY);
     }
     else {
 	/* Do nothing for single buffer */
@@ -247,8 +257,9 @@ static void clear_index(GLcontext *ctx, GLuint index)
 static void clear_color(GLcontext *ctx, const GLfloat color[4])
 {
     WMesaContext pwc = wmesa_context(ctx);
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
     GLubyte col[3];
-    UINT    bytesPerPixel = pwc->cColorBits / 8; 
+    UINT    bytesPerPixel = pwfb->cColorBits / 8; 
 
     CLAMPED_FLOAT_TO_UBYTE(col[0], color[0]);
     CLAMPED_FLOAT_TO_UBYTE(col[1], color[1]);
@@ -279,6 +290,7 @@ static void clear(GLcontext *ctx,
 #define FLIP(Y)  (ctx->DrawBuffer->Height - (Y) - 1)
 
     WMesaContext pwc = wmesa_context(ctx);
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
     int done = 0;
 
     /* Let swrast do all the work if the masks are not set to
@@ -295,7 +307,7 @@ static void clear(GLcontext *ctx,
     if (mask & BUFFER_BIT_BACK_LEFT) { 
 	
 	int     i, rowSize; 
-	UINT    bytesPerPixel = pwc->cColorBits / 8; 
+	UINT    bytesPerPixel = pwfb->cColorBits / 8; 
 	LPBYTE  lpb, clearRow;
 	LPWORD  lpw;
 	BYTE    bColor; 
@@ -313,8 +325,8 @@ static void clear(GLcontext *ctx,
 		bColor = BGR8(GetRValue(pwc->clearColorRef), 
 			      GetGValue(pwc->clearColorRef), 
 			      GetBValue(pwc->clearColorRef));
-		memset(pwc->pbPixels, bColor, 
-		       pwc->ScanWidth * height);
+		memset(pwfb->pbPixels, bColor, 
+		       pwfb->ScanWidth * height);
 		done = 1;
 		break;
 	    case 2:
@@ -322,8 +334,8 @@ static void clear(GLcontext *ctx,
 			       GetGValue(pwc->clearColorRef), 
 			       GetBValue(pwc->clearColorRef)); 
 		if (((wColor >> 8) & 0xff) == (wColor & 0xff)) {
-		    memset(pwc->pbPixels, wColor & 0xff, 
-			   pwc->ScanWidth * height);
+		    memset(pwfb->pbPixels, wColor & 0xff, 
+			   pwfb->ScanWidth * height);
 		    done = 1;
 		}
 		break;
@@ -334,9 +346,9 @@ static void clear(GLcontext *ctx,
 		    GetGValue(pwc->clearColorRef) &&
 		    GetRValue(pwc->clearColorRef) == 
 		    GetBValue(pwc->clearColorRef)) {
-		    memset(pwc->pbPixels, 
+		    memset(pwfb->pbPixels, 
 			   GetRValue(pwc->clearColorRef), 
-			   pwc->ScanWidth * height);
+			   pwfb->ScanWidth * height);
 		    done = 1;
 		}
 		break;
@@ -349,8 +361,8 @@ static void clear(GLcontext *ctx,
 	    /* Need to clear a row at a time.  Begin by setting the first
 	     * row in the area to be cleared to the clear color. */
 	    
-	    clearRow = pwc->pbPixels + 
-		pwc->ScanWidth * FLIP(y) +
+	    clearRow = pwfb->pbPixels + 
+		pwfb->ScanWidth * FLIP(y) +
 		bytesPerPixel * x; 
 	    switch (bytesPerPixel) {
 	    case 1:
@@ -392,11 +404,11 @@ static void clear(GLcontext *ctx,
 	    } /* switch */
 	    
 	    /* copy cleared row to other rows in buffer */
-	    lpb = clearRow - pwc->ScanWidth;
+	    lpb = clearRow - pwfb->ScanWidth;
 	    rowSize = width * bytesPerPixel;
 	    for (i=1; i<height; i++) { 
 		memcpy(lpb, clearRow, rowSize); 
-		lpb -= pwc->ScanWidth; 
+		lpb -= pwfb->ScanWidth; 
 	    } 
 	} /* not done */
 	mask &= ~BUFFER_BIT_BACK_LEFT;
@@ -615,13 +627,14 @@ static void write_rgba_span_32(const GLcontext *ctx,
 			       const GLubyte mask[] )
 {
     WMesaContext pwc = wmesa_context(ctx);
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
     GLuint i;
     LPDWORD lpdw;
 
     (void) ctx;
     
     y=FLIP(y);
-    lpdw = ((LPDWORD)(pwc->pbPixels + pwc->ScanWidth * y)) + x;
+    lpdw = ((LPDWORD)(pwfb->pbPixels + pwfb->ScanWidth * y)) + x;
     if (mask) {
 	for (i=0; i<n; i++)
 	    if (mask[i])
@@ -644,13 +657,14 @@ static void write_rgb_span_32(const GLcontext *ctx,
 			      const GLubyte mask[] )
 {
     WMesaContext pwc = wmesa_context(ctx);
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
     GLuint i;
     LPDWORD lpdw;
 
     (void) ctx;
     
     y=FLIP(y);
-    lpdw = ((LPDWORD)(pwc->pbPixels + pwc->ScanWidth * y)) + x;
+    lpdw = ((LPDWORD)(pwfb->pbPixels + pwfb->ScanWidth * y)) + x;
     if (mask) {
 	for (i=0; i<n; i++)
 	    if (mask[i])
@@ -678,7 +692,8 @@ static void write_mono_rgba_span_32(const GLcontext *ctx,
     DWORD pixel;
     GLuint i;
     WMesaContext pwc = wmesa_context(ctx);
-    lpdw = ((LPDWORD)(pwc->pbPixels + pwc->ScanWidth * y)) + x;
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
+    lpdw = ((LPDWORD)(pwfb->pbPixels + pwfb->ScanWidth * y)) + x;
     y=FLIP(y);
     pixel = BGR32(color[RCOMP], color[GCOMP], color[BCOMP]);
     if (mask) {
@@ -700,10 +715,11 @@ static void write_rgba_pixels_32(const GLcontext *ctx,
 				 const GLubyte mask[])
 {
     GLuint i;
-    WMesaContext pwc = wmesa_context(ctx);;
+    WMesaContext pwc = wmesa_context(ctx);
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
     for (i=0; i<n; i++)
 	if (mask[i])
-	    WMSETPIXEL32(pwc, FLIP(y[i]), x[i],
+	    WMSETPIXEL32(pwfb, FLIP(y[i]), x[i],
 			 rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP]);
 }
 
@@ -720,9 +736,10 @@ static void write_mono_rgba_pixels_32(const GLcontext *ctx,
 {
     GLuint i;
     WMesaContext pwc = wmesa_context(ctx);
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
     for (i=0; i<n; i++)
 	if (mask[i])
-	    WMSETPIXEL32(pwc, FLIP(y[i]),x[i],color[RCOMP],
+	    WMSETPIXEL32(pwfb, FLIP(y[i]),x[i],color[RCOMP],
 			 color[GCOMP], color[BCOMP]);
 }
 
@@ -736,9 +753,10 @@ static void read_rgba_span_32(const GLcontext *ctx,
     DWORD pixel;
     LPDWORD lpdw;
     WMesaContext pwc = wmesa_context(ctx);
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
     
     y = FLIP(y);
-    lpdw = ((LPDWORD)(pwc->pbPixels + pwc->ScanWidth * y)) + x;
+    lpdw = ((LPDWORD)(pwfb->pbPixels + pwfb->ScanWidth * y)) + x;
     for (i=0; i<n; i++) {
 	pixel = lpdw[i];
 	rgba[i][RCOMP] = (pixel & 0x00ff0000) >> 16;
@@ -759,10 +777,11 @@ static void read_rgba_pixels_32(const GLcontext *ctx,
     DWORD pixel;
     LPDWORD lpdw;
     WMesaContext pwc = wmesa_context(ctx);
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
 
     for (i=0; i<n; i++) {
 	GLint y2 = FLIP(y[i]);
-	lpdw = ((LPDWORD)(pwc->pbPixels + pwc->ScanWidth * y2)) + x[i];
+	lpdw = ((LPDWORD)(pwfb->pbPixels + pwfb->ScanWidth * y2)) + x[i];
 	pixel = lpdw[i];
 	rgba[i][RCOMP] = (pixel & 0x00ff0000) >> 16;
 	rgba[i][GCOMP] = (pixel & 0x0000ff00) >> 8;
@@ -790,13 +809,14 @@ static void write_rgba_span_16(const GLcontext *ctx,
 			       const GLubyte mask[] )
 {
     WMesaContext pwc = wmesa_context(ctx);
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
     GLuint i;
     LPWORD lpw;
 
     (void) ctx;
     
     y=FLIP(y);
-    lpw = ((LPWORD)(pwc->pbPixels + pwc->ScanWidth * y)) + x;
+    lpw = ((LPWORD)(pwfb->pbPixels + pwfb->ScanWidth * y)) + x;
     if (mask) {
 	for (i=0; i<n; i++)
 	    if (mask[i])
@@ -819,13 +839,14 @@ static void write_rgb_span_16(const GLcontext *ctx,
 			      const GLubyte mask[] )
 {
     WMesaContext pwc = wmesa_context(ctx);
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
     GLuint i;
     LPWORD lpw;
 
     (void) ctx;
     
     y=FLIP(y);
-    lpw = ((LPWORD)(pwc->pbPixels + pwc->ScanWidth * y)) + x;
+    lpw = ((LPWORD)(pwfb->pbPixels + pwfb->ScanWidth * y)) + x;
     if (mask) {
 	for (i=0; i<n; i++)
 	    if (mask[i])
@@ -853,8 +874,9 @@ static void write_mono_rgba_span_16(const GLcontext *ctx,
     WORD pixel;
     GLuint i;
     WMesaContext pwc = wmesa_context(ctx);
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
     (void) ctx;
-    lpw = ((LPWORD)(pwc->pbPixels + pwc->ScanWidth * y)) + x;
+    lpw = ((LPWORD)(pwfb->pbPixels + pwfb->ScanWidth * y)) + x;
     y=FLIP(y);
     pixel = BGR16(color[RCOMP], color[GCOMP], color[BCOMP]);
     if (mask) {
@@ -877,10 +899,11 @@ static void write_rgba_pixels_16(const GLcontext *ctx,
 {
     GLuint i;
     WMesaContext pwc = wmesa_context(ctx);
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
     (void) ctx;
     for (i=0; i<n; i++)
 	if (mask[i])
-	    WMSETPIXEL16(pwc, FLIP(y[i]), x[i],
+	    WMSETPIXEL16(pwfb, FLIP(y[i]), x[i],
 			 rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP]);
 }
 
@@ -897,10 +920,11 @@ static void write_mono_rgba_pixels_16(const GLcontext *ctx,
 {
     GLuint i;
     WMesaContext pwc = wmesa_context(ctx);
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
     (void) ctx;
     for (i=0; i<n; i++)
 	if (mask[i])
-	    WMSETPIXEL16(pwc, FLIP(y[i]),x[i],color[RCOMP],
+	    WMSETPIXEL16(pwfb, FLIP(y[i]),x[i],color[RCOMP],
 			 color[GCOMP], color[BCOMP]);
 }
 
@@ -913,9 +937,10 @@ static void read_rgba_span_16(const GLcontext *ctx,
     GLuint i, pixel;
     LPWORD lpw;
     WMesaContext pwc = wmesa_context(ctx);
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
     
     y = FLIP(y);
-    lpw = ((LPWORD)(pwc->pbPixels + pwc->ScanWidth * y)) + x;
+    lpw = ((LPWORD)(pwfb->pbPixels + pwfb->ScanWidth * y)) + x;
     for (i=0; i<n; i++) {
 	pixel = lpw[i];
 	/* Windows uses 5,5,5 for 16-bit */
@@ -936,10 +961,11 @@ static void read_rgba_pixels_16(const GLcontext *ctx,
     GLuint i, pixel;
     LPWORD lpw;
     WMesaContext pwc = wmesa_context(ctx);
+    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
 
     for (i=0; i<n; i++) {
 	GLint y2 = FLIP(y[i]);
-	lpw = ((LPWORD)(pwc->pbPixels + pwc->ScanWidth * y2)) + x[i];
+	lpw = ((LPWORD)(pwfb->pbPixels + pwfb->ScanWidth * y2)) + x[i];
 	pixel = lpw[i];
 	/* Windows uses 5,5,5 for 16-bit */
 	rgba[i][RCOMP] = (pixel & 0x7c00) >> 7;
@@ -1051,9 +1077,9 @@ wmesa_resize_buffers(GLcontext *ctx, GLframebuffer *buffer,
 
     if (pwfb->Base.Width != width || pwfb->Base.Height != height) {
 	/* Realloc back buffer */
-	if (pwc->db_flag) {
-	    wmDeleteBackingStore(pwc);
-	    wmCreateBackingStore(pwc, width, height);
+	if (ctx->Visual.doubleBufferMode == 1) {
+	    wmDeleteBackingStore(pwfb);
+	    wmCreateBackingStore(pwfb, width, height);
 	}
     }
     _mesa_resize_framebuffer(ctx, buffer, width, height);
@@ -1101,24 +1127,12 @@ static void wmesa_update_state(GLcontext *ctx, GLuint new_state)
     _ac_InvalidateState(ctx, new_state);
     _tnl_InvalidateState(ctx, new_state);
 
-    /* TODO - need code to update the span functions in case the
-     * renderer changes the target buffer (like a DB app writing to
-     * the front buffer). */
+    /* TODO - This code is not complete yet because I 
+     * don't know what to do for all state updates.
+     */
 
-#if 0
-    {  /* could check _NEW_BUFFERS bit flag here  in new_state */
-	/* In progress - Need to make the wmesa context inherit (by containment)
-	the gl_context, so I can get access to the pixel format */
-	struct gl_renderbuffer *rb;
-	int pixelformat, double_buffer;
-
-	rb = ctx->DrawBuffer->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-	pixelformat = PF_5R6G5B;  // hard code for now - see note above
-        double_buffer = ctx->DrawBuffer->ColorDrawBuffer[0] == GL_BACK ? 1 : 0;
-	if (rb)
-        wmesa_set_renderbuffer_funcs(rb, pixelformat, double_buffer);
+    if (new_state & _NEW_BUFFERS) {
     }
-#endif
 }
 
 
@@ -1164,11 +1178,6 @@ WMesaContext WMesaCreateContext(HDC hDC,
 #else
     c->hDC = hDC;
 #endif
-
-    /* rememember DC and flag settings */
-    c->rgb_flag = rgb_flag;
-    c->db_flag = db_flag;
-    c->alpha_flag = alpha_flag;
 
     /* Get data for visual */
     /* Dealing with this is actually a bit of overkill because Mesa will end
@@ -1249,11 +1258,20 @@ WMesaContext WMesaCreateContext(HDC hDC,
 void WMesaDestroyContext( WMesaContext pwc )
 {
     GLcontext *ctx = &pwc->gl_ctx;
+    WMesaFramebuffer pwfb;
     GET_CURRENT_CONTEXT(cur_ctx);
 
     if (cur_ctx == ctx) {
         /* unbind current if deleting current context */
         WMesaMakeCurrent(NULL, NULL);
+    }
+
+    /* clean up frame buffer resources */
+    pwfb = wmesa_lookup_framebuffer(pwc->hDC);
+    if (pwfb) {
+	if (ctx->Visual.doubleBufferMode == 1)
+	    wmDeleteBackingStore(pwfb);
+	wmesa_free_framebuffer(pwc->hDC);
     }
 
     /* Release for device, not memory contexts */
@@ -1264,9 +1282,6 @@ void WMesaDestroyContext( WMesaContext pwc )
     DeleteObject(pwc->clearPen); 
     DeleteObject(pwc->clearBrush); 
     
-    if (pwc->db_flag)
-	wmDeleteBackingStore(pwc);
-
     _swsetup_DestroyContext(ctx);
     _tnl_DestroyContext(ctx);
     _ac_DestroyContext(ctx);
@@ -1313,7 +1328,7 @@ void WMesaMakeCurrent(WMesaContext c, HDC hdc)
     pwfb = wmesa_lookup_framebuffer(hdc);
 
     /* Lazy creation of framebuffers */
-    if (c && !pwfb) {
+    if (c && !pwfb && hdc) {
         struct gl_renderbuffer *rb;
         GLvisual *visual = &c->gl_ctx.Visual;
         GLuint width, height;
@@ -1323,31 +1338,30 @@ void WMesaMakeCurrent(WMesaContext c, HDC hdc)
 	c->clearPen = CreatePen(PS_SOLID, 1, 0); 
 	c->clearBrush = CreateSolidBrush(0); 
 
-	/* Create back buffer if double buffered */
-	if (c->db_flag) {
-	    wmCreateBackingStore(c, width, height);
-	}
-	
         pwfb = wmesa_new_framebuffer(hdc, visual);
 
-        /* need a color renderbuffer */
-        /* XXX we need to make two renderbuffers if double-buffering,
-         * one for front color buffer and one for the back.
-         */
-        rb = wmesa_new_renderbuffer();
-        if (c->db_flag)
+	/* Create back buffer if double buffered */
+	if (visual->doubleBufferMode == 1) {
+	    wmCreateBackingStore(pwfb, width, height);
+	}
+	
+        /* make render buffers */
+        if (visual->doubleBufferMode == 1) {
+            rb = wmesa_new_renderbuffer();
             _mesa_add_renderbuffer(&pwfb->Base, BUFFER_BACK_LEFT, rb);
-        else
-            _mesa_add_renderbuffer(&pwfb->Base, BUFFER_FRONT_LEFT, rb);
-        wmesa_set_renderbuffer_funcs(rb, c->pixelformat, c->db_flag);
+            wmesa_set_renderbuffer_funcs(rb, pwfb->pixelformat, 1);
+	}
+        rb = wmesa_new_renderbuffer();
+        _mesa_add_renderbuffer(&pwfb->Base, BUFFER_FRONT_LEFT, rb);
+        wmesa_set_renderbuffer_funcs(rb, pwfb->pixelformat, 0);
 
-        /* Let Mesa own the Depth, Stencil, and Accum buffers */
+	/* Let Mesa own the Depth, Stencil, and Accum buffers */
         _mesa_add_soft_renderbuffers(&pwfb->Base,
                                      GL_FALSE, /* color */
                                      visual->depthBits > 0,
                                      visual->stencilBits > 0,
                                      visual->accumRedBits > 0,
-                                     c->alpha_flag, 
+                                     visual->alphaBits >0, 
                                      GL_FALSE);
     }
 
@@ -1375,8 +1389,8 @@ void WMesaSwapBuffers( HDC hdc )
     if (pwc->hDC == hdc) {
 	_mesa_notifySwapBuffers(ctx);
 
-	BitBlt(pwc->hDC, 0, 0, pwfb->Base.Width, pwfb->Base.Height,
-	       pwc->dib.hDC, 0, 0, SRCCOPY);
+	BitBlt(pwfb->hDC, 0, 0, pwfb->Base.Width, pwfb->Base.Height,
+	       pwfb->dib_hDC, 0, 0, SRCCOPY);
     }
     else {
         /* XXX for now only allow swapping current window */
