@@ -661,6 +661,10 @@ _mesa_source_buffer_exists(GLcontext *ctx, GLenum format)
       if (ctx->ReadBuffer->_ColorReadBuffer == NULL) {
          return GL_FALSE;
       }
+      /* XXX enable this post 6.5 release:
+      ASSERT(ctx->ReadBuffer->_ColorReadBuffer->RedBits > 0 ||
+             ctx->ReadBuffer->_ColorReadBuffer->IndexBits > 0);
+      */
       break;
    case GL_DEPTH:
    case GL_DEPTH_COMPONENT:
@@ -726,6 +730,7 @@ _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format)
    case GL_ABGR_EXT:
    case GL_COLOR_INDEX:
       /* nothing special */
+      /* Could assert that colorbuffer has RedBits > 0 */
       break;
    case GL_DEPTH:
    case GL_DEPTH_COMPONENT:
