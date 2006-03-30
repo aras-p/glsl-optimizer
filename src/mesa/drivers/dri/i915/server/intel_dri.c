@@ -617,13 +617,13 @@ static Bool
 I830ClearScreen(DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sarea)
 {
   /* need to drmMap front and back buffers and zero them */
-  drmAddressPtr map_addr;
+  drmAddress map_addr;
   int ret;
 
   ret = drmMap(ctx->drmFD,
 	       sarea->front_handle,
 	       sarea->front_size,
-	       map_addr);
+	       &map_addr);
 
   if (ret)
   {
@@ -640,7 +640,7 @@ I830ClearScreen(DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sarea)
   ret = drmMap(ctx->drmFD,
 	       sarea->back_handle,
 	       sarea->back_size,
-	       map_addr);
+	       &map_addr);
 
   if (ret)
   {
@@ -810,13 +810,13 @@ I830ScreenInit(DRIDriverContext *ctx, I830Rec *pI830)
    if (err == FALSE)
        return FALSE;
 
-   I830SetRingRegs(ctx, pI830);
-
    /* Quick hack to clear the front & back buffers.  Could also use
     * the clear ioctl to do this, but would need to setup hw state
     * first.
     */
    I830ClearScreen(ctx, pI830, pSAREAPriv);
+
+   I830SetRingRegs(ctx, pI830);
 
    return TRUE;
 }
