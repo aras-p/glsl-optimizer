@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.11 2006/01/25 06:02:55 kschultz Exp $ */
+/* $Id: wgl.c,v 1.12 2006/03/30 07:58:24 kschultz Exp $ */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -37,8 +37,6 @@
 #include "glapi.h"
 
 #include "GL/wmesa.h"   /* protos for wmesa* functions */
-
-typedef struct wmesa_context *PWMC;
 
 /*
  * Pixel Format Descriptors
@@ -143,7 +141,6 @@ int npfd = sizeof(pfd) / sizeof(pfd[0]);
 
 typedef struct {
     WMesaContext ctx;
-    HDC hdc;
 } MesaWglCtx;
 
 #define MESAWGL_CTX_MAX_COUNT 20
@@ -154,13 +151,15 @@ static unsigned ctx_count = 0;
 static int ctx_current = -1;
 static unsigned curPFD = 0;
 
+static HDC CurrentHDC = 0;
+
+
 WINGDIAPI HGLRC GLAPIENTRY wglCreateContext(HDC hdc)
 {
     int i = 0;
     if (!ctx_count) {
 	for(i=0;i<MESAWGL_CTX_MAX_COUNT;i++) {
 	    wgl_ctx[i].ctx = NULL;
-	    wgl_ctx[i].hdc = NULL;
 	}
     }
     for( i = 0; i < MESAWGL_CTX_MAX_COUNT; i++ ) {
@@ -173,7 +172,6 @@ WINGDIAPI HGLRC GLAPIENTRY wglCreateContext(HDC hdc)
 				   GL_TRUE : GL_FALSE) );
             if (wgl_ctx[i].ctx == NULL)
                 break;
-            wgl_ctx[i].hdc = hdc;
             ctx_count++;
             return ((HGLRC)wgl_ctx[i].ctx);
         }
@@ -186,11 +184,10 @@ WINGDIAPI BOOL GLAPIENTRY wglDeleteContext(HGLRC hglrc)
 {
     int i;
     for ( i = 0; i < MESAWGL_CTX_MAX_COUNT; i++ ) {
-    	if ( wgl_ctx[i].ctx == (PWMC) hglrc ){
-            WMesaMakeCurrent((PWMC) hglrc);
-            WMesaDestroyContext();
+    	if ( wgl_ctx[i].ctx == (WMesaContext) hglrc ){
+            WMesaMakeCurrent((WMesaContext) hglrc, NULL);
+            WMesaDestroyContext(wgl_ctx[i].ctx);
             wgl_ctx[i].ctx = NULL;
-            wgl_ctx[i].hdc = NULL;
             ctx_count--;
             return(TRUE);
     	}
@@ -209,26 +206,24 @@ WINGDIAPI HGLRC GLAPIENTRY wglGetCurrentContext(VOID)
 
 WINGDIAPI HDC GLAPIENTRY wglGetCurrentDC(VOID)
 {
-    if (ctx_current < 0)
-	return 0;
-    else
-	return wgl_ctx[ctx_current].hdc;
+    return CurrentHDC;
 }
 
-WINGDIAPI BOOL GLAPIENTRY wglMakeCurrent(HDC hdc,HGLRC hglrc)
+WINGDIAPI BOOL GLAPIENTRY wglMakeCurrent(HDC hdc, HGLRC hglrc)
 {
     int i;
     
+    CurrentHDC = hdc;
+
     if (!hdc || !hglrc) {
-	WMesaMakeCurrent(NULL);
+	WMesaMakeCurrent(NULL, NULL);
 	ctx_current = -1;
 	return TRUE;
     }
     
     for ( i = 0; i < MESAWGL_CTX_MAX_COUNT; i++ ) {
-	if ( wgl_ctx[i].ctx == (PWMC) hglrc ) {
-	    wgl_ctx[i].hdc = hdc;
-	    WMesaMakeCurrent( (WMesaContext) hglrc );
+	if ( wgl_ctx[i].ctx == (WMesaContext) hglrc ) {
+	    WMesaMakeCurrent( (WMesaContext) hglrc, hdc );
 	    ctx_current = i;
 	    return TRUE;
 	}
@@ -353,16 +348,8 @@ WINGDIAPI BOOL GLAPIENTRY wglSetPixelFormat(HDC hdc,int iPixelFormat,
 
 WINGDIAPI BOOL GLAPIENTRY wglSwapBuffers(HDC hdc)
 {
-    (void) hdc;
-    if (ctx_current < 0)
-	return FALSE;
-    
-    if(wgl_ctx[ctx_current].ctx == NULL) {
-	SetLastError(0);
-	return(FALSE);
-    }
-    WMesaSwapBuffers();
-    return(TRUE);
+    WMesaSwapBuffers(hdc);
+    return TRUE;
 }
 
 static FIXED FixedFromDouble(double d)
