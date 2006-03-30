@@ -236,6 +236,7 @@ static void SpecialKey( int key, int x, int y )
 static void Init( int argc, char *argv[] )
 {
    GLboolean convolve = GL_FALSE;
+   GLboolean fullscreen = GL_FALSE;
    int i;
 
    for (i = 1; i < argc; i++) {
@@ -248,8 +249,13 @@ static void Init( int argc, char *argv[] )
       else if (strcmp(argv[i], "-c")==0) {
          convolve = GL_TRUE;
       }
+      else if (strcmp(argv[i], "-f")==0) {
+         fullscreen = GL_TRUE;
+      }
    }
 
+   if (fullscreen)
+      glutFullScreen();
 
    /* Cylinder object */
    {
@@ -421,7 +427,8 @@ int main( int argc, char *argv[] )
    glutKeyboardFunc( Key );
    glutSpecialFunc( SpecialKey );
    glutDisplayFunc( Display );
-   glutIdleFunc( Idle );
+   if (Animate)
+      glutIdleFunc( Idle );
 
    glutCreateMenu(ModeMenu);
    glutAddMenuEntry("Toggle Highlight", DO_SPEC_TEXTURE);
