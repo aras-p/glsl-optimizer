@@ -670,7 +670,7 @@ static void _ae_update_state( GLcontext *ctx )
       aa++;
    }
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
-      if (ctx->Array.TexCoord[i].Enabled && ctx->Array.TexCoord[i].Ptr) {
+      if (ctx->Array.TexCoord[i].Enabled) {
          /* NOTE: we use generic glVertexAttrib functions here.
           * If we ever de-alias conventional/generic vertex attribs this
           * will have to change.
@@ -685,8 +685,7 @@ static void _ae_update_state( GLcontext *ctx )
 
    /* generic vertex attribute arrays */
    for (i = 1; i < VERT_ATTRIB_MAX; i++) {  /* skip zero! */
-      if (ctx->Array.VertexAttrib[i].Enabled &&
-            ctx->Array.VertexAttrib[i].Ptr) {
+      if (ctx->Array.VertexAttrib[i].Enabled) {
          struct gl_client_array *attribArray = &ctx->Array.VertexAttrib[i];
          at->array = attribArray;
          /* Note: we can't grab the _glapi_Dispatch->VertexAttrib1fvNV
