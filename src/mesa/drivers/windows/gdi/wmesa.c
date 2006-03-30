@@ -1080,14 +1080,11 @@ static void wmesa_viewport(GLcontext *ctx,
 
     wmesa_get_buffer_size(ctx->WinSysDrawBuffer, &new_width, &new_height);
 
-    if (new_width != width || new_height != height) {
-        /**
-	 * Either the window was resized or the viewport changed - not sure which.
-	 * So call resize buffers to resize them if the window size changed.
-	 */
-       wmesa_resize_buffers(ctx, ctx->WinSysDrawBuffer, new_width, new_height);
-       ctx->NewState |= _NEW_BUFFERS;  /* to update scissor / window bounds */
-   }
+    /**
+     * Resize buffers if the window size changed.
+     */
+    wmesa_resize_buffers(ctx, ctx->WinSysDrawBuffer, new_width, new_height);
+    ctx->NewState |= _NEW_BUFFERS;  /* to update scissor / window bounds */
 }
 
 
