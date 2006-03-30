@@ -166,6 +166,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/glx.h					\
 	$(DIRECTORY)/include/GL/glxext.h				\
 	$(DIRECTORY)/include/GL/glx_mangle.h				\
+	$(DIRECTORY)/include/GL/glfbdev.h				\
 	$(DIRECTORY)/include/GL/mesa_wgl.h				\
 	$(DIRECTORY)/include/GL/mglmesa.h				\
 	$(DIRECTORY)/include/GL/osmesa.h				\
