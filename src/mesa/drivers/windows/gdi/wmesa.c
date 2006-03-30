@@ -814,7 +814,7 @@ static void write_rgba_span_16(const GLcontext *ctx,
 static void write_rgb_span_16(const GLcontext *ctx, 
 			      struct gl_renderbuffer *rb, 
 			      GLuint n, GLint x, GLint y,
-			      const GLubyte rgb[][4], 
+			      const GLubyte rgb[][3], 
 			      const GLubyte mask[] )
 {
     WMesaContext pwc = wmesa_context(ctx);
