@@ -43,7 +43,7 @@
    intelContextPtr intel = INTEL_CONTEXT(ctx);			\
    __DRIdrawablePrivate *dPriv = intel->driDrawable;		\
    driRenderbuffer *drb = (driRenderbuffer *) rb;		\
-   GLuint pitch = drb->pitch * drb->cpp;			\
+   GLuint pitch = drb->pitch;					\
    GLuint height = dPriv->h;					\
    char *buf = (char *) drb->Base.Data +			\
 			dPriv->x * drb->cpp +			\
@@ -55,7 +55,7 @@
    intelContextPtr intel = INTEL_CONTEXT(ctx);			\
    __DRIdrawablePrivate *dPriv = intel->driDrawable;		\
    driRenderbuffer *drb = (driRenderbuffer *) rb;		\
-   GLuint pitch = drb->pitch * drb->cpp;			\
+   GLuint pitch = drb->pitch;					\
    GLuint height = dPriv->h;					\
    char *buf = (char *) drb->Base.Data +			\
 			dPriv->x * drb->cpp +			\
@@ -133,7 +133,7 @@ do {								\
    intelContextPtr intel = INTEL_CONTEXT(ctx);			\
    __DRIdrawablePrivate *dPriv = intel->driDrawable;		\
    driRenderbuffer *drb = (driRenderbuffer *) rb;		\
-   GLuint pitch = drb->pitch * drb->cpp;			\
+   GLuint pitch = drb->pitch;					\
    GLuint height = dPriv->h;					\
    char *buf = (char *)drb->Base.Data +				\
 			dPriv->x * drb->cpp +			\
