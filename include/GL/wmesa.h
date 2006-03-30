@@ -100,15 +100,14 @@ extern WMesaContext WMesaCreateContext(HDC hDC,HPALETTE* pPal,
 /*
  * Destroy a rendering context as returned by WMesaCreateContext()
  */
-/*extern void WMesaDestroyContext( WMesaContext ctx );*/
-extern void WMesaDestroyContext( void );
+extern void WMesaDestroyContext( WMesaContext ctx );
 
 
 
 /*
  * Make the specified context the current one.
  */
-extern void WMesaMakeCurrent( WMesaContext ctx );
+extern void WMesaMakeCurrent( WMesaContext ctx, HDC hdc );
 
 
 /*
@@ -121,7 +120,7 @@ extern WMesaContext WMesaGetCurrentContext( void );
  * Swap the front and back buffers for the current context.  No action
  * taken if the context is not double buffered.
  */
-extern void WMesaSwapBuffers(void);
+extern void WMesaSwapBuffers(HDC hdc);
 
 
 /*
