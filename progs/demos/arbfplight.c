@@ -343,7 +343,7 @@ static void Init( void )
                            (const GLubyte *) vertProgramText);
    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
    if (glGetError() != GL_NO_ERROR || errorPos != -1) {
-      int l = FindLine(fragProgramText, errorPos);
+      int l = FindLine(vertProgramText, errorPos);
       printf("Vertex Program Error (pos=%d line=%d): %s\n", errorPos, l,
              (char *) glGetString(GL_PROGRAM_ERROR_STRING_ARB));
       exit(0);
