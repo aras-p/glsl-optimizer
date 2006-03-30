@@ -50,26 +50,18 @@ Rendering Manager) kernel drivers and header files.
 They're available from the <a href="http://dri.sf.net/" target="_parent">DRI</a> project.
 </p>
 <p>
-You can get them from CVS by doing:
+Your distribution should already have both the kernel modules and support
+library already installed.  If not, you can get them from CVS by doing:
 <pre>
-cvs -d:pserver:anonymous@pds.freedesktop.org:/cvs/dri login
-(hit enter when prompted for a password)
-cvs -z3 -d:pserver:anonymous@pdx.freedesktop.org:/cvs/dri co drm
+cvs -z3 -d:pserver:anonymous@anoncvs.freedesktop.org:/cvs/dri co drm
 </pre>
 <p>
-Make note of the directory in which the drm files are placed.
-</p>
-<p>
 See the <a href="http://dri.freedesktop.org/wiki/Building" target="_parent">
-DRI Building Instructions</a> for the steps to build the DRM modules.
+DRI Building Instructions</a> for the steps to build the DRM modules.  This
+version of Mesa requires at least libdrm 2.0.1 or greater.
 </p>
 <p>
-Next, in the <code>Mesa-x.y.z/configs/default</code> file, set the
-<code>DRM_SOURCE_PATH</code> variable to indicate where the DRM files
-are located.
-</p>
-<p>
-Now build Mesa and the DRI drivers by running
+Build Mesa and the DRI drivers by running
 </p>
 <pre>
 make linux-dri
