@@ -496,7 +496,7 @@ extern const int xmesa_kernel1[16];
  */
 
 extern struct xmesa_renderbuffer *
-xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, GLboolean rgbMode,
+xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
                        GLboolean backBuffer);
 
 extern unsigned long

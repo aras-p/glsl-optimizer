@@ -432,12 +432,13 @@ static void clear(GLcontext *ctx,
 #define FLIP(Y)  (rb->Height - (Y) - 1)
 
 
-/* SINGLE BUFFER */
-
-/* These are slow, but work with all non-indexed visual types */
+/**
+ ** Front Buffer reading/writing
+ ** These are slow, but work with all non-indexed visual types.
+ **/
 
 /* Write a horizontal span of RGBA color pixels with a boolean mask. */
-static void write_rgba_span_single(const GLcontext *ctx, 
+static void write_rgba_span_front(const GLcontext *ctx, 
 				   struct gl_renderbuffer *rb, 
 				   GLuint n, GLint x, GLint y,
 				   const GLubyte rgba[][4], 
@@ -463,7 +464,7 @@ static void write_rgba_span_single(const GLcontext *ctx,
 }
 
 /* Write a horizontal span of RGB color pixels with a boolean mask. */
-static void write_rgb_span_single(const GLcontext *ctx, 
+static void write_rgb_span_front(const GLcontext *ctx, 
 				  struct gl_renderbuffer *rb, 
 				  GLuint n, GLint x, GLint y,
 				  const GLubyte rgb[][3], 
@@ -492,7 +493,7 @@ static void write_rgb_span_single(const GLcontext *ctx,
  * Write a horizontal span of pixels with a boolean mask.  The current color
  * is used for all pixels.
  */
-static void write_mono_rgba_span_single(const GLcontext *ctx, 
+static void write_mono_rgba_span_front(const GLcontext *ctx, 
 					struct gl_renderbuffer *rb,
 					GLuint n, GLint x, GLint y,
 					const GLchan color[4], 
@@ -517,7 +518,7 @@ static void write_mono_rgba_span_single(const GLcontext *ctx,
 }
 
 /* Write an array of RGBA pixels with a boolean mask. */
-static void write_rgba_pixels_single(const GLcontext *ctx, 
+static void write_rgba_pixels_front(const GLcontext *ctx, 
 				     struct gl_renderbuffer *rb,
 				     GLuint n, 
 				     const GLint x[], const GLint y[],
@@ -540,7 +541,7 @@ static void write_rgba_pixels_single(const GLcontext *ctx,
  * Write an array of pixels with a boolean mask.  The current color
  * is used for all pixels.
  */
-static void write_mono_rgba_pixels_single(const GLcontext *ctx, 
+static void write_mono_rgba_pixels_front(const GLcontext *ctx, 
 					  struct gl_renderbuffer *rb,
 					  GLuint n,
 					  const GLint x[], const GLint y[],
@@ -558,7 +559,7 @@ static void write_mono_rgba_pixels_single(const GLcontext *ctx,
 }
 
 /* Read a horizontal span of color pixels. */
-static void read_rgba_span_single(const GLcontext *ctx, 
+static void read_rgba_span_front(const GLcontext *ctx, 
 				  struct gl_renderbuffer *rb,
 				  GLuint n, GLint x, GLint y,
 				  GLubyte rgba[][4] )
@@ -578,7 +579,7 @@ static void read_rgba_span_single(const GLcontext *ctx,
 
 
 /* Read an array of color pixels. */
-static void read_rgba_pixels_single(const GLcontext *ctx, 
+static void read_rgba_pixels_front(const GLcontext *ctx, 
 				    struct gl_renderbuffer *rb,
 				    GLuint n, const GLint x[], const GLint y[],
 				    GLubyte rgba[][4])
@@ -981,10 +982,16 @@ wmesa_renderbuffer_storage(GLcontext *ctx,
     return GL_TRUE;
 }
 
+
+/**
+ * Plug in the Get/PutRow/Values functions for a renderbuffer depending
+ * on if we're drawing to the front or back color buffer.
+ */
 void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
                                   int double_buffer)
 {
     if (double_buffer) {
+        /* back buffer */
 	/* Picking the correct span functions is important because
 	 * the DIB was allocated with the indicated depth. */
 	switch(pixelformat) {
@@ -996,6 +1003,9 @@ void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 	    rb->PutMonoValues = write_mono_rgba_pixels_16;
 	    rb->GetRow = read_rgba_span_16;
 	    rb->GetValues = read_rgba_pixels_16;
+            rb->RedBits = 5;
+            rb->GreenBits = 6;
+            rb->BlueBits = 5;
 	    break;
 	case PF_8R8G8B:
 	    rb->PutRow = write_rgba_span_32;
@@ -1005,19 +1015,26 @@ void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 	    rb->PutMonoValues = write_mono_rgba_pixels_32;
 	    rb->GetRow = read_rgba_span_32;
 	    rb->GetValues = read_rgba_pixels_32;
+            rb->RedBits = 8;
+            rb->GreenBits = 8;
+            rb->BlueBits = 8;
 	    break;
 	default:
 	    break;
 	}
     }
-    else { /* single buffer */
-	rb->PutRow = write_rgba_span_single;
-	rb->PutRowRGB = write_rgb_span_single;
-	rb->PutMonoRow = write_mono_rgba_span_single;
-	rb->PutValues = write_rgba_pixels_single;
-	rb->PutMonoValues = write_mono_rgba_pixels_single;
-	rb->GetRow = read_rgba_span_single;
-	rb->GetValues = read_rgba_pixels_single;
+    else {
+        /* front buffer (actual Windows window) */
+	rb->PutRow = write_rgba_span_front;
+	rb->PutRowRGB = write_rgb_span_front;
+	rb->PutMonoRow = write_mono_rgba_span_front;
+	rb->PutValues = write_rgba_pixels_front;
+	rb->PutMonoValues = write_mono_rgba_pixels_front;
+	rb->GetRow = read_rgba_span_front;
+	rb->GetValues = read_rgba_pixels_front;
+        rb->RedBits = 8; /* XXX fix these (565?) */
+        rb->GreenBits = 8;
+        rb->BlueBits = 8;
     }
 }
 
@@ -1317,6 +1334,9 @@ void WMesaMakeCurrent(WMesaContext c, HDC hdc)
         pwfb = wmesa_new_framebuffer(hdc, visual);
 
         /* need a color renderbuffer */
+        /* XXX we need to make two renderbuffers if double-buffering,
+         * one for front color buffer and one for the back.
+         */
         rb = wmesa_new_renderbuffer();
         if (c->db_flag)
             _mesa_add_renderbuffer(&pwfb->Base, BUFFER_BACK_LEFT, rb);

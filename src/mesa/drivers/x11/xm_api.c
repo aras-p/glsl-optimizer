@@ -355,15 +355,14 @@ alloc_xmesa_buffer(XMesaVisual vis, BufferType type, XMesaColormap cmap)
       assert(!b->mesa_buffer.Attachment[BUFFER_BACK_LEFT].Renderbuffer);
 
       /* front renderbuffer */
-      b->frontxrb = xmesa_new_renderbuffer(NULL, 0, vis->mesa_visual.rgbMode,
+      b->frontxrb = xmesa_new_renderbuffer(NULL, 0, &vis->mesa_visual,
                                            GL_FALSE);
       _mesa_add_renderbuffer(&b->mesa_buffer, BUFFER_FRONT_LEFT,
                              &b->frontxrb->Base);
 
       /* back renderbuffer */
       if (vis->mesa_visual.doubleBufferMode) {
-         b->backxrb = xmesa_new_renderbuffer(NULL, 0,
-                                             vis->mesa_visual.rgbMode,
+         b->backxrb = xmesa_new_renderbuffer(NULL, 0, &vis->mesa_visual,
                                              GL_TRUE);
          /* determine back buffer implementation */
          b->db_mode = vis->ximage_flag ? BACK_XIMAGE : BACK_PIXMAP;

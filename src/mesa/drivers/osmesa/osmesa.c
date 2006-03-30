@@ -601,6 +601,7 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 {
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
 
+   /* Note: we can ignoring internalFormat for "window-system" renderbuffers */
    if (osmesa->format == OSMESA_RGBA) {
       rb->GetRow = get_row_RGBA;
       rb->GetValues = get_values_RGBA;
@@ -609,6 +610,10 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_RGBA;
       rb->PutValues = put_values_RGBA;
       rb->PutMonoValues = put_mono_values_RGBA;
+      rb->RedBits =
+      rb->GreenBits =
+      rb->BlueBits =
+      rb->AlphaBits = 8 * sizeof(GLchan);
    }
    else if (osmesa->format == OSMESA_BGRA) {
       rb->GetRow = get_row_BGRA;
@@ -618,6 +623,10 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_BGRA;
       rb->PutValues = put_values_BGRA;
       rb->PutMonoValues = put_mono_values_BGRA;
+      rb->RedBits =
+      rb->GreenBits =
+      rb->BlueBits =
+      rb->AlphaBits = 8 * sizeof(GLchan);
    }
    else if (osmesa->format == OSMESA_ARGB) {
       rb->GetRow = get_row_ARGB;
@@ -627,6 +636,10 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_ARGB;
       rb->PutValues = put_values_ARGB;
       rb->PutMonoValues = put_mono_values_ARGB;
+      rb->RedBits =
+      rb->GreenBits =
+      rb->BlueBits =
+      rb->AlphaBits = 8 * sizeof(GLchan);
    }
    else if (osmesa->format == OSMESA_RGB) {
       rb->GetRow = get_row_RGB;
@@ -636,6 +649,9 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_RGB;
       rb->PutValues = put_values_RGB;
       rb->PutMonoValues = put_mono_values_RGB;
+      rb->RedBits =
+      rb->GreenBits =
+      rb->BlueBits = 8 * sizeof(GLchan);
    }
    else if (osmesa->format == OSMESA_BGR) {
       rb->GetRow = get_row_BGR;
@@ -645,6 +661,9 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_BGR;
       rb->PutValues = put_values_BGR;
       rb->PutMonoValues = put_mono_values_BGR;
+      rb->RedBits =
+      rb->GreenBits =
+      rb->BlueBits = 8 * sizeof(GLchan);
    }
 #if CHAN_TYPE == GL_UNSIGNED_BYTE
    else if (osmesa->format == OSMESA_RGB_565) {
@@ -655,6 +674,9 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_RGB_565;
       rb->PutValues = put_values_RGB_565;
       rb->PutMonoValues = put_mono_values_RGB_565;
+      rb->RedBits = 5;
+      rb->GreenBits = 6;
+      rb->BlueBits = 5;
    }
 #endif
    else if (osmesa->format == OSMESA_COLOR_INDEX) {
@@ -664,6 +686,7 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoRow = put_mono_row_CI;
       rb->PutValues = put_values_CI;
       rb->PutMonoValues = put_mono_values_CI;
+      rb->IndexBits = 8;
    }
    else {
       _mesa_problem(ctx, "bad pixel format in osmesa renderbuffer_storage");

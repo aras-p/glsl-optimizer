@@ -107,7 +107,7 @@ xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 struct xmesa_renderbuffer *
-xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, GLboolean rgbMode,
+xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
                        GLboolean backBuffer)
 {
    struct xmesa_renderbuffer *xrb = CALLOC_STRUCT(xmesa_renderbuffer);
@@ -121,15 +121,20 @@ xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, GLboolean rgbMode,
       else
          xrb->Base.AllocStorage = xmesa_alloc_front_storage;
 
-      if (rgbMode) {
+      if (visual->rgbMode) {
          xrb->Base.InternalFormat = GL_RGBA;
          xrb->Base._BaseFormat = GL_RGBA;
          xrb->Base.DataType = GL_UNSIGNED_BYTE;
+         xrb->Base.RedBits = visual->redBits;
+         xrb->Base.GreenBits = visual->greenBits;
+         xrb->Base.BlueBits = visual->blueBits;
+         xrb->Base.AlphaBits = visual->alphaBits;
       }
       else {
          xrb->Base.InternalFormat = GL_COLOR_INDEX;
          xrb->Base._BaseFormat = GL_COLOR_INDEX;
          xrb->Base.DataType = GL_UNSIGNED_INT;
+         xrb->Base.IndexBits = visual->indexBits;
       }
       /* only need to set Red/Green/EtcBits fields for user-created RBs */
    }
