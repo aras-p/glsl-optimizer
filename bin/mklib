@@ -502,6 +502,9 @@ case $ARCH in
             ${LINK} ${OPTS} ${LIBNAME} ${OBJECTS}
             FINAL_LIBS=${LIBNAME}
         else
+	    # may need these:
+	    # CFLAGS += -fno-common
+	    # LDFLAGS += -bundle -flat_namespace -undefined suppress
             LIBNAME="lib${LIBNAME}.dylib"
             echo "mklib: Making Darwin shared library: " ${LIBNAME}
             FLAGS="-dynamiclib -multiply_defined suppress -current_version ${MAJOR}.${MINOR}.0 -compatibility_version ${MAJOR}.${MINOR}.0"
