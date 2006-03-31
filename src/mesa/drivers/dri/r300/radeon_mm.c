@@ -98,7 +98,7 @@ int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 			
 	again:
 	
-	done_age = rmesa->radeon.radeonScreen->scratch[RADEON_MM_SCRATCH];
+	done_age = radeonGetAge((radeonContextPtr)rmesa);
 	
 	for (i = rmesa->rmm->u_last + 1; i > 0; i --) {
 		if (rmesa->rmm->u_list[i].ptr == NULL) {
@@ -120,7 +120,7 @@ int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 				exit(1);
 			} else {
 #ifdef MM_DEBUG
-				fprintf(stderr, "really freed %d at age %x\n", i, rmesa->radeon.radeonScreen->scratch[RADEON_MM_SCRATCH]);
+				fprintf(stderr, "really freed %d at age %x\n", i, radeonGetAge((radeonContextPtr)rmesa));
 #endif
 				if (i == rmesa->rmm->u_last)
 					rmesa->rmm->u_last --;
@@ -196,7 +196,7 @@ int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 	//fprintf(stderr, "alloc %p at id %d\n", rmesa->rmm->u_list[i].ptr, i);
 	
 #ifdef MM_DEBUG
-	fprintf(stderr, "allocated %d at age %x\n", i, rmesa->radeon.radeonScreen->scratch[RADEON_MM_SCRATCH]);
+	fprintf(stderr, "allocated %d at age %x\n", i, radeonGetAge((radeonContextPtr)rmesa));
 #endif
 	
 	return i;
@@ -261,7 +261,7 @@ void radeon_mm_use(r300ContextPtr rmesa, int id)
 {
 	uint64_t ull;
 #ifdef MM_DEBUG
-	fprintf(stderr, "%s: %d at age %x\n", __FUNCTION__, id, rmesa->radeon.radeonScreen->scratch[RADEON_MM_SCRATCH]);
+	fprintf(stderr, "%s: %d at age %x\n", __FUNCTION__, id, radeonGetAge((radeonContextPtr)rmesa));
 #endif	
 	drm_r300_cmd_header_t *cmd;
 	
@@ -345,7 +345,7 @@ int radeon_mm_on_card(r300ContextPtr rmesa, int id)
 void *radeon_mm_map(r300ContextPtr rmesa, int id, int access)
 {
 #ifdef MM_DEBUG
-	fprintf(stderr, "%s: %d at age %x\n", __FUNCTION__, id, rmesa->radeon.radeonScreen->scratch[RADEON_MM_SCRATCH]);
+	fprintf(stderr, "%s: %d at age %x\n", __FUNCTION__, id, radeonGetAge((radeonContextPtr)rmesa));
 #endif	
 	void *ptr;
 	int tries = 0;
@@ -385,12 +385,12 @@ void *radeon_mm_map(r300ContextPtr rmesa, int id, int access)
 		return NULL;
 	}
 	
-	while(rmesa->rmm->u_list[id].age > rmesa->radeon.radeonScreen->scratch[RADEON_MM_SCRATCH] && tries++ < 1000)
+	while(rmesa->rmm->u_list[id].age > radeonGetAge((radeonContextPtr)rmesa) && tries++ < 1000)
 		usleep(10);
 	
 	if (tries >= 1000) {
 		fprintf(stderr, "Idling failed (%x vs %x)\n",
-				rmesa->rmm->u_list[id].age, rmesa->radeon.radeonScreen->scratch[RADEON_MM_SCRATCH]);
+				rmesa->rmm->u_list[id].age, radeonGetAge((radeonContextPtr)rmesa));
 		return NULL;
 	}
 	
@@ -406,7 +406,7 @@ void *radeon_mm_map(r300ContextPtr rmesa, int id, int access)
 void radeon_mm_unmap(r300ContextPtr rmesa, int id)
 {
 #ifdef MM_DEBUG
-	fprintf(stderr, "%s: %d at age %x\n", __FUNCTION__, id, rmesa->radeon.radeonScreen->scratch[RADEON_MM_SCRATCH]);
+	fprintf(stderr, "%s: %d at age %x\n", __FUNCTION__, id, radeonGetAge((radeonContextPtr)rmesa));
 #endif	
 	
 	if(rmesa->rmm->u_list[id].mapped == 0)
@@ -423,7 +423,7 @@ void radeon_mm_unmap(r300ContextPtr rmesa, int id)
 void radeon_mm_free(r300ContextPtr rmesa, int id)
 {
 #ifdef MM_DEBUG
-	fprintf(stderr, "%s: %d at age %x\n", __FUNCTION__, id, rmesa->radeon.radeonScreen->scratch[RADEON_MM_SCRATCH]);
+	fprintf(stderr, "%s: %d at age %x\n", __FUNCTION__, id, radeonGetAge((radeonContextPtr)rmesa));
 #endif	
 	
 	if(id == 0)

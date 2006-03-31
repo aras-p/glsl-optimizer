@@ -81,6 +81,25 @@ static uint32_t radeonGetLastFrame(radeonContextPtr radeon)
 	return frame;
 }
 
+uint32_t radeonGetAge(radeonContextPtr radeon)
+{
+	drm_radeon_getparam_t gp;
+	int ret;
+	uint32_t age;
+
+	gp.param = RADEON_PARAM_LAST_CLEAR;
+	gp.value = (int *)&age;
+	ret = drmCommandWriteRead(radeon->dri.fd, DRM_RADEON_GETPARAM,
+				  &gp, sizeof(gp));
+	if (ret) {
+		fprintf(stderr, "%s: drmRadeonGetParam: %d\n", __FUNCTION__,
+			ret);
+		exit(1);
+	}
+
+	return age;
+}
+
 static void radeonEmitIrqLocked(radeonContextPtr radeon)
 {
 	drm_radeon_irq_emit_t ie;
