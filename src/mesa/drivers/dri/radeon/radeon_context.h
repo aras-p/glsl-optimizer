@@ -850,6 +850,8 @@ extern GLboolean radeonCreateContext(const __GLcontextModes *glVisual,
 				     __DRIcontextPrivate *driContextPriv,
 				     void *sharedContextPrivate);
 extern void radeonSwapBuffers( __DRIdrawablePrivate *dPriv );
+extern void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
+				int x, int y, int w, int h);
 extern GLboolean radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
 				    __DRIdrawablePrivate *driDrawPriv,
 				    __DRIdrawablePrivate *driReadPriv );

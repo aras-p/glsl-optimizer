@@ -75,7 +75,8 @@ extern void intelRestartInlinePrimitive( intelContextPtr intel );
 extern GLuint *intelEmitInlinePrimitiveLocked(intelContextPtr intel, 
 					      int primitive, int dwords,
 					      int vertex_size);
-extern void intelCopyBuffer( const __DRIdrawablePrivate *dpriv );
+extern void intelCopyBuffer( const __DRIdrawablePrivate *dpriv,
+			     const drm_clip_rect_t	*rect);
 extern void intelClearWithBlit(GLcontext *ctx, GLbitfield mask, GLboolean all,
 			     GLint cx1, GLint cy1, GLint cw, GLint ch);
 

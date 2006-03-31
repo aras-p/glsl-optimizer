@@ -716,6 +716,8 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
       if (IS_R200_CLASS(screen))
 	 (*glx_enable_extension)( psc, "GLX_MESA_allocate_memory" );
+
+      (*glx_enable_extension)( psc, "GLX_MESA_copy_sub_buffer" );
    }
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
@@ -923,7 +925,8 @@ static struct __DriverAPIRec radeonAPI = {
    .GetMSC          = driGetMSC32,
    .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,
-   .SwapBuffersMSC  = NULL
+   .SwapBuffersMSC  = NULL,
+   .CopySubBuffer   = radeonCopySubBuffer,
 };
 #else
 static const struct __DriverAPIRec r200API = {
@@ -940,7 +943,8 @@ static const struct __DriverAPIRec r200API = {
    .GetMSC          = driGetMSC32,
    .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,
-   .SwapBuffersMSC  = NULL
+   .SwapBuffersMSC  = NULL,
+   .CopySubBuffer   = r200CopySubBuffer
 };
 #endif
 

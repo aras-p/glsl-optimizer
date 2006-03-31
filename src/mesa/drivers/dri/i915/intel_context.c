@@ -722,7 +722,7 @@ void intelSwapBuffers( __DRIdrawablePrivate *dPriv )
 	 if ( 0 /*intel->doPageFlip*/ ) { /* doPageFlip is never set !!! */
 	    intelPageFlip( dPriv );
 	 } else {
-	    intelCopyBuffer( dPriv );
+	     intelCopyBuffer( dPriv, NULL );
 	 }
          if (screen->current_rotation != 0) {
             intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
@@ -734,6 +734,29 @@ void intelSwapBuffers( __DRIdrawablePrivate *dPriv )
    }
 }
 
+void intelCopySubBuffer( __DRIdrawablePrivate *dPriv,
+			 int x, int y, int w, int h )
+{
+   if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
+      intelContextPtr intel;
+      GLcontext *ctx;
+      intel = (intelContextPtr) dPriv->driContextPriv->driverPrivate;
+      ctx = &intel->ctx;
+      if (ctx->Visual.doubleBufferMode) {
+         intelScreenPrivate *screen = intel->intelScreen;
+	 drm_clip_rect_t rect;
+	 rect.x1 = x + dPriv->x;
+	 rect.y1 = (dPriv->h - y - h) + dPriv->y;
+	 rect.x2 = rect.x1 + w;
+	 rect.y2 = rect.y1 + h;
+	 _mesa_notifySwapBuffers( ctx );  /* flush pending rendering comands */
+	 intelCopyBuffer( dPriv, &rect );
+      }
+   } else {
+      /* XXX this shouldn't be an error but we can't handle it for now */
+      fprintf(stderr, "%s: drawable has no context!\n", __FUNCTION__);
+   }
+}
 
 void intelInitState( GLcontext *ctx )
 {

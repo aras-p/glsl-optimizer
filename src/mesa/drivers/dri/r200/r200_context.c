@@ -637,7 +637,7 @@ r200SwapBuffers( __DRIdrawablePrivate *dPriv )
             r200PageFlip( dPriv );
          }
          else {
-            r200CopyBuffer( dPriv );
+	     r200CopyBuffer( dPriv, NULL );
          }
       }
    }
@@ -647,6 +647,30 @@ r200SwapBuffers( __DRIdrawablePrivate *dPriv )
    }
 }
 
+void
+r200CopySubBuffer( __DRIdrawablePrivate *dPriv,
+		   int x, int y, int w, int h )
+{
+   if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
+      r200ContextPtr rmesa;
+      GLcontext *ctx;
+      rmesa = (r200ContextPtr) dPriv->driContextPriv->driverPrivate;
+      ctx = rmesa->glCtx;
+      if (ctx->Visual.doubleBufferMode) {
+	 drm_clip_rect_t rect;
+	 rect.x1 = x + dPriv->x;
+	 rect.y1 = (dPriv->h - y - h) + dPriv->y;
+	 rect.x2 = rect.x1 + w;
+	 rect.y2 = rect.y1 + h;
+         _mesa_notifySwapBuffers( ctx );  /* flush pending rendering comands */
+	 r200CopyBuffer( dPriv, &rect );
+      }
+   }
+   else {
+      /* XXX this shouldn't be an error but we can't handle it for now */
+      _mesa_problem(NULL, "%s: drawable has no context!", __FUNCTION__);
+   }
+}
 
 /* Force the context `c' to be the current context and associate with it
  * buffer `b'.

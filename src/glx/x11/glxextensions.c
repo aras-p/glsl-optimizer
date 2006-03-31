@@ -79,7 +79,7 @@ static const struct extension_info known_glx_extensions[] = {
    { GLX(EXT_visual_rating),           VER(0,0), Y, Y, N, N },
    { GLX(MESA_agp_offset),             VER(0,0), N, N, N, Y }, /* Deprecated */
    { GLX(MESA_allocate_memory),        VER(0,0), Y, N, N, Y },
-   { GLX(MESA_copy_sub_buffer),        VER(0,0), N, N, N, N }, /* Deprecated? */
+   { GLX(MESA_copy_sub_buffer),        VER(0,0), Y, N, N, N },
    { GLX(MESA_pixmap_colormap),        VER(0,0), N, N, N, N }, /* Deprecated */
    { GLX(MESA_release_buffers),        VER(0,0), N, N, N, N }, /* Deprecated */
    { GLX(MESA_set_3dfx_mode),          VER(0,0), N, N, N, N }, /* Deprecated */

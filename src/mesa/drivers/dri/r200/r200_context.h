@@ -1006,6 +1006,8 @@ extern GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 				    __DRIcontextPrivate *driContextPriv,
 				    void *sharedContextPrivate);
 extern void r200SwapBuffers( __DRIdrawablePrivate *dPriv );
+extern void r200CopySubBuffer( __DRIdrawablePrivate * dPriv,
+			       int x, int y, int w, int h );
 extern GLboolean r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
 				  __DRIdrawablePrivate *driDrawPriv,
 				  __DRIdrawablePrivate *driReadPriv );

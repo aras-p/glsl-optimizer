@@ -547,6 +547,13 @@ static int64_t driSwapBuffersMSC( __DRInativeDisplay * dpy, void *drawablePriv,
                                                            remainder );
 }
 
+static void driCopySubBuffer( __DRInativeDisplay *dpy, void *drawablePrivate,
+			      int x, int y, int w, int h)
+{
+    __DRIdrawablePrivate *dPriv = (__DRIdrawablePrivate *) drawablePrivate;
+    dPriv->driScreenPriv->DriverAPI.CopySubBuffer(dPriv, x, y, w, h);
+    (void) dpy;
+}
 
 /**
  * This is called via __DRIscreenRec's createNewDrawable pointer.
@@ -622,6 +629,9 @@ static void *driCreateNewDrawable(__DRInativeDisplay *dpy,
     pdraw->swapBuffersMSC = driSwapBuffersMSC;
     pdraw->frameTracking = NULL;
     pdraw->queryFrameTracking = driQueryFrameTracking;
+
+    if (driCompareGLXAPIVersion (20060314) >= 0)
+	pdraw->copySubBuffer = driCopySubBuffer;
 
     /* This special default value is replaced with the configured
      * default value when the drawable is first bound to a direct

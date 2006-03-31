@@ -366,7 +366,8 @@ static void intelWaitForFrameCompletion( intelContextPtr intel )
 /*
  * Copy the back buffer to the front buffer. 
  */
-void intelCopyBuffer( const __DRIdrawablePrivate *dPriv ) 
+void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
+		      const drm_clip_rect_t	 *rect)
 {
    intelContextPtr intel;
    GLboolean   missed_target;
@@ -385,15 +386,19 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv )
    
    LOCK_HARDWARE( intel );
    intelWaitForFrameCompletion( intel );
-   UNLOCK_HARDWARE( intel );
-   driWaitForVBlank( dPriv, &intel->vbl_seq, intel->vblank_flags, & missed_target );
 
-   LOCK_HARDWARE( intel );
+   if (!rect)
+   {
+       UNLOCK_HARDWARE( intel );
+       driWaitForVBlank( dPriv, &intel->vbl_seq, intel->vblank_flags, & missed_target );
+       LOCK_HARDWARE( intel );
+   }
    {
       const intelScreenPrivate *intelScreen = intel->intelScreen;
       const __DRIdrawablePrivate *dPriv = intel->driDrawable;
       const int nbox = dPriv->numClipRects;
       const drm_clip_rect_t *pbox = dPriv->pClipRects;
+      drm_clip_rect_t box;
       const int cpp = intelScreen->cpp;
       const int pitch = intelScreen->front.pitch; /* in bytes */
       int i;
@@ -429,18 +434,35 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv )
 	    continue;
          }
 
+	 box = *pbox;
+
+	 if (rect)
+	 {
+	     if (rect->x1 > box.x1)
+		 box.x1 = rect->x1;
+	     if (rect->y1 > box.y1)
+		 box.y1 = rect->y1;
+	     if (rect->x2 < box.x2)
+		 box.x2 = rect->x2;
+	     if (rect->y2 < box.y2)
+		 box.y2 = rect->y2;
+
+	     if (box.x1 > box.x2 || box.y1 > box.y2)
+		 continue;
+	 }
+
 	 BEGIN_BATCH( 8);
 	 OUT_BATCH( CMD );
 	 OUT_BATCH( BR13 );
-	 OUT_BATCH( (pbox->y1 << 16) | pbox->x1 );
-	 OUT_BATCH( (pbox->y2 << 16) | pbox->x2 );
+	 OUT_BATCH( (box.y1 << 16) | box.x1 );
+	 OUT_BATCH( (box.y2 << 16) | box.x2 );
 
 	 if (intel->sarea->pf_current_page == 0) 
 	    OUT_BATCH( intelScreen->front.offset );
 	 else
 	    OUT_BATCH( intelScreen->back.offset );			
 
-	 OUT_BATCH( (pbox->y1 << 16) | pbox->x1 );
+	 OUT_BATCH( (box.y1 << 16) | box.x1 );
 	 OUT_BATCH( BR13 & 0xffff );
 
 	 if (intel->sarea->pf_current_page == 0) 
@@ -454,14 +476,17 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv )
    intelFlushBatchLocked( intel, GL_TRUE, GL_TRUE, GL_TRUE );
    UNLOCK_HARDWARE( intel );
 
-   intel->swap_count++;
-   (*dri_interface->getUST)(&ust);
-   if (missed_target) {
-     intel->swap_missed_count++;
-     intel->swap_missed_ust = ust -  intel->swap_ust;
-   }
+   if (!rect)
+   {
+       intel->swap_count++;
+       (*dri_interface->getUST)(&ust);
+       if (missed_target) {
+	   intel->swap_missed_count++;
+	   intel->swap_missed_ust = ust -  intel->swap_ust;
+       }
    
-   intel->swap_ust = ust;
+       intel->swap_ust = ust;
+   }
 }
 
 

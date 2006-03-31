@@ -189,6 +189,8 @@ struct __DriverAPIRec {
     int64_t (*SwapBuffersMSC)( __DRIdrawablePrivate *priv, int64_t target_msc,
 			       int64_t divisor, int64_t remainder );
     /*@}*/
+    void (*CopySubBuffer)(__DRIdrawablePrivate *driDrawPriv,
+			  int x, int y, int w, int h);
 };
 
 

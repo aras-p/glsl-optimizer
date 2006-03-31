@@ -106,4 +106,7 @@ intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
 extern void
 intelSwapBuffers(__DRIdrawablePrivate *dPriv);
 
+extern void
+intelCopySubBuffer( __DRIdrawablePrivate *dPriv, int x, int y, int w, int h );
+
 #endif

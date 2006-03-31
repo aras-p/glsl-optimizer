@@ -875,7 +875,8 @@ static void radeonWaitForFrameCompletion( radeonContextPtr rmesa )
 
 /* Copy the back color buffer to the front color buffer.
  */
-void radeonCopyBuffer( const __DRIdrawablePrivate *dPriv )
+void radeonCopyBuffer( const __DRIdrawablePrivate *dPriv,
+		       const drm_clip_rect_t	  *rect)
 {
    radeonContextPtr rmesa;
    GLint nbox, i, ret;
@@ -899,9 +900,12 @@ void radeonCopyBuffer( const __DRIdrawablePrivate *dPriv )
     * request at a time.
     */
    radeonWaitForFrameCompletion( rmesa );
-   UNLOCK_HARDWARE( rmesa );
-   driWaitForVBlank( dPriv, & rmesa->vbl_seq, rmesa->vblank_flags, & missed_target );
-   LOCK_HARDWARE( rmesa );
+   if (!rect)
+   {
+       UNLOCK_HARDWARE( rmesa );
+       driWaitForVBlank( dPriv, & rmesa->vbl_seq, rmesa->vblank_flags, & missed_target );
+       LOCK_HARDWARE( rmesa );
+   }
 
    nbox = dPriv->numClipRects; /* must be in locked region */
 
@@ -912,8 +916,27 @@ void radeonCopyBuffer( const __DRIdrawablePrivate *dPriv )
       GLint n = 0;
 
       for ( ; i < nr ; i++ ) {
-	 *b++ = box[i];
-	 n++;
+
+	  *b = box[i];
+
+	  if (rect)
+	  {
+	      if (rect->x1 > b->x1)
+		  b->x1 = rect->x1;
+	      if (rect->y1 > b->y1)
+		  b->y1 = rect->y1;
+	      if (rect->x2 < b->x2)
+		  b->x2 = rect->x2;
+	      if (rect->y2 < b->y2)
+		  b->y2 = rect->y2;
+
+	      if (b->x1 < b->x2 && b->y1 < b->y2)
+		  b++;
+	  }
+	  else
+	      b++;
+
+	  n++;
       }
       rmesa->sarea->nbox = n;
 
@@ -927,15 +950,18 @@ void radeonCopyBuffer( const __DRIdrawablePrivate *dPriv )
    }
 
    UNLOCK_HARDWARE( rmesa );
-   rmesa->swap_count++;
-   (*dri_interface->getUST)( & ust );
-   if ( missed_target ) {
-      rmesa->swap_missed_count++;
-      rmesa->swap_missed_ust = ust - rmesa->swap_ust;
-   }
+   if (!rect)
+   {
+       rmesa->swap_count++;
+       (*dri_interface->getUST)( & ust );
+       if ( missed_target ) {
+	   rmesa->swap_missed_count++;
+	   rmesa->swap_missed_ust = ust - rmesa->swap_ust;
+       }
 
-   rmesa->swap_ust = ust;
-   rmesa->hw.all_dirty = GL_TRUE;
+       rmesa->swap_ust = ust;
+       rmesa->hw.all_dirty = GL_TRUE;
+   }
 }
 
 void radeonPageFlip( const __DRIdrawablePrivate *dPriv )

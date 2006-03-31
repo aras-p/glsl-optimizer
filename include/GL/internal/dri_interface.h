@@ -472,6 +472,14 @@ struct __DRIdrawableRec {
      * \since Internal API version 20030317.
      */
     unsigned swap_interval;
+
+    /**
+     * Used by drivers that implement the GLX_MESA_copy_sub_buffer extension.
+     *
+     * \since Internal API version 20060314.
+     */
+    void (*copySubBuffer)(__DRInativeDisplay *dpy, void *drawablePrivate,
+			  int x, int y, int w, int h);
 };
 
 #endif

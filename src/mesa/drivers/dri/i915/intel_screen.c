@@ -341,6 +341,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
       (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
       (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
       (*glx_enable_extension)( psc, "GLX_MESA_allocate_memory" );
+      (*glx_enable_extension)( psc, "GLX_MESA_copy_sub_buffer" );
    }
    
    sPriv->psc->allocateMemory = (void *) intelAllocateMemoryMESA;
@@ -534,7 +535,8 @@ static const struct __DriverAPIRec intelAPI = {
    .GetMSC          = driGetMSC32,
    .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,
-   .SwapBuffersMSC  = NULL
+   .SwapBuffersMSC  = NULL,
+   .CopySubBuffer   = intelCopySubBuffer
 };
 
 

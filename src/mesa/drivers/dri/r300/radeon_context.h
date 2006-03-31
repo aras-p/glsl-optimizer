@@ -203,6 +203,8 @@ struct radeon_context {
 #define RADEON_CONTEXT(glctx) ((radeonContextPtr)(ctx->DriverCtx))
 
 extern void radeonSwapBuffers(__DRIdrawablePrivate * dPriv);
+extern void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
+				int x, int y, int w, int h);
 extern GLboolean radeonInitContext(radeonContextPtr radeon,
 				   struct dd_function_table* functions,
 				   const __GLcontextModes * glVisual,

@@ -2570,18 +2570,69 @@ PUBLIC GLXPixmap glXCreateGLXPixmapMESA( Display *dpy, XVisualInfo *visual,
    return 0;
 }
 
-
+#define X_GLXvop_CopySubBufferMESA 5154 /* temporary */
 PUBLIC void glXCopySubBufferMESA(Display *dpy, GLXDrawable drawable,
 				 int x, int y, int width, int height)
 {
-   (void) dpy;
-   (void) drawable;
-   (void) x;
-   (void) y;
-   (void) width;
-   (void) height;
-}
+    xGLXVendorPrivateReq *req;
+    GLXContext gc;
+    GLXContextTag tag;
+    CARD32 *drawable_ptr;
+    INT32 *x_ptr, *y_ptr, *w_ptr, *h_ptr;
+    CARD8 opcode;
 
+#ifdef GLX_DIRECT_RENDERING
+    int screen;
+    __DRIdrawable *pdraw = GetDRIDrawable( dpy, drawable, & screen );
+    if ( pdraw != NULL ) {
+	__GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, screen );
+	if ( __glXExtensionBitIsEnabled( psc, MESA_copy_sub_buffer_bit ) ) {
+	    (*pdraw->copySubBuffer)(dpy, pdraw->private, x, y, width, height);
+	}
+
+	return;
+    }
+#endif
+
+    opcode = __glXSetupForCommand(dpy);
+    if (!opcode)
+	return;
+
+    /*
+    ** The calling thread may or may not have a current context.  If it
+    ** does, send the context tag so the server can do a flush.
+    */
+    gc = __glXGetCurrentContext();
+    if ((gc != NULL) && (dpy == gc->currentDpy) &&
+	((drawable == gc->currentDrawable) ||
+	 (drawable == gc->currentReadable)) ) {
+	tag = gc->currentContextTag;
+    } else {
+	tag = 0;
+    }
+
+    LockDisplay(dpy);
+    GetReqExtra(GLXVendorPrivate, sizeof(CARD32) + sizeof(INT32) * 4,req);
+    req->reqType = opcode;
+    req->glxCode = X_GLXVendorPrivate;
+    req->vendorCode = X_GLXvop_CopySubBufferMESA;
+    req->contextTag = tag;
+
+    drawable_ptr = (CARD32 *) (req + 1);
+    x_ptr = (INT32 *) (drawable_ptr + 1);
+    y_ptr = (INT32 *) (drawable_ptr + 2);
+    w_ptr = (INT32 *) (drawable_ptr + 3);
+    h_ptr = (INT32 *) (drawable_ptr + 4);
+
+    *drawable_ptr = drawable;
+    *x_ptr = x;
+    *y_ptr = y;
+    *w_ptr = width;
+    *h_ptr = height;
+
+    UnlockDisplay(dpy);
+    SyncHandle();
+}
 
 PUBLIC Bool glXSet3DfxModeMESA( int mode )
 {
@@ -2973,8 +3024,9 @@ int __glXGetInternalVersion(void)
      *            months ago. :(
      * 20050727 - Gut all the old interfaces.  This breaks compatability with
      *            any DRI driver built to any previous version.
+     * 20060314 - Added support for GLX_MESA_copy_sub_buffer.
      */
-    return 20050727;
+    return 20060314;
 }
 
 
