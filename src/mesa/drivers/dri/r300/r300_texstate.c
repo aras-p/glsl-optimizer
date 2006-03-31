@@ -269,6 +269,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	    }
 	    else /* DXT3/5, 16 bytes per block */
 	    {
+	      WARN_ONCE("DXT 3/5 suffers from multitexturing problems!\n");
 	      // fprintf(stderr,"DXT 3/5 %d\n", texImage->Width);
 	      if ((texImage->Width + 3) < 8)
 		size = texImage->CompressedSize * 2;
