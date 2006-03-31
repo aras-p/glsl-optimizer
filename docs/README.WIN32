@@ -1,6 +1,6 @@
 File: docs/README.WIN32
 
-Last updated: Mar 29, 2006 - Karl Schultz - kschultz@users.sourceforge.net
+Last updated: Mar 31, 2006 - Karl Schultz - kschultz@users.sourceforge.net
 
 Quick Start
 ----- -----
@@ -37,10 +37,8 @@ from the projects using Visual Studio.
 Windows Drivers
 ------- -------
 
-At this time, only the GDI driver is known to partially work, as it is
-in the process of being ported and rewritten to the latest Mesa DD
-interfaces.  Most of the demos in progs/demos work, but some do not.
-We hope to finish this driver work in the near future.
+At this time, only the GDI driver is known to work.  Most of the demos
+in progs/demos should work with this driver.
 
 Source code also exists in the tree for other drivers in
 src/mesa/drivers/windows, but the status of this code is unknown.
