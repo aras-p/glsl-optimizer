@@ -1434,7 +1434,7 @@ Mesa Version History
 	- fixed TNL initialization bug which could lead to crash (bug 5791)
 
 
-6.5  March, day, 2006
+6.5  March 31, 2006
     New:
 	- OpenGL Shading Language support through GL_ARB_shader_objects,
 	  GL_ARB_shading_language_100, GL_ARB_vertex_shader and
@@ -1467,3 +1467,6 @@ Mesa Version History
 	- fixed some minor framebuffer object bugs
 	- replaced dprintf() with _glu_printf() in GLU (bug 6244)
 	- fixed a number of thread safety bugs/regressions
+	- fixed a number of GLU tesselator bugs (John Shell, bug 6339)
+	- paletted texturing was broken w/ floating point palettes (K. Schultz)
+	- lots of assorted framebuffer object bug fixes

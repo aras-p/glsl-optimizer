@@ -11,6 +11,56 @@
 <H1>News</H1>
 
 
+<h2>March 31, 2006</h2>
+<p>
+Mesa 6.5 has been released.  This is a new development release.
+</p>
+<pre>
+    New:
+	- OpenGL Shading Language support through GL_ARB_shader_objects,
+	  GL_ARB_shading_language_100, GL_ARB_vertex_shader and
+	  GL_ARB_fragment_shader (done by Michal Krol)
+	- GL_EXT_packed_depth_stencil extension
+	- GL_EXT_timer_query extension
+	- GL_EXT_framebuffer_blit extension
+	- GL_ARB_half_float_pixel
+	- GLX_MESA_copy_sub_buffer for DRI drivers (Dave Reveman)
+	- reflect demo improved to support multiple windows
+	- singlebuffer demo (shows no/little-flicker single-buffered rendering)
+	- r200: enable GL_ARB_texture_env_crossbar, separate the texture
+	  sampling unit bits from the texture env combine enable bits
+	- r200: add support for GL_ATI_fragment_shader
+	- added fast XOR-mode line drawing optimization
+	- radeon: add support for all 3 tmus, GL_ARB_texture_cube_map
+	  and GL_EXT_fog_coord
+	- MESA_GLX_ALPHA_BITS env var for xlib driver
+	- many DRI driver updates (including screen rotation support
+	  for the Intel DRI driver)
+    Changes:
+	- removed GL_HP_occlusion_test (use GL_ARB_occlusion_query instead)
+	- removed GL_SGIX/SGIS_pixel_texture extensions
+    Bug fixes:
+	- fixed glxcontextmodes.c datatype problem (bug 5835)
+	- fixed aix-gcc build/install bugs (bug 5874)
+	- fixed some bugs in texture env program generation
+	- glXCopyContext() didn't handle texture object bindings properly
+	- glXCopyContext() didn't copy all lighting state
+	- fixed FreeBSD config (Pedro Giffuni)
+	- fixed some minor framebuffer object bugs
+	- replaced dprintf() with _glu_printf() in GLU (bug 6244)
+	- fixed a number of thread safety bugs/regressions
+	- fixed a number of GLU tesselator bugs (John Shell, bug 6339)
+	- paletted texturing was broken w/ floating point palettes (K. Schultz)
+	- lots of assorted framebuffer object bug fixes
+</pre>
+<p>
+The MD5 checksums are:
+</p>
+<pre>
+TBD
+</pre>
+
+
 <h2>February 2, 2006</h2>
 <p>
 Mesa 6.4.2 has been released.  This is primarily a bug-fix release.
@@ -1168,6 +1218,6 @@ source code</a>.</p>
 
 
 <hr>
-$Id: news.html,v 3.26 2006/02/03 17:21:54 brianp Exp $
+$Id: news.html,v 3.27 2006/03/31 23:10:21 brianp Exp $
 </body>
 </html>
