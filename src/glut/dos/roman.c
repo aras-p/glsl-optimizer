@@ -5,11 +5,7 @@
 
 /* char: 0x20 */
 
-static const GLUTStrokeStrip ch32st[] =
-{
-};
-
-static const GLUTStrokeChar ch32 = {104.7619f,0,ch32st};
+static const GLUTStrokeChar ch32 = {104.7619f,0,NULL};
 
 /* char: 0x21 */
 
