@@ -453,8 +453,8 @@ GLboolean r300_run_vb_render(GLcontext *ctx,
 do {										\
 	if (expr) {								\
 		if (1 || RADEON_DEBUG & DEBUG_FALLBACKS)			\
-			WARN_ONCE("fallback:%s\n", #expr);			\
-		return R300_FALLBACK_RAST;							\
+			WARN_ONCE("Software fallback:%s\n", #expr);		\
+		return R300_FALLBACK_RAST;					\
 	}									\
 } while(0)
 
