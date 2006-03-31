@@ -637,6 +637,14 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	      dri_priv->deviceID);
       return NULL;
    }
+   if (screen->chip_family == CHIP_FAMILY_RS300 || 
+       screen->chip_family == CHIP_FAMILY_R300) {
+	   if (getenv("R300_FORCE_R300") == NULL) {
+		   fprintf(stderr, "Radeon 9500/9700 cards are not currently stable.\n");
+		   fprintf(stderr, "More details can be found at https://bugs.freedesktop.org/show_bug.cgi?id=6318\n");
+		   return NULL;
+	   }
+   }
 
    if (screen->chip_family <= CHIP_FAMILY_RS200)
       screen->chip_flags |= RADEON_CLASS_R100;
