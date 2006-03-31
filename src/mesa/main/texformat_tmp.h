@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1060,7 +1060,6 @@ static void FETCH(ci8)( const struct gl_texture_image *texImage,
 {
    const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
    const struct gl_color_table *palette;
-   const GLchan *table;
    GLuint index;
    GET_CURRENT_CONTEXT(ctx);
 
@@ -1072,13 +1071,56 @@ static void FETCH(ci8)( const struct gl_texture_image *texImage,
    }
    if (palette->Size == 0)
       return; /* undefined results */
-   ASSERT(palette->Type != GL_FLOAT);
-   table = (const GLchan *) palette->Table;
 
    /* Mask the index against size of palette to avoid going out of bounds */
    index = (*src) & (palette->Size - 1);
 
-   switch (palette->_BaseFormat) {
+   if (palette->Type == GL_FLOAT) {
+      const GLfloat *ftable = (const GLfloat *) palette->Table;
+      switch (palette->_BaseFormat) {
+      case GL_ALPHA:
+         texel[RCOMP] =
+         texel[GCOMP] =
+         texel[BCOMP] = 0;
+         texel[ACOMP] = (GLchan) (ftable[index] * CHAN_MAX);
+         return;
+      case GL_LUMINANCE:
+         texel[RCOMP] =
+         texel[GCOMP] =
+         texel[BCOMP] = (GLchan) (ftable[index] * CHAN_MAX);
+         texel[ACOMP] = CHAN_MAX;
+         break;
+      case GL_INTENSITY:
+         texel[RCOMP] =
+         texel[GCOMP] =
+         texel[BCOMP] =
+         texel[ACOMP] = ftable[index] * CHAN_MAX;
+         return;
+      case GL_LUMINANCE_ALPHA:
+         texel[RCOMP] =
+         texel[GCOMP] =
+         texel[BCOMP] = (GLchan) (ftable[index * 2 + 0] * CHAN_MAX);
+         texel[ACOMP] = (GLchan) (ftable[index * 2 + 1] * CHAN_MAX);
+         return;
+      case GL_RGB:
+         texel[RCOMP] = (GLchan) (ftable[index * 3 + 0] * CHAN_MAX);
+         texel[GCOMP] = (GLchan) (ftable[index * 3 + 1] * CHAN_MAX);
+         texel[BCOMP] = (GLchan) (ftable[index * 3 + 2] * CHAN_MAX);
+         texel[ACOMP] = CHAN_MAX;
+         return;
+      case GL_RGBA:
+         texel[RCOMP] = (GLchan) (ftable[index * 4 + 0] * CHAN_MAX);
+         texel[GCOMP] = (GLchan) (ftable[index * 4 + 1] * CHAN_MAX);
+         texel[BCOMP] = (GLchan) (ftable[index * 4 + 2] * CHAN_MAX);
+         texel[ACOMP] = (GLchan) (ftable[index * 4 + 3] * CHAN_MAX);
+         return;
+      default:
+         _mesa_problem(ctx, "Bad palette format in fetch_texel_ci8");
+       }
+   }
+   else {
+      const GLchan *table = (const GLchan *) palette->Table;
+      switch (palette->_BaseFormat) {
       case GL_ALPHA:
          texel[RCOMP] =
          texel[GCOMP] =
@@ -1116,7 +1158,8 @@ static void FETCH(ci8)( const struct gl_texture_image *texImage,
          texel[ACOMP] = table[index * 4 + 3];
          return;
       default:
-         _mesa_problem(ctx, "Bad palette format in palette_sample");
+         _mesa_problem(ctx, "Bad palette format in fetch_texel_ci8");
+      }
    }
 }
 
