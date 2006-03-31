@@ -23,9 +23,9 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.6 for Mesa
+ * DOS/DJGPP device driver for Mesa
  *
- *  Copyright (C) 2002 - Borca Daniel
+ *  Author: Daniel Borca
  *  Email : dborca@yahoo.com
  *  Web   : http://www.geocities.com/dborca
  */

@@ -1,4 +1,4 @@
-			Mesa 6.3 DOS/DJGPP Port v1.7
+			Mesa 6.5 DOS/DJGPP Port v1.8
 			~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -7,8 +7,7 @@ Description:
 ~~~~~~~~~~~~
 
 Well, guess what... this is the DOS port of Mesa 6.3, for DJGPP fans... Whoa!
-The driver has its origins in ddsample.c, written by Brian Paul and found by me
-in Mesa 3.4.2.
+The driver uses OSMesa to draw off screen, and then blits the buffer.
 
 
 
@@ -32,9 +31,6 @@ Available options:
      Environment variables:
 	CPU		optimize for the given processor.
 			default = pentium
-	GLU=[mesa|sgi]	specify GLU directory; can be `sgi' (requires GNU/C++)
-			or `mesa'.
-			default = mesa
 	GLIDE		path to Glide3 SDK; used with FX.
 			default = $(TOP)/glide3
 	FX=1		build for 3dfx Glide3. Note that this disables
@@ -56,11 +52,9 @@ Available options:
 
 
 Tested on:
-	CPU:		AMD Athlon XP 1800+
-	Mainboard:	GA-7VTXE w/ 512 MB DDRAM
-	Video card:	Voodoo5 6000 AGP w/ 128 MB SDRAM
-	DJGPP:		djdev 2.04 + gcc v3.4.3 + make v3.80
-	OS:		DOS and Win98SE
+	Video card:	Radeon 9500
+	DJGPP:		djdev 2.04 + gcc v4.1.0 + make v3.80
+	OS:		DOS, Win98SE, WinXP (using Videoport driver)
 
 
 
@@ -98,7 +92,7 @@ FAQ:
    Q) DMesa is so SLOOOW! The Win32 OpenGL performs so much better...
    A) Is that a question? If you have a 3dfx Voodoo (any model), you're
       lucky (check http://sourceforge.net/projects/glide for the DJGPP port).
-      If you haven't, sorry; everything is done in software. Suggestions?
+      If you haven't, sorry; everything is done in software.
 
    Q) I tried to set refresh rate w/ DMesa, but without success.
    A) Refresh rate control works only for VESA 3.0 and the 3dfx driver (in
@@ -107,7 +101,8 @@ FAQ:
 
    Q) I made a simple application and it does nothing. It exits right away. Not
       even a blank screen.
-   A) Pure software drivers (VESA/VGA/NUL) support only double-buffered modes.
+   A) Software drivers (VESA/VGA/NUL) must to be constructed as single-buffered
+      visuals.  However, DMesaSwapBuffers must be called to get any output.
    A) Another weird "feature" is that buffer width must be multiple of 8 (I'm a
       lazy programmer and I found that the easiest way to keep buffer handling
       at peak performance ;-).
@@ -264,6 +259,11 @@ v1.7 (???-2005)
 	+ added FreeGLUT specific functions
 	* no more GLX sources in DOS GLUT
 	* made GLUT timer callbacks less accurate but safer
+
+v1.8 (apr-2006)
+	* killed lots of code, the driver is now a front-end to OSMesa
+	* fixed problem with WinNT (http://www.volny.cz/martin.sulak/)
+	- removed 3dfx Glide3 support (temporarily?)
 
 
 

@@ -23,9 +23,9 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.6 for Mesa
+ * DOS/DJGPP device driver for Mesa
  *
- *  Copyright (C) 2002 - Borca Daniel
+ *  Author: Daniel Borca
  *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
@@ -54,6 +54,8 @@ typedef unsigned long word32;
 #define _16_ *(word16 *)&
 #define _32_ *(word32 *)&
 
+typedef void (*BLTFUNC) (void);
+
 
 /*
  * video mode structure
@@ -75,7 +77,7 @@ typedef struct vl_mode {
  */
 typedef struct {
    vl_mode *(*init) (void);
-   int (*entermode) (vl_mode *p, int refresh);
+   int (*entermode) (vl_mode *p, int refresh, int fbbits);
    void (*blit) (void);
    void (*setCI_f) (int index, float red, float green, float blue);
    void (*setCI_i) (int index, int red, int green, int blue);
@@ -98,34 +100,6 @@ void _remove_selector (int *segment);
  * system routines
  */
 int _can_mmx (void);
-
-
-/*
- * asm routines to deal with virtual buffering
- */
-extern void v_clear8 (int color);
-#define v_clear15 v_clear16
-extern void v_clear16 (int color);
-extern void v_clear24 (int color);
-extern void v_clear32 (int color);
-
-extern void v_clear8_mmx (int color);
-#define v_clear15_mmx v_clear16_mmx
-extern void v_clear16_mmx (int color);
-extern void v_clear24_mmx (int color);
-extern void v_clear32_mmx (int color);
-
-extern void v_rect8 (int x, int y, int width, int height, int color);
-#define v_rect15 v_rect16
-extern void v_rect16 (int x, int y, int width, int height, int color);
-extern void v_rect24 (int x, int y, int width, int height, int color);
-extern void v_rect32 (int x, int y, int width, int height, int color);
-
-extern void v_putpixel8 (unsigned int offset, int color);
-#define v_putpixel15 v_putpixel16
-extern void v_putpixel16 (unsigned int offset, int color);
-extern void v_putpixel24 (unsigned int offset, int color);
-extern void v_putpixel32 (unsigned int offset, int color);
 
 
 #endif

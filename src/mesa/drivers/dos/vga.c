@@ -23,9 +23,9 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.7 for Mesa
+ * DOS/DJGPP device driver for Mesa
  *
- *  Copyright (C) 2002 - Borca Daniel
+ *  Author: Daniel Borca
  *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
@@ -123,6 +123,41 @@ vga_fini (void)
 }
 
 
+/* Desc: Attempts to choose a suitable blitter.
+ *
+ * In  : ptr to mode structure, software framebuffer bits
+ * Out : blitter funciton, or NULL
+ *
+ * Note: -
+ */
+static BLTFUNC
+_choose_blitter (vl_mode *p, int fbbits)
+{
+    BLTFUNC blitter;
+
+    switch (fbbits) {
+	case 8:
+	    blitter = _can_mmx() ? vesa_l_dump_virtual_mmx : vesa_l_dump_virtual;
+	    break;
+	case 16:
+	    blitter = vesa_l_dump_16_to_8;
+	    break;
+	case 24:
+	    blitter = vesa_l_dump_24_to_8;
+	    break;
+	case 32:
+	    blitter = vesa_l_dump_32_to_8;
+	    break;
+	default:
+	    return NULL;
+    }
+
+    return blitter;
+
+    (void)p;
+}
+
+
 /* Desc: Attempts to enter specified video mode.
  *
  * In  : ptr to mode structure, refresh rate
@@ -131,27 +166,31 @@ vga_fini (void)
  * Note: -
  */
 static int
-vga_entermode (vl_mode *p, int refresh)
+vga_entermode (vl_mode *p, int refresh, int fbbits)
 {
-   if (!(p->mode & 0x4000)) {
-      return -1;
-   }
-   VGA.blit = _can_mmx() ? vesa_l_dump_virtual_mmx : vesa_l_dump_virtual;
+    if (!(p->mode & 0x4000)) {
+	return -1;
+    }
 
-   if (oldmode == -1) {
-      __asm("\n\
+    VGA.blit = _choose_blitter(p, fbbits);
+    if (VGA.blit == NULL) {
+	return !0;
+    }
+
+    if (oldmode == -1) {
+	__asm("\n\
 		movb	$0x0f, %%ah	\n\
 		int	$0x10		\n\
 		andl	$0xff, %%eax	\n\
 		movl	%%eax, %0	\n\
-      ":"=g"(oldmode)::"%eax", "%ebx");
-   }
+	":"=g"(oldmode)::"%eax", "%ebx");
+    }
 
-   __asm("int $0x10"::"a"(p->mode&0xff));
+    __asm("int $0x10"::"a"(p->mode&0xff));
 
-   return 0;
+    return 0;
 
-   (void)refresh; /* silence compiler warning */
+    (void)refresh; /* silence compiler warning */
 }
 
 

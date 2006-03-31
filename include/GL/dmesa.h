@@ -23,9 +23,9 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.7 for Mesa
+ * DOS/DJGPP device driver for Mesa
  *
- *  Copyright (C) 2002 - Daniel Borca
+ *  Author: Daniel Borca
  *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
@@ -35,7 +35,7 @@
 #define DMESA_H_included
 
 #define DMESA_MAJOR_VERSION 6
-#define DMESA_MINOR_VERSION 3
+#define DMESA_MINOR_VERSION 5
 
 /* Sample Usage:
  *
@@ -138,7 +138,7 @@ void DMesaSetCI (int ndx, GLfloat red, GLfloat green, GLfloat blue);
 /*
  * DMesa functions
  */
-typedef void (*DMesaProc) (void);
+typedef void (*DMesaProc) ();
 DMesaProc DMesaGetProcAddress (const char *name);
 
 /*
@@ -149,8 +149,8 @@ DMesaProc DMesaGetProcAddress (const char *name);
 #define DMESA_GET_VIDEO_MODES 0x0300
 #define DMESA_GET_BUFFER_ADDR 0x0400
 
-#define DMESA_DRIVER_SWDB_BIT 0x1 /* software double-buffered */
-#define DMESA_DRIVER_LLWO_BIT 0x2 /* lower-left window origin */
+#define DMESA_DRIVER_DBL_BIT 0x1 /* double-buffered */
+#define DMESA_DRIVER_YUP_BIT 0x2 /* lower-left window origin */
 int DMesaGetIntegerv (GLenum pname, GLint *params);
 
 #ifdef __cplusplus

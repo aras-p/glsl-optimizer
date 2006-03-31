@@ -66,6 +66,10 @@ glutCreateWindow (const char *title)
    int i;
    int m8width = (_glut_default.width + 7) & ~7;
 
+   if (!(_glut_default.mode & GLUT_DOUBLE)) {
+      return 0;
+   }
+    
    /* We set the Visual once. This will be our desktop (graphic mode).
     * We should do this in the `glutInit' code, but we don't have any idea
     * about its geometry. Supposedly, when we are about to create one
@@ -73,7 +77,7 @@ glutCreateWindow (const char *title)
     */
    if (!visual) {
       if ((visual=DMesaCreateVisual(_glut_default.x + m8width, _glut_default.y + _glut_default.height, _glut_visual.bpp, _glut_visual.refresh,
-                                    _glut_default.mode & GLUT_DOUBLE,
+                                    GLUT_SINGLE,
                                     !(_glut_default.mode & GLUT_INDEX),
                                     (_glut_default.mode & GLUT_ALPHA  ) ? _glut_visual.alpha   : 0,
                                     (_glut_default.mode & GLUT_DEPTH  ) ? _glut_visual.depth   : 0,

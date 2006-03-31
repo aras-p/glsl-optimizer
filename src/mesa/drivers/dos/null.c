@@ -23,9 +23,9 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.7 for Mesa
+ * DOS/DJGPP device driver for Mesa
  *
- *  Copyright (C) 2002 - Borca Daniel
+ *  Author: Daniel Borca
  *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
@@ -137,13 +137,13 @@ null_fini (void)
  * Note: -
  */
 static int
-null_entermode (vl_mode *p, int refresh)
+null_entermode (vl_mode *p, int refresh, int fbbits)
 {
    NUL.blit = null_blit_nop;
 
    return 0;
 
-   (void)(p && refresh); /* silence compiler warning */
+   (void)(p && refresh && fbbits); /* silence compiler warning */
 }
 
 

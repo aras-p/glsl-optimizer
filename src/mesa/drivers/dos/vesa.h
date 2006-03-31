@@ -23,9 +23,9 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.3 for Mesa
+ * DOS/DJGPP device driver for Mesa
  *
- *  Copyright (C) 2002 - Borca Daniel
+ *  Author: Daniel Borca
  *  Email : dborca@yahoo.com
  *  Web   : http://www.geocities.com/dborca
  */
@@ -41,6 +41,24 @@ extern void *vesa_swbank;
 extern void vesa_b_dump_virtual (void);
 extern void vesa_l_dump_virtual (void);
 extern void vesa_l_dump_virtual_mmx (void);
+
+extern void vesa_l_dump_32_to_24 (void);
+extern void vesa_l_dump_32_to_16 (void);
+extern void vesa_l_dump_32_to_15 (void);
+extern void vesa_l_dump_32_to_8 (void);
+extern void vesa_l_dump_24_to_32 (void);
+extern void vesa_l_dump_24_to_8 (void);
+extern void vesa_l_dump_16_to_15 (void);
+extern void vesa_l_dump_16_to_8 (void);
+
+extern void vesa_b_dump_32_to_24 (void);
+extern void vesa_b_dump_32_to_16 (void);
+extern void vesa_b_dump_32_to_15 (void);
+extern void vesa_b_dump_32_to_8 (void);
+extern void vesa_b_dump_24_to_32 (void);
+extern void vesa_b_dump_24_to_8 (void);
+extern void vesa_b_dump_16_to_15 (void);
+extern void vesa_b_dump_16_to_8 (void);
 
 extern vl_driver VESA;
 

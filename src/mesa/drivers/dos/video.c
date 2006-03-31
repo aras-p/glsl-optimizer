@@ -23,9 +23,9 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.6 for Mesa
+ * DOS/DJGPP device driver for Mesa
  *
- *  Copyright (C) 2002 - Borca Daniel
+ *  Author: Daniel Borca
  *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  *
@@ -53,17 +53,25 @@ int vl_current_stride, vl_current_width, vl_current_height, vl_current_bytes;
 int vl_current_offset, vl_current_delta;
 
 
-#if HUGE_LOOKUP
-/* These lookup tables are used to extract RGB values in [0,255]
- * from 15/16-bit pixel values.
- */
-static unsigned char pix15r[0x8000];
-static unsigned char pix15g[0x8000];
-static unsigned char pix15b[0x8000];
-static unsigned char pix16r[0x10000];
-static unsigned char pix16g[0x10000];
-static unsigned char pix16b[0x10000];
-#else
+void (*vl_flip) (void);
+
+
+/* FakeColor data */
+#define R_CNT 6
+#define G_CNT 6
+#define B_CNT 6
+
+#define R_BIAS 7
+#define G_BIAS 7
+#define B_BIAS 7
+
+static word32 VGAPalette[256];
+word8 array_r[256];
+word8 array_g[256];
+word8 array_b[256];
+word8 tab_16_8[0x10000];
+
+
 /* lookup table for scaling 5 bit colors up to 8 bits */
 static int _rgb_scale_5[32] = {
    0,   8,   16,  25,  33,  41,  49,  58,
@@ -71,7 +79,6 @@ static int _rgb_scale_5[32] = {
    132, 140, 148, 156, 165, 173, 181, 189,
    197, 206, 214, 222, 230, 239, 247, 255
 };
-#endif
 
 /* lookup table for scaling 6 bit colors up to 8 bits */
 static int _rgb_scale_6[64] = {
@@ -85,92 +92,6 @@ static int _rgb_scale_6[64] = {
    227, 231, 235, 239, 243, 247, 251, 255
 };
 
-/* FakeColor data */
-#define R_CNT 6
-#define G_CNT 6
-#define B_CNT 6
-
-#define R_BIAS 7
-#define G_BIAS 7
-#define B_BIAS 7
-
-static word32 VGAPalette[256];
-static word8 array_r[256];
-static word8 array_g[256];
-static word8 array_b[256];
-
-
-int (*vl_mixfix) (fixed r, fixed g, fixed b);
-int (*vl_mixrgb) (const unsigned char rgb[]);
-int (*vl_mixrgba) (const unsigned char rgba[]);
-void (*vl_getrgba) (unsigned int offset, unsigned char rgba[4]);
-int (*vl_getpixel) (unsigned int offset);
-void (*vl_clear) (int color);
-void (*vl_rect) (int x, int y, int width, int height, int color);
-void (*vl_flip) (void);
-void (*vl_putpixel) (unsigned int offset, int color);
-
-
-/* Desc: color composition (w/o ALPHA)
- *
- * In  : R, G, B
- * Out : color
- *
- * Note: -
- */
-static int
-vl_mixfix8fake (fixed r, fixed g, fixed b)
-{
-   return array_b[b>>FIXED_SHIFT]*G_CNT*R_CNT
-        + array_g[g>>FIXED_SHIFT]*R_CNT
-        + array_r[r>>FIXED_SHIFT];
-}
-#define vl_mixfix8 vl_mixfix8fake
-static int
-vl_mixfix15 (fixed r, fixed g, fixed b)
-{
-   return ((r>>(3+FIXED_SHIFT))<<10)
-         |((g>>(3+FIXED_SHIFT))<<5)
-         | (b>>(3+FIXED_SHIFT));
-}
-static int
-vl_mixfix16 (fixed r, fixed g, fixed b)
-{
-   return ((r>>(3+FIXED_SHIFT))<<11)
-         |((g>>(2+FIXED_SHIFT))<<5)
-         | (b>>(3+FIXED_SHIFT));
-}
-#define vl_mixfix24 vl_mixfix32
-static int
-vl_mixfix32 (fixed r, fixed g, fixed b)
-{
-   return ((r>>FIXED_SHIFT)<<16)
-         |((g>>FIXED_SHIFT)<<8)
-         | (b>>FIXED_SHIFT);
-}
-
-
-/* Desc: color composition (w/ ALPHA)
- *
- * In  : array of integers (R, G, B, A)
- * Out : color
- *
- * Note: -
- */
-#define vl_mixrgba8 vl_mixrgb8fake
-#define vl_mixrgba15 vl_mixrgb15
-#define vl_mixrgba16 vl_mixrgb16
-#define vl_mixrgba24 vl_mixrgb24
-static int
-vl_mixrgba32 (const unsigned char rgba[])
-{
-   /* Hack alert:
-    * currently, DMesa uses Mesa's alpha buffer;
-    * so we don't really care about alpha value here...
-    */
-   return /*(rgba[3]<<24) | */(rgba[0]<<16) | (rgba[1]<<8) | (rgba[2]);
-}
-
 
 /* Desc: color composition (w/o ALPHA)
  *
@@ -180,28 +101,11 @@ vl_mixrgba32 (const unsigned char rgba[])
  * Note: -
  */
 static int
-vl_mixrgb8fake (const unsigned char rgb[])
+v_mixrgb8fake (const unsigned char rgb[])
 {
    return array_b[rgb[2]]*G_CNT*R_CNT
         + array_g[rgb[1]]*R_CNT
         + array_r[rgb[0]];
-}
-#define vl_mixrgb8 vl_mixrgb8fake
-static int
-vl_mixrgb15 (const unsigned char rgb[])
-{
-   return ((rgb[0]>>3)<<10) | ((rgb[1]>>3)<<5) | (rgb[2]>>3);
-}
-static int
-vl_mixrgb16 (const unsigned char rgb[])
-{
-   return ((rgb[0]>>3)<<11) | ((rgb[1]>>2)<<5) | (rgb[2]>>3);
-}
-#define vl_mixrgb24 vl_mixrgb32
-static int
-vl_mixrgb32 (const unsigned char rgb[])
-{
-   return (rgb[0]<<16) | (rgb[1]<<8) | (rgb[2]);
 }
 
 
@@ -213,102 +117,43 @@ vl_mixrgb32 (const unsigned char rgb[])
  * Note: uses current read buffer
  */
 static void
-v_getrgba8fake6 (unsigned int offset, unsigned char rgba[4])
+v_getrgb8fake6 (unsigned int offset, unsigned char rgb[])
 {
    word32 c = VGAPalette[((word8 *)vl_current_read_buffer)[offset]];
-   rgba[0] = _rgb_scale_6[(c >> 16) & 0x3F];
-   rgba[1] = _rgb_scale_6[(c >> 8)  & 0x3F];
-   rgba[2] = _rgb_scale_6[ c        & 0x3F];
-   /*rgba[3] = c >> 24;*/ /* dummy alpha; we have separate SW alpha, so ignore */
+   rgb[0] = _rgb_scale_6[(c >> 16) & 0x3F];
+   rgb[1] = _rgb_scale_6[(c >> 8)  & 0x3F];
+   rgb[2] = _rgb_scale_6[ c        & 0x3F];
 }
 static void
-v_getrgba8fake8 (unsigned int offset, unsigned char rgba[4])
+v_getrgb8fake8 (unsigned int offset, unsigned char rgb[])
 {
    word32 c = VGAPalette[((word8 *)vl_current_read_buffer)[offset]];
-   rgba[0] = c >> 16;
-   rgba[1] = c >> 8;
-   rgba[2] = c;
-   /*rgba[3] = c >> 24;*/ /* dummy alpha; we have separate SW alpha, so ignore */
-}
-#define v_getrgba8 v_getrgba8fake6
-static void
-v_getrgba15 (unsigned int offset, unsigned char rgba[4])
-{
-   word32 c = ((word16 *)vl_current_read_buffer)[offset];
-#if HUGE_LOOKUP
-   c &= 0x7fff;
-   rgba[0] = pix15r[c];
-   rgba[1] = pix15g[c];
-   rgba[2] = pix15b[c];
-#else
-   rgba[0] = _rgb_scale_5[(c >> 10) & 0x1F];
-   rgba[1] = _rgb_scale_5[(c >> 5)  & 0x1F];
-   rgba[2] = _rgb_scale_5[ c        & 0x1F];
-#endif
-   /*rgba[3] = 255;*/ /* dummy alpha; we have separate SW alpha, so ignore */
-}
-static void
-v_getrgba16 (unsigned int offset, unsigned char rgba[4])
-{
-   word32 c = ((word16 *)vl_current_read_buffer)[offset];
-#if HUGE_LOOKUP
-   rgba[0] = pix16r[c];
-   rgba[1] = pix16g[c];
-   rgba[2] = pix16b[c];
-#else
-   rgba[0] = _rgb_scale_5[(c >> 11) & 0x1F];
-   rgba[1] = _rgb_scale_6[(c >> 5)  & 0x3F];
-   rgba[2] = _rgb_scale_5[ c        & 0x1F];
-#endif
-   /*rgba[3] = 255;*/ /* dummy alpha; we have separate SW alpha, so ignore */
-}
-static void
-v_getrgba24 (unsigned int offset, unsigned char rgba[4])
-{
-   word32 c = *(word32 *)((long)vl_current_read_buffer+offset*3);
-   rgba[0] = c >> 16;
-   rgba[1] = c >> 8;
-   rgba[2] = c;
-   /*rgba[3] = 255;*/ /* dummy alpha; we have separate SW alpha, so ignore */
-}
-static void
-v_getrgba32 (unsigned int offset, unsigned char rgba[4])
-{
-   word32 c = ((word32 *)vl_current_read_buffer)[offset];
-   rgba[0] = c >> 16;
-   rgba[1] = c >> 8;
-   rgba[2] = c;
-   /*rgba[3] = c >> 24;*/ /* dummy alpha; we have separate SW alpha, so ignore */
+   rgb[0] = c >> 16;
+   rgb[1] = c >> 8;
+   rgb[2] = c;
 }
 
 
-/* Desc: pixel retrieval
+/* Desc: create R5G6B5 to FakeColor table lookup
  *
- * In  : pixel offset
- * Out : pixel value
+ * In  : -
+ * Out : -
  *
- * Note: uses current read buffer
+ * Note: -
  */
-static int
-v_getpixel8 (unsigned int offset)
+static void
+init_tab_16_8 (void)
 {
-   return ((word8 *)vl_current_read_buffer)[offset];
-}
-#define v_getpixel15 v_getpixel16
-static int
-v_getpixel16 (unsigned int offset)
-{
-   return ((word16 *)vl_current_read_buffer)[offset];
-}
-static int
-v_getpixel24 (unsigned int offset)
-{
-   return *(word32 *)((long)vl_current_read_buffer+offset*3);
-}
-static int
-v_getpixel32 (unsigned int offset)
-{
-   return ((word32 *)vl_current_read_buffer)[offset];
+    int i;
+    for (i = 0; i < 0x10000; i++) {
+	unsigned char rgb[3];
+	rgb[0] = _rgb_scale_5[(i >> 11) & 0x1F];
+	rgb[1] = _rgb_scale_6[(i >>  5) & 0x3F];
+	rgb[2] = _rgb_scale_5[ i        & 0x1F];
+	tab_16_8[i] = v_mixrgb8fake(rgb);
+    }
+    (void)v_getrgb8fake6;
+    (void)v_getrgb8fake8;
 }
 
 
@@ -379,54 +224,6 @@ fake_buildpalette (int bits)
 }
 
 
-#if HUGE_LOOKUP
-/* Desc: initialize lookup arrays
- *
- * In  : -
- * Out : -
- *
- * Note: -
- */
-void
-v_init_pixeltables (void)
-{
-   unsigned int pixel;
-
-   for (pixel = 0; pixel <= 0xffff; pixel++) {
-      unsigned int r, g, b;
-
-      if (pixel <= 0x7fff) {
-         /* 15bit */
-         r = (pixel & 0x7c00) >> 8;
-         g = (pixel & 0x03E0) >> 3;
-         b = (pixel & 0x001F) << 2;
-
-         r = (unsigned int)(((double)r * 255. / 0x7c) + 0.5);
-         g = (unsigned int)(((double)g * 255. / 0x7c) + 0.5);
-         b = (unsigned int)(((double)b * 255. / 0x7c) + 0.5);
-
-         pix15r[pixel] = r;
-         pix15g[pixel] = g;
-         pix15b[pixel] = b;
-      }
-
-      /* 16bit */
-      r = (pixel & 0xF800) >> 8;
-      g = (pixel & 0x07E0) >> 3;
-      b = (pixel & 0x001F) << 3;
-
-      r = (unsigned int)(((double)r * 255. / 0xF8) + 0.5);
-      g = (unsigned int)(((double)g * 255. / 0xFC) + 0.5);
-      b = (unsigned int)(((double)b * 255. / 0xF8) + 0.5);
-
-      pix16r[pixel] = r;
-      pix16g[pixel] = g;
-      pix16b[pixel] = b;
-   }
-}
-#endif
-
-
 /* Desc: initialize hardware
  *
  * In  : -
@@ -471,7 +268,7 @@ v_init_hw (void)
 int
 vl_sync_buffer (void **buffer, int x, int y, int width, int height)
 {
-   if ((width & 7) || (x < 0) || (y < 0) || (x+width > video_mode->xres) || (y+height > video_mode->yres)) {
+   if ((/*XXX*/width & 7) || (x < 0) || (y < 0) || (x+width > video_mode->xres) || (y+height > video_mode->yres)) {
       return -1;
    } else {
       void *newbuf = *buffer;
@@ -553,37 +350,20 @@ vl_setup_mode (vl_mode *p)
       return -1;
    }
 
-#define INITPTR(bpp) \
-   vl_putpixel = v_putpixel##bpp; \
-   vl_getrgba = v_getrgba##bpp;   \
-   vl_getpixel = v_getpixel##bpp; \
-   vl_rect = v_rect##bpp;         \
-   vl_mixfix = vl_mixfix##bpp;    \
-   vl_mixrgb = vl_mixrgb##bpp;    \
-   vl_mixrgba = vl_mixrgba##bpp;  \
-   vl_clear = _can_mmx() ? v_clear##bpp##_mmx : v_clear##bpp
-        
    switch (p->bpp) {
       case 8:
-         INITPTR(8);
          break;
       case 15:
-         INITPTR(15);
          break;
       case 16:
-         INITPTR(16);
          break;
       case 24:
-         INITPTR(24);
          break;
       case 32:
-         INITPTR(32);
          break;
       default:
          return -1;
    }
-
-#undef INITPTR
 
    video_mode = p;
    video_bypp = (p->bpp+7)/8;
@@ -618,7 +398,7 @@ vl_video_exit (void)
  * Note: -
  */
 int
-vl_video_init (int width, int height, int bpp, int rgb, int refresh)
+vl_video_init (int width, int height, int bpp, int rgb, int refresh, int fbbits)
 {
    int fake;
    vl_mode *p, *q;
@@ -630,11 +410,6 @@ vl_video_init (int width, int height, int bpp, int rgb, int refresh)
    } else if (bpp == 8) {
       fake = 1;
    }
-#if HUGE_LOOKUP
-   else if (bpp < 24) {
-      v_init_pixeltables();
-   }
-#endif
 
    /* initialize hardware */
    if ((q = v_init_hw()) == NULL) {
@@ -651,18 +426,16 @@ vl_video_init (int width, int height, int bpp, int rgb, int refresh)
       }
    }
 
-   /* setup and enter mode */
-   if ((vl_setup_mode(p) == 0) && (drv->entermode(p, refresh) == 0)) {
-      vl_flip = drv->blit;
-      if (fake) {
-         drv->get(VL_GET_CI_PREC, (int *)(&min));
-         fake_buildpalette(min);
-         if (min == 8) {
-            vl_getrgba = v_getrgba8fake8;
-         }
-      }
-      return bpp;
-   }
+    /* setup and enter mode */
+    if ((vl_setup_mode(p) == 0) && (drv->entermode(p, refresh, fbbits) == 0)) {
+	vl_flip = drv->blit;
+	if (fake) {
+	    drv->get(VL_GET_CI_PREC, (int *)(&min));
+	    fake_buildpalette(min);
+	    init_tab_16_8();
+	}
+	return bpp;
+    }
 
    /* abort */
    return 0;
