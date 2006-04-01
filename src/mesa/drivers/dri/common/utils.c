@@ -361,15 +361,15 @@ driCheckDriDdxDrmVersions3(const char * driver_name,
 			   const __DRIversion * drmExpected)
 {
    static const char format[] = "%s DRI driver expected %s version %d.%d.x "
-       "but got version %d.%d.%d";
+       "but got version %d.%d.%d\n";
    static const char format2[] = "%s DRI driver expected %s version %d-%d.%d.x "
-       "but got version %d.%d.%d";
+       "but got version %d.%d.%d\n";
 
 
    /* Check the DRI version */
    if ( (driActual->major != driExpected->major)
 	|| (driActual->minor < driExpected->minor) ) {
-      __driUtilMessage(format, driver_name, "DRI",
+      fprintf(stderr, format, driver_name, "DRI",
 		       driExpected->major, driExpected->minor,
 		       driActual->major, driActual->minor, driActual->patch);
       return GL_FALSE;
@@ -379,7 +379,7 @@ driCheckDriDdxDrmVersions3(const char * driver_name,
    if ( (ddxActual->major < ddxExpected->major_min)
 	|| (ddxActual->major > ddxExpected->major_max)
 	|| (ddxActual->minor < ddxExpected->minor) ) {
-      __driUtilMessage(format2, driver_name, "DDX",
+      fprintf(stderr, format2, driver_name, "DDX",
 		       ddxExpected->major_min, ddxExpected->major_max, ddxExpected->minor,
 		       ddxActual->major, ddxActual->minor, ddxActual->patch);
       return GL_FALSE;
@@ -388,7 +388,7 @@ driCheckDriDdxDrmVersions3(const char * driver_name,
    /* Check that the DRM driver version is compatible */
    if ( (drmActual->major != drmExpected->major)
 	|| (drmActual->minor < drmExpected->minor) ) {
-      __driUtilMessage(format, driver_name, "DRM",
+      fprintf(stderr, format, driver_name, "DRM",
 		       drmExpected->major, drmExpected->minor,
 		       drmActual->major, drmActual->minor, drmActual->patch);
       return GL_FALSE;
