@@ -655,10 +655,10 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
 	 drm_clip_rect_t b;
 
 	 if (!all) {
-	    GLint x = box[i].x1;
-	    GLint y = box[i].y1;
-	    GLint w = box[i].x2 - x;
-	    GLint h = box[i].y2 - y;
+	    GLint x = box->x1;
+	    GLint y = box->y1;
+	    GLint w = box->x2 - x;
+	    GLint h = box->y2 - y;
 
 	    if (x < cx) w -= cx - x, x = cx; 
 	    if (y < cy) h -= cy - y, y = cy;
