@@ -692,6 +692,9 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       _mesa_problem(ctx, "bad pixel format in osmesa renderbuffer_storage");
    }
 
+   rb->Width = width;
+   rb->Height = height;
+
    return GL_TRUE;
 }
 
