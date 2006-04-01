@@ -555,6 +555,8 @@ void intelWindowMoved( intelContextPtr intel )
       intelSetFrontClipRects( intel );
    }
    else {
+      driUpdateFramebufferSize(&intel->ctx, intel->driDrawable);
+    
       switch (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0]) {
       case BUFFER_BIT_FRONT_LEFT:
 	 intelSetFrontClipRects( intel );
