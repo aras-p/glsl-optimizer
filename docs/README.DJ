@@ -6,16 +6,16 @@
 Description:
 ~~~~~~~~~~~~
 
-Well, guess what... this is the DOS port of Mesa 6.3, for DJGPP fans... Whoa!
-The driver uses OSMesa to draw off screen, and then blits the buffer.
+Well, guess what... this is the DOS port of Mesa 6.5, for DJGPP fans... Whoa!
+The driver uses OSMesa to draw off screen, and then blits the buffer.  This is
+not terribly efficient, and has some drawbacks, but saves maintenance costs.
 
 
 
 Legal:
 ~~~~~~
 
-Mesa copyright applies, provided this package is used within Mesa. For anything
-else, see GPL.
+Mesa copyright applies.
 
 
 
