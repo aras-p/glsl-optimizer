@@ -194,7 +194,7 @@ static void _tnl_copy_from_current( GLcontext *ctx )
    tnl->vtx.CurrentFloatEdgeFlag = 
       (GLfloat)ctx->Current.EdgeFlag;
    
-   for (i = _TNL_ATTRIB_POS+1 ; i <= _TNL_ATTRIB_MAX ; i++) 
+   for (i = _TNL_ATTRIB_POS+1 ; i < _TNL_ATTRIB_MAX ; i++) 
       switch (tnl->vtx.attrsz[i]) {
       case 4: tnl->vtx.attrptr[i][3] = tnl->vtx.current[i][3];
       case 3: tnl->vtx.attrptr[i][2] = tnl->vtx.current[i][2];
