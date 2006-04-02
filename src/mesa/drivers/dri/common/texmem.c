@@ -410,6 +410,7 @@ static void driTexturesGone( driTexHeap * heap, int offset, int size,
 	 fprintf( stderr, "Couldn't alloc placeholder: heap %u sz %x ofs %x\n", heap->heapId,
 		  (int)size, (int)offset );
 	 mmDumpMemInfo( heap->memory_heap );
+	 FREE(t);
 	 return;
       }
       t->heap = heap;
