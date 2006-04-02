@@ -1213,6 +1213,7 @@ adjust2DRatio (GLcontext *ctx,
       }
       tempImage = MALLOC(newWidth * newHeight * rawBytes);
       if (!tempImage) {
+	 FREE(rawImage);
          return GL_FALSE;
       }
       /* unpack image, apply transfer ops and store in rawImage */
