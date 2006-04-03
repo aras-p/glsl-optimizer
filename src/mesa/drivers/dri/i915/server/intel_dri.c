@@ -48,6 +48,14 @@
 static size_t drm_page_size;
 #define xf86DrvMsg(...) do {} while(0)
 
+static const int pitches[] = {
+  128 * 8,
+  128 * 16,
+  128 * 32,
+  128 * 64,
+  0
+};
+
 static Bool I830DRIDoMappings(DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sarea);
 
 static int I830DetectMemory(const DRIDriverContext *ctx, I830Rec *pI830)
@@ -663,7 +671,6 @@ I830ScreenInit(DRIDriverContext *ctx, I830Rec *pI830)
    I830DRIPtr pI830DRI;
    drmI830Sarea *pSAREAPriv;
    int err;
-
       
    drm_page_size = getpagesize();   
 
@@ -675,7 +682,7 @@ I830ScreenInit(DRIDriverContext *ctx, I830Rec *pI830)
     */
    ctx->shared.SAREASize = SAREA_MAX;
 
-  /* Note that drmOpen will try to load the kernel module, if needed. */
+   /* Note that drmOpen will try to load the kernel module, if needed. */
    ctx->drmFD = drmOpen("i915", NULL );
    if (ctx->drmFD < 0) {
       fprintf(stderr, "[drm] drmOpen failed\n");
@@ -873,6 +880,7 @@ static int i830PostValidateMode( const DRIDriverContext *ctx )
 static int i830InitFBDev( DRIDriverContext *ctx )
 {
   I830Rec *pI830 = calloc(1, sizeof(I830Rec));
+  int i;
 
    {
       int  dummy = ctx->shared.virtualWidth;
@@ -885,6 +893,15 @@ static int i830InitFBDev( DRIDriverContext *ctx )
       }
 
       ctx->shared.virtualWidth = dummy;
+      ctx->shared.Width = ctx->shared.virtualWidth;
+   }
+
+
+   for (i = 0; pitches[i] != 0; i++) {
+     if (pitches[i] >= ctx->shared.virtualWidth) {
+       ctx->shared.virtualWidth = pitches[i];
+       break;
+     }
    }
 
    ctx->driverPrivate = (void *)pI830;
