@@ -38,7 +38,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $Id: miniglx_events.c,v 1.5 2005/08/31 01:24:01 airlied Exp $ */
+/* $Id: miniglx_events.c,v 1.6 2006/04/03 07:31:27 airlied Exp $ */
 
 
 #include <assert.h>
@@ -155,7 +155,10 @@ static void shut_fd( Display *dpy, int i )
       er->xdestroywindow.serial = 0;
       er->xdestroywindow.send_event = 0;
       er->xdestroywindow.display = dpy;
-      er->xdestroywindow.window = (Window)i;	
+      er->xdestroywindow.window = (Window)i;
+
+      drmGetLock(dpy->driverContext.drmFD, 1, 0);
+      drmUnlock(dpy->driverContext.drmFD, 1);
    }
 }
 
