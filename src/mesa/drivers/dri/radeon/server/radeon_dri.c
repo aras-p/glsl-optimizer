@@ -1260,6 +1260,7 @@ static int radeonInitFBDev( DRIDriverContext *ctx )
       }
 
       ctx->shared.virtualWidth = dummy;
+      ctx->shared.Width = dummy;
    }
 
    fprintf(stderr,"shared virtual width is %d\n", ctx->shared.virtualWidth);
