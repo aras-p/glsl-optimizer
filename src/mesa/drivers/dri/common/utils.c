@@ -376,9 +376,10 @@ driCheckDriDdxDrmVersions3(const char * driver_name,
    }
 
    /* Check that the DDX driver version is compatible */
-   if ( (ddxActual->major < ddxExpected->major_min)
+   /* for miniglx we pass in -1 so we can ignore the DDX version */
+   if ( (ddxActual->major != -1) && ((ddxActual->major < ddxExpected->major_min)
 	|| (ddxActual->major > ddxExpected->major_max)
-	|| (ddxActual->minor < ddxExpected->minor) ) {
+	|| (ddxActual->minor < ddxExpected->minor)) ) {
       fprintf(stderr, format2, driver_name, "DDX",
 		       ddxExpected->major_min, ddxExpected->major_max, ddxExpected->minor,
 		       ddxActual->major, ddxActual->minor, ddxActual->patch);
