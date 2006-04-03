@@ -95,6 +95,7 @@ typedef struct DRIDriverContextRec {
       int fbStride;
       int virtualWidth;
       int virtualHeight;
+      int Width;
    } shared;
    
    /**
