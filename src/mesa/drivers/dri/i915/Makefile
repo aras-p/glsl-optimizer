@@ -4,6 +4,8 @@ include $(TOP)/configs/current
 
 LIBNAME = i915_dri.so
 
+MINIGLX_SOURCES = server/intel_dri.c
+
 DRIVER_SOURCES = \
 	i915_context.c \
 	i915_debug.c \
@@ -37,7 +39,6 @@ DRIVER_SOURCES = \
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \
-	$(MINIGLX_SOURCES) \
 	$(DRIVER_SOURCES)
 
 ASM_SOURCES = 
