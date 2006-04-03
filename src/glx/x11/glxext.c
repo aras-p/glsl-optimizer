@@ -289,6 +289,10 @@ static /* const */ char *error_list[] = {
     "GLXBadRenderRequest",
     "GLXBadLargeRequest",
     "GLXUnsupportedPrivateRequest",
+    "GLXBadFBConfig",
+    "GLXBadPbuffer",
+    "GLXBadCurrentDrawable",
+    "GLXBadWindow",
 };
 
 int __glXCloseDisplay(Display *dpy, XExtCodes *codes)
