@@ -115,6 +115,7 @@
 #include "glcontextmodes.h"
 #include "glapi.h"
 
+#include "pciaccess.h"
 
 static GLboolean __glXCreateContextWithConfig(__DRInativeDisplay *dpy,
         int screen, int fbconfigID, void *contextID,
@@ -439,6 +440,7 @@ SetupFBDev( Display *dpy )
    
    if (width==832)
 	width=800;
+#if 0
    /* Bump size up to next supported mode.
     */
    if (width <= 720 && height <= 480) { 
@@ -459,7 +461,7 @@ SetupFBDev( Display *dpy )
    else if (width <= 1280 && height <= 1024) { 
       width = 1280; height = 1024; 
    } 
-
+#endif
 
    dpy->driverContext.shared.fbStride = width * (dpy->driverContext.bpp / 8);
    
@@ -468,7 +470,7 @@ SetupFBDev( Display *dpy )
    dpy->VarInfo.bits_per_pixel = dpy->driverContext.bpp;
    dpy->VarInfo.xres_virtual = dpy->driverContext.shared.virtualWidth;
    dpy->VarInfo.yres_virtual = dpy->driverContext.shared.virtualHeight;
-   dpy->VarInfo.xres = width;
+   dpy->VarInfo.xres = dpy->driverContext.shared.Width;
    dpy->VarInfo.yres = height;
    dpy->VarInfo.xoffset = 0;
    dpy->VarInfo.yoffset = 0;
@@ -1056,6 +1058,8 @@ __miniglx_StartServer( const char *display_name )
    Display *dpy;
    int use_vt = 0;
 
+   pci_system_init();
+
    dpy = (Display *)calloc(1, sizeof(Display));
    if (!dpy)
       return NULL;
@@ -1215,7 +1219,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
      * We'll check the version in each DRI driver's "createScreen"
      * function.
      */
-    ddx_version.major = 4;
+    ddx_version.major = -1;
     ddx_version.minor = 0;
     ddx_version.patch = 0;
 
