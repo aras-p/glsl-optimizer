@@ -782,7 +782,7 @@ static void read_rgba_pixels_32(const GLcontext *ctx,
     for (i=0; i<n; i++) {
 	GLint y2 = FLIP(y[i]);
 	lpdw = ((LPDWORD)(pwfb->pbPixels + pwfb->ScanWidth * y2)) + x[i];
-	pixel = lpdw[i];
+	pixel = *lpdw;
 	rgba[i][RCOMP] = (pixel & 0x00ff0000) >> 16;
 	rgba[i][GCOMP] = (pixel & 0x0000ff00) >> 8;
 	rgba[i][BCOMP] = (pixel & 0x000000ff);
@@ -966,7 +966,7 @@ static void read_rgba_pixels_16(const GLcontext *ctx,
     for (i=0; i<n; i++) {
 	GLint y2 = FLIP(y[i]);
 	lpw = ((LPWORD)(pwfb->pbPixels + pwfb->ScanWidth * y2)) + x[i];
-	pixel = lpw[i];
+	pixel = *lpw;
 	/* Windows uses 5,5,5 for 16-bit */
 	rgba[i][RCOMP] = (pixel & 0x7c00) >> 7;
 	rgba[i][GCOMP] = (pixel & 0x03e0) >> 2;
