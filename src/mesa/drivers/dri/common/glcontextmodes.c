@@ -104,7 +104,7 @@ _gl_convert_to_x_visual_type( int visualType )
 	GrayScale,   StaticGray
     };
 
-    return ( (unsigned) (visualType - GLX_TRUE_COLOR) <= NUM_VISUAL_TYPES )
+    return ( (unsigned) (visualType - GLX_TRUE_COLOR) < NUM_VISUAL_TYPES )
 	? x_visual_types[ visualType - GLX_TRUE_COLOR ] : -1;
 }
 
