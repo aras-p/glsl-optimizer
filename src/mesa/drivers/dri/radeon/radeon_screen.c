@@ -351,30 +351,27 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	 return NULL;
       }
 
-      if (sPriv->drmMinor >= 6) {
-
-	 ret = radeonGetParam( sPriv->fd, RADEON_PARAM_GART_BASE,
+      ret = radeonGetParam( sPriv->fd, RADEON_PARAM_GART_BASE,
 			    &screen->gart_base);
-	 if (ret) {
-	    FREE( screen );
-	    fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_GART_BASE): %d\n", ret);
-	    return NULL;
-	 }
-
-	 ret = radeonGetParam( sPriv->fd, RADEON_PARAM_IRQ_NR,
-			       &screen->irq);
-	 if (ret) {
-	    FREE( screen );
-	    fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_IRQ_NR): %d\n", ret);
-	    return NULL;
-	 }
-	 screen->drmSupportsCubeMapsR200 = (sPriv->drmMinor >= 7);
-	 screen->drmSupportsBlendColor = (sPriv->drmMinor >= 11);
-	 screen->drmSupportsTriPerf = (sPriv->drmMinor >= 16);
-	 screen->drmSupportsFragShader = (sPriv->drmMinor >= 18);
-	 screen->drmSupportsPointSprites = (sPriv->drmMinor >= 13);
-	 screen->drmSupportsCubeMapsR100 = (sPriv->drmMinor >= 15);
+      if (ret) {
+	 FREE( screen );
+	 fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_GART_BASE): %d\n", ret);
+	 return NULL;
       }
+
+      ret = radeonGetParam( sPriv->fd, RADEON_PARAM_IRQ_NR,
+			    &screen->irq);
+      if (ret) {
+	 FREE( screen );
+	 fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_IRQ_NR): %d\n", ret);
+	 return NULL;
+      }
+      screen->drmSupportsCubeMapsR200 = (sPriv->drmMinor >= 7);
+      screen->drmSupportsBlendColor = (sPriv->drmMinor >= 11);
+      screen->drmSupportsTriPerf = (sPriv->drmMinor >= 16);
+      screen->drmSupportsFragShader = (sPriv->drmMinor >= 18);
+      screen->drmSupportsPointSprites = (sPriv->drmMinor >= 13);
+      screen->drmSupportsCubeMapsR100 = (sPriv->drmMinor >= 15);
    }
 
    screen->mmio.handle = dri_priv->registerHandle;
@@ -428,9 +425,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	 return NULL;
       }
 
-      screen->gart_texture_offset = dri_priv->gartTexOffset + (( screen->card_type == RADEON_CARD_PCI)
-		? INREG( RADEON_AIC_LO_ADDR )
-		: ( ( INREG( RADEON_MC_AGP_LOCATION ) & 0x0ffffU ) << 16 ) );
+      screen->gart_texture_offset = dri_priv->gartTexOffset + screen->gart_base;
    }
 
    screen->chip_flags = 0;
@@ -979,12 +974,12 @@ __driCreateNewScreen_20050727( __DRInativeDisplay *dpy,
    static const char *driver_name = "Radeon";
    static const __DRIutilversion2 ddx_expected = { 4, 5, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
-   static const __DRIversion drm_expected = { 1, 3, 0 };
+   static const __DRIversion drm_expected = { 1, 6, 0 };
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
    static const char *driver_name = "R200";
    static const __DRIutilversion2 ddx_expected = { 4, 5, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
-   static const __DRIversion drm_expected = { 1, 5, 0 };
+   static const __DRIversion drm_expected = { 1, 6, 0 };
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
    static const char *driver_name = "R300";
    static const __DRIutilversion2 ddx_expected = { 4, 5, 0, 0 };
