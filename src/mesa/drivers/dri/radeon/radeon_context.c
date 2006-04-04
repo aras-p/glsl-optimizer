@@ -102,7 +102,7 @@ static const GLubyte *radeonGetString( GLcontext *ctx, GLenum name )
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    static char buffer[128];
    unsigned   offset;
-   GLuint agp_mode = rmesa->radeonScreen->IsPCI ? 0 :
+   GLuint agp_mode = (rmesa->radeonScreen->card_type==RADEON_CARD_PCI) ? 0 :
       rmesa->radeonScreen->AGPMode;
 
    switch ( name ) {

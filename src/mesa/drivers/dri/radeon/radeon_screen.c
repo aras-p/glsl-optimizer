@@ -209,6 +209,19 @@ extern const struct dri_extension card_extensions[];
 
 static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
 
+static int
+radeonGetParam(int fd, int param, void *value)
+{
+  int ret;
+  drm_radeon_getparam_t gp;
+  
+  gp.param = param;
+  gp.value = value;
+  
+  ret = drmCommandWriteRead( fd, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
+  return ret;
+}
+
 static __GLcontextModes *
 radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
@@ -326,17 +339,12 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    /* This is first since which regions we map depends on whether or
     * not we are using a PCI card.
     */
-   screen->IsPCI = dri_priv->IsPCI;
-
+   screen->card_type = (dri_priv->IsPCI ? RADEON_CARD_PCI : RADEON_CARD_AGP);
    {
       int ret;
-      drm_radeon_getparam_t gp;
-
-      gp.param = RADEON_PARAM_GART_BUFFER_OFFSET;
-      gp.value = &screen->gart_buffer_offset;
-
-      ret = drmCommandWriteRead( sPriv->fd, DRM_RADEON_GETPARAM,
-				 &gp, sizeof(gp));
+      ret = radeonGetParam( sPriv->fd, RADEON_PARAM_GART_BUFFER_OFFSET,
+			    &screen->gart_buffer_offset);
+	
       if (ret) {
 	 FREE( screen );
 	 fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_GART_BUFFER_OFFSET): %d\n", ret);
@@ -344,22 +352,17 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       }
 
       if (sPriv->drmMinor >= 6) {
-	 gp.param = RADEON_PARAM_GART_BASE;
-	 gp.value = &screen->gart_base;
 
-	 ret = drmCommandWriteRead( sPriv->fd, DRM_RADEON_GETPARAM,
-				    &gp, sizeof(gp));
+	 ret = radeonGetParam( sPriv->fd, RADEON_PARAM_GART_BASE,
+			    &screen->gart_base);
 	 if (ret) {
 	    FREE( screen );
-	    fprintf(stderr, "drmR200GetParam (RADEON_PARAM_GART_BASE): %d\n", ret);
+	    fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_GART_BASE): %d\n", ret);
 	    return NULL;
 	 }
 
-	 gp.param = RADEON_PARAM_IRQ_NR;
-	 gp.value = &screen->irq;
-
-	 ret = drmCommandWriteRead( sPriv->fd, DRM_RADEON_GETPARAM,
-				    &gp, sizeof(gp));
+	 ret = radeonGetParam( sPriv->fd, RADEON_PARAM_IRQ_NR,
+			       &screen->irq);
 	 if (ret) {
 	    FREE( screen );
 	    fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_IRQ_NR): %d\n", ret);
@@ -425,7 +428,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	 return NULL;
       }
 
-      screen->gart_texture_offset = dri_priv->gartTexOffset + ( screen->IsPCI
+      screen->gart_texture_offset = dri_priv->gartTexOffset + (( screen->card_type == RADEON_CARD_PCI)
 		? INREG( RADEON_AIC_LO_ADDR )
 		: ( ( INREG( RADEON_MC_AGP_LOCATION ) & 0x0ffffU ) << 16 ) );
    }

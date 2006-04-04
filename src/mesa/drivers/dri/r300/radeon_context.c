@@ -76,7 +76,7 @@ static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
 	case GL_RENDERER:
 	{
 		unsigned offset;
-		GLuint agp_mode = radeon->radeonScreen->IsPCI ? 0 :
+		GLuint agp_mode = (radeon->radeonScreen->card_type==RADEON_CARD_PCI) ? 0 :
 			radeon->radeonScreen->AGPMode;
 		const char* chipname;
 

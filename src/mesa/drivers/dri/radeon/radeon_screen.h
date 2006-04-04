@@ -59,7 +59,7 @@ typedef struct {
    int chip_family;
    int chip_flags;
    int cpp;
-   int IsPCI;				/* Current card is a PCI card */
+   int card_type;
    int AGPMode;
    unsigned int irq;			/* IRQ number (0 means none) */
 
