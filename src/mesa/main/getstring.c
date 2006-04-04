@@ -55,6 +55,7 @@ _mesa_GetString( GLenum name )
    static const char *version_1_4 = "1.4 Mesa " MESA_VERSION_STRING;
    static const char *version_1_5 = "1.5 Mesa " MESA_VERSION_STRING;
    static const char *version_2_0 = "1.5 Mesa " MESA_VERSION_STRING;/*XXX FIX*/
+   static const char *sl_version_110 = "1.10 Mesa " MESA_VERSION_STRING;
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, NULL);
 
@@ -126,6 +127,12 @@ _mesa_GetString( GLenum name )
          if (!ctx->Extensions.String)
             ctx->Extensions.String = _mesa_make_extension_string(ctx);
          return (const GLubyte *) ctx->Extensions.String;
+#if FEATURE_ARB_shading_language_100
+      case GL_SHADING_LANGUAGE_VERSION_ARB:
+         if (ctx->Extensions.ARB_shading_language_100)
+            return (const GLubyte *) sl_version_110;
+         goto error;
+#endif
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program || \
     FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
       case GL_PROGRAM_ERROR_STRING_NV:
@@ -137,6 +144,7 @@ _mesa_GetString( GLenum name )
          }
          /* FALL-THROUGH */
 #endif
+      error:
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetString" );
          return (const GLubyte *) 0;
