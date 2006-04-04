@@ -666,7 +666,7 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
       *driver_modes = intelFillInModes( dri_priv->cpp * 8,
 					(dri_priv->cpp == 2) ? 16 : 24,
 					(dri_priv->cpp == 2) ? 0  : 8,
-					(dri_priv->backOffset != dri_priv->depthOffset) );
+					1 );
 
       /* Calling driInitExtensions here, with a NULL context pointer, does not actually
        * enable the extensions.  It just makes sure that all the dispatch offsets for all
