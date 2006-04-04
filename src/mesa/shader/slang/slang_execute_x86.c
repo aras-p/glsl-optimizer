@@ -81,6 +81,12 @@ static GLvoid add_fixup (codegen_ctx *G, GLuint index, GLubyte *csr)
 #define RND_NEG_FPU (FAST_X86_FPU | 0x400)
 #endif
 
+#if 0
+
+/*
+ * XXX
+ * These should produce a valid code that computes powers. Unfortunately, it does not.
+ */
 static void set_fpu_round_neg_inf (codegen_ctx *G)
 {
 	if (G->fpucntl != RND_NEG_FPU)
@@ -107,6 +113,16 @@ static void emit_x87_ex2 (codegen_ctx *G)
 	x87_fscale (&G->f);			/* 2^a */
 }
 
+static void emit_pow (codegen_ctx *G)
+{
+	x87_fld (&G->f, x86_deref (G->r_esp));
+	x87_fld (&G->f, x86_make_disp (G->r_esp, 4));
+	x87_fyl2x (&G->f);
+	emit_x87_ex2 (G);
+}
+
+#endif
+
 static GLfloat do_ceilf (GLfloat x)
 {
 	return CEILF (x);
@@ -115,6 +131,11 @@ static GLfloat do_ceilf (GLfloat x)
 static GLfloat do_floorf (GLfloat x)
 {
 	return FLOORF (x);
+}
+
+static GLfloat do_powf (GLfloat y, GLfloat x)
+{
+	return (GLfloat) _mesa_pow ((GLdouble) x, (GLdouble) y);
 }
 
 static GLvoid do_print_float (GLfloat x)
@@ -285,10 +306,8 @@ static GLvoid codegen_assem (codegen_ctx *G, slang_assembly *a)
 		x87_fstp (&G->f, x86_deref (G->r_esp));
 		break;
 	case slang_asm_float_power:
-		x87_fld (&G->f, x86_deref (G->r_esp));
-		x87_fld (&G->f, x86_make_disp (G->r_esp, 4));
-		x87_fyl2x (&G->f);
-		emit_x87_ex2 (G);
+		/* TODO: use emit_pow() */
+		x86_call (&G->f, (GLubyte *) do_powf);
 		x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
 		x87_fstp (&G->f, x86_deref (G->r_esp));
 		break;

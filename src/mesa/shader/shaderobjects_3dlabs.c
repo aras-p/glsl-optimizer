@@ -1150,9 +1150,7 @@ _program_GetTextureImageUsage (struct gl2_program_intf **intf, GLbitfield *texim
 	{
 		GLuint n, addr, j;
 
-		n = pro->texture_usage.table[i].quant->array_len;
-		if (n == 0)
-			n = 1;
+		n = slang_export_data_quant_elements (pro->texture_usage.table[i].quant);
 		addr = pro->texture_usage.table[i].frag_address;
 		for (j = 0; j < n; j++)
 		{
@@ -1163,7 +1161,7 @@ _program_GetTextureImageUsage (struct gl2_program_intf **intf, GLbitfield *texim
 			image = (GLuint) *((GLfloat *) mem);
 			if (image >= 0 && image < ctx->Const.MaxTextureImageUnits)
 			{
-				switch (pro->texture_usage.table[i].quant->u.basic_type)
+				switch (slang_export_data_quant_type (pro->texture_usage.table[i].quant))
 				{
 				case GL_SAMPLER_1D_ARB:
 				case GL_SAMPLER_1D_SHADOW_ARB:
@@ -1204,6 +1202,29 @@ _program_IsShaderPresent (struct gl2_program_intf **intf, GLenum subtype)
 	}
 }
 
+static GLvoid
+_program_UpdateVarying (struct gl2_program_intf **intf, GLuint index, GLfloat *value,
+	GLboolean vert)
+{
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
+	slang_program *pro = &impl->_obj.prog;
+	GLuint addr;
+
+	if (index >= pro->varyings.total)
+		return;
+	if (vert)
+		addr = pro->varyings.slots[index].vert_addr / 4;
+	else
+		addr = pro->varyings.slots[index].frag_addr / 4;
+	if (addr != ~0)
+	{
+		if (vert)
+			*value = pro->machines[SLANG_SHADER_VERTEX]->mem[addr]._float;
+		else
+			pro->machines[SLANG_SHADER_FRAGMENT]->mem[addr]._float = *value;
+	}
+}
+
 static struct gl2_program_intf _program_vftbl = {
 	{
 		{
@@ -1231,7 +1252,8 @@ static struct gl2_program_intf _program_vftbl = {
 	_program_UpdateFixedAttribute,
 	_program_UpdateFixedVarying,
 	_program_GetTextureImageUsage,
-	_program_IsShaderPresent
+	_program_IsShaderPresent,
+	_program_UpdateVarying
 };
 
 static void
@@ -1514,10 +1536,10 @@ GLboolean _slang_write_uniform (struct gl2_program_intf **pro, GLint loc, GLsize
 
 	b = &bind->table[loc];
 	/* TODO: check sizes */
-	if (b->quant->structure != NULL)
+	if (slang_export_data_quant_struct (b->quant))
 		return GL_FALSE;
 
-	switch (b->quant->u.basic_type)
+	switch (slang_export_data_quant_type (b->quant))
 	{
 	case GL_BOOL_ARB:
 		types_match = (type == GL_FLOAT) || (type == GL_INT);
@@ -1556,7 +1578,7 @@ GLboolean _slang_write_uniform (struct gl2_program_intf **pro, GLint loc, GLsize
 		types_match = (type == GL_INT);
 		break;
 	default:
-		types_match = (type == b->quant->u.basic_type);
+		types_match = (type == slang_export_data_quant_type (b->quant));
 		break;
 	}
 
@@ -1581,8 +1603,9 @@ GLboolean _slang_write_uniform (struct gl2_program_intf **pro, GLint loc, GLsize
 				const GLfloat *src = (GLfloat *) (data);
 				GLfloat *dst = (GLfloat *) (&impl->_obj.prog.machines[i]->mem[b->address[i] / 4]);
 				GLuint j;
+				GLuint total = count * slang_export_data_quant_components (b->quant);
 
-				for (j = 0; j < count * b->quant->size / 4; j++)
+				for (j = 0; j < total; j++)
 					dst[j] = src[j] != 0.0f ? 1.0f : 0.0f;
 			}
 	}
@@ -1594,8 +1617,9 @@ GLboolean _slang_write_uniform (struct gl2_program_intf **pro, GLint loc, GLsize
 				const GLuint *src = (GLuint *) (data);
 				GLfloat *dst = (GLfloat *) (&impl->_obj.prog.machines[i]->mem[b->address[i] / 4]);
 				GLuint j;
+				GLuint total = count * slang_export_data_quant_components (b->quant);
 
-				for (j = 0; j < count * b->quant->size / 4; j++)
+				for (j = 0; j < total; j++)
 					dst[j] = src[j] ? 1.0f : 0.0f;
 			}
 	}
@@ -1607,8 +1631,9 @@ GLboolean _slang_write_uniform (struct gl2_program_intf **pro, GLint loc, GLsize
 				const GLuint *src = (GLuint *) (data);
 				GLfloat *dst = (GLfloat *) (&impl->_obj.prog.machines[i]->mem[b->address[i] / 4]);
 				GLuint j;
+				GLuint total = count * slang_export_data_quant_components (b->quant);
 
-				for (j = 0; j < count * b->quant->size / 4; j++)
+				for (j = 0; j < total; j++)
 					dst[j] = (GLfloat) src[j];
 			}
 	}
@@ -1618,7 +1643,7 @@ GLboolean _slang_write_uniform (struct gl2_program_intf **pro, GLint loc, GLsize
 			if (b->address[i] != ~0)
 			{
 				_mesa_memcpy (&impl->_obj.prog.machines[i]->mem[b->address[i] / 4], data,
-					count * b->quant->size);
+					count * slang_export_data_quant_size (b->quant));
 			}
 	}
 	return GL_TRUE;
@@ -1664,11 +1689,8 @@ GLvoid _slang_get_active_uniform (struct gl2_program_intf **pro, GLuint index, G
 	name[len] = '\0';
 	if (length != NULL)
 		*length = len;
-	*type = u->quant->u.basic_type;
-	if (u->quant->array_len == 0)
-		*size = 1;
-	else
-		*size = u->quant->array_len;
+	*type = slang_export_data_quant_type (u->quant);
+	*size = slang_export_data_quant_elements (u->quant);
 }
 
 void

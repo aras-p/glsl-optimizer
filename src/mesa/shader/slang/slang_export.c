@@ -69,6 +69,45 @@ slang_export_data_quant *slang_export_data_quant_add_field (slang_export_data_qu
 	return &self->structure[n];
 }
 
+GLboolean slang_export_data_quant_array (slang_export_data_quant *self)
+{
+	return self->array_len != 0;
+}
+
+GLboolean slang_export_data_quant_struct (slang_export_data_quant *self)
+{
+	return self->structure != NULL;
+}
+
+GLenum slang_export_data_quant_type (slang_export_data_quant *self)
+{
+	assert (self->structure == NULL);
+	return self->u.basic_type;
+}
+
+GLuint slang_export_data_quant_fields (slang_export_data_quant *self)
+{
+	assert (self->structure != NULL);
+	return self->u.field_count;
+}
+
+GLuint slang_export_data_quant_elements (slang_export_data_quant *self)
+{
+	if (self->array_len == 0)
+		return 1;
+	return self->array_len;
+}
+
+GLuint slang_export_data_quant_components (slang_export_data_quant *self)
+{
+	return self->size / 4;
+}
+
+GLuint slang_export_data_quant_size (slang_export_data_quant *self)
+{
+	return self->size;
+}
+
 /*
  * slang_export_data_entry
  */
@@ -254,19 +293,19 @@ static GLboolean validate_extracted (slang_export_data_quant *q, GLuint element,
 	case EXTRACT_BASIC:
 		return GL_TRUE;
 	case EXTRACT_ARRAY:
-		return element < q->array_len;
+		return element < slang_export_data_quant_elements (q);
 	case EXTRACT_STRUCT:
-		return q->structure != NULL;
+		return slang_export_data_quant_struct (q);
 	case EXTRACT_STRUCT_ARRAY:
-		return q->structure != NULL && element < q->array_len;
+		return slang_export_data_quant_struct (q) && element < slang_export_data_quant_elements (q);
 	}
 	return GL_FALSE;
 }
 
 static GLuint calculate_offset (slang_export_data_quant *q, GLuint element)
 {
-	if (q->array_len != 0)
-		return element * q->size;
+	if (slang_export_data_quant_array (q))
+		return element * slang_export_data_quant_size (q);
 	return 0;
 }
 
@@ -277,6 +316,7 @@ static GLboolean find_exported_data (slang_export_data_quant *q, const char *nam
 	GLuint result, element, i;
 	const char *end;
 	slang_atom atom;
+	const GLuint fields = slang_export_data_quant_fields (q);
 
 	result = extract_name (name, parsed, &element, &end);
 	if (result == EXTRACT_ERROR)
@@ -286,7 +326,7 @@ static GLboolean find_exported_data (slang_export_data_quant *q, const char *nam
 	if (atom == SLANG_ATOM_NULL)
 		return GL_FALSE;
 
-	for (i = 0; i < q->u.field_count; i++)
+	for (i = 0; i < fields; i++)
 		if (q->structure[i].name == atom)
 		{
 			if (!validate_extracted (&q->structure[i], element, result))

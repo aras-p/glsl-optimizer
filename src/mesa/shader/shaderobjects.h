@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 2004-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2004-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -93,6 +93,7 @@ struct gl2_program_intf
       GLboolean);
    GLvoid (* GetTextureImageUsage) (struct gl2_program_intf **, GLbitfield *);
    GLboolean (* IsShaderPresent) (struct gl2_program_intf **, GLenum);
+   GLvoid (* UpdateVarying) (struct gl2_program_intf **, GLuint, GLfloat *, GLboolean);
 };
 
 struct gl2_fragment_shader_intf

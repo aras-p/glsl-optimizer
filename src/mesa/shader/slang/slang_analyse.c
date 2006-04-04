@@ -49,9 +49,9 @@ GLboolean _slang_analyse_texture_usage (slang_program *prog)
 	{
 		slang_uniform_binding *b = &prog->uniforms.table[i];
 
-		if (b->address[SLANG_SHADER_FRAGMENT] != ~0 && b->quant->structure == NULL)
+		if (b->address[SLANG_SHADER_FRAGMENT] != ~0 && !slang_export_data_quant_struct (b->quant))
 		{
-			switch (b->quant->u.basic_type)
+			switch (slang_export_data_quant_type (b->quant))
 			{
 			case GL_SAMPLER_1D_ARB:
 			case GL_SAMPLER_2D_ARB:
@@ -77,9 +77,9 @@ GLboolean _slang_analyse_texture_usage (slang_program *prog)
 	{
 		slang_uniform_binding *b = &prog->uniforms.table[i];
 
-		if (b->address[SLANG_SHADER_FRAGMENT] != ~0 && b->quant->structure == NULL)
+		if (b->address[SLANG_SHADER_FRAGMENT] != ~0 && !slang_export_data_quant_struct (b->quant))
 		{
-			switch (b->quant->u.basic_type)
+			switch (slang_export_data_quant_type (b->quant))
 			{
 			case GL_SAMPLER_1D_ARB:
 			case GL_SAMPLER_2D_ARB:

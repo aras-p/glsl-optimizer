@@ -65,6 +65,27 @@ typedef struct
 
 typedef struct
 {
+	GLuint vert_addr;
+	GLuint frag_addr;
+} slang_varying_slot;
+
+typedef struct
+{
+	slang_export_data_quant *quant;
+	char *name;
+	GLuint slot;
+} slang_varying_binding;
+
+typedef struct
+{
+	slang_varying_binding table[MAX_VARYING_FLOATS];
+	GLuint count;
+	slang_varying_slot slots[MAX_VARYING_FLOATS];
+	GLuint total;
+} slang_varying_bindings;
+
+typedef struct
+{
 	slang_export_data_quant *quant;
 	GLuint frag_address;
 } slang_texture_usage;
@@ -173,6 +194,7 @@ typedef struct
 {
 	slang_uniform_bindings uniforms;
 	slang_active_uniforms active_uniforms;
+	slang_varying_bindings varyings;
 	slang_texture_usages texture_usage;
 	GLuint common_fixed_entries[SLANG_SHADER_MAX][SLANG_COMMON_FIXED_MAX];
 	GLuint vertex_fixed_entries[SLANG_VERTEX_FIXED_MAX];

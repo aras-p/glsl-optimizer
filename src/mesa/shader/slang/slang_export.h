@@ -35,7 +35,7 @@ extern "C" {
  * Basic data quantity to transfer between application and assembly.
  * The <size> is the actual size of the data quantity including padding, if any. It is
  * used to calculate offsets from the beginning of the data.
- * The <array_len> is not 0, the data quantity is an array of <array_len> size.
+ * If the <array_len> is not 0, the data quantity is an array of <array_len> size.
  * If the <structure> is not NULL, the data quantity is a struct. The <basic_type> is
  * invalid and the <field_count> holds the size of the <structure> array.
  * The <basic_type> values match those of <type> parameter for glGetActiveUniformARB.
@@ -57,6 +57,43 @@ typedef struct slang_export_data_quant_
 GLvoid slang_export_data_quant_ctr (slang_export_data_quant *);
 GLvoid slang_export_data_quant_dtr (slang_export_data_quant *);
 slang_export_data_quant *slang_export_data_quant_add_field (slang_export_data_quant *);
+
+/*
+ * Returns GL_FALSE if the quant is not an array.
+ */
+GLboolean slang_export_data_quant_array (slang_export_data_quant *);
+
+/*
+ * Returns GL_FALSE if the quant is not a structure.
+ */
+GLboolean slang_export_data_quant_struct (slang_export_data_quant *);
+
+/*
+ * Returns basic type of the quant. It must not be a structure.
+ */
+GLenum slang_export_data_quant_type (slang_export_data_quant *);
+
+/*
+ * Returns number of fields in the quant that is a structure.
+ */
+GLuint slang_export_data_quant_fields (slang_export_data_quant *);
+
+/*
+ * Return number of elements in the quant.
+ * For arrays, return the size of the array.
+ * For scalars, return 1.
+ */
+GLuint slang_export_data_quant_elements (slang_export_data_quant *);
+
+/*
+ * Returns total number of components withing the quant element.
+ */
+GLuint slang_export_data_quant_components (slang_export_data_quant *);
+
+/*
+ * Returns size of the quant element.
+ */
+GLuint slang_export_data_quant_size (slang_export_data_quant *);
 
 /*
  * Data access pattern. Specifies how data is accessed at what frequency.

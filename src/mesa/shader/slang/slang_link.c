@@ -79,46 +79,42 @@ static GLboolean slang_uniform_bindings_add (slang_uniform_bindings *self, slang
 	return GL_TRUE;
 }
 
-static GLboolean insert_binding (slang_uniform_bindings *bind, slang_export_data_quant *q,
+static GLboolean insert_uniform_binding (slang_uniform_bindings *bind, slang_export_data_quant *q,
 	char *name, slang_atom_pool *atoms, GLuint index, GLuint addr)
 {
 	GLuint count, i;
 
 	slang_string_concat (name, slang_atom_pool_id (atoms, q->name));
-
-	if (q->array_len == 0)
-		count = 1;
-	else
-		count = q->array_len;
-
+	count = slang_export_data_quant_elements (q);
 	for (i = 0; i < count; i++)
 	{
 		GLuint save;
 
 		save = slang_string_length (name);
-		if (q->array_len != 0)
+		if (slang_export_data_quant_array (q))
 			_mesa_sprintf (name + slang_string_length (name), "[%d]", i);
 
-		if (q->structure != NULL)
+		if (slang_export_data_quant_struct (q))
 		{
 			GLuint save, i;
+			const GLuint fields = slang_export_data_quant_fields (q);
 
 			slang_string_concat (name, ".");
 			save = slang_string_length (name);
 
-			for (i = 0; i < q->u.field_count; i++)
+			for (i = 0; i < fields; i++)
 			{
-				if (!insert_binding (bind, &q->structure[i], name, atoms, index, addr))
+				if (!insert_uniform_binding (bind, &q->structure[i], name, atoms, index, addr))
 					return GL_FALSE;
 				name[save] = '\0';
-				addr += q->structure[i].size;
+				addr += slang_export_data_quant_size (&q->structure[i]);
 			}
 		}
 		else
 		{
 			if (!slang_uniform_bindings_add (bind, q, name, index, addr))
 				return GL_FALSE;
-			addr += q->size;
+			addr += slang_export_data_quant_size (q);
 		}
 		name[save] = '\0';
 	}
@@ -126,8 +122,8 @@ static GLboolean insert_binding (slang_uniform_bindings *bind, slang_export_data
 	return GL_TRUE;
 }
 
-static GLboolean gather_uniform_bindings (slang_uniform_bindings *bind, slang_export_data_table *tbl,
-	GLuint index)
+static GLboolean gather_uniform_bindings (slang_uniform_bindings *bind,
+	slang_export_data_table *tbl, GLuint index)
 {
 	GLuint i;
 
@@ -136,7 +132,7 @@ static GLboolean gather_uniform_bindings (slang_uniform_bindings *bind, slang_ex
 		{
 			char name[1024] = "";
 
-			if (!insert_binding (bind, &tbl->entries[i].quant, name, tbl->atoms, index,
+			if (!insert_uniform_binding (bind, &tbl->entries[i].quant, name, tbl->atoms, index,
 					tbl->entries[i].address))
 				return GL_FALSE;
 		}
@@ -184,17 +180,18 @@ static GLboolean insert_uniform (slang_active_uniforms *u, slang_export_data_qua
 	slang_atom_pool *atoms)
 {
 	slang_string_concat (name, slang_atom_pool_id (atoms, q->name));
-	if (q->array_len != 0)
+	if (slang_export_data_quant_array (q))
 		slang_string_concat (name, "[0]");
 
-	if (q->structure != NULL)
+	if (slang_export_data_quant_struct (q))
 	{
 		GLuint save, i;
+		const GLuint fields = slang_export_data_quant_fields (q);
 
 		slang_string_concat (name, ".");
 		save = slang_string_length (name);
 
-		for (i = 0; i < q->u.field_count; i++)
+		for (i = 0; i < fields; i++)
 		{
 			if (!insert_uniform (u, &q->structure[i], name, atoms))
 				return GL_FALSE;
@@ -217,6 +214,97 @@ static GLboolean gather_active_uniforms (slang_active_uniforms *u, slang_export_
 			char name[1024] = "";
 
 			if (!insert_uniform (u, &tbl->entries[i].quant, name, tbl->atoms))
+				return GL_FALSE;
+		}
+
+	return GL_TRUE;
+}
+
+/*
+ * slang_varying_bindings
+ */
+
+static GLvoid slang_varying_bindings_ctr (slang_varying_bindings *self)
+{
+	self->count = 0;
+	self->total = 0;
+}
+
+static GLvoid slang_varying_bindings_dtr (slang_varying_bindings *self)
+{
+	GLuint i;
+
+	for (i = 0; i < self->count; i++)
+		slang_alloc_free (self->table[i].name);
+}
+
+static GLvoid update_varying_slots (slang_varying_slot *slots, GLuint count, GLboolean vert,
+	GLuint address, GLuint do_offset)
+{
+	GLuint i;
+
+	for (i = 0; i < count; i++)
+		if (vert)
+			slots[i].vert_addr = address + i * 4 * do_offset;
+		else
+			slots[i].frag_addr = address + i * 4 * do_offset;
+}
+
+static GLboolean slang_varying_bindings_add (slang_varying_bindings *self,
+	slang_export_data_quant *q, const char *name, GLboolean vert, GLuint address)
+{
+	const GLuint n = self->count;
+	const GLuint total_components =
+		slang_export_data_quant_components (q) * slang_export_data_quant_elements (q);
+	GLuint i;
+
+	for (i = 0; i < n; i++)
+		if (slang_string_compare (self->table[i].name, name) == 0)
+		{
+			/* TODO: data quantities must match, or else link fails */
+			update_varying_slots (&self->slots[self->table[i].slot], total_components, vert,
+				address, 1);
+			return GL_TRUE;
+		}
+
+	if (self->total + total_components > MAX_VARYING_FLOATS)
+	{
+		/* TODO: info log: error: MAX_VARYING_FLOATS exceeded */
+		return GL_FALSE;
+	}
+
+	self->table[n].quant = q;
+	self->table[n].slot = self->total;
+	self->table[n].name = slang_string_duplicate (name);
+	if (self->table[n].name == NULL)
+		return GL_FALSE;
+	self->count++;
+
+	update_varying_slots (&self->slots[self->table[n].slot], total_components, vert, address, 1);
+	update_varying_slots (&self->slots[self->table[n].slot], total_components, !vert, ~0, 0);
+	self->total += total_components;
+
+	return GL_TRUE;
+}
+
+static GLboolean entry_has_gl_prefix (slang_atom name, slang_atom_pool *atoms)
+{
+	const char *str = slang_atom_pool_id (atoms, name);
+	return str[0] == 'g' && str[1] == 'l' && str[2] == '_';
+}
+
+static GLboolean gather_varying_bindings (slang_varying_bindings *bind,
+	slang_export_data_table *tbl, GLboolean vert)
+{
+	GLuint i;
+
+	for (i = 0; i < tbl->count; i++)
+		if (tbl->entries[i].access == slang_exp_varying &&
+			!entry_has_gl_prefix (tbl->entries[i].quant.name, tbl->atoms))
+		{
+			if (!slang_varying_bindings_add (bind, &tbl->entries[i].quant,
+				slang_atom_pool_id (tbl->atoms, tbl->entries[i].quant.name), vert,
+				tbl->entries[i].address))
 				return GL_FALSE;
 		}
 
@@ -248,6 +336,7 @@ GLvoid slang_program_ctr (slang_program *self)
 
 	slang_uniform_bindings_ctr (&self->uniforms);
 	slang_active_uniforms_ctr (&self->active_uniforms);
+	slang_varying_bindings_ctr (&self->varyings);
 	slang_texture_usages_ctr (&self->texture_usage);
 	for (i = 0; i < SLANG_SHADER_MAX; i++)
 	{
@@ -270,6 +359,7 @@ GLvoid slang_program_dtr (slang_program *self)
 {
 	slang_uniform_bindings_dtr (&self->uniforms);
 	slang_active_uniforms_dtr (&self->active_uniforms);
+	slang_varying_bindings_dtr (&self->varyings);
 	slang_texture_usages_dtr (&self->texture_usage);
 }
 
@@ -423,11 +513,16 @@ GLboolean _slang_link (slang_program *prog, slang_translation_unit **units, GLui
 			return GL_FALSE;
 		if (!gather_active_uniforms (&prog->active_uniforms, &units[i]->exp_data))
 			return GL_FALSE;
+		if (!gather_varying_bindings (&prog->varyings, &units[i]->exp_data,
+			index == SLANG_SHADER_VERTEX))
+			return GL_FALSE;
 		resolve_common_fixed (prog->common_fixed_entries[index], &units[i]->exp_data);
 		resolve_common_code (prog->code[index], &units[i]->exp_code);
 		prog->machines[index] = units[i]->machine;
 		prog->assemblies[index] = units[i]->assembly;
 	}
+
+	/* TODO: all varyings read by fragment shader must be written by vertex shader */
 
 	if (!_slang_analyse_texture_usage (prog))
 		return GL_FALSE;
