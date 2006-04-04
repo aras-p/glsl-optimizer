@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -203,6 +203,7 @@
 
 /** For GL_ARB_vertex_shader */
 /*@{*/
+#define MAX_VERTEX_ATTRIBS 16
 #define MAX_VERTEX_UNIFORM_COMPONENTS 512
 #define MAX_VARYING_FLOATS 32
 #define MAX_VERTEX_TEXTURE_IMAGE_UNITS 0
