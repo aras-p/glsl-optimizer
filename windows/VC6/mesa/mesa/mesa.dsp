@@ -915,6 +915,10 @@ SOURCE=..\..\..\..\src\mesa\main\attrib.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\main\bitset.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\main\blend.h
 # End Source File
 # Begin Source File
