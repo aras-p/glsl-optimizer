@@ -147,6 +147,43 @@ static int AgpInit(const DRIDriverContext *ctx, I830Rec *info)
   return 1;
 }
 
+/*
+ * Allocate memory from the given pool.  Grow the pool if needed and if
+ * possible.
+ */
+static unsigned long
+AllocFromPool(const DRIDriverContext *ctx, I830Rec *pI830, 
+	      I830MemRange *result, I830MemPool *pool,
+	      long size, unsigned long alignment, int flags)
+{
+   long needed, start, end;
+
+   if (!result || !pool || !size)
+      return 0;
+
+   /* Calculate how much space is needed. */
+   if (alignment <= GTT_PAGE_SIZE)
+      needed = size;
+   else {
+	 start = ROUND_TO(pool->Free.Start, alignment);
+	 end = ROUND_TO(start + size, alignment);
+	 needed = end - pool->Free.Start;
+   }
+   if (needed > pool->Free.Size) {
+     return 0;
+   }
+
+   result->Start = ROUND_TO(pool->Free.Start, alignment);
+   pool->Free.Start += needed;
+   result->End = pool->Free.Start;
+
+   pool->Free.Size = pool->Free.End - pool->Free.Start;
+   result->Size = result->End - result->Start;
+   result->Pool = pool;
+   result->Alignment = alignment;
+   return needed;
+}
+
 static unsigned long AllocFromAGP(const DRIDriverContext *ctx, I830Rec *pI830, long size, unsigned long alignment, I830MemRange  *result)
 {
    unsigned long start, end;
@@ -174,7 +211,7 @@ static unsigned long AllocFromAGP(const DRIDriverContext *ctx, I830Rec *pI830, l
    pI830->MemoryAperture.Start = newApStart;
    pI830->MemoryAperture.End = newApEnd;
    pI830->MemoryAperture.Size = newApEnd - newApStart;
-   pI830->FreeMemory -= size;
+   //   pI830->FreeMemory -= size;
    result->Start = start;
    result->End = start + size;
    result->Size = size;
@@ -185,6 +222,34 @@ static unsigned long AllocFromAGP(const DRIDriverContext *ctx, I830Rec *pI830, l
    return size;
 }
 
+unsigned long
+I830AllocVidMem(const DRIDriverContext *ctx, I830Rec *pI830, I830MemRange *result, I830MemPool *pool, long size, unsigned long alignment, int flags)
+{
+  int ret;
+
+  if (!result)
+    return 0;
+
+   /* Make sure these are initialised. */
+   result->Size = 0;
+   result->Key = -1;
+
+   if (!size) {
+      return 0;
+   }
+
+   if (pool->Free.Size < size)
+     return AllocFromAGP(ctx, pI830, size, alignment, result);
+   else
+   {
+     ret = AllocFromPool(ctx, pI830, result, pool, size, alignment, flags);
+
+     if (ret==0)
+       return AllocFromAGP(ctx, pI830, size, alignment, result);
+     return ret;
+   }
+}
+
 static Bool BindAgpRange(const DRIDriverContext *ctx, I830MemRange *mem)
 {
   if (!mem)
@@ -193,7 +258,7 @@ static Bool BindAgpRange(const DRIDriverContext *ctx, I830MemRange *mem)
   if (mem->Key == -1)
     return TRUE;
 
-  return drmAgpBind(ctx->drmFD, mem->Key, mem->Offset);
+  return !drmAgpBind(ctx->drmFD, mem->Key, mem->Offset);
 }
 
 /* simple memory allocation routines needed */
@@ -215,7 +280,7 @@ I830AllocateMemory(const DRIDriverContext *ctx, I830Rec *pI830)
 
   size = PRIMARY_RINGBUFFER_SIZE;
   
-  ret = AllocFromAGP(ctx, pI830, size, 0x1000, &pI830->LpRing->mem);
+  ret = I830AllocVidMem(ctx, pI830, &pI830->LpRing->mem, &pI830->StolenPool, size, 0x1000, 0);
   
   if (ret != size)
   {
@@ -238,8 +303,8 @@ I830AllocateMemory(const DRIDriverContext *ctx, I830Rec *pI830)
   size = lineSize * lines;
   size = ROUND_TO_PAGE(size);
 
-  ret = AllocFromAGP(ctx, pI830, size, align, &pI830->FrontBuffer);
-  if (ret != size)
+  ret = I830AllocVidMem(ctx, pI830, &pI830->FrontBuffer, &pI830->StolenPool, size, align, 0);
+  if (ret < size)
   {
     fprintf(stderr,"unable to allocate front buffer %ld\n", ret);
     return FALSE;
@@ -249,8 +314,8 @@ I830AllocateMemory(const DRIDriverContext *ctx, I830Rec *pI830)
   pI830->BackBuffer.Key = -1;
   pI830->BackBuffer.Pitch = ctx->shared.virtualWidth;
 
-  ret = AllocFromAGP(ctx, pI830, size, align, &pI830->BackBuffer);
-  if (ret != size)
+  ret = I830AllocVidMem(ctx, pI830, &pI830->BackBuffer, &pI830->StolenPool, size, align, 0);
+  if (ret < size)
   {
     fprintf(stderr,"unable to allocate back buffer %ld\n", ret);
     return FALSE;
@@ -260,8 +325,8 @@ I830AllocateMemory(const DRIDriverContext *ctx, I830Rec *pI830)
   pI830->DepthBuffer.Key = -1;
   pI830->DepthBuffer.Pitch = ctx->shared.virtualWidth;
 
-  ret = AllocFromAGP(ctx, pI830, size, align, &pI830->DepthBuffer);
-  if (ret != size)
+  ret = I830AllocVidMem(ctx, pI830, &pI830->DepthBuffer, &pI830->StolenPool, size, align, 0);
+  if (ret < size)
   {
     fprintf(stderr,"unable to allocate depth buffer %ld\n", ret);
     return FALSE;
@@ -271,10 +336,10 @@ I830AllocateMemory(const DRIDriverContext *ctx, I830Rec *pI830)
   pI830->ContextMem.Key = -1;
   size = KB(32);
 
-  ret = AllocFromAGP(ctx, pI830, size, align, &pI830->ContextMem);
-  if (ret != size)
+  ret = I830AllocVidMem(ctx, pI830, &pI830->ContextMem, &pI830->StolenPool, size, align, 0);
+  if (ret < size)
   {
-    fprintf(stderr,"unable to allocate back buffer %ld\n", ret);
+    fprintf(stderr,"unable to allocate context buffer %ld\n", ret);
     return FALSE;
   }
   
@@ -283,7 +348,7 @@ I830AllocateMemory(const DRIDriverContext *ctx, I830Rec *pI830)
 
   size = 32768 * 1024;
   ret = AllocFromAGP(ctx, pI830, size, align, &pI830->TexMem);
-  if (ret != size)
+  if (ret < size)
   {
     fprintf(stderr,"unable to allocate texture memory %ld\n", ret);
     return FALSE;
@@ -295,17 +360,17 @@ I830AllocateMemory(const DRIDriverContext *ctx, I830Rec *pI830)
 static Bool
 I830BindMemory(const DRIDriverContext *ctx, I830Rec *pI830)
 {
-  if (BindAgpRange(ctx, &pI830->LpRing->mem))
+  if (!BindAgpRange(ctx, &pI830->LpRing->mem))
     return FALSE;
-  if (BindAgpRange(ctx, &pI830->FrontBuffer))
+  if (!BindAgpRange(ctx, &pI830->FrontBuffer))
     return FALSE;
-  if (BindAgpRange(ctx, &pI830->BackBuffer))
+  if (!BindAgpRange(ctx, &pI830->BackBuffer))
     return FALSE;
-  if (BindAgpRange(ctx, &pI830->DepthBuffer))
+  if (!BindAgpRange(ctx, &pI830->DepthBuffer))
     return FALSE;
-  if (BindAgpRange(ctx, &pI830->ContextMem))
+  if (!BindAgpRange(ctx, &pI830->ContextMem))
     return FALSE;
-  if (BindAgpRange(ctx, &pI830->TexMem))
+  if (!BindAgpRange(ctx, &pI830->TexMem))
     return FALSE;
 
   return TRUE;
@@ -763,6 +828,11 @@ I830ScreenInit(DRIDriverContext *ctx, I830Rec *pI830)
    pI830->MemoryAperture.Start = pI830->StolenMemory.End;
    pI830->MemoryAperture.End = KB(40000);
    pI830->MemoryAperture.Size = pI830->MemoryAperture.End - pI830->MemoryAperture.Start;
+
+   pI830->StolenPool.Fixed = pI830->StolenMemory;
+   pI830->StolenPool.Total = pI830->StolenMemory;
+   pI830->StolenPool.Free = pI830->StolenPool.Total;
+   pI830->FreeMemory = pI830->StolenPool.Total.Size;
 
    if (!AgpInit(ctx, pI830))
      return FALSE;
