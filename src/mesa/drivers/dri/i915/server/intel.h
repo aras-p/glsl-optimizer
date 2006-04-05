@@ -137,11 +137,6 @@ typedef struct {
    int space;
 } I830RingBuffer;
 
-typedef struct {
-   unsigned int Fence[8];
-} I830RegRec, *I830RegPtr;
-
-
 typedef struct _I830Rec {
    unsigned char *MMIOBase;
    unsigned char *FbBase;
@@ -194,6 +189,7 @@ typedef struct _I830Rec {
    int GttBound;
 
    drm_handle_t ring_map;
+   unsigned int Fence[8];
 
 } I830Rec;
 
@@ -270,6 +266,44 @@ typedef struct _I830Rec {
 #define RING_VALID          0x00000001
 #define RING_INVALID        0x00000000
 
+
+/* Fence/Tiling ranges [0..7]
+ */
+#define FENCE            0x2000
+#define FENCE_NR         8
+
+#define I915G_FENCE_START_MASK	0x0ff00000
+
+#define I830_FENCE_START_MASK	0x07f80000
+
+#define FENCE_START_MASK    0x03F80000
+#define FENCE_X_MAJOR       0x00000000
+#define FENCE_Y_MAJOR       0x00001000
+#define FENCE_SIZE_MASK     0x00000700
+#define FENCE_SIZE_512K     0x00000000
+#define FENCE_SIZE_1M       0x00000100
+#define FENCE_SIZE_2M       0x00000200
+#define FENCE_SIZE_4M       0x00000300
+#define FENCE_SIZE_8M       0x00000400
+#define FENCE_SIZE_16M      0x00000500
+#define FENCE_SIZE_32M      0x00000600
+#define FENCE_SIZE_64M	    0x00000700
+#define I915G_FENCE_SIZE_1M       0x00000000
+#define I915G_FENCE_SIZE_2M       0x00000100
+#define I915G_FENCE_SIZE_4M       0x00000200
+#define I915G_FENCE_SIZE_8M       0x00000300
+#define I915G_FENCE_SIZE_16M      0x00000400
+#define I915G_FENCE_SIZE_32M      0x00000500
+#define I915G_FENCE_SIZE_64M	0x00000600
+#define I915G_FENCE_SIZE_128M	0x00000700
+#define FENCE_PITCH_1       0x00000000
+#define FENCE_PITCH_2       0x00000010
+#define FENCE_PITCH_4       0x00000020
+#define FENCE_PITCH_8       0x00000030
+#define FENCE_PITCH_16      0x00000040
+#define FENCE_PITCH_32      0x00000050
+#define FENCE_PITCH_64	    0x00000060
+#define FENCE_VALID         0x00000001
 
 #include <mmio.h>
 

@@ -46,6 +46,7 @@
 #include "pciaccess.h"
 
 static size_t drm_page_size;
+static int nextTile = 0;
 #define xf86DrvMsg(...) do {} while(0)
 
 static const int pitches[] = {
@@ -57,6 +58,237 @@ static const int pitches[] = {
 };
 
 static Bool I830DRIDoMappings(DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sarea);
+
+static unsigned long
+GetBestTileAlignment(unsigned long size)
+{
+   unsigned long i;
+
+   for (i = KB(512); i < size; i <<= 1)
+      ;
+
+   if (i > MB(64))
+      i = MB(64);
+
+   return i;
+}
+
+static void SetFenceRegs(const DRIDriverContext *ctx, I830Rec *pI830)
+{
+  int i;
+  unsigned char *MMIO = ctx->MMIOAddress;
+
+  for (i = 0; i < 8; i++) {
+    OUTREG(FENCE + i * 4, pI830->Fence[i]);
+    //    if (I810_DEBUG & DEBUG_VERBOSE_VGA)
+    fprintf(stderr,"Fence Register : %x\n", pI830->Fence[i]);
+  }
+}
+
+/* Tiled memory is good... really, really good...
+ *
+ * Need to make it less likely that we miss out on this - probably
+ * need to move the frontbuffer away from the 'guarenteed' alignment
+ * of the first memory segment, or perhaps allocate a discontigous
+ * framebuffer to get more alignment 'sweet spots'.
+ */
+static void
+SetFence(const DRIDriverContext *ctx, I830Rec *pI830,
+	 int nr, unsigned int start, unsigned int pitch,
+         unsigned int size)
+{
+   unsigned int val;
+   unsigned int fence_mask = 0;
+   unsigned int fence_pitch;
+
+   if (nr < 0 || nr > 7) {
+      fprintf(stderr,
+		 "SetFence: fence %d out of range\n",nr);
+      return;
+   }
+
+   pI830->Fence[nr] = 0;
+
+   if (IS_I9XX(pI830))
+   	fence_mask = ~I915G_FENCE_START_MASK;
+   else
+   	fence_mask = ~I830_FENCE_START_MASK;
+
+   if (start & fence_mask) {
+      fprintf(stderr,
+		 "SetFence: %d: start (0x%08x) is not %s aligned\n",
+		 nr, start, (IS_I9XX(pI830)) ? "1MB" : "512k");
+      return;
+   }
+
+   if (start % size) {
+      fprintf(stderr,
+		 "SetFence: %d: start (0x%08x) is not size (%dk) aligned\n",
+		 nr, start, size / 1024);
+      return;
+   }
+
+   if (pitch & 127) {
+      fprintf(stderr,
+		 "SetFence: %d: pitch (%d) not a multiple of 128 bytes\n",
+		 nr, pitch);
+      return;
+   }
+
+   val = (start | FENCE_X_MAJOR | FENCE_VALID);
+
+   if (IS_I9XX(pI830)) {
+   	switch (size) {
+	   case MB(1):
+      		val |= I915G_FENCE_SIZE_1M;
+      		break;
+   	   case MB(2):
+      		val |= I915G_FENCE_SIZE_2M;
+      		break;
+   	   case MB(4):
+      		val |= I915G_FENCE_SIZE_4M;
+      		break;
+   	   case MB(8):
+      		val |= I915G_FENCE_SIZE_8M;
+      		break;
+   	   case MB(16):
+      		val |= I915G_FENCE_SIZE_16M;
+      		break;
+   	   case MB(32):
+      		val |= I915G_FENCE_SIZE_32M;
+      		break;
+   	   case MB(64):
+      		val |= I915G_FENCE_SIZE_64M;
+      		break;
+   	   default:
+      		fprintf(stderr,
+		 "SetFence: %d: illegal size (%d kByte)\n", nr, size / 1024);
+      		return;
+   	}
+    } else {
+   	switch (size) {
+	   case KB(512):
+      		val |= FENCE_SIZE_512K;
+      		break;
+	   case MB(1):
+      		val |= FENCE_SIZE_1M;
+      		break;
+   	   case MB(2):
+      		val |= FENCE_SIZE_2M;
+      		break;
+   	   case MB(4):
+      		val |= FENCE_SIZE_4M;
+      		break;
+   	   case MB(8):
+      		val |= FENCE_SIZE_8M;
+      		break;
+   	   case MB(16):
+      		val |= FENCE_SIZE_16M;
+      		break;
+   	   case MB(32):
+      		val |= FENCE_SIZE_32M;
+      		break;
+   	   case MB(64):
+      		val |= FENCE_SIZE_64M;
+      		break;
+   	   default:
+      		fprintf(stderr,
+		 "SetFence: %d: illegal size (%d kByte)\n", nr, size / 1024);
+      		return;
+   	}
+   }
+
+   if (IS_I9XX(pI830))
+	fence_pitch = pitch / 512;
+   else
+	fence_pitch = pitch / 128;
+
+   switch (fence_pitch) {
+   case 1:
+      val |= FENCE_PITCH_1;
+      break;
+   case 2:
+      val |= FENCE_PITCH_2;
+      break;
+   case 4:
+      val |= FENCE_PITCH_4;
+      break;
+   case 8:
+      val |= FENCE_PITCH_8;
+      break;
+   case 16:
+      val |= FENCE_PITCH_16;
+      break;
+   case 32:
+      val |= FENCE_PITCH_32;
+      break;
+   case 64:
+      val |= FENCE_PITCH_64;
+      break;
+   default:
+      fprintf(stderr,
+		 "SetFence: %d: illegal pitch (%d)\n", nr, pitch);
+      return;
+   }
+
+   pI830->Fence[nr] = val;
+}
+
+static Bool
+MakeTiles(const DRIDriverContext *ctx, I830Rec *pI830, I830MemRange *pMem)
+{
+   int pitch, ntiles, i;
+
+   pitch = pMem->Pitch * ctx->cpp;
+   /*
+    * Simply try to break the region up into at most four pieces of size
+    * equal to the alignment.
+    */
+   ntiles = ROUND_TO(pMem->Size, pMem->Alignment) / pMem->Alignment;
+   if (ntiles >= 4) {
+      return FALSE;
+   }
+
+   for (i = 0; i < ntiles; i++, nextTile++) {
+     SetFence(ctx, pI830, nextTile, pMem->Start + i * pMem->Alignment,
+	       pitch, pMem->Alignment);
+   }
+   return TRUE;
+}
+
+static void I830SetupMemoryTiling(const DRIDriverContext *ctx, I830Rec *pI830)
+{
+  int i;
+
+  /* Clear out */
+  for (i = 0; i < 8; i++)
+    pI830->Fence[i] = 0;
+  
+  nextTile = 0;
+
+  if (pI830->BackBuffer.Alignment >= KB(512)) {
+    if (MakeTiles(ctx, pI830, &(pI830->BackBuffer))) {
+      fprintf(stderr,
+		 "Activating tiled memory for the back buffer.\n");
+    } else {
+      fprintf(stderr,
+		 "MakeTiles failed for the back buffer.\n");
+      pI830->allowPageFlip = FALSE;
+    }
+  }
+  
+  if (pI830->DepthBuffer.Alignment >= KB(512)) {
+    if (MakeTiles(ctx, pI830, &(pI830->DepthBuffer))) {
+      fprintf(stderr,
+		 "Activating tiled memory for the depth buffer.\n");
+    } else {
+      fprintf(stderr,
+		 "MakeTiles failed for the depth buffer.\n");
+    }
+  }
+
+  return;
+}
 
 static int I830DetectMemory(const DRIDriverContext *ctx, I830Rec *pI830)
 {
@@ -303,6 +535,8 @@ I830AllocateMemory(const DRIDriverContext *ctx, I830Rec *pI830)
   size = lineSize * lines;
   size = ROUND_TO_PAGE(size);
 
+  align = GetBestTileAlignment(size);
+
   ret = I830AllocVidMem(ctx, pI830, &pI830->FrontBuffer, &pI830->StolenPool, size, align, 0);
   if (ret < size)
   {
@@ -386,7 +620,7 @@ I830CleanupDma(const DRIDriverContext *ctx)
 
    if (drmCommandWrite(ctx->drmFD, DRM_I830_INIT,
 		       &info, sizeof(drmI830Init))) {
-     xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "I830 Dma Cleanup Failed\n");
+     fprintf(stderr, "I830 Dma Cleanup Failed\n");
       return FALSE;
    }
 
@@ -418,11 +652,11 @@ I830InitDma(const DRIDriverContext *ctx, I830Rec *pI830)
    info.pitch = ctx->shared.virtualWidth;
    info.back_pitch = pI830->BackBuffer.Pitch;
    info.depth_pitch = pI830->DepthBuffer.Pitch;
-   info.cpp = pI830->cpp;
+   info.cpp = ctx->cpp;
 
    if (drmCommandWrite(ctx->drmFD, DRM_I830_INIT,
 		       &info, sizeof(drmI830Init))) {
-      xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+      fprintf(stderr,
 		 "I830 Dma Initialization Failed\n");
       return FALSE;
    }
@@ -481,7 +715,7 @@ I830SetRingRegs(const DRIDriverContext *ctx, I830Rec *pI830)
 
    if ((long)(pI830->LpRing->mem.Start & I830_RING_START_MASK) !=
        pI830->LpRing->mem.Start) {
-      xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+      fprintf(stderr,
 		 "I830SetRingRegs: Ring buffer start (%lx) violates its "
 		 "mask (%x)\n", pI830->LpRing->mem.Start, I830_RING_START_MASK);
    }
@@ -491,7 +725,7 @@ I830SetRingRegs(const DRIDriverContext *ctx, I830Rec *pI830)
 
    if (((pI830->LpRing->mem.Size - 4096) & I830_RING_NR_PAGES) !=
        pI830->LpRing->mem.Size - 4096) {
-      xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+      fprintf(stderr,
 		 "I830SetRingRegs: Ring buffer size - 4096 (%lx) violates its "
 		 "mask (%x)\n", pI830->LpRing->mem.Size - 4096,
 		 I830_RING_NR_PAGES);
@@ -506,6 +740,8 @@ I830SetRingRegs(const DRIDriverContext *ctx, I830Rec *pI830)
    pI830->LpRing->space = pI830->LpRing->head - (pI830->LpRing->tail + 8);
    if (pI830->LpRing->space < 0)
       pI830->LpRing->space += pI830->LpRing->mem.Size;
+
+   SetFenceRegs(ctx, pI830);
    
    /* RESET THE DISPLAY PIPE TO POINT TO THE FRONTBUFFER - hacky
       hacky hacky */
@@ -523,7 +759,7 @@ I830SetParam(const DRIDriverContext *ctx, int param, int value)
    sp.value = value;
 
    if (drmCommandWrite(ctx->drmFD, DRM_I830_SETPARAM, &sp, sizeof(sp))) {
-      xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "I830 SetParam Failed\n");
+      fprintf(stderr, "I830 SetParam Failed\n");
       return FALSE;
    }
 
@@ -555,7 +791,7 @@ I830DRIMapScreenRegions(DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sar
                  (drm_handle_t)(sarea->back_offset),
                  sarea->back_size, DRM_AGP, 0,
                  &sarea->back_handle) < 0) {
-      xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+      fprintf(stderr,
                  "[drm] drmAddMap(back_handle) failed. Disabling DRI\n");
       return FALSE;
    }
@@ -566,7 +802,7 @@ I830DRIMapScreenRegions(DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sar
                  (drm_handle_t)sarea->depth_offset,
                  sarea->depth_size, DRM_AGP, 0,
                  &sarea->depth_handle) < 0) {
-      xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+      fprintf(stderr,
                  "[drm] drmAddMap(depth_handle) failed. Disabling DRI\n");
       return FALSE;
    }
@@ -577,7 +813,7 @@ I830DRIMapScreenRegions(DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sar
 		 (drm_handle_t)sarea->tex_offset,
 		 sarea->tex_size, DRM_AGP, 0,
 		 &sarea->tex_handle) < 0) {
-      xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+      fprintf(stderr,
 		 "[drm] drmAddMap(tex_handle) failed. Disabling DRI\n");
       return FALSE;
    }
@@ -622,10 +858,10 @@ I830InitTextureHeap(const DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *s
       
    if (drmCommandWrite(ctx->drmFD, DRM_I830_INIT_HEAP,
 			  &drmHeap, sizeof(drmHeap))) {
-      xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+      fprintf(stderr,
 		    "[drm] Failed to initialized agp heap manager\n");
    } else {
-      xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+      fprintf(stderr,
 		    "[drm] Initialized kernel agp heap manager, %d\n",
 		    sarea->tex_size);
 
@@ -670,18 +906,18 @@ I830DRIDoMappings(DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sarea)
 					    ctx->pciFunc);
 
       if (drmCtlInstHandler(ctx->drmFD, pI830->irq)) {
-	 xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+	 fprintf(stderr,
 		    "[drm] failure adding irq handler\n");
 	 pI830->irq = 0;
 	 return FALSE;
       }
       else
-	 xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+	 fprintf(stderr,
 		    "[drm] dma control initialized, using IRQ %d\n",
-		    pI830DRI->irq);
+		    pI830->irq);
    }
 
-   xf86DrvMsg(pScrn->scrnIndex, X_INFO, "[dri] visual configs initialized\n");
+   fprintf(stderr, "[dri] visual configs initialized\n");
 
    return TRUE;
 }
@@ -886,6 +1122,8 @@ I830ScreenInit(DRIDriverContext *ctx, I830Rec *pI830)
    err = I830DRIDoMappings(ctx, pI830, pSAREAPriv);
    if (err == FALSE)
        return FALSE;
+
+   I830SetupMemoryTiling(ctx, pI830);
 
    /* Quick hack to clear the front & back buffers.  Could also use
     * the clear ioctl to do this, but would need to setup hw state
