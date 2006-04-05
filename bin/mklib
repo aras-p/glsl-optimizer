@@ -276,9 +276,7 @@ case $ARCH in
 	else
 	    LIBNAME="lib${LIBNAME}.so"
 	    echo "mklib: Making SunOS shared library: " ${LIBNAME}
-	    # XXX OPTS for gcc should be -shared, but that doesn't work.
-	    # Using -G does work though.
-	    OPTS="-G"
+
 	    if [ "x$LINK" = "x" ] ; then
 		# -linker was not specified, choose default linker now
 		if [ $CPLUSPLUS = 1 ] ; then
@@ -298,7 +296,27 @@ case $ARCH in
 		    LINK="ld"
 		fi
 	    fi
-	    echo "mklib: linker is" ${LINK} ${OPTS}
+
+	    # linker options
+	    if [ ${LINK} = "ld" ] ; then
+		# SunOS linker, -G to make shared libs
+		OPTS="-G"
+	    else
+		# gcc linker
+		# Check if objects are 32-bit and we're running in 64-bit
+		# environment.  If so, pass -m32 flag to linker.
+		set ${OBJECTS}
+		ABI32=`file $1 | grep 32-bit`
+		if [ "${ABI32}" ] ; then
+		    OPTS="-m32 -shared -Wl,-Bdynamic"
+		else
+		    OPTS="-m64 -shared -Wl,-Bdynamic"
+		fi
+	    fi
+
+	    # for debug:
+	    #echo "mklib: linker is" ${LINK} ${OPTS}
+
 	    rm -f ${LIBNAME}.${MAJOR} ${LIBNAME}
 	    ${LINK} ${OPTS} -o ${LIBNAME}.${MAJOR} ${OBJECTS} ${DEPS}
 	    ln -s ${LIBNAME}.${MAJOR} ${LIBNAME}
