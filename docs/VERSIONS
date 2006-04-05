@@ -1470,3 +1470,10 @@ Mesa Version History
 	- fixed a number of GLU tesselator bugs (John Shell, bug 6339)
 	- paletted texturing was broken w/ floating point palettes (K. Schultz)
 	- lots of assorted framebuffer object bug fixes
+
+6.5.1  month, day, 2006
+    New:
+    Changes:
+    Bug fixes:
+	- fixed broken texture border handling for depth textures (bug 6498)
+
