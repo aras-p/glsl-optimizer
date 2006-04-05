@@ -53,7 +53,7 @@ extern void GLAPIENTRY
 _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers);
 
 extern void
-_mesa_drawbuffers(GLcontext *ctx, GLsizei n, const GLenum *buffers,
+_mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
                   const GLbitfield *destMask);
 
 extern void GLAPIENTRY

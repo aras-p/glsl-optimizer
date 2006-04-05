@@ -410,6 +410,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
    GLenum intFormat = GL_NONE;
    GLuint w = 0, h = 0;
    GLint i;
+   GLuint j;
 
    assert(fb->Name != 0);
 
@@ -498,14 +499,14 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
    }
 
    /* Check that all DrawBuffers are present */
-   for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
-      if (fb->ColorDrawBuffer[i] != GL_NONE) {
+   for (j = 0; j < ctx->Const.MaxDrawBuffers; j++) {
+      if (fb->ColorDrawBuffer[j] != GL_NONE) {
          const struct gl_renderbuffer_attachment *att
-            = _mesa_get_attachment(ctx, fb, fb->ColorDrawBuffer[i]);
+            = _mesa_get_attachment(ctx, fb, fb->ColorDrawBuffer[j]);
          assert(att);
          if (att->Type == GL_NONE) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT;
-            fbo_incomplete("missing drawbuffer", i);
+            fbo_incomplete("missing drawbuffer", j);
             return;
          }
       }

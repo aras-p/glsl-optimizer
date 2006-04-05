@@ -141,6 +141,7 @@ struct gl_framebuffer *
 _mesa_new_framebuffer(GLcontext *ctx, GLuint name)
 {
    struct gl_framebuffer *fb;
+   (void) ctx;
    assert(name != 0);
    fb = CALLOC_STRUCT(gl_framebuffer);
    if (fb) {
@@ -581,6 +582,7 @@ update_color_draw_buffers(GLcontext *ctx, struct gl_framebuffer *fb)
 static void
 update_color_read_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 {
+   (void) ctx;
    if (fb->_ColorReadBufferIndex == -1) {
       fb->_ColorReadBuffer = NULL; /* legal! */
    }

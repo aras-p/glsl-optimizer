@@ -248,7 +248,7 @@ MatchInstruction(const GLubyte *token)
          return result;
       }
    }
-   result.opcode = (enum prog_opcode) -1;
+   result.opcode = MAX_OPCODE; /* i.e. invalid instruction */
    return result;
 }
 
@@ -1320,7 +1320,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
 
          /* try to find matching instuction */
          instMatch = MatchInstruction(token);
-         if (instMatch.opcode < 0) {
+         if (instMatch.opcode >= MAX_OPCODE) {
             /* bad instruction name */
             RETURN_ERROR2("Unexpected token: ", token);
          }

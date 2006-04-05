@@ -48,6 +48,10 @@
 static void *
 nop_get_pointer(GLcontext *ctx, struct gl_renderbuffer *rb, GLint x, GLint y)
 {
+   (void) ctx;
+   (void) rb;
+   (void) x;
+   (void) y;
    return NULL;
 }
 
@@ -81,6 +85,8 @@ alloc_wrapper_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
    /* just pass this on to the wrapped renderbuffer */
    struct gl_renderbuffer *dsrb = rb->Wrapped;
    GLboolean retVal;
+
+   (void) internalFormat;
 
    ASSERT(dsrb->_ActualFormat == GL_DEPTH24_STENCIL8_EXT);
 

@@ -576,8 +576,8 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
    }
 
    /* clamp width and height to the implementation dependent range */
-   width  = CLAMP(width,  1, ctx->Const.MaxViewportWidth);
-   height = CLAMP(height, 1, ctx->Const.MaxViewportHeight);
+   width  = CLAMP(width,  1, (GLsizei) ctx->Const.MaxViewportWidth);
+   height = CLAMP(height, 1, (GLsizei) ctx->Const.MaxViewportHeight);
 
    ctx->Viewport.X = x;
    ctx->Viewport.Width = width;

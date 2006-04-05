@@ -193,10 +193,10 @@ static GLbitfield
 supported_buffer_bitmask(const GLcontext *ctx, GLuint framebufferID)
 {
    GLbitfield mask = 0x0;
-   GLint i;
 
    if (framebufferID > 0) {
       /* A user-created renderbuffer */
+      GLuint i;
       ASSERT(ctx->Extensions.EXT_framebuffer_object);
       for (i = 0; i < ctx->Const.MaxColorAttachments; i++) {
          mask |= (BUFFER_BIT_COLOR0 << i);
@@ -204,6 +204,7 @@ supported_buffer_bitmask(const GLcontext *ctx, GLuint framebufferID)
    }
    else {
       /* A window system renderbuffer */
+      GLint i;
       mask = BUFFER_BIT_FRONT_LEFT; /* always have this */
       if (ctx->Visual.stereoMode) {
          mask |= BUFFER_BIT_FRONT_RIGHT;
@@ -485,11 +486,11 @@ set_color_output(GLcontext *ctx, GLuint output, GLenum buffer,
  *                  BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT).
  */
 void
-_mesa_drawbuffers(GLcontext *ctx, GLsizei n, const GLenum *buffers,
+_mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
                   const GLbitfield *destMask)
 {
    GLbitfield mask[MAX_DRAW_BUFFERS];
-   GLint output;
+   GLuint output;
 
    if (!destMask) {
       /* compute destMask values now */
