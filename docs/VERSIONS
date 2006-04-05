@@ -1476,4 +1476,5 @@ Mesa Version History
     Changes:
     Bug fixes:
 	- fixed broken texture border handling for depth textures (bug 6498)
-
+	- removed the test for duplicated framebuffer attachments, per
+	  version 117 of the GL_EXT_framebuffer_object specification
