@@ -534,6 +534,8 @@ SpecialKey(int key, int x, int y)
 static void
 Init(void)
 {
+   static const GLfloat borderColor[4] = {1.0, 0.0, 0.0, 0.0};
+
 #if defined(GL_ARB_depth_texture) && defined(GL_ARB_shadow)
    if (!glutExtensionSupported("GL_ARB_depth_texture") ||
        !glutExtensionSupported("GL_ARB_shadow")) {
@@ -552,9 +554,11 @@ Init(void)
    HaveEXTshadowFuncs = glutExtensionSupported("GL_EXT_shadow_funcs");
 
    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP);
    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+   glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 #if defined(GL_ARB_shadow)
