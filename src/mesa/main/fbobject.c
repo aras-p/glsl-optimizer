@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -523,26 +523,6 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          return;
       }
    }
-
-   /* Check if any renderbuffer is attached more than once.
-    * Note that there's one exception: a GL_DEPTH_STENCIL renderbuffer can be
-    * bound to both the stencil and depth attachment points at the same time.
-    */
-   for (i = 0; i < BUFFER_COUNT - 1; i++) {
-      struct gl_renderbuffer *rb_i = fb->Attachment[i].Renderbuffer;
-      if (rb_i) {
-         GLint j;
-         for (j = i + 1; j < BUFFER_COUNT; j++) {
-            struct gl_renderbuffer *rb_j = fb->Attachment[j].Renderbuffer;
-            if (rb_i == rb_j && rb_i->_BaseFormat != GL_DEPTH_STENCIL_EXT) {
-               fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT_EXT;
-               fbo_incomplete("multiply bound renderbuffer", -1);
-               return;
-            }
-         }
-      }
-   }
-
 
    if (numImages == 0) {
       fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT;
