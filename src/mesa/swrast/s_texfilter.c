@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1037,6 +1037,8 @@ sample_2d_linear_repeat(GLcontext *ctx,
    GLfloat u, v;
    GLfloat a, b;
    GLchan t00[4], t10[4], t01[4], t11[4]; /* sampled texel colors */
+
+   (void) ctx;
 
    ASSERT(tObj->WrapS == GL_REPEAT);
    ASSERT(tObj->WrapT == GL_REPEAT);
@@ -2239,8 +2241,8 @@ sample_depth_texture( GLcontext *ctx,
 {
    const GLint baseLevel = tObj->BaseLevel;
    const struct gl_texture_image *img = tObj->Image[0][baseLevel];
-   const GLuint width = img->Width;
-   const GLuint height = img->Height;
+   const GLint width = img->Width;
+   const GLint height = img->Height;
    GLchan ambient;
    GLenum function;
    GLchan result;
@@ -2285,7 +2287,12 @@ sample_depth_texture( GLcontext *ctx,
          /* XXX fix for texture rectangle! */
          COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoords[i][0], width, col);
          COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapT, texcoords[i][1], height, row);
-         img->FetchTexelf(img, col, row, 0, &depthSample);
+         if (col >= 0 && row >= 0 && col < width && row < height) {
+            img->FetchTexelf(img, col, row, 0, &depthSample);
+         }
+         else {
+            depthSample = tObj->BorderColor[0];
+         }
 
          switch (function) {
          case GL_LEQUAL:
@@ -2373,25 +2380,25 @@ sample_depth_texture( GLcontext *ctx,
 
          /* get four depth samples from the texture */
          if (useBorderTexel & (I0BIT | J0BIT)) {
-            depth00 = 1.0;
+            depth00 = tObj->BorderColor[0];
          }
          else {
             img->FetchTexelf(img, i0, j0, 0, &depth00);
          }
          if (useBorderTexel & (I1BIT | J0BIT)) {
-            depth10 = 1.0;
+            depth10 = tObj->BorderColor[0];
          }
          else {
             img->FetchTexelf(img, i1, j0, 0, &depth10);
          }
          if (useBorderTexel & (I0BIT | J1BIT)) {
-            depth01 = 1.0;
+            depth01 = tObj->BorderColor[0];
          }
          else {
             img->FetchTexelf(img, i0, j1, 0, &depth01);
          }
          if (useBorderTexel & (I1BIT | J1BIT)) {
-            depth11 = 1.0;
+            depth11 = tObj->BorderColor[0];
          }
          else {
             img->FetchTexelf(img, i1, j1, 0, &depth11);
