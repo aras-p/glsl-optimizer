@@ -1,13 +1,16 @@
 /*
  * Shadow demo using the GL_ARB_depth_texture, GL_ARB_shadow and
- * GL_ARB_shadow_ambient extensions (or the old SGIX extensions).
+ * GL_ARB_shadow_ambient extensions.
  *
  * Brian Paul
  * 19 Feb 2001
  *
  * Added GL_EXT_shadow_funcs support on 23 March 2002
+ * Added GL_EXT_packed_depth_stencil support on 15 March 2006.
+ * Added GL_EXT_framebuffer_object support on 27 March 2006.
+ * Removed old SGIX extension support on 5 April 2006.
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,19 +30,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
+#define GL_GLEXT_PROTOTYPES
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <GL/glut.h>
 #include "showbuffer.h"
-
-#if 0 /* change to 1 if you want to use the old SGIX extensions */
-#undef GL_ARB_depth_texture
-#undef GL_ARB_shadow
-#undef GL_ARB_shadow_ambient
-#endif
 
 #define DEG_TO_RAD (3.14159 / 180.0)
 
@@ -64,10 +61,19 @@ static GLboolean LinearFilter = GL_FALSE;
 
 static GLfloat Bias = -0.06;
 
-static GLboolean Anim = GL_TRUE;
+static GLboolean Anim = GL_FALSE;
 
+static GLboolean NeedNewShadowMap = GL_FALSE;
+static GLuint ShadowTexture, GrayTexture;
+static GLuint ShadowFBO;
+
+static GLboolean HaveFBO = GL_FALSE;
+static GLboolean UseFBO = GL_FALSE;
+static GLboolean HavePackedDepthStencil = GL_FALSE;
 static GLboolean UsePackedDepthStencil = GL_FALSE;
 static GLboolean HaveEXTshadowFuncs = GL_FALSE;
+static GLboolean HaveShadowAmbient = GL_FALSE;
+
 static GLint Operator = 0;
 static const GLenum OperatorFunc[8] = {
    GL_LEQUAL, GL_LESS, GL_GEQUAL, GL_GREATER,
@@ -78,7 +84,7 @@ static const char *OperatorName[8] = {
 
 
 static GLuint DisplayMode;
-#define SHOW_NORMAL         0
+#define SHOW_SHADOWS        0
 #define SHOW_DEPTH_IMAGE    1
 #define SHOW_DEPTH_MAPPING  2
 #define SHOW_DISTANCE       3
@@ -89,6 +95,7 @@ static void
 DrawScene(void)
 {
    GLfloat k = 6;
+
    /* sphere */
    glPushMatrix();
    glTranslatef(1.6, 2.2, 2.7);
@@ -200,9 +207,9 @@ EnableDistanceTexgen(const GLfloat lightPos[4], const GLfloat lightDir[3],
    /* nearPoint = point on light direction vector which intersects the
     * near plane of the light frustum.
     */
-   nearPoint[0] = LightPos[0] + lightDir[0] / m * lightNear;
-   nearPoint[1] = LightPos[1] + lightDir[1] / m * lightNear;
-   nearPoint[2] = LightPos[2] + lightDir[2] / m * lightNear;
+   nearPoint[0] = lightPos[0] + lightDir[0] / m * lightNear;
+   nearPoint[1] = lightPos[1] + lightDir[1] / m * lightNear;
+   nearPoint[2] = lightPos[2] + lightDir[2] / m * lightNear;
 
    sPlane[0] = lightDir[0] / d / m;
    sPlane[1] = lightDir[1] / d / m;
@@ -242,20 +249,43 @@ ComputeLightPos(GLfloat dist, GLfloat latitude, GLfloat longitude,
 }
 
 
+/**
+ * Render the shadow map / depth texture.
+ * The result will be in the texture object named ShadowTexture.
+ */
 static void
-Display(void)
+RenderShadowMap(void)
 {
-   GLfloat ar = (GLfloat) WindowWidth / (GLfloat) WindowHeight;
-   GLfloat d;
-   GLenum error;
+   GLenum depthFormat; /* GL_DEPTH_COMPONENT or GL_DEPTH_STENCIL_EXT */
+   GLenum depthType; /* GL_UNSIGNED_INT_24_8_EXT or GL_UNSIGNED_INT */
+   float d;
 
-   ComputeLightPos(LightDist, LightLatitude, LightLongitude,
-                   LightPos, SpotDir);
-   /*
-    * Step 1: render scene from point of view of the light source
-    */
+   if (WindowWidth >= 1024 && WindowHeight >= 1024) {
+      ShadowTexWidth = ShadowTexHeight = 1024;
+   }
+   else if (WindowWidth >= 512 && WindowHeight >= 512) {
+      ShadowTexWidth = ShadowTexHeight = 512;
+   }
+   else if (WindowWidth >= 256 && WindowHeight >= 256) {
+      ShadowTexWidth = ShadowTexHeight = 256;
+   }
+   else {
+      ShadowTexWidth = ShadowTexHeight = 128;
+   }
+   printf("Rendering %d x %d depth texture\n", ShadowTexWidth, ShadowTexHeight);
+
+   if (UsePackedDepthStencil) {
+      depthFormat = GL_DEPTH_STENCIL_EXT;
+      depthType = GL_UNSIGNED_INT_24_8_EXT;
+   }
+   else {
+      depthFormat = GL_DEPTH_COMPONENT;
+      depthType = GL_UNSIGNED_INT;
+   }
+
    /* compute frustum to enclose spot light cone */
    d = ShadowNear * tan(SpotAngle);
+
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
    glFrustum(-d, d, -d, d, ShadowNear, ShadowFar);
@@ -265,73 +295,145 @@ Display(void)
              0, 0, 0, /* target */
              0, 1, 0); /* up */
 
+   if (UseFBO) {
+      glTexImage2D(GL_TEXTURE_2D, 0, depthFormat,
+                   ShadowTexWidth, ShadowTexHeight, 0,
+                   depthFormat, depthType, NULL);
+      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, ShadowFBO);
+      glDrawBuffer(GL_NONE);
+      glReadBuffer(GL_NONE);
+      assert(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT)
+             == GL_FRAMEBUFFER_COMPLETE_EXT);
+   }
+
+   assert(!glIsEnabled(GL_TEXTURE_1D));
+   assert(!glIsEnabled(GL_TEXTURE_2D));
+
    glViewport(0, 0, ShadowTexWidth, ShadowTexHeight);
-   glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+   glClear(GL_DEPTH_BUFFER_BIT);
+   glEnable(GL_DEPTH_TEST);
    DrawScene();
 
-   /*
-    * Step 2: copy depth buffer into texture map
-    */
-   if (DisplayMode == SHOW_DEPTH_MAPPING) {
-      /* load depth image as gray-scale luminance texture */
-      if (UsePackedDepthStencil) {
-         GLuint *depth = (GLuint *) malloc(ShadowTexWidth * ShadowTexHeight
-                                           * sizeof(GLuint));
+   if (UseFBO) {
+      /* all done! */
+      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+   }
+   else {
+      /*
+       * copy depth buffer into the texture map
+       */
+      if (DisplayMode == SHOW_DEPTH_MAPPING) {
+         /* load depth image as gray-scale luminance texture */
+         GLuint *depth = (GLuint *)
+            malloc(ShadowTexWidth * ShadowTexHeight * sizeof(GLuint));
          assert(depth);
          glReadPixels(0, 0, ShadowTexWidth, ShadowTexHeight,
-                      GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT, depth);
+                      depthFormat, depthType, depth);
          glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,
                       ShadowTexWidth, ShadowTexHeight, 0,
                       GL_LUMINANCE, GL_UNSIGNED_INT, depth);
          free(depth);
       }
       else {
-         GLfloat *depth = (GLfloat *) malloc(ShadowTexWidth * ShadowTexHeight
-                                             * sizeof(GLfloat));
-         assert(depth);
-         glReadPixels(0, 0, ShadowTexWidth, ShadowTexHeight,
-                      GL_DEPTH_COMPONENT, GL_FLOAT, depth);
-         glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,
-                      ShadowTexWidth, ShadowTexHeight, 0,
-                      GL_LUMINANCE, GL_FLOAT, depth);
-         free(depth);
+         /* The normal shadow case - a real depth texture */
+         glCopyTexImage2D(GL_TEXTURE_2D, 0, depthFormat,
+                          0, 0, ShadowTexWidth, ShadowTexHeight, 0);
+         if (UsePackedDepthStencil) {
+            /* debug check */
+            GLint intFormat;
+            glGetTexLevelParameteriv(GL_TEXTURE_2D, 0,
+                                     GL_TEXTURE_INTERNAL_FORMAT, &intFormat);
+            assert(intFormat == GL_DEPTH_STENCIL_EXT);
+         }
       }
    }
-   else {
-      /* The normal shadow case */
-      if (UsePackedDepthStencil) {
-         GLint intFormat;
-         glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_STENCIL_EXT,
-                          0, 0, ShadowTexWidth, ShadowTexHeight, 0);
-         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0,
-                                  GL_TEXTURE_INTERNAL_FORMAT, &intFormat);
-         assert(intFormat == GL_DEPTH_STENCIL_EXT);
-      }
-      else {
-         glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-                          0, 0, ShadowTexWidth, ShadowTexHeight, 0);
-      }
+}
+
+
+/**
+ * Show the shadow map as a grayscale image.
+ */
+static void
+ShowShadowMap(void)
+{
+   glClear(GL_COLOR_BUFFER_BIT);
+
+   glMatrixMode(GL_TEXTURE);
+   glLoadIdentity();
+
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   glOrtho(0, WindowWidth, 0, WindowHeight, -1, 1);
+
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+
+   glDisable(GL_DEPTH_TEST);
+   glDisable(GL_LIGHTING);
+
+   glEnable(GL_TEXTURE_2D);
+
+   DisableTexgen();
+
+   /* interpret texture's depth values as luminance values */
+#if defined(GL_ARB_shadow)
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+   glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+#endif
+   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+   glBegin(GL_POLYGON);
+   glTexCoord2f(0, 0);  glVertex2f(0, 0);
+   glTexCoord2f(1, 0);  glVertex2f(ShadowTexWidth, 0);
+   glTexCoord2f(1, 1);  glVertex2f(ShadowTexWidth, ShadowTexHeight);
+   glTexCoord2f(0, 1);  glVertex2f(0, ShadowTexHeight);
+   glEnd();
+
+   glDisable(GL_TEXTURE_2D);
+   glEnable(GL_DEPTH_TEST);
+   glEnable(GL_LIGHTING);
+}
+
+
+/**
+ * Redraw window image
+ */
+static void
+Display(void)
+{
+   GLenum error;
+
+   ComputeLightPos(LightDist, LightLatitude, LightLongitude,
+                   LightPos, SpotDir);
+
+   if (NeedNewShadowMap) {
+      RenderShadowMap();
+      NeedNewShadowMap = GL_FALSE;
    }
 
-   /*
-    * Step 3: render scene from point of view of the camera
-    */
    glViewport(0, 0, WindowWidth, WindowHeight);
    if (DisplayMode == SHOW_DEPTH_IMAGE) {
-      ShowDepthBuffer(WindowWidth, WindowHeight, 0, 1);
+      ShowShadowMap();
    }
    else {
+      /* prepare to draw scene from camera's view */
+      const GLfloat ar = (GLfloat) WindowWidth / (GLfloat) WindowHeight;
+
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
       glFrustum(-ar, ar, -1.0, 1.0, 4.0, 50.0);
+
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
       glTranslatef(0.0, 0.0, -22.0);
       glRotatef(Xrot, 1, 0, 0);
       glRotatef(Yrot, 0, 1, 0);
       glRotatef(Zrot, 0, 0, 1);
+
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
       glLightfv(GL_LIGHT0, GL_POSITION, LightPos);
+
       if (LinearFilter) {
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -340,11 +442,10 @@ Display(void)
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       }
+
       if (DisplayMode == SHOW_DEPTH_MAPPING) {
 #if defined(GL_ARB_shadow)
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-#elif defined(GL_SGIX_shadow)
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_SGIX, GL_FALSE);
 #endif
          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
          glEnable(GL_TEXTURE_2D);
@@ -358,21 +459,22 @@ Display(void)
          EnableDistanceTexgen(LightPos, SpotDir, ShadowNear+Bias, ShadowFar);
          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
          glEnable(GL_TEXTURE_1D);
+         assert(!glIsEnabled(GL_TEXTURE_2D));
       }
       else {
-         assert(DisplayMode == SHOW_NORMAL);
+         assert(DisplayMode == SHOW_SHADOWS);
 #if defined(GL_ARB_shadow)
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB,
                          GL_COMPARE_R_TO_TEXTURE_ARB);
-#elif defined(GL_SGIX_shadow)
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_SGIX, GL_TRUE);
 #endif
          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
          glEnable(GL_TEXTURE_2D);
          MakeShadowMatrix(LightPos, SpotDir, SpotAngle, ShadowNear, ShadowFar);
          EnableIdentityTexgen();
       }
+
       DrawScene();
+
       DisableTexgen();
       glDisable(GL_TEXTURE_1D);
       glDisable(GL_TEXTURE_2D);
@@ -392,16 +494,7 @@ Reshape(int width, int height)
 {
    WindowWidth = width;
    WindowHeight = height;
-   if (width >= 512 && height >= 512) {
-      ShadowTexWidth = ShadowTexHeight = 512;
-   }
-   else if (width >= 256 && height >= 256) {
-      ShadowTexWidth = ShadowTexHeight = 256;
-   }
-   else {
-      ShadowTexWidth = ShadowTexHeight = 128;
-   }
-   printf("Using %d x %d depth texture\n", ShadowTexWidth, ShadowTexHeight);
+   NeedNewShadowMap = GL_TRUE;
 }
 
 
@@ -456,8 +549,9 @@ Key(unsigned char key, int x, int y)
          DisplayMode = SHOW_DEPTH_MAPPING;
          break;
       case 'n':
+      case 's':
       case ' ':
-         DisplayMode = SHOW_NORMAL;
+         DisplayMode = SHOW_SHADOWS;
          break;
       case 'o':
          if (HaveEXTshadowFuncs) {
@@ -465,19 +559,24 @@ Key(unsigned char key, int x, int y)
             if (Operator >= 8)
                Operator = 0;
             printf("Operator: %s\n", OperatorName[Operator]);
+#if defined(GL_ARB_shadow)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB,
                             OperatorFunc[Operator]);
+#endif
          }
          break;
       case 'p':
          UsePackedDepthStencil = !UsePackedDepthStencil;
-         if (UsePackedDepthStencil
-             && !glutExtensionSupported("GL_EXT_packed_depth_stencil")) {
+         if (UsePackedDepthStencil && !HavePackedDepthStencil) {
             printf("Sorry, GL_EXT_packed_depth_stencil not supported\n");
             UsePackedDepthStencil = GL_FALSE;
          }
          else {
             printf("Use GL_DEPTH_STENCIL_EXT: %d\n", UsePackedDepthStencil);
+            /* Don't really need to regenerate shadow map texture, but do so
+             * to exercise more code more often.
+             */
+            NeedNewShadowMap = GL_TRUE;
          }
          break;
       case 'z':
@@ -527,6 +626,9 @@ SpecialKey(int key, int x, int y)
             Yrot -= step;
          break;
    }
+   if (mod)
+      NeedNewShadowMap = GL_TRUE;
+
    glutPostRedisplay();
 }
 
@@ -539,25 +641,39 @@ Init(void)
 #if defined(GL_ARB_depth_texture) && defined(GL_ARB_shadow)
    if (!glutExtensionSupported("GL_ARB_depth_texture") ||
        !glutExtensionSupported("GL_ARB_shadow")) {
+#else
+   if (1) {
+#endif
       printf("Sorry, this demo requires the GL_ARB_depth_texture and GL_ARB_shadow extensions\n");
       exit(1);
    }
    printf("Using GL_ARB_depth_texture and GL_ARB_shadow\n");
-#elif defined(GL_SGIX_depth_texture) && defined(GL_SGIX_shadow)
-   if (!glutExtensionSupported("GL_SGIX_depth_texture") ||
-       !glutExtensionSupported("GL_SGIX_shadow")) {
-      printf("Sorry, this demo requires the GL_SGIX_depth_texture and GL_SGIX_shadow extensions\n");
-      exit(1);
+
+#if defined(GL_ARB_shadow_ambient)
+   HaveShadowAmbient = glutExtensionSupported("GL_ARB_shadow_ambient");
+   if (HaveShadowAmbient) {
+      printf("and GL_ARB_shadow_ambient\n");
    }
-   printf("Using GL_SGIX_depth_texture and GL_SGIX_shadow\n");
 #endif
+
    HaveEXTshadowFuncs = glutExtensionSupported("GL_EXT_shadow_funcs");
 
-   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   HavePackedDepthStencil = glutExtensionSupported("GL_EXT_packed_depth_stencil");
+   UsePackedDepthStencil = HavePackedDepthStencil;
 
+#if defined(GL_EXT_framebuffer_object)
+   HaveFBO = glutExtensionSupported("GL_EXT_framebuffer_object");
+   UseFBO = HaveFBO;
+   if (UseFBO) {
+      printf("Using GL_EXT_framebuffer_object\n");
+   }
+#endif
+
+   /*
+    * Set up the 2D shadow map texture
+    */
+   glGenTextures(1, &ShadowTexture);
+   glBindTexture(GL_TEXTURE_2D, ShadowTexture);
    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
@@ -565,24 +681,36 @@ Init(void)
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB,
                    GL_COMPARE_R_TO_TEXTURE_ARB);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-#elif defined(GL_SGIX_shadow)
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_OPERATOR_SGIX,
-                   GL_TEXTURE_LEQUAL_R_SGIX);
 #endif
-
+   if (HaveShadowAmbient) {
 #if defined(GL_ARB_shadow_ambient)
-   if (glutExtensionSupported("GL_ARB_shadow_ambient")) {
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, 0.3);
-      printf("and GL_ARB_shadow_ambient\n");
+#endif
    }
-#elif defined(GL_SGIX_shadow_ambient)
-   if (glutExtensionSupported("GL_SGIX_shadow_ambient")) {
-      glTexParameterf(GL_TEXTURE_2D, GL_SHADOW_AMBIENT_SGIX, 0.3);
-      printf("and GL_SGIX_shadow_ambient\n");
+
+#if defined(GL_EXT_framebuffer_object)
+   if (UseFBO) {
+      glGenFramebuffersEXT(1, &ShadowFBO);
+      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, ShadowFBO);
+      glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,
+                                   GL_COLOR_ATTACHMENT0_EXT,
+                                   GL_RENDERBUFFER_EXT, 0);
+      glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
+                                GL_TEXTURE_2D, ShadowTexture, 0);
+
+      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
    }
 #endif
 
-   /* setup 1-D grayscale texture image for SHOW_DISTANCE mode */
+   /*
+    * Setup 1-D grayscale texture image for SHOW_DISTANCE mode
+    */
+   glGenTextures(1, &GrayTexture);
+   glBindTexture(GL_TEXTURE_1D, GrayTexture);
+   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
    {
       GLuint i;
       GLubyte image[256];
