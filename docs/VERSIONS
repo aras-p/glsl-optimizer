@@ -1479,3 +1479,4 @@ Mesa Version History
 	- removed the test for duplicated framebuffer attachments, per
 	  version 117 of the GL_EXT_framebuffer_object specification
 	- fixed a few render-to-texture bugs, including render to depth texture
+	- clipping of lines against user-defined clip planes was broken (6512)
