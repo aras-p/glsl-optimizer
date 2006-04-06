@@ -1193,7 +1193,7 @@ do_ndc_cliptest(GLcontext *ctx, struct arb_vp_machine *m)
     * the clipmask.
     */
    m->ormask = 0;
-   m->andmask = CLIP_ALL_BITS;
+   m->andmask = CLIP_FRUSTUM_BITS;
 
    if (tnl->NeedNdcCoords) {
       VB->NdcPtr =

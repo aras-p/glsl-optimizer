@@ -245,7 +245,7 @@ static int test_cliptest_function( clip_func func, int np,
    ref->flags = 0;
 
    dco = rco = 0;
-   dca = rca = CLIP_ALL_BITS;
+   dca = rca = CLIP_FRUSTUM_BITS;
 
    ref_cliptest[psize]( source, ref, rm, &rco, &rca );
 

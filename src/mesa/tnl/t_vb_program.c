@@ -176,7 +176,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
     * the clipmask.
     */
    store->ormask = 0;
-   store->andmask = CLIP_ALL_BITS;
+   store->andmask = CLIP_FRUSTUM_BITS;
 
    if (tnl->NeedNdcCoords) {
       VB->NdcPtr =

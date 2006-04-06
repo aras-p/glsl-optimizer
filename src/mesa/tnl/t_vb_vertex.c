@@ -168,7 +168,7 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
     * the clipmask.
     */
    store->ormask = 0;
-   store->andmask = CLIP_ALL_BITS;
+   store->andmask = CLIP_FRUSTUM_BITS;
 
    if (tnl->NeedNdcCoords) {
       VB->NdcPtr =

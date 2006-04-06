@@ -227,7 +227,7 @@ static GLboolean run_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stag
 	vb->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &store->outputs[VERT_RESULT_PSIZ];
 
 	store->ormask = 0;
-	store->andmask = CLIP_ALL_BITS;
+	store->andmask = CLIP_FRUSTUM_BITS;
 
 	if (tnl->NeedNdcCoords)
 	{

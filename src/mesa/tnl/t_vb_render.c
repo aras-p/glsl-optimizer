@@ -73,7 +73,8 @@
 #define EDGEFLAG_SET(idx, val) VB->EdgeFlag[idx] = val
 
 
-#define CLIPMASK (CLIP_ALL_BITS|CLIP_CULL_BIT)
+/* This does NOT include the CLIP_USER_BIT! */
+#define CLIPMASK (CLIP_FRUSTUM_BITS | CLIP_CULL_BIT)
 
 
 /* Vertices, with the possibility of clipping.
@@ -85,6 +86,7 @@
 do {						\
    GLubyte c1 = mask[v1], c2 = mask[v2];	\
    GLubyte ormask = c1|c2;			\
+   printf("0x%x 0x%x 0x%x\n", c1, c2, CLIPMASK);\
    if (!ormask)					\
       LineFunc( ctx, v1, v2 );			\
    else if (!(c1 & c2 & CLIPMASK))			\
