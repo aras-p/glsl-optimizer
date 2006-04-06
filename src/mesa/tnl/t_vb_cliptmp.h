@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,9 +28,9 @@
 
 #define CLIP_DOTPROD(K, A, B, C, D) X(K)*A + Y(K)*B + Z(K)*C + W(K)*D
 
-#define POLY_CLIP( PLANE, A, B, C, D )					\
+#define POLY_CLIP( PLANE_BIT, A, B, C, D )				\
 do {									\
-   if (mask & PLANE) {							\
+   if (mask & PLANE_BIT) {						\
       GLuint idxPrev = inlist[0];					\
       GLfloat dpPrev = CLIP_DOTPROD(idxPrev, A, B, C, D );		\
       GLuint outcount = 0;						\
@@ -81,29 +80,34 @@ do {									\
 } while (0)
 
 
-#define LINE_CLIP(PLANE, A, B, C, D )					\
+#define LINE_CLIP(PLANE_BIT, A, B, C, D )				\
 do {									\
-   if (mask & PLANE) {							\
-      GLfloat dp0 = CLIP_DOTPROD( v0, A, B, C, D );			\
-      GLfloat dp1 = CLIP_DOTPROD( v1, A, B, C, D );			\
-									\
-      /* For regular clipping, we know from the clipmask that one of	\
-       * these must be negative (otherwise we wouldn't be here).  For	\
-       * userclip, there is only a single bit for all active planes,	\
-       * so we can end up here when there is nothing to do, hence the	\
-       * second IS_NEGATIVE() test:					\
+   if (mask & PLANE_BIT) {						\
+      const GLfloat dp0 = CLIP_DOTPROD( v0, A, B, C, D );		\
+      const GLfloat dp1 = CLIP_DOTPROD( v1, A, B, C, D );		\
+      const GLboolean neg_dp0 = IS_NEGATIVE(dp0);			\
+      const GLboolean neg_dp1 = IS_NEGATIVE(dp1);			\
+      									\
+      /* For regular clipping, we know from the clipmask that one	\
+       * (or both) of these must be negative (otherwise we wouldn't	\
+       * be here).							\
+       * For userclip, there is only a single bit for all active	\
+       * planes, so we can end up here when there is nothing to do,	\
+       * hence the second IS_NEGATIVE() test:				\
        */								\
-      if (IS_NEGATIVE(dp1)) {						\
+      if (neg_dp0 && neg_dp1)						\
+         return; /* both vertices outside clip plane: discard */	\
+									\
+      if (neg_dp1) {							\
 	 GLfloat t = dp1 / (dp1 - dp0);					\
 	 if (t > t1) t1 = t;						\
-      } else if (IS_NEGATIVE(dp0)) {					\
+      } else if (neg_dp0) {						\
 	 GLfloat t = dp0 / (dp0 - dp1);					\
 	 if (t > t0) t0 = t;						\
       }									\
-									\
       if (t0 + t1 >= 1.0)						\
-	 return;							\
-  }									\
+	 return; /* discard */						\
+   }									\
 } while (0)
 
 
@@ -122,7 +126,6 @@ TAG(clip_line)( GLcontext *ctx, GLuint v0, GLuint v1, GLubyte mask )
    GLfloat t1 = 0;
    GLuint p;
 
-
    if (mask & 0x3f) {
       LINE_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
       LINE_CLIP( CLIP_LEFT_BIT,    1,  0,  0, 1 );
@@ -133,7 +136,7 @@ TAG(clip_line)( GLcontext *ctx, GLuint v0, GLuint v1, GLubyte mask )
    }
 
    if (mask & CLIP_USER_BIT) {
-      for (p=0;p<MAX_CLIP_PLANES;p++) {
+      for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
 	 if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
             const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
             const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
@@ -161,6 +164,7 @@ TAG(clip_line)( GLcontext *ctx, GLuint v0, GLuint v1, GLubyte mask )
 	 tnl->Driver.Render.CopyPV( ctx, newvert, v1 );
 
       v1 = newvert;
+
       newvert++;
    }
    else
@@ -198,7 +202,7 @@ TAG(clip_tri)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte mask )
    }
 
    if (mask & CLIP_USER_BIT) {
-      for (p=0;p<MAX_CLIP_PLANES;p++) {
+      for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
          if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
             const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
             const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
@@ -249,7 +253,7 @@ TAG(clip_quad)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
    }
 
    if (mask & CLIP_USER_BIT) {
-      for (p=0;p<MAX_CLIP_PLANES;p++) {
+      for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
 	 if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
             const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
             const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
