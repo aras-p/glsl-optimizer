@@ -1271,8 +1271,6 @@ void
 _swrast_read_depth_span_uint( GLcontext *ctx, struct gl_renderbuffer *rb,
                               GLint n, GLint x, GLint y, GLuint depth[] )
 {
-   const GLfloat scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
-
    if (!rb) {
       /* really only doing this to prevent FP exceptions later */
       _mesa_bzero(depth, n * sizeof(GLfloat));
