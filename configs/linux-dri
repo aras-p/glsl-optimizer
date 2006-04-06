@@ -26,8 +26,8 @@ DEFINES = -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE \
 
 X11_INCLUDES = -I/usr/X11R6/include
 
-CFLAGS = -Wall -Wmissing-prototypes $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) \
-	$(DEFINES) $(ASM_FLAGS) -std=c99 -ffast-math 
+CFLAGS = -Wall -Wmissing-prototypes -std=c99 -ffast-math \
+	$(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) $(ASM_FLAGS)
 
 CXXFLAGS = -Wall $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES)
 
