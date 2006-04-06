@@ -456,7 +456,7 @@ static void i915SetTexImages( i915ContextPtr i915,
      textureFormat = (MAPSURF_COMPRESSED | MT_COMPRESS_FXT1);
      break;
 
-   case MESA_FORMAT_DEPTH_COMPONENT16:
+   case MESA_FORMAT_Z16:
       t->intel.texelBytes = 2;
       textureFormat = (MAPSURF_16BIT | MT_16BIT_L16);
       break;
@@ -483,7 +483,7 @@ static void i915SetTexImages( i915ContextPtr i915,
      break;
 
 #if 0
-   case MESA_FORMAT_DEPTH_COMPONENT_X8Z24:
+   case MESA_FORMAT_Z24_S8:
       t->intel.texelBytes = 4;
       textureFormat = (MAPSURF_32BIT | MT_32BIT_xL824);
       break;
