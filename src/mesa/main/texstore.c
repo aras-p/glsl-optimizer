@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -848,20 +848,21 @@ _mesa_texstore_rgba(GLcontext *ctx, GLuint dims,
 
 
 /**
- * Store a floating point depth component texture image.
+ * Store a 32-bit integer depth component texture image.
  */
 GLboolean
-_mesa_texstore_depth_component_float32(STORE_PARAMS)
+_mesa_texstore_z32(STORE_PARAMS)
 {
+   const GLfloat depthScale = (GLfloat) 0xffffffff;
    (void) dims;
-   ASSERT(dstFormat == &_mesa_texformat_depth_component_float32);
-   ASSERT(dstFormat->TexelBytes == sizeof(GLfloat));
+   ASSERT(dstFormat == &_mesa_texformat_z32);
+   ASSERT(dstFormat->TexelBytes == sizeof(GLuint));
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
        baseInternalFormat == GL_DEPTH_COMPONENT &&
        srcFormat == GL_DEPTH_COMPONENT &&
-       srcType == GL_FLOAT) {
+       srcType == GL_UNSIGNED_INT) {
       /* simple memcpy path */
       memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
@@ -882,8 +883,8 @@ _mesa_texstore_depth_component_float32(STORE_PARAMS)
             const GLvoid *src = _mesa_image_address(dims, srcPacking,
                 srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, row, 0);
             _mesa_unpack_depth_span(ctx, srcWidth,
-                                    GL_FLOAT, (GLfloat *) dstRow, 1.0F,
-                                    srcType, src, srcPacking);
+                                    GL_UNSIGNED_INT, (GLuint *) dstRow,
+                                    depthScale, srcType, src, srcPacking);
             dstRow += dstRowStride;
          }
          dstImage += dstImageStride;
@@ -897,10 +898,11 @@ _mesa_texstore_depth_component_float32(STORE_PARAMS)
  * Store a 16-bit integer depth component texture image.
  */
 GLboolean
-_mesa_texstore_depth_component16(STORE_PARAMS)
+_mesa_texstore_z16(STORE_PARAMS)
 {
+   const GLfloat depthScale = 65535.0f;
    (void) dims;
-   ASSERT(dstFormat == &_mesa_texformat_depth_component16);
+   ASSERT(dstFormat == &_mesa_texformat_z16);
    ASSERT(dstFormat->TexelBytes == sizeof(GLushort));
 
    if (!ctx->_ImageTransferState &&
@@ -929,7 +931,7 @@ _mesa_texstore_depth_component16(STORE_PARAMS)
                 srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, row, 0);
             GLushort *dst16 = (GLushort *) dstRow;
             _mesa_unpack_depth_span(ctx, srcWidth,
-                                    GL_UNSIGNED_SHORT, dst16, 65535.0F,
+                                    GL_UNSIGNED_SHORT, dst16, depthScale,
                                     srcType, src, srcPacking);
             dstRow += dstRowStride;
          }
@@ -3068,19 +3070,19 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          }
       }
       return;
-   case MESA_FORMAT_DEPTH_COMPONENT_FLOAT32:
+   case MESA_FORMAT_Z32:
       {
          GLuint i, j, k;
-         const GLfloat *rowA = (const GLfloat *) srcRowA;
-         const GLfloat *rowB = (const GLfloat *) srcRowB;
+         const GLuint *rowA = (const GLuint *) srcRowA;
+         const GLuint *rowB = (const GLuint *) srcRowB;
          GLfloat *dst = (GLfloat *) dstRow;
          for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
-            dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) * 0.25F;
+            dst[i] = rowA[j] / 4 + rowA[k] / 4 + rowB[j] / 4 + rowB[k] / 4;
          }
       }
       return;
-   case MESA_FORMAT_DEPTH_COMPONENT16:
+   case MESA_FORMAT_Z16:
       {
          GLuint i, j, k;
          const GLushort *rowA = (const GLushort *) srcRowA;

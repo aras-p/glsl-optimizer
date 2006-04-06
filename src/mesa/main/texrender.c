@@ -1,6 +1,7 @@
 
 #include "context.h"
 #include "fbobject.h"
+#include "texformat.h"
 #include "texrender.h"
 #include "renderbuffer.h"
 
@@ -43,6 +44,23 @@ texture_get_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
          trb->TexImage->FetchTexelc(trb->TexImage, x + i, y, z, rgbaOut + 4 * i);
       }
    }
+   else if (rb->DataType == GL_UNSIGNED_INT) {
+      GLuint *zValues = (GLuint *) values;
+      /*
+      const GLdouble scale = (GLdouble) 0xffffffff;
+      */
+      for (i = 0; i < count; i++) {
+         GLfloat flt;
+         trb->TexImage->FetchTexelf(trb->TexImage, x + i, y, z, &flt);
+#if 0
+         /* this should work, but doesn't (overflow due to low precision) */
+         zValues[i] = (GLuint) (flt * scale);
+#else
+         /* temporary hack */
+         zValues[i] = ((GLuint) (flt * 0xffffff)) << 8;
+#endif
+      }
+   }
    else if (rb->DataType == GL_UNSIGNED_INT_24_8_EXT) {
       GLuint *zValues = (GLuint *) values;
       for (i = 0; i < count; i++) {
@@ -71,6 +89,18 @@ texture_get_values(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
       for (i = 0; i < count; i++) {
          trb->TexImage->FetchTexelc(trb->TexImage, x[i], y[i], z,
                                     rgbaOut + 4 * i);
+      }
+   }
+   else if (rb->DataType == GL_UNSIGNED_INT) {
+      GLuint *zValues = (GLuint *) values;
+      for (i = 0; i < count; i++) {
+         GLfloat flt;
+         trb->TexImage->FetchTexelf(trb->TexImage, x[i], y[i], z, &flt);
+#if 0
+         zValues[i] = (GLuint) (flt * 0xffffffff);
+#else
+         zValues[i] = ((GLuint) (flt * 0xffffff)) << 8;
+#endif
       }
    }
    else if (rb->DataType == GL_UNSIGNED_INT_24_8_EXT) {
@@ -108,6 +138,14 @@ texture_put_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
          rgba += 4;
       }
    }
+   else if (rb->DataType == GL_UNSIGNED_INT) {
+      const GLuint *zValues = (const GLuint *) values;
+      for (i = 0; i < count; i++) {
+         if (!mask || mask[i]) {
+            trb->Store(trb->TexImage, x + i, y, z, zValues + i);
+         }
+      }
+   }
    else if (rb->DataType == GL_UNSIGNED_INT_24_8_EXT) {
       const GLuint *zValues = (const GLuint *) values;
       for (i = 0; i < count; i++) {
@@ -137,6 +175,14 @@ texture_put_mono_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
       for (i = 0; i < count; i++) {
          if (!mask || mask[i]) {
             trb->Store(trb->TexImage, x + i, y, z, rgba);
+         }
+      }
+   }
+   else if (rb->DataType == GL_UNSIGNED_INT) {
+      const GLuint zValue = *((const GLuint *) value);
+      for (i = 0; i < count; i++) {
+         if (!mask || mask[i]) {
+            trb->Store(trb->TexImage, x + i, y, z, &zValue);
          }
       }
    }
@@ -174,6 +220,14 @@ texture_put_values(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
          rgba += 4;
       }
    }
+   else if (rb->DataType == GL_UNSIGNED_INT) {
+      const GLuint *zValues = (const GLuint *) values;
+      for (i = 0; i < count; i++) {
+         if (!mask || mask[i]) {
+            trb->Store(trb->TexImage, x[i], y[i], z, zValues + i);
+         }
+      }
+   }
    else if (rb->DataType == GL_UNSIGNED_INT_24_8_EXT) {
       const GLuint *zValues = (const GLuint *) values;
       for (i = 0; i < count; i++) {
@@ -204,6 +258,14 @@ texture_put_mono_values(GLcontext *ctx, struct gl_renderbuffer *rb,
       for (i = 0; i < count; i++) {
          if (!mask || mask[i]) {
             trb->Store(trb->TexImage, x[i], y[i], z, rgba);
+         }
+      }
+   }
+   else if (rb->DataType == GL_UNSIGNED_INT) {
+      const GLuint zValue = *((const GLuint *) value);
+      for (i = 0; i < count; i++) {
+         if (!mask || mask[i]) {
+            trb->Store(trb->TexImage, x[i], y[i], z, &zValue);
          }
       }
    }
@@ -279,6 +341,7 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
    struct texture_renderbuffer *trb
       = (struct texture_renderbuffer *) att->Renderbuffer;
 
+   (void) ctx;
    ASSERT(trb);
 
    trb->TexImage = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
@@ -293,13 +356,17 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
    trb->Base.Height = trb->TexImage->Height;
    trb->Base.InternalFormat = trb->TexImage->InternalFormat;
    /* XXX may need more special cases here */
-   if (trb->TexImage->TexFormat->BaseFormat == GL_DEPTH_STENCIL_EXT) {
+   if (trb->TexImage->TexFormat->MesaFormat == MESA_FORMAT_Z24_S8) {
       trb->Base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
       trb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
    }
-   else if (trb->TexImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT) {
+   else if (trb->TexImage->TexFormat->MesaFormat == MESA_FORMAT_Z16) {
       trb->Base._ActualFormat = GL_DEPTH_COMPONENT;
-      trb->Base.DataType = GL_FLOAT;
+      trb->Base.DataType = GL_UNSIGNED_SHORT;
+   }
+   else if (trb->TexImage->TexFormat->MesaFormat == MESA_FORMAT_Z32) {
+      trb->Base._ActualFormat = GL_DEPTH_COMPONENT;
+      trb->Base.DataType = GL_UNSIGNED_INT;
    }
    else {
       trb->Base._ActualFormat = trb->TexImage->InternalFormat;
@@ -345,6 +412,8 @@ _mesa_render_texture(GLcontext *ctx,
                      struct gl_framebuffer *fb,
                      struct gl_renderbuffer_attachment *att)
 {
+   (void) fb;
+
    if (!att->Renderbuffer) {
       wrap_texture(ctx, att);
    }
@@ -360,4 +429,6 @@ _mesa_finish_render_texture(GLcontext *ctx,
    /* The renderbuffer texture wrapper will get deleted by the
     * normal mechanism for deleting renderbuffers.
     */
+   (void) ctx;
+   (void) att;
 }

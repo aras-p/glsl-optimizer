@@ -572,7 +572,7 @@ intelChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_DEPTH_COMPONENT16:
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
-      return &_mesa_texformat_depth_component16;
+      return &_mesa_texformat_z16;
 
    default:
       fprintf(stderr, "unexpected texture format %s in %s\n", 

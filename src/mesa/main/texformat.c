@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -79,6 +79,11 @@ static void fetch_null_texelf( const struct gl_texture_image *texImage,
 static void store_null_texel(struct gl_texture_image *texImage,
                              GLint i, GLint j, GLint k, const void *texel)
 {
+   (void) texImage;
+   (void) i;
+   (void) j;
+   (void) k;
+   (void) texel;
    /* no-op */
 }
 
@@ -245,53 +250,6 @@ const struct gl_texture_format _mesa_texformat_intensity = {
    store_texel_intensity		/* StoreTexel */
 };
 
-const struct gl_texture_format _mesa_texformat_depth_component_float32 = {
-   MESA_FORMAT_DEPTH_COMPONENT_FLOAT32,	/* MesaFormat */
-   GL_DEPTH_COMPONENT,			/* BaseFormat */
-   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
-   0,					/* RedBits */
-   0,					/* GreenBits */
-   0,					/* BlueBits */
-   0,					/* AlphaBits */
-   0,					/* LuminanceBits */
-   0,					/* IntensityBits */
-   0,					/* IndexBits */
-   sizeof(GLfloat) * 8,			/* DepthBits */
-   sizeof(GLfloat) * 8,			/* StencilBits */
-   sizeof(GLfloat),			/* TexelBytes */
-   _mesa_texstore_depth_component_float32,/* StoreTexImageFunc */
-   NULL,				/* FetchTexel1D */
-   NULL,				/* FetchTexel1D */
-   NULL,				/* FetchTexel1D */
-   fetch_texel_1d_f_depth_component_f32,/* FetchTexel1Df */
-   fetch_texel_2d_f_depth_component_f32,/* FetchTexel2Df */
-   fetch_texel_3d_f_depth_component_f32,/* FetchTexel3Df */
-   store_texel_depth_component_f32	/* StoreTexel */
-};
-
-const struct gl_texture_format _mesa_texformat_depth_component16 = {
-   MESA_FORMAT_DEPTH_COMPONENT16,	/* MesaFormat */
-   GL_DEPTH_COMPONENT,			/* BaseFormat */
-   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
-   0,					/* RedBits */
-   0,					/* GreenBits */
-   0,					/* BlueBits */
-   0,					/* AlphaBits */
-   0,					/* LuminanceBits */
-   0,					/* IntensityBits */
-   0,					/* IndexBits */
-   sizeof(GLushort) * 8,		/* DepthBits */
-   sizeof(GLushort) * 8,		/* StencilBits */
-   sizeof(GLushort),			/* TexelBytes */
-   _mesa_texstore_depth_component16,	/* StoreTexImageFunc */
-   NULL,				/* FetchTexel1D */
-   NULL,				/* FetchTexel1D */
-   NULL,				/* FetchTexel1D */
-   fetch_texel_1d_f_depth_component16,	/* FetchTexel1Df */
-   fetch_texel_2d_f_depth_component16,	/* FetchTexel2Df */
-   fetch_texel_3d_f_depth_component16,	/* FetchTexel3Df */
-   store_texel_depth_component16	/* StoreTexel */
-};
 
 const struct gl_texture_format _mesa_texformat_rgba_float32 = {
    MESA_FORMAT_RGBA_FLOAT32,		/* MesaFormat */
@@ -1117,6 +1075,54 @@ const struct gl_texture_format _mesa_texformat_z24_s8 = {
    store_texel_z24_s8			/* StoreTexel */
 };
 
+const struct gl_texture_format _mesa_texformat_z16 = {
+   MESA_FORMAT_Z16,			/* MesaFormat */
+   GL_DEPTH_COMPONENT,			/* BaseFormat */
+   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
+   0,					/* RedBits */
+   0,					/* GreenBits */
+   0,					/* BlueBits */
+   0,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   sizeof(GLushort) * 8,		/* DepthBits */
+   0,					/* StencilBits */
+   sizeof(GLushort),			/* TexelBytes */
+   _mesa_texstore_z16,			/* StoreTexImageFunc */
+   NULL,				/* FetchTexel1D */
+   NULL,				/* FetchTexel1D */
+   NULL,				/* FetchTexel1D */
+   fetch_texel_1d_f_z16,		/* FetchTexel1Df */
+   fetch_texel_2d_f_z16,		/* FetchTexel2Df */
+   fetch_texel_3d_f_z16,		/* FetchTexel3Df */
+   store_texel_z16			/* StoreTexel */
+};
+
+const struct gl_texture_format _mesa_texformat_z32 = {
+   MESA_FORMAT_Z32,			/* MesaFormat */
+   GL_DEPTH_COMPONENT,			/* BaseFormat */
+   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
+   0,					/* RedBits */
+   0,					/* GreenBits */
+   0,					/* BlueBits */
+   0,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   sizeof(GLuint) * 8,			/* DepthBits */
+   0,					/* StencilBits */
+   sizeof(GLuint),			/* TexelBytes */
+   _mesa_texstore_z32,			/* StoreTexImageFunc */
+   NULL,				/* FetchTexel1D */
+   NULL,				/* FetchTexel1D */
+   NULL,				/* FetchTexel1D */
+   fetch_texel_1d_f_z32,		/* FetchTexel1Df */
+   fetch_texel_2d_f_z32,		/* FetchTexel2Df */
+   fetch_texel_3d_f_z32,		/* FetchTexel3Df */
+   store_texel_z32			/* StoreTexel */
+};
+
 /*@}*/
 
 
@@ -1264,9 +1270,9 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
          case GL_DEPTH_COMPONENT:
          case GL_DEPTH_COMPONENT24_SGIX:
          case GL_DEPTH_COMPONENT32_SGIX:
-            return &_mesa_texformat_depth_component_float32;
+            return &_mesa_texformat_z32;
          case GL_DEPTH_COMPONENT16_SGIX:
-            return &_mesa_texformat_depth_component16;
+            return &_mesa_texformat_z16;
          default:
             ; /* fallthrough */
       }

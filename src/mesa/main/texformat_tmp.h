@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -234,46 +234,46 @@ static void store_texel_intensity(struct gl_texture_image *texImage,
 #endif
 
 
-/* MESA_FORMAT_DEPTH_COMPONENT_F32 *******************************************/
+/* MESA_FORMAT_Z32 ***********************************************************/
 
-/* Fetch depth texel from 1D, 2D or 3D float32 DEPTH texture,
+/* Fetch depth texel from 1D, 2D or 3D 32-bit depth texture,
  * returning 1 GLfloat.
  * Note: no GLchan version of this function.
  */
-static void FETCH(f_depth_component_f32)( const struct gl_texture_image *texImage,
-                                    GLint i, GLint j, GLint k, GLfloat *texel )
+static void FETCH(f_z32)( const struct gl_texture_image *texImage,
+                          GLint i, GLint j, GLint k, GLfloat *texel )
 {
-   const GLfloat *src = TEXEL_ADDR(GLfloat, texImage, i, j, k, 1);
-   texel[0] = src[0];
+   const GLuint *src = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   texel[0] = src[0] * (1.0F / 0xffffffff);
 }
 
 #if DIM == 3
-static void store_texel_depth_component_f32(struct gl_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
+static void store_texel_z32(struct gl_texture_image *texImage,
+                            GLint i, GLint j, GLint k, const void *texel)
 {
-   const GLfloat *depth = (const GLfloat *) texel;
-   GLfloat *dst = TEXEL_ADDR(GLfloat, texImage, i, j, k, 1);
+   const GLuint *depth = (const GLuint *) texel;
+   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
    dst[0] = *depth;
 }
 #endif
 
 
-/* MESA_FORMAT_DEPTH_COMPONENT16 *********************************************/
+/* MESA_FORMAT_Z16 ***********************************************************/
 
-/* Fetch depth texel from 1D, 2D or 3D float32 DEPTH texture,
+/* Fetch depth texel from 1D, 2D or 3D 16-bit depth texture,
  * returning 1 GLfloat.
  * Note: no GLchan version of this function.
  */
-static void FETCH(f_depth_component16)(const struct gl_texture_image *texImage,
-                                    GLint i, GLint j, GLint k, GLfloat *texel )
+static void FETCH(f_z16)(const struct gl_texture_image *texImage,
+                         GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
    texel[0] = src[0] * (1.0F / 65535.0F);
 }
 
 #if DIM == 3
-static void store_texel_depth_component16(struct gl_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
+static void store_texel_z16(struct gl_texture_image *texImage,
+                            GLint i, GLint j, GLint k, const void *texel)
 {
    const GLushort *depth = (const GLushort *) texel;
    GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
@@ -1211,6 +1211,11 @@ static void FETCH(ycbcr)( const struct gl_texture_image *texImage,
 static void store_texel_ycbcr(struct gl_texture_image *texImage,
                               GLint i, GLint j, GLint k, const void *texel)
 {
+   (void) texImage;
+   (void) i;
+   (void) j;
+   (void) k;
+   (void) texel;
    /* XXX to do */
 }
 #endif
@@ -1253,6 +1258,11 @@ static void FETCH(ycbcr_rev)( const struct gl_texture_image *texImage,
 static void store_texel_ycbcr_rev(struct gl_texture_image *texImage,
                                   GLint i, GLint j, GLint k, const void *texel)
 {
+   (void) texImage;
+   (void) i;
+   (void) j;
+   (void) k;
+   (void) texel;
    /* XXX to do */
 }
 #endif

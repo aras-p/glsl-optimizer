@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1262,6 +1262,85 @@ _swrast_read_depth_span_float( GLcontext *ctx, struct gl_renderbuffer *rb,
       _mesa_problem(ctx, "Invalid depth renderbuffer data type");
    }
 }
+
+
+/**
+ * As above, but return 32-bit GLuint values.
+ */
+void
+_swrast_read_depth_span_uint( GLcontext *ctx, struct gl_renderbuffer *rb,
+                              GLint n, GLint x, GLint y, GLuint depth[] )
+{
+   const GLfloat scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
+
+   if (!rb) {
+      /* really only doing this to prevent FP exceptions later */
+      _mesa_bzero(depth, n * sizeof(GLfloat));
+   }
+
+   ASSERT(rb->_BaseFormat == GL_DEPTH_COMPONENT);
+
+   if (y < 0 || y >= (GLint) rb->Height ||
+       x + n <= 0 || x >= (GLint) rb->Width) {
+      /* span is completely outside framebuffer */
+      _mesa_bzero(depth, n * sizeof(GLfloat));
+      return;
+   }
+
+   if (x < 0) {
+      GLint dx = -x;
+      GLint i;
+      for (i = 0; i < dx; i++)
+         depth[i] = 0.0;
+      x = 0;
+      n -= dx;
+      depth += dx;
+   }
+   if (x + n > (GLint) rb->Width) {
+      GLint dx = x + n - (GLint) rb->Width;
+      GLint i;
+      for (i = 0; i < dx; i++)
+         depth[n - i - 1] = 0.0;
+      n -= dx;
+   }
+   if (n <= 0) {
+      return;
+   }
+
+   if (rb->DataType == GL_UNSIGNED_INT) {
+      rb->GetRow(ctx, rb, n, x, y, depth);
+      if (rb->DepthBits < 32) {
+         GLuint shift = 32 - rb->DepthBits;
+         GLint i;
+         for (i = 0; i < n; i++) {
+            GLuint z = depth[i];
+            depth[i] = z << shift; /* XXX lsb bits? */
+         }
+      }
+   }
+   else if (rb->DataType == GL_UNSIGNED_SHORT) {
+      GLushort temp[MAX_WIDTH];
+      GLint i;
+      rb->GetRow(ctx, rb, n, x, y, temp);
+      if (rb->DepthBits == 16) {
+         for (i = 0; i < n; i++) {
+            GLuint z = temp[i];
+            depth[i] = (z << 16) | z;
+         }
+      }
+      else {
+         GLuint shift = 16 - rb->DepthBits;
+         for (i = 0; i < n; i++) {
+            GLuint z = temp[i];
+            depth[i] = (z << (shift + 16)) | (z << shift); /* XXX lsb bits? */
+         }
+      }
+   }
+   else {
+      _mesa_problem(ctx, "Invalid depth renderbuffer data type");
+   }
+}
+
 
 
 /**

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -88,18 +88,19 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
 
 
 /**
- * As above, but read data from depth buffer.
+ * As above, but read data from depth buffer.  Returned as GLuints.
+ * \sa read_color_image
  */
-static GLfloat *
+static GLuint *
 read_depth_image( GLcontext *ctx, GLint x, GLint y,
                   GLsizei width, GLsizei height )
 {
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_DepthBuffer;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLfloat *image, *dst;
+   GLuint *image, *dst;
    GLint i;
 
-   image = (GLfloat *) _mesa_malloc(width * height * sizeof(GLfloat));
+   image = (GLuint *) _mesa_malloc(width * height * sizeof(GLuint));
    if (!image)
       return NULL;
 
@@ -107,7 +108,7 @@ read_depth_image( GLcontext *ctx, GLint x, GLint y,
 
    dst = image;
    for (i = 0; i < height; i++) {
-      _swrast_read_depth_span_float(ctx, rb, width, x, y + i, dst);
+      _swrast_read_depth_span_uint(ctx, rb, width, x, y + i, dst);
       dst += width;
    }
 
@@ -255,7 +256,7 @@ _swrast_copy_teximage1d( GLcontext *ctx, GLenum target, GLint level,
 
    if (is_depth_format(internalFormat)) {
       /* read depth image from framebuffer */
-      GLfloat *image = read_depth_image(ctx, x, y, width, 1);
+      GLuint *image = read_depth_image(ctx, x, y, width, 1);
       if (!image) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
          return;
@@ -263,7 +264,7 @@ _swrast_copy_teximage1d( GLcontext *ctx, GLenum target, GLint level,
       /* call glTexImage1D to redefine the texture */
       ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
                              width, border,
-                             GL_DEPTH_COMPONENT, GL_FLOAT, image,
+                             GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
                              &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
@@ -326,7 +327,7 @@ _swrast_copy_teximage2d( GLcontext *ctx, GLenum target, GLint level,
 
    if (is_depth_format(internalFormat)) {
       /* read depth image from framebuffer */
-      GLfloat *image = read_depth_image(ctx, x, y, width, height);
+      GLuint *image = read_depth_image(ctx, x, y, width, height);
       if (!image) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
          return;
@@ -334,7 +335,7 @@ _swrast_copy_teximage2d( GLcontext *ctx, GLenum target, GLint level,
       /* call glTexImage2D to redefine the texture */
       ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
                              width, height, border,
-                             GL_DEPTH_COMPONENT, GL_FLOAT, image,
+                             GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
                              &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
@@ -394,7 +395,7 @@ _swrast_copy_texsubimage1d( GLcontext *ctx, GLenum target, GLint level,
 
    if (texImage->_BaseFormat == GL_DEPTH_COMPONENT) {
       /* read depth image from framebuffer */
-      GLfloat *image = read_depth_image(ctx, x, y, width, 1);
+      GLuint *image = read_depth_image(ctx, x, y, width, 1);
       if (!image) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D");
          return;
@@ -402,7 +403,7 @@ _swrast_copy_texsubimage1d( GLcontext *ctx, GLenum target, GLint level,
 
       /* call glTexSubImage1D to redefine the texture */
       ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
-                                GL_DEPTH_COMPONENT, GL_FLOAT, image,
+                                GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
                                 &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
@@ -463,7 +464,7 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
 
    if (texImage->_BaseFormat == GL_DEPTH_COMPONENT) {
       /* read depth image from framebuffer */
-      GLfloat *image = read_depth_image(ctx, x, y, width, height);
+      GLuint *image = read_depth_image(ctx, x, y, width, height);
       if (!image) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D");
          return;
@@ -471,7 +472,7 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
       /* call glTexImage2D to redefine the texture */
       ctx->Driver.TexSubImage2D(ctx, target, level,
                                 xoffset, yoffset, width, height,
-                                GL_DEPTH_COMPONENT, GL_FLOAT, image,
+                                GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
                                 &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
@@ -534,7 +535,7 @@ _swrast_copy_texsubimage3d( GLcontext *ctx,
 
    if (texImage->_BaseFormat == GL_DEPTH_COMPONENT) {
       /* read depth image from framebuffer */
-      GLfloat *image = read_depth_image(ctx, x, y, width, height);
+      GLuint *image = read_depth_image(ctx, x, y, width, height);
       if (!image) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D");
          return;
@@ -542,7 +543,7 @@ _swrast_copy_texsubimage3d( GLcontext *ctx,
       /* call glTexImage3D to redefine the texture */
       ctx->Driver.TexSubImage3D(ctx, target, level,
                                 xoffset, yoffset, zoffset, width, height, 1,
-                                GL_DEPTH_COMPONENT, GL_FLOAT, image,
+                                GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
                                 &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
