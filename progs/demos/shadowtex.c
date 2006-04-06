@@ -61,7 +61,7 @@ static GLboolean LinearFilter = GL_FALSE;
 
 static GLfloat Bias = -0.06;
 
-static GLboolean Anim = GL_FALSE;
+static GLboolean Anim = GL_TRUE;
 
 static GLboolean NeedNewShadowMap = GL_FALSE;
 static GLuint ShadowTexture, GrayTexture;
