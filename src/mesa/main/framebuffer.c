@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -481,7 +481,9 @@ _mesa_update_depth_buffer(GLcontext *ctx,
 
    if (depthRb && depthRb->_ActualFormat == GL_DEPTH24_STENCIL8_EXT) {
       /* The attached depth buffer is a GL_DEPTH_STENCIL renderbuffer */
-      if (!fb->_DepthBuffer || fb->_DepthBuffer->Wrapped != depthRb) {
+      if (!fb->_DepthBuffer
+          || fb->_DepthBuffer->Wrapped != depthRb
+          || fb->_DepthBuffer->_BaseFormat != GL_DEPTH_COMPONENT) {
          /* need to update wrapper */
          struct gl_renderbuffer *wrapper
             = _mesa_new_z24_renderbuffer_wrapper(ctx, depthRb);
@@ -520,7 +522,9 @@ _mesa_update_stencil_buffer(GLcontext *ctx,
 
    if (stencilRb && stencilRb->_ActualFormat == GL_DEPTH24_STENCIL8_EXT) {
       /* The attached stencil buffer is a GL_DEPTH_STENCIL renderbuffer */
-      if (!fb->_StencilBuffer || fb->_StencilBuffer->Wrapped != stencilRb) {
+      if (!fb->_StencilBuffer
+          || fb->_StencilBuffer->Wrapped != stencilRb
+          || fb->_StencilBuffer->_BaseFormat != GL_STENCIL_INDEX) {
          /* need to update wrapper */
          struct gl_renderbuffer *wrapper
             = _mesa_new_s8_renderbuffer_wrapper(ctx, stencilRb);
