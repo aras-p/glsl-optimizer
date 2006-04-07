@@ -191,20 +191,23 @@ static int
 GetDrawableAttribute( Display *dpy, GLXDrawable drawable,
 		      int attribute, unsigned int *value )
 {
-   __GLXdisplayPrivate *priv = __glXInitialize(dpy);
+   __GLXdisplayPrivate *priv;
    xGLXGetDrawableAttributesReply reply;
    CARD32 * data;
    unsigned int length;
    unsigned int i;
    unsigned int num_attributes;
+
+   if ( (dpy == NULL) || (drawable == 0) ) {
+      return 0;
+   }
+
+   priv = __glXInitialize(dpy);
    GLboolean use_glx_1_3 = ((priv->majorVersion > 1)
 			    || (priv->minorVersion >= 3));
 
    *value = 0;
 
-   if ( (dpy == NULL) || (drawable == 0) ) {
-      return 0;
-   }
 
    
    LockDisplay(dpy);
