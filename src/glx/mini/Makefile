@@ -32,8 +32,7 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/swrast \
 	-I$(TOP)/src/mesa/swrast_setup \
 	-I$(TOP)/src/mesa/drivers/dri/common \
-	-I$(DRM_SOURCE_PATH)/libdrm \
-	-I$(DRM_SOURCE_PATH)/shared
+	`pkg-config --cflags libdrm`
 
 
 ##### RULES #####
