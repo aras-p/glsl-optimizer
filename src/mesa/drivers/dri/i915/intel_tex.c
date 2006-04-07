@@ -787,7 +787,8 @@ int intelUploadTexImages( intelContextPtr intel,
 	 }
 
 	 /* Set the base offset of the texture image */
-	 t->BufAddr = intel->intelScreen->tex.map + t->base.memBlock->ofs;
+	 t->BufAddr = (GLubyte *) (intel->intelScreen->tex.map + 
+				   t->base.memBlock->ofs);
 	 t->TextureOffset = intel->intelScreen->tex.offset + t->base.memBlock->ofs;
 	 t->dirty = ~0;
       }

@@ -157,13 +157,15 @@ intersect_region(const drm_clip_rect_t *box,
    if (by < y) bh -= y - by, by = y;
    if (bx + bw > x + width) bw = x + width - bx;
    if (by + bh > y + height) bh = y + height - by;
-   if (bw <= 0) return GL_FALSE;
-   if (bh <= 0) return GL_FALSE;
 
    *xOut = bx;
    *yOut = by;
    *wOut = bw;
    *hOut = bh;
+
+   if (bw <= 0) return GL_FALSE;
+   if (bh <= 0) return GL_FALSE;
+
    return GL_TRUE;
 }
 
@@ -423,6 +425,8 @@ intelTryDrawPixels( GLcontext *ctx,
    }
    else
       return GL_FALSE;
+
+   return GL_FALSE;
 }
 
 static void

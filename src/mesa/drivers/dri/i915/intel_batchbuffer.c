@@ -216,7 +216,7 @@ void intelStartInlinePrimitive( intelContextPtr intel, GLuint prim )
    }
 
 #if 1
-   if (((int)intel->batch.ptr) & 0x4) {
+   if (((unsigned long)intel->batch.ptr) & 0x4) {
       BEGIN_BATCH(1);
       OUT_BATCH(0);
       ADVANCE_BATCH();

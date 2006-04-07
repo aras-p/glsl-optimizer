@@ -207,7 +207,7 @@ struct intel_context
    GLenum render_primitive;
    GLenum reduced_primitive;
    GLuint vertex_size;
-   char *verts;			/* points to tnl->clipspace.vertex_buf */
+   unsigned char *verts;	   /* points to tnl->clipspace.vertex_buf */
 
 
    /* Fallback rasterization functions 

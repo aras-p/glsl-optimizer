@@ -43,8 +43,9 @@ extern int VERBOSE;
 #define BEGIN_BATCH(n)							\
 do {									\
    if (VERBOSE) fprintf(stderr, 					\
-			"BEGIN_BATCH(%d) in %s, %d dwords free\n",	\
-			(n), __FUNCTION__, intel->batch.space/4);	\
+			"BEGIN_BATCH(%ld) in %s, %d dwords free\n",	\
+			((unsigned long)n), __FUNCTION__,		\
+			intel->batch.space/4);				\
    if (intel->batch.space < (n)*4)					\
       intelFlushBatch(intel, GL_TRUE);					\
    if (intel->batch.space == intel->batch.size)	intel->batch.func = __FUNCTION__;			\

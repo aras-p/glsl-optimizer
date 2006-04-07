@@ -84,7 +84,7 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
 			    12,
 			    I830_NR_TEX_REGIONS,
 			    intel->sarea->texList,
-			    & intel->sarea->texAge,
+			    (unsigned *) & intel->sarea->texAge,
 			    & intel->swapped,
 			    sizeof( struct i830_texture_object ),
 			    (destroy_texture_object_t *)intelDestroyTexObj );
