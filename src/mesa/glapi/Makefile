@@ -11,6 +11,7 @@ OUTPUTS = glprocs.h glapitemp.h glapioffsets.h glapitable.h dispatch.h \
 	../main/enums.c \
 	../x86/glapi_x86.S \
 	../x86-64/glapi_x86-64.S \
+	../sparc/glapi_sparc.S \
 	../drivers/dri/common/extension_helper.h \
 	../../glx/x11/indirect.c \
 	../../glx/x11/indirect.h \
@@ -58,6 +59,10 @@ dispatch.h: $(COMMON) gl_table.py
 
 ../x86-64/glapi_x86-64.S: $(COMMON) gl_x86-64_asm.py
 	$(PYTHON2) $(PYTHON_FLAGS) gl_x86-64_asm.py > ../x86-64/glapi_x86-64.S
+
+../sparc/glapi_sparc.S: $(COMMON) gl_SPARC_asm.py
+	$(PYTHON2) $(PYTHON_FLAGS) gl_SPARC_asm.py > ../sparc/glapi_sparc.S
+
 
 ../drivers/dri/common/extension_helper.h: $(COMMON) extension_helper.py
 	$(PYTHON2) $(PYTHON_FLAGS) extension_helper.py > ../drivers/dri/common/extension_helper.h

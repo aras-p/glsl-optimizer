@@ -31,10 +31,10 @@
 #ifdef __arch64__
 #  define GL_STUB(fn,off)				\
 fn:					\
-	sethi	%hi(0x00000000), %g4 ;			\
-	sethi	%hi(0x00000000), %g1 ;			\
-	or	%g4, %lo(0x00000000), %g4 ;		\
-	or	%g1, %lo(0x00000000), %g1 ;		\
+	sethi	%hi(0xDEADBEEF), %g4 ;			\
+	sethi	%hi(0xDEADBEEF), %g1 ;			\
+	or	%g4, %lo(0xDEADBEEF), %g4 ;		\
+	or	%g1, %lo(0xDEADBEEF), %g1 ;		\
 	sllx	%g4, 32, %g4 ;				\
 	ldx	[%g1 + %g4], %g1 ;			\
 	sethi	%hi(8 * off), %g4 ;			\
@@ -45,8 +45,8 @@ fn:					\
 #else
 #  define GL_STUB(fn,off)				\
 fn:					\
-	sethi	%hi(0x00000000), %g1 ;			\
-	ld	[%g1 + %lo(0x00000000)], %g1 ;		\
+	sethi	%hi(0xDEADBEEF), %g1 ;			\
+	ld	[%g1 + %lo(0xDEADBEEF)], %g1 ;		\
 	ld	[%g1 + (4 * off)], %g5 ;		\
 	jmpl	%g5, %g0 ;				\
 	nop
@@ -881,6 +881,9 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 		.globl glStencilFuncSeparate ; .type glStencilFuncSeparate,#function
 		.globl glStencilOpSeparate ; .type glStencilOpSeparate,#function
 		.globl glStencilMaskSeparate ; .type glStencilMaskSeparate,#function
+		.globl glGetQueryObjecti64vEXT ; .type glGetQueryObjecti64vEXT,#function
+		.globl glGetQueryObjectui64vEXT ; .type glGetQueryObjectui64vEXT,#function
+		.globl glBlitFramebufferEXT ; .type glBlitFramebufferEXT,#function
 		.globl _mesa_sparc_glapi_begin ; .type _mesa_sparc_glapi_begin,#function
 _mesa_sparc_glapi_begin:
 
@@ -1700,6 +1703,9 @@ _mesa_sparc_glapi_begin:
 	GL_STUB(glStencilFuncSeparate, _gloffset_StencilFuncSeparate)
 	GL_STUB(glStencilOpSeparate, _gloffset_StencilOpSeparate)
 	GL_STUB(glStencilMaskSeparate, _gloffset_StencilMaskSeparate)
+	GL_STUB(glGetQueryObjecti64vEXT, _gloffset_GetQueryObjecti64vEXT)
+	GL_STUB(glGetQueryObjectui64vEXT, _gloffset_GetQueryObjectui64vEXT)
+	GL_STUB(glBlitFramebufferEXT, _gloffset_BlitFramebufferEXT)
 
 		.globl _mesa_sparc_glapi_end ; .type _mesa_sparc_glapi_end,#function
 _mesa_sparc_glapi_end:
