@@ -126,6 +126,7 @@ sunos4-gcc \
 sunos4-static \
 sunos5 \
 sunos5-gcc \
+sunos5-64-gcc \
 sunos5-smp \
 ultrix-gcc:
 	(cd configs && rm -f current && ln -s $@ current)
