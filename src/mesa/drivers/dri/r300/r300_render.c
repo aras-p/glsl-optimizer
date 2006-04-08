@@ -382,7 +382,6 @@ GLboolean r300_run_vb_render(GLcontext *ctx,
 	
 	r300UpdateShaders(rmesa);
 	if (rmesa->state.VB.LockCount == 0 || 1) {
- 	  	r300ReleaseArrays(ctx);
 		r300EmitArrays(ctx, GL_FALSE);
 
 		r300UpdateShaderStates(rmesa);
@@ -446,6 +445,7 @@ GLboolean r300_run_vb_render(GLcontext *ctx,
 #ifdef USER_BUFFERS
 	r300UseArrays(ctx);
 #endif
+	r300ReleaseArrays(ctx);
 	return GL_FALSE;
 }
 

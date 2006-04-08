@@ -182,7 +182,7 @@ static void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const G
 	unsigned int min = ~0, max = 0;
 	struct tnl_prim prim;
 	static void *ptr = NULL;
-	static struct r300_dma_region rvb;
+	struct r300_dma_region rvb;
 	const GLvoid *indices = c_indices;
 	
 	if (count > 65535) {
@@ -205,8 +205,8 @@ static void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const G
 		return;
 	
 	FLUSH_CURRENT( ctx, 0 );
-	r300ReleaseDmaRegion(rmesa, &rvb, __FUNCTION__);
 	
+	memset(&rvb, 0, sizeof(rvb));
 	switch (type) {
 	case GL_UNSIGNED_BYTE:
 		for (i=0; i < count; i++) {
@@ -311,8 +311,10 @@ static void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const G
 			return;
 		}
 	} else {
-		if (setup_arrays(rmesa, min) >= R300_FALLBACK_TCL)
+		if (setup_arrays(rmesa, min) >= R300_FALLBACK_TCL) {
+			r300ReleaseDmaRegion(rmesa, &rvb, __FUNCTION__);
 			goto fallback;
+		}
 		
 		rmesa->state.VB.Count = max - min + 1;
 	}
@@ -337,6 +339,7 @@ static void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const G
 	if(rvb.buf)
 		radeon_mm_use(rmesa, rvb.buf->id);
 	
+	r300ReleaseDmaRegion(rmesa, &rvb, __FUNCTION__);
 	return;
 	
 	fallback:
@@ -355,7 +358,7 @@ static void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei
 	int elt_size;
 	int i;
 	void *ptr = NULL;
-	static struct r300_dma_region rvb;
+	struct r300_dma_region rvb;
 	const GLvoid *indices = c_indices;
 	
 	if (count > 65535) {
@@ -381,9 +384,9 @@ static void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei
 #ifdef OPTIMIZE_ELTS
 	min = 0;
 #endif
-	r300ReleaseDmaRegion(rmesa, &rvb, __FUNCTION__);
 	
-	switch(type){
+	memset(&rvb, 0, sizeof(rvb));
+	switch (type){
 	case GL_UNSIGNED_BYTE:
 		elt_size = 2;
 		
@@ -473,8 +476,10 @@ static void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei
 			return;
 		}*/
 	} else {
-		if (setup_arrays(rmesa, min) >= R300_FALLBACK_TCL)
+		if (setup_arrays(rmesa, min) >= R300_FALLBACK_TCL) {
+			r300ReleaseDmaRegion(rmesa, &rvb, __FUNCTION__);
 			goto fallback;
+		}
 		
 		rmesa->state.VB.Count = max - min + 1;
 	}
@@ -501,6 +506,7 @@ static void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei
 	if(rvb.buf)
 		radeon_mm_use(rmesa, rvb.buf->id);
 	
+	r300ReleaseDmaRegion(rmesa, &rvb, __FUNCTION__);
 	return ;
 	
 	fallback:
