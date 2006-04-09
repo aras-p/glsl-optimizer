@@ -590,10 +590,6 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
 	    r200VtxfmtDestroy( rmesa->glCtx );
       }
 
-      /* free the Mesa context */
-      rmesa->glCtx->DriverCtx = NULL;
-      _mesa_destroy_context( rmesa->glCtx );
-
       if (rmesa->state.scissor.pClipRects) {
 	 FREE(rmesa->state.scissor.pClipRects);
 	 rmesa->state.scissor.pClipRects = NULL;
@@ -612,6 +608,10 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
 
 	 assert( is_empty_list( & rmesa->swapped ) );
       }
+
+      /* free the Mesa context */
+      rmesa->glCtx->DriverCtx = NULL;
+      _mesa_destroy_context( rmesa->glCtx );
 
       /* free the option cache */
       driDestroyOptionCache (&rmesa->optionCache);

@@ -521,10 +521,6 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
 	    radeonVtxfmtDestroy( rmesa->glCtx );
       }
 
-      /* free the Mesa context */
-      rmesa->glCtx->DriverCtx = NULL;
-      _mesa_destroy_context( rmesa->glCtx );
-
       _mesa_vector4f_free( &rmesa->tcl.ObjClean );
 
       if (rmesa->state.scissor.pClipRects) {
@@ -545,6 +541,10 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
 
 	 assert( is_empty_list( & rmesa->swapped ) );
       }
+
+      /* free the Mesa context */
+      rmesa->glCtx->DriverCtx = NULL;
+      _mesa_destroy_context( rmesa->glCtx );
 
       /* free the option cache */
       driDestroyOptionCache (&rmesa->optionCache);
