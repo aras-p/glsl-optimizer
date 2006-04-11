@@ -287,6 +287,7 @@ CreateDrawable( Display *dpy, const __GLcontextModes * fbconfig,
    xGLXCreateWindowReq * req;
    CARD32 * data;
    unsigned int i;
+   CARD8 opcode;
 
    i = 0;
    if (attrib_list) {
@@ -294,11 +295,16 @@ CreateDrawable( Display *dpy, const __GLcontextModes * fbconfig,
 	   i++;
    }
 
+    opcode = __glXSetupForCommand(dpy);
+    if (!opcode) {
+	return None;
+    }
+
    LockDisplay(dpy);
    GetReqExtra( GLXCreateWindow, 8 * i, req );
    data = (CARD32 *) (req + 1);
 
-   req->reqType = __glXSetupForCommand(dpy);
+   req->reqType = opcode;
    req->glxCode = glxCode;
    req->screen = (CARD32) fbconfig->screen;
    req->fbconfig = fbconfig->fbconfigID;
