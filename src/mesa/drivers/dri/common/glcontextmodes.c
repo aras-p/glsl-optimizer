@@ -182,6 +182,15 @@ _gl_copy_visual_to_context_mode( __GLcontextModes * mode,
     mode->transparentIndex = config->transparentIndex;
 
     mode->swapMethod = GLX_SWAP_UNDEFINED_OML;
+
+    mode->bindToTextureRgb = (mode->rgbMode) ? GL_TRUE : GL_FALSE;
+    mode->bindToTextureRgba = (mode->rgbMode && mode->alphaBits) ?
+	GL_TRUE : GL_FALSE;
+    mode->bindToMipmapTexture = mode->rgbMode ? GL_TRUE : GL_FALSE;
+    mode->bindToTextureTargets = mode->rgbMode ?
+	GLX_TEXTURE_1D_BIT_EXT | GLX_TEXTURE_2D_BIT_EXT |
+	GLX_TEXTURE_RECTANGLE_BIT_EXT : 0;
+    mode->yInverted = GL_FALSE;
 }
 
 
@@ -313,6 +322,21 @@ _gl_get_context_mode_data(const __GLcontextModes *mode, int attribute,
       case GLX_SAMPLES_SGIS:
 	*value_return = mode->samples;
 	return 0;
+      case GLX_BIND_TO_TEXTURE_RGB_EXT:
+	*value_return = mode->bindToTextureRgb;
+	return 0;
+      case GLX_BIND_TO_TEXTURE_RGBA_EXT:
+	*value_return = mode->bindToTextureRgba;
+	return 0;
+      case GLX_BIND_TO_MIPMAP_TEXTURE_EXT:
+	*value_return = mode->bindToMipmapTexture;
+	return 0;
+      case GLX_BIND_TO_TEXTURE_TARGETS_EXT:
+	*value_return = mode->bindToTextureTargets;
+	return 0;
+      case GLX_Y_INVERTED_EXT:
+	*value_return = mode->yInverted;
+	return 0;
 
       /* Applications are NOT allowed to query GLX_VISUAL_SELECT_GROUP_SGIX.
        * It is ONLY for communication between the GLX client and the GLX
@@ -383,6 +407,11 @@ _gl_context_modes_create( unsigned count, size_t minimum_size )
       (*next)->xRenderable = GLX_DONT_CARE;
       (*next)->fbconfigID = GLX_DONT_CARE;
       (*next)->swapMethod = GLX_SWAP_UNDEFINED_OML;
+      (*next)->bindToTextureRgb = GLX_DONT_CARE;
+      (*next)->bindToTextureRgba = GLX_DONT_CARE;
+      (*next)->bindToMipmapTexture = GLX_DONT_CARE;
+      (*next)->bindToTextureTargets = 0;
+      (*next)->yInverted = GLX_DONT_CARE;
 
       next = & ((*next)->next);
    }
@@ -495,5 +524,10 @@ _gl_context_modes_are_same( const __GLcontextModes * a,
 	    (a->maxPbufferPixels == b->maxPbufferPixels) &&
 	    (a->optimalPbufferWidth == b->optimalPbufferWidth) &&
 	    (a->optimalPbufferHeight == b->optimalPbufferHeight) &&
-	    (a->swapMethod == b->swapMethod) );
+	    (a->swapMethod == b->swapMethod) &&
+	    (a->bindToTextureRgb == b->bindToTextureRgb) &&
+	    (a->bindToTextureRgba == b->bindToTextureRgba) &&
+	    (a->bindToMipmapTexture == b->bindToMipmapTexture) &&
+	    (a->bindToTextureTargets == b->bindToTextureTargets) &&
+	    (a->yInverted == b->yInverted) );
 }

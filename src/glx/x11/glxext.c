@@ -595,6 +595,21 @@ __glXInitializeVisualConfigFromTags( __GLcontextModes *config, int count,
 	  case GLX_SAMPLES_SGIS:
 	    config->samples = *bp++;
 	    break;
+	case GLX_BIND_TO_TEXTURE_RGB_EXT:
+	    config->bindToTextureRgb = *bp++;
+	    break;
+	case GLX_BIND_TO_TEXTURE_RGBA_EXT:
+	    config->bindToTextureRgba = *bp++;
+	    break;
+	case GLX_BIND_TO_MIPMAP_TEXTURE_EXT:
+	    config->bindToMipmapTexture = *bp++;
+	    break;
+	case GLX_BIND_TO_TEXTURE_TARGETS_EXT:
+	    config->bindToTextureTargets = *bp++;
+	    break;
+	case GLX_Y_INVERTED_EXT:
+	    config->yInverted = *bp++;
+	    break;
 	  case None:
 	    i = count;
 	    break;
