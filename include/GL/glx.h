@@ -425,7 +425,7 @@ typedef int (*PFNGLXGETSWAPINTERVALMESAPROC)(void);
 
 /* XXX need enums/tokens! */
 
-extern Bool glXBindTexImageEXT(Display *dpy, GLXDrawable drawable, int buffer);
+extern Bool glXBindTexImageEXT(Display *dpy, GLXDrawable drawable, int buffer, const int *attrib_list);
 extern Bool glXReleaseTexImageEXT(Display *dpy, GLXDrawable drawable, int buffer);
 
 #endif /* GLX_EXT_texture_from_pixmap */
