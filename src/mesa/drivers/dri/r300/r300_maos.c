@@ -268,8 +268,10 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 	GLuint vic_1 = 0;	/* R300_VAP_INPUT_CNTL_1 */
 	GLuint aa_vap_reg = 0; /* VAP register assignment */
 	GLuint i;
-	GLuint inputs = 0;
-	
+	DECLARE_RENDERINPUTS(inputs_bitset);
+
+	RENDERINPUTS_ZERO( inputs_bitset );
+
 #define CONFIGURE_AOS(r, f, v, sz, cn) { \
 		if (RADEON_DEBUG & DEBUG_STATE) \
 			fprintf(stderr, "Enabling "#v "\n"); \
@@ -300,23 +302,23 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 		GLuint InputsRead = CURRENT_VERTEX_SHADER(ctx)->Base.InputsRead;
 		struct r300_vertex_program *prog=(struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 		if (InputsRead & (1<<VERT_ATTRIB_POS)) {
-			inputs |= _TNL_BIT_POS;
+			RENDERINPUTS_SET( inputs_bitset, _TNL_ATTRIB_POS );
 			rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_POS];
 		}
 		if (InputsRead & (1<<VERT_ATTRIB_NORMAL)) {
-			inputs |= _TNL_BIT_NORMAL;
+			RENDERINPUTS_SET( inputs_bitset, _TNL_ATTRIB_NORMAL );
 			rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_NORMAL];
 		}
 		if (InputsRead & (1<<VERT_ATTRIB_COLOR0)) {
-			inputs |= _TNL_BIT_COLOR0;
+			RENDERINPUTS_SET( inputs_bitset, _TNL_ATTRIB_COLOR0 );
 			rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_COLOR0];
 		}
 		if (InputsRead & (1<<VERT_ATTRIB_COLOR1)) {
-			inputs |= _TNL_BIT_COLOR1;
+			RENDERINPUTS_SET( inputs_bitset, _TNL_ATTRIB_COLOR1 );
 			rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_COLOR1];
 		}
 		if (InputsRead & (1<<VERT_ATTRIB_FOG)) {
-			inputs |= _TNL_BIT_FOG;
+			RENDERINPUTS_SET( inputs_bitset, _TNL_ATTRIB_FOG );
 			rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_FOG];
 		}
 		if(ctx->Const.MaxTextureUnits > 8) { /* Not sure if this can even happen... */
@@ -325,17 +327,17 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 		}
 		for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
 			if (InputsRead & (1<<(VERT_ATTRIB_TEX0+i))) {
-				inputs |= _TNL_BIT_TEX0<<i;
+				RENDERINPUTS_SET( inputs_bitset, _TNL_ATTRIB_TEX(i) );
 				rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_TEX0+i];
 			}
 		}
 		nr = 0;
 	} else {
-		inputs = TNL_CONTEXT(ctx)->render_inputs;
+		RENDERINPUTS_COPY( inputs_bitset, TNL_CONTEXT(ctx)->render_inputs_bitset );
 	}
-	rmesa->state.render_inputs = inputs;
+	RENDERINPUTS_COPY( rmesa->state.render_inputs_bitset, inputs_bitset );
 
-	if (inputs & _TNL_BIT_POS) {
+	if (RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_POS )) {
 		CONFIGURE_AOS(i_coords,	AOS_FORMAT_FLOAT,
 						VB->AttribPtr[VERT_ATTRIB_POS],
 						immd ? 4 : VB->AttribPtr[VERT_ATTRIB_POS].size,
@@ -344,7 +346,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 		vic_1 |= R300_INPUT_CNTL_POS;
 	}
 
-	if (inputs & _TNL_BIT_NORMAL) {
+	if (RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_NORMAL )) {
 		CONFIGURE_AOS(i_normal,	AOS_FORMAT_FLOAT,
 						VB->AttribPtr[VERT_ATTRIB_NORMAL],
 						immd ? 4 : VB->AttribPtr[VERT_ATTRIB_NORMAL].size,
@@ -353,7 +355,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 		vic_1 |= R300_INPUT_CNTL_NORMAL;
 	}
 
-	if (inputs & _TNL_BIT_COLOR0) {
+	if (RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_COLOR0 )) {
 		int emitsize=4;
 
 		if (!immd) {
@@ -376,7 +378,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 		vic_1 |= R300_INPUT_CNTL_COLOR;
 	}
 
-	if (inputs & _TNL_BIT_COLOR1) {
+	if (RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_COLOR1 )) {
 		int emitsize=4;
 
 		if (!immd) {
@@ -398,7 +400,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 	}
 
 #if 0
-	if (inputs & _TNL_BIT_FOG) {
+	if (RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_FOG )) {
 		CONFIGURE_AOS(	AOS_FORMAT_FLOAT,
 						VB->FogCoordPtr,
 						immd ? 4 : VB->FogCoordPtr->size,
@@ -408,7 +410,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 
 	r300->state.texture.tc_count = 0;
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-		if (inputs & (_TNL_BIT_TEX0 << i)) {
+		if (RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_TEX(i) )) {
 			CONFIGURE_AOS(i_tex[i], AOS_FORMAT_FLOAT,
 							VB->AttribPtr[VERT_ATTRIB_TEX0+i],
 							immd ? 4 : VB->AttribPtr[VERT_ATTRIB_TEX0+i].size,
@@ -531,17 +533,17 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 #if 0
 	r300->hw.vic.cmd[R300_VIC_CNTL_1]=0;
 
-	if(r300->state.render_inputs & _TNL_BIT_POS)
+	if(RENDERINPUTS_TEST( r300->state.render_inputs_bitset, _TNL_ATTRIB_POS ))
 		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=R300_INPUT_CNTL_POS;
 
-	if(r300->state.render_inputs & _TNL_BIT_NORMAL)
+	if(RENDERINPUTS_TEST( r300->state.render_inputs_bitset, _TNL_ATTRIB_NORMAL ))
 		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=R300_INPUT_CNTL_NORMAL;
 
-	if(r300->state.render_inputs & _TNL_BIT_COLOR0)
+	if(RENDERINPUTS_TEST( r300->state.render_inputs_bitset, _TNL_ATTRIB_COLOR0 ))
 		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=R300_INPUT_CNTL_COLOR;
 
 	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
-		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i))
+		if(RENDERINPUTS_TEST( r300->state.render_inputs_bitset, _TNL_ATTRIB_TEX(i) ))
 			r300->hw.vic.cmd[R300_VIC_CNTL_1]|=(R300_INPUT_CNTL_TC0<<i);
 #endif
 
@@ -573,15 +575,15 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 			if(OutputsWritten & (1<<(VERT_RESULT_TEX0+i)))
 				r300->hw.vof.cmd[R300_VOF_CNTL_1] |= (4<<(3*i));
 	} else {
-		if(inputs & _TNL_BIT_POS)
+		if(RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_POS ))
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
-		if(inputs & _TNL_BIT_COLOR0)
+		if(RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_COLOR0 ))
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
-		if(inputs & _TNL_BIT_COLOR1)
+		if(RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_COLOR1 ))
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
 
 		for(i=0;i < ctx->Const.MaxTextureUnits;i++)
-			if(inputs & (_TNL_BIT_TEX0<<i))
+			if(RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_TEX(i) ))
 				r300->hw.vof.cmd[R300_VOF_CNTL_1]|=(4<<(3*i));
 	}
 

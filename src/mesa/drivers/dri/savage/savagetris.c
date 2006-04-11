@@ -867,15 +867,17 @@ static GLboolean savageCheckPTexHack( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint index = tnl->render_inputs;
+   DECLARE_RENDERINPUTS(index_bitset);
 
-   if (index & _TNL_BIT_TEX(0) && VB->TexCoordPtr[0]->size == 4) {
-      if ((index & _TNL_BITS_TEX_ANY) == _TNL_BIT_TEX(0))
+   RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
+
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX0 ) && VB->TexCoordPtr[0]->size == 4) {
+      if (!RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_ATTRIB_TEX1, _TNL_LAST_TEX ))
 	 return GL_TRUE; /* apply ptex hack */
       else
 	 FALLBACK(ctx, SAVAGE_FALLBACK_PROJ_TEXTURE, GL_TRUE);
    }
-   if ((index & _TNL_BIT_TEX(1)) && VB->TexCoordPtr[1]->size == 4)
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX1 ) && VB->TexCoordPtr[1]->size == 4)
       FALLBACK(ctx, SAVAGE_FALLBACK_PROJ_TEXTURE, GL_TRUE);
 
    return GL_FALSE; /* don't apply ptex hack */
@@ -929,10 +931,11 @@ static __inline__ GLuint savageChooseVertexFormat_s3d( GLcontext *ctx )
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint index = tnl->render_inputs;
+   DECLARE_RENDERINPUTS(index_bitset);
    GLuint setupIndex = SAVAGE_EMIT_XYZ;
    GLubyte skip;
 
+   RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
    imesa->vertex_attr_count = 0;
 
    skip = SAVAGE_SKIP_ALL_S3D;
@@ -941,7 +944,7 @@ static __inline__ GLuint savageChooseVertexFormat_s3d( GLcontext *ctx )
    /* EMIT_ATTR's must be in order as they tell t_vertex.c how to
     * build up a hardware vertex.
     */
-   if ((index & _TNL_BITS_TEX_ANY) || !(ctx->_TriangleCaps & DD_FLATSHADE))
+   if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX ) || !(ctx->_TriangleCaps & DD_FLATSHADE))
       EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, SAVAGE_EMIT_W, SAVAGE_SKIP_W );
    else {
       EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_3F_VIEWPORT, 0, 0 );
@@ -952,17 +955,17 @@ static __inline__ GLuint savageChooseVertexFormat_s3d( GLcontext *ctx )
    /* t_context.c always includes a diffuse color */
    EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, SAVAGE_EMIT_C0, SAVAGE_SKIP_C0 );
 
-   if ((index & _TNL_BIT_COLOR1))
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 ))
       EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, SAVAGE_EMIT_C1, SAVAGE_SKIP_C1 );
    else
       EMIT_PAD( 3 );
-   if ((index & _TNL_BIT_FOG))
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG ))
       EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, SAVAGE_EMIT_FOG, SAVAGE_SKIP_C1 );
    else
       EMIT_PAD( 1 );
    skip &= ~SAVAGE_SKIP_C1;
 
-   if (index & _TNL_BIT_TEX(0)) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX0 )) {
       if (imesa->ptexHack)
 	 EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_3F_XYW, SAVAGE_EMIT_STQ0, SAVAGE_SKIP_ST0);
       else if (VB->TexCoordPtr[0]->size == 4)
@@ -991,28 +994,27 @@ static __inline__ GLuint savageChooseVertexFormat_s4( GLcontext *ctx )
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint index = tnl->render_inputs;
+   DECLARE_RENDERINPUTS(index_bitset);
    GLuint setupIndex = SAVAGE_EMIT_XYZ;
    GLubyte skip;
    GLuint size, mask;
 
+   RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
    skip = SAVAGE_SKIP_ALL_S4;
    skip &= ~SAVAGE_SKIP_Z; /* all mesa vertices have a z coordinate */
 
-   if ((index & _TNL_BITS_TEX_ANY) || !(ctx->_TriangleCaps & DD_FLATSHADE))
+   if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX ) || !(ctx->_TriangleCaps & DD_FLATSHADE))
       NEED_ATTR( SAVAGE_EMIT_W, SAVAGE_SKIP_W );
 
    /* t_context.c always includes a diffuse color */
    NEED_ATTR( SAVAGE_EMIT_C0, SAVAGE_SKIP_C0 );
-      
-   if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
-      if ((index & _TNL_BIT_COLOR1))
-	 NEED_ATTR( SAVAGE_EMIT_C1, SAVAGE_SKIP_C1 );
-      if ((index & _TNL_BIT_FOG))
-	 NEED_ATTR( SAVAGE_EMIT_FOG, SAVAGE_SKIP_C1 );
-   }
 
-   if (index & _TNL_BIT_TEX(0)) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 ))
+      NEED_ATTR( SAVAGE_EMIT_C1, SAVAGE_SKIP_C1 );
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG ))
+      NEED_ATTR( SAVAGE_EMIT_FOG, SAVAGE_SKIP_C1 );
+
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX0 )) {
       if (imesa->ptexHack)
 	 NEED_ATTR( SAVAGE_EMIT_STQ0, SAVAGE_SKIP_ST0);
       else if (VB->TexCoordPtr[0]->size == 4)
@@ -1024,7 +1026,7 @@ static __inline__ GLuint savageChooseVertexFormat_s4( GLcontext *ctx )
       else
 	 NEED_ATTR( SAVAGE_EMIT_S0, SAVAGE_SKIP_S0 );
    }
-   if (index & _TNL_BIT_TEX(1)) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX1 )) {
       if (VB->TexCoordPtr[1]->size == 4)
 	 /* projective textures are not supported by the hardware */
 	 assert (0); /* should be caught by savageCheckPTexHack */

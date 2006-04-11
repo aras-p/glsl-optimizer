@@ -1270,6 +1270,19 @@ void r300_setup_textures(GLcontext *ctx)
 		fprintf(stderr, "TX_ENABLE: %08x  last_hw_tmu=%d\n", r300->hw.txe.cmd[R300_TXE_ENABLE], last_hw_tmu);
 }
 
+union r300_outputs_written {
+	GLuint vp_outputs;                       /* hw_tcl_on */
+	DECLARE_RENDERINPUTS(index_bitset);      /* !hw_tcl_on */
+};
+
+static GLboolean r300_outputs_written_test (r300_outputs_written *ow, GLuint vp_result,
+                                            GLuint tnl_attrib)
+{
+	if (hw_tcl_on)
+		return ow->vp_outputs & (1 << vp_result);
+	return RENDERINPUTS_TEST( ow->index_bitset, tnl_attrib );
+}
+
 void r300_setup_rs_unit(GLcontext *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
@@ -1284,16 +1297,16 @@ void r300_setup_rs_unit(GLcontext *ctx)
 		0x00,
 		0x00
 	};
-	GLuint OutputsWritten;
+	union r300_outputs_written OutputsWritten;
 	GLuint InputsRead;
 	int fp_reg, high_rr;
 	int in_texcoords, col_interp_nr;
 	int i;
 
 	if(hw_tcl_on)
-		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->Base.OutputsWritten;
+		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->Base.OutputsWritten;
 	else
-		OutputsWritten = r300->state.render_inputs;
+		RENDERINPUTS_COPY( OutputsWritten.index_bitset, r300->state.render_inputs_bitset );
 
 	if (ctx->FragmentProgram._Current)
 		InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
@@ -1324,7 +1337,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 					| (fp_reg << R300_RS_ROUTE_DEST_SHIFT);
 			high_rr = fp_reg;
 
-			if (!(OutputsWritten & (hw_tcl_on ? (1 << (VERT_RESULT_TEX0+i)) : (_TNL_BIT_TEX0<<i)))) {
+			if (!r300_outputs_written_test( &OutputsWritten, VERT_RESULT_TEX0+i, _TNL_ATTRIB_TEX(i) )) {
 				/* Passing invalid data here can lock the GPU. */
 				WARN_ONCE("fragprog wants coords for tex%d, vp doesn't provide them!\n", i);
 				//_mesa_print_program(&CURRENT_VERTEX_SHADER(ctx)->Base);
@@ -1334,12 +1347,12 @@ void r300_setup_rs_unit(GLcontext *ctx)
 			fp_reg++;
 		} 
 		/* Need to count all coords enabled at vof */
-		if (OutputsWritten & (hw_tcl_on ? (1 << (VERT_RESULT_TEX0+i)) : (_TNL_BIT_TEX0<<i)))
+		if (r300_outputs_written_test( &OutputsWritten, VERT_RESULT_TEX0+i, _TNL_ATTRIB_TEX(i) ))
 			in_texcoords++;
 	}
 
 	if (InputsRead & FRAG_BIT_COL0) {
-		if (!(OutputsWritten & (hw_tcl_on ? (1<<VERT_RESULT_COL0) : _TNL_BIT_COLOR0))) {
+		if (!r300_outputs_written_test( &OutputsWritten, VERT_RESULT_COL0, _TNL_ATTRIB_COLOR0 )) {
 			WARN_ONCE("fragprog wants col0, vp doesn't provide it\n");
 			goto out; /* FIXME */
 			//_mesa_print_program(&CURRENT_VERTEX_SHADER(ctx)->Base);
@@ -1355,7 +1368,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	out:
 	
 	if (InputsRead & FRAG_BIT_COL1) {
-		if (!(OutputsWritten & (hw_tcl_on ? (1<<VERT_RESULT_COL1) : _TNL_BIT_COLOR1))) {
+		if (!r300_outputs_written_test( &OutputsWritten, VERT_RESULT_COL1, _TNL_ATTRIB_COLOR1 )) {
 			WARN_ONCE("fragprog wants col1, vp doesn't provide it\n");
 			//exit(-1);
 		}
@@ -1515,7 +1528,7 @@ static void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 		)
 	o_reg += 2;
 	
-	if (r300->state.render_inputs & _TNL_BIT_COLOR1) {
+	if (RENDERINPUTS_TEST( r300->state.render_inputs_bitset, _TNL_ATTRIB_COLOR1 )) {
 		WRITE_OP(
 			EASY_VSF_OP(MUL, o_reg++, ALL, RESULT),
 			VSF_REG(r300->state.vap_reg.i_color[1]),
@@ -1526,7 +1539,7 @@ static void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 	
 	/* Pass through texture coordinates, if any */
 	for(i=0;i < r300->radeon.glCtx->Const.MaxTextureUnits;i++)
-		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i)){
+		if (RENDERINPUTS_TEST( r300->state.render_inputs_bitset, _TNL_ATTRIB_TEX(i) )){
 			// fprintf(stderr, "i_tex[%d]=%d\n", i, r300->state.vap_reg.i_tex[i]);
 			WRITE_OP(
 				EASY_VSF_OP(MUL, o_reg++ /* 2+i */, ALL, RESULT),

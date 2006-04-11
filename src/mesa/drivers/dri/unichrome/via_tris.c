@@ -744,16 +744,18 @@ static void viaChooseVertexState( GLcontext *ctx )
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   GLuint index = tnl->render_inputs;
+   DECLARE_RENDERINPUTS(index_bitset);
    GLuint regCmdB = HC_HVPMSK_X | HC_HVPMSK_Y | HC_HVPMSK_Z;
    GLuint setupIndex = 0;
 
+   RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
    vmesa->vertex_attr_count = 0;
  
    /* EMIT_ATTR's must be in order as they tell t_vertex.c how to
     * build up a hardware vertex.
     */
-   if (index & (_TNL_BITS_TEX_ANY|_TNL_BIT_FOG)) {
+   if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX ) ||
+       RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
       EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, VIA_EMIT_W, HC_HVPMSK_W );
       vmesa->coloroffset = 4;
    }
@@ -767,8 +769,9 @@ static void viaChooseVertexState( GLcontext *ctx )
 	      HC_HVPMSK_Cd );
       
    vmesa->specoffset = 0;
-   if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
-      if ((index & _TNL_BIT_COLOR1)) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 ) ||
+       RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
 	 vmesa->specoffset = vmesa->coloroffset + 1;
 	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, VIA_EMIT_SPEC, 
 		    HC_HVPMSK_Cs );
@@ -776,13 +779,13 @@ static void viaChooseVertexState( GLcontext *ctx )
       else
 	 EMIT_PAD( 3 );
 
-      if ((index & _TNL_BIT_FOG))
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG ))
 	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, VIA_EMIT_FOG, HC_HVPMSK_Cs );
       else
 	 EMIT_PAD( 1 );
    }
 
-   if (index & _TNL_BIT_TEX(0)) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX0 )) {
       if (vmesa->ptexHack)
 	 EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_3F_XYW, VIA_EMIT_PTEX0, 
 		    (HC_HVPMSK_S | HC_HVPMSK_T) );
@@ -791,7 +794,7 @@ static void viaChooseVertexState( GLcontext *ctx )
 		    (HC_HVPMSK_S | HC_HVPMSK_T) );
    }
 
-   if (index & _TNL_BIT_TEX(1)) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX1 )) {
       EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, VIA_EMIT_TEX1, 
 		 (HC_HVPMSK_S | HC_HVPMSK_T) );
    }
@@ -824,17 +827,19 @@ static GLboolean viaCheckPTexHack( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint index = tnl->render_inputs;
+   DECLARE_RENDERINPUTS(index_bitset);
    GLboolean fallback = GL_FALSE;
    GLboolean ptexHack = GL_FALSE;
 
-   if (index & _TNL_BIT_TEX(0) && VB->TexCoordPtr[0]->size == 4) {
-      if ((index & _TNL_BITS_TEX_ANY) == _TNL_BIT_TEX(0))
+   RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
+
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX0 ) && VB->TexCoordPtr[0]->size == 4) {
+      if (!RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_ATTRIB_TEX1, _TNL_LAST_TEX ))
 	 ptexHack = GL_TRUE; 
       else
 	 fallback = GL_TRUE;
    }
-   if ((index & _TNL_BIT_TEX(1)) && VB->TexCoordPtr[1]->size == 4)
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX1 ) && VB->TexCoordPtr[1]->size == 4)
       fallback = GL_TRUE;
 
    FALLBACK(VIA_CONTEXT(ctx), VIA_FALLBACK_PROJ_TEXTURE, fallback);

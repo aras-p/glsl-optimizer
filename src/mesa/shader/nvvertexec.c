@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -51,7 +51,7 @@ _mesa_init_vp_per_vertex_registers(GLcontext *ctx)
 {
    /* Input registers get initialized from the current vertex attribs */
    MEMCPY(ctx->VertexProgram.Inputs, ctx->Current.Attrib,
-          VERT_ATTRIB_MAX * 4 * sizeof(GLfloat));
+          MAX_VERTEX_PROGRAM_ATTRIBS * 4 * sizeof(GLfloat));
 
    if (ctx->VertexProgram.Current->IsNVProgram) {
       GLuint i;

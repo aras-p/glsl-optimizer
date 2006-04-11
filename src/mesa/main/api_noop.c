@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -391,7 +391,7 @@ void GLAPIENTRY _mesa_noop_TexCoord4fv( const GLfloat *v )
 void GLAPIENTRY _mesa_noop_VertexAttrib1fNV( GLuint index, GLfloat x )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
+   if (index < MAX_VERTEX_PROGRAM_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[index], x, 0, 0, 1);
    }
    else
@@ -401,7 +401,7 @@ void GLAPIENTRY _mesa_noop_VertexAttrib1fNV( GLuint index, GLfloat x )
 void GLAPIENTRY _mesa_noop_VertexAttrib1fvNV( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
+   if (index < MAX_VERTEX_PROGRAM_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[index], v[0], 0, 0, 1);
    }
    else
@@ -411,7 +411,7 @@ void GLAPIENTRY _mesa_noop_VertexAttrib1fvNV( GLuint index, const GLfloat *v )
 void GLAPIENTRY _mesa_noop_VertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
+   if (index < MAX_VERTEX_PROGRAM_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[index], x, y, 0, 1);
    }
    else
@@ -421,7 +421,7 @@ void GLAPIENTRY _mesa_noop_VertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y 
 void GLAPIENTRY _mesa_noop_VertexAttrib2fvNV( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
+   if (index < MAX_VERTEX_PROGRAM_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[index], v[0], v[1], 0, 1);
    }
    else
@@ -432,7 +432,7 @@ void GLAPIENTRY _mesa_noop_VertexAttrib3fNV( GLuint index, GLfloat x,
                                   GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
+   if (index < MAX_VERTEX_PROGRAM_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[index], x, y, z, 1);
    }
    else
@@ -442,7 +442,7 @@ void GLAPIENTRY _mesa_noop_VertexAttrib3fNV( GLuint index, GLfloat x,
 void GLAPIENTRY _mesa_noop_VertexAttrib3fvNV( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
+   if (index < MAX_VERTEX_PROGRAM_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[index], v[0], v[1], v[2], 1);
    }
    else
@@ -453,7 +453,7 @@ void GLAPIENTRY _mesa_noop_VertexAttrib4fNV( GLuint index, GLfloat x,
                                   GLfloat y, GLfloat z, GLfloat w )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
+   if (index < MAX_VERTEX_PROGRAM_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[index], x, y, z, w);
    }
    else
@@ -463,7 +463,7 @@ void GLAPIENTRY _mesa_noop_VertexAttrib4fNV( GLuint index, GLfloat x,
 void GLAPIENTRY _mesa_noop_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
+   if (index < MAX_VERTEX_PROGRAM_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[index], v[0], v[1], v[2], v[3]);
    }
    else
@@ -471,15 +471,12 @@ void GLAPIENTRY _mesa_noop_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
 }
 
 
-/*
- * XXX Un-alias attribs here
- */
 
 void GLAPIENTRY _mesa_noop_VertexAttrib1fARB( GLuint index, GLfloat x )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
-      ASSIGN_4V(ctx->Current.Attrib[index], x, 0, 0, 1);
+   if (index < MAX_VERTEX_ATTRIBS) {
+      ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], x, 0, 0, 1);
    }
    else
       _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib1fARB" );
@@ -488,8 +485,8 @@ void GLAPIENTRY _mesa_noop_VertexAttrib1fARB( GLuint index, GLfloat x )
 void GLAPIENTRY _mesa_noop_VertexAttrib1fvARB( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
-      ASSIGN_4V(ctx->Current.Attrib[index], v[0], 0, 0, 1);
+   if (index < MAX_VERTEX_ATTRIBS) {
+      ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], v[0], 0, 0, 1);
    }
    else
       _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib1fvARB" );
@@ -498,8 +495,8 @@ void GLAPIENTRY _mesa_noop_VertexAttrib1fvARB( GLuint index, const GLfloat *v )
 void GLAPIENTRY _mesa_noop_VertexAttrib2fARB( GLuint index, GLfloat x, GLfloat y )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
-      ASSIGN_4V(ctx->Current.Attrib[index], x, y, 0, 1);
+   if (index < MAX_VERTEX_ATTRIBS) {
+      ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], x, y, 0, 1);
    }
    else
       _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib2fARB" );
@@ -508,8 +505,8 @@ void GLAPIENTRY _mesa_noop_VertexAttrib2fARB( GLuint index, GLfloat x, GLfloat y
 void GLAPIENTRY _mesa_noop_VertexAttrib2fvARB( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
-      ASSIGN_4V(ctx->Current.Attrib[index], v[0], v[1], 0, 1);
+   if (index < MAX_VERTEX_ATTRIBS) {
+      ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], v[0], v[1], 0, 1);
    }
    else
       _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib2fvARB" );
@@ -519,8 +516,8 @@ void GLAPIENTRY _mesa_noop_VertexAttrib3fARB( GLuint index, GLfloat x,
                                   GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
-      ASSIGN_4V(ctx->Current.Attrib[index], x, y, z, 1);
+   if (index < MAX_VERTEX_ATTRIBS) {
+      ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], x, y, z, 1);
    }
    else
       _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib3fARB" );
@@ -529,8 +526,8 @@ void GLAPIENTRY _mesa_noop_VertexAttrib3fARB( GLuint index, GLfloat x,
 void GLAPIENTRY _mesa_noop_VertexAttrib3fvARB( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
-      ASSIGN_4V(ctx->Current.Attrib[index], v[0], v[1], v[2], 1);
+   if (index < MAX_VERTEX_ATTRIBS) {
+      ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], v[0], v[1], v[2], 1);
    }
    else
       _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib3fvARB" );
@@ -540,8 +537,8 @@ void GLAPIENTRY _mesa_noop_VertexAttrib4fARB( GLuint index, GLfloat x,
                                   GLfloat y, GLfloat z, GLfloat w )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
-      ASSIGN_4V(ctx->Current.Attrib[index], x, y, z, w);
+   if (index < MAX_VERTEX_ATTRIBS) {
+      ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], x, y, z, w);
    }
    else
       _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib4fARB" );
@@ -550,8 +547,8 @@ void GLAPIENTRY _mesa_noop_VertexAttrib4fARB( GLuint index, GLfloat x,
 void GLAPIENTRY _mesa_noop_VertexAttrib4fvARB( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < VERT_ATTRIB_MAX) {
-      ASSIGN_4V(ctx->Current.Attrib[index], v[0], v[1], v[2], v[3]);
+   if (index < MAX_VERTEX_ATTRIBS) {
+      ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], v[0], v[1], v[2], v[3]);
    }
    else
       _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib4fvARB" );

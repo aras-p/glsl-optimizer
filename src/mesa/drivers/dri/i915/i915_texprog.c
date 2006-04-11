@@ -576,10 +576,12 @@ void i915ValidateTextureProgram( i915ContextPtr i915 )
    GLcontext *ctx = &intel->ctx;
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint index = tnl->render_inputs;
+   DECLARE_RENDERINPUTS(index_bitset);
    int i, offset;
    GLuint s4 = i915->state.Ctx[I915_CTXREG_LIS4] & ~S4_VFMT_MASK;
    GLuint s2 = S2_TEXCOORD_NONE;
+
+   RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
 
    /* Important:
     */
@@ -591,9 +593,9 @@ void i915ValidateTextureProgram( i915ContextPtr i915 )
 
    if (i915->vertex_fog == I915_FOG_PIXEL) {
       EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, S4_VFMT_XYZW, 16 );
-      index &= ~_TNL_BIT_FOG;
+      RENDERINPUTS_CLEAR( index_bitset, _TNL_ATTRIB_FOG );
    }
-   else if (index & _TNL_BITS_TEX_ANY) {
+   else if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
       EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, S4_VFMT_XYZW, 16 );
    }
    else {
@@ -601,29 +603,30 @@ void i915ValidateTextureProgram( i915ContextPtr i915 )
    }
 
    /* How undefined is undefined? */
-   if (index & _TNL_BIT_POINTSIZE) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POINTSIZE )) {
       EMIT_ATTR( _TNL_ATTRIB_POINTSIZE, EMIT_1F, S4_VFMT_POINT_WIDTH, 4 );
    }
       
    intel->coloroffset = offset / 4;
    EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, S4_VFMT_COLOR, 4 );
             
-   if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
-      if (index & _TNL_BIT_COLOR1) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 ) ||
+       RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
 	 intel->specoffset = offset / 4;
 	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, S4_VFMT_SPEC_FOG, 3 );
       } else 
 	 EMIT_PAD( 3 );
       
-      if (index & _TNL_BIT_FOG)
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG ))
 	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, S4_VFMT_SPEC_FOG, 1 );
       else
 	 EMIT_PAD( 1 );
    }
 
-   if (index & _TNL_BITS_TEX_ANY) {
+   if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
       for (i = 0; i < 8; i++) {
-	 if (index & _TNL_BIT_TEX(i)) {
+	 if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
 	    int sz = VB->TexCoordPtr[i]->size;
 	    
 	    s2 &= ~S2_TEXCOORD_FMT(i, S2_TEXCOORD_FMT0_MASK);

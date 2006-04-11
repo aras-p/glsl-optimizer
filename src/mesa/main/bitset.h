@@ -27,6 +27,10 @@
  * \brief Bitset of arbitrary size definitions.
  * \author Michal Krol
  */
+ 
+/****************************************************************************
+ * generic bitset implementation
+ */
 
 #define BITSET_WORD GLuint
 #define BITSET_WORDBITS (sizeof (BITSET_WORD) * 8)
@@ -69,4 +73,50 @@
    (BITSET_BITWORD(b) == BITSET_BITWORD(e) ? \
    ((x)[BITSET_BITWORD(b)] &= ~BITSET_RANGE(b, e)) : \
    (assert (!"BITSET_CLEAR_RANGE: bit range crosses word boundary"), 0))
+
+/****************************************************************************
+ * 64-bit bitset implementation
+ */
+ 
+#define BITSET64_WORD GLuint
+#define BITSET64_WORDBITS (sizeof (BITSET64_WORD) * 8)
+
+/* bitset declarations
+ */
+#define BITSET64_DECLARE(name, size) \
+   GLuint name[2]
+
+/* bitset operations
+ */
+#define BITSET64_COPY(x, y) do { (x)[0] = (y)[0]; (x)[1] = (y)[1]; } while (0)
+#define BITSET64_EQUAL(x, y) ( (x)[0] == (y)[0] && (x)[1] == (y)[1] )
+#define BITSET64_ZERO(x) do { (x)[0] = 0; (x)[1] = 0; } while (0)
+#define BITSET64_ONES(x) do { (x)[0] = 0xFF; (x)[1] = 0xFF; } while (0)
+
+#define BITSET64_BITWORD(b) ((b) / BITSET64_WORDBITS)
+#define BITSET64_BIT(b) (1 << ((b) % BITSET64_WORDBITS))
+
+/* single bit operations
+ */
+#define BITSET64_TEST(x, b) ((x)[BITSET64_BITWORD(b)] & BITSET64_BIT(b))
+#define BITSET64_SET(x, b) ((x)[BITSET64_BITWORD(b)] |= BITSET64_BIT(b))
+#define BITSET64_CLEAR(x, b) ((x)[BITSET64_BITWORD(b)] &= ~BITSET64_BIT(b))
+
+#define BITSET64_MASK(b) ((b) == BITSET64_WORDBITS ? ~0 : BITSET64_BIT(b) - 1)
+#define BITSET64_RANGE(b, e) (BITSET64_MASK((e) + 1) & ~BITSET64_MASK(b))
+
+/* bit range operations
+ */
+#define BITSET64_TEST_RANGE(x, b, e) \
+   (BITSET64_BITWORD(b) == BITSET64_BITWORD(e) ? \
+   ((x)[BITSET64_BITWORD(b)] & BITSET64_RANGE(b, e)) : \
+   (assert (!"BITSET64_TEST_RANGE: bit range crosses word boundary"), 0))
+#define BITSET64_SET_RANGE(x, b, e) \
+   (BITSET64_BITWORD(b) == BITSET64_BITWORD(e) ? \
+   ((x)[BITSET64_BITWORD(b)] |= BITSET64_RANGE(b, e)) : \
+   (assert (!"BITSET64_SET_RANGE: bit range crosses word boundary"), 0))
+#define BITSET64_CLEAR_RANGE(x, b, e) \
+   (BITSET64_BITWORD(b) == BITSET64_BITWORD(e) ? \
+   ((x)[BITSET64_BITWORD(b)] &= ~BITSET64_RANGE(b, e)) : \
+   (assert (!"BITSET64_CLEAR_RANGE: bit range crosses word boundary"), 0))
 

@@ -332,7 +332,7 @@ struct sis_context
   GLint drawableID;
 
   GLint GlobalFlag;
-  GLuint last_tcl_state;
+  DECLARE_RENDERINPUTS(last_tcl_state_bitset);
 
   /* Stereo */
   GLboolean useStereo;

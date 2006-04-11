@@ -434,7 +434,8 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled) {
+               if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled ||
+                   ctx->ShaderObjects._FragmentShaderPresent) {
                   /* do perspective correction but don't divide s, t, r by q */
                   const GLfloat dwdx = span->dwdx;
                   GLfloat w = span->w;
@@ -485,7 +486,8 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled) {
+               if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled ||
+                   ctx->ShaderObjects._FragmentShaderPresent) {
                   /* do perspective correction but don't divide s, t, r by q */
                   const GLfloat dwdx = span->dwdx;
                   GLfloat w = span->w;
@@ -568,7 +570,8 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled) {
+         if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled ||
+             ctx->ShaderObjects._FragmentShaderPresent) {
             /* do perspective correction but don't divide s, t, r by q */
             const GLfloat dwdx = span->dwdx;
             GLfloat w = span->w;
@@ -619,7 +622,8 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled) {
+         if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled ||
+             ctx->ShaderObjects._FragmentShaderPresent) {
             /* do perspective correction but don't divide s, t, r by q */
             const GLfloat dwdx = span->dwdx;
             GLfloat w = span->w;
@@ -661,6 +665,38 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                r += drdx;
                q += dqdx;
             }
+         }
+      }
+   }
+}
+
+
+/**
+ * Fill in the span.varying array from the interpolation values.
+ */
+static void
+interpolate_varying(GLcontext *ctx, struct sw_span *span)
+{
+   GLuint i, j;
+
+   ASSERT(span->interpMask & SPAN_VARYING);
+   ASSERT(!(span->arrayMask & SPAN_VARYING));
+
+   span->arrayMask |= SPAN_VARYING;
+
+   for (i = 0; i < MAX_VARYING_VECTORS; i++) {
+      for (j = 0; j < VARYINGS_PER_VECTOR; j++) {
+         const GLfloat dvdx = span->varStepX[i][j];
+         GLfloat v = span->var[i][j];
+         const GLfloat dwdx = span->dwdx;
+         GLfloat w = span->w;
+         GLuint k;
+
+         for (k = 0; k < span->end; k++) {
+            GLfloat invW = 1.0f / w;
+            span->array->varying[k][i][j] = v * invW;
+            v += dvdx;
+            w += dwdx;
          }
       }
    }
@@ -1137,6 +1173,10 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
        && (span->interpMask & SPAN_TEXTURE)
        && (span->arrayMask & SPAN_TEXTURE) == 0) {
       interpolate_texcoords(ctx, span);
+   }
+
+   if (ctx->ShaderObjects._FragmentShaderPresent) {
+      interpolate_varying(ctx, span);
    }
 
    /* This is the normal place to compute the resulting fragment color/Z.

@@ -37,6 +37,7 @@
 typedef struct
 {
 	GLvector4f outputs[VERT_RESULT_MAX];
+	GLvector4f varyings[MAX_VARYING_VECTORS];
 	GLvector4f ndc_coords;
 	GLubyte *clipmask;
 	GLubyte ormask;
@@ -63,6 +64,11 @@ static GLboolean construct_arb_vertex_shader (GLcontext *ctx, struct tnl_pipelin
 		_mesa_vector4f_alloc (&store->outputs[i], 0, size, 32);
 		store->outputs[i].size = 4;
 	}
+	for (i = 0; i < MAX_VARYING_VECTORS; i++)
+	{
+		_mesa_vector4f_alloc (&store->varyings[i], 0, size, 32);
+		store->varyings[i].size = 4;
+	}
 	_mesa_vector4f_alloc (&store->ndc_coords, 0, size, 32);
 	store->clipmask = (GLubyte *) ALIGN_MALLOC (size, 32);
 
@@ -79,6 +85,8 @@ static void destruct_arb_vertex_shader (struct tnl_pipeline_stage *stage)
 
 		for (i = 0; i < VERT_RESULT_MAX; i++)
 			_mesa_vector4f_free (&store->outputs[i]);
+		for (i = 0; i < MAX_VARYING_VECTORS; i++)
+			_mesa_vector4f_free (&store->varyings[i]);
 		_mesa_vector4f_free (&store->ndc_coords);
 		ALIGN_FREE (store->clipmask);
 
@@ -206,6 +214,17 @@ static GLboolean run_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stag
 		fetch_output_vec4 (pro, SLANG_VERTEX_FIXED_BACKCOLOR, VERT_RESULT_BFC0, i, 0, store);
 		fetch_output_vec4 (pro, SLANG_VERTEX_FIXED_BACKSECONDARYCOLOR, VERT_RESULT_BFC1, i, 0, store);
 		/* XXX: fetch output SLANG_VERTEX_FIXED_CLIPVERTEX */
+
+		for (j = 0; j < MAX_VARYING_VECTORS; j++)
+		{
+			GLuint k;
+
+			for (k = 0; k < VARYINGS_PER_VECTOR; k++)
+			{
+				(**pro).UpdateVarying (pro, j * VARYINGS_PER_VECTOR + k,
+					&store->varyings[j].data[i][k], GL_TRUE);
+			}
+		}
 	}
 
 	vb->ClipPtr = &store->outputs[VERT_RESULT_HPOS];
@@ -218,6 +237,8 @@ static GLboolean run_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stag
 	vb->SecondaryColorPtr[1] = &store->outputs[VERT_RESULT_BFC1];
 	vb->FogCoordPtr = &store->outputs[VERT_RESULT_FOGC];
 	vb->PointSizePtr = &store->outputs[VERT_RESULT_PSIZ];
+	for (i = 0; i < MAX_VARYING_VECTORS; i++)
+		vb->VaryingPtr[i] = &store->varyings[i];
 
 	vb->AttribPtr[VERT_ATTRIB_COLOR0] = vb->ColorPtr[0];
 	vb->AttribPtr[VERT_ATTRIB_COLOR1] = vb->SecondaryColorPtr[0];
@@ -225,6 +246,8 @@ static GLboolean run_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stag
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
 		vb->AttribPtr[VERT_ATTRIB_TEX0 + i] = vb->TexCoordPtr[i];
 	vb->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &store->outputs[VERT_RESULT_PSIZ];
+	for (i = 0; i < MAX_VARYING_VECTORS; i++)
+		vb->AttribPtr[_TNL_ATTRIB_ATTRIBUTE0 + i] = vb->VaryingPtr[i];
 
 	store->ormask = 0;
 	store->andmask = CLIP_FRUSTUM_BITS;

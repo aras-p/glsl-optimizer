@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -170,32 +170,43 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
    /* Calculate tnl->render_inputs:
     */
    if (ctx->Visual.rgbMode) {
-      tnl->render_inputs = (_TNL_BIT_POS|
-			    _TNL_BIT_COLOR0|
-			    (ctx->Texture._EnabledCoordUnits << _TNL_ATTRIB_TEX0));
+      GLuint i;
+
+      RENDERINPUTS_ZERO( tnl->render_inputs_bitset );
+      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POS );
+      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR0 );
+      for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
+         if (ctx->Texture._EnabledCoordUnits & (1 << i)) {
+            RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) );
+         }
+      }
 
       if (NEED_SECONDARY_COLOR(ctx))
-	 tnl->render_inputs |= _TNL_BIT_COLOR1;
+         RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR1 );
    }
    else {
-      tnl->render_inputs |= (_TNL_BIT_POS|_TNL_BIT_INDEX);
+      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POS );
+      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_INDEX );
    }
-    
+
    if (ctx->Fog.Enabled ||
        (ctx->FragmentProgram._Active &&
-        ctx->FragmentProgram._Current->FogOption != GL_NONE))
-      tnl->render_inputs |= _TNL_BIT_FOG;
+       ctx->FragmentProgram._Current->FogOption != GL_NONE))
+      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_FOG );
 
    if (ctx->Polygon.FrontMode != GL_FILL || 
        ctx->Polygon.BackMode != GL_FILL)
-      tnl->render_inputs |= _TNL_BIT_EDGEFLAG;
+      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_EDGEFLAG );
 
    if (ctx->RenderMode == GL_FEEDBACK)
-      tnl->render_inputs |= _TNL_BIT_TEX0;
+      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_TEX0 );
 
    if (ctx->Point._Attenuated ||
        (ctx->VertexProgram._Enabled && ctx->VertexProgram.PointSizeEnabled))
-      tnl->render_inputs |= _TNL_BIT_POINTSIZE;
+      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POINTSIZE );
+
+   if (ctx->ShaderObjects._VertexShaderPresent || ctx->ShaderObjects._FragmentShaderPresent)
+      RENDERINPUTS_SET_RANGE( tnl->render_inputs_bitset, _TNL_FIRST_ATTRIBUTE, _TNL_LAST_ATTRIBUTE );
 }
 
 

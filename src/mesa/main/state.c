@@ -820,7 +820,11 @@ update_arrays( GLcontext *ctx )
    /* find min of _MaxElement values for all enabled arrays */
 
    /* 0 */
-   if (ctx->VertexProgram._Enabled
+   if (ctx->ShaderObjects._VertexShaderPresent
+       && ctx->Array.VertexAttrib[VERT_ATTRIB_GENERIC0].Enabled) {
+      min = ctx->Array.VertexAttrib[VERT_ATTRIB_GENERIC0]._MaxElement;
+   }
+   else if (ctx->VertexProgram._Enabled
        && ctx->Array.VertexAttrib[VERT_ATTRIB_POS].Enabled) {
       min = ctx->Array.VertexAttrib[VERT_ATTRIB_POS]._MaxElement;
    }
@@ -888,7 +892,7 @@ update_arrays( GLcontext *ctx )
    }
 
    /* 8..15 */
-   for (i = VERT_ATTRIB_TEX0; i < VERT_ATTRIB_MAX; i++) {
+   for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++) {
       if (ctx->VertexProgram._Enabled
           && ctx->Array.VertexAttrib[i].Enabled) {
          min = MIN2(min, ctx->Array.VertexAttrib[i]._MaxElement);
@@ -896,6 +900,15 @@ update_arrays( GLcontext *ctx )
       else if (i - VERT_ATTRIB_TEX0 < ctx->Const.MaxTextureCoordUnits
                && ctx->Array.TexCoord[i - VERT_ATTRIB_TEX0].Enabled) {
          min = MIN2(min, ctx->Array.TexCoord[i - VERT_ATTRIB_TEX0]._MaxElement);
+      }
+   }
+
+   /* 16..31 */
+   if (ctx->ShaderObjects._VertexShaderPresent) {
+      for (i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++) {
+         if (ctx->Array.VertexAttrib[i].Enabled) {
+            min = MIN2(min, ctx->Array.VertexAttrib[i]._MaxElement);
+         }
       }
    }
 

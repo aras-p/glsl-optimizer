@@ -75,6 +75,16 @@ void _swrast_exec_arbshader (GLcontext *ctx, struct sw_span *span)
 			(**pro).UpdateFixedVarying (pro, SLANG_FRAGMENT_FIXED_TEXCOORD, vec, j,
 				4 * sizeof (GLfloat), GL_TRUE);
 		}
+		for (j = 0; j < MAX_VARYING_VECTORS; j++)
+		{
+			GLuint k;
+
+			for (k = 0; k < VARYINGS_PER_VECTOR; k++)
+			{
+				(**pro).UpdateVarying (pro, j * VARYINGS_PER_VECTOR + k,
+					&span->array->varying[i][j][k], GL_FALSE);
+			}
+		}
 
 		_slang_exec_fragment_shader (pro);
 

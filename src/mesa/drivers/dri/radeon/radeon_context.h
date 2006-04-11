@@ -735,7 +735,7 @@ struct radeon_context {
    GLuint TclFallback;
    GLuint Fallback;
    GLuint NewGLState;
-   GLuint tnl_index;	/* index of bits for last tnl_install_attrs */
+   DECLARE_RENDERINPUTS(tnl_index_bitset);	/* index of bits for last tnl_install_attrs */
 
    /* Vertex buffers
     */

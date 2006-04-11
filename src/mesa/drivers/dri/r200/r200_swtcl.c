@@ -85,11 +85,12 @@ static void r200SetVertexFormat( GLcontext *ctx )
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint index = tnl->render_inputs;
+   DECLARE_RENDERINPUTS(index_bitset);
    int fmt_0 = 0;
    int fmt_1 = 0;
    int offset = 0;
 
+   RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
 
    /* Important:
     */
@@ -106,7 +107,8 @@ static void r200SetVertexFormat( GLcontext *ctx )
    /* EMIT_ATTR's must be in order as they tell t_vertex.c how to
     * build up a hardware vertex.
     */
-   if ( !rmesa->swtcl.needproj || (index & _TNL_BITS_TEX_ANY)) { /* need w coord for projected textures */
+   if ( !rmesa->swtcl.needproj ||
+       RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) { /* need w coord for projected textures */
       EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F, R200_VTX_XY | R200_VTX_Z0 | R200_VTX_W0 );
       offset = 4;
    }
@@ -124,10 +126,11 @@ static void r200SetVertexFormat( GLcontext *ctx )
    offset += 1;
 
    rmesa->swtcl.specoffset = 0;
-   if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 ) ||
+       RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
 
 #if MESA_LITTLE_ENDIAN 
-      if (index & _TNL_BIT_COLOR1) {
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
 	 rmesa->swtcl.specoffset = offset;
 	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB, (R200_VTX_PK_RGBA << R200_VTX_COLOR_1_SHIFT) );
       }
@@ -135,21 +138,21 @@ static void r200SetVertexFormat( GLcontext *ctx )
 	 EMIT_PAD( 3 );
       }
 
-      if (index & _TNL_BIT_FOG) {
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
 	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, (R200_VTX_PK_RGBA << R200_VTX_COLOR_1_SHIFT) );
       }
       else {
 	 EMIT_PAD( 1 );
       }
 #else
-      if (index & _TNL_BIT_FOG) {
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
 	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, (R200_VTX_PK_RGBA << R200_VTX_COLOR_1_SHIFT) );
       }
       else {
 	 EMIT_PAD( 1 );
       }
 
-      if (index & _TNL_BIT_COLOR1) {
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
 	 rmesa->swtcl.specoffset = offset;
 	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, (R200_VTX_PK_RGBA << R200_VTX_COLOR_1_SHIFT) );
       }
@@ -159,11 +162,11 @@ static void r200SetVertexFormat( GLcontext *ctx )
 #endif
    }
 
-   if (index & _TNL_BITS_TEX_ANY) {
+   if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
       int i;
 
       for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-	 if (index & _TNL_BIT_TEX(i)) {
+	 if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
 	    GLuint sz = VB->TexCoordPtr[i]->size;
 
 	    fmt_1 |= sz << (3 * i);
@@ -179,7 +182,7 @@ static void r200SetVertexFormat( GLcontext *ctx )
       rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] |= R200_FOG_USE_SPEC_ALPHA;
    }
 
-   if ( rmesa->tnl_index != index ||
+   if (!RENDERINPUTS_EQUAL( rmesa->tnl_index_bitset, index_bitset ) ||
 	(rmesa->hw.vtx.cmd[VTX_VTXFMT_0] != fmt_0) ||
 	(rmesa->hw.vtx.cmd[VTX_VTXFMT_1] != fmt_1) ) {
       R200_NEWPRIM(rmesa);
@@ -193,7 +196,7 @@ static void r200SetVertexFormat( GLcontext *ctx )
 			      rmesa->swtcl.vertex_attr_count,
 			      NULL, 0 );
       rmesa->swtcl.vertex_size /= 4;
-      rmesa->tnl_index = index;
+      RENDERINPUTS_COPY( rmesa->tnl_index_bitset, index_bitset );
    }
 }
 
@@ -235,12 +238,12 @@ void r200ChooseVertexState( GLcontext *ctx )
    /* HW perspective divide is a win, but tiny vertex formats are a
     * bigger one.
     */
-   if ( ((tnl->render_inputs & _TNL_BITS_TEX_ANY) == 0)
+   if (!RENDERINPUTS_TEST_RANGE( tnl->render_inputs_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )
 	|| (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED))) {
       rmesa->swtcl.needproj = GL_TRUE;
       vte |= R200_VTX_XY_FMT | R200_VTX_Z_FMT;
       vte &= ~R200_VTX_W0_FMT;
-      if (tnl->render_inputs & _TNL_BITS_TEX_ANY) {
+      if (RENDERINPUTS_TEST_RANGE( tnl->render_inputs_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
 	 vap &= ~R200_VAP_FORCE_W_TO_ONE;
       }
       else {
@@ -719,7 +722,7 @@ void r200Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	     */
 	    _tnl_invalidate_vertex_state( ctx, ~0 );
 	    _tnl_invalidate_vertices( ctx, ~0 );
-	    rmesa->tnl_index = 0;
+	    RENDERINPUTS_ZERO( rmesa->tnl_index_bitset );
 	    r200ChooseVertexState( ctx );
 	    r200ChooseRenderState( ctx );
 	 }

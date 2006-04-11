@@ -41,6 +41,7 @@
 #include "glapitable.h"
 #include "glthread.h"
 #include "math/m_matrix.h"	/* GLmatrix */
+#include "bitset.h"
 
 
 /**
@@ -155,7 +156,19 @@ enum
    VERT_ATTRIB_GENERIC1 = 17,
    VERT_ATTRIB_GENERIC2 = 18,
    VERT_ATTRIB_GENERIC3 = 19,
-   VERT_ATTRIB_MAX = 16  /* XXX not counting generic attribs yet */
+   VERT_ATTRIB_GENERIC4 = 20,
+   VERT_ATTRIB_GENERIC5 = 21,
+   VERT_ATTRIB_GENERIC6 = 22,
+   VERT_ATTRIB_GENERIC7 = 23,
+   VERT_ATTRIB_GENERIC8 = 24,
+   VERT_ATTRIB_GENERIC9 = 25,
+   VERT_ATTRIB_GENERIC10 = 26,
+   VERT_ATTRIB_GENERIC11 = 27,
+   VERT_ATTRIB_GENERIC12 = 28,
+   VERT_ATTRIB_GENERIC13 = 29,
+   VERT_ATTRIB_GENERIC14 = 30,
+   VERT_ATTRIB_GENERIC15 = 31,
+   VERT_ATTRIB_MAX = 32
 };
 
 /**
@@ -183,10 +196,39 @@ enum
 #define VERT_BIT_GENERIC1 (1 << VERT_ATTRIB_GENERIC1)
 #define VERT_BIT_GENERIC2 (1 << VERT_ATTRIB_GENERIC2)
 #define VERT_BIT_GENERIC3 (1 << VERT_ATTRIB_GENERIC3)
+#define VERT_BIT_GENERIC4 (1 << VERT_ATTRIB_GENERIC4)
+#define VERT_BIT_GENERIC5 (1 << VERT_ATTRIB_GENERIC5)
+#define VERT_BIT_GENERIC6 (1 << VERT_ATTRIB_GENERIC6)
+#define VERT_BIT_GENERIC7 (1 << VERT_ATTRIB_GENERIC7)
+#define VERT_BIT_GENERIC8 (1 << VERT_ATTRIB_GENERIC8)
+#define VERT_BIT_GENERIC9 (1 << VERT_ATTRIB_GENERIC9)
+#define VERT_BIT_GENERIC10 (1 << VERT_ATTRIB_GENERIC10)
+#define VERT_BIT_GENERIC11 (1 << VERT_ATTRIB_GENERIC11)
+#define VERT_BIT_GENERIC12 (1 << VERT_ATTRIB_GENERIC12)
+#define VERT_BIT_GENERIC13 (1 << VERT_ATTRIB_GENERIC13)
+#define VERT_BIT_GENERIC14 (1 << VERT_ATTRIB_GENERIC14)
+#define VERT_BIT_GENERIC15 (1 << VERT_ATTRIB_GENERIC15)
 
 #define VERT_BIT_TEX(u)  (1 << (VERT_ATTRIB_TEX0 + (u)))
 #define VERT_BIT_GENERIC(g)  (1 << (VERT_ATTRIB_GENERIC0 + (g)))
 /*@}*/
+
+/**
+ * GLSL allows shader writers to allocate vertex result attributes (varyings) in
+ * single float component granularity. This is in contrast to vertex / fragment
+ * programs, where result attributes (actually texcoords) were allocated
+ * in 4-component vectors of floats granularity.
+ * For performance reasons, it would be optimal to stick with this scheme on a scalar
+ * processor. Varyings will likely be allocated as 3-component vectors, so statistically
+ * we win 2 floats.
+ * The constant VARYINGS_PER_VECTOR tells us how much of float components we pack into
+ * one result vector. For scalar processor it would be 1, for vector processor - 4.
+ * 
+ * NOTE: Currently we pack varyings into vertex attributes.
+ */
+#define VARYINGS_PER_VECTOR 2
+#define VARYING_EMIT_STYLE  EMIT_2F
+#define MAX_VARYING_VECTORS ((MAX_VARYING_FLOATS + VARYINGS_PER_VECTOR - 1) / VARYINGS_PER_VECTOR)
 
 /**
  * Indexes for vertex program result attributes

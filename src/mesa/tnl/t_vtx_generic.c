@@ -364,42 +364,42 @@ static void GLAPIENTRY _tnl_MultiTexCoord4fv( GLenum target,
 
 static void GLAPIENTRY _tnl_VertexAttrib1fNV( GLuint index, GLfloat x )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
    DISPATCH_ATTR1F( index, x );
 }
 
 static void GLAPIENTRY _tnl_VertexAttrib1fvNV( GLuint index, 
 					       const GLfloat *v )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
    DISPATCH_ATTR1FV( index, v );
 }
 
 static void GLAPIENTRY _tnl_VertexAttrib2fNV( GLuint index, GLfloat x, 
 					      GLfloat y )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
    DISPATCH_ATTR2F( index, x, y );
 }
 
 static void GLAPIENTRY _tnl_VertexAttrib2fvNV( GLuint index,
 					       const GLfloat *v )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
    DISPATCH_ATTR2FV( index, v );
 }
 
 static void GLAPIENTRY _tnl_VertexAttrib3fNV( GLuint index, GLfloat x,
 					      GLfloat y, GLfloat z )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
    DISPATCH_ATTR3F( index, x, y, z );
 }
 
 static void GLAPIENTRY _tnl_VertexAttrib3fvNV( GLuint index,
 					       const GLfloat *v )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
    DISPATCH_ATTR3FV( index, v );
 }
 
@@ -407,60 +407,73 @@ static void GLAPIENTRY _tnl_VertexAttrib4fNV( GLuint index, GLfloat x,
 					      GLfloat y, GLfloat z,
 					      GLfloat w )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
    DISPATCH_ATTR4F( index, x, y, z, w );
 }
 
 static void GLAPIENTRY _tnl_VertexAttrib4fvNV( GLuint index, 
 					       const GLfloat *v )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
    DISPATCH_ATTR4FV( index, v );
 }
 
-
-/*
- * XXX adjust index
- */
-
 static void GLAPIENTRY _tnl_VertexAttrib1fARB( GLuint index, GLfloat x )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_ATTRIBS)
+      index = ERROR_ATTRIB;
+   else
+      index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR1F( index, x );
 }
 
 static void GLAPIENTRY _tnl_VertexAttrib1fvARB( GLuint index, 
 					       const GLfloat *v )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_ATTRIBS)
+      index = ERROR_ATTRIB;
+   else
+      index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR1FV( index, v );
 }
 
 static void GLAPIENTRY _tnl_VertexAttrib2fARB( GLuint index, GLfloat x, 
 					      GLfloat y )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_ATTRIBS)
+      index = ERROR_ATTRIB;
+   else
+      index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR2F( index, x, y );
 }
 
 static void GLAPIENTRY _tnl_VertexAttrib2fvARB( GLuint index,
 					       const GLfloat *v )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_ATTRIBS)
+      index = ERROR_ATTRIB;
+   else
+      index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR2FV( index, v );
 }
 
 static void GLAPIENTRY _tnl_VertexAttrib3fARB( GLuint index, GLfloat x,
 					      GLfloat y, GLfloat z )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_ATTRIBS)
+      index = ERROR_ATTRIB;
+   else
+      index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR3F( index, x, y, z );
 }
 
 static void GLAPIENTRY _tnl_VertexAttrib3fvARB( GLuint index,
 					       const GLfloat *v )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_ATTRIBS)
+      index = ERROR_ATTRIB;
+   else
+      index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR3FV( index, v );
 }
 
@@ -468,14 +481,20 @@ static void GLAPIENTRY _tnl_VertexAttrib4fARB( GLuint index, GLfloat x,
 					      GLfloat y, GLfloat z,
 					      GLfloat w )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_ATTRIBS)
+      index = ERROR_ATTRIB;
+   else
+      index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR4F( index, x, y, z, w );
 }
 
 static void GLAPIENTRY _tnl_VertexAttrib4fvARB( GLuint index, 
 					       const GLfloat *v )
 {
-   if (index >= VERT_ATTRIB_MAX) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_ATTRIBS)
+      index = ERROR_ATTRIB;
+   else
+      index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR4FV( index, v );
 }
 

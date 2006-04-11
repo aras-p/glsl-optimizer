@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -66,6 +66,7 @@
 #define SPAN_FLAT         0x400  /**< flat shading? */
 #define SPAN_XY           0x800
 #define SPAN_MASK        0x1000
+#define SPAN_VARYING     0x2000
 /*@}*/
 
 
@@ -90,6 +91,7 @@ struct span_arrays {
    GLfloat texcoords[MAX_TEXTURE_COORD_UNITS][MAX_WIDTH][4];
    GLfloat lambda[MAX_TEXTURE_COORD_UNITS][MAX_WIDTH];
    GLfloat coverage[MAX_WIDTH];
+   GLfloat varying[MAX_WIDTH][MAX_VARYING_VECTORS][VARYINGS_PER_VECTOR];
 
    /** This mask indicates which fragments are alive or culled */
    GLubyte mask[MAX_WIDTH];
@@ -167,6 +169,9 @@ struct sw_span {
    GLfloat texStepX[MAX_TEXTURE_COORD_UNITS][4];
    GLfloat texStepY[MAX_TEXTURE_COORD_UNITS][4];
    GLfixed intTex[2], intTexStep[2];  /* s, t only */
+   GLfloat var[MAX_VARYING_VECTORS][VARYINGS_PER_VECTOR];
+   GLfloat varStepX[MAX_VARYING_VECTORS][VARYINGS_PER_VECTOR];
+   GLfloat varStepY[MAX_VARYING_VECTORS][VARYINGS_PER_VECTOR];
 
    /* partial derivatives wrt X and Y. */
    GLfloat dzdx, dzdy;

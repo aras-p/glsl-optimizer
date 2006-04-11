@@ -842,9 +842,11 @@ static void sisRenderStart( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint index = tnl->render_inputs;
+   DECLARE_RENDERINPUTS(index_bitset);
    GLuint AGPParseSet = smesa->AGPParseSet;
    GLboolean tex_fallback = GL_FALSE;
+
+   RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
 
    if (ctx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT && 
       smesa->driDrawable->numClipRects != 0)
@@ -869,7 +871,7 @@ static void sisRenderStart( GLcontext *ctx )
 
    AGPParseSet &= ~(MASK_VertexDWSize | MASK_VertexDataFormat);
    AGPParseSet |= SiS_PS_HAS_XYZ | SiS_PS_HAS_DIFFUSE;
-   if (index & _TNL_BITS_TEX_ANY) {
+   if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
       EMIT_ATTR(_TNL_ATTRIB_POS, EMIT_4F_VIEWPORT);
       AGPParseSet |= SiS_PS_HAS_W;
       smesa->coloroffset = 4;
@@ -881,17 +883,18 @@ static void sisRenderStart( GLcontext *ctx )
    EMIT_ATTR(_TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA);
 
    smesa->specoffset = 0;
-   if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 ) ||
+       RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
       AGPParseSet |= SiS_PS_HAS_SPECULAR;
 
-      if (index & _TNL_BIT_COLOR1) {
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
 	 EMIT_ATTR(_TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR);
 	 smesa->specoffset = smesa->coloroffset + 1;
       } else {
 	 EMIT_PAD(3);
       }
 
-      if (index & _TNL_BIT_FOG) {
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
 	 EMIT_ATTR(_TNL_ATTRIB_FOG, EMIT_1UB_1F);
       } else {
 	 EMIT_PAD(1);
@@ -899,14 +902,14 @@ static void sisRenderStart( GLcontext *ctx )
    }
 
    /* projective textures are not supported by the hardware */
-   if (index & _TNL_BIT_TEX(0)) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX0 )) {
       if (VB->TexCoordPtr[0]->size > 2)
 	 tex_fallback = GL_TRUE;
       EMIT_ATTR(_TNL_ATTRIB_TEX0, EMIT_2F);
       AGPParseSet |= SiS_PS_HAS_UV0;
    }
    /* Will only hit tex1 on SiS300 */
-   if (index & _TNL_BIT_TEX(1)) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX1 )) {
       if (VB->TexCoordPtr[1]->size > 2)
 	 tex_fallback = GL_TRUE;
       EMIT_ATTR(_TNL_ATTRIB_TEX1, EMIT_2F);
@@ -914,7 +917,7 @@ static void sisRenderStart( GLcontext *ctx )
    }
    FALLBACK(smesa, SIS_FALLBACK_TEXTURE, tex_fallback);
 
-   if (smesa->last_tcl_state != index) {
+   if (!RENDERINPUTS_EQUAL( smesa->last_tcl_state_bitset, index_bitset )) {
       smesa->AGPParseSet = AGPParseSet;
 
       smesa->vertex_size =  _tnl_install_attrs( ctx, smesa->vertex_attrs, 

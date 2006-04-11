@@ -2,7 +2,7 @@
  * mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -92,6 +92,12 @@
  * number of bits allocated for these numbers in places like vertex
  * program instruction formats and register layouts.
  */
+/* The bit space exhaustion is a fact now, done by _TNL_ATTRIB_ATTRIBUTE* for
+ * GLSL vertex shader which cannot be aliased with conventional vertex attribs.
+ * Compacting _TNL_ATTRIB_MAT_* attribs would not work, they would not give
+ * as many free bits (11 plus already 1 free bit) as _TNL_ATTRIB_ATTRIBUTE*
+ * attribs want (16).
+ */
 enum {
 	_TNL_ATTRIB_POS = 0,
 	_TNL_ATTRIB_WEIGHT = 1,
@@ -109,98 +115,56 @@ enum {
 	_TNL_ATTRIB_TEX5 = 13,
 	_TNL_ATTRIB_TEX6 = 14,
 	_TNL_ATTRIB_TEX7 = 15,
-	_TNL_ATTRIB_MAT_FRONT_AMBIENT = 16,
-	_TNL_ATTRIB_MAT_BACK_AMBIENT = 17,
-	_TNL_ATTRIB_MAT_FRONT_DIFFUSE = 18,
-	_TNL_ATTRIB_MAT_BACK_DIFFUSE = 19,
-	_TNL_ATTRIB_MAT_FRONT_SPECULAR = 20,
-	_TNL_ATTRIB_MAT_BACK_SPECULAR = 21,
-	_TNL_ATTRIB_MAT_FRONT_EMISSION = 22,
-	_TNL_ATTRIB_MAT_BACK_EMISSION = 23,
-	_TNL_ATTRIB_MAT_FRONT_SHININESS = 24,
-	_TNL_ATTRIB_MAT_BACK_SHININESS = 25,
-	_TNL_ATTRIB_MAT_FRONT_INDEXES = 26,
-	_TNL_ATTRIB_MAT_BACK_INDEXES = 27, 
-	_TNL_ATTRIB_INDEX = 28,        
-	_TNL_ATTRIB_EDGEFLAG = 29,     
-	_TNL_ATTRIB_POINTSIZE = 30,
-	_TNL_ATTRIB_MAX = 31
+	_TNL_ATTRIB_ATTRIBUTE0 = 16,
+	_TNL_ATTRIB_ATTRIBUTE1 = 17,
+	_TNL_ATTRIB_ATTRIBUTE2 = 18,
+	_TNL_ATTRIB_ATTRIBUTE3 = 19,
+	_TNL_ATTRIB_ATTRIBUTE4 = 20,
+	_TNL_ATTRIB_ATTRIBUTE5 = 21,
+	_TNL_ATTRIB_ATTRIBUTE6 = 22,
+	_TNL_ATTRIB_ATTRIBUTE7 = 23,
+	_TNL_ATTRIB_ATTRIBUTE8 = 24,
+	_TNL_ATTRIB_ATTRIBUTE9 = 25,
+	_TNL_ATTRIB_ATTRIBUTE10 = 26,
+	_TNL_ATTRIB_ATTRIBUTE11 = 27,
+	_TNL_ATTRIB_ATTRIBUTE12 = 28,
+	_TNL_ATTRIB_ATTRIBUTE13 = 29,
+	_TNL_ATTRIB_ATTRIBUTE14 = 30,
+	_TNL_ATTRIB_ATTRIBUTE15 = 31,
+	_TNL_ATTRIB_MAT_FRONT_AMBIENT = 32,
+	_TNL_ATTRIB_MAT_BACK_AMBIENT = 33,
+	_TNL_ATTRIB_MAT_FRONT_DIFFUSE = 34,
+	_TNL_ATTRIB_MAT_BACK_DIFFUSE = 35,
+	_TNL_ATTRIB_MAT_FRONT_SPECULAR = 36,
+	_TNL_ATTRIB_MAT_BACK_SPECULAR = 37,
+	_TNL_ATTRIB_MAT_FRONT_EMISSION = 38,
+	_TNL_ATTRIB_MAT_BACK_EMISSION = 39,
+	_TNL_ATTRIB_MAT_FRONT_SHININESS = 40,
+	_TNL_ATTRIB_MAT_BACK_SHININESS = 41,
+	_TNL_ATTRIB_MAT_FRONT_INDEXES = 42,
+	_TNL_ATTRIB_MAT_BACK_INDEXES = 43,
+	_TNL_ATTRIB_INDEX = 44,
+	_TNL_ATTRIB_EDGEFLAG = 45,
+	_TNL_ATTRIB_POINTSIZE = 46,
+	_TNL_ATTRIB_MAX = 47
 } ;
 
-/* Will probably have to revise this scheme fairly shortly, eg. by
- * compacting all the MAT flags down to one bit, or by using two
- * dwords to store the flags.
+#define _TNL_ATTRIB_TEX(u)       (_TNL_ATTRIB_TEX0 + (u))
+#define _TNL_ATTRIB_ATTRIBUTE(n) (_TNL_ATTRIB_ATTRIBUTE0 + (n))
+
+/* Define bit ranges instead of bit masks.
  */
-#define _TNL_BIT_POS                 (1<<0)
-#define _TNL_BIT_WEIGHT              (1<<1)
-#define _TNL_BIT_NORMAL              (1<<2)
-#define _TNL_BIT_COLOR0              (1<<3)
-#define _TNL_BIT_COLOR1              (1<<4)
-#define _TNL_BIT_FOG                 (1<<5)
-#define _TNL_BIT_SIX                 (1<<6)
-#define _TNL_BIT_SEVEN               (1<<7)
-#define _TNL_BIT_TEX0                (1<<8)
-#define _TNL_BIT_TEX1                (1<<9)
-#define _TNL_BIT_TEX2                (1<<10)
-#define _TNL_BIT_TEX3                (1<<11)
-#define _TNL_BIT_TEX4                (1<<12)
-#define _TNL_BIT_TEX5                (1<<13)
-#define _TNL_BIT_TEX6                (1<<14)
-#define _TNL_BIT_TEX7                (1<<15)
-#define _TNL_BIT_MAT_FRONT_AMBIENT   (1<<16)
-#define _TNL_BIT_MAT_BACK_AMBIENT    (1<<17)
-#define _TNL_BIT_MAT_FRONT_DIFFUSE   (1<<18)
-#define _TNL_BIT_MAT_BACK_DIFFUSE    (1<<19)
-#define _TNL_BIT_MAT_FRONT_SPECULAR  (1<<20)
-#define _TNL_BIT_MAT_BACK_SPECULAR   (1<<21)
-#define _TNL_BIT_MAT_FRONT_EMISSION  (1<<22)
-#define _TNL_BIT_MAT_BACK_EMISSION   (1<<23)
-#define _TNL_BIT_MAT_FRONT_SHININESS (1<<24)
-#define _TNL_BIT_MAT_BACK_SHININESS  (1<<25)
-#define _TNL_BIT_MAT_FRONT_INDEXES   (1<<26)
-#define _TNL_BIT_MAT_BACK_INDEXES    (1<<27)
-#define _TNL_BIT_INDEX               (1<<28)
-#define _TNL_BIT_EDGEFLAG            (1<<29)
-#define _TNL_BIT_POINTSIZE           (1<<30)
+#define _TNL_FIRST_PROG      _TNL_ATTRIB_WEIGHT
+#define _TNL_LAST_PROG       _TNL_ATTRIB_TEX7
 
-#define _TNL_BIT_TEX(u)  (1 << (_TNL_ATTRIB_TEX0 + (u)))
+#define _TNL_FIRST_TEX       _TNL_ATTRIB_TEX0
+#define _TNL_LAST_TEX        _TNL_ATTRIB_TEX7
 
+#define _TNL_FIRST_ATTRIBUTE _TNL_ATTRIB_ATTRIBUTE0
+#define _TNL_LAST_ATTRIBUTE  _TNL_ATTRIB_ATTRIBUTE15
 
-
-#define _TNL_BITS_MAT_ANY  (_TNL_BIT_MAT_FRONT_AMBIENT   | 	\
-			    _TNL_BIT_MAT_BACK_AMBIENT    | 	\
-			    _TNL_BIT_MAT_FRONT_DIFFUSE   | 	\
-			    _TNL_BIT_MAT_BACK_DIFFUSE    | 	\
-			    _TNL_BIT_MAT_FRONT_SPECULAR  | 	\
-			    _TNL_BIT_MAT_BACK_SPECULAR   | 	\
-			    _TNL_BIT_MAT_FRONT_EMISSION  | 	\
-			    _TNL_BIT_MAT_BACK_EMISSION   | 	\
-			    _TNL_BIT_MAT_FRONT_SHININESS | 	\
-			    _TNL_BIT_MAT_BACK_SHININESS  | 	\
-			    _TNL_BIT_MAT_FRONT_INDEXES   | 	\
-			    _TNL_BIT_MAT_BACK_INDEXES)
-
-
-#define _TNL_BITS_TEX_ANY  (_TNL_BIT_TEX0 |	\
-                            _TNL_BIT_TEX1 |	\
-                            _TNL_BIT_TEX2 |	\
-                            _TNL_BIT_TEX3 |	\
-                            _TNL_BIT_TEX4 |	\
-                            _TNL_BIT_TEX5 |	\
-                            _TNL_BIT_TEX6 |	\
-                            _TNL_BIT_TEX7)
-
-
-#define _TNL_BITS_PROG_ANY   (_TNL_BIT_POS    |		\
-			      _TNL_BIT_WEIGHT |		\
-			      _TNL_BIT_NORMAL |		\
-			      _TNL_BIT_COLOR0 |		\
-			      _TNL_BIT_COLOR1 |		\
-			      _TNL_BIT_FOG    |		\
-			      _TNL_BIT_SIX    |		\
-			      _TNL_BIT_SEVEN  |		\
-			      _TNL_BITS_TEX_ANY)
-
+#define _TNL_FIRST_MAT       _TNL_ATTRIB_MAT_FRONT_AMBIENT
+#define _TNL_LAST_MAT        _TNL_ATTRIB_MAT_BACK_INDEXES
 
 
 #define PRIM_BEGIN     0x10
@@ -444,6 +408,7 @@ struct vertex_buffer
    GLvector4f  *SecondaryColorPtr[2];           /* _TNL_BIT_COLOR1 */
    GLvector4f  *PointSizePtr;	                /* _TNL_BIT_POS */
    GLvector4f  *FogCoordPtr;	                /* _TNL_BIT_FOG */
+   GLvector4f  *VaryingPtr[MAX_VARYING_VECTORS];
 
    struct tnl_prim  *Primitive;	              
    GLuint      PrimitiveCount;	      
@@ -730,7 +695,20 @@ struct tnl_device_driver
        */
    } Render;
 };
-   
+
+
+#define DECLARE_RENDERINPUTS(name) BITSET64_DECLARE(name, _TNL_ATTRIB_MAX)
+#define RENDERINPUTS_COPY BITSET64_COPY
+#define RENDERINPUTS_EQUAL BITSET64_EQUAL
+#define RENDERINPUTS_ZERO BITSET64_ZERO
+#define RENDERINPUTS_ONES BITSET64_ONES
+#define RENDERINPUTS_TEST BITSET64_TEST
+#define RENDERINPUTS_SET BITSET64_SET
+#define RENDERINPUTS_CLEAR BITSET64_CLEAR
+#define RENDERINPUTS_TEST_RANGE BITSET64_TEST_RANGE
+#define RENDERINPUTS_SET_RANGE BITSET64_SET_RANGE
+#define RENDERINPUTS_CLEAR_RANGE BITSET64_CLEAR_RANGE
+
 
 /**
  * Context state for T&L context.
@@ -783,7 +761,7 @@ typedef struct
     */
    GLboolean DiscardPrimitive;
 
-   GLuint render_inputs;
+   DECLARE_RENDERINPUTS(render_inputs_bitset);
 
    GLvertexformat exec_vtxfmt;
    GLvertexformat save_vtxfmt;

@@ -118,7 +118,7 @@ struct i830_context
 {
    struct intel_context intel;
    
-   GLuint last_index;
+   DECLARE_RENDERINPUTS(last_index_bitset);
 
    struct i830_hw_state meta, initial, state, *current;
 };

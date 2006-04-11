@@ -564,10 +564,12 @@ static void r128RenderStart( GLcontext *ctx )
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint index = tnl->render_inputs;
+   DECLARE_RENDERINPUTS(index_bitset);
    GLuint vc_frmt = 0;
    GLboolean fallback_projtex = GL_FALSE;
    GLuint offset = 0;
+
+   RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
 
    /* Important: */
    VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
@@ -577,7 +579,7 @@ static void r128RenderStart( GLcontext *ctx )
    /* EMIT_ATTR's must be in order as they tell t_vertex.c how to
     * build up a hardware vertex.
     */
-   if ( index & _TNL_BITS_TEX_ANY )
+   if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX ))
       EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, R128_CCE_VC_FRMT_RHW, 16 );
    else
       EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_3F_VIEWPORT, 0, 12 );
@@ -591,28 +593,29 @@ static void r128RenderStart( GLcontext *ctx )
       R128_CCE_VC_FRMT_DIFFUSE_ARGB, 4 );
 #endif
 
-   if ( index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG) ) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 ) ||
+       RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
 #if MESA_LITTLE_ENDIAN
-      if ( index & _TNL_BIT_COLOR1) {
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
 	 rmesa->specoffset = offset;
 	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR,
 	    R128_CCE_VC_FRMT_SPEC_FRGB, 3 );
       } else 
 	 EMIT_PAD( 3 );
 
-      if (index & _TNL_BIT_FOG)
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG ))
 	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, R128_CCE_VC_FRMT_SPEC_FRGB,
 		    1 );
       else
 	 EMIT_PAD( 1 );
 #else
-      if (index & _TNL_BIT_FOG)
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG ))
 	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, R128_CCE_VC_FRMT_SPEC_FRGB,
 		    1 );
       else
 	 EMIT_PAD( 1 );
 
-      if ( index & _TNL_BIT_COLOR1) {
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
 	 rmesa->specoffset = offset;
 	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB,
 	    R128_CCE_VC_FRMT_SPEC_FRGB, 3 );
@@ -621,12 +624,12 @@ static void r128RenderStart( GLcontext *ctx )
 #endif
    }
 
-   if ( index & _TNL_BIT_TEX(rmesa->tmu_source[0]) ) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(rmesa->tmu_source[0]) )) {
       if ( VB->TexCoordPtr[rmesa->tmu_source[0]]->size > 2 )
 	 fallback_projtex = GL_TRUE;
       EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_2F, R128_CCE_VC_FRMT_S_T, 8 );
    }
-   if ( index & _TNL_BIT_TEX(rmesa->tmu_source[1]) ) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(rmesa->tmu_source[1]) )) {
       if ( VB->TexCoordPtr[rmesa->tmu_source[1]]->size > 2 )
 	 fallback_projtex = GL_TRUE;
       EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, R128_CCE_VC_FRMT_S2_T2, 8 );
@@ -638,7 +641,7 @@ static void r128RenderStart( GLcontext *ctx )
    /* Only need to change the vertex emit code if there has been a
     * statechange to a TNL index.
     */
-   if ( index != rmesa->tnl_state ) {
+   if (!RENDERINPUTS_EQUAL( index_bitset, rmesa->tnl_state_bitset )) {
       FLUSH_BATCH( rmesa );
       rmesa->dirty |= R128_UPLOAD_CONTEXT;
 
@@ -763,7 +766,7 @@ void r128InitTriFuncs( GLcontext *ctx )
    _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
 		       (6 + 2 * ctx->Const.MaxTextureUnits) * sizeof(GLfloat) );
    rmesa->verts = (char *)tnl->clipspace.vertex_buf;
-   rmesa->tnl_state = -1;
+   RENDERINPUTS_ONES( rmesa->tnl_state_bitset );
 
    rmesa->NewGLState |= _R128_NEW_RENDER_STATE;
 }

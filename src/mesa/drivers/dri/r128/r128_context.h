@@ -130,7 +130,7 @@ struct r128_context {
    char *verts;			/* points to tnl->clipspace.vertex_buf */
    GLuint num_verts;
    int coloroffset, specoffset;
-   int tnl_state;	/* tnl->render_inputs for this _tnl_install_attrs */
+   DECLARE_RENDERINPUTS(tnl_state_bitset);	/* tnl->render_inputs for this _tnl_install_attrs */
 
    GLuint NewGLState;
    GLuint Fallback;

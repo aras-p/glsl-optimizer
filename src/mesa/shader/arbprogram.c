@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -123,11 +123,8 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
          params[0] = ctx->Array.VertexAttrib[index].Normalized;
          break;
       case GL_CURRENT_VERTEX_ATTRIB_ARB:
-	 FLUSH_CURRENT(ctx, 0);
-         /* XXX should read:
-            COPY_4V(params, ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index]);
-          */
-         COPY_4V(params, ctx->Current.Attrib[index]);
+         FLUSH_CURRENT(ctx, 0);
+         COPY_4V(params, ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index]);
          break;
       case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB:
          if (!ctx->Extensions.ARB_vertex_buffer_object) {

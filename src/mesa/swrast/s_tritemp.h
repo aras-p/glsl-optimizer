@@ -28,7 +28,7 @@
  * This file is #include'd to generate custom triangle rasterizers.
  *
  * The following macros may be defined to indicate what auxillary information
- * must be interplated across the triangle:
+ * must be interpolated across the triangle:
  *    INTERP_Z        - if defined, interpolate vertex Z values
  *    INTERP_W        - if defined, interpolate vertex W values
  *    INTERP_FOG      - if defined, interpolate fog values
@@ -41,6 +41,7 @@
  *    INTERP_TEX      - if defined, interpolate set 0 float STRQ texcoords
  *                         NOTE:  OpenGL STRQ = Mesa STUV (R was taken for red)
  *    INTERP_MULTITEX - if defined, interpolate N units of STRQ texcoords
+ *    INTERP_VARYING  - if defined, interpolate M floats of GLSL varyings
  *
  * When one can directly address pixels in the color buffer the following
  * macros can be defined and used to compute pixel addresses during
@@ -137,6 +138,20 @@
    {								\
       const GLuint u = 0;					\
       CODE							\
+   }
+#endif
+
+
+
+#ifdef INTERP_VARYING
+#define VARYING_LOOP(CODE)\
+   {\
+      GLuint iv, ic;\
+      for (iv = 0; iv < MAX_VARYING_VECTORS; iv++) {\
+         for (ic = 0; ic < VARYINGS_PER_VECTOR; ic++) {\
+            CODE\
+         }\
+      }\
    }
 #endif
 
@@ -648,6 +663,19 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
          )
       }
 #endif
+#ifdef INTERP_VARYING
+      span.interpMask |= SPAN_VARYING;
+      {
+         /* win[3] is 1/W */
+         const GLfloat wMax = vMax->win[3], wMin = vMin->win[3], wMid = vMid->win[3];
+         VARYING_LOOP(
+            GLfloat eMaj_dvar = vMax->attribute[iv][ic] * wMax - vMin->attribute[iv][ic] * wMin;
+            GLfloat eBot_dvar = vMid->attribute[iv][ic] * wMid - vMin->attribute[iv][ic] * wMin;
+            span.varStepX[iv][ic] = oneOverArea * (eMaj_dvar * eBot.dy - eMaj.dy * eBot_dvar);
+            span.varStepY[iv][ic] = oneOverArea * (eMaj.dx * eBot_dvar - eMaj_dvar * eBot.dx);
+         )
+      }
+#endif
 
       /*
        * We always sample at pixel centers.  However, we avoid
@@ -750,6 +778,11 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
          GLfloat dtOuter[MAX_TEXTURE_COORD_UNITS], dtInner[MAX_TEXTURE_COORD_UNITS];
          GLfloat duOuter[MAX_TEXTURE_COORD_UNITS], duInner[MAX_TEXTURE_COORD_UNITS];
          GLfloat dvOuter[MAX_TEXTURE_COORD_UNITS], dvInner[MAX_TEXTURE_COORD_UNITS];
+#endif
+#ifdef INTERP_VARYING
+         GLfloat varLeft[MAX_VARYING_VECTORS][VARYINGS_PER_VECTOR];
+         GLfloat dvarOuter[MAX_VARYING_VECTORS][VARYINGS_PER_VECTOR];
+         GLfloat dvarInner[MAX_VARYING_VECTORS][VARYINGS_PER_VECTOR];
 #endif
 
          for (subTriangle=0; subTriangle<=1; subTriangle++) {
@@ -1024,6 +1057,15 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   dvOuter[u] = span.texStepY[u][3] + dxOuter * span.texStepX[u][3];
                )
 #endif
+#ifdef INTERP_VARYING
+               VARYING_LOOP(
+                  const GLfloat invW = vLower->win[3];
+                  const GLfloat var0 = vLower->attribute[iv][ic] * invW;
+                  varLeft[iv][ic] = var0 + (span.varStepX[iv][ic] * adjx +
+                     span.varStepY[iv][ic] * adjy) * (1.0f / FIXED_SCALE);
+                  dvarOuter[iv][ic] = span.varStepY[iv][ic] + dxOuter * span.varStepX[iv][ic];
+               )
+#endif
             } /*if setupLeft*/
 
 
@@ -1086,6 +1128,11 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                dvInner[u] = dvOuter[u] + span.texStepX[u][3];
             )
 #endif
+#ifdef INTERP_VARYING
+            VARYING_LOOP(
+               dvarInner[iv][ic] = dvarOuter[iv][ic] + span.varStepX[iv][ic];
+            )
+#endif
 
             while (lines > 0) {
                /* initialize the span interpolants to the leftmost value */
@@ -1133,6 +1180,11 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   span.tex[u][1] = tLeft[u];
                   span.tex[u][2] = uLeft[u];
                   span.tex[u][3] = vLeft[u];
+               )
+#endif
+#ifdef INTERP_VARYING
+               VARYING_LOOP(
+                  span.var[iv][ic] = varLeft[iv][ic];
                )
 #endif
 
@@ -1223,6 +1275,11 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                      vLeft[u] += dvOuter[u];
                   )
 #endif
+#ifdef INTERP_VARYING
+                  VARYING_LOOP(
+                     varLeft[iv][ic] += dvarOuter[iv][ic];
+                  )
+#endif
                }
                else {
 #ifdef PIXEL_ADDRESS
@@ -1268,6 +1325,11 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                      vLeft[u] += dvInner[u];
                   )
 #endif
+#ifdef INTERP_VARYING
+                  VARYING_LOOP(
+                     varLeft[iv][ic] += dvarInner[iv][ic];
+                  )
+#endif
                }
             } /*while lines>0*/
 
@@ -1299,7 +1361,9 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #undef INTERP_INT_TEX
 #undef INTERP_TEX
 #undef INTERP_MULTITEX
+#undef INTERP_VARYING
 #undef TEX_UNIT_LOOP
+#undef VARYING_LOOP
 
 #undef S_SCALE
 #undef T_SCALE
