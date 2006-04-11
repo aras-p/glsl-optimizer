@@ -38,6 +38,7 @@
 /* for convolution */
 #define FILTER_SIZE 7
 
+static GLint WinWidth = 500, WinHeight = 500;
 static GLuint CylinderObj = 0;
 static GLuint TeapotObj = 0;
 static GLuint Object = 0;
@@ -53,6 +54,11 @@ static GLfloat Shininess = 6;
 
 static GLuint BaseTexture, SpecularTexture;
 static GLboolean DoSpecTexture = GL_TRUE;
+
+static GLboolean ButtonDown = GL_FALSE;
+static GLint ButtonX, ButtonY;
+static GLfloat Xrot0, Yrot0;
+
 
 /* performance info */
 static GLint T0 = 0;
@@ -134,6 +140,8 @@ static void Reshape( int width, int height )
 {
    GLfloat h = 30.0;
    GLfloat w = h * width / height;
+   WinWidth = width;
+   WinHeight = height;
    glViewport( 0, 0, width, height );
    glMatrixMode( GL_PROJECTION );
    glLoadIdentity();
@@ -198,6 +206,7 @@ static void Key( unsigned char key, int x, int y )
          glMaterialf(GL_FRONT, GL_SHININESS, Shininess);
          printf("Shininess = %g\n", Shininess);
          break;
+      case 'a':
       case ' ':
          ToggleAnimate();
          break;
@@ -230,6 +239,36 @@ static void SpecialKey( int key, int x, int y )
          break;
    }
    glutPostRedisplay();
+}
+
+
+static void
+MouseMotion(int x, int y)
+{
+   const float k = 300.0;
+   if (ButtonDown) {
+      float dx = x - ButtonX;
+      float dy = y - ButtonY;
+      Xrot = Xrot0 + k * dy / WinWidth;
+      Yrot = Yrot0 + k * dx / WinHeight;
+      glutPostRedisplay();
+   }
+}
+
+
+static void
+MouseButton(int button, int state, int x, int y)
+{
+  if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+     ButtonDown = GL_TRUE;
+     ButtonX = x;
+     ButtonY = y;
+     Xrot0 = Xrot;
+     Yrot0 = Yrot;
+  }
+  else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+     ButtonDown = GL_FALSE;
+  }
 }
 
 
@@ -415,7 +454,7 @@ int main( int argc, char *argv[] )
 {
    glutInit( &argc, argv );
    glutInitWindowPosition(0, 0);
-   glutInitWindowSize( 500, 500 );
+   glutInitWindowSize(WinWidth, WinHeight);
 
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
 
@@ -427,6 +466,8 @@ int main( int argc, char *argv[] )
    glutKeyboardFunc( Key );
    glutSpecialFunc( SpecialKey );
    glutDisplayFunc( Display );
+   glutMotionFunc(MouseMotion);
+   glutMouseFunc(MouseButton);
    if (Animate)
       glutIdleFunc( Idle );
 
