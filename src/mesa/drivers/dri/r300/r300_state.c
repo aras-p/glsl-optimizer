@@ -1275,8 +1275,9 @@ union r300_outputs_written {
 	DECLARE_RENDERINPUTS(index_bitset);      /* !hw_tcl_on */
 };
 
-static GLboolean r300_outputs_written_test (r300_outputs_written *ow, GLuint vp_result,
-                                            GLuint tnl_attrib)
+static GLboolean
+r300_outputs_written_test(union r300_outputs_written *ow, GLuint vp_result,
+                          GLuint tnl_attrib)
 {
 	if (hw_tcl_on)
 		return ow->vp_outputs & (1 << vp_result);
