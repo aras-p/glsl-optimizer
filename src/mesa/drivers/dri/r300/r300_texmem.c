@@ -130,6 +130,12 @@ static void r300UploadGARTClientSubImage(r300ContextPtr rmesa,
 		srcPitch = t->image[0][0].width * texFormat->TexelBytes;
 		dstPitch = t->image[0][0].width * texFormat->TexelBytes;
 		break;
+	case 8:
+	case 16:
+		blit_format = R200_CP_COLOR_FORMAT_CI8;
+		srcPitch = t->image[0][0].width * texFormat->TexelBytes;
+		dstPitch = t->image[0][0].width * texFormat->TexelBytes;
+		break;
 	default:
 		return;
 	}
@@ -143,6 +149,10 @@ static void r300UploadGARTClientSubImage(r300ContextPtr rmesa,
 	 */
 	width = texImage->Width;
 	height = texImage->Height;
+
+	if (texFormat->TexelBytes > 4) {
+		width *= texFormat->TexelBytes;
+	}
 
 	r300EmitWait(rmesa, R300_WAIT_3D);
 
@@ -177,6 +187,10 @@ static void r300UploadRectSubImage(r300ContextPtr rmesa,
 	case 4:
 		blit_format = R200_CP_COLOR_FORMAT_ARGB8888;
 		break;
+	case 8:
+	case 16:
+		blit_format = R200_CP_COLOR_FORMAT_CI8;
+		break;
 	default:
 		return;
 	}
@@ -188,6 +202,10 @@ static void r300UploadRectSubImage(r300ContextPtr rmesa,
 	width = texImage->Width;
 	height = texImage->Height;
 	dstPitch = t->pitch;
+
+	if (texFormat->TexelBytes > 4) {
+		width *= texFormat->TexelBytes;
+	}
 
 	if (rmesa->prefer_gart_client_texturing && texImage->IsClientData) {
 		/* In this case, could also use GART texturing.  This is
