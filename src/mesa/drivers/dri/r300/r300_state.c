@@ -423,7 +423,6 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 			r300->hw.fogs.cmd[R300_FOGS_STATE] |=
 			    R300_FOG_ENABLE;
 			
-			r300Enable(ctx, GL_FOG, ctx->Fog.Enabled);
 			ctx->Driver.Fogfv( ctx, GL_FOG_MODE, NULL );
 			ctx->Driver.Fogfv( ctx, GL_FOG_DENSITY, &ctx->Fog.Density );
 			ctx->Driver.Fogfv( ctx, GL_FOG_START, &ctx->Fog.Start );
