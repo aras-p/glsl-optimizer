@@ -2643,17 +2643,27 @@ PUBLIC Bool glXSet3DfxModeMESA( int mode )
 
 PUBLIC Bool glXBindTexImageEXT(Display *dpy,
 			       GLXDrawable drawable,
-			       int buffer)
+			       int buffer,
+ 			       const int *attrib_list)
 {
     xGLXVendorPrivateReq *req;
     GLXContext gc = __glXGetCurrentContext();
     CARD32 *drawable_ptr;
     INT32 *buffer_ptr;
+    CARD32 *num_attrib_ptr;
+    CARD32 *attrib_ptr;
     CARD8 opcode;
+    unsigned int i;
 
     if (gc == NULL)
 	return False;
 
+    i = 0;
+    if (attrib_list) {
+ 	while (attrib_list[i * 2] != None)
+ 	    i++;
+    }
+ 
 #ifdef GLX_DIRECT_RENDERING
     if (gc->isDirect)
 	return False;
@@ -2664,7 +2674,7 @@ PUBLIC Bool glXBindTexImageEXT(Display *dpy,
 	return False;
 
     LockDisplay(dpy);
-    GetReqExtra(GLXVendorPrivate, sizeof(CARD32)+sizeof(INT32),req);
+    GetReqExtra(GLXVendorPrivate, 12 + 8 * i,req);
     req->reqType = opcode;
     req->glxCode = X_GLXVendorPrivate;
     req->vendorCode = X_GLXvop_BindTexImageEXT;
@@ -2672,9 +2682,22 @@ PUBLIC Bool glXBindTexImageEXT(Display *dpy,
 
     drawable_ptr = (CARD32 *) (req + 1);
     buffer_ptr = (INT32 *) (drawable_ptr + 1);
+    num_attrib_ptr = (CARD32 *) (buffer_ptr + 1);
+    attrib_ptr = (CARD32 *) (num_attrib_ptr + 1);
 
     *drawable_ptr = drawable;
     *buffer_ptr = buffer;
+    *num_attrib_ptr = (CARD32) i;
+
+    i = 0;
+    if (attrib_list) {
+ 	while (attrib_list[i * 2] != None)
+ 	{
+ 	    *attrib_ptr++ = (CARD32) attrib_list[i * 2 + 0];
+ 	    *attrib_ptr++ = (CARD32) attrib_list[i * 2 + 1];
+ 	    i++;
+ 	}
+    }
 
     UnlockDisplay(dpy);
     SyncHandle();
