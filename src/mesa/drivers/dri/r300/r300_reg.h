@@ -517,6 +517,10 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #	define R300_PM_BACK_LINE              (1 << 7)
 #	define R300_PM_BACK_FILL              (1 << 8)
 
+/* Fog parameters */
+#define R300_RE_FOG_SCALE                     0x4294
+#define R300_RE_FOG_START                     0x4298
+
 /* Not sure why there are duplicate of factor and constant values. 
    My best guess so far is that there are seperate zbiases for test and write. 
    Ordering might be wrong.
@@ -1113,7 +1117,17 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_FPI2_UNKNOWN_31              (1 << 31)
 /* END */
 
-/* gap */
+/* Fog state and color */
+#define R300_RE_FOG_STATE                   0x4BC0
+#       define R300_FOG_ENABLE                   (1 << 0)
+#	define R300_FOG_MODE_LINEAR              (0 << 1)
+#	define R300_FOG_MODE_EXP                 (1 << 1)
+#	define R300_FOG_MODE_EXP2                (2 << 1)
+#	define R300_FOG_MODE_MASK                (3 << 1)
+#define R300_FOG_COLOR_R                    0x4BC8
+#define R300_FOG_COLOR_G                    0x4BCC
+#define R300_FOG_COLOR_B                    0x4BD0
+
 #define R300_PP_ALPHA_TEST                  0x4BD4
 #       define R300_REF_ALPHA_MASK               0x000000ff
 #       define R300_ALPHA_TEST_FAIL              (0 << 8)

@@ -417,6 +417,25 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 	case GL_TEXTURE_3D:
 		break;
 
+	case GL_FOG:
+		R300_STATECHANGE(r300, fogs);
+		if (state) {
+			r300->hw.fogs.cmd[R300_FOGS_STATE] |=
+			    R300_FOG_ENABLE;
+			
+			r300Enable(ctx, GL_FOG, ctx->Fog.Enabled);
+			ctx->Driver.Fogfv( ctx, GL_FOG_MODE, NULL );
+			ctx->Driver.Fogfv( ctx, GL_FOG_DENSITY, &ctx->Fog.Density );
+			ctx->Driver.Fogfv( ctx, GL_FOG_START, &ctx->Fog.Start );
+			ctx->Driver.Fogfv( ctx, GL_FOG_END, &ctx->Fog.End );
+			ctx->Driver.Fogfv( ctx, GL_FOG_COLOR, ctx->Fog.Color );
+		} else {
+			r300->hw.fogs.cmd[R300_FOGS_STATE] &=
+			    ~R300_FOG_ENABLE;
+		}
+		
+		break;
+
 	case GL_ALPHA_TEST:
 		R300_STATECHANGE(r300, at);
 		if (state) {
@@ -636,6 +655,101 @@ static void r300ColorMask(GLcontext* ctx,
 	if (mask != r300->hw.cmk.cmd[R300_CMK_COLORMASK]) {
 		R300_STATECHANGE(r300, cmk);
 		r300->hw.cmk.cmd[R300_CMK_COLORMASK] = mask;
+	}
+}
+
+/* =============================================================
+ * Fog
+ */
+static void r300Fogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	union { int i; float f; } fogScale, fogStart;
+	
+	(void) param;
+	
+	fogScale.i = r300->hw.fogp.cmd[R300_FOGP_SCALE];
+	fogStart.i = r300->hw.fogp.cmd[R300_FOGP_START];
+
+	switch (pname) {
+	case GL_FOG_MODE:
+		if (!ctx->Fog.Enabled)
+			return;
+		switch (ctx->Fog.Mode) {
+		case GL_LINEAR:
+			R300_STATECHANGE(r300, fogs);
+			r300->hw.fogs.cmd[R300_FOGS_STATE] =
+				(r300->hw.fogs.cmd[R300_FOGS_STATE] & ~R300_FOG_MODE_MASK) | R300_FOG_MODE_LINEAR;
+
+			if (ctx->Fog.Start == ctx->Fog.End) {
+				fogScale.f = -1.0;
+				fogStart.f = 1.0;
+			}
+			else {
+				fogScale.f = 1.0 / (ctx->Fog.End-ctx->Fog.Start);
+				fogStart.f = -ctx->Fog.Start / (ctx->Fog.End-ctx->Fog.Start);
+			}
+			break;
+		case GL_EXP:
+			R300_STATECHANGE(r300, fogs);
+			r300->hw.fogs.cmd[R300_FOGS_STATE] =
+				(r300->hw.fogs.cmd[R300_FOGS_STATE] & ~R300_FOG_MODE_MASK) | R300_FOG_MODE_EXP;
+			fogScale.f = 0.0933*ctx->Fog.Density;
+			fogStart.f = 0.0;
+			break;
+		case GL_EXP2:
+			R300_STATECHANGE(r300, fogs);
+			r300->hw.fogs.cmd[R300_FOGS_STATE] =
+				(r300->hw.fogs.cmd[R300_FOGS_STATE] & ~R300_FOG_MODE_MASK) | R300_FOG_MODE_EXP2;
+			fogScale.f = 0.3*ctx->Fog.Density;
+			fogStart.f = 0.0;
+		default:
+			return;
+		}
+		break;
+	case GL_FOG_DENSITY:
+		switch (ctx->Fog.Mode) {
+		case GL_EXP:
+			fogScale.f = 0.0933*ctx->Fog.Density;
+			fogStart.f = 0.0;
+			break;
+		case GL_EXP2:
+			fogScale.f = 0.3*ctx->Fog.Density;
+			fogStart.f = 0.0;
+		default:
+			break;
+		}
+		break;
+	case GL_FOG_START:
+	case GL_FOG_END:
+		if (ctx->Fog.Mode == GL_LINEAR) {
+			if (ctx->Fog.Start == ctx->Fog.End) {
+				fogScale.f = -1.0;
+				fogStart.f = 1.0;
+			}
+			else {
+				fogScale.f = 1.0 / (ctx->Fog.End-ctx->Fog.Start);
+				fogStart.f = -ctx->Fog.Start / (ctx->Fog.End-ctx->Fog.Start);
+			}
+		}
+		break;
+	case GL_FOG_COLOR:
+		R300_STATECHANGE(r300, fogc);
+		r300->hw.fogc.cmd[R300_FOGC_R] = (GLuint) (ctx->Fog.Color[0]*1023.0F) & 0x3FF;
+		r300->hw.fogc.cmd[R300_FOGC_G] = (GLuint) (ctx->Fog.Color[1]*1023.0F) & 0x3FF;
+		r300->hw.fogc.cmd[R300_FOGC_B] = (GLuint) (ctx->Fog.Color[2]*1023.0F) & 0x3FF;
+		break;
+	case GL_FOG_COORD_SRC:
+		break;
+	default:
+		return;
+	}
+
+	if (fogScale.i != r300->hw.fogp.cmd[R300_FOGP_SCALE] ||
+	    fogStart.i != r300->hw.fogp.cmd[R300_FOGP_START]) {
+		R300_STATECHANGE(r300, fogp);
+		r300->hw.fogp.cmd[R300_FOGP_SCALE] = fogScale.i;
+		r300->hw.fogp.cmd[R300_FOGP_START] = fogStart.i;
 	}
 }
 
@@ -1870,7 +1984,8 @@ void r300ResetHwState(r300ContextPtr r300)
 		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] = R300_GB_TILE_ENABLE
 							| R300_GB_TILE_PIPE_COUNT_RV300
 							| R300_GB_TILE_SIZE_16;
-	r300->hw.gb_misc.cmd[R300_GB_MISC_SELECT] = 0x00000000;
+	/* set to 0 when fog is disabled? */
+	r300->hw.gb_misc.cmd[R300_GB_MISC_SELECT] = R300_GB_FOG_SELECT_1_1_W;
 	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = 0x00000000; /* No antialiasing */
 
 	//r300->hw.txe.cmd[R300_TXE_ENABLE] = 0;
@@ -1907,9 +2022,6 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300PolygonMode(ctx, GL_BACK, ctx->Polygon.BackMode);
 	r300->hw.unk4288.cmd[2] = 0x00000001;
 	r300->hw.unk4288.cmd[3] = 0x00000000;
-	r300->hw.unk4288.cmd[4] = 0x00000000;
-	r300->hw.unk4288.cmd[5] = 0x00000000;
-
 	r300->hw.unk42A0.cmd[1] = 0x00000000;
 
 	r300PolygonOffset(ctx, ctx->Polygon.OffsetFactor, ctx->Polygon.OffsetUnits);
@@ -1949,13 +2061,13 @@ void r300ResetHwState(r300ContextPtr r300)
 		r300->hw.fpi[3].cmd[i] = FP_SELA(0,W,NO,FP_TMP(0),0,0);
 	}
 #endif
-
-	r300->hw.unk4BC0.cmd[1] = 0;
-
-	r300->hw.unk4BC8.cmd[1] = 0;
-	r300->hw.unk4BC8.cmd[2] = 0;
-	r300->hw.unk4BC8.cmd[3] = 0;
-
+	r300Enable(ctx, GL_FOG, ctx->Fog.Enabled);
+	ctx->Driver.Fogfv( ctx, GL_FOG_MODE, NULL );
+	ctx->Driver.Fogfv( ctx, GL_FOG_DENSITY, &ctx->Fog.Density );
+	ctx->Driver.Fogfv( ctx, GL_FOG_START, &ctx->Fog.Start );
+	ctx->Driver.Fogfv( ctx, GL_FOG_END, &ctx->Fog.End );
+	ctx->Driver.Fogfv( ctx, GL_FOG_COLOR, ctx->Fog.Color );
+	ctx->Driver.Fogfv( ctx, GL_FOG_COORDINATE_SOURCE_EXT, NULL );
 
 	r300->hw.at.cmd[R300_AT_UNKNOWN] = 0;
 	r300->hw.unk4BD8.cmd[1] = 0;
@@ -2128,6 +2240,7 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	functions->DepthFunc = r300DepthFunc;
 	functions->DepthMask = r300DepthMask;
 	functions->CullFace = r300CullFace;
+	functions->Fogfv = r300Fogfv;
 	functions->FrontFace = r300FrontFace;
 	functions->ShadeModel = r300ShadeModel;
 

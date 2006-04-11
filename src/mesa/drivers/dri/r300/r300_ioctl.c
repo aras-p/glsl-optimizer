@@ -380,9 +380,15 @@ static void r300EmitClearState(GLcontext * ctx)
 	int i;
 	LOCAL_VARS;
 	
+	
 	R300_STATECHANGE(r300, vir[0]);
 	reg_start(R300_VAP_INPUT_ROUTE_0_0, 0);
 	e32(0x21030003);
+	
+	/* disable fog */
+	R300_STATECHANGE(r300, fogs);
+	reg_start(R300_RE_FOG_STATE, 0);
+	e32(0x0);
 	
 	R300_STATECHANGE(r300, vir[1]);
 	reg_start(R300_VAP_INPUT_ROUTE_1_0, 0);
@@ -553,7 +559,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 
 #ifdef CB_DPATH
 	/* Make sure it fits there. */
-	r300EnsureCmdBufSpace(r300, 419*3, __FUNCTION__);
+	r300EnsureCmdBufSpace(r300, 421*3, __FUNCTION__);
 	if(flags || bits)
 		r300EmitClearState(ctx);
 #endif

@@ -337,8 +337,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.unk4260.cmd[0] = cmdpacket0(0x4260, 3);
 	ALLOC_STATE( unk4274, always, 5, "unk4274", 0 );
 		r300->hw.unk4274.cmd[0] = cmdpacket0(0x4274, 4);
-	ALLOC_STATE( unk4288, always, 6, "unk4288", 0 );
-		r300->hw.unk4288.cmd[0] = cmdpacket0(0x4288, 5);
+	ALLOC_STATE( unk4288, always, 4, "unk4288", 0 );
+		r300->hw.unk4288.cmd[0] = cmdpacket0(0x4288, 3);
+	ALLOC_STATE( fogp, always, 3, "fogp", 0 );
+		r300->hw.fogp.cmd[0] = cmdpacket0(R300_RE_FOG_SCALE, 2);
 	ALLOC_STATE( unk42A0, always, 2, "unk42A0", 0 );
 		r300->hw.unk42A0.cmd[0] = cmdpacket0(0x42A0, 1);
 	ALLOC_STATE( zbs, always, R300_ZBS_CMDSIZE, "zbs", 0 );
@@ -374,10 +376,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR2_0, 1);
 	ALLOC_STATE( fpi[3], variable, R300_FPI_CMDSIZE, "fpi/3", 3 );
 		r300->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR3_0, 1);
-	ALLOC_STATE( unk4BC0, always, 2, "unk4BC0", 0 );
-		r300->hw.unk4BC0.cmd[0] = cmdpacket0(0x4BC0, 1);
-	ALLOC_STATE( unk4BC8, always, 4, "unk4BC8", 0 );
-		r300->hw.unk4BC8.cmd[0] = cmdpacket0(0x4BC8, 3);
+	ALLOC_STATE( fogs, always, R300_FOGS_CMDSIZE, "fogs", 0 );
+		r300->hw.fogs.cmd[R300_FOGS_CMD_0] = cmdpacket0(R300_RE_FOG_STATE, 1);
+	ALLOC_STATE( fogc, always, R300_FOGC_CMDSIZE, "fogc", 0 );
+		r300->hw.fogc.cmd[R300_FOGC_CMD_0] = cmdpacket0(R300_FOG_COLOR_R, 3);
 	ALLOC_STATE( at, always, R300_AT_CMDSIZE, "at", 0 );
 		r300->hw.at.cmd[R300_AT_CMD_0] = cmdpacket0(R300_PP_ALPHA_TEST, 2);
 	ALLOC_STATE( unk4BD8, always, 2, "unk4BD8", 0 );
@@ -478,6 +480,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4260);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4274);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4288);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.fogp);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk42A0);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.zbs);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk42B4);
@@ -495,8 +498,8 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpi[1]);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpi[2]);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpi[3]);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4BC0);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4BC8);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.fogs);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.fogc);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.at);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4BD8);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpp);

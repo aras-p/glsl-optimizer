@@ -469,12 +469,12 @@ int r300Fallback(GLcontext *ctx)
 	FALLBACK_IF(ctx->Color.AlphaEnabled); // GL_ALPHA_TEST
 	FALLBACK_IF(ctx->Color.BlendEnabled); // GL_BLEND
 	FALLBACK_IF(ctx->Polygon.OffsetFill); // GL_POLYGON_OFFSET_FILL
+	FALLBACK_IF(ctx->Fog.Enabled);
 #endif
 	FALLBACK_IF(ctx->Polygon.OffsetPoint); // GL_POLYGON_OFFSET_POINT
 	FALLBACK_IF(ctx->Polygon.OffsetLine); // GL_POLYGON_OFFSET_LINE
 	//FALLBACK_IF(ctx->Stencil.Enabled); // GL_STENCIL_TEST
 	
-	//FALLBACK_IF(ctx->Fog.Enabled); // GL_FOG disable as swtcl doesnt seem to support this
 	//FALLBACK_IF(ctx->Polygon.SmoothFlag); // GL_POLYGON_SMOOTH disabling to get blender going
 	FALLBACK_IF(ctx->Polygon.StippleFlag); // GL_POLYGON_STIPPLE
 	FALLBACK_IF(ctx->Multisample.Enabled); // GL_MULTISAMPLE_ARB

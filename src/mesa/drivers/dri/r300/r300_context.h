@@ -346,6 +346,21 @@ struct r300_state_atom {
 #define R300_FPP_PARAM_0	1
 #define R300_FPP_CMDSIZE	(32*4+1)
 
+#define R300_FOGS_CMD_0		0
+#define R300_FOGS_STATE		1
+#define R300_FOGS_CMDSIZE	2
+
+#define R300_FOGC_CMD_0		0
+#define R300_FOGC_R		1
+#define R300_FOGC_G		2
+#define R300_FOGC_B		3
+#define R300_FOGC_CMDSIZE	4
+
+#define R300_FOGP_CMD_0		0
+#define R300_FOGP_SCALE		1
+#define R300_FOGP_START		2
+#define R300_FOGP_CMDSIZE	3
+
 #define R300_AT_CMD_0		0
 #define R300_AT_ALPHA_TEST	1
 #define R300_AT_UNKNOWN		2
@@ -432,6 +447,8 @@ struct r300_hw_state {
 	struct r300_state_atom unk4260; /* (4260) */
 	struct r300_state_atom unk4274; /* (4274) */
 	struct r300_state_atom unk4288; /* (4288) */
+	struct r300_state_atom fogp;	/* fog parameters (4294) */
+	struct r300_state_atom unk429C; /* (429C) */
 	struct r300_state_atom unk42A0;	/* (42A0) */
 	struct r300_state_atom zbs;	/* zbias (42A4) */
 	struct r300_state_atom unk42B4; /* (42B4) */
@@ -446,8 +463,8 @@ struct r300_hw_state {
 	struct r300_state_atom fpt;     /* texi - (4620) */
 	struct r300_state_atom unk46A4;	/* (46A4) */
 	struct r300_state_atom fpi[4];	/* fp instructions (46C0/47C0/48C0/49C0) */
-	struct r300_state_atom unk4BC0;	/* (4BC0) */
-	struct r300_state_atom unk4BC8;	/* (4BC8) */
+	struct r300_state_atom fogs;	/* fog state (4BC0) */
+	struct r300_state_atom fogc;	/* fog color (4BC8) */
 	struct r300_state_atom at;	/* alpha test (4BD4) */
 	struct r300_state_atom unk4BD8;	/* (4BD8) */
 	struct r300_state_atom fpp;     /* 0x4C00 and following */
