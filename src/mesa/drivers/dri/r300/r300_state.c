@@ -1275,14 +1275,9 @@ union r300_outputs_written {
 	DECLARE_RENDERINPUTS(index_bitset);      /* !hw_tcl_on */
 };
 
-static GLboolean
-r300_outputs_written_test(union r300_outputs_written *ow, GLuint vp_result,
-                          GLuint tnl_attrib)
-{
-	if (hw_tcl_on)
-		return ow->vp_outputs & (1 << vp_result);
-	return RENDERINPUTS_TEST( ow->index_bitset, tnl_attrib );
-}
+#define R300_OUTPUTS_WRITTEN_TEST(ow, vp_result, tnl_attrib) \
+	((hw_tcl_on) ? (ow).vp_outputs & (1 << (vp_result)) : \
+	RENDERINPUTS_TEST( (ow.index_bitset), (tnl_attrib) ))
 
 void r300_setup_rs_unit(GLcontext *ctx)
 {
@@ -1338,7 +1333,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 					| (fp_reg << R300_RS_ROUTE_DEST_SHIFT);
 			high_rr = fp_reg;
 
-			if (!r300_outputs_written_test( &OutputsWritten, VERT_RESULT_TEX0+i, _TNL_ATTRIB_TEX(i) )) {
+			if (!R300_OUTPUTS_WRITTEN_TEST( OutputsWritten, VERT_RESULT_TEX0+i, _TNL_ATTRIB_TEX(i) )) {
 				/* Passing invalid data here can lock the GPU. */
 				WARN_ONCE("fragprog wants coords for tex%d, vp doesn't provide them!\n", i);
 				//_mesa_print_program(&CURRENT_VERTEX_SHADER(ctx)->Base);
@@ -1348,12 +1343,12 @@ void r300_setup_rs_unit(GLcontext *ctx)
 			fp_reg++;
 		} 
 		/* Need to count all coords enabled at vof */
-		if (r300_outputs_written_test( &OutputsWritten, VERT_RESULT_TEX0+i, _TNL_ATTRIB_TEX(i) ))
+		if (R300_OUTPUTS_WRITTEN_TEST( OutputsWritten, VERT_RESULT_TEX0+i, _TNL_ATTRIB_TEX(i) ))
 			in_texcoords++;
 	}
 
 	if (InputsRead & FRAG_BIT_COL0) {
-		if (!r300_outputs_written_test( &OutputsWritten, VERT_RESULT_COL0, _TNL_ATTRIB_COLOR0 )) {
+		if (!R300_OUTPUTS_WRITTEN_TEST( OutputsWritten, VERT_RESULT_COL0, _TNL_ATTRIB_COLOR0 )) {
 			WARN_ONCE("fragprog wants col0, vp doesn't provide it\n");
 			goto out; /* FIXME */
 			//_mesa_print_program(&CURRENT_VERTEX_SHADER(ctx)->Base);
@@ -1369,7 +1364,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	out:
 	
 	if (InputsRead & FRAG_BIT_COL1) {
-		if (!r300_outputs_written_test( &OutputsWritten, VERT_RESULT_COL1, _TNL_ATTRIB_COLOR1 )) {
+		if (!R300_OUTPUTS_WRITTEN_TEST( OutputsWritten, VERT_RESULT_COL1, _TNL_ATTRIB_COLOR1 )) {
 			WARN_ONCE("fragprog wants col1, vp doesn't provide it\n");
 			//exit(-1);
 		}
