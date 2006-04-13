@@ -32,10 +32,19 @@ static GLboolean Benchmark = GL_FALSE;
 static GLuint DrawPBO, TempPBO;
 
 
-static GLenum ReadFormat = GL_RGBA;
-static GLenum ReadType = GL_UNSIGNED_BYTE;
+static GLenum ReadFormat = GL_BGRA;
+static GLenum ReadType = GL_UNSIGNED_INT_8_8_8_8_REV;
 
 
+
+static void
+CheckError(int line)
+{
+   GLenum err = glGetError();
+   if (err) {
+      printf("GL Error 0x%x at line %d\n", (int) err, line);
+   }
+}
 
 
 static void
@@ -85,6 +94,8 @@ Display( void )
    glClearColor(.3, .3, .3, 1);
    glClear( GL_COLOR_BUFFER_BIT );
 
+   CheckError(__LINE__);
+
    /** Unbind UNPACK pixel buffer before calling glBitmap */
    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_EXT, 0);
 
@@ -105,12 +116,15 @@ Display( void )
    glDrawPixels(ImgWidth, ImgHeight, ImgFormat, GL_UNSIGNED_BYTE, 0);
    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_EXT, 0);
 
+   CheckError(__LINE__);
+
    /* do readpixels, drawpixels */
    glRasterPos2i(BPosX, 5);
    PrintString("Read/DrawPixels");
    SetupPixelTransfer(ScaleAndBias);
    /*** read into the Temp PBO */
    glBindBufferARB(GL_PIXEL_PACK_BUFFER_EXT, TempPBO);
+   CheckError(__LINE__);
    if (Benchmark) {
       GLint reads = 0;
       GLint endTime;
@@ -133,13 +147,19 @@ Display( void )
       glReadPixels(APosX, APosY, ImgWidth, ImgHeight,
                    ReadFormat, ReadType, 0);
    }
+   CheckError(__LINE__);
    glRasterPos2i(BPosX, BPosY);
    glDisable(GL_DITHER);
    SetupPixelTransfer(GL_FALSE);
+
+   CheckError(__LINE__);
+
    /*** draw from the Temp PBO */
    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_EXT, TempPBO);
    glDrawPixels(ImgWidth, ImgHeight, ReadFormat, ReadType, 0);
    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_EXT, 0);
+
+   CheckError(__LINE__);
 
    /* do copypixels */
    glRasterPos2i(CPosX, 5);
@@ -148,6 +168,8 @@ Display( void )
    glDisable(GL_DITHER);
    SetupPixelTransfer(ScaleAndBias);
    glCopyPixels(APosX, APosY, ImgWidth, ImgHeight, GL_COLOR);
+
+   CheckError(__LINE__);
 
    if (!DrawFront)
       glutSwapBuffers();
@@ -201,7 +223,7 @@ Key( unsigned char key, int x, int y )
 
 
 static void
-Init( GLboolean ciMode )
+Init(void)
 {
    printf("GL_VERSION = %s\n", (char *) glGetString(GL_VERSION));
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
@@ -217,25 +239,23 @@ Init( GLboolean ciMode )
       exit(0);
    }
 
-   if (ciMode) {
-      /* Convert RGB image to grayscale */
-      GLubyte *indexImage = (GLubyte *) malloc( ImgWidth * ImgHeight );
-      GLint i;
-      for (i=0; i<ImgWidth*ImgHeight; i++) {
-         int gray = Image[i*3] + Image[i*3+1] + Image[i*3+2];
-         indexImage[i] = gray / 3;
+   printf("Loaded %d by %d image\n", ImgWidth, ImgHeight );
+
+   if (ImgFormat == GL_RGB) {
+      /* convert to RGBA */
+      int i;
+      GLubyte *image2 = (GLubyte *) malloc(ImgWidth * ImgHeight * 4);
+      printf("Converting RGB image to RGBA\n");
+      for (i = 0; i < ImgWidth * ImgHeight; i++) {
+         image2[i*4+0] = Image[i*3+0];
+         image2[i*4+1] = Image[i*3+1];
+         image2[i*4+2] = Image[i*3+2];
+         image2[i*4+3] = 255;
       }
       free(Image);
-      Image = indexImage;
-      ImgFormat = GL_COLOR_INDEX;
-
-      for (i=0;i<255;i++) {
-         float g = i / 255.0;
-         glutSetColor(i, g, g, g);
-      }
+      Image = image2;
+      ImgFormat = GL_RGBA;
    }
-
-   printf("Loaded %d by %d image\n", ImgWidth, ImgHeight );
 
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
    glPixelStorei(GL_UNPACK_ROW_LENGTH, ImgWidth);
@@ -262,19 +282,12 @@ Init( GLboolean ciMode )
 int
 main( int argc, char *argv[] )
 {
-   GLboolean ciMode = GL_FALSE;
-   if (argc > 1 && strcmp(argv[1], "-ci")==0) {
-      ciMode = GL_TRUE;
-   }
    glutInit( &argc, argv );
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( 750, 250 );
-   if (ciMode)
-      glutInitDisplayMode( GLUT_INDEX | GLUT_DOUBLE );
-   else
-      glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
+   glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
    glutCreateWindow(argv[0]);
-   Init(ciMode);
+   Init();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutDisplayFunc( Display );
