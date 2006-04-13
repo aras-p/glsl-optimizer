@@ -56,6 +56,7 @@ static void nv10RenderPrimitive( GLcontext *ctx, GLenum prim );
 static void nv10RasterPrimitive( GLcontext *ctx, GLenum rprim, GLuint hwprim );
 
 
+
 /***********************************************************************
  *                    Emit primitives as inline vertices               *
  ***********************************************************************/

@@ -113,6 +113,8 @@ typedef struct nouveau_context {
 
 	/* Configuration cache */
 	driOptionCache optionCache;
+
+        uint32_t vblank_flags;
 }nouveauContextRec, *nouveauContextPtr;
 
 #define NOUVEAU_CONTEXT(ctx)		((nouveauContextPtr)(ctx->DriverCtx))

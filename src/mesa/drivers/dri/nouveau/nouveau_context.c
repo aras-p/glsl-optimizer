@@ -55,6 +55,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 int NOUVEAU_DEBUG = 0;
 #endif
 
+#define NOUVEAU_FALLBACK_DISABLE 1
+
 static const struct dri_debug_control debug_control[] =
 {
 	{ NULL,    0 }

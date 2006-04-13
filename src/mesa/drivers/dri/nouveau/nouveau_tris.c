@@ -25,6 +25,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************/
 
 #include "nouveau_context.h"
+#include "nouveau_tris.h"
+#include <swrast.h>
 
 /* Common tri functions */
 
