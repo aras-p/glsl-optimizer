@@ -167,7 +167,7 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
    }
 
    update_array(ctx, &ctx->Array.Normal, _NEW_ARRAY_NORMAL,
-                elementSize, 3, type, stride, GL_FALSE, ptr);
+                elementSize, 3, type, stride, GL_TRUE, ptr);
 
    if (ctx->Driver.NormalPointer)
       ctx->Driver.NormalPointer( ctx, type, stride, ptr );
@@ -225,7 +225,7 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    }
 
    update_array(ctx, &ctx->Array.Color, _NEW_ARRAY_COLOR0,
-                elementSize, size, type, stride, GL_FALSE, ptr);
+                elementSize, size, type, stride, GL_TRUE, ptr);
 
    if (ctx->Driver.ColorPointer)
       ctx->Driver.ColorPointer( ctx, size, type, stride, ptr );
@@ -357,7 +357,7 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
    }
 
    update_array(ctx, &ctx->Array.SecondaryColor, _NEW_ARRAY_COLOR1,
-                elementSize, size, type, stride, GL_FALSE, ptr);
+                elementSize, size, type, stride, GL_TRUE, ptr);
 
    if (ctx->Driver.SecondaryColorPointer)
       ctx->Driver.SecondaryColorPointer( ctx, size, type, stride, ptr );
