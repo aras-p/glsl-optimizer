@@ -49,7 +49,9 @@ static GLint Frames = 0;
 
 #define clamp255(a)  ( (a)<(0.0f) ? (0.0f) : ((a)>(255.0f) ? (255.0f) : (a)) )
 
+#ifndef fabs
 #define fabs(x) ((x)<0.0f?-(x):(x))
+#endif
 
 #define vequ(a,b) { (a)[0]=(b)[0]; (a)[1]=(b)[1]; (a)[2]=(b)[2]; }
 #define vsub(a,b,c) { (a)[0]=(b)[0]-(c)[0]; (a)[1]=(b)[1]-(c)[1]; (a)[2]=(b)[2]-(c)[2]; }
