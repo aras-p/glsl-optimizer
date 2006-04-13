@@ -391,6 +391,8 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
 static void
 fbo_incomplete(const char *msg, int index)
 {
+   (void) msg;
+   (void) index;
    /*
    _mesa_debug(NULL, "FBO Incomplete: %s [%d]\n", msg, index);
    */
@@ -751,12 +753,12 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
       return;
    }
 
-   if (width < 1 || width > ctx->Const.MaxRenderbufferSize) {
+   if (width < 1 || width > (GLsizei) ctx->Const.MaxRenderbufferSize) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glRenderbufferStorageEXT(width)");
       return;
    }
 
-   if (height < 1 || height > ctx->Const.MaxRenderbufferSize) {
+   if (height < 1 || height > (GLsizei) ctx->Const.MaxRenderbufferSize) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glRenderbufferStorageEXT(height)");
       return;
    }
@@ -771,8 +773,8 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    if (rb->InternalFormat == internalFormat &&
-       rb->Width == width &&
-       rb->Height == height) {
+       rb->Width == (GLuint) width &&
+       rb->Height == (GLuint) height) {
       /* no change in allocation needed */
       return;
    }
@@ -792,8 +794,8 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
    if (rb->AllocStorage(ctx, rb, internalFormat, width, height)) {
       /* No error - check/set fields now */
       assert(rb->_ActualFormat);
-      assert(rb->Width == width);
-      assert(rb->Height == height);
+      assert(rb->Width == (GLuint) width);
+      assert(rb->Height == (GLuint) height);
       assert(rb->RedBits || rb->GreenBits || rb->BlueBits || rb->AlphaBits ||
              rb->DepthBits || rb->StencilBits || rb->IndexBits);
       rb->InternalFormat = internalFormat;

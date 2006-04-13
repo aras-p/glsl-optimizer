@@ -259,7 +259,7 @@ struct ureg {
    GLuint pad:5;
 };
 
-const static struct ureg undef = { 
+static const struct ureg undef = { 
    ~0,
    ~0,
    0,
@@ -342,7 +342,7 @@ static GLboolean is_undef( struct ureg reg )
 
 static struct ureg get_temp( struct texenv_fragment_program *p )
 {
-   int bit;
+   GLint bit;
    
    /* First try and reuse temps which have been used already:
     */
@@ -358,7 +358,7 @@ static struct ureg get_temp( struct texenv_fragment_program *p )
       _mesa_exit(1);
    }
 
-   if (bit > p->program->Base.NumTemporaries)
+   if ((GLuint) bit > p->program->Base.NumTemporaries)
       p->program->Base.NumTemporaries = bit;
 
    p->temp_in_use |= 1<<(bit-1);
@@ -386,7 +386,7 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
       _mesa_exit(1);
    }
 
-   if (bit > p->program->Base.NumTemporaries)
+   if ((GLuint) bit > p->program->Base.NumTemporaries)
       p->program->Base.NumTemporaries = bit;
 
    p->temp_in_use |= 1<<(bit-1);
