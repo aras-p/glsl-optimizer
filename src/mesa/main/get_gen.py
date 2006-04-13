@@ -495,8 +495,7 @@ StateVars = [
 
 	# GL_ARB_multitexture
 	( "GL_MAX_TEXTURE_UNITS_ARB", GLint,
-	  ["MIN2(ctx->Const.MaxTextureImageUnits, ctx->Const.MaxTextureCoordUnits)"],
-	  "", ["ARB_multitexture"] ),
+	  ["ctx->Const.MaxTextureUnits"], "", ["ARB_multitexture"] ),
 	( "GL_ACTIVE_TEXTURE_ARB", GLint,
 	  [ "GL_TEXTURE0_ARB + ctx->Texture.CurrentUnit"], "", ["ARB_multitexture"] ),
 	( "GL_CLIENT_ACTIVE_TEXTURE_ARB", GLint,

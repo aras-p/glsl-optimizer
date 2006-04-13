@@ -108,7 +108,11 @@
 /** Maximum rectangular texture size - GL_NV_texture_rectangle */
 #define MAX_TEXTURE_RECT_SIZE 2048
 
-/** Number of texture units - GL_ARB_multitexture */
+/** Number of texture units - GL_ARB_multitexture
+ * This needs to be the larger of MAX_TEXTURE_COORD_UNITS and
+ * MAX_TEXTURE_IMAGE_UNITS seen below, since MAX_TEXTURE_UNITS is used
+ * to dimension some arrays that store both coord and image data.
+*/
 #define MAX_TEXTURE_UNITS 8
 
 /*@}*/

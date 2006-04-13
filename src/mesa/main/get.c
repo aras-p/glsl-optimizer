@@ -1040,7 +1040,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_MAX_TEXTURE_UNITS_ARB:
          CHECK_EXT1(ARB_multitexture, "GetBooleanv");
-         params[0] = INT_TO_BOOLEAN(MIN2(ctx->Const.MaxTextureImageUnits, ctx->Const.MaxTextureCoordUnits));
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxTextureUnits);
          break;
       case GL_ACTIVE_TEXTURE_ARB:
          CHECK_EXT1(ARB_multitexture, "GetBooleanv");
@@ -2858,7 +2858,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_MAX_TEXTURE_UNITS_ARB:
          CHECK_EXT1(ARB_multitexture, "GetFloatv");
-         params[0] = (GLfloat)(MIN2(ctx->Const.MaxTextureImageUnits, ctx->Const.MaxTextureCoordUnits));
+         params[0] = (GLfloat)(ctx->Const.MaxTextureUnits);
          break;
       case GL_ACTIVE_TEXTURE_ARB:
          CHECK_EXT1(ARB_multitexture, "GetFloatv");
@@ -4676,7 +4676,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_MAX_TEXTURE_UNITS_ARB:
          CHECK_EXT1(ARB_multitexture, "GetIntegerv");
-         params[0] = MIN2(ctx->Const.MaxTextureImageUnits, ctx->Const.MaxTextureCoordUnits);
+         params[0] = ctx->Const.MaxTextureUnits;
          break;
       case GL_ACTIVE_TEXTURE_ARB:
          CHECK_EXT1(ARB_multitexture, "GetIntegerv");
