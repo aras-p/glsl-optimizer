@@ -247,9 +247,12 @@
  * Don't define it if using a newer Windows compiler.
  */
 #if defined(__VMS)
-#define __FUNCTION__ "VMS$NL:"
-#elif !(defined(__GNUC__) && __GNUC__ >= 2) && !(defined(_MSC_VER) && _MSC_VER >= 1300)
-#define __FUNCTION__ "unknown"
+# define __FUNCTION__ "VMS$NL:"
+#elif __STDC_VERSION__ < 199901L
+# if ((!defined __GNUC__) || (__GNUC__ < 2)) && (!defined __xlC__) && \
+      (!defined(_MSC_VER) || _MSC_VER < 1300)
+#  define __FUNCTION__ "<unknown>"
+# endif
 #endif
 
 
