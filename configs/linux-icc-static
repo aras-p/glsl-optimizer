@@ -6,9 +6,9 @@ CONFIG_NAME = linux-icc-static
 
 # Compiler and flags
 CC = icc
-CXX = g++
+CXX = icpc
 CFLAGS = -O3 -tpp6 -axK -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include
-CXXFLAGS = -O3
+CXXFLAGS = -O3 -tpp6 -axK -DPTHREADS
 GLUT_CFLAGS = -fexceptions
 MKLIB_OPTIONS = -static -arch icc
 
@@ -19,12 +19,9 @@ GLUT_LIB_NAME = libglut.a
 GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 
-GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread
-GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
-APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
-MKLIB_OPTIONS = -arch icc
+GL_LIB_DEPS =
+GLUT_LIB_DEPS =
+APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm -lpthread -lcxa -lunwind
 
 ASM_SOURCES = $(X86_SOURCES)
 ASM_API = $(X86_API)
-
-
