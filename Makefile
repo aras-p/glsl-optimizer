@@ -55,11 +55,14 @@ $(TOP)/configs/current:
 # Rules to set/install a specific build configuration
 aix \
 aix-64 \
+aix-64-static \
 aix-gcc \
 aix-static \
 beos \
 darwin \
 darwin-static \
+darwin-static-x86ppc \
+darwin-x86ppc \
 freebsd \
 freebsd-dri \
 freebsd-dri-amd64 \
@@ -72,6 +75,8 @@ hpux11-32-static \
 hpux11-32-static-nothreads \
 hpux11-64 \
 hpux11-64-static \
+hpux11-ia64 \
+hpux11-ia64-static \
 hpux9 \
 hpux9-gcc \
 irix6-64 \
@@ -93,6 +98,8 @@ linux-dri-xcb \
 linux-indirect \
 linux-fbdev \
 linux-glide \
+linux-ia64-icc \
+linux-ia64-icc-static \
 linux-icc \
 linux-icc-static \
 linux-osmesa16 \
@@ -119,6 +126,7 @@ linux-x86-static \
 netbsd \
 openbsd \
 osf1 \
+osf1-static \
 solaris-x86 \
 solaris-x86-gcc \
 sunos4 \
@@ -128,6 +136,10 @@ sunos5 \
 sunos5-gcc \
 sunos5-64-gcc \
 sunos5-smp \
+sunos5-v8 \
+sunos5-v8-static \
+sunos5-v9 \
+sunos5-v9-static \
 ultrix-gcc:
 	(cd configs && rm -f current && ln -s $@ current)
 	$(MAKE) default
