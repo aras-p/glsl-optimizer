@@ -5,9 +5,11 @@ include $(TOP)/configs/darwin
 CONFIG_NAME = darwin-static
 
 # Compiler and flags
-CFLAGS = -I/usr/X11R6/include -O3 -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
-CXXFLAGS = -I/usr/X11R6/include -O3 -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
-MKLIB_OPTIONS = -static
+CFLAGS = -arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk \
+         -I/usr/X11R6/include -O3 -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
+CXXFLAGS = -arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk \
+           -I/usr/X11R6/include -O3 -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
+MKLIB_OPTIONS = -static -archopt "-arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk"
 
 # Library names (actual file names)
 GL_LIB_NAME = libGL.a

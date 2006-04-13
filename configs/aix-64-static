@@ -2,15 +2,16 @@
 
 include $(TOP)/configs/default
 
-CONFIG_NAME = aix-static
+CONFIG_NAME = aix-64-static
 
 # Compiler and flags
 CC = cc
 CXX = xlC
 
-CFLAGS = -O -DAIXV3 -DPTHREADS
-CXXFLAGS = -O -DAIXV3 -DPTHREADS
-MKLIB_OPTIONS = -static
+CFLAGS = -q64 -O -DAIXV3 -DPTHREADS
+CXXFLAGS = -q64 -O -DAIXV3 -DPTHREADS
+MKLIB_OPTIONS = -static -arch AIX64
+LIB_DIR=$(TOP)/lib64
 
 # Library names (actual file names)
 GL_LIB_NAME = libGL.a
@@ -19,7 +20,6 @@ GLUT_LIB_NAME = libglut.a
 GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 
-APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) \
+APP_LIB_DEPS = -q64 -L$(LIB_DIR)  -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) \
                -lX11 -lXext -lXmu -lXi -lm -lpthread -lC
-
 

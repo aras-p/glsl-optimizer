@@ -10,7 +10,7 @@ CXX = aCC
 
 CFLAGS = +z -Ae +O2 +Onolimit +Oaggressive -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM -DPTHREADS
 
-CXXFLAGS = +z -Aa +O2 +Onolimit +Oaggressive -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include
+CXXFLAGS = +z -Aa +O2 +Onolimit +Oaggressive -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DPTHREADS
 
 MKLIB_OPTIONS =
 
@@ -23,4 +23,8 @@ GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 
 # Library/program dependencies
-APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm
+APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB)
+GL_LIB_DEPS = -L/usr/lib/X11R6/ -L/usr/contrib/X11R6/lib/ -lXext -lXt -lXi -lX11 -lm -lpthread
+GLU_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -lm -lCsup -lcl
+GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) $(GL_LIB_DEPS)
+GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) $(GL_LIB_DEPS)

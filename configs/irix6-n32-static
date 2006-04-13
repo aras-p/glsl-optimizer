@@ -7,15 +7,15 @@ CONFIG_NAME = irix6-n32-static
 # Compiler and flags
 CC = cc
 CXX = CC
-CFLAGS = -n32 -mips2 -O2 -ansi -woff 1521,1552 -DUSE_XSHM
-CXXFLAGS = -n32 -mips2 -O2 -ansi -woff 3262,3666
+CFLAGS = -n32 -mips2 -O2 -ansi -woff 1521,1552 -DUSE_XSHM -DPTHREADS
+CXXFLAGS = -n32 -mips2 -O2 -ansi -woff 3262,3666 -DPTHREADS
 MKLIB_OPTIONS = -archopt n32 -static
 
 GLW_SOURCES = GLwDrawA.c GLwMDrawA.c
 
 LIB_DIR = $(TOP)/lib32
 
-APP_LIB_DEPS = -L$(LIB_DIR) -n32 -glut -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXext -lXmu -lXi -lm
+APP_LIB_DEPS = -L$(LIB_DIR) -n32 -glut -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXext -lXmu -lXi -lpthread -lm -lC
 
 GL_LIB_NAME = libGL.a
 GLU_LIB_NAME = libGLU.a

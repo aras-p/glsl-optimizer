@@ -7,8 +7,12 @@ CONFIG_NAME = darwin
 # Compiler and flags
 CC = cc
 CXX = cc
-CFLAGS = -I/usr/X11R6/include -O3 -fPIC -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
-CXXFLAGS = -I/usr/X11R6/include -O3 -fPIC -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
+CFLAGS = -arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk \
+         -I/usr/X11R6/include -O3 -fPIC -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
+CXXFLAGS = -arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk \
+         -I/usr/X11R6/include -O3 -fPIC -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
+
+MKLIB_OPTIONS = -archopt "-arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk"
 
 # Library names (actual file names)
 GL_LIB_NAME = libGL.dylib
