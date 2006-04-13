@@ -411,7 +411,7 @@ extern const GLubyte gl_dispatch_functions_start[];
  * Return dispatch function address for the named static (built-in) function.
  * Return NULL if function not found.
  */
-static const _glapi_proc
+static _glapi_proc
 get_static_proc_address(const char *funcName)
 {
    const glprocs_table_t * const f = find_entry( funcName );
