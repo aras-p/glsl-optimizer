@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 2005  Tungsten Graphics   All Rights Reserved.
+ * Copyright (C) 2006  Tungsten Graphics   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -272,7 +272,7 @@ struct tnl_program {
 };
 
 
-const static struct ureg undef = { 
+static const struct ureg undef = { 
    ~0,
    ~0,
    0,
@@ -333,7 +333,7 @@ static struct ureg get_temp( struct tnl_program *p )
       _mesa_exit(1);
    }
 
-   if (bit > p->program->Base.NumTemporaries)
+   if ((GLuint) bit > p->program->Base.NumTemporaries)
       p->program->Base.NumTemporaries = bit;
 
    p->temp_in_use |= 1<<(bit-1);
@@ -444,7 +444,7 @@ static void register_matrix_param6( struct tnl_program *p,
 				    GLint s5,
 				    struct ureg *matrix )
 {
-   GLuint i;
+   GLint i;
 
    /* This is a bit sad as the support is there to pull the whole
     * matrix out in one go:
