@@ -593,8 +593,8 @@ static void nv10ChooseRenderState(GLcontext *ctx)
 		index = NOUVEAU_MAX_TRIFUNC;	/* flat specular */
 	}
 
-	if (nmesa->renderIndex != index) {
-		nmesa->renderIndex = index;
+	if (nmesa->render_index != index) {
+		nmesa->render_index = index;
 
 		tnl->Driver.Render.Points = rast_tab[index].points;
 		tnl->Driver.Render.Line = rast_tab[index].line;
@@ -792,7 +792,7 @@ static void nv10RenderPrimitive( GLcontext *ctx, GLuint prim )
 /*                            Initialization.                         */
 /**********************************************************************/
 
-void nouveauTriInitFunctions(GLcontext *ctx)
+void nv10TriInitFunctions(GLcontext *ctx)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	TNLcontext *tnl = TNL_CONTEXT(ctx);

@@ -92,6 +92,7 @@ typedef struct nouveau_context {
 
 	/* Vertex state */
 	GLuint vertex_size;
+	char *verts;
 	struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
 	GLuint vertex_attr_count;
 

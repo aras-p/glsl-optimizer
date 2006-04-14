@@ -87,7 +87,7 @@ void nouveauFallback(struct nouveau_context *nmesa, GLuint bit, GLboolean mode)
 			}
 
 			_swsetup_Wakeup(ctx);
-			nmesa->renderIndex = ~0;
+			nmesa->render_index = ~0;
 		}
 	}
 	else {
@@ -95,14 +95,18 @@ void nouveauFallback(struct nouveau_context *nmesa, GLuint bit, GLboolean mode)
 		if (oldfallback == bit) {
 			_swrast_flush( ctx );
 
-			nouveauInitTriFunctions(ctx);
+			if (nmesa->screen->card_type<NV_10) {
+				//nv03TriInitFunctions(ctx);
+			} else {
+				nv10TriInitFunctions(ctx);
+			}
 
 			_tnl_invalidate_vertex_state( ctx, ~0 );
 			_tnl_invalidate_vertices( ctx, ~0 );
 			_tnl_install_attrs( ctx, 
 					nmesa->vertex_attrs, 
 					nmesa->vertex_attr_count,
-					nmesa->ViewportMatrix.m, 0 ); 
+					nmesa->viewport.m, 0 ); 
 		}
 	}    
 }
@@ -112,8 +116,8 @@ void nouveauRunPipeline( GLcontext *ctx )
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 
-	if (nmesa->newState) {
-		nmesa->newRenderState |= nmesa->newState;
+	if (nmesa->new_state) {
+		nmesa->new_render_state |= nmesa->new_state;
 	}
 
 	_tnl_run_pipeline( ctx );
