@@ -14,6 +14,7 @@ DRIVER_SOURCES = \
 	nouveau_ioctl.c          \
 	nouveau_lock.c           \
 	nouveau_span.c           \
+	nouveau_state.c		 \
 	nouveau_tex.c            \
 	nouveau_tris.c           \
 	nv10_swtcl.c

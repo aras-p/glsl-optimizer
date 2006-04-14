@@ -115,6 +115,9 @@ typedef struct nouveau_context {
 	driOptionCache optionCache;
 
         uint32_t vblank_flags;
+
+        GLfloat viewport[16];
+
 }nouveauContextRec, *nouveauContextPtr;
 
 #define NOUVEAU_CONTEXT(ctx)		((nouveauContextPtr)(ctx->DriverCtx))
