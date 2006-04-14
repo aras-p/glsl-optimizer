@@ -394,7 +394,9 @@ _mesa_Uniform2fARB (GLint location, GLfloat v0, GLfloat v1)
 
 	if (pro != NULL)
 	{
-		GLfloat v[2] = { v0, v1 };
+		GLfloat v[2];
+		v[0] = v0;
+		v[1] = v1;
 
 		if (!_slang_write_uniform (pro, location, 1, v, GL_FLOAT_VEC2))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2fARB");
@@ -411,7 +413,10 @@ _mesa_Uniform3fARB (GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
 
 	if (pro != NULL)
 	{
-		GLfloat v[3] = { v0, v1, v2 };
+		GLfloat v[3];
+		v[0] = v0;
+		v[1] = v1;
+		v[2] = v2;
 
 		if (!_slang_write_uniform (pro, location, 1, v, GL_FLOAT_VEC3))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3fARB");
@@ -428,7 +433,11 @@ _mesa_Uniform4fARB (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat 
 
 	if (pro != NULL)
 	{
-		GLfloat v[4] = { v0, v1, v2, v3 };
+		GLfloat v[4];
+		v[0] = v0;
+		v[1] = v1;
+		v[2] = v2;
+		v[3] = v3;
 
 		if (!_slang_write_uniform (pro, location, 1, v, GL_FLOAT_VEC4))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4fARB");
@@ -460,7 +469,9 @@ _mesa_Uniform2iARB (GLint location, GLint v0, GLint v1)
 
 	if (pro != NULL)
 	{
-		GLint v[2] = { v0, v1 };
+		GLint v[2];
+		v[0] = v0;
+		v[1] = v1;
 
 		if (!_slang_write_uniform (pro, location, 1, v, GL_INT_VEC2))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2iARB");
@@ -477,7 +488,10 @@ _mesa_Uniform3iARB (GLint location, GLint v0, GLint v1, GLint v2)
 
 	if (pro != NULL)
 	{
-		GLint v[3] = { v0, v1, v2 };
+		GLint v[3];
+		v[0] = v0;
+		v[1] = v1;
+		v[2] = v2;
 
 		if (!_slang_write_uniform (pro, location, 1, v, GL_INT_VEC3))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3iARB");
@@ -494,7 +508,11 @@ _mesa_Uniform4iARB (GLint location, GLint v0, GLint v1, GLint v2, GLint v3)
 
 	if (pro != NULL)
 	{
-		GLint v[4] = { v0, v1, v2, v3 };
+		GLint v[4];
+		v[0] = v0;
+		v[1] = v1;
+		v[2] = v2;
+		v[3] = v3;
 
 		if (!_slang_write_uniform (pro, location, 1, v, GL_INT_VEC4))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4iARB");
@@ -897,30 +915,28 @@ _mesa_GetObjectParameterivARB (GLhandleARB obj, GLenum pname, GLint *params)
 		}
 }
 
+
+/**
+ * Copy string from <src> to <dst>, up to maxLength characters, returning
+ * length of <dst> in <length>.
+ * \param src  the strings source
+ * \param maxLength  max chars to copy
+ * \param length  returns numberof chars copied
+ * \param dst  the string destination
+ */
 static GLvoid
-_mesa_get_string (const GLcharARB *src, GLsizei maxLength, GLsizei *length, GLcharARB *str)
+copy_string(const GLcharARB *src, GLsizei maxLength, GLsizei *length,
+            GLcharARB *dst)
 {
 	GLsizei len;
-
-	if (maxLength == 0)
-	{
-		if (length != NULL)
-			*length = 0;
-		return;
-	}
-
-	if (src == NULL)
-		src = "";
-
-	len = _mesa_strlen (src);
-	if (len >= maxLength)
-		len = maxLength - 1;
-
-	_mesa_memcpy (str, src, len * sizeof (GLcharARB));
-	str[len] = '\0';
-	if (length != NULL)
+	for (len = 0; len < maxLength - 1 && src && src[len]; len++)
+		dst[len] = src[len];
+	if (maxLength > 0)
+		dst[len] = 0;
+	if (length)
 		*length = len;
 }
+
 
 GLvoid GLAPIENTRY
 _mesa_GetInfoLogARB (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *infoLog)
@@ -930,7 +946,7 @@ _mesa_GetInfoLogARB (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLchar
 
 	if (gen != NULL)
 	{
-		_mesa_get_string ((**gen).GetInfoLog (gen), maxLength, length, infoLog);
+		copy_string((**gen).GetInfoLog (gen), maxLength, length, infoLog);
 		RELEASE_GENERIC(gen);
 	}
 }
@@ -1028,7 +1044,7 @@ _mesa_GetShaderSourceARB (GLhandleARB obj, GLsizei maxLength, GLsizei *length, G
 
 	if (sha != NULL)
 	{
-		_mesa_get_string ((**sha).GetSource (sha), maxLength, length, source);
+		copy_string((**sha).GetSource (sha), maxLength, length, source);
 		RELEASE_SHADER(sha);
 	}
 }
