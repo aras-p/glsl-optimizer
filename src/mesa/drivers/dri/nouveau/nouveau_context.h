@@ -83,9 +83,13 @@ typedef struct nouveau_context {
 	volatile unsigned char* mmio;
 
 	/* State for tris */
-	GLuint vertex_size;
 	GLuint color_offset;
 	GLuint specular_offset;
+
+	/* Vertex state */
+	GLuint vertex_size;
+	struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
+	GLuint vertex_attr_count;
 
 	/* The drawing fallbacks */
 	GLuint Fallback;
