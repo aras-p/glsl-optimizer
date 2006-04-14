@@ -54,6 +54,10 @@ nouveau_fifo;
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
 
+/* Subpixel offsets for window coordinates (triangles): */
+#define SUBPIXEL_X  (0.0F)
+#define SUBPIXEL_Y  (0.125F)
+
 struct nouveau_context;
 
 typedef void (*nouveau_tri_func)( struct nouveau_context*, 
@@ -121,7 +125,8 @@ typedef struct nouveau_context {
 
         uint32_t vblank_flags;
 
-        GLfloat viewport[16];
+        GLmatrix viewport;
+        GLfloat depth_scale;
 
 }nouveauContextRec, *nouveauContextPtr;
 

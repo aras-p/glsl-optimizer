@@ -40,10 +40,9 @@ static void nouveauCalcViewport(GLcontext *ctx)
 {
     /* Calculate the Viewport Matrix */
     
-/* Taken from the intel driver
     nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
     const GLfloat *v = ctx->Viewport._WindowMap.m;
-    GLfloat *m = nmesa->ViewportMatrix.m;
+    GLfloat *m = nmesa->viewport.m;
     GLint h = 0;
     
     if (nmesa->driDrawable) 
@@ -55,7 +54,7 @@ static void nouveauCalcViewport(GLcontext *ctx)
     m[MAT_TY] = - v[MAT_TY] + h;
     m[MAT_SZ] =   v[MAT_SZ] * nmesa->depth_scale;
     m[MAT_TZ] =   v[MAT_TZ] * nmesa->depth_scale;
-*/
+
 }
 
 static nouveauViewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
@@ -75,7 +74,13 @@ static nouveauViewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
      * 44c   0x03000000  <-- (Height_from_glViewport << 16) | (win_height - height - y)
      *
      */
+    
+    nouveauCalcViewport(ctx);
+}
 
+void nouveauDepthRange(GLcontext *ctx)
+{
+    nouveauCalcViewport(ctx);
 }
 
 /* Initialize the context's hardware state. */
@@ -120,7 +125,7 @@ void nouveauDDInitStateFuncs(GLcontext *ctx)
    ctx->Driver.StencilMaskSeparate	= NULL; //nouveauDDStencilMaskSeparate;
    ctx->Driver.StencilOpSeparate	= NULL; //nouveauDDStencilOpSeparate;
 
-   ctx->Driver.DepthRange               = NULL; //nouveauDepthRange;
+   ctx->Driver.DepthRange               = nouveauDepthRange;
    ctx->Driver.Viewport                 = nouveauViewport;
 
    /* Pixel path fallbacks.
