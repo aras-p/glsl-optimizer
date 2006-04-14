@@ -34,6 +34,7 @@ SOURCES = \
 	dinoshade.c \
 	floattex.c \
 	fbotest1.c \
+	fbotest2.c \
 	fbotexture.c \
 	fog.c \
 	fogcoord.c \
@@ -49,6 +50,7 @@ SOURCES = \
 	packedpixels.c \
 	pbo.c \
 	projtex.c \
+	readrate.c \
 	seccolor.c \
 	sharedtex.c \
 	stencilwrap.c \
