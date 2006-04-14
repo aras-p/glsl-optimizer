@@ -127,7 +127,8 @@ typedef struct nouveau_context {
 
         GLmatrix viewport;
         GLfloat depth_scale;
-
+        GLfloat depth_scale;
+	GLuint render_index;
 }nouveauContextRec, *nouveauContextPtr;
 
 #define NOUVEAU_CONTEXT(ctx)		((nouveauContextPtr)(ctx->DriverCtx))
