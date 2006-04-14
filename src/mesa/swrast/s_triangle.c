@@ -38,7 +38,6 @@
 
 #include "s_aatriangle.h"
 #include "s_context.h"
-#include "s_depth.h"
 #include "s_feedback.h"
 #include "s_span.h"
 #include "s_triangle.h"
