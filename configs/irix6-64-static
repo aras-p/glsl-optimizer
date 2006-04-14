@@ -9,7 +9,7 @@ CC = cc
 CXX = CC
 CFLAGS = -64 -O3 -ansi -woff 1068,1069,1174,1185,1209,1474,1552 -DUSE_XSHM -DPTHREADS
 CXXFLAGS = -64 -O3 -ansi -woff 1174 -DPTHREADS
-MKLIB_OPTIONS = -archopt 64 -static
+MKLIB_OPTIONS = -static
 
 GLW_SOURCES = GLwDrawA.c GLwMDrawA.c
 

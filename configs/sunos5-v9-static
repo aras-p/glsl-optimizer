@@ -1,4 +1,4 @@
-# Configuration for SunOS 5
+# Configuration for SunOS 5, SPARC V9, static libs
 
 include $(TOP)/configs/default
 

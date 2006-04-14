@@ -1,10 +1,10 @@
-# Configuration for SunOS 5
+# Configuration for SunOS 5, SPARC V9
 
 include $(TOP)/configs/default
 
 CONFIG_NAME = sunos5-v9
 
-MKLIB_OPTIONS = -archopt SUNV9 -cplusplus
+MKLIB_OPTIONS = -cplusplus
 
 LIB_DIR = $(TOP)/lib64
 
