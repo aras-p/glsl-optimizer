@@ -42,6 +42,7 @@ struct gl_query_object *
 _mesa_new_query_object(GLcontext *ctx, GLuint id)
 {
    struct gl_query_object *q = MALLOC_STRUCT(gl_query_object);
+   (void) ctx;
    if (q) {
       q->Id = id;
       q->Result = 0;
