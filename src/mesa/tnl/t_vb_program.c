@@ -165,7 +165,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    VB->AttribPtr[VERT_ATTRIB_FOG] = VB->FogCoordPtr;
    VB->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &store->attribs[VERT_RESULT_PSIZ];
 
-   for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
       VB->AttribPtr[VERT_ATTRIB_TEX0+i] = VB->TexCoordPtr[i] = 
 	 &store->attribs[VERT_RESULT_TEX0 + i];
    }

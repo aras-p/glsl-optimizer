@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -399,7 +399,7 @@ void _tnl_array_init( GLcontext *ctx )
    _mesa_vector4f_init( &tmp->FogCoord, 0, NULL);
    _mesa_vector4f_init( &tmp->Index, 0, NULL);
 
-   for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
+   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++)
       _mesa_vector4f_init( &tmp->TexCoord[i], 0, NULL);
 }
 

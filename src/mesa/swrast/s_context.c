@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -487,7 +487,7 @@ _swrast_invalidate_state( GLcontext *ctx, GLbitfield new_state )
       swrast->BlendFunc = _swrast_validate_blend_func;
 
    if (new_state & _SWRAST_NEW_TEXTURE_SAMPLE_FUNC)
-      for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
+      for (i = 0 ; i < ctx->Const.MaxTextureImageUnits ; i++)
 	 swrast->TextureSample[i] = NULL;
 }
 
@@ -688,10 +688,7 @@ _swrast_CreateContext( GLcontext *ctx )
    swrast->PointSpan.facing = 0;
    swrast->PointSpan.array = swrast->SpanArrays;
 
-   assert(ctx->Const.MaxTextureUnits > 0);
-   assert(ctx->Const.MaxTextureUnits <= MAX_TEXTURE_UNITS);
-
-   swrast->TexelBuffer = (GLchan *) MALLOC(ctx->Const.MaxTextureUnits *
+   swrast->TexelBuffer = (GLchan *) MALLOC(ctx->Const.MaxTextureImageUnits *
                                            MAX_WIDTH * 4 * sizeof(GLchan));
    if (!swrast->TexelBuffer) {
       FREE(swrast->SpanArrays);
@@ -786,7 +783,7 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
       _mesa_debug(ctx, "win %f %f %f %f\n",
                   v->win[0], v->win[1], v->win[2], v->win[3]);
 
-      for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
+      for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
 	 if (ctx->Texture.Unit[i]._ReallyEnabled)
 	    _mesa_debug(ctx, "texcoord[%d] %f %f %f %f\n", i,
                         v->texcoord[i][0], v->texcoord[i][1],

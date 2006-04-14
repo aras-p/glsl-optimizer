@@ -312,9 +312,19 @@ calculate_derived_texenv( struct gl_tex_env_combine_state *state,
 void GLAPIENTRY
 _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 {
+   GLuint maxUnit;
    GET_CURRENT_CONTEXT(ctx);
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   struct gl_texture_unit *texUnit;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
+      ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxTextureImageUnits;
+   if (ctx->Texture.CurrentUnit >= maxUnit) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glTexEnvfv(current unit)");
+      return;
+   }
+
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
 
 #define TE_ERROR(errCode, msg, value)				\
    _mesa_error(ctx, errCode, msg, _mesa_lookup_enum_by_nr(value));
@@ -795,9 +805,19 @@ _mesa_TexEnviv( GLenum target, GLenum pname, const GLint *param )
 void GLAPIENTRY
 _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
 {
+   GLuint maxUnit;
+   const struct gl_texture_unit *texUnit;
    GET_CURRENT_CONTEXT(ctx);
-   const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
+      ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxTextureImageUnits;
+   if (ctx->Texture.CurrentUnit >= maxUnit) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexEnvfv(current unit)");
+      return;
+   }
+
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
 
    if (target == GL_TEXTURE_ENV) {
       switch (pname) {
@@ -1006,9 +1026,19 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
 void GLAPIENTRY
 _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
 {
+   GLuint maxUnit;
+   const struct gl_texture_unit *texUnit;
    GET_CURRENT_CONTEXT(ctx);
-   const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
+      ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxTextureImageUnits;
+   if (ctx->Texture.CurrentUnit >= maxUnit) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexEnviv(current unit)");
+      return;
+   }
+
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
 
    if (target == GL_TEXTURE_ENV) {
       switch (pname) {
@@ -1264,10 +1294,10 @@ _mesa_TexParameterf( GLenum target, GLenum pname, GLfloat param )
 void GLAPIENTRY
 _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
 {
-   GET_CURRENT_CONTEXT(ctx);
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   GLenum eparam = (GLenum) (GLint) params[0];
+   const GLenum eparam = (GLenum) (GLint) params[0];
+   struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&(VERBOSE_API|VERBOSE_TEXTURE))
@@ -1277,6 +1307,12 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
                   *params,
 		  _mesa_lookup_enum_by_nr(eparam));
 
+   if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureImageUnits) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glTexParameterfv(current unit)");
+      return;
+   }
+
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
 
    switch (target) {
       case GL_TEXTURE_1D:
@@ -1662,13 +1698,21 @@ void GLAPIENTRY
 _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                               GLenum pname, GLint *params )
 {
-   GET_CURRENT_CONTEXT(ctx);
-   const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   const struct gl_texture_unit *texUnit;
    const struct gl_texture_image *img = NULL;
    GLuint dimensions;
    GLboolean isProxy;
    GLint maxLevels;
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureImageUnits) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGetTexLevelParameteriv(current unit)");
+      return;
+   }
+
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
 
    /* this will catch bad target values */
    dimensions = tex_image_dimensions(ctx, target);  /* 1, 2 or 3 */
@@ -1884,10 +1928,18 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
 void GLAPIENTRY
 _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 {
-   GET_CURRENT_CONTEXT(ctx);
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   struct gl_texture_unit *texUnit;
    struct gl_texture_object *obj;
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureImageUnits) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGetTexParameterfv(current unit)");
+      return;
+   }
+
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
 
    obj = _mesa_select_tex_object(ctx, texUnit, target);
    if (!obj) {
@@ -2008,10 +2060,18 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 void GLAPIENTRY
 _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
 {
-   GET_CURRENT_CONTEXT(ctx);
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   struct gl_texture_unit *texUnit;
    struct gl_texture_object *obj;
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureImageUnits) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGetTexParameteriv(current unit)");
+      return;
+   }
+
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
 
    obj = _mesa_select_tex_object(ctx, texUnit, target);
    if (!obj) {
@@ -2146,8 +2206,7 @@ void GLAPIENTRY
 _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLuint tUnit = ctx->Texture.CurrentUnit;
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[tUnit];
+   struct gl_texture_unit *texUnit;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&(VERBOSE_API|VERBOSE_TEXTURE))
@@ -2156,6 +2215,13 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
                   _mesa_lookup_enum_by_nr(pname),
                   *params,
 		  _mesa_lookup_enum_by_nr((GLenum) (GLint) *params));
+
+   if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureCoordUnits) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glTexGen(current unit)");
+      return;
+   }
+
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
 
    switch (coord) {
       case GL_S:
@@ -2428,10 +2494,16 @@ _mesa_TexGeni( GLenum coord, GLenum pname, GLint param )
 void GLAPIENTRY
 _mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
 {
+   const struct gl_texture_unit *texUnit;
    GET_CURRENT_CONTEXT(ctx);
-   GLuint tUnit = ctx->Texture.CurrentUnit;
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[tUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureCoordUnits) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexGendv(current unit)");
+      return;
+   }
+
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
 
    switch (coord) {
       case GL_S:
@@ -2505,10 +2577,16 @@ _mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
 void GLAPIENTRY
 _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
 {
+   const struct gl_texture_unit *texUnit;
    GET_CURRENT_CONTEXT(ctx);
-   GLuint tUnit = ctx->Texture.CurrentUnit;
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[tUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureCoordUnits) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexGenfv(current unit)");
+      return;
+   }
+
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
 
    switch (coord) {
       case GL_S:
@@ -2582,10 +2660,16 @@ _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
 void GLAPIENTRY
 _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
 {
+   const struct gl_texture_unit *texUnit;
    GET_CURRENT_CONTEXT(ctx);
-   GLuint tUnit = ctx->Texture.CurrentUnit;
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[tUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureCoordUnits) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexGeniv(current unit)");
+      return;
+   }
+
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
 
    switch (coord) {
       case GL_S:
@@ -2679,21 +2763,22 @@ _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
 }
 #endif
 
+
 /* GL_ARB_multitexture */
 void GLAPIENTRY
-_mesa_ActiveTextureARB( GLenum target )
+_mesa_ActiveTextureARB(GLenum texture)
 {
    GET_CURRENT_CONTEXT(ctx);
-   const GLuint texUnit = target - GL_TEXTURE0;
+   const GLuint texUnit = texture - GL_TEXTURE0;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       _mesa_debug(ctx, "glActiveTexture %s\n",
-                  _mesa_lookup_enum_by_nr(target));
+                  _mesa_lookup_enum_by_nr(texture));
 
-   /* Cater for texture unit 0 is first, therefore use >= */
+   /* XXX error-check against max(coordunits, imageunits) */
    if (texUnit >= ctx->Const.MaxTextureUnits) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glActiveTexture(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glActiveTexture(texture)");
       return;
    }
 
@@ -2716,14 +2801,14 @@ _mesa_ActiveTextureARB( GLenum target )
 
 /* GL_ARB_multitexture */
 void GLAPIENTRY
-_mesa_ClientActiveTextureARB( GLenum target )
+_mesa_ClientActiveTextureARB(GLenum texture)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLuint texUnit = target - GL_TEXTURE0;
+   GLuint texUnit = texture - GL_TEXTURE0;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (texUnit >= ctx->Const.MaxTextureUnits) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glClientActiveTexture(target)");
+   if (texUnit >= ctx->Const.MaxTextureCoordUnits) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glClientActiveTexture(texture)");
       return;
    }
 

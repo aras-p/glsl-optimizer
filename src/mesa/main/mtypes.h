@@ -634,7 +634,7 @@ struct gl_current_attrib
    GLfloat RasterColor[4];			/**< Current raster color */
    GLfloat RasterSecondaryColor[4];             /**< Current raster secondary color */
    GLfloat RasterIndex;				/**< Current raster index */
-   GLfloat RasterTexCoords[MAX_TEXTURE_UNITS][4];/**< Current raster texcoords */
+   GLfloat RasterTexCoords[MAX_TEXTURE_COORD_UNITS][4];
    GLboolean RasterPosValid;			/**< Raster pos valid flag */
    /*@}*/
 };
@@ -1048,8 +1048,8 @@ struct gl_point_attrib
    GLfloat MinSize, MaxSize;	/**< GL_EXT_point_parameters */
    GLfloat Threshold;		/**< GL_EXT_point_parameters */
    GLboolean _Attenuated;	/**< True if Params != [1, 0, 0] */
-   GLboolean PointSprite;	/**< GL_NV_point_sprite / GL_NV_point_sprite */
-   GLboolean CoordReplace[MAX_TEXTURE_UNITS]; /**< GL_NV/ARB_point_sprite */
+   GLboolean PointSprite;	/**< GL_NV/ARB_point_sprite */
+   GLboolean CoordReplace[MAX_TEXTURE_COORD_UNITS]; /**< GL_ARB_point_sprite */
    GLenum SpriteRMode;		/**< GL_NV_point_sprite (only!) */
    GLenum SpriteOrigin;		/**< GL_ARB_point_sprite */
 };

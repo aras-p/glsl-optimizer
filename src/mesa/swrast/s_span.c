@@ -127,7 +127,7 @@ void
 _swrast_span_default_texcoords( GLcontext *ctx, struct sw_span *span )
 {
    GLuint i;
-   for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
       const GLfloat *tc = ctx->Current.RasterTexCoords[i];
       if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled) {
          COPY_4V(span->tex[i], tc);
@@ -401,6 +401,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
       /* multitexture */
       GLuint u;
       span->arrayMask |= SPAN_TEXTURE;
+      /* XXX CoordUnits vs. ImageUnits */
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
          if (ctx->Texture._EnabledCoordUnits & (1 << u)) {
             const struct gl_texture_object *obj =ctx->Texture.Unit[u]._Current;
