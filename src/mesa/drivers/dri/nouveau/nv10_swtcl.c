@@ -88,7 +88,7 @@ static inline void nv10StartPrimitive(struct nouveau_context* nmesa)
 		BEGIN_RING_PRIM(channel,NV20_BEGIN_VERTICES,NOUVEAU_MIN_PRIM_SIZE);
 }
 
-static inline void nv10FinishPrimitive(struct nouveau_context *nmesa)
+inline void nv10FinishPrimitive(struct nouveau_context *nmesa)
 {
 	FINISH_RING_PRIM();
 	if (nmesa->screen->card_type==NV_10)
@@ -788,13 +788,11 @@ static void nv10RenderPrimitive( GLcontext *ctx, GLuint prim )
 }
 
 
-
 /**********************************************************************/
 /*                            Initialization.                         */
 /**********************************************************************/
 
-
-void nouveauInitTriFuncs(GLcontext *ctx)
+void nouveauTriInitFunctions(GLcontext *ctx)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -820,4 +818,5 @@ void nouveauInitTriFuncs(GLcontext *ctx)
 	nmesa->verts = (GLubyte *)tnl->clipspace.vertex_buf;
 
 }
+
 

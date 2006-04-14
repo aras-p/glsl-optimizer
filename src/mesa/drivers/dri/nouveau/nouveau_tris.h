@@ -47,6 +47,9 @@ extern void nouveauFallback(struct nouveau_context *nmesa, GLuint bit, GLboolean
 
 extern void nouveauRunPipeline( GLcontext *ctx );
 
+extern void nouveauTriInitFunctions( GLcontext *ctx );
+
+
 #endif /* __NOUVEAU_TRIS_H__ */
 
 

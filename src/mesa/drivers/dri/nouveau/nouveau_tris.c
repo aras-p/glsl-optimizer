@@ -26,6 +26,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "nouveau_context.h"
 #include "nouveau_tris.h"
+#include "nv10_swtcl.h"
+#include "nouveau_span.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
@@ -44,9 +46,7 @@ void nouveau_fallback_tri(struct nouveau_context *nmesa,
 	_swsetup_Translate(ctx, v0, &v[0]);
 	_swsetup_Translate(ctx, v1, &v[1]);
 	_swsetup_Translate(ctx, v2, &v[2]);
-	nouveauSpanRenderStart( ctx );
 	_swrast_Triangle(ctx, &v[0], &v[1], &v[2]);
-	nouveauSpanRenderFinish( ctx );
 }
 
 
@@ -58,9 +58,7 @@ void nouveau_fallback_line(struct nouveau_context *nmesa,
 	SWvertex v[2];
 	_swsetup_Translate(ctx, v0, &v[0]);
 	_swsetup_Translate(ctx, v1, &v[1]);
-	nouveauSpanRenderStart( ctx );
 	_swrast_Line(ctx, &v[0], &v[1]);
-	nouveauSpanRenderFinish( ctx );
 }
 
 
@@ -70,11 +68,8 @@ void nouveau_fallback_point(struct nouveau_context *nmesa,
 	GLcontext *ctx = nmesa->glCtx;
 	SWvertex v[1];
 	_swsetup_Translate(ctx, v0, &v[0]);
-	nouveauSpanRenderStart( ctx );
 	_swrast_Point(ctx, &v[0]);
-	nouveauSpanRenderFinish( ctx );
 }
-
 
 void nouveauFallback(struct nouveau_context *nmesa, GLuint bit, GLboolean mode)
 {
@@ -85,7 +80,11 @@ void nouveauFallback(struct nouveau_context *nmesa, GLuint bit, GLboolean mode)
 	if (mode) {
 		nmesa->Fallback |= bit;
 		if (oldfallback == 0) {
-			nv40FinishPrimitive(nmesa);
+			if (nmesa->screen->card_type<NV_10) {
+				//nv03FinishPrimitive(nmesa);
+			} else {
+				nv10FinishPrimitive(nmesa);
+			}
 
 			_swsetup_Wakeup(ctx);
 			nmesa->renderIndex = ~0;
@@ -96,14 +95,7 @@ void nouveauFallback(struct nouveau_context *nmesa, GLuint bit, GLboolean mode)
 		if (oldfallback == bit) {
 			_swrast_flush( ctx );
 
-			tnl->Driver.Render.Start = nouveauRenderStart;
-			tnl->Driver.Render.PrimitiveNotify = nouveauRenderPrimitive;
-			tnl->Driver.Render.Finish = nouveauRenderFinish;
-
-			tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
-			tnl->Driver.Render.CopyPV = _tnl_copy_pv;
-			tnl->Driver.Render.Interp = _tnl_interp;
-			tnl->Driver.Render.ResetLineStipple = nouveauResetLineStipple;
+			nouveauInitTriFunctions(ctx);
 
 			_tnl_invalidate_vertex_state( ctx, ~0 );
 			_tnl_invalidate_vertices( ctx, ~0 );
@@ -118,10 +110,10 @@ void nouveauFallback(struct nouveau_context *nmesa, GLuint bit, GLboolean mode)
 
 void nouveauRunPipeline( GLcontext *ctx )
 {
-	struct nouveau_context *vmesa = NOUVEAU_CONTEXT(ctx);
+	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 
-	if (vmesa->newState) {
-		vmesa->newRenderState |= vmesa->newState;
+	if (nmesa->newState) {
+		nmesa->newRenderState |= nmesa->newState;
 	}
 
 	_tnl_run_pipeline( ctx );

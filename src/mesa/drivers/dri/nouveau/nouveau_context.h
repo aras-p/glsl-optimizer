@@ -88,6 +88,7 @@ typedef struct nouveau_context {
 	GLuint specular_offset;
 
 	/* The drawing fallbacks */
+	GLuint Fallback;
 	nouveau_tri_func* draw_tri;
 	nouveau_line_func* draw_line;
 	nouveau_point_func* draw_point;
@@ -121,6 +122,18 @@ typedef struct nouveau_context {
 }nouveauContextRec, *nouveauContextPtr;
 
 #define NOUVEAU_CONTEXT(ctx)		((nouveauContextPtr)(ctx->DriverCtx))
+
+#define NOUVEAU_FALLBACK_TEXTURE		0x0001
+#define NOUVEAU_FALLBACK_DRAW_BUFFER		0x0002
+#define NOUVEAU_FALLBACK_READ_BUFFER		0x0004
+#define NOUVEAU_FALLBACK_STENCIL		0x0008
+#define NOUVEAU_FALLBACK_RENDER_MODE		0x0010
+#define NOUVEAU_FALLBACK_LOGICOP		0x0020
+#define NOUVEAU_FALLBACK_SEP_SPECULAR		0x0040
+#define NOUVEAU_FALLBACK_BLEND_EQ		0x0080
+#define NOUVEAU_FALLBACK_BLEND_FUNC		0x0100
+#define NOUVEAU_FALLBACK_PROJTEX		0x0200
+#define NOUVEAU_FALLBACK_DISABLE		0x0400
 
 
 extern GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,

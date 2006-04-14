@@ -31,8 +31,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "mtypes.h"
 
-extern void nv10TriInitFunctions( GLcontext *ctx );
 extern void nv10Fallback( GLcontext *ctx, GLuint bit, GLboolean mode );
+extern void nv10FinishPrimitive(struct nouveau_context *nmesa);
+extern void nv10RenderStart(GLcontext *ctx);
 #define FALLBACK( nmesa, bit, mode ) nouveauFallback( nmesa->glCtx, bit, mode )
 
 #endif /* __NV10_SWTCL_H__ */
