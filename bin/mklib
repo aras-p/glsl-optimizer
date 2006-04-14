@@ -36,6 +36,7 @@ DEPS=""
 LINK=""
 CPLUSPLUS=0
 STATIC=0
+DLOPEN=0
 INSTALLDIR="."
 ARCH="auto"
 ARCHOPT=""
@@ -64,6 +65,7 @@ do
 	    echo '                Not observed on all systems at this time.'
 	    echo '  -cplusplus    link with C++ runtime'
 	    echo '  -static       make a static library (default is dynamic/shared)'
+	    echo '  -dlopen       make a shared library suitable for dynamic loading'
 	    echo '  -install DIR  put resulting library file(s) in DIR'
 	    echo '  -arch ARCH    override using `uname` to determine host system'
 	    echo '  -archopt OPT  specify an extra achitecture-specific option OPT'
@@ -103,6 +105,9 @@ do
 	    ;;
 	'-static')
 	    STATIC=1
+	    ;;
+	'-dlopen')
+	    DLOPEN=1
 	    ;;
 	'-install')
 	    shift 1;
@@ -316,14 +321,18 @@ case $ARCH in
 		fi
 	    fi
 
-            ARCHOPTS=""
-	    if [ "$ARCHOPT" = "SUNV9" ] ; then
-                ARCHOPTS="-xarch=v9"
-            fi
+	    # Check if objects are SPARC v9
+	    # file says: ELF 64-bit MSB relocatable SPARCV9 Version 1
+	    set ${OBJECTS}
+	    SPARCV9=`file $1 | grep SPARCV9`
+	    if [ "${SPARCV9}" ] ; then
+		OPTS="${OPTS} -xarch=v9"
+	    fi
+
 	    # for debug:
-	    #echo "mklib: linker is" ${LINK} ${OPTS} ${ARCHOPTS}
+	    #echo "mklib: linker is" ${LINK} ${OPTS}
 	    rm -f ${LIBNAME}.${MAJOR} ${LIBNAME}
-	    ${LINK} ${OPTS} ${ARCHOPTS} -o ${LIBNAME}.${MAJOR} ${OBJECTS} ${DEPS}
+	    ${LINK} ${OPTS} -o ${LIBNAME}.${MAJOR} ${OBJECTS} ${DEPS}
 	    ln -s ${LIBNAME}.${MAJOR} ${LIBNAME}
 	    FINAL_LIBS="${LIBNAME}.${MAJOR} ${LIBNAME}"
 	fi
@@ -391,26 +400,33 @@ case $ARCH in
 	    FINAL_LIBS=${LIBNAME}
 	else
 	    LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
-	    # XXX we should run 'file' on the first object file to determine
-	    # if it's o32, n32 or 64 format, as we do for Linux above.
-	    if [ $ARCHOPT = "64" ] ; then
-		# 64-bit ABI
-		OPTS="-64 -shared -all"
-		echo "mklib: Making IRIX 64-bit shared library: " ${LIBNAME}
-	    elif [ $ARCHOPT = "o32" ] ; then
-		# old 32-bit ABI
+
+	    # examine first object to determine ABI
+    	    set ${OBJECTS}
+	    ABI_O32=`file $1 | grep 'ELF 32-bit'`
+	    ABI_N32=`file $1 | grep 'ELF N32-bit'`
+	    ABI_N64=`file $1 | grep 'ELF 64-bit'`
+	    if [ ${ABI_O32} ] ; then
 		OPTS="-32 -shared -all"
-		echo "mklib: Making IRIX o32-bit shared library: " ${LIBNAME}
-	    else
-		# new 32-bit ABI
+		ABI="o32-bit"
+	    elif [ ${ABI_N32} ] ; then
 		OPTS="-n32 -shared -all"
-		echo "mklib: Making IRIX n32-bit shared library: " ${LIBNAME}
+		ABI="n32-bit"
+	    elif [ ${ABI_N64} ] ; then
+		OPTS="-64 -shared -all"
+		ABI="64-bit"
+	    else
+		echo "Error: Unexpected IRIX ABI!"
+		exit 1
 	    fi
+
 	    if [ $CPLUSPLUS = 1 ] ; then
 		LINK="CC"
 	    else
 		LINK="ld"
 	    fi
+
+	    echo "mklib: Making IRIX " ${ABI} " shared library: " ${LIBNAME}
 	    ${LINK} ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
 	    FINAL_LIBS=${LIBNAME}
 	fi
@@ -464,7 +480,6 @@ case $ARCH in
 	    else
 		OFILE=shr.o  #Want to be consistent with the IBM libGL.a
 	    fi
-	    DLOPENLIBNAME="lib${LIBNAME}.so"  # different libs required for dlopen
 	    LIBNAME="lib${LIBNAME}.a"  # shared objects are still stored in the .a libraries
 	    if [ $ARCH = "AIX64" ] ; then
 		OPTS="-bE:${EXPFILE} -bM:SRE -bnoentry -q64"
@@ -491,13 +506,14 @@ case $ARCH in
 
             # On AIX a shared library is linked differently when
             # you want to dlopen the file
-	    cc -G ${OPTS} -o ${DLOPENLIBNAME} ${OBJECTS} ${DEPS}
+	    if [ $DLOPEN = "1" ] ; then
+		cc -G ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+	    else
+		cc ${OPTS} -o ${OFILE} ${OBJECTS} ${DEPS}
+		ar ${X64} -r ${LIBNAME} ${OFILE}
+	    fi
 
-            # Traditional link-time binding compatible with system lib
-	    cc ${OPTS} -o ${OFILE} ${OBJECTS} ${DEPS}
-	    ar ${X64} -r ${LIBNAME} ${OFILE}
-
-            FINAL_LIBS="${LIBNAME} ${DLOPENLIBNAME}"
+            FINAL_LIBS="${LIBNAME}"
         fi
         ;;
 
@@ -543,32 +559,41 @@ case $ARCH in
             FINAL_LIBS=${LIBNAME}
         else
             # On Darwin a .bundle is used for a library that you want to dlopen
-            FLAGS="${ARCHOPT} -bundle -multiply_defined suppress"
-            BLINKNAME="lib${LIBNAME}.bundle"
-            BLIBNAME="lib${LIBNAME}.${MAJOR}.bundle"
-            echo "mklib: Making Darwin bundle: " ${BLIBNAME}
+            if [ $DLOPEN = "1" ] ; then
+                LIBSUFFIX="bundle"
+                OPTS="${ARCHOPT} -bundle -multiply_defined suppress"
+            else
+		LIBSUFFIX="dylib"
+                OPTS="${ARCHOPT} -dynamiclib -multiply_defined suppress -current_version ${MAJOR}.${MINOR}.0 -compatibility_version ${MAJOR}.${MINOR}.0 -install_name lib${LIBNAME}.${MAJOR}.${LIBSUFFIX}"
+            fi
+            LINKNAME="lib${LIBNAME}.${LIBSUFFIX}"
+            LIBNAME="lib${LIBNAME}.${MAJOR}.${LIBSUFFIX}"
+
+	    # examine first object to determine ABI
+    	    set ${OBJECTS}
+	    ABI_PPC=`file $1 | grep 'object ppct'`
+	    ABI_I386=`file $1 | grep 'object i386'`
+	    if [ ${ABI_PPC} ] ; then
+		OPTS="${OPTS} -arch ppc"
+	    fi
+	    if [ ${ABI_I386} ] ; then
+		OPTS="${OPTS} -arch i386"
+	    fi
+
+	    # XXX can we always add -isysroot /Developer/SDKs/MacOSX10.4u.sdk
+	    # to OPTS here?
+
+	    # determine linker
 	    if [ $CPLUSPLUS = 1 ] ; then
 		LINK="g++"
 	    else
 		LINK="cc"
 	    fi
-            ${LINK} ${FLAGS} -o ${BLIBNAME} ${OBJECTS} ${DEPS}
-            ln -s ${BLIBNAME} ${BLINKNAME}
 
-            # A .dylib is for link-time binding
-            FLAGS="${ARCHOPT} -dynamiclib -multiply_defined suppress -current_version ${MAJOR}.${MINOR}.0 -compatibility_version ${MAJOR}.${MINOR}.0 -install_name lib${LIBNAME}.${MAJOR}.${LIBSUFFIX}"
-            LINKNAME="lib${LIBNAME}.dylib"
-            LIBNAME="lib${LIBNAME}.${MAJOR}.dylib"
             echo "mklib: Making Darwin shared library: " ${LIBNAME}
-	    if [ $CPLUSPLUS = 1 ] ; then
-		LINK="g++"
-	    else
-		LINK="cc"
-	    fi
-            ${LINK} ${FLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+            ${LINK} ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
             ln -s ${LIBNAME} ${LINKNAME}
-
-            FINAL_LIBS="${LIBNAME} ${LINKNAME} ${BLIBNAME} ${BLINKNAME}"
+            FINAL_LIBS="${LIBNAME} ${LINKNAME}"
         fi
         ;;
 
