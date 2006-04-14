@@ -217,10 +217,8 @@ _swsetup_Wakeup( GLcontext *ctx )
 }
 
 
-
-
-
-/* Populate a swrast SWvertex from an attrib-style vertex.
+/**
+ * Populate a swrast SWvertex from an attrib-style vertex.
  */
 void 
 _swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest )
@@ -237,7 +235,7 @@ _swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest )
    dest->win[3] =         tmp[3];
 
 
-   for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
+   for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
       _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_TEX0+i, dest->texcoord[i] );
 	  
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR0, tmp );
