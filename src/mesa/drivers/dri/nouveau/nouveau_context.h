@@ -125,9 +125,12 @@ typedef struct nouveau_context {
 
         uint32_t vblank_flags;
 
+        GLuint new_state;
+        GLuint new_render_state;
+        GLuint render_index;
         GLmatrix viewport;
         GLfloat depth_scale;
-	GLuint render_index;
+
 }nouveauContextRec, *nouveauContextPtr;
 
 #define NOUVEAU_CONTEXT(ctx)		((nouveauContextPtr)(ctx->DriverCtx))
