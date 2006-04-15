@@ -35,6 +35,8 @@ typedef struct {
 	u_int32_t bus_type;
 	u_int32_t agp_mode;
 
+        GLint fbFormat;
+
 	GLuint frontOffset;
 	GLuint frontPitch;
 	GLuint backOffset;

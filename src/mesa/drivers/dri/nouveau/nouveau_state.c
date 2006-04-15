@@ -28,6 +28,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_state.h"
 #include "nouveau_ioctl.h"
 #include "nouveau_tris.h"
+#include "nouveau_fifo.h"
 
 #include "swrast/swrast.h"
 #include "array_cache/acache.h"
@@ -35,6 +36,38 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast_setup/swrast_setup.h"
 
 #include "tnl/t_pipeline.h"
+
+#include "mtypes.h"
+#include "colormac.h"
+
+static __inline__ GLuint nouveauPackColor(GLuint format,
+				       GLubyte r, GLubyte g,
+				       GLubyte b, GLubyte a)
+{
+   switch (format) {
+   case 2:
+      return PACK_COLOR_565( r, g, b );
+   case 4:
+      return PACK_COLOR_8888( r, g, b, a);
+   default:
+      fprintf(stderr, "unknown format %d\n", (int)format);
+      return 0;
+   }
+}
+
+static void nouveauDDClearColor(GLcontext *ctx, const GLfloat color[4])
+{
+   nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+   GLubyte c[4];
+
+   CLAMPED_FLOAT_TO_UBYTE(c[0], color[0]);
+   CLAMPED_FLOAT_TO_UBYTE(c[1], color[1]);
+   CLAMPED_FLOAT_TO_UBYTE(c[2], color[2]);
+   CLAMPED_FLOAT_TO_UBYTE(c[3], color[3]);
+
+   nmesa->clear_color = nouveauPackColor( nmesa->screen->fbFormat,
+				      c[0], c[1], c[2], c[3] );
+}
 
 static void nouveauCalcViewport(GLcontext *ctx)
 {
@@ -57,7 +90,7 @@ static void nouveauCalcViewport(GLcontext *ctx)
 
 }
 
-static nouveauViewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+static void nouveauViewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
     /* 
      * Need to send (at least on an nv35 the following:
@@ -78,9 +111,59 @@ static nouveauViewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     nouveauCalcViewport(ctx);
 }
 
-void nouveauDepthRange(GLcontext *ctx)
+static void nouveauDepthRange(GLcontext *ctx)
 {
     nouveauCalcViewport(ctx);
+}
+
+static void nouveauDDUpdateHWState(GLcontext *ctx)
+{
+    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+    int new_state = nmesa->new_state;
+
+    if ( new_state || nmesa->new_render_state & _NEW_TEXTURE )
+    {
+        FINISH_RING_PRIM();
+
+        nmesa->new_state = 0;
+
+        /* Update the various parts of the context's state.
+        */
+        /*
+        if ( new_state & NOUVEAU_NEW_ALPHA )
+            nouveauUpdateAlphaMode( ctx );
+
+        if ( new_state & NOUVEAU_NEW_DEPTH )
+            nouveauUpdateZMode( ctx );
+
+        if ( new_state & NOUVEAU_NEW_FOG )
+            nouveauUpdateFogAttrib( ctx );
+
+        if ( new_state & NOUVEAU_NEW_CLIP )
+            nouveauUpdateClipping( ctx );
+
+        if ( new_state & NOUVEAU_NEW_CULL )
+            nouveauUpdateCull( ctx );
+
+        if ( new_state & NOUVEAU_NEW_MASKS )
+            nouveauUpdateMasks( ctx );
+
+        if ( new_state & NOUVEAU_NEW_WINDOW )
+            nouveauUpdateWindow( ctx );
+
+        if ( nmesa->new_render_state & _NEW_TEXTURE ) {
+            nouveauUpdateTextureState( ctx );
+        }*/
+    }
+}
+
+static void nouveauDDInvalidateState(GLcontext *ctx, GLuint new_state)
+{
+    _swrast_InvalidateState( ctx, new_state );
+    _swsetup_InvalidateState( ctx, new_state );
+    _ac_InvalidateState( ctx, new_state );
+    _tnl_InvalidateState( ctx, new_state );
+    NOUVEAU_CONTEXT(ctx)->new_render_state |= new_state;
 }
 
 /* Initialize the context's hardware state. */
@@ -92,7 +175,7 @@ void nouveauDDInitState(nouveauContextPtr nmesa)
 /* Initialize the driver's state functions */
 void nouveauDDInitStateFuncs(GLcontext *ctx)
 {
-   ctx->Driver.UpdateState		= NULL; //nouveauDDInvalidateState;
+   ctx->Driver.UpdateState		= nouveauDDInvalidateState;
 
    ctx->Driver.ClearIndex		= NULL;
    ctx->Driver.ClearColor		= NULL; //nouveauDDClearColor;
