@@ -739,8 +739,8 @@ static void nv10RenderStart(GLcontext *ctx)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 
-	if (nmesa->newState) {
-		nmesa->newRenderState |= nmesa->newState;
+	if (nmesa->new_state) {
+		nmesa->new_render_state |= nmesa->new_state;
 	}
 
 	if (nmesa->Fallback) {
@@ -748,10 +748,10 @@ static void nv10RenderStart(GLcontext *ctx)
 		return;
 	}
 
-	if (nmesa->newRenderState) {
+	if (nmesa->new_render_state) {
 		nv10ChooseVertexState(ctx);
 		nv10ChooseRenderState(ctx);
-		nmesa->newRenderState = 0;
+		nmesa->new_render_state = 0;
 	}
 }
 
@@ -771,7 +771,7 @@ void nv10RasterPrimitive(GLcontext *ctx,
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 
-	assert (!nmesa->newState);
+	assert (!nmesa->new_state);
 
 	if (hwprim != nmesa->current_primitive)
 	{
