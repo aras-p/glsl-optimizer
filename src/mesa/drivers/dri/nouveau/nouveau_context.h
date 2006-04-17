@@ -96,8 +96,10 @@ typedef struct nouveau_context {
 	struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
 	GLuint vertex_attr_count;
 
-        /* Color state */
+        /* Clear state */
         GLuint clear_color;
+        GLuint clear_depth;
+        GLuint clear_stencil;
 
 	/* The drawing fallbacks */
 	GLuint Fallback;
