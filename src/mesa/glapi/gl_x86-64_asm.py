@@ -190,6 +190,10 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 		print '	.long	2,4,20    /* Minimum kernel version w/TLS */'
 		print '3:	.p2align 2        /* pad out section */'
 		print '#endif /* GLX_USE_TLS */'
+		print ''
+		print '#if defined (__ELF__) && defined (__linux__)'
+		print '	.section .note.GNU-stack,"",%progbits'
+		print '#endif'
 		return
 
 

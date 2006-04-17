@@ -687,3 +687,7 @@ _generic_read_RGBA_span_RGB565_MMX:
 #endif
 	ret
 #endif /* !defined(__DJGPP__) && !defined(__MINGW32__) */
+	
+#if defined (__ELF__) && defined (__linux__)
+	.section .note.GNU-stack,"",%progbits
+#endif

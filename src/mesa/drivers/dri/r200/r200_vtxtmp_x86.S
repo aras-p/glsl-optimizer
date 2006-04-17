@@ -493,3 +493,7 @@ GLOBL( _sse_MultiTexCoord2f_2 )
 	ret
 GLOBL( _sse_MultiTexCoord2f_2_end )
 #endif
+
+#if defined (__ELF__) && defined (__linux__)
+	.section .note.GNU-stack,"",%progbits
+#endif

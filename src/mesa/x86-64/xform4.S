@@ -1,4 +1,4 @@
-/* $Id: xform4.S,v 1.1 2005/05/07 16:59:59 brianp Exp $ */
+/* $Id: xform4.S,v 1.2 2006/04/17 18:58:24 krh Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -455,4 +455,8 @@ p4_2d_done:
 	femms
 	ret
 			
+#endif
+	
+#if defined (__ELF__) && defined (__linux__)
+	.section .note.GNU-stack,"",%progbits
 #endif

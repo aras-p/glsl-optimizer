@@ -1156,3 +1156,7 @@ GLNAME(gl_dispatch_functions_end):
 	.long	2,4,20    /* Minimum kernel version w/TLS */
 3:	.p2align 2        /* pad out section */
 #endif /* GLX_USE_TLS */
+	
+#if defined(__ELF__) && defined(__linux__)
+	.section .note.GNU-stack,"",%progbits
+#endif
