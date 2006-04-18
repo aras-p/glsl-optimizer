@@ -32,6 +32,151 @@
 #include "slang_link.h"
 #include "slang_analyse.h"
 
+static GLboolean entry_has_gl_prefix (slang_atom name, slang_atom_pool *atoms)
+{
+	const char *str = slang_atom_pool_id (atoms, name);
+	return str[0] == 'g' && str[1] == 'l' && str[2] == '_';
+}
+
+/*
+ * slang_active_variables
+ */
+
+static GLvoid slang_active_variables_ctr (slang_active_variables *self)
+{
+	self->table = NULL;
+	self->count = 0;
+}
+
+static GLvoid slang_active_variables_dtr (slang_active_variables *self)
+{
+	GLuint i;
+
+	for (i = 0; i < self->count; i++)
+		slang_alloc_free (self->table[i].name);
+	slang_alloc_free (self->table);
+}
+
+static GLboolean add_simple_variable (slang_active_variables *self, slang_export_data_quant *q,
+	const char *name)
+{
+	const GLuint n = self->count;
+
+	self->table = (slang_active_variable *) slang_alloc_realloc (self->table,
+		n * sizeof (slang_active_variable), (n + 1) * sizeof (slang_active_variable));
+	if (self->table == NULL)
+		return GL_FALSE;
+
+	self->table[n].quant = q;
+	self->table[n].name = slang_string_duplicate (name);
+	if (self->table[n].name == NULL)
+		return GL_FALSE;
+	self->count++;
+
+	return GL_TRUE;
+}
+
+static GLboolean add_complex_variable (slang_active_variables *self, slang_export_data_quant *q,
+	char *name, slang_atom_pool *atoms)
+{
+	slang_string_concat (name, slang_atom_pool_id (atoms, q->name));
+	if (slang_export_data_quant_array (q))
+		slang_string_concat (name, "[0]");
+
+	if (slang_export_data_quant_struct (q))
+	{
+		GLuint dot_pos, i;
+		const GLuint fields = slang_export_data_quant_fields (q);
+
+		slang_string_concat (name, ".");
+		dot_pos = slang_string_length (name);
+
+		for (i = 0; i < fields; i++)
+		{
+			if (!add_complex_variable (self, &q->structure[i], name, atoms))
+				return GL_FALSE;
+
+			name[dot_pos] = '\0';
+		}
+
+		return GL_TRUE;
+	}
+
+	return add_simple_variable (self, q, name);
+}
+
+static GLboolean gather_active_variables (slang_active_variables *self,
+	slang_export_data_table *tbl, slang_export_data_access access)
+{
+	GLuint i;
+
+	for (i = 0; i < tbl->count; i++)
+		if (tbl->entries[i].access == access)
+		{
+			char name[1024] = "";
+
+			if (!add_complex_variable (self, &tbl->entries[i].quant, name, tbl->atoms))
+				return GL_FALSE;
+		}
+
+	return GL_TRUE;
+}
+
+/*
+ * slang_attrib_overrides
+ */
+
+static GLvoid slang_attrib_overrides_ctr (slang_attrib_overrides *self)
+{
+	self->table = NULL;
+	self->count = 0;
+}
+
+static GLvoid slang_attrib_overrides_dtr (slang_attrib_overrides *self)
+{
+	GLuint i;
+
+	for (i = 0; i < self->count; i++)
+		slang_alloc_free (self->table[i].name);
+	slang_alloc_free (self->table);
+}
+
+GLboolean slang_attrib_overrides_add (slang_attrib_overrides *self, GLuint index, const GLchar *name)
+{
+	const GLuint n = self->count;
+	GLuint i;
+
+	for (i = 0; i < n; i++)
+		if (slang_string_compare (name, self->table[i].name) == 0)
+		{
+			self->table[i].index = index;
+			return GL_TRUE;
+		}
+
+	self->table = (slang_attrib_override *) slang_alloc_realloc (self->table,
+		n * sizeof (slang_attrib_override), (n + 1) * sizeof (slang_attrib_override));
+	if (self->table == NULL)
+		return GL_FALSE;
+
+	self->table[n].index = index;
+	self->table[n].name = slang_string_duplicate (name);
+	if (self->table[n].name == NULL)
+		return GL_FALSE;
+	self->count++;
+
+	return GL_TRUE;
+}
+
+static GLuint lookup_attrib_override (slang_attrib_overrides *self, const GLchar *name)
+{
+	GLuint i;
+
+	for (i = 0; self->count; i++)
+		if (slang_string_compare (name, self->table[i].name) == 0)
+			return self->table[i].index;
+	return MAX_VERTEX_ATTRIBS;
+}
+
 /*
  * slang_uniform_bindings
  */
@@ -51,8 +196,8 @@ static GLvoid slang_uniform_bindings_dtr (slang_uniform_bindings *self)
 	slang_alloc_free (self->table);
 }
 
-static GLboolean slang_uniform_bindings_add (slang_uniform_bindings *self, slang_export_data_quant *q,
-	const char *name, GLuint index, GLuint address)
+static GLboolean add_simple_uniform_binding (slang_uniform_bindings *self,
+	slang_export_data_quant *q, const char *name, GLuint index, GLuint addr)
 {
 	const GLuint n = self->count;
 	GLuint i;
@@ -60,7 +205,7 @@ static GLboolean slang_uniform_bindings_add (slang_uniform_bindings *self, slang
 	for (i = 0; i < n; i++)
 		if (slang_string_compare (self->table[i].name, name) == 0)
 		{
-			self->table[i].address[index] = address;
+			self->table[i].address[index] = addr;
 			return GL_TRUE;
 		}
 
@@ -68,19 +213,21 @@ static GLboolean slang_uniform_bindings_add (slang_uniform_bindings *self, slang
 		n * sizeof (slang_uniform_binding), (n + 1) * sizeof (slang_uniform_binding));
 	if (self->table == NULL)
 		return GL_FALSE;
+
 	self->table[n].quant = q;
 	self->table[n].name = slang_string_duplicate (name);
-	for (i = 0; i < SLANG_SHADER_MAX; i++)
-		self->table[n].address[i] = ~0;
-	self->table[n].address[index] = address;
 	if (self->table[n].name == NULL)
 		return GL_FALSE;
+	for (i = 0; i < SLANG_SHADER_MAX; i++)
+		self->table[n].address[i] = ~0;
+	self->table[n].address[index] = addr;
 	self->count++;
+
 	return GL_TRUE;
 }
 
-static GLboolean insert_uniform_binding (slang_uniform_bindings *bind, slang_export_data_quant *q,
-	char *name, slang_atom_pool *atoms, GLuint index, GLuint addr)
+static GLboolean add_complex_uniform_binding (slang_uniform_bindings *self,
+	slang_export_data_quant *q, char *name, slang_atom_pool *atoms, GLuint index, GLuint addr)
 {
 	GLuint count, i;
 
@@ -88,41 +235,44 @@ static GLboolean insert_uniform_binding (slang_uniform_bindings *bind, slang_exp
 	count = slang_export_data_quant_elements (q);
 	for (i = 0; i < count; i++)
 	{
-		GLuint save;
+		GLuint bracket_pos;
 
-		save = slang_string_length (name);
+		bracket_pos = slang_string_length (name);
 		if (slang_export_data_quant_array (q))
 			_mesa_sprintf (name + slang_string_length (name), "[%d]", i);
 
 		if (slang_export_data_quant_struct (q))
 		{
-			GLuint save, i;
+			GLuint dot_pos, i;
 			const GLuint fields = slang_export_data_quant_fields (q);
 
 			slang_string_concat (name, ".");
-			save = slang_string_length (name);
+			dot_pos = slang_string_length (name);
 
 			for (i = 0; i < fields; i++)
 			{
-				if (!insert_uniform_binding (bind, &q->structure[i], name, atoms, index, addr))
+				if (!add_complex_uniform_binding (self, &q->structure[i], name, atoms, index, addr))
 					return GL_FALSE;
-				name[save] = '\0';
+
+				name[dot_pos] = '\0';
 				addr += slang_export_data_quant_size (&q->structure[i]);
 			}
 		}
 		else
 		{
-			if (!slang_uniform_bindings_add (bind, q, name, index, addr))
+			if (!add_simple_uniform_binding (self, q, name, index, addr))
 				return GL_FALSE;
+
 			addr += slang_export_data_quant_size (q);
 		}
-		name[save] = '\0';
+
+		name[bracket_pos] = '\0';
 	}
 
 	return GL_TRUE;
 }
 
-static GLboolean gather_uniform_bindings (slang_uniform_bindings *bind,
+static GLboolean gather_uniform_bindings (slang_uniform_bindings *self,
 	slang_export_data_table *tbl, GLuint index)
 {
 	GLuint i;
@@ -132,8 +282,8 @@ static GLboolean gather_uniform_bindings (slang_uniform_bindings *bind,
 		{
 			char name[1024] = "";
 
-			if (!insert_uniform_binding (bind, &tbl->entries[i].quant, name, tbl->atoms, index,
-					tbl->entries[i].address))
+			if (!add_complex_uniform_binding (self, &tbl->entries[i].quant, name, tbl->atoms, index,
+				tbl->entries[i].address))
 				return GL_FALSE;
 		}
 
@@ -141,80 +291,145 @@ static GLboolean gather_uniform_bindings (slang_uniform_bindings *bind,
 }
 
 /*
- * slang_active_uniforms
+ * slang_attrib_bindings
  */
 
-static GLvoid slang_active_uniforms_ctr (slang_active_uniforms *self)
-{
-	self->table = NULL;
-	self->count = 0;
-}
-
-static GLvoid slang_active_uniforms_dtr (slang_active_uniforms *self)
+static GLvoid slang_attrib_bindings_ctr (slang_attrib_bindings *self)
 {
 	GLuint i;
 
-	for (i = 0; i < self->count; i++)
-		slang_alloc_free (self->table[i].name);
-	slang_alloc_free (self->table);
+	self->binding_count = 0;
+	for (i = 0; i < MAX_VERTEX_ATTRIBS; i++)
+		self->slots[i].addr = ~0;
 }
 
-static GLboolean slang_active_uniforms_add (slang_active_uniforms *self, slang_export_data_quant *q,
-	const char *name)
+static GLvoid slang_attrib_bindings_dtr (slang_attrib_bindings *self)
 {
-	const GLuint n = self->count;
+	GLuint i;
 
-	self->table = (slang_active_uniform *) slang_alloc_realloc (self->table,
-		n * sizeof (slang_active_uniform), (n + 1) * sizeof (slang_active_uniform));
-	if (self->table == NULL)
+	for (i = 0; i < self->binding_count; i++)
+		slang_alloc_free (self->bindings[i].name);
+}
+
+static GLuint can_allocate_attrib_slots (slang_attrib_bindings *self, GLuint index, GLuint count)
+{
+	GLuint i;
+
+	for (i = 0; i < count; i++)
+		if (self->slots[index + i].addr != ~0)
+			break;
+	return i;
+}
+
+static GLuint allocate_attrib_slots (slang_attrib_bindings *self, GLuint count)
+{
+	GLuint i;
+
+	for (i = 0; i <= MAX_VERTEX_ATTRIBS - count; i++)
+	{
+		GLuint size;
+		
+		size = can_allocate_attrib_slots (self, i, count);
+		if (size == count)
+			return i;
+
+		/* speed-up the search a bit */
+		i += count;
+	}
+	return MAX_VERTEX_ATTRIBS;
+}
+
+static GLboolean add_attrib_binding (slang_attrib_bindings *self, slang_export_data_quant *q,
+	const char *name, GLuint addr, GLuint index_override)
+{
+	const GLuint n = self->binding_count;
+	GLuint slot_span, slot_index;
+	GLuint i;
+
+	assert (slang_export_data_quant_simple (q));
+
+	switch (slang_export_data_quant_type (q))
+	{
+	case GL_FLOAT:
+	case GL_FLOAT_VEC2:
+	case GL_FLOAT_VEC3:
+	case GL_FLOAT_VEC4:
+		slot_span = 1;
+		break;
+	case GL_FLOAT_MAT2:
+		slot_span = 2;
+		break;
+	case GL_FLOAT_MAT3:
+		slot_span = 3;
+		break;
+	case GL_FLOAT_MAT4:
+		slot_span = 4;
+		break;
+	default:
+		assert (0);
+	}
+
+	if (index_override == MAX_VERTEX_ATTRIBS)
+		slot_index = allocate_attrib_slots (self, slot_span);
+	else if (can_allocate_attrib_slots (self, index_override, slot_span) == slot_span)
+		slot_index = index_override;
+	else
+		slot_index = MAX_VERTEX_ATTRIBS;
+			
+	if (slot_index == MAX_VERTEX_ATTRIBS)
+	{
+		/* TODO: info log: error: MAX_VERTEX_ATTRIBS exceeded */
 		return GL_FALSE;
-	self->table[n].quant = q;
-	self->table[n].name = slang_string_duplicate (name);
-	if (self->table[n].name == NULL)
+	}
+
+	self->bindings[n].quant = q;
+	self->bindings[n].name = slang_string_duplicate (name);
+	if (self->bindings[n].name == NULL)
 		return GL_FALSE;
-	self->count++;
+	self->bindings[n].first_slot_index = slot_index;
+	self->binding_count++;
+
+	for (i = 0; i < slot_span; i++)
+		self->slots[self->bindings[n].first_slot_index + i].addr = addr + i * 4;
+
 	return GL_TRUE;
 }
 
-static GLboolean insert_uniform (slang_active_uniforms *u, slang_export_data_quant *q, char *name,
-	slang_atom_pool *atoms)
-{
-	slang_string_concat (name, slang_atom_pool_id (atoms, q->name));
-	if (slang_export_data_quant_array (q))
-		slang_string_concat (name, "[0]");
-
-	if (slang_export_data_quant_struct (q))
-	{
-		GLuint save, i;
-		const GLuint fields = slang_export_data_quant_fields (q);
-
-		slang_string_concat (name, ".");
-		save = slang_string_length (name);
-
-		for (i = 0; i < fields; i++)
-		{
-			if (!insert_uniform (u, &q->structure[i], name, atoms))
-				return GL_FALSE;
-			name[save] = '\0';
-		}
-
-		return GL_TRUE;
-	}
-
-	return slang_active_uniforms_add (u, q, name);
-}
-
-static GLboolean gather_active_uniforms (slang_active_uniforms *u, slang_export_data_table *tbl)
+static GLboolean gather_attrib_bindings (slang_attrib_bindings *self, slang_export_data_table *tbl,
+	slang_attrib_overrides *ovr)
 {
 	GLuint i;
 
+	/* First pass. Gather attribs that have overriden index slots. */
 	for (i = 0; i < tbl->count; i++)
-		if (tbl->entries[i].access == slang_exp_uniform)
+		if (tbl->entries[i].access == slang_exp_attribute &&
+			!entry_has_gl_prefix (tbl->entries[i].quant.name, tbl->atoms))
 		{
-			char name[1024] = "";
+			slang_export_data_quant *quant = &tbl->entries[i].quant;
+			const GLchar *id = slang_atom_pool_id (tbl->atoms, quant->name);
+			GLuint index = lookup_attrib_override (ovr, id);
 
-			if (!insert_uniform (u, &tbl->entries[i].quant, name, tbl->atoms))
-				return GL_FALSE;
+			if (index != MAX_VERTEX_ATTRIBS)
+			{
+				if (!add_attrib_binding (self, quant, id, tbl->entries[i].address, index))
+					return GL_FALSE;
+			}
+		}
+
+	/* Second pass. Gather attribs that have *NOT* overriden index slots. */
+	for (i = 0; i < tbl->count; i++)
+		if (tbl->entries[i].access == slang_exp_attribute &&
+			!entry_has_gl_prefix (tbl->entries[i].quant.name, tbl->atoms))
+		{
+			slang_export_data_quant *quant = &tbl->entries[i].quant;
+			const GLchar *id = slang_atom_pool_id (tbl->atoms, quant->name);
+			GLuint index = lookup_attrib_override (ovr, id);
+
+			if (index == MAX_VERTEX_ATTRIBS)
+			{
+				if (!add_attrib_binding (self, quant, id, tbl->entries[i].address, index))
+					return GL_FALSE;
+			}
 		}
 
 	return GL_TRUE;
@@ -226,75 +441,68 @@ static GLboolean gather_active_uniforms (slang_active_uniforms *u, slang_export_
 
 static GLvoid slang_varying_bindings_ctr (slang_varying_bindings *self)
 {
-	self->count = 0;
-	self->total = 0;
+	self->binding_count = 0;
+	self->slot_count = 0;
 }
 
 static GLvoid slang_varying_bindings_dtr (slang_varying_bindings *self)
 {
 	GLuint i;
 
-	for (i = 0; i < self->count; i++)
-		slang_alloc_free (self->table[i].name);
+	for (i = 0; i < self->binding_count; i++)
+		slang_alloc_free (self->bindings[i].name);
 }
 
-static GLvoid update_varying_slots (slang_varying_slot *slots, GLuint count, GLboolean vert,
-	GLuint address, GLuint do_offset)
+static GLvoid update_varying_slots (slang_varying_slot *slots, GLuint count, GLboolean is_vert,
+	GLuint addr, GLuint do_offset)
 {
 	GLuint i;
 
 	for (i = 0; i < count; i++)
-		if (vert)
-			slots[i].vert_addr = address + i * 4 * do_offset;
-		else
-			slots[i].frag_addr = address + i * 4 * do_offset;
+		*(is_vert ? &slots[i].vert_addr : &slots[i].frag_addr) = addr + i * 4 * do_offset;
 }
 
-static GLboolean slang_varying_bindings_add (slang_varying_bindings *self,
-	slang_export_data_quant *q, const char *name, GLboolean vert, GLuint address)
+static GLboolean add_varying_binding (slang_varying_bindings *self,
+	slang_export_data_quant *q, const char *name, GLboolean is_vert, GLuint addr)
 {
-	const GLuint n = self->count;
-	const GLuint total_components =
+	const GLuint n = self->binding_count;
+	const GLuint slot_span =
 		slang_export_data_quant_components (q) * slang_export_data_quant_elements (q);
 	GLuint i;
 
 	for (i = 0; i < n; i++)
-		if (slang_string_compare (self->table[i].name, name) == 0)
+		if (slang_string_compare (self->bindings[i].name, name) == 0)
 		{
 			/* TODO: data quantities must match, or else link fails */
-			update_varying_slots (&self->slots[self->table[i].slot], total_components, vert,
-				address, 1);
+			update_varying_slots (&self->slots[self->bindings[i].first_slot_index], slot_span,
+				is_vert, addr, 1);
 			return GL_TRUE;
 		}
 
-	if (self->total + total_components > MAX_VARYING_FLOATS)
+	if (self->slot_count + slot_span > MAX_VARYING_FLOATS)
 	{
 		/* TODO: info log: error: MAX_VARYING_FLOATS exceeded */
 		return GL_FALSE;
 	}
 
-	self->table[n].quant = q;
-	self->table[n].slot = self->total;
-	self->table[n].name = slang_string_duplicate (name);
-	if (self->table[n].name == NULL)
+	self->bindings[n].quant = q;
+	self->bindings[n].name = slang_string_duplicate (name);
+	if (self->bindings[n].name == NULL)
 		return GL_FALSE;
-	self->count++;
+	self->bindings[n].first_slot_index = self->slot_count;
+	self->binding_count++;
 
-	update_varying_slots (&self->slots[self->table[n].slot], total_components, vert, address, 1);
-	update_varying_slots (&self->slots[self->table[n].slot], total_components, !vert, ~0, 0);
-	self->total += total_components;
+	update_varying_slots (&self->slots[self->bindings[n].first_slot_index], slot_span, is_vert,
+		addr, 1);
+	update_varying_slots (&self->slots[self->bindings[n].first_slot_index], slot_span, !is_vert,
+		~0, 0);
+	self->slot_count += slot_span;
 
 	return GL_TRUE;
 }
 
-static GLboolean entry_has_gl_prefix (slang_atom name, slang_atom_pool *atoms)
-{
-	const char *str = slang_atom_pool_id (atoms, name);
-	return str[0] == 'g' && str[1] == 'l' && str[2] == '_';
-}
-
-static GLboolean gather_varying_bindings (slang_varying_bindings *bind,
-	slang_export_data_table *tbl, GLboolean vert)
+static GLboolean gather_varying_bindings (slang_varying_bindings *self,
+	slang_export_data_table *tbl, GLboolean is_vert)
 {
 	GLuint i;
 
@@ -302,9 +510,8 @@ static GLboolean gather_varying_bindings (slang_varying_bindings *bind,
 		if (tbl->entries[i].access == slang_exp_varying &&
 			!entry_has_gl_prefix (tbl->entries[i].quant.name, tbl->atoms))
 		{
-			if (!slang_varying_bindings_add (bind, &tbl->entries[i].quant,
-				slang_atom_pool_id (tbl->atoms, tbl->entries[i].quant.name), vert,
-				tbl->entries[i].address))
+			if (!add_varying_binding (self, &tbl->entries[i].quant, slang_atom_pool_id (tbl->atoms,
+				tbl->entries[i].quant.name), is_vert, tbl->entries[i].address))
 				return GL_FALSE;
 		}
 
@@ -334,8 +541,11 @@ GLvoid slang_program_ctr (slang_program *self)
 {
 	GLuint i;
 
+	slang_active_variables_ctr (&self->active_uniforms);
+	slang_active_variables_ctr (&self->active_attribs);
+	slang_attrib_overrides_ctr (&self->attrib_overrides);
 	slang_uniform_bindings_ctr (&self->uniforms);
-	slang_active_uniforms_ctr (&self->active_uniforms);
+	slang_attrib_bindings_ctr (&self->attribs);
 	slang_varying_bindings_ctr (&self->varyings);
 	slang_texture_usages_ctr (&self->texture_usage);
 	for (i = 0; i < SLANG_SHADER_MAX; i++)
@@ -357,10 +567,45 @@ GLvoid slang_program_ctr (slang_program *self)
 
 GLvoid slang_program_dtr (slang_program *self)
 {
+	slang_active_variables_dtr (&self->active_uniforms);
+	slang_active_variables_dtr (&self->active_attribs);
+	slang_attrib_overrides_dtr (&self->attrib_overrides);
 	slang_uniform_bindings_dtr (&self->uniforms);
-	slang_active_uniforms_dtr (&self->active_uniforms);
+	slang_attrib_bindings_dtr (&self->attribs);
 	slang_varying_bindings_dtr (&self->varyings);
 	slang_texture_usages_dtr (&self->texture_usage);
+}
+
+static GLvoid slang_program_rst (slang_program *self)
+{
+	GLuint i;
+
+	slang_active_variables_dtr (&self->active_uniforms);
+	slang_active_variables_dtr (&self->active_attribs);
+	slang_uniform_bindings_dtr (&self->uniforms);
+	slang_attrib_bindings_dtr (&self->attribs);
+	slang_varying_bindings_dtr (&self->varyings);
+	slang_texture_usages_dtr (&self->texture_usage);
+
+	slang_active_variables_ctr (&self->active_uniforms);
+	slang_active_variables_ctr (&self->active_attribs);
+	slang_uniform_bindings_ctr (&self->uniforms);
+	slang_attrib_bindings_ctr (&self->attribs);
+	slang_varying_bindings_ctr (&self->varyings);
+	slang_texture_usages_ctr (&self->texture_usage);
+	for (i = 0; i < SLANG_SHADER_MAX; i++)
+	{
+		GLuint j;
+
+		for (j = 0; j < SLANG_COMMON_FIXED_MAX; j++)
+			self->common_fixed_entries[i][j] = ~0;
+		for (j = 0; j < SLANG_COMMON_CODE_MAX; j++)
+			self->code[i][j] = ~0;
+	}
+	for (i = 0; i < SLANG_VERTEX_FIXED_MAX; i++)
+		self->vertex_fixed_entries[i] = ~0;
+	for (i = 0; i < SLANG_FRAGMENT_FIXED_MAX; i++)
+		self->fragment_fixed_entries[i] = ~0;
 }
 
 /*
@@ -494,6 +739,8 @@ GLboolean _slang_link (slang_program *prog, slang_translation_unit **units, GLui
 {
 	GLuint i;
 
+	slang_program_rst (prog);
+
 	for (i = 0; i < count; i++)
 	{
 		GLuint index;
@@ -507,11 +754,18 @@ GLboolean _slang_link (slang_program *prog, slang_translation_unit **units, GLui
 		{
 			index = SLANG_SHADER_VERTEX;
 			resolve_vertex_fixed (prog->vertex_fixed_entries, &units[i]->exp_data);
+			if (!gather_attrib_bindings (&prog->attribs, &units[i]->exp_data,
+				&prog->attrib_overrides))
+				return GL_FALSE;
 		}
 
-		if (!gather_uniform_bindings (&prog->uniforms, &units[i]->exp_data, index))
+		if (!gather_active_variables (&prog->active_uniforms, &units[i]->exp_data,
+			slang_exp_uniform))
 			return GL_FALSE;
-		if (!gather_active_uniforms (&prog->active_uniforms, &units[i]->exp_data))
+		if (!gather_active_variables (&prog->active_attribs, &units[i]->exp_data,
+			slang_exp_attribute))
+			return GL_FALSE;
+		if (!gather_uniform_bindings (&prog->uniforms, &units[i]->exp_data, index))
 			return GL_FALSE;
 		if (!gather_varying_bindings (&prog->varyings, &units[i]->exp_data,
 			index == SLANG_SHADER_VERTEX))

@@ -99,9 +99,9 @@
 		_QUERY_INTERFACE(x, I_SHADER, UIID_SHADER, function);\
 	} while (0)
 
-#define _LINKED_PROGRAM(x, function)\
+#define _LINKED_PROGRAM(x, function, release)\
 	if ((**x).GetLinkStatus (x) == GL_FALSE) {\
-		RELEASE_PROGRAM(x);\
+		if (release) RELEASE_PROGRAM(x);\
 		_mesa_error (ctx, GL_INVALID_OPERATION, function);\
 		break;\
 	}
@@ -111,7 +111,7 @@
 	do {\
 		_LOOKUP_HANDLE(handle, function);\
 		_QUERY_INTERFACE(x, I_PROGRAM, UIID_PROGRAM, function);\
-		_LINKED_PROGRAM(x, function);\
+		_LINKED_PROGRAM(x, function, GL_TRUE);\
 	} while (0)
 
 #define _CURRENT_PROGRAM(x, function)\
@@ -125,8 +125,10 @@
 	I_PROGRAM x = NULL;\
 	do {\
 		_CURRENT_PROGRAM(x, function);\
-		_LINKED_PROGRAM(x, function);\
+		_LINKED_PROGRAM(x, function, GL_FALSE);\
 	} while (0)
+
+#define IS_NAME_WITH_GL_PREFIX(x) ((x)[0] == 'g' && (x)[1] == 'l' && (x)[2] == '_')
 
 
 GLvoid GLAPIENTRY
@@ -379,7 +381,7 @@ _mesa_Uniform1fARB (GLint location, GLfloat v0)
 
 	if (pro != NULL)
 	{
-		if (!_slang_write_uniform (pro, location, 1, &v0, GL_FLOAT))
+		if (!(**pro).WriteUniform (pro, location, 1, &v0, GL_FLOAT))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1fARB");
 	}
 }
@@ -398,7 +400,7 @@ _mesa_Uniform2fARB (GLint location, GLfloat v0, GLfloat v1)
 		v[0] = v0;
 		v[1] = v1;
 
-		if (!_slang_write_uniform (pro, location, 1, v, GL_FLOAT_VEC2))
+		if (!(**pro).WriteUniform (pro, location, 1, v, GL_FLOAT_VEC2))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2fARB");
 	}
 }
@@ -418,7 +420,7 @@ _mesa_Uniform3fARB (GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
 		v[1] = v1;
 		v[2] = v2;
 
-		if (!_slang_write_uniform (pro, location, 1, v, GL_FLOAT_VEC3))
+		if (!(**pro).WriteUniform (pro, location, 1, v, GL_FLOAT_VEC3))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3fARB");
 	}
 }
@@ -439,7 +441,7 @@ _mesa_Uniform4fARB (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat 
 		v[2] = v2;
 		v[3] = v3;
 
-		if (!_slang_write_uniform (pro, location, 1, v, GL_FLOAT_VEC4))
+		if (!(**pro).WriteUniform (pro, location, 1, v, GL_FLOAT_VEC4))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4fARB");
 	}
 }
@@ -454,7 +456,7 @@ _mesa_Uniform1iARB (GLint location, GLint v0)
 
 	if (pro != NULL)
 	{
-		if (!_slang_write_uniform (pro, location, 1, &v0, GL_INT))
+		if (!(**pro).WriteUniform (pro, location, 1, &v0, GL_INT))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1iARB");
 	}
 }
@@ -473,7 +475,7 @@ _mesa_Uniform2iARB (GLint location, GLint v0, GLint v1)
 		v[0] = v0;
 		v[1] = v1;
 
-		if (!_slang_write_uniform (pro, location, 1, v, GL_INT_VEC2))
+		if (!(**pro).WriteUniform (pro, location, 1, v, GL_INT_VEC2))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2iARB");
 	}
 }
@@ -493,7 +495,7 @@ _mesa_Uniform3iARB (GLint location, GLint v0, GLint v1, GLint v2)
 		v[1] = v1;
 		v[2] = v2;
 
-		if (!_slang_write_uniform (pro, location, 1, v, GL_INT_VEC3))
+		if (!(**pro).WriteUniform (pro, location, 1, v, GL_INT_VEC3))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3iARB");
 	}
 }
@@ -514,7 +516,7 @@ _mesa_Uniform4iARB (GLint location, GLint v0, GLint v1, GLint v2, GLint v3)
 		v[2] = v2;
 		v[3] = v3;
 
-		if (!_slang_write_uniform (pro, location, 1, v, GL_INT_VEC4))
+		if (!(**pro).WriteUniform (pro, location, 1, v, GL_INT_VEC4))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4iARB");
 	}
 }
@@ -525,11 +527,17 @@ _mesa_Uniform1fvARB (GLint location, GLsizei count, const GLfloat *value)
 	GET_CURRENT_CONTEXT(ctx);
 	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform1fvARB");
 
+	if (value == NULL)
+	{
+		_mesa_error (ctx, GL_INVALID_VALUE, "glUniform1fvARB");
+		return;
+	}
+
 	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
 	if (pro != NULL)
 	{
-		if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT))
+		if (!(**pro).WriteUniform (pro, location, count, value, GL_FLOAT))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1fvARB");
 	}
 }
@@ -540,11 +548,17 @@ _mesa_Uniform2fvARB (GLint location, GLsizei count, const GLfloat *value)
 	GET_CURRENT_CONTEXT(ctx);
 	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform2fvARB");
 
+	if (value == NULL)
+	{
+		_mesa_error (ctx, GL_INVALID_VALUE, "glUniform2fvARB");
+		return;
+	}
+
 	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
 	if (pro != NULL)
 	{
-		if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT_VEC2))
+		if (!(**pro).WriteUniform (pro, location, count, value, GL_FLOAT_VEC2))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2fvARB");
 	}
 }
@@ -555,11 +569,17 @@ _mesa_Uniform3fvARB (GLint location, GLsizei count, const GLfloat *value)
 	GET_CURRENT_CONTEXT(ctx);
 	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform3fvARB");
 
+	if (value == NULL)
+	{
+		_mesa_error (ctx, GL_INVALID_VALUE, "glUniform3fvARB");
+		return;
+	}
+
 	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
 	if (pro != NULL)
 	{
-		if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT_VEC3))
+		if (!(**pro).WriteUniform (pro, location, count, value, GL_FLOAT_VEC3))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3fvARB");
 	}
 }
@@ -570,11 +590,17 @@ _mesa_Uniform4fvARB (GLint location, GLsizei count, const GLfloat *value)
 	GET_CURRENT_CONTEXT(ctx);
 	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform4fvARB");
 
+	if (value == NULL)
+	{
+		_mesa_error (ctx, GL_INVALID_VALUE, "glUniform4fvARB");
+		return;
+	}
+
 	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
 	if (pro != NULL)
 	{
-		if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT_VEC4))
+		if (!(**pro).WriteUniform (pro, location, count, value, GL_FLOAT_VEC4))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4fvARB");
 	}
 }
@@ -585,11 +611,17 @@ _mesa_Uniform1ivARB (GLint location, GLsizei count, const GLint *value)
 	GET_CURRENT_CONTEXT(ctx);
 	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform1ivARB");
 
+	if (value == NULL)
+	{
+		_mesa_error (ctx, GL_INVALID_VALUE, "glUniform1ivARB");
+		return;
+	}
+
 	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
 	if (pro != NULL)
 	{
-		if (!_slang_write_uniform (pro, location, count, value, GL_INT))
+		if (!(**pro).WriteUniform (pro, location, count, value, GL_INT))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform1ivARB");
 	}
 }
@@ -600,11 +632,17 @@ _mesa_Uniform2ivARB (GLint location, GLsizei count, const GLint *value)
 	GET_CURRENT_CONTEXT(ctx);
 	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform2ivARB");
 
+	if (value == NULL)
+	{
+		_mesa_error (ctx, GL_INVALID_VALUE, "glUniform2ivARB");
+		return;
+	}
+
 	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
 	if (pro != NULL)
 	{
-		if (!_slang_write_uniform (pro, location, count, value, GL_INT_VEC2))
+		if (!(**pro).WriteUniform (pro, location, count, value, GL_INT_VEC2))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform2ivARB");
 	}
 }
@@ -615,11 +653,17 @@ _mesa_Uniform3ivARB (GLint location, GLsizei count, const GLint *value)
 	GET_CURRENT_CONTEXT(ctx);
 	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform3ivARB");
 
+	if (value == NULL)
+	{
+		_mesa_error (ctx, GL_INVALID_VALUE, "glUniform3ivARB");
+		return;
+	}
+
 	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
 	if (pro != NULL)
 	{
-		if (!_slang_write_uniform (pro, location, count, value, GL_INT_VEC3))
+		if (!(**pro).WriteUniform (pro, location, count, value, GL_INT_VEC3))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform3ivARB");
 	}
 }
@@ -630,11 +674,17 @@ _mesa_Uniform4ivARB (GLint location, GLsizei count, const GLint *value)
 	GET_CURRENT_CONTEXT(ctx);
 	GET_CURRENT_LINKED_PROGRAM(pro, "glUniform4ivARB");
 
+	if (value == NULL)
+	{
+		_mesa_error (ctx, GL_INVALID_VALUE, "glUniform4ivARB");
+		return;
+	}
+
 	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
 	if (pro != NULL)
 	{
-		if (!_slang_write_uniform (pro, location, count, value, GL_INT_VEC4))
+		if (!(**pro).WriteUniform (pro, location, count, value, GL_INT_VEC4))
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glUniform4ivARB");
 	}
 }
@@ -644,6 +694,12 @@ _mesa_UniformMatrix2fvARB (GLint location, GLsizei count, GLboolean transpose, c
 {
 	GET_CURRENT_CONTEXT(ctx);
 	GET_CURRENT_LINKED_PROGRAM(pro, "glUniformMatrix2fvARB");
+
+	if (value == NULL)
+	{
+		_mesa_error (ctx, GL_INVALID_VALUE, "glUniformMatrix2fvARB");
+		return;
+	}
 
 	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
@@ -667,13 +723,13 @@ _mesa_UniformMatrix2fvARB (GLint location, GLsizei count, GLboolean transpose, c
 				pt[2] = pv[1];
 				pt[3] = pv[3];
 			}
-			if (!_slang_write_uniform (pro, location, count, trans, GL_FLOAT_MAT2))
+			if (!(**pro).WriteUniform (pro, location, count, trans, GL_FLOAT_MAT2))
 				_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix2fvARB");
 			_mesa_free (trans);
 		}
 		else
 		{
-			if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT_MAT2))
+			if (!(**pro).WriteUniform (pro, location, count, value, GL_FLOAT_MAT2))
 				_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix2fvARB");
 		}
 	}
@@ -684,6 +740,12 @@ _mesa_UniformMatrix3fvARB (GLint location, GLsizei count, GLboolean transpose, c
 {
 	GET_CURRENT_CONTEXT(ctx);
 	GET_CURRENT_LINKED_PROGRAM(pro, "glUniformMatrix3fvARB");
+
+	if (value == NULL)
+	{
+		_mesa_error (ctx, GL_INVALID_VALUE, "glUniformMatrix3fvARB");
+		return;
+	}
 
 	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
@@ -712,13 +774,13 @@ _mesa_UniformMatrix3fvARB (GLint location, GLsizei count, GLboolean transpose, c
 				pt[7] = pv[5];
 				pt[8] = pv[8];
 			}
-			if (!_slang_write_uniform (pro, location, count, trans, GL_FLOAT_MAT3))
+			if (!(**pro).WriteUniform (pro, location, count, trans, GL_FLOAT_MAT3))
 				_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix3fvARB");
 			_mesa_free (trans);
 		}
 		else
 		{
-			if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT_MAT3))
+			if (!(**pro).WriteUniform (pro, location, count, value, GL_FLOAT_MAT3))
 				_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix3fvARB");
 		}
 	}
@@ -729,6 +791,12 @@ _mesa_UniformMatrix4fvARB (GLint location, GLsizei count, GLboolean transpose, c
 {
 	GET_CURRENT_CONTEXT(ctx);
 	GET_CURRENT_LINKED_PROGRAM(pro, "glUniformMatrix4fvARB");
+
+	if (value == NULL)
+	{
+		_mesa_error (ctx, GL_INVALID_VALUE, "glUniformMatrix4fvARB");
+		return;
+	}
 
 	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
@@ -749,13 +817,13 @@ _mesa_UniformMatrix4fvARB (GLint location, GLsizei count, GLboolean transpose, c
 			{
 				_math_transposef (pt, pv);
 			}
-			if (!_slang_write_uniform (pro, location, count, trans, GL_FLOAT_MAT4))
+			if (!(**pro).WriteUniform (pro, location, count, trans, GL_FLOAT_MAT4))
 				_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix4fvARB");
 			_mesa_free (trans);
 		}
 		else
 		{
-			if (!_slang_write_uniform (pro, location, count, value, GL_FLOAT_MAT4))
+			if (!(**pro).WriteUniform (pro, location, count, value, GL_FLOAT_MAT4))
 				_mesa_error (ctx, GL_INVALID_OPERATION, "glUniformMatrix4fvARB");
 		}
 	}
@@ -861,10 +929,16 @@ _mesa_get_object_parameter (GLhandleARB obj, GLenum pname, GLvoid *params, GLboo
 				*ipar = (**pro)._container.GetAttachedCount ((I_CONTAINER) pro);
 				break;
 			case GL_OBJECT_ACTIVE_UNIFORMS_ARB:
-				*ipar = _slang_get_active_uniform_count (pro);
+				*ipar = (**pro).GetActiveUniformCount (pro);
 				break;
 			case GL_OBJECT_ACTIVE_UNIFORM_MAX_LENGTH_ARB:
-				*ipar = _slang_get_active_uniform_max_length (pro);
+				*ipar = (**pro).GetActiveUniformMaxLength (pro);
+				break;
+			case GL_OBJECT_ACTIVE_ATTRIBUTES_ARB:
+				*ipar = (**pro).GetActiveAttribCount (pro);
+				break;
+			case GL_OBJECT_ACTIVE_ATTRIBUTE_MAX_LENGTH_ARB:
+				*ipar = (**pro).GetActiveAttribMaxLength (pro);
 				break;
 			}
 
@@ -882,8 +956,15 @@ _mesa_get_object_parameter (GLhandleARB obj, GLenum pname, GLvoid *params, GLboo
 GLvoid GLAPIENTRY
 _mesa_GetObjectParameterfvARB (GLhandleARB obj, GLenum pname, GLfloat *params)
 {
+	GET_CURRENT_CONTEXT(ctx);
 	GLboolean integral;
 	GLint size;
+
+	if (params == NULL)
+	{
+		_mesa_error (ctx, GL_INVALID_VALUE, "glGetObjectParameterfvARB");
+		return;
+	}
 
 	assert (sizeof (GLfloat) == sizeof (GLint));
 
@@ -900,8 +981,15 @@ _mesa_GetObjectParameterfvARB (GLhandleARB obj, GLenum pname, GLfloat *params)
 GLvoid GLAPIENTRY
 _mesa_GetObjectParameterivARB (GLhandleARB obj, GLenum pname, GLint *params)
 {
+	GET_CURRENT_CONTEXT(ctx);
 	GLboolean integral;
 	GLint size;
+
+	if (params == NULL)
+	{
+		_mesa_error (ctx, GL_INVALID_VALUE, "glGetObjectParameterivARB");
+		return;
+	}
 
 	assert (sizeof (GLfloat) == sizeof (GLint));
 
@@ -944,11 +1032,14 @@ _mesa_GetInfoLogARB (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLchar
 	GET_CURRENT_CONTEXT(ctx);
 	GET_GENERIC(gen, obj, "glGetInfoLogARB");
 
-	if (gen != NULL)
-	{
-		copy_string((**gen).GetInfoLog (gen), maxLength, length, infoLog);
-		RELEASE_GENERIC(gen);
-	}
+	if (gen == NULL)
+		return;
+
+	if (infoLog == NULL)
+		_mesa_error (ctx, GL_INVALID_VALUE, "glGetInfoLogARB");
+	else
+		copy_string ((**gen).GetInfoLog (gen), maxLength, length, infoLog);
+	RELEASE_GENERIC(gen);
 }
 
 GLvoid GLAPIENTRY
@@ -956,11 +1047,17 @@ _mesa_GetAttachedObjectsARB (GLhandleARB containerObj, GLsizei maxCount, GLsizei
 							 GLhandleARB *obj)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	GLsizei cnt, i;
 	GET_CONTAINER(con, containerObj, "glGetAttachedObjectsARB");
 
-	if (con != NULL)
+	if (con == NULL)
+		return;
+
+	if (obj == NULL)
+		_mesa_error (ctx, GL_INVALID_VALUE, "glGetAttachedObjectsARB");
+	else
 	{
+		GLsizei cnt, i;
+
 		cnt = (**con).GetAttachedCount (con);
 		if (cnt > maxCount)
 			cnt = maxCount;
@@ -973,8 +1070,8 @@ _mesa_GetAttachedObjectsARB (GLhandleARB containerObj, GLsizei maxCount, GLsizei
 			obj[i] = (**x).GetName (x);
 			RELEASE_GENERIC(x);
 		}
-		RELEASE_CONTAINER(con);
 	}
+	RELEASE_CONTAINER(con);
 }
 
 GLint GLAPIENTRY
@@ -984,12 +1081,17 @@ _mesa_GetUniformLocationARB (GLhandleARB programObj, const GLcharARB *name)
 	GLint loc = -1;
 	GET_LINKED_PROGRAM(pro, programObj, "glGetUniformLocationARB");
 
-	if (pro != NULL)
+	if (pro == NULL)
+		return -1;
+
+	if (name == NULL)
+		_mesa_error (ctx, GL_INVALID_VALUE, "glGetUniformLocationARB");
+	else
 	{
-		if (name != NULL && (name[0] != 'g' || name[1] != 'l' || name[2] != '_'))
-			loc = _slang_get_uniform_location (pro, name);
-		RELEASE_PROGRAM(pro);
+		if (!IS_NAME_WITH_GL_PREFIX(name))
+			loc = (**pro).GetUniformLocation (pro, name);
 	}
+	RELEASE_PROGRAM(pro);
 	return loc;
 }
 
@@ -1000,14 +1102,19 @@ _mesa_GetActiveUniformARB (GLhandleARB programObj, GLuint index, GLsizei maxLeng
 	GET_CURRENT_CONTEXT(ctx);
 	GET_PROGRAM(pro, programObj, "glGetActiveUniformARB");
 
-	if (pro != NULL)
+	if (pro == NULL)
+		return;
+
+	if (size == NULL || type == NULL || name == NULL)
+		_mesa_error (ctx, GL_INVALID_VALUE, "glGetActiveUniformARB");
+	else
 	{
-		if (index < _slang_get_active_uniform_count (pro))
-			_slang_get_active_uniform (pro, index, maxLength, length, size, type, name);
+		if (index < (**pro).GetActiveUniformCount (pro))
+			(**pro).GetActiveUniform (pro, index, maxLength, length, size, type, name);
 		else
 			_mesa_error (ctx, GL_INVALID_VALUE, "glGetActiveUniformARB");
-		RELEASE_PROGRAM(pro);
 	}
+	RELEASE_PROGRAM(pro);
 }
 
 GLvoid GLAPIENTRY
@@ -1042,11 +1149,14 @@ _mesa_GetShaderSourceARB (GLhandleARB obj, GLsizei maxLength, GLsizei *length, G
 	GET_CURRENT_CONTEXT(ctx);
 	GET_SHADER(sha, obj, "glGetShaderSourceARB");
 
-	if (sha != NULL)
-	{
-		copy_string((**sha).GetSource (sha), maxLength, length, source);
-		RELEASE_SHADER(sha);
-	}
+	if (sha == NULL)
+		return;
+
+	if (source == NULL)
+		_mesa_error (ctx, GL_INVALID_VALUE, "glGetShaderSourceARB");
+	else
+		copy_string ((**sha).GetSource (sha), maxLength, length, source);
+	RELEASE_SHADER(sha);
 }
 
 /* GL_ARB_vertex_shader */
@@ -1057,28 +1167,33 @@ _mesa_BindAttribLocationARB (GLhandleARB programObj, GLuint index, const GLcharA
 	GET_CURRENT_CONTEXT(ctx);
 	GET_PROGRAM(pro, programObj, "glBindAttribLocationARB");
 
-	if (pro != NULL)
-	{
-		if (name != NULL && (name[0] != 'g' || name[1] != 'l' || name[2] != '_'))
-		{
-			/* TODO */
-		}
-		RELEASE_PROGRAM(pro);
-	}
+	if (pro == NULL)
+		return;
+
+	if (name == NULL || index >= MAX_VERTEX_ATTRIBS)
+		_mesa_error (ctx, GL_INVALID_VALUE, "glBindAttribLocationARB");
+	else if (IS_NAME_WITH_GL_PREFIX(name))
+		_mesa_error (ctx, GL_INVALID_OPERATION, "glBindAttribLocationARB");
+	else
+		(**pro).OverrideAttribBinding (pro, index, name);
+	RELEASE_PROGRAM(pro);
 }
 
 GLvoid GLAPIENTRY
 _mesa_GetActiveAttribARB (GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei *length,
-						  GLint *size, GLenum *type, GLcharARB *name)
+                          GLint *size, GLenum *type, GLcharARB *name)
 {
 	GET_CURRENT_CONTEXT(ctx);
 	GET_PROGRAM(pro, programObj, "glGetActiveAttribARB");
 
-	if (pro != NULL)
-	{
-		/* TODO */
-		RELEASE_PROGRAM(pro);
-	}
+	if (pro == NULL)
+		return;
+
+	if (name == NULL || index >= (**pro).GetActiveAttribCount (pro))
+		_mesa_error (ctx, GL_INVALID_VALUE, "glGetActiveAttribARB");
+	else
+		(**pro).GetActiveAttrib (pro, index, maxLength, length, size, type, name);
+	RELEASE_PROGRAM(pro);
 }
 
 GLint GLAPIENTRY
@@ -1086,16 +1201,16 @@ _mesa_GetAttribLocationARB (GLhandleARB programObj, const GLcharARB *name)
 {
 	GET_CURRENT_CONTEXT(ctx);
 	GLint loc = -1;
-	GET_PROGRAM(pro, programObj, "glGetAttribLocationARB");
+	GET_LINKED_PROGRAM(pro, programObj, "glGetAttribLocationARB");
 
-	if (pro != NULL)
-	{
-		if (name != NULL && (name[0] != 'g' || name[1] != 'l' || name[2] != '_'))
-		{
-			/* TODO */
-		}
-		RELEASE_PROGRAM(pro);
-	}
+	if (pro == NULL)
+		return -1;
+
+	if (name == NULL)
+		_mesa_error (ctx, GL_INVALID_VALUE, "glGetAttribLocationARB");
+	else if (!IS_NAME_WITH_GL_PREFIX(name))
+		loc = (**pro).GetAttribLocation (pro, name);
+	RELEASE_PROGRAM(pro);
 	return loc;
 }
 

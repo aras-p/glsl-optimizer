@@ -69,6 +69,11 @@ GLboolean slang_export_data_quant_array (slang_export_data_quant *);
 GLboolean slang_export_data_quant_struct (slang_export_data_quant *);
 
 /*
+ * Returns GL_TRUE if the quant is neither an array nor a structure.
+ */
+GLboolean slang_export_data_quant_simple (slang_export_data_quant *);
+
+/*
  * Returns basic type of the quant. It must not be a structure.
  */
 GLenum slang_export_data_quant_type (slang_export_data_quant *);
@@ -81,7 +86,7 @@ GLuint slang_export_data_quant_fields (slang_export_data_quant *);
 /*
  * Return number of elements in the quant.
  * For arrays, return the size of the array.
- * For scalars, return 1.
+ * Otherwise, return 1.
  */
 GLuint slang_export_data_quant_elements (slang_export_data_quant *);
 

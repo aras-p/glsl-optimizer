@@ -31,18 +31,6 @@ extern GLvoid _slang_exec_fragment_shader (struct gl2_program_intf **pro);
 
 extern GLvoid _slang_exec_vertex_shader (struct gl2_program_intf **pro);
 
-extern GLint _slang_get_uniform_location (struct gl2_program_intf **pro, const char *name);
-
-extern GLboolean _slang_write_uniform (struct gl2_program_intf **pro, GLint loc, GLsizei count,
-	const GLvoid *data, GLenum type);
-
-extern GLuint _slang_get_active_uniform_count (struct gl2_program_intf **pro);
-
-extern GLuint _slang_get_active_uniform_max_length (struct gl2_program_intf **pro);
-
-extern GLvoid _slang_get_active_uniform (struct gl2_program_intf **pro, GLuint index, GLsizei maxLength,
-	GLsizei *length, GLint *size, GLenum *type, char *name);
-
 extern GLhandleARB
 _mesa_3dlabs_create_shader_object (GLenum);
 

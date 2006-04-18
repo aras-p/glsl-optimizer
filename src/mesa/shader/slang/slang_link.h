@@ -38,6 +38,61 @@ enum
 	SLANG_SHADER_MAX
 };
 
+/* Active variables.
+ *
+ * Active uniforms or attribs can be queried by the application to get a list of uniforms
+ * or attribs actually used by shaders (uniforms) or vertex shader (attribs).
+ */
+
+typedef struct
+{
+	slang_export_data_quant *quant;
+	char *name;
+} slang_active_variable;
+
+typedef struct
+{
+	slang_active_variable *table;
+	GLuint count;
+} slang_active_variables;
+
+/*
+ * Attrib binding override.
+ *
+ * The application can override GL attrib binding by specifying its preferred index assignment
+ * for a given attrib name. Those overrides are taken into account while linking the program.
+ */
+
+typedef struct
+{
+	GLuint index;
+	GLchar *name;
+} slang_attrib_override;
+
+typedef struct
+{
+	slang_attrib_override *table;
+	GLuint count;
+} slang_attrib_overrides;
+
+GLboolean slang_attrib_overrides_add (slang_attrib_overrides *, GLuint, const GLchar *);
+
+/*
+ * Uniform bindings.
+ *
+ * Each slang_uniform_binding holds an array of addresses to actual memory locations in those
+ * shader types that use that uniform. Uniform bindings are held in an array and accessed
+ * by array index which is seen to the application as a uniform location.
+ *
+ * When the application writes to a particular uniform, it specifies its location.
+ * This location is treated as an array index to slang_uniform_bindings::table and tested
+ * against slang_uniform_bindings::count limit. The result is a pointer to slang_uniform_binding.
+ * The type of data being written to uniform is tested against slang_uniform_binding::quant.
+ * If the types are compatible, the array slang_uniform_binding::address is iterated for
+ * each shader type and if the address is valid (i.e. the uniform is used by this shader type),
+ * the new uniform value is written at that address.
+ */
+
 typedef struct
 {
 	slang_export_data_quant *quant;
@@ -51,17 +106,42 @@ typedef struct
 	GLuint count;
 } slang_uniform_bindings;
 
+/*
+ * Attrib bindings.
+ *
+ * There is a fixed number of vertex attrib vectors (attrib slots). The slang_attrib_slot::addr
+ * maps vertex attrib index to the actual memory location of the attrib in vertex shader.
+ * One vertex attrib can span over many attrib slots (this is the case for matrices). The
+ * slang_attrib_binding::first_slot_index holds the first slot index that the attrib is bound to.
+ */
+
 typedef struct
 {
 	slang_export_data_quant *quant;
 	char *name;
-} slang_active_uniform;
+	GLuint first_slot_index;
+} slang_attrib_binding;
 
 typedef struct
 {
-	slang_active_uniform *table;
-	GLuint count;
-} slang_active_uniforms;
+	GLuint addr;
+} slang_attrib_slot;
+
+typedef struct
+{
+	slang_attrib_binding bindings[MAX_VERTEX_ATTRIBS];
+	GLuint binding_count;
+	slang_attrib_slot slots[MAX_VERTEX_ATTRIBS];
+} slang_attrib_bindings;
+
+/*
+ * Varying bindings.
+ *
+ * There is a fixed number of varying floats (varying slots). The slang_varying_slot::vert_addr
+ * maps varying float index to the actual memory location of the output variable in vertex shader.
+ * The slang_varying_slot::frag_addr maps varying float index to the actual memory location of
+ * the input variable in fragment shader.
+ */
 
 typedef struct
 {
@@ -73,16 +153,29 @@ typedef struct
 {
 	slang_export_data_quant *quant;
 	char *name;
-	GLuint slot;
+	GLuint first_slot_index;
 } slang_varying_binding;
 
 typedef struct
 {
-	slang_varying_binding table[MAX_VARYING_FLOATS];
-	GLuint count;
+	slang_varying_binding bindings[MAX_VARYING_FLOATS];
+	GLuint binding_count;
 	slang_varying_slot slots[MAX_VARYING_FLOATS];
-	GLuint total;
+	GLuint slot_count;
 } slang_varying_bindings;
+
+/*
+ * Texture usage.
+ *
+ * A slang_texture_usage struct holds indirect information about texture image unit usage. The
+ * slang_texture_usages::table is derived from active uniform table by extracting only uniforms
+ * that are samplers.
+ *
+ * To collect current texture usage one must iterate the slang_texture_usages::table and read
+ * uniform at address slang_texture_usage::frag_address to get texture unit index. This
+ * index, coupled with texture access type (target) taken from slang_texture_usage::quant
+ * forms texture usage for that texture unit.
+ */
 
 typedef struct
 {
@@ -192,8 +285,11 @@ enum
 
 typedef struct
 {
+	slang_active_variables active_uniforms;
+	slang_active_variables active_attribs;
+	slang_attrib_overrides attrib_overrides;
 	slang_uniform_bindings uniforms;
-	slang_active_uniforms active_uniforms;
+	slang_attrib_bindings attribs;
 	slang_varying_bindings varyings;
 	slang_texture_usages texture_usage;
 	GLuint common_fixed_entries[SLANG_SHADER_MAX][SLANG_COMMON_FIXED_MAX];

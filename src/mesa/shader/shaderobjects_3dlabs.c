@@ -1095,7 +1095,7 @@ _program_UpdateFixedUniforms (struct gl2_program_intf **intf)
 
 static GLvoid
 _program_UpdateFixedAttribute (struct gl2_program_intf **intf, GLuint index, GLvoid *data,
-							  GLuint offset, GLuint size, GLboolean write)
+                               GLuint offset, GLuint size, GLboolean write)
 {
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
 	slang_program *pro = &impl->_obj.prog;
@@ -1116,7 +1116,7 @@ _program_UpdateFixedAttribute (struct gl2_program_intf **intf, GLuint index, GLv
 
 static GLvoid
 _program_UpdateFixedVarying (struct gl2_program_intf **intf, GLuint index, GLvoid *data,
-							GLuint offset, GLuint size, GLboolean write)
+                             GLuint offset, GLuint size, GLboolean write)
 {
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
 	slang_program *pro = &impl->_obj.prog;
@@ -1203,14 +1203,270 @@ _program_IsShaderPresent (struct gl2_program_intf **intf, GLenum subtype)
 }
 
 static GLvoid
+get_active_variable (slang_active_variable *var, GLsizei maxLength, GLsizei *length, GLint *size,
+                     GLenum *type, GLchar *name)
+{
+	GLsizei len;
+
+	len = _mesa_strlen (var->name);
+	if (len >= maxLength)
+		len = maxLength - 1;
+	if (length != NULL)
+		*length = len;
+	*size = slang_export_data_quant_elements (var->quant);
+	*type = slang_export_data_quant_type (var->quant);
+	_mesa_memcpy (name, var->name, len);
+	name[len] = '\0';
+}
+
+static GLuint
+get_active_variable_max_length (slang_active_variables *vars)
+{
+	GLuint i, len = 0;
+
+	for (i = 0; i < vars->count; i++)
+	{
+		GLuint n = _mesa_strlen (vars->table[i].name);
+		if (n > len)
+			len = n;
+	}
+	return len;
+}
+
+static GLvoid
+_program_GetActiveUniform (struct gl2_program_intf **intf, GLuint index, GLsizei maxLength,
+                           GLsizei *length, GLint *size, GLenum *type, GLchar *name)
+{
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) (intf);
+	slang_active_variable *u = &impl->_obj.prog.active_uniforms.table[index];
+
+	get_active_variable (u, maxLength, length, size, type, name);
+}
+
+static GLuint
+_program_GetActiveUniformMaxLength (struct gl2_program_intf **intf)
+{
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) (intf);
+
+	return get_active_variable_max_length (&impl->_obj.prog.active_uniforms);
+}
+
+static GLuint
+_program_GetActiveUniformCount (struct gl2_program_intf **intf)
+{
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) (intf);
+
+	return impl->_obj.prog.active_uniforms.count;
+}
+
+static GLint
+_program_GetUniformLocation (struct gl2_program_intf **intf, const GLchar *name)
+{
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) (intf);
+	slang_uniform_bindings *bind = &impl->_obj.prog.uniforms;
+	GLuint i;
+
+	for (i = 0; i < bind->count; i++)
+		if (_mesa_strcmp (bind->table[i].name, name) == 0)
+			return i;
+	return -1;
+}
+
+static GLboolean
+_program_WriteUniform (struct gl2_program_intf **intf, GLint loc, GLsizei count, const GLvoid *data,
+                       GLenum type)
+{
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) (intf);
+	slang_uniform_bindings *uniforms = &impl->_obj.prog.uniforms;
+	slang_uniform_binding *uniform;
+	GLuint i;
+	GLboolean convert_float_to_bool = GL_FALSE;
+	GLboolean convert_int_to_bool = GL_FALSE;
+	GLboolean convert_int_to_float = GL_FALSE;
+	GLboolean types_match = GL_FALSE;
+
+	if (loc == -1)
+		return GL_TRUE;
+	if (loc >= uniforms->count)
+		return GL_FALSE;
+
+	uniform = &uniforms->table[loc];
+	/* TODO: check sizes */
+	if (slang_export_data_quant_struct (uniform->quant))
+		return GL_FALSE;
+
+	switch (slang_export_data_quant_type (uniform->quant))
+	{
+	case GL_BOOL_ARB:
+		types_match = (type == GL_FLOAT) || (type == GL_INT);
+		if (type == GL_FLOAT)
+			convert_float_to_bool = GL_TRUE;
+		else
+			convert_int_to_bool = GL_TRUE;
+		break;
+	case GL_BOOL_VEC2_ARB:
+		types_match = (type == GL_FLOAT_VEC2_ARB) || (type == GL_INT_VEC2_ARB);
+		if (type == GL_FLOAT_VEC2_ARB)
+			convert_float_to_bool = GL_TRUE;
+		else
+			convert_int_to_bool = GL_TRUE;
+		break;
+	case GL_BOOL_VEC3_ARB:
+		types_match = (type == GL_FLOAT_VEC3_ARB) || (type == GL_INT_VEC3_ARB);
+		if (type == GL_FLOAT_VEC3_ARB)
+			convert_float_to_bool = GL_TRUE;
+		else
+			convert_int_to_bool = GL_TRUE;
+		break;
+	case GL_BOOL_VEC4_ARB:
+		types_match = (type == GL_FLOAT_VEC4_ARB) || (type == GL_INT_VEC4_ARB);
+		if (type == GL_FLOAT_VEC4_ARB)
+			convert_float_to_bool = GL_TRUE;
+		else
+			convert_int_to_bool = GL_TRUE;
+		break;
+	case GL_SAMPLER_1D_ARB:
+	case GL_SAMPLER_2D_ARB:
+	case GL_SAMPLER_3D_ARB:
+	case GL_SAMPLER_CUBE_ARB:
+	case GL_SAMPLER_1D_SHADOW_ARB:
+	case GL_SAMPLER_2D_SHADOW_ARB:
+		types_match = (type == GL_INT);
+		break;
+	default:
+		types_match = (type == slang_export_data_quant_type (uniform->quant));
+		break;
+	}
+
+	if (!types_match)
+		return GL_FALSE;
+
+	switch (type)
+	{
+	case GL_INT:
+	case GL_INT_VEC2_ARB:
+	case GL_INT_VEC3_ARB:
+	case GL_INT_VEC4_ARB:
+		convert_int_to_float = GL_TRUE;
+		break;
+	}
+
+	if (convert_float_to_bool)
+	{
+		for (i = 0; i < SLANG_SHADER_MAX; i++)
+			if (uniform->address[i] != ~0)
+			{
+				const GLfloat *src = (GLfloat *) (data);
+				GLfloat *dst = (GLfloat *)
+					(&impl->_obj.prog.machines[i]->mem[uniform->address[i] / 4]);
+				GLuint j;
+				GLuint total = count * slang_export_data_quant_components (uniform->quant);
+
+				for (j = 0; j < total; j++)
+					dst[j] = src[j] != 0.0f ? 1.0f : 0.0f;
+			}
+	}
+	else if (convert_int_to_bool)
+	{
+		for (i = 0; i < SLANG_SHADER_MAX; i++)
+			if (uniform->address[i] != ~0)
+			{
+				const GLuint *src = (GLuint *) (data);
+				GLfloat *dst = (GLfloat *)
+					(&impl->_obj.prog.machines[i]->mem[uniform->address[i] / 4]);
+				GLuint j;
+				GLuint total = count * slang_export_data_quant_components (uniform->quant);
+
+				for (j = 0; j < total; j++)
+					dst[j] = src[j] ? 1.0f : 0.0f;
+			}
+	}
+	else if (convert_int_to_float)
+	{
+		for (i = 0; i < SLANG_SHADER_MAX; i++)
+			if (uniform->address[i] != ~0)
+			{
+				const GLuint *src = (GLuint *) (data);
+				GLfloat *dst = (GLfloat *)
+					(&impl->_obj.prog.machines[i]->mem[uniform->address[i] / 4]);
+				GLuint j;
+				GLuint total = count * slang_export_data_quant_components (uniform->quant);
+
+				for (j = 0; j < total; j++)
+					dst[j] = (GLfloat) src[j];
+			}
+	}
+	else
+	{
+		for (i = 0; i < SLANG_SHADER_MAX; i++)
+			if (uniform->address[i] != ~0)
+			{
+				_mesa_memcpy (&impl->_obj.prog.machines[i]->mem[uniform->address[i] / 4], data,
+					count * slang_export_data_quant_size (uniform->quant));
+			}
+	}
+	return GL_TRUE;
+}
+
+static GLvoid
+_program_GetActiveAttrib (struct gl2_program_intf **intf, GLuint index, GLsizei maxLength,
+                          GLsizei *length, GLint *size, GLenum *type, GLchar *name)
+{
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) (intf);
+	slang_active_variable *a = &impl->_obj.prog.active_attribs.table[index];
+
+	get_active_variable (a, maxLength, length, size, type, name);
+}
+
+static GLuint
+_program_GetActiveAttribMaxLength (struct gl2_program_intf **intf)
+{
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) (intf);
+
+	return get_active_variable_max_length (&impl->_obj.prog.active_attribs);
+}
+
+static GLuint
+_program_GetActiveAttribCount (struct gl2_program_intf **intf)
+{
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) (intf);
+
+	return impl->_obj.prog.active_attribs.count;
+}
+
+static GLint
+_program_GetAttribLocation (struct gl2_program_intf **intf, const GLchar *name)
+{
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) (intf);
+	slang_attrib_bindings *attribs = &impl->_obj.prog.attribs;
+	GLuint i;
+
+	for (i = 0; i < attribs->binding_count; i++)
+		if (_mesa_strcmp (attribs->bindings[i].name, name) == 0)
+			return attribs->bindings[i].first_slot_index;
+	return -1;
+}
+
+static GLvoid
+_program_OverrideAttribBinding (struct gl2_program_intf **intf, GLuint index, const GLchar *name)
+{
+	GET_CURRENT_CONTEXT(ctx);
+	struct gl2_program_impl *impl = (struct gl2_program_impl *) (intf);
+	slang_program *pro = &impl->_obj.prog;
+
+	if (!slang_attrib_overrides_add (&pro->attrib_overrides, index, name))
+		_mesa_error (ctx, GL_OUT_OF_MEMORY, "_program_OverrideAttribBinding");
+}
+
+static GLvoid
 _program_UpdateVarying (struct gl2_program_intf **intf, GLuint index, GLfloat *value,
-	GLboolean vert)
+                        GLboolean vert)
 {
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
 	slang_program *pro = &impl->_obj.prog;
 	GLuint addr;
 
-	if (index >= pro->varyings.total)
+	if (index >= pro->varyings.slot_count)
 		return;
 	if (vert)
 		addr = pro->varyings.slots[index].vert_addr / 4;
@@ -1253,7 +1509,17 @@ static struct gl2_program_intf _program_vftbl = {
 	_program_UpdateFixedVarying,
 	_program_GetTextureImageUsage,
 	_program_IsShaderPresent,
-	_program_UpdateVarying
+	_program_GetActiveUniform,
+	_program_GetActiveUniformMaxLength,
+	_program_GetActiveUniformCount,
+	_program_GetUniformLocation,
+	_program_WriteUniform,
+	_program_GetActiveAttrib,
+	_program_GetActiveAttribMaxLength,
+	_program_GetActiveAttribCount,
+	_program_GetAttribLocation,
+	_program_OverrideAttribBinding,
+	_program_UpdateVarying	
 };
 
 static void
@@ -1498,199 +1764,6 @@ GLvoid _slang_exec_fragment_shader (struct gl2_program_intf **pro)
 GLvoid _slang_exec_vertex_shader (struct gl2_program_intf **pro)
 {
 	exec_shader (pro, SLANG_SHADER_VERTEX);
-}
-
-GLint _slang_get_uniform_location (struct gl2_program_intf **pro, const char *name)
-{
-	struct gl2_program_impl *impl;
-	slang_uniform_bindings *bind;
-	GLuint i;
-
-	impl = (struct gl2_program_impl *) pro;
-	bind = &impl->_obj.prog.uniforms;
-	for (i = 0; i < bind->count; i++)
-		if (_mesa_strcmp (bind->table[i].name, name) == 0)
-			return i;
-	return -1;
-}
-
-GLboolean _slang_write_uniform (struct gl2_program_intf **pro, GLint loc, GLsizei count,
-	const GLvoid *data, GLenum type)
-{
-	struct gl2_program_impl *impl;
-	slang_uniform_bindings *bind;
-	slang_uniform_binding *b;
-	GLuint i;
-	GLboolean convert_float_to_bool = GL_FALSE;
-	GLboolean convert_int_to_bool = GL_FALSE;
-	GLboolean convert_int_to_float = GL_FALSE;
-	GLboolean types_match = GL_FALSE;
-
-	if (loc == -1)
-		return GL_TRUE;
-
-	impl = (struct gl2_program_impl *) pro;
-	bind = &impl->_obj.prog.uniforms;
-	if (loc >= bind->count)
-		return GL_FALSE;
-
-	b = &bind->table[loc];
-	/* TODO: check sizes */
-	if (slang_export_data_quant_struct (b->quant))
-		return GL_FALSE;
-
-	switch (slang_export_data_quant_type (b->quant))
-	{
-	case GL_BOOL_ARB:
-		types_match = (type == GL_FLOAT) || (type == GL_INT);
-		if (type == GL_FLOAT)
-			convert_float_to_bool = GL_TRUE;
-		else
-			convert_int_to_bool = GL_TRUE;
-		break;
-	case GL_BOOL_VEC2_ARB:
-		types_match = (type == GL_FLOAT_VEC2_ARB) || (type == GL_INT_VEC2_ARB);
-		if (type == GL_FLOAT_VEC2_ARB)
-			convert_float_to_bool = GL_TRUE;
-		else
-			convert_int_to_bool = GL_TRUE;
-		break;
-	case GL_BOOL_VEC3_ARB:
-		types_match = (type == GL_FLOAT_VEC3_ARB) || (type == GL_INT_VEC3_ARB);
-		if (type == GL_FLOAT_VEC3_ARB)
-			convert_float_to_bool = GL_TRUE;
-		else
-			convert_int_to_bool = GL_TRUE;
-		break;
-	case GL_BOOL_VEC4_ARB:
-		types_match = (type == GL_FLOAT_VEC4_ARB) || (type == GL_INT_VEC4_ARB);
-		if (type == GL_FLOAT_VEC4_ARB)
-			convert_float_to_bool = GL_TRUE;
-		else
-			convert_int_to_bool = GL_TRUE;
-		break;
-	case GL_SAMPLER_1D_ARB:
-	case GL_SAMPLER_2D_ARB:
-	case GL_SAMPLER_3D_ARB:
-	case GL_SAMPLER_CUBE_ARB:
-	case GL_SAMPLER_1D_SHADOW_ARB:
-	case GL_SAMPLER_2D_SHADOW_ARB:
-		types_match = (type == GL_INT);
-		break;
-	default:
-		types_match = (type == slang_export_data_quant_type (b->quant));
-		break;
-	}
-
-	if (!types_match)
-		return GL_FALSE;
-
-	switch (type)
-	{
-	case GL_INT:
-	case GL_INT_VEC2_ARB:
-	case GL_INT_VEC3_ARB:
-	case GL_INT_VEC4_ARB:
-		convert_int_to_float = GL_TRUE;
-		break;
-	}
-
-	if (convert_float_to_bool)
-	{
-		for (i = 0; i < SLANG_SHADER_MAX; i++)
-			if (b->address[i] != ~0)
-			{
-				const GLfloat *src = (GLfloat *) (data);
-				GLfloat *dst = (GLfloat *) (&impl->_obj.prog.machines[i]->mem[b->address[i] / 4]);
-				GLuint j;
-				GLuint total = count * slang_export_data_quant_components (b->quant);
-
-				for (j = 0; j < total; j++)
-					dst[j] = src[j] != 0.0f ? 1.0f : 0.0f;
-			}
-	}
-	else if (convert_int_to_bool)
-	{
-		for (i = 0; i < SLANG_SHADER_MAX; i++)
-			if (b->address[i] != ~0)
-			{
-				const GLuint *src = (GLuint *) (data);
-				GLfloat *dst = (GLfloat *) (&impl->_obj.prog.machines[i]->mem[b->address[i] / 4]);
-				GLuint j;
-				GLuint total = count * slang_export_data_quant_components (b->quant);
-
-				for (j = 0; j < total; j++)
-					dst[j] = src[j] ? 1.0f : 0.0f;
-			}
-	}
-	else if (convert_int_to_float)
-	{
-		for (i = 0; i < SLANG_SHADER_MAX; i++)
-			if (b->address[i] != ~0)
-			{
-				const GLuint *src = (GLuint *) (data);
-				GLfloat *dst = (GLfloat *) (&impl->_obj.prog.machines[i]->mem[b->address[i] / 4]);
-				GLuint j;
-				GLuint total = count * slang_export_data_quant_components (b->quant);
-
-				for (j = 0; j < total; j++)
-					dst[j] = (GLfloat) src[j];
-			}
-	}
-	else
-	{
-		for (i = 0; i < SLANG_SHADER_MAX; i++)
-			if (b->address[i] != ~0)
-			{
-				_mesa_memcpy (&impl->_obj.prog.machines[i]->mem[b->address[i] / 4], data,
-					count * slang_export_data_quant_size (b->quant));
-			}
-	}
-	return GL_TRUE;
-}
-
-GLuint _slang_get_active_uniform_count (struct gl2_program_intf **pro)
-{
-	struct gl2_program_impl *impl;
-
-	impl = (struct gl2_program_impl *) pro;
-	return impl->_obj.prog.active_uniforms.count;
-}
-
-GLuint _slang_get_active_uniform_max_length (struct gl2_program_intf **pro)
-{
-	struct gl2_program_impl *impl;
-	GLuint i, len = 0;
-
-	impl = (struct gl2_program_impl *) pro;
-	for (i = 0; i < impl->_obj.prog.active_uniforms.count; i++)
-	{
-		GLuint n = _mesa_strlen (impl->_obj.prog.active_uniforms.table[i].name);
-		if (n > len)
-			len = n;
-	}
-	return len;
-}
-
-GLvoid _slang_get_active_uniform (struct gl2_program_intf **pro, GLuint index, GLsizei maxLength,
-	GLsizei *length, GLint *size, GLenum *type, char *name)
-{
-	struct gl2_program_impl *impl;
-	slang_active_uniform *u;
-	GLsizei len;
-
-	impl = (struct gl2_program_impl *) pro;
-	u = &impl->_obj.prog.active_uniforms.table[index];
-
-	len = _mesa_strlen (u->name);
-	if (len >= maxLength)
-		len = maxLength - 1;
-	_mesa_memcpy (name, u->name, len);
-	name[len] = '\0';
-	if (length != NULL)
-		*length = len;
-	*type = slang_export_data_quant_type (u->quant);
-	*size = slang_export_data_quant_elements (u->quant);
 }
 
 void

@@ -88,11 +88,24 @@ struct gl2_program_intf
    GLvoid (* Validate) (struct gl2_program_intf **);
    GLvoid (* UpdateFixedUniforms) (struct gl2_program_intf **);
    GLvoid (* UpdateFixedAttribute) (struct gl2_program_intf **, GLuint, GLvoid *, GLuint, GLuint,
-      GLboolean);
+                                    GLboolean);
    GLvoid (* UpdateFixedVarying) (struct gl2_program_intf **, GLuint, GLvoid *, GLuint, GLuint,
-      GLboolean);
+                                  GLboolean);
    GLvoid (* GetTextureImageUsage) (struct gl2_program_intf **, GLbitfield *);
    GLboolean (* IsShaderPresent) (struct gl2_program_intf **, GLenum);
+   GLvoid (* GetActiveUniform) (struct gl2_program_intf **, GLuint index, GLsizei maxLength,
+                                GLsizei *length, GLint *size, GLenum *type, GLchar *name);
+   GLuint (* GetActiveUniformMaxLength) (struct gl2_program_intf **);
+   GLuint (* GetActiveUniformCount) (struct gl2_program_intf **);
+   GLint (* GetUniformLocation) (struct gl2_program_intf **, const GLchar *name);
+   GLboolean (* WriteUniform) (struct gl2_program_intf **, GLint loc, GLsizei count,
+                               const GLvoid *data, GLenum type);
+   GLvoid (* GetActiveAttrib) (struct gl2_program_intf **, GLuint index, GLsizei maxLength,
+                               GLsizei *length, GLint *size, GLenum *type, GLchar *name);
+   GLuint (* GetActiveAttribMaxLength) (struct gl2_program_intf **);
+   GLuint (* GetActiveAttribCount) (struct gl2_program_intf **);
+   GLint (* GetAttribLocation) (struct gl2_program_intf **, const GLchar *name);
+   GLvoid (* OverrideAttribBinding) (struct gl2_program_intf **, GLuint, const GLchar *);
    GLvoid (* UpdateVarying) (struct gl2_program_intf **, GLuint, GLfloat *, GLboolean);
 };
 

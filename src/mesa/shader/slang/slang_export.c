@@ -79,6 +79,11 @@ GLboolean slang_export_data_quant_struct (slang_export_data_quant *self)
 	return self->structure != NULL;
 }
 
+GLboolean slang_export_data_quant_simple (slang_export_data_quant *self)
+{
+	return self->array_len == 0 && self->structure == NULL;
+}
+
 GLenum slang_export_data_quant_type (slang_export_data_quant *self)
 {
 	assert (self->structure == NULL);
