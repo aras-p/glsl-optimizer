@@ -10,7 +10,7 @@ CXX = xlC
 
 CFLAGS = -q64 -O -DAIXV3 -DPTHREADS
 CXXFLAGS = -q64 -O -DAIXV3 -DPTHREADS
-MKLIB_OPTIONS = -static -arch AIX64
+MKLIB_OPTIONS = -static
 LIB_DIR=$(TOP)/lib64
 
 # Library names (actual file names)

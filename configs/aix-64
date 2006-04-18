@@ -10,7 +10,6 @@ CXX = xlC
 
 CFLAGS = -q64 -qmaxmem=16384 -O -DAIXV3 -DPTHREADS
 CXXFLAGS = -q64 -qmaxmem=16384 -O -DAIXV3 -DPTHREADS
-MKLIB_OPTIONS = -arch AIX64
 LIB_DIR=$(TOP)/lib64
 
 # Library names (actual file names)
