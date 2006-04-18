@@ -305,8 +305,8 @@ case $ARCH in
 	    fi
 
 	    # linker options
-	    if [ ${LINK} = "ld" ] ; then
-		# SunOS linker, -G to make shared libs
+	    if [ ${LINK} = "ld" -o ${LINK} = "cc" -o ${LINK} = "CC" ] ; then
+		# SunOS tools, -G to make shared libs
 		OPTS="-G"
 	    else
 		# gcc linker
@@ -404,15 +404,15 @@ case $ARCH in
 	    # examine first object to determine ABI
     	    set ${OBJECTS}
 	    ABI_O32=`file $1 | grep 'ELF 32-bit'`
-	    ABI_N32=`file $1 | grep 'ELF N32-bit'`
+	    ABI_N32=`file $1 | grep 'ELF N32'`
 	    ABI_N64=`file $1 | grep 'ELF 64-bit'`
-	    if [ ${ABI_O32} ] ; then
+	    if [ "${ABI_O32}" ] ; then
 		OPTS="-32 -shared -all"
 		ABI="o32-bit"
-	    elif [ ${ABI_N32} ] ; then
+	    elif [ "${ABI_N32}" ] ; then
 		OPTS="-n32 -shared -all"
 		ABI="n32-bit"
-	    elif [ ${ABI_N64} ] ; then
+	    elif [ "${ABI_N64}" ] ; then
 		OPTS="-64 -shared -all"
 		ABI="64-bit"
 	    else
@@ -461,31 +461,27 @@ case $ARCH in
 	fi
 	;;
 
-    'AIX' | 'AIX64')
-	if [ $ARCH = "AIX64" ] ; then
+    'AIX' )
+	# examine first object to determine ABI
+    	set ${OBJECTS}
+	ABI_64=`file $1 | grep '64-bit'`
+	if [ "${ABI_64}" ] ; then
 	    X64="-X64"
+	    Q64="-q64"
+	    OFILE=shr_64.o
+	else
+	    OFILE=shr.o  #Want to be consistent with the IBM libGL.a
 	fi
 
-        if [ $STATIC = 1 ] ; then
-            LIBNAME="lib${LIBNAME}.a"
-            echo "mklib: Making AIX static library: " ${LIBNAME}
-            ar -ruv ${X64} ${LIBNAME} ${OBJECTS}
-            FINAL_LIBS=${LIBNAME}
-        else
-	    # We make both .a (normal shared lib) and .so (which can be
-	    # loaded with dlopen).
+	if [ $STATIC = 1 ] ; then
+	    LIBNAME="lib${LIBNAME}.a"
+	    echo "mklib: Making AIX static library: " ${LIBNAME}
+	    ar -ruv ${X64} ${LIBNAME} ${OBJECTS}
+	    FINAL_LIBS=${LIBNAME}
+	else
 	    EXPFILE="lib${LIBNAME}.exp"
-	    if [ $ARCH = "AIX64" ] ; then
-		OFILE=shr_64.o
-	    else
-		OFILE=shr.o  #Want to be consistent with the IBM libGL.a
-	    fi
 	    LIBNAME="lib${LIBNAME}.a"  # shared objects are still stored in the .a libraries
-	    if [ $ARCH = "AIX64" ] ; then
-		OPTS="-bE:${EXPFILE} -bM:SRE -bnoentry -q64"
-	    else
-		OPTS="-bE:${EXPFILE} -bM:SRE -bnoentry"
-	    fi
+	    OPTS="-bE:${EXPFILE} -bM:SRE -bnoentry ${Q64}"
 	    rm -f ${EXPFILE} ${OFILE}
 	    NM="/bin/nm -eC ${X64}"
 	    echo "#! /usr/lib/${LIBNAME}" > ${EXPFILE}
@@ -571,12 +567,12 @@ case $ARCH in
 
 	    # examine first object to determine ABI
     	    set ${OBJECTS}
-	    ABI_PPC=`file $1 | grep 'object ppct'`
+	    ABI_PPC=`file $1 | grep 'object ppc'`
 	    ABI_I386=`file $1 | grep 'object i386'`
-	    if [ ${ABI_PPC} ] ; then
+	    if [ "${ABI_PPC}" ] ; then
 		OPTS="${OPTS} -arch ppc"
 	    fi
-	    if [ ${ABI_I386} ] ; then
+	    if [ "${ABI_I386}" ] ; then
 		OPTS="${OPTS} -arch i386"
 	    fi
 
