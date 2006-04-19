@@ -699,6 +699,9 @@ Parse_SwizzleSrcReg(struct parse_state *parseState, struct prog_src_register *sr
       else {
          /* 2, 3 or 4-component swizzle */
          GLint k;
+
+         srcReg->Swizzle = 0;
+
          for (k = 0; token[k] && k < 5; k++) {
             if (token[k] == 'x')
                srcReg->Swizzle |= 0 << (k*3);
