@@ -180,7 +180,7 @@ fi
 #
 case $ARCH in
 
-    'Linux' | 'OpenBSD')
+    'Linux' | 'OpenBSD' | 'GNU' | GNU/*)
 	# we assume gcc
 
 	if [ "x$LINK" = "x" ] ; then
@@ -223,11 +223,13 @@ case $ARCH in
             FINAL_LIBS=${LIBNAME}.a
         else
 	    LIBNAME="lib${LIBNAME}"     # prefix with "lib"
-	    if [ $ARCH = 'Linux' ] ; then
+	    case $ARCH in 'Linux' | 'GNU' | GNU/*)
 		OPTS="-Xlinker -Bsymbolic -shared -Wl,-soname,${LIBNAME}.so.${MAJOR}"
-	    else
+	    ;;
+	    *)
 		OPTS="-shared -Wl,-soname,${LIBNAME}.so.${MAJOR}"
-	    fi
+	    ;;
+	    esac
 	    if [ $EXPORTS ] ; then
 		#OPTS="${OPTS} -Xlinker --retain-symbols-file ${EXPORTS}"
 		# Make the 'exptmp' file for --version-script option
