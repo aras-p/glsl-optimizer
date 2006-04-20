@@ -1403,6 +1403,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 #define bump_vpu_count(ptr, new_count)   do{\
 	drm_r300_cmd_header_t* _p=((drm_r300_cmd_header_t*)(ptr));\
 	int _nc=(new_count)/4; \
+	assert(_nc < 256); \
 	if(_nc>_p->vpu.count)_p->vpu.count=_nc;\
 	}while(0)
 

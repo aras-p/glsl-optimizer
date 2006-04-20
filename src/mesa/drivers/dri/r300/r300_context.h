@@ -549,7 +549,8 @@ struct r300_vap_reg_state {
 /* Vertex shader state */
 
 /* Perhaps more if we store programs in vmem? */
-#define VSF_MAX_FRAGMENT_LENGTH (256*4)
+/* drm_r300_cmd_header_t->vpu->count is unsigned char */
+#define VSF_MAX_FRAGMENT_LENGTH (255*4)
 	
 /* Can be tested with colormat currently. */
 #define VSF_MAX_FRAGMENT_TEMPS (14)
