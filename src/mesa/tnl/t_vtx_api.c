@@ -150,8 +150,8 @@ static void _tnl_copy_to_current( GLcontext *ctx )
           * the ctx->Current fields.  The first 16 or so, anyway.
           */
 	 COPY_CLEAN_4V(tnl->vtx.current[i], 
-		    tnl->vtx.attrsz[i], 
-		    tnl->vtx.attrptr[i]);
+                       tnl->vtx.attrsz[i], 
+                       tnl->vtx.attrptr[i]);
       }
    }
 
@@ -276,7 +276,7 @@ static void _tnl_wrap_upgrade_vertex( GLcontext *ctx,
     */
    if (tnl->vtx.copied.nr)
    {
-      GLfloat *data = tnl->vtx.copied.buffer;
+      const GLfloat *data = tnl->vtx.copied.buffer;
       GLfloat *dest = tnl->vtx.buffer;
       GLuint j;
 
@@ -443,21 +443,21 @@ static tnl_attrfv_func do_choose( GLuint attr, GLuint sz )
 #define CHOOSE( ATTR, N )				\
 static void choose_##ATTR##_##N( const GLfloat *v )	\
 {							\
-   tnl_attrfv_func f = do_choose(ATTR, N);			\
+   tnl_attrfv_func f = do_choose(ATTR, N);		\
    f( v );						\
 }
 
-#define CHOOSERS( ATTRIB ) \
-   CHOOSE( ATTRIB, 1 )				\
-   CHOOSE( ATTRIB, 2 )				\
-   CHOOSE( ATTRIB, 3 )				\
-   CHOOSE( ATTRIB, 4 )				\
+#define CHOOSERS( ATTRIB )	\
+   CHOOSE( ATTRIB, 1 )		\
+   CHOOSE( ATTRIB, 2 )		\
+   CHOOSE( ATTRIB, 3 )		\
+   CHOOSE( ATTRIB, 4 )		\
 
 
-#define INIT_CHOOSERS(ATTR)				\
-   choose[ATTR][0] = choose_##ATTR##_1;				\
-   choose[ATTR][1] = choose_##ATTR##_2;				\
-   choose[ATTR][2] = choose_##ATTR##_3;				\
+#define INIT_CHOOSERS(ATTR)			\
+   choose[ATTR][0] = choose_##ATTR##_1;		\
+   choose[ATTR][1] = choose_##ATTR##_2;		\
+   choose[ATTR][2] = choose_##ATTR##_3;		\
    choose[ATTR][3] = choose_##ATTR##_4;
 
 CHOOSERS( 0 )
@@ -477,16 +477,28 @@ CHOOSERS( 13 )
 CHOOSERS( 14 )
 CHOOSERS( 15 )
 
-static void error_attrib( const GLfloat *unused )
+
+
+/**
+ * This function will get called when glVertexAttribNV/ARB() is called
+ * with an invalid index parameter.
+ */
+static void
+error_attrib(const GLfloat *unused)
 {
    GET_CURRENT_CONTEXT( ctx );
    (void) unused;
-   _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib" );
+   _mesa_error( ctx, GL_INVALID_VALUE, "glVertexAttrib(index)" );
 }   
 
 
 
-static void reset_attrfv( TNLcontext *tnl )
+/**
+ * Reset all the per-vertex functions pointers to point to the default
+ * "chooser" functions.
+ */
+static void
+reset_attrfv(TNLcontext *tnl)
 {   
    GLuint i;
 
@@ -509,7 +521,8 @@ static void reset_attrfv( TNLcontext *tnl )
       
 
 
-/* Materials:  
+/**
+ * Materials:  
  * 
  * These are treated as per-vertex attributes, at indices above where
  * the NV_vertex_program leaves off.  There are a lot of good things
@@ -522,7 +535,7 @@ static void reset_attrfv( TNLcontext *tnl )
  *
  * There is no aliasing of material attributes with other entrypoints.
  */
-#define OTHER_ATTR( A, N, params )		\
+#define OTHER_ATTR( A, N, params )			\
 do {							\
    if (tnl->vtx.attrsz[A] != N) {			\
       _tnl_fixup_vertex( ctx, A, N );			\
@@ -538,19 +551,21 @@ do {							\
 } while (0)
 
 
-#define MAT( ATTR, N, face, params )				\
-do {								\
-   if (face != GL_BACK)						\
+#define MAT( ATTR, N, face, params )			\
+do {							\
+   if (face != GL_BACK)					\
       OTHER_ATTR( ATTR, N, params ); /* front */	\
-   if (face != GL_FRONT)					\
+   if (face != GL_FRONT)				\
       OTHER_ATTR( ATTR + 1, N, params ); /* back */	\
 } while (0)
 
 
-/* Colormaterial is dealt with later on.
+/**
+ * Called by glMaterialfv().
+ * Colormaterial is dealt with later on.
  */
-static void GLAPIENTRY _tnl_Materialfv( GLenum face, GLenum pname, 
-			       const GLfloat *params )
+static void GLAPIENTRY
+_tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT( ctx ); 
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -560,7 +575,6 @@ static void GLAPIENTRY _tnl_Materialfv( GLenum face, GLenum pname,
    case GL_BACK:
    case GL_FRONT_AND_BACK:
       break;
-      
    default:
       _mesa_error( ctx, GL_INVALID_ENUM, "glMaterialfv" );
       return;
@@ -882,12 +896,16 @@ void _tnl_FlushVertices( GLcontext *ctx, GLuint flags )
 }
 
 
+/**
+ * Init the tnl->vtx->current[] pointers to point to the corresponding
+ * fields in ctx->Current attribute group.
+ */
 static void _tnl_current_init( GLcontext *ctx ) 
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLint i;
 
-   /* setup the pointers for the typical 16 vertex attributes */
+   /* setup the pointers for the typical (32) vertex attributes */
    for (i = 0; i < VERT_ATTRIB_MAX; i++) 
       tnl->vtx.current[i] = ctx->Current.Attrib[i];
 
@@ -896,6 +914,7 @@ static void _tnl_current_init( GLcontext *ctx )
       tnl->vtx.current[_TNL_ATTRIB_MAT_FRONT_AMBIENT + i] = 
 	 ctx->Light.Material.Attrib[i];
 
+   /* special cases */
    tnl->vtx.current[_TNL_ATTRIB_INDEX] = &ctx->Current.Index;
    tnl->vtx.current[_TNL_ATTRIB_EDGEFLAG] = &tnl->vtx.CurrentFloatEdgeFlag;
 }
