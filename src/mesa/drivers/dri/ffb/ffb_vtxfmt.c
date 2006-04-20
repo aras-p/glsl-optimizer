@@ -341,7 +341,8 @@ void ffbInitTnlModule(GLcontext *ctx)
 	ffb_init_norm_funcs();
 	ffb_init_vert_funcs();
 
-	MEMSET(vfmt, 0, sizeof(GLvertexformat));
+	/* start by initializing to no-op functions */
+	_mesa_noop_vtxfmt_init(vfmt);
 
 	/* Handled fully in supported states: */
 	vfmt->ArrayElement		= NULL;		/* FIXME: ... */
@@ -389,18 +390,8 @@ void ffbInitTnlModule(GLcontext *ctx)
 	vfmt->Begin			= ffb_Begin;
 	vfmt->End			= ffb_End;
 
-	vfmt->Rectf = _mesa_noop_Rectf;			/* generic helper */
-
 	vfmt->DrawArrays = NULL;
 	vfmt->DrawElements = NULL;
-	vfmt->DrawRangeElements = _mesa_noop_DrawRangeElements; /* discard range */
-
-
-	/* Not active in supported states; just keep ctx->Current uptodate: */
-	vfmt->EdgeFlag = _mesa_noop_EdgeFlag;
-	vfmt->EdgeFlagv = _mesa_noop_EdgeFlagv;
-	vfmt->Indexi = _mesa_noop_Indexi;
-	vfmt->Indexiv = _mesa_noop_Indexiv;
 
 	/* Active but unsupported -- fallback if we receive these:
 	 *

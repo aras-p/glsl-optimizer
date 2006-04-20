@@ -1056,12 +1056,16 @@ static void r200VtxFmtFlushVertices( GLcontext *ctx, GLuint flags )
  */
 
 
+/**
+ * Called once during context creation.
+ */
 void r200VtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
 {
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    GLvertexformat *vfmt = &(rmesa->vb.vtxfmt);
 
-   MEMSET( vfmt, 0, sizeof(GLvertexformat) );
+   /* start by initializing to no-op functions */
+   _mesa_noop_vtxfmt_init(vfmt);
 
    /* Hook in chooser functions for codegen, etc:
     */
@@ -1071,7 +1075,6 @@ void r200VtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
     */
    vfmt->Materialfv = r200_Materialfv;
    vfmt->ArrayElement = _ae_loopback_array_elt;	        /* generic helper */
-   vfmt->Rectf = _mesa_noop_Rectf;			/* generic helper */
    vfmt->Begin = r200_Begin;
    vfmt->End = r200_End;
 
@@ -1084,15 +1087,6 @@ void r200VtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
    vfmt->DrawArrays = r200_fallback_DrawArrays;
    vfmt->DrawElements = r200_fallback_DrawElements;
    vfmt->DrawRangeElements = r200_fallback_DrawRangeElements; 
-
-
-   /* Not active in supported states; just keep ctx->Current uptodate:
-    */
-   vfmt->EdgeFlag = _mesa_noop_EdgeFlag;
-   vfmt->EdgeFlagv = _mesa_noop_EdgeFlagv;
-   vfmt->Indexf = _mesa_noop_Indexf;
-   vfmt->Indexfv = _mesa_noop_Indexfv;
-
 
    /* Active but unsupported -- fallback if we receive these:
     */

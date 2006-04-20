@@ -929,7 +929,8 @@ void radeonVtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
    GLvertexformat *vfmt = &(rmesa->vb.vtxfmt);
 
-   MEMSET( vfmt, 0, sizeof(GLvertexformat) );
+   /* start by initializing to no-op functions */
+   _mesa_noop_vtxfmt_init(vfmt);
 
    /* Hook in chooser functions for codegen, etc:
     */
@@ -939,7 +940,6 @@ void radeonVtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
     */
    vfmt->Materialfv = radeon_Materialfv;
    vfmt->ArrayElement = _ae_loopback_array_elt;	        /* generic helper */
-   vfmt->Rectf = _mesa_noop_Rectf;			/* generic helper */
    vfmt->Begin = radeon_Begin;
    vfmt->End = radeon_End;
 
@@ -952,15 +952,6 @@ void radeonVtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
    vfmt->DrawArrays = radeon_fallback_DrawArrays;
    vfmt->DrawElements = radeon_fallback_DrawElements;
    vfmt->DrawRangeElements = radeon_fallback_DrawRangeElements; 
-
-
-   /* Not active in supported states; just keep ctx->Current uptodate:
-    */
-   vfmt->EdgeFlag = _mesa_noop_EdgeFlag;
-   vfmt->EdgeFlagv = _mesa_noop_EdgeFlagv;
-   vfmt->Indexf = _mesa_noop_Indexf;
-   vfmt->Indexfv = _mesa_noop_Indexfv;
-
 
    /* Active but unsupported -- fallback if we receive these:
     */
