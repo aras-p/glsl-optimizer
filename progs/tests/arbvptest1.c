@@ -1,4 +1,4 @@
-/* Test glGenProgramsNV(), glIsProgramNV(), glLoadProgramNV() */
+/* Test glGenProgramsARB(), glIsProgramARB(), glLoadProgramARB() */
 
 #include <assert.h>
 #include <string.h>
@@ -15,9 +15,9 @@ static void Display( void )
    glPushMatrix();
 
    glBegin(GL_POLYGON);
-   glVertexAttrib2fNV(0, -1, -1);
-   glVertexAttrib2fNV(0, 1, -1);
-   glVertexAttrib2fNV(0, 0,  1);
+   glVertexAttrib2fARB(0, -1, -1);
+   glVertexAttrib2fARB(0, 1, -1);
+   glVertexAttrib2fARB(0, 0,  1);
    glEnd();
 
    glPopMatrix();
@@ -139,7 +139,7 @@ static void Init( void )
       "DP4   result.position, R3, blah[A0.x - 4];\n"
       "END\n";
 
-   glGenProgramsNV(4, prognum);
+   glGenProgramsARB(4, prognum);
 
    load_program(prog1, prognum[0]);   
    load_program(prog2, prognum[1]);   
