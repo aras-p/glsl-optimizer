@@ -5037,7 +5037,7 @@ save_Indexf(GLfloat x)
    ctx->ListState.CurrentIndex = x;
 
    if (ctx->ExecuteFlag) {
-      CALL_Indexi(ctx->Exec, ((GLint) x));
+      CALL_Indexf(ctx->Exec, (x));
    }
 }
 
@@ -6527,7 +6527,7 @@ execute_list(GLcontext *ctx, GLuint list)
             }
             break;
          case OPCODE_INDEX:
-            CALL_Indexi(ctx->Exec, (n[1].i));
+            CALL_Indexf(ctx->Exec, (n[1].f));
             break;
          case OPCODE_EDGEFLAG:
             CALL_EdgeFlag(ctx->Exec, (n[1].b));
