@@ -84,7 +84,6 @@ $(LIB_DIR)/$(LIBNAME): $(LIBNAME)
 
 # Run 'make depend' to update the dependencies if you change
 # what's included by any source file.
-.PHONY: depend
 depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) $(C_SOURCES) \
