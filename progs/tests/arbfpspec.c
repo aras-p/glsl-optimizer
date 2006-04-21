@@ -118,10 +118,10 @@ static void Init( void )
       "MOV   result.color.front.secondary, {1, 1, 1, 1};\n"
       "END";
 
-	static const char fprog[] = 
-     "!!ARBfp1.0\n"			  
-     "MOV result.color, fragment.color.secondary;\n"
-	  "END";
+    static const char fprog[] = 
+      "!!ARBfp1.0\n"			  
+      "MOV result.color, fragment.color.secondary;\n"
+      "END";
 
    if (!glutExtensionSupported("GL_ARB_vertex_program")) {
       printf("Sorry, this program requires GL_ARB_vertex_program");
@@ -132,8 +132,6 @@ static void Init( void )
       printf("Sorry, this program requires GL_ARB_fragment_program");
       exit(1);
    }
-
-
    	
    glGenProgramsARB(1, &prognum);
    glGenProgramsARB(1, &fprognum);
