@@ -187,7 +187,7 @@ static void Init( void )
       "DP4   result.position.z, state.matrix.mvp.row[2], R3 ;\n"
       "DP4   result.position.w, state.matrix.mvp.row[3], R3 ;\n"
 
-      "MOV   result.color, vertex.color;\n       # copy input color to output color\n"
+      "MOV   result.color, vertex.attrib[3];\n       # copy input color to output color\n"
 
       "END";
 

@@ -1,4 +1,3 @@
-/* Test glGenProgramsNV(), glIsProgramNV(), glLoadProgramNV() */
 
 #include <assert.h>
 #include <string.h>
@@ -16,7 +15,7 @@ static void Display( void )
    glClearColor(0.3, 0.3, 0.3, 1);
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-   glEnable(GL_VERTEX_PROGRAM_NV);
+   glEnable(GL_VERTEX_PROGRAM_ARB);
 
    glLoadIdentity();
    glRotatef(Zrot, 0, 0, 1);
@@ -84,7 +83,7 @@ static void Init( void )
    
    static const char *prog1 =
       "!!ARBvp1.0\n"
-      "MOV  result.color, vertex.color;\n"
+      "MOV  result.color, vertex.attrib[3];\n"
 
       "DP4  result.position.x, vertex.position, state.matrix.modelview.row[0];\n"
       "DP4  result.position.y, vertex.position, state.matrix.modelview.row[1];\n"
