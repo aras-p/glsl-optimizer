@@ -462,7 +462,7 @@ int r300Fallback(GLcontext *ctx)
 {
 	int i;
 
-	//FALLBACK_IF(ctx->RenderMode != GL_RENDER);  // We do not do SELECT or FEEDBACK (yet ?)
+	FALLBACK_IF(ctx->RenderMode != GL_RENDER);  // We do not do SELECT or FEEDBACK (yet ?)
 	
 #if 0 /* These should work now.. */
 	FALLBACK_IF(ctx->Color.DitherFlag);
