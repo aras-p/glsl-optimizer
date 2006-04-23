@@ -374,49 +374,55 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 
 static void r300FreeGartAllocations(r300ContextPtr r300)
 {
-    int i, ret;
-    drm_radeon_mem_free_t memfree;
+	int i, ret, tries=0, done_age;
+	drm_radeon_mem_free_t memfree;
 
-    memfree.region = RADEON_MEM_REGION_GART;
-
-#if 0
-    if (r300->rmm->u_last + 1 >= r300->rmm->u_size)
-	resize_u_list(r300);
-#endif
+	memfree.region = RADEON_MEM_REGION_GART;
 
 #ifdef USER_BUFFERS
-    for (i = r300->rmm->u_last + 1; i > 0; i--) {
-	if (r300->rmm->u_list[i].ptr == NULL) {
-	    continue;
-	}
-
-	if (r300->rmm->u_list[i].h_pending == 0 &&
-		r300->rmm->u_list[i].pending) {
-	    memfree.region_offset = (char *)r300->rmm->u_list[i].ptr -
-			(char *)r300->radeon.radeonScreen->gartTextures.map;
-	    ret = drmCommandWrite(r300->radeon.radeonScreen->driScreen->fd,
-				  DRM_RADEON_FREE, &memfree, sizeof(memfree));
-	    if (ret) {
-		fprintf(stderr, "Failed to free at %p\nret = %s\n",
-			r300->rmm->u_list[i].ptr, strerror(-ret));
-	    } else {
-		fprintf(stderr, "Really freed %d at age %x\n", i,
-			radeonGetAge((radeonContextPtr)r300));
-		if (i == r300->rmm->u_last)
-		    r300->rmm->u_last--;
-		r300->rmm->u_list[i].pending = 0;
-		r300->rmm->u_list[i].ptr = NULL;
-		if (r300->rmm->u_list[i].fb) {
-		    LOCK_HARDWARE(&(r300->radeon));
-		    ret = mmFreeMem(r300->rmm->u_list[i].fb);
-		    UNLOCK_HARDWARE(&(r300->radeon));
-		    if (ret) fprintf(stderr, "failed to free!\n");
-		    r300->rmm->u_list[i].fb = NULL;
+	done_age = radeonGetAge((radeonContextPtr)r300);
+	
+	for (i = r300->rmm->u_last; i > 0; i--) {
+		if (r300->rmm->u_list[i].ptr == NULL) {
+			continue;
 		}
-		r300->rmm->u_list[i].ref_count = 0;
-	    }
+		
+		assert(r300->rmm->u_list[i].pending);
+		assert(r300->rmm->u_list[i].h_pending == 0);
+		
+		tries = 0;
+		while(r300->rmm->u_list[i].age > done_age && tries++ < 1000) {
+			usleep(10);
+			done_age = radeonGetAge((radeonContextPtr)r300);
+		}
+		if (tries >= 1000) {
+			WARN_ONCE("Failed to idle region!");
+		}
+		
+		memfree.region_offset = (char *)r300->rmm->u_list[i].ptr -
+			(char *)r300->radeon.radeonScreen->gartTextures.map;
+		
+		ret = drmCommandWrite(r300->radeon.radeonScreen->driScreen->fd,
+				DRM_RADEON_FREE, &memfree, sizeof(memfree));
+		if (ret) {
+			fprintf(stderr, "Failed to free at %p\nret = %s\n",
+				r300->rmm->u_list[i].ptr, strerror(-ret));
+		} else {
+			if (i == r300->rmm->u_last)
+				r300->rmm->u_last--;
+			
+			r300->rmm->u_list[i].pending = 0;
+			r300->rmm->u_list[i].ptr = NULL;
+			if (r300->rmm->u_list[i].fb) {
+				LOCK_HARDWARE(&(r300->radeon));
+				ret = mmFreeMem(r300->rmm->u_list[i].fb);
+				UNLOCK_HARDWARE(&(r300->radeon));
+				if (ret) fprintf(stderr, "failed to free!\n");
+				r300->rmm->u_list[i].fb = NULL;
+			}
+			r300->rmm->u_list[i].ref_count = 0;
+		}
 	}
-    }
     r300->rmm->u_head = i;
 #endif /* USER_BUFFERS */
 }
@@ -452,13 +458,11 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 		_ac_DestroyContext(r300->radeon.glCtx);
 		_swrast_DestroyContext(r300->radeon.glCtx);
 		
-		r300ReleaseArrays(r300->radeon.glCtx);
 		if (r300->dma.current.buf) {
 			r300ReleaseDmaRegion(r300, &r300->dma.current, __FUNCTION__ );
-			r300FlushCmdBuf(r300, __FUNCTION__ );
 		}
-
-		r300FreeGartAllocations(r300); // XXX SO MUCH HATE		
+		r300FlushCmdBuf(r300, __FUNCTION__);
+		r300FreeGartAllocations(r300);
 		r300DestroyCmdBuf(r300);
 
 		if (radeon->state.scissor.pClipRects) {
