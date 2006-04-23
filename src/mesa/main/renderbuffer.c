@@ -2029,11 +2029,15 @@ _mesa_add_renderbuffer(struct gl_framebuffer *fb,
 {
    assert(fb);
    assert(rb);
-#if 00
-   /* there should be no previous renderbuffer on this attachment point! */
-   assert(fb->Attachment[bufferName].Renderbuffer == NULL);
-#endif
    assert(bufferName < BUFFER_COUNT);
+
+   /* There should be no previous renderbuffer on this attachment point,
+    * with the exception of depth/stencil since the same renderbuffer may
+    * be used for both.
+    */
+   assert(bufferName == BUFFER_DEPTH ||
+          bufferName == BUFFER_STENCIL ||
+          fb->Attachment[bufferName].Renderbuffer == NULL);
 
    /* winsys vs. user-created buffer cross check */
    if (fb->Name) {
