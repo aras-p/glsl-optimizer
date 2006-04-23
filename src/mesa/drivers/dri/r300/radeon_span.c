@@ -257,13 +257,14 @@ static void radeonSpanRenderStart( GLcontext *ctx )
    r300Flush(ctx);
    LOCK_HARDWARE( rmesa );
    radeonWaitForIdleLocked( rmesa );
+   UNLOCK_HARDWARE( rmesa );
 }
 
 static void radeonSpanRenderFinish( GLcontext *ctx )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
    _swrast_flush( ctx );
-   UNLOCK_HARDWARE( rmesa );
+   //UNLOCK_HARDWARE( rmesa );
 }
 
 void radeonInitSpanFuncs( GLcontext *ctx )
