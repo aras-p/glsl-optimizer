@@ -216,14 +216,22 @@ static void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const G
 				max = ((unsigned char *)indices)[i];
 		}
 		
+#ifdef FORCE_32BITS_ELTS
+		elt_size = 4;
+#else
 		elt_size = 2;
-		
+#endif		
 		r300AllocDmaRegion(rmesa, &rvb, count * elt_size, elt_size);
 		rvb.aos_offset = GET_START(&rvb);
 		ptr = rvb.address + rvb.start;
 			
+#ifdef FORCE_32BITS_ELTS
+		for (i=0; i < count; i++)
+			((unsigned int *)ptr)[i] = ((unsigned char *)indices)[i] - min;
+#else
 		for (i=0; i < count; i++)
 			((unsigned short int *)ptr)[i] = ((unsigned char *)indices)[i] - min;
+#endif
 	break;
 		
 	case GL_UNSIGNED_SHORT:
@@ -234,14 +242,23 @@ static void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const G
 				max = ((unsigned short int *)indices)[i];
 		}
 		
+#ifdef FORCE_32BITS_ELTS
+		elt_size = 4;
+#else
 		elt_size = 2;
+#endif
 		
 		r300AllocDmaRegion(rmesa, &rvb, count * elt_size, elt_size);
 		rvb.aos_offset = GET_START(&rvb);
 		ptr = rvb.address + rvb.start;
 		
+#ifdef FORCE_32BITS_ELTS
+		for (i=0; i < count; i++)
+			((unsigned int *)ptr)[i] = ((unsigned short int *)indices)[i] - min;
+#else
 		for (i=0; i < count; i++)
 			((unsigned short int *)ptr)[i] = ((unsigned short int *)indices)[i] - min;
+#endif
 	break;
 	
 	case GL_UNSIGNED_INT:
@@ -252,17 +269,20 @@ static void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const G
 				max = ((unsigned int *)indices)[i];
 		}
 		
+#ifdef FORCE_32BITS_ELTS
+		elt_size = 4;
+#else
 		if (max - min <= 65535)
 			elt_size = 2;
 		else 
 			elt_size = 4;
-		
+#endif
 		r300AllocDmaRegion(rmesa, &rvb, count * elt_size, elt_size);
 		rvb.aos_offset = GET_START(&rvb);
 		ptr = rvb.address + rvb.start;
 		
 		
-		if (max - min <= 65535)
+		if (elt_size == 2)
 			for (i=0; i < count; i++)
 				((unsigned short int *)ptr)[i] = ((unsigned int *)indices)[i] - min;
 		else
@@ -388,19 +408,30 @@ static void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei
 	memset(&rvb, 0, sizeof(rvb));
 	switch (type){
 	case GL_UNSIGNED_BYTE:
+#ifdef FORCE_32BITS_ELTS
+		elt_size = 4;
+#else
 		elt_size = 2;
-		
+#endif	
 		r300AllocDmaRegion(rmesa, &rvb, count * elt_size, elt_size);
 		rvb.aos_offset = GET_START(&rvb);
 		ptr = rvb.address + rvb.start;
 		
+#ifdef FORCE_32BITS_ELTS
+		for(i=0; i < count; i++)
+			((unsigned int *)ptr)[i] = ((unsigned char *)indices)[i] - min;
+#else
 		for(i=0; i < count; i++)
 			((unsigned short int *)ptr)[i] = ((unsigned char *)indices)[i] - min;
+#endif
 	break;
 	
 	case GL_UNSIGNED_SHORT:
+#ifdef FORCE_32BITS_ELTS
+		elt_size = 4;
+#else
 		elt_size = 2;
-		
+#endif	
 #ifdef OPTIMIZE_ELTS
 		if (min == 0 && ctx->Array.ElementArrayBufferObj->Name){
 			ptr = indices;
@@ -411,21 +442,29 @@ static void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei
 		rvb.aos_offset = GET_START(&rvb);
 		ptr = rvb.address + rvb.start;
 
+#ifdef FORCE_32BITS_ELTS
+		for(i=0; i < count; i++)
+			((unsigned int *)ptr)[i] = ((unsigned short int *)indices)[i] - min;
+#else
 		for(i=0; i < count; i++)
 			((unsigned short int *)ptr)[i] = ((unsigned short int *)indices)[i] - min;
+#endif
 	break;
 	
 	case GL_UNSIGNED_INT:
+#ifdef FORCE_32BITS_ELTS
+		elt_size = 4;
+#else
 		if (max - min <= 65535)
 			elt_size = 2;
 		else 
 			elt_size = 4;
-		
+#endif	
 		r300AllocDmaRegion(rmesa, &rvb, count * elt_size, elt_size);
 		rvb.aos_offset = GET_START(&rvb);
 		ptr = rvb.address + rvb.start;
 		
-		if (max - min <= 65535)
+		if (elt_size == 2)
 			for (i=0; i < count; i++)
 				((unsigned short int *)ptr)[i] = ((unsigned int *)indices)[i] - min;
 		else

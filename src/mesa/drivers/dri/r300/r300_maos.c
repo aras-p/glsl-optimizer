@@ -252,6 +252,43 @@ void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts, int elt_siz
 	memcpy(out, elts, n_elts * elt_size);
 }
 
+	/* Mesa assumes that all missing components are from (0, 0, 0, 1) */
+#define ALL_COMPONENTS ((R300_INPUT_ROUTE_SELECT_X<<R300_INPUT_ROUTE_X_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_Y<<R300_INPUT_ROUTE_Y_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_Z<<R300_INPUT_ROUTE_Z_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_W<<R300_INPUT_ROUTE_W_SHIFT))
+
+#define ALL_DEFAULT ((R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_X_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Y_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Z_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_ONE<<R300_INPUT_ROUTE_W_SHIFT))
+
+
+static GLuint t_comps(GLuint aos_size)
+{
+	GLuint mask;
+	mask = (1 << (aos_size*3)) - 1;
+	return (ALL_COMPONENTS & mask) | (ALL_DEFAULT & ~mask);
+}
+
+static GLuint fix_comps(GLuint dw, int fmt)
+{	
+#ifdef MESA_BIG_ENDIAN
+	if (fmt == 2) {
+		GLuint dw_temp = 0;
+
+		dw_temp |= ((dw >> R300_INPUT_ROUTE_X_SHIFT) & R300_INPUT_ROUTE_SELECT_MASK) << R300_INPUT_ROUTE_W_SHIFT;
+		dw_temp |= ((dw >> R300_INPUT_ROUTE_Y_SHIFT) & R300_INPUT_ROUTE_SELECT_MASK) << R300_INPUT_ROUTE_Z_SHIFT;
+		dw_temp |= ((dw >> R300_INPUT_ROUTE_Z_SHIFT) & R300_INPUT_ROUTE_SELECT_MASK) << R300_INPUT_ROUTE_Y_SHIFT;
+		dw_temp |= ((dw >> R300_INPUT_ROUTE_W_SHIFT) & R300_INPUT_ROUTE_SELECT_MASK) << R300_INPUT_ROUTE_X_SHIFT;
+		
+		return dw_temp;
+	}
+#endif /* MESA_BIG_ENDIAN */
+	return dw;
+		
+}
+
 /* Emit vertex data to GART memory (unless immediate mode)
  * Route inputs to the vertex processor
  */
@@ -264,7 +301,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 	//struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 	GLuint nr = 0;
 	GLuint count = VB->Count;
-	GLuint dw,mask;
+	GLuint dw;
 	GLuint vic_1 = 0;	/* R300_VAP_INPUT_CNTL_1 */
 	GLuint aa_vap_reg = 0; /* VAP register assignment */
 	GLuint i;
@@ -469,17 +506,6 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->packet0.count = (nr+1)>>1;
 
 
-	/* Mesa assumes that all missing components are from (0, 0, 0, 1) */
-#define ALL_COMPONENTS ((R300_INPUT_ROUTE_SELECT_X<<R300_INPUT_ROUTE_X_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_Y<<R300_INPUT_ROUTE_Y_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_Z<<R300_INPUT_ROUTE_Z_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_W<<R300_INPUT_ROUTE_W_SHIFT))
-
-#define ALL_DEFAULT ((R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_X_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Y_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Z_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_ONE<<R300_INPUT_ROUTE_W_SHIFT))
-
 	R300_STATECHANGE(r300, vir[1]);
 
 	for(i=0; i < nr; i++)
@@ -488,33 +514,22 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 			r300->state.aos[i].aos_size=/*3*/4; /* XXX */
 		}
 		
-		
-	for(i=0;i+1<nr;i+=2){
+	for (i=0;i+1<nr;i+=2) {
 		/* do i first.. */
-		mask=(1<<(r300->state.aos[i].aos_size*3))-1;
-		dw=(ALL_COMPONENTS & mask)
-		| (ALL_DEFAULT & ~mask)
-		| R300_INPUT_ROUTE_ENABLE;
-
+		dw = fix_comps(t_comps(r300->state.aos[i].aos_size), r300->state.aos[i].aos_format) | R300_INPUT_ROUTE_ENABLE;
 		/* i+1 */
-		mask=(1<<(r300->state.aos[i+1].aos_size*3))-1;
-		dw|=(
-		(ALL_COMPONENTS & mask)
-		| (ALL_DEFAULT & ~mask)
-		| R300_INPUT_ROUTE_ENABLE
-		)<<16;
-
+		dw |= (fix_comps(t_comps(r300->state.aos[i+1].aos_size), r300->state.aos[i+1].aos_format) | R300_INPUT_ROUTE_ENABLE) << 16;
+		
 		//fprintf(stderr, "vir1 dw=%08x\n", dw);
 		r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(i>>1)]=dw;
-		}
-	if(nr & 1){
-		mask=(1<<(r300->state.aos[nr-1].aos_size*3))-1;
-		dw=(ALL_COMPONENTS & mask)
-		| (ALL_DEFAULT & ~mask)
-		| R300_INPUT_ROUTE_ENABLE;
-		r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(nr>>1)]=dw;
+	}
+	if (nr & 1) {
+		dw = fix_comps(t_comps(r300->state.aos[nr-1].aos_size), r300->state.aos[nr-1].aos_format) | R300_INPUT_ROUTE_ENABLE;
+		
 		//fprintf(stderr, "vir1 dw=%08x\n", dw);
-		}
+		r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(nr>>1)]=dw;
+	}
+
 	/* Set the rest of INPUT_ROUTE_1 to 0 */
 	//for(i=((count+1)>>1); i<8; i++)r300->hw.vir[1].cmd[R300_VIR_CNTL_0+i]=0x0;
 	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->packet0.count = (nr+1)>>1;

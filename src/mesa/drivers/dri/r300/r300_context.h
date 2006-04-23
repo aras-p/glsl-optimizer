@@ -47,11 +47,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "colormac.h"
 #include "radeon_context.h"
 
-/* PPC doesnt support 16 bit elts ... */
-#ifndef MESA_BIG_ENDIAN
 #define USER_BUFFERS
 #define RADEON_VTXFMT_A
 #define HW_VBOS
+
+/* We don't handle 16 bits elts swapping yet */
+#ifdef MESA_BIG_ENDIAN
+#define FORCE_32BITS_ELTS
 #endif
 
 //#define OPTIMIZE_ELTS

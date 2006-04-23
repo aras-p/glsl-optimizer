@@ -384,6 +384,7 @@ static void r300FreeGartAllocations(r300ContextPtr r300)
 	resize_u_list(r300);
 #endif
 
+#ifdef USER_BUFFERS
     for (i = r300->rmm->u_last + 1; i > 0; i--) {
 	if (r300->rmm->u_list[i].ptr == NULL) {
 	    continue;
@@ -417,6 +418,7 @@ static void r300FreeGartAllocations(r300ContextPtr r300)
 	}
     }
     r300->rmm->u_head = i;
+#endif /* USER_BUFFERS */
 }
 
 /* Destroy the device specific context.
