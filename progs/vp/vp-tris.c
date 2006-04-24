@@ -24,8 +24,6 @@ static void usage( char *name )
 static void args(int argc, char *argv[])
 {
    GLint i;
-   
-   fprintf(stderr, "%d\n", argc);
 
    for (i = 1; i < argc; i++) {
       if (strncmp(argv[i], "-n", 2) == 0) {
@@ -70,7 +68,7 @@ static void Init( void )
       exit(1);
    }
 
-   fprintf(stderr, "%*s\n", sz, buf);
+   fprintf(stderr, "%.*s\n", sz, buf);
       
    glGenProgramsARB(1, &prognum);
 
