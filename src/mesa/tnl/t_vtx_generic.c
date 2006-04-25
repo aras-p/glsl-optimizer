@@ -96,6 +96,7 @@ static void attrib_##ATTR##_##N( const GLfloat *v )	\
    ATTRFV( ATTRIB, 3 )				\
    ATTRFV( ATTRIB, 4 )			
 
+/* conventional attribs */
 ATTRS( 0 )
 ATTRS( 1 )
 ATTRS( 2 )
@@ -113,8 +114,28 @@ ATTRS( 13 )
 ATTRS( 14 )
 ATTRS( 15 )
 
+/* generic attribs */
+ATTRS( 16 )
+ATTRS( 17 )
+ATTRS( 18 )
+ATTRS( 19 )
+ATTRS( 20 )
+ATTRS( 21 )
+ATTRS( 22 )
+ATTRS( 23 )
+ATTRS( 24 )
+ATTRS( 25 )
+ATTRS( 26 )
+ATTRS( 27 )
+ATTRS( 28 )
+ATTRS( 29 )
+ATTRS( 30 )
+ATTRS( 31 )
+
+
 void _tnl_generic_attr_table_init( tnl_attrfv_func (*tab)[4] )
 {
+   /* conventional attribs */
    INIT( tab, 0 );
    INIT( tab, 1 );
    INIT( tab, 2 );
@@ -131,6 +152,24 @@ void _tnl_generic_attr_table_init( tnl_attrfv_func (*tab)[4] )
    INIT( tab, 13 );
    INIT( tab, 14 );
    INIT( tab, 15 );
+
+   /* generic attribs */
+   INIT( tab, 16 );
+   INIT( tab, 17 );
+   INIT( tab, 18 );
+   INIT( tab, 19 );
+   INIT( tab, 20 );
+   INIT( tab, 21 );
+   INIT( tab, 22 );
+   INIT( tab, 23 );
+   INIT( tab, 24 );
+   INIT( tab, 25 );
+   INIT( tab, 26 );
+   INIT( tab, 27 );
+   INIT( tab, 28 );
+   INIT( tab, 29 );
+   INIT( tab, 30 );
+   INIT( tab, 31 );
 }
 
 /* These can be made efficient with codegen.  Further, by adding more
@@ -311,22 +350,19 @@ static void GLAPIENTRY _tnl_MultiTexCoord1f( GLenum target, GLfloat x  )
    DISPATCH_ATTR1F( attr, x );
 }
 
-static void GLAPIENTRY _tnl_MultiTexCoord1fv( GLenum target,
-					      const GLfloat *v )
+static void GLAPIENTRY _tnl_MultiTexCoord1fv( GLenum target, const GLfloat *v )
 {
    GLuint attr = (target & 0x7) + _TNL_ATTRIB_TEX0;
    DISPATCH_ATTR1FV( attr, v );
 }
 
-static void GLAPIENTRY _tnl_MultiTexCoord2f( GLenum target, GLfloat x, 
-					     GLfloat y )
+static void GLAPIENTRY _tnl_MultiTexCoord2f( GLenum target, GLfloat x, GLfloat y )
 {
    GLuint attr = (target & 0x7) + _TNL_ATTRIB_TEX0;
    DISPATCH_ATTR2F( attr, x, y );
 }
 
-static void GLAPIENTRY _tnl_MultiTexCoord2fv( GLenum target, 
-					      const GLfloat *v )
+static void GLAPIENTRY _tnl_MultiTexCoord2fv( GLenum target, const GLfloat *v )
 {
    GLuint attr = (target & 0x7) + _TNL_ATTRIB_TEX0;
    DISPATCH_ATTR2FV( attr, v );
@@ -339,8 +375,7 @@ static void GLAPIENTRY _tnl_MultiTexCoord3f( GLenum target, GLfloat x,
    DISPATCH_ATTR3F( attr, x, y, z );
 }
 
-static void GLAPIENTRY _tnl_MultiTexCoord3fv( GLenum target, 
-					      const GLfloat *v )
+static void GLAPIENTRY _tnl_MultiTexCoord3fv( GLenum target, const GLfloat *v )
 {
    GLuint attr = (target & 0x7) + _TNL_ATTRIB_TEX0;
    DISPATCH_ATTR3FV( attr, v );
@@ -354,52 +389,59 @@ static void GLAPIENTRY _tnl_MultiTexCoord4f( GLenum target, GLfloat x,
    DISPATCH_ATTR4F( attr, x, y, z, w );
 }
 
-static void GLAPIENTRY _tnl_MultiTexCoord4fv( GLenum target, 
-					      const GLfloat *v )
+static void GLAPIENTRY _tnl_MultiTexCoord4fv( GLenum target, const GLfloat *v )
 {
    GLuint attr = (target & 0x7) + _TNL_ATTRIB_TEX0;
    DISPATCH_ATTR4FV( attr, v );
 }
 
 
+/**
+ * GL_NV_vertex_program Vertex Attributes
+ * Note that these attributes DO alias the conventional attributes.
+ * Also, calling glVertexAttribNV(0, xxx) is equivalent to glVertex(xxx).
+ */
+
 static void GLAPIENTRY _tnl_VertexAttrib1fNV( GLuint index, GLfloat x )
 {
-   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS)
+      index = _TNL_ATTRIB_ERROR;
    DISPATCH_ATTR1F( index, x );
 }
 
-static void GLAPIENTRY _tnl_VertexAttrib1fvNV( GLuint index, 
-					       const GLfloat *v )
+static void GLAPIENTRY _tnl_VertexAttrib1fvNV( GLuint index, const GLfloat *v )
 {
-   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS)
+      index = _TNL_ATTRIB_ERROR;
    DISPATCH_ATTR1FV( index, v );
 }
 
-static void GLAPIENTRY _tnl_VertexAttrib2fNV( GLuint index, GLfloat x, 
-					      GLfloat y )
+static void GLAPIENTRY _tnl_VertexAttrib2fNV(GLuint index, GLfloat x, GLfloat y)
 {
-   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS)
+      index = _TNL_ATTRIB_ERROR;
    DISPATCH_ATTR2F( index, x, y );
 }
 
-static void GLAPIENTRY _tnl_VertexAttrib2fvNV( GLuint index,
-					       const GLfloat *v )
+static void GLAPIENTRY _tnl_VertexAttrib2fvNV( GLuint index, const GLfloat *v )
 {
-   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS)
+      index = _TNL_ATTRIB_ERROR;
    DISPATCH_ATTR2FV( index, v );
 }
 
 static void GLAPIENTRY _tnl_VertexAttrib3fNV( GLuint index, GLfloat x,
 					      GLfloat y, GLfloat z )
 {
-   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS)
+      index = _TNL_ATTRIB_ERROR;
    DISPATCH_ATTR3F( index, x, y, z );
 }
 
-static void GLAPIENTRY _tnl_VertexAttrib3fvNV( GLuint index,
-					       const GLfloat *v )
+static void GLAPIENTRY _tnl_VertexAttrib3fvNV( GLuint index, const GLfloat *v )
 {
-   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS)
+      index = _TNL_ATTRIB_ERROR;
    DISPATCH_ATTR3FV( index, v );
 }
 
@@ -407,32 +449,40 @@ static void GLAPIENTRY _tnl_VertexAttrib4fNV( GLuint index, GLfloat x,
 					      GLfloat y, GLfloat z,
 					      GLfloat w )
 {
-   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS)
+      index = _TNL_ATTRIB_ERROR;
    DISPATCH_ATTR4F( index, x, y, z, w );
 }
 
-static void GLAPIENTRY _tnl_VertexAttrib4fvNV( GLuint index, 
-					       const GLfloat *v )
+static void GLAPIENTRY _tnl_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
 {
-   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) index = ERROR_ATTRIB;
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS)
+      index = _TNL_ATTRIB_ERROR;
    DISPATCH_ATTR4FV( index, v );
 }
+
+
+
+/**
+ * GL_ARB_vertex_program Vertex Attributes
+ * Note that these attributes do NOT alias the conventional attributes.
+ * Also, calling glVertexAttribARB(0, xxx) is equivalent to glVertex(xxx).
+ */
 
 static void GLAPIENTRY _tnl_VertexAttrib1fARB( GLuint index, GLfloat x )
 {
    if (index >= MAX_VERTEX_ATTRIBS)
-      index = ERROR_ATTRIB;
-   else
+      index = _TNL_ATTRIB_ERROR;
+   else if (index > 0)
       index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR1F( index, x );
 }
 
-static void GLAPIENTRY _tnl_VertexAttrib1fvARB( GLuint index, 
-					       const GLfloat *v )
+static void GLAPIENTRY _tnl_VertexAttrib1fvARB(GLuint index, const GLfloat *v)
 {
    if (index >= MAX_VERTEX_ATTRIBS)
-      index = ERROR_ATTRIB;
-   else
+      index = _TNL_ATTRIB_ERROR;
+   else if (index > 0)
       index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR1FV( index, v );
 }
@@ -441,59 +491,55 @@ static void GLAPIENTRY _tnl_VertexAttrib2fARB( GLuint index, GLfloat x,
 					      GLfloat y )
 {
    if (index >= MAX_VERTEX_ATTRIBS)
-      index = ERROR_ATTRIB;
-   else
+      index = _TNL_ATTRIB_ERROR;
+   else if (index > 0)
       index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR2F( index, x, y );
 }
 
-static void GLAPIENTRY _tnl_VertexAttrib2fvARB( GLuint index,
-					       const GLfloat *v )
+static void GLAPIENTRY _tnl_VertexAttrib2fvARB(GLuint index, const GLfloat *v)
 {
    if (index >= MAX_VERTEX_ATTRIBS)
-      index = ERROR_ATTRIB;
-   else
+      index = _TNL_ATTRIB_ERROR;
+   else if (index > 0)
       index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR2FV( index, v );
 }
 
-static void GLAPIENTRY _tnl_VertexAttrib3fARB( GLuint index, GLfloat x,
-					      GLfloat y, GLfloat z )
+static void GLAPIENTRY _tnl_VertexAttrib3fARB(GLuint index, GLfloat x,
+					      GLfloat y, GLfloat z)
 {
    if (index >= MAX_VERTEX_ATTRIBS)
-      index = ERROR_ATTRIB;
-   else
+      index = _TNL_ATTRIB_ERROR;
+   else if (index > 0)
       index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR3F( index, x, y, z );
 }
 
-static void GLAPIENTRY _tnl_VertexAttrib3fvARB( GLuint index,
-					       const GLfloat *v )
+static void GLAPIENTRY _tnl_VertexAttrib3fvARB(GLuint index, const GLfloat *v)
 {
    if (index >= MAX_VERTEX_ATTRIBS)
-      index = ERROR_ATTRIB;
-   else
+      index = _TNL_ATTRIB_ERROR;
+   else if (index > 0)
       index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR3FV( index, v );
 }
 
-static void GLAPIENTRY _tnl_VertexAttrib4fARB( GLuint index, GLfloat x,
-					      GLfloat y, GLfloat z,
-					      GLfloat w )
+static void GLAPIENTRY _tnl_VertexAttrib4fARB(GLuint index, GLfloat x,
+					      GLfloat y, GLfloat z, GLfloat w)
 {
    if (index >= MAX_VERTEX_ATTRIBS)
-      index = ERROR_ATTRIB;
-   else
+      index = _TNL_ATTRIB_ERROR;
+   else if (index > 0)
       index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR4F( index, x, y, z, w );
 }
 
-static void GLAPIENTRY _tnl_VertexAttrib4fvARB( GLuint index, 
-					       const GLfloat *v )
+static void GLAPIENTRY _tnl_VertexAttrib4fvARB(GLuint index, const GLfloat *v)
 {
    if (index >= MAX_VERTEX_ATTRIBS)
-      index = ERROR_ATTRIB;
-   else
+      index = _TNL_ATTRIB_ERROR;
+   else if (index > 0)
       index += VERT_ATTRIB_GENERIC0;
    DISPATCH_ATTR4FV( index, v );
 }

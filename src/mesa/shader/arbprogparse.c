@@ -1537,7 +1537,12 @@ parse_attrib_binding(GLcontext * ctx, GLubyte ** inst,
                GLuint attrib;
                if (!parse_generic_attrib_num(ctx, inst, Program, &attrib)) {
                   *is_generic = 1;
-                  *inputReg = attrib;
+                  /* Add VERT_ATTRIB_GENERIC0 here because ARB_vertex_program's
+                   * attributes do not alias the conventional vertex
+                   * attributes.
+                   */
+                  if (attrib > 0)
+                     *inputReg = attrib + VERT_ATTRIB_GENERIC0;
                }
             }
             break;

@@ -613,29 +613,27 @@ struct gl_colorbuffer_attrib
 struct gl_current_attrib
 {
    /**
-    * \name Values valid only when FLUSH_VERTICES has been called.
+    * \name Current vertex attributes.
+    * \note Values are valid only after FLUSH_VERTICES has been called.
     */
    /*@{*/
-   GLfloat Attrib[VERT_ATTRIB_MAX][4];		/**< Current vertex attributes
-						  *  indexed by VERT_ATTRIB_* */
-   GLfloat Index;				/**< Current color index */
-   GLboolean EdgeFlag;				/**< Current edge flag */
+   GLfloat Attrib[VERT_ATTRIB_MAX][4];	/**< Position, color, texcoords, etc */
+   GLfloat Index;			/**< Current color index */
+   GLboolean EdgeFlag;			/**< Current edge flag */
    /*@}*/
 
    /**
-    * \name Values are always valid.  
-    * 
-    * \note BTW, note how similar this set of attributes is to the SWvertex
-    * data type in the software rasterizer...
+    * \name Current raster position attributes (always valid).
+    * \note This set of attributes is very similar to the SWvertex struct.
     */
    /*@{*/
-   GLfloat RasterPos[4];			/**< Current raster position */
-   GLfloat RasterDistance;			/**< Current raster distance */
-   GLfloat RasterColor[4];			/**< Current raster color */
-   GLfloat RasterSecondaryColor[4];             /**< Current raster secondary color */
-   GLfloat RasterIndex;				/**< Current raster index */
+   GLfloat RasterPos[4];
+   GLfloat RasterDistance;
+   GLfloat RasterColor[4];
+   GLfloat RasterSecondaryColor[4];
+   GLfloat RasterIndex;
    GLfloat RasterTexCoords[MAX_TEXTURE_COORD_UNITS][4];
-   GLboolean RasterPosValid;			/**< Raster pos valid flag */
+   GLboolean RasterPosValid;
    /*@}*/
 };
 
@@ -1641,7 +1639,9 @@ struct gl_client_array
  */
 struct gl_array_attrib
 {
-   struct gl_client_array Vertex;	     /**< client data descriptors */
+   /** Conventional vertex arrays */
+   /*@{*/
+   struct gl_client_array Vertex;
    struct gl_client_array Normal;
    struct gl_client_array Color;
    struct gl_client_array SecondaryColor;
@@ -1649,15 +1649,17 @@ struct gl_array_attrib
    struct gl_client_array Index;
    struct gl_client_array TexCoord[MAX_TEXTURE_COORD_UNITS];
    struct gl_client_array EdgeFlag;
+   /*@}*/
 
-   struct gl_client_array VertexAttrib[VERT_ATTRIB_MAX];  /**< GL_NV_vertex_program */
+   /** Generic arrays for vertex programs/shaders; */
+   struct gl_client_array VertexAttrib[VERT_ATTRIB_MAX];
 
    GLint ActiveTexture;		/**< Client Active Texture */
    GLuint LockFirst;            /**< GL_EXT_compiled_vertex_array */
    GLuint LockCount;            /**< GL_EXT_compiled_vertex_array */
 
-   GLbitfield _Enabled;		/**< _NEW_ARRAY_* - bit set if array enabled */
-   GLbitfield NewState;		/**< _NEW_ARRAY_* */
+   GLbitfield _Enabled;		/**< mask of _NEW_ARRAY_* values */
+   GLbitfield NewState;		/**< mask of _NEW_ARRAY_* values */
 
 #if FEATURE_ARB_vertex_buffer_object
    struct gl_buffer_object *NullBufferObj;

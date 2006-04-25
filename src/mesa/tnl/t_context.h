@@ -152,6 +152,9 @@ enum {
 #define _TNL_ATTRIB_TEX(u)       (_TNL_ATTRIB_TEX0 + (u))
 #define _TNL_ATTRIB_ATTRIBUTE(n) (_TNL_ATTRIB_ATTRIBUTE0 + (n))
 
+/* special index used for handing invalid glVertexAttribute() indices */
+#define _TNL_ATTRIB_ERROR    (_TNL_ATTRIB_ATTRIBUTE15 + 1)
+
 /* Define bit ranges instead of bit masks.
  */
 #define _TNL_FIRST_PROG      _TNL_ATTRIB_WEIGHT
@@ -228,10 +231,11 @@ struct _tnl_dynfn_generators {
    struct _tnl_dynfn *(*Attribute[4])( GLcontext *ctx, int key );
 };
 
-#define _TNL_MAX_ATTR_CODEGEN 16 
+#define _TNL_MAX_ATTR_CODEGEN 32
 
 
-/* The assembly of vertices in immediate mode is separated from
+/**
+ * The assembly of vertices in immediate mode is separated from
  * display list compilation.  This allows a simpler immediate mode
  * treatment and a display list compiler better suited to
  * hardware-acceleration.
@@ -250,7 +254,8 @@ struct tnl_vtx {
    GLuint counter, initial_counter;
    struct tnl_copied_vtx copied;
 
-   tnl_attrfv_func tabfv[_TNL_MAX_ATTR_CODEGEN+1][4]; /* plus 1 for ERROR_ATTRIB */
+   /** Note extra space for error handler: */
+   tnl_attrfv_func tabfv[_TNL_ATTRIB_ERROR+1][4];
 
    struct _tnl_dynfn_lists cache;
    struct _tnl_dynfn_generators gen;

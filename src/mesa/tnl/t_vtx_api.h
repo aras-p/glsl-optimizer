@@ -37,9 +37,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "t_context.h"
 
-#define ERROR_ATTRIB 16
-
-
 
 /* t_vtx_api.c:
  */

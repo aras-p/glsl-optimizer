@@ -47,7 +47,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 static void reset_attrfv( TNLcontext *tnl );
 
-static tnl_attrfv_func choose[_TNL_MAX_ATTR_CODEGEN+1][4]; /* +1 for ERROR_ATTRIB */
+/** Note extra space for error index: */
+static tnl_attrfv_func choose[_TNL_ATTRIB_ERROR+1][4];
 static tnl_attrfv_func generic_attr_func[_TNL_MAX_ATTR_CODEGEN][4];
 
 
@@ -191,8 +192,7 @@ static void _tnl_copy_from_current( GLcontext *ctx )
 
    /* Edgeflag requires additional treatment:
     */
-   tnl->vtx.CurrentFloatEdgeFlag = 
-      (GLfloat)ctx->Current.EdgeFlag;
+   tnl->vtx.CurrentFloatEdgeFlag = (GLfloat) ctx->Current.EdgeFlag;
    
    for (i = _TNL_ATTRIB_POS+1 ; i < _TNL_ATTRIB_MAX ; i++) 
       switch (tnl->vtx.attrsz[i]) {
@@ -435,6 +435,7 @@ static tnl_attrfv_func do_choose( GLuint attr, GLuint sz )
    if (!tnl->vtx.tabfv[attr][sz-1])
       tnl->vtx.tabfv[attr][sz-1] = generic_attr_func[attr][sz-1];
 
+   ASSERT(tnl->vtx.tabfv[attr][sz-1]);
    return tnl->vtx.tabfv[attr][sz-1];
 }
 
@@ -444,6 +445,7 @@ static tnl_attrfv_func do_choose( GLuint attr, GLuint sz )
 static void choose_##ATTR##_##N( const GLfloat *v )	\
 {							\
    tnl_attrfv_func f = do_choose(ATTR, N);		\
+   ASSERT(f); \
    f( v );						\
 }
 
@@ -455,11 +457,13 @@ static void choose_##ATTR##_##N( const GLfloat *v )	\
 
 
 #define INIT_CHOOSERS(ATTR)			\
+   ASSERT(ATTR <= _TNL_ATTRIB_ERROR);\
    choose[ATTR][0] = choose_##ATTR##_1;		\
    choose[ATTR][1] = choose_##ATTR##_2;		\
    choose[ATTR][2] = choose_##ATTR##_3;		\
    choose[ATTR][3] = choose_##ATTR##_4;
 
+/* conventional attributes */
 CHOOSERS( 0 )
 CHOOSERS( 1 )
 CHOOSERS( 2 )
@@ -477,6 +481,23 @@ CHOOSERS( 13 )
 CHOOSERS( 14 )
 CHOOSERS( 15 )
 
+/* generic attributes */
+CHOOSERS( 16 )
+CHOOSERS( 17 )
+CHOOSERS( 18 )
+CHOOSERS( 19 )
+CHOOSERS( 20 )
+CHOOSERS( 21 )
+CHOOSERS( 22 )
+CHOOSERS( 23 )
+CHOOSERS( 24 )
+CHOOSERS( 25 )
+CHOOSERS( 26 )
+CHOOSERS( 27 )
+CHOOSERS( 28 )
+CHOOSERS( 29 )
+CHOOSERS( 30 )
+CHOOSERS( 31 )
 
 
 /**
@@ -935,6 +956,7 @@ void _tnl_vtx_init( GLcontext *ctx )
    if (firsttime) {
       firsttime = 0;
 
+      /* conventional attributes */
       INIT_CHOOSERS( 0 );
       INIT_CHOOSERS( 1 );
       INIT_CHOOSERS( 2 );
@@ -952,10 +974,28 @@ void _tnl_vtx_init( GLcontext *ctx )
       INIT_CHOOSERS( 14 );
       INIT_CHOOSERS( 15 );
 
-      choose[ERROR_ATTRIB][0] = error_attrib;
-      choose[ERROR_ATTRIB][1] = error_attrib;
-      choose[ERROR_ATTRIB][2] = error_attrib;
-      choose[ERROR_ATTRIB][3] = error_attrib;
+      /* generic attributes */
+      INIT_CHOOSERS( 16 );
+      INIT_CHOOSERS( 17 );
+      INIT_CHOOSERS( 18 );
+      INIT_CHOOSERS( 19 );
+      INIT_CHOOSERS( 20 );
+      INIT_CHOOSERS( 21 );
+      INIT_CHOOSERS( 22 );
+      INIT_CHOOSERS( 23 );
+      INIT_CHOOSERS( 24 );
+      INIT_CHOOSERS( 25 );
+      INIT_CHOOSERS( 26 );
+      INIT_CHOOSERS( 27 );
+      INIT_CHOOSERS( 28 );
+      INIT_CHOOSERS( 29 );
+      INIT_CHOOSERS( 30 );
+      INIT_CHOOSERS( 31 );
+
+      choose[_TNL_ATTRIB_ERROR][0] = error_attrib;
+      choose[_TNL_ATTRIB_ERROR][1] = error_attrib;
+      choose[_TNL_ATTRIB_ERROR][2] = error_attrib;
+      choose[_TNL_ATTRIB_ERROR][3] = error_attrib;
 
 #ifdef USE_X86_ASM
       if (tnl->AllowCodegen) {
