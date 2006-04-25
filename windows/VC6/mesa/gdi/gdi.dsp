@@ -123,7 +123,7 @@ LINK32=link.exe
 # ADD LINK32 mesa.lib winmm.lib msvcrt.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386 /nodefaultlib /out:"Release_x86/OPENGL32.DLL" /libpath:"../mesa/Release_x86"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=if not exist ..\..\..\..\lib md ..\..\..\..\lib	copy Release_x86\OPENGL32.LIB ..\..\..\..\lib	copy Release_x86\OPENGL32.DLL ..\..\..\..\lib	if exist ..\..\..\..\progs\demos copy Release_x86\OPENGL32.DLL ..\..\..\..\progs\demos
+PostBuild_Cmds=if not exist ..\..\..\..\lib md ..\..\..\..\lib	copy Release_x86\OPENGL32.LIB ..\..\..\..\lib	copy Release_x86\OPENGL32.DLL ..\..\..\..\lib	if exist ..\..\..\..\progs\demos copy Release_x86\OPENGL32.DLL ..\..\..\..\progs\demos	copy Release_x86\OPENGL32.DLL "C:\Documents and Settings\mjk\Pulpit\pen\noise-demo"
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "gdi - Win32 Debug x86"
@@ -156,7 +156,7 @@ LINK32=link.exe
 # ADD LINK32 mesa.lib winmm.lib msvcrtd.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /debug /machine:I386 /nodefaultlib /out:"Debug_x86/OPENGL32.DLL" /pdbtype:sept /libpath:"../mesa/Debug_x86"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=if not exist ..\..\..\..\lib md ..\..\..\..\lib	copy Debug_x86\OPENGL32.LIB ..\..\..\..\lib	copy Debug_x86\OPENGL32.DLL ..\..\..\..\lib	if exist ..\..\..\..\progs\demos copy Debug_x86\OPENGL32.DLL ..\..\..\..\progs\demos
+PostBuild_Cmds=if not exist ..\..\..\..\lib md ..\..\..\..\lib	copy Debug_x86\OPENGL32.LIB ..\..\..\..\lib	copy Debug_x86\OPENGL32.DLL ..\..\..\..\lib	if exist ..\..\..\..\progs\demos copy Debug_x86\OPENGL32.DLL ..\..\..\..\progs\demos	copy Debug_x86\OPENGL32.DLL "C:\Documents and Settings\mjk\Pulpit\pen\noise-demo"
 # End Special Build Tool
 
 !ENDIF 
