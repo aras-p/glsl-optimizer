@@ -298,12 +298,12 @@ static void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const G
 	if (ctx->NewState) 
 		_mesa_update_state( ctx );
 	
-	for (i=_TNL_ATTRIB_MAT_FRONT_AMBIENT; i < _TNL_ATTRIB_INDEX; i++) {
+	for (i=_TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
 		rmesa->temp_attrib[i] = TNL_CONTEXT(ctx)->vb.AttribPtr[i];
 		TNL_CONTEXT(ctx)->vb.AttribPtr[i] = &rmesa->dummy_attrib[i];
 	}
 	r300UpdateShaders(rmesa);
-	for (i=_TNL_ATTRIB_MAT_FRONT_AMBIENT; i < _TNL_ATTRIB_INDEX; i++) {
+	for (i=_TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
 		TNL_CONTEXT(ctx)->vb.AttribPtr[i] = rmesa->temp_attrib[i];
 	}
 	
@@ -482,12 +482,12 @@ static void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei
 	if (ctx->NewState) 
 		_mesa_update_state( ctx );
 	
-	for (i=_TNL_ATTRIB_MAT_FRONT_AMBIENT; i < _TNL_ATTRIB_INDEX; i++) {
+	for (i=_TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
 		rmesa->temp_attrib[i] = TNL_CONTEXT(ctx)->vb.AttribPtr[i];
 		TNL_CONTEXT(ctx)->vb.AttribPtr[i] = &rmesa->dummy_attrib[i];
 	}
 	r300UpdateShaders(rmesa);
-	for (i=_TNL_ATTRIB_MAT_FRONT_AMBIENT; i < _TNL_ATTRIB_INDEX; i++) {
+	for (i=_TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
 		TNL_CONTEXT(ctx)->vb.AttribPtr[i] = rmesa->temp_attrib[i];
 	}
 
@@ -578,12 +578,12 @@ static void radeonDrawArrays( GLenum mode, GLint start, GLsizei count )
 	
 	/* XXX: setup_arrays before state update? */
 	
-	for (i=_TNL_ATTRIB_MAT_FRONT_AMBIENT; i < _TNL_ATTRIB_INDEX; i++) {
+	for (i=_TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
 		rmesa->temp_attrib[i] = TNL_CONTEXT(ctx)->vb.AttribPtr[i];
 		TNL_CONTEXT(ctx)->vb.AttribPtr[i] = &rmesa->dummy_attrib[i];
 	}
 	r300UpdateShaders(rmesa);
-	for (i=_TNL_ATTRIB_MAT_FRONT_AMBIENT; i < _TNL_ATTRIB_INDEX; i++) {
+	for (i=_TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
 		TNL_CONTEXT(ctx)->vb.AttribPtr[i] = rmesa->temp_attrib[i];
 	}
 
