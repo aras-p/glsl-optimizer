@@ -169,8 +169,8 @@ clear_ci_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 
    ASSERT(!ctx->Visual.rgbMode);
 
-   ASSERT((ctx->Color.IndexMask & ((1 << ctx->Visual.indexBits) - 1))
-          == (GLuint) ((1 << ctx->Visual.indexBits) - 1));
+   ASSERT((ctx->Color.IndexMask & ((1 << rb->IndexBits) - 1))
+          == (GLuint) ((1 << rb->IndexBits) - 1));
 
    ASSERT(rb->PutMonoRow);
 
@@ -221,7 +221,8 @@ clear_color_buffers(GLcontext *ctx)
       }
    }
    else {
-      const GLuint indexBits = (1 << ctx->Visual.indexBits) - 1;
+      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+      const GLuint indexBits = (1 << rb->IndexBits) - 1;
       if ((ctx->Color.IndexMask & indexBits) == indexBits) {
          masking = GL_FALSE;
       }

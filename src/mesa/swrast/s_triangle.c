@@ -914,7 +914,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
       return;								\
    }
 #define RENDER_SPAN( span )						\
-   if (ctx->Visual.depthBits <= 16) {					\
+   if (rb->DepthBits <= 16) {						\
       GLuint i;								\
       const GLushort *zRow = (const GLushort *)				\
          rb->GetPointer(ctx, rb, span.x, span.y);			\
@@ -1110,7 +1110,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 			&& ctx->Depth.Mask == GL_TRUE)
 		       || swrast->_RasterMask == TEXTURE_BIT)
 		   && ctx->Polygon.StippleFlag == GL_FALSE
-                   && ctx->Visual.depthBits <= 16) {
+                   && ctx->DrawBuffer->Visual.depthBits <= 16) {
 		  if (swrast->_RasterMask == (DEPTH_BIT | TEXTURE_BIT)) {
 		     USE(simple_z_textured_triangle);
 		  }
