@@ -145,7 +145,7 @@ static void _tnl_copy_to_current( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx); 
    GLuint i;
 
-   for (i = _TNL_ATTRIB_POS+1 ; i < _TNL_ATTRIB_INDEX ; i++) {
+   for (i = _TNL_ATTRIB_POS+1 ; i < _TNL_ATTRIB_EDGEFLAG ; i++) {
       if (tnl->vtx.attrsz[i]) {
          /* Note: the tnl->vtx.current[i] pointers points to
           * the ctx->Current fields.  The first 16 or so, anyway.
@@ -154,13 +154,6 @@ static void _tnl_copy_to_current( GLcontext *ctx )
                        tnl->vtx.attrsz[i], 
                        tnl->vtx.attrptr[i]);
       }
-   }
-
-   /* color index is special (it's not a float[4] so COPY_CLEAN_4V above
-    * will trash adjacent memory!)
-    */
-   if (tnl->vtx.attrsz[_TNL_ATTRIB_INDEX]) {
-      ctx->Current.Index = tnl->vtx.attrptr[_TNL_ATTRIB_INDEX][0];
    }
 
    /* Edgeflag requires additional treatment:
@@ -642,30 +635,6 @@ static void GLAPIENTRY _tnl_EdgeFlag( GLboolean b )
    OTHER_ATTR( _TNL_ATTRIB_EDGEFLAG, 1, &f );
 }
 
-static void GLAPIENTRY _tnl_EdgeFlagv( const GLboolean *v )
-{
-   GET_CURRENT_CONTEXT( ctx ); 
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   GLfloat f = (GLfloat)v[0];
-
-   OTHER_ATTR( _TNL_ATTRIB_EDGEFLAG, 1, &f );
-}
-
-static void GLAPIENTRY _tnl_Indexf( GLfloat f )
-{
-   GET_CURRENT_CONTEXT( ctx ); 
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-
-   OTHER_ATTR( _TNL_ATTRIB_INDEX, 1, &f );
-}
-
-static void GLAPIENTRY _tnl_Indexfv( const GLfloat *v )
-{
-   GET_CURRENT_CONTEXT( ctx ); 
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-
-   OTHER_ATTR( _TNL_ATTRIB_INDEX, 1, v );
-}
 
 /* Eval
  */
@@ -680,7 +649,7 @@ static void GLAPIENTRY _tnl_EvalCoord1f( GLfloat u )
       if (tnl->vtx.eval.new_state) 
 	 _tnl_update_eval( ctx );
 
-      for (i = 0 ; i <= _TNL_ATTRIB_INDEX ; i++) {
+      for (i = 0 ; i <= _TNL_ATTRIB_EDGEFLAG ; i++) {
 	 if (tnl->vtx.eval.map1[i].map) 
 	    if (tnl->vtx.attrsz[i] != tnl->vtx.eval.map1[i].sz)
 	       _tnl_fixup_vertex( ctx, i, tnl->vtx.eval.map1[i].sz );
@@ -708,7 +677,7 @@ static void GLAPIENTRY _tnl_EvalCoord2f( GLfloat u, GLfloat v )
       if (tnl->vtx.eval.new_state) 
 	 _tnl_update_eval( ctx );
 
-      for (i = 0 ; i <= _TNL_ATTRIB_INDEX ; i++) {
+      for (i = 0 ; i <= _TNL_ATTRIB_EDGEFLAG ; i++) {
 	 if (tnl->vtx.eval.map2[i].map) 
 	    if (tnl->vtx.attrsz[i] != tnl->vtx.eval.map2[i].sz)
 	       _tnl_fixup_vertex( ctx, i, tnl->vtx.eval.map2[i].sz );
@@ -859,6 +828,9 @@ static void GLAPIENTRY _tnl_End( void )
 }
 
 
+/**
+ * XXX why aren't all members initialized here??
+ */
 static void _tnl_exec_vtxfmt_init( GLcontext *ctx )
 {
    GLvertexformat *vfmt = &(TNL_CONTEXT(ctx)->exec_vtxfmt);
@@ -868,7 +840,6 @@ static void _tnl_exec_vtxfmt_init( GLcontext *ctx )
    vfmt->CallList = _mesa_CallList;
    vfmt->CallLists = _mesa_CallLists;
    vfmt->EdgeFlag = _tnl_EdgeFlag;
-   vfmt->EdgeFlagv = _tnl_EdgeFlagv;
    vfmt->End = _tnl_End;
    vfmt->EvalCoord1f = _tnl_EvalCoord1f;
    vfmt->EvalCoord1fv = _tnl_EvalCoord1fv;
@@ -876,8 +847,6 @@ static void _tnl_exec_vtxfmt_init( GLcontext *ctx )
    vfmt->EvalCoord2fv = _tnl_EvalCoord2fv;
    vfmt->EvalPoint1 = _tnl_EvalPoint1;
    vfmt->EvalPoint2 = _tnl_EvalPoint2;
-   vfmt->Indexf = _tnl_Indexf;
-   vfmt->Indexfv = _tnl_Indexfv;
    vfmt->Materialfv = _tnl_Materialfv;
 
    vfmt->Rectf = _mesa_noop_Rectf;
@@ -935,8 +904,7 @@ static void _tnl_current_init( GLcontext *ctx )
       tnl->vtx.current[_TNL_ATTRIB_MAT_FRONT_AMBIENT + i] = 
 	 ctx->Light.Material.Attrib[i];
 
-   /* special cases */
-   tnl->vtx.current[_TNL_ATTRIB_INDEX] = &ctx->Current.Index;
+   /* special case */
    tnl->vtx.current[_TNL_ATTRIB_EDGEFLAG] = &tnl->vtx.CurrentFloatEdgeFlag;
 }
 
@@ -1006,7 +974,7 @@ void _tnl_vtx_init( GLcontext *ctx )
       _tnl_generic_attr_table_init( generic_attr_func );
    }
 
-   for (i = 0; i < _TNL_ATTRIB_INDEX; i++)
+   for (i = 0; i < _TNL_ATTRIB_EDGEFLAG; i++)
       _mesa_vector4f_init( &tmp->Attribs[i], 0, NULL);
 
    for (i = 0; i < 4; i++) {

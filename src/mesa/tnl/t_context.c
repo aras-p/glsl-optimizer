@@ -186,7 +186,7 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
    }
    else {
       RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POS );
-      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_INDEX );
+      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR_INDEX );
    }
 
    if (ctx->Fog.Enabled ||

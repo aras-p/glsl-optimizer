@@ -333,6 +333,16 @@ static void GLAPIENTRY _tnl_Color4fv( const GLfloat *v )
    DISPATCH_ATTR4FV( _TNL_ATTRIB_COLOR0, v );
 }
 
+static void GLAPIENTRY _tnl_Indexf( GLfloat v )
+{
+   DISPATCH_ATTR1F( _TNL_ATTRIB_COLOR_INDEX, v );
+}
+
+static void GLAPIENTRY _tnl_Indexfv( const GLfloat *v )
+{
+   DISPATCH_ATTR1FV( _TNL_ATTRIB_COLOR_INDEX, v );
+}
+
 static void GLAPIENTRY _tnl_SecondaryColor3fEXT( GLfloat x, GLfloat y, 
 						 GLfloat z )
 {
@@ -556,6 +566,8 @@ void _tnl_generic_exec_vtxfmt_init( GLcontext *ctx )
    vfmt->Color3fv = _tnl_Color3fv;
    vfmt->Color4f = _tnl_Color4f;
    vfmt->Color4fv = _tnl_Color4fv;
+   vfmt->Indexf = _tnl_Indexf;
+   vfmt->Indexfv = _tnl_Indexfv;
    vfmt->FogCoordfEXT = _tnl_FogCoordfEXT;
    vfmt->FogCoordfvEXT = _tnl_FogCoordfvEXT;
    vfmt->MultiTexCoord1fARB = _tnl_MultiTexCoord1f;

@@ -5067,12 +5067,6 @@ save_EdgeFlag(GLboolean x)
 }
 
 static void GLAPIENTRY
-save_EdgeFlagv(const GLboolean * v)
-{
-   save_EdgeFlag(v[0]);
-}
-
-static void GLAPIENTRY
 save_Materialfv(GLenum face, GLenum pname, const GLfloat * param)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -8447,7 +8441,6 @@ _mesa_save_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->Color4f = save_Color4f;
    vfmt->Color4fv = save_Color4fv;
    vfmt->EdgeFlag = save_EdgeFlag;
-   vfmt->EdgeFlagv = save_EdgeFlagv;
    vfmt->End = save_End;
    vfmt->EvalCoord1f = save_EvalCoord1f;
    vfmt->EvalCoord1fv = save_EvalCoord1fv;

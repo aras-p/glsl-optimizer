@@ -48,22 +48,16 @@ static void GLAPIENTRY _mesa_noop_EdgeFlag( GLboolean b )
    ctx->Current.EdgeFlag = b;
 }
 
-static void GLAPIENTRY _mesa_noop_EdgeFlagv( const GLboolean *b )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Current.EdgeFlag = *b;
-}
-
 static void GLAPIENTRY _mesa_noop_Indexf( GLfloat f )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ctx->Current.Index = f;
+   ctx->Current.Attrib[VERT_ATTRIB_COLOR_INDEX][0] = f;
 }
 
 static void GLAPIENTRY _mesa_noop_Indexfv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ctx->Current.Index = *v;
+   ctx->Current.Attrib[VERT_ATTRIB_COLOR_INDEX][0] = *v;
 }
 
 static void GLAPIENTRY _mesa_noop_FogCoordfEXT( GLfloat a )
@@ -917,7 +911,6 @@ _mesa_noop_vtxfmt_init( GLvertexformat *vfmt )
    vfmt->Color4f = _mesa_noop_Color4f;
    vfmt->Color4fv = _mesa_noop_Color4fv;
    vfmt->EdgeFlag = _mesa_noop_EdgeFlag;
-   vfmt->EdgeFlagv = _mesa_noop_EdgeFlagv;
    vfmt->End = _mesa_noop_End;
    vfmt->EvalCoord1f = _mesa_noop_EvalCoord1f;
    vfmt->EvalCoord1fv = _mesa_noop_EvalCoord1fv;

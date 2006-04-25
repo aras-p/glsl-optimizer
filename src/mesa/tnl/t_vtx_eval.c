@@ -134,7 +134,7 @@ void _tnl_do_EvalCoord1f(GLcontext* ctx, GLfloat u)
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint attr;
 
-   for (attr = 1; attr <= _TNL_ATTRIB_INDEX; attr++) {
+   for (attr = 1; attr <= _TNL_ATTRIB_EDGEFLAG; attr++) {
       struct gl_1d_map *map = tnl->vtx.eval.map1[attr].map;
       if (map) {
 	 GLfloat uu = (u - map->u1) * map->du;
@@ -179,7 +179,7 @@ void _tnl_do_EvalCoord2f( GLcontext* ctx, GLfloat u, GLfloat v )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint attr;
 
-   for (attr = 1; attr <= _TNL_ATTRIB_INDEX; attr++) {
+   for (attr = 1; attr <= _TNL_ATTRIB_EDGEFLAG; attr++) {
       struct gl_2d_map *map = tnl->vtx.eval.map2[attr].map;
       if (map) {
 	 GLfloat uu = (u - map->u1) * map->du;

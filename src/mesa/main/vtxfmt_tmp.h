@@ -68,12 +68,6 @@ static void GLAPIENTRY TAG(EdgeFlag)( GLboolean e )
    CALL_EdgeFlag(GET_DISPATCH(), ( e ));
 }
 
-static void GLAPIENTRY TAG(EdgeFlagv)( const GLboolean *v )
-{
-   PRE_LOOPBACK( EdgeFlagv );
-   CALL_EdgeFlagv(GET_DISPATCH(), ( v ));
-}
-
 static void GLAPIENTRY TAG(EvalCoord1f)( GLfloat s )
 {
    PRE_LOOPBACK( EvalCoord1f );
@@ -467,7 +461,6 @@ static GLvertexformat TAG(vtxfmt) = {
    TAG(Color4f),
    TAG(Color4fv),
    TAG(EdgeFlag),
-   TAG(EdgeFlagv),
    TAG(EvalCoord1f),
    TAG(EvalCoord1fv),
    TAG(EvalCoord2f),

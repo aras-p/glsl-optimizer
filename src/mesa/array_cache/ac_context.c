@@ -96,7 +96,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 0;
-   cl->Ptr = (GLubyte *) &ctx->Current.Index;
+   cl->Ptr = (GLubyte *) &ctx->Current.Attrib[VERT_ATTRIB_COLOR_INDEX];
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
 #if FEATURE_ARB_vertex_buffer_object

@@ -81,7 +81,7 @@ static GLuint check_input_changes( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint i;
    
-   for (i = 0; i < _TNL_ATTRIB_EDGEFLAG; i++) {
+   for (i = 0; i <= _TNL_LAST_MAT; i++) {
       if (tnl->vb.AttribPtr[i]->size != tnl->pipeline.last_attrib_size[i] ||
 	  tnl->vb.AttribPtr[i]->stride != tnl->pipeline.last_attrib_stride[i]) {
 	 tnl->pipeline.last_attrib_size[i] = tnl->vb.AttribPtr[i]->size;

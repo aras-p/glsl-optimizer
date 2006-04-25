@@ -133,6 +133,9 @@ _swsetup_RenderStart( GLcontext *ctx )
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 ))
          EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_4CHAN_4F_RGBA, specular);
 
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR_INDEX ))
+         EMIT_ATTR( _TNL_ATTRIB_COLOR_INDEX, EMIT_1F, index );
+
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG ))
          EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1F, fog);
 
@@ -151,9 +154,6 @@ _swsetup_RenderStart( GLcontext *ctx )
               }
           }
       }
-
-      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_INDEX ))
-         EMIT_ATTR( _TNL_ATTRIB_INDEX, EMIT_1F, index );
 
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POINTSIZE ))
          EMIT_ATTR( _TNL_ATTRIB_POINTSIZE, EMIT_1F, pointSize );
@@ -247,8 +247,8 @@ _swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest )
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_FOG, tmp );
    dest->fog = tmp[0];
 
-   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_INDEX, tmp );
-   dest->index = (GLuint) tmp[0];
+   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR_INDEX, tmp );
+   dest->index = tmp[0];
 
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_POINTSIZE, tmp );
    dest->pointSize = tmp[0];

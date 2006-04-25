@@ -135,7 +135,7 @@ prepare_materials(GLcontext *ctx,
     * update_materials(), above, that'll actually copy the vertex color to
     * the material attribute(s).
     */
-   for (i = _TNL_ATTRIB_MAT_FRONT_AMBIENT ; i < _TNL_ATTRIB_INDEX ; i++) {
+   for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
       if (VB->AttribPtr[i]->stride) {
 	 const GLuint j = store->mat_count++;
 	 const GLuint attr = i - _TNL_ATTRIB_MAT_FRONT_AMBIENT;
@@ -251,7 +251,7 @@ static GLboolean run_lighting( GLcontext *ctx,
 
    VB->AttribPtr[_TNL_ATTRIB_COLOR0] = VB->ColorPtr[0];
    VB->AttribPtr[_TNL_ATTRIB_COLOR1] = VB->SecondaryColorPtr[0];
-   VB->AttribPtr[_TNL_ATTRIB_INDEX] = VB->IndexPtr[0];
+   VB->AttribPtr[_TNL_ATTRIB_COLOR_INDEX] = VB->IndexPtr[0];
 
    return GL_TRUE;
 }

@@ -105,7 +105,7 @@ enum {
 	_TNL_ATTRIB_COLOR0 = 3,
 	_TNL_ATTRIB_COLOR1 = 4,
 	_TNL_ATTRIB_FOG = 5,
-	_TNL_ATTRIB_SIX = 6,
+	_TNL_ATTRIB_COLOR_INDEX = 6,
 	_TNL_ATTRIB_SEVEN = 7,
 	_TNL_ATTRIB_TEX0 = 8,
 	_TNL_ATTRIB_TEX1 = 9,
@@ -143,10 +143,9 @@ enum {
 	_TNL_ATTRIB_MAT_BACK_SHININESS = 41,
 	_TNL_ATTRIB_MAT_FRONT_INDEXES = 42,
 	_TNL_ATTRIB_MAT_BACK_INDEXES = 43,
-	_TNL_ATTRIB_INDEX = 44,
-	_TNL_ATTRIB_EDGEFLAG = 45,
-	_TNL_ATTRIB_POINTSIZE = 46,
-	_TNL_ATTRIB_MAX = 47
+	_TNL_ATTRIB_EDGEFLAG = 44,
+	_TNL_ATTRIB_POINTSIZE = 45,
+	_TNL_ATTRIB_MAX = 46
 } ;
 
 #define _TNL_ATTRIB_TEX(u)       (_TNL_ATTRIB_TEX0 + (u))
@@ -155,7 +154,8 @@ enum {
 /* special index used for handing invalid glVertexAttribute() indices */
 #define _TNL_ATTRIB_ERROR    (_TNL_ATTRIB_ATTRIBUTE15 + 1)
 
-/* Define bit ranges instead of bit masks.
+/**
+ * Handy attribute ranges:
  */
 #define _TNL_FIRST_PROG      _TNL_ATTRIB_WEIGHT
 #define _TNL_LAST_PROG       _TNL_ATTRIB_TEX7
@@ -197,8 +197,8 @@ struct tnl_eval2_map {
 
 struct tnl_eval {
    GLuint new_state;
-   struct tnl_eval1_map map1[_TNL_ATTRIB_INDEX + 1];
-   struct tnl_eval2_map map2[_TNL_ATTRIB_INDEX + 1];
+   struct tnl_eval1_map map1[_TNL_ATTRIB_EDGEFLAG + 1];
+   struct tnl_eval2_map map2[_TNL_ATTRIB_EDGEFLAG + 1];
 };
 
 
@@ -377,6 +377,7 @@ struct tnl_vertex_arrays
     * The GL_NV_vertex_program extension defines 16 extra sets of vertex
     * arrays which have precedent over the conventional arrays when enabled.
     */
+   /* XXX I think the array size is wronge (47 vs. 16) */
    GLvector4f  Attribs[_TNL_ATTRIB_MAX];
 };
 
@@ -419,6 +420,7 @@ struct vertex_buffer
    GLuint      PrimitiveCount;	      
 
    /* Inputs to the vertex program stage */
+   /* XXX This array may be too large (47 vs. 16) */
    GLvector4f *AttribPtr[_TNL_ATTRIB_MAX];      /* GL_NV_vertex_program */
 };
 

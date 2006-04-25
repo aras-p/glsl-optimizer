@@ -129,7 +129,7 @@ static void _tnl_vb_bind_vtx( GLcontext *ctx )
    VB->Elts = NULL;
    VB->NormalLengthPtr = NULL;
 
-   for (attr = 0; attr <= _TNL_ATTRIB_INDEX ; attr++) {
+   for (attr = 0; attr <= _TNL_ATTRIB_EDGEFLAG ; attr++) {
       if (tnl->vtx.attrsz[attr]) {
 	 tmp->Attribs[attr].count = count;
 	 tmp->Attribs[attr].data = (GLfloat (*)[4]) data;
@@ -171,10 +171,10 @@ static void _tnl_vb_bind_vtx( GLcontext *ctx )
    VB->NormalPtr = VB->AttribPtr[_TNL_ATTRIB_NORMAL];
    VB->ColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR0];
    VB->ColorPtr[1] = NULL;
-   VB->IndexPtr[0] = VB->AttribPtr[_TNL_ATTRIB_INDEX];
-   VB->IndexPtr[1] = NULL;
    VB->SecondaryColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR1];
    VB->SecondaryColorPtr[1] = NULL;
+   VB->IndexPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR_INDEX];
+   VB->IndexPtr[1] = NULL;
    VB->FogCoordPtr = VB->AttribPtr[_TNL_ATTRIB_FOG];
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {

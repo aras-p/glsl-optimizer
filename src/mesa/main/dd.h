@@ -975,7 +975,6 @@ typedef struct {
    void (GLAPIENTRYP Color4f)( GLfloat, GLfloat, GLfloat, GLfloat );
    void (GLAPIENTRYP Color4fv)( const GLfloat * );
    void (GLAPIENTRYP EdgeFlag)( GLboolean );
-   void (GLAPIENTRYP EdgeFlagv)( const GLboolean * );
    void (GLAPIENTRYP EvalCoord1f)( GLfloat );          /* NOTE */
    void (GLAPIENTRYP EvalCoord1fv)( const GLfloat * ); /* NOTE */
    void (GLAPIENTRYP EvalCoord2f)( GLfloat, GLfloat ); /* NOTE */

@@ -267,6 +267,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
    /* When vertex program mode is enabled, the generic vertex program
     * attribute arrays have priority over the conventional attributes.
     * Try to use them now.
+    * XXX that's true of NV_vertex_program, but ARB_vertex_program???
     */
    for (index = 0; index < VERT_ATTRIB_MAX; index++) {
       /* When vertex program mode is enabled, the generic vertex attribute
@@ -304,6 +305,11 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
 	 tmp->FogCoord.count = VB->Count;
 	 VB->AttribPtr[_TNL_ATTRIB_FOG] = &tmp->FogCoord;
       }
+      else if (index == VERT_ATTRIB_COLOR_INDEX) {
+         _tnl_import_index( ctx, 0, 0 );
+         tmp->Index.count = VB->Count;
+         VB->AttribPtr[_TNL_ATTRIB_COLOR_INDEX] = &tmp->Index;
+      }
       else if (index >= VERT_ATTRIB_TEX0 && index <= VERT_ATTRIB_TEX7) {
 	 i = index - VERT_ATTRIB_TEX0;
 	 _tnl_import_texcoord( ctx, i, GL_FALSE, GL_FALSE );
@@ -317,19 +323,13 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
 
    /* odd-ball vertex attributes */
    {
-      _tnl_import_index( ctx, 0, 0 );
-      tmp->Index.count = VB->Count;
-      VB->AttribPtr[_TNL_ATTRIB_INDEX] = &tmp->Index;
-   }
-
-   {
       _tnl_import_edgeflag( ctx, GL_TRUE, sizeof(GLboolean) );
       VB->EdgeFlag = (GLboolean *) tmp->EdgeFlag;
    }
 
    /* These are constant & could be precalculated:
     */
-   for (i = _TNL_ATTRIB_MAT_FRONT_AMBIENT; i < _TNL_ATTRIB_INDEX; i++) {
+   for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
       _tnl_constant_attrib(tnl, tmp, i);
    }
 
@@ -340,7 +340,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
    VB->NormalPtr = VB->AttribPtr[_TNL_ATTRIB_NORMAL];
    VB->ColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR0];
    VB->ColorPtr[1] = NULL;
-   VB->IndexPtr[0] = VB->AttribPtr[_TNL_ATTRIB_INDEX];
+   VB->IndexPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR_INDEX];
    VB->IndexPtr[1] = NULL;
    VB->SecondaryColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR1];
    VB->SecondaryColorPtr[1] = NULL;

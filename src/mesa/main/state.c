@@ -881,9 +881,13 @@ update_arrays( GLcontext *ctx )
 
    /* 6 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.VertexAttrib[VERT_ATTRIB_SIX].Enabled) {
-      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_SIX]._MaxElement);
+       && ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled) {
+      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR_INDEX]._MaxElement);
    }
+   else if (ctx->Array.Index.Enabled) {
+      min = MIN2(min, ctx->Array.Index._MaxElement);
+   }
+
 
    /* 7 */
    if (ctx->VertexProgram._Enabled
@@ -910,10 +914,6 @@ update_arrays( GLcontext *ctx )
             min = MIN2(min, ctx->Array.VertexAttrib[i]._MaxElement);
          }
       }
-   }
-
-   if (ctx->Array.Index.Enabled) {
-      min = MIN2(min, ctx->Array.Index._MaxElement);
    }
 
    if (ctx->Array.EdgeFlag.Enabled) {

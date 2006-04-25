@@ -85,7 +85,6 @@ install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
    SET_Color4f(tab, vfmt->Color4f);
    SET_Color4fv(tab, vfmt->Color4fv);
    SET_EdgeFlag(tab, vfmt->EdgeFlag);
-   SET_EdgeFlagv(tab, vfmt->EdgeFlagv);
    SET_EvalCoord1f(tab, vfmt->EvalCoord1f);
    SET_EvalCoord1fv(tab, vfmt->EvalCoord1fv);
    SET_EvalCoord2f(tab, vfmt->EvalCoord2f);

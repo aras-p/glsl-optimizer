@@ -230,7 +230,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_CURRENT_INDEX:
          {
          FLUSH_CURRENT(ctx, 0);
-         params[0] = FLOAT_TO_BOOLEAN(ctx->Current.Index);
+         params[0] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_COLOR_INDEX][0]);
          }
          break;
       case GL_CURRENT_NORMAL:
@@ -2048,7 +2048,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_CURRENT_INDEX:
          {
          FLUSH_CURRENT(ctx, 0);
-         params[0] = ctx->Current.Index;
+         params[0] = ctx->Current.Attrib[VERT_ATTRIB_COLOR_INDEX][0];
          }
          break;
       case GL_CURRENT_NORMAL:
@@ -3866,7 +3866,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_CURRENT_INDEX:
          {
          FLUSH_CURRENT(ctx, 0);
-         params[0] = IROUND(ctx->Current.Index);
+         params[0] = IROUND(ctx->Current.Attrib[VERT_ATTRIB_COLOR_INDEX][0]);
          }
          break;
       case GL_CURRENT_NORMAL:

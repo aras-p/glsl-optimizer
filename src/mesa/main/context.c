@@ -913,18 +913,18 @@ _mesa_init_current( GLcontext *ctx )
 {
    GLuint i;
 
-   /* Current group */
+   /* Init all to (0,0,0,1) */
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
       ASSIGN_4V( ctx->Current.Attrib[i], 0.0, 0.0, 0.0, 1.0 );
    }
-   /* special cases: */
+
+   /* redo special cases: */
    ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_WEIGHT], 1.0, 0.0, 0.0, 1.0 );
    ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_NORMAL], 0.0, 0.0, 1.0, 1.0 );
    ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_COLOR0], 1.0, 1.0, 1.0, 1.0 );
    ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_COLOR1], 0.0, 0.0, 0.0, 1.0 );
    ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_FOG], 0.0, 0.0, 0.0, 0.0 );
-
-   ctx->Current.Index = 1;
+   ctx->Current.Attrib[VERT_ATTRIB_COLOR_INDEX][0] = 1.0;
    ctx->Current.EdgeFlag = GL_TRUE;
 }
 

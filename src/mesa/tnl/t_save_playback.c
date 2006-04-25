@@ -66,7 +66,7 @@ static void _tnl_bind_vertex_list( GLcontext *ctx,
    VB->Elts = NULL;
    VB->NormalLengthPtr = node->normal_lengths;
 
-   for (attr = 0; attr <= _TNL_ATTRIB_INDEX; attr++) {
+   for (attr = 0; attr <= _TNL_ATTRIB_EDGEFLAG; attr++) {
       if (node->attrsz[attr]) {
 	 tmp->Attribs[attr].count = node->count;
 	 tmp->Attribs[attr].data = (GLfloat (*)[4]) data;
@@ -106,7 +106,7 @@ static void _tnl_bind_vertex_list( GLcontext *ctx,
    VB->NormalPtr = VB->AttribPtr[_TNL_ATTRIB_NORMAL];
    VB->ColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR0];
    VB->ColorPtr[1] = NULL;
-   VB->IndexPtr[0] = VB->AttribPtr[_TNL_ATTRIB_INDEX];
+   VB->IndexPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR_INDEX];
    VB->IndexPtr[1] = NULL;
    VB->SecondaryColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR1];
    VB->SecondaryColorPtr[1] = NULL;
@@ -129,7 +129,7 @@ static void _playback_copy_to_current( GLcontext *ctx,
    else
       data = node->buffer;
 
-   for (i = _TNL_ATTRIB_POS+1 ; i <= _TNL_ATTRIB_INDEX ; i++) {
+   for (i = _TNL_ATTRIB_POS+1 ; i <= _TNL_ATTRIB_EDGEFLAG ; i++) {
       if (node->attrsz[i]) {
 	 COPY_CLEAN_4V(tnl->vtx.current[i], node->attrsz[i], data);
 	 data += node->attrsz[i];

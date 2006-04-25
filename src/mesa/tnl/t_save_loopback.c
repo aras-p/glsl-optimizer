@@ -297,7 +297,8 @@ void _tnl_loopback_vertex_list( GLcontext *ctx,
    struct loopback_attr la[_TNL_ATTRIB_MAX];
    GLuint i, nr = 0;
 
-   for (i = 0 ; i <= _TNL_ATTRIB_TEX7 ; i++) {
+   /* conventional + generic attributes */
+   for (i = 0 ; i <= _TNL_ATTRIB_ATTRIBUTE15 ; i++) {
       if (list->attrsz[i]) {
 	 la[nr].target = i;
 	 la[nr].sz = list->attrsz[i];
@@ -306,6 +307,7 @@ void _tnl_loopback_vertex_list( GLcontext *ctx,
       }
    }
 
+   /* material attributes */
    for (i = _TNL_ATTRIB_MAT_FRONT_AMBIENT ; 
 	i <= _TNL_ATTRIB_MAT_BACK_INDEXES ; 
 	i++) {
@@ -317,21 +319,13 @@ void _tnl_loopback_vertex_list( GLcontext *ctx,
       }
    }
 
+   /* special-case: edgeflag */
    if (list->attrsz[_TNL_ATTRIB_EDGEFLAG]) {
       la[nr].target = _TNL_ATTRIB_EDGEFLAG;
       la[nr].sz = list->attrsz[_TNL_ATTRIB_EDGEFLAG];
       la[nr].func = edgeflag_attr1fv;
       nr++;
    }
-
-   if (list->attrsz[_TNL_ATTRIB_INDEX]) {
-      la[nr].target = _TNL_ATTRIB_INDEX;
-      la[nr].sz = list->attrsz[_TNL_ATTRIB_INDEX];
-      la[nr].func = index_attr1fv;
-      nr++;
-   }
-
-   /* XXX ARB vertex attribs */
 
    for (i = 0 ; i < list->prim_count ; i++) {
       if (list->prim[i].mode & PRIM_WEAK)
