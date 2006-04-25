@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,7 +29,7 @@
  * and PutMonoValues functions.
  *
  * Define the following macros before including this file:
- *   NAME(PREFIX)  to generate the function name
+ *   NAME(BASE)  to generate the function name (i.e. add prefix or suffix)
  *   FORMAT  must be either GL_RGBA, GL_RGBA8 or GL_COLOR_INDEX8_EXT
  *   SPAN_VARS  to declare any local variables
  *   INIT_PIXEL_PTR(P, X, Y)  to initialize a pointer to a pixel
@@ -67,6 +67,7 @@ NAME(get_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
       FETCH_PIXEL(dest[i], pixel);
       INC_PIXEL_PTR(pixel);
    }
+   (void) rb;
 }
 
 static void
@@ -88,6 +89,7 @@ NAME(get_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
       INIT_PIXEL_PTR(pixel, x[i], y[i]);
       FETCH_PIXEL(dest[i], pixel);
    }
+   (void) rb;
 }
 
 
@@ -122,6 +124,7 @@ NAME(put_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
          INC_PIXEL_PTR(pixel);
       }
    }
+   (void) rb;
 }
 
 #if (FORMAT == GL_RGBA) || (FORMAT == GL_RGBA8)
@@ -152,6 +155,7 @@ NAME(put_row_rgb)( GLcontext *ctx, struct gl_renderbuffer *rb,
       }
       INC_PIXEL_PTR(pixel);
    }
+   (void) rb;
 }
 #endif
 
@@ -186,6 +190,7 @@ NAME(put_mono_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
          INC_PIXEL_PTR(pixel);
       }
    }
+   (void) rb;
 }
 
 
@@ -212,6 +217,7 @@ NAME(put_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
          STORE_PIXEL(pixel, x[i], y[i], src[i]);
       }
    }
+   (void) rb;
 }
 
 
@@ -238,6 +244,7 @@ NAME(put_mono_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
          STORE_PIXEL(pixel, x[i], y[i], src);
       }
    }
+   (void) rb;
 }
 
 
