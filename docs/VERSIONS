@@ -1474,6 +1474,8 @@ Mesa Version History
 6.5.1  month, day, 2006
     New:
     Changes:
+	- The glVertexAttribARB functions no longer alias the conventional
+	  vertex attributes.
     Bug fixes:
 	- fixed broken texture border handling for depth textures (bug 6498)
 	- removed the test for duplicated framebuffer attachments, per
@@ -1482,3 +1484,4 @@ Mesa Version History
 	- clipping of lines against user-defined clip planes was broken (6512)
 	- assembly language dispatch for SPARC was broken (bug 6484)
 	- assorted compilation fixes on various Unix platforms (Dan Schikore)
+	- glPopAttrib could restore an invalid value for GL_DRAW_BUFFER
