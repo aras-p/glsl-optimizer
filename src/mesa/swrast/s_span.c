@@ -1437,7 +1437,7 @@ _swrast_read_rgba_span( GLcontext *ctx, struct gl_renderbuffer *rb,
       ASSERT(rb);
       ASSERT(rb->GetRow);
       ASSERT(rb->_BaseFormat == GL_RGB || rb->_BaseFormat == GL_RGBA);
-      ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
+      ASSERT(rb->DataType == CHAN_TYPE);
       rb->GetRow(ctx, rb, length, x + skip, y, rgba + skip);
    }
 }
