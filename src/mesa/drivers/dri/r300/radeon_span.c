@@ -252,19 +252,43 @@ do {									\
 static void radeonSpanRenderStart( GLcontext *ctx )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
+   {
+	static int first = 1;
+	r300ContextPtr r300 = rmesa;
+	
+	if (first) {
+		r300->span_dlocking = getenv("R300_SPAN_DISABLE_LOCKING") ? 1 : 0;
+		if (r300->span_dlocking == 0) {
+			fprintf(stderr, "Try R300_SPAN_DISABLE_LOCKING env var if this hangs.\n");
+			fflush(stderr);
+			sleep(1);
+		}
+		first = 0;
+	}
+	
+	if (r300->span_dlocking) {
+		r300Flush(ctx);
+		LOCK_HARDWARE( rmesa );
+		radeonWaitForIdleLocked( rmesa );
+		UNLOCK_HARDWARE( rmesa );
+		
+		return;
+	}
+   }
    //   R300_FIREVERTICES( rmesa );
    // old code has flush
    r300Flush(ctx);
    LOCK_HARDWARE( rmesa );
    radeonWaitForIdleLocked( rmesa );
-   UNLOCK_HARDWARE( rmesa );
 }
 
 static void radeonSpanRenderFinish( GLcontext *ctx )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
+   r300ContextPtr r300 = rmesa;
    _swrast_flush( ctx );
-   //UNLOCK_HARDWARE( rmesa );
+   if (r300->span_dlocking == 0)
+	UNLOCK_HARDWARE( rmesa );
 }
 
 void radeonInitSpanFuncs( GLcontext *ctx )
