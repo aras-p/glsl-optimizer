@@ -1517,7 +1517,6 @@ _mesa_delete_renderbuffer(struct gl_renderbuffer *rb)
    if (rb->Data) {
       _mesa_free(rb->Data);
    }
-   _glthread_INIT_MUTEX(rb->Mutex);
    _mesa_free(rb);
 }
 
