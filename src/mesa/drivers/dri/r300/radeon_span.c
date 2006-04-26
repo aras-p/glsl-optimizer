@@ -40,7 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  *
  */
-
+#include <unistd.h>
 #include "glheader.h"
 #include "imports.h"
 #include "swrast/swrast.h"
@@ -254,7 +254,7 @@ static void radeonSpanRenderStart( GLcontext *ctx )
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
    {
 	static int first = 1;
-	r300ContextPtr r300 = rmesa;
+	r300ContextPtr r300 = (r300ContextPtr)rmesa;
 	
 	if (first) {
 		r300->span_dlocking = getenv("R300_SPAN_DISABLE_LOCKING") ? 1 : 0;
@@ -285,7 +285,7 @@ static void radeonSpanRenderStart( GLcontext *ctx )
 static void radeonSpanRenderFinish( GLcontext *ctx )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
-   r300ContextPtr r300 = rmesa;
+   r300ContextPtr r300 = (r300ContextPtr)rmesa;
    _swrast_flush( ctx );
    if (r300->span_dlocking == 0)
 	UNLOCK_HARDWARE( rmesa );
