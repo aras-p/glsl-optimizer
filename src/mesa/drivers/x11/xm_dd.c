@@ -997,18 +997,18 @@ xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
     * renderbuffer span/clear funcs.
     */
    if (new_state & (_NEW_COLOR | _NEW_PIXEL | _NEW_BUFFERS)) {
+      XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
       struct xmesa_renderbuffer *front_xrb, *back_xrb;
 
-      front_xrb = XMESA_BUFFER(ctx->DrawBuffer)->frontxrb;
+      front_xrb = xmbuf->frontxrb;
       if (front_xrb) {
          xmesa_set_renderbuffer_funcs(front_xrb, xmesa->pixelformat,
                                       xmesa->xm_visual->BitsPerPixel);
          front_xrb->clearFunc = clear_pixmap;
       }
 
-      back_xrb = XMESA_BUFFER(ctx->DrawBuffer)->backxrb;
+      back_xrb = xmbuf->backxrb;
       if (back_xrb) {
-         XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
          xmesa_set_renderbuffer_funcs(back_xrb, xmesa->pixelformat,
                                       xmesa->xm_visual->BitsPerPixel);
          if (xmbuf->backxrb->pixmap) {
