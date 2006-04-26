@@ -560,7 +560,7 @@ swizzle_copy(GLubyte *dst, GLuint dstComponents, const GLubyte *src,
              GLuint srcComponents, const GLubyte *map, GLuint count)
 {
    GLubyte tmp[8];
-   GLint i;
+   GLuint i;
 
    tmp[ZERO] = 0x0;
    tmp[ONE] = 0xff;
@@ -636,6 +636,8 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
                      + dstZoffset * dstImageStride
                      + dstYoffset * dstRowStride
                      + dstXoffset * dstComponents;
+
+   (void) ctx;
 
    compute_component_mapping(srcFormat, GL_RGBA, srcmap);
 
@@ -790,10 +792,10 @@ _mesa_texstore_rgba(GLcontext *ctx, GLuint dims,
             srcType == CHAN_TYPE) {
       /* extract RGB from RGBA */
       int img, row, col;
-      GLchan *dstImage = (GLchan *) (GLubyte *) dstAddr
-                       + dstZoffset * dstImageStride
-                       + dstYoffset * dstRowStride
-                       + dstXoffset * dstFormat->TexelBytes;
+      GLchan *dstImage = (GLchan *) ((GLubyte *) dstAddr
+                                     + dstZoffset * dstImageStride
+                                     + dstYoffset * dstRowStride
+                                     + dstXoffset * dstFormat->TexelBytes);
       for (img = 0; img < srcDepth; img++) {
          const GLint srcRowStride = _mesa_image_row_stride(srcPacking,
                                                  srcWidth, srcFormat, srcType);
@@ -806,10 +808,10 @@ _mesa_texstore_rgba(GLcontext *ctx, GLuint dims,
                dstRow[col * 3 + GCOMP] = srcRow[col * 4 + GCOMP];
                dstRow[col * 3 + BCOMP] = srcRow[col * 4 + BCOMP];
             }
-            dstRow += dstRowStride;
+            dstRow += dstRowStride / sizeof(GLchan);
             srcRow = (GLchan *) ((GLubyte *) srcRow + srcRowStride);
          }
-         dstImage += dstImageStride;
+         dstImage += dstImageStride / sizeof(GLchan);
       }
    }
    else {
