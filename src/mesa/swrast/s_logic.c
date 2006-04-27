@@ -216,7 +216,7 @@ _swrast_logicop_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
 
    ASSERT(span->end < MAX_WIDTH);
    ASSERT(span->arrayMask & SPAN_RGBA);
-   ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
+   ASSERT(rb->DataType == CHAN_TYPE);
 
    if (span->arrayMask & SPAN_XY) {
       _swrast_get_values(ctx, rb, span->end, span->array->x, span->array->y,

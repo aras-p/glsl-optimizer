@@ -767,7 +767,11 @@ _mesa_GetColorTable( GLenum target, GLenum format,
                rgba[i][RCOMP] = 0;
                rgba[i][GCOMP] = 0;
                rgba[i][BCOMP] = 0;
+#if CHAN_BITS==32
+               rgba[i][ACOMP] = tableF[i];
+#else
                rgba[i][ACOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
+#endif
             }
          }
          else {
@@ -786,18 +790,25 @@ _mesa_GetColorTable( GLenum target, GLenum format,
             const GLfloat *tableF = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
-               rgba[i][GCOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
+#if CHAN_BITS==32
+               rgba[i][RCOMP] =
+               rgba[i][GCOMP] =
+               rgba[i][BCOMP] = tableF[i];
+               rgba[i][ACOMP] = CHAN_MAX;
+#else
+               rgba[i][RCOMP] =
+               rgba[i][GCOMP] =
                rgba[i][BCOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
                rgba[i][ACOMP] = CHAN_MAX;
+#endif
             }
          }
          else {
             const GLchan *tableUB = (const GLchan *) table->Table;
             GLuint i;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = tableUB[i];
-               rgba[i][GCOMP] = tableUB[i];
+               rgba[i][RCOMP] =
+               rgba[i][GCOMP] =
                rgba[i][BCOMP] = tableUB[i];
                rgba[i][ACOMP] = CHAN_MAX;
             }
@@ -808,18 +819,25 @@ _mesa_GetColorTable( GLenum target, GLenum format,
             const GLfloat *tableF = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = IROUND_POS(tableF[i*2+0] * CHAN_MAXF);
-               rgba[i][GCOMP] = IROUND_POS(tableF[i*2+0] * CHAN_MAXF);
+#if CHAN_BITS==32
+               rgba[i][RCOMP] =
+               rgba[i][GCOMP] =
+               rgba[i][BCOMP] = tableF[i*2+0];
+               rgba[i][ACOMP] = tableF[i*2+1];
+#else
+               rgba[i][RCOMP] =
+               rgba[i][GCOMP] =
                rgba[i][BCOMP] = IROUND_POS(tableF[i*2+0] * CHAN_MAXF);
                rgba[i][ACOMP] = IROUND_POS(tableF[i*2+1] * CHAN_MAXF);
+#endif
             }
          }
          else {
             const GLchan *tableUB = (const GLchan *) table->Table;
             GLuint i;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = tableUB[i*2+0];
-               rgba[i][GCOMP] = tableUB[i*2+0];
+               rgba[i][RCOMP] =
+               rgba[i][GCOMP] =
                rgba[i][BCOMP] = tableUB[i*2+0];
                rgba[i][ACOMP] = tableUB[i*2+1];
             }
@@ -830,19 +848,26 @@ _mesa_GetColorTable( GLenum target, GLenum format,
             const GLfloat *tableF = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
-               rgba[i][GCOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
-               rgba[i][BCOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
+#if CHAN_BITS==32
+               rgba[i][RCOMP] =
+               rgba[i][GCOMP] =
+               rgba[i][BCOMP] =
+               rgba[i][ACOMP] = tableF[i];
+#else
+               rgba[i][RCOMP] =
+               rgba[i][GCOMP] =
+               rgba[i][BCOMP] =
                rgba[i][ACOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
+#endif
             }
          }
          else {
             const GLchan *tableUB = (const GLchan *) table->Table;
             GLuint i;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = tableUB[i];
-               rgba[i][GCOMP] = tableUB[i];
-               rgba[i][BCOMP] = tableUB[i];
+               rgba[i][RCOMP] =
+               rgba[i][GCOMP] =
+               rgba[i][BCOMP] =
                rgba[i][ACOMP] = tableUB[i];
             }
          }
@@ -852,10 +877,17 @@ _mesa_GetColorTable( GLenum target, GLenum format,
             const GLfloat *tableF = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < table->Size; i++) {
+#if CHAN_BITS==32
+               rgba[i][RCOMP] = tableF[i*3+0];
+               rgba[i][GCOMP] = tableF[i*3+1];
+               rgba[i][BCOMP] = tableF[i*3+2];
+               rgba[i][ACOMP] = CHAN_MAX;
+#else
                rgba[i][RCOMP] = IROUND_POS(tableF[i*3+0] * CHAN_MAXF);
                rgba[i][GCOMP] = IROUND_POS(tableF[i*3+1] * CHAN_MAXF);
                rgba[i][BCOMP] = IROUND_POS(tableF[i*3+2] * CHAN_MAXF);
                rgba[i][ACOMP] = CHAN_MAX;
+#endif
             }
          }
          else {
@@ -872,6 +904,9 @@ _mesa_GetColorTable( GLenum target, GLenum format,
       case GL_RGBA:
          if (table->Type == GL_FLOAT) {
             const GLfloat *tableF = (const GLfloat *) table->Table;
+#if CHAN_BITS==32
+            _mesa_memcpy(rgba, tableF, 4 * table->Size * sizeof(GLfloat));
+#else
             GLuint i;
             for (i = 0; i < table->Size; i++) {
                rgba[i][RCOMP] = IROUND_POS(tableF[i*4+0] * CHAN_MAXF);
@@ -879,6 +914,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
                rgba[i][BCOMP] = IROUND_POS(tableF[i*4+2] * CHAN_MAXF);
                rgba[i][ACOMP] = IROUND_POS(tableF[i*4+3] * CHAN_MAXF);
             }
+#endif
          }
          else {
             const GLchan *tableUB = (const GLchan *) table->Table;

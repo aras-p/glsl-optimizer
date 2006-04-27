@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,6 +35,9 @@
 #include "s_span.h"
 
 
+/* XXX this would have to change for accum buffers with more or less
+ * than 16 bits per color channel.
+ */
 #define ACCUM_SCALE16 32767.0
 
 
@@ -419,9 +422,6 @@ accum_load(GLcontext *ctx, GLfloat value,
          }
       }
    }
-   else {
-      /* other types someday */
-   }
 }
 
 
@@ -462,7 +462,8 @@ accum_return(GLcontext *ctx, GLfloat value,
    if (accumRb->DataType == GL_SHORT ||
        accumRb->DataType == GL_UNSIGNED_SHORT) {
       const GLfloat scale = value * CHAN_MAXF / ACCUM_SCALE16;
-      GLuint buffer, i;
+      GLuint buffer;
+      GLint i;
 
       /* XXX maybe transpose the 'i' and 'buffer' loops??? */
       for (i = 0; i < height; i++) {
@@ -496,10 +497,17 @@ accum_return(GLcontext *ctx, GLfloat value,
             /* scaled integer (or float) accum buffer */
             GLint j;
             for (j = 0; j < width; j++) {
+#if CHAN_BITS==32
+               GLchan r = acc[j * 4 + 0] * scale;
+               GLchan g = acc[j * 4 + 1] * scale;
+               GLchan b = acc[j * 4 + 2] * scale;
+               GLchan a = acc[j * 4 + 3] * scale;
+#else
                GLint r = IROUND( (GLfloat) (acc[j * 4 + 0]) * scale );
                GLint g = IROUND( (GLfloat) (acc[j * 4 + 1]) * scale );
                GLint b = IROUND( (GLfloat) (acc[j * 4 + 2]) * scale );
                GLint a = IROUND( (GLfloat) (acc[j * 4 + 3]) * scale );
+#endif
                rgba[j][RCOMP] = CLAMP( r, 0, CHAN_MAX );
                rgba[j][GCOMP] = CLAMP( g, 0, CHAN_MAX );
                rgba[j][BCOMP] = CLAMP( b, 0, CHAN_MAX );

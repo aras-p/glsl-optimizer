@@ -36,6 +36,11 @@
 
 #define PROD(A,B)   ( (GLuint)(A) * ((GLuint)(B)+1) )
 #define S_PROD(A,B) ( (GLint)(A) * ((GLint)(B)+1) )
+#if CHAN_BITS == 32
+typedef GLfloat ChanTemp;
+#else
+typedef GLuint ChanTemp;
+#endif
 
 
 /**
@@ -996,10 +1001,10 @@ texture_apply( const GLcontext *ctx,
                break;
             case GL_LUMINANCE:
                for (i=0;i<n;i++) {
-                  GLuint Lt = texel[i][RCOMP];
-                  GLuint r = rgba[i][RCOMP] + Lt;
-                  GLuint g = rgba[i][GCOMP] + Lt;
-                  GLuint b = rgba[i][BCOMP] + Lt;
+                  ChanTemp Lt = texel[i][RCOMP];
+                  ChanTemp r = rgba[i][RCOMP] + Lt;
+                  ChanTemp g = rgba[i][GCOMP] + Lt;
+                  ChanTemp b = rgba[i][BCOMP] + Lt;
                   rgba[i][RCOMP] = MIN2(r, CHAN_MAX);
                   rgba[i][GCOMP] = MIN2(g, CHAN_MAX);
                   rgba[i][BCOMP] = MIN2(b, CHAN_MAX);
@@ -1008,10 +1013,10 @@ texture_apply( const GLcontext *ctx,
                break;
             case GL_LUMINANCE_ALPHA:
                for (i=0;i<n;i++) {
-                  GLuint Lt = texel[i][RCOMP];
-                  GLuint r = rgba[i][RCOMP] + Lt;
-                  GLuint g = rgba[i][GCOMP] + Lt;
-                  GLuint b = rgba[i][BCOMP] + Lt;
+                  ChanTemp Lt = texel[i][RCOMP];
+                  ChanTemp r = rgba[i][RCOMP] + Lt;
+                  ChanTemp g = rgba[i][GCOMP] + Lt;
+                  ChanTemp b = rgba[i][BCOMP] + Lt;
                   rgba[i][RCOMP] = MIN2(r, CHAN_MAX);
                   rgba[i][GCOMP] = MIN2(g, CHAN_MAX);
                   rgba[i][BCOMP] = MIN2(b, CHAN_MAX);
@@ -1021,10 +1026,10 @@ texture_apply( const GLcontext *ctx,
             case GL_INTENSITY:
                for (i=0;i<n;i++) {
                   GLchan It = texel[i][RCOMP];
-                  GLuint r = rgba[i][RCOMP] + It;
-                  GLuint g = rgba[i][GCOMP] + It;
-                  GLuint b = rgba[i][BCOMP] + It;
-                  GLuint a = rgba[i][ACOMP] + It;
+                  ChanTemp r = rgba[i][RCOMP] + It;
+                  ChanTemp g = rgba[i][GCOMP] + It;
+                  ChanTemp b = rgba[i][BCOMP] + It;
+                  ChanTemp a = rgba[i][ACOMP] + It;
                   rgba[i][RCOMP] = MIN2(r, CHAN_MAX);
                   rgba[i][GCOMP] = MIN2(g, CHAN_MAX);
                   rgba[i][BCOMP] = MIN2(b, CHAN_MAX);
@@ -1033,9 +1038,9 @@ texture_apply( const GLcontext *ctx,
                break;
 	    case GL_RGB:
 	       for (i=0;i<n;i++) {
-                  GLuint r = rgba[i][RCOMP] + texel[i][RCOMP];
-                  GLuint g = rgba[i][GCOMP] + texel[i][GCOMP];
-                  GLuint b = rgba[i][BCOMP] + texel[i][BCOMP];
+                  ChanTemp r = rgba[i][RCOMP] + texel[i][RCOMP];
+                  ChanTemp g = rgba[i][GCOMP] + texel[i][GCOMP];
+                  ChanTemp b = rgba[i][BCOMP] + texel[i][BCOMP];
 		  rgba[i][RCOMP] = MIN2(r, CHAN_MAX);
 		  rgba[i][GCOMP] = MIN2(g, CHAN_MAX);
 		  rgba[i][BCOMP] = MIN2(b, CHAN_MAX);
@@ -1044,9 +1049,9 @@ texture_apply( const GLcontext *ctx,
 	       break;
 	    case GL_RGBA:
 	       for (i=0;i<n;i++) {
-                  GLuint r = rgba[i][RCOMP] + texel[i][RCOMP];
-                  GLuint g = rgba[i][GCOMP] + texel[i][GCOMP];
-                  GLuint b = rgba[i][BCOMP] + texel[i][BCOMP];
+                  ChanTemp r = rgba[i][RCOMP] + texel[i][RCOMP];
+                  ChanTemp g = rgba[i][GCOMP] + texel[i][GCOMP];
+                  ChanTemp b = rgba[i][BCOMP] + texel[i][BCOMP];
 		  rgba[i][RCOMP] = MIN2(r, CHAN_MAX);
 		  rgba[i][GCOMP] = MIN2(g, CHAN_MAX);
 		  rgba[i][BCOMP] = MIN2(b, CHAN_MAX);
