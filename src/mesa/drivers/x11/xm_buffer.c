@@ -48,7 +48,7 @@ static GLboolean
 xmesa_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
                           GLenum internalFormat, GLuint width, GLuint height)
 {
-   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
+   struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb);
 
    /* just clear these to be sure we don't accidentally use them */
    xrb->origin1 = NULL;
@@ -74,7 +74,7 @@ static GLboolean
 xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
                          GLenum internalFormat, GLuint width, GLuint height)
 {
-   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
+   struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb);
 
    /* same as front buffer */
    (void) xmesa_alloc_front_storage(ctx, rb, internalFormat, width, height);

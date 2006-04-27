@@ -118,7 +118,7 @@ void xmesa_choose_point( GLcontext *ctx )
 
 
 #define GET_XRB(XRB)  struct xmesa_renderbuffer *XRB = \
-   (struct xmesa_renderbuffer *) ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped
+   xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped)
 
 
 /*
@@ -547,8 +547,7 @@ xor_line(GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1)
    XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaGC gc = xmesa->xm_buffer->gc;
-   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *)
-      ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+   GET_XRB(xrb);
    unsigned long pixel = xmesa_color_to_pixel(ctx,
                                               vert1->color[0], vert1->color[1],
                                               vert1->color[2], vert1->color[3],
@@ -589,8 +588,7 @@ get_line_func(GLcontext *ctx)
    if (ctx->Line.StippleFlag)             return (swrast_line_func) NULL;
    if (swrast->_RasterMask & MULTI_DRAW_BIT) return (swrast_line_func) NULL;
 
-   xrb = (struct xmesa_renderbuffer *)
-      ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped;
+   xrb = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped);
 
    if (xrb->ximage
        && swrast->_RasterMask==DEPTH_BIT

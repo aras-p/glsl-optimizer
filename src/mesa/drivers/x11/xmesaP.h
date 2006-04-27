@@ -480,12 +480,14 @@ extern const int xmesa_kernel1[16];
 /*
  * Return pointer to XMesaContext corresponding to a Mesa GLcontext.
  * Since we're using structure containment, it's just a cast!.
+ * XXX should use inlined function for better type safety.
  */
 #define XMESA_CONTEXT(MESACTX)  ((XMesaContext) (MESACTX))
 
 /*
  * Return pointer to XMesaBuffer corresponding to a Mesa GLframebuffer.
  * Since we're using structure containment, it's just a cast!.
+ * XXX should use inlined function for better type safety.
  */
 #define XMESA_BUFFER(MESABUFF)  ((XMesaBuffer) (MESABUFF))
 
@@ -518,6 +520,16 @@ extern void xmesa_update_state( GLcontext *ctx, GLbitfield new_state );
 extern void
 xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
                              enum pixel_format pixelformat, GLint depth);
+
+
+/**
+ * Using a function instead of an ordinary cast is safer.
+ */
+static INLINE struct xmesa_renderbuffer *
+xmesa_renderbuffer(struct gl_renderbuffer *rb)
+{
+   return (struct xmesa_renderbuffer *) rb;
+}
 
 
 /* Plugged into the software rasterizer.  Try to use internal

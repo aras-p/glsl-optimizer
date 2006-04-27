@@ -45,13 +45,15 @@
 
 
 #define GET_XRB(XRB)  struct xmesa_renderbuffer *XRB = \
-   (struct xmesa_renderbuffer *) ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped
+   xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped)
 
 
 /**********************************************************************/
 /***                   Triangle rendering                           ***/
 /**********************************************************************/
 
+
+#if CHAN_BITS == 8
 
 /*
  * XImage, smooth, depth-buffered, PF_TRUECOLOR triangle.
@@ -1307,8 +1309,10 @@
 #include "swrast/s_tritemp.h"
 
 
+#endif /* CHAN_BITS == 8 */
 
-#ifdef DEBUG
+
+#if defined(DEBUG) && CHAN_BITS == 8
 extern void _xmesa_print_triangle_func( swrast_tri_func triFunc );
 void _xmesa_print_triangle_func( swrast_tri_func triFunc )
 {
@@ -1441,19 +1445,24 @@ get_triangle_func(GLcontext *ctx)
    triFuncName = NULL;
 #endif
 
+#if CHAN_BITS == 8
+   /* trivial fallback tests */
    if ((ctx->DrawBuffer->_ColorDrawBufferMask[0]
         & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT)) == 0)
       return (swrast_tri_func) NULL;
-   if (ctx->RenderMode != GL_RENDER)  return (swrast_tri_func) NULL;
-   if (ctx->Polygon.SmoothFlag)       return (swrast_tri_func) NULL;
-   if (ctx->Texture._EnabledUnits)    return (swrast_tri_func) NULL;
-   if (swrast->_RasterMask & MULTI_DRAW_BIT) return (swrast_tri_func) NULL;
+   if (ctx->RenderMode != GL_RENDER)
+      return (swrast_tri_func) NULL;
+   if (ctx->Polygon.SmoothFlag)
+      return (swrast_tri_func) NULL;
+   if (ctx->Texture._EnabledUnits)
+      return (swrast_tri_func) NULL;
+   if (swrast->_RasterMask & MULTI_DRAW_BIT)
+      return (swrast_tri_func) NULL;
    if (ctx->Polygon.CullFlag && 
        ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
-                                        return (swrast_tri_func) NULL;
+      return (swrast_tri_func) NULL;
 
-   xrb = (struct xmesa_renderbuffer *)
-      ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped;
+   xrb = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped);
 
    if (xrb->ximage) {
       if (   ctx->Light.ShadeModel==GL_SMOOTH
@@ -1607,13 +1616,11 @@ get_triangle_func(GLcontext *ctx)
                return (swrast_tri_func) NULL;
          }
       }
+   }
 
-      return (swrast_tri_func) NULL;
-   }
-   else {
-      /* draw to pixmap */
-      return (swrast_tri_func) NULL;
-   }
+#else
+   return (swrast_tri_func) NULL;
+#endif /* CHAN_BITS == 8 */
 }
 
 

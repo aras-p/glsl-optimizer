@@ -302,11 +302,12 @@ clear_HPCR_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
    if (all) {
-      GLint i, c16 = (xrb->ximage->bytes_per_line>>4)<<4;
+      const GLuint c16 = xrb->ximage->bytes_per_line & ~0xf;
+      GLuint i;
       GLubyte *ptr  = (GLubyte *) xrb->ximage->data;
       for (i = 0; i < xrb->Base.Height; i++) {
-         GLint j;
-         GLubyte *sptr = xmesa->xm_visual->hpcr_clear_ximage_pattern[0];
+         GLuint j;
+         const GLubyte *sptr = xmesa->xm_visual->hpcr_clear_ximage_pattern[0];
          if (i&1) {
             sptr += 16;
          }
@@ -329,7 +330,7 @@ clear_HPCR_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
             ptr[15] = sptr[15];
             ptr += 16;
          }
-         for (; j < xrb->ximage->bytes_per_line; j++) {
+         for (; j < (GLuint) xrb->ximage->bytes_per_line; j++) {
             *ptr = sptr[j&15];
             ptr++;
          }
@@ -530,14 +531,15 @@ clear_buffers( GLcontext *ctx, GLbitfield mask,
    if (ctx->DrawBuffer->Name == 0) {
       /* this is a window system framebuffer */
       const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask;
-      XMesaBuffer b = (XMesaBuffer) ctx->DrawBuffer;
+      XMesaBuffer b = XMESA_BUFFER(ctx->DrawBuffer);
 
       /* we can't handle color or index masking */
       if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {
          if (mask & BUFFER_BIT_FRONT_LEFT) {
             /* clear front color buffer */
-            if (b->frontxrb == (struct xmesa_renderbuffer *)
-                ctx->DrawBuffer->Attachment[BUFFER_FRONT_LEFT].Renderbuffer) {
+            struct gl_renderbuffer *frontRb
+               = ctx->DrawBuffer->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+            if (b->frontxrb == xmesa_renderbuffer(frontRb)) {
                /* renderbuffer is not wrapped - great! */
                b->frontxrb->clearFunc(ctx, b->frontxrb, all, x, y,
                                       width, height);
@@ -549,8 +551,9 @@ clear_buffers( GLcontext *ctx, GLbitfield mask,
          }
          if (mask & BUFFER_BIT_BACK_LEFT) {
             /* clear back color buffer */
-            if (b->backxrb == (struct xmesa_renderbuffer *)
-                ctx->DrawBuffer->Attachment[BUFFER_BACK_LEFT].Renderbuffer) {
+            struct gl_renderbuffer *backRb
+               = ctx->DrawBuffer->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+            if (b->backxrb == xmesa_renderbuffer(backRb)) {
                /* renderbuffer is not wrapped - great! */
                b->backxrb->clearFunc(ctx, b->backxrb, all, x, y,
                                      width, height);
@@ -600,7 +603,7 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
                          const GLvoid *pixels )
 {
    struct xmesa_renderbuffer *xrb
-      = (struct xmesa_renderbuffer *) ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+      = (struct xmesa_renderbuffer *) ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped;
 
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const SWcontext *swrast = SWRAST_CONTEXT( ctx );
@@ -1151,10 +1154,15 @@ update_framebuffer_size(GLcontext *ctx)
  * Thus, we poll.
  * Note that this trick isn't fool-proof.  If the application never calls
  * glViewport, our notion of the current window size may be incorrect.
+ * That problem led to the GLX_MESA_resize_buffers extension.
  */
 static void
 xmesa_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
+   (void) x;
+   (void) y;
+   (void) w;
+   (void) h;
    update_framebuffer_size(ctx);
 }
 
