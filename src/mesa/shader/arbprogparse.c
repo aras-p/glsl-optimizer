@@ -518,7 +518,7 @@ typedef enum
  */
 struct var_cache
 {
-   GLubyte *name;
+   const GLubyte *name;         /* don't free() - no need */
    var_type type;
    GLuint address_binding;      /* The index of the address register we should
                                  * be using                                        */
@@ -641,7 +641,7 @@ parse_string (GLubyte ** inst, struct var_cache **vc_head,
 
    *found = 0;
    var_cache_create (&va);
-   va->name = i;
+   va->name = (const GLubyte *) i;
 
    var_cache_append (vc_head, va);
 
@@ -828,6 +828,7 @@ static GLuint
 parse_relative_offset (GLcontext *ctx, GLubyte **inst, struct arb_program *Program,
                         GLint *offset)
 {
+   (void) ctx;
    *offset = parse_integer(inst, Program);
    return 0;
 }
@@ -1936,7 +1937,7 @@ parse_param_use (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
 
    /* First, insert a dummy entry into the var_cache */
    var_cache_create (&param_var);
-   param_var->name = (GLubyte *) _mesa_strdup (" ");
+   param_var->name = (const GLubyte *) " ";
    param_var->type = vt_param;
 
    param_var->param_binding_length = 0;
@@ -2466,7 +2467,7 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
           */
          var_cache_create(&src);
          src->type = vt_attrib;
-         src->name = (GLubyte *)_mesa_strdup("Dummy Attrib Variable");
+         src->name = (const GLubyte *) "Dummy Attrib Variable";
          src->attrib_binding = binding;
          src->attrib_is_generic = is_generic;
          var_cache_append(vc_head, src);
