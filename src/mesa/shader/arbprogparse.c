@@ -3884,6 +3884,10 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
       err = !grammar_check(grammar_syn_id, (byte *) arb_grammar_text,
                            &parsed, &parsed_len);
 
+      /* 'parsed' is unused here */
+      _mesa_free (parsed);
+      parsed = NULL;
+
       /* NOTE: we can't destroy grammar_syn_id right here because
        * grammar_destroy() can reset the last error
        */
@@ -3956,6 +3960,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
    /* Syntax parse error */
    if (err) {
       _mesa_free(strz);
+      _mesa_free(parsed);
       grammar_get_last_error ((GLubyte *) error_msg, 300, &error_pos);
       _mesa_set_program_error (ctx, error_pos, error_msg);
       _mesa_error (ctx, GL_INVALID_OPERATION,
