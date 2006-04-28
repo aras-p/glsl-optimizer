@@ -149,6 +149,11 @@ static void Init( void )
 
    GLuint progs[20];
 
+   if (!glutExtensionSupported ("GL_NV_fragment_program")) {
+	   printf("Sorry, this program requires GL_NV_fragment_program\n");
+	   exit(1);
+   }
+
    glGenProgramsNV(20, progs);
    assert(progs[0]);
    assert(progs[1]);
