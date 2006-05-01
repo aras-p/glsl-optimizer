@@ -2641,7 +2641,7 @@ PUBLIC Bool glXSet3DfxModeMESA( int mode )
 }
 /*@}*/
 
-PUBLIC Bool glXBindTexImageEXT(Display *dpy,
+PUBLIC void glXBindTexImageEXT(Display *dpy,
 			       GLXDrawable drawable,
 			       int buffer,
  			       const int *attrib_list)
@@ -2656,7 +2656,7 @@ PUBLIC Bool glXBindTexImageEXT(Display *dpy,
     unsigned int i;
 
     if (gc == NULL)
-	return False;
+	return;
 
     i = 0;
     if (attrib_list) {
@@ -2666,12 +2666,12 @@ PUBLIC Bool glXBindTexImageEXT(Display *dpy,
  
 #ifdef GLX_DIRECT_RENDERING
     if (gc->isDirect)
-	return False;
+	return;
 #endif
 
     opcode = __glXSetupForCommand(dpy);
     if (!opcode)
-	return False;
+	return;
 
     LockDisplay(dpy);
     GetReqExtra(GLXVendorPrivate, 12 + 8 * i,req);
@@ -2701,11 +2701,9 @@ PUBLIC Bool glXBindTexImageEXT(Display *dpy,
 
     UnlockDisplay(dpy);
     SyncHandle();
-
-    return True;
 }
 
-PUBLIC Bool glXReleaseTexImageEXT(Display *dpy,
+PUBLIC void glXReleaseTexImageEXT(Display *dpy,
 				  GLXDrawable drawable,
 				  int buffer)
 {
@@ -2716,16 +2714,16 @@ PUBLIC Bool glXReleaseTexImageEXT(Display *dpy,
     CARD8 opcode;
 
     if (gc == NULL)
-	return False;
+	return;
 
 #ifdef GLX_DIRECT_RENDERING
     if (gc->isDirect)
-	return False;
+	return;
 #endif
 
     opcode = __glXSetupForCommand(dpy);
     if (!opcode)
-	return False;
+	return;
 
     LockDisplay(dpy);
     GetReqExtra(GLXVendorPrivate, sizeof(CARD32)+sizeof(INT32),req);
@@ -2742,8 +2740,6 @@ PUBLIC Bool glXReleaseTexImageEXT(Display *dpy,
 
     UnlockDisplay(dpy);
     SyncHandle();
-
-    return True;
 }
 
 /**
