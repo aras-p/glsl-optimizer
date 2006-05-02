@@ -39,7 +39,6 @@ SHARED_INCLUDES = \
 	-I. \
 	-I$(TOP)/src/mesa/drivers/dri/common \
 	-Iserver \
-	`pkg-config --cflags libdrm` \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa \
@@ -51,7 +50,8 @@ SHARED_INCLUDES = \
 	-I$(TOP)/src/mesa/swrast \
 	-I$(TOP)/src/mesa/swrast_setup \
 	-I$(TOP)/src/egl/main \
-	-I$(TOP)/src/egl/drivers/dri
+	-I$(TOP)/src/egl/drivers/dri \
+	`pkg-config --cflags libdrm`
 
 ##### RULES #####
 
