@@ -14,8 +14,7 @@ COMMON_SOURCES = \
 ifeq ($(WINDOW_SYSTEM),dri)
 WINOBJ=
 WINLIB=
-INCLUDES = $(SHARED_INCLUDES) $(EXPAT_INCLUDES) \
-           `pkg-config --cflags libdrm`
+INCLUDES = $(SHARED_INCLUDES) $(EXPAT_INCLUDES)
 
 OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(ASM_SOURCES:.S=.o) 
@@ -25,7 +24,6 @@ WINOBJ=
 WINLIB=-L$(MESA)/src/glx/mini
 MINIGLX_INCLUDES = -I$(TOP)/src/glx/mini
 INCLUDES = $(MINIGLX_INCLUDES) \
-	   `pkg-config --cflags libdrm` \
 	   $(SHARED_INCLUDES)
 
 OBJECTS = $(C_SOURCES:.c=.o) \
