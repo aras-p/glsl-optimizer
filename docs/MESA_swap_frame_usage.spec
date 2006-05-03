@@ -32,7 +32,7 @@ Dependencies
 
 Overview
 
-    This extension allows an application to deterine what portion of the
+    This extension allows an application to determine what portion of the
     swap period has elapsed since the last swap operation completed.  The
     "usage" value is a floating point value on the range [0,max] which is
     calculated as follows:
@@ -59,7 +59,7 @@ Overview
     is taken from the completion of one swap to the issuance of the next.
     This representation may not be as useful as measuring between
     completions, as a significant amount of time may pass between the
-    issuance of a swap and the swap actually occuring.
+    issuance of a swap and the swap actually occurring.
 
     There is also a mechanism to determine whether a frame swap was
     missed.
@@ -110,7 +110,7 @@ Additions to Chapter 6 of the 1.4 GL Specification (State and State Requests)
 Additions to the GLX 1.3 Specification
 
     The frame usage is measured as the percentage of the swap period elapsed
-    between two buffer-swap operations being commited.  In unextened GLX the
+    between two buffer-swap operations being committed.  In unextended GLX the
     swap period is the vertical refresh time.  If SGI_swap_control or
     MESA_swap_control are supported, the swap period is the vertical refresh
     time multiplied by the swap interval (or one if the swap interval is set
@@ -119,7 +119,7 @@ Additions to the GLX 1.3 Specification
     If OML_sync_control is supported, the swap period is the vertical
     refresh time multiplied by the divisor parameter to
     glXSwapBuffersMscOML.  The frame usage in this case is less than 1.0 if
-    the swap is commited before target_msc, and is greater than or equal to
+    the swap is committed before target_msc, and is greater than or equal to
     1.0 otherwise.  The actual usage value is based on the divisor and is
     never less than 0.0.
 
@@ -143,7 +143,7 @@ Additions to the GLX 1.3 Specification
 
     The current missed frame count and total number of swaps since
     the last call to glXBeginFrameTrackingMESA can be obtained by
-    callling the following function:
+    calling the following function:
 
        int glXQueryFrameTrackingMESA(Display *dpy,
                                      GLXDrawable drawable,
@@ -152,7 +152,7 @@ Additions to the GLX 1.3 Specification
                                      float *lastMissedUsage)
 
     The location pointed to by <swapCount> will be updated with the
-    number of swaps that have been commited.  This value may not match the
+    number of swaps that have been committed.  This value may not match the
     number of swaps that have been requested since swaps may be
     queued by the implementation.  This function can be called at any
     time and does not synchronize to vertical blank.
@@ -171,7 +171,7 @@ Additions to the GLX 1.3 Specification
     application can call glXQueryFrameTrackingMESA for a final swap and
     missed frame count.
 
-    If these functions are succesful, zero is returned.  If the context
+    If these functions are successful, zero is returned.  If the context
     associated with dpy and drawable is not a direct context,
     GLX_BAD_CONTEXT is returned.
 
