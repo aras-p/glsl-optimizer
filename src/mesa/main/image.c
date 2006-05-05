@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -3953,8 +3953,21 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
    if (dstType == GL_UNSIGNED_INT) {
       GLuint *zValues = (GLuint *) dest;
       GLuint i;
-      for (i = 0; i < n; i++) {
-         zValues[i] = (GLuint) (depthValues[i] * depthScale);
+      if (depthScale <= (GLfloat) 0xffffff) {
+         /* no overflow worries */
+         for (i = 0; i < n; i++) {
+            zValues[i] = (GLuint) (depthValues[i] * depthScale);
+         }
+      }
+      else {
+         /* need to use double precision to prevent overflow problems */
+         for (i = 0; i < n; i++) {
+            GLdouble z = depthValues[i] * depthScale;
+            if (z >= (GLdouble) 0xffffffff)
+               zValues[i] = 0xffffffff;
+            else
+               zValues[i] = (GLuint) z;
+         }
       }
    }
    else if (dstType == GL_UNSIGNED_SHORT) {
