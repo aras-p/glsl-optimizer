@@ -762,11 +762,6 @@ void intelInitBatchBuffer( GLcontext *ctx )
 	 break;
       }
 
-      /* KW: temporary - this make crashes & lockups more frequent, so
-       * leave in until they are solved.
-       */
-      intel->alloc.size = 8 * 1024; 
-
       intel->alloc.ptr = intelAllocateAGP( intel, intel->alloc.size );
       if (intel->alloc.ptr)
 	 intel->alloc.offset = 
