@@ -249,7 +249,8 @@ enum
 #define VERT_RESULT_PSIZ 12
 #define VERT_RESULT_BFC0 13
 #define VERT_RESULT_BFC1 14
-#define VERT_RESULT_MAX  15
+#define VERT_RESULT_EDGE 15
+#define VERT_RESULT_MAX  16
 /*@}*/
 
 
