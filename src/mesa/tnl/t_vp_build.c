@@ -1154,6 +1154,8 @@ static void build_reflect_texgen( struct tnl_program *p,
    emit_op2(p, OPCODE_ADD, tmp, 0, tmp, tmp); 
    /* (-2n.u)n + u */
    emit_op3(p, OPCODE_MAD, dest, writemask, negate(tmp), normal, eye_hat);
+
+   release_temp(p, tmp);
 }
 
 static void build_sphere_texgen( struct tnl_program *p,
