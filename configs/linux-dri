@@ -13,7 +13,7 @@ CXX = g++
 #MKDEP = gcc -M
 #MKDEP_OPTIONS = -MF depend
 
-OPT_FLAGS  = -g
+OPT_FLAGS  = -O -g
 PIC_FLAGS  = -fPIC
 
 # Add '-DGLX_USE_TLS' to ARCH_FLAGS to enable TLS support.
