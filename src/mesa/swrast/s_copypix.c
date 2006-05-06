@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -478,6 +478,41 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 }
 
 
+/**
+ * Convert floating point Z values to integer Z values with pixel transfer's
+ * Z scale and bias.
+ */
+static void
+scale_and_bias_z(GLcontext *ctx, GLuint width,
+                 const GLfloat depth[], GLuint z[])
+{
+   const GLuint depthMax = ctx->DrawBuffer->_DepthMax;
+   GLuint i;
+
+   if (depthMax <= 0xffffff &&
+       ctx->Pixel.DepthScale == 1.0 &&
+       ctx->Pixel.DepthBias == 0.0) {
+      /* no scale or bias and no clamping and no worry of overflow */
+      const GLfloat depthMaxF = ctx->DrawBuffer->_DepthMaxF;
+      for (i = 0; i < width; i++) {
+         z[i] = (GLuint) (depth[i] * depthMaxF);
+      }
+   }
+   else {
+      /* need to be careful with overflow */
+      const GLdouble depthMaxF = ctx->DrawBuffer->_DepthMaxF;
+      for (i = 0; i < width; i++) {
+         GLdouble d = depth[i] * ctx->Pixel.DepthScale + ctx->Pixel.DepthBias;
+         d = CLAMP(d, 0.0, 1.0) * depthMaxF;
+         if (d >= depthMaxF)
+            z[i] = depthMax;
+         else
+            z[i] = (GLuint) d;
+      }
+   }
+}
+
+
 
 /*
  * TODO: Optimize!!!!
@@ -490,10 +525,9 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *readRb = fb->_DepthBuffer;
-   const GLfloat depthMax = fb->_DepthMaxF;
    GLfloat *p, *tmpImage;
    GLint sy, dy, stepy;
-   GLint i, j;
+   GLint j;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
    struct sw_span span;
@@ -562,10 +596,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       }
 
       /* apply scale and bias */
-      for (i = 0; i < width; i++) {
-         GLfloat d = depth[i] * ctx->Pixel.DepthScale + ctx->Pixel.DepthBias;
-         span.array->z[i] = (GLuint) (CLAMP(d, 0.0F, 1.0F) * depthMax);
-      }
+      scale_and_bias_z(ctx, width, depth, span.array->z);
 
       /* write depth values */
       span.x = destx;
