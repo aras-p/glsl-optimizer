@@ -834,8 +834,8 @@ draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                           const GLvoid *pixels)
 {
    const GLint imgX = x, imgY = y;
-   const GLboolean scaleOrBias = 
-      ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
+   const GLboolean scaleOrBias
+      = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
    const GLfloat depthScale = ctx->DrawBuffer->_DepthMaxF;
    const GLuint stencilMask = ctx->Stencil.WriteMask[0];
    const GLuint stencilType = (STENCIL_BITS == 8) ? 

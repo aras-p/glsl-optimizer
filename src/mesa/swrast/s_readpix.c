@@ -88,7 +88,8 @@ read_depth_pixels( GLcontext *ctx,
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *rb = fb->_DepthBuffer;
-   GLboolean bias_or_scale;
+   const GLboolean biasOrScale
+      = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
 
    /* clipping should have been done already */
    ASSERT(x >= 0);
@@ -100,10 +101,8 @@ read_depth_pixels( GLcontext *ctx,
 
    ASSERT(rb);
 
-   bias_or_scale = ctx->Pixel.DepthBias != 0.0 || ctx->Pixel.DepthScale != 1.0;
-
    if (type == GL_UNSIGNED_SHORT && fb->Visual.depthBits == 16
-       && !bias_or_scale && !packing->SwapBytes) {
+       && !biasOrScale && !packing->SwapBytes) {
       /* Special case: directly read 16-bit unsigned depth values. */
       GLint j;
       ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT16);
@@ -115,7 +114,7 @@ read_depth_pixels( GLcontext *ctx,
       }
    }
    else if (type == GL_UNSIGNED_INT && fb->Visual.depthBits == 24
-            && !bias_or_scale && !packing->SwapBytes) {
+            && !biasOrScale && !packing->SwapBytes) {
       /* Special case: directly read 24-bit unsigned depth values. */
       GLint j;
       ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT32);
@@ -133,7 +132,7 @@ read_depth_pixels( GLcontext *ctx,
       }
    }
    else if (type == GL_UNSIGNED_INT && fb->Visual.depthBits == 32
-            && !bias_or_scale && !packing->SwapBytes) {
+            && !biasOrScale && !packing->SwapBytes) {
       /* Special case: directly read 32-bit unsigned depth values. */
       GLint j;
       ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT32);
