@@ -578,6 +578,9 @@ get_line_func(GLcontext *ctx)
    int depth = GET_VISUAL_DEPTH(xmesa->xm_visual);
    struct xmesa_renderbuffer *xrb;
 
+   if (CHAN_BITS != 8)
+      return NULL;
+
    if ((ctx->DrawBuffer->_ColorDrawBufferMask[0]
         & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT)) == 0)
       return (swrast_line_func) NULL;
