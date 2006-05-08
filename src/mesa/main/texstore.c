@@ -2367,6 +2367,48 @@ set_fetch_functions(struct gl_texture_image *texImage, GLuint dims)
 }
 
 
+/**
+ * Choose the actual storage format for a new texture image.
+ * Mainly, this is a wrapper for the driver's ChooseTextureFormat() function.
+ * Also set some other texImage fields related to texture compression, etc.
+ * \param ctx  rendering context
+ * \param texImage  the gl_texture_image
+ * \param dims  texture dimensions (1, 2 or 3)
+ * \param format  the user-specified format parameter
+ * \param type  the user-specified type parameter
+ * \param internalFormat  the user-specified internal format hint
+ */
+static void
+choose_texture_format(GLcontext *ctx, struct gl_texture_image *texImage,
+                      GLuint dims,
+                      GLenum format, GLenum type, GLint internalFormat)
+{
+   assert(ctx->Driver.ChooseTextureFormat);
+
+   texImage->TexFormat
+      = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
+
+   assert(texImage->TexFormat);
+
+   set_fetch_functions(texImage, dims);
+
+   if (texImage->TexFormat->TexelBytes == 0) {
+      /* must be a compressed format */
+      texImage->IsCompressed = GL_TRUE;
+      texImage->CompressedSize =
+         ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
+                                           texImage->Height, texImage->Depth,
+                                           texImage->TexFormat->MesaFormat);
+   }
+   else {
+      /* non-compressed format */
+      texImage->IsCompressed = GL_FALSE;
+      texImage->CompressedSize = 0;
+   }
+}
+
+
+
 /*
  * This is the software fallback for Driver.TexImage1D()
  * and Driver.CopyTexImage1D().
@@ -2389,12 +2431,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
       _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
    }
 
-   /* choose the texture format */
-   assert(ctx->Driver.ChooseTextureFormat);
-   texImage->TexFormat = ctx->Driver.ChooseTextureFormat(ctx, internalFormat,
-                                                         format, type);
-   assert(texImage->TexFormat);
-   set_fetch_functions(texImage, 1);
+   choose_texture_format(ctx, texImage, 1, format, type, internalFormat);
 
    /* allocate memory */
    if (texImage->IsCompressed)
@@ -2474,12 +2511,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
                                          &postConvHeight);
    }
 
-   /* choose the texture format */
-   assert(ctx->Driver.ChooseTextureFormat);
-   texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
-                                          internalFormat, format, type);
-   assert(texImage->TexFormat);
-   set_fetch_functions(texImage, 2);
+   choose_texture_format(ctx, texImage, 2, format, type, internalFormat);
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
@@ -2507,7 +2539,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
       GLboolean success;
       if (texImage->IsCompressed) {
          dstRowStride
-            = _mesa_compressed_row_stride(texImage->InternalFormat,width);
+            = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
       }
       else {
          dstRowStride = postConvWidth * texImage->TexFormat->TexelBytes;
@@ -2554,12 +2586,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
    GLint texelBytes, sizeInBytes;
    (void) border;
 
-   /* choose the texture format */
-   assert(ctx->Driver.ChooseTextureFormat);
-   texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
-                                          internalFormat, format, type);
-   assert(texImage->TexFormat);
-   set_fetch_functions(texImage, 3);
+   choose_texture_format(ctx, texImage, 3, format, type, internalFormat);
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
@@ -2587,7 +2614,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
       GLboolean success;
       if (texImage->IsCompressed) {
          dstRowStride
-            = _mesa_compressed_row_stride(texImage->InternalFormat,width);
+            = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
          dstImageStride = 0;
       }
       else {
@@ -2687,7 +2714,7 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
       GLint dstRowStride = 0, dstImageStride = 0;
       GLboolean success;
       if (texImage->IsCompressed) {
-         dstRowStride = _mesa_compressed_row_stride(texImage->InternalFormat,
+         dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat,
                                                     texImage->Width);
       }
       else {
@@ -2740,7 +2767,7 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
       GLint dstRowStride, dstImageStride;
       GLboolean success;
       if (texImage->IsCompressed) {
-         dstRowStride = _mesa_compressed_row_stride(texImage->InternalFormat,
+         dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat,
                                                     texImage->Width);
          dstImageStride = 0; /* XXX fix */
       }
@@ -2818,12 +2845,7 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    ASSERT(texImage->Depth == 1);
    ASSERT(texImage->Data == NULL); /* was freed in glCompressedTexImage2DARB */
 
-   /* choose the texture format */
-   assert(ctx->Driver.ChooseTextureFormat);
-   texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
-                                          internalFormat, 0, 0);
-   assert(texImage->TexFormat);
-   set_fetch_functions(texImage, 2);
+   choose_texture_format(ctx, texImage, 2, 0, 0, internalFormat);
 
    /* allocate storage */
    texImage->Data = _mesa_alloc_texmemory(imageSize);
@@ -2891,7 +2913,7 @@ _mesa_store_compressed_texsubimage1d(GLcontext *ctx, GLenum target,
                                      struct gl_texture_object *texObj,
                                      struct gl_texture_image *texImage)
 {
-   /* this space intentionally left blank */
+   /* there are no compressed 1D texture formats yet */
    (void) ctx;
    (void) target; (void) level;
    (void) xoffset; (void) width;
@@ -2919,6 +2941,8 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
    GLint i, rows;
    GLubyte *dest;
    const GLubyte *src;
+   const GLuint mesaFormat = texImage->TexFormat->MesaFormat;
+
    (void) format;
 
    /* these should have been caught sooner */
@@ -2933,11 +2957,10 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
    if (!data)
       return;
 
-   srcRowStride = _mesa_compressed_row_stride(texImage->InternalFormat, width);
+   srcRowStride = _mesa_compressed_row_stride(mesaFormat, width);
    src = (const GLubyte *) data;
 
-   destRowStride = _mesa_compressed_row_stride(texImage->InternalFormat,
-                                               texImage->Width);
+   destRowStride = _mesa_compressed_row_stride(mesaFormat, texImage->Width);
    dest = _mesa_compressed_image_address(xoffset, yoffset, 0,
                                          texImage->InternalFormat,
                                          texImage->Width,
@@ -2976,7 +2999,7 @@ _mesa_store_compressed_texsubimage3d(GLcontext *ctx, GLenum target,
                                 struct gl_texture_object *texObj,
                                 struct gl_texture_image *texImage)
 {
-   /* this space intentionally left blank */
+   /* there are no compressed 3D texture formats yet */
    (void) ctx;
    (void) target; (void) level;
    (void) xoffset; (void) yoffset; (void) zoffset;
@@ -3733,7 +3756,7 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
 }
 
 
-/*
+/**
  * For GL_SGIX_generate_mipmap:
  * Generate a complete set of mipmaps from texObj's base-level image.
  * Stop at texObj's MaxLevel or when we get to the 1x1 texture.
@@ -3876,6 +3899,16 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       dstImage->TexFormat = srcImage->TexFormat;
       dstImage->FetchTexelc = srcImage->FetchTexelc;
       dstImage->FetchTexelf = srcImage->FetchTexelf;
+      dstImage->IsCompressed = srcImage->IsCompressed;
+      if (dstImage->IsCompressed) {
+         dstImage->CompressedSize
+            = ctx->Driver.CompressedTextureSize(ctx, dstImage->Width,
+                                              dstImage->Height,
+                                              dstImage->Depth,
+                                              dstImage->TexFormat->MesaFormat);
+         ASSERT(dstImage->CompressedSize > 0);
+      }
+
       ASSERT(dstImage->TexFormat);
       ASSERT(dstImage->FetchTexelc);
       ASSERT(dstImage->FetchTexelf);
@@ -3884,7 +3917,6 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
        * Setup src and dest data pointers.
        */
       if (dstImage->IsCompressed) {
-         ASSERT(dstImage->CompressedSize > 0); /* set by init_teximage_fields*/
          dstImage->Data = _mesa_alloc_texmemory(dstImage->CompressedSize);
          if (!dstImage->Data) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
@@ -3895,7 +3927,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
          ASSERT(dstData);
       }
       else {
-         bytesPerTexel = srcImage->TexFormat->TexelBytes;
+         bytesPerTexel = dstImage->TexFormat->TexelBytes;
          ASSERT(dstWidth * dstHeight * dstDepth * bytesPerTexel > 0);
          dstImage->Data = _mesa_alloc_texmemory(dstWidth * dstHeight
                                                 * dstDepth * bytesPerTexel);
@@ -3945,7 +3977,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
          /* compress image from dstData into dstImage->Data */
          const GLenum srcFormat = convertFormat->BaseFormat;
          GLint dstRowStride
-            = _mesa_compressed_row_stride(srcImage->InternalFormat, dstWidth);
+            = _mesa_compressed_row_stride(dstImage->TexFormat->MesaFormat, dstWidth);
          ASSERT(srcFormat == GL_RGB || srcFormat == GL_RGBA);
          dstImage->TexFormat->StoreImage(ctx, 2, dstImage->_BaseFormat,
                                          dstImage->TexFormat,

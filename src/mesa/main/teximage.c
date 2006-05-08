@@ -1113,12 +1113,8 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
    else
       img->DepthLog2 = logbase2(img->Depth2);
    img->MaxLog2 = MAX2(img->WidthLog2, img->HeightLog2);
-   img->IsCompressed = is_compressed_format(ctx, internalFormat);
-   if (img->IsCompressed)
-      img->CompressedSize = ctx->Driver.CompressedTextureSize(ctx, width,
-                                               height, depth, internalFormat);
-   else
-      img->CompressedSize = 0;
+   img->IsCompressed = GL_FALSE;
+   img->CompressedSize = 0;
 
    if ((width == 1 || _mesa_bitcount(img->Width2) == 1) &&
        (height == 1 || _mesa_bitcount(img->Height2) == 1) &&
@@ -2844,7 +2840,7 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
                                GLsizei height, GLsizei depth, GLint border,
                                GLsizei imageSize)
 {
-   GLint expectedSize, maxLevels = 0, maxTextureSize;
+   GLint /**expectedSize,**/ maxLevels = 0, maxTextureSize;
 
    if (dimensions == 1) {
       /* 1D compressed textures not allowed */
@@ -2913,10 +2909,13 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
    if (level < 0 || level >= maxLevels)
       return GL_INVALID_VALUE;
 
+#if 0
+   /* XXX need to renable this code someday! */
    expectedSize = ctx->Driver.CompressedTextureSize(ctx, width, height, depth,
                                                     internalFormat);
    if (expectedSize != imageSize)
       return GL_INVALID_VALUE;
+#endif
 
    return GL_NO_ERROR;
 }

@@ -101,23 +101,23 @@ _mesa_get_compressed_formats( GLcontext *ctx, GLint *formats )
  * \param width texture width in texels.
  * \param height texture height in texels.
  * \param depth texture depth in texels.
- * \param format - one of the specific compressed texture formats
+ * \param mesaFormat  one of the MESA_FORMAT_* compressed formats
  *
  * \return size in bytes, or zero if bad format
  */
 GLuint
 _mesa_compressed_texture_size( GLcontext *ctx,
                                GLsizei width, GLsizei height, GLsizei depth,
-                               GLenum format )
+                               GLuint mesaFormat )
 {
    GLuint size;
 
    ASSERT(depth == 1);
    (void) depth;
 
-   switch (format) {
-   case GL_COMPRESSED_RGB_FXT1_3DFX:
-   case GL_COMPRESSED_RGBA_FXT1_3DFX:
+   switch (mesaFormat) {
+   case MESA_FORMAT_RGB_FXT1:
+   case MESA_FORMAT_RGBA_FXT1:
       /* round up width to next multiple of 8, height to next multiple of 4 */
       width = (width + 7) & ~7;
       height = (height + 3) & ~3;
@@ -129,10 +129,8 @@ _mesa_compressed_texture_size( GLcontext *ctx,
       if (size < 16)
          size = 16;
       return size;
-   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-   case GL_RGB_S3TC:
-   case GL_RGB4_S3TC:
+   case MESA_FORMAT_RGB_DXT1:
+   case MESA_FORMAT_RGBA_DXT1:
       /* round up width, height to next multiple of 4 */
       width = (width + 3) & ~3;
       height = (height + 3) & ~3;
@@ -144,10 +142,8 @@ _mesa_compressed_texture_size( GLcontext *ctx,
       if (size < 8)
          size = 8;
       return size;
-   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-   case GL_RGBA_S3TC:
-   case GL_RGBA4_S3TC:
+   case MESA_FORMAT_RGBA_DXT3:
+   case MESA_FORMAT_RGBA_DXT5:
       /* round up width, height to next multiple of 4 */
       width = (width + 3) & ~3;
       height = (height + 3) & ~3;
@@ -160,7 +156,7 @@ _mesa_compressed_texture_size( GLcontext *ctx,
          size = 16;
       return size;
    default:
-      _mesa_problem(ctx, "bad texformat in compressed_texture_size");
+      _mesa_problem(ctx, "bad mesaFormat in _mesa_compressed_texture_size");
       return 0;
    }
 }
@@ -169,33 +165,30 @@ _mesa_compressed_texture_size( GLcontext *ctx,
 /*
  * Compute the bytes per row in a compressed texture image.
  * We use this for computing the destination address for sub-texture updates.
- * \param format  one of the specific texture compression formats
+ * \param mesaFormat  one of the MESA_FORMAT_* compressed formats
  * \param width  image width in pixels
  * \return stride, in bytes, between rows for compressed image
  */
 GLint
-_mesa_compressed_row_stride(GLenum format, GLsizei width)
+_mesa_compressed_row_stride(GLuint mesaFormat, GLsizei width)
 {
    GLint stride;
 
-   switch (format) {
-   case GL_COMPRESSED_RGB_FXT1_3DFX:
-   case GL_COMPRESSED_RGBA_FXT1_3DFX:
+   switch (mesaFormat) {
+   case MESA_FORMAT_RGB_FXT1:
+   case MESA_FORMAT_RGBA_FXT1:
       stride = ((width + 7) / 8) * 16; /* 16 bytes per 8x4 tile */
       break;
-   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-   case GL_RGB_S3TC:
-   case GL_RGB4_S3TC:
+   case MESA_FORMAT_RGB_DXT1:
+   case MESA_FORMAT_RGBA_DXT1:
       stride = ((width + 3) / 4) * 8; /* 8 bytes per 4x4 tile */
       break;
-   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-   case GL_RGBA_S3TC:
-   case GL_RGBA4_S3TC:
+   case MESA_FORMAT_RGBA_DXT3:
+   case MESA_FORMAT_RGBA_DXT5:
       stride = ((width + 3) / 4) * 16; /* 16 bytes per 4x4 tile */
       break;
    default:
+      _mesa_problem(NULL, "bad mesaFormat in _mesa_compressed_row_stride");
       return 0;
    }
 
@@ -214,7 +207,7 @@ _mesa_compressed_row_stride(GLenum format, GLsizei width)
  */
 GLubyte *
 _mesa_compressed_image_address(GLint col, GLint row, GLint img,
-                               GLenum format,
+                               GLuint mesaFormat,
                                GLsizei width, const GLubyte *image)
 {
    GLubyte *addr;
@@ -229,25 +222,22 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
     * offset = Z * (((width + X - 1) / X) * (row / Y) + col / X);
     */
 
-   switch (format) {
-   case GL_COMPRESSED_RGB_FXT1_3DFX:
-   case GL_COMPRESSED_RGBA_FXT1_3DFX:
+   switch (mesaFormat) {
+   case MESA_FORMAT_RGB_FXT1:
+   case MESA_FORMAT_RGBA_FXT1:
       addr = (GLubyte *) image + 16 * (((width + 7) / 8) * (row / 4) + col / 8);
       break;
-   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-   case GL_RGB_S3TC:
-   case GL_RGB4_S3TC:
+   case MESA_FORMAT_RGB_DXT1:
+   case MESA_FORMAT_RGBA_DXT1:
       addr = (GLubyte *) image + 8 * (((width + 3) / 4) * (row / 4) + col / 4);
       break;
-   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-   case GL_RGBA_S3TC:
-   case GL_RGBA4_S3TC:
+   case MESA_FORMAT_RGBA_DXT3:
+   case MESA_FORMAT_RGBA_DXT5:
       addr = (GLubyte *) image + 16 * (((width + 3) / 4) * (row / 4) + col / 4);
       break;
    default:
-      return NULL;
+      _mesa_problem(NULL, "bad mesaFormat in _mesa_compressed_image_address");
+      addr = NULL;
    }
 
    return addr;

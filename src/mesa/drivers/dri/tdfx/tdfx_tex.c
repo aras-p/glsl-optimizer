@@ -1258,6 +1258,7 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
     tdfxTexInfo *ti;
     tdfxMipMapLevel *mml;
     GLint texelBytes, dstRowStride;
+    GLuint mesaFormat;
 
     /*
     printf("TexImage id=%d int 0x%x  format 0x%x  type 0x%x  %dx%d\n",
@@ -1345,9 +1346,10 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
     texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
                                      internalFormat, format, type);
     assert(texImage->TexFormat);
-    mml->glideFormat = fxGlideFormat(texImage->TexFormat->MesaFormat);
+    mesaFormat = texImage->TexFormat->MesaFormat;
+    mml->glideFormat = fxGlideFormat(mesaFormat);
     ti->info.format = mml->glideFormat;
-    texImage->FetchTexelc = fxFetchFunction(texImage->TexFormat->MesaFormat);
+    texImage->FetchTexelc = fxFetchFunction(mesaFormat);
     texelBytes = texImage->TexFormat->TexelBytes;
 
     if (texImage->IsCompressed) {
@@ -1355,8 +1357,8 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
                                                         	mml->width,
                                                         	mml->height,
                                                         	1,
-                                                        	internalFormat);
-       dstRowStride = _mesa_compressed_row_stride(internalFormat, mml->width);
+                                                        	mesaFormat);
+       dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, mml->width);
        texImage->Data = _mesa_alloc_texmemory(texImage->CompressedSize);
     } else {
        dstRowStride = mml->width * texelBytes;
@@ -1475,7 +1477,7 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
 
     texelBytes = texImage->TexFormat->TexelBytes;
     if (texImage->IsCompressed) {
-       dstRowStride = _mesa_compressed_row_stride(texImage->InternalFormat, mml->width);
+       dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, mml->width);
     } else {
        dstRowStride = mml->width * texelBytes;
     }
@@ -1602,6 +1604,7 @@ tdfxCompressedTexImage2D (GLcontext *ctx, GLenum target,
     tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
     tdfxTexInfo *ti;
     tdfxMipMapLevel *mml;
+    GLuint mesaFormat;
 
     if (TDFX_DEBUG & DEBUG_VERBOSE_DRI) {
         fprintf(stderr, "tdfxCompressedTexImage2D: id=%d int 0x%x  %dx%d\n",
@@ -1653,9 +1656,10 @@ tdfxCompressedTexImage2D (GLcontext *ctx, GLenum target,
     /* Determine the appropriate Glide texel format,
      * given the user's internal texture format hint.
      */
-    mml->glideFormat = fxGlideFormat(texImage->TexFormat->MesaFormat);
+    mesaFormat = texImage->TexFormat->MesaFormat;
+    mml->glideFormat = fxGlideFormat(mesaFormat);
     ti->info.format = mml->glideFormat;
-    texImage->FetchTexelc = fxFetchFunction(texImage->TexFormat->MesaFormat);
+    texImage->FetchTexelc = fxFetchFunction(mesaFormat);
 
     /* allocate new storage for texture image, if needed */
     if (!texImage->Data) {
@@ -1663,7 +1667,7 @@ tdfxCompressedTexImage2D (GLcontext *ctx, GLenum target,
                                                                 mml->width,
                                                                 mml->height,
                                                                 1,
-                                                                internalFormat);
+                                                                mesaFormat);
        texImage->Data = _mesa_alloc_texmemory(texImage->CompressedSize);
        if (!texImage->Data) {
           _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
@@ -1687,9 +1691,10 @@ tdfxCompressedTexImage2D (GLcontext *ctx, GLenum target,
         *    we replicate the data over the padded area.
         * For now, we take 2) + 3) but texelfetchers will be wrong!
         */
-       GLuint srcRowStride = _mesa_compressed_row_stride(internalFormat, width);
+       const GLuint mesaFormat = texImage->TexFormat->MesaFormat;
+       GLuint srcRowStride = _mesa_compressed_row_stride(mesaFormat, width);
  
-       GLuint destRowStride = _mesa_compressed_row_stride(internalFormat,
+       GLuint destRowStride = _mesa_compressed_row_stride(mesaFormat,
                                                    mml->width);
  
        _mesa_upscale_teximage2d(srcRowStride, (height+3) / 4,
@@ -1728,6 +1733,7 @@ tdfxCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
     GLint destRowStride, srcRowStride;
     GLint i, rows;
     GLubyte *dest;
+    const GLuint mesaFormat = texImage->TexFormat->MesaFormat;
 
     if (TDFX_DEBUG & DEBUG_VERBOSE_DRI) {
         fprintf(stderr, "tdfxCompressedTexSubImage2D: id=%d\n", texObj->Name);
@@ -1738,12 +1744,11 @@ tdfxCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
     mml = TDFX_TEXIMAGE_DATA(texImage);
     assert(mml);
 
-    srcRowStride = _mesa_compressed_row_stride(texImage->InternalFormat, width);
+    srcRowStride = _mesa_compressed_row_stride(mesaFormat, width);
 
-    destRowStride = _mesa_compressed_row_stride(texImage->InternalFormat,
-                                                mml->width);
+    destRowStride = _mesa_compressed_row_stride(mesaFormat, mml->width);
     dest = _mesa_compressed_image_address(xoffset, yoffset, 0,
-                                          texImage->InternalFormat,
+                                          mesaFormat,
                                           mml->width,
                                (GLubyte*) texImage->Data);
 
@@ -1759,10 +1764,9 @@ tdfxCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
      * see fxDDCompressedTexImage2D for caveats
      */
     if (mml->wScale != 1 || mml->hScale != 1) {
-       srcRowStride = _mesa_compressed_row_stride(texImage->InternalFormat, texImage->Width);
+       srcRowStride = _mesa_compressed_row_stride(mesaFormat, texImage->Width);
  
-       destRowStride = _mesa_compressed_row_stride(texImage->InternalFormat,
-                                                mml->width);
+       destRowStride = _mesa_compressed_row_stride(mesaFormat, mml->width);
        _mesa_upscale_teximage2d(srcRowStride, texImage->Height / 4,
                                 destRowStride, mml->height / 4,
                                 1, texImage->Data, destRowStride,

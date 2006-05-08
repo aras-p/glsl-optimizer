@@ -172,11 +172,13 @@ texstore_rgb_dxt1(STORE_PARAMS)
    }
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
-                                        GL_COMPRESSED_RGB_S3TC_DXT1_EXT,
+                                        dstFormat->MesaFormat,
                                         texWidth, (GLubyte *) dstAddr);
 
    if (ext_tx_compress_dxtn) {
-      (*ext_tx_compress_dxtn)(3, srcWidth, srcHeight, pixels,  GL_COMPRESSED_RGB_S3TC_DXT1_EXT, dst, dstRowStride);
+      (*ext_tx_compress_dxtn)(3, srcWidth, srcHeight, pixels,
+                              GL_COMPRESSED_RGB_S3TC_DXT1_EXT,
+                              dst, dstRowStride);
    }
    else {
       _mesa_problem(ctx, "external dxt library not available");
@@ -232,10 +234,12 @@ texstore_rgba_dxt1(STORE_PARAMS)
    }
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
-                                        GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
+                                        dstFormat->MesaFormat,
                                         texWidth, (GLubyte *) dstAddr);
    if (ext_tx_compress_dxtn) {
-      (*ext_tx_compress_dxtn)(4, srcWidth, srcHeight, pixels,  GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, dst, dstRowStride);
+      (*ext_tx_compress_dxtn)(4, srcWidth, srcHeight, pixels,
+                              GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
+                              dst, dstRowStride);
    }
    else {
       _mesa_problem(ctx, "external dxt library not available");
@@ -290,10 +294,12 @@ texstore_rgba_dxt3(STORE_PARAMS)
    }
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
-                                        GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,
+                                        dstFormat->MesaFormat,
                                         texWidth, (GLubyte *) dstAddr);
    if (ext_tx_compress_dxtn) {
-      (*ext_tx_compress_dxtn)(4, srcWidth, srcHeight, pixels,  GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, dst, dstRowStride);
+      (*ext_tx_compress_dxtn)(4, srcWidth, srcHeight, pixels,
+                              GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,
+                              dst, dstRowStride);
    }
    else {
       _mesa_problem(ctx, "external dxt library not available");
@@ -348,10 +354,12 @@ texstore_rgba_dxt5(STORE_PARAMS)
    }
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
-                                        GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,
+                                        dstFormat->MesaFormat,
                                         texWidth, (GLubyte *) dstAddr);
    if (ext_tx_compress_dxtn) {
-      (*ext_tx_compress_dxtn)(4, srcWidth, srcHeight, pixels,  GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, dst, dstRowStride);
+      (*ext_tx_compress_dxtn)(4, srcWidth, srcHeight, pixels,
+                              GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,
+                              dst, dstRowStride);
    }
    else {
       _mesa_problem(ctx, "external dxt library not available");
@@ -368,12 +376,14 @@ static void
 fetch_texel_2d_rgb_dxt1( const struct gl_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLchan *texel )
 {
-    (void) k;
-    if (fetch_ext_rgb_dxt1) {
-       ASSERT (sizeof(GLchan) == sizeof(GLubyte));
-       (*fetch_ext_rgb_dxt1)((texImage)->RowStride, (GLubyte *)(texImage)->Data, i, j, texel);
-    }
-    else _mesa_debug(NULL, "attempted to decode s3tc texture without library available\n");
+   (void) k;
+   if (fetch_ext_rgb_dxt1) {
+      ASSERT (sizeof(GLchan) == sizeof(GLubyte));
+      fetch_ext_rgb_dxt1(texImage->RowStride,
+                         (GLubyte *)(texImage)->Data, i, j, texel);
+   }
+   else
+      _mesa_debug(NULL, "attempted to decode s3tc texture without library available\n");
 }
 
 
@@ -397,9 +407,11 @@ fetch_texel_2d_rgba_dxt1( const struct gl_texture_image *texImage,
 {
    (void) k;
    if (fetch_ext_rgba_dxt1) {
-       (*fetch_ext_rgba_dxt1)((texImage)->RowStride, (GLubyte *)(texImage)->Data, i, j, texel);
-    }
-    else _mesa_debug(NULL, "attempted to decode s3tc texture without library available\n");
+      fetch_ext_rgba_dxt1(texImage->RowStride,
+                          (GLubyte *)(texImage)->Data, i, j, texel);
+   }
+   else
+      _mesa_debug(NULL, "attempted to decode s3tc texture without library available\n");
 }
 
 
@@ -423,10 +435,12 @@ fetch_texel_2d_rgba_dxt3( const struct gl_texture_image *texImage,
 {
    (void) k;
    if (fetch_ext_rgba_dxt3) {
-       ASSERT (sizeof(GLchan) == sizeof(GLubyte));
-       (*fetch_ext_rgba_dxt3)((texImage)->RowStride, (GLubyte *)(texImage)->Data, i, j, texel);
-    }
-    else _mesa_debug(NULL, "attempted to decode s3tc texture without library available\n");
+      ASSERT (sizeof(GLchan) == sizeof(GLubyte));
+      fetch_ext_rgba_dxt3(texImage->RowStride, (GLubyte *)(texImage)->Data,
+                          i, j, texel);
+   }
+   else
+      _mesa_debug(NULL, "attempted to decode s3tc texture without library available\n");
 }
 
 
@@ -450,9 +464,11 @@ fetch_texel_2d_rgba_dxt5( const struct gl_texture_image *texImage,
 {
    (void) k;
    if (fetch_ext_rgba_dxt5) {
-       (*fetch_ext_rgba_dxt5)((texImage)->RowStride, (GLubyte *)(texImage)->Data, i, j, texel);
-    }
-    else _mesa_debug(NULL, "attempted to decode s3tc texture without library available\n");
+      fetch_ext_rgba_dxt5(texImage->RowStride, (GLubyte *)(texImage)->Data,
+                          i, j, texel);
+   }
+   else
+      _mesa_debug(NULL, "attempted to decode s3tc texture without library available\n");
 }
 
 

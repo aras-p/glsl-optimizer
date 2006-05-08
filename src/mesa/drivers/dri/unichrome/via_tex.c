@@ -691,6 +691,14 @@ static void viaTexImage(GLcontext *ctx,
    }
    texelBytes = texImage->TexFormat->TexelBytes;
 
+   if (texelBytes == 0) {
+      /* compressed format */
+      texImage->IsCompressed = GL_TRUE;
+      texImage->CompressedSize =
+         ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
+                                           texImage->Height, texImage->Depth,
+                                           texImage->TexFormat->MesaFormat);
+   }
 
    /* Minimum pitch of 32 bytes */
    if (postConvWidth * texelBytes < 32) {
@@ -782,7 +790,7 @@ static void viaTexImage(GLcontext *ctx,
       GLint dstRowStride, dstImageStride = 0;
       GLboolean success;
       if (texImage->IsCompressed) {
-         dstRowStride = _mesa_compressed_row_stride(texImage->InternalFormat,width);
+         dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
       }
       else {
          dstRowStride = postConvWidth * texImage->TexFormat->TexelBytes;

@@ -34,15 +34,15 @@ _mesa_get_compressed_formats( GLcontext *ctx, GLint *formats );
 extern GLuint
 _mesa_compressed_texture_size( GLcontext *ctx,
                                GLsizei width, GLsizei height, GLsizei depth,
-                               GLenum format );
+                               GLuint mesaFormat );
 
 extern GLint
-_mesa_compressed_row_stride(GLenum format, GLsizei width);
+_mesa_compressed_row_stride(GLuint mesaFormat, GLsizei width);
 
 
 extern GLubyte *
 _mesa_compressed_image_address(GLint col, GLint row, GLint img,
-                               GLenum format,
+                               GLuint mesaFormat,
                                GLsizei width, const GLubyte *image);
 
 
