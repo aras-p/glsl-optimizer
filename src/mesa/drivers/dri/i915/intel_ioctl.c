@@ -418,7 +418,7 @@ void intelClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
       if (!intel->hw_stencil) {
 	 swrast_mask |= BUFFER_BIT_STENCIL;
       }
-      else if (ctx->Stencil.WriteMask[0] != ~0U) {
+      else if ((ctx->Stencil.WriteMask[0] & 0xff) != 0xff) {
 	 tri_mask |= BUFFER_BIT_STENCIL;
       } 
       else {

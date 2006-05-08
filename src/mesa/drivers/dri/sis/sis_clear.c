@@ -133,7 +133,8 @@ sisDDClear( GLcontext * ctx, GLbitfield mask, GLboolean all,
    if ((smesa->current.hwCapEnable2 & (MASK_AlphaMaskWriteEnable |
       MASK_ColorMaskWriteEnable) &&
       (mask & (BUFFER_BIT_BACK_LEFT | BUFFER_BIT_FRONT_LEFT)) != 0) ||
-      (ctx->Stencil.WriteMask[0] < 0xff && (mask & BUFFER_BIT_STENCIL) != 0) )
+      ((ctx->Stencil.WriteMask[0] & 0xff) != 0xff && 
+       (mask & BUFFER_BIT_STENCIL) != 0) )
    {
       mask = sis_3D_Clear( ctx, mask, x1, y1, width1, height1 );
    }
@@ -213,13 +214,13 @@ sis_3D_Clear( GLcontext * ctx, GLbitfield mask,
 
    if (bClrStencil) {
       dwSten1 = STENCIL_FORMAT_8 | SiS_STENCIL_ALWAYS |
-         (ctx->Stencil.Clear << 8) | 0xff;
+         ((ctx->Stencil.Clear & 0xff) << 8) | 0xff;
       dwSten2 = SiS_SFAIL_REPLACE | SiS_SPASS_ZFAIL_REPLACE |
          SiS_SPASS_ZPASS_REPLACE;
       dwEnable1 = MASK_ZWriteEnable | MASK_StencilWriteEnable |
 	MASK_StencilTestEnable;
       dwEnable2 |= MASK_ZMaskWriteEnable;
-      dwDepthMask |= ctx->Stencil.WriteMask[0] << 24;
+      dwDepthMask |= (ctx->Stencil.WriteMask[0] & 0xff) << 24;
    } else if (bClrDepth) {
       dwEnable1 = MASK_ZWriteEnable;
       dwEnable2 |= MASK_ZMaskWriteEnable;

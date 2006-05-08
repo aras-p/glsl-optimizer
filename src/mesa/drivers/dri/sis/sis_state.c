@@ -251,7 +251,7 @@ sisDDDepthMask( GLcontext * ctx, GLboolean flag )
    if (ctx->Visual.stencilBits) {
       if (flag || (ctx->Stencil.WriteMask[0] != 0)) {
          current->hwCapEnable |= MASK_ZWriteEnable;
-         if (flag && (ctx->Stencil.WriteMask[0] == 0xff)) {
+         if (flag && ((ctx->Stencil.WriteMask[0] & 0xff) == 0xff)) {
 	      current->hwCapEnable2 &= ~MASK_ZMaskWriteEnable;
          } else {
             current->hwCapEnable2 |= MASK_ZMaskWriteEnable;

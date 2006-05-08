@@ -1282,8 +1282,8 @@ radeonStencilFuncSeparate( GLcontext *ctx, GLenum face, GLenum func,
                            GLint ref, GLuint mask )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   GLuint refmask = ((ctx->Stencil.Ref[0] << RADEON_STENCIL_REF_SHIFT) |
-		     (ctx->Stencil.ValueMask[0] << RADEON_STENCIL_MASK_SHIFT));
+   GLuint refmask = (((ctx->Stencil.Ref[0] & 0xff) << RADEON_STENCIL_REF_SHIFT) |
+		     ((ctx->Stencil.ValueMask[0] & 0xff) << RADEON_STENCIL_MASK_SHIFT));
 
    RADEON_STATECHANGE( rmesa, ctx );
    RADEON_STATECHANGE( rmesa, msk );
@@ -1330,7 +1330,7 @@ radeonStencilMaskSeparate( GLcontext *ctx, GLenum face, GLuint mask )
    RADEON_STATECHANGE( rmesa, msk );
    rmesa->hw.msk.cmd[MSK_RB3D_STENCILREFMASK] &= ~RADEON_STENCIL_WRITE_MASK;
    rmesa->hw.msk.cmd[MSK_RB3D_STENCILREFMASK] |=
-      (ctx->Stencil.WriteMask[0] << RADEON_STENCIL_WRITEMASK_SHIFT);
+      ((ctx->Stencil.WriteMask[0] & 0xff) << RADEON_STENCIL_WRITEMASK_SHIFT);
 }
 
 static void radeonStencilOpSeparate( GLcontext *ctx, GLenum face, GLenum fail,
@@ -1458,9 +1458,9 @@ static void radeonClearStencil( GLcontext *ctx, GLint s )
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 
    rmesa->state.stencil.clear = 
-      ((GLuint) ctx->Stencil.Clear |
+      ((GLuint) (ctx->Stencil.Clear & 0xff) |
        (0xff << RADEON_STENCIL_MASK_SHIFT) |
-       (ctx->Stencil.WriteMask[0] << RADEON_STENCIL_WRITEMASK_SHIFT));
+       ((ctx->Stencil.WriteMask[0] & 0xff) << RADEON_STENCIL_WRITEMASK_SHIFT));
 }
 
 

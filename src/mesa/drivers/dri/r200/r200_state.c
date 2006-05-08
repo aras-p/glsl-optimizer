@@ -1452,8 +1452,8 @@ r200StencilFuncSeparate( GLcontext *ctx, GLenum face, GLenum func,
                          GLint ref, GLuint mask )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint refmask = ((ctx->Stencil.Ref[0] << R200_STENCIL_REF_SHIFT) |
-		     (ctx->Stencil.ValueMask[0] << R200_STENCIL_MASK_SHIFT));
+   GLuint refmask = (((ctx->Stencil.Ref[0] & 0xff) << R200_STENCIL_REF_SHIFT) |
+		     ((ctx->Stencil.ValueMask[0] & 0xff) << R200_STENCIL_MASK_SHIFT));
 
    R200_STATECHANGE( rmesa, ctx );
    R200_STATECHANGE( rmesa, msk );
@@ -1500,7 +1500,7 @@ r200StencilMaskSeparate( GLcontext *ctx, GLenum face, GLuint mask )
    R200_STATECHANGE( rmesa, msk );
    rmesa->hw.msk.cmd[MSK_RB3D_STENCILREFMASK] &= ~R200_STENCIL_WRITE_MASK;
    rmesa->hw.msk.cmd[MSK_RB3D_STENCILREFMASK] |=
-      (ctx->Stencil.WriteMask[0] << R200_STENCIL_WRITEMASK_SHIFT);
+      ((ctx->Stencil.WriteMask[0] & 0xff) << R200_STENCIL_WRITEMASK_SHIFT);
 }
 
 static void
@@ -1601,9 +1601,9 @@ static void r200ClearStencil( GLcontext *ctx, GLint s )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
    rmesa->state.stencil.clear = 
-      ((GLuint) ctx->Stencil.Clear |
+      ((GLuint) (ctx->Stencil.Clear & 0xff) |
        (0xff << R200_STENCIL_MASK_SHIFT) |
-       (ctx->Stencil.WriteMask[0] << R200_STENCIL_WRITEMASK_SHIFT));
+       ((ctx->Stencil.WriteMask[0] & 0xff) << R200_STENCIL_WRITEMASK_SHIFT));
 }
 
 

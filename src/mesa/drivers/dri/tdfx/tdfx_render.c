@@ -70,7 +70,7 @@ static void tdfxClear( GLcontext *ctx,
    mask &= ~(BUFFER_BIT_ACCUM);
 
    if (mask & BUFFER_BIT_STENCIL) {
-      if (!fxMesa->haveHwStencil || ctx->Stencil.WriteMask[0] != 0xff) {
+      if (!fxMesa->haveHwStencil || (ctx->Stencil.WriteMask[0] & 0xff) != 0xff) {
          /* Napalm seems to have trouble with stencil write masks != 0xff */
          /* do stencil clear in software */
          mask &= ~(BUFFER_BIT_STENCIL);
@@ -98,7 +98,7 @@ static void tdfxClear( GLcontext *ctx,
 	 fxMesa->Glide.grStencilMask(/*ctx->Stencil.WriteMask*/ 0xff);
 	 /* set stencil ref value = desired clear value */
 	 fxMesa->Glide.grStencilFunc(GR_CMP_ALWAYS,
-                                     fxMesa->Stencil.Clear, 0xff);
+                                     (fxMesa->Stencil.Clear & 0xff), 0xff);
 	 fxMesa->Glide.grStencilOp(GR_STENCILOP_REPLACE,
                                    GR_STENCILOP_REPLACE, GR_STENCILOP_REPLACE);
 	 fxMesa->Glide.grEnable(GR_STENCIL_MODE_EXT);
@@ -129,7 +129,7 @@ static void tdfxClear( GLcontext *ctx,
             fxMesa->Glide.grBufferClearExt(fxMesa->Color.ClearColor,
                                            fxMesa->Color.ClearAlpha,
                                            fxMesa->Depth.Clear,
-                                           (FxU32) ctx->Stencil.Clear);
+                                           (FxU32) (ctx->Stencil.Clear & 0xff));
          }
 	 else
             fxMesa->Glide.grBufferClear(fxMesa->Color.ClearColor,
@@ -152,11 +152,11 @@ static void tdfxClear( GLcontext *ctx,
             fxMesa->Glide.grBufferClearExt(fxMesa->Color.ClearColor,
                                            fxMesa->Color.ClearAlpha,
                                            fxMesa->Depth.Clear,
-                                           (FxU32) ctx->Stencil.Clear);
+                                           (FxU32) (ctx->Stencil.Clear & 0xff));
 	 else
             fxMesa->Glide.grBufferClear(fxMesa->Color.ClearColor,
                                         fxMesa->Color.ClearAlpha,
-                                        fxMesa->Depth.Clear);
+                                        fxMesa->Depth.Clear & 0xff);
 	 /* clear front */
 	 FX_grColorMaskv_NoLock(ctx, true4);
 	 fxMesa->Glide.grRenderBuffer(GR_BUFFER_FRONTBUFFER);
@@ -164,7 +164,7 @@ static void tdfxClear( GLcontext *ctx,
             fxMesa->Glide.grBufferClearExt(fxMesa->Color.ClearColor,
                                            fxMesa->Color.ClearAlpha,
                                            fxMesa->Depth.Clear,
-                                           (FxU32) ctx->Stencil.Clear);
+                                           (FxU32) (ctx->Stencil.Clear & 0xff));
 	 else
             fxMesa->Glide.grBufferClear(fxMesa->Color.ClearColor,
                                         fxMesa->Color.ClearAlpha,
@@ -181,7 +181,7 @@ static void tdfxClear( GLcontext *ctx,
             fxMesa->Glide.grBufferClearExt(fxMesa->Color.ClearColor,
                                            fxMesa->Color.ClearAlpha,
                                            fxMesa->Depth.Clear,
-                                           (FxU32) ctx->Stencil.Clear);
+                                           (FxU32) (ctx->Stencil.Clear & 0xff));
 	 else
             fxMesa->Glide.grBufferClear(fxMesa->Color.ClearColor,
                                         fxMesa->Color.ClearAlpha,
@@ -198,7 +198,7 @@ static void tdfxClear( GLcontext *ctx,
             fxMesa->Glide.grBufferClearExt(fxMesa->Color.ClearColor,
                                            fxMesa->Color.ClearAlpha,
                                            fxMesa->Depth.Clear,
-                                           (FxU32) ctx->Stencil.Clear);
+                                           (FxU32) (ctx->Stencil.Clear & 0xff));
 	 else
             fxMesa->Glide.grBufferClear(fxMesa->Color.ClearColor,
                                         fxMesa->Color.ClearAlpha,
@@ -215,7 +215,7 @@ static void tdfxClear( GLcontext *ctx,
             fxMesa->Glide.grBufferClearExt(fxMesa->Color.ClearColor,
                                            fxMesa->Color.ClearAlpha,
                                            fxMesa->Depth.Clear,
-                                           (FxU32) ctx->Stencil.Clear);
+                                           (FxU32) (ctx->Stencil.Clear & 0xff));
 	 else
             fxMesa->Glide.grBufferClear(fxMesa->Color.ClearColor,
                                         fxMesa->Color.ClearAlpha,
@@ -225,7 +225,7 @@ static void tdfxClear( GLcontext *ctx,
             fxMesa->Glide.grBufferClearExt(fxMesa->Color.ClearColor,
                                            fxMesa->Color.ClearAlpha,
                                            fxMesa->Depth.Clear,
-                                           (FxU32) ctx->Stencil.Clear);
+                                           (FxU32) (ctx->Stencil.Clear & 0xff));
 	 else
             fxMesa->Glide.grBufferClear(fxMesa->Color.ClearColor,
                                         fxMesa->Color.ClearAlpha,
@@ -242,7 +242,7 @@ static void tdfxClear( GLcontext *ctx,
             fxMesa->Glide.grBufferClearExt(fxMesa->Color.ClearColor,
                                            fxMesa->Color.ClearAlpha,
                                            fxMesa->Depth.Clear,
-                                           (FxU32) ctx->Stencil.Clear);
+                                           (FxU32) (ctx->Stencil.Clear & 0xff));
 	 else
             fxMesa->Glide.grBufferClear(fxMesa->Color.ClearColor,
                                         fxMesa->Color.ClearAlpha,
@@ -254,7 +254,7 @@ static void tdfxClear( GLcontext *ctx,
             fxMesa->Glide.grBufferClearExt(fxMesa->Color.ClearColor,
                                            fxMesa->Color.ClearAlpha,
                                            fxMesa->Depth.Clear,
-                                           (FxU32) ctx->Stencil.Clear);
+                                           (FxU32) (ctx->Stencil.Clear & 0xff));
 	 else
             fxMesa->Glide.grBufferClear(fxMesa->Color.ClearColor,
                                         fxMesa->Color.ClearAlpha,
@@ -272,7 +272,7 @@ static void tdfxClear( GLcontext *ctx,
             fxMesa->Glide.grBufferClearExt(fxMesa->Color.ClearColor,
                                            fxMesa->Color.ClearAlpha,
                                            fxMesa->Depth.Clear,
-                                           (FxU32) ctx->Stencil.Clear);
+                                           (FxU32) (ctx->Stencil.Clear & 0xff));
 	 else
             fxMesa->Glide.grBufferClear(fxMesa->Color.ClearColor,
                                         fxMesa->Color.ClearAlpha,
@@ -293,7 +293,7 @@ static void tdfxClear( GLcontext *ctx,
             fxMesa->Glide.grBufferClearExt(fxMesa->Color.ClearColor,
                                            fxMesa->Color.ClearAlpha,
                                            fxMesa->Depth.Clear,
-                                           (FxU32) ctx->Stencil.Clear);
+                                           (FxU32) (ctx->Stencil.Clear & 0xff));
             if (ctx->Depth.Mask && ctx->Depth.Test) {
                fxMesa->Glide.grDepthMask(FXTRUE);
             }

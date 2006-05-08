@@ -233,7 +233,7 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
     
    if (mask & BUFFER_BIT_STENCIL) {
       if (vmesa->have_hw_stencil) {
-	 if (ctx->Stencil.WriteMask[0] == 0xff) {
+	 if ((ctx->Stencil.WriteMask[0] & 0xff) == 0xff) {
 	    flag |= VIA_DEPTH;
 	    clear_depth &= ~0xff;
 	    clear_depth |= (ctx->Stencil.Clear & 0xff);

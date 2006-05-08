@@ -260,9 +260,9 @@ r128DDStencilFuncSeparate( GLcontext *ctx, GLenum face, GLenum func,
                            GLint ref, GLuint mask )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
-   GLuint refmask = ((ctx->Stencil.Ref[0] << 0) |
-		     (ctx->Stencil.ValueMask[0] << 16) |
-		     (ctx->Stencil.WriteMask[0] << 24)); 
+   GLuint refmask = (((ctx->Stencil.Ref[0] & 0xff) << 0) |
+		     ((ctx->Stencil.ValueMask[0] & 0xff) << 16) |
+		     ((ctx->Stencil.WriteMask[0] & 0xff) << 24)); 
    GLuint z = rmesa->setup.z_sten_cntl_c;
 
    z &= ~R128_STENCIL_TEST_MASK;
@@ -307,9 +307,9 @@ static void
 r128DDStencilMaskSeparate( GLcontext *ctx, GLenum face, GLuint mask )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
-   GLuint refmask = ((ctx->Stencil.Ref[0] << 0) |
-		     (ctx->Stencil.ValueMask[0] << 16) |
-		     (ctx->Stencil.WriteMask[0] << 24)); 
+   GLuint refmask = (((ctx->Stencil.Ref[0] & 0xff) << 0) |
+		     ((ctx->Stencil.ValueMask[0] & 0xff) << 16) |
+		     ((ctx->Stencil.WriteMask[0] & 0xff) << 24)); 
 
    if ( rmesa->setup.sten_ref_mask_c != refmask ) {
       rmesa->setup.sten_ref_mask_c = refmask;

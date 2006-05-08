@@ -986,8 +986,8 @@ savageDDStencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func,
     const u_int32_t zBufCtrl = imesa->regs.s4.zBufCtrl.ui;
     const u_int32_t stencilCtrl = imesa->regs.s4.stencilCtrl.ui;
 
-    imesa->regs.s4.zBufCtrl.ni.stencilRefVal = ctx->Stencil.Ref[0];
-    imesa->regs.s4.stencilCtrl.ni.readMask  = ctx->Stencil.ValueMask[0];
+    imesa->regs.s4.zBufCtrl.ni.stencilRefVal = ctx->Stencil.Ref[0] & 0xff;
+    imesa->regs.s4.stencilCtrl.ni.readMask  = ctx->Stencil.ValueMask[0] & 0xff;
 
     switch (ctx->Stencil.Function[0])
     {
@@ -1015,8 +1015,8 @@ savageDDStencilMaskSeparate(GLcontext *ctx, GLenum face, GLuint mask)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
 
-    if (imesa->regs.s4.stencilCtrl.ni.writeMask != ctx->Stencil.WriteMask[0]) {
-	imesa->regs.s4.stencilCtrl.ni.writeMask = ctx->Stencil.WriteMask[0];
+    if (imesa->regs.s4.stencilCtrl.ni.writeMask != (ctx->Stencil.WriteMask[0] & 0xff)) {
+	imesa->regs.s4.stencilCtrl.ni.writeMask = (ctx->Stencil.WriteMask[0] & 0xff);
 	imesa->dirty |= SAVAGE_UPLOAD_GLOBAL;
     }
 }

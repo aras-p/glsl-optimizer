@@ -462,9 +462,9 @@ static void tdfxUpdateStencil( GLcontext *ctx )
    if (fxMesa->haveHwStencil) {
       if (ctx->Stencil.Enabled) {
          fxMesa->Stencil.Function = ctx->Stencil.Function[0] - GL_NEVER + GR_CMP_NEVER;
-         fxMesa->Stencil.RefValue = ctx->Stencil.Ref[0];
-         fxMesa->Stencil.ValueMask = ctx->Stencil.ValueMask[0];
-         fxMesa->Stencil.WriteMask = ctx->Stencil.WriteMask[0];
+         fxMesa->Stencil.RefValue = ctx->Stencil.Ref[0] & 0xff;
+         fxMesa->Stencil.ValueMask = ctx->Stencil.ValueMask[0] & 0xff;
+         fxMesa->Stencil.WriteMask = ctx->Stencil.WriteMask[0] & 0xff;
          fxMesa->Stencil.FailFunc = convertGLStencilOp(ctx->Stencil.FailFunc[0]);
          fxMesa->Stencil.ZFailFunc = convertGLStencilOp(ctx->Stencil.ZFailFunc[0]);
          fxMesa->Stencil.ZPassFunc = convertGLStencilOp(ctx->Stencil.ZPassFunc[0]);

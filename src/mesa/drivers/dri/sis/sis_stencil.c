@@ -45,8 +45,9 @@ sisDDStencilFuncSeparate( GLcontext * ctx, GLenum face,
   __GLSiSHardware *current = &smesa->current;
 
    /* set reference */ 
-   current->hwStSetting = STENCIL_FORMAT_8 | (ctx->Stencil.Ref[0] << 8) |
-      ctx->Stencil.ValueMask[0];
+   current->hwStSetting = (STENCIL_FORMAT_8 | 
+			   ((ctx->Stencil.Ref[0] & 0xff) << 8) |
+			   (ctx->Stencil.ValueMask[0] & 0xff));
 
   switch (func)
     {
