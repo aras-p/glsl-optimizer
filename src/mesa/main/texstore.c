@@ -2963,9 +2963,9 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
 
    destRowStride = _mesa_compressed_row_stride(mesaFormat, texImage->Width);
    dest = _mesa_compressed_image_address(xoffset, yoffset, 0,
-                                         texImage->InternalFormat,
+                                         texImage->TexFormat->MesaFormat,
                                          texImage->Width,
-                              (GLubyte*) texImage->Data);
+                                         (GLubyte *) texImage->Data);
 
    bytesPerRow = srcRowStride;
    rows = height / 4;
@@ -4255,6 +4255,8 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
                               const struct gl_texture_object *texObj,
                               const struct gl_texture_image *texImage)
 {
+   GLuint size;
+
    if (ctx->Pack.BufferObj->Name) {
       /* pack texture image into a PBO */
       GLubyte *buf;
@@ -4280,8 +4282,13 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
+   /* don't use texImage->CompressedSize since that may be padded out */
+   size = _mesa_compressed_texture_size(ctx, texImage->Width, texImage->Height,
+                                        texImage->Depth,
+                                        texImage->TexFormat->MesaFormat);
+
    /* just memcpy, no pixelstore or pixel transfer */
-   MEMCPY(img, texImage->Data, texImage->CompressedSize);
+   _mesa_memcpy(img, texImage->Data, size);
 
    if (ctx->Pack.BufferObj->Name) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
