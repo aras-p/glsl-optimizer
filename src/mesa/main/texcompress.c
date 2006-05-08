@@ -162,6 +162,53 @@ _mesa_compressed_texture_size( GLcontext *ctx,
 }
 
 
+/**
+ * As above, but format is specified by a GLenum (GL_COMPRESSED_*) token.
+ *
+ * Note: This function CAN NOT return a padded hardware texture size.
+ * That's why we don't call the ctx->Driver.CompressedTextureSize() function.
+ *
+ * We use this function to validate the <imageSize> parameter
+ * of glCompressedTex[Sub]Image1/2/3D(), which must be an exact match.
+ */
+GLuint
+_mesa_compressed_texture_size_glenum(GLcontext *ctx,
+                                     GLsizei width, GLsizei height,
+                                     GLsizei depth, GLenum glformat)
+{
+   GLuint mesaFormat;
+
+   switch (glformat) {
+   case GL_COMPRESSED_RGB_FXT1_3DFX:
+      mesaFormat = MESA_FORMAT_RGB_FXT1;
+      break;
+   case GL_COMPRESSED_RGBA_FXT1_3DFX:
+      mesaFormat = MESA_FORMAT_RGBA_FXT1;
+      break;
+   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+   case GL_RGB_S3TC:
+      mesaFormat = MESA_FORMAT_RGB_DXT1;
+      break;
+   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+   case GL_RGB4_S3TC:
+      mesaFormat = MESA_FORMAT_RGBA_DXT1;
+      break;
+   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+   case GL_RGBA_S3TC:
+      mesaFormat = MESA_FORMAT_RGBA_DXT3;
+      break;
+   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+   case GL_RGBA4_S3TC:
+      mesaFormat = MESA_FORMAT_RGBA_DXT5;
+      break;
+   default:
+      return 0;
+   }
+
+   return _mesa_compressed_texture_size(ctx, width, height, depth, mesaFormat);
+}
+
+
 /*
  * Compute the bytes per row in a compressed texture image.
  * We use this for computing the destination address for sub-texture updates.

@@ -533,22 +533,17 @@ is_depthstencil_format(GLenum format)
 static GLboolean
 is_compressed_format(GLcontext *ctx, GLenum internalFormat)
 {
-   (void) ctx;
-   switch (internalFormat) {
-      case GL_COMPRESSED_RGB_FXT1_3DFX:
-      case GL_COMPRESSED_RGBA_FXT1_3DFX:
-      case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-      case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-      case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-      case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-      case GL_RGB_S3TC:
-      case GL_RGB4_S3TC:
-      case GL_RGBA_S3TC:
-      case GL_RGBA4_S3TC:
+   GLint supported[100]; /* 100 should be plenty */
+   GLuint i, n;
+
+   n = _mesa_get_compressed_formats(ctx, supported);
+   ASSERT(n < 100);
+   for (i = 0; i < n; i++) {
+      if ((GLint) internalFormat == supported[i]) {
          return GL_TRUE;
-      default:
-         return GL_FALSE;
+      }
    }
+   return GL_FALSE;
 }
 
 
@@ -642,6 +637,8 @@ void
 _mesa_free_texture_image_data(GLcontext *ctx,
                               struct gl_texture_image *texImage)
 {
+   (void) ctx;
+
    if (texImage->Data && !texImage->IsClientData) {
       /* free the old texture data */
       _mesa_free_texmemory(texImage->Data);
@@ -2840,7 +2837,7 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
                                GLsizei height, GLsizei depth, GLint border,
                                GLsizei imageSize)
 {
-   GLint /**expectedSize,**/ maxLevels = 0, maxTextureSize;
+   GLint expectedSize, maxLevels = 0, maxTextureSize;
 
    if (dimensions == 1) {
       /* 1D compressed textures not allowed */
@@ -2875,9 +2872,11 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
 
    maxTextureSize = 1 << (maxLevels - 1);
 
+   /* This will detect any invalid internalFormat value */
    if (!is_compressed_format(ctx, internalFormat))
       return GL_INVALID_ENUM;
 
+   /* This should really never fail */
    if (_mesa_base_tex_format(ctx, internalFormat) < 0)
       return GL_INVALID_ENUM;
 
@@ -2909,13 +2908,10 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
    if (level < 0 || level >= maxLevels)
       return GL_INVALID_VALUE;
 
-#if 0
-   /* XXX need to renable this code someday! */
-   expectedSize = ctx->Driver.CompressedTextureSize(ctx, width, height, depth,
-                                                    internalFormat);
+   expectedSize = _mesa_compressed_texture_size_glenum(ctx, width, height,
+                                                       depth, internalFormat);
    if (expectedSize != imageSize)
       return GL_INVALID_VALUE;
-#endif
 
    return GL_NO_ERROR;
 }
@@ -2971,6 +2967,7 @@ compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
 
    maxTextureSize = 1 << (maxLevels - 1);
 
+   /* this will catch any invalid compressed format token */
    if (!is_compressed_format(ctx, format))
       return GL_INVALID_ENUM;
 
@@ -2996,8 +2993,8 @@ compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
    if ((height & 3) != 0 && height != 2 && height != 1)
       return GL_INVALID_VALUE;
 
-   expectedSize = ctx->Driver.CompressedTextureSize(ctx, width, height, depth,
-                                                    format);
+   expectedSize = _mesa_compressed_texture_size_glenum(ctx, width, height,
+                                                       depth, format);
    if (expectedSize != imageSize)
       return GL_INVALID_VALUE;
 
@@ -3265,7 +3262,9 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    error = compressed_subtexture_error_check(ctx, 1, target, level,
-                                xoffset, 0, 0, width, 1, 1, format, imageSize);
+                                             xoffset, 0, 0, /* pos */
+                                             width, 1, 1,   /* size */
+                                             format, imageSize);
    if (error) {
       _mesa_error(ctx, error, "glCompressedTexSubImage1D");
       return;
@@ -3314,7 +3313,9 @@ _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    error = compressed_subtexture_error_check(ctx, 2, target, level,
-                     xoffset, yoffset, 0, width, height, 1, format, imageSize);
+                                             xoffset, yoffset, 0, /* pos */
+                                             width, height, 1,    /* size */
+                                             format, imageSize);
    if (error) {
       /* XXX proxy target? */
       _mesa_error(ctx, error, "glCompressedTexSubImage2D");
@@ -3365,7 +3366,9 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    error = compressed_subtexture_error_check(ctx, 3, target, level,
-           xoffset, yoffset, zoffset, width, height, depth, format, imageSize);
+                                             xoffset, yoffset, zoffset,/*pos*/
+                                             width, height, depth, /*size*/
+                                             format, imageSize);
    if (error) {
       _mesa_error(ctx, error, "glCompressedTexSubImage2D");
       return;

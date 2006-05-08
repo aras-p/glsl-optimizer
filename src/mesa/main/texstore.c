@@ -2383,12 +2383,13 @@ choose_texture_format(GLcontext *ctx, struct gl_texture_image *texImage,
                       GLuint dims,
                       GLenum format, GLenum type, GLint internalFormat)
 {
-   assert(ctx->Driver.ChooseTextureFormat);
+   ASSERT(dims == 1 || dims == 2 || dims == 3);
+   ASSERT(ctx->Driver.ChooseTextureFormat);
 
    texImage->TexFormat
       = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
 
-   assert(texImage->TexFormat);
+   ASSERT(texImage->TexFormat);
 
    set_fetch_functions(texImage, dims);
 
