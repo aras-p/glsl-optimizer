@@ -1617,10 +1617,9 @@ get_triangle_func(GLcontext *ctx)
          }
       }
    }
-
-#else
-   return (swrast_tri_func) NULL;
 #endif /* CHAN_BITS == 8 */
+
+   return (swrast_tri_func) NULL;
 }
 
 
