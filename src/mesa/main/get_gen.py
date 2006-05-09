@@ -516,11 +516,12 @@ StateVars = [
 	( "GL_TEXTURE_COMPRESSION_HINT_ARB", GLint,
 	  ["ctx->Hint.TextureCompression"], "", ["ARB_texture_compression"] ),
 	( "GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB", GLint,
-	  ["_mesa_get_compressed_formats(ctx, NULL)"], "", ["ARB_texture_compression"] ),
+	  ["_mesa_get_compressed_formats(ctx, NULL, GL_FALSE)"],
+	  "", ["ARB_texture_compression"] ),
 	( "GL_COMPRESSED_TEXTURE_FORMATS_ARB", GLenum,
 	  [],
 	  """GLint formats[100];
-         GLuint i, n = _mesa_get_compressed_formats(ctx, formats);
+         GLuint i, n = _mesa_get_compressed_formats(ctx, formats, GL_FALSE);
          ASSERT(n <= 100);
          for (i = 0; i < n; i++)
             params[i] = ENUM_TO_INT(formats[i]);""",

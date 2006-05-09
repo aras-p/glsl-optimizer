@@ -1068,13 +1068,13 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
          CHECK_EXT1(ARB_texture_compression, "GetBooleanv");
-         params[0] = INT_TO_BOOLEAN(_mesa_get_compressed_formats(ctx, NULL));
+         params[0] = INT_TO_BOOLEAN(_mesa_get_compressed_formats(ctx, NULL, GL_FALSE));
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
          CHECK_EXT1(ARB_texture_compression, "GetBooleanv");
          {
          GLint formats[100];
-         GLuint i, n = _mesa_get_compressed_formats(ctx, formats);
+         GLuint i, n = _mesa_get_compressed_formats(ctx, formats, GL_FALSE);
          ASSERT(n <= 100);
          for (i = 0; i < n; i++)
             params[i] = ENUM_TO_INT(formats[i]);
@@ -2886,13 +2886,13 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
          CHECK_EXT1(ARB_texture_compression, "GetFloatv");
-         params[0] = (GLfloat)(_mesa_get_compressed_formats(ctx, NULL));
+         params[0] = (GLfloat)(_mesa_get_compressed_formats(ctx, NULL, GL_FALSE));
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
          CHECK_EXT1(ARB_texture_compression, "GetFloatv");
          {
          GLint formats[100];
-         GLuint i, n = _mesa_get_compressed_formats(ctx, formats);
+         GLuint i, n = _mesa_get_compressed_formats(ctx, formats, GL_FALSE);
          ASSERT(n <= 100);
          for (i = 0; i < n; i++)
             params[i] = ENUM_TO_INT(formats[i]);
@@ -4704,13 +4704,13 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
          CHECK_EXT1(ARB_texture_compression, "GetIntegerv");
-         params[0] = _mesa_get_compressed_formats(ctx, NULL);
+         params[0] = _mesa_get_compressed_formats(ctx, NULL, GL_FALSE);
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
          CHECK_EXT1(ARB_texture_compression, "GetIntegerv");
          {
          GLint formats[100];
-         GLuint i, n = _mesa_get_compressed_formats(ctx, formats);
+         GLuint i, n = _mesa_get_compressed_formats(ctx, formats, GL_FALSE);
          ASSERT(n <= 100);
          for (i = 0; i < n; i++)
             params[i] = ENUM_TO_INT(formats[i]);

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,16 +38,21 @@
 #include "texformat.h"
 #include "texstore.h"
 
+
 /**
- * Get the list of supported internal compression formats.
+ * Return list of (and count of) all specific texture compression
+ * formats that are supported.
  *
- * \param ctx GL context.
- * \param formats the resulting format list (may be NULL).
+ * \param ctx  the GL context
+ * \param formats  the resulting format list (may be NULL).
+ * \param all  if true return all formats, even those with  some kind
+ *             of restrictions/limitations (See GL_ARB_texture_compression
+ *             spec for more info).
  *
  * \return number of formats.
  */
 GLuint
-_mesa_get_compressed_formats( GLcontext *ctx, GLint *formats )
+_mesa_get_compressed_formats(GLcontext *ctx, GLint *formats, GLboolean all)
 {
    GLuint n = 0;
    if (ctx->Extensions.ARB_texture_compression) {
@@ -63,16 +68,20 @@ _mesa_get_compressed_formats( GLcontext *ctx, GLint *formats )
       if (ctx->Extensions.EXT_texture_compression_s3tc) {
          if (formats) {
             formats[n++] = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-            /* Skip this one because it has a restriction (all transparent
-             * pixels become black).  See the texture compressions spec for
-             * a detailed explanation.  This is what NVIDIA does.
-            formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-            */
+            /* This format has some restrictions/limitations and so should
+             * not be returned via the GL_COMPRESSED_TEXTURE_FORMATS query.
+             * Specifically, all transparent pixels become black.  NVIDIA
+             * omits this format too.
+             */
+            if (all)
+               formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
             formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
             formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
          }
          else {
             n += 3;
+            if (all)
+               n += 1;
          }
       }
       if (ctx->Extensions.S3_s3tc) {

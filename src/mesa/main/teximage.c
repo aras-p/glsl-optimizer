@@ -536,7 +536,7 @@ is_compressed_format(GLcontext *ctx, GLenum internalFormat)
    GLint supported[100]; /* 100 should be plenty */
    GLuint i, n;
 
-   n = _mesa_get_compressed_formats(ctx, supported);
+   n = _mesa_get_compressed_formats(ctx, supported, GL_TRUE);
    ASSERT(n < 100);
    for (i = 0; i < n; i++) {
       if ((GLint) internalFormat == supported[i]) {

@@ -30,7 +30,7 @@
 #if _HAVE_FULL_GL
 
 extern GLuint
-_mesa_get_compressed_formats( GLcontext *ctx, GLint *formats );
+_mesa_get_compressed_formats(GLcontext *ctx, GLint *formats, GLboolean all);
 
 extern GLuint
 _mesa_compressed_texture_size( GLcontext *ctx,
