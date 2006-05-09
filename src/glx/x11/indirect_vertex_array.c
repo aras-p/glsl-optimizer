@@ -1591,7 +1591,7 @@ void __indirect_glClientActiveTextureARB(GLenum texture)
     const GLint unit = (GLint) texture - GL_TEXTURE0;
 
 
-    if ( (unit < 0) || (unit > arrays->num_texture_units) ) {
+    if ( (unit < 0) || (unit >= arrays->num_texture_units) ) {
 	__glXSetError(gc, GL_INVALID_ENUM);
 	return;
     }
