@@ -1485,3 +1485,6 @@ Mesa Version History
 	- assembly language dispatch for SPARC was broken (bug 6484)
 	- assorted compilation fixes on various Unix platforms (Dan Schikore)
 	- glPopAttrib could restore an invalid value for GL_DRAW_BUFFER
+	- assorted minor fixes for 16 and 32 bit/channel modes
+	- fixed assorted bugs in texture compression paths
+
