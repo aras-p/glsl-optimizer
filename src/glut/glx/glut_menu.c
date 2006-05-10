@@ -1000,6 +1000,10 @@ glutAddSubMenu(const char *label, int menu)
 void GLUTAPIENTRY 
 glutAttachMenu(int button)
 {
+  /* if button >= GLUT_MAX_MENUS, we'll go out of array bounds below */
+  if (button >= GLUT_MAX_MENUS) {
+    return;
+  }
   if (__glutMappedMenu) {
     __glutMenuModificationError();
   }
