@@ -47,7 +47,7 @@
 #include <sys/mman.h>
 #include "mm.h"
 
-#define EXEC_HEAP_SIZE (128*1024)
+#define EXEC_HEAP_SIZE (10*1024*1024)
 
 _glthread_DECLARE_STATIC_MUTEX(exec_mutex);
 
@@ -85,7 +85,11 @@ _mesa_exec_malloc(GLuint size)
 
    if (block)
       addr = exec_mem + block->ofs;
-
+   else {
+      _mesa_printf("%s failed\n", __FUNCTION__);
+      exit(1);
+   }
+   
    _glthread_UNLOCK_MUTEX(exec_mutex);
    
    return addr;
