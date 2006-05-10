@@ -45,6 +45,7 @@ SOURCES = \
 	invert.c \
 	jkrahntest.c \
 	manytex.c \
+	mipmap_limits.c \
 	multipal.c \
 	no_s3tc.c \
 	packedpixels.c \
