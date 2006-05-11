@@ -1766,13 +1766,14 @@ __glXPushArrayState( __GLXattribute * state )
     struct array_stack_state * stack = & arrays->stack[ (arrays->stack_index * arrays->num_arrays)];
     unsigned  i;
 
-
+    /* XXX are we pushing _all_ the necessary fields? */
     for ( i = 0 ; i < arrays->num_arrays ; i++ ) {
 	stack[i].data = arrays->arrays[i].data;
 	stack[i].data_type = arrays->arrays[i].data_type;
 	stack[i].user_stride = arrays->arrays[i].user_stride;
 	stack[i].count = arrays->arrays[i].count;
 	stack[i].key = arrays->arrays[i].key;
+        stack[i].index = arrays->arrays[i].index;
 	stack[i].enabled = arrays->arrays[i].enabled;
     }
 
