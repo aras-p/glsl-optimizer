@@ -53,66 +53,56 @@
 #include <stdio.h>
 #include <GL/glut.h>
 
-GLubyte mipmapImage64[64][64][3];
-GLubyte mipmapImage32[32][32][3];
-GLubyte mipmapImage16[16][16][3];
-GLubyte mipmapImage8[8][8][3];
-GLubyte mipmapImage4[4][4][3];
-GLubyte mipmapImage2[2][2][3];
-GLubyte mipmapImage1[1][1][3];
-
 static GLint BaseLevel = 0, MaxLevel = 8;
+static GLfloat LodBias = 0.0;
 static GLboolean NearestFilter = GL_TRUE;
+
+
+static void MakeImage(int level, int width, int height, const GLubyte color[4])
+{
+   const int makeStripes = 0;
+   GLubyte img[256*256*3];
+   int i, j;
+   for (i = 0; i < height; i++) {
+      for (j = 0; j < width; j++) {
+         int k = (i * width + j) * 3;
+         int p = (i/8) & makeStripes;
+         if (p == 0) {
+            img[k + 0] = color[0];
+            img[k + 1] = color[1];
+            img[k + 2] = color[2];
+         }
+         else {
+            img[k + 0] = 0;
+            img[k + 1] = 0;
+            img[k + 2] = 0;
+         }
+      }
+   }
+
+   glTexImage2D(GL_TEXTURE_2D, level, GL_RGB, width, height, 0,
+                GL_RGB, GL_UNSIGNED_BYTE, img);
+}
+
 
 static void makeImages(void)
 {
-    int i, j;
+   static const GLubyte colors[8][3] = {
+      {128, 128, 128 },
+      { 0, 255, 255 },
+      { 255, 255, 0 },
+      { 255, 0, 255 },
+      { 255, 0, 0 },
+      { 0, 255, 0 },
+      { 0, 0, 255 },
+      { 255, 255, 255 }
+   };
+   int i, sz = 128;
 
-    for (i = 0; i < 64; i++) {
-	for (j = 0; j < 64; j++) {
-            mipmapImage64[i][j][0] = 0;
-	    mipmapImage64[i][j][1] = 255;
-	    mipmapImage64[i][j][2] = 255;
-	}
-    }
-    for (i = 0; i < 32; i++) {
-	for (j = 0; j < 32; j++) {
-	    mipmapImage32[i][j][0] = 255;
-	    mipmapImage32[i][j][1] = 255;
-	    mipmapImage32[i][j][2] = 0;
-	}
-    }
-    for (i = 0; i < 16; i++) {
-	for (j = 0; j < 16; j++) {
-	    mipmapImage16[i][j][0] = 255;
-	    mipmapImage16[i][j][1] = 0;
-	    mipmapImage16[i][j][2] = 255;
-	}
-    }
-    for (i = 0; i < 8; i++) {
-	for (j = 0; j < 8; j++) {
-	    mipmapImage8[i][j][0] = 255;
-	    mipmapImage8[i][j][1] = 0;
-	    mipmapImage8[i][j][2] = 0;
-	}
-    }
-    for (i = 0; i < 4; i++) {
-	for (j = 0; j < 4; j++) {
-	    mipmapImage4[i][j][0] = 0;
-	    mipmapImage4[i][j][1] = 255;
-	    mipmapImage4[i][j][2] = 0;
-	}
-    }
-    for (i = 0; i < 2; i++) {
-	for (j = 0; j < 2; j++) {
-	    mipmapImage2[i][j][0] = 0;
-	    mipmapImage2[i][j][1] = 0;
-	    mipmapImage2[i][j][2] = 255;
-	}
-    }
-    mipmapImage1[0][0][0] = 255;
-    mipmapImage1[0][0][1] = 255;
-    mipmapImage1[0][0][2] = 255;
+   for (i = 0; i < 8; i++) {
+      MakeImage(i, sz, sz, colors[i]);
+      sz /= 2;
+   }
 }
 
 static void myinit(void)
@@ -122,22 +112,9 @@ static void myinit(void)
     glShadeModel(GL_FLAT);
 
     glTranslatef(0.0, 0.0, -3.6);
-    makeImages();
+
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, 64, 64, 0,
-		 GL_RGB, GL_UNSIGNED_BYTE, &mipmapImage64[0][0][0]);
-    glTexImage2D(GL_TEXTURE_2D, 1, 3, 32, 32, 0,
-		 GL_RGB, GL_UNSIGNED_BYTE, &mipmapImage32[0][0][0]);
-    glTexImage2D(GL_TEXTURE_2D, 2, 3, 16, 16, 0,
-		 GL_RGB, GL_UNSIGNED_BYTE, &mipmapImage16[0][0][0]);
-    glTexImage2D(GL_TEXTURE_2D, 3, 3, 8, 8, 0,
-		 GL_RGB, GL_UNSIGNED_BYTE, &mipmapImage8[0][0][0]);
-    glTexImage2D(GL_TEXTURE_2D, 4, 3, 4, 4, 0,
-		 GL_RGB, GL_UNSIGNED_BYTE, &mipmapImage4[0][0][0]);
-    glTexImage2D(GL_TEXTURE_2D, 5, 3, 2, 2, 0,
-		 GL_RGB, GL_UNSIGNED_BYTE, &mipmapImage2[0][0][0]);
-    glTexImage2D(GL_TEXTURE_2D, 6, 3, 1, 1, 0,
-		 GL_RGB, GL_UNSIGNED_BYTE, &mipmapImage1[0][0][0]);
+    makeImages();
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
@@ -146,8 +123,9 @@ static void myinit(void)
 
 static void display(void)
 {
-    printf("GL_TEXTURE_BASE_LEVEL = %d  GL_TEXTURE_MAX_LEVEL = %d  filter = %s\n",
-           BaseLevel, MaxLevel,
+   GLfloat tcm = 4.0;
+    printf("GL_TEXTURE_BASE_LEVEL = %d  GL_TEXTURE_MAX_LEVEL = %d  Bias = %.2g  filter = %s\n",
+           BaseLevel, MaxLevel, LodBias,
            NearestFilter ? "LINEAR" : "NEAREST");
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, BaseLevel);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MaxLevel);
@@ -163,12 +141,14 @@ static void display(void)
                        GL_LINEAR_MIPMAP_LINEAR);
     }
 
+    glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, LodBias);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBegin(GL_QUADS);
     glTexCoord2f(0.0, 0.0); glVertex3f(-2.0, -1.0, 0.0);
-    glTexCoord2f(0.0, 8.0); glVertex3f(-2.0, 1.0, 0.0);
-    glTexCoord2f(8.0, 8.0); glVertex3f(3000.0, 1.0, -6000.0);
-    glTexCoord2f(8.0, 0.0); glVertex3f(3000.0, -1.0, -6000.0);
+    glTexCoord2f(0.0, tcm); glVertex3f(-2.0, 1.0, 0.0);
+    glTexCoord2f(tcm, tcm); glVertex3f(3000.0, 1.0, -6000.0);
+    glTexCoord2f(tcm, 0.0); glVertex3f(3000.0, -1.0, -6000.0);
     glEnd();
     glFlush();
 }
@@ -209,6 +189,12 @@ key(unsigned char k, int x, int y)
      if (MaxLevel > 10)
         MaxLevel = 10;
      break;
+  case 'l':
+     LodBias -= 0.02;
+     break;
+  case 'L':
+     LodBias += 0.02;
+     break;
   case 'f':
      NearestFilter = !NearestFilter;
      break;
@@ -235,7 +221,7 @@ int main(int argc, char** argv)
 {
     glutInit(&argc, argv);
     glutInitDisplayMode (GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize (500, 500);
+    glutInitWindowSize (600, 600);
     glutCreateWindow (argv[0]);
     myinit();
     glutReshapeFunc (myReshape);
