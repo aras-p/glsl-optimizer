@@ -71,7 +71,7 @@ void radeon_vb_to_rvb(r300ContextPtr rmesa, struct radeon_vertex_buffer *rvb, st
 	CONV_VB(VERT_ATTRIB_COLOR1, SecondaryColorPtr[0]);
 	CONV_VB(VERT_ATTRIB_FOG, FogCoordPtr);
 	
-	for (i=0; i < MAX_TEXTURE_COORD_UNITS; i++)
+	for (i=0; i < ctx->Const.MaxTextureCoordUnits; i++)
 		CONV_VB(VERT_ATTRIB_TEX0 + i, TexCoordPtr[i]);
 	
 	rvb->Primitive = vb->Primitive;
