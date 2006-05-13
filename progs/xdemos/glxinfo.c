@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,14 +33,9 @@
  * Brian Paul  26 January 2000
  */
 
-#define DO_GLU  /* may want to remove this for easier XFree86 building? */
-
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <GL/gl.h>
-#ifdef DO_GLU
-#include <GL/glu.h>
-#endif
 #include <GL/glx.h>
 #include <stdio.h>
 #include <string.h>
@@ -155,8 +150,126 @@ print_display_info(Display *dpy)
 }
 
 
+/**
+ * Print interesting limits for vertex/fragment programs.
+ */
 static void
-print_limits(void)
+print_program_limits(GLenum target)
+{
+#if defined(GL_ARB_vertex_program) || defined(GL_ARB_fragment_program)
+   struct token_name {
+      GLenum token;
+      const char *name;
+   };
+   static const struct token_name limits[] = {
+      { GL_MAX_PROGRAM_INSTRUCTIONS_ARB, "GL_MAX_PROGRAM_INSTRUCTIONS_ARB" },
+      { GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB, "GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB" },
+      { GL_MAX_PROGRAM_TEMPORARIES_ARB, "GL_MAX_PROGRAM_TEMPORARIES_ARB" },
+      { GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB, "GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB" },
+      { GL_MAX_PROGRAM_PARAMETERS_ARB, "GL_MAX_PROGRAM_PARAMETERS_ARB" },
+      { GL_MAX_PROGRAM_NATIVE_PARAMETERS_ARB, "GL_MAX_PROGRAM_NATIVE_PARAMETERS_ARB" },
+      { GL_MAX_PROGRAM_ATTRIBS_ARB, "GL_MAX_PROGRAM_ATTRIBS_ARB" },
+      { GL_MAX_PROGRAM_NATIVE_ATTRIBS_ARB, "GL_MAX_PROGRAM_NATIVE_ATTRIBS_ARB" },
+      { GL_MAX_PROGRAM_ADDRESS_REGISTERS_ARB, "GL_MAX_PROGRAM_ADDRESS_REGISTERS_ARB" },
+      { GL_MAX_PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB, "GL_MAX_PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB" },
+      { GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB, "GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB" },
+      { GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, "GL_MAX_PROGRAM_ENV_PARAMETERS_ARB" },
+      { GL_MAX_PROGRAM_ALU_INSTRUCTIONS_ARB, "GL_MAX_PROGRAM_ALU_INSTRUCTIONS_ARB" },
+      { GL_MAX_PROGRAM_TEX_INSTRUCTIONS_ARB, "GL_MAX_PROGRAM_TEX_INSTRUCTIONS_ARB" },
+      { GL_MAX_PROGRAM_TEX_INDIRECTIONS_ARB, "GL_MAX_PROGRAM_TEX_INDIRECTIONS_ARB" },
+      { GL_MAX_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB, "GL_MAX_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB" },
+      { GL_MAX_PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB, "GL_MAX_PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB" },
+      { GL_MAX_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB, "GL_MAX_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB" },
+      { (GLenum) 0, NULL }
+   };
+   PFNGLGETPROGRAMIVARBPROC GetProgramivARB_func = (PFNGLGETPROGRAMIVARBPROC)
+      glXGetProcAddressARB((GLubyte *) "glGetProgramivARB");
+   GLint max[1];
+   int i;
+
+   if (target == GL_VERTEX_PROGRAM_ARB) {
+      printf("    GL_VERTEX_PROGRAM_ARB:\n");
+   }
+   else if (target == GL_FRAGMENT_PROGRAM_ARB) {
+      printf("    GL_FRAGMENT_PROGRAM_ARB:\n");
+   }
+   else {
+      return; /* something's wrong */
+   }
+
+   for (i = 0; limits[i].token; i++) {
+      GetProgramivARB_func(target, limits[i].token, max);
+      if (glGetError() == GL_NO_ERROR) {
+         printf("        %s = %d\n", limits[i].name, max[0]);
+      }
+   }
+#endif /* GL_ARB_vertex_program */   
+}
+
+
+/**
+ * Print interesting limits for vertex/fragment shaders.
+ */
+static void
+print_shader_limits(GLenum target)
+{
+   struct token_name {
+      GLenum token;
+      const char *name;
+   };
+#if defined(GL_ARB_vertex_shader)
+   static const struct token_name vertex_limits[] = {
+      { GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, "GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB" },
+      { GL_MAX_VARYING_FLOATS_ARB, "GL_MAX_VARYING_FLOATS_ARB" },
+      { GL_MAX_VERTEX_ATTRIBS_ARB, "GL_MAX_VERTEX_ATTRIBS_ARB" },
+      { GL_MAX_TEXTURE_IMAGE_UNITS_ARB, "GL_MAX_TEXTURE_IMAGE_UNITS_ARB" },
+      { GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, "GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB" },
+      { GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB, "GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB" },
+      { GL_MAX_TEXTURE_COORDS_ARB, "GL_MAX_TEXTURE_COORDS_ARB" },
+      { (GLenum) 0, NULL }
+   };
+#endif
+#if defined(GL_ARB_fragment_shader)
+   static const struct token_name fragment_limits[] = {
+      { GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, "GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB" },
+      { GL_MAX_TEXTURE_COORDS_ARB, "GL_MAX_TEXTURE_COORDS_ARB" },
+      { GL_MAX_TEXTURE_IMAGE_UNITS_ARB, "GL_MAX_TEXTURE_IMAGE_UNITS_ARB" },
+      { (GLenum) 0, NULL }
+   };
+#endif
+   GLint max[1];
+   int i;
+
+#if defined(GL_ARB_vertex_shader)
+   if (target == GL_VERTEX_SHADER_ARB) {
+      printf("    GL_VERTEX_SHADER_ARB:\n");
+      for (i = 0; vertex_limits[i].token; i++) {
+         glGetIntegerv(vertex_limits[i].token, max);
+         if (glGetError() == GL_NO_ERROR) {
+            printf("        %s = %d\n", vertex_limits[i].name, max[0]);
+         }
+      }
+   }
+#endif
+#if defined(GL_ARB_fragment_shader)
+   if (target == GL_FRAGMENT_SHADER_ARB) {
+      printf("    GL_FRAGMENT_SHADER_ARB:\n");
+      for (i = 0; fragment_limits[i].token; i++) {
+         glGetIntegerv(fragment_limits[i].token, max);
+         if (glGetError() == GL_NO_ERROR) {
+            printf("        %s = %d\n", fragment_limits[i].name, max[0]);
+         }
+      }
+   }
+#endif
+}
+
+
+/**
+ * Print interesting OpenGL implementation limits.
+ */
+static void
+print_limits(const char *extensions)
 {
    struct token_name {
       GLuint count;
@@ -180,30 +293,47 @@ print_limits(void)
       { 1, GL_MAX_TEXTURE_STACK_DEPTH, "GL_MAX_TEXTURE_STACK_DEPTH" },
       { 1, GL_MAX_TEXTURE_SIZE, "GL_MAX_TEXTURE_SIZE" },
       { 1, GL_MAX_3D_TEXTURE_SIZE, "GL_MAX_3D_TEXTURE_SIZE" },
-      { 1, GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB, "GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB" },
-      { 1, GL_MAX_RECTANGLE_TEXTURE_SIZE_NV, "GL_MAX_RECTANGLE_TEXTURE_SIZE_NV" },
-      { 1, GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB, "GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB" },
-      { 1, GL_MAX_TEXTURE_UNITS_ARB, "GL_MAX_TEXTURE_UNITS_ARB" },
-      { 1, GL_MAX_TEXTURE_LOD_BIAS_EXT, "GL_MAX_TEXTURE_LOD_BIAS_EXT" },
-      { 1, GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, "GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT" },
       { 2, GL_MAX_VIEWPORT_DIMS, "GL_MAX_VIEWPORT_DIMS" },
       { 2, GL_ALIASED_LINE_WIDTH_RANGE, "GL_ALIASED_LINE_WIDTH_RANGE" },
       { 2, GL_SMOOTH_LINE_WIDTH_RANGE, "GL_SMOOTH_LINE_WIDTH_RANGE" },
       { 2, GL_ALIASED_POINT_SIZE_RANGE, "GL_ALIASED_POINT_SIZE_RANGE" },
       { 2, GL_SMOOTH_POINT_SIZE_RANGE, "GL_SMOOTH_POINT_SIZE_RANGE" },
+#if defined(GL_ARB_texture_cube_map)
+      { 1, GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB, "GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB" },
+#endif
+#if defined(GLX_NV_texture_rectangle)
+      { 1, GL_MAX_RECTANGLE_TEXTURE_SIZE_NV, "GL_MAX_RECTANGLE_TEXTURE_SIZE_NV" },
+#endif
+#if defined(GL_ARB_texture_compression)
+      { 1, GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB, "GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB" },
+#endif
+#if defined(GL_ARB_multitexture)
+      { 1, GL_MAX_TEXTURE_UNITS_ARB, "GL_MAX_TEXTURE_UNITS_ARB" },
+#endif
+#if defined(GL_EXT_texture_lod_bias)
+      { 1, GL_MAX_TEXTURE_LOD_BIAS_EXT, "GL_MAX_TEXTURE_LOD_BIAS_EXT" },
+#endif
+#if defined(GL_EXT_texture_filter_anisotropic)
+      { 1, GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, "GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT" },
+#endif
+#if defined(GL_ARB_draw_buffers)
+      { 1, GL_MAX_DRAW_BUFFERS_ARB, "GL_MAX_DRAW_BUFFERS_ARB" },
+#endif
       { 0, (GLenum) 0, NULL }
    };
    GLint i, max[2];
+
    printf("OpenGL limits:\n");
    for (i = 0; limits[i].count; i++) {
       glGetIntegerv(limits[i].token, max);
-      if (glGetError() == GL_NONE) {
+      if (glGetError() == GL_NO_ERROR) {
          if (limits[i].count == 1)
             printf("    %s = %d\n", limits[i].name, max[0]);
          else /* XXX fix if we ever query something with more than 2 values */
             printf("    %s = %d, %d\n", limits[i].name, max[0], max[1]);
       }
    }
+
    /* these don't fit into the above mechanism, unfortunately */
    glGetConvolutionParameteriv(GL_CONVOLUTION_2D, GL_MAX_CONVOLUTION_WIDTH, max);
    glGetConvolutionParameteriv(GL_CONVOLUTION_2D, GL_MAX_CONVOLUTION_HEIGHT, max+1);
@@ -211,6 +341,18 @@ print_limits(void)
       printf("    GL_MAX_CONVOLUTION_WIDTH/HEIGHT = %d, %d\n", max[0], max[1]);
    }
 
+   if (strstr(extensions, "GL_ARB_vertex_program")) {
+      print_program_limits(GL_VERTEX_PROGRAM_ARB);
+   }
+   if (strstr(extensions, "GL_ARB_fragment_program")) {
+      print_program_limits(GL_FRAGMENT_PROGRAM_ARB);
+   }
+   if (strstr(extensions, "GL_ARB_vertex_shader")) {
+      print_shader_limits(GL_VERTEX_SHADER_ARB);
+   }
+   if (strstr(extensions, "GL_ARB_fragment_shader")) {
+      print_shader_limits(GL_FRAGMENT_SHADER_ARB);
+   }
 }
 
 
@@ -283,10 +425,6 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
       int glxVersionMinor;
       char *displayName = NULL;
       char *colon = NULL, *period = NULL;
-#ifdef DO_GLU
-      const char *gluVersion = (const char *) gluGetString(GLU_VERSION);
-      const char *gluExtensions = (const char *) gluGetString(GLU_EXTENSIONS);
-#endif
       
       if (! glXQueryVersion( dpy, & glxVersionMajor, & glxVersionMinor )) {
          fprintf(stderr, "Error: glXQueryVersion failed\n");
@@ -325,12 +463,7 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
       printf("OpenGL extensions:\n");
       print_extension_list(glExtensions);
       if (limits)
-         print_limits();
-#ifdef DO_GLU
-      printf("glu version: %s\n", gluVersion);
-      printf("glu extensions:\n");
-      print_extension_list(gluExtensions);
-#endif
+         print_limits(glExtensions);
    }
    else {
       fprintf(stderr, "Error: glXMakeCurrent failed\n");
@@ -440,7 +573,7 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
 
    /* multisample attribs */
 #ifdef GLX_ARB_multisample
-   if (strstr("GLX_ARB_multisample", ext) == 0) {
+   if (ext && strstr(ext, "GLX_ARB_multisample") == 0) {
       glXGetConfig(dpy, vInfo, GLX_SAMPLE_BUFFERS_ARB, &attribs->numMultisample);
       glXGetConfig(dpy, vInfo, GLX_SAMPLES_ARB, &attribs->numSamples);
    }
