@@ -624,10 +624,10 @@ static void
 get_row_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
                GLint x, GLint y, void *values)
 {
-   const GLbyte *src = (const GLbyte *) rb->Data + 4 * (y * rb->Width + x);
+   const GLubyte *src = (const GLubyte *) rb->Data + 4 * (y * rb->Width + x);
    ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
    ASSERT(rb->_ActualFormat == GL_RGBA8);
-   _mesa_memcpy(values, src, 4 * count * sizeof(GLbyte));
+   _mesa_memcpy(values, src, 4 * count * sizeof(GLubyte));
 }
 
 
