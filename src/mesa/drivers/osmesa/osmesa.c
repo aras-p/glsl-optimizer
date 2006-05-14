@@ -702,7 +702,7 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 /**
- * Allocate a new renderbuffer tpo describe the user-provided color buffer.
+ * Allocate a new renderbuffer to describe the user-provided color buffer.
  */
 static struct gl_renderbuffer *
 new_osmesa_renderbuffer(GLenum format)
@@ -1195,7 +1195,6 @@ OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
       rb = c->gl_buffer->Attachment[BUFFER_DEPTH].Renderbuffer;
 
    if (!rb || !rb->Data) {
-      /*if ((!c->gl_buffer) || (!c->gl_buffer->DepthBuffer)) {*/
       *width = 0;
       *height = 0;
       *bytesPerValue = 0;
