@@ -303,20 +303,11 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 
 
 
-/**********************************************************************/
-/*****                   Optimized line rendering                 *****/
-/**********************************************************************/
+/**
+ * Macros for optimized line/triangle rendering.
+ * Only for 8-bit channel, RGBA, BGRA, ARGB formats.
+ */
 
-
-#if CHAN_TYPE == GL_FLOAT
-#define PACK_RGBA(DST, R, G, B, A)	\
-do {					\
-   (DST)[0] = MAX2( R, 0.0F );		\
-   (DST)[1] = MAX2( G, 0.0F );		\
-   (DST)[2] = MAX2( B, 0.0F );		\
-   (DST)[3] = CLAMP(A, 0.0F, CHAN_MAXF);\
-} while (0)
-#else
 #define PACK_RGBA(DST, R, G, B, A)	\
 do {					\
    (DST)[osmesa->rInd] = R;		\
@@ -324,39 +315,11 @@ do {					\
    (DST)[osmesa->bInd] = B;		\
    (DST)[osmesa->aInd] = A;		\
 } while (0)
-#endif
 
-#define PACK_RGB(DST, R, G, B)  \
-do {				\
-   (DST)[0] = R;		\
-   (DST)[1] = G;		\
-   (DST)[2] = B;		\
-} while (0)
-
-#define PACK_BGR(DST, R, G, B)  \
-do {				\
-   (DST)[0] = B;		\
-   (DST)[1] = G;		\
-   (DST)[2] = R;		\
-} while (0)
-
-#define PACK_RGB_565(DST, R, G, B)					\
-do {									\
-   (DST) = (((int) (R) << 8) & 0xf800) | (((int) (G) << 3) & 0x7e0) | ((int) (B) >> 3);\
-} while (0)
-
-#define UNPACK_RED(P)      ( (P)[osmesa->rInd] )
-#define UNPACK_GREEN(P)    ( (P)[osmesa->gInd] )
-#define UNPACK_BLUE(P)     ( (P)[osmesa->bInd] )
-#define UNPACK_ALPHA(P)    ( (P)[osmesa->aInd] )
-
-#define PIXELADDR1(X,Y)  (osmesa->rowaddr[Y] + (X))
-#define PIXELADDR2(X,Y)  (osmesa->rowaddr[Y] + 2 * (X))
-#define PIXELADDR3(X,Y)  (osmesa->rowaddr[Y] + 3 * (X))
 #define PIXELADDR4(X,Y)  (osmesa->rowaddr[Y] + 4 * (X))
 
 
-/*
+/**
  * Draw a flat-shaded, RGB line into an osmesa buffer.
  */
 #define NAME flat_rgba_line
@@ -379,7 +342,7 @@ do {								\
 
 
 
-/*
+/**
  * Draw a flat-shaded, Z-less, RGB line into an osmesa buffer.
  */
 #define NAME flat_rgba_z_line
