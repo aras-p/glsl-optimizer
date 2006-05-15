@@ -1053,6 +1053,35 @@ _mesa_init_constants( GLcontext *ctx )
 
 
 /**
+ * Do some sanity checks on the limits/constants for the given context.
+ * Only called the first time a context is bound.
+ */
+static void
+check_context_limits(GLcontext *ctx)
+{
+   /* Many context limits/constants are limited by the size of
+    * internal arrays.
+    */
+   assert(ctx->Const.MaxTextureImageUnits <= MAX_TEXTURE_IMAGE_UNITS);
+   assert(ctx->Const.MaxTextureCoordUnits <= MAX_TEXTURE_COORD_UNITS);
+   assert(ctx->Const.MaxTextureUnits <= MAX_TEXTURE_IMAGE_UNITS);
+   assert(ctx->Const.MaxTextureUnits <= MAX_TEXTURE_COORD_UNITS);
+
+   assert(ctx->Const.MaxViewportWidth <= MAX_WIDTH);
+   assert(ctx->Const.MaxViewportHeight <= MAX_WIDTH);
+
+   /* make sure largest texture image is <= MAX_WIDTH in size */
+   assert((1 << (ctx->Const.MaxTextureLevels -1 )) <= MAX_WIDTH);
+   assert((1 << (ctx->Const.MaxCubeTextureLevels -1 )) <= MAX_WIDTH);
+   assert((1 << (ctx->Const.Max3DTextureLevels -1 )) <= MAX_WIDTH);
+
+   assert(ctx->Const.MaxDrawBuffers <= MAX_DRAW_BUFFERS);
+
+   /* XXX probably add more tests */
+}
+
+
+/**
  * Initialize the attribute groups in a GL context.
  *
  * \param ctx GL context.
@@ -1647,6 +1676,7 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
                                drawBuffer->Width, drawBuffer->Height);
 	    _mesa_set_scissor(newCtx, 0, 0,
 			      drawBuffer->Width, drawBuffer->Height );
+            check_context_limits(newCtx);
          }
       }
 
