@@ -540,6 +540,17 @@ event_loop(Display *dpy, Window win)
 }
 
 
+static void
+usage(void)
+{
+   printf("Usage:\n");
+   printf("  -display <displayname>  set the display to run on\n");
+   printf("  -stereo                 run in stereo mode\n");
+   printf("  -fullscreen             run in fullscreen mode\n");
+   printf("  -info                   display OpenGL renderer info\n");
+}
+ 
+
 int
 main(int argc, char *argv[])
 {
@@ -564,8 +575,10 @@ main(int argc, char *argv[])
       else if (strcmp(argv[i], "-fullscreen") == 0) {
          fullscreen = GL_TRUE;
       }
-      else
-	 printf("Warrning: unknown parameter: %s\n", argv[i]);
+      else {
+         usage();
+         return -1;
+      }
    }
 
    dpy = XOpenDisplay(dpyName);
