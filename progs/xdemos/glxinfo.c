@@ -33,6 +33,8 @@
  * Brian Paul  26 January 2000
  */
 
+#define GLX_GLXEXT_PROTOTYPES
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <GL/gl.h>
@@ -49,6 +51,7 @@
 #ifndef GLX_TRANSPARENT_RGB
 #define GLX_TRANSPARENT_RGB 0x8008
 #endif
+
 
 typedef enum
 {
@@ -203,7 +206,7 @@ print_program_limits(GLenum target)
          printf("        %s = %d\n", limits[i].name, max[0]);
       }
    }
-#endif /* GL_ARB_vertex_program */   
+#endif /* GL_ARB_vertex_program / GL_ARB_fragment_program */
 }
 
 
@@ -341,18 +344,26 @@ print_limits(const char *extensions)
       printf("    GL_MAX_CONVOLUTION_WIDTH/HEIGHT = %d, %d\n", max[0], max[1]);
    }
 
+#if defined(GL_ARB_vertex_program)
    if (strstr(extensions, "GL_ARB_vertex_program")) {
       print_program_limits(GL_VERTEX_PROGRAM_ARB);
    }
+#endif
+#if defined(GL_ARB_fragment_program)
    if (strstr(extensions, "GL_ARB_fragment_program")) {
       print_program_limits(GL_FRAGMENT_PROGRAM_ARB);
    }
+#endif
+#if defined(GL_ARB_vertex_shader)
    if (strstr(extensions, "GL_ARB_vertex_shader")) {
       print_shader_limits(GL_VERTEX_SHADER_ARB);
    }
+#endif
+#if defined(GL_ARB_fragment_shader)
    if (strstr(extensions, "GL_ARB_fragment_shader")) {
       print_shader_limits(GL_FRAGMENT_SHADER_ARB);
    }
+#endif
 }
 
 
