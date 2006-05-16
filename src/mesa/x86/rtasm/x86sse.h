@@ -197,6 +197,7 @@ void x87_fdiv( struct x86_function *p, struct x86_reg dst, struct x86_reg arg );
 void x87_fdivp( struct x86_function *p, struct x86_reg dst );
 void x87_fdivr( struct x86_function *p, struct x86_reg dst, struct x86_reg arg );
 void x87_fdivrp( struct x86_function *p, struct x86_reg dst );
+void x87_fild( struct x86_function *p, struct x86_reg arg );
 void x87_fist( struct x86_function *p, struct x86_reg dst );
 void x87_fistp( struct x86_function *p, struct x86_reg dst );
 void x87_fld( struct x86_function *p, struct x86_reg arg );

@@ -629,6 +629,12 @@ void x87_fistp( struct x86_function *p, struct x86_reg dst )
    emit_modrm_noreg(p, 3, dst);
 }
 
+void x87_fild( struct x86_function *p, struct x86_reg arg )
+{
+   emit_1ub(p, 0xdf);
+   emit_modrm_noreg(p, 0, arg);
+}
+
 void x87_fldz( struct x86_function *p )
 {
    emit_2ub(p, 0xd9, 0xee);
