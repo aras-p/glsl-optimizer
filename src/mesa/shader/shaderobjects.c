@@ -49,7 +49,7 @@
    (**x)._generic._unknown.Release ((struct gl2_unknown_intf **) (x))
 
 static struct gl2_unknown_intf **
-lookup_handle (GLcontext *ctx, GLhandleARB handle, enum gl2_uuid uuid, const char *function)
+lookup_handle (GLcontext *ctx, GLhandleARB handle, enum gl2_uiid uiid, const char *function)
 {
    struct gl2_unknown_intf **unk;
 
@@ -67,7 +67,7 @@ lookup_handle (GLcontext *ctx, GLhandleARB handle, enum gl2_uuid uuid, const cha
    if (unk == NULL)
       _mesa_error (ctx, GL_INVALID_VALUE, function);
    else {
-      unk = (**unk).QueryInterface (unk, uuid);
+      unk = (**unk).QueryInterface (unk, uiid);
       if (unk == NULL)
          _mesa_error (ctx, GL_INVALID_OPERATION, function);
    }
