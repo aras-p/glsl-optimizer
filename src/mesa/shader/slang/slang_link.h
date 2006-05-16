@@ -124,7 +124,8 @@ typedef struct
 
 typedef struct
 {
-	GLuint addr;
+   GLuint addr;   /* memory location */
+   GLuint fill;   /* 1..4, number of components used */
 } slang_attrib_slot;
 
 typedef struct
@@ -302,8 +303,10 @@ typedef struct
 
 GLvoid slang_program_ctr (slang_program *);
 GLvoid slang_program_dtr (slang_program *);
+GLvoid slang_program_rst (slang_program *);
 
-GLboolean _slang_link (slang_program *, slang_translation_unit **, GLuint);
+extern GLboolean
+_slang_link (slang_program *, slang_code_object **, GLuint);
 
 #ifdef __cplusplus
 }

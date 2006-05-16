@@ -171,7 +171,7 @@ static GLuint lookup_attrib_override (slang_attrib_overrides *self, const GLchar
 {
 	GLuint i;
 
-	for (i = 0; self->count; i++)
+	for (i = 0; i < self->count; i++)
 		if (slang_string_compare (name, self->table[i].name) == 0)
 			return self->table[i].index;
 	return MAX_VERTEX_ATTRIBS;
@@ -311,6 +311,12 @@ static GLvoid slang_attrib_bindings_dtr (slang_attrib_bindings *self)
 		slang_alloc_free (self->bindings[i].name);
 }
 
+/*
+ * NOTE: If conventional vertex attribute gl_Vertex is used, application cannot use
+ *       vertex attrib index 0 for binding override. Currently this is not checked.
+ *       Although attrib index 0 is not used when not explicitly asked.
+ */
+
 static GLuint can_allocate_attrib_slots (slang_attrib_bindings *self, GLuint index, GLuint count)
 {
 	GLuint i;
@@ -325,7 +331,7 @@ static GLuint allocate_attrib_slots (slang_attrib_bindings *self, GLuint count)
 {
 	GLuint i;
 
-	for (i = 0; i <= MAX_VERTEX_ATTRIBS - count; i++)
+   for (i = 1; i <= MAX_VERTEX_ATTRIBS - count; i++)
 	{
 		GLuint size;
 		
@@ -334,16 +340,17 @@ static GLuint allocate_attrib_slots (slang_attrib_bindings *self, GLuint count)
 			return i;
 
 		/* speed-up the search a bit */
-		i += count;
+      i += size;
 	}
 	return MAX_VERTEX_ATTRIBS;
 }
 
-static GLboolean add_attrib_binding (slang_attrib_bindings *self, slang_export_data_quant *q,
-	const char *name, GLuint addr, GLuint index_override)
+static GLboolean
+add_attrib_binding (slang_attrib_bindings *self, slang_export_data_quant *q, const char *name,
+                    GLuint addr, GLuint index_override)
 {
 	const GLuint n = self->binding_count;
-	GLuint slot_span, slot_index;
+   GLuint slot_span, slot_fill, slot_index;
 	GLuint i;
 
 	assert (slang_export_data_quant_simple (q));
@@ -351,19 +358,32 @@ static GLboolean add_attrib_binding (slang_attrib_bindings *self, slang_export_d
 	switch (slang_export_data_quant_type (q))
 	{
 	case GL_FLOAT:
+      slot_span = 1;
+      slot_fill = 1;
+      break;
 	case GL_FLOAT_VEC2:
+      slot_span = 1;
+      slot_fill = 2;
+      break;
 	case GL_FLOAT_VEC3:
+      slot_span = 1;
+      slot_fill = 3;
+      break;
 	case GL_FLOAT_VEC4:
 		slot_span = 1;
+      slot_fill = 4;
 		break;
 	case GL_FLOAT_MAT2:
 		slot_span = 2;
+      slot_fill = 2;
 		break;
 	case GL_FLOAT_MAT3:
 		slot_span = 3;
+      slot_fill = 3;
 		break;
 	case GL_FLOAT_MAT4:
 		slot_span = 4;
+      slot_fill = 4;
 		break;
 	default:
 		assert (0);
@@ -389,8 +409,11 @@ static GLboolean add_attrib_binding (slang_attrib_bindings *self, slang_export_d
 	self->bindings[n].first_slot_index = slot_index;
 	self->binding_count++;
 
-	for (i = 0; i < slot_span; i++)
-		self->slots[self->bindings[n].first_slot_index + i].addr = addr + i * 4;
+   for (i = 0; i < slot_span; i++) {
+      slang_attrib_slot *slot = &self->slots[self->bindings[n].first_slot_index + i];
+      slot->addr = addr + i * slot_fill * 4;
+      slot->fill = slot_fill;
+   }
 
 	return GL_TRUE;
 }
@@ -576,7 +599,7 @@ GLvoid slang_program_dtr (slang_program *self)
 	slang_texture_usages_dtr (&self->texture_usage);
 }
 
-static GLvoid slang_program_rst (slang_program *self)
+GLvoid slang_program_rst (slang_program *self)
 {
 	GLuint i;
 
@@ -735,45 +758,41 @@ static GLvoid resolve_common_code (GLuint code[], slang_export_code_table *tbl)
 	code[SLANG_COMMON_CODE_MAIN] = gc (tbl, "@main");
 }
 
-GLboolean _slang_link (slang_program *prog, slang_translation_unit **units, GLuint count)
+GLboolean
+_slang_link (slang_program *prog, slang_code_object **objects, GLuint count)
 {
 	GLuint i;
-
-	slang_program_rst (prog);
 
 	for (i = 0; i < count; i++)
 	{
 		GLuint index;
 
-		if (units[i]->type == slang_unit_fragment_shader)
-		{
+      if (objects[i]->unit.type == slang_unit_fragment_shader) {
 			index = SLANG_SHADER_FRAGMENT;
-			resolve_fragment_fixed (prog->fragment_fixed_entries, &units[i]->exp_data);
+         resolve_fragment_fixed (prog->fragment_fixed_entries, &objects[i]->expdata);
 		}
 		else
 		{
 			index = SLANG_SHADER_VERTEX;
-			resolve_vertex_fixed (prog->vertex_fixed_entries, &units[i]->exp_data);
-			if (!gather_attrib_bindings (&prog->attribs, &units[i]->exp_data,
-				&prog->attrib_overrides))
+         resolve_vertex_fixed (prog->vertex_fixed_entries, &objects[i]->expdata);
+         if (!gather_attrib_bindings (&prog->attribs, &objects[i]->expdata,
+                                      &prog->attrib_overrides))
 				return GL_FALSE;
 		}
 
-		if (!gather_active_variables (&prog->active_uniforms, &units[i]->exp_data,
-			slang_exp_uniform))
+      if (!gather_active_variables (&prog->active_uniforms, &objects[i]->expdata, slang_exp_uniform))
 			return GL_FALSE;
-		if (!gather_active_variables (&prog->active_attribs, &units[i]->exp_data,
-			slang_exp_attribute))
+      if (!gather_active_variables (&prog->active_attribs, &objects[i]->expdata, slang_exp_attribute))
 			return GL_FALSE;
-		if (!gather_uniform_bindings (&prog->uniforms, &units[i]->exp_data, index))
+      if (!gather_uniform_bindings (&prog->uniforms, &objects[i]->expdata, index))
 			return GL_FALSE;
-		if (!gather_varying_bindings (&prog->varyings, &units[i]->exp_data,
-			index == SLANG_SHADER_VERTEX))
+      if (!gather_varying_bindings (&prog->varyings, &objects[i]->expdata,
+                                    index == SLANG_SHADER_VERTEX))
 			return GL_FALSE;
-		resolve_common_fixed (prog->common_fixed_entries[index], &units[i]->exp_data);
-		resolve_common_code (prog->code[index], &units[i]->exp_code);
-		prog->machines[index] = units[i]->machine;
-		prog->assemblies[index] = units[i]->assembly;
+      resolve_common_fixed (prog->common_fixed_entries[index], &objects[i]->expdata);
+      resolve_common_code (prog->code[index], &objects[i]->expcode);
+      prog->machines[index] = &objects[i]->machine;
+      prog->assemblies[index] = &objects[i]->assembly;
 	}
 
 	/* TODO: all varyings read by fragment shader must be written by vertex shader */
