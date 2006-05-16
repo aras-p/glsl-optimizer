@@ -228,12 +228,25 @@ _generic_GetDeleteStatus (struct gl2_generic_intf **intf)
 	return impl->_obj.delete_status;
 }
 
-static const GLcharARB *
-_generic_GetInfoLog (struct gl2_generic_intf **intf)
+static GLvoid
+_generic_GetInfoLog (struct gl2_generic_intf **intf, GLsizei maxlen, GLcharARB *infolog)
 {
-	struct gl2_generic_impl *impl = (struct gl2_generic_impl *) intf;
+   struct gl2_generic_impl *impl = (struct gl2_generic_impl *) (intf);
 
-	return impl->_obj.info_log;
+   if (maxlen > 0) {
+      _mesa_strncpy (infolog, impl->_obj.info_log, maxlen - 1);
+      infolog[maxlen - 1] = '\0';
+   }
+}
+
+static GLsizei
+_generic_GetInfoLogLength (struct gl2_generic_intf **intf)
+{
+   struct gl2_generic_impl *impl = (struct gl2_generic_impl *) (intf);
+
+   if (impl->_obj.info_log == NULL)
+      return 1;
+   return _mesa_strlen (impl->_obj.info_log) + 1;
 }
 
 static struct gl2_generic_intf _generic_vftbl = {
@@ -246,7 +259,8 @@ static struct gl2_generic_intf _generic_vftbl = {
 	NULL,		/* abstract GetType */
 	_generic_GetName,
 	_generic_GetDeleteStatus,
-	_generic_GetInfoLog
+   _generic_GetInfoLog,
+   _generic_GetInfoLogLength
 };
 
 static void
@@ -384,7 +398,8 @@ static struct gl2_container_intf _container_vftbl = {
 		NULL,		/* abstract GetType */
 		_generic_GetName,
 		_generic_GetDeleteStatus,
-		_generic_GetInfoLog
+      _generic_GetInfoLog,
+      _generic_GetInfoLogLength
 	},
 	_container_Attach,
 	_container_Detach,
@@ -464,7 +479,7 @@ struct gl2_shader_obj
 	GLcharARB *source;
 	GLint *offsets;
 	GLsizei offset_count;
-	slang_translation_unit unit;
+   slang_code_object code;
 };
 
 struct gl2_shader_impl
@@ -480,6 +495,7 @@ _shader_destructor (struct gl2_unknown_intf **intf)
 
 	_mesa_free ((void *) impl->_obj.source);
 	_mesa_free ((void *) impl->_obj.offsets);
+   _slang_code_object_dtr (&impl->_obj.code);
 	_3dlabs_shhandle_destructor ((struct gl2_unknown_intf **) &impl->_obj._3dlabs_shhandle._vftbl);
 	_generic_destructor (intf);
 }
@@ -510,6 +526,45 @@ static GLenum
 _shader_GetType (struct gl2_generic_intf **intf)
 {
 	return GL_SHADER_OBJECT_ARB;
+}
+
+static GLvoid
+_shader_GetInfoLog (struct gl2_generic_intf **intf, GLsizei maxlen, GLcharARB *infolog)
+{
+   struct gl2_shader_impl *impl = (struct gl2_shader_impl *) (intf);
+
+   if (maxlen > 0) {
+      if (impl->_obj._generic.info_log != NULL) {
+         GLsizei len = _mesa_strlen (impl->_obj._generic.info_log);
+         if (len > maxlen - 1)
+            len = maxlen - 1;
+         _mesa_memcpy (infolog, impl->_obj._generic.info_log, len);
+         infolog += len;
+         maxlen -= len;
+      }
+      if (impl->_obj.code.machine.infolog != NULL &&
+          impl->_obj.code.machine.infolog->text != NULL) {
+         GLsizei len = _mesa_strlen (impl->_obj.code.machine.infolog->text);
+         if (len > maxlen - 1)
+            len = maxlen - 1;
+         _mesa_memcpy (infolog, impl->_obj.code.machine.infolog->text, len);
+      }
+      infolog[maxlen - 1] = '\0';
+   }
+}
+
+static GLsizei
+_shader_GetInfoLogLength (struct gl2_generic_intf **intf)
+{
+   struct gl2_shader_impl *impl = (struct gl2_shader_impl *) (intf);
+   GLsizei length = 1;
+
+   if (impl->_obj._generic.info_log != NULL)
+      length += _mesa_strlen (impl->_obj._generic.info_log);
+   if (impl->_obj.code.machine.infolog != NULL &&
+       impl->_obj.code.machine.infolog->text != NULL)
+      length += _mesa_strlen (impl->_obj.code.machine.infolog->text);
+   return length;
 }
 
 static GLboolean
@@ -626,14 +681,14 @@ _shader_Compile (struct gl2_shader_intf **intf)
 	else
 		type = slang_unit_vertex_shader;
 	slang_info_log_construct (&info_log);
-	if (_slang_compile (impl->_obj.source, &impl->_obj.unit, type, &info_log))
-	{
-		impl->_obj.compile_status = GL_TRUE;
-	}
+   if (_slang_compile (impl->_obj.source, &impl->_obj.code, type, &info_log))
+      impl->_obj.compile_status = GL_TRUE;
 	if (info_log.text != NULL)
 		impl->_obj._generic.info_log = _mesa_strdup (info_log.text);
-	else
-		impl->_obj._generic.info_log = _mesa_strdup ("");
+	else if (impl->_obj.compile_status)
+		impl->_obj._generic.info_log = _mesa_strdup ("Compile OK.\n");
+   else
+      impl->_obj._generic.info_log = _mesa_strdup ("Compile failed.\n");
 	slang_info_log_destruct (&info_log);
 #endif
 }
@@ -649,7 +704,8 @@ static struct gl2_shader_intf _shader_vftbl = {
 		_shader_GetType,
 		_generic_GetName,
 		_generic_GetDeleteStatus,
-		_generic_GetInfoLog
+      _shader_GetInfoLog,
+      _shader_GetInfoLogLength
 	},
 	NULL,		/* abstract GetSubType */
 	_shader_GetCompileStatus,
@@ -670,6 +726,7 @@ _shader_constructor (struct gl2_shader_impl *impl)
 	impl->_obj.source = NULL;
 	impl->_obj.offsets = NULL;
 	impl->_obj.offset_count = 0;
+   _slang_code_object_ctr (&impl->_obj.code);
 }
 
 struct gl2_program_obj
@@ -760,13 +817,13 @@ _program_Link (struct gl2_program_intf **intf)
 	ShHandle *handles;
 #endif
 	GLuint i, count;
-	slang_translation_unit *units[2];
+   slang_code_object *code[2];
+   GLboolean all_compiled = GL_TRUE;
 
 	impl->_obj.link_status = GL_FALSE;
 	_mesa_free ((void *) impl->_obj._container._generic.info_log);
 	impl->_obj._container._generic.info_log = NULL;
-	slang_program_dtr (&impl->_obj.prog);
-	slang_program_ctr (&impl->_obj.prog);
+	slang_program_rst (&impl->_obj.prog);
 
 #if USE_3DLABS_FRONTEND
 	handles = (ShHandle *) _mesa_malloc (impl->_obj._container.attached_count * sizeof (ShHandle));
@@ -798,9 +855,9 @@ _program_Link (struct gl2_program_intf **intf)
 
 	impl->_obj._container._generic.info_log = _mesa_strdup (ShGetInfoLog (impl->_obj.linker));
 #else
-	count = impl->_obj._container.attached_count;
-	if (count == 0 || count > 2)
-		return;
+   count = impl->_obj._container.attached_count;
+   if (count > 2)
+      return;
 	for (i = 0; i < count; i++)
 	{
 		struct gl2_generic_intf **obj;
@@ -809,19 +866,30 @@ _program_Link (struct gl2_program_intf **intf)
 
 		obj = impl->_obj._container.attached[i];
 		unk = (**obj)._unknown.QueryInterface ((struct gl2_unknown_intf **) obj, UIID_SHADER);
-		(**obj)._unknown.Release ((struct gl2_unknown_intf **) obj);
 		if (unk == NULL)
 			return;
 		sha = (struct gl2_shader_impl *) unk;
-		units[i] = &sha->_obj.unit;
-		(**unk).Release (unk);
-	}
+      code[i] = &sha->_obj.code;
+      all_compiled = all_compiled && sha->_obj.compile_status;
+      (**unk).Release (unk);
+   }
 
-	impl->_obj.link_status = _slang_link (&impl->_obj.prog, units, count);
-	if (impl->_obj.link_status)
-		impl->_obj._container._generic.info_log = _mesa_strdup ("Link OK.\n");
-	else
-		impl->_obj._container._generic.info_log = _mesa_strdup ("Link failed.\n");
+   impl->_obj.link_status = all_compiled;
+   if (!impl->_obj.link_status)
+   {
+      impl->_obj._container._generic.info_log = _mesa_strdup (
+         "Error: One or more shaders has not successfully compiled.\n");
+      return;
+   }
+
+   impl->_obj.link_status = _slang_link (&impl->_obj.prog, code, count);
+   if (!impl->_obj.link_status)
+   {
+      impl->_obj._container._generic.info_log = _mesa_strdup ("Link failed.\n");
+      return;
+   }
+
+   impl->_obj._container._generic.info_log = _mesa_strdup ("Link OK.\n");
 #endif
 }
 
@@ -1094,8 +1162,8 @@ _program_UpdateFixedUniforms (struct gl2_program_intf **intf)
 }
 
 static GLvoid
-_program_UpdateFixedAttribute (struct gl2_program_intf **intf, GLuint index, GLvoid *data,
-                               GLuint offset, GLuint size, GLboolean write)
+_program_UpdateFixedAttrib (struct gl2_program_intf **intf, GLuint index, GLvoid *data,
+                            GLuint offset, GLuint size, GLboolean write)
 {
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
 	slang_program *pro = &impl->_obj.prog;
@@ -1459,6 +1527,27 @@ _program_OverrideAttribBinding (struct gl2_program_intf **intf, GLuint index, co
 }
 
 static GLvoid
+_program_WriteAttrib (struct gl2_program_intf **intf, GLuint index, const GLfloat *value)
+{
+   struct gl2_program_impl *impl = (struct gl2_program_impl *) (intf);
+   slang_program *pro = &impl->_obj.prog;
+   slang_attrib_slot *slot = &pro->attribs.slots[index];
+
+   /*
+    * Generic attributes can be allocated in a shader with scalar, vec or mat type.
+    * For scalar and vec types (specifically float, vec2 and vec3) this is simple - just
+    * ignore the extra components. For mat type this is more complicated - the vertex_shader
+    * spec requires to store every column of a matrix in a separate attrib slot.
+    * To prvent from overwriting data from neighbouring matrix columns, the "fill" information
+    * is kept to know how many components to copy.
+    */
+
+   if (slot->addr != ~0)
+      _mesa_memcpy (&pro->machines[SLANG_SHADER_VERTEX]->mem[slot->addr / 4]._float, value,
+                    slot->fill * sizeof (GLfloat));
+}
+
+static GLvoid
 _program_UpdateVarying (struct gl2_program_intf **intf, GLuint index, GLfloat *value,
                         GLboolean vert)
 {
@@ -1493,7 +1582,8 @@ static struct gl2_program_intf _program_vftbl = {
 			_program_GetType,
 			_generic_GetName,
 			_generic_GetDeleteStatus,
-			_generic_GetInfoLog
+         _generic_GetInfoLog,
+         _generic_GetInfoLogLength
 		},
 		_program_Attach,
 		_container_Detach,
@@ -1505,7 +1595,7 @@ static struct gl2_program_intf _program_vftbl = {
 	_program_Link,
 	_program_Validate,
 	_program_UpdateFixedUniforms,
-	_program_UpdateFixedAttribute,
+	_program_UpdateFixedAttrib,
 	_program_UpdateFixedVarying,
 	_program_GetTextureImageUsage,
 	_program_IsShaderPresent,
@@ -1519,6 +1609,7 @@ static struct gl2_program_intf _program_vftbl = {
 	_program_GetActiveAttribCount,
 	_program_GetAttribLocation,
 	_program_OverrideAttribBinding,
+   _program_WriteAttrib,
 	_program_UpdateVarying	
 };
 
@@ -1588,7 +1679,8 @@ static struct gl2_fragment_shader_intf _fragment_shader_vftbl = {
 			_shader_GetType,
 			_generic_GetName,
 			_generic_GetDeleteStatus,
-			_generic_GetInfoLog
+         _shader_GetInfoLog,
+         _shader_GetInfoLogLength
 		},
 		_fragment_shader_GetSubType,
 		_shader_GetCompileStatus,
@@ -1660,7 +1752,8 @@ static struct gl2_vertex_shader_intf _vertex_shader_vftbl = {
 			_shader_GetType,
 			_generic_GetName,
 			_generic_GetDeleteStatus,
-			_generic_GetInfoLog
+         _shader_GetInfoLog,
+         _shader_GetInfoLogLength
 		},
 		_vertex_shader_GetSubType,
 		_shader_GetCompileStatus,
