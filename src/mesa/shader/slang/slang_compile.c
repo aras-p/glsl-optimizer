@@ -52,120 +52,65 @@ static GLuint slang_var_pool_alloc (slang_var_pool *pool, unsigned int size)
 	return addr;
 }
 
-/* slang_translation_unit */
+/*
+ * slang_code_unit
+ */
 
-int slang_translation_unit_construct (slang_translation_unit *unit)
+GLvoid
+_slang_code_unit_ctr (slang_code_unit *self, struct slang_code_object_ *object)
 {
-	unit->assembly = (slang_assembly_file *) slang_alloc_malloc (sizeof (slang_assembly_file));
-	if (unit->assembly == NULL)
-		return 0;
-	if (!slang_assembly_file_construct (unit->assembly))
-	{
-		slang_alloc_free (unit->assembly);
-		return 0;
-	}
-	unit->global_pool = (slang_var_pool *) slang_alloc_malloc (sizeof (slang_var_pool));
-	if (unit->global_pool == NULL)
-	{
-		slang_assembly_file_destruct (unit->assembly);
-		slang_alloc_free (unit->assembly);
-		return 0;
-	}
-	unit->global_pool->next_addr = 0;
-	unit->machine = (slang_machine *) slang_alloc_malloc (sizeof (slang_machine));
-	if (unit->machine == NULL)
-	{
-		slang_alloc_free (unit->global_pool);
-		slang_assembly_file_destruct (unit->assembly);
-		slang_alloc_free (unit->assembly);
-		return 0;
-	}
-	slang_machine_ctr (unit->machine);
-	unit->atom_pool = (slang_atom_pool *) slang_alloc_malloc (sizeof (slang_atom_pool));
-	if (unit->atom_pool == NULL)
-	{
-		slang_alloc_free (unit->machine);
-		slang_alloc_free (unit->global_pool);
-		slang_assembly_file_destruct (unit->assembly);
-		slang_alloc_free (unit->assembly);
-		return 0;
-	}
-	slang_atom_pool_construct (unit->atom_pool);
-	if (!slang_translation_unit_construct2 (unit, unit->assembly, unit->global_pool, unit->machine,
-			unit->atom_pool))
-	{
-		slang_alloc_free (unit->atom_pool);
-		slang_alloc_free (unit->machine);
-		slang_alloc_free (unit->global_pool);
-		slang_assembly_file_destruct (unit->assembly);
-		slang_alloc_free (unit->assembly);
-		return 0;
-	}
-	unit->free_assembly = 1;
-	unit->free_global_pool = 1;
-	unit->free_machine = 1;
-	unit->free_atom_pool = 1;
-	return 1;
+   _slang_variable_scope_ctr (&self->vars);
+   _slang_function_scope_ctr (&self->funs);
+   _slang_struct_scope_ctr (&self->structs);
+   self->object = object;
 }
 
-int slang_translation_unit_construct2 (slang_translation_unit *unit, slang_assembly_file *file,
-	slang_var_pool *pool, struct slang_machine_ *mach, slang_atom_pool *atoms)
+GLvoid
+_slang_code_unit_dtr (slang_code_unit *self)
 {
-	if (!slang_variable_scope_construct (&unit->globals))
-		return 0;
-	if (!slang_function_scope_construct (&unit->functions))
-	{
-		slang_variable_scope_destruct (&unit->globals);
-		return 0;
-	}
-	if (!slang_struct_scope_construct (&unit->structs))
-	{
-		slang_variable_scope_destruct (&unit->globals);
-		slang_function_scope_destruct (&unit->functions);
-		return 0;
-	}
-	unit->assembly = file;
-	unit->free_assembly = 0;
-	unit->global_pool = pool;
-	unit->free_global_pool = 0;
-	unit->machine = mach;
-	unit->free_machine = 0;
-	unit->atom_pool = atoms;
-	unit->free_atom_pool = 0;
-	slang_export_data_table_ctr (&unit->exp_data);
-	slang_export_code_table_ctr (&unit->exp_code);
-	return 1;
+   slang_variable_scope_destruct (&self->vars);
+   slang_function_scope_destruct (&self->funs);
+   slang_struct_scope_destruct (&self->structs);
 }
 
-void slang_translation_unit_destruct (slang_translation_unit *unit)
+/*
+ * slang_code_object
+ */
+
+GLvoid
+_slang_code_object_ctr (slang_code_object *self)
 {
-	slang_variable_scope_destruct (&unit->globals);
-	slang_function_scope_destruct (&unit->functions);
-	slang_struct_scope_destruct (&unit->structs);
-	if (unit->free_assembly)
-	{
-		slang_assembly_file_destruct (unit->assembly);
-		slang_alloc_free (unit->assembly);
-	}
-	if (unit->free_global_pool)
-		slang_alloc_free (unit->global_pool);
-	if (unit->free_machine)
-	{
-		slang_machine_dtr (unit->machine);
-		slang_alloc_free (unit->machine);
-	}
-	if (unit->free_atom_pool)
-	{
-		slang_atom_pool_destruct (unit->atom_pool);
-		slang_alloc_free (unit->atom_pool);
-	}
-	slang_export_data_table_dtr (&unit->exp_data);
-	slang_export_code_table_ctr (&unit->exp_code);
+   _slang_code_unit_ctr (&self->builtin[0], self);
+   _slang_code_unit_ctr (&self->builtin[1], self);
+   _slang_code_unit_ctr (&self->builtin[2], self);
+   _slang_code_unit_ctr (&self->unit, self);
+   _slang_assembly_file_ctr (&self->assembly);
+   slang_machine_ctr (&self->machine);
+   self->varpool.next_addr = 0;
+   slang_atom_pool_construct (&self->atompool);
+   slang_export_data_table_ctr (&self->expdata);
+   self->expdata.atoms = &self->atompool;
+   slang_export_code_table_ctr (&self->expcode);
+   self->expcode.atoms = &self->atompool;
+}
+
+GLvoid
+_slang_code_object_dtr (slang_code_object *self)
+{
+   _slang_code_unit_dtr (&self->builtin[0]);
+   _slang_code_unit_dtr (&self->builtin[1]);
+   _slang_code_unit_dtr (&self->builtin[2]);
+   _slang_code_unit_dtr (&self->unit);
+   slang_assembly_file_destruct (&self->assembly);
+   slang_machine_dtr (&self->machine);
+   slang_atom_pool_destruct (&self->atompool);
+   slang_export_data_table_dtr (&self->expdata);
+   slang_export_code_table_ctr (&self->expcode);
 }
 
 /* slang_info_log */
 
-static char *out_of_memory = "error: out of memory\n";
+static char *out_of_memory = "Error: Out of memory.\n";
 
 void slang_info_log_construct (slang_info_log *log)
 {
@@ -181,30 +126,42 @@ void slang_info_log_destruct (slang_info_log *log)
 
 static int slang_info_log_message (slang_info_log *log, const char *prefix, const char *msg)
 {
-	unsigned int new_size;
+   GLuint size;
 
 	if (log->dont_free_text)
 		return 0;
-	new_size = slang_string_length (prefix) + 3 + slang_string_length (msg);
-	if (log->text != NULL)
-	{
-		unsigned int text_len = slang_string_length (log->text);
-
-		log->text = (char *) slang_alloc_realloc (log->text, text_len + 1, new_size + text_len + 1);
-	}
-	else
-	{
-		log->text = (char *) slang_alloc_malloc (new_size + 1);
-		if (log->text != NULL)
-			log->text[0] = '\0';
-	}
+   size = slang_string_length (msg) + 2;
+   if (prefix != NULL)
+      size += slang_string_length (prefix) + 2;
+   if (log->text != NULL) {
+      GLuint old_len = slang_string_length (log->text);
+      log->text = (char *) (slang_alloc_realloc (log->text, old_len + 1, old_len + size));
+   }
+   else {
+      log->text = (char *) (slang_alloc_malloc (size));
+      if (log->text != NULL)
+         log->text[0] = '\0';
+   }
 	if (log->text == NULL)
 		return 0;
-	slang_string_concat (log->text, prefix);
-	slang_string_concat (log->text, ": ");
+   if (prefix != NULL) {
+      slang_string_concat (log->text, prefix);
+      slang_string_concat (log->text, ": ");
+   }
 	slang_string_concat (log->text, msg);
 	slang_string_concat (log->text, "\n");
 	return 1;
+}
+
+int slang_info_log_print (slang_info_log *log, const char *msg, ...)
+{
+   va_list va;
+   char buf[1024];
+
+   va_start (va, msg);
+   _mesa_vsprintf (buf, msg, va);
+   va_end (va);
+   return slang_info_log_message (log, NULL, buf);
 }
 
 int slang_info_log_error (slang_info_log *log, const char *msg, ...)
@@ -214,10 +171,10 @@ int slang_info_log_error (slang_info_log *log, const char *msg, ...)
 
 	va_start (va, msg);
 	_mesa_vsprintf (buf, msg, va);
-	if (slang_info_log_message (log, "error", buf))
+   va_end (va);
+	if (slang_info_log_message (log, "Error", buf))
 		return 1;
 	slang_info_log_memory (log);
-	va_end (va);
 	return 0;
 }
 
@@ -228,16 +185,16 @@ int slang_info_log_warning (slang_info_log *log, const char *msg, ...)
 
 	va_start (va, msg);
 	_mesa_vsprintf (buf, msg, va);
-	if (slang_info_log_message (log, "warning", buf))
+   va_end (va);
+	if (slang_info_log_message (log, "Warning", buf))
 		return 1;
 	slang_info_log_memory (log);
-	va_end (va);
 	return 0;
 }
 
 void slang_info_log_memory (slang_info_log *log)
 {
-	if (!slang_info_log_message (log, "error", "out of memory"))
+	if (!slang_info_log_message (log, "Error", "Out of memory."))
 	{
 		log->dont_free_text = 1;
 		log->text = out_of_memory;
@@ -302,7 +259,7 @@ static int parse_number (slang_parse_ctx *C, int *number)
 	}
 	C->I++;
 	if (*number > 65535)
-		slang_info_log_warning (C->L, "%d: literal integer overflow", *number);
+      slang_info_log_warning (C->L, "%d: literal integer overflow.", *number);
 	return 1;
 }
 
@@ -344,7 +301,7 @@ static int check_revision (slang_parse_ctx *C)
 {
 	if (*C->I != REVISION)
 	{
-		slang_info_log_error (C->L, "internal compiler error");
+      slang_info_log_error (C->L, "Internal compiler error.");
 		return 0;
 	}
 	C->I++;
@@ -486,7 +443,7 @@ static int parse_struct (slang_parse_ctx *C, slang_output_ctx *O, slang_struct *
 	name = slang_atom_pool_id (C->atoms, a_name);
 	if (name[0] != '\0' && slang_struct_scope_find (O->structs, a_name, 0) != NULL)
 	{
-		slang_info_log_error (C->L, "%s: duplicate type name", name);
+      slang_info_log_error (C->L, "%s: duplicate type name.", name);
 		return 0;
 	}
 
@@ -700,7 +657,7 @@ static int parse_type_specifier (slang_parse_ctx *C, slang_output_ctx *O, slang_
 			stru = slang_struct_scope_find (O->structs, a_name, 1);
 			if (stru == NULL)
 			{
-				slang_info_log_error (C->L, "%s: undeclared type name",
+            slang_info_log_error (C->L, "%s: undeclared type name.",
 					slang_atom_pool_id (C->atoms, a_name));
 				return 0;
 			}
@@ -1220,7 +1177,7 @@ static int parse_expression (slang_parse_ctx *C, slang_output_ctx *O, slang_oper
 				id = slang_atom_pool_id (C->atoms, op->a_id);
 				if (!is_constructor_name (id, op->a_id, O->structs))
 				{
-					slang_info_log_error (C->L, "%s: undeclared function name", id);
+               slang_info_log_error (C->L, "%s: undeclared function name.", id);
 					return 0;
 				}
 			}
@@ -1275,7 +1232,7 @@ static int parse_parameter_declaration (slang_parse_ctx *C, slang_output_ctx *O,
 	case PARAM_QUALIFIER_IN:
 		if (param->type.qualifier != slang_qual_const && param->type.qualifier != slang_qual_none)
 		{
-			slang_info_log_error (C->L, "invalid type qualifier");
+         slang_info_log_error (C->L, "Invalid type qualifier.");
 			return 0;
 		}
 		break;
@@ -1284,7 +1241,7 @@ static int parse_parameter_declaration (slang_parse_ctx *C, slang_output_ctx *O,
 			param->type.qualifier = slang_qual_out;
 		else
 		{
-			slang_info_log_error (C->L, "invalid type qualifier");
+         slang_info_log_error (C->L, "Invalid type qualifier.");
 			return 0;
 		}
 		break;
@@ -1293,7 +1250,7 @@ static int parse_parameter_declaration (slang_parse_ctx *C, slang_output_ctx *O,
 			param->type.qualifier = slang_qual_inout;
 		else
 		{
-			slang_info_log_error (C->L, "invalid type qualifier");
+         slang_info_log_error (C->L, "Invalid type qualifier.");
 			return 0;
 		}
 		break;
@@ -1815,7 +1772,7 @@ static int parse_function (slang_parse_ctx *C, slang_output_ctx *O, int definiti
 		{
 			if (found_func->body != NULL)
 			{
-				slang_info_log_error (C->L, "%s: function already has a body",
+            slang_info_log_error (C->L, "%s: function already has a body.",
 					slang_atom_pool_id (C->atoms, parsed_func.header.a_name));
 				slang_function_destruct (&parsed_func);
 				return 0;
@@ -1885,17 +1842,18 @@ static int parse_declaration (slang_parse_ctx *C, slang_output_ctx *O)
 #define EXTERNAL_FUNCTION_DEFINITION 1
 #define EXTERNAL_DECLARATION 2
 
-static int parse_translation_unit (slang_parse_ctx *C, slang_translation_unit *unit)
+static GLboolean
+parse_code_unit (slang_parse_ctx *C, slang_code_unit *unit)
 {
 	slang_output_ctx o;
 
-	/* setup output context */
-	o.funs = &unit->functions;
-	o.structs = &unit->structs;
-	o.vars = &unit->globals;
-	o.assembly = unit->assembly;
-	o.global_pool = unit->global_pool;
-	o.machine = unit->machine;
+   /* setup output context */
+   o.funs = &unit->funs;
+   o.structs = &unit->structs;
+   o.vars = &unit->vars;
+   o.assembly = &unit->object->assembly;
+   o.global_pool = &unit->object->varpool;
+   o.machine = &unit->object->machine;
 
 	/* parse individual functions and declarations */
 	while (*C->I != EXTERNAL_NULL)
@@ -1927,60 +1885,44 @@ static int parse_translation_unit (slang_parse_ctx *C, slang_translation_unit *u
 #define BUILTIN_TARGET 2
 #define BUILTIN_TOTAL 3
 
-static int compile_binary (const byte *prod, slang_translation_unit *unit, slang_unit_type type,
-	slang_info_log *log, slang_translation_unit *builtins, slang_assembly_file *file,
-	slang_var_pool *pool, slang_machine *mach, slang_translation_unit *downlink,
-	slang_atom_pool *atoms)
+static GLboolean
+compile_binary (const byte *prod, slang_code_unit *unit, slang_unit_type type,
+                slang_info_log *infolog, slang_code_unit *builtin, slang_code_unit *downlink)
 {
-	slang_parse_ctx C;
+   slang_parse_ctx C;
 
-	/* create translation unit object */
-	if (file != NULL)
-	{
-		if (!slang_translation_unit_construct2 (unit, file, pool, mach, atoms))
-			return 0;
-		unit->type = type;
-	}
+   unit->type = type;
 
-	/* set-up parse context */
-	C.I = prod;
-	C.L = log;
-	C.parsing_builtin = builtins == NULL;
-	C.global_scope = 1;
-	C.atoms = unit->atom_pool;
+   /* setup parse context */
+   C.I = prod;
+   C.L = infolog;
+   C.parsing_builtin = (builtin == NULL);
+   C.global_scope = GL_TRUE;
+   C.atoms = &unit->object->atompool;
 
-	if (!check_revision (&C))
-	{
-		slang_translation_unit_destruct (unit);
-		return 0;
-	}
+   if (!check_revision (&C))
+      return GL_FALSE;
 
-	if (downlink != NULL)
-	{
-		unit->functions.outer_scope = &downlink->functions;
-		unit->globals.outer_scope = &downlink->globals;
-		unit->structs.outer_scope = &downlink->structs;
-	}
+   if (downlink != NULL) {
+      unit->vars.outer_scope = &downlink->vars;
+      unit->funs.outer_scope = &downlink->funs;
+      unit->structs.outer_scope = &downlink->structs;
+   }
 
-	/* parse translation unit */
-	if (!parse_translation_unit (&C, unit))
-	{
-		slang_translation_unit_destruct (unit);
-		return 0;
-	}
-
-	return 1;
+   /* parse translation unit */
+   return parse_code_unit (&C, unit);
 }
 
-static int compile_with_grammar (grammar id, const char *source, slang_translation_unit *unit,
-	slang_unit_type type, slang_info_log *log, slang_translation_unit *builtins)
+static GLboolean
+compile_with_grammar (grammar id, const char *source, slang_code_unit *unit, slang_unit_type type,
+                      slang_info_log *infolog, slang_code_unit *builtin)
 {
 	byte *prod;
-	unsigned int size, start, version;
+   GLuint size, start, version;
 
 	/* retrieve version */
-	if (!_slang_preprocess_version (source, &version, &start, log))
-		return 0;
+   if (!_slang_preprocess_version (source, &version, &start, infolog))
+      return GL_FALSE;
 
 	/* check the syntax and generate its binary representation */
 	if (!grammar_fast_check (id, (const byte *) source + start, &prod, &size, 65536))
@@ -1988,20 +1930,18 @@ static int compile_with_grammar (grammar id, const char *source, slang_translati
 		char buf[1024];
 		unsigned int pos;
 		grammar_get_last_error ( (unsigned char*) buf, 1024, (int*) &pos);
-		slang_info_log_error (log, buf);
-		return 0;
+      slang_info_log_error (infolog, buf);
+      return GL_FALSE;
 	}
 
 	/* syntax is okay - translate it to internal representation */
-	if (!compile_binary (prod, unit, type, log, builtins, NULL, NULL, NULL,
-			&builtins[BUILTIN_TARGET], NULL))
-	{
-		grammar_alloc_free (prod);
-		return 0;
-	}
+   if (!compile_binary (prod, unit, type, infolog, builtin, &builtin[BUILTIN_TARGET])) {
+      grammar_alloc_free (prod);
+      return GL_FALSE;
+   }
 
-	grammar_alloc_free (prod);
-	return 1;
+   grammar_alloc_free (prod);
+   return GL_TRUE;
 }
 
 static const char *slang_shader_syn =
@@ -2024,12 +1964,13 @@ static const byte slang_vertex_builtin_gc[] = {
 #include "library/slang_vertex_builtin_gc.h"
 };
 
-static int compile (grammar *id, slang_translation_unit *builtin_units, int *compiled,
-	const char *source, slang_translation_unit *unit, slang_unit_type type, slang_info_log *log)
+static GLboolean
+compile_object (grammar *id, const char *source, slang_code_object *object, slang_unit_type type,
+                slang_info_log *infolog)
 {
-	slang_translation_unit *builtins = NULL;
+   slang_code_unit *builtins = NULL;
 
-	/* load slang grammar */
+   /* load GLSL grammar */
 	*id = grammar_load_from_text ((const byte *) (slang_shader_syn));
 	if (*id == 0)
 	{
@@ -2037,8 +1978,8 @@ static int compile (grammar *id, slang_translation_unit *builtin_units, int *com
 		int pos;
 
 		grammar_get_last_error (buf, 1024, &pos);
-		slang_info_log_error (log, (const char *) (buf));
-		return 0;
+      slang_info_log_error (infolog, (const char *) (buf));
+      return GL_FALSE;
 	}
 
 	/* set shader type - the syntax is slightly different for different shaders */
@@ -2054,95 +1995,68 @@ static int compile (grammar *id, slang_translation_unit *builtin_units, int *com
 	if (type == slang_unit_fragment_shader || type == slang_unit_vertex_shader)
 	{
 		/* compile core functionality first */
-		if (!compile_binary (slang_core_gc, &builtin_units[BUILTIN_CORE],
-				slang_unit_fragment_builtin, log, NULL, unit->assembly, unit->global_pool,
-				unit->machine, NULL, unit->atom_pool))
-			return 0;
-		compiled[BUILTIN_CORE] = 1;
+      if (!compile_binary (slang_core_gc, &object->builtin[BUILTIN_CORE],
+                           slang_unit_fragment_builtin, infolog, NULL, NULL))
+         return GL_FALSE;
 
 		/* compile common functions and variables, link to core */
-		if (!compile_binary (slang_common_builtin_gc, &builtin_units[BUILTIN_COMMON],
-				slang_unit_fragment_builtin, log, NULL, unit->assembly, unit->global_pool,
-				unit->machine, &builtin_units[BUILTIN_CORE], unit->atom_pool))
-			return 0;
-		compiled[BUILTIN_COMMON] = 1;
+      if (!compile_binary (slang_common_builtin_gc, &object->builtin[BUILTIN_COMMON],
+                           slang_unit_fragment_builtin, infolog, NULL,
+                           &object->builtin[BUILTIN_CORE]))
+         return GL_FALSE;
 
 		/* compile target-specific functions and variables, link to common */
 		if (type == slang_unit_fragment_shader)
 		{
-			if (!compile_binary (slang_fragment_builtin_gc, &builtin_units[BUILTIN_TARGET],
-					slang_unit_fragment_builtin, log, NULL, unit->assembly, unit->global_pool,
-					unit->machine, &builtin_units[BUILTIN_COMMON], unit->atom_pool))
-				return 0;
+         if (!compile_binary (slang_fragment_builtin_gc, &object->builtin[BUILTIN_TARGET],
+                              slang_unit_fragment_builtin, infolog, NULL,
+                              &object->builtin[BUILTIN_COMMON]))
+            return GL_FALSE;
 		}
 		else if (type == slang_unit_vertex_shader)
 		{
-			if (!compile_binary (slang_vertex_builtin_gc, &builtin_units[BUILTIN_TARGET],
-					slang_unit_vertex_builtin, log, NULL, unit->assembly, unit->global_pool,
-					unit->machine, &builtin_units[BUILTIN_COMMON], unit->atom_pool))
-				return 0;
+         if (!compile_binary (slang_vertex_builtin_gc, &object->builtin[BUILTIN_TARGET],
+                              slang_unit_vertex_builtin, infolog, NULL,
+                              &object->builtin[BUILTIN_COMMON]))
+            return GL_FALSE;
 		}
-		compiled[BUILTIN_TARGET] = 1;
 
 		/* disable language extensions */
 		grammar_set_reg8 (*id, (const byte *) "parsing_builtin", 0);
-		builtins = builtin_units;
+      builtins = object->builtin;
 	}
 
 	/* compile the actual shader - pass-in built-in library for external shader */
-	if (!compile_with_grammar (*id, source, unit, type, log, builtins))
-		return 0;
-
-	return 1;
+   return compile_with_grammar (*id, source, &object->unit, type, infolog, builtins);
 }
 
-int _slang_compile (const char *source, slang_translation_unit *unit, slang_unit_type type,
-	slang_info_log *log)
+GLboolean
+_slang_compile (const char *source, slang_code_object *object, slang_unit_type type,
+                slang_info_log *infolog)
 {
-	int success;
-	grammar id = 0;
-/*	slang_translation_unit builtin_units[BUILTIN_TOTAL];*/
-	slang_translation_unit *builtin_units;
-	int compiled[BUILTIN_TOTAL] = { 0 };
+   GLboolean success;
+   grammar id = 0;
 
-	/* create the main unit first */
-	if (!slang_translation_unit_construct (unit))
-		return 0;
-	unit->type = type;
+   _slang_code_object_dtr (object);
+   _slang_code_object_ctr (object);
 
-	builtin_units = (slang_translation_unit *) slang_alloc_malloc (BUILTIN_TOTAL * sizeof (slang_translation_unit));
-	success = compile (&id, builtin_units, compiled, source, unit, type, log);
+   success = compile_object (&id, source, object, type, infolog);
+   if (id != 0)
+      grammar_destroy (id);
+   if (!success)
+      return GL_FALSE;
 
-	/* destroy built-in library */
-	/* XXX: free with the unit */
-	/*if (type == slang_unit_fragment_shader || type == slang_unit_vertex_shader)
-	{
-		int i;
-
-		for (i = 0; i < BUILTIN_TOTAL; i++)
-			if (compiled[i] != 0)
-				slang_translation_unit_destruct (&builtin_units[i]);
-	}*/
-	if (id != 0)
-		grammar_destroy (id);
-
-	if (!success)
-		return 0;
-
-	unit->exp_data.atoms = unit->atom_pool;
-	if (!_slang_build_export_data_table (&unit->exp_data, &unit->globals))
-		return 0;
-
-	unit->exp_code.atoms = unit->atom_pool;
-	if (!_slang_build_export_code_table (&unit->exp_code, &unit->functions, unit))
-		return 0;
+   if (!_slang_build_export_data_table (&object->expdata, &object->unit.vars))
+      return GL_FALSE;
+   if (!_slang_build_export_code_table (&object->expcode, &object->unit.funs, &object->unit))
+      return GL_FALSE;
 
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
-	/* XXX: lookup the @main label */
-	if (!_slang_x86_codegen (unit->machine, unit->assembly, unit->exp_code.entries[0].address))
-		return 0;
+   /* XXX: lookup the @main label */
+   if (!_slang_x86_codegen (&object->machine, &object->assembly, object->expcode.entries[0].address))
+      return GL_FALSE;
 #endif
 
-	return 1;
+   return GL_TRUE;
 }
 

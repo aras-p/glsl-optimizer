@@ -49,28 +49,38 @@ typedef struct slang_var_pool_
 	GLuint next_addr;
 } slang_var_pool;
 
-typedef struct slang_translation_unit_
+typedef struct slang_code_unit_
 {
-	slang_variable_scope globals;
-	slang_function_scope functions;
-	slang_struct_scope structs;
-	slang_unit_type type;
-	slang_assembly_file *assembly;
-	int free_assembly;
-	slang_var_pool *global_pool;
-	int free_global_pool;
-	slang_machine *machine;
-	int free_machine;
-	slang_atom_pool *atom_pool;
-	int free_atom_pool;
-	slang_export_data_table exp_data;
-	slang_export_code_table exp_code;
-} slang_translation_unit;
+   slang_variable_scope vars;
+   slang_function_scope funs;
+   slang_struct_scope structs;
+   slang_unit_type type;
+   struct slang_code_object_ *object;
+} slang_code_unit;
 
-int slang_translation_unit_construct (slang_translation_unit *);
-int slang_translation_unit_construct2 (slang_translation_unit *, slang_assembly_file *,
-	slang_var_pool *, slang_machine *, slang_atom_pool *);
-void slang_translation_unit_destruct (slang_translation_unit *);
+extern GLvoid
+_slang_code_unit_ctr (slang_code_unit *, struct slang_code_object_ *);
+
+extern GLvoid
+_slang_code_unit_dtr (slang_code_unit *);
+
+typedef struct slang_code_object_
+{
+   slang_code_unit builtin[3];
+   slang_code_unit unit;
+   slang_assembly_file assembly;
+   slang_machine machine;
+   slang_var_pool varpool;
+   slang_atom_pool atompool;
+   slang_export_data_table expdata;
+   slang_export_code_table expcode;
+} slang_code_object;
+
+extern GLvoid
+_slang_code_object_ctr (slang_code_object *);
+
+extern GLvoid
+_slang_code_object_dtr (slang_code_object *);
 
 typedef struct slang_info_log_
 {
@@ -80,11 +90,13 @@ typedef struct slang_info_log_
 
 void slang_info_log_construct (slang_info_log *);
 void slang_info_log_destruct (slang_info_log *);
+int slang_info_log_print (slang_info_log *, const char *, ...);
 int slang_info_log_error (slang_info_log *, const char *, ...);
 int slang_info_log_warning (slang_info_log *, const char *, ...);
 void slang_info_log_memory (slang_info_log *);
 
-int _slang_compile (const char *, slang_translation_unit *, slang_unit_type type, slang_info_log *);
+extern GLboolean
+_slang_compile (const char *, slang_code_object *, slang_unit_type, slang_info_log *);
 
 #ifdef __cplusplus
 }
