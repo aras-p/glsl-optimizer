@@ -1566,114 +1566,114 @@ bool __operator ! (const bool a) {
 }
 
 //
-// mesa-specific extension functions.
+// MESA-specific extension functions.
 //
 
-void print (const float f) {
+void printMESA (const float f) {
     __asm float_print f;
 }
 
-void print (const int i) {
+void printMESA (const int i) {
     __asm int_print i;
 }
 
-void print (const bool b) {
+void printMESA (const bool b) {
     __asm bool_print b;
 }
 
-void print (const vec2 v) {
-    print (v.x);
-    print (v.y);
+void printMESA (const vec2 v) {
+    printMESA (v.x);
+    printMESA (v.y);
 }
 
-void print (const vec3 v) {
-    print (v.x);
-    print (v.y);
-    print (v.z);
+void printMESA (const vec3 v) {
+    printMESA (v.x);
+    printMESA (v.y);
+    printMESA (v.z);
 }
 
-void print (const vec4 v) {
-    print (v.x);
-    print (v.y);
-    print (v.z);
-    print (v.w);
+void printMESA (const vec4 v) {
+    printMESA (v.x);
+    printMESA (v.y);
+    printMESA (v.z);
+    printMESA (v.w);
 }
 
-void print (const ivec2 v) {
-    print (v.x);
-    print (v.y);
+void printMESA (const ivec2 v) {
+    printMESA (v.x);
+    printMESA (v.y);
 }
 
-void print (const ivec3 v) {
-    print (v.x);
-    print (v.y);
-    print (v.z);
+void printMESA (const ivec3 v) {
+    printMESA (v.x);
+    printMESA (v.y);
+    printMESA (v.z);
 }
 
-void print (const ivec4 v) {
-    print (v.x);
-    print (v.y);
-    print (v.z);
-    print (v.w);
+void printMESA (const ivec4 v) {
+    printMESA (v.x);
+    printMESA (v.y);
+    printMESA (v.z);
+    printMESA (v.w);
 }
 
-void print (const bvec2 v) {
-    print (v.x);
-    print (v.y);
+void printMESA (const bvec2 v) {
+    printMESA (v.x);
+    printMESA (v.y);
 }
 
-void print (const bvec3 v) {
-    print (v.x);
-    print (v.y);
-    print (v.z);
+void printMESA (const bvec3 v) {
+    printMESA (v.x);
+    printMESA (v.y);
+    printMESA (v.z);
 }
 
-void print (const bvec4 v) {
-    print (v.x);
-    print (v.y);
-    print (v.z);
-    print (v.w);
+void printMESA (const bvec4 v) {
+    printMESA (v.x);
+    printMESA (v.y);
+    printMESA (v.z);
+    printMESA (v.w);
 }
 
-void print (const mat2 m) {
-    print (m[0]);
-    print (m[1]);
+void printMESA (const mat2 m) {
+    printMESA (m[0]);
+    printMESA (m[1]);
 }
 
-void print (const mat3 m) {
-    print (m[0]);
-    print (m[1]);
-    print (m[2]);
+void printMESA (const mat3 m) {
+    printMESA (m[0]);
+    printMESA (m[1]);
+    printMESA (m[2]);
 }
 
-void print (const mat4 m) {
-    print (m[0]);
-    print (m[1]);
-    print (m[2]);
-    print (m[3]);
+void printMESA (const mat4 m) {
+    printMESA (m[0]);
+    printMESA (m[1]);
+    printMESA (m[2]);
+    printMESA (m[3]);
 }
 
-void print (const sampler1D e) {
+void printMESA (const sampler1D e) {
     __asm int_print e;
 }
 
-void print (const sampler2D e) {
+void printMESA (const sampler2D e) {
     __asm int_print e;
 }
 
-void print (const sampler3D e) {
+void printMESA (const sampler3D e) {
     __asm int_print e;
 }
 
-void print (const samplerCube e) {
+void printMESA (const samplerCube e) {
     __asm int_print e;
 }
 
-void print (const sampler1DShadow e) {
+void printMESA (const sampler1DShadow e) {
     __asm int_print e;
 }
 
-void print (const sampler2DShadow e) {
+void printMESA (const sampler2DShadow e) {
     __asm int_print e;
 }
 
