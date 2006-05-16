@@ -57,7 +57,8 @@ struct gl2_generic_intf
    GLenum (* GetType) (struct gl2_generic_intf **);
    GLhandleARB (* GetName) (struct gl2_generic_intf **);
    GLboolean (* GetDeleteStatus) (struct gl2_generic_intf **);
-   const GLcharARB *(* GetInfoLog) (struct gl2_generic_intf **);
+   GLvoid (* GetInfoLog) (struct gl2_generic_intf **, GLsizei, GLcharARB *);
+   GLsizei (* GetInfoLogLength) (struct gl2_generic_intf **);
 };
 
 struct gl2_container_intf
@@ -87,8 +88,8 @@ struct gl2_program_intf
    GLvoid (* Link) (struct gl2_program_intf **);
    GLvoid (* Validate) (struct gl2_program_intf **);
    GLvoid (* UpdateFixedUniforms) (struct gl2_program_intf **);
-   GLvoid (* UpdateFixedAttribute) (struct gl2_program_intf **, GLuint, GLvoid *, GLuint, GLuint,
-                                    GLboolean);
+   GLvoid (* UpdateFixedAttrib) (struct gl2_program_intf **, GLuint, GLvoid *, GLuint, GLuint,
+                                 GLboolean);
    GLvoid (* UpdateFixedVarying) (struct gl2_program_intf **, GLuint, GLvoid *, GLuint, GLuint,
                                   GLboolean);
    GLvoid (* GetTextureImageUsage) (struct gl2_program_intf **, GLbitfield *);
@@ -106,6 +107,7 @@ struct gl2_program_intf
    GLuint (* GetActiveAttribCount) (struct gl2_program_intf **);
    GLint (* GetAttribLocation) (struct gl2_program_intf **, const GLchar *name);
    GLvoid (* OverrideAttribBinding) (struct gl2_program_intf **, GLuint, const GLchar *);
+   GLvoid (* WriteAttrib) (struct gl2_program_intf **, GLuint, const GLfloat *);
    GLvoid (* UpdateVarying) (struct gl2_program_intf **, GLuint, GLfloat *, GLboolean);
 };
 

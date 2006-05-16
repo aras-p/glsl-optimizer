@@ -36,97 +36,79 @@
 #include "shaderobjects_3dlabs.h"
 
 
-#define I_UNKNOWN struct gl2_unknown_intf **
-#define I_GENERIC struct gl2_generic_intf **
-#define I_CONTAINER struct gl2_container_intf **
-#define I_PROGRAM struct gl2_program_intf **
-#define I_SHADER struct gl2_shader_intf **
-
 #define RELEASE_GENERIC(x)\
-	(**x)._unknown.Release ((I_UNKNOWN) x)
+   (**x)._unknown.Release ((struct gl2_unknown_intf **) (x))
 
 #define RELEASE_CONTAINER(x)\
-	(**x)._generic._unknown.Release ((I_UNKNOWN) x)
+   (**x)._generic._unknown.Release ((struct gl2_unknown_intf **) (x))
 
 #define RELEASE_PROGRAM(x)\
-	(**x)._container._generic._unknown.Release ((I_UNKNOWN) x)
+   (**x)._container._generic._unknown.Release ((struct gl2_unknown_intf **) (x))
 
 #define RELEASE_SHADER(x)\
-	(**x)._generic._unknown.Release ((I_UNKNOWN) x);
+   (**x)._generic._unknown.Release ((struct gl2_unknown_intf **) (x))
 
-#define _LOOKUP_HANDLE(handle, function)\
-	I_UNKNOWN unk;\
-	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);\
-	unk = (I_UNKNOWN) _mesa_HashLookup (ctx->Shared->GL2Objects, handle);\
-	_glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);\
-	if (unk == NULL) {\
-		_mesa_error (ctx, GL_INVALID_VALUE, function);\
-		break;\
-	}
+static struct gl2_unknown_intf **
+lookup_handle (GLcontext *ctx, GLhandleARB handle, enum gl2_uuid uuid, const char *function)
+{
+   struct gl2_unknown_intf **unk;
 
-#define _QUERY_INTERFACE(x, type, uuid, function)\
-	x = (type) (**unk).QueryInterface (unk, uuid);\
-	if (x == NULL) {\
-		_mesa_error (ctx, GL_INVALID_OPERATION, function);\
-		break;\
-	}
+   /*
+    * Note: _mesa_HashLookup() requires non-zero input values, so the passed-in handle value
+    *       must be checked beforehand.
+    */
+   if (handle == 0) {
+      _mesa_error (ctx, GL_INVALID_VALUE, function);
+      return NULL;
+   }
+   _glthread_LOCK_MUTEX (ctx->Shared->Mutex);
+   unk = (struct gl2_unknown_intf **) (_mesa_HashLookup (ctx->Shared->GL2Objects, handle));
+   _glthread_UNLOCK_MUTEX (ctx->Shared->Mutex);
+   if (unk == NULL)
+      _mesa_error (ctx, GL_INVALID_VALUE, function);
+   else {
+      unk = (**unk).QueryInterface (unk, uuid);
+      if (unk == NULL)
+         _mesa_error (ctx, GL_INVALID_OPERATION, function);
+   }
+   return unk;
+}
 
 #define GET_GENERIC(x, handle, function)\
-	I_GENERIC x = NULL;\
-	do {\
-		_LOOKUP_HANDLE(handle, function);\
-		_QUERY_INTERFACE(x, I_GENERIC, UIID_GENERIC, function);\
-	} while (0)
+   struct gl2_generic_intf **x = (struct gl2_generic_intf **)\
+                                 lookup_handle (ctx, handle, UIID_GENERIC, function);
 
 #define GET_CONTAINER(x, handle, function)\
-	I_CONTAINER x = NULL;\
-	do {\
-		_LOOKUP_HANDLE(handle, function);\
-		_QUERY_INTERFACE(x, I_CONTAINER, UIID_CONTAINER, function);\
-	} while (0)
+   struct gl2_container_intf **x = (struct gl2_container_intf **)\
+                                   lookup_handle (ctx, handle, UIID_CONTAINER, function);
 
 #define GET_PROGRAM(x, handle, function)\
-	I_PROGRAM x = NULL;\
-	do {\
-		_LOOKUP_HANDLE(handle, function);\
-		_QUERY_INTERFACE(x, I_PROGRAM, UIID_PROGRAM, function);\
-	} while (0)
+   struct gl2_program_intf **x = (struct gl2_program_intf **)\
+                                 lookup_handle (ctx, handle, UIID_PROGRAM, function);
 
 #define GET_SHADER(x, handle, function)\
-	I_SHADER x = NULL;\
-	do {\
-		_LOOKUP_HANDLE(handle, function);\
-		_QUERY_INTERFACE(x, I_SHADER, UIID_SHADER, function);\
-	} while (0)
-
-#define _LINKED_PROGRAM(x, function, release)\
-	if ((**x).GetLinkStatus (x) == GL_FALSE) {\
-		if (release) RELEASE_PROGRAM(x);\
-		_mesa_error (ctx, GL_INVALID_OPERATION, function);\
-		break;\
-	}
+   struct gl2_shader_intf **x = (struct gl2_shader_intf **)\
+                                lookup_handle (ctx, handle, UIID_SHADER, function);
 
 #define GET_LINKED_PROGRAM(x, handle, function)\
-	I_PROGRAM x = NULL;\
-	do {\
-		_LOOKUP_HANDLE(handle, function);\
-		_QUERY_INTERFACE(x, I_PROGRAM, UIID_PROGRAM, function);\
-		_LINKED_PROGRAM(x, function, GL_TRUE);\
-	} while (0)
-
-#define _CURRENT_PROGRAM(x, function)\
-	if (ctx->ShaderObjects.CurrentProgram == NULL) {\
-		_mesa_error (ctx, GL_INVALID_OPERATION, function);\
-		break;\
-	}\
-	x = ctx->ShaderObjects.CurrentProgram;
+   GET_PROGRAM(x, handle, function);\
+   if (x != NULL && (**x).GetLinkStatus (x) == GL_FALSE) {\
+      RELEASE_PROGRAM(x);\
+      x = NULL;\
+      _mesa_error (ctx, GL_INVALID_OPERATION, function);\
+   }
 
 #define GET_CURRENT_LINKED_PROGRAM(x, function)\
-	I_PROGRAM x = NULL;\
-	do {\
-		_CURRENT_PROGRAM(x, function);\
-		_LINKED_PROGRAM(x, function, GL_FALSE);\
-	} while (0)
+   struct gl2_program_intf **x = NULL;\
+   if (ctx->ShaderObjects.CurrentProgram == NULL)\
+      _mesa_error (ctx, GL_INVALID_OPERATION, function);\
+   else {\
+      x = ctx->ShaderObjects.CurrentProgram;\
+      if (x != NULL && (**x).GetLinkStatus (x) == GL_FALSE) {\
+         x = NULL;\
+         _mesa_error (ctx, GL_INVALID_OPERATION, function);\
+      }\
+   }
 
 #define IS_NAME_WITH_GL_PREFIX(x) ((x)[0] == 'g' && (x)[1] == 'l' && (x)[2] == '_')
 
@@ -134,14 +116,17 @@
 GLvoid GLAPIENTRY
 _mesa_DeleteObjectARB (GLhandleARB obj)
 {
-	GET_CURRENT_CONTEXT(ctx);
-	GET_GENERIC(gen, obj, "glDeleteObjectARB");
+   if (obj != 0)
+   {
+      GET_CURRENT_CONTEXT(ctx);
+      GET_GENERIC(gen, obj, "glDeleteObjectARB");
 
-	if (gen != NULL)
-	{
-		(**gen).Delete (gen);
-		RELEASE_GENERIC(gen);
-	}
+      if (gen != NULL)
+      {
+         (**gen).Delete (gen);
+         RELEASE_GENERIC(gen);
+      }
+   }
 }
 
 GLhandleARB GLAPIENTRY
@@ -151,14 +136,14 @@ _mesa_GetHandleARB (GLenum pname)
 
 	switch (pname)
 	{
-	case GL_PROGRAM_OBJECT_ARB:
-		{
-			I_PROGRAM pro = ctx->ShaderObjects.CurrentProgram;
+   case GL_PROGRAM_OBJECT_ARB:
+      {
+         struct gl2_program_intf **pro = ctx->ShaderObjects.CurrentProgram;
 
-			if (pro != NULL)
-				return (**pro)._container._generic.GetName ((I_GENERIC) pro);
-		}
-		break;
+         if (pro != NULL)
+            return (**pro)._container._generic.GetName ((struct gl2_generic_intf **) (pro));
+      }
+      break;
 	default:
 		_mesa_error (ctx, GL_INVALID_ENUM, "glGetHandleARB");
 	}
@@ -323,7 +308,7 @@ GLvoid GLAPIENTRY
 _mesa_UseProgramObjectARB (GLhandleARB programObj)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	I_PROGRAM program = NULL;
+   struct gl2_program_intf **program = NULL;
 
 	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
@@ -859,16 +844,9 @@ _mesa_get_object_parameter (GLhandleARB obj, GLenum pname, GLvoid *params, GLboo
 			case GL_OBJECT_DELETE_STATUS_ARB:
 				*ipar = (**gen).GetDeleteStatus (gen);
 				break;
-			case GL_OBJECT_INFO_LOG_LENGTH_ARB:
-				{
-					const GLcharARB *info = (**gen).GetInfoLog (gen);
-
-					if (info == NULL)
-						*ipar = 0;
-					else
-						*ipar = _mesa_strlen (info) + 1;
-				}
-				break;
+         case GL_OBJECT_INFO_LOG_LENGTH_ARB:
+            *ipar = (**gen).GetInfoLogLength (gen);
+            break;
 			}
 
 			RELEASE_GENERIC(gen);
@@ -925,9 +903,9 @@ _mesa_get_object_parameter (GLhandleARB obj, GLenum pname, GLvoid *params, GLboo
 			case GL_OBJECT_VALIDATE_STATUS_ARB:
 				*ipar = (**pro).GetValidateStatus (pro);
 				break;
-			case GL_OBJECT_ATTACHED_OBJECTS_ARB:
-				*ipar = (**pro)._container.GetAttachedCount ((I_CONTAINER) pro);
-				break;
+         case GL_OBJECT_ATTACHED_OBJECTS_ARB:
+            *ipar = (**pro)._container.GetAttachedCount ((struct gl2_container_intf **) (pro));
+            break;
 			case GL_OBJECT_ACTIVE_UNIFORMS_ARB:
 				*ipar = (**pro).GetActiveUniformCount (pro);
 				break;
@@ -1037,8 +1015,14 @@ _mesa_GetInfoLogARB (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLchar
 
 	if (infoLog == NULL)
 		_mesa_error (ctx, GL_INVALID_VALUE, "glGetInfoLogARB");
-	else
-		copy_string ((**gen).GetInfoLog (gen), maxLength, length, infoLog);
+   else {
+      GLsizei actualsize = (**gen).GetInfoLogLength (gen);
+      if (actualsize > maxLength)
+         actualsize = maxLength;
+		(**gen).GetInfoLog (gen, actualsize, infoLog);
+      if (length != NULL)
+         *length = (actualsize > 0) ? actualsize - 1 : 0;
+   }
 	RELEASE_GENERIC(gen);
 }
 
@@ -1066,7 +1050,7 @@ _mesa_GetAttachedObjectsARB (GLhandleARB containerObj, GLsizei maxCount, GLsizei
 
 		for (i = 0; i < cnt; i++)
 		{
-			I_GENERIC x = (**con).GetAttached (con, i);
+         struct gl2_generic_intf **x = (**con).GetAttached (con, i);
 			obj[i] = (**x).GetName (x);
 			RELEASE_GENERIC(x);
 		}
