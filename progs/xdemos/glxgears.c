@@ -473,6 +473,7 @@ event_loop(Display *dpy, Window win)
          switch (event.type) {
 	 case Expose:
             /* we'll redraw below */
+	    reshape(event.xexpose.width, event.xexpose.height);
 	    break;
 	 case ConfigureNotify:
 	    reshape(event.xconfigure.width, event.xconfigure.height);
