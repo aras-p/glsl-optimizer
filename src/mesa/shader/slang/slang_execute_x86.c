@@ -29,6 +29,7 @@
  */
 
 #include "imports.h"
+#include "slang_compile.h"
 #include "slang_execute.h"
 #include "slang_library_noise.h"
 #include "slang_library_texsample.h"
@@ -133,30 +134,53 @@ static GLfloat do_floorf (GLfloat x)
 	return FLOORF (x);
 }
 
+static GLfloat
+do_ftoi (GLfloat x)
+{
+   return (GLfloat) ((GLint) (x));
+}
+
 static GLfloat do_powf (GLfloat y, GLfloat x)
 {
 	return (GLfloat) _mesa_pow ((GLdouble) x, (GLdouble) y);
 }
 
-static GLvoid do_print_float (GLfloat x)
+static GLvoid
+ensure_infolog_created (slang_info_log **infolog)
 {
-	_mesa_printf ("slang print: %f\n", x);
+   if (*infolog == NULL) {
+      *infolog = slang_alloc_malloc (sizeof (slang_info_log));
+      if (*infolog == NULL)
+         return;
+      slang_info_log_construct (*infolog);
+   }
 }
 
-static GLvoid do_print_int (GLfloat x)
+static GLvoid do_print_float (slang_info_log **infolog, GLfloat x)
 {
-	_mesa_printf ("slang print: %d\n", (GLint) x);
+   _mesa_printf ("slang print: %f\n", x);
+   ensure_infolog_created (infolog);
+   slang_info_log_print (*infolog, "%f", x);
 }
 
-static GLvoid do_print_bool (GLfloat x)
+static GLvoid do_print_int (slang_info_log **infolog, GLfloat x)
 {
-	_mesa_printf ("slang print: %s\n", (GLint) x ? "true" : "false");
+   _mesa_printf ("slang print: %d\n", (GLint) (x));
+   ensure_infolog_created (infolog);
+   slang_info_log_print (*infolog, "%d", (GLint) (x));
+}
+
+static GLvoid do_print_bool (slang_info_log **infolog, GLfloat x)
+{
+   _mesa_printf ("slang print: %s\n", (GLint) (x) ? "true" : "false");
+   ensure_infolog_created (infolog);
+   slang_info_log_print (*infolog, "%s", (GLint) (x) ? "true" : "false");
 }
 
 #define FLOAT_ONE 0x3f800000
 #define FLOAT_ZERO 0
 
-static GLvoid codegen_assem (codegen_ctx *G, slang_assembly *a)
+static GLvoid codegen_assem (codegen_ctx *G, slang_assembly *a, slang_info_log **infolog)
 {
 	GLint disp;
 
@@ -287,8 +311,9 @@ static GLvoid codegen_assem (codegen_ctx *G, slang_assembly *a)
 		}
 		break;
 	case slang_asm_float_to_int:
-		x87_fld (&G->f, x86_deref (G->r_esp));
-		x87_fistp (&G->f, x86_deref (G->r_esp));
+      /* TODO: use fistp without rounding */
+      x86_call (&G->f, (GLubyte *) (do_ftoi));
+      x87_fstp (&G->f, x86_deref (G->r_esp));
 		break;
 	case slang_asm_float_sine:
 		/* TODO: use fsin */
@@ -457,14 +482,26 @@ static GLvoid codegen_assem (codegen_ctx *G, slang_assembly *a)
 		x86_jmp (&G->f, G->l_exit);
 		break;
 	/* mesa-specific extensions */
-	case slang_asm_float_print:
-		x86_call (&G->f, (GLubyte *) do_print_float);
-		break;
+   case slang_asm_float_print:
+      /* TODO: use push imm32 */
+      x86_mov_reg_imm (&G->f, G->r_eax, (GLint) (infolog));
+      x86_push (&G->f, G->r_eax);
+      x86_call (&G->f, (GLubyte *) (do_print_float));
+      x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
+      break;
 	case slang_asm_int_print:
+      /* TODO: use push imm32 */
+      x86_mov_reg_imm (&G->f, G->r_eax, (GLint) (infolog));
+      x86_push (&G->f, G->r_eax);
 		x86_call (&G->f, (GLubyte *) do_print_int);
+      x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
 		break;
 	case slang_asm_bool_print:
+      /* TODO: use push imm32 */
+      x86_mov_reg_imm (&G->f, G->r_eax, (GLint) (infolog));
+      x86_push (&G->f, G->r_eax);
 		x86_call (&G->f, (GLubyte *) do_print_bool);
+      x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
 		break;
 	default:
 		assert (0);
@@ -523,7 +560,7 @@ GLboolean _slang_x86_codegen (slang_machine *mach, slang_assembly_file *file, GL
 		G.labels[i] = x86_get_label (&G.f);
 		if (i == start)
 			x86_fixup_fwd_jump (&G.f, j_body);
-		codegen_assem (&G, &file->code[i]);
+		codegen_assem (&G, &file->code[i], &mach->infolog);
 	}
 
 	/*

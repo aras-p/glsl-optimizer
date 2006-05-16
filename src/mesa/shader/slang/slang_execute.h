@@ -59,6 +59,7 @@ typedef struct slang_machine_
 	GLuint kill;				/* discard the fragment */
 	GLuint exit;				/* terminate the shader */
 	slang_machine_slot mem[SLANG_MACHINE_MEMORY_SIZE];
+   struct slang_info_log_ *infolog;                /* printMESA() support */
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
 	slang_machine_x86 x86;
 #endif
@@ -69,7 +70,6 @@ GLvoid slang_machine_dtr (slang_machine *);
 
 void slang_machine_init (slang_machine *);
 
-int _slang_execute (const slang_assembly_file *);
 int _slang_execute2 (const slang_assembly_file *, slang_machine *);
 
 #if defined(USE_X86_ASM) || defined(SLANG_X86)

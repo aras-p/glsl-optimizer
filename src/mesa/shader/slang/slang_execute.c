@@ -29,6 +29,7 @@
  */
 
 #include "imports.h"
+#include "slang_compile.h"
 #include "slang_execute.h"
 #include "slang_library_noise.h"
 #include "slang_library_texsample.h"
@@ -38,6 +39,7 @@
 GLvoid slang_machine_ctr (slang_machine *self)
 {
 	slang_machine_init (self);
+   self->infolog = NULL;
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
 	self->x86.compiled_func = NULL;
 #endif
@@ -45,6 +47,10 @@ GLvoid slang_machine_ctr (slang_machine *self)
 
 GLvoid slang_machine_dtr (slang_machine *self)
 {
+   if (self->infolog != NULL) {
+      slang_info_log_destruct (self->infolog);
+      slang_alloc_free (self->infolog);
+   }
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
 	if (self->x86.compiled_func != NULL)
 		_mesa_exec_free (self->x86.compiled_func);
@@ -58,14 +64,6 @@ void slang_machine_init (slang_machine *mach)
 	mach->bp = 0;
 	mach->kill = 0;
 	mach->exit = 0;
-}
-
-int _slang_execute (const slang_assembly_file *file)
-{
-	slang_machine mach;
-
-	slang_machine_ctr (&mach);
-	return _slang_execute2 (file, &mach);
 }
 
 #if DEBUG_SLANG
@@ -285,6 +283,17 @@ static void dump (const slang_assembly_file *file)
 }
 
 #endif
+
+static GLvoid
+ensure_infolog_created (slang_info_log **infolog)
+{
+   if (*infolog == NULL) {
+      *infolog = slang_alloc_malloc (sizeof (slang_info_log));
+      if (*infolog == NULL)
+         return;
+      slang_info_log_construct (*infolog);
+   }
+}
 
 int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
 {
@@ -545,12 +554,19 @@ int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
 		/* mesa-specific extensions */
 		case slang_asm_float_print:
 			_mesa_printf ("slang print: %f\n", stack[mach->sp]._float);
+         ensure_infolog_created (&mach->infolog);
+         slang_info_log_print (mach->infolog, "%f", stack[mach->sp]._float);
 			break;
 		case slang_asm_int_print:
 			_mesa_printf ("slang print: %d\n", (GLint) stack[mach->sp]._float);
+         ensure_infolog_created (&mach->infolog);
+         slang_info_log_print (mach->infolog, "%d", (GLint) (stack[mach->sp]._float));
 			break;
 		case slang_asm_bool_print:
 			_mesa_printf ("slang print: %s\n", (GLint) stack[mach->sp]._float ? "true" : "false");
+         ensure_infolog_created (&mach->infolog);
+         slang_info_log_print (mach->infolog, "%s",
+                               (GLint) (stack[mach->sp]._float) ? "true" : "false");
 			break;
 		default:
 			assert (0);
