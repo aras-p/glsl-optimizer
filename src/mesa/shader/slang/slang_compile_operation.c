@@ -43,11 +43,7 @@ int slang_operation_construct (slang_operation *oper)
 	oper->locals = (slang_variable_scope *) slang_alloc_malloc (sizeof (slang_variable_scope));
 	if (oper->locals == NULL)
 		return 0;
-	if (!slang_variable_scope_construct (oper->locals))
-	{
-		slang_alloc_free (oper->locals);
-		return 0;
-	}
+   _slang_variable_scope_ctr (oper->locals);
 	return 1;
 }
 

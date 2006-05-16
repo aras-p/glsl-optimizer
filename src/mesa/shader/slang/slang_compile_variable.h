@@ -58,11 +58,13 @@ int slang_fully_specified_type_copy (slang_fully_specified_type *, const slang_f
 typedef struct slang_variable_scope_
 {
 	struct slang_variable_ *variables;
-	unsigned int num_variables;
+   GLuint num_variables;
 	struct slang_variable_scope_ *outer_scope;
 } slang_variable_scope;
 
-int slang_variable_scope_construct (slang_variable_scope *);
+extern GLvoid
+_slang_variable_scope_ctr (slang_variable_scope *);
+
 void slang_variable_scope_destruct (slang_variable_scope *);
 int slang_variable_scope_copy (slang_variable_scope *, const slang_variable_scope *);
 

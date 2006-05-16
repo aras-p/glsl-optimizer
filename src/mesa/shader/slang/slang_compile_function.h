@@ -64,17 +64,20 @@ void slang_function_destruct (slang_function *);
 typedef struct slang_function_scope_
 {
 	slang_function *functions;
-	unsigned int num_functions;
+   GLuint num_functions;
 	struct slang_function_scope_ *outer_scope;
 } slang_function_scope;
 
-int slang_function_scope_construct (slang_function_scope *);
+extern GLvoid
+_slang_function_scope_ctr (slang_function_scope *);
+
 void slang_function_scope_destruct (slang_function_scope *);
 int slang_function_scope_find_by_name (slang_function_scope *, slang_atom, int);
 slang_function *slang_function_scope_find (slang_function_scope *, slang_function *, int);
 
-GLboolean _slang_build_export_code_table (slang_export_code_table *, slang_function_scope *,
-	struct slang_translation_unit_ *);
+extern GLboolean
+_slang_build_export_code_table (slang_export_code_table *, slang_function_scope *,
+                                struct slang_code_unit_ *);
 
 #ifdef __cplusplus
 }

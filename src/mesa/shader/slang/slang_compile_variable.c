@@ -120,14 +120,16 @@ int slang_fully_specified_type_copy (slang_fully_specified_type *x, const slang_
 	return 1;
 }
 
-/* slang_variable_scope */
+/*
+ * slang_variable_scope
+ */
 
-int slang_variable_scope_construct (slang_variable_scope *scope)
+GLvoid
+_slang_variable_scope_ctr (slang_variable_scope *self)
 {
-	scope->variables = NULL;
-	scope->num_variables = 0;
-	scope->outer_scope = NULL;
-	return 1;
+   self->variables = NULL;
+   self->num_variables = 0;
+   self->outer_scope = NULL;
 }
 
 void slang_variable_scope_destruct (slang_variable_scope *scope)
@@ -145,8 +147,7 @@ int slang_variable_scope_copy (slang_variable_scope *x, const slang_variable_sco
 	slang_variable_scope z;
 	unsigned int i;
 
-	if (!slang_variable_scope_construct (&z))
-		return 0;
+   _slang_variable_scope_ctr (&z);
 	z.variables = (slang_variable *) slang_alloc_malloc (y->num_variables * sizeof (slang_variable));
 	if (z.variables == NULL)
 	{

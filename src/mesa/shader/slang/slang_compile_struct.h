@@ -32,11 +32,13 @@ extern "C" {
 typedef struct slang_struct_scope_
 {
 	struct slang_struct_ *structs;
-	unsigned int num_structs;
+   GLuint num_structs;
 	struct slang_struct_scope_ *outer_scope;
 } slang_struct_scope;
 
-int slang_struct_scope_construct (slang_struct_scope *);
+extern GLvoid
+_slang_struct_scope_ctr (slang_struct_scope *);
+
 void slang_struct_scope_destruct (slang_struct_scope *);
 int slang_struct_scope_copy (slang_struct_scope *, const slang_struct_scope *);
 struct slang_struct_ *slang_struct_scope_find (slang_struct_scope *, slang_atom, int);

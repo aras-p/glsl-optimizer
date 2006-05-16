@@ -31,14 +31,16 @@
 #include "imports.h"
 #include "slang_compile.h"
 
-/* slang_struct_scope */
+/*
+ * slang_struct_scope
+ */
 
-int slang_struct_scope_construct (slang_struct_scope *scope)
+GLvoid
+_slang_struct_scope_ctr (slang_struct_scope *self)
 {
-	scope->structs = NULL;
-	scope->num_structs = 0;
-	scope->outer_scope = NULL;
-	return 1;
+   self->structs = NULL;
+   self->num_structs = 0;
+   self->outer_scope = NULL;
 }
 
 void slang_struct_scope_destruct (slang_struct_scope *scope)
@@ -56,8 +58,7 @@ int slang_struct_scope_copy (slang_struct_scope *x, const slang_struct_scope *y)
 	slang_struct_scope z;
 	unsigned int i;
 
-	if (!slang_struct_scope_construct (&z))
-		return 0;
+   _slang_struct_scope_ctr (&z);
 	z.structs = (slang_struct *) slang_alloc_malloc (y->num_structs * sizeof (slang_struct));
 	if (z.structs == NULL)
 	{
@@ -102,11 +103,7 @@ int slang_struct_construct (slang_struct *stru)
 	stru->fields = (slang_variable_scope *) slang_alloc_malloc (sizeof (slang_variable_scope));
 	if (stru->fields == NULL)
 		return 0;
-	if (!slang_variable_scope_construct (stru->fields))
-	{
-		slang_alloc_free (stru->fields);
-		return 0;
-	}
+   _slang_variable_scope_ctr (stru->fields);
 	stru->structs = (slang_struct_scope *) slang_alloc_malloc (sizeof (slang_struct_scope));
 	if (stru->structs == NULL)
 	{
@@ -114,13 +111,7 @@ int slang_struct_construct (slang_struct *stru)
 		slang_alloc_free (stru->fields);
 		return 0;
 	}
-	if (!slang_struct_scope_construct (stru->structs))
-	{
-		slang_variable_scope_destruct (stru->fields);
-		slang_alloc_free (stru->fields);
-		slang_alloc_free (stru->structs);
-		return 0;
-	}
+   _slang_struct_scope_ctr (stru->structs);
 	return 1;
 }
 

@@ -58,12 +58,7 @@ int slang_function_construct (slang_function *func)
 		slang_variable_destruct (&func->header);
 		return 0;
 	}
-	if (!slang_variable_scope_construct (func->parameters))
-	{
-		slang_alloc_free (func->parameters);
-		slang_variable_destruct (&func->header);
-		return 0;
-	}
+   _slang_variable_scope_ctr (func->parameters);
 	func->param_count = 0;
 	func->body = NULL;
 	func->address = ~0;
@@ -84,14 +79,16 @@ void slang_function_destruct (slang_function *func)
 	slang_fixup_table_free (&func->fixups);
 }
 
-/* slang_function_scope */
+/*
+ * slang_function_scope
+ */
 
-int slang_function_scope_construct (slang_function_scope *scope)
+GLvoid
+_slang_function_scope_ctr (slang_function_scope *self)
 {
-	scope->functions = NULL;
-	scope->num_functions = 0;
-	scope->outer_scope = NULL;
-	return 1;
+   self->functions = NULL;
+   self->num_functions = 0;
+   self->outer_scope = NULL;
 }
 
 void slang_function_scope_destruct (slang_function_scope *scope)
@@ -147,8 +144,9 @@ slang_function *slang_function_scope_find (slang_function_scope *funcs, slang_fu
  * _slang_build_export_code_table()
  */
 
-GLboolean _slang_build_export_code_table (slang_export_code_table *tbl, slang_function_scope *funs,
-	slang_translation_unit *unit)
+GLboolean
+_slang_build_export_code_table (slang_export_code_table *tbl, slang_function_scope *funs,
+                                slang_code_unit *unit)
 {
 	slang_atom mainAtom;
 	GLuint i;
@@ -168,21 +166,21 @@ GLboolean _slang_build_export_code_table (slang_export_code_table *tbl, slang_fu
 			e = slang_export_code_table_add (tbl);
 			if (e == NULL)
 				return GL_FALSE;
-			e->address = unit->assembly->count;
+         e->address = unit->object->assembly.count;
 			e->name = slang_atom_pool_atom (tbl->atoms, "@main");
 			if (e->name == SLANG_ATOM_NULL)
 				return GL_FALSE;
 
-			A.file = unit->assembly;
-			A.mach = unit->machine;
-			A.atoms = unit->atom_pool;
-			A.space.funcs = &unit->functions;
-			A.space.structs = &unit->structs;
-			A.space.vars = &unit->globals;
-			slang_assembly_file_push_label (unit->assembly, slang_asm_local_alloc, 20);
-			slang_assembly_file_push_label (unit->assembly, slang_asm_enter, 20);
+         A.file = &unit->object->assembly;
+         A.mach = &unit->object->machine;
+         A.atoms = &unit->object->atompool;
+         A.space.funcs = &unit->funs;
+         A.space.structs = &unit->structs;
+         A.space.vars = &unit->vars;
+         slang_assembly_file_push_label (&unit->object->assembly, slang_asm_local_alloc, 20);
+         slang_assembly_file_push_label (&unit->object->assembly, slang_asm_enter, 20);
 			_slang_assemble_function_call (&A, fun, NULL, 0, GL_FALSE);
-			slang_assembly_file_push (unit->assembly, slang_asm_exit);
+         slang_assembly_file_push (&unit->object->assembly, slang_asm_exit);
 		}
 	}
 	return GL_TRUE;
