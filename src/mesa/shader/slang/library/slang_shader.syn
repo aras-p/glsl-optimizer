@@ -224,11 +224,11 @@
 .emtcode PARAMETER_ARRAY_NOT_PRESENT                0
 .emtcode PARAMETER_ARRAY_PRESENT                    1
 
-.errtext INVALID_EXTERNAL_DECLARATION               "error 2001: invalid external declaration"
-.errtext INVALID_OPERATOR_OVERRIDE                  "error 2002: invalid operator override"
-.errtext LBRACE_EXPECTED                            "error 2003: '{' expected but '$err_token$' found"
-.errtext LPAREN_EXPECTED                            "error 2004: '(' expected but '$err_token$' found"
-.errtext RPAREN_EXPECTED                            "error 2005: ')' expected but '$err_token$' found"
+.errtext INVALID_EXTERNAL_DECLARATION               "2001: Invalid external declaration."
+.errtext INVALID_OPERATOR_OVERRIDE                  "2002: Invalid operator override."
+.errtext LBRACE_EXPECTED                            "2003: '{' expected but '$err_token$' found."
+.errtext LPAREN_EXPECTED                            "2004: '(' expected but '$err_token$' found."
+.errtext RPAREN_EXPECTED                            "2005: ')' expected but '$err_token$' found."
 
 /* tells whether the shader that is being parsed is a built-in shader or not */
 /*   0 - normal behaviour */
