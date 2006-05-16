@@ -104,11 +104,9 @@ static GLvoid fetch_input_float (struct gl2_program_intf **pro, GLuint index, GL
 {
 	const GLubyte *ptr = (const GLubyte *) vb->AttribPtr[attr]->data;
 	const GLuint stride = vb->AttribPtr[attr]->stride;
-	const GLfloat *data = (const GLfloat *) (ptr + stride * i);
-	GLfloat vec[1];
+   GLfloat *data = (GLfloat *) (ptr + stride * i);
 
-	vec[0] = data[0];
-	(**pro).UpdateFixedAttribute (pro, index, vec, 0, sizeof (GLfloat), GL_TRUE);
+   (**pro).UpdateFixedAttrib (pro, index, data, 0, sizeof (GLfloat), GL_TRUE);
 }
 
 static GLvoid fetch_input_vec3 (struct gl2_program_intf **pro, GLuint index, GLuint attr, GLuint i,
@@ -116,13 +114,9 @@ static GLvoid fetch_input_vec3 (struct gl2_program_intf **pro, GLuint index, GLu
 {
 	const GLubyte *ptr = (const GLubyte *) vb->AttribPtr[attr]->data;
 	const GLuint stride = vb->AttribPtr[attr]->stride;
-	const GLfloat *data = (const GLfloat *) (ptr + stride * i);
-	GLfloat vec[3];
+   GLfloat *data = (GLfloat *) (ptr + stride * i);
 
-	vec[0] = data[0];
-	vec[1] = data[1];
-	vec[2] = data[2];
-	(**pro).UpdateFixedAttribute (pro, index, vec, 0, 3 * sizeof (GLfloat), GL_TRUE);
+   (**pro).UpdateFixedAttrib (pro, index, data, 0, 3 * sizeof (GLfloat), GL_TRUE);
 }
 
 static void fetch_input_vec4 (struct gl2_program_intf **pro, GLuint index, GLuint attr, GLuint i,
@@ -155,21 +149,32 @@ static void fetch_input_vec4 (struct gl2_program_intf **pro, GLuint index, GLuin
 		vec[3] = data[3];
 		break;
 	}
-	(**pro).UpdateFixedAttribute (pro, index, vec, 0, 4 * sizeof (GLfloat), GL_TRUE);
+   (**pro).UpdateFixedAttrib (pro, index, vec, 0, 4 * sizeof (GLfloat), GL_TRUE);
+}
+
+static GLvoid
+fetch_gen_attrib (struct gl2_program_intf **pro, GLuint index, GLuint i, struct vertex_buffer *vb)
+{
+   const GLuint attr = _TNL_ATTRIB_ATTRIBUTE0 + index;
+   const GLubyte *ptr = (const GLubyte *) (vb->AttribPtr[attr]->data);
+   const GLuint stride = vb->AttribPtr[attr]->stride;
+   const GLfloat *data = (const GLfloat *) (ptr + stride * i);
+
+   (**pro).WriteAttrib (pro, index, data);
 }
 
 static GLvoid fetch_output_float (struct gl2_program_intf **pro, GLuint index, GLuint attr, GLuint i,
 	arbvs_stage_data *store)
 {
-	(**pro).UpdateFixedAttribute (pro, index, &store->outputs[attr].data[i], 0, sizeof (GLfloat),
-		GL_FALSE);
+   (**pro).UpdateFixedAttrib (pro, index, &store->outputs[attr].data[i], 0, sizeof (GLfloat),
+                              GL_FALSE);
 }
 
 static void fetch_output_vec4 (struct gl2_program_intf **pro, GLuint index, GLuint attr, GLuint i,
 	GLuint offset, arbvs_stage_data *store)
 {
-	(**pro).UpdateFixedAttribute (pro, index, &store->outputs[attr].data[i], offset,
-		4 * sizeof (GLfloat), GL_FALSE);
+   (**pro).UpdateFixedAttrib (pro, index, &store->outputs[attr].data[i], offset,
+                              4 * sizeof (GLfloat), GL_FALSE);
 }
 
 static GLboolean run_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stage *stage)
@@ -201,6 +206,8 @@ static GLboolean run_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stag
 		fetch_input_vec4 (pro, SLANG_VERTEX_FIXED_MULTITEXCOORD5, _TNL_ATTRIB_TEX5, i, vb);
 		fetch_input_vec4 (pro, SLANG_VERTEX_FIXED_MULTITEXCOORD6, _TNL_ATTRIB_TEX6, i, vb);
 		fetch_input_vec4 (pro, SLANG_VERTEX_FIXED_MULTITEXCOORD7, _TNL_ATTRIB_TEX7, i, vb);
+      for (j = 0; j < MAX_VERTEX_ATTRIBS; j++)
+         fetch_gen_attrib (pro, j, i, vb);
 
 		_slang_exec_vertex_shader (pro);
 
