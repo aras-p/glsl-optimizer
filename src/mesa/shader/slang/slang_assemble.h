@@ -114,7 +114,9 @@ typedef struct slang_assembly_file_
 	GLuint capacity;
 } slang_assembly_file;
 
-GLboolean slang_assembly_file_construct (slang_assembly_file *);
+extern GLvoid
+_slang_assembly_file_ctr (slang_assembly_file *);
+
 GLvoid slang_assembly_file_destruct (slang_assembly_file *);
 GLboolean slang_assembly_file_push (slang_assembly_file *, slang_assembly_type);
 GLboolean slang_assembly_file_push_label (slang_assembly_file *, slang_assembly_type, GLuint);

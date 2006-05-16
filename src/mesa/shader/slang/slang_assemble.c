@@ -45,14 +45,16 @@ static GLvoid slang_assembly_destruct (slang_assembly *assem)
 {
 }
 
-/* slang_assembly_file */
+/*
+ * slang_assembly_file
+ */
 
-GLboolean slang_assembly_file_construct (slang_assembly_file *file)
+GLvoid
+_slang_assembly_file_ctr (slang_assembly_file *self)
 {
-	file->code = NULL;
-	file->count = 0;
-	file->capacity = 0;
-	return GL_TRUE;
+   self->code = NULL;
+   self->count = 0;
+   self->capacity = 0;
 }
 
 GLvoid slang_assembly_file_destruct (slang_assembly_file *file)
@@ -935,9 +937,10 @@ static GLboolean handle_field (slang_assemble_ctx *A, slang_assembly_typeinfo *t
 	else
 	{
 		GLuint i, struct_size = 0, field_offset = 0, field_size = 0;
-		GLboolean relocate, shrink;
 
-		/* calculate struct size, field offset and field size */
+      /*
+       * Calculate struct size, field offset and field size.
+       */
 		for (i = 0; i < tib->spec._struct->fields->num_variables; i++)
 		{
 			slang_variable *field;
@@ -956,44 +959,43 @@ static GLboolean handle_field (slang_assemble_ctx *A, slang_assembly_typeinfo *t
 			size = _slang_sizeof_aggregate (&agg);
 			slang_storage_aggregate_destruct (&agg);
 
-			if (op->a_id == field->a_name)
-			{
-				field_size = size;
-				struct_size = field_offset + size;
-			}
-			else if (struct_size != 0)
-				struct_size += size;
-			else
-				field_offset += size;
-		}
-
-		/*
-		 * OPTIMIZATION: If selecting the last field, no relocation is needed.
-		 */
-		relocate = field_offset != struct_size - field_size;
-
-		/*
-		 * OPTIMIZATION: If field and struct sizes are equal, no partial free is needed.
-		 */
-		shrink = field_size != struct_size;
-
-		if (relocate)
-		{
-			if (!PLAB (A->file, slang_asm_addr_push, field_offset))
-				return GL_FALSE;
+         if (op->a_id == field->a_name) {
+            field_size = size;
+            field_offset = struct_size;
+         }
+         struct_size += size;
 		}
 
 		if (ref == slang_ref_force)
 		{
-			if (relocate)
-			{
+         GLboolean shift;
+
+         /*
+         * OPTIMIZATION: If selecting first field, no address shifting is needed.
+         */
+         shift = (field_offset != 0);
+
+         if (shift) {
+            if (!PLAB (A->file, slang_asm_addr_push, field_offset))
+               return GL_FALSE;
 				if (!PUSH (A->file, slang_asm_addr_add))
 					return GL_FALSE;
 			}
 		}
 		else
 		{
+         GLboolean relocate, shrink;
 			GLuint free_b = 0;
+
+         /*
+         * OPTIMIZATION: If selecting last field, no relocation is needed.
+         */
+         relocate = (field_offset != (struct_size - field_size));
+
+         /*
+         * OPTIMIZATION: If field and struct sizes are equal, no partial free is needed.
+         */
+         shrink = (field_size != struct_size);
 
 			if (relocate)
 			{
@@ -1003,6 +1005,8 @@ static GLboolean handle_field (slang_assemble_ctx *A, slang_assembly_typeinfo *t
 				 * Move the selected element to the end of the master expression.
 				 * Do it in reverse order to avoid overwriting itself.
 				 */
+            if (!PLAB (A->file, slang_asm_addr_push, field_offset))
+               return GL_FALSE;
 				for (i = field_size; i > 0; i -= 4)
 					if (!PLAB2 (A->file, slang_asm_float_move, struct_size - field_size + i, i))
 						return GL_FALSE;
