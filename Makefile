@@ -129,6 +129,7 @@ osf1 \
 osf1-static \
 solaris-x86 \
 solaris-x86-gcc \
+solaris-x86-gcc-static \
 sunos4 \
 sunos4-gcc \
 sunos4-static \
