@@ -115,8 +115,6 @@ static void i810SetTexImages( i810ContextPtr imesa,
    t->max_level = i-1;
    t->dirty = I810_UPLOAD_TEX0 | I810_UPLOAD_TEX1;   
    t->Setup[I810_TEXREG_MI1] = (MI1_MAP_0 | textureFormat | log_pitch); 
-   t->Setup[I810_TEXREG_MI2] = (MI2_DIMENSIONS_ARE_LOG2 |
-				(log2Height << 16) | log2Width);
    t->Setup[I810_TEXREG_MLL] = (GFX_OP_MAP_LOD_LIMITS |
 				MLL_MAP_0  |
 				MLL_UPDATE_MAX_MIP | 
@@ -537,6 +535,92 @@ i810UpdateTexEnvCombine( GLcontext *ctx, GLuint unit,
    return GL_TRUE;
 }
 
+static GLboolean enable_tex_common( GLcontext *ctx, GLuint unit )
+{
+   i810ContextPtr imesa = I810_CONTEXT(ctx);
+   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+   struct gl_texture_object *tObj = texUnit->_Current;
+   i810TextureObjectPtr t = (i810TextureObjectPtr)tObj->DriverData;
+
+   if (tObj->Image[0][tObj->BaseLevel]->Border > 0) {
+     return GL_FALSE;
+   }
+
+  /* Upload teximages (not pipelined)
+   */
+  if (t->base.dirty_images[0]) {
+    I810_FIREVERTICES(imesa);
+    i810SetTexImages( imesa, tObj );
+    if (!t->base.memBlock) {
+      return GL_FALSE;
+    }
+  }
+   
+  /* Update state if this is a different texture object to last
+   * time.
+   */
+  if (imesa->CurrentTexObj[unit] != t) {
+    I810_STATECHANGE(imesa, (I810_UPLOAD_TEX0<<unit));
+    imesa->CurrentTexObj[unit] = t;
+    t->base.bound |= (1U << unit);
+    
+    /* XXX: should be locked */
+    driUpdateTextureLRU( (driTextureObject *) t );
+  }
+  
+  imesa->TexEnvImageFmt[unit] = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
+  return GL_TRUE;
+}
+
+static GLboolean enable_tex_rect( GLcontext *ctx, GLuint unit )
+{
+  i810ContextPtr imesa = I810_CONTEXT(ctx);
+  struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+  struct gl_texture_object *tObj = texUnit->_Current;
+  i810TextureObjectPtr t = (i810TextureObjectPtr)tObj->DriverData;
+  GLint Width, Height;
+
+  Width = tObj->Image[0][t->base.firstLevel]->Width - 1;
+  Height = tObj->Image[0][t->base.firstLevel]->Height - 1;
+
+  I810_STATECHANGE(imesa, (I810_UPLOAD_TEX0<<unit));
+  t->Setup[I810_TEXREG_MCS] &= ~MCS_NORMALIZED_COORDS;
+  t->Setup[I810_TEXREG_MCS] |= MCS_UPDATE_NORMALIZED; 
+  t->Setup[I810_TEXREG_MI2] = (MI2_DIMENSIONS_ARE_EXACT |
+			       (Height << MI2_HEIGHT_SHIFT) | Width);
+  
+  return GL_TRUE;
+}
+
+static GLboolean enable_tex_2d( GLcontext *ctx, GLuint unit )
+{
+  i810ContextPtr imesa = I810_CONTEXT(ctx);
+  struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+  struct gl_texture_object *tObj = texUnit->_Current;
+  i810TextureObjectPtr t = (i810TextureObjectPtr)tObj->DriverData;
+  GLint log2Width, log2Height;
+
+
+  log2Width = tObj->Image[0][t->base.firstLevel]->WidthLog2;
+  log2Height = tObj->Image[0][t->base.firstLevel]->HeightLog2;
+
+  I810_STATECHANGE(imesa, (I810_UPLOAD_TEX0<<unit));
+  t->Setup[I810_TEXREG_MCS] |= MCS_NORMALIZED_COORDS | MCS_UPDATE_NORMALIZED; 
+  t->Setup[I810_TEXREG_MI2] = (MI2_DIMENSIONS_ARE_LOG2 |
+			       (log2Height << MI2_HEIGHT_SHIFT) | log2Width);
+  
+  return GL_TRUE;
+}
+
+static void disable_tex( GLcontext *ctx, GLuint unit )
+{
+  i810ContextPtr imesa = I810_CONTEXT(ctx);
+
+  imesa->CurrentTexObj[unit] = 0;
+  imesa->TexEnvImageFmt[unit] = 0;	
+  imesa->dirty &= ~(I810_UPLOAD_TEX0<<unit); 
+  
+}
 
 /**
  * Update hardware state for a texture unit.
@@ -550,62 +634,32 @@ static void i810UpdateTexUnit( GLcontext *ctx, GLuint unit,
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-
-   if ( (texUnit->_ReallyEnabled == TEXTURE_2D_BIT)
-	|| (texUnit->_ReallyEnabled == 0) ) {
-      if (texUnit->_ReallyEnabled != 0) {
-	 struct gl_texture_object *tObj = texUnit->_Current;
-	 i810TextureObjectPtr t = (i810TextureObjectPtr)tObj->DriverData;
-
-	 if (tObj->Image[0][tObj->BaseLevel]->Border > 0) {
-	    FALLBACK( imesa, I810_FALLBACK_TEXTURE, GL_TRUE );
-	    return;
-	 }
-
-
-	 /* Upload teximages (not pipelined)
-	  */
-	 if (t->base.dirty_images[0]) {
-	    I810_FIREVERTICES(imesa);
-	    i810SetTexImages( imesa, tObj );
-	    if (!t->base.memBlock) {
-	       FALLBACK( imesa, I810_FALLBACK_TEXTURE, GL_TRUE );
-	       return;
-	    }
-	 }
-
-
-	 /* Update state if this is a different texture object to last
-	  * time.
-	  */
-	 if (imesa->CurrentTexObj[unit] != t) {
-	    I810_STATECHANGE(imesa, (I810_UPLOAD_TEX0<<unit));
-	    imesa->CurrentTexObj[unit] = t;
-	    t->base.bound |= (1U << unit);
-
-	    /* XXX: should be locked */
-	    driUpdateTextureLRU( (driTextureObject *) t );
-	 }
-      
-	 /* Update texture environment if texture object image format or 
-	  * texture environment state has changed.
-	  */
-
-	 imesa->TexEnvImageFmt[unit] = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
-      }
-      else {
-	 imesa->CurrentTexObj[unit] = 0;
-	 imesa->TexEnvImageFmt[unit] = 0;	
-	 imesa->dirty &= ~(I810_UPLOAD_TEX0<<unit); 
-      }
-      
-      if (!i810UpdateTexEnvCombine( ctx, unit, 
-				    next_color_stage, next_alpha_stage )) {
-	 FALLBACK( imesa, I810_FALLBACK_TEXTURE, GL_TRUE );
-      }
+   GLboolean ret;
+   
+   switch(texUnit->_ReallyEnabled) {
+   case TEXTURE_2D_BIT:
+     ret = enable_tex_common( ctx, unit);
+     ret &= enable_tex_2d(ctx, unit);
+     if (ret == GL_FALSE) {
+       FALLBACK( imesa, I810_FALLBACK_TEXTURE, GL_TRUE );
+     }
+     break;
+   case TEXTURE_RECT_BIT:
+     ret = enable_tex_common( ctx, unit);
+     ret &= enable_tex_rect(ctx, unit);
+     if (ret == GL_FALSE) {
+       FALLBACK( imesa, I810_FALLBACK_TEXTURE, GL_TRUE );
+     }
+     break;
+   case 0:
+     disable_tex(ctx, unit);
+     break;
    }
-   else if (texUnit->_ReallyEnabled) {
-      FALLBACK( imesa, I810_FALLBACK_TEXTURE, GL_TRUE );
+
+
+   if (!i810UpdateTexEnvCombine( ctx, unit, 
+				 next_color_stage, next_alpha_stage )) {
+     FALLBACK( imesa, I810_FALLBACK_TEXTURE, GL_TRUE );
    }
 
    return;

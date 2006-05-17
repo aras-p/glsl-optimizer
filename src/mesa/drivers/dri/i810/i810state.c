@@ -597,6 +597,7 @@ static void i810Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 	 imesa->Setup[I810_CTXREG_LCS] |= LCS_CULL_DISABLE;
       break;
    case GL_TEXTURE_2D:
+   case GL_TEXTURE_RECTANGLE_NV:
       I810_STATECHANGE(imesa, I810_UPLOAD_CTX);
       if (ctx->Texture.CurrentUnit == 0) {
 	 imesa->Setup[I810_CTXREG_MT] &= ~MT_TEXEL0_ENABLE;
