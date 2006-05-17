@@ -473,7 +473,6 @@ event_loop(Display *dpy, Window win)
          switch (event.type) {
 	 case Expose:
             /* we'll redraw below */
-	    reshape(event.xexpose.width, event.xexpose.height);
 	    break;
 	 case ConfigureNotify:
 	    reshape(event.xconfigure.width, event.xconfigure.height);
@@ -555,6 +554,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
+   const int winWidth = 300, winHeight = 300;
    Display *dpy;
    Window win;
    GLXContext ctx;
@@ -589,7 +589,7 @@ main(int argc, char *argv[])
       return -1;
    }
 
-   make_window(dpy, "glxgears", 0, 0, 300, 300, &win, &ctx);
+   make_window(dpy, "glxgears", 0, 0, winWidth, winHeight, &win, &ctx);
    XMapWindow(dpy, win);
    glXMakeCurrent(dpy, win, ctx);
 
@@ -601,6 +601,12 @@ main(int argc, char *argv[])
    }
 
    init();
+
+   /* Set initial projection/viewing transformation.
+    * We can't be sure we'll get a ConfigureNotify event when the window
+    * first appears.
+    */
+   reshape(winWidth, winHeight);
 
    event_loop(dpy, win);
 
