@@ -7,8 +7,8 @@ CONFIG_NAME = solaris-x86-gcc
 # Compiler and flags
 CC = gcc
 CXX = g++
-CFLAGS = -O3 -m486 -fPIC -I/usr/openwin/include -DUSE_XSHM
-CXXFLAGS = -O3 -m486 -fPIC
+CFLAGS = -O3 -march=i486 -fPIC -I/usr/openwin/include -DUSE_XSHM
+CXXFLAGS = -O3 -march=i486 -fPIC
 GLUT_CFLAGS = -fexceptions
 
 GL_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lm -lpthread
