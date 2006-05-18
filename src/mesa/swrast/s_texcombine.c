@@ -72,13 +72,11 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 #if CHAN_TYPE == GL_FLOAT
    const GLchan RGBmult = (GLfloat) (1 << RGBshift);
    const GLchan Amult = (GLfloat) (1 << Ashift);
-   static const GLchan one[4] = { 1.0, 1.0, 1.0, 1.0 };
-   static const GLchan zero[4] = { 0.0, 0.0, 0.0, 0.0 };
 #else
    const GLint half = (CHAN_MAX + 1) / 2;
+#endif
    static const GLchan one[4] = { CHAN_MAX, CHAN_MAX, CHAN_MAX, CHAN_MAX };
    static const GLchan zero[4] = { 0, 0, 0, 0 };
-#endif
    const GLuint numColorArgs = textureUnit->_CurrentCombine->_NumArgsRGB;
    const GLuint numAlphaArgs = textureUnit->_CurrentCombine->_NumArgsA;
    GLchan ccolor[3][MAX_WIDTH][4];
@@ -103,7 +101,6 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
     */
    for (j = 0; j < numColorArgs; j++) {
       const GLenum srcRGB = textureUnit->_CurrentCombine->SourceRGB[j];
-
 
       switch (srcRGB) {
          case GL_TEXTURE:
