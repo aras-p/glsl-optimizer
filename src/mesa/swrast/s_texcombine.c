@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -738,7 +738,7 @@ texture_apply( const GLcontext *ctx,
 {
    GLint baseLevel;
    GLuint i;
-   GLint Rc, Gc, Bc, Ac;
+   GLchan Rc, Gc, Bc, Ac;
    GLenum format;
    (void) primary_rgba;
 
@@ -904,7 +904,7 @@ texture_apply( const GLcontext *ctx,
 	    case GL_RGBA:
 	       for (i=0;i<n;i++) {
 		  /* Cv = Cf(1-At) + CtAt */
-		  GLint t = texel[i][ACOMP], s = CHAN_MAX - t;
+		  GLchan t = texel[i][ACOMP], s = CHAN_MAX - t;
 		  rgba[i][RCOMP] = CHAN_PRODUCT(rgba[i][RCOMP], s) + CHAN_PRODUCT(texel[i][RCOMP],t);
 		  rgba[i][GCOMP] = CHAN_PRODUCT(rgba[i][GCOMP], s) + CHAN_PRODUCT(texel[i][GCOMP],t);
 		  rgba[i][BCOMP] = CHAN_PRODUCT(rgba[i][BCOMP], s) + CHAN_PRODUCT(texel[i][BCOMP],t);
@@ -918,10 +918,10 @@ texture_apply( const GLcontext *ctx,
 	 break;
 
       case GL_BLEND:
-         Rc = (GLint) (texUnit->EnvColor[0] * CHAN_MAXF);
-         Gc = (GLint) (texUnit->EnvColor[1] * CHAN_MAXF);
-         Bc = (GLint) (texUnit->EnvColor[2] * CHAN_MAXF);
-         Ac = (GLint) (texUnit->EnvColor[3] * CHAN_MAXF);
+         UNCLAMPED_FLOAT_TO_CHAN(Rc, texUnit->EnvColor[0]);
+         UNCLAMPED_FLOAT_TO_CHAN(Gc, texUnit->EnvColor[1]);
+         UNCLAMPED_FLOAT_TO_CHAN(Bc, texUnit->EnvColor[2]);
+         UNCLAMPED_FLOAT_TO_CHAN(Ac, texUnit->EnvColor[3]);
 	 switch (format) {
 	    case GL_ALPHA:
 	       for (i=0;i<n;i++) {
