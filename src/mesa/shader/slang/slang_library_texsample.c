@@ -39,9 +39,14 @@ GLvoid _slang_library_tex1d (GLfloat bias, GLfloat s, GLfloat sampler, GLfloat *
 	GET_CURRENT_CONTEXT(ctx);
 	SWcontext *swrast = SWRAST_CONTEXT(ctx);
 	GLuint unit = (GLuint) sampler;
-	GLfloat texcoord[4] = { s, 0.0f, 0.0f, 1.0f };
+	GLfloat texcoord[4];
 	GLfloat lambda = bias;
 	GLchan rgba[4];
+
+	texcoord[0] = s;
+	texcoord[1] = 0.0f;
+	texcoord[2] = 0.0f;
+	texcoord[3] = 1.0f;
 
 	swrast->TextureSample[unit] (ctx, ctx->Texture.Unit[unit]._Current, 1,
 		(const GLfloat (*)[4]) texcoord, &lambda, &rgba);
@@ -56,9 +61,14 @@ GLvoid _slang_library_tex2d (GLfloat bias, GLfloat s, GLfloat t, GLfloat sampler
 	GET_CURRENT_CONTEXT(ctx);
 	SWcontext *swrast = SWRAST_CONTEXT(ctx);
 	GLuint unit = (GLuint) sampler;
-	GLfloat texcoord[4] = { s, t, 0.0f, 1.0f };
+	GLfloat texcoord[4];
 	GLfloat lambda = bias;
 	GLchan rgba[4];
+
+	texcoord[0] = s;
+	texcoord[1] = t;
+	texcoord[2] = 0.0f;
+	texcoord[3] = 1.0f;
 
 	swrast->TextureSample[unit] (ctx, ctx->Texture.Unit[unit]._Current, 1,
 		(const GLfloat (*)[4]) texcoord, &lambda, &rgba);
@@ -74,9 +84,14 @@ GLvoid _slang_library_tex3d (GLfloat bias, GLfloat s, GLfloat t, GLfloat r, GLfl
 	GET_CURRENT_CONTEXT(ctx);
 	SWcontext *swrast = SWRAST_CONTEXT(ctx);
 	GLuint unit = (GLuint) sampler;
-	GLfloat texcoord[4] = { s, t, r, 1.0f };
+	GLfloat texcoord[4];
 	GLfloat lambda = bias;
 	GLchan rgba[4];
+
+	texcoord[0] = s;
+	texcoord[1] = t;
+	texcoord[2] = r;
+	texcoord[3] = 1.0f;
 
 	swrast->TextureSample[unit] (ctx, ctx->Texture.Unit[unit]._Current, 1,
 		(const GLfloat (*)[4]) texcoord, &lambda, &rgba);
@@ -92,9 +107,14 @@ GLvoid _slang_library_texcube (GLfloat bias, GLfloat s, GLfloat t, GLfloat r, GL
 	GET_CURRENT_CONTEXT(ctx);
 	SWcontext *swrast = SWRAST_CONTEXT(ctx);
 	GLuint unit = (GLuint) sampler;
-	GLfloat texcoord[4] = { s, t, r, 1.0f };
+	GLfloat texcoord[4];
 	GLfloat lambda = bias;
 	GLchan rgba[4];
+
+	texcoord[0] = s;
+	texcoord[1] = t;
+	texcoord[2] = r;
+	texcoord[3] = 1.0f;
 
 	swrast->TextureSample[unit] (ctx, ctx->Texture.Unit[unit]._Current, 1,
 		(const GLfloat (*)[4]) texcoord, &lambda, &rgba);
@@ -110,9 +130,14 @@ GLvoid _slang_library_shad1d (GLfloat bias, GLfloat s, GLfloat t, GLfloat r, GLf
 	GET_CURRENT_CONTEXT(ctx);
 	SWcontext *swrast = SWRAST_CONTEXT(ctx);
 	GLuint unit = (GLuint) sampler;
-	GLfloat texcoord[4] = { s, t, r, 1.0f };
+	GLfloat texcoord[4];
 	GLfloat lambda = bias;
 	GLchan rgba[4];
+
+	texcoord[0] = s;
+	texcoord[1] = t;
+	texcoord[2] = r;
+	texcoord[3] = 1.0f;
 
 	swrast->TextureSample[unit] (ctx, ctx->Texture.Unit[unit]._Current, 1,
 		(const GLfloat (*)[4]) texcoord, &lambda, &rgba);
@@ -128,9 +153,14 @@ GLvoid _slang_library_shad2d (GLfloat bias, GLfloat s, GLfloat t, GLfloat r, GLf
 	GET_CURRENT_CONTEXT(ctx);
 	SWcontext *swrast = SWRAST_CONTEXT(ctx);
 	GLuint unit = (GLuint) sampler;
-	GLfloat texcoord[4] = { s, t, r, 1.0f };
+	GLfloat texcoord[4];
 	GLfloat lambda = bias;
 	GLchan rgba[4];
+
+	texcoord[0] = s;
+	texcoord[1] = t;
+	texcoord[2] = r;
+	texcoord[3] = 1.0f;
 
 	swrast->TextureSample[unit] (ctx, ctx->Texture.Unit[unit]._Current, 1,
 		(const GLfloat (*)[4]) texcoord, &lambda, &rgba);
