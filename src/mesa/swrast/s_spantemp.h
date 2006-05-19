@@ -30,7 +30,8 @@
  *
  * Define the following macros before including this file:
  *   NAME(BASE)  to generate the function name (i.e. add prefix or suffix)
- *   FORMAT  must be either GL_RGBA, GL_RGBA8 or GL_COLOR_INDEX8_EXT
+ *   RB_TYPE  the renderbuffer DataType
+ *   CI_MODE  if set, color index mode, else RGBA
  *   SPAN_VARS  to declare any local variables
  *   INIT_PIXEL_PTR(P, X, Y)  to initialize a pointer to a pixel
  *   INC_PIXEL_PTR(P)  to increment a pixel pointer by one pixel
@@ -45,6 +46,13 @@
 #include "macros.h"
 
 
+#ifdef CI_MODE
+#define RB_COMPONENTS 1
+#elif !defined(RB_COMPONENTS)
+#define RB_COMPONENTS 4
+#endif
+
+
 static void
 NAME(get_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
                GLuint count, GLint x, GLint y, void *values )
@@ -52,14 +60,10 @@ NAME(get_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
-#if FORMAT == GL_RGBA
-   GLchan (*dest)[4] = (GLchan (*)[4]) values;
-#elif FORMAT == GL_RGBA8
-   GLubyte (*dest)[4] = (GLubyte (*)[4]) values;
-#elif FORMAT == GL_COLOR_INDEX8_EXT
-   GLubyte *dest = (GLubyte *) values;
+#ifdef CI_MODE
+   RB_TYPE *dest = (RB_TYPE *) values;
 #else
-#error FORMAT must be set!!!!
+   RB_TYPE (*dest)[RB_COMPONENTS] = (RB_TYPE (*)[RB_COMPONENTS]) values;
 #endif
    GLuint i;
    INIT_PIXEL_PTR(pixel, x, y);
@@ -70,6 +74,7 @@ NAME(get_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
    (void) rb;
 }
 
+
 static void
 NAME(get_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
                   GLuint count, const GLint x[], const GLint y[], void *values )
@@ -77,12 +82,10 @@ NAME(get_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
-#if FORMAT == GL_RGBA
-   GLchan (*dest)[4] = (GLchan (*)[4]) values;
-#elif FORMAT == GL_RGBA8
-   GLubyte (*dest)[4] = (GLubyte (*)[4]) values;
-#elif FORMAT == GL_COLOR_INDEX8_EXT
-   GLubyte *dest = (GLubyte *) values;
+#ifdef CI_MODE
+   RB_TYPE *dest = (RB_TYPE *) values;
+#else
+   RB_TYPE (*dest)[RB_COMPONENTS] = (RB_TYPE (*)[RB_COMPONENTS]) values;
 #endif
    GLuint i;
    for (i = 0; i < count; i++) {
@@ -101,13 +104,7 @@ NAME(put_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
-#if FORMAT == GL_RGBA
-   const GLchan (*src)[4] = (const GLchan (*)[4]) values;
-#elif FORMAT == GL_RGBA8
-   const GLubyte (*src)[4] = (const GLubyte (*)[4]) values;
-#elif FORMAT == GL_COLOR_INDEX8_EXT
-   const GLubyte (*src)[1] = (const GLubyte (*)[1]) values;
-#endif
+   const RB_TYPE (*src)[RB_COMPONENTS] = (const RB_TYPE (*)[RB_COMPONENTS]) values;
    GLuint i;
    INIT_PIXEL_PTR(pixel, x, y);
    if (mask) {
@@ -127,7 +124,8 @@ NAME(put_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
    (void) rb;
 }
 
-#if (FORMAT == GL_RGBA) || (FORMAT == GL_RGBA8)
+
+#if !defined(CI_MODE)
 static void
 NAME(put_row_rgb)( GLcontext *ctx, struct gl_renderbuffer *rb,
                    GLuint count, GLint x, GLint y,
@@ -136,13 +134,7 @@ NAME(put_row_rgb)( GLcontext *ctx, struct gl_renderbuffer *rb,
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
-#if FORMAT == GL_RGBA
-   const GLchan (*src)[3] = (const GLchan (*)[3]) values;
-#elif FORMAT == GL_RGBA8
-   const GLubyte (*src)[3] = (const GLubyte (*)[3]) values;
-#else
-#error bad format
-#endif
+   const RB_TYPE (*src)[3] = (const RB_TYPE (*)[3]) values;
    GLuint i;
    INIT_PIXEL_PTR(pixel, x, y);
    for (i = 0; i < count; i++) {
@@ -159,6 +151,7 @@ NAME(put_row_rgb)( GLcontext *ctx, struct gl_renderbuffer *rb,
 }
 #endif
 
+
 static void
 NAME(put_mono_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
                     GLuint count, GLint x, GLint y,
@@ -167,13 +160,7 @@ NAME(put_mono_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
-#if FORMAT == GL_RGBA
-   const GLchan *src = (const GLchan *) value;
-#elif FORMAT == GL_RGBA8
-   const GLubyte *src = (const GLubyte *) value;
-#elif FORMAT == GL_COLOR_INDEX8_EXT
-   const GLubyte *src = (const GLubyte *) value;
-#endif
+   const RB_TYPE *src = (const RB_TYPE *) value;
    GLuint i;
    INIT_PIXEL_PTR(pixel, x, y);
    if (mask) {
@@ -202,13 +189,7 @@ NAME(put_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
-#if FORMAT == GL_RGBA
-   const GLchan (*src)[4] = (const GLchan (*)[4]) values;
-#elif FORMAT == GL_RGBA8
-   const GLubyte (*src)[4] = (const GLubyte (*)[4]) values;
-#elif FORMAT == GL_COLOR_INDEX8_EXT
-   const GLubyte (*src)[1] = (const GLubyte (*)[1]) values;
-#endif
+   const RB_TYPE (*src)[RB_COMPONENTS] = (const RB_TYPE (*)[RB_COMPONENTS]) values;
    GLuint i;
    ASSERT(mask);
    for (i = 0; i < count; i++) {
@@ -229,13 +210,7 @@ NAME(put_mono_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
-#if FORMAT == GL_RGBA
-   const GLchan *src = (const GLchan *) value;
-#elif FORMAT == GL_RGBA8
-   const GLubyte *src = (const GLubyte *) value;
-#elif FORMAT == GL_COLOR_INDEX8_EXT
-   const GLubyte *src = (const GLubyte *) value;
-#endif
+   const RB_TYPE *src = (const RB_TYPE *) value;
    GLuint i;
    ASSERT(mask);
    for (i = 0; i < count; i++) {
@@ -249,10 +224,12 @@ NAME(put_mono_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 #undef NAME
+#undef RB_TYPE
+#undef RB_COMPONENTS
+#undef CI_MODE
 #undef SPAN_VARS
 #undef INIT_PIXEL_PTR
 #undef INC_PIXEL_PTR
 #undef STORE_PIXEL
 #undef STORE_PIXEL_RGB
 #undef FETCH_PIXEL
-#undef FORMAT
