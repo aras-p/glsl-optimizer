@@ -256,6 +256,15 @@ Draw(void)
    PrintString(s);
    glPopMatrix();
 
+   glPushMatrix();
+   glTranslatef(2, (i + 2) * (h + 2), 0);
+   glRasterPos2i(8, 6);
+   if (Test3D)
+      PrintString("Target [2/3]: GL_TEXTURE_3D");
+   else
+      PrintString("Target [2/3]: GL_TEXTURE_2D");
+   glPopMatrix();
+
    glutSwapBuffers();
 }
 
@@ -291,11 +300,9 @@ Key(unsigned char key, int x, int y)
          break;
       case '2':
          Test3D = GL_FALSE;
-         printf("Using 2D textures\n");
          break;
       case '3':
          Test3D = GL_TRUE;
-         printf("Using 3D textures\n");
          break;
       case 27:
          exit(0);
