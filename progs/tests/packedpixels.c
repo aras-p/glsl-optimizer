@@ -106,6 +106,9 @@ static const struct name_format IntFormats[] = {
 #define NUM_INT_FORMATS (sizeof(IntFormats) / sizeof(IntFormats[0]))
 static GLuint CurFormat = 0;
 
+static GLboolean Test3D = GL_FALSE;
+
+
 
 static void
 PrintString(const char *s)
@@ -167,8 +170,25 @@ MakeTexture(const struct pixel_format *format, GLenum intFormat, GLboolean swap)
    else {
       abort();
    }
-   glTexImage2D(GL_TEXTURE_2D, 0, intFormat, 4, 4, 0,
-                format->format, format->type, texBuffer);
+
+   if (Test3D) {
+      /* 4 x 4 x 4 texture, undefined data */
+      glTexImage3D(GL_TEXTURE_3D, 0, intFormat, 4, 4, 4, 0,
+                   format->format, format->type, NULL);
+      /* fill in Z=1 and Z=2 slices with the real texture data */
+      glTexSubImage3D(GL_TEXTURE_3D, 0,
+                      0, 0, 1,  /* offset */
+                      4, 4, 1,  /* size */
+                      format->format, format->type, texBuffer);
+      glTexSubImage3D(GL_TEXTURE_3D, 0,
+                      0, 0, 2,  /* offset */
+                      4, 4, 1,  /* size */
+                      format->format, format->type, texBuffer);
+   }
+   else {
+      glTexImage2D(GL_TEXTURE_2D, 0, intFormat, 4, 4, 0,
+                   format->format, format->type, texBuffer);
+   }
 
    if (glGetError()) {
       printf("GL Error for %s\n", format->name);
@@ -196,15 +216,21 @@ Draw(void)
 
         MakeTexture(Formats + i, IntFormats[CurFormat].format, swap);
 
-        glEnable(GL_TEXTURE_2D);
+        if (Test3D)
+           glEnable(GL_TEXTURE_3D);
+        else
+           glEnable(GL_TEXTURE_2D);
         glBegin(GL_POLYGON);
-        glTexCoord2f(0, 0);  glVertex2f(0, 0);
-        glTexCoord2f(1, 0);  glVertex2f(w, 0);
-        glTexCoord2f(1, 1);  glVertex2f(w, h);
-        glTexCoord2f(0, 1);  glVertex2f(0, h);
+        glTexCoord3f(0, 0, 0.5);  glVertex2f(0, 0);
+        glTexCoord3f(1, 0, 0.5);  glVertex2f(w, 0);
+        glTexCoord3f(1, 1, 0.5);  glVertex2f(w, h);
+        glTexCoord3f(0, 1, 0.5);  glVertex2f(0, h);
         glEnd();
 
-        glDisable(GL_TEXTURE_2D);
+        if (Test3D)
+           glDisable(GL_TEXTURE_3D);
+        else
+           glDisable(GL_TEXTURE_2D);
         glColor3f(0, 0, 0);
         glRasterPos2i(8, 6);
         PrintString(Formats[i].name);
@@ -263,6 +289,14 @@ Key(unsigned char key, int x, int y)
          if (CurFormat == NUM_INT_FORMATS)
             CurFormat = 0;
          break;
+      case '2':
+         Test3D = GL_FALSE;
+         printf("Using 2D textures\n");
+         break;
+      case '3':
+         Test3D = GL_TRUE;
+         printf("Using 3D textures\n");
+         break;
       case 27:
          exit(0);
          break;
@@ -278,6 +312,8 @@ Init(void)
    printf("GL_VERSION = %s\n", (char *) glGetString(GL_VERSION));
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 }
 
