@@ -47,6 +47,8 @@
 #include "fbobject.h"
 #include "renderbuffer.h"
 
+#include "rbadaptors.h"
+
 
 /* 32-bit color index format.  Not a public format. */
 #define COLOR_INDEX32 0x424243
@@ -2044,6 +2046,25 @@ _mesa_add_renderbuffer(struct gl_framebuffer *fb,
    }
    else {
       assert(!rb->Name);
+   }
+
+   /* If Mesa's compiled with deep color channels (16 or 32 bits / channel)
+    * and the device driver is expecting 8-bit values (GLubyte), we can
+    * use a "renderbuffer adaptor/wrapper" to do the necessary conversions.
+    */
+   if (rb->_BaseFormat == GL_RGBA) {
+      if (CHAN_BITS == 16 && rb->DataType == GL_UNSIGNED_BYTE) {
+         GET_CURRENT_CONTEXT(ctx);
+         rb = _mesa_new_renderbuffer_16wrap8(ctx, rb);
+      }
+      else if (CHAN_BITS == 32 && rb->DataType == GL_UNSIGNED_BYTE) {
+         GET_CURRENT_CONTEXT(ctx);
+         rb = _mesa_new_renderbuffer_32wrap8(ctx, rb);
+      }
+      else if (CHAN_BITS == 32 && rb->DataType == GL_UNSIGNED_SHORT) {
+         GET_CURRENT_CONTEXT(ctx);
+         rb = _mesa_new_renderbuffer_32wrap16(ctx, rb);
+      }
    }
 
    fb->Attachment[bufferName].Type = GL_RENDERBUFFER_EXT;
