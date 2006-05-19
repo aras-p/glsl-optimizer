@@ -14,7 +14,8 @@ OSMESA32_LIBS = -L$(LIB_DIR) -lglut -lOSMesa32 -lGLU -lGL $(APP_LIB_DEPS)
 LIB_DEP = $(LIB_DIR)/$(GL_LIB_NAME) $(LIB_DIR)/$(GLU_LIB_NAME) $(LIB_DIR)/$(GLUT_LIB_NAME)
 
 PROGS = \
-	osdemo 
+	osdemo \
+	ostest1
 
 
 ##### RULES #####
@@ -56,6 +57,10 @@ showbuffer.o: showbuffer.c showbuffer.h
 # special case: need the -lOSMesa library:
 osdemo: osdemo.c
 	$(CC) -I$(INCDIR) $(CFLAGS) osdemo.c $(OSMESA_LIBS) -o $@
+
+# special case: need the -lOSMesa library:
+ostest1: ostest1.c
+	$(CC) -I$(INCDIR) $(CFLAGS) ostest1.c $(OSMESA_LIBS) -o $@
 
 # another special case: need the -lOSMesa16 library:
 osdemo16: osdemo16.c
