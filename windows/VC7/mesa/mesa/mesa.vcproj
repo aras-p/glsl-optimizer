@@ -318,6 +318,9 @@
 				RelativePath="..\..\..\..\src\mesa\main\rastpos.c">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\rbadaptors.c">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\renderbuffer.c">
 			</File>
 			<File
@@ -872,6 +875,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\rastpos.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\rbadaptors.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\renderbuffer.h">

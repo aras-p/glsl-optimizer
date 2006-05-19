@@ -433,6 +433,10 @@ SOURCE=..\..\..\..\src\mesa\main\rastpos.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\main\rbadaptors.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\main\renderbuffer.c
 # End Source File
 # Begin Source File
@@ -1200,6 +1204,10 @@ SOURCE=..\..\..\..\src\mesa\shader\program.h
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\main\rastpos.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\main\rbadaptors.h
 # End Source File
 # Begin Source File
 
