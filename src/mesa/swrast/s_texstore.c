@@ -304,8 +304,13 @@ _swrast_copy_teximage1d( GLcontext *ctx, GLenum target, GLint level,
 }
 
 
-/*
+/**
  * Fallback for Driver.CopyTexImage2D().
+ *
+ * We implement CopyTexImage by reading the image from the framebuffer
+ * then passing it to the ctx->Driver.TexImage2D() function.
+ *
+ * Device drivers should try to implement direct framebuffer->texture copies.
  */
 void
 _swrast_copy_teximage2d( GLcontext *ctx, GLenum target, GLint level,
@@ -441,8 +446,11 @@ _swrast_copy_texsubimage1d( GLcontext *ctx, GLenum target, GLint level,
 }
 
 
-/*
+/**
  * Fallback for Driver.CopyTexSubImage2D().
+ *
+ * Read the image from the framebuffer then hand it
+ * off to ctx->Driver.TexSubImage2D().
  */
 void
 _swrast_copy_texsubimage2d( GLcontext *ctx,
