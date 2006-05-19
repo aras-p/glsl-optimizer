@@ -61,6 +61,7 @@ SOURCES =accum.c \
 	points.c \
 	polygon.c \
 	rastpos.c \
+	rbadaptors.c \
 	renderbuffer.c \
 	state.c \
 	stencil.c \
@@ -195,6 +196,7 @@ pixel.obj : pixel.c
 points.obj : points.c
 polygon.obj : polygon.c
 rastpos.obj : rastpos.c
+rbadaptors.obj : rbadaptors.c
 renderbuffer.obj : renderbuffer.c
 state.obj : state.c
 stencil.obj : stencil.c
