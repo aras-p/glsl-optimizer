@@ -1216,22 +1216,40 @@ typedef void (*StoreTexelFunc)(struct gl_texture_image *texImage,
                                GLint col, GLint row, GLint img,
                                const void *texel);
 
-/**
- * TexImage store function.  This is called by the glTex[Sub]Image
- * functions and is responsible for converting the user-specified texture
- * image into a specific (hardware) image format.
- */
-typedef GLboolean (*StoreTexImageFunc)(GLcontext *ctx, GLuint dims,
-                          GLenum baseInternalFormat,
-                          const struct gl_texture_format *dstFormat,
-                          GLvoid *dstAddr,
-                          GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
-                          GLint dstRowStride, GLint dstImageStride,
-                          GLint srcWidth, GLint srcHeight, GLint srcDepth,
-                          GLenum srcFormat, GLenum srcType,
-                          const GLvoid *srcAddr,
-                          const struct gl_pixelstore_attrib *srcPacking);
 
+/**
+ * This macro defines the (many) parameters to the texstore functions.
+ * \param dims  either 1 or 2 or 3
+ * \param baseInternalFormat  user-specified base internal format
+ * \param dstFormat  destination Mesa texture format
+ * \param dstAddr  destination image address
+ * \param dstX/Y/Zoffset  destination x/y/z offset (ala TexSubImage), in texels
+ * \param dstRowStride  destination image row stride, in bytes
+ * \param dstImageOffsets  offset of each 2D slice within 3D texture, in texels
+ * \param srcWidth/Height/Depth  source image size, in pixels
+ * \param srcFormat  incoming image format
+ * \param srcType  incoming image data type
+ * \param srcAddr  source image address
+ * \param srcPacking  source image packing parameters
+ */
+#define TEXSTORE_PARAMS \
+	GLcontext *ctx, GLuint dims, \
+	GLenum baseInternalFormat, \
+	const struct gl_texture_format *dstFormat, \
+	GLvoid *dstAddr, \
+	GLint dstXoffset, GLint dstYoffset, GLint dstZoffset, \
+	GLint dstRowStride, const GLuint *dstImageOffsets, \
+	GLint srcWidth, GLint srcHeight, GLint srcDepth, \
+	GLenum srcFormat, GLenum srcType, \
+	const GLvoid *srcAddr, \
+	const struct gl_pixelstore_attrib *srcPacking
+
+
+
+/**
+ * Texture image storage function.
+ */
+typedef GLboolean (*StoreTexImageFunc)(TEXSTORE_PARAMS);
 
 
 /**
@@ -1277,6 +1295,8 @@ struct gl_texture_format
 };
 
 
+#define MAX_3D_TEXTURE_SIZE (1 << (MAX_3D_TEXTURE_LEVELS - 1))
+
 /**
  * Texture image state.  Describes the dimensions of a texture image,
  * the texel format and pointers to Texel Fetch functions.
@@ -1294,8 +1314,6 @@ struct gl_texture_image
    GLuint Width;		/**< = 2^WidthLog2 + 2*Border */
    GLuint Height;		/**< = 2^HeightLog2 + 2*Border */
    GLuint Depth;		/**< = 2^DepthLog2 + 2*Border */
-   GLuint RowStride;		/**< == Width unless IsClientData and padded */
-   GLuint ImageStride;          /**< Stride between images, in texels */
    GLuint Width2;		/**< = Width - 2*Border */
    GLuint Height2;		/**< = Height - 2*Border */
    GLuint Depth2;		/**< = Depth - 2*Border */
@@ -1306,7 +1324,6 @@ struct gl_texture_image
    GLfloat WidthScale;		/**< used for mipmap LOD computation */
    GLfloat HeightScale;		/**< used for mipmap LOD computation */
    GLfloat DepthScale;		/**< used for mipmap LOD computation */
-   GLvoid *Data;		/**< Image data, accessed via FetchTexel() */
    GLboolean IsClientData;	/**< Data owned by client? */
    GLboolean _IsPowerOfTwo;	/**< Are all dimensions powers of two? */
 
@@ -1319,6 +1336,11 @@ struct gl_texture_image
 
    GLboolean IsCompressed;	/**< GL_ARB_texture_compression */
    GLuint CompressedSize;	/**< GL_ARB_texture_compression */
+
+   GLuint RowStride;		/**< == Width unless IsClientData and padded */
+   GLuint *ImageOffsets;        /**< if 3D texture: array [Depth] of offsets to
+                                     each 2D slice in 'Data', in texels */
+   GLvoid *Data;		/**< Image data, accessed via FetchTexel() */
 
    /**
     * \name For device driver:

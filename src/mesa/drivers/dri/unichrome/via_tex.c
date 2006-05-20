@@ -787,7 +787,7 @@ static void viaTexImage(GLcontext *ctx,
       return;
    }
    else {
-      GLint dstRowStride, dstImageStride = 0;
+      GLint dstRowStride;
       GLboolean success;
       if (texImage->IsCompressed) {
          dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
@@ -801,7 +801,8 @@ static void viaTexImage(GLcontext *ctx,
                                                 texImage->TexFormat,
                                                 texImage->Data,
                                                 0, 0, 0,  /* dstX/Y/Zoffset */
-                                                dstRowStride, dstImageStride,
+                                                dstRowStride,
+                                                texImage->ImageOffsets,
                                                 width, height, 1,
                                                 format, type, pixels, packing);
       if (!success) {

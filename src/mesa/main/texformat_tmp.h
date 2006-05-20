@@ -59,8 +59,8 @@
 #elif DIM == 3
 
 #define TEXEL_ADDR( type, image, i, j, k, size )			\
-	((type *)(image)->Data + (((image)->Height * (k) + (j)) *	\
-         (image)->RowStride + (i)) * (size))
+	((type *)(image)->Data + ((image)->ImageOffsets[k]		\
+             + (image)->RowStride * (j) + (i)) * (size))
 
 #define FETCH(x) fetch_texel_3d_##x
 

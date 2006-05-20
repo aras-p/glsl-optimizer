@@ -525,29 +525,85 @@ savageAllocTexObj( struct gl_texture_object *texObj )
  * because we can't tell the hardware to ignore the color components
  * and only use the alpha component. So we define our own texture
  * formats that promote to ARGB8888 or ARGB4444 and set the color
- * components to white. This way we get the correct result. */
+ * components to white. This way we get the correct result.
+ */
 static GLboolean
-_savage_texstore_a1114444 (GLcontext *ctx, GLuint dims,
-			   GLenum baseInternalFormat,
-			   const struct gl_texture_format *dstFormat,
-			   GLvoid *dstAddr,
-			   GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
-			   GLint dstRowStride, GLint dstImageStride,
-			   GLint srcWidth, GLint srcHeight, GLint srcDepth,
-			   GLenum srcFormat, GLenum srcType,
-			   const GLvoid *srcAddr,
-			   const struct gl_pixelstore_attrib *srcPacking);
+_savage_texstore_a1114444(TEXSTORE_PARAMS)
+{
+    const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
+                                                 baseInternalFormat,
+                                                 baseInternalFormat,
+                                                 srcWidth, srcHeight, srcDepth,
+                                                 srcFormat, srcType, srcAddr,
+                                                 srcPacking);
+    const GLchan *src = tempImage;
+    GLint img, row, col;
+
+    ASSERT(dstFormat == &_savage_texformat_a1114444);
+    ASSERT(baseInternalFormat == GL_ALPHA);
+
+    if (!tempImage)
+	return GL_FALSE;
+    _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
+    for (img = 0; img < srcDepth; img++) {
+        GLubyte *dstRow = (GLubyte *) dstAddr
+           + dstImageOffsets[dstZoffset + img] * dstFormat->TexelBytes
+           + dstYoffset * dstRowStride
+           + dstXoffset * dstFormat->TexelBytes;
+	for (row = 0; row < srcHeight; row++) {
+            GLushort *dstUI = (GLushort *) dstRow;
+	    for (col = 0; col < srcWidth; col++) {
+		dstUI[col] = PACK_COLOR_4444( CHAN_TO_UBYTE(src[0]),
+					      255, 255, 255 );
+		src += 1;
+            }
+            dstRow += dstRowStride;
+	}
+    }
+    _mesa_free((void *) tempImage);
+
+    return GL_TRUE;
+}
+
+
 static GLboolean
-_savage_texstore_a1118888 (GLcontext *ctx, GLuint dims,
-			   GLenum baseInternalFormat,
-			   const struct gl_texture_format *dstFormat,
-			   GLvoid *dstAddr,
-			   GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
-			   GLint dstRowStride, GLint dstImageStride,
-			   GLint srcWidth, GLint srcHeight, GLint srcDepth,
-			   GLenum srcFormat, GLenum srcType,
-			   const GLvoid *srcAddr,
-			   const struct gl_pixelstore_attrib *srcPacking);
+_savage_texstore_a1118888(TEXSTORE_PARAMS)
+{
+    const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
+                                                 baseInternalFormat,
+                                                 baseInternalFormat,
+                                                 srcWidth, srcHeight, srcDepth,
+                                                 srcFormat, srcType, srcAddr,
+                                                 srcPacking);
+    const GLchan *src = tempImage;
+    GLint img, row, col;
+
+    ASSERT(dstFormat == &_savage_texformat_a1118888);
+    ASSERT(baseInternalFormat == GL_ALPHA);
+
+    if (!tempImage)
+	return GL_FALSE;
+    _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
+    for (img = 0; img < srcDepth; img++) {
+        GLubyte *dstRow = (GLubyte *) dstAddr
+           + dstImageOffsets[dstZoffset + img] * dstFormat->TexelBytes
+           + dstYoffset * dstRowStride
+           + dstXoffset * dstFormat->TexelBytes;
+	for (row = 0; row < srcHeight; row++) {
+            GLuint *dstUI = (GLuint *) dstRow;
+	    for (col = 0; col < srcWidth; col++) {
+		dstUI[col] = PACK_COLOR_8888( CHAN_TO_UBYTE(src[0]),
+					      255, 255, 255 );
+		src += 1;
+            }
+            dstRow += dstRowStride;
+	}
+    }
+    _mesa_free((void *) tempImage);
+
+    return GL_TRUE;
+}
+
 
 static struct gl_texture_format _savage_texformat_a1114444 = {
     MESA_FORMAT_ARGB4444,		/* MesaFormat */
@@ -586,104 +642,6 @@ static struct gl_texture_format _savage_texformat_a1118888 = {
 					 * savageDDInitTextureFuncs */
 };
 
-static GLboolean
-_savage_texstore_a1114444 (GLcontext *ctx, GLuint dims,
-			   GLenum baseInternalFormat,
-			   const struct gl_texture_format *dstFormat,
-			   GLvoid *dstAddr,
-			   GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
-			   GLint dstRowStride, GLint dstImageStride,
-			   GLint srcWidth, GLint srcHeight, GLint srcDepth,
-			   GLenum srcFormat, GLenum srcType,
-			   const GLvoid *srcAddr,
-			   const struct gl_pixelstore_attrib *srcPacking)
-{
-    /* general path */
-    const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 baseInternalFormat,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking);
-    const GLchan *src = tempImage;
-    GLubyte *dstImage = (GLubyte *) dstAddr
-	+ dstZoffset * dstImageStride
-	+ dstYoffset * dstRowStride
-	+ dstXoffset * dstFormat->TexelBytes;
-    GLint img, row, col;
-
-    ASSERT(dstFormat == &_savage_texformat_a1114444);
-    ASSERT(baseInternalFormat == GL_ALPHA);
-
-    if (!tempImage)
-	return GL_FALSE;
-    _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
-    for (img = 0; img < srcDepth; img++) {
-	GLubyte *dstRow = dstImage;
-	for (row = 0; row < srcHeight; row++) {
-            GLushort *dstUI = (GLushort *) dstRow;
-	    for (col = 0; col < srcWidth; col++) {
-		dstUI[col] = PACK_COLOR_4444( CHAN_TO_UBYTE(src[0]),
-					      255, 255, 255 );
-		src += 1;
-            }
-            dstRow += dstRowStride;
-	}
-	dstImage += dstImageStride;
-    }
-    _mesa_free((void *) tempImage);
-
-    return GL_TRUE;
-}
-static GLboolean
-_savage_texstore_a1118888 (GLcontext *ctx, GLuint dims,
-			   GLenum baseInternalFormat,
-			   const struct gl_texture_format *dstFormat,
-			   GLvoid *dstAddr,
-			   GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
-			   GLint dstRowStride, GLint dstImageStride,
-			   GLint srcWidth, GLint srcHeight, GLint srcDepth,
-			   GLenum srcFormat, GLenum srcType,
-			   const GLvoid *srcAddr,
-			   const struct gl_pixelstore_attrib *srcPacking)
-{
-    /* general path */
-    const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 baseInternalFormat,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking);
-    const GLchan *src = tempImage;
-    GLubyte *dstImage = (GLubyte *) dstAddr
-	+ dstZoffset * dstImageStride
-	+ dstYoffset * dstRowStride
-	+ dstXoffset * dstFormat->TexelBytes;
-    GLint img, row, col;
-
-    ASSERT(dstFormat == &_savage_texformat_a1118888);
-    ASSERT(baseInternalFormat == GL_ALPHA);
-
-    if (!tempImage)
-	return GL_FALSE;
-    _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
-    for (img = 0; img < srcDepth; img++) {
-	GLubyte *dstRow = dstImage;
-	for (row = 0; row < srcHeight; row++) {
-            GLuint *dstUI = (GLuint *) dstRow;
-	    for (col = 0; col < srcWidth; col++) {
-		dstUI[col] = PACK_COLOR_8888( CHAN_TO_UBYTE(src[0]),
-					      255, 255, 255 );
-		src += 1;
-            }
-            dstRow += dstRowStride;
-	}
-	dstImage += dstImageStride;
-    }
-    _mesa_free((void *) tempImage);
-
-    return GL_TRUE;
-}
 
 /* Called by the _mesa_store_teximage[123]d() functions. */
 static const struct gl_texture_format *

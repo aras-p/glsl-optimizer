@@ -52,7 +52,7 @@
 
 
 /* no borders! can't halve 1x1! (stride > width * comp) not allowed */
-void
+static void
 _mesa_halve2x2_teximage2d ( GLcontext *ctx,
 			    struct gl_texture_image *texImage,
 			    GLuint bytesPerPixel,
@@ -65,6 +65,7 @@ _mesa_halve2x2_teximage2d ( GLcontext *ctx,
    GLint srcRowStride = srcWidth * bytesPerPixel;
    GLubyte *src = (GLubyte *)srcImage;
    GLubyte *dst = dstImage;
+   GLuint dstImageOffsets = 0;
 
    GLuint bpt = 0;
    GLubyte *_s = NULL;
@@ -96,7 +97,7 @@ _mesa_halve2x2_teximage2d ( GLcontext *ctx,
                               &_mesa_texformat_rgba8888_rev, src,
                               0, 0, 0, /* dstX/Y/Zoffset */
                               srcRowStride, /* dstRowStride */
-                              0, /* dstImageStride */
+                              &dstImageOffsets,
                               srcWidth, srcHeight, 1,
                               texImage->_BaseFormat, _t, srcImage, &ctx->DefaultPacking);
    }
@@ -143,7 +144,7 @@ _mesa_halve2x2_teximage2d ( GLcontext *ctx,
                                       texImage->TexFormat, dstImage,
                                       0, 0, 0, /* dstX/Y/Zoffset */
                                       dstWidth * bpt,
-                                      0, /* dstImageStride */
+                                      &dstImageOffsets,
                                       dstWidth, dstHeight, 1,
                                       GL_BGRA, CHAN_TYPE, dst, &ctx->DefaultPacking);
       FREE(dst);
@@ -1177,6 +1178,7 @@ adjust2DRatio (GLcontext *ctx,
    const GLint newWidth = width * mml->wScale;
    const GLint newHeight = height * mml->hScale;
    GLvoid *tempImage;
+   GLuint dstImageOffsets = 0;
 
    if (!texImage->IsCompressed) {
       GLubyte *destAddr;
@@ -1189,7 +1191,7 @@ adjust2DRatio (GLcontext *ctx,
                                       texImage->TexFormat, tempImage,
                                       0, 0, 0, /* dstX/Y/Zoffset */
                                       width * texelBytes, /* dstRowStride */
-                                      0, /* dstImageStride */
+                                      &dstImageOffsets,
                                       width, height, 1,
                                       format, type, pixels, packing);
 
@@ -1221,7 +1223,7 @@ adjust2DRatio (GLcontext *ctx,
                               &_mesa_texformat_rgba8888_rev, rawImage,
                               0, 0, 0, /* dstX/Y/Zoffset */
                               width * rawBytes, /* dstRowStride */
-                              0, /* dstImageStride */
+                              &dstImageOffsets,
                               width, height, 1,
                               format, type, pixels, packing);
       _mesa_rescale_teximage2d(rawBytes,
@@ -1234,7 +1236,7 @@ adjust2DRatio (GLcontext *ctx,
                                       texImage->TexFormat, texImage->Data,
                                       xoffset * mml->wScale, yoffset * mml->hScale, 0, /* dstX/Y/Zoffset */
                                       dstRowStride,
-                                      0, /* dstImageStride */
+                                      &dstImageOffsets,
                                       newWidth, newHeight, 1,
                                       GL_RGBA, CHAN_TYPE, tempImage, &ctx->DefaultPacking);
       FREE(rawImage);
@@ -1391,12 +1393,12 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
           /* no rescaling needed */
           /* unpack image, apply transfer ops and store in texImage->Data */
           texImage->TexFormat->StoreImage(ctx, 2, texImage->_BaseFormat,
-                                         texImage->TexFormat, texImage->Data,
-                                         0, 0, 0, /* dstX/Y/Zoffset */
-                                         dstRowStride,
-                                         0, /* dstImageStride */
-                                         width, height, 1,
-                                         format, type, pixels, packing);
+                                          texImage->TexFormat, texImage->Data,
+                                          0, 0, 0, /* dstX/Y/Zoffset */
+                                          dstRowStride,
+                                          texImage->ImageOffsets,
+                                          width, height, 1,
+                                          format, type, pixels, packing);
        }
 
       /* GL_SGIS_generate_mipmap */
@@ -1501,12 +1503,12 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
     else {
         /* no rescaling needed */
         texImage->TexFormat->StoreImage(ctx, 2, texImage->_BaseFormat,
-                                    texImage->TexFormat, texImage->Data,
-                                    xoffset, yoffset, 0,
-                                    dstRowStride,
-                                    0, /* dstImageStride */
-                                    width, height, 1,
-                                    format, type, pixels, packing);
+                                        texImage->TexFormat, texImage->Data,
+                                        xoffset, yoffset, 0,
+                                        dstRowStride,
+                                        texImage->ImageOffsets,
+                                        width, height, 1,
+                                        format, type, pixels, packing);
     }
 
    /* GL_SGIS_generate_mipmap */

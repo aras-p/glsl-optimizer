@@ -64,7 +64,7 @@ _mesa_init_texture_fxt1( GLcontext *ctx )
  * Called via TexFormat->StoreImage to store an RGB_FXT1 texture.
  */
 static GLboolean
-texstore_rgb_fxt1(STORE_PARAMS)
+texstore_rgb_fxt1(TEXSTORE_PARAMS)
 {
    const GLchan *pixels;
    GLint srcRowStride;
@@ -76,7 +76,8 @@ texstore_rgb_fxt1(STORE_PARAMS)
    ASSERT(dstXoffset % 8 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset     == 0);
-   (void) dstZoffset; (void) dstImageStride;
+   (void) dstZoffset;
+   (void) dstImageOffsets;
 
    if (srcFormat != GL_RGB ||
        srcType != CHAN_TYPE ||
@@ -120,7 +121,7 @@ texstore_rgb_fxt1(STORE_PARAMS)
  * Called via TexFormat->StoreImage to store an RGBA_FXT1 texture.
  */
 static GLboolean
-texstore_rgba_fxt1(STORE_PARAMS)
+texstore_rgba_fxt1(TEXSTORE_PARAMS)
 {
    const GLchan *pixels;
    GLint srcRowStride;
@@ -132,7 +133,8 @@ texstore_rgba_fxt1(STORE_PARAMS)
    ASSERT(dstXoffset % 8 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset     == 0);
-   (void) dstZoffset; (void) dstImageStride;
+   (void) dstZoffset;
+   (void) dstImageOffsets;
 
    if (srcFormat != GL_RGBA ||
        srcType != CHAN_TYPE ||

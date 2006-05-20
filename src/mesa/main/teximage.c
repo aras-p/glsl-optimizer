@@ -662,7 +662,9 @@ _mesa_delete_texture_image( GLcontext *ctx, struct gl_texture_image *texImage )
       ctx->Driver.FreeTexImageData( ctx, texImage );
    }
    ASSERT(texImage->Data == NULL);
-   FREE( texImage );
+   if (texImage->ImageOffsets)
+      _mesa_free(texImage->ImageOffsets);
+   _mesa_free(texImage);
 }
 
 
@@ -1050,7 +1052,10 @@ clear_teximage_fields(struct gl_texture_image *img)
    img->Height = 0;
    img->Depth = 0;
    img->RowStride = 0;
-   img->ImageStride = 0;
+   if (img->ImageOffsets) {
+      _mesa_free(img->ImageOffsets);
+      img->ImageOffsets = NULL;
+   }
    img->Width2 = 0;
    img->Height2 = 0;
    img->Depth2 = 0;
@@ -1070,7 +1075,7 @@ clear_teximage_fields(struct gl_texture_image *img)
  * Initialize basic fields of the gl_texture_image struct.
  *
  * \param ctx GL context.
- * \param target texture target.
+ * \param target texture target (GL_TEXTURE_1D, GL_TEXTURE_RECTANGLE, etc).
  * \param img texture image structure to be initialized.
  * \param width image width.
  * \param height image height.
@@ -1087,7 +1092,13 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
                            GLsizei width, GLsizei height, GLsizei depth,
                            GLint border, GLenum internalFormat)
 {
+   GLint i;
+
    ASSERT(img);
+   ASSERT(width > 0);
+   ASSERT(height > 0);
+   ASSERT(depth > 0);
+
    img->_BaseFormat = _mesa_base_tex_format( ctx, internalFormat );
    ASSERT(img->_BaseFormat > 0);
    img->InternalFormat = internalFormat;
@@ -1095,8 +1106,6 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
    img->Width = width;
    img->Height = height;
    img->Depth = depth;
-   img->RowStride = width;
-   img->ImageStride = width * height;
    img->Width2 = width - 2 * border;   /* == 1 << img->WidthLog2; */
    img->Height2 = height - 2 * border; /* == 1 << img->HeightLog2; */
    img->Depth2 = depth - 2 * border;   /* == 1 << img->DepthLog2; */
@@ -1119,6 +1128,17 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
       img->_IsPowerOfTwo = GL_TRUE;
    else
       img->_IsPowerOfTwo = GL_FALSE;
+
+   /* RowStride and ImageOffsets[] describe how to address texels in 'Data' */
+   img->RowStride = width;
+   /* Allocate the ImageOffsets array and initialize to typical values.
+    * We allocate the array for 1D/2D textures too in order to avoid special-
+    * case code in the texstore routines.
+    */
+   img->ImageOffsets = (GLuint *) _mesa_malloc(depth * sizeof(GLuint));
+   for (i = 0; i < depth; i++) {
+      img->ImageOffsets[i] = i * width * height;
+   }
 
    /* Compute Width/Height/DepthScale for mipmap lod computation */
    if (target == GL_TEXTURE_RECTANGLE_NV) {

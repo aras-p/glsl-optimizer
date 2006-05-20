@@ -88,7 +88,7 @@ _mesa_init_texture_s3tc( GLcontext *ctx )
       dxtlibhandle = dlopen (DXTN_EXT, RTLD_LAZY | RTLD_GLOBAL);
       if (!dxtlibhandle) {
 	 _mesa_warning(ctx, "couldn't open " DXTN_EXT ", software DXTn "
-	    "compression/decompression unavailable\n");
+	    "compression/decompression unavailable");
       }
       else {
          /* the fetch functions are not per context! Might be problematic... */
@@ -109,7 +109,7 @@ _mesa_init_texture_s3tc( GLcontext *ctx )
          if (ext_tx_compress_dxtn == NULL) {
 	    _mesa_warning(ctx, "couldn't reference all symbols in "
 	       DXTN_EXT ", software DXTn compression/decompression "
-	       "unavailable\n");
+	       "unavailable");
             fetch_ext_rgb_dxt1 = NULL;
             fetch_ext_rgba_dxt1 = NULL;
             fetch_ext_rgba_dxt3 = NULL;
@@ -122,7 +122,7 @@ _mesa_init_texture_s3tc( GLcontext *ctx )
    }
    if (dxtlibhandle) {
       ctx->Mesa_DXTn = GL_TRUE;
-      _mesa_warning(ctx, "software DXTn compression/decompression available\n");
+      _mesa_warning(ctx, "software DXTn compression/decompression available");
    }
 #else
    (void) ctx;
@@ -133,7 +133,7 @@ _mesa_init_texture_s3tc( GLcontext *ctx )
  * Called via TexFormat->StoreImage to store an RGB_DXT1 texture.
  */
 static GLboolean
-texstore_rgb_dxt1(STORE_PARAMS)
+texstore_rgb_dxt1(TEXSTORE_PARAMS)
 {
    const GLchan *pixels;
    GLint srcRowStride;
@@ -145,7 +145,8 @@ texstore_rgb_dxt1(STORE_PARAMS)
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
-   (void) dstZoffset; (void) dstImageStride;
+   (void) dstZoffset;
+   (void) dstImageOffsets;
 
    if (srcFormat != GL_RGB ||
        srcType != CHAN_TYPE ||
@@ -195,7 +196,7 @@ texstore_rgb_dxt1(STORE_PARAMS)
  * Called via TexFormat->StoreImage to store an RGBA_DXT1 texture.
  */
 static GLboolean
-texstore_rgba_dxt1(STORE_PARAMS)
+texstore_rgba_dxt1(TEXSTORE_PARAMS)
 {
    const GLchan *pixels;
    GLint srcRowStride;
@@ -207,7 +208,8 @@ texstore_rgba_dxt1(STORE_PARAMS)
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
-   (void) dstZoffset; (void) dstImageStride;
+   (void) dstZoffset;
+   (void) dstImageOffsets;
 
    if (srcFormat != GL_RGBA ||
        srcType != CHAN_TYPE ||
@@ -256,7 +258,7 @@ texstore_rgba_dxt1(STORE_PARAMS)
  * Called via TexFormat->StoreImage to store an RGBA_DXT3 texture.
  */
 static GLboolean
-texstore_rgba_dxt3(STORE_PARAMS)
+texstore_rgba_dxt3(TEXSTORE_PARAMS)
 {
    const GLchan *pixels;
    GLint srcRowStride;
@@ -268,7 +270,8 @@ texstore_rgba_dxt3(STORE_PARAMS)
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
-   (void) dstZoffset; (void) dstImageStride;
+   (void) dstZoffset;
+   (void) dstImageOffsets;
 
    if (srcFormat != GL_RGBA ||
        srcType != CHAN_TYPE ||
@@ -316,7 +319,7 @@ texstore_rgba_dxt3(STORE_PARAMS)
  * Called via TexFormat->StoreImage to store an RGBA_DXT5 texture.
  */
 static GLboolean
-texstore_rgba_dxt5(STORE_PARAMS)
+texstore_rgba_dxt5(TEXSTORE_PARAMS)
 {
    const GLchan *pixels;
    GLint srcRowStride;
@@ -328,7 +331,8 @@ texstore_rgba_dxt5(STORE_PARAMS)
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
-   (void) dstZoffset; (void) dstImageStride;
+   (void) dstZoffset;
+   (void) dstImageOffsets;
 
    if (srcFormat != GL_RGBA ||
        srcType != CHAN_TYPE ||

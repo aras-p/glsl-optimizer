@@ -37,49 +37,36 @@
 
 #include "mtypes.h"
 
-/* Macro just to save some typing */
-#define STORE_PARAMS \
-	GLcontext *ctx, GLuint dims, \
-	GLenum baseInternalFormat, \
-	const struct gl_texture_format *dstFormat, \
-	GLvoid *dstAddr, \
-	GLint dstXoffset, GLint dstYoffset, GLint dstZoffset, \
-	GLint dstRowStride, GLint dstImageStride, \
-	GLint srcWidth, GLint srcHeight, GLint srcDepth, \
-	GLenum srcFormat, GLenum srcType, \
-	const GLvoid *srcAddr, \
-	const struct gl_pixelstore_attrib *srcPacking
 
-
-extern GLboolean _mesa_texstore_rgba(STORE_PARAMS);
-extern GLboolean _mesa_texstore_color_index(STORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba8888(STORE_PARAMS);
-extern GLboolean _mesa_texstore_argb8888(STORE_PARAMS);
-extern GLboolean _mesa_texstore_rgb888(STORE_PARAMS);
-extern GLboolean _mesa_texstore_bgr888(STORE_PARAMS);
-extern GLboolean _mesa_texstore_rgb565(STORE_PARAMS);
-extern GLboolean _mesa_texstore_rgb565_rev(STORE_PARAMS);
-extern GLboolean _mesa_texstore_argb4444(STORE_PARAMS);
-extern GLboolean _mesa_texstore_argb4444_rev(STORE_PARAMS);
-extern GLboolean _mesa_texstore_argb1555(STORE_PARAMS);
-extern GLboolean _mesa_texstore_argb1555_rev(STORE_PARAMS);
-extern GLboolean _mesa_texstore_al88(STORE_PARAMS);
-extern GLboolean _mesa_texstore_al88_rev(STORE_PARAMS);
-extern GLboolean _mesa_texstore_rgb332(STORE_PARAMS);
-extern GLboolean _mesa_texstore_a8(STORE_PARAMS);
-extern GLboolean _mesa_texstore_ci8(STORE_PARAMS);
-extern GLboolean _mesa_texstore_ycbcr(STORE_PARAMS);
-extern GLboolean _mesa_texstore_z24_s8(STORE_PARAMS);
-extern GLboolean _mesa_texstore_z16(STORE_PARAMS);
-extern GLboolean _mesa_texstore_z32(STORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba_float32(STORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba_float16(STORE_PARAMS);
-extern GLboolean _mesa_texstore_rgb_fxt1(STORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba_fxt1(STORE_PARAMS);
-extern GLboolean _mesa_texstore_rgb_dxt1(STORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba_dxt1(STORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba_dxt3(STORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba_dxt5(STORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_color_index(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba8888(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_argb8888(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_rgb888(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_bgr888(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_rgb565(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_rgb565_rev(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_argb4444(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_argb4444_rev(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_argb1555(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_argb1555_rev(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_al88(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_al88_rev(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_rgb332(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_a8(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_ci8(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_ycbcr(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_z24_s8(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_z16(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_z32(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba_float32(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba_float16(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba_dxt1(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba_dxt3(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS);
 
 
 extern GLchan *
