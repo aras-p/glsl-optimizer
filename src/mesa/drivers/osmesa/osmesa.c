@@ -1391,17 +1391,12 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
    osmesa_renderbuffer_storage(&osmesa->mesa, osmesa->rb,
                                osmesa->rb->InternalFormat, width, height);
 
-   /* Clear renderbuffer attachment, then re-add.  This installs the
+   /* Remove renderbuffer attachment, then re-add.  This installs the
     * renderbuffer adaptor/wrapper if needed.
     */
-   {
-      struct gl_renderbuffer *rb
-         = osmesa->gl_buffer->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-      if (rb && rb->Wrapped != rb)
-         _mesa_free(rb);
-      osmesa->gl_buffer->Attachment[BUFFER_FRONT_LEFT].Renderbuffer = NULL;
-   }
+   _mesa_remove_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT);
    _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT, osmesa->rb);
+
 
    /* this updates the visual's red/green/blue/alphaBits fields */
    _mesa_update_framebuffer_visual(osmesa->gl_buffer);
