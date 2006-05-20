@@ -595,10 +595,7 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
 
    oldRb = ctx->CurrentRenderbuffer;
    if (oldRb) {
-      oldRb->RefCount--;
-      if (oldRb->RefCount == 0) {
-         oldRb->Delete(oldRb);
-      }
+      _mesa_dereference_renderbuffer(&oldRb);
    }
 
    ASSERT(newRb != &DummyRenderbuffer);
@@ -635,10 +632,7 @@ _mesa_DeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers)
                /* But the object will not be freed until it's no longer
                 * bound in any context.
                 */
-               rb->RefCount--;
-               if (rb->RefCount == 0) {
-                  rb->Delete(rb);
-               }
+               _mesa_dereference_renderbuffer(&rb);
 	    }
 	 }
       }
@@ -1019,12 +1013,7 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    if (bindReadBuf) {
       oldFb = ctx->ReadBuffer;
       if (oldFb && oldFb->Name != 0) {
-         _glthread_LOCK_MUTEX(oldFb->Mutex);
-         oldFb->RefCount--;
-         _glthread_UNLOCK_MUTEX(oldFb->Mutex);
-         if (oldFb->RefCount == 0) {
-            oldFb->Delete(oldFb);
-         }
+         _mesa_dereference_framebuffer(&oldFb);
       }
       ctx->ReadBuffer = newFb;
    }
@@ -1035,12 +1024,7 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
          /* check if old FB had any texture attachments */
          check_end_texture_render(ctx, oldFb);
          /* check if time to delete this framebuffer */
-         _glthread_LOCK_MUTEX(oldFb->Mutex);
-         oldFb->RefCount--;
-         if (oldFb->RefCount == 0) {
-            oldFb->Delete(oldFb);
-         }
-         _glthread_UNLOCK_MUTEX(oldFb->Mutex);
+         _mesa_dereference_framebuffer(&oldFb);
       }
       ctx->DrawBuffer = newFb;
       if (newFb->Name != 0) {
@@ -1085,12 +1069,7 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
                /* But the object will not be freed until it's no longer
                 * bound in any context.
                 */
-               _glthread_LOCK_MUTEX(fb->Mutex);
-               fb->RefCount--;
-               _glthread_UNLOCK_MUTEX(fb->Mutex);
-               if (fb->RefCount == 0) {
-                  fb->Delete(fb);
-               }
+               _mesa_dereference_framebuffer(&fb);
 	    }
 	 }
       }
