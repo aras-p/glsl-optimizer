@@ -78,10 +78,7 @@ set_depth_renderbuffer(struct gl_framebuffer *fb,
                        struct gl_renderbuffer *rb)
 {
    if (fb->_DepthBuffer) {
-      fb->_DepthBuffer->RefCount--;
-      if (fb->_DepthBuffer->RefCount <= 0) {
-         fb->_DepthBuffer->Delete(fb->_DepthBuffer);
-      }
+      _mesa_dereference_renderbuffer(&fb->_DepthBuffer);
    }
    fb->_DepthBuffer = rb;
    if (rb) {
@@ -99,10 +96,7 @@ set_stencil_renderbuffer(struct gl_framebuffer *fb,
                          struct gl_renderbuffer *rb)
 {
    if (fb->_StencilBuffer) {
-      fb->_StencilBuffer->RefCount--;
-      if (fb->_StencilBuffer->RefCount <= 0) {
-         fb->_StencilBuffer->Delete(fb->_StencilBuffer);
-      }
+      _mesa_dereference_renderbuffer(&fb->_StencilBuffer);
    }
    fb->_StencilBuffer = rb;
    if (rb) {
@@ -226,11 +220,11 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
       struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
       if (att->Renderbuffer) {
          struct gl_renderbuffer *rb = att->Renderbuffer;
-         _glthread_LOCK_MUTEX(rb->Mutex);
-         rb->RefCount--;
-         _glthread_UNLOCK_MUTEX(rb->Mutex);
-         if (rb->RefCount == 0) {
-            rb->Delete(rb);
+         /* remove framebuffer's reference to renderbuffer */
+         _mesa_dereference_renderbuffer(&rb);
+         if (rb && rb->Name == 0) {
+            /* delete window system renderbuffer */
+            _mesa_dereference_renderbuffer(&rb);
          }
       }
       att->Type = GL_NONE;
@@ -241,6 +235,33 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
    set_depth_renderbuffer(fb, NULL);
    set_stencil_renderbuffer(fb, NULL);
 }
+
+
+/**
+ * Decrement the reference count on a framebuffer and delete it when
+ * the refcount hits zero.
+ * Note: we pass the address of a pointer and set it to NULL if we delete it.
+ */
+void
+_mesa_dereference_framebuffer(struct gl_framebuffer **fb)
+{
+   GLboolean deleteFlag = GL_FALSE;
+
+   _glthread_LOCK_MUTEX((*fb)->Mutex);
+   {
+      ASSERT((*fb)->RefCount > 0);
+      (*fb)->RefCount--;
+      deleteFlag = ((*fb)->RefCount == 0);
+   }
+   _glthread_UNLOCK_MUTEX((*fb)->Mutex);
+
+   if (deleteFlag) {
+      (*fb)->Delete(*fb);
+      *fb = NULL;
+   }
+}
+
+
 
 
 /**
