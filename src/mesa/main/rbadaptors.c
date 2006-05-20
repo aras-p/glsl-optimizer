@@ -40,15 +40,20 @@
 
 
 static void
-Delete_16wrap8(struct gl_renderbuffer *rb)
+Delete_wrapper(struct gl_renderbuffer *rb)
 {
-   rb->Wrapped->Delete(rb->Wrapped);
+   /* Decrement reference count on the buffer we're wrapping and delete
+    * it if refcount hits zero.
+    */
+   _mesa_dereference_renderbuffer(&rb->Wrapped);
+
+   /* delete myself */
    _mesa_delete_renderbuffer(rb);
 }
 
 
 static GLboolean
-AllocStorage_16wrap8(GLcontext *ctx, struct gl_renderbuffer *rb,
+AllocStorage_wrapper(GLcontext *ctx, struct gl_renderbuffer *rb,
                      GLenum internalFormat, GLuint width, GLuint height)
 {
    GLboolean b = rb->Wrapped->AllocStorage(ctx, rb->Wrapped, internalFormat,
@@ -62,7 +67,7 @@ AllocStorage_16wrap8(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void *
-GetPointer_16wrap8(GLcontext *ctx, struct gl_renderbuffer *rb,
+GetPointer_wrapper(GLcontext *ctx, struct gl_renderbuffer *rb,
                    GLint x, GLint y)
 {
    (void) ctx;
@@ -208,6 +213,10 @@ _mesa_new_renderbuffer_16wrap8(GLcontext *ctx, struct gl_renderbuffer *rb8)
       ASSERT(rb8->DataType == GL_UNSIGNED_BYTE);
       ASSERT(rb8->_BaseFormat == GL_RGBA);
 
+      _glthread_LOCK_MUTEX(rb8->Mutex);
+      rb8->RefCount++;
+      _glthread_UNLOCK_MUTEX(rb8->Mutex);
+
       rb16->InternalFormat = rb8->InternalFormat;
       rb16->_ActualFormat = rb8->_ActualFormat;
       rb16->_BaseFormat = rb8->_BaseFormat;
@@ -219,9 +228,9 @@ _mesa_new_renderbuffer_16wrap8(GLcontext *ctx, struct gl_renderbuffer *rb8)
       rb16->AlphaBits = rb8->AlphaBits;
       rb16->Wrapped = rb8;
 
-      rb16->AllocStorage = AllocStorage_16wrap8;
-      rb16->Delete = Delete_16wrap8;
-      rb16->GetPointer = GetPointer_16wrap8;
+      rb16->AllocStorage = AllocStorage_wrapper;
+      rb16->Delete = Delete_wrapper;
+      rb16->GetPointer = GetPointer_wrapper;
       rb16->GetRow = GetRow_16wrap8;
       rb16->GetValues = GetValues_16wrap8;
       rb16->PutRow = PutRow_16wrap8;
@@ -234,40 +243,6 @@ _mesa_new_renderbuffer_16wrap8(GLcontext *ctx, struct gl_renderbuffer *rb8)
 }
 
 
-
-
-static void
-Delete_32wrap8(struct gl_renderbuffer *rb)
-{
-   rb->Wrapped->Delete(rb->Wrapped);
-   _mesa_delete_renderbuffer(rb);
-}
-
-
-static GLboolean
-AllocStorage_32wrap8(GLcontext *ctx, struct gl_renderbuffer *rb,
-                     GLenum internalFormat, GLuint width, GLuint height)
-{
-   GLboolean b = rb->Wrapped->AllocStorage(ctx, rb->Wrapped, internalFormat,
-                                           width, height);
-   if (b) {
-      rb->Width = width;
-      rb->Height = height;
-   }
-   return b;
-}
-
-
-static void *
-GetPointer_32wrap8(GLcontext *ctx, struct gl_renderbuffer *rb,
-                   GLint x, GLint y)
-{
-   (void) ctx;
-   (void) rb;
-   (void) x;
-   (void) y;
-   return NULL;
-}
 
 
 static void
@@ -405,6 +380,10 @@ _mesa_new_renderbuffer_32wrap8(GLcontext *ctx, struct gl_renderbuffer *rb8)
       ASSERT(rb8->DataType == GL_UNSIGNED_BYTE);
       ASSERT(rb8->_BaseFormat == GL_RGBA);
 
+      _glthread_LOCK_MUTEX(rb8->Mutex);
+      rb8->RefCount++;
+      _glthread_UNLOCK_MUTEX(rb8->Mutex);
+
       rb32->InternalFormat = rb8->InternalFormat;
       rb32->_ActualFormat = rb8->_ActualFormat;
       rb32->_BaseFormat = rb8->_BaseFormat;
@@ -416,9 +395,9 @@ _mesa_new_renderbuffer_32wrap8(GLcontext *ctx, struct gl_renderbuffer *rb8)
       rb32->AlphaBits = rb8->AlphaBits;
       rb32->Wrapped = rb8;
 
-      rb32->AllocStorage = AllocStorage_32wrap8;
-      rb32->Delete = Delete_32wrap8;
-      rb32->GetPointer = GetPointer_32wrap8;
+      rb32->AllocStorage = AllocStorage_wrapper;
+      rb32->Delete = Delete_wrapper;
+      rb32->GetPointer = GetPointer_wrapper;
       rb32->GetRow = GetRow_32wrap8;
       rb32->GetValues = GetValues_32wrap8;
       rb32->PutRow = PutRow_32wrap8;
@@ -431,40 +410,6 @@ _mesa_new_renderbuffer_32wrap8(GLcontext *ctx, struct gl_renderbuffer *rb8)
 }
 
 
-
-
-static void
-Delete_32wrap16(struct gl_renderbuffer *rb)
-{
-   rb->Wrapped->Delete(rb->Wrapped);
-   _mesa_delete_renderbuffer(rb);
-}
-
-
-static GLboolean
-AllocStorage_32wrap16(GLcontext *ctx, struct gl_renderbuffer *rb,
-                      GLenum internalFormat, GLuint width, GLuint height)
-{
-   GLboolean b = rb->Wrapped->AllocStorage(ctx, rb->Wrapped, internalFormat,
-                                           width, height);
-   if (b) {
-      rb->Width = width;
-      rb->Height = height;
-   }
-   return b;
-}
-
-
-static void *
-GetPointer_32wrap16(GLcontext *ctx, struct gl_renderbuffer *rb,
-                    GLint x, GLint y)
-{
-   (void) ctx;
-   (void) rb;
-   (void) x;
-   (void) y;
-   return NULL;
-}
 
 
 static void
@@ -602,6 +547,10 @@ _mesa_new_renderbuffer_32wrap16(GLcontext *ctx, struct gl_renderbuffer *rb16)
       ASSERT(rb16->DataType == GL_UNSIGNED_SHORT);
       ASSERT(rb16->_BaseFormat == GL_RGBA);
 
+      _glthread_LOCK_MUTEX(rb16->Mutex);
+      rb16->RefCount++;
+      _glthread_UNLOCK_MUTEX(rb16->Mutex);
+
       rb32->InternalFormat = rb16->InternalFormat;
       rb32->_ActualFormat = rb16->_ActualFormat;
       rb32->_BaseFormat = rb16->_BaseFormat;
@@ -613,9 +562,9 @@ _mesa_new_renderbuffer_32wrap16(GLcontext *ctx, struct gl_renderbuffer *rb16)
       rb32->AlphaBits = rb16->AlphaBits;
       rb32->Wrapped = rb16;
 
-      rb32->AllocStorage = AllocStorage_32wrap16;
-      rb32->Delete = Delete_32wrap16;
-      rb32->GetPointer = GetPointer_32wrap16;
+      rb32->AllocStorage = AllocStorage_wrapper;
+      rb32->Delete = Delete_wrapper;
+      rb32->GetPointer = GetPointer_wrapper;
       rb32->GetRow = GetRow_32wrap16;
       rb32->GetValues = GetValues_32wrap16;
       rb32->PutRow = PutRow_32wrap16;
