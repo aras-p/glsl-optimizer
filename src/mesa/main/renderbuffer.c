@@ -1511,7 +1511,7 @@ _mesa_new_renderbuffer(GLcontext *ctx, GLuint name)
 
 /**
  * Delete a gl_framebuffer.
- * This is the default function for framebuffer->Delete().
+ * This is the default function for renderbuffer->Delete().
  */
 void
 _mesa_delete_renderbuffer(struct gl_renderbuffer *rb)
@@ -2070,7 +2070,56 @@ _mesa_add_renderbuffer(struct gl_framebuffer *fb,
    fb->Attachment[bufferName].Type = GL_RENDERBUFFER_EXT;
    fb->Attachment[bufferName].Complete = GL_TRUE;
    fb->Attachment[bufferName].Renderbuffer = rb;
+
+   rb->RefCount++;
 }
+
+
+/**
+ * Remove the named renderbuffer from the given framebuffer.
+ */
+void
+_mesa_remove_renderbuffer(struct gl_framebuffer *fb, GLuint bufferName)
+{
+   struct gl_renderbuffer *rb;
+
+   assert(bufferName < BUFFER_COUNT);
+
+   rb = fb->Attachment[bufferName].Renderbuffer;
+   if (!rb)
+      return;
+
+   _mesa_dereference_renderbuffer(&rb);
+
+   fb->Attachment[bufferName].Renderbuffer = NULL;
+}
+
+
+/**
+ * Decrement the reference count on a renderbuffer and delete it when
+ * the refcount hits zero.
+ * Note: we pass the address of a pointer and set it to NULL if we delete it.
+ */
+void
+_mesa_dereference_renderbuffer(struct gl_renderbuffer **rb)
+{
+   GLboolean deleteFlag = GL_FALSE;
+
+   _glthread_LOCK_MUTEX((*rb)->Mutex);
+   {
+      ASSERT((*rb)->RefCount > 0);
+      (*rb)->RefCount--;
+      deleteFlag = ((*rb)->RefCount == 0);
+   }
+   _glthread_UNLOCK_MUTEX((*rb)->Mutex);
+
+   if (deleteFlag) {
+      (*rb)->Delete(*rb);
+      *rb = NULL;
+   }
+}
+
+
 
 
 /**
