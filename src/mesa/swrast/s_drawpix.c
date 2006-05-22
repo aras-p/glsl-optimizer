@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -60,6 +60,11 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
 
    if (swrast->_RasterMask & MULTI_DRAW_BIT)
       return GL_FALSE;
+
+   if (ctx->_ImageTransferState) {
+      /* don't handle any pixel transfer options here */
+      return GL_FALSE;
+   }
 
    if (ctx->Depth.Test)
       _swrast_span_default_z(ctx, &span);
@@ -155,10 +160,9 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
        * skip "skipRows" rows and skip "skipPixels" pixels/row.
        */
 
-      if (format == GL_RGBA && type == CHAN_TYPE
-          && ctx->_ImageTransferState==0) {
+      if (format == GL_RGBA && type == CHAN_TYPE) {
          if (ctx->Visual.rgbMode) {
-            GLchan *src = (GLchan *) pixels
+            const GLchan *src = (const GLchan *) pixels
                + (skipRows * rowLength + skipPixels) * 4;
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
                /* no zooming */
@@ -193,10 +197,9 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          }
          return GL_TRUE;
       }
-      else if (format == GL_RGB && type == CHAN_TYPE
-               && ctx->_ImageTransferState == 0) {
+      else if (format == GL_RGB && type == CHAN_TYPE) {
          if (ctx->Visual.rgbMode) {
-            GLchan *src = (GLchan *) pixels
+            const GLchan *src = (const GLchan *) pixels
                + (skipRows * rowLength + skipPixels) * 3;
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
                GLint row;
@@ -231,10 +234,9 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          }
          return GL_TRUE;
       }
-      else if (format == GL_LUMINANCE && type == CHAN_TYPE
-               && ctx->_ImageTransferState==0) {
+      else if (format == GL_LUMINANCE && type == CHAN_TYPE) {
          if (ctx->Visual.rgbMode) {
-            GLchan *src = (GLchan *) pixels
+            const GLchan *src = (const GLchan *) pixels
                + (skipRows * rowLength + skipPixels);
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
                /* no zooming */
@@ -293,10 +295,9 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          }
          return GL_TRUE;
       }
-      else if (format == GL_LUMINANCE_ALPHA && type == CHAN_TYPE
-               && ctx->_ImageTransferState == 0) {
+      else if (format == GL_LUMINANCE_ALPHA && type == CHAN_TYPE) {
          if (ctx->Visual.rgbMode) {
-            GLchan *src = (GLchan *) pixels
+            const GLchan *src = (const GLchan *) pixels
                + (skipRows * rowLength + skipPixels)*2;
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
                /* no zooming */
@@ -304,7 +305,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                ASSERT(drawWidth <= MAX_WIDTH);
                for (row=0; row<drawHeight; row++) {
                   GLint i;
-                  GLchan *ptr = src;
+                  const GLchan *ptr = src;
 		  for (i=0;i<drawWidth;i++) {
                      span.array->rgba[i][0] = *ptr;
                      span.array->rgba[i][1] = *ptr;
@@ -323,7 +324,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                ASSERT(drawWidth <= MAX_WIDTH);
                for (row=0; row<drawHeight; row++) {
                   GLint i;
-                  GLchan *ptr = src;
+                  const GLchan *ptr = src;
                   for (i=0;i<drawWidth;i++) {
                      span.array->rgba[i][0] = *ptr;
                      span.array->rgba[i][1] = *ptr;
@@ -341,7 +342,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                GLint row;
                ASSERT(drawWidth <= MAX_WIDTH);
                for (row=0; row<drawHeight; row++) {
-                  GLchan *ptr = src;
+                  const GLchan *ptr = src;
                   GLint i;
 		  for (i=0;i<drawWidth;i++) {
                      span.array->rgba[i][0] = *ptr;
@@ -362,7 +363,8 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          return GL_TRUE;
       }
       else if (format==GL_COLOR_INDEX && type==GL_UNSIGNED_BYTE) {
-         GLubyte *src = (GLubyte *) pixels + skipRows * rowLength + skipPixels;
+         const GLubyte *src =
+            (const GLubyte *) pixels + skipRows * rowLength + skipPixels;
          if (ctx->Visual.rgbMode) {
             /* convert CI data to RGBA */
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
@@ -408,7 +410,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                return GL_TRUE;
             }
          }
-         else if (ctx->_ImageTransferState==0) {
+         else {
             /* write CI data to CI frame buffer */
             GLint row;
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
