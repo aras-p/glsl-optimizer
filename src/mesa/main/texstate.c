@@ -3198,6 +3198,8 @@ _mesa_init_texture(GLcontext *ctx)
    ctx->Texture.SharedPalette = GL_FALSE;
    _mesa_init_colortable(&ctx->Texture.Palette);
 
+   _mesa_TexEnvProgramCacheInit( ctx );
+
    /* Allocate proxy textures */
    if (!alloc_proxy_textures( ctx ))
       return GL_FALSE;
