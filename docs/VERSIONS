@@ -1489,3 +1489,4 @@ Mesa Version History
 	- assorted minor fixes for 16 and 32 bit/channel modes
 	- fixed assorted bugs in texture compression paths
 	- fixed indirect rendering vertex array crashes (bug 6863)
+	- glDrawPixels GL_INDEX_OFFSET didn't always work
