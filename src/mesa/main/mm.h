@@ -36,12 +36,12 @@
 
 
 struct mem_block {
-  struct mem_block *next;
-  struct mem_block *heap;
-  int ofs,size;
-  int align;
-  unsigned int free:1;
-  unsigned int reserved:1;
+   struct mem_block *next, *prev;
+   struct mem_block *next_free, *prev_free;
+   struct mem_block *heap;
+   int ofs,size;
+   unsigned int free:1;
+   unsigned int reserved:1;
 };
 
 

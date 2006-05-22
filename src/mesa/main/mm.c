@@ -28,19 +28,26 @@
 void
 mmDumpMemInfo(const struct mem_block *heap)
 {
-   const struct mem_block *p;
-
    fprintf(stderr, "Memory heap %p:\n", (void *)heap);
    if (heap == 0) {
       fprintf(stderr, "  heap == 0\n");
    } else {
-      p = (struct mem_block *)heap;
-      while (p) {
+      const struct mem_block *p;
+
+      for(p = heap->next; p != heap; p = p->next) {
 	 fprintf(stderr, "  Offset:%08x, Size:%08x, %c%c\n",p->ofs,p->size,
-		 p->free ? '.':'U',
+		 p->free ? 'F':'.',
 		 p->reserved ? 'R':'.');
-	 p = p->next;
       }
+
+      fprintf(stderr, "\nFree list:\n");
+
+      for(p = heap->next_free; p != heap; p = p->next_free) {
+	 fprintf(stderr, "  Offset:%08x, Size:%08x, %c%c\n",p->ofs,p->size,
+		 p->free ? 'F':'.',
+		 p->reserved ? 'R':'.');
+      }
+
    }
    fprintf(stderr, "End of memory blocks\n");
 }
@@ -48,21 +55,37 @@ mmDumpMemInfo(const struct mem_block *heap)
 struct mem_block *
 mmInit(int ofs, int size)
 {
-   struct mem_block *blocks;
+   struct mem_block *heap, *block;
   
-   if (size <= 0) {
+   if (size <= 0) 
+      return NULL;
+
+   heap = (struct mem_block *) _mesa_calloc(sizeof(struct mem_block));
+   if (!heap) 
+      return NULL;
+   
+   block = (struct mem_block *) _mesa_calloc(sizeof(struct mem_block));
+   if (!block) {
+      _mesa_free(heap);
       return NULL;
    }
-   blocks = (struct mem_block *) _mesa_calloc(sizeof(struct mem_block));
-   if (blocks) {
-      blocks->ofs = ofs;
-      blocks->size = size;
-      blocks->free = 1;
-      return (struct mem_block *)blocks;
-   }
-   else {
-      return NULL;
-   }
+
+   heap->next = block;
+   heap->prev = block;
+   heap->next_free = block;
+   heap->prev_free = block;
+
+   block->heap = heap;
+   block->next = heap;
+   block->prev = heap;
+   block->next_free = heap;
+   block->prev_free = heap;
+
+   block->ofs = ofs;
+   block->size = size;
+   block->free = 1;
+
+   return (struct mem_block *)heap;
 }
 
 
@@ -73,7 +96,7 @@ SliceBlock(struct mem_block *p,
 {
    struct mem_block *newblock;
 
-   /* break left */
+   /* break left  [p, newblock, p->next], then p = newblock */
    if (startofs > p->ofs) {
       newblock = (struct mem_block*) _mesa_calloc(sizeof(struct mem_block));
       if (!newblock)
@@ -81,13 +104,23 @@ SliceBlock(struct mem_block *p,
       newblock->ofs = startofs;
       newblock->size = p->size - (startofs - p->ofs);
       newblock->free = 1;
+      newblock->heap = p->heap;
+
       newblock->next = p->next;
-      p->size -= newblock->size;
+      newblock->prev = p;
+      p->next->prev = newblock;
       p->next = newblock;
+
+      newblock->next_free = p->next_free;
+      newblock->prev_free = p;
+      p->next_free->prev_free = newblock;
+      p->next_free = newblock;
+
+      p->size -= newblock->size;
       p = newblock;
    }
 
-   /* break right */
+   /* break right, also [p, newblock, p->next], then p = newblock*/
    if (size < p->size) {
       newblock = (struct mem_block*) _mesa_calloc(sizeof(struct mem_block));
       if (!newblock)
@@ -95,14 +128,29 @@ SliceBlock(struct mem_block *p,
       newblock->ofs = startofs + size;
       newblock->size = p->size - size;
       newblock->free = 1;
+      newblock->heap = p->heap;
+
       newblock->next = p->next;
-      p->size = size;
+      newblock->prev = p;
+      p->next->prev = newblock;
       p->next = newblock;
+
+      newblock->next_free = p->next_free;
+      newblock->prev_free = p;
+      p->next_free->prev_free = newblock;
+      p->next_free = newblock;
+	 
+      p->size = size;
    }
 
    /* p = middle block */
-   p->align = alignment;
    p->free = 0;
+
+   /* Remove p from the free list: 
+    */
+   p->next_free->prev_free = p->prev_free;
+   p->prev_free->next_free = p->next_free;
+
    p->reserved = reserved;
    return p;
 }
@@ -111,30 +159,31 @@ SliceBlock(struct mem_block *p,
 struct mem_block *
 mmAllocMem(struct mem_block *heap, int size, int align2, int startSearch)
 {
-   struct mem_block *p = heap;
-   int mask = (1 << align2)-1;
+   struct mem_block *p;
+   const int mask = (1 << align2)-1;
    int startofs = 0;
    int endofs;
 
    if (!heap || align2 < 0 || size <= 0)
       return NULL;
 
-   while (p) {
-      if ((p)->free) {
-	 startofs = (p->ofs + mask) & ~mask;
-	 if ( startofs < startSearch ) {
-	    startofs = startSearch;
-	 }
-	 endofs = startofs+size;
-	 if (endofs <= (p->ofs+p->size))
-	    break;
+   for (p = heap->next_free; p != heap; p = p->next_free) {
+      assert(p->free);
+
+      startofs = (p->ofs + mask) & ~mask;
+      if ( startofs < startSearch ) {
+	 startofs = startSearch;
       }
-      p = p->next;
+      endofs = startofs+size;
+      if (endofs <= (p->ofs+p->size))
+	 break;
    }
-   if (!p)
+
+   if (p == heap) 
       return NULL;
+
    p = SliceBlock(p,startofs,size,0,mask+1);
-   p->heap = heap;
+
    return p;
 }
 
@@ -142,27 +191,34 @@ mmAllocMem(struct mem_block *heap, int size, int align2, int startSearch)
 struct mem_block *
 mmFindBlock(struct mem_block *heap, int start)
 {
-   struct mem_block *p = (struct mem_block *)heap;
+   struct mem_block *p;
 
-   while (p) {
-      if (p->ofs == start && p->free) 
+   for (p = heap->next_free; p != heap; p = p->next_free) {
+      if (p->ofs == start) 
 	 return p;
-
-      p = p->next;
    }
 
    return NULL;
 }
 
 
-static int
+static INLINE int
 Join2Blocks(struct mem_block *p)
 {
    /* XXX there should be some assertions here */
-   if (p->free && p->next && p->next->free) {
+
+   /* NOTE: heap->free == 0 */
+
+   if (p->free && p->next->free) {
       struct mem_block *q = p->next;
       p->size += q->size;
+
       p->next = q->next;
+      q->next->prev = p;
+
+      q->next_free->prev_free = q->prev_free; 
+      q->prev_free->next_free = q->next_free;
+     
       _mesa_free(q);
       return 1;
    }
@@ -172,33 +228,28 @@ Join2Blocks(struct mem_block *p)
 int
 mmFreeMem(struct mem_block *b)
 {
-   struct mem_block *p,*prev;
-
    if (!b)
       return 0;
-   if (!b->heap) {
-      fprintf(stderr, "no heap\n");
+
+   if (b->free) {
+      fprintf(stderr, "block already free\n");
       return -1;
    }
-   p = b->heap;
-   prev = NULL;
-   while (p && p != b) {
-      prev = p;
-      p = p->next;
-   }
-   if (!p || p->free || p->reserved) {
-      if (!p)
-	 fprintf(stderr, "block not found in heap\n");
-      else if (p->free)
-	 fprintf(stderr, "block already free\n");
-      else
-	 fprintf(stderr, "block is reserved\n");
+   if (b->reserved) {
+      fprintf(stderr, "block is reserved\n");
       return -1;
    }
-   p->free = 1;
-   Join2Blocks(p);
-   if (prev)
-      Join2Blocks(prev);
+
+   b->free = 1;
+   b->next_free = b->heap->next_free;
+   b->prev_free = b->heap;
+   b->next_free->prev_free = b;
+   b->prev_free->next_free = b;
+
+   Join2Blocks(b);
+   if (b->prev)
+      Join2Blocks(b->prev);
+
    return 0;
 }
 
@@ -211,10 +262,11 @@ mmDestroy(struct mem_block *heap)
    if (!heap)
       return;
 
-   p = (struct mem_block *) heap;
-   while (p) {
+   for (p = heap->next; p != heap; ) {
       struct mem_block *next = p->next;
       _mesa_free(p);
       p = next;
    }
+
+   _mesa_free(heap);
 }
