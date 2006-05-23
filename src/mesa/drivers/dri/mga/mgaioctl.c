@@ -50,7 +50,7 @@
 #include "vblank.h"
 
 
-int
+static int
 mgaSetFence( mgaContextPtr mmesa, uint32_t * fence )
 {
     int ret = ENOSYS;
@@ -68,7 +68,7 @@ mgaSetFence( mgaContextPtr mmesa, uint32_t * fence )
 }
 
 
-int
+static int
 mgaWaitFence( mgaContextPtr mmesa, uint32_t fence, uint32_t * curr_fence )
 {
     int ret = ENOSYS;
