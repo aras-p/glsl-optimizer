@@ -1039,7 +1039,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 	const struct prog_instruction *inst = mp->Base.Instructions;
 	struct prog_instruction *fpi;
 	pfs_reg_t src[3], dest, temp;
-	int flags, mask;
+	int flags, mask = 0;
 
 	if (!inst || inst[0].Opcode == OPCODE_END) {
 		ERROR("empty program?\n");
