@@ -1162,7 +1162,7 @@ static void clear_cache( struct texenvprog_cache *cache )
 
 static void cache_item( struct texenvprog_cache *cache,
 			GLuint hash,
-			void *key,
+			const struct state_key *key,
 			void *data )
 {
    struct texenvprog_cache_item *c = MALLOC(sizeof(*c));
