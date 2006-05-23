@@ -192,7 +192,7 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
    memset(key, 0, sizeof(*key));
 
    for (i=0;i<MAX_TEXTURE_UNITS;i++) {
-      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+      const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
 		
       if (!texUnit->_ReallyEnabled)
          continue;
@@ -727,7 +727,7 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
 				 GLuint unit,
 				 GLuint nr,
 				 GLuint mode,
-				 struct mode_opt *opt)
+				 const struct mode_opt *opt)
 {
    struct ureg src[3];
    struct ureg tmp, half;
@@ -1103,16 +1103,17 @@ create_new_program(struct state_key *key, GLcontext *ctx,
 }
 
 
-static void *search_cache( struct texenvprog_cache *cache,
-			   GLuint hash,
-			   const void *key,
-			   GLuint keysize)
+static struct fragment_program *
+search_cache(const struct texenvprog_cache *cache,
+             GLuint hash,
+             const const void *key,
+             GLuint keysize)
 {
    struct texenvprog_cache_item *c;
 
    for (c = cache->items[hash % cache->size]; c; c = c->next) {
       if (c->hash == hash && memcmp(c->key, key, keysize) == 0)
-	 return c->data;
+	 return (struct fragment_program *) c->data;
    }
 
    return NULL;
@@ -1185,7 +1186,7 @@ static void cache_item( struct texenvprog_cache *cache,
    cache->items[hash % cache->size] = c;
 }
 
-static GLuint hash_key( struct state_key *key )
+static GLuint hash_key( const struct state_key *key )
 {
    GLuint *ikey = (GLuint *)key;
    GLuint hash = 0, i;
@@ -1206,14 +1207,14 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
 {
    struct state_key key;
    GLuint hash;
-   struct fragment_program *prev = ctx->FragmentProgram._Current;
+   const struct fragment_program *prev = ctx->FragmentProgram._Current;
 	
    if (!ctx->FragmentProgram._Enabled) {
       make_state_key(ctx, &key);
       hash = hash_key(&key);
       
-      ctx->FragmentProgram._Current = ctx->_TexEnvProgram =
-	 (struct fragment_program *)
+      ctx->FragmentProgram._Current =
+      ctx->_TexEnvProgram =
 	 search_cache(&ctx->Texture.env_fp_cache, hash, &key, sizeof(key));
 	
       if (!ctx->_TexEnvProgram) {

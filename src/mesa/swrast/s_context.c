@@ -231,7 +231,7 @@ static void
 _swrast_update_fragment_program( GLcontext *ctx )
 {
    if (ctx->FragmentProgram._Active) {
-      struct fragment_program *program = ctx->FragmentProgram._Current;
+      const struct fragment_program *program = ctx->FragmentProgram._Current;
       _mesa_load_state_parameters(ctx, program->Base.Parameters);
    }
 }

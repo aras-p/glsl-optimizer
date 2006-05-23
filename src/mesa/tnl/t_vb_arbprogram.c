@@ -1257,7 +1257,7 @@ static INLINE void call_func( struct tnl_compiled_program *p,
 static GLboolean
 run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
-   struct vertex_program *program;
+   const struct vertex_program *program;
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct arb_vp_machine *m = ARB_VP_MACHINE(stage);
    struct tnl_compiled_program *p;

@@ -1917,9 +1917,9 @@ struct gl_vertex_program_state
    GLboolean PointSizeEnabled;         /**< GL_VERTEX_PROGRAM_POINT_SIZE_ARB/NV */
    GLboolean TwoSideEnabled;           /**< GL_VERTEX_PROGRAM_TWO_SIDE_ARB/NV */
    struct vertex_program *Current;     /**< ptr to currently bound program */
-   struct vertex_program *_Current;    /**< ptr to currently bound
-					   program, including internal
-					   (t_vp_build.c) programs */
+   const struct vertex_program *_Current;    /**< ptr to currently bound
+					          program, including internal
+					          (t_vp_build.c) programs */
 
    GLenum TrackMatrix[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
    GLenum TrackMatrixTransform[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
@@ -1950,8 +1950,8 @@ struct gl_fragment_program_state
    GLboolean _Enabled;                   /* Enabled and valid program? */
    GLboolean _Active;
    struct fragment_program *Current;     /* ptr to currently bound program */
-   struct fragment_program *_Current;    /* ptr to currently active program 
-					    (including internal programs) */
+   const struct fragment_program *_Current; /* ptr to currently active program 
+					       (including internal programs) */
    struct fp_machine Machine;            /* machine state */
    GLfloat Parameters[MAX_NV_FRAGMENT_PROGRAM_PARAMS][4]; /* Env params */
 
