@@ -625,6 +625,10 @@ extern void
 _mesa_align_free( void *ptr );
 
 extern void *
+_mesa_align_realloc(void *oldBuffer, size_t oldSize, size_t newSize,
+                    unsigned long alignment);
+
+extern void *
 _mesa_exec_malloc( GLuint size );
 
 extern void 

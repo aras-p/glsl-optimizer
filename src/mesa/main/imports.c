@@ -201,6 +201,25 @@ _mesa_align_free(void *ptr)
 #endif
 }
 
+/**
+ * Reallocate memory, with alignment.
+ */
+void *
+_mesa_align_realloc(void *oldBuffer, size_t oldSize, size_t newSize,
+                    unsigned long alignment)
+{
+   const size_t copySize = (oldSize < newSize) ? oldSize : newSize;
+   void *newBuf = _mesa_align_malloc(newSize, alignment);
+   if (newBuf && oldBuffer && copySize > 0) {
+      _mesa_memcpy(newBuf, oldBuffer, copySize);
+   }
+   if (oldBuffer)
+      _mesa_align_free(oldBuffer);
+   return newBuf;
+}
+
+
+
 /** Reallocate memory */
 void *
 _mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize)
