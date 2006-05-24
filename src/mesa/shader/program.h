@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -192,21 +192,23 @@ enum state_index {
  */
 struct program_parameter
 {
-   const char *Name;                   /* Null-terminated */
-   enum register_file Type; /** PROGRAM_NAMED_PARAM, CONSTANT or STATE_VAR */
-   enum state_index StateIndexes[6];   /* Global state reference */
+   const char *Name;          /**< Null-terminated string */
+   enum register_file Type; /**< PROGRAM_NAMED_PARAM, CONSTANT or STATE_VAR */
+   enum state_index StateIndexes[6];   /**< Global state reference */
 };
 
 
+/**
+ * A list of the above program_parameter instances.
+ */
 struct program_parameter_list
 {
-   GLuint Size;           /** allocated size of Parameters, ParameterValues */
-   GLuint NumParameters;  /** number of parameters in arrays */
-   struct program_parameter *Parameters; /** Array [Size] */
-   GLfloat (*ParameterValues)[4];        /** Array [Size] */
-   GLuint StateFlags;		/** _NEW_* flags indicating which
-				    statechanges might invalidate
-				    ParameterValues[]  */
+   GLuint Size;           /**< allocated size of Parameters, ParameterValues */
+   GLuint NumParameters;  /**< number of parameters in arrays */
+   struct program_parameter *Parameters; /**< Array [Size] */
+   GLfloat (*ParameterValues)[4];        /**< Array [Size] of GLfloat[4] */
+   GLbitfield StateFlags; /**< _NEW_* flags indicating which state changes
+                               might invalidate ParameterValues[] */
 };
 
 
