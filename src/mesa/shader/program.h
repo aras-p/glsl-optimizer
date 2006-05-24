@@ -222,9 +222,6 @@ _mesa_new_parameter_list(void);
 extern void
 _mesa_free_parameter_list(struct program_parameter_list *paramList);
 
-extern void
-_mesa_free_parameters(struct program_parameter_list *paramList);
-
 extern GLint
 _mesa_add_named_parameter(struct program_parameter_list *paramList,
                           const char *name, const GLfloat values[4]);

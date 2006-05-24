@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -295,8 +295,9 @@ _mesa_delete_program(GLcontext *ctx, struct program *prog)
       _mesa_free(prog->Instructions);
    }
 
-   if (prog->Parameters)
+   if (prog->Parameters) {
       _mesa_free_parameter_list(prog->Parameters);
+   }
 
    _mesa_free(prog);
 }
@@ -321,32 +322,24 @@ _mesa_new_parameter_list(void)
 void
 _mesa_free_parameter_list(struct program_parameter_list *paramList)
 {
-   _mesa_free_parameters(paramList);
-   _mesa_free(paramList->Parameters);
-   if (paramList->ParameterValues)
-      ALIGN_FREE(paramList->ParameterValues);
-   _mesa_free(paramList);
-}
-
-
-/**
- * Free all the parameters in the given list, but don't free the
- * paramList structure itself.
- */
-void
-_mesa_free_parameters(struct program_parameter_list *paramList)
-{
    GLuint i;
    for (i = 0; i < paramList->NumParameters; i++) {
       if (paramList->Parameters[i].Name)
 	 _mesa_free((void *) paramList->Parameters[i].Name);
    }
-   paramList->NumParameters = 0;
+   _mesa_free(paramList->Parameters);
+   if (paramList->ParameterValues)
+      _mesa_align_free(paramList->ParameterValues);
+   _mesa_free(paramList);
 }
 
 
 /**
- * Helper function used by the functions below.
+ * Add a new parameter to a parameter list.
+ * \param paramList  the list to add the parameter to
+ * \param name  the parameter name, will be duplicated/copied!
+ * \param values  initial parameter value, 4 GLfloats
+ * \param type  type of parameter, such as 
  * \return  index of new parameter in the list, or -1 if error (out of mem)
  */
 static GLint
@@ -357,24 +350,23 @@ add_parameter(struct program_parameter_list *paramList,
    const GLuint n = paramList->NumParameters;
 
    if (n == paramList->Size) {
-      GLfloat (*tmp)[4];
-
-      paramList->Size *= 2;
-      if (!paramList->Size)
+      /* Need to grow the parameter list array */
+      if (paramList->Size == 0)
 	 paramList->Size = 8;
+      else
+         paramList->Size *= 2;
 
+      /* realloc arrays */
       paramList->Parameters = (struct program_parameter *)
 	 _mesa_realloc(paramList->Parameters,
 		       n * sizeof(struct program_parameter),
 		       paramList->Size * sizeof(struct program_parameter));
 
-      tmp = paramList->ParameterValues;
-      paramList->ParameterValues = (GLfloat(*)[4]) ALIGN_MALLOC(paramList->Size * 4 * sizeof(GLfloat), 16);
-      if (tmp) {
-	 _mesa_memcpy(paramList->ParameterValues, tmp, 
-		      n * 4 * sizeof(GLfloat));
-	 ALIGN_FREE(tmp);
-      }
+      paramList->ParameterValues = (GLfloat (*)[4])
+         _mesa_align_realloc(paramList->ParameterValues,         /* old buf */
+                             n * 4 * sizeof(GLfloat),            /* old size */
+                             paramList->Size * 4 *sizeof(GLfloat), /* new sz */
+                             16);
    }
 
    if (!paramList->Parameters ||
@@ -459,11 +451,11 @@ _mesa_add_state_reference(struct program_parameter_list *paramList,
    index = add_parameter(paramList, name, NULL, PROGRAM_STATE_VAR);
    if (index >= 0) {
       GLuint i;
-      for (i = 0; i < 6; i++)
+      for (i = 0; i < 6; i++) {
          paramList->Parameters[index].StateIndexes[i]
             = (enum state_index) stateTokens[i];
-
-	 paramList->StateFlags |= 
+      }
+      paramList->StateFlags |= 
 	    make_state_flags(stateTokens);
    }
 
@@ -908,7 +900,8 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
 }
 
 
-/* Return a bit mask of the Mesa state flags under which a parameter's
+/**
+ * Return a bit mask of the Mesa state flags under which a parameter's
  * value might change.
  */
 static GLuint make_state_flags(const GLint state[])
@@ -949,7 +942,7 @@ static GLuint make_state_flags(const GLint state[])
       case STATE_PROGRAM:
 	 return _NEW_TRACK_MATRIX;
       default:
-	 assert(0);
+	 _mesa_problem(NULL, "unexpected matrix in make_state_flags()");
 	 return 0;
       }
 
@@ -965,18 +958,15 @@ static GLuint make_state_flags(const GLint state[])
       case STATE_NORMAL_SCALE:
 	 return _NEW_MODELVIEW;
       default:
-	 assert(0);
+         _mesa_problem(NULL, "unexpected int. state in make_state_flags()");
 	 return 0;
       }
 
    default:
-      assert(0);
+      _mesa_problem(NULL, "unexpected state[0] in make_state_flags()");
       return 0;
    }
 }
-
-
-
 
 
 static void
@@ -988,6 +978,7 @@ append(char *dst, const char *src)
      *dst++ = *src++;
    *dst = 0;
 }
+
 
 static void
 append_token(char *dst, enum state_index k)
@@ -1148,6 +1139,7 @@ append_index(char *dst, GLint index)
 /**
  * Make a string from the given state vector.
  * For example, return "state.matrix.texture[2].inverse".
+ * Use _mesa_free() to deallocate the string.
  */
 static const char *
 make_state_string(const GLint state[6])
