@@ -946,11 +946,12 @@ update_program(GLcontext *ctx)
    ctx->FragmentProgram._Active = ctx->FragmentProgram._Enabled;
 
    if (ctx->_MaintainTexEnvProgram && !ctx->FragmentProgram._Enabled) {
+#if 0
       if (!ctx->_TexEnvProgram)
 	 ctx->_TexEnvProgram = (struct fragment_program *)
 	    ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
-
       ctx->FragmentProgram._Current = ctx->_TexEnvProgram;
+#endif
 
       if (ctx->_UseTexEnvProgram)
 	 ctx->FragmentProgram._Active = GL_TRUE;
