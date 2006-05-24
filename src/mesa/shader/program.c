@@ -467,6 +467,9 @@ _mesa_add_state_reference(struct program_parameter_list *paramList,
 	    make_state_flags(stateTokens);
    }
 
+   /* free name string here since we duplicated it in add_parameter() */
+   _mesa_free((void *) name);
+
    return index;
 }
 
