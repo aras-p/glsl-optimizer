@@ -955,7 +955,7 @@ static int radeon_emit_veclinear(
 
    if (start < 0x60) {
       for (i = 0 ; i < sz ;  i += 4) {
-	 fprintf(stderr, "R200_VS_PARAM %d 0 %f\n", (i >> 2) + start , fdata[i]);
+	 fprintf(stderr, "R200_VS_PARAM %d 0 %f\n", (i >> 2) + start, fdata[i]);
 	 fprintf(stderr, "R200_VS_PARAM %d 1 %f\n", (i >> 2) + start, fdata[i+1]);
 	 fprintf(stderr, "R200_VS_PARAM %d 2 %f\n", (i >> 2) + start, fdata[i+2]);
 	 fprintf(stderr, "R200_VS_PARAM %d 3 %f\n", (i >> 2) + start, fdata[i+3]);
@@ -974,7 +974,7 @@ static int radeon_emit_veclinear(
 	 fprintf(stderr, "R200_VS_PROG %d OPDST %08x\n", (i >> 2) + start - 0x80, data[i]);
 	 fprintf(stderr, "R200_VS_PROG %d SRC1  %08x\n", (i >> 2) + start - 0x80, data[i+1]);
 	 fprintf(stderr, "R200_VS_PROG %d SRC2  %08x\n", (i >> 2) + start - 0x80, data[i+2]);
-	 fprintf(stderr, "R200_VS_PROG %d SRC3  %08x\n", (i >> 2)  + start - 0x80, data[i+3]);
+	 fprintf(stderr, "R200_VS_PROG %d SRC3  %08x\n", (i >> 2) + start - 0x80, data[i+3]);
       }
    }
    else if ((start >= 0x180) && (start < 0x1c0)) {
