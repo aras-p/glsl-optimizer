@@ -1883,6 +1883,8 @@
 #       define RADEON_LIGHT_6_SHIFT            0
 #       define RADEON_LIGHT_7_SHIFT            16
 
+#define RADEON_SE_TCL_STATE_FLUSH           0x2284
+
 #define RADEON_SE_TCL_SHININESS             0x2250
 
 #define RADEON_SE_TCL_TEXTURE_PROC_CTL      0x2268

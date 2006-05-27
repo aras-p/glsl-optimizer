@@ -337,6 +337,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* gap */
 #define R200_SE_VAP_CNTL                           0x2080
 #define     R200_VAP_TCL_ENABLE                       0x00000001
+#define     R200_VAP_PROG_VTX_SHADER_ENABLE           0x00000004
 #define     R200_VAP_SINGLE_BUF_STATE_ENABLE          0x00000010
 #define     R200_VAP_FORCE_W_TO_ONE                   0x00010000
 #define     R200_VAP_D3D_TEX_DEFAULT                  0x00020000
@@ -660,6 +661,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R200_SE_TCL_POINT_SPRITE_CNTL     0x22c4
 #define     R200_POINTSIZE_SEL_STATE            (1<<16)
 /* gap */
+/* taken from r300, see comments there */
+#define R200_VAP_PVS_CNTL_1                 0x22d0
+#       define R200_PVS_CNTL_1_PROGRAM_START_SHIFT   0
+#       define R200_PVS_CNTL_1_POS_END_SHIFT         10
+#       define R200_PVS_CNTL_1_PROGRAM_END_SHIFT     20
+/* Addresses are relative the the vertex program parameters area. */
+#define R200_VAP_PVS_CNTL_2                 0x22d4
+#       define R200_PVS_CNTL_2_PARAM_OFFSET_SHIFT 0
+#       define R200_PVS_CNTL_2_PARAM_COUNT_SHIFT  16
+/* gap */
+
 #define R200_SE_VTX_ST_POS_0_X_4                   0x2300
 #define R200_SE_VTX_ST_POS_0_Y_4                   0x2304
 #define R200_SE_VTX_ST_POS_0_Z_4                   0x2308
@@ -1473,6 +1485,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R200_VS_PNT_SPRITE_CLAMP            0x000000BE
 #define R200_VS_MAX                         0x000001C0
 
+#define R200_PVS_PROG0                      0x00000080
+#define R200_PVS_PROG1                      0x00000180
+#define R200_PVS_PARAM0                     0x00000000
+#define R200_PVS_PARAM1                     0x00000100
 
 /*
  * Offsets in TCL scalar state

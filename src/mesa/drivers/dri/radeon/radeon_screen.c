@@ -372,6 +372,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       screen->drmSupportsFragShader = (sPriv->drmMinor >= 18);
       screen->drmSupportsPointSprites = (sPriv->drmMinor >= 13);
       screen->drmSupportsCubeMapsR100 = (sPriv->drmMinor >= 15);
+      screen->drmSupportsVertexProgram = (sPriv->drmMinor >= 25);
    }
 
    screen->mmio.handle = dri_priv->registerHandle;

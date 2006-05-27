@@ -2110,18 +2110,18 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	    if they didn't change) and restore tex coord routing */
 	 GLuint unit;
 	 for (unit = 0; unit < R200_MAX_TEXTURE_UNITS; unit++) {
+	    R200_STATECHANGE( rmesa, pix[unit] );
+	    R200_STATECHANGE( rmesa, tex[unit] );
 	    rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT] &=
 		~(R200_TXFORMAT_ST_ROUTE_MASK | R200_TXFORMAT_LOOKUP_DISABLE);
 	    rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT] |= unit << R200_TXFORMAT_ST_ROUTE_SHIFT;
 	    /* need to guard this with drmSupportsFragmentShader? Should never get here if
 	       we don't announce ATI_fs, right? */
 	    rmesa->hw.tex[unit].cmd[TEX_PP_TXMULTI_CTL] = 0;
-	    R200_STATECHANGE( rmesa, pix[unit] );
-	    R200_STATECHANGE( rmesa, tex[unit] );
          }
-	 rmesa->hw.cst.cmd[CST_PP_CNTL_X] = 0;
 	 R200_STATECHANGE( rmesa, cst );
 	 R200_STATECHANGE( rmesa, tf );
+	 rmesa->hw.cst.cmd[CST_PP_CNTL_X] = 0;
       }
       else {
 	 /* need to mark this dirty as pix/tf atoms have overwritten the data

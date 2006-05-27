@@ -160,6 +160,7 @@ static struct {
    { R200_PP_TXFILTER_3, 8, "R200_PP_TXCTLALL_3"},
    { R200_PP_TXFILTER_4, 8, "R200_PP_TXCTLALL_4"},
    { R200_PP_TXFILTER_5, 8, "R200_PP_TXCTLALL_5"},
+   { R200_VAP_PVS_CNTL_1, 2, "R200_VAP_PVS_CNTL"},
 };
 
 struct reg_names {
@@ -532,6 +533,8 @@ static struct reg_names reg_names[] = {
    { R200_PP_TXCBLEND2_15, "R200_PP_TXCBLEND2_15" },
    { R200_PP_TXABLEND_15, "R200_PP_TXABLEND_15" },
    { R200_PP_TXABLEND2_15, "R200_PP_TXABLEND2_15" },
+   { R200_VAP_PVS_CNTL_1, "R200_VAP_PVS_CNTL_1" },
+   { R200_VAP_PVS_CNTL_2, "R200_VAP_PVS_CNTL_2" },
 };
 
 static struct reg_names scalar_names[] = {
@@ -929,6 +932,62 @@ static int radeon_emit_vectors(
       total += 4;
    }
 	 
+
+   cmdbuf->buf += sz * sizeof(int);
+   cmdbuf->bufsz -= sz * sizeof(int);
+   return 0;
+}
+
+static int radeon_emit_veclinear( 
+   drm_radeon_cmd_header_t header,
+   drm_radeon_cmd_buffer_t *cmdbuf )
+{
+   int sz = header.veclinear.count * 4;
+   int *data = (int *)cmdbuf->buf;
+   float *fdata =(float *)cmdbuf->buf;
+   int start = header.veclinear.addr_lo | (header.veclinear.addr_hi << 8);
+   int i;
+
+   if (1||VERBOSE)
+      fprintf(stderr, "emit vectors linear, start %d nr %d (end %d) (0x%x)\n",
+	      start, sz >> 2, start + (sz >> 2), header.i);
+
+
+   if (start < 0x60) {
+      for (i = 0 ; i < sz ;  i += 4) {
+	 fprintf(stderr, "R200_VS_PARAM %d 0 %f\n", (i >> 2) + start , fdata[i]);
+	 fprintf(stderr, "R200_VS_PARAM %d 1 %f\n", (i >> 2) + start, fdata[i+1]);
+	 fprintf(stderr, "R200_VS_PARAM %d 2 %f\n", (i >> 2) + start, fdata[i+2]);
+	 fprintf(stderr, "R200_VS_PARAM %d 3 %f\n", (i >> 2) + start, fdata[i+3]);
+      }
+   }
+   else if ((start >= 0x100) && (start < 0x160)) {
+      for (i = 0 ; i < sz ;  i += 4) {
+	 fprintf(stderr, "R200_VS_PARAM %d 0 %f\n", (i >> 2) + start - 0x100 + 0x60, fdata[i]);
+	 fprintf(stderr, "R200_VS_PARAM %d 1 %f\n", (i >> 2) + start - 0x100 + 0x60, fdata[i+1]);
+	 fprintf(stderr, "R200_VS_PARAM %d 2 %f\n", (i >> 2) + start - 0x100 + 0x60, fdata[i+2]);
+	 fprintf(stderr, "R200_VS_PARAM %d 3 %f\n", (i >> 2) + start - 0x100 + 0x60, fdata[i+3]);
+      }
+   }
+   else if ((start >= 0x80) && (start < 0xc0)) {
+      for (i = 0 ; i < sz ;  i += 4) {
+	 fprintf(stderr, "R200_VS_PROG %d OPDST %08x\n", (i >> 2) + start - 0x80, data[i]);
+	 fprintf(stderr, "R200_VS_PROG %d SRC1  %08x\n", (i >> 2) + start - 0x80, data[i+1]);
+	 fprintf(stderr, "R200_VS_PROG %d SRC2  %08x\n", (i >> 2) + start - 0x80, data[i+2]);
+	 fprintf(stderr, "R200_VS_PROG %d SRC3  %08x\n", (i >> 2)  + start - 0x80, data[i+3]);
+      }
+   }
+   else if ((start >= 0x180) && (start < 0x1c0)) {
+      for (i = start ; (i < start + sz) ;  i += 4) {
+	 fprintf(stderr, "R200_VS_PROG %d OPDST %08x\n", (i >> 2) + start - 0x180 + 0x40, data[i]);
+	 fprintf(stderr, "R200_VS_PROG %d SRC1  %08x\n", (i >> 2) + start - 0x180 + 0x40, data[i+1]);
+	 fprintf(stderr, "R200_VS_PROG %d SRC2  %08x\n", (i >> 2) + start - 0x180 + 0x40, data[i+2]);
+	 fprintf(stderr, "R200_VS_PROG %d SRC3  %08x\n", (i >> 2) + start - 0x180 + 0x40, data[i+3]);
+      }
+   }
+   else {
+      fprintf(stderr, "write to unknown vector area\n");
+   }
 
    cmdbuf->buf += sz * sizeof(int);
    cmdbuf->bufsz -= sz * sizeof(int);
@@ -1358,6 +1417,13 @@ int r200SanityCmdBuffer( r200ContextPtr rmesa,
 	 break;
 
       case RADEON_CMD_WAIT:
+	 break;
+
+      case RADEON_CMD_VECLINEAR:
+	 if (radeon_emit_veclinear( header, &cmdbuf )) {
+	    fprintf(stderr,"radeon_emit_veclinear failed\n");
+	    return -EINVAL;
+	 }
 	 break;
 
       default:

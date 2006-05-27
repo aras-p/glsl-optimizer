@@ -156,6 +156,7 @@ static struct {
    { 0, 8, "R200_PP_TXCTLALL_3"},
    { 0, 8, "R200_PP_TXCTLALL_4"},
    { 0, 8, "R200_PP_TXCTLALL_5"},
+   { 0, 2, "R200_VAP_PVS_CNTL"},
 };
 
 struct reg_names {

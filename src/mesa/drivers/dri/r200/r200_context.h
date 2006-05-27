@@ -637,7 +637,7 @@ struct r200_dri_mirror {
 };
 
 
-#define R200_CMD_BUF_SZ  (8*1024) 
+#define R200_CMD_BUF_SZ  (16*1024) 
 
 struct r200_store {
    GLuint statenr;
