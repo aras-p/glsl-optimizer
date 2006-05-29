@@ -1538,12 +1538,6 @@ parse_attrib_binding(GLcontext * ctx, GLubyte ** inst,
                GLuint attrib;
                if (!parse_generic_attrib_num(ctx, inst, Program, &attrib)) {
                   *is_generic = 1;
-                  if (attrib >= MAX_VERTEX_PROGRAM_ATTRIBS) {
-                     const char *msg = "Invalid generic vertex attribute reference";
-                     _mesa_set_program_error (ctx, Program->Position, msg);
-                     _mesa_error (ctx, GL_INVALID_OPERATION, msg);
-                     return 1;
-                  }
                   /* Add VERT_ATTRIB_GENERIC0 here because ARB_vertex_program's
                    * attributes do not alias the conventional vertex
                    * attributes.
