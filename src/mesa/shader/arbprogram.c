@@ -132,6 +132,7 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
             return;
          }
          params[0] = (GLfloat) ctx->Array.VertexAttrib[index].BufferObj->Name;
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribfvARB(pname)");
          return;
