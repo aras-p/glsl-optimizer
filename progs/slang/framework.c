@@ -3,8 +3,10 @@
 /*
  * GL_ARB_multitexture
  */
+#ifndef GL_ARB_multitexture
 PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB;
 PFNGLMULTITEXCOORD4FVARBPROC glMultiTexCoord4fvARB;
+#endif
 
 /*
  * GL_ARB_shader_objects
@@ -65,8 +67,10 @@ void InitFramework (int *argc, char *argv[])
    glutInitDisplayMode (GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    glutCreateWindow (argv[0]);
 
+#ifndef GL_ARB_multitexture
    GETPROCADDR(glClientActiveTextureARB, PFNGLCLIENTACTIVETEXTUREARBPROC);
    GETPROCADDR(glMultiTexCoord4fvARB, PFNGLMULTITEXCOORD4FVARBPROC);
+#endif
 
    GETPROCADDR(glDeleteObjectARB, PFNGLDELETEOBJECTARBPROC);
    GETPROCADDR(glGetHandleARB, PFNGLGETHANDLEARBPROC);
@@ -100,9 +104,6 @@ void InitFramework (int *argc, char *argv[])
 
    InitScene ();
 
-   /*glutReshapeFunc (Reshape);
-   glutKeyboardFunc (Key);
-   glutSpecialFunc (SpecialKey);*/
    glutDisplayFunc (Display);
    glutIdleFunc (Idle);
    glutMainLoop ();

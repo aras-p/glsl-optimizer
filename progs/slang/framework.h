@@ -6,9 +6,10 @@
 #include <windows.h>
 #endif
 
-#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <assert.h>
 #include <math.h>
 #include <GL/gl.h>
 #include <GL/glut.h>
@@ -25,8 +26,10 @@
 /*
  * GL_ARB_multitexture
  */
+#ifndef GL_ARB_multitexture
 extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB;
 extern PFNGLMULTITEXCOORD4FVARBPROC glMultiTexCoord4fvARB;
+#endif
 
 /*
  * GL_ARB_shader_objects
@@ -68,12 +71,12 @@ extern PFNGLFOGCOORDPOINTEREXTPROC glFogCoordPointerEXT;
 extern PFNGLSECONDARYCOLOR3FVEXTPROC glSecondaryColor3fvEXT;
 extern PFNGLSECONDARYCOLORPOINTEREXTPROC glSecondaryColorPointerEXT;
 
-void InitFramework (int *argc, char *argv[]);
+extern void InitFramework (int *argc, char *argv[]);
 
 extern void InitScene (void);
 extern void RenderScene (void);
 
-GLboolean CheckObjectStatus (GLhandleARB);
+extern GLboolean CheckObjectStatus (GLhandleARB);
 
 #endif
 

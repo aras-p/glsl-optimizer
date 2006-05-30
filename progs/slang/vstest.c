@@ -210,7 +210,7 @@ static void dl_end ()
 static void load_test_file (const char *filename)
 {
    FILE *f;
-   long size;
+   GLint size;
    char *code;
    GLint i;
 
@@ -230,7 +230,7 @@ static void load_test_file (const char *filename)
    size = fread (code, 1, size, f);
    fclose (f);
 
-   glShaderSourceARB (vert, 1, &code, &size);
+   glShaderSourceARB (vert, 1, (const GLcharARB **) (&code), &size);
    glCompileShaderARB (vert);
    if (!CheckObjectStatus (vert))
       exit (0);

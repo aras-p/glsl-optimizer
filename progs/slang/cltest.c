@@ -76,8 +76,8 @@ static void load_test_file (const char *filename, struct PROGRAM **program)
    struct PROGRAM **currprog = program;
    FILE *f;
    char line[256];
-   enum PROGRAM_LOAD_STATE pls;
-   enum SHADER_LOAD_STATE sls;
+   enum PROGRAM_LOAD_STATE pls = PLS_NONE;
+   enum SHADER_LOAD_STATE sls = SLS_NONE;
 
    f = fopen (filename, "r");
    if (f == NULL)
@@ -174,7 +174,7 @@ void RenderScene (void)
       exit (0);
 
    code = program->vertex.code;
-   glShaderSourceARB (vert, 1, &code, NULL);
+   glShaderSourceARB (vert, 1, (const GLcharARB **) (&code), NULL);
    glCompileShaderARB (vert);
    CheckObjectStatus (vert);
 
