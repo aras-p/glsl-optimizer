@@ -1490,3 +1490,4 @@ Mesa Version History
 	- fixed assorted bugs in texture compression paths
 	- fixed indirect rendering vertex array crashes (bug 6863)
 	- glDrawPixels GL_INDEX_OFFSET didn't always work
+	- fixed convolution memory leak (bug 7077)
