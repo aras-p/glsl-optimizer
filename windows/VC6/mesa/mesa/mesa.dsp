@@ -1565,6 +1565,10 @@ SOURCE=..\..\..\..\src\mesa\main\vtxfmt.h
 
 SOURCE=..\..\..\..\src\mesa\main\vtxfmt_tmp.h
 # End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\x86\rtasm\x86sse.h
+# End Source File
 # End Group
 # End Target
 # End Project
