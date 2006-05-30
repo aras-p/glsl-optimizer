@@ -640,12 +640,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 			o_inst->op=MAKE_VSF_OP(hw_op, t_dst_index(vp, &vpi->DstReg),
 				t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			o_inst->src1=t_src(vp, &src[0]);
-			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
-					SWIZZLE_ONE, SWIZZLE_ONE,
-					SWIZZLE_ONE, SWIZZLE_ONE,
-					t_src_class(src[0].File), VSF_FLAG_NONE);
-
-
+			o_inst->src2=ONE_SRC_0;
 			o_inst->src3=ZERO_SRC_0;
 #endif			
 
@@ -726,10 +721,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 			o_inst->op=MAKE_VSF_OP(hw_op, t_dst_index(vp, &vpi->DstReg),
 				t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			o_inst->src1=t_src(vp, &src[0]);
-			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
-						SWIZZLE_ONE, SWIZZLE_ONE,
-						SWIZZLE_ONE, SWIZZLE_ONE,
-						t_src_class(src[0].File), VSF_FLAG_NONE);
+			o_inst->src2=ONE_SRC_0;
 			o_inst->src3=MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
 					t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
 					t_swizzle(GET_SWZ(src[1].Swizzle, 1)),
