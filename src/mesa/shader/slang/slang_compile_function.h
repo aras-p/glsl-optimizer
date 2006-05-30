@@ -30,7 +30,6 @@ extern "C" {
 #endif
 
 struct slang_code_unit_;
-struct slang_translation_unit_;
 
 typedef enum slang_function_kind_
 {
