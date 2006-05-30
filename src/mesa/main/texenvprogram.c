@@ -1106,7 +1106,7 @@ create_new_program(struct state_key *key, GLcontext *ctx,
 static struct fragment_program *
 search_cache(const struct texenvprog_cache *cache,
              GLuint hash,
-             const const void *key,
+             const void *key,
              GLuint keysize)
 {
    struct texenvprog_cache_item *c;
