@@ -642,12 +642,12 @@ Parse_SwizzleSrcReg(struct parse_state *parseState, struct prog_src_register *sr
       RETURN_ERROR;
    if (token[0] == '-') {
       (void) Parse_String(parseState, "-");
-      srcReg->NegateBase = GL_TRUE;
+      srcReg->NegateBase = NEGATE_XYZW;
       if (!Peek_Token(parseState, token))
          RETURN_ERROR;
    }
    else {
-      srcReg->NegateBase = GL_FALSE;
+      srcReg->NegateBase = NEGATE_NONE;
    }
 
    /* Src reg can be R<n>, c[n], c[n +/- offset], or a named vertex attrib */
@@ -735,13 +735,13 @@ Parse_ScalarSrcReg(struct parse_state *parseState, struct prog_src_register *src
    if (!Peek_Token(parseState, token))
       RETURN_ERROR;
    if (token[0] == '-') {
-      srcReg->NegateBase = GL_TRUE;
+      srcReg->NegateBase = NEGATE_XYZW;
       (void) Parse_String(parseState, "-"); /* consume '-' */
       if (!Peek_Token(parseState, token))
          RETURN_ERROR;
    }
    else {
-      srcReg->NegateBase = GL_FALSE;
+      srcReg->NegateBase = NEGATE_NONE;
    }
 
    /* Src reg can be R<n>, c[n], c[n +/- offset], or a named vertex attrib */
@@ -1070,7 +1070,7 @@ Parse_PrintInstruction(struct parse_state *parseState, struct prog_instruction *
          RETURN_ERROR;
 
       srcReg->RelAddr = GL_FALSE;
-      srcReg->NegateBase = GL_FALSE;
+      srcReg->NegateBase = NEGATE_NONE;
       srcReg->Swizzle = SWIZZLE_NOOP;
 
       /* Register can be R<n>, c[n], c[n +/- offset], a named vertex attrib,

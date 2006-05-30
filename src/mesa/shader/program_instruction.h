@@ -75,6 +75,19 @@
 
 
 /**
+ * Per-component negation masks
+ */
+/*@{*/
+#define NEGATE_X    0x1
+#define NEGATE_Y    0x2
+#define NEGATE_Z    0x4
+#define NEGATE_W    0x8
+#define NEGATE_XYZW 0xf
+#define NEGATE_NONE 0x0
+/*@}*/
+
+
+/**
  * Program instruction opcodes, for both vertex and fragment programs.
  * \note changes to this opcode list must be reflected in t_vb_arbprogram.c
  */
@@ -173,7 +186,8 @@ struct prog_src_register
     */
    /*@{*/
    /**
-    * Per-component negation for the SWZ instruction.
+    * Per-component negation for the SWZ instruction.  For non-SWZ
+    * instructions the only possible values are NEGATE_XYZW and NEGATE_NONE.
     *
     * \since
     * ARB_vertex_program, ARB_fragment_program
@@ -190,8 +204,7 @@ struct prog_src_register
    GLuint Abs:1;
 
    /**
-    * Take the component-wise negation.  The negation occurs \b after the
-    * (optional) absolute value operation.
+    * Post-absolute value negation (all components).
     */
    GLuint NegateAbs:1;
    /*@}*/
