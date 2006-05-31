@@ -269,14 +269,16 @@ static unsigned long t_src_index(struct r300_vertex_program *vp, struct prog_src
 
 static unsigned long t_src(struct r300_vertex_program *vp, struct prog_src_register *src)
 {
-	
+	/* src->NegateBase uses the NEGATE_ flags from program_instruction.h,
+	 * which equal our VSF_FLAGS_ values, so it's safe to just pass it here.
+	 */
 	return MAKE_VSF_SOURCE(t_src_index(vp, src),
 				t_swizzle(GET_SWZ(src->Swizzle, 0)),
 				t_swizzle(GET_SWZ(src->Swizzle, 1)),
 				t_swizzle(GET_SWZ(src->Swizzle, 2)),
 				t_swizzle(GET_SWZ(src->Swizzle, 3)),
 				t_src_class(src->File),
-				src->NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src->RelAddr << 4);
+				src->NegateBase) | (src->RelAddr << 4);
 }
 
 static unsigned long t_src_scalar(struct r300_vertex_program *vp, struct prog_src_register *src)
