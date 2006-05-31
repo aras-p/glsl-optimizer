@@ -630,6 +630,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 			goto next;
 			
 		case OPCODE_MOV://ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO} 
+		case OPCODE_SWZ:
 #if 1
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, t_dst_index(vp, &vpi->DstReg),
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
@@ -910,16 +911,6 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 			fprintf(stderr, "Dont know how to handle op %d yet\n", vpi->Opcode);
 			exit(-1);
 		break;
-		case OPCODE_SWZ:
-			hw_op=(src[0].File == PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 : R300_VPI_OUT_OP_MAD;
-			
-			o_inst->op=MAKE_VSF_OP(hw_op, t_dst_index(vp, &vpi->DstReg),
-				t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
-			o_inst->src1=t_src(vp, &src[0]);
-			o_inst->src2=ONE_SRC_0;
-			o_inst->src3=ZERO_SRC_0;
-
-			goto next;
 		case OPCODE_END:
 			break;
 		default:
