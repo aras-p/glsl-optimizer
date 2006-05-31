@@ -22,9 +22,13 @@ ifeq ($(HAVE_X86), yes)
 endif
 
 # Directories
-SRC_DIRS     = mesa glu
+SRC_DIRS     = mesa glu glut/directfb
+GLU_DIRS     = sgi
 DRIVER_DIRS  = directfb
-PROGRAM_DIRS = # disabled
+PROGRAM_DIRS = demos directfb
 
 # Library/program dependencies
-GL_LIB_DEPS  = -lm -lpthread
+GL_LIB_DEPS   = -lm -lpthread
+GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -l$(GLU_LIB)
+APP_LIB_DEPS  = -L$(LIB_DIR) -l$(GL_LIB) -l$(GLU_LIB) -l$(GLUT_LIB)
+
