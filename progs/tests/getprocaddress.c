@@ -39,6 +39,14 @@ typedef void (*generic_func)();
 
 #define EQUAL(X, Y)  (fabs((X) - (Y)) < 0.001)
 
+/**
+ * The following functions are used to check that the named OpenGL function
+ * actually does what it's supposed to do.
+ * The naming of these functions is signficant.  The getprocaddress.py script
+ * scans this file and extracts these function names.
+ */
+
+
 static GLboolean
 test_ActiveTextureARB(generic_func func)
 {
@@ -261,8 +269,7 @@ test_VertexAttrib4dvNV(generic_func func)
 
 
 /*
- * The following header file is auto-generated with Python.  The Python
- * script looks in this file for functions named "test_*" as seen above.
+ * The following file is auto-generated with Python.
  */
 #include "getproclist.h"
 
@@ -271,8 +278,15 @@ test_VertexAttrib4dvNV(generic_func func)
 static int
 extension_supported(const char *haystack, const char *needle)
 {
-   if (strstr(haystack, needle))
-      return 1;
+   const char *p = strstr(haystack, needle);
+   if (p) {
+      /* found string, make sure next char is space or zero */
+      const int len = strlen(needle);
+      if (p[len] == ' ' || p[len] == 0)
+         return 1;
+      else
+         return 0;
+   }
    else
       return 0;
 }
