@@ -374,7 +374,7 @@ static void r200WaitIrq( r200ContextPtr rmesa )
    do {
       ret = drmCommandWrite( rmesa->dri.fd, DRM_RADEON_IRQ_WAIT,
 			     &rmesa->iw, sizeof(rmesa->iw) );
-   } while (ret && (errno == EINTR || errno == EAGAIN));
+   } while (ret && (errno == EINTR || errno == EBUSY));
 
    if ( ret ) {
       fprintf( stderr, "%s: drmRadeonIrqWait: %d\n", __FUNCTION__, ret );

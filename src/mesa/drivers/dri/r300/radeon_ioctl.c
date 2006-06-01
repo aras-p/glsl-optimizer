@@ -122,7 +122,7 @@ static void radeonWaitIrq(radeonContextPtr radeon)
 	do {
 		ret = drmCommandWrite(radeon->dri.fd, DRM_RADEON_IRQ_WAIT,
 				      &radeon->iw, sizeof(radeon->iw));
-	} while (ret && (errno == EINTR || errno == EAGAIN));
+	} while (ret && (errno == EINTR || errno == EBUSY));
 
 	if (ret) {
 		fprintf(stderr, "%s: drmRadeonIrqWait: %d\n", __FUNCTION__,
