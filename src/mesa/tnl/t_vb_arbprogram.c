@@ -115,8 +115,6 @@ static GLfloat rough_approx_log2_0_1(GLfloat x)
 }
 
 
-
-
 /**
  * Perform a reduced swizzle:
  */
@@ -131,12 +129,42 @@ static void do_RSW( struct arb_vp_machine *m, union instruction op )
    /* Need a temporary to be correct in the case where result == arg0.
     */
    COPY_4V(tmp, arg0);
-   
-   result[0] = tmp[GET_RSW(swz, 0)];
-   result[1] = tmp[GET_RSW(swz, 1)];
-   result[2] = tmp[GET_RSW(swz, 2)];
-   result[3] = tmp[GET_RSW(swz, 3)];
-   
+
+   result[0] = tmp[GET_SWZ(swz, 0)];
+   result[1] = tmp[GET_SWZ(swz, 1)];
+   result[2] = tmp[GET_SWZ(swz, 2)];
+   result[3] = tmp[GET_SWZ(swz, 3)];
+
+   if (neg) {
+      if (neg & 0x1) result[0] = -result[0];
+      if (neg & 0x2) result[1] = -result[1];
+      if (neg & 0x4) result[2] = -result[2];
+      if (neg & 0x8) result[3] = -result[3];
+   }
+}
+
+/**
+ * Perform a full swizzle
+ */
+static void do_SWZ( struct arb_vp_machine *m, union instruction op ) 
+{
+   GLfloat *result = m->File[0][op.rsw.dst];
+   const GLfloat *arg0 = m->File[op.rsw.file0][op.rsw.idx0];
+   GLuint swz = op.rsw.swz;
+   GLuint neg = op.rsw.neg;
+   GLfloat tmp[6];
+   tmp[4] = 0.0;
+   tmp[5] = 1.0;
+
+   /* Need a temporary to be correct in the case where result == arg0.
+    */
+   COPY_4V(tmp, arg0);
+
+   result[0] = tmp[GET_SWZ(swz, 0)];
+   result[1] = tmp[GET_SWZ(swz, 1)];
+   result[2] = tmp[GET_SWZ(swz, 2)];
+   result[3] = tmp[GET_SWZ(swz, 3)];
+
    if (neg) {
       if (neg & 0x1) result[0] = -result[0];
       if (neg & 0x2) result[1] = -result[1];
@@ -570,11 +598,31 @@ static void print_RSW( union instruction op )
    _mesa_printf(", ");
    print_reg(op.rsw.file0, op.rsw.idx0);
    _mesa_printf(".");
-   for (i = 0; i < 4; i++, swz >>= 2) {
-      const char *cswz = "xyzw";
+   for (i = 0; i < 4; i++, swz >>= 3) {
+      const char *cswz = "xyzw01";
       if (neg & (1<<i))   
 	 _mesa_printf("-");
-      _mesa_printf("%c", cswz[swz&0x3]);
+      _mesa_printf("%c", cswz[swz&0x7]);
+   }
+   _mesa_printf("\n");
+}
+
+static void print_SWZ( union instruction op )
+{
+   GLuint swz = op.rsw.swz;
+   GLuint neg = op.rsw.neg;
+   GLuint i;
+
+   _mesa_printf("SWZ ");
+   print_reg(0, op.rsw.dst);
+   _mesa_printf(", ");
+   print_reg(op.rsw.file0, op.rsw.idx0);
+   _mesa_printf(".");
+   for (i = 0; i < 4; i++, swz >>= 3) {
+      const char *cswz = "xyzw01";
+      if (neg & (1<<i))   
+	 _mesa_printf("-");
+      _mesa_printf("%c", cswz[swz&0x7]);
    }
    _mesa_printf("\n");
 }
@@ -651,8 +699,10 @@ _tnl_disassem_vba_insn( union instruction op )
    case OPCODE_RCC:
    case OPCODE_RET:
    case OPCODE_SSG:
-   case OPCODE_SWZ:
       print_NOP(op);
+      break;
+   case OPCODE_SWZ:
+      print_SWZ(op);
       break;
    case RSW:
       print_RSW(op);
@@ -728,7 +778,7 @@ static void (* const opcode_func[MAX_OPCODE+3])(struct arb_vp_machine *, union i
    do_NOP,/*SSG*/
    do_NOP,/*STR*/
    do_SUB,
-   do_RSW,/*SWZ*/
+   do_SWZ,/*SWZ*/
    do_NOP,/*TEX*/
    do_NOP,/*TXB*/
    do_NOP,/*TXD*/
@@ -833,7 +883,7 @@ static struct reg cvp_emit_arg( struct compilation *cp,
 {
    struct reg reg = cvp_load_reg( cp, src->File, src->Index, src->RelAddr, arg );
    union instruction rsw, noop;
-   
+
    /* Emit any necessary swizzling.  
     */
    _mesa_bzero(&rsw, sizeof(rsw));
@@ -841,19 +891,17 @@ static struct reg cvp_emit_arg( struct compilation *cp,
 
    /* we're expecting 2-bit swizzles below... */
 #if 1 /* XXX THESE ASSERTIONS CURRENTLY FAIL DURING GLEAN TESTS! */
+/* hopefully no longer happens? */
    ASSERT(GET_SWZ(src->Swizzle, 0) < 4);
    ASSERT(GET_SWZ(src->Swizzle, 1) < 4);
    ASSERT(GET_SWZ(src->Swizzle, 2) < 4);
    ASSERT(GET_SWZ(src->Swizzle, 3) < 4);
 #endif
-   rsw.rsw.swz = ((GET_SWZ(src->Swizzle, 0) << 0) |
-		  (GET_SWZ(src->Swizzle, 1) << 2) |
-		  (GET_SWZ(src->Swizzle, 2) << 4) |
-		  (GET_SWZ(src->Swizzle, 3) << 6));
+   rsw.rsw.swz = src->Swizzle;
 
    _mesa_bzero(&noop, sizeof(noop));
    noop.rsw.neg = 0;
-   noop.rsw.swz = RSW_NOOP;
+   noop.rsw.swz = SWIZZLE_NOOP;
 
    if (_mesa_memcmp(&rsw, &noop, sizeof(rsw)) !=0) {
       union instruction *op = cvp_next_instruction(cp);
@@ -904,46 +952,6 @@ static GLuint cvp_choose_result( struct compilation *cp,
       _mesa_bzero(fixup, sizeof(*fixup));
       cp->reg_active |= 1 << idx;
       return idx;
-   }
-}
-
-static struct reg cvp_emit_rsw( struct compilation *cp, 
-				GLuint dst,
-				struct reg src,
-				GLuint neg, 
-				GLuint swz,
-				GLboolean force)
-{
-   struct reg retval;
-
-   if (swz != RSW_NOOP || neg != 0) {
-      union instruction *op = cvp_next_instruction(cp);
-      op->rsw.opcode = RSW;
-      op->rsw.dst = dst;
-      op->rsw.file0 = src.file;
-      op->rsw.idx0 = src.idx;
-      op->rsw.neg = neg;
-      op->rsw.swz = swz;
-	    
-      retval.file = FILE_REG;
-      retval.idx = dst;
-      return retval;
-   }
-   else if (force) {
-      /* Oops.  Degenerate case:
-       */
-      union instruction *op = cvp_next_instruction(cp);
-      op->alu.opcode = OPCODE_MOV;
-      op->alu.dst = dst;
-      op->alu.file0 = src.file;
-      op->alu.idx0 = src.idx;
-      
-      retval.file = FILE_REG;
-      retval.idx = dst;
-      return retval;
-   }
-   else {
-      return src;
    }
 }
 
@@ -998,63 +1006,25 @@ static void cvp_emit_inst( struct compilation *cp,
       op->alu.idx0 = reg[0].idx;
       break;
 
-   case OPCODE_SWZ: {
-      GLuint swz0 = 0, swz1 = 0;
-      GLuint neg0 = 0, neg1 = 0;
-      GLuint mask = 0;
+   case OPCODE_END:
+      break;
 
-      /* Translate 3-bit-per-element swizzle into two 2-bit swizzles,
-       * one from the source register the other from a constant
-       * {0,0,0,1}.
-       */
-      for (i = 0; i < 4; i++) {
-	 GLuint swzelt = GET_SWZ(inst->SrcReg[0].Swizzle, i);
-	 if (swzelt >= SWIZZLE_ZERO) {
-	    neg0 |= inst->SrcReg[0].NegateBase & (1<<i);
-	    if (swzelt == SWIZZLE_ONE)
-	       swz0 |= SWIZZLE_W << (i*2);
-	    else if (i < SWIZZLE_W)
-	       swz0 |= i << (i*2);
-	 }
-	 else {
-	    mask |= 1<<i;
-	    neg1 |= inst->SrcReg[0].NegateBase & (1<<i);
-	    swz1 |= swzelt << (i*2);
-	 }
-      }
-
+   case OPCODE_SWZ:
       result = cvp_choose_result( cp, &inst->DstReg, &fixup );
-      reg[0].file = FILE_REG;
-      reg[0].idx = REG_ID;
-      reg[1] = cvp_emit_arg( cp, &inst->SrcReg[0], REG_ARG0 );
-
-      if (mask == WRITEMASK_XYZW) {
-	 cvp_emit_rsw(cp, result, reg[0], neg0, swz0, GL_TRUE);
-	 
-      }
-      else if (mask == 0) {
-	 cvp_emit_rsw(cp, result, reg[1], neg1, swz1, GL_TRUE);
-      }
-      else {
-	 cvp_emit_rsw(cp, result, reg[0], neg0, swz0, GL_TRUE);
-	 reg[1] = cvp_emit_rsw(cp, REG_ARG0, reg[1], neg1, swz1, GL_FALSE);
-
-	 op = cvp_next_instruction(cp);
-	 op->msk.opcode = MSK;
-	 op->msk.dst = result;
-	 op->msk.file = reg[1].file;
-	 op->msk.idx = reg[1].idx;
-	 op->msk.mask = mask;
-      }
+      reg[0] = cvp_load_reg( cp, inst->SrcReg[0].File,
+			inst->SrcReg[0].Index, inst->SrcReg[0].RelAddr, REG_ARG0 );
+      op = cvp_next_instruction(cp);
+      op->rsw.opcode = inst->Opcode;
+      op->rsw.file0 = reg[0].file;
+      op->rsw.idx0 = reg[0].idx;
+      op->rsw.dst = result;
+      op->rsw.swz = inst->SrcReg[0].Swizzle;
+      op->rsw.neg = inst->SrcReg[0].NegateBase;
 
       if (result == REG_RES) {
 	 op = cvp_next_instruction(cp);
 	 *op = fixup;
       }
-      break;
-   }
-
-   case OPCODE_END:
       break;
 
    default:
@@ -1074,7 +1044,7 @@ static void cvp_emit_inst( struct compilation *cp,
       if (result == REG_RES) {
 	 op = cvp_next_instruction(cp);
 	 *op = fixup;
-      }      	 
+      }
       break;
    }
 }
@@ -1485,7 +1455,7 @@ static GLboolean init_vertex_program( GLcontext *ctx,
     */
    ASSIGN_4V(m->File[0][REG_ID], 0, 0, 0, 1);
    ASSIGN_4V(m->File[0][REG_ONES], 1, 1, 1, 1);
-   ASSIGN_4V(m->File[0][REG_SWZ], -1, 1, 0, 0);
+   ASSIGN_4V(m->File[0][REG_SWZ], 1, -1, 0, 0);
    ASSIGN_4V(m->File[0][REG_NEG], -1, -1, -1, -1);
    ASSIGN_4V(m->File[0][REG_LIT], 1, 0, 0, 1);
    ASSIGN_4V(m->File[0][REG_LIT2], 1, .5, .2, 1); /* debug value */

@@ -294,11 +294,12 @@ static GLboolean emit_RSW( struct compilation *cp, union instruction op )
 {
    struct x86_reg arg0 = get_arg(cp, op.rsw.file0, op.rsw.idx0);
    struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.rsw.dst);
-   GLuint swz = op.rsw.swz;
+   GLuint swz = GET_SWZ(op.rsw.swz, 0) | (GET_SWZ(op.rsw.swz, 1) << 2) |
+		(GET_SWZ(op.rsw.swz, 2) << 4| (GET_SWZ(op.rsw.swz, 3) << 6));
    GLuint neg = op.rsw.neg;
 
    emit_pshufd(cp, dst, arg0, swz);
-   
+
    if (neg) {
       struct x86_reg negs = get_arg(cp, FILE_REG, REG_SWZ);
       struct x86_reg tmp = get_xmm_reg(cp);
@@ -306,11 +307,70 @@ static GLboolean emit_RSW( struct compilation *cp, union instruction op )
        * Use neg as arg to pshufd
        * Multiply
        */
+      /* is the emit_pshufd necessary? only SWZ can negate individual components */
       emit_pshufd(cp, tmp, negs, 
 		  SHUF((neg & 1) ? 1 : 0,
 		       (neg & 2) ? 1 : 0,
 		       (neg & 4) ? 1 : 0,
 		       (neg & 8) ? 1 : 0));
+      sse_mulps(&cp->func, dst, tmp);
+   }
+
+   return GL_TRUE;
+}
+
+/* Perform a full swizzle
+ */
+static GLboolean emit_SWZ( struct compilation *cp, union instruction op ) 
+{
+   struct x86_reg arg0 = get_arg(cp, op.rsw.file0, op.rsw.idx0);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.rsw.dst);
+   struct x86_reg negs = get_arg(cp, FILE_REG, REG_SWZ);
+   struct x86_reg tmp = get_xmm_reg(cp);
+   GLubyte neg = op.rsw.neg;
+   GLubyte shuf2, swz, savepos, savemask, swizzle[4];
+
+   swizzle[0] = GET_SWZ(op.rsw.swz, 0);
+   swizzle[1] = GET_SWZ(op.rsw.swz, 1);
+   swizzle[2] = GET_SWZ(op.rsw.swz, 2);
+   swizzle[3] = GET_SWZ(op.rsw.swz, 3);
+
+   swz = SHUF((swizzle[0] & 3), (swizzle[1] & 3),
+	      (swizzle[2] & 3), (swizzle[3] & 3));
+
+   emit_pshufd(cp, dst, arg0, swz);
+
+   /* can handle negation and replace with zero with the same shuffle/mul */
+   shuf2 = SHUF(swizzle[0] == 4 ? 2 : (neg & 1),
+	        swizzle[1] == 4 ? 2 : ((neg & 2) >> 1),
+	        swizzle[2] == 4 ? 2 : ((neg & 4) >> 2),
+	        swizzle[3] == 4 ? 2 : ((neg & 8) >> 3));
+
+   /* now the hard part is getting those 1's in there... */
+   savepos = 0;
+   savemask = 0;
+   if (swizzle[0] == 5) savepos = 1;
+   if (swizzle[1] == 5) savepos = 2;
+   else savemask |= 1 << 2;
+   if (swizzle[2] == 5) savepos = 3;
+   else savemask |= 2 << 4;
+   if (swizzle[3] == 5) savepos = 4;
+   else savemask |= 3 << 6;
+   if (savepos) {
+      /* need a mov first as movss from memory will overwrite high bits of xmm reg */
+      sse_movups(&cp->func, tmp, negs);
+      /* can only replace lowest 32bits, thus move away that part first */
+      emit_pshufd(cp, dst, dst, savemask);
+      sse_movss(&cp->func, dst, tmp);
+      emit_pshufd(cp, dst, dst, (savepos - 1) | (savemask & 0xfc));
+   }
+
+   if (shuf2) {
+      /* Load 1,-1,0,0
+       * Use neg as arg to pshufd
+       * Multiply
+       */
+      emit_pshufd(cp, tmp, negs, shuf2);
       sse_mulps(&cp->func, dst, tmp);
    }
 
@@ -595,19 +655,18 @@ static GLboolean emit_DPH( struct compilation *cp, union instruction op )
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0); 
    struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1); 
    struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
-   struct x86_reg ones = get_reg_ptr(FILE_REG, REG_ONES);
-   struct x86_reg tmp = get_xmm_reg(cp);      
+   struct x86_reg tmp = get_xmm_reg(cp);
 
-   emit_pshufd(cp, dst, arg0, SHUF(W,X,Y,Z));
-   sse_movss(&cp->func, dst, ones);
-   emit_pshufd(cp, dst, dst, SHUF(W,X,Y,Z));
+   sse_movups(&cp->func, dst, arg0);
    sse_mulps(&cp->func, dst, arg1);
-   
-   /* Now the hard bit: sum the values (from DP4):
+
+   /* Now the hard bit: sum the values (from DP3):
     */ 
    sse_movhlps(&cp->func, tmp, dst);
-   sse_addps(&cp->func, dst, tmp); /* a*x+c*z, b*y+d*w, a*x+c*z, b*y+d*w */
+   sse_addss(&cp->func, dst, tmp); /* a*x+c*z, b*y, ?, ? */
    emit_pshufd(cp, tmp, dst, SHUF(Y,X,W,Z));
+   sse_addss(&cp->func, dst, tmp);
+   emit_pshufd(cp, tmp, arg1, SHUF(W,W,W,W));
    sse_addss(&cp->func, dst, tmp);
    sse_shufps(&cp->func, dst, dst, SHUF(X, X, X, X));
    return GL_TRUE;
@@ -985,15 +1044,18 @@ static GLboolean emit_RSQ( struct compilation *cp, union instruction op )
 {
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0);
    struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
-
-   /* TODO: Calculate absolute value
-    */
 #if 0
+   struct x86_reg neg = get_reg_ptr(FILE_REG, REG_NEG);
+
+/* get abs value first. This STILL doesn't work.
+   Looks like we get bogus neg values ?
+*/
    sse_movss(&cp->func, dst, arg0);
    sse_mulss(&cp->func, dst, neg);
    sse_maxss(&cp->func, dst, arg0);
-#endif
 
+   sse_rsqrtss(&cp->func, dst, dst);
+#endif
    sse_rsqrtss(&cp->func, dst, arg0);
    sse_shufps(&cp->func, dst, dst, SHUF(X, X, X, X));
    return GL_TRUE;
@@ -1132,7 +1194,7 @@ static GLboolean (* const emit_func[])(struct compilation *, union instruction) 
    emit_NOP, /* SSG */
    emit_NOP, /* STR */
    emit_SUB,
-   emit_RSW, /* SWZ */
+   emit_SWZ, /* SWZ */
    emit_NOP, /* TEX */
    emit_NOP, /* TXB */
    emit_NOP, /* TXD */

@@ -61,7 +61,7 @@
 #define REG_IN31   63
 #define REG_ID     64		/* 0,0,0,1 */
 #define REG_ONES   65		/* 1,1,1,1 */
-#define REG_SWZ    66		/* -1,1,0,0 */
+#define REG_SWZ    66		/* 1,-1,0,0 */
 #define REG_NEG    67		/* -1,-1,-1,-1 */
 #define REG_LIT    68           /* 1,0,0,1 */
 #define REG_LIT2    69           /* 1,0,0,1 */
@@ -98,7 +98,7 @@ union instruction {
       GLuint file0:2;
       GLuint idx0:7;
       GLuint neg:4;
-      GLuint swz:8;		/* xyzw only */
+      GLuint swz:12;		/* xyzw01 */
    } rsw;
 
    struct {
@@ -114,11 +114,8 @@ union instruction {
 
 
 /**
- * Reduced swizzle is a 2-bit field; only X/Y/Z/W are allowed, not 0/1.
+ * Reduced swizzle is a 3-bit field, for simplicity same as normal swizzle, X/Y/Z/W/0/1 allowed.
  */
-#define RSW_NOOP ((0<<0) | (1<<2) | (2<<4) | (3<<6))
-#define GET_RSW(swz, idx)      (((swz) >> ((idx)*2)) & 0x3)
-
 
 struct input {
    GLuint idx;
