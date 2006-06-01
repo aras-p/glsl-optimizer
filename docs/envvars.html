@@ -20,6 +20,11 @@ Mesa supports the following environment variables:
 If the value of MESA_DEBUG is "FP" floating point arithmetic errors will
 generate exceptions.
 <li>MESA_NO_DITHER - if set, disables dithering, overriding glEnable(GL_DITHER)
+<li>MESA_TEX_PROG - if set, implement conventional texture env modes with
+fragment programs (intended for developers only)
+<li>MESA_TNL_PROG - if set, implement conventional vertex transformation
+operations with vertex programs (intended for developers only).
+Setting this variable automatically sets the MESA_TEX_PROG variable as well.
 </ul>
 
 <p>
