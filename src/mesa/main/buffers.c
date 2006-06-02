@@ -460,16 +460,14 @@ set_color_output(GLcontext *ctx, GLuint output, GLenum buffer,
 
    ASSERT(output < ctx->Const.MaxDrawBuffers);
 
+   /* Set per-FBO state */
    fb->ColorDrawBuffer[output] = buffer;
    fb->_ColorDrawBufferMask[output] = destMask;
-
-   if (fb->Name == 0) {
-      /* Set traditional state var */
-      ctx->Color.DrawBuffer[output] = buffer;
-   }
-
    /* not really needed, will be set later */
    fb->_NumColorDrawBuffers[output] = 0;
+
+   /* Set traditional state var */
+   ctx->Color.DrawBuffer[output] = buffer;
 }
 
 
