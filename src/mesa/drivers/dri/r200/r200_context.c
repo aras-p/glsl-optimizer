@@ -494,17 +494,15 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    fthrottle_mode = driQueryOptioni(&rmesa->optionCache, "fthrottle_mode");
    rmesa->iw.irq_seq = -1;
    rmesa->irqsEmitted = 0;
-   rmesa->do_irqs = (rmesa->dri.drmMinor >= 6 && 
-		     fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS &&
+   rmesa->do_irqs = (fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS &&
 		     rmesa->r200Screen->irq);
 
    rmesa->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
 
    if (!rmesa->do_irqs)
       fprintf(stderr,
-	      "IRQ's not enabled, falling back to %s: %d %d %d\n",
+	      "IRQ's not enabled, falling back to %s: %d %d\n",
 	      rmesa->do_usleeps ? "usleeps" : "busy waits",
-	      rmesa->dri.drmMinor,
 	      fthrottle_mode,
 	      rmesa->r200Screen->irq);
 

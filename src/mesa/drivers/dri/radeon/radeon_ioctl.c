@@ -521,17 +521,15 @@ void radeonEmitBlit( radeonContextPtr rmesa, /* FIXME: which drmMinor is require
 
 void radeonEmitWait( radeonContextPtr rmesa, GLuint flags )
 {
-   if (rmesa->dri.drmMinor >= 6) {
-      drm_radeon_cmd_header_t *cmd;
+   drm_radeon_cmd_header_t *cmd;
 
-      assert( !(flags & ~(RADEON_WAIT_2D|RADEON_WAIT_3D)) );
-      
-      cmd = (drm_radeon_cmd_header_t *)radeonAllocCmdBuf( rmesa, 1 * sizeof(int),
-						   __FUNCTION__ );
-      cmd[0].i = 0;
-      cmd[0].wait.cmd_type = RADEON_CMD_WAIT;
-      cmd[0].wait.flags = flags;
-   }
+   assert( !(flags & ~(RADEON_WAIT_2D|RADEON_WAIT_3D)) );
+
+   cmd = (drm_radeon_cmd_header_t *)radeonAllocCmdBuf( rmesa, 1 * sizeof(int),
+					   __FUNCTION__ );
+   cmd[0].i = 0;
+   cmd[0].wait.cmd_type = RADEON_CMD_WAIT;
+   cmd[0].wait.flags = flags;
 }
 
 
@@ -782,25 +780,15 @@ void radeonAllocDmaRegion( radeonContextPtr rmesa,
 
 static u_int32_t radeonGetLastFrame (radeonContextPtr rmesa) 
 {
-   unsigned char *RADEONMMIO = rmesa->radeonScreen->mmio.map;
+   drm_radeon_getparam_t gp;
    int ret;
    u_int32_t frame;
 
-   if (rmesa->dri.screen->drmMinor >= 4) {
-      drm_radeon_getparam_t gp;
+   gp.param = RADEON_PARAM_LAST_FRAME;
+   gp.value = (int *)&frame;
+   ret = drmCommandWriteRead( rmesa->dri.fd, DRM_RADEON_GETPARAM,
+			      &gp, sizeof(gp) );
 
-      gp.param = RADEON_PARAM_LAST_FRAME;
-      gp.value = (int *)&frame;
-      ret = drmCommandWriteRead( rmesa->dri.fd, DRM_RADEON_GETPARAM,
-				 &gp, sizeof(gp) );
-   } 
-   else
-      ret = -EINVAL;
-
-   if ( ret == -EINVAL ) {
-      frame = INREG( RADEON_LAST_FRAME_REG );
-      ret = 0;
-   } 
    if ( ret ) {
       fprintf( stderr, "%s: drm_radeon_getparam_t: %d\n", __FUNCTION__, ret );
       exit(1);
@@ -1039,7 +1027,6 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
    drm_radeon_sarea_t *sarea = rmesa->sarea;
-   unsigned char *RADEONMMIO = rmesa->radeonScreen->mmio.map;
    u_int32_t clear;
    GLuint flags = 0;
    GLuint color_mask = 0;
@@ -1111,28 +1098,16 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
     */
    while ( 1 ) {
       int ret;
+      drm_radeon_getparam_t gp;
 
-      if (rmesa->dri.screen->drmMinor >= 4) {
-	drm_radeon_getparam_t gp;
+      gp.param = RADEON_PARAM_LAST_CLEAR;
+      gp.value = (int *)&clear;
+      ret = drmCommandWriteRead( rmesa->dri.fd,
+				 DRM_RADEON_GETPARAM, &gp, sizeof(gp) );
 
-	gp.param = RADEON_PARAM_LAST_CLEAR;
-	gp.value = (int *)&clear;
-	ret = drmCommandWriteRead( rmesa->dri.fd,
-				   DRM_RADEON_GETPARAM, &gp, sizeof(gp) );
-      } else
-	ret = -EINVAL;
-
-      if ( ret == -EINVAL ) {
-	 clear = INREG( RADEON_LAST_CLEAR_REG );
-	 ret = 0;
-      }
       if ( ret ) {
 	 fprintf( stderr, "%s: drm_radeon_getparam_t: %d\n", __FUNCTION__, ret );
 	 exit(1);
-      }
-      if ( RADEON_DEBUG & DEBUG_IOCTL ) {
-	 fprintf( stderr, "%s( %d )\n", __FUNCTION__, (int)clear );
-	 if ( ret ) fprintf( stderr, " ( RADEON_LAST_CLEAR register read directly )\n" );
       }
 
       if ( sarea->last_clear - clear <= RADEON_MAX_CLEARS ) {

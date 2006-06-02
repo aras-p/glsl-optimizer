@@ -875,9 +875,6 @@ GLuint r300GetMemoryOffsetMESA(__DRInativeDisplay * dpy, int scrn,
 	if (!r300IsGartMemory(rmesa, pointer, 0))
 		return ~0;
 
-	if (rmesa->radeon.dri.drmMinor < 6)
-		return ~0;
-
 	card_offset = r300GartOffsetFromVirtual(rmesa, pointer);
 
 	return card_offset - rmesa->radeon.radeonScreen->gart_base;

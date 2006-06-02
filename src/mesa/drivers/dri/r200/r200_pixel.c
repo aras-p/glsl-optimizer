@@ -490,7 +490,7 @@ void r200InitPixelFuncs( GLcontext *ctx )
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
    ctx->Driver.ReadPixels = _swrast_ReadPixels;
 
-   if (!getenv("R200_NO_BLITS") && R200_CONTEXT(ctx)->dri.drmMinor >= 6) {
+   if (!getenv("R200_NO_BLITS")) {
       ctx->Driver.ReadPixels = r200ReadPixels;  
       ctx->Driver.DrawPixels = r200DrawPixels; 
       if (getenv("R200_HW_BITMAP")) 

@@ -175,17 +175,15 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	fthrottle_mode = driQueryOptioni(&radeon->optionCache, "fthrottle_mode");
 	radeon->iw.irq_seq = -1;
 	radeon->irqsEmitted = 0;
-	radeon->do_irqs = (radeon->dri.drmMinor >= 6 &&
-			  fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS &&
+	radeon->do_irqs = (fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS &&
 			  radeon->radeonScreen->irq);
 
 	radeon->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
 
 	if (!radeon->do_irqs)
 		fprintf(stderr,
-			"IRQ's not enabled, falling back to %s: %d %d %d\n",
+			"IRQ's not enabled, falling back to %s: %d %d\n",
 			radeon->do_usleeps ? "usleeps" : "busy waits",
-			radeon->dri.drmMinor,
 			fthrottle_mode, radeon->radeonScreen->irq);
 
 	radeon->vblank_flags = (radeon->radeonScreen->irq != 0)

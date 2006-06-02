@@ -870,10 +870,7 @@ void *r200AllocateMemoryMESA(__DRInativeDisplay *dpy, int scrn, GLsizei size,
 
    if (getenv("R200_NO_ALLOC"))
       return NULL;
-   
-   if (rmesa->dri.drmMinor < 6) 
-      return NULL;
-      
+
    alloc.region = RADEON_MEM_REGION_GART;
    alloc.alignment = 0;
    alloc.size = size;
@@ -912,9 +909,6 @@ void r200FreeMemoryMESA(__DRInativeDisplay *dpy, int scrn, GLvoid *pointer)
       return;
    }
 
-   if (rmesa->dri.drmMinor < 6) 
-      return;
-
    region_offset = (char *)pointer - (char *)rmesa->r200Screen->gartTextures.map;
 
    if (region_offset < 0 || 
@@ -948,9 +942,6 @@ GLuint r200GetMemoryOffsetMESA(__DRInativeDisplay *dpy, int scrn, const GLvoid *
    }
 
    if (!r200IsGartMemory( rmesa, pointer, 0 ))
-      return ~0;
-
-   if (rmesa->dri.drmMinor < 6) 
       return ~0;
 
    card_offset = r200GartOffsetFromVirtual( rmesa, pointer );

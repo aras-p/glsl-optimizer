@@ -412,15 +412,13 @@ void r200EmitBlit( r200ContextPtr rmesa,
 
 void r200EmitWait( r200ContextPtr rmesa, GLuint flags )
 {
-   if (rmesa->dri.drmMinor >= 6) {
-      drm_radeon_cmd_header_t *cmd;
+   drm_radeon_cmd_header_t *cmd;
 
-      assert( !(flags & ~(RADEON_WAIT_2D|RADEON_WAIT_3D)) );
-      
-      cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, 1 * sizeof(int),
-						   __FUNCTION__ );
-      cmd[0].i = 0;
-      cmd[0].wait.cmd_type = RADEON_CMD_WAIT;
-      cmd[0].wait.flags = flags;
-   }
+   assert( !(flags & ~(RADEON_WAIT_2D|RADEON_WAIT_3D)) );
+
+   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, 1 * sizeof(int),
+					   __FUNCTION__ );
+   cmd[0].i = 0;
+   cmd[0].wait.cmd_type = RADEON_CMD_WAIT;
+   cmd[0].wait.flags = flags;
 }

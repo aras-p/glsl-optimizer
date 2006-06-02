@@ -192,8 +192,6 @@ static __inline char *radeonAllocCmdBuf( radeonContextPtr rmesa,
 {
    if (rmesa->store.cmd_used + bytes > RADEON_CMD_BUF_SZ)
       radeonFlushCmdBuf( rmesa, __FUNCTION__ );
-   
-   assert(rmesa->dri.drmMinor >= 3);
 
    {
       char *head = rmesa->store.cmd_buf + rmesa->store.cmd_used;
