@@ -31,6 +31,7 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_vtxfmt_sse.c \
 		 r200_vtxfmt_x86.c \
 		 r200_fragshader.c \
+		 r200_vertprog.c \
 		 radeon_screen.c \
 		 $(EGL_SOURCES)
 

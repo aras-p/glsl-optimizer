@@ -663,7 +663,9 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
    GLuint count[R200_MAX_TEXTURE_UNITS];
 
    if (rmesa->TclFallback || rmesa->vb.fell_back || ctx->CompileFlag ||
-      (ctx->Fog.Enabled && (ctx->Fog.FogCoordinateSource == GL_FOG_COORD)))
+      (ctx->Fog.Enabled && (ctx->Fog.FogCoordinateSource == GL_FOG_COORD)) ||
+      /* TODO: set tcl out fmt/compsel and reenable vtxfmt code */
+      ctx->VertexProgram._Enabled)
       return GL_FALSE;
 
    if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT) 

@@ -46,6 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "mtypes.h"
 #include "colormac.h"
 #include "r200_reg.h"
+#include "r200_vertprog.h"
 
 #define ENABLE_HW_3D_TEXTURE 1  /* XXX this is temporary! */
 
@@ -93,6 +94,15 @@ typedef void (*r200_line_func)( r200ContextPtr,
 typedef void (*r200_point_func)( r200ContextPtr,
 				   r200Vertex * );
 
+
+struct r200_vertex_program {
+        struct vertex_program mesa_program; /* Must be first */
+        int translated;
+        VERTEX_SHADER_INSTRUCTION instr[R200_VSF_MAX_INST + 2];
+        int pos_end;
+        int inputs[VERT_ATTRIB_MAX];
+        int native;
+};
 
 struct r200_colorbuffer_state {
    GLuint clear;
@@ -336,6 +346,34 @@ struct r200_state_atom {
 #define AFS_IA1                   4 /* 2f0c */
 #define AFS_STATE_SIZE           33
 
+#define PVS_CMD_0                 0
+#define PVS_CNTL_1                1
+#define PVS_CNTL_2                2
+#define PVS_STATE_SIZE            3
+
+/* those are quite big... */
+#define VPI_CMD_0                 0
+#define VPI_OPDST_0               1
+#define VPI_SRC0_0                2
+#define VPI_SRC1_0                3
+#define VPI_SRC2_0                4
+#define VPI_OPDST_63              253
+#define VPI_SRC0_63               254
+#define VPI_SRC1_63               255
+#define VPI_SRC2_63               256
+#define VPI_STATE_SIZE            257
+
+#define VPP_CMD_0                0
+#define VPP_PARAM0_0             1
+#define VPP_PARAM1_0             2
+#define VPP_PARAM2_0             3
+#define VPP_PARAM3_0             4
+#define VPP_PARAM0_95            381
+#define VPP_PARAM1_95            382
+#define VPP_PARAM2_95            383
+#define VPP_PARAM3_95            384
+#define VPP_STATE_SIZE           385
+
 #define TCL_CMD_0                 0
 #define TCL_LIGHT_MODEL_CTL_0     1
 #define TCL_LIGHT_MODEL_CTL_1     2
@@ -567,6 +605,9 @@ struct r200_hw_state {
    struct r200_state_atom glt;
    struct r200_state_atom prf;
    struct r200_state_atom afs[2];
+   struct r200_state_atom pvs;
+   struct r200_state_atom vpi[2];
+   struct r200_state_atom vpp[2];
    struct r200_state_atom atf;
    struct r200_state_atom spr;
 
@@ -883,6 +924,7 @@ struct r200_context {
     */
    struct r200_hw_state hw;
    struct r200_state state;
+   struct r200_vertex_program *curr_vp_hw;
 
    /* Texture object bookkeeping
     */

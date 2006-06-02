@@ -93,6 +93,19 @@ static int cmdvec( int offset, int stride, int count )
    return h.i;
 }
 
+/* warning: the count here is divided by 4 compared to other cmds
+   (so it doesn't exceed the char size)! */
+static int cmdveclinear( int offset, int count ) 
+{
+   drm_radeon_cmd_header_t h;
+   h.i = 0;
+   h.veclinear.cmd_type = RADEON_CMD_VECLINEAR;
+   h.veclinear.addr_lo = offset & 0xff;
+   h.veclinear.addr_hi = (offset & 0xff00) >> 8;
+   h.veclinear.count = count;
+   return h.i;
+}
+
 static int cmdscl( int offset, int stride, int count ) 
 {
    drm_radeon_cmd_header_t h;
@@ -129,9 +142,24 @@ static GLboolean check_##NM( GLcontext *ctx, int idx )	\
 {							\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);		\
    (void) idx;						\
+   return !rmesa->TclFallback && !ctx->VertexProgram._Enabled && (FLAG);	\
+}
+
+#define TCL_OR_VP_CHECK( NM, FLAG )			\
+static GLboolean check_##NM( GLcontext *ctx, int idx )	\
+{							\
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);		\
+   (void) idx;						\
    return !rmesa->TclFallback && (FLAG);		\
 }
 
+#define VP_CHECK( NM, FLAG )				\
+static GLboolean check_##NM( GLcontext *ctx, int idx )	\
+{							\
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);		\
+   (void) idx;						\
+   return !rmesa->TclFallback && ctx->VertexProgram._Enabled && (FLAG);		\
+}
 
 
 CHECK( always, GL_TRUE )
@@ -150,7 +178,11 @@ TCL_CHECK( tcl, GL_TRUE )
 TCL_CHECK( tcl_tex, rmesa->state.texture.unit[idx].unitneeded )
 TCL_CHECK( tcl_lighting, ctx->Light.Enabled )
 TCL_CHECK( tcl_light, ctx->Light.Enabled && ctx->Light.Light[idx].Enabled )
-TCL_CHECK( tcl_ucp, (ctx->Transform.ClipPlanesEnabled & (1 << idx)) )
+TCL_OR_VP_CHECK( tcl_ucp, (ctx->Transform.ClipPlanesEnabled & (1 << idx)) )
+TCL_OR_VP_CHECK( tcl_or_vp, GL_TRUE )
+VP_CHECK( tcl_vp, GL_TRUE )
+VP_CHECK( tcl_vp_size, ctx->VertexProgram.Current->Base.NumNativeInstructions > 64 )
+VP_CHECK( tcl_vpp_size, ctx->VertexProgram.Current->Base.NumNativeParameters > 96 )
 
 
 /* Initialize the context's hardware state.
@@ -307,13 +339,27 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( cube[4], never, CUBE_STATE_SIZE, "CUBE/tex-4", 4 );
       ALLOC_STATE( cube[5], never, CUBE_STATE_SIZE, "CUBE/tex-5", 5 );
    }
-
-   ALLOC_STATE( tcl, tcl, TCL_STATE_SIZE, "TCL/tcl", 0 );
+   if (rmesa->r200Screen->drmSupportsVertexProgram) {
+      ALLOC_STATE( pvs, tcl_vp, PVS_STATE_SIZE, "PVS/pvscntl", 0 );
+      ALLOC_STATE( vpi[0], tcl_vp, VPI_STATE_SIZE, "VP/vertexprog-0", 0 );
+      ALLOC_STATE( vpi[1], tcl_vp_size, VPI_STATE_SIZE, "VP/vertexprog-1", 1 );
+      ALLOC_STATE( vpp[0], tcl_vp, VPP_STATE_SIZE, "VPP/vertexparam-0", 0 );
+      ALLOC_STATE( vpp[1], tcl_vpp_size, VPP_STATE_SIZE, "VPP/vertexparam-1", 1 );
+   }
+   else {
+      ALLOC_STATE( pvs, never, PVS_STATE_SIZE, "PVS/pvscntl", 0 );
+      ALLOC_STATE( vpi[0], never, VPI_STATE_SIZE, "VP/vertexprog-0", 0 );
+      ALLOC_STATE( vpi[1], never, VPI_STATE_SIZE, "VP/vertexprog-1", 1 );
+      ALLOC_STATE( vpp[0], never, VPP_STATE_SIZE, "VPP/vertexparam-0", 0 );
+      ALLOC_STATE( vpp[1], never, VPP_STATE_SIZE, "VPP/vertexparam-1", 1 );
+   }
+   /* FIXME: this atom has two commands, we need only one (ucp_vert_blend) for vp */
+   ALLOC_STATE( tcl, tcl_or_vp, TCL_STATE_SIZE, "TCL/tcl", 0 );
    ALLOC_STATE( msl, tcl, MSL_STATE_SIZE, "MSL/matrix-select", 0 );
    ALLOC_STATE( tcg, tcl, TCG_STATE_SIZE, "TCG/texcoordgen", 0 );
    ALLOC_STATE( mtl[0], tcl_lighting, MTL_STATE_SIZE, "MTL0/material0", 0 );
    ALLOC_STATE( mtl[1], tcl_lighting, MTL_STATE_SIZE, "MTL1/material1", 1 );
-   ALLOC_STATE( grd, tcl, GRD_STATE_SIZE, "GRD/guard-band", 0 );
+   ALLOC_STATE( grd, tcl_or_vp, GRD_STATE_SIZE, "GRD/guard-band", 0 );
    ALLOC_STATE( fog, fog, FOG_STATE_SIZE, "FOG/fog", 0 );
    ALLOC_STATE( glt, tcl_lighting, GLT_STATE_SIZE, "GLT/light-global", 0 );
    ALLOC_STATE( eye, tcl_lighting, EYE_STATE_SIZE, "EYE/eye-vector", 0 );
@@ -411,6 +457,7 @@ void r200InitState( r200ContextPtr rmesa )
    }
    rmesa->hw.afs[0].cmd[AFS_CMD_0] = cmdpkt(R200_EMIT_PP_AFS_0);
    rmesa->hw.afs[1].cmd[AFS_CMD_0] = cmdpkt(R200_EMIT_PP_AFS_1);
+   rmesa->hw.pvs.cmd[PVS_CMD_0] = cmdpkt(R200_EMIT_VAP_PVS_CNTL);
    rmesa->hw.cube[0].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_0);
    rmesa->hw.cube[0].cmd[CUBE_CMD_1] = cmdpkt(R200_EMIT_PP_CUBIC_OFFSETS_0);
    rmesa->hw.cube[1].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_1);
@@ -449,6 +496,15 @@ void r200InitState( r200ContextPtr rmesa )
       cmdvec( R200_VS_MAT_1_EMISS, 1, 16 );
    rmesa->hw.mtl[1].cmd[MTL_CMD_1] =
       cmdscl2( R200_SS_MAT_1_SHININESS, 1, 1 );
+
+   rmesa->hw.vpi[0].cmd[VPI_CMD_0] =
+      cmdveclinear( R200_PVS_PROG0, 64 );
+   rmesa->hw.vpi[1].cmd[VPI_CMD_0] =
+      cmdveclinear( R200_PVS_PROG1, 64 );
+   rmesa->hw.vpp[0].cmd[VPP_CMD_0] =
+      cmdveclinear( R200_PVS_PARAM0, 96 );
+   rmesa->hw.vpp[1].cmd[VPP_CMD_0] =
+      cmdveclinear( R200_PVS_PARAM1, 96 );
 
    rmesa->hw.grd.cmd[GRD_CMD_0] = 
       cmdscl( R200_SS_VERT_GUARD_CLIP_ADJ_ADDR, 1, 4 );

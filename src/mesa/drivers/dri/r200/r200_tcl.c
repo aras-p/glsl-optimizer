@@ -390,27 +390,86 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
    if (rmesa->NewGLState)
       r200ValidateState( ctx );
 
+   if (!ctx->VertexProgram._Enabled) {
    /* NOTE: inputs != tnl->render_inputs - these are the untransformed
     * inputs.
     */
-   if (ctx->Light.Enabled) {
-      inputs |= VERT_BIT_NORMAL;
-   }
+      if (ctx->Light.Enabled) {
+	 inputs |= VERT_BIT_NORMAL;
+      }
 
-   if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
-      inputs |= VERT_BIT_COLOR1;
-   }
+      if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
+	 inputs |= VERT_BIT_COLOR1;
+      }
 
-   if ( (ctx->Fog.FogCoordinateSource == GL_FOG_COORD) && ctx->Fog.Enabled ) {
-      inputs |= VERT_BIT_FOG;
-   }
+      if ( (ctx->Fog.FogCoordinateSource == GL_FOG_COORD) && ctx->Fog.Enabled ) {
+	 inputs |= VERT_BIT_FOG;
+      }
 
-   for (i = 0 ; i < ctx->Const.MaxTextureUnits; i++) {
-      if (ctx->Texture.Unit[i]._ReallyEnabled) {
-	 if (rmesa->TexGenNeedNormals[i]) {
-	    inputs |= VERT_BIT_NORMAL;
+      for (i = 0 ; i < ctx->Const.MaxTextureUnits; i++) {
+	 if (ctx->Texture.Unit[i]._ReallyEnabled) {
+	    if (rmesa->TexGenNeedNormals[i]) {
+	       inputs |= VERT_BIT_NORMAL;
+	    }
+	    inputs |= VERT_BIT_TEX(i);
 	 }
-	 inputs |= VERT_BIT_TEX(i);
+      }
+   }
+   else {
+      GLuint out_vtxfmt0 = 0;
+      GLuint out_vtxfmt1 = 0;
+      GLuint out_compsel = 0;
+      GLuint vp_out = rmesa->curr_vp_hw->mesa_program.Base.OutputsWritten;
+      /* can't handle other inputs, generic attribs etc. currently - should never arrive here */
+      assert ((rmesa->curr_vp_hw->mesa_program.Base.InputsRead &
+	 ~(VERT_BIT_POS | VERT_BIT_NORMAL | VERT_BIT_COLOR0 | VERT_BIT_COLOR1 |
+	  VERT_BIT_FOG | VERT_BIT_TEX0 | VERT_BIT_TEX1 | VERT_BIT_TEX2 |
+	  VERT_BIT_TEX3 | VERT_BIT_TEX4 | VERT_BIT_TEX5)) == 0);
+      inputs |= rmesa->curr_vp_hw->mesa_program.Base.InputsRead;
+      /* FIXME: this is a mess. Not really sure how to set up TCL_OUTPUT_VTXFMT
+	 in "undefined" cases (e.g. output needed later but not written by vertex program or vice versa)
+	 - however misconfiguration here will almost certainly lock up the chip.
+	 I think at the very least we need to enable tcl outputs which we write to. Maybe even need to
+	 fix up a vertex program so an output needed later always gets written?
+	 For now just set the compsel and output_vtxfmt to the outputs written.
+	 However, for simplicity we assume always all 4 values are written which may not be correct
+	 (but I don't know if it could lead to lockups). */
+      assert(vp_out & (1 << VERT_RESULT_HPOS));
+      out_vtxfmt0 = R200_VTX_XY | R200_VTX_Z0 | R200_VTX_W0;
+      /* FIXME: need to always enable color_0 otherwise doom3's shadow vp (?) will lock up (?) */
+      out_vtxfmt0 |= R200_VTX_FP_RGBA << R200_VTX_COLOR_0_SHIFT;
+      out_compsel = R200_OUTPUT_XYZW;
+      if (vp_out & (1 << VERT_RESULT_COL0)) {
+	 out_vtxfmt0 |= R200_VTX_FP_RGBA << R200_VTX_COLOR_0_SHIFT;
+	 out_compsel |= R200_OUTPUT_COLOR_0;
+      }
+      if (vp_out & (1 << VERT_RESULT_COL1)) {
+	 out_vtxfmt0 |= R200_VTX_FP_RGBA << R200_VTX_COLOR_1_SHIFT;
+	 out_compsel |= R200_OUTPUT_COLOR_1;
+      }
+      /* FIXME: probably not everything is set up for fogc and psiz to work correctly */
+      if (vp_out & (1 << VERT_RESULT_FOGC)) {
+	 out_vtxfmt0 |= R200_VTX_DISCRETE_FOG;
+         out_compsel |= R200_OUTPUT_DISCRETE_FOG;
+      }
+      if (vp_out & (1 << VERT_RESULT_PSIZ)) {
+	 out_vtxfmt0 |= R200_VTX_POINT_SIZE;
+	 out_compsel |= R200_OUTPUT_PT_SIZE;
+      }
+      for (i = VERT_RESULT_TEX0; i < VERT_RESULT_TEX6; i++) {
+	 if (vp_out & (1 << i)) {
+	    out_vtxfmt1 |= 4  << ((i - VERT_RESULT_TEX0) * 3);
+	    out_compsel |= R200_OUTPUT_TEX_0 << (i - VERT_RESULT_TEX0);
+	 }
+      }
+      if ((rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] != out_vtxfmt0) ||
+	 (rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_1] != out_vtxfmt1) ||
+	 (rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL] != out_compsel)) {
+	 R200_STATECHANGE( rmesa, vtx );
+	 rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] = out_vtxfmt0;
+	 rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_1] = out_vtxfmt1;
+	 rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL] = out_compsel;
+	 /* FIXME: should restore this when disabling vertex programs maybe? */
       }
    }
 
@@ -486,7 +545,8 @@ static void transition_to_swtnl( GLcontext *ctx )
     * need to put the card into D3D mode to make it work:
     */
    R200_STATECHANGE( rmesa, vap );
-   rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] &= ~R200_VAP_TCL_ENABLE;
+   /* not sure if it's strictly necessary to disable VAP_PROG_VTX_SHADER_ENABLE in addition to VAP_TCL_ENABLE) */
+   rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] &= ~(R200_VAP_TCL_ENABLE|R200_VAP_PROG_VTX_SHADER_ENABLE);
 }
 
 static void transition_to_hwtnl( GLcontext *ctx )
@@ -512,6 +572,10 @@ static void transition_to_hwtnl( GLcontext *ctx )
    R200_STATECHANGE( rmesa, vap );
    rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] |= R200_VAP_TCL_ENABLE;
    rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] &= ~R200_VAP_FORCE_W_TO_ONE;
+
+   if (ctx->VertexProgram._Enabled) {
+      rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] |= R200_VAP_PROG_VTX_SHADER_ENABLE;
+   }
 
    if ( ((rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] & R200_FOG_USE_MASK)
       == R200_FOG_USE_SPEC_ALPHA) &&

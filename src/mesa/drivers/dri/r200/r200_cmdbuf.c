@@ -110,6 +110,11 @@ void r200SetUpAtomList( r200ContextPtr rmesa )
    /* FIXME: is this a good place to insert that atom ? */
    insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.spr );
    insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.prf );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.pvs );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vpp[0] );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vpp[1] );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vpi[0] );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vpi[1] );
 }
 
 static void r200SaveHwState( r200ContextPtr rmesa )

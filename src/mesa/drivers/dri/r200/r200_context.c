@@ -62,6 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_tcl.h"
 #include "r200_vtxfmt.h"
 #include "r200_maos.h"
+#include "r200_vertprog.h"
 
 #define need_GL_ARB_multisample
 #define need_GL_ARB_texture_compression
@@ -76,7 +77,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_NV_vertex_program
 #include "extension_helper.h"
 
-#define DRIVER_DATE	"20060327"
+#define DRIVER_DATE	"20060602"
 
 #include "vblank.h"
 #include "utils.h"
@@ -310,6 +311,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    r200InitIoctlFuncs(&functions);
    r200InitStateFuncs(&functions);
    r200InitTextureFuncs(&functions);
+   r200InitShaderFuncs(&functions); 
 
    /* Allocate and initialize the Mesa context */
    if (sharedContextPrivate)
@@ -416,6 +418,12 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    ctx->Const.MaxLineWidth = 10.0;
    ctx->Const.MaxLineWidthAA = 10.0;
    ctx->Const.LineWidthGranularity = 0.0625;
+
+   ctx->Const.VertexProgram.MaxNativeInstructions = R200_VSF_MAX_INST;
+   ctx->Const.VertexProgram.MaxNativeAttribs = 12;
+   ctx->Const.VertexProgram.MaxNativeTemps = R200_VSF_MAX_TEMPS;
+   ctx->Const.VertexProgram.MaxNativeParameters = R200_VSF_MAX_PARAM;
+   ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
 
    /* Initialize the software rasterizer and helper modules.
     */
