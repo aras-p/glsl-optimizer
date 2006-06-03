@@ -466,6 +466,20 @@ _mesa_validate_pbo_access(GLuint dimensions,
 }
 
 
+/**
+ * Return the gl_buffer_object for the given ID.
+ * Always return NULL for ID 0.
+ */
+static INLINE struct gl_buffer_object *
+lookup_bufferobj(GLcontext *ctx, GLuint buffer)
+{
+   if (buffer == 0)
+      return NULL;
+   else
+      return (struct gl_buffer_object *)
+         _mesa_HashLookup(ctx->Shared->BufferObjects, buffer);
+}
+
 
 
 /**********************************************************************/
@@ -495,8 +509,7 @@ _mesa_BindBufferARB(GLenum target, GLuint buffer)
    }
    else {
       /* non-default buffer object */
-      const struct _mesa_HashTable *hash = ctx->Shared->BufferObjects;
-      newBufObj = (struct gl_buffer_object *) _mesa_HashLookup(hash, buffer);
+      newBufObj = lookup_bufferobj(ctx, buffer);
       if (!newBufObj) {
          /* if this is a new buffer object id, allocate a buffer object now */
          ASSERT(ctx->Driver.NewBufferObject);
@@ -565,89 +578,86 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
    _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
 
    for (i = 0; i < n; i++) {
-      if (ids[i] != 0) {
-         struct gl_buffer_object *bufObj = (struct gl_buffer_object *)
-            _mesa_HashLookup(ctx->Shared->BufferObjects, ids[i]);
-         if (bufObj) {
-            /* unbind any vertex pointers bound to this buffer */
-            GLuint j;
+      struct gl_buffer_object *bufObj = lookup_bufferobj(ctx, ids[i]);
+      if (bufObj) {
+         /* unbind any vertex pointers bound to this buffer */
+         GLuint j;
 
-            ASSERT(bufObj->Name == ids[i]);
+         ASSERT(bufObj->Name == ids[i]);
 
-            if (ctx->Array.Vertex.BufferObj == bufObj) {
-               bufObj->RefCount--;
-               ctx->Array.Vertex.BufferObj = ctx->Array.NullBufferObj;
-               ctx->Array.NullBufferObj->RefCount++;
-            }
-            if (ctx->Array.Normal.BufferObj == bufObj) {
-               bufObj->RefCount--;
-               ctx->Array.Normal.BufferObj = ctx->Array.NullBufferObj;
-               ctx->Array.NullBufferObj->RefCount++;
-            }
-            if (ctx->Array.Color.BufferObj == bufObj) {
-               bufObj->RefCount--;
-               ctx->Array.Color.BufferObj = ctx->Array.NullBufferObj;
-               ctx->Array.NullBufferObj->RefCount++;
-            }
-            if (ctx->Array.SecondaryColor.BufferObj == bufObj) {
-               bufObj->RefCount--;
-               ctx->Array.SecondaryColor.BufferObj = ctx->Array.NullBufferObj;
-               ctx->Array.NullBufferObj->RefCount++;
-            }
-            if (ctx->Array.FogCoord.BufferObj == bufObj) {
-               bufObj->RefCount--;
-               ctx->Array.FogCoord.BufferObj = ctx->Array.NullBufferObj;
-               ctx->Array.NullBufferObj->RefCount++;
-            }
-            if (ctx->Array.Index.BufferObj == bufObj) {
-               bufObj->RefCount--;
-               ctx->Array.Index.BufferObj = ctx->Array.NullBufferObj;
-               ctx->Array.NullBufferObj->RefCount++;
-            }
-            if (ctx->Array.EdgeFlag.BufferObj == bufObj) {
-               bufObj->RefCount--;
-               ctx->Array.EdgeFlag.BufferObj = ctx->Array.NullBufferObj;
-               ctx->Array.NullBufferObj->RefCount++;
-            }
-            for (j = 0; j < MAX_TEXTURE_UNITS; j++) {
-               if (ctx->Array.TexCoord[j].BufferObj == bufObj) {
-                  bufObj->RefCount--;
-                  ctx->Array.TexCoord[j].BufferObj = ctx->Array.NullBufferObj;
-                  ctx->Array.NullBufferObj->RefCount++;
-               }
-            }
-            for (j = 0; j < VERT_ATTRIB_MAX; j++) {
-               if (ctx->Array.VertexAttrib[j].BufferObj == bufObj) {
-                  bufObj->RefCount--;
-                  ctx->Array.VertexAttrib[j].BufferObj = ctx->Array.NullBufferObj;
-                  ctx->Array.NullBufferObj->RefCount++;
-               }
-            }
-
-            if (ctx->Array.ArrayBufferObj == bufObj) {
-               _mesa_BindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
-            }
-            if (ctx->Array.ElementArrayBufferObj == bufObj) {
-               _mesa_BindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, 0 );
-            }
-
-            if (ctx->Pack.BufferObj == bufObj) {
-               _mesa_BindBufferARB( GL_PIXEL_PACK_BUFFER_EXT, 0 );
-            }
-            if (ctx->Unpack.BufferObj == bufObj) {
-               _mesa_BindBufferARB( GL_PIXEL_UNPACK_BUFFER_EXT, 0 );
-            }
-
-            /* The ID is immediately freed for re-use */
-            _mesa_remove_buffer_object(ctx, bufObj);
+         if (ctx->Array.Vertex.BufferObj == bufObj) {
             bufObj->RefCount--;
-            if (bufObj->RefCount <= 0) {
-               ASSERT(ctx->Array.ArrayBufferObj != bufObj);
-               ASSERT(ctx->Array.ElementArrayBufferObj != bufObj);
-               ASSERT(ctx->Array.Vertex.BufferObj != bufObj);
-               ASSERT(ctx->Driver.DeleteBuffer);
-               ctx->Driver.DeleteBuffer(ctx, bufObj);
+            ctx->Array.Vertex.BufferObj = ctx->Array.NullBufferObj;
+            ctx->Array.NullBufferObj->RefCount++;
+         }
+         if (ctx->Array.Normal.BufferObj == bufObj) {
+            bufObj->RefCount--;
+            ctx->Array.Normal.BufferObj = ctx->Array.NullBufferObj;
+            ctx->Array.NullBufferObj->RefCount++;
+         }
+         if (ctx->Array.Color.BufferObj == bufObj) {
+            bufObj->RefCount--;
+            ctx->Array.Color.BufferObj = ctx->Array.NullBufferObj;
+            ctx->Array.NullBufferObj->RefCount++;
+         }
+         if (ctx->Array.SecondaryColor.BufferObj == bufObj) {
+            bufObj->RefCount--;
+            ctx->Array.SecondaryColor.BufferObj = ctx->Array.NullBufferObj;
+            ctx->Array.NullBufferObj->RefCount++;
+         }
+         if (ctx->Array.FogCoord.BufferObj == bufObj) {
+            bufObj->RefCount--;
+            ctx->Array.FogCoord.BufferObj = ctx->Array.NullBufferObj;
+            ctx->Array.NullBufferObj->RefCount++;
+         }
+         if (ctx->Array.Index.BufferObj == bufObj) {
+            bufObj->RefCount--;
+            ctx->Array.Index.BufferObj = ctx->Array.NullBufferObj;
+            ctx->Array.NullBufferObj->RefCount++;
+         }
+         if (ctx->Array.EdgeFlag.BufferObj == bufObj) {
+            bufObj->RefCount--;
+            ctx->Array.EdgeFlag.BufferObj = ctx->Array.NullBufferObj;
+            ctx->Array.NullBufferObj->RefCount++;
+         }
+         for (j = 0; j < MAX_TEXTURE_UNITS; j++) {
+            if (ctx->Array.TexCoord[j].BufferObj == bufObj) {
+               bufObj->RefCount--;
+               ctx->Array.TexCoord[j].BufferObj = ctx->Array.NullBufferObj;
+               ctx->Array.NullBufferObj->RefCount++;
             }
+         }
+         for (j = 0; j < VERT_ATTRIB_MAX; j++) {
+            if (ctx->Array.VertexAttrib[j].BufferObj == bufObj) {
+               bufObj->RefCount--;
+               ctx->Array.VertexAttrib[j].BufferObj = ctx->Array.NullBufferObj;
+               ctx->Array.NullBufferObj->RefCount++;
+            }
+         }
+
+         if (ctx->Array.ArrayBufferObj == bufObj) {
+            _mesa_BindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
+         }
+         if (ctx->Array.ElementArrayBufferObj == bufObj) {
+            _mesa_BindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, 0 );
+         }
+
+         if (ctx->Pack.BufferObj == bufObj) {
+            _mesa_BindBufferARB( GL_PIXEL_PACK_BUFFER_EXT, 0 );
+         }
+         if (ctx->Unpack.BufferObj == bufObj) {
+            _mesa_BindBufferARB( GL_PIXEL_UNPACK_BUFFER_EXT, 0 );
+         }
+
+         /* The ID is immediately freed for re-use */
+         _mesa_remove_buffer_object(ctx, bufObj);
+         bufObj->RefCount--;
+         if (bufObj->RefCount <= 0) {
+            ASSERT(ctx->Array.ArrayBufferObj != bufObj);
+            ASSERT(ctx->Array.ElementArrayBufferObj != bufObj);
+            ASSERT(ctx->Array.Vertex.BufferObj != bufObj);
+            ASSERT(ctx->Driver.DeleteBuffer);
+            ctx->Driver.DeleteBuffer(ctx, bufObj);
          }
       }
    }
@@ -715,15 +725,12 @@ _mesa_GenBuffersARB(GLsizei n, GLuint *buffer)
 GLboolean GLAPIENTRY
 _mesa_IsBufferARB(GLuint id)
 {
-   struct gl_buffer_object * bufObj;
+   struct gl_buffer_object *bufObj;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
-   if (id == 0)
-      return GL_FALSE;
-
    _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
-   bufObj = (struct gl_buffer_object *) _mesa_HashLookup(ctx->Shared->BufferObjects, id);
+   bufObj = lookup_bufferobj(ctx, id);
    _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
    return bufObj ? GL_TRUE : GL_FALSE;
