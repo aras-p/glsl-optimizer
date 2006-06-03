@@ -16,6 +16,7 @@
  *  - Handle ARB_position_invarient
  *  - Relative register addressing
  *  - Implement any missing instructions
+ *  - Fix scalar instructions (the other "writemask")
  */
 
 static int t_dst_mask(int mask);
