@@ -67,7 +67,7 @@ make_srcreg(nouveau_vertex_program *vp,
 {
 	switch (type) {
 	case HW_INPUT:
-		src->hw  = &vp->inputs[id];
+		src->hw  = NULL;
 		src->idx = id;
 		break;
 	case HW_TEMP:
@@ -134,33 +134,38 @@ src_to_hw(nouveau_vertex_program *vp, nouveau_srcreg *src,
 		return hs;
 	}
 
-	switch (src->hw->file) {
-	case HW_INPUT:
-		if (*is != -1) {
-			fprintf(stderr, "multiple inputs detected... not good\n");
-			return;
-		}
-		*is = src->hw->hw_id;
+	if (!src->hw) { /* this is a forced read from a "real" hardware source */
+		*is = src->idx;
 		hs |= (NV40_VP_SRC_REG_TYPE_INPUT << NV40_VP_SRC_REG_TYPE_SHIFT);
-		break;
-	case HW_CONST:
-		if (*cs != -1) {
-			fprintf(stderr, "multiple consts detected... not good\n");
-			return;
-		}
-		*cs = src->hw->hw_id;
-		hs |= (NV40_VP_SRC_REG_TYPE_CONST << NV40_VP_SRC_REG_TYPE_SHIFT);
-		break;
-	case HW_TEMP:
-		if (src->hw->hw_id == -1) {
-			fprintf(stderr, "read from unwritten temp!\n");
-			return;
-		}
-		hs |= (NV40_VP_SRC_REG_TYPE_TEMP << NV40_VP_SRC_REG_TYPE_SHIFT) |
-			(src->hw->hw_id << NV40_VP_SRC_TEMP_SRC_SHIFT);
+	} else {
+		switch (src->hw->file) {
+		case HW_INPUT:
+			if (*is != -1) {
+				fprintf(stderr, "multiple inputs detected... not good\n");
+				return;
+			}
+			*is = src->hw->hw_id;
+			hs |= (NV40_VP_SRC_REG_TYPE_INPUT << NV40_VP_SRC_REG_TYPE_SHIFT);
+			break;
+		case HW_CONST:
+			if (*cs != -1) {
+				fprintf(stderr, "multiple consts detected... not good\n");
+				return;
+			}
+			*cs = src->hw->hw_id;
+			hs |= (NV40_VP_SRC_REG_TYPE_CONST << NV40_VP_SRC_REG_TYPE_SHIFT);
+			break;
+		case HW_TEMP:
+			if (src->hw->hw_id == -1) {
+				fprintf(stderr, "read from unwritten temp!\n");
+				return;
+			}
+			hs |= (NV40_VP_SRC_REG_TYPE_TEMP << NV40_VP_SRC_REG_TYPE_SHIFT) |
+				(src->hw->hw_id << NV40_VP_SRC_TEMP_SRC_SHIFT);
 
-		if (--src->hw->ref == 0)
-			free_hw_temp(vp, src->hw->hw_id);
+			if (--src->hw->ref == 0)
+				free_hw_temp(vp, src->hw->hw_id);
+		}
 	}
 
 	hs |= (src->swizzle << NV40_VP_SRC_SWZ_ALL_SHIFT);
@@ -219,13 +224,13 @@ emit_arith(nouveau_vertex_program *vp, int op,
 	if (dest->condreg) hop[0] |= NV40_VP_INST_COND_REG_SELECT_1;
 	if (dest->condup ) hop[0] |= NV40_VP_INST_COND_UPDATE_ENABLE;
 
-	if (hwdest->file == HW_OUTPUT)
+	if (hwdest == NULL /* write output */)
 		hop[0] |= NV40_VP_INST0_UNK0;
 	else {
 		if (hwdest->hw_id == -1)
 			hwdest->hw_id = alloc_hw_temp(vp);
 
-		hop[0] = (hwdest->hw_id << NV40_VP_INST_DEST_TEMP_SHIFT);
+		hop[0] |= (hwdest->hw_id << NV40_VP_INST_DEST_TEMP_SHIFT);
 		if (flags & NOUVEAU_OUT_ABS)
 			hop[0] |= NV40_VP_INST_DEST_TEMP_ABS;
 
@@ -245,8 +250,8 @@ emit_arith(nouveau_vertex_program *vp, int op,
 			  (insrc    << NV40_VP_INST_INPUT_SRC_SHIFT);
 
 	/* bits 31:0 */
-	if (hwdest->file == HW_OUTPUT) {
-		hop[3] |= (dest->mask | (hwdest->hw_id << NV40_VP_INST_DEST_SHIFT));
+	if (hwdest == NULL) {
+		hop[3] |= (dest->mask | (dest->idx << NV40_VP_INST_DEST_SHIFT));
 	} else {
 		hop[3] |= (dest->mask | (NV40_VP_INST_DEST_TEMP << NV40_VP_INST_DEST_SHIFT));
 	}
@@ -713,6 +718,11 @@ main(int argc, char **argv)
 	inst[0].DstReg.File      = PROGRAM_TEMPORARY;
 	inst[0].DstReg.Index     = 0;
 	inst[0].DstReg.WriteMask = WRITEMASK_XYZW;
+	inst[0].DstReg.CondMask    = COND_TR;
+	inst[0].DstReg.CondSwizzle = MAKE_SWIZZLE4(0, 1, 2, 3);
+	inst[0].DstReg.CondSrc     = 0;
+	inst[0].CondUpdate         = 0;
+	inst[0].CondDst            = 0;
 
 	inst[1].Opcode = OPCODE_ADD;
 	inst[1].SrcReg[0].File       = PROGRAM_TEMPORARY;
@@ -727,6 +737,11 @@ main(int argc, char **argv)
 	inst[1].DstReg.File      = PROGRAM_OUTPUT;
 	inst[1].DstReg.Index     = VERT_RESULT_HPOS;
 	inst[1].DstReg.WriteMask = WRITEMASK_XYZW;
+	inst[1].DstReg.CondMask    = COND_TR;
+	inst[1].DstReg.CondSwizzle = MAKE_SWIZZLE4(0, 1, 2, 3);
+	inst[1].DstReg.CondSrc     = 0;
+	inst[1].CondUpdate         = 0;
+	inst[1].CondDst            = 0;
 
 	inst[2].Opcode = OPCODE_END;
 
