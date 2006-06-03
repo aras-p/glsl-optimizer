@@ -7,8 +7,8 @@ include $(TOP)/configs/current
 ### Include directories
 INCLUDE_DIRS = \
 	-I. \
-	-I$(DRM_SOURCE_PATH)/shared-core \
-	-I$(DRM_SOURCE_PATH)/libdrm \
+	-I/usr/include \
+	-I/usr/include/drm \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa \
@@ -25,10 +25,7 @@ INCLUDE_DIRS = \
 
 HEADERS = egldri.h
 
-SOURCES = egldri.c \
-          $(DRM_SOURCE_PATH)/libdrm/xf86drm.c \
-          $(DRM_SOURCE_PATH)/libdrm/xf86drmHash.c \
-          $(DRM_SOURCE_PATH)/libdrm/xf86drmRandom.c
+SOURCES = egldri.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
