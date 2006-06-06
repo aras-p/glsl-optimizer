@@ -39,6 +39,15 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_program.h"
 #include "program_instruction.h"
 
+#if SWIZZLE_X != VSF_IN_COMPONENT_X || \
+    SWIZZLE_Y != VSF_IN_COMPONENT_Y || \
+    SWIZZLE_Z != VSF_IN_COMPONENT_Z || \
+    SWIZZLE_W != VSF_IN_COMPONENT_W || \
+    SWIZZLE_ZERO != VSF_IN_COMPONENT_ZERO || \
+    SWIZZLE_ONE != VSF_IN_COMPONENT_ONE
+#error Cannot change these!
+#endif
+    
 #define SCALAR_FLAG (1<<31)
 #define FLAG_MASK (1<<31)
 #define OP_MASK	(0xf)  /* we are unlikely to have more than 15 */
@@ -211,19 +220,10 @@ static unsigned long t_src_class(enum register_file file)
 	}
 }
 
-static unsigned long t_swizzle(GLubyte swizzle)
+static __inline unsigned long t_swizzle(GLubyte swizzle)
 {
-	switch(swizzle){
-		case SWIZZLE_X: return VSF_IN_COMPONENT_X;
-		case SWIZZLE_Y: return VSF_IN_COMPONENT_Y;
-		case SWIZZLE_Z: return VSF_IN_COMPONENT_Z;
-		case SWIZZLE_W: return VSF_IN_COMPONENT_W;
-		case SWIZZLE_ZERO: return VSF_IN_COMPONENT_ZERO;
-		case SWIZZLE_ONE: return VSF_IN_COMPONENT_ONE;
-		default:
-			fprintf(stderr, "problem in %s", __FUNCTION__);
-			exit(0);
-	}
+/* this is in fact a NOP as the Mesa SWIZZLE_* are all identical to VSF_IN_COMPONENT_* */
+	return swizzle;
 }
 
 #if 0
@@ -263,6 +263,10 @@ static unsigned long t_src_index(struct r300_vertex_program *vp, struct prog_src
 		
 		return vp->inputs[src->Index];
 	}else{
+		if (src->Index < 0) {
+			fprintf(stderr, "WARNING negative offsets for indirect addressing do not work\n");
+			return 0;
+		}
 		return src->Index;
 	}
 }
@@ -290,7 +294,7 @@ static unsigned long t_src_scalar(struct r300_vertex_program *vp, struct prog_sr
 				t_swizzle(GET_SWZ(src->Swizzle, 0)),
 				t_swizzle(GET_SWZ(src->Swizzle, 0)),
 				t_src_class(src->File),
-				src->NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+				src->NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src->RelAddr << 4);
 }
 
 static unsigned long t_opcode(enum prog_opcode opcode)
@@ -334,11 +338,11 @@ static unsigned long op_operands(enum prog_opcode opcode)
 }
 
 /* TODO: Get rid of t_src_class call */
-#define CMP_SRCS(a, b) (a.Index != b.Index && \
+#define CMP_SRCS(a, b) ((a.RelAddr != b.RelAddr) || (a.Index != b.Index && \
 		       ((t_src_class(a.File) == VSF_IN_CLASS_PARAM && \
 			 t_src_class(b.File) == VSF_IN_CLASS_PARAM) || \
 			(t_src_class(a.File) == VSF_IN_CLASS_ATTR && \
-			 t_src_class(b.File) == VSF_IN_CLASS_ATTR))) \
+			 t_src_class(b.File) == VSF_IN_CLASS_ATTR)))) \
 			 
 #define ZERO_SRC_0 MAKE_VSF_SOURCE(t_src_index(vp, &src[0]), \
 				   SWIZZLE_ZERO, SWIZZLE_ZERO, \
@@ -578,7 +582,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 				o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[2]),
 						SWIZZLE_X, SWIZZLE_Y,
 						SWIZZLE_Z, SWIZZLE_W,
-						t_src_class(src[2].File), VSF_FLAG_NONE);
+						t_src_class(src[2].File), VSF_FLAG_NONE) | (src[2].RelAddr << 4);
 
 				o_inst->src2=ZERO_SRC_2;
 				o_inst->src3=ZERO_SRC_2;
@@ -586,6 +590,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 						
 				src[2].File=PROGRAM_TEMPORARY;
 				src[2].Index=u_temp_i;
+				src[2].RelAddr=0;
 				u_temp_i--;
 			}
 			
@@ -599,7 +604,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 				o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
 						SWIZZLE_X, SWIZZLE_Y,
 						SWIZZLE_Z, SWIZZLE_W,
-						t_src_class(src[0].File), VSF_FLAG_NONE);
+						t_src_class(src[0].File), VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 
 				o_inst->src2=ZERO_SRC_0;
 				o_inst->src3=ZERO_SRC_0;
@@ -607,6 +612,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 						
 				src[0].File=PROGRAM_TEMPORARY;
 				src[0].Index=u_temp_i;
+				src[0].RelAddr=0;
 				u_temp_i--;
 			}
 		}
@@ -703,7 +709,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 					t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
 					SWIZZLE_ZERO,
 					t_src_class(src[0].File),
-					src[0].NegateBase ? VSF_FLAG_XYZ : VSF_FLAG_NONE);
+					src[0].NegateBase ? VSF_FLAG_XYZ : VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 			
 			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
 					t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
@@ -711,7 +717,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 					t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
 					SWIZZLE_ZERO,
 					t_src_class(src[1].File),
-					src[1].NegateBase ? VSF_FLAG_XYZ : VSF_FLAG_NONE);
+					src[1].NegateBase ? VSF_FLAG_XYZ : VSF_FLAG_NONE) | (src[1].RelAddr << 4);
 
 			o_inst->src3=ZERO_SRC_1;
 			goto next;
@@ -731,7 +737,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 					t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
 					t_swizzle(GET_SWZ(src[1].Swizzle, 3)),
 					t_src_class(src[1].File),
-					(!src[1].NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					(!src[1].NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE)  | (src[1].RelAddr << 4);
 #else
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, t_dst_index(vp, &vpi->DstReg),
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
@@ -743,7 +749,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 					t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
 					t_swizzle(GET_SWZ(src[1].Swizzle, 3)),
 					t_src_class(src[1].File),
-					(!src[1].NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					(!src[1].NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[1].RelAddr << 4);
 			o_inst->src3=0;
 #endif
 			goto next;
@@ -759,7 +765,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 					t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
 					t_swizzle(GET_SWZ(src[0].Swizzle, 3)),
 					t_src_class(src[0].File),
-					(!src[0].NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					(!src[0].NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 			o_inst->src3=0;
 			goto next;
 			
@@ -786,7 +792,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 					VSF_IN_COMPONENT_W,
 					VSF_IN_CLASS_TMP,
 					/* Not 100% sure about this */
-					(!src[1].NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE/*VSF_FLAG_ALL*/);
+					(!src[0].NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE/*VSF_FLAG_ALL*/);
 
 			o_inst->src3=ZERO_SRC_0;
 			u_temp_i--;
@@ -802,7 +808,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 					t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
 					t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
 					t_src_class(src[0].File),
-					src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 			o_inst->src2=ZERO_SRC_0;
 			o_inst->src3=ZERO_SRC_0;
 			goto next;
@@ -817,21 +823,21 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 					VSF_IN_COMPONENT_ZERO, // z
 					t_swizzle(GET_SWZ(src[0].Swizzle, 1)), // y
 					t_src_class(src[0].File),
-					src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
 					t_swizzle(GET_SWZ(src[0].Swizzle, 1)), // y
 					t_swizzle(GET_SWZ(src[0].Swizzle, 3)), // w
 					VSF_IN_COMPONENT_ZERO, // z
 					t_swizzle(GET_SWZ(src[0].Swizzle, 0)), // x
 					t_src_class(src[0].File),
-					src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 			o_inst->src3=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
 					t_swizzle(GET_SWZ(src[0].Swizzle, 1)), // y
 					t_swizzle(GET_SWZ(src[0].Swizzle, 0)), // x
 					VSF_IN_COMPONENT_ZERO, // z
 					t_swizzle(GET_SWZ(src[0].Swizzle, 3)), // w
 					t_src_class(src[0].File),
-					src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 			goto next;
 			
 		case OPCODE_DPH://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ONE} PARAM 0{} {X Y Z W} 
@@ -844,7 +850,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 					t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
 					VSF_IN_COMPONENT_ONE,
 					t_src_class(src[0].File),
-					src[0].NegateBase ? VSF_FLAG_XYZ : VSF_FLAG_NONE);
+					src[0].NegateBase ? VSF_FLAG_XYZ : VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 			o_inst->src2=t_src(vp, &src[1]);
 			o_inst->src3=ZERO_SRC_1;
 			goto next;
@@ -864,7 +870,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 					t_swizzle(GET_SWZ(src[0].Swizzle, 0)), // x
 					t_swizzle(GET_SWZ(src[0].Swizzle, 3)), // w
 					t_src_class(src[0].File),
-					src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 			
 			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
 					t_swizzle(GET_SWZ(src[1].Swizzle, 2)), // z
@@ -872,7 +878,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 					t_swizzle(GET_SWZ(src[1].Swizzle, 1)), // y
 					t_swizzle(GET_SWZ(src[1].Swizzle, 3)), // w
 					t_src_class(src[1].File),
-					src[1].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					src[1].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[1].RelAddr << 4);
 			
 			o_inst->src3=ZERO_SRC_1;
 			o_inst++;
@@ -887,7 +893,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 					t_swizzle(GET_SWZ(src[1].Swizzle, 0)), // x
 					t_swizzle(GET_SWZ(src[1].Swizzle, 3)), // w
 					t_src_class(src[1].File),
-					(!src[1].NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					(!src[1].NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[1].RelAddr << 4);
 			
 			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
 					t_swizzle(GET_SWZ(src[0].Swizzle, 2)), // z
@@ -895,7 +901,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 					t_swizzle(GET_SWZ(src[0].Swizzle, 1)), // y
 					t_swizzle(GET_SWZ(src[0].Swizzle, 3)), // w
 					t_src_class(src[0].File),
-					src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 			
 			o_inst->src3=MAKE_VSF_SOURCE(u_temp_i+1,
 					VSF_IN_COMPONENT_X,
