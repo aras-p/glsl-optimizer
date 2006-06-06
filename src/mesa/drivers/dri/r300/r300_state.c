@@ -1678,10 +1678,6 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 	
 	ctx = rmesa->radeon.glCtx;
 	
-	/* Disable tnl programs when doing software vertex programs.
-	   I can only hope this actually disables it at the right time. */
-	ctx->_MaintainTnlProgram = hw_tcl_on;
-	
 	if (rmesa->NewGLState && hw_tcl_on) {
 		rmesa->NewGLState = 0;
 		

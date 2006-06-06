@@ -87,14 +87,7 @@ _tnl_CreateContext( GLcontext *ctx )
    _tnl_vtx_init( ctx );
 
    if (ctx->_MaintainTnlProgram) {
-      tnl->vp_cache = (struct tnl_cache *) MALLOC(sizeof(*tnl->vp_cache));
-      tnl->vp_cache->size = 5;
-      tnl->vp_cache->n_items = 0;
-      tnl->vp_cache->items = (struct tnl_cache_item**)
-         _mesa_malloc(tnl->vp_cache->size * sizeof(*tnl->vp_cache->items));
-      _mesa_memset(tnl->vp_cache->items, 0, tnl->vp_cache->size *
-				sizeof(*tnl->vp_cache->items));
-      
+      _tnl_ProgramCacheInit( ctx );
       _tnl_install_pipeline( ctx, _tnl_vp_pipeline );
    } else {
       _tnl_install_pipeline( ctx, _tnl_default_pipeline );
