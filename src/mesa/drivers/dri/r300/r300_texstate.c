@@ -190,7 +190,8 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	t->format &= ~(R200_TXFORMAT_FORMAT_MASK |
 			    R200_TXFORMAT_ALPHA_IN_MAP);
 
-	if (VALID_FORMAT(baseImage->TexFormat->MesaFormat)) {
+	if (VALID_FORMAT(baseImage->TexFormat->MesaFormat) &&
+	    tx_table[baseImage->TexFormat->MesaFormat].flag) {
 		t->format =
 		    tx_table[baseImage->TexFormat->MesaFormat].format;
 #if 1
