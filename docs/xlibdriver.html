@@ -70,17 +70,26 @@ Here are some examples:
 
 <H2>Double Buffering</H2>
 <p>
-Mesa can use either an X Pixmap or XImage as the backbuffer when in
-double buffer mode.  Using GLX, the default is to use an XImage.  The
-<b>MESA_BACK_BUFFER</b> environment variable can override this.  The valid
-values for <b>MESA_BACK_BUFFER</b> are:  <b>Pixmap</b> and <b>XImage</b>
-(only the first letter is checked, case doesn't matter).
+Mesa can use either an X Pixmap or XImage as the back color buffer when in
+double-buffer mode.
+The default is to use an XImage.
+The <b>MESA_BACK_BUFFER</b> environment variable can override this.
+The valid values for <b>MESA_BACK_BUFFER</b> are:  <b>Pixmap</b> and
+<b>XImage</b> (only the first letter is checked, case doesn't matter).
 </p>
 
 <p>
-A pixmap is faster when drawing simple lines and polygons while an
-XImage is faster when Mesa has to do pixel-by-pixel rendering.  If you
-need depth buffering the XImage will almost surely be faster.
+Using XImage is almost always faster than a Pixmap since it resides in
+the application's address space.
+When glXSwapBuffers() is called, XPutImage() or XShmPutImage() is used
+to transfer the XImage to the on-screen window.
+</p>
+<p>
+A Pixmap may be faster when doing remote rendering of a simple scene.
+Some OpenGL features will be very slow with a Pixmap (for example, blending
+will require a round-trip message for pixel readback.)
+</p>
+<p>
 Experiment with the MESA_BACK_BUFFER variable to see which is faster
 for your application.
 </p>
