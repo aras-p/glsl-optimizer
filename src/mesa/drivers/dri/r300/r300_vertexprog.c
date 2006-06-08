@@ -60,7 +60,7 @@ static struct{
 }op_names[]={
 	OPN(ABS, 1),
 	OPN(ADD, 2),
-	OPN(ARL, 1),
+	OPN(ARL, 1|SCALAR_FLAG),
 	OPN(DP3, 2),
 	OPN(DP4, 2),
 	OPN(DPH, 2),
