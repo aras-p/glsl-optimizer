@@ -3,6 +3,7 @@
 #include "enums.h"
 
 #include "program.h"
+#include "tnl/tnl.h"
 #include "r300_context.h"
 #include "r300_fragprog.h"
 
