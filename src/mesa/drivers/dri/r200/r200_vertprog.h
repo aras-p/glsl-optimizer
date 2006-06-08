@@ -72,7 +72,8 @@ extern void r200SetupVertexProg( GLcontext *ctx );
 #define R200_VSF_OUT_CLASS_RESULT_POINTSIZE	(8 << 8)
 #define R200_VSF_OUT_CLASS_MASK			(31 << 8)
 
-/* opcodes - they all are the same as on r300 it seems */
+/* opcodes - they all are the same as on r300 it seems, however
+   LIT and POW require different setup */
 #define R200_VPI_OUT_OP_DOT                     (1 << 0)
 #define R200_VPI_OUT_OP_MUL                     (2 << 0)
 #define R200_VPI_OUT_OP_ADD                     (3 << 0)

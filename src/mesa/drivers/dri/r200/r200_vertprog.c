@@ -44,44 +44,42 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define SCALAR_FLAG (1<<31)
 #define FLAG_MASK (1<<31)
 #define OP_MASK (0xf)  /* we are unlikely to have more than 15 */
-#define OPN(operator, ip, op) {#operator, OPCODE_##operator, ip, op}
+#define OPN(operator, ip) {#operator, OPCODE_##operator, ip}
 
 static struct{
    char *name;
    int opcode;
    unsigned long ip; /* number of input operands and flags */
-   unsigned long op;
 }op_names[]={
-   OPN(ABS, 1, 1),
-   OPN(ADD, 2, 1),
-   OPN(ARL, 1, 1|SCALAR_FLAG),
-   OPN(DP3, 2, 3|SCALAR_FLAG),
-   OPN(DP4, 2, 3|SCALAR_FLAG),
-   OPN(DPH, 2, 3|SCALAR_FLAG),
-   OPN(DST, 2, 1),
-   OPN(EX2, 1|SCALAR_FLAG, 4|SCALAR_FLAG),
-   OPN(EXP, 1|SCALAR_FLAG, 1),
-   OPN(FLR, 1, 1),
-   OPN(FRC, 1, 1),
-   OPN(LG2, 1|SCALAR_FLAG, 4|SCALAR_FLAG),
-   OPN(LIT, 1, 1),
-   OPN(LOG, 1|SCALAR_FLAG, 1),
-   OPN(MAD, 3, 1),
-   OPN(MAX, 2, 1),
-   OPN(MIN, 2, 1),
-   OPN(MOV, 1, 1),
-   OPN(MUL, 2, 1),
-   OPN(POW, 2|SCALAR_FLAG, 4|SCALAR_FLAG),
-   OPN(RCP, 1|SCALAR_FLAG, 4|SCALAR_FLAG),
-   OPN(RSQ, 1|SCALAR_FLAG, 4|SCALAR_FLAG),
-   OPN(SGE, 2, 1),
-   OPN(SLT, 2, 1),
-   OPN(SUB, 2, 1),
-   OPN(SWZ, 1, 1),
-   OPN(XPD, 2, 1),
-   OPN(RCC, 0, 0), //extra
-   OPN(PRINT, 0, 0),
-   OPN(END, 0, 0),
+   OPN(ABS, 1),
+   OPN(ADD, 2),
+   OPN(ARL, 1|SCALAR_FLAG),
+   OPN(DP3, 2),
+   OPN(DP4, 2),
+   OPN(DPH, 2),
+   OPN(DST, 2),
+   OPN(EX2, 1|SCALAR_FLAG),
+   OPN(EXP, 1|SCALAR_FLAG),
+   OPN(FLR, 1),
+   OPN(FRC, 1),
+   OPN(LG2, 1|SCALAR_FLAG),
+   OPN(LIT, 1),
+   OPN(LOG, 1|SCALAR_FLAG),
+   OPN(MAD, 3),
+   OPN(MAX, 2),
+   OPN(MIN, 2),
+   OPN(MOV, 1),
+   OPN(MUL, 2),
+   OPN(POW, 2|SCALAR_FLAG),
+   OPN(RCP, 1|SCALAR_FLAG),
+   OPN(RSQ, 1|SCALAR_FLAG),
+   OPN(SGE, 2),
+   OPN(SLT, 2),
+   OPN(SUB, 2),
+   OPN(SWZ, 1),
+   OPN(XPD, 2),
+   OPN(PRINT, 0),
+   OPN(END, 0),
 };
 #undef OPN
 
@@ -312,11 +310,14 @@ static unsigned long t_opcode(enum prog_opcode opcode)
 {
 
    switch(opcode){
+   case OPCODE_ADD: return R200_VPI_OUT_OP_ADD;
+   case OPCODE_DP4: return R200_VPI_OUT_OP_DOT;
    case OPCODE_DST: return R200_VPI_OUT_OP_DST;
    case OPCODE_EX2: return R200_VPI_OUT_OP_EX2;
    case OPCODE_EXP: return R200_VPI_OUT_OP_EXP;
    case OPCODE_FRC: return R200_VPI_OUT_OP_FRC;
    case OPCODE_LG2: return R200_VPI_OUT_OP_LG2;
+   case OPCODE_LIT: return R200_VPI_OUT_OP_LIT;
    case OPCODE_LOG: return R200_VPI_OUT_OP_LOG;
    case OPCODE_MAX: return R200_VPI_OUT_OP_MAX;
    case OPCODE_MIN: return R200_VPI_OUT_OP_MIN;
@@ -325,8 +326,6 @@ static unsigned long t_opcode(enum prog_opcode opcode)
    case OPCODE_RSQ: return R200_VPI_OUT_OP_RSQ;
    case OPCODE_SGE: return R200_VPI_OUT_OP_SGE;
    case OPCODE_SLT: return R200_VPI_OUT_OP_SLT;
-   case OPCODE_DP4: return R200_VPI_OUT_OP_DOT;
-   case OPCODE_ADD: return R200_VPI_OUT_OP_ADD;
 
    default: 
       fprintf(stderr, "%s: Should not be called with opcode %d!", __FUNCTION__, opcode);
@@ -350,11 +349,11 @@ static unsigned long op_operands(enum prog_opcode opcode)
 }
 
 /* TODO: Get rid of t_src_class call */
-#define CMP_SRCS(a, b) ((a.RelAddr != b.RelAddr) || (a.Index != b.Index && \
+#define CMP_SRCS(a, b) (((a.RelAddr != b.RelAddr) || (a.Index != b.Index)) && \
 		       ((t_src_class(a.File) == VSF_IN_CLASS_PARAM && \
 			 t_src_class(b.File) == VSF_IN_CLASS_PARAM) || \
 			(t_src_class(a.File) == VSF_IN_CLASS_ATTR && \
-			 t_src_class(b.File) == VSF_IN_CLASS_ATTR)))) \
+			 t_src_class(b.File) == VSF_IN_CLASS_ATTR))) \
 
 /* fglrx on rv250 codes up unused sources as follows:
    unused but necessary sources are same as previous source, zero-ed out.
@@ -599,10 +598,10 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
       are_srcs_scalar = operands & SCALAR_FLAG;
       operands &= OP_MASK;
 
-      for(i=0; i < operands; i++)
+      for(i = 0; i < operands; i++)
 	 src[i] = vpi->SrcReg[i];
 
-      if(operands == 3){ /* TODO: scalars */
+      if(operands == 3){
 	 if( CMP_SRCS(src[1], src[2]) || CMP_SRCS(src[0], src[2]) ){
 	    o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_ADD,
 		(u_temp_i << R200_VPI_OUT_REG_INDEX_SHIFT) | R200_VSF_OUT_CLASS_TMP,
@@ -661,7 +660,6 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
       case OPCODE_POW:
 /* pow takes only one argument, first scalar is in slot x, 2nd in slot z (other slots don't matter).
    So may need to insert additional instruction */
-/* this appears to be different to r300 */
 	 if ((src[0].File == src[1].File) &&
 	     (src[0].Index == src[1].Index)) {
 	    o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_POW, t_dst(&vpi->DstReg),
@@ -709,12 +707,14 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
 	 goto next;
 
       case OPCODE_MOV://ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO} 
+      case OPCODE_SWZ:
 	 o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_ADD, t_dst(&vpi->DstReg),
 		t_dst_mask(vpi->DstReg.WriteMask));
 	 o_inst->src0 = t_src(vp, &src[0]);
 	 o_inst->src1 = ZERO_SRC_0;
 	 o_inst->src2 = UNUSED_SRC_1;
 	 goto next;
+      
       case OPCODE_MAD:
 	 hw_op=(src[0].File == PROGRAM_TEMPORARY &&
 	    src[1].File == PROGRAM_TEMPORARY &&
@@ -765,6 +765,21 @@ else {
 		t_src_class(src[1].File),
 		src[1].NegateBase) | (src[1].RelAddr << 4);
 
+	 o_inst->src2 = UNUSED_SRC_1;
+	 goto next;
+
+      case OPCODE_DPH://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ONE} PARAM 0{} {X Y Z W} 
+	 o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_DOT, t_dst(&vpi->DstReg),
+		t_dst_mask(vpi->DstReg.WriteMask));
+
+	 o_inst->src0 = MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+		t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
+		t_swizzle(GET_SWZ(src[0].Swizzle, 1)),
+		t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
+		VSF_IN_COMPONENT_ONE,
+		t_src_class(src[0].File),
+		src[0].NegateBase) | (src[0].RelAddr << 4);
+	 o_inst->src1 = t_src(vp, &src[1]);
 	 o_inst->src2 = UNUSED_SRC_1;
 	 goto next;
 
@@ -828,46 +843,6 @@ else {
 	 u_temp_i--;
 	 goto next;
 
-      case OPCODE_LG2:// LG2 RESULT 1.X Y Z W PARAM 0{} {X X X X}
-	 o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_LG2, t_dst(&vpi->DstReg),
-		t_dst_mask(vpi->DstReg.WriteMask));
-
-	 o_inst->src0 = MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
-		t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
-		t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
-		t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
-		t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
-		t_src_class(src[0].File),
-		src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[0].RelAddr << 4);
-	 o_inst->src1 = UNUSED_SRC_0;
-	 o_inst->src2 = UNUSED_SRC_0;
-	 goto next;
-
-      case OPCODE_LIT://LIT TMP 1.Y Z TMP 1{} {X W Z Y} TMP 1{} {Y W Z X} TMP 1{} {Y X Z W} 
-	 o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_LIT, t_dst(&vpi->DstReg),
-		t_dst_mask(vpi->DstReg.WriteMask));
-/* r200 in contrast to r300 does not seem to need any complicated setup,
-   its LIT instruction is "more native" */
-	 o_inst->src0 = t_src(vp, &src[0]);
-	 o_inst->src1 = UNUSED_SRC_0;
-	 o_inst->src2 = UNUSED_SRC_0;
-	 goto next;
-
-      case OPCODE_DPH://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ONE} PARAM 0{} {X Y Z W} 
-	 o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_DOT, t_dst(&vpi->DstReg),
-		t_dst_mask(vpi->DstReg.WriteMask));
-
-	 o_inst->src0 = MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
-		t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
-		t_swizzle(GET_SWZ(src[0].Swizzle, 1)),
-		t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
-		VSF_IN_COMPONENT_ONE,
-		t_src_class(src[0].File),
-		src[0].NegateBase) | (src[0].RelAddr << 4);
-	 o_inst->src1 = t_src(vp, &src[1]);
-	 o_inst->src2 = UNUSED_SRC_1;
-	 goto next;
-
       case OPCODE_XPD:
 	 /* mul r0, r1.yzxw, r2.zxyw
 	    mad r0, -r2.yzxw, r1.zxyw, r0
@@ -924,23 +899,8 @@ else {
 		VSF_IN_COMPONENT_W,
 		VSF_IN_CLASS_TMP,
 		VSF_FLAG_NONE);
-
 	 goto next;
 
-      case OPCODE_SWZ:
-	 o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_ADD, t_dst(&vpi->DstReg),
-		t_dst_mask(vpi->DstReg.WriteMask));
-	 o_inst->src0 = t_src(vp, &src[0]);
-	 o_inst->src1 = ZERO_SRC_0;
-	 o_inst->src2 = UNUSED_SRC_1;
-	 goto next;
-
-      case OPCODE_RCC:
-	 if (R200_DEBUG & DEBUG_FALLBACKS) {
-	    fprintf(stderr, "Don't know how to handle op %d yet\n", vpi->Opcode);
-	 }
-	 return GL_FALSE;
-      break;
       case OPCODE_END:
 	 break;
       default:
