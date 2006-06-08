@@ -51,44 +51,43 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define SCALAR_FLAG (1<<31)
 #define FLAG_MASK (1<<31)
 #define OP_MASK	(0xf)  /* we are unlikely to have more than 15 */
-#define OPN(operator, ip, op) {#operator, OPCODE_##operator, ip, op}
+#define OPN(operator, ip) {#operator, OPCODE_##operator, ip}
 
 static struct{
 	char *name;
 	int opcode;
 	unsigned long ip; /* number of input operands and flags */
-	unsigned long op;
 }op_names[]={
-	OPN(ABS, 1, 1),
-	OPN(ADD, 2, 1),
-	OPN(ARL, 1, 1|SCALAR_FLAG),
-	OPN(DP3, 2, 3|SCALAR_FLAG),
-	OPN(DP4, 2, 3|SCALAR_FLAG),
-	OPN(DPH, 2, 3|SCALAR_FLAG),
-	OPN(DST, 2, 1),
-	OPN(EX2, 1|SCALAR_FLAG, 4|SCALAR_FLAG),
-	OPN(EXP, 1|SCALAR_FLAG, 1),
-	OPN(FLR, 1, 1),
-	OPN(FRC, 1, 1),
-	OPN(LG2, 1|SCALAR_FLAG, 4|SCALAR_FLAG),
-	OPN(LIT, 1, 1),
-	OPN(LOG, 1|SCALAR_FLAG, 1),
-	OPN(MAD, 3, 1),
-	OPN(MAX, 2, 1),
-	OPN(MIN, 2, 1),
-	OPN(MOV, 1, 1),
-	OPN(MUL, 2, 1),
-	OPN(POW, 2|SCALAR_FLAG, 4|SCALAR_FLAG),
-	OPN(RCP, 1|SCALAR_FLAG, 4|SCALAR_FLAG),
-	OPN(RSQ, 1|SCALAR_FLAG, 4|SCALAR_FLAG),
-	OPN(SGE, 2, 1),
-	OPN(SLT, 2, 1),
-	OPN(SUB, 2, 1),
-	OPN(SWZ, 1, 1),
-	OPN(XPD, 2, 1),
-	OPN(RCC, 0, 0), //extra
-	OPN(PRINT, 0, 0),
-	OPN(END, 0, 0),
+	OPN(ABS, 1),
+	OPN(ADD, 2),
+	OPN(ARL, 1),
+	OPN(DP3, 2),
+	OPN(DP4, 2),
+	OPN(DPH, 2),
+	OPN(DST, 2),
+	OPN(EX2, 1|SCALAR_FLAG),
+	OPN(EXP, 1|SCALAR_FLAG),
+	OPN(FLR, 1),
+	OPN(FRC, 1),
+	OPN(LG2, 1|SCALAR_FLAG),
+	OPN(LIT, 1),
+	OPN(LOG, 1|SCALAR_FLAG),
+	OPN(MAD, 3),
+	OPN(MAX, 2),
+	OPN(MIN, 2),
+	OPN(MOV, 1),
+	OPN(MUL, 2),
+	OPN(POW, 2|SCALAR_FLAG),
+	OPN(RCP, 1|SCALAR_FLAG),
+	OPN(RSQ, 1|SCALAR_FLAG),
+	OPN(SGE, 2),
+	OPN(SLT, 2),
+	OPN(SUB, 2),
+	OPN(SWZ, 1),
+	OPN(XPD, 2),
+	OPN(RCC, 0), //extra
+	OPN(PRINT, 0),
+	OPN(END, 0),
 };
 #undef OPN
 	
