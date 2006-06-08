@@ -9,7 +9,7 @@
 
 <center>
 <h1>Mesa Frequently Asked Questions</h1>
-Last updated: 21 October 2004
+Last updated: 8 June 2006
 </center>
 
 <br>
@@ -157,6 +157,12 @@ is an OpenGL subset for mobile devices.
 isn't a conventional OpenGL implementation (it's layered upon OpenGL),
 but it does export the OpenGL API.  It allows tiled rendering, sort-last
 rendering, etc.
+</p>
+
+<p>
+<a href="http://www.ticalc.org/archives/files/fileinfo/361/36173.html"
+target="_parent">ClosedGL</a> is an OpenGL subset library for TI
+graphing calculators.
 </p>
 
 <p>
@@ -373,7 +379,7 @@ the archives) is a good way to get information.
 </p>
 
 
-<h2>4.3 Why isn't GL_EXT_texture_compression_s3tc implemented in Mesa and/or the DRI drivers?</h2>
+<h2>4.3 Why isn't GL_EXT_texture_compression_s3tc implemented in Mesa?</h2>
 <p>
 The <a href="http://oss.sgi.com/projects/ogl-sample/registry/EXT/texture_compression_s3tc.txt" target="_parent">specification for the extension</a>
 indicates that there are intellectual property (IP) and/or patent issues
@@ -385,8 +391,9 @@ implement the extension (specifically the compression/decompression
 algorithms).
 </p>
 <p>
-Until we can get official permission to do so, this extension will not
-be implemented in Mesa.
+In the mean time, a 3rd party <a href=
+"http://homepage.hispeed.ch/rscheidegger/dri_experimental/s3tc_index.html"
+target="_parent">plug-in library</a> is available.
 </p>
 
 
