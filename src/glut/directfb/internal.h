@@ -61,10 +61,13 @@ typedef struct __GlutWindow_s {
      IDirectFBSurface      *surface;
      IDirectFBGL           *gl;
 
-     /* pointer position in fullscreen mode */
+     /* cursor position in fullscreen mode */
      int                    cx;
      int                    cy;
-     int                    cz;
+     /* joystick position */
+     int                    jx;
+     int                    jy;
+     int                    jz;
      /* pressed modifiers */
      int                    modifiers;
      /* pressed buttons */

@@ -50,7 +50,7 @@ glutForceJoystickFunc( void )
 {
      if (g_game && joystick && joystick_func) {
           joystick_func( g_game->buttons, 
-                         g_game->cx, g_game->cy, g_game->cz );
+                         g_game->jx, g_game->jy, g_game->jz );
      }
 }
 
@@ -270,7 +270,7 @@ __glutInputEvent( DFBInputEvent *e )
                     if (joystick_func) {
                          __glutSetWindow( g_game );
                          joystick_func( g_game->buttons,
-                                        g_game->cx, g_game->cy, g_game->cz );
+                                        g_game->jx, g_game->jy, g_game->jz );
                     }
                }
                else {
@@ -287,7 +287,7 @@ __glutInputEvent( DFBInputEvent *e )
                     if (joystick_func) {
                          __glutSetWindow( g_game );
                          joystick_func( g_game->buttons,
-                                        g_game->cx, g_game->cy, g_game->cz );
+                                        g_game->jx, g_game->jy, g_game->jz );
                     }
                }
                else {
@@ -299,36 +299,52 @@ __glutInputEvent( DFBInputEvent *e )
                }
                break;
           case DIET_AXISMOTION:
-               switch (e->axis) {
-                    case DIAI_X:
-                         if (e->flags & DIEF_AXISABS)
-                              g_game->cx = e->axisabs;
-                         else if (e->flags & DIEF_AXISREL)
-                              g_game->cx += e->axisrel;
-                         break;
-                    case DIAI_Y:
-                         if (e->flags & DIEF_AXISABS)
-                              g_game->cy = e->axisabs;
-                         else if (e->flags & DIEF_AXISREL)
-                              g_game->cy += e->axisrel;
-                         break;
-                    case DIAI_Z:
-                         if (e->flags & DIEF_AXISABS)
-                              g_game->cz = e->axisabs;
-                         else if (e->flags & DIEF_AXISREL)
-                              g_game->cz += e->axisrel;
-                         break;
-                    default:
-                         return;
-               }
                if (e->device_id == DIDID_JOYSTICK) {
+                    switch (e->axis) {
+                         case DIAI_X:
+                              if (e->flags & DIEF_AXISABS)
+                                   g_game->jx = e->axisabs;
+                              else if (e->flags & DIEF_AXISREL)
+                                   g_game->jx += e->axisrel;
+                              break;
+                         case DIAI_Y:
+                              if (e->flags & DIEF_AXISABS)
+                                   g_game->jy = e->axisabs;
+                              else if (e->flags & DIEF_AXISREL)
+                                   g_game->jy += e->axisrel;
+                              break;
+                         case DIAI_Z:
+                              if (e->flags & DIEF_AXISABS)
+                                   g_game->jz = e->axisabs;
+                              else if (e->flags & DIEF_AXISREL)
+                                   g_game->jz += e->axisrel;
+                              break;
+                         default:
+                              break;
+                    } 
                     if (joystick_func) {
                          __glutSetWindow( g_game );
                          joystick_func( g_game->buttons,
-                                        g_game->cx, g_game->cy, g_game->cz );
+                                        g_game->jx, g_game->jy, g_game->jz );
                     }
                }
-               else if (e->axis != DIAI_Z) {                    
+               else {
+                    switch (e->axis) {
+                         case DIAI_X:
+                              if (e->flags & DIEF_AXISABS)
+                                   g_game->cx = e->axisabs;
+                              else if (e->flags & DIEF_AXISREL)
+                                   g_game->cx += e->axisrel;
+                              break;
+                         case DIAI_Y:
+                              if (e->flags & DIEF_AXISABS)
+                                   g_game->cy = e->axisabs;
+                              else if (e->flags & DIEF_AXISREL)
+                                   g_game->cy += e->axisrel;
+                              break;
+                         default:
+                              return;
+                    }
                     if (e->buttons && motion_func) {
                          __glutSetWindow( g_game );
                          motion_func( g_game->cx, g_game->cy );
