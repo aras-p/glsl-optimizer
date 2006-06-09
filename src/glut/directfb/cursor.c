@@ -32,10 +32,6 @@ glutSetCursor( int type )
      const unsigned char   *cursor;
      DFBSurfaceDescription  dsc;
      IDirectFBSurface      *shape;
-     __u8                  *src, *msk;
-     void                  *dst;
-     int                    pitch;
-     int                    x, y;
      
      if (!g_current || !g_current->window)
           return;
@@ -104,44 +100,56 @@ glutSetCursor( int type )
           case GLUT_CURSOR_BOTTOM_LEFT_CORNER:
                cursor = &cur_bottom_left[0];
                break;
+          case GLUT_CURSOR_NONE:
+               cursor = NULL;
+               break;
           default:
                cursor = &cur_right_arrow[0];
                break;
      }
 
      dsc.flags       = DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PIXELFORMAT;
-     dsc.width       = cursor[0];
-     dsc.height      = cursor[0];
+     dsc.width       =
+     dsc.height      = cursor ? cursor[0] : 8;
      dsc.pixelformat = DSPF_ARGB;
          
      if (dfb->CreateSurface( dfb, &dsc, &shape ))
           return;
+ 
+     if (cursor) {
+          __u8 *src = (__u8*) &cursor[3];
+          __u8 *msk = src + cursor[0]*cursor[0]/8;
+          void *dst;
+          int   pitch;
+          int   x, y;
 
-     if (shape->Lock( shape, DSLF_WRITE, &dst, &pitch )) {
-          shape->Release( shape );
-          return;
-     }
-     
-     src = (__u8*) &cursor[3];
-     msk = src + cursor[0]*cursor[0]/8;
-          
-     for (y = 0; y < cursor[0]; y++) {
-          for (x = 0; x < cursor[0]; x++) {
-               int p = x & 7;
-               
-               ((__u32*)dst)[x] = ((src[x>>3] & (0x80 >> p)) ? 0 : 0x00ffffff) |
-                                  ((msk[x>>3] & (0x80 >> p)) ? 0xff000000 : 0);
+          if (shape->Lock( shape, DSLF_WRITE, &dst, &pitch )) {
+               shape->Release( shape );
+               return;
           }
-               
-          dst += pitch;
-          src += 2;
-          msk += 2;
-     }
-
-     shape->Unlock( shape );
           
-     g_current->window->SetCursorShape( g_current->window, 
-                                        shape, cursor[1], cursor[2] );          
+          for (y = 0; y < cursor[0]; y++) {
+               for (x = 0; x < cursor[0]; x++) {
+                    ((__u32*)dst)[x] = 
+                              ((src[x>>3] & (0x80 >> (x&7))) ? 0 : 0x00ffffff) |
+                              ((msk[x>>3] & (0x80 >> (x&7))) ? 0xff000000 : 0);
+               }
+               
+               dst += pitch;
+               src += cursor[0]/8;
+               msk += cursor[0]/8;
+          }
+
+          shape->Unlock( shape );
+     }
+     else {
+          /* Invisible cursor */
+          shape->Clear( shape, 0, 0, 0, 0 );
+     }
+               
+     g_current->window->SetCursorShape( g_current->window, shape,
+                                        cursor ? cursor[1] : 0,
+                                        cursor ? cursor[2] : 0 );          
      g_current->cursor = type;
      
      shape->Release( shape );           
