@@ -527,6 +527,51 @@ savageAllocTexObj( struct gl_texture_object *texObj )
  * formats that promote to ARGB8888 or ARGB4444 and set the color
  * components to white. This way we get the correct result.
  */
+
+static GLboolean
+_savage_texstore_a1114444(TEXSTORE_PARAMS);
+
+static GLboolean
+_savage_texstore_a1118888(TEXSTORE_PARAMS);
+
+static struct gl_texture_format _savage_texformat_a1114444 = {
+    MESA_FORMAT_ARGB4444,		/* MesaFormat */
+    GL_RGBA,				/* BaseFormat */
+    GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
+    4,					/* RedBits */
+    4,					/* GreenBits */
+    4,					/* BlueBits */
+    4,					/* AlphaBits */
+    0,					/* LuminanceBits */
+    0,					/* IntensityBits */
+    0,					/* IndexBits */
+    0,					/* DepthBits */
+    0,					/* StencilBits */
+    2,					/* TexelBytes */
+    _savage_texstore_a1114444,		/* StoreTexImageFunc */
+    NULL, NULL, NULL, NULL, NULL, NULL  /* FetchTexel* filled in by 
+					 * savageDDInitTextureFuncs */
+};
+static struct gl_texture_format _savage_texformat_a1118888 = {
+    MESA_FORMAT_ARGB8888,		/* MesaFormat */
+    GL_RGBA,				/* BaseFormat */
+    GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
+    8,					/* RedBits */
+    8,					/* GreenBits */
+    8,					/* BlueBits */
+    8,					/* AlphaBits */
+    0,					/* LuminanceBits */
+    0,					/* IntensityBits */
+    0,					/* IndexBits */
+    0,					/* DepthBits */
+    0,					/* StencilBits */
+    4,					/* TexelBytes */
+    _savage_texstore_a1118888,		/* StoreTexImageFunc */
+    NULL, NULL, NULL, NULL, NULL, NULL  /* FetchTexel* filled in by 
+					 * savageDDInitTextureFuncs */
+};
+
+
 static GLboolean
 _savage_texstore_a1114444(TEXSTORE_PARAMS)
 {
@@ -603,44 +648,6 @@ _savage_texstore_a1118888(TEXSTORE_PARAMS)
 
     return GL_TRUE;
 }
-
-
-static struct gl_texture_format _savage_texformat_a1114444 = {
-    MESA_FORMAT_ARGB4444,		/* MesaFormat */
-    GL_RGBA,				/* BaseFormat */
-    GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
-    4,					/* RedBits */
-    4,					/* GreenBits */
-    4,					/* BlueBits */
-    4,					/* AlphaBits */
-    0,					/* LuminanceBits */
-    0,					/* IntensityBits */
-    0,					/* IndexBits */
-    0,					/* DepthBits */
-    0,					/* StencilBits */
-    2,					/* TexelBytes */
-    _savage_texstore_a1114444,		/* StoreTexImageFunc */
-    NULL, NULL, NULL, NULL, NULL, NULL  /* FetchTexel* filled in by 
-					 * savageDDInitTextureFuncs */
-};
-static struct gl_texture_format _savage_texformat_a1118888 = {
-    MESA_FORMAT_ARGB8888,		/* MesaFormat */
-    GL_RGBA,				/* BaseFormat */
-    GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
-    8,					/* RedBits */
-    8,					/* GreenBits */
-    8,					/* BlueBits */
-    8,					/* AlphaBits */
-    0,					/* LuminanceBits */
-    0,					/* IntensityBits */
-    0,					/* IndexBits */
-    0,					/* DepthBits */
-    0,					/* StencilBits */
-    4,					/* TexelBytes */
-    _savage_texstore_a1118888,		/* StoreTexImageFunc */
-    NULL, NULL, NULL, NULL, NULL, NULL  /* FetchTexel* filled in by 
-					 * savageDDInitTextureFuncs */
-};
 
 
 /* Called by the _mesa_store_teximage[123]d() functions. */
