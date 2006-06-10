@@ -414,6 +414,11 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
       return GL_FALSE;
    }
 
+   if (mesa_vp->IsNVProgram) {
+   /* subtle differences in spec like guaranteed initialized regs could cause
+      headaches. Might want to remove the driconf option to enable it completely */
+      return GL_FALSE;
+   }
    /* Initial value should be last tmp reg that hw supports.
       Strangely enough r300 doesnt mind even though these would be out of range.
       Smart enough to realize that it doesnt need it? */
