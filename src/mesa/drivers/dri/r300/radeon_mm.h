@@ -26,6 +26,7 @@ struct radeon_memory_manager {
 };
 
 extern void radeon_mm_init(r300ContextPtr rmesa);
+extern void radeon_mm_destroy(r300ContextPtr rmesa);
 extern void *radeon_mm_ptr(r300ContextPtr rmesa, int id);
 extern int radeon_mm_find(r300ContextPtr rmesa, void *ptr);
 extern int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size);

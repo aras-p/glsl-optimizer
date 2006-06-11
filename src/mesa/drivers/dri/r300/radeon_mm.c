@@ -69,6 +69,15 @@ void radeon_mm_init(r300ContextPtr rmesa)
 	resize_u_list(rmesa);
 }
 
+void radeon_mm_destroy(r300ContextPtr rmesa)
+{
+	_mesa_free(rmesa->rmm->u_list);
+	rmesa->rmm->u_list = NULL;
+
+	_mesa_free(rmesa->rmm);
+	rmesa->rmm = NULL;
+}
+
 void *radeon_mm_ptr(r300ContextPtr rmesa, int id)
 {
 	assert(id <= rmesa->rmm->u_last);

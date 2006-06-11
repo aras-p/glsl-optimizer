@@ -486,6 +486,13 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 
 		radeonCleanupContext(&r300->radeon);
 
+#ifdef USER_BUFFERS
+		/* the memory manager might be accessed when Mesa frees the shared
+		 * state, so don't destroy it earlier
+		 */
+		radeon_mm_destroy(r300);
+#endif
+
 		/* free the option cache */
 		driDestroyOptionCache(&r300->radeon.optionCache);
 
