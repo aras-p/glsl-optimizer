@@ -182,28 +182,28 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
 
    switch (pname) {
       case GL_VERTEX_ARRAY_POINTER:
-         *params = (GLvoid *) ctx->Array.Vertex.Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->Vertex.Ptr;
          break;
       case GL_NORMAL_ARRAY_POINTER:
-         *params = (GLvoid *) ctx->Array.Normal.Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->Normal.Ptr;
          break;
       case GL_COLOR_ARRAY_POINTER:
-         *params = (GLvoid *) ctx->Array.Color.Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->Color.Ptr;
          break;
       case GL_SECONDARY_COLOR_ARRAY_POINTER_EXT:
-         *params = (GLvoid *) ctx->Array.SecondaryColor.Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->SecondaryColor.Ptr;
          break;
       case GL_FOG_COORDINATE_ARRAY_POINTER_EXT:
-         *params = (GLvoid *) ctx->Array.FogCoord.Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->FogCoord.Ptr;
          break;
       case GL_INDEX_ARRAY_POINTER:
-         *params = (GLvoid *) ctx->Array.Index.Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->Index.Ptr;
          break;
       case GL_TEXTURE_COORD_ARRAY_POINTER:
-         *params = (GLvoid *) ctx->Array.TexCoord[clientUnit].Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->TexCoord[clientUnit].Ptr;
          break;
       case GL_EDGE_FLAG_ARRAY_POINTER:
-         *params = (GLvoid *) ctx->Array.EdgeFlag.Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->EdgeFlag.Ptr;
          break;
       case GL_FEEDBACK_BUFFER_POINTER:
          *params = ctx->Feedback.Buffer;

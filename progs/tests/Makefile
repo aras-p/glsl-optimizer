@@ -64,6 +64,8 @@ SOURCES = \
 	texobjshare.c \
 	texrect.c \
 	texwrap.c \
+	vao-01.c \
+	vao-02.c \
 	vparray.c \
 	vptest1.c \
 	vptest2.c \

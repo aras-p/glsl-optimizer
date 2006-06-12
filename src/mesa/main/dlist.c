@@ -43,6 +43,7 @@
 #if FEATURE_ARB_vertex_buffer_object
 #include "bufferobj.h"
 #endif
+#include "arrayobj.h"
 #include "clip.h"
 #include "colormac.h"
 #include "colortab.h"
@@ -8030,6 +8031,12 @@ _mesa_init_dlist_table(struct _glapi_table *table)
 
    /* 268. GL_EXT_stencil_two_side */
    SET_ActiveStencilFaceEXT(table, save_ActiveStencilFaceEXT);
+
+   /* 273. GL_APPLE_vertex_array_object */
+   SET_BindVertexArrayAPPLE(table, _mesa_BindVertexArrayAPPLE);
+   SET_DeleteVertexArraysAPPLE(table, _mesa_DeleteVertexArraysAPPLE);
+   SET_GenVertexArraysAPPLE(table, _mesa_GenVertexArraysAPPLE);
+   SET_IsVertexArrayAPPLE(table, _mesa_IsVertexArrayAPPLE);
 
    /* ???. GL_EXT_depth_bounds_test */
    SET_DepthBoundsEXT(table, save_DepthBoundsEXT);

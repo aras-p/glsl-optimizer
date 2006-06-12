@@ -292,7 +292,7 @@ static void _ac_raw_init( GLcontext *ctx )
    ac->Raw.Index = ac->Fallback.Index;
    ac->Raw.Normal = ac->Fallback.Normal;
    ac->Raw.SecondaryColor = ac->Fallback.SecondaryColor;
-   ac->Raw.Vertex = ctx->Array.Vertex;
+   ac->Raw.Vertex = ctx->Array.ArrayObj->Vertex;
 
    ac->IsCached.Color = GL_FALSE;
    ac->IsCached.EdgeFlag = GL_FALSE;

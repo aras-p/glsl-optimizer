@@ -43,6 +43,7 @@
 #include "fbobject.h"
 #include "texrender.h"
 #endif
+#include "arrayobj.h"
 
 #include "driverfuncs.h"
 #include "tnl/tnl.h"
@@ -219,6 +220,11 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->NewQueryObject = _mesa_new_query_object;
    driver->BeginQuery = NULL;
    driver->EndQuery = NULL;
+
+   /* APPLE_vertex_array_object */
+   driver->NewArrayObject = _mesa_new_array_object;
+   driver->DeleteArrayObject = _mesa_delete_array_object;
+   driver->BindArrayObject = NULL;
 
    /* T&L stuff */
    driver->NeedValidate = GL_FALSE;

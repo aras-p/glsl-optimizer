@@ -57,35 +57,35 @@ client_state( GLcontext *ctx, GLenum cap, GLboolean state )
 
    switch (cap) {
       case GL_VERTEX_ARRAY:
-         var = &ctx->Array.Vertex.Enabled;
+         var = &ctx->Array.ArrayObj->Vertex.Enabled;
          flag = _NEW_ARRAY_VERTEX;
          break;
       case GL_NORMAL_ARRAY:
-         var = &ctx->Array.Normal.Enabled;
+         var = &ctx->Array.ArrayObj->Normal.Enabled;
          flag = _NEW_ARRAY_NORMAL;
          break;
       case GL_COLOR_ARRAY:
-         var = &ctx->Array.Color.Enabled;
+         var = &ctx->Array.ArrayObj->Color.Enabled;
          flag = _NEW_ARRAY_COLOR0;
          break;
       case GL_INDEX_ARRAY:
-         var = &ctx->Array.Index.Enabled;
+         var = &ctx->Array.ArrayObj->Index.Enabled;
          flag = _NEW_ARRAY_INDEX;
          break;
       case GL_TEXTURE_COORD_ARRAY:
-         var = &ctx->Array.TexCoord[ctx->Array.ActiveTexture].Enabled;
+         var = &ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].Enabled;
          flag = _NEW_ARRAY_TEXCOORD(ctx->Array.ActiveTexture);
          break;
       case GL_EDGE_FLAG_ARRAY:
-         var = &ctx->Array.EdgeFlag.Enabled;
+         var = &ctx->Array.ArrayObj->EdgeFlag.Enabled;
          flag = _NEW_ARRAY_EDGEFLAG;
          break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
-         var = &ctx->Array.FogCoord.Enabled;
+         var = &ctx->Array.ArrayObj->FogCoord.Enabled;
          flag = _NEW_ARRAY_FOGCOORD;
          break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
-         var = &ctx->Array.SecondaryColor.Enabled;
+         var = &ctx->Array.ArrayObj->SecondaryColor.Enabled;
          flag = _NEW_ARRAY_COLOR1;
          break;
 
@@ -109,7 +109,7 @@ client_state( GLcontext *ctx, GLenum cap, GLboolean state )
          CHECK_EXTENSION(NV_vertex_program, cap);
          {
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
-            var = &ctx->Array.VertexAttrib[n].Enabled;
+            var = &ctx->Array.ArrayObj->VertexAttrib[n].Enabled;
             flag = _NEW_ARRAY_ATTRIB(n);
          }
          break;
@@ -129,9 +129,9 @@ client_state( GLcontext *ctx, GLenum cap, GLboolean state )
    *var = state;
 
    if (state)
-      ctx->Array._Enabled |= flag;
+      ctx->Array.ArrayObj->_Enabled |= flag;
    else
-      ctx->Array._Enabled &= ~flag;
+      ctx->Array.ArrayObj->_Enabled &= ~flag;
 
    if (ctx->Driver.Enable) {
       (*ctx->Driver.Enable)( ctx, cap, state );
@@ -1206,23 +1206,23 @@ _mesa_IsEnabled( GLenum cap )
        * CLIENT STATE!!!
        */
       case GL_VERTEX_ARRAY:
-         return (ctx->Array.Vertex.Enabled != 0);
+         return (ctx->Array.ArrayObj->Vertex.Enabled != 0);
       case GL_NORMAL_ARRAY:
-         return (ctx->Array.Normal.Enabled != 0);
+         return (ctx->Array.ArrayObj->Normal.Enabled != 0);
       case GL_COLOR_ARRAY:
-         return (ctx->Array.Color.Enabled != 0);
+         return (ctx->Array.ArrayObj->Color.Enabled != 0);
       case GL_INDEX_ARRAY:
-         return (ctx->Array.Index.Enabled != 0);
+         return (ctx->Array.ArrayObj->Index.Enabled != 0);
       case GL_TEXTURE_COORD_ARRAY:
-         return (ctx->Array.TexCoord[ctx->Array.ActiveTexture].Enabled != 0);
+         return (ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].Enabled != 0);
       case GL_EDGE_FLAG_ARRAY:
-         return (ctx->Array.EdgeFlag.Enabled != 0);
+         return (ctx->Array.ArrayObj->EdgeFlag.Enabled != 0);
       case GL_FOG_COORDINATE_ARRAY_EXT:
          CHECK_EXTENSION(EXT_fog_coord);
-         return (ctx->Array.FogCoord.Enabled != 0);
+         return (ctx->Array.ArrayObj->FogCoord.Enabled != 0);
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          CHECK_EXTENSION(EXT_secondary_color);
-         return (ctx->Array.SecondaryColor.Enabled != 0);
+         return (ctx->Array.ArrayObj->SecondaryColor.Enabled != 0);
 
       /* GL_EXT_histogram */
       case GL_HISTOGRAM:
@@ -1331,7 +1331,7 @@ _mesa_IsEnabled( GLenum cap )
          CHECK_EXTENSION(NV_vertex_program);
          {
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
-            return (ctx->Array.VertexAttrib[n].Enabled != 0);
+            return (ctx->Array.ArrayObj->VertexAttrib[n].Enabled != 0);
          }
       case GL_MAP1_VERTEX_ATTRIB0_4_NV:
       case GL_MAP1_VERTEX_ATTRIB1_4_NV:

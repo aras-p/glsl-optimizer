@@ -2515,10 +2515,22 @@
 #define CALL_BlitFramebufferEXT(disp, parameters) (*((disp)->BlitFramebufferEXT)) parameters
 #define GET_BlitFramebufferEXT(disp) ((disp)->BlitFramebufferEXT)
 #define SET_BlitFramebufferEXT(disp, fn) ((disp)->BlitFramebufferEXT = fn)
+#define CALL_BindVertexArrayAPPLE(disp, parameters) (*((disp)->BindVertexArrayAPPLE)) parameters
+#define GET_BindVertexArrayAPPLE(disp) ((disp)->BindVertexArrayAPPLE)
+#define SET_BindVertexArrayAPPLE(disp, fn) ((disp)->BindVertexArrayAPPLE = fn)
+#define CALL_DeleteVertexArraysAPPLE(disp, parameters) (*((disp)->DeleteVertexArraysAPPLE)) parameters
+#define GET_DeleteVertexArraysAPPLE(disp) ((disp)->DeleteVertexArraysAPPLE)
+#define SET_DeleteVertexArraysAPPLE(disp, fn) ((disp)->DeleteVertexArraysAPPLE = fn)
+#define CALL_GenVertexArraysAPPLE(disp, parameters) (*((disp)->GenVertexArraysAPPLE)) parameters
+#define GET_GenVertexArraysAPPLE(disp) ((disp)->GenVertexArraysAPPLE)
+#define SET_GenVertexArraysAPPLE(disp, fn) ((disp)->GenVertexArraysAPPLE = fn)
+#define CALL_IsVertexArrayAPPLE(disp, parameters) (*((disp)->IsVertexArrayAPPLE)) parameters
+#define GET_IsVertexArrayAPPLE(disp) ((disp)->IsVertexArrayAPPLE)
+#define SET_IsVertexArrayAPPLE(disp, fn) ((disp)->IsVertexArrayAPPLE = fn)
 
 #else
 
-#define driDispatchRemapTable_size 411
+#define driDispatchRemapTable_size 415
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define LoadTransposeMatrixfARB_remap_index 0
@@ -2932,6 +2944,10 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define GetQueryObjecti64vEXT_remap_index 408
 #define GetQueryObjectui64vEXT_remap_index 409
 #define BlitFramebufferEXT_remap_index 410
+#define BindVertexArrayAPPLE_remap_index 411
+#define DeleteVertexArraysAPPLE_remap_index 412
+#define GenVertexArraysAPPLE_remap_index 413
+#define IsVertexArrayAPPLE_remap_index 414
 
 #define CALL_LoadTransposeMatrixfARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), driDispatchRemapTable[LoadTransposeMatrixfARB_remap_index], parameters)
 #define GET_LoadTransposeMatrixfARB(disp) GET_by_offset(disp, driDispatchRemapTable[LoadTransposeMatrixfARB_remap_index])
@@ -4166,6 +4182,18 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_BlitFramebufferEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum)), driDispatchRemapTable[BlitFramebufferEXT_remap_index], parameters)
 #define GET_BlitFramebufferEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BlitFramebufferEXT_remap_index])
 #define SET_BlitFramebufferEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BlitFramebufferEXT_remap_index], fn)
+#define CALL_BindVertexArrayAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[BindVertexArrayAPPLE_remap_index], parameters)
+#define GET_BindVertexArrayAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[BindVertexArrayAPPLE_remap_index])
+#define SET_BindVertexArrayAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BindVertexArrayAPPLE_remap_index], fn)
+#define CALL_DeleteVertexArraysAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), driDispatchRemapTable[DeleteVertexArraysAPPLE_remap_index], parameters)
+#define GET_DeleteVertexArraysAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[DeleteVertexArraysAPPLE_remap_index])
+#define SET_DeleteVertexArraysAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DeleteVertexArraysAPPLE_remap_index], fn)
+#define CALL_GenVertexArraysAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), driDispatchRemapTable[GenVertexArraysAPPLE_remap_index], parameters)
+#define GET_GenVertexArraysAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[GenVertexArraysAPPLE_remap_index])
+#define SET_GenVertexArraysAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GenVertexArraysAPPLE_remap_index], fn)
+#define CALL_IsVertexArrayAPPLE(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[IsVertexArrayAPPLE_remap_index], parameters)
+#define GET_IsVertexArrayAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[IsVertexArrayAPPLE_remap_index])
+#define SET_IsVertexArrayAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsVertexArrayAPPLE_remap_index], fn)
 
 #endif /* !defined(IN_DRI_DRIVER) */
 

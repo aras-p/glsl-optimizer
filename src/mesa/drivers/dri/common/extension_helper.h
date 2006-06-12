@@ -397,6 +397,13 @@ static const char UniformMatrix4fvARB_names[] =
     "";
 #endif
 
+#if defined(need_GL_APPLE_vertex_array_object)
+static const char DeleteVertexArraysAPPLE_names[] = 
+    "ip\0" /* Parameter signature */
+    "glDeleteVertexArraysAPPLE\0"
+    "";
+#endif
+
 #if defined(need_GL_SGIX_instruments)
 static const char ReadInstrumentsSGIX_names[] = 
     "i\0" /* Parameter signature */
@@ -2472,6 +2479,13 @@ static const char ReplacementCodeuivSUN_names[] =
     "";
 #endif
 
+#if defined(need_GL_APPLE_vertex_array_object)
+static const char GenVertexArraysAPPLE_names[] = 
+    "ip\0" /* Parameter signature */
+    "glGenVertexArraysAPPLE\0"
+    "";
+#endif
+
 #if defined(need_GL_VERSION_1_4) || defined(need_GL_ARB_window_pos) || defined(need_GL_MESA_window_pos)
 static const char WindowPos2iMESA_names[] = 
     "ii\0" /* Parameter signature */
@@ -3775,6 +3789,13 @@ static const char TexCoord4fVertex4fSUN_names[] =
     "";
 #endif
 
+#if defined(need_GL_APPLE_vertex_array_object)
+static const char BindVertexArrayAPPLE_names[] = 
+    "i\0" /* Parameter signature */
+    "glBindVertexArrayAPPLE\0"
+    "";
+#endif
+
 #if defined(need_GL_ARB_vertex_program)
 static const char GetProgramLocalParameterdvARB_names[] = 
     "iip\0" /* Parameter signature */
@@ -3803,6 +3824,13 @@ static const char BlendFuncSeparateEXT_names[] =
     "glBlendFuncSeparate\0"
     "glBlendFuncSeparateEXT\0"
     "glBlendFuncSeparateINGR\0"
+    "";
+#endif
+
+#if defined(need_GL_APPLE_vertex_array_object)
+static const char IsVertexArrayAPPLE_names[] = 
+    "i\0" /* Parameter signature */
+    "glIsVertexArrayAPPLE\0"
     "";
 #endif
 
@@ -4602,6 +4630,16 @@ static const char WindowPos2fMESA_names[] =
 #if defined(need_GL_3DFX_tbuffer)
 static const struct dri_extension_function GL_3DFX_tbuffer_functions[] = {
     { TbufferMask3DFX_names, TbufferMask3DFX_remap_index, 553 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_APPLE_vertex_array_object)
+static const struct dri_extension_function GL_APPLE_vertex_array_object_functions[] = {
+    { DeleteVertexArraysAPPLE_names, DeleteVertexArraysAPPLE_remap_index, 820 },
+    { GenVertexArraysAPPLE_names, GenVertexArraysAPPLE_remap_index, 821 },
+    { BindVertexArrayAPPLE_names, BindVertexArrayAPPLE_remap_index, 819 },
+    { IsVertexArrayAPPLE_names, IsVertexArrayAPPLE_remap_index, 822 },
     { NULL, 0, 0 }
 };
 #endif

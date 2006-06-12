@@ -51,8 +51,8 @@ _mesa_EnableVertexAttribArrayARB(GLuint index)
    }
 
    FLUSH_VERTICES(ctx, _NEW_ARRAY);
-   ctx->Array.VertexAttrib[index].Enabled = GL_TRUE;
-   ctx->Array._Enabled |= _NEW_ARRAY_ATTRIB(index);
+   ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_TRUE;
+   ctx->Array.ArrayObj->_Enabled |= _NEW_ARRAY_ATTRIB(index);
    ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
 }
 
@@ -70,8 +70,8 @@ _mesa_DisableVertexAttribArrayARB(GLuint index)
    }
 
    FLUSH_VERTICES(ctx, _NEW_ARRAY);
-   ctx->Array.VertexAttrib[index].Enabled = GL_FALSE;
-   ctx->Array._Enabled &= ~_NEW_ARRAY_ATTRIB(index);
+   ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_FALSE;
+   ctx->Array.ArrayObj->_Enabled &= ~_NEW_ARRAY_ATTRIB(index);
    ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
 }
 
@@ -108,19 +108,19 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
 
    switch (pname) {
       case GL_VERTEX_ATTRIB_ARRAY_ENABLED_ARB:
-         params[0] = (GLfloat) ctx->Array.VertexAttrib[index].Enabled;
+         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_SIZE_ARB:
-         params[0] = (GLfloat) ctx->Array.VertexAttrib[index].Size;
+         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Size;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_STRIDE_ARB:
-         params[0] = (GLfloat) ctx->Array.VertexAttrib[index].Stride;
+         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Stride;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_TYPE_ARB:
-         params[0] = (GLfloat) ctx->Array.VertexAttrib[index].Type;
+         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Type;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_NORMALIZED_ARB:
-         params[0] = ctx->Array.VertexAttrib[index].Normalized;
+         params[0] = ctx->Array.ArrayObj->VertexAttrib[index].Normalized;
          break;
       case GL_CURRENT_VERTEX_ATTRIB_ARB:
          FLUSH_CURRENT(ctx, 0);
@@ -131,7 +131,7 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribfvARB(pname)");
             return;
          }
-         params[0] = (GLfloat) ctx->Array.VertexAttrib[index].BufferObj->Name;
+         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].BufferObj->Name;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribfvARB(pname)");
@@ -175,7 +175,7 @@ _mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer)
       return;
    }
 
-   *pointer = (GLvoid *) ctx->Array.VertexAttrib[index].Ptr;;
+   *pointer = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[index].Ptr;
 }
 
 

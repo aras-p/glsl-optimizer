@@ -60,6 +60,7 @@ PROGS = \
 	trispd \
 	tunnel \
 	tunnel2 \
+	vao_demo \
 	winpos
 
 

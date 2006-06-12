@@ -1210,17 +1210,17 @@ static void
 adjust_buffer_object_ref_counts(struct gl_array_attrib *array, GLint step)
 {
    GLuint i;
-   array->Vertex.BufferObj->RefCount += step;
-   array->Normal.BufferObj->RefCount += step;
-   array->Color.BufferObj->RefCount += step;
-   array->SecondaryColor.BufferObj->RefCount += step;
-   array->FogCoord.BufferObj->RefCount += step;
-   array->Index.BufferObj->RefCount += step;
-   array->EdgeFlag.BufferObj->RefCount += step;
+   array->ArrayObj->Vertex.BufferObj->RefCount += step;
+   array->ArrayObj->Normal.BufferObj->RefCount += step;
+   array->ArrayObj->Color.BufferObj->RefCount += step;
+   array->ArrayObj->SecondaryColor.BufferObj->RefCount += step;
+   array->ArrayObj->FogCoord.BufferObj->RefCount += step;
+   array->ArrayObj->Index.BufferObj->RefCount += step;
+   array->ArrayObj->EdgeFlag.BufferObj->RefCount += step;
    for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
-      array->TexCoord[i].BufferObj->RefCount += step;
+      array->ArrayObj->TexCoord[i].BufferObj->RefCount += step;
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
-      array->VertexAttrib[i].BufferObj->RefCount += step;
+      array->ArrayObj->VertexAttrib[i].BufferObj->RefCount += step;
 
    array->ArrayBufferObj->RefCount += step;
    array->ElementArrayBufferObj->RefCount += step;
@@ -1272,8 +1272,16 @@ _mesa_PushClientAttrib(GLbitfield mask)
    }
    if (mask & GL_CLIENT_VERTEX_ARRAY_BIT) {
       struct gl_array_attrib *attr;
+      struct gl_array_object *obj;
+
       attr = MALLOC_STRUCT( gl_array_attrib );
+      obj = MALLOC_STRUCT( gl_array_object );
+
       MEMCPY( attr, &ctx->Array, sizeof(struct gl_array_attrib) );
+      MEMCPY( obj, ctx->Array.ArrayObj, sizeof(struct gl_array_object) );
+
+      attr->ArrayObj = obj;
+
       newnode = new_attrib_node( GL_CLIENT_VERTEX_ARRAY_BIT );
       newnode->data = attr;
       newnode->next = head;
@@ -1331,13 +1339,31 @@ _mesa_PopClientAttrib(void)
                     sizeof(struct gl_pixelstore_attrib) );
 	    ctx->NewState |= _NEW_PACKUNPACK;
             break;
-         case GL_CLIENT_VERTEX_ARRAY_BIT:
+         case GL_CLIENT_VERTEX_ARRAY_BIT: {
+	    struct gl_array_attrib * data =
+	      (struct gl_array_attrib *) attr->data;
+
             adjust_buffer_object_ref_counts(&ctx->Array, -1);
-            MEMCPY( &ctx->Array, attr->data,
-		    sizeof(struct gl_array_attrib) );
-            /* decrement reference counts on buffer objects */
+	 
+            ctx->Array.ActiveTexture = data->ActiveTexture;
+	    ctx->Array.LockFirst = data->LockFirst;
+	    ctx->Array.LockCount = data->LockCount;
+
+	    _mesa_BindVertexArrayAPPLE( data->ArrayObj->Name );
+	    
+	    MEMCPY( ctx->Array.ArrayObj, data->ArrayObj,
+		    sizeof( struct gl_array_object ) );
+
+	    FREE( data->ArrayObj );
+	    
+	    /* FIXME: Should some bits in ctx->Array->NewState also be set
+	     * FIXME: here?  It seems like it should be set to inclusive-or
+	     * FIXME: of the old ArrayObj->_Enabled and the new _Enabled.
+	     */
+
 	    ctx->NewState |= _NEW_ARRAY;
             break;
+	 }
          default:
             _mesa_problem( ctx, "Bad attrib flag in PopClientAttrib");
             break;

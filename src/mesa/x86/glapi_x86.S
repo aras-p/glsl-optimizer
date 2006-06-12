@@ -960,6 +960,10 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB(GetQueryObjecti64vEXT, _gloffset_GetQueryObjecti64vEXT, GetQueryObjecti64vEXT@12)
 	GL_STUB(GetQueryObjectui64vEXT, _gloffset_GetQueryObjectui64vEXT, GetQueryObjectui64vEXT@12)
 	GL_STUB(BlitFramebufferEXT, _gloffset_BlitFramebufferEXT, BlitFramebufferEXT@40)
+	GL_STUB(BindVertexArrayAPPLE, _gloffset_BindVertexArrayAPPLE, BindVertexArrayAPPLE@4)
+	GL_STUB(DeleteVertexArraysAPPLE, _gloffset_DeleteVertexArraysAPPLE, DeleteVertexArraysAPPLE@8)
+	GL_STUB(GenVertexArraysAPPLE, _gloffset_GenVertexArraysAPPLE, GenVertexArraysAPPLE@8)
+	GL_STUB(IsVertexArrayAPPLE, _gloffset_IsVertexArrayAPPLE, IsVertexArrayAPPLE@4)
 	GL_STUB_ALIAS(ArrayElementEXT, _gloffset_ArrayElement, ArrayElementEXT@4, ArrayElement, ArrayElement@4)
 	GL_STUB_ALIAS(BindTextureEXT, _gloffset_BindTexture, BindTextureEXT@8, BindTexture, BindTexture@8)
 	GL_STUB_ALIAS(DrawArraysEXT, _gloffset_DrawArrays, DrawArraysEXT@12, DrawArrays, DrawArrays@12)
@@ -1156,7 +1160,7 @@ GLNAME(gl_dispatch_functions_end):
 	.long	2,4,20    /* Minimum kernel version w/TLS */
 3:	.p2align 2        /* pad out section */
 #endif /* GLX_USE_TLS */
-	
-#if defined(__ELF__) && defined(__linux__)
+
+#if defined (__ELF__) && defined (__linux__)
 	.section .note.GNU-stack,"",%progbits
 #endif

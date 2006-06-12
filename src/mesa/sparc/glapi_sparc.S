@@ -884,6 +884,10 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 		.globl glGetQueryObjecti64vEXT ; .type glGetQueryObjecti64vEXT,#function
 		.globl glGetQueryObjectui64vEXT ; .type glGetQueryObjectui64vEXT,#function
 		.globl glBlitFramebufferEXT ; .type glBlitFramebufferEXT,#function
+		.globl glBindVertexArrayAPPLE ; .type glBindVertexArrayAPPLE,#function
+		.globl glDeleteVertexArraysAPPLE ; .type glDeleteVertexArraysAPPLE,#function
+		.globl glGenVertexArraysAPPLE ; .type glGenVertexArraysAPPLE,#function
+		.globl glIsVertexArrayAPPLE ; .type glIsVertexArrayAPPLE,#function
 		.globl _mesa_sparc_glapi_begin ; .type _mesa_sparc_glapi_begin,#function
 _mesa_sparc_glapi_begin:
 
@@ -1706,6 +1710,10 @@ _mesa_sparc_glapi_begin:
 	GL_STUB(glGetQueryObjecti64vEXT, _gloffset_GetQueryObjecti64vEXT)
 	GL_STUB(glGetQueryObjectui64vEXT, _gloffset_GetQueryObjectui64vEXT)
 	GL_STUB(glBlitFramebufferEXT, _gloffset_BlitFramebufferEXT)
+	GL_STUB(glBindVertexArrayAPPLE, _gloffset_BindVertexArrayAPPLE)
+	GL_STUB(glDeleteVertexArraysAPPLE, _gloffset_DeleteVertexArraysAPPLE)
+	GL_STUB(glGenVertexArraysAPPLE, _gloffset_GenVertexArraysAPPLE)
+	GL_STUB(glIsVertexArrayAPPLE, _gloffset_IsVertexArrayAPPLE)
 
 		.globl _mesa_sparc_glapi_end ; .type _mesa_sparc_glapi_end,#function
 _mesa_sparc_glapi_end:

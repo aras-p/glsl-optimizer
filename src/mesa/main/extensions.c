@@ -128,6 +128,7 @@ static const struct {
    { OFF, "GL_3DFX_texture_compression_FXT1",  F(TDFX_texture_compression_FXT1) },
    { OFF, "GL_APPLE_client_storage",           F(APPLE_client_storage) },
    { ON,  "GL_APPLE_packed_pixels",            F(APPLE_packed_pixels) },
+   { OFF, "GL_APPLE_vertex_array_object",      F(APPLE_vertex_array_object) },
    { OFF, "GL_ATI_blend_equation_separate",    F(EXT_blend_equation_separate) },
    { OFF, "GL_ATI_texture_env_combine3",       F(ATI_texture_env_combine3)},
    { OFF, "GL_ATI_texture_mirror_once",        F(ATI_texture_mirror_once)},
@@ -213,6 +214,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #if FEATURE_ARB_vertex_buffer_object
    ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
 #endif
+   ctx->Extensions.APPLE_vertex_array_object = GL_TRUE;
 #if FEATURE_ATI_fragment_shader
    ctx->Extensions.ATI_fragment_shader = GL_TRUE;
 #endif

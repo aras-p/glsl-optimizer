@@ -11124,6 +11124,8 @@
     </function>
 </category>
 
+<xi:include href="APPLE_vertex_array_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 <category name="GL_APPLE_ycbcr_422" number="275">
     <enum name="YCBCR_422_APPLE"                          value="0x85B9"/>
     <enum name="UNSIGNED_SHORT_8_8_APPLE"                 value="0x85BA"/>

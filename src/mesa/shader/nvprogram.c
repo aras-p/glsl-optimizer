@@ -371,13 +371,13 @@ _mesa_GetVertexAttribdvNV(GLuint index, GLenum pname, GLdouble *params)
 
    switch (pname) {
       case GL_ATTRIB_ARRAY_SIZE_NV:
-         params[0] = ctx->Array.VertexAttrib[index].Size;
+         params[0] = ctx->Array.ArrayObj->VertexAttrib[index].Size;
          break;
       case GL_ATTRIB_ARRAY_STRIDE_NV:
-         params[0] = ctx->Array.VertexAttrib[index].Stride;
+         params[0] = ctx->Array.ArrayObj->VertexAttrib[index].Stride;
          break;
       case GL_ATTRIB_ARRAY_TYPE_NV:
-         params[0] = ctx->Array.VertexAttrib[index].Type;
+         params[0] = ctx->Array.ArrayObj->VertexAttrib[index].Type;
          break;
       case GL_CURRENT_ATTRIB_NV:
 	 FLUSH_CURRENT(ctx, 0);
@@ -407,13 +407,13 @@ _mesa_GetVertexAttribfvNV(GLuint index, GLenum pname, GLfloat *params)
 
    switch (pname) {
       case GL_ATTRIB_ARRAY_SIZE_NV:
-         params[0] = (GLfloat) ctx->Array.VertexAttrib[index].Size;
+         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Size;
          break;
       case GL_ATTRIB_ARRAY_STRIDE_NV:
-         params[0] = (GLfloat) ctx->Array.VertexAttrib[index].Stride;
+         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Stride;
          break;
       case GL_ATTRIB_ARRAY_TYPE_NV:
-         params[0] = (GLfloat) ctx->Array.VertexAttrib[index].Type;
+         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Type;
          break;
       case GL_CURRENT_ATTRIB_NV:
 	 FLUSH_CURRENT(ctx, 0);
@@ -443,13 +443,13 @@ _mesa_GetVertexAttribivNV(GLuint index, GLenum pname, GLint *params)
 
    switch (pname) {
       case GL_ATTRIB_ARRAY_SIZE_NV:
-         params[0] = ctx->Array.VertexAttrib[index].Size;
+         params[0] = ctx->Array.ArrayObj->VertexAttrib[index].Size;
          break;
       case GL_ATTRIB_ARRAY_STRIDE_NV:
-         params[0] = ctx->Array.VertexAttrib[index].Stride;
+         params[0] = ctx->Array.ArrayObj->VertexAttrib[index].Stride;
          break;
       case GL_ATTRIB_ARRAY_TYPE_NV:
-         params[0] = ctx->Array.VertexAttrib[index].Type;
+         params[0] = ctx->Array.ArrayObj->VertexAttrib[index].Type;
          break;
       case GL_CURRENT_ATTRIB_NV:
 	 FLUSH_CURRENT(ctx, 0);
@@ -463,7 +463,7 @@ _mesa_GetVertexAttribivNV(GLuint index, GLenum pname, GLint *params)
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribdvNV");
             return;
          }
-         params[0] = ctx->Array.VertexAttrib[index].BufferObj->Name;
+         params[0] = ctx->Array.ArrayObj->VertexAttrib[index].BufferObj->Name;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribdvNV");
@@ -493,7 +493,7 @@ _mesa_GetVertexAttribPointervNV(GLuint index, GLenum pname, GLvoid **pointer)
       return;
    }
 
-   *pointer = (GLvoid *) ctx->Array.VertexAttrib[index].Ptr;;
+   *pointer = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[index].Ptr;
 }
 
 

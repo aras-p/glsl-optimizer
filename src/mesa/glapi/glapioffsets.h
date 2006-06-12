@@ -851,7 +851,11 @@
 #define _gloffset_GetQueryObjecti64vEXT 816
 #define _gloffset_GetQueryObjectui64vEXT 817
 #define _gloffset_BlitFramebufferEXT 818
-#define _gloffset_FIRST_DYNAMIC 819
+#define _gloffset_BindVertexArrayAPPLE 819
+#define _gloffset_DeleteVertexArraysAPPLE 820
+#define _gloffset_GenVertexArraysAPPLE 821
+#define _gloffset_IsVertexArrayAPPLE 822
+#define _gloffset_FIRST_DYNAMIC 823
 
 #else
 
@@ -1266,6 +1270,10 @@
 #define _gloffset_GetQueryObjecti64vEXT driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index]
 #define _gloffset_GetQueryObjectui64vEXT driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index]
 #define _gloffset_BlitFramebufferEXT driDispatchRemapTable[BlitFramebufferEXT_remap_index]
+#define _gloffset_BindVertexArrayAPPLE driDispatchRemapTable[BindVertexArrayAPPLE_remap_index]
+#define _gloffset_DeleteVertexArraysAPPLE driDispatchRemapTable[DeleteVertexArraysAPPLE_remap_index]
+#define _gloffset_GenVertexArraysAPPLE driDispatchRemapTable[GenVertexArraysAPPLE_remap_index]
+#define _gloffset_IsVertexArrayAPPLE driDispatchRemapTable[IsVertexArrayAPPLE_remap_index]
 
 #endif /* !defined(IN_DRI_DRIVER) */
 

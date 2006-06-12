@@ -45,6 +45,7 @@
 #if FEATURE_ARB_vertex_buffer_object
 #include "bufferobj.h"
 #endif
+#include "arrayobj.h"
 #include "buffers.h"
 #include "clip.h"
 #include "colortab.h"
@@ -537,6 +538,12 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    /* glVertexAttrib*NV functions handled in api_loopback.c */
 #endif
 
+   /* 273. GL_APPLE_vertex_array_object */
+   SET_BindVertexArrayAPPLE(exec, _mesa_BindVertexArrayAPPLE);
+   SET_DeleteVertexArraysAPPLE(exec, _mesa_DeleteVertexArraysAPPLE);
+   SET_GenVertexArraysAPPLE(exec, _mesa_GenVertexArraysAPPLE);
+   SET_IsVertexArrayAPPLE(exec, _mesa_IsVertexArrayAPPLE);
+
    /* 282. GL_NV_fragment_program */
 #if FEATURE_NV_fragment_program
    SET_ProgramNamedParameter4fNV(exec, _mesa_ProgramNamedParameter4fNV);
@@ -821,15 +828,15 @@ update_arrays( GLcontext *ctx )
 
    /* 0 */
    if (ctx->ShaderObjects._VertexShaderPresent
-       && ctx->Array.VertexAttrib[VERT_ATTRIB_GENERIC0].Enabled) {
-      min = ctx->Array.VertexAttrib[VERT_ATTRIB_GENERIC0]._MaxElement;
+       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC0].Enabled) {
+      min = ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC0]._MaxElement;
    }
    else if (ctx->VertexProgram._Enabled
-       && ctx->Array.VertexAttrib[VERT_ATTRIB_POS].Enabled) {
-      min = ctx->Array.VertexAttrib[VERT_ATTRIB_POS]._MaxElement;
+       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POS].Enabled) {
+      min = ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POS]._MaxElement;
    }
-   else if (ctx->Array.Vertex.Enabled) {
-      min = ctx->Array.Vertex._MaxElement;
+   else if (ctx->Array.ArrayObj->Vertex.Enabled) {
+      min = ctx->Array.ArrayObj->Vertex._MaxElement;
    }
    else {
       /* can't draw anything without vertex positions! */
@@ -838,86 +845,86 @@ update_arrays( GLcontext *ctx )
 
    /* 1 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.VertexAttrib[VERT_ATTRIB_WEIGHT].Enabled) {
-      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_WEIGHT]._MaxElement);
+       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_WEIGHT].Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_WEIGHT]._MaxElement);
    }
    /* no conventional vertex weight array */
 
    /* 2 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.VertexAttrib[VERT_ATTRIB_NORMAL].Enabled) {
-      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_NORMAL]._MaxElement);
+       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_NORMAL].Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_NORMAL]._MaxElement);
    }
-   else if (ctx->Array.Normal.Enabled) {
-      min = MIN2(min, ctx->Array.Normal._MaxElement);
+   else if (ctx->Array.ArrayObj->Normal.Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->Normal._MaxElement);
    }
 
    /* 3 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR0].Enabled) {
-      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR0]._MaxElement);
+       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR0].Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR0]._MaxElement);
    }
-   else if (ctx->Array.Color.Enabled) {
-      min = MIN2(min, ctx->Array.Color._MaxElement);
+   else if (ctx->Array.ArrayObj->Color.Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->Color._MaxElement);
    }
 
    /* 4 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR1].Enabled) {
-      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR1]._MaxElement);
+       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR1]._MaxElement);
    }
-   else if (ctx->Array.SecondaryColor.Enabled) {
-      min = MIN2(min, ctx->Array.SecondaryColor._MaxElement);
+   else if (ctx->Array.ArrayObj->SecondaryColor.Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->SecondaryColor._MaxElement);
    }
 
    /* 5 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.VertexAttrib[VERT_ATTRIB_FOG].Enabled) {
-      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_FOG]._MaxElement);
+       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_FOG].Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_FOG]._MaxElement);
    }
-   else if (ctx->Array.FogCoord.Enabled) {
-      min = MIN2(min, ctx->Array.FogCoord._MaxElement);
+   else if (ctx->Array.ArrayObj->FogCoord.Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->FogCoord._MaxElement);
    }
 
    /* 6 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled) {
-      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR_INDEX]._MaxElement);
+       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX]._MaxElement);
    }
-   else if (ctx->Array.Index.Enabled) {
-      min = MIN2(min, ctx->Array.Index._MaxElement);
+   else if (ctx->Array.ArrayObj->Index.Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->Index._MaxElement);
    }
 
 
    /* 7 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.VertexAttrib[VERT_ATTRIB_SEVEN].Enabled) {
-      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_SEVEN]._MaxElement);
+       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_SEVEN].Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_SEVEN]._MaxElement);
    }
 
    /* 8..15 */
    for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++) {
       if (ctx->VertexProgram._Enabled
-          && ctx->Array.VertexAttrib[i].Enabled) {
-         min = MIN2(min, ctx->Array.VertexAttrib[i]._MaxElement);
+          && ctx->Array.ArrayObj->VertexAttrib[i].Enabled) {
+         min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[i]._MaxElement);
       }
       else if (i - VERT_ATTRIB_TEX0 < ctx->Const.MaxTextureCoordUnits
-               && ctx->Array.TexCoord[i - VERT_ATTRIB_TEX0].Enabled) {
-         min = MIN2(min, ctx->Array.TexCoord[i - VERT_ATTRIB_TEX0]._MaxElement);
+               && ctx->Array.ArrayObj->TexCoord[i - VERT_ATTRIB_TEX0].Enabled) {
+         min = MIN2(min, ctx->Array.ArrayObj->TexCoord[i - VERT_ATTRIB_TEX0]._MaxElement);
       }
    }
 
    /* 16..31 */
    if (ctx->ShaderObjects._VertexShaderPresent) {
       for (i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++) {
-         if (ctx->Array.VertexAttrib[i].Enabled) {
-            min = MIN2(min, ctx->Array.VertexAttrib[i]._MaxElement);
+         if (ctx->Array.ArrayObj->VertexAttrib[i].Enabled) {
+            min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[i]._MaxElement);
          }
       }
    }
 
-   if (ctx->Array.EdgeFlag.Enabled) {
-      min = MIN2(min, ctx->Array.EdgeFlag._MaxElement);
+   if (ctx->Array.ArrayObj->EdgeFlag.Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->EdgeFlag._MaxElement);
    }
 
    /* _MaxElement is one past the last legal array element */

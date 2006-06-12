@@ -274,7 +274,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
        * arrays have priority over the conventional vertex arrays.
        */
       if (ctx->VertexProgram._Enabled
-          && ctx->Array.VertexAttrib[index].Enabled) {
+          && ctx->Array.ArrayObj->VertexAttrib[index].Enabled) {
          /* Use generic attribute array */
          _tnl_import_attrib( ctx, index, GL_FALSE, GL_TRUE );
          VB->AttribPtr[index] = &tmp->Attribs[index];

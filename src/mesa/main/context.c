@@ -698,6 +698,7 @@ alloc_shared_state( GLcontext *ctx )
 #endif
 
    ss->BufferObjects = _mesa_NewHashTable();
+   ss->ArrayObjects = _mesa_NewHashTable();
 
    ss->GL2Objects = _mesa_NewHashTable ();
 

@@ -833,6 +833,16 @@ struct dd_function_table {
 
 
    /**
+    * \name Vertex Array objects
+    */
+   /*@{*/
+   struct gl_array_object * (*NewArrayObject)(GLcontext *ctx, GLuint id);
+   void (*DeleteArrayObject)(GLcontext *ctx, struct gl_array_object *obj);
+   void (*BindArrayObject)(GLcontext *ctx, struct gl_array_object *obj);
+   /*@}*/
+
+
+   /**
     * \name Support for multiple T&L engines
     */
    /*@{*/
