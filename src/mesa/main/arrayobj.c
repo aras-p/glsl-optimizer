@@ -109,7 +109,6 @@ _mesa_initialize_array_object( GLcontext *ctx,
 {
    GLuint i;
 
-
    obj->Name = name;
 
    /* Vertex arrays */
@@ -245,7 +244,6 @@ _mesa_BindVertexArrayAPPLE( GLuint id )
    struct gl_array_object *newObj = NULL;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-
    ASSERT(oldObj != NULL);
 
    if ( oldObj->Name == id )
@@ -353,13 +351,13 @@ _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids)
 
 
 /**
- * Generate a set of unique array object IDs and store them in \c buffer.
+ * Generate a set of unique array object IDs and store them in \c arrays.
  * 
  * \param n       Number of IDs to generate.
- * \param buffer  Array of \c n locations to store the IDs.
+ * \param arrays  Array of \c n locations to store the IDs.
  */
 void GLAPIENTRY
-_mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *buffer)
+_mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *arrays)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint first;
@@ -371,7 +369,7 @@ _mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *buffer)
       return;
    }
 
-   if (!buffer) {
+   if (!arrays) {
       return;
    }
 
@@ -394,7 +392,7 @@ _mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *buffer)
          return;
       }
       _mesa_save_array_object(ctx, obj);
-      buffer[i] = first + i;
+      arrays[i] = first + i;
    }
 
    _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
