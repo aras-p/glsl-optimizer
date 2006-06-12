@@ -6154,12 +6154,12 @@ typedef void (APIENTRYP PFNGLFINISHOBJECTAPPLEPROC) (GLenum object, GLint name);
 #ifdef GL_GLEXT_PROTOTYPES
 GLAPI void APIENTRY glBindVertexArrayAPPLE (GLuint);
 GLAPI void APIENTRY glDeleteVertexArraysAPPLE (GLsizei, const GLuint *);
-GLAPI void APIENTRY glGenVertexArraysAPPLE (GLsizei, const GLuint *);
+GLAPI void APIENTRY glGenVertexArraysAPPLE (GLsizei, GLuint *);
 GLAPI GLboolean APIENTRY glIsVertexArrayAPPLE (GLuint);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRYP PFNGLBINDVERTEXARRAYAPPLEPROC) (GLuint array);
 typedef void (APIENTRYP PFNGLDELETEVERTEXARRAYSAPPLEPROC) (GLsizei n, const GLuint *arrays);
-typedef void (APIENTRYP PFNGLGENVERTEXARRAYSAPPLEPROC) (GLsizei n, const GLuint *arrays);
+typedef void (APIENTRYP PFNGLGENVERTEXARRAYSAPPLEPROC) (GLsizei n, GLuint *arrays);
 typedef GLboolean (APIENTRYP PFNGLISVERTEXARRAYAPPLEPROC) (GLuint array);
 #endif
 
