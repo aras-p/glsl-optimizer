@@ -453,6 +453,7 @@ void intelDestroyContext(__DRIcontextPrivate *driContextPriv)
    if (intel) {
       GLboolean   release_texture_heaps;
 
+      INTEL_FIREVERTICES( intel );
 
       intel->vtbl.destroy( intel );
 
