@@ -30,7 +30,8 @@
 #include "indirect_vertex_array.h"
 #include <GL/glxproto.h>
 
-void do_vertex_attrib_enable( GLuint index, GLboolean val )
+static void
+do_vertex_attrib_enable( GLuint index, GLboolean val )
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
