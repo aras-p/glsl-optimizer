@@ -36,6 +36,7 @@
 
 #include <GL/gl.h>
 #include "indirect_size.h"
+#include "glxclient.h"
 
 /*
 ** Return the number of elements per group of a specified format
