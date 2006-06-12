@@ -1473,6 +1473,7 @@ Mesa Version History
 
 6.5.1  month, day, 2006
     New:
+	- GL_APPLE_vertex_array_object extension (Ian Romanick)
     Changes:
 	- The glVertexAttribARB functions no longer alias the conventional
 	  vertex attributes.
