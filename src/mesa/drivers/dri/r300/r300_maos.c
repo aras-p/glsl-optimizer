@@ -621,8 +621,12 @@ void r300UseArrays(GLcontext * ctx)
 	
 #ifdef HW_VBOS
 	
-#define USE_VBO(a) if (ctx->Array.a.BufferObj->Name && ctx->Array.a.Enabled) \
-		radeon_mm_use(rmesa, ((struct r300_buffer_object *)ctx->Array.a.BufferObj)->id)
+#define USE_VBO(a) \
+    do { \
+	if (ctx->Array.ArrayObj->a.BufferObj->Name \
+	    && ctx->Array.ArrayObj->a.Enabled) \
+	    radeon_mm_use(rmesa, ((struct r300_buffer_object *)ctx->Array.ArrayObj->a.BufferObj)->id); \
+    } while(0)
 	
 	if (ctx->Array.ElementArrayBufferObj->Name && ctx->Array.ElementArrayBufferObj->OnCard)
 		radeon_mm_use(rmesa, ((struct r300_buffer_object *)ctx->Array.ElementArrayBufferObj)->id);

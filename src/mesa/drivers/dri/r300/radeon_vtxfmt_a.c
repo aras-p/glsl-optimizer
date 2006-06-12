@@ -84,16 +84,18 @@ void radeon_vb_to_rvb(r300ContextPtr rmesa, struct radeon_vertex_buffer *rvb, st
 
 extern void _tnl_array_init( GLcontext *ctx );
 
-#define CONV(a, b) do { \
-			if (ctx->Array.b.Enabled) { \
-				rmesa->state.VB.AttribPtr[(a)].size = ctx->Array.b.Size; \
-				rmesa->state.VB.AttribPtr[(a)].data = ctx->Array.b.BufferObj->Name ? \
-				(void *)ADD_POINTERS(ctx->Array.b.Ptr, ctx->Array.b.BufferObj->Data) : (void *)ctx->Array.b.Ptr; \
-				rmesa->state.VB.AttribPtr[(a)].stride = ctx->Array.b.StrideB; \
-				rmesa->state.VB.AttribPtr[(a)].type = ctx->Array.b.Type; \
-				enabled |= 1 << (a); \
-			} \
-		   } while (0)
+#define CONV(a, b) \
+    do { \
+	if (ctx->Array.ArrayObj->b.Enabled) { \
+	    rmesa->state.VB.AttribPtr[(a)].size = ctx->Array.ArrayObj->b.Size; \
+	    rmesa->state.VB.AttribPtr[(a)].data = ctx->Array.ArrayObj->b.BufferObj->Name \
+	      ? (void *)ADD_POINTERS(ctx->Array.ArrayObj->b.Ptr, ctx->Array.ArrayObj->b.BufferObj->Data) \
+	      : (void *)ctx->Array.ArrayObj->b.Ptr; \
+	    rmesa->state.VB.AttribPtr[(a)].stride = ctx->Array.ArrayObj->b.StrideB; \
+	    rmesa->state.VB.AttribPtr[(a)].type = ctx->Array.ArrayObj->b.Type; \
+	    enabled |= 1 << (a); \
+	} \
+    } while (0)
 
 static int setup_arrays(r300ContextPtr rmesa, GLint start)
 {
