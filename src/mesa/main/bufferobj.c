@@ -394,8 +394,6 @@ _mesa_buffer_unmap( GLcontext *ctx, GLenum target,
 void
 _mesa_init_buffer_objects( GLcontext *ctx )
 {
-   GLuint i;
-
    /* Allocate the default buffer object and set refcount so high that
     * it never gets deleted.
     */
