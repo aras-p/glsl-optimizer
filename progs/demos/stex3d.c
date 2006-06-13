@@ -342,18 +342,18 @@ parseCmdLine(int argc, char **argv)
    GLint i;
 
    for (i = 1; i < argc; i++) {
-      if (strstr(argv[i], "-w") == 0) {
-	 tex_width = atoi((argv[i]) + 2);
-      }
-      else if (strstr(argv[i], "-h") == 0) {
-	 tex_height = atoi((argv[i]) + 2);
-      }
-      else if (strstr(argv[i], "-d") == 0) {
-	 tex_depth = atoi((argv[i]) + 2);
-      }
-      else if (strcmp(argv[i], "-help") == 0) {
+      if (strcmp(argv[i], "-help") == 0) {
 	 printHelp();
 	 return GL_FALSE;
+      }
+      else if (strstr(argv[i], "-w") != NULL) {
+	 tex_width = atoi((argv[i]) + 2);
+      }
+      else if (strstr(argv[i], "-h") != NULL) {
+	 tex_height = atoi((argv[i]) + 2);
+      }
+      else if (strstr(argv[i], "-d") != NULL) {
+	 tex_depth = atoi((argv[i]) + 2);
       }
       else {
 	 printf("%s (Bad option).\n", argv[i]);
