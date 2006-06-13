@@ -45,7 +45,7 @@
 
 typedef void (* PFNGLBINDVERTEXARRAYAPPLEPROC) (GLuint array);
 typedef void (* PFNGLDELETEVERTEXARRAYSAPPLEPROC) (GLsizei n, const GLuint *arrays);
-typedef void (* PFNGLGENVERTEXARRAYSAPPLEPROC) (GLsizei n, const GLuint *arrays);
+typedef void (* PFNGLGENVERTEXARRAYSAPPLEPROC) (GLsizei n, GLuint *arrays);
 typedef GLboolean (* PFNGLISVERTEXARRAYAPPLEPROC) (GLuint array);
 
 #else
