@@ -72,12 +72,15 @@ ChangeDrawableAttribute( Display * dpy, GLXDrawable drawable,
 {
    __GLXdisplayPrivate *priv = __glXInitialize(dpy);
    CARD32 * output;
-
+   CARD8 opcode;
 
    if ( (dpy == NULL) || (drawable == 0) ) {
       return;
    }
 
+   opcode = __glXSetupForCommand(dpy);
+   if (!opcode)
+      return;
 
    LockDisplay(dpy);
 
@@ -87,7 +90,7 @@ ChangeDrawableAttribute( Display * dpy, GLXDrawable drawable,
       GetReqExtra( GLXChangeDrawableAttributes, 8 + (8 * num_attribs), req );
       output = (CARD32 *) (req + 1);
 
-      req->reqType = __glXSetupForCommand(dpy);
+      req->reqType = opcode;
       req->glxCode = X_GLXChangeDrawableAttributes;
       req->drawable = drawable;
       req->numAttribs = (CARD32) num_attribs;
@@ -98,7 +101,7 @@ ChangeDrawableAttribute( Display * dpy, GLXDrawable drawable,
       GetReqExtra( GLXVendorPrivateWithReply, 4 + (8 * num_attribs), vpreq );
       output = (CARD32 *) (vpreq + 1);
 
-      vpreq->reqType = __glXSetupForCommand(dpy);
+      vpreq->reqType = opcode;
       vpreq->glxCode = X_GLXVendorPrivateWithReply;
       vpreq->vendorCode = X_GLXvop_ChangeDrawableAttributesSGIX;
 
@@ -132,11 +135,15 @@ static void
 DestroyPbuffer( Display * dpy, GLXDrawable drawable )
 {
    __GLXdisplayPrivate *priv = __glXInitialize(dpy);
+   CARD8 opcode;
 
    if ( (dpy == NULL) || (drawable == 0) ) {
       return;
    }
 
+   opcode = __glXSetupForCommand(dpy);
+   if (!opcode)
+      return;
 
    LockDisplay(dpy);
 
@@ -144,7 +151,7 @@ DestroyPbuffer( Display * dpy, GLXDrawable drawable )
       xGLXDestroyPbufferReq * req;
 
       GetReqExtra( GLXDestroyPbuffer, 4, req );
-      req->reqType = __glXSetupForCommand(dpy);
+      req->reqType = opcode;
       req->glxCode = X_GLXDestroyPbuffer;
       req->pbuffer = (GLXPbuffer) drawable;
    }
@@ -157,7 +164,7 @@ DestroyPbuffer( Display * dpy, GLXDrawable drawable )
 
       data[0] = (CARD32) drawable;
 
-      vpreq->reqType = __glXSetupForCommand(dpy);
+      vpreq->reqType = opcode;
       vpreq->glxCode = X_GLXVendorPrivateWithReply;
       vpreq->vendorCode = X_GLXvop_DestroyGLXPbufferSGIX;
    }
@@ -194,6 +201,7 @@ GetDrawableAttribute( Display *dpy, GLXDrawable drawable,
    __GLXdisplayPrivate *priv;
    xGLXGetDrawableAttributesReply reply;
    CARD32 * data;
+   CARD8 opcode;
    unsigned int length;
    unsigned int i;
    unsigned int num_attributes;
@@ -209,14 +217,17 @@ GetDrawableAttribute( Display *dpy, GLXDrawable drawable,
    *value = 0;
 
 
-   
+   opcode = __glXSetupForCommand(dpy);
+   if (!opcode)
+      return 0;
+
    LockDisplay(dpy);
 
    if ( use_glx_1_3 ) {
       xGLXGetDrawableAttributesReq *req;
 
       GetReqExtra( GLXGetDrawableAttributes, 4, req );
-      req->reqType = __glXSetupForCommand(dpy);
+      req->reqType = opcode;
       req->glxCode = X_GLXGetDrawableAttributes;
       req->drawable = drawable;
    }
@@ -227,7 +238,7 @@ GetDrawableAttribute( Display *dpy, GLXDrawable drawable,
       data = (CARD32 *) (vpreq + 1);
       data[0] = (CARD32) drawable;
 
-      vpreq->reqType = __glXSetupForCommand(dpy);
+      vpreq->reqType = opcode;
       vpreq->glxCode = X_GLXVendorPrivateWithReply;
       vpreq->vendorCode = X_GLXvop_GetDrawableAttributesSGIX;
    }
@@ -295,10 +306,9 @@ CreateDrawable( Display *dpy, const __GLcontextModes * fbconfig,
 	   i++;
    }
 
-    opcode = __glXSetupForCommand(dpy);
-    if (!opcode) {
-	return None;
-    }
+   opcode = __glXSetupForCommand(dpy);
+   if (!opcode)
+      return None;
 
    LockDisplay(dpy);
    GetReqExtra( GLXCreateWindow, 8 * i, req );
@@ -331,16 +341,21 @@ static void
 DestroyDrawable( Display * dpy, GLXDrawable drawable, CARD32 glxCode )
 {
    xGLXDestroyPbufferReq * req;
+   CARD8 opcode;
 
    if ( (dpy == NULL) || (drawable == 0) ) {
       return;
    }
 
 
+   opcode = __glXSetupForCommand(dpy);
+   if (!opcode)
+      return;
+
    LockDisplay(dpy);
 
    GetReqExtra( GLXDestroyPbuffer, 4, req );
-   req->reqType = __glXSetupForCommand(dpy);
+   req->reqType = opcode;
    req->glxCode = glxCode;
    req->pbuffer = (GLXPbuffer) drawable;
 
@@ -372,6 +387,7 @@ CreatePbuffer( Display *dpy, const __GLcontextModes * fbconfig,
    __GLXdisplayPrivate *priv = __glXInitialize(dpy);
    GLXDrawable id = 0;
    CARD32 * data;
+   CARD8 opcode;
    unsigned int  i;
 
    i = 0;
@@ -379,6 +395,10 @@ CreatePbuffer( Display *dpy, const __GLcontextModes * fbconfig,
        while (attrib_list[i * 2])
 	   i++;
    }
+
+   opcode = __glXSetupForCommand(dpy);
+   if (!opcode)
+      return None;
 
    LockDisplay(dpy);
    id = XAllocID(dpy);
@@ -390,7 +410,7 @@ CreatePbuffer( Display *dpy, const __GLcontextModes * fbconfig,
       GetReqExtra( GLXCreatePbuffer, (8 * (i + extra)), req );
       data = (CARD32 *) (req + 1);
 
-      req->reqType = __glXSetupForCommand(dpy);
+      req->reqType = opcode;
       req->glxCode = X_GLXCreatePbuffer;
       req->screen = (CARD32) fbconfig->screen;
       req->fbconfig = fbconfig->fbconfigID;
@@ -411,7 +431,7 @@ CreatePbuffer( Display *dpy, const __GLcontextModes * fbconfig,
       GetReqExtra( GLXVendorPrivate, 20 + (8 * i), vpreq );
       data = (CARD32 *) (vpreq + 1);
 
-      vpreq->reqType = __glXSetupForCommand(dpy);
+      vpreq->reqType = opcode;
       vpreq->glxCode = X_GLXVendorPrivate;
       vpreq->vendorCode = X_GLXvop_CreateGLXPbufferSGIX;
 
