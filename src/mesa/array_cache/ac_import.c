@@ -221,7 +221,7 @@ import( const GLcontext *ctx,
 
    switch (destType) {
    case GL_FLOAT:
-      _math_trans_4fc( (GLfloat (*)[4]) to->Ptr,
+      _math_trans_4fn( (GLfloat (*)[4]) to->Ptr,
                        from->Ptr,
 		       from->StrideB,
 		       from->Type,
@@ -343,7 +343,7 @@ import_normal( GLcontext *ctx, GLenum type, GLuint stride )
    ASSERT(type == GL_FLOAT);
    ASSERT(stride == 3*sizeof(GLfloat) || stride == 0);
 
-   _math_trans_3f( (GLfloat (*)[3]) to->Ptr,
+   _math_trans_3fn((GLfloat (*)[3]) to->Ptr,
 		   from->Ptr,
 		   from->StrideB,
 		   from->Type,
@@ -476,7 +476,7 @@ import_attrib( GLcontext *ctx, GLuint index, GLenum type, GLuint stride )
    ASSERT(ac->count - ac->start < ctx->Const.MaxArrayLockSize);
 
    if (from->Normalized) {
-      _math_trans_4fc( (GLfloat (*)[4]) to->Ptr,
+      _math_trans_4fn( (GLfloat (*)[4]) to->Ptr,
                       from->Ptr,
                       from->StrideB,
                       from->Type,

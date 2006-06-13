@@ -101,7 +101,7 @@ extern void _math_trans_4f(GLfloat (*to)[4],
 			   GLuint n );
 
 /** Convert to normalized floats in [0,1] or [-1, 1] */
-extern void _math_trans_4fc(GLfloat (*to)[4],
+extern void _math_trans_4fn(GLfloat (*to)[4],
 			    CONST void *ptr,
 			    GLuint stride,
 			    GLenum type,
@@ -109,7 +109,7 @@ extern void _math_trans_4fc(GLfloat (*to)[4],
 			    GLuint start,
 			    GLuint n );
 
-extern void _math_trans_3f(GLfloat (*to)[3],
+extern void _math_trans_3fn(GLfloat (*to)[3],
 			   CONST void *ptr,
 			   GLuint stride,
 			   GLenum type,
