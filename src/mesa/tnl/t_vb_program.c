@@ -45,8 +45,6 @@
 #include "nvvertexec.h"
 #include "nvprogram.h"
 
-#include "math/m_translate.h"
-
 #include "t_context.h"
 #include "t_pipeline.h"
 
@@ -231,6 +229,7 @@ static GLboolean init_vp( GLcontext *ctx,
       return GL_FALSE;
 
    /* Allocate arrays of vertex output values */
+   /* XXX change '15' to a named constant */
    for (i = 0; i < 15; i++) {
       _mesa_vector4f_alloc( &store->attribs[i], 0, size, 32 );
       store->attribs[i].size = 4;

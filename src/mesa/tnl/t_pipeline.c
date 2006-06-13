@@ -32,9 +32,6 @@
 #include "state.h"
 #include "mtypes.h"
 
-#include "math/m_translate.h"
-#include "math/m_xform.h"
-
 #include "t_context.h"
 #include "t_pipeline.h"
 #include "t_vp_build.h"

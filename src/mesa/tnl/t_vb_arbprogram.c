@@ -38,7 +38,6 @@
 #include "light.h"
 #include "program.h"
 #include "math/m_matrix.h"
-#include "math/m_translate.h"
 #include "t_context.h"
 #include "t_pipeline.h"
 #include "t_vb_arbprogram.h"
@@ -1517,7 +1516,7 @@ static void dtr( struct tnl_pipeline_stage *stage )
  */
 const struct tnl_pipeline_stage _tnl_arb_vertex_program_stage =
 {
-   "vertex-program",
+   "arb-vertex-program",
    NULL,			/* private_data */
    init_vertex_program,		/* create */
    dtr,				/* destroy */
