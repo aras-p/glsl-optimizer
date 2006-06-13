@@ -313,7 +313,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
 	 i = index - VERT_ATTRIB_TEX0;
 	 _tnl_import_texcoord( ctx, i, GL_FALSE, GL_FALSE );
 	 tmp->TexCoord[i].count = VB->Count;
-	 VB->AttribPtr[_TNL_ATTRIB_TEX0 + i] = &tmp->TexCoord[i];
+	 VB->AttribPtr[index] = &tmp->TexCoord[i];
       }
       else {
 	 _tnl_constant_attrib(tnl, tmp, index);
