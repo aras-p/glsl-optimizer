@@ -185,6 +185,9 @@ reset_edgeflag( GLcontext *ctx )
 }
 
 
+/**
+ * \param index  the generic vertex array number.
+ */
 static void
 reset_attrib( GLcontext *ctx, GLuint index )
 {
@@ -453,6 +456,9 @@ import_edgeflag( GLcontext *ctx, GLenum type, GLuint stride )
    ac->IsCached.EdgeFlag = GL_TRUE;
 }
 
+/**
+ * \param index  the generic vertex array number
+ */
 static void
 import_attrib( GLcontext *ctx, GLuint index, GLenum type, GLuint stride )
 {
@@ -469,13 +475,24 @@ import_attrib( GLcontext *ctx, GLuint index, GLenum type, GLuint stride )
    ASSERT(stride == 4*sizeof(GLfloat) || stride == 0);
    ASSERT(ac->count - ac->start < ctx->Const.MaxArrayLockSize);
 
-   _math_trans_4f( (GLfloat (*)[4]) to->Ptr,
-		   from->Ptr,
-		   from->StrideB,
-		   from->Type,
-		   from->Size,
-		   0,
-		   ac->count - ac->start);
+   if (from->Normalized) {
+      _math_trans_4fc( (GLfloat (*)[4]) to->Ptr,
+                      from->Ptr,
+                      from->StrideB,
+                      from->Type,
+                      from->Size,
+                      0,
+                      ac->count - ac->start);
+   }
+   else {
+      _math_trans_4f( (GLfloat (*)[4]) to->Ptr,
+                      from->Ptr,
+                      from->StrideB,
+                      from->Type,
+                      from->Size,
+                      0,
+                      ac->count - ac->start);
+   }
 
    to->Size = from->Size;
    to->StrideB = 4 * sizeof(GLfloat);
@@ -768,7 +785,10 @@ _ac_import_edgeflag( GLcontext *ctx,
    }
 }
 
-/* GL_NV_vertex_program */
+/**
+ * For GL_ARB/NV_vertex_program
+ * \param index  index of the vertex array, starting at zero.
+ */
 struct gl_client_array *
 _ac_import_attrib( GLcontext *ctx,
                    GLuint index,
