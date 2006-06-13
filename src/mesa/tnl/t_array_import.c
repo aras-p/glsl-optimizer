@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,12 +38,15 @@
 #include "t_context.h"
 
 
+/**
+ * XXX writable and stride are always false in these functions...
+ */
 static void _tnl_import_vertex( GLcontext *ctx,
-				GLboolean writeable,
+				GLboolean writable,
 				GLboolean stride )
 {
    struct gl_client_array *tmp;
-   GLboolean is_writeable = 0;
+   GLboolean is_writable = 0;
    struct tnl_vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    const GLubyte *data;
 
@@ -51,8 +54,8 @@ static void _tnl_import_vertex( GLcontext *ctx,
 			   GL_FLOAT,
 			   stride ? 4*sizeof(GLfloat) : 0,
 			   0,
-			   writeable,
-			   &is_writeable);
+			   writable,
+			   &is_writable);
 
    data = tmp->Ptr;
    inputs->Obj.data = (GLfloat (*)[4]) data;
@@ -62,17 +65,17 @@ static void _tnl_import_vertex( GLcontext *ctx,
 }
 
 static void _tnl_import_normal( GLcontext *ctx,
-				GLboolean writeable,
+				GLboolean writable,
 				GLboolean stride )
 {
    struct gl_client_array *tmp;
-   GLboolean is_writeable = 0;
+   GLboolean is_writable = 0;
    struct tnl_vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    const GLubyte *data;
 
    tmp = _ac_import_normal(ctx, GL_FLOAT,
-			   stride ? 3*sizeof(GLfloat) : 0, writeable,
-			   &is_writeable);
+			   stride ? 3*sizeof(GLfloat) : 0, writable,
+			   &is_writable);
 
    data = tmp->Ptr;
    inputs->Normal.data = (GLfloat (*)[4]) data;
@@ -83,11 +86,11 @@ static void _tnl_import_normal( GLcontext *ctx,
 
 
 static void _tnl_import_color( GLcontext *ctx,
-			       GLboolean writeable,
+			       GLboolean writable,
 			       GLboolean stride )
 {
    struct gl_client_array *tmp;
-   GLboolean is_writeable = 0;
+   GLboolean is_writable = 0;
    struct tnl_vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    const GLubyte *data;
 
@@ -95,8 +98,8 @@ static void _tnl_import_color( GLcontext *ctx,
 			  GL_FLOAT,
 			  stride ? 4*sizeof(GLfloat) : 0,
 			  4,
-			  writeable,
-			  &is_writeable);
+			  writable,
+			  &is_writable);
 
    data = tmp->Ptr;
    inputs->Color.data = (GLfloat (*)[4]) data;
@@ -107,11 +110,11 @@ static void _tnl_import_color( GLcontext *ctx,
 
 
 static void _tnl_import_secondarycolor( GLcontext *ctx,
-					GLboolean writeable,
+					GLboolean writable,
 					GLboolean stride )
 {
    struct gl_client_array *tmp;
-   GLboolean is_writeable = 0;
+   GLboolean is_writable = 0;
    struct tnl_vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    const GLubyte *data;
 
@@ -119,8 +122,8 @@ static void _tnl_import_secondarycolor( GLcontext *ctx,
 				   GL_FLOAT,
 				   stride ? 4*sizeof(GLfloat) : 0,
 				   4,
-				   writeable,
-				   &is_writeable);
+				   writable,
+				   &is_writable);
 
    data = tmp->Ptr;
    inputs->SecondaryColor.data = (GLfloat (*)[4]) data;
@@ -130,17 +133,17 @@ static void _tnl_import_secondarycolor( GLcontext *ctx,
 }
 
 static void _tnl_import_fogcoord( GLcontext *ctx,
-				  GLboolean writeable,
+				  GLboolean writable,
 				  GLboolean stride )
 {
    struct tnl_vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    struct gl_client_array *tmp;
-   GLboolean is_writeable = 0;
+   GLboolean is_writable = 0;
    const GLubyte *data;
 
    tmp = _ac_import_fogcoord(ctx, GL_FLOAT,
-			     stride ? sizeof(GLfloat) : 0, writeable,
-			     &is_writeable);
+			     stride ? sizeof(GLfloat) : 0, writable,
+			     &is_writable);
 
    data = tmp->Ptr;
    inputs->FogCoord.data = (GLfloat (*)[4]) data;
@@ -149,17 +152,17 @@ static void _tnl_import_fogcoord( GLcontext *ctx,
 }
 
 static void _tnl_import_index( GLcontext *ctx,
-			       GLboolean writeable,
+			       GLboolean writable,
 			       GLboolean stride )
 {
    struct tnl_vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    struct gl_client_array *tmp;
-   GLboolean is_writeable = 0;
+   GLboolean is_writable = 0;
    const GLubyte *data;
 
    tmp = _ac_import_index(ctx, GL_FLOAT,
-			  stride ? sizeof(GLfloat) : 0, writeable,
-			  &is_writeable);
+			  stride ? sizeof(GLfloat) : 0, writable,
+			  &is_writable);
 
    data = tmp->Ptr;
    inputs->Index.data = (GLfloat (*)[4]) data;
@@ -170,19 +173,19 @@ static void _tnl_import_index( GLcontext *ctx,
 
 static void _tnl_import_texcoord( GLcontext *ctx,
 				  GLuint unit,
-				  GLboolean writeable,
+				  GLboolean writable,
 				  GLboolean stride )
 {
    struct tnl_vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    struct gl_client_array *tmp;
-   GLboolean is_writeable = 0;
+   GLboolean is_writable = 0;
    const GLubyte *data;
 
    tmp = _ac_import_texcoord(ctx, unit, GL_FLOAT,
 			     stride ? 4 * sizeof(GLfloat) : 0,
 			     0,
-			     writeable,
-			     &is_writeable);
+			     writable,
+			     &is_writable);
 
    data = tmp->Ptr;
    inputs->TexCoord[unit].data = (GLfloat (*)[4]) data;
@@ -193,19 +196,19 @@ static void _tnl_import_texcoord( GLcontext *ctx,
 
 
 static void _tnl_import_edgeflag( GLcontext *ctx,
-				  GLboolean writeable,
+				  GLboolean writable,
 				  GLboolean stride )
 {
    struct tnl_vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    struct gl_client_array *tmp;
-   GLboolean is_writeable = 0;
+   GLboolean is_writable = 0;
    const GLubyte *data;
-   (void) writeable; (void) stride;
+   (void) writable; (void) stride;
 
    tmp = _ac_import_edgeflag(ctx, GL_UNSIGNED_BYTE,
 			     sizeof(GLubyte),
 			     0,
-			     &is_writeable);
+			     &is_writable);
 
    data = tmp->Ptr;
    inputs->EdgeFlag = (GLubyte *) data;
@@ -215,19 +218,19 @@ static void _tnl_import_edgeflag( GLcontext *ctx,
 
 static void _tnl_import_attrib( GLcontext *ctx,
                                 GLuint index,
-                                GLboolean writeable,
+                                GLboolean writable,
                                 GLboolean stride )
 {
    struct tnl_vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    struct gl_client_array *tmp;
-   GLboolean is_writeable = 0;
+   GLboolean is_writable = 0;
    const GLubyte *data;
 
    tmp = _ac_import_attrib(ctx, index, GL_FLOAT,
                            stride ? 4 * sizeof(GLfloat) : 0,
                            4,  /* want GLfloat[4] */
-                           writeable,
-                           &is_writeable);
+                           writable,
+                           &is_writable);
 
    data = tmp->Ptr;
    inputs->Attribs[index].data = (GLfloat (*)[4]) data;
@@ -256,6 +259,8 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    struct tnl_vertex_arrays *tmp = &tnl->array_inputs;
+   const struct vertex_program *program
+      = ctx->VertexProgram._Enabled ? ctx->VertexProgram.Current : NULL;
    GLuint i, index;
 
    VB->Count = end - start;
@@ -263,49 +268,52 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
 
    _ac_import_range( ctx, start, end );
 
-   /* When vertex program mode is enabled, the generic vertex program
-    * attribute arrays have priority over the conventional attributes.
-    * Try to use them now.
-    * XXX that's true of NV_vertex_program, but ARB_vertex_program???
+   /* Note that the generic attribute arrays are treated differently
+    * depending on whether an NV or ARB vertex program is enabled
+    * (corresponding to aliasing vs. non-aliasing behaviour).
+    * Generic array 0 always aliases vertex position.
     */
    for (index = 0; index < VERT_ATTRIB_MAX; index++) {
-      /* When vertex program mode is enabled, the generic vertex attribute
-       * arrays have priority over the conventional vertex arrays.
-       */
       if (ctx->VertexProgram._Enabled
+          && (program->IsNVProgram || index == 0)
           && ctx->Array.ArrayObj->VertexAttrib[index].Enabled) {
-         /* Use generic attribute array */
+         /* Use generic attribute array.  If an NV vertex program is active,
+          * the generic arrays override the conventional attributes.
+          * Otherwise, if an ARB vertex program is active, we'll import the
+          * generic attributes without aliasing over conventional attribs
+          * (see below).
+          */
          _tnl_import_attrib( ctx, index, GL_FALSE, GL_TRUE );
          VB->AttribPtr[index] = &tmp->Attribs[index];
       }
       /* use conventional arrays... */
       else if (index == VERT_ATTRIB_POS) {
-	 _tnl_import_vertex( ctx, 0, 0 );
+	 _tnl_import_vertex( ctx, GL_FALSE, GL_FALSE );
 	 tmp->Obj.count = VB->Count;
 	 VB->AttribPtr[_TNL_ATTRIB_POS] = &tmp->Obj;
       }
       else if (index == VERT_ATTRIB_NORMAL) {
-	 _tnl_import_normal( ctx, 0, 0 );
+	 _tnl_import_normal( ctx, GL_FALSE, GL_FALSE );
 	 tmp->Normal.count = VB->Count;
 	 VB->AttribPtr[_TNL_ATTRIB_NORMAL] = &tmp->Normal;
       }
       else if (index == VERT_ATTRIB_COLOR0) {
-	 _tnl_import_color( ctx, 0, 0 );
+	 _tnl_import_color( ctx, GL_FALSE, GL_FALSE );
 	 tmp->Color.count = VB->Count;
 	 VB->AttribPtr[_TNL_ATTRIB_COLOR0] = &tmp->Color;
       }
       else if (index == VERT_ATTRIB_COLOR1) {
-	 _tnl_import_secondarycolor( ctx, 0, 0 );
+	 _tnl_import_secondarycolor( ctx, GL_FALSE, GL_FALSE );
 	 tmp->SecondaryColor.count = VB->Count;
 	 VB->AttribPtr[_TNL_ATTRIB_COLOR1] = &tmp->SecondaryColor;
       }
       else if (index == VERT_ATTRIB_FOG) {
-	 _tnl_import_fogcoord( ctx, 0, 0 );
+	 _tnl_import_fogcoord( ctx, GL_FALSE, GL_FALSE );
 	 tmp->FogCoord.count = VB->Count;
 	 VB->AttribPtr[_TNL_ATTRIB_FOG] = &tmp->FogCoord;
       }
       else if (index == VERT_ATTRIB_COLOR_INDEX) {
-         _tnl_import_index( ctx, 0, 0 );
+         _tnl_import_index( ctx, GL_FALSE, GL_FALSE );
          tmp->Index.count = VB->Count;
          VB->AttribPtr[_TNL_ATTRIB_COLOR_INDEX] = &tmp->Index;
       }
@@ -315,9 +323,23 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
 	 tmp->TexCoord[i].count = VB->Count;
 	 VB->AttribPtr[index] = &tmp->TexCoord[i];
       }
+      else if (index >= VERT_ATTRIB_GENERIC1 &&
+               index <= VERT_ATTRIB_GENERIC15) {
+         if (program && !program->IsNVProgram) {
+            /* GL_ARB_vertex_program: bind a generic attribute array */
+            const GLuint arrayIndex = index - VERT_ATTRIB_GENERIC0;
+            _tnl_import_attrib(ctx, arrayIndex, GL_FALSE, GL_TRUE);
+            VB->AttribPtr[index] = &tmp->Attribs[arrayIndex];
+         }
+	 else {
+            _tnl_constant_attrib(tnl, tmp, index);
+         }
+      }
       else {
 	 _tnl_constant_attrib(tnl, tmp, index);
       }
+      assert(VB->AttribPtr[index]);
+      assert(VB->AttribPtr[index]->size);
    }
 
    /* odd-ball vertex attributes */
