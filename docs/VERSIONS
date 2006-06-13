@@ -1494,3 +1494,4 @@ Mesa Version History
 	- fixed convolution memory leak (bug 7077)
 	- rectangular depth textures didn't work
 	- invalid mode to glBegin didn't generate an error (bug 7142)
+	- 'normalized' parameter to glVertexAttribPointerARB didn't work
