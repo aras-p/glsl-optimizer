@@ -195,12 +195,6 @@ static attr_func mat_attrfunc[4] = {
 };
 
 
-static void index_attr1fv(GLcontext *ctx, GLint target, const GLfloat *v)
-{
-   (void) target;
-   CALL_Indexf(ctx->Exec, (v[0]));
-}
-
 static void edgeflag_attr1fv(GLcontext *ctx, GLint target, const GLfloat *v)
 {
    (void) target;
