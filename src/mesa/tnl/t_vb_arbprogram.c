@@ -1236,7 +1236,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    if (ctx->ShaderObjects._VertexShaderPresent)
       return GL_TRUE;
 
-   program = (ctx->VertexProgram._Enabled ? ctx->VertexProgram.Current : 0);
+   program = ctx->VertexProgram._Enabled ? ctx->VertexProgram.Current : NULL;
    if (!program && ctx->_MaintainTnlProgram) {
       program = ctx->_TnlProgram;
    }
