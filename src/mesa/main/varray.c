@@ -40,13 +40,22 @@
 
 
 /**
- * Update the fields of a vertex array structure.
+ * Update the fields of a vertex array object.
  * We need to do a few special things for arrays that live in
  * vertex buffer objects.
+ *
+ * \param array  the array to update
+ * \param dirtyBit  which bit to set in ctx->Array.NewState for this array
+ * \param elementSize  size of each array element, in bytes
+ * \param size  components per element (1, 2, 3 or 4)
+ * \param type  datatype of each component (GL_FLOAT, GL_INT, etc)
+ * \param stride  stride between elements, in elements
+ * \param normalized  are integer types converted to floats in [-1, 1]?
+ * \param ptr  the address (or offset inside VBO) of the array data
  */
 static void
 update_array(GLcontext *ctx, struct gl_client_array *array,
-             GLbitfield dirtyFlag, GLsizei elementSize,
+             GLbitfield dirtyBit, GLsizei elementSize,
              GLint size, GLenum type,
              GLsizei stride, GLboolean normalized, const GLvoid *ptr)
 {
@@ -77,7 +86,7 @@ update_array(GLcontext *ctx, struct gl_client_array *array,
       array->_MaxElement = 2 * 1000 * 1000 * 1000; /* just a big number */
 
    ctx->NewState |= _NEW_ARRAY;
-   ctx->Array.NewState |= dirtyFlag;
+   ctx->Array.NewState |= dirtyBit;
 }
 
 
@@ -404,7 +413,8 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
          return;
    }
 
-   update_array(ctx, &ctx->Array.ArrayObj->TexCoord[unit], _NEW_ARRAY_TEXCOORD(unit),
+   update_array(ctx, &ctx->Array.ArrayObj->TexCoord[unit],
+                _NEW_ARRAY_TEXCOORD(unit),
                 elementSize, size, type, stride, GL_FALSE, ptr);
 
    if (ctx->Driver.TexCoordPointer)
@@ -480,7 +490,8 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
          return;
    }
 
-   update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index], _NEW_ARRAY_ATTRIB(index),
+   update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
+                _NEW_ARRAY_ATTRIB(index),
                 elementSize, size, type, stride, normalized, ptr);
 
    if (ctx->Driver.VertexAttribPointer)
@@ -551,13 +562,12 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
          return;
    }
 
-   update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index], _NEW_ARRAY_ATTRIB(index),
+   update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
+                _NEW_ARRAY_ATTRIB(index),
                 elementSize, size, type, stride, normalized, ptr);
 
-   /* XXX fix
    if (ctx->Driver.VertexAttribPointer)
-      ctx->Driver.VertexAttribPointer( ctx, index, size, type, stride, ptr );
-   */
+      ctx->Driver.VertexAttribPointer(ctx, index, size, type, stride, ptr);
 }
 #endif
 
