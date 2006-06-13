@@ -588,8 +588,8 @@ glXGetVideoSyncSGI(unsigned int *count)
    struct _glxapi_table *t;
    Display *dpy = glXGetCurrentDisplay();
    GET_DISPATCH(dpy, t);
-   if (!t)
-      return 0;
+   if (!t || !glXGetCurrentContext())
+      return GLX_BAD_CONTEXT;
    return (t->GetVideoSyncSGI)(count);
 }
 
@@ -599,8 +599,8 @@ glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
    struct _glxapi_table *t;
    Display *dpy = glXGetCurrentDisplay();
    GET_DISPATCH(dpy, t);
-   if (!t)
-      return 0;
+   if (!t || !glXGetCurrentContext())
+      return GLX_BAD_CONTEXT;
    return (t->WaitVideoSyncSGI)(divisor, remainder, count);
 }
 
@@ -614,7 +614,7 @@ glXMakeCurrentReadSGI(Display *dpy, GLXDrawable draw, GLXDrawable read, GLXConte
    struct _glxapi_table *t;
    GET_DISPATCH(dpy, t);
    if (!t)
-      return 0;
+      return False;
    return (t->MakeCurrentReadSGI)(dpy, draw, read, ctx);
 }
 
