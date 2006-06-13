@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -80,7 +80,7 @@
    "GLX_ARB_get_proc_address " \
    "GLX_EXT_visual_info " \
    "GLX_EXT_visual_rating " \
-   "GLX_SGI_video_sync " \
+   /*"GLX_SGI_video_sync "*/ \
    "GLX_SGIX_fbconfig " \
    "GLX_SGIX_pbuffer "
 
@@ -2274,19 +2274,26 @@ Fake_glXSwapIntervalSGI(int interval)
 
 /*** GLX_SGI_video_sync ***/
 
+static unsigned int FrameCounter = 0;
+
 static int
 Fake_glXGetVideoSyncSGI(unsigned int *count)
 {
-   (void) count;
+   /* this is a bogus implementation */
+   *count = FrameCounter++;
    return 0;
 }
 
 static int
 Fake_glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
 {
-   (void) divisor;
-   (void) remainder;
-   (void) count;
+   if (divisor <= 0 || remainder < 0)
+      return GLX_BAD_VALUE;
+   /* this is a bogus implementation */
+   FrameCounter++;
+   while (FrameCounter % divisor != remainder)
+      FrameCounter++;
+   *count = FrameCounter;
    return 0;
 }
 
