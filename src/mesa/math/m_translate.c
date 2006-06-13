@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,8 +22,9 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/*
- * New (3.1) transformation code written by Keith Whitwell.
+/**
+ * \brief  Translate vectors of numbers between various types.
+ * \author Keith Whitwell.
  */
 
 
@@ -113,12 +114,17 @@ static trans_4f_func  _math_trans_4fc_tab[5][MAX_TYPES];
 
 
 
-/* GL_BYTE
+/**
+ * Translate from GL_BYTE.
  */
 #define SRC GLbyte
 #define SRC_IDX TYPE_IDX(GL_BYTE)
 #define TRX_3F(f,n)   BYTE_TO_FLOAT( PTR_ELT(f,n) )
+#if 1
 #define TRX_4F(f,n)   BYTE_TO_FLOAT( PTR_ELT(f,n) )
+#else
+#define TRX_4F(f,n)   (GLfloat)( PTR_ELT(f,n) )
+#endif
 #define TRX_4FC(f,n)   BYTE_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_UB(ub, f,n)  ub = BYTE_TO_UBYTE( PTR_ELT(f,n) )
 #define TRX_US(ch, f,n)  ch = BYTE_TO_USHORT( PTR_ELT(f,n) )
@@ -166,12 +172,13 @@ static trans_4f_func  _math_trans_4fc_tab[5][MAX_TYPES];
 #undef SRC_IDX
 
 
-/* GL_UNSIGNED_BYTE
+/**
+ * Translate from GL_UNSIGNED_BYTE.
  */
 #define SRC GLubyte
 #define SRC_IDX TYPE_IDX(GL_UNSIGNED_BYTE)
 #define TRX_3F(f,n)	     UBYTE_TO_FLOAT(PTR_ELT(f,n))
-#define TRX_4F(f,n)	     UBYTE_TO_FLOAT(PTR_ELT(f,n))
+#define TRX_4F(f,n)	     (GLfloat)( PTR_ELT(f,n) )
 #define TRX_4FC(f,n)	     UBYTE_TO_FLOAT(PTR_ELT(f,n))
 #define TRX_UB(ub, f,n)	     ub = PTR_ELT(f,n)
 #define TRX_US(us, f,n)      us = UBYTE_TO_USHORT(PTR_ELT(f,n))
@@ -219,7 +226,7 @@ static trans_4f_func  _math_trans_4fc_tab[5][MAX_TYPES];
 #define SRC_IDX TYPE_IDX(GL_SHORT)
 #define TRX_3F(f,n)   SHORT_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_4F(f,n)   (GLfloat)( PTR_ELT(f,n) )
-#define TRX_4FC(f,n)   (GLfloat)( PTR_ELT(f,n) )
+#define TRX_4FC(f,n)  SHORT_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_UB(ub, f,n)  ub = SHORT_TO_UBYTE(PTR_ELT(f,n))
 #define TRX_US(us, f,n)  us = SHORT_TO_USHORT(PTR_ELT(f,n))
 #define TRX_UI(f,n)  (PTR_ELT(f,n) < 0 ? 0 : (GLuint)  PTR_ELT(f,n))
@@ -273,9 +280,9 @@ static trans_4f_func  _math_trans_4fc_tab[5][MAX_TYPES];
 #define SRC_IDX TYPE_IDX(GL_UNSIGNED_SHORT)
 #define TRX_3F(f,n)   USHORT_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_4F(f,n)   (GLfloat)( PTR_ELT(f,n) )
-#define TRX_4FC(f,n)   (GLfloat)( PTR_ELT(f,n) )
+#define TRX_4FC(f,n)  USHORT_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_UB(ub,f,n)  ub = (GLubyte) (PTR_ELT(f,n) >> 8)
-#define TRX_US(us,f,n)  us = (GLushort) (PTR_ELT(f,n) >> 8)
+#define TRX_US(us,f,n)  us = PTR_ELT(f,n)
 #define TRX_UI(f,n)  (GLuint)   PTR_ELT(f,n)
 
 
@@ -326,7 +333,7 @@ static trans_4f_func  _math_trans_4fc_tab[5][MAX_TYPES];
 #define SRC_IDX TYPE_IDX(GL_INT)
 #define TRX_3F(f,n)   INT_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_4F(f,n)   (GLfloat)( PTR_ELT(f,n) )
-#define TRX_4FC(f,n)   (GLfloat)( PTR_ELT(f,n) )
+#define TRX_4FC(f,n)  INT_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_UB(ub, f,n)  ub = INT_TO_UBYTE(PTR_ELT(f,n))
 #define TRX_US(us, f,n)  us = INT_TO_USHORT(PTR_ELT(f,n))
 #define TRX_UI(f,n)  (PTR_ELT(f,n) < 0 ? 0 : (GLuint)  PTR_ELT(f,n))
@@ -380,7 +387,7 @@ static trans_4f_func  _math_trans_4fc_tab[5][MAX_TYPES];
 #define SRC_IDX TYPE_IDX(GL_UNSIGNED_INT)
 #define TRX_3F(f,n)   INT_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_4F(f,n)   (GLfloat)( PTR_ELT(f,n) )
-#define TRX_4FC(f,n)   (GLfloat)( PTR_ELT(f,n) )
+#define TRX_4FC(f,n)  UINT_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_UB(ub, f,n)  ub = (GLubyte) (PTR_ELT(f,n) >> 24)
 #define TRX_US(us, f,n)  us = (GLshort) (PTR_ELT(f,n) >> 16)
 #define TRX_UI(f,n)		PTR_ELT(f,n)
@@ -614,7 +621,9 @@ void _math_init_translate( void )
 }
 
 
-
+/**
+ * Translate vector of values to GLfloat [1].
+ */
 void _math_trans_1f(GLfloat *to,
 		    CONST void *ptr,
 		    GLuint stride,
@@ -625,6 +634,9 @@ void _math_trans_1f(GLfloat *to,
    _math_trans_1f_tab[TYPE_IDX(type)]( to, ptr, stride, start, n );
 }
 
+/**
+ * Translate vector of values to GLuint [1].
+ */
 void _math_trans_1ui(GLuint *to,
 		     CONST void *ptr,
 		     GLuint stride,
@@ -635,6 +647,9 @@ void _math_trans_1ui(GLuint *to,
    _math_trans_1ui_tab[TYPE_IDX(type)]( to, ptr, stride, start, n );
 }
 
+/**
+ * Translate vector of values to GLubyte [1].
+ */
 void _math_trans_1ub(GLubyte *to,
 		     CONST void *ptr,
 		     GLuint stride,
@@ -646,6 +661,9 @@ void _math_trans_1ub(GLubyte *to,
 }
 
 
+/**
+ * Translate vector of values to GLubyte [4].
+ */
 void _math_trans_4ub(GLubyte (*to)[4],
 		     CONST void *ptr,
 		     GLuint stride,
@@ -657,6 +675,9 @@ void _math_trans_4ub(GLubyte (*to)[4],
    _math_trans_4ub_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n );
 }
 
+/**
+ * Translate vector of values to GLchan [4].
+ */
 void _math_trans_4chan( GLchan (*to)[4],
 			CONST void *ptr,
 			GLuint stride,
@@ -674,6 +695,9 @@ void _math_trans_4chan( GLchan (*to)[4],
 #endif
 }
 
+/**
+ * Translate vector of values to GLushort [4].
+ */
 void _math_trans_4us(GLushort (*to)[4],
 		     CONST void *ptr,
 		     GLuint stride,
@@ -685,6 +709,9 @@ void _math_trans_4us(GLushort (*to)[4],
    _math_trans_4us_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n );
 }
 
+/**
+ * Translate vector of values to GLfloat [4].
+ */
 void _math_trans_4f(GLfloat (*to)[4],
 		    CONST void *ptr,
 		    GLuint stride,
@@ -696,6 +723,9 @@ void _math_trans_4f(GLfloat (*to)[4],
    _math_trans_4f_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n );
 }
 
+/**
+ * Translate vector of values to GLfloat[4], normalized to [-1, 1].
+ */
 void _math_trans_4fc(GLfloat (*to)[4],
 		    CONST void *ptr,
 		    GLuint stride,
@@ -707,6 +737,9 @@ void _math_trans_4fc(GLfloat (*to)[4],
    _math_trans_4fc_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n );
 }
 
+/**
+ * Translate vector of values to GLfloat[3], normalized to [-1, 1].
+ */
 void _math_trans_3f(GLfloat (*to)[3],
 		    CONST void *ptr,
 		    GLuint stride,
