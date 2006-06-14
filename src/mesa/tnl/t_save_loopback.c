@@ -292,7 +292,7 @@ void _tnl_loopback_vertex_list( GLcontext *ctx,
    GLuint i, nr = 0;
 
    /* conventional + generic attributes */
-   for (i = 0 ; i <= _TNL_ATTRIB_ATTRIBUTE15 ; i++) {
+   for (i = 0 ; i <= _TNL_ATTRIB_GENERIC15 ; i++) {
       if (list->attrsz[i]) {
 	 la[nr].target = i;
 	 la[nr].sz = list->attrsz[i];

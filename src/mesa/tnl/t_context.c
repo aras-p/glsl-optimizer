@@ -199,7 +199,7 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
       RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POINTSIZE );
 
    if (ctx->ShaderObjects._VertexShaderPresent || ctx->ShaderObjects._FragmentShaderPresent)
-      RENDERINPUTS_SET_RANGE( tnl->render_inputs_bitset, _TNL_FIRST_ATTRIBUTE, _TNL_LAST_ATTRIBUTE );
+      RENDERINPUTS_SET_RANGE( tnl->render_inputs_bitset, _TNL_FIRST_GENERIC, _TNL_LAST_GENERIC );
 }
 
 

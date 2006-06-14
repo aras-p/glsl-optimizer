@@ -155,7 +155,7 @@ static void fetch_input_vec4 (struct gl2_program_intf **pro, GLuint index, GLuin
 static GLvoid
 fetch_gen_attrib (struct gl2_program_intf **pro, GLuint index, GLuint i, struct vertex_buffer *vb)
 {
-   const GLuint attr = _TNL_ATTRIB_ATTRIBUTE0 + index;
+   const GLuint attr = _TNL_ATTRIB_GENERIC0 + index;
    const GLubyte *ptr = (const GLubyte *) (vb->AttribPtr[attr]->data);
    const GLuint stride = vb->AttribPtr[attr]->stride;
    const GLfloat *data = (const GLfloat *) (ptr + stride * i);
@@ -254,7 +254,7 @@ static GLboolean run_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stag
 		vb->AttribPtr[VERT_ATTRIB_TEX0 + i] = vb->TexCoordPtr[i];
 	vb->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &store->outputs[VERT_RESULT_PSIZ];
 	for (i = 0; i < MAX_VARYING_VECTORS; i++)
-		vb->AttribPtr[_TNL_ATTRIB_ATTRIBUTE0 + i] = vb->VaryingPtr[i];
+		vb->AttribPtr[_TNL_ATTRIB_GENERIC0 + i] = vb->VaryingPtr[i];
 
 	store->ormask = 0;
 	store->andmask = CLIP_FRUSTUM_BITS;

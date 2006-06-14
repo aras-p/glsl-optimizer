@@ -147,7 +147,7 @@ _swsetup_RenderStart( GLcontext *ctx )
          }
       }
 
-      if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_ATTRIBUTE, _TNL_LAST_ATTRIBUTE )) {
+      if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_GENERIC, _TNL_LAST_GENERIC )) {
           for (i = 0; i < MAX_VERTEX_ATTRIBS; i++) {
               if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_ATTRIBUTE(i) )) {
                   EMIT_ATTR( _TNL_ATTRIB_ATTRIBUTE(i), VARYING_EMIT_STYLE, attribute[i] );

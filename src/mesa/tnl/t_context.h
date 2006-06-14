@@ -115,22 +115,22 @@ enum {
 	_TNL_ATTRIB_TEX5 = 13,
 	_TNL_ATTRIB_TEX6 = 14,
 	_TNL_ATTRIB_TEX7 = 15,
-	_TNL_ATTRIB_ATTRIBUTE0 = 16,
-	_TNL_ATTRIB_ATTRIBUTE1 = 17,
-	_TNL_ATTRIB_ATTRIBUTE2 = 18,
-	_TNL_ATTRIB_ATTRIBUTE3 = 19,
-	_TNL_ATTRIB_ATTRIBUTE4 = 20,
-	_TNL_ATTRIB_ATTRIBUTE5 = 21,
-	_TNL_ATTRIB_ATTRIBUTE6 = 22,
-	_TNL_ATTRIB_ATTRIBUTE7 = 23,
-	_TNL_ATTRIB_ATTRIBUTE8 = 24,
-	_TNL_ATTRIB_ATTRIBUTE9 = 25,
-	_TNL_ATTRIB_ATTRIBUTE10 = 26,
-	_TNL_ATTRIB_ATTRIBUTE11 = 27,
-	_TNL_ATTRIB_ATTRIBUTE12 = 28,
-	_TNL_ATTRIB_ATTRIBUTE13 = 29,
-	_TNL_ATTRIB_ATTRIBUTE14 = 30,
-	_TNL_ATTRIB_ATTRIBUTE15 = 31,
+	_TNL_ATTRIB_GENERIC0 = 16,
+	_TNL_ATTRIB_GENERIC1 = 17,
+	_TNL_ATTRIB_GENERIC2 = 18,
+	_TNL_ATTRIB_GENERIC3 = 19,
+	_TNL_ATTRIB_GENERIC4 = 20,
+	_TNL_ATTRIB_GENERIC5 = 21,
+	_TNL_ATTRIB_GENERIC6 = 22,
+	_TNL_ATTRIB_GENERIC7 = 23,
+	_TNL_ATTRIB_GENERIC8 = 24,
+	_TNL_ATTRIB_GENERIC9 = 25,
+	_TNL_ATTRIB_GENERIC10 = 26,
+	_TNL_ATTRIB_GENERIC11 = 27,
+	_TNL_ATTRIB_GENERIC12 = 28,
+	_TNL_ATTRIB_GENERIC13 = 29,
+	_TNL_ATTRIB_GENERIC14 = 30,
+	_TNL_ATTRIB_GENERIC15 = 31,
 	_TNL_ATTRIB_MAT_FRONT_AMBIENT = 32,
 	_TNL_ATTRIB_MAT_BACK_AMBIENT = 33,
 	_TNL_ATTRIB_MAT_FRONT_DIFFUSE = 34,
@@ -149,10 +149,10 @@ enum {
 } ;
 
 #define _TNL_ATTRIB_TEX(u)       (_TNL_ATTRIB_TEX0 + (u))
-#define _TNL_ATTRIB_ATTRIBUTE(n) (_TNL_ATTRIB_ATTRIBUTE0 + (n))
+#define _TNL_ATTRIB_GENERIC(n) (_TNL_ATTRIB_GENERIC0 + (n))
 
 /* special index used for handing invalid glVertexAttribute() indices */
-#define _TNL_ATTRIB_ERROR    (_TNL_ATTRIB_ATTRIBUTE15 + 1)
+#define _TNL_ATTRIB_ERROR    (_TNL_ATTRIB_GENERIC15 + 1)
 
 /**
  * Handy attribute ranges:
@@ -163,8 +163,8 @@ enum {
 #define _TNL_FIRST_TEX       _TNL_ATTRIB_TEX0
 #define _TNL_LAST_TEX        _TNL_ATTRIB_TEX7
 
-#define _TNL_FIRST_ATTRIBUTE _TNL_ATTRIB_ATTRIBUTE0
-#define _TNL_LAST_ATTRIBUTE  _TNL_ATTRIB_ATTRIBUTE15
+#define _TNL_FIRST_GENERIC _TNL_ATTRIB_GENERIC0
+#define _TNL_LAST_GENERIC  _TNL_ATTRIB_GENERIC15
 
 #define _TNL_FIRST_MAT       _TNL_ATTRIB_MAT_FRONT_AMBIENT
 #define _TNL_LAST_MAT        _TNL_ATTRIB_MAT_BACK_INDEXES
@@ -359,6 +359,9 @@ struct tnl_save {
 };
 
 
+/**
+ * A collection of vertex arrays.
+ */
 struct tnl_vertex_arrays
 {
    /* Conventional vertex attribute arrays */
@@ -387,15 +390,15 @@ struct tnl_vertex_arrays
  */
 struct vertex_buffer
 {
-   /* Constant over life of the vertex_buffer.
-    */
-   GLuint      Size;
+   GLuint Size;  /**< Max vertices per vertex buffer, constant */
 
    /* Constant over the pipeline.
     */
-   GLuint      Count;		              /* for everything except Elts */
+   GLuint Count;  /**< Number of vertices currently in buffer */
 
    /* Pointers to current data.
+    * XXX some of these fields alias AttribPtr below and should be removed
+    * such as NormalPtr, TexCoordPtr, FogCoordPtr, etc.
     */
    GLuint      *Elts;		                
    GLvector4f  *ObjPtr;		                /* _TNL_BIT_POS */
@@ -425,7 +428,8 @@ struct vertex_buffer
 };
 
 
-/** Describes an individual operation on the pipeline.
+/**
+ * Describes an individual operation on the pipeline.
  */
 struct tnl_pipeline_stage
 {
