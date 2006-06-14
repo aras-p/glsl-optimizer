@@ -226,6 +226,8 @@ static void _tnl_import_attrib( GLcontext *ctx,
    GLboolean is_writable = 0;
    const GLubyte *data;
 
+   ASSERT(index < MAX_VERTEX_PROGRAM_ATTRIBS);
+
    tmp = _ac_import_attrib(ctx, index, GL_FLOAT,
                            stride ? 4 * sizeof(GLfloat) : 0,
                            4,  /* want GLfloat[4] */
