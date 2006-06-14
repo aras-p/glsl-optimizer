@@ -74,10 +74,10 @@ static GLboolean run_texmat_stage( GLcontext *ctx,
       if (ctx->Texture._TexMatEnabled & ENABLE_TEXMAT(i)) {
 	 (void) TransformRaw( &store->texcoord[i],
 			      ctx->TextureMatrixStack[i].Top,
-			      VB->TexCoordPtr[i]);
+			      VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]);
 
-	 VB->AttribPtr[VERT_ATTRIB_TEX0+i] = 
-	    VB->TexCoordPtr[i] = &store->texcoord[i];
+         VB->TexCoordPtr[i] = 
+	 VB->AttribPtr[VERT_ATTRIB_TEX0+i] = &store->texcoord[i];
       }
    }
 

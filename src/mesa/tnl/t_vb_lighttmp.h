@@ -56,8 +56,8 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
 
    const GLuint vstride = input->stride;
    const GLfloat *vertex = (GLfloat *)input->data;
-   const GLuint nstride = VB->NormalPtr->stride;
-   const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
+   const GLuint nstride = VB->AttribPtr[_TNL_ATTRIB_NORMAL]->stride;
+   const GLfloat *normal = (GLfloat *)VB->AttribPtr[_TNL_ATTRIB_NORMAL]->data;
 
    GLfloat (*Fcolor)[4] = (GLfloat (*)[4]) store->LitColor[0].data;
    GLfloat (*Fspec)[4] = (GLfloat (*)[4]) store->LitSecondary[0].data;
@@ -245,8 +245,8 @@ static void TAG(light_rgba)( GLcontext *ctx,
 
    const GLuint vstride = input->stride;
    const GLfloat *vertex = (GLfloat *) input->data;
-   const GLuint nstride = VB->NormalPtr->stride;
-   const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
+   const GLuint nstride = VB->AttribPtr[_TNL_ATTRIB_NORMAL]->stride;
+   const GLfloat *normal = (GLfloat *)VB->AttribPtr[_TNL_ATTRIB_NORMAL]->data;
 
    GLfloat (*Fcolor)[4] = (GLfloat (*)[4]) store->LitColor[0].data;
 #if IDX & LIGHT_TWOSIDE
@@ -428,8 +428,8 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
 
 {
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
-   const GLuint nstride = VB->NormalPtr->stride;
-   const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
+   const GLuint nstride = VB->AttribPtr[_TNL_ATTRIB_NORMAL]->stride;
+   const GLfloat *normal = (GLfloat *)VB->AttribPtr[_TNL_ATTRIB_NORMAL]->data;
    GLfloat (*Fcolor)[4] = (GLfloat (*)[4]) store->LitColor[0].data;
 #if IDX & LIGHT_TWOSIDE
    GLfloat (*Bcolor)[4] = (GLfloat (*)[4]) store->LitColor[1].data;
@@ -440,7 +440,7 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
 #if IDX & LIGHT_MATERIAL
    const GLuint nr = VB->Count;
 #else
-   const GLuint nr = VB->NormalPtr->count;
+   const GLuint nr = VB->AttribPtr[_TNL_ATTRIB_NORMAL]->count;
 #endif
 
 #ifdef TRACE
@@ -536,8 +536,8 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
 {
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
    GLfloat sumA[2];
-   const GLuint nstride = VB->NormalPtr->stride;
-   const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
+   const GLuint nstride = VB->AttribPtr[_TNL_ATTRIB_NORMAL]->stride;
+   const GLfloat *normal = (GLfloat *)VB->AttribPtr[_TNL_ATTRIB_NORMAL]->data;
    GLfloat (*Fcolor)[4] = (GLfloat (*)[4]) store->LitColor[0].data;
 #if IDX & LIGHT_TWOSIDE
    GLfloat (*Bcolor)[4] = (GLfloat (*)[4]) store->LitColor[1].data;
@@ -546,7 +546,7 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
 #if IDX & LIGHT_MATERIAL
    const GLuint nr = VB->Count;
 #else
-   const GLuint nr = VB->NormalPtr->count;
+   const GLuint nr = VB->AttribPtr[_TNL_ATTRIB_NORMAL]->count;
 #endif
    const struct gl_light *light;
 
@@ -656,8 +656,8 @@ static void TAG(light_ci)( GLcontext *ctx,
    GLuint j;
    const GLuint vstride = input->stride;
    const GLfloat *vertex = (GLfloat *) input->data;
-   const GLuint nstride = VB->NormalPtr->stride;
-   const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
+   const GLuint nstride = VB->AttribPtr[_TNL_ATTRIB_NORMAL]->stride;
+   const GLfloat *normal = (GLfloat *)VB->AttribPtr[_TNL_ATTRIB_NORMAL]->data;
    GLfloat *indexResult[2];
    const GLuint nr = VB->Count;
 

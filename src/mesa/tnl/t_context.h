@@ -415,7 +415,6 @@ struct vertex_buffer
    GLvector4f  *IndexPtr[2];	                /* _TNL_BIT_INDEX */
    GLvector4f  *ColorPtr[2];	                /* _TNL_BIT_COLOR0 */
    GLvector4f  *SecondaryColorPtr[2];           /* _TNL_BIT_COLOR1 */
-   GLvector4f  *PointSizePtr;	                /* _TNL_BIT_POS */
    GLvector4f  *FogCoordPtr;	                /* _TNL_BIT_FOG */
    GLvector4f  *VaryingPtr[MAX_VARYING_VECTORS];
 

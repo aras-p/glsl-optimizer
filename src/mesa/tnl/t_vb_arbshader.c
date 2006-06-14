@@ -236,25 +236,30 @@ static GLboolean run_arb_vertex_shader (GLcontext *ctx, struct tnl_pipeline_stag
 
 	vb->ClipPtr = &store->outputs[VERT_RESULT_HPOS];
 	vb->ClipPtr->count = vb->Count;
-	vb->ColorPtr[0] = &store->outputs[VERT_RESULT_COL0];
-	vb->SecondaryColorPtr[0] = &store->outputs[VERT_RESULT_COL1];
-	for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++)
-		vb->TexCoordPtr[i] = &store->outputs[VERT_RESULT_TEX0 + i];
-	vb->ColorPtr[1] = &store->outputs[VERT_RESULT_BFC0];
-	vb->SecondaryColorPtr[1] = &store->outputs[VERT_RESULT_BFC1];
-	vb->FogCoordPtr = &store->outputs[VERT_RESULT_FOGC];
-	vb->PointSizePtr = &store->outputs[VERT_RESULT_PSIZ];
-	for (i = 0; i < MAX_VARYING_VECTORS; i++)
-		vb->VaryingPtr[i] = &store->varyings[i];
 
+	vb->ColorPtr[0] = &store->outputs[VERT_RESULT_COL0];
 	vb->AttribPtr[VERT_ATTRIB_COLOR0] = vb->ColorPtr[0];
-	vb->AttribPtr[VERT_ATTRIB_COLOR1] = vb->SecondaryColorPtr[0];
-	vb->AttribPtr[VERT_ATTRIB_FOG] = vb->FogCoordPtr;
-	for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++)
-		vb->AttribPtr[VERT_ATTRIB_TEX0 + i] = vb->TexCoordPtr[i];
+	vb->ColorPtr[1] = &store->outputs[VERT_RESULT_BFC0];
+
+	vb->SecondaryColorPtr[0] =
+	vb->AttribPtr[VERT_ATTRIB_COLOR1] = &store->outputs[VERT_RESULT_COL1];
+
+	vb->SecondaryColorPtr[1] = &store->outputs[VERT_RESULT_BFC1];
+
+	for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
+		vb->TexCoordPtr[i] =
+		vb->AttribPtr[VERT_ATTRIB_TEX0 + i] = &store->outputs[VERT_RESULT_TEX0 + i];
+        }
+
+	vb->FogCoordPtr =
+	vb->AttribPtr[VERT_ATTRIB_FOG] = &store->outputs[VERT_RESULT_FOGC];
+
 	vb->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &store->outputs[VERT_RESULT_PSIZ];
-	for (i = 0; i < MAX_VARYING_VECTORS; i++)
+
+	for (i = 0; i < MAX_VARYING_VECTORS; i++) {
+		vb->VaryingPtr[i] = &store->varyings[i];
 		vb->AttribPtr[_TNL_ATTRIB_GENERIC0 + i] = vb->VaryingPtr[i];
+        }
 
 	store->ormask = 0;
 	store->andmask = CLIP_FRUSTUM_BITS;

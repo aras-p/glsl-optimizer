@@ -158,8 +158,8 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT) {
       /* Fog is computed from vertex or fragment Z values */
       /* source = VB->ObjPtr or VB->EyePtr coords */
-      /* dest = VB->FogCoordPtr = fog stage private storage */
-      VB->FogCoordPtr = &store->fogcoord;
+      /* dest = VB->AttribPtr[_TNL_ATTRIB_FOG] = fog stage private storage */
+      VB->AttribPtr[_TNL_ATTRIB_FOG] = &store->fogcoord;
 
       if (!ctx->_NeedEyeCoords) {
          /* compute fog coords from object coords */
@@ -199,26 +199,26 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    }
    else {
       /* use glFogCoord() coordinates */
-      input = VB->FogCoordPtr;  /* source data */
+      input = VB->AttribPtr[_TNL_ATTRIB_FOG];  /* source data */
 
       /* input->count may be one if glFogCoord was only called once
        * before glBegin.  But we need to compute fog for all vertices.
        */
       input->count = VB->ObjPtr->count;
 
-      VB->FogCoordPtr = &store->fogcoord;  /* dest data */
+      VB->AttribPtr[_TNL_ATTRIB_FOG] = &store->fogcoord;  /* dest data */
    }
 
    if (tnl->_DoVertexFog) {
       /* compute blend factors from fog coordinates */
-      compute_fog_blend_factors( ctx, VB->FogCoordPtr, input );
+      compute_fog_blend_factors( ctx, VB->AttribPtr[_TNL_ATTRIB_FOG], input );
    }
    else {
       /* results = incoming fog coords (compute fog per-fragment later) */
-      VB->FogCoordPtr = input;
+      VB->AttribPtr[_TNL_ATTRIB_FOG] = input;
    }
 
-   VB->AttribPtr[_TNL_ATTRIB_FOG] = VB->FogCoordPtr;
+   VB->FogCoordPtr = VB->AttribPtr[_TNL_ATTRIB_FOG];
    return GL_TRUE;
 }
 

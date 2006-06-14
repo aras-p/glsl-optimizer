@@ -68,7 +68,6 @@ run_point_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
          size[i][0] = pointSize * atten; /* clamping done in rasterization */
       }
 
-      VB->PointSizePtr = &store->PointSize;
       VB->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &store->PointSize;
    }
 

@@ -1334,13 +1334,16 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    VB->ClipPtr = &m->attribs[VERT_RESULT_HPOS];
    VB->ClipPtr->count = VB->Count;
 
+   /* XXX There seems to be confusion between using the VERT_ATTRIB_*
+    * values vs _TNL_ATTRIB_* tokens here:
+    */
    outputs = program->Base.OutputsWritten;
    if (program->IsPositionInvariant) 
       outputs |= (1<<VERT_RESULT_HPOS);
 
    if (outputs & (1<<VERT_RESULT_COL0)) {
-      VB->ColorPtr[0] = &m->attribs[VERT_RESULT_COL0];
-      VB->AttribPtr[VERT_ATTRIB_COLOR0] = VB->ColorPtr[0];
+      VB->ColorPtr[0] =
+      VB->AttribPtr[VERT_ATTRIB_COLOR0] = &m->attribs[VERT_RESULT_COL0];
    }
 
    if (outputs & (1<<VERT_RESULT_BFC0)) {
@@ -1348,8 +1351,8 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    }
 
    if (outputs & (1<<VERT_RESULT_COL1)) {
-      VB->SecondaryColorPtr[0] = &m->attribs[VERT_RESULT_COL1];
-      VB->AttribPtr[VERT_ATTRIB_COLOR1] = VB->SecondaryColorPtr[0];
+      VB->SecondaryColorPtr[0] =
+      VB->AttribPtr[VERT_ATTRIB_COLOR1] = &m->attribs[VERT_RESULT_COL1];
    }
 
    if (outputs & (1<<VERT_RESULT_BFC1)) {
@@ -1357,19 +1360,18 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    }
 
    if (outputs & (1<<VERT_RESULT_FOGC)) {
-      VB->FogCoordPtr = &m->attribs[VERT_RESULT_FOGC];
-      VB->AttribPtr[VERT_ATTRIB_FOG] = VB->FogCoordPtr;
+      VB->FogCoordPtr =
+      VB->AttribPtr[VERT_ATTRIB_FOG] = &m->attribs[VERT_RESULT_FOGC];
    }
 
    if (outputs & (1<<VERT_RESULT_PSIZ)) {
-      VB->PointSizePtr = &m->attribs[VERT_RESULT_PSIZ];
       VB->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &m->attribs[VERT_RESULT_PSIZ];
    }
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
       if (outputs & (1<<(VERT_RESULT_TEX0+i))) {
-	 VB->TexCoordPtr[i] = &m->attribs[VERT_RESULT_TEX0 + i];
-	 VB->AttribPtr[VERT_ATTRIB_TEX0+i] = VB->TexCoordPtr[i];
+	 VB->TexCoordPtr[i] =
+	 VB->AttribPtr[VERT_ATTRIB_TEX0+i] = &m->attribs[VERT_RESULT_TEX0 + i];
       }
    }
 
@@ -1380,10 +1382,10 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	     VEC_ELT(VB->ClipPtr, GLfloat, i)[1],
 	     VEC_ELT(VB->ClipPtr, GLfloat, i)[2],
 	     VEC_ELT(VB->ClipPtr, GLfloat, i)[3],
-	     VEC_ELT(VB->TexCoordPtr[0], GLfloat, i)[0],
-	     VEC_ELT(VB->TexCoordPtr[0], GLfloat, i)[1],
-	     VEC_ELT(VB->TexCoordPtr[0], GLfloat, i)[2],
-	     VEC_ELT(VB->TexCoordPtr[0], GLfloat, i)[3]);
+	     VEC_ELT(VB->AttribPtr[VERT_ATTRIB_TEX0], GLfloat, i)[0],
+	     VEC_ELT(VB->AttribPtr[VERT_ATTRIB_TEX0], GLfloat, i)[1],
+	     VEC_ELT(VB->AttribPtr[VERT_ATTRIB_TEX0], GLfloat, i)[2],
+	     VEC_ELT(VB->AttribPtr[VERT_ATTRIB_TEX0], GLfloat, i)[3]);
    }
 #endif
 
