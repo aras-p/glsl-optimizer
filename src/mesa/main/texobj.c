@@ -754,7 +754,7 @@ void GLAPIENTRY
 _mesa_BindTexture( GLenum target, GLuint texName )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLuint unit = ctx->Texture.CurrentUnit;
+   const GLuint unit = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *oldTexObj;
    struct gl_texture_object *newTexObj = NULL;
@@ -796,12 +796,15 @@ _mesa_BindTexture( GLenum target, GLuint texName )
          return;
    }
 
-   if (oldTexObj->Name == texName)
+   if (oldTexObj->Name == texName) {
       /* XXX this might be wrong.  If the texobj is in use by another
        * context and a texobj parameter was changed, this might be our
        * only chance to update this context's hardware state.
+       * Note that some applications re-bind the same texture a lot so we
+       * want to handle that case quickly.
        */
       return;   /* rebinding the same texture- no change */
+   }
 
    /*
     * Get pointer to new texture object (newTexObj)
