@@ -1663,7 +1663,12 @@ struct gl_client_array
 };
 
 
-struct gl_array_object {
+/**
+ * Collection of vertex arrays.  Defined by the GL_APPLE_vertex_array_object
+ * extension, but a nice encapsulation in any case.
+ */
+struct gl_array_object
+{
    /** Name of the array object as received from glGenVertexArrayAPPLE. */
    GLuint Name;
 
@@ -1679,10 +1684,11 @@ struct gl_array_object {
    struct gl_client_array EdgeFlag;
    /*@}*/
 
-   /** Generic arrays for vertex programs/shaders; */
+   /** Generic arrays for vertex programs/shaders */
    struct gl_client_array VertexAttrib[VERT_ATTRIB_MAX];
 
-   GLbitfield _Enabled;		/**< mask of _NEW_ARRAY_* values */
+   /** Mask of _NEW_ARRAY_* values indicating which arrays are enabled */
+   GLbitfield _Enabled;
 };
 
 
