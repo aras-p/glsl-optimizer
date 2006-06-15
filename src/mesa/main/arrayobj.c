@@ -69,7 +69,7 @@ lookup_arrayobj(GLcontext *ctx, GLuint id)
 
 
 /**
- * Allocate and initialize a new array object.
+ * Allocate and initialize a new vertex array object.
  * 
  * This function is intended to be called via
  * \c dd_function_table::NewArrayObject.
@@ -77,12 +77,9 @@ lookup_arrayobj(GLcontext *ctx, GLuint id)
 struct gl_array_object *
 _mesa_new_array_object( GLcontext *ctx, GLuint name )
 {
-   struct gl_array_object *obj;
-
-   (void) ctx;
-
-   obj = MALLOC_STRUCT(gl_array_object);
-   _mesa_initialize_array_object(ctx, obj, name);
+   struct gl_array_object *obj = MALLOC_STRUCT(gl_array_object);
+   if (obj)
+      _mesa_initialize_array_object(ctx, obj, name);
    return obj;
 }
 
@@ -97,7 +94,6 @@ void
 _mesa_delete_array_object( GLcontext *ctx, struct gl_array_object *obj )
 {
    (void) ctx;
-
    _mesa_free(obj);
 }
 
@@ -176,7 +172,6 @@ _mesa_initialize_array_object( GLcontext *ctx,
       obj->VertexAttrib[i].Normalized = GL_FALSE;
       obj->VertexAttrib[i].Flags = CA_CLIENT_DATA;
    }
-
 
 #if FEATURE_ARB_vertex_buffer_object
    /* Vertex array buffers */
