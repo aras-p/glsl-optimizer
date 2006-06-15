@@ -552,6 +552,8 @@ void intelSetBackClipRects( intelContextPtr intel )
 
 void intelWindowMoved( intelContextPtr intel )
 {
+   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+
    if (!intel->ctx.DrawBuffer) {
       intelSetFrontClipRects( intel );
    }
@@ -571,6 +573,10 @@ void intelWindowMoved( intelContextPtr intel )
       }
    }
 
+   _mesa_resize_framebuffer(&intel->ctx,
+			    (GLframebuffer*)dPriv->driverPrivate,
+			    dPriv->w, dPriv->h);
+   
    /* Set state we know depends on drawable parameters:
     */
    {
