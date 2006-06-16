@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -137,7 +137,6 @@ int main( int argc, char **argv )
    OFFSET( "VB_COLOR_PTR           ", struct vertex_buffer, ColorPtr );
    OFFSET( "VB_SECONDARY_COLOR_PTR ", struct vertex_buffer, SecondaryColorPtr );
    OFFSET( "VB_FOG_COORD_PTR       ", struct vertex_buffer, FogCoordPtr );
-   OFFSET( "VB_POINT_SIZE_PTR      ", struct vertex_buffer, PointSizePtr );
    OFFSET( "VB_PRIMITIVE           ", struct vertex_buffer, Primitive );
    printf( "\n" );
 
