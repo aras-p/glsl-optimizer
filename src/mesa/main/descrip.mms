@@ -23,6 +23,7 @@ SOURCES =accum.c \
 	api_noop.c \
 	api_validate.c \
  	attrib.c \
+	arrayobj.c \
 	blend.c \
 	bufferobj.c \
 	buffers.c \
@@ -83,6 +84,7 @@ api_arrayelt.obj,\
 api_loopback.obj,\
 api_noop.obj,\
 api_validate.obj,\
+arrayobj.obj,\
 attrib.obj,\
 blend.obj,\
 bufferobj.obj,\
@@ -157,6 +159,7 @@ api_arrayelt.obj : api_arrayelt.c
 api_loopback.obj : api_loopback.c
 api_noop.obj : api_noop.c
 api_validate.obj : api_validate.c
+arrayobj.obj : arrayobj.c
 attrib.obj : attrib.c
 blend.obj : blend.c
 bufferobj.obj : bufferobj.c
