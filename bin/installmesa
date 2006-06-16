@@ -64,7 +64,7 @@ set -v
 
 mkdir ${INCLUDE_DIR}
 mkdir ${INCLUDE_DIR}/GL
-mkdir ${INCLUDE_DIR}/GLES
+# NOT YET: mkdir ${INCLUDE_DIR}/GLES
 mkdir ${LIB_DIR}
 cp -f ${TOP}/include/GL/*.h ${INCLUDE_DIR}/GL
 cp -f ${TOP}/src/glw/*.h ${INCLUDE_DIR}/GL
