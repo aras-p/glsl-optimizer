@@ -185,6 +185,15 @@ static GLboolean ThreadSafe = GL_FALSE;  /**< In thread-safe mode? */
 _glthread_TSD _gl_DispatchTSD;           /**< Per-thread dispatch pointer */
 static _glthread_TSD ContextTSD;         /**< Per-thread context pointer */
 
+#if defined(WIN32_THREADS)
+void FreeTSD(_glthread_TSD *p);
+void FreeAllTSD(void)
+{
+   FreeTSD(&_gl_DispatchTSD);
+   FreeTSD(&ContextTSD);
+}
+#endif /* defined(WIN32_THREADS) */
+
 #endif /* defined(THREADS) */
 
 PUBLIC struct _glapi_table *_glapi_Dispatch = 

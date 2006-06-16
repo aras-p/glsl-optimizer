@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -163,12 +163,11 @@ typedef HANDLE _glthread_Thread;
 
 typedef CRITICAL_SECTION _glthread_Mutex;
 
-/* XXX need to really implement mutex-related macros */
-#define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = 0
-#define _glthread_INIT_MUTEX(name)  (void) name
-#define _glthread_DESTROY_MUTEX(name)  (void) name
-#define _glthread_LOCK_MUTEX(name)  (void) name
-#define _glthread_UNLOCK_MUTEX(name)  (void) name
+#define _glthread_DECLARE_STATIC_MUTEX(name)  /*static*/ _glthread_Mutex name = {0,0,0,0,0,0}
+#define _glthread_INIT_MUTEX(name)  InitializeCriticalSection(&name)
+#define _glthread_DESTROY_MUTEX(name)  DeleteCriticalSection(&name)
+#define _glthread_LOCK_MUTEX(name)  EnterCriticalSection(&name)
+#define _glthread_UNLOCK_MUTEX(name)  LeaveCriticalSection(&name)
 
 #endif /* WIN32_THREADS */
 
