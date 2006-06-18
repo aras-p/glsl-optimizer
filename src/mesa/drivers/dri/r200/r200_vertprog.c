@@ -311,6 +311,10 @@ static unsigned long t_opcode(enum prog_opcode opcode)
 
    switch(opcode){
    case OPCODE_ADD: return R200_VPI_OUT_OP_ADD;
+   /* FIXME: ARL works fine, but negative offsets won't work - fglrx just
+    * seems to ignore neg offsets which isn't quite correct...
+    */
+   case OPCODE_ARL: return R200_VPI_OUT_OP_ARL;
    case OPCODE_DP4: return R200_VPI_OUT_OP_DOT;
    case OPCODE_DST: return R200_VPI_OUT_OP_DST;
    case OPCODE_EX2: return R200_VPI_OUT_OP_EX2;
@@ -652,16 +656,6 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
 
       /* These ops need special handling. */
       switch(vpi->Opcode){
-      /* FIXME: ARL works fine, but negative offsets won't work - fglrx just sems to ignore neg offsets
-	 which isn't quite correct... */
-      case OPCODE_ARL:
-	 o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_ARL, t_dst(&vpi->DstReg),
-		t_dst_mask(vpi->DstReg.WriteMask));
-	 o_inst->src0 = t_src_scalar(vp, &src[0]);
-	 o_inst->src1 = UNUSED_SRC_0;
-	 o_inst->src2 = UNUSED_SRC_1;
-	 goto next;
-
       case OPCODE_POW:
 /* pow takes only one argument, first scalar is in slot x, 2nd in slot z (other slots don't matter).
    So may need to insert additional instruction */

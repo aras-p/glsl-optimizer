@@ -300,6 +300,7 @@ static unsigned long t_opcode(enum prog_opcode opcode)
 {
 
 	switch(opcode){
+		case OPCODE_ARL: return R300_VPI_OUT_OP_ARL;
 		case OPCODE_DST: return R300_VPI_OUT_OP_DST;
 		case OPCODE_EX2: return R300_VPI_OUT_OP_EX2;
 		case OPCODE_EXP: return R300_VPI_OUT_OP_EXP;
@@ -618,14 +619,6 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 		
 		/* These ops need special handling. */
 		switch(vpi->Opcode){
-		case OPCODE_ARL:
-			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ARL, t_dst_index(vp, &vpi->DstReg),
-					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
-			o_inst->src1=t_src_scalar(vp, &src[0]);
-			o_inst->src2=ZERO_SRC_0;
-			o_inst->src3=ZERO_SRC_0;
-			goto next;
-			
 		case OPCODE_POW:
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_POW, t_dst_index(vp, &vpi->DstReg),
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
