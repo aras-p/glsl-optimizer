@@ -343,35 +343,35 @@ static unsigned long op_operands(enum prog_opcode opcode)
 			(t_src_class(a.File) == VSF_IN_CLASS_ATTR && \
 			 t_src_class(b.File) == VSF_IN_CLASS_ATTR)))) \
 			 
-#define ZERO_SRC_0 MAKE_VSF_SOURCE(t_src_index(vp, &src[0]), \
-				   SWIZZLE_ZERO, SWIZZLE_ZERO, \
-				   SWIZZLE_ZERO, SWIZZLE_ZERO, \
-				   t_src_class(src[0].File), VSF_FLAG_NONE)
+#define ZERO_SRC_0 (MAKE_VSF_SOURCE(t_src_index(vp, &src[0]), \
+				    SWIZZLE_ZERO, SWIZZLE_ZERO, \
+				    SWIZZLE_ZERO, SWIZZLE_ZERO, \
+				    t_src_class(src[0].File), VSF_FLAG_NONE) | (src[0].RelAddr << 4))
 				   
-#define ZERO_SRC_1 MAKE_VSF_SOURCE(t_src_index(vp, &src[1]), \
-				   SWIZZLE_ZERO, SWIZZLE_ZERO, \
-				   SWIZZLE_ZERO, SWIZZLE_ZERO, \
-				   t_src_class(src[1].File), VSF_FLAG_NONE)
+#define ZERO_SRC_1 (MAKE_VSF_SOURCE(t_src_index(vp, &src[1]), \
+				    SWIZZLE_ZERO, SWIZZLE_ZERO, \
+				    SWIZZLE_ZERO, SWIZZLE_ZERO, \
+				    t_src_class(src[1].File), VSF_FLAG_NONE) | (src[1].RelAddr << 4))
 
-#define ZERO_SRC_2 MAKE_VSF_SOURCE(t_src_index(vp, &src[2]), \
-				   SWIZZLE_ZERO, SWIZZLE_ZERO, \
-				   SWIZZLE_ZERO, SWIZZLE_ZERO, \
-				   t_src_class(src[2].File), VSF_FLAG_NONE)
+#define ZERO_SRC_2 (MAKE_VSF_SOURCE(t_src_index(vp, &src[2]), \
+				    SWIZZLE_ZERO, SWIZZLE_ZERO, \
+				    SWIZZLE_ZERO, SWIZZLE_ZERO, \
+				    t_src_class(src[2].File), VSF_FLAG_NONE) | (src[2].RelAddr << 4))
 				   
-#define ONE_SRC_0 MAKE_VSF_SOURCE(t_src_index(vp, &src[0]), \
-				   SWIZZLE_ONE, SWIZZLE_ONE, \
-				   SWIZZLE_ONE, SWIZZLE_ONE, \
-				   t_src_class(src[0].File), VSF_FLAG_NONE)
+#define ONE_SRC_0 (MAKE_VSF_SOURCE(t_src_index(vp, &src[0]), \
+				    SWIZZLE_ONE, SWIZZLE_ONE, \
+				    SWIZZLE_ONE, SWIZZLE_ONE, \
+				    t_src_class(src[0].File), VSF_FLAG_NONE) | (src[0].RelAddr << 4))
 				   
-#define ONE_SRC_1 MAKE_VSF_SOURCE(t_src_index(vp, &src[1]), \
-				   SWIZZLE_ONE, SWIZZLE_ONE, \
-				   SWIZZLE_ONE, SWIZZLE_ONE, \
-				   t_src_class(src[1].File), VSF_FLAG_NONE)
+#define ONE_SRC_1 (MAKE_VSF_SOURCE(t_src_index(vp, &src[1]), \
+				    SWIZZLE_ONE, SWIZZLE_ONE, \
+				    SWIZZLE_ONE, SWIZZLE_ONE, \
+				    t_src_class(src[1].File), VSF_FLAG_NONE) | (src[1].RelAddr << 4))
 
-#define ONE_SRC_2 MAKE_VSF_SOURCE(t_src_index(vp, &src[2]), \
-				   SWIZZLE_ONE, SWIZZLE_ONE, \
-				   SWIZZLE_ONE, SWIZZLE_ONE, \
-				   t_src_class(src[2].File), VSF_FLAG_NONE)
+#define ONE_SRC_2 (MAKE_VSF_SOURCE(t_src_index(vp, &src[2]), \
+				    SWIZZLE_ONE, SWIZZLE_ONE, \
+				    SWIZZLE_ONE, SWIZZLE_ONE, \
+				    t_src_class(src[2].File), VSF_FLAG_NONE) | (src[2].RelAddr << 4))
 				   
 /* DP4 version seems to trigger some hw peculiarity */
 //#define PREFER_DP4
