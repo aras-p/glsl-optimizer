@@ -460,7 +460,7 @@ static void emit_arg( struct prog_src_register *src,
    src->File = reg.file;
    src->Index = reg.idx;
    src->Swizzle = reg.swz;
-   src->NegateBase = reg.negate;
+   src->NegateBase = reg.negate ? NEGATE_XYZW : 0;
    src->Abs = 0;
    src->NegateAbs = 0;
    src->RelAddr = 0;
