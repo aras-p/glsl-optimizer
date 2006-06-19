@@ -109,7 +109,7 @@ _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
       case GL_ALWAYS:
          break;
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glStencilFunc" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glStencilFunc (0x%04x)", func );
          return;
    }
 
