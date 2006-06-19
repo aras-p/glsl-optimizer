@@ -381,6 +381,9 @@ _mesa_update_draw_buffer_bounds(GLcontext *ctx)
 {
    struct gl_framebuffer *buffer = ctx->DrawBuffer;
 
+   if (!buffer)
+      return;
+
    if (buffer->Name) {
       /* user-created framebuffer size depends on the renderbuffers */
       update_framebuffer_size(buffer);
