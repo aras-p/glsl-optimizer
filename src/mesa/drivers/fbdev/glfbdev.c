@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -171,7 +171,7 @@ viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 
 /* 24-bit BGR */
 #define NAME(PREFIX) PREFIX##_B8G8R8
-#define FORMAT GL_RGBA8
+#define RB_TYPE GLubyte
 #define SPAN_VARS \
    struct GLFBDevRenderbufferRec *frb = (struct GLFBDevRenderbufferRec *) rb;
 #define INIT_PIXEL_PTR(P, X, Y) \
@@ -192,7 +192,7 @@ viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 
 /* 32-bit BGRA */
 #define NAME(PREFIX) PREFIX##_B8G8R8A8
-#define FORMAT GL_RGBA8
+#define RB_TYPE GLubyte
 #define SPAN_VARS \
    struct GLFBDevRenderbufferRec *frb = (struct GLFBDevRenderbufferRec *) rb;
 #define INIT_PIXEL_PTR(P, X, Y) \
@@ -214,7 +214,7 @@ viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 
 /* 16-bit BGR (XXX implement dithering someday) */
 #define NAME(PREFIX) PREFIX##_B5G6R5
-#define FORMAT GL_RGBA8
+#define RB_TYPE GLubyte
 #define SPAN_VARS \
    struct GLFBDevRenderbufferRec *frb = (struct GLFBDevRenderbufferRec *) rb;
 #define INIT_PIXEL_PTR(P, X, Y) \
@@ -233,7 +233,7 @@ viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 
 /* 15-bit BGR (XXX implement dithering someday) */
 #define NAME(PREFIX) PREFIX##_B5G5R5
-#define FORMAT GL_RGBA8
+#define RB_TYPE GLubyte
 #define SPAN_VARS \
    struct GLFBDevRenderbufferRec *frb = (struct GLFBDevRenderbufferRec *) rb;
 #define INIT_PIXEL_PTR(P, X, Y) \
@@ -252,7 +252,8 @@ viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 
 /* 8-bit color index */
 #define NAME(PREFIX) PREFIX##_CI8
-#define FORMAT GL_COLOR_INDEX8_EXT
+#define CI_MODE
+#define RB_TYPE GLubyte
 #define SPAN_VARS \
    struct GLFBDevRenderbufferRec *frb = (struct GLFBDevRenderbufferRec *) rb;
 #define INIT_PIXEL_PTR(P, X, Y) \
