@@ -115,13 +115,8 @@ static void Init( void )
     */
    static const char prog[] = 
       "!!ARBvp1.0\n"
+      "OPTION ARB_position_invariant ;"
       "TEMP R0, R1; \n"
-      "#Simple transform and diffuse lighting\n"
-      "# object x MVP -> clip\n"
-      "DP4   result.position.x, state.matrix.mvp.row[0], vertex.position ;\n"
-      "DP4   result.position.y, state.matrix.mvp.row[1], vertex.position ;\n"
-      "DP4   result.position.z, state.matrix.mvp.row[2], vertex.position ;\n"
-      "DP4   result.position.w, state.matrix.mvp.row[3], vertex.position ;\n"
 
       "# normal x MV-1T -> lighting normal\n"		
       "DP3   R1.x, state.matrix.modelview.invtrans.row[0], vertex.normal ;\n"
