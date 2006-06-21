@@ -54,6 +54,7 @@
 #include <GL/glut.h>
 
 static GLint BaseLevel = 0, MaxLevel = 8;
+static GLfloat MinLod = -1, MaxLod = 9;
 static GLfloat LodBias = 0.0;
 static GLboolean NearestFilter = GL_TRUE;
 
@@ -124,11 +125,14 @@ static void myinit(void)
 static void display(void)
 {
    GLfloat tcm = 4.0;
-    printf("GL_TEXTURE_BASE_LEVEL = %d  GL_TEXTURE_MAX_LEVEL = %d  Bias = %.2g  filter = %s\n",
-           BaseLevel, MaxLevel, LodBias,
+    printf("BASE_LEVEL = %d  MAX_LEVEL = %d  MIN_LOD = %f MAX_LOD = %f Bias = %.2g  filter = %s\n",
+           BaseLevel, MaxLevel, MinLod, MaxLod, LodBias,
            NearestFilter ? "LINEAR" : "NEAREST");
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, BaseLevel);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MaxLevel);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_LOD, MinLod);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, MaxLod);
 
     if (NearestFilter) {
        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -195,6 +199,18 @@ key(unsigned char k, int x, int y)
   case 'L':
      LodBias += 0.02;
      break;
+  case 'n':
+     MinLod -= 0.02;
+     break;
+  case 'N':
+     MinLod += 0.02;
+     break;
+  case 'x':
+     MaxLod -= 0.02;
+     break;
+  case 'X':
+     MaxLod += 0.02;
+     break;
   case 'f':
      NearestFilter = !NearestFilter;
      break;
@@ -213,6 +229,9 @@ static void usage(void)
    printf("usage:\n");
    printf("  b/B  decrease/increase GL_TEXTURE_BASE_LEVEL\n");
    printf("  m/M  decrease/increase GL_TEXTURE_MAX_LEVEL\n");
+   printf("  n/N  decrease/increase GL_TEXTURE_MIN_LOD\n");
+   printf("  x/X  decrease/increase GL_TEXTURE_MAX_LOD\n");
+   printf("  l/L  decrease/increase GL_TEXTURE_LOD_BIAS\n");
    printf("  f    toggle nearest/linear filtering\n");
 }
 
