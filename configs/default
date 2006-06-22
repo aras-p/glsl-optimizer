@@ -2,6 +2,8 @@
 
 # This is included by other config files which may override some
 # of these variables.
+# Think of this as a base class from which configs are derived.
+
 
 CONFIG_NAME = default
 
@@ -25,6 +27,8 @@ MKLIB_OPTIONS =
 MKDEP = makedepend
 MKDEP_OPTIONS = -fdepend
 MAKE = make
+INSTALL = install
+COPY_LIBS = cp -f -d
 
 # Python and flags (generally only needed by the developers)
 PYTHON2 = python
@@ -54,9 +58,8 @@ ASM_SOURCES =
 GLW_SOURCES = GLwDrawA.c
 
 
-# Directories
+# Directories to build
 LIB_DIR = $(TOP)/lib
-INSTALL_PREFIX = /usr/local
 SRC_DIRS = mesa glu glut/glx glw
 GLU_DIRS = sgi
 DRIVER_DIRS = x11 osmesa
@@ -72,3 +75,9 @@ GLU_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -lm
 GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lX11 -lXmu -lXt -lXi -lm
 GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lXt -lX11
 APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm
+
+
+
+# Installation directories (for make install)
+INSTALL_DIR = /usr/local
+DRI_DRIVER_INSTALL_DIR = /usr/X11R6/lib/modules/dri

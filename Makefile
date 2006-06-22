@@ -33,8 +33,9 @@ realclean:
 
 
 install:
-	@echo "Installing"
-	$(TOP)/bin/installmesa $(DESTDIR)
+	@for dir in $(SUBDIRS) ; do \
+		(cd $$dir ; $(MAKE) install) || exit 1 ; \
+	done
 
 # DirectFBGL module installation
 linux-directfb-install:

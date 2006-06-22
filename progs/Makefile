@@ -21,6 +21,8 @@ subdirs:
 		fi \
 	done
 
+# Dummy install target
+install:
 
 clean:
 	@for dir in $(SUBDIRS) tests ; do \

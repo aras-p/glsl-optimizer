@@ -96,6 +96,13 @@ $(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
 		$(GLUT_LIB_DEPS) $(OBJECTS)
 
 
+install:
+	$(INSTALL) -d $(INSTALL_DIR)/include/GL
+	$(INSTALL) -d $(INSTALL_DIR)/lib
+	$(INSTALL) -m 644 $(TOP)/include/GL/glut.h $(INSTALL_DIR)/include/GL
+	$(COPY_LIBS) $(TOP)/lib/libglut* $(INSTALL_DIR)/lib
+
+
 clean:
 	-rm -f *.o *~
 	-rm -f *.lo

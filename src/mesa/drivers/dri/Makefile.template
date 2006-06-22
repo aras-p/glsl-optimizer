@@ -70,7 +70,7 @@ default: depend symlinks $(LIBNAME) $(LIB_DIR)/$(LIBNAME)
 #	$(TOP)/bin/mklib -o $(LIBNAME) -noprefix -install $(LIB_DIR) \
 #		$(WINLIB) $(LIB_DEPS) $(WINOBJ) $(MESA_MODULES) $(OBJECTS)
 
-$(LIBNAME):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
+$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
 	$(TOP)/bin/mklib -noprefix -o $@ \
 		$(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
 
@@ -99,6 +99,7 @@ clean:
 	-rm -f depend depend.bak
 
 install: $(LIBNAME)
-	install $(LIBNAME) /usr/X11R6/lib/modules/dri/$(LIBNAME)
+	$(INSTALL) -d $(DRI_DRIVER_INSTALL_DIR)
+	$(INSTALL) -m 755 $(LIBNAME) $(DRI_DRIVER_INSTALL_DIR)
 
 include depend

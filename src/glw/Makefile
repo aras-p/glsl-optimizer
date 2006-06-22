@@ -25,6 +25,11 @@ OBJECTS = $(GLW_SOURCES:.c=.o)
 
 default: $(LIB_DIR)/$(GLW_LIB_NAME)
 
+install:
+	$(INSTALL) -d $(INSTALL_DIR)/include/GL
+	$(INSTALL) -d $(INSTALL_DIR)/lib
+	$(INSTALL) -m 644 *.h $(INSTALL_DIR)/include/GL
+	$(COPY_LIBS) $(TOP)/lib/libGLw.* $(INSTALL_DIR)/lib
 
 clean:
 	-rm depend depend.bak

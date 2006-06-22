@@ -10,7 +10,10 @@ CXX = xlC
 
 CFLAGS = -O -DAIXV3 -DPTHREADS
 CXXFLAGS = -O -DAIXV3 -DPTHREADS
+
+# Misc tools and flags
 MKLIB_OPTIONS =
+COPY_LIBS = cp -f -h
 
 # Library names (actual file names)
 GL_LIB_NAME = libGL.a

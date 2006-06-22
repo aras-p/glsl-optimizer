@@ -149,9 +149,18 @@ subdirs:
 
 
 install: default
+	$(INSTALL) -d $(INSTALL_DIR)/include/GL
+	$(INSTALL) -d $(INSTALL_DIR)/lib
+	$(INSTALL) -m 644 $(TOP)/include/GL/*.h $(INSTALL_DIR)/include/GL
+	$(COPY_LIBS) $(TOP)/lib/libGL.* $(INSTALL_DIR)/lib
 	@if [ "${DRIVER_DIRS}" = "dri" ] ; then \
 		cd drivers/dri ; $(MAKE) install ; \
 	fi
+
+
+	## NOT YET:
+	## $(INSTALL) -d $(INSTALL_DIR)/include/GLES
+	## $(INSTALL) -m 644 include/GLES/*.h $(INSTALL_DIR)/include/GLES
 
 
 # Emacs tags

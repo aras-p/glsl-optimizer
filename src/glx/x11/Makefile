@@ -1,7 +1,8 @@
 TOP = ../../..
 include $(TOP)/configs/current
 
-EXTRA_DEFINES = -DXF86VIDMODE -D_REENTRANT -UIN_DRI_DRIVER
+EXTRA_DEFINES = -DXF86VIDMODE -D_REENTRANT -UIN_DRI_DRIVER \
+                -DDEFAULT_DRIVER_DIR=\"$(DRI_DRIVER_INSTALL_DIR)\"
 
 SOURCES = \
 	  glcontextmodes.c \
@@ -82,6 +83,8 @@ depend: $(SOURCES) $(MESA_GLAPI_SOURCES) $(MESA_ASM_API) Makefile
 tags:
 	etags `find . -name \*.[ch]` `find ../include`
 
+# Dummy install target
+install:
 
 # Remove .o and backup files
 clean:
