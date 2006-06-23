@@ -44,7 +44,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
     SWIZZLE_Z != VSF_IN_COMPONENT_Z || \
     SWIZZLE_W != VSF_IN_COMPONENT_W || \
     SWIZZLE_ZERO != VSF_IN_COMPONENT_ZERO || \
-    SWIZZLE_ONE != VSF_IN_COMPONENT_ONE
+    SWIZZLE_ONE != VSF_IN_COMPONENT_ONE || \
+    WRITEMASK_X != VSF_FLAG_X || \
+    WRITEMASK_Y != VSF_FLAG_Y || \
+    WRITEMASK_Z != VSF_FLAG_Z || \
+    WRITEMASK_W != VSF_FLAG_W
 #error Cannot change these!
 #endif
     
@@ -142,14 +146,8 @@ int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp, f
 		
 static unsigned long t_dst_mask(GLuint mask)
 {
-	unsigned long flags=0;
-	
-	if(mask & WRITEMASK_X) flags |= VSF_FLAG_X;
-	if(mask & WRITEMASK_Y) flags |= VSF_FLAG_Y;
-	if(mask & WRITEMASK_Z) flags |= VSF_FLAG_Z;
-	if(mask & WRITEMASK_W) flags |= VSF_FLAG_W;
-	
-	return flags;
+	/* WRITEMASK_* is equivalent to VSF_FLAG_* */
+	return mask & VSF_FLAG_ALL;
 }
 
 static unsigned long t_dst_class(enum register_file file)
