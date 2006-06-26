@@ -25,6 +25,8 @@
 #include <GL/glut.h>
 
 #include "readtex.h"
+#include "trackball.h"
+
 
 #define SPECULAR_TEXTURE_FILE "../images/reflect.rgb"
 #define BASE_TEXTURE_FILE "../images/tile.rgb"
@@ -44,8 +46,7 @@ static GLuint TeapotObj = 0;
 static GLuint Object = 0;
 static GLboolean Animate = GL_TRUE;
 
-static GLfloat Xrot = 0.0, Yrot = 0.0, Zrot = 0.0;
-static GLfloat DXrot = 20.0, DYrot = 50.;
+static float CurQuat[4] = { 0, 0, 0, 1 };
 
 static GLfloat Black[4] = { 0, 0, 0, 0 };
 static GLfloat White[4] = { 1, 1, 1, 1 };
@@ -57,7 +58,6 @@ static GLboolean DoSpecTexture = GL_TRUE;
 
 static GLboolean ButtonDown = GL_FALSE;
 static GLint ButtonX, ButtonY;
-static GLfloat Xrot0, Yrot0;
 
 
 /* performance info */
@@ -67,29 +67,31 @@ static GLint Frames = 0;
 
 static void Idle( void )
 {
+   static const float yAxis[3] = {0, 1, 0};
    static double t0 = -1.;
+   float quat[4];
    double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
    if (t0 < 0.0)
       t0 = t;
    dt = t - t0;
    t0 = t;
 
-   if (Animate) {
-      Xrot += DXrot*dt;
-      Yrot += DYrot*dt;
-      glutPostRedisplay();
-   }
+   axis_to_quat(yAxis, 2.0 * dt, quat);
+   add_quats(quat, CurQuat, CurQuat);
+
+   glutPostRedisplay();
 }
 
 
 static void Display( void )
 {
+   GLfloat rot[4][4];
+
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
    glPushMatrix();
-   glRotatef(Xrot, 1.0, 0.0, 0.0);
-   glRotatef(Yrot, 0.0, 1.0, 0.0);
-   glRotatef(Zrot, 0.0, 0.0, 1.0);
+   build_rotmatrix(rot, CurQuat);
+   glMultMatrixf(&rot[0][0]);
 
    /* First pass: diffuse lighting with base texture */
    glMaterialfv(GL_FRONT, GL_DIFFUSE, Diffuse);
@@ -218,39 +220,21 @@ static void Key( unsigned char key, int x, int y )
 }
 
 
-static void SpecialKey( int key, int x, int y )
-{
-   float step = 3.0;
-   (void) x;
-   (void) y;
-
-   switch (key) {
-      case GLUT_KEY_UP:
-         Xrot += step;
-         break;
-      case GLUT_KEY_DOWN:
-         Xrot -= step;
-         break;
-      case GLUT_KEY_LEFT:
-         Yrot += step;
-         break;
-      case GLUT_KEY_RIGHT:
-         Yrot -= step;
-         break;
-   }
-   glutPostRedisplay();
-}
-
-
 static void
 MouseMotion(int x, int y)
 {
-   const float k = 300.0;
    if (ButtonDown) {
-      float dx = x - ButtonX;
-      float dy = y - ButtonY;
-      Xrot = Xrot0 + k * dy / WinWidth;
-      Yrot = Yrot0 + k * dx / WinHeight;
+      float x0 = (2.0 * ButtonX - WinWidth) / WinWidth;
+      float y0 = (WinHeight - 2.0 * ButtonY) / WinHeight;
+      float x1 = (2.0 * x - WinWidth) / WinWidth;
+      float y1 = (WinHeight - 2.0 * y) / WinHeight;
+      float q[4];
+
+      trackball(q, x0, y0, x1, y1);
+      ButtonX = x;
+      ButtonY = y;
+      add_quats(q, CurQuat, CurQuat);
+
       glutPostRedisplay();
    }
 }
@@ -263,8 +247,6 @@ MouseButton(int button, int state, int x, int y)
      ButtonDown = GL_TRUE;
      ButtonX = x;
      ButtonY = y;
-     Xrot0 = Xrot;
-     Yrot0 = Yrot;
   }
   else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
      ButtonDown = GL_FALSE;
@@ -453,18 +435,11 @@ static void Init( int argc, char *argv[] )
 int main( int argc, char *argv[] )
 {
    glutInit( &argc, argv );
-   glutInitWindowPosition(0, 0);
    glutInitWindowSize(WinWidth, WinHeight);
-
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
-
    glutCreateWindow(argv[0] );
-
-   Init(argc, argv);
-
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
-   glutSpecialFunc( SpecialKey );
    glutDisplayFunc( Display );
    glutMotionFunc(MouseMotion);
    glutMouseFunc(MouseButton);
@@ -477,6 +452,8 @@ int main( int argc, char *argv[] )
    glutAddMenuEntry("Toggle Animate", ANIMATE);
    glutAddMenuEntry("Quit", QUIT);
    glutAttachMenu(GLUT_RIGHT_BUTTON);
+
+   Init(argc, argv);
 
    glutMainLoop();
    return 0;
