@@ -123,6 +123,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Depth buffer
  */
 
+/* These functions require locking */
+#undef HW_LOCK
+#undef HW_UNLOCK
+#define HW_LOCK()    LOCK_HARDWARE(R128_CONTEXT(ctx));
+#define HW_UNLOCK()  UNLOCK_HARDWARE(R128_CONTEXT(ctx));
+
 /* 16-bit depth buffer functions
  */
 
