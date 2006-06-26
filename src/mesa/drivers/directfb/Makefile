@@ -34,7 +34,7 @@ default: directfbgl_mesa
 # Mesa DirectFBGL module
 directfbgl_mesa: $(DIRECTFBGL_MESA_OBJECTS)
 	$(CC) -shared $(CFLAGS) $(DIRECTFBGL_MESA_OBJECTS) -o $(DIRECTFBGL_MESA) \
-	-Wl,-soname -Wl,$(DIRECTFBGL_MESA) -L$(TOP)/lib -lGL -lm
+	-Wl,-soname -Wl,$(DIRECTFBGL_MESA) -L$(LIB_DIR) -lGL -lm
 
 
 install:

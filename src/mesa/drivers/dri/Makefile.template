@@ -76,7 +76,7 @@ $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/driver
 
 
 $(LIB_DIR)/$(LIBNAME): $(LIBNAME)
-	install $(LIBNAME) $(LIB_DIR) 
+	$(INSTALL) $(LIBNAME) $(LIB_DIR) 
 
 
 
