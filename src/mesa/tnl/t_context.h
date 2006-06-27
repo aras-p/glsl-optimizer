@@ -533,17 +533,19 @@ typedef void (*tnl_setup_func)( GLcontext *ctx,
 				GLuint new_inputs);
 
 
+struct tnl_attr_type {
+   GLuint format;
+   GLuint size;
+   GLuint stride;
+   GLuint offset;
+};
+
 struct tnl_clipspace_fastpath {
    GLuint vertex_size;
    GLuint attr_count;
    GLboolean match_strides;
 
-   struct attr_type {
-      GLuint format;
-      GLuint size;
-      GLuint stride;
-      GLuint offset;
-   } *attr;
+   struct tnl_attr_type *attr;
 
    tnl_emit_func func;
    struct tnl_clipspace_fastpath *next;
