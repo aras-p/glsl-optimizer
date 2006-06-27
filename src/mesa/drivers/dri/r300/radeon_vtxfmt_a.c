@@ -73,6 +73,9 @@ void radeon_vb_to_rvb(r300ContextPtr rmesa, struct radeon_vertex_buffer *rvb, st
 	
 	for (i=0; i < ctx->Const.MaxTextureCoordUnits; i++)
 		CONV_VB(VERT_ATTRIB_TEX0 + i, TexCoordPtr[i]);
+
+	for (i=0; i < 16; i++)
+		CONV_VB(VERT_ATTRIB_GENERIC0 + i, AttribPtr[VERT_ATTRIB_GENERIC0 + i]);
 	
 	rvb->Primitive = vb->Primitive;
 	rvb->PrimitiveCount = vb->PrimitiveCount;
