@@ -380,6 +380,7 @@ GLUT_FILES = \
 
 DEPEND_FILES = \
 	$(TOP)/src/mesa/depend		\
+	$(TOP)/src/glx/x11/depend	\
 	$(TOP)/src/glw/depend		\
 	$(TOP)/src/glut/glx/depend	\
 	$(TOP)/src/glu/sgi/depend
