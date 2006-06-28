@@ -1536,7 +1536,10 @@ parse_attrib_binding(GLcontext * ctx, GLubyte ** inst,
          case VERTEX_ATTRIB_GENERIC:
             {
                GLuint attrib;
-               if (!parse_generic_attrib_num(ctx, inst, Program, &attrib)) {
+
+               err = parse_generic_attrib_num(ctx, inst, Program, &attrib);
+
+			   if (!err) {
                   *is_generic = 1;
                   /* Add VERT_ATTRIB_GENERIC0 here because ARB_vertex_program's
                    * attributes do not alias the conventional vertex
@@ -1556,7 +1559,6 @@ parse_attrib_binding(GLcontext * ctx, GLubyte ** inst,
       }
    }
 
-   /* Can this even happen? */
    if (err) {
       const char *msg = "Bad attribute binding";
       _mesa_set_program_error(ctx, Program->Position, msg);
