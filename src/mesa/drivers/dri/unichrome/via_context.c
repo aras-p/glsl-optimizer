@@ -336,7 +336,9 @@ calculate_buffer_parameters( struct via_context *vmesa,
    if( vmesa->viaScreen->width == vmesa->driDrawable->w && 
        vmesa->viaScreen->height == vmesa->driDrawable->h ) {
       vmesa->doPageFlip = vmesa->allowPageFlip;
-      assert(vmesa->back.pitch == vmesa->front.pitch);
+      if (vmesa->hasBack) {
+         assert(vmesa->back.pitch == vmesa->front.pitch);
+      }
    }
    else
       vmesa->doPageFlip = GL_FALSE;
