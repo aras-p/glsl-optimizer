@@ -169,6 +169,8 @@ enum {
 #define _TNL_FIRST_MAT       _TNL_ATTRIB_MAT_FRONT_AMBIENT
 #define _TNL_LAST_MAT        _TNL_ATTRIB_MAT_BACK_INDEXES
 
+/* Number of available generic attributes */
+#define _TNL_NUM_GENERIC 16
 
 #define PRIM_BEGIN     0x10
 #define PRIM_END       0x20
