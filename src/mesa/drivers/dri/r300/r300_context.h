@@ -544,7 +544,7 @@ struct r300_vap_reg_state {
 	   int i_color[2];
 	   int i_fog;
 	   int i_tex[R300_MAX_TEXTURE_UNITS];
-	   int i_attrib[_TNL_LAST_GENERIC-_TNL_FIRST_GENERIC];
+	   int i_attrib[_TNL_NUM_GENERIC];
 	   int i_index;
 	   int i_pointsize;
 	};
