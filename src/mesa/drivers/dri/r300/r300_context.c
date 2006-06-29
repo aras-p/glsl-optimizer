@@ -385,8 +385,12 @@ static void r300FreeGartAllocations(r300ContextPtr r300)
 		if (r300->rmm->u_list[i].ptr == NULL) {
 			continue;
 		}
-		
-		assert(r300->rmm->u_list[i].pending);
+
+		/* check whether this buffer is still in use */
+		if (!r300->rmm->u_list[i].pending) {
+			continue;
+		}
+
 		assert(r300->rmm->u_list[i].h_pending == 0);
 		
 		tries = 0;

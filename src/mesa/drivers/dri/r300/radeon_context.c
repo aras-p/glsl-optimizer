@@ -202,8 +202,12 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 void radeonCleanupContext(radeonContextPtr radeon)
 {
 	/* free the Mesa context */
-	radeon->glCtx->DriverCtx = NULL;
 	_mesa_destroy_context(radeon->glCtx);
+
+	/* the above call might result in calls to functions that depend on
+	 * the DriverCtx.
+	 */
+	radeon->glCtx->DriverCtx = NULL;
 
 	if (radeon->state.scissor.pClipRects) {
 		FREE(radeon->state.scissor.pClipRects);

@@ -888,6 +888,20 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
 #endif
 
 #if FEATURE_ARB_vertex_buffer_object
+   /* Free vertex buffer objects */
+   while (1) {
+      GLuint name = _mesa_HashFirstEntry(ss->BufferObjects);
+      if (name) {
+         struct gl_buffer_object *bufObj = (struct gl_buffer_object *)
+            _mesa_HashLookup(ss->BufferObjects, name);
+         ASSERT(bufObj);
+         ctx->Driver.DeleteBuffer(ctx, bufObj);
+         _mesa_HashRemove(ss->BufferObjects, name);
+      }
+      else {
+         break;
+      }
+   }
    _mesa_DeleteHashTable(ss->BufferObjects);
 #endif
 
