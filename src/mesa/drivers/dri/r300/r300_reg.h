@@ -870,7 +870,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_PFS_CNTL_ALU_OFFSET_SHIFT    0
 #       define R300_PFS_CNTL_ALU_OFFSET_MASK     (63 << 0)
 #       define R300_PFS_CNTL_ALU_END_SHIFT       6
-#       define R300_PFS_CNTL_ALU_END_MASK        (63 << 0)
+#       define R300_PFS_CNTL_ALU_END_MASK        (63 << 6)
 #       define R300_PFS_CNTL_TEX_OFFSET_SHIFT    12
 #       define R300_PFS_CNTL_TEX_OFFSET_MASK     (31 << 12) /* GUESS */
 #       define R300_PFS_CNTL_TEX_END_SHIFT       18
