@@ -38,7 +38,6 @@ PROGS = \
 	lodbias \
 	morph3d \
 	multiarb \
-	occlude \
 	paltex \
 	pointblast \
 	ray \
