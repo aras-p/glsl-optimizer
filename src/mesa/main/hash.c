@@ -12,9 +12,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.4
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -66,6 +66,7 @@ struct _mesa_HashTable {
    struct HashEntry *Table[TABLE_SIZE];  /**< the lookup table */
    GLuint MaxKey;                        /**< highest key inserted so far */
    _glthread_Mutex Mutex;                /**< mutual exclusion lock */
+   GLboolean InDeleteAll;                /**< Debug check */
 };
 
 
@@ -208,6 +209,13 @@ _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key)
    assert(table);
    assert(key);
 
+   /* have to check this outside of mutex lock */
+   if (table->InDeleteAll) {
+      _mesa_problem(NULL, "_mesa_HashRemove illegally called from "
+                    "_mesa_HashDeleteAll callback function");
+      return;
+   }
+
    _glthread_LOCK_MUTEX(table->Mutex);
 
    pos = HASH_FUNC(key);
@@ -236,17 +244,73 @@ _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key)
 
 
 /**
- * Get the key of the "first" entry in the hash table.
- * 
- * This is used in the course of deleting all display lists when
- * a context is destroyed.
- * 
- * \param table the hash table
- * 
- * \return key for the "first" entry in the hash table.
+ * Delete all entries in a hash table, but don't delete the table itself.
+ * Invoke the given callback function for each table entry.
  *
+ * \param table  the hash table to delete
+ * \param callback  the callback function
+ * \param userData  arbitrary pointer to pass along to the callback
+ *                  (this is typically a GLcontext pointer)
+ */
+void
+_mesa_HashDeleteAll(struct _mesa_HashTable *table,
+                    void (*callback)(GLuint key, void *data, void *userData),
+                    void *userData)
+{
+   GLuint pos;
+   ASSERT(table);
+   ASSERT(callback);
+   _glthread_LOCK_MUTEX(table->Mutex);
+   table->InDeleteAll = GL_TRUE;
+   for (pos = 0; pos < TABLE_SIZE; pos++) {
+      struct HashEntry *entry, *next;
+      for (entry = table->Table[pos]; entry; entry = next) {
+         callback(entry->Key, entry->Data, userData);
+         next = entry->Next;
+         _mesa_free(entry);
+      }
+      table->Table[pos] = NULL;
+   }
+   table->InDeleteAll = GL_FALSE;
+   _glthread_UNLOCK_MUTEX(table->Mutex);
+}
+
+
+/**
+ * Walk over all entries in a hash table, calling callback function for each.
+ * \param table  the hash table to walk
+ * \param callback  the callback function
+ * \param userData  arbitrary pointer to pass along to the callback
+ *                  (this is typically a GLcontext pointer)
+ */
+void
+_mesa_HashWalk(const struct _mesa_HashTable *table,
+               void (*callback)(GLuint key, void *data, void *userData),
+               void *userData)
+{
+   /* cast-away const */
+   struct _mesa_HashTable *table2 = (struct _mesa_HashTable *) table;
+   GLuint pos;
+   ASSERT(table);
+   ASSERT(callback);
+   _glthread_UNLOCK_MUTEX(table2->Mutex);
+   for (pos = 0; pos < TABLE_SIZE; pos++) {
+      struct HashEntry *entry;
+      for (entry = table->Table[pos]; entry; entry = entry->Next) {
+         callback(entry->Key, entry->Data, userData);
+      }
+   }
+   _glthread_UNLOCK_MUTEX(table2->Mutex);
+}
+
+
+/**
+ * Return the key of the "first" entry in the hash table.
  * While holding the lock, walks through all table positions until finding
  * the first entry of the first non-empty one.
+ * 
+ * \param table  the hash table
+ * \return key for the "first" entry in the hash table.
  */
 GLuint
 _mesa_HashFirstEntry(struct _mesa_HashTable *table)

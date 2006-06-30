@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,6 +44,16 @@ extern void *_mesa_HashLookup(const struct _mesa_HashTable *table, GLuint key);
 extern void _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data);
 
 extern void _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key);
+
+extern void
+_mesa_HashDeleteAll(struct _mesa_HashTable *table,
+                    void (*callback)(GLuint key, void *data, void *userData),
+                    void *userData);
+
+extern void
+_mesa_HashWalk(const struct _mesa_HashTable *table,
+               void (*callback)(GLuint key, void *data, void *userData),
+               void *userData);
 
 extern GLuint _mesa_HashFirstEntry(struct _mesa_HashTable *table);
 
