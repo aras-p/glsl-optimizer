@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -504,22 +504,23 @@ _mesa_init_query(GLcontext *ctx)
 
 
 /**
+ * Callback for deleting a query object.  Called by _mesa_HashDeleteAll().
+ */
+static void
+delete_queryobj_cb(GLuint id, void *data, void *userData)
+{
+   struct gl_query_object *q= (struct gl_query_object *) data;
+   (void) userData;
+   delete_query_object(q);
+}
+
+
+/**
  * Free the context state related to query objects.
  */
 void
 _mesa_free_query_data(GLcontext *ctx)
 {
-   while (1) {
-      GLuint id = _mesa_HashFirstEntry(ctx->Query.QueryObjects);
-      if (id) {
-         struct gl_query_object *q = lookup_query_object(ctx, id);
-         ASSERT(q);
-         delete_query_object(q);
-         _mesa_HashRemove(ctx->Query.QueryObjects, id);
-      }
-      else {
-         break;
-      }
-   }
+   _mesa_HashDeleteAll(ctx->Query.QueryObjects, delete_queryobj_cb, NULL);
    _mesa_DeleteHashTable(ctx->Query.QueryObjects);
 }
