@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,7 +38,8 @@
 
 #if _HAVE_FULL_GL
 
-extern void _mesa_destroy_list( GLcontext *ctx, GLuint list );
+extern void
+_mesa_delete_list(GLcontext *ctx, struct mesa_display_list *dlist);
 
 extern void GLAPIENTRY _mesa_CallList( GLuint list );
 
@@ -80,9 +81,6 @@ extern void _mesa_save_vtxfmt_init( GLvertexformat *vfmt );
 
 
 #else
-
-/** No-op */
-#define _mesa_destroy_list(c,l) ((void)0)
 
 /** No-op */
 #define _mesa_init_dlist_table(t,ts) ((void)0)
