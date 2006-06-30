@@ -599,8 +599,18 @@ static void r128UpdateClipping( GLcontext *ctx )
       x2 += drawable->x;
       y2 += drawable->y;
 
-      rmesa->setup.sc_top_left_c     = ((y1 << 16) | x1);
-      rmesa->setup.sc_bottom_right_c = ((y2 << 16) | x2);
+      /* Clamp values to screen to avoid wrapping problems */
+      if ( x1 < 0 )
+         x1 = 0;
+      else if ( x1 >= rmesa->driScreen->fbWidth )
+         x1 = rmesa->driScreen->fbWidth - 1;
+      if ( y1 < 0 )
+         y1 = 0;
+      else if ( y1 >= rmesa->driScreen->fbHeight )
+         y1 = rmesa->driScreen->fbHeight - 1;
+
+      rmesa->setup.sc_top_left_c     = (((y1 & 0x3FFF) << 16) | (x1 & 0x3FFF));
+      rmesa->setup.sc_bottom_right_c = (((y2 & 0x3FFF) << 16) | (x2 & 0x3FFF));
 
       rmesa->dirty |= R128_UPLOAD_CONTEXT;
    }
@@ -798,8 +808,8 @@ static void r128UpdateWindow( GLcontext *ctx )
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
    driRenderbuffer *drb = (driRenderbuffer *) rb;
 
-   rmesa->setup.window_xy_offset = ((y << R128_WINDOW_Y_SHIFT) |
-				    (x << R128_WINDOW_X_SHIFT));
+   rmesa->setup.window_xy_offset = (((y & 0xFFF) << R128_WINDOW_Y_SHIFT) |
+				    ((x & 0xFFF) << R128_WINDOW_X_SHIFT));
 
    rmesa->setup.dst_pitch_offset_c = (((drb->flippedPitch/8) << 21) |
                                       (drb->flippedOffset >> 5));
