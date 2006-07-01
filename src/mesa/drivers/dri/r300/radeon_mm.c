@@ -105,7 +105,7 @@ int radeon_mm_find(r300ContextPtr rmesa, void *ptr)
 int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 {
 	drm_radeon_mem_alloc_t alloc;
-	int offset, ret;
+	int offset = 0, ret;
 	int i, free=-1;
 	int done_age;
 	drm_radeon_mem_free_t memfree;
