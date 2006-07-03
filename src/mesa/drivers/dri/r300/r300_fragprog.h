@@ -1,3 +1,35 @@
+/*
+ * Copyright (C) 2005 Ben Skeggs.
+ *
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
+
+/*
+ * Authors:
+ *   Ben Skeggs <darktama@iinet.net.au>
+ *   Jerome Glisse <j.glisse@gmail.com>
+ */
 #ifndef __R300_FRAGPROG_H_
 #define __R300_FRAGPROG_H_
 
@@ -59,30 +91,27 @@ typedef struct r300_fragment_program_swizzle {
 #define SRC_MASK		(63 << 0)
 #define SRC_STRIDE		6
 
-#define NOP_INST0 ( \
-		(R300_FPI0_OUTC_MAD) | \
+#define NOP_INST0 (						 \
+		(R300_FPI0_OUTC_MAD) |				 \
 		(R300_FPI0_ARGC_ZERO << R300_FPI0_ARG0C_SHIFT) | \
 		(R300_FPI0_ARGC_ZERO << R300_FPI0_ARG1C_SHIFT) | \
 		(R300_FPI0_ARGC_ZERO << R300_FPI0_ARG2C_SHIFT))
-#define NOP_INST1 ( \
+#define NOP_INST1 (					     \
 		((0 | SRC_CONST) << R300_FPI1_SRC0C_SHIFT) | \
 		((0 | SRC_CONST) << R300_FPI1_SRC1C_SHIFT) | \
 		((0 | SRC_CONST) << R300_FPI1_SRC2C_SHIFT))
 #define NOP_INST2 ( \
-		(R300_FPI2_OUTA_MAD) | \
+		(R300_FPI2_OUTA_MAD) |				 \
 		(R300_FPI2_ARGA_ZERO << R300_FPI2_ARG0A_SHIFT) | \
 		(R300_FPI2_ARGA_ZERO << R300_FPI2_ARG1A_SHIFT) | \
 		(R300_FPI2_ARGA_ZERO << R300_FPI2_ARG2A_SHIFT))
-#define NOP_INST3 ( \
+#define NOP_INST3 (					     \
 		((0 | SRC_CONST) << R300_FPI3_SRC0A_SHIFT) | \
 		((0 | SRC_CONST) << R300_FPI3_SRC1A_SHIFT) | \
 		((0 | SRC_CONST) << R300_FPI3_SRC2A_SHIFT))
-
-#include "r300_context.h"
 
 struct r300_fragment_program;
 
 extern void r300_translate_fragment_shader(struct r300_fragment_program *rp);
 
 #endif
-
