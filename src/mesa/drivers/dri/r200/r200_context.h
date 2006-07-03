@@ -50,6 +50,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define ENABLE_HW_3D_TEXTURE 1  /* XXX this is temporary! */
 
+#ifndef R200_EMIT_VAP_PVS_CNTL
+#error This driver requires a newer libdrm to compile
+#endif
+
 struct r200_context;
 typedef struct r200_context r200ContextRec;
 typedef struct r200_context *r200ContextPtr;
