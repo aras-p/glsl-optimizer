@@ -41,6 +41,19 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "program_instruction.h"
 #include "tnl/tnl.h"
 
+#if SWIZZLE_X != VSF_IN_COMPONENT_X || \
+    SWIZZLE_Y != VSF_IN_COMPONENT_Y || \
+    SWIZZLE_Z != VSF_IN_COMPONENT_Z || \
+    SWIZZLE_W != VSF_IN_COMPONENT_W || \
+    SWIZZLE_ZERO != VSF_IN_COMPONENT_ZERO || \
+    SWIZZLE_ONE != VSF_IN_COMPONENT_ONE || \
+    WRITEMASK_X != VSF_FLAG_X || \
+    WRITEMASK_Y != VSF_FLAG_Y || \
+    WRITEMASK_Z != VSF_FLAG_Z || \
+    WRITEMASK_W != VSF_FLAG_W
+#error Cannot change these!
+#endif
+
 #define SCALAR_FLAG (1<<31)
 #define FLAG_MASK (1<<31)
 #define OP_MASK (0xf)  /* we are unlikely to have more than 15 */
@@ -137,16 +150,10 @@ static GLboolean r200VertexProgUpdateParams(GLcontext *ctx, struct r200_vertex_p
    return GL_TRUE;
 }
 
-static unsigned long t_dst_mask(GLuint mask)
+static __inline unsigned long t_dst_mask(GLuint mask)
 {
-   unsigned long flags = 0;
-
-   if(mask & WRITEMASK_X) flags |= VSF_FLAG_X;
-   if(mask & WRITEMASK_Y) flags |= VSF_FLAG_Y;
-   if(mask & WRITEMASK_Z) flags |= VSF_FLAG_Z;
-   if(mask & WRITEMASK_W) flags |= VSF_FLAG_W;
-
-   return flags;
+   /* WRITEMASK_* is equivalent to VSF_FLAG_* */
+   return mask & VSF_FLAG_ALL;
 }
 
 static unsigned long t_dst(struct prog_dst_register *dst)
@@ -220,19 +227,6 @@ static unsigned long t_src_class(enum register_file file)
 static __inline unsigned long t_swizzle(GLubyte swizzle)
 {
 /* this is in fact a NOP as the Mesa SWIZZLE_* are all identical to VSF_IN_COMPONENT_* */
-/*
-   switch(swizzle){
-   case SWIZZLE_X: return VSF_IN_COMPONENT_X;
-   case SWIZZLE_Y: return VSF_IN_COMPONENT_Y;
-   case SWIZZLE_Z: return VSF_IN_COMPONENT_Z;
-   case SWIZZLE_W: return VSF_IN_COMPONENT_W;
-   case SWIZZLE_ZERO: return VSF_IN_COMPONENT_ZERO;
-   case SWIZZLE_ONE: return VSF_IN_COMPONENT_ONE;
-   default:
-      fprintf(stderr, "problem in %s", __FUNCTION__);
-      exit(0);
-   }
-*/
    return swizzle;
 }
 
@@ -713,7 +707,7 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
 	 o_inst->src1 = ZERO_SRC_0;
 	 o_inst->src2 = UNUSED_SRC_1;
 	 goto next;
-      
+
       case OPCODE_MAD:
 	 hw_op=(src[0].File == PROGRAM_TEMPORARY &&
 	    src[1].File == PROGRAM_TEMPORARY &&
