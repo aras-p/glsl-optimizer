@@ -1132,6 +1132,15 @@ void r128EmitHwStateLocked( r128ContextPtr rmesa )
 			R128_UPLOAD_WINDOW |
 			R128_UPLOAD_CORE) ) {
       memcpy( &sarea->context_state, regs, sizeof(sarea->context_state) );
+      
+      if( rmesa->dirty & R128_UPLOAD_CONTEXT )
+      {
+         /* One possible side-effect of uploading a new context is the
+          * setting of the R128_GMC_AUX_CLIP_DIS bit, which causes all
+          * auxilliary cliprects to be disabled. So the next command must
+          * upload them again. */
+         rmesa->dirty |= R128_UPLOAD_CLIPRECTS;
+      }
    }
 
    if ( (rmesa->dirty & R128_UPLOAD_TEX0) && t0 ) {
