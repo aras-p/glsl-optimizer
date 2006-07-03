@@ -175,9 +175,11 @@ _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
    for (entry = table->Table[pos]; entry; entry = entry->Next) {
       if (entry->Key == key) {
          /* replace entry's data */
+#if 0 /* not sure this check is always valid */
          if (entry->Data) {
             _mesa_problem(NULL, "Memory leak detected in _mesa_HashInsert");
          }
+#endif
 	 entry->Data = data;
          _glthread_UNLOCK_MUTEX(table->Mutex);
 	 return;
