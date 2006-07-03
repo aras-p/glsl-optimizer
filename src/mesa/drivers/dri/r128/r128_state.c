@@ -608,6 +608,14 @@ static void r128UpdateClipping( GLcontext *ctx )
          y1 = 0;
       else if ( y1 >= rmesa->driScreen->fbHeight )
          y1 = rmesa->driScreen->fbHeight - 1;
+      if ( x2 < 0 )
+         x2 = 0;
+      else if ( x2 >= rmesa->driScreen->fbWidth )
+         x2 = rmesa->driScreen->fbWidth - 1;
+      if ( y2 < 0 )
+         y2 = 0;
+      else if ( y2 >= rmesa->driScreen->fbHeight )
+         y2 = rmesa->driScreen->fbHeight - 1;
 
       rmesa->setup.sc_top_left_c     = (((y1 & 0x3FFF) << 16) | (x1 & 0x3FFF));
       rmesa->setup.sc_bottom_right_c = (((y2 & 0x3FFF) << 16) | (x2 & 0x3FFF));
@@ -1226,7 +1234,10 @@ void r128DDUpdateHWState( GLcontext *ctx )
 	 r128UpdateMasks( ctx );
 
       if ( new_state & R128_NEW_WINDOW )
+      {
 	 r128UpdateWindow( ctx );
+	 r128CalcViewport( ctx );
+      }
 
       if ( rmesa->NewGLState & _NEW_TEXTURE ) {
 	 r128UpdateTextureState( ctx );
