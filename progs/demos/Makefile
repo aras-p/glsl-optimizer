@@ -21,6 +21,7 @@ PROGS = \
 	clearspd \
 	cubemap \
 	drawpix \
+	engine \
 	fire \
 	fogcoord \
 	fplight \
@@ -129,6 +130,13 @@ gloss: gloss.o trackball.o readtex.o
 
 gloss.o: gloss.c trackball.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) gloss.c
+
+
+engine: engine.o trackball.o readtex.o
+	$(CC) -I$(INCDIR) $(CFLAGS) engine.o trackball.o readtex.o $(APP_LIB_DEPS) -o $@
+
+engine.o: engine.c trackball.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) engine.c
 
 
 clean:
