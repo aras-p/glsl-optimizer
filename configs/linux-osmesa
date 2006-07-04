@@ -1,0 +1,25 @@
+# Configuration for building libGL and libOSMesa on Linux, no Xlib driver
+# This doesn't really have any Linux dependencies, so it should be usable
+# on other (gcc-based) systems.
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = linux-osmesa
+
+# Compiler and flags
+CC = gcc
+CXX = g++
+CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DPTHREADS
+CXXFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE
+
+
+# Directories
+SRC_DIRS = mesa glu
+DRIVER_DIRS = osmesa
+PROGRAM_DIRS = osdemos
+
+
+# Dependencies
+OSMESA_LIB_DEPS = -lm -lpthread
+GLU_LIB_DEPS = -L$(LIB_DIR) -l$(OSMESA_LIB)
+APP_LIB_DEPS = -lOSMesa
