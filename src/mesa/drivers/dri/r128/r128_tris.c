@@ -420,8 +420,8 @@ r128_fallback_point( r128ContextPtr rmesa,
 /**********************************************************************/
 
 #define POINT_FALLBACK (DD_POINT_SMOOTH)
-#define LINE_FALLBACK (DD_LINE_STIPPLE|DD_LINE_SMOOTH)
-#define TRI_FALLBACK (DD_TRI_SMOOTH)
+#define LINE_FALLBACK (DD_LINE_STIPPLE)
+#define TRI_FALLBACK (0)
 #define ANY_FALLBACK_FLAGS (POINT_FALLBACK|LINE_FALLBACK|TRI_FALLBACK)
 #define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET|DD_TRI_UNFILLED)
 #define _R128_NEW_RENDER_STATE (ANY_FALLBACK_FLAGS | ANY_RASTER_FLAGS)
@@ -531,11 +531,36 @@ static void r128RasterPrimitive( GLcontext *ctx, GLuint hwprim )
    }
 }
 
+static void r128SetupAntialias( GLcontext *ctx, GLenum prim )
+{
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+
+   GLuint currAA, wantAA;
+   
+   currAA = (rmesa->setup.pm4_vc_fpu_setup & R128_EDGE_ANTIALIAS) != 0;
+   if( prim >= GL_TRIANGLES )
+      wantAA = ctx->Polygon.SmoothFlag;
+   else if( prim >= GL_LINES )
+      wantAA = ctx->Line.SmoothFlag;
+   else
+      wantAA = 0;
+      
+   if( wantAA != currAA )
+   {
+     FLUSH_BATCH( rmesa );
+     rmesa->setup.pm4_vc_fpu_setup ^= R128_EDGE_ANTIALIAS;
+     rmesa->dirty |= R128_UPLOAD_SETUP;
+   }
+}
+
 static void r128RenderPrimitive( GLcontext *ctx, GLenum prim )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint hw = hw_prim[prim];
    rmesa->render_primitive = prim;
+
+   r128SetupAntialias( ctx, prim );
+   
    if (prim >= GL_TRIANGLES && (ctx->_TriangleCaps & DD_TRI_UNFILLED))
       return;
    r128RasterPrimitive( ctx, hw );
