@@ -1317,6 +1317,8 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	
 	fp_reg = in_texcoords = col_interp_nr = high_rr = 0;
 
+	r300->hw.rr.cmd[R300_RR_ROUTE_1] = 0;
+	
 	for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
 		r300->hw.ri.cmd[R300_RI_INTERP_0+i] = 0
 				| R300_RS_INTERP_USED
