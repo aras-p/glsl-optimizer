@@ -28,7 +28,6 @@
 
 
 #ifdef XFree86Server
-# include "GL/xf86glx.h"
 # include "xf86glx_util.h"
 #elif defined(USE_XSHM)
 # include <X11/extensions/XShm.h>
