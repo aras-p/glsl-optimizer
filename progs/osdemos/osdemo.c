@@ -1,4 +1,3 @@
-
 /*
  * Demo of off-screen Mesa rendering
  *
@@ -14,31 +13,88 @@
  * PPM output provided by Joerg Schmalzl.
  * ASCII PPM output added by Brian Paul.
  *
- * Usage: osdemo [-perf] [filename]
- *
- * -perf: Redraws the image 1000 times, displaying the FPS every 5 secs.
- * filename: file to store the TGA or PPM output
+ * Usage: osdemo [filename]
  */
 
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "GL/osmesa.h"
-#include "GL/glut.h"
+#include "GL/glu.h"
 
 
 #define SAVE_TARGA
 
-
 #define WIDTH 400
 #define HEIGHT 400
 
-static GLint T0 = 0;
-static GLint Frames = 0;
-static int perf = 0;
 
-static void render_image( void )
+static void
+Sphere(float radius, int slices, int stacks)
+{
+   GLUquadric *q = gluNewQuadric();
+   gluQuadricNormals(q, GLU_SMOOTH);
+   gluSphere(q, radius, slices, stacks);
+   gluDeleteQuadric(q);
+}
+
+
+static void
+Cone(float base, float height, int slices, int stacks)
+{
+   GLUquadric *q = gluNewQuadric();
+   gluQuadricDrawStyle(q, GLU_FILL);
+   gluQuadricNormals(q, GLU_SMOOTH);
+   gluCylinder(q, base, 0.0, height, slices, stacks);
+   gluDeleteQuadric(q);
+}
+
+
+static void
+Torus(float innerRadius, float outerRadius, int sides, int rings)
+{
+   /* from GLUT... */
+   int i, j;
+   GLfloat theta, phi, theta1;
+   GLfloat cosTheta, sinTheta;
+   GLfloat cosTheta1, sinTheta1;
+   const GLfloat ringDelta = 2.0 * M_PI / rings;
+   const GLfloat sideDelta = 2.0 * M_PI / sides;
+
+   theta = 0.0;
+   cosTheta = 1.0;
+   sinTheta = 0.0;
+   for (i = rings - 1; i >= 0; i--) {
+      theta1 = theta + ringDelta;
+      cosTheta1 = cos(theta1);
+      sinTheta1 = sin(theta1);
+      glBegin(GL_QUAD_STRIP);
+      phi = 0.0;
+      for (j = sides; j >= 0; j--) {
+         GLfloat cosPhi, sinPhi, dist;
+
+         phi += sideDelta;
+         cosPhi = cos(phi);
+         sinPhi = sin(phi);
+         dist = outerRadius + innerRadius * cosPhi;
+
+         glNormal3f(cosTheta1 * cosPhi, -sinTheta1 * cosPhi, sinPhi);
+         glVertex3f(cosTheta1 * dist, -sinTheta1 * dist, innerRadius * sinPhi);
+         glNormal3f(cosTheta * cosPhi, -sinTheta * cosPhi, sinPhi);
+         glVertex3f(cosTheta * dist, -sinTheta * dist,  innerRadius * sinPhi);
+      }
+      glEnd();
+      theta = theta1;
+      cosTheta = cosTheta1;
+      sinTheta = sinTheta1;
+   }
+}
+
+
+static void
+render_image(void)
 {
    GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
    GLfloat light_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
@@ -72,20 +128,20 @@ static void render_image( void )
    glTranslatef(-0.75, 0.5, 0.0); 
    glRotatef(90.0, 1.0, 0.0, 0.0);
    glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, red_mat );
-   glutSolidTorus(0.275, 0.85, 20, 20);
+   Torus(0.275, 0.85, 20, 20);
    glPopMatrix();
 
    glPushMatrix();
    glTranslatef(-0.75, -0.5, 0.0); 
    glRotatef(270.0, 1.0, 0.0, 0.0);
    glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, green_mat );
-   glutSolidCone(1.0, 2.0, 16, 1);
+   Cone(1.0, 2.0, 16, 1);
    glPopMatrix();
 
    glPushMatrix();
    glTranslatef(0.75, 0.0, -1.0); 
    glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, blue_mat );
-   glutSolidSphere(1.0, 20, 20);
+   Sphere(1.0, 20, 20);
    glPopMatrix();
 
    glPopMatrix();
@@ -94,18 +150,6 @@ static void render_image( void )
     * Make sure buffered commands are finished!!!
     */
    glFinish();
-
-   Frames++;
-   if (perf) {
-     GLint t = glutGet(GLUT_ELAPSED_TIME);
-     if (t - T0 >= 5000) {
-        GLfloat seconds = (t - T0) / 1000.0;
-        GLfloat fps = Frames / seconds;
-        printf("%d frames in %6.3f seconds = %6.3f FPS\n", Frames, seconds, fps);
-        T0 = t;
-        Frames = 0;
-     }
-   }
 }
 
 
@@ -201,7 +245,8 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
 
 
 
-int main( int argc, char *argv[] )
+int
+main(int argc, char *argv[])
 {
    void *buffer;
    int i;
@@ -219,9 +264,9 @@ int main( int argc, char *argv[] )
       return 0;
    }
 
-   for ( i=1; i<argc; i++ ) {
-      if (argv[i][0] != '-') filename = argv[i];
-      if (strcmp(argv[i], "-perf")==0) perf = 1;
+   for (i = 1; i < argc; i++) {
+      if (argv[i][0] != '-')
+         filename = argv[i];
    }
 
    /* Allocate the image buffer */
@@ -247,9 +292,6 @@ int main( int argc, char *argv[] )
    }
 
    render_image();
-   if (perf)
-      for(i=0; i< 1000; i++)
-         render_image();
 
    if (filename != NULL) {
 #ifdef SAVE_TARGA
