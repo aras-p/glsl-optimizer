@@ -9,11 +9,12 @@
  */
 
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "GL/osmesa.h"
-#include "GL/glut.h"
+#include "GL/glu.h"
 
 
 #define WIDTH 600
@@ -21,6 +22,120 @@
 
 static GLboolean WriteFiles = GL_FALSE;
 static GLboolean Gradient = GL_FALSE;
+
+
+static void
+Sphere(float radius, int slices, int stacks)
+{
+   GLUquadric *q = gluNewQuadric();
+   gluQuadricNormals(q, GLU_SMOOTH);
+   gluSphere(q, radius, slices, stacks);
+   gluDeleteQuadric(q);
+}
+
+
+static void
+Cone(float base, float height, int slices, int stacks)
+{
+   GLUquadric *q = gluNewQuadric();
+   gluQuadricDrawStyle(q, GLU_FILL);
+   gluQuadricNormals(q, GLU_SMOOTH);
+   gluCylinder(q, base, 0.0, height, slices, stacks);
+   gluDeleteQuadric(q);
+}
+
+
+static void
+Torus(float innerRadius, float outerRadius, int sides, int rings)
+{
+   /* from GLUT... */
+   int i, j;
+   GLfloat theta, phi, theta1;
+   GLfloat cosTheta, sinTheta;
+   GLfloat cosTheta1, sinTheta1;
+   const GLfloat ringDelta = 2.0 * M_PI / rings;
+   const GLfloat sideDelta = 2.0 * M_PI / sides;
+
+   theta = 0.0;
+   cosTheta = 1.0;
+   sinTheta = 0.0;
+   for (i = rings - 1; i >= 0; i--) {
+      theta1 = theta + ringDelta;
+      cosTheta1 = cos(theta1);
+      sinTheta1 = sin(theta1);
+      glBegin(GL_QUAD_STRIP);
+      phi = 0.0;
+      for (j = sides; j >= 0; j--) {
+         GLfloat cosPhi, sinPhi, dist;
+
+         phi += sideDelta;
+         cosPhi = cos(phi);
+         sinPhi = sin(phi);
+         dist = outerRadius + innerRadius * cosPhi;
+
+         glNormal3f(cosTheta1 * cosPhi, -sinTheta1 * cosPhi, sinPhi);
+         glVertex3f(cosTheta1 * dist, -sinTheta1 * dist, innerRadius * sinPhi);
+         glNormal3f(cosTheta * cosPhi, -sinTheta * cosPhi, sinPhi);
+         glVertex3f(cosTheta * dist, -sinTheta * dist,  innerRadius * sinPhi);
+      }
+      glEnd();
+      theta = theta1;
+      cosTheta = cosTheta1;
+      sinTheta = sinTheta1;
+   }
+}
+
+
+static void Cube(float size)
+{
+   size = 0.5 * size;
+
+   glBegin(GL_QUADS);
+   /* +X face */
+   glNormal3f(1, 0, 0);
+   glVertex3f(size, -size,  size);
+   glVertex3f(size, -size, -size);
+   glVertex3f(size,  size, -size);
+   glVertex3f(size,  size,  size);
+
+   /* -X face */
+   glNormal3f(-1, 0, 0);
+   glVertex3f(-size,  size,  size);
+   glVertex3f(-size,  size, -size);
+   glVertex3f(-size, -size, -size);
+   glVertex3f(-size, -size,  size);
+
+   /* +Y face */
+   glNormal3f(0, 1, 0);
+   glVertex3f(-size, size,  size);
+   glVertex3f( size, size,  size);
+   glVertex3f( size, size, -size);
+   glVertex3f(-size, size, -size);
+
+   /* -Y face */
+   glNormal3f(0, -1, 0);
+   glVertex3f(-size, -size, -size);
+   glVertex3f( size, -size, -size);
+   glVertex3f( size, -size,  size);
+   glVertex3f(-size, -size,  size);
+
+   /* +Z face */
+   glNormal3f(0, 0, 1);
+   glVertex3f(-size, -size, size);
+   glVertex3f( size, -size, size);
+   glVertex3f( size,  size, size);
+   glVertex3f(-size,  size, size);
+
+   /* -Z face */
+   glNormal3f(0, 0, -1);
+   glVertex3f(-size,  size, -size);
+   glVertex3f( size,  size, -size);
+   glVertex3f( size, -size, -size);
+   glVertex3f(-size, -size, -size);
+
+   glEnd();
+}
+
 
 
 /**
@@ -66,7 +181,9 @@ render_image(void)
    static const GLfloat red_mat[4]   = { 1.0, 0.2, 0.2, 1.0 };
    static const GLfloat green_mat[4] = { 0.2, 1.0, 0.2, 1.0 };
    static const GLfloat blue_mat[4]  = { 0.2, 0.2, 1.0, 1.0 };
+#if 0
    static const GLfloat yellow_mat[4]  = { 0.8, 0.8, 0.0, 1.0 };
+#endif
    static const GLfloat purple_mat[4]  = { 0.8, 0.4, 0.8, 0.6 };
 
    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
@@ -106,36 +223,41 @@ render_image(void)
    glTranslatef(-1.5, 0.5, 0.0); 
    glRotatef(90.0, 1.0, 0.0, 0.0);
    glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, red_mat );
-   glutSolidTorus(0.275, 0.85, 20, 20);
+   Torus(0.275, 0.85, 20, 20);
    glPopMatrix();
 
    glPushMatrix();
    glTranslatef(-1.5, -0.5, 0.0); 
    glRotatef(270.0, 1.0, 0.0, 0.0);
    glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, green_mat );
-   glutSolidCone(1.0, 2.0, 16, 1);
+   Cone(1.0, 2.0, 16, 1);
    glPopMatrix();
 
    glPushMatrix();
-   glTranslatef(0.75, 0.0, -1.0); 
+   glTranslatef(0.95, 0.0, -0.8); 
    glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, blue_mat );
-   glutSolidSphere(1.0, 20, 20);
+   glLineWidth(2.0);
+   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+   Sphere(1.2, 20, 20);
+   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
    glPopMatrix();
 
+#if 0
    glPushMatrix();
    glTranslatef(0.75, 0.0, 1.3); 
    glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, yellow_mat );
    glutWireTeapot(1.0);
    glPopMatrix();
+#endif
 
    glPushMatrix();
-   glTranslatef(-0.5, 0.0, 2.5);
+   glTranslatef(-0.25, 0.0, 2.5);
    glRotatef(40, 0, 1, 0);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
    glEnable(GL_BLEND);
    glEnable(GL_CULL_FACE);
    glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, purple_mat );
-   glutSolidCube(1.0);
+   Cube(1.0);
    glDisable(GL_BLEND);
    glDisable(GL_CULL_FACE);
    glPopMatrix();
@@ -270,6 +392,8 @@ test(GLenum type, GLint bits, const char *filename)
    /* Bind the buffer to the context and make it current */
    if (!OSMesaMakeCurrent( ctx, buffer, type, WIDTH, HEIGHT )) {
       printf("OSMesaMakeCurrent (%d bits/channel) failed!\n", bits);
+      free(buffer);
+      OSMesaDestroyContext(ctx);
       return 0;
    }
 
@@ -319,6 +443,8 @@ test(GLenum type, GLint bits, const char *filename)
    }
 
    OSMesaDestroyContext(ctx);
+
+   free(buffer);
 
    return 1;
 }
