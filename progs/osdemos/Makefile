@@ -5,7 +5,7 @@ include $(TOP)/configs/current
 
 INCDIR = $(TOP)/include
 
-OSMESA_LIBS = -L$(LIB_DIR) -lglut -lOSMesa -lGLU -lGL $(APP_LIB_DEPS)
+OSMESA_LIBS = -L$(LIB_DIR) -lOSMesa $(APP_LIB_DEPS)
 
 OSMESA16_LIBS = -L$(LIB_DIR) -lglut -lOSMesa16 -lGLU -lGL $(APP_LIB_DEPS)
 
@@ -76,3 +76,7 @@ clean:
 	-rm -f $(PROGS)
 	-rm -f *.o *~
 	-rm -f readtex.[ch] showbuffer.[ch]
+	-rm -f *.ppm
+	-rm -f osdemo16 osdemo32
+
+
