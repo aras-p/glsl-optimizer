@@ -1,4 +1,4 @@
-# Configuration for building libGL and libOSMesa on Linux, no Xlib driver
+# Configuration for building only libOSMesa on Linux, no Xlib driver
 # This doesn't really have any Linux dependencies, so it should be usable
 # on other (gcc-based) systems.
 
@@ -22,4 +22,4 @@ PROGRAM_DIRS = osdemos
 # Dependencies
 OSMESA_LIB_DEPS = -lm -lpthread
 GLU_LIB_DEPS = -L$(LIB_DIR) -l$(OSMESA_LIB)
-APP_LIB_DEPS = -lOSMesa
+APP_LIB_DEPS = -lOSMesa -lGLU
