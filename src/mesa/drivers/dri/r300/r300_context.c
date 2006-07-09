@@ -374,12 +374,26 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 
 static void r300FreeGartAllocations(r300ContextPtr r300)
 {
-	int i, ret, tries=0, done_age;
+	int i, ret, tries=0, done_age, in_use=0;
 	drm_radeon_mem_free_t memfree;
 
 	memfree.region = RADEON_MEM_REGION_GART;
 
 #ifdef USER_BUFFERS
+	for (i = r300->rmm->u_last; i > 0; i--) {
+		if (r300->rmm->u_list[i].ptr == NULL) {
+			continue;
+		}
+
+		/* check whether this buffer is still in use */
+		if (r300->rmm->u_list[i].pending) {
+			in_use++;
+		}
+	}
+	/* Cannot flush/lock if no context exists. */
+	if (in_use)
+		r300FlushCmdBuf(r300, __FUNCTION__);
+	
 	done_age = radeonGetAge((radeonContextPtr)r300);
 	
 	for (i = r300->rmm->u_last; i > 0; i--) {
@@ -465,8 +479,10 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 		
 		if (r300->dma.current.buf) {
 			r300ReleaseDmaRegion(r300, &r300->dma.current, __FUNCTION__ );
+#ifndef USER_BUFFERS
+			r300FlushCmdBuf(r300, __FUNCTION__);
+#endif  
 		}
-		r300FlushCmdBuf(r300, __FUNCTION__);
 		r300FreeGartAllocations(r300);
 		r300DestroyCmdBuf(r300);
 

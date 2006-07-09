@@ -153,6 +153,8 @@ void radeonGetLock(radeonContextPtr radeon, GLuint flags)
 	__DRIdrawablePrivate *dPriv = radeon->dri.drawable;
 	__DRIscreenPrivate *sPriv = radeon->dri.screen;
 	drm_radeon_sarea_t *sarea = radeon->sarea;
+	
+	assert (dPriv != NULL);
 
 	drmGetLock(radeon->dri.fd, radeon->dri.hwContext, flags);
 
