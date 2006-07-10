@@ -169,13 +169,8 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 	    __driUtilMessage("viaInitDriver: drmMap agp failed");
 	    return GL_FALSE;
 	}
-	    
-	/*
-	 * FIXME: This is an invalid assumption that works until handle is
-	 * changed to mean something else than the 32-bit physical AGP address.
-	 */
 
-	viaScreen->agpBase = gDRIPriv->agp.handle;
+	viaScreen->agpBase = drmAgpBase(sPriv->fd);
     } else
 	viaScreen->agpLinearStart = 0;
 
@@ -440,16 +435,38 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn,
                                               VIA_DRIDDX_VERSION_PATCH };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 2, 3, 0 };
+   static const __DRIversion drm_compat = {3, 0, 0};
+   static const char *driver_name = "Unichrome";
 
    dri_interface = interface;
 
-   if ( ! driCheckDriDdxDrmVersions2( "Unichrome",
+   /*
+    * Check ddx and dri only.
+    */
+
+   if ( ! driCheckDriDdxDrmVersions2( driver_name,
 				      dri_version, & dri_expected,
 				      ddx_version, & ddx_expected,
-				      drm_version, & drm_expected ) ) {
+				      drm_version, drm_version) ) {
       return NULL;
    }
       
+   /*
+    * Check drm version with major versioning span.
+    */
+
+   if (((drm_version->major < drm_expected.major) ||
+	(drm_version->major > drm_compat.major)) ||
+       ((drm_version->major == drm_expected.major) &&
+	(drm_version->minor < drm_expected.minor))) {
+
+      fprintf(stderr, "%s DRI driver expected DRM version %d.%d.x - %d.x.x "
+	      "but got version %d.%d.%d\n", driver_name,
+	      drm_expected.major, drm_expected.minor, drm_compat.major,
+	      drm_version->major, drm_version->minor, drm_version->patch);
+      return NULL;
+   }
+
    psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
 				  ddx_version, dri_version, drm_version,
 				  frame_buffer, pSAREA, fd,
@@ -470,7 +487,6 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn,
       driInitExtensions( NULL, card_extensions, GL_FALSE );
    }
 
-   fprintf(stderr, "%s - succeeded\n", __FUNCTION__);
    return (void *) psp;
 }
 

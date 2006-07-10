@@ -41,6 +41,7 @@ typedef struct {
 typedef struct {
    sisRegionRec2 mmio;
    sisRegionRec2 agp;
+   unsigned long agpBaseOffset;
 
    unsigned int AGPCmdBufOffset;
    unsigned int AGPCmdBufSize;

@@ -272,7 +272,7 @@ sisCreateContext( const __GLcontextModes *glVisual,
    /* set AGP */
    smesa->AGPSize = sisScreen->agp.size;
    smesa->AGPBase = sisScreen->agp.map;
-   smesa->AGPAddr = sisScreen->agp.handle;
+   smesa->AGPAddr = sisScreen->agpBaseOffset;
 
    /* Create AGP command buffer */
    if (smesa->AGPSize != 0 && 

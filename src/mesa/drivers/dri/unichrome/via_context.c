@@ -68,7 +68,7 @@
 #define need_GL_EXT_secondary_color
 #include "extension_helper.h"
 
-#define DRIVER_DATE	"20050526"
+#define DRIVER_DATE	"20060710"
 
 #include "vblank.h"
 #include "utils.h"

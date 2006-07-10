@@ -163,6 +163,7 @@ sisCreateScreen( __DRIscreenPrivate *sPriv )
 
    if (sisDRIPriv->agp.size) {
       sisScreen->agp.handle = sisDRIPriv->agp.handle;
+      sisScreen->agpBaseOffset = drmAgpBase(sPriv->fd);
       sisScreen->agp.size   = sisDRIPriv->agp.size;
       if ( drmMap( sPriv->fd, sisScreen->agp.handle, sisScreen->agp.size,
                    &sisScreen->agp.map ) )
@@ -349,14 +350,36 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn,
    static const __DRIversion ddx_expected = {0, 8, 0};
    static const __DRIversion dri_expected = {4, 0, 0};
    static const __DRIversion drm_expected = {1, 0, 0};
-
+   static const __DRIversion drm_compat = {2, 0, 0};
+   static const char *driver_name = "SiS";
    dri_interface = interface;
 
-   if (!driCheckDriDdxDrmVersions2("SiS", dri_version, &dri_expected,
+   /*
+    * Check ddx and dri only.
+    */
+
+   if (!driCheckDriDdxDrmVersions2(driver_name, dri_version, &dri_expected,
 				   ddx_version, &ddx_expected,
-				   drm_version, &drm_expected)) {
+				   drm_version, drm_version)) {
       return NULL;
    }
+
+   /*
+    * Check drm version with major versioning span.
+    */
+
+   if (((drm_version->major < drm_expected.major) ||
+	(drm_version->major > drm_compat.major)) ||
+       ((drm_version->major == drm_expected.major) &&
+	(drm_version->minor < drm_expected.minor))) {
+
+      fprintf(stderr, "%s DRI driver expected DRM version %d.%d.x - %d.x.x "
+	      "but got version %d.%d.%d\n", driver_name,
+	      drm_expected.major, drm_expected.minor, drm_compat.major,
+	      drm_version->major, drm_version->minor, drm_version->patch);
+      return NULL;
+   }
+
 
    psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
 				  ddx_version, dri_version, drm_version,
