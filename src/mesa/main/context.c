@@ -697,7 +697,10 @@ alloc_shared_state( GLcontext *ctx )
       goto cleanup;
 #endif
 
+#if FEATURE_ARB_vertex_buffer_object || FEATURE_ARB_pixel_buffer_object
    ss->BufferObjects = _mesa_NewHashTable();
+#endif
+
    ss->ArrayObjects = _mesa_NewHashTable();
 
    ss->GL2Objects = _mesa_NewHashTable ();
@@ -763,7 +766,7 @@ alloc_shared_state( GLcontext *ctx )
    if (ss->DefaultFragmentShader)
       _mesa_delete_ati_fragment_shader(ctx, ss->DefaultFragmentShader);
 #endif
-#if FEATURE_ARB_vertex_buffer_object
+#if FEATURE_ARB_vertex_buffer_object || FEATURE_ARB_pixel_buffer_object
    if (ss->BufferObjects)
       _mesa_DeleteHashTable(ss->BufferObjects);
 #endif
@@ -903,7 +906,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_delete_ati_fragment_shader(ctx, ss->DefaultFragmentShader);
 #endif
 
-#if FEATURE_ARB_vertex_buffer_object
+#if FEATURE_ARB_vertex_buffer_object || FEATURE_ARB_pixel_buffer_object
    _mesa_HashDeleteAll(ss->BufferObjects, delete_bufferobj_cb, ctx);
    _mesa_DeleteHashTable(ss->BufferObjects);
 #endif
