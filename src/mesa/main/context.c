@@ -916,9 +916,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
 
    _mesa_DeleteHashTable(ss->ArrayObjects);
 
-#if FEATURE_ARB_shader_objects
    _mesa_DeleteHashTable(ss->GL2Objects);
-#endif
 
 #if FEATURE_EXT_framebuffer_object
    _mesa_DeleteHashTable(ss->FrameBuffers);
