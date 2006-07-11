@@ -771,6 +771,9 @@ alloc_shared_state( GLcontext *ctx )
       _mesa_DeleteHashTable(ss->BufferObjects);
 #endif
 
+   if (ss->ArrayObjects)
+      _mesa_DeleteHashTable (ss->ArrayObjects);
+
    if (ss->GL2Objects)
       _mesa_DeleteHashTable (ss->GL2Objects);
 
@@ -910,6 +913,8 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_HashDeleteAll(ss->BufferObjects, delete_bufferobj_cb, ctx);
    _mesa_DeleteHashTable(ss->BufferObjects);
 #endif
+
+   _mesa_DeleteHashTable(ss->ArrayObjects);
 
 #if FEATURE_ARB_shader_objects
    _mesa_DeleteHashTable(ss->GL2Objects);
