@@ -79,6 +79,7 @@
 #include "glheader.h"
 #include "imports.h"
 #include "accum.h"
+#include "arrayobj.h"
 #include "attrib.h"
 #include "blend.h"
 #include "buffers.h"
@@ -856,6 +857,17 @@ delete_bufferobj_cb(GLuint id, void *data, void *userData)
    ctx->Driver.DeleteBuffer(ctx, bufObj);
 }
 
+/**
+ * Callback for deleting an array object.  Called by _mesa_HashDeleteAll().
+ */
+static void
+delete_arrayobj_cb(GLuint id, void *data, void *userData)
+{
+   struct gl_array_object *arrayObj = (struct gl_array_object *) data;
+   GLcontext *ctx = (GLcontext *) userData;
+   _mesa_delete_array_object(ctx, arrayObj);
+}
+
 
 /**
  * Deallocate a shared state object and all children structures.
@@ -914,6 +926,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_DeleteHashTable(ss->BufferObjects);
 #endif
 
+   _mesa_HashDeleteAll(ss->ArrayObjects, delete_arrayobj_cb, ctx);
    _mesa_DeleteHashTable(ss->ArrayObjects);
 
    _mesa_DeleteHashTable(ss->GL2Objects);
@@ -1391,6 +1404,7 @@ _mesa_free_context_data( GLcontext *ctx )
 #if FEATURE_ARB_vertex_buffer_object
    _mesa_delete_buffer_object(ctx, ctx->Array.NullBufferObj);
 #endif
+   _mesa_delete_array_object(ctx, ctx->Array.DefaultArrayObj);
 
    /* free dispatch tables */
    _mesa_free(ctx->Exec);
