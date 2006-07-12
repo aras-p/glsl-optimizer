@@ -45,6 +45,7 @@ static PFNGLISVERTEXARRAYAPPLEPROC is_vertex_array = NULL;
 
 static int Width = 400;
 static int Height = 200;
+static int Win = 0;
 static const GLfloat Near = 5.0, Far = 25.0;
 static GLfloat angle = 0.0;
 
@@ -258,6 +259,7 @@ static void Key( unsigned char key, int x, int y )
    (void) y;
    switch (key) {
       case 27:
+         glutDestroyWindow(Win);
          exit(0);
          break;
    }
@@ -312,7 +314,7 @@ int main( int argc, char *argv[] )
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( Width, Height );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
-   glutCreateWindow( "GL_APPLE_vertex_array_object demo" );
+   Win = glutCreateWindow( "GL_APPLE_vertex_array_object demo" );
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutDisplayFunc( Display );
