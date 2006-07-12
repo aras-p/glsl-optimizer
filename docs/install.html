@@ -32,6 +32,7 @@ a software renderer using Xlib to do all rendering.
 The libGL.so library will be a self-contained rendering library that will
 allow you to run OpenGL/GLX applications on any X server (regardless of
 whether it supports the GLX X server extension).
+You will <em>not</em> be able to use hardware 3D acceleration.
 <p>
 To compile stand-alone Mesa type <b>make</b> in the top-level directory.
 You'll see a list of supported system configurations.
@@ -126,7 +127,7 @@ Later, if you want to rebuild for a different configuration run
 
 <p>
 When compilation has finished, look in the top-level <code>lib/</code>
-directory.
+(or <code>lib64/</code>) directory.
 You'll see a set of library files similar to this:
 </p>
 <pre>
@@ -278,14 +279,16 @@ already installed, you'll have to choose different directories, like
 </p>
 
 <p>
-To install Mesa's headers and libraries, run <code>make install</code>
-You'll be prompted to enter alternative directories for the headers
-and libraries.
+To install Mesa's headers and libraries, run <code>make install</code>.
+But first, check the Mesa/configs/default file and examine the values
+of the <b>INSTALL_DIR</b> and <b>DRI_DRIVER_INSTALL_DIR</b> variables.
+Change them if needed, then run <code>make install</code>
 </p>
 
 <p>
-Note: at runtime, you can set the LD_LIBRARY_PATH (on Linux) to switch
-between the Mesa libs and another vendor libs whenever you want.
+Note: at runtime you can use the LD_LIBRARY_PATH environment variable
+(on Linux at least) to switch
+between the Mesa libraries and other vendor's libraries whenever you want.
 This is a handy way to compare multiple OpenGL implementations.
 </p>
 
