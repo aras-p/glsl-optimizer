@@ -356,6 +356,7 @@ static void FreeScreenConfigs(__GLXdisplayPrivate *priv)
 
 	    psc->configs = NULL;	/* NOTE: just for paranoia */
 	}
+	Xfree((char*) psc->serverGLXexts);
 
 #ifdef GLX_DIRECT_RENDERING
 	/* Free the direct rendering per screen data */
