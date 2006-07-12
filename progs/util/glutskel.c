@@ -1,26 +1,7 @@
-/* $Id: glutskel.c,v 1.2 2004/04/22 00:47:28 brianp Exp $ */
-
-/*
+/**
  * A skeleton/template GLUT program
  *
  * Written by Brian Paul and in the public domain.
- */
-
-
-/*
- * $Log: glutskel.c,v $
- * Revision 1.2  2004/04/22 00:47:28  brianp
- * minor clean-ups
- *
- * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
- * Imported sources
- *
- * Revision 1.2  1998/11/07 14:20:14  brianp
- * added simple rotation, animation of cube
- *
- * Revision 1.1  1998/11/07 14:14:37  brianp
- * Initial revision
- *
  */
 
 
@@ -29,7 +10,7 @@
 #include <math.h>
 #include <GL/glut.h>
 
-
+static int Win;
 static GLfloat Xrot = 0, Yrot = 0, Zrot = 0;
 static GLboolean Anim = GL_FALSE;
 
@@ -96,6 +77,7 @@ Key(unsigned char key, int x, int y)
          Zrot += step;
          break;
       case 27:
+         glutDestroyWindow(Win);
          exit(0);
          break;
    }
@@ -144,7 +126,7 @@ main(int argc, char *argv[])
    glutInitWindowPosition(0, 0);
    glutInitWindowSize(400, 400);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-   glutCreateWindow(argv[0]);
+   Win = glutCreateWindow(argv[0]);
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
    glutSpecialFunc(SpecialKey);
