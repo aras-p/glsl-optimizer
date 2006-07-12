@@ -845,6 +845,10 @@ static void driDestroyScreen(__DRInativeDisplay *dpy, int scrn, void *screenPriv
 	if ( psp->modes != NULL ) {
 	    (*dri_interface->destroyContextModes)( psp->modes );
 	}
+
+	assert(psp->drawHash);
+	drmHashDestroy(psp->drawHash);
+
 	_mesa_free(psp);
     }
 }
