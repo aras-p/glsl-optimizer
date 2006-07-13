@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -129,6 +129,9 @@ typedef union { GLfloat f; GLint i; } fi_type;
 #define M_E (2.7182818284590452354)
 #endif
 
+#ifndef FLT_MAX_EXP
+#define FLT_MAX_EXP 128
+#endif
 
 /* XXX this is a bit of a hack needed for compilation within XFree86 */
 #ifndef FLT_MIN
