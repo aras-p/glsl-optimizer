@@ -319,6 +319,11 @@ set_glx_extension( const struct extension_info * ext,
  * 
  * \param server_string   GLX extension string from the server.
  * \param server_support  Bit-field of supported extensions.
+ * 
+ * \note
+ * This function is used to process both GLX and GL extension strings.  The
+ * bit-fields used to track each of these have different sizes.  Therefore,
+ * the data pointed by \c server_support must be preinitialized to zero.
  */
 static void
 __glXProcessServerString( const struct extension_info * ext,
@@ -328,8 +333,6 @@ __glXProcessServerString( const struct extension_info * ext,
    unsigned  base;
    unsigned  len;
 
-   (void) memset( server_support, 0, sizeof( server_support ) );
-   
    for ( base = 0 ; server_string[ base ] != NUL ; /* empty */ ) {
       /* Determine the length of the next extension name.
        */
@@ -580,6 +583,8 @@ __glXCalculateUsableExtensions( __GLXscreenConfigs *psc,
 
    __glXExtensionsCtr();
    __glXExtensionsCtrScreen( psc );
+
+   (void) memset( server_support, 0, sizeof( server_support ) );
    __glXProcessServerString( known_glx_extensions,
 			     psc->serverGLXexts, server_support );
 
