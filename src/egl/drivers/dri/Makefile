@@ -39,11 +39,11 @@ default: depend library Makefile
 
 
 # EGLdri Library
-library: $(LIB_DIR)/libEGLdri.so
+library: $(TOP)/$(LIB_DIR)/libEGLdri.so
 
-$(LIB_DIR)/libEGLdri.so: $(OBJECTS)
+$(TOP)/$(LIB_DIR)/libEGLdri.so: $(OBJECTS)
 	$(TOP)/bin/mklib -o EGLdri -major 1 -minor 0 \
-		-install $(LIB_DIR) -ldl $(OBJECTS)
+		-install $(TOP)/$(LIB_DIR) -ldl $(OBJECTS)
 
 
 clean:

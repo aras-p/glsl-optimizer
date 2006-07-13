@@ -167,7 +167,7 @@ OBJECTS := $(DRIVER_OBJECTS:.cpp=.o)
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
 
 
-default: depend $(LIB_DIR) $(LIB_DIR)/$(GL_LIB_NAME)
+default: depend $(TOP)/$(LIB_DIR) $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 $(MESA_MODULES):
 	cd $(TOP)/src/mesa; $(MAKE) mesa.a ;
@@ -175,11 +175,11 @@ $(MESA_MODULES):
 $(GLU_MODULES):
 	cd $(GLU_DIR); $(MAKE) $(subst $(GLU_DIR)/,,$(GLU_MODULES)) ; 
 
-$(LIB_DIR):
-	mkdir $(LIB_DIR)
+$(TOP)/$(LIB_DIR):
+	mkdir $(TOP)/$(LIB_DIR)
 
-$(LIB_DIR)/$(GL_LIB_NAME): $(OBJECTS) $(MESA_MODULES) $(GLU_MODULES)
-	@$(TOP)/bin/mklib -o $(GL_LIB) -install $(LIB_DIR) -major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
+$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(OBJECTS) $(MESA_MODULES) $(GLU_MODULES)
+	@$(TOP)/bin/mklib -o $(GL_LIB) -install $(TOP)/$(LIB_DIR) -major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
 		$(MKLIB_OPTIONS) $(GL_LIB_DEPS) $(OBJECTS) $(MESA_MODULES) $(GLU_MODULES)
 
 # $(GLU_OBJECTS):

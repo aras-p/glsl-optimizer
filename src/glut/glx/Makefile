@@ -85,22 +85,22 @@ OBJECTS = $(SOURCES:.c=.o)
 
 ##### TARGETS #####
 
-default: $(LIB_DIR)/$(GLUT_LIB_NAME)
+default: $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME)
 
 
 # Make the library
-$(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
+$(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
 	$(TOP)/bin/mklib -o $(GLUT_LIB) -linker '$(CC)' \
 		-major $(GLUT_MAJOR) -minor $(GLUT_MINOR) -patch $(GLUT_TINY) \
-		$(MKLIB_OPTIONS) -install $(LIB_DIR) \
+		$(MKLIB_OPTIONS) -install $(TOP)/$(LIB_DIR) \
 		$(GLUT_LIB_DEPS) $(OBJECTS)
 
 
 install:
 	$(INSTALL) -d $(INSTALL_DIR)/include/GL
-	$(INSTALL) -d $(INSTALL_DIR)/lib
+	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
 	$(INSTALL) -m 644 $(TOP)/include/GL/glut.h $(INSTALL_DIR)/include/GL
-	$(COPY_LIBS) $(LIB_DIR)/libglut* $(INSTALL_DIR)/lib
+	$(COPY_LIBS) $(TOP)/$(LIB_DIR)/libglut* $(INSTALL_DIR)/$(LIB_DIR)
 
 
 clean:

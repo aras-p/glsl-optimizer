@@ -46,16 +46,16 @@ INCLUDE_DIRS = \
 
 ##### TARGETS #####
 
-default: depend $(LIB_DIR)/$(GL_LIB_NAME)
+default: depend $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 
 # Make libGL
-$(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) Makefile
+$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) Makefile
 	$(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
 		-major 1 -minor 2 $(MKLIB_OPTIONS) \
-		-install $(LIB_DIR) $(GL_LIB_DEPS) $(OBJECTS) `/usr/bin/pkg-config --libs libdrm` `/usr/bin/pkg-config --libs pciaccess`
-	rm -f $(LIB_DIR)/miniglx.conf
-	install example.miniglx.conf $(LIB_DIR)/miniglx.conf
+		-install $(TOP)/$(LIB_DIR) $(GL_LIB_DEPS) $(OBJECTS) `/usr/bin/pkg-config --libs libdrm` `/usr/bin/pkg-config --libs pciaccess`
+	rm -f $(TOP)/$(LIB_DIR)/miniglx.conf
+	install example.miniglx.conf $(TOP)/$(LIB_DIR)/miniglx.conf
 
 
 drmtest: xf86drm.o drmtest.o
@@ -75,7 +75,7 @@ tags:
 
 # Remove .o and backup files
 clean:
-	-rm -f drmtest $(LIB_DIR)/libGL.so*
+	-rm -f drmtest $(TOP)/$(LIB_DIR)/libGL.so*
 	-rm -f *.o *~
 	-rm -f depend
 

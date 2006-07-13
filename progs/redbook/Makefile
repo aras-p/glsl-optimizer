@@ -5,7 +5,7 @@ include $(TOP)/configs/current
 
 INCDIR = $(TOP)/include
 
-LIB_DEP = $(LIB_DIR)/$(GL_LIB_NAME) $(LIB_DIR)/$(GLU_LIB_NAME) $(LIB_DIR)/$(GLUT_LIB_NAME)
+LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME)
 
 PROGS = aaindex aapoly aargb accanti accpersp alpha alpha3D anti \
 	bezcurve bezmesh checker clip colormat cube depthcue dof \

@@ -26,5 +26,5 @@ GLUT_CFLAGS = -fexceptions
 EXTRA_LIB_PATH=-L/usr/X11R6/lib
 
 GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread
-GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lX11 -lXmu -lXt -lXi -lm
-GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lXt -lX11
+GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lX11 -lXmu -lXt -lXi -lm
+GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lXt -lX11

@@ -11,5 +11,5 @@ CFLAGS = -fPIC -O3 -I/usr/openwin/include -I/usr/include/X11R5 -I/usr/include/X1
 CXXFLAGS = -fPIC -O3 -I/usr/openwin/include -DSUNOS4
 GLUT_CFLAGS = -fexceptions -DSOLARIS_2_4_BUG
 
-APP_LIB_DEPS = -L$(LIB_DIR) -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm
+APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm
 

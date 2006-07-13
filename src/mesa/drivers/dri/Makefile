@@ -6,11 +6,11 @@ include $(TOP)/configs/current
 
 
 
-default: $(LIB_DIR) subdirs
+default: $(TOP)/$(LIB_DIR) subdirs
 
 
-$(LIB_DIR):
-	-mkdir $(LIB_DIR)
+$(TOP)/$(LIB_DIR):
+	-mkdir $(TOP)/$(LIB_DIR)
 
 
 subdirs:

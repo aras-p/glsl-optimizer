@@ -43,11 +43,11 @@ default: depend library
 
 
 # EGL Library
-library: $(LIB_DIR)/libEGL.so
+library: $(TOP)/$(LIB_DIR)/libEGL.so
 
-$(LIB_DIR)/libEGL.so: $(OBJECTS)
+$(TOP)/$(LIB_DIR)/libEGL.so: $(OBJECTS)
 	$(TOP)/bin/mklib -o EGL -major 1 -minor 0 \
-		-install $(LIB_DIR) -ldl $(OBJECTS)
+		-install $(TOP)/$(LIB_DIR) -ldl $(OBJECTS)
 
 
 

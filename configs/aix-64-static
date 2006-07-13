@@ -11,7 +11,7 @@ CXX = xlC
 CFLAGS = -q64 -O -DAIXV3 -DPTHREADS
 CXXFLAGS = -q64 -O -DAIXV3 -DPTHREADS
 MKLIB_OPTIONS = -static
-LIB_DIR=$(TOP)/lib64
+LIB_DIR = lib64
 
 # Library names (actual file names)
 GL_LIB_NAME = libGL.a
@@ -20,6 +20,6 @@ GLUT_LIB_NAME = libglut.a
 GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 
-APP_LIB_DEPS = -q64 -L$(LIB_DIR)  -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) \
+APP_LIB_DEPS = -q64 -L$(TOP)/$(LIB_DIR)  -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) \
                -lX11 -lXext -lXmu -lXi -lm -lpthread -lC
 

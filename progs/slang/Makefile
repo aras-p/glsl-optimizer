@@ -6,7 +6,7 @@ include $(TOP)/configs/current
 
 INCDIR = $(TOP)/include
 
-LIB_DEP = $(LIB_DIR)/$(GL_LIB_NAME)
+LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 #
 # targets

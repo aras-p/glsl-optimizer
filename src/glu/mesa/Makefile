@@ -37,17 +37,17 @@ default:
 		echo "$(GLU_LIB_NAME) not build under BeOS, but integrated into ${GL_LIB_NAME}." ; \
 		exit 0 ; \
 	else \
-		$(MAKE) "${LIB_DIR}/${GLU_LIB_NAME}" ; \
+		$(MAKE) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME) ; \
 	fi
 
-$(LIB_DIR):
-	-mkdir $(LIB_DIR)
+$(TOP)/$(LIB_DIR):
+	-mkdir $(TOP)/$(LIB_DIR)
 
 # Make the library:
-$(LIB_DIR)/$(GLU_LIB_NAME): $(OBJECTS)
+$(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME): $(OBJECTS)
 	@ $(TOP)/bin/mklib -o $(GLU_LIB) -linker '$(CC)' \
 		-major $(GLU_MAJOR) -minor $(GLU_MINOR) -patch $(GLU_TINY) \
-		$(MKLIB_OPTIONS) -install $(LIB_DIR) \
+		$(MKLIB_OPTIONS) -install $(TOP)/$(LIB_DIR) \
 		$(GLU_LIB_DEPS) $(OBJECTS)
 
 clean:

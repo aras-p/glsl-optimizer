@@ -16,8 +16,8 @@ GLUT_CFLAGS = -fexceptions
 
 # Need to have -L/usr/X11R6/lib in these:
 GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread
-GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
-GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -lXt -L/usr/X11R6/lib -lX11
+GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
+GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lXt -L/usr/X11R6/lib -lX11
 
 # Need to make static libs for profiling:
 MKLIB_OPTIONS = -static
@@ -26,4 +26,4 @@ GLU_LIB_NAME = lib$(GLU_LIB).a
 GLUT_LIB_NAME = lib$(GLUT_LIB).a
 GLW_LIB_NAME = lib$(GLW_LIB).a
 OSMESA_LIB_NAME = lib$(OSMesa).a
-APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm -lpthread
+APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm -lpthread

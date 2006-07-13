@@ -28,11 +28,11 @@ CXXFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES)
 ASM_SOURCES = 
 
 # Library/program dependencies
-DRI_LIB_DEPS = -lm -lpthread -lexpat -ldl -L$(LIB_DIR) 
+DRI_LIB_DEPS = -lm -lpthread -lexpat -ldl -L$(TOP)/$(LIB_DIR) 
 GL_LIB_DEPS = -lm -lpthread -ldl
-GLU_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -lm
-GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lm
-APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm -lpthread
+GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lm
+GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lm
+APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm -lpthread
 
 # Directories
 SRC_DIRS = glx/mini mesa glu glut/mini

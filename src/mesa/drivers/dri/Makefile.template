@@ -62,12 +62,12 @@ SHARED_INCLUDES = \
 
 ##### TARGETS #####
 
-default: depend symlinks $(LIBNAME) $(LIB_DIR)/$(LIBNAME)
+default: depend symlinks $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
 
 
-#$(LIB_DIR)/$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile
+#$(TOP)/$(LIB_DIR)/$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile
 #	@echo BUILDING FOR: $(WINDOW_SYSTEM)
-#	$(TOP)/bin/mklib -o $(LIBNAME) -noprefix -install $(LIB_DIR) \
+#	$(TOP)/bin/mklib -o $(LIBNAME) -noprefix -install $(TOP)/$(LIB_DIR) \
 #		$(WINLIB) $(LIB_DEPS) $(WINOBJ) $(MESA_MODULES) $(OBJECTS)
 
 $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
@@ -75,8 +75,8 @@ $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/driver
 		$(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
 
 
-$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
-	$(INSTALL) $(LIBNAME) $(LIB_DIR) 
+$(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
+	$(INSTALL) $(LIBNAME) $(TOP)/$(LIB_DIR) 
 
 
 

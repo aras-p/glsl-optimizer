@@ -23,13 +23,13 @@ OBJECTS = $(GLW_SOURCES:.c=.o)
 
 ##### TARGETS #####
 
-default: $(LIB_DIR)/$(GLW_LIB_NAME)
+default: $(TOP)/$(LIB_DIR)/$(GLW_LIB_NAME)
 
 install:
 	$(INSTALL) -d $(INSTALL_DIR)/include/GL
-	$(INSTALL) -d $(INSTALL_DIR)/lib
+	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
 	$(INSTALL) -m 644 *.h $(INSTALL_DIR)/include/GL
-	$(COPY_LIBS) $(LIB_DIR)/libGLw.* $(INSTALL_DIR)/lib
+	$(COPY_LIBS) $(TOP)/$(LIB_DIR)/libGLw.* $(INSTALL_DIR)/$(LIB_DIR)
 
 clean:
 	-rm depend depend.bak
@@ -37,10 +37,10 @@ clean:
 
 
 # Make the library
-$(LIB_DIR)/$(GLW_LIB_NAME): $(OBJECTS)
+$(TOP)/$(LIB_DIR)/$(GLW_LIB_NAME): $(OBJECTS)
 	$(TOP)/bin/mklib -o $(GLW_LIB) -linker '$(CC)' \
 		-major $(MAJOR) -minor $(MINOR) -patch $(TINY) \
-		$(MKLIB_OPTIONS) -install $(LIB_DIR) \
+		$(MKLIB_OPTIONS) -install $(TOP)/$(LIB_DIR) \
 		$(GLW_LIB_DEPS) $(OBJECTS)
 
 

@@ -27,14 +27,14 @@ OBJECTS = $(SOURCES:.c=.o)
 
 ##### TARGETS #####
 
-default: $(LIB_DIR)/$(GLUT_LIB_NAME)
+default: $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME)
 
 
 # Make the library
-$(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
+$(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
 	$(TOP)/bin/mklib -o $(GLUT_LIB) -linker '$(CC)' \
 		-major $(GLUT_MAJOR) -minor $(GLUT_MINOR) \
-		-patch $(GLUT_TINY) $(MKLIB_OPTIONS) -install $(LIB_DIR) \
+		-patch $(GLUT_TINY) $(MKLIB_OPTIONS) -install $(TOP)/$(LIB_DIR) \
 		$(GLUT_LIB_DEPS) $(OBJECTS)
 
 

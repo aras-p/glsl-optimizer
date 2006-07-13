@@ -7,7 +7,7 @@ include $(TOP)/configs/current
 SUBDIRS = $(SRC_DIRS)
 
 
-default: message $(LIB_DIR) subdirs
+default: message $(TOP)/$(LIB_DIR) subdirs
 
 
 message:
@@ -28,8 +28,8 @@ install:
 		fi \
 	done
 
-$(LIB_DIR):
-	-mkdir $(LIB_DIR)
+$(TOP)/$(LIB_DIR):
+	-mkdir $(TOP)/$(LIB_DIR)
 
 
 clean:

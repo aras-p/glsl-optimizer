@@ -75,16 +75,16 @@ INCLUDES = \
 
 # ---- TARGETS
 
-default: $(LIB_DIR) $(LIB_DIR)/$(GLUT_LIB_NAME)
+default: $(TOP)/$(LIB_DIR) $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME)
 
 # Create the lib directory if missing
-$(LIB_DIR):
-	mkdir $(LIB_DIR)
+$(TOP)/$(LIB_DIR):
+	mkdir $(TOP)/$(LIB_DIR)
 
 # Make the library
-$(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
+$(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
 	@$(TOP)/bin/mklib -o $(GLUT_LIB) -major $(GLUT_MAJOR) -minor $(GLUT_MINOR) -patch $(GLUT_TINY) \
-		-install $(LIB_DIR) $(MKLIB_OPTIONS) $(GLUT_LIB_DEPS) \
+		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) $(GLUT_LIB_DEPS) \
 		$(OBJECTS)
 
 clean:

@@ -13,9 +13,9 @@ GLUT_CFLAGS = -fexceptions
 MKLIB_OPTIONS = -arch icc-istatic
 
 GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lpthread
-GLU_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) 
-GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi
-GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) $(GL_LIB_DEPS)
-APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB)
+GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) 
+GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi
+GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) $(GL_LIB_DEPS)
+APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB)
 
 

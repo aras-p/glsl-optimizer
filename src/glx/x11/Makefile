@@ -2,7 +2,7 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 EXTRA_DEFINES = -DXF86VIDMODE -D_REENTRANT -UIN_DRI_DRIVER \
-                -DDEFAULT_DRIVER_DIR=\"$(DRI_DRIVER_INSTALL_DIR)\"
+                -DDEFAULT_DRIVER_DIR=\"$(DRI_DRIVER_SEARCH_DIR)\"
 
 SOURCES = \
 	  glcontextmodes.c \
@@ -61,16 +61,16 @@ INCLUDES = -I. \
 
 ##### TARGETS #####
 
-default: depend $(LIB_DIR)/$(GL_LIB_NAME)
+default: depend $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 glcontextmodes.c:
 	ln -s $(TOP)/src/mesa/drivers/dri/common/glcontextmodes.c .
 
 # Make libGL
-$(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) Makefile
+$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) Makefile
 	$(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
 		-major 1 -minor 2 $(MKLIB_OPTIONS) \
-		-install $(LIB_DIR) $(GL_LIB_DEPS) $(OBJECTS)
+		-install $(TOP)/$(LIB_DIR) $(GL_LIB_DEPS) $(OBJECTS)
 
 
 depend: $(SOURCES) $(MESA_GLAPI_SOURCES) $(MESA_ASM_API) Makefile
@@ -88,7 +88,7 @@ install:
 
 # Remove .o and backup files
 clean:
-	-rm -f $(LIB_DIR)/libGL.so*
+	-rm -f $(TOP)/$(LIB_DIR)/libGL.so*
 	-rm -f *.o *~
 	-rm -f depend
 
