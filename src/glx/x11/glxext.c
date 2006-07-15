@@ -388,7 +388,7 @@ static int __glXFreeDisplayPrivate(XExtData *extension)
 	priv->serverGLXversion = 0x0; /* to protect against double free's */
     }
 
-#if 0 /* GLX_DIRECT_RENDERING */
+#ifdef GLX_DIRECT_RENDERING
     /* Free the direct rendering per display data */
     if (priv->driDisplay.private)
 	(*priv->driDisplay.destroyDisplay)(priv->dpy,
