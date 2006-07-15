@@ -529,7 +529,7 @@ static pfs_reg_t t_src(struct r300_fragment_program *rp,
 	}
 
 	/* no point swizzling ONE/ZERO/HALF constants... */
-	if (r.v_swz < SWIZZLE_111 && r.s_swz < SWIZZLE_ZERO)
+	if (r.v_swz < SWIZZLE_111 || r.s_swz < SWIZZLE_ZERO)
 		r = do_swizzle(rp, r, fpsrc.Swizzle, fpsrc.NegateBase);
 #if 0
 	/* WRONG! Need to be able to do individual component negation,
