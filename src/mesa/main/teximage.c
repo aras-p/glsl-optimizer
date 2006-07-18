@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -2101,20 +2101,24 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 
    if (!ctx->Extensions.EXT_paletted_texture && is_index_format(format)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+      return;
    }
 
    if (!ctx->Extensions.SGIX_depth_texture &&
        !ctx->Extensions.ARB_depth_texture && is_depth_format(format)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+      return;
    }
 
    if (!ctx->Extensions.MESA_ycbcr_texture && is_ycbcr_format(format)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+      return;
    }
 
    if (!ctx->Extensions.EXT_packed_depth_stencil
        && is_depthstencil_format(format)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+      return;
    }
 
    if (!pixels)
