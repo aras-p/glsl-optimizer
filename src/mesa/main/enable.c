@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -232,12 +232,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
             return;
          FLUSH_VERTICES(ctx, _NEW_COLOR);
          ctx->Color.BlendEnabled = state;
-         /* This is needed to support 1.1's RGB logic ops AND
-          * 1.0's blending logicops.
-          */
-         ctx->Color._LogicOpEnabled =
-            (ctx->Color.ColorLogicOpEnabled ||
-             (state && ctx->Color.BlendEquationRGB == GL_LOGIC_OP));
          break;
 #if FEATURE_userclip
       case GL_CLIP_PLANE0:
@@ -389,12 +383,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
             return;
          FLUSH_VERTICES(ctx, _NEW_COLOR);
          ctx->Color.ColorLogicOpEnabled = state;
-         /* This is needed to support 1.1's RGB logic ops AND
-          * 1.0's blending logicops.
-          */
-         ctx->Color._LogicOpEnabled =
-            (state || (ctx->Color.BlendEnabled &&
-                       ctx->Color.BlendEquationRGB == GL_LOGIC_OP));
          break;
       case GL_MAP1_COLOR_4:
          if (ctx->Eval.Map1Color4 == state)

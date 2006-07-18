@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -275,13 +275,6 @@ _mesa_BlendEquation( GLenum mode )
    ctx->Color.BlendEquationRGB = mode;
    ctx->Color.BlendEquationA = mode;
 
-   /* This is needed to support 1.1's RGB logic ops AND
-    * 1.0's blending logicops.
-    */
-   ctx->Color._LogicOpEnabled = (ctx->Color.ColorLogicOpEnabled ||
-                                 (ctx->Color.BlendEnabled &&
-                                  mode == GL_LOGIC_OP));
-
    if (ctx->Driver.BlendEquationSeparate)
       (*ctx->Driver.BlendEquationSeparate)( ctx, mode, mode );
 }
@@ -322,12 +315,6 @@ _mesa_BlendEquationSeparateEXT( GLenum modeRGB, GLenum modeA )
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    ctx->Color.BlendEquationRGB = modeRGB;
    ctx->Color.BlendEquationA = modeA;
-
-   /* This is needed to support 1.1's RGB logic ops AND
-    * 1.0's blending logicops.  This test is simplified over glBlendEquation
-    * because modeRGB cannot be GL_LOGIC_OP.
-    */
-   ctx->Color._LogicOpEnabled = (ctx->Color.ColorLogicOpEnabled);
 
    if (ctx->Driver.BlendEquationSeparate)
       (*ctx->Driver.BlendEquationSeparate)( ctx, modeRGB, modeA );
