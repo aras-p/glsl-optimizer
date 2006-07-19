@@ -649,7 +649,7 @@ static void GLAPIENTRY _tnl_EvalCoord1f( GLfloat u )
       if (tnl->vtx.eval.new_state) 
 	 _tnl_update_eval( ctx );
 
-      for (i = 0 ; i <= _TNL_ATTRIB_EDGEFLAG ; i++) {
+      for (i = 0; i < _TNL_NUM_EVAL; i++) {
 	 if (tnl->vtx.eval.map1[i].map) 
 	    if (tnl->vtx.attrsz[i] != tnl->vtx.eval.map1[i].sz)
 	       _tnl_fixup_vertex( ctx, i, tnl->vtx.eval.map1[i].sz );
@@ -677,7 +677,7 @@ static void GLAPIENTRY _tnl_EvalCoord2f( GLfloat u, GLfloat v )
       if (tnl->vtx.eval.new_state) 
 	 _tnl_update_eval( ctx );
 
-      for (i = 0 ; i <= _TNL_ATTRIB_EDGEFLAG ; i++) {
+      for (i = 0; i < _TNL_NUM_EVAL; i++) {
 	 if (tnl->vtx.eval.map2[i].map) 
 	    if (tnl->vtx.attrsz[i] != tnl->vtx.eval.map2[i].sz)
 	       _tnl_fixup_vertex( ctx, i, tnl->vtx.eval.map2[i].sz );

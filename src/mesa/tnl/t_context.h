@@ -172,6 +172,9 @@ enum {
 /* Number of available generic attributes */
 #define _TNL_NUM_GENERIC 16
 
+/* Number of attributes used for evaluators */
+#define _TNL_NUM_EVAL 16
+
 #define PRIM_BEGIN     0x10
 #define PRIM_END       0x20
 #define PRIM_WEAK      0x40
@@ -199,8 +202,8 @@ struct tnl_eval2_map {
 
 struct tnl_eval {
    GLuint new_state;
-   struct tnl_eval1_map map1[_TNL_ATTRIB_EDGEFLAG + 1];
-   struct tnl_eval2_map map2[_TNL_ATTRIB_EDGEFLAG + 1];
+   struct tnl_eval1_map map1[_TNL_NUM_EVAL];
+   struct tnl_eval2_map map2[_TNL_NUM_EVAL];
 };
 
 
