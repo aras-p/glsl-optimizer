@@ -4100,26 +4100,26 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                    struct gl_texture_object *texObj,
                    struct gl_texture_image *texImage)
 {
-   GLuint dimensions = (target == GL_TEXTURE_3D) ? 3 : 2;
+   const GLuint dimensions = (target == GL_TEXTURE_3D) ? 3 : 2;
 
    if (ctx->Pack.BufferObj->Name) {
-      /* pack texture image into a PBO */
-      GLubyte *buf;
-      if (!_mesa_validate_pbo_access(dimensions, &ctx->Pack, texImage->Width,
-                                     texImage->Height, texImage->Depth,
-                                     format, type, pixels)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetTexImage(invalid PBO access)");
-         return;
-      }
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                                              GL_WRITE_ONLY_ARB,
-                                              ctx->Pack.BufferObj);
+      /* Packing texture image into a PBO.
+       * Map the (potentially) VRAM-based buffer into our process space so
+       * we can write into it with the code below.
+       * A hardware driver might use a sophisticated blit to move the
+       * texture data to the PBO if the PBO is in VRAM along with the texture.
+       */
+      GLubyte *buf = (GLubyte *)
+         ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
+                               GL_WRITE_ONLY_ARB, ctx->Pack.BufferObj);
       if (!buf) {
          /* buffer is already mapped - that's an error */
          _mesa_error(ctx, GL_INVALID_OPERATION,"glGetTexImage(PBO is mapped)");
          return;
       }
+      /* <pixels> was an offset into the PBO.
+       * Now make it a real, client-side pointer inside the mapped region.
+       */
       pixels = ADD_POINTERS(buf, pixels);
    }
    else if (!pixels) {

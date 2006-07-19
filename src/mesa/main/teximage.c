@@ -2162,6 +2162,18 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
+   if (ctx->Pack.BufferObj->Name) {
+      /* packing texture image into a PBO */
+      const GLuint dimensions = (target == GL_TEXTURE_3D) ? 3 : 2;
+      if (!_mesa_validate_pbo_access(dimensions, &ctx->Pack, texImage->Width,
+                                     texImage->Height, texImage->Depth,
+                                     format, type, pixels)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetTexImage(invalid PBO access)");
+         return;
+      }
+   }
+
    /* typically, this will call _mesa_get_teximage() */
    ctx->Driver.GetTexImage(ctx, target, level, format, type, pixels,
                            texObj, texImage);
