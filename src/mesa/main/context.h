@@ -308,12 +308,6 @@ do {									\
 
 
 /**
- * Macros to help evaluate current state conditions
- */
-
-/*@{*/
-
-/**
  * Is the secondary color needed?
  */
 #define NEED_SECONDARY_COLOR(CTX)					\
@@ -327,14 +321,4 @@ do {									\
    )
 
 
-/**
- * Is two-sided lighting in effect?
- */
-#define NEED_TWO_SIDED_LIGHTING(CTX) \
-   (ctx->Light.Enabled && ctx->Light.Model.TwoSide)
-
-
-/*@}*/
-
-
-#endif
+#endif /* CONTEXT_H */
