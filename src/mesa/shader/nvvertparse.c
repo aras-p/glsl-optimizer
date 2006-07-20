@@ -1290,7 +1290,7 @@ Parse_Program(struct parse_state *parseState,
 void
 _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
                               const GLubyte *str, GLsizei len,
-                              struct vertex_program *program)
+                              struct gl_vertex_program *program)
 {
    struct parse_state parseState;
    struct prog_instruction instBuffer[MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS];
@@ -1562,7 +1562,7 @@ _mesa_print_nv_vertex_instruction(const struct prog_instruction *inst)
  * Print (unparse) the given vertex program.  Just for debugging.
  */
 void
-_mesa_print_nv_vertex_program(const struct vertex_program *program)
+_mesa_print_nv_vertex_program(const struct gl_vertex_program *program)
 {
    const struct prog_instruction *inst;
 

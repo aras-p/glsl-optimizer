@@ -7,7 +7,8 @@
 #include "r300_context.h"
 #include "r300_fragprog.h"
 
-static void r300BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
+static void
+r300BindProgram(GLcontext *ctx, GLenum target, struct gl_program *prog)
 {
 	
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -16,7 +17,7 @@ static void r300BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
 	
 	switch(target){
 		case GL_VERTEX_PROGRAM_ARB:
-		rmesa->curr_vp = (struct vertex_program *)vp;
+		rmesa->curr_vp = (struct gl_vertex_program *)vp;
 		vp->ref_count++;
 #if 0
 		if((vp->ref_count % 1500) == 0) {
@@ -33,7 +34,8 @@ static void r300BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
 	}
 }
 
-static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
+static struct gl_program *
+r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 {
 	struct r300_vertex_program *vp;
 	struct r300_fragment_program *fp;
@@ -58,7 +60,8 @@ static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 }
 
 
-static void r300DeleteProgram(GLcontext *ctx, struct program *prog)
+static void
+r300DeleteProgram(GLcontext *ctx, struct gl_program *prog)
 {
 #if 0
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -71,8 +74,8 @@ static void r300DeleteProgram(GLcontext *ctx, struct program *prog)
 	_mesa_delete_program(ctx, prog);
 }
 
-static void r300ProgramStringNotify(GLcontext *ctx, GLenum target, 
-				struct program *prog)
+static void
+r300ProgramStringNotify(GLcontext *ctx, GLenum target, struct gl_program *prog)
 {
 	struct r300_vertex_program *vp=(void *)prog;
 	struct r300_fragment_program *fp = (struct r300_fragment_program *) prog;
@@ -80,7 +83,7 @@ static void r300ProgramStringNotify(GLcontext *ctx, GLenum target,
 	switch(target) {
 	case GL_VERTEX_PROGRAM_ARB:
 		vp->translated = GL_FALSE;
-		memset(&vp->translated, 0, sizeof(struct r300_vertex_program) - sizeof(struct vertex_program));
+		memset(&vp->translated, 0, sizeof(struct r300_vertex_program) - sizeof(struct gl_vertex_program));
 		/*r300_translate_vertex_shader(vp);*/
 	break;
 	case GL_FRAGMENT_PROGRAM_ARB:
@@ -91,7 +94,8 @@ static void r300ProgramStringNotify(GLcontext *ctx, GLenum target,
 	_tnl_program_string(ctx, target, prog);
 }
 
-static GLboolean r300IsProgramNative(GLcontext *ctx, GLenum target, struct program *prog)
+static GLboolean
+r300IsProgramNative(GLcontext *ctx, GLenum target, struct gl_program *prog)
 {
 	//struct r300_vertex_program *vp=(void *)prog;
 	//r300ContextPtr rmesa = R300_CONTEXT(ctx);

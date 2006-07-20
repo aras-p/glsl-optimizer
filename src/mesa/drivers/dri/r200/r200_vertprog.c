@@ -101,8 +101,8 @@ static GLboolean r200VertexProgUpdateParams(GLcontext *ctx, struct r200_vertex_p
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    GLfloat *fcmd = (GLfloat *)&rmesa->hw.vpp[0].cmd[VPP_CMD_0 + 1];
    int pi;
-   struct vertex_program *mesa_vp = (void *)vp;
-   struct program_parameter_list *paramList;
+   struct gl_vertex_program *mesa_vp = (void *)vp;
+   struct gl_program_parameter_list *paramList;
    drm_radeon_cmd_header_t tmp;
 
    R200_STATECHANGE( rmesa, vpp[0] );
@@ -391,7 +391,7 @@ static unsigned long op_operands(enum prog_opcode opcode)
 
 static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
 {
-   struct vertex_program *mesa_vp = (void *)vp;
+   struct gl_vertex_program *mesa_vp = (void *)vp;
    struct prog_instruction *vpi;
    int i;
    VERTEX_SHADER_INSTRUCTION *o_inst;
@@ -457,7 +457,7 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
    }*/
 /* FIXME: is changing the prog safe to do here? */
    if (mesa_vp->IsPositionInvariant) {
-      struct program_parameter_list *paramList;
+      struct gl_program_parameter_list *paramList;
       GLint tokens[6] = { STATE_MATRIX, STATE_MVP, 0, 0, 0, STATE_MATRIX };
 
 #ifdef PREFER_DP4
@@ -1053,7 +1053,8 @@ void r200SetupVertexProg( GLcontext *ctx ) {
 }
 
 
-static void r200BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
+static void
+r200BindProgram(GLcontext *ctx, GLenum target, struct gl_program *prog)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
@@ -1067,7 +1068,8 @@ static void r200BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
    }
 }
 
-static struct program *r200NewProgram(GLcontext *ctx, GLenum target, GLuint id)
+static struct gl_program *
+r200NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 {
    struct r200_vertex_program *vp;
 
@@ -1077,7 +1079,7 @@ static struct program *r200NewProgram(GLcontext *ctx, GLenum target, GLuint id)
       return _mesa_init_vertex_program(ctx, &vp->mesa_program, target, id);
    case GL_FRAGMENT_PROGRAM_ARB:
    case GL_FRAGMENT_PROGRAM_NV:
-      return _mesa_init_fragment_program( ctx, CALLOC_STRUCT(fragment_program), target, id );
+      return _mesa_init_fragment_program( ctx, CALLOC_STRUCT(gl_fragment_program), target, id );
    default:
       _mesa_problem(ctx, "Bad target in r200NewProgram");
    }
@@ -1085,19 +1087,21 @@ static struct program *r200NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 }
 
 
-static void r200DeleteProgram(GLcontext *ctx, struct program *prog)
+static void
+r200DeleteProgram(GLcontext *ctx, struct gl_program *prog)
 {
    _mesa_delete_program(ctx, prog);
 }
 
-static void r200ProgramStringNotify(GLcontext *ctx, GLenum target, struct program *prog)
+static void
+r200ProgramStringNotify(GLcontext *ctx, GLenum target, struct gl_program *prog)
 {
    struct r200_vertex_program *vp = (void *)prog;
 
    switch(target) {
    case GL_VERTEX_PROGRAM_ARB:
       vp->translated = GL_FALSE;
-      memset(&vp->translated, 0, sizeof(struct r200_vertex_program) - sizeof(struct vertex_program));
+      memset(&vp->translated, 0, sizeof(struct r200_vertex_program) - sizeof(struct gl_vertex_program));
       /*r200_translate_vertex_shader(vp);*/
       break;
    }
@@ -1105,7 +1109,8 @@ static void r200ProgramStringNotify(GLcontext *ctx, GLenum target, struct progra
    _tnl_program_string(ctx, target, prog);
 }
 
-static GLboolean r200IsProgramNative(GLcontext *ctx, GLenum target, struct program *prog)
+static GLboolean
+r200IsProgramNative(GLcontext *ctx, GLenum target, struct gl_program *prog)
 {
    struct r200_vertex_program *vp = (void *)prog;
 

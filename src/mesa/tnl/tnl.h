@@ -84,6 +84,6 @@ extern void
 _tnl_allow_pixel_fog( GLcontext *ctx, GLboolean value );
 
 extern void
-_tnl_program_string(GLcontext *ctx, GLenum target, struct program *program);
+_tnl_program_string(GLcontext *ctx, GLenum target, struct gl_program *program);
 
 #endif

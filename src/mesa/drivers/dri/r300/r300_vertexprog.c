@@ -98,9 +98,9 @@ static struct{
 int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp, float *dst)
 {
 	int pi;
-	struct vertex_program *mesa_vp=(void *)vp;
+	struct gl_vertex_program *mesa_vp=(void *)vp;
 	float *dst_o=dst;
-        struct program_parameter_list *paramList;
+        struct gl_program_parameter_list *paramList;
 	
 	if (mesa_vp->IsNVProgram) {
 		_mesa_init_vp_per_primitive_registers(ctx);
@@ -386,7 +386,7 @@ static unsigned long op_operands(enum prog_opcode opcode)
 
 void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 {
-	struct vertex_program *mesa_vp=(void *)vp;
+	struct gl_vertex_program *mesa_vp=(void *)vp;
 	struct prog_instruction *vpi;
 	int i, cur_reg=0;
 	VERTEX_SHADER_INSTRUCTION *o_inst;
@@ -433,7 +433,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 	}
 	
 	if (mesa_vp->IsPositionInvariant) {
-		struct program_parameter_list *paramList;
+		struct gl_program_parameter_list *paramList;
 		GLint tokens[6] = { STATE_MATRIX, STATE_MVP, 0, 0, 0, STATE_MATRIX };
 
 #ifdef PREFER_DP4

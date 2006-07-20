@@ -74,7 +74,7 @@
 #define WRITEMASK_XYZW  0xf
 
 
-extern struct program _mesa_DummyProgram;
+extern struct gl_program _mesa_DummyProgram;
 
 
 /*
@@ -95,21 +95,21 @@ _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
                        GLint *line, GLint *col);
 
 
-extern struct program * 
+extern struct gl_program * 
 _mesa_init_vertex_program(GLcontext *ctx, 
-                          struct vertex_program *prog, 
+                          struct gl_vertex_program *prog, 
                           GLenum target, GLuint id);
 
-extern struct program * 
+extern struct gl_program * 
 _mesa_init_fragment_program(GLcontext *ctx, 
-                            struct fragment_program *prog,
+                            struct gl_fragment_program *prog,
                             GLenum target, GLuint id);
 
-extern struct program *
+extern struct gl_program *
 _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id);
 
 extern void
-_mesa_delete_program(GLcontext *ctx, struct program *prog);
+_mesa_delete_program(GLcontext *ctx, struct gl_program *prog);
 
 
 
@@ -190,7 +190,7 @@ enum state_index {
  * and ARB_fragment_program global state references.  For the later, Name
  * might be "state.light[0].diffuse", for example.
  */
-struct program_parameter
+struct gl_program_parameter
 {
    const char *Name;          /**< Null-terminated string */
    enum register_file Type; /**< PROGRAM_NAMED_PARAM, CONSTANT or STATE_VAR */
@@ -201,11 +201,11 @@ struct program_parameter
 /**
  * A list of the above program_parameter instances.
  */
-struct program_parameter_list
+struct gl_program_parameter_list
 {
    GLuint Size;           /**< allocated size of Parameters, ParameterValues */
    GLuint NumParameters;  /**< number of parameters in arrays */
-   struct program_parameter *Parameters; /**< Array [Size] */
+   struct gl_program_parameter *Parameters; /**< Array [Size] */
    GLfloat (*ParameterValues)[4];        /**< Array [Size] of GLfloat[4] */
    GLbitfield StateFlags; /**< _NEW_* flags indicating which state changes
                                might invalidate ParameterValues[] */
@@ -216,39 +216,39 @@ struct program_parameter_list
  * Program parameter functions
  */
 
-extern struct program_parameter_list *
+extern struct gl_program_parameter_list *
 _mesa_new_parameter_list(void);
 
 extern void
-_mesa_free_parameter_list(struct program_parameter_list *paramList);
+_mesa_free_parameter_list(struct gl_program_parameter_list *paramList);
 
 extern GLint
-_mesa_add_named_parameter(struct program_parameter_list *paramList,
+_mesa_add_named_parameter(struct gl_program_parameter_list *paramList,
                           const char *name, const GLfloat values[4]);
 
 extern GLint
-_mesa_add_named_constant(struct program_parameter_list *paramList,
+_mesa_add_named_constant(struct gl_program_parameter_list *paramList,
                          const char *name, const GLfloat values[4]);
 
 extern GLint
-_mesa_add_unnamed_constant(struct program_parameter_list *paramList,
+_mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
                            const GLfloat values[4]);
 
 extern GLint
-_mesa_add_state_reference(struct program_parameter_list *paramList,
+_mesa_add_state_reference(struct gl_program_parameter_list *paramList,
                           const GLint *stateTokens);
 
 extern GLfloat *
-_mesa_lookup_parameter_value(struct program_parameter_list *paramList,
+_mesa_lookup_parameter_value(struct gl_program_parameter_list *paramList,
                              GLsizei nameLen, const char *name);
 
 extern GLint
-_mesa_lookup_parameter_index(struct program_parameter_list *paramList,
+_mesa_lookup_parameter_index(struct gl_program_parameter_list *paramList,
                              GLsizei nameLen, const char *name);
 
 extern void
 _mesa_load_state_parameters(GLcontext *ctx,
-                            struct program_parameter_list *paramList);
+                            struct gl_program_parameter_list *paramList);
 
 
 
@@ -256,10 +256,10 @@ extern void
 _mesa_print_instruction(const struct prog_instruction *inst);
 
 extern void
-_mesa_print_program(const struct program *prog);
+_mesa_print_program(const struct gl_program *prog);
 
 extern void
-_mesa_print_program_parameters(GLcontext *ctx, const struct program *prog);
+_mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog);
 
 
 /*

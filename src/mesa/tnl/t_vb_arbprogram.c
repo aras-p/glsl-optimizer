@@ -1048,7 +1048,7 @@ static void cvp_emit_inst( struct compilation *cp,
    }
 }
 
-static void free_tnl_data( struct vertex_program *program  )
+static void free_tnl_data( struct gl_vertex_program *program  )
 {
    struct tnl_compiled_program *p = (struct tnl_compiled_program *) program->TnlData;
    if (p->compiled_func)
@@ -1057,7 +1057,7 @@ static void free_tnl_data( struct vertex_program *program  )
    program->TnlData = NULL;
 }
 
-static void compile_vertex_program( struct vertex_program *program,
+static void compile_vertex_program( struct gl_vertex_program *program,
 				    GLboolean try_codegen )
 { 
    struct compilation cp;
@@ -1226,7 +1226,7 @@ static INLINE void call_func( struct tnl_compiled_program *p,
 static GLboolean
 run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
-   const struct vertex_program *program;
+   const struct gl_vertex_program *program;
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct arb_vp_machine *m = ARB_VP_MACHINE(stage);
    struct tnl_compiled_program *p;
@@ -1399,7 +1399,7 @@ static void
 validate_vertex_program( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 {
    struct arb_vp_machine *m = ARB_VP_MACHINE(stage);
-   struct vertex_program *program;
+   struct gl_vertex_program *program;
 
    if (ctx->ShaderObjects._VertexShaderPresent)
       return;
@@ -1532,11 +1532,11 @@ const struct tnl_pipeline_stage _tnl_arb_vertex_program_stage =
  * string has been parsed.
  */
 void
-_tnl_program_string(GLcontext *ctx, GLenum target, struct program *program)
+_tnl_program_string(GLcontext *ctx, GLenum target, struct gl_program *program)
 {
    if (program->Target == GL_VERTEX_PROGRAM_ARB) {
       /* free any existing tnl data hanging off the program */
-      struct vertex_program *vprog = (struct vertex_program *) program;
+      struct gl_vertex_program *vprog = (struct gl_vertex_program *) program;
       if (vprog->TnlData) {
          free_tnl_data(vprog);
       }

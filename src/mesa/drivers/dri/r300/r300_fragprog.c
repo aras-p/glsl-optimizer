@@ -529,7 +529,7 @@ static pfs_reg_t t_src(struct r300_fragment_program *rp,
 	}
 
 	/* no point swizzling ONE/ZERO/HALF constants... */
-	if (r.v_swz < SWIZZLE_111 || r.s_swz < SWIZZLE_ZERO)
+	if (r.v_swz < SWIZZLE_111 && r.s_swz < SWIZZLE_ZERO)
 		r = do_swizzle(rp, r, fpsrc.Swizzle, fpsrc.NegateBase);
 #if 0
 	/* WRONG! Need to be able to do individual component negation,
@@ -1018,7 +1018,7 @@ static void emit_arith(struct r300_fragment_program *rp, int op,
 #if 0
 static pfs_reg_t get_attrib(struct r300_fragment_program *rp, GLuint attr)
 {
-	struct fragment_program *mp = &rp->mesa_program;
+	struct gl_fragment_program *mp = &rp->mesa_program;
 	pfs_reg_t r = undef;
 
 	if (!(mp->Base.InputsRead & (1<<attr))) {
@@ -1035,7 +1035,7 @@ static pfs_reg_t get_attrib(struct r300_fragment_program *rp, GLuint attr)
 
 static GLboolean parse_program(struct r300_fragment_program *rp)
 {	
-	struct fragment_program *mp = &rp->mesa_program;
+	struct gl_fragment_program *mp = &rp->mesa_program;
 	const struct prog_instruction *inst = mp->Base.Instructions;
 	struct prog_instruction *fpi;
 	pfs_reg_t src[3], dest, temp;
@@ -1355,7 +1355,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 static void init_program(struct r300_fragment_program *rp)
 {
 	struct r300_pfs_compile_state *cs = NULL;
-	struct fragment_program *mp = &rp->mesa_program;	
+	struct gl_fragment_program *mp = &rp->mesa_program;	
 	struct prog_instruction *fpi;
 	GLuint InputsRead = mp->Base.InputsRead;
 	GLuint temps_used = 0; /* for rp->temps[] */
@@ -1467,7 +1467,7 @@ static void init_program(struct r300_fragment_program *rp)
 
 static void update_params(struct r300_fragment_program *rp)
 {
-	struct fragment_program *mp = &rp->mesa_program;
+	struct gl_fragment_program *mp = &rp->mesa_program;
 	int i;
 
 	/* Ask Mesa nicely to fill in ParameterValues for us */

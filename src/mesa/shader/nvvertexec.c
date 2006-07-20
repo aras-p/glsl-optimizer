@@ -379,7 +379,7 @@ store_vector4( const struct prog_dst_register *dest,
  * Execute the given vertex program
  */
 void
-_mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
+_mesa_exec_vertex_program(GLcontext *ctx, const struct gl_vertex_program *program)
 {
    struct gl_vertex_program_state *state = &ctx->VertexProgram;
    const struct prog_instruction *inst;

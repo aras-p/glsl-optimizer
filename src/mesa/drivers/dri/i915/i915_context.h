@@ -107,7 +107,7 @@
  * mesa fragment_program struct.
  */
 struct i915_fragment_program {
-   struct fragment_program FragProg;
+   struct gl_fragment_program FragProg;
 
    GLboolean translated;
    GLboolean params_uptodate;

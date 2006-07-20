@@ -35,7 +35,7 @@ extern void
 _mesa_init_vp_per_primitive_registers(GLcontext *ctx);
 
 extern void
-_mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program);
+_mesa_exec_vertex_program(GLcontext *ctx, const struct gl_vertex_program *program);
 
 extern void
 _mesa_dump_vp_state( const struct gl_vertex_program_state *state );

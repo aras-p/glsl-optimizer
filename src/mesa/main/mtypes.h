@@ -1517,7 +1517,7 @@ struct gl_texture_unit
 struct texenvprog_cache_item {
    GLuint hash;
    void *key;
-   struct fragment_program *data;
+   struct gl_fragment_program *data;
    struct texenvprog_cache_item *next;
 };
 
@@ -1843,13 +1843,13 @@ enum register_file
 
 /** Vertex and fragment instructions */
 struct prog_instruction;
-struct program_parameter_list;
+struct gl_program_parameter_list;
 
 
 /**
  * Base class for any kind of program object
  */
-struct program
+struct gl_program
 {
    GLuint Id;
    GLubyte *String;          /**< Null-terminated program text */
@@ -1864,7 +1864,7 @@ struct program
    GLbitfield OutputsWritten; /* Bitmask of which output regs are written to */
 
    /** Named parameters, constants, etc. from program text */
-   struct program_parameter_list *Parameters;
+   struct gl_program_parameter_list *Parameters;
    /** Numbered local parameters */
    GLfloat LocalParams[MAX_PROGRAM_LOCAL_PARAMS][4];
 
@@ -1888,19 +1888,19 @@ struct program
 
 
 /** Vertex program object */
-struct vertex_program
+struct gl_vertex_program
 {
-   struct program Base;   /* base class */
-   GLboolean IsNVProgram; /* GL_NV_vertex_program ? */
-   GLboolean IsPositionInvariant;  /* GL_ARB_vertex_program / GL_NV_vertex_program1_1 */
-   void *TnlData;		/* should probably use Base.DriverData */
+   struct gl_program Base;   /**< base class */
+   GLboolean IsNVProgram;    /**< is this a GL_NV_vertex_program program? */
+   GLboolean IsPositionInvariant;
+   void *TnlData;		/**< should probably use Base.DriverData */
 };
 
 
 /** Fragment program object */
-struct fragment_program
+struct gl_fragment_program
 {
-   struct program Base;   /**< base class */
+   struct gl_program Base;   /**< base class */
    GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /**< TEXTURE_x_BIT bitmask */
    GLuint NumAluInstructions; /**< GL_ARB_fragment_program */
    GLuint NumTexInstructions;
@@ -1932,8 +1932,8 @@ struct gl_vertex_program_state
    GLboolean _Enabled;                 /**< Enabled and valid program? */
    GLboolean PointSizeEnabled;         /**< GL_VERTEX_PROGRAM_POINT_SIZE_ARB/NV */
    GLboolean TwoSideEnabled;           /**< GL_VERTEX_PROGRAM_TWO_SIDE_ARB/NV */
-   struct vertex_program *Current;     /**< ptr to currently bound program */
-   const struct vertex_program *_Current;    /**< ptr to currently bound
+   struct gl_vertex_program *Current;  /**< ptr to currently bound program */
+   const struct gl_vertex_program *_Current;    /**< ptr to currently bound
 					          program, including internal
 					          (t_vp_build.c) programs */
 
@@ -1965,8 +1965,8 @@ struct gl_fragment_program_state
    GLboolean Enabled;                    /* GL_VERTEX_PROGRAM_NV */
    GLboolean _Enabled;                   /* Enabled and valid program? */
    GLboolean _Active;
-   struct fragment_program *Current;     /* ptr to currently bound program */
-   const struct fragment_program *_Current; /* ptr to currently active program 
+   struct gl_fragment_program *Current;  /* ptr to currently bound program */
+   const struct gl_fragment_program *_Current; /* ptr to currently active program 
 					       (including internal programs) */
    struct fp_machine Machine;            /* machine state */
    GLfloat Parameters[MAX_NV_FRAGMENT_PROGRAM_PARAMS][4]; /* Env params */
@@ -2096,10 +2096,10 @@ struct gl_shared_state
    /*@{*/
    struct _mesa_HashTable *Programs; /**< All vertex/fragment programs */
 #if FEATURE_ARB_vertex_program
-   struct program *DefaultVertexProgram;
+   struct gl_program *DefaultVertexProgram;
 #endif
 #if FEATURE_ARB_fragment_program
-   struct program *DefaultFragmentProgram;
+   struct gl_program *DefaultFragmentProgram;
 #endif
    /*@}*/
 
@@ -2920,8 +2920,8 @@ struct __GLcontextRec
    struct gl_fragment_program_state FragmentProgram;  /**< GL_ARB/NV_vertex_program */
    struct gl_ati_fragment_shader_state ATIFragmentShader;  /**< GL_ATI_fragment_shader */
 
-   struct fragment_program *_TexEnvProgram;     /**< Texture state as fragment program */
-   struct vertex_program *_TnlProgram;          /**< Fixed func TNL state as vertex program */
+   struct gl_fragment_program *_TexEnvProgram;     /**< Texture state as fragment program */
+   struct gl_vertex_program *_TnlProgram;          /**< Fixed func TNL state as vertex program */
 
    GLboolean _MaintainTnlProgram;
    GLboolean _MaintainTexEnvProgram;

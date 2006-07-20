@@ -261,7 +261,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    struct tnl_vertex_arrays *tmp = &tnl->array_inputs;
-   const struct vertex_program *program
+   const struct gl_vertex_program *program
       = ctx->VertexProgram._Enabled ? ctx->VertexProgram.Current : NULL;
    GLuint i, index;
 

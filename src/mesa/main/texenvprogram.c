@@ -271,7 +271,7 @@ static const struct ureg undef = {
 /* State used to build the fragment program:
  */
 struct texenv_fragment_program {
-   struct fragment_program *program;
+   struct gl_fragment_program *program;
    GLcontext *ctx;
    struct state_key *state;
 
@@ -989,7 +989,7 @@ load_texunit_sources( struct texenv_fragment_program *p, int unit )
  */
 static void
 create_new_program(struct state_key *key, GLcontext *ctx,
-                   struct fragment_program *program)
+                   struct gl_fragment_program *program)
 {
    struct texenv_fragment_program p;
    GLuint unit;
@@ -1103,7 +1103,7 @@ create_new_program(struct state_key *key, GLcontext *ctx,
 }
 
 
-static struct fragment_program *
+static struct gl_fragment_program *
 search_cache(const struct texenvprog_cache *cache,
              GLuint hash,
              const void *key,
@@ -1113,7 +1113,7 @@ search_cache(const struct texenvprog_cache *cache,
 
    for (c = cache->items[hash % cache->size]; c; c = c->next) {
       if (c->hash == hash && memcmp(c->key, key, keysize) == 0)
-	 return (struct fragment_program *) c->data;
+	 return (struct gl_fragment_program *) c->data;
    }
 
    return NULL;
@@ -1150,7 +1150,8 @@ static void clear_cache( struct texenvprog_cache *cache )
       for (c = cache->items[i]; c; c = next) {
 	 next = c->next;
 	 _mesa_free(c->key);
-	 cache->ctx->Driver.DeleteProgram(cache->ctx, (struct program *)c->data);
+	 cache->ctx->Driver.DeleteProgram(cache->ctx,
+                                          (struct gl_program *) c->data);
 	 _mesa_free(c);
       }
       cache->items[i] = NULL;
@@ -1207,7 +1208,7 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
 {
    struct state_key key;
    GLuint hash;
-   const struct fragment_program *prev = ctx->FragmentProgram._Current;
+   const struct gl_fragment_program *prev = ctx->FragmentProgram._Current;
 	
    if (!ctx->FragmentProgram._Enabled) {
       make_state_key(ctx, &key);
@@ -1221,7 +1222,7 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
 	 if (0) _mesa_printf("Building new texenv proggy for key %x\n", hash);
 		
 	 ctx->FragmentProgram._Current = ctx->_TexEnvProgram = 
-	    (struct fragment_program *) 
+	    (struct gl_fragment_program *) 
 	    ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
 		
 	 create_new_program(&key, ctx, ctx->_TexEnvProgram);
@@ -1240,7 +1241,7 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
     */
    if (ctx->FragmentProgram._Current != prev && ctx->Driver.BindProgram) {
       ctx->Driver.BindProgram(ctx, GL_FRAGMENT_PROGRAM_ARB,
-                             (struct program *) ctx->FragmentProgram._Current);
+                             (struct gl_program *) ctx->FragmentProgram._Current);
    }
 }
 

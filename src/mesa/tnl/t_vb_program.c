@@ -75,7 +75,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vp_stage_data *store = VP_STAGE_DATA(stage);
    struct vertex_buffer *VB = &tnl->vb;
-   struct vertex_program *program = ctx->VertexProgram.Current;
+   struct gl_vertex_program *program = ctx->VertexProgram.Current;
    GLuint i;
 
    if (ctx->ShaderObjects._VertexShaderPresent)

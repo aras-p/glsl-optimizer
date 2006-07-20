@@ -59,7 +59,7 @@ static const GLfloat cos_constants[4] = {  1.0,
  */
 static GLuint src_vector( struct i915_fragment_program *p,
 			  const struct prog_src_register *source,
-			  const struct fragment_program *program )
+			  const struct gl_fragment_program *program )
 {
    GLuint src;
 
@@ -244,7 +244,7 @@ do {									\
  */
 static void upload_program( struct i915_fragment_program *p )
 {
-   const struct fragment_program *program = p->ctx->FragmentProgram._Current;
+   const struct gl_fragment_program *program = p->ctx->FragmentProgram._Current;
    const struct prog_instruction *inst = program->Base.Instructions;
 
 /*    _mesa_debug_fp_inst(program->Base.NumInstructions, inst); */
@@ -837,7 +837,7 @@ static void track_params( struct i915_fragment_program *p )
 
 static void i915BindProgram( GLcontext *ctx,
 			    GLenum target, 
-			    struct program *prog )
+			    struct gl_program *prog )
 {
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
       i915ContextPtr i915 = I915_CONTEXT(ctx);
@@ -864,13 +864,13 @@ static void i915BindProgram( GLcontext *ctx,
    }
 }
 
-static struct program *i915NewProgram( GLcontext *ctx,
+static struct gl_program *i915NewProgram( GLcontext *ctx,
 				      GLenum target, 
 				      GLuint id )
 {
    switch (target) {
    case GL_VERTEX_PROGRAM_ARB:
-      return _mesa_init_vertex_program( ctx, CALLOC_STRUCT(vertex_program),
+      return _mesa_init_vertex_program( ctx, CALLOC_STRUCT(gl_vertex_program),
 					target, id );
 
    case GL_FRAGMENT_PROGRAM_ARB: {
@@ -893,7 +893,7 @@ static struct program *i915NewProgram( GLcontext *ctx,
 }
 
 static void i915DeleteProgram( GLcontext *ctx,
-			      struct program *prog )
+			      struct gl_program *prog )
 {
    if (prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
       i915ContextPtr i915 = I915_CONTEXT(ctx);
@@ -909,7 +909,7 @@ static void i915DeleteProgram( GLcontext *ctx,
 
 static GLboolean i915IsProgramNative( GLcontext *ctx,
 				     GLenum target, 
-				     struct program *prog )
+				     struct gl_program *prog )
 {
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
       struct i915_fragment_program *p = (struct i915_fragment_program *)prog;
@@ -925,7 +925,7 @@ static GLboolean i915IsProgramNative( GLcontext *ctx,
 
 static void i915ProgramStringNotify( GLcontext *ctx,
 				    GLenum target,
-				    struct program *prog )
+				    struct gl_program *prog )
 {
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
       struct i915_fragment_program *p = (struct i915_fragment_program *)prog;

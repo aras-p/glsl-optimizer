@@ -955,7 +955,7 @@ update_program(GLcontext *ctx)
    if (ctx->_MaintainTexEnvProgram && !ctx->FragmentProgram._Enabled) {
 #if 0
       if (!ctx->_TexEnvProgram)
-	 ctx->_TexEnvProgram = (struct fragment_program *)
+	 ctx->_TexEnvProgram = (struct gl_fragment_program *)
 	    ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
       ctx->FragmentProgram._Current = ctx->_TexEnvProgram;
 #endif

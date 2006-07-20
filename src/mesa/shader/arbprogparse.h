@@ -31,11 +31,11 @@
 extern void
 _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
 			       const GLvoid *str, GLsizei len,
-			       struct vertex_program *program);
+			       struct gl_vertex_program *program);
 
 extern void
 _mesa_parse_arb_fragment_program(GLcontext *ctx, GLenum target,
                                  const GLvoid *str, GLsizei len,
-                                 struct fragment_program *program);
+                                 struct gl_fragment_program *program);
 
 #endif

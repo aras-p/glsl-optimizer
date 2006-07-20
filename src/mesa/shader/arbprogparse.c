@@ -51,7 +51,7 @@
  */
 struct arb_program
 {
-   struct program Base;
+   struct gl_program Base;
 
    GLuint Position;       /* Just used for error reporting while parsing */
    GLuint MajorVersion;
@@ -4060,7 +4060,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
 void
 _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
                                  const GLvoid *str, GLsizei len,
-                                 struct fragment_program *program)
+                                 struct gl_fragment_program *program)
 {
    struct arb_program ap;
    GLuint i;
@@ -4115,7 +4115,7 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
 void
 _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
 			       const GLvoid *str, GLsizei len,
-			       struct vertex_program *program)
+			       struct gl_vertex_program *program)
 {
    struct arb_program ap;
 

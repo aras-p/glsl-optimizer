@@ -195,7 +195,7 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 
    if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
-      struct vertex_program *prog = ctx->VertexProgram.Current;
+      struct gl_vertex_program *prog = ctx->VertexProgram.Current;
       _mesa_parse_arb_vertex_program(ctx, target, string, len, prog);
       
       if (ctx->Driver.ProgramStringNotify)
@@ -203,7 +203,7 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
    }
    else if (target == GL_FRAGMENT_PROGRAM_ARB
             && ctx->Extensions.ARB_fragment_program) {
-      struct fragment_program *prog = ctx->FragmentProgram.Current;
+      struct gl_fragment_program *prog = ctx->FragmentProgram.Current;
       _mesa_parse_arb_fragment_program(ctx, target, string, len, prog);
 
       if (ctx->Driver.ProgramStringNotify)
@@ -335,7 +335,7 @@ _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
                                  GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct program *prog;
+   struct gl_program *prog;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
@@ -416,7 +416,7 @@ void GLAPIENTRY
 _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
                                     GLfloat *params)
 {
-   const struct program *prog;
+   const struct gl_program *prog;
    GLuint maxParams;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -474,7 +474,7 @@ void GLAPIENTRY
 _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
 {
    const struct gl_program_constants *limits;
-   struct program *prog;
+   struct gl_program *prog;
    GET_CURRENT_CONTEXT(ctx);
 
    if (!ctx->_CurrentProgram)
@@ -598,7 +598,7 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
     * The following apply to fragment programs only (at this time)
     */
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
-      const struct fragment_program *fp = ctx->FragmentProgram.Current;
+      const struct gl_fragment_program *fp = ctx->FragmentProgram.Current;
       switch (pname) {
          case GL_PROGRAM_ALU_INSTRUCTIONS_ARB:
             *params = fp->NumNativeAluInstructions;
@@ -647,7 +647,7 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
 void GLAPIENTRY
 _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string)
 {
-   const struct program *prog;
+   const struct gl_program *prog;
    GET_CURRENT_CONTEXT(ctx);
 
    if (!ctx->_CurrentProgram)

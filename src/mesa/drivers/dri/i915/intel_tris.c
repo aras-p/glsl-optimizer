@@ -642,7 +642,7 @@ void intelChooseRenderState(GLcontext *ctx)
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    intelContextPtr intel = INTEL_CONTEXT(ctx);
    GLuint flags = ctx->_TriangleCaps;
-   const struct fragment_program *fprog = ctx->FragmentProgram._Current;
+   const struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
    GLboolean have_wpos = (fprog && (fprog->Base.InputsRead & FRAG_BIT_WPOS));
    GLuint index = 0;
 

@@ -617,7 +617,7 @@ extern int hw_tcl_on;
  * Keeping them them seperate for now should ensure fixed pipeline keeps functioning properly.
  */	
 struct r300_vertex_program {
-	struct vertex_program mesa_program; /* Must be first */
+	struct gl_vertex_program mesa_program; /* Must be first */
 	int translated;
 	
 	struct r300_vertex_shader_fragment program;
@@ -671,7 +671,7 @@ struct r300_pfs_compile_state {
 };
 
 struct r300_fragment_program {
-	struct fragment_program mesa_program;
+	struct gl_fragment_program mesa_program;
 
 	GLcontext *ctx;
 	GLboolean translated;
@@ -804,7 +804,7 @@ struct r300_context {
 	struct r300_hw_state hw;
 	struct r300_cmdbuf cmdbuf;
 	struct r300_state state;
-	struct vertex_program *curr_vp;
+	struct gl_vertex_program *curr_vp;
 
 	/* Vertex buffers
 	 */

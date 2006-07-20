@@ -146,9 +146,9 @@ struct parse_state {
    const GLubyte *start;              /* start of program string */
    const GLubyte *pos;                /* current position */
    const GLubyte *curLine;
-   struct fragment_program *program;  /* current program */
+   struct gl_fragment_program *program;  /* current program */
 
-   struct program_parameter_list *parameters;
+   struct gl_program_parameter_list *parameters;
 
    GLuint numInst;                    /* number of instructions parsed */
    GLuint inputsRead;                 /* bitmask of input registers used */
@@ -1452,7 +1452,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
 void
 _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
                                 const GLubyte *str, GLsizei len,
-                                struct fragment_program *program)
+                                struct gl_fragment_program *program)
 {
    struct parse_state parseState;
    struct prog_instruction instBuffer[MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS];
@@ -1569,7 +1569,7 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
 
 
 static void
-PrintSrcReg(const struct fragment_program *program,
+PrintSrcReg(const struct gl_fragment_program *program,
             const struct prog_src_register *src)
 {
    static const char comps[5] = "xyzw";
@@ -1731,7 +1731,7 @@ PrintDstReg(const struct prog_dst_register *dst)
  * Print (unparse) the given vertex program.  Just for debugging.
  */
 void
-_mesa_print_nv_fragment_program(const struct fragment_program *program)
+_mesa_print_nv_fragment_program(const struct gl_fragment_program *program)
 {
    const struct prog_instruction *inst;
 

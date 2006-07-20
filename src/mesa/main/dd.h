@@ -583,20 +583,20 @@ struct dd_function_table {
     */
    /*@{*/
    /** Bind a vertex/fragment program */
-   void (*BindProgram)(GLcontext *ctx, GLenum target, struct program *prog);
+   void (*BindProgram)(GLcontext *ctx, GLenum target, struct gl_program *prog);
    /** Allocate a new program */
-   struct program * (*NewProgram)(GLcontext *ctx, GLenum target, GLuint id);
+   struct gl_program * (*NewProgram)(GLcontext *ctx, GLenum target, GLuint id);
    /** Delete a program */
-   void (*DeleteProgram)(GLcontext *ctx, struct program *prog);   
+   void (*DeleteProgram)(GLcontext *ctx, struct gl_program *prog);   
    /** Notify driver that a program string has been specified. */
    void (*ProgramStringNotify)(GLcontext *ctx, GLenum target, 
-			       struct program *prog);
+			       struct gl_program *prog);
    
 
 
    /** Query if program can be loaded onto hardware */
    GLboolean (*IsProgramNative)(GLcontext *ctx, GLenum target, 
-				struct program *prog);
+				struct gl_program *prog);
    
    /*@}*/
 

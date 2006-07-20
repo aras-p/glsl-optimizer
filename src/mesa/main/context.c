@@ -829,7 +829,7 @@ delete_texture_cb(GLuint id, void *data, void *userData)
 static void
 delete_program_cb(GLuint id, void *data, void *userData)
 {
-   struct program *prog = (struct program *) data;
+   struct gl_program *prog = (struct gl_program *) data;
    GLcontext *ctx = (GLcontext *) userData;
    ctx->Driver.DeleteProgram(ctx, prog);
 }

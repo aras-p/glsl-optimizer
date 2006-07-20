@@ -179,8 +179,8 @@ struct tnl_compiled_program {
    void (*compiled_func)( struct arb_vp_machine * ); /**< codegen'd program */   
 };
 
-void _tnl_program_string_change( struct vertex_program * );
-void _tnl_program_destroy( struct vertex_program * );
+void _tnl_program_string_change( struct gl_vertex_program * );
+void _tnl_program_destroy( struct gl_vertex_program * );
 
 void _tnl_disassem_vba_insn( union instruction op );
 
