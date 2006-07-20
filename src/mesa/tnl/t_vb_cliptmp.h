@@ -160,7 +160,7 @@ TAG(clip_line)( GLcontext *ctx, GLuint v0, GLuint v1, GLubyte mask )
       INTERP_4F( t1, coord[newvert], coord[v1], coord[v0] );
       interp( ctx, t1, newvert, v1, v0, GL_FALSE );
 
-      if (ctx->_TriangleCaps & DD_FLATSHADE)
+      if (ctx->Light.ShadeModel == GL_FLAT)
 	 tnl->Driver.Render.CopyPV( ctx, newvert, v1 );
 
       v1 = newvert;
@@ -213,7 +213,7 @@ TAG(clip_tri)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte mask )
       }
    }
 
-   if (ctx->_TriangleCaps & DD_FLATSHADE) {
+   if (ctx->Light.ShadeModel == GL_FLAT) {
       if (pv != inlist[0]) {
 	 ASSERT( inlist[0] >= VB->Count );
 	 tnl->Driver.Render.CopyPV( ctx, inlist[0], pv );
@@ -264,7 +264,7 @@ TAG(clip_quad)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
       }
    }
 
-   if (ctx->_TriangleCaps & DD_FLATSHADE) {
+   if (ctx->Light.ShadeModel == GL_FLAT) {
       if (pv != inlist[0]) {
 	 ASSERT( inlist[0] >= VB->Count );
 	 tnl->Driver.Render.CopyPV( ctx, inlist[0], pv );
