@@ -1,29 +1,8 @@
-/**
- * \file context.h
- * Mesa context/visual/framebuffer management functions.
- *
- * There are three Mesa data types which are meant to be used by device
- * drivers:
- * - GLcontext: this contains the Mesa rendering state
- * - GLvisual:  this describes the color buffer (RGB vs. ci), whether or not
- *   there's a depth buffer, stencil buffer, etc.
- * - GLframebuffer:  contains pointers to the depth buffer, stencil buffer,
- *   accum buffer and alpha buffers.
- *
- * These types should be encapsulated by corresponding device driver
- * data types.  See xmesa.h and xmesaP.h for an example.
- *
- * In OOP terms, GLcontext, GLvisual, and GLframebuffer are base classes
- * which the device driver must derive from.
- *
- * The following functions create and destroy these data types.
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,6 +23,28 @@
  */
 
 
+/**
+ * \file context.h
+ * Mesa context and visual-related functions.
+ *
+ * There are three large Mesa data types/classes which are meant to be
+ * used by device drivers:
+ * - GLcontext: this contains the Mesa rendering state
+ * - GLvisual:  this describes the color buffer (RGB vs. ci), whether or not
+ *   there's a depth buffer, stencil buffer, etc.
+ * - GLframebuffer:  contains pointers to the depth buffer, stencil buffer,
+ *   accum buffer and alpha buffers.
+ *
+ * These types should be encapsulated by corresponding device driver
+ * data types.  See xmesa.h and xmesaP.h for an example.
+ *
+ * In OOP terms, GLcontext, GLvisual, and GLframebuffer are base classes
+ * which the device driver must derive from.
+ *
+ * The following functions create and destroy these data types.
+ */
+
+
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
@@ -53,8 +54,7 @@
 #include "mtypes.h"
 
 
-/**********************************************************************/
-/** \name Create/destroy a GLvisual. */
+/** \name Visual-related functions */
 /*@{*/
  
 extern GLvisual *
@@ -98,8 +98,7 @@ _mesa_destroy_visual( GLvisual *vis );
 /*@}*/
 
 
-/**********************************************************************/
-/** \name Create/destroy a GLcontext. */
+/** \name Context-related functions */
 /*@{*/
 
 extern GLcontext *
@@ -139,8 +138,7 @@ _mesa_get_current_context(void);
 /*@}*/
 
 
-/**********************************************************************/
-/** \name OpenGL SI-style export functions. */
+/** \name OpenGL SI-style export functions */
 /*@{*/
 
 extern GLboolean
@@ -187,13 +185,11 @@ _mesa_get_dispatch(GLcontext *ctx);
 
 
 
-/**********************************************************************/
 /** \name Miscellaneous */
 /*@{*/
 
 extern void
 _mesa_record_error( GLcontext *ctx, GLenum error );
-
 
 extern void GLAPIENTRY
 _mesa_Finish( void );
@@ -205,10 +201,11 @@ _mesa_Flush( void );
 
 
 
-/**********************************************************************/
-/** \name Macros for contexts/flushing. */
+/**
+ * \name Macros for flushing buffered rendering commands before state changes,
+ * checking if inside glBegin/glEnd, etc.
+ */
 /*@{*/
-
 
 /**
  * Flush vertices.
@@ -258,7 +255,7 @@ do {								\
 #define ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, retval)		\
 do {									\
    if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {	\
-      _mesa_error( ctx, GL_INVALID_OPERATION, "begin/end" );		\
+      _mesa_error(ctx, GL_INVALID_OPERATION, "Inside glBegin/glEnd");	\
       return retval;							\
    }									\
 } while (0)
@@ -272,7 +269,7 @@ do {									\
 #define ASSERT_OUTSIDE_BEGIN_END(ctx)					\
 do {									\
    if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {	\
-      _mesa_error( ctx, GL_INVALID_OPERATION, "begin/end" );		\
+      _mesa_error(ctx, GL_INVALID_OPERATION, "Inside glBegin/glEnd");	\
       return;								\
    }									\
 } while (0)
@@ -301,7 +298,6 @@ do {									\
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, retval);			\
    FLUSH_VERTICES(ctx, 0);						\
 } while (0)
-
 
 /*@}*/
 
