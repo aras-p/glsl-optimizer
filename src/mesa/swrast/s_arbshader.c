@@ -61,12 +61,21 @@ _swrast_exec_arbshader(GLcontext *ctx, struct sw_span *span)
          vec[3] = span->w + span->dwdx * i;
          (**pro).UpdateFixedVarying(pro, SLANG_FRAGMENT_FIXED_FRAGCOORD, vec,
                                     0, 4 * sizeof(GLfloat), GL_TRUE);
+
          vec[0] = CHAN_TO_FLOAT(span->array->rgba[i][RCOMP]);
          vec[1] = CHAN_TO_FLOAT(span->array->rgba[i][GCOMP]);
          vec[2] = CHAN_TO_FLOAT(span->array->rgba[i][BCOMP]);
          vec[3] = CHAN_TO_FLOAT(span->array->rgba[i][ACOMP]);
          (**pro).UpdateFixedVarying(pro, SLANG_FRAGMENT_FIXED_COLOR, vec, 0,
                                     4 * sizeof(GLfloat), GL_TRUE);
+
+         vec[0] = CHAN_TO_FLOAT(span->array->spec[i][RCOMP]);
+         vec[1] = CHAN_TO_FLOAT(span->array->spec[i][GCOMP]);
+         vec[2] = CHAN_TO_FLOAT(span->array->spec[i][BCOMP]);
+         vec[3] = CHAN_TO_FLOAT(span->array->spec[i][ACOMP]);
+         (**pro).UpdateFixedVarying(pro, SLANG_FRAGMENT_FIXED_SECONDARYCOLOR,
+                                    vec, 0, 4 * sizeof(GLfloat), GL_TRUE);
+
          for (j = 0; j < ctx->Const.MaxTextureCoordUnits; j++) {
             vec[0] = span->array->texcoords[j][i][0];
             vec[1] = span->array->texcoords[j][i][1];
@@ -75,6 +84,7 @@ _swrast_exec_arbshader(GLcontext *ctx, struct sw_span *span)
             (**pro).UpdateFixedVarying(pro, SLANG_FRAGMENT_FIXED_TEXCOORD,
                                        vec, j, 4 * sizeof(GLfloat), GL_TRUE);
          }
+
          for (j = 0; j < MAX_VARYING_VECTORS; j++) {
             GLuint k;
 
