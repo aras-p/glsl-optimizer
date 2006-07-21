@@ -129,6 +129,9 @@
 				RelativePath="..\..\..\..\src\mesa\main\api_validate.c">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\arrayobj.c">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\arbprogparse.c">
 			</File>
 			<File

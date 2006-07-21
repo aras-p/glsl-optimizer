@@ -163,6 +163,10 @@ SOURCE=..\..\..\..\src\mesa\main\api_validate.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\main\arrayobj.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\shader\arbprogparse.c
 # End Source File
 # Begin Source File
@@ -896,6 +900,10 @@ SOURCE=..\..\..\..\src\mesa\main\api_noop.h
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\main\api_validate.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\main\arrayobj.h
 # End Source File
 # Begin Source File
 
