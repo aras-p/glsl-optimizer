@@ -1321,7 +1321,7 @@ void WMesaMakeCurrent(WMesaContext c, HDC hdc)
         /* return if already current */
         GET_CURRENT_CONTEXT(ctx);
         WMesaContext pwc = wmesa_context(ctx);
-        if (c == pwc && pwc->hDC == hdc)
+        if (pwc && c == pwc && pwc->hDC == hdc)
             return;
     }
 
