@@ -196,9 +196,11 @@ static int r300_get_num_verts(r300ContextPtr rmesa,
 
 /* vertex buffer implementation */
 
-static void inline fire_EB(PREFIX unsigned long addr, int vertex_count, int type, int elt_size)
+static void inline fire_EB(r300ContextPtr rmesa, unsigned long addr, int vertex_count, int type, int elt_size)
 {
-	LOCAL_VARS
+	int cmd_reserved = 0;
+	int cmd_written = 0;
+	drm_radeon_cmd_header_t *cmd = NULL;
 	unsigned long addr_a;
 	unsigned long t_addr;
 	unsigned long magic_1, magic_2;
@@ -241,7 +243,7 @@ static void inline fire_EB(PREFIX unsigned long addr, int vertex_count, int type
 	} else {
 		e32(magic_2); /* Total number of dwords needed? */
 	}
-	//cp_delay(PASS_PREFIX 1);
+	//cp_delay(rmesa, 1);
 #if 0
 	fprintf(stderr, "magic_1 %d\n", magic_1);
 	fprintf(stderr, "t_addr %x\n", t_addr);
@@ -271,7 +273,7 @@ static void inline fire_EB(PREFIX unsigned long addr, int vertex_count, int type
 	} else {
 		e32((vertex_count+1)/2 /*+ addr_a/4*/); /* Total number of dwords needed? */
 	}
-	//cp_delay(PASS_PREFIX 1);
+	//cp_delay(rmesa, 1);
 #endif	
 }
 
@@ -291,7 +293,9 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
    if(rmesa->state.VB.Elts){
 	r300EmitAOS(rmesa, rmesa->state.aos_count, /*0*/start);
 #if 0
-	LOCAL_VARS
+	int cmd_reserved = 0;
+	int cmd_written = 0;
+	drm_radeon_cmd_header_t *cmd = NULL;
 	int i;
 	start_index32_packet(num_verts, type);
 	for(i=0; i < num_verts; i++)
@@ -309,11 +313,11 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 	}
 	
 	r300EmitElts(ctx, rmesa->state.VB.Elts, num_verts, rmesa->state.VB.elt_size);
-	fire_EB(PASS_PREFIX rmesa->state.elt_dma.aos_offset, num_verts, type, rmesa->state.VB.elt_size);
+	fire_EB(rmesa, rmesa->state.elt_dma.aos_offset, num_verts, type, rmesa->state.VB.elt_size);
 #endif
    }else{
 	   r300EmitAOS(rmesa, rmesa->state.aos_count, start);
-	   fire_AOS(PASS_PREFIX num_verts, type);
+	   fire_AOS(rmesa, num_verts, type);
    }
 }
 
@@ -370,7 +374,10 @@ GLboolean r300_run_vb_render(GLcontext *ctx,
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct radeon_vertex_buffer *VB = &rmesa->state.VB;
 	int i;
-	LOCAL_VARS
+	int cmd_reserved = 0;
+	int cmd_written = 0;
+	drm_radeon_cmd_header_t *cmd = NULL;
+
    
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);

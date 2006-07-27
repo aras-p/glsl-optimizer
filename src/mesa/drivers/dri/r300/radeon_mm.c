@@ -239,7 +239,9 @@ int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 #include "r300_emit.h"
 static void emit_lin_cp(r300ContextPtr rmesa, unsigned long dst, unsigned long src, unsigned long size)
 {
-	LOCAL_VARS
+	int cmd_reserved = 0;
+	int cmd_written = 0;
+	drm_radeon_cmd_header_t *cmd = NULL;
 	int cp_size;
 	
 	

@@ -65,12 +65,12 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
 	GLuint cboffset, cbpitch;
 	drm_r300_cmd_header_t* cmd2;
-#ifdef CB_DPATH
+	int cmd_reserved = 0;
+	int cmd_written = 0;
+	drm_radeon_cmd_header_t *cmd = NULL;
 	r300ContextPtr rmesa=r300;
-	LOCAL_VARS;
-#else
-	r300ContextPtr rmesa=r300;
-	LOCAL_VARS;
+
+#ifndef CB_DPATH
 	int i;
 #endif
 	
@@ -249,7 +249,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 #else
 #if 1
 	cp_wait(r300, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
-	end_3d(PASS_PREFIX_VOID);
+	end_3d(rmesa);
 #endif
 	
 	R300_STATECHANGE(r300, cb);
@@ -345,7 +345,9 @@ static void r300EmitClearState(GLcontext * ctx)
 	r300ContextPtr rmesa=r300;
 	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
 	int i;
-	LOCAL_VARS;
+	int cmd_reserved = 0;
+	int cmd_written = 0;
+	drm_radeon_cmd_header_t *cmd = NULL;
 	
 	
 	R300_STATECHANGE(r300, vir[0]);
