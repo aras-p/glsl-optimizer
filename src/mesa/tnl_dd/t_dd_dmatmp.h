@@ -986,7 +986,7 @@ static void TAG(render_poly_elts)( GLcontext *ctx,
 	 FLUSH();
 	 currentsz = dmasz;
       }
-   } else if (HAVE_TRI_FANS && Light.ShadeModel == GL_SMOOTH) {
+   } else if (HAVE_TRI_FANS && ctx->Light.ShadeModel == GL_SMOOTH) {
       TAG(render_tri_fan_verts)( ctx, start, count, flags );
    } else {
       fprintf(stderr, "%s - cannot draw primitive\n", __FUNCTION__);
