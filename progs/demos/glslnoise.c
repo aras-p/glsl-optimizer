@@ -30,6 +30,9 @@ static GLhandleARB program;
 
 static GLint uTime;
 
+static GLint t0 = 0;
+static GLint frames = 0;
+
 static GLfloat u_time = 0.0f;
 
 static PFNGLCREATESHADEROBJECTARBPROC glCreateShaderObjectARB = NULL;
@@ -44,15 +47,27 @@ static PFNGLUNIFORM1FARBPROC glUniform1fARB = NULL;
 
 static void Redisplay (void)
 {
+   GLint t;
+
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glUniform1fARB (uTime, u_time);
+	glUniform1fARB (uTime, 0.5f * u_time);
 
 	glPushMatrix ();
 	glutSolidSphere (2.0, 20, 10);
 	glPopMatrix ();
 
 	glutSwapBuffers();
+   frames++;
+
+   t = glutGet (GLUT_ELAPSED_TIME);
+   if (t - t0 >= 5000) {
+      GLfloat seconds = (GLfloat) (t - t0) / 1000.0f;
+      GLfloat fps = frames / seconds;
+      printf ("%d frames in %6.3f seconds = %6.3f FPS\n", frames, seconds, fps);
+      t0 = t;
+      frames = 0;
+   }
 }
 
 static void Idle (void)
@@ -88,20 +103,20 @@ static void Key (unsigned char key, int x, int y)
 
 static void Init (void)
 {
-	static const char *fragShaderText =
-		"uniform float time;\n"
-		"void main () {\n"
-		"	gl_FragColor = gl_Color * vec4 ((0.5 + 0.5 * vec3 (noise1 (\n"
-		"		vec4 (4.0 * gl_TexCoord[0].xyz, 0.5 * time)))), 1.0);\n"
-		"}\n"
-	;
-	static const char *vertShaderText =
-		"void main () {\n"
-		"	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
-		"	gl_TexCoord[0] = gl_Vertex;\n"
-		"	gl_FrontColor = gl_Color;\n"
-		"}\n"
-	;
+   static const char *fragShaderText =
+      "uniform float time;\n"
+      "varying vec3 position;\n"
+      "void main () {\n"
+      "   gl_FragColor = vec4 (vec3 (0.5 + 0.5 * noise1 (vec4 (position, time))), 1.0);\n"
+      "}\n"
+   ;
+   static const char *vertShaderText =
+      "varying vec3 position;\n"
+      "void main () {\n"
+      "   gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
+      "   position = 4.0 * gl_Vertex.xyz;\n"
+      "}\n"
+   ;
 
 	if (!glutExtensionSupported ("GL_ARB_fragment_shader"))
 	{
