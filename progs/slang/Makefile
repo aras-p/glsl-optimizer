@@ -41,27 +41,15 @@ vstest: vstest.o framework.o $(LIB_DEP)
 # objects
 #
 
-framework.o: framework.c
+framework.o: framework.c framework.h
 	$(CC) -c -I$(INCDIR) framework.c -o framework.o
 
-cltest.o: cltest.c
+cltest.o: cltest.c framework.h
 	$(CC) -c -I$(INCDIR) cltest.c -o cltest.o
 
-sotest.o: sotest.c
+sotest.o: sotest.c framework.h
 	$(CC) -c -I$(INCDIR) sotest.c -o sotest.o
 
-vstest.o: vstest.c
+vstest.o: vstest.c framework.h
 	$(CC) -c -I$(INCDIR) vstest.c -o vstest.o
-
-#
-# sources
-#
-
-framework.c: framework.h
-
-cltest.c: framework.h
-
-sotest.c: framework.h
-
-vstest.c: framework.h
 
