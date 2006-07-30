@@ -258,6 +258,13 @@ static const char VertexAttrib2fARB_names[] =
     "";
 #endif
 
+#if defined(need_GL_MESA_shader_debug)
+static const char GetDebugLogLengthMESA_names[] = 
+    "iii\0" /* Parameter signature */
+    "glGetDebugLogLengthMESA\0"
+    "";
+#endif
+
 #if defined(need_GL_EXT_histogram)
 static const char GetHistogramParameterivEXT_names[] = 
     "iip\0" /* Parameter signature */
@@ -482,6 +489,13 @@ static const char GlobalAlphaFactorubSUN_names[] =
     "";
 #endif
 
+#if defined(need_GL_MESA_shader_debug)
+static const char ClearDebugLogMESA_names[] = 
+    "iii\0" /* Parameter signature */
+    "glClearDebugLogMESA\0"
+    "";
+#endif
+
 #if defined(need_GL_EXT_histogram)
 static const char ResetHistogram_names[] = 
     "i\0" /* Parameter signature */
@@ -632,6 +646,13 @@ static const char ReplacementCodeubSUN_names[] =
 static const char FinishAsyncSGIX_names[] = 
     "p\0" /* Parameter signature */
     "glFinishAsyncSGIX\0"
+    "";
+#endif
+
+#if defined(need_GL_MESA_shader_debug)
+static const char GetDebugLogMESA_names[] = 
+    "iiiipp\0" /* Parameter signature */
+    "glGetDebugLogMESA\0"
     "";
 #endif
 
@@ -4285,6 +4306,13 @@ static const char VertexAttrib4svARB_names[] =
     "";
 #endif
 
+#if defined(need_GL_MESA_shader_debug)
+static const char CreateDebugObjectMESA_names[] = 
+    "\0" /* Parameter signature */
+    "glCreateDebugObjectMESA\0"
+    "";
+#endif
+
 #if defined(need_GL_ARB_shader_objects)
 static const char Uniform3fARB_names[] = 
     "ifff\0" /* Parameter signature */
@@ -5331,6 +5359,16 @@ static const struct dri_extension_function GL_INTEL_parallel_arrays_functions[] 
 #if defined(need_GL_MESA_resize_buffers)
 static const struct dri_extension_function GL_MESA_resize_buffers_functions[] = {
     { ResizeBuffersMESA_names, ResizeBuffersMESA_remap_index, 512 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_MESA_shader_debug)
+static const struct dri_extension_function GL_MESA_shader_debug_functions[] = {
+    { GetDebugLogLengthMESA_names, GetDebugLogLengthMESA_remap_index, -1 },
+    { ClearDebugLogMESA_names, ClearDebugLogMESA_remap_index, -1 },
+    { GetDebugLogMESA_names, GetDebugLogMESA_remap_index, -1 },
+    { CreateDebugObjectMESA_names, CreateDebugObjectMESA_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
