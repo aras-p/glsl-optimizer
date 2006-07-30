@@ -11408,6 +11408,38 @@
     </function>
 </category>
 
+<category name="GL_MESA_shader_debug">
+    <enum name="DEBUG_OBJECT_MESA"                        value="0x8759"/>
+    <enum name="DEBUG_PRINT_MESA"                         value="0x875A"/>
+    <enum name="DEBUG_ASSERT_MESA"                        value="0x875B"/>
+    <function name="CreateDebugObjectMESA">
+        <return type="GLhandleARB"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="ClearDebugLogMESA" offset="?">
+        <param name="obj" type="GLhandleARB"/>
+        <param name="logType" type="GLenum"/>
+        <param name="shaderType" type="GLenum"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="GetDebugLogMESA" offset="?">
+        <param name="obj" type="GLhandleARB"/>
+        <param name="logType" type="GLenum"/>
+        <param name="shaderType" type="GLenum"/>
+        <param name="maxLength" type="GLsizei"/>
+        <param name="length" type="GLsizei *" output="true"/>
+        <param name="debugLog" type="GLcharARB *" output="true"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="GetDebugLogLengthMESA" offset="?">
+        <return type="GLsizei"/>
+        <param name="obj" type="GLhandleARB"/>
+        <param name="logType" type="GLenum"/>
+        <param name="shaderType" type="GLenum"/>
+        <glx ignore="true"/>
+    </function>
+</category>
+
 <category name="GL_SGIS_point_parameters">
     <enum name="POINT_SIZE_MIN_SGIS"           count="1"  value="0x8126">
         <size name="PointParameterfvEXT"/>
