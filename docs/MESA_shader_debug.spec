@@ -17,9 +17,9 @@ Status
 
 Version
 
-    Last Modified Date: May 29, 2006
-    Author Revision: 0.1
-    $Date: 2006/05/30 09:35:36 $ $Revision: 1.1 $
+    Last Modified Date: July 30, 2006
+    Author Revision: 0.2
+    $Date: 2006/07/30 14:28:38 $ $Revision: 1.2 $
 
 Number
 
@@ -27,16 +27,26 @@ Number
 
 Dependencies
 
-    OpenGL 1.5 is required.
+    OpenGL 1.0 is required.
+
+    The ARB_shader_objects extension is required.
+
+    The ARB_shading_language_100 extension is required.
+
     The extension is written against the OpenGL 1.5 specification.
-    ARB_shading_language_100 is required.
-    ARB_shader_objects is required.
-    The extension is written against the OpenGL Shading Language
-    1.10 Specification.
+
+    The extension is written against the OpenGL Shading Language 1.10
+    Specification.
 
 Overview
 
-    TBD
+    This extension introduces a debug object that can be attached to
+    a program object to enable debugging. Vertex and/or fragment shader,
+    during execution, issue diagnostic function calls that are logged
+    to the debug object's log. A separate debug log for each shader type
+    is maintained. A debug object can be attached, detached and queried
+    at any time outside the Begin/End pair. Multiple debug objects can
+    be attached to a single program object.
 
 IP Status
 
@@ -48,7 +58,13 @@ Issues
 
 New Procedures and Functions
 
-    TBD
+    handleARB CreateDebugObjectMESA(void)
+    void ClearDebugLogMESA(handleARB obj, enum logType, enum shaderType)
+    void GetDebugLogMESA(handleARB obj, enum logType, enum shaderType,
+                         sizei maxLength, sizei *length,
+                         charARB *debugLog)
+    sizei GetDebugLogLengthMESA(handleARB obj, enum logType,
+                                enum shaderType)
 
 New Types
 
@@ -56,7 +72,15 @@ New Types
 
 New Tokens
 
-    TBD
+    Returned by the <params> parameter of GetObjectParameter{fi}vARB:
+
+        DEBUG_OBJECT_MESA                               0x8759
+
+    Accepted by the <logType> argument of ClearDebugLogMESA,
+    GetDebugLogLengthMESA and GetDebugLogMESA:
+
+        DEBUG_PRINT_MESA                                0x875A
+        DEBUG_ASSERT_MESA                               0x875B
 
 Additions to Chapter 2 of the OpenGL 1.5 Specification
 (OpenGL Operation)
@@ -128,31 +152,75 @@ Additions to Chapter 8 of the OpenGL Shading Language 1.10 Specification
 
     Debug functions are available to both fragment and vertex shaders.
     They are used to track the execution of a shader by logging
-    passed-in arguments to the shader's info log. That values can be
-    retrieved and validated by the application after shader execution
+    passed-in arguments to the debug object's log. Those values can be
+    retrieved by the application for inspection after shader execution
     is complete.
 
-    void printMESA(const float value);
-    void printMESA(const int value);
-    void printMESA(const bool value);
-    void printMESA(const vec2 value);
-    void printMESA(const vec3 value);
-    void printMESA(const vec4 value);
-    void printMESA(const ivec2 value);
-    void printMESA(const ivec3 value);
-    void printMESA(const ivec4 value);
-    void printMESA(const bvec2 value);
-    void printMESA(const bvec3 value);
-    void printMESA(const bvec4 value);
-    void printMESA(const mat2 value);
-    void printMESA(const mat3 value);
-    void printMESA(const mat4 value);
-    void printMESA(const sampler1D value);
-    void printMESA(const sampler2D value);
-    void printMESA(const sampler3D value);
-    void printMESA(const samplerCube value);
-    void printMESA(const sampler1DShadow value);
-    void printMESA(const sampler2DShadow value);
+    The text, if any, produced by any of these functions is appended
+    to each debug object that is attached to the program object.
+    There are different debug log types
+
+    Add a new section 8.10.1 "Print Function":
+
+    The following printMESA prototypes are available.
+
+        void printMESA(const float value)
+        void printMESA(const int value)
+        void printMESA(const bool value)
+        void printMESA(const vec2 value)
+        void printMESA(const vec3 value)
+        void printMESA(const vec4 value)
+        void printMESA(const ivec2 value)
+        void printMESA(const ivec3 value)
+        void printMESA(const ivec4 value)
+        void printMESA(const bvec2 value)
+        void printMESA(const bvec3 value)
+        void printMESA(const bvec4 value)
+        void printMESA(const mat2 value)
+        void printMESA(const mat3 value)
+        void printMESA(const mat4 value)
+        void printMESA(const sampler1D value)
+        void printMESA(const sampler2D value)
+        void printMESA(const sampler3D value)
+        void printMESA(const samplerCube value)
+        void printMESA(const sampler1DShadow value)
+        void printMESA(const sampler2DShadow value)
+
+    The printMESA function writes the argument <value> to the "debug
+    print log" (XXX DEBUG_PRINT_MESA?). Each component is written in
+    text format (XXX format!) and is delimited by a white space (XXX 1
+    or more?).
+
+    Add a new section 8.10.2 "Assert Function":
+
+    The following assertMESA prototypes are available.
+
+        void assertMESA(const bool condition)
+        void assertMESA(const bool condition, const int cookie)
+        void assertMESA(const bool condition, const int cookie,
+                        const int file, const int line)
+
+    The assertMESA function checks if the argument <condition> is
+    true or false. If it is true, nothing happens. If it is false,
+    a diagnostic message is written to the "debug assert log".
+    The message contains the argument <file>, <line>, <cookie> and
+    implementation dependent double-quoted string, each of this
+    delimited by a white space. If the argument <cookie> is not present,
+    it is meant as if it was of value 0. If the arguments <file> and
+    <line> are not present, they are meant as if they were of values
+    __FILE__ and __LINE__, respectively. The following three calls
+    produce the same output, assuming they were issued from the same
+    file and line.
+
+        assertMESA (false);
+        assertMESA (false, 0);
+        assertMESA (false, 0, __FILE__, __LINE__);
+
+    The diagnostic message examples follow.
+
+        1 89 0 ""
+        1 45 333 "all (lessThanEqual (fragColor, vec4 (1.0)))"
+        1 66 1 "assertion failed in file 1, line 66, cookie 1"
 
 Additions to Chapter 9 of the OpenGL Shading Language 1.10 Specification
 (Shading Language Grammar)
@@ -192,3 +260,6 @@ Revision History
 
     29 May 2006
         Initial draft. (Michal Krol)
+    30 July 2006
+        Add Overview, New Procedures and Functions, New Tokens sections.
+        Add sections 8.10.1, 8.10.2 to GLSL spec.
