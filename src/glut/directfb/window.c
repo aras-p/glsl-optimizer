@@ -155,6 +155,7 @@ __glutCreateWindow( GLboolean fullscreen )
           
           new->window->AttachEventBuffer( new->window, events );
           /* enable only handled events */
+          new->window->DisableEvents( new->window, DWET_ALL );
           new->window->EnableEvents( new->window, DWET_KEYDOWN    | DWET_KEYUP    |
                                                   DWET_BUTTONDOWN | DWET_BUTTONUP |
                                                   DWET_ENTER      | DWET_LEAVE    |
@@ -331,7 +332,11 @@ __glutDestroyWindow( __GlutWindow *window )
      window->surface->Release( window->surface );
      
      if (window->window) {
+#if DIRECTFB_VERSION_CODE >= VERSION_CODE(0,9,26)
+          window->window->DetachEventBuffer( window->window, events );
+#else
           window->window->Destroy( window->window );
+#endif
           window->window->Release( window->window );
      }
      else {
