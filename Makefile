@@ -376,6 +376,9 @@ GLUT_FILES = \
 	$(DIRECTORY)/src/glut/dos/PC_HW/*.[chS]		\
 	$(DIRECTORY)/src/glut/ggi/*.[ch]		\
 	$(DIRECTORY)/src/glut/ggi/Makefile		\
+	$(DIRECTORY)/src/glut/fbdev/Makefile		\
+	$(DIRECTORY)/src/glut/fbdev/cursors.h		\
+	$(DIRECTORY)/src/glut/fbdev/glut_fbdev.c	\
 	$(DIRECTORY)/windows/VC6/progs/glut/glut.dsp	\
 	$(DIRECTORY)/windows/VC7/progs/glut/glut.vcproj
 
