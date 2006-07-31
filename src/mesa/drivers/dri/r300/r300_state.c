@@ -1676,14 +1676,24 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 {
 	GLcontext *ctx;
 	struct r300_vertex_program *vp;
+	int i;
 	
 	ctx = rmesa->radeon.glCtx;
 	
 	if (rmesa->NewGLState && hw_tcl_on) {
 		rmesa->NewGLState = 0;
 		
+		for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
+			rmesa->temp_attrib[i] = TNL_CONTEXT(ctx)->vb.AttribPtr[i];
+			TNL_CONTEXT(ctx)->vb.AttribPtr[i] = &rmesa->dummy_attrib[i];
+		}
+		
 		_tnl_UpdateFixedFunctionProgram(ctx);
 	
+		for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
+			TNL_CONTEXT(ctx)->vb.AttribPtr[i] = rmesa->temp_attrib[i];
+		}
+		
 		vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 		if (vp->translated == GL_FALSE)
 			r300_translate_vertex_shader(vp);
