@@ -23,11 +23,20 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <directfb.h>
+#include <pthread.h>
 
 #include <direct/messages.h>
 #include <direct/interface.h>
 #include <direct/mem.h>
+
+#include <directfb.h>
+#include <directfb_version.h>
+
+#define VERSION_CODE( M, m, r )  (((M) * 1000) + ((m) * 100) + ((r)))
+#define DIRECTFB_VERSION_CODE    VERSION_CODE( DIRECTFB_MAJOR_VERSION, \
+                                               DIRECTFB_MINOR_VERSION, \
+                                               DIRECTFB_MICRO_VERSION )
+
 
 #ifdef CLAMP
 # undef CLAMP
@@ -70,7 +79,7 @@ DIRECT_INTERFACE_IMPLEMENTATION( IDirectFBGL, Mesa )
 typedef struct {
      int                     ref;       /* reference counter */
      
-     int                     locked;
+     DFBBoolean              locked;
      
      IDirectFBSurface       *surface;
      DFBSurfacePixelFormat   format;
@@ -89,6 +98,37 @@ typedef struct {
      struct gl_renderbuffer  render;
 } IDirectFBGL_data;
 
+/******************************************************************************/
+
+static pthread_mutex_t global_lock = PTHREAD_MUTEX_INITIALIZER;
+static unsigned int    global_ref  = 0;
+
+static inline int directfbgl_init( void )
+{
+     pthread_mutexattr_t attr;
+     int                 ret;
+     
+     if (global_ref++)
+          return 0;
+
+     pthread_mutexattr_init( &attr );
+     pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_ERRORCHECK );
+     ret = pthread_mutex_init( &global_lock, &attr );
+     pthread_mutexattr_destroy( &attr );
+
+     return ret;
+}
+
+static inline void directfbgl_finish( void )
+{
+     if (--global_ref == 0)
+          pthread_mutex_destroy( &global_lock );
+}
+
+#define directfbgl_lock()    pthread_mutex_lock( &global_lock )
+#define directfbgl_unlock()  pthread_mutex_unlock( &global_lock )
+
+/******************************************************************************/
 
 static bool  directfbgl_init_visual    ( GLvisual              *visual,
                                          DFBSurfacePixelFormat  format );
@@ -100,21 +140,26 @@ static bool  directfbgl_create_context ( GLcontext             *context,
 static void  directfbgl_destroy_context( GLcontext             *context,
                                          GLframebuffer         *framebuffer );
 
+/******************************************************************************/
+
 
 static void
-IDirectFBGL_Destruct( IDirectFBGL *thiz )
+IDirectFBGL_Mesa_Destruct( IDirectFBGL *thiz )
 {
      IDirectFBGL_data *data = (IDirectFBGL_data*) thiz->priv;
 
      directfbgl_destroy_context( &data->context, &data->framebuffer );
      
-     data->surface->Release( data->surface );
+     if (data->surface)
+          data->surface->Release( data->surface );
 
      DIRECT_DEALLOCATE_INTERFACE( thiz );
+
+     directfbgl_finish();
 }
 
 static DFBResult
-IDirectFBGL_AddRef( IDirectFBGL *thiz )
+IDirectFBGL_Mesa_AddRef( IDirectFBGL *thiz )
 {
      DIRECT_INTERFACE_GET_DATA( IDirectFBGL );
 
@@ -124,19 +169,18 @@ IDirectFBGL_AddRef( IDirectFBGL *thiz )
 }
 
 static DFBResult
-IDirectFBGL_Release( IDirectFBGL *thiz )
+IDirectFBGL_Mesa_Release( IDirectFBGL *thiz )
 {
      DIRECT_INTERFACE_GET_DATA( IDirectFBGL )
 
-     if (--data->ref == 0) {
-          IDirectFBGL_Destruct( thiz );
-     }
+     if (--data->ref == 0) 
+          IDirectFBGL_Mesa_Destruct( thiz );
 
      return DFB_OK;
 }
 
 static DFBResult
-IDirectFBGL_Lock( IDirectFBGL *thiz )
+IDirectFBGL_Mesa_Lock( IDirectFBGL *thiz )
 {
      IDirectFBSurface *surface;
      int               width   = 0;
@@ -145,8 +189,11 @@ IDirectFBGL_Lock( IDirectFBGL *thiz )
      
      DIRECT_INTERFACE_GET_DATA( IDirectFBGL );
 
-     if (data->locked++)
-          return DFB_OK;
+     if (data->locked)
+          return DFB_LOCKED;
+
+     if (directfbgl_lock())
+          return DFB_LOCKED;
 
      surface = data->surface;
      surface->GetSize( surface, &width, &height );
@@ -169,29 +216,34 @@ IDirectFBGL_Lock( IDirectFBGL *thiz )
           data->height = height;
           _mesa_ResizeBuffersMESA();
      }
+
+     data->locked = DFB_TRUE;
      
      return DFB_OK;
 }
 
 static DFBResult
-IDirectFBGL_Unlock( IDirectFBGL *thiz )
+IDirectFBGL_Mesa_Unlock( IDirectFBGL *thiz )
 {     
      DIRECT_INTERFACE_GET_DATA( IDirectFBGL );
 
      if (!data->locked)
           return DFB_OK;
 
-     if (--data->locked == 0) {
-          _mesa_make_current( NULL, NULL, NULL );
-          data->surface->Unlock( data->surface );
-     }
+     _mesa_make_current( NULL, NULL, NULL );
+     
+     data->surface->Unlock( data->surface );
 
+     directfbgl_unlock();
+
+     data->locked = DFB_FALSE;
+     
      return DFB_OK;
 }
 
 static DFBResult
-IDirectFBGL_GetAttributes( IDirectFBGL     *thiz,
-                           DFBGLAttributes *attributes )
+IDirectFBGL_Mesa_GetAttributes( IDirectFBGL     *thiz,
+                                DFBGLAttributes *attributes )
 {
      DFBSurfaceCapabilities   caps;
      GLvisual                *visual;
@@ -233,12 +285,15 @@ Probe( void *data )
 }
 
 static DFBResult
-Construct( IDirectFBGL      *thiz,
-           IDirectFBSurface *surface )
-{ 
+Construct( IDirectFBGL *thiz, IDirectFBSurface *surface )
+{
+     /* Initialize global resources. */
+     if (directfbgl_init())
+          return DFB_INIT;
+     
      /* Allocate interface data. */
      DIRECT_ALLOCATE_INTERFACE_DATA( thiz, IDirectFBGL );
-
+ 
      /* Initialize interface data. */
      data->ref     = 1;
      data->surface = surface;
@@ -250,7 +305,7 @@ Construct( IDirectFBGL      *thiz,
      /* Configure visual. */
      if (!directfbgl_init_visual( &data->visual, data->format )) {
           D_ERROR( "DirectFBGL/Mesa: failed to initialize visual.\n" );
-          surface->Release( surface );
+          IDirectFBGL_Mesa_Destruct( thiz );
           return DFB_UNSUPPORTED;
      }
      
@@ -258,16 +313,16 @@ Construct( IDirectFBGL      *thiz,
      if (!directfbgl_create_context( &data->context, &data->framebuffer,
                                      &data->visual, data->format, data )) {
           D_ERROR( "DirectFBGL/Mesa: failed to create context.\n" );
-          surface->Release( surface );
+          IDirectFBGL_Mesa_Destruct( thiz );
           return DFB_UNSUPPORTED;
      }
 
      /* Assign interface pointers. */
-     thiz->AddRef        = IDirectFBGL_AddRef;
-     thiz->Release       = IDirectFBGL_Release;
-     thiz->Lock          = IDirectFBGL_Lock;
-     thiz->Unlock        = IDirectFBGL_Unlock;
-     thiz->GetAttributes = IDirectFBGL_GetAttributes;
+     thiz->AddRef        = IDirectFBGL_Mesa_AddRef;
+     thiz->Release       = IDirectFBGL_Mesa_Release;
+     thiz->Lock          = IDirectFBGL_Mesa_Lock;
+     thiz->Unlock        = IDirectFBGL_Mesa_Unlock;
+     thiz->GetAttributes = IDirectFBGL_Mesa_GetAttributes;
 
      return DFB_OK;
 }
@@ -278,12 +333,7 @@ Construct( IDirectFBGL      *thiz,
 static const GLubyte*
 dfbGetString( GLcontext *ctx, GLenum pname )
 {
-     switch (pname) {
-          case GL_VENDOR:
-               return "Claudio Ciccani";
-          default:
-               return NULL;
-     }
+     return NULL;
 }
 
 static void
@@ -323,6 +373,7 @@ dfbClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
          ctx->Color.ColorMask[2]      &&
          ctx->Color.ColorMask[3])
      {
+          DFBRegion clip;
           __u8 a, r, g, b;
           
           UNCLAMPED_FLOAT_TO_UBYTE( a, ctx->Color.ClearColor[ACOMP] );
@@ -331,17 +382,26 @@ dfbClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
           UNCLAMPED_FLOAT_TO_UBYTE( b, ctx->Color.ClearColor[BCOMP] );
 
           data->surface->Unlock( data->surface );
+
+#if DIRECTFB_VERSION_CODE >= VERSION_CODE(0,9,25)
+          data->surface->GetClip( data->surface, &clip );
+#else
+          (void)clip;
+#endif
           
           if (all) {
                data->surface->SetClip( data->surface, NULL );
-               data->surface->Clear( data->surface, r, g, b, a );
           }
           else {
                DFBRegion reg = { x1:x, y1:y, x2:x+width-1, y2:y+height-1 };
                data->surface->SetClip( data->surface, &reg );
-               data->surface->Clear( data->surface, r, g, b, a );
-               data->surface->SetClip( data->surface, NULL );
           }
+          
+          data->surface->Clear( data->surface, r, g, b, a );
+
+#if DIRECTFB_VERSION_CODE >= VERSION_CODE(0,9,25)
+          data->surface->SetClip( data->surface, &clip );
+#endif
           
           data->surface->Lock( data->surface, DSLF_READ | DSLF_WRITE,
                                (void*)&data->video.start, &data->video.pitch );
