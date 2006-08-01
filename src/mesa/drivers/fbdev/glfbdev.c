@@ -501,11 +501,13 @@ renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static struct GLFBDevRenderbufferRec *
-new_glfbdev_renderbuffer(void *bufferStart, int pixelFormat)
+new_glfbdev_renderbuffer(void *bufferStart, const GLFBDevVisualPtr visual)
 {
    struct GLFBDevRenderbufferRec *rb = CALLOC_STRUCT(GLFBDevRenderbufferRec);
    if (rb) {
       GLuint name = 0;
+      int pixelFormat = visual->pixelFormat;
+
       _mesa_init_renderbuffer(&rb->Base, name);
 
       rb->Base.Delete = delete_renderbuffer;
@@ -566,6 +568,20 @@ new_glfbdev_renderbuffer(void *bufferStart, int pixelFormat)
       }
       rb->Base.DataType = GL_UNSIGNED_BYTE;
       rb->Base.Data = bufferStart;
+
+      rb->rowStride = visual->var.xres_virtual * visual->var.bits_per_pixel / 8;
+      rb->bottom = (GLubyte *) bufferStart
+	  + (visual->var.yres_virtual - 1) * rb->rowStride;
+
+      rb->Base.Width = visual->var.xres;
+      rb->Base.Height = visual->var.yres;
+
+      rb->Base.RedBits = visual->var.red.length;
+      rb->Base.GreenBits = visual->var.green.length;
+      rb->Base.BlueBits = visual->var.blue.length;
+      rb->Base.AlphaBits = visual->var.transp.length;
+
+      rb->Base.InternalFormat = pixelFormat;
    }
    return rb;
 }
@@ -603,12 +619,12 @@ glFBDevCreateBuffer( const struct fb_fix_screeninfo *fixInfo,
    /* basic framebuffer setup */
    _mesa_initialize_framebuffer(&buf->glframebuffer, &visual->glvisual);
    /* add front renderbuffer */
-   frontrb = new_glfbdev_renderbuffer(frontBuffer, visual->pixelFormat);
+   frontrb = new_glfbdev_renderbuffer(frontBuffer, visual);
    _mesa_add_renderbuffer(&buf->glframebuffer, BUFFER_FRONT_LEFT,
                           &frontrb->Base);
    /* add back renderbuffer */
    if (visual->glvisual.doubleBufferMode) {
-      backrb = new_glfbdev_renderbuffer(backBuffer, visual->pixelFormat);
+      backrb = new_glfbdev_renderbuffer(backBuffer, visual);
       _mesa_add_renderbuffer(&buf->glframebuffer, BUFFER_BACK_LEFT,
                              &backrb->Base);
    }
@@ -628,9 +644,6 @@ glFBDevCreateBuffer( const struct fb_fix_screeninfo *fixInfo,
    buf->visual = visual;  /* ptr assignment */
    buf->size = size;
    buf->bytesPerPixel = visual->var.bits_per_pixel / 8;
-   frontrb->rowStride = visual->var.xres_virtual * buf->bytesPerPixel;
-   frontrb->bottom = (GLubyte *) frontrb->Base.Data
-      + (visual->var.yres_virtual - 1) * frontrb->rowStride;
 
    if (visual->glvisual.doubleBufferMode) {
       if (!backBuffer) {
@@ -643,14 +656,12 @@ glFBDevCreateBuffer( const struct fb_fix_screeninfo *fixInfo,
          }
          backrb->mallocedBuffer = GL_TRUE;
       }
-      backrb->rowStride = frontrb->rowStride;
-      backrb->bottom = (GLubyte *) backrb->Base.Data
-         + (visual->var.yres_virtual - 1) * backrb->rowStride;
    }
+   /* this causes segfault:
    else {
       backrb->bottom = NULL;
       backrb->rowStride = 0;
-   }
+      }*/
 
    return buf;
 }
