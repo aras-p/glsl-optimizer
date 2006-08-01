@@ -108,6 +108,7 @@
 #define glClampColorARB		MANGLE(ClampColorARB)
 #define glClearAccum		MANGLE(ClearAccum)
 #define glClearColor		MANGLE(ClearColor)
+#define glClearDebugLogMESA		MANGLE(ClearDebugLogMESA)
 #define glClearDepth		MANGLE(ClearDepth)
 #define glClearIndex		MANGLE(ClearIndex)
 #define glClear		MANGLE(Clear)
@@ -230,6 +231,7 @@
 #define glCopyTexSubImage2D		MANGLE(CopyTexSubImage2D)
 #define glCopyTexSubImage3DEXT		MANGLE(CopyTexSubImage3DEXT)
 #define glCopyTexSubImage3D		MANGLE(CopyTexSubImage3D)
+#define glCreateDebugObjectMESA		MANGLE(CreateDebugObjectMESA)
 #define glCreateProgram		MANGLE(CreateProgram)
 #define glCreateProgramObjectARB		MANGLE(CreateProgramObjectARB)
 #define glCreateShader		MANGLE(CreateShader)
@@ -438,6 +440,8 @@
 #define glGetConvolutionParameterfv		MANGLE(GetConvolutionParameterfv)
 #define glGetConvolutionParameterivEXT		MANGLE(GetConvolutionParameterivEXT)
 #define glGetConvolutionParameteriv		MANGLE(GetConvolutionParameteriv)
+#define glGetDebugLogLengthMESA		MANGLE(GetDebugLogLengthMESA)
+#define glGetDebugLogMESA		MANGLE(GetDebugLogMESA)
 #define glGetDetailTexFuncSGIS		MANGLE(GetDetailTexFuncSGIS)
 #define glGetDoublev		MANGLE(GetDoublev)
 #define glGetError		MANGLE(GetError)
@@ -1470,5 +1474,6 @@
 #define glWindowPos4sMESA		MANGLE(WindowPos4sMESA)
 #define glWindowPos4svMESA		MANGLE(WindowPos4svMESA)
 #define glWriteMaskEXT		MANGLE(WriteMaskEXT)
+gl.h:GLAPI void GLAPIENTRY
 
 #endif /* GL_MANGLE_H */
