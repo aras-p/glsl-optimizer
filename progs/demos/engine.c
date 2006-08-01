@@ -47,6 +47,7 @@ typedef struct
    GLuint CrankList;
    GLuint ConnRodList;
    GLuint PistonList;
+   GLuint BlockList;
 } Engine;
 
 
@@ -80,6 +81,7 @@ typedef struct
    GLboolean UseLists;
    GLboolean DrawBox;
    GLboolean ShowInfo;
+   GLboolean ShowBlock;
 } RenderInfo;
 
 
@@ -87,9 +89,10 @@ static GLUquadric *Q;
 
 static GLfloat Theta = 0.0;
 
-static GLfloat PistonColor[4] = { 1.0, 0.5, 0.5, 1.0 };
-static GLfloat ConnRodColor[4] = { 0.7, 1.0, 0.7, 1.0 };
-static GLfloat CrankshaftColor[4] = { 0.7, 0.7, 1.0, 1.0 };
+static const GLfloat PistonColor[4] = { 1.0, 0.5, 0.5, 1.0 };
+static const GLfloat ConnRodColor[4] = { 0.7, 1.0, 0.7, 1.0 };
+static const GLfloat CrankshaftColor[4] = { 0.7, 0.7, 1.0, 1.0 };
+static const GLfloat BlockColor[4] = {0.8, 0.8, 0.8, 0.75 };
 
 static GLuint TextureObj;
 static GLint WinWidth = 800, WinHeight = 500;
@@ -113,7 +116,7 @@ static Engine Engines[NUM_ENGINES] =
       0.25, /* CrankPinRadius */
       0.3,  /* CrankJournalRadius */
       0.4,  /* CrankJournalLength */
-      1.3,  /* ConnectingRodLength */
+      1.5,  /* ConnectingRodLength */
       0.1   /* ConnectingRodThickness */
    },
    {
@@ -129,7 +132,7 @@ static Engine Engines[NUM_ENGINES] =
       0.25, /* CrankPinRadius */
       0.3,  /* CrankJournalRadius */
       0.4,  /* CrankJournalLength */
-      1.3,  /* ConnectingRodLength */
+      1.5,  /* ConnectingRodLength */
       0.1   /* ConnectingRodThickness */
    },
    {
@@ -145,7 +148,7 @@ static Engine Engines[NUM_ENGINES] =
       0.25, /* CrankPinRadius */
       0.3,  /* CrankJournalRadius */
       0.4,  /* CrankJournalLength */
-      1.3,  /* ConnectingRodLength */
+      1.5,  /* ConnectingRodLength */
       0.1   /* ConnectingRodThickness */
    }
 };
@@ -180,6 +183,7 @@ InitRenderInfo(RenderInfo *render)
    render->Texture = GL_FALSE;
    render->DrawBox = GL_FALSE;
    render->ShowInfo = GL_TRUE;
+   render->ShowBlock = GL_FALSE;
    render->UseLists = GL_FALSE;
 }
 
@@ -190,6 +194,9 @@ InitRenderInfo(RenderInfo *render)
 static void
 SetRenderState(RenderMode mode)
 {
+   static const GLfloat gray2[4] = { 0.2, 0.2, 0.2, 1.0 };
+   static const GLfloat gray4[4] = { 0.4, 0.4, 0.4, 1.0 };
+
    /* defaults */
    glDisable(GL_LIGHTING);
    glDisable(GL_TEXTURE_2D);
@@ -198,6 +205,7 @@ SetRenderState(RenderMode mode)
    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
    glDisable(GL_TEXTURE_GEN_S);
    glDisable(GL_TEXTURE_GEN_T);
+   glLightModelfv(GL_LIGHT_MODEL_AMBIENT, gray2);
 
    switch (mode) {
    case LIT:
@@ -214,6 +222,7 @@ SetRenderState(RenderMode mode)
       glEnable(GL_TEXTURE_2D);
       glEnable(GL_TEXTURE_GEN_S);
       glEnable(GL_TEXTURE_GEN_T);
+      glLightModelfv(GL_LIGHT_MODEL_AMBIENT, gray4);
       break;
    default:
       ;
@@ -266,6 +275,19 @@ PistonShaftPosition(const Engine *eng, int piston)
          z -= eng->ConnectingRodThickness;
    }
    return z;
+}
+
+
+/**
+ * Compute distance between two adjacent pistons
+ */
+static float
+PistonSpacing(const Engine *eng)
+{
+   const int pistonsPerCrank = eng->Pistons / eng->Cranks;
+   const float z0 = PistonShaftPosition(eng, 0);
+   const float z1 = PistonShaftPosition(eng, pistonsPerCrank);
+   return z1 - z0;
 }
 
 
@@ -518,6 +540,144 @@ DrawPositionedConnectingRod(const Engine *eng, float crankAngle)
 
 
 /**
+ * Draw a square with a hole in middle.
+ */
+static void
+SquareWithHole(float squareSize, float holeRadius)
+{
+   int i;
+   glBegin(GL_QUAD_STRIP);
+   glNormal3f(0, 0, 1);
+   for (i = 0; i <= 360; i += 5) {
+      const float x1 = holeRadius * cos(DEG_TO_RAD(i));
+      const float y1 = holeRadius * sin(DEG_TO_RAD(i));
+      float x2, y2;
+      if (i > 315 || i <= 45) {
+         x2 = squareSize;
+         y2 = squareSize * tan(DEG_TO_RAD(i));
+      }
+      else if (i > 45 && i <= 135) {
+         x2 = -squareSize * tan(DEG_TO_RAD(i - 90));
+         y2 = squareSize;
+      }
+      else if (i > 135 && i <= 225) {
+         x2 = -squareSize;
+         y2 = -squareSize * tan(DEG_TO_RAD(i-180));
+      }
+      else if (i > 225 && i <= 315) {
+         x2 = squareSize * tan(DEG_TO_RAD(i - 270));
+         y2 = -squareSize;
+      }
+      glVertex2f(x1, y1); /* inner circle */
+      glVertex2f(x2, y2); /* outer square */
+   }
+   glEnd();
+}
+
+
+/**
+ * Draw block with hole through middle.
+ * Hole is centered on Z axis.
+ * Bottom of block is at z=0, top of block is at z = blockHeight.
+ * index is in [0, count - 1] to determine which block faces are drawn.
+ */
+static void
+DrawBlockWithHole(float blockSize, float blockHeight, float holeRadius,
+                  int index, int count)
+{
+   const int slices = 30, stacks = 4;
+   const float x = blockSize;
+   const float y = blockSize;
+   const float z0 = 0;
+   const float z1 = blockHeight;
+
+   assert(index < count);
+   assert(Q);
+   gluQuadricOrientation(Q, GLU_INSIDE);
+
+   glBegin(GL_QUADS);
+   /* +X face */
+   glNormal3f(1, 0, 0);
+   glVertex3f( x, -y, z0);
+   glVertex3f( x, y, z0);
+   glVertex3f( x, y, z1);
+   glVertex3f( x, -y, z1);
+   /* -X face */
+   glNormal3f(-1, 0, 0);
+   glVertex3f(-x, -y, z1);
+   glVertex3f(-x, y, z1);
+   glVertex3f(-x, y, z0);
+   glVertex3f(-x, -y, z0);
+   if (index == 0) {
+      /* +Y face */
+      glNormal3f(0, 1, 0);
+      glVertex3f(-x, y, z1);
+      glVertex3f( x, y, z1);
+      glVertex3f( x, y, z0);
+      glVertex3f(-x, y, z0);
+   }
+   if (index == count - 1) {
+      /* -Y face */
+      glNormal3f(0, -1, 0);
+      glVertex3f(-x, -y, z0);
+      glVertex3f( x, -y, z0);
+      glVertex3f( x, -y, z1);
+      glVertex3f(-x, -y, z1);
+   }
+   glEnd();
+
+   /* cylinder / hole */
+   gluCylinder(Q, holeRadius, holeRadius, blockHeight, slices, stacks);
+
+   /* face at z0 */
+   glPushMatrix();
+   glRotatef(180, 1, 0, 0);
+   SquareWithHole(blockSize, holeRadius);
+   glPopMatrix();
+
+   /* face at z1 */
+   glTranslatef(0, 0, z1);
+   SquareWithHole(blockSize, holeRadius);
+
+   gluQuadricOrientation(Q, GLU_OUTSIDE);
+}
+
+
+/**
+ * Draw the engine block.
+ */
+static void
+DrawEngineBlock(const Engine *eng)
+{
+   const float blockHeight = eng->Throw + 1.5 * eng->PistonHeight;
+   const float cylRadius = 1.01 * eng->PistonRadius;
+   const float blockSize = 0.5 * PistonSpacing(eng);
+   const int pistonsPerCrank = eng->Pistons / eng->Cranks;
+   int i;
+
+   for (i = 0; i < eng->Pistons; i++) {
+      const float z = PistonShaftPosition(eng, i);
+      const int crank = i / pistonsPerCrank;
+      int k;
+
+      glPushMatrix();
+         glTranslatef(0, 0, z);
+
+         /* additional rotation for kth piston per crank */
+         k = i % pistonsPerCrank;
+         glRotatef(k * -eng->V_Angle, 0, 0, 1);
+
+         /* the block */
+         glRotatef(-90, 1, 0, 0);
+         glTranslatef(0, 0, eng->Throw * 2);
+         DrawBlockWithHole(blockSize, blockHeight, cylRadius,
+                           crank, eng->Cranks);
+      glPopMatrix();
+   }
+}
+
+
+/**
  * Generate display lists for engine parts.
  */
 static void
@@ -538,6 +698,11 @@ GenerateDisplayLists(Engine *eng)
    glNewList(eng->PistonList, GL_COMPILE);
    DrawPiston(eng);
    glEndList();
+
+   eng->BlockList = glGenLists(1);
+   glNewList(eng->BlockList, GL_COMPILE);
+   DrawEngineBlock(eng);
+   glEndList();
 }
 
 
@@ -553,8 +718,9 @@ FreeDisplayLists(Engine *eng)
    eng->ConnRodList = 0;
    glDeleteLists(eng->PistonList, 1);
    eng->PistonList = 0;
+   glDeleteLists(eng->BlockList, 1);
+   eng->BlockList = 0;
 }
-
 
 
 /**
@@ -602,8 +768,30 @@ DrawEngine(const Engine *eng, float crankAngle)
          glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, ConnRodColor);
          glColor4fv(ConnRodColor);
          DrawPositionedConnectingRod(eng, rot);
-
       glPopMatrix();
+   }
+
+   if (Render.ShowBlock) {
+      const GLboolean blend = glIsEnabled(GL_BLEND);
+
+      glDepthMask(GL_FALSE);
+      if (!blend) {
+         glEnable(GL_BLEND);
+      }
+      glEnable(GL_CULL_FACE);
+
+      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, BlockColor);
+      glColor4fv(BlockColor);
+      if (eng->CrankList)
+         glCallList(eng->BlockList);
+      else
+         DrawEngineBlock(eng);
+
+      glDisable(GL_CULL_FACE);
+      glDepthMask(GL_TRUE);
+      if (!blend) {
+         glDisable(GL_BLEND);
+      }
    }
 
    glPopMatrix();
@@ -745,9 +933,9 @@ Draw(void)
 
       glPushMatrix();
          glTranslatef(0, -0.75, 0);
-         DrawEngine(Engines + CurEngine, Theta);
          if (Render.DrawBox)
             DrawBox();
+         DrawEngine(Engines + CurEngine, Theta);
       glPopMatrix();
 
    glPopMatrix();
@@ -900,6 +1088,12 @@ OptDisplayLists(void)
 }
 
 static void
+OptShowBlock(void)
+{
+   Render.ShowBlock = !Render.ShowBlock;
+}
+
+static void
 OptShowInfo(void)
 {
    Render.ShowInfo = !Render.ShowInfo;
@@ -940,8 +1134,9 @@ static const MenuInfo MenuItems[] = {
    { "Change Engine", 'e', OptChangeEngine },
    { "Rendering Style", 'm', OptRenderMode },
    { "Display Lists", 'd', OptDisplayLists },
+   { "Show Block", 'b', OptShowBlock },
    { "Show Info", 'i', OptShowInfo },
-   { "Show Box", 'b', OptShowBox },
+   { "Show Box", 'x', OptShowBox },
    { "Exit", 27, OptExit },
    { NULL, 'r', OptRotate },
    { NULL, 0, NULL }
@@ -1070,7 +1265,6 @@ Init(void)
    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
    glEnable(GL_NORMALIZE);
 
-   glBlendFunc(GL_SRC_ALPHA, GL_ZERO);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
    InitViewInfo(&View);
