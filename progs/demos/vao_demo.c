@@ -22,6 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -280,11 +281,15 @@ static void Init( void )
       exit(1);
    }
 
-   bind_vertex_array = glutGetProcAddress( "glBindVertexArrayAPPLE" );
-   gen_vertex_arrays = glutGetProcAddress( "glGenVertexArraysAPPLE" );
-   delete_vertex_arrays = glutGetProcAddress( "glDeleteVertexArraysAPPLE" );
-   is_vertex_array = glutGetProcAddress( "glIsVertexArrayAPPLE" );
+   bind_vertex_array = (PFNGLBINDVERTEXARRAYAPPLEPROC) glutGetProcAddress( "glBindVertexArrayAPPLE" );
+   gen_vertex_arrays = (PFNGLGENVERTEXARRAYSAPPLEPROC) glutGetProcAddress( "glGenVertexArraysAPPLE" );
+   delete_vertex_arrays = (PFNGLDELETEVERTEXARRAYSAPPLEPROC) glutGetProcAddress( "glDeleteVertexArraysAPPLE" );
+   is_vertex_array = (PFNGLISVERTEXARRAYAPPLEPROC) glutGetProcAddress( "glIsVertexArrayAPPLE" );
 
+   assert(bind_vertex_array);
+   assert(gen_vertex_arrays);
+   assert(delete_vertex_arrays);
+   assert(is_vertex_array);
 
    glEnable( GL_DEPTH_TEST );
    
