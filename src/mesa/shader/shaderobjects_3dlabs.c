@@ -44,6 +44,8 @@
 #include "slang_link.h"
 #endif
 
+#if FEATURE_ARB_shader_objects
+
 struct gl2_unknown_obj
 {
 	GLuint reference_count;
@@ -1774,6 +1776,101 @@ _vertex_shader_constructor (struct gl2_vertex_shader_impl *impl)
 #endif
 }
 
+struct gl2_debug_obj
+{
+   struct gl2_generic_obj _generic;
+};
+
+struct gl2_debug_impl
+{
+   struct gl2_debug_intf *_vftbl;
+   struct gl2_debug_obj _obj;
+};
+
+static GLvoid
+_debug_destructor (struct gl2_unknown_intf **intf)
+{
+   struct gl2_debug_impl *impl = (struct gl2_debug_impl *) (intf);
+
+   (void) (impl);
+   /* TODO */
+
+   _generic_destructor (intf);
+}
+
+static struct gl2_unknown_intf **
+_debug_QueryInterface (struct gl2_unknown_intf **intf, enum gl2_uiid uiid)
+{
+   if (uiid == UIID_DEBUG) {
+      (**intf).AddRef (intf);
+      return intf;
+   }
+   return _generic_QueryInterface (intf, uiid);
+}
+
+static GLenum
+_debug_GetType (struct gl2_generic_intf **intf)
+{
+   return /*GL_DEBUG_OBJECT_MESA*/0;
+}
+
+static GLvoid
+_debug_ClearDebugLog (struct gl2_debug_intf **intf, GLenum logType, GLenum shaderType)
+{
+   struct gl2_debug_impl *impl = (struct gl2_debug_impl *) (intf);
+
+   (void) (impl);
+   /* TODO */
+}
+
+static GLvoid
+_debug_GetDebugLog (struct gl2_debug_intf **intf, GLenum logType, GLenum shaderType,
+                    GLsizei maxLength, GLsizei *length, GLcharARB *infoLog)
+{
+   struct gl2_debug_impl *impl = (struct gl2_debug_impl *) (intf);
+
+   (void) (impl);
+   /* TODO */
+}
+
+static GLsizei
+_debug_GetDebugLogLength (struct gl2_debug_intf **intf, GLenum logType, GLenum shaderType)
+{
+   struct gl2_debug_impl *impl = (struct gl2_debug_impl *) (intf);
+
+   (void) (impl);
+   /* TODO */
+
+   return 0;
+}
+
+static struct gl2_debug_intf _debug_vftbl = {
+   {
+      {
+         _unknown_AddRef,
+         _unknown_Release,
+         _debug_QueryInterface
+      },
+      _generic_Delete,
+      _debug_GetType,
+      _generic_GetName,
+      _generic_GetDeleteStatus,
+      _generic_GetInfoLog,
+      _generic_GetInfoLogLength
+   },
+   _debug_ClearDebugLog,
+   _debug_GetDebugLog,
+   _debug_GetDebugLogLength
+};
+
+static GLvoid
+_debug_constructor (struct gl2_debug_impl *impl)
+{
+   _generic_constructor ((struct gl2_generic_impl *) (impl));
+   impl->_vftbl = &_debug_vftbl;
+   impl->_obj._generic._unknown._destructor = _debug_destructor;
+}
+
 GLhandleARB
 _mesa_3dlabs_create_shader_object (GLenum shaderType)
 {
@@ -1823,6 +1920,19 @@ _mesa_3dlabs_create_program_object (void)
 	return 0;
 }
 
+GLhandleARB
+_mesa_3dlabs_create_debug_object (GLvoid)
+{
+   struct gl2_debug_impl *obj;
+
+   obj = (struct gl2_debug_impl *) (_mesa_malloc (sizeof (struct gl2_debug_impl)));
+   if (obj != NULL) {
+      _debug_constructor (obj);
+      return obj->_obj._generic.name;
+   }
+   return 0;
+}
+
 #include "slang_assemble.h"
 #include "slang_execute.h"
 
@@ -1858,6 +1968,8 @@ GLvoid _slang_exec_vertex_shader (struct gl2_program_intf **pro)
 {
 	exec_shader (pro, SLANG_SHADER_VERTEX);
 }
+
+#endif
 
 void
 _mesa_init_shaderobjects_3dlabs (GLcontext *ctx)

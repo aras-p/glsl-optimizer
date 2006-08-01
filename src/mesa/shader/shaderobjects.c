@@ -36,6 +36,8 @@
 #include "shaderobjects_3dlabs.h"
 
 
+#if FEATURE_ARB_shader_objects
+
 #define RELEASE_GENERIC(x)\
    (**x)._unknown.Release ((struct gl2_unknown_intf **) (x))
 
@@ -1197,6 +1199,8 @@ _mesa_GetAttribLocationARB (GLhandleARB programObj, const GLcharARB *name)
 	RELEASE_PROGRAM(pro);
 	return loc;
 }
+
+#endif
 
 GLvoid
 _mesa_init_shaderobjects (GLcontext *ctx)

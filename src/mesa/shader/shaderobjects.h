@@ -27,6 +27,8 @@
 
 #include "context.h"
 
+#if FEATURE_ARB_shader_objects
+
 /**
  * gl2 unique interface identifier.
  * Each gl2 interface has its own interface id used for object queries.
@@ -40,7 +42,8 @@ enum gl2_uiid
    UIID_FRAGMENT_SHADER,	/* fragment shader */
    UIID_VERTEX_SHADER,		/* vertex shader */
    UIID_PROGRAM,		/* program object */
-   UIID_3DLABS_SHHANDLE		/* encapsulates 3dlabs' ShHandle */
+   UIID_3DLABS_SHHANDLE,         /* encapsulates 3DLabs' ShHandle */
+   UIID_DEBUG                    /* debug object */
 };
 
 struct gl2_unknown_intf
@@ -127,8 +130,15 @@ struct gl2_3dlabs_shhandle_intf
    GLvoid *(* GetShHandle) (struct gl2_3dlabs_shhandle_intf **);
 };
 
+struct gl2_debug_intf
+{
+   struct gl2_generic_intf _generic;
+   GLvoid (* ClearDebugLog) (struct gl2_debug_intf **, GLenum logType, GLenum shaderType);
+   GLvoid (* GetDebugLog) (struct gl2_debug_intf **, GLenum logType, GLenum shaderType,
+                           GLsizei maxLength, GLsizei *length, GLcharARB *infoLog);
+   GLsizei (* GetDebugLogLength) (struct gl2_debug_intf **, GLenum logType, GLenum shaderType);
+};
 
-#if FEATURE_ARB_shader_objects
 
 extern void GLAPIENTRY
 _mesa_DeleteObjectARB(GLhandleARB obj);
@@ -260,9 +270,9 @@ _mesa_GetAttribLocationARB (GLhandleARB, const GLcharARB *);
 
 #endif /* FEATURE_ARB_vertex_shader */
 
+#endif /* FEATURE_ARB_shader_objects */
+
 extern void
 _mesa_init_shaderobjects (GLcontext *ctx);
-
-#endif /* FEATURE_ARB_shader_objects */
 
 #endif /* SHADEROBJECTS_H */

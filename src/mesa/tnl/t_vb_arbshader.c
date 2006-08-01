@@ -34,6 +34,8 @@
 #include "slang_utility.h"
 #include "slang_link.h"
 
+#if FEATURE_ARB_vertex_shader
+
 typedef struct
 {
 	GLvector4f outputs[VERT_RESULT_MAX];
@@ -294,4 +296,6 @@ const struct tnl_pipeline_stage _tnl_arb_vertex_shader_stage = {
 	validate_arb_vertex_shader,
 	run_arb_vertex_shader
 };
+
+#endif /* FEATURE_ARB_vertex_shader */
 

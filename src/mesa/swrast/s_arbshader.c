@@ -35,6 +35,8 @@
 #include "slang_utility.h"
 #include "slang_link.h"
 
+#if FEATURE_ARB_fragment_shader
+
 void
 _swrast_exec_arbshader(GLcontext *ctx, struct sw_span *span)
 {
@@ -113,3 +115,6 @@ _swrast_exec_arbshader(GLcontext *ctx, struct sw_span *span)
       }
    }
 }
+
+#endif /* FEATURE_ARB_fragment_shader */
+

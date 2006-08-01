@@ -28,7 +28,11 @@
 
 #include "s_context.h"
 
+#if FEATURE_ARB_fragment_shader
+
 extern void _swrast_exec_arbshader (GLcontext *ctx, struct sw_span *span);
+
+#endif /* FEATURE_ARB_fragment_shader */
 
 #endif
 

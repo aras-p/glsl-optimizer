@@ -1197,12 +1197,15 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
          interpolate_fog(ctx, span);
 
       /* Compute fragment colors with fragment program or texture lookups */
+#if FEATURE_ARB_fragment_shader
       if (ctx->ShaderObjects._FragmentShaderPresent) {
          if (span->interpMask & SPAN_Z)
             _swrast_span_interpolate_z (ctx, span);
          _swrast_exec_arbshader (ctx, span);
       }
-      else if (ctx->FragmentProgram._Active) {
+      else
+#endif
+      if (ctx->FragmentProgram._Active) {
          /* frag prog may need Z values */
          if (span->interpMask & SPAN_Z)
             _swrast_span_interpolate_z(ctx, span);
@@ -1281,12 +1284,15 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
       if (span->interpMask & SPAN_FOG)
          interpolate_fog(ctx, span);
 
+#if FEATURE_ARB_fragment_shader
       if (ctx->ShaderObjects._FragmentShaderPresent) {
          if (span->interpMask & SPAN_Z)
             _swrast_span_interpolate_z (ctx, span);
          _swrast_exec_arbshader (ctx, span);
       }
-      else if (ctx->FragmentProgram._Active)
+      else
+#endif
+      if (ctx->FragmentProgram._Active)
          _swrast_exec_fragment_program( ctx, span );
       else if (ctx->ATIFragmentShader._Enabled)
          _swrast_exec_fragment_shader( ctx, span );

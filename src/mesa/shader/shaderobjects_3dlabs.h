@@ -25,6 +25,8 @@
 #ifndef SHADEROBJECTS_3DLABS_H
 #define SHADEROBJECTS_3DLABS_H
 
+#if FEATURE_ARB_shader_objects
+
 extern int _slang_fetch_discard (struct gl2_program_intf **pro, GLboolean *val);
 
 extern GLvoid _slang_exec_fragment_shader (struct gl2_program_intf **pro);
@@ -36,6 +38,11 @@ _mesa_3dlabs_create_shader_object (GLenum);
 
 extern GLhandleARB
 _mesa_3dlabs_create_program_object (GLvoid);
+
+extern GLhandleARB
+_mesa_3dlabs_create_debug_object (GLvoid);
+
+#endif /* FEATURE_ARB_shader_objects */
 
 extern void
 _mesa_init_shaderobjects_3dlabs (GLcontext *ctx);

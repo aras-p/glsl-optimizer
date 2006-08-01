@@ -2894,8 +2894,11 @@ static void
 update_texture_state( GLcontext *ctx )
 {
    GLuint unit;
+
+#if FEATURE_ARB_fragment_shader
    struct gl2_program_intf **prog = ctx->ShaderObjects.CurrentProgram;
    GLbitfield progteximageusage[MAX_TEXTURE_IMAGE_UNITS];
+#endif
 
    ctx->NewState |= _NEW_TEXTURE; /* TODO: only set this if there are 
 				   * actual changes. 
@@ -2906,6 +2909,7 @@ update_texture_state( GLcontext *ctx )
    ctx->Texture._TexMatEnabled = 0;
    ctx->Texture._TexGenEnabled = 0;
 
+#if FEATURE_ARB_fragment_shader
    /*
     * Grab texture image usage state from shader program. It must be
     * grabbed every time uniform sampler changes, so maybe there is a
@@ -2914,6 +2918,7 @@ update_texture_state( GLcontext *ctx )
    if (ctx->ShaderObjects._FragmentShaderPresent) {
       (**prog).GetTextureImageUsage (prog, progteximageusage);
    }
+#endif /* FEATURE_ARB_fragment_shader */
 
    /*
     * Update texture unit state.
@@ -2927,10 +2932,13 @@ update_texture_state( GLcontext *ctx )
       texUnit->_GenFlags = 0;
 
       /* Get the bitmask of texture enables */
+#if FEATURE_ARB_fragment_shader
       if (ctx->ShaderObjects._FragmentShaderPresent) {
          enableBits = progteximageusage[unit];
       }
-      else if (ctx->FragmentProgram._Enabled) {
+      else
+#endif
+      if (ctx->FragmentProgram._Enabled) {
          enableBits = ctx->FragmentProgram.Current->TexturesUsed[unit];
       }
       else {

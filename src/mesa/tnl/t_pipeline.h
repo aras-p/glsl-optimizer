@@ -54,7 +54,9 @@ extern const struct tnl_pipeline_stage _tnl_texture_transform_stage;
 extern const struct tnl_pipeline_stage _tnl_point_attenuation_stage;
 extern const struct tnl_pipeline_stage _tnl_arb_vertex_program_stage;
 extern const struct tnl_pipeline_stage _tnl_vertex_program_stage;
+#if FEATURE_ARB_vertex_shader
 extern const struct tnl_pipeline_stage _tnl_arb_vertex_shader_stage;
+#endif
 extern const struct tnl_pipeline_stage _tnl_render_stage;
 
 /* Shorthand to plug in the default pipeline:
