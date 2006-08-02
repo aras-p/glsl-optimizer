@@ -193,7 +193,7 @@ mmFindBlock(struct mem_block *heap, int start)
 {
    struct mem_block *p;
 
-   for (p = heap->next_free; p != heap; p = p->next_free) {
+   for (p = heap->next; p != heap; p = p->next) {
       if (p->ofs == start) 
 	 return p;
    }
