@@ -64,9 +64,20 @@ _slang_code_unit_ctr (slang_code_unit *, struct slang_code_object_ *);
 extern GLvoid
 _slang_code_unit_dtr (slang_code_unit *);
 
+#define SLANG_BUILTIN_CORE   0
+#define SLANG_BUILTIN_COMMON 1
+#define SLANG_BUILTIN_TARGET 2
+
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#define SLANG_BUILTIN_VEC4   3
+#define SLANG_BUILTIN_TOTAL  4
+#else
+#define SLANG_BUILTIN_TOTAL  3
+#endif
+
 typedef struct slang_code_object_
 {
-   slang_code_unit builtin[3];
+   slang_code_unit builtin[SLANG_BUILTIN_TOTAL];
    slang_code_unit unit;
    slang_assembly_file assembly;
    slang_machine machine;

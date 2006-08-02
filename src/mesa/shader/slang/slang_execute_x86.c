@@ -56,6 +56,7 @@ typedef struct
 	struct x86_reg r_st1;
 	struct x86_reg r_st2;
 	struct x86_reg r_st3;
+   struct x86_reg r_st4;
 	fixup *fixups;
 	GLuint fixup_count;
 	GLubyte **labels;
@@ -481,7 +482,7 @@ static GLvoid codegen_assem (codegen_ctx *G, slang_assembly *a, slang_info_log *
 	case slang_asm_exit:
 		x86_jmp (&G->f, G->l_exit);
 		break;
-	/* mesa-specific extensions */
+   /* GL_MESA_shader_debug */
    case slang_asm_float_print:
       /* TODO: use push imm32 */
       x86_mov_reg_imm (&G->f, G->r_eax, (GLint) (infolog));
@@ -503,6 +504,138 @@ static GLvoid codegen_assem (codegen_ctx *G, slang_assembly *a, slang_info_log *
 		x86_call (&G->f, (GLubyte *) do_print_bool);
       x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
 		break;
+   /* vec4 */
+   case slang_asm_float_to_vec4:
+      /* [vec4] | float */
+      x87_fld (&G->f, x86_deref (G->r_esp));
+      x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 4));
+      x86_mov (&G->f, G->r_eax, x86_deref (G->r_esp));
+      x87_fst (&G->f, x86_make_disp (G->r_eax, 12));
+      x87_fst (&G->f, x86_make_disp (G->r_eax, 8));
+      x87_fst (&G->f, x86_make_disp (G->r_eax, 4));
+      x87_fstp (&G->f, x86_deref (G->r_eax));
+      break;
+   case slang_asm_vec4_add:
+      /* [vec4] | vec4 */
+      x87_fld (&G->f, x86_deref (G->r_esp));
+      x87_fld (&G->f, x86_make_disp (G->r_esp, 4));
+      x87_fld (&G->f, x86_make_disp (G->r_esp, 8));
+      x87_fld (&G->f, x86_make_disp (G->r_esp, 12));
+      x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 16));
+      x86_mov (&G->f, G->r_eax, x86_deref (G->r_esp));
+      x87_fld (&G->f, x86_deref (G->r_eax));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 4));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 8));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 12));
+      x87_faddp (&G->f, G->r_st4);
+      x87_faddp (&G->f, G->r_st4);
+      x87_faddp (&G->f, G->r_st4);
+      x87_faddp (&G->f, G->r_st4);
+      x87_fstp (&G->f, x86_make_disp (G->r_eax, 12));
+      x87_fstp (&G->f, x86_make_disp (G->r_eax, 8));
+      x87_fstp (&G->f, x86_make_disp (G->r_eax, 4));
+      x87_fstp (&G->f, x86_deref (G->r_eax));
+      break;
+   case slang_asm_vec4_subtract:
+      /* [vec4] | vec4 */
+      x86_mov (&G->f, G->r_eax, x86_make_disp (G->r_esp, 16));
+      x87_fld (&G->f, x86_deref (G->r_eax));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 4));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 8));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 12));
+      x87_fld (&G->f, x86_deref (G->r_esp));
+      x87_fld (&G->f, x86_make_disp (G->r_esp, 4));
+      x87_fld (&G->f, x86_make_disp (G->r_esp, 8));
+      x87_fld (&G->f, x86_make_disp (G->r_esp, 12));
+      x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 16));
+      x87_fsubp (&G->f, G->r_st4);
+      x87_fsubp (&G->f, G->r_st4);
+      x87_fsubp (&G->f, G->r_st4);
+      x87_fsubp (&G->f, G->r_st4);
+      x87_fstp (&G->f, x86_make_disp (G->r_eax, 12));
+      x87_fstp (&G->f, x86_make_disp (G->r_eax, 8));
+      x87_fstp (&G->f, x86_make_disp (G->r_eax, 4));
+      x87_fstp (&G->f, x86_deref (G->r_eax));
+      break;
+   case slang_asm_vec4_multiply:
+      /* [vec4] | vec4 */
+      x87_fld (&G->f, x86_deref (G->r_esp));
+      x87_fld (&G->f, x86_make_disp (G->r_esp, 4));
+      x87_fld (&G->f, x86_make_disp (G->r_esp, 8));
+      x87_fld (&G->f, x86_make_disp (G->r_esp, 12));
+      x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 16));
+      x86_mov (&G->f, G->r_eax, x86_deref (G->r_esp));
+      x87_fld (&G->f, x86_deref (G->r_eax));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 4));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 8));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 12));
+      x87_fmulp (&G->f, G->r_st4);
+      x87_fmulp (&G->f, G->r_st4);
+      x87_fmulp (&G->f, G->r_st4);
+      x87_fmulp (&G->f, G->r_st4);
+      x87_fstp (&G->f, x86_make_disp (G->r_eax, 12));
+      x87_fstp (&G->f, x86_make_disp (G->r_eax, 8));
+      x87_fstp (&G->f, x86_make_disp (G->r_eax, 4));
+      x87_fstp (&G->f, x86_deref (G->r_eax));
+      break;
+   case slang_asm_vec4_divide:
+      /* [vec4] | vec4 */
+      x86_mov (&G->f, G->r_eax, x86_make_disp (G->r_esp, 16));
+      x87_fld (&G->f, x86_deref (G->r_eax));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 4));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 8));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 12));
+      x87_fld (&G->f, x86_deref (G->r_esp));
+      x87_fld (&G->f, x86_make_disp (G->r_esp, 4));
+      x87_fld (&G->f, x86_make_disp (G->r_esp, 8));
+      x87_fld (&G->f, x86_make_disp (G->r_esp, 12));
+      x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 16));
+      x87_fdivp (&G->f, G->r_st4);
+      x87_fdivp (&G->f, G->r_st4);
+      x87_fdivp (&G->f, G->r_st4);
+      x87_fdivp (&G->f, G->r_st4);
+      x87_fstp (&G->f, x86_make_disp (G->r_eax, 12));
+      x87_fstp (&G->f, x86_make_disp (G->r_eax, 8));
+      x87_fstp (&G->f, x86_make_disp (G->r_eax, 4));
+      x87_fstp (&G->f, x86_deref (G->r_eax));
+      break;
+   case slang_asm_vec4_negate:
+      /* [vec4] */
+      x86_mov (&G->f, G->r_eax, x86_deref (G->r_esp));
+      x87_fld (&G->f, x86_deref (G->r_eax));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 4));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 8));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 12));
+      x87_fchs (&G->f);
+      x87_fstp (&G->f, x86_make_disp (G->r_eax, 12));
+      x87_fchs (&G->f);
+      x87_fstp (&G->f, x86_make_disp (G->r_eax, 8));
+      x87_fchs (&G->f);
+      x87_fstp (&G->f, x86_make_disp (G->r_eax, 4));
+      x87_fchs (&G->f);
+      x87_fstp (&G->f, x86_deref (G->r_eax));
+      break;
+   case slang_asm_vec4_dot:
+      /* [vec4] | vec4 */
+      x87_fld (&G->f, x86_deref (G->r_esp));
+      x87_fld (&G->f, x86_make_disp (G->r_esp, 4));
+      x87_fld (&G->f, x86_make_disp (G->r_esp, 8));
+      x87_fld (&G->f, x86_make_disp (G->r_esp, 12));
+      x86_lea (&G->f, G->r_esp, x86_make_disp (G->r_esp, 16));
+      x86_mov (&G->f, G->r_eax, x86_deref (G->r_esp));
+      x87_fld (&G->f, x86_deref (G->r_eax));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 4));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 8));
+      x87_fld (&G->f, x86_make_disp (G->r_eax, 12));
+      x87_fmulp (&G->f, G->r_st4);
+      x87_fmulp (&G->f, G->r_st4);
+      x87_fmulp (&G->f, G->r_st4);
+      x87_fmulp (&G->f, G->r_st4);
+      x87_faddp (&G->f, G->r_st1);
+      x87_faddp (&G->f, G->r_st1);
+      x87_faddp (&G->f, G->r_st1);
+      x87_fstp (&G->f, x86_deref (G->r_eax));
+      break;
 	default:
 		assert (0);
 	}
@@ -513,6 +646,13 @@ GLboolean _slang_x86_codegen (slang_machine *mach, slang_assembly_file *file, GL
 	codegen_ctx G;
 	GLubyte *j_body, *j_exit;
 	GLuint i;
+
+   /* Free the old code - if any.
+    */
+   if (mach->x86.compiled_func != NULL) {
+      _mesa_exec_free (mach->x86.compiled_func);
+      mach->x86.compiled_func = NULL;
+   }
 
 	/*
 	 * We need as much as 1M because *all* assembly, including built-in library, is
@@ -530,6 +670,7 @@ GLboolean _slang_x86_codegen (slang_machine *mach, slang_assembly_file *file, GL
 	G.r_st1 = x86_make_reg (file_x87, 1);
 	G.r_st2 = x86_make_reg (file_x87, 2);
 	G.r_st3 = x86_make_reg (file_x87, 3);
+   G.r_st4 = x86_make_reg (file_x87, 4);
 	G.fixups = NULL;
 	G.fixup_count = 0;
 	G.labels = (GLubyte **) slang_alloc_malloc (file->count * sizeof (GLubyte *));
@@ -591,8 +732,6 @@ GLboolean _slang_x86_codegen (slang_machine *mach, slang_assembly_file *file, GL
 	slang_alloc_free (G.labels);
 
 	/* install new code */
-	if (mach->x86.compiled_func != NULL)
-		_mesa_exec_free (mach->x86.compiled_func);
 	mach->x86.compiled_func = (GLvoid (*) (slang_machine *)) x86_get_func (&G.f);
 
 	return GL_TRUE;

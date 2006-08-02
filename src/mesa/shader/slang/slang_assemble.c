@@ -652,10 +652,19 @@ static const struct
 	{ "vec4_texcube",   slang_asm_vec4_texcube,   slang_asm_none },
 	{ "vec4_shad1d",    slang_asm_vec4_shad1d,    slang_asm_none },
 	{ "vec4_shad2d",    slang_asm_vec4_shad2d,    slang_asm_none },
-	/* mesa-specific extensions */
+   /* GL_MESA_shader_debug */
 	{ "float_print",    slang_asm_float_deref,    slang_asm_float_print },
 	{ "int_print",      slang_asm_int_deref,      slang_asm_int_print },
 	{ "bool_print",     slang_asm_bool_deref,     slang_asm_bool_print },
+   /* vec4 */
+   { "float_to_vec4",  slang_asm_float_to_vec4,  slang_asm_none },
+   { "vec4_add",       slang_asm_vec4_add,       slang_asm_none },
+   { "vec4_subtract",  slang_asm_vec4_subtract,  slang_asm_none },
+   { "vec4_multiply",  slang_asm_vec4_multiply,  slang_asm_none },
+   { "vec4_divide",    slang_asm_vec4_divide,    slang_asm_none },
+   { "vec4_negate",    slang_asm_vec4_negate,    slang_asm_none },
+   { "vec4_dot",       slang_asm_vec4_dot,       slang_asm_none },
+
 	{ NULL,             slang_asm_none,           slang_asm_none }
 };
 

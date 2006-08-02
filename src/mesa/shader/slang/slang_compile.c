@@ -80,9 +80,10 @@ _slang_code_unit_dtr (slang_code_unit *self)
 GLvoid
 _slang_code_object_ctr (slang_code_object *self)
 {
-   _slang_code_unit_ctr (&self->builtin[0], self);
-   _slang_code_unit_ctr (&self->builtin[1], self);
-   _slang_code_unit_ctr (&self->builtin[2], self);
+   GLuint i;
+
+   for (i = 0; i < SLANG_BUILTIN_TOTAL; i++)
+      _slang_code_unit_ctr (&self->builtin[i], self);
    _slang_code_unit_ctr (&self->unit, self);
    _slang_assembly_file_ctr (&self->assembly);
    slang_machine_ctr (&self->machine);
@@ -97,9 +98,10 @@ _slang_code_object_ctr (slang_code_object *self)
 GLvoid
 _slang_code_object_dtr (slang_code_object *self)
 {
-   _slang_code_unit_dtr (&self->builtin[0]);
-   _slang_code_unit_dtr (&self->builtin[1]);
-   _slang_code_unit_dtr (&self->builtin[2]);
+   GLuint i;
+
+   for (i = 0; i < SLANG_BUILTIN_TOTAL; i++)
+      _slang_code_unit_dtr (&self->builtin[i]);
    _slang_code_unit_dtr (&self->unit);
    slang_assembly_file_destruct (&self->assembly);
    slang_machine_dtr (&self->machine);
@@ -1675,18 +1677,22 @@ static int parse_init_declarator (slang_parse_ctx *C, slang_output_ctx *O,
 	}
 
 	/* initialize global variable */
-	if (C->global_scope && var->initializer != NULL)
-	{
-		slang_assemble_ctx A;
+   if (C->global_scope) {
+      if (var->initializer != NULL) {
+         slang_assemble_ctx A;
 
-		A.file = O->assembly;
-		A.mach = O->machine;
-		A.atoms = C->atoms;
-		A.space.funcs = O->funs;
-		A.space.structs = O->structs;
-		A.space.vars = O->vars;
-		if (!initialize_global (&A, var))
-			return 0;
+         A.file = O->assembly;
+         A.mach = O->machine;
+         A.atoms = C->atoms;
+         A.space.funcs = O->funs;
+         A.space.structs = O->structs;
+         A.space.vars = O->vars;
+         if (!initialize_global (&A, var))
+            return 0;
+      }
+      else {
+         _mesa_memset ((GLubyte *) (O->machine->mem) + var->address, 0, var->size);
+      }
 	}
 	return 1;
 }
@@ -1880,11 +1886,6 @@ parse_code_unit (slang_parse_ctx *C, slang_code_unit *unit)
 	return 1;
 }
 
-#define BUILTIN_CORE 0
-#define BUILTIN_COMMON 1
-#define BUILTIN_TARGET 2
-#define BUILTIN_TOTAL 3
-
 static GLboolean
 compile_binary (const byte *prod, slang_code_unit *unit, slang_unit_type type,
                 slang_info_log *infolog, slang_code_unit *builtin, slang_code_unit *downlink)
@@ -1935,7 +1936,7 @@ compile_with_grammar (grammar id, const char *source, slang_code_unit *unit, sla
 	}
 
 	/* syntax is okay - translate it to internal representation */
-   if (!compile_binary (prod, unit, type, infolog, builtin, &builtin[BUILTIN_TARGET])) {
+   if (!compile_binary (prod, unit, type, infolog, builtin, &builtin[SLANG_BUILTIN_TOTAL - 1])) {
       grammar_alloc_free (prod);
       return GL_FALSE;
    }
@@ -1963,6 +1964,12 @@ static const byte slang_fragment_builtin_gc[] = {
 static const byte slang_vertex_builtin_gc[] = {
 #include "library/slang_vertex_builtin_gc.h"
 };
+
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+static const byte slang_builtin_vec4_gc[] = {
+#include "library/slang_builtin_vec4_gc.h"
+};
+#endif
 
 static GLboolean
 compile_object (grammar *id, const char *source, slang_code_object *object, slang_unit_type type,
@@ -1995,31 +2002,39 @@ compile_object (grammar *id, const char *source, slang_code_object *object, slan
 	if (type == slang_unit_fragment_shader || type == slang_unit_vertex_shader)
 	{
 		/* compile core functionality first */
-      if (!compile_binary (slang_core_gc, &object->builtin[BUILTIN_CORE],
+      if (!compile_binary (slang_core_gc, &object->builtin[SLANG_BUILTIN_CORE],
                            slang_unit_fragment_builtin, infolog, NULL, NULL))
          return GL_FALSE;
 
 		/* compile common functions and variables, link to core */
-      if (!compile_binary (slang_common_builtin_gc, &object->builtin[BUILTIN_COMMON],
+      if (!compile_binary (slang_common_builtin_gc, &object->builtin[SLANG_BUILTIN_COMMON],
                            slang_unit_fragment_builtin, infolog, NULL,
-                           &object->builtin[BUILTIN_CORE]))
+                           &object->builtin[SLANG_BUILTIN_CORE]))
          return GL_FALSE;
 
 		/* compile target-specific functions and variables, link to common */
 		if (type == slang_unit_fragment_shader)
 		{
-         if (!compile_binary (slang_fragment_builtin_gc, &object->builtin[BUILTIN_TARGET],
+         if (!compile_binary (slang_fragment_builtin_gc, &object->builtin[SLANG_BUILTIN_TARGET],
                               slang_unit_fragment_builtin, infolog, NULL,
-                              &object->builtin[BUILTIN_COMMON]))
+                              &object->builtin[SLANG_BUILTIN_COMMON]))
             return GL_FALSE;
 		}
 		else if (type == slang_unit_vertex_shader)
 		{
-         if (!compile_binary (slang_vertex_builtin_gc, &object->builtin[BUILTIN_TARGET],
+         if (!compile_binary (slang_vertex_builtin_gc, &object->builtin[SLANG_BUILTIN_TARGET],
                               slang_unit_vertex_builtin, infolog, NULL,
-                              &object->builtin[BUILTIN_COMMON]))
+                              &object->builtin[SLANG_BUILTIN_COMMON]))
             return GL_FALSE;
 		}
+
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+      /* compile x86 4-component vector overrides, link to target */
+      if (!compile_binary (slang_builtin_vec4_gc, &object->builtin[SLANG_BUILTIN_VEC4],
+                           slang_unit_fragment_builtin, infolog, NULL,
+                           &object->builtin[SLANG_BUILTIN_TARGET]))
+         return GL_FALSE;
+#endif
 
 		/* disable language extensions */
 		grammar_set_reg8 (*id, (const byte *) "parsing_builtin", 0);
