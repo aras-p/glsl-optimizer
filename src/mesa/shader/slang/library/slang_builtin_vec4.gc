@@ -1,0 +1,220 @@
+/*
+ * Mesa 3-D graphics library
+ * Version:  6.5
+ *
+ * Copyright (C) 2006  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+//
+// This file overrides most of the standard built-in functions that operate on vec4 data type.
+// This file also overrides most commonly used functions that do not neccessarily operate
+// on vec4 data type, like dot(vec3,vec3). Those are adapted to vec4 instructions and are believed
+// to execute faster.
+// This file replaces parts of the core.gc and common.gc, so it must be included somewhere after
+// the common.gc file.
+// 
+// Assembly instructions required:
+//   float_to_vec4
+//   vec4_add
+//   vec4_subtract
+//   vec4_multiply
+//   vec4_divide
+//   vec4_negate
+//   vec4_dot
+//
+
+
+vec4 __constructor (const float f) {
+    vec4 v;
+    __asm float_to_vec4 v, f;
+    return v;
+}
+
+
+void __operator += (inout vec4 v, const vec4 u) {
+    __asm vec4_add v, u;
+}
+
+void __operator -= (inout vec4 v, const vec4 u) {
+    __asm vec4_subtract v, u;
+}
+
+void __operator *= (inout vec4 v, const vec4 u) {
+    __asm vec4_multiply v, u;
+}
+
+void __operator /= (inout vec4 v, const vec4 u) {
+    __asm vec4_divide v, u;
+}
+
+
+void __operator += (inout vec4 v, const float a) {
+    vec4 u;
+    __asm float_to_vec4 u, a;
+    __asm vec4_add      v, u;
+}
+
+void __operator -= (inout vec4 v, const float a) {
+    vec4 u;
+    __asm float_to_vec4 u, a;
+    __asm vec4_subtract v, u;
+}
+
+void __operator *= (inout vec4 v, const float a) {
+    vec4 u;
+    __asm float_to_vec4 u, a;
+    __asm vec4_multiply v, u;
+}
+
+void __operator /= (inout vec4 v, const float a) {
+    vec4 u;
+    __asm float_to_vec4 u, a;
+    __asm vec4_divide   v, u;
+}
+
+
+vec4 __operator + (vec4 v, const vec4 u) {
+    __asm vec4_add v, u;
+    return v;
+}
+
+vec4 __operator - (vec4 v, const vec4 u) {
+    __asm vec4_subtract v, u;
+    return v;
+}
+
+vec4 __operator * (vec4 v, const vec4 u) {
+    __asm vec4_multiply v, u;
+    return v;
+}
+
+vec4 __operator / (vec4 v, const vec4 u) {
+    __asm vec4_divide v, u;
+    return v;
+}
+
+
+vec4 __operator + (const float a, const vec4 u) {
+    vec4 v;
+    __asm float_to_vec4 v, a;
+    __asm vec4_add      v, u;
+    return v;
+}
+
+vec4 __operator + (const vec4 v, const float b) {
+    vec4 u;
+    __asm float_to_vec4 u, b;
+    __asm vec4_add      u, v;
+    return u;
+}
+
+vec4 __operator - (const float a, const vec4 u) {
+    vec4 v;
+    __asm float_to_vec4 v, a;
+    __asm vec4_subtract v, u;
+    return v;
+}
+
+vec4 __operator - (vec4 v, const float b) {
+    vec4 u;
+    __asm float_to_vec4 u, b;
+    __asm vec4_subtract v, u;
+    return v;
+}
+
+vec4 __operator * (const float a, const vec4 u) {
+    vec4 v;
+    __asm float_to_vec4 v, a;
+    __asm vec4_multiply v, u;
+    return v;
+}
+
+vec4 __operator * (const vec4 v, const float b) {
+    vec4 u;
+    __asm float_to_vec4 u, b;
+    __asm vec4_multiply u, v;
+    return u;
+}
+
+vec4 __operator / (const float a, const vec4 u) {
+    vec4 v;
+    __asm float_to_vec4 v, a;
+    __asm vec4_divide   v, u;
+    return v;
+}
+
+vec4 __operator / (vec4 v, const float b) {
+    vec4 u;
+    __asm float_to_vec4 u, b;
+    __asm vec4_divide   v, u;
+    return v;
+}
+
+
+vec4 __operator - (vec4 v) {
+    __asm vec4_negate v;
+    return v;
+}
+
+
+float dot (vec3 v, vec3 u) {
+    vec4 v4 = vec4 (v, 0.0);
+    vec4 u4 = vec4 (u, 0.0);
+    __asm vec4_dot v4, u4;
+    return v4.x;
+}
+
+float dot (vec4 v, vec4 u) {
+    __asm vec4_dot v, u;
+    return v.x;
+}
+
+
+float length (vec3 v) {
+    vec4 u = vec4 (v, 0.0);
+    __asm vec4_dot u, u;
+    return sqrt (u.x);
+}
+
+float length (vec4 v) {
+    __asm vec4_dot v, v;
+    return sqrt (v.x);
+}
+
+
+vec3 normalize (vec3 v) {
+    vec4 u = vec4 (v, 0.0);
+    vec4 w = u;
+    __asm vec4_dot      u, u;
+    float l = sqrt (u.x);
+    __asm float_to_vec4 u, l;
+    __asm vec4_divide   w, u;
+    return w.xyz;
+}
+
+vec4 normalize (vec4 v) {
+    vec4 w = v;
+    __asm vec4_dot      v, v;
+    float l = sqrt (v.x);
+    __asm float_to_vec4 v, l;
+    __asm vec4_divide   w, v;
+    return w;
+}
+
