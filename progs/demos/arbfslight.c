@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <GL/gl.h>
 #include <GL/glut.h>
 #include <GL/glext.h>
@@ -56,7 +57,16 @@ static PFNGLATTACHOBJECTARBPROC glAttachObjectARB = NULL;
 static PFNGLLINKPROGRAMARBPROC glLinkProgramARB = NULL;
 static PFNGLUSEPROGRAMOBJECTARBPROC glUseProgramObjectARB = NULL;
 static PFNGLGETUNIFORMLOCATIONARBPROC glGetUniformLocationARB = NULL;
-static PFNGLUNIFORM4FVARBPROC glUniform4fvARB = NULL;
+static PFNGLUNIFORM3FVARBPROC glUniform3fvARB = NULL;
+static PFNGLUNIFORM3FVARBPROC glUniform4fvARB = NULL;
+
+static void normalize (GLfloat *dst, const GLfloat *src)
+{
+   GLfloat len = sqrtf (src[0] * src[0] + src[1] * src[1] + src[2] * src[2]);
+   dst[0] = src[0] / len;
+   dst[1] = src[1] / len;
+   dst[2] = src[2] / len;
+}
 
 static void Redisplay (void)
 {
@@ -64,8 +74,11 @@ static void Redisplay (void)
 
 	if (pixelLight)
 	{
+      GLfloat vec[3];
+
 		glUseProgramObjectARB (program);
-		glUniform4fvARB (uLightPos, 1, lightPos);
+      normalize (vec, lightPos);
+      glUniform3fvARB (uLightPos, 1, vec);
 		glDisable(GL_LIGHTING);
 	}
 	else
@@ -186,24 +199,25 @@ static void SpecialKey (int key, int x, int y)
 
 static void Init (void)
 {
-	static const char *fragShaderText =
-		"uniform vec4 lightPos;\n"
-		"uniform vec4 diffuse;\n"
-		"uniform vec4 specular;\n"
-		"void main () {\n"
-		"	// Compute dot product of light direction and normal vector\n"
-		"	float dotProd;\n"
-		"	dotProd = clamp (dot (normalize (lightPos).xyz, normalize (gl_TexCoord[0]).xyz), 0.0, 1.0);\n"
-		"	// Compute diffuse and specular contributions\n"
-		"	gl_FragColor = diffuse * dotProd + specular * pow (dotProd, 20.0);\n"
-		"}\n"
-	;
-	static const char *vertShaderText =
-		"void main () {\n"
-		"	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
-		"	gl_TexCoord[0] = vec4 (gl_NormalMatrix * gl_Normal, 1.0);\n"
-		"}\n"
-	;
+   static const char *fragShaderText =
+      "uniform vec3 lightPos;\n"
+      "uniform vec4 diffuse;\n"
+      "uniform vec4 specular;\n"
+      "varying vec3 normal;\n"
+      "void main () {\n"
+      "   // Compute dot product of light direction and normal vector\n"
+      "   float dotProd = max (dot (lightPos, normalize (normal)), 0.0);\n"
+      "   // Compute diffuse and specular contributions\n"
+      "   gl_FragColor = diffuse * dotProd + specular * pow (dotProd, 20.0);\n"
+      "}\n"
+   ;
+   static const char *vertShaderText =
+      "varying vec3 normal;\n"
+      "void main () {\n"
+      "   gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
+      "   normal = gl_NormalMatrix * gl_Normal;\n"
+      "}\n"
+   ;
 
 	if (!glutExtensionSupported ("GL_ARB_fragment_shader"))
 	{
@@ -234,7 +248,8 @@ static void Init (void)
 	glLinkProgramARB = (PFNGLLINKPROGRAMARBPROC) GETPROCADDRESS ("glLinkProgramARB");
 	glUseProgramObjectARB = (PFNGLUSEPROGRAMOBJECTARBPROC) GETPROCADDRESS ("glUseProgramObjectARB");
 	glGetUniformLocationARB = (PFNGLGETUNIFORMLOCATIONARBPROC) GETPROCADDRESS ("glGetUniformLocationARB");
-	glUniform4fvARB = (PFNGLUNIFORM4FVARBPROC) GETPROCADDRESS ("glUniform4fvARB");
+   glUniform3fvARB = (PFNGLUNIFORM3FVARBPROC) GETPROCADDRESS ("glUniform3fvARB");
+   glUniform4fvARB = (PFNGLUNIFORM3FVARBPROC) GETPROCADDRESS ("glUniform4fvARB");
 
 	fragShader = glCreateShaderObjectARB (GL_FRAGMENT_SHADER_ARB);
 	glShaderSourceARB (fragShader, 1, &fragShaderText, NULL);
@@ -254,8 +269,8 @@ static void Init (void)
 	uDiffuse = glGetUniformLocationARB (program, "diffuse");
 	uSpecular = glGetUniformLocationARB (program, "specular");
 
-	glUniform4fvARB (uDiffuse, 1, diffuse);
-	glUniform4fvARB (uSpecular, 1, specular);
+   glUniform4fvARB (uDiffuse, 1, diffuse);
+   glUniform4fvARB (uSpecular, 1, specular);
 
 	glClearColor (0.3f, 0.3f, 0.3f, 0.0f);
 	glEnable (GL_DEPTH_TEST);
