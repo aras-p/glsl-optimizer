@@ -1400,3 +1400,155 @@ true
 2.3
 2.4
 
+
+$ /*
+$ --------------------------------------------------------------------------------------------------
+$ Test vec4 extension operations.
+$ */
+
+$program VEC4 EXTENSION OPERATIONS
+
+$attrib gl_Vertex
+0.0 0.0 0.0 1.0
+
+$attrib _One
+1.1 0.0 0.0 0.0
+
+$attrib _Two4
+2.1 2.2 2.3 2.4
+
+$attrib _Three4
+3.1 3.2 3.3 3.4
+
+$vertex
+
+$code
+
+attribute float _One;
+attribute vec4 _Two4;
+attribute vec4 _Three4;
+
+void main () {
+   gl_Position = gl_ModelViewMatrix * gl_Vertex;
+   gl_FrontColor = vec4 (1.0);
+
+   printMESA (_One);
+   printMESA (_Two4);
+   printMESA (_Three4);
+
+   printMESA (vec4 (_One));
+
+   printMESA (_Two4 + _Three4);
+   printMESA (_Two4 - _Three4);
+   printMESA (_Two4 * _Three4);
+   printMESA (_Two4 / _Three4);
+
+   printMESA (_Two4 + _One);
+   printMESA (_Two4 - _One);
+   printMESA (_Two4 * _One);
+   printMESA (_Two4 / _One);
+
+   printMESA (_One + _Two4);
+   printMESA (_One - _Two4);
+   printMESA (_One * _Two4);
+   printMESA (_One / _Two4);
+
+   printMESA (-_Three4);
+
+   printMESA (dot (_Two4.xyz, _Three4.xyz));
+   printMESA (dot (_Two4, _Three4));
+
+   printMESA (length (_Two4.xyz));
+   printMESA (length (_Three4));
+
+   printMESA (normalize (_Two4.xyz));
+   printMESA (normalize (_Three4));
+}
+
+$output
+
+1.1
+2.1
+2.2
+2.3
+2.4
+3.1
+3.2
+3.3
+3.4
+
+1.1
+1.1
+1.1
+1.1
+
+5.2
+5.4
+5.6
+5.8
+-1.0
+-1.0
+-1.0
+-1.0
+6.51
+7.04
+7.59
+8.16
+0.677419
+0.6875
+0.69697
+0.705882
+
+3.2
+3.3
+3.4
+3.5
+1.0
+1.1
+1.2
+1.3
+2.31
+2.42
+2.53
+2.64
+1.909091
+2.0
+2.090909
+2.181818
+
+3.2
+3.3
+3.4
+3.5
+-1.0
+-1.1
+-1.2
+-1.3
+2.31
+2.42
+2.53
+2.64
+0.52381
+0.5
+0.478261
+0.458333
+
+-3.1
+-3.2
+-3.3
+-3.4
+
+21.14
+29.3
+
+3.813135
+6.503845
+
+0.550728
+0.576953
+0.603178
+0.476641
+0.492017
+0.507392
+0.522768
+
