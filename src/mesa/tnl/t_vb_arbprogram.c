@@ -187,10 +187,10 @@ static void do_MSK( struct arb_vp_machine *m, union instruction op )
    GLfloat *dst = m->File[0][op.msk.dst];
    const GLfloat *arg = m->File[op.msk.file][op.msk.idx];
  
-   if (op.msk.mask & 0x1) dst[0] = arg[0];
-   if (op.msk.mask & 0x2) dst[1] = arg[1];
-   if (op.msk.mask & 0x4) dst[2] = arg[2];
-   if (op.msk.mask & 0x8) dst[3] = arg[3];
+   if (op.msk.mask & WRITEMASK_X) dst[0] = arg[0];
+   if (op.msk.mask & WRITEMASK_Y) dst[1] = arg[1];
+   if (op.msk.mask & WRITEMASK_Z) dst[2] = arg[2];
+   if (op.msk.mask & WRITEMASK_W) dst[3] = arg[3];
 }
 
 
@@ -548,10 +548,10 @@ static void do_NOP( struct arb_vp_machine *m, union instruction op )
 static void print_mask( GLuint mask )
 {
    _mesa_printf(".");
-   if (mask&0x1) _mesa_printf("x");
-   if (mask&0x2) _mesa_printf("y");
-   if (mask&0x4) _mesa_printf("z");
-   if (mask&0x8) _mesa_printf("w");
+   if (mask & WRITEMASK_X) _mesa_printf("x");
+   if (mask & WRITEMASK_Y) _mesa_printf("y");
+   if (mask & WRITEMASK_Z) _mesa_printf("z");
+   if (mask & WRITEMASK_W) _mesa_printf("w");
 }
 
 static void print_reg( GLuint file, GLuint reg )
