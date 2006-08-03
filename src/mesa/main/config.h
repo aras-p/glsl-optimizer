@@ -5,7 +5,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -308,6 +308,7 @@
 #define FEATURE_ATI_fragment_shader _HAVE_FULL_GL
 #define FEATURE_EXT_framebuffer_object _HAVE_FULL_GL
 #define FEATURE_EXT_framebuffer_blit _HAVE_FULL_GL
+#define FEATURE_EXT_texture_sRGB _HAVE_FULL_GL
 /*@}*/
 
 

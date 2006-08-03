@@ -2164,6 +2164,41 @@ _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
 }
 
 
+#if FEATURE_EXT_texture_sRGB
+GLboolean
+_mesa_texstore_srgb8(TEXSTORE_PARAMS)
+{
+   /* XXX to do */
+   _mesa_problem(ctx, "_mesa_texstore_srgb8 not finished");
+   return GL_FALSE;
+}
+
+GLboolean
+_mesa_texstore_srgba8(TEXSTORE_PARAMS)
+{
+   /* XXX to do */
+   _mesa_problem(ctx, "_mesa_texstore_srgb8 not finished");
+   return GL_FALSE;
+}
+
+GLboolean
+_mesa_texstore_sl8(TEXSTORE_PARAMS)
+{
+   /* XXX to do */
+   _mesa_problem(ctx, "_mesa_texstore_srgb8 not finished");
+   return GL_FALSE;
+}
+
+GLboolean
+_mesa_texstore_sla8(TEXSTORE_PARAMS)
+{
+   /* XXX to do */
+   _mesa_problem(ctx, "_mesa_texstore_srgb8 not finished");
+   return GL_FALSE;
+}
+
+#endif /* FEATURE_EXT_texture_sRGB */
+
 
 /**
  * Check if an unpack PBO is active prior to fetching a texture image.

@@ -67,6 +67,12 @@ extern GLboolean _mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_rgba_dxt1(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_rgba_dxt3(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS);
+#if FEATURE_EXT_texture_sRGB
+extern GLboolean _mesa_texstore_srgb8(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_srgba8(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_sl8(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_sla8(TEXSTORE_PARAMS);
+#endif
 
 
 extern GLchan *

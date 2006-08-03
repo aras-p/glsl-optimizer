@@ -2112,7 +2112,9 @@ struct gl_shared_state
    struct _mesa_HashTable *BufferObjects;
 #endif
 
+#if FEATURE_ARB_shader_objects
    struct _mesa_HashTable *GL2Objects;
+#endif
 
 #if FEATURE_EXT_framebuffer_object
    struct _mesa_HashTable *RenderBuffers;
@@ -2473,6 +2475,7 @@ struct gl_extensions
    GLboolean EXT_texture_filter_anisotropic;
    GLboolean EXT_texture_lod_bias;
    GLboolean EXT_texture_mirror_clamp;
+   GLboolean EXT_texture_sRGB;
    GLboolean EXT_timer_query;
    GLboolean EXT_vertex_array;
    GLboolean EXT_vertex_array_set;

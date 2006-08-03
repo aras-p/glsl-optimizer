@@ -1174,6 +1174,103 @@ static void store_texel_ci8(struct gl_texture_image *texImage,
 #endif
 
 
+#if FEATURE_EXT_texture_sRGB
+
+/* Fetch texel from 1D, 2D or 3D srgb8 texture, return 4 GLfloats */
+static void FETCH(srgb8)(const struct gl_texture_image *texImage,
+                         GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
+   texel[RCOMP] = nonlinear_to_linear(src[0]);
+   texel[GCOMP] = nonlinear_to_linear(src[1]);
+   texel[BCOMP] = nonlinear_to_linear(src[2]);
+   texel[ACOMP] = CHAN_MAX;
+}
+
+#if DIM == 3
+static void store_texel_srgb8(struct gl_texture_image *texImage,
+                              GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLubyte *rgba = (const GLubyte *) texel;
+   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
+   dst[0] = rgba[RCOMP]; /* no conversion */
+   dst[1] = rgba[GCOMP];
+   dst[2] = rgba[BCOMP];
+}
+#endif
+
+/* Fetch texel from 1D, 2D or 3D srgba8 texture, return 4 GLfloats */
+static void FETCH(srgba8)(const struct gl_texture_image *texImage,
+                          GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 4);
+   texel[RCOMP] = nonlinear_to_linear(src[0]);
+   texel[GCOMP] = nonlinear_to_linear(src[1]);
+   texel[BCOMP] = nonlinear_to_linear(src[2]);
+   texel[ACOMP] = UBYTE_TO_FLOAT(src[3]); /* linear! */
+}
+
+#if DIM == 3
+static void store_texel_srgba8(struct gl_texture_image *texImage,
+                               GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLubyte *rgba = (const GLubyte *) texel;
+   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 4);
+   dst[0] = rgba[RCOMP];
+   dst[1] = rgba[GCOMP];
+   dst[2] = rgba[BCOMP];
+}
+#endif
+
+/* Fetch texel from 1D, 2D or 3D sl8 texture, return 4 GLfloats */
+static void FETCH(sl8)(const struct gl_texture_image *texImage,
+                       GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
+   texel[RCOMP] = 
+   texel[GCOMP] = 
+   texel[BCOMP] = nonlinear_to_linear(src[0]);
+   texel[ACOMP] = CHAN_MAX;
+}
+
+#if DIM == 3
+static void store_texel_sl8(struct gl_texture_image *texImage,
+                            GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLubyte *rgba = (const GLubyte *) texel;
+   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
+   dst[0] = rgba[RCOMP];
+}
+#endif
+
+/* Fetch texel from 1D, 2D or 3D sla8 texture, return 4 GLfloats */
+static void FETCH(sla8)(const struct gl_texture_image *texImage,
+                       GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 2);
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = nonlinear_to_linear(src[0]);
+   texel[ACOMP] = UBYTE_TO_FLOAT(src[1]); /* linear */
+}
+
+#if DIM == 3
+static void store_texel_sla8(struct gl_texture_image *texImage,
+                            GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLubyte *rgba = (const GLubyte *) texel;
+   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 2);
+   dst[0] = rgba[RCOMP];
+   dst[1] = rgba[ACOMP];
+}
+#endif
+
+
+
+#endif /* FEATURE_EXT_texture_sRGB */
+
+
+
 /* MESA_FORMAT_YCBCR *********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D ycbcr texture, return 4 GLchans */

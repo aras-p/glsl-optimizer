@@ -37,6 +37,38 @@
 #include "texstore.h"
 
 
+#if FEATURE_EXT_texture_sRGB
+
+/**
+ * Convert an 8-bit sRGB value from non-linear space to a
+ * linear RGB value in [0, 1].
+ * Implemented with a 256-entry lookup table.
+ */
+static INLINE GLfloat
+nonlinear_to_linear(GLubyte cs8)
+{
+   static GLfloat table[256];
+   static GLboolean tableReady = GL_FALSE;
+   if (!tableReady) {
+      /* compute lookup table now */
+      GLuint i;
+      for (i = 0; i < 256; i++) {
+         const GLfloat cs = UBYTE_TO_FLOAT(i);
+         if (cs <= 0.04045) {
+            table[i] = cs / 12.92;
+         }
+         else {
+            table[i] = _mesa_pow((cs + 0.055) / 1.055, 2.4);
+         }
+      }
+      tableReady = GL_TRUE;
+   }
+   return table[cs8];
+}
+
+
+#endif /* FEATURE_EXT_texture_sRGB */
+
 
 /* Texel fetch routines for all supported formats
  */
@@ -250,6 +282,106 @@ const struct gl_texture_format _mesa_texformat_intensity = {
    store_texel_intensity		/* StoreTexel */
 };
 
+
+#if FEATURE_EXT_texture_sRGB
+
+const struct gl_texture_format _mesa_texformat_srgb8 = {
+   MESA_FORMAT_SRGB8,			/* MesaFormat */
+   GL_RGB,				/* BaseFormat */
+   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
+   8,					/* RedBits */
+   8,					/* GreenBits */
+   8,					/* BlueBits */
+   0,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   0,					/* StencilBits */
+   3,					/* TexelBytes */
+   _mesa_texstore_srgb8,		/* StoreTexImageFunc */
+   NULL,				/* FetchTexel1D */
+   NULL,				/* FetchTexel2D */
+   NULL,				/* FetchTexel3D */
+   fetch_texel_1d_srgb8,		/* FetchTexel1Df */
+   fetch_texel_2d_srgb8,		/* FetchTexel2Df */
+   fetch_texel_3d_srgb8,		/* FetchTexel3Df */
+   store_texel_srgb8			/* StoreTexel */
+};
+
+const struct gl_texture_format _mesa_texformat_srgba8 = {
+   MESA_FORMAT_SRGBA8,			/* MesaFormat */
+   GL_RGBA,				/* BaseFormat */
+   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
+   8,					/* RedBits */
+   8,					/* GreenBits */
+   8,					/* BlueBits */
+   8,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   0,					/* StencilBits */
+   4,					/* TexelBytes */
+   _mesa_texstore_srgba8,		/* StoreTexImageFunc */
+   NULL,				/* FetchTexel1D */
+   NULL,				/* FetchTexel2D */
+   NULL,				/* FetchTexel3D */
+   fetch_texel_1d_srgba8,		/* FetchTexel1Df */
+   fetch_texel_2d_srgba8,		/* FetchTexel2Df */
+   fetch_texel_3d_srgba8,		/* FetchTexel3Df */
+   store_texel_srgba8			/* StoreTexel */
+};
+
+const struct gl_texture_format _mesa_texformat_sl8 = {
+   MESA_FORMAT_SL8,			/* MesaFormat */
+   GL_LUMINANCE,			/* BaseFormat */
+   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
+   0,					/* RedBits */
+   0,					/* GreenBits */
+   0,					/* BlueBits */
+   0,					/* AlphaBits */
+   8,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   0,					/* StencilBits */
+   1,					/* TexelBytes */
+   _mesa_texstore_sl8,			/* StoreTexImageFunc */
+   NULL,				/* FetchTexel1D */
+   NULL,				/* FetchTexel2D */
+   NULL,				/* FetchTexel3D */
+   fetch_texel_1d_sl8,			/* FetchTexel1Df */
+   fetch_texel_2d_sl8,			/* FetchTexel2Df */
+   fetch_texel_3d_sl8,			/* FetchTexel3Df */
+   store_texel_sl8			/* StoreTexel */
+};
+
+const struct gl_texture_format _mesa_texformat_sla8 = {
+   MESA_FORMAT_SLA8,			/* MesaFormat */
+   GL_LUMINANCE_ALPHA,			/* BaseFormat */
+   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
+   0,					/* RedBits */
+   0,					/* GreenBits */
+   0,					/* BlueBits */
+   8,					/* AlphaBits */
+   8,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   0,					/* StencilBits */
+   2,					/* TexelBytes */
+   _mesa_texstore_sla8,			/* StoreTexImageFunc */
+   NULL,				/* FetchTexel1D */
+   NULL,				/* FetchTexel2D */
+   NULL,				/* FetchTexel3D */
+   fetch_texel_1d_sla8,			/* FetchTexel1Df */
+   fetch_texel_2d_sla8,			/* FetchTexel2Df */
+   fetch_texel_3d_sla8,			/* FetchTexel3Df */
+   store_texel_sla8			/* StoreTexel */
+};
+
+#endif /* FEATURE_EXT_texture_sRGB */
 
 const struct gl_texture_format _mesa_texformat_rgba_float32 = {
    MESA_FORMAT_RGBA_FLOAT32,		/* MesaFormat */
@@ -1397,6 +1529,42 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
             ; /* fallthrough */
       }
    }
+
+#if FEATURE_EXT_texture_sRGB
+   if (ctx->Extensions.EXT_texture_sRGB) {
+      switch (internalFormat) {
+         case GL_SRGB_EXT:
+         case GL_SRGB8_EXT:
+            return &_mesa_texformat_srgb8;
+         case GL_SRGB_ALPHA_EXT:
+         case GL_SRGB8_ALPHA8_EXT:
+            return &_mesa_texformat_srgba8;
+         case GL_SLUMINANCE_EXT:
+         case GL_SLUMINANCE8_EXT:
+            return &_mesa_texformat_sl8;
+         case GL_SLUMINANCE_ALPHA_EXT:
+         case GL_SLUMINANCE8_ALPHA8_EXT:
+            return &_mesa_texformat_sla8;
+         /* NOTE: not supporting any compression of sRGB at this time */
+         case GL_COMPRESSED_SRGB_EXT:
+            return &_mesa_texformat_srgb8;
+         case GL_COMPRESSED_SRGB_ALPHA_EXT:
+            return &_mesa_texformat_srgba8;
+         case GL_COMPRESSED_SLUMINANCE_EXT:
+            return &_mesa_texformat_sl8;
+         case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
+            return &_mesa_texformat_sla8;
+         case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+            return &_mesa_texformat_srgb8;
+         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+            return &_mesa_texformat_srgba8;
+         default:
+            ; /* fallthrough */
+      }
+   }
+#endif /* FEATURE_EXT_texture_sRGB */
 
    _mesa_problem(ctx, "unexpected format in _mesa_choose_tex_format()");
    return NULL;

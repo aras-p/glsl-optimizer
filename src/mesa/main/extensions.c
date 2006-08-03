@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -122,6 +122,7 @@ static const struct {
    { OFF, "GL_EXT_texture_mirror_clamp",       F(EXT_texture_mirror_clamp) },
    { ON,  "GL_EXT_texture_object",             F(EXT_texture_object) },
    { OFF, "GL_EXT_texture_rectangle",          F(NV_texture_rectangle) },
+   { OFF, "GL_EXT_texture_sRGB",               F(EXT_texture_sRGB) },
    { OFF, "GL_EXT_timer_query",                F(EXT_timer_query) },
    { ON,  "GL_EXT_vertex_array",               F(EXT_vertex_array) },
    { OFF, "GL_EXT_vertex_array_set",           F(EXT_vertex_array_set) },
@@ -253,6 +254,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.EXT_texture_mirror_clamp = GL_TRUE;
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
+#if FEATURE_EXT_texture_sRGB
+   ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
+#endif
    ctx->Extensions.IBM_multimode_draw_arrays = GL_TRUE;
    ctx->Extensions.MESA_pack_invert = GL_TRUE;
 #if FEATURE_MESA_program_debug
@@ -384,6 +388,23 @@ _mesa_enable_2_0_extensions(GLcontext *ctx)
 #if FEATURE_ARB_vertex_shader
    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
 #endif
+}
+
+
+/**
+ * Enable all OpenGL 2.1 features and extensions.
+ * A convenience function to be called by drivers.
+ */
+void
+_mesa_enable_2_1_extensions(GLcontext *ctx)
+{
+#if FEATURE_EXT_pixel_buffer_object
+   ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
+#endif
+#if FEATURE_EXT_texture_sRGB
+   ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
+#endif
+   /* plus: shading language extensions, non-square uniform matrices */
 }
 
 

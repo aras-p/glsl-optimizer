@@ -88,6 +88,18 @@ enum _format {
    MESA_FORMAT_Z32,             /*ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ */
    /*@}*/
 
+#if FEATURE_EXT_texture_sRGB
+   /**
+    * \name 8-bit/channel sRGB formats
+    */
+   /*@{*/
+   MESA_FORMAT_SRGB8,
+   MESA_FORMAT_SRGBA8,
+   MESA_FORMAT_SL8,
+   MESA_FORMAT_SLA8,
+   /*@}*/
+#endif
+
    /**
     * \name Compressed texture formats.
     */
@@ -148,6 +160,16 @@ extern const struct gl_texture_format _mesa_texformat_luminance;
 extern const struct gl_texture_format _mesa_texformat_luminance_alpha;
 extern const struct gl_texture_format _mesa_texformat_intensity;
 /*@}*/
+
+#if FEATURE_EXT_texture_sRGB
+/** sRGB (nonlinear) formats */
+/*@{*/
+extern const struct gl_texture_format _mesa_texformat_srgb8;
+extern const struct gl_texture_format _mesa_texformat_srgba8;
+extern const struct gl_texture_format _mesa_texformat_s8;
+extern const struct gl_texture_format _mesa_texformat_sla8;
+/*@}*/
+#endif
 
 /** Floating point texture formats */
 /*@{*/
