@@ -2152,6 +2152,26 @@ typedef void (APIENTRYP PFNGLMULTITEXCOORD4SVARBPROC) (GLenum target, const GLsh
 
 
 
+#if GL_ARB_shader_objects
+
+#ifndef GL_MESA_shader_debug
+#define GL_MESA_shader_debug 1
+
+#define GL_DEBUG_OBJECT_MESA              0x8759
+#define GL_DEBUG_PRINT_MESA               0x875A
+#define GL_DEBUG_ASSERT_MESA              0x875B
+
+GLAPI GLhandleARB APIENTRY glCreateDebugObjectMESA (GLvoid);
+GLAPI GLvoid APIENTRY glClearDebugLogMESA (GLhandleARB obj, GLenum logType, GLenum shaderType);
+GLAPI GLvoid APIENTRY glGetDebugLogMESA (GLhandleARB obj, GLenum logType, GLenum shaderType, GLsizei maxLength,
+                                         GLsizei *length, GLcharARB *debugLog);
+GLAPI GLsizei APIENTRY glGetDebugLogLengthMESA (GLhandleARB obj, GLenum logType, GLenum shaderType);
+
+#endif /* GL_MESA_shader_debug */
+
+#endif /* GL_ARB_shader_objects */
+
+
 /*
  * ???. GL_MESA_trace
  * XXX obsolete
@@ -2291,6 +2311,29 @@ typedef void (APIENTRYP PFNGLBLITFRAMEBUFFEREXTPROC)
 #define GL_TEXTURE_STENCIL_SIZE_EXT   0x88F1
 
 #endif /* GL_EXT_packed_depth_stencil */
+
+
+#ifndef GL_EXT_texture_sRGB
+#define GL_EXT_texture_sRGB 1
+
+#define GL_SRGB_EXT                                       0x8C40
+#define GL_SRGB8_EXT                                      0x8C41
+#define GL_SRGB_ALPHA_EXT                                 0x8C42
+#define GL_SRGB8_ALPHA8_EXT                               0x8C43
+#define GL_SLUMINANCE_ALPHA_EXT                           0x8C44
+#define GL_SLUMINANCE8_ALPHA8_EXT                         0x8C45
+#define GL_SLUMINANCE_EXT                                 0x8C46
+#define GL_SLUMINANCE8_EXT                                0x8C47
+#define GL_COMPRESSED_SRGB_EXT                            0x8C48
+#define GL_COMPRESSED_SRGB_ALPHA_EXT                      0x8C49
+#define GL_COMPRESSED_SLUMINANCE_EXT                      0x8C4A
+#define GL_COMPRESSED_SLUMINANCE_ALPHA_EXT                0x8C4B
+#define GL_COMPRESSED_SRGB_S3TC_DXT1_EXT                  0x8C4C
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT            0x8C4D
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT            0x8C4E
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT            0x8C4F
+
+#endif /* GL_EXT_texture_sRGB */
 
 
 /**
