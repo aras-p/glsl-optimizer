@@ -144,6 +144,10 @@ sunos5-v8-static \
 sunos5-v9 \
 sunos5-v9-static \
 ultrix-gcc:
+	@ if [ -e configs/current ] ; then \
+		echo "Please run 'make realclean' before changing configs" ; \
+		exit 1 ; \
+	fi
 	(cd configs && rm -f current && ln -s $@ current)
 	$(MAKE) default
 
