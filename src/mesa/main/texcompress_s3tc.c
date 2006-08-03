@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,28 +42,21 @@
 #include "texformat.h"
 #include "texstore.h"
 
-#if USE_EXTERNAL_DXTN_LIB
-#ifdef __MINGW32__
-/* no dlopen */
-#define DXTN_EXT "dxtn.dll"
-#define DXTN_PREFIX ""
-#define dlopen(name, mode) LoadLibrary(name)
-#define dlsym(hndl, proc) GetProcAddress(hndl, proc)
-#define dlclose(hndl) FreeLibrary(hndl)
-#elif defined(__DJGPP__)
-/* has dlopen, but doesn't like the names */
+#if USE_EXTERNAL_DXTN_LIB && !defined(__MINGW32__)
 #include <dlfcn.h>
-#define DXTN_EXT "dxtn.dxe"
-#define DXTN_PREFIX "_"
-#else
-/* happiness */
-#include <dlfcn.h>
-#define DXTN_EXT "libtxc_dxtn.so"
-#define DXTN_PREFIX ""
 #endif
-#endif /* USE_EXTERNAL_DXTN_LIB */
+
+#ifdef __MINGW32__
+#define DXTN_LIBNAME "dxtn.dll"
+#elif defined(__DJGPP__)
+#define DXTN_LIBNAME "dxtn.dxe"
+#else
+#define DXTN_LIBNAME "libtxc_dxtn.so"
+#endif
+
 
 typedef void (*dxtFetchTexelFuncExt)( GLint srcRowstride, GLubyte *pixdata, GLint col, GLint row, GLvoid *texelOut );
+
 dxtFetchTexelFuncExt fetch_ext_rgb_dxt1 = NULL;
 dxtFetchTexelFuncExt fetch_ext_rgba_dxt1 = NULL;
 dxtFetchTexelFuncExt fetch_ext_rgba_dxt3 = NULL;
@@ -73,9 +66,76 @@ typedef void (*dxtCompressTexFuncExt)(GLint srccomps, GLint width,
                                       GLint height, const GLchan *srcPixData,
                                       GLenum destformat, GLubyte *dest,
                                       GLint dstRowStride);
+
 static dxtCompressTexFuncExt ext_tx_compress_dxtn = NULL;
 
 static void *dxtlibhandle = NULL;
+
+
+typedef void (*GenericFunc)(void);
+
+
+/**
+ * Wrapper for dlopen().
+ * XXX Probably move this and the following wrappers into imports.h someday.
+ */
+static void *
+_mesa_dlopen(const char *libname, int flags)
+{
+#if USE_EXTERNAL_DXTN_LIB
+#ifdef __MINGW32__
+   return LoadLibrary(libname);
+#else
+   return dlopen(libname, flags);
+#endif
+#else
+   return (GenericFunc) NULL;
+#endif /* USE_EXTERNAL_DXTN_LIB */
+}
+
+
+/**
+ * Wrapper for dlsym() that does a cast to a generic function type,
+ * rather than a void *.  This reduces the number of warnings that are
+ * generated.
+ */
+static GenericFunc
+_mesa_dlsym(void *handle, const char *fname)
+{
+#if USE_EXTERNAL_DXTN_LIB
+#ifdef __MINGW32__
+   return (GenericFunc) GetProcAddress(handle, fname)
+#elif defined(__DJGPP__)
+   /* need '_' prefix on symbol names */
+   char fname2[1000];
+   fname2[0] = '_';
+   _mesa_strncpy(fname2 + 1, fname, 998);
+   fname2[999] = 0;
+   return (GenericFunc) dlsym(handle, fname2);
+#else
+   return (GenericFunc) dlsym(handle, fname);
+#endif
+#else
+   return (GenericFunc) NULL;
+#endif /* USE_EXTERNAL_DXTN_LIB */
+}
+
+
+/**
+ * Wrapper for dlclose().
+ */
+static void
+_mesa_dlclose(void *handle)
+{
+#if USE_EXTERNAL_DXTN_LIB
+#ifdef __MINGW32__
+   FreeLibrary(handle);
+#else
+   dlclose(handle);
+#endif
+#endif
+}
+
 
 
 void
@@ -85,37 +145,38 @@ _mesa_init_texture_s3tc( GLcontext *ctx )
    ctx->Mesa_DXTn = GL_FALSE;
 #if USE_EXTERNAL_DXTN_LIB
    if (!dxtlibhandle) {
-      dxtlibhandle = dlopen (DXTN_EXT, RTLD_LAZY | RTLD_GLOBAL);
+      dxtlibhandle = _mesa_dlopen(DXTN_LIBNAME, RTLD_LAZY | RTLD_GLOBAL);
       if (!dxtlibhandle) {
-	 _mesa_warning(ctx, "couldn't open " DXTN_EXT ", software DXTn "
+	 _mesa_warning(ctx, "couldn't open " DXTN_LIBNAME ", software DXTn "
 	    "compression/decompression unavailable");
       }
       else {
          /* the fetch functions are not per context! Might be problematic... */
-         fetch_ext_rgb_dxt1 = (dxtFetchTexelFuncExt)dlsym(dxtlibhandle, DXTN_PREFIX "fetch_2d_texel_rgb_dxt1");
-         if (fetch_ext_rgb_dxt1 != NULL) {
-            fetch_ext_rgba_dxt1 = (dxtFetchTexelFuncExt)dlsym(dxtlibhandle, DXTN_PREFIX "fetch_2d_texel_rgba_dxt1");
-         }
-         if (fetch_ext_rgba_dxt1 != NULL) {
-            fetch_ext_rgba_dxt3 = (dxtFetchTexelFuncExt)dlsym(dxtlibhandle, DXTN_PREFIX "fetch_2d_texel_rgba_dxt3");
-         }
-         if (fetch_ext_rgba_dxt3 != NULL) {
-            fetch_ext_rgba_dxt5 = (dxtFetchTexelFuncExt)dlsym(dxtlibhandle, DXTN_PREFIX "fetch_2d_texel_rgba_dxt5");
-         }
-         if (fetch_ext_rgba_dxt5 != NULL) {
-            ext_tx_compress_dxtn = (dxtCompressTexFuncExt)dlsym(dxtlibhandle, DXTN_PREFIX "tx_compress_dxtn");
-         }
+         fetch_ext_rgb_dxt1 = (dxtFetchTexelFuncExt)
+            _mesa_dlsym(dxtlibhandle, "fetch_2d_texel_rgb_dxt1");
+         fetch_ext_rgba_dxt1 = (dxtFetchTexelFuncExt)
+            _mesa_dlsym(dxtlibhandle, "fetch_2d_texel_rgba_dxt1");
+         fetch_ext_rgba_dxt3 = (dxtFetchTexelFuncExt)
+            _mesa_dlsym(dxtlibhandle, "fetch_2d_texel_rgba_dxt3");
+         fetch_ext_rgba_dxt5 = (dxtFetchTexelFuncExt)
+            _mesa_dlsym(dxtlibhandle, "fetch_2d_texel_rgba_dxt5");
+         ext_tx_compress_dxtn = (dxtCompressTexFuncExt)
+            _mesa_dlsym(dxtlibhandle, "tx_compress_dxtn");
 
-         if (ext_tx_compress_dxtn == NULL) {
+         if (!fetch_ext_rgb_dxt1 ||
+             !fetch_ext_rgba_dxt1 ||
+             !fetch_ext_rgba_dxt3 ||
+             !fetch_ext_rgba_dxt5 ||
+             !ext_tx_compress_dxtn) {
 	    _mesa_warning(ctx, "couldn't reference all symbols in "
-	       DXTN_EXT ", software DXTn compression/decompression "
+	       DXTN_LIBNAME ", software DXTn compression/decompression "
 	       "unavailable");
             fetch_ext_rgb_dxt1 = NULL;
             fetch_ext_rgba_dxt1 = NULL;
             fetch_ext_rgba_dxt3 = NULL;
             fetch_ext_rgba_dxt5 = NULL;
             ext_tx_compress_dxtn = NULL;
-            dlclose(dxtlibhandle);
+            _mesa_dlclose(dxtlibhandle);
             dxtlibhandle = NULL;
          }
       }
