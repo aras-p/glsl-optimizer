@@ -276,6 +276,8 @@ _mesa_PushAttrib(GLbitfield mask)
       struct gl_pixel_attrib *attr;
       attr = MALLOC_STRUCT( gl_pixel_attrib );
       MEMCPY( attr, &ctx->Pixel, sizeof(struct gl_pixel_attrib) );
+      /* push the Read FBO's ReadBuffer state, not ctx->Pixel.ReadBuffer */
+      attr->ReadBuffer = ctx->ReadBuffer->ColorReadBuffer;
       newnode = new_attrib_node( GL_PIXEL_MODE_BIT );
       newnode->data = attr;
       newnode->next = head;
