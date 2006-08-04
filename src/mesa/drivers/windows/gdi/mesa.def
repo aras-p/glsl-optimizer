@@ -991,6 +991,7 @@ EXPORTS
 	_mesa_compressed_texture_size
 	_mesa_create_framebuffer
 	_mesa_create_visual
+	_mesa_delete_array_object
 	_mesa_delete_buffer_object
 	_mesa_delete_program
 	_mesa_delete_texture_object
@@ -1016,14 +1017,17 @@ EXPORTS
 	_mesa_make_current
 	_mesa_memcpy
 	_mesa_memset
+	_mesa_new_array_object
 	_mesa_new_buffer_object
 	_mesa_new_framebuffer
 	_mesa_new_program
 	_mesa_new_query_object
+	_mesa_new_renderbuffer
 	_mesa_new_soft_renderbuffer
 	_mesa_new_texture_image
 	_mesa_new_texture_object
 	_mesa_problem
+	_mesa_remove_renderbuffer
 	_mesa_render_texture
 	_mesa_ResizeBuffersMESA
 	_mesa_resize_framebuffer
@@ -1041,6 +1045,7 @@ EXPORTS
 	_mesa_store_texsubimage3d
 	_mesa_strcmp
 	_mesa_test_proxy_teximage
+	_mesa_update_framebuffer_visual
 	_mesa_Viewport
 	_swrast_Accum
 	_swrast_Bitmap
