@@ -95,6 +95,19 @@ _mesa_get_compressed_formats(GLcontext *ctx, GLint *formats, GLboolean all)
             n += 4;
          }
       }
+#if FEATURE_EXT_texture_sRGB
+      if (ctx->Extensions.EXT_texture_sRGB) {
+         if (formats) {
+            formats[n++] = GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
+            formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
+            formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
+            formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
+         }
+         else {
+            n += 4;
+         }
+      }
+#endif /* FEATURE_EXT_texture_sRGB */
    }
    return n;
 }

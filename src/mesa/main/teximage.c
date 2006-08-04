@@ -348,6 +348,36 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
       }
    }
 
+#if FEATURE_EXT_texture_sRGB
+   if (ctx->Extensions.EXT_texture_sRGB) {
+      switch (internalFormat) {
+      case GL_SRGB_EXT:
+      case GL_SRGB8_EXT:
+      case GL_COMPRESSED_SRGB_EXT:
+      case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+         return GL_RGB;
+      case GL_SRGB_ALPHA_EXT:
+      case GL_SRGB8_ALPHA8_EXT:
+      case GL_COMPRESSED_SRGB_ALPHA_EXT:
+      case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+      case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+      case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+         return GL_RGBA;
+      case GL_SLUMINANCE_ALPHA_EXT:
+      case GL_SLUMINANCE8_ALPHA8_EXT:
+      case GL_COMPRESSED_SLUMINANCE_EXT:
+      case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
+         return GL_LUMINANCE_ALPHA;
+      case GL_SLUMINANCE_EXT:
+      case GL_SLUMINANCE8_EXT:
+         return GL_LUMINANCE;
+      default:
+            ; /* fallthrough */
+      }
+   }
+
+#endif /* FEATURE_EXT_texture_sRGB */
+
    return -1; /* error */
 }
 
@@ -440,6 +470,24 @@ is_color_format(GLenum format)
       case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
       case GL_COMPRESSED_RGB_FXT1_3DFX:
       case GL_COMPRESSED_RGBA_FXT1_3DFX:
+#if FEATURE_EXT_texture_sRGB
+      case GL_SRGB_EXT:
+      case GL_SRGB8_EXT:
+      case GL_SRGB_ALPHA_EXT:
+      case GL_SRGB8_ALPHA8_EXT:
+      case GL_SLUMINANCE_ALPHA_EXT:
+      case GL_SLUMINANCE8_ALPHA8_EXT:
+      case GL_SLUMINANCE_EXT:
+      case GL_SLUMINANCE8_EXT:
+      case GL_COMPRESSED_SRGB_EXT:
+      case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+      case GL_COMPRESSED_SRGB_ALPHA_EXT:
+      case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+      case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+      case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+      case GL_COMPRESSED_SLUMINANCE_EXT:
+      case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
+#endif /* FEATURE_EXT_texture_sRGB */
          return GL_TRUE;
       case GL_YCBCR_MESA:  /* not considered to be RGB */
       default:
@@ -1645,6 +1693,20 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
                   "glTexSubImage%dD(format or type)", dimensions);
       return GL_TRUE;
    }
+
+#if FEATURE_EXT_texture_sRGB
+   if (destTex->InternalFormat == GL_COMPRESSED_SRGB_S3TC_DXT1_EXT ||
+       destTex->InternalFormat == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT ||
+       destTex->InternalFormat == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT ||
+       destTex->InternalFormat == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT) {
+      if ((width & 0x3) || (height & 0x3) ||
+          (xoffset & 0x3) || (yoffset & 0x3))
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glTexSubImage%dD(size or offset not multiple of 4)",
+                     dimensions);
+      return GL_TRUE;
+   }
+#endif
 
    if (destTex->IsCompressed) {
       const struct gl_texture_unit *texUnit;
@@ -2950,6 +3012,16 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
                                                        depth, internalFormat);
    if (expectedSize != imageSize)
       return GL_INVALID_VALUE;
+
+#if FEATURE_EXT_texture_sRGB
+   if ((internalFormat == GL_COMPRESSED_SRGB_S3TC_DXT1_EXT ||
+        internalFormat == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT ||
+        internalFormat == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT ||
+        internalFormat == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT)
+       && border != 0) {
+      return GL_INVALID_OPERATION;
+   }
+#endif
 
    return GL_NO_ERROR;
 }

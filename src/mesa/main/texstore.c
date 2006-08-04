@@ -4124,6 +4124,27 @@ _mesa_upscale_teximage2d (GLsizei inWidth, GLsizei inHeight,
 }
 
 
+#if FEATURE_EXT_texture_sRGB
+
+/**
+ * Test if given texture image is an sRGB format.
+ */
+static GLboolean
+is_srgb_teximage(const struct gl_texture_image *texImage)
+{
+   switch (texImage->TexFormat->MesaFormat) {
+   case MESA_FORMAT_SRGB8:
+   case MESA_FORMAT_SRGBA8:
+   case MESA_FORMAT_SL8:
+   case MESA_FORMAT_SLA8:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+#endif /* FEATURE_EXT_texture_sRGB */
+
 
 /**
  * This is the software fallback for Driver.GetTexImage().
@@ -4238,6 +4259,16 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                   _mesa_swap2((GLushort *) dest, width);
                }
             }
+#if FEATURE_EXT_texture_sRGB
+            else if (is_srgb_teximage(texImage)) {
+               /* no pixel transfer and no non-linear to linear conversion */
+               const GLint comps = texImage->TexFormat->TexelBytes;
+               const GLint rowstride = comps * texImage->RowStride;
+               MEMCPY(dest,
+                      (const GLubyte *) texImage->Data + row * rowstride,
+                      comps * width * sizeof(GLubyte));
+            }
+#endif /* FEATURE_EXT_texture_sRGB */
             else {
                /* general case:  convert row to RGBA format */
                GLfloat rgba[MAX_WIDTH][4];
