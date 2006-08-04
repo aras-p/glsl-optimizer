@@ -46,7 +46,13 @@ glutDeviceGet( GLenum type )
                     return dsc.max_button+1;
                }
                break;
+          case GLUT_DEVICE_IGNORE_KEY_REPEAT:
+               return g_ignore_key_repeat;
+          case GLUT_DEVICE_KEY_REPEAT:
+               return (g_ignore_key_repeat) ? GLUT_KEY_REPEAT_OFF
+                                            : GLUT_KEY_REPEAT_ON;
           case GLUT_HAS_JOYSTICK:
+          case GLUT_OWNS_JOYSTICK:
                return (g_game && joystick); /* only available in game mode */
           case GLUT_JOYSTICK_BUTTONS:
                if (joystick) {
@@ -62,8 +68,10 @@ glutDeviceGet( GLenum type )
                     return dsc.max_axis+1;
                }
                break;
-          case GLUT_DEVICE_IGNORE_KEY_REPEAT:
-               return g_ignore_key_repeat;
+          case GLUT_JOYSTICK_POLL_RATE:
+               if (joystick)
+                    return 1; /* hack */
+               break;
           default:
                break;
      }
