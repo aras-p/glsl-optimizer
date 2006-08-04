@@ -84,8 +84,8 @@ enum _format {
    MESA_FORMAT_YCBCR,		/*                     YYYY YYYY UorV UorV */
    MESA_FORMAT_YCBCR_REV,	/*                     UorV UorV YYYY YYYY */
    MESA_FORMAT_Z24_S8,          /* ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ SSSS SSSS */
-   MESA_FORMAT_Z16,             /*                    ZZZZ ZZZZ ZZZZ ZZZZ */
-   MESA_FORMAT_Z32,             /*ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ */
+   MESA_FORMAT_Z16,             /*                     ZZZZ ZZZZ ZZZZ ZZZZ */
+   MESA_FORMAT_Z32,             /* ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ */
    /*@}*/
 
 #if FEATURE_EXT_texture_sRGB
@@ -166,7 +166,7 @@ extern const struct gl_texture_format _mesa_texformat_intensity;
 /*@{*/
 extern const struct gl_texture_format _mesa_texformat_srgb8;
 extern const struct gl_texture_format _mesa_texformat_srgba8;
-extern const struct gl_texture_format _mesa_texformat_s8;
+extern const struct gl_texture_format _mesa_texformat_sl8;
 extern const struct gl_texture_format _mesa_texformat_sla8;
 /*@}*/
 #endif
