@@ -24,6 +24,54 @@
 #include "internal.h"
 
 
+/*****************************************************************************/
+
+static int g_ignore_key_repeat = 0;
+
+/*****************************************************************************/
+
+
+int GLUTAPIENTRY 
+glutDeviceGet( GLenum type )
+{
+     switch (type) {
+          case GLUT_HAS_KEYBOARD:
+               return (keyboard != NULL);
+          case GLUT_HAS_MOUSE:
+               return (mouse != NULL);
+          case GLUT_NUM_MOUSE_BUTTONS:
+               if (mouse) {
+                    DFBInputDeviceDescription dsc;
+                    mouse->GetDescription( mouse, &dsc );
+                    return dsc.max_button+1;
+               }
+               break;
+          case GLUT_HAS_JOYSTICK:
+               return (g_game && joystick); /* only available in game mode */
+          case GLUT_JOYSTICK_BUTTONS:
+               if (joystick) {
+                    DFBInputDeviceDescription dsc;
+                    joystick->GetDescription( joystick, &dsc );
+                    return dsc.max_button+1;
+               }
+               break;
+          case GLUT_JOYSTICK_AXES:
+               if (joystick) {
+                    DFBInputDeviceDescription dsc;
+                    joystick->GetDescription( joystick, &dsc );
+                    return dsc.max_axis+1;
+               }
+               break;
+          case GLUT_DEVICE_IGNORE_KEY_REPEAT:
+               return g_ignore_key_repeat;
+          default:
+               break;
+     }
+     
+     return 0;
+}
+
+
 int GLUTAPIENTRY
 glutGetModifiers( void )
 {
@@ -36,12 +84,14 @@ glutGetModifiers( void )
 void GLUTAPIENTRY 
 glutIgnoreKeyRepeat( int ignore )
 {
+     g_ignore_key_repeat = ignore;
 }
 
 
 void GLUTAPIENTRY
 glutSetKeyRepeat( int mode )
 {
+     g_ignore_key_repeat = (mode == GLUT_KEY_REPEAT_OFF);
 }
 
 
@@ -137,7 +187,7 @@ __glutModifiers( DFBInputDeviceModifierMask mask )
 
 
 static void 
-__glutWindowEvent( DFBWindowEvent *e )
+__glutWindowEvent( DFBWindowEvent *e, DFBWindowEvent *p )
 {
      __GlutWindow *window;
      
@@ -148,6 +198,12 @@ __glutWindowEvent( DFBWindowEvent *e )
      switch (e->type) {
           case DWET_KEYDOWN:
                window->modifiers = __glutModifiers( e->modifiers );
+               if (g_ignore_key_repeat && p) {
+                    if (p->type       == DWET_KEYDOWN &&
+                        p->window_id  == e->window_id &&
+                        p->key_symbol == e->key_symbol)
+                         break;
+               }
                if (DFB_KEY_IS_ASCII( e->key_symbol )) {
                     if (keyboard_func) {
                          __glutSetWindow( window );
@@ -227,13 +283,18 @@ __glutWindowEvent( DFBWindowEvent *e )
 
 
 static void 
-__glutInputEvent( DFBInputEvent *e )
+__glutInputEvent( DFBInputEvent *e, DFBInputEvent *p )
 {
      __glutAssert( g_game != NULL );
      
      switch (e->type) {
           case DIET_KEYPRESS:
-               g_game->modifiers = __glutModifiers( e->modifiers ); 
+               g_game->modifiers = __glutModifiers( e->modifiers );
+               if (g_ignore_key_repeat && p) {
+                    if (p->type       == DIET_KEYPRESS &&
+                        p->key_symbol == e->key_symbol)
+                         break;
+               }
                if (DFB_KEY_IS_ASCII( e->key_symbol )) {
                     if (keyboard_func) {
                          __glutSetWindow( g_game );
@@ -367,20 +428,37 @@ glutMainLoop( void )
      __glutAssert( events != NULL );
      
      while (GL_TRUE) {
-          DFBEvent evt;
+          DFBEvent evt, prev;
           
           g_idle = GL_TRUE;
           
           __glutHandleTimers();
           __glutHandleWindows();
+
+          prev.clazz = DFEC_NONE;
           
           while (events->GetEvent( events, &evt ) == DFB_OK) {
                g_idle = GL_FALSE;
                
-               if (evt.clazz == DFEC_WINDOW)
-                    __glutWindowEvent( &evt.window );
-               else
-                    __glutInputEvent( &evt.input );
+               switch (evt.clazz) {
+                    case DFEC_WINDOW:
+                         if (prev.clazz == DFEC_WINDOW)
+                              __glutWindowEvent( &evt.window, &prev.window );
+                         else
+                              __glutWindowEvent( &evt.window, NULL );
+                         break;
+                    case DFEC_INPUT:
+                         if (prev.clazz == DFEC_INPUT)
+                              __glutInputEvent( &evt.input, &prev.input );
+                         else
+                              __glutInputEvent( &evt.input, NULL );
+                         break;
+                    default:
+                         __glutWarning( "unexpected event class %d!\n", evt.clazz );
+                         break;
+               }
+               
+               prev = evt;
                          
                __glutHandleTimers();
           }

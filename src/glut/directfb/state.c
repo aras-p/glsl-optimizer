@@ -207,45 +207,6 @@ glutLayerGet( GLenum type )
      return 0;
 }
 
-int GLUTAPIENTRY 
-glutDeviceGet( GLenum type )
-{
-     switch (type) {
-          case GLUT_HAS_KEYBOARD:
-               return (keyboard != NULL);
-          case GLUT_HAS_MOUSE:
-               return (mouse != NULL);
-          case GLUT_NUM_MOUSE_BUTTONS:
-               if (mouse) {
-                    DFBInputDeviceDescription dsc;
-                    mouse->GetDescription( mouse, &dsc );
-                    return dsc.max_button+1;
-               }
-               break;
-          case GLUT_HAS_JOYSTICK:
-               return (g_game && joystick); /* only available in game mode */
-          case GLUT_JOYSTICK_BUTTONS:
-               if (joystick) {
-                    DFBInputDeviceDescription dsc;
-                    joystick->GetDescription( joystick, &dsc );
-                    return dsc.max_button+1;
-               }
-               break;
-          case GLUT_JOYSTICK_AXES:
-               if (joystick) {
-                    DFBInputDeviceDescription dsc;
-                    joystick->GetDescription( joystick, &dsc );
-                    return dsc.max_axis+1;
-               }
-               break;                    
-          default:
-               break;
-     }
-     
-     return 0;
-}
-
-
 void GLUTAPIENTRY
 glutReportErrors( void )
 {
