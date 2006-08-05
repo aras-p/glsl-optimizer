@@ -13,7 +13,16 @@ GLUT_TINY = 1
 INCLUDES = -I$(TOP)/include -I$(GLX_SHARED)
 
 CORE_SOURCES = \
-	glut_fbdev.c
+	fbdev.c \
+	colormap.c \
+	cursor.c \
+	menu.c \
+	overlay.c \
+	ext.c \
+	state.c \
+	input.c \
+	callback.c \
+	gamemode.c
 
 GLX_SHARED_SOURCES = \
 	$(GLX_SHARED)/glut_8x13.c \
@@ -57,7 +66,6 @@ $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
 		-major $(GLUT_MAJOR) -minor $(GLUT_MINOR) -patch $(GLUT_TINY) \
 		$(GLUT_LIB_DEPS) -install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(OBJECTS)
-
 
 # Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.
