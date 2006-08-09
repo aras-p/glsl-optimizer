@@ -41,13 +41,19 @@ extern "C" {
  *
  * For now, only the three basic types are supported, that is bool, int and float. Other built-in
  * types like vector or matrix can easily be decomposed into a series of basic types.
+ *
+ * If the vec4 module is enabled, 4-component vectors of floats are used when possible. 4x4 matrices
+ * are constructed of 4 vec4 slots.
  */
 typedef enum slang_storage_type_
 {
-	slang_stor_aggregate,
-	slang_stor_bool,
-	slang_stor_int,
-	slang_stor_float
+   /* core */
+   slang_stor_aggregate,
+   slang_stor_bool,
+   slang_stor_int,
+   slang_stor_float,
+   /* vec4 */
+   slang_stor_vec4
 } slang_storage_type;
 
 /*
@@ -104,6 +110,14 @@ _slang_evaluate_int(slang_assembly_file *file,
                     slang_operation *array_size,
                     GLuint *pint,
                     slang_atom_pool *atoms);
+
+/*
+ * Returns the size (in machine units) of the given storage type.
+ * It is an error to pass-in slang_stor_aggregate.
+ * Returns 0 on error.
+ */
+extern GLuint
+_slang_sizeof_type (slang_storage_type);
 
 /*
  * Returns total size (in machine units) of the given aggregate.

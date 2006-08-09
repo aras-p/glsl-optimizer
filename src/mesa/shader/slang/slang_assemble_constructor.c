@@ -143,38 +143,32 @@ GLvoid _slang_multiply_swizzles (slang_swizzle *dst, const slang_swizzle *left,
 
 /* _slang_assemble_constructor() */
 
-static GLboolean sizeof_argument (slang_assemble_ctx *A, GLuint *size, slang_operation *op)
+static GLboolean
+sizeof_argument (slang_assemble_ctx *A, GLuint *size, slang_operation *op)
 {
-	slang_assembly_typeinfo ti;
-	GLboolean result = GL_FALSE;
-	slang_storage_aggregate agg, flat_agg;
+   slang_assembly_typeinfo ti;
+   GLboolean result = GL_FALSE;
+   slang_storage_aggregate agg;
 
-	if (!slang_assembly_typeinfo_construct (&ti))
-		return GL_FALSE;
-	if (!_slang_typeof_operation (A, op, &ti))
-		goto end1;
+   if (!slang_assembly_typeinfo_construct (&ti))
+      return GL_FALSE;
+   if (!_slang_typeof_operation (A, op, &ti))
+      goto end1;
 
-	if (!slang_storage_aggregate_construct (&agg))
-		goto end1;
-	if (!_slang_aggregate_variable (&agg, &ti.spec, 0, A->space.funcs, A->space.structs,
-			A->space.vars, A->mach, A->file, A->atoms))
-		goto end2;
+   if (!slang_storage_aggregate_construct (&agg))
+      goto end1;
+   if (!_slang_aggregate_variable (&agg, &ti.spec, 0, A->space.funcs, A->space.structs,
+                                   A->space.vars, A->mach, A->file, A->atoms))
+      goto end;
 
-	if (!slang_storage_aggregate_construct (&flat_agg))
-		goto end2;
-	if (!_slang_flatten_aggregate (&flat_agg, &agg))
-		goto end;
+   *size = _slang_sizeof_aggregate (&agg);
+   result = GL_TRUE;
 
-	*size = flat_agg.count * 4;
-
-	result = GL_TRUE;
 end:
-	slang_storage_aggregate_destruct (&flat_agg);
-end2:
-	slang_storage_aggregate_destruct (&agg);
+   slang_storage_aggregate_destruct (&agg);
 end1:
-	slang_assembly_typeinfo_destruct (&ti);
-	return result;
+   slang_assembly_typeinfo_destruct (&ti);
+   return result;
 }
 
 static GLboolean constructor_aggregate (slang_assemble_ctx *A, const slang_storage_aggregate *flat,
@@ -270,7 +264,7 @@ GLboolean _slang_assemble_constructor (slang_assemble_ctx *A, slang_operation *o
 	arg_sums[1] = 0;	/* will hold all argument's size sum */
 	for (i = 0; i < op->num_children; i++)
 	{
-		GLuint arg_size;
+		GLuint arg_size = 0;
 
 		if (!sizeof_argument (A, &arg_size, &op->children[i]))
 			goto end;

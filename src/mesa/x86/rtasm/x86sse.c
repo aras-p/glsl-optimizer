@@ -367,6 +367,20 @@ void x86_sub( struct x86_function *p,
    emit_op_modrm(p, 0x2b, 0x29, dst, src );
 }
 
+void x86_or( struct x86_function *p,
+             struct x86_reg dst,
+             struct x86_reg src )
+{
+   emit_op_modrm( p, 0x0b, 0x09, dst, src );
+}
+
+void x86_and( struct x86_function *p,
+              struct x86_reg dst,
+              struct x86_reg src )
+{
+   emit_op_modrm( p, 0x23, 0x21, dst, src );
+}
+
 
 
 /***********************************************************************

@@ -211,14 +211,22 @@ GLboolean _slang_aggregate_variable (slang_storage_aggregate *agg, slang_type_sp
 		return aggregate_vector (agg, slang_stor_float, 2);
 	case slang_spec_vec3:
 		return aggregate_vector (agg, slang_stor_float, 3);
-	case slang_spec_vec4:
-		return aggregate_vector (agg, slang_stor_float, 4);
+   case slang_spec_vec4:
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+      return aggregate_vector (agg, slang_stor_vec4, 1);
+#else
+      return aggregate_vector (agg, slang_stor_float, 4);
+#endif
 	case slang_spec_mat2:
 		return aggregate_matrix (agg, slang_stor_float, 2);
 	case slang_spec_mat3:
 		return aggregate_matrix (agg, slang_stor_float, 3);
-	case slang_spec_mat4:
-		return aggregate_matrix (agg, slang_stor_float, 4);
+   case slang_spec_mat4:
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+      return aggregate_vector (agg, slang_stor_vec4, 4);
+#else
+      return aggregate_matrix (agg, slang_stor_float, 4);
+#endif
 	case slang_spec_sampler1D:
 	case slang_spec_sampler2D:
 	case slang_spec_sampler3D:
@@ -258,54 +266,77 @@ GLboolean _slang_aggregate_variable (slang_storage_aggregate *agg, slang_type_sp
 	}
 }
 
+/* _slang_sizeof_type() */
+
+GLuint
+_slang_sizeof_type (slang_storage_type type)
+{
+   if (type == slang_stor_aggregate)
+      return 0;
+   if (type == slang_stor_vec4)
+      return 4 * sizeof (GLfloat);
+   return sizeof (GLfloat);
+}
+
 /* _slang_sizeof_aggregate() */
 
 GLuint _slang_sizeof_aggregate (const slang_storage_aggregate *agg)
 {
-	GLuint i, size = 0;
+   GLuint i, size = 0;
 
-	for (i = 0; i < agg->count; i++)
-	{
-		GLuint element_size;
+   for (i = 0; i < agg->count; i++) {
+      slang_storage_array *arr = &agg->arrays[i];
+      GLuint element_size;
 
-		if (agg->arrays[i].type == slang_stor_aggregate)
-			element_size = _slang_sizeof_aggregate (agg->arrays[i].aggregate);
-		else
-			element_size = sizeof (GLfloat);
-		size += element_size * agg->arrays[i].length;
-	}
-	return size;
+      if (arr->type == slang_stor_aggregate)
+         element_size = _slang_sizeof_aggregate (arr->aggregate);
+      else
+         element_size = _slang_sizeof_type (arr->type);
+      size += element_size * arr->length;
+   }
+   return size;
 }
 
 /* _slang_flatten_aggregate () */
 
-GLboolean _slang_flatten_aggregate (slang_storage_aggregate *flat, const slang_storage_aggregate *agg)
+GLboolean
+_slang_flatten_aggregate (slang_storage_aggregate *flat, const slang_storage_aggregate *agg)
 {
-	GLuint i;
+   GLuint i;
 
-	for (i = 0; i < agg->count; i++)
-	{
-		GLuint j;
+   for (i = 0; i < agg->count; i++) {
+      GLuint j;
 
-		for (j = 0; j < agg->arrays[i].length; j++)
-		{
-			if (agg->arrays[i].type == slang_stor_aggregate)
-			{
-				if (!_slang_flatten_aggregate (flat, agg->arrays[i].aggregate))
-					return GL_FALSE;
-			}
-			else
-			{
-				slang_storage_array *arr;
+      for (j = 0; j < agg->arrays[i].length; j++) {
+         if (agg->arrays[i].type == slang_stor_aggregate) {
+            if (!_slang_flatten_aggregate (flat, agg->arrays[i].aggregate))
+               return GL_FALSE;
+         }
+         else {
+            GLuint k, count;
+            slang_storage_type type;
 
-				arr = slang_storage_aggregate_push_new (flat);
-				if (arr == NULL)
-					return GL_FALSE;
-				arr->type = agg->arrays[i].type;
-				arr->length = 1;
-			}
-		}
-	}
-	return GL_TRUE;
+            if (agg->arrays[i].type == slang_stor_vec4) {
+               count = 4;
+               type = slang_stor_float;
+            }
+            else {
+               count = 1;
+               type = agg->arrays[i].type;
+            }
+
+            for (k = 0; k < count; k++) {
+               slang_storage_array *arr;
+
+               arr = slang_storage_aggregate_push_new (flat);
+               if (arr == NULL)
+                  return GL_FALSE;
+               arr->type = type;
+               arr->length = 1;
+            }
+         }
+      }
+   }
+   return GL_TRUE;
 }
 

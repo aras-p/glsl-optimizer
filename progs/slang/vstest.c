@@ -320,7 +320,7 @@ void RenderScene (void)
             break;
          }
          if (fabs (value - attribs[i].data[j]) > EPSILON)
-            printf ("*** %s\n", "Values are different");
+            printf ("*** %s, is %f, should be %f\n", "Values are different", value, attribs[i].data[j]);
          p = strchr (p, '\n');
          if (p != NULL)
             p++;

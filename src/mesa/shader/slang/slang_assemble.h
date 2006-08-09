@@ -105,6 +105,9 @@ typedef enum slang_assembly_type_
    slang_asm_vec4_divide,
    slang_asm_vec4_negate,
    slang_asm_vec4_dot,
+   slang_asm_vec4_copy,
+   slang_asm_vec4_deref,
+   slang_asm_vec4_equal_int,
    /* not a real assembly instruction */
 	slang_asm__last
 } slang_assembly_type;

@@ -53,66 +53,89 @@
  *      +------------------+
  */
 
-static GLboolean assign_aggregate (slang_assemble_ctx *A, const slang_storage_aggregate *agg,
-	GLuint *index, GLuint size)
+static GLboolean
+assign_basic (slang_assemble_ctx *A, slang_storage_type type, GLuint *index, GLuint size)
 {
-	GLuint i;
+   GLuint dst_offset, dst_addr_loc;
+   slang_assembly_type ty;
 
-	for (i = 0; i < agg->count; i++)
-	{
-		const slang_storage_array *arr = &agg->arrays[i];
-		GLuint j;
+   /* Calculate the offset within destination variable to write. */
+   if (A->swz.num_components != 0)
+      dst_offset = A->swz.swizzle[*index / 4] * 4;
+   else
+      dst_offset = *index;
 
-		for (j = 0; j < arr->length; j++)
-		{
-			if (arr->type == slang_stor_aggregate)
-			{
-				if (!assign_aggregate (A, arr->aggregate, index, size))
-					return GL_FALSE;
-			}
-			else
-			{
-				GLuint dst_addr_loc, dst_offset;
-				slang_assembly_type ty;
+   switch (type) {
+   case slang_stor_bool:
+      ty = slang_asm_bool_copy;
+      break;
+   case slang_stor_int:
+      ty = slang_asm_int_copy;
+      break;
+   case slang_stor_float:
+      ty = slang_asm_float_copy;
+      break;
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+   case slang_stor_vec4:
+      ty = slang_asm_vec4_copy;
+      break;
+#endif
+   default:
+      _mesa_problem(NULL, "Unexpected arr->type in assign_basic");
+      ty = slang_asm_none;
+   }
 
-				/* calculate the distance from top of the stack to the destination address */
-				dst_addr_loc = size - *index;
+  /* Calculate the distance from top of the stack to the destination address. As the
+   * copy operation progresses, components of the source are being successively popped
+   * off the stack by the amount of *index increase step.
+   */
+   dst_addr_loc = size - *index;
 
-				/* calculate the offset within destination variable to write */
-				if (A->swz.num_components != 0)
-				{
-					/* swizzle the index to get the actual offset */
-					dst_offset = A->swz.swizzle[*index / 4] * 4;
-				}
-				else
-				{
-					/* no swizzling - write sequentially */
-					dst_offset = *index;
-				}
+   if (!slang_assembly_file_push_label2 (A->file, ty, dst_addr_loc, dst_offset))
+      return GL_FALSE;
+   *index += _slang_sizeof_type (type);
 
-				switch (arr->type)
-				{
-				case slang_stor_bool:
-					ty = slang_asm_bool_copy;
-					break;
-				case slang_stor_int:
-					ty = slang_asm_int_copy;
-					break;
-				case slang_stor_float:
-					ty = slang_asm_float_copy;
-					break;
-				default:
-					break;
-				}
-				if (!slang_assembly_file_push_label2 (A->file, ty, dst_addr_loc, dst_offset))
-					return GL_FALSE;
+   return GL_TRUE;
+}
 
-				*index += 4;
-			}
-		}
-	}
+static GLboolean
+assign_aggregate (slang_assemble_ctx *A, const slang_storage_aggregate *agg, GLuint *index,
+                  GLuint size)
+{
+   GLuint i;
 
-	return GL_TRUE;
+   for (i = 0; i < agg->count; i++) {
+      const slang_storage_array *arr = &agg->arrays[i];
+      GLuint j;
+
+      for (j = 0; j < arr->length; j++) {
+         if (arr->type == slang_stor_aggregate) {
+            if (!assign_aggregate (A, arr->aggregate, index, size))
+               return GL_FALSE;
+         }
+         else {
+            /* When the destination is swizzled, we are forced to do float_copy, even if
+             * vec4 extension is enabled with vec4_copy operation.
+             */
+            if (A->swz.num_components != 0 && arr->type == slang_stor_vec4) {
+               if (!assign_basic (A, slang_stor_float, index, size))
+                  return GL_FALSE;
+               if (!assign_basic (A, slang_stor_float, index, size))
+                  return GL_FALSE;
+               if (!assign_basic (A, slang_stor_float, index, size))
+                  return GL_FALSE;
+               if (!assign_basic (A, slang_stor_float, index, size))
+                  return GL_FALSE;
+            }
+            else {
+               if (!assign_basic (A, arr->type, index, size))
+                  return GL_FALSE;
+            }
+         }
+      }
+   }
+
+   return GL_TRUE;
 }
 
 GLboolean _slang_assemble_assignment (slang_assemble_ctx *A, slang_operation *op)

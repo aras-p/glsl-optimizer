@@ -398,74 +398,95 @@ GLboolean _slang_cleanup_stack (slang_assemble_ctx *A, slang_operation *op)
 
 /* _slang_assemble_operation() */
 
-static GLboolean dereference_aggregate (slang_assemble_ctx *A, const slang_storage_aggregate *agg,
-	GLuint *size, slang_swizzle *swz, GLboolean is_swizzled)
+static GLboolean
+dereference_basic (slang_assemble_ctx *A, slang_storage_type type, GLuint *size, slang_swizzle *swz,
+                   GLboolean is_swizzled)
 {
-	GLuint i;
+   GLuint src_offset;
+   slang_assembly_type ty;
 
-	for (i = agg->count; i > 0; i--)
-	{
-		const slang_storage_array *arr = &agg->arrays[i - 1];
-		GLuint j;
+   *size -= _slang_sizeof_type (type);
 
-		for (j = arr->length; j > 0; j--)
-		{
-			if (arr->type == slang_stor_aggregate)
-			{
-				if (!dereference_aggregate (A, arr->aggregate, size, swz, is_swizzled))
-					return GL_FALSE;
-			}
-			else
-			{
-				GLuint src_offset;
-				slang_assembly_type ty;
+   /* If swizzling is taking place, we are forced to use scalar operations, even if we have
+    * vec4 instructions enabled (this should be actually done with special vec4 shuffle
+    * instructions).
+    * Adjust the size and calculate the offset within source variable to read.
+    */
+   if (is_swizzled)
+      src_offset = swz->swizzle[*size / 4] * 4;
+   else
+      src_offset = *size;
 
-				*size -= 4;
+   /* dereference data slot of a basic type */
+   if (!PLAB2 (A->file, slang_asm_local_addr, A->local.addr_tmp, 4))
+      return GL_FALSE;
+   if (!PUSH (A->file, slang_asm_addr_deref))
+      return GL_FALSE;
+   if (src_offset != 0) {
+      if (!PLAB (A->file, slang_asm_addr_push, src_offset))
+         return GL_FALSE;
+      if (!PUSH (A->file, slang_asm_addr_add))
+         return GL_FALSE;
+   }
 
-				/* calculate the offset within source variable to read */
-				if (is_swizzled)
-				{
-					/* swizzle the index to get the actual offset */
-					src_offset = swz->swizzle[*size / 4] * 4;
-				}
-				else
-				{
-					/* no swizzling - read sequentially */
-					src_offset = *size;
-				}
+   switch (type) {
+   case slang_stor_bool:
+      ty = slang_asm_bool_deref;
+      break;
+   case slang_stor_int:
+      ty = slang_asm_int_deref;
+      break;
+   case slang_stor_float:
+      ty = slang_asm_float_deref;
+      break;
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+   case slang_stor_vec4:
+      ty = slang_asm_vec4_deref;
+      break;
+#endif
+   default:
+      _mesa_problem(NULL, "Unexpected arr->type in dereference_basic");
+      ty = slang_asm_none;
+   }
 
-				/* dereference data slot of a basic type */
-				if (!PLAB2 (A->file, slang_asm_local_addr, A->local.addr_tmp, 4))
-					return GL_FALSE;
-				if (!PUSH (A->file, slang_asm_addr_deref))
-					return GL_FALSE;
-				if (!PLAB (A->file, slang_asm_addr_push, src_offset))
-					return GL_FALSE;
-				if (!PUSH (A->file, slang_asm_addr_add))
-					return GL_FALSE;
+   return PUSH (A->file, ty);
+}
 
-				switch (arr->type)
-				{
-				case slang_stor_bool:
-					ty = slang_asm_bool_deref;
-					break;
-				case slang_stor_int:
-					ty = slang_asm_int_deref;
-					break;
-				case slang_stor_float:
-					ty = slang_asm_float_deref;
-					break;
-				default:
-					_mesa_problem(NULL, "Unexpected arr->type in dereference_aggregate");
-					ty = slang_asm_none;
-				}
-				if (!PUSH (A->file, ty))
-					return GL_FALSE;
-			}
-		}
-	}
+static GLboolean
+dereference_aggregate (slang_assemble_ctx *A, const slang_storage_aggregate *agg, GLuint *size,
+                       slang_swizzle *swz, GLboolean is_swizzled)
+{
+   GLuint i;
 
-	return GL_TRUE;
+   for (i = agg->count; i > 0; i--) {
+      const slang_storage_array *arr = &agg->arrays[i - 1];
+      GLuint j;
+
+      for (j = arr->length; j > 0; j--) {
+         if (arr->type == slang_stor_aggregate) {
+            if (!dereference_aggregate (A, arr->aggregate, size, swz, is_swizzled))
+               return GL_FALSE;
+         }
+         else {
+            if (is_swizzled && arr->type == slang_stor_vec4) {
+               if (!dereference_basic (A, slang_stor_float, size, swz, is_swizzled))
+                  return GL_FALSE;
+               if (!dereference_basic (A, slang_stor_float, size, swz, is_swizzled))
+                  return GL_FALSE;
+               if (!dereference_basic (A, slang_stor_float, size, swz, is_swizzled))
+                  return GL_FALSE;
+               if (!dereference_basic (A, slang_stor_float, size, swz, is_swizzled))
+                  return GL_FALSE;
+            }
+            else {
+               if (!dereference_basic (A, arr->type, size, swz, is_swizzled))
+                  return GL_FALSE;
+            }
+         }
+      }
+   }
+
+   return GL_TRUE;
 }
 
 GLboolean _slang_dereference (slang_assemble_ctx *A, slang_operation *op)
@@ -694,35 +715,40 @@ static GLboolean call_asm_instruction (slang_assemble_ctx *A, slang_atom a_name)
 	return GL_TRUE;
 }
 
-static GLboolean equality_aggregate (slang_assemble_ctx *A, const slang_storage_aggregate *agg,
-	GLuint *index, GLuint size, GLuint z_label)
+static GLboolean
+equality_aggregate (slang_assemble_ctx *A, const slang_storage_aggregate *agg, GLuint *index,
+                    GLuint size, GLuint z_label)
 {
-	GLuint i;
+   GLuint i;
 
-	for (i = 0; i < agg->count; i++)
-	{
-		const slang_storage_array *arr = &agg->arrays[i];
-		GLuint j;
+   for (i = 0; i < agg->count; i++) {
+      const slang_storage_array *arr = &agg->arrays[i];
+      GLuint j;
 
-		for (j = 0; j < arr->length; j++)
-		{
-			if (arr->type == slang_stor_aggregate)
-			{
-				if (!equality_aggregate (A, arr->aggregate, index, size, z_label))
-					return GL_FALSE;
-			}
-			else
-			{
-				if (!PLAB2 (A->file, slang_asm_float_equal_int, size + *index, *index))
-					return GL_FALSE;
-				*index += 4;
-				if (!PLAB (A->file, slang_asm_jump_if_zero, z_label))
-					return GL_FALSE;
-			}
-		}
-	}
+      for (j = 0; j < arr->length; j++) {
+         if (arr->type == slang_stor_aggregate) {
+            if (!equality_aggregate (A, arr->aggregate, index, size, z_label))
+               return GL_FALSE;
+         }
+         else {
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+            if (arr->type == slang_stor_vec4) {
+               if (!PLAB2 (A->file, slang_asm_vec4_equal_int, size + *index, *index))
+                  return GL_FALSE;
+            }
+            else
+#endif
+               if (!PLAB2 (A->file, slang_asm_float_equal_int, size + *index, *index))
+                  return GL_FALSE;
 
-	return GL_TRUE;
+            *index += _slang_sizeof_type (arr->type);
+            if (!PLAB (A->file, slang_asm_jump_if_zero, z_label))
+               return GL_FALSE;
+         }
+      }
+   }
+
+   return GL_TRUE;
 }
 
 static GLboolean equality (slang_assemble_ctx *A, slang_operation *op, GLboolean equal)

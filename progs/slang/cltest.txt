@@ -1463,6 +1463,16 @@ void main () {
 
    printMESA (normalize (_Two4.xyz));
    printMESA (normalize (_Three4));
+
+   vec4 tmp = _Two4;
+   printMESA (tmp);
+
+   printMESA (_Two4 == _Three4);
+   printMESA (_Two4 != _Three4);
+   printMESA (_Two4 == _Two4);
+   printMESA (_Three4 != _Three4);
+   printMESA (_Two4 != vec4 (_Two4.xyz, 999.0));
+   printMESA (_Two4 != vec4 (999.0, _Two4.yzw));
 }
 
 $output
@@ -1552,3 +1562,14 @@ $output
 0.507392
 0.522768
 
+2.1
+2.2
+2.3
+2.4
+
+false
+true
+true
+false
+true
+true
