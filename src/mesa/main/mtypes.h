@@ -1837,7 +1837,8 @@ enum register_file
    PROGRAM_CONSTANT = 7,
    PROGRAM_WRITE_ONLY = 8,
    PROGRAM_ADDRESS = 9,
-   PROGRAM_UNDEFINED = 15  /* invalid value */
+   PROGRAM_UNDEFINED = 10,  /* invalid value */
+   PROGRAM_FILE_MAX
 };
 
 
