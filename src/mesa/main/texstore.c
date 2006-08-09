@@ -2168,33 +2168,109 @@ _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_srgb8(TEXSTORE_PARAMS)
 {
-   /* XXX to do */
-   _mesa_problem(ctx, "_mesa_texstore_srgb8 not finished");
-   return GL_FALSE;
+   const GLuint ui = 1;
+   const GLubyte littleEndian = *((const GLubyte *) &ui);
+   const struct gl_texture_format *newDstFormat;
+   StoreTexImageFunc store;
+   GLboolean k;
+
+   ASSERT(dstFormat == &_mesa_texformat_srgb8);
+
+   /* reuse normal rgb texstore code */
+   if (littleEndian) {
+      newDstFormat = &_mesa_texformat_bgr888;
+      store = _mesa_texstore_bgr888;
+   }
+   else {
+      newDstFormat = &_mesa_texformat_rgb888;
+      store = _mesa_texstore_rgb888;
+   }
+
+   k = store(ctx, dims, baseInternalFormat,
+             newDstFormat, dstAddr,
+             dstXoffset, dstYoffset, dstZoffset,
+             dstRowStride, dstImageOffsets,
+             srcWidth, srcHeight, srcDepth,
+             srcFormat, srcType,
+             srcAddr, srcPacking);
+   return k;
 }
 
 GLboolean
 _mesa_texstore_srgba8(TEXSTORE_PARAMS)
 {
-   /* XXX to do */
-   _mesa_problem(ctx, "_mesa_texstore_srgb8 not finished");
-   return GL_FALSE;
+   const GLuint ui = 1;
+   const GLubyte littleEndian = *((const GLubyte *) &ui);
+   const struct gl_texture_format *newDstFormat;
+   GLboolean k;
+
+   ASSERT(dstFormat == &_mesa_texformat_srgba8);
+
+   /* reuse normal rgba texstore code */
+   if (littleEndian)
+      newDstFormat = &_mesa_texformat_rgba8888_rev;
+   else
+      newDstFormat = &_mesa_texformat_rgba8888;
+
+   k = _mesa_texstore_rgba8888(ctx, dims, baseInternalFormat,
+                               newDstFormat, dstAddr,
+                               dstXoffset, dstYoffset, dstZoffset,
+                               dstRowStride, dstImageOffsets,
+                               srcWidth, srcHeight, srcDepth,
+                               srcFormat, srcType,
+                               srcAddr, srcPacking);
+   return k;
 }
 
 GLboolean
 _mesa_texstore_sl8(TEXSTORE_PARAMS)
 {
-   /* XXX to do */
-   _mesa_problem(ctx, "_mesa_texstore_srgb8 not finished");
-   return GL_FALSE;
+   const struct gl_texture_format *newDstFormat;
+   GLboolean k;
+
+   ASSERT(dstFormat == &_mesa_texformat_sl8);
+
+   newDstFormat = &_mesa_texformat_l8;
+
+#if 1
+   _mesa_problem(ctx, "_mesa_texstore_sl8 not finished");
+   k = GL_FALSE;
+#else
+   k = _mesa_texstore_l8(ctx, dims, baseInternalFormat,
+                               newDstFormat, dstAddr,
+                               dstXoffset, dstYoffset, dstZoffset,
+                               dstRowStride, dstImageOffsets,
+                               srcWidth, srcHeight, srcDepth,
+                               srcFormat, srcType,
+                               srcAddr, srcPacking);
+#endif
+   return k;
 }
 
 GLboolean
 _mesa_texstore_sla8(TEXSTORE_PARAMS)
 {
-   /* XXX to do */
-   _mesa_problem(ctx, "_mesa_texstore_srgb8 not finished");
-   return GL_FALSE;
+   const GLuint ui = 1;
+   const GLubyte littleEndian = *((const GLubyte *) &ui);
+   const struct gl_texture_format *newDstFormat;
+   GLboolean k;
+
+   ASSERT(dstFormat == &_mesa_texformat_sla8);
+
+   /* reuse normal luminance/alpha texstore code */
+   if (littleEndian)
+      newDstFormat = &_mesa_texformat_al88;
+   else
+      newDstFormat = &_mesa_texformat_al88_rev;
+
+   k = _mesa_texstore_al88(ctx, dims, baseInternalFormat,
+                           newDstFormat, dstAddr,
+                           dstXoffset, dstYoffset, dstZoffset,
+                           dstRowStride, dstImageOffsets,
+                           srcWidth, srcHeight, srcDepth,
+                           srcFormat, srcType,
+                           srcAddr, srcPacking);
+   return k;
 }
 
 #endif /* FEATURE_EXT_texture_sRGB */
