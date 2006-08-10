@@ -258,7 +258,7 @@ struct ureg {
 };
 
 static const struct ureg undef = { 
-   ~0,
+   PROGRAM_UNDEFINED,
    ~0,
    0,
    0,
@@ -334,7 +334,7 @@ static struct ureg negate( struct ureg reg )
 
 static GLboolean is_undef( struct ureg reg )
 {
-   return reg.file == 0xf;
+   return reg.file == PROGRAM_UNDEFINED;
 }
 
 
