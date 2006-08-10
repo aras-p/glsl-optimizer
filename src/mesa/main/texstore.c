@@ -162,7 +162,7 @@ compute_component_mapping(GLenum logicalBaseFormat, GLenum textureBaseFormat,
       }
       break;
    default:
-      _mesa_problem(NULL, "Unexpected logicalBaseFormat");
+      _mesa_problem(NULL, "Unexpected textureBaseFormat");
       map[0] = map[1] = 0;
       break;
    }   
@@ -2196,6 +2196,7 @@ _mesa_texstore_srgb8(TEXSTORE_PARAMS)
    return k;
 }
 
+
 GLboolean
 _mesa_texstore_srgba8(TEXSTORE_PARAMS)
 {
@@ -2222,6 +2223,7 @@ _mesa_texstore_srgba8(TEXSTORE_PARAMS)
    return k;
 }
 
+
 GLboolean
 _mesa_texstore_sl8(TEXSTORE_PARAMS)
 {
@@ -2232,20 +2234,17 @@ _mesa_texstore_sl8(TEXSTORE_PARAMS)
 
    newDstFormat = &_mesa_texformat_l8;
 
-#if 1
-   _mesa_problem(ctx, "_mesa_texstore_sl8 not finished");
-   k = GL_FALSE;
-#else
-   k = _mesa_texstore_l8(ctx, dims, baseInternalFormat,
-                               newDstFormat, dstAddr,
-                               dstXoffset, dstYoffset, dstZoffset,
-                               dstRowStride, dstImageOffsets,
-                               srcWidth, srcHeight, srcDepth,
-                               srcFormat, srcType,
-                               srcAddr, srcPacking);
-#endif
+   /* _mesa_textore_a8 handles luminance8 too */
+   k = _mesa_texstore_a8(ctx, dims, baseInternalFormat,
+                         newDstFormat, dstAddr,
+                         dstXoffset, dstYoffset, dstZoffset,
+                         dstRowStride, dstImageOffsets,
+                         srcWidth, srcHeight, srcDepth,
+                         srcFormat, srcType,
+                         srcAddr, srcPacking);
    return k;
 }
+
 
 GLboolean
 _mesa_texstore_sla8(TEXSTORE_PARAMS)
@@ -3215,6 +3214,9 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
    case MESA_FORMAT_RGBA8888_REV:
    case MESA_FORMAT_ARGB8888:
    case MESA_FORMAT_ARGB8888_REV:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGBA8:
+#endif
       {
          GLuint i, j, k;
          const GLubyte (*rowA)[4] = (const GLubyte (*)[4]) srcRowA;
@@ -3235,6 +3237,9 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
       return;
    case MESA_FORMAT_RGB888:
    case MESA_FORMAT_BGR888:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGB8:
+#endif
       {
          GLuint i, j, k;
          const GLubyte (*rowA)[3] = (const GLubyte (*)[3]) srcRowA;
@@ -3347,6 +3352,9 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
       return;
    case MESA_FORMAT_AL88:
    case MESA_FORMAT_AL88_REV:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SLA8:
+#endif
       {
          GLuint i, j, k;
          const GLubyte (*rowA)[2] = (const GLubyte (*)[2]) srcRowA;
@@ -3392,6 +3400,9 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
    case MESA_FORMAT_L8:
    case MESA_FORMAT_I8:
    case MESA_FORMAT_CI8:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SL8:
+#endif
       {
          GLuint i, j, k;
          const GLubyte *rowA = (const GLubyte *) srcRowA;
