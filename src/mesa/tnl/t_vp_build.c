@@ -273,7 +273,7 @@ struct tnl_program {
 
 
 static const struct ureg undef = { 
-   ~0,
+   PROGRAM_UNDEFINED,
    ~0,
    0,
    0,
@@ -397,7 +397,7 @@ static struct ureg register_const4f( struct tnl_program *p,
 
 static GLboolean is_undef( struct ureg reg )
 {
-   return reg.file == 0xf;
+   return reg.file == PROGRAM_UNDEFINED;
 }
 
 static struct ureg get_identity_param( struct tnl_program *p )
