@@ -42,7 +42,6 @@ int ActiveMenu;
 int CurrentMenu;
 
 static double MenuProjection[16];
-static double MenuModelview[16];
 
 static int AttachedMenus[3];
 static int NumMenus = 1;
@@ -55,14 +54,8 @@ void InitializeMenus(void)
    glPushMatrix();
    glLoadIdentity();
    gluOrtho2D(0.0, VarInfo.xres, VarInfo.yres, 0.0);
-   glMatrixMode(GL_MODELVIEW);
-   glPushMatrix();
-   glLoadIdentity();
-   glViewport(0, 0, VarInfo.xres, VarInfo.yres);
    glGetDoublev(GL_PROJECTION_MATRIX, MenuProjection);
-   glGetDoublev(GL_MODELVIEW_MATRIX, MenuModelview);
-   glPopMatrix();
-   glMatrixMode(GL_PROJECTION);
+
    glPopMatrix();
    glPopAttrib();
 }
@@ -72,7 +65,7 @@ void FreeMenus(void)
    int i, j;
 	
    for(i = 1; i<NumMenus; i++) {
-      for(j = 1; i<Menus[i].NumItems; j++)
+      for(j = 0; j<Menus[i].NumItems; j++)
 	 free(Menus[i].Items[j].name);
       free(Menus[i].Items);
    }
@@ -101,9 +94,10 @@ static int DrawMenu(int menu, int x, int *y)
 {
    int i;
    int ret = 1;
+
    for(i=0; i < Menus[menu].NumItems; i++) {
       char *s = Menus[menu].Items[i].name;
-      int a =0;
+      int a = 0;
       if(MouseY >= *y && MouseY < *y + MENU_FONT_HEIGHT &&
 	 MouseX >= x && MouseX < x + Menus[menu].width) {
 	 a = 1;
@@ -133,18 +127,26 @@ static int DrawMenu(int menu, int x, int *y)
 
 void DrawMenus(void)
 {
-   int x = Menus[ActiveMenu].x;
-   int y = Menus[ActiveMenu].y;
+   int x, y;
+
+   if(GameMode)
+      return;
+
+   x = Menus[ActiveMenu].x;
+   y = Menus[ActiveMenu].y;
 
    /* save old settings */
-   glPushAttrib(-1);
+   glPushAttrib(GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT
+		| GL_ENABLE_BIT | GL_VIEWPORT_BIT);
 
    glMatrixMode(GL_MODELVIEW);
    glPushMatrix();
-   glLoadMatrixd(MenuModelview);
+   glLoadIdentity();
+
    glMatrixMode(GL_PROJECTION);
    glPushMatrix();
    glLoadMatrixd(MenuProjection);
+   glViewport(0, 0, VarInfo.xres, VarInfo.yres);
 
    glDisable(GL_DEPTH_TEST);
    glDisable(GL_ALPHA_TEST);
@@ -153,7 +155,7 @@ void DrawMenus(void)
    glDisable(GL_TEXTURE_2D);
    glEnable(GL_COLOR_LOGIC_OP);
    glLogicOp(GL_AND_REVERSE);
-    
+
    if(DrawMenu(ActiveMenu, x, &y))
       Menus[ActiveMenu].selected = -1;
     
@@ -171,8 +173,14 @@ void OpenMenu(void)
       MenuStatusFunc(GLUT_MENU_IN_USE, MouseX, MouseY);
    if(MenuStateFunc)
       MenuStateFunc(GLUT_MENU_IN_USE);
-   Menus[ActiveMenu].x = MouseX - Menus[ActiveMenu].width/2;
-   Menus[ActiveMenu].y = MouseY - Menus[ActiveMenu].NumItems*MENU_FONT_HEIGHT/2;
+   Menus[ActiveMenu].x = MouseX-Menus[ActiveMenu].width/2;
+
+   if(Menus[ActiveMenu].x < 0)
+      Menus[ActiveMenu].x = 0;
+   if(Menus[ActiveMenu].x + Menus[ActiveMenu].width >= VarInfo.xres)
+     Menus[ActiveMenu].x = VarInfo.xres - Menus[ActiveMenu].width - 1;
+
+   Menus[ActiveMenu].y = MouseY-Menus[ActiveMenu].NumItems*MENU_FONT_HEIGHT/2;
    Menus[ActiveMenu].selected = -1;
 }
 

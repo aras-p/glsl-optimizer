@@ -281,7 +281,7 @@ glFBDevGetString( int str )
    case GLFBDEV_VENDOR:
       return "Mesa Project";
    case GLFBDEV_VERSION:
-      return "1.0.0";
+      return "1.0.1";
    default:
       return NULL;
    }
@@ -372,6 +372,10 @@ glFBDevCreateVisual( const struct fb_fix_screeninfo *fixInfo,
       case GLFBDEV_LEVEL:
          /* ignored for now */
          break;
+      case GLFBDEV_MULTISAMPLE:
+	 numSamples = attrib[1];
+	 attrib++;
+         break;
       default:
          /* unexpected token */
          _mesa_free(vis);
@@ -420,13 +424,6 @@ glFBDevCreateVisual( const struct fb_fix_screeninfo *fixInfo,
       }
       else {
          _mesa_problem(NULL, "Unsupported fbdev RGB visual/bitdepth!\n");
-         /*
-         printf("fixInfo->visual = 0x%x\n", fixInfo->visual);
-         printf("varInfo->bits_per_pixel = %d\n", varInfo->bits_per_pixel);
-         printf("varInfo->red.offset = %d\n", varInfo->red.offset);
-         printf("varInfo->green.offset = %d\n", varInfo->green.offset);
-         printf("varInfo->blue.offset = %d\n", varInfo->blue.offset);
-         */
          _mesa_free(vis);
          return NULL;
       }
@@ -586,7 +583,6 @@ new_glfbdev_renderbuffer(void *bufferStart, const GLFBDevVisualPtr visual)
    return rb;
 }
 
-
 GLFBDevBufferPtr
 glFBDevCreateBuffer( const struct fb_fix_screeninfo *fixInfo,
                      const struct fb_var_screeninfo *varInfo,
@@ -599,6 +595,11 @@ glFBDevCreateBuffer( const struct fb_fix_screeninfo *fixInfo,
    ASSERT(visual);
    ASSERT(frontBuffer);
    ASSERT(size > 0);
+
+   /* this is to update the visual if there was a resize and the
+      buffer is created again */
+   visual->var = *varInfo;
+   visual->fix = *fixInfo;
 
    if (visual->fix.visual != fixInfo->visual ||
        visual->fix.type != fixInfo->type ||
@@ -624,7 +625,21 @@ glFBDevCreateBuffer( const struct fb_fix_screeninfo *fixInfo,
                           &frontrb->Base);
    /* add back renderbuffer */
    if (visual->glvisual.doubleBufferMode) {
+      int malloced = !backBuffer;
+      if (malloced) {
+         /* malloc a back buffer */
+         backBuffer = _mesa_malloc(size);
+         if (!backBuffer) {
+            _mesa_free_framebuffer_data(&buf->glframebuffer);
+            _mesa_free(buf);
+            return NULL;
+         }
+      }
+
       backrb = new_glfbdev_renderbuffer(backBuffer, visual);
+      if(malloced)
+	 backrb->mallocedBuffer = GL_TRUE;
+
       _mesa_add_renderbuffer(&buf->glframebuffer, BUFFER_BACK_LEFT,
                              &backrb->Base);
    }
@@ -637,31 +652,11 @@ glFBDevCreateBuffer( const struct fb_fix_screeninfo *fixInfo,
                                 GL_FALSE, /* alpha */
                                 GL_FALSE /* aux bufs */);
 
-
-
    buf->fix = *fixInfo;   /* struct assignment */
    buf->var = *varInfo;   /* struct assignment */
    buf->visual = visual;  /* ptr assignment */
    buf->size = size;
    buf->bytesPerPixel = visual->var.bits_per_pixel / 8;
-
-   if (visual->glvisual.doubleBufferMode) {
-      if (!backBuffer) {
-         /* malloc a back buffer */
-         backrb->Base.Data = _mesa_malloc(size);
-         if (!backrb->Base.Data) {
-            _mesa_free_framebuffer_data(&buf->glframebuffer);
-            _mesa_free(buf);
-            return NULL;
-         }
-         backrb->mallocedBuffer = GL_TRUE;
-      }
-   }
-   /* this causes segfault:
-   else {
-      backrb->bottom = NULL;
-      backrb->rowStride = 0;
-      }*/
 
    return buf;
 }

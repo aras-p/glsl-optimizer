@@ -6,8 +6,8 @@ include $(TOP)/configs/current
 GLX_SHARED = $(TOP)/src/glut/glx
 SHAPES = $(TOP)/src/glut/mini
 
-GLUT_MAJOR = 3
-GLUT_MINOR = 7
+GLUT_MAJOR = 5
+GLUT_MINOR = 0
 GLUT_TINY = 1
 
 INCLUDES = -I$(TOP)/include -I$(GLX_SHARED)
@@ -22,7 +22,8 @@ CORE_SOURCES = \
 	state.c \
 	input.c \
 	callback.c \
-	gamemode.c
+	gamemode.c \
+	vidresize.c
 
 GLX_SHARED_SOURCES = \
 	$(GLX_SHARED)/glut_8x13.c \

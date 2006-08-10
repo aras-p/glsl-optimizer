@@ -126,8 +126,11 @@ static void KeyboardHandler(int sig)
    if(!release && labelval >= K_F1 && labelval <= K_F12)
       if(KeyboardModifiers & GLUT_ACTIVE_ALT) {
 	 /* VT switch, we must do it */
-	 if(ioctl(ConsoleFD, VT_ACTIVATE, labelval - K_F1 + 1) < 0)
-	    sprintf(exiterror, "Error switching console\n");
+	 if(Swapping)
+	    VTSwitch = labelval - K_F1 + 1;
+	 else
+	    if(ioctl(ConsoleFD, VT_ACTIVATE, labelval - K_F1 + 1) < 0)
+	       sprintf(exiterror, "Error switching console\n");
 	 return;
       }
    write(kbdpipe[1], &code, 1);
@@ -456,6 +459,7 @@ static int ReadMouse(void)
 	    PassiveMotionFunc(MouseX, MouseY);
 
       EraseCursor();
+
       if(ActiveMenu)
 	 Redisplay = 1;
       else
@@ -515,14 +519,17 @@ void InitializeVT(int usestdin)
    struct vt_mode vt;
    char console[128];
 
-   /* terminos settings for straight-through mode */
+   signal(SIGIO, SIG_IGN);
+
+   /* save old terminos settings */
    if (tcgetattr(0, &OldTermios) < 0) {
       sprintf(exiterror, "tcgetattr failed\n");
       exit(0);
    }
 
    tio = OldTermios;
-  
+
+   /* terminos settings for straight-through mode */  
    tio.c_lflag &= ~(ICANON | ECHO  | ISIG);
    tio.c_iflag &= ~(ISTRIP | IGNCR | ICRNL | INLCR | IXOFF | IXON);
    tio.c_iflag |= IGNBRK;
@@ -607,8 +614,8 @@ void InitializeVT(int usestdin)
    }
 
    /* use SIGIO so VT switching can work if the program is locked */
-   if(ConsoleFD)
    signal(SIGIO, KeyboardHandler);
+
    pipe(kbdpipe);
 
    if(fcntl(kbdpipe[0], F_SETFL, O_NONBLOCK | O_ASYNC) < 0) {
@@ -642,64 +649,63 @@ void InitializeVT(int usestdin)
 
 void RestoreVT(void)
 {
-   if(ConsoleFD >= 0)
-      if (tcsetattr(0, TCSANOW, &OldTermios) < 0)
-	 fprintf(stderr, "tcsetattr failed\n");
+   if(ConsoleFD < 0)
+      return;
 
-   if(ConsoleFD > 0) {
-      /* restore keyboard state */
-      if (ioctl(ConsoleFD, VT_SETMODE, &OldVTMode) < 0)
-	 fprintf(stderr, "Failed to set vtmode\n");
+   if (tcsetattr(0, TCSANOW, &OldTermios) < 0)
+      fprintf(stderr, "tcsetattr failed\n");
 
-      if (ioctl(ConsoleFD, KDSKBMODE, OldKDMode) < 0)
-	 fprintf(stderr, "ioctl KDSKBMODE failed!\n");
+   if(ConsoleFD == 0)
+       return;
 
-      /* if we were in text mode, switching to graphics and back restores
-	 the colormap */
-      if(ioctl(ConsoleFD, KDSETMODE, KD_GRAPHICS) < 0)
-	 fprintf(stderr, "ioctl KDSETMODE failed!\n");
+   /* restore keyboard state */
+   if (ioctl(ConsoleFD, VT_SETMODE, &OldVTMode) < 0)
+      fprintf(stderr, "Failed to set vtmode\n");
 
-      if(ioctl(ConsoleFD, KDSETMODE, OldMode) < 0)
-	 fprintf(stderr, "ioctl KDSETMODE failed!\n");
+   if (ioctl(ConsoleFD, KDSKBMODE, OldKDMode) < 0)
+      fprintf(stderr, "ioctl KDSKBMODE failed!\n");
 
-      close(ConsoleFD);
-   }
+   if(ioctl(ConsoleFD, KDSETMODE, OldMode) < 0)
+      fprintf(stderr, "ioctl KDSETMODE failed!\n");
+   
+   close(ConsoleFD);
 }
 
 void InitializeMouse(void)
 {
 #ifdef HAVE_GPM
-   if(GpmMouse) {
+   if(!GpmMouse)
+#endif
+   {
+      const char *mousedev = getenv("MOUSE");
+      if(!mousedev)
+	 mousedev = MOUSEDEV;
+      if((MouseFD = open(mousedev, O_RDONLY)) >= 0) {
+	 if(!MouseSpeed)
+	    MouseSpeed = 1;
+	 NumMouseButtons = 3;
+	 return;
+      }
+   }
+#ifdef HAVE_GPM
+   {
       Gpm_Connect conn;  
       int c;
       conn.eventMask  = ~0;   /* Want to know about all the events */
       conn.defaultMask = 0;   /* don't handle anything by default  */
       conn.minMod     = 0;    /* want everything                   */
       conn.maxMod     = ~0;   /* all modifiers included            */
-      if(Gpm_Open(&conn, 0) == -1) {
-	 fprintf(stderr, "Cannot open gpmctl. Continuing without Mouse\n");
+      if(Gpm_Open(&conn, 0) != -1) {
+	 if(!MouseSpeed)
+	    MouseSpeed = 8;
+	 NumMouseButtons = 3;
 	 return;
       }
-	
-      if(!MouseSpeed)
-	 MouseSpeed = 5;
-   } else
+      fprintf(stderr, "Cannot open gpmctl.\n");
+   }
 #endif
-      {
-	 const char *mousedev = getenv("MOUSE");
-	 if(!mousedev)
-	    mousedev = MOUSEDEV;
-	 if((MouseFD = open(mousedev, O_RDONLY)) < 0) {
-	    fprintf(stderr,"Cannot open %s.\n"
-		    "Continuing without Mouse\n", MOUSEDEV);
-	    return;
-	 }
-
-	 if(!MouseSpeed)
-	    MouseSpeed = 1;
-      }
-
-   NumMouseButtons = 3;
+   fprintf(stderr,"Cannot open %s.\n"
+	   "Continuing without Mouse\n", MOUSEDEV);
 }
 
 void CloseMouse(void)

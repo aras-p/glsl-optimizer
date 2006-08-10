@@ -22,6 +22,9 @@
  * Library for glut using mesa fbdev driver
  *
  * Written by Sean D'Epagnier (c) 2006
+ * 
+ * To improve on this library, maybe support subwindows or overlays,
+ * I (sean at depagnier dot com) will do my best to help.
  */
 
 #include <errno.h>
@@ -41,16 +44,15 @@
 #include <linux/vt.h>
 
 #include <GL/gl.h>
-#include <GL/glfbdev.h>
 #include <GL/glut.h>
 
 #include "internal.h"
 
 #define FBMODES "/etc/fb.modes"
 
-
 struct fb_fix_screeninfo FixedInfo;
-struct fb_var_screeninfo VarInfo, OrigVarInfo;
+struct fb_var_screeninfo VarInfo;
+static struct fb_var_screeninfo OrigVarInfo;
 
 static int DesiredDepth = 0;
 
@@ -64,9 +66,9 @@ struct GlutTimer *GlutTimers = NULL;
 struct timeval StartTime;
 
 /* per window data */
-static GLFBDevContextPtr Context;
-static GLFBDevBufferPtr Buffer;
-static GLFBDevVisualPtr Visual;
+GLFBDevContextPtr Context;
+GLFBDevBufferPtr Buffer;
+GLFBDevVisualPtr Visual;
 
 int Redisplay;
 int Visible;
@@ -75,12 +77,8 @@ int Active;
 /* we have to poll to see if we are visible
    on a framebuffer that is not active */
 int VisiblePoll;
+int Swapping, VTSwitch;
 static int FramebufferIndex;
-
-static int RequiredWidth;
-static int RequiredHeight;
-static int InitialWidthHint;
-static int InitialHeightHint;
 
 static int Initialized;
 
@@ -105,6 +103,9 @@ void TestVisible(void) {
 
 static void Cleanup(void)
 {
+   if(GameMode)
+      glutLeaveGameMode();
+
    if(ConsoleFD != -1)
       RestoreVT();
 
@@ -136,7 +137,7 @@ static void Cleanup(void)
 
    if(exiterror[0])
       fprintf(stderr, "[glfbdev glut] %s", exiterror);
-}
+ }
 
 static void CrashHandler(int sig)
 {
@@ -162,10 +163,9 @@ static void removeArgs(int *argcp, char **argv, int num)
 
 void glutInit (int *argcp, char **argv)
 {
-   int i;
-   int nomouse = 0;
-   int nokeyboard = 0;
-   int usestdin = 0;
+   int i, nomouse = 0, nokeyboard = 0, usestdin = 0;
+   int RequiredWidth = 0, RequiredHeight;
+   char *fbdev;
 
    /* parse out args */
    for (i = 1; i < *argcp;) {
@@ -242,166 +242,6 @@ void glutInit (int *argcp, char **argv)
    if(nokeyboard == 0)
       InitializeVT(usestdin);
 
-   Initialized = 1;
-}
-
-void glutInitDisplayMode (unsigned int mode)
-{
-   DisplayMode = mode;
-}
-
-void glutInitWindowPosition (int x, int y)
-{
-}
-
-void glutInitWindowSize (int width, int height)
-{
-   InitialWidthHint = width;
-   InitialHeightHint = height;
-}
-
-
-static void ProcessTimers(void)
-{
-   if(GlutTimers && GlutTimers->time < glutGet(GLUT_ELAPSED_TIME)) {
-      struct GlutTimer *timer = GlutTimers;
-      timer->func(timer->value);
-      GlutTimers = timer->next;
-      free(timer);
-   }
-}
-
-void glutMainLoop(void)
-{
-   if(ReshapeFunc)
-      ReshapeFunc(VarInfo.xres, VarInfo.yres);
-
-   if(!DisplayFunc) {
-      sprintf(exiterror, "Fatal Error: No Display Function registered\n");
-      exit(0);
-   }   
-
-   for(;;) {
-      ProcessTimers();
-
-      if(Active)
-	 ReceiveInput();
-      else
-	 if(VisiblePoll)
-	    TestVisible();
-
-      if(IdleFunc)
-	 IdleFunc();
-
-      if(VisibleSwitch) {
-	 VisibleSwitch = 0;
-	 if(VisibilityFunc)
-	    VisibilityFunc(Visible ? GLUT_VISIBLE : GLUT_NOT_VISIBLE);
-      }
-
-      if(Visible && Redisplay) {
-	 Redisplay = 0;
-	 if(MouseEnabled)
-	    EraseCursor();
-	 DisplayFunc();
-	 if(!(DisplayMode & GLUT_DOUBLE)) {
-	    if(ActiveMenu)
-	       DrawMenus();
-	    if(MouseEnabled)
-	       DrawCursor();
-	 }
-      }
-   }
-}
-
-static void ParseFBModes(void)
-{
-   char buf[1024];
-   struct fb_var_screeninfo vi = VarInfo;
-
-   FILE *fbmodes = fopen(FBMODES, "r");
-
-   if(!fbmodes) {
-      sprintf(exiterror, "Warning: could not open "
-	      FBMODES" using current mode\n");
-      return;
-   }
-
-   if(InitialWidthHint == 0 && InitialHeightHint == 0
-      && RequiredWidth == 0)
-      return; /* use current mode */
-
-   while(fgets(buf, sizeof buf, fbmodes)) {
-      char *c;
-      int v;
-
-      if(!(c = strstr(buf, "geometry")))
-	 continue;
-      v = sscanf(c, "geometry %d %d %d %d %d", &vi.xres, &vi.yres,
-		 &vi.xres_virtual, &vi.yres_virtual, &vi.bits_per_pixel);
-      if(v != 5)
-	 continue;
-
-      /* now we have to decide what is best */
-      if(RequiredWidth) {
-	 if(RequiredWidth != vi.xres || RequiredHeight != vi.yres)
-	    continue;
-      } else {
-	 if(VarInfo.xres < vi.xres && VarInfo.xres < InitialWidthHint)
-	    v++;
-	 if(VarInfo.xres > vi.xres && vi.xres > InitialWidthHint)
-	    v++;
-
-	 if(VarInfo.yres < vi.yres && VarInfo.yres < InitialHeightHint)
-	    v++;
-	 if(VarInfo.yres > vi.yres && vi.yres > InitialHeightHint)
-	    v++;
-
-	 if(v < 7)
-	    continue;
-      }
-
-      fgets(buf, sizeof buf, fbmodes);
-      if(!(c = strstr(buf, "timings")))
-	 continue;
-
-      v = sscanf(c, "timings %d %d %d %d %d %d %d", &vi.pixclock,
-		 &vi.left_margin, &vi.right_margin, &vi.upper_margin,
-		 &vi.lower_margin, &vi.hsync_len, &vi.vsync_len);
-      if(v != 7)
-	 continue;
-
-      VarInfo = vi; /* finally found a better mode */
-      if(RequiredWidth) {
-	 fclose(fbmodes);
-	 return;
-      }
-   }
-
-   fclose(fbmodes);
-
-   if(RequiredWidth) {
-      sprintf(exiterror, "No mode (%dx%d) found in "FBMODES"\n",
-	      RequiredWidth, RequiredHeight);
-      exit(0);
-   }
-}
-
-/* ---------- Window Management ----------*/
-int glutCreateWindow (const char *title)
-{
-   char *fbdev;
-   int attribs[9], i, mask, size;
-
-   if(Initialized == 0) {
-      int argc = 0;
-      char *argv[] = {NULL};
-      glutInit(&argc, argv);
-   }
-
-   if(Context)
-      return 0;
-
    fbdev = getenv("FRAMEBUFFER");
    if(fbdev) {
 #ifdef MULTIHEAD
@@ -449,22 +289,252 @@ int glutCreateWindow (const char *title)
    VarInfo = OrigVarInfo;
 
    /* set the depth, resolution, etc */
-   ParseFBModes();
+   if(RequiredWidth)
+      if(!ParseFBModes(RequiredWidth, RequiredWidth, RequiredHeight,
+		       RequiredHeight, 0, MAX_VSYNC)) {
+	 sprintf(exiterror, "No mode (%dx%d) found in "FBMODES"\n",
+		 RequiredWidth, RequiredHeight);
+	 exit(0);
+      }
 
-   if(DisplayMode & GLUT_INDEX)
-      VarInfo.bits_per_pixel = 8;
+   Initialized = 1;
+}
+
+void glutInitDisplayMode (unsigned int mode)
+{
+   DisplayMode = mode;
+}
+
+static const char *GetStrVal(const char *p, int *set, int min, int max)
+{
+   char *endptr;
+   int comp = *p, val;
+
+   if(p[1] == '=')
+      p++;
+
+   if(*p == '\0')
+      return p;
+
+   val = strtol(p+1, &endptr, 10);
+
+   if(endptr == p+1)
+      return p;
+
+   switch(comp) {
+   case '!':
+      if(val == min)
+	 val = max;
+      else
+	 val = min;
+      break;
+   case '<':
+      val = min;
+      break;
+   case '>':
+      val = max;
+      break;
+   }
+
+   if(val < min || val > max) {
+      sprintf(exiterror, "display string value out of range\n");
+      exit(0);
+   }
+
+   *set = val;
+
+   return endptr;
+}
+
+static void SetAttrib(int val, int attr)
+{
+   if(val)
+      DisplayMode |= attr;
    else
-      if(VarInfo.bits_per_pixel == 8)
-	 VarInfo.bits_per_pixel = 32;
-    
-   if (DesiredDepth)
-      VarInfo.bits_per_pixel = DesiredDepth;
+      DisplayMode &= ~attr;
+}
 
-   VarInfo.xoffset = 0;
-   VarInfo.yoffset = 0;
-   VarInfo.nonstd = 0;
-   VarInfo.vmode &= ~FB_VMODE_YWRAP; /* turn off scrolling */
+void glutInitDisplayString(const char *string)
+{
+   const char *p = string;
+   int val;
+   while(*p) {
+      if(*p == ' ')
+	 p++;
+      else
+      if(memcmp(p, "acca", 4) == 0) {
+	 p = GetStrVal(p+4, &AccumSize, 1, 32);
+	 SetAttrib(AccumSize, GLUT_ACCUM);
+      } else
+      if(memcmp(p, "acc", 3) == 0) {
+	 p = GetStrVal(p+3, &AccumSize, 1, 32);
+	 SetAttrib(AccumSize, GLUT_ACCUM);
+      } else
+      if(memcmp(p, "depth", 5) == 0) {
+	 p = GetStrVal(p+5, &DepthSize, 12, 32);
+	 SetAttrib(DepthSize, GLUT_DEPTH);
+      } else
+      if(memcmp(p, "double", 6) == 0) {
+	 val = 1;
+	 p = GetStrVal(p+6, &val, 0, 1);
+	 SetAttrib(val, GLUT_DOUBLE);
+      } else
+      if(memcmp(p, "index", 5) == 0) {
+	 val = 1;
+	 p = GetStrVal(p+5, &val, 0, 1);
+	 SetAttrib(val, GLUT_INDEX);
+      } else
+      if(memcmp(p, "stencil", 7) == 0) {
+	 p = GetStrVal(p+7, &StencilSize, 0, 1);
+	 SetAttrib(StencilSize, GLUT_STENCIL);
+      } else
+      if(memcmp(p, "samples", 7) == 0) {
+	 NumSamples = 1;
+	 p = GetStrVal(p+7, &NumSamples, 0, 16);
+	 SetAttrib(NumSamples, GLUT_MULTISAMPLE);
+      } else
+      if(p = strchr(p, ' '))
+         p++;
+      else
+	 break;
+   }
+}
 
+void glutInitWindowPosition (int x, int y)
+{
+}
+
+void glutInitWindowSize (int width, int height)
+{
+}
+
+static void ProcessTimers(void)
+{
+   if(GlutTimers && GlutTimers->time < glutGet(GLUT_ELAPSED_TIME)) {
+      struct GlutTimer *timer = GlutTimers;
+      timer->func(timer->value);
+      GlutTimers = timer->next;
+      free(timer);
+   }
+}
+
+void glutMainLoop(void)
+{
+   if(ReshapeFunc)
+      ReshapeFunc(VarInfo.xres, VarInfo.yres);
+
+   if(!DisplayFunc) {
+      sprintf(exiterror, "Fatal Error: No Display Function registered\n");
+      exit(0);
+   }   
+
+   for(;;) {
+      ProcessTimers();
+
+      if(Active)
+	 ReceiveInput();
+      else
+	 if(VisiblePoll)
+	    TestVisible();
+	 else
+	    usleep(1);
+
+      if(IdleFunc)
+	 IdleFunc();
+      
+      if(VisibleSwitch) {
+	 VisibleSwitch = 0;
+	 if(VisibilityFunc)
+	    VisibilityFunc(Visible ? GLUT_VISIBLE : GLUT_NOT_VISIBLE);
+      }
+
+      if(Visible && Redisplay) {
+	 Redisplay = 0;
+	 if(MouseEnabled)
+	    EraseCursor();
+	 DisplayFunc();
+	 if(!(DisplayMode & GLUT_DOUBLE)) {
+	    if(ActiveMenu)
+	       DrawMenus();
+	    if(MouseEnabled)
+	       DrawCursor();
+	 }
+      }
+   }
+}
+
+int ParseFBModes(int minw, int maxw, int minh, int maxh, int minf, int maxf)
+{
+   char buf[1024];
+   struct fb_var_screeninfo vi = VarInfo;
+
+   FILE *fbmodes = fopen(FBMODES, "r");
+
+   if(!fbmodes) {
+      sprintf(exiterror, "Warning: could not open "FBMODES"\n");
+      return 0;
+   }
+
+   while(fgets(buf, sizeof buf, fbmodes)) {
+      char *c;
+      int v, bpp, freq;
+
+      if(!(c = strstr(buf, "geometry")))
+	 continue;
+      v = sscanf(c, "geometry %d %d %d %d %d", &vi.xres, &vi.yres,
+		 &vi.xres_virtual, &vi.yres_virtual, &bpp);
+      if(v != 5)
+	 continue;
+
+      if(maxw < minw) {
+	 if(maxw < vi.xres && minw > vi.xres)
+	    continue;
+      } else
+	 if(maxw < vi.xres || minw > vi.xres)
+	    continue;
+
+      if(maxh < minh) {
+	 if(maxh < vi.yres && minh > vi.yres)
+	    continue;
+      } else
+	 if(maxh < vi.yres || minh > vi.yres)
+	    continue;
+
+      fgets(buf, sizeof buf, fbmodes);
+      if(!(c = strstr(buf, "timings")))
+	 continue;
+
+      v = sscanf(c, "timings %d %d %d %d %d %d %d", &vi.pixclock,
+		 &vi.left_margin, &vi.right_margin, &vi.upper_margin,
+		 &vi.lower_margin, &vi.hsync_len, &vi.vsync_len);
+
+      if(v != 7)
+	 continue;
+
+      freq = 1E12/vi.pixclock
+	 /(vi.left_margin + vi.xres + vi.right_margin + vi.hsync_len)
+	 /(vi.upper_margin + vi.yres + vi.lower_margin + vi.vsync_len);
+
+      if(maxf < minf) {
+	 if(maxf < freq && minf > freq)
+	    continue;
+      } else
+	 if(maxf < freq || minf > freq)
+	    continue;
+
+      VarInfo = vi;
+      fclose(fbmodes);
+      return 1;
+   }
+
+   fclose(fbmodes);
+
+   return 0;
+}
+
+/* ---------- Window Management ----------*/
+void SetVideoMode(void)
+{
    /* set new variable screen info */
    if (ioctl(FrameBufferFD, FBIOPUT_VSCREENINFO, &VarInfo)) {
       sprintf(exiterror, "ioctl(FBIOPUT_VSCREENINFO failed): %s\n",
@@ -498,8 +568,16 @@ int glutCreateWindow (const char *title)
 
    /* initialize colormap */
    LoadColorMap();
+}
+
+void CreateBuffer()
+{
+   int size = VarInfo.xres_virtual * VarInfo.yres_virtual
+                              * VarInfo.bits_per_pixel / 8;
 
    /* mmap the framebuffer into our address space */
+   if(FrameBuffer)
+      munmap(FrameBuffer, FixedInfo.smem_len);
    FrameBuffer = mmap(0, FixedInfo.smem_len, PROT_READ | PROT_WRITE, 
 		      MAP_SHARED, FrameBufferFD, 0);
    if (FrameBuffer == MAP_FAILED) {
@@ -508,8 +586,30 @@ int glutCreateWindow (const char *title)
       exit(0);
    }
 
-   mask = DisplayMode;
-   for(i=0; i<8 && mask; i++) {
+   if(DisplayMode & GLUT_DOUBLE) {
+      free(BackBuffer);
+      if(!(BackBuffer = malloc(size))) {
+	 sprintf(exiterror, "Failed to allocate double buffer\n");
+	 exit(0);
+      }
+   } else
+      BackBuffer = FrameBuffer;
+
+   if(Buffer)
+      glFBDevDestroyBuffer(Buffer);
+
+   if(!(Buffer = glFBDevCreateBuffer( &FixedInfo, &VarInfo, Visual,
+				      FrameBuffer, BackBuffer, size))) {
+      sprintf(exiterror, "Failure to create Buffer\n");
+      exit(0);
+   }
+}
+
+void CreateVisual(void)
+{
+   int i, mask = DisplayMode;
+   int attribs[20];
+   for(i=0; i<sizeof(attribs)/sizeof(*attribs) && mask; i++) {
       if(mask & GLUT_DOUBLE) {
 	 attribs[i] = GLFBDEV_DOUBLE_BUFFER;
 	 mask &= ~GLUT_DOUBLE;
@@ -549,6 +649,13 @@ int glutCreateWindow (const char *title)
 	    i--;
 	    continue;
 	 }
+
+      if(mask & GLUT_MULTISAMPLE) {
+	 attribs[i] = GLFBDEV_MULTISAMPLE;
+	 attribs[++i] = NumSamples;
+	 mask &= ~GLUT_MULTISAMPLE;
+	 continue;
+      }
        
       sprintf(exiterror, "Invalid mode from glutInitDisplayMode\n");
       exit(0);
@@ -560,22 +667,36 @@ int glutCreateWindow (const char *title)
       sprintf(exiterror, "Failure to create Visual\n");
       exit(0);
    }
+}
 
-   size = VarInfo.xres_virtual * VarInfo.yres_virtual
-      * VarInfo.bits_per_pixel / 8;
-   if(DisplayMode & GLUT_DOUBLE) {
-      if(!(BackBuffer = malloc(size))) {
-	 sprintf(exiterror, "Failed to allocate double buffer\n");
-	 exit(0);
-      }
-   } else
-      BackBuffer = FrameBuffer;
-
-   if(!(Buffer = glFBDevCreateBuffer( &FixedInfo, &VarInfo, Visual,
-				      FrameBuffer, BackBuffer, size))) {
-      sprintf(exiterror, "Failure to create Buffer\n");
-      exit(0);
+int glutCreateWindow (const char *title)
+{
+   if(Initialized == 0) {
+      int argc = 0;
+      char *argv[] = {NULL};
+      glutInit(&argc, argv);
    }
+
+   if(Context)
+      return 0;
+
+   if(DisplayMode & GLUT_INDEX)
+      VarInfo.bits_per_pixel = 8;
+   else
+      if(VarInfo.bits_per_pixel == 8)
+	 VarInfo.bits_per_pixel = 32;
+    
+   if (DesiredDepth)
+      VarInfo.bits_per_pixel = DesiredDepth;
+
+   VarInfo.xoffset = 0;
+   VarInfo.yoffset = 0;
+   VarInfo.nonstd = 0;
+   VarInfo.vmode &= ~FB_VMODE_YWRAP; /* turn off scrolling */
+
+   SetVideoMode();
+   CreateVisual();
+   CreateBuffer();
 
    if(!(Context = glFBDevCreateContext(Visual, NULL))) {
       sprintf(exiterror, "Failure to create Context\n");
@@ -589,6 +710,8 @@ int glutCreateWindow (const char *title)
 
    InitializeCursor();
    InitializeMenus();
+
+   glutSetWindowTitle(title);
 
    Visible = 1;
    VisibleSwitch = 1;
@@ -628,12 +751,21 @@ void glutSwapBuffers(void)
 {
    glFlush();
 
-   if(Visible && DisplayMode & GLUT_DOUBLE) {
-      if(ActiveMenu)
-	 DrawMenus();
-      if(MouseEnabled)
-	 DrawCursor();
+   if(ActiveMenu)
+      DrawMenus();
+   if(MouseEnabled)
+      DrawCursor();
+
+   if(DisplayMode & GLUT_DOUBLE && Visible) {
+      Swapping = 1;
       glFBDevSwapBuffers(Buffer);
+      Swapping = 0;
+   }
+
+   if(VTSwitch) {
+      if(ioctl(ConsoleFD, VT_ACTIVATE, VTSwitch) < 0)
+	 sprintf(exiterror, "Error switching console\n");
+      VTSwitch = 0;
    }
 }
 
@@ -643,6 +775,25 @@ void glutPositionWindow(int x, int y)
 
 void glutReshapeWindow(int width, int height)
 {
+   if(GameMode)
+      return;
+
+   if(!ParseFBModes(width, width, height, height, 0, MAX_VSYNC))
+      return;
+
+   SetVideoMode();
+   CreateBuffer();
+ 
+   if(!glFBDevMakeCurrent( Context, Buffer, Buffer )) {
+      sprintf(exiterror, "Failure to Make Current\n");
+      exit(0);
+   }
+
+   InitializeMenus();
+
+   if(ReshapeFunc)
+      ReshapeFunc(VarInfo.xres, VarInfo.yres);
+   Redisplay = 1;
 }
 
 void glutFullScreen(void)
@@ -659,10 +810,12 @@ void glutPushWindow(void)
 
 void glutShowWindow(void)
 {
+   Visible = 1;
 }
 
 void glutHideWindow(void)
 {
+   Visible = 0;
 }
 
 static void UnIconifyWindow(int sig)
@@ -677,6 +830,9 @@ static void UnIconifyWindow(int sig)
 	      strerror(errno));
       exit(0);
    }
+   Redisplay = 1;
+   VisibleSwitch = 1;
+   Visible = 1;
 }
 
 void glutIconifyWindow(void)
@@ -691,6 +847,9 @@ void glutIconifyWindow(void)
 
 void glutSetWindowTitle(const char *name)
 {
+   /* escape code to set title in screen */
+   if(getenv("TERM") && memcmp(getenv("TERM"), "screen", 6) == 0)
+      printf("\033k%s\033\\", name);
 }
 
 void glutSetIconTitle(const char *name)

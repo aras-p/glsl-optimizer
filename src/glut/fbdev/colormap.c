@@ -29,7 +29,6 @@
 #include <linux/fb.h>
 
 #include <GL/gl.h>
-#include <GL/glfbdev.h>
 #include <GL/glut.h>
 
 #include "internal.h"
@@ -53,9 +52,9 @@ static void FindReverseMap(int r, int g, int b)
    unsigned int minv = -1, mini = 0;
    for(i=0; i<256; i++) {
       int val = 0;
-      val += abs(r-(ColorMap.red[i]>>shift));
-      val += abs(g-(ColorMap.green[i]>>shift));
-      val += abs(b-(ColorMap.blue[i]>>shift));
+      val += abs(r-(RedColorMap[i]>>shift));
+      val += abs(g-(GreenColorMap[i]>>shift));
+      val += abs(b-(BlueColorMap[i]>>shift));
       if(val < minv) {
 	 minv = val;
 	 mini = i;

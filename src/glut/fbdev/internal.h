@@ -26,6 +26,7 @@
 
 #include <sys/time.h>
 #include <linux/fb.h>
+#include <GL/glfbdev.h>
 
 #define MULTIHEAD   /* enable multihead hacks,
 		       it allows the program to continue drawing
@@ -34,16 +35,23 @@
 		       screen corruption that requires C-l to fix */
 #define HAVE_GPM
 
+#define MAX_VSYNC 200
+
 /* this causes these symbols to not be exported */
 #pragma GCC visibility push(hidden)
 
+
+/* --------- fbdev ------------ */
 extern int Redisplay;
 extern int Visible;
 extern int VisibleSwitch;
 extern int Active;
 extern int VisiblePoll;
+extern int Swapping, VTSwitch;
 
 void TestVisible(void);
+int ParseFBModes(int, int, int, int, int, int);
+void CreateVisual(void);
 
 extern int FrameBufferFD;
 extern unsigned char *FrameBuffer;
@@ -53,7 +61,11 @@ extern int DisplayMode;
 extern char exiterror[256];
 
 extern struct fb_fix_screeninfo FixedInfo;
-extern struct fb_var_screeninfo VarInfo, OrigVarInfo;
+extern struct fb_var_screeninfo VarInfo;
+
+extern GLFBDevContextPtr Context;
+extern GLFBDevBufferPtr Buffer;
+extern GLFBDevVisualPtr Visual;
 
 /* --- colormap --- */
 #define REVERSECMAPSIZELOG 3
@@ -65,6 +77,7 @@ extern unsigned short RedColorMap[256],
 extern unsigned char ReverseColorMap[REVERSECMAPSIZE]
                                     [REVERSECMAPSIZE]
                                     [REVERSECMAPSIZE];
+void LoadOldColorMap(void);
 void LoadColorMap(void);
 void UnloadColorMap(void);
 void RestoreColorMap(void);
@@ -108,7 +121,7 @@ void OpenMenu(void);
 void CloseMenu(void);
 
 /* --- state --- */
-extern int AccumSize, DepthSize, StencilSize;
+extern int AccumSize, DepthSize, StencilSize, NumSamples;
 extern struct timeval StartTime;
 extern int KeyboardModifiers;
 
@@ -155,5 +168,8 @@ struct GlutTimer {
 };
 
 extern struct GlutTimer *GlutTimers;
+
+/* ------- Game Mode -------- */
+extern int GameMode;
 
 #pragma GCC visibility pop

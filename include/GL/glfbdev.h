@@ -49,6 +49,7 @@ typedef struct GLFBDevContextRec *GLFBDevContextPtr;
 #define GLFBDEV_STENCIL_SIZE    103
 #define GLFBDEV_ACCUM_SIZE      104
 #define GLFBDEV_LEVEL           105
+#define GLFBDEV_MULTISAMPLE     106
 #define GLFBDEV_NONE              0
 
 /* For glFBDevGetString */

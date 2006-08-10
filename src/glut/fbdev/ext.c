@@ -25,7 +25,6 @@
  */
 
 #include <GL/gl.h>
-#include <GL/glfbdev.h>
 #include <GL/glut.h>
 
 #include "internal.h"

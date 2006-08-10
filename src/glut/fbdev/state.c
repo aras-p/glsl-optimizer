@@ -37,6 +37,7 @@
 int AccumSize = 16; /* per channel size of accumulation buffer */
 int DepthSize = DEFAULT_SOFTWARE_DEPTH_BITS;
 int StencilSize = STENCIL_BITS;
+int NumSamples = 4;
 
 int glutGet(GLenum state)
 {
@@ -89,7 +90,7 @@ int glutGet(GLenum state)
 	 return 256;
       return 0;
    case GLUT_WINDOW_NUM_SAMPLES:
-      return 0;
+      return NumSamples;
    case GLUT_WINDOW_STEREO:
       return 0;
    case GLUT_WINDOW_CURSOR:
@@ -170,16 +171,6 @@ int glutDeviceGet(GLenum info)
    case GLUT_JOYSTICK_BUTTONS:
    case GLUT_JOYSTICK_AXES:
       return 0;
-   }
-   return -1;
-}
-
-int glutVideoResizeGet(GLenum param)
-{
-   switch(param) {
-   case GLUT_VIDEO_RESIZE_POSSIBLE:
-      return 0;
-      
    }
    return -1;
 }

@@ -44,7 +44,7 @@ static unsigned char *MouseBuffer;
 
 void InitializeCursor(void)
 {
-   if((MouseBuffer = malloc(CURSOR_WIDTH * CURSOR_HEIGHT
+   if(!MouseBuffer && (MouseBuffer = malloc(CURSOR_WIDTH * CURSOR_HEIGHT
 			    * VarInfo.bits_per_pixel / 8)) == NULL) {
       sprintf(exiterror, "malloc failure\n");
       exit(0);
@@ -216,10 +216,10 @@ void SwapCursor(void)
       if(miny < 0)
 	 miny = 0;
 	
-      if(minx + sizex > VarInfo.xres)
-	 sizex = VarInfo.xres - minx;
-      if(miny + sizey > VarInfo.yres)
-	 sizey = VarInfo.yres - miny;
+      if(minx + sizex > VarInfo.xres - CURSOR_WIDTH)
+	 sizex = VarInfo.xres - CURSOR_WIDTH - minx;
+      if(miny + sizey > VarInfo.yres - CURSOR_HEIGHT)
+	 sizey = VarInfo.yres - CURSOR_HEIGHT - miny;
       off = FixedInfo.line_length * miny
 	 + minx * VarInfo.bits_per_pixel / 8;
       stride = (sizex + CURSOR_WIDTH) * VarInfo.bits_per_pixel / 8;
