@@ -1,0 +1,58 @@
+
+			Mesa 6.5.1 Release Notes
+
+
+
+Introduction
+------------
+
+Mesa uses an even/odd version number scheme like the Linux kernel.
+Odd numbered versions (such as 6.5) designate new developmental releases.
+Even numbered versions (such as 6.4) designate stable releases.
+
+
+
+Mesa 6.5.1 is a 6.5 follow-on development release mostly consisting of
+bug fixes (see the VERSIONS file).
+
+
+New Features
+------------
+
+  Intel i965 "broadwater" DRI driver
+
+  GL_APPLE_vertex_array_object - allows encapsulation of a set of vertex
+	arrays in an object.
+
+  GL_EXT_texture_sRGB - non-linearly mapped texture formats
+
+
+
+
+To Do (someday) items
+---------------------
+ Switch to freeglut
+ Increase MAX_DRAWBUFFERS
+ Fix linux-glide target/driver.
+ Fix lambda calculation for frag progs.
+
+
+
+Driver			Status
+----------------------	----------------------
+DRI drivers		varies with the driver
+XMesa/GLX (on Xlib)	implements OpenGL 1.5
+OSMesa (off-screen)	implements OpenGL 1.5
+Glide (3dfx Voodoo1/2)	implements OpenGL 1.3
+SVGA			implements OpenGL 1.3
+Wind River UGL		implements OpenGL 1.3
+Windows/Win32		implements OpenGL 1.5
+DJGPP			implements OpenGL 1.5
+GGI			implements OpenGL 1.3
+BeOS			implements OpenGL 1.5
+Allegro			needs updating
+D3D			needs updating
+
+
+----------------------------------------------------------------------
+$Id: RELNOTES-6.5.1,v 1.1 2006/08/10 14:54:19 brianp Exp $

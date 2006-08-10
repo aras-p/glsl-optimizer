@@ -1473,7 +1473,9 @@ Mesa Version History
 
 6.5.1  month, day, 2006
     New:
+	- Intel i965 DRI driver
 	- GL_APPLE_vertex_array_object extension (Ian Romanick)
+	- GL_EXT_texture_sRGB extension
 	- "engine" demo
     Changes:
 	- The glVertexAttribARB functions no longer alias the conventional
@@ -1498,3 +1500,4 @@ Mesa Version History
 	- 'normalized' parameter to glVertexAttribPointerARB didn't work
 	- disable bogus GLX_SGI_video_sync extension in xlib driver
 	- fixed R128 driver locking bug (Martijn van Oosterhout)
+	- using evaluators with vertex programs caused crashes (bug 7564)
