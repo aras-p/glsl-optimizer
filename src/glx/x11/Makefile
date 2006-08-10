@@ -47,7 +47,7 @@ INCLUDES = -I. \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/glapi \
 	-I$(TOP)/src/mesa/drivers/dri/common \
-        `pkg-config --cflags libdrm` \
+	$(LIBDRM_CFLAGS) \
 	$(X11_INCLUDES)
 
 
