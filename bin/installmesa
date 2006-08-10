@@ -62,10 +62,10 @@ fi
 
 set -v
 
-mkdir ${INCLUDE_DIR}
-mkdir ${INCLUDE_DIR}/GL
-# NOT YET: mkdir ${INCLUDE_DIR}/GLES
-mkdir ${LIB_DIR}
+mkdir -p ${INCLUDE_DIR}
+mkdir -p ${INCLUDE_DIR}/GL
+# NOT YET: mkdir -p ${INCLUDE_DIR}/GLES
+mkdir -p ${LIB_DIR}
 cp -f ${TOP}/include/GL/*.h ${INCLUDE_DIR}/GL
 cp -f ${TOP}/src/glw/*.h ${INCLUDE_DIR}/GL
 # NOT YET: cp -f ${TOP}/include/GLES/*.h ${INCLUDE_DIR}/GLES
