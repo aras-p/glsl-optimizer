@@ -64,12 +64,18 @@ typedef struct __GLinterfaceRec __GLinterface;
 ** and used by the "operating system".
 */
 
-/*
-** Mode and limit information for a context.  This information is
-** kept around in the context so that values can be used during
-** command execution, and for returning information about the
-** context to the application.
-*/
+/**
+ * Mode and limit information for a context.  This information is
+ * kept around in the context so that values can be used during
+ * command execution, and for returning information about the
+ * context to the application.
+ * 
+ * Instances of this structure are shared by the driver and the loader.  To
+ * maintain binary compatability, new fields \b must be added only to the
+ * end of the structure.
+ * 
+ * \sa _gl_context_modes_create
+ */
 typedef struct __GLcontextModesRec {
     struct __GLcontextModesRec * next;
 
