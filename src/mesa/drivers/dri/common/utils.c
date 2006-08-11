@@ -309,15 +309,17 @@ void driInitSingleExtension( GLcontext * ctx,
 	    /* Add each entry-point to the dispatch table.
 	     */
 	    offset = _glapi_add_dispatch( functions, parameter_signature );
-	    if ( ext->functions[i].remap_index != -1 ) {
-		driDispatchRemapTable[ ext->functions[i].remap_index ] = offset;
+	    if (offset == -1) {
+		fprintf(stderr, "DISPATCH ERROR! _glapi_add_dispatch failed "
+			"to add %s!\n", functions[0]);
 	    }
-
-	    if ( (ext->functions[i].offset != -1)
-		 && (ext->functions[i].offset != offset) ) {
-		fprintf(stderr, "DISPATCH ERROR! %s -> %u != %u\n", functions[0],
-			driDispatchRemapTable[ ext->functions[i].remap_index ],
-			ext->functions[i].offset);
+	    else if (ext->functions[i].remap_index != -1) {
+		driDispatchRemapTable[ ext->functions[i].remap_index ] = 
+		  offset;
+	    }
+	    else if (ext->functions[i].offset != offset) {
+		fprintf(stderr, "DISPATCH ERROR! %s -> %u != %u\n",
+			functions[0], offset, ext->functions[i].offset);
 	    }
 	}
     }

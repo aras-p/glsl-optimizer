@@ -211,12 +211,17 @@ class PrintGlExtensionGlue(gl_XML.gl_print_base):
 			print 'static const struct dri_extension_function %s_functions[] = {' % (category)
 			
 			for f in category_list[ category ]:
+				# A function either has an offset that is
+				# assigned by the ABI, or it has a remap
+				# index.
 				if any_entrypoints_in_abi(f, abi, api):
 					index_name = "-1"
+					offset = f.offset
 				else:
 					index_name = "%s_remap_index" % (f.name)
+					offset = -1
 
-				print '    { %s_names, %s, %d },' % (f.name, index_name, f.offset)
+				print '    { %s_names, %s, %d },' % (f.name, index_name, offset)
 
 
 			print '    { NULL, 0, 0 }'
