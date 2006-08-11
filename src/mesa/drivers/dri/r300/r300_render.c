@@ -321,53 +321,6 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
    }
 }
 
-#if 0
-void dump_array(struct r300_dma_region *rvb, int count)
-{
-	int *out = (int *)(rvb->address + rvb->start);
-	int i, ci;
-	
-	fprintf(stderr, "stride %d:", rvb->aos_stride);
-	for (i=0; i < count; i++) {
-		fprintf(stderr, "{");
-		if (rvb->aos_format == AOS_FORMAT_FLOAT)
-			for (ci=0; ci < rvb->aos_size; ci++)
-				fprintf(stderr, "%f ", ((float *)out)[ci]);
-		else
-			for (ci=0; ci < rvb->aos_size; ci++)
-				fprintf(stderr, "%d ", ((unsigned char *)out)[ci]);
-		fprintf(stderr, "}");
-		
-		out += rvb->aos_stride;
-	}
-
-	fprintf(stderr, "\n");
-}
-		
-void dump_dt(struct dt *dt, int count)
-{
-	int *out = dt->data;
-	int i, ci;
-	
-	fprintf(stderr, "stride %d", dt->stride);
-	
-	for (i=0; i < count; i++){
-		fprintf(stderr, "{");
-		if (dt->type == GL_FLOAT)
-			for (ci=0; ci < dt->size; ci++)
-				fprintf(stderr, "%f ", ((float *)out)[ci]);
-		else
-			for (ci=0; ci < dt->size; ci++)
-				fprintf(stderr, "%d ", ((unsigned char *)out)[ci]);
-		fprintf(stderr, "}");
-		
-		out = (int *)((char *)out + dt->stride);
-	}
-	
-	fprintf(stderr, "\n");
-}
-#endif
-
 GLboolean r300_run_vb_render(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
@@ -388,51 +341,17 @@ GLboolean r300_run_vb_render(GLcontext *ctx,
 	}
 	
 	r300UpdateShaders(rmesa);
-	if (rmesa->state.VB.LockCount == 0 || 1) {
-		r300EmitArrays(ctx, GL_FALSE);
+	if (r300EmitArrays(ctx))
+		return GL_TRUE;
 
-		r300UpdateShaderStates(rmesa);
-	} else {
-		/* TODO: Figure out why do we need these. */
-		R300_STATECHANGE(rmesa, vir[0]);
-		R300_STATECHANGE(rmesa, vir[1]);
-		R300_STATECHANGE(rmesa, vic);
-		R300_STATECHANGE(rmesa, vof);
-		
-#if 0		
-		fprintf(stderr, "dt:\n");
-		for(i=0; i < VERT_ATTRIB_MAX; i++){
-			fprintf(stderr, "dt %d:", i);
-			dump_dt(&rmesa->state.VB.AttribPtr[i], VB->Count);
-		}
-		
-		fprintf(stderr, "before:\n");
-		for(i=0; i < rmesa->state.aos_count; i++){
-			fprintf(stderr, "aos %d:", i);
-			dump_array(&rmesa->state.aos[i], VB->Count);
-		}
-#endif
-#if 0
- 	  	r300ReleaseArrays(ctx);
-		r300EmitArrays(ctx, GL_FALSE);
-			
-		fprintf(stderr, "after:\n");
-		for(i=0; i < rmesa->state.aos_count; i++){
-			fprintf(stderr, "aos %d:", i);
-			dump_array(&rmesa->state.aos[i], VB->Count);
-		}
-#endif
-	}
+	r300UpdateShaderStates(rmesa);
 	
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
 
 	reg_start(0x4f18,0);
 	e32(0x00000003);
-#if 0
-	reg_start(R300_VAP_PVS_WAITIDLE,0);
-		e32(0x00000000);
-#endif
+	
 	r300EmitState(rmesa);
 	
 	for(i=0; i < VB->PrimitiveCount; i++){

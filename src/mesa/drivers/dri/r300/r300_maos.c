@@ -54,6 +54,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_mm.h"
 #endif
 
+#if SWIZZLE_X != R300_INPUT_ROUTE_SELECT_X || \
+    SWIZZLE_Y != R300_INPUT_ROUTE_SELECT_Y || \
+    SWIZZLE_Z != R300_INPUT_ROUTE_SELECT_Z || \
+    SWIZZLE_W != R300_INPUT_ROUTE_SELECT_W || \
+    SWIZZLE_ZERO != R300_INPUT_ROUTE_SELECT_ZERO || \
+    SWIZZLE_ONE != R300_INPUT_ROUTE_SELECT_ONE
+#error Cannot change these!
+#endif
+
 #define DEBUG_ALL DEBUG_VERTS
 
 
@@ -177,16 +186,6 @@ static void emit_vector(GLcontext * ctx,
 		fprintf(stderr, "%s count %d size %d stride %d\n",
 			__FUNCTION__, count, size, stride);
 
-	if(r300IsGartMemory(rmesa, data, /*(count-1)*stride */ 4)){
-		rvb->address = data;
-		rvb->start = 0;
-		rvb->aos_offset = r300GartOffsetFromVirtual(rmesa, data);
-		rvb->aos_stride	= stride / 4 ;
-		
-		rvb->aos_size = size;
-		return;
-	}
-	
 	/* Gets triggered when playing with future_hw_tcl_on ...*/
 	//assert(!rvb->buf);
 
@@ -195,12 +194,10 @@ static void emit_vector(GLcontext * ctx,
 		count = 1;
 		rvb->aos_offset	= GET_START(rvb);
 		rvb->aos_stride	= 0;
-		rvb->aos_size	= size;
 	} else {
 		r300AllocDmaRegion(rmesa, rvb, size * count * 4, 4);	/* alignment? */
 		rvb->aos_offset	= GET_START(rvb);
 		rvb->aos_stride	= size;
-		rvb->aos_size	= size;
 	}
 	
 	/* Emit the data
@@ -252,330 +249,319 @@ void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts, int elt_siz
 	memcpy(out, elts, n_elts * elt_size);
 }
 
-	/* Mesa assumes that all missing components are from (0, 0, 0, 1) */
-#define ALL_COMPONENTS ((R300_INPUT_ROUTE_SELECT_X<<R300_INPUT_ROUTE_X_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_Y<<R300_INPUT_ROUTE_Y_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_Z<<R300_INPUT_ROUTE_Z_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_W<<R300_INPUT_ROUTE_W_SHIFT))
-
-#define ALL_DEFAULT ((R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_X_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Y_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Z_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_ONE<<R300_INPUT_ROUTE_W_SHIFT))
-
-
-static GLuint t_comps(GLuint aos_size)
+static GLuint t_type(struct dt *dt)
 {
-	GLuint mask;
-	mask = (1 << (aos_size*3)) - 1;
-	return (ALL_COMPONENTS & mask) | (ALL_DEFAULT & ~mask);
-}
-
-static GLuint fix_comps(GLuint dw, int fmt)
-{	
-#ifdef MESA_BIG_ENDIAN
-	if (fmt == 2) {
-		GLuint dw_temp = 0;
-
-		dw_temp |= ((dw >> R300_INPUT_ROUTE_X_SHIFT) & R300_INPUT_ROUTE_SELECT_MASK) << R300_INPUT_ROUTE_W_SHIFT;
-		dw_temp |= ((dw >> R300_INPUT_ROUTE_Y_SHIFT) & R300_INPUT_ROUTE_SELECT_MASK) << R300_INPUT_ROUTE_Z_SHIFT;
-		dw_temp |= ((dw >> R300_INPUT_ROUTE_Z_SHIFT) & R300_INPUT_ROUTE_SELECT_MASK) << R300_INPUT_ROUTE_Y_SHIFT;
-		dw_temp |= ((dw >> R300_INPUT_ROUTE_W_SHIFT) & R300_INPUT_ROUTE_SELECT_MASK) << R300_INPUT_ROUTE_X_SHIFT;
-		
-		return dw_temp;
+	switch (dt->type) {
+	case GL_UNSIGNED_BYTE:
+		return AOS_FORMAT_UBYTE;
+	
+	case GL_SHORT:
+		return AOS_FORMAT_USHORT;
+	
+	case GL_FLOAT:
+		return AOS_FORMAT_FLOAT;
+	
+	default:
+		assert(0);
+	break;
 	}
-#endif /* MESA_BIG_ENDIAN */
-	return dw;
-		
+	
+	return AOS_FORMAT_FLOAT;
 }
 
-/* Emit vertex data to GART memory (unless immediate mode)
+static GLuint t_vir0_size(struct dt *dt)
+{
+	switch (dt->type) {
+	case GL_UNSIGNED_BYTE:
+		return 4;
+	
+	case GL_SHORT:
+		return 7;
+	
+	case GL_FLOAT:
+		return dt->size - 1;
+	
+	default:
+		assert(0);
+	break;
+	}
+	
+	return 0;
+}
+
+static GLuint comp_bytes(struct dt *dt)
+{
+	switch (dt->type) {
+	case GL_UNSIGNED_BYTE:
+		return 1;
+	
+	case GL_SHORT:
+		return 2;
+	
+	case GL_FLOAT:
+		return 4;
+	
+	default:
+		assert(0);
+		break;
+	}
+	
+	return 0;
+}
+
+static GLuint t_aos_size(struct dt *dt)
+{
+	switch (dt->type) {
+	case GL_UNSIGNED_BYTE:
+		return 1;
+	
+	case GL_SHORT:
+		return 2;
+	
+	case GL_FLOAT:
+		return dt->size;
+	
+	default:
+		assert(0);
+		break;
+	}
+	
+	return 0;
+}
+
+static GLuint t_vir0(uint32_t *dst, struct dt *dt, int *inputs, GLint *tab, GLuint nr)
+{
+	GLuint i, dw;
+	
+	for (i = 0; i + 1 < nr; i += 2){
+		dw =  t_vir0_size(&dt[tab[i]]) | (inputs[tab[i]] << 8) | (t_type(&dt[tab[i]]) << 14);
+		dw |= (t_vir0_size(&dt[tab[i + 1]]) | (inputs[tab[i + 1]] << 8) | (t_type(&dt[tab[i + 1]]) << 14)) << 16;
+		
+		if (i + 2 == nr) {
+			dw |= (1 << (13 + 16));
+		}
+		dst[i >> 1] = dw;
+	}
+	
+	if (nr & 1) {
+		dw = t_vir0_size(&dt[tab[nr - 1]]) | (inputs[tab[nr - 1]] << 8) | (t_type(&dt[tab[nr - 1]]) << 14);
+		dw |= 1 << 13;
+		
+		dst[nr >> 1] = dw;
+	}
+	
+	return (nr + 1) >> 1;
+}
+
+static GLuint t_swizzle(int swizzle[4])
+{
+	return (swizzle[0] << R300_INPUT_ROUTE_X_SHIFT) |
+	       (swizzle[1] << R300_INPUT_ROUTE_Y_SHIFT) |
+	       (swizzle[2] << R300_INPUT_ROUTE_Z_SHIFT) |
+	       (swizzle[3] << R300_INPUT_ROUTE_W_SHIFT);
+}
+
+static GLuint t_vir1(uint32_t *dst, int swizzle[][4], GLuint nr)
+{
+	GLuint i;
+	
+	for (i = 0; i + 1 < nr; i += 2) {
+		dst[i >> 1] = t_swizzle(swizzle[i]) | R300_INPUT_ROUTE_ENABLE;
+		dst[i >> 1] |= (t_swizzle(swizzle[i + 1]) | R300_INPUT_ROUTE_ENABLE) << 16;
+	}
+	
+	if (nr & 1)
+		dst[nr >> 1] = t_swizzle(swizzle[nr - 1]) | R300_INPUT_ROUTE_ENABLE;
+	
+	return (nr + 1) >> 1;
+}
+
+static GLuint t_emit_size(struct dt *dt)
+{
+	return dt->size;
+}
+
+static GLuint t_vic(GLcontext * ctx, GLuint InputsRead)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	GLuint i, vic_1 = 0;
+	
+	if (InputsRead & (1 << VERT_ATTRIB_POS))
+		vic_1 |= R300_INPUT_CNTL_POS;
+	
+	if (InputsRead & (1 << VERT_ATTRIB_NORMAL))
+		vic_1 |= R300_INPUT_CNTL_NORMAL;
+
+	if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
+		vic_1 |= R300_INPUT_CNTL_COLOR;
+	
+	r300->state.texture.tc_count = 0;
+	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
+		if (InputsRead & (1 << (VERT_ATTRIB_TEX0 + i))) {
+			r300->state.texture.tc_count++;
+			vic_1 |= R300_INPUT_CNTL_TC0 << i;
+		}
+	
+	return vic_1;
+}
+
+/* Emit vertex data to GART memory
  * Route inputs to the vertex processor
+ * This function should never return R300_FALLBACK_TCL when using software tcl.
  */
 
-void r300EmitArrays(GLcontext * ctx, GLboolean immd)
+int r300EmitArrays(GLcontext *ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	r300ContextPtr r300 = rmesa;
 	struct radeon_vertex_buffer *VB = &rmesa->state.VB;
-	//struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-	GLuint nr = 0;
+	GLuint nr;
 	GLuint count = VB->Count;
-	GLuint dw;
-	GLuint vic_1 = 0;	/* R300_VAP_INPUT_CNTL_1 */
-	GLuint aa_vap_reg = 0; /* VAP register assignment */
 	GLuint i;
-	DECLARE_RENDERINPUTS(inputs_bitset);
-
-	RENDERINPUTS_ZERO( inputs_bitset );
-
-#define CONFIGURE_AOS(r, f, v, sz, cn) { \
-		if (RADEON_DEBUG & DEBUG_STATE) \
-			fprintf(stderr, "Enabling "#v "\n"); \
-		if (++nr >= R300_MAX_AOS_ARRAYS) { \
-			fprintf(stderr, "Aieee! AOS array count exceeded!\n"); \
-			exit(-1); \
-		} \
-		\
-		if (hw_tcl_on == GL_FALSE) \
-			rmesa->state.aos[nr-1].aos_reg = aa_vap_reg++; \
-		rmesa->state.aos[nr-1].aos_format = f; \
-		if (immd) { \
-			rmesa->state.aos[nr-1].aos_size = 4; \
-			rmesa->state.aos[nr-1].aos_stride = 4; \
-			rmesa->state.aos[nr-1].aos_offset = 0; \
-		} else { \
-			emit_vector(ctx, \
-						&rmesa->state.aos[nr-1], \
-						v.data, \
-						sz, \
-						v.stride, \
-						cn); \
-		rmesa->state.vap_reg.r=rmesa->state.aos[nr-1].aos_reg; \
-		} \
-}
-
-	if (hw_tcl_on) {
-		GLuint InputsRead = CURRENT_VERTEX_SHADER(ctx)->Base.InputsRead;
-		struct r300_vertex_program *prog=(struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
-		if (InputsRead & (1<<VERT_ATTRIB_POS)) {
-			RENDERINPUTS_SET( inputs_bitset, _TNL_ATTRIB_POS );
-			rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_POS];
-		}
-		if (InputsRead & (1<<VERT_ATTRIB_NORMAL)) {
-			RENDERINPUTS_SET( inputs_bitset, _TNL_ATTRIB_NORMAL );
-			rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_NORMAL];
-		}
-		if (InputsRead & (1<<VERT_ATTRIB_COLOR0)) {
-			RENDERINPUTS_SET( inputs_bitset, _TNL_ATTRIB_COLOR0 );
-			rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_COLOR0];
-		}
-		if (InputsRead & (1<<VERT_ATTRIB_COLOR1)) {
-			RENDERINPUTS_SET( inputs_bitset, _TNL_ATTRIB_COLOR1 );
-			rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_COLOR1];
-		}
-		if (InputsRead & (1<<VERT_ATTRIB_FOG)) {
-			RENDERINPUTS_SET( inputs_bitset, _TNL_ATTRIB_FOG );
-			rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_FOG];
-		}
-		if(ctx->Const.MaxTextureUnits > 8) { /* Not sure if this can even happen... */
-			fprintf(stderr, "%s: Cant handle that many inputs\n", __FUNCTION__);
-			exit(-1);
-		}
-		for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
-			if (InputsRead & (1<<(VERT_ATTRIB_TEX0+i))) {
-				RENDERINPUTS_SET( inputs_bitset, _TNL_ATTRIB_TEX(i) );
-				rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_TEX0+i];
-			}
-		}
-		for (i = 0; i < _TNL_NUM_GENERIC; i++) {
-			if (InputsRead & (1<<(VERT_ATTRIB_GENERIC0+i))) {
-				RENDERINPUTS_SET( inputs_bitset, _TNL_ATTRIB_GENERIC(i) );
-				rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_GENERIC0+i];
-			}
-		}
-		nr = 0;
-	} else {
-		RENDERINPUTS_COPY( inputs_bitset, TNL_CONTEXT(ctx)->render_inputs_bitset );
-	}
-	RENDERINPUTS_COPY( rmesa->state.render_inputs_bitset, inputs_bitset );
-
-	if (RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_POS )) {
-		CONFIGURE_AOS(i_coords,	AOS_FORMAT_FLOAT,
-						VB->AttribPtr[VERT_ATTRIB_POS],
-						immd ? 4 : VB->AttribPtr[VERT_ATTRIB_POS].size,
-						count);
-
-		vic_1 |= R300_INPUT_CNTL_POS;
-	}
-
-	if (RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_NORMAL )) {
-		CONFIGURE_AOS(i_normal,	AOS_FORMAT_FLOAT,
-						VB->AttribPtr[VERT_ATTRIB_NORMAL],
-						immd ? 4 : VB->AttribPtr[VERT_ATTRIB_NORMAL].size,
-						count);
-
-		vic_1 |= R300_INPUT_CNTL_NORMAL;
-	}
-
-	if (RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_COLOR0 )) {
-		int emitsize=4;
-
-		if (!immd) {
-			if (VB->AttribPtr[VERT_ATTRIB_COLOR0].size == 4 &&
-			    (VB->AttribPtr[VERT_ATTRIB_COLOR0].stride != 0 ||
-			     ((float*)VB->AttribPtr[VERT_ATTRIB_COLOR0].data)[3] != 1.0)) {
-				emitsize = 4;
-			} else {
-				emitsize = 3;
-			}//emitsize = VB->AttribPtr[VERT_ATTRIB_COLOR0].size;
-		}
-		if(VB->AttribPtr[VERT_ATTRIB_COLOR0].type == GL_UNSIGNED_BYTE)
-			emitsize = 1;
-
-		CONFIGURE_AOS(i_color[0], VB->AttribPtr[VERT_ATTRIB_COLOR0].type == GL_UNSIGNED_BYTE ? AOS_FORMAT_UBYTE : AOS_FORMAT_FLOAT_COLOR,
-						VB->AttribPtr[VERT_ATTRIB_COLOR0],
-						immd ? 4 : emitsize,
-						count);
-
-		vic_1 |= R300_INPUT_CNTL_COLOR;
-	}
-
-	if (RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_COLOR1 )) {
-		int emitsize=4;
-
-		if (!immd) {
-			if (VB->AttribPtr[VERT_ATTRIB_COLOR1].size == 4 &&
-			    (VB->AttribPtr[VERT_ATTRIB_COLOR1].stride != 0 ||
-			     ((float*)VB->AttribPtr[VERT_ATTRIB_COLOR1].data)[3] != 1.0)) {
-				emitsize = 4;
-			} else {
-				emitsize = 3;
-			}//emitsize = VB->AttribPtr[VERT_ATTRIB_COLOR1].size;
-		}
-		if(VB->AttribPtr[VERT_ATTRIB_COLOR1].type == GL_UNSIGNED_BYTE)
-			emitsize = 1;
-
-		CONFIGURE_AOS(i_color[1], VB->AttribPtr[VERT_ATTRIB_COLOR1].type == GL_UNSIGNED_BYTE ? AOS_FORMAT_UBYTE : AOS_FORMAT_FLOAT_COLOR,
-						VB->AttribPtr[VERT_ATTRIB_COLOR1],
-						immd ? 4 : VB->AttribPtr[VERT_ATTRIB_COLOR1].size,
-						count);
-	}
-
-#if 0
-	if (RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_FOG )) {
-		CONFIGURE_AOS(	AOS_FORMAT_FLOAT,
-						VB->FogCoordPtr,
-						immd ? 4 : VB->FogCoordPtr->size,
-						count);
-	}
-#endif
-
-	r300->state.texture.tc_count = 0;
-	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-		if (RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_TEX(i) )) {
-			CONFIGURE_AOS(i_tex[i], AOS_FORMAT_FLOAT,
-							VB->AttribPtr[VERT_ATTRIB_TEX0+i],
-							immd ? 4 : VB->AttribPtr[VERT_ATTRIB_TEX0+i].size,
-							count);
-
-			vic_1 |= R300_INPUT_CNTL_TC0 << i;
-			r300->state.texture.tc_count++;
-		}
-	}
-
-	for (i = 0; i < _TNL_NUM_GENERIC; i++) {
-		if (RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_GENERIC(i) )) {
-			CONFIGURE_AOS(i_attrib[i], AOS_FORMAT_FLOAT,
-							VB->AttribPtr[VERT_ATTRIB_GENERIC0+i],
-							immd ? 4 : VB->AttribPtr[VERT_ATTRIB_GENERIC0+i].size,
-							count);
-		}
-	}
-	for(i=0; i < nr; i++)
-		if(r300->state.aos[i].aos_format == 2){
-			assert(r300->state.aos[i].aos_size == 1);
-			r300->state.aos[i].aos_size=5;
-		}
+	GLuint InputsRead = 0, OutputsWritten = 0;
+	int *inputs = NULL;
+	GLint tab[VERT_ATTRIB_MAX];
+	int swizzle[VERT_ATTRIB_MAX][4];
 	
-#define SHOW_INFO(n) do { \
-	if (RADEON_DEBUG & DEBUG_ALL) { \
-	fprintf(stderr, "RR[%d] - sz=%d, reg=%d, fmt=%d -- st=%d, of=0x%08x\n", \
-		n, \
-		r300->state.aos[n].aos_size, \
-		r300->state.aos[n].aos_reg, \
-		r300->state.aos[n].aos_format, \
-		r300->state.aos[n].aos_stride, \
-		r300->state.aos[n].aos_offset); \
-	} \
-} while(0);
-
+	if (hw_tcl_on) {
+		struct r300_vertex_program *prog=(struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
+		inputs = prog->inputs;
+		InputsRead = CURRENT_VERTEX_SHADER(ctx)->Base.InputsRead;
+		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->Base.OutputsWritten;
+	} else {
+		DECLARE_RENDERINPUTS(inputs_bitset);
+		inputs = r300->state.sw_tcl_inputs;
+		
+		RENDERINPUTS_COPY( inputs_bitset, TNL_CONTEXT(ctx)->render_inputs_bitset );
+		
+		assert(RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_POS ));
+		InputsRead |= 1 << VERT_ATTRIB_POS;
+		OutputsWritten |= 1 << VERT_RESULT_HPOS;
+		
+		assert(RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_NORMAL ) == 0);
+			
+		assert(RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_COLOR0 ));
+		InputsRead |= 1 << VERT_ATTRIB_COLOR0;
+		OutputsWritten |= 1 << VERT_RESULT_COL0;
+		
+		if (RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_COLOR1 )) {
+			InputsRead |= 1 << VERT_ATTRIB_COLOR1;
+			OutputsWritten |= 1 << VERT_RESULT_COL1;
+		}
+		
+		for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
+			if (RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_TEX(i) )) {
+				InputsRead |= 1 << (VERT_ATTRIB_TEX0 + i);
+				OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
+			}
+				
+		for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++)
+			if (InputsRead & (1 << i))
+				inputs[i] = nr++;
+			else
+				inputs[i] = -1;
+		
+		RENDERINPUTS_COPY( rmesa->state.render_inputs_bitset, inputs_bitset );
+	}
+	assert(InputsRead);
+	assert(OutputsWritten);
+	
+	for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++)
+		if (InputsRead & (1 << i))
+			tab[nr++] = i;
+	
+	if (nr > R300_MAX_AOS_ARRAYS)
+		return R300_FALLBACK_TCL;
+	
+	for (i = 0; i < nr; i++) {
+		int ci;
+		int comp_size, fix, found = 0;
+		
+		swizzle[i][0] = SWIZZLE_ZERO;
+		swizzle[i][1] = SWIZZLE_ZERO;
+		swizzle[i][2] = SWIZZLE_ZERO;
+		swizzle[i][3] = SWIZZLE_ONE;
+		
+		for (ci = 0; ci < VB->AttribPtr[tab[i]].size; ci++)
+			swizzle[i][ci] = ci;
+		
+#if MESA_BIG_ENDIAN
+#define SWAP(a, b) do { \
+	typeof(a) __temp; \
+	__temp = a;\
+	a = b; \
+	b = __temp; \
+} while (0)
+	
+		if (VB->AttribPtr[tab[i]].type == GL_UNSIGNED_BYTE) {
+			SWAP(swizzle[i][0], swizzle[i][3]);
+			SWAP(swizzle[i][1], swizzle[i][2]);
+		}
+#endif /* MESA_BIG_ENDIAN */
+		
+		if (r300IsGartMemory(rmesa, VB->AttribPtr[tab[i]].data, /*(count-1)*stride */ 4)) {
+			if (VB->AttribPtr[tab[i]].stride % 4)
+				return R300_FALLBACK_TCL;
+				
+			rmesa->state.aos[i].address = VB->AttribPtr[tab[i]].data;
+			rmesa->state.aos[i].start = 0;
+			rmesa->state.aos[i].aos_offset = r300GartOffsetFromVirtual(rmesa, VB->AttribPtr[tab[i]].data);
+			rmesa->state.aos[i].aos_stride = VB->AttribPtr[tab[i]].stride / 4;
+			
+			rmesa->state.aos[i].aos_size = t_emit_size(&VB->AttribPtr[tab[i]]);
+		} else {
+			/* TODO: emit_vector can only handle 4 byte vectors */
+			if (VB->AttribPtr[tab[i]].type != GL_FLOAT)
+				return R300_FALLBACK_TCL;
+			
+			emit_vector(ctx, &rmesa->state.aos[i], VB->AttribPtr[tab[i]].data,
+				    t_emit_size(&VB->AttribPtr[tab[i]]), VB->AttribPtr[tab[i]].stride, count);
+		}
+		
+		rmesa->state.aos[i].aos_size = t_aos_size(&VB->AttribPtr[tab[i]]);
+		
+		comp_size = comp_bytes(&VB->AttribPtr[tab[i]]);
+		
+#if MESA_LITTLE_ENDIAN
+		for (fix = 0; fix <= 4 - VB->AttribPtr[tab[i]].size; fix++) {
+			if ((rmesa->state.aos[i].aos_offset - comp_size * fix) % 4)
+				continue;
+			
+			found = 1;
+			break;
+		}
+#endif
+		
+		if (found) {
+			if (fix > 0) {
+				WARN_ONCE("Feeling lucky?\n");
+			}
+			
+			rmesa->state.aos[i].aos_offset -= comp_size * fix;
+			
+			for (ci = 0; ci < VB->AttribPtr[tab[i]].size; ci++)
+				swizzle[i][ci] += fix;
+		} else {
+			WARN_ONCE("Cannot handle offset %x with stride %d, comp %d\n",
+				  rmesa->state.aos[i].aos_offset, rmesa->state.aos[i].aos_stride, VB->AttribPtr[tab[i]].size);
+			return R300_FALLBACK_TCL;
+		}
+	}
+			  
 	/* setup INPUT_ROUTE */
 	R300_STATECHANGE(r300, vir[0]);
-	for(i=0;i+1<nr;i+=2){
-		SHOW_INFO(i)
-		SHOW_INFO(i+1)
-		dw=(r300->state.aos[i].aos_size-1)
-		| ((r300->state.aos[i].aos_reg)<<8)
-		| (r300->state.aos[i].aos_format<<14)
-		| (((r300->state.aos[i+1].aos_size-1)
-		| ((r300->state.aos[i+1].aos_reg)<<8)
-		| (r300->state.aos[i+1].aos_format<<14))<<16);
-
-		if(i+2==nr){
-			dw|=(1<<(13+16));
-			}
-		r300->hw.vir[0].cmd[R300_VIR_CNTL_0+(i>>1)]=dw;
-		}
-	if(nr & 1){
-		SHOW_INFO(nr-1)
-		dw=(r300->state.aos[nr-1].aos_size-1)
-		| (r300->state.aos[nr-1].aos_format<<14)
-		| ((r300->state.aos[nr-1].aos_reg)<<8)
-		| (1<<13);
-		r300->hw.vir[0].cmd[R300_VIR_CNTL_0+(nr>>1)]=dw;
-		//fprintf(stderr, "vir0 dw=%08x\n", dw);
-		}
-	/* Set the rest of INPUT_ROUTE_0 to 0 */
-	//for(i=((count+1)>>1); i<8; i++)r300->hw.vir[0].cmd[R300_VIR_CNTL_0+i]=(0x0);
-	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->packet0.count = (nr+1)>>1;
-
+	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->packet0.count =
+		t_vir0(&r300->hw.vir[0].cmd[R300_VIR_CNTL_0], VB->AttribPtr, inputs, tab, nr);
 
 	R300_STATECHANGE(r300, vir[1]);
-
-	for(i=0; i < nr; i++)
-		if(r300->state.aos[i].aos_format == 2){
-			assert(r300->state.aos[i].aos_size == 5);
-			r300->state.aos[i].aos_size=/*3*/4; /* XXX */
-		}
-		
-	for (i=0;i+1<nr;i+=2) {
-		/* do i first.. */
-		dw = fix_comps(t_comps(r300->state.aos[i].aos_size), r300->state.aos[i].aos_format) | R300_INPUT_ROUTE_ENABLE;
-		/* i+1 */
-		dw |= (fix_comps(t_comps(r300->state.aos[i+1].aos_size), r300->state.aos[i+1].aos_format) | R300_INPUT_ROUTE_ENABLE) << 16;
-		
-		//fprintf(stderr, "vir1 dw=%08x\n", dw);
-		r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(i>>1)]=dw;
-	}
-	if (nr & 1) {
-		dw = fix_comps(t_comps(r300->state.aos[nr-1].aos_size), r300->state.aos[nr-1].aos_format) | R300_INPUT_ROUTE_ENABLE;
-		
-		//fprintf(stderr, "vir1 dw=%08x\n", dw);
-		r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(nr>>1)]=dw;
-	}
-
-	/* Set the rest of INPUT_ROUTE_1 to 0 */
-	//for(i=((count+1)>>1); i<8; i++)r300->hw.vir[1].cmd[R300_VIR_CNTL_0+i]=0x0;
-	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->packet0.count = (nr+1)>>1;
+	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->packet0.count =
+		t_vir1(&r300->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle, nr);
 
 	/* Set up input_cntl */
 	/* I don't think this is needed for vertex buffers, but it doesn't hurt anything */
 	R300_STATECHANGE(r300, vic);
-	r300->hw.vic.cmd[R300_VIC_CNTL_0]=0x5555;  /* Hard coded value, no idea what it means */
-	r300->hw.vic.cmd[R300_VIC_CNTL_1]=vic_1;
-
-	for(i=0; i < nr; i++)
-		if(r300->state.aos[i].aos_format == 2){
-			assert(r300->state.aos[i].aos_size == /*3*/4); /* XXX */
-			r300->state.aos[i].aos_size=1;
-		}
-#if 0
-	r300->hw.vic.cmd[R300_VIC_CNTL_1]=0;
-
-	if(RENDERINPUTS_TEST( r300->state.render_inputs_bitset, _TNL_ATTRIB_POS ))
-		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=R300_INPUT_CNTL_POS;
-
-	if(RENDERINPUTS_TEST( r300->state.render_inputs_bitset, _TNL_ATTRIB_NORMAL ))
-		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=R300_INPUT_CNTL_NORMAL;
-
-	if(RENDERINPUTS_TEST( r300->state.render_inputs_bitset, _TNL_ATTRIB_COLOR0 ))
-		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=R300_INPUT_CNTL_COLOR;
-
-	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
-		if(RENDERINPUTS_TEST( r300->state.render_inputs_bitset, _TNL_ATTRIB_TEX(i) ))
-			r300->hw.vic.cmd[R300_VIC_CNTL_1]|=(R300_INPUT_CNTL_TC0<<i);
-#endif
+	r300->hw.vic.cmd[R300_VIC_CNTL_0] = 0x5555;  /* Hard coded value, no idea what it means */
+	r300->hw.vic.cmd[R300_VIC_CNTL_1] = t_vic(ctx, InputsRead);
 
 	/* Stage 3: VAP output */
 	
@@ -583,41 +569,33 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 	
 	r300->hw.vof.cmd[R300_VOF_CNTL_0]=0;
 	r300->hw.vof.cmd[R300_VOF_CNTL_1]=0;
-	if (hw_tcl_on){
-		GLuint OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->Base.OutputsWritten;
 		
-		if(OutputsWritten & (1<<VERT_RESULT_HPOS))
-			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
-		if(OutputsWritten & (1<<VERT_RESULT_COL0))
-			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
-		if(OutputsWritten & (1<<VERT_RESULT_COL1))
-			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
-		/*if(OutputsWritten & (1<<VERT_RESULT_BFC0))
-			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT;
-		if(OutputsWritten & (1<<VERT_RESULT_BFC1))
-			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;*/
-		//if(OutputsWritten & (1<<VERT_RESULT_FOGC))
+	if (OutputsWritten & (1 << VERT_RESULT_HPOS))
+		r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
+	
+	if (OutputsWritten & (1 << VERT_RESULT_COL0))
+		r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
+	
+	if (OutputsWritten & (1 << VERT_RESULT_COL1))
+		r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
+	
+	/*if(OutputsWritten & (1 << VERT_RESULT_BFC0))
+		r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT;
+	
+	if(OutputsWritten & (1 << VERT_RESULT_BFC1))
+		r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;*/
+	//if(OutputsWritten & (1 << VERT_RESULT_FOGC))
 
-		if(OutputsWritten & (1<<VERT_RESULT_PSIZ))
-			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
+	if (OutputsWritten & (1 << VERT_RESULT_PSIZ))
+		r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
 
-		for(i=0;i < ctx->Const.MaxTextureUnits;i++)
-			if(OutputsWritten & (1<<(VERT_RESULT_TEX0+i)))
-				r300->hw.vof.cmd[R300_VOF_CNTL_1] |= (4<<(3*i));
-	} else {
-		if(RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_POS ))
-			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
-		if(RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_COLOR0 ))
-			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
-		if(RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_COLOR1 ))
-			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
-
-		for(i=0;i < ctx->Const.MaxTextureUnits;i++)
-			if(RENDERINPUTS_TEST( inputs_bitset, _TNL_ATTRIB_TEX(i) ))
-				r300->hw.vof.cmd[R300_VOF_CNTL_1]|=(4<<(3*i));
-	}
-
+	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
+		if(OutputsWritten & (1 << (VERT_RESULT_TEX0 + i)))
+			r300->hw.vof.cmd[R300_VOF_CNTL_1] |= (4 << (3 * i));
+	
 	rmesa->state.aos_count = nr;
+	
+	return R300_FALLBACK_NONE;
 }
 
 #ifdef USER_BUFFERS

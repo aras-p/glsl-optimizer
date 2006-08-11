@@ -1526,26 +1526,16 @@ static void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 		)
 	o_reg += 2;
 	
-	if (RENDERINPUTS_TEST( r300->state.render_inputs_bitset, _TNL_ATTRIB_COLOR1 )) {
-		WRITE_OP(
-			EASY_VSF_OP(MUL, o_reg++, ALL, RESULT),
-			VSF_REG(r300->state.vap_reg.i_color[1]),
-			VSF_ATTR_UNITY(r300->state.vap_reg.i_color[1]),
-			VSF_UNITY(r300->state.vap_reg.i_color[1])
-		)
-	}
-	
-	/* Pass through texture coordinates, if any */
-	for(i=0;i < r300->radeon.glCtx->Const.MaxTextureUnits;i++)
-		if (RENDERINPUTS_TEST( r300->state.render_inputs_bitset, _TNL_ATTRIB_TEX(i) )){
-			// fprintf(stderr, "i_tex[%d]=%d\n", i, r300->state.vap_reg.i_tex[i]);
+	for (i = VERT_ATTRIB_COLOR1; i < VERT_ATTRIB_MAX; i++)
+		if (r300->state.sw_tcl_inputs[i] != -1) {
 			WRITE_OP(
 				EASY_VSF_OP(MUL, o_reg++ /* 2+i */, ALL, RESULT),
-				VSF_REG(r300->state.vap_reg.i_tex[i]),
-				VSF_ATTR_UNITY(r300->state.vap_reg.i_tex[i]),
-				VSF_UNITY(r300->state.vap_reg.i_tex[i])
+				VSF_REG(r300->state.sw_tcl_inputs[i]),
+				VSF_ATTR_UNITY(r300->state.sw_tcl_inputs[i]),
+				VSF_UNITY(r300->state.sw_tcl_inputs[i])
 				)
-			}
+		
+		}
 	
 	r300->state.vertex_shader.program_end--; /* r300 wants program length to be one more - no idea why */
 	r300->state.vertex_shader.program.length=(r300->state.vertex_shader.program_end+1)*4;
