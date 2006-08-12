@@ -486,16 +486,16 @@ int r300EmitArrays(GLcontext *ctx)
 			swizzle[i][ci] = ci;
 		
 #if MESA_BIG_ENDIAN
-#define SWAP(a, b) do { \
-	typeof(a) __temp; \
+#define SWAP_INT(a, b) do { \
+	int __temp; \
 	__temp = a;\
 	a = b; \
 	b = __temp; \
 } while (0)
 	
 		if (VB->AttribPtr[tab[i]].type == GL_UNSIGNED_BYTE) {
-			SWAP(swizzle[i][0], swizzle[i][3]);
-			SWAP(swizzle[i][1], swizzle[i][2]);
+			SWAP_INT(swizzle[i][0], swizzle[i][3]);
+			SWAP_INT(swizzle[i][1], swizzle[i][2]);
 		}
 #endif /* MESA_BIG_ENDIAN */
 		
