@@ -290,6 +290,14 @@ typedef union
     struct
     {
         unsigned dstAlphaMode        :  3;
+
+	/**
+	 * This bit enables \c GL_FUNC_SUBTRACT.  Like most DirectX oriented
+	 * hardware, there's no way to do \c GL_FUNC_REVERSE_SUBTRACT.
+	 * 
+	 * \todo
+	 * Add support for \c GL_FUNC_SUBTRACT!
+	 */
         unsigned dstMinusSrc         :  1;
         unsigned srcAlphaMode        :  3;
         unsigned binaryFinalAlpha    :  1;
@@ -327,7 +335,11 @@ typedef union
         unsigned texBlendCtrl      : 3;
         unsigned flushPdDestWrites : 1;
         unsigned flushPdZbufWrites : 1;
-	/* havn't found an equivalent for Savage4. Utah-driver sets it to 0. */
+
+	/**
+	 * Disable perspective correct interpolation for vertex color, vertex
+	 * fog, and vertex alpha.  For OpenGL, this should \b always be zero.
+	 */
         unsigned interpMode        : 1;
     }ni;
     u_int32_t ui;
