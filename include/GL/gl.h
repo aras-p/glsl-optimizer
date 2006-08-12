@@ -2288,8 +2288,7 @@ typedef void (APIENTRYP PFNGLGETQUERYOBJECTUI64VEXTPROC) (GLuint id, GLenum pnam
 #define GL_DRAW_FRAMEBUFFER_BINDING_EXT        0x8CA6
 #define GL_READ_FRAMEBUFFER_BINDING_EXT        0x8CAA
 
-GLAPI void GLAPIENTRY
-glBlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+GLAPI void GLAPIENTRY glBlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                      GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                      GLbitfield mask, GLenum filter);
 

@@ -98,6 +98,7 @@
 #define glBlendFuncSeparateEXT		MANGLE(BlendFuncSeparateEXT)
 #define glBlendFuncSeparateINGR		MANGLE(BlendFuncSeparateINGR)
 #define glBlendFuncSeparate		MANGLE(BlendFuncSeparate)
+#define glBlitFramebufferEXT		MANGLE(BlitFramebufferEXT)
 #define glBufferDataARB		MANGLE(BufferDataARB)
 #define glBufferData		MANGLE(BufferData)
 #define glBufferSubDataARB		MANGLE(BufferSubDataARB)
