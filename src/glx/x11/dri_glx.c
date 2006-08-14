@@ -183,6 +183,7 @@ static const char createNewScreenName[] = "__driCreateNewScreen_20050727";
  */
 static __DRIdriver *OpenDriver(const char *driverName)
 {
+   void *glhandle = NULL;
    char *libPaths = NULL;
    char libDir[1000];
    int i;
@@ -195,6 +196,9 @@ static __DRIdriver *OpenDriver(const char *driverName)
          return driver;
       }
    }
+
+   /* Attempt to make sure libGL symbols will be visible to the driver */
+   glhandle = dlopen("libGL.so.1", RTLD_NOW | RTLD_GLOBAL);
 
    if (geteuid() == getuid()) {
       /* don't allow setuid apps to use LIBGL_DRIVERS_PATH */
@@ -229,12 +233,13 @@ static __DRIdriver *OpenDriver(const char *driverName)
          /* allocate __DRIdriver struct */
          driver = (__DRIdriver *) Xmalloc(sizeof(__DRIdriver));
          if (!driver)
-            return NULL; /* out of memory! */
+            break; /* out of memory! */
          /* init the struct */
          driver->name = __glXstrdup(driverName);
          if (!driver->name) {
             Xfree(driver);
-            return NULL; /* out of memory! */
+            driver = NULL;
+            break; /* out of memory! */
          }
 
          driver->createNewScreenFunc = (PFNCREATENEWSCREENFUNC)
@@ -248,6 +253,7 @@ static __DRIdriver *OpenDriver(const char *driverName)
 			  "Your driver may be too old for this libGL.\n",
 			  createNewScreenName, driverName);
             Xfree(driver);
+            driver = NULL;
             dlclose(handle);
             continue;
          }
@@ -255,15 +261,20 @@ static __DRIdriver *OpenDriver(const char *driverName)
          /* put at head of linked list */
          driver->next = Drivers;
          Drivers = driver;
-         return driver;
+         break;
       }
       else {
 	 ErrorMessageF("dlopen %s failed (%s)\n", realDriverName, dlerror());
       }
    }
 
-   ErrorMessageF("unable to find driver: %s_dri.so\n", driverName);
-   return NULL;
+   if (!driver)
+      ErrorMessageF("unable to load driver: %s_dri.so\n", driverName);
+
+   if (glhandle)
+      dlclose(glhandle);
+
+   return driver;
 }
 
 
