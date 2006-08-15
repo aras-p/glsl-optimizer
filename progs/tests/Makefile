@@ -50,6 +50,7 @@ SOURCES = \
 	no_s3tc.c \
 	packedpixels.c \
 	pbo.c \
+	prog_parameter.c \
 	projtex.c \
 	readrate.c \
 	seccolor.c \
