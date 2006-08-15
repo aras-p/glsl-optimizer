@@ -94,6 +94,7 @@ static const struct {
    { OFF, "GL_EXT_framebuffer_object",         F(EXT_framebuffer_object) },
    { OFF, "GL_EXT_framebuffer_blit",           F(EXT_framebuffer_blit) },
    { OFF, "GL_EXT_fog_coord",                  F(EXT_fog_coord) },
+   { OFF, "GL_EXT_gpu_program_parameters",     F(EXT_gpu_program_parameters) },
    { OFF, "GL_EXT_histogram",                  F(EXT_histogram) },
    { OFF, "GL_EXT_multi_draw_arrays",          F(EXT_multi_draw_arrays) },
    { OFF, "GL_EXT_packed_depth_stencil",       F(EXT_packed_depth_stencil) },
@@ -284,6 +285,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.SGIX_depth_texture = GL_TRUE;
    ctx->Extensions.SGIX_shadow = GL_TRUE;
    ctx->Extensions.SGIX_shadow_ambient = GL_TRUE;
+#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
+   ctx->Extensions.EXT_gpu_program_parameters = GL_TRUE;
+#endif
 }
 
 

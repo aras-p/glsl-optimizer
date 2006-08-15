@@ -5075,6 +5075,16 @@ KEYWORD1 GLboolean KEYWORD2 NAME(IsVertexArrayAPPLE)(GLuint array)
    RETURN_DISPATCH(IsVertexArrayAPPLE, (array), (F, "glIsVertexArrayAPPLE(%d);\n", array));
 }
 
+KEYWORD1 void KEYWORD2 NAME(ProgramEnvParameters4fvEXT)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
+{
+   DISPATCH(ProgramEnvParameters4fvEXT, (target, index, count, params), (F, "glProgramEnvParameters4fvEXT(0x%x, %d, %d, %p);\n", target, index, count, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ProgramLocalParameters4fvEXT)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
+{
+   DISPATCH(ProgramLocalParameters4fvEXT, (target, index, count, params), (F, "glProgramLocalParameters4fvEXT(0x%x, %d, %d, %p);\n", target, index, count, (const void *) params));
+}
+
 
 #endif /* defined( NAME ) */
 
@@ -5912,6 +5922,8 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(DeleteVertexArraysAPPLE),
    TABLE_ENTRY(GenVertexArraysAPPLE),
    TABLE_ENTRY(IsVertexArrayAPPLE),
+   TABLE_ENTRY(ProgramEnvParameters4fvEXT),
+   TABLE_ENTRY(ProgramLocalParameters4fvEXT),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.

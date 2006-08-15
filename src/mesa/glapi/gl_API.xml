@@ -11551,4 +11551,20 @@
     </function>
 </category>
 
+<category name="GL_EXT_gpu_program_parameters" number="319">
+    <function name="ProgramEnvParameters4fvEXT" offset="823">
+        <param name="target" type="GLenum"/>
+	<param name="index" type="GLuint"/>
+	<param name="count" type="GLsizei"/>
+	<param name="params" type="const GLfloat *"/>
+    </function>	
+
+    <function name="ProgramLocalParameters4fvEXT" offset="824">
+        <param name="target" type="GLenum"/>
+	<param name="index" type="GLuint"/>
+	<param name="count" type="GLsizei"/>
+	<param name="params" type="const GLfloat *"/>
+    </function>	
+</category>
+
 </OpenGLAPI>

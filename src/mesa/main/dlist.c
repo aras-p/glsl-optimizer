@@ -4468,6 +4468,38 @@ save_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
 
 
 static void GLAPIENTRY
+save_ProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
+				  const GLfloat *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (count > 0) {
+      unsigned i;
+      const GLfloat * p = params;
+
+      for (i = 0 ; i < count ; i++) {
+	 n = ALLOC_INSTRUCTION(ctx, OPCODE_PROGRAM_LOCAL_PARAMETER_ARB, 6);
+	 if (n) {
+	    n[1].e = target;
+	    n[2].ui = index;
+	    n[3].f = p[0];
+	    n[4].f = p[1];
+	    n[5].f = p[2];
+	    n[6].f = p[3];
+	    p += 4;
+	 }
+      }
+   }
+
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramLocalParameters4fvEXT(ctx->Exec, (target, index, count, params));
+   }
+}
+
+
+static void GLAPIENTRY
 save_ProgramLocalParameter4dARB(GLenum target, GLuint index,
                                 GLdouble x, GLdouble y,
                                 GLdouble z, GLdouble w)
@@ -4666,6 +4698,38 @@ save_ProgramEnvParameter4fvARB(GLenum target, GLuint index,
 {
    save_ProgramEnvParameter4fARB(target, index, params[0], params[1],
                                  params[2], params[3]);
+}
+
+
+static void GLAPIENTRY
+save_ProgramEnvParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
+				const GLfloat * params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (count > 0) {
+      unsigned i;
+      const GLfloat * p = params;
+
+      for (i = 0 ; i < count ; i++) {
+	 n = ALLOC_INSTRUCTION(ctx, OPCODE_PROGRAM_ENV_PARAMETER_ARB, 6);
+	 if (n) {
+	    n[1].e = target;
+	    n[2].ui = index;
+	    n[3].f = p[0];
+	    n[4].f = p[1];
+	    n[5].f = p[2];
+	    n[6].f = p[3];
+	    p += 4;
+	 }
+      }
+   }
+
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramEnvParameters4fvEXT(ctx->Exec, (target, index, count, params));
+   }
 }
 
 
@@ -8154,6 +8218,12 @@ _mesa_init_dlist_table(struct _glapi_table *table)
 
    /* 299. GL_EXT_blend_equation_separate */
    SET_BlendEquationSeparateEXT(table, save_BlendEquationSeparateEXT);
+
+   /* GL_EXT_gpu_program_parmaeters */
+#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
+   SET_ProgramEnvParameters4fvEXT(table, save_ProgramEnvParameters4fvEXT);
+   SET_ProgramLocalParameters4fvEXT(table, save_ProgramLocalParameters4fvEXT);
+#endif
 }
 
 

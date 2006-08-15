@@ -2312,6 +2312,24 @@ typedef void (APIENTRYP PFNGLBLITFRAMEBUFFEREXTPROC)
 #endif /* GL_EXT_packed_depth_stencil */
 
 
+#ifndef GL_EXT_gpu_program_parameters
+#define GL_EXT_gpu_program_parameters 1
+
+GLAPI void GLAPIENTRY glProgramEnvParameters4fvEXT(GLenum target,
+    GLuint index, GLsizei count, const GLfloat *params); 
+
+GLAPI void GLAPIENTRY glProgramLocalParameters4fvEXT(GLenum target,
+    GLuint index, GLsizei count, const GLfloat *params); 
+
+typedef void (APIENTRYP PFNGLPROGRAMENVPARAMETERS4FVEXTPROC)
+       (GLenum target, GLuint index, GLsizei count, const GLfloat *params); 
+
+typedef void (APIENTRYP PFNGLPROGRAMLOCALPARAMETERS4FVEXTPROC)
+       (GLenum target, GLuint index, GLsizei count, const GLfloat *params); 
+
+#endif /* GL_EXT_gpu_program_parameters */
+
+
 #ifndef GL_EXT_texture_sRGB
 #define GL_EXT_texture_sRGB 1
 

@@ -2527,10 +2527,16 @@
 #define CALL_IsVertexArrayAPPLE(disp, parameters) (*((disp)->IsVertexArrayAPPLE)) parameters
 #define GET_IsVertexArrayAPPLE(disp) ((disp)->IsVertexArrayAPPLE)
 #define SET_IsVertexArrayAPPLE(disp, fn) ((disp)->IsVertexArrayAPPLE = fn)
+#define CALL_ProgramEnvParameters4fvEXT(disp, parameters) (*((disp)->ProgramEnvParameters4fvEXT)) parameters
+#define GET_ProgramEnvParameters4fvEXT(disp) ((disp)->ProgramEnvParameters4fvEXT)
+#define SET_ProgramEnvParameters4fvEXT(disp, fn) ((disp)->ProgramEnvParameters4fvEXT = fn)
+#define CALL_ProgramLocalParameters4fvEXT(disp, parameters) (*((disp)->ProgramLocalParameters4fvEXT)) parameters
+#define GET_ProgramLocalParameters4fvEXT(disp) ((disp)->ProgramLocalParameters4fvEXT)
+#define SET_ProgramLocalParameters4fvEXT(disp, fn) ((disp)->ProgramLocalParameters4fvEXT = fn)
 
 #else
 
-#define driDispatchRemapTable_size 415
+#define driDispatchRemapTable_size 417
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define LoadTransposeMatrixfARB_remap_index 0
@@ -2948,6 +2954,8 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define DeleteVertexArraysAPPLE_remap_index 412
 #define GenVertexArraysAPPLE_remap_index 413
 #define IsVertexArrayAPPLE_remap_index 414
+#define ProgramEnvParameters4fvEXT_remap_index 415
+#define ProgramLocalParameters4fvEXT_remap_index 416
 
 #define CALL_LoadTransposeMatrixfARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), driDispatchRemapTable[LoadTransposeMatrixfARB_remap_index], parameters)
 #define GET_LoadTransposeMatrixfARB(disp) GET_by_offset(disp, driDispatchRemapTable[LoadTransposeMatrixfARB_remap_index])
@@ -4194,6 +4202,12 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_IsVertexArrayAPPLE(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[IsVertexArrayAPPLE_remap_index], parameters)
 #define GET_IsVertexArrayAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[IsVertexArrayAPPLE_remap_index])
 #define SET_IsVertexArrayAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsVertexArrayAPPLE_remap_index], fn)
+#define CALL_ProgramEnvParameters4fvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLsizei, const GLfloat *)), driDispatchRemapTable[ProgramEnvParameters4fvEXT_remap_index], parameters)
+#define GET_ProgramEnvParameters4fvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameters4fvEXT_remap_index])
+#define SET_ProgramEnvParameters4fvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameters4fvEXT_remap_index], fn)
+#define CALL_ProgramLocalParameters4fvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLsizei, const GLfloat *)), driDispatchRemapTable[ProgramLocalParameters4fvEXT_remap_index], parameters)
+#define GET_ProgramLocalParameters4fvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameters4fvEXT_remap_index])
+#define SET_ProgramLocalParameters4fvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameters4fvEXT_remap_index], fn)
 
 #endif /* !defined(IN_DRI_DRIVER) */
 

@@ -797,6 +797,12 @@ _mesa_init_exec_table(struct _glapi_table *exec)
 #if FEATURE_EXT_framebuffer_blit
    SET_BlitFramebufferEXT(exec, _mesa_BlitFramebufferEXT);
 #endif
+
+   /* GL_EXT_gpu_program_parmaeters */
+#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
+   SET_ProgramEnvParameters4fvEXT(exec, _mesa_ProgramEnvParameters4fvEXT);
+   SET_ProgramLocalParameters4fvEXT(exec, _mesa_ProgramLocalParameters4fvEXT);
+#endif
 }
 
 

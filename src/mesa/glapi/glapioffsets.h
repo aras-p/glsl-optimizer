@@ -855,7 +855,9 @@
 #define _gloffset_DeleteVertexArraysAPPLE 820
 #define _gloffset_GenVertexArraysAPPLE 821
 #define _gloffset_IsVertexArrayAPPLE 822
-#define _gloffset_FIRST_DYNAMIC 823
+#define _gloffset_ProgramEnvParameters4fvEXT 823
+#define _gloffset_ProgramLocalParameters4fvEXT 824
+#define _gloffset_FIRST_DYNAMIC 825
 
 #else
 
@@ -1274,6 +1276,8 @@
 #define _gloffset_DeleteVertexArraysAPPLE driDispatchRemapTable[DeleteVertexArraysAPPLE_remap_index]
 #define _gloffset_GenVertexArraysAPPLE driDispatchRemapTable[GenVertexArraysAPPLE_remap_index]
 #define _gloffset_IsVertexArrayAPPLE driDispatchRemapTable[IsVertexArrayAPPLE_remap_index]
+#define _gloffset_ProgramEnvParameters4fvEXT driDispatchRemapTable[ProgramEnvParameters4fvEXT_remap_index]
+#define _gloffset_ProgramLocalParameters4fvEXT driDispatchRemapTable[ProgramLocalParameters4fvEXT_remap_index]
 
 #endif /* !defined(IN_DRI_DRIVER) */
 

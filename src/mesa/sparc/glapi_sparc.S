@@ -888,6 +888,8 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 		.globl glDeleteVertexArraysAPPLE ; .type glDeleteVertexArraysAPPLE,#function
 		.globl glGenVertexArraysAPPLE ; .type glGenVertexArraysAPPLE,#function
 		.globl glIsVertexArrayAPPLE ; .type glIsVertexArrayAPPLE,#function
+		.globl glProgramEnvParameters4fvEXT ; .type glProgramEnvParameters4fvEXT,#function
+		.globl glProgramLocalParameters4fvEXT ; .type glProgramLocalParameters4fvEXT,#function
 		.globl _mesa_sparc_glapi_begin ; .type _mesa_sparc_glapi_begin,#function
 _mesa_sparc_glapi_begin:
 
@@ -1714,6 +1716,8 @@ _mesa_sparc_glapi_begin:
 	GL_STUB(glDeleteVertexArraysAPPLE, _gloffset_DeleteVertexArraysAPPLE)
 	GL_STUB(glGenVertexArraysAPPLE, _gloffset_GenVertexArraysAPPLE)
 	GL_STUB(glIsVertexArrayAPPLE, _gloffset_IsVertexArrayAPPLE)
+	GL_STUB(glProgramEnvParameters4fvEXT, _gloffset_ProgramEnvParameters4fvEXT)
+	GL_STUB(glProgramLocalParameters4fvEXT, _gloffset_ProgramLocalParameters4fvEXT)
 
 		.globl _mesa_sparc_glapi_end ; .type _mesa_sparc_glapi_end,#function
 _mesa_sparc_glapi_end:

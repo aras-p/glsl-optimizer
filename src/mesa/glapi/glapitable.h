@@ -860,6 +860,8 @@ struct _glapi_table
    void (GLAPIENTRYP DeleteVertexArraysAPPLE)(GLsizei n, const GLuint * arrays); /* 820 */
    void (GLAPIENTRYP GenVertexArraysAPPLE)(GLsizei n, GLuint * arrays); /* 821 */
    GLboolean (GLAPIENTRYP IsVertexArrayAPPLE)(GLuint array); /* 822 */
+   void (GLAPIENTRYP ProgramEnvParameters4fvEXT)(GLenum target, GLuint index, GLsizei count, const GLfloat * params); /* 823 */
+   void (GLAPIENTRYP ProgramLocalParameters4fvEXT)(GLenum target, GLuint index, GLsizei count, const GLfloat * params); /* 824 */
 };
 
 #endif /* !defined( _GLAPI_TABLE_H_ ) */

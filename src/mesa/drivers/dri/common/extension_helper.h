@@ -2372,6 +2372,13 @@ static const char MultiTexCoord4ivARB_names[] =
     "";
 #endif
 
+#if defined(need_GL_EXT_gpu_program_parameters)
+static const char ProgramLocalParameters4fvEXT_names[] = 
+    "iiip\0" /* Parameter signature */
+    "glProgramLocalParameters4fvEXT\0"
+    "";
+#endif
+
 #if defined(need_GL_NV_evaluators)
 static const char GetMapAttribParameterfvNV_names[] = 
     "iiip\0" /* Parameter signature */
@@ -2504,6 +2511,13 @@ static const char ReplacementCodeuivSUN_names[] =
 static const char GenVertexArraysAPPLE_names[] = 
     "ip\0" /* Parameter signature */
     "glGenVertexArraysAPPLE\0"
+    "";
+#endif
+
+#if defined(need_GL_EXT_gpu_program_parameters)
+static const char ProgramEnvParameters4fvEXT_names[] = 
+    "iiip\0" /* Parameter signature */
+    "glProgramEnvParameters4fvEXT\0"
     "";
 #endif
 
@@ -5114,6 +5128,14 @@ static const struct dri_extension_function GL_EXT_framebuffer_object_functions[]
     { GenFramebuffersEXT_names, GenFramebuffersEXT_remap_index, -1 },
     { BindRenderbufferEXT_names, BindRenderbufferEXT_remap_index, -1 },
     { GetRenderbufferParameterivEXT_names, GetRenderbufferParameterivEXT_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_EXT_gpu_program_parameters)
+static const struct dri_extension_function GL_EXT_gpu_program_parameters_functions[] = {
+    { ProgramLocalParameters4fvEXT_names, ProgramLocalParameters4fvEXT_remap_index, -1 },
+    { ProgramEnvParameters4fvEXT_names, ProgramEnvParameters4fvEXT_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif

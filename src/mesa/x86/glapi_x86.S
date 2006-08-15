@@ -964,6 +964,8 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB(DeleteVertexArraysAPPLE, _gloffset_DeleteVertexArraysAPPLE, DeleteVertexArraysAPPLE@8)
 	GL_STUB(GenVertexArraysAPPLE, _gloffset_GenVertexArraysAPPLE, GenVertexArraysAPPLE@8)
 	GL_STUB(IsVertexArrayAPPLE, _gloffset_IsVertexArrayAPPLE, IsVertexArrayAPPLE@4)
+	GL_STUB(ProgramEnvParameters4fvEXT, _gloffset_ProgramEnvParameters4fvEXT, ProgramEnvParameters4fvEXT@16)
+	GL_STUB(ProgramLocalParameters4fvEXT, _gloffset_ProgramLocalParameters4fvEXT, ProgramLocalParameters4fvEXT@16)
 	GL_STUB_ALIAS(ArrayElementEXT, _gloffset_ArrayElement, ArrayElementEXT@4, ArrayElement, ArrayElement@4)
 	GL_STUB_ALIAS(BindTextureEXT, _gloffset_BindTexture, BindTextureEXT@8, BindTexture, BindTexture@8)
 	GL_STUB_ALIAS(DrawArraysEXT, _gloffset_DrawArrays, DrawArraysEXT@12, DrawArrays, DrawArrays@12)
