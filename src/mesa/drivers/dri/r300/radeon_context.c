@@ -59,7 +59,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vblank.h"
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
-#define DRIVER_DATE "20040924"
+#define DRIVER_DATE "20060815"
 
 
 /* Return various strings for glGetString().

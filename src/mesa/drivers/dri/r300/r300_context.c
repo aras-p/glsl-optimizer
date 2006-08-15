@@ -82,6 +82,7 @@ int hw_tcl_on=1;
 #define need_GL_EXT_secondary_color
 #define need_GL_EXT_blend_equation_separate
 #define need_GL_EXT_blend_func_separate
+#define need_GL_EXT_gpu_program_parameters
 #define need_GL_NV_vertex_program
 #include "extension_helper.h"
 
@@ -104,6 +105,7 @@ const struct dri_extension card_extensions[] = {
   {"GL_EXT_blend_minmax",		GL_EXT_blend_minmax_functions},
   {"GL_EXT_blend_subtract",		NULL},
 //  {"GL_EXT_fog_coord",			GL_EXT_fog_coord_functions },
+  {"GL_EXT_gpu_program_parameters",     GL_EXT_gpu_program_parameters_functions},
   {"GL_EXT_secondary_color", 		GL_EXT_secondary_color_functions},
   {"GL_EXT_stencil_wrap",		NULL},
   {"GL_EXT_texture_edge_clamp",		NULL},
