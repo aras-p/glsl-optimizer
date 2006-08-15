@@ -686,7 +686,7 @@ _mesa_ProgramParameters4fvNV(GLenum target, GLuint index,
       for (i = 0; i < num; i++) {
          COPY_4V(ctx->VertexProgram.Parameters[index + i], params);
          params += 4;
-      };
+      }
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glProgramParameters4fvNV");
