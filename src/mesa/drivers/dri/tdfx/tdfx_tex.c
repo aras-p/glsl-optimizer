@@ -1364,8 +1364,7 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
        texImage->Data = _mesa_alloc_texmemory(texImage->CompressedSize);
     } else {
        dstRowStride = mml->width * texelBytes;
-       texImage->Data = _mesa_alloc_texmemory(mml->width * mml->height *
-					      texelBytes);
+       texImage->Data = _mesa_alloc_texmemory(mml->width * mml->height * texelBytes);
     }
     if (!texImage->Data) {
        _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
