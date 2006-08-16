@@ -131,6 +131,12 @@ _mesa_free(void *ptr)
 void *
 _mesa_align_malloc(size_t bytes, unsigned long alignment)
 {
+#if defined(HAVE_POSIX_MEMALIGN) && !(defined(XFree86LOADER) && defined(IN_MODULE))
+   void *mem;
+
+   (void) posix_memalign(& mem, alignment, bytes);
+   return mem;
+#else
    uintptr_t ptr, buf;
 
    ASSERT( alignment > 0 );
@@ -151,6 +157,7 @@ _mesa_align_malloc(size_t bytes, unsigned long alignment)
 #endif
 
    return (void *) buf;
+#endif /* defined(HAVE_POSIX_MEMALIGN) && !(defined(XFree86LOADER) && defined(IN_MODULE)) */
 }
 
 /**
@@ -160,6 +167,16 @@ _mesa_align_malloc(size_t bytes, unsigned long alignment)
 void *
 _mesa_align_calloc(size_t bytes, unsigned long alignment)
 {
+#if defined(HAVE_POSIX_MEMALIGN) && !(defined(XFree86LOADER) && defined(IN_MODULE))
+   void *mem;
+   
+   mem = _mesa_align_malloc(bytes, alignment);
+   if (mem != NULL) {
+      (void) memset(mem, 0, bytes);
+   }
+
+   return mem;
+#else
    uintptr_t ptr, buf;
 
    ASSERT( alignment > 0 );
@@ -180,6 +197,7 @@ _mesa_align_calloc(size_t bytes, unsigned long alignment)
 #endif
 
    return (void *)buf;
+#endif /* defined(HAVE_POSIX_MEMALIGN) && !(defined(XFree86LOADER) && defined(IN_MODULE)) */
 }
 
 /**
@@ -192,13 +210,13 @@ _mesa_align_calloc(size_t bytes, unsigned long alignment)
 void
 _mesa_align_free(void *ptr)
 {
-#if 0
-   _mesa_free( (void *)(*(unsigned long *)((unsigned long)ptr - sizeof(void *))) );
+#if defined(HAVE_POSIX_MEMALIGN) && !(defined(XFree86LOADER) && defined(IN_MODULE))
+   free(ptr);
 #else
    void **cubbyHole = (void **) ((char *) ptr - sizeof(void *));
    void *realAddr = *cubbyHole;
    _mesa_free(realAddr);
-#endif
+#endif /* defined(HAVE_POSIX_MEMALIGN) && !(defined(XFree86LOADER) && defined(IN_MODULE)) */
 }
 
 /**
