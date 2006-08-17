@@ -70,7 +70,7 @@
 #include "lines.h"
 #include "macros.h"
 #include "matrix.h"
-#if FEATURE_ARB_occlusion_query
+#if FEATURE_ARB_occlusion_query || FEATURE_EXT_timer_query
 #include "occlude.h"
 #endif
 #include "pixel.h"
@@ -790,15 +790,16 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_GenerateMipmapEXT(exec, _mesa_GenerateMipmapEXT);
 #endif
 
-   /* GL_EXT_timer_query */
+#if FEATURE_EXT_timer_query
    SET_GetQueryObjecti64vEXT(exec, _mesa_GetQueryObjecti64vEXT);
    SET_GetQueryObjectui64vEXT(exec, _mesa_GetQueryObjectui64vEXT);
+#endif
 
 #if FEATURE_EXT_framebuffer_blit
    SET_BlitFramebufferEXT(exec, _mesa_BlitFramebufferEXT);
 #endif
 
-   /* GL_EXT_gpu_program_parmaeters */
+   /* GL_EXT_gpu_program_parameters */
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
    SET_ProgramEnvParameters4fvEXT(exec, _mesa_ProgramEnvParameters4fvEXT);
    SET_ProgramLocalParameters4fvEXT(exec, _mesa_ProgramLocalParameters4fvEXT);
