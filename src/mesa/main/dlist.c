@@ -4756,7 +4756,7 @@ save_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
 #endif /* FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program */
 
 
-#ifdef FEATURE_ARB_occlusion_query
+#if FEATURE_ARB_occlusion_query
 
 static void GLAPIENTRY
 save_BeginQueryARB(GLenum target, GLuint id)
