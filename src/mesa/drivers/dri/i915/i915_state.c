@@ -919,9 +919,10 @@ static void i915_init_packets( i915ContextPtr i915 )
     * we get hardware contexts working.
     */
    i915->state.active = (I915_UPLOAD_PROGRAM | 
-			I915_UPLOAD_STIPPLE | 
-			I915_UPLOAD_CTX | 
-			I915_UPLOAD_BUFFERS);
+			 I915_UPLOAD_STIPPLE | 
+			 I915_UPLOAD_CTX | 
+			 I915_UPLOAD_BUFFERS | 
+			 I915_UPLOAD_INVARIENT);
 }
 
 void i915InitStateFunctions( struct dd_function_table *functions )

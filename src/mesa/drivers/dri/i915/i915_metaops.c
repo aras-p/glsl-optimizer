@@ -41,7 +41,8 @@
 
 /* A large amount of state doesn't need to be uploaded.
  */
-#define ACTIVE (I915_UPLOAD_PROGRAM | 		\
+#define ACTIVE (I915_UPLOAD_INVARIENT |         \
+		I915_UPLOAD_PROGRAM | 		\
 		I915_UPLOAD_STIPPLE |		\
 		I915_UPLOAD_CTX |		\
 		I915_UPLOAD_BUFFERS |		\

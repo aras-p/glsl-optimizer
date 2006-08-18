@@ -40,7 +40,8 @@
 
 /* A large amount of state doesn't need to be uploaded.
  */
-#define ACTIVE (I830_UPLOAD_TEXBLEND(0) |	\
+#define ACTIVE (I830_UPLOAD_INVARIENT |         \
+		I830_UPLOAD_TEXBLEND(0) |	\
 		I830_UPLOAD_STIPPLE |		\
 		I830_UPLOAD_CTX |		\
 		I830_UPLOAD_BUFFERS |		\

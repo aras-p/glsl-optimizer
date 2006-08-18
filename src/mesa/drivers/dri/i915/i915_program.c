@@ -195,29 +195,47 @@ GLuint i915_emit_arith( struct i915_fragment_program *p,
 }
 
 GLuint i915_emit_texld( struct i915_fragment_program *p,
-			  GLuint dest,
-			  GLuint destmask,
-			  GLuint sampler,
-			  GLuint coord,
-			  GLuint op )
+			GLuint dest,
+			GLuint destmask,
+			GLuint sampler,
+			GLuint coord,
+			GLuint op )
 {
-   assert(GET_UREG_TYPE(dest) != REG_TYPE_CONST);
-   assert(dest = UREG(GET_UREG_TYPE(dest), GET_UREG_NR(dest)));
-
-   if (GET_UREG_TYPE(coord) != REG_TYPE_T) {
-      p->nr_tex_indirect++;
+   if (coord != UREG(GET_UREG_TYPE(coord), GET_UREG_NR(coord))) {
+      /* No real way to work around this in the general case - need to
+       * allocate and declare a new temporary register (a utemp won't
+       * do).  Will fallback for now.
+       */
+      i915_program_error(p, "Can't (yet) swizzle TEX arguments");
+      return 0;
    }
 
-   *(p->csr++) = (op | 
-		  T0_DEST( dest ) |
-		  destmask |
-		  T0_SAMPLER( sampler ));
+   /* Don't worry about saturate as we only support  
+    */
+   if (destmask != A0_DEST_CHANNEL_ALL) {
+      GLuint tmp = i915_get_utemp(p);
+      i915_emit_texld( p, tmp, A0_DEST_CHANNEL_ALL, sampler, coord, op );
+      i915_emit_arith( p, A0_MOV, dest, destmask, 0, tmp, 0, 0 );
+      return dest;
+   }
+   else {
+      assert(GET_UREG_TYPE(dest) != REG_TYPE_CONST);
+      assert(dest = UREG(GET_UREG_TYPE(dest), GET_UREG_NR(dest)));
 
-   *(p->csr++) = T1_ADDRESS_REG( coord );
-   *(p->csr++) = T2_MBZ;
+      if (GET_UREG_TYPE(coord) != REG_TYPE_T) {
+	 p->nr_tex_indirect++;
+      }
 
-   p->nr_tex_insn++;
-   return dest;
+      *(p->csr++) = (op | 
+		     T0_DEST( dest ) |
+		     T0_SAMPLER( sampler ));
+
+      *(p->csr++) = T1_ADDRESS_REG( coord );
+      *(p->csr++) = T2_MBZ;
+
+      p->nr_tex_insn++;
+      return dest;
+   }
 }
 
 

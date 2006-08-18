@@ -384,8 +384,8 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
 
    intelFlush( &intel->ctx );
    
-   LOCK_HARDWARE( intel );
    intelWaitForFrameCompletion( intel );
+   LOCK_HARDWARE( intel );
 
    if (!rect)
    {

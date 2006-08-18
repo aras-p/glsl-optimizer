@@ -136,7 +136,7 @@ static void i915_emit_invarient_state( intelContextPtr intel )
 {
    BATCH_LOCALS;
 
-   BEGIN_BATCH( 200 );
+   BEGIN_BATCH( 20 );
 
    OUT_BATCH(_3DSTATE_AA_CMD |
 	     AA_LINE_ECAAR_WIDTH_ENABLE |
@@ -235,6 +235,9 @@ static GLuint get_state_size( struct i915_hw_state *state )
    GLuint i;
    GLuint sz = 0;
 
+   if (dirty & I915_UPLOAD_INVARIENT)
+      sz += 20 * sizeof(int);
+
    if (dirty & I915_UPLOAD_CTX)
       sz += sizeof(state->Ctx);
 
@@ -285,6 +288,11 @@ static void i915_emit_state( intelContextPtr intel )
 
    if (VERBOSE) 
       fprintf(stderr, "%s dirty: %x\n", __FUNCTION__, dirty);
+
+   if (dirty & I915_UPLOAD_INVARIENT) {
+      if (VERBOSE) fprintf(stderr, "I915_UPLOAD_INVARIENT:\n"); 
+      i915_emit_invarient_state( intel );
+   }
 
    if (dirty & I915_UPLOAD_CTX) {
       if (VERBOSE) fprintf(stderr, "I915_UPLOAD_CTX:\n"); 
@@ -439,7 +447,6 @@ void i915InitVtbl( i915ContextPtr i915 )
    i915->intel.vtbl.clear_with_tris = i915ClearWithTris;
    i915->intel.vtbl.rotate_window = i915RotateWindow;
    i915->intel.vtbl.destroy = i915_destroy_context;
-   i915->intel.vtbl.emit_invarient_state = i915_emit_invarient_state;
    i915->intel.vtbl.emit_state = i915_emit_state;
    i915->intel.vtbl.lost_hardware = i915_lost_hardware;
    i915->intel.vtbl.reduced_primitive_state = i915_reduced_primitive_state;

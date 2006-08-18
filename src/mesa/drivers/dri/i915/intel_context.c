@@ -279,16 +279,6 @@ void intelInitDriverFunctions( struct dd_function_table *functions )
 
 static void intel_emit_invarient_state( GLcontext *ctx )
 {
-   intelContextPtr intel = INTEL_CONTEXT(ctx);
-
-   intel->vtbl.emit_invarient_state( intel );
-   intel->prim.flush = 0;
-
-   /* Make sure this gets to the hardware, even if we have no cliprects:
-    */
-   LOCK_HARDWARE( intel );
-   intelFlushBatchLocked( intel, GL_TRUE, GL_FALSE, GL_TRUE );
-   UNLOCK_HARDWARE( intel );
 }
 
 

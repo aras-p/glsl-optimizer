@@ -39,6 +39,7 @@
 #define I830_UPLOAD_CTX              0x1
 #define I830_UPLOAD_BUFFERS          0x2
 #define I830_UPLOAD_STIPPLE          0x4
+#define I830_UPLOAD_INVARIENT        0x8
 #define I830_UPLOAD_TEX(i)           (0x10<<(i))
 #define I830_UPLOAD_TEXBLEND(i)      (0x100<<(i))
 #define I830_UPLOAD_TEX_ALL          (0x0f0)

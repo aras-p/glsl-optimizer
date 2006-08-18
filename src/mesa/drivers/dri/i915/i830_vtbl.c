@@ -264,7 +264,7 @@ static void i830_emit_invarient_state( intelContextPtr intel )
 {
    BATCH_LOCALS;
 
-   BEGIN_BATCH( 200 );
+   BEGIN_BATCH( 40 );
 
    OUT_BATCH(_3DSTATE_MAP_CUBE | MAP_UNIT(0));
    OUT_BATCH(_3DSTATE_MAP_CUBE | MAP_UNIT(1));
@@ -370,6 +370,9 @@ static GLuint get_state_size( struct i830_hw_state *state )
    GLuint sz = 0;
    GLuint i;
 
+   if (dirty & I830_UPLOAD_INVARIENT)
+      sz += 40 * sizeof(int);
+
    if (dirty & I830_UPLOAD_CTX) 
       sz += sizeof(state->Ctx);
 
@@ -406,6 +409,11 @@ static void i830_emit_state( intelContextPtr intel )
       intelFlushBatch(intel, GL_TRUE);
       dirty = state->active & ~state->emitted;
       counter = intel->batch.counter;
+   }
+
+   if (dirty & I830_UPLOAD_INVARIENT) {
+      if (VERBOSE) fprintf(stderr, "I830_UPLOAD_INVARIENT:\n"); 
+      i830_emit_invarient_state( intel );
    }
 
    if (dirty & I830_UPLOAD_CTX) {
@@ -514,7 +522,6 @@ void i830InitVtbl( i830ContextPtr i830 )
    i830->intel.vtbl.clear_with_tris = i830ClearWithTris;
    i830->intel.vtbl.rotate_window = i830RotateWindow;
    i830->intel.vtbl.destroy = i830_destroy_context;
-   i830->intel.vtbl.emit_invarient_state = i830_emit_invarient_state;
    i830->intel.vtbl.emit_state = i830_emit_state;
    i830->intel.vtbl.lost_hardware = i830_lost_hardware;
    i830->intel.vtbl.reduced_primitive_state = i830_reduced_primitive_state;

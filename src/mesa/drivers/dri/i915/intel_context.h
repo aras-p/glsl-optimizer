@@ -107,7 +107,6 @@ struct intel_context
    struct {
       void (*destroy)( intelContextPtr intel ); 
       void (*emit_state)( intelContextPtr intel );
-      void (*emit_invarient_state)( intelContextPtr intel );
       void (*lost_hardware)( intelContextPtr intel );
       void (*update_texture_state)( intelContextPtr intel );
 

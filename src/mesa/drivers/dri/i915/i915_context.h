@@ -45,6 +45,7 @@
 #define I915_UPLOAD_PROGRAM          0x8
 #define I915_UPLOAD_CONSTANTS        0x10
 #define I915_UPLOAD_FOG              0x20
+#define I915_UPLOAD_INVARIENT        0x40
 #define I915_UPLOAD_TEX(i)           (0x00010000<<(i))
 #define I915_UPLOAD_TEX_ALL          (0x00ff0000)
 #define I915_UPLOAD_TEX_0_SHIFT      16
