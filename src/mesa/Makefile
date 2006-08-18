@@ -32,7 +32,9 @@ default:
 	elif [ "$(DRIVER_DIRS)" = "beos" ]; then \
 		$(MAKE) beos ; \
 	elif [ "$(DRIVER_DIRS)" = "directfb" ]; then \
-		$(MAKE) directfb; \
+		$(MAKE) directfb ; \
+	elif [ "$(DRIVER_DIRS)" = "fbdev" ]; then \
+		$(MAKE) fbdev ; \
 	else \
 		$(MAKE) stand-alone ; \
 	fi
@@ -65,10 +67,21 @@ linux-solo: depend subdirs libmesa.a
 libgl-core: $(CORE_OBJECTS)
 	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
-		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) $(CORE_OBJECTS) $(GL_LIB_DEPS)
+		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) $(CORE_OBJECTS) \
+		$(GL_LIB_DEPS)
 
 directfb: depend subdirs libgl-core
-	cd drivers/directfb; $(MAKE)
+	cd drivers/directfb ; $(MAKE)
+
+
+#####################################################################
+# fbdev Mesa driver (libGL.so)
+
+fbdev: $(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS)
+	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
+		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
+		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
+		$(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) $(GL_LIB_DEPS)
 
 
 ######################################################################
