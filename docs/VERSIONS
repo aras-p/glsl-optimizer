@@ -1476,7 +1476,10 @@ Mesa Version History
 	- Intel i965 DRI driver
 	- GL_APPLE_vertex_array_object extension (Ian Romanick)
 	- GL_EXT_texture_sRGB extension
+	- GL_EXT_gpu_program_parameters (Ian Romanick)
 	- "engine" demo
+	- updated fbdev driver and GLUT for fbdev (Sean D'Epagnier)
+	- many updates to the DRI drivers
     Changes:
 	- The glVertexAttribARB functions no longer alias the conventional
 	  vertex attributes.
