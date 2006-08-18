@@ -3,12 +3,14 @@
 include $(TOP)/configs/linux
 
 CONFIG_NAME = linux-fbdev
-DRIVER_DIRS = fbdev osmesa
-SRC_DIRS = mesa glu glut/fbdev glw
 
-CFLAGS = -g -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -DUSE_GLFBDEV_DRIVER
+CFLAGS = -O3 -ffast-math -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DPTHREADS -DUSE_GLFBDEV_DRIVER
 
 
+SRC_DIRS = mesa glu glut/fbdev
+DRIVER_DIRS = fbdev
+PROGRAM_DIRS = fbdev demos redbook samples
+
+GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lm -lpthread
 GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lgpm -lm
 
-PROGRAM_DIRS = fbdev demos redbook samples

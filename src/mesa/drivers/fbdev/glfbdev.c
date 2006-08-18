@@ -152,8 +152,8 @@ static void
 get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 {
    const GLFBDevBufferPtr fbdevbuffer = GLFBDEV_BUFFER(buffer);
-   *width = fbdevbuffer->var.xres_virtual;
-   *height = fbdevbuffer->var.yres_virtual;
+   *width = fbdevbuffer->var.xres;
+   *height = fbdevbuffer->var.yres;
 }
 
 
@@ -389,43 +389,37 @@ glFBDevCreateVisual( const struct fb_fix_screeninfo *fixInfo,
       blueBits  = varInfo->blue.length;
       alphaBits = varInfo->transp.length;
 
-      if ((fixInfo->visual == FB_VISUAL_TRUECOLOR ||
-           fixInfo->visual == FB_VISUAL_DIRECTCOLOR)
-          && varInfo->bits_per_pixel == 24
-          && varInfo->red.offset == 16
-          && varInfo->green.offset == 8
-          && varInfo->blue.offset == 0) {
-         vis->pixelFormat = PF_B8G8R8;
-      }
-      else if ((fixInfo->visual == FB_VISUAL_TRUECOLOR ||
-                fixInfo->visual == FB_VISUAL_DIRECTCOLOR)
-               && varInfo->bits_per_pixel == 32
-               && varInfo->red.offset == 16
-               && varInfo->green.offset == 8
-               && varInfo->blue.offset == 0
-               && varInfo->transp.offset == 24) {
-         vis->pixelFormat = PF_B8G8R8A8;
-      }
-      else if ((fixInfo->visual == FB_VISUAL_TRUECOLOR ||
-                fixInfo->visual == FB_VISUAL_DIRECTCOLOR)
-               && varInfo->bits_per_pixel == 16
-               && varInfo->red.offset == 11
-               && varInfo->green.offset == 5
-               && varInfo->blue.offset == 0) {
-         vis->pixelFormat = PF_B5G6R5;
-      }
-      else if ((fixInfo->visual == FB_VISUAL_TRUECOLOR ||
-                fixInfo->visual == FB_VISUAL_DIRECTCOLOR)
-               && varInfo->bits_per_pixel == 16
-               && varInfo->red.offset == 10
-               && varInfo->green.offset == 5
-               && varInfo->blue.offset == 0) {
-         vis->pixelFormat = PF_B5G5R5;
-      }
-      else {
-         _mesa_problem(NULL, "Unsupported fbdev RGB visual/bitdepth!\n");
-         _mesa_free(vis);
-         return NULL;
+      if (fixInfo->visual == FB_VISUAL_TRUECOLOR ||
+	  fixInfo->visual == FB_VISUAL_DIRECTCOLOR) {
+	 if(varInfo->bits_per_pixel == 24
+	    && varInfo->red.offset == 16
+	    && varInfo->green.offset == 8
+	    && varInfo->blue.offset == 0)
+	    vis->pixelFormat = PF_B8G8R8;
+
+	 else if(varInfo->bits_per_pixel == 32
+		 && varInfo->red.offset == 16
+		 && varInfo->green.offset == 8
+		 && varInfo->blue.offset == 0)
+	    vis->pixelFormat = PF_B8G8R8A8;
+
+	 else if(varInfo->bits_per_pixel == 16
+		 && varInfo->red.offset == 11
+		 && varInfo->green.offset == 5
+		 && varInfo->blue.offset == 0)
+	    vis->pixelFormat = PF_B5G6R5;
+
+	 else if(varInfo->bits_per_pixel == 16
+		 && varInfo->red.offset == 10
+		 && varInfo->green.offset == 5
+		 && varInfo->blue.offset == 0)
+	    vis->pixelFormat = PF_B5G5R5;
+
+	 else {
+	    _mesa_problem(NULL, "Unsupported fbdev RGB visual/bitdepth!\n");
+	    _mesa_free(vis);
+	    return NULL;
+	 }
       }
    }
    else {
@@ -568,7 +562,7 @@ new_glfbdev_renderbuffer(void *bufferStart, const GLFBDevVisualPtr visual)
 
       rb->rowStride = visual->var.xres_virtual * visual->var.bits_per_pixel / 8;
       rb->bottom = (GLubyte *) bufferStart
-	  + (visual->var.yres_virtual - 1) * rb->rowStride;
+	  + (visual->var.yres - 1) * rb->rowStride;
 
       rb->Base.Width = visual->var.xres;
       rb->Base.Height = visual->var.yres;

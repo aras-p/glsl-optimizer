@@ -100,8 +100,21 @@ void LoadColorMap(void)
    /* we're assuming 256 entries here */
    int i;
 
+   switch(VarInfo.bits_per_pixel) {
+   case 8:
+   case 24:
+   case 32:
+      ColorMap.len = 256;
+      break;
+   case 15:
+      ColorMap.len = 32;
+      break;
+   case 16:
+      ColorMap.len = 64;
+      break;
+   }
+
    ColorMap.start = 0;
-   ColorMap.len = 256;
    ColorMap.red   = RedColorMap;
    ColorMap.green = GreenColorMap;
    ColorMap.blue  = BlueColorMap;

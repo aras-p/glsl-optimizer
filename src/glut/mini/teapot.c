@@ -143,7 +143,6 @@ teapot(GLint grid, GLdouble scale, GLenum type)
   float p[4][4][3], q[4][4][3], r[4][4][3], s[4][4][3];
   long i, j, k, l;
 
-#if 0
   glPushAttrib(GL_ENABLE_BIT | GL_EVAL_BIT);
   glEnable(GL_AUTO_NORMAL);
   glEnable(GL_NORMALIZE);
@@ -195,7 +194,6 @@ teapot(GLint grid, GLdouble scale, GLenum type)
   }
   glPopMatrix();
   glPopAttrib();
-#endif
 }
 
 /* CENTRY */

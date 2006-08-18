@@ -163,7 +163,8 @@ void DrawCursor(void)
 	 cstride /= 2;
 	 for(i = yoff; i < ylen; i++) {
 	    for(j = xoff; j < xlen; j++) {
-	       e[0] = ((((d[0] + (((int)(((e[0] >> 8) & 0xf8) 
+	       if(d[3] < 220)
+		  e[0] = ((((d[0] + (((int)(((e[0] >> 8) & 0xf8) 
 		     	 | ((c[0] >> 11) & 0x7)) * d[3]) >> 8)) & 0xf8) << 8)
 		     | (((d[1] + (((int)(((e[0] >> 3) & 0xfc)
 	   		 | ((e[0] >> 5) & 0x3)) * d[3]) >> 8)) & 0xfc) << 3)
@@ -181,9 +182,11 @@ void DrawCursor(void)
    case 4:
       for(i = yoff; i < ylen; i++) {
 	 for(j = xoff; j < xlen; j++) {
-	    c[0] = d[0] + (((int)c[0] * d[3]) >> 8);
-	    c[1] = d[1] + (((int)c[1] * d[3]) >> 8);
-	    c[2] = d[2] + (((int)c[2] * d[3]) >> 8);
+	    if(d[3] < 220) {
+	       c[0] = d[0] + (((int)c[0] * d[3]) >> 8);
+	       c[1] = d[1] + (((int)c[1] * d[3]) >> 8);
+	       c[2] = d[2] + (((int)c[2] * d[3]) >> 8);
+	    }
 		
 	    c+=bypp;
 	    d+=4;

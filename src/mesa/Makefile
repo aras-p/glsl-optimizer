@@ -38,7 +38,6 @@ default:
 	fi
 
 
-
 ######################################################################
 # BeOS driver target
 
@@ -74,13 +73,17 @@ directfb: depend subdirs libgl-core
 
 ######################################################################
 # Stand-alone Mesa libGL and libOSMesa
-
-STAND_ALONE_DRIVER_SOURCES = \
+STAND_ALONE_DRIVER_SOURCES_A = \
 	$(COMMON_DRIVER_SOURCES) \
-	$(X11_DRIVER_SOURCES) \
 	$(GLIDE_DRIVER_SOURCES) \
-	$(SVGA_DRIVER_SOURCES) \
-	$(FBDEV_DRIVER_SOURCES)
+	$(SVGA_DRIVER_SOURCES)
+
+# if x11 is not installed, compiling with x11 sources will not work for fbdev
+ifeq ($(DRIVER_DIRS), fbdev)
+STAND_ALONE_DRIVER_SOURCES = $(STAND_ALONE_DRIVER_SOURCES_A) $(FBDEV_DRIVER_SOURCES)
+else
+STAND_ALONE_DRIVER_SOURCES = $(STAND_ALONE_DRIVER_SOURCES_A) $(X11_DRIVER_SOURCES)
+endif
 
 STAND_ALONE_DRIVER_OBJECTS = $(STAND_ALONE_DRIVER_SOURCES:.c=.o)
 
@@ -133,6 +136,7 @@ ALL_SOURCES = \
 	$(X86_SOURCES)		\
 	$(COMMON_DRIVER_SOURCES)\
 	$(X11_DRIVER_SOURCES)	\
+	$(FBDEV_DRIVER_SOURCES) \
 	$(OSMESA_DRIVER_SOURCES)
 
 

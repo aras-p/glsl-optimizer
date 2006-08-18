@@ -112,11 +112,8 @@ static void Cleanup(void)
    /* close mouse */
    CloseMouse();
 
-   glFBDevMakeCurrent( NULL, NULL, NULL);
-
-   glFBDevDestroyContext(Context);
-   glFBDevDestroyBuffer(Buffer);
-   glFBDevDestroyVisual(Visual);
+   if(Visual)
+      glutDestroyWindow(1);
 
    /* restore original variable screen info */
    if(FrameBufferFD != -1) {
@@ -735,6 +732,11 @@ int glutGetWindow(void)
 
 void glutDestroyWindow(int win)
 {
+   glFBDevMakeCurrent( NULL, NULL, NULL);
+   glFBDevDestroyContext(Context);
+   glFBDevDestroyBuffer(Buffer);
+   glFBDevDestroyVisual(Visual);
+   Visual = NULL;
 }
 
 void glutPostRedisplay(void)
@@ -762,6 +764,7 @@ void glutSwapBuffers(void)
       Swapping = 0;
    }
 
+   /* if there was a vt switch while swapping, switch now */
    if(VTSwitch) {
       if(ioctl(ConsoleFD, VT_ACTIVATE, VTSwitch) < 0)
 	 sprintf(exiterror, "Error switching console\n");

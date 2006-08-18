@@ -4,10 +4,10 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 GLX_SHARED = $(TOP)/src/glut/glx
-SHAPES = $(TOP)/src/glut/mini
+MINI_SHARED = $(TOP)/src/glut/mini
 
-GLUT_MAJOR = 5
-GLUT_MINOR = 0
+GLUT_MAJOR = 3
+GLUT_MINOR = 7
 GLUT_TINY = 1
 
 INCLUDES = -I$(TOP)/include -I$(GLX_SHARED)
@@ -23,13 +23,13 @@ CORE_SOURCES = \
 	input.c \
 	callback.c \
 	gamemode.c \
-	vidresize.c
+	vidresize.c \
+	bitmap.c \
+	stroke.c
 
 GLX_SHARED_SOURCES = \
 	$(GLX_SHARED)/glut_8x13.c \
 	$(GLX_SHARED)/glut_9x15.c \
-	$(GLX_SHARED)/glut_bwidth.c \
-	$(GLX_SHARED)/glut_bitmap.c \
 	$(GLX_SHARED)/glut_hel10.c \
 	$(GLX_SHARED)/glut_hel12.c \
 	$(GLX_SHARED)/glut_hel18.c \
@@ -37,12 +37,12 @@ GLX_SHARED_SOURCES = \
 	$(GLX_SHARED)/glut_tr24.c \
 	$(GLX_SHARED)/glut_mroman.c \
 	$(GLX_SHARED)/glut_roman.c \
-	$(GLX_SHARED)/glut_swidth.c \
-	$(GLX_SHARED)/glut_stroke.c \
-	$(TOP)/src/glut/mini/models.c \
-	$(GLX_SHARED)/glut_teapot.c
 
-SOURCES = $(CORE_SOURCES)  $(GLX_SHARED_SOURCES)
+MINI_SHARED_SOURCES = \
+	$(MINI_SHARED)/models.c \
+	$(MINI_SHARED)/teapot.c
+
+SOURCES = $(CORE_SOURCES)  $(GLX_SHARED_SOURCES) $(MINI_SHARED_SOURCES)
 
 OBJECTS =  $(SOURCES:.c=.o)
 
@@ -50,7 +50,7 @@ OBJECTS =  $(SOURCES:.c=.o)
 ##### RULES #####
 
 .c.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
 
 .S.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
@@ -67,6 +67,12 @@ $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
 		-major $(GLUT_MAJOR) -minor $(GLUT_MINOR) -patch $(GLUT_TINY) \
 		$(GLUT_LIB_DEPS) -install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(OBJECTS)
+
+install:
+	$(INSTALL) -d $(INSTALL_DIR)/include/GL
+	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -m 644 $(TOP)/include/GL/glut.h $(INSTALL_DIR)/include/GL
+	$(COPY_LIBS) $(TOP)/$(LIB_DIR)/libglut* $(INSTALL_DIR)/$(LIB_DIR)
 
 # Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.
