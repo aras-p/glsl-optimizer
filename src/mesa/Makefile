@@ -76,6 +76,7 @@ directfb: depend subdirs libgl-core
 
 #####################################################################
 # fbdev Mesa driver (libGL.so)
+FBDEV_DRIVER_OBJECTS = $(FBDEV_DRIVER_SOURCES:.c=.o) $(COMMON_DRIVER_SOURCES:.c=.o)
 
 fbdev: $(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS)
 	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
@@ -83,20 +84,13 @@ fbdev: $(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS)
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
 		$(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) $(GL_LIB_DEPS)
 
-
 ######################################################################
 # Stand-alone Mesa libGL and libOSMesa
-STAND_ALONE_DRIVER_SOURCES_A = \
+STAND_ALONE_DRIVER_SOURCES = \
 	$(COMMON_DRIVER_SOURCES) \
+	$(X11_DRIVER_SOURCES) \
 	$(GLIDE_DRIVER_SOURCES) \
 	$(SVGA_DRIVER_SOURCES)
-
-# if x11 is not installed, compiling with x11 sources will not work for fbdev
-ifeq ($(DRIVER_DIRS), fbdev)
-STAND_ALONE_DRIVER_SOURCES = $(STAND_ALONE_DRIVER_SOURCES_A) $(FBDEV_DRIVER_SOURCES)
-else
-STAND_ALONE_DRIVER_SOURCES = $(STAND_ALONE_DRIVER_SOURCES_A) $(X11_DRIVER_SOURCES)
-endif
 
 STAND_ALONE_DRIVER_OBJECTS = $(STAND_ALONE_DRIVER_SOURCES:.c=.o)
 
