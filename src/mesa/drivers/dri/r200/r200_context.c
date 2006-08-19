@@ -478,8 +478,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    if (rmesa->r200Screen->drmSupportsBlendColor) {
        driInitExtensions( ctx, blend_extensions, GL_FALSE );
    }
-   if(rmesa->r200Screen->drmSupportsVertexProgram || 
-      driQueryOptionb(&rmesa->optionCache, "arb_vertex_program"))
+   if(rmesa->r200Screen->drmSupportsVertexProgram)
       driInitSingleExtension( ctx, ARB_vp_extension );
    if(driQueryOptionb(&rmesa->optionCache, "nv_vertex_program"))
       driInitSingleExtension( ctx, NV_vp_extension );

@@ -121,11 +121,10 @@ DRI_CONF_BEGIN
         DRI_CONF_NO_RAST(false)
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_SOFTWARE
-        DRI_CONF_ARB_VERTEX_PROGRAM(false)
         DRI_CONF_NV_VERTEX_PROGRAM(false)
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 17;
+static const GLuint __driNConfigOptions = 16;
 
 extern const struct dri_extension blend_extensions[];
 extern const struct dri_extension ARB_vp_extension[];
