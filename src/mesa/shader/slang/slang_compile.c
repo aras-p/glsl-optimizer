@@ -1925,6 +1925,11 @@ compile_with_grammar (grammar id, const char *source, slang_code_unit *unit, sla
    if (!_slang_preprocess_version (source, &version, &start, infolog))
       return GL_FALSE;
 
+   if (version > 110) {
+      slang_info_log_error (infolog, "language version specified is not supported.");
+      return GL_FALSE;
+   }
+
 	/* check the syntax and generate its binary representation */
 	if (!grammar_fast_check (id, (const byte *) source + start, &prod, &size, 65536))
 	{

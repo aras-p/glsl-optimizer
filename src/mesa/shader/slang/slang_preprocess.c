@@ -32,55 +32,46 @@
 #include "grammar_mesa.h"
 #include "slang_preprocess.h"
 
-static const char *slang_version_syn =
-#include "library/slang_version_syn.h"
+static const char *slang_pp_version_syn =
+#include "library/slang_pp_version_syn.h"
 ;
 
-int _slang_preprocess_version (const char *text, unsigned int *version, unsigned int *eaten,
-	slang_info_log *log)
+static GLvoid
+grammar_error_to_log (slang_info_log *log)
 {
-	grammar id;
-	byte *prod, *I;
-	unsigned int size;
+   char buf[1024];
+   int pos;
 
-	id = grammar_load_from_text ((const byte *) slang_version_syn);
-	if (id == 0)
-	{
-		char buf[1024];
-		unsigned int pos;
-		grammar_get_last_error ( (unsigned char*) buf, 1024, (int*) &pos);
-		slang_info_log_error (log, buf);
-		return 0;
-	}
+   grammar_get_last_error ((byte *) (buf), sizeof (buf), &pos);
+   slang_info_log_error (log, buf);
+}
 
-	if (!grammar_fast_check (id, (const byte *) text, &prod, &size, 8))
-	{
-		char buf[1024];
-		unsigned int pos;
-		grammar_get_last_error ( (unsigned char*) buf, 1024, (int*) &pos);
-		slang_info_log_error (log, buf);
-		grammar_destroy (id);
-		return 0;
-	}
+GLboolean
+_slang_preprocess_version (const char *text, GLuint *version, GLuint *eaten, slang_info_log *log)
+{
+   grammar id;
+   byte *prod, *I;
+   unsigned int size;
 
-	grammar_destroy (id);
+   id = grammar_load_from_text ((const byte *) (slang_pp_version_syn));
+   if (id == 0) {
+      grammar_error_to_log (log);
+      return GL_FALSE;
+   }
 
-	/* there can be multiple #version directives - grab the last one */
-	I = prod;
-	while (I < prod + size)
-	{
-		*version =
-			(unsigned int) I[0] +
-			(unsigned int) I[1] * 100;
-		*eaten =
-			((unsigned int) I[2]) +
-			((unsigned int) I[3] << 8) +
-			((unsigned int) I[4] << 16) +
-			((unsigned int) I[5] << 24);
-		I += 6;
-	}
+   if (!grammar_fast_check (id, (const byte *) (text), &prod, &size, 8)) {
+      grammar_error_to_log (log);
+      grammar_destroy (id);
+      return GL_FALSE;
+   }
 
-	grammar_alloc_free (prod);
-	return 1;
+   /* there can be multiple #version directives - grab the last one */
+   I = &prod[size - 6];
+   *version = (GLuint) (I[0]) + (GLuint) (I[1]) * 100;
+   *eaten = (GLuint) (I[2]) + ((GLuint) (I[3]) << 8) + ((GLuint) (I[4]) << 16) + ((GLuint) (I[5]) << 24);
+
+   grammar_destroy (id);
+   grammar_alloc_free (prod);
+   return GL_TRUE;
 }
 

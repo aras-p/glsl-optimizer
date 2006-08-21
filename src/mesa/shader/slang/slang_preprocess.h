@@ -31,7 +31,8 @@
 extern "C" {
 #endif
 
-int _slang_preprocess_version (const char *, unsigned int *, unsigned int *, slang_info_log *);
+GLboolean
+_slang_preprocess_version (const char *, GLuint *, GLuint *, slang_info_log *);
 
 #ifdef __cplusplus
 }
