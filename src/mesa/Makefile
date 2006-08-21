@@ -76,13 +76,13 @@ directfb: depend subdirs libgl-core
 
 #####################################################################
 # fbdev Mesa driver (libGL.so)
-FBDEV_DRIVER_OBJECTS = $(FBDEV_DRIVER_SOURCES:.c=.o) $(COMMON_DRIVER_SOURCES:.c=.o)
 
-fbdev: $(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS)
+fbdev: $(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) $(COMMON_DRIVER_OBJECTS)
 	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
-		$(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) $(GL_LIB_DEPS)
+		$(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) \
+		$(COMMON_DRIVER_OBJECTS) $(GL_LIB_DEPS)
 
 ######################################################################
 # Stand-alone Mesa libGL and libOSMesa
