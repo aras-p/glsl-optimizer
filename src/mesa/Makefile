@@ -84,6 +84,7 @@ fbdev: $(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) $(COMMON_DRIVER_OBJECTS)
 		$(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) \
 		$(COMMON_DRIVER_OBJECTS) $(GL_LIB_DEPS)
 
+
 ######################################################################
 # Stand-alone Mesa libGL and libOSMesa
 STAND_ALONE_DRIVER_SOURCES = \
@@ -137,16 +138,6 @@ $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OSMESA_DRIVER_OBJECTS) $(OSMESA16_OBJECT
 ######################################################################
 # Generic stuff
 
-ALL_SOURCES = \
-	$(GLAPI_SOURCES)	\
-	$(SOLO_SOURCES)		\
-	$(X86_SOURCES)		\
-	$(COMMON_DRIVER_SOURCES)\
-	$(X11_DRIVER_SOURCES)	\
-	$(FBDEV_DRIVER_SOURCES) \
-	$(OSMESA_DRIVER_SOURCES)
-
-
 depend: $(ALL_SOURCES)
 	@ echo "running $(MKDEP)"
 	@ touch depend
@@ -168,7 +159,6 @@ install: default
 		cd drivers/dri ; $(MAKE) install ; \
 	fi
 
-
 	## NOT YET:
 	## $(INSTALL) -d $(INSTALL_DIR)/include/GLES
 	## $(INSTALL) -m 644 include/GLES/*.h $(INSTALL_DIR)/include/GLES
@@ -186,5 +176,6 @@ clean:
 	(cd drivers/dri ; $(MAKE) clean)
 	(cd x86 ; $(MAKE) clean)
 	(cd x86-64 ; $(MAKE) clean)
+
 
 include depend
