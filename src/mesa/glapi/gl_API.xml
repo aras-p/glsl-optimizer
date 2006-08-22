@@ -11263,7 +11263,7 @@
     </function>
 </category>
 
-<category name="GL_NV_expand_normal" number="286">
+<category name="GL_NV_texture_expand_normal" number="286">
     <enum name="TEXTURE_UNSIGNED_REMAP_MODE_NV" count="1" value="0x888F">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
