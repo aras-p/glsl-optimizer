@@ -82,14 +82,24 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 
 	def printBody(self, api):
 		for f in api.functionIterateByOffset():
-			print '\t\t.globl gl%s ; .type gl%s,#function' % (f.name, f.name)
+			if f.static_dispatch:
+				name = f.name
+			else:
+				name = "_dispatch_stub_%u" % (f.offset)
+
+			print '\t\t.globl gl%s ; .type gl%s,#function' % (name, name)
 
 		print '\t\t.globl _mesa_sparc_glapi_begin ; .type _mesa_sparc_glapi_begin,#function'
 		print '_mesa_sparc_glapi_begin:'
 		print ''
 
 		for f in api.functionIterateByOffset():
-			print '\tGL_STUB(gl%s, _gloffset_%s)' % (f.name, f.name)
+			if f.static_dispatch:
+				name = f.name
+			else:
+				name = "_dispatch_stub_%u" % (f.offset)
+
+			print '\tGL_STUB(gl%s, _gloffset_%s)' % (name, name)
 
 		print ''
 		print '\t\t.globl _mesa_sparc_glapi_end ; .type _mesa_sparc_glapi_end,#function'
@@ -98,9 +108,10 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 
 
 		for f in api.functionIterateByOffset():
-			for n in f.entry_points:
-				if n != f.name:
-					print '\t.globl gl%s ; .type gl%s,#function ; gl%s = gl%s' % (n, n, n, f.name)
+			if f.static_dispatch:
+				for n in f.entry_points:
+					if n != f.name:
+						print '\t.globl gl%s ; .type gl%s,#function ; gl%s = gl%s' % (n, n, n, f.name)
 
 		return
 

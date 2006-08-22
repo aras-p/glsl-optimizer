@@ -30937,9 +30937,10 @@ GL_PREFIX(BlitFramebufferEXT):
 	.size	GL_PREFIX(BlitFramebufferEXT), .-GL_PREFIX(BlitFramebufferEXT)
 
 	.p2align	4,,15
-	.globl	GL_PREFIX(BindVertexArrayAPPLE)
-	.type	GL_PREFIX(BindVertexArrayAPPLE), @function
-GL_PREFIX(BindVertexArrayAPPLE):
+	.globl	GL_PREFIX(_dispatch_stub_819)
+	.type	GL_PREFIX(_dispatch_stub_819), @function
+	HIDDEN(GL_PREFIX(_dispatch_stub_819))
+GL_PREFIX(_dispatch_stub_819):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6552(%rax), %r11
@@ -30963,12 +30964,13 @@ GL_PREFIX(BindVertexArrayAPPLE):
 	movq	6552(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	GL_PREFIX(BindVertexArrayAPPLE), .-GL_PREFIX(BindVertexArrayAPPLE)
+	.size	GL_PREFIX(_dispatch_stub_819), .-GL_PREFIX(_dispatch_stub_819)
 
 	.p2align	4,,15
-	.globl	GL_PREFIX(DeleteVertexArraysAPPLE)
-	.type	GL_PREFIX(DeleteVertexArraysAPPLE), @function
-GL_PREFIX(DeleteVertexArraysAPPLE):
+	.globl	GL_PREFIX(_dispatch_stub_820)
+	.type	GL_PREFIX(_dispatch_stub_820), @function
+	HIDDEN(GL_PREFIX(_dispatch_stub_820))
+GL_PREFIX(_dispatch_stub_820):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6560(%rax), %r11
@@ -31000,12 +31002,13 @@ GL_PREFIX(DeleteVertexArraysAPPLE):
 	movq	6560(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	GL_PREFIX(DeleteVertexArraysAPPLE), .-GL_PREFIX(DeleteVertexArraysAPPLE)
+	.size	GL_PREFIX(_dispatch_stub_820), .-GL_PREFIX(_dispatch_stub_820)
 
 	.p2align	4,,15
-	.globl	GL_PREFIX(GenVertexArraysAPPLE)
-	.type	GL_PREFIX(GenVertexArraysAPPLE), @function
-GL_PREFIX(GenVertexArraysAPPLE):
+	.globl	GL_PREFIX(_dispatch_stub_821)
+	.type	GL_PREFIX(_dispatch_stub_821), @function
+	HIDDEN(GL_PREFIX(_dispatch_stub_821))
+GL_PREFIX(_dispatch_stub_821):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6568(%rax), %r11
@@ -31037,12 +31040,13 @@ GL_PREFIX(GenVertexArraysAPPLE):
 	movq	6568(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	GL_PREFIX(GenVertexArraysAPPLE), .-GL_PREFIX(GenVertexArraysAPPLE)
+	.size	GL_PREFIX(_dispatch_stub_821), .-GL_PREFIX(_dispatch_stub_821)
 
 	.p2align	4,,15
-	.globl	GL_PREFIX(IsVertexArrayAPPLE)
-	.type	GL_PREFIX(IsVertexArrayAPPLE), @function
-GL_PREFIX(IsVertexArrayAPPLE):
+	.globl	GL_PREFIX(_dispatch_stub_822)
+	.type	GL_PREFIX(_dispatch_stub_822), @function
+	HIDDEN(GL_PREFIX(_dispatch_stub_822))
+GL_PREFIX(_dispatch_stub_822):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6576(%rax), %r11
@@ -31066,12 +31070,13 @@ GL_PREFIX(IsVertexArrayAPPLE):
 	movq	6576(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	GL_PREFIX(IsVertexArrayAPPLE), .-GL_PREFIX(IsVertexArrayAPPLE)
+	.size	GL_PREFIX(_dispatch_stub_822), .-GL_PREFIX(_dispatch_stub_822)
 
 	.p2align	4,,15
-	.globl	GL_PREFIX(ProgramEnvParameters4fvEXT)
-	.type	GL_PREFIX(ProgramEnvParameters4fvEXT), @function
-GL_PREFIX(ProgramEnvParameters4fvEXT):
+	.globl	GL_PREFIX(_dispatch_stub_823)
+	.type	GL_PREFIX(_dispatch_stub_823), @function
+	HIDDEN(GL_PREFIX(_dispatch_stub_823))
+GL_PREFIX(_dispatch_stub_823):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6584(%rax), %r11
@@ -31111,12 +31116,13 @@ GL_PREFIX(ProgramEnvParameters4fvEXT):
 	movq	6584(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	GL_PREFIX(ProgramEnvParameters4fvEXT), .-GL_PREFIX(ProgramEnvParameters4fvEXT)
+	.size	GL_PREFIX(_dispatch_stub_823), .-GL_PREFIX(_dispatch_stub_823)
 
 	.p2align	4,,15
-	.globl	GL_PREFIX(ProgramLocalParameters4fvEXT)
-	.type	GL_PREFIX(ProgramLocalParameters4fvEXT), @function
-GL_PREFIX(ProgramLocalParameters4fvEXT):
+	.globl	GL_PREFIX(_dispatch_stub_824)
+	.type	GL_PREFIX(_dispatch_stub_824), @function
+	HIDDEN(GL_PREFIX(_dispatch_stub_824))
+GL_PREFIX(_dispatch_stub_824):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6592(%rax), %r11
@@ -31156,7 +31162,7 @@ GL_PREFIX(ProgramLocalParameters4fvEXT):
 	movq	6592(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	GL_PREFIX(ProgramLocalParameters4fvEXT), .-GL_PREFIX(ProgramLocalParameters4fvEXT)
+	.size	GL_PREFIX(_dispatch_stub_824), .-GL_PREFIX(_dispatch_stub_824)
 
 	.globl GL_PREFIX(ArrayElementEXT) ; .set GL_PREFIX(ArrayElementEXT), GL_PREFIX(ArrayElement)
 	.globl GL_PREFIX(BindTextureEXT) ; .set GL_PREFIX(BindTextureEXT), GL_PREFIX(BindTexture)

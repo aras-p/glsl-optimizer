@@ -884,12 +884,12 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 		.globl glGetQueryObjecti64vEXT ; .type glGetQueryObjecti64vEXT,#function
 		.globl glGetQueryObjectui64vEXT ; .type glGetQueryObjectui64vEXT,#function
 		.globl glBlitFramebufferEXT ; .type glBlitFramebufferEXT,#function
-		.globl glBindVertexArrayAPPLE ; .type glBindVertexArrayAPPLE,#function
-		.globl glDeleteVertexArraysAPPLE ; .type glDeleteVertexArraysAPPLE,#function
-		.globl glGenVertexArraysAPPLE ; .type glGenVertexArraysAPPLE,#function
-		.globl glIsVertexArrayAPPLE ; .type glIsVertexArrayAPPLE,#function
-		.globl glProgramEnvParameters4fvEXT ; .type glProgramEnvParameters4fvEXT,#function
-		.globl glProgramLocalParameters4fvEXT ; .type glProgramLocalParameters4fvEXT,#function
+		.globl gl_dispatch_stub_819 ; .type gl_dispatch_stub_819,#function
+		.globl gl_dispatch_stub_820 ; .type gl_dispatch_stub_820,#function
+		.globl gl_dispatch_stub_821 ; .type gl_dispatch_stub_821,#function
+		.globl gl_dispatch_stub_822 ; .type gl_dispatch_stub_822,#function
+		.globl gl_dispatch_stub_823 ; .type gl_dispatch_stub_823,#function
+		.globl gl_dispatch_stub_824 ; .type gl_dispatch_stub_824,#function
 		.globl _mesa_sparc_glapi_begin ; .type _mesa_sparc_glapi_begin,#function
 _mesa_sparc_glapi_begin:
 
@@ -1712,12 +1712,12 @@ _mesa_sparc_glapi_begin:
 	GL_STUB(glGetQueryObjecti64vEXT, _gloffset_GetQueryObjecti64vEXT)
 	GL_STUB(glGetQueryObjectui64vEXT, _gloffset_GetQueryObjectui64vEXT)
 	GL_STUB(glBlitFramebufferEXT, _gloffset_BlitFramebufferEXT)
-	GL_STUB(glBindVertexArrayAPPLE, _gloffset_BindVertexArrayAPPLE)
-	GL_STUB(glDeleteVertexArraysAPPLE, _gloffset_DeleteVertexArraysAPPLE)
-	GL_STUB(glGenVertexArraysAPPLE, _gloffset_GenVertexArraysAPPLE)
-	GL_STUB(glIsVertexArrayAPPLE, _gloffset_IsVertexArrayAPPLE)
-	GL_STUB(glProgramEnvParameters4fvEXT, _gloffset_ProgramEnvParameters4fvEXT)
-	GL_STUB(glProgramLocalParameters4fvEXT, _gloffset_ProgramLocalParameters4fvEXT)
+	GL_STUB(gl_dispatch_stub_819, _gloffset__dispatch_stub_819)
+	GL_STUB(gl_dispatch_stub_820, _gloffset__dispatch_stub_820)
+	GL_STUB(gl_dispatch_stub_821, _gloffset__dispatch_stub_821)
+	GL_STUB(gl_dispatch_stub_822, _gloffset__dispatch_stub_822)
+	GL_STUB(gl_dispatch_stub_823, _gloffset__dispatch_stub_823)
+	GL_STUB(gl_dispatch_stub_824, _gloffset__dispatch_stub_824)
 
 		.globl _mesa_sparc_glapi_end ; .type _mesa_sparc_glapi_end,#function
 _mesa_sparc_glapi_end:

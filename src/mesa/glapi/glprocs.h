@@ -1051,6 +1051,16 @@ static const char gl_string_table[] =
     "glBlendEquationSeparateATI\0"
     ;
 
+/* FIXME: Having these (incorrect) prototypes here is ugly. */
+#ifdef NEED_FUNCTION_POINTER
+extern void gl_dispatch_stub_819(void);
+extern void gl_dispatch_stub_820(void);
+extern void gl_dispatch_stub_821(void);
+extern void gl_dispatch_stub_822(void);
+extern void gl_dispatch_stub_823(void);
+extern void gl_dispatch_stub_824(void);
+#endif /* NEED_FUNCTION_POINTER */
+
 static const glprocs_table_t static_functions[] = {
     NAME_FUNC_OFFSET(     0, glNewList, _gloffset_NewList ),
     NAME_FUNC_OFFSET(    10, glEndList, _gloffset_EndList ),
@@ -1871,12 +1881,12 @@ static const glprocs_table_t static_functions[] = {
     NAME_FUNC_OFFSET( 14671, glGetQueryObjecti64vEXT, _gloffset_GetQueryObjecti64vEXT ),
     NAME_FUNC_OFFSET( 14695, glGetQueryObjectui64vEXT, _gloffset_GetQueryObjectui64vEXT ),
     NAME_FUNC_OFFSET( 14720, glBlitFramebufferEXT, _gloffset_BlitFramebufferEXT ),
-    NAME_FUNC_OFFSET( 14741, glBindVertexArrayAPPLE, _gloffset_BindVertexArrayAPPLE ),
-    NAME_FUNC_OFFSET( 14764, glDeleteVertexArraysAPPLE, _gloffset_DeleteVertexArraysAPPLE ),
-    NAME_FUNC_OFFSET( 14790, glGenVertexArraysAPPLE, _gloffset_GenVertexArraysAPPLE ),
-    NAME_FUNC_OFFSET( 14813, glIsVertexArrayAPPLE, _gloffset_IsVertexArrayAPPLE ),
-    NAME_FUNC_OFFSET( 14834, glProgramEnvParameters4fvEXT, _gloffset_ProgramEnvParameters4fvEXT ),
-    NAME_FUNC_OFFSET( 14863, glProgramLocalParameters4fvEXT, _gloffset_ProgramLocalParameters4fvEXT ),
+    NAME_FUNC_OFFSET( 14741, gl_dispatch_stub_819, _gloffset_BindVertexArrayAPPLE ),
+    NAME_FUNC_OFFSET( 14764, gl_dispatch_stub_820, _gloffset_DeleteVertexArraysAPPLE ),
+    NAME_FUNC_OFFSET( 14790, gl_dispatch_stub_821, _gloffset_GenVertexArraysAPPLE ),
+    NAME_FUNC_OFFSET( 14813, gl_dispatch_stub_822, _gloffset_IsVertexArrayAPPLE ),
+    NAME_FUNC_OFFSET( 14834, gl_dispatch_stub_823, _gloffset_ProgramEnvParameters4fvEXT ),
+    NAME_FUNC_OFFSET( 14863, gl_dispatch_stub_824, _gloffset_ProgramLocalParameters4fvEXT ),
     NAME_FUNC_OFFSET( 14894, glArrayElementEXT, _gloffset_ArrayElement ),
     NAME_FUNC_OFFSET( 14912, glBindTextureEXT, _gloffset_BindTexture ),
     NAME_FUNC_OFFSET( 14929, glDrawArraysEXT, _gloffset_DrawArrays ),

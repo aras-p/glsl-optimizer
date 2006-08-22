@@ -99,6 +99,7 @@ warn(void)
 
 
 #define KEYWORD1 static
+#define KEYWORD1_ALT static
 #define KEYWORD2 GLAPIENTRY
 #define NAME(func)  NoOp##func
 

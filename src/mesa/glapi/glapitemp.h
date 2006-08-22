@@ -27,6 +27,12 @@
  */
 
 
+#  if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)) && defined(__ELF__)
+#    define HIDDEN  __attribute__((visibility("hidden")))
+#  else
+#    define HIDDEN
+#  endif
+
 /*
  * This file is a template which generates the OpenGL API entry point
  * functions.  It should be included by a .c file which first defines
@@ -55,6 +61,10 @@
 #if defined( NAME )
 #ifndef KEYWORD1
 #define KEYWORD1
+#endif
+
+#ifndef KEYWORD1_ALT
+#define KEYWORD1_ALT HIDDEN
 #endif
 
 #ifndef KEYWORD2
@@ -5055,32 +5065,44 @@ KEYWORD1 void KEYWORD2 NAME(BlitFramebufferEXT)(GLint srcX0, GLint srcY0, GLint 
    DISPATCH(BlitFramebufferEXT, (srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter), (F, "glBlitFramebufferEXT(%d, %d, %d, %d, %d, %d, %d, %d, %d, 0x%x);\n", srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter));
 }
 
-KEYWORD1 void KEYWORD2 NAME(BindVertexArrayAPPLE)(GLuint array)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_819)(GLuint array);
+
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_819)(GLuint array)
 {
    DISPATCH(BindVertexArrayAPPLE, (array), (F, "glBindVertexArrayAPPLE(%d);\n", array));
 }
 
-KEYWORD1 void KEYWORD2 NAME(DeleteVertexArraysAPPLE)(GLsizei n, const GLuint * arrays)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_820)(GLsizei n, const GLuint * arrays);
+
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_820)(GLsizei n, const GLuint * arrays)
 {
    DISPATCH(DeleteVertexArraysAPPLE, (n, arrays), (F, "glDeleteVertexArraysAPPLE(%d, %p);\n", n, (const void *) arrays));
 }
 
-KEYWORD1 void KEYWORD2 NAME(GenVertexArraysAPPLE)(GLsizei n, GLuint * arrays)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_821)(GLsizei n, GLuint * arrays);
+
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_821)(GLsizei n, GLuint * arrays)
 {
    DISPATCH(GenVertexArraysAPPLE, (n, arrays), (F, "glGenVertexArraysAPPLE(%d, %p);\n", n, (const void *) arrays));
 }
 
-KEYWORD1 GLboolean KEYWORD2 NAME(IsVertexArrayAPPLE)(GLuint array)
+KEYWORD1_ALT GLboolean KEYWORD2 NAME(_dispatch_stub_822)(GLuint array);
+
+KEYWORD1_ALT GLboolean KEYWORD2 NAME(_dispatch_stub_822)(GLuint array)
 {
    RETURN_DISPATCH(IsVertexArrayAPPLE, (array), (F, "glIsVertexArrayAPPLE(%d);\n", array));
 }
 
-KEYWORD1 void KEYWORD2 NAME(ProgramEnvParameters4fvEXT)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_823)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
+
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_823)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
 {
    DISPATCH(ProgramEnvParameters4fvEXT, (target, index, count, params), (F, "glProgramEnvParameters4fvEXT(0x%x, %d, %d, %p);\n", target, index, count, (const void *) params));
 }
 
-KEYWORD1 void KEYWORD2 NAME(ProgramLocalParameters4fvEXT)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_824)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
+
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_824)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
 {
    DISPATCH(ProgramLocalParameters4fvEXT, (target, index, count, params), (F, "glProgramLocalParameters4fvEXT(0x%x, %d, %d, %p);\n", target, index, count, (const void *) params));
 }
@@ -5918,12 +5940,12 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(GetQueryObjecti64vEXT),
    TABLE_ENTRY(GetQueryObjectui64vEXT),
    TABLE_ENTRY(BlitFramebufferEXT),
-   TABLE_ENTRY(BindVertexArrayAPPLE),
-   TABLE_ENTRY(DeleteVertexArraysAPPLE),
-   TABLE_ENTRY(GenVertexArraysAPPLE),
-   TABLE_ENTRY(IsVertexArrayAPPLE),
-   TABLE_ENTRY(ProgramEnvParameters4fvEXT),
-   TABLE_ENTRY(ProgramLocalParameters4fvEXT),
+   TABLE_ENTRY(_dispatch_stub_819),
+   TABLE_ENTRY(_dispatch_stub_820),
+   TABLE_ENTRY(_dispatch_stub_821),
+   TABLE_ENTRY(_dispatch_stub_822),
+   TABLE_ENTRY(_dispatch_stub_823),
+   TABLE_ENTRY(_dispatch_stub_824),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.
@@ -6220,6 +6242,7 @@ static _glapi_proc UNUSED_TABLE_NAME[] = {
 
 
 #  undef KEYWORD1
+#  undef KEYWORD1_ALT
 #  undef KEYWORD2
 #  undef NAME
 #  undef DISPATCH
@@ -6227,3 +6250,4 @@ static _glapi_proc UNUSED_TABLE_NAME[] = {
 #  undef DISPATCH_TABLE_NAME
 #  undef UNUSED_TABLE_NAME
 #  undef TABLE_ENTRY
+#  undef HIDDEN

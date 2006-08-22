@@ -33,6 +33,7 @@
 <!ATTLIST function name                NMTOKEN #REQUIRED
                    alias               NMTOKEN #IMPLIED
                    offset              CDATA   #IMPLIED
+                   static_dispatch     (true | false) "true"
                    vectorequiv         NMTOKEN #IMPLIED>
 <!ATTLIST size     name                NMTOKEN #REQUIRED
                    count               NMTOKEN #IMPLIED

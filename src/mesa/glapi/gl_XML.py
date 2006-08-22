@@ -575,6 +575,8 @@ class gl_function( gl_item ):
 		name = element.nsProp( "name", None )
 		alias = element.nsProp( "alias", None )
 
+		self.static_dispatch = is_attr_true(element, "static_dispatch")
+
 		self.entry_points.append( name )
 		if alias:
 			true_name = alias
