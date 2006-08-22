@@ -847,6 +847,8 @@ extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 				   __DRIcontextPrivate * driContextPriv,
 				   void *sharedContextPrivate);
 
+extern int r300_get_num_verts(r300ContextPtr rmesa, int num_verts, int prim);
+
 void r300_translate_vertex_shader(struct r300_vertex_program *vp);
 extern void r300InitShaderFuncs(struct dd_function_table *functions);
 extern int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp, float *dst);

@@ -113,10 +113,7 @@ static int r300_get_primitive_type(r300ContextPtr rmesa, GLcontext *ctx, int pri
    return type;
 }
 
-static int r300_get_num_verts(r300ContextPtr rmesa,
-	GLcontext *ctx,
-	int num_verts,
-	int prim)
+int r300_get_num_verts(r300ContextPtr rmesa, int num_verts, int prim)
 {
 	int verts_off=0;
 	char *name="UNKNOWN";
@@ -286,7 +283,7 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
    int type, num_verts;
 
    type=r300_get_primitive_type(rmesa, ctx, prim);
-   num_verts=r300_get_num_verts(rmesa, ctx, end-start, prim);
+   num_verts=r300_get_num_verts(rmesa, end-start, prim);
 
    if(type<0 || num_verts <= 0)return;
 
