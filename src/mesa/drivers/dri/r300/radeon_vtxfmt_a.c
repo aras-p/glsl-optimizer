@@ -44,6 +44,7 @@
 #include "vtxfmt.h"
 #include "api_validate.h"
 #include "state.h"
+#include "image.h"
 
 #define CONV_VB(a, b) rvb->AttribPtr[(a)].size = vb->b->size, \
 			rvb->AttribPtr[(a)].type = GL_FLOAT, \
@@ -344,22 +345,6 @@ static void radeonDrawElements( GLenum mode, GLsizei count, GLenum type, const G
 	_mesa_install_exec_vtxfmt( ctx, &TNL_CONTEXT(ctx)->exec_vtxfmt );
 }
 
-static int elt_bytes(GLenum type)
-{
-       switch (type) {
-       case GL_UNSIGNED_BYTE:
-               return 1;
-       case GL_UNSIGNED_SHORT:
-               return 2;
-       case GL_UNSIGNED_INT:
-               return 4;
-       default:
-               _mesa_problem(NULL, "bad elt type in %s", __FUNCTION__);
-               return 0;
-       }
-       return 0;
-}
-
 static void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei count, GLenum type, const GLvoid *c_indices)
 {
 	GET_CURRENT_CONTEXT(ctx);
@@ -378,15 +363,12 @@ static void radeonDrawRangeElements(GLenum mode, GLuint min, GLuint max, GLsizei
 		    mode == GL_QUADS ||
 		    mode == GL_TRIANGLES) {
 			
-			if (!_mesa_validate_DrawRangeElements( ctx, mode, min, max, count, type, indices ))
-				return;
-			
 			while (count) {
 				i = r300_get_num_verts(rmesa, MIN2(count, 65535), mode);
 				
 				radeonDrawRangeElements(mode, min, max, i, type, indices);
 				
-				indices += i * elt_bytes(type);
+				indices += i * _mesa_sizeof_type(type);
 				count -= i;
 			}
 			return ;

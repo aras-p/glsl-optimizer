@@ -38,6 +38,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "colormac.h"
 #include "imports.h"
 #include "macros.h"
+#include "image.h"
 
 #include "swrast_setup/swrast_setup.h"
 #include "math/m_translate.h"
@@ -289,26 +290,6 @@ static GLuint t_vir0_size(struct dt *dt)
 	return 0;
 }
 
-static GLuint comp_bytes(struct dt *dt)
-{
-	switch (dt->type) {
-	case GL_UNSIGNED_BYTE:
-		return 1;
-	
-	case GL_SHORT:
-		return 2;
-	
-	case GL_FLOAT:
-		return 4;
-	
-	default:
-		assert(0);
-		break;
-	}
-	
-	return 0;
-}
-
 static GLuint t_aos_size(struct dt *dt)
 {
 	switch (dt->type) {
@@ -520,7 +501,7 @@ int r300EmitArrays(GLcontext *ctx)
 		
 		rmesa->state.aos[i].aos_size = t_aos_size(&VB->AttribPtr[tab[i]]);
 		
-		comp_size = comp_bytes(&VB->AttribPtr[tab[i]]);
+		comp_size = _mesa_sizeof_type(VB->AttribPtr[tab[i]].type);
 		
 #if MESA_LITTLE_ENDIAN
 		for (fix = 0; fix <= 4 - VB->AttribPtr[tab[i]].size; fix++) {
