@@ -64,50 +64,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "drirenderbuffer.h"
 
-static void r300AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	int pp_misc = rmesa->hw.at.cmd[R300_AT_ALPHA_TEST];
-	GLubyte refByte;
-
-	CLAMPED_FLOAT_TO_UBYTE(refByte, ref);
-	
-	R300_STATECHANGE(rmesa, at);
-
-	pp_misc &= ~(R300_ALPHA_TEST_OP_MASK | R300_REF_ALPHA_MASK);
-	pp_misc |= (refByte & R300_REF_ALPHA_MASK);
-
-	switch (func) {
-	case GL_NEVER:
-		pp_misc |= R300_ALPHA_TEST_FAIL;
-		break;
-	case GL_LESS:
-		pp_misc |= R300_ALPHA_TEST_LESS;
-		break;
-	case GL_EQUAL:
-		pp_misc |= R300_ALPHA_TEST_EQUAL;
-		break;
-	case GL_LEQUAL:
-		pp_misc |= R300_ALPHA_TEST_LEQUAL;
-		break;
-	case GL_GREATER:
-		pp_misc |= R300_ALPHA_TEST_GREATER;
-		break;
-	case GL_NOTEQUAL:
-		pp_misc |= R300_ALPHA_TEST_NEQUAL;
-		break;
-	case GL_GEQUAL:
-		pp_misc |= R300_ALPHA_TEST_GEQUAL;
-		break;
-	case GL_ALWAYS:
-		pp_misc |= R300_ALPHA_TEST_PASS;
-		//pp_misc &= ~R300_ALPHA_TEST_ENABLE;
-		break;
-	}
-
-	rmesa->hw.at.cmd[R300_AT_ALPHA_TEST] = pp_misc;
-}
-
 static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 {
 	GLubyte color[4];
@@ -371,7 +327,7 @@ static void r300UpdateCulling(GLcontext* ctx)
 	r300->hw.cul.cmd[R300_CUL_CULL] = val;
 }
 
-static void update_early_z(GLcontext* ctx)
+static void update_early_z(GLcontext *ctx)
 {
 	/* updates register 0x4f14 
 	   if depth test is not enabled it should be 0x00000000
@@ -381,17 +337,124 @@ static void update_early_z(GLcontext* ctx)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
 	R300_STATECHANGE(r300, unk4F10);
-	if (ctx->Color.AlphaEnabled)
+	if (ctx->Color.AlphaEnabled && ctx->Color.AlphaFunc != GL_ALWAYS)
 		/* disable early Z */
 		r300->hw.unk4F10.cmd[2] = 0x00000000;
 	else {
-		if (ctx->Depth.Test)
+		if (ctx->Depth.Test && ctx->Depth.Func != GL_ALWAYS)
 			/* enable early Z */
 			r300->hw.unk4F10.cmd[2] = 0x00000001;
 		else
 			/* disable early Z */
 			r300->hw.unk4F10.cmd[2] = 0x00000000;
 	}
+}
+
+static void update_alpha(GLcontext *ctx)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	GLubyte refByte;
+	uint32_t pp_misc = 0x0;
+	GLboolean really_enabled = ctx->Color.AlphaEnabled;
+
+	CLAMPED_FLOAT_TO_UBYTE(refByte, ctx->Color.AlphaRef);
+	
+	switch (ctx->Color.AlphaFunc) {
+	case GL_NEVER:
+		pp_misc |= R300_ALPHA_TEST_FAIL;
+		break;
+	case GL_LESS:
+		pp_misc |= R300_ALPHA_TEST_LESS;
+		break;
+	case GL_EQUAL:
+		pp_misc |= R300_ALPHA_TEST_EQUAL;
+		break;
+	case GL_LEQUAL:
+		pp_misc |= R300_ALPHA_TEST_LEQUAL;
+		break;
+	case GL_GREATER:
+		pp_misc |= R300_ALPHA_TEST_GREATER;
+		break;
+	case GL_NOTEQUAL:
+		pp_misc |= R300_ALPHA_TEST_NEQUAL;
+		break;
+	case GL_GEQUAL:
+		pp_misc |= R300_ALPHA_TEST_GEQUAL;
+		break;
+	case GL_ALWAYS:
+		/*pp_misc |= R300_ALPHA_TEST_PASS;*/
+		really_enabled = GL_FALSE;
+		break;
+	}
+	
+	if (really_enabled) {
+		pp_misc |= R300_ALPHA_TEST_ENABLE;
+		pp_misc |= (refByte & R300_REF_ALPHA_MASK);
+	} else {
+		pp_misc = 0x0;
+	}
+	
+	
+	R300_STATECHANGE(r300, at);
+	r300->hw.at.cmd[R300_AT_ALPHA_TEST] = pp_misc;
+	update_early_z(ctx);
+}
+
+static void r300AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
+{
+	(void) func;
+	(void) ref;
+	update_alpha(ctx);
+}
+
+static int translate_func(int func)
+{
+	switch (func) {
+	case GL_NEVER:
+		return R300_ZS_NEVER;
+	case GL_LESS:
+		return R300_ZS_LESS;
+	case GL_EQUAL:
+		return R300_ZS_EQUAL;
+	case GL_LEQUAL:
+		return R300_ZS_LEQUAL;
+	case GL_GREATER:
+		return R300_ZS_GREATER;
+	case GL_NOTEQUAL:
+		return R300_ZS_NOTEQUAL;
+	case GL_GEQUAL:
+		return R300_ZS_GEQUAL;
+	case GL_ALWAYS:
+		return R300_ZS_ALWAYS;
+	}
+	return 0;
+}
+
+static void update_depth(GLcontext* ctx)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+
+	R300_STATECHANGE(r300, zs);
+	r300->hw.zs.cmd[R300_ZS_CNTL_0] &= R300_RB3D_STENCIL_ENABLE;
+	r300->hw.zs.cmd[R300_ZS_CNTL_1] &= ~(R300_ZS_MASK << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
+	
+	if (ctx->Depth.Test && ctx->Depth.Func != GL_ALWAYS) {
+		if (ctx->Depth.Mask)
+			r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_RB3D_Z_TEST_AND_WRITE;
+		else
+			r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_RB3D_Z_TEST;
+		
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= translate_func(ctx->Depth.Func) << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
+	} else {
+		if (ctx->Depth.Mask) {
+			r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_RB3D_Z_WRITE_ONLY;
+			r300->hw.zs.cmd[R300_ZS_CNTL_1] |= translate_func(GL_ALWAYS) << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
+		} else {
+			r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_RB3D_Z_DISABLED_1;
+		}
+	}
+	
+	update_early_z(ctx);
 }
 
 /**
@@ -436,15 +499,7 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 		break;
 
 	case GL_ALPHA_TEST:
-		R300_STATECHANGE(r300, at);
-		if (state) {
-			r300->hw.at.cmd[R300_AT_ALPHA_TEST] |=
-			    R300_ALPHA_TEST_ENABLE;
-		} else {
-			r300->hw.at.cmd[R300_AT_ALPHA_TEST] &=
-			    ~R300_ALPHA_TEST_ENABLE;
-		}
-		update_early_z(ctx);
+		update_alpha(ctx);
 		break;
 
 	case GL_BLEND:
@@ -453,19 +508,7 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 		break;
 
 	case GL_DEPTH_TEST:
-		R300_STATECHANGE(r300, zs);
-
-		if (state) {
-			if (ctx->Depth.Mask)
-				newval = R300_RB3D_Z_TEST_AND_WRITE;
-			else
-				newval = R300_RB3D_Z_TEST;
-		} else
-			newval = R300_RB3D_Z_DISABLED_1;
-
-		r300->hw.zs.cmd[R300_ZS_CNTL_0] &= R300_RB3D_STENCIL_ENABLE;
-		r300->hw.zs.cmd[R300_ZS_CNTL_0] |= newval;
-		update_early_z(ctx);
+		update_depth(ctx);
 		break;
 
 	case GL_STENCIL_TEST:
@@ -593,38 +636,8 @@ static void r300FrontFace(GLcontext* ctx, GLenum mode)
  */
 static void r300DepthFunc(GLcontext* ctx, GLenum func)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-
-	R300_STATECHANGE(r300, zs);
-
-	r300->hw.zs.cmd[R300_ZS_CNTL_1] &= ~(R300_ZS_MASK << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
-
-	switch(func) {
-	case GL_NEVER:
-		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_NEVER << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
-		break;
-	case GL_LESS:
-		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_LESS << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
-		break;
-	case GL_EQUAL:
-		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_EQUAL << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
-		break;
-	case GL_LEQUAL:
-		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_LEQUAL << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
-		break;
-	case GL_GREATER:
-		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_GREATER << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
-		break;
-	case GL_NOTEQUAL:
-		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_NOTEQUAL << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
-		break;
-	case GL_GEQUAL:
-		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_GEQUAL << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
-		break;
-	case GL_ALWAYS:
-		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_ALWAYS << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
-		break;
-	}
+	(void) func;
+	update_depth(ctx);
 }
 
 
@@ -635,7 +648,8 @@ static void r300DepthFunc(GLcontext* ctx, GLenum func)
  */
 static void r300DepthMask(GLcontext* ctx, GLboolean mask)
 {
-	r300Enable(ctx, GL_DEPTH_TEST, ctx->Depth.Test);
+	(void) mask;
+	update_depth(ctx);
 }
 
 
@@ -793,29 +807,6 @@ static void r300PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
  * Stencil
  */
 
-static int translate_stencil_func(int func)
-{
-	switch (func) {
-	case GL_NEVER:
-		return R300_ZS_NEVER;
-	case GL_LESS:
-		return R300_ZS_LESS;
-	case GL_EQUAL:
-		return R300_ZS_EQUAL;
-	case GL_LEQUAL:
-		return R300_ZS_LEQUAL;
-	case GL_GREATER:
-		return R300_ZS_GREATER;
-	case GL_NOTEQUAL:
-		return R300_ZS_NOTEQUAL;
-	case GL_GEQUAL:
-		return R300_ZS_GEQUAL;
-	case GL_ALWAYS:
-		return R300_ZS_ALWAYS;
-	}
-	return 0;
-}
-
 static int translate_stencil_op(int op)
 {
 	switch (op) {
@@ -877,7 +868,7 @@ static void r300StencilFuncSeparate(GLcontext * ctx, GLenum face,
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] &=  ~((R300_RB3D_ZS2_STENCIL_MASK << R300_RB3D_ZS2_STENCIL_REF_SHIFT) |
 						(R300_RB3D_ZS2_STENCIL_MASK << R300_RB3D_ZS2_STENCIL_MASK_SHIFT));
 	
-	flag = translate_stencil_func(ctx->Stencil.Function[0]);
+	flag = translate_func(ctx->Stencil.Function[0]);
 
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |= (flag << R300_RB3D_ZS1_FRONT_FUNC_SHIFT)
 					  | (flag << R300_RB3D_ZS1_BACK_FUNC_SHIFT);
