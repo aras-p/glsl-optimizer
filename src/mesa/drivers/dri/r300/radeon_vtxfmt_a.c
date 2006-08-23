@@ -749,8 +749,6 @@ void r300_evict_vbos(GLcontext *ctx, int amount)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct _mesa_HashTable *hash = ctx->Shared->BufferObjects;
 	GLuint k = _mesa_HashFirstEntry(hash);
-	struct r300_buffer_object *r300_obj;
-	GLvoid *data;
 	
 	while (amount > 0 && k) {
 		struct gl_buffer_object *obj = _mesa_lookup_bufferobj(ctx, k);
@@ -758,6 +756,7 @@ void r300_evict_vbos(GLcontext *ctx, int amount)
 			= (struct r300_buffer_object *) obj;
 		
 		if (obj->OnCard && obj->Size) {
+			GLvoid *data;
 			obj->Data = _mesa_malloc(obj->Size);
 			
 			data = radeon_mm_map(rmesa, r300_obj->id, RADEON_MM_R);
