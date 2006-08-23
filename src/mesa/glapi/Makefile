@@ -27,7 +27,8 @@ SERVER_OUTPUTS = $(GLX_DIR)/indirect_dispatch.c \
 	$(GLX_DIR)/indirect_dispatch_swap.c \
 	$(GLX_DIR)/indirect_dispatch.h \
 	$(GLX_DIR)/indirect_size_get.c \
-	$(GLX_DIR)/indirect_size_get.h
+	$(GLX_DIR)/indirect_size_get.h \
+	$(GLX_DIR)/indirect_table.c
 
 COMMON = gl_XML.py license.py gl_API.xml typeexpr.py
 COMMON_GLX = $(COMMON) glX_XML.py glX_proto_common.py
@@ -88,14 +89,17 @@ $(GLX_DIR)/indirect_dispatch.c: $(COMMON_GLX) glX_proto_recv.py
 $(GLX_DIR)/indirect_dispatch_swap.c: $(COMMON_GLX) glX_proto_recv.py
 	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_recv.py -m dispatch_c -s > $@
 
-$(GLX_DIR)/indirect_dispatch.h: $(COMMON_GLX) glX_proto_recv.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_recv.py -m dispatch_h -s > $@
+$(GLX_DIR)/indirect_dispatch.h: $(COMMON_GLX) glX_proto_recv.py glX_API.xml
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_recv.py -m dispatch_h -f gl_and_glX_API.xml -s > $@
 
 $(GLX_DIR)/indirect_size_get.h: $(COMMON_GLX) glX_proto_size.py
 	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_h --only-get -h '_INDIRECT_SIZE_GET_H_' > $@
 
 $(GLX_DIR)/indirect_size_get.c: $(COMMON_GLX) glX_proto_size.py
 	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_c > $@
+
+$(GLX_DIR)/indirect_table.c: $(COMMON_GLX) glX_server_table.py glX_API.xml
+	$(PYTHON2) $(PYTHON_FLAGS) glX_server_table.py -f gl_and_glX_API.xml > $@
 
 clean:
 	rm -f *~ *.pyo
