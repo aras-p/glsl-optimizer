@@ -69,7 +69,7 @@ int KeyRepeatMode = GLUT_KEY_REPEAT_DEFAULT;
 int MouseEnabled = 0;
 
 static int OldKDMode = -1;
-static int OldMode;
+static int OldMode = KD_TEXT;
 static struct vt_mode OldVTMode;
 static struct termios OldTermios;
 
@@ -92,7 +92,8 @@ static void KeyboardHandler(int sig)
 {
    int release, labelval;
    unsigned char code;
-   struct kbentry entry; 
+   struct kbentry entry;
+   static int lalt; /* only left alt does vt switch */
 
    if(read(ConsoleFD, &code, 1) != 1)
       return;
@@ -118,21 +119,36 @@ static void KeyboardHandler(int sig)
       MODIFIER(GLUT_ACTIVE_CTRL);
       return;
    case K_ALT:
+      lalt = !release;
    case K_ALTGR:
       MODIFIER(GLUT_ACTIVE_ALT);
       return;
    }
 
-   if(!release && labelval >= K_F1 && labelval <= K_F12)
-      if(KeyboardModifiers & GLUT_ACTIVE_ALT) {
-	 /* VT switch, we must do it */
+   if(lalt && !release) {
+      /* VT switch, we must do it */
+      int vt = -1;
+      struct vt_stat st;
+      if(labelval >= K_F1 && labelval <= K_F12)
+	 vt = labelval - K_F1 + 1;
+
+      if(labelval == K_LEFT)
+	 if(ioctl(ConsoleFD, VT_GETSTATE, &st) >= 0)
+	    vt = st.v_active - 1;
+
+      if(labelval == K_RIGHT)
+	 if(ioctl(ConsoleFD, VT_GETSTATE, &st) >= 0)
+	    vt = st.v_active - 1;
+
+      if(vt != -1) {
 	 if(Swapping)
-	    VTSwitch = labelval - K_F1 + 1;
+	    VTSwitch = vt;
 	 else
-	    if(ioctl(ConsoleFD, VT_ACTIVATE, labelval - K_F1 + 1) < 0)
+	    if(ioctl(ConsoleFD, VT_ACTIVATE, vt) < 0)
 	       sprintf(exiterror, "Error switching console\n");
 	 return;
       }
+   }
    write(kbdpipe[1], &code, 1);
 }
 
@@ -153,7 +169,7 @@ static void LedModifier(int led, int release)
 #define READKEY read(kbdpipe[0], &code, 1)
 static int ReadKey(void)
 {
-   int release, labelval;
+   int release, labelval, labelvalnoshift;
    unsigned char code;
    int specialkey = 0;
    struct kbentry entry; 
@@ -227,7 +243,7 @@ static int ReadKey(void)
 	 if(SpecialFunc)
 	    SpecialFunc(specialkey, MouseX, MouseY);
       } else {
-	 if(code >= 1 && code <= 26) {
+	 if(code >= 1 && code <= 26 && code != '\r') {
 	    KeyboardModifiers |= GLUT_ACTIVE_CTRL;
 	    code += 'a' - 1;
 	 }
@@ -260,6 +276,13 @@ static int ReadKey(void)
    entry.kb_index = code;
    entry.kb_table = 0;
 
+   if (ioctl(ConsoleFD, KDGKBENT, &entry) < 0) {
+      sprintf(exiterror, "ioctl(KDGKBENT) failed.\n");
+      exit(0);
+   }
+
+   labelvalnoshift = entry.kb_value;
+
    if(KeyboardModifiers & GLUT_ACTIVE_SHIFT)
       entry.kb_table |= K_SHIFTTAB;
 	
@@ -270,7 +293,7 @@ static int ReadKey(void)
 
    labelval = entry.kb_value;
 
-   switch(labelval) {
+   switch(labelvalnoshift) {
    case K_CAPS:
       LedModifier(LED_CAP, release);
       return 0;
@@ -293,7 +316,7 @@ static int ReadKey(void)
    if(labelval >= K_F1 && labelval <= K_F12)
       specialkey = GLUT_KEY_F1 + labelval - K_F1;
    else
-      switch(labelval) {
+      switch(labelvalnoshift) {
       case K_LEFT:
 	 specialkey = GLUT_KEY_LEFT; break;
       case K_UP:
@@ -312,9 +335,10 @@ static int ReadKey(void)
 	 specialkey = GLUT_KEY_END; break;
       case K_INSERT:
 	 specialkey = GLUT_KEY_INSERT; break; 
-      case K_REMOVE:
+      case 127:
 	 labelval = '\b'; break;
       case K_ENTER:
+      case K_ENTER - 1: /* keypad enter */
 	 labelval = '\n'; break;
       }
 
@@ -634,7 +658,6 @@ void InitializeVT(int usestdin)
       if(ioctl(ConsoleFD, KDSETMODE, KD_GRAPHICS) < 0)
 	 sprintf(exiterror,"Warning: Failed to set terminal to graphics\n");
 
-
    if (ioctl(ConsoleFD, KDSKBMODE, K_MEDIUMRAW) < 0) {
       sprintf(exiterror, "ioctl KDSKBMODE failed!\n");
       tcsetattr(0, TCSANOW, &OldTermios);
@@ -655,6 +678,22 @@ void RestoreVT(void)
    if (tcsetattr(0, TCSANOW, &OldTermios) < 0)
       fprintf(stderr, "tcsetattr failed\n");
 
+   /* setting the mode to text from graphics restores the colormap*/
+   if(
+#ifdef HAVE_GPM
+   GpmMouse ||
+#endif
+   ConsoleFD == 0)
+      if(ioctl(ConsoleFD, KDSETMODE, KD_GRAPHICS) < 0) {
+	 sprintf(exiterror,"Warning: Failed to set terminal to graphics\n");
+	 goto skipioctl; /* no need to fail twice */
+      }
+   
+   if(ioctl(ConsoleFD, KDSETMODE, OldMode) < 0)
+      fprintf(stderr, "ioctl KDSETMODE failed!\n");
+
+ skipioctl:
+
    if(ConsoleFD == 0)
        return;
 
@@ -664,10 +703,7 @@ void RestoreVT(void)
 
    if (ioctl(ConsoleFD, KDSKBMODE, OldKDMode) < 0)
       fprintf(stderr, "ioctl KDSKBMODE failed!\n");
-
-   if(ioctl(ConsoleFD, KDSETMODE, OldMode) < 0)
-      fprintf(stderr, "ioctl KDSETMODE failed!\n");
-   
+  
    close(ConsoleFD);
 }
 

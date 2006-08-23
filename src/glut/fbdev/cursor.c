@@ -25,7 +25,8 @@
  */
 
 /* these routines are written to access graphics memory directly, not using mesa
-   to render the cursor, this is faster, and */
+   to render the cursor, this is faster, it would be good to use a hardware
+   cursor if it exists instead */
 
 #include <stdlib.h>
 #include <inttypes.h>

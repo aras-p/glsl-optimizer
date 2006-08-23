@@ -117,6 +117,9 @@ static void Cleanup(void)
 
    /* restore original variable screen info */
    if(FrameBufferFD != -1) {
+      OrigVarInfo.xoffset = 0;
+      OrigVarInfo.yoffset = 0;
+
       if (ioctl(FrameBufferFD, FBIOPUT_VSCREENINFO, &OrigVarInfo))
 	 fprintf(stderr, "ioctl(FBIOPUT_VSCREENINFO failed): %s\n",
 		 strerror(errno));
