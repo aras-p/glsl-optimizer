@@ -469,8 +469,8 @@ _mesa_validate_pbo_access(GLuint dimensions,
  * Return the gl_buffer_object for the given ID.
  * Always return NULL for ID 0.
  */
-static INLINE struct gl_buffer_object *
-lookup_bufferobj(GLcontext *ctx, GLuint buffer)
+struct gl_buffer_object *
+_mesa_lookup_bufferobj(GLcontext *ctx, GLuint buffer)
 {
    if (buffer == 0)
       return NULL;
@@ -508,7 +508,7 @@ _mesa_BindBufferARB(GLenum target, GLuint buffer)
    }
    else {
       /* non-default buffer object */
-      newBufObj = lookup_bufferobj(ctx, buffer);
+      newBufObj = _mesa_lookup_bufferobj(ctx, buffer);
       if (!newBufObj) {
          /* if this is a new buffer object id, allocate a buffer object now */
          ASSERT(ctx->Driver.NewBufferObject);
@@ -577,7 +577,7 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
    _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
 
    for (i = 0; i < n; i++) {
-      struct gl_buffer_object *bufObj = lookup_bufferobj(ctx, ids[i]);
+      struct gl_buffer_object *bufObj = _mesa_lookup_bufferobj(ctx, ids[i]);
       if (bufObj) {
          /* unbind any vertex pointers bound to this buffer */
          GLuint j;
@@ -722,7 +722,7 @@ _mesa_IsBufferARB(GLuint id)
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
    _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
-   bufObj = lookup_bufferobj(ctx, id);
+   bufObj = _mesa_lookup_bufferobj(ctx, id);
    _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
    return bufObj ? GL_TRUE : GL_FALSE;

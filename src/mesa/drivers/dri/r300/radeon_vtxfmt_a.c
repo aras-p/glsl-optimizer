@@ -749,13 +749,13 @@ void r300_evict_vbos(GLcontext *ctx, int amount)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct _mesa_HashTable *hash = ctx->Shared->BufferObjects;
 	GLuint k = _mesa_HashFirstEntry(hash);
-	struct gl_buffer_object *obj;
 	struct r300_buffer_object *r300_obj;
 	GLvoid *data;
 	
 	while (amount > 0 && k) {
-		obj = (struct gl_buffer_object *) _mesa_HashLookup(hash, k);
-		r300_obj = (struct r300_buffer_object *) obj;
+		struct gl_buffer_object *obj = _mesa_lookup_bufferobj(ctx, k);
+		struct r300_buffer_object *r300_obj
+			= (struct r300_buffer_object *) obj;
 		
 		if (obj->OnCard && obj->Size) {
 			obj->Data = _mesa_malloc(obj->Size);

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -303,6 +303,20 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
    _mesa_free(prog);
 }
 
+
+/**
+ * Return the gl_program object for a given ID.
+ * Basically just a wrapper for _mesa_HashLookup() to avoid a lot of
+ * casts elsewhere.
+ */
+struct gl_program *
+_mesa_lookup_program(GLcontext *ctx, GLuint id)
+{
+   if (id)
+      return (struct gl_program *) _mesa_HashLookup(ctx->Shared->Programs, id);
+   else
+      return NULL;
+}
 
 
 /**********************************************************************/
@@ -1753,7 +1767,7 @@ _mesa_BindProgram(GLenum target, GLuint id)
    }
    else {
       /* Bind user program */
-      prog = (struct gl_program *) _mesa_HashLookup(ctx->Shared->Programs, id);
+      prog = _mesa_lookup_program(ctx, id);
       if (!prog || prog == &_mesa_DummyProgram) {
          /* allocate a new program now */
          prog = ctx->Driver.NewProgram(ctx, target, id);
@@ -1809,8 +1823,7 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
 
    for (i = 0; i < n; i++) {
       if (ids[i] != 0) {
-         struct gl_program *prog = (struct gl_program *)
-            _mesa_HashLookup(ctx->Shared->Programs, ids[i]);
+         struct gl_program *prog = _mesa_lookup_program(ctx, ids[i]);
          if (prog == &_mesa_DummyProgram) {
             _mesa_HashRemove(ctx->Shared->Programs, ids[i]);
          }
@@ -1899,7 +1912,7 @@ _mesa_IsProgram(GLuint id)
    if (id == 0)
       return GL_FALSE;
 
-   if (_mesa_HashLookup(ctx->Shared->Programs, id))
+   if (_mesa_lookup_program(ctx, id))
       return GL_TRUE;
    else
       return GL_FALSE;

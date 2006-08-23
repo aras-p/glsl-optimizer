@@ -70,8 +70,7 @@ _mesa_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   vprog = (struct gl_vertex_program *)
-      _mesa_HashLookup(ctx->Shared->Programs, id);
+   vprog = (struct gl_vertex_program *) _mesa_lookup_program(ctx, id);
 
    if (!vprog || vprog->Base.Target != GL_VERTEX_STATE_PROGRAM_NV) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glExecuteProgramNV");
@@ -109,8 +108,7 @@ GLboolean GLAPIENTRY _mesa_AreProgramsResidentNV(GLsizei n, const GLuint *ids,
          _mesa_error(ctx, GL_INVALID_VALUE, "glAreProgramsResidentNV");
          return GL_FALSE;
       }
-      prog = (const struct gl_program *)
-         _mesa_HashLookup(ctx->Shared->Programs, ids[i]);
+      prog = _mesa_lookup_program(ctx, ids[i]);
       if (!prog) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glAreProgramsResidentNV");
          return GL_FALSE;
@@ -158,7 +156,7 @@ _mesa_RequestResidentProgramsNV(GLsizei n, const GLuint *ids)
          return;
       }
 
-      prog = (struct gl_program *) _mesa_HashLookup(ctx->Shared->Programs, ids[i]);
+      prog = _mesa_lookup_program(ctx, ids[i]);
       if (!prog) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glRequestResidentProgramsNV(id)");
          return;
@@ -254,7 +252,7 @@ _mesa_GetProgramivNV(GLuint id, GLenum pname, GLint *params)
    if (!ctx->_CurrentProgram)
       ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   prog = (struct gl_program *) _mesa_HashLookup(ctx->Shared->Programs, id);
+   prog = _mesa_lookup_program(ctx, id);
    if (!prog) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetProgramivNV");
       return;
@@ -296,7 +294,7 @@ _mesa_GetProgramStringNV(GLuint id, GLenum pname, GLubyte *program)
       return;
    }
 
-   prog = (struct gl_program *) _mesa_HashLookup(ctx->Shared->Programs, id);
+   prog = _mesa_lookup_program(ctx, id);
    if (!prog) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetProgramStringNV");
       return;
@@ -522,7 +520,7 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   prog = (struct gl_program *) _mesa_HashLookup(ctx->Shared->Programs, id);
+   prog = _mesa_lookup_program(ctx, id);
 
    if (prog && prog->Target != 0 && prog->Target != target) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glLoadProgramNV(target)");
@@ -773,7 +771,7 @@ _mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   prog = (struct gl_program *) _mesa_HashLookup(ctx->Shared->Programs, id);
+   prog = _mesa_lookup_program(ctx, id);
    if (!prog || prog->Target != GL_FRAGMENT_PROGRAM_NV) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glProgramNamedParameterNV");
       return;
@@ -839,7 +837,7 @@ _mesa_GetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
    if (!ctx->_CurrentProgram)
       ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   prog = (struct gl_program *) _mesa_HashLookup(ctx->Shared->Programs, id);
+   prog = _mesa_lookup_program(ctx, id);
    if (!prog || prog->Target != GL_FRAGMENT_PROGRAM_NV) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetProgramNamedParameterNV");
       return;

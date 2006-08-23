@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -111,6 +111,8 @@ _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id);
 extern void
 _mesa_delete_program(GLcontext *ctx, struct gl_program *prog);
 
+extern struct gl_program *
+_mesa_lookup_program(GLcontext *ctx, GLuint id);
 
 
 /**

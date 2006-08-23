@@ -38,6 +38,7 @@
 #include "tdfx_context.h"
 #include "tdfx_tex.h"
 #include "tdfx_texman.h"
+#include "texobj.h"
 #include "hash.h"
 
 
@@ -82,8 +83,8 @@ VerifyFreeList(tdfxContextPtr fxMesa, FxU32 tmu)
        for (id = _mesa_HashFirstEntry(textures);
             id;
             id = _mesa_HashNextEntry(textures, id)) {
-          struct gl_texture_object *tObj;
-          tObj = (struct gl_texture_object *) _mesa_HashLookup(textures, id);
+          struct gl_texture_object *tObj
+             = _mesa_lookup_texture(fxMesa->glCtx, id);
           tdfxTexInfo *ti = TDFX_TEXTURE_DATA(tObj);
           if (ti) {
              if (ti->isInTM) {
@@ -122,7 +123,7 @@ dump_texmem(tdfxContextPtr fxMesa)
          id;
          id = _mesa_HashNextEntry(textures, id)) {
         struct gl_texture_object *obj
-            = (struct gl_texture_object *) _mesa_HashLookup(textures, id);
+           = _mesa_lookup_texture(fxMesa->glCtx, id);
         tdfxTexInfo *info = TDFX_TEXTURE_DATA(obj);
 
         if (info && info->isInTM) {
@@ -404,7 +405,7 @@ FindOldestObject(tdfxContextPtr fxMesa, FxU32 tmu)
          id;
          id = _mesa_HashNextEntry(textures, id)) {
         struct gl_texture_object *obj
-            = (struct gl_texture_object *) _mesa_HashLookup(textures, id);
+           = _mesa_lookup_texture(fxMesa->glCtx, id);
         tdfxTexInfo *info = TDFX_TEXTURE_DATA(obj);
 
         if (info && info->isInTM &&
@@ -460,7 +461,7 @@ FlushTexMemory(tdfxContextPtr fxMesa)
          id;
          id = _mesa_HashNextEntry(textures, id)) {
        struct gl_texture_object *obj
-          = (struct gl_texture_object *) _mesa_HashLookup(textures, id);
+          = _mesa_lookup_texture(fxMesa->glCtx, id);
        if (obj->RefCount < 2) {
           /* don't flush currently bound textures */
           tdfxTMMoveOutTM_NoLock(fxMesa, obj);
@@ -972,7 +973,7 @@ void tdfxTMRestoreTextures_NoLock( tdfxContextPtr fxMesa )
         id;
         id = _mesa_HashNextEntry(textures, id)) {
       struct gl_texture_object *tObj
-         = (struct gl_texture_object *) _mesa_HashLookup(textures, id);
+         = _mesa_lookup_texture(fxMesa->glCtx, id);
       tdfxTexInfo *ti = TDFX_TEXTURE_DATA( tObj );
       if ( ti && ti->isInTM ) {
          int i;

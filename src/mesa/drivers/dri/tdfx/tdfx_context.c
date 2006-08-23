@@ -602,7 +602,7 @@ tdfxDestroyContext( __DRIcontextPrivate *driContextPriv )
               id;
               id = _mesa_HashNextEntry(textures, id)) {
             struct gl_texture_object *tObj
-               = (struct gl_texture_object *) _mesa_HashLookup(textures, id);
+               = _mesa_lookup_texture(fxMesa->glCtx, id);
             tdfxTMFreeTexture(fxMesa, tObj);
          }
       }
