@@ -36,11 +36,14 @@
 #include "grammar_mesa.h"
 #include "program.h"
 #include "context.h"
+#include "macros.h"
 #include "mtypes.h"
 #include "program_instruction.h"
 
 
-#define MAX_INSTRUCTIONS 256
+/* For ARB programs, use the NV instruction limits */
+#define MAX_INSTRUCTIONS MAX2(MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS, \
+                              MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS)
 
 
 /**
