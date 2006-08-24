@@ -389,6 +389,12 @@ static unsigned long op_operands(enum prog_opcode opcode)
 /* DP4 version seems to trigger some hw peculiarity - fglrx does this on r200 however */
 #define PREFER_DP4
 
+
+/**
+ * Generate an R200 vertex program from Mesa's internal representation.
+ *
+ * \return  GL_TRUE for success, GL_FALSE for failure.
+ */
 static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
 {
    struct gl_vertex_program *mesa_vp = &vp->mesa_program;
@@ -400,6 +406,9 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
    unsigned long hw_op;
 
    vp->native = GL_FALSE;
+
+   if (!mesa_vp->Base.String)
+      return GL_FALSE;
 
    if ((mesa_vp->Base.InputsRead &
       ~(VERT_BIT_POS | VERT_BIT_NORMAL | VERT_BIT_COLOR0 | VERT_BIT_COLOR1 |
@@ -423,7 +432,8 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
    int u_temp_i = R200_VSF_MAX_TEMPS - 1;
    struct prog_src_register src[3];
 
-/*   if (getenv("R300_VP_SAFETY")) {
+#if 0
+   if (getenv("R300_VP_SAFETY")) {
       WARN_ONCE("R300_VP_SAFETY enabled.\n");
 
       vpi = malloc((mesa_vp->Base.NumInstructions + VSF_MAX_FRAGMENT_TEMPS) * sizeof(struct prog_instruction));
@@ -454,7 +464,9 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
       vpi = &mesa_vp->Base.Instructions[mesa_vp->Base.NumInstructions-1];
 
       assert(vpi->Opcode == OPCODE_END);
-   }*/
+   }
+#endif
+
 /* FIXME: is changing the prog safe to do here? */
    if (mesa_vp->IsPositionInvariant) {
       struct gl_program_parameter_list *paramList;
@@ -470,6 +482,7 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
       vpi = malloc((mesa_vp->Base.NumInstructions + 4) * sizeof(struct prog_instruction));
       memset(vpi, 0, 4 * sizeof(struct prog_instruction));
 
+      /* emit four dot product instructions to do MVP transformation */
       for (i=0; i < 4; i++) {
 	 GLint idx;
 	 tokens[3] = tokens[4] = i;
@@ -524,10 +537,13 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
 #endif	
       }
 
+      /* now append original program after our new instructions */
       memcpy(&vpi[i], mesa_vp->Base.Instructions, mesa_vp->Base.NumInstructions * sizeof(struct prog_instruction));
 
+      /* deallocate original program */
       free(mesa_vp->Base.Instructions);
 
+      /* install new program */
       mesa_vp->Base.Instructions = vpi;
 
       mesa_vp->Base.NumInstructions += 4;
