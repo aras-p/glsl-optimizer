@@ -98,7 +98,7 @@ static struct{
 int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp, float *dst)
 {
 	int pi;
-	struct gl_vertex_program *mesa_vp=(void *)vp;
+	struct gl_vertex_program *mesa_vp = &vp->mesa_program;
 	float *dst_o=dst;
         struct gl_program_parameter_list *paramList;
 	
@@ -386,7 +386,7 @@ static unsigned long op_operands(enum prog_opcode opcode)
 
 void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 {
-	struct gl_vertex_program *mesa_vp=(void *)vp;
+	struct gl_vertex_program *mesa_vp= &vp->mesa_program;
 	struct prog_instruction *vpi;
 	int i, cur_reg=0;
 	VERTEX_SHADER_INSTRUCTION *o_inst;
@@ -398,6 +398,9 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 	   Smart enough to realize that it doesnt need it? */
 	int u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1;
 	struct prog_src_register src[3];
+
+	if (!mesa_vp->Base.String)
+		return;
 
 	if (getenv("R300_VP_SAFETY")) {
 		WARN_ONCE("R300_VP_SAFETY enabled.\n");
