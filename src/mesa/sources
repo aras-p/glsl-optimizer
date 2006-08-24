@@ -160,6 +160,7 @@ SHADER_SOURCES = \
 	shader/nvvertexec.c \
 	shader/nvvertparse.c \
 	shader/program.c \
+	shader/programopt.c \
 	shader/shaderobjects.c \
 	shader/shaderobjects_3dlabs.c
 
