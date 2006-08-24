@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1400,8 +1400,14 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
    if (inputsRead & (1 << FRAG_ATTRIB_WPOS)) {
       GLfloat *wpos = machine->Inputs[FRAG_ATTRIB_WPOS];
       ASSERT(span->arrayMask & SPAN_Z);
-      wpos[0] = (GLfloat) span->x + col;
-      wpos[1] = (GLfloat) span->y;
+      if (span->arrayMask & SPAN_XY) {
+         wpos[0] = (GLfloat) span->array->x[col];
+         wpos[1] = (GLfloat) span->array->y[col];
+      }
+      else {
+         wpos[0] = (GLfloat) span->x + col;
+         wpos[1] = (GLfloat) span->y;
+      }
       wpos[2] = (GLfloat) span->array->z[col] / ctx->DrawBuffer->_DepthMaxF;
       wpos[3] = span->w + col * span->dwdx;
    }
