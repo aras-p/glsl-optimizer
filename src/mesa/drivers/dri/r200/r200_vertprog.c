@@ -101,7 +101,7 @@ static GLboolean r200VertexProgUpdateParams(GLcontext *ctx, struct r200_vertex_p
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    GLfloat *fcmd = (GLfloat *)&rmesa->hw.vpp[0].cmd[VPP_CMD_0 + 1];
    int pi;
-   struct gl_vertex_program *mesa_vp = (void *)vp;
+   struct gl_vertex_program *mesa_vp = &vp->mesa_program;
    struct gl_program_parameter_list *paramList;
    drm_radeon_cmd_header_t tmp;
 
@@ -391,7 +391,7 @@ static unsigned long op_operands(enum prog_opcode opcode)
 
 static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
 {
-   struct gl_vertex_program *mesa_vp = (void *)vp;
+   struct gl_vertex_program *mesa_vp = &vp->mesa_program;
    struct prog_instruction *vpi;
    int i;
    VERTEX_SHADER_INSTRUCTION *o_inst;
@@ -544,7 +544,10 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
 
    vp->pos_end = 0;
    mesa_vp->Base.NumNativeInstructions = 0;
-   mesa_vp->Base.NumNativeParameters = mesa_vp->Base.Parameters->NumParameters;
+   if (mesa_vp->Base.Parameters)
+      mesa_vp->Base.NumNativeParameters = mesa_vp->Base.Parameters->NumParameters;
+   else
+      mesa_vp->Base.NumNativeParameters = 0;
 
    for(i=0; i < VERT_ATTRIB_MAX; i++)
       vp->inputs[i] = -1;
