@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -4047,11 +4047,11 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
    /* Reallocate the instruction array from size [MAX_INSTRUCTIONS]
     * to size [ap.Base.NumInstructions].
     */
-   program->Base.Instructions = (struct prog_instruction *)
-      _mesa_realloc(program->Base.Instructions,
-             MAX_INSTRUCTIONS * sizeof(struct prog_instruction),/*orig*/
-             program->Base.NumInstructions * sizeof(struct prog_instruction));
-   
+   program->Base.Instructions
+      = _mesa_realloc_instructions(program->Base.Instructions,
+                                   MAX_INSTRUCTIONS,
+                                   program->Base.NumInstructions);
+
    return !err;
 }
 
