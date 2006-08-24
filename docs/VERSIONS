@@ -1484,6 +1484,8 @@ Mesa Version History
 	- The glVertexAttribARB functions no longer alias the conventional
 	  vertex attributes.
 	- glxinfo program prints more info with -l option
+	- GL_FRAGMENT_PROGRAM_NV and GL_FRAGMENT_PROGRAM_ARB are now
+	  compatible, in terms of glBindProgramARB()
     Bug fixes:
 	- fixed broken texture border handling for depth textures (bug 6498)
 	- removed the test for duplicated framebuffer attachments, per
@@ -1504,3 +1506,6 @@ Mesa Version History
 	- disable bogus GLX_SGI_video_sync extension in xlib driver
 	- fixed R128 driver locking bug (Martijn van Oosterhout)
 	- using evaluators with vertex programs caused crashes (bug 7564)
+	- fragment.position wasn't set correctly for point/line primitives
+	- fixed parser bug for scalar sources for GL_NV_fragment_program
+	- max fragment program length was incorrectly 128, now 1024
