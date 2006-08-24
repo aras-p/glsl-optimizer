@@ -6765,6 +6765,61 @@ __indirect_glDrawBuffersARB(GLsizei n, const GLenum * bufs)
     }
 }
 
+#define X_GLvop_GetColorTableParameterfvSGI 4099
+void
+__indirect_glGetColorTableParameterfvSGI(GLenum target, GLenum pname, GLfloat * params)
+{
+    __GLXcontext * const gc = __glXGetCurrentContext();
+    Display * const dpy = gc->currentDpy;
+    const GLuint cmdlen = 8;
+    if (__builtin_expect(dpy != NULL, 1)) {
+        GLubyte const * pc = __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply, X_GLvop_GetColorTableParameterfvSGI, cmdlen);
+        (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
+        (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
+        (void) __glXReadReply(dpy, 4, params, GL_FALSE);
+        UnlockDisplay(dpy); SyncHandle();
+    }
+    return;
+}
+
+#define X_GLvop_GetColorTableParameterivSGI 4100
+void
+__indirect_glGetColorTableParameterivSGI(GLenum target, GLenum pname, GLint * params)
+{
+    __GLXcontext * const gc = __glXGetCurrentContext();
+    Display * const dpy = gc->currentDpy;
+    const GLuint cmdlen = 8;
+    if (__builtin_expect(dpy != NULL, 1)) {
+        GLubyte const * pc = __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply, X_GLvop_GetColorTableParameterivSGI, cmdlen);
+        (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
+        (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
+        (void) __glXReadReply(dpy, 4, params, GL_FALSE);
+        UnlockDisplay(dpy); SyncHandle();
+    }
+    return;
+}
+
+#define X_GLvop_GetColorTableSGI 4098
+void
+__indirect_glGetColorTableSGI(GLenum target, GLenum format, GLenum type, GLvoid * table)
+{
+    __GLXcontext * const gc = __glXGetCurrentContext();
+    const __GLXattribute * const state = gc->client_state_private;
+    Display * const dpy = gc->currentDpy;
+    const GLuint cmdlen = 16;
+    if (__builtin_expect(dpy != NULL, 1)) {
+        GLubyte const * pc = __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply, X_GLvop_GetColorTableSGI, cmdlen);
+        (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
+        (void) memcpy((void *)(pc + 4), (void *)(&format), 4);
+        (void) memcpy((void *)(pc + 8), (void *)(&type), 4);
+        *(int32_t *)(pc + 12) = 0;
+        * (int8_t *)(pc + 12) = state->storePack.swapEndian;
+        __glXReadPixelReply(dpy, gc, 1, 0, 0, 0, format, type, table, GL_TRUE);
+        UnlockDisplay(dpy); SyncHandle();
+    }
+    return;
+}
+
 #define X_GLvop_AreTexturesResidentEXT 11
 GLboolean
 __indirect_glAreTexturesResidentEXT(GLsizei n, const GLuint * textures, GLboolean * residences)

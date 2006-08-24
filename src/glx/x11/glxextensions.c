@@ -226,6 +226,7 @@ static const struct extension_info known_gl_extensions[] = {
    { GL(OES_read_format),                VER(0,0), Y, N, N, N },
    { GL(OES_compressed_paletted_texture),VER(0,0), Y, N, N, N },
    { GL(SGI_color_matrix),               VER(0,0), Y, N, N, N },
+   { GL(SGI_color_table),                VER(0,0), Y, N, N, N },
    { GL(SGI_texture_color_table),        VER(0,0), Y, N, N, N },
    { GL(SGIS_generate_mipmap),           VER(1,4), Y, N, N, N },
    { GL(SGIS_multisample),               VER(0,0), Y, N, N, N },

@@ -7925,11 +7925,11 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_CopyConvolutionFilter1D(table, exec_CopyConvolutionFilter1D);
    SET_CopyConvolutionFilter2D(table, exec_CopyConvolutionFilter2D);
    SET_GetColorTable(table, exec_GetColorTable);
-   SET_GetColorTableEXT(table, exec_GetColorTable);
+   SET_GetColorTableSGI(table, exec_GetColorTable);
    SET_GetColorTableParameterfv(table, exec_GetColorTableParameterfv);
-   SET_GetColorTableParameterfvEXT(table, exec_GetColorTableParameterfv);
+   SET_GetColorTableParameterfvSGI(table, exec_GetColorTableParameterfv);
    SET_GetColorTableParameteriv(table, exec_GetColorTableParameteriv);
-   SET_GetColorTableParameterivEXT(table, exec_GetColorTableParameteriv);
+   SET_GetColorTableParameterivSGI(table, exec_GetColorTableParameteriv);
    SET_GetConvolutionFilter(table, exec_GetConvolutionFilter);
    SET_GetConvolutionFilterEXT(table, exec_GetConvolutionFilter);
    SET_GetConvolutionParameterfv(table, exec_GetConvolutionParameterfv);
@@ -7971,6 +7971,15 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_TexSubImage3DEXT(table, save_TexSubImage3D);
 #endif
 
+   /* 14. GL_SGI_color_table */
+#if 0
+   SET_ColorTableSGI(table, save_ColorTable);
+   SET_ColorSubTableSGI(table, save_ColorSubTable);
+#endif
+   SET_GetColorTableSGI(table, exec_GetColorTable);
+   SET_GetColorTableParameterfvSGI(table, exec_GetColorTableParameterfv);
+   SET_GetColorTableParameterivSGI(table, exec_GetColorTableParameteriv);
+
    /* 30. GL_EXT_vertex_array */
    SET_ColorPointerEXT(table, exec_ColorPointerEXT);
    SET_EdgeFlagPointerEXT(table, exec_EdgeFlagPointerEXT);
@@ -7987,15 +7996,6 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    /* 54. GL_EXT_point_parameters */
    SET_PointParameterfEXT(table, save_PointParameterfEXT);
    SET_PointParameterfvEXT(table, save_PointParameterfvEXT);
-
-   /* 78. GL_EXT_paletted_texture */
-#if 0
-   SET_ColorTableEXT(table, save_ColorTable);
-   SET_ColorSubTableEXT(table, save_ColorSubTable);
-#endif
-   SET_GetColorTableEXT(table, exec_GetColorTable);
-   SET_GetColorTableParameterfvEXT(table, exec_GetColorTableParameterfv);
-   SET_GetColorTableParameterivEXT(table, exec_GetColorTableParameteriv);
 
    /* 97. GL_EXT_compiled_vertex_array */
    SET_LockArraysEXT(table, exec_LockArraysEXT);

@@ -7763,22 +7763,22 @@
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="table" type="GLvoid *" output="true"/>
-        <glx vendorpriv="4098" handcode="true" ignore="true"/>
+        <param name="table" type="GLvoid *" output="true" img_width="width" img_format="format" img_type="type"/>
+        <glx vendorpriv="4098" dimensions_in_reply="true"/>
     </function>
 
     <function name="GetColorTableParameterfvSGI" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
-        <glx vendorpriv="4099" ignore="true"/>
+        <glx vendorpriv="4099"/>
     </function>
 
     <function name="GetColorTableParameterivSGI" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
-        <glx vendorpriv="4100" ignore="true"/>
+        <glx vendorpriv="4100"/>
     </function>
 </category>
 
@@ -8419,26 +8419,23 @@
         <param name="table" type="const GLvoid *"/>
     </function>
 
-    <function name="GetColorTableEXT" offset="assign">
+    <function name="GetColorTableEXT" alias="GetColorTableSGI">
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="data" type="GLvoid *" output="true"/>
-        <glx ignore="true"/>
+        <param name="table" type="GLvoid *" output="true"/>
     </function>
 
-    <function name="GetColorTableParameterivEXT" offset="assign">
+    <function name="GetColorTableParameterivEXT" alias="GetColorTableParameterivSGI">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
-        <glx ignore="true"/>
     </function>
 
-    <function name="GetColorTableParameterfvEXT" offset="assign">
+    <function name="GetColorTableParameterfvEXT" alias="GetColorTableParameterfvSGI">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
-        <glx ignore="true"/>
     </function>
 </category>
 

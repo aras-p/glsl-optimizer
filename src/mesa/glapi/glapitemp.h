@@ -3370,14 +3370,29 @@ KEYWORD1 void KEYWORD2 NAME(GetColorTableParameterfvSGI)(GLenum target, GLenum p
    DISPATCH(GetColorTableParameterfvSGI, (target, pname, params), (F, "glGetColorTableParameterfvSGI(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
 
+KEYWORD1 void KEYWORD2 NAME(GetColorTableParameterfvEXT)(GLenum target, GLenum pname, GLfloat * params)
+{
+   DISPATCH(GetColorTableParameterfvSGI, (target, pname, params), (F, "glGetColorTableParameterfvEXT(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
+}
+
 KEYWORD1 void KEYWORD2 NAME(GetColorTableParameterivSGI)(GLenum target, GLenum pname, GLint * params)
 {
    DISPATCH(GetColorTableParameterivSGI, (target, pname, params), (F, "glGetColorTableParameterivSGI(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
 
+KEYWORD1 void KEYWORD2 NAME(GetColorTableParameterivEXT)(GLenum target, GLenum pname, GLint * params)
+{
+   DISPATCH(GetColorTableParameterivSGI, (target, pname, params), (F, "glGetColorTableParameterivEXT(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
+}
+
 KEYWORD1 void KEYWORD2 NAME(GetColorTableSGI)(GLenum target, GLenum format, GLenum type, GLvoid * table)
 {
    DISPATCH(GetColorTableSGI, (target, format, type, table), (F, "glGetColorTableSGI(0x%x, 0x%x, 0x%x, %p);\n", target, format, type, (const void *) table));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetColorTableEXT)(GLenum target, GLenum format, GLenum type, GLvoid * table)
+{
+   DISPATCH(GetColorTableSGI, (target, format, type, table), (F, "glGetColorTableEXT(0x%x, 0x%x, 0x%x, %p);\n", target, format, type, (const void *) table));
 }
 
 KEYWORD1 void KEYWORD2 NAME(GetPixelTexGenParameterfvSGIS)(GLenum pname, GLfloat * params)
@@ -3513,21 +3528,6 @@ KEYWORD1 void KEYWORD2 NAME(PointParameterfvEXT)(GLenum pname, const GLfloat * p
 KEYWORD1 void KEYWORD2 NAME(PointParameterfvSGIS)(GLenum pname, const GLfloat * params)
 {
    DISPATCH(PointParameterfvEXT, (pname, params), (F, "glPointParameterfvSGIS(0x%x, %p);\n", pname, (const void *) params));
-}
-
-KEYWORD1 void KEYWORD2 NAME(GetColorTableEXT)(GLenum target, GLenum format, GLenum type, GLvoid * data)
-{
-   DISPATCH(GetColorTableEXT, (target, format, type, data), (F, "glGetColorTableEXT(0x%x, 0x%x, 0x%x, %p);\n", target, format, type, (const void *) data));
-}
-
-KEYWORD1 void KEYWORD2 NAME(GetColorTableParameterfvEXT)(GLenum target, GLenum pname, GLfloat * params)
-{
-   DISPATCH(GetColorTableParameterfvEXT, (target, pname, params), (F, "glGetColorTableParameterfvEXT(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
-}
-
-KEYWORD1 void KEYWORD2 NAME(GetColorTableParameterivEXT)(GLenum target, GLenum pname, GLint * params)
-{
-   DISPATCH(GetColorTableParameterivEXT, (target, pname, params), (F, "glGetColorTableParameterivEXT(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
 
 KEYWORD1 void KEYWORD2 NAME(LockArraysEXT)(GLint first, GLsizei count)
@@ -4670,30 +4670,30 @@ KEYWORD1 void KEYWORD2 NAME(ActiveStencilFaceEXT)(GLenum face)
    DISPATCH(ActiveStencilFaceEXT, (face), (F, "glActiveStencilFaceEXT(0x%x);\n", face));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_741)(GLuint array);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_738)(GLuint array);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_741)(GLuint array)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_738)(GLuint array)
 {
    DISPATCH(BindVertexArrayAPPLE, (array), (F, "glBindVertexArrayAPPLE(%d);\n", array));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_742)(GLsizei n, const GLuint * arrays);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_739)(GLsizei n, const GLuint * arrays);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_742)(GLsizei n, const GLuint * arrays)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_739)(GLsizei n, const GLuint * arrays)
 {
    DISPATCH(DeleteVertexArraysAPPLE, (n, arrays), (F, "glDeleteVertexArraysAPPLE(%d, %p);\n", n, (const void *) arrays));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_743)(GLsizei n, GLuint * arrays);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_740)(GLsizei n, GLuint * arrays);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_743)(GLsizei n, GLuint * arrays)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_740)(GLsizei n, GLuint * arrays)
 {
    DISPATCH(GenVertexArraysAPPLE, (n, arrays), (F, "glGenVertexArraysAPPLE(%d, %p);\n", n, (const void *) arrays));
 }
 
-KEYWORD1_ALT GLboolean KEYWORD2 NAME(_dispatch_stub_744)(GLuint array);
+KEYWORD1_ALT GLboolean KEYWORD2 NAME(_dispatch_stub_741)(GLuint array);
 
-KEYWORD1_ALT GLboolean KEYWORD2 NAME(_dispatch_stub_744)(GLuint array)
+KEYWORD1_ALT GLboolean KEYWORD2 NAME(_dispatch_stub_741)(GLuint array)
 {
    RETURN_DISPATCH(IsVertexArrayAPPLE, (array), (F, "glIsVertexArrayAPPLE(%d);\n", array));
 }
@@ -4843,16 +4843,16 @@ KEYWORD1 void KEYWORD2 NAME(BlitFramebufferEXT)(GLint srcX0, GLint srcY0, GLint 
    DISPATCH(BlitFramebufferEXT, (srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter), (F, "glBlitFramebufferEXT(%d, %d, %d, %d, %d, %d, %d, %d, %d, 0x%x);\n", srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_773)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_770)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_773)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_770)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
 {
    DISPATCH(ProgramEnvParameters4fvEXT, (target, index, count, params), (F, "glProgramEnvParameters4fvEXT(0x%x, %d, %d, %p);\n", target, index, count, (const void *) params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_774)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_771)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_774)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_771)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
 {
    DISPATCH(ProgramLocalParameters4fvEXT, (target, index, count, params), (F, "glProgramLocalParameters4fvEXT(0x%x, %d, %d, %p);\n", target, index, count, (const void *) params));
 }
@@ -5446,9 +5446,6 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(VertexPointerEXT),
    TABLE_ENTRY(PointParameterfEXT),
    TABLE_ENTRY(PointParameterfvEXT),
-   TABLE_ENTRY(GetColorTableEXT),
-   TABLE_ENTRY(GetColorTableParameterfvEXT),
-   TABLE_ENTRY(GetColorTableParameterivEXT),
    TABLE_ENTRY(LockArraysEXT),
    TABLE_ENTRY(UnlockArraysEXT),
    TABLE_ENTRY(CullParameterdvEXT),
@@ -5612,10 +5609,10 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(PointParameteriNV),
    TABLE_ENTRY(PointParameterivNV),
    TABLE_ENTRY(ActiveStencilFaceEXT),
+   TABLE_ENTRY(_dispatch_stub_738),
+   TABLE_ENTRY(_dispatch_stub_739),
+   TABLE_ENTRY(_dispatch_stub_740),
    TABLE_ENTRY(_dispatch_stub_741),
-   TABLE_ENTRY(_dispatch_stub_742),
-   TABLE_ENTRY(_dispatch_stub_743),
-   TABLE_ENTRY(_dispatch_stub_744),
    TABLE_ENTRY(GetProgramNamedParameterdvNV),
    TABLE_ENTRY(GetProgramNamedParameterfvNV),
    TABLE_ENTRY(ProgramNamedParameter4dNV),
@@ -5644,8 +5641,8 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(IsRenderbufferEXT),
    TABLE_ENTRY(RenderbufferStorageEXT),
    TABLE_ENTRY(BlitFramebufferEXT),
-   TABLE_ENTRY(_dispatch_stub_773),
-   TABLE_ENTRY(_dispatch_stub_774),
+   TABLE_ENTRY(_dispatch_stub_770),
+   TABLE_ENTRY(_dispatch_stub_771),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.
@@ -5863,6 +5860,9 @@ static _glapi_proc UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(GetQueryiv),
    TABLE_ENTRY(IsQuery),
    TABLE_ENTRY(DrawBuffersATI),
+   TABLE_ENTRY(GetColorTableParameterfvEXT),
+   TABLE_ENTRY(GetColorTableParameterivEXT),
+   TABLE_ENTRY(GetColorTableEXT),
    TABLE_ENTRY(SampleMaskEXT),
    TABLE_ENTRY(SamplePatternEXT),
    TABLE_ENTRY(PointParameterf),

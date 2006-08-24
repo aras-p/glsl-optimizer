@@ -588,6 +588,12 @@ __GLapi * __glXNewIndirectAPI( void )
 
     glAPI->DrawBuffersARB = __indirect_glDrawBuffersARB;
 
+    /*  14. GL_SGI_color_table */
+
+    glAPI->GetColorTableParameterfvSGI = __indirect_glGetColorTableParameterfvSGI;
+    glAPI->GetColorTableParameterivSGI = __indirect_glGetColorTableParameterivSGI;
+    glAPI->GetColorTableSGI = __indirect_glGetColorTableSGI;
+
     /*  20. GL_EXT_texture_object */
 
     glAPI->AreTexturesResidentEXT = __indirect_glAreTexturesResidentEXT;
@@ -635,16 +641,16 @@ __GLapi * __glXNewIndirectAPI( void )
 
     /* 148. GL_EXT_multi_draw_arrays */
 
-    glAPI->MultiDrawElementsEXT = __indirect_glMultiDrawElementsEXT;
     glAPI->MultiDrawArraysEXT = __indirect_glMultiDrawArraysEXT;
+    glAPI->MultiDrawElementsEXT = __indirect_glMultiDrawElementsEXT;
 
     /* 149. GL_EXT_fog_coord */
 
-    glAPI->FogCoordPointerEXT = __indirect_glFogCoordPointerEXT;
-    glAPI->FogCoorddEXT = __indirect_glFogCoorddEXT;
     glAPI->FogCoorddvEXT = __indirect_glFogCoorddvEXT;
     glAPI->FogCoordfEXT = __indirect_glFogCoordfEXT;
     glAPI->FogCoordfvEXT = __indirect_glFogCoordfvEXT;
+    glAPI->FogCoordPointerEXT = __indirect_glFogCoordPointerEXT;
+    glAPI->FogCoorddEXT = __indirect_glFogCoorddEXT;
 
     /* 173. GL_EXT_blend_func_separate */
 
@@ -652,9 +658,6 @@ __GLapi * __glXNewIndirectAPI( void )
 
     /* 197. GL_MESA_window_pos */
 
-    glAPI->WindowPos3ivMESA = __indirect_glWindowPos3ivMESA;
-    glAPI->WindowPos3sMESA = __indirect_glWindowPos3sMESA;
-    glAPI->WindowPos3svMESA = __indirect_glWindowPos3svMESA;
     glAPI->WindowPos2dMESA = __indirect_glWindowPos2dMESA;
     glAPI->WindowPos2dvMESA = __indirect_glWindowPos2dvMESA;
     glAPI->WindowPos2fMESA = __indirect_glWindowPos2fMESA;
@@ -668,6 +671,9 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->WindowPos3fMESA = __indirect_glWindowPos3fMESA;
     glAPI->WindowPos3fvMESA = __indirect_glWindowPos3fvMESA;
     glAPI->WindowPos3iMESA = __indirect_glWindowPos3iMESA;
+    glAPI->WindowPos3ivMESA = __indirect_glWindowPos3ivMESA;
+    glAPI->WindowPos3sMESA = __indirect_glWindowPos3sMESA;
+    glAPI->WindowPos3svMESA = __indirect_glWindowPos3svMESA;
 
     /* 233. GL_NV_vertex_program */
 
@@ -738,8 +744,8 @@ __GLapi * __glXNewIndirectAPI( void )
 
     /* 262. GL_NV_point_sprite */
 
-    glAPI->PointParameteriNV = __indirect_glPointParameteriNV;
     glAPI->PointParameterivNV = __indirect_glPointParameterivNV;
+    glAPI->PointParameteriNV = __indirect_glPointParameteriNV;
 
     /* 268. GL_EXT_stencil_two_side */
 
@@ -756,9 +762,6 @@ __GLapi * __glXNewIndirectAPI( void )
 
     /* 310. GL_EXT_framebuffer_object */
 
-    glAPI->GetRenderbufferParameterivEXT = __indirect_glGetRenderbufferParameterivEXT;
-    glAPI->IsFramebufferEXT = __indirect_glIsFramebufferEXT;
-    glAPI->IsRenderbufferEXT = __indirect_glIsRenderbufferEXT;
     glAPI->RenderbufferStorageEXT = __indirect_glRenderbufferStorageEXT;
     glAPI->BindFramebufferEXT = __indirect_glBindFramebufferEXT;
     glAPI->BindRenderbufferEXT = __indirect_glBindRenderbufferEXT;
@@ -773,6 +776,9 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->GenRenderbuffersEXT = __indirect_glGenRenderbuffersEXT;
     glAPI->GenerateMipmapEXT = __indirect_glGenerateMipmapEXT;
     glAPI->GetFramebufferAttachmentParameterivEXT = __indirect_glGetFramebufferAttachmentParameterivEXT;
+    glAPI->GetRenderbufferParameterivEXT = __indirect_glGetRenderbufferParameterivEXT;
+    glAPI->IsFramebufferEXT = __indirect_glIsFramebufferEXT;
+    glAPI->IsRenderbufferEXT = __indirect_glIsRenderbufferEXT;
 
     return glAPI;
 }

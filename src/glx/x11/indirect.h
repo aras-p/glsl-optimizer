@@ -555,6 +555,9 @@ extern HIDDEN void __indirect_glGetQueryObjectuivARB(GLuint id, GLenum pname, GL
 extern HIDDEN void __indirect_glGetQueryivARB(GLenum target, GLenum pname, GLint * params);
 extern HIDDEN GLboolean __indirect_glIsQueryARB(GLuint id);
 extern HIDDEN void __indirect_glDrawBuffersARB(GLsizei n, const GLenum * bufs);
+extern HIDDEN void __indirect_glGetColorTableParameterfvSGI(GLenum target, GLenum pname, GLfloat * params);
+extern HIDDEN void __indirect_glGetColorTableParameterivSGI(GLenum target, GLenum pname, GLint * params);
+extern HIDDEN void __indirect_glGetColorTableSGI(GLenum target, GLenum format, GLenum type, GLvoid * table);
 extern HIDDEN GLboolean __indirect_glAreTexturesResidentEXT(GLsizei n, const GLuint * textures, GLboolean * residences);
 extern HIDDEN void __indirect_glGenTexturesEXT(GLsizei n, GLuint * textures);
 extern HIDDEN GLboolean __indirect_glIsTextureEXT(GLuint texture);

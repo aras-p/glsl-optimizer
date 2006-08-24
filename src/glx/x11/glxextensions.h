@@ -180,6 +180,7 @@ enum {
    GL_OES_compressed_paletted_texture_bit,
    GL_OES_read_format_bit,
    GL_SGI_color_matrix_bit,
+   GL_SGI_color_table_bit,
    GL_SGI_texture_color_table_bit,
    GL_SGIS_generate_mipmap_bit,
    GL_SGIS_multisample_bit,

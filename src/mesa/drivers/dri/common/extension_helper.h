@@ -132,10 +132,11 @@ static const char VertexAttrib4ubvNV_names[] =
     "";
 #endif
 
-#if defined(need_GL_SGI_color_table)
+#if defined(need_GL_SGI_color_table) || defined(need_GL_EXT_paletted_texture)
 static const char GetColorTableParameterfvSGI_names[] = 
     "iip\0" /* Parameter signature */
     "glGetColorTableParameterfvSGI\0"
+    "glGetColorTableParameterfvEXT\0"
     "";
 #endif
 
@@ -174,13 +175,6 @@ static const char WindowPos2dvMESA_names[] =
 static const char ReplacementCodeuiColor3fVertex3fvSUN_names[] = 
     "ppp\0" /* Parameter signature */
     "glReplacementCodeuiColor3fVertex3fvSUN\0"
-    "";
-#endif
-
-#if defined(need_GL_EXT_paletted_texture)
-static const char GetColorTableParameterivEXT_names[] = 
-    "iip\0" /* Parameter signature */
-    "glGetColorTableParameterivEXT\0"
     "";
 #endif
 
@@ -1153,10 +1147,10 @@ static const char FragmentMaterialfSGIX_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_paletted_texture)
-static const char GetColorTableEXT_names[] = 
-    "iiip\0" /* Parameter signature */
-    "glGetColorTableEXT\0"
+#if defined(need_GL_SUN_vertex)
+static const char TexCoord2fNormal3fVertex3fSUN_names[] = 
+    "ffffffff\0" /* Parameter signature */
+    "glTexCoord2fNormal3fVertex3fSUN\0"
     "";
 #endif
 
@@ -2546,13 +2540,6 @@ static const char CompressedTexSubImage1DARB_names[] =
     "";
 #endif
 
-#if defined(need_GL_SUN_vertex)
-static const char TexCoord2fNormal3fVertex3fSUN_names[] = 
-    "ffffffff\0" /* Parameter signature */
-    "glTexCoord2fNormal3fVertex3fSUN\0"
-    "";
-#endif
-
 #if defined(need_GL_NV_vertex_program)
 static const char GetVertexAttribivNV_names[] = 
     "iip\0" /* Parameter signature */
@@ -3011,10 +2998,11 @@ static const char LightEnviSGIX_names[] =
     "";
 #endif
 
-#if defined(need_GL_SGI_color_table)
+#if defined(need_GL_SGI_color_table) || defined(need_GL_EXT_paletted_texture)
 static const char GetColorTableParameterivSGI_names[] = 
     "iip\0" /* Parameter signature */
     "glGetColorTableParameterivSGI\0"
+    "glGetColorTableParameterivEXT\0"
     "";
 #endif
 
@@ -3581,10 +3569,11 @@ static const char MultiTexCoord4dARB_names[] =
     "";
 #endif
 
-#if defined(need_GL_SGI_color_table)
+#if defined(need_GL_SGI_color_table) || defined(need_GL_EXT_paletted_texture)
 static const char GetColorTableSGI_names[] = 
     "iiip\0" /* Parameter signature */
     "glGetColorTableSGI\0"
+    "glGetColorTableEXT\0"
     "";
 #endif
 
@@ -3980,13 +3969,6 @@ static const char VertexWeightPointerEXT_names[] =
 static const char ActiveStencilFaceEXT_names[] = 
     "i\0" /* Parameter signature */
     "glActiveStencilFaceEXT\0"
-    "";
-#endif
-
-#if defined(need_GL_EXT_paletted_texture)
-static const char GetColorTableParameterfvEXT_names[] = 
-    "iip\0" /* Parameter signature */
-    "glGetColorTableParameterfvEXT\0"
     "";
 #endif
 
@@ -5197,10 +5179,10 @@ static const struct dri_extension_function GL_EXT_multisample_functions[] = {
 
 #if defined(need_GL_EXT_paletted_texture)
 static const struct dri_extension_function GL_EXT_paletted_texture_functions[] = {
-    { GetColorTableParameterivEXT_names, GetColorTableParameterivEXT_remap_index, -1 },
-    { GetColorTableEXT_names, GetColorTableEXT_remap_index, -1 },
+    { GetColorTableParameterfvSGI_names, GetColorTableParameterfvSGI_remap_index, -1 },
     { ColorTable_names, -1, 339 },
-    { GetColorTableParameterfvEXT_names, GetColorTableParameterfvEXT_remap_index, -1 },
+    { GetColorTableParameterivSGI_names, GetColorTableParameterivSGI_remap_index, -1 },
+    { GetColorTableSGI_names, GetColorTableSGI_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
@@ -5851,6 +5833,7 @@ static const struct dri_extension_function GL_SUN_vertex_functions[] = {
     { TexCoord2fNormal3fVertex3fvSUN_names, TexCoord2fNormal3fVertex3fvSUN_remap_index, -1 },
     { ReplacementCodeuiTexCoord2fNormal3fVertex3fSUN_names, ReplacementCodeuiTexCoord2fNormal3fVertex3fSUN_remap_index, -1 },
     { ReplacementCodeuiTexCoord2fVertex3fSUN_names, ReplacementCodeuiTexCoord2fVertex3fSUN_remap_index, -1 },
+    { TexCoord2fNormal3fVertex3fSUN_names, TexCoord2fNormal3fVertex3fSUN_remap_index, -1 },
     { Color3fVertex3fSUN_names, Color3fVertex3fSUN_remap_index, -1 },
     { ReplacementCodeuiNormal3fVertex3fvSUN_names, ReplacementCodeuiNormal3fVertex3fvSUN_remap_index, -1 },
     { Color3fVertex3fvSUN_names, Color3fVertex3fvSUN_remap_index, -1 },
@@ -5863,7 +5846,6 @@ static const struct dri_extension_function GL_SUN_vertex_functions[] = {
     { Color4ubVertex2fvSUN_names, Color4ubVertex2fvSUN_remap_index, -1 },
     { Normal3fVertex3fSUN_names, Normal3fVertex3fSUN_remap_index, -1 },
     { ReplacementCodeuiColor4fNormal3fVertex3fSUN_names, ReplacementCodeuiColor4fNormal3fVertex3fSUN_remap_index, -1 },
-    { TexCoord2fNormal3fVertex3fSUN_names, TexCoord2fNormal3fVertex3fSUN_remap_index, -1 },
     { TexCoord2fVertex3fvSUN_names, TexCoord2fVertex3fvSUN_remap_index, -1 },
     { Color4ubVertex2fSUN_names, Color4ubVertex2fSUN_remap_index, -1 },
     { ReplacementCodeuiColor4ubVertex3fSUN_names, ReplacementCodeuiColor4ubVertex3fSUN_remap_index, -1 },
