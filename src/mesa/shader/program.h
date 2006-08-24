@@ -114,6 +114,10 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog);
 extern struct gl_program *
 _mesa_lookup_program(GLcontext *ctx, GLuint id);
 
+extern struct prog_instruction *
+_mesa_realloc_instructions(struct prog_instruction *oldInst,
+                           GLuint numOldInst, GLuint numNewInst);
+
 
 /**
  * Used for describing GL state referenced from inside ARB vertex and

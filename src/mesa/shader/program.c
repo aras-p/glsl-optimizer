@@ -419,7 +419,10 @@ _mesa_add_named_parameter(struct gl_program_parameter_list *paramList,
 
 
 /**
- * Add a new unnamed constant to the parameter list.
+ * Add a new named constant to the parameter list.
+ * This will be used when the program contains something like this:
+ *    PARAM myVals = { 0, 1, 2, 3 };
+ *
  * \param paramList - the parameter list
  * \param values - four float values
  * \return index of the new parameter.
@@ -434,6 +437,9 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
 
 /**
  * Add a new unnamed constant to the parameter list.
+ * This will be used when the program contains something like this:
+ *    MOV r, { 0, 1, 2, 3 };
+ *
  * \param paramList - the parameter list
  * \param values - four float values
  * \return index of the new parameter.
@@ -448,9 +454,11 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
 
 /**
  * Add a new state reference to the parameter list.
+ * This will be used when the program contains something like this:
+ *    PARAM ambient = state.material.front.ambient;
+ *
  * \param paramList - the parameter list
  * \param state     - an array of 6 state tokens
- *
  * \return index of the new parameter.
  */
 GLint
@@ -1301,6 +1309,30 @@ _mesa_init_instruction(struct prog_instruction *inst)
 
    inst->SaturateMode = SATURATE_OFF;
    inst->Precision = FLOAT32;
+}
+
+
+/**
+ * Reallocate memory storing an array of program instructions.
+ * This is used when we need to append additional instructions onto an
+ * program.
+ * \param oldInst  pointer to first of old/src instructions
+ * \param numOldInst  number of instructions at <oldInst>
+ * \param numNewInst  desired size of new instruction array.
+ * \return  pointer to start of new instruction array.
+ */
+struct prog_instruction *
+_mesa_realloc_instructions(struct prog_instruction *oldInst,
+                           GLuint numOldInst, GLuint numNewInst)
+{
+   struct prog_instruction *newInst;
+
+   newInst = (struct prog_instruction *)
+      _mesa_realloc(oldInst,
+                    numOldInst * sizeof(struct prog_instruction),
+                    numNewInst * sizeof(struct prog_instruction));
+
+   return newInst;
 }
 
 
