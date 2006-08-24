@@ -46,6 +46,7 @@ SOURCES = \
 	tri-tex.c \
 	tri-xpd.c \
 	tri-position.c \
+	point-position.c \
 	tri-depth.c \
 	tri-depth2.c \
 	tri-depthwrite.c \
