@@ -1,30 +1,9 @@
 # Configuration for Linux on Sparc
 
-include $(TOP)/configs/default
+include $(TOP)/configs/linux
 
 CONFIG_NAME = linux-sparc
 
-# Compiler and flags
-CC = gcc
-CXX = g++
-
-WARN_FLAGS = -Wall
-OPT_FLAGS  = -O2
-PIC_FLAGS  = -fPIC
-
-DEFINES = -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DHAVE_POSIX_MEMALIGN
-
-X11_INCLUDES = -I/usr/X11R6/include
-
-CFLAGS   = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) \
-	$(ASM_FLAGS) -std=c99 -ffast-math 
-
-CXXFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES)
-
-GLUT_CFLAGS = -fexceptions
-
-EXTRA_LIB_PATH=-L/usr/X11R6/lib
-
-GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread
-GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lX11 -lXmu -lXt -lXi -lm
-GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lXt -lX11
+#ASM_FLAGS = -DUSE_SPARC_ASM
+#ASM_SOURCES = $(SPARC_SOURCES)
+#ASM_API = $(SPARC_API)
