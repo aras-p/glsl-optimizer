@@ -1722,6 +1722,27 @@ _mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog)
 }
 
 
+/**
+ * Mixing ARB and NV vertex/fragment programs can be tricky.
+ * Note: GL_VERTEX_PROGRAM_ARB == GL_VERTEX_PROGRAM_NV
+ *  but, GL_FRAGMENT_PROGRAM_ARB != GL_FRAGMENT_PROGRAM_NV
+ * The two different fragment program targets are supposed to be compatible
+ * to some extent (see GL_ARB_fragment_program spec).
+ * This function does the compatibility check.
+ */
+static GLboolean
+compatible_program_targets(GLenum t1, GLenum t2)
+{
+   if (t1 == t2)
+      return GL_TRUE;
+   if (t1 == GL_FRAGMENT_PROGRAM_ARB && t2 == GL_FRAGMENT_PROGRAM_NV)
+      return GL_TRUE;
+   if (t1 == GL_FRAGMENT_PROGRAM_NV && t2 == GL_FRAGMENT_PROGRAM_ARB)
+      return GL_TRUE;
+   return GL_FALSE;
+}
+
+
 
 /**********************************************************************/
 /* API functions                                                      */
@@ -1809,7 +1830,7 @@ _mesa_BindProgram(GLenum target, GLuint id)
          }
          _mesa_HashInsert(ctx->Shared->Programs, id, prog);
       }
-      else if (prog->Target != target) {
+      else if (!compatible_program_targets(prog->Target, target)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glBindProgramNV/ARB(target mismatch)");
          return;
