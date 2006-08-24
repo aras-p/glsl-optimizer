@@ -25,7 +25,7 @@
 # Authors:
 #    Ian Romanick <idr@us.ibm.com>
 
-import gl_XML, glX_XML, license
+import gl_XML, glX_XML, glX_proto_common, license
 import sys, getopt
 
 
@@ -196,6 +196,12 @@ class function_table:
 						if self.functions.has_key(op):
 							func = self.functions[op]
 							size = func.command_fixed_length()
+
+							if func.glx_rop != 0:
+								size += 4
+
+							size = ((size + 3) & ~3)
+
 							if func.has_variable_size_request():
 								size_name = "__glX%sReqSize" % (func.name)
 							else:
@@ -275,7 +281,7 @@ class function_table:
 		
 		# After dumping the tree, dump the function lookup table.
 		
-		print 'static const __GLXdispatch%sProcPtr %s_function_table[%u][2] = {' % (self.name_base, self.name_base, len(self.lookup_table))
+		print 'static const void *%s_function_table[%u][2] = {' % (self.name_base, len(self.lookup_table))
 		index = 0
 		for func in self.lookup_table:
 			opcode = func[0]
@@ -300,19 +306,19 @@ class function_table:
 				var = func[4]
 				
 				if var != "":
-					var_offset = "%u" % (len(var))
+					var_offset = "%2u" % (len(var_table))
 					var_table.append(var)
 				else:
 					var_offset = "~0"
 
-				print '    /* [% 3u] = %5u */ {%u, %s},' % (index, opcode, fixed, var_offset)
+				print '    /* [%3u] = %5u */ {%3u, %s},' % (index, opcode, fixed, var_offset)
 				index += 1
 
 				
 			print '};\n'
 
 
-			print 'static const size_func %s_size_func_table[%u] = {' % (self.name_base, len(var_table))
+			print 'static const gl_proto_size_func %s_size_func_table[%u] = {' % (self.name_base, len(var_table))
 			for func in var_table:
 				print '   %s,' % (func)
  
@@ -333,7 +339,7 @@ class function_table:
 		return
 
 
-class PrintGlxDispatchTables(gl_XML.gl_print_base):
+class PrintGlxDispatchTables(glX_proto_common.glx_print_proto):
 	def __init__(self):
 		gl_XML.gl_print_base.__init__(self)
 		self.name = "glX_server_table.py (from Mesa)"
@@ -368,7 +374,7 @@ class PrintGlxDispatchTables(gl_XML.gl_print_base):
 					self.vop_functions.append(f.glx_vendorpriv, f)
 
 		self.sop_functions.Print()
-		#self.rop_functions.Print()
+		self.rop_functions.Print()
 		self.vop_functions.Print()
 		return
 
