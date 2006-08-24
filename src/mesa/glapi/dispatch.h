@@ -1282,33 +1282,411 @@
 
 #if !defined(IN_DRI_DRIVER)
 
-#define CALL_LoadTransposeMatrixfARB(disp, parameters) (*((disp)->LoadTransposeMatrixfARB)) parameters
-#define GET_LoadTransposeMatrixfARB(disp) ((disp)->LoadTransposeMatrixfARB)
-#define SET_LoadTransposeMatrixfARB(disp, fn) ((disp)->LoadTransposeMatrixfARB = fn)
+#define CALL_StencilFuncSeparate(disp, parameters) (*((disp)->StencilFuncSeparate)) parameters
+#define GET_StencilFuncSeparate(disp) ((disp)->StencilFuncSeparate)
+#define SET_StencilFuncSeparate(disp, fn) ((disp)->StencilFuncSeparate = fn)
+#define CALL_StencilMaskSeparate(disp, parameters) (*((disp)->StencilMaskSeparate)) parameters
+#define GET_StencilMaskSeparate(disp) ((disp)->StencilMaskSeparate)
+#define SET_StencilMaskSeparate(disp, fn) ((disp)->StencilMaskSeparate = fn)
+#define CALL_StencilOpSeparate(disp, parameters) (*((disp)->StencilOpSeparate)) parameters
+#define GET_StencilOpSeparate(disp) ((disp)->StencilOpSeparate)
+#define SET_StencilOpSeparate(disp, fn) ((disp)->StencilOpSeparate = fn)
 #define CALL_LoadTransposeMatrixdARB(disp, parameters) (*((disp)->LoadTransposeMatrixdARB)) parameters
 #define GET_LoadTransposeMatrixdARB(disp) ((disp)->LoadTransposeMatrixdARB)
 #define SET_LoadTransposeMatrixdARB(disp, fn) ((disp)->LoadTransposeMatrixdARB = fn)
-#define CALL_MultTransposeMatrixfARB(disp, parameters) (*((disp)->MultTransposeMatrixfARB)) parameters
-#define GET_MultTransposeMatrixfARB(disp) ((disp)->MultTransposeMatrixfARB)
-#define SET_MultTransposeMatrixfARB(disp, fn) ((disp)->MultTransposeMatrixfARB = fn)
+#define CALL_LoadTransposeMatrixfARB(disp, parameters) (*((disp)->LoadTransposeMatrixfARB)) parameters
+#define GET_LoadTransposeMatrixfARB(disp) ((disp)->LoadTransposeMatrixfARB)
+#define SET_LoadTransposeMatrixfARB(disp, fn) ((disp)->LoadTransposeMatrixfARB = fn)
 #define CALL_MultTransposeMatrixdARB(disp, parameters) (*((disp)->MultTransposeMatrixdARB)) parameters
 #define GET_MultTransposeMatrixdARB(disp) ((disp)->MultTransposeMatrixdARB)
 #define SET_MultTransposeMatrixdARB(disp, fn) ((disp)->MultTransposeMatrixdARB = fn)
+#define CALL_MultTransposeMatrixfARB(disp, parameters) (*((disp)->MultTransposeMatrixfARB)) parameters
+#define GET_MultTransposeMatrixfARB(disp) ((disp)->MultTransposeMatrixfARB)
+#define SET_MultTransposeMatrixfARB(disp, fn) ((disp)->MultTransposeMatrixfARB = fn)
 #define CALL_SampleCoverageARB(disp, parameters) (*((disp)->SampleCoverageARB)) parameters
 #define GET_SampleCoverageARB(disp) ((disp)->SampleCoverageARB)
 #define SET_SampleCoverageARB(disp, fn) ((disp)->SampleCoverageARB = fn)
+#define CALL_CompressedTexImage1DARB(disp, parameters) (*((disp)->CompressedTexImage1DARB)) parameters
+#define GET_CompressedTexImage1DARB(disp) ((disp)->CompressedTexImage1DARB)
+#define SET_CompressedTexImage1DARB(disp, fn) ((disp)->CompressedTexImage1DARB = fn)
+#define CALL_CompressedTexImage2DARB(disp, parameters) (*((disp)->CompressedTexImage2DARB)) parameters
+#define GET_CompressedTexImage2DARB(disp) ((disp)->CompressedTexImage2DARB)
+#define SET_CompressedTexImage2DARB(disp, fn) ((disp)->CompressedTexImage2DARB = fn)
+#define CALL_CompressedTexImage3DARB(disp, parameters) (*((disp)->CompressedTexImage3DARB)) parameters
+#define GET_CompressedTexImage3DARB(disp) ((disp)->CompressedTexImage3DARB)
+#define SET_CompressedTexImage3DARB(disp, fn) ((disp)->CompressedTexImage3DARB = fn)
+#define CALL_CompressedTexSubImage1DARB(disp, parameters) (*((disp)->CompressedTexSubImage1DARB)) parameters
+#define GET_CompressedTexSubImage1DARB(disp) ((disp)->CompressedTexSubImage1DARB)
+#define SET_CompressedTexSubImage1DARB(disp, fn) ((disp)->CompressedTexSubImage1DARB = fn)
+#define CALL_CompressedTexSubImage2DARB(disp, parameters) (*((disp)->CompressedTexSubImage2DARB)) parameters
+#define GET_CompressedTexSubImage2DARB(disp) ((disp)->CompressedTexSubImage2DARB)
+#define SET_CompressedTexSubImage2DARB(disp, fn) ((disp)->CompressedTexSubImage2DARB = fn)
+#define CALL_CompressedTexSubImage3DARB(disp, parameters) (*((disp)->CompressedTexSubImage3DARB)) parameters
+#define GET_CompressedTexSubImage3DARB(disp) ((disp)->CompressedTexSubImage3DARB)
+#define SET_CompressedTexSubImage3DARB(disp, fn) ((disp)->CompressedTexSubImage3DARB = fn)
+#define CALL_GetCompressedTexImageARB(disp, parameters) (*((disp)->GetCompressedTexImageARB)) parameters
+#define GET_GetCompressedTexImageARB(disp) ((disp)->GetCompressedTexImageARB)
+#define SET_GetCompressedTexImageARB(disp, fn) ((disp)->GetCompressedTexImageARB = fn)
+#define CALL_DisableVertexAttribArrayARB(disp, parameters) (*((disp)->DisableVertexAttribArrayARB)) parameters
+#define GET_DisableVertexAttribArrayARB(disp) ((disp)->DisableVertexAttribArrayARB)
+#define SET_DisableVertexAttribArrayARB(disp, fn) ((disp)->DisableVertexAttribArrayARB = fn)
+#define CALL_EnableVertexAttribArrayARB(disp, parameters) (*((disp)->EnableVertexAttribArrayARB)) parameters
+#define GET_EnableVertexAttribArrayARB(disp) ((disp)->EnableVertexAttribArrayARB)
+#define SET_EnableVertexAttribArrayARB(disp, fn) ((disp)->EnableVertexAttribArrayARB = fn)
+#define CALL_GetProgramEnvParameterdvARB(disp, parameters) (*((disp)->GetProgramEnvParameterdvARB)) parameters
+#define GET_GetProgramEnvParameterdvARB(disp) ((disp)->GetProgramEnvParameterdvARB)
+#define SET_GetProgramEnvParameterdvARB(disp, fn) ((disp)->GetProgramEnvParameterdvARB = fn)
+#define CALL_GetProgramEnvParameterfvARB(disp, parameters) (*((disp)->GetProgramEnvParameterfvARB)) parameters
+#define GET_GetProgramEnvParameterfvARB(disp) ((disp)->GetProgramEnvParameterfvARB)
+#define SET_GetProgramEnvParameterfvARB(disp, fn) ((disp)->GetProgramEnvParameterfvARB = fn)
+#define CALL_GetProgramLocalParameterdvARB(disp, parameters) (*((disp)->GetProgramLocalParameterdvARB)) parameters
+#define GET_GetProgramLocalParameterdvARB(disp) ((disp)->GetProgramLocalParameterdvARB)
+#define SET_GetProgramLocalParameterdvARB(disp, fn) ((disp)->GetProgramLocalParameterdvARB = fn)
+#define CALL_GetProgramLocalParameterfvARB(disp, parameters) (*((disp)->GetProgramLocalParameterfvARB)) parameters
+#define GET_GetProgramLocalParameterfvARB(disp) ((disp)->GetProgramLocalParameterfvARB)
+#define SET_GetProgramLocalParameterfvARB(disp, fn) ((disp)->GetProgramLocalParameterfvARB = fn)
+#define CALL_GetProgramStringARB(disp, parameters) (*((disp)->GetProgramStringARB)) parameters
+#define GET_GetProgramStringARB(disp) ((disp)->GetProgramStringARB)
+#define SET_GetProgramStringARB(disp, fn) ((disp)->GetProgramStringARB = fn)
+#define CALL_GetProgramivARB(disp, parameters) (*((disp)->GetProgramivARB)) parameters
+#define GET_GetProgramivARB(disp) ((disp)->GetProgramivARB)
+#define SET_GetProgramivARB(disp, fn) ((disp)->GetProgramivARB = fn)
+#define CALL_GetVertexAttribdvARB(disp, parameters) (*((disp)->GetVertexAttribdvARB)) parameters
+#define GET_GetVertexAttribdvARB(disp) ((disp)->GetVertexAttribdvARB)
+#define SET_GetVertexAttribdvARB(disp, fn) ((disp)->GetVertexAttribdvARB = fn)
+#define CALL_GetVertexAttribfvARB(disp, parameters) (*((disp)->GetVertexAttribfvARB)) parameters
+#define GET_GetVertexAttribfvARB(disp) ((disp)->GetVertexAttribfvARB)
+#define SET_GetVertexAttribfvARB(disp, fn) ((disp)->GetVertexAttribfvARB = fn)
+#define CALL_GetVertexAttribivARB(disp, parameters) (*((disp)->GetVertexAttribivARB)) parameters
+#define GET_GetVertexAttribivARB(disp) ((disp)->GetVertexAttribivARB)
+#define SET_GetVertexAttribivARB(disp, fn) ((disp)->GetVertexAttribivARB = fn)
+#define CALL_ProgramEnvParameter4dARB(disp, parameters) (*((disp)->ProgramEnvParameter4dARB)) parameters
+#define GET_ProgramEnvParameter4dARB(disp) ((disp)->ProgramEnvParameter4dARB)
+#define SET_ProgramEnvParameter4dARB(disp, fn) ((disp)->ProgramEnvParameter4dARB = fn)
+#define CALL_ProgramEnvParameter4dvARB(disp, parameters) (*((disp)->ProgramEnvParameter4dvARB)) parameters
+#define GET_ProgramEnvParameter4dvARB(disp) ((disp)->ProgramEnvParameter4dvARB)
+#define SET_ProgramEnvParameter4dvARB(disp, fn) ((disp)->ProgramEnvParameter4dvARB = fn)
+#define CALL_ProgramEnvParameter4fARB(disp, parameters) (*((disp)->ProgramEnvParameter4fARB)) parameters
+#define GET_ProgramEnvParameter4fARB(disp) ((disp)->ProgramEnvParameter4fARB)
+#define SET_ProgramEnvParameter4fARB(disp, fn) ((disp)->ProgramEnvParameter4fARB = fn)
+#define CALL_ProgramEnvParameter4fvARB(disp, parameters) (*((disp)->ProgramEnvParameter4fvARB)) parameters
+#define GET_ProgramEnvParameter4fvARB(disp) ((disp)->ProgramEnvParameter4fvARB)
+#define SET_ProgramEnvParameter4fvARB(disp, fn) ((disp)->ProgramEnvParameter4fvARB = fn)
+#define CALL_ProgramLocalParameter4dARB(disp, parameters) (*((disp)->ProgramLocalParameter4dARB)) parameters
+#define GET_ProgramLocalParameter4dARB(disp) ((disp)->ProgramLocalParameter4dARB)
+#define SET_ProgramLocalParameter4dARB(disp, fn) ((disp)->ProgramLocalParameter4dARB = fn)
+#define CALL_ProgramLocalParameter4dvARB(disp, parameters) (*((disp)->ProgramLocalParameter4dvARB)) parameters
+#define GET_ProgramLocalParameter4dvARB(disp) ((disp)->ProgramLocalParameter4dvARB)
+#define SET_ProgramLocalParameter4dvARB(disp, fn) ((disp)->ProgramLocalParameter4dvARB = fn)
+#define CALL_ProgramLocalParameter4fARB(disp, parameters) (*((disp)->ProgramLocalParameter4fARB)) parameters
+#define GET_ProgramLocalParameter4fARB(disp) ((disp)->ProgramLocalParameter4fARB)
+#define SET_ProgramLocalParameter4fARB(disp, fn) ((disp)->ProgramLocalParameter4fARB = fn)
+#define CALL_ProgramLocalParameter4fvARB(disp, parameters) (*((disp)->ProgramLocalParameter4fvARB)) parameters
+#define GET_ProgramLocalParameter4fvARB(disp) ((disp)->ProgramLocalParameter4fvARB)
+#define SET_ProgramLocalParameter4fvARB(disp, fn) ((disp)->ProgramLocalParameter4fvARB = fn)
+#define CALL_ProgramStringARB(disp, parameters) (*((disp)->ProgramStringARB)) parameters
+#define GET_ProgramStringARB(disp) ((disp)->ProgramStringARB)
+#define SET_ProgramStringARB(disp, fn) ((disp)->ProgramStringARB = fn)
+#define CALL_VertexAttrib1dARB(disp, parameters) (*((disp)->VertexAttrib1dARB)) parameters
+#define GET_VertexAttrib1dARB(disp) ((disp)->VertexAttrib1dARB)
+#define SET_VertexAttrib1dARB(disp, fn) ((disp)->VertexAttrib1dARB = fn)
+#define CALL_VertexAttrib1dvARB(disp, parameters) (*((disp)->VertexAttrib1dvARB)) parameters
+#define GET_VertexAttrib1dvARB(disp) ((disp)->VertexAttrib1dvARB)
+#define SET_VertexAttrib1dvARB(disp, fn) ((disp)->VertexAttrib1dvARB = fn)
+#define CALL_VertexAttrib1fARB(disp, parameters) (*((disp)->VertexAttrib1fARB)) parameters
+#define GET_VertexAttrib1fARB(disp) ((disp)->VertexAttrib1fARB)
+#define SET_VertexAttrib1fARB(disp, fn) ((disp)->VertexAttrib1fARB = fn)
+#define CALL_VertexAttrib1fvARB(disp, parameters) (*((disp)->VertexAttrib1fvARB)) parameters
+#define GET_VertexAttrib1fvARB(disp) ((disp)->VertexAttrib1fvARB)
+#define SET_VertexAttrib1fvARB(disp, fn) ((disp)->VertexAttrib1fvARB = fn)
+#define CALL_VertexAttrib1sARB(disp, parameters) (*((disp)->VertexAttrib1sARB)) parameters
+#define GET_VertexAttrib1sARB(disp) ((disp)->VertexAttrib1sARB)
+#define SET_VertexAttrib1sARB(disp, fn) ((disp)->VertexAttrib1sARB = fn)
+#define CALL_VertexAttrib1svARB(disp, parameters) (*((disp)->VertexAttrib1svARB)) parameters
+#define GET_VertexAttrib1svARB(disp) ((disp)->VertexAttrib1svARB)
+#define SET_VertexAttrib1svARB(disp, fn) ((disp)->VertexAttrib1svARB = fn)
+#define CALL_VertexAttrib2dARB(disp, parameters) (*((disp)->VertexAttrib2dARB)) parameters
+#define GET_VertexAttrib2dARB(disp) ((disp)->VertexAttrib2dARB)
+#define SET_VertexAttrib2dARB(disp, fn) ((disp)->VertexAttrib2dARB = fn)
+#define CALL_VertexAttrib2dvARB(disp, parameters) (*((disp)->VertexAttrib2dvARB)) parameters
+#define GET_VertexAttrib2dvARB(disp) ((disp)->VertexAttrib2dvARB)
+#define SET_VertexAttrib2dvARB(disp, fn) ((disp)->VertexAttrib2dvARB = fn)
+#define CALL_VertexAttrib2fARB(disp, parameters) (*((disp)->VertexAttrib2fARB)) parameters
+#define GET_VertexAttrib2fARB(disp) ((disp)->VertexAttrib2fARB)
+#define SET_VertexAttrib2fARB(disp, fn) ((disp)->VertexAttrib2fARB = fn)
+#define CALL_VertexAttrib2fvARB(disp, parameters) (*((disp)->VertexAttrib2fvARB)) parameters
+#define GET_VertexAttrib2fvARB(disp) ((disp)->VertexAttrib2fvARB)
+#define SET_VertexAttrib2fvARB(disp, fn) ((disp)->VertexAttrib2fvARB = fn)
+#define CALL_VertexAttrib2sARB(disp, parameters) (*((disp)->VertexAttrib2sARB)) parameters
+#define GET_VertexAttrib2sARB(disp) ((disp)->VertexAttrib2sARB)
+#define SET_VertexAttrib2sARB(disp, fn) ((disp)->VertexAttrib2sARB = fn)
+#define CALL_VertexAttrib2svARB(disp, parameters) (*((disp)->VertexAttrib2svARB)) parameters
+#define GET_VertexAttrib2svARB(disp) ((disp)->VertexAttrib2svARB)
+#define SET_VertexAttrib2svARB(disp, fn) ((disp)->VertexAttrib2svARB = fn)
+#define CALL_VertexAttrib3dARB(disp, parameters) (*((disp)->VertexAttrib3dARB)) parameters
+#define GET_VertexAttrib3dARB(disp) ((disp)->VertexAttrib3dARB)
+#define SET_VertexAttrib3dARB(disp, fn) ((disp)->VertexAttrib3dARB = fn)
+#define CALL_VertexAttrib3dvARB(disp, parameters) (*((disp)->VertexAttrib3dvARB)) parameters
+#define GET_VertexAttrib3dvARB(disp) ((disp)->VertexAttrib3dvARB)
+#define SET_VertexAttrib3dvARB(disp, fn) ((disp)->VertexAttrib3dvARB = fn)
+#define CALL_VertexAttrib3fARB(disp, parameters) (*((disp)->VertexAttrib3fARB)) parameters
+#define GET_VertexAttrib3fARB(disp) ((disp)->VertexAttrib3fARB)
+#define SET_VertexAttrib3fARB(disp, fn) ((disp)->VertexAttrib3fARB = fn)
+#define CALL_VertexAttrib3fvARB(disp, parameters) (*((disp)->VertexAttrib3fvARB)) parameters
+#define GET_VertexAttrib3fvARB(disp) ((disp)->VertexAttrib3fvARB)
+#define SET_VertexAttrib3fvARB(disp, fn) ((disp)->VertexAttrib3fvARB = fn)
+#define CALL_VertexAttrib3sARB(disp, parameters) (*((disp)->VertexAttrib3sARB)) parameters
+#define GET_VertexAttrib3sARB(disp) ((disp)->VertexAttrib3sARB)
+#define SET_VertexAttrib3sARB(disp, fn) ((disp)->VertexAttrib3sARB = fn)
+#define CALL_VertexAttrib3svARB(disp, parameters) (*((disp)->VertexAttrib3svARB)) parameters
+#define GET_VertexAttrib3svARB(disp) ((disp)->VertexAttrib3svARB)
+#define SET_VertexAttrib3svARB(disp, fn) ((disp)->VertexAttrib3svARB = fn)
+#define CALL_VertexAttrib4NbvARB(disp, parameters) (*((disp)->VertexAttrib4NbvARB)) parameters
+#define GET_VertexAttrib4NbvARB(disp) ((disp)->VertexAttrib4NbvARB)
+#define SET_VertexAttrib4NbvARB(disp, fn) ((disp)->VertexAttrib4NbvARB = fn)
+#define CALL_VertexAttrib4NivARB(disp, parameters) (*((disp)->VertexAttrib4NivARB)) parameters
+#define GET_VertexAttrib4NivARB(disp) ((disp)->VertexAttrib4NivARB)
+#define SET_VertexAttrib4NivARB(disp, fn) ((disp)->VertexAttrib4NivARB = fn)
+#define CALL_VertexAttrib4NsvARB(disp, parameters) (*((disp)->VertexAttrib4NsvARB)) parameters
+#define GET_VertexAttrib4NsvARB(disp) ((disp)->VertexAttrib4NsvARB)
+#define SET_VertexAttrib4NsvARB(disp, fn) ((disp)->VertexAttrib4NsvARB = fn)
+#define CALL_VertexAttrib4NubARB(disp, parameters) (*((disp)->VertexAttrib4NubARB)) parameters
+#define GET_VertexAttrib4NubARB(disp) ((disp)->VertexAttrib4NubARB)
+#define SET_VertexAttrib4NubARB(disp, fn) ((disp)->VertexAttrib4NubARB = fn)
+#define CALL_VertexAttrib4NubvARB(disp, parameters) (*((disp)->VertexAttrib4NubvARB)) parameters
+#define GET_VertexAttrib4NubvARB(disp) ((disp)->VertexAttrib4NubvARB)
+#define SET_VertexAttrib4NubvARB(disp, fn) ((disp)->VertexAttrib4NubvARB = fn)
+#define CALL_VertexAttrib4NuivARB(disp, parameters) (*((disp)->VertexAttrib4NuivARB)) parameters
+#define GET_VertexAttrib4NuivARB(disp) ((disp)->VertexAttrib4NuivARB)
+#define SET_VertexAttrib4NuivARB(disp, fn) ((disp)->VertexAttrib4NuivARB = fn)
+#define CALL_VertexAttrib4NusvARB(disp, parameters) (*((disp)->VertexAttrib4NusvARB)) parameters
+#define GET_VertexAttrib4NusvARB(disp) ((disp)->VertexAttrib4NusvARB)
+#define SET_VertexAttrib4NusvARB(disp, fn) ((disp)->VertexAttrib4NusvARB = fn)
+#define CALL_VertexAttrib4bvARB(disp, parameters) (*((disp)->VertexAttrib4bvARB)) parameters
+#define GET_VertexAttrib4bvARB(disp) ((disp)->VertexAttrib4bvARB)
+#define SET_VertexAttrib4bvARB(disp, fn) ((disp)->VertexAttrib4bvARB = fn)
+#define CALL_VertexAttrib4dARB(disp, parameters) (*((disp)->VertexAttrib4dARB)) parameters
+#define GET_VertexAttrib4dARB(disp) ((disp)->VertexAttrib4dARB)
+#define SET_VertexAttrib4dARB(disp, fn) ((disp)->VertexAttrib4dARB = fn)
+#define CALL_VertexAttrib4dvARB(disp, parameters) (*((disp)->VertexAttrib4dvARB)) parameters
+#define GET_VertexAttrib4dvARB(disp) ((disp)->VertexAttrib4dvARB)
+#define SET_VertexAttrib4dvARB(disp, fn) ((disp)->VertexAttrib4dvARB = fn)
+#define CALL_VertexAttrib4fARB(disp, parameters) (*((disp)->VertexAttrib4fARB)) parameters
+#define GET_VertexAttrib4fARB(disp) ((disp)->VertexAttrib4fARB)
+#define SET_VertexAttrib4fARB(disp, fn) ((disp)->VertexAttrib4fARB = fn)
+#define CALL_VertexAttrib4fvARB(disp, parameters) (*((disp)->VertexAttrib4fvARB)) parameters
+#define GET_VertexAttrib4fvARB(disp) ((disp)->VertexAttrib4fvARB)
+#define SET_VertexAttrib4fvARB(disp, fn) ((disp)->VertexAttrib4fvARB = fn)
+#define CALL_VertexAttrib4ivARB(disp, parameters) (*((disp)->VertexAttrib4ivARB)) parameters
+#define GET_VertexAttrib4ivARB(disp) ((disp)->VertexAttrib4ivARB)
+#define SET_VertexAttrib4ivARB(disp, fn) ((disp)->VertexAttrib4ivARB = fn)
+#define CALL_VertexAttrib4sARB(disp, parameters) (*((disp)->VertexAttrib4sARB)) parameters
+#define GET_VertexAttrib4sARB(disp) ((disp)->VertexAttrib4sARB)
+#define SET_VertexAttrib4sARB(disp, fn) ((disp)->VertexAttrib4sARB = fn)
+#define CALL_VertexAttrib4svARB(disp, parameters) (*((disp)->VertexAttrib4svARB)) parameters
+#define GET_VertexAttrib4svARB(disp) ((disp)->VertexAttrib4svARB)
+#define SET_VertexAttrib4svARB(disp, fn) ((disp)->VertexAttrib4svARB = fn)
+#define CALL_VertexAttrib4ubvARB(disp, parameters) (*((disp)->VertexAttrib4ubvARB)) parameters
+#define GET_VertexAttrib4ubvARB(disp) ((disp)->VertexAttrib4ubvARB)
+#define SET_VertexAttrib4ubvARB(disp, fn) ((disp)->VertexAttrib4ubvARB = fn)
+#define CALL_VertexAttrib4uivARB(disp, parameters) (*((disp)->VertexAttrib4uivARB)) parameters
+#define GET_VertexAttrib4uivARB(disp) ((disp)->VertexAttrib4uivARB)
+#define SET_VertexAttrib4uivARB(disp, fn) ((disp)->VertexAttrib4uivARB = fn)
+#define CALL_VertexAttrib4usvARB(disp, parameters) (*((disp)->VertexAttrib4usvARB)) parameters
+#define GET_VertexAttrib4usvARB(disp) ((disp)->VertexAttrib4usvARB)
+#define SET_VertexAttrib4usvARB(disp, fn) ((disp)->VertexAttrib4usvARB = fn)
+#define CALL_VertexAttribPointerARB(disp, parameters) (*((disp)->VertexAttribPointerARB)) parameters
+#define GET_VertexAttribPointerARB(disp) ((disp)->VertexAttribPointerARB)
+#define SET_VertexAttribPointerARB(disp, fn) ((disp)->VertexAttribPointerARB = fn)
+#define CALL_BindBufferARB(disp, parameters) (*((disp)->BindBufferARB)) parameters
+#define GET_BindBufferARB(disp) ((disp)->BindBufferARB)
+#define SET_BindBufferARB(disp, fn) ((disp)->BindBufferARB = fn)
+#define CALL_BufferDataARB(disp, parameters) (*((disp)->BufferDataARB)) parameters
+#define GET_BufferDataARB(disp) ((disp)->BufferDataARB)
+#define SET_BufferDataARB(disp, fn) ((disp)->BufferDataARB = fn)
+#define CALL_BufferSubDataARB(disp, parameters) (*((disp)->BufferSubDataARB)) parameters
+#define GET_BufferSubDataARB(disp) ((disp)->BufferSubDataARB)
+#define SET_BufferSubDataARB(disp, fn) ((disp)->BufferSubDataARB = fn)
+#define CALL_DeleteBuffersARB(disp, parameters) (*((disp)->DeleteBuffersARB)) parameters
+#define GET_DeleteBuffersARB(disp) ((disp)->DeleteBuffersARB)
+#define SET_DeleteBuffersARB(disp, fn) ((disp)->DeleteBuffersARB = fn)
+#define CALL_GenBuffersARB(disp, parameters) (*((disp)->GenBuffersARB)) parameters
+#define GET_GenBuffersARB(disp) ((disp)->GenBuffersARB)
+#define SET_GenBuffersARB(disp, fn) ((disp)->GenBuffersARB = fn)
+#define CALL_GetBufferParameterivARB(disp, parameters) (*((disp)->GetBufferParameterivARB)) parameters
+#define GET_GetBufferParameterivARB(disp) ((disp)->GetBufferParameterivARB)
+#define SET_GetBufferParameterivARB(disp, fn) ((disp)->GetBufferParameterivARB = fn)
+#define CALL_GetBufferPointervARB(disp, parameters) (*((disp)->GetBufferPointervARB)) parameters
+#define GET_GetBufferPointervARB(disp) ((disp)->GetBufferPointervARB)
+#define SET_GetBufferPointervARB(disp, fn) ((disp)->GetBufferPointervARB = fn)
+#define CALL_GetBufferSubDataARB(disp, parameters) (*((disp)->GetBufferSubDataARB)) parameters
+#define GET_GetBufferSubDataARB(disp) ((disp)->GetBufferSubDataARB)
+#define SET_GetBufferSubDataARB(disp, fn) ((disp)->GetBufferSubDataARB = fn)
+#define CALL_IsBufferARB(disp, parameters) (*((disp)->IsBufferARB)) parameters
+#define GET_IsBufferARB(disp) ((disp)->IsBufferARB)
+#define SET_IsBufferARB(disp, fn) ((disp)->IsBufferARB = fn)
+#define CALL_MapBufferARB(disp, parameters) (*((disp)->MapBufferARB)) parameters
+#define GET_MapBufferARB(disp) ((disp)->MapBufferARB)
+#define SET_MapBufferARB(disp, fn) ((disp)->MapBufferARB = fn)
+#define CALL_UnmapBufferARB(disp, parameters) (*((disp)->UnmapBufferARB)) parameters
+#define GET_UnmapBufferARB(disp) ((disp)->UnmapBufferARB)
+#define SET_UnmapBufferARB(disp, fn) ((disp)->UnmapBufferARB = fn)
+#define CALL_BeginQueryARB(disp, parameters) (*((disp)->BeginQueryARB)) parameters
+#define GET_BeginQueryARB(disp) ((disp)->BeginQueryARB)
+#define SET_BeginQueryARB(disp, fn) ((disp)->BeginQueryARB = fn)
+#define CALL_DeleteQueriesARB(disp, parameters) (*((disp)->DeleteQueriesARB)) parameters
+#define GET_DeleteQueriesARB(disp) ((disp)->DeleteQueriesARB)
+#define SET_DeleteQueriesARB(disp, fn) ((disp)->DeleteQueriesARB = fn)
+#define CALL_EndQueryARB(disp, parameters) (*((disp)->EndQueryARB)) parameters
+#define GET_EndQueryARB(disp) ((disp)->EndQueryARB)
+#define SET_EndQueryARB(disp, fn) ((disp)->EndQueryARB = fn)
+#define CALL_GenQueriesARB(disp, parameters) (*((disp)->GenQueriesARB)) parameters
+#define GET_GenQueriesARB(disp) ((disp)->GenQueriesARB)
+#define SET_GenQueriesARB(disp, fn) ((disp)->GenQueriesARB = fn)
+#define CALL_GetQueryObjectivARB(disp, parameters) (*((disp)->GetQueryObjectivARB)) parameters
+#define GET_GetQueryObjectivARB(disp) ((disp)->GetQueryObjectivARB)
+#define SET_GetQueryObjectivARB(disp, fn) ((disp)->GetQueryObjectivARB = fn)
+#define CALL_GetQueryObjectuivARB(disp, parameters) (*((disp)->GetQueryObjectuivARB)) parameters
+#define GET_GetQueryObjectuivARB(disp) ((disp)->GetQueryObjectuivARB)
+#define SET_GetQueryObjectuivARB(disp, fn) ((disp)->GetQueryObjectuivARB = fn)
+#define CALL_GetQueryivARB(disp, parameters) (*((disp)->GetQueryivARB)) parameters
+#define GET_GetQueryivARB(disp) ((disp)->GetQueryivARB)
+#define SET_GetQueryivARB(disp, fn) ((disp)->GetQueryivARB = fn)
+#define CALL_IsQueryARB(disp, parameters) (*((disp)->IsQueryARB)) parameters
+#define GET_IsQueryARB(disp) ((disp)->IsQueryARB)
+#define SET_IsQueryARB(disp, fn) ((disp)->IsQueryARB = fn)
+#define CALL_AttachObjectARB(disp, parameters) (*((disp)->AttachObjectARB)) parameters
+#define GET_AttachObjectARB(disp) ((disp)->AttachObjectARB)
+#define SET_AttachObjectARB(disp, fn) ((disp)->AttachObjectARB = fn)
+#define CALL_CompileShaderARB(disp, parameters) (*((disp)->CompileShaderARB)) parameters
+#define GET_CompileShaderARB(disp) ((disp)->CompileShaderARB)
+#define SET_CompileShaderARB(disp, fn) ((disp)->CompileShaderARB = fn)
+#define CALL_CreateProgramObjectARB(disp, parameters) (*((disp)->CreateProgramObjectARB)) parameters
+#define GET_CreateProgramObjectARB(disp) ((disp)->CreateProgramObjectARB)
+#define SET_CreateProgramObjectARB(disp, fn) ((disp)->CreateProgramObjectARB = fn)
+#define CALL_CreateShaderObjectARB(disp, parameters) (*((disp)->CreateShaderObjectARB)) parameters
+#define GET_CreateShaderObjectARB(disp) ((disp)->CreateShaderObjectARB)
+#define SET_CreateShaderObjectARB(disp, fn) ((disp)->CreateShaderObjectARB = fn)
+#define CALL_DeleteObjectARB(disp, parameters) (*((disp)->DeleteObjectARB)) parameters
+#define GET_DeleteObjectARB(disp) ((disp)->DeleteObjectARB)
+#define SET_DeleteObjectARB(disp, fn) ((disp)->DeleteObjectARB = fn)
+#define CALL_DetachObjectARB(disp, parameters) (*((disp)->DetachObjectARB)) parameters
+#define GET_DetachObjectARB(disp) ((disp)->DetachObjectARB)
+#define SET_DetachObjectARB(disp, fn) ((disp)->DetachObjectARB = fn)
+#define CALL_GetActiveUniformARB(disp, parameters) (*((disp)->GetActiveUniformARB)) parameters
+#define GET_GetActiveUniformARB(disp) ((disp)->GetActiveUniformARB)
+#define SET_GetActiveUniformARB(disp, fn) ((disp)->GetActiveUniformARB = fn)
+#define CALL_GetAttachedObjectsARB(disp, parameters) (*((disp)->GetAttachedObjectsARB)) parameters
+#define GET_GetAttachedObjectsARB(disp) ((disp)->GetAttachedObjectsARB)
+#define SET_GetAttachedObjectsARB(disp, fn) ((disp)->GetAttachedObjectsARB = fn)
+#define CALL_GetHandleARB(disp, parameters) (*((disp)->GetHandleARB)) parameters
+#define GET_GetHandleARB(disp) ((disp)->GetHandleARB)
+#define SET_GetHandleARB(disp, fn) ((disp)->GetHandleARB = fn)
+#define CALL_GetInfoLogARB(disp, parameters) (*((disp)->GetInfoLogARB)) parameters
+#define GET_GetInfoLogARB(disp) ((disp)->GetInfoLogARB)
+#define SET_GetInfoLogARB(disp, fn) ((disp)->GetInfoLogARB = fn)
+#define CALL_GetObjectParameterfvARB(disp, parameters) (*((disp)->GetObjectParameterfvARB)) parameters
+#define GET_GetObjectParameterfvARB(disp) ((disp)->GetObjectParameterfvARB)
+#define SET_GetObjectParameterfvARB(disp, fn) ((disp)->GetObjectParameterfvARB = fn)
+#define CALL_GetObjectParameterivARB(disp, parameters) (*((disp)->GetObjectParameterivARB)) parameters
+#define GET_GetObjectParameterivARB(disp) ((disp)->GetObjectParameterivARB)
+#define SET_GetObjectParameterivARB(disp, fn) ((disp)->GetObjectParameterivARB = fn)
+#define CALL_GetShaderSourceARB(disp, parameters) (*((disp)->GetShaderSourceARB)) parameters
+#define GET_GetShaderSourceARB(disp) ((disp)->GetShaderSourceARB)
+#define SET_GetShaderSourceARB(disp, fn) ((disp)->GetShaderSourceARB = fn)
+#define CALL_GetUniformLocationARB(disp, parameters) (*((disp)->GetUniformLocationARB)) parameters
+#define GET_GetUniformLocationARB(disp) ((disp)->GetUniformLocationARB)
+#define SET_GetUniformLocationARB(disp, fn) ((disp)->GetUniformLocationARB = fn)
+#define CALL_GetUniformfvARB(disp, parameters) (*((disp)->GetUniformfvARB)) parameters
+#define GET_GetUniformfvARB(disp) ((disp)->GetUniformfvARB)
+#define SET_GetUniformfvARB(disp, fn) ((disp)->GetUniformfvARB = fn)
+#define CALL_GetUniformivARB(disp, parameters) (*((disp)->GetUniformivARB)) parameters
+#define GET_GetUniformivARB(disp) ((disp)->GetUniformivARB)
+#define SET_GetUniformivARB(disp, fn) ((disp)->GetUniformivARB = fn)
+#define CALL_LinkProgramARB(disp, parameters) (*((disp)->LinkProgramARB)) parameters
+#define GET_LinkProgramARB(disp) ((disp)->LinkProgramARB)
+#define SET_LinkProgramARB(disp, fn) ((disp)->LinkProgramARB = fn)
+#define CALL_ShaderSourceARB(disp, parameters) (*((disp)->ShaderSourceARB)) parameters
+#define GET_ShaderSourceARB(disp) ((disp)->ShaderSourceARB)
+#define SET_ShaderSourceARB(disp, fn) ((disp)->ShaderSourceARB = fn)
+#define CALL_Uniform1fARB(disp, parameters) (*((disp)->Uniform1fARB)) parameters
+#define GET_Uniform1fARB(disp) ((disp)->Uniform1fARB)
+#define SET_Uniform1fARB(disp, fn) ((disp)->Uniform1fARB = fn)
+#define CALL_Uniform1fvARB(disp, parameters) (*((disp)->Uniform1fvARB)) parameters
+#define GET_Uniform1fvARB(disp) ((disp)->Uniform1fvARB)
+#define SET_Uniform1fvARB(disp, fn) ((disp)->Uniform1fvARB = fn)
+#define CALL_Uniform1iARB(disp, parameters) (*((disp)->Uniform1iARB)) parameters
+#define GET_Uniform1iARB(disp) ((disp)->Uniform1iARB)
+#define SET_Uniform1iARB(disp, fn) ((disp)->Uniform1iARB = fn)
+#define CALL_Uniform1ivARB(disp, parameters) (*((disp)->Uniform1ivARB)) parameters
+#define GET_Uniform1ivARB(disp) ((disp)->Uniform1ivARB)
+#define SET_Uniform1ivARB(disp, fn) ((disp)->Uniform1ivARB = fn)
+#define CALL_Uniform2fARB(disp, parameters) (*((disp)->Uniform2fARB)) parameters
+#define GET_Uniform2fARB(disp) ((disp)->Uniform2fARB)
+#define SET_Uniform2fARB(disp, fn) ((disp)->Uniform2fARB = fn)
+#define CALL_Uniform2fvARB(disp, parameters) (*((disp)->Uniform2fvARB)) parameters
+#define GET_Uniform2fvARB(disp) ((disp)->Uniform2fvARB)
+#define SET_Uniform2fvARB(disp, fn) ((disp)->Uniform2fvARB = fn)
+#define CALL_Uniform2iARB(disp, parameters) (*((disp)->Uniform2iARB)) parameters
+#define GET_Uniform2iARB(disp) ((disp)->Uniform2iARB)
+#define SET_Uniform2iARB(disp, fn) ((disp)->Uniform2iARB = fn)
+#define CALL_Uniform2ivARB(disp, parameters) (*((disp)->Uniform2ivARB)) parameters
+#define GET_Uniform2ivARB(disp) ((disp)->Uniform2ivARB)
+#define SET_Uniform2ivARB(disp, fn) ((disp)->Uniform2ivARB = fn)
+#define CALL_Uniform3fARB(disp, parameters) (*((disp)->Uniform3fARB)) parameters
+#define GET_Uniform3fARB(disp) ((disp)->Uniform3fARB)
+#define SET_Uniform3fARB(disp, fn) ((disp)->Uniform3fARB = fn)
+#define CALL_Uniform3fvARB(disp, parameters) (*((disp)->Uniform3fvARB)) parameters
+#define GET_Uniform3fvARB(disp) ((disp)->Uniform3fvARB)
+#define SET_Uniform3fvARB(disp, fn) ((disp)->Uniform3fvARB = fn)
+#define CALL_Uniform3iARB(disp, parameters) (*((disp)->Uniform3iARB)) parameters
+#define GET_Uniform3iARB(disp) ((disp)->Uniform3iARB)
+#define SET_Uniform3iARB(disp, fn) ((disp)->Uniform3iARB = fn)
+#define CALL_Uniform3ivARB(disp, parameters) (*((disp)->Uniform3ivARB)) parameters
+#define GET_Uniform3ivARB(disp) ((disp)->Uniform3ivARB)
+#define SET_Uniform3ivARB(disp, fn) ((disp)->Uniform3ivARB = fn)
+#define CALL_Uniform4fARB(disp, parameters) (*((disp)->Uniform4fARB)) parameters
+#define GET_Uniform4fARB(disp) ((disp)->Uniform4fARB)
+#define SET_Uniform4fARB(disp, fn) ((disp)->Uniform4fARB = fn)
+#define CALL_Uniform4fvARB(disp, parameters) (*((disp)->Uniform4fvARB)) parameters
+#define GET_Uniform4fvARB(disp) ((disp)->Uniform4fvARB)
+#define SET_Uniform4fvARB(disp, fn) ((disp)->Uniform4fvARB = fn)
+#define CALL_Uniform4iARB(disp, parameters) (*((disp)->Uniform4iARB)) parameters
+#define GET_Uniform4iARB(disp) ((disp)->Uniform4iARB)
+#define SET_Uniform4iARB(disp, fn) ((disp)->Uniform4iARB = fn)
+#define CALL_Uniform4ivARB(disp, parameters) (*((disp)->Uniform4ivARB)) parameters
+#define GET_Uniform4ivARB(disp) ((disp)->Uniform4ivARB)
+#define SET_Uniform4ivARB(disp, fn) ((disp)->Uniform4ivARB = fn)
+#define CALL_UniformMatrix2fvARB(disp, parameters) (*((disp)->UniformMatrix2fvARB)) parameters
+#define GET_UniformMatrix2fvARB(disp) ((disp)->UniformMatrix2fvARB)
+#define SET_UniformMatrix2fvARB(disp, fn) ((disp)->UniformMatrix2fvARB = fn)
+#define CALL_UniformMatrix3fvARB(disp, parameters) (*((disp)->UniformMatrix3fvARB)) parameters
+#define GET_UniformMatrix3fvARB(disp) ((disp)->UniformMatrix3fvARB)
+#define SET_UniformMatrix3fvARB(disp, fn) ((disp)->UniformMatrix3fvARB = fn)
+#define CALL_UniformMatrix4fvARB(disp, parameters) (*((disp)->UniformMatrix4fvARB)) parameters
+#define GET_UniformMatrix4fvARB(disp) ((disp)->UniformMatrix4fvARB)
+#define SET_UniformMatrix4fvARB(disp, fn) ((disp)->UniformMatrix4fvARB = fn)
+#define CALL_UseProgramObjectARB(disp, parameters) (*((disp)->UseProgramObjectARB)) parameters
+#define GET_UseProgramObjectARB(disp) ((disp)->UseProgramObjectARB)
+#define SET_UseProgramObjectARB(disp, fn) ((disp)->UseProgramObjectARB = fn)
+#define CALL_ValidateProgramARB(disp, parameters) (*((disp)->ValidateProgramARB)) parameters
+#define GET_ValidateProgramARB(disp) ((disp)->ValidateProgramARB)
+#define SET_ValidateProgramARB(disp, fn) ((disp)->ValidateProgramARB = fn)
+#define CALL_BindAttribLocationARB(disp, parameters) (*((disp)->BindAttribLocationARB)) parameters
+#define GET_BindAttribLocationARB(disp) ((disp)->BindAttribLocationARB)
+#define SET_BindAttribLocationARB(disp, fn) ((disp)->BindAttribLocationARB = fn)
+#define CALL_GetActiveAttribARB(disp, parameters) (*((disp)->GetActiveAttribARB)) parameters
+#define GET_GetActiveAttribARB(disp) ((disp)->GetActiveAttribARB)
+#define SET_GetActiveAttribARB(disp, fn) ((disp)->GetActiveAttribARB = fn)
+#define CALL_GetAttribLocationARB(disp, parameters) (*((disp)->GetAttribLocationARB)) parameters
+#define GET_GetAttribLocationARB(disp) ((disp)->GetAttribLocationARB)
+#define SET_GetAttribLocationARB(disp, fn) ((disp)->GetAttribLocationARB = fn)
 #define CALL_DrawBuffersARB(disp, parameters) (*((disp)->DrawBuffersARB)) parameters
 #define GET_DrawBuffersARB(disp) ((disp)->DrawBuffersARB)
 #define SET_DrawBuffersARB(disp, fn) ((disp)->DrawBuffersARB = fn)
 #define CALL_PolygonOffsetEXT(disp, parameters) (*((disp)->PolygonOffsetEXT)) parameters
 #define GET_PolygonOffsetEXT(disp) ((disp)->PolygonOffsetEXT)
 #define SET_PolygonOffsetEXT(disp, fn) ((disp)->PolygonOffsetEXT = fn)
-#define CALL_GetTexFilterFuncSGIS(disp, parameters) (*((disp)->GetTexFilterFuncSGIS)) parameters
-#define GET_GetTexFilterFuncSGIS(disp) ((disp)->GetTexFilterFuncSGIS)
-#define SET_GetTexFilterFuncSGIS(disp, fn) ((disp)->GetTexFilterFuncSGIS = fn)
-#define CALL_TexFilterFuncSGIS(disp, parameters) (*((disp)->TexFilterFuncSGIS)) parameters
-#define GET_TexFilterFuncSGIS(disp) ((disp)->TexFilterFuncSGIS)
-#define SET_TexFilterFuncSGIS(disp, fn) ((disp)->TexFilterFuncSGIS = fn)
 #define CALL_GetHistogramEXT(disp, parameters) (*((disp)->GetHistogramEXT)) parameters
 #define GET_GetHistogramEXT(disp) ((disp)->GetHistogramEXT)
 #define SET_GetHistogramEXT(disp, fn) ((disp)->GetHistogramEXT = fn)
@@ -1339,42 +1717,33 @@
 #define CALL_GetSeparableFilterEXT(disp, parameters) (*((disp)->GetSeparableFilterEXT)) parameters
 #define GET_GetSeparableFilterEXT(disp) ((disp)->GetSeparableFilterEXT)
 #define SET_GetSeparableFilterEXT(disp, fn) ((disp)->GetSeparableFilterEXT = fn)
-#define CALL_GetColorTableSGI(disp, parameters) (*((disp)->GetColorTableSGI)) parameters
-#define GET_GetColorTableSGI(disp) ((disp)->GetColorTableSGI)
-#define SET_GetColorTableSGI(disp, fn) ((disp)->GetColorTableSGI = fn)
 #define CALL_GetColorTableParameterfvSGI(disp, parameters) (*((disp)->GetColorTableParameterfvSGI)) parameters
 #define GET_GetColorTableParameterfvSGI(disp) ((disp)->GetColorTableParameterfvSGI)
 #define SET_GetColorTableParameterfvSGI(disp, fn) ((disp)->GetColorTableParameterfvSGI = fn)
 #define CALL_GetColorTableParameterivSGI(disp, parameters) (*((disp)->GetColorTableParameterivSGI)) parameters
 #define GET_GetColorTableParameterivSGI(disp) ((disp)->GetColorTableParameterivSGI)
 #define SET_GetColorTableParameterivSGI(disp, fn) ((disp)->GetColorTableParameterivSGI = fn)
-#define CALL_PixelTexGenSGIX(disp, parameters) (*((disp)->PixelTexGenSGIX)) parameters
-#define GET_PixelTexGenSGIX(disp) ((disp)->PixelTexGenSGIX)
-#define SET_PixelTexGenSGIX(disp, fn) ((disp)->PixelTexGenSGIX = fn)
-#define CALL_PixelTexGenParameteriSGIS(disp, parameters) (*((disp)->PixelTexGenParameteriSGIS)) parameters
-#define GET_PixelTexGenParameteriSGIS(disp) ((disp)->PixelTexGenParameteriSGIS)
-#define SET_PixelTexGenParameteriSGIS(disp, fn) ((disp)->PixelTexGenParameteriSGIS = fn)
-#define CALL_PixelTexGenParameterivSGIS(disp, parameters) (*((disp)->PixelTexGenParameterivSGIS)) parameters
-#define GET_PixelTexGenParameterivSGIS(disp) ((disp)->PixelTexGenParameterivSGIS)
-#define SET_PixelTexGenParameterivSGIS(disp, fn) ((disp)->PixelTexGenParameterivSGIS = fn)
+#define CALL_GetColorTableSGI(disp, parameters) (*((disp)->GetColorTableSGI)) parameters
+#define GET_GetColorTableSGI(disp) ((disp)->GetColorTableSGI)
+#define SET_GetColorTableSGI(disp, fn) ((disp)->GetColorTableSGI = fn)
+#define CALL_GetPixelTexGenParameterfvSGIS(disp, parameters) (*((disp)->GetPixelTexGenParameterfvSGIS)) parameters
+#define GET_GetPixelTexGenParameterfvSGIS(disp) ((disp)->GetPixelTexGenParameterfvSGIS)
+#define SET_GetPixelTexGenParameterfvSGIS(disp, fn) ((disp)->GetPixelTexGenParameterfvSGIS = fn)
+#define CALL_GetPixelTexGenParameterivSGIS(disp, parameters) (*((disp)->GetPixelTexGenParameterivSGIS)) parameters
+#define GET_GetPixelTexGenParameterivSGIS(disp) ((disp)->GetPixelTexGenParameterivSGIS)
+#define SET_GetPixelTexGenParameterivSGIS(disp, fn) ((disp)->GetPixelTexGenParameterivSGIS = fn)
 #define CALL_PixelTexGenParameterfSGIS(disp, parameters) (*((disp)->PixelTexGenParameterfSGIS)) parameters
 #define GET_PixelTexGenParameterfSGIS(disp) ((disp)->PixelTexGenParameterfSGIS)
 #define SET_PixelTexGenParameterfSGIS(disp, fn) ((disp)->PixelTexGenParameterfSGIS = fn)
 #define CALL_PixelTexGenParameterfvSGIS(disp, parameters) (*((disp)->PixelTexGenParameterfvSGIS)) parameters
 #define GET_PixelTexGenParameterfvSGIS(disp) ((disp)->PixelTexGenParameterfvSGIS)
 #define SET_PixelTexGenParameterfvSGIS(disp, fn) ((disp)->PixelTexGenParameterfvSGIS = fn)
-#define CALL_GetPixelTexGenParameterivSGIS(disp, parameters) (*((disp)->GetPixelTexGenParameterivSGIS)) parameters
-#define GET_GetPixelTexGenParameterivSGIS(disp) ((disp)->GetPixelTexGenParameterivSGIS)
-#define SET_GetPixelTexGenParameterivSGIS(disp, fn) ((disp)->GetPixelTexGenParameterivSGIS = fn)
-#define CALL_GetPixelTexGenParameterfvSGIS(disp, parameters) (*((disp)->GetPixelTexGenParameterfvSGIS)) parameters
-#define GET_GetPixelTexGenParameterfvSGIS(disp) ((disp)->GetPixelTexGenParameterfvSGIS)
-#define SET_GetPixelTexGenParameterfvSGIS(disp, fn) ((disp)->GetPixelTexGenParameterfvSGIS = fn)
-#define CALL_TexImage4DSGIS(disp, parameters) (*((disp)->TexImage4DSGIS)) parameters
-#define GET_TexImage4DSGIS(disp) ((disp)->TexImage4DSGIS)
-#define SET_TexImage4DSGIS(disp, fn) ((disp)->TexImage4DSGIS = fn)
-#define CALL_TexSubImage4DSGIS(disp, parameters) (*((disp)->TexSubImage4DSGIS)) parameters
-#define GET_TexSubImage4DSGIS(disp) ((disp)->TexSubImage4DSGIS)
-#define SET_TexSubImage4DSGIS(disp, fn) ((disp)->TexSubImage4DSGIS = fn)
+#define CALL_PixelTexGenParameteriSGIS(disp, parameters) (*((disp)->PixelTexGenParameteriSGIS)) parameters
+#define GET_PixelTexGenParameteriSGIS(disp) ((disp)->PixelTexGenParameteriSGIS)
+#define SET_PixelTexGenParameteriSGIS(disp, fn) ((disp)->PixelTexGenParameteriSGIS = fn)
+#define CALL_PixelTexGenParameterivSGIS(disp, parameters) (*((disp)->PixelTexGenParameterivSGIS)) parameters
+#define GET_PixelTexGenParameterivSGIS(disp) ((disp)->PixelTexGenParameterivSGIS)
+#define SET_PixelTexGenParameterivSGIS(disp, fn) ((disp)->PixelTexGenParameterivSGIS = fn)
 #define CALL_AreTexturesResidentEXT(disp, parameters) (*((disp)->AreTexturesResidentEXT)) parameters
 #define GET_AreTexturesResidentEXT(disp) ((disp)->AreTexturesResidentEXT)
 #define SET_AreTexturesResidentEXT(disp, fn) ((disp)->AreTexturesResidentEXT = fn)
@@ -1384,18 +1753,6 @@
 #define CALL_IsTextureEXT(disp, parameters) (*((disp)->IsTextureEXT)) parameters
 #define GET_IsTextureEXT(disp) ((disp)->IsTextureEXT)
 #define SET_IsTextureEXT(disp, fn) ((disp)->IsTextureEXT = fn)
-#define CALL_DetailTexFuncSGIS(disp, parameters) (*((disp)->DetailTexFuncSGIS)) parameters
-#define GET_DetailTexFuncSGIS(disp) ((disp)->DetailTexFuncSGIS)
-#define SET_DetailTexFuncSGIS(disp, fn) ((disp)->DetailTexFuncSGIS = fn)
-#define CALL_GetDetailTexFuncSGIS(disp, parameters) (*((disp)->GetDetailTexFuncSGIS)) parameters
-#define GET_GetDetailTexFuncSGIS(disp) ((disp)->GetDetailTexFuncSGIS)
-#define SET_GetDetailTexFuncSGIS(disp, fn) ((disp)->GetDetailTexFuncSGIS = fn)
-#define CALL_SharpenTexFuncSGIS(disp, parameters) (*((disp)->SharpenTexFuncSGIS)) parameters
-#define GET_SharpenTexFuncSGIS(disp) ((disp)->SharpenTexFuncSGIS)
-#define SET_SharpenTexFuncSGIS(disp, fn) ((disp)->SharpenTexFuncSGIS = fn)
-#define CALL_GetSharpenTexFuncSGIS(disp, parameters) (*((disp)->GetSharpenTexFuncSGIS)) parameters
-#define GET_GetSharpenTexFuncSGIS(disp) ((disp)->GetSharpenTexFuncSGIS)
-#define SET_GetSharpenTexFuncSGIS(disp, fn) ((disp)->GetSharpenTexFuncSGIS = fn)
 #define CALL_SampleMaskSGIS(disp, parameters) (*((disp)->SampleMaskSGIS)) parameters
 #define GET_SampleMaskSGIS(disp) ((disp)->SampleMaskSGIS)
 #define SET_SampleMaskSGIS(disp, fn) ((disp)->SampleMaskSGIS = fn)
@@ -1420,159 +1777,144 @@
 #define CALL_VertexPointerEXT(disp, parameters) (*((disp)->VertexPointerEXT)) parameters
 #define GET_VertexPointerEXT(disp) ((disp)->VertexPointerEXT)
 #define SET_VertexPointerEXT(disp, fn) ((disp)->VertexPointerEXT = fn)
-#define CALL_SpriteParameterfSGIX(disp, parameters) (*((disp)->SpriteParameterfSGIX)) parameters
-#define GET_SpriteParameterfSGIX(disp) ((disp)->SpriteParameterfSGIX)
-#define SET_SpriteParameterfSGIX(disp, fn) ((disp)->SpriteParameterfSGIX = fn)
-#define CALL_SpriteParameterfvSGIX(disp, parameters) (*((disp)->SpriteParameterfvSGIX)) parameters
-#define GET_SpriteParameterfvSGIX(disp) ((disp)->SpriteParameterfvSGIX)
-#define SET_SpriteParameterfvSGIX(disp, fn) ((disp)->SpriteParameterfvSGIX = fn)
-#define CALL_SpriteParameteriSGIX(disp, parameters) (*((disp)->SpriteParameteriSGIX)) parameters
-#define GET_SpriteParameteriSGIX(disp) ((disp)->SpriteParameteriSGIX)
-#define SET_SpriteParameteriSGIX(disp, fn) ((disp)->SpriteParameteriSGIX = fn)
-#define CALL_SpriteParameterivSGIX(disp, parameters) (*((disp)->SpriteParameterivSGIX)) parameters
-#define GET_SpriteParameterivSGIX(disp) ((disp)->SpriteParameterivSGIX)
-#define SET_SpriteParameterivSGIX(disp, fn) ((disp)->SpriteParameterivSGIX = fn)
 #define CALL_PointParameterfEXT(disp, parameters) (*((disp)->PointParameterfEXT)) parameters
 #define GET_PointParameterfEXT(disp) ((disp)->PointParameterfEXT)
 #define SET_PointParameterfEXT(disp, fn) ((disp)->PointParameterfEXT = fn)
 #define CALL_PointParameterfvEXT(disp, parameters) (*((disp)->PointParameterfvEXT)) parameters
 #define GET_PointParameterfvEXT(disp) ((disp)->PointParameterfvEXT)
 #define SET_PointParameterfvEXT(disp, fn) ((disp)->PointParameterfvEXT = fn)
-#define CALL_GetInstrumentsSGIX(disp, parameters) (*((disp)->GetInstrumentsSGIX)) parameters
-#define GET_GetInstrumentsSGIX(disp) ((disp)->GetInstrumentsSGIX)
-#define SET_GetInstrumentsSGIX(disp, fn) ((disp)->GetInstrumentsSGIX = fn)
-#define CALL_InstrumentsBufferSGIX(disp, parameters) (*((disp)->InstrumentsBufferSGIX)) parameters
-#define GET_InstrumentsBufferSGIX(disp) ((disp)->InstrumentsBufferSGIX)
-#define SET_InstrumentsBufferSGIX(disp, fn) ((disp)->InstrumentsBufferSGIX = fn)
-#define CALL_PollInstrumentsSGIX(disp, parameters) (*((disp)->PollInstrumentsSGIX)) parameters
-#define GET_PollInstrumentsSGIX(disp) ((disp)->PollInstrumentsSGIX)
-#define SET_PollInstrumentsSGIX(disp, fn) ((disp)->PollInstrumentsSGIX = fn)
-#define CALL_ReadInstrumentsSGIX(disp, parameters) (*((disp)->ReadInstrumentsSGIX)) parameters
-#define GET_ReadInstrumentsSGIX(disp) ((disp)->ReadInstrumentsSGIX)
-#define SET_ReadInstrumentsSGIX(disp, fn) ((disp)->ReadInstrumentsSGIX = fn)
-#define CALL_StartInstrumentsSGIX(disp, parameters) (*((disp)->StartInstrumentsSGIX)) parameters
-#define GET_StartInstrumentsSGIX(disp) ((disp)->StartInstrumentsSGIX)
-#define SET_StartInstrumentsSGIX(disp, fn) ((disp)->StartInstrumentsSGIX = fn)
-#define CALL_StopInstrumentsSGIX(disp, parameters) (*((disp)->StopInstrumentsSGIX)) parameters
-#define GET_StopInstrumentsSGIX(disp) ((disp)->StopInstrumentsSGIX)
-#define SET_StopInstrumentsSGIX(disp, fn) ((disp)->StopInstrumentsSGIX = fn)
-#define CALL_FrameZoomSGIX(disp, parameters) (*((disp)->FrameZoomSGIX)) parameters
-#define GET_FrameZoomSGIX(disp) ((disp)->FrameZoomSGIX)
-#define SET_FrameZoomSGIX(disp, fn) ((disp)->FrameZoomSGIX = fn)
-#define CALL_TagSampleBufferSGIX(disp, parameters) (*((disp)->TagSampleBufferSGIX)) parameters
-#define GET_TagSampleBufferSGIX(disp) ((disp)->TagSampleBufferSGIX)
-#define SET_TagSampleBufferSGIX(disp, fn) ((disp)->TagSampleBufferSGIX = fn)
-#define CALL_ReferencePlaneSGIX(disp, parameters) (*((disp)->ReferencePlaneSGIX)) parameters
-#define GET_ReferencePlaneSGIX(disp) ((disp)->ReferencePlaneSGIX)
-#define SET_ReferencePlaneSGIX(disp, fn) ((disp)->ReferencePlaneSGIX = fn)
-#define CALL_FlushRasterSGIX(disp, parameters) (*((disp)->FlushRasterSGIX)) parameters
-#define GET_FlushRasterSGIX(disp) ((disp)->FlushRasterSGIX)
-#define SET_FlushRasterSGIX(disp, fn) ((disp)->FlushRasterSGIX = fn)
-#define CALL_GetListParameterfvSGIX(disp, parameters) (*((disp)->GetListParameterfvSGIX)) parameters
-#define GET_GetListParameterfvSGIX(disp) ((disp)->GetListParameterfvSGIX)
-#define SET_GetListParameterfvSGIX(disp, fn) ((disp)->GetListParameterfvSGIX = fn)
-#define CALL_GetListParameterivSGIX(disp, parameters) (*((disp)->GetListParameterivSGIX)) parameters
-#define GET_GetListParameterivSGIX(disp) ((disp)->GetListParameterivSGIX)
-#define SET_GetListParameterivSGIX(disp, fn) ((disp)->GetListParameterivSGIX = fn)
-#define CALL_ListParameterfSGIX(disp, parameters) (*((disp)->ListParameterfSGIX)) parameters
-#define GET_ListParameterfSGIX(disp) ((disp)->ListParameterfSGIX)
-#define SET_ListParameterfSGIX(disp, fn) ((disp)->ListParameterfSGIX = fn)
-#define CALL_ListParameterfvSGIX(disp, parameters) (*((disp)->ListParameterfvSGIX)) parameters
-#define GET_ListParameterfvSGIX(disp) ((disp)->ListParameterfvSGIX)
-#define SET_ListParameterfvSGIX(disp, fn) ((disp)->ListParameterfvSGIX = fn)
-#define CALL_ListParameteriSGIX(disp, parameters) (*((disp)->ListParameteriSGIX)) parameters
-#define GET_ListParameteriSGIX(disp) ((disp)->ListParameteriSGIX)
-#define SET_ListParameteriSGIX(disp, fn) ((disp)->ListParameteriSGIX = fn)
-#define CALL_ListParameterivSGIX(disp, parameters) (*((disp)->ListParameterivSGIX)) parameters
-#define GET_ListParameterivSGIX(disp) ((disp)->ListParameterivSGIX)
-#define SET_ListParameterivSGIX(disp, fn) ((disp)->ListParameterivSGIX = fn)
-#define CALL_FragmentColorMaterialSGIX(disp, parameters) (*((disp)->FragmentColorMaterialSGIX)) parameters
-#define GET_FragmentColorMaterialSGIX(disp) ((disp)->FragmentColorMaterialSGIX)
-#define SET_FragmentColorMaterialSGIX(disp, fn) ((disp)->FragmentColorMaterialSGIX = fn)
-#define CALL_FragmentLightfSGIX(disp, parameters) (*((disp)->FragmentLightfSGIX)) parameters
-#define GET_FragmentLightfSGIX(disp) ((disp)->FragmentLightfSGIX)
-#define SET_FragmentLightfSGIX(disp, fn) ((disp)->FragmentLightfSGIX = fn)
-#define CALL_FragmentLightfvSGIX(disp, parameters) (*((disp)->FragmentLightfvSGIX)) parameters
-#define GET_FragmentLightfvSGIX(disp) ((disp)->FragmentLightfvSGIX)
-#define SET_FragmentLightfvSGIX(disp, fn) ((disp)->FragmentLightfvSGIX = fn)
-#define CALL_FragmentLightiSGIX(disp, parameters) (*((disp)->FragmentLightiSGIX)) parameters
-#define GET_FragmentLightiSGIX(disp) ((disp)->FragmentLightiSGIX)
-#define SET_FragmentLightiSGIX(disp, fn) ((disp)->FragmentLightiSGIX = fn)
-#define CALL_FragmentLightivSGIX(disp, parameters) (*((disp)->FragmentLightivSGIX)) parameters
-#define GET_FragmentLightivSGIX(disp) ((disp)->FragmentLightivSGIX)
-#define SET_FragmentLightivSGIX(disp, fn) ((disp)->FragmentLightivSGIX = fn)
-#define CALL_FragmentLightModelfSGIX(disp, parameters) (*((disp)->FragmentLightModelfSGIX)) parameters
-#define GET_FragmentLightModelfSGIX(disp) ((disp)->FragmentLightModelfSGIX)
-#define SET_FragmentLightModelfSGIX(disp, fn) ((disp)->FragmentLightModelfSGIX = fn)
-#define CALL_FragmentLightModelfvSGIX(disp, parameters) (*((disp)->FragmentLightModelfvSGIX)) parameters
-#define GET_FragmentLightModelfvSGIX(disp) ((disp)->FragmentLightModelfvSGIX)
-#define SET_FragmentLightModelfvSGIX(disp, fn) ((disp)->FragmentLightModelfvSGIX = fn)
-#define CALL_FragmentLightModeliSGIX(disp, parameters) (*((disp)->FragmentLightModeliSGIX)) parameters
-#define GET_FragmentLightModeliSGIX(disp) ((disp)->FragmentLightModeliSGIX)
-#define SET_FragmentLightModeliSGIX(disp, fn) ((disp)->FragmentLightModeliSGIX = fn)
-#define CALL_FragmentLightModelivSGIX(disp, parameters) (*((disp)->FragmentLightModelivSGIX)) parameters
-#define GET_FragmentLightModelivSGIX(disp) ((disp)->FragmentLightModelivSGIX)
-#define SET_FragmentLightModelivSGIX(disp, fn) ((disp)->FragmentLightModelivSGIX = fn)
-#define CALL_FragmentMaterialfSGIX(disp, parameters) (*((disp)->FragmentMaterialfSGIX)) parameters
-#define GET_FragmentMaterialfSGIX(disp) ((disp)->FragmentMaterialfSGIX)
-#define SET_FragmentMaterialfSGIX(disp, fn) ((disp)->FragmentMaterialfSGIX = fn)
-#define CALL_FragmentMaterialfvSGIX(disp, parameters) (*((disp)->FragmentMaterialfvSGIX)) parameters
-#define GET_FragmentMaterialfvSGIX(disp) ((disp)->FragmentMaterialfvSGIX)
-#define SET_FragmentMaterialfvSGIX(disp, fn) ((disp)->FragmentMaterialfvSGIX = fn)
-#define CALL_FragmentMaterialiSGIX(disp, parameters) (*((disp)->FragmentMaterialiSGIX)) parameters
-#define GET_FragmentMaterialiSGIX(disp) ((disp)->FragmentMaterialiSGIX)
-#define SET_FragmentMaterialiSGIX(disp, fn) ((disp)->FragmentMaterialiSGIX = fn)
-#define CALL_FragmentMaterialivSGIX(disp, parameters) (*((disp)->FragmentMaterialivSGIX)) parameters
-#define GET_FragmentMaterialivSGIX(disp) ((disp)->FragmentMaterialivSGIX)
-#define SET_FragmentMaterialivSGIX(disp, fn) ((disp)->FragmentMaterialivSGIX = fn)
-#define CALL_GetFragmentLightfvSGIX(disp, parameters) (*((disp)->GetFragmentLightfvSGIX)) parameters
-#define GET_GetFragmentLightfvSGIX(disp) ((disp)->GetFragmentLightfvSGIX)
-#define SET_GetFragmentLightfvSGIX(disp, fn) ((disp)->GetFragmentLightfvSGIX = fn)
-#define CALL_GetFragmentLightivSGIX(disp, parameters) (*((disp)->GetFragmentLightivSGIX)) parameters
-#define GET_GetFragmentLightivSGIX(disp) ((disp)->GetFragmentLightivSGIX)
-#define SET_GetFragmentLightivSGIX(disp, fn) ((disp)->GetFragmentLightivSGIX = fn)
-#define CALL_GetFragmentMaterialfvSGIX(disp, parameters) (*((disp)->GetFragmentMaterialfvSGIX)) parameters
-#define GET_GetFragmentMaterialfvSGIX(disp) ((disp)->GetFragmentMaterialfvSGIX)
-#define SET_GetFragmentMaterialfvSGIX(disp, fn) ((disp)->GetFragmentMaterialfvSGIX = fn)
-#define CALL_GetFragmentMaterialivSGIX(disp, parameters) (*((disp)->GetFragmentMaterialivSGIX)) parameters
-#define GET_GetFragmentMaterialivSGIX(disp) ((disp)->GetFragmentMaterialivSGIX)
-#define SET_GetFragmentMaterialivSGIX(disp, fn) ((disp)->GetFragmentMaterialivSGIX = fn)
-#define CALL_LightEnviSGIX(disp, parameters) (*((disp)->LightEnviSGIX)) parameters
-#define GET_LightEnviSGIX(disp) ((disp)->LightEnviSGIX)
-#define SET_LightEnviSGIX(disp, fn) ((disp)->LightEnviSGIX = fn)
+#define CALL_GetColorTableEXT(disp, parameters) (*((disp)->GetColorTableEXT)) parameters
+#define GET_GetColorTableEXT(disp) ((disp)->GetColorTableEXT)
+#define SET_GetColorTableEXT(disp, fn) ((disp)->GetColorTableEXT = fn)
+#define CALL_GetColorTableParameterfvEXT(disp, parameters) (*((disp)->GetColorTableParameterfvEXT)) parameters
+#define GET_GetColorTableParameterfvEXT(disp) ((disp)->GetColorTableParameterfvEXT)
+#define SET_GetColorTableParameterfvEXT(disp, fn) ((disp)->GetColorTableParameterfvEXT = fn)
+#define CALL_GetColorTableParameterivEXT(disp, parameters) (*((disp)->GetColorTableParameterivEXT)) parameters
+#define GET_GetColorTableParameterivEXT(disp) ((disp)->GetColorTableParameterivEXT)
+#define SET_GetColorTableParameterivEXT(disp, fn) ((disp)->GetColorTableParameterivEXT = fn)
+#define CALL_LockArraysEXT(disp, parameters) (*((disp)->LockArraysEXT)) parameters
+#define GET_LockArraysEXT(disp) ((disp)->LockArraysEXT)
+#define SET_LockArraysEXT(disp, fn) ((disp)->LockArraysEXT = fn)
+#define CALL_UnlockArraysEXT(disp, parameters) (*((disp)->UnlockArraysEXT)) parameters
+#define GET_UnlockArraysEXT(disp) ((disp)->UnlockArraysEXT)
+#define SET_UnlockArraysEXT(disp, fn) ((disp)->UnlockArraysEXT = fn)
+#define CALL_CullParameterdvEXT(disp, parameters) (*((disp)->CullParameterdvEXT)) parameters
+#define GET_CullParameterdvEXT(disp) ((disp)->CullParameterdvEXT)
+#define SET_CullParameterdvEXT(disp, fn) ((disp)->CullParameterdvEXT = fn)
+#define CALL_CullParameterfvEXT(disp, parameters) (*((disp)->CullParameterfvEXT)) parameters
+#define GET_CullParameterfvEXT(disp) ((disp)->CullParameterfvEXT)
+#define SET_CullParameterfvEXT(disp, fn) ((disp)->CullParameterfvEXT = fn)
+#define CALL_SecondaryColor3bEXT(disp, parameters) (*((disp)->SecondaryColor3bEXT)) parameters
+#define GET_SecondaryColor3bEXT(disp) ((disp)->SecondaryColor3bEXT)
+#define SET_SecondaryColor3bEXT(disp, fn) ((disp)->SecondaryColor3bEXT = fn)
+#define CALL_SecondaryColor3bvEXT(disp, parameters) (*((disp)->SecondaryColor3bvEXT)) parameters
+#define GET_SecondaryColor3bvEXT(disp) ((disp)->SecondaryColor3bvEXT)
+#define SET_SecondaryColor3bvEXT(disp, fn) ((disp)->SecondaryColor3bvEXT = fn)
+#define CALL_SecondaryColor3dEXT(disp, parameters) (*((disp)->SecondaryColor3dEXT)) parameters
+#define GET_SecondaryColor3dEXT(disp) ((disp)->SecondaryColor3dEXT)
+#define SET_SecondaryColor3dEXT(disp, fn) ((disp)->SecondaryColor3dEXT = fn)
+#define CALL_SecondaryColor3dvEXT(disp, parameters) (*((disp)->SecondaryColor3dvEXT)) parameters
+#define GET_SecondaryColor3dvEXT(disp) ((disp)->SecondaryColor3dvEXT)
+#define SET_SecondaryColor3dvEXT(disp, fn) ((disp)->SecondaryColor3dvEXT = fn)
+#define CALL_SecondaryColor3fEXT(disp, parameters) (*((disp)->SecondaryColor3fEXT)) parameters
+#define GET_SecondaryColor3fEXT(disp) ((disp)->SecondaryColor3fEXT)
+#define SET_SecondaryColor3fEXT(disp, fn) ((disp)->SecondaryColor3fEXT = fn)
+#define CALL_SecondaryColor3fvEXT(disp, parameters) (*((disp)->SecondaryColor3fvEXT)) parameters
+#define GET_SecondaryColor3fvEXT(disp) ((disp)->SecondaryColor3fvEXT)
+#define SET_SecondaryColor3fvEXT(disp, fn) ((disp)->SecondaryColor3fvEXT = fn)
+#define CALL_SecondaryColor3iEXT(disp, parameters) (*((disp)->SecondaryColor3iEXT)) parameters
+#define GET_SecondaryColor3iEXT(disp) ((disp)->SecondaryColor3iEXT)
+#define SET_SecondaryColor3iEXT(disp, fn) ((disp)->SecondaryColor3iEXT = fn)
+#define CALL_SecondaryColor3ivEXT(disp, parameters) (*((disp)->SecondaryColor3ivEXT)) parameters
+#define GET_SecondaryColor3ivEXT(disp) ((disp)->SecondaryColor3ivEXT)
+#define SET_SecondaryColor3ivEXT(disp, fn) ((disp)->SecondaryColor3ivEXT = fn)
+#define CALL_SecondaryColor3sEXT(disp, parameters) (*((disp)->SecondaryColor3sEXT)) parameters
+#define GET_SecondaryColor3sEXT(disp) ((disp)->SecondaryColor3sEXT)
+#define SET_SecondaryColor3sEXT(disp, fn) ((disp)->SecondaryColor3sEXT = fn)
+#define CALL_SecondaryColor3svEXT(disp, parameters) (*((disp)->SecondaryColor3svEXT)) parameters
+#define GET_SecondaryColor3svEXT(disp) ((disp)->SecondaryColor3svEXT)
+#define SET_SecondaryColor3svEXT(disp, fn) ((disp)->SecondaryColor3svEXT = fn)
+#define CALL_SecondaryColor3ubEXT(disp, parameters) (*((disp)->SecondaryColor3ubEXT)) parameters
+#define GET_SecondaryColor3ubEXT(disp) ((disp)->SecondaryColor3ubEXT)
+#define SET_SecondaryColor3ubEXT(disp, fn) ((disp)->SecondaryColor3ubEXT = fn)
+#define CALL_SecondaryColor3ubvEXT(disp, parameters) (*((disp)->SecondaryColor3ubvEXT)) parameters
+#define GET_SecondaryColor3ubvEXT(disp) ((disp)->SecondaryColor3ubvEXT)
+#define SET_SecondaryColor3ubvEXT(disp, fn) ((disp)->SecondaryColor3ubvEXT = fn)
+#define CALL_SecondaryColor3uiEXT(disp, parameters) (*((disp)->SecondaryColor3uiEXT)) parameters
+#define GET_SecondaryColor3uiEXT(disp) ((disp)->SecondaryColor3uiEXT)
+#define SET_SecondaryColor3uiEXT(disp, fn) ((disp)->SecondaryColor3uiEXT = fn)
+#define CALL_SecondaryColor3uivEXT(disp, parameters) (*((disp)->SecondaryColor3uivEXT)) parameters
+#define GET_SecondaryColor3uivEXT(disp) ((disp)->SecondaryColor3uivEXT)
+#define SET_SecondaryColor3uivEXT(disp, fn) ((disp)->SecondaryColor3uivEXT = fn)
+#define CALL_SecondaryColor3usEXT(disp, parameters) (*((disp)->SecondaryColor3usEXT)) parameters
+#define GET_SecondaryColor3usEXT(disp) ((disp)->SecondaryColor3usEXT)
+#define SET_SecondaryColor3usEXT(disp, fn) ((disp)->SecondaryColor3usEXT = fn)
+#define CALL_SecondaryColor3usvEXT(disp, parameters) (*((disp)->SecondaryColor3usvEXT)) parameters
+#define GET_SecondaryColor3usvEXT(disp) ((disp)->SecondaryColor3usvEXT)
+#define SET_SecondaryColor3usvEXT(disp, fn) ((disp)->SecondaryColor3usvEXT = fn)
+#define CALL_SecondaryColorPointerEXT(disp, parameters) (*((disp)->SecondaryColorPointerEXT)) parameters
+#define GET_SecondaryColorPointerEXT(disp) ((disp)->SecondaryColorPointerEXT)
+#define SET_SecondaryColorPointerEXT(disp, fn) ((disp)->SecondaryColorPointerEXT = fn)
+#define CALL_MultiDrawArraysEXT(disp, parameters) (*((disp)->MultiDrawArraysEXT)) parameters
+#define GET_MultiDrawArraysEXT(disp) ((disp)->MultiDrawArraysEXT)
+#define SET_MultiDrawArraysEXT(disp, fn) ((disp)->MultiDrawArraysEXT = fn)
+#define CALL_MultiDrawElementsEXT(disp, parameters) (*((disp)->MultiDrawElementsEXT)) parameters
+#define GET_MultiDrawElementsEXT(disp) ((disp)->MultiDrawElementsEXT)
+#define SET_MultiDrawElementsEXT(disp, fn) ((disp)->MultiDrawElementsEXT = fn)
+#define CALL_FogCoordPointerEXT(disp, parameters) (*((disp)->FogCoordPointerEXT)) parameters
+#define GET_FogCoordPointerEXT(disp) ((disp)->FogCoordPointerEXT)
+#define SET_FogCoordPointerEXT(disp, fn) ((disp)->FogCoordPointerEXT = fn)
+#define CALL_FogCoorddEXT(disp, parameters) (*((disp)->FogCoorddEXT)) parameters
+#define GET_FogCoorddEXT(disp) ((disp)->FogCoorddEXT)
+#define SET_FogCoorddEXT(disp, fn) ((disp)->FogCoorddEXT = fn)
+#define CALL_FogCoorddvEXT(disp, parameters) (*((disp)->FogCoorddvEXT)) parameters
+#define GET_FogCoorddvEXT(disp) ((disp)->FogCoorddvEXT)
+#define SET_FogCoorddvEXT(disp, fn) ((disp)->FogCoorddvEXT = fn)
+#define CALL_FogCoordfEXT(disp, parameters) (*((disp)->FogCoordfEXT)) parameters
+#define GET_FogCoordfEXT(disp) ((disp)->FogCoordfEXT)
+#define SET_FogCoordfEXT(disp, fn) ((disp)->FogCoordfEXT = fn)
+#define CALL_FogCoordfvEXT(disp, parameters) (*((disp)->FogCoordfvEXT)) parameters
+#define GET_FogCoordfvEXT(disp) ((disp)->FogCoordfvEXT)
+#define SET_FogCoordfvEXT(disp, fn) ((disp)->FogCoordfvEXT = fn)
+#define CALL_PixelTexGenSGIX(disp, parameters) (*((disp)->PixelTexGenSGIX)) parameters
+#define GET_PixelTexGenSGIX(disp) ((disp)->PixelTexGenSGIX)
+#define SET_PixelTexGenSGIX(disp, fn) ((disp)->PixelTexGenSGIX = fn)
+#define CALL_BlendFuncSeparateEXT(disp, parameters) (*((disp)->BlendFuncSeparateEXT)) parameters
+#define GET_BlendFuncSeparateEXT(disp) ((disp)->BlendFuncSeparateEXT)
+#define SET_BlendFuncSeparateEXT(disp, fn) ((disp)->BlendFuncSeparateEXT = fn)
+#define CALL_VertexWeightPointerEXT(disp, parameters) (*((disp)->VertexWeightPointerEXT)) parameters
+#define GET_VertexWeightPointerEXT(disp) ((disp)->VertexWeightPointerEXT)
+#define SET_VertexWeightPointerEXT(disp, fn) ((disp)->VertexWeightPointerEXT = fn)
 #define CALL_VertexWeightfEXT(disp, parameters) (*((disp)->VertexWeightfEXT)) parameters
 #define GET_VertexWeightfEXT(disp) ((disp)->VertexWeightfEXT)
 #define SET_VertexWeightfEXT(disp, fn) ((disp)->VertexWeightfEXT = fn)
 #define CALL_VertexWeightfvEXT(disp, parameters) (*((disp)->VertexWeightfvEXT)) parameters
 #define GET_VertexWeightfvEXT(disp) ((disp)->VertexWeightfvEXT)
 #define SET_VertexWeightfvEXT(disp, fn) ((disp)->VertexWeightfvEXT = fn)
-#define CALL_VertexWeightPointerEXT(disp, parameters) (*((disp)->VertexWeightPointerEXT)) parameters
-#define GET_VertexWeightPointerEXT(disp) ((disp)->VertexWeightPointerEXT)
-#define SET_VertexWeightPointerEXT(disp, fn) ((disp)->VertexWeightPointerEXT = fn)
 #define CALL_FlushVertexArrayRangeNV(disp, parameters) (*((disp)->FlushVertexArrayRangeNV)) parameters
 #define GET_FlushVertexArrayRangeNV(disp) ((disp)->FlushVertexArrayRangeNV)
 #define SET_FlushVertexArrayRangeNV(disp, fn) ((disp)->FlushVertexArrayRangeNV = fn)
 #define CALL_VertexArrayRangeNV(disp, parameters) (*((disp)->VertexArrayRangeNV)) parameters
 #define GET_VertexArrayRangeNV(disp) ((disp)->VertexArrayRangeNV)
 #define SET_VertexArrayRangeNV(disp, fn) ((disp)->VertexArrayRangeNV = fn)
-#define CALL_CombinerParameterfvNV(disp, parameters) (*((disp)->CombinerParameterfvNV)) parameters
-#define GET_CombinerParameterfvNV(disp) ((disp)->CombinerParameterfvNV)
-#define SET_CombinerParameterfvNV(disp, fn) ((disp)->CombinerParameterfvNV = fn)
-#define CALL_CombinerParameterfNV(disp, parameters) (*((disp)->CombinerParameterfNV)) parameters
-#define GET_CombinerParameterfNV(disp) ((disp)->CombinerParameterfNV)
-#define SET_CombinerParameterfNV(disp, fn) ((disp)->CombinerParameterfNV = fn)
-#define CALL_CombinerParameterivNV(disp, parameters) (*((disp)->CombinerParameterivNV)) parameters
-#define GET_CombinerParameterivNV(disp) ((disp)->CombinerParameterivNV)
-#define SET_CombinerParameterivNV(disp, fn) ((disp)->CombinerParameterivNV = fn)
-#define CALL_CombinerParameteriNV(disp, parameters) (*((disp)->CombinerParameteriNV)) parameters
-#define GET_CombinerParameteriNV(disp) ((disp)->CombinerParameteriNV)
-#define SET_CombinerParameteriNV(disp, fn) ((disp)->CombinerParameteriNV = fn)
 #define CALL_CombinerInputNV(disp, parameters) (*((disp)->CombinerInputNV)) parameters
 #define GET_CombinerInputNV(disp) ((disp)->CombinerInputNV)
 #define SET_CombinerInputNV(disp, fn) ((disp)->CombinerInputNV = fn)
 #define CALL_CombinerOutputNV(disp, parameters) (*((disp)->CombinerOutputNV)) parameters
 #define GET_CombinerOutputNV(disp) ((disp)->CombinerOutputNV)
 #define SET_CombinerOutputNV(disp, fn) ((disp)->CombinerOutputNV = fn)
+#define CALL_CombinerParameterfNV(disp, parameters) (*((disp)->CombinerParameterfNV)) parameters
+#define GET_CombinerParameterfNV(disp) ((disp)->CombinerParameterfNV)
+#define SET_CombinerParameterfNV(disp, fn) ((disp)->CombinerParameterfNV = fn)
+#define CALL_CombinerParameterfvNV(disp, parameters) (*((disp)->CombinerParameterfvNV)) parameters
+#define GET_CombinerParameterfvNV(disp) ((disp)->CombinerParameterfvNV)
+#define SET_CombinerParameterfvNV(disp, fn) ((disp)->CombinerParameterfvNV = fn)
+#define CALL_CombinerParameteriNV(disp, parameters) (*((disp)->CombinerParameteriNV)) parameters
+#define GET_CombinerParameteriNV(disp) ((disp)->CombinerParameteriNV)
+#define SET_CombinerParameteriNV(disp, fn) ((disp)->CombinerParameteriNV = fn)
+#define CALL_CombinerParameterivNV(disp, parameters) (*((disp)->CombinerParameterivNV)) parameters
+#define GET_CombinerParameterivNV(disp) ((disp)->CombinerParameterivNV)
+#define SET_CombinerParameterivNV(disp, fn) ((disp)->CombinerParameterivNV = fn)
 #define CALL_FinalCombinerInputNV(disp, parameters) (*((disp)->FinalCombinerInputNV)) parameters
 #define GET_FinalCombinerInputNV(disp) ((disp)->FinalCombinerInputNV)
 #define SET_FinalCombinerInputNV(disp, fn) ((disp)->FinalCombinerInputNV = fn)
@@ -1669,129 +2011,33 @@
 #define CALL_WindowPos4svMESA(disp, parameters) (*((disp)->WindowPos4svMESA)) parameters
 #define GET_WindowPos4svMESA(disp) ((disp)->WindowPos4svMESA)
 #define SET_WindowPos4svMESA(disp, fn) ((disp)->WindowPos4svMESA = fn)
-#define CALL_BlendFuncSeparateEXT(disp, parameters) (*((disp)->BlendFuncSeparateEXT)) parameters
-#define GET_BlendFuncSeparateEXT(disp) ((disp)->BlendFuncSeparateEXT)
-#define SET_BlendFuncSeparateEXT(disp, fn) ((disp)->BlendFuncSeparateEXT = fn)
-#define CALL_IndexMaterialEXT(disp, parameters) (*((disp)->IndexMaterialEXT)) parameters
-#define GET_IndexMaterialEXT(disp) ((disp)->IndexMaterialEXT)
-#define SET_IndexMaterialEXT(disp, fn) ((disp)->IndexMaterialEXT = fn)
-#define CALL_IndexFuncEXT(disp, parameters) (*((disp)->IndexFuncEXT)) parameters
-#define GET_IndexFuncEXT(disp) ((disp)->IndexFuncEXT)
-#define SET_IndexFuncEXT(disp, fn) ((disp)->IndexFuncEXT = fn)
-#define CALL_LockArraysEXT(disp, parameters) (*((disp)->LockArraysEXT)) parameters
-#define GET_LockArraysEXT(disp) ((disp)->LockArraysEXT)
-#define SET_LockArraysEXT(disp, fn) ((disp)->LockArraysEXT = fn)
-#define CALL_UnlockArraysEXT(disp, parameters) (*((disp)->UnlockArraysEXT)) parameters
-#define GET_UnlockArraysEXT(disp) ((disp)->UnlockArraysEXT)
-#define SET_UnlockArraysEXT(disp, fn) ((disp)->UnlockArraysEXT = fn)
-#define CALL_CullParameterdvEXT(disp, parameters) (*((disp)->CullParameterdvEXT)) parameters
-#define GET_CullParameterdvEXT(disp) ((disp)->CullParameterdvEXT)
-#define SET_CullParameterdvEXT(disp, fn) ((disp)->CullParameterdvEXT = fn)
-#define CALL_CullParameterfvEXT(disp, parameters) (*((disp)->CullParameterfvEXT)) parameters
-#define GET_CullParameterfvEXT(disp) ((disp)->CullParameterfvEXT)
-#define SET_CullParameterfvEXT(disp, fn) ((disp)->CullParameterfvEXT = fn)
-#define CALL_HintPGI(disp, parameters) (*((disp)->HintPGI)) parameters
-#define GET_HintPGI(disp) ((disp)->HintPGI)
-#define SET_HintPGI(disp, fn) ((disp)->HintPGI = fn)
-#define CALL_FogCoordfEXT(disp, parameters) (*((disp)->FogCoordfEXT)) parameters
-#define GET_FogCoordfEXT(disp) ((disp)->FogCoordfEXT)
-#define SET_FogCoordfEXT(disp, fn) ((disp)->FogCoordfEXT = fn)
-#define CALL_FogCoordfvEXT(disp, parameters) (*((disp)->FogCoordfvEXT)) parameters
-#define GET_FogCoordfvEXT(disp) ((disp)->FogCoordfvEXT)
-#define SET_FogCoordfvEXT(disp, fn) ((disp)->FogCoordfvEXT = fn)
-#define CALL_FogCoorddEXT(disp, parameters) (*((disp)->FogCoorddEXT)) parameters
-#define GET_FogCoorddEXT(disp) ((disp)->FogCoorddEXT)
-#define SET_FogCoorddEXT(disp, fn) ((disp)->FogCoorddEXT = fn)
-#define CALL_FogCoorddvEXT(disp, parameters) (*((disp)->FogCoorddvEXT)) parameters
-#define GET_FogCoorddvEXT(disp) ((disp)->FogCoorddvEXT)
-#define SET_FogCoorddvEXT(disp, fn) ((disp)->FogCoorddvEXT = fn)
-#define CALL_FogCoordPointerEXT(disp, parameters) (*((disp)->FogCoordPointerEXT)) parameters
-#define GET_FogCoordPointerEXT(disp) ((disp)->FogCoordPointerEXT)
-#define SET_FogCoordPointerEXT(disp, fn) ((disp)->FogCoordPointerEXT = fn)
-#define CALL_GetColorTableEXT(disp, parameters) (*((disp)->GetColorTableEXT)) parameters
-#define GET_GetColorTableEXT(disp) ((disp)->GetColorTableEXT)
-#define SET_GetColorTableEXT(disp, fn) ((disp)->GetColorTableEXT = fn)
-#define CALL_GetColorTableParameterivEXT(disp, parameters) (*((disp)->GetColorTableParameterivEXT)) parameters
-#define GET_GetColorTableParameterivEXT(disp) ((disp)->GetColorTableParameterivEXT)
-#define SET_GetColorTableParameterivEXT(disp, fn) ((disp)->GetColorTableParameterivEXT = fn)
-#define CALL_GetColorTableParameterfvEXT(disp, parameters) (*((disp)->GetColorTableParameterfvEXT)) parameters
-#define GET_GetColorTableParameterfvEXT(disp) ((disp)->GetColorTableParameterfvEXT)
-#define SET_GetColorTableParameterfvEXT(disp, fn) ((disp)->GetColorTableParameterfvEXT = fn)
-#define CALL_TbufferMask3DFX(disp, parameters) (*((disp)->TbufferMask3DFX)) parameters
-#define GET_TbufferMask3DFX(disp) ((disp)->TbufferMask3DFX)
-#define SET_TbufferMask3DFX(disp, fn) ((disp)->TbufferMask3DFX = fn)
-#define CALL_CompressedTexImage3DARB(disp, parameters) (*((disp)->CompressedTexImage3DARB)) parameters
-#define GET_CompressedTexImage3DARB(disp) ((disp)->CompressedTexImage3DARB)
-#define SET_CompressedTexImage3DARB(disp, fn) ((disp)->CompressedTexImage3DARB = fn)
-#define CALL_CompressedTexImage2DARB(disp, parameters) (*((disp)->CompressedTexImage2DARB)) parameters
-#define GET_CompressedTexImage2DARB(disp) ((disp)->CompressedTexImage2DARB)
-#define SET_CompressedTexImage2DARB(disp, fn) ((disp)->CompressedTexImage2DARB = fn)
-#define CALL_CompressedTexImage1DARB(disp, parameters) (*((disp)->CompressedTexImage1DARB)) parameters
-#define GET_CompressedTexImage1DARB(disp) ((disp)->CompressedTexImage1DARB)
-#define SET_CompressedTexImage1DARB(disp, fn) ((disp)->CompressedTexImage1DARB = fn)
-#define CALL_CompressedTexSubImage3DARB(disp, parameters) (*((disp)->CompressedTexSubImage3DARB)) parameters
-#define GET_CompressedTexSubImage3DARB(disp) ((disp)->CompressedTexSubImage3DARB)
-#define SET_CompressedTexSubImage3DARB(disp, fn) ((disp)->CompressedTexSubImage3DARB = fn)
-#define CALL_CompressedTexSubImage2DARB(disp, parameters) (*((disp)->CompressedTexSubImage2DARB)) parameters
-#define GET_CompressedTexSubImage2DARB(disp) ((disp)->CompressedTexSubImage2DARB)
-#define SET_CompressedTexSubImage2DARB(disp, fn) ((disp)->CompressedTexSubImage2DARB = fn)
-#define CALL_CompressedTexSubImage1DARB(disp, parameters) (*((disp)->CompressedTexSubImage1DARB)) parameters
-#define GET_CompressedTexSubImage1DARB(disp) ((disp)->CompressedTexSubImage1DARB)
-#define SET_CompressedTexSubImage1DARB(disp, fn) ((disp)->CompressedTexSubImage1DARB = fn)
-#define CALL_GetCompressedTexImageARB(disp, parameters) (*((disp)->GetCompressedTexImageARB)) parameters
-#define GET_GetCompressedTexImageARB(disp) ((disp)->GetCompressedTexImageARB)
-#define SET_GetCompressedTexImageARB(disp, fn) ((disp)->GetCompressedTexImageARB = fn)
-#define CALL_SecondaryColor3bEXT(disp, parameters) (*((disp)->SecondaryColor3bEXT)) parameters
-#define GET_SecondaryColor3bEXT(disp) ((disp)->SecondaryColor3bEXT)
-#define SET_SecondaryColor3bEXT(disp, fn) ((disp)->SecondaryColor3bEXT = fn)
-#define CALL_SecondaryColor3bvEXT(disp, parameters) (*((disp)->SecondaryColor3bvEXT)) parameters
-#define GET_SecondaryColor3bvEXT(disp) ((disp)->SecondaryColor3bvEXT)
-#define SET_SecondaryColor3bvEXT(disp, fn) ((disp)->SecondaryColor3bvEXT = fn)
-#define CALL_SecondaryColor3dEXT(disp, parameters) (*((disp)->SecondaryColor3dEXT)) parameters
-#define GET_SecondaryColor3dEXT(disp) ((disp)->SecondaryColor3dEXT)
-#define SET_SecondaryColor3dEXT(disp, fn) ((disp)->SecondaryColor3dEXT = fn)
-#define CALL_SecondaryColor3dvEXT(disp, parameters) (*((disp)->SecondaryColor3dvEXT)) parameters
-#define GET_SecondaryColor3dvEXT(disp) ((disp)->SecondaryColor3dvEXT)
-#define SET_SecondaryColor3dvEXT(disp, fn) ((disp)->SecondaryColor3dvEXT = fn)
-#define CALL_SecondaryColor3fEXT(disp, parameters) (*((disp)->SecondaryColor3fEXT)) parameters
-#define GET_SecondaryColor3fEXT(disp) ((disp)->SecondaryColor3fEXT)
-#define SET_SecondaryColor3fEXT(disp, fn) ((disp)->SecondaryColor3fEXT = fn)
-#define CALL_SecondaryColor3fvEXT(disp, parameters) (*((disp)->SecondaryColor3fvEXT)) parameters
-#define GET_SecondaryColor3fvEXT(disp) ((disp)->SecondaryColor3fvEXT)
-#define SET_SecondaryColor3fvEXT(disp, fn) ((disp)->SecondaryColor3fvEXT = fn)
-#define CALL_SecondaryColor3iEXT(disp, parameters) (*((disp)->SecondaryColor3iEXT)) parameters
-#define GET_SecondaryColor3iEXT(disp) ((disp)->SecondaryColor3iEXT)
-#define SET_SecondaryColor3iEXT(disp, fn) ((disp)->SecondaryColor3iEXT = fn)
-#define CALL_SecondaryColor3ivEXT(disp, parameters) (*((disp)->SecondaryColor3ivEXT)) parameters
-#define GET_SecondaryColor3ivEXT(disp) ((disp)->SecondaryColor3ivEXT)
-#define SET_SecondaryColor3ivEXT(disp, fn) ((disp)->SecondaryColor3ivEXT = fn)
-#define CALL_SecondaryColor3sEXT(disp, parameters) (*((disp)->SecondaryColor3sEXT)) parameters
-#define GET_SecondaryColor3sEXT(disp) ((disp)->SecondaryColor3sEXT)
-#define SET_SecondaryColor3sEXT(disp, fn) ((disp)->SecondaryColor3sEXT = fn)
-#define CALL_SecondaryColor3svEXT(disp, parameters) (*((disp)->SecondaryColor3svEXT)) parameters
-#define GET_SecondaryColor3svEXT(disp) ((disp)->SecondaryColor3svEXT)
-#define SET_SecondaryColor3svEXT(disp, fn) ((disp)->SecondaryColor3svEXT = fn)
-#define CALL_SecondaryColor3ubEXT(disp, parameters) (*((disp)->SecondaryColor3ubEXT)) parameters
-#define GET_SecondaryColor3ubEXT(disp) ((disp)->SecondaryColor3ubEXT)
-#define SET_SecondaryColor3ubEXT(disp, fn) ((disp)->SecondaryColor3ubEXT = fn)
-#define CALL_SecondaryColor3ubvEXT(disp, parameters) (*((disp)->SecondaryColor3ubvEXT)) parameters
-#define GET_SecondaryColor3ubvEXT(disp) ((disp)->SecondaryColor3ubvEXT)
-#define SET_SecondaryColor3ubvEXT(disp, fn) ((disp)->SecondaryColor3ubvEXT = fn)
-#define CALL_SecondaryColor3uiEXT(disp, parameters) (*((disp)->SecondaryColor3uiEXT)) parameters
-#define GET_SecondaryColor3uiEXT(disp) ((disp)->SecondaryColor3uiEXT)
-#define SET_SecondaryColor3uiEXT(disp, fn) ((disp)->SecondaryColor3uiEXT = fn)
-#define CALL_SecondaryColor3uivEXT(disp, parameters) (*((disp)->SecondaryColor3uivEXT)) parameters
-#define GET_SecondaryColor3uivEXT(disp) ((disp)->SecondaryColor3uivEXT)
-#define SET_SecondaryColor3uivEXT(disp, fn) ((disp)->SecondaryColor3uivEXT = fn)
-#define CALL_SecondaryColor3usEXT(disp, parameters) (*((disp)->SecondaryColor3usEXT)) parameters
-#define GET_SecondaryColor3usEXT(disp) ((disp)->SecondaryColor3usEXT)
-#define SET_SecondaryColor3usEXT(disp, fn) ((disp)->SecondaryColor3usEXT = fn)
-#define CALL_SecondaryColor3usvEXT(disp, parameters) (*((disp)->SecondaryColor3usvEXT)) parameters
-#define GET_SecondaryColor3usvEXT(disp) ((disp)->SecondaryColor3usvEXT)
-#define SET_SecondaryColor3usvEXT(disp, fn) ((disp)->SecondaryColor3usvEXT = fn)
-#define CALL_SecondaryColorPointerEXT(disp, parameters) (*((disp)->SecondaryColorPointerEXT)) parameters
-#define GET_SecondaryColorPointerEXT(disp) ((disp)->SecondaryColorPointerEXT)
-#define SET_SecondaryColorPointerEXT(disp, fn) ((disp)->SecondaryColorPointerEXT = fn)
+#define CALL_MultiModeDrawArraysIBM(disp, parameters) (*((disp)->MultiModeDrawArraysIBM)) parameters
+#define GET_MultiModeDrawArraysIBM(disp) ((disp)->MultiModeDrawArraysIBM)
+#define SET_MultiModeDrawArraysIBM(disp, fn) ((disp)->MultiModeDrawArraysIBM = fn)
+#define CALL_MultiModeDrawElementsIBM(disp, parameters) (*((disp)->MultiModeDrawElementsIBM)) parameters
+#define GET_MultiModeDrawElementsIBM(disp) ((disp)->MultiModeDrawElementsIBM)
+#define SET_MultiModeDrawElementsIBM(disp, fn) ((disp)->MultiModeDrawElementsIBM = fn)
+#define CALL_DeleteFencesNV(disp, parameters) (*((disp)->DeleteFencesNV)) parameters
+#define GET_DeleteFencesNV(disp) ((disp)->DeleteFencesNV)
+#define SET_DeleteFencesNV(disp, fn) ((disp)->DeleteFencesNV = fn)
+#define CALL_FinishFenceNV(disp, parameters) (*((disp)->FinishFenceNV)) parameters
+#define GET_FinishFenceNV(disp) ((disp)->FinishFenceNV)
+#define SET_FinishFenceNV(disp, fn) ((disp)->FinishFenceNV = fn)
+#define CALL_GenFencesNV(disp, parameters) (*((disp)->GenFencesNV)) parameters
+#define GET_GenFencesNV(disp) ((disp)->GenFencesNV)
+#define SET_GenFencesNV(disp, fn) ((disp)->GenFencesNV = fn)
+#define CALL_GetFenceivNV(disp, parameters) (*((disp)->GetFenceivNV)) parameters
+#define GET_GetFenceivNV(disp) ((disp)->GetFenceivNV)
+#define SET_GetFenceivNV(disp, fn) ((disp)->GetFenceivNV = fn)
+#define CALL_IsFenceNV(disp, parameters) (*((disp)->IsFenceNV)) parameters
+#define GET_IsFenceNV(disp) ((disp)->IsFenceNV)
+#define SET_IsFenceNV(disp, fn) ((disp)->IsFenceNV = fn)
+#define CALL_SetFenceNV(disp, parameters) (*((disp)->SetFenceNV)) parameters
+#define GET_SetFenceNV(disp) ((disp)->SetFenceNV)
+#define SET_SetFenceNV(disp, fn) ((disp)->SetFenceNV = fn)
+#define CALL_TestFenceNV(disp, parameters) (*((disp)->TestFenceNV)) parameters
+#define GET_TestFenceNV(disp) ((disp)->TestFenceNV)
+#define SET_TestFenceNV(disp, fn) ((disp)->TestFenceNV = fn)
 #define CALL_AreProgramsResidentNV(disp, parameters) (*((disp)->AreProgramsResidentNV)) parameters
 #define GET_AreProgramsResidentNV(disp) ((disp)->AreProgramsResidentNV)
 #define SET_AreProgramsResidentNV(disp, fn) ((disp)->AreProgramsResidentNV = fn)
@@ -1813,27 +2059,27 @@
 #define CALL_GetProgramParameterfvNV(disp, parameters) (*((disp)->GetProgramParameterfvNV)) parameters
 #define GET_GetProgramParameterfvNV(disp) ((disp)->GetProgramParameterfvNV)
 #define SET_GetProgramParameterfvNV(disp, fn) ((disp)->GetProgramParameterfvNV = fn)
-#define CALL_GetProgramivNV(disp, parameters) (*((disp)->GetProgramivNV)) parameters
-#define GET_GetProgramivNV(disp) ((disp)->GetProgramivNV)
-#define SET_GetProgramivNV(disp, fn) ((disp)->GetProgramivNV = fn)
 #define CALL_GetProgramStringNV(disp, parameters) (*((disp)->GetProgramStringNV)) parameters
 #define GET_GetProgramStringNV(disp) ((disp)->GetProgramStringNV)
 #define SET_GetProgramStringNV(disp, fn) ((disp)->GetProgramStringNV = fn)
+#define CALL_GetProgramivNV(disp, parameters) (*((disp)->GetProgramivNV)) parameters
+#define GET_GetProgramivNV(disp) ((disp)->GetProgramivNV)
+#define SET_GetProgramivNV(disp, fn) ((disp)->GetProgramivNV = fn)
 #define CALL_GetTrackMatrixivNV(disp, parameters) (*((disp)->GetTrackMatrixivNV)) parameters
 #define GET_GetTrackMatrixivNV(disp) ((disp)->GetTrackMatrixivNV)
 #define SET_GetTrackMatrixivNV(disp, fn) ((disp)->GetTrackMatrixivNV = fn)
-#define CALL_GetVertexAttribdvARB(disp, parameters) (*((disp)->GetVertexAttribdvARB)) parameters
-#define GET_GetVertexAttribdvARB(disp) ((disp)->GetVertexAttribdvARB)
-#define SET_GetVertexAttribdvARB(disp, fn) ((disp)->GetVertexAttribdvARB = fn)
-#define CALL_GetVertexAttribfvARB(disp, parameters) (*((disp)->GetVertexAttribfvARB)) parameters
-#define GET_GetVertexAttribfvARB(disp) ((disp)->GetVertexAttribfvARB)
-#define SET_GetVertexAttribfvARB(disp, fn) ((disp)->GetVertexAttribfvARB = fn)
-#define CALL_GetVertexAttribivARB(disp, parameters) (*((disp)->GetVertexAttribivARB)) parameters
-#define GET_GetVertexAttribivARB(disp) ((disp)->GetVertexAttribivARB)
-#define SET_GetVertexAttribivARB(disp, fn) ((disp)->GetVertexAttribivARB = fn)
 #define CALL_GetVertexAttribPointervNV(disp, parameters) (*((disp)->GetVertexAttribPointervNV)) parameters
 #define GET_GetVertexAttribPointervNV(disp) ((disp)->GetVertexAttribPointervNV)
 #define SET_GetVertexAttribPointervNV(disp, fn) ((disp)->GetVertexAttribPointervNV = fn)
+#define CALL_GetVertexAttribdvNV(disp, parameters) (*((disp)->GetVertexAttribdvNV)) parameters
+#define GET_GetVertexAttribdvNV(disp) ((disp)->GetVertexAttribdvNV)
+#define SET_GetVertexAttribdvNV(disp, fn) ((disp)->GetVertexAttribdvNV = fn)
+#define CALL_GetVertexAttribfvNV(disp, parameters) (*((disp)->GetVertexAttribfvNV)) parameters
+#define GET_GetVertexAttribfvNV(disp) ((disp)->GetVertexAttribfvNV)
+#define SET_GetVertexAttribfvNV(disp, fn) ((disp)->GetVertexAttribfvNV = fn)
+#define CALL_GetVertexAttribivNV(disp, parameters) (*((disp)->GetVertexAttribivNV)) parameters
+#define GET_GetVertexAttribivNV(disp) ((disp)->GetVertexAttribivNV)
+#define SET_GetVertexAttribivNV(disp, fn) ((disp)->GetVertexAttribivNV = fn)
 #define CALL_IsProgramNV(disp, parameters) (*((disp)->IsProgramNV)) parameters
 #define GET_IsProgramNV(disp) ((disp)->IsProgramNV)
 #define SET_IsProgramNV(disp, fn) ((disp)->IsProgramNV = fn)
@@ -1864,468 +2110,6 @@
 #define CALL_TrackMatrixNV(disp, parameters) (*((disp)->TrackMatrixNV)) parameters
 #define GET_TrackMatrixNV(disp) ((disp)->TrackMatrixNV)
 #define SET_TrackMatrixNV(disp, fn) ((disp)->TrackMatrixNV = fn)
-#define CALL_VertexAttribPointerNV(disp, parameters) (*((disp)->VertexAttribPointerNV)) parameters
-#define GET_VertexAttribPointerNV(disp) ((disp)->VertexAttribPointerNV)
-#define SET_VertexAttribPointerNV(disp, fn) ((disp)->VertexAttribPointerNV = fn)
-#define CALL_VertexAttrib1dARB(disp, parameters) (*((disp)->VertexAttrib1dARB)) parameters
-#define GET_VertexAttrib1dARB(disp) ((disp)->VertexAttrib1dARB)
-#define SET_VertexAttrib1dARB(disp, fn) ((disp)->VertexAttrib1dARB = fn)
-#define CALL_VertexAttrib1dvARB(disp, parameters) (*((disp)->VertexAttrib1dvARB)) parameters
-#define GET_VertexAttrib1dvARB(disp) ((disp)->VertexAttrib1dvARB)
-#define SET_VertexAttrib1dvARB(disp, fn) ((disp)->VertexAttrib1dvARB = fn)
-#define CALL_VertexAttrib1fARB(disp, parameters) (*((disp)->VertexAttrib1fARB)) parameters
-#define GET_VertexAttrib1fARB(disp) ((disp)->VertexAttrib1fARB)
-#define SET_VertexAttrib1fARB(disp, fn) ((disp)->VertexAttrib1fARB = fn)
-#define CALL_VertexAttrib1fvARB(disp, parameters) (*((disp)->VertexAttrib1fvARB)) parameters
-#define GET_VertexAttrib1fvARB(disp) ((disp)->VertexAttrib1fvARB)
-#define SET_VertexAttrib1fvARB(disp, fn) ((disp)->VertexAttrib1fvARB = fn)
-#define CALL_VertexAttrib1sARB(disp, parameters) (*((disp)->VertexAttrib1sARB)) parameters
-#define GET_VertexAttrib1sARB(disp) ((disp)->VertexAttrib1sARB)
-#define SET_VertexAttrib1sARB(disp, fn) ((disp)->VertexAttrib1sARB = fn)
-#define CALL_VertexAttrib1svARB(disp, parameters) (*((disp)->VertexAttrib1svARB)) parameters
-#define GET_VertexAttrib1svARB(disp) ((disp)->VertexAttrib1svARB)
-#define SET_VertexAttrib1svARB(disp, fn) ((disp)->VertexAttrib1svARB = fn)
-#define CALL_VertexAttrib2dARB(disp, parameters) (*((disp)->VertexAttrib2dARB)) parameters
-#define GET_VertexAttrib2dARB(disp) ((disp)->VertexAttrib2dARB)
-#define SET_VertexAttrib2dARB(disp, fn) ((disp)->VertexAttrib2dARB = fn)
-#define CALL_VertexAttrib2dvARB(disp, parameters) (*((disp)->VertexAttrib2dvARB)) parameters
-#define GET_VertexAttrib2dvARB(disp) ((disp)->VertexAttrib2dvARB)
-#define SET_VertexAttrib2dvARB(disp, fn) ((disp)->VertexAttrib2dvARB = fn)
-#define CALL_VertexAttrib2fARB(disp, parameters) (*((disp)->VertexAttrib2fARB)) parameters
-#define GET_VertexAttrib2fARB(disp) ((disp)->VertexAttrib2fARB)
-#define SET_VertexAttrib2fARB(disp, fn) ((disp)->VertexAttrib2fARB = fn)
-#define CALL_VertexAttrib2fvARB(disp, parameters) (*((disp)->VertexAttrib2fvARB)) parameters
-#define GET_VertexAttrib2fvARB(disp) ((disp)->VertexAttrib2fvARB)
-#define SET_VertexAttrib2fvARB(disp, fn) ((disp)->VertexAttrib2fvARB = fn)
-#define CALL_VertexAttrib2sARB(disp, parameters) (*((disp)->VertexAttrib2sARB)) parameters
-#define GET_VertexAttrib2sARB(disp) ((disp)->VertexAttrib2sARB)
-#define SET_VertexAttrib2sARB(disp, fn) ((disp)->VertexAttrib2sARB = fn)
-#define CALL_VertexAttrib2svARB(disp, parameters) (*((disp)->VertexAttrib2svARB)) parameters
-#define GET_VertexAttrib2svARB(disp) ((disp)->VertexAttrib2svARB)
-#define SET_VertexAttrib2svARB(disp, fn) ((disp)->VertexAttrib2svARB = fn)
-#define CALL_VertexAttrib3dARB(disp, parameters) (*((disp)->VertexAttrib3dARB)) parameters
-#define GET_VertexAttrib3dARB(disp) ((disp)->VertexAttrib3dARB)
-#define SET_VertexAttrib3dARB(disp, fn) ((disp)->VertexAttrib3dARB = fn)
-#define CALL_VertexAttrib3dvARB(disp, parameters) (*((disp)->VertexAttrib3dvARB)) parameters
-#define GET_VertexAttrib3dvARB(disp) ((disp)->VertexAttrib3dvARB)
-#define SET_VertexAttrib3dvARB(disp, fn) ((disp)->VertexAttrib3dvARB = fn)
-#define CALL_VertexAttrib3fARB(disp, parameters) (*((disp)->VertexAttrib3fARB)) parameters
-#define GET_VertexAttrib3fARB(disp) ((disp)->VertexAttrib3fARB)
-#define SET_VertexAttrib3fARB(disp, fn) ((disp)->VertexAttrib3fARB = fn)
-#define CALL_VertexAttrib3fvARB(disp, parameters) (*((disp)->VertexAttrib3fvARB)) parameters
-#define GET_VertexAttrib3fvARB(disp) ((disp)->VertexAttrib3fvARB)
-#define SET_VertexAttrib3fvARB(disp, fn) ((disp)->VertexAttrib3fvARB = fn)
-#define CALL_VertexAttrib3sARB(disp, parameters) (*((disp)->VertexAttrib3sARB)) parameters
-#define GET_VertexAttrib3sARB(disp) ((disp)->VertexAttrib3sARB)
-#define SET_VertexAttrib3sARB(disp, fn) ((disp)->VertexAttrib3sARB = fn)
-#define CALL_VertexAttrib3svARB(disp, parameters) (*((disp)->VertexAttrib3svARB)) parameters
-#define GET_VertexAttrib3svARB(disp) ((disp)->VertexAttrib3svARB)
-#define SET_VertexAttrib3svARB(disp, fn) ((disp)->VertexAttrib3svARB = fn)
-#define CALL_VertexAttrib4dARB(disp, parameters) (*((disp)->VertexAttrib4dARB)) parameters
-#define GET_VertexAttrib4dARB(disp) ((disp)->VertexAttrib4dARB)
-#define SET_VertexAttrib4dARB(disp, fn) ((disp)->VertexAttrib4dARB = fn)
-#define CALL_VertexAttrib4dvARB(disp, parameters) (*((disp)->VertexAttrib4dvARB)) parameters
-#define GET_VertexAttrib4dvARB(disp) ((disp)->VertexAttrib4dvARB)
-#define SET_VertexAttrib4dvARB(disp, fn) ((disp)->VertexAttrib4dvARB = fn)
-#define CALL_VertexAttrib4fARB(disp, parameters) (*((disp)->VertexAttrib4fARB)) parameters
-#define GET_VertexAttrib4fARB(disp) ((disp)->VertexAttrib4fARB)
-#define SET_VertexAttrib4fARB(disp, fn) ((disp)->VertexAttrib4fARB = fn)
-#define CALL_VertexAttrib4fvARB(disp, parameters) (*((disp)->VertexAttrib4fvARB)) parameters
-#define GET_VertexAttrib4fvARB(disp) ((disp)->VertexAttrib4fvARB)
-#define SET_VertexAttrib4fvARB(disp, fn) ((disp)->VertexAttrib4fvARB = fn)
-#define CALL_VertexAttrib4sARB(disp, parameters) (*((disp)->VertexAttrib4sARB)) parameters
-#define GET_VertexAttrib4sARB(disp) ((disp)->VertexAttrib4sARB)
-#define SET_VertexAttrib4sARB(disp, fn) ((disp)->VertexAttrib4sARB = fn)
-#define CALL_VertexAttrib4svARB(disp, parameters) (*((disp)->VertexAttrib4svARB)) parameters
-#define GET_VertexAttrib4svARB(disp) ((disp)->VertexAttrib4svARB)
-#define SET_VertexAttrib4svARB(disp, fn) ((disp)->VertexAttrib4svARB = fn)
-#define CALL_VertexAttrib4NubARB(disp, parameters) (*((disp)->VertexAttrib4NubARB)) parameters
-#define GET_VertexAttrib4NubARB(disp) ((disp)->VertexAttrib4NubARB)
-#define SET_VertexAttrib4NubARB(disp, fn) ((disp)->VertexAttrib4NubARB = fn)
-#define CALL_VertexAttrib4NubvARB(disp, parameters) (*((disp)->VertexAttrib4NubvARB)) parameters
-#define GET_VertexAttrib4NubvARB(disp) ((disp)->VertexAttrib4NubvARB)
-#define SET_VertexAttrib4NubvARB(disp, fn) ((disp)->VertexAttrib4NubvARB = fn)
-#define CALL_VertexAttribs1dvNV(disp, parameters) (*((disp)->VertexAttribs1dvNV)) parameters
-#define GET_VertexAttribs1dvNV(disp) ((disp)->VertexAttribs1dvNV)
-#define SET_VertexAttribs1dvNV(disp, fn) ((disp)->VertexAttribs1dvNV = fn)
-#define CALL_VertexAttribs1fvNV(disp, parameters) (*((disp)->VertexAttribs1fvNV)) parameters
-#define GET_VertexAttribs1fvNV(disp) ((disp)->VertexAttribs1fvNV)
-#define SET_VertexAttribs1fvNV(disp, fn) ((disp)->VertexAttribs1fvNV = fn)
-#define CALL_VertexAttribs1svNV(disp, parameters) (*((disp)->VertexAttribs1svNV)) parameters
-#define GET_VertexAttribs1svNV(disp) ((disp)->VertexAttribs1svNV)
-#define SET_VertexAttribs1svNV(disp, fn) ((disp)->VertexAttribs1svNV = fn)
-#define CALL_VertexAttribs2dvNV(disp, parameters) (*((disp)->VertexAttribs2dvNV)) parameters
-#define GET_VertexAttribs2dvNV(disp) ((disp)->VertexAttribs2dvNV)
-#define SET_VertexAttribs2dvNV(disp, fn) ((disp)->VertexAttribs2dvNV = fn)
-#define CALL_VertexAttribs2fvNV(disp, parameters) (*((disp)->VertexAttribs2fvNV)) parameters
-#define GET_VertexAttribs2fvNV(disp) ((disp)->VertexAttribs2fvNV)
-#define SET_VertexAttribs2fvNV(disp, fn) ((disp)->VertexAttribs2fvNV = fn)
-#define CALL_VertexAttribs2svNV(disp, parameters) (*((disp)->VertexAttribs2svNV)) parameters
-#define GET_VertexAttribs2svNV(disp) ((disp)->VertexAttribs2svNV)
-#define SET_VertexAttribs2svNV(disp, fn) ((disp)->VertexAttribs2svNV = fn)
-#define CALL_VertexAttribs3dvNV(disp, parameters) (*((disp)->VertexAttribs3dvNV)) parameters
-#define GET_VertexAttribs3dvNV(disp) ((disp)->VertexAttribs3dvNV)
-#define SET_VertexAttribs3dvNV(disp, fn) ((disp)->VertexAttribs3dvNV = fn)
-#define CALL_VertexAttribs3fvNV(disp, parameters) (*((disp)->VertexAttribs3fvNV)) parameters
-#define GET_VertexAttribs3fvNV(disp) ((disp)->VertexAttribs3fvNV)
-#define SET_VertexAttribs3fvNV(disp, fn) ((disp)->VertexAttribs3fvNV = fn)
-#define CALL_VertexAttribs3svNV(disp, parameters) (*((disp)->VertexAttribs3svNV)) parameters
-#define GET_VertexAttribs3svNV(disp) ((disp)->VertexAttribs3svNV)
-#define SET_VertexAttribs3svNV(disp, fn) ((disp)->VertexAttribs3svNV = fn)
-#define CALL_VertexAttribs4dvNV(disp, parameters) (*((disp)->VertexAttribs4dvNV)) parameters
-#define GET_VertexAttribs4dvNV(disp) ((disp)->VertexAttribs4dvNV)
-#define SET_VertexAttribs4dvNV(disp, fn) ((disp)->VertexAttribs4dvNV = fn)
-#define CALL_VertexAttribs4fvNV(disp, parameters) (*((disp)->VertexAttribs4fvNV)) parameters
-#define GET_VertexAttribs4fvNV(disp) ((disp)->VertexAttribs4fvNV)
-#define SET_VertexAttribs4fvNV(disp, fn) ((disp)->VertexAttribs4fvNV = fn)
-#define CALL_VertexAttribs4svNV(disp, parameters) (*((disp)->VertexAttribs4svNV)) parameters
-#define GET_VertexAttribs4svNV(disp) ((disp)->VertexAttribs4svNV)
-#define SET_VertexAttribs4svNV(disp, fn) ((disp)->VertexAttribs4svNV = fn)
-#define CALL_VertexAttribs4ubvNV(disp, parameters) (*((disp)->VertexAttribs4ubvNV)) parameters
-#define GET_VertexAttribs4ubvNV(disp) ((disp)->VertexAttribs4ubvNV)
-#define SET_VertexAttribs4ubvNV(disp, fn) ((disp)->VertexAttribs4ubvNV = fn)
-#define CALL_PointParameteriNV(disp, parameters) (*((disp)->PointParameteriNV)) parameters
-#define GET_PointParameteriNV(disp) ((disp)->PointParameteriNV)
-#define SET_PointParameteriNV(disp, fn) ((disp)->PointParameteriNV = fn)
-#define CALL_PointParameterivNV(disp, parameters) (*((disp)->PointParameterivNV)) parameters
-#define GET_PointParameterivNV(disp) ((disp)->PointParameterivNV)
-#define SET_PointParameterivNV(disp, fn) ((disp)->PointParameterivNV = fn)
-#define CALL_MultiDrawArraysEXT(disp, parameters) (*((disp)->MultiDrawArraysEXT)) parameters
-#define GET_MultiDrawArraysEXT(disp) ((disp)->MultiDrawArraysEXT)
-#define SET_MultiDrawArraysEXT(disp, fn) ((disp)->MultiDrawArraysEXT = fn)
-#define CALL_MultiDrawElementsEXT(disp, parameters) (*((disp)->MultiDrawElementsEXT)) parameters
-#define GET_MultiDrawElementsEXT(disp) ((disp)->MultiDrawElementsEXT)
-#define SET_MultiDrawElementsEXT(disp, fn) ((disp)->MultiDrawElementsEXT = fn)
-#define CALL_ActiveStencilFaceEXT(disp, parameters) (*((disp)->ActiveStencilFaceEXT)) parameters
-#define GET_ActiveStencilFaceEXT(disp) ((disp)->ActiveStencilFaceEXT)
-#define SET_ActiveStencilFaceEXT(disp, fn) ((disp)->ActiveStencilFaceEXT = fn)
-#define CALL_DeleteFencesNV(disp, parameters) (*((disp)->DeleteFencesNV)) parameters
-#define GET_DeleteFencesNV(disp) ((disp)->DeleteFencesNV)
-#define SET_DeleteFencesNV(disp, fn) ((disp)->DeleteFencesNV = fn)
-#define CALL_GenFencesNV(disp, parameters) (*((disp)->GenFencesNV)) parameters
-#define GET_GenFencesNV(disp) ((disp)->GenFencesNV)
-#define SET_GenFencesNV(disp, fn) ((disp)->GenFencesNV = fn)
-#define CALL_IsFenceNV(disp, parameters) (*((disp)->IsFenceNV)) parameters
-#define GET_IsFenceNV(disp) ((disp)->IsFenceNV)
-#define SET_IsFenceNV(disp, fn) ((disp)->IsFenceNV = fn)
-#define CALL_TestFenceNV(disp, parameters) (*((disp)->TestFenceNV)) parameters
-#define GET_TestFenceNV(disp) ((disp)->TestFenceNV)
-#define SET_TestFenceNV(disp, fn) ((disp)->TestFenceNV = fn)
-#define CALL_GetFenceivNV(disp, parameters) (*((disp)->GetFenceivNV)) parameters
-#define GET_GetFenceivNV(disp) ((disp)->GetFenceivNV)
-#define SET_GetFenceivNV(disp, fn) ((disp)->GetFenceivNV = fn)
-#define CALL_FinishFenceNV(disp, parameters) (*((disp)->FinishFenceNV)) parameters
-#define GET_FinishFenceNV(disp) ((disp)->FinishFenceNV)
-#define SET_FinishFenceNV(disp, fn) ((disp)->FinishFenceNV = fn)
-#define CALL_SetFenceNV(disp, parameters) (*((disp)->SetFenceNV)) parameters
-#define GET_SetFenceNV(disp) ((disp)->SetFenceNV)
-#define SET_SetFenceNV(disp, fn) ((disp)->SetFenceNV = fn)
-#define CALL_VertexAttrib4bvARB(disp, parameters) (*((disp)->VertexAttrib4bvARB)) parameters
-#define GET_VertexAttrib4bvARB(disp) ((disp)->VertexAttrib4bvARB)
-#define SET_VertexAttrib4bvARB(disp, fn) ((disp)->VertexAttrib4bvARB = fn)
-#define CALL_VertexAttrib4ivARB(disp, parameters) (*((disp)->VertexAttrib4ivARB)) parameters
-#define GET_VertexAttrib4ivARB(disp) ((disp)->VertexAttrib4ivARB)
-#define SET_VertexAttrib4ivARB(disp, fn) ((disp)->VertexAttrib4ivARB = fn)
-#define CALL_VertexAttrib4ubvARB(disp, parameters) (*((disp)->VertexAttrib4ubvARB)) parameters
-#define GET_VertexAttrib4ubvARB(disp) ((disp)->VertexAttrib4ubvARB)
-#define SET_VertexAttrib4ubvARB(disp, fn) ((disp)->VertexAttrib4ubvARB = fn)
-#define CALL_VertexAttrib4usvARB(disp, parameters) (*((disp)->VertexAttrib4usvARB)) parameters
-#define GET_VertexAttrib4usvARB(disp) ((disp)->VertexAttrib4usvARB)
-#define SET_VertexAttrib4usvARB(disp, fn) ((disp)->VertexAttrib4usvARB = fn)
-#define CALL_VertexAttrib4uivARB(disp, parameters) (*((disp)->VertexAttrib4uivARB)) parameters
-#define GET_VertexAttrib4uivARB(disp) ((disp)->VertexAttrib4uivARB)
-#define SET_VertexAttrib4uivARB(disp, fn) ((disp)->VertexAttrib4uivARB = fn)
-#define CALL_VertexAttrib4NbvARB(disp, parameters) (*((disp)->VertexAttrib4NbvARB)) parameters
-#define GET_VertexAttrib4NbvARB(disp) ((disp)->VertexAttrib4NbvARB)
-#define SET_VertexAttrib4NbvARB(disp, fn) ((disp)->VertexAttrib4NbvARB = fn)
-#define CALL_VertexAttrib4NsvARB(disp, parameters) (*((disp)->VertexAttrib4NsvARB)) parameters
-#define GET_VertexAttrib4NsvARB(disp) ((disp)->VertexAttrib4NsvARB)
-#define SET_VertexAttrib4NsvARB(disp, fn) ((disp)->VertexAttrib4NsvARB = fn)
-#define CALL_VertexAttrib4NivARB(disp, parameters) (*((disp)->VertexAttrib4NivARB)) parameters
-#define GET_VertexAttrib4NivARB(disp) ((disp)->VertexAttrib4NivARB)
-#define SET_VertexAttrib4NivARB(disp, fn) ((disp)->VertexAttrib4NivARB = fn)
-#define CALL_VertexAttrib4NusvARB(disp, parameters) (*((disp)->VertexAttrib4NusvARB)) parameters
-#define GET_VertexAttrib4NusvARB(disp) ((disp)->VertexAttrib4NusvARB)
-#define SET_VertexAttrib4NusvARB(disp, fn) ((disp)->VertexAttrib4NusvARB = fn)
-#define CALL_VertexAttrib4NuivARB(disp, parameters) (*((disp)->VertexAttrib4NuivARB)) parameters
-#define GET_VertexAttrib4NuivARB(disp) ((disp)->VertexAttrib4NuivARB)
-#define SET_VertexAttrib4NuivARB(disp, fn) ((disp)->VertexAttrib4NuivARB = fn)
-#define CALL_VertexAttribPointerARB(disp, parameters) (*((disp)->VertexAttribPointerARB)) parameters
-#define GET_VertexAttribPointerARB(disp) ((disp)->VertexAttribPointerARB)
-#define SET_VertexAttribPointerARB(disp, fn) ((disp)->VertexAttribPointerARB = fn)
-#define CALL_EnableVertexAttribArrayARB(disp, parameters) (*((disp)->EnableVertexAttribArrayARB)) parameters
-#define GET_EnableVertexAttribArrayARB(disp) ((disp)->EnableVertexAttribArrayARB)
-#define SET_EnableVertexAttribArrayARB(disp, fn) ((disp)->EnableVertexAttribArrayARB = fn)
-#define CALL_DisableVertexAttribArrayARB(disp, parameters) (*((disp)->DisableVertexAttribArrayARB)) parameters
-#define GET_DisableVertexAttribArrayARB(disp) ((disp)->DisableVertexAttribArrayARB)
-#define SET_DisableVertexAttribArrayARB(disp, fn) ((disp)->DisableVertexAttribArrayARB = fn)
-#define CALL_ProgramStringARB(disp, parameters) (*((disp)->ProgramStringARB)) parameters
-#define GET_ProgramStringARB(disp) ((disp)->ProgramStringARB)
-#define SET_ProgramStringARB(disp, fn) ((disp)->ProgramStringARB = fn)
-#define CALL_ProgramEnvParameter4dARB(disp, parameters) (*((disp)->ProgramEnvParameter4dARB)) parameters
-#define GET_ProgramEnvParameter4dARB(disp) ((disp)->ProgramEnvParameter4dARB)
-#define SET_ProgramEnvParameter4dARB(disp, fn) ((disp)->ProgramEnvParameter4dARB = fn)
-#define CALL_ProgramEnvParameter4dvARB(disp, parameters) (*((disp)->ProgramEnvParameter4dvARB)) parameters
-#define GET_ProgramEnvParameter4dvARB(disp) ((disp)->ProgramEnvParameter4dvARB)
-#define SET_ProgramEnvParameter4dvARB(disp, fn) ((disp)->ProgramEnvParameter4dvARB = fn)
-#define CALL_ProgramEnvParameter4fARB(disp, parameters) (*((disp)->ProgramEnvParameter4fARB)) parameters
-#define GET_ProgramEnvParameter4fARB(disp) ((disp)->ProgramEnvParameter4fARB)
-#define SET_ProgramEnvParameter4fARB(disp, fn) ((disp)->ProgramEnvParameter4fARB = fn)
-#define CALL_ProgramEnvParameter4fvARB(disp, parameters) (*((disp)->ProgramEnvParameter4fvARB)) parameters
-#define GET_ProgramEnvParameter4fvARB(disp) ((disp)->ProgramEnvParameter4fvARB)
-#define SET_ProgramEnvParameter4fvARB(disp, fn) ((disp)->ProgramEnvParameter4fvARB = fn)
-#define CALL_ProgramLocalParameter4dARB(disp, parameters) (*((disp)->ProgramLocalParameter4dARB)) parameters
-#define GET_ProgramLocalParameter4dARB(disp) ((disp)->ProgramLocalParameter4dARB)
-#define SET_ProgramLocalParameter4dARB(disp, fn) ((disp)->ProgramLocalParameter4dARB = fn)
-#define CALL_ProgramLocalParameter4dvARB(disp, parameters) (*((disp)->ProgramLocalParameter4dvARB)) parameters
-#define GET_ProgramLocalParameter4dvARB(disp) ((disp)->ProgramLocalParameter4dvARB)
-#define SET_ProgramLocalParameter4dvARB(disp, fn) ((disp)->ProgramLocalParameter4dvARB = fn)
-#define CALL_ProgramLocalParameter4fARB(disp, parameters) (*((disp)->ProgramLocalParameter4fARB)) parameters
-#define GET_ProgramLocalParameter4fARB(disp) ((disp)->ProgramLocalParameter4fARB)
-#define SET_ProgramLocalParameter4fARB(disp, fn) ((disp)->ProgramLocalParameter4fARB = fn)
-#define CALL_ProgramLocalParameter4fvARB(disp, parameters) (*((disp)->ProgramLocalParameter4fvARB)) parameters
-#define GET_ProgramLocalParameter4fvARB(disp) ((disp)->ProgramLocalParameter4fvARB)
-#define SET_ProgramLocalParameter4fvARB(disp, fn) ((disp)->ProgramLocalParameter4fvARB = fn)
-#define CALL_GetProgramEnvParameterdvARB(disp, parameters) (*((disp)->GetProgramEnvParameterdvARB)) parameters
-#define GET_GetProgramEnvParameterdvARB(disp) ((disp)->GetProgramEnvParameterdvARB)
-#define SET_GetProgramEnvParameterdvARB(disp, fn) ((disp)->GetProgramEnvParameterdvARB = fn)
-#define CALL_GetProgramEnvParameterfvARB(disp, parameters) (*((disp)->GetProgramEnvParameterfvARB)) parameters
-#define GET_GetProgramEnvParameterfvARB(disp) ((disp)->GetProgramEnvParameterfvARB)
-#define SET_GetProgramEnvParameterfvARB(disp, fn) ((disp)->GetProgramEnvParameterfvARB = fn)
-#define CALL_GetProgramLocalParameterdvARB(disp, parameters) (*((disp)->GetProgramLocalParameterdvARB)) parameters
-#define GET_GetProgramLocalParameterdvARB(disp) ((disp)->GetProgramLocalParameterdvARB)
-#define SET_GetProgramLocalParameterdvARB(disp, fn) ((disp)->GetProgramLocalParameterdvARB = fn)
-#define CALL_GetProgramLocalParameterfvARB(disp, parameters) (*((disp)->GetProgramLocalParameterfvARB)) parameters
-#define GET_GetProgramLocalParameterfvARB(disp) ((disp)->GetProgramLocalParameterfvARB)
-#define SET_GetProgramLocalParameterfvARB(disp, fn) ((disp)->GetProgramLocalParameterfvARB = fn)
-#define CALL_GetProgramivARB(disp, parameters) (*((disp)->GetProgramivARB)) parameters
-#define GET_GetProgramivARB(disp) ((disp)->GetProgramivARB)
-#define SET_GetProgramivARB(disp, fn) ((disp)->GetProgramivARB = fn)
-#define CALL_GetProgramStringARB(disp, parameters) (*((disp)->GetProgramStringARB)) parameters
-#define GET_GetProgramStringARB(disp) ((disp)->GetProgramStringARB)
-#define SET_GetProgramStringARB(disp, fn) ((disp)->GetProgramStringARB = fn)
-#define CALL_ProgramNamedParameter4fNV(disp, parameters) (*((disp)->ProgramNamedParameter4fNV)) parameters
-#define GET_ProgramNamedParameter4fNV(disp) ((disp)->ProgramNamedParameter4fNV)
-#define SET_ProgramNamedParameter4fNV(disp, fn) ((disp)->ProgramNamedParameter4fNV = fn)
-#define CALL_ProgramNamedParameter4dNV(disp, parameters) (*((disp)->ProgramNamedParameter4dNV)) parameters
-#define GET_ProgramNamedParameter4dNV(disp) ((disp)->ProgramNamedParameter4dNV)
-#define SET_ProgramNamedParameter4dNV(disp, fn) ((disp)->ProgramNamedParameter4dNV = fn)
-#define CALL_ProgramNamedParameter4fvNV(disp, parameters) (*((disp)->ProgramNamedParameter4fvNV)) parameters
-#define GET_ProgramNamedParameter4fvNV(disp) ((disp)->ProgramNamedParameter4fvNV)
-#define SET_ProgramNamedParameter4fvNV(disp, fn) ((disp)->ProgramNamedParameter4fvNV = fn)
-#define CALL_ProgramNamedParameter4dvNV(disp, parameters) (*((disp)->ProgramNamedParameter4dvNV)) parameters
-#define GET_ProgramNamedParameter4dvNV(disp) ((disp)->ProgramNamedParameter4dvNV)
-#define SET_ProgramNamedParameter4dvNV(disp, fn) ((disp)->ProgramNamedParameter4dvNV = fn)
-#define CALL_GetProgramNamedParameterfvNV(disp, parameters) (*((disp)->GetProgramNamedParameterfvNV)) parameters
-#define GET_GetProgramNamedParameterfvNV(disp) ((disp)->GetProgramNamedParameterfvNV)
-#define SET_GetProgramNamedParameterfvNV(disp, fn) ((disp)->GetProgramNamedParameterfvNV = fn)
-#define CALL_GetProgramNamedParameterdvNV(disp, parameters) (*((disp)->GetProgramNamedParameterdvNV)) parameters
-#define GET_GetProgramNamedParameterdvNV(disp) ((disp)->GetProgramNamedParameterdvNV)
-#define SET_GetProgramNamedParameterdvNV(disp, fn) ((disp)->GetProgramNamedParameterdvNV = fn)
-#define CALL_BindBufferARB(disp, parameters) (*((disp)->BindBufferARB)) parameters
-#define GET_BindBufferARB(disp) ((disp)->BindBufferARB)
-#define SET_BindBufferARB(disp, fn) ((disp)->BindBufferARB = fn)
-#define CALL_BufferDataARB(disp, parameters) (*((disp)->BufferDataARB)) parameters
-#define GET_BufferDataARB(disp) ((disp)->BufferDataARB)
-#define SET_BufferDataARB(disp, fn) ((disp)->BufferDataARB = fn)
-#define CALL_BufferSubDataARB(disp, parameters) (*((disp)->BufferSubDataARB)) parameters
-#define GET_BufferSubDataARB(disp) ((disp)->BufferSubDataARB)
-#define SET_BufferSubDataARB(disp, fn) ((disp)->BufferSubDataARB = fn)
-#define CALL_DeleteBuffersARB(disp, parameters) (*((disp)->DeleteBuffersARB)) parameters
-#define GET_DeleteBuffersARB(disp) ((disp)->DeleteBuffersARB)
-#define SET_DeleteBuffersARB(disp, fn) ((disp)->DeleteBuffersARB = fn)
-#define CALL_GenBuffersARB(disp, parameters) (*((disp)->GenBuffersARB)) parameters
-#define GET_GenBuffersARB(disp) ((disp)->GenBuffersARB)
-#define SET_GenBuffersARB(disp, fn) ((disp)->GenBuffersARB = fn)
-#define CALL_GetBufferParameterivARB(disp, parameters) (*((disp)->GetBufferParameterivARB)) parameters
-#define GET_GetBufferParameterivARB(disp) ((disp)->GetBufferParameterivARB)
-#define SET_GetBufferParameterivARB(disp, fn) ((disp)->GetBufferParameterivARB = fn)
-#define CALL_GetBufferPointervARB(disp, parameters) (*((disp)->GetBufferPointervARB)) parameters
-#define GET_GetBufferPointervARB(disp) ((disp)->GetBufferPointervARB)
-#define SET_GetBufferPointervARB(disp, fn) ((disp)->GetBufferPointervARB = fn)
-#define CALL_GetBufferSubDataARB(disp, parameters) (*((disp)->GetBufferSubDataARB)) parameters
-#define GET_GetBufferSubDataARB(disp) ((disp)->GetBufferSubDataARB)
-#define SET_GetBufferSubDataARB(disp, fn) ((disp)->GetBufferSubDataARB = fn)
-#define CALL_IsBufferARB(disp, parameters) (*((disp)->IsBufferARB)) parameters
-#define GET_IsBufferARB(disp) ((disp)->IsBufferARB)
-#define SET_IsBufferARB(disp, fn) ((disp)->IsBufferARB = fn)
-#define CALL_MapBufferARB(disp, parameters) (*((disp)->MapBufferARB)) parameters
-#define GET_MapBufferARB(disp) ((disp)->MapBufferARB)
-#define SET_MapBufferARB(disp, fn) ((disp)->MapBufferARB = fn)
-#define CALL_UnmapBufferARB(disp, parameters) (*((disp)->UnmapBufferARB)) parameters
-#define GET_UnmapBufferARB(disp) ((disp)->UnmapBufferARB)
-#define SET_UnmapBufferARB(disp, fn) ((disp)->UnmapBufferARB = fn)
-#define CALL_DepthBoundsEXT(disp, parameters) (*((disp)->DepthBoundsEXT)) parameters
-#define GET_DepthBoundsEXT(disp) ((disp)->DepthBoundsEXT)
-#define SET_DepthBoundsEXT(disp, fn) ((disp)->DepthBoundsEXT = fn)
-#define CALL_GenQueriesARB(disp, parameters) (*((disp)->GenQueriesARB)) parameters
-#define GET_GenQueriesARB(disp) ((disp)->GenQueriesARB)
-#define SET_GenQueriesARB(disp, fn) ((disp)->GenQueriesARB = fn)
-#define CALL_DeleteQueriesARB(disp, parameters) (*((disp)->DeleteQueriesARB)) parameters
-#define GET_DeleteQueriesARB(disp) ((disp)->DeleteQueriesARB)
-#define SET_DeleteQueriesARB(disp, fn) ((disp)->DeleteQueriesARB = fn)
-#define CALL_IsQueryARB(disp, parameters) (*((disp)->IsQueryARB)) parameters
-#define GET_IsQueryARB(disp) ((disp)->IsQueryARB)
-#define SET_IsQueryARB(disp, fn) ((disp)->IsQueryARB = fn)
-#define CALL_BeginQueryARB(disp, parameters) (*((disp)->BeginQueryARB)) parameters
-#define GET_BeginQueryARB(disp) ((disp)->BeginQueryARB)
-#define SET_BeginQueryARB(disp, fn) ((disp)->BeginQueryARB = fn)
-#define CALL_EndQueryARB(disp, parameters) (*((disp)->EndQueryARB)) parameters
-#define GET_EndQueryARB(disp) ((disp)->EndQueryARB)
-#define SET_EndQueryARB(disp, fn) ((disp)->EndQueryARB = fn)
-#define CALL_GetQueryivARB(disp, parameters) (*((disp)->GetQueryivARB)) parameters
-#define GET_GetQueryivARB(disp) ((disp)->GetQueryivARB)
-#define SET_GetQueryivARB(disp, fn) ((disp)->GetQueryivARB = fn)
-#define CALL_GetQueryObjectivARB(disp, parameters) (*((disp)->GetQueryObjectivARB)) parameters
-#define GET_GetQueryObjectivARB(disp) ((disp)->GetQueryObjectivARB)
-#define SET_GetQueryObjectivARB(disp, fn) ((disp)->GetQueryObjectivARB = fn)
-#define CALL_GetQueryObjectuivARB(disp, parameters) (*((disp)->GetQueryObjectuivARB)) parameters
-#define GET_GetQueryObjectuivARB(disp) ((disp)->GetQueryObjectuivARB)
-#define SET_GetQueryObjectuivARB(disp, fn) ((disp)->GetQueryObjectuivARB = fn)
-#define CALL_MultiModeDrawArraysIBM(disp, parameters) (*((disp)->MultiModeDrawArraysIBM)) parameters
-#define GET_MultiModeDrawArraysIBM(disp) ((disp)->MultiModeDrawArraysIBM)
-#define SET_MultiModeDrawArraysIBM(disp, fn) ((disp)->MultiModeDrawArraysIBM = fn)
-#define CALL_MultiModeDrawElementsIBM(disp, parameters) (*((disp)->MultiModeDrawElementsIBM)) parameters
-#define GET_MultiModeDrawElementsIBM(disp) ((disp)->MultiModeDrawElementsIBM)
-#define SET_MultiModeDrawElementsIBM(disp, fn) ((disp)->MultiModeDrawElementsIBM = fn)
-#define CALL_BlendEquationSeparateEXT(disp, parameters) (*((disp)->BlendEquationSeparateEXT)) parameters
-#define GET_BlendEquationSeparateEXT(disp) ((disp)->BlendEquationSeparateEXT)
-#define SET_BlendEquationSeparateEXT(disp, fn) ((disp)->BlendEquationSeparateEXT = fn)
-#define CALL_DeleteObjectARB(disp, parameters) (*((disp)->DeleteObjectARB)) parameters
-#define GET_DeleteObjectARB(disp) ((disp)->DeleteObjectARB)
-#define SET_DeleteObjectARB(disp, fn) ((disp)->DeleteObjectARB = fn)
-#define CALL_GetHandleARB(disp, parameters) (*((disp)->GetHandleARB)) parameters
-#define GET_GetHandleARB(disp) ((disp)->GetHandleARB)
-#define SET_GetHandleARB(disp, fn) ((disp)->GetHandleARB = fn)
-#define CALL_DetachObjectARB(disp, parameters) (*((disp)->DetachObjectARB)) parameters
-#define GET_DetachObjectARB(disp) ((disp)->DetachObjectARB)
-#define SET_DetachObjectARB(disp, fn) ((disp)->DetachObjectARB = fn)
-#define CALL_CreateShaderObjectARB(disp, parameters) (*((disp)->CreateShaderObjectARB)) parameters
-#define GET_CreateShaderObjectARB(disp) ((disp)->CreateShaderObjectARB)
-#define SET_CreateShaderObjectARB(disp, fn) ((disp)->CreateShaderObjectARB = fn)
-#define CALL_ShaderSourceARB(disp, parameters) (*((disp)->ShaderSourceARB)) parameters
-#define GET_ShaderSourceARB(disp) ((disp)->ShaderSourceARB)
-#define SET_ShaderSourceARB(disp, fn) ((disp)->ShaderSourceARB = fn)
-#define CALL_CompileShaderARB(disp, parameters) (*((disp)->CompileShaderARB)) parameters
-#define GET_CompileShaderARB(disp) ((disp)->CompileShaderARB)
-#define SET_CompileShaderARB(disp, fn) ((disp)->CompileShaderARB = fn)
-#define CALL_CreateProgramObjectARB(disp, parameters) (*((disp)->CreateProgramObjectARB)) parameters
-#define GET_CreateProgramObjectARB(disp) ((disp)->CreateProgramObjectARB)
-#define SET_CreateProgramObjectARB(disp, fn) ((disp)->CreateProgramObjectARB = fn)
-#define CALL_AttachObjectARB(disp, parameters) (*((disp)->AttachObjectARB)) parameters
-#define GET_AttachObjectARB(disp) ((disp)->AttachObjectARB)
-#define SET_AttachObjectARB(disp, fn) ((disp)->AttachObjectARB = fn)
-#define CALL_LinkProgramARB(disp, parameters) (*((disp)->LinkProgramARB)) parameters
-#define GET_LinkProgramARB(disp) ((disp)->LinkProgramARB)
-#define SET_LinkProgramARB(disp, fn) ((disp)->LinkProgramARB = fn)
-#define CALL_UseProgramObjectARB(disp, parameters) (*((disp)->UseProgramObjectARB)) parameters
-#define GET_UseProgramObjectARB(disp) ((disp)->UseProgramObjectARB)
-#define SET_UseProgramObjectARB(disp, fn) ((disp)->UseProgramObjectARB = fn)
-#define CALL_ValidateProgramARB(disp, parameters) (*((disp)->ValidateProgramARB)) parameters
-#define GET_ValidateProgramARB(disp) ((disp)->ValidateProgramARB)
-#define SET_ValidateProgramARB(disp, fn) ((disp)->ValidateProgramARB = fn)
-#define CALL_Uniform1fARB(disp, parameters) (*((disp)->Uniform1fARB)) parameters
-#define GET_Uniform1fARB(disp) ((disp)->Uniform1fARB)
-#define SET_Uniform1fARB(disp, fn) ((disp)->Uniform1fARB = fn)
-#define CALL_Uniform2fARB(disp, parameters) (*((disp)->Uniform2fARB)) parameters
-#define GET_Uniform2fARB(disp) ((disp)->Uniform2fARB)
-#define SET_Uniform2fARB(disp, fn) ((disp)->Uniform2fARB = fn)
-#define CALL_Uniform3fARB(disp, parameters) (*((disp)->Uniform3fARB)) parameters
-#define GET_Uniform3fARB(disp) ((disp)->Uniform3fARB)
-#define SET_Uniform3fARB(disp, fn) ((disp)->Uniform3fARB = fn)
-#define CALL_Uniform4fARB(disp, parameters) (*((disp)->Uniform4fARB)) parameters
-#define GET_Uniform4fARB(disp) ((disp)->Uniform4fARB)
-#define SET_Uniform4fARB(disp, fn) ((disp)->Uniform4fARB = fn)
-#define CALL_Uniform1iARB(disp, parameters) (*((disp)->Uniform1iARB)) parameters
-#define GET_Uniform1iARB(disp) ((disp)->Uniform1iARB)
-#define SET_Uniform1iARB(disp, fn) ((disp)->Uniform1iARB = fn)
-#define CALL_Uniform2iARB(disp, parameters) (*((disp)->Uniform2iARB)) parameters
-#define GET_Uniform2iARB(disp) ((disp)->Uniform2iARB)
-#define SET_Uniform2iARB(disp, fn) ((disp)->Uniform2iARB = fn)
-#define CALL_Uniform3iARB(disp, parameters) (*((disp)->Uniform3iARB)) parameters
-#define GET_Uniform3iARB(disp) ((disp)->Uniform3iARB)
-#define SET_Uniform3iARB(disp, fn) ((disp)->Uniform3iARB = fn)
-#define CALL_Uniform4iARB(disp, parameters) (*((disp)->Uniform4iARB)) parameters
-#define GET_Uniform4iARB(disp) ((disp)->Uniform4iARB)
-#define SET_Uniform4iARB(disp, fn) ((disp)->Uniform4iARB = fn)
-#define CALL_Uniform1fvARB(disp, parameters) (*((disp)->Uniform1fvARB)) parameters
-#define GET_Uniform1fvARB(disp) ((disp)->Uniform1fvARB)
-#define SET_Uniform1fvARB(disp, fn) ((disp)->Uniform1fvARB = fn)
-#define CALL_Uniform2fvARB(disp, parameters) (*((disp)->Uniform2fvARB)) parameters
-#define GET_Uniform2fvARB(disp) ((disp)->Uniform2fvARB)
-#define SET_Uniform2fvARB(disp, fn) ((disp)->Uniform2fvARB = fn)
-#define CALL_Uniform3fvARB(disp, parameters) (*((disp)->Uniform3fvARB)) parameters
-#define GET_Uniform3fvARB(disp) ((disp)->Uniform3fvARB)
-#define SET_Uniform3fvARB(disp, fn) ((disp)->Uniform3fvARB = fn)
-#define CALL_Uniform4fvARB(disp, parameters) (*((disp)->Uniform4fvARB)) parameters
-#define GET_Uniform4fvARB(disp) ((disp)->Uniform4fvARB)
-#define SET_Uniform4fvARB(disp, fn) ((disp)->Uniform4fvARB = fn)
-#define CALL_Uniform1ivARB(disp, parameters) (*((disp)->Uniform1ivARB)) parameters
-#define GET_Uniform1ivARB(disp) ((disp)->Uniform1ivARB)
-#define SET_Uniform1ivARB(disp, fn) ((disp)->Uniform1ivARB = fn)
-#define CALL_Uniform2ivARB(disp, parameters) (*((disp)->Uniform2ivARB)) parameters
-#define GET_Uniform2ivARB(disp) ((disp)->Uniform2ivARB)
-#define SET_Uniform2ivARB(disp, fn) ((disp)->Uniform2ivARB = fn)
-#define CALL_Uniform3ivARB(disp, parameters) (*((disp)->Uniform3ivARB)) parameters
-#define GET_Uniform3ivARB(disp) ((disp)->Uniform3ivARB)
-#define SET_Uniform3ivARB(disp, fn) ((disp)->Uniform3ivARB = fn)
-#define CALL_Uniform4ivARB(disp, parameters) (*((disp)->Uniform4ivARB)) parameters
-#define GET_Uniform4ivARB(disp) ((disp)->Uniform4ivARB)
-#define SET_Uniform4ivARB(disp, fn) ((disp)->Uniform4ivARB = fn)
-#define CALL_UniformMatrix2fvARB(disp, parameters) (*((disp)->UniformMatrix2fvARB)) parameters
-#define GET_UniformMatrix2fvARB(disp) ((disp)->UniformMatrix2fvARB)
-#define SET_UniformMatrix2fvARB(disp, fn) ((disp)->UniformMatrix2fvARB = fn)
-#define CALL_UniformMatrix3fvARB(disp, parameters) (*((disp)->UniformMatrix3fvARB)) parameters
-#define GET_UniformMatrix3fvARB(disp) ((disp)->UniformMatrix3fvARB)
-#define SET_UniformMatrix3fvARB(disp, fn) ((disp)->UniformMatrix3fvARB = fn)
-#define CALL_UniformMatrix4fvARB(disp, parameters) (*((disp)->UniformMatrix4fvARB)) parameters
-#define GET_UniformMatrix4fvARB(disp) ((disp)->UniformMatrix4fvARB)
-#define SET_UniformMatrix4fvARB(disp, fn) ((disp)->UniformMatrix4fvARB = fn)
-#define CALL_GetObjectParameterfvARB(disp, parameters) (*((disp)->GetObjectParameterfvARB)) parameters
-#define GET_GetObjectParameterfvARB(disp) ((disp)->GetObjectParameterfvARB)
-#define SET_GetObjectParameterfvARB(disp, fn) ((disp)->GetObjectParameterfvARB = fn)
-#define CALL_GetObjectParameterivARB(disp, parameters) (*((disp)->GetObjectParameterivARB)) parameters
-#define GET_GetObjectParameterivARB(disp) ((disp)->GetObjectParameterivARB)
-#define SET_GetObjectParameterivARB(disp, fn) ((disp)->GetObjectParameterivARB = fn)
-#define CALL_GetInfoLogARB(disp, parameters) (*((disp)->GetInfoLogARB)) parameters
-#define GET_GetInfoLogARB(disp) ((disp)->GetInfoLogARB)
-#define SET_GetInfoLogARB(disp, fn) ((disp)->GetInfoLogARB = fn)
-#define CALL_GetAttachedObjectsARB(disp, parameters) (*((disp)->GetAttachedObjectsARB)) parameters
-#define GET_GetAttachedObjectsARB(disp) ((disp)->GetAttachedObjectsARB)
-#define SET_GetAttachedObjectsARB(disp, fn) ((disp)->GetAttachedObjectsARB = fn)
-#define CALL_GetUniformLocationARB(disp, parameters) (*((disp)->GetUniformLocationARB)) parameters
-#define GET_GetUniformLocationARB(disp) ((disp)->GetUniformLocationARB)
-#define SET_GetUniformLocationARB(disp, fn) ((disp)->GetUniformLocationARB = fn)
-#define CALL_GetActiveUniformARB(disp, parameters) (*((disp)->GetActiveUniformARB)) parameters
-#define GET_GetActiveUniformARB(disp) ((disp)->GetActiveUniformARB)
-#define SET_GetActiveUniformARB(disp, fn) ((disp)->GetActiveUniformARB = fn)
-#define CALL_GetUniformfvARB(disp, parameters) (*((disp)->GetUniformfvARB)) parameters
-#define GET_GetUniformfvARB(disp) ((disp)->GetUniformfvARB)
-#define SET_GetUniformfvARB(disp, fn) ((disp)->GetUniformfvARB = fn)
-#define CALL_GetUniformivARB(disp, parameters) (*((disp)->GetUniformivARB)) parameters
-#define GET_GetUniformivARB(disp) ((disp)->GetUniformivARB)
-#define SET_GetUniformivARB(disp, fn) ((disp)->GetUniformivARB = fn)
-#define CALL_GetShaderSourceARB(disp, parameters) (*((disp)->GetShaderSourceARB)) parameters
-#define GET_GetShaderSourceARB(disp) ((disp)->GetShaderSourceARB)
-#define SET_GetShaderSourceARB(disp, fn) ((disp)->GetShaderSourceARB = fn)
-#define CALL_BindAttribLocationARB(disp, parameters) (*((disp)->BindAttribLocationARB)) parameters
-#define GET_BindAttribLocationARB(disp) ((disp)->BindAttribLocationARB)
-#define SET_BindAttribLocationARB(disp, fn) ((disp)->BindAttribLocationARB = fn)
-#define CALL_GetActiveAttribARB(disp, parameters) (*((disp)->GetActiveAttribARB)) parameters
-#define GET_GetActiveAttribARB(disp) ((disp)->GetActiveAttribARB)
-#define SET_GetActiveAttribARB(disp, fn) ((disp)->GetActiveAttribARB = fn)
-#define CALL_GetAttribLocationARB(disp, parameters) (*((disp)->GetAttribLocationARB)) parameters
-#define GET_GetAttribLocationARB(disp) ((disp)->GetAttribLocationARB)
-#define SET_GetAttribLocationARB(disp, fn) ((disp)->GetAttribLocationARB = fn)
-#define CALL_GetVertexAttribdvNV(disp, parameters) (*((disp)->GetVertexAttribdvNV)) parameters
-#define GET_GetVertexAttribdvNV(disp) ((disp)->GetVertexAttribdvNV)
-#define SET_GetVertexAttribdvNV(disp, fn) ((disp)->GetVertexAttribdvNV = fn)
-#define CALL_GetVertexAttribfvNV(disp, parameters) (*((disp)->GetVertexAttribfvNV)) parameters
-#define GET_GetVertexAttribfvNV(disp) ((disp)->GetVertexAttribfvNV)
-#define SET_GetVertexAttribfvNV(disp, fn) ((disp)->GetVertexAttribfvNV = fn)
-#define CALL_GetVertexAttribivNV(disp, parameters) (*((disp)->GetVertexAttribivNV)) parameters
-#define GET_GetVertexAttribivNV(disp) ((disp)->GetVertexAttribivNV)
-#define SET_GetVertexAttribivNV(disp, fn) ((disp)->GetVertexAttribivNV = fn)
 #define CALL_VertexAttrib1dNV(disp, parameters) (*((disp)->VertexAttrib1dNV)) parameters
 #define GET_VertexAttrib1dNV(disp) ((disp)->VertexAttrib1dNV)
 #define SET_VertexAttrib1dNV(disp, fn) ((disp)->VertexAttrib1dNV = fn)
@@ -2404,36 +2188,48 @@
 #define CALL_VertexAttrib4ubvNV(disp, parameters) (*((disp)->VertexAttrib4ubvNV)) parameters
 #define GET_VertexAttrib4ubvNV(disp) ((disp)->VertexAttrib4ubvNV)
 #define SET_VertexAttrib4ubvNV(disp, fn) ((disp)->VertexAttrib4ubvNV = fn)
-#define CALL_GenFragmentShadersATI(disp, parameters) (*((disp)->GenFragmentShadersATI)) parameters
-#define GET_GenFragmentShadersATI(disp) ((disp)->GenFragmentShadersATI)
-#define SET_GenFragmentShadersATI(disp, fn) ((disp)->GenFragmentShadersATI = fn)
-#define CALL_BindFragmentShaderATI(disp, parameters) (*((disp)->BindFragmentShaderATI)) parameters
-#define GET_BindFragmentShaderATI(disp) ((disp)->BindFragmentShaderATI)
-#define SET_BindFragmentShaderATI(disp, fn) ((disp)->BindFragmentShaderATI = fn)
-#define CALL_DeleteFragmentShaderATI(disp, parameters) (*((disp)->DeleteFragmentShaderATI)) parameters
-#define GET_DeleteFragmentShaderATI(disp) ((disp)->DeleteFragmentShaderATI)
-#define SET_DeleteFragmentShaderATI(disp, fn) ((disp)->DeleteFragmentShaderATI = fn)
-#define CALL_BeginFragmentShaderATI(disp, parameters) (*((disp)->BeginFragmentShaderATI)) parameters
-#define GET_BeginFragmentShaderATI(disp) ((disp)->BeginFragmentShaderATI)
-#define SET_BeginFragmentShaderATI(disp, fn) ((disp)->BeginFragmentShaderATI = fn)
-#define CALL_EndFragmentShaderATI(disp, parameters) (*((disp)->EndFragmentShaderATI)) parameters
-#define GET_EndFragmentShaderATI(disp) ((disp)->EndFragmentShaderATI)
-#define SET_EndFragmentShaderATI(disp, fn) ((disp)->EndFragmentShaderATI = fn)
-#define CALL_PassTexCoordATI(disp, parameters) (*((disp)->PassTexCoordATI)) parameters
-#define GET_PassTexCoordATI(disp) ((disp)->PassTexCoordATI)
-#define SET_PassTexCoordATI(disp, fn) ((disp)->PassTexCoordATI = fn)
-#define CALL_SampleMapATI(disp, parameters) (*((disp)->SampleMapATI)) parameters
-#define GET_SampleMapATI(disp) ((disp)->SampleMapATI)
-#define SET_SampleMapATI(disp, fn) ((disp)->SampleMapATI = fn)
-#define CALL_ColorFragmentOp1ATI(disp, parameters) (*((disp)->ColorFragmentOp1ATI)) parameters
-#define GET_ColorFragmentOp1ATI(disp) ((disp)->ColorFragmentOp1ATI)
-#define SET_ColorFragmentOp1ATI(disp, fn) ((disp)->ColorFragmentOp1ATI = fn)
-#define CALL_ColorFragmentOp2ATI(disp, parameters) (*((disp)->ColorFragmentOp2ATI)) parameters
-#define GET_ColorFragmentOp2ATI(disp) ((disp)->ColorFragmentOp2ATI)
-#define SET_ColorFragmentOp2ATI(disp, fn) ((disp)->ColorFragmentOp2ATI = fn)
-#define CALL_ColorFragmentOp3ATI(disp, parameters) (*((disp)->ColorFragmentOp3ATI)) parameters
-#define GET_ColorFragmentOp3ATI(disp) ((disp)->ColorFragmentOp3ATI)
-#define SET_ColorFragmentOp3ATI(disp, fn) ((disp)->ColorFragmentOp3ATI = fn)
+#define CALL_VertexAttribPointerNV(disp, parameters) (*((disp)->VertexAttribPointerNV)) parameters
+#define GET_VertexAttribPointerNV(disp) ((disp)->VertexAttribPointerNV)
+#define SET_VertexAttribPointerNV(disp, fn) ((disp)->VertexAttribPointerNV = fn)
+#define CALL_VertexAttribs1dvNV(disp, parameters) (*((disp)->VertexAttribs1dvNV)) parameters
+#define GET_VertexAttribs1dvNV(disp) ((disp)->VertexAttribs1dvNV)
+#define SET_VertexAttribs1dvNV(disp, fn) ((disp)->VertexAttribs1dvNV = fn)
+#define CALL_VertexAttribs1fvNV(disp, parameters) (*((disp)->VertexAttribs1fvNV)) parameters
+#define GET_VertexAttribs1fvNV(disp) ((disp)->VertexAttribs1fvNV)
+#define SET_VertexAttribs1fvNV(disp, fn) ((disp)->VertexAttribs1fvNV = fn)
+#define CALL_VertexAttribs1svNV(disp, parameters) (*((disp)->VertexAttribs1svNV)) parameters
+#define GET_VertexAttribs1svNV(disp) ((disp)->VertexAttribs1svNV)
+#define SET_VertexAttribs1svNV(disp, fn) ((disp)->VertexAttribs1svNV = fn)
+#define CALL_VertexAttribs2dvNV(disp, parameters) (*((disp)->VertexAttribs2dvNV)) parameters
+#define GET_VertexAttribs2dvNV(disp) ((disp)->VertexAttribs2dvNV)
+#define SET_VertexAttribs2dvNV(disp, fn) ((disp)->VertexAttribs2dvNV = fn)
+#define CALL_VertexAttribs2fvNV(disp, parameters) (*((disp)->VertexAttribs2fvNV)) parameters
+#define GET_VertexAttribs2fvNV(disp) ((disp)->VertexAttribs2fvNV)
+#define SET_VertexAttribs2fvNV(disp, fn) ((disp)->VertexAttribs2fvNV = fn)
+#define CALL_VertexAttribs2svNV(disp, parameters) (*((disp)->VertexAttribs2svNV)) parameters
+#define GET_VertexAttribs2svNV(disp) ((disp)->VertexAttribs2svNV)
+#define SET_VertexAttribs2svNV(disp, fn) ((disp)->VertexAttribs2svNV = fn)
+#define CALL_VertexAttribs3dvNV(disp, parameters) (*((disp)->VertexAttribs3dvNV)) parameters
+#define GET_VertexAttribs3dvNV(disp) ((disp)->VertexAttribs3dvNV)
+#define SET_VertexAttribs3dvNV(disp, fn) ((disp)->VertexAttribs3dvNV = fn)
+#define CALL_VertexAttribs3fvNV(disp, parameters) (*((disp)->VertexAttribs3fvNV)) parameters
+#define GET_VertexAttribs3fvNV(disp) ((disp)->VertexAttribs3fvNV)
+#define SET_VertexAttribs3fvNV(disp, fn) ((disp)->VertexAttribs3fvNV = fn)
+#define CALL_VertexAttribs3svNV(disp, parameters) (*((disp)->VertexAttribs3svNV)) parameters
+#define GET_VertexAttribs3svNV(disp) ((disp)->VertexAttribs3svNV)
+#define SET_VertexAttribs3svNV(disp, fn) ((disp)->VertexAttribs3svNV = fn)
+#define CALL_VertexAttribs4dvNV(disp, parameters) (*((disp)->VertexAttribs4dvNV)) parameters
+#define GET_VertexAttribs4dvNV(disp) ((disp)->VertexAttribs4dvNV)
+#define SET_VertexAttribs4dvNV(disp, fn) ((disp)->VertexAttribs4dvNV = fn)
+#define CALL_VertexAttribs4fvNV(disp, parameters) (*((disp)->VertexAttribs4fvNV)) parameters
+#define GET_VertexAttribs4fvNV(disp) ((disp)->VertexAttribs4fvNV)
+#define SET_VertexAttribs4fvNV(disp, fn) ((disp)->VertexAttribs4fvNV = fn)
+#define CALL_VertexAttribs4svNV(disp, parameters) (*((disp)->VertexAttribs4svNV)) parameters
+#define GET_VertexAttribs4svNV(disp) ((disp)->VertexAttribs4svNV)
+#define SET_VertexAttribs4svNV(disp, fn) ((disp)->VertexAttribs4svNV = fn)
+#define CALL_VertexAttribs4ubvNV(disp, parameters) (*((disp)->VertexAttribs4ubvNV)) parameters
+#define GET_VertexAttribs4ubvNV(disp) ((disp)->VertexAttribs4ubvNV)
+#define SET_VertexAttribs4ubvNV(disp, fn) ((disp)->VertexAttribs4ubvNV = fn)
 #define CALL_AlphaFragmentOp1ATI(disp, parameters) (*((disp)->AlphaFragmentOp1ATI)) parameters
 #define GET_AlphaFragmentOp1ATI(disp) ((disp)->AlphaFragmentOp1ATI)
 #define SET_AlphaFragmentOp1ATI(disp, fn) ((disp)->AlphaFragmentOp1ATI = fn)
@@ -2443,78 +2239,48 @@
 #define CALL_AlphaFragmentOp3ATI(disp, parameters) (*((disp)->AlphaFragmentOp3ATI)) parameters
 #define GET_AlphaFragmentOp3ATI(disp) ((disp)->AlphaFragmentOp3ATI)
 #define SET_AlphaFragmentOp3ATI(disp, fn) ((disp)->AlphaFragmentOp3ATI = fn)
+#define CALL_BeginFragmentShaderATI(disp, parameters) (*((disp)->BeginFragmentShaderATI)) parameters
+#define GET_BeginFragmentShaderATI(disp) ((disp)->BeginFragmentShaderATI)
+#define SET_BeginFragmentShaderATI(disp, fn) ((disp)->BeginFragmentShaderATI = fn)
+#define CALL_BindFragmentShaderATI(disp, parameters) (*((disp)->BindFragmentShaderATI)) parameters
+#define GET_BindFragmentShaderATI(disp) ((disp)->BindFragmentShaderATI)
+#define SET_BindFragmentShaderATI(disp, fn) ((disp)->BindFragmentShaderATI = fn)
+#define CALL_ColorFragmentOp1ATI(disp, parameters) (*((disp)->ColorFragmentOp1ATI)) parameters
+#define GET_ColorFragmentOp1ATI(disp) ((disp)->ColorFragmentOp1ATI)
+#define SET_ColorFragmentOp1ATI(disp, fn) ((disp)->ColorFragmentOp1ATI = fn)
+#define CALL_ColorFragmentOp2ATI(disp, parameters) (*((disp)->ColorFragmentOp2ATI)) parameters
+#define GET_ColorFragmentOp2ATI(disp) ((disp)->ColorFragmentOp2ATI)
+#define SET_ColorFragmentOp2ATI(disp, fn) ((disp)->ColorFragmentOp2ATI = fn)
+#define CALL_ColorFragmentOp3ATI(disp, parameters) (*((disp)->ColorFragmentOp3ATI)) parameters
+#define GET_ColorFragmentOp3ATI(disp) ((disp)->ColorFragmentOp3ATI)
+#define SET_ColorFragmentOp3ATI(disp, fn) ((disp)->ColorFragmentOp3ATI = fn)
+#define CALL_DeleteFragmentShaderATI(disp, parameters) (*((disp)->DeleteFragmentShaderATI)) parameters
+#define GET_DeleteFragmentShaderATI(disp) ((disp)->DeleteFragmentShaderATI)
+#define SET_DeleteFragmentShaderATI(disp, fn) ((disp)->DeleteFragmentShaderATI = fn)
+#define CALL_EndFragmentShaderATI(disp, parameters) (*((disp)->EndFragmentShaderATI)) parameters
+#define GET_EndFragmentShaderATI(disp) ((disp)->EndFragmentShaderATI)
+#define SET_EndFragmentShaderATI(disp, fn) ((disp)->EndFragmentShaderATI = fn)
+#define CALL_GenFragmentShadersATI(disp, parameters) (*((disp)->GenFragmentShadersATI)) parameters
+#define GET_GenFragmentShadersATI(disp) ((disp)->GenFragmentShadersATI)
+#define SET_GenFragmentShadersATI(disp, fn) ((disp)->GenFragmentShadersATI = fn)
+#define CALL_PassTexCoordATI(disp, parameters) (*((disp)->PassTexCoordATI)) parameters
+#define GET_PassTexCoordATI(disp) ((disp)->PassTexCoordATI)
+#define SET_PassTexCoordATI(disp, fn) ((disp)->PassTexCoordATI = fn)
+#define CALL_SampleMapATI(disp, parameters) (*((disp)->SampleMapATI)) parameters
+#define GET_SampleMapATI(disp) ((disp)->SampleMapATI)
+#define SET_SampleMapATI(disp, fn) ((disp)->SampleMapATI = fn)
 #define CALL_SetFragmentShaderConstantATI(disp, parameters) (*((disp)->SetFragmentShaderConstantATI)) parameters
 #define GET_SetFragmentShaderConstantATI(disp) ((disp)->SetFragmentShaderConstantATI)
 #define SET_SetFragmentShaderConstantATI(disp, fn) ((disp)->SetFragmentShaderConstantATI = fn)
-#define CALL_IsRenderbufferEXT(disp, parameters) (*((disp)->IsRenderbufferEXT)) parameters
-#define GET_IsRenderbufferEXT(disp) ((disp)->IsRenderbufferEXT)
-#define SET_IsRenderbufferEXT(disp, fn) ((disp)->IsRenderbufferEXT = fn)
-#define CALL_BindRenderbufferEXT(disp, parameters) (*((disp)->BindRenderbufferEXT)) parameters
-#define GET_BindRenderbufferEXT(disp) ((disp)->BindRenderbufferEXT)
-#define SET_BindRenderbufferEXT(disp, fn) ((disp)->BindRenderbufferEXT = fn)
-#define CALL_DeleteRenderbuffersEXT(disp, parameters) (*((disp)->DeleteRenderbuffersEXT)) parameters
-#define GET_DeleteRenderbuffersEXT(disp) ((disp)->DeleteRenderbuffersEXT)
-#define SET_DeleteRenderbuffersEXT(disp, fn) ((disp)->DeleteRenderbuffersEXT = fn)
-#define CALL_GenRenderbuffersEXT(disp, parameters) (*((disp)->GenRenderbuffersEXT)) parameters
-#define GET_GenRenderbuffersEXT(disp) ((disp)->GenRenderbuffersEXT)
-#define SET_GenRenderbuffersEXT(disp, fn) ((disp)->GenRenderbuffersEXT = fn)
-#define CALL_RenderbufferStorageEXT(disp, parameters) (*((disp)->RenderbufferStorageEXT)) parameters
-#define GET_RenderbufferStorageEXT(disp) ((disp)->RenderbufferStorageEXT)
-#define SET_RenderbufferStorageEXT(disp, fn) ((disp)->RenderbufferStorageEXT = fn)
-#define CALL_GetRenderbufferParameterivEXT(disp, parameters) (*((disp)->GetRenderbufferParameterivEXT)) parameters
-#define GET_GetRenderbufferParameterivEXT(disp) ((disp)->GetRenderbufferParameterivEXT)
-#define SET_GetRenderbufferParameterivEXT(disp, fn) ((disp)->GetRenderbufferParameterivEXT = fn)
-#define CALL_IsFramebufferEXT(disp, parameters) (*((disp)->IsFramebufferEXT)) parameters
-#define GET_IsFramebufferEXT(disp) ((disp)->IsFramebufferEXT)
-#define SET_IsFramebufferEXT(disp, fn) ((disp)->IsFramebufferEXT = fn)
-#define CALL_BindFramebufferEXT(disp, parameters) (*((disp)->BindFramebufferEXT)) parameters
-#define GET_BindFramebufferEXT(disp) ((disp)->BindFramebufferEXT)
-#define SET_BindFramebufferEXT(disp, fn) ((disp)->BindFramebufferEXT = fn)
-#define CALL_DeleteFramebuffersEXT(disp, parameters) (*((disp)->DeleteFramebuffersEXT)) parameters
-#define GET_DeleteFramebuffersEXT(disp) ((disp)->DeleteFramebuffersEXT)
-#define SET_DeleteFramebuffersEXT(disp, fn) ((disp)->DeleteFramebuffersEXT = fn)
-#define CALL_GenFramebuffersEXT(disp, parameters) (*((disp)->GenFramebuffersEXT)) parameters
-#define GET_GenFramebuffersEXT(disp) ((disp)->GenFramebuffersEXT)
-#define SET_GenFramebuffersEXT(disp, fn) ((disp)->GenFramebuffersEXT = fn)
-#define CALL_CheckFramebufferStatusEXT(disp, parameters) (*((disp)->CheckFramebufferStatusEXT)) parameters
-#define GET_CheckFramebufferStatusEXT(disp) ((disp)->CheckFramebufferStatusEXT)
-#define SET_CheckFramebufferStatusEXT(disp, fn) ((disp)->CheckFramebufferStatusEXT = fn)
-#define CALL_FramebufferTexture1DEXT(disp, parameters) (*((disp)->FramebufferTexture1DEXT)) parameters
-#define GET_FramebufferTexture1DEXT(disp) ((disp)->FramebufferTexture1DEXT)
-#define SET_FramebufferTexture1DEXT(disp, fn) ((disp)->FramebufferTexture1DEXT = fn)
-#define CALL_FramebufferTexture2DEXT(disp, parameters) (*((disp)->FramebufferTexture2DEXT)) parameters
-#define GET_FramebufferTexture2DEXT(disp) ((disp)->FramebufferTexture2DEXT)
-#define SET_FramebufferTexture2DEXT(disp, fn) ((disp)->FramebufferTexture2DEXT = fn)
-#define CALL_FramebufferTexture3DEXT(disp, parameters) (*((disp)->FramebufferTexture3DEXT)) parameters
-#define GET_FramebufferTexture3DEXT(disp) ((disp)->FramebufferTexture3DEXT)
-#define SET_FramebufferTexture3DEXT(disp, fn) ((disp)->FramebufferTexture3DEXT = fn)
-#define CALL_FramebufferRenderbufferEXT(disp, parameters) (*((disp)->FramebufferRenderbufferEXT)) parameters
-#define GET_FramebufferRenderbufferEXT(disp) ((disp)->FramebufferRenderbufferEXT)
-#define SET_FramebufferRenderbufferEXT(disp, fn) ((disp)->FramebufferRenderbufferEXT = fn)
-#define CALL_GetFramebufferAttachmentParameterivEXT(disp, parameters) (*((disp)->GetFramebufferAttachmentParameterivEXT)) parameters
-#define GET_GetFramebufferAttachmentParameterivEXT(disp) ((disp)->GetFramebufferAttachmentParameterivEXT)
-#define SET_GetFramebufferAttachmentParameterivEXT(disp, fn) ((disp)->GetFramebufferAttachmentParameterivEXT = fn)
-#define CALL_GenerateMipmapEXT(disp, parameters) (*((disp)->GenerateMipmapEXT)) parameters
-#define GET_GenerateMipmapEXT(disp) ((disp)->GenerateMipmapEXT)
-#define SET_GenerateMipmapEXT(disp, fn) ((disp)->GenerateMipmapEXT = fn)
-#define CALL_StencilFuncSeparate(disp, parameters) (*((disp)->StencilFuncSeparate)) parameters
-#define GET_StencilFuncSeparate(disp) ((disp)->StencilFuncSeparate)
-#define SET_StencilFuncSeparate(disp, fn) ((disp)->StencilFuncSeparate = fn)
-#define CALL_StencilOpSeparate(disp, parameters) (*((disp)->StencilOpSeparate)) parameters
-#define GET_StencilOpSeparate(disp) ((disp)->StencilOpSeparate)
-#define SET_StencilOpSeparate(disp, fn) ((disp)->StencilOpSeparate = fn)
-#define CALL_StencilMaskSeparate(disp, parameters) (*((disp)->StencilMaskSeparate)) parameters
-#define GET_StencilMaskSeparate(disp) ((disp)->StencilMaskSeparate)
-#define SET_StencilMaskSeparate(disp, fn) ((disp)->StencilMaskSeparate = fn)
-#define CALL_GetQueryObjecti64vEXT(disp, parameters) (*((disp)->GetQueryObjecti64vEXT)) parameters
-#define GET_GetQueryObjecti64vEXT(disp) ((disp)->GetQueryObjecti64vEXT)
-#define SET_GetQueryObjecti64vEXT(disp, fn) ((disp)->GetQueryObjecti64vEXT = fn)
-#define CALL_GetQueryObjectui64vEXT(disp, parameters) (*((disp)->GetQueryObjectui64vEXT)) parameters
-#define GET_GetQueryObjectui64vEXT(disp) ((disp)->GetQueryObjectui64vEXT)
-#define SET_GetQueryObjectui64vEXT(disp, fn) ((disp)->GetQueryObjectui64vEXT = fn)
-#define CALL_BlitFramebufferEXT(disp, parameters) (*((disp)->BlitFramebufferEXT)) parameters
-#define GET_BlitFramebufferEXT(disp) ((disp)->BlitFramebufferEXT)
-#define SET_BlitFramebufferEXT(disp, fn) ((disp)->BlitFramebufferEXT = fn)
+#define CALL_PointParameteriNV(disp, parameters) (*((disp)->PointParameteriNV)) parameters
+#define GET_PointParameteriNV(disp) ((disp)->PointParameteriNV)
+#define SET_PointParameteriNV(disp, fn) ((disp)->PointParameteriNV = fn)
+#define CALL_PointParameterivNV(disp, parameters) (*((disp)->PointParameterivNV)) parameters
+#define GET_PointParameterivNV(disp) ((disp)->PointParameterivNV)
+#define SET_PointParameterivNV(disp, fn) ((disp)->PointParameterivNV = fn)
+#define CALL_ActiveStencilFaceEXT(disp, parameters) (*((disp)->ActiveStencilFaceEXT)) parameters
+#define GET_ActiveStencilFaceEXT(disp) ((disp)->ActiveStencilFaceEXT)
+#define SET_ActiveStencilFaceEXT(disp, fn) ((disp)->ActiveStencilFaceEXT = fn)
 #define CALL_BindVertexArrayAPPLE(disp, parameters) (*((disp)->BindVertexArrayAPPLE)) parameters
 #define GET_BindVertexArrayAPPLE(disp) ((disp)->BindVertexArrayAPPLE)
 #define SET_BindVertexArrayAPPLE(disp, fn) ((disp)->BindVertexArrayAPPLE = fn)
@@ -2527,6 +2293,90 @@
 #define CALL_IsVertexArrayAPPLE(disp, parameters) (*((disp)->IsVertexArrayAPPLE)) parameters
 #define GET_IsVertexArrayAPPLE(disp) ((disp)->IsVertexArrayAPPLE)
 #define SET_IsVertexArrayAPPLE(disp, fn) ((disp)->IsVertexArrayAPPLE = fn)
+#define CALL_GetProgramNamedParameterdvNV(disp, parameters) (*((disp)->GetProgramNamedParameterdvNV)) parameters
+#define GET_GetProgramNamedParameterdvNV(disp) ((disp)->GetProgramNamedParameterdvNV)
+#define SET_GetProgramNamedParameterdvNV(disp, fn) ((disp)->GetProgramNamedParameterdvNV = fn)
+#define CALL_GetProgramNamedParameterfvNV(disp, parameters) (*((disp)->GetProgramNamedParameterfvNV)) parameters
+#define GET_GetProgramNamedParameterfvNV(disp) ((disp)->GetProgramNamedParameterfvNV)
+#define SET_GetProgramNamedParameterfvNV(disp, fn) ((disp)->GetProgramNamedParameterfvNV = fn)
+#define CALL_ProgramNamedParameter4dNV(disp, parameters) (*((disp)->ProgramNamedParameter4dNV)) parameters
+#define GET_ProgramNamedParameter4dNV(disp) ((disp)->ProgramNamedParameter4dNV)
+#define SET_ProgramNamedParameter4dNV(disp, fn) ((disp)->ProgramNamedParameter4dNV = fn)
+#define CALL_ProgramNamedParameter4dvNV(disp, parameters) (*((disp)->ProgramNamedParameter4dvNV)) parameters
+#define GET_ProgramNamedParameter4dvNV(disp) ((disp)->ProgramNamedParameter4dvNV)
+#define SET_ProgramNamedParameter4dvNV(disp, fn) ((disp)->ProgramNamedParameter4dvNV = fn)
+#define CALL_ProgramNamedParameter4fNV(disp, parameters) (*((disp)->ProgramNamedParameter4fNV)) parameters
+#define GET_ProgramNamedParameter4fNV(disp) ((disp)->ProgramNamedParameter4fNV)
+#define SET_ProgramNamedParameter4fNV(disp, fn) ((disp)->ProgramNamedParameter4fNV = fn)
+#define CALL_ProgramNamedParameter4fvNV(disp, parameters) (*((disp)->ProgramNamedParameter4fvNV)) parameters
+#define GET_ProgramNamedParameter4fvNV(disp) ((disp)->ProgramNamedParameter4fvNV)
+#define SET_ProgramNamedParameter4fvNV(disp, fn) ((disp)->ProgramNamedParameter4fvNV = fn)
+#define CALL_DepthBoundsEXT(disp, parameters) (*((disp)->DepthBoundsEXT)) parameters
+#define GET_DepthBoundsEXT(disp) ((disp)->DepthBoundsEXT)
+#define SET_DepthBoundsEXT(disp, fn) ((disp)->DepthBoundsEXT = fn)
+#define CALL_BlendEquationSeparateEXT(disp, parameters) (*((disp)->BlendEquationSeparateEXT)) parameters
+#define GET_BlendEquationSeparateEXT(disp) ((disp)->BlendEquationSeparateEXT)
+#define SET_BlendEquationSeparateEXT(disp, fn) ((disp)->BlendEquationSeparateEXT = fn)
+#define CALL_BindFramebufferEXT(disp, parameters) (*((disp)->BindFramebufferEXT)) parameters
+#define GET_BindFramebufferEXT(disp) ((disp)->BindFramebufferEXT)
+#define SET_BindFramebufferEXT(disp, fn) ((disp)->BindFramebufferEXT = fn)
+#define CALL_BindRenderbufferEXT(disp, parameters) (*((disp)->BindRenderbufferEXT)) parameters
+#define GET_BindRenderbufferEXT(disp) ((disp)->BindRenderbufferEXT)
+#define SET_BindRenderbufferEXT(disp, fn) ((disp)->BindRenderbufferEXT = fn)
+#define CALL_CheckFramebufferStatusEXT(disp, parameters) (*((disp)->CheckFramebufferStatusEXT)) parameters
+#define GET_CheckFramebufferStatusEXT(disp) ((disp)->CheckFramebufferStatusEXT)
+#define SET_CheckFramebufferStatusEXT(disp, fn) ((disp)->CheckFramebufferStatusEXT = fn)
+#define CALL_DeleteFramebuffersEXT(disp, parameters) (*((disp)->DeleteFramebuffersEXT)) parameters
+#define GET_DeleteFramebuffersEXT(disp) ((disp)->DeleteFramebuffersEXT)
+#define SET_DeleteFramebuffersEXT(disp, fn) ((disp)->DeleteFramebuffersEXT = fn)
+#define CALL_DeleteRenderbuffersEXT(disp, parameters) (*((disp)->DeleteRenderbuffersEXT)) parameters
+#define GET_DeleteRenderbuffersEXT(disp) ((disp)->DeleteRenderbuffersEXT)
+#define SET_DeleteRenderbuffersEXT(disp, fn) ((disp)->DeleteRenderbuffersEXT = fn)
+#define CALL_FramebufferRenderbufferEXT(disp, parameters) (*((disp)->FramebufferRenderbufferEXT)) parameters
+#define GET_FramebufferRenderbufferEXT(disp) ((disp)->FramebufferRenderbufferEXT)
+#define SET_FramebufferRenderbufferEXT(disp, fn) ((disp)->FramebufferRenderbufferEXT = fn)
+#define CALL_FramebufferTexture1DEXT(disp, parameters) (*((disp)->FramebufferTexture1DEXT)) parameters
+#define GET_FramebufferTexture1DEXT(disp) ((disp)->FramebufferTexture1DEXT)
+#define SET_FramebufferTexture1DEXT(disp, fn) ((disp)->FramebufferTexture1DEXT = fn)
+#define CALL_FramebufferTexture2DEXT(disp, parameters) (*((disp)->FramebufferTexture2DEXT)) parameters
+#define GET_FramebufferTexture2DEXT(disp) ((disp)->FramebufferTexture2DEXT)
+#define SET_FramebufferTexture2DEXT(disp, fn) ((disp)->FramebufferTexture2DEXT = fn)
+#define CALL_FramebufferTexture3DEXT(disp, parameters) (*((disp)->FramebufferTexture3DEXT)) parameters
+#define GET_FramebufferTexture3DEXT(disp) ((disp)->FramebufferTexture3DEXT)
+#define SET_FramebufferTexture3DEXT(disp, fn) ((disp)->FramebufferTexture3DEXT = fn)
+#define CALL_GenFramebuffersEXT(disp, parameters) (*((disp)->GenFramebuffersEXT)) parameters
+#define GET_GenFramebuffersEXT(disp) ((disp)->GenFramebuffersEXT)
+#define SET_GenFramebuffersEXT(disp, fn) ((disp)->GenFramebuffersEXT = fn)
+#define CALL_GenRenderbuffersEXT(disp, parameters) (*((disp)->GenRenderbuffersEXT)) parameters
+#define GET_GenRenderbuffersEXT(disp) ((disp)->GenRenderbuffersEXT)
+#define SET_GenRenderbuffersEXT(disp, fn) ((disp)->GenRenderbuffersEXT = fn)
+#define CALL_GenerateMipmapEXT(disp, parameters) (*((disp)->GenerateMipmapEXT)) parameters
+#define GET_GenerateMipmapEXT(disp) ((disp)->GenerateMipmapEXT)
+#define SET_GenerateMipmapEXT(disp, fn) ((disp)->GenerateMipmapEXT = fn)
+#define CALL_GetFramebufferAttachmentParameterivEXT(disp, parameters) (*((disp)->GetFramebufferAttachmentParameterivEXT)) parameters
+#define GET_GetFramebufferAttachmentParameterivEXT(disp) ((disp)->GetFramebufferAttachmentParameterivEXT)
+#define SET_GetFramebufferAttachmentParameterivEXT(disp, fn) ((disp)->GetFramebufferAttachmentParameterivEXT = fn)
+#define CALL_GetQueryObjecti64vEXT(disp, parameters) (*((disp)->GetQueryObjecti64vEXT)) parameters
+#define GET_GetQueryObjecti64vEXT(disp) ((disp)->GetQueryObjecti64vEXT)
+#define SET_GetQueryObjecti64vEXT(disp, fn) ((disp)->GetQueryObjecti64vEXT = fn)
+#define CALL_GetQueryObjectui64vEXT(disp, parameters) (*((disp)->GetQueryObjectui64vEXT)) parameters
+#define GET_GetQueryObjectui64vEXT(disp) ((disp)->GetQueryObjectui64vEXT)
+#define SET_GetQueryObjectui64vEXT(disp, fn) ((disp)->GetQueryObjectui64vEXT = fn)
+#define CALL_GetRenderbufferParameterivEXT(disp, parameters) (*((disp)->GetRenderbufferParameterivEXT)) parameters
+#define GET_GetRenderbufferParameterivEXT(disp) ((disp)->GetRenderbufferParameterivEXT)
+#define SET_GetRenderbufferParameterivEXT(disp, fn) ((disp)->GetRenderbufferParameterivEXT = fn)
+#define CALL_IsFramebufferEXT(disp, parameters) (*((disp)->IsFramebufferEXT)) parameters
+#define GET_IsFramebufferEXT(disp) ((disp)->IsFramebufferEXT)
+#define SET_IsFramebufferEXT(disp, fn) ((disp)->IsFramebufferEXT = fn)
+#define CALL_IsRenderbufferEXT(disp, parameters) (*((disp)->IsRenderbufferEXT)) parameters
+#define GET_IsRenderbufferEXT(disp) ((disp)->IsRenderbufferEXT)
+#define SET_IsRenderbufferEXT(disp, fn) ((disp)->IsRenderbufferEXT = fn)
+#define CALL_RenderbufferStorageEXT(disp, parameters) (*((disp)->RenderbufferStorageEXT)) parameters
+#define GET_RenderbufferStorageEXT(disp) ((disp)->RenderbufferStorageEXT)
+#define SET_RenderbufferStorageEXT(disp, fn) ((disp)->RenderbufferStorageEXT = fn)
+#define CALL_BlitFramebufferEXT(disp, parameters) (*((disp)->BlitFramebufferEXT)) parameters
+#define GET_BlitFramebufferEXT(disp) ((disp)->BlitFramebufferEXT)
+#define SET_BlitFramebufferEXT(disp, fn) ((disp)->BlitFramebufferEXT = fn)
 #define CALL_ProgramEnvParameters4fvEXT(disp, parameters) (*((disp)->ProgramEnvParameters4fvEXT)) parameters
 #define GET_ProgramEnvParameters4fvEXT(disp) ((disp)->ProgramEnvParameters4fvEXT)
 #define SET_ProgramEnvParameters4fvEXT(disp, fn) ((disp)->ProgramEnvParameters4fvEXT = fn)
@@ -2536,454 +2386,782 @@
 
 #else
 
-#define driDispatchRemapTable_size 417
+#define driDispatchRemapTable_size 367
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
-#define LoadTransposeMatrixfARB_remap_index 0
-#define LoadTransposeMatrixdARB_remap_index 1
-#define MultTransposeMatrixfARB_remap_index 2
-#define MultTransposeMatrixdARB_remap_index 3
-#define SampleCoverageARB_remap_index 4
-#define DrawBuffersARB_remap_index 5
-#define PolygonOffsetEXT_remap_index 6
-#define GetTexFilterFuncSGIS_remap_index 7
-#define TexFilterFuncSGIS_remap_index 8
-#define GetHistogramEXT_remap_index 9
-#define GetHistogramParameterfvEXT_remap_index 10
-#define GetHistogramParameterivEXT_remap_index 11
-#define GetMinmaxEXT_remap_index 12
-#define GetMinmaxParameterfvEXT_remap_index 13
-#define GetMinmaxParameterivEXT_remap_index 14
-#define GetConvolutionFilterEXT_remap_index 15
-#define GetConvolutionParameterfvEXT_remap_index 16
-#define GetConvolutionParameterivEXT_remap_index 17
-#define GetSeparableFilterEXT_remap_index 18
-#define GetColorTableSGI_remap_index 19
-#define GetColorTableParameterfvSGI_remap_index 20
-#define GetColorTableParameterivSGI_remap_index 21
-#define PixelTexGenSGIX_remap_index 22
-#define PixelTexGenParameteriSGIS_remap_index 23
-#define PixelTexGenParameterivSGIS_remap_index 24
-#define PixelTexGenParameterfSGIS_remap_index 25
-#define PixelTexGenParameterfvSGIS_remap_index 26
-#define GetPixelTexGenParameterivSGIS_remap_index 27
-#define GetPixelTexGenParameterfvSGIS_remap_index 28
-#define TexImage4DSGIS_remap_index 29
-#define TexSubImage4DSGIS_remap_index 30
-#define AreTexturesResidentEXT_remap_index 31
-#define GenTexturesEXT_remap_index 32
-#define IsTextureEXT_remap_index 33
-#define DetailTexFuncSGIS_remap_index 34
-#define GetDetailTexFuncSGIS_remap_index 35
-#define SharpenTexFuncSGIS_remap_index 36
-#define GetSharpenTexFuncSGIS_remap_index 37
-#define SampleMaskSGIS_remap_index 38
-#define SamplePatternSGIS_remap_index 39
-#define ColorPointerEXT_remap_index 40
-#define EdgeFlagPointerEXT_remap_index 41
-#define IndexPointerEXT_remap_index 42
-#define NormalPointerEXT_remap_index 43
-#define TexCoordPointerEXT_remap_index 44
-#define VertexPointerEXT_remap_index 45
-#define SpriteParameterfSGIX_remap_index 46
-#define SpriteParameterfvSGIX_remap_index 47
-#define SpriteParameteriSGIX_remap_index 48
-#define SpriteParameterivSGIX_remap_index 49
-#define PointParameterfEXT_remap_index 50
-#define PointParameterfvEXT_remap_index 51
-#define GetInstrumentsSGIX_remap_index 52
-#define InstrumentsBufferSGIX_remap_index 53
-#define PollInstrumentsSGIX_remap_index 54
-#define ReadInstrumentsSGIX_remap_index 55
-#define StartInstrumentsSGIX_remap_index 56
-#define StopInstrumentsSGIX_remap_index 57
-#define FrameZoomSGIX_remap_index 58
-#define TagSampleBufferSGIX_remap_index 59
-#define ReferencePlaneSGIX_remap_index 60
-#define FlushRasterSGIX_remap_index 61
-#define GetListParameterfvSGIX_remap_index 62
-#define GetListParameterivSGIX_remap_index 63
-#define ListParameterfSGIX_remap_index 64
-#define ListParameterfvSGIX_remap_index 65
-#define ListParameteriSGIX_remap_index 66
-#define ListParameterivSGIX_remap_index 67
-#define FragmentColorMaterialSGIX_remap_index 68
-#define FragmentLightfSGIX_remap_index 69
-#define FragmentLightfvSGIX_remap_index 70
-#define FragmentLightiSGIX_remap_index 71
-#define FragmentLightivSGIX_remap_index 72
-#define FragmentLightModelfSGIX_remap_index 73
-#define FragmentLightModelfvSGIX_remap_index 74
-#define FragmentLightModeliSGIX_remap_index 75
-#define FragmentLightModelivSGIX_remap_index 76
-#define FragmentMaterialfSGIX_remap_index 77
-#define FragmentMaterialfvSGIX_remap_index 78
-#define FragmentMaterialiSGIX_remap_index 79
-#define FragmentMaterialivSGIX_remap_index 80
-#define GetFragmentLightfvSGIX_remap_index 81
-#define GetFragmentLightivSGIX_remap_index 82
-#define GetFragmentMaterialfvSGIX_remap_index 83
-#define GetFragmentMaterialivSGIX_remap_index 84
-#define LightEnviSGIX_remap_index 85
-#define VertexWeightfEXT_remap_index 86
-#define VertexWeightfvEXT_remap_index 87
-#define VertexWeightPointerEXT_remap_index 88
-#define FlushVertexArrayRangeNV_remap_index 89
-#define VertexArrayRangeNV_remap_index 90
-#define CombinerParameterfvNV_remap_index 91
-#define CombinerParameterfNV_remap_index 92
-#define CombinerParameterivNV_remap_index 93
-#define CombinerParameteriNV_remap_index 94
-#define CombinerInputNV_remap_index 95
-#define CombinerOutputNV_remap_index 96
-#define FinalCombinerInputNV_remap_index 97
-#define GetCombinerInputParameterfvNV_remap_index 98
-#define GetCombinerInputParameterivNV_remap_index 99
-#define GetCombinerOutputParameterfvNV_remap_index 100
-#define GetCombinerOutputParameterivNV_remap_index 101
-#define GetFinalCombinerInputParameterfvNV_remap_index 102
-#define GetFinalCombinerInputParameterivNV_remap_index 103
-#define ResizeBuffersMESA_remap_index 104
-#define WindowPos2dMESA_remap_index 105
-#define WindowPos2dvMESA_remap_index 106
-#define WindowPos2fMESA_remap_index 107
-#define WindowPos2fvMESA_remap_index 108
-#define WindowPos2iMESA_remap_index 109
-#define WindowPos2ivMESA_remap_index 110
-#define WindowPos2sMESA_remap_index 111
-#define WindowPos2svMESA_remap_index 112
-#define WindowPos3dMESA_remap_index 113
-#define WindowPos3dvMESA_remap_index 114
-#define WindowPos3fMESA_remap_index 115
-#define WindowPos3fvMESA_remap_index 116
-#define WindowPos3iMESA_remap_index 117
-#define WindowPos3ivMESA_remap_index 118
-#define WindowPos3sMESA_remap_index 119
-#define WindowPos3svMESA_remap_index 120
-#define WindowPos4dMESA_remap_index 121
-#define WindowPos4dvMESA_remap_index 122
-#define WindowPos4fMESA_remap_index 123
-#define WindowPos4fvMESA_remap_index 124
-#define WindowPos4iMESA_remap_index 125
-#define WindowPos4ivMESA_remap_index 126
-#define WindowPos4sMESA_remap_index 127
-#define WindowPos4svMESA_remap_index 128
-#define BlendFuncSeparateEXT_remap_index 129
-#define IndexMaterialEXT_remap_index 130
-#define IndexFuncEXT_remap_index 131
-#define LockArraysEXT_remap_index 132
-#define UnlockArraysEXT_remap_index 133
-#define CullParameterdvEXT_remap_index 134
-#define CullParameterfvEXT_remap_index 135
-#define HintPGI_remap_index 136
-#define FogCoordfEXT_remap_index 137
-#define FogCoordfvEXT_remap_index 138
-#define FogCoorddEXT_remap_index 139
-#define FogCoorddvEXT_remap_index 140
-#define FogCoordPointerEXT_remap_index 141
-#define GetColorTableEXT_remap_index 142
-#define GetColorTableParameterivEXT_remap_index 143
-#define GetColorTableParameterfvEXT_remap_index 144
-#define TbufferMask3DFX_remap_index 145
-#define CompressedTexImage3DARB_remap_index 146
-#define CompressedTexImage2DARB_remap_index 147
-#define CompressedTexImage1DARB_remap_index 148
-#define CompressedTexSubImage3DARB_remap_index 149
-#define CompressedTexSubImage2DARB_remap_index 150
-#define CompressedTexSubImage1DARB_remap_index 151
-#define GetCompressedTexImageARB_remap_index 152
-#define SecondaryColor3bEXT_remap_index 153
-#define SecondaryColor3bvEXT_remap_index 154
-#define SecondaryColor3dEXT_remap_index 155
-#define SecondaryColor3dvEXT_remap_index 156
-#define SecondaryColor3fEXT_remap_index 157
-#define SecondaryColor3fvEXT_remap_index 158
-#define SecondaryColor3iEXT_remap_index 159
-#define SecondaryColor3ivEXT_remap_index 160
-#define SecondaryColor3sEXT_remap_index 161
-#define SecondaryColor3svEXT_remap_index 162
-#define SecondaryColor3ubEXT_remap_index 163
-#define SecondaryColor3ubvEXT_remap_index 164
-#define SecondaryColor3uiEXT_remap_index 165
-#define SecondaryColor3uivEXT_remap_index 166
-#define SecondaryColor3usEXT_remap_index 167
-#define SecondaryColor3usvEXT_remap_index 168
-#define SecondaryColorPointerEXT_remap_index 169
-#define AreProgramsResidentNV_remap_index 170
-#define BindProgramNV_remap_index 171
-#define DeleteProgramsNV_remap_index 172
-#define ExecuteProgramNV_remap_index 173
-#define GenProgramsNV_remap_index 174
-#define GetProgramParameterdvNV_remap_index 175
-#define GetProgramParameterfvNV_remap_index 176
-#define GetProgramivNV_remap_index 177
-#define GetProgramStringNV_remap_index 178
-#define GetTrackMatrixivNV_remap_index 179
-#define GetVertexAttribdvARB_remap_index 180
-#define GetVertexAttribfvARB_remap_index 181
-#define GetVertexAttribivARB_remap_index 182
-#define GetVertexAttribPointervNV_remap_index 183
-#define IsProgramNV_remap_index 184
-#define LoadProgramNV_remap_index 185
-#define ProgramParameter4dNV_remap_index 186
-#define ProgramParameter4dvNV_remap_index 187
-#define ProgramParameter4fNV_remap_index 188
-#define ProgramParameter4fvNV_remap_index 189
-#define ProgramParameters4dvNV_remap_index 190
-#define ProgramParameters4fvNV_remap_index 191
-#define RequestResidentProgramsNV_remap_index 192
-#define TrackMatrixNV_remap_index 193
-#define VertexAttribPointerNV_remap_index 194
-#define VertexAttrib1dARB_remap_index 195
-#define VertexAttrib1dvARB_remap_index 196
-#define VertexAttrib1fARB_remap_index 197
-#define VertexAttrib1fvARB_remap_index 198
-#define VertexAttrib1sARB_remap_index 199
-#define VertexAttrib1svARB_remap_index 200
-#define VertexAttrib2dARB_remap_index 201
-#define VertexAttrib2dvARB_remap_index 202
-#define VertexAttrib2fARB_remap_index 203
-#define VertexAttrib2fvARB_remap_index 204
-#define VertexAttrib2sARB_remap_index 205
-#define VertexAttrib2svARB_remap_index 206
-#define VertexAttrib3dARB_remap_index 207
-#define VertexAttrib3dvARB_remap_index 208
-#define VertexAttrib3fARB_remap_index 209
-#define VertexAttrib3fvARB_remap_index 210
-#define VertexAttrib3sARB_remap_index 211
-#define VertexAttrib3svARB_remap_index 212
-#define VertexAttrib4dARB_remap_index 213
-#define VertexAttrib4dvARB_remap_index 214
-#define VertexAttrib4fARB_remap_index 215
-#define VertexAttrib4fvARB_remap_index 216
-#define VertexAttrib4sARB_remap_index 217
-#define VertexAttrib4svARB_remap_index 218
-#define VertexAttrib4NubARB_remap_index 219
-#define VertexAttrib4NubvARB_remap_index 220
-#define VertexAttribs1dvNV_remap_index 221
-#define VertexAttribs1fvNV_remap_index 222
-#define VertexAttribs1svNV_remap_index 223
-#define VertexAttribs2dvNV_remap_index 224
-#define VertexAttribs2fvNV_remap_index 225
-#define VertexAttribs2svNV_remap_index 226
-#define VertexAttribs3dvNV_remap_index 227
-#define VertexAttribs3fvNV_remap_index 228
-#define VertexAttribs3svNV_remap_index 229
-#define VertexAttribs4dvNV_remap_index 230
-#define VertexAttribs4fvNV_remap_index 231
-#define VertexAttribs4svNV_remap_index 232
-#define VertexAttribs4ubvNV_remap_index 233
-#define PointParameteriNV_remap_index 234
-#define PointParameterivNV_remap_index 235
-#define MultiDrawArraysEXT_remap_index 236
-#define MultiDrawElementsEXT_remap_index 237
-#define ActiveStencilFaceEXT_remap_index 238
-#define DeleteFencesNV_remap_index 239
-#define GenFencesNV_remap_index 240
-#define IsFenceNV_remap_index 241
-#define TestFenceNV_remap_index 242
-#define GetFenceivNV_remap_index 243
-#define FinishFenceNV_remap_index 244
-#define SetFenceNV_remap_index 245
-#define VertexAttrib4bvARB_remap_index 246
-#define VertexAttrib4ivARB_remap_index 247
-#define VertexAttrib4ubvARB_remap_index 248
-#define VertexAttrib4usvARB_remap_index 249
-#define VertexAttrib4uivARB_remap_index 250
-#define VertexAttrib4NbvARB_remap_index 251
-#define VertexAttrib4NsvARB_remap_index 252
-#define VertexAttrib4NivARB_remap_index 253
-#define VertexAttrib4NusvARB_remap_index 254
-#define VertexAttrib4NuivARB_remap_index 255
-#define VertexAttribPointerARB_remap_index 256
-#define EnableVertexAttribArrayARB_remap_index 257
-#define DisableVertexAttribArrayARB_remap_index 258
-#define ProgramStringARB_remap_index 259
-#define ProgramEnvParameter4dARB_remap_index 260
-#define ProgramEnvParameter4dvARB_remap_index 261
-#define ProgramEnvParameter4fARB_remap_index 262
-#define ProgramEnvParameter4fvARB_remap_index 263
-#define ProgramLocalParameter4dARB_remap_index 264
-#define ProgramLocalParameter4dvARB_remap_index 265
-#define ProgramLocalParameter4fARB_remap_index 266
-#define ProgramLocalParameter4fvARB_remap_index 267
-#define GetProgramEnvParameterdvARB_remap_index 268
-#define GetProgramEnvParameterfvARB_remap_index 269
-#define GetProgramLocalParameterdvARB_remap_index 270
-#define GetProgramLocalParameterfvARB_remap_index 271
-#define GetProgramivARB_remap_index 272
-#define GetProgramStringARB_remap_index 273
-#define ProgramNamedParameter4fNV_remap_index 274
-#define ProgramNamedParameter4dNV_remap_index 275
-#define ProgramNamedParameter4fvNV_remap_index 276
-#define ProgramNamedParameter4dvNV_remap_index 277
-#define GetProgramNamedParameterfvNV_remap_index 278
-#define GetProgramNamedParameterdvNV_remap_index 279
-#define BindBufferARB_remap_index 280
-#define BufferDataARB_remap_index 281
-#define BufferSubDataARB_remap_index 282
-#define DeleteBuffersARB_remap_index 283
-#define GenBuffersARB_remap_index 284
-#define GetBufferParameterivARB_remap_index 285
-#define GetBufferPointervARB_remap_index 286
-#define GetBufferSubDataARB_remap_index 287
-#define IsBufferARB_remap_index 288
-#define MapBufferARB_remap_index 289
-#define UnmapBufferARB_remap_index 290
-#define DepthBoundsEXT_remap_index 291
-#define GenQueriesARB_remap_index 292
-#define DeleteQueriesARB_remap_index 293
-#define IsQueryARB_remap_index 294
-#define BeginQueryARB_remap_index 295
-#define EndQueryARB_remap_index 296
-#define GetQueryivARB_remap_index 297
-#define GetQueryObjectivARB_remap_index 298
-#define GetQueryObjectuivARB_remap_index 299
-#define MultiModeDrawArraysIBM_remap_index 300
-#define MultiModeDrawElementsIBM_remap_index 301
-#define BlendEquationSeparateEXT_remap_index 302
-#define DeleteObjectARB_remap_index 303
-#define GetHandleARB_remap_index 304
-#define DetachObjectARB_remap_index 305
-#define CreateShaderObjectARB_remap_index 306
-#define ShaderSourceARB_remap_index 307
-#define CompileShaderARB_remap_index 308
-#define CreateProgramObjectARB_remap_index 309
-#define AttachObjectARB_remap_index 310
-#define LinkProgramARB_remap_index 311
-#define UseProgramObjectARB_remap_index 312
-#define ValidateProgramARB_remap_index 313
-#define Uniform1fARB_remap_index 314
-#define Uniform2fARB_remap_index 315
-#define Uniform3fARB_remap_index 316
-#define Uniform4fARB_remap_index 317
-#define Uniform1iARB_remap_index 318
-#define Uniform2iARB_remap_index 319
-#define Uniform3iARB_remap_index 320
-#define Uniform4iARB_remap_index 321
-#define Uniform1fvARB_remap_index 322
-#define Uniform2fvARB_remap_index 323
-#define Uniform3fvARB_remap_index 324
-#define Uniform4fvARB_remap_index 325
-#define Uniform1ivARB_remap_index 326
-#define Uniform2ivARB_remap_index 327
-#define Uniform3ivARB_remap_index 328
-#define Uniform4ivARB_remap_index 329
-#define UniformMatrix2fvARB_remap_index 330
-#define UniformMatrix3fvARB_remap_index 331
-#define UniformMatrix4fvARB_remap_index 332
-#define GetObjectParameterfvARB_remap_index 333
-#define GetObjectParameterivARB_remap_index 334
-#define GetInfoLogARB_remap_index 335
-#define GetAttachedObjectsARB_remap_index 336
-#define GetUniformLocationARB_remap_index 337
-#define GetActiveUniformARB_remap_index 338
-#define GetUniformfvARB_remap_index 339
-#define GetUniformivARB_remap_index 340
-#define GetShaderSourceARB_remap_index 341
-#define BindAttribLocationARB_remap_index 342
-#define GetActiveAttribARB_remap_index 343
-#define GetAttribLocationARB_remap_index 344
-#define GetVertexAttribdvNV_remap_index 345
-#define GetVertexAttribfvNV_remap_index 346
-#define GetVertexAttribivNV_remap_index 347
-#define VertexAttrib1dNV_remap_index 348
-#define VertexAttrib1dvNV_remap_index 349
-#define VertexAttrib1fNV_remap_index 350
-#define VertexAttrib1fvNV_remap_index 351
-#define VertexAttrib1sNV_remap_index 352
-#define VertexAttrib1svNV_remap_index 353
-#define VertexAttrib2dNV_remap_index 354
-#define VertexAttrib2dvNV_remap_index 355
-#define VertexAttrib2fNV_remap_index 356
-#define VertexAttrib2fvNV_remap_index 357
-#define VertexAttrib2sNV_remap_index 358
-#define VertexAttrib2svNV_remap_index 359
-#define VertexAttrib3dNV_remap_index 360
-#define VertexAttrib3dvNV_remap_index 361
-#define VertexAttrib3fNV_remap_index 362
-#define VertexAttrib3fvNV_remap_index 363
-#define VertexAttrib3sNV_remap_index 364
-#define VertexAttrib3svNV_remap_index 365
-#define VertexAttrib4dNV_remap_index 366
-#define VertexAttrib4dvNV_remap_index 367
-#define VertexAttrib4fNV_remap_index 368
-#define VertexAttrib4fvNV_remap_index 369
-#define VertexAttrib4sNV_remap_index 370
-#define VertexAttrib4svNV_remap_index 371
-#define VertexAttrib4ubNV_remap_index 372
-#define VertexAttrib4ubvNV_remap_index 373
-#define GenFragmentShadersATI_remap_index 374
-#define BindFragmentShaderATI_remap_index 375
-#define DeleteFragmentShaderATI_remap_index 376
-#define BeginFragmentShaderATI_remap_index 377
-#define EndFragmentShaderATI_remap_index 378
-#define PassTexCoordATI_remap_index 379
-#define SampleMapATI_remap_index 380
-#define ColorFragmentOp1ATI_remap_index 381
-#define ColorFragmentOp2ATI_remap_index 382
-#define ColorFragmentOp3ATI_remap_index 383
-#define AlphaFragmentOp1ATI_remap_index 384
-#define AlphaFragmentOp2ATI_remap_index 385
-#define AlphaFragmentOp3ATI_remap_index 386
-#define SetFragmentShaderConstantATI_remap_index 387
-#define IsRenderbufferEXT_remap_index 388
-#define BindRenderbufferEXT_remap_index 389
-#define DeleteRenderbuffersEXT_remap_index 390
-#define GenRenderbuffersEXT_remap_index 391
-#define RenderbufferStorageEXT_remap_index 392
-#define GetRenderbufferParameterivEXT_remap_index 393
-#define IsFramebufferEXT_remap_index 394
-#define BindFramebufferEXT_remap_index 395
-#define DeleteFramebuffersEXT_remap_index 396
-#define GenFramebuffersEXT_remap_index 397
-#define CheckFramebufferStatusEXT_remap_index 398
-#define FramebufferTexture1DEXT_remap_index 399
-#define FramebufferTexture2DEXT_remap_index 400
-#define FramebufferTexture3DEXT_remap_index 401
-#define FramebufferRenderbufferEXT_remap_index 402
-#define GetFramebufferAttachmentParameterivEXT_remap_index 403
-#define GenerateMipmapEXT_remap_index 404
-#define StencilFuncSeparate_remap_index 405
-#define StencilOpSeparate_remap_index 406
-#define StencilMaskSeparate_remap_index 407
-#define GetQueryObjecti64vEXT_remap_index 408
-#define GetQueryObjectui64vEXT_remap_index 409
-#define BlitFramebufferEXT_remap_index 410
-#define BindVertexArrayAPPLE_remap_index 411
-#define DeleteVertexArraysAPPLE_remap_index 412
-#define GenVertexArraysAPPLE_remap_index 413
-#define IsVertexArrayAPPLE_remap_index 414
-#define ProgramEnvParameters4fvEXT_remap_index 415
-#define ProgramLocalParameters4fvEXT_remap_index 416
+#define StencilFuncSeparate_remap_index 0
+#define StencilMaskSeparate_remap_index 1
+#define StencilOpSeparate_remap_index 2
+#define LoadTransposeMatrixdARB_remap_index 3
+#define LoadTransposeMatrixfARB_remap_index 4
+#define MultTransposeMatrixdARB_remap_index 5
+#define MultTransposeMatrixfARB_remap_index 6
+#define SampleCoverageARB_remap_index 7
+#define CompressedTexImage1DARB_remap_index 8
+#define CompressedTexImage2DARB_remap_index 9
+#define CompressedTexImage3DARB_remap_index 10
+#define CompressedTexSubImage1DARB_remap_index 11
+#define CompressedTexSubImage2DARB_remap_index 12
+#define CompressedTexSubImage3DARB_remap_index 13
+#define GetCompressedTexImageARB_remap_index 14
+#define DisableVertexAttribArrayARB_remap_index 15
+#define EnableVertexAttribArrayARB_remap_index 16
+#define GetProgramEnvParameterdvARB_remap_index 17
+#define GetProgramEnvParameterfvARB_remap_index 18
+#define GetProgramLocalParameterdvARB_remap_index 19
+#define GetProgramLocalParameterfvARB_remap_index 20
+#define GetProgramStringARB_remap_index 21
+#define GetProgramivARB_remap_index 22
+#define GetVertexAttribdvARB_remap_index 23
+#define GetVertexAttribfvARB_remap_index 24
+#define GetVertexAttribivARB_remap_index 25
+#define ProgramEnvParameter4dARB_remap_index 26
+#define ProgramEnvParameter4dvARB_remap_index 27
+#define ProgramEnvParameter4fARB_remap_index 28
+#define ProgramEnvParameter4fvARB_remap_index 29
+#define ProgramLocalParameter4dARB_remap_index 30
+#define ProgramLocalParameter4dvARB_remap_index 31
+#define ProgramLocalParameter4fARB_remap_index 32
+#define ProgramLocalParameter4fvARB_remap_index 33
+#define ProgramStringARB_remap_index 34
+#define VertexAttrib1dARB_remap_index 35
+#define VertexAttrib1dvARB_remap_index 36
+#define VertexAttrib1fARB_remap_index 37
+#define VertexAttrib1fvARB_remap_index 38
+#define VertexAttrib1sARB_remap_index 39
+#define VertexAttrib1svARB_remap_index 40
+#define VertexAttrib2dARB_remap_index 41
+#define VertexAttrib2dvARB_remap_index 42
+#define VertexAttrib2fARB_remap_index 43
+#define VertexAttrib2fvARB_remap_index 44
+#define VertexAttrib2sARB_remap_index 45
+#define VertexAttrib2svARB_remap_index 46
+#define VertexAttrib3dARB_remap_index 47
+#define VertexAttrib3dvARB_remap_index 48
+#define VertexAttrib3fARB_remap_index 49
+#define VertexAttrib3fvARB_remap_index 50
+#define VertexAttrib3sARB_remap_index 51
+#define VertexAttrib3svARB_remap_index 52
+#define VertexAttrib4NbvARB_remap_index 53
+#define VertexAttrib4NivARB_remap_index 54
+#define VertexAttrib4NsvARB_remap_index 55
+#define VertexAttrib4NubARB_remap_index 56
+#define VertexAttrib4NubvARB_remap_index 57
+#define VertexAttrib4NuivARB_remap_index 58
+#define VertexAttrib4NusvARB_remap_index 59
+#define VertexAttrib4bvARB_remap_index 60
+#define VertexAttrib4dARB_remap_index 61
+#define VertexAttrib4dvARB_remap_index 62
+#define VertexAttrib4fARB_remap_index 63
+#define VertexAttrib4fvARB_remap_index 64
+#define VertexAttrib4ivARB_remap_index 65
+#define VertexAttrib4sARB_remap_index 66
+#define VertexAttrib4svARB_remap_index 67
+#define VertexAttrib4ubvARB_remap_index 68
+#define VertexAttrib4uivARB_remap_index 69
+#define VertexAttrib4usvARB_remap_index 70
+#define VertexAttribPointerARB_remap_index 71
+#define BindBufferARB_remap_index 72
+#define BufferDataARB_remap_index 73
+#define BufferSubDataARB_remap_index 74
+#define DeleteBuffersARB_remap_index 75
+#define GenBuffersARB_remap_index 76
+#define GetBufferParameterivARB_remap_index 77
+#define GetBufferPointervARB_remap_index 78
+#define GetBufferSubDataARB_remap_index 79
+#define IsBufferARB_remap_index 80
+#define MapBufferARB_remap_index 81
+#define UnmapBufferARB_remap_index 82
+#define BeginQueryARB_remap_index 83
+#define DeleteQueriesARB_remap_index 84
+#define EndQueryARB_remap_index 85
+#define GenQueriesARB_remap_index 86
+#define GetQueryObjectivARB_remap_index 87
+#define GetQueryObjectuivARB_remap_index 88
+#define GetQueryivARB_remap_index 89
+#define IsQueryARB_remap_index 90
+#define AttachObjectARB_remap_index 91
+#define CompileShaderARB_remap_index 92
+#define CreateProgramObjectARB_remap_index 93
+#define CreateShaderObjectARB_remap_index 94
+#define DeleteObjectARB_remap_index 95
+#define DetachObjectARB_remap_index 96
+#define GetActiveUniformARB_remap_index 97
+#define GetAttachedObjectsARB_remap_index 98
+#define GetHandleARB_remap_index 99
+#define GetInfoLogARB_remap_index 100
+#define GetObjectParameterfvARB_remap_index 101
+#define GetObjectParameterivARB_remap_index 102
+#define GetShaderSourceARB_remap_index 103
+#define GetUniformLocationARB_remap_index 104
+#define GetUniformfvARB_remap_index 105
+#define GetUniformivARB_remap_index 106
+#define LinkProgramARB_remap_index 107
+#define ShaderSourceARB_remap_index 108
+#define Uniform1fARB_remap_index 109
+#define Uniform1fvARB_remap_index 110
+#define Uniform1iARB_remap_index 111
+#define Uniform1ivARB_remap_index 112
+#define Uniform2fARB_remap_index 113
+#define Uniform2fvARB_remap_index 114
+#define Uniform2iARB_remap_index 115
+#define Uniform2ivARB_remap_index 116
+#define Uniform3fARB_remap_index 117
+#define Uniform3fvARB_remap_index 118
+#define Uniform3iARB_remap_index 119
+#define Uniform3ivARB_remap_index 120
+#define Uniform4fARB_remap_index 121
+#define Uniform4fvARB_remap_index 122
+#define Uniform4iARB_remap_index 123
+#define Uniform4ivARB_remap_index 124
+#define UniformMatrix2fvARB_remap_index 125
+#define UniformMatrix3fvARB_remap_index 126
+#define UniformMatrix4fvARB_remap_index 127
+#define UseProgramObjectARB_remap_index 128
+#define ValidateProgramARB_remap_index 129
+#define BindAttribLocationARB_remap_index 130
+#define GetActiveAttribARB_remap_index 131
+#define GetAttribLocationARB_remap_index 132
+#define DrawBuffersARB_remap_index 133
+#define PolygonOffsetEXT_remap_index 134
+#define GetHistogramEXT_remap_index 135
+#define GetHistogramParameterfvEXT_remap_index 136
+#define GetHistogramParameterivEXT_remap_index 137
+#define GetMinmaxEXT_remap_index 138
+#define GetMinmaxParameterfvEXT_remap_index 139
+#define GetMinmaxParameterivEXT_remap_index 140
+#define GetConvolutionFilterEXT_remap_index 141
+#define GetConvolutionParameterfvEXT_remap_index 142
+#define GetConvolutionParameterivEXT_remap_index 143
+#define GetSeparableFilterEXT_remap_index 144
+#define GetColorTableParameterfvSGI_remap_index 145
+#define GetColorTableParameterivSGI_remap_index 146
+#define GetColorTableSGI_remap_index 147
+#define GetPixelTexGenParameterfvSGIS_remap_index 148
+#define GetPixelTexGenParameterivSGIS_remap_index 149
+#define PixelTexGenParameterfSGIS_remap_index 150
+#define PixelTexGenParameterfvSGIS_remap_index 151
+#define PixelTexGenParameteriSGIS_remap_index 152
+#define PixelTexGenParameterivSGIS_remap_index 153
+#define AreTexturesResidentEXT_remap_index 154
+#define GenTexturesEXT_remap_index 155
+#define IsTextureEXT_remap_index 156
+#define SampleMaskSGIS_remap_index 157
+#define SamplePatternSGIS_remap_index 158
+#define ColorPointerEXT_remap_index 159
+#define EdgeFlagPointerEXT_remap_index 160
+#define IndexPointerEXT_remap_index 161
+#define NormalPointerEXT_remap_index 162
+#define TexCoordPointerEXT_remap_index 163
+#define VertexPointerEXT_remap_index 164
+#define PointParameterfEXT_remap_index 165
+#define PointParameterfvEXT_remap_index 166
+#define GetColorTableEXT_remap_index 167
+#define GetColorTableParameterfvEXT_remap_index 168
+#define GetColorTableParameterivEXT_remap_index 169
+#define LockArraysEXT_remap_index 170
+#define UnlockArraysEXT_remap_index 171
+#define CullParameterdvEXT_remap_index 172
+#define CullParameterfvEXT_remap_index 173
+#define SecondaryColor3bEXT_remap_index 174
+#define SecondaryColor3bvEXT_remap_index 175
+#define SecondaryColor3dEXT_remap_index 176
+#define SecondaryColor3dvEXT_remap_index 177
+#define SecondaryColor3fEXT_remap_index 178
+#define SecondaryColor3fvEXT_remap_index 179
+#define SecondaryColor3iEXT_remap_index 180
+#define SecondaryColor3ivEXT_remap_index 181
+#define SecondaryColor3sEXT_remap_index 182
+#define SecondaryColor3svEXT_remap_index 183
+#define SecondaryColor3ubEXT_remap_index 184
+#define SecondaryColor3ubvEXT_remap_index 185
+#define SecondaryColor3uiEXT_remap_index 186
+#define SecondaryColor3uivEXT_remap_index 187
+#define SecondaryColor3usEXT_remap_index 188
+#define SecondaryColor3usvEXT_remap_index 189
+#define SecondaryColorPointerEXT_remap_index 190
+#define MultiDrawArraysEXT_remap_index 191
+#define MultiDrawElementsEXT_remap_index 192
+#define FogCoordPointerEXT_remap_index 193
+#define FogCoorddEXT_remap_index 194
+#define FogCoorddvEXT_remap_index 195
+#define FogCoordfEXT_remap_index 196
+#define FogCoordfvEXT_remap_index 197
+#define PixelTexGenSGIX_remap_index 198
+#define BlendFuncSeparateEXT_remap_index 199
+#define VertexWeightPointerEXT_remap_index 200
+#define VertexWeightfEXT_remap_index 201
+#define VertexWeightfvEXT_remap_index 202
+#define FlushVertexArrayRangeNV_remap_index 203
+#define VertexArrayRangeNV_remap_index 204
+#define CombinerInputNV_remap_index 205
+#define CombinerOutputNV_remap_index 206
+#define CombinerParameterfNV_remap_index 207
+#define CombinerParameterfvNV_remap_index 208
+#define CombinerParameteriNV_remap_index 209
+#define CombinerParameterivNV_remap_index 210
+#define FinalCombinerInputNV_remap_index 211
+#define GetCombinerInputParameterfvNV_remap_index 212
+#define GetCombinerInputParameterivNV_remap_index 213
+#define GetCombinerOutputParameterfvNV_remap_index 214
+#define GetCombinerOutputParameterivNV_remap_index 215
+#define GetFinalCombinerInputParameterfvNV_remap_index 216
+#define GetFinalCombinerInputParameterivNV_remap_index 217
+#define ResizeBuffersMESA_remap_index 218
+#define WindowPos2dMESA_remap_index 219
+#define WindowPos2dvMESA_remap_index 220
+#define WindowPos2fMESA_remap_index 221
+#define WindowPos2fvMESA_remap_index 222
+#define WindowPos2iMESA_remap_index 223
+#define WindowPos2ivMESA_remap_index 224
+#define WindowPos2sMESA_remap_index 225
+#define WindowPos2svMESA_remap_index 226
+#define WindowPos3dMESA_remap_index 227
+#define WindowPos3dvMESA_remap_index 228
+#define WindowPos3fMESA_remap_index 229
+#define WindowPos3fvMESA_remap_index 230
+#define WindowPos3iMESA_remap_index 231
+#define WindowPos3ivMESA_remap_index 232
+#define WindowPos3sMESA_remap_index 233
+#define WindowPos3svMESA_remap_index 234
+#define WindowPos4dMESA_remap_index 235
+#define WindowPos4dvMESA_remap_index 236
+#define WindowPos4fMESA_remap_index 237
+#define WindowPos4fvMESA_remap_index 238
+#define WindowPos4iMESA_remap_index 239
+#define WindowPos4ivMESA_remap_index 240
+#define WindowPos4sMESA_remap_index 241
+#define WindowPos4svMESA_remap_index 242
+#define MultiModeDrawArraysIBM_remap_index 243
+#define MultiModeDrawElementsIBM_remap_index 244
+#define DeleteFencesNV_remap_index 245
+#define FinishFenceNV_remap_index 246
+#define GenFencesNV_remap_index 247
+#define GetFenceivNV_remap_index 248
+#define IsFenceNV_remap_index 249
+#define SetFenceNV_remap_index 250
+#define TestFenceNV_remap_index 251
+#define AreProgramsResidentNV_remap_index 252
+#define BindProgramNV_remap_index 253
+#define DeleteProgramsNV_remap_index 254
+#define ExecuteProgramNV_remap_index 255
+#define GenProgramsNV_remap_index 256
+#define GetProgramParameterdvNV_remap_index 257
+#define GetProgramParameterfvNV_remap_index 258
+#define GetProgramStringNV_remap_index 259
+#define GetProgramivNV_remap_index 260
+#define GetTrackMatrixivNV_remap_index 261
+#define GetVertexAttribPointervNV_remap_index 262
+#define GetVertexAttribdvNV_remap_index 263
+#define GetVertexAttribfvNV_remap_index 264
+#define GetVertexAttribivNV_remap_index 265
+#define IsProgramNV_remap_index 266
+#define LoadProgramNV_remap_index 267
+#define ProgramParameter4dNV_remap_index 268
+#define ProgramParameter4dvNV_remap_index 269
+#define ProgramParameter4fNV_remap_index 270
+#define ProgramParameter4fvNV_remap_index 271
+#define ProgramParameters4dvNV_remap_index 272
+#define ProgramParameters4fvNV_remap_index 273
+#define RequestResidentProgramsNV_remap_index 274
+#define TrackMatrixNV_remap_index 275
+#define VertexAttrib1dNV_remap_index 276
+#define VertexAttrib1dvNV_remap_index 277
+#define VertexAttrib1fNV_remap_index 278
+#define VertexAttrib1fvNV_remap_index 279
+#define VertexAttrib1sNV_remap_index 280
+#define VertexAttrib1svNV_remap_index 281
+#define VertexAttrib2dNV_remap_index 282
+#define VertexAttrib2dvNV_remap_index 283
+#define VertexAttrib2fNV_remap_index 284
+#define VertexAttrib2fvNV_remap_index 285
+#define VertexAttrib2sNV_remap_index 286
+#define VertexAttrib2svNV_remap_index 287
+#define VertexAttrib3dNV_remap_index 288
+#define VertexAttrib3dvNV_remap_index 289
+#define VertexAttrib3fNV_remap_index 290
+#define VertexAttrib3fvNV_remap_index 291
+#define VertexAttrib3sNV_remap_index 292
+#define VertexAttrib3svNV_remap_index 293
+#define VertexAttrib4dNV_remap_index 294
+#define VertexAttrib4dvNV_remap_index 295
+#define VertexAttrib4fNV_remap_index 296
+#define VertexAttrib4fvNV_remap_index 297
+#define VertexAttrib4sNV_remap_index 298
+#define VertexAttrib4svNV_remap_index 299
+#define VertexAttrib4ubNV_remap_index 300
+#define VertexAttrib4ubvNV_remap_index 301
+#define VertexAttribPointerNV_remap_index 302
+#define VertexAttribs1dvNV_remap_index 303
+#define VertexAttribs1fvNV_remap_index 304
+#define VertexAttribs1svNV_remap_index 305
+#define VertexAttribs2dvNV_remap_index 306
+#define VertexAttribs2fvNV_remap_index 307
+#define VertexAttribs2svNV_remap_index 308
+#define VertexAttribs3dvNV_remap_index 309
+#define VertexAttribs3fvNV_remap_index 310
+#define VertexAttribs3svNV_remap_index 311
+#define VertexAttribs4dvNV_remap_index 312
+#define VertexAttribs4fvNV_remap_index 313
+#define VertexAttribs4svNV_remap_index 314
+#define VertexAttribs4ubvNV_remap_index 315
+#define AlphaFragmentOp1ATI_remap_index 316
+#define AlphaFragmentOp2ATI_remap_index 317
+#define AlphaFragmentOp3ATI_remap_index 318
+#define BeginFragmentShaderATI_remap_index 319
+#define BindFragmentShaderATI_remap_index 320
+#define ColorFragmentOp1ATI_remap_index 321
+#define ColorFragmentOp2ATI_remap_index 322
+#define ColorFragmentOp3ATI_remap_index 323
+#define DeleteFragmentShaderATI_remap_index 324
+#define EndFragmentShaderATI_remap_index 325
+#define GenFragmentShadersATI_remap_index 326
+#define PassTexCoordATI_remap_index 327
+#define SampleMapATI_remap_index 328
+#define SetFragmentShaderConstantATI_remap_index 329
+#define PointParameteriNV_remap_index 330
+#define PointParameterivNV_remap_index 331
+#define ActiveStencilFaceEXT_remap_index 332
+#define BindVertexArrayAPPLE_remap_index 333
+#define DeleteVertexArraysAPPLE_remap_index 334
+#define GenVertexArraysAPPLE_remap_index 335
+#define IsVertexArrayAPPLE_remap_index 336
+#define GetProgramNamedParameterdvNV_remap_index 337
+#define GetProgramNamedParameterfvNV_remap_index 338
+#define ProgramNamedParameter4dNV_remap_index 339
+#define ProgramNamedParameter4dvNV_remap_index 340
+#define ProgramNamedParameter4fNV_remap_index 341
+#define ProgramNamedParameter4fvNV_remap_index 342
+#define DepthBoundsEXT_remap_index 343
+#define BlendEquationSeparateEXT_remap_index 344
+#define BindFramebufferEXT_remap_index 345
+#define BindRenderbufferEXT_remap_index 346
+#define CheckFramebufferStatusEXT_remap_index 347
+#define DeleteFramebuffersEXT_remap_index 348
+#define DeleteRenderbuffersEXT_remap_index 349
+#define FramebufferRenderbufferEXT_remap_index 350
+#define FramebufferTexture1DEXT_remap_index 351
+#define FramebufferTexture2DEXT_remap_index 352
+#define FramebufferTexture3DEXT_remap_index 353
+#define GenFramebuffersEXT_remap_index 354
+#define GenRenderbuffersEXT_remap_index 355
+#define GenerateMipmapEXT_remap_index 356
+#define GetFramebufferAttachmentParameterivEXT_remap_index 357
+#define GetQueryObjecti64vEXT_remap_index 358
+#define GetQueryObjectui64vEXT_remap_index 359
+#define GetRenderbufferParameterivEXT_remap_index 360
+#define IsFramebufferEXT_remap_index 361
+#define IsRenderbufferEXT_remap_index 362
+#define RenderbufferStorageEXT_remap_index 363
+#define BlitFramebufferEXT_remap_index 364
+#define ProgramEnvParameters4fvEXT_remap_index 365
+#define ProgramLocalParameters4fvEXT_remap_index 366
 
-#define CALL_LoadTransposeMatrixfARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), driDispatchRemapTable[LoadTransposeMatrixfARB_remap_index], parameters)
-#define GET_LoadTransposeMatrixfARB(disp) GET_by_offset(disp, driDispatchRemapTable[LoadTransposeMatrixfARB_remap_index])
-#define SET_LoadTransposeMatrixfARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[LoadTransposeMatrixfARB_remap_index], fn)
+#define CALL_StencilFuncSeparate(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint, GLuint)), driDispatchRemapTable[StencilFuncSeparate_remap_index], parameters)
+#define GET_StencilFuncSeparate(disp) GET_by_offset(disp, driDispatchRemapTable[StencilFuncSeparate_remap_index])
+#define SET_StencilFuncSeparate(disp, fn) SET_by_offset(disp, driDispatchRemapTable[StencilFuncSeparate_remap_index], fn)
+#define CALL_StencilMaskSeparate(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), driDispatchRemapTable[StencilMaskSeparate_remap_index], parameters)
+#define GET_StencilMaskSeparate(disp) GET_by_offset(disp, driDispatchRemapTable[StencilMaskSeparate_remap_index])
+#define SET_StencilMaskSeparate(disp, fn) SET_by_offset(disp, driDispatchRemapTable[StencilMaskSeparate_remap_index], fn)
+#define CALL_StencilOpSeparate(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLenum)), driDispatchRemapTable[StencilOpSeparate_remap_index], parameters)
+#define GET_StencilOpSeparate(disp) GET_by_offset(disp, driDispatchRemapTable[StencilOpSeparate_remap_index])
+#define SET_StencilOpSeparate(disp, fn) SET_by_offset(disp, driDispatchRemapTable[StencilOpSeparate_remap_index], fn)
 #define CALL_LoadTransposeMatrixdARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), driDispatchRemapTable[LoadTransposeMatrixdARB_remap_index], parameters)
 #define GET_LoadTransposeMatrixdARB(disp) GET_by_offset(disp, driDispatchRemapTable[LoadTransposeMatrixdARB_remap_index])
 #define SET_LoadTransposeMatrixdARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[LoadTransposeMatrixdARB_remap_index], fn)
-#define CALL_MultTransposeMatrixfARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), driDispatchRemapTable[MultTransposeMatrixfARB_remap_index], parameters)
-#define GET_MultTransposeMatrixfARB(disp) GET_by_offset(disp, driDispatchRemapTable[MultTransposeMatrixfARB_remap_index])
-#define SET_MultTransposeMatrixfARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[MultTransposeMatrixfARB_remap_index], fn)
+#define CALL_LoadTransposeMatrixfARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), driDispatchRemapTable[LoadTransposeMatrixfARB_remap_index], parameters)
+#define GET_LoadTransposeMatrixfARB(disp) GET_by_offset(disp, driDispatchRemapTable[LoadTransposeMatrixfARB_remap_index])
+#define SET_LoadTransposeMatrixfARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[LoadTransposeMatrixfARB_remap_index], fn)
 #define CALL_MultTransposeMatrixdARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), driDispatchRemapTable[MultTransposeMatrixdARB_remap_index], parameters)
 #define GET_MultTransposeMatrixdARB(disp) GET_by_offset(disp, driDispatchRemapTable[MultTransposeMatrixdARB_remap_index])
 #define SET_MultTransposeMatrixdARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[MultTransposeMatrixdARB_remap_index], fn)
+#define CALL_MultTransposeMatrixfARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), driDispatchRemapTable[MultTransposeMatrixfARB_remap_index], parameters)
+#define GET_MultTransposeMatrixfARB(disp) GET_by_offset(disp, driDispatchRemapTable[MultTransposeMatrixfARB_remap_index])
+#define SET_MultTransposeMatrixfARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[MultTransposeMatrixfARB_remap_index], fn)
 #define CALL_SampleCoverageARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLclampf, GLboolean)), driDispatchRemapTable[SampleCoverageARB_remap_index], parameters)
 #define GET_SampleCoverageARB(disp) GET_by_offset(disp, driDispatchRemapTable[SampleCoverageARB_remap_index])
 #define SET_SampleCoverageARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SampleCoverageARB_remap_index], fn)
+#define CALL_CompressedTexImage1DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLsizei, GLint, GLsizei, const GLvoid *)), driDispatchRemapTable[CompressedTexImage1DARB_remap_index], parameters)
+#define GET_CompressedTexImage1DARB(disp) GET_by_offset(disp, driDispatchRemapTable[CompressedTexImage1DARB_remap_index])
+#define SET_CompressedTexImage1DARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CompressedTexImage1DARB_remap_index], fn)
+#define CALL_CompressedTexImage2DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, const GLvoid *)), driDispatchRemapTable[CompressedTexImage2DARB_remap_index], parameters)
+#define GET_CompressedTexImage2DARB(disp) GET_by_offset(disp, driDispatchRemapTable[CompressedTexImage2DARB_remap_index])
+#define SET_CompressedTexImage2DARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CompressedTexImage2DARB_remap_index], fn)
+#define CALL_CompressedTexImage3DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLsizei, const GLvoid *)), driDispatchRemapTable[CompressedTexImage3DARB_remap_index], parameters)
+#define GET_CompressedTexImage3DARB(disp) GET_by_offset(disp, driDispatchRemapTable[CompressedTexImage3DARB_remap_index])
+#define SET_CompressedTexImage3DARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CompressedTexImage3DARB_remap_index], fn)
+#define CALL_CompressedTexSubImage1DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLsizei, GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[CompressedTexSubImage1DARB_remap_index], parameters)
+#define GET_CompressedTexSubImage1DARB(disp) GET_by_offset(disp, driDispatchRemapTable[CompressedTexSubImage1DARB_remap_index])
+#define SET_CompressedTexSubImage1DARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CompressedTexSubImage1DARB_remap_index], fn)
+#define CALL_CompressedTexSubImage2DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[CompressedTexSubImage2DARB_remap_index], parameters)
+#define GET_CompressedTexSubImage2DARB(disp) GET_by_offset(disp, driDispatchRemapTable[CompressedTexSubImage2DARB_remap_index])
+#define SET_CompressedTexSubImage2DARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CompressedTexSubImage2DARB_remap_index], fn)
+#define CALL_CompressedTexSubImage3DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[CompressedTexSubImage3DARB_remap_index], parameters)
+#define GET_CompressedTexSubImage3DARB(disp) GET_by_offset(disp, driDispatchRemapTable[CompressedTexSubImage3DARB_remap_index])
+#define SET_CompressedTexSubImage3DARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CompressedTexSubImage3DARB_remap_index], fn)
+#define CALL_GetCompressedTexImageARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLvoid *)), driDispatchRemapTable[GetCompressedTexImageARB_remap_index], parameters)
+#define GET_GetCompressedTexImageARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetCompressedTexImageARB_remap_index])
+#define SET_GetCompressedTexImageARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetCompressedTexImageARB_remap_index], fn)
+#define CALL_DisableVertexAttribArrayARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[DisableVertexAttribArrayARB_remap_index], parameters)
+#define GET_DisableVertexAttribArrayARB(disp) GET_by_offset(disp, driDispatchRemapTable[DisableVertexAttribArrayARB_remap_index])
+#define SET_DisableVertexAttribArrayARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DisableVertexAttribArrayARB_remap_index], fn)
+#define CALL_EnableVertexAttribArrayARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[EnableVertexAttribArrayARB_remap_index], parameters)
+#define GET_EnableVertexAttribArrayARB(disp) GET_by_offset(disp, driDispatchRemapTable[EnableVertexAttribArrayARB_remap_index])
+#define SET_EnableVertexAttribArrayARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EnableVertexAttribArrayARB_remap_index], fn)
+#define CALL_GetProgramEnvParameterdvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLdouble *)), driDispatchRemapTable[GetProgramEnvParameterdvARB_remap_index], parameters)
+#define GET_GetProgramEnvParameterdvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramEnvParameterdvARB_remap_index])
+#define SET_GetProgramEnvParameterdvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramEnvParameterdvARB_remap_index], fn)
+#define CALL_GetProgramEnvParameterfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLfloat *)), driDispatchRemapTable[GetProgramEnvParameterfvARB_remap_index], parameters)
+#define GET_GetProgramEnvParameterfvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramEnvParameterfvARB_remap_index])
+#define SET_GetProgramEnvParameterfvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramEnvParameterfvARB_remap_index], fn)
+#define CALL_GetProgramLocalParameterdvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLdouble *)), driDispatchRemapTable[GetProgramLocalParameterdvARB_remap_index], parameters)
+#define GET_GetProgramLocalParameterdvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramLocalParameterdvARB_remap_index])
+#define SET_GetProgramLocalParameterdvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramLocalParameterdvARB_remap_index], fn)
+#define CALL_GetProgramLocalParameterfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLfloat *)), driDispatchRemapTable[GetProgramLocalParameterfvARB_remap_index], parameters)
+#define GET_GetProgramLocalParameterfvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramLocalParameterfvARB_remap_index])
+#define SET_GetProgramLocalParameterfvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramLocalParameterfvARB_remap_index], fn)
+#define CALL_GetProgramStringARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLvoid *)), driDispatchRemapTable[GetProgramStringARB_remap_index], parameters)
+#define GET_GetProgramStringARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramStringARB_remap_index])
+#define SET_GetProgramStringARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramStringARB_remap_index], fn)
+#define CALL_GetProgramivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), driDispatchRemapTable[GetProgramivARB_remap_index], parameters)
+#define GET_GetProgramivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramivARB_remap_index])
+#define SET_GetProgramivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramivARB_remap_index], fn)
+#define CALL_GetVertexAttribdvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLdouble *)), driDispatchRemapTable[GetVertexAttribdvARB_remap_index], parameters)
+#define GET_GetVertexAttribdvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetVertexAttribdvARB_remap_index])
+#define SET_GetVertexAttribdvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetVertexAttribdvARB_remap_index], fn)
+#define CALL_GetVertexAttribfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLfloat *)), driDispatchRemapTable[GetVertexAttribfvARB_remap_index], parameters)
+#define GET_GetVertexAttribfvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetVertexAttribfvARB_remap_index])
+#define SET_GetVertexAttribfvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetVertexAttribfvARB_remap_index], fn)
+#define CALL_GetVertexAttribivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), driDispatchRemapTable[GetVertexAttribivARB_remap_index], parameters)
+#define GET_GetVertexAttribivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetVertexAttribivARB_remap_index])
+#define SET_GetVertexAttribivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetVertexAttribivARB_remap_index], fn)
+#define CALL_ProgramEnvParameter4dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble)), driDispatchRemapTable[ProgramEnvParameter4dARB_remap_index], parameters)
+#define GET_ProgramEnvParameter4dARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4dARB_remap_index])
+#define SET_ProgramEnvParameter4dARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4dARB_remap_index], fn)
+#define CALL_ProgramEnvParameter4dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, const GLdouble *)), driDispatchRemapTable[ProgramEnvParameter4dvARB_remap_index], parameters)
+#define GET_ProgramEnvParameter4dvARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4dvARB_remap_index])
+#define SET_ProgramEnvParameter4dvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4dvARB_remap_index], fn)
+#define CALL_ProgramEnvParameter4fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[ProgramEnvParameter4fARB_remap_index], parameters)
+#define GET_ProgramEnvParameter4fARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4fARB_remap_index])
+#define SET_ProgramEnvParameter4fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4fARB_remap_index], fn)
+#define CALL_ProgramEnvParameter4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, const GLfloat *)), driDispatchRemapTable[ProgramEnvParameter4fvARB_remap_index], parameters)
+#define GET_ProgramEnvParameter4fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4fvARB_remap_index])
+#define SET_ProgramEnvParameter4fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4fvARB_remap_index], fn)
+#define CALL_ProgramLocalParameter4dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble)), driDispatchRemapTable[ProgramLocalParameter4dARB_remap_index], parameters)
+#define GET_ProgramLocalParameter4dARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4dARB_remap_index])
+#define SET_ProgramLocalParameter4dARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4dARB_remap_index], fn)
+#define CALL_ProgramLocalParameter4dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, const GLdouble *)), driDispatchRemapTable[ProgramLocalParameter4dvARB_remap_index], parameters)
+#define GET_ProgramLocalParameter4dvARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4dvARB_remap_index])
+#define SET_ProgramLocalParameter4dvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4dvARB_remap_index], fn)
+#define CALL_ProgramLocalParameter4fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[ProgramLocalParameter4fARB_remap_index], parameters)
+#define GET_ProgramLocalParameter4fARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4fARB_remap_index])
+#define SET_ProgramLocalParameter4fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4fARB_remap_index], fn)
+#define CALL_ProgramLocalParameter4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, const GLfloat *)), driDispatchRemapTable[ProgramLocalParameter4fvARB_remap_index], parameters)
+#define GET_ProgramLocalParameter4fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4fvARB_remap_index])
+#define SET_ProgramLocalParameter4fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4fvARB_remap_index], fn)
+#define CALL_ProgramStringARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[ProgramStringARB_remap_index], parameters)
+#define GET_ProgramStringARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramStringARB_remap_index])
+#define SET_ProgramStringARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramStringARB_remap_index], fn)
+#define CALL_VertexAttrib1dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble)), driDispatchRemapTable[VertexAttrib1dARB_remap_index], parameters)
+#define GET_VertexAttrib1dARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib1dARB_remap_index])
+#define SET_VertexAttrib1dARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib1dARB_remap_index], fn)
+#define CALL_VertexAttrib1dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), driDispatchRemapTable[VertexAttrib1dvARB_remap_index], parameters)
+#define GET_VertexAttrib1dvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib1dvARB_remap_index])
+#define SET_VertexAttrib1dvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib1dvARB_remap_index], fn)
+#define CALL_VertexAttrib1fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat)), driDispatchRemapTable[VertexAttrib1fARB_remap_index], parameters)
+#define GET_VertexAttrib1fARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib1fARB_remap_index])
+#define SET_VertexAttrib1fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib1fARB_remap_index], fn)
+#define CALL_VertexAttrib1fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), driDispatchRemapTable[VertexAttrib1fvARB_remap_index], parameters)
+#define GET_VertexAttrib1fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib1fvARB_remap_index])
+#define SET_VertexAttrib1fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib1fvARB_remap_index], fn)
+#define CALL_VertexAttrib1sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort)), driDispatchRemapTable[VertexAttrib1sARB_remap_index], parameters)
+#define GET_VertexAttrib1sARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib1sARB_remap_index])
+#define SET_VertexAttrib1sARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib1sARB_remap_index], fn)
+#define CALL_VertexAttrib1svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), driDispatchRemapTable[VertexAttrib1svARB_remap_index], parameters)
+#define GET_VertexAttrib1svARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib1svARB_remap_index])
+#define SET_VertexAttrib1svARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib1svARB_remap_index], fn)
+#define CALL_VertexAttrib2dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble, GLdouble)), driDispatchRemapTable[VertexAttrib2dARB_remap_index], parameters)
+#define GET_VertexAttrib2dARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib2dARB_remap_index])
+#define SET_VertexAttrib2dARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib2dARB_remap_index], fn)
+#define CALL_VertexAttrib2dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), driDispatchRemapTable[VertexAttrib2dvARB_remap_index], parameters)
+#define GET_VertexAttrib2dvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib2dvARB_remap_index])
+#define SET_VertexAttrib2dvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib2dvARB_remap_index], fn)
+#define CALL_VertexAttrib2fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat, GLfloat)), driDispatchRemapTable[VertexAttrib2fARB_remap_index], parameters)
+#define GET_VertexAttrib2fARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib2fARB_remap_index])
+#define SET_VertexAttrib2fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib2fARB_remap_index], fn)
+#define CALL_VertexAttrib2fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), driDispatchRemapTable[VertexAttrib2fvARB_remap_index], parameters)
+#define GET_VertexAttrib2fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib2fvARB_remap_index])
+#define SET_VertexAttrib2fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib2fvARB_remap_index], fn)
+#define CALL_VertexAttrib2sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort, GLshort)), driDispatchRemapTable[VertexAttrib2sARB_remap_index], parameters)
+#define GET_VertexAttrib2sARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib2sARB_remap_index])
+#define SET_VertexAttrib2sARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib2sARB_remap_index], fn)
+#define CALL_VertexAttrib2svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), driDispatchRemapTable[VertexAttrib2svARB_remap_index], parameters)
+#define GET_VertexAttrib2svARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib2svARB_remap_index])
+#define SET_VertexAttrib2svARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib2svARB_remap_index], fn)
+#define CALL_VertexAttrib3dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble, GLdouble, GLdouble)), driDispatchRemapTable[VertexAttrib3dARB_remap_index], parameters)
+#define GET_VertexAttrib3dARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib3dARB_remap_index])
+#define SET_VertexAttrib3dARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib3dARB_remap_index], fn)
+#define CALL_VertexAttrib3dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), driDispatchRemapTable[VertexAttrib3dvARB_remap_index], parameters)
+#define GET_VertexAttrib3dvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib3dvARB_remap_index])
+#define SET_VertexAttrib3dvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib3dvARB_remap_index], fn)
+#define CALL_VertexAttrib3fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[VertexAttrib3fARB_remap_index], parameters)
+#define GET_VertexAttrib3fARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib3fARB_remap_index])
+#define SET_VertexAttrib3fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib3fARB_remap_index], fn)
+#define CALL_VertexAttrib3fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), driDispatchRemapTable[VertexAttrib3fvARB_remap_index], parameters)
+#define GET_VertexAttrib3fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib3fvARB_remap_index])
+#define SET_VertexAttrib3fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib3fvARB_remap_index], fn)
+#define CALL_VertexAttrib3sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort, GLshort, GLshort)), driDispatchRemapTable[VertexAttrib3sARB_remap_index], parameters)
+#define GET_VertexAttrib3sARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib3sARB_remap_index])
+#define SET_VertexAttrib3sARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib3sARB_remap_index], fn)
+#define CALL_VertexAttrib3svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), driDispatchRemapTable[VertexAttrib3svARB_remap_index], parameters)
+#define GET_VertexAttrib3svARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib3svARB_remap_index])
+#define SET_VertexAttrib3svARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib3svARB_remap_index], fn)
+#define CALL_VertexAttrib4NbvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLbyte *)), driDispatchRemapTable[VertexAttrib4NbvARB_remap_index], parameters)
+#define GET_VertexAttrib4NbvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NbvARB_remap_index])
+#define SET_VertexAttrib4NbvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NbvARB_remap_index], fn)
+#define CALL_VertexAttrib4NivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLint *)), driDispatchRemapTable[VertexAttrib4NivARB_remap_index], parameters)
+#define GET_VertexAttrib4NivARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NivARB_remap_index])
+#define SET_VertexAttrib4NivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NivARB_remap_index], fn)
+#define CALL_VertexAttrib4NsvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), driDispatchRemapTable[VertexAttrib4NsvARB_remap_index], parameters)
+#define GET_VertexAttrib4NsvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NsvARB_remap_index])
+#define SET_VertexAttrib4NsvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NsvARB_remap_index], fn)
+#define CALL_VertexAttrib4NubARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLubyte, GLubyte, GLubyte, GLubyte)), driDispatchRemapTable[VertexAttrib4NubARB_remap_index], parameters)
+#define GET_VertexAttrib4NubARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NubARB_remap_index])
+#define SET_VertexAttrib4NubARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NubARB_remap_index], fn)
+#define CALL_VertexAttrib4NubvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLubyte *)), driDispatchRemapTable[VertexAttrib4NubvARB_remap_index], parameters)
+#define GET_VertexAttrib4NubvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NubvARB_remap_index])
+#define SET_VertexAttrib4NubvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NubvARB_remap_index], fn)
+#define CALL_VertexAttrib4NuivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLuint *)), driDispatchRemapTable[VertexAttrib4NuivARB_remap_index], parameters)
+#define GET_VertexAttrib4NuivARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NuivARB_remap_index])
+#define SET_VertexAttrib4NuivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NuivARB_remap_index], fn)
+#define CALL_VertexAttrib4NusvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLushort *)), driDispatchRemapTable[VertexAttrib4NusvARB_remap_index], parameters)
+#define GET_VertexAttrib4NusvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NusvARB_remap_index])
+#define SET_VertexAttrib4NusvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NusvARB_remap_index], fn)
+#define CALL_VertexAttrib4bvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLbyte *)), driDispatchRemapTable[VertexAttrib4bvARB_remap_index], parameters)
+#define GET_VertexAttrib4bvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4bvARB_remap_index])
+#define SET_VertexAttrib4bvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4bvARB_remap_index], fn)
+#define CALL_VertexAttrib4dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble, GLdouble, GLdouble, GLdouble)), driDispatchRemapTable[VertexAttrib4dARB_remap_index], parameters)
+#define GET_VertexAttrib4dARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4dARB_remap_index])
+#define SET_VertexAttrib4dARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4dARB_remap_index], fn)
+#define CALL_VertexAttrib4dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), driDispatchRemapTable[VertexAttrib4dvARB_remap_index], parameters)
+#define GET_VertexAttrib4dvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4dvARB_remap_index])
+#define SET_VertexAttrib4dvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4dvARB_remap_index], fn)
+#define CALL_VertexAttrib4fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat, GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[VertexAttrib4fARB_remap_index], parameters)
+#define GET_VertexAttrib4fARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4fARB_remap_index])
+#define SET_VertexAttrib4fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4fARB_remap_index], fn)
+#define CALL_VertexAttrib4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), driDispatchRemapTable[VertexAttrib4fvARB_remap_index], parameters)
+#define GET_VertexAttrib4fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4fvARB_remap_index])
+#define SET_VertexAttrib4fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4fvARB_remap_index], fn)
+#define CALL_VertexAttrib4ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLint *)), driDispatchRemapTable[VertexAttrib4ivARB_remap_index], parameters)
+#define GET_VertexAttrib4ivARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4ivARB_remap_index])
+#define SET_VertexAttrib4ivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4ivARB_remap_index], fn)
+#define CALL_VertexAttrib4sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort, GLshort, GLshort, GLshort)), driDispatchRemapTable[VertexAttrib4sARB_remap_index], parameters)
+#define GET_VertexAttrib4sARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4sARB_remap_index])
+#define SET_VertexAttrib4sARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4sARB_remap_index], fn)
+#define CALL_VertexAttrib4svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), driDispatchRemapTable[VertexAttrib4svARB_remap_index], parameters)
+#define GET_VertexAttrib4svARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4svARB_remap_index])
+#define SET_VertexAttrib4svARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4svARB_remap_index], fn)
+#define CALL_VertexAttrib4ubvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLubyte *)), driDispatchRemapTable[VertexAttrib4ubvARB_remap_index], parameters)
+#define GET_VertexAttrib4ubvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4ubvARB_remap_index])
+#define SET_VertexAttrib4ubvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4ubvARB_remap_index], fn)
+#define CALL_VertexAttrib4uivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLuint *)), driDispatchRemapTable[VertexAttrib4uivARB_remap_index], parameters)
+#define GET_VertexAttrib4uivARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4uivARB_remap_index])
+#define SET_VertexAttrib4uivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4uivARB_remap_index], fn)
+#define CALL_VertexAttrib4usvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLushort *)), driDispatchRemapTable[VertexAttrib4usvARB_remap_index], parameters)
+#define GET_VertexAttrib4usvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4usvARB_remap_index])
+#define SET_VertexAttrib4usvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4usvARB_remap_index], fn)
+#define CALL_VertexAttribPointerARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLint, GLenum, GLboolean, GLsizei, const GLvoid *)), driDispatchRemapTable[VertexAttribPointerARB_remap_index], parameters)
+#define GET_VertexAttribPointerARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribPointerARB_remap_index])
+#define SET_VertexAttribPointerARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribPointerARB_remap_index], fn)
+#define CALL_BindBufferARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), driDispatchRemapTable[BindBufferARB_remap_index], parameters)
+#define GET_BindBufferARB(disp) GET_by_offset(disp, driDispatchRemapTable[BindBufferARB_remap_index])
+#define SET_BindBufferARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BindBufferARB_remap_index], fn)
+#define CALL_BufferDataARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizeiptrARB, const GLvoid *, GLenum)), driDispatchRemapTable[BufferDataARB_remap_index], parameters)
+#define GET_BufferDataARB(disp) GET_by_offset(disp, driDispatchRemapTable[BufferDataARB_remap_index])
+#define SET_BufferDataARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BufferDataARB_remap_index], fn)
+#define CALL_BufferSubDataARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLintptrARB, GLsizeiptrARB, const GLvoid *)), driDispatchRemapTable[BufferSubDataARB_remap_index], parameters)
+#define GET_BufferSubDataARB(disp) GET_by_offset(disp, driDispatchRemapTable[BufferSubDataARB_remap_index])
+#define SET_BufferSubDataARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BufferSubDataARB_remap_index], fn)
+#define CALL_DeleteBuffersARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), driDispatchRemapTable[DeleteBuffersARB_remap_index], parameters)
+#define GET_DeleteBuffersARB(disp) GET_by_offset(disp, driDispatchRemapTable[DeleteBuffersARB_remap_index])
+#define SET_DeleteBuffersARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DeleteBuffersARB_remap_index], fn)
+#define CALL_GenBuffersARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), driDispatchRemapTable[GenBuffersARB_remap_index], parameters)
+#define GET_GenBuffersARB(disp) GET_by_offset(disp, driDispatchRemapTable[GenBuffersARB_remap_index])
+#define SET_GenBuffersARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GenBuffersARB_remap_index], fn)
+#define CALL_GetBufferParameterivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), driDispatchRemapTable[GetBufferParameterivARB_remap_index], parameters)
+#define GET_GetBufferParameterivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetBufferParameterivARB_remap_index])
+#define SET_GetBufferParameterivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetBufferParameterivARB_remap_index], fn)
+#define CALL_GetBufferPointervARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLvoid **)), driDispatchRemapTable[GetBufferPointervARB_remap_index], parameters)
+#define GET_GetBufferPointervARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetBufferPointervARB_remap_index])
+#define SET_GetBufferPointervARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetBufferPointervARB_remap_index], fn)
+#define CALL_GetBufferSubDataARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLintptrARB, GLsizeiptrARB, GLvoid *)), driDispatchRemapTable[GetBufferSubDataARB_remap_index], parameters)
+#define GET_GetBufferSubDataARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetBufferSubDataARB_remap_index])
+#define SET_GetBufferSubDataARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetBufferSubDataARB_remap_index], fn)
+#define CALL_IsBufferARB(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[IsBufferARB_remap_index], parameters)
+#define GET_IsBufferARB(disp) GET_by_offset(disp, driDispatchRemapTable[IsBufferARB_remap_index])
+#define SET_IsBufferARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsBufferARB_remap_index], fn)
+#define CALL_MapBufferARB(disp, parameters) CALL_by_offset(disp, (GLvoid * (GLAPIENTRYP)(GLenum, GLenum)), driDispatchRemapTable[MapBufferARB_remap_index], parameters)
+#define GET_MapBufferARB(disp) GET_by_offset(disp, driDispatchRemapTable[MapBufferARB_remap_index])
+#define SET_MapBufferARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[MapBufferARB_remap_index], fn)
+#define CALL_UnmapBufferARB(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[UnmapBufferARB_remap_index], parameters)
+#define GET_UnmapBufferARB(disp) GET_by_offset(disp, driDispatchRemapTable[UnmapBufferARB_remap_index])
+#define SET_UnmapBufferARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[UnmapBufferARB_remap_index], fn)
+#define CALL_BeginQueryARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), driDispatchRemapTable[BeginQueryARB_remap_index], parameters)
+#define GET_BeginQueryARB(disp) GET_by_offset(disp, driDispatchRemapTable[BeginQueryARB_remap_index])
+#define SET_BeginQueryARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BeginQueryARB_remap_index], fn)
+#define CALL_DeleteQueriesARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), driDispatchRemapTable[DeleteQueriesARB_remap_index], parameters)
+#define GET_DeleteQueriesARB(disp) GET_by_offset(disp, driDispatchRemapTable[DeleteQueriesARB_remap_index])
+#define SET_DeleteQueriesARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DeleteQueriesARB_remap_index], fn)
+#define CALL_EndQueryARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[EndQueryARB_remap_index], parameters)
+#define GET_EndQueryARB(disp) GET_by_offset(disp, driDispatchRemapTable[EndQueryARB_remap_index])
+#define SET_EndQueryARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EndQueryARB_remap_index], fn)
+#define CALL_GenQueriesARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), driDispatchRemapTable[GenQueriesARB_remap_index], parameters)
+#define GET_GenQueriesARB(disp) GET_by_offset(disp, driDispatchRemapTable[GenQueriesARB_remap_index])
+#define SET_GenQueriesARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GenQueriesARB_remap_index], fn)
+#define CALL_GetQueryObjectivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), driDispatchRemapTable[GetQueryObjectivARB_remap_index], parameters)
+#define GET_GetQueryObjectivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjectivARB_remap_index])
+#define SET_GetQueryObjectivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjectivARB_remap_index], fn)
+#define CALL_GetQueryObjectuivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLuint *)), driDispatchRemapTable[GetQueryObjectuivARB_remap_index], parameters)
+#define GET_GetQueryObjectuivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjectuivARB_remap_index])
+#define SET_GetQueryObjectuivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjectuivARB_remap_index], fn)
+#define CALL_GetQueryivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), driDispatchRemapTable[GetQueryivARB_remap_index], parameters)
+#define GET_GetQueryivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryivARB_remap_index])
+#define SET_GetQueryivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryivARB_remap_index], fn)
+#define CALL_IsQueryARB(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[IsQueryARB_remap_index], parameters)
+#define GET_IsQueryARB(disp) GET_by_offset(disp, driDispatchRemapTable[IsQueryARB_remap_index])
+#define SET_IsQueryARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsQueryARB_remap_index], fn)
+#define CALL_AttachObjectARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLhandleARB)), driDispatchRemapTable[AttachObjectARB_remap_index], parameters)
+#define GET_AttachObjectARB(disp) GET_by_offset(disp, driDispatchRemapTable[AttachObjectARB_remap_index])
+#define SET_AttachObjectARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[AttachObjectARB_remap_index], fn)
+#define CALL_CompileShaderARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB)), driDispatchRemapTable[CompileShaderARB_remap_index], parameters)
+#define GET_CompileShaderARB(disp) GET_by_offset(disp, driDispatchRemapTable[CompileShaderARB_remap_index])
+#define SET_CompileShaderARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CompileShaderARB_remap_index], fn)
+#define CALL_CreateProgramObjectARB(disp, parameters) CALL_by_offset(disp, (GLhandleARB (GLAPIENTRYP)(void)), driDispatchRemapTable[CreateProgramObjectARB_remap_index], parameters)
+#define GET_CreateProgramObjectARB(disp) GET_by_offset(disp, driDispatchRemapTable[CreateProgramObjectARB_remap_index])
+#define SET_CreateProgramObjectARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CreateProgramObjectARB_remap_index], fn)
+#define CALL_CreateShaderObjectARB(disp, parameters) CALL_by_offset(disp, (GLhandleARB (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[CreateShaderObjectARB_remap_index], parameters)
+#define GET_CreateShaderObjectARB(disp) GET_by_offset(disp, driDispatchRemapTable[CreateShaderObjectARB_remap_index])
+#define SET_CreateShaderObjectARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CreateShaderObjectARB_remap_index], fn)
+#define CALL_DeleteObjectARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB)), driDispatchRemapTable[DeleteObjectARB_remap_index], parameters)
+#define GET_DeleteObjectARB(disp) GET_by_offset(disp, driDispatchRemapTable[DeleteObjectARB_remap_index])
+#define SET_DeleteObjectARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DeleteObjectARB_remap_index], fn)
+#define CALL_DetachObjectARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLhandleARB)), driDispatchRemapTable[DetachObjectARB_remap_index], parameters)
+#define GET_DetachObjectARB(disp) GET_by_offset(disp, driDispatchRemapTable[DetachObjectARB_remap_index])
+#define SET_DetachObjectARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DetachObjectARB_remap_index], fn)
+#define CALL_GetActiveUniformARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLenum *, GLcharARB *)), driDispatchRemapTable[GetActiveUniformARB_remap_index], parameters)
+#define GET_GetActiveUniformARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetActiveUniformARB_remap_index])
+#define SET_GetActiveUniformARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetActiveUniformARB_remap_index], fn)
+#define CALL_GetAttachedObjectsARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLsizei, GLsizei *, GLhandleARB *)), driDispatchRemapTable[GetAttachedObjectsARB_remap_index], parameters)
+#define GET_GetAttachedObjectsARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetAttachedObjectsARB_remap_index])
+#define SET_GetAttachedObjectsARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetAttachedObjectsARB_remap_index], fn)
+#define CALL_GetHandleARB(disp, parameters) CALL_by_offset(disp, (GLhandleARB (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[GetHandleARB_remap_index], parameters)
+#define GET_GetHandleARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetHandleARB_remap_index])
+#define SET_GetHandleARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetHandleARB_remap_index], fn)
+#define CALL_GetInfoLogARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLsizei, GLsizei *, GLcharARB *)), driDispatchRemapTable[GetInfoLogARB_remap_index], parameters)
+#define GET_GetInfoLogARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetInfoLogARB_remap_index])
+#define SET_GetInfoLogARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetInfoLogARB_remap_index], fn)
+#define CALL_GetObjectParameterfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLenum, GLfloat *)), driDispatchRemapTable[GetObjectParameterfvARB_remap_index], parameters)
+#define GET_GetObjectParameterfvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetObjectParameterfvARB_remap_index])
+#define SET_GetObjectParameterfvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetObjectParameterfvARB_remap_index], fn)
+#define CALL_GetObjectParameterivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLenum, GLint *)), driDispatchRemapTable[GetObjectParameterivARB_remap_index], parameters)
+#define GET_GetObjectParameterivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetObjectParameterivARB_remap_index])
+#define SET_GetObjectParameterivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetObjectParameterivARB_remap_index], fn)
+#define CALL_GetShaderSourceARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLsizei, GLsizei *, GLcharARB *)), driDispatchRemapTable[GetShaderSourceARB_remap_index], parameters)
+#define GET_GetShaderSourceARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetShaderSourceARB_remap_index])
+#define SET_GetShaderSourceARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetShaderSourceARB_remap_index], fn)
+#define CALL_GetUniformLocationARB(disp, parameters) CALL_by_offset(disp, (GLint (GLAPIENTRYP)(GLhandleARB, const GLcharARB *)), driDispatchRemapTable[GetUniformLocationARB_remap_index], parameters)
+#define GET_GetUniformLocationARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetUniformLocationARB_remap_index])
+#define SET_GetUniformLocationARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetUniformLocationARB_remap_index], fn)
+#define CALL_GetUniformfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLint, GLfloat *)), driDispatchRemapTable[GetUniformfvARB_remap_index], parameters)
+#define GET_GetUniformfvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetUniformfvARB_remap_index])
+#define SET_GetUniformfvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetUniformfvARB_remap_index], fn)
+#define CALL_GetUniformivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLint, GLint *)), driDispatchRemapTable[GetUniformivARB_remap_index], parameters)
+#define GET_GetUniformivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetUniformivARB_remap_index])
+#define SET_GetUniformivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetUniformivARB_remap_index], fn)
+#define CALL_LinkProgramARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB)), driDispatchRemapTable[LinkProgramARB_remap_index], parameters)
+#define GET_LinkProgramARB(disp) GET_by_offset(disp, driDispatchRemapTable[LinkProgramARB_remap_index])
+#define SET_LinkProgramARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[LinkProgramARB_remap_index], fn)
+#define CALL_ShaderSourceARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLsizei, const GLcharARB **, const GLint *)), driDispatchRemapTable[ShaderSourceARB_remap_index], parameters)
+#define GET_ShaderSourceARB(disp) GET_by_offset(disp, driDispatchRemapTable[ShaderSourceARB_remap_index])
+#define SET_ShaderSourceARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ShaderSourceARB_remap_index], fn)
+#define CALL_Uniform1fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLfloat)), driDispatchRemapTable[Uniform1fARB_remap_index], parameters)
+#define GET_Uniform1fARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform1fARB_remap_index])
+#define SET_Uniform1fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform1fARB_remap_index], fn)
+#define CALL_Uniform1fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLfloat *)), driDispatchRemapTable[Uniform1fvARB_remap_index], parameters)
+#define GET_Uniform1fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform1fvARB_remap_index])
+#define SET_Uniform1fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform1fvARB_remap_index], fn)
+#define CALL_Uniform1iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint)), driDispatchRemapTable[Uniform1iARB_remap_index], parameters)
+#define GET_Uniform1iARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform1iARB_remap_index])
+#define SET_Uniform1iARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform1iARB_remap_index], fn)
+#define CALL_Uniform1ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLint *)), driDispatchRemapTable[Uniform1ivARB_remap_index], parameters)
+#define GET_Uniform1ivARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform1ivARB_remap_index])
+#define SET_Uniform1ivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform1ivARB_remap_index], fn)
+#define CALL_Uniform2fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLfloat, GLfloat)), driDispatchRemapTable[Uniform2fARB_remap_index], parameters)
+#define GET_Uniform2fARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform2fARB_remap_index])
+#define SET_Uniform2fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform2fARB_remap_index], fn)
+#define CALL_Uniform2fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLfloat *)), driDispatchRemapTable[Uniform2fvARB_remap_index], parameters)
+#define GET_Uniform2fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform2fvARB_remap_index])
+#define SET_Uniform2fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform2fvARB_remap_index], fn)
+#define CALL_Uniform2iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint)), driDispatchRemapTable[Uniform2iARB_remap_index], parameters)
+#define GET_Uniform2iARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform2iARB_remap_index])
+#define SET_Uniform2iARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform2iARB_remap_index], fn)
+#define CALL_Uniform2ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLint *)), driDispatchRemapTable[Uniform2ivARB_remap_index], parameters)
+#define GET_Uniform2ivARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform2ivARB_remap_index])
+#define SET_Uniform2ivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform2ivARB_remap_index], fn)
+#define CALL_Uniform3fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[Uniform3fARB_remap_index], parameters)
+#define GET_Uniform3fARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform3fARB_remap_index])
+#define SET_Uniform3fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform3fARB_remap_index], fn)
+#define CALL_Uniform3fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLfloat *)), driDispatchRemapTable[Uniform3fvARB_remap_index], parameters)
+#define GET_Uniform3fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform3fvARB_remap_index])
+#define SET_Uniform3fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform3fvARB_remap_index], fn)
+#define CALL_Uniform3iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint)), driDispatchRemapTable[Uniform3iARB_remap_index], parameters)
+#define GET_Uniform3iARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform3iARB_remap_index])
+#define SET_Uniform3iARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform3iARB_remap_index], fn)
+#define CALL_Uniform3ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLint *)), driDispatchRemapTable[Uniform3ivARB_remap_index], parameters)
+#define GET_Uniform3ivARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform3ivARB_remap_index])
+#define SET_Uniform3ivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform3ivARB_remap_index], fn)
+#define CALL_Uniform4fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLfloat, GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[Uniform4fARB_remap_index], parameters)
+#define GET_Uniform4fARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform4fARB_remap_index])
+#define SET_Uniform4fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform4fARB_remap_index], fn)
+#define CALL_Uniform4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLfloat *)), driDispatchRemapTable[Uniform4fvARB_remap_index], parameters)
+#define GET_Uniform4fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform4fvARB_remap_index])
+#define SET_Uniform4fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform4fvARB_remap_index], fn)
+#define CALL_Uniform4iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint, GLint)), driDispatchRemapTable[Uniform4iARB_remap_index], parameters)
+#define GET_Uniform4iARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform4iARB_remap_index])
+#define SET_Uniform4iARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform4iARB_remap_index], fn)
+#define CALL_Uniform4ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLint *)), driDispatchRemapTable[Uniform4ivARB_remap_index], parameters)
+#define GET_Uniform4ivARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform4ivARB_remap_index])
+#define SET_Uniform4ivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform4ivARB_remap_index], fn)
+#define CALL_UniformMatrix2fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)), driDispatchRemapTable[UniformMatrix2fvARB_remap_index], parameters)
+#define GET_UniformMatrix2fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[UniformMatrix2fvARB_remap_index])
+#define SET_UniformMatrix2fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[UniformMatrix2fvARB_remap_index], fn)
+#define CALL_UniformMatrix3fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)), driDispatchRemapTable[UniformMatrix3fvARB_remap_index], parameters)
+#define GET_UniformMatrix3fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[UniformMatrix3fvARB_remap_index])
+#define SET_UniformMatrix3fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[UniformMatrix3fvARB_remap_index], fn)
+#define CALL_UniformMatrix4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)), driDispatchRemapTable[UniformMatrix4fvARB_remap_index], parameters)
+#define GET_UniformMatrix4fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[UniformMatrix4fvARB_remap_index])
+#define SET_UniformMatrix4fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[UniformMatrix4fvARB_remap_index], fn)
+#define CALL_UseProgramObjectARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB)), driDispatchRemapTable[UseProgramObjectARB_remap_index], parameters)
+#define GET_UseProgramObjectARB(disp) GET_by_offset(disp, driDispatchRemapTable[UseProgramObjectARB_remap_index])
+#define SET_UseProgramObjectARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[UseProgramObjectARB_remap_index], fn)
+#define CALL_ValidateProgramARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB)), driDispatchRemapTable[ValidateProgramARB_remap_index], parameters)
+#define GET_ValidateProgramARB(disp) GET_by_offset(disp, driDispatchRemapTable[ValidateProgramARB_remap_index])
+#define SET_ValidateProgramARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ValidateProgramARB_remap_index], fn)
+#define CALL_BindAttribLocationARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLuint, const GLcharARB *)), driDispatchRemapTable[BindAttribLocationARB_remap_index], parameters)
+#define GET_BindAttribLocationARB(disp) GET_by_offset(disp, driDispatchRemapTable[BindAttribLocationARB_remap_index])
+#define SET_BindAttribLocationARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BindAttribLocationARB_remap_index], fn)
+#define CALL_GetActiveAttribARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLenum *, GLcharARB *)), driDispatchRemapTable[GetActiveAttribARB_remap_index], parameters)
+#define GET_GetActiveAttribARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetActiveAttribARB_remap_index])
+#define SET_GetActiveAttribARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetActiveAttribARB_remap_index], fn)
+#define CALL_GetAttribLocationARB(disp, parameters) CALL_by_offset(disp, (GLint (GLAPIENTRYP)(GLhandleARB, const GLcharARB *)), driDispatchRemapTable[GetAttribLocationARB_remap_index], parameters)
+#define GET_GetAttribLocationARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetAttribLocationARB_remap_index])
+#define SET_GetAttribLocationARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetAttribLocationARB_remap_index], fn)
 #define CALL_DrawBuffersARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLenum *)), driDispatchRemapTable[DrawBuffersARB_remap_index], parameters)
 #define GET_DrawBuffersARB(disp) GET_by_offset(disp, driDispatchRemapTable[DrawBuffersARB_remap_index])
 #define SET_DrawBuffersARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DrawBuffersARB_remap_index], fn)
 #define CALL_PolygonOffsetEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat)), driDispatchRemapTable[PolygonOffsetEXT_remap_index], parameters)
 #define GET_PolygonOffsetEXT(disp) GET_by_offset(disp, driDispatchRemapTable[PolygonOffsetEXT_remap_index])
 #define SET_PolygonOffsetEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PolygonOffsetEXT_remap_index], fn)
-#define CALL_GetTexFilterFuncSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), driDispatchRemapTable[GetTexFilterFuncSGIS_remap_index], parameters)
-#define GET_GetTexFilterFuncSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[GetTexFilterFuncSGIS_remap_index])
-#define SET_GetTexFilterFuncSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetTexFilterFuncSGIS_remap_index], fn)
-#define CALL_TexFilterFuncSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLsizei, const GLfloat *)), driDispatchRemapTable[TexFilterFuncSGIS_remap_index], parameters)
-#define GET_TexFilterFuncSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[TexFilterFuncSGIS_remap_index])
-#define SET_TexFilterFuncSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[TexFilterFuncSGIS_remap_index], fn)
 #define CALL_GetHistogramEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLboolean, GLenum, GLenum, GLvoid *)), driDispatchRemapTable[GetHistogramEXT_remap_index], parameters)
 #define GET_GetHistogramEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetHistogramEXT_remap_index])
 #define SET_GetHistogramEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetHistogramEXT_remap_index], fn)
@@ -3014,42 +3192,33 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_GetSeparableFilterEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLvoid *, GLvoid *, GLvoid *)), driDispatchRemapTable[GetSeparableFilterEXT_remap_index], parameters)
 #define GET_GetSeparableFilterEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetSeparableFilterEXT_remap_index])
 #define SET_GetSeparableFilterEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetSeparableFilterEXT_remap_index], fn)
-#define CALL_GetColorTableSGI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLvoid *)), driDispatchRemapTable[GetColorTableSGI_remap_index], parameters)
-#define GET_GetColorTableSGI(disp) GET_by_offset(disp, driDispatchRemapTable[GetColorTableSGI_remap_index])
-#define SET_GetColorTableSGI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetColorTableSGI_remap_index], fn)
 #define CALL_GetColorTableParameterfvSGI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), driDispatchRemapTable[GetColorTableParameterfvSGI_remap_index], parameters)
 #define GET_GetColorTableParameterfvSGI(disp) GET_by_offset(disp, driDispatchRemapTable[GetColorTableParameterfvSGI_remap_index])
 #define SET_GetColorTableParameterfvSGI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetColorTableParameterfvSGI_remap_index], fn)
 #define CALL_GetColorTableParameterivSGI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), driDispatchRemapTable[GetColorTableParameterivSGI_remap_index], parameters)
 #define GET_GetColorTableParameterivSGI(disp) GET_by_offset(disp, driDispatchRemapTable[GetColorTableParameterivSGI_remap_index])
 #define SET_GetColorTableParameterivSGI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetColorTableParameterivSGI_remap_index], fn)
-#define CALL_PixelTexGenSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[PixelTexGenSGIX_remap_index], parameters)
-#define GET_PixelTexGenSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[PixelTexGenSGIX_remap_index])
-#define SET_PixelTexGenSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PixelTexGenSGIX_remap_index], fn)
-#define CALL_PixelTexGenParameteriSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), driDispatchRemapTable[PixelTexGenParameteriSGIS_remap_index], parameters)
-#define GET_PixelTexGenParameteriSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[PixelTexGenParameteriSGIS_remap_index])
-#define SET_PixelTexGenParameteriSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PixelTexGenParameteriSGIS_remap_index], fn)
-#define CALL_PixelTexGenParameterivSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), driDispatchRemapTable[PixelTexGenParameterivSGIS_remap_index], parameters)
-#define GET_PixelTexGenParameterivSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[PixelTexGenParameterivSGIS_remap_index])
-#define SET_PixelTexGenParameterivSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PixelTexGenParameterivSGIS_remap_index], fn)
+#define CALL_GetColorTableSGI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLvoid *)), driDispatchRemapTable[GetColorTableSGI_remap_index], parameters)
+#define GET_GetColorTableSGI(disp) GET_by_offset(disp, driDispatchRemapTable[GetColorTableSGI_remap_index])
+#define SET_GetColorTableSGI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetColorTableSGI_remap_index], fn)
+#define CALL_GetPixelTexGenParameterfvSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat *)), driDispatchRemapTable[GetPixelTexGenParameterfvSGIS_remap_index], parameters)
+#define GET_GetPixelTexGenParameterfvSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[GetPixelTexGenParameterfvSGIS_remap_index])
+#define SET_GetPixelTexGenParameterfvSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetPixelTexGenParameterfvSGIS_remap_index], fn)
+#define CALL_GetPixelTexGenParameterivSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint *)), driDispatchRemapTable[GetPixelTexGenParameterivSGIS_remap_index], parameters)
+#define GET_GetPixelTexGenParameterivSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[GetPixelTexGenParameterivSGIS_remap_index])
+#define SET_GetPixelTexGenParameterivSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetPixelTexGenParameterivSGIS_remap_index], fn)
 #define CALL_PixelTexGenParameterfSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat)), driDispatchRemapTable[PixelTexGenParameterfSGIS_remap_index], parameters)
 #define GET_PixelTexGenParameterfSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[PixelTexGenParameterfSGIS_remap_index])
 #define SET_PixelTexGenParameterfSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PixelTexGenParameterfSGIS_remap_index], fn)
 #define CALL_PixelTexGenParameterfvSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), driDispatchRemapTable[PixelTexGenParameterfvSGIS_remap_index], parameters)
 #define GET_PixelTexGenParameterfvSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[PixelTexGenParameterfvSGIS_remap_index])
 #define SET_PixelTexGenParameterfvSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PixelTexGenParameterfvSGIS_remap_index], fn)
-#define CALL_GetPixelTexGenParameterivSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint *)), driDispatchRemapTable[GetPixelTexGenParameterivSGIS_remap_index], parameters)
-#define GET_GetPixelTexGenParameterivSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[GetPixelTexGenParameterivSGIS_remap_index])
-#define SET_GetPixelTexGenParameterivSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetPixelTexGenParameterivSGIS_remap_index], fn)
-#define CALL_GetPixelTexGenParameterfvSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat *)), driDispatchRemapTable[GetPixelTexGenParameterfvSGIS_remap_index], parameters)
-#define GET_GetPixelTexGenParameterfvSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[GetPixelTexGenParameterfvSGIS_remap_index])
-#define SET_GetPixelTexGenParameterfvSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetPixelTexGenParameterfvSGIS_remap_index], fn)
-#define CALL_TexImage4DSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *)), driDispatchRemapTable[TexImage4DSGIS_remap_index], parameters)
-#define GET_TexImage4DSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[TexImage4DSGIS_remap_index])
-#define SET_TexImage4DSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[TexImage4DSGIS_remap_index], fn)
-#define CALL_TexSubImage4DSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *)), driDispatchRemapTable[TexSubImage4DSGIS_remap_index], parameters)
-#define GET_TexSubImage4DSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[TexSubImage4DSGIS_remap_index])
-#define SET_TexSubImage4DSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[TexSubImage4DSGIS_remap_index], fn)
+#define CALL_PixelTexGenParameteriSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), driDispatchRemapTable[PixelTexGenParameteriSGIS_remap_index], parameters)
+#define GET_PixelTexGenParameteriSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[PixelTexGenParameteriSGIS_remap_index])
+#define SET_PixelTexGenParameteriSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PixelTexGenParameteriSGIS_remap_index], fn)
+#define CALL_PixelTexGenParameterivSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), driDispatchRemapTable[PixelTexGenParameterivSGIS_remap_index], parameters)
+#define GET_PixelTexGenParameterivSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[PixelTexGenParameterivSGIS_remap_index])
+#define SET_PixelTexGenParameterivSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PixelTexGenParameterivSGIS_remap_index], fn)
 #define CALL_AreTexturesResidentEXT(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLsizei, const GLuint *, GLboolean *)), driDispatchRemapTable[AreTexturesResidentEXT_remap_index], parameters)
 #define GET_AreTexturesResidentEXT(disp) GET_by_offset(disp, driDispatchRemapTable[AreTexturesResidentEXT_remap_index])
 #define SET_AreTexturesResidentEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[AreTexturesResidentEXT_remap_index], fn)
@@ -3059,18 +3228,6 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_IsTextureEXT(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[IsTextureEXT_remap_index], parameters)
 #define GET_IsTextureEXT(disp) GET_by_offset(disp, driDispatchRemapTable[IsTextureEXT_remap_index])
 #define SET_IsTextureEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsTextureEXT_remap_index], fn)
-#define CALL_DetailTexFuncSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, const GLfloat *)), driDispatchRemapTable[DetailTexFuncSGIS_remap_index], parameters)
-#define GET_DetailTexFuncSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[DetailTexFuncSGIS_remap_index])
-#define SET_DetailTexFuncSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DetailTexFuncSGIS_remap_index], fn)
-#define CALL_GetDetailTexFuncSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat *)), driDispatchRemapTable[GetDetailTexFuncSGIS_remap_index], parameters)
-#define GET_GetDetailTexFuncSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[GetDetailTexFuncSGIS_remap_index])
-#define SET_GetDetailTexFuncSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetDetailTexFuncSGIS_remap_index], fn)
-#define CALL_SharpenTexFuncSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, const GLfloat *)), driDispatchRemapTable[SharpenTexFuncSGIS_remap_index], parameters)
-#define GET_SharpenTexFuncSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[SharpenTexFuncSGIS_remap_index])
-#define SET_SharpenTexFuncSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SharpenTexFuncSGIS_remap_index], fn)
-#define CALL_GetSharpenTexFuncSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat *)), driDispatchRemapTable[GetSharpenTexFuncSGIS_remap_index], parameters)
-#define GET_GetSharpenTexFuncSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[GetSharpenTexFuncSGIS_remap_index])
-#define SET_GetSharpenTexFuncSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetSharpenTexFuncSGIS_remap_index], fn)
 #define CALL_SampleMaskSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLclampf, GLboolean)), driDispatchRemapTable[SampleMaskSGIS_remap_index], parameters)
 #define GET_SampleMaskSGIS(disp) GET_by_offset(disp, driDispatchRemapTable[SampleMaskSGIS_remap_index])
 #define SET_SampleMaskSGIS(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SampleMaskSGIS_remap_index], fn)
@@ -3095,159 +3252,144 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_VertexPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLenum, GLsizei, GLsizei, const GLvoid *)), driDispatchRemapTable[VertexPointerEXT_remap_index], parameters)
 #define GET_VertexPointerEXT(disp) GET_by_offset(disp, driDispatchRemapTable[VertexPointerEXT_remap_index])
 #define SET_VertexPointerEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexPointerEXT_remap_index], fn)
-#define CALL_SpriteParameterfSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat)), driDispatchRemapTable[SpriteParameterfSGIX_remap_index], parameters)
-#define GET_SpriteParameterfSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[SpriteParameterfSGIX_remap_index])
-#define SET_SpriteParameterfSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SpriteParameterfSGIX_remap_index], fn)
-#define CALL_SpriteParameterfvSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), driDispatchRemapTable[SpriteParameterfvSGIX_remap_index], parameters)
-#define GET_SpriteParameterfvSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[SpriteParameterfvSGIX_remap_index])
-#define SET_SpriteParameterfvSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SpriteParameterfvSGIX_remap_index], fn)
-#define CALL_SpriteParameteriSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), driDispatchRemapTable[SpriteParameteriSGIX_remap_index], parameters)
-#define GET_SpriteParameteriSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[SpriteParameteriSGIX_remap_index])
-#define SET_SpriteParameteriSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SpriteParameteriSGIX_remap_index], fn)
-#define CALL_SpriteParameterivSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), driDispatchRemapTable[SpriteParameterivSGIX_remap_index], parameters)
-#define GET_SpriteParameterivSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[SpriteParameterivSGIX_remap_index])
-#define SET_SpriteParameterivSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SpriteParameterivSGIX_remap_index], fn)
 #define CALL_PointParameterfEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat)), driDispatchRemapTable[PointParameterfEXT_remap_index], parameters)
 #define GET_PointParameterfEXT(disp) GET_by_offset(disp, driDispatchRemapTable[PointParameterfEXT_remap_index])
 #define SET_PointParameterfEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PointParameterfEXT_remap_index], fn)
 #define CALL_PointParameterfvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), driDispatchRemapTable[PointParameterfvEXT_remap_index], parameters)
 #define GET_PointParameterfvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[PointParameterfvEXT_remap_index])
 #define SET_PointParameterfvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PointParameterfvEXT_remap_index], fn)
-#define CALL_GetInstrumentsSGIX(disp, parameters) CALL_by_offset(disp, (GLint (GLAPIENTRYP)(void)), driDispatchRemapTable[GetInstrumentsSGIX_remap_index], parameters)
-#define GET_GetInstrumentsSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[GetInstrumentsSGIX_remap_index])
-#define SET_GetInstrumentsSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetInstrumentsSGIX_remap_index], fn)
-#define CALL_InstrumentsBufferSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLint *)), driDispatchRemapTable[InstrumentsBufferSGIX_remap_index], parameters)
-#define GET_InstrumentsBufferSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[InstrumentsBufferSGIX_remap_index])
-#define SET_InstrumentsBufferSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[InstrumentsBufferSGIX_remap_index], fn)
-#define CALL_PollInstrumentsSGIX(disp, parameters) CALL_by_offset(disp, (GLint (GLAPIENTRYP)(GLint *)), driDispatchRemapTable[PollInstrumentsSGIX_remap_index], parameters)
-#define GET_PollInstrumentsSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[PollInstrumentsSGIX_remap_index])
-#define SET_PollInstrumentsSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PollInstrumentsSGIX_remap_index], fn)
-#define CALL_ReadInstrumentsSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint)), driDispatchRemapTable[ReadInstrumentsSGIX_remap_index], parameters)
-#define GET_ReadInstrumentsSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[ReadInstrumentsSGIX_remap_index])
-#define SET_ReadInstrumentsSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ReadInstrumentsSGIX_remap_index], fn)
-#define CALL_StartInstrumentsSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), driDispatchRemapTable[StartInstrumentsSGIX_remap_index], parameters)
-#define GET_StartInstrumentsSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[StartInstrumentsSGIX_remap_index])
-#define SET_StartInstrumentsSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[StartInstrumentsSGIX_remap_index], fn)
-#define CALL_StopInstrumentsSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint)), driDispatchRemapTable[StopInstrumentsSGIX_remap_index], parameters)
-#define GET_StopInstrumentsSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[StopInstrumentsSGIX_remap_index])
-#define SET_StopInstrumentsSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[StopInstrumentsSGIX_remap_index], fn)
-#define CALL_FrameZoomSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint)), driDispatchRemapTable[FrameZoomSGIX_remap_index], parameters)
-#define GET_FrameZoomSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[FrameZoomSGIX_remap_index])
-#define SET_FrameZoomSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FrameZoomSGIX_remap_index], fn)
-#define CALL_TagSampleBufferSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), driDispatchRemapTable[TagSampleBufferSGIX_remap_index], parameters)
-#define GET_TagSampleBufferSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[TagSampleBufferSGIX_remap_index])
-#define SET_TagSampleBufferSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[TagSampleBufferSGIX_remap_index], fn)
-#define CALL_ReferencePlaneSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), driDispatchRemapTable[ReferencePlaneSGIX_remap_index], parameters)
-#define GET_ReferencePlaneSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[ReferencePlaneSGIX_remap_index])
-#define SET_ReferencePlaneSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ReferencePlaneSGIX_remap_index], fn)
-#define CALL_FlushRasterSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), driDispatchRemapTable[FlushRasterSGIX_remap_index], parameters)
-#define GET_FlushRasterSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[FlushRasterSGIX_remap_index])
-#define SET_FlushRasterSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FlushRasterSGIX_remap_index], fn)
-#define CALL_GetListParameterfvSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLfloat *)), driDispatchRemapTable[GetListParameterfvSGIX_remap_index], parameters)
-#define GET_GetListParameterfvSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[GetListParameterfvSGIX_remap_index])
-#define SET_GetListParameterfvSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetListParameterfvSGIX_remap_index], fn)
-#define CALL_GetListParameterivSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), driDispatchRemapTable[GetListParameterivSGIX_remap_index], parameters)
-#define GET_GetListParameterivSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[GetListParameterivSGIX_remap_index])
-#define SET_GetListParameterivSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetListParameterivSGIX_remap_index], fn)
-#define CALL_ListParameterfSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLfloat)), driDispatchRemapTable[ListParameterfSGIX_remap_index], parameters)
-#define GET_ListParameterfSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[ListParameterfSGIX_remap_index])
-#define SET_ListParameterfSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ListParameterfSGIX_remap_index], fn)
-#define CALL_ListParameterfvSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, const GLfloat *)), driDispatchRemapTable[ListParameterfvSGIX_remap_index], parameters)
-#define GET_ListParameterfvSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[ListParameterfvSGIX_remap_index])
-#define SET_ListParameterfvSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ListParameterfvSGIX_remap_index], fn)
-#define CALL_ListParameteriSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint)), driDispatchRemapTable[ListParameteriSGIX_remap_index], parameters)
-#define GET_ListParameteriSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[ListParameteriSGIX_remap_index])
-#define SET_ListParameteriSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ListParameteriSGIX_remap_index], fn)
-#define CALL_ListParameterivSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, const GLint *)), driDispatchRemapTable[ListParameterivSGIX_remap_index], parameters)
-#define GET_ListParameterivSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[ListParameterivSGIX_remap_index])
-#define SET_ListParameterivSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ListParameterivSGIX_remap_index], fn)
-#define CALL_FragmentColorMaterialSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum)), driDispatchRemapTable[FragmentColorMaterialSGIX_remap_index], parameters)
-#define GET_FragmentColorMaterialSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[FragmentColorMaterialSGIX_remap_index])
-#define SET_FragmentColorMaterialSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FragmentColorMaterialSGIX_remap_index], fn)
-#define CALL_FragmentLightfSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat)), driDispatchRemapTable[FragmentLightfSGIX_remap_index], parameters)
-#define GET_FragmentLightfSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[FragmentLightfSGIX_remap_index])
-#define SET_FragmentLightfSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FragmentLightfSGIX_remap_index], fn)
-#define CALL_FragmentLightfvSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLfloat *)), driDispatchRemapTable[FragmentLightfvSGIX_remap_index], parameters)
-#define GET_FragmentLightfvSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[FragmentLightfvSGIX_remap_index])
-#define SET_FragmentLightfvSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FragmentLightfvSGIX_remap_index], fn)
-#define CALL_FragmentLightiSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint)), driDispatchRemapTable[FragmentLightiSGIX_remap_index], parameters)
-#define GET_FragmentLightiSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[FragmentLightiSGIX_remap_index])
-#define SET_FragmentLightiSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FragmentLightiSGIX_remap_index], fn)
-#define CALL_FragmentLightivSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLint *)), driDispatchRemapTable[FragmentLightivSGIX_remap_index], parameters)
-#define GET_FragmentLightivSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[FragmentLightivSGIX_remap_index])
-#define SET_FragmentLightivSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FragmentLightivSGIX_remap_index], fn)
-#define CALL_FragmentLightModelfSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat)), driDispatchRemapTable[FragmentLightModelfSGIX_remap_index], parameters)
-#define GET_FragmentLightModelfSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[FragmentLightModelfSGIX_remap_index])
-#define SET_FragmentLightModelfSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FragmentLightModelfSGIX_remap_index], fn)
-#define CALL_FragmentLightModelfvSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), driDispatchRemapTable[FragmentLightModelfvSGIX_remap_index], parameters)
-#define GET_FragmentLightModelfvSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[FragmentLightModelfvSGIX_remap_index])
-#define SET_FragmentLightModelfvSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FragmentLightModelfvSGIX_remap_index], fn)
-#define CALL_FragmentLightModeliSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), driDispatchRemapTable[FragmentLightModeliSGIX_remap_index], parameters)
-#define GET_FragmentLightModeliSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[FragmentLightModeliSGIX_remap_index])
-#define SET_FragmentLightModeliSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FragmentLightModeliSGIX_remap_index], fn)
-#define CALL_FragmentLightModelivSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), driDispatchRemapTable[FragmentLightModelivSGIX_remap_index], parameters)
-#define GET_FragmentLightModelivSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[FragmentLightModelivSGIX_remap_index])
-#define SET_FragmentLightModelivSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FragmentLightModelivSGIX_remap_index], fn)
-#define CALL_FragmentMaterialfSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat)), driDispatchRemapTable[FragmentMaterialfSGIX_remap_index], parameters)
-#define GET_FragmentMaterialfSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[FragmentMaterialfSGIX_remap_index])
-#define SET_FragmentMaterialfSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FragmentMaterialfSGIX_remap_index], fn)
-#define CALL_FragmentMaterialfvSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLfloat *)), driDispatchRemapTable[FragmentMaterialfvSGIX_remap_index], parameters)
-#define GET_FragmentMaterialfvSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[FragmentMaterialfvSGIX_remap_index])
-#define SET_FragmentMaterialfvSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FragmentMaterialfvSGIX_remap_index], fn)
-#define CALL_FragmentMaterialiSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint)), driDispatchRemapTable[FragmentMaterialiSGIX_remap_index], parameters)
-#define GET_FragmentMaterialiSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[FragmentMaterialiSGIX_remap_index])
-#define SET_FragmentMaterialiSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FragmentMaterialiSGIX_remap_index], fn)
-#define CALL_FragmentMaterialivSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLint *)), driDispatchRemapTable[FragmentMaterialivSGIX_remap_index], parameters)
-#define GET_FragmentMaterialivSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[FragmentMaterialivSGIX_remap_index])
-#define SET_FragmentMaterialivSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FragmentMaterialivSGIX_remap_index], fn)
-#define CALL_GetFragmentLightfvSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), driDispatchRemapTable[GetFragmentLightfvSGIX_remap_index], parameters)
-#define GET_GetFragmentLightfvSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[GetFragmentLightfvSGIX_remap_index])
-#define SET_GetFragmentLightfvSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetFragmentLightfvSGIX_remap_index], fn)
-#define CALL_GetFragmentLightivSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), driDispatchRemapTable[GetFragmentLightivSGIX_remap_index], parameters)
-#define GET_GetFragmentLightivSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[GetFragmentLightivSGIX_remap_index])
-#define SET_GetFragmentLightivSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetFragmentLightivSGIX_remap_index], fn)
-#define CALL_GetFragmentMaterialfvSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), driDispatchRemapTable[GetFragmentMaterialfvSGIX_remap_index], parameters)
-#define GET_GetFragmentMaterialfvSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[GetFragmentMaterialfvSGIX_remap_index])
-#define SET_GetFragmentMaterialfvSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetFragmentMaterialfvSGIX_remap_index], fn)
-#define CALL_GetFragmentMaterialivSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), driDispatchRemapTable[GetFragmentMaterialivSGIX_remap_index], parameters)
-#define GET_GetFragmentMaterialivSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[GetFragmentMaterialivSGIX_remap_index])
-#define SET_GetFragmentMaterialivSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetFragmentMaterialivSGIX_remap_index], fn)
-#define CALL_LightEnviSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), driDispatchRemapTable[LightEnviSGIX_remap_index], parameters)
-#define GET_LightEnviSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[LightEnviSGIX_remap_index])
-#define SET_LightEnviSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[LightEnviSGIX_remap_index], fn)
+#define CALL_GetColorTableEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLvoid *)), driDispatchRemapTable[GetColorTableEXT_remap_index], parameters)
+#define GET_GetColorTableEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetColorTableEXT_remap_index])
+#define SET_GetColorTableEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetColorTableEXT_remap_index], fn)
+#define CALL_GetColorTableParameterfvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), driDispatchRemapTable[GetColorTableParameterfvEXT_remap_index], parameters)
+#define GET_GetColorTableParameterfvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetColorTableParameterfvEXT_remap_index])
+#define SET_GetColorTableParameterfvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetColorTableParameterfvEXT_remap_index], fn)
+#define CALL_GetColorTableParameterivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), driDispatchRemapTable[GetColorTableParameterivEXT_remap_index], parameters)
+#define GET_GetColorTableParameterivEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetColorTableParameterivEXT_remap_index])
+#define SET_GetColorTableParameterivEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetColorTableParameterivEXT_remap_index], fn)
+#define CALL_LockArraysEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei)), driDispatchRemapTable[LockArraysEXT_remap_index], parameters)
+#define GET_LockArraysEXT(disp) GET_by_offset(disp, driDispatchRemapTable[LockArraysEXT_remap_index])
+#define SET_LockArraysEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[LockArraysEXT_remap_index], fn)
+#define CALL_UnlockArraysEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), driDispatchRemapTable[UnlockArraysEXT_remap_index], parameters)
+#define GET_UnlockArraysEXT(disp) GET_by_offset(disp, driDispatchRemapTable[UnlockArraysEXT_remap_index])
+#define SET_UnlockArraysEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[UnlockArraysEXT_remap_index], fn)
+#define CALL_CullParameterdvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLdouble *)), driDispatchRemapTable[CullParameterdvEXT_remap_index], parameters)
+#define GET_CullParameterdvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[CullParameterdvEXT_remap_index])
+#define SET_CullParameterdvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CullParameterdvEXT_remap_index], fn)
+#define CALL_CullParameterfvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat *)), driDispatchRemapTable[CullParameterfvEXT_remap_index], parameters)
+#define GET_CullParameterfvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[CullParameterfvEXT_remap_index])
+#define SET_CullParameterfvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CullParameterfvEXT_remap_index], fn)
+#define CALL_SecondaryColor3bEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLbyte, GLbyte, GLbyte)), driDispatchRemapTable[SecondaryColor3bEXT_remap_index], parameters)
+#define GET_SecondaryColor3bEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3bEXT_remap_index])
+#define SET_SecondaryColor3bEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3bEXT_remap_index], fn)
+#define CALL_SecondaryColor3bvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLbyte *)), driDispatchRemapTable[SecondaryColor3bvEXT_remap_index], parameters)
+#define GET_SecondaryColor3bvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3bvEXT_remap_index])
+#define SET_SecondaryColor3bvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3bvEXT_remap_index], fn)
+#define CALL_SecondaryColor3dEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble)), driDispatchRemapTable[SecondaryColor3dEXT_remap_index], parameters)
+#define GET_SecondaryColor3dEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3dEXT_remap_index])
+#define SET_SecondaryColor3dEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3dEXT_remap_index], fn)
+#define CALL_SecondaryColor3dvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), driDispatchRemapTable[SecondaryColor3dvEXT_remap_index], parameters)
+#define GET_SecondaryColor3dvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3dvEXT_remap_index])
+#define SET_SecondaryColor3dvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3dvEXT_remap_index], fn)
+#define CALL_SecondaryColor3fEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[SecondaryColor3fEXT_remap_index], parameters)
+#define GET_SecondaryColor3fEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3fEXT_remap_index])
+#define SET_SecondaryColor3fEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3fEXT_remap_index], fn)
+#define CALL_SecondaryColor3fvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), driDispatchRemapTable[SecondaryColor3fvEXT_remap_index], parameters)
+#define GET_SecondaryColor3fvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3fvEXT_remap_index])
+#define SET_SecondaryColor3fvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3fvEXT_remap_index], fn)
+#define CALL_SecondaryColor3iEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint)), driDispatchRemapTable[SecondaryColor3iEXT_remap_index], parameters)
+#define GET_SecondaryColor3iEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3iEXT_remap_index])
+#define SET_SecondaryColor3iEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3iEXT_remap_index], fn)
+#define CALL_SecondaryColor3ivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), driDispatchRemapTable[SecondaryColor3ivEXT_remap_index], parameters)
+#define GET_SecondaryColor3ivEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3ivEXT_remap_index])
+#define SET_SecondaryColor3ivEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3ivEXT_remap_index], fn)
+#define CALL_SecondaryColor3sEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort, GLshort)), driDispatchRemapTable[SecondaryColor3sEXT_remap_index], parameters)
+#define GET_SecondaryColor3sEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3sEXT_remap_index])
+#define SET_SecondaryColor3sEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3sEXT_remap_index], fn)
+#define CALL_SecondaryColor3svEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), driDispatchRemapTable[SecondaryColor3svEXT_remap_index], parameters)
+#define GET_SecondaryColor3svEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3svEXT_remap_index])
+#define SET_SecondaryColor3svEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3svEXT_remap_index], fn)
+#define CALL_SecondaryColor3ubEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLubyte, GLubyte, GLubyte)), driDispatchRemapTable[SecondaryColor3ubEXT_remap_index], parameters)
+#define GET_SecondaryColor3ubEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3ubEXT_remap_index])
+#define SET_SecondaryColor3ubEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3ubEXT_remap_index], fn)
+#define CALL_SecondaryColor3ubvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLubyte *)), driDispatchRemapTable[SecondaryColor3ubvEXT_remap_index], parameters)
+#define GET_SecondaryColor3ubvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3ubvEXT_remap_index])
+#define SET_SecondaryColor3ubvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3ubvEXT_remap_index], fn)
+#define CALL_SecondaryColor3uiEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLuint)), driDispatchRemapTable[SecondaryColor3uiEXT_remap_index], parameters)
+#define GET_SecondaryColor3uiEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3uiEXT_remap_index])
+#define SET_SecondaryColor3uiEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3uiEXT_remap_index], fn)
+#define CALL_SecondaryColor3uivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLuint *)), driDispatchRemapTable[SecondaryColor3uivEXT_remap_index], parameters)
+#define GET_SecondaryColor3uivEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3uivEXT_remap_index])
+#define SET_SecondaryColor3uivEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3uivEXT_remap_index], fn)
+#define CALL_SecondaryColor3usEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLushort, GLushort, GLushort)), driDispatchRemapTable[SecondaryColor3usEXT_remap_index], parameters)
+#define GET_SecondaryColor3usEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3usEXT_remap_index])
+#define SET_SecondaryColor3usEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3usEXT_remap_index], fn)
+#define CALL_SecondaryColor3usvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLushort *)), driDispatchRemapTable[SecondaryColor3usvEXT_remap_index], parameters)
+#define GET_SecondaryColor3usvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3usvEXT_remap_index])
+#define SET_SecondaryColor3usvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3usvEXT_remap_index], fn)
+#define CALL_SecondaryColorPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[SecondaryColorPointerEXT_remap_index], parameters)
+#define GET_SecondaryColorPointerEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColorPointerEXT_remap_index])
+#define SET_SecondaryColorPointerEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColorPointerEXT_remap_index], fn)
+#define CALL_MultiDrawArraysEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint *, GLsizei *, GLsizei)), driDispatchRemapTable[MultiDrawArraysEXT_remap_index], parameters)
+#define GET_MultiDrawArraysEXT(disp) GET_by_offset(disp, driDispatchRemapTable[MultiDrawArraysEXT_remap_index])
+#define SET_MultiDrawArraysEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[MultiDrawArraysEXT_remap_index], fn)
+#define CALL_MultiDrawElementsEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLsizei *, GLenum, const GLvoid **, GLsizei)), driDispatchRemapTable[MultiDrawElementsEXT_remap_index], parameters)
+#define GET_MultiDrawElementsEXT(disp) GET_by_offset(disp, driDispatchRemapTable[MultiDrawElementsEXT_remap_index])
+#define SET_MultiDrawElementsEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[MultiDrawElementsEXT_remap_index], fn)
+#define CALL_FogCoordPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[FogCoordPointerEXT_remap_index], parameters)
+#define GET_FogCoordPointerEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FogCoordPointerEXT_remap_index])
+#define SET_FogCoordPointerEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FogCoordPointerEXT_remap_index], fn)
+#define CALL_FogCoorddEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble)), driDispatchRemapTable[FogCoorddEXT_remap_index], parameters)
+#define GET_FogCoorddEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FogCoorddEXT_remap_index])
+#define SET_FogCoorddEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FogCoorddEXT_remap_index], fn)
+#define CALL_FogCoorddvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), driDispatchRemapTable[FogCoorddvEXT_remap_index], parameters)
+#define GET_FogCoorddvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FogCoorddvEXT_remap_index])
+#define SET_FogCoorddvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FogCoorddvEXT_remap_index], fn)
+#define CALL_FogCoordfEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat)), driDispatchRemapTable[FogCoordfEXT_remap_index], parameters)
+#define GET_FogCoordfEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FogCoordfEXT_remap_index])
+#define SET_FogCoordfEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FogCoordfEXT_remap_index], fn)
+#define CALL_FogCoordfvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), driDispatchRemapTable[FogCoordfvEXT_remap_index], parameters)
+#define GET_FogCoordfvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FogCoordfvEXT_remap_index])
+#define SET_FogCoordfvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FogCoordfvEXT_remap_index], fn)
+#define CALL_PixelTexGenSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[PixelTexGenSGIX_remap_index], parameters)
+#define GET_PixelTexGenSGIX(disp) GET_by_offset(disp, driDispatchRemapTable[PixelTexGenSGIX_remap_index])
+#define SET_PixelTexGenSGIX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PixelTexGenSGIX_remap_index], fn)
+#define CALL_BlendFuncSeparateEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLenum)), driDispatchRemapTable[BlendFuncSeparateEXT_remap_index], parameters)
+#define GET_BlendFuncSeparateEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BlendFuncSeparateEXT_remap_index])
+#define SET_BlendFuncSeparateEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BlendFuncSeparateEXT_remap_index], fn)
+#define CALL_VertexWeightPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[VertexWeightPointerEXT_remap_index], parameters)
+#define GET_VertexWeightPointerEXT(disp) GET_by_offset(disp, driDispatchRemapTable[VertexWeightPointerEXT_remap_index])
+#define SET_VertexWeightPointerEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexWeightPointerEXT_remap_index], fn)
 #define CALL_VertexWeightfEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat)), driDispatchRemapTable[VertexWeightfEXT_remap_index], parameters)
 #define GET_VertexWeightfEXT(disp) GET_by_offset(disp, driDispatchRemapTable[VertexWeightfEXT_remap_index])
 #define SET_VertexWeightfEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexWeightfEXT_remap_index], fn)
 #define CALL_VertexWeightfvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), driDispatchRemapTable[VertexWeightfvEXT_remap_index], parameters)
 #define GET_VertexWeightfvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[VertexWeightfvEXT_remap_index])
 #define SET_VertexWeightfvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexWeightfvEXT_remap_index], fn)
-#define CALL_VertexWeightPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[VertexWeightPointerEXT_remap_index], parameters)
-#define GET_VertexWeightPointerEXT(disp) GET_by_offset(disp, driDispatchRemapTable[VertexWeightPointerEXT_remap_index])
-#define SET_VertexWeightPointerEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexWeightPointerEXT_remap_index], fn)
 #define CALL_FlushVertexArrayRangeNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), driDispatchRemapTable[FlushVertexArrayRangeNV_remap_index], parameters)
 #define GET_FlushVertexArrayRangeNV(disp) GET_by_offset(disp, driDispatchRemapTable[FlushVertexArrayRangeNV_remap_index])
 #define SET_FlushVertexArrayRangeNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FlushVertexArrayRangeNV_remap_index], fn)
 #define CALL_VertexArrayRangeNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLvoid *)), driDispatchRemapTable[VertexArrayRangeNV_remap_index], parameters)
 #define GET_VertexArrayRangeNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexArrayRangeNV_remap_index])
 #define SET_VertexArrayRangeNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexArrayRangeNV_remap_index], fn)
-#define CALL_CombinerParameterfvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), driDispatchRemapTable[CombinerParameterfvNV_remap_index], parameters)
-#define GET_CombinerParameterfvNV(disp) GET_by_offset(disp, driDispatchRemapTable[CombinerParameterfvNV_remap_index])
-#define SET_CombinerParameterfvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CombinerParameterfvNV_remap_index], fn)
-#define CALL_CombinerParameterfNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat)), driDispatchRemapTable[CombinerParameterfNV_remap_index], parameters)
-#define GET_CombinerParameterfNV(disp) GET_by_offset(disp, driDispatchRemapTable[CombinerParameterfNV_remap_index])
-#define SET_CombinerParameterfNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CombinerParameterfNV_remap_index], fn)
-#define CALL_CombinerParameterivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), driDispatchRemapTable[CombinerParameterivNV_remap_index], parameters)
-#define GET_CombinerParameterivNV(disp) GET_by_offset(disp, driDispatchRemapTable[CombinerParameterivNV_remap_index])
-#define SET_CombinerParameterivNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CombinerParameterivNV_remap_index], fn)
-#define CALL_CombinerParameteriNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), driDispatchRemapTable[CombinerParameteriNV_remap_index], parameters)
-#define GET_CombinerParameteriNV(disp) GET_by_offset(disp, driDispatchRemapTable[CombinerParameteriNV_remap_index])
-#define SET_CombinerParameteriNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CombinerParameteriNV_remap_index], fn)
 #define CALL_CombinerInputNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLenum, GLenum, GLenum)), driDispatchRemapTable[CombinerInputNV_remap_index], parameters)
 #define GET_CombinerInputNV(disp) GET_by_offset(disp, driDispatchRemapTable[CombinerInputNV_remap_index])
 #define SET_CombinerInputNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CombinerInputNV_remap_index], fn)
 #define CALL_CombinerOutputNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLenum, GLenum, GLenum, GLenum, GLboolean, GLboolean, GLboolean)), driDispatchRemapTable[CombinerOutputNV_remap_index], parameters)
 #define GET_CombinerOutputNV(disp) GET_by_offset(disp, driDispatchRemapTable[CombinerOutputNV_remap_index])
 #define SET_CombinerOutputNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CombinerOutputNV_remap_index], fn)
+#define CALL_CombinerParameterfNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat)), driDispatchRemapTable[CombinerParameterfNV_remap_index], parameters)
+#define GET_CombinerParameterfNV(disp) GET_by_offset(disp, driDispatchRemapTable[CombinerParameterfNV_remap_index])
+#define SET_CombinerParameterfNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CombinerParameterfNV_remap_index], fn)
+#define CALL_CombinerParameterfvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), driDispatchRemapTable[CombinerParameterfvNV_remap_index], parameters)
+#define GET_CombinerParameterfvNV(disp) GET_by_offset(disp, driDispatchRemapTable[CombinerParameterfvNV_remap_index])
+#define SET_CombinerParameterfvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CombinerParameterfvNV_remap_index], fn)
+#define CALL_CombinerParameteriNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), driDispatchRemapTable[CombinerParameteriNV_remap_index], parameters)
+#define GET_CombinerParameteriNV(disp) GET_by_offset(disp, driDispatchRemapTable[CombinerParameteriNV_remap_index])
+#define SET_CombinerParameteriNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CombinerParameteriNV_remap_index], fn)
+#define CALL_CombinerParameterivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), driDispatchRemapTable[CombinerParameterivNV_remap_index], parameters)
+#define GET_CombinerParameterivNV(disp) GET_by_offset(disp, driDispatchRemapTable[CombinerParameterivNV_remap_index])
+#define SET_CombinerParameterivNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CombinerParameterivNV_remap_index], fn)
 #define CALL_FinalCombinerInputNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLenum)), driDispatchRemapTable[FinalCombinerInputNV_remap_index], parameters)
 #define GET_FinalCombinerInputNV(disp) GET_by_offset(disp, driDispatchRemapTable[FinalCombinerInputNV_remap_index])
 #define SET_FinalCombinerInputNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FinalCombinerInputNV_remap_index], fn)
@@ -3344,129 +3486,33 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_WindowPos4svMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), driDispatchRemapTable[WindowPos4svMESA_remap_index], parameters)
 #define GET_WindowPos4svMESA(disp) GET_by_offset(disp, driDispatchRemapTable[WindowPos4svMESA_remap_index])
 #define SET_WindowPos4svMESA(disp, fn) SET_by_offset(disp, driDispatchRemapTable[WindowPos4svMESA_remap_index], fn)
-#define CALL_BlendFuncSeparateEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLenum)), driDispatchRemapTable[BlendFuncSeparateEXT_remap_index], parameters)
-#define GET_BlendFuncSeparateEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BlendFuncSeparateEXT_remap_index])
-#define SET_BlendFuncSeparateEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BlendFuncSeparateEXT_remap_index], fn)
-#define CALL_IndexMaterialEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum)), driDispatchRemapTable[IndexMaterialEXT_remap_index], parameters)
-#define GET_IndexMaterialEXT(disp) GET_by_offset(disp, driDispatchRemapTable[IndexMaterialEXT_remap_index])
-#define SET_IndexMaterialEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IndexMaterialEXT_remap_index], fn)
-#define CALL_IndexFuncEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLclampf)), driDispatchRemapTable[IndexFuncEXT_remap_index], parameters)
-#define GET_IndexFuncEXT(disp) GET_by_offset(disp, driDispatchRemapTable[IndexFuncEXT_remap_index])
-#define SET_IndexFuncEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IndexFuncEXT_remap_index], fn)
-#define CALL_LockArraysEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei)), driDispatchRemapTable[LockArraysEXT_remap_index], parameters)
-#define GET_LockArraysEXT(disp) GET_by_offset(disp, driDispatchRemapTable[LockArraysEXT_remap_index])
-#define SET_LockArraysEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[LockArraysEXT_remap_index], fn)
-#define CALL_UnlockArraysEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), driDispatchRemapTable[UnlockArraysEXT_remap_index], parameters)
-#define GET_UnlockArraysEXT(disp) GET_by_offset(disp, driDispatchRemapTable[UnlockArraysEXT_remap_index])
-#define SET_UnlockArraysEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[UnlockArraysEXT_remap_index], fn)
-#define CALL_CullParameterdvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLdouble *)), driDispatchRemapTable[CullParameterdvEXT_remap_index], parameters)
-#define GET_CullParameterdvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[CullParameterdvEXT_remap_index])
-#define SET_CullParameterdvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CullParameterdvEXT_remap_index], fn)
-#define CALL_CullParameterfvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat *)), driDispatchRemapTable[CullParameterfvEXT_remap_index], parameters)
-#define GET_CullParameterfvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[CullParameterfvEXT_remap_index])
-#define SET_CullParameterfvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CullParameterfvEXT_remap_index], fn)
-#define CALL_HintPGI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), driDispatchRemapTable[HintPGI_remap_index], parameters)
-#define GET_HintPGI(disp) GET_by_offset(disp, driDispatchRemapTable[HintPGI_remap_index])
-#define SET_HintPGI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[HintPGI_remap_index], fn)
-#define CALL_FogCoordfEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat)), driDispatchRemapTable[FogCoordfEXT_remap_index], parameters)
-#define GET_FogCoordfEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FogCoordfEXT_remap_index])
-#define SET_FogCoordfEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FogCoordfEXT_remap_index], fn)
-#define CALL_FogCoordfvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), driDispatchRemapTable[FogCoordfvEXT_remap_index], parameters)
-#define GET_FogCoordfvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FogCoordfvEXT_remap_index])
-#define SET_FogCoordfvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FogCoordfvEXT_remap_index], fn)
-#define CALL_FogCoorddEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble)), driDispatchRemapTable[FogCoorddEXT_remap_index], parameters)
-#define GET_FogCoorddEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FogCoorddEXT_remap_index])
-#define SET_FogCoorddEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FogCoorddEXT_remap_index], fn)
-#define CALL_FogCoorddvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), driDispatchRemapTable[FogCoorddvEXT_remap_index], parameters)
-#define GET_FogCoorddvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FogCoorddvEXT_remap_index])
-#define SET_FogCoorddvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FogCoorddvEXT_remap_index], fn)
-#define CALL_FogCoordPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[FogCoordPointerEXT_remap_index], parameters)
-#define GET_FogCoordPointerEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FogCoordPointerEXT_remap_index])
-#define SET_FogCoordPointerEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FogCoordPointerEXT_remap_index], fn)
-#define CALL_GetColorTableEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLvoid *)), driDispatchRemapTable[GetColorTableEXT_remap_index], parameters)
-#define GET_GetColorTableEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetColorTableEXT_remap_index])
-#define SET_GetColorTableEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetColorTableEXT_remap_index], fn)
-#define CALL_GetColorTableParameterivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), driDispatchRemapTable[GetColorTableParameterivEXT_remap_index], parameters)
-#define GET_GetColorTableParameterivEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetColorTableParameterivEXT_remap_index])
-#define SET_GetColorTableParameterivEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetColorTableParameterivEXT_remap_index], fn)
-#define CALL_GetColorTableParameterfvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), driDispatchRemapTable[GetColorTableParameterfvEXT_remap_index], parameters)
-#define GET_GetColorTableParameterfvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetColorTableParameterfvEXT_remap_index])
-#define SET_GetColorTableParameterfvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetColorTableParameterfvEXT_remap_index], fn)
-#define CALL_TbufferMask3DFX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[TbufferMask3DFX_remap_index], parameters)
-#define GET_TbufferMask3DFX(disp) GET_by_offset(disp, driDispatchRemapTable[TbufferMask3DFX_remap_index])
-#define SET_TbufferMask3DFX(disp, fn) SET_by_offset(disp, driDispatchRemapTable[TbufferMask3DFX_remap_index], fn)
-#define CALL_CompressedTexImage3DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLsizei, const GLvoid *)), driDispatchRemapTable[CompressedTexImage3DARB_remap_index], parameters)
-#define GET_CompressedTexImage3DARB(disp) GET_by_offset(disp, driDispatchRemapTable[CompressedTexImage3DARB_remap_index])
-#define SET_CompressedTexImage3DARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CompressedTexImage3DARB_remap_index], fn)
-#define CALL_CompressedTexImage2DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, const GLvoid *)), driDispatchRemapTable[CompressedTexImage2DARB_remap_index], parameters)
-#define GET_CompressedTexImage2DARB(disp) GET_by_offset(disp, driDispatchRemapTable[CompressedTexImage2DARB_remap_index])
-#define SET_CompressedTexImage2DARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CompressedTexImage2DARB_remap_index], fn)
-#define CALL_CompressedTexImage1DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLsizei, GLint, GLsizei, const GLvoid *)), driDispatchRemapTable[CompressedTexImage1DARB_remap_index], parameters)
-#define GET_CompressedTexImage1DARB(disp) GET_by_offset(disp, driDispatchRemapTable[CompressedTexImage1DARB_remap_index])
-#define SET_CompressedTexImage1DARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CompressedTexImage1DARB_remap_index], fn)
-#define CALL_CompressedTexSubImage3DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[CompressedTexSubImage3DARB_remap_index], parameters)
-#define GET_CompressedTexSubImage3DARB(disp) GET_by_offset(disp, driDispatchRemapTable[CompressedTexSubImage3DARB_remap_index])
-#define SET_CompressedTexSubImage3DARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CompressedTexSubImage3DARB_remap_index], fn)
-#define CALL_CompressedTexSubImage2DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[CompressedTexSubImage2DARB_remap_index], parameters)
-#define GET_CompressedTexSubImage2DARB(disp) GET_by_offset(disp, driDispatchRemapTable[CompressedTexSubImage2DARB_remap_index])
-#define SET_CompressedTexSubImage2DARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CompressedTexSubImage2DARB_remap_index], fn)
-#define CALL_CompressedTexSubImage1DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLsizei, GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[CompressedTexSubImage1DARB_remap_index], parameters)
-#define GET_CompressedTexSubImage1DARB(disp) GET_by_offset(disp, driDispatchRemapTable[CompressedTexSubImage1DARB_remap_index])
-#define SET_CompressedTexSubImage1DARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CompressedTexSubImage1DARB_remap_index], fn)
-#define CALL_GetCompressedTexImageARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLvoid *)), driDispatchRemapTable[GetCompressedTexImageARB_remap_index], parameters)
-#define GET_GetCompressedTexImageARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetCompressedTexImageARB_remap_index])
-#define SET_GetCompressedTexImageARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetCompressedTexImageARB_remap_index], fn)
-#define CALL_SecondaryColor3bEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLbyte, GLbyte, GLbyte)), driDispatchRemapTable[SecondaryColor3bEXT_remap_index], parameters)
-#define GET_SecondaryColor3bEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3bEXT_remap_index])
-#define SET_SecondaryColor3bEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3bEXT_remap_index], fn)
-#define CALL_SecondaryColor3bvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLbyte *)), driDispatchRemapTable[SecondaryColor3bvEXT_remap_index], parameters)
-#define GET_SecondaryColor3bvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3bvEXT_remap_index])
-#define SET_SecondaryColor3bvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3bvEXT_remap_index], fn)
-#define CALL_SecondaryColor3dEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble)), driDispatchRemapTable[SecondaryColor3dEXT_remap_index], parameters)
-#define GET_SecondaryColor3dEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3dEXT_remap_index])
-#define SET_SecondaryColor3dEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3dEXT_remap_index], fn)
-#define CALL_SecondaryColor3dvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), driDispatchRemapTable[SecondaryColor3dvEXT_remap_index], parameters)
-#define GET_SecondaryColor3dvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3dvEXT_remap_index])
-#define SET_SecondaryColor3dvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3dvEXT_remap_index], fn)
-#define CALL_SecondaryColor3fEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[SecondaryColor3fEXT_remap_index], parameters)
-#define GET_SecondaryColor3fEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3fEXT_remap_index])
-#define SET_SecondaryColor3fEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3fEXT_remap_index], fn)
-#define CALL_SecondaryColor3fvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), driDispatchRemapTable[SecondaryColor3fvEXT_remap_index], parameters)
-#define GET_SecondaryColor3fvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3fvEXT_remap_index])
-#define SET_SecondaryColor3fvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3fvEXT_remap_index], fn)
-#define CALL_SecondaryColor3iEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint)), driDispatchRemapTable[SecondaryColor3iEXT_remap_index], parameters)
-#define GET_SecondaryColor3iEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3iEXT_remap_index])
-#define SET_SecondaryColor3iEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3iEXT_remap_index], fn)
-#define CALL_SecondaryColor3ivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), driDispatchRemapTable[SecondaryColor3ivEXT_remap_index], parameters)
-#define GET_SecondaryColor3ivEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3ivEXT_remap_index])
-#define SET_SecondaryColor3ivEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3ivEXT_remap_index], fn)
-#define CALL_SecondaryColor3sEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort, GLshort)), driDispatchRemapTable[SecondaryColor3sEXT_remap_index], parameters)
-#define GET_SecondaryColor3sEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3sEXT_remap_index])
-#define SET_SecondaryColor3sEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3sEXT_remap_index], fn)
-#define CALL_SecondaryColor3svEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), driDispatchRemapTable[SecondaryColor3svEXT_remap_index], parameters)
-#define GET_SecondaryColor3svEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3svEXT_remap_index])
-#define SET_SecondaryColor3svEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3svEXT_remap_index], fn)
-#define CALL_SecondaryColor3ubEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLubyte, GLubyte, GLubyte)), driDispatchRemapTable[SecondaryColor3ubEXT_remap_index], parameters)
-#define GET_SecondaryColor3ubEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3ubEXT_remap_index])
-#define SET_SecondaryColor3ubEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3ubEXT_remap_index], fn)
-#define CALL_SecondaryColor3ubvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLubyte *)), driDispatchRemapTable[SecondaryColor3ubvEXT_remap_index], parameters)
-#define GET_SecondaryColor3ubvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3ubvEXT_remap_index])
-#define SET_SecondaryColor3ubvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3ubvEXT_remap_index], fn)
-#define CALL_SecondaryColor3uiEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLuint)), driDispatchRemapTable[SecondaryColor3uiEXT_remap_index], parameters)
-#define GET_SecondaryColor3uiEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3uiEXT_remap_index])
-#define SET_SecondaryColor3uiEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3uiEXT_remap_index], fn)
-#define CALL_SecondaryColor3uivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLuint *)), driDispatchRemapTable[SecondaryColor3uivEXT_remap_index], parameters)
-#define GET_SecondaryColor3uivEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3uivEXT_remap_index])
-#define SET_SecondaryColor3uivEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3uivEXT_remap_index], fn)
-#define CALL_SecondaryColor3usEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLushort, GLushort, GLushort)), driDispatchRemapTable[SecondaryColor3usEXT_remap_index], parameters)
-#define GET_SecondaryColor3usEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3usEXT_remap_index])
-#define SET_SecondaryColor3usEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3usEXT_remap_index], fn)
-#define CALL_SecondaryColor3usvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLushort *)), driDispatchRemapTable[SecondaryColor3usvEXT_remap_index], parameters)
-#define GET_SecondaryColor3usvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColor3usvEXT_remap_index])
-#define SET_SecondaryColor3usvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColor3usvEXT_remap_index], fn)
-#define CALL_SecondaryColorPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[SecondaryColorPointerEXT_remap_index], parameters)
-#define GET_SecondaryColorPointerEXT(disp) GET_by_offset(disp, driDispatchRemapTable[SecondaryColorPointerEXT_remap_index])
-#define SET_SecondaryColorPointerEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SecondaryColorPointerEXT_remap_index], fn)
+#define CALL_MultiModeDrawArraysIBM(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLenum *, const GLint *, const GLsizei *, GLsizei, GLint)), driDispatchRemapTable[MultiModeDrawArraysIBM_remap_index], parameters)
+#define GET_MultiModeDrawArraysIBM(disp) GET_by_offset(disp, driDispatchRemapTable[MultiModeDrawArraysIBM_remap_index])
+#define SET_MultiModeDrawArraysIBM(disp, fn) SET_by_offset(disp, driDispatchRemapTable[MultiModeDrawArraysIBM_remap_index], fn)
+#define CALL_MultiModeDrawElementsIBM(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLenum *, const GLsizei *, GLenum, const GLvoid * const *, GLsizei, GLint)), driDispatchRemapTable[MultiModeDrawElementsIBM_remap_index], parameters)
+#define GET_MultiModeDrawElementsIBM(disp) GET_by_offset(disp, driDispatchRemapTable[MultiModeDrawElementsIBM_remap_index])
+#define SET_MultiModeDrawElementsIBM(disp, fn) SET_by_offset(disp, driDispatchRemapTable[MultiModeDrawElementsIBM_remap_index], fn)
+#define CALL_DeleteFencesNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), driDispatchRemapTable[DeleteFencesNV_remap_index], parameters)
+#define GET_DeleteFencesNV(disp) GET_by_offset(disp, driDispatchRemapTable[DeleteFencesNV_remap_index])
+#define SET_DeleteFencesNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DeleteFencesNV_remap_index], fn)
+#define CALL_FinishFenceNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[FinishFenceNV_remap_index], parameters)
+#define GET_FinishFenceNV(disp) GET_by_offset(disp, driDispatchRemapTable[FinishFenceNV_remap_index])
+#define SET_FinishFenceNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FinishFenceNV_remap_index], fn)
+#define CALL_GenFencesNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), driDispatchRemapTable[GenFencesNV_remap_index], parameters)
+#define GET_GenFencesNV(disp) GET_by_offset(disp, driDispatchRemapTable[GenFencesNV_remap_index])
+#define SET_GenFencesNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GenFencesNV_remap_index], fn)
+#define CALL_GetFenceivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), driDispatchRemapTable[GetFenceivNV_remap_index], parameters)
+#define GET_GetFenceivNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetFenceivNV_remap_index])
+#define SET_GetFenceivNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetFenceivNV_remap_index], fn)
+#define CALL_IsFenceNV(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[IsFenceNV_remap_index], parameters)
+#define GET_IsFenceNV(disp) GET_by_offset(disp, driDispatchRemapTable[IsFenceNV_remap_index])
+#define SET_IsFenceNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsFenceNV_remap_index], fn)
+#define CALL_SetFenceNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum)), driDispatchRemapTable[SetFenceNV_remap_index], parameters)
+#define GET_SetFenceNV(disp) GET_by_offset(disp, driDispatchRemapTable[SetFenceNV_remap_index])
+#define SET_SetFenceNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SetFenceNV_remap_index], fn)
+#define CALL_TestFenceNV(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[TestFenceNV_remap_index], parameters)
+#define GET_TestFenceNV(disp) GET_by_offset(disp, driDispatchRemapTable[TestFenceNV_remap_index])
+#define SET_TestFenceNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[TestFenceNV_remap_index], fn)
 #define CALL_AreProgramsResidentNV(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLsizei, const GLuint *, GLboolean *)), driDispatchRemapTable[AreProgramsResidentNV_remap_index], parameters)
 #define GET_AreProgramsResidentNV(disp) GET_by_offset(disp, driDispatchRemapTable[AreProgramsResidentNV_remap_index])
 #define SET_AreProgramsResidentNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[AreProgramsResidentNV_remap_index], fn)
@@ -3488,27 +3534,27 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_GetProgramParameterfvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLenum, GLfloat *)), driDispatchRemapTable[GetProgramParameterfvNV_remap_index], parameters)
 #define GET_GetProgramParameterfvNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramParameterfvNV_remap_index])
 #define SET_GetProgramParameterfvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramParameterfvNV_remap_index], fn)
-#define CALL_GetProgramivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), driDispatchRemapTable[GetProgramivNV_remap_index], parameters)
-#define GET_GetProgramivNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramivNV_remap_index])
-#define SET_GetProgramivNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramivNV_remap_index], fn)
 #define CALL_GetProgramStringNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLubyte *)), driDispatchRemapTable[GetProgramStringNV_remap_index], parameters)
 #define GET_GetProgramStringNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramStringNV_remap_index])
 #define SET_GetProgramStringNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramStringNV_remap_index], fn)
+#define CALL_GetProgramivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), driDispatchRemapTable[GetProgramivNV_remap_index], parameters)
+#define GET_GetProgramivNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramivNV_remap_index])
+#define SET_GetProgramivNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramivNV_remap_index], fn)
 #define CALL_GetTrackMatrixivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLenum, GLint *)), driDispatchRemapTable[GetTrackMatrixivNV_remap_index], parameters)
 #define GET_GetTrackMatrixivNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetTrackMatrixivNV_remap_index])
 #define SET_GetTrackMatrixivNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetTrackMatrixivNV_remap_index], fn)
-#define CALL_GetVertexAttribdvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLdouble *)), driDispatchRemapTable[GetVertexAttribdvARB_remap_index], parameters)
-#define GET_GetVertexAttribdvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetVertexAttribdvARB_remap_index])
-#define SET_GetVertexAttribdvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetVertexAttribdvARB_remap_index], fn)
-#define CALL_GetVertexAttribfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLfloat *)), driDispatchRemapTable[GetVertexAttribfvARB_remap_index], parameters)
-#define GET_GetVertexAttribfvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetVertexAttribfvARB_remap_index])
-#define SET_GetVertexAttribfvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetVertexAttribfvARB_remap_index], fn)
-#define CALL_GetVertexAttribivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), driDispatchRemapTable[GetVertexAttribivARB_remap_index], parameters)
-#define GET_GetVertexAttribivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetVertexAttribivARB_remap_index])
-#define SET_GetVertexAttribivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetVertexAttribivARB_remap_index], fn)
 #define CALL_GetVertexAttribPointervNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLvoid **)), driDispatchRemapTable[GetVertexAttribPointervNV_remap_index], parameters)
 #define GET_GetVertexAttribPointervNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetVertexAttribPointervNV_remap_index])
 #define SET_GetVertexAttribPointervNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetVertexAttribPointervNV_remap_index], fn)
+#define CALL_GetVertexAttribdvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLdouble *)), driDispatchRemapTable[GetVertexAttribdvNV_remap_index], parameters)
+#define GET_GetVertexAttribdvNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetVertexAttribdvNV_remap_index])
+#define SET_GetVertexAttribdvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetVertexAttribdvNV_remap_index], fn)
+#define CALL_GetVertexAttribfvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLfloat *)), driDispatchRemapTable[GetVertexAttribfvNV_remap_index], parameters)
+#define GET_GetVertexAttribfvNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetVertexAttribfvNV_remap_index])
+#define SET_GetVertexAttribfvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetVertexAttribfvNV_remap_index], fn)
+#define CALL_GetVertexAttribivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), driDispatchRemapTable[GetVertexAttribivNV_remap_index], parameters)
+#define GET_GetVertexAttribivNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetVertexAttribivNV_remap_index])
+#define SET_GetVertexAttribivNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetVertexAttribivNV_remap_index], fn)
 #define CALL_IsProgramNV(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[IsProgramNV_remap_index], parameters)
 #define GET_IsProgramNV(disp) GET_by_offset(disp, driDispatchRemapTable[IsProgramNV_remap_index])
 #define SET_IsProgramNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsProgramNV_remap_index], fn)
@@ -3539,468 +3585,6 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_TrackMatrixNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLenum, GLenum)), driDispatchRemapTable[TrackMatrixNV_remap_index], parameters)
 #define GET_TrackMatrixNV(disp) GET_by_offset(disp, driDispatchRemapTable[TrackMatrixNV_remap_index])
 #define SET_TrackMatrixNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[TrackMatrixNV_remap_index], fn)
-#define CALL_VertexAttribPointerNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLint, GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[VertexAttribPointerNV_remap_index], parameters)
-#define GET_VertexAttribPointerNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribPointerNV_remap_index])
-#define SET_VertexAttribPointerNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribPointerNV_remap_index], fn)
-#define CALL_VertexAttrib1dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble)), driDispatchRemapTable[VertexAttrib1dARB_remap_index], parameters)
-#define GET_VertexAttrib1dARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib1dARB_remap_index])
-#define SET_VertexAttrib1dARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib1dARB_remap_index], fn)
-#define CALL_VertexAttrib1dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), driDispatchRemapTable[VertexAttrib1dvARB_remap_index], parameters)
-#define GET_VertexAttrib1dvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib1dvARB_remap_index])
-#define SET_VertexAttrib1dvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib1dvARB_remap_index], fn)
-#define CALL_VertexAttrib1fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat)), driDispatchRemapTable[VertexAttrib1fARB_remap_index], parameters)
-#define GET_VertexAttrib1fARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib1fARB_remap_index])
-#define SET_VertexAttrib1fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib1fARB_remap_index], fn)
-#define CALL_VertexAttrib1fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), driDispatchRemapTable[VertexAttrib1fvARB_remap_index], parameters)
-#define GET_VertexAttrib1fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib1fvARB_remap_index])
-#define SET_VertexAttrib1fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib1fvARB_remap_index], fn)
-#define CALL_VertexAttrib1sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort)), driDispatchRemapTable[VertexAttrib1sARB_remap_index], parameters)
-#define GET_VertexAttrib1sARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib1sARB_remap_index])
-#define SET_VertexAttrib1sARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib1sARB_remap_index], fn)
-#define CALL_VertexAttrib1svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), driDispatchRemapTable[VertexAttrib1svARB_remap_index], parameters)
-#define GET_VertexAttrib1svARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib1svARB_remap_index])
-#define SET_VertexAttrib1svARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib1svARB_remap_index], fn)
-#define CALL_VertexAttrib2dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble, GLdouble)), driDispatchRemapTable[VertexAttrib2dARB_remap_index], parameters)
-#define GET_VertexAttrib2dARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib2dARB_remap_index])
-#define SET_VertexAttrib2dARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib2dARB_remap_index], fn)
-#define CALL_VertexAttrib2dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), driDispatchRemapTable[VertexAttrib2dvARB_remap_index], parameters)
-#define GET_VertexAttrib2dvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib2dvARB_remap_index])
-#define SET_VertexAttrib2dvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib2dvARB_remap_index], fn)
-#define CALL_VertexAttrib2fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat, GLfloat)), driDispatchRemapTable[VertexAttrib2fARB_remap_index], parameters)
-#define GET_VertexAttrib2fARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib2fARB_remap_index])
-#define SET_VertexAttrib2fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib2fARB_remap_index], fn)
-#define CALL_VertexAttrib2fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), driDispatchRemapTable[VertexAttrib2fvARB_remap_index], parameters)
-#define GET_VertexAttrib2fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib2fvARB_remap_index])
-#define SET_VertexAttrib2fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib2fvARB_remap_index], fn)
-#define CALL_VertexAttrib2sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort, GLshort)), driDispatchRemapTable[VertexAttrib2sARB_remap_index], parameters)
-#define GET_VertexAttrib2sARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib2sARB_remap_index])
-#define SET_VertexAttrib2sARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib2sARB_remap_index], fn)
-#define CALL_VertexAttrib2svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), driDispatchRemapTable[VertexAttrib2svARB_remap_index], parameters)
-#define GET_VertexAttrib2svARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib2svARB_remap_index])
-#define SET_VertexAttrib2svARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib2svARB_remap_index], fn)
-#define CALL_VertexAttrib3dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble, GLdouble, GLdouble)), driDispatchRemapTable[VertexAttrib3dARB_remap_index], parameters)
-#define GET_VertexAttrib3dARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib3dARB_remap_index])
-#define SET_VertexAttrib3dARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib3dARB_remap_index], fn)
-#define CALL_VertexAttrib3dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), driDispatchRemapTable[VertexAttrib3dvARB_remap_index], parameters)
-#define GET_VertexAttrib3dvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib3dvARB_remap_index])
-#define SET_VertexAttrib3dvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib3dvARB_remap_index], fn)
-#define CALL_VertexAttrib3fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[VertexAttrib3fARB_remap_index], parameters)
-#define GET_VertexAttrib3fARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib3fARB_remap_index])
-#define SET_VertexAttrib3fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib3fARB_remap_index], fn)
-#define CALL_VertexAttrib3fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), driDispatchRemapTable[VertexAttrib3fvARB_remap_index], parameters)
-#define GET_VertexAttrib3fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib3fvARB_remap_index])
-#define SET_VertexAttrib3fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib3fvARB_remap_index], fn)
-#define CALL_VertexAttrib3sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort, GLshort, GLshort)), driDispatchRemapTable[VertexAttrib3sARB_remap_index], parameters)
-#define GET_VertexAttrib3sARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib3sARB_remap_index])
-#define SET_VertexAttrib3sARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib3sARB_remap_index], fn)
-#define CALL_VertexAttrib3svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), driDispatchRemapTable[VertexAttrib3svARB_remap_index], parameters)
-#define GET_VertexAttrib3svARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib3svARB_remap_index])
-#define SET_VertexAttrib3svARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib3svARB_remap_index], fn)
-#define CALL_VertexAttrib4dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble, GLdouble, GLdouble, GLdouble)), driDispatchRemapTable[VertexAttrib4dARB_remap_index], parameters)
-#define GET_VertexAttrib4dARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4dARB_remap_index])
-#define SET_VertexAttrib4dARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4dARB_remap_index], fn)
-#define CALL_VertexAttrib4dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), driDispatchRemapTable[VertexAttrib4dvARB_remap_index], parameters)
-#define GET_VertexAttrib4dvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4dvARB_remap_index])
-#define SET_VertexAttrib4dvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4dvARB_remap_index], fn)
-#define CALL_VertexAttrib4fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat, GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[VertexAttrib4fARB_remap_index], parameters)
-#define GET_VertexAttrib4fARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4fARB_remap_index])
-#define SET_VertexAttrib4fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4fARB_remap_index], fn)
-#define CALL_VertexAttrib4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), driDispatchRemapTable[VertexAttrib4fvARB_remap_index], parameters)
-#define GET_VertexAttrib4fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4fvARB_remap_index])
-#define SET_VertexAttrib4fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4fvARB_remap_index], fn)
-#define CALL_VertexAttrib4sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort, GLshort, GLshort, GLshort)), driDispatchRemapTable[VertexAttrib4sARB_remap_index], parameters)
-#define GET_VertexAttrib4sARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4sARB_remap_index])
-#define SET_VertexAttrib4sARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4sARB_remap_index], fn)
-#define CALL_VertexAttrib4svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), driDispatchRemapTable[VertexAttrib4svARB_remap_index], parameters)
-#define GET_VertexAttrib4svARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4svARB_remap_index])
-#define SET_VertexAttrib4svARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4svARB_remap_index], fn)
-#define CALL_VertexAttrib4NubARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLubyte, GLubyte, GLubyte, GLubyte)), driDispatchRemapTable[VertexAttrib4NubARB_remap_index], parameters)
-#define GET_VertexAttrib4NubARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NubARB_remap_index])
-#define SET_VertexAttrib4NubARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NubARB_remap_index], fn)
-#define CALL_VertexAttrib4NubvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLubyte *)), driDispatchRemapTable[VertexAttrib4NubvARB_remap_index], parameters)
-#define GET_VertexAttrib4NubvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NubvARB_remap_index])
-#define SET_VertexAttrib4NubvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NubvARB_remap_index], fn)
-#define CALL_VertexAttribs1dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLdouble *)), driDispatchRemapTable[VertexAttribs1dvNV_remap_index], parameters)
-#define GET_VertexAttribs1dvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs1dvNV_remap_index])
-#define SET_VertexAttribs1dvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs1dvNV_remap_index], fn)
-#define CALL_VertexAttribs1fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLfloat *)), driDispatchRemapTable[VertexAttribs1fvNV_remap_index], parameters)
-#define GET_VertexAttribs1fvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs1fvNV_remap_index])
-#define SET_VertexAttribs1fvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs1fvNV_remap_index], fn)
-#define CALL_VertexAttribs1svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLshort *)), driDispatchRemapTable[VertexAttribs1svNV_remap_index], parameters)
-#define GET_VertexAttribs1svNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs1svNV_remap_index])
-#define SET_VertexAttribs1svNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs1svNV_remap_index], fn)
-#define CALL_VertexAttribs2dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLdouble *)), driDispatchRemapTable[VertexAttribs2dvNV_remap_index], parameters)
-#define GET_VertexAttribs2dvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs2dvNV_remap_index])
-#define SET_VertexAttribs2dvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs2dvNV_remap_index], fn)
-#define CALL_VertexAttribs2fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLfloat *)), driDispatchRemapTable[VertexAttribs2fvNV_remap_index], parameters)
-#define GET_VertexAttribs2fvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs2fvNV_remap_index])
-#define SET_VertexAttribs2fvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs2fvNV_remap_index], fn)
-#define CALL_VertexAttribs2svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLshort *)), driDispatchRemapTable[VertexAttribs2svNV_remap_index], parameters)
-#define GET_VertexAttribs2svNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs2svNV_remap_index])
-#define SET_VertexAttribs2svNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs2svNV_remap_index], fn)
-#define CALL_VertexAttribs3dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLdouble *)), driDispatchRemapTable[VertexAttribs3dvNV_remap_index], parameters)
-#define GET_VertexAttribs3dvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs3dvNV_remap_index])
-#define SET_VertexAttribs3dvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs3dvNV_remap_index], fn)
-#define CALL_VertexAttribs3fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLfloat *)), driDispatchRemapTable[VertexAttribs3fvNV_remap_index], parameters)
-#define GET_VertexAttribs3fvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs3fvNV_remap_index])
-#define SET_VertexAttribs3fvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs3fvNV_remap_index], fn)
-#define CALL_VertexAttribs3svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLshort *)), driDispatchRemapTable[VertexAttribs3svNV_remap_index], parameters)
-#define GET_VertexAttribs3svNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs3svNV_remap_index])
-#define SET_VertexAttribs3svNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs3svNV_remap_index], fn)
-#define CALL_VertexAttribs4dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLdouble *)), driDispatchRemapTable[VertexAttribs4dvNV_remap_index], parameters)
-#define GET_VertexAttribs4dvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs4dvNV_remap_index])
-#define SET_VertexAttribs4dvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs4dvNV_remap_index], fn)
-#define CALL_VertexAttribs4fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLfloat *)), driDispatchRemapTable[VertexAttribs4fvNV_remap_index], parameters)
-#define GET_VertexAttribs4fvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs4fvNV_remap_index])
-#define SET_VertexAttribs4fvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs4fvNV_remap_index], fn)
-#define CALL_VertexAttribs4svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLshort *)), driDispatchRemapTable[VertexAttribs4svNV_remap_index], parameters)
-#define GET_VertexAttribs4svNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs4svNV_remap_index])
-#define SET_VertexAttribs4svNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs4svNV_remap_index], fn)
-#define CALL_VertexAttribs4ubvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *)), driDispatchRemapTable[VertexAttribs4ubvNV_remap_index], parameters)
-#define GET_VertexAttribs4ubvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs4ubvNV_remap_index])
-#define SET_VertexAttribs4ubvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs4ubvNV_remap_index], fn)
-#define CALL_PointParameteriNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), driDispatchRemapTable[PointParameteriNV_remap_index], parameters)
-#define GET_PointParameteriNV(disp) GET_by_offset(disp, driDispatchRemapTable[PointParameteriNV_remap_index])
-#define SET_PointParameteriNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PointParameteriNV_remap_index], fn)
-#define CALL_PointParameterivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), driDispatchRemapTable[PointParameterivNV_remap_index], parameters)
-#define GET_PointParameterivNV(disp) GET_by_offset(disp, driDispatchRemapTable[PointParameterivNV_remap_index])
-#define SET_PointParameterivNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PointParameterivNV_remap_index], fn)
-#define CALL_MultiDrawArraysEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint *, GLsizei *, GLsizei)), driDispatchRemapTable[MultiDrawArraysEXT_remap_index], parameters)
-#define GET_MultiDrawArraysEXT(disp) GET_by_offset(disp, driDispatchRemapTable[MultiDrawArraysEXT_remap_index])
-#define SET_MultiDrawArraysEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[MultiDrawArraysEXT_remap_index], fn)
-#define CALL_MultiDrawElementsEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLsizei *, GLenum, const GLvoid **, GLsizei)), driDispatchRemapTable[MultiDrawElementsEXT_remap_index], parameters)
-#define GET_MultiDrawElementsEXT(disp) GET_by_offset(disp, driDispatchRemapTable[MultiDrawElementsEXT_remap_index])
-#define SET_MultiDrawElementsEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[MultiDrawElementsEXT_remap_index], fn)
-#define CALL_ActiveStencilFaceEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[ActiveStencilFaceEXT_remap_index], parameters)
-#define GET_ActiveStencilFaceEXT(disp) GET_by_offset(disp, driDispatchRemapTable[ActiveStencilFaceEXT_remap_index])
-#define SET_ActiveStencilFaceEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ActiveStencilFaceEXT_remap_index], fn)
-#define CALL_DeleteFencesNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), driDispatchRemapTable[DeleteFencesNV_remap_index], parameters)
-#define GET_DeleteFencesNV(disp) GET_by_offset(disp, driDispatchRemapTable[DeleteFencesNV_remap_index])
-#define SET_DeleteFencesNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DeleteFencesNV_remap_index], fn)
-#define CALL_GenFencesNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), driDispatchRemapTable[GenFencesNV_remap_index], parameters)
-#define GET_GenFencesNV(disp) GET_by_offset(disp, driDispatchRemapTable[GenFencesNV_remap_index])
-#define SET_GenFencesNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GenFencesNV_remap_index], fn)
-#define CALL_IsFenceNV(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[IsFenceNV_remap_index], parameters)
-#define GET_IsFenceNV(disp) GET_by_offset(disp, driDispatchRemapTable[IsFenceNV_remap_index])
-#define SET_IsFenceNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsFenceNV_remap_index], fn)
-#define CALL_TestFenceNV(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[TestFenceNV_remap_index], parameters)
-#define GET_TestFenceNV(disp) GET_by_offset(disp, driDispatchRemapTable[TestFenceNV_remap_index])
-#define SET_TestFenceNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[TestFenceNV_remap_index], fn)
-#define CALL_GetFenceivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), driDispatchRemapTable[GetFenceivNV_remap_index], parameters)
-#define GET_GetFenceivNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetFenceivNV_remap_index])
-#define SET_GetFenceivNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetFenceivNV_remap_index], fn)
-#define CALL_FinishFenceNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[FinishFenceNV_remap_index], parameters)
-#define GET_FinishFenceNV(disp) GET_by_offset(disp, driDispatchRemapTable[FinishFenceNV_remap_index])
-#define SET_FinishFenceNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FinishFenceNV_remap_index], fn)
-#define CALL_SetFenceNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum)), driDispatchRemapTable[SetFenceNV_remap_index], parameters)
-#define GET_SetFenceNV(disp) GET_by_offset(disp, driDispatchRemapTable[SetFenceNV_remap_index])
-#define SET_SetFenceNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SetFenceNV_remap_index], fn)
-#define CALL_VertexAttrib4bvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLbyte *)), driDispatchRemapTable[VertexAttrib4bvARB_remap_index], parameters)
-#define GET_VertexAttrib4bvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4bvARB_remap_index])
-#define SET_VertexAttrib4bvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4bvARB_remap_index], fn)
-#define CALL_VertexAttrib4ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLint *)), driDispatchRemapTable[VertexAttrib4ivARB_remap_index], parameters)
-#define GET_VertexAttrib4ivARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4ivARB_remap_index])
-#define SET_VertexAttrib4ivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4ivARB_remap_index], fn)
-#define CALL_VertexAttrib4ubvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLubyte *)), driDispatchRemapTable[VertexAttrib4ubvARB_remap_index], parameters)
-#define GET_VertexAttrib4ubvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4ubvARB_remap_index])
-#define SET_VertexAttrib4ubvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4ubvARB_remap_index], fn)
-#define CALL_VertexAttrib4usvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLushort *)), driDispatchRemapTable[VertexAttrib4usvARB_remap_index], parameters)
-#define GET_VertexAttrib4usvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4usvARB_remap_index])
-#define SET_VertexAttrib4usvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4usvARB_remap_index], fn)
-#define CALL_VertexAttrib4uivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLuint *)), driDispatchRemapTable[VertexAttrib4uivARB_remap_index], parameters)
-#define GET_VertexAttrib4uivARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4uivARB_remap_index])
-#define SET_VertexAttrib4uivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4uivARB_remap_index], fn)
-#define CALL_VertexAttrib4NbvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLbyte *)), driDispatchRemapTable[VertexAttrib4NbvARB_remap_index], parameters)
-#define GET_VertexAttrib4NbvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NbvARB_remap_index])
-#define SET_VertexAttrib4NbvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NbvARB_remap_index], fn)
-#define CALL_VertexAttrib4NsvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), driDispatchRemapTable[VertexAttrib4NsvARB_remap_index], parameters)
-#define GET_VertexAttrib4NsvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NsvARB_remap_index])
-#define SET_VertexAttrib4NsvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NsvARB_remap_index], fn)
-#define CALL_VertexAttrib4NivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLint *)), driDispatchRemapTable[VertexAttrib4NivARB_remap_index], parameters)
-#define GET_VertexAttrib4NivARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NivARB_remap_index])
-#define SET_VertexAttrib4NivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NivARB_remap_index], fn)
-#define CALL_VertexAttrib4NusvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLushort *)), driDispatchRemapTable[VertexAttrib4NusvARB_remap_index], parameters)
-#define GET_VertexAttrib4NusvARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NusvARB_remap_index])
-#define SET_VertexAttrib4NusvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NusvARB_remap_index], fn)
-#define CALL_VertexAttrib4NuivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLuint *)), driDispatchRemapTable[VertexAttrib4NuivARB_remap_index], parameters)
-#define GET_VertexAttrib4NuivARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NuivARB_remap_index])
-#define SET_VertexAttrib4NuivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4NuivARB_remap_index], fn)
-#define CALL_VertexAttribPointerARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLint, GLenum, GLboolean, GLsizei, const GLvoid *)), driDispatchRemapTable[VertexAttribPointerARB_remap_index], parameters)
-#define GET_VertexAttribPointerARB(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribPointerARB_remap_index])
-#define SET_VertexAttribPointerARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribPointerARB_remap_index], fn)
-#define CALL_EnableVertexAttribArrayARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[EnableVertexAttribArrayARB_remap_index], parameters)
-#define GET_EnableVertexAttribArrayARB(disp) GET_by_offset(disp, driDispatchRemapTable[EnableVertexAttribArrayARB_remap_index])
-#define SET_EnableVertexAttribArrayARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EnableVertexAttribArrayARB_remap_index], fn)
-#define CALL_DisableVertexAttribArrayARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[DisableVertexAttribArrayARB_remap_index], parameters)
-#define GET_DisableVertexAttribArrayARB(disp) GET_by_offset(disp, driDispatchRemapTable[DisableVertexAttribArrayARB_remap_index])
-#define SET_DisableVertexAttribArrayARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DisableVertexAttribArrayARB_remap_index], fn)
-#define CALL_ProgramStringARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[ProgramStringARB_remap_index], parameters)
-#define GET_ProgramStringARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramStringARB_remap_index])
-#define SET_ProgramStringARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramStringARB_remap_index], fn)
-#define CALL_ProgramEnvParameter4dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble)), driDispatchRemapTable[ProgramEnvParameter4dARB_remap_index], parameters)
-#define GET_ProgramEnvParameter4dARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4dARB_remap_index])
-#define SET_ProgramEnvParameter4dARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4dARB_remap_index], fn)
-#define CALL_ProgramEnvParameter4dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, const GLdouble *)), driDispatchRemapTable[ProgramEnvParameter4dvARB_remap_index], parameters)
-#define GET_ProgramEnvParameter4dvARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4dvARB_remap_index])
-#define SET_ProgramEnvParameter4dvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4dvARB_remap_index], fn)
-#define CALL_ProgramEnvParameter4fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[ProgramEnvParameter4fARB_remap_index], parameters)
-#define GET_ProgramEnvParameter4fARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4fARB_remap_index])
-#define SET_ProgramEnvParameter4fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4fARB_remap_index], fn)
-#define CALL_ProgramEnvParameter4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, const GLfloat *)), driDispatchRemapTable[ProgramEnvParameter4fvARB_remap_index], parameters)
-#define GET_ProgramEnvParameter4fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4fvARB_remap_index])
-#define SET_ProgramEnvParameter4fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameter4fvARB_remap_index], fn)
-#define CALL_ProgramLocalParameter4dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble)), driDispatchRemapTable[ProgramLocalParameter4dARB_remap_index], parameters)
-#define GET_ProgramLocalParameter4dARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4dARB_remap_index])
-#define SET_ProgramLocalParameter4dARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4dARB_remap_index], fn)
-#define CALL_ProgramLocalParameter4dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, const GLdouble *)), driDispatchRemapTable[ProgramLocalParameter4dvARB_remap_index], parameters)
-#define GET_ProgramLocalParameter4dvARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4dvARB_remap_index])
-#define SET_ProgramLocalParameter4dvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4dvARB_remap_index], fn)
-#define CALL_ProgramLocalParameter4fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[ProgramLocalParameter4fARB_remap_index], parameters)
-#define GET_ProgramLocalParameter4fARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4fARB_remap_index])
-#define SET_ProgramLocalParameter4fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4fARB_remap_index], fn)
-#define CALL_ProgramLocalParameter4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, const GLfloat *)), driDispatchRemapTable[ProgramLocalParameter4fvARB_remap_index], parameters)
-#define GET_ProgramLocalParameter4fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4fvARB_remap_index])
-#define SET_ProgramLocalParameter4fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameter4fvARB_remap_index], fn)
-#define CALL_GetProgramEnvParameterdvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLdouble *)), driDispatchRemapTable[GetProgramEnvParameterdvARB_remap_index], parameters)
-#define GET_GetProgramEnvParameterdvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramEnvParameterdvARB_remap_index])
-#define SET_GetProgramEnvParameterdvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramEnvParameterdvARB_remap_index], fn)
-#define CALL_GetProgramEnvParameterfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLfloat *)), driDispatchRemapTable[GetProgramEnvParameterfvARB_remap_index], parameters)
-#define GET_GetProgramEnvParameterfvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramEnvParameterfvARB_remap_index])
-#define SET_GetProgramEnvParameterfvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramEnvParameterfvARB_remap_index], fn)
-#define CALL_GetProgramLocalParameterdvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLdouble *)), driDispatchRemapTable[GetProgramLocalParameterdvARB_remap_index], parameters)
-#define GET_GetProgramLocalParameterdvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramLocalParameterdvARB_remap_index])
-#define SET_GetProgramLocalParameterdvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramLocalParameterdvARB_remap_index], fn)
-#define CALL_GetProgramLocalParameterfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLfloat *)), driDispatchRemapTable[GetProgramLocalParameterfvARB_remap_index], parameters)
-#define GET_GetProgramLocalParameterfvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramLocalParameterfvARB_remap_index])
-#define SET_GetProgramLocalParameterfvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramLocalParameterfvARB_remap_index], fn)
-#define CALL_GetProgramivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), driDispatchRemapTable[GetProgramivARB_remap_index], parameters)
-#define GET_GetProgramivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramivARB_remap_index])
-#define SET_GetProgramivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramivARB_remap_index], fn)
-#define CALL_GetProgramStringARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLvoid *)), driDispatchRemapTable[GetProgramStringARB_remap_index], parameters)
-#define GET_GetProgramStringARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramStringARB_remap_index])
-#define SET_GetProgramStringARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramStringARB_remap_index], fn)
-#define CALL_ProgramNamedParameter4fNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, GLfloat, GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[ProgramNamedParameter4fNV_remap_index], parameters)
-#define GET_ProgramNamedParameter4fNV(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4fNV_remap_index])
-#define SET_ProgramNamedParameter4fNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4fNV_remap_index], fn)
-#define CALL_ProgramNamedParameter4dNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, GLdouble, GLdouble, GLdouble, GLdouble)), driDispatchRemapTable[ProgramNamedParameter4dNV_remap_index], parameters)
-#define GET_ProgramNamedParameter4dNV(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4dNV_remap_index])
-#define SET_ProgramNamedParameter4dNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4dNV_remap_index], fn)
-#define CALL_ProgramNamedParameter4fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, const GLfloat *)), driDispatchRemapTable[ProgramNamedParameter4fvNV_remap_index], parameters)
-#define GET_ProgramNamedParameter4fvNV(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4fvNV_remap_index])
-#define SET_ProgramNamedParameter4fvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4fvNV_remap_index], fn)
-#define CALL_ProgramNamedParameter4dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, const GLdouble *)), driDispatchRemapTable[ProgramNamedParameter4dvNV_remap_index], parameters)
-#define GET_ProgramNamedParameter4dvNV(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4dvNV_remap_index])
-#define SET_ProgramNamedParameter4dvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4dvNV_remap_index], fn)
-#define CALL_GetProgramNamedParameterfvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, GLfloat *)), driDispatchRemapTable[GetProgramNamedParameterfvNV_remap_index], parameters)
-#define GET_GetProgramNamedParameterfvNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramNamedParameterfvNV_remap_index])
-#define SET_GetProgramNamedParameterfvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramNamedParameterfvNV_remap_index], fn)
-#define CALL_GetProgramNamedParameterdvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, GLdouble *)), driDispatchRemapTable[GetProgramNamedParameterdvNV_remap_index], parameters)
-#define GET_GetProgramNamedParameterdvNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramNamedParameterdvNV_remap_index])
-#define SET_GetProgramNamedParameterdvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramNamedParameterdvNV_remap_index], fn)
-#define CALL_BindBufferARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), driDispatchRemapTable[BindBufferARB_remap_index], parameters)
-#define GET_BindBufferARB(disp) GET_by_offset(disp, driDispatchRemapTable[BindBufferARB_remap_index])
-#define SET_BindBufferARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BindBufferARB_remap_index], fn)
-#define CALL_BufferDataARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizeiptrARB, const GLvoid *, GLenum)), driDispatchRemapTable[BufferDataARB_remap_index], parameters)
-#define GET_BufferDataARB(disp) GET_by_offset(disp, driDispatchRemapTable[BufferDataARB_remap_index])
-#define SET_BufferDataARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BufferDataARB_remap_index], fn)
-#define CALL_BufferSubDataARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLintptrARB, GLsizeiptrARB, const GLvoid *)), driDispatchRemapTable[BufferSubDataARB_remap_index], parameters)
-#define GET_BufferSubDataARB(disp) GET_by_offset(disp, driDispatchRemapTable[BufferSubDataARB_remap_index])
-#define SET_BufferSubDataARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BufferSubDataARB_remap_index], fn)
-#define CALL_DeleteBuffersARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), driDispatchRemapTable[DeleteBuffersARB_remap_index], parameters)
-#define GET_DeleteBuffersARB(disp) GET_by_offset(disp, driDispatchRemapTable[DeleteBuffersARB_remap_index])
-#define SET_DeleteBuffersARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DeleteBuffersARB_remap_index], fn)
-#define CALL_GenBuffersARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), driDispatchRemapTable[GenBuffersARB_remap_index], parameters)
-#define GET_GenBuffersARB(disp) GET_by_offset(disp, driDispatchRemapTable[GenBuffersARB_remap_index])
-#define SET_GenBuffersARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GenBuffersARB_remap_index], fn)
-#define CALL_GetBufferParameterivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), driDispatchRemapTable[GetBufferParameterivARB_remap_index], parameters)
-#define GET_GetBufferParameterivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetBufferParameterivARB_remap_index])
-#define SET_GetBufferParameterivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetBufferParameterivARB_remap_index], fn)
-#define CALL_GetBufferPointervARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLvoid **)), driDispatchRemapTable[GetBufferPointervARB_remap_index], parameters)
-#define GET_GetBufferPointervARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetBufferPointervARB_remap_index])
-#define SET_GetBufferPointervARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetBufferPointervARB_remap_index], fn)
-#define CALL_GetBufferSubDataARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLintptrARB, GLsizeiptrARB, GLvoid *)), driDispatchRemapTable[GetBufferSubDataARB_remap_index], parameters)
-#define GET_GetBufferSubDataARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetBufferSubDataARB_remap_index])
-#define SET_GetBufferSubDataARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetBufferSubDataARB_remap_index], fn)
-#define CALL_IsBufferARB(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[IsBufferARB_remap_index], parameters)
-#define GET_IsBufferARB(disp) GET_by_offset(disp, driDispatchRemapTable[IsBufferARB_remap_index])
-#define SET_IsBufferARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsBufferARB_remap_index], fn)
-#define CALL_MapBufferARB(disp, parameters) CALL_by_offset(disp, (GLvoid * (GLAPIENTRYP)(GLenum, GLenum)), driDispatchRemapTable[MapBufferARB_remap_index], parameters)
-#define GET_MapBufferARB(disp) GET_by_offset(disp, driDispatchRemapTable[MapBufferARB_remap_index])
-#define SET_MapBufferARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[MapBufferARB_remap_index], fn)
-#define CALL_UnmapBufferARB(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[UnmapBufferARB_remap_index], parameters)
-#define GET_UnmapBufferARB(disp) GET_by_offset(disp, driDispatchRemapTable[UnmapBufferARB_remap_index])
-#define SET_UnmapBufferARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[UnmapBufferARB_remap_index], fn)
-#define CALL_DepthBoundsEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLclampd, GLclampd)), driDispatchRemapTable[DepthBoundsEXT_remap_index], parameters)
-#define GET_DepthBoundsEXT(disp) GET_by_offset(disp, driDispatchRemapTable[DepthBoundsEXT_remap_index])
-#define SET_DepthBoundsEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DepthBoundsEXT_remap_index], fn)
-#define CALL_GenQueriesARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), driDispatchRemapTable[GenQueriesARB_remap_index], parameters)
-#define GET_GenQueriesARB(disp) GET_by_offset(disp, driDispatchRemapTable[GenQueriesARB_remap_index])
-#define SET_GenQueriesARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GenQueriesARB_remap_index], fn)
-#define CALL_DeleteQueriesARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), driDispatchRemapTable[DeleteQueriesARB_remap_index], parameters)
-#define GET_DeleteQueriesARB(disp) GET_by_offset(disp, driDispatchRemapTable[DeleteQueriesARB_remap_index])
-#define SET_DeleteQueriesARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DeleteQueriesARB_remap_index], fn)
-#define CALL_IsQueryARB(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[IsQueryARB_remap_index], parameters)
-#define GET_IsQueryARB(disp) GET_by_offset(disp, driDispatchRemapTable[IsQueryARB_remap_index])
-#define SET_IsQueryARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsQueryARB_remap_index], fn)
-#define CALL_BeginQueryARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), driDispatchRemapTable[BeginQueryARB_remap_index], parameters)
-#define GET_BeginQueryARB(disp) GET_by_offset(disp, driDispatchRemapTable[BeginQueryARB_remap_index])
-#define SET_BeginQueryARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BeginQueryARB_remap_index], fn)
-#define CALL_EndQueryARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[EndQueryARB_remap_index], parameters)
-#define GET_EndQueryARB(disp) GET_by_offset(disp, driDispatchRemapTable[EndQueryARB_remap_index])
-#define SET_EndQueryARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EndQueryARB_remap_index], fn)
-#define CALL_GetQueryivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), driDispatchRemapTable[GetQueryivARB_remap_index], parameters)
-#define GET_GetQueryivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryivARB_remap_index])
-#define SET_GetQueryivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryivARB_remap_index], fn)
-#define CALL_GetQueryObjectivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), driDispatchRemapTable[GetQueryObjectivARB_remap_index], parameters)
-#define GET_GetQueryObjectivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjectivARB_remap_index])
-#define SET_GetQueryObjectivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjectivARB_remap_index], fn)
-#define CALL_GetQueryObjectuivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLuint *)), driDispatchRemapTable[GetQueryObjectuivARB_remap_index], parameters)
-#define GET_GetQueryObjectuivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjectuivARB_remap_index])
-#define SET_GetQueryObjectuivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjectuivARB_remap_index], fn)
-#define CALL_MultiModeDrawArraysIBM(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLenum *, const GLint *, const GLsizei *, GLsizei, GLint)), driDispatchRemapTable[MultiModeDrawArraysIBM_remap_index], parameters)
-#define GET_MultiModeDrawArraysIBM(disp) GET_by_offset(disp, driDispatchRemapTable[MultiModeDrawArraysIBM_remap_index])
-#define SET_MultiModeDrawArraysIBM(disp, fn) SET_by_offset(disp, driDispatchRemapTable[MultiModeDrawArraysIBM_remap_index], fn)
-#define CALL_MultiModeDrawElementsIBM(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLenum *, const GLsizei *, GLenum, const GLvoid * const *, GLsizei, GLint)), driDispatchRemapTable[MultiModeDrawElementsIBM_remap_index], parameters)
-#define GET_MultiModeDrawElementsIBM(disp) GET_by_offset(disp, driDispatchRemapTable[MultiModeDrawElementsIBM_remap_index])
-#define SET_MultiModeDrawElementsIBM(disp, fn) SET_by_offset(disp, driDispatchRemapTable[MultiModeDrawElementsIBM_remap_index], fn)
-#define CALL_BlendEquationSeparateEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum)), driDispatchRemapTable[BlendEquationSeparateEXT_remap_index], parameters)
-#define GET_BlendEquationSeparateEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BlendEquationSeparateEXT_remap_index])
-#define SET_BlendEquationSeparateEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BlendEquationSeparateEXT_remap_index], fn)
-#define CALL_DeleteObjectARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB)), driDispatchRemapTable[DeleteObjectARB_remap_index], parameters)
-#define GET_DeleteObjectARB(disp) GET_by_offset(disp, driDispatchRemapTable[DeleteObjectARB_remap_index])
-#define SET_DeleteObjectARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DeleteObjectARB_remap_index], fn)
-#define CALL_GetHandleARB(disp, parameters) CALL_by_offset(disp, (GLhandleARB (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[GetHandleARB_remap_index], parameters)
-#define GET_GetHandleARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetHandleARB_remap_index])
-#define SET_GetHandleARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetHandleARB_remap_index], fn)
-#define CALL_DetachObjectARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLhandleARB)), driDispatchRemapTable[DetachObjectARB_remap_index], parameters)
-#define GET_DetachObjectARB(disp) GET_by_offset(disp, driDispatchRemapTable[DetachObjectARB_remap_index])
-#define SET_DetachObjectARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DetachObjectARB_remap_index], fn)
-#define CALL_CreateShaderObjectARB(disp, parameters) CALL_by_offset(disp, (GLhandleARB (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[CreateShaderObjectARB_remap_index], parameters)
-#define GET_CreateShaderObjectARB(disp) GET_by_offset(disp, driDispatchRemapTable[CreateShaderObjectARB_remap_index])
-#define SET_CreateShaderObjectARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CreateShaderObjectARB_remap_index], fn)
-#define CALL_ShaderSourceARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLsizei, const GLcharARB **, const GLint *)), driDispatchRemapTable[ShaderSourceARB_remap_index], parameters)
-#define GET_ShaderSourceARB(disp) GET_by_offset(disp, driDispatchRemapTable[ShaderSourceARB_remap_index])
-#define SET_ShaderSourceARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ShaderSourceARB_remap_index], fn)
-#define CALL_CompileShaderARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB)), driDispatchRemapTable[CompileShaderARB_remap_index], parameters)
-#define GET_CompileShaderARB(disp) GET_by_offset(disp, driDispatchRemapTable[CompileShaderARB_remap_index])
-#define SET_CompileShaderARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CompileShaderARB_remap_index], fn)
-#define CALL_CreateProgramObjectARB(disp, parameters) CALL_by_offset(disp, (GLhandleARB (GLAPIENTRYP)(void)), driDispatchRemapTable[CreateProgramObjectARB_remap_index], parameters)
-#define GET_CreateProgramObjectARB(disp) GET_by_offset(disp, driDispatchRemapTable[CreateProgramObjectARB_remap_index])
-#define SET_CreateProgramObjectARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CreateProgramObjectARB_remap_index], fn)
-#define CALL_AttachObjectARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLhandleARB)), driDispatchRemapTable[AttachObjectARB_remap_index], parameters)
-#define GET_AttachObjectARB(disp) GET_by_offset(disp, driDispatchRemapTable[AttachObjectARB_remap_index])
-#define SET_AttachObjectARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[AttachObjectARB_remap_index], fn)
-#define CALL_LinkProgramARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB)), driDispatchRemapTable[LinkProgramARB_remap_index], parameters)
-#define GET_LinkProgramARB(disp) GET_by_offset(disp, driDispatchRemapTable[LinkProgramARB_remap_index])
-#define SET_LinkProgramARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[LinkProgramARB_remap_index], fn)
-#define CALL_UseProgramObjectARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB)), driDispatchRemapTable[UseProgramObjectARB_remap_index], parameters)
-#define GET_UseProgramObjectARB(disp) GET_by_offset(disp, driDispatchRemapTable[UseProgramObjectARB_remap_index])
-#define SET_UseProgramObjectARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[UseProgramObjectARB_remap_index], fn)
-#define CALL_ValidateProgramARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB)), driDispatchRemapTable[ValidateProgramARB_remap_index], parameters)
-#define GET_ValidateProgramARB(disp) GET_by_offset(disp, driDispatchRemapTable[ValidateProgramARB_remap_index])
-#define SET_ValidateProgramARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ValidateProgramARB_remap_index], fn)
-#define CALL_Uniform1fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLfloat)), driDispatchRemapTable[Uniform1fARB_remap_index], parameters)
-#define GET_Uniform1fARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform1fARB_remap_index])
-#define SET_Uniform1fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform1fARB_remap_index], fn)
-#define CALL_Uniform2fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLfloat, GLfloat)), driDispatchRemapTable[Uniform2fARB_remap_index], parameters)
-#define GET_Uniform2fARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform2fARB_remap_index])
-#define SET_Uniform2fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform2fARB_remap_index], fn)
-#define CALL_Uniform3fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[Uniform3fARB_remap_index], parameters)
-#define GET_Uniform3fARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform3fARB_remap_index])
-#define SET_Uniform3fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform3fARB_remap_index], fn)
-#define CALL_Uniform4fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLfloat, GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[Uniform4fARB_remap_index], parameters)
-#define GET_Uniform4fARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform4fARB_remap_index])
-#define SET_Uniform4fARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform4fARB_remap_index], fn)
-#define CALL_Uniform1iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint)), driDispatchRemapTable[Uniform1iARB_remap_index], parameters)
-#define GET_Uniform1iARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform1iARB_remap_index])
-#define SET_Uniform1iARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform1iARB_remap_index], fn)
-#define CALL_Uniform2iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint)), driDispatchRemapTable[Uniform2iARB_remap_index], parameters)
-#define GET_Uniform2iARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform2iARB_remap_index])
-#define SET_Uniform2iARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform2iARB_remap_index], fn)
-#define CALL_Uniform3iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint)), driDispatchRemapTable[Uniform3iARB_remap_index], parameters)
-#define GET_Uniform3iARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform3iARB_remap_index])
-#define SET_Uniform3iARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform3iARB_remap_index], fn)
-#define CALL_Uniform4iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint, GLint)), driDispatchRemapTable[Uniform4iARB_remap_index], parameters)
-#define GET_Uniform4iARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform4iARB_remap_index])
-#define SET_Uniform4iARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform4iARB_remap_index], fn)
-#define CALL_Uniform1fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLfloat *)), driDispatchRemapTable[Uniform1fvARB_remap_index], parameters)
-#define GET_Uniform1fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform1fvARB_remap_index])
-#define SET_Uniform1fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform1fvARB_remap_index], fn)
-#define CALL_Uniform2fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLfloat *)), driDispatchRemapTable[Uniform2fvARB_remap_index], parameters)
-#define GET_Uniform2fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform2fvARB_remap_index])
-#define SET_Uniform2fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform2fvARB_remap_index], fn)
-#define CALL_Uniform3fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLfloat *)), driDispatchRemapTable[Uniform3fvARB_remap_index], parameters)
-#define GET_Uniform3fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform3fvARB_remap_index])
-#define SET_Uniform3fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform3fvARB_remap_index], fn)
-#define CALL_Uniform4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLfloat *)), driDispatchRemapTable[Uniform4fvARB_remap_index], parameters)
-#define GET_Uniform4fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform4fvARB_remap_index])
-#define SET_Uniform4fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform4fvARB_remap_index], fn)
-#define CALL_Uniform1ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLint *)), driDispatchRemapTable[Uniform1ivARB_remap_index], parameters)
-#define GET_Uniform1ivARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform1ivARB_remap_index])
-#define SET_Uniform1ivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform1ivARB_remap_index], fn)
-#define CALL_Uniform2ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLint *)), driDispatchRemapTable[Uniform2ivARB_remap_index], parameters)
-#define GET_Uniform2ivARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform2ivARB_remap_index])
-#define SET_Uniform2ivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform2ivARB_remap_index], fn)
-#define CALL_Uniform3ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLint *)), driDispatchRemapTable[Uniform3ivARB_remap_index], parameters)
-#define GET_Uniform3ivARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform3ivARB_remap_index])
-#define SET_Uniform3ivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform3ivARB_remap_index], fn)
-#define CALL_Uniform4ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLint *)), driDispatchRemapTable[Uniform4ivARB_remap_index], parameters)
-#define GET_Uniform4ivARB(disp) GET_by_offset(disp, driDispatchRemapTable[Uniform4ivARB_remap_index])
-#define SET_Uniform4ivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[Uniform4ivARB_remap_index], fn)
-#define CALL_UniformMatrix2fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)), driDispatchRemapTable[UniformMatrix2fvARB_remap_index], parameters)
-#define GET_UniformMatrix2fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[UniformMatrix2fvARB_remap_index])
-#define SET_UniformMatrix2fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[UniformMatrix2fvARB_remap_index], fn)
-#define CALL_UniformMatrix3fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)), driDispatchRemapTable[UniformMatrix3fvARB_remap_index], parameters)
-#define GET_UniformMatrix3fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[UniformMatrix3fvARB_remap_index])
-#define SET_UniformMatrix3fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[UniformMatrix3fvARB_remap_index], fn)
-#define CALL_UniformMatrix4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)), driDispatchRemapTable[UniformMatrix4fvARB_remap_index], parameters)
-#define GET_UniformMatrix4fvARB(disp) GET_by_offset(disp, driDispatchRemapTable[UniformMatrix4fvARB_remap_index])
-#define SET_UniformMatrix4fvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[UniformMatrix4fvARB_remap_index], fn)
-#define CALL_GetObjectParameterfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLenum, GLfloat *)), driDispatchRemapTable[GetObjectParameterfvARB_remap_index], parameters)
-#define GET_GetObjectParameterfvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetObjectParameterfvARB_remap_index])
-#define SET_GetObjectParameterfvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetObjectParameterfvARB_remap_index], fn)
-#define CALL_GetObjectParameterivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLenum, GLint *)), driDispatchRemapTable[GetObjectParameterivARB_remap_index], parameters)
-#define GET_GetObjectParameterivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetObjectParameterivARB_remap_index])
-#define SET_GetObjectParameterivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetObjectParameterivARB_remap_index], fn)
-#define CALL_GetInfoLogARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLsizei, GLsizei *, GLcharARB *)), driDispatchRemapTable[GetInfoLogARB_remap_index], parameters)
-#define GET_GetInfoLogARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetInfoLogARB_remap_index])
-#define SET_GetInfoLogARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetInfoLogARB_remap_index], fn)
-#define CALL_GetAttachedObjectsARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLsizei, GLsizei *, GLhandleARB *)), driDispatchRemapTable[GetAttachedObjectsARB_remap_index], parameters)
-#define GET_GetAttachedObjectsARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetAttachedObjectsARB_remap_index])
-#define SET_GetAttachedObjectsARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetAttachedObjectsARB_remap_index], fn)
-#define CALL_GetUniformLocationARB(disp, parameters) CALL_by_offset(disp, (GLint (GLAPIENTRYP)(GLhandleARB, const GLcharARB *)), driDispatchRemapTable[GetUniformLocationARB_remap_index], parameters)
-#define GET_GetUniformLocationARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetUniformLocationARB_remap_index])
-#define SET_GetUniformLocationARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetUniformLocationARB_remap_index], fn)
-#define CALL_GetActiveUniformARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLenum *, GLcharARB *)), driDispatchRemapTable[GetActiveUniformARB_remap_index], parameters)
-#define GET_GetActiveUniformARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetActiveUniformARB_remap_index])
-#define SET_GetActiveUniformARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetActiveUniformARB_remap_index], fn)
-#define CALL_GetUniformfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLint, GLfloat *)), driDispatchRemapTable[GetUniformfvARB_remap_index], parameters)
-#define GET_GetUniformfvARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetUniformfvARB_remap_index])
-#define SET_GetUniformfvARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetUniformfvARB_remap_index], fn)
-#define CALL_GetUniformivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLint, GLint *)), driDispatchRemapTable[GetUniformivARB_remap_index], parameters)
-#define GET_GetUniformivARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetUniformivARB_remap_index])
-#define SET_GetUniformivARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetUniformivARB_remap_index], fn)
-#define CALL_GetShaderSourceARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLsizei, GLsizei *, GLcharARB *)), driDispatchRemapTable[GetShaderSourceARB_remap_index], parameters)
-#define GET_GetShaderSourceARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetShaderSourceARB_remap_index])
-#define SET_GetShaderSourceARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetShaderSourceARB_remap_index], fn)
-#define CALL_BindAttribLocationARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLuint, const GLcharARB *)), driDispatchRemapTable[BindAttribLocationARB_remap_index], parameters)
-#define GET_BindAttribLocationARB(disp) GET_by_offset(disp, driDispatchRemapTable[BindAttribLocationARB_remap_index])
-#define SET_BindAttribLocationARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BindAttribLocationARB_remap_index], fn)
-#define CALL_GetActiveAttribARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLenum *, GLcharARB *)), driDispatchRemapTable[GetActiveAttribARB_remap_index], parameters)
-#define GET_GetActiveAttribARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetActiveAttribARB_remap_index])
-#define SET_GetActiveAttribARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetActiveAttribARB_remap_index], fn)
-#define CALL_GetAttribLocationARB(disp, parameters) CALL_by_offset(disp, (GLint (GLAPIENTRYP)(GLhandleARB, const GLcharARB *)), driDispatchRemapTable[GetAttribLocationARB_remap_index], parameters)
-#define GET_GetAttribLocationARB(disp) GET_by_offset(disp, driDispatchRemapTable[GetAttribLocationARB_remap_index])
-#define SET_GetAttribLocationARB(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetAttribLocationARB_remap_index], fn)
-#define CALL_GetVertexAttribdvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLdouble *)), driDispatchRemapTable[GetVertexAttribdvNV_remap_index], parameters)
-#define GET_GetVertexAttribdvNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetVertexAttribdvNV_remap_index])
-#define SET_GetVertexAttribdvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetVertexAttribdvNV_remap_index], fn)
-#define CALL_GetVertexAttribfvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLfloat *)), driDispatchRemapTable[GetVertexAttribfvNV_remap_index], parameters)
-#define GET_GetVertexAttribfvNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetVertexAttribfvNV_remap_index])
-#define SET_GetVertexAttribfvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetVertexAttribfvNV_remap_index], fn)
-#define CALL_GetVertexAttribivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), driDispatchRemapTable[GetVertexAttribivNV_remap_index], parameters)
-#define GET_GetVertexAttribivNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetVertexAttribivNV_remap_index])
-#define SET_GetVertexAttribivNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetVertexAttribivNV_remap_index], fn)
 #define CALL_VertexAttrib1dNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble)), driDispatchRemapTable[VertexAttrib1dNV_remap_index], parameters)
 #define GET_VertexAttrib1dNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib1dNV_remap_index])
 #define SET_VertexAttrib1dNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib1dNV_remap_index], fn)
@@ -4079,36 +3663,48 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_VertexAttrib4ubvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLubyte *)), driDispatchRemapTable[VertexAttrib4ubvNV_remap_index], parameters)
 #define GET_VertexAttrib4ubvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttrib4ubvNV_remap_index])
 #define SET_VertexAttrib4ubvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttrib4ubvNV_remap_index], fn)
-#define CALL_GenFragmentShadersATI(disp, parameters) CALL_by_offset(disp, (GLuint (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[GenFragmentShadersATI_remap_index], parameters)
-#define GET_GenFragmentShadersATI(disp) GET_by_offset(disp, driDispatchRemapTable[GenFragmentShadersATI_remap_index])
-#define SET_GenFragmentShadersATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GenFragmentShadersATI_remap_index], fn)
-#define CALL_BindFragmentShaderATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[BindFragmentShaderATI_remap_index], parameters)
-#define GET_BindFragmentShaderATI(disp) GET_by_offset(disp, driDispatchRemapTable[BindFragmentShaderATI_remap_index])
-#define SET_BindFragmentShaderATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BindFragmentShaderATI_remap_index], fn)
-#define CALL_DeleteFragmentShaderATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[DeleteFragmentShaderATI_remap_index], parameters)
-#define GET_DeleteFragmentShaderATI(disp) GET_by_offset(disp, driDispatchRemapTable[DeleteFragmentShaderATI_remap_index])
-#define SET_DeleteFragmentShaderATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DeleteFragmentShaderATI_remap_index], fn)
-#define CALL_BeginFragmentShaderATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), driDispatchRemapTable[BeginFragmentShaderATI_remap_index], parameters)
-#define GET_BeginFragmentShaderATI(disp) GET_by_offset(disp, driDispatchRemapTable[BeginFragmentShaderATI_remap_index])
-#define SET_BeginFragmentShaderATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BeginFragmentShaderATI_remap_index], fn)
-#define CALL_EndFragmentShaderATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), driDispatchRemapTable[EndFragmentShaderATI_remap_index], parameters)
-#define GET_EndFragmentShaderATI(disp) GET_by_offset(disp, driDispatchRemapTable[EndFragmentShaderATI_remap_index])
-#define SET_EndFragmentShaderATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EndFragmentShaderATI_remap_index], fn)
-#define CALL_PassTexCoordATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLenum)), driDispatchRemapTable[PassTexCoordATI_remap_index], parameters)
-#define GET_PassTexCoordATI(disp) GET_by_offset(disp, driDispatchRemapTable[PassTexCoordATI_remap_index])
-#define SET_PassTexCoordATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PassTexCoordATI_remap_index], fn)
-#define CALL_SampleMapATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLenum)), driDispatchRemapTable[SampleMapATI_remap_index], parameters)
-#define GET_SampleMapATI(disp) GET_by_offset(disp, driDispatchRemapTable[SampleMapATI_remap_index])
-#define SET_SampleMapATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SampleMapATI_remap_index], fn)
-#define CALL_ColorFragmentOp1ATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)), driDispatchRemapTable[ColorFragmentOp1ATI_remap_index], parameters)
-#define GET_ColorFragmentOp1ATI(disp) GET_by_offset(disp, driDispatchRemapTable[ColorFragmentOp1ATI_remap_index])
-#define SET_ColorFragmentOp1ATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ColorFragmentOp1ATI_remap_index], fn)
-#define CALL_ColorFragmentOp2ATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)), driDispatchRemapTable[ColorFragmentOp2ATI_remap_index], parameters)
-#define GET_ColorFragmentOp2ATI(disp) GET_by_offset(disp, driDispatchRemapTable[ColorFragmentOp2ATI_remap_index])
-#define SET_ColorFragmentOp2ATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ColorFragmentOp2ATI_remap_index], fn)
-#define CALL_ColorFragmentOp3ATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)), driDispatchRemapTable[ColorFragmentOp3ATI_remap_index], parameters)
-#define GET_ColorFragmentOp3ATI(disp) GET_by_offset(disp, driDispatchRemapTable[ColorFragmentOp3ATI_remap_index])
-#define SET_ColorFragmentOp3ATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ColorFragmentOp3ATI_remap_index], fn)
+#define CALL_VertexAttribPointerNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLint, GLenum, GLsizei, const GLvoid *)), driDispatchRemapTable[VertexAttribPointerNV_remap_index], parameters)
+#define GET_VertexAttribPointerNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribPointerNV_remap_index])
+#define SET_VertexAttribPointerNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribPointerNV_remap_index], fn)
+#define CALL_VertexAttribs1dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLdouble *)), driDispatchRemapTable[VertexAttribs1dvNV_remap_index], parameters)
+#define GET_VertexAttribs1dvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs1dvNV_remap_index])
+#define SET_VertexAttribs1dvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs1dvNV_remap_index], fn)
+#define CALL_VertexAttribs1fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLfloat *)), driDispatchRemapTable[VertexAttribs1fvNV_remap_index], parameters)
+#define GET_VertexAttribs1fvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs1fvNV_remap_index])
+#define SET_VertexAttribs1fvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs1fvNV_remap_index], fn)
+#define CALL_VertexAttribs1svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLshort *)), driDispatchRemapTable[VertexAttribs1svNV_remap_index], parameters)
+#define GET_VertexAttribs1svNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs1svNV_remap_index])
+#define SET_VertexAttribs1svNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs1svNV_remap_index], fn)
+#define CALL_VertexAttribs2dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLdouble *)), driDispatchRemapTable[VertexAttribs2dvNV_remap_index], parameters)
+#define GET_VertexAttribs2dvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs2dvNV_remap_index])
+#define SET_VertexAttribs2dvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs2dvNV_remap_index], fn)
+#define CALL_VertexAttribs2fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLfloat *)), driDispatchRemapTable[VertexAttribs2fvNV_remap_index], parameters)
+#define GET_VertexAttribs2fvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs2fvNV_remap_index])
+#define SET_VertexAttribs2fvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs2fvNV_remap_index], fn)
+#define CALL_VertexAttribs2svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLshort *)), driDispatchRemapTable[VertexAttribs2svNV_remap_index], parameters)
+#define GET_VertexAttribs2svNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs2svNV_remap_index])
+#define SET_VertexAttribs2svNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs2svNV_remap_index], fn)
+#define CALL_VertexAttribs3dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLdouble *)), driDispatchRemapTable[VertexAttribs3dvNV_remap_index], parameters)
+#define GET_VertexAttribs3dvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs3dvNV_remap_index])
+#define SET_VertexAttribs3dvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs3dvNV_remap_index], fn)
+#define CALL_VertexAttribs3fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLfloat *)), driDispatchRemapTable[VertexAttribs3fvNV_remap_index], parameters)
+#define GET_VertexAttribs3fvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs3fvNV_remap_index])
+#define SET_VertexAttribs3fvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs3fvNV_remap_index], fn)
+#define CALL_VertexAttribs3svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLshort *)), driDispatchRemapTable[VertexAttribs3svNV_remap_index], parameters)
+#define GET_VertexAttribs3svNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs3svNV_remap_index])
+#define SET_VertexAttribs3svNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs3svNV_remap_index], fn)
+#define CALL_VertexAttribs4dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLdouble *)), driDispatchRemapTable[VertexAttribs4dvNV_remap_index], parameters)
+#define GET_VertexAttribs4dvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs4dvNV_remap_index])
+#define SET_VertexAttribs4dvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs4dvNV_remap_index], fn)
+#define CALL_VertexAttribs4fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLfloat *)), driDispatchRemapTable[VertexAttribs4fvNV_remap_index], parameters)
+#define GET_VertexAttribs4fvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs4fvNV_remap_index])
+#define SET_VertexAttribs4fvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs4fvNV_remap_index], fn)
+#define CALL_VertexAttribs4svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLshort *)), driDispatchRemapTable[VertexAttribs4svNV_remap_index], parameters)
+#define GET_VertexAttribs4svNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs4svNV_remap_index])
+#define SET_VertexAttribs4svNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs4svNV_remap_index], fn)
+#define CALL_VertexAttribs4ubvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *)), driDispatchRemapTable[VertexAttribs4ubvNV_remap_index], parameters)
+#define GET_VertexAttribs4ubvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs4ubvNV_remap_index])
+#define SET_VertexAttribs4ubvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs4ubvNV_remap_index], fn)
 #define CALL_AlphaFragmentOp1ATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint)), driDispatchRemapTable[AlphaFragmentOp1ATI_remap_index], parameters)
 #define GET_AlphaFragmentOp1ATI(disp) GET_by_offset(disp, driDispatchRemapTable[AlphaFragmentOp1ATI_remap_index])
 #define SET_AlphaFragmentOp1ATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[AlphaFragmentOp1ATI_remap_index], fn)
@@ -4118,78 +3714,48 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_AlphaFragmentOp3ATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)), driDispatchRemapTable[AlphaFragmentOp3ATI_remap_index], parameters)
 #define GET_AlphaFragmentOp3ATI(disp) GET_by_offset(disp, driDispatchRemapTable[AlphaFragmentOp3ATI_remap_index])
 #define SET_AlphaFragmentOp3ATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[AlphaFragmentOp3ATI_remap_index], fn)
+#define CALL_BeginFragmentShaderATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), driDispatchRemapTable[BeginFragmentShaderATI_remap_index], parameters)
+#define GET_BeginFragmentShaderATI(disp) GET_by_offset(disp, driDispatchRemapTable[BeginFragmentShaderATI_remap_index])
+#define SET_BeginFragmentShaderATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BeginFragmentShaderATI_remap_index], fn)
+#define CALL_BindFragmentShaderATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[BindFragmentShaderATI_remap_index], parameters)
+#define GET_BindFragmentShaderATI(disp) GET_by_offset(disp, driDispatchRemapTable[BindFragmentShaderATI_remap_index])
+#define SET_BindFragmentShaderATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BindFragmentShaderATI_remap_index], fn)
+#define CALL_ColorFragmentOp1ATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)), driDispatchRemapTable[ColorFragmentOp1ATI_remap_index], parameters)
+#define GET_ColorFragmentOp1ATI(disp) GET_by_offset(disp, driDispatchRemapTable[ColorFragmentOp1ATI_remap_index])
+#define SET_ColorFragmentOp1ATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ColorFragmentOp1ATI_remap_index], fn)
+#define CALL_ColorFragmentOp2ATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)), driDispatchRemapTable[ColorFragmentOp2ATI_remap_index], parameters)
+#define GET_ColorFragmentOp2ATI(disp) GET_by_offset(disp, driDispatchRemapTable[ColorFragmentOp2ATI_remap_index])
+#define SET_ColorFragmentOp2ATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ColorFragmentOp2ATI_remap_index], fn)
+#define CALL_ColorFragmentOp3ATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)), driDispatchRemapTable[ColorFragmentOp3ATI_remap_index], parameters)
+#define GET_ColorFragmentOp3ATI(disp) GET_by_offset(disp, driDispatchRemapTable[ColorFragmentOp3ATI_remap_index])
+#define SET_ColorFragmentOp3ATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ColorFragmentOp3ATI_remap_index], fn)
+#define CALL_DeleteFragmentShaderATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[DeleteFragmentShaderATI_remap_index], parameters)
+#define GET_DeleteFragmentShaderATI(disp) GET_by_offset(disp, driDispatchRemapTable[DeleteFragmentShaderATI_remap_index])
+#define SET_DeleteFragmentShaderATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DeleteFragmentShaderATI_remap_index], fn)
+#define CALL_EndFragmentShaderATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), driDispatchRemapTable[EndFragmentShaderATI_remap_index], parameters)
+#define GET_EndFragmentShaderATI(disp) GET_by_offset(disp, driDispatchRemapTable[EndFragmentShaderATI_remap_index])
+#define SET_EndFragmentShaderATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EndFragmentShaderATI_remap_index], fn)
+#define CALL_GenFragmentShadersATI(disp, parameters) CALL_by_offset(disp, (GLuint (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[GenFragmentShadersATI_remap_index], parameters)
+#define GET_GenFragmentShadersATI(disp) GET_by_offset(disp, driDispatchRemapTable[GenFragmentShadersATI_remap_index])
+#define SET_GenFragmentShadersATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GenFragmentShadersATI_remap_index], fn)
+#define CALL_PassTexCoordATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLenum)), driDispatchRemapTable[PassTexCoordATI_remap_index], parameters)
+#define GET_PassTexCoordATI(disp) GET_by_offset(disp, driDispatchRemapTable[PassTexCoordATI_remap_index])
+#define SET_PassTexCoordATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PassTexCoordATI_remap_index], fn)
+#define CALL_SampleMapATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLenum)), driDispatchRemapTable[SampleMapATI_remap_index], parameters)
+#define GET_SampleMapATI(disp) GET_by_offset(disp, driDispatchRemapTable[SampleMapATI_remap_index])
+#define SET_SampleMapATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SampleMapATI_remap_index], fn)
 #define CALL_SetFragmentShaderConstantATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), driDispatchRemapTable[SetFragmentShaderConstantATI_remap_index], parameters)
 #define GET_SetFragmentShaderConstantATI(disp) GET_by_offset(disp, driDispatchRemapTable[SetFragmentShaderConstantATI_remap_index])
 #define SET_SetFragmentShaderConstantATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[SetFragmentShaderConstantATI_remap_index], fn)
-#define CALL_IsRenderbufferEXT(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[IsRenderbufferEXT_remap_index], parameters)
-#define GET_IsRenderbufferEXT(disp) GET_by_offset(disp, driDispatchRemapTable[IsRenderbufferEXT_remap_index])
-#define SET_IsRenderbufferEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsRenderbufferEXT_remap_index], fn)
-#define CALL_BindRenderbufferEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), driDispatchRemapTable[BindRenderbufferEXT_remap_index], parameters)
-#define GET_BindRenderbufferEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BindRenderbufferEXT_remap_index])
-#define SET_BindRenderbufferEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BindRenderbufferEXT_remap_index], fn)
-#define CALL_DeleteRenderbuffersEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), driDispatchRemapTable[DeleteRenderbuffersEXT_remap_index], parameters)
-#define GET_DeleteRenderbuffersEXT(disp) GET_by_offset(disp, driDispatchRemapTable[DeleteRenderbuffersEXT_remap_index])
-#define SET_DeleteRenderbuffersEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DeleteRenderbuffersEXT_remap_index], fn)
-#define CALL_GenRenderbuffersEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), driDispatchRemapTable[GenRenderbuffersEXT_remap_index], parameters)
-#define GET_GenRenderbuffersEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GenRenderbuffersEXT_remap_index])
-#define SET_GenRenderbuffersEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GenRenderbuffersEXT_remap_index], fn)
-#define CALL_RenderbufferStorageEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLsizei, GLsizei)), driDispatchRemapTable[RenderbufferStorageEXT_remap_index], parameters)
-#define GET_RenderbufferStorageEXT(disp) GET_by_offset(disp, driDispatchRemapTable[RenderbufferStorageEXT_remap_index])
-#define SET_RenderbufferStorageEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[RenderbufferStorageEXT_remap_index], fn)
-#define CALL_GetRenderbufferParameterivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), driDispatchRemapTable[GetRenderbufferParameterivEXT_remap_index], parameters)
-#define GET_GetRenderbufferParameterivEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetRenderbufferParameterivEXT_remap_index])
-#define SET_GetRenderbufferParameterivEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetRenderbufferParameterivEXT_remap_index], fn)
-#define CALL_IsFramebufferEXT(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[IsFramebufferEXT_remap_index], parameters)
-#define GET_IsFramebufferEXT(disp) GET_by_offset(disp, driDispatchRemapTable[IsFramebufferEXT_remap_index])
-#define SET_IsFramebufferEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsFramebufferEXT_remap_index], fn)
-#define CALL_BindFramebufferEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), driDispatchRemapTable[BindFramebufferEXT_remap_index], parameters)
-#define GET_BindFramebufferEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BindFramebufferEXT_remap_index])
-#define SET_BindFramebufferEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BindFramebufferEXT_remap_index], fn)
-#define CALL_DeleteFramebuffersEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), driDispatchRemapTable[DeleteFramebuffersEXT_remap_index], parameters)
-#define GET_DeleteFramebuffersEXT(disp) GET_by_offset(disp, driDispatchRemapTable[DeleteFramebuffersEXT_remap_index])
-#define SET_DeleteFramebuffersEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DeleteFramebuffersEXT_remap_index], fn)
-#define CALL_GenFramebuffersEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), driDispatchRemapTable[GenFramebuffersEXT_remap_index], parameters)
-#define GET_GenFramebuffersEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GenFramebuffersEXT_remap_index])
-#define SET_GenFramebuffersEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GenFramebuffersEXT_remap_index], fn)
-#define CALL_CheckFramebufferStatusEXT(disp, parameters) CALL_by_offset(disp, (GLenum (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[CheckFramebufferStatusEXT_remap_index], parameters)
-#define GET_CheckFramebufferStatusEXT(disp) GET_by_offset(disp, driDispatchRemapTable[CheckFramebufferStatusEXT_remap_index])
-#define SET_CheckFramebufferStatusEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CheckFramebufferStatusEXT_remap_index], fn)
-#define CALL_FramebufferTexture1DEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLuint, GLint)), driDispatchRemapTable[FramebufferTexture1DEXT_remap_index], parameters)
-#define GET_FramebufferTexture1DEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FramebufferTexture1DEXT_remap_index])
-#define SET_FramebufferTexture1DEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FramebufferTexture1DEXT_remap_index], fn)
-#define CALL_FramebufferTexture2DEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLuint, GLint)), driDispatchRemapTable[FramebufferTexture2DEXT_remap_index], parameters)
-#define GET_FramebufferTexture2DEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FramebufferTexture2DEXT_remap_index])
-#define SET_FramebufferTexture2DEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FramebufferTexture2DEXT_remap_index], fn)
-#define CALL_FramebufferTexture3DEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLuint, GLint, GLint)), driDispatchRemapTable[FramebufferTexture3DEXT_remap_index], parameters)
-#define GET_FramebufferTexture3DEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FramebufferTexture3DEXT_remap_index])
-#define SET_FramebufferTexture3DEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FramebufferTexture3DEXT_remap_index], fn)
-#define CALL_FramebufferRenderbufferEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLuint)), driDispatchRemapTable[FramebufferRenderbufferEXT_remap_index], parameters)
-#define GET_FramebufferRenderbufferEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FramebufferRenderbufferEXT_remap_index])
-#define SET_FramebufferRenderbufferEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FramebufferRenderbufferEXT_remap_index], fn)
-#define CALL_GetFramebufferAttachmentParameterivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLint *)), driDispatchRemapTable[GetFramebufferAttachmentParameterivEXT_remap_index], parameters)
-#define GET_GetFramebufferAttachmentParameterivEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetFramebufferAttachmentParameterivEXT_remap_index])
-#define SET_GetFramebufferAttachmentParameterivEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetFramebufferAttachmentParameterivEXT_remap_index], fn)
-#define CALL_GenerateMipmapEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[GenerateMipmapEXT_remap_index], parameters)
-#define GET_GenerateMipmapEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GenerateMipmapEXT_remap_index])
-#define SET_GenerateMipmapEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GenerateMipmapEXT_remap_index], fn)
-#define CALL_StencilFuncSeparate(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint, GLuint)), driDispatchRemapTable[StencilFuncSeparate_remap_index], parameters)
-#define GET_StencilFuncSeparate(disp) GET_by_offset(disp, driDispatchRemapTable[StencilFuncSeparate_remap_index])
-#define SET_StencilFuncSeparate(disp, fn) SET_by_offset(disp, driDispatchRemapTable[StencilFuncSeparate_remap_index], fn)
-#define CALL_StencilOpSeparate(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLenum)), driDispatchRemapTable[StencilOpSeparate_remap_index], parameters)
-#define GET_StencilOpSeparate(disp) GET_by_offset(disp, driDispatchRemapTable[StencilOpSeparate_remap_index])
-#define SET_StencilOpSeparate(disp, fn) SET_by_offset(disp, driDispatchRemapTable[StencilOpSeparate_remap_index], fn)
-#define CALL_StencilMaskSeparate(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), driDispatchRemapTable[StencilMaskSeparate_remap_index], parameters)
-#define GET_StencilMaskSeparate(disp) GET_by_offset(disp, driDispatchRemapTable[StencilMaskSeparate_remap_index])
-#define SET_StencilMaskSeparate(disp, fn) SET_by_offset(disp, driDispatchRemapTable[StencilMaskSeparate_remap_index], fn)
-#define CALL_GetQueryObjecti64vEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint64EXT *)), driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index], parameters)
-#define GET_GetQueryObjecti64vEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index])
-#define SET_GetQueryObjecti64vEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index], fn)
-#define CALL_GetQueryObjectui64vEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLuint64EXT *)), driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], parameters)
-#define GET_GetQueryObjectui64vEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index])
-#define SET_GetQueryObjectui64vEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], fn)
-#define CALL_BlitFramebufferEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum)), driDispatchRemapTable[BlitFramebufferEXT_remap_index], parameters)
-#define GET_BlitFramebufferEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BlitFramebufferEXT_remap_index])
-#define SET_BlitFramebufferEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BlitFramebufferEXT_remap_index], fn)
+#define CALL_PointParameteriNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), driDispatchRemapTable[PointParameteriNV_remap_index], parameters)
+#define GET_PointParameteriNV(disp) GET_by_offset(disp, driDispatchRemapTable[PointParameteriNV_remap_index])
+#define SET_PointParameteriNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PointParameteriNV_remap_index], fn)
+#define CALL_PointParameterivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), driDispatchRemapTable[PointParameterivNV_remap_index], parameters)
+#define GET_PointParameterivNV(disp) GET_by_offset(disp, driDispatchRemapTable[PointParameterivNV_remap_index])
+#define SET_PointParameterivNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[PointParameterivNV_remap_index], fn)
+#define CALL_ActiveStencilFaceEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[ActiveStencilFaceEXT_remap_index], parameters)
+#define GET_ActiveStencilFaceEXT(disp) GET_by_offset(disp, driDispatchRemapTable[ActiveStencilFaceEXT_remap_index])
+#define SET_ActiveStencilFaceEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ActiveStencilFaceEXT_remap_index], fn)
 #define CALL_BindVertexArrayAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[BindVertexArrayAPPLE_remap_index], parameters)
 #define GET_BindVertexArrayAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[BindVertexArrayAPPLE_remap_index])
 #define SET_BindVertexArrayAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BindVertexArrayAPPLE_remap_index], fn)
@@ -4202,6 +3768,90 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_IsVertexArrayAPPLE(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[IsVertexArrayAPPLE_remap_index], parameters)
 #define GET_IsVertexArrayAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[IsVertexArrayAPPLE_remap_index])
 #define SET_IsVertexArrayAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsVertexArrayAPPLE_remap_index], fn)
+#define CALL_GetProgramNamedParameterdvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, GLdouble *)), driDispatchRemapTable[GetProgramNamedParameterdvNV_remap_index], parameters)
+#define GET_GetProgramNamedParameterdvNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramNamedParameterdvNV_remap_index])
+#define SET_GetProgramNamedParameterdvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramNamedParameterdvNV_remap_index], fn)
+#define CALL_GetProgramNamedParameterfvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, GLfloat *)), driDispatchRemapTable[GetProgramNamedParameterfvNV_remap_index], parameters)
+#define GET_GetProgramNamedParameterfvNV(disp) GET_by_offset(disp, driDispatchRemapTable[GetProgramNamedParameterfvNV_remap_index])
+#define SET_GetProgramNamedParameterfvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetProgramNamedParameterfvNV_remap_index], fn)
+#define CALL_ProgramNamedParameter4dNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, GLdouble, GLdouble, GLdouble, GLdouble)), driDispatchRemapTable[ProgramNamedParameter4dNV_remap_index], parameters)
+#define GET_ProgramNamedParameter4dNV(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4dNV_remap_index])
+#define SET_ProgramNamedParameter4dNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4dNV_remap_index], fn)
+#define CALL_ProgramNamedParameter4dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, const GLdouble *)), driDispatchRemapTable[ProgramNamedParameter4dvNV_remap_index], parameters)
+#define GET_ProgramNamedParameter4dvNV(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4dvNV_remap_index])
+#define SET_ProgramNamedParameter4dvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4dvNV_remap_index], fn)
+#define CALL_ProgramNamedParameter4fNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, GLfloat, GLfloat, GLfloat, GLfloat)), driDispatchRemapTable[ProgramNamedParameter4fNV_remap_index], parameters)
+#define GET_ProgramNamedParameter4fNV(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4fNV_remap_index])
+#define SET_ProgramNamedParameter4fNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4fNV_remap_index], fn)
+#define CALL_ProgramNamedParameter4fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, const GLfloat *)), driDispatchRemapTable[ProgramNamedParameter4fvNV_remap_index], parameters)
+#define GET_ProgramNamedParameter4fvNV(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4fvNV_remap_index])
+#define SET_ProgramNamedParameter4fvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramNamedParameter4fvNV_remap_index], fn)
+#define CALL_DepthBoundsEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLclampd, GLclampd)), driDispatchRemapTable[DepthBoundsEXT_remap_index], parameters)
+#define GET_DepthBoundsEXT(disp) GET_by_offset(disp, driDispatchRemapTable[DepthBoundsEXT_remap_index])
+#define SET_DepthBoundsEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DepthBoundsEXT_remap_index], fn)
+#define CALL_BlendEquationSeparateEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum)), driDispatchRemapTable[BlendEquationSeparateEXT_remap_index], parameters)
+#define GET_BlendEquationSeparateEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BlendEquationSeparateEXT_remap_index])
+#define SET_BlendEquationSeparateEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BlendEquationSeparateEXT_remap_index], fn)
+#define CALL_BindFramebufferEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), driDispatchRemapTable[BindFramebufferEXT_remap_index], parameters)
+#define GET_BindFramebufferEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BindFramebufferEXT_remap_index])
+#define SET_BindFramebufferEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BindFramebufferEXT_remap_index], fn)
+#define CALL_BindRenderbufferEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), driDispatchRemapTable[BindRenderbufferEXT_remap_index], parameters)
+#define GET_BindRenderbufferEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BindRenderbufferEXT_remap_index])
+#define SET_BindRenderbufferEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BindRenderbufferEXT_remap_index], fn)
+#define CALL_CheckFramebufferStatusEXT(disp, parameters) CALL_by_offset(disp, (GLenum (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[CheckFramebufferStatusEXT_remap_index], parameters)
+#define GET_CheckFramebufferStatusEXT(disp) GET_by_offset(disp, driDispatchRemapTable[CheckFramebufferStatusEXT_remap_index])
+#define SET_CheckFramebufferStatusEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[CheckFramebufferStatusEXT_remap_index], fn)
+#define CALL_DeleteFramebuffersEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), driDispatchRemapTable[DeleteFramebuffersEXT_remap_index], parameters)
+#define GET_DeleteFramebuffersEXT(disp) GET_by_offset(disp, driDispatchRemapTable[DeleteFramebuffersEXT_remap_index])
+#define SET_DeleteFramebuffersEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DeleteFramebuffersEXT_remap_index], fn)
+#define CALL_DeleteRenderbuffersEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), driDispatchRemapTable[DeleteRenderbuffersEXT_remap_index], parameters)
+#define GET_DeleteRenderbuffersEXT(disp) GET_by_offset(disp, driDispatchRemapTable[DeleteRenderbuffersEXT_remap_index])
+#define SET_DeleteRenderbuffersEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DeleteRenderbuffersEXT_remap_index], fn)
+#define CALL_FramebufferRenderbufferEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLuint)), driDispatchRemapTable[FramebufferRenderbufferEXT_remap_index], parameters)
+#define GET_FramebufferRenderbufferEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FramebufferRenderbufferEXT_remap_index])
+#define SET_FramebufferRenderbufferEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FramebufferRenderbufferEXT_remap_index], fn)
+#define CALL_FramebufferTexture1DEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLuint, GLint)), driDispatchRemapTable[FramebufferTexture1DEXT_remap_index], parameters)
+#define GET_FramebufferTexture1DEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FramebufferTexture1DEXT_remap_index])
+#define SET_FramebufferTexture1DEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FramebufferTexture1DEXT_remap_index], fn)
+#define CALL_FramebufferTexture2DEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLuint, GLint)), driDispatchRemapTable[FramebufferTexture2DEXT_remap_index], parameters)
+#define GET_FramebufferTexture2DEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FramebufferTexture2DEXT_remap_index])
+#define SET_FramebufferTexture2DEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FramebufferTexture2DEXT_remap_index], fn)
+#define CALL_FramebufferTexture3DEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLuint, GLint, GLint)), driDispatchRemapTable[FramebufferTexture3DEXT_remap_index], parameters)
+#define GET_FramebufferTexture3DEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FramebufferTexture3DEXT_remap_index])
+#define SET_FramebufferTexture3DEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FramebufferTexture3DEXT_remap_index], fn)
+#define CALL_GenFramebuffersEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), driDispatchRemapTable[GenFramebuffersEXT_remap_index], parameters)
+#define GET_GenFramebuffersEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GenFramebuffersEXT_remap_index])
+#define SET_GenFramebuffersEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GenFramebuffersEXT_remap_index], fn)
+#define CALL_GenRenderbuffersEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), driDispatchRemapTable[GenRenderbuffersEXT_remap_index], parameters)
+#define GET_GenRenderbuffersEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GenRenderbuffersEXT_remap_index])
+#define SET_GenRenderbuffersEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GenRenderbuffersEXT_remap_index], fn)
+#define CALL_GenerateMipmapEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[GenerateMipmapEXT_remap_index], parameters)
+#define GET_GenerateMipmapEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GenerateMipmapEXT_remap_index])
+#define SET_GenerateMipmapEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GenerateMipmapEXT_remap_index], fn)
+#define CALL_GetFramebufferAttachmentParameterivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLint *)), driDispatchRemapTable[GetFramebufferAttachmentParameterivEXT_remap_index], parameters)
+#define GET_GetFramebufferAttachmentParameterivEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetFramebufferAttachmentParameterivEXT_remap_index])
+#define SET_GetFramebufferAttachmentParameterivEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetFramebufferAttachmentParameterivEXT_remap_index], fn)
+#define CALL_GetQueryObjecti64vEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint64EXT *)), driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index], parameters)
+#define GET_GetQueryObjecti64vEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index])
+#define SET_GetQueryObjecti64vEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index], fn)
+#define CALL_GetQueryObjectui64vEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLuint64EXT *)), driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], parameters)
+#define GET_GetQueryObjectui64vEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index])
+#define SET_GetQueryObjectui64vEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], fn)
+#define CALL_GetRenderbufferParameterivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), driDispatchRemapTable[GetRenderbufferParameterivEXT_remap_index], parameters)
+#define GET_GetRenderbufferParameterivEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetRenderbufferParameterivEXT_remap_index])
+#define SET_GetRenderbufferParameterivEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetRenderbufferParameterivEXT_remap_index], fn)
+#define CALL_IsFramebufferEXT(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[IsFramebufferEXT_remap_index], parameters)
+#define GET_IsFramebufferEXT(disp) GET_by_offset(disp, driDispatchRemapTable[IsFramebufferEXT_remap_index])
+#define SET_IsFramebufferEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsFramebufferEXT_remap_index], fn)
+#define CALL_IsRenderbufferEXT(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), driDispatchRemapTable[IsRenderbufferEXT_remap_index], parameters)
+#define GET_IsRenderbufferEXT(disp) GET_by_offset(disp, driDispatchRemapTable[IsRenderbufferEXT_remap_index])
+#define SET_IsRenderbufferEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsRenderbufferEXT_remap_index], fn)
+#define CALL_RenderbufferStorageEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLsizei, GLsizei)), driDispatchRemapTable[RenderbufferStorageEXT_remap_index], parameters)
+#define GET_RenderbufferStorageEXT(disp) GET_by_offset(disp, driDispatchRemapTable[RenderbufferStorageEXT_remap_index])
+#define SET_RenderbufferStorageEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[RenderbufferStorageEXT_remap_index], fn)
+#define CALL_BlitFramebufferEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum)), driDispatchRemapTable[BlitFramebufferEXT_remap_index], parameters)
+#define GET_BlitFramebufferEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BlitFramebufferEXT_remap_index])
+#define SET_BlitFramebufferEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BlitFramebufferEXT_remap_index], fn)
 #define CALL_ProgramEnvParameters4fvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLsizei, const GLfloat *)), driDispatchRemapTable[ProgramEnvParameters4fvEXT_remap_index], parameters)
 #define GET_ProgramEnvParameters4fvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameters4fvEXT_remap_index])
 #define SET_ProgramEnvParameters4fvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameters4fvEXT_remap_index], fn)

@@ -5029,21 +5029,21 @@
         <size name="PointParameterivNV"/>
     </enum>
 
-    <function name="StencilFuncSeparate" offset="813">
+    <function name="StencilFuncSeparate" offset="assign">
         <param name="face" type="GLenum"/>
         <param name="func" type="GLenum"/>
         <param name="ref" type="GLint"/>
         <param name="mask" type="GLuint"/>
     </function>
 
-    <function name="StencilOpSeparate" offset="814">
+    <function name="StencilOpSeparate" offset="assign">
         <param name="face" type="GLenum"/>
         <param name="fail" type="GLenum"/>
         <param name="zfail" type="GLenum"/>
         <param name="zpass" type="GLenum"/>
     </function>
 
-    <function name="StencilMaskSeparate" offset="815">
+    <function name="StencilMaskSeparate" offset="assign">
         <param name="face" type="GLenum"/>
         <param name="mask" type="GLuint"/>
     </function>
@@ -5314,22 +5314,22 @@
     <enum name="TRANSPOSE_TEXTURE_MATRIX_ARB"             value="0x84E5"/>
     <enum name="TRANSPOSE_COLOR_MATRIX_ARB"               value="0x84E6"/>
 
-    <function name="LoadTransposeMatrixfARB" offset="408">
+    <function name="LoadTransposeMatrixfARB" offset="assign">
         <param name="m" type="const GLfloat *"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="LoadTransposeMatrixdARB" offset="409">
+    <function name="LoadTransposeMatrixdARB" offset="assign">
         <param name="m" type="const GLdouble *"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="MultTransposeMatrixfARB" offset="410">
+    <function name="MultTransposeMatrixfARB" offset="assign">
         <param name="m" type="const GLfloat *"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="MultTransposeMatrixdARB" offset="411">
+    <function name="MultTransposeMatrixdARB" offset="assign">
         <param name="m" type="const GLdouble *"/>
         <glx handcode="true"/>
     </function>
@@ -5364,7 +5364,7 @@
     </enum>
     <enum name="MULTISAMPLE_BIT_ARB"                      value="0x20000000"/>
 
-    <function name="SampleCoverageARB" offset="412">
+    <function name="SampleCoverageARB" offset="assign">
         <param name="value" type="GLclampf"/>
         <param name="invert" type="GLboolean"/>
         <glx rop="229"/>
@@ -5424,7 +5424,7 @@
     </enum>
     <enum name="TEXTURE_COMPRESSED_FORMATS_ARB"           value="0x86A3"/>
 
-    <function name="CompressedTexImage3DARB" offset="554">
+    <function name="CompressedTexImage3DARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="internalformat" type="GLenum"/>
@@ -5437,7 +5437,7 @@
         <glx rop="216" handcode="client"/>
     </function>
 
-    <function name="CompressedTexImage2DARB" offset="555">
+    <function name="CompressedTexImage2DARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="internalformat" type="GLenum"/>
@@ -5449,7 +5449,7 @@
         <glx rop="215" handcode="client"/>
     </function>
 
-    <function name="CompressedTexImage1DARB" offset="556">
+    <function name="CompressedTexImage1DARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="internalformat" type="GLenum"/>
@@ -5460,7 +5460,7 @@
         <glx rop="214" handcode="client"/>
     </function>
 
-    <function name="CompressedTexSubImage3DARB" offset="557">
+    <function name="CompressedTexSubImage3DARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="xoffset" type="GLint"/>
@@ -5475,7 +5475,7 @@
         <glx rop="219" handcode="client"/>
     </function>
 
-    <function name="CompressedTexSubImage2DARB" offset="558">
+    <function name="CompressedTexSubImage2DARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="xoffset" type="GLint"/>
@@ -5488,7 +5488,7 @@
         <glx rop="218" handcode="client"/>
     </function>
 
-    <function name="CompressedTexSubImage1DARB" offset="559">
+    <function name="CompressedTexSubImage1DARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="xoffset" type="GLint"/>
@@ -5499,7 +5499,7 @@
         <glx rop="217" handcode="client"/>
     </function>
 
-    <function name="GetCompressedTexImageARB" offset="560">
+    <function name="GetCompressedTexImageARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="img" type="GLvoid *" output="true"/>
@@ -5670,47 +5670,47 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="WeightbvARB" offset="?">
+    <function name="WeightbvARB">
         <param name="size" type="GLint"/>
         <param name="weights" type="const GLbyte *"/>
     </function>
 
-    <function name="WeightsvARB" offset="?">
+    <function name="WeightsvARB">
         <param name="size" type="GLint"/>
         <param name="weights" type="const GLshort *"/>
     </function>
 
-    <function name="WeightivARB" offset="?">
+    <function name="WeightivARB">
         <param name="size" type="GLint"/>
         <param name="weights" type="const GLint *"/>
     </function>
 
-    <function name="WeightfvARB" offset="?">
+    <function name="WeightfvARB">
         <param name="size" type="GLint"/>
         <param name="weights" type="const GLfloat *"/>
     </function>
 
-    <function name="WeightdvARB" offset="?">
+    <function name="WeightdvARB">
         <param name="size" type="GLint"/>
         <param name="weights" type="const GLdouble *"/>
     </function>
 
-    <function name="WeightubvARB" offset="?">
+    <function name="WeightubvARB">
         <param name="size" type="GLint"/>
         <param name="weights" type="const GLubyte *"/>
     </function>
 
-    <function name="WeightusvARB" offset="?">
+    <function name="WeightusvARB">
         <param name="size" type="GLint"/>
         <param name="weights" type="const GLushort *"/>
     </function>
 
-    <function name="WeightuivARB" offset="?">
+    <function name="WeightuivARB">
         <param name="size" type="GLint"/>
         <param name="weights" type="const GLuint *"/>
     </function>
 
-    <function name="WeightPointerARB" offset="?">
+    <function name="WeightPointerARB">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
@@ -5718,7 +5718,7 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="VertexBlendARB" offset="?">
+    <function name="VertexBlendARB">
         <param name="count" type="GLint"/>
     </function>
 </category>
@@ -5753,30 +5753,30 @@
     </enum>
     <enum name="MATRIX_INDEX_ARRAY_POINTER_ARB"           value="0x8849"/>
 
-    <function name="CurrentPaletteMatrixARB" offset="?">
+    <function name="CurrentPaletteMatrixARB">
         <param name="index" type="GLint"/>
         <glx ignore="true" rop="4329"/>
     </function>
 
-    <function name="MatrixIndexubvARB" offset="?">
+    <function name="MatrixIndexubvARB">
         <param name="size" type="GLint" counter="true"/>
         <param name="indices" type="const GLubyte *" count="size"/>
         <glx ignore="true" rop="4326"/>
     </function>
 
-    <function name="MatrixIndexusvARB" offset="?">
+    <function name="MatrixIndexusvARB">
         <param name="size" type="GLint" counter="true"/>
         <param name="indices" type="const GLushort *" count="size"/>
         <glx ignore="true" rop="4327"/>
     </function>
 
-    <function name="MatrixIndexuivARB" offset="?">
+    <function name="MatrixIndexuivARB">
         <param name="size" type="GLint" counter="true"/>
         <param name="indices" type="const GLuint *" count="size"/>
         <glx ignore="true" rop="4328"/>
     </function>
 
-    <function name="MatrixIndexPointerARB" offset="?">
+    <function name="MatrixIndexPointerARB">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
@@ -6122,136 +6122,136 @@
     <enum name="MATRIX30_ARB"                             value="0x88DE"/>
     <enum name="MATRIX31_ARB"                             value="0x88DF"/>
 
-    <function name="GetVertexAttribdvARB" offset="588">
+    <function name="GetVertexAttribdvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLdouble *" output="true" variable_param="pname"/>
         <glx handcode="client" vendorpriv="1301"/>
     </function>
 
-    <function name="GetVertexAttribfvARB" offset="589">
+    <function name="GetVertexAttribfvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx handcode="client" vendorpriv="1302"/>
     </function>
 
-    <function name="GetVertexAttribivARB" offset="590">
+    <function name="GetVertexAttribivARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx handcode="client" vendorpriv="1303"/>
     </function>
 
-    <function name="VertexAttrib1dARB" offset="603" vectorequiv="VertexAttrib1dvARB">
+    <function name="VertexAttrib1dARB" offset="assign" vectorequiv="VertexAttrib1dvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib1dvARB" offset="604">
+    <function name="VertexAttrib1dvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="1"/>
         <glx rop="4197"/>
     </function>
 
-    <function name="VertexAttrib1fARB" offset="605" vectorequiv="VertexAttrib1fvARB">
+    <function name="VertexAttrib1fARB" offset="assign" vectorequiv="VertexAttrib1fvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib1fvARB" offset="606">
+    <function name="VertexAttrib1fvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="1"/>
         <glx rop="4193"/>
     </function>
 
-    <function name="VertexAttrib1sARB" offset="607" vectorequiv="VertexAttrib1svARB">
+    <function name="VertexAttrib1sARB" offset="assign" vectorequiv="VertexAttrib1svARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib1svARB" offset="608">
+    <function name="VertexAttrib1svARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="1"/>
         <glx rop="4189"/>
     </function>
 
-    <function name="VertexAttrib2dARB" offset="609" vectorequiv="VertexAttrib2dvARB">
+    <function name="VertexAttrib2dARB" offset="assign" vectorequiv="VertexAttrib2dvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib2dvARB" offset="610">
+    <function name="VertexAttrib2dvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="2"/>
         <glx rop="4198"/>
     </function>
 
-    <function name="VertexAttrib2fARB" offset="611" vectorequiv="VertexAttrib2fvARB">
+    <function name="VertexAttrib2fARB" offset="assign" vectorequiv="VertexAttrib2fvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib2fvARB" offset="612">
+    <function name="VertexAttrib2fvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="2"/>
         <glx rop="4194"/>
     </function>
 
-    <function name="VertexAttrib2sARB" offset="613" vectorequiv="VertexAttrib2svARB">
+    <function name="VertexAttrib2sARB" offset="assign" vectorequiv="VertexAttrib2svARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib2svARB" offset="614">
+    <function name="VertexAttrib2svARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="2"/>
         <glx rop="4190"/>
     </function>
 
-    <function name="VertexAttrib3dARB" offset="615" vectorequiv="VertexAttrib3dvARB">
+    <function name="VertexAttrib3dARB" offset="assign" vectorequiv="VertexAttrib3dvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib3dvARB" offset="616">
+    <function name="VertexAttrib3dvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="3"/>
         <glx rop="4199"/>
     </function>
 
-    <function name="VertexAttrib3fARB" offset="617" vectorequiv="VertexAttrib3fvARB">
+    <function name="VertexAttrib3fARB" offset="assign" vectorequiv="VertexAttrib3fvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib3fvARB" offset="618">
+    <function name="VertexAttrib3fvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="3"/>
         <glx rop="4195"/>
     </function>
 
-    <function name="VertexAttrib3sARB" offset="619" vectorequiv="VertexAttrib3svARB">
+    <function name="VertexAttrib3sARB" offset="assign" vectorequiv="VertexAttrib3svARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib3svARB" offset="620">
+    <function name="VertexAttrib3svARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="3"/>
         <glx rop="4191"/>
     </function>
 
-    <function name="VertexAttrib4dARB" offset="621" vectorequiv="VertexAttrib4dvARB">
+    <function name="VertexAttrib4dARB" offset="assign" vectorequiv="VertexAttrib4dvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
@@ -6259,13 +6259,13 @@
         <param name="w" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib4dvARB" offset="622">
+    <function name="VertexAttrib4dvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="4"/>
         <glx rop="4200"/>
     </function>
 
-    <function name="VertexAttrib4fARB" offset="623" vectorequiv="VertexAttrib4fvARB">
+    <function name="VertexAttrib4fARB" offset="assign" vectorequiv="VertexAttrib4fvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
@@ -6273,13 +6273,13 @@
         <param name="w" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib4fvARB" offset="624">
+    <function name="VertexAttrib4fvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="4"/>
         <glx rop="4196"/>
     </function>
 
-    <function name="VertexAttrib4sARB" offset="625" vectorequiv="VertexAttrib4svARB">
+    <function name="VertexAttrib4sARB" offset="assign" vectorequiv="VertexAttrib4svARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
@@ -6287,13 +6287,13 @@
         <param name="w" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib4svARB" offset="626">
+    <function name="VertexAttrib4svARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="4"/>
         <glx rop="4192"/>
     </function>
 
-    <function name="VertexAttrib4NubARB" offset="627" vectorequiv="VertexAttrib4NubvARB">
+    <function name="VertexAttrib4NubARB" offset="assign" vectorequiv="VertexAttrib4NubvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLubyte"/>
         <param name="y" type="GLubyte"/>
@@ -6301,73 +6301,73 @@
         <param name="w" type="GLubyte"/>
     </function>
 
-    <function name="VertexAttrib4NubvARB" offset="628">
+    <function name="VertexAttrib4NubvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLubyte *" count="4"/>
         <glx rop="4201"/>
     </function>
 
-    <function name="VertexAttrib4bvARB" offset="654">
+    <function name="VertexAttrib4bvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLbyte *" count="4"/>
         <glx rop="4230"/>
     </function>
 
-    <function name="VertexAttrib4ivARB" offset="655">
+    <function name="VertexAttrib4ivARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLint *" count="4"/>
         <glx rop="4231"/>
     </function>
 
-    <function name="VertexAttrib4ubvARB" offset="656">
+    <function name="VertexAttrib4ubvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLubyte *" count="4"/>
         <glx rop="4232"/>
     </function>
 
-    <function name="VertexAttrib4usvARB" offset="657">
+    <function name="VertexAttrib4usvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLushort *" count="4"/>
         <glx rop="4233"/>
     </function>
 
-    <function name="VertexAttrib4uivARB" offset="658">
+    <function name="VertexAttrib4uivARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLuint *" count="4"/>
         <glx rop="4234"/>
     </function>
 
-    <function name="VertexAttrib4NbvARB" offset="659">
+    <function name="VertexAttrib4NbvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLbyte *" count="4"/>
         <glx rop="4235"/>
     </function>
 
-    <function name="VertexAttrib4NsvARB" offset="660">
+    <function name="VertexAttrib4NsvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="4"/>
         <glx rop="4236"/>
     </function>
 
-    <function name="VertexAttrib4NivARB" offset="661">
+    <function name="VertexAttrib4NivARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLint *" count="4"/>
         <glx rop="4237"/>
     </function>
 
-    <function name="VertexAttrib4NusvARB" offset="662">
+    <function name="VertexAttrib4NusvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLushort *" count="4"/>
         <glx rop="4238"/>
     </function>
 
-    <function name="VertexAttrib4NuivARB" offset="663">
+    <function name="VertexAttrib4NuivARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLuint *" count="4"/>
         <glx rop="4239"/>
     </function>
 
-    <function name="VertexAttribPointerARB" offset="664">
+    <function name="VertexAttribPointerARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
@@ -6377,17 +6377,17 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="EnableVertexAttribArrayARB" offset="665">
+    <function name="EnableVertexAttribArrayARB" offset="assign">
         <param name="index" type="GLuint"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="DisableVertexAttribArrayARB" offset="666">
+    <function name="DisableVertexAttribArrayARB" offset="assign">
         <param name="index" type="GLuint"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="ProgramStringARB" offset="667">
+    <function name="ProgramStringARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
         <param name="len" type="GLsizei" counter="true"/>
@@ -6415,7 +6415,7 @@
         <return type="GLboolean"/>
     </function>
 
-    <function name="ProgramEnvParameter4dARB" offset="668" vectorequiv="ProgramEnvParameter4dvARB">
+    <function name="ProgramEnvParameter4dARB" offset="assign" vectorequiv="ProgramEnvParameter4dvARB">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
@@ -6424,14 +6424,14 @@
         <param name="w" type="GLdouble"/>
     </function>
 
-    <function name="ProgramEnvParameter4dvARB" offset="669">
+    <function name="ProgramEnvParameter4dvARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="const GLdouble *" count="4"/>
         <glx rop="4185" doubles_in_order="true"/>
     </function>
 
-    <function name="ProgramEnvParameter4fARB" offset="670" vectorequiv="ProgramEnvParameter4fvARB">
+    <function name="ProgramEnvParameter4fARB" offset="assign" vectorequiv="ProgramEnvParameter4fvARB">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
@@ -6440,14 +6440,14 @@
         <param name="w" type="GLfloat"/>
     </function>
 
-    <function name="ProgramEnvParameter4fvARB" offset="671">
+    <function name="ProgramEnvParameter4fvARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="const GLfloat *" count="4"/>
         <glx rop="4184"/>
     </function>
 
-    <function name="ProgramLocalParameter4dARB" offset="672" vectorequiv="ProgramLocalParameter4dvARB">
+    <function name="ProgramLocalParameter4dARB" offset="assign" vectorequiv="ProgramLocalParameter4dvARB">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
@@ -6456,14 +6456,14 @@
         <param name="w" type="GLdouble"/>
     </function>
 
-    <function name="ProgramLocalParameter4dvARB" offset="673">
+    <function name="ProgramLocalParameter4dvARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="const GLdouble *" count="4"/>
         <glx rop="4216" doubles_in_order="true"/>
     </function>
 
-    <function name="ProgramLocalParameter4fARB" offset="674" vectorequiv="ProgramLocalParameter4fvARB">
+    <function name="ProgramLocalParameter4fARB" offset="assign" vectorequiv="ProgramLocalParameter4fvARB">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
@@ -6472,7 +6472,7 @@
         <param name="w" type="GLfloat"/>
     </function>
 
-    <function name="ProgramLocalParameter4fvARB" offset="675">
+    <function name="ProgramLocalParameter4fvARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="const GLfloat *" count="4"/>
@@ -6491,28 +6491,28 @@
          the ARB_vertex_program protocol to unused padding.
       -->
 
-    <function name="GetProgramEnvParameterdvARB" offset="676">
+    <function name="GetProgramEnvParameterdvARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="GLdouble *" output="true" count="4"/>
         <glx vendorpriv="1297" handcode="client" doubles_in_order="true"/>
     </function>
 
-    <function name="GetProgramEnvParameterfvARB" offset="677">
+    <function name="GetProgramEnvParameterfvARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="GLfloat *" output="true" count="4"/>
         <glx vendorpriv="1296" handcode="client"/>
     </function>
 
-    <function name="GetProgramLocalParameterdvARB" offset="678">
+    <function name="GetProgramLocalParameterdvARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="GLdouble *" output="true" count="4"/>
         <glx vendorpriv="1306" handcode="client" doubles_in_order="true"/>
     </function>
 
-    <function name="GetProgramLocalParameterfvARB" offset="679">
+    <function name="GetProgramLocalParameterfvARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="GLfloat *" output="true" count="4"/>
@@ -6520,14 +6520,14 @@
     </function>
 
 
-    <function name="GetProgramivARB" offset="680">
+    <function name="GetProgramivARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx vendorpriv="1307"/>
     </function>
 
-    <function name="GetProgramStringARB" offset="681">
+    <function name="GetProgramStringARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="string" type="GLvoid *" output="true"/>
@@ -6625,13 +6625,13 @@
     <type name="intptrARB"                   size="4"/>
     <type name="sizeiptrARB" unsigned="true" size="4"/>
 
-    <function name="BindBufferARB" offset="688">
+    <function name="BindBufferARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="buffer" type="GLuint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="BufferDataARB" offset="689">
+    <function name="BufferDataARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="size" type="GLsizeiptrARB"/>
         <param name="data" type="const GLvoid *"/>
@@ -6639,7 +6639,7 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="BufferSubDataARB" offset="690">
+    <function name="BufferSubDataARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="offset" type="GLintptrARB"/>
         <param name="size" type="GLsizeiptrARB"/>
@@ -6647,33 +6647,33 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="DeleteBuffersARB" offset="691">
+    <function name="DeleteBuffersARB" offset="assign">
         <param name="n" type="GLsizei"/>
         <param name="buffer" type="const GLuint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GenBuffersARB" offset="692">
+    <function name="GenBuffersARB" offset="assign">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="buffer" type="GLuint *" output="true" count="n"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetBufferParameterivARB" offset="693">
+    <function name="GetBufferParameterivARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetBufferPointervARB" offset="694">
+    <function name="GetBufferPointervARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLvoid **" output="true"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetBufferSubDataARB" offset="695">
+    <function name="GetBufferSubDataARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="offset" type="GLintptrARB"/>
         <param name="size" type="GLsizeiptrARB"/>
@@ -6681,20 +6681,20 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="IsBufferARB" offset="696">
+    <function name="IsBufferARB" offset="assign">
         <param name="buffer" type="GLuint"/>
         <return type="GLboolean"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="MapBufferARB" offset="697">
+    <function name="MapBufferARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="access" type="GLenum"/>
         <return type="GLvoid *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="UnmapBufferARB" offset="698">
+    <function name="UnmapBufferARB" offset="assign">
         <param name="target" type="GLenum"/>
         <return type="GLboolean"/>
         <glx ignore="true"/>
@@ -6718,50 +6718,50 @@
     </enum>
     <enum name="SAMPLES_PASSED_ARB"                       value="0x8914"/>
 
-    <function name="GenQueriesARB" offset="700">
+    <function name="GenQueriesARB" offset="assign">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="ids" type="GLuint *" output="true" count="n"/>
         <glx sop="162" always_array="true"/>
     </function>
 
-    <function name="DeleteQueriesARB" offset="701">
+    <function name="DeleteQueriesARB" offset="assign">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="ids" type="const GLuint *" count="n"/>
         <glx sop="161"/>
     </function>
 
-    <function name="IsQueryARB" offset="702">
+    <function name="IsQueryARB" offset="assign">
         <param name="id" type="GLuint"/>
         <return type="GLboolean"/>
         <glx sop="163"/>
     </function>
 
-    <function name="BeginQueryARB" offset="703">
+    <function name="BeginQueryARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="id" type="GLuint"/>
         <glx rop="231"/>
     </function>
 
-    <function name="EndQueryARB" offset="704">
+    <function name="EndQueryARB" offset="assign">
         <param name="target" type="GLenum"/>
         <glx rop="232"/>
     </function>
 
-    <function name="GetQueryivARB" offset="705">
+    <function name="GetQueryivARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx sop="164"/>
     </function>
 
-    <function name="GetQueryObjectivARB" offset="706">
+    <function name="GetQueryObjectivARB" offset="assign">
         <param name="id" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx sop="165"/>
     </function>
 
-    <function name="GetQueryObjectuivARB" offset="707">
+    <function name="GetQueryObjectuivARB" offset="assign">
         <param name="id" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLuint *" output="true" variable_param="pname"/>
@@ -6800,30 +6800,30 @@
     <type name="charARB"   size="1" glx_name="CARD8"/>
     <type name="handleARB" size="4" glx_name="CARD32"/>
 
-    <function name="DeleteObjectARB" offset="711">
+    <function name="DeleteObjectARB" offset="assign">
         <param name="obj" type="GLhandleARB"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetHandleARB" offset="712">
+    <function name="GetHandleARB" offset="assign">
         <param name="pname" type="GLenum"/>
         <return type="GLhandleARB"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="DetachObjectARB" offset="713">
+    <function name="DetachObjectARB" offset="assign">
         <param name="containerObj" type="GLhandleARB"/>
         <param name="attachedObj" type="GLhandleARB"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="CreateShaderObjectARB" offset="714">
+    <function name="CreateShaderObjectARB" offset="assign">
         <param name="shaderType" type="GLenum"/>
         <return type="GLhandleARB"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="ShaderSourceARB" offset="715">
+    <function name="ShaderSourceARB" offset="assign">
         <param name="shaderObj" type="GLhandleARB"/>
         <param name="count" type="GLsizei"/>
         <param name="string" type="const GLcharARB **"/>
@@ -6831,51 +6831,51 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="CompileShaderARB" offset="716">
+    <function name="CompileShaderARB" offset="assign">
         <param name="shaderObj" type="GLhandleARB"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="CreateProgramObjectARB" offset="717">
+    <function name="CreateProgramObjectARB" offset="assign">
         <return type="GLhandleARB"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="AttachObjectARB" offset="718">
+    <function name="AttachObjectARB" offset="assign">
         <param name="containerObj" type="GLhandleARB"/>
         <param name="obj" type="GLhandleARB"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="LinkProgramARB" offset="719">
+    <function name="LinkProgramARB" offset="assign">
         <param name="programObj" type="GLhandleARB"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="UseProgramObjectARB" offset="720">
+    <function name="UseProgramObjectARB" offset="assign">
         <param name="programObj" type="GLhandleARB"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="ValidateProgramARB" offset="721">
+    <function name="ValidateProgramARB" offset="assign">
         <param name="programObj" type="GLhandleARB"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform1fARB" offset="722">
+    <function name="Uniform1fARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform2fARB" offset="723">
+    <function name="Uniform2fARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLfloat"/>
         <param name="v1" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform3fARB" offset="724">
+    <function name="Uniform3fARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLfloat"/>
         <param name="v1" type="GLfloat"/>
@@ -6883,7 +6883,7 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform4fARB" offset="725">
+    <function name="Uniform4fARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLfloat"/>
         <param name="v1" type="GLfloat"/>
@@ -6892,20 +6892,20 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform1iARB" offset="726">
+    <function name="Uniform1iARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform2iARB" offset="727">
+    <function name="Uniform2iARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLint"/>
         <param name="v1" type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform3iARB" offset="728">
+    <function name="Uniform3iARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLint"/>
         <param name="v1" type="GLint"/>
@@ -6913,7 +6913,7 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform4iARB" offset="729">
+    <function name="Uniform4iARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLint"/>
         <param name="v1" type="GLint"/>
@@ -6922,63 +6922,63 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform1fvARB" offset="730">
+    <function name="Uniform1fvARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform2fvARB" offset="731">
+    <function name="Uniform2fvARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform3fvARB" offset="732">
+    <function name="Uniform3fvARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform4fvARB" offset="733">
+    <function name="Uniform4fvARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform1ivARB" offset="734">
+    <function name="Uniform1ivARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform2ivARB" offset="735">
+    <function name="Uniform2ivARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform3ivARB" offset="736">
+    <function name="Uniform3ivARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform4ivARB" offset="737">
+    <function name="Uniform4ivARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="UniformMatrix2fvARB" offset="738">
+    <function name="UniformMatrix2fvARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="transpose" type="GLboolean"/>
@@ -6986,7 +6986,7 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="UniformMatrix3fvARB" offset="739">
+    <function name="UniformMatrix3fvARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="transpose" type="GLboolean"/>
@@ -6994,7 +6994,7 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="UniformMatrix4fvARB" offset="740">
+    <function name="UniformMatrix4fvARB" offset="assign">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="transpose" type="GLboolean"/>
@@ -7002,21 +7002,21 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="GetObjectParameterfvARB" offset="741">
+    <function name="GetObjectParameterfvARB" offset="assign">
         <param name="obj" type="GLhandleARB"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetObjectParameterivARB" offset="742">
+    <function name="GetObjectParameterivARB" offset="assign">
         <param name="obj" type="GLhandleARB"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetInfoLogARB" offset="743">
+    <function name="GetInfoLogARB" offset="assign">
         <param name="obj" type="GLhandleARB"/>
         <param name="maxLength" type="GLsizei"/>
         <param name="length" type="GLsizei *" output="true"/>
@@ -7024,7 +7024,7 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="GetAttachedObjectsARB" offset="744">
+    <function name="GetAttachedObjectsARB" offset="assign">
         <param name="containerObj" type="GLhandleARB"/>
         <param name="maxLength" type="GLsizei"/>
         <param name="length" type="GLsizei *" output="true"/>
@@ -7032,14 +7032,14 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="GetUniformLocationARB" offset="745">
+    <function name="GetUniformLocationARB" offset="assign">
         <param name="programObj" type="GLhandleARB"/>
         <param name="name" type="const GLcharARB *"/>
         <return type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetActiveUniformARB" offset="746">
+    <function name="GetActiveUniformARB" offset="assign">
         <param name="programObj" type="GLhandleARB"/>
         <param name="index" type="GLuint"/>
         <param name="maxLength" type="GLsizei"/>
@@ -7050,21 +7050,21 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="GetUniformfvARB" offset="747">
+    <function name="GetUniformfvARB" offset="assign">
         <param name="programObj" type="GLhandleARB"/>
         <param name="location" type="GLint"/>
         <param name="params" type="GLfloat *" output="true"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetUniformivARB" offset="748">
+    <function name="GetUniformivARB" offset="assign">
         <param name="programObj" type="GLhandleARB"/>
         <param name="location" type="GLint"/>
         <param name="params" type="GLint *" output="true"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetShaderSourceARB" offset="749">
+    <function name="GetShaderSourceARB" offset="assign">
         <param name="obj" type="GLhandleARB"/>
         <param name="maxLength" type="GLsizei"/>
         <param name="length" type="GLsizei *" output="true"/>
@@ -7082,14 +7082,14 @@
     <enum name="OBJECT_ACTIVE_ATTRIBUTES_ARB"             value="0x8B89"/>
     <enum name="OBJECT_ACTIVE_ATTRIBUTE_MAX_LENGTH_ARB"   value="0x8B8A"/>
 
-    <function name="BindAttribLocationARB" offset="750">
+    <function name="BindAttribLocationARB" offset="assign">
         <param name="programObj" type="GLhandleARB"/>
         <param name="index" type="GLuint"/>
         <param name="name" type="const GLcharARB *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetActiveAttribARB" offset="751">
+    <function name="GetActiveAttribARB" offset="assign">
         <param name="programObj" type="GLhandleARB"/>
         <param name="index" type="GLuint"/>
         <param name="maxLength" type="GLsizei"/>
@@ -7100,7 +7100,7 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="GetAttribLocationARB" offset="752">
+    <function name="GetAttribLocationARB" offset="assign">
         <param name="programObj" type="GLhandleARB"/>
         <param name="name" type="const GLcharARB *"/>
         <return type="GLint"/>
@@ -7190,7 +7190,7 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="DrawBuffersARB" offset="413">
+    <function name="DrawBuffersARB" offset="assign">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="bufs" type="const GLenum *" count="n"/>
         <glx rop="233" large="true"/>
@@ -7230,7 +7230,7 @@
 </category>
 
 <category name="GL_EXT_polygon_offset" number="3">
-    <function name="PolygonOffsetEXT" offset="414">
+    <function name="PolygonOffsetEXT" offset="assign">
         <param name="factor" type="GLfloat"/>
         <param name="bias" type="GLfloat"/>
         <glx rop="4098" ignore="true"/>
@@ -7333,14 +7333,14 @@
 </category>
 
 <category name="GL_SGIS_texture_filter4" number="7">
-    <function name="GetTexFilterFuncSGIS" offset="415">
+    <function name="GetTexFilterFuncSGIS">
         <param name="target" type="GLenum"/>
         <param name="filter" type="GLenum"/>
         <param name="weights" type="GLfloat *" output="true"/>
         <glx vendorpriv="4101" ignore="true"/>
     </function>
 
-    <function name="TexFilterFuncSGIS" offset="416">
+    <function name="TexFilterFuncSGIS">
         <param name="target" type="GLenum"/>
         <param name="filter" type="GLenum"/>
         <param name="n" type="GLsizei" counter="true"/>
@@ -7476,7 +7476,7 @@
     </enum>
     <enum name="TABLE_TOO_LARGE_EXT"                      value="0x8031"/>
 
-    <function name="GetHistogramEXT" offset="417">
+    <function name="GetHistogramEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="reset" type="GLboolean"/>
         <param name="format" type="GLenum"/>
@@ -7485,21 +7485,21 @@
         <glx vendorpriv="5" handcode="true" ignore="true"/>
     </function>
 
-    <function name="GetHistogramParameterfvEXT" offset="418">
+    <function name="GetHistogramParameterfvEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx vendorpriv="6" ignore="true"/>
     </function>
 
-    <function name="GetHistogramParameterivEXT" offset="419">
+    <function name="GetHistogramParameterivEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx vendorpriv="7" ignore="true"/>
     </function>
 
-    <function name="GetMinmaxEXT" offset="420">
+    <function name="GetMinmaxEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="reset" type="GLboolean"/>
         <param name="format" type="GLenum"/>
@@ -7508,14 +7508,14 @@
         <glx vendorpriv="8" handcode="true" ignore="true"/>
     </function>
 
-    <function name="GetMinmaxParameterfvEXT" offset="421">
+    <function name="GetMinmaxParameterfvEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx vendorpriv="9" ignore="true"/>
     </function>
 
-    <function name="GetMinmaxParameterivEXT" offset="422">
+    <function name="GetMinmaxParameterivEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
@@ -7671,7 +7671,7 @@
         <param name="height" type="GLsizei"/>
     </function>
 
-    <function name="GetConvolutionFilterEXT" offset="423">
+    <function name="GetConvolutionFilterEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
@@ -7679,21 +7679,21 @@
         <glx vendorpriv="1" handcode="true" ignore="true"/>
     </function>
 
-    <function name="GetConvolutionParameterfvEXT" offset="424">
+    <function name="GetConvolutionParameterfvEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx vendorpriv="2" ignore="true"/>
     </function>
 
-    <function name="GetConvolutionParameterivEXT" offset="425">
+    <function name="GetConvolutionParameterivEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx vendorpriv="3" ignore="true"/>
     </function>
 
-    <function name="GetSeparableFilterEXT" offset="426">
+    <function name="GetSeparableFilterEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
@@ -7759,7 +7759,7 @@
         <param name="width" type="GLsizei"/>
     </function>
 
-    <function name="GetColorTableSGI" offset="427">
+    <function name="GetColorTableSGI" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
@@ -7767,14 +7767,14 @@
         <glx vendorpriv="4098" handcode="true" ignore="true"/>
     </function>
 
-    <function name="GetColorTableParameterfvSGI" offset="428">
+    <function name="GetColorTableParameterfvSGI" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx vendorpriv="4099" ignore="true"/>
     </function>
 
-    <function name="GetColorTableParameterivSGI" offset="429">
+    <function name="GetColorTableParameterivSGI" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
@@ -7783,37 +7783,37 @@
 </category>
 
 <category name="GL_SGIS_pixel_texture" number="15">
-    <function name="PixelTexGenParameteriSGIS" offset="431">
+    <function name="PixelTexGenParameteriSGIS" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="PixelTexGenParameterivSGIS" offset="432">
+    <function name="PixelTexGenParameterivSGIS" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="PixelTexGenParameterfSGIS" offset="433">
+    <function name="PixelTexGenParameterfSGIS" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="PixelTexGenParameterfvSGIS" offset="434">
+    <function name="PixelTexGenParameterfvSGIS" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetPixelTexGenParameterivSGIS" offset="435">
+    <function name="GetPixelTexGenParameterivSGIS" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetPixelTexGenParameterfvSGIS" offset="436">
+    <function name="GetPixelTexGenParameterfvSGIS" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
@@ -7821,7 +7821,7 @@
 </category>
 
 <category name="GL_SGIS_texture4D" number="16">
-    <function name="TexImage4DSGIS" offset="437">
+    <function name="TexImage4DSGIS">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="internalformat" type="GLenum"/>
@@ -7836,7 +7836,7 @@
         <glx rop="2057" ignore="true"/>
     </function>
 
-    <function name="TexSubImage4DSGIS" offset="438">
+    <function name="TexSubImage4DSGIS">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="xoffset" type="GLint"/>
@@ -7862,7 +7862,7 @@
 <!-- Extension number 19 is not listed in the extension registry. -->
 
 <category name="GL_EXT_texture_object" number="20">
-    <function name="AreTexturesResidentEXT" offset="439">
+    <function name="AreTexturesResidentEXT" offset="assign">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="textures" type="const GLuint *" count="n"/>
         <param name="residences" type="GLboolean *" output="true" count="n"/>
@@ -7884,13 +7884,13 @@
         <glx vendorpriv="12"/>
     </function>
 
-    <function name="GenTexturesEXT" offset="440">
+    <function name="GenTexturesEXT" offset="assign">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="textures" type="GLuint *" output="true" count="n"/>
         <glx vendorpriv="13" always_array="true"/>
     </function>
 
-    <function name="IsTextureEXT" offset="441">
+    <function name="IsTextureEXT" offset="assign">
         <param name="texture" type="GLuint"/>
         <return type="GLboolean"/>
         <glx vendorpriv="14"/>
@@ -7904,14 +7904,14 @@
 </category>
 
 <category name="GL_SGIS_detail_texture" number="21">
-    <function name="DetailTexFuncSGIS" offset="442">
+    <function name="DetailTexFuncSGIS">
         <param name="target" type="GLenum"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="points" type="const GLfloat *" count="n"/>
         <glx rop="2051" ignore="true"/>
     </function>
 
-    <function name="GetDetailTexFuncSGIS" offset="443">
+    <function name="GetDetailTexFuncSGIS">
         <param name="target" type="GLenum"/>
         <param name="points" type="GLfloat *" output="true"/>
         <glx vendorpriv="4096" ignore="true"/>
@@ -7919,14 +7919,14 @@
 </category>
 
 <category name="GL_SGIS_sharpen_texture" number="22">
-    <function name="SharpenTexFuncSGIS" offset="444">
+    <function name="SharpenTexFuncSGIS">
         <param name="target" type="GLenum"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="points" type="const GLfloat *" count="n" count_scale="2"/>
         <glx rop="2052" ignore="true"/>
     </function>
 
-    <function name="GetSharpenTexFuncSGIS" offset="445">
+    <function name="GetSharpenTexFuncSGIS">
         <param name="target" type="GLenum"/>
         <param name="points" type="GLfloat *" output="true"/>
         <glx vendorpriv="4097" ignore="true"/>
@@ -7934,13 +7934,13 @@
 </category>
 
 <category name="GL_SGIS_multisample" number="25">
-    <function name="SampleMaskSGIS" offset="446">
+    <function name="SampleMaskSGIS" offset="assign">
         <param name="value" type="GLclampf"/>
         <param name="invert" type="GLboolean"/>
         <glx rop="2048"/>
     </function>
 
-    <function name="SamplePatternSGIS" offset="447">
+    <function name="SamplePatternSGIS" offset="assign">
         <param name="pattern" type="GLenum"/>
         <glx rop="2049"/>
     </function>
@@ -7962,7 +7962,7 @@
         <param name="i" type="GLint"/>
     </function>
 
-    <function name="ColorPointerEXT" offset="448">
+    <function name="ColorPointerEXT" offset="assign">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
@@ -7977,7 +7977,7 @@
         <param name="count" type="GLsizei"/>
     </function>
 
-    <function name="EdgeFlagPointerEXT" offset="449">
+    <function name="EdgeFlagPointerEXT" offset="assign">
         <param name="stride" type="GLsizei"/>
         <param name="count" type="GLsizei"/>
         <param name="pointer" type="const GLboolean *"/>
@@ -7989,7 +7989,7 @@
         <param name="params" type="GLvoid **" output="true"/>
     </function>
 
-    <function name="IndexPointerEXT" offset="450">
+    <function name="IndexPointerEXT" offset="assign">
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
         <param name="count" type="GLsizei"/>
@@ -7997,7 +7997,7 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="NormalPointerEXT" offset="451">
+    <function name="NormalPointerEXT" offset="assign">
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
         <param name="count" type="GLsizei"/>
@@ -8005,7 +8005,7 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="TexCoordPointerEXT" offset="452">
+    <function name="TexCoordPointerEXT" offset="assign">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
@@ -8014,7 +8014,7 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="VertexPointerEXT" offset="453">
+    <function name="VertexPointerEXT" offset="assign">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
@@ -8128,25 +8128,25 @@
 <!-- Extension number 50 is a GLX extension. -->
 
 <category name="GL_SGIX_sprite" number="52">
-    <function name="SpriteParameterfSGIX" offset="454">
+    <function name="SpriteParameterfSGIX">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="SpriteParameterfvSGIX" offset="455">
+    <function name="SpriteParameterfvSGIX">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="SpriteParameteriSGIX" offset="456">
+    <function name="SpriteParameteriSGIX">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="SpriteParameterivSGIX" offset="457">
+    <function name="SpriteParameterivSGIX">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *"/>
         <glx ignore="true"/>
@@ -8167,13 +8167,13 @@
         <size name="PointParameterfvEXT"/>
     </enum>
 
-    <function name="PointParameterfEXT" offset="458">
+    <function name="PointParameterfEXT" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx rop="2065"/>
     </function>
 
-    <function name="PointParameterfvEXT" offset="459">
+    <function name="PointParameterfvEXT" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *" variable_param="pname"/>
         <glx rop="2066"/>
@@ -8181,33 +8181,33 @@
 </category>
 
 <category name="GL_SGIX_instruments" number="55">
-    <function name="GetInstrumentsSGIX" offset="460">
+    <function name="GetInstrumentsSGIX">
         <return type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="InstrumentsBufferSGIX" offset="461">
+    <function name="InstrumentsBufferSGIX">
         <param name="size" type="GLsizei"/>
         <param name="buffer" type="GLint *" output="true"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="PollInstrumentsSGIX" offset="462">
+    <function name="PollInstrumentsSGIX">
         <param name="marker_p" type="GLint *" output="true"/>
         <return type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="ReadInstrumentsSGIX" offset="463">
+    <function name="ReadInstrumentsSGIX">
         <param name="marker" type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="StartInstrumentsSGIX" offset="464">
+    <function name="StartInstrumentsSGIX">
         <glx ignore="true"/>
     </function>
 
-    <function name="StopInstrumentsSGIX" offset="465">
+    <function name="StopInstrumentsSGIX">
         <param name="marker" type="GLint"/>
         <glx ignore="true"/>
     </function>
@@ -8231,14 +8231,14 @@
 </category>
 
 <category name="GL_SGIX_framezoom" number="57">
-    <function name="FrameZoomSGIX" offset="466">
+    <function name="FrameZoomSGIX">
         <param name="factor" type="GLint"/>
         <glx rop="2072" ignore="true"/>
     </function>
 </category>
 
 <category name="GL_SGIX_tag_sample_buffer" number="58">
-    <function name="TagSampleBufferSGIX" offset="467">
+    <function name="TagSampleBufferSGIX">
         <glx rop="2050" ignore="true"/>
     </function>
 </category>
@@ -8246,14 +8246,14 @@
 <!-- Extension number 59 is not listed in the extension registry. -->
 
 <category name="GL_SGIX_reference_plane" number="60">
-    <function name="ReferencePlaneSGIX" offset="468">
+    <function name="ReferencePlaneSGIX">
         <param name="equation" type="const GLdouble *" count="4"/>
         <glx rop="2071" ignore="true"/>
     </function>
 </category>
 
 <category name="GL_SGIX_flush_raster" number="61">
-    <function name="FlushRasterSGIX" offset="469">
+    <function name="FlushRasterSGIX">
         <glx vendorpriv="4105" ignore="true"/>
     </function>
 </category>
@@ -8267,13 +8267,13 @@
 </category>
 
 <category name="GL_SGIS_fog_function" number="64">
-    <function name="FogFuncSGIS" offset="?">
+    <function name="FogFuncSGIS">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="points" type="const GLfloat *" count="n" count_scale="2"/>
         <glx rop="2067" ignore="true"/>
     </function>
 
-    <function name="GetFogFuncSGIS" offset="?">
+    <function name="GetFogFuncSGIS">
         <param name="points" type="GLfloat *" output="true"/>
         <!-- GLX protocol for this function is unknown. -->
     </function>
@@ -8288,37 +8288,37 @@
 </category>
 
 <category name="GL_HP_image_transform" number="66">
-    <function name="ImageTransformParameteriHP" offset="?">
+    <function name="ImageTransformParameteriHP">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
     </function>
 
-    <function name="ImageTransformParameterfHP" offset="?">
+    <function name="ImageTransformParameterfHP">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
     </function>
 
-    <function name="ImageTransformParameterivHP" offset="?">
+    <function name="ImageTransformParameterivHP">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *"/>
     </function>
 
-    <function name="ImageTransformParameterfvHP" offset="?">
+    <function name="ImageTransformParameterfvHP">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
     </function>
 
-    <function name="GetImageTransformParameterivHP" offset="?">
+    <function name="GetImageTransformParameterivHP">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
     </function>
 
-    <function name="GetImageTransformParameterfvHP" offset="?">
+    <function name="GetImageTransformParameterfvHP">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
@@ -8365,7 +8365,7 @@
 <!-- Extension number 75 is a GLU extension. -->
 
 <category name="GL_PGI_misc_hints" number="77">
-    <function name="HintPGI" offset="544">
+    <function name="HintPGI">
         <param name="target" type="GLenum"/>
         <param name="mode" type="GLint"/>
         <glx ignore="true"/>
@@ -8419,7 +8419,7 @@
         <param name="table" type="const GLvoid *"/>
     </function>
 
-    <function name="GetColorTableEXT" offset="550">
+    <function name="GetColorTableEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
@@ -8427,14 +8427,14 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="GetColorTableParameterivEXT" offset="551">
+    <function name="GetColorTableParameterivEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetColorTableParameterfvEXT" offset="552">
+    <function name="GetColorTableParameterfvEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
@@ -8449,42 +8449,42 @@
 </category>
 
 <category name="GL_SGIX_list_priority" number="80">
-    <function name="GetListParameterfvSGIX" offset="470">
+    <function name="GetListParameterfvSGIX">
         <param name="list" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetListParameterivSGIX" offset="471">
+    <function name="GetListParameterivSGIX">
         <param name="list" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="ListParameterfSGIX" offset="472">
+    <function name="ListParameterfSGIX">
         <param name="list" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="ListParameterfvSGIX" offset="473">
+    <function name="ListParameterfvSGIX">
         <param name="list" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="ListParameteriSGIX" offset="474">
+    <function name="ListParameteriSGIX">
         <param name="list" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="ListParameterivSGIX" offset="475">
+    <function name="ListParameterivSGIX">
         <param name="list" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *"/>
@@ -8536,7 +8536,7 @@
 <!-- Extension number 92 is a GLX extension. -->
 
 <category name="GL_EXT_index_material" number="94">
-    <function name="IndexMaterialEXT" offset="538">
+    <function name="IndexMaterialEXT">
         <param name="face" type="GLenum"/>
         <param name="mode" type="GLenum"/>
         <glx ignore="true"/>
@@ -8544,7 +8544,7 @@
 </category>
 
 <category name="GL_EXT_index_func" number="95">
-    <function name="IndexFuncEXT" offset="539">
+    <function name="IndexFuncEXT">
         <param name="func" type="GLenum"/>
         <param name="ref" type="GLclampf"/>
         <glx ignore="true"/>
@@ -8552,13 +8552,13 @@
 </category>
 
 <category name="GL_EXT_compiled_vertex_array" number="97">
-    <function name="LockArraysEXT" offset="540">
+    <function name="LockArraysEXT" offset="assign">
         <param name="first" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <glx handcode="true" ignore="true"/>
     </function>
 
-    <function name="UnlockArraysEXT" offset="541">
+    <function name="UnlockArraysEXT" offset="assign">
         <glx handcode="true" ignore="true"/>
     </function>
 </category>
@@ -8574,13 +8574,13 @@
         <size name="CullParameterdv"/>
     </enum>
 
-    <function name="CullParameterdvEXT" offset="542">
+    <function name="CullParameterdvEXT" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLdouble *"/> <!-- Spec bug. Should be const. -->
         <glx ignore="true"/>
     </function>
 
-    <function name="CullParameterfvEXT" offset="543">
+    <function name="CullParameterfvEXT" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *"/> <!-- Spec bug. Should be const. -->
         <glx ignore="true"/>
@@ -8592,121 +8592,121 @@
 
 <!-- Shouldn't this be EXT_fragment_lighting? -->
 <category name="GL_SGIX_fragment_lighting" number="102">
-    <function name="FragmentColorMaterialSGIX" offset="476">
+    <function name="FragmentColorMaterialSGIX">
         <param name="face" type="GLenum"/>
         <param name="mode" type="GLenum"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="FragmentLightfSGIX" offset="477">
+    <function name="FragmentLightfSGIX">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="FragmentLightfvSGIX" offset="478">
+    <function name="FragmentLightfvSGIX">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="FragmentLightiSGIX" offset="479">
+    <function name="FragmentLightiSGIX">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="FragmentLightivSGIX" offset="480">
+    <function name="FragmentLightivSGIX">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="FragmentLightModelfSGIX" offset="481">
+    <function name="FragmentLightModelfSGIX">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="FragmentLightModelfvSGIX" offset="482">
+    <function name="FragmentLightModelfvSGIX">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="FragmentLightModeliSGIX" offset="483">
+    <function name="FragmentLightModeliSGIX">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="FragmentLightModelivSGIX" offset="484">
+    <function name="FragmentLightModelivSGIX">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="FragmentMaterialfSGIX" offset="485">
+    <function name="FragmentMaterialfSGIX">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="FragmentMaterialfvSGIX" offset="486">
+    <function name="FragmentMaterialfvSGIX">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="FragmentMaterialiSGIX" offset="487">
+    <function name="FragmentMaterialiSGIX">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="FragmentMaterialivSGIX" offset="488">
+    <function name="FragmentMaterialivSGIX">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetFragmentLightfvSGIX" offset="489">
+    <function name="GetFragmentLightfvSGIX">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetFragmentLightivSGIX" offset="490">
+    <function name="GetFragmentLightivSGIX">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetFragmentMaterialfvSGIX" offset="491">
+    <function name="GetFragmentMaterialfvSGIX">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetFragmentMaterialivSGIX" offset="492">
+    <function name="GetFragmentMaterialivSGIX">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="LightEnviSGIX" offset="493">
+    <function name="LightEnviSGIX">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx ignore="true"/>
@@ -8743,15 +8743,15 @@
 <!-- Extension number 116 is not listed in the extension registry. -->
 
 <category name="GL_EXT_light_texture" number="117">
-    <function name="ApplyTextureEXT" offset="?">
+    <function name="ApplyTextureEXT">
         <param name="mode" type="GLenum"/>
     </function>
 
-    <function name="TextureLightEXT" offset="?">
+    <function name="TextureLightEXT">
         <param name="pname" type="GLenum"/>
     </function>
 
-    <function name="TextureMaterialEXT" offset="?">
+    <function name="TextureMaterialEXT">
         <param name="face" type="GLenum"/>
         <param name="mode" type="GLenum"/>
     </function>
@@ -8769,55 +8769,55 @@
 <!-- Extension number 131 is not listed in the extension registry. -->
 
 <category name="GL_SGIX_async" number="132">
-    <function name="AsyncMarkerSGIX" offset="?">
+    <function name="AsyncMarkerSGIX">
         <param name="marker" type="GLuint"/>
     </function>
 
-    <function name="FinishAsyncSGIX" offset="?">
+    <function name="FinishAsyncSGIX">
         <param name="markerp" type="GLuint *"/> <!-- Spec bug. Should be const. -->
         <return type="GLint"/>
     </function>
 
-    <function name="PollAsyncSGIX" offset="?">
+    <function name="PollAsyncSGIX">
         <param name="markerp" type="GLuint *"/> <!-- Spec bug. Should be const. -->
         <return type="GLint"/>
     </function>
 
-    <function name="GenAsyncMarkersSGIX" offset="?">
+    <function name="GenAsyncMarkersSGIX">
         <param name="range" type="GLsizei"/>
         <return type="GLuint"/>
     </function>
 
-    <function name="DeleteAsyncMarkersSGIX" offset="?">
+    <function name="DeleteAsyncMarkersSGIX">
         <param name="marker" type="GLuint"/>
         <param name="range" type="GLsizei"/>
     </function>
 
-    <function name="IsAsyncMarkerSGIX" offset="?">
+    <function name="IsAsyncMarkerSGIX">
         <param name="marker" type="GLuint"/>
         <return type="GLboolean"/>
     </function>
 </category>
 
 <category name="GL_INTEL_parallel_arrays" number="136">
-    <function name="VertexPointervINTEL" offset="?">
+    <function name="VertexPointervINTEL">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="pointer" type="const GLvoid **"/>
     </function>
 
-    <function name="NormalPointervINTEL" offset="?">
+    <function name="NormalPointervINTEL">
         <param name="type" type="GLenum"/>
         <param name="pointer" type="const GLvoid **"/>
     </function>
 
-    <function name="ColorPointervINTEL" offset="?">
+    <function name="ColorPointervINTEL">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="pointer" type="const GLvoid **"/>
     </function>
 
-    <function name="TexCoordPointervINTEL" offset="?">
+    <function name="TexCoordPointervINTEL">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="pointer" type="const GLvoid **"/>
@@ -8834,25 +8834,25 @@
 </category>
 
 <category name="GL_EXT_pixel_transform" number="138">
-    <function name="PixelTransformParameteriEXT" offset="?">
+    <function name="PixelTransformParameteriEXT">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
     </function>
 
-    <function name="PixelTransformParameterfEXT" offset="?">
+    <function name="PixelTransformParameterfEXT">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
     </function>
 
-    <function name="PixelTransformParameterivEXT" offset="?">
+    <function name="PixelTransformParameterivEXT">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *"/>
     </function>
 
-    <function name="PixelTransformParameterfvEXT" offset="?">
+    <function name="PixelTransformParameterfvEXT">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
@@ -8878,95 +8878,95 @@
 </category>
 
 <category name="GL_EXT_secondary_color" number="145">
-    <function name="SecondaryColor3bEXT" offset="561" vectorequiv="SecondaryColor3bvEXT">
+    <function name="SecondaryColor3bEXT" offset="assign" vectorequiv="SecondaryColor3bvEXT">
         <param name="red" type="GLbyte"/>
         <param name="green" type="GLbyte"/>
         <param name="blue" type="GLbyte"/>
     </function>
 
-    <function name="SecondaryColor3bvEXT" offset="562">
+    <function name="SecondaryColor3bvEXT" offset="assign">
         <param name="v" type="const GLbyte *" count="3"/>
         <glx rop="4126"/>
     </function>
 
-    <function name="SecondaryColor3dEXT" offset="563" vectorequiv="SecondaryColor3dvEXT">
+    <function name="SecondaryColor3dEXT" offset="assign" vectorequiv="SecondaryColor3dvEXT">
         <param name="red" type="GLdouble"/>
         <param name="green" type="GLdouble"/>
         <param name="blue" type="GLdouble"/>
     </function>
 
-    <function name="SecondaryColor3dvEXT" offset="564">
+    <function name="SecondaryColor3dvEXT" offset="assign">
         <param name="v" type="const GLdouble *" count="3"/>
         <glx rop="4130"/>
     </function>
 
-    <function name="SecondaryColor3fEXT" offset="565" vectorequiv="SecondaryColor3fvEXT">
+    <function name="SecondaryColor3fEXT" offset="assign" vectorequiv="SecondaryColor3fvEXT">
         <param name="red" type="GLfloat"/>
         <param name="green" type="GLfloat"/>
         <param name="blue" type="GLfloat"/>
     </function>
 
-    <function name="SecondaryColor3fvEXT" offset="566">
+    <function name="SecondaryColor3fvEXT" offset="assign">
         <param name="v" type="const GLfloat *" count="3"/>
         <glx rop="4129"/>
     </function>
 
-    <function name="SecondaryColor3iEXT" offset="567" vectorequiv="SecondaryColor3ivEXT">
+    <function name="SecondaryColor3iEXT" offset="assign" vectorequiv="SecondaryColor3ivEXT">
         <param name="red" type="GLint"/>
         <param name="green" type="GLint"/>
         <param name="blue" type="GLint"/>
     </function>
 
-    <function name="SecondaryColor3ivEXT" offset="568">
+    <function name="SecondaryColor3ivEXT" offset="assign">
         <param name="v" type="const GLint *" count="3"/>
         <glx rop="4128"/>
     </function>
 
-    <function name="SecondaryColor3sEXT" offset="569" vectorequiv="SecondaryColor3svEXT">
+    <function name="SecondaryColor3sEXT" offset="assign" vectorequiv="SecondaryColor3svEXT">
         <param name="red" type="GLshort"/>
         <param name="green" type="GLshort"/>
         <param name="blue" type="GLshort"/>
     </function>
 
-    <function name="SecondaryColor3svEXT" offset="570">
+    <function name="SecondaryColor3svEXT" offset="assign">
         <param name="v" type="const GLshort *" count="3"/>
         <glx rop="4127"/>
     </function>
 
-    <function name="SecondaryColor3ubEXT" offset="571" vectorequiv="SecondaryColor3ubvEXT">
+    <function name="SecondaryColor3ubEXT" offset="assign" vectorequiv="SecondaryColor3ubvEXT">
         <param name="red" type="GLubyte"/>
         <param name="green" type="GLubyte"/>
         <param name="blue" type="GLubyte"/>
     </function>
 
-    <function name="SecondaryColor3ubvEXT" offset="572">
+    <function name="SecondaryColor3ubvEXT" offset="assign">
         <param name="v" type="const GLubyte *" count="3"/>
         <glx rop="4131"/>
     </function>
 
-    <function name="SecondaryColor3uiEXT" offset="573" vectorequiv="SecondaryColor3uivEXT">
+    <function name="SecondaryColor3uiEXT" offset="assign" vectorequiv="SecondaryColor3uivEXT">
         <param name="red" type="GLuint"/>
         <param name="green" type="GLuint"/>
         <param name="blue" type="GLuint"/>
     </function>
 
-    <function name="SecondaryColor3uivEXT" offset="574">
+    <function name="SecondaryColor3uivEXT" offset="assign">
         <param name="v" type="const GLuint *" count="3"/>
         <glx rop="4133"/>
     </function>
 
-    <function name="SecondaryColor3usEXT" offset="575" vectorequiv="SecondaryColor3usvEXT">
+    <function name="SecondaryColor3usEXT" offset="assign" vectorequiv="SecondaryColor3usvEXT">
         <param name="red" type="GLushort"/>
         <param name="green" type="GLushort"/>
         <param name="blue" type="GLushort"/>
     </function>
 
-    <function name="SecondaryColor3usvEXT" offset="576">
+    <function name="SecondaryColor3usvEXT" offset="assign">
         <param name="v" type="const GLushort *" count="3"/>
         <glx rop="4132"/>
     </function>
 
-    <function name="SecondaryColorPointerEXT" offset="577">
+    <function name="SecondaryColorPointerEXT" offset="assign">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
@@ -8976,13 +8976,13 @@
 </category>
 
 <category name="GL_EXT_texture_perturb_normal" number="147">
-    <function name="TextureNormalEXT" offset="?">
+    <function name="TextureNormalEXT">
         <param name="mode" type="GLenum"/>
     </function>
 </category>
 
 <category name="GL_EXT_multi_draw_arrays" number="148">
-    <function name="MultiDrawArraysEXT" offset="644">
+    <function name="MultiDrawArraysEXT" offset="assign">
         <param name="mode" type="GLenum"/>
         <param name="first" type="GLint *"/> <!-- Spec bug. Should be const. -->
         <param name="count" type="GLsizei *"/> <!-- Spec bug. Should be const. -->
@@ -8990,7 +8990,7 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="MultiDrawElementsEXT" offset="645">
+    <function name="MultiDrawElementsEXT" offset="assign">
         <param name="mode" type="GLenum"/>
         <param name="count" type="const GLsizei *"/>
         <param name="type" type="GLenum"/>
@@ -9001,25 +9001,25 @@
 </category>
 
 <category name="GL_EXT_fog_coord" number="149">
-    <function name="FogCoordfEXT" offset="545" vectorequiv="FogCoordfvEXT">
+    <function name="FogCoordfEXT" offset="assign" vectorequiv="FogCoordfvEXT">
         <param name="coord" type="GLfloat"/>
     </function>
 
-    <function name="FogCoordfvEXT" offset="546">
+    <function name="FogCoordfvEXT" offset="assign">
         <param name="coord" type="const GLfloat *" count="1"/>
         <glx rop="4124"/>
     </function>
 
-    <function name="FogCoorddEXT" offset="547" vectorequiv="FogCoorddvEXT">
+    <function name="FogCoorddEXT" offset="assign" vectorequiv="FogCoorddvEXT">
         <param name="coord" type="GLdouble"/>
     </function>
 
-    <function name="FogCoorddvEXT" offset="548">
+    <function name="FogCoorddvEXT" offset="assign">
         <param name="coord" type="const GLdouble *" count="1"/>
         <glx rop="4125"/>
     </function>
 
-    <function name="FogCoordPointerEXT" offset="549">
+    <function name="FogCoordPointerEXT" offset="assign">
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
         <param name="pointer" type="const GLvoid *"/>
@@ -9034,113 +9034,113 @@
 <!-- Extension number 154 is not listed in the extension registry. -->
 
 <category name="GL_EXT_coordinate_frame" number="156">
-    <function name="Tangent3bEXT" offset="?">
+    <function name="Tangent3bEXT">
         <param name="tx" type="GLbyte"/>
         <param name="ty" type="GLbyte"/>
         <param name="tz" type="GLbyte"/>
     </function>
 
-    <function name="Tangent3bvEXT" offset="?">
+    <function name="Tangent3bvEXT">
         <param name="v" type="const GLbyte *"/>
     </function>
 
-    <function name="Tangent3dEXT" offset="?">
+    <function name="Tangent3dEXT">
         <param name="tx" type="GLdouble"/>
         <param name="ty" type="GLdouble"/>
         <param name="tz" type="GLdouble"/>
     </function>
 
-    <function name="Tangent3dvEXT" offset="?">
+    <function name="Tangent3dvEXT">
         <param name="v" type="const GLdouble *"/>
     </function>
 
-    <function name="Tangent3fEXT" offset="?">
+    <function name="Tangent3fEXT">
         <param name="tx" type="GLfloat"/>
         <param name="ty" type="GLfloat"/>
         <param name="tz" type="GLfloat"/>
     </function>
 
-    <function name="Tangent3fvEXT" offset="?">
+    <function name="Tangent3fvEXT">
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="Tangent3iEXT" offset="?">
+    <function name="Tangent3iEXT">
         <param name="tx" type="GLint"/>
         <param name="ty" type="GLint"/>
         <param name="tz" type="GLint"/>
     </function>
 
-    <function name="Tangent3ivEXT" offset="?">
+    <function name="Tangent3ivEXT">
         <param name="v" type="const GLint *"/>
     </function>
 
-    <function name="Tangent3sEXT" offset="?">
+    <function name="Tangent3sEXT">
         <param name="tx" type="GLshort"/>
         <param name="ty" type="GLshort"/>
         <param name="tz" type="GLshort"/>
     </function>
 
-    <function name="Tangent3svEXT" offset="?">
+    <function name="Tangent3svEXT">
         <param name="v" type="const GLshort *"/>
     </function>
 
-    <function name="Binormal3bEXT" offset="?">
+    <function name="Binormal3bEXT">
         <param name="bx" type="GLbyte"/>
         <param name="by" type="GLbyte"/>
         <param name="bz" type="GLbyte"/>
     </function>
 
-    <function name="Binormal3bvEXT" offset="?">
+    <function name="Binormal3bvEXT">
         <param name="v" type="const GLbyte *"/>
     </function>
 
-    <function name="Binormal3dEXT" offset="?">
+    <function name="Binormal3dEXT">
         <param name="bx" type="GLdouble"/>
         <param name="by" type="GLdouble"/>
         <param name="bz" type="GLdouble"/>
     </function>
 
-    <function name="Binormal3dvEXT" offset="?">
+    <function name="Binormal3dvEXT">
         <param name="v" type="const GLdouble *"/>
     </function>
 
-    <function name="Binormal3fEXT" offset="?">
+    <function name="Binormal3fEXT">
         <param name="bx" type="GLfloat"/>
         <param name="by" type="GLfloat"/>
         <param name="bz" type="GLfloat"/>
     </function>
 
-    <function name="Binormal3fvEXT" offset="?">
+    <function name="Binormal3fvEXT">
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="Binormal3iEXT" offset="?">
+    <function name="Binormal3iEXT">
         <param name="bx" type="GLint"/>
         <param name="by" type="GLint"/>
         <param name="bz" type="GLint"/>
     </function>
 
-    <function name="Binormal3ivEXT" offset="?">
+    <function name="Binormal3ivEXT">
         <param name="v" type="const GLint *"/>
     </function>
 
-    <function name="Binormal3sEXT" offset="?">
+    <function name="Binormal3sEXT">
         <param name="bx" type="GLshort"/>
         <param name="by" type="GLshort"/>
         <param name="bz" type="GLshort"/>
     </function>
 
-    <function name="Binormal3svEXT" offset="?">
+    <function name="Binormal3svEXT">
         <param name="v" type="const GLshort *"/>
     </function>
 
-    <function name="TangentPointerEXT" offset="?">
+    <function name="TangentPointerEXT">
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
         <param name="pointer" type="const GLvoid *"/>
     </function>
 
-    <function name="BinormalPointerEXT" offset="?">
+    <function name="BinormalPointerEXT">
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
         <param name="pointer" type="const GLvoid *"/>
@@ -9174,7 +9174,7 @@
 </category>
 
 <category name="GL_SGIX_pixel_texture" number="160">
-    <function name="PixelTexGenSGIX" offset="430">
+    <function name="PixelTexGenSGIX" offset="assign">
         <param name="mode" type="GLenum"/>
         <glx rop="2059" ignore="true"/>
     </function>
@@ -9184,70 +9184,70 @@
 <!-- Extension number 162 is not listed in the extension registry. -->
 
 <category name="GL_SUNX_constant_data" number="163">
-    <function name="FinishTextureSUNX" offset="?">
+    <function name="FinishTextureSUNX">
     </function>
 </category>
 
 <category name="GL_SUN_global_alpha" number="164">
-    <function name="GlobalAlphaFactorbSUN" offset="?">
+    <function name="GlobalAlphaFactorbSUN">
         <param name="factor" type="GLbyte"/>
     </function>
 
-    <function name="GlobalAlphaFactorsSUN" offset="?">
+    <function name="GlobalAlphaFactorsSUN">
         <param name="factor" type="GLshort"/>
     </function>
 
-    <function name="GlobalAlphaFactoriSUN" offset="?">
+    <function name="GlobalAlphaFactoriSUN">
         <param name="factor" type="GLint"/>
     </function>
 
-    <function name="GlobalAlphaFactorfSUN" offset="?">
+    <function name="GlobalAlphaFactorfSUN">
         <param name="factor" type="GLfloat"/>
     </function>
 
-    <function name="GlobalAlphaFactordSUN" offset="?">
+    <function name="GlobalAlphaFactordSUN">
         <param name="factor" type="GLdouble"/>
     </function>
 
-    <function name="GlobalAlphaFactorubSUN" offset="?">
+    <function name="GlobalAlphaFactorubSUN">
         <param name="factor" type="GLubyte"/>
     </function>
 
-    <function name="GlobalAlphaFactorusSUN" offset="?">
+    <function name="GlobalAlphaFactorusSUN">
         <param name="factor" type="GLushort"/>
     </function>
 
-    <function name="GlobalAlphaFactoruiSUN" offset="?">
+    <function name="GlobalAlphaFactoruiSUN">
         <param name="factor" type="GLuint"/>
     </function>
 </category>
 
 <category name="GL_SUN_triangle_list" number="165">
-    <function name="ReplacementCodeuiSUN" offset="?">
+    <function name="ReplacementCodeuiSUN">
         <param name="code" type="GLuint"/>
     </function>
 
-    <function name="ReplacementCodeusSUN" offset="?">
+    <function name="ReplacementCodeusSUN">
         <param name="code" type="GLushort"/>
     </function>
 
-    <function name="ReplacementCodeubSUN" offset="?">
+    <function name="ReplacementCodeubSUN">
         <param name="code" type="GLubyte"/>
     </function>
 
-    <function name="ReplacementCodeuivSUN" offset="?">
+    <function name="ReplacementCodeuivSUN">
         <param name="code" type="const GLuint *"/>
     </function>
 
-    <function name="ReplacementCodeusvSUN" offset="?">
+    <function name="ReplacementCodeusvSUN">
         <param name="code" type="const GLushort *"/>
     </function>
 
-    <function name="ReplacementCodeubvSUN" offset="?">
+    <function name="ReplacementCodeubvSUN">
         <param name="code" type="const GLubyte *"/>
     </function>
 
-    <function name="ReplacementCodePointerSUN" offset="?">
+    <function name="ReplacementCodePointerSUN">
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
         <param name="pointer" type="const GLvoid *"/>
@@ -9255,7 +9255,7 @@
 </category>
 
 <category name="GL_SUN_vertex" number="166">
-    <function name="Color4ubVertex2fSUN" offset="?">
+    <function name="Color4ubVertex2fSUN">
         <param name="r" type="GLubyte"/>
         <param name="g" type="GLubyte"/>
         <param name="b" type="GLubyte"/>
@@ -9264,12 +9264,12 @@
         <param name="y" type="GLfloat"/>
     </function>
 
-    <function name="Color4ubVertex2fvSUN" offset="?">
+    <function name="Color4ubVertex2fvSUN">
         <param name="c" type="const GLubyte *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="Color4ubVertex3fSUN" offset="?">
+    <function name="Color4ubVertex3fSUN">
         <param name="r" type="GLubyte"/>
         <param name="g" type="GLubyte"/>
         <param name="b" type="GLubyte"/>
@@ -9279,12 +9279,12 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="Color4ubVertex3fvSUN" offset="?">
+    <function name="Color4ubVertex3fvSUN">
         <param name="c" type="const GLubyte *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="Color3fVertex3fSUN" offset="?">
+    <function name="Color3fVertex3fSUN">
         <param name="r" type="GLfloat"/>
         <param name="g" type="GLfloat"/>
         <param name="b" type="GLfloat"/>
@@ -9293,12 +9293,12 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="Color3fVertex3fvSUN" offset="?">
+    <function name="Color3fVertex3fvSUN">
         <param name="c" type="const GLfloat *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="Normal3fVertex3fSUN" offset="?">
+    <function name="Normal3fVertex3fSUN">
         <param name="nx" type="GLfloat"/>
         <param name="ny" type="GLfloat"/>
         <param name="nz" type="GLfloat"/>
@@ -9307,12 +9307,12 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="Normal3fVertex3fvSUN" offset="?">
+    <function name="Normal3fVertex3fvSUN">
         <param name="n" type="const GLfloat *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="Color4fNormal3fVertex3fSUN" offset="?">
+    <function name="Color4fNormal3fVertex3fSUN">
         <param name="r" type="GLfloat"/>
         <param name="g" type="GLfloat"/>
         <param name="b" type="GLfloat"/>
@@ -9325,13 +9325,13 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="Color4fNormal3fVertex3fvSUN" offset="?">
+    <function name="Color4fNormal3fVertex3fvSUN">
         <param name="c" type="const GLfloat *"/>
         <param name="n" type="const GLfloat *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="TexCoord2fVertex3fSUN" offset="?">
+    <function name="TexCoord2fVertex3fSUN">
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
         <param name="x" type="GLfloat"/>
@@ -9339,12 +9339,12 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="TexCoord2fVertex3fvSUN" offset="?">
+    <function name="TexCoord2fVertex3fvSUN">
         <param name="tc" type="const GLfloat *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="TexCoord4fVertex4fSUN" offset="?">
+    <function name="TexCoord4fVertex4fSUN">
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
         <param name="p" type="GLfloat"/>
@@ -9355,12 +9355,12 @@
         <param name="w" type="GLfloat"/>
     </function>
 
-    <function name="TexCoord4fVertex4fvSUN" offset="?">
+    <function name="TexCoord4fVertex4fvSUN">
         <param name="tc" type="const GLfloat *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="TexCoord2fColor4ubVertex3fSUN" offset="?">
+    <function name="TexCoord2fColor4ubVertex3fSUN">
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
         <param name="r" type="GLubyte"/>
@@ -9372,13 +9372,13 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="TexCoord2fColor4ubVertex3fvSUN" offset="?">
+    <function name="TexCoord2fColor4ubVertex3fvSUN">
         <param name="tc" type="const GLfloat *"/>
         <param name="c" type="const GLubyte *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="TexCoord2fColor3fVertex3fSUN" offset="?">
+    <function name="TexCoord2fColor3fVertex3fSUN">
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
         <param name="r" type="GLfloat"/>
@@ -9389,13 +9389,13 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="TexCoord2fColor3fVertex3fvSUN" offset="?">
+    <function name="TexCoord2fColor3fVertex3fvSUN">
         <param name="tc" type="const GLfloat *"/>
         <param name="c" type="const GLfloat *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="TexCoord2fNormal3fVertex3fSUN" offset="?">
+    <function name="TexCoord2fNormal3fVertex3fSUN">
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
         <param name="nx" type="GLfloat"/>
@@ -9406,13 +9406,13 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="TexCoord2fNormal3fVertex3fvSUN" offset="?">
+    <function name="TexCoord2fNormal3fVertex3fvSUN">
         <param name="tc" type="const GLfloat *"/>
         <param name="n" type="const GLfloat *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="TexCoord2fColor4fNormal3fVertex3fSUN" offset="?">
+    <function name="TexCoord2fColor4fNormal3fVertex3fSUN">
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
         <param name="r" type="GLfloat"/>
@@ -9427,14 +9427,14 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="TexCoord2fColor4fNormal3fVertex3fvSUN" offset="?">
+    <function name="TexCoord2fColor4fNormal3fVertex3fvSUN">
         <param name="tc" type="const GLfloat *"/>
         <param name="c" type="const GLfloat *"/>
         <param name="n" type="const GLfloat *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="TexCoord4fColor4fNormal3fVertex4fSUN" offset="?">
+    <function name="TexCoord4fColor4fNormal3fVertex4fSUN">
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
         <param name="p" type="GLfloat"/>
@@ -9452,26 +9452,26 @@
         <param name="w" type="GLfloat"/>
     </function>
 
-    <function name="TexCoord4fColor4fNormal3fVertex4fvSUN" offset="?">
+    <function name="TexCoord4fColor4fNormal3fVertex4fvSUN">
         <param name="tc" type="const GLfloat *"/>
         <param name="c" type="const GLfloat *"/>
         <param name="n" type="const GLfloat *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="ReplacementCodeuiVertex3fSUN" offset="?">
+    <function name="ReplacementCodeuiVertex3fSUN">
         <param name="rc" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="ReplacementCodeuiVertex3fvSUN" offset="?">
+    <function name="ReplacementCodeuiVertex3fvSUN">
         <param name="rc" type="const GLuint *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="ReplacementCodeuiColor4ubVertex3fSUN" offset="?">
+    <function name="ReplacementCodeuiColor4ubVertex3fSUN">
         <param name="rc" type="GLuint"/>
         <param name="r" type="GLubyte"/>
         <param name="g" type="GLubyte"/>
@@ -9482,13 +9482,13 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="ReplacementCodeuiColor4ubVertex3fvSUN" offset="?">
+    <function name="ReplacementCodeuiColor4ubVertex3fvSUN">
         <param name="rc" type="const GLuint *"/>
         <param name="c" type="const GLubyte *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="ReplacementCodeuiColor3fVertex3fSUN" offset="?">
+    <function name="ReplacementCodeuiColor3fVertex3fSUN">
         <param name="rc" type="GLuint"/>
         <param name="r" type="GLfloat"/>
         <param name="g" type="GLfloat"/>
@@ -9498,13 +9498,13 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="ReplacementCodeuiColor3fVertex3fvSUN" offset="?">
+    <function name="ReplacementCodeuiColor3fVertex3fvSUN">
         <param name="rc" type="const GLuint *"/>
         <param name="c" type="const GLfloat *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="ReplacementCodeuiNormal3fVertex3fSUN" offset="?">
+    <function name="ReplacementCodeuiNormal3fVertex3fSUN">
         <param name="rc" type="GLuint"/>
         <param name="nx" type="GLfloat"/>
         <param name="ny" type="GLfloat"/>
@@ -9514,13 +9514,13 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="ReplacementCodeuiNormal3fVertex3fvSUN" offset="?">
+    <function name="ReplacementCodeuiNormal3fVertex3fvSUN">
         <param name="rc" type="const GLuint *"/>
         <param name="n" type="const GLfloat *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="ReplacementCodeuiColor4fNormal3fVertex3fSUN" offset="?">
+    <function name="ReplacementCodeuiColor4fNormal3fVertex3fSUN">
         <param name="rc" type="GLuint"/>
         <param name="r" type="GLfloat"/>
         <param name="g" type="GLfloat"/>
@@ -9534,14 +9534,14 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="ReplacementCodeuiColor4fNormal3fVertex3fvSUN" offset="?">
+    <function name="ReplacementCodeuiColor4fNormal3fVertex3fvSUN">
         <param name="rc" type="const GLuint *"/>
         <param name="c" type="const GLfloat *"/>
         <param name="n" type="const GLfloat *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="ReplacementCodeuiTexCoord2fVertex3fSUN" offset="?">
+    <function name="ReplacementCodeuiTexCoord2fVertex3fSUN">
         <param name="rc" type="GLuint"/>
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
@@ -9550,13 +9550,13 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="ReplacementCodeuiTexCoord2fVertex3fvSUN" offset="?">
+    <function name="ReplacementCodeuiTexCoord2fVertex3fvSUN">
         <param name="rc" type="const GLuint *"/>
         <param name="tc" type="const GLfloat *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="ReplacementCodeuiTexCoord2fNormal3fVertex3fSUN" offset="?">
+    <function name="ReplacementCodeuiTexCoord2fNormal3fVertex3fSUN">
         <param name="rc" type="GLuint"/>
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
@@ -9568,14 +9568,14 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="ReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN" offset="?">
+    <function name="ReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN">
         <param name="rc" type="const GLuint *"/>
         <param name="tc" type="const GLfloat *"/>
         <param name="n" type="const GLfloat *"/>
         <param name="v" type="const GLfloat *"/>
     </function>
 
-    <function name="ReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN" offset="?">
+    <function name="ReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN">
         <param name="rc" type="GLuint"/>
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
@@ -9591,7 +9591,7 @@
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="ReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN" offset="?">
+    <function name="ReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN">
         <param name="rc" type="const GLuint *"/>
         <param name="tc" type="const GLfloat *"/>
         <param name="c" type="const GLfloat *"/>
@@ -9608,7 +9608,7 @@
 <!-- Extension number 172 is a WGL extension. -->
 
 <category name="GL_EXT_blend_func_separate" number="173">
-    <function name="BlendFuncSeparateEXT" offset="537">
+    <function name="BlendFuncSeparateEXT" offset="assign">
         <param name="sfactorRGB" type="GLenum"/>
         <param name="dfactorRGB" type="GLenum"/>
         <param name="sfactorAlpha" type="GLenum"/>
@@ -9662,17 +9662,17 @@
 </category>
 
 <category name="GL_EXT_vertex_weighting" number="188">
-    <function name="VertexWeightfEXT" offset="494" vectorequiv="VertexWeightfvEXT">
+    <function name="VertexWeightfEXT" offset="assign" vectorequiv="VertexWeightfvEXT">
         <param name="weight" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexWeightfvEXT" offset="495">
+    <function name="VertexWeightfvEXT" offset="assign">
         <param name="weight" type="const GLfloat *" count="1"/>
         <glx rop="4135" ignore="true"/>
     </function>
 
-    <function name="VertexWeightPointerEXT" offset="496">
+    <function name="VertexWeightPointerEXT" offset="assign">
         <param name="size" type="GLsizei"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
@@ -9691,11 +9691,11 @@
 </category>
 
 <category name="GL_NV_vertex_array_range" number="190">
-    <function name="FlushVertexArrayRangeNV" offset="497">
+    <function name="FlushVertexArrayRangeNV" offset="assign">
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexArrayRangeNV" offset="498">
+    <function name="VertexArrayRangeNV" offset="assign">
         <param name="length" type="GLsizei"/>
         <param name="pointer" type="const GLvoid *"/>
         <glx ignore="true"/>
@@ -9703,31 +9703,31 @@
 </category>
 
 <category name="GL_NV_register_combiners" number="191">
-    <function name="CombinerParameterfvNV" offset="499">
+    <function name="CombinerParameterfvNV" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *" variable_param="pname"/>
         <glx rop="4137" ignore="true"/>
     </function>
 
-    <function name="CombinerParameterfNV" offset="500">
+    <function name="CombinerParameterfNV" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx rop="4136" ignore="true"/>
     </function>
 
-    <function name="CombinerParameterivNV" offset="501">
+    <function name="CombinerParameterivNV" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *" variable_param="pname"/>
         <glx rop="4139" ignore="true"/>
     </function>
 
-    <function name="CombinerParameteriNV" offset="502">
+    <function name="CombinerParameteriNV" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx rop="4138" ignore="true"/>
     </function>
 
-    <function name="CombinerInputNV" offset="503">
+    <function name="CombinerInputNV" offset="assign">
         <param name="stage" type="GLenum"/>
         <param name="portion" type="GLenum"/>
         <param name="variable" type="GLenum"/>
@@ -9737,7 +9737,7 @@
         <glx rop="4140" ignore="true"/>
     </function>
 
-    <function name="CombinerOutputNV" offset="504">
+    <function name="CombinerOutputNV" offset="assign">
         <param name="stage" type="GLenum"/>
         <param name="portion" type="GLenum"/>
         <param name="abOutput" type="GLenum"/>
@@ -9751,7 +9751,7 @@
         <glx rop="4141" ignore="true"/>
     </function>
 
-    <function name="FinalCombinerInputNV" offset="505">
+    <function name="FinalCombinerInputNV" offset="assign">
         <param name="variable" type="GLenum"/>
         <param name="input" type="GLenum"/>
         <param name="mapping" type="GLenum"/>
@@ -9759,7 +9759,7 @@
         <glx rop="4142" ignore="true"/>
     </function>
 
-    <function name="GetCombinerInputParameterfvNV" offset="506">
+    <function name="GetCombinerInputParameterfvNV" offset="assign">
         <param name="stage" type="GLenum"/>
         <param name="portion" type="GLenum"/>
         <param name="variable" type="GLenum"/>
@@ -9768,7 +9768,7 @@
         <glx vendorpriv="1270" ignore="true"/>
     </function>
 
-    <function name="GetCombinerInputParameterivNV" offset="507">
+    <function name="GetCombinerInputParameterivNV" offset="assign">
         <param name="stage" type="GLenum"/>
         <param name="portion" type="GLenum"/>
         <param name="variable" type="GLenum"/>
@@ -9777,7 +9777,7 @@
         <glx vendorpriv="1271" ignore="true"/>
     </function>
 
-    <function name="GetCombinerOutputParameterfvNV" offset="508">
+    <function name="GetCombinerOutputParameterfvNV" offset="assign">
         <param name="stage" type="GLenum"/>
         <param name="portion" type="GLenum"/>
         <param name="pname" type="GLenum"/>
@@ -9785,7 +9785,7 @@
         <glx vendorpriv="1272" ignore="true"/>
     </function>
 
-    <function name="GetCombinerOutputParameterivNV" offset="509">
+    <function name="GetCombinerOutputParameterivNV" offset="assign">
         <param name="stage" type="GLenum"/>
         <param name="portion" type="GLenum"/>
         <param name="pname" type="GLenum"/>
@@ -9793,14 +9793,14 @@
         <glx vendorpriv="1273" ignore="true"/>
     </function>
 
-    <function name="GetFinalCombinerInputParameterfvNV" offset="510">
+    <function name="GetFinalCombinerInputParameterfvNV" offset="assign">
         <param name="variable" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true"/>
         <glx vendorpriv="1274" ignore="true"/>
     </function>
 
-    <function name="GetFinalCombinerInputParameterivNV" offset="511">
+    <function name="GetFinalCombinerInputParameterivNV" offset="assign">
         <param name="variable" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>
@@ -9851,104 +9851,104 @@
 </category>
 
 <category name="GL_MESA_resize_buffers" number="196">
-    <function name="ResizeBuffersMESA" offset="512">
+    <function name="ResizeBuffersMESA" offset="assign">
         <glx ignore="true"/>
     </function>
 </category>
 
 <category name="GL_MESA_window_pos" number="197">
-    <function name="WindowPos2dMESA" offset="513">
+    <function name="WindowPos2dMESA" offset="assign">
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="WindowPos2dvMESA" offset="514">
+    <function name="WindowPos2dvMESA" offset="assign">
         <param name="v" type="const GLdouble *"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="WindowPos2fMESA" offset="515">
+    <function name="WindowPos2fMESA" offset="assign">
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="WindowPos2fvMESA" offset="516">
+    <function name="WindowPos2fvMESA" offset="assign">
         <param name="v" type="const GLfloat *"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="WindowPos2iMESA" offset="517">
+    <function name="WindowPos2iMESA" offset="assign">
         <param name="x" type="GLint"/>
         <param name="y" type="GLint"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="WindowPos2ivMESA" offset="518">
+    <function name="WindowPos2ivMESA" offset="assign">
         <param name="v" type="const GLint *"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="WindowPos2sMESA" offset="519">
+    <function name="WindowPos2sMESA" offset="assign">
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="WindowPos2svMESA" offset="520">
+    <function name="WindowPos2svMESA" offset="assign">
         <param name="v" type="const GLshort *"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="WindowPos3dMESA" offset="521">
+    <function name="WindowPos3dMESA" offset="assign">
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="WindowPos3dvMESA" offset="522">
+    <function name="WindowPos3dvMESA" offset="assign">
         <param name="v" type="const GLdouble *"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="WindowPos3fMESA" offset="523" vectorequiv="WindowPos3fvMESA">
+    <function name="WindowPos3fMESA" offset="assign" vectorequiv="WindowPos3fvMESA">
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="WindowPos3fvMESA" offset="524">
+    <function name="WindowPos3fvMESA" offset="assign">
         <param name="v" type="const GLfloat *" count="3"/>
         <glx rop="230"/>
     </function>
 
-    <function name="WindowPos3iMESA" offset="525">
+    <function name="WindowPos3iMESA" offset="assign">
         <param name="x" type="GLint"/>
         <param name="y" type="GLint"/>
         <param name="z" type="GLint"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="WindowPos3ivMESA" offset="526">
+    <function name="WindowPos3ivMESA" offset="assign">
         <param name="v" type="const GLint *"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="WindowPos3sMESA" offset="527">
+    <function name="WindowPos3sMESA" offset="assign">
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="WindowPos3svMESA" offset="528">
+    <function name="WindowPos3svMESA" offset="assign">
         <param name="v" type="const GLshort *"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="WindowPos4dMESA" offset="529">
+    <function name="WindowPos4dMESA" offset="assign">
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
@@ -9956,12 +9956,12 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="WindowPos4dvMESA" offset="530">
+    <function name="WindowPos4dvMESA" offset="assign">
         <param name="v" type="const GLdouble *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="WindowPos4fMESA" offset="531">
+    <function name="WindowPos4fMESA" offset="assign">
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
@@ -9969,12 +9969,12 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="WindowPos4fvMESA" offset="532">
+    <function name="WindowPos4fvMESA" offset="assign">
         <param name="v" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="WindowPos4iMESA" offset="533">
+    <function name="WindowPos4iMESA" offset="assign">
         <param name="x" type="GLint"/>
         <param name="y" type="GLint"/>
         <param name="z" type="GLint"/>
@@ -9982,12 +9982,12 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="WindowPos4ivMESA" offset="534">
+    <function name="WindowPos4ivMESA" offset="assign">
         <param name="v" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="WindowPos4sMESA" offset="535">
+    <function name="WindowPos4sMESA" offset="assign">
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
@@ -9995,7 +9995,7 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="WindowPos4svMESA" offset="536">
+    <function name="WindowPos4svMESA" offset="assign">
         <param name="v" type="const GLshort *"/>
         <glx ignore="true"/>
     </function>
@@ -10009,7 +10009,7 @@
 </category>
 
 <category name="GL_IBM_multimode_draw_arrays" number="200">
-    <function name="MultiModeDrawArraysIBM" offset="708">
+    <function name="MultiModeDrawArraysIBM" offset="assign">
         <param name="mode" type="const GLenum *"/>
         <param name="first" type="const GLint *"/>
         <param name="count" type="const GLsizei *"/>
@@ -10018,7 +10018,7 @@
         <glx handcode="true" ignore="true"/>
     </function>
 
-    <function name="MultiModeDrawElementsIBM" offset="709">
+    <function name="MultiModeDrawElementsIBM" offset="assign">
         <param name="mode" type="const GLenum *"/>
         <param name="count" type="const GLsizei *"/>
         <param name="type" type="GLenum"/>
@@ -10030,7 +10030,7 @@
 </category>
 
 <category name="GL_IBM_vertex_array_lists" number="201">
-    <function name="ColorPointerListIBM" offset="?">
+    <function name="ColorPointerListIBM">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLint"/>
@@ -10038,7 +10038,7 @@
         <param name="ptrstride" type="GLint"/>
     </function>
 
-    <function name="SecondaryColorPointerListIBM" offset="?">
+    <function name="SecondaryColorPointerListIBM">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLint"/>
@@ -10046,34 +10046,34 @@
         <param name="ptrstride" type="GLint"/>
     </function>
 
-    <function name="EdgeFlagPointerListIBM" offset="?">
+    <function name="EdgeFlagPointerListIBM">
         <param name="stride" type="GLint"/>
         <param name="pointer" type="const GLboolean **"/>
         <param name="ptrstride" type="GLint"/>
     </function>
 
-    <function name="FogCoordPointerListIBM" offset="?">
+    <function name="FogCoordPointerListIBM">
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLint"/>
         <param name="pointer" type="const GLvoid **"/>
         <param name="ptrstride" type="GLint"/>
     </function>
 
-    <function name="IndexPointerListIBM" offset="?">
+    <function name="IndexPointerListIBM">
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLint"/>
         <param name="pointer" type="const GLvoid **"/>
         <param name="ptrstride" type="GLint"/>
     </function>
 
-    <function name="NormalPointerListIBM" offset="?">
+    <function name="NormalPointerListIBM">
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLint"/>
         <param name="pointer" type="const GLvoid **"/>
         <param name="ptrstride" type="GLint"/>
     </function>
 
-    <function name="TexCoordPointerListIBM" offset="?">
+    <function name="TexCoordPointerListIBM">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLint"/>
@@ -10081,7 +10081,7 @@
         <param name="ptrstride" type="GLint"/>
     </function>
 
-    <function name="VertexPointerListIBM" offset="?">
+    <function name="VertexPointerListIBM">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLint"/>
@@ -10108,7 +10108,7 @@
 </category>
 
 <category name="GL_3DFX_tbuffer" number="208">
-    <function name="TbufferMask3DFX" offset="553">
+    <function name="TbufferMask3DFX">
         <param name="mask" type="GLuint"/>
         <glx ignore="true"/>
     </function>
@@ -10131,7 +10131,7 @@
 <category name="GL_SGIS_texture_color_mask" number="214">
     <enum name="TEXTURE_COLOR_WRITEMASK_SGIS"             value="0x81EF"/>
 
-    <function name="TextureColorMaskSGIS" offset="?">
+    <function name="TextureColorMaskSGIS">
         <param name="red" type="GLboolean"/>
         <param name="green" type="GLboolean"/>
         <param name="blue" type="GLboolean"/>
@@ -10157,43 +10157,43 @@
 </category>
 
 <category name="GL_NV_fence" number="222">
-    <function name="DeleteFencesNV" offset="647">
+    <function name="DeleteFencesNV" offset="assign">
         <param name="n" type="GLsizei"/>
         <param name="fences" type="const GLuint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GenFencesNV" offset="648">
+    <function name="GenFencesNV" offset="assign">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="fences" type="GLuint *" output="true" count="n"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="IsFenceNV" offset="649">
+    <function name="IsFenceNV" offset="assign">
         <param name="fence" type="GLuint"/>
         <return type="GLboolean"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="TestFenceNV" offset="650">
+    <function name="TestFenceNV" offset="assign">
         <param name="fence" type="GLuint"/>
         <return type="GLboolean"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetFenceivNV" offset="651">
+    <function name="GetFenceivNV" offset="assign">
         <param name="fence" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="FinishFenceNV" offset="652">
+    <function name="FinishFenceNV" offset="assign">
         <param name="fence" type="GLuint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="SetFenceNV" offset="653">
+    <function name="SetFenceNV" offset="assign">
         <param name="fence" type="GLuint"/>
         <param name="condition" type="GLenum"/>
         <glx ignore="true"/>
@@ -10205,7 +10205,7 @@
 </category>
 
 <category name="GL_NV_evaluators" number="225">
-    <function name="MapControlPointsNV" offset="?">
+    <function name="MapControlPointsNV">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="type" type="GLenum"/>
@@ -10217,19 +10217,19 @@
         <param name="points" type="const GLvoid *"/>
     </function>
 
-    <function name="MapParameterivNV" offset="?">
+    <function name="MapParameterivNV">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *"/>
     </function>
 
-    <function name="MapParameterfvNV" offset="?">
+    <function name="MapParameterfvNV">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
     </function>
 
-    <function name="GetMapControlPointsNV" offset="?">
+    <function name="GetMapControlPointsNV">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="type" type="GLenum"/>
@@ -10239,33 +10239,33 @@
         <param name="points" type="GLvoid *" output="true"/>
     </function>
 
-    <function name="GetMapParameterivNV" offset="?">
+    <function name="GetMapParameterivNV">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>
     </function>
 
-    <function name="GetMapParameterfvNV" offset="?">
+    <function name="GetMapParameterfvNV">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true"/>
     </function>
 
-    <function name="GetMapAttribParameterivNV" offset="?">
+    <function name="GetMapAttribParameterivNV">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>
     </function>
 
-    <function name="GetMapAttribParameterfvNV" offset="?">
+    <function name="GetMapAttribParameterfvNV">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true"/>
     </function>
 
-    <function name="EvalMapsNV" offset="?">
+    <function name="EvalMapsNV">
         <param name="target" type="GLenum"/>
         <param name="mode" type="GLenum"/>
     </function>
@@ -10277,13 +10277,13 @@
 </category>
 
 <category name="GL_NV_register_combiners2" number="227">
-    <function name="CombinerStageParameterfvNV" offset="?">
+    <function name="CombinerStageParameterfvNV">
         <param name="stage" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
     </function>
 
-    <function name="GetCombinerStageParameterfvNV" offset="?">
+    <function name="GetCombinerStageParameterfvNV">
         <param name="stage" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true"/>
@@ -10417,7 +10417,7 @@
     <enum name="MAP2_VERTEX_ATTRIB14_4_NV"                value="0x867E"/>
     <enum name="MAP2_VERTEX_ATTRIB15_4_NV"                value="0x867F"/>
 
-    <function name="AreProgramsResidentNV" offset="578">
+    <function name="AreProgramsResidentNV" offset="assign">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="ids" type="const GLuint *" count="n"/>
         <param name="residences" type="GLboolean *" output="true" count="n"/>
@@ -10425,26 +10425,26 @@
         <glx vendorpriv="1293"/>
     </function>
 
-    <function name="BindProgramNV" offset="579">
+    <function name="BindProgramNV" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="program" type="GLuint"/>
         <glx rop="4180"/>
     </function>
 
-    <function name="DeleteProgramsNV" offset="580">
+    <function name="DeleteProgramsNV" offset="assign">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="programs" type="const GLuint *" count="n"/>
         <glx vendorpriv="1294"/>
     </function>
 
-    <function name="ExecuteProgramNV" offset="581">
+    <function name="ExecuteProgramNV" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="id" type="GLuint"/>
         <param name="params" type="const GLfloat *" count="4"/>
         <glx rop="4181"/>
     </function>
 
-    <function name="GenProgramsNV" offset="582">
+    <function name="GenProgramsNV" offset="assign">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="programs" type="GLuint *" output="true" count="n"/>
         <glx vendorpriv="1295" always_array="true"/>
@@ -10456,7 +10456,7 @@
          of these functions.
       -->
 
-    <function name="GetProgramParameterdvNV" offset="583">
+    <function name="GetProgramParameterdvNV" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
@@ -10464,7 +10464,7 @@
         <glx vendorpriv="1297"/>
     </function>
 
-    <function name="GetProgramParameterfvNV" offset="584">
+    <function name="GetProgramParameterfvNV" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
@@ -10472,21 +10472,21 @@
         <glx vendorpriv="1296"/>
     </function>
 
-    <function name="GetProgramivNV" offset="585">
+    <function name="GetProgramivNV" offset="assign">
         <param name="id" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx vendorpriv="1298"/>
     </function>
 
-    <function name="GetProgramStringNV" offset="586">
+    <function name="GetProgramStringNV" offset="assign">
         <param name="id" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="program" type="GLubyte *" output="true"/>
         <glx vendorpriv="1299" handcode="server" always_array="true"/>
     </function>
 
-    <function name="GetTrackMatrixivNV" offset="587">
+    <function name="GetTrackMatrixivNV" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="address" type="GLuint"/>
         <param name="pname" type="GLenum"/>
@@ -10494,41 +10494,41 @@
         <glx vendorpriv="1300"/>
     </function>
 
-    <function name="GetVertexAttribdvNV" offset="753">
+    <function name="GetVertexAttribdvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLdouble *" output="true" variable_param="pname"/>
         <glx vendorpriv="1301"/>
     </function>
 
-    <function name="GetVertexAttribfvNV" offset="754">
+    <function name="GetVertexAttribfvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx vendorpriv="1302"/>
     </function>
 
-    <function name="GetVertexAttribivNV" offset="755">
+    <function name="GetVertexAttribivNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx vendorpriv="1303"/>
     </function>
 
-    <function name="GetVertexAttribPointervNV" offset="591">
+    <function name="GetVertexAttribPointervNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLvoid **" output="true"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="IsProgramNV" offset="592">
+    <function name="IsProgramNV" offset="assign">
         <param name="program" type="GLuint"/>
         <return type="GLboolean"/>
         <glx vendorpriv="1304"/>
     </function>
 
-    <function name="LoadProgramNV" offset="593">
+    <function name="LoadProgramNV" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="id" type="GLuint"/>
         <param name="len" type="GLsizei" counter="true"/>
@@ -10536,7 +10536,7 @@
         <glx rop="4183"/>
     </function>
 
-    <function name="ProgramParameter4dNV" offset="594" vectorequiv="ProgramParameter4dvNV">
+    <function name="ProgramParameter4dNV" offset="assign" vectorequiv="ProgramParameter4dvNV">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
@@ -10545,14 +10545,14 @@
         <param name="w" type="GLdouble"/>
     </function>
 
-    <function name="ProgramParameter4dvNV" offset="595">
+    <function name="ProgramParameter4dvNV" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="const GLdouble *" count="4"/>
         <glx rop="4185" doubles_in_order="true"/>
     </function>
 
-    <function name="ProgramParameter4fNV" offset="596" vectorequiv="ProgramParameter4fvNV">
+    <function name="ProgramParameter4fNV" offset="assign" vectorequiv="ProgramParameter4fvNV">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
@@ -10561,14 +10561,14 @@
         <param name="w" type="GLfloat"/>
     </function>
 
-    <function name="ProgramParameter4fvNV" offset="597">
+    <function name="ProgramParameter4fvNV" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="const GLfloat *" count="4"/>
         <glx rop="4184"/>
     </function>
 
-    <function name="ProgramParameters4dvNV" offset="598">
+    <function name="ProgramParameters4dvNV" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="num" type="GLuint" counter="true"/>
@@ -10576,7 +10576,7 @@
         <glx rop="4187"/>
     </function>
 
-    <function name="ProgramParameters4fvNV" offset="599">
+    <function name="ProgramParameters4fvNV" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="num" type="GLuint" counter="true"/>
@@ -10584,13 +10584,13 @@
         <glx rop="4186"/>
     </function>
 
-    <function name="RequestResidentProgramsNV" offset="600">
+    <function name="RequestResidentProgramsNV" offset="assign">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="ids" type="const GLuint *" count="n"/>
         <glx rop="4182"/>
     </function>
 
-    <function name="TrackMatrixNV" offset="601">
+    <function name="TrackMatrixNV" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="address" type="GLuint"/>
         <param name="matrix" type="GLenum"/>
@@ -10598,7 +10598,7 @@
         <glx rop="4188"/>
     </function>
 
-    <function name="VertexAttribPointerNV" offset="602">
+    <function name="VertexAttribPointerNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
@@ -10607,43 +10607,43 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="VertexAttrib1sNV" offset="760" vectorequiv="VertexAttrib1svNV">
+    <function name="VertexAttrib1sNV" offset="assign" vectorequiv="VertexAttrib1svNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib1svNV" offset="761">
+    <function name="VertexAttrib1svNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="1"/>
         <glx rop="4189"/>
     </function>
 
-    <function name="VertexAttrib2sNV" offset="766" vectorequiv="VertexAttrib2svNV">
+    <function name="VertexAttrib2sNV" offset="assign" vectorequiv="VertexAttrib2svNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib2svNV" offset="767">
+    <function name="VertexAttrib2svNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="2"/>
         <glx rop="4190"/>
     </function>
 
-    <function name="VertexAttrib3sNV" offset="772" vectorequiv="VertexAttrib3svNV">
+    <function name="VertexAttrib3sNV" offset="assign" vectorequiv="VertexAttrib3svNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib3svNV" offset="773">
+    <function name="VertexAttrib3svNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="3"/>
         <glx rop="4191"/>
     </function>
 
-    <function name="VertexAttrib4sNV" offset="778" vectorequiv="VertexAttrib4svNV">
+    <function name="VertexAttrib4sNV" offset="assign" vectorequiv="VertexAttrib4svNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
@@ -10651,49 +10651,49 @@
         <param name="w" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib4svNV" offset="779">
+    <function name="VertexAttrib4svNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="4"/>
         <glx rop="4192"/>
     </function>
 
-    <function name="VertexAttrib1fNV" offset="758" vectorequiv="VertexAttrib1fvNV">
+    <function name="VertexAttrib1fNV" offset="assign" vectorequiv="VertexAttrib1fvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib1fvNV" offset="759">
+    <function name="VertexAttrib1fvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="1"/>
         <glx rop="4193"/>
     </function>
 
-    <function name="VertexAttrib2fNV" offset="764" vectorequiv="VertexAttrib2fvNV">
+    <function name="VertexAttrib2fNV" offset="assign" vectorequiv="VertexAttrib2fvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib2fvNV" offset="765">
+    <function name="VertexAttrib2fvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="2"/>
         <glx rop="4194"/>
     </function>
 
-    <function name="VertexAttrib3fNV" offset="770" vectorequiv="VertexAttrib3fvNV">
+    <function name="VertexAttrib3fNV" offset="assign" vectorequiv="VertexAttrib3fvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib3fvNV" offset="771">
+    <function name="VertexAttrib3fvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="3"/>
         <glx rop="4195"/>
     </function>
 
-    <function name="VertexAttrib4fNV" offset="776" vectorequiv="VertexAttrib4fvNV">
+    <function name="VertexAttrib4fNV" offset="assign" vectorequiv="VertexAttrib4fvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
@@ -10701,49 +10701,49 @@
         <param name="w" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib4fvNV" offset="777">
+    <function name="VertexAttrib4fvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="4"/>
         <glx rop="4196"/>
     </function>
 
-    <function name="VertexAttrib1dNV" offset="756" vectorequiv="VertexAttrib1dvNV">
+    <function name="VertexAttrib1dNV" offset="assign" vectorequiv="VertexAttrib1dvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib1dvNV" offset="757">
+    <function name="VertexAttrib1dvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="1"/>
         <glx rop="4197" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttrib2dNV" offset="762" vectorequiv="VertexAttrib2dvNV">
+    <function name="VertexAttrib2dNV" offset="assign" vectorequiv="VertexAttrib2dvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib2dvNV" offset="763">
+    <function name="VertexAttrib2dvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="2"/>
         <glx rop="4198" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttrib3dNV" offset="768" vectorequiv="VertexAttrib3dvNV">
+    <function name="VertexAttrib3dNV" offset="assign" vectorequiv="VertexAttrib3dvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib3dvNV" offset="769">
+    <function name="VertexAttrib3dvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="3"/>
         <glx rop="4199" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttrib4dNV" offset="774" vectorequiv="VertexAttrib4dvNV">
+    <function name="VertexAttrib4dNV" offset="assign" vectorequiv="VertexAttrib4dvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
@@ -10751,13 +10751,13 @@
         <param name="w" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib4dvNV" offset="775">
+    <function name="VertexAttrib4dvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="4"/>
         <glx rop="4200" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttrib4ubNV" offset="780" vectorequiv="VertexAttrib4ubvNV">
+    <function name="VertexAttrib4ubNV" offset="assign" vectorequiv="VertexAttrib4ubvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLubyte"/>
         <param name="y" type="GLubyte"/>
@@ -10765,97 +10765,97 @@
         <param name="w" type="GLubyte"/>
     </function>
 
-    <function name="VertexAttrib4ubvNV" offset="781">
+    <function name="VertexAttrib4ubvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLubyte *" count="4"/>
         <glx rop="4201"/>
     </function>
 
-    <function name="VertexAttribs1svNV" offset="631">
+    <function name="VertexAttribs1svNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLshort *" count="n"/>
         <glx rop="4202"/>
     </function>
 
-    <function name="VertexAttribs2svNV" offset="634">
+    <function name="VertexAttribs2svNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLshort *" count="n" count_scale="2"/>
         <glx rop="4203"/>
     </function>
 
-    <function name="VertexAttribs3svNV" offset="637">
+    <function name="VertexAttribs3svNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLshort *" count="n" count_scale="3"/>
         <glx rop="4204"/>
     </function>
 
-    <function name="VertexAttribs4svNV" offset="640">
+    <function name="VertexAttribs4svNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLshort *" count="n" count_scale="4"/>
         <glx rop="4205"/>
     </function>
 
-    <function name="VertexAttribs1fvNV" offset="630">
+    <function name="VertexAttribs1fvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLfloat *" count="n"/>
         <glx rop="4206"/>
     </function>
 
-    <function name="VertexAttribs2fvNV" offset="633">
+    <function name="VertexAttribs2fvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLfloat *" count="n" count_scale="2"/>
         <glx rop="4207"/>
     </function>
 
-    <function name="VertexAttribs3fvNV" offset="636">
+    <function name="VertexAttribs3fvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLfloat *" count="n" count_scale="3"/>
         <glx rop="4208"/>
     </function>
 
-    <function name="VertexAttribs4fvNV" offset="639">
+    <function name="VertexAttribs4fvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLfloat *" count="n" count_scale="4"/>
         <glx rop="4209"/>
     </function>
 
-    <function name="VertexAttribs1dvNV" offset="629">
+    <function name="VertexAttribs1dvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLdouble *" count="n"/>
         <glx rop="4210" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttribs2dvNV" offset="632">
+    <function name="VertexAttribs2dvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLdouble *" count="n" count_scale="2"/>
         <glx rop="4211" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttribs3dvNV" offset="635">
+    <function name="VertexAttribs3dvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLdouble *" count="n" count_scale="3"/>
         <glx rop="4212" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttribs4dvNV" offset="638">
+    <function name="VertexAttribs4dvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLdouble *" count="n" count_scale="4"/>
         <glx rop="4213" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttribs4ubvNV" offset="641">
+    <function name="VertexAttribs4ubvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLubyte *" count="n" count_scale="4"/>
@@ -10897,45 +10897,45 @@
 </category>
 
 <category name="GL_ATI_fragment_shader" number="245">
-    <function name="GenFragmentShadersATI" offset="782">
+    <function name="GenFragmentShadersATI" offset="assign">
       <return type="GLuint"/>
       <param name="range" type="GLuint"/>
       <glx ignore="true"/>
     </function>
     
-    <function name="BindFragmentShaderATI" offset="783">
+    <function name="BindFragmentShaderATI" offset="assign">
       <param name="id" type="GLuint"/>
       <glx ignore="true"/>
     </function>
 
-    <function name="DeleteFragmentShaderATI" offset="784">
+    <function name="DeleteFragmentShaderATI" offset="assign">
       <param name="id" type="GLuint"/>
       <glx ignore="true"/>
     </function>
 
-    <function name="BeginFragmentShaderATI" offset="785">
+    <function name="BeginFragmentShaderATI" offset="assign">
       <glx ignore="true"/>
     </function>
 
-    <function name="EndFragmentShaderATI" offset="786">
+    <function name="EndFragmentShaderATI" offset="assign">
       <glx ignore="true"/>
     </function>
     
-    <function name="PassTexCoordATI" offset="787">
+    <function name="PassTexCoordATI" offset="assign">
       <param name="dst" type="GLuint"/>
       <param name="coord" type="GLuint"/>
       <param name="swizzle" type="GLenum"/>
       <glx ignore="true"/>
     </function>
 
-    <function name="SampleMapATI" offset="788">
+    <function name="SampleMapATI" offset="assign">
       <param name="dst" type="GLuint"/>
       <param name="interp" type="GLuint"/>
       <param name="swizzle" type="GLenum"/>
       <glx ignore="true"/>
     </function>
 
-    <function name="ColorFragmentOp1ATI" offset="789">
+    <function name="ColorFragmentOp1ATI" offset="assign">
       <param name="op" type="GLenum"/>
       <param name="dst" type="GLuint"/>
       <param name="dstMask" type="GLuint"/>
@@ -10946,7 +10946,7 @@
       <glx ignore="true"/>
     </function>
 
-    <function name="ColorFragmentOp2ATI" offset="790">
+    <function name="ColorFragmentOp2ATI" offset="assign">
       <param name="op" type="GLenum"/>
       <param name="dst" type="GLuint"/>
       <param name="dstMask" type="GLuint"/>
@@ -10960,7 +10960,7 @@
       <glx ignore="true"/>
     </function>
 
-    <function name="ColorFragmentOp3ATI" offset="791">
+    <function name="ColorFragmentOp3ATI" offset="assign">
       <param name="op" type="GLenum"/>
       <param name="dst" type="GLuint"/>
       <param name="dstMask" type="GLuint"/>
@@ -10977,7 +10977,7 @@
       <glx ignore="true"/>
     </function>
 
-    <function name="AlphaFragmentOp1ATI" offset="792">
+    <function name="AlphaFragmentOp1ATI" offset="assign">
       <param name="op" type="GLenum"/>
       <param name="dst" type="GLuint"/>
       <param name="dstMod" type="GLuint"/>
@@ -10987,7 +10987,7 @@
       <glx ignore="true"/>
     </function>
 
-    <function name="AlphaFragmentOp2ATI" offset="793">
+    <function name="AlphaFragmentOp2ATI" offset="assign">
       <param name="op" type="GLenum"/>
       <param name="dst" type="GLuint"/>
       <param name="dstMod" type="GLuint"/>
@@ -11000,7 +11000,7 @@
       <glx ignore="true"/>
     </function>
 
-    <function name="AlphaFragmentOp3ATI" offset="794">
+    <function name="AlphaFragmentOp3ATI" offset="assign">
       <param name="op" type="GLenum"/>
       <param name="dst" type="GLuint"/>
       <param name="dstMod" type="GLuint"/>
@@ -11016,7 +11016,7 @@
       <glx ignore="true"/>
     </function>
 
-    <function name="SetFragmentShaderConstantATI" offset="795">
+    <function name="SetFragmentShaderConstantATI" offset="assign">
       <param name="dst" type="GLuint"/>
       <param name="value" type="const GLfloat *"/>
       <glx ignore="true"/>
@@ -11034,7 +11034,7 @@
     <enum name="QUAD_MESH_SUN"                            value="0x8614"/>
     <enum name="TRIANGLE_MESH_SUN"                        value="0x8615"/>
 
-    <function name="DrawMeshArraysSUN" offset="?">
+    <function name="DrawMeshArraysSUN">
         <param name="mode" type="GLenum"/>
         <param name="first" type="GLint"/>
         <param name="count" type="GLsizei"/>
@@ -11090,13 +11090,13 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="PointParameteriNV" offset="642">
+    <function name="PointParameteriNV" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx rop="4221"/>
     </function>
 
-    <function name="PointParameterivNV" offset="643">
+    <function name="PointParameterivNV" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *" variable_param="pname"/>
         <glx rop="4222"/>
@@ -11118,7 +11118,7 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="ActiveStencilFaceEXT" offset="646">
+    <function name="ActiveStencilFaceEXT" offset="assign">
         <param name="face" type="GLenum"/>
         <glx rop="4220"/>
     </function>
@@ -11210,7 +11210,7 @@
 </category>
 
 <category name="GL_NV_fragment_program" number="282">
-    <function name="ProgramNamedParameter4fNV" offset="682" vectorequiv="ProgramNamedParameter4fvNV">
+    <function name="ProgramNamedParameter4fNV" offset="assign" vectorequiv="ProgramNamedParameter4fvNV">
         <param name="id" type="GLuint"/>
         <param name="len" type="GLsizei" counter="true"/>
         <param name="name" type="const GLubyte *" count="len"/>
@@ -11220,7 +11220,7 @@
         <param name="w" type="GLfloat"/>
     </function>
 
-    <function name="ProgramNamedParameter4dNV" offset="683" vectorequiv="ProgramNamedParameter4dvNV">
+    <function name="ProgramNamedParameter4dNV" offset="assign" vectorequiv="ProgramNamedParameter4dvNV">
         <param name="id" type="GLuint"/>
         <param name="len" type="GLsizei" counter="true"/>
         <param name="name" type="const GLubyte *" count="len"/>
@@ -11230,7 +11230,7 @@
         <param name="w" type="GLdouble"/>
     </function>
 
-    <function name="ProgramNamedParameter4fvNV" offset="684">
+    <function name="ProgramNamedParameter4fvNV" offset="assign">
         <param name="id" type="GLuint"/>
         <param name="len" type="GLsizei" counter="true"/>
         <param name="name" type="const GLubyte *" count="len"/>
@@ -11238,7 +11238,7 @@
         <glx rop="4218"/>
     </function>
 
-    <function name="ProgramNamedParameter4dvNV" offset="685">
+    <function name="ProgramNamedParameter4dvNV" offset="assign">
         <param name="id" type="GLuint"/>
         <param name="len" type="GLsizei" counter="true"/>
         <param name="name" type="const GLubyte *" count="len"/>
@@ -11246,7 +11246,7 @@
         <glx rop="4219"/>
     </function>
 
-    <function name="GetProgramNamedParameterfvNV" offset="686">
+    <function name="GetProgramNamedParameterfvNV" offset="assign">
         <param name="id" type="GLuint"/>
         <param name="len" type="GLsizei" counter="true"/>
         <param name="name" type="const GLubyte *" count="len"/>
@@ -11254,7 +11254,7 @@
         <glx vendorpriv="1310" always_array="true"/>
     </function>
 
-    <function name="GetProgramNamedParameterdvNV" offset="687">
+    <function name="GetProgramNamedParameterdvNV" offset="assign">
         <param name="id" type="GLuint"/>
         <param name="len" type="GLsizei" counter="true"/>
         <param name="name" type="const GLubyte *" count="len"/>
@@ -11298,7 +11298,7 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="DepthBoundsEXT" offset="699">
+    <function name="DepthBoundsEXT" offset="assign">
         <param name="zmin" type="GLclampd"/>
         <param name="zmax" type="GLclampd"/>
         <glx rop="4229" ignore="true"/>
@@ -11319,7 +11319,7 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="BlendEquationSeparateEXT" offset="710">
+    <function name="BlendEquationSeparateEXT" offset="assign">
         <param name="modeRGB" type="GLenum"/>
         <param name="modeA" type="GLenum"/>
         <glx rop="4228" ignore="true"/>
@@ -11416,13 +11416,13 @@
         <return type="GLhandleARB"/>
         <glx ignore="true"/>
     </function>
-    <function name="ClearDebugLogMESA" offset="?">
+    <function name="ClearDebugLogMESA">
         <param name="obj" type="GLhandleARB"/>
         <param name="logType" type="GLenum"/>
         <param name="shaderType" type="GLenum"/>
         <glx ignore="true"/>
     </function>
-    <function name="GetDebugLogMESA" offset="?">
+    <function name="GetDebugLogMESA">
         <param name="obj" type="GLhandleARB"/>
         <param name="logType" type="GLenum"/>
         <param name="shaderType" type="GLenum"/>
@@ -11431,7 +11431,7 @@
         <param name="debugLog" type="GLcharARB *" output="true"/>
         <glx ignore="true"/>
     </function>
-    <function name="GetDebugLogLengthMESA" offset="?">
+    <function name="GetDebugLogLengthMESA">
         <return type="GLsizei"/>
         <param name="obj" type="GLhandleARB"/>
         <param name="logType" type="GLenum"/>
@@ -11466,14 +11466,14 @@
 </category>
 
 <category name="GL_SGIX_igloo_interface">
-    <function name="IglooInterfaceSGIX" offset="?">
+    <function name="IglooInterfaceSGIX">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLvoid *"/>
     </function>
 </category>
 
 <category name="GL_SGIX_polynomial_ffd">
-    <function name="DeformationMap3dSGIX" offset="?">
+    <function name="DeformationMap3dSGIX">
         <param name="target" type="GLenum"/>
         <param name="u1" type="GLdouble"/>
         <param name="u2" type="GLdouble"/>
@@ -11490,7 +11490,7 @@
         <param name="points" type="const GLdouble *"/>
     </function>
 
-    <function name="DeformationMap3fSGIX" offset="?">
+    <function name="DeformationMap3fSGIX">
         <param name="target" type="GLenum"/>
         <param name="u1" type="GLfloat"/>
         <param name="u2" type="GLfloat"/>
@@ -11507,11 +11507,11 @@
         <param name="points" type="const GLfloat *"/>
     </function>
 
-    <function name="DeformSGIX" offset="?">
+    <function name="DeformSGIX">
         <param name="mask" type="GLenum"/>
     </function>
 
-    <function name="LoadIdentityDeformationMapSGIX" offset="?">
+    <function name="LoadIdentityDeformationMapSGIX">
         <param name="mask" type="GLenum"/>
     </function>
 </category>
@@ -11520,12 +11520,12 @@
     <enum name="TIME_ELAPSED_EXT" value="0x88BF"/>
     <type name="int64EXT"                  size="8"/>
     <type name="uint64EXT" unsigned="true" size="8"/>
-    <function name="GetQueryObjecti64vEXT" offset="816">
+    <function name="GetQueryObjecti64vEXT" offset="assign">
         <param name="id" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint64EXT *"/>
     </function>
-    <function name="GetQueryObjectui64vEXT" offset="817">
+    <function name="GetQueryObjectui64vEXT" offset="assign">
         <param name="id" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLuint64EXT *"/>
@@ -11537,7 +11537,7 @@
     <enum name="DRAW_FRAMEBUFFER_EXT" value="0x8CA9"/>
     <enum name="DRAW_FRAMEBUFFER_BINDING_EXT" value="0x8CA6"/>
     <enum name="READ_FRAMEBUFFER_BINDING_EXT" value="0x8CAA"/>
-    <function name="BlitFramebufferEXT" offset="818">
+    <function name="BlitFramebufferEXT" offset="assign">
         <param name="srcX0" type="GLint"/>
         <param name="srcY0" type="GLint"/>
         <param name="srcX1" type="GLint"/>
@@ -11552,14 +11552,14 @@
 </category>
 
 <category name="GL_EXT_gpu_program_parameters" number="319">
-    <function name="ProgramEnvParameters4fvEXT" offset="823" static_dispatch="false">
+    <function name="ProgramEnvParameters4fvEXT" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
 	<param name="index" type="GLuint"/>
 	<param name="count" type="GLsizei"/>
 	<param name="params" type="const GLfloat *"/>
     </function>	
 
-    <function name="ProgramLocalParameters4fvEXT" offset="824" static_dispatch="false">
+    <function name="ProgramLocalParameters4fvEXT" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
 	<param name="index" type="GLuint"/>
 	<param name="count" type="GLsizei"/>

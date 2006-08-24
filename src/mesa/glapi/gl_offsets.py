@@ -65,10 +65,8 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 
 		for [f, index] in functions:
 			print '#define _gloffset_%s %d' % (f.name, f.offset)
-			if f.offset > last_static:
-				last_static = f.offset
 
-		print '#define _gloffset_FIRST_DYNAMIC %d' % (last_static + 1)
+		print '#define _gloffset_FIRST_DYNAMIC %d' % (api.next_offset)
 
 		print ''
 		print '#else'

@@ -67,31 +67,31 @@
 
     <enum name="INVALID_FRAMEBUFFER_OPERATION_EXT"        value="0x0506"/>
 
-    <function name="IsRenderbufferEXT" offset="796">
+    <function name="IsRenderbufferEXT" offset="assign">
         <param name="renderbuffer" type="GLuint"/>
 	<return type="GLboolean"/>
 	<glx vendorpriv="1422"/>
     </function>
 
-    <function name="BindRenderbufferEXT" offset="797">
+    <function name="BindRenderbufferEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="renderbuffer" type="GLuint"/>
 	<glx rop="4316"/>
     </function>
 
-    <function name="DeleteRenderbuffersEXT" offset="798">
+    <function name="DeleteRenderbuffersEXT" offset="assign">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="renderbuffers" type="const GLuint *" count="n"/>
 	<glx rop="4317"/>
     </function>
 
-    <function name="GenRenderbuffersEXT" offset="799">
+    <function name="GenRenderbuffersEXT" offset="assign">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="renderbuffers" type="GLuint *" count="n" output="true"/>
 	<glx vendorpriv="1423" always_array="true"/>
     </function>
 
-    <function name="RenderbufferStorageEXT" offset="800">
+    <function name="RenderbufferStorageEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="internalformat" type="GLenum"/>
         <param name="width" type="GLsizei"/>
@@ -99,44 +99,44 @@
 	<glx rop="4318"/>
     </function>
 
-    <function name="GetRenderbufferParameterivEXT" offset="801">
+    <function name="GetRenderbufferParameterivEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>
 	<glx vendorpriv="1424"/>
     </function>
 
-    <function name="IsFramebufferEXT" offset="802">
+    <function name="IsFramebufferEXT" offset="assign">
         <param name="framebuffer" type="GLuint"/>
 	<return type="GLboolean"/>
 	<glx vendorpriv="1425"/>
     </function>
 
-    <function name="BindFramebufferEXT" offset="803">
+    <function name="BindFramebufferEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="framebuffer" type="GLuint"/>
 	<glx rop="4319"/>
     </function>
 
-    <function name="DeleteFramebuffersEXT" offset="804">
+    <function name="DeleteFramebuffersEXT" offset="assign">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="framebuffers" type="const GLuint *" count="n"/>
 	<glx rop="4320"/>
     </function>
 
-    <function name="GenFramebuffersEXT" offset="805">
+    <function name="GenFramebuffersEXT" offset="assign">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="framebuffers" type="GLuint *" count="n" output="true"/>
 	<glx vendorpriv="1426" always_array="true"/>
     </function>
 
-    <function name="CheckFramebufferStatusEXT" offset="806">
+    <function name="CheckFramebufferStatusEXT" offset="assign">
         <param name="target" type="GLenum"/>
 	<return type="GLenum"/>
 	<glx vendorpriv="1427"/>
     </function>
 
-    <function name="FramebufferTexture1DEXT" offset="807">
+    <function name="FramebufferTexture1DEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
         <param name="textarget" type="GLenum"/>
@@ -145,7 +145,7 @@
 	<glx rop="4321"/>
     </function>
 
-    <function name="FramebufferTexture2DEXT" offset="808">
+    <function name="FramebufferTexture2DEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
         <param name="textarget" type="GLenum"/>
@@ -154,7 +154,7 @@
 	<glx rop="4322"/>
     </function>
 
-    <function name="FramebufferTexture3DEXT" offset="809">
+    <function name="FramebufferTexture3DEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
         <param name="textarget" type="GLenum"/>
@@ -164,7 +164,7 @@
 	<glx rop="4323"/>
     </function>
 
-    <function name="FramebufferRenderbufferEXT" offset="810">
+    <function name="FramebufferRenderbufferEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
         <param name="renderbuffertarget" type="GLenum"/>
@@ -172,7 +172,8 @@
 	<glx rop="4324"/>
     </function>
 
-    <function name="GetFramebufferAttachmentParameterivEXT" offset="811">
+    <function name="GetFramebufferAttachmentParameterivEXT"
+offset="assign">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
         <param name="pname" type="GLenum"/>
@@ -180,7 +181,7 @@
 	<glx vendorpriv="1428"/>
     </function>
 
-    <function name="GenerateMipmapEXT" offset="812">
+    <function name="GenerateMipmapEXT" offset="assign">
         <param name="target" type="GLenum"/>
 	<glx rop="4325"/>
     </function>
