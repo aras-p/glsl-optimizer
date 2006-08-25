@@ -41,15 +41,16 @@
 
 
 /**
- * This is used for helping with position-invariant vertex programs.
- * It appends extra instructions to the given program to do the
- * vertex position transformation (multiply by the MVP matrix).
+ * This function inserts instructions for coordinate modelview * projection
+ * into a vertex program.
+ * May be used to implement the position_invariant option.
  */
 void
-_mesa_append_modelview_code(GLcontext *ctx, struct gl_vertex_program *vprog)
+_mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog)
 {
-   struct prog_instruction newInst[5];
+   struct prog_instruction *newInst;
    const GLuint origLen = vprog->Base.NumInstructions;
+   const GLuint newLen = origLen + 4;
    GLuint i;
 
    /*
@@ -69,13 +70,20 @@ _mesa_append_modelview_code(GLcontext *ctx, struct gl_vertex_program *vprog)
                                             mvpState[i]);
    }
 
+   /* Alloc storage for new instructions */
+   newInst = _mesa_alloc_instructions(newLen);
+   if (!newInst) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY,
+                  "glProgramString(inserting position_invariant code)");
+      return;
+   }
+
    /*
     * Generated instructions:
     * newInst[0] = DP4 result.position.x, mvp.row[0], vertex.position;
     * newInst[1] = DP4 result.position.y, mvp.row[1], vertex.position;
     * newInst[2] = DP4 result.position.z, mvp.row[2], vertex.position;
     * newInst[3] = DP4 result.position.w, mvp.row[3], vertex.position;
-    * newInst[4] = END;
     */
    for (i = 0; i < 4; i++) {
       _mesa_init_instruction(newInst + i);
@@ -90,24 +98,17 @@ _mesa_append_modelview_code(GLcontext *ctx, struct gl_vertex_program *vprog)
       newInst[i].SrcReg[1].Index = VERT_ATTRIB_POS;
       newInst[i].SrcReg[1].Swizzle = SWIZZLE_NOOP;
    }
-   newInst[4].Opcode = OPCODE_END;
 
-   /*
-    * Append new instructions onto program.
-    */
-   vprog->Base.Instructions
-      = _mesa_realloc_instructions(vprog->Base.Instructions,
-                                   origLen, origLen + 4);
-   if (!vprog->Base.Instructions) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY,
-                  "glProgramString(generating position transformation code)");
-      return;
-   }
-   /* subtract one to overwrite original program's END instruction */
-   _mesa_memcpy(vprog->Base.Instructions + origLen - 1,
-                newInst, sizeof(newInst));
+   /* Append original instructions after new instructions */
+   _mesa_memcpy(newInst + 4, vprog->Base.Instructions,
+                origLen * sizeof(struct prog_instruction));
 
-   vprog->Base.NumInstructions = origLen + 4;
+   /* free old instructions */
+   _mesa_free(vprog->Base.Instructions);
+
+   /* install new instructions */
+   vprog->Base.Instructions = newInst;
+   vprog->Base.NumInstructions = newLen;
    vprog->Base.InputsRead |= VERT_BIT_POS;
    vprog->Base.OutputsWritten |= (1 << VERT_RESULT_HPOS);
 }

@@ -28,7 +28,7 @@
 
 
 extern void
-_mesa_append_modelview_code(GLcontext *ctx, struct gl_vertex_program *vprog);
+_mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog);
 
 extern void
 _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog);
