@@ -1534,14 +1534,13 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
 
       /* copy the compiled instructions */
       assert(parseState.numInst <= MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS);
-      newInst = (struct prog_instruction *)
-         MALLOC(parseState.numInst * sizeof(struct prog_instruction));
+      newInst = _mesa_alloc_instructions(parseState.numInst);
       if (!newInst) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
          return;  /* out of memory */
       }
-      MEMCPY(newInst, instBuffer,
-             parseState.numInst * sizeof(struct prog_instruction));
+      _mesa_memcpy(newInst, instBuffer,
+                   parseState.numInst * sizeof(struct prog_instruction));
 
       /* install the program */
       program->Base.Target = target;

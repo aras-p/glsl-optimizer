@@ -1374,8 +1374,7 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
 
       /* copy the compiled instructions */
       assert(parseState.numInst <= MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS);
-      newInst = (struct prog_instruction *)
-         _mesa_malloc(parseState.numInst * sizeof(struct prog_instruction));
+      newInst = _mesa_alloc_instructions(parseState.numInst);
       if (!newInst) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
          _mesa_free(programString);

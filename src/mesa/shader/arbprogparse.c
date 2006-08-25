@@ -4000,8 +4000,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
 
    /* Initialize the arb_program struct */
    program->Base.String = strz;
-   program->Base.Instructions = (struct prog_instruction *)
-      _mesa_malloc(MAX_INSTRUCTIONS * sizeof(struct prog_instruction));
+   program->Base.Instructions = _mesa_alloc_instructions(MAX_INSTRUCTIONS);
    program->Base.NumInstructions =
    program->Base.NumTemporaries =
    program->Base.NumParameters =
