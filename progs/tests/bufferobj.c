@@ -28,6 +28,8 @@ struct object
 static struct object Objects[NUM_OBJECTS];
 static GLuint NumObjects;
 
+static GLuint Win;
+
 static GLfloat Xrot = 0, Yrot = 0, Zrot = 0;
 static GLboolean Anim = GL_TRUE;
 
@@ -118,6 +120,14 @@ static void Reshape( int width, int height )
 }
 
 
+static void FreeBuffers(void)
+{
+   int i;
+   for (i = 0; i < NUM_OBJECTS; i++)
+      glDeleteBuffersARB(1, &Objects[i].BufferID);
+}
+
+
 static void Key( unsigned char key, int x, int y )
 {
    const GLfloat step = 3.0;
@@ -138,6 +148,8 @@ static void Key( unsigned char key, int x, int y )
          Zrot += step;
          break;
       case 27:
+         FreeBuffers();
+         glutDestroyWindow(Win);
          exit(0);
          break;
    }
@@ -346,7 +358,7 @@ int main( int argc, char *argv[] )
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( 600, 300 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
-   glutCreateWindow(argv[0]);
+   Win = glutCreateWindow(argv[0]);
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutSpecialFunc( SpecialKey );
