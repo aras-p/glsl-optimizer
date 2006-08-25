@@ -1770,103 +1770,95 @@ compatible_program_targets(GLenum t1, GLenum t2)
 void GLAPIENTRY
 _mesa_BindProgram(GLenum target, GLuint id)
 {
-   struct gl_program *prog;
+   struct gl_program *curProg, *newProg;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
+   /* Error-check target and get curProg */
    if ((target == GL_VERTEX_PROGRAM_ARB) && /* == GL_VERTEX_PROGRAM_NV */
         (ctx->Extensions.NV_vertex_program ||
          ctx->Extensions.ARB_vertex_program)) {
-      /*** Vertex program binding ***/
-      struct gl_vertex_program *curProg = ctx->VertexProgram.Current;
-      if (curProg->Base.Id == id) {
-         /* binding same program - no change */
-         return;
-      }
-      if (curProg->Base.Id != 0) {
-         /* decrement refcount on previously bound vertex program */
-         curProg->Base.RefCount--;
-         /* and delete if refcount goes below one */
-         if (curProg->Base.RefCount <= 0) {
-            /* the program ID was already removed from the hash table */
-            ctx->Driver.DeleteProgram(ctx, &(curProg->Base));
-         }
-      }
+      curProg = &ctx->VertexProgram.Current->Base;
    }
    else if ((target == GL_FRAGMENT_PROGRAM_NV
              && ctx->Extensions.NV_fragment_program) ||
             (target == GL_FRAGMENT_PROGRAM_ARB
              && ctx->Extensions.ARB_fragment_program)) {
-      /*** Fragment program binding ***/
-      struct gl_fragment_program *curProg = ctx->FragmentProgram.Current;
-      if (curProg->Base.Id == id) {
-         /* binding same program - no change */
-         return;
-      }
-      if (curProg->Base.Id != 0) {
-         /* decrement refcount on previously bound fragment program */
-         curProg->Base.RefCount--;
-         /* and delete if refcount goes below one */
-         if (curProg->Base.RefCount <= 0) {
-            /* the program ID was already removed from the hash table */
-            ctx->Driver.DeleteProgram(ctx, &(curProg->Base));
-         }
-      }
+      curProg = &ctx->FragmentProgram.Current->Base;
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glBindProgramNV/ARB(target)");
       return;
    }
 
-   /* NOTE: binding to a non-existant program is not an error.
+   /*
+    * Get pointer to new program to bind.
+    * NOTE: binding to a non-existant program is not an error.
     * That's supposed to be caught in glBegin.
     */
    if (id == 0) {
-      /* Bind default program */
-      prog = NULL;
+      /* Bind a default program */
+      newProg = NULL;
       if (target == GL_VERTEX_PROGRAM_ARB) /* == GL_VERTEX_PROGRAM_NV */
-         prog = ctx->Shared->DefaultVertexProgram;
+         newProg = ctx->Shared->DefaultVertexProgram;
       else
-         prog = ctx->Shared->DefaultFragmentProgram;
+         newProg = ctx->Shared->DefaultFragmentProgram;
    }
    else {
-      /* Bind user program */
-      prog = _mesa_lookup_program(ctx, id);
-      if (!prog || prog == &_mesa_DummyProgram) {
+      /* Bind a user program */
+      newProg = _mesa_lookup_program(ctx, id);
+      if (!newProg || newProg == &_mesa_DummyProgram) {
          /* allocate a new program now */
-         prog = ctx->Driver.NewProgram(ctx, target, id);
-         if (!prog) {
+         newProg = ctx->Driver.NewProgram(ctx, target, id);
+         if (!newProg) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramNV/ARB");
             return;
          }
-         _mesa_HashInsert(ctx->Shared->Programs, id, prog);
+         _mesa_HashInsert(ctx->Shared->Programs, id, newProg);
       }
-      else if (!compatible_program_targets(prog->Target, target)) {
+      else if (!compatible_program_targets(newProg->Target, target)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glBindProgramNV/ARB(target mismatch)");
          return;
       }
    }
 
-   /* bind now */
+   /** All error checking is complete now **/
+
+   if (curProg->Id == id) {
+      /* binding same program - no change */
+      return;
+   }
+
+   /* unbind/delete oldProg */
+   if (curProg->Id != 0) {
+      /* decrement refcount on previously bound fragment program */
+      curProg->RefCount--;
+      /* and delete if refcount goes below one */
+      if (curProg->RefCount <= 0) {
+         /* the program ID was already removed from the hash table */
+         ctx->Driver.DeleteProgram(ctx, curProg);
+      }
+   }
+
+   /* bind newProg */
    if (target == GL_VERTEX_PROGRAM_ARB) { /* == GL_VERTEX_PROGRAM_NV */
-      ctx->VertexProgram.Current = (struct gl_vertex_program *) prog;
+      ctx->VertexProgram.Current = (struct gl_vertex_program *) newProg;
    }
-   else if (target == GL_FRAGMENT_PROGRAM_NV || target == GL_FRAGMENT_PROGRAM_ARB) {
-      ctx->FragmentProgram.Current = (struct gl_fragment_program *) prog;
+   else if (target == GL_FRAGMENT_PROGRAM_NV ||
+            target == GL_FRAGMENT_PROGRAM_ARB) {
+      ctx->FragmentProgram.Current = (struct gl_fragment_program *) newProg;
    }
+   newProg->RefCount++;
 
    /* Never null pointers */
    ASSERT(ctx->VertexProgram.Current);
    ASSERT(ctx->FragmentProgram.Current);
 
-   if (prog)
-      prog->RefCount++;
-
    if (ctx->Driver.BindProgram)
-      ctx->Driver.BindProgram(ctx, target, prog);
+      ctx->Driver.BindProgram(ctx, target, newProg);
 }
 
 
