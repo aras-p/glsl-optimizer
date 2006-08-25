@@ -1491,7 +1491,12 @@ _swrast_exec_fragment_program( GLcontext *ctx, struct sw_span *span )
          if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
             const GLfloat depth
                = ctx->FragmentProgram.Machine.Outputs[FRAG_RESULT_DEPR][2];
-            span->array->z[i] = IROUND(depth * ctx->DrawBuffer->_DepthMaxF);
+            if (depth <= 0.0)
+               span->array->z[i] = 0;
+            else if (depth >= 1.0)
+               span->array->z[i] = ctx->DrawBuffer->_DepthMax;
+            else
+               span->array->z[i] = IROUND(depth * ctx->DrawBuffer->_DepthMaxF);
          }
       }
    }
