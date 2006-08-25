@@ -1509,3 +1509,5 @@ Mesa Version History
 	- fragment.position wasn't set correctly for point/line primitives
 	- fixed parser bug for scalar sources for GL_NV_fragment_program
 	- max fragment program length was incorrectly 128, now 1024
+	- writes to result.depth in fragment programs weren't clamped to [0,1]
+	- fixed potential dangling pointer bug in glBindProgram()
