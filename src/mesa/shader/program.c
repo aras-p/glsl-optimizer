@@ -1313,6 +1313,19 @@ _mesa_init_instruction(struct prog_instruction *inst)
 
 
 /**
+ * Allocate an array of program instructions.
+ * \param numInst  number of instructions
+ * \return pointer to instruction memory
+ */
+struct prog_instruction *
+_mesa_alloc_instructions(GLuint numInst)
+{
+   return (struct prog_instruction *)
+      _mesa_calloc(numInst * sizeof(struct prog_instruction));
+}
+
+
+/**
  * Reallocate memory storing an array of program instructions.
  * This is used when we need to append additional instructions onto an
  * program.
