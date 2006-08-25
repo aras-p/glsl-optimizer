@@ -760,6 +760,10 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->ProgramNamedParameter4fNV = __indirect_glProgramNamedParameter4fNV;
     glAPI->ProgramNamedParameter4fvNV = __indirect_glProgramNamedParameter4fvNV;
 
+    /* 299. GL_EXT_blend_equation_separate */
+
+    glAPI->BlendEquationSeparateEXT = __indirect_glBlendEquationSeparateEXT;
+
     /* 310. GL_EXT_framebuffer_object */
 
     glAPI->RenderbufferStorageEXT = __indirect_glRenderbufferStorageEXT;

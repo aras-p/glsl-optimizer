@@ -1719,6 +1719,7 @@ _mesa_sparc_glapi_end:
 	.globl glGetQueryObjectuiv ; .type glGetQueryObjectuiv,#function ; glGetQueryObjectuiv = glGetQueryObjectuivARB
 	.globl glGetQueryiv ; .type glGetQueryiv,#function ; glGetQueryiv = glGetQueryivARB
 	.globl glIsQuery ; .type glIsQuery,#function ; glIsQuery = glIsQueryARB
+	.globl glDrawBuffers ; .type glDrawBuffers,#function ; glDrawBuffers = glDrawBuffersARB
 	.globl glDrawBuffersATI ; .type glDrawBuffersATI,#function ; glDrawBuffersATI = glDrawBuffersARB
 	.globl glGetColorTableParameterfvEXT ; .type glGetColorTableParameterfvEXT,#function ; glGetColorTableParameterfvEXT = glGetColorTableParameterfvSGI
 	.globl glGetColorTableParameterivEXT ; .type glGetColorTableParameterivEXT,#function ; glGetColorTableParameterivEXT = glGetColorTableParameterivSGI
@@ -1796,4 +1797,5 @@ _mesa_sparc_glapi_end:
 	.globl glIsProgramARB ; .type glIsProgramARB,#function ; glIsProgramARB = glIsProgramNV
 	.globl glPointParameteri ; .type glPointParameteri,#function ; glPointParameteri = glPointParameteriNV
 	.globl glPointParameteriv ; .type glPointParameteriv,#function ; glPointParameteriv = glPointParameterivNV
+	.globl glBlendEquationSeparate ; .type glBlendEquationSeparate,#function ; glBlendEquationSeparate = glBlendEquationSeparateEXT
 	.globl glBlendEquationSeparateATI ; .type glBlendEquationSeparateATI,#function ; glBlendEquationSeparateATI = glBlendEquationSeparateEXT

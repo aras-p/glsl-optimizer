@@ -178,9 +178,10 @@ static const char ReplacementCodeuiColor3fVertex3fvSUN_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_blend_equation_separate) || defined(need_GL_ATI_blend_equation_separate)
+#if defined(need_GL_VERSION_2_0) || defined(need_GL_EXT_blend_equation_separate) || defined(need_GL_ATI_blend_equation_separate)
 static const char BlendEquationSeparateEXT_names[] = 
     "ii\0" /* Parameter signature */
+    "glBlendEquationSeparate\0"
     "glBlendEquationSeparateEXT\0"
     "glBlendEquationSeparateATI\0"
     "";
@@ -1046,11 +1047,10 @@ static const char ReplacementCodeuiTexCoord2fVertex3fSUN_names[] =
     "";
 #endif
 
-#if defined(need_GL_ARB_draw_buffers) || defined(need_GL_ATI_draw_buffers)
-static const char DrawBuffersARB_names[] = 
-    "ip\0" /* Parameter signature */
-    "glDrawBuffersARB\0"
-    "glDrawBuffersATI\0"
+#if defined(need_GL_ARB_shader_objects)
+static const char Uniform1fARB_names[] = 
+    "if\0" /* Parameter signature */
+    "glUniform1fARB\0"
     "";
 #endif
 
@@ -4044,10 +4044,12 @@ static const char GetMapControlPointsNV_names[] =
     "";
 #endif
 
-#if defined(need_GL_ARB_shader_objects)
-static const char Uniform1fARB_names[] = 
-    "if\0" /* Parameter signature */
-    "glUniform1fARB\0"
+#if defined(need_GL_VERSION_2_0) || defined(need_GL_ARB_draw_buffers) || defined(need_GL_ATI_draw_buffers)
+static const char DrawBuffersARB_names[] = 
+    "ip\0" /* Parameter signature */
+    "glDrawBuffers\0"
+    "glDrawBuffersARB\0"
+    "glDrawBuffersATI\0"
     "";
 #endif
 
@@ -4724,6 +4726,7 @@ static const struct dri_extension_function GL_ARB_shader_objects_functions[] = {
     { CreateProgramObjectARB_names, CreateProgramObjectARB_remap_index, -1 },
     { Uniform3iARB_names, Uniform3iARB_remap_index, -1 },
     { CreateShaderObjectARB_names, CreateShaderObjectARB_remap_index, -1 },
+    { Uniform1fARB_names, Uniform1fARB_remap_index, -1 },
     { AttachObjectARB_names, AttachObjectARB_remap_index, -1 },
     { UniformMatrix2fvARB_names, UniformMatrix2fvARB_remap_index, -1 },
     { GetAttachedObjectsARB_names, GetAttachedObjectsARB_remap_index, -1 },
@@ -4751,7 +4754,6 @@ static const struct dri_extension_function GL_ARB_shader_objects_functions[] = {
     { GetObjectParameterivARB_names, GetObjectParameterivARB_remap_index, -1 },
     { GetUniformLocationARB_names, GetUniformLocationARB_remap_index, -1 },
     { GetShaderSourceARB_names, GetShaderSourceARB_remap_index, -1 },
-    { Uniform1fARB_names, Uniform1fARB_remap_index, -1 },
     { Uniform1fvARB_names, Uniform1fvARB_remap_index, -1 },
     { Uniform3fARB_names, Uniform3fARB_remap_index, -1 },
     { GetObjectParameterfvARB_names, GetObjectParameterfvARB_remap_index, -1 },
@@ -5994,9 +5996,11 @@ static const struct dri_extension_function GL_VERSION_1_5_functions[] = {
 
 #if defined(need_GL_VERSION_2_0)
 static const struct dri_extension_function GL_VERSION_2_0_functions[] = {
+    { BlendEquationSeparateEXT_names, BlendEquationSeparateEXT_remap_index, -1 },
     { StencilMaskSeparate_names, StencilMaskSeparate_remap_index, -1 },
     { StencilOpSeparate_names, StencilOpSeparate_remap_index, -1 },
     { StencilFuncSeparate_names, StencilFuncSeparate_remap_index, -1 },
+    { DrawBuffersARB_names, DrawBuffersARB_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif

@@ -685,6 +685,7 @@ extern HIDDEN void __indirect_glProgramNamedParameter4dNV(GLuint id, GLsizei len
 extern HIDDEN void __indirect_glProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte * name, const GLdouble * v);
 extern HIDDEN void __indirect_glProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte * name, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 extern HIDDEN void __indirect_glProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte * name, const GLfloat * v);
+extern HIDDEN void __indirect_glBlendEquationSeparateEXT(GLenum modeRGB, GLenum modeA);
 extern HIDDEN void __indirect_glBindFramebufferEXT(GLenum target, GLuint framebuffer);
 extern HIDDEN void __indirect_glBindRenderbufferEXT(GLenum target, GLuint renderbuffer);
 extern HIDDEN GLenum __indirect_glCheckFramebufferStatusEXT(GLenum target);

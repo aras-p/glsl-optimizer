@@ -8257,6 +8257,19 @@ __indirect_glProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte * 
     }
 }
 
+#define X_GLrop_BlendEquationSeparateEXT 4228
+void
+__indirect_glBlendEquationSeparateEXT(GLenum modeRGB, GLenum modeA)
+{
+    __GLXcontext * const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_BlendEquationSeparateEXT, cmdlen);
+    (void) memcpy((void *)(gc->pc + 4), (void *)(&modeRGB), 4);
+    (void) memcpy((void *)(gc->pc + 8), (void *)(&modeA), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+}
+
 #define X_GLrop_BindFramebufferEXT 4319
 void
 __indirect_glBindFramebufferEXT(GLenum target, GLuint framebuffer)

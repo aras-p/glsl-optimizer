@@ -29326,6 +29326,7 @@ GL_PREFIX(_dispatch_stub_771):
 	.globl GL_PREFIX(GetQueryObjectuiv) ; .set GL_PREFIX(GetQueryObjectuiv), GL_PREFIX(GetQueryObjectuivARB)
 	.globl GL_PREFIX(GetQueryiv) ; .set GL_PREFIX(GetQueryiv), GL_PREFIX(GetQueryivARB)
 	.globl GL_PREFIX(IsQuery) ; .set GL_PREFIX(IsQuery), GL_PREFIX(IsQueryARB)
+	.globl GL_PREFIX(DrawBuffers) ; .set GL_PREFIX(DrawBuffers), GL_PREFIX(DrawBuffersARB)
 	.globl GL_PREFIX(DrawBuffersATI) ; .set GL_PREFIX(DrawBuffersATI), GL_PREFIX(DrawBuffersARB)
 	.globl GL_PREFIX(GetColorTableParameterfvEXT) ; .set GL_PREFIX(GetColorTableParameterfvEXT), GL_PREFIX(GetColorTableParameterfvSGI)
 	.globl GL_PREFIX(GetColorTableParameterivEXT) ; .set GL_PREFIX(GetColorTableParameterivEXT), GL_PREFIX(GetColorTableParameterivSGI)
@@ -29403,6 +29404,7 @@ GL_PREFIX(_dispatch_stub_771):
 	.globl GL_PREFIX(IsProgramARB) ; .set GL_PREFIX(IsProgramARB), GL_PREFIX(IsProgramNV)
 	.globl GL_PREFIX(PointParameteri) ; .set GL_PREFIX(PointParameteri), GL_PREFIX(PointParameteriNV)
 	.globl GL_PREFIX(PointParameteriv) ; .set GL_PREFIX(PointParameteriv), GL_PREFIX(PointParameterivNV)
+	.globl GL_PREFIX(BlendEquationSeparate) ; .set GL_PREFIX(BlendEquationSeparate), GL_PREFIX(BlendEquationSeparateEXT)
 	.globl GL_PREFIX(BlendEquationSeparateATI) ; .set GL_PREFIX(BlendEquationSeparateATI), GL_PREFIX(BlendEquationSeparateEXT)
 
 #if defined(GLX_USE_TLS) && defined(__linux__)

@@ -1022,6 +1022,7 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB_ALIAS(GetQueryObjectuiv, _gloffset_GetQueryObjectuivARB, GetQueryObjectuiv@12, GetQueryObjectuivARB, GetQueryObjectuivARB@12)
 	GL_STUB_ALIAS(GetQueryiv, _gloffset_GetQueryivARB, GetQueryiv@12, GetQueryivARB, GetQueryivARB@12)
 	GL_STUB_ALIAS(IsQuery, _gloffset_IsQueryARB, IsQuery@4, IsQueryARB, IsQueryARB@4)
+	GL_STUB_ALIAS(DrawBuffers, _gloffset_DrawBuffersARB, DrawBuffers@8, DrawBuffersARB, DrawBuffersARB@8)
 	GL_STUB_ALIAS(DrawBuffersATI, _gloffset_DrawBuffersARB, DrawBuffersATI@8, DrawBuffersARB, DrawBuffersARB@8)
 	GL_STUB_ALIAS(GetColorTableParameterfvEXT, _gloffset_GetColorTableParameterfvSGI, GetColorTableParameterfvEXT@12, GetColorTableParameterfvSGI, GetColorTableParameterfvSGI@12)
 	GL_STUB_ALIAS(GetColorTableParameterivEXT, _gloffset_GetColorTableParameterivSGI, GetColorTableParameterivEXT@12, GetColorTableParameterivSGI, GetColorTableParameterivSGI@12)
@@ -1099,6 +1100,7 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB_ALIAS(IsProgramARB, _gloffset_IsProgramNV, IsProgramARB@4, IsProgramNV, IsProgramNV@4)
 	GL_STUB_ALIAS(PointParameteri, _gloffset_PointParameteriNV, PointParameteri@8, PointParameteriNV, PointParameteriNV@8)
 	GL_STUB_ALIAS(PointParameteriv, _gloffset_PointParameterivNV, PointParameteriv@8, PointParameterivNV, PointParameterivNV@8)
+	GL_STUB_ALIAS(BlendEquationSeparate, _gloffset_BlendEquationSeparateEXT, BlendEquationSeparate@8, BlendEquationSeparateEXT, BlendEquationSeparateEXT@8)
 	GL_STUB_ALIAS(BlendEquationSeparateATI, _gloffset_BlendEquationSeparateEXT, BlendEquationSeparateATI@8, BlendEquationSeparateEXT, BlendEquationSeparateEXT@8)
 
 		GLOBL	GLNAME(gl_dispatch_functions_end)

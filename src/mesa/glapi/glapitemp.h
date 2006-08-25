@@ -3300,6 +3300,11 @@ KEYWORD1 GLint KEYWORD2 NAME(GetAttribLocationARB)(GLhandleARB programObj, const
    RETURN_DISPATCH(GetAttribLocationARB, (programObj, name), (F, "glGetAttribLocationARB(%d, %p);\n", programObj, (const void *) name));
 }
 
+KEYWORD1 void KEYWORD2 NAME(DrawBuffers)(GLsizei n, const GLenum * bufs)
+{
+   DISPATCH(DrawBuffersARB, (n, bufs), (F, "glDrawBuffers(%d, %p);\n", n, (const void *) bufs));
+}
+
 KEYWORD1 void KEYWORD2 NAME(DrawBuffersARB)(GLsizei n, const GLenum * bufs)
 {
    DISPATCH(DrawBuffersARB, (n, bufs), (F, "glDrawBuffersARB(%d, %p);\n", n, (const void *) bufs));
@@ -4733,6 +4738,11 @@ KEYWORD1 void KEYWORD2 NAME(DepthBoundsEXT)(GLclampd zmin, GLclampd zmax)
    DISPATCH(DepthBoundsEXT, (zmin, zmax), (F, "glDepthBoundsEXT(%f, %f);\n", zmin, zmax));
 }
 
+KEYWORD1 void KEYWORD2 NAME(BlendEquationSeparate)(GLenum modeRGB, GLenum modeA)
+{
+   DISPATCH(BlendEquationSeparateEXT, (modeRGB, modeA), (F, "glBlendEquationSeparate(0x%x, 0x%x);\n", modeRGB, modeA));
+}
+
 KEYWORD1 void KEYWORD2 NAME(BlendEquationSeparateEXT)(GLenum modeRGB, GLenum modeA)
 {
    DISPATCH(BlendEquationSeparateEXT, (modeRGB, modeA), (F, "glBlendEquationSeparateEXT(0x%x, 0x%x);\n", modeRGB, modeA));
@@ -5859,6 +5869,7 @@ static _glapi_proc UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(GetQueryObjectuiv),
    TABLE_ENTRY(GetQueryiv),
    TABLE_ENTRY(IsQuery),
+   TABLE_ENTRY(DrawBuffers),
    TABLE_ENTRY(DrawBuffersATI),
    TABLE_ENTRY(GetColorTableParameterfvEXT),
    TABLE_ENTRY(GetColorTableParameterivEXT),
@@ -5936,6 +5947,7 @@ static _glapi_proc UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(IsProgramARB),
    TABLE_ENTRY(PointParameteri),
    TABLE_ENTRY(PointParameteriv),
+   TABLE_ENTRY(BlendEquationSeparate),
    TABLE_ENTRY(BlendEquationSeparateATI),
 };
 #endif /*UNUSED_TABLE_NAME*/

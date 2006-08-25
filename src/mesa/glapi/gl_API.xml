@@ -5029,6 +5029,16 @@
         <size name="PointParameterivNV"/>
     </enum>
 
+    <function name="BlendEquationSeparate" alias="BlendEquationSeparateEXT">
+        <param name="modeRGB" type="GLenum"/>
+        <param name="modeA" type="GLenum"/>
+    </function>
+
+    <function name="DrawBuffers" alias="DrawBuffersARB">
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="bufs" type="const GLenum *" count="n"/>
+    </function>
+
     <function name="StencilFuncSeparate" offset="assign">
         <param name="face" type="GLenum"/>
         <param name="func" type="GLenum"/>
@@ -9700,7 +9710,9 @@
         <size name="GetTexParameterfv" mode="get"/>
         <size name="GetTexParameteriv" mode="get"/>
     </enum>
-    <enum name="MAX_TEXTURE_MAX_ANISOTROPY_EXT"           value="0x84FF"/>
+    <enum name="MAX_TEXTURE_MAX_ANISOTROPY_EXT" count="1" value="0x84FF">
+        <size name="Get" mode="get"/>
+    </enum>
 </category>
 
 <category name="GL_EXT_vertex_weighting" number="188">
@@ -11239,7 +11251,6 @@
     <function name="DrawBuffersATI" alias="DrawBuffersARB">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="bufs" type="const GLenum *" count="n"/>
-        <!-- GLX protocol is not fully defined for this extension. -->
     </function>
 </category>
 
@@ -11364,7 +11375,7 @@
     <function name="BlendEquationSeparateEXT" offset="assign">
         <param name="modeRGB" type="GLenum"/>
         <param name="modeA" type="GLenum"/>
-        <glx rop="4228" ignore="true"/>
+        <glx rop="4228"/>
     </function>
 </category>
 

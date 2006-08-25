@@ -141,7 +141,7 @@ static const struct extension_info known_gl_extensions[] = {
    { GL(EXT_abgr),                       VER(0,0), Y, N, N, N },
    { GL(EXT_bgra),                       VER(1,2), Y, N, N, N },
    { GL(EXT_blend_color),                VER(1,4), Y, N, N, N },
-   { GL(EXT_blend_equation_separate),    VER(0,0), N, N, N, N },
+   { GL(EXT_blend_equation_separate),    VER(0,0), Y, N, N, N },
    { GL(EXT_blend_func_separate),        VER(1,4), Y, N, N, N },
    { GL(EXT_blend_logic_op),             VER(1,4), Y, N, N, N },
    { GL(EXT_blend_minmax),               VER(1,4), Y, N, N, N },
