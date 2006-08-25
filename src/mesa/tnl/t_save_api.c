@@ -1305,6 +1305,9 @@ static void GLAPIENTRY _save_End( void )
    GLint i = tnl->save.prim_count - 1;
 
    ctx->Driver.CurrentSavePrimitive = PRIM_OUTSIDE_BEGIN_END;
+   if (ctx->ExecuteFlag)
+      ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
+
    tnl->save.prim[i].mode |= PRIM_END;
    tnl->save.prim[i].count = ((tnl->save.initial_counter - tnl->save.counter) - 
 			      tnl->save.prim[i].start);
