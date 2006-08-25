@@ -1,4 +1,3 @@
-/* $XFree86$ */
 /**************************************************************************
 
 Copyright 2002 Tungsten Graphics Inc., Cedar Park, Texas.
@@ -33,7 +32,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 
-/* Display list compiler attempts to store lists of vertices with the
+/**
+ * The display list compiler attempts to store lists of vertices with the
  * same vertex layout.  Additionally it attempts to minimize the need
  * for execute-time fixup of these vertex lists, allowing them to be
  * cached on hardware.
@@ -1265,8 +1265,16 @@ static void GLAPIENTRY _save_CallLists( GLsizei n, GLenum type, const GLvoid *v 
 
 
 
-/* This begin is hooked into ...  Updating of
- * ctx->Driver.CurrentSavePrimitive is already taken care of.
+/**
+ * Called via ctx->Driver.NotifySaveBegin(ctx, mode) when we get a
+ * glBegin() call while compiling a display list.
+ * See save_Begin() in dlist.c
+ *
+ * This plugs in our special TNL-related display list functions.
+ * All subsequent glBegin/glVertex/glEnd()s found while compiling a
+ * display list will get routed to the functions in this file.
+ *
+ * Updating of ctx->Driver.CurrentSavePrimitive is already taken care of.
  */
 static GLboolean _save_NotifyBegin( GLcontext *ctx, GLenum mode )
 {
@@ -1365,11 +1373,16 @@ static void GLAPIENTRY _save_EvalMesh2( GLenum mode, GLint i1, GLint i2,
    _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glEvalMesh2" );
 }
 
+/**
+ * This is only called if someone tries to compile nested glBegin()s 
+ * in their display list.
+ */
 static void GLAPIENTRY _save_Begin( GLenum mode )
 {
    GET_CURRENT_CONTEXT( ctx );
    (void) mode;
-   _mesa_compile_error( ctx, GL_INVALID_OPERATION, "Recursive glBegin" );
+   _mesa_compile_error(ctx, GL_INVALID_OPERATION,
+                       "glBegin(called inside glBegin/End)");
 }
 
 
