@@ -7730,6 +7730,51 @@
 </category>
 
 <category name="GL_SGI_color_table" number="14">
+    <enum name="COLOR_TABLE_SCALE_SGI"         count="4"  value="0x80D6">
+        <size name="ColorTableParameterfvSGI"/>
+        <size name="ColorTableParameterivSGI"/>
+        <size name="GetColorTableParameterfvSGI" mode="get"/>
+        <size name="GetColorTableParameterivSGI" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_BIAS_SGI"          count="4"  value="0x80D7">
+        <size name="ColorTableParameterfvSGI"/>
+        <size name="ColorTableParameterivSGI"/>
+        <size name="GetColorTableParameterfvSGI" mode="get"/>
+        <size name="GetColorTableParameterivSGI" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_FORMAT_SGI"        count="1"  value="0x80D8">
+        <size name="GetColorTableParameterfvSGI" mode="get"/>
+        <size name="GetColorTableParameterivSGI" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_WIDTH_SGI"         count="1"  value="0x80D9">
+        <size name="GetColorTableParameterfvSGI" mode="get"/>
+        <size name="GetColorTableParameterivSGI" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_RED_SIZE_SGI"      count="1"  value="0x80DA">
+        <size name="GetColorTableParameterfvSGI" mode="get"/>
+        <size name="GetColorTableParameterivSGI" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_GREEN_SIZE_SGI"    count="1"  value="0x80DB">
+        <size name="GetColorTableParameterfvSGI" mode="get"/>
+        <size name="GetColorTableParameterivSGI" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_BLUE_SIZE_SGI"     count="1"  value="0x80DC">
+        <size name="GetColorTableParameterfvSGI" mode="get"/>
+        <size name="GetColorTableParameterivSGI" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_ALPHA_SIZE_SGI"    count="1"  value="0x80DD">
+        <size name="GetColorTableParameterfvSGI" mode="get"/>
+        <size name="GetColorTableParameterivSGI" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_LUMINANCE_SIZE_SGI" count="1" value="0x80DE">
+        <size name="GetColorTableParameterfvSGI" mode="get"/>
+        <size name="GetColorTableParameterivSGI" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_INTENSITY_SIZE_SGI" count="1" value="0x80DF">
+        <size name="GetColorTableParameterfvSGI" mode="get"/>
+        <size name="GetColorTableParameterivSGI" mode="get"/>
+    </enum>
+
     <function name="ColorTableSGI" alias="ColorTable">
         <param name="target" type="GLenum"/>
         <param name="internalformat" type="GLenum"/>
