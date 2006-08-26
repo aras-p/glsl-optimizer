@@ -341,24 +341,22 @@ static void intelWaitForFrameCompletion( intelContextPtr intel )
 	       ;
 	 }
 	 else {
-	    UNLOCK_HARDWARE( intel ); 
 	    intelWaitIrq( intel, intel->alloc.irq_emitted );	
-	    LOCK_HARDWARE( intel ); 
 	 }
 	 intel->irqsEmitted = 10;
       }
 
       if (intel->irqsEmitted) {
+	 LOCK_HARDWARE( intel ); 
 	 intelEmitIrqLocked( intel );
 	 intel->irqsEmitted--;
+	 UNLOCK_HARDWARE( intel ); 
       }
    } 
    else {
       while (intelGetLastFrame (intel) < sarea->last_dispatch) {
-	 UNLOCK_HARDWARE( intel ); 
 	 if (intel->do_usleeps) 
 	    DO_USLEEP( 1 );
-	 LOCK_HARDWARE( intel ); 
       }
    }
 }
