@@ -55,7 +55,7 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 		t_string = ""
 		comma = ""
 
-		if f.static_dispatch:
+		if f.is_static_entry_point(name):
 			n = name
 			keyword = "KEYWORD1"
 		else:
@@ -79,7 +79,7 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 		else:
 			dispatch = "DISPATCH"
 
-		if not f.static_dispatch:
+		if not f.is_static_entry_point(name):
 			print '%s %s KEYWORD2 NAME(%s)(%s);' % (keyword, f.return_type, n, f.get_parameter_string(name))
 			print ''
 
@@ -166,7 +166,7 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 
 static _glapi_proc DISPATCH_TABLE_NAME[] = {"""
 		for f in api.functionIterateByOffset():
-			if f.static_dispatch:
+			if f.is_static_entry_point(f.name):
 				n = f.name
 			else:
 				n = "_dispatch_stub_%u" % (f.offset)
@@ -196,9 +196,9 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {"""
 static _glapi_proc UNUSED_TABLE_NAME[] = {"""
 
 		for f in api.functionIterateByOffset():
-			if f.static_dispatch:
-				for n in f.entry_points:
-					if n != f.name:
+			for n in f.entry_points:
+				if n != f.name:
+					if f.is_static_entry_point(n):
 						print '   TABLE_ENTRY(%s),' % (n)
 
 		print '};'
@@ -209,11 +209,13 @@ static _glapi_proc UNUSED_TABLE_NAME[] = {"""
 
 	def printBody(self, api):
 		for func in api.functionIterateByOffset():
-			if func.static_dispatch:
-				for n in func.entry_points:
-					self.printFunction( func, n )
-			else:
-				self.printFunction(func, func.name)
+			got_stub = 0
+			for n in func.entry_points:
+				if func.is_static_entry_point(n):
+					self.printFunction(func, n)
+				elif not got_stub:
+					self.printFunction(func, n)
+					got_stub = 1
 
 		self.printInitDispatch(api)
 		self.printAliasedTable(api)

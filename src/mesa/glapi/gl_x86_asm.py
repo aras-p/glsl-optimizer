@@ -197,7 +197,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 
 	def printBody(self, api):
 		for f in api.functionIterateByOffset():
-			if f.static_dispatch:
+			if f.is_static_entry_point(f.name):
 				name = f.name
 			else:
 				name = "_dispatch_stub_%u" % (f.offset)
@@ -207,12 +207,12 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 			alt = "%s@%u" % (name, stack)
 			print '\tGL_STUB(%s, _gloffset_%s, %s)' % (name, f.name, alt)
 
-			if not f.static_dispatch:
+			if not f.is_static_entry_point(f.name):
 				print '\tHIDDEN(GL_PREFIX(%s, %s))' % (name, alt)
 
 
 		for f in api.functionIterateByOffset():
-			if f.static_dispatch:
+			if f.is_static_entry_point(f.name):
 				name = f.name
 			else:
 				name = "_dispatch_stub_%u" % (f.offset)
@@ -221,7 +221,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 
 			alt = "%s@%u" % (name, stack)
 
-			if f.static_dispatch:
+			if f.is_static_entry_point(f.name):
 				for n in f.entry_points:
 					if n != f.name:
 						alt2 = "%s@%u" % (n, stack)

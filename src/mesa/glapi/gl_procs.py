@@ -87,7 +87,7 @@ class PrintGlProcs(gl_XML.gl_print_base):
 		base_offset = 0
 		table = []
 		for func in api.functionIterateByOffset():
-			if func.static_dispatch:
+			if func.is_static_entry_point(func.name):
 				name = func.name
 			else:
 				name = "_dispatch_stub_%u" % (func.offset)
@@ -104,7 +104,7 @@ class PrintGlProcs(gl_XML.gl_print_base):
 		for func in api.functionIterateByOffset():
 			for n in func.entry_points:
 				if n != func.name:
-					if func.static_dispatch:
+					if func.is_static_entry_point(n):
 						name = n
 					else:
 						name = "_dispatch_stub_%u" % (func.offset)
@@ -123,8 +123,11 @@ class PrintGlProcs(gl_XML.gl_print_base):
 		print '/* FIXME: Having these (incorrect) prototypes here is ugly. */'
 		print '#ifdef NEED_FUNCTION_POINTER'
 		for func in api.functionIterateByOffset():
-			if not func.static_dispatch:
-				print 'extern void gl_dispatch_stub_%u(void);' % (func.offset)
+			for n in func.entry_points:
+				if not func.is_static_entry_point(n):
+					print 'extern void gl_dispatch_stub_%u(void);' % (func.offset)
+					break
+
 		print '#endif /* NEED_FUNCTION_POINTER */'
 
 		print ''

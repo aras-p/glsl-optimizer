@@ -614,6 +614,8 @@ class gl_function( gl_item ):
 
 		self.assign_offset = 0
 
+		self.static_entry_points = []
+
 		# Track the parameter string (for the function prototype)
 		# for each entry-point.  This is done because some functions
 		# change their prototype slightly when promoted from extension
@@ -634,7 +636,8 @@ class gl_function( gl_item ):
 		name = element.nsProp( "name", None )
 		alias = element.nsProp( "alias", None )
 
-		self.static_dispatch = is_attr_true(element, "static_dispatch")
+		if is_attr_true(element, "static_dispatch"):
+			self.static_entry_points.append(name)
 
 		self.entry_points.append( name )
 		if alias:
@@ -730,6 +733,9 @@ class gl_function( gl_item ):
 				return s
 		
 		return create_parameter_string( self.parameters, 1 )
+
+	def is_static_entry_point(self, name):
+		return name in self.static_entry_points
 
 
 class gl_item_factory:
