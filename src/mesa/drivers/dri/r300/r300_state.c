@@ -341,7 +341,7 @@ static void update_early_z(GLcontext *ctx)
 		/* disable early Z */
 		r300->hw.unk4F10.cmd[2] = 0x00000000;
 	else {
-		if (ctx->Depth.Test && ctx->Depth.Func != GL_ALWAYS)
+		if (ctx->Depth.Test && ctx->Depth.Func != GL_NEVER)
 			/* enable early Z */
 			r300->hw.unk4F10.cmd[2] = 0x00000001;
 		else
@@ -438,7 +438,7 @@ static void update_depth(GLcontext* ctx)
 	r300->hw.zs.cmd[R300_ZS_CNTL_0] &= R300_RB3D_STENCIL_ENABLE;
 	r300->hw.zs.cmd[R300_ZS_CNTL_1] &= ~(R300_ZS_MASK << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
 	
-	if (ctx->Depth.Test && ctx->Depth.Func != GL_ALWAYS) {
+	if (ctx->Depth.Test && ctx->Depth.Func != GL_NEVER) {
 		if (ctx->Depth.Mask)
 			r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_RB3D_Z_TEST_AND_WRITE;
 		else
@@ -446,12 +446,8 @@ static void update_depth(GLcontext* ctx)
 		
 		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= translate_func(ctx->Depth.Func) << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
 	} else {
-		if (ctx->Depth.Mask) {
-			r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_RB3D_Z_WRITE_ONLY;
-			r300->hw.zs.cmd[R300_ZS_CNTL_1] |= translate_func(GL_ALWAYS) << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
-		} else {
-			r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_RB3D_Z_DISABLED_1;
-		}
+		r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_RB3D_Z_DISABLED_1;
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= translate_func(GL_NEVER) << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
 	}
 	
 	update_early_z(ctx);
