@@ -97,54 +97,39 @@ void RestoreColorMap(void)
 
 void LoadColorMap(void)
 {
-   /* we're assuming 256 entries here */
-   int i;
-
-   switch(VarInfo.bits_per_pixel) {
-   case 8:
-   case 24:
-   case 32:
-      ColorMap.len = 256;
-      break;
-   case 15:
-      ColorMap.len = 32;
-      break;
-   case 16:
-      ColorMap.len = 64;
-      break;
-   }
-
    ColorMap.start = 0;
    ColorMap.red   = RedColorMap;
    ColorMap.green = GreenColorMap;
    ColorMap.blue  = BlueColorMap;
    ColorMap.transp = NULL;
 
-   if (ioctl(FrameBufferFD, FBIOGETCMAP, (void *) &ColorMap) < 0)
-      sprintf(exiterror, "ioctl(FBIOGETCMAP) failed!\n");
+   if(DisplayMode & GLUT_INDEX) {
+      ColorMap.len = 256;
 
-   switch(VarInfo.bits_per_pixel) {
-   case 15:
-      for(i=0; i<32; i++)
-	 RedColorMap[i] = GreenColorMap[i] = BlueColorMap[i] = i*65535/31;
-      break;
-   case 16:
-      for(i=0; i<32; i++) 
-	 RedColorMap[i] = BlueColorMap[i] = i*65535/31;
-      for(i=0; i<64; i++) 
-	 GreenColorMap[i] = i*65535/63;
-      break;
-   case 24:
-   case 32:
-      for(i=0; i<256; i++)
-	 RedColorMap[i] = GreenColorMap[i] = BlueColorMap[i] = i*257;
-      break;
-   }
+      if (ioctl(FrameBufferFD, FBIOGETCMAP, (void *) &ColorMap) < 0)
+	 sprintf(exiterror, "ioctl(FBIOGETCMAP) failed!\n");
 
-   RestoreColorMap();
-
-   if(DisplayMode & GLUT_INDEX)
       FillReverseColorMap();
+   } else {
+      int rcols = 1 << VarInfo.red.length;
+      int gcols = 1 << VarInfo.green.length;
+      int bcols = 1 << VarInfo.blue.length;
+
+      int i;
+
+      ColorMap.len = gcols;
+
+      for (i = 0; i < rcols ; i++) 
+	 RedColorMap[i] = (65536/(rcols-1)) * i;
+      
+      for (i = 0; i < gcols ; i++) 
+	 GreenColorMap[i] = (65536/(gcols-1)) * i;
+      
+      for (i = 0; i < bcols ; i++) 
+	 BlueColorMap[i] = (65536/(bcols-1)) * i;  
+
+      RestoreColorMap();
+   }
 }
 
 void glutSetColor(int cell, GLfloat red, GLfloat green, GLfloat blue)

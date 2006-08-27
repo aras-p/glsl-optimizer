@@ -138,7 +138,7 @@ static void KeyboardHandler(int sig)
 
       if(labelval == K_RIGHT)
 	 if(ioctl(ConsoleFD, VT_GETSTATE, &st) >= 0)
-	    vt = st.v_active - 1;
+	    vt = st.v_active + 1;
 
       if(vt != -1) {
 	 if(Swapping)
@@ -224,7 +224,8 @@ static int ReadKey(void)
 	       specialkey = GLUT_KEY_INSERT;
 	       break; 
 	    case 51:
-	       code = '\b'; goto stdkey;
+	       code = '\b';
+	       goto stdkey;
 	    case 91:
 	       READKEY;
 	       specialkey = GLUT_KEY_F1 + code - 65;
@@ -313,8 +314,8 @@ static int ReadKey(void)
    if(KeyboardLedState & LED_SCR)
       return 0;
 
-   if(labelval >= K_F1 && labelval <= K_F12)
-      specialkey = GLUT_KEY_F1 + labelval - K_F1;
+   if(labelvalnoshift >= K_F1 && labelvalnoshift <= K_F12)
+      specialkey = GLUT_KEY_F1 + labelvalnoshift - K_F1;
    else
       switch(labelvalnoshift) {
       case K_LEFT:
@@ -335,8 +336,9 @@ static int ReadKey(void)
 	 specialkey = GLUT_KEY_END; break;
       case K_INSERT:
 	 specialkey = GLUT_KEY_INSERT; break; 
-      case 127:
-	 labelval = '\b'; break;
+      case K_REMOVE:
+	 labelval = '\b';
+	 break;
       case K_ENTER:
       case K_ENTER - 1: /* keypad enter */
 	 labelval = '\n'; break;
