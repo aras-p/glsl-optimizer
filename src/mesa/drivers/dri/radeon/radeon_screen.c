@@ -635,13 +635,10 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	      dri_priv->deviceID);
       return NULL;
    }
-   if (screen->chip_family == CHIP_FAMILY_R350 || 
-       screen->chip_family == CHIP_FAMILY_R300) {
-	   if (getenv("R300_FORCE_R300") == NULL) {
-		   fprintf(stderr, "Radeon 9500/9700/9800 cards are not currently stable.\n");
-		   fprintf(stderr, "More details can be found at https://bugs.freedesktop.org/show_bug.cgi?id=6318\n");
-		   return NULL;
-	   }
+   if ((screen->chip_family == CHIP_FAMILY_R350 || screen->chip_family == CHIP_FAMILY_R300) &&
+       sPriv->ddxMinor < 2) {
+      fprintf(stderr, "xf86-video-ati-6.6.2 or newer needed for Radeon 9500/9700/9800 cards.\n");
+      return NULL;
    }
 
    if (screen->chip_family <= CHIP_FAMILY_RS200)
