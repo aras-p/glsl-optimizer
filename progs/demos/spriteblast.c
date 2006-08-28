@@ -537,6 +537,9 @@ main(int argc, char **argv)
   glutAddMenuEntry("Quit", 666);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
 
+  makePointList();
+  makeSprite();
+
   glShadeModel(GL_FLAT);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_POINT_SMOOTH);
@@ -545,9 +548,6 @@ main(int argc, char **argv)
 #ifdef GL_ARB_point_parameters
   glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, theQuad);
 #endif
-
-  makePointList();
-  makeSprite();
 
   glutMainLoop();
   return 0;             /* ANSI C requires main to return int. */
