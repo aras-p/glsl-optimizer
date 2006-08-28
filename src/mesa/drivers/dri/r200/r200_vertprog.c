@@ -407,7 +407,7 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
 
    vp->native = GL_FALSE;
 
-   if (!mesa_vp->Base.String)
+   if (mesa_vp->Base.NumInstructions == 0)
       return GL_FALSE;
 
    if ((mesa_vp->Base.InputsRead &

@@ -399,7 +399,7 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 	int u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1;
 	struct prog_src_register src[3];
 
-	if (!mesa_vp->Base.String)
+	if (mesa_vp->Base.NumInstructions == 0)
 		return;
 
 	if (getenv("R300_VP_SAFETY")) {
