@@ -30,8 +30,12 @@ SERVER_OUTPUTS = $(GLX_DIR)/indirect_dispatch.c \
 	$(GLX_DIR)/indirect_size_get.h \
 	$(GLX_DIR)/indirect_table.c
 
-COMMON = gl_XML.py license.py gl_API.xml typeexpr.py
-COMMON_GLX = $(COMMON) glX_XML.py glX_proto_common.py
+API_XML = gl_API.xml \
+	EXT_framebuffer_object.xml \
+	APPLE_vertex_array_object.xml
+
+COMMON = gl_XML.py license.py $(API_XML) typeexpr.py
+COMMON_GLX = $(COMMON) glX_API.xml glX_XML.py glX_proto_common.py
 
 all: $(OUTPUTS)
 
