@@ -471,6 +471,11 @@ main(int argc, char **argv)
   glutAddMenuEntry("Quit", 666);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
 
+  if (!glutExtensionSupported("GL_ARB_point_parameters")) {
+    fprintf(stderr, "Sorry, GL_ARB_point_parameters is not supported.\n");
+    return -1;
+  }
+
   glShadeModel(GL_FLAT);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_POINT_SMOOTH);
