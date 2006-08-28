@@ -742,7 +742,6 @@ void intelCopySubBuffer( __DRIdrawablePrivate *dPriv,
       intel = (intelContextPtr) dPriv->driContextPriv->driverPrivate;
       ctx = &intel->ctx;
       if (ctx->Visual.doubleBufferMode) {
-         intelScreenPrivate *screen = intel->intelScreen;
 	 drm_clip_rect_t rect;
 	 rect.x1 = x + dPriv->x;
 	 rect.y1 = (dPriv->h - y - h) + dPriv->y;
