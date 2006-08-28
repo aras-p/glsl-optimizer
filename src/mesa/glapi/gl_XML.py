@@ -737,6 +737,18 @@ class gl_function( gl_item ):
 	def is_static_entry_point(self, name):
 		return name in self.static_entry_points
 
+	def dispatch_name(self):
+		if self.name in self.static_entry_points:
+			return self.name
+		else:
+			return "_dispatch_stub_%u" % (self.offset)
+
+	def static_name(self, name):
+		if name in self.static_entry_points:
+			return name
+		else:
+			return "_dispatch_stub_%u" % (self.offset)
+
 
 class gl_item_factory:
 	"""Factory to create objects derived from gl_item."""

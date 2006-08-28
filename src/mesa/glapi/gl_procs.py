@@ -87,12 +87,8 @@ class PrintGlProcs(gl_XML.gl_print_base):
 		base_offset = 0
 		table = []
 		for func in api.functionIterateByOffset():
-			if func.is_static_entry_point(func.name):
-				name = func.name
-			else:
-				name = "_dispatch_stub_%u" % (func.offset)
-
-			self.printFunctionString( func.name )
+			name = func.dispatch_name()
+			self.printFunctionString(func.name)
 			table.append((base_offset, name, func.name))
 
 			# The length of the function's name, plus 2 for "gl",
@@ -104,11 +100,7 @@ class PrintGlProcs(gl_XML.gl_print_base):
 		for func in api.functionIterateByOffset():
 			for n in func.entry_points:
 				if n != func.name:
-					if func.is_static_entry_point(n):
-						name = n
-					else:
-						name = "_dispatch_stub_%u" % (func.offset)
-
+					name = func.dispatch_name()
 					self.printFunctionString( n )
 					table.append((base_offset, name, func.name))
 					base_offset += len(n) + 3
@@ -124,7 +116,7 @@ class PrintGlProcs(gl_XML.gl_print_base):
 		print '#ifdef NEED_FUNCTION_POINTER'
 		for func in api.functionIterateByOffset():
 			for n in func.entry_points:
-				if not func.is_static_entry_point(n):
+				if not func.is_static_entry_point(func.name):
 					print 'extern void gl_dispatch_stub_%u(void);' % (func.offset)
 					break
 

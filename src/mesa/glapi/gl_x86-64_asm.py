@@ -236,10 +236,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 			registers.append( ["%rbp", 0] )
 
 
-		if f.is_static_entry_point(f.name):
-			name = f.name
-		else:
-			name = "_dispatch_stub_%u" % (f.offset)
+		name = f.dispatch_name()
 
 		print '\t.p2align\t4,,15'
 		print '\t.globl\tGL_PREFIX(%s)' % (name)
@@ -291,10 +288,11 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 
 
 		for f in api.functionIterateByOffset():
+			dispatch = f.dispatch_name()
 			for n in f.entry_points:
 				if n != f.name:
 					if f.is_static_entry_point(n):
-						print '\t.globl GL_PREFIX(%s) ; .set GL_PREFIX(%s), GL_PREFIX(%s)' % (n, n, f.name)
+						print '\t.globl GL_PREFIX(%s) ; .set GL_PREFIX(%s), GL_PREFIX(%s)' % (n, n, dispatch)
 
 		return
 

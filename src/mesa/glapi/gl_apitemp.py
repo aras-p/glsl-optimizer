@@ -56,11 +56,11 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 		comma = ""
 
 		if f.is_static_entry_point(name):
-			n = name
 			keyword = "KEYWORD1"
 		else:
-			n = "_dispatch_stub_%u" % (f.offset)
 			keyword = "KEYWORD1_ALT"
+
+		n = f.static_name(name)
 
 		for p in f.parameterIterator():
 			if p.is_pointer():
@@ -166,12 +166,7 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 
 static _glapi_proc DISPATCH_TABLE_NAME[] = {"""
 		for f in api.functionIterateByOffset():
-			if f.is_static_entry_point(f.name):
-				n = f.name
-			else:
-				n = "_dispatch_stub_%u" % (f.offset)
-
-			print '   TABLE_ENTRY(%s),' % (n)
+			print '   TABLE_ENTRY(%s),' % (f.dispatch_name())
 
 		print '   /* A whole bunch of no-op functions.  These might be called'
 		print '    * when someone tries to call a dynamically-registered'
