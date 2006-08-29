@@ -9716,17 +9716,17 @@
 </category>
 
 <category name="GL_EXT_vertex_weighting" number="188">
-    <function name="VertexWeightfEXT" offset="assign" vectorequiv="VertexWeightfvEXT">
+    <function name="VertexWeightfEXT" vectorequiv="VertexWeightfvEXT">
         <param name="weight" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexWeightfvEXT" offset="assign">
+    <function name="VertexWeightfvEXT">
         <param name="weight" type="const GLfloat *" count="1"/>
         <glx rop="4135" ignore="true"/>
     </function>
 
-    <function name="VertexWeightPointerEXT" offset="assign">
+    <function name="VertexWeightPointerEXT">
         <param name="size" type="GLsizei"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>

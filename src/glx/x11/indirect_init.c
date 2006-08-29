@@ -744,8 +744,8 @@ __GLapi * __glXNewIndirectAPI( void )
 
     /* 262. GL_NV_point_sprite */
 
-    glAPI->PointParameterivNV = __indirect_glPointParameterivNV;
     glAPI->PointParameteriNV = __indirect_glPointParameteriNV;
+    glAPI->PointParameterivNV = __indirect_glPointParameterivNV;
 
     /* 268. GL_EXT_stencil_two_side */
 
@@ -766,7 +766,6 @@ __GLapi * __glXNewIndirectAPI( void )
 
     /* 310. GL_EXT_framebuffer_object */
 
-    glAPI->RenderbufferStorageEXT = __indirect_glRenderbufferStorageEXT;
     glAPI->BindFramebufferEXT = __indirect_glBindFramebufferEXT;
     glAPI->BindRenderbufferEXT = __indirect_glBindRenderbufferEXT;
     glAPI->CheckFramebufferStatusEXT = __indirect_glCheckFramebufferStatusEXT;
@@ -783,6 +782,7 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->GetRenderbufferParameterivEXT = __indirect_glGetRenderbufferParameterivEXT;
     glAPI->IsFramebufferEXT = __indirect_glIsFramebufferEXT;
     glAPI->IsRenderbufferEXT = __indirect_glIsRenderbufferEXT;
+    glAPI->RenderbufferStorageEXT = __indirect_glRenderbufferStorageEXT;
 
     return glAPI;
 }
