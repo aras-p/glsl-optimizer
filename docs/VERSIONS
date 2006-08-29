@@ -1471,7 +1471,7 @@ Mesa Version History
 	- paletted texturing was broken w/ floating point palettes (K. Schultz)
 	- lots of assorted framebuffer object bug fixes
 
-6.5.1  month, day, 2006
+6.5.1  August 31, 2006
     New:
 	- Intel i965 DRI driver
 	- GL_APPLE_vertex_array_object extension (Ian Romanick)
