@@ -569,7 +569,8 @@ int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
                                (GLint) (stack[mach->sp]._float) ? "true" : "false");
 			break;
 		default:
-			assert (0);
+			_mesa_problem(NULL, "bad slang opcode 0x%x", a->type);
+			return 0;
 		}
 	}
 
