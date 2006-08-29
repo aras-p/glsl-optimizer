@@ -7486,7 +7486,7 @@
     </enum>
     <enum name="TABLE_TOO_LARGE_EXT"                      value="0x8031"/>
 
-    <function name="GetHistogramEXT" offset="assign">
+    <function name="GetHistogramEXT" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="reset" type="GLboolean"/>
         <param name="format" type="GLenum"/>
@@ -7495,21 +7495,21 @@
         <glx vendorpriv="5" handcode="true" ignore="true"/>
     </function>
 
-    <function name="GetHistogramParameterfvEXT" offset="assign">
+    <function name="GetHistogramParameterfvEXT" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx vendorpriv="6" ignore="true"/>
     </function>
 
-    <function name="GetHistogramParameterivEXT" offset="assign">
+    <function name="GetHistogramParameterivEXT" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx vendorpriv="7" ignore="true"/>
     </function>
 
-    <function name="GetMinmaxEXT" offset="assign">
+    <function name="GetMinmaxEXT" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="reset" type="GLboolean"/>
         <param name="format" type="GLenum"/>
@@ -7518,38 +7518,38 @@
         <glx vendorpriv="8" handcode="true" ignore="true"/>
     </function>
 
-    <function name="GetMinmaxParameterfvEXT" offset="assign">
+    <function name="GetMinmaxParameterfvEXT" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx vendorpriv="9" ignore="true"/>
     </function>
 
-    <function name="GetMinmaxParameterivEXT" offset="assign">
+    <function name="GetMinmaxParameterivEXT" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx vendorpriv="10" ignore="true"/>
     </function>
 
-    <function name="HistogramEXT" alias="Histogram">
+    <function name="HistogramEXT" alias="Histogram" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="width" type="GLsizei"/>
         <param name="internalformat" type="GLenum"/>
         <param name="sink" type="GLboolean"/>
     </function>
 
-    <function name="MinmaxEXT" alias="Minmax">
+    <function name="MinmaxEXT" alias="Minmax" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="internalformat" type="GLenum"/>
         <param name="sink" type="GLboolean"/>
     </function>
 
-    <function name="ResetHistogramEXT" alias="ResetHistogram">
+    <function name="ResetHistogramEXT" alias="ResetHistogram" static_dispatch="false">
         <param name="target" type="GLenum"/>
     </function>
 
-    <function name="ResetMinmaxEXT" alias="ResetMinmax">
+    <function name="ResetMinmaxEXT" alias="ResetMinmax" static_dispatch="false">
         <param name="target" type="GLenum"/>
     </function>
 </category>
@@ -7621,7 +7621,7 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="ConvolutionFilter1DEXT" alias="ConvolutionFilter1D">
+    <function name="ConvolutionFilter1DEXT" alias="ConvolutionFilter1D" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="internalformat" type="GLenum"/>
         <param name="width" type="GLsizei"/>
@@ -7630,7 +7630,7 @@
         <param name="image" type="const GLvoid *"/>
     </function>
 
-    <function name="ConvolutionFilter2DEXT" alias="ConvolutionFilter2D">
+    <function name="ConvolutionFilter2DEXT" alias="ConvolutionFilter2D" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="internalformat" type="GLenum"/>
         <param name="width" type="GLsizei"/>
@@ -7640,31 +7640,31 @@
         <param name="image" type="const GLvoid *"/>
     </function>
 
-    <function name="ConvolutionParameterfEXT" alias="ConvolutionParameterf">
+    <function name="ConvolutionParameterfEXT" alias="ConvolutionParameterf" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat"/>
     </function>
 
-    <function name="ConvolutionParameterfvEXT" alias="ConvolutionParameterfv">
+    <function name="ConvolutionParameterfvEXT" alias="ConvolutionParameterfv" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
     </function>
 
-    <function name="ConvolutionParameteriEXT" alias="ConvolutionParameteri">
+    <function name="ConvolutionParameteriEXT" alias="ConvolutionParameteri" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint"/>
     </function>
 
-    <function name="ConvolutionParameterivEXT" alias="ConvolutionParameteriv">
+    <function name="ConvolutionParameterivEXT" alias="ConvolutionParameteriv" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *"/>
     </function>
 
-    <function name="CopyConvolutionFilter1DEXT" alias="CopyConvolutionFilter1D">
+    <function name="CopyConvolutionFilter1DEXT" alias="CopyConvolutionFilter1D" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="internalformat" type="GLenum"/>
         <param name="x" type="GLint"/>
@@ -7672,7 +7672,7 @@
         <param name="width" type="GLsizei"/>
     </function>
 
-    <function name="CopyConvolutionFilter2DEXT" alias="CopyConvolutionFilter2D">
+    <function name="CopyConvolutionFilter2DEXT" alias="CopyConvolutionFilter2D" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="internalformat" type="GLenum"/>
         <param name="x" type="GLint"/>
@@ -7681,7 +7681,7 @@
         <param name="height" type="GLsizei"/>
     </function>
 
-    <function name="GetConvolutionFilterEXT" offset="assign">
+    <function name="GetConvolutionFilterEXT" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
@@ -7689,21 +7689,21 @@
         <glx vendorpriv="1" handcode="true" ignore="true"/>
     </function>
 
-    <function name="GetConvolutionParameterfvEXT" offset="assign">
+    <function name="GetConvolutionParameterfvEXT" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx vendorpriv="2" ignore="true"/>
     </function>
 
-    <function name="GetConvolutionParameterivEXT" offset="assign">
+    <function name="GetConvolutionParameterivEXT" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx vendorpriv="3" ignore="true"/>
     </function>
 
-    <function name="GetSeparableFilterEXT" offset="assign">
+    <function name="GetSeparableFilterEXT" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
@@ -7713,7 +7713,7 @@
         <glx vendorpriv="4" handcode="true" ignore="true"/>
     </function>
 
-    <function name="SeparableFilter2DEXT" alias="SeparableFilter2D">
+    <function name="SeparableFilter2DEXT" alias="SeparableFilter2D" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="internalformat" type="GLenum"/>
         <param name="width" type="GLsizei"/>
@@ -7785,7 +7785,7 @@
         <size name="GetColorTableParameterivSGI" mode="get"/>
     </enum>
 
-    <function name="ColorTableSGI" alias="ColorTable">
+    <function name="ColorTableSGI" alias="ColorTable" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="internalformat" type="GLenum"/>
         <param name="width" type="GLsizei"/>
@@ -7794,19 +7794,19 @@
         <param name="table" type="const GLvoid *"/>
     </function>
 
-    <function name="ColorTableParameterfvSGI" alias="ColorTableParameterfv">
+    <function name="ColorTableParameterfvSGI" alias="ColorTableParameterfv" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
     </function>
 
-    <function name="ColorTableParameterivSGI" alias="ColorTableParameteriv">
+    <function name="ColorTableParameterivSGI" alias="ColorTableParameteriv" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *"/>
     </function>
 
-    <function name="CopyColorTableSGI" alias="CopyColorTable">
+    <function name="CopyColorTableSGI" alias="CopyColorTable" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="internalformat" type="GLenum"/>
         <param name="x" type="GLint"/>
@@ -7814,7 +7814,7 @@
         <param name="width" type="GLsizei"/>
     </function>
 
-    <function name="GetColorTableSGI" offset="assign">
+    <function name="GetColorTableSGI" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
@@ -7822,14 +7822,14 @@
         <glx vendorpriv="4098" dimensions_in_reply="true"/>
     </function>
 
-    <function name="GetColorTableParameterfvSGI" offset="assign">
+    <function name="GetColorTableParameterfvSGI" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx vendorpriv="4099"/>
     </function>
 
-    <function name="GetColorTableParameterivSGI" offset="assign">
+    <function name="GetColorTableParameterivSGI" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
@@ -7838,37 +7838,37 @@
 </category>
 
 <category name="GL_SGIS_pixel_texture" number="15">
-    <function name="PixelTexGenParameteriSGIS" offset="assign">
+    <function name="PixelTexGenParameteriSGIS" offset="assign" static_dispatch="false">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="PixelTexGenParameterivSGIS" offset="assign">
+    <function name="PixelTexGenParameterivSGIS" offset="assign" static_dispatch="false">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="PixelTexGenParameterfSGIS" offset="assign">
+    <function name="PixelTexGenParameterfSGIS" offset="assign" static_dispatch="false">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="PixelTexGenParameterfvSGIS" offset="assign">
+    <function name="PixelTexGenParameterfvSGIS" offset="assign" static_dispatch="false">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetPixelTexGenParameterivSGIS" offset="assign">
+    <function name="GetPixelTexGenParameterivSGIS" offset="assign" static_dispatch="false">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetPixelTexGenParameterfvSGIS" offset="assign">
+    <function name="GetPixelTexGenParameterfvSGIS" offset="assign" static_dispatch="false">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
@@ -7989,13 +7989,13 @@
 </category>
 
 <category name="GL_SGIS_multisample" number="25">
-    <function name="SampleMaskSGIS" offset="assign">
+    <function name="SampleMaskSGIS" offset="assign" static_dispatch="false">
         <param name="value" type="GLclampf"/>
         <param name="invert" type="GLboolean"/>
         <glx rop="2048"/>
     </function>
 
-    <function name="SamplePatternSGIS" offset="assign">
+    <function name="SamplePatternSGIS" offset="assign" static_dispatch="false">
         <param name="pattern" type="GLenum"/>
         <glx rop="2049"/>
     </function>
@@ -8399,7 +8399,7 @@
 <!-- Extension number 73 is not listed in the extension registry. -->
 
 <category name="GL_EXT_color_subtable" number="74">
-    <function name="ColorSubTableEXT" alias="ColorSubTable">
+    <function name="ColorSubTableEXT" alias="ColorSubTable" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="start" type="GLsizei"/>
         <param name="count" type="GLsizei"/>
@@ -8408,7 +8408,7 @@
         <param name="data" type="const GLvoid *"/>
     </function>
 
-    <function name="CopyColorSubTableEXT" alias="CopyColorSubTable">
+    <function name="CopyColorSubTableEXT" alias="CopyColorSubTable" static_dispatch="false">
         <param name="target" type="GLenum"/>
         <param name="start" type="GLsizei"/>
         <param name="x" type="GLint"/>
@@ -8626,13 +8626,13 @@
         <size name="CullParameterdv"/>
     </enum>
 
-    <function name="CullParameterdvEXT" offset="assign">
+    <function name="CullParameterdvEXT" offset="assign" static_dispatch="false">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLdouble *"/> <!-- Spec bug. Should be const. -->
         <glx ignore="true"/>
     </function>
 
-    <function name="CullParameterfvEXT" offset="assign">
+    <function name="CullParameterfvEXT" offset="assign" static_dispatch="false">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *"/> <!-- Spec bug. Should be const. -->
         <glx ignore="true"/>
@@ -9226,7 +9226,7 @@
 </category>
 
 <category name="GL_SGIX_pixel_texture" number="160">
-    <function name="PixelTexGenSGIX" offset="assign">
+    <function name="PixelTexGenSGIX" offset="assign" static_dispatch="false">
         <param name="mode" type="GLenum"/>
         <glx rop="2059" ignore="true"/>
     </function>
@@ -10063,7 +10063,7 @@
 </category>
 
 <category name="GL_IBM_multimode_draw_arrays" number="200">
-    <function name="MultiModeDrawArraysIBM" offset="assign">
+    <function name="MultiModeDrawArraysIBM" offset="assign" static_dispatch="false">
         <param name="mode" type="const GLenum *"/>
         <param name="first" type="const GLint *"/>
         <param name="count" type="const GLsizei *"/>
@@ -10072,7 +10072,7 @@
         <glx handcode="true" ignore="true"/>
     </function>
 
-    <function name="MultiModeDrawElementsIBM" offset="assign">
+    <function name="MultiModeDrawElementsIBM" offset="assign" static_dispatch="false">
         <param name="mode" type="const GLenum *"/>
         <param name="count" type="const GLsizei *"/>
         <param name="type" type="GLenum"/>
@@ -10169,12 +10169,12 @@
 </category>
 
 <category name="GL_EXT_multisample" number="209">
-    <function name="SampleMaskEXT" alias="SampleMaskSGIS">
+    <function name="SampleMaskEXT" alias="SampleMaskSGIS" static_dispatch="false">
         <param name="value" type="GLclampf"/>
         <param name="invert" type="GLboolean"/>
     </function>
 
-    <function name="SamplePatternEXT" alias="SamplePatternSGIS">
+    <function name="SamplePatternEXT" alias="SamplePatternSGIS" static_dispatch="false">
         <param name="pattern" type="GLenum"/>
     </function>
 </category>
@@ -10211,43 +10211,43 @@
 </category>
 
 <category name="GL_NV_fence" number="222">
-    <function name="DeleteFencesNV" offset="assign">
+    <function name="DeleteFencesNV" offset="assign" static_dispatch="false">
         <param name="n" type="GLsizei"/>
         <param name="fences" type="const GLuint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GenFencesNV" offset="assign">
+    <function name="GenFencesNV" offset="assign" static_dispatch="false">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="fences" type="GLuint *" output="true" count="n"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="IsFenceNV" offset="assign">
+    <function name="IsFenceNV" offset="assign" static_dispatch="false">
         <param name="fence" type="GLuint"/>
         <return type="GLboolean"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="TestFenceNV" offset="assign">
+    <function name="TestFenceNV" offset="assign" static_dispatch="false">
         <param name="fence" type="GLuint"/>
         <return type="GLboolean"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetFenceivNV" offset="assign">
+    <function name="GetFenceivNV" offset="assign" static_dispatch="false">
         <param name="fence" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="FinishFenceNV" offset="assign">
+    <function name="FinishFenceNV" offset="assign" static_dispatch="false">
         <param name="fence" type="GLuint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="SetFenceNV" offset="assign">
+    <function name="SetFenceNV" offset="assign" static_dispatch="false">
         <param name="fence" type="GLuint"/>
         <param name="condition" type="GLenum"/>
         <glx ignore="true"/>
@@ -11172,7 +11172,7 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="ActiveStencilFaceEXT" offset="assign">
+    <function name="ActiveStencilFaceEXT" offset="assign" static_dispatch="false">
         <param name="face" type="GLenum"/>
         <glx rop="4220"/>
     </function>
@@ -11351,7 +11351,7 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="DepthBoundsEXT" offset="assign">
+    <function name="DepthBoundsEXT" offset="assign" static_dispatch="false">
         <param name="zmin" type="GLclampd"/>
         <param name="zmax" type="GLclampd"/>
         <glx rop="4229" ignore="true"/>
@@ -11372,7 +11372,7 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="BlendEquationSeparateEXT" offset="assign">
+    <function name="BlendEquationSeparateEXT" offset="assign" static_dispatch="false">
         <param name="modeRGB" type="GLenum"/>
         <param name="modeA" type="GLenum"/>
         <glx rop="4228"/>
@@ -11446,14 +11446,14 @@
 <!-- Unnumbered extensions sorted by name. -->
 
 <category name="GL_ATI_blend_equation_separate">
-    <function name="BlendEquationSeparateATI" alias="BlendEquationSeparateEXT">
+    <function name="BlendEquationSeparateATI" alias="BlendEquationSeparateEXT" static_dispatch="false">
         <param name="modeRGB" type="GLenum"/>
         <param name="modeA" type="GLenum"/>
     </function>
 </category>
 
 <category name="GL_INGR_blend_func_separate">
-    <function name="BlendFuncSeparateINGR" alias="BlendFuncSeparateEXT">
+    <function name="BlendFuncSeparateINGR" alias="BlendFuncSeparateEXT" static_dispatch="false">
         <param name="sfactorRGB" type="GLenum"/>
         <param name="dfactorRGB" type="GLenum"/>
         <param name="sfactorAlpha" type="GLenum"/>
@@ -11507,12 +11507,12 @@
         <size name="PointParameterfvEXT"/>
     </enum>
 
-    <function name="PointParameterfSGIS" alias="PointParameterfEXT">
+    <function name="PointParameterfSGIS" alias="PointParameterfEXT" static_dispatch="false">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
     </function>
 
-    <function name="PointParameterfvSGIS" alias="PointParameterfvEXT">
+    <function name="PointParameterfvSGIS" alias="PointParameterfvEXT" static_dispatch="false">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
     </function>
@@ -11573,12 +11573,12 @@
     <enum name="TIME_ELAPSED_EXT" value="0x88BF"/>
     <type name="int64EXT"                  size="8"/>
     <type name="uint64EXT" unsigned="true" size="8"/>
-    <function name="GetQueryObjecti64vEXT" offset="assign">
+    <function name="GetQueryObjecti64vEXT" offset="assign" static_dispatch="false">
         <param name="id" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint64EXT *"/>
     </function>
-    <function name="GetQueryObjectui64vEXT" offset="assign">
+    <function name="GetQueryObjectui64vEXT" offset="assign" static_dispatch="false">
         <param name="id" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLuint64EXT *"/>
@@ -11590,7 +11590,7 @@
     <enum name="DRAW_FRAMEBUFFER_EXT" value="0x8CA9"/>
     <enum name="DRAW_FRAMEBUFFER_BINDING_EXT" value="0x8CA6"/>
     <enum name="READ_FRAMEBUFFER_BINDING_EXT" value="0x8CAA"/>
-    <function name="BlitFramebufferEXT" offset="assign">
+    <function name="BlitFramebufferEXT" offset="assign" static_dispatch="false">
         <param name="srcX0" type="GLint"/>
         <param name="srcY0" type="GLint"/>
         <param name="srcX1" type="GLint"/>
