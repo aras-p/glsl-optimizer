@@ -687,4 +687,7 @@ extern int __glXGetInternalVersion(void);
 /* Get the unadjusted system time */
 extern int __glXGetUST( int64_t * ust );
 
+extern Bool __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
+    int32_t * numerator, int32_t * denominator);
+
 #endif /* !__GLX_client_h__ */

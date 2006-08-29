@@ -82,7 +82,6 @@ static const struct extension_info known_glx_extensions[] = {
    { GLX(MESA_copy_sub_buffer),        VER(0,0), Y, N, N, N },
    { GLX(MESA_pixmap_colormap),        VER(0,0), N, N, N, N }, /* Deprecated */
    { GLX(MESA_release_buffers),        VER(0,0), N, N, N, N }, /* Deprecated */
-   { GLX(MESA_set_3dfx_mode),          VER(0,0), N, N, N, N }, /* Deprecated */
    { GLX(MESA_swap_control),           VER(0,0), Y, N, N, Y },
    { GLX(MESA_swap_frame_usage),       VER(0,0), Y, N, N, Y },
    { GLX(NV_float_buffer),             VER(0,0), N, N, N, N },
@@ -91,22 +90,17 @@ static const struct extension_info known_glx_extensions[] = {
    { GLX(NV_vertex_array_range),       VER(0,0), N, N, N, Y }, /* Deprecated */
    { GLX(OML_swap_method),             VER(0,0), Y, Y, N, N },
    { GLX(OML_sync_control),            VER(0,0), Y, N, N, Y },
-   { GLX(SGI_cushion),                 VER(0,0), N, N, N, N },
    { GLX(SGI_make_current_read),       VER(1,3), Y, N, N, N },
    { GLX(SGI_swap_control),            VER(0,0), Y, N, N, N },
    { GLX(SGI_video_sync),              VER(0,0), Y, N, N, Y },
    { GLX(SGIS_blended_overlay),        VER(0,0), N, N, N, N },
    { GLX(SGIS_color_range),            VER(0,0), N, N, N, N },
    { GLX(SGIS_multisample),            VER(0,0), Y, Y, N, N },
-   { GLX(SGIX_dm_buffer),              VER(0,0), N, N, N, N },
    { GLX(SGIX_fbconfig),               VER(1,3), Y, Y, N, N },
    { GLX(SGIX_pbuffer),                VER(1,3), Y, N, N, N },
    { GLX(SGIX_swap_barrier),           VER(0,0), N, N, N, N },
    { GLX(SGIX_swap_group),             VER(0,0), N, N, N, N },
-   { GLX(SGIX_video_resize),           VER(0,0), N, N, N, N },
-   { GLX(SGIX_video_source),           VER(0,0), N, N, N, N },
    { GLX(SGIX_visual_select_group),    VER(0,0), Y, Y, N, N },
-   { GLX(SUN_get_transparent_index),   VER(0,0), N, N, N, N },
    { GLX(EXT_texture_from_pixmap),     VER(0,0), Y, N, N, N },
    { NULL }
 };

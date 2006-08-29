@@ -719,7 +719,7 @@ static const __DRIinterfaceMethods interface_methods = {
     XF86DRIGetDrawableInfo,
 
     __glXGetUST,
-    glXGetMscRateOML,
+    __glXGetMscRateOML,
 };
 
 
