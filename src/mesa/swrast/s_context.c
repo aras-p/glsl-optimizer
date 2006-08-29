@@ -513,9 +513,6 @@ _swrast_validate_derived( GLcontext *ctx )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    if (swrast->NewState) {
-      if (swrast->NewState & _SWRAST_NEW_RASTERMASK)
- 	 _swrast_update_rasterflags( ctx );
-
       if (swrast->NewState & _NEW_POLYGON)
 	 _swrast_update_polygon( ctx );
 
@@ -536,6 +533,9 @@ _swrast_validate_derived( GLcontext *ctx )
 
       if (swrast->NewState & (_NEW_TEXTURE | _NEW_PROGRAM))
          _swrast_validate_texture_images( ctx );
+
+      if (swrast->NewState & _SWRAST_NEW_RASTERMASK)
+ 	 _swrast_update_rasterflags( ctx );
 
       swrast->NewState = 0;
       swrast->StateChanges = 0;
