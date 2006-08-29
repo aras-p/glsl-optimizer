@@ -1021,7 +1021,6 @@ _glapi_check_table(const struct _glapi_table *table)
       GLuint offset = (setFenceFunc - (char *) table) / sizeof(void *);
       assert(setFenceOffset == _gloffset_SetFenceNV);
       assert(setFenceOffset == offset);
-      assert(_glapi_get_proc_address("glSetFenceNV") == (_glapi_proc) &glSetFenceNV);
    }
 #else
    (void) table;
