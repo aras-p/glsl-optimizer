@@ -1166,9 +1166,9 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
 void
 _mesa_debug( const GLcontext *ctx, const char *fmtString, ... )
 {
+#ifdef DEBUG
    char s[MAXSTRING];
    va_list args;
-   (void) ctx;
    va_start(args, fmtString);
    vsnprintf(s, MAXSTRING, fmtString, args);
    va_end(args);
@@ -1177,6 +1177,9 @@ _mesa_debug( const GLcontext *ctx, const char *fmtString, ... )
 #else
    fprintf(stderr, "Mesa: %s", s);
 #endif
+#endif /* DEBUG */
+   (void) ctx;
+   (void) fmtString;
 }
 
 /*@}*/
