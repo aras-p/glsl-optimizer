@@ -246,7 +246,7 @@ static void dump_instruction (FILE *f, slang_assembly *a, unsigned int i)
 	case slang_asm_exit:
 		fprintf (f, "exit");
 		break;
-	/* mesa-specific extensions */
+   /* GL_MESA_shader_debug */
 	case slang_asm_float_print:
 		fprintf (f, "float_print");
 		break;
@@ -256,7 +256,38 @@ static void dump_instruction (FILE *f, slang_assembly *a, unsigned int i)
 	case slang_asm_bool_print:
 		fprintf (f, "bool_print");
 		break;
-	default:
+   /* vec4 */
+   case slang_asm_float_to_vec4:
+      fprintf (f, "float_to_vec4");
+      break;
+   case slang_asm_vec4_add:
+      fprintf (f, "vec4_add");
+      break;
+   case slang_asm_vec4_subtract:
+      fprintf (f, "vec4_subtract");
+      break;
+   case slang_asm_vec4_multiply:
+      fprintf (f, "vec4_multiply");
+      break;
+   case slang_asm_vec4_divide:
+      fprintf (f, "vec4_divide");
+      break;
+   case slang_asm_vec4_negate:
+      fprintf (f, "vec4_negate");
+      break;
+   case slang_asm_vec4_dot:
+      fprintf (f, "vec4_dot");
+      break;
+   case slang_asm_vec4_copy:
+      fprintf (f, "vec4_copy");
+      break;
+   case slang_asm_vec4_deref:
+      fprintf (f, "vec4_deref");
+      break;
+   case slang_asm_vec4_equal_int:
+      fprintf (f, "vec4_equal");
+      break;
+   default:
 		break;
 	}
 
@@ -295,7 +326,8 @@ ensure_infolog_created (slang_info_log **infolog)
    }
 }
 
-int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
+GLboolean
+_slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
 {
 	slang_machine_slot *stack;
 
@@ -320,7 +352,7 @@ int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
 	if (mach->x86.compiled_func != NULL)
 	{
 		mach->x86.compiled_func (mach);
-		return 1;
+		return GL_TRUE;
 	}
 #endif
 
@@ -533,7 +565,7 @@ int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
 			break;
 		case slang_asm_local_addr:
 			mach->sp--;
-			stack[mach->sp]._addr = SLANG_MACHINE_GLOBAL_SIZE * 4 + mach->bp * 4 - 
+			stack[mach->sp]._addr = SLANG_MACHINE_GLOBAL_SIZE * 4 + mach->bp * 4 -
 				(a->param[0] + a->param[1]) + 4;
 			break;
 		case slang_asm_call:
@@ -551,7 +583,7 @@ int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
 		case slang_asm_exit:
 			mach->exit = 1;
 			break;
-		/* mesa-specific extensions */
+      /* GL_MESA_shader_debug */
 		case slang_asm_float_print:
 			_mesa_printf ("slang print: %f\n", stack[mach->sp]._float);
          ensure_infolog_created (&mach->infolog);
@@ -568,17 +600,130 @@ int _slang_execute2 (const slang_assembly_file *file, slang_machine *mach)
          slang_info_log_print (mach->infolog, "%s",
                                (GLint) (stack[mach->sp]._float) ? "true" : "false");
 			break;
-		default:
-			_mesa_problem(NULL, "bad slang opcode 0x%x", a->type);
-			return 0;
-		}
-	}
+      /* vec4 */
+      case slang_asm_float_to_vec4:
+         /* [vec4] | float > [vec4] */
+         {
+            GLuint da = stack[mach->sp + 1]._addr;
+            mach->mem[da / 4]._float = stack[mach->sp]._float;
+            mach->sp++;
+         }
+         break;
+      case slang_asm_vec4_add:
+         /* [vec4] | vec4 > [vec4] */
+         {
+            GLuint da = stack[mach->sp + 4]._addr;
+            mach->mem[da / 4]._float += stack[mach->sp]._float;
+            mach->mem[(da + 4) / 4]._float += stack[mach->sp + 1]._float;
+            mach->mem[(da + 8) / 4]._float += stack[mach->sp + 2]._float;
+            mach->mem[(da + 12) / 4]._float += stack[mach->sp + 3]._float;
+            mach->sp += 4;
+         }
+         break;
+      case slang_asm_vec4_subtract:
+         /* [vec4] | vec4 > [vec4] */
+         {
+            GLuint da = stack[mach->sp + 4]._addr;
+            mach->mem[da / 4]._float -= stack[mach->sp]._float;
+            mach->mem[(da + 4) / 4]._float -= stack[mach->sp + 1]._float;
+            mach->mem[(da + 8) / 4]._float -= stack[mach->sp + 2]._float;
+            mach->mem[(da + 12) / 4]._float -= stack[mach->sp + 3]._float;
+            mach->sp += 4;
+         }
+         break;
+      case slang_asm_vec4_multiply:
+         /* [vec4] | vec4 > [vec4] */
+         {
+            GLuint da = stack[mach->sp + 4]._addr;
+            mach->mem[da / 4]._float *= stack[mach->sp]._float;
+            mach->mem[(da + 4) / 4]._float *= stack[mach->sp + 1]._float;
+            mach->mem[(da + 8) / 4]._float *= stack[mach->sp + 2]._float;
+            mach->mem[(da + 12) / 4]._float *= stack[mach->sp + 3]._float;
+            mach->sp += 4;
+         }
+         break;
+      case slang_asm_vec4_divide:
+         /* [vec4] | vec4 > [vec4] */
+         {
+            GLuint da = stack[mach->sp + 4]._addr;
+            mach->mem[da / 4]._float /= stack[mach->sp]._float;
+            mach->mem[(da + 4) / 4]._float /= stack[mach->sp + 1]._float;
+            mach->mem[(da + 8) / 4]._float /= stack[mach->sp + 2]._float;
+            mach->mem[(da + 12) / 4]._float /= stack[mach->sp + 3]._float;
+            mach->sp += 4;
+         }
+         break;
+      case slang_asm_vec4_negate:
+         /* [vec4] > [vec4] */
+         {
+            GLuint da = stack[mach->sp]._addr;
+            mach->mem[da / 4]._float = -mach->mem[da / 4]._float;
+            mach->mem[(da + 4) / 4]._float = -mach->mem[(da + 4) / 4]._float;
+            mach->mem[(da + 8) / 4]._float = -mach->mem[(da + 8) / 4]._float;
+            mach->mem[(da + 12) / 4]._float = -mach->mem[(da + 12) / 4]._float;
+         }
+         break;
+      case slang_asm_vec4_dot:
+         /* [vec4] | vec4 > [float] */
+         {
+            GLuint da = stack[mach->sp + 4]._addr;
+            mach->mem[da / 4]._float =
+               mach->mem[da / 4]._float * stack[mach->sp]._float +
+               mach->mem[(da + 4) / 4]._float * stack[mach->sp + 1]._float +
+               mach->mem[(da + 8) / 4]._float * stack[mach->sp + 2]._float +
+               mach->mem[(da + 12) / 4]._float * stack[mach->sp + 3]._float;
+            mach->sp += 4;
+         }
+         break;
+      case slang_asm_vec4_copy:
+         /* [vec4] | vec4 > [vec4] */
+         {
+            GLuint da = stack[mach->sp + a->param[0] / 4]._addr + a->param[1];
+            mach->mem[da / 4]._float = stack[mach->sp]._float;
+            mach->mem[(da + 4) / 4]._float = stack[mach->sp + 1]._float;
+            mach->mem[(da + 8) / 4]._float = stack[mach->sp + 2]._float;
+            mach->mem[(da + 12) / 4]._float = stack[mach->sp + 3]._float;
+            mach->sp += 4;
+         }
+         break;
+      case slang_asm_vec4_deref:
+         /* [vec4] > vec4 */
+         {
+            GLuint sa = stack[mach->sp]._addr;
+            mach->sp -= 3;
+            stack[mach->sp]._float = mach->mem[sa / 4]._float;
+            stack[mach->sp + 1]._float = mach->mem[(sa + 4) / 4]._float;
+            stack[mach->sp + 2]._float = mach->mem[(sa + 8) / 4]._float;
+            stack[mach->sp + 3]._float = mach->mem[(sa + 12) / 4]._float;
+         }
+         break;
+      case slang_asm_vec4_equal_int:
+         {
+            GLuint sp0 = mach->sp + a->param[0] / 4;
+            GLuint sp1 = mach->sp + a->param[1] / 4;
+            mach->sp--;
+            if (stack[sp0]._float == stack[sp1]._float &&
+                stack[sp0 + 1]._float == stack[sp1 + 1]._float &&
+                stack[sp0 + 2]._float == stack[sp1 + 2]._float &&
+                stack[sp0 + 3]._float == stack[sp1 + 3]._float) {
+               stack[mach->sp]._float = 1.0f;
+            }
+            else {
+               stack[mach->sp]._float = 0.0f;
+            }
+         }
+         break;
+      default:
+         _mesa_problem(NULL, "bad slang opcode 0x%x", a->type);
+         return GL_FALSE;
+      }
+   }
 
 #if DEBUG_SLANG
-	if (f != NULL)
-		fclose (f);
+   if (f != NULL)
+      fclose (f);
 #endif
 
-	return 1;
+   return GL_TRUE;
 }
 
