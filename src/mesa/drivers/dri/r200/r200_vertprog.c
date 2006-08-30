@@ -132,7 +132,7 @@ static GLboolean r200VertexProgUpdateParams(GLcontext *ctx, struct r200_vertex_p
 	 break;
       }
       if (pi == 95) {
-	 fcmd = (GLfloat *)rmesa->hw.vpp[1].cmd[VPP_CMD_0 + 1];
+	 fcmd = (GLfloat *)&rmesa->hw.vpp[1].cmd[VPP_CMD_0 + 1];
       }
    }
    /* hack up the cmd_size so not the whole state atom is emitted always. */
