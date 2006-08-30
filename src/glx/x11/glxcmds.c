@@ -1700,7 +1700,7 @@ static int __glXSwapIntervalSGI(int interval)
    req->vendorCode = X_GLXvop_SwapIntervalSGI;
    req->contextTag = gc->currentContextTag;
 
-   interval_ptr = (CARD32 *) req + 1;
+   interval_ptr = (CARD32 *) (req + 1);
    *interval_ptr = interval;
 
    UnlockDisplay(dpy);
