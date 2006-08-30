@@ -4082,6 +4082,11 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    program->Base.NumParameters   = ap.Base.NumParameters;
    program->Base.NumAttributes   = ap.Base.NumAttributes;
    program->Base.NumAddressRegs  = ap.Base.NumAddressRegs;
+   program->Base.NumNativeInstructions = ap.Base.NumNativeInstructions;
+   program->Base.NumNativeTemporaries = ap.Base.NumNativeTemporaries;
+   program->Base.NumNativeParameters = ap.Base.NumNativeParameters;
+   program->Base.NumNativeAttributes = ap.Base.NumNativeAttributes;
+   program->Base.NumNativeAddressRegs = ap.Base.NumNativeAddressRegs;
    program->NumAluInstructions   = ap.NumAluInstructions;
    program->NumTexInstructions   = ap.NumTexInstructions;
    program->NumTexIndirections   = ap.NumTexIndirections;
@@ -4137,6 +4142,11 @@ _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
    program->Base.NumParameters   = ap.Base.NumParameters;
    program->Base.NumAttributes   = ap.Base.NumAttributes;
    program->Base.NumAddressRegs  = ap.Base.NumAddressRegs;
+   program->Base.NumNativeInstructions = ap.Base.NumNativeInstructions;
+   program->Base.NumNativeTemporaries = ap.Base.NumNativeTemporaries;
+   program->Base.NumNativeParameters = ap.Base.NumNativeParameters;
+   program->Base.NumNativeAttributes = ap.Base.NumNativeAttributes;
+   program->Base.NumNativeAddressRegs = ap.Base.NumNativeAddressRegs;
    program->Base.InputsRead     = ap.Base.InputsRead;
    program->Base.OutputsWritten = ap.Base.OutputsWritten;
    program->IsPositionInvariant = ap.HintPositionInvariant;
