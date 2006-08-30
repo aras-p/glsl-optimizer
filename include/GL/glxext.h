@@ -52,9 +52,9 @@ extern "C" {
 /*************************************************************/
 
 /* Header file version number, required by OpenGL ABI for Linux */
-/* glxext.h last updated 2004/07/26 */
-/* Current version at http://oss.sgi.com/projects/ogl-sample/registry/ */
-#define GLX_GLXEXT_VERSION 6
+/* glxext.h last updated 2006/08/30 */
+/* Current version at http://www.opengl.org/registry/ */
+#define GLX_GLXEXT_VERSION 14
 
 #ifndef GLX_VERSION_1_3
 #define GLX_WINDOW_BIT                     0x00000001
@@ -126,6 +126,11 @@ extern "C" {
 #ifndef GLX_ARB_multisample
 #define GLX_SAMPLE_BUFFERS_ARB             100000
 #define GLX_SAMPLES_ARB                    100001
+#endif
+
+#ifndef GLX_ARB_fbconfig_float
+#define GLX_RGBA_FLOAT_TYPE_ARB            0x20B9
+#define GLX_RGBA_FLOAT_BIT_ARB             0x00000004
 #endif
 
 #ifndef GLX_SGIS_multisample
@@ -282,7 +287,11 @@ extern "C" {
 #ifndef GLX_OML_sync_control
 #endif
 
-#ifndef GLX_SGIX_hyperpipe_group
+#ifndef GLX_NV_float_buffer
+#define GLX_FLOAT_COMPONENTS_NV            0x20B0
+#endif
+
+#ifndef GLX_SGIX_hyperpipe
 #define GLX_HYPERPIPE_PIPE_NAME_LENGTH_SGIX 80
 #define GLX_BAD_HYPERPIPE_CONFIG_SGIX      91
 #define GLX_BAD_HYPERPIPE_SGIX             92
@@ -331,24 +340,37 @@ typedef struct {
 } GLXBufferClobberEventSGIX;
 #endif
 
-#if defined(__sun__) || defined(__osf__)
+#ifndef GLEXT_64_TYPES_DEFINED
+/* This code block is duplicated in glxext.h, so must be protected */
+#define GLEXT_64_TYPES_DEFINED
+/* Define int32_t, int64_t, and uint64_t types for UST/MSC */
+/* (as used in the GLX_OML_sync_control extension). */
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#include <inttypes.h>
+#elif defined(__sun__)
 #include <inttypes.h>
 #if defined(__STDC__)
 #if defined(__arch64__)
 typedef long int int64_t;
+typedef unsigned long int uint64_t;
 #else
-typedef long long int int64_t;   
+typedef long long int int64_t;
+typedef unsigned long long int uint64_t;
 #endif /* __arch64__ */
 #endif /* __STDC__ */
-#elif defined(__UNIXOS2__) || defined(__SOL64__)
-typedef long int int32_t;
-typedef long long int int64_t;
 #elif defined( __VMS )
 #include <inttypes.h>
 #elif defined(__SCO__) || defined(__USLC__)
 #include <stdint.h>
+#elif defined(__UNIXOS2__) || defined(__SOL64__)
+typedef long int int32_t;
+typedef long long int int64_t;
+typedef unsigned long long int uint64_t;
 #elif defined(WIN32) && defined(__GNUC__)
 #include <stdint.h>
+#else
+#include <inttypes.h>     /* Fallback option */
+#endif
 #endif
 
 #ifndef GLX_VERSION_1_3
@@ -411,6 +433,10 @@ typedef __GLXextFuncPtr ( * PFNGLXGETPROCADDRESSARBPROC) (const GLubyte *procNam
 
 #ifndef GLX_ARB_multisample
 #define GLX_ARB_multisample 1
+#endif
+
+#ifndef GLX_ARB_fbconfig_float
+#define GLX_ARB_fbconfig_float 1
 #endif
 
 #ifndef GLX_SGIS_multisample
@@ -631,8 +657,12 @@ typedef Bool ( * PFNGLXWAITFORMSCOMLPROC) (Display *dpy, GLXDrawable drawable, i
 typedef Bool ( * PFNGLXWAITFORSBCOMLPROC) (Display *dpy, GLXDrawable drawable, int64_t target_sbc, int64_t *ust, int64_t *msc, int64_t *sbc);
 #endif
 
-#ifndef GLX_SGIX_hyperpipe_group
-#define GLX_SGIX_hyperpipe_group 1
+#ifndef GLX_NV_float_buffer
+#define GLX_NV_float_buffer 1
+#endif
+
+#ifndef GLX_SGIX_hyperpipe
+#define GLX_SGIX_hyperpipe 1
 
 typedef struct {
     char    pipeName[GLX_HYPERPIPE_PIPE_NAME_LENGTH_SGIX];
@@ -685,6 +715,7 @@ extern unsigned int glXGetAGPOffsetMESA (const void *);
 #endif /* GLX_GLXEXT_PROTOTYPES */
 typedef unsigned int ( * PFNGLXGETAGPOFFSETMESAPROC) (const void *pointer);
 #endif
+
 
 #ifdef __cplusplus
 }
