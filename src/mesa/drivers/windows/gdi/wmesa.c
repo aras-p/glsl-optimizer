@@ -1397,3 +1397,53 @@ void WMesaSwapBuffers( HDC hdc )
         _mesa_problem(NULL, "wmesa: can't swap non-current window");
     }
 }
+
+/* This is hopefully a temporary hack to define some needed dispatch
+ * table entries.  Hopefully, I'll find a better solution.  The
+ * dispatch table generation scripts ought to be making these dummy
+ * stubs as well. */
+void gl_dispatch_stub_543(void){};
+void gl_dispatch_stub_544(void){};
+void gl_dispatch_stub_545(void){};
+void gl_dispatch_stub_546(void){};
+void gl_dispatch_stub_547(void){};
+void gl_dispatch_stub_548(void){};
+void gl_dispatch_stub_549(void){};
+void gl_dispatch_stub_550(void){};
+void gl_dispatch_stub_551(void){};
+void gl_dispatch_stub_552(void){};
+void gl_dispatch_stub_553(void){};
+void gl_dispatch_stub_554(void){};
+void gl_dispatch_stub_555(void){};
+void gl_dispatch_stub_556(void){};
+void gl_dispatch_stub_557(void){};
+void gl_dispatch_stub_558(void){};
+void gl_dispatch_stub_559(void){};
+void gl_dispatch_stub_560(void){};
+void gl_dispatch_stub_561(void){};
+void gl_dispatch_stub_565(void){};
+void gl_dispatch_stub_566(void){};
+void gl_dispatch_stub_577(void){};
+void gl_dispatch_stub_578(void){};
+void gl_dispatch_stub_603(void){};
+void gl_dispatch_stub_645(void){};
+void gl_dispatch_stub_646(void){};
+void gl_dispatch_stub_647(void){};
+void gl_dispatch_stub_648(void){};
+void gl_dispatch_stub_649(void){};
+void gl_dispatch_stub_650(void){};
+void gl_dispatch_stub_651(void){};
+void gl_dispatch_stub_652(void){};
+void gl_dispatch_stub_653(void){};
+void gl_dispatch_stub_734(void){};
+void gl_dispatch_stub_735(void){};
+void gl_dispatch_stub_736(void){};
+void gl_dispatch_stub_737(void){};
+void gl_dispatch_stub_738(void){};
+void gl_dispatch_stub_745(void){};
+void gl_dispatch_stub_746(void){};
+void gl_dispatch_stub_760(void){};
+void gl_dispatch_stub_761(void){};
+void gl_dispatch_stub_766(void){};
+void gl_dispatch_stub_767(void){};
+void gl_dispatch_stub_768(void){};

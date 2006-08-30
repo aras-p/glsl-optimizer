@@ -500,8 +500,6 @@ EXPORTS
 	glPolygonOffsetEXT
 	glTexImage3DEXT
 	glTexSubImage3DEXT
-	glGetTexFilterFuncSGIS
-	glTexFilterFuncSGIS
 	glTexSubImage1DEXT
 	glTexSubImage2DEXT
 	glCopyTexImage1DEXT
@@ -509,57 +507,12 @@ EXPORTS
 	glCopyTexSubImage1DEXT
 	glCopyTexSubImage2DEXT
 	glCopyTexSubImage3DEXT
-	glGetHistogramEXT
-	glGetHistogramParameterfvEXT
-	glGetHistogramParameterivEXT
-	glGetMinmaxEXT
-	glGetMinmaxParameterfvEXT
-	glGetMinmaxParameterivEXT
-	glHistogramEXT
-	glMinmaxEXT
-	glResetHistogramEXT
-	glResetMinmaxEXT
-	glConvolutionFilter1DEXT
-	glConvolutionFilter2DEXT
-	glConvolutionParameterfEXT
-	glConvolutionParameterfvEXT
-	glConvolutionParameteriEXT
-	glConvolutionParameterivEXT
-	glCopyConvolutionFilter1DEXT
-	glCopyConvolutionFilter2DEXT
-	glGetConvolutionFilterEXT
-	glGetConvolutionParameterfvEXT
-	glGetConvolutionParameterivEXT
-	glGetSeparableFilterEXT
-	glSeparableFilter2DEXT
-	glColorTableSGI
-	glColorTableParameterfvSGI
-	glColorTableParameterivSGI
-	glCopyColorTableSGI
-	glGetColorTableSGI
-	glGetColorTableParameterfvSGI
-	glGetColorTableParameterivSGI
-	glPixelTexGenSGIX
-	glPixelTexGenParameteriSGIS
-	glPixelTexGenParameterivSGIS
-	glPixelTexGenParameterfSGIS
-	glPixelTexGenParameterfvSGIS
-	glGetPixelTexGenParameterivSGIS
-	glGetPixelTexGenParameterfvSGIS
-	glTexImage4DSGIS
-	glTexSubImage4DSGIS
 	glAreTexturesResidentEXT
 	glBindTextureEXT
 	glDeleteTexturesEXT
 	glGenTexturesEXT
 	glIsTextureEXT
 	glPrioritizeTexturesEXT
-	glDetailTexFuncSGIS
-	glGetDetailTexFuncSGIS
-	glSharpenTexFuncSGIS
-	glGetSharpenTexFuncSGIS
-	glSampleMaskSGIS
-	glSamplePatternSGIS
 	glArrayElementEXT
 	glColorPointerEXT
 	glDrawArraysEXT
@@ -570,63 +523,16 @@ EXPORTS
 	glTexCoordPointerEXT
 	glVertexPointerEXT
 	glBlendEquationEXT
-	glSpriteParameterfSGIX
-	glSpriteParameterfvSGIX
-	glSpriteParameteriSGIX
-	glSpriteParameterivSGIX
 	glPointParameterfEXT
 	glPointParameterfvEXT
 	glPointParameterfARB
 	glPointParameterfvARB
-	glPointParameterfSGIS
-	glPointParameterfvSGIS
-	glGetInstrumentsSGIX
-	glInstrumentsBufferSGIX
-	glPollInstrumentsSGIX
-	glReadInstrumentsSGIX
-	glStartInstrumentsSGIX
-	glStopInstrumentsSGIX
-	glFrameZoomSGIX
-	glTagSampleBufferSGIX
-	glReferencePlaneSGIX
-	glFlushRasterSGIX
-	glColorSubTableEXT
-	glCopyColorSubTableEXT
-	glHintPGI
 	glColorTableEXT
 	glGetColorTableEXT
 	glGetColorTableParameterivEXT
 	glGetColorTableParameterfvEXT
-	glGetListParameterfvSGIX
-	glGetListParameterivSGIX
-	glListParameterfSGIX
-	glListParameterfvSGIX
-	glListParameteriSGIX
-	glListParameterivSGIX
-	glIndexMaterialEXT
-	glIndexFuncEXT
 	glLockArraysEXT
 	glUnlockArraysEXT
-	glCullParameterdvEXT
-	glCullParameterfvEXT
-	glFragmentColorMaterialSGIX
-	glFragmentLightfSGIX
-	glFragmentLightfvSGIX
-	glFragmentLightiSGIX
-	glFragmentLightivSGIX
-	glFragmentLightModelfSGIX
-	glFragmentLightModelfvSGIX
-	glFragmentLightModeliSGIX
-	glFragmentLightModelivSGIX
-	glFragmentMaterialfSGIX
-	glFragmentMaterialfvSGIX
-	glFragmentMaterialiSGIX
-	glFragmentMaterialivSGIX
-	glGetFragmentLightfvSGIX
-	glGetFragmentLightivSGIX
-	glGetFragmentMaterialfvSGIX
-	glGetFragmentMaterialivSGIX
-	glLightEnviSGIX
 	glDrawRangeElementsEXT
 	glSecondaryColor3bEXT
 	glSecondaryColor3bvEXT
@@ -653,10 +559,6 @@ EXPORTS
 	glFogCoorddvEXT
 	glFogCoordPointerEXT
 	glBlendFuncSeparateEXT
-	glBlendFuncSeparateINGR
-	glVertexWeightfEXT
-	glVertexWeightfvEXT
-	glVertexWeightPointerEXT
 	glFlushVertexArrayRangeNV
 	glVertexArrayRangeNV
 	glCombinerParameterfvNV
@@ -697,11 +599,6 @@ EXPORTS
 	glWindowPos4ivMESA
 	glWindowPos4sMESA
 	glWindowPos4svMESA
-	glMultiModeDrawArraysIBM
-	glMultiModeDrawElementsIBM
-	glTbufferMask3DFX
-	glSampleMaskEXT
-	glSamplePatternEXT
 	glWindowPos2dARB
 	glWindowPos2fARB
 	glWindowPos2iARB
@@ -784,7 +681,6 @@ EXPORTS
 	glVertexAttribs4ubvNV
 	glPointParameteriNV
 	glPointParameterivNV
-	glBlendFuncSeparate
 	glFogCoordf
 	glFogCoordfv
 	glFogCoordd
@@ -829,14 +725,6 @@ EXPORTS
 	glWindowPos3iv
 	glWindowPos3s
 	glWindowPos3sv
-	glActiveStencilFaceEXT
-	glDeleteFencesNV
-	glGenFencesNV
-	glIsFenceNV
-	glTestFenceNV
-	glGetFenceivNV
-	glFinishFenceNV
-	glSetFenceNV
 	glVertexAttrib1sARB
 	glVertexAttrib1fARB
 	glVertexAttrib1dARB
@@ -916,7 +804,6 @@ EXPORTS
 	glIsBufferARB
 	glMapBufferARB
 	glUnmapBufferARB
-	glDepthBoundsEXT
 	glGenQueriesARB
 	glDeleteQueriesARB
 	glIsQueryARB
@@ -1069,7 +956,6 @@ EXPORTS
 	_swrast_DestroyContext
 	_swrast_InvalidateState
 	_swrast_ReadPixels
-;	_swrast_zbuffer_address
 	_swsetup_Wakeup
 	_swsetup_CreateContext
 	_swsetup_DestroyContext
