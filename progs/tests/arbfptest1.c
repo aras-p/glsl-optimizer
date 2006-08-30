@@ -120,7 +120,7 @@ static void Init( void )
    static const char *prog2 =
       "!!ARBfp1.0\n"
       "TEMP R0, R1, R2, R3;\n"
-      "TEX R0, fragment.texcoord,    texture[1], 2D; \n"
+      "TEX R0, fragment.texcoord,    texture[0], 2D; \n"
       "TEX R1, fragment.texcoord[1], texture[1], CUBE; \n"
       "TEX R2, fragment.texcoord[2], texture[2], 3D; \n"
       "TXP R3, fragment.texcoord[3], texture[3], RECT; \n"
