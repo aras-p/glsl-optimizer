@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -2552,6 +2552,20 @@ XMesaBuffer XMesaFindBuffer( XMesaDisplay *dpy, XMesaDrawable d )
    return NULL;
 }
 
+
+/**
+ * Free/destroy all XMesaBuffers associated with given display.
+ */
+void xmesa_destroy_buffers_on_display(XMesaDisplay *dpy)
+{
+   XMesaBuffer b, next;
+   for (b = XMesaBufferList; b; b = next) {
+      next = b->Next;
+      if (b->display == dpy) {
+         free_xmesa_buffer(0, b);
+      }
+   }
+}
 
 
 /*

@@ -520,6 +520,8 @@ extern void
 xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
                              enum pixel_format pixelformat, GLint depth);
 
+extern void xmesa_destroy_buffers_on_display(XMesaDisplay *dpy);
+
 
 /**
  * Using a function instead of an ordinary cast is safer.

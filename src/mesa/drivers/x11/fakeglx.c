@@ -916,6 +916,81 @@ choose_x_overlay_visual( Display *dpy, int scr, GLboolean rgbFlag,
 
 
 /**********************************************************************/
+/***             Display-related functions                          ***/
+/**********************************************************************/
+
+
+/**
+ * Free all XMesaVisuals which are associated with the given display.
+ */
+static void
+destroy_visuals_on_display(Display *dpy)
+{
+   int i;
+   for (i = 0; i < NumVisuals; i++) {
+      if (VisualTable[i]->display == dpy) {
+         /* remove this visual */
+         int j;
+         free(VisualTable[i]);
+         for (j = i; j < NumVisuals - 1; j++)
+            VisualTable[j] = VisualTable[j + 1];
+         NumVisuals--;
+      }
+   }
+}
+
+
+/**
+ * Called from XCloseDisplay() to let us free our display-related data.
+ */
+static int
+close_display_callback(Display *dpy, XExtCodes *codes)
+{
+   destroy_visuals_on_display(dpy);
+   xmesa_destroy_buffers_on_display(dpy);
+   return 0;
+}
+
+
+/**
+ * Look for the named extension on given display and return a pointer
+ * to the _XExtension data, or NULL if extension not found.
+ */
+static _XExtension *
+lookup_extension(Display *dpy, const char *extName)
+{
+   _XExtension *ext;
+   for (ext = dpy->ext_procs; ext; ext = ext->next) {
+      if (strcmp(ext->name, extName) == 0) {
+         return ext;
+      }
+   }
+   return NULL;
+}
+
+
+/**
+ * Whenever we're given a new Display pointer, call this function to
+ * register our close_display_callback function.
+ */
+static void
+register_with_display(Display *dpy)
+{
+   const char *extName = "MesaGLX";
+   _XExtension *ext;
+
+   ext = lookup_extension(dpy, extName);
+   if (!ext) {
+      XExtCodes *c = XAddExtension(dpy);
+      ext = dpy->ext_procs;  /* new extension is at head of list */
+      assert(c->extension == ext->codes.extension);
+      ext->name = _mesa_strdup(extName);
+      ext->close_display = close_display_callback;
+   }
+}
+
+
+/**********************************************************************/
 /***                  Begin Fake GLX API Functions                  ***/
 /**********************************************************************/
 
@@ -1264,7 +1339,12 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
 static XVisualInfo *
 Fake_glXChooseVisual( Display *dpy, int screen, int *list )
 {
-   XMesaVisual xmvis = choose_visual(dpy, screen, list, GL_FALSE);
+   XMesaVisual xmvis;
+
+   /* register ourselves as an extension on this display */
+   register_with_display(dpy);
+
+   xmvis = choose_visual(dpy, screen, list, GL_FALSE);
    if (xmvis) {
 #if 0
       return xmvis->vishandle;
@@ -1298,7 +1378,9 @@ Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
       return 0;
 
    /* deallocate unused windows/buffers */
+#if 0
    XMesaGarbageCollect();
+#endif
 
    xmvis = find_glx_visual( dpy, visinfo );
    if (!xmvis) {
