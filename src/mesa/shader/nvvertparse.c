@@ -1364,7 +1364,7 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
       }
       else {
          if (!parseState.isPositionInvariant &&
-             !(parseState.outputsWritten & 1)) {
+             !(parseState.outputsWritten & (1 << VERT_RESULT_HPOS))) {
             /* bit 1 = HPOS register */
             _mesa_error(ctx, GL_INVALID_OPERATION,
                         "glLoadProgramNV(HPOS not written)");
