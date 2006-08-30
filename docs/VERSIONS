@@ -1511,3 +1511,4 @@ Mesa Version History
 	- max fragment program length was incorrectly 128, now 1024
 	- writes to result.depth in fragment programs weren't clamped to [0,1]
 	- fixed potential dangling pointer bug in glBindProgram()
+	- fixed some memory leaks (and potential crashes) in Xlib driver
