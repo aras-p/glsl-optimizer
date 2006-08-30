@@ -28,6 +28,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Authors:
  *   Aapo Tahkola <aet@rasterburn.org>
+ *   Roland Scheidegger <rscheidegger_lists@hispeed.ch>
  */
 #include "glheader.h"
 #include "macros.h"
@@ -432,41 +433,6 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
    int u_temp_i = R200_VSF_MAX_TEMPS - 1;
    struct prog_src_register src[3];
 
-#if 0
-   if (getenv("R300_VP_SAFETY")) {
-      WARN_ONCE("R300_VP_SAFETY enabled.\n");
-
-      vpi = malloc((mesa_vp->Base.NumInstructions + VSF_MAX_FRAGMENT_TEMPS) * sizeof(struct prog_instruction));
-      memset(vpi, 0, VSF_MAX_FRAGMENT_TEMPS * sizeof(struct prog_instruction));
-
-      for (i=0; i < VSF_MAX_FRAGMENT_TEMPS; i++) {
-	 vpi[i].Opcode = OPCODE_MOV;
-	 vpi[i].StringPos = 0;
-	 vpi[i].Data = 0;
-
-	 vpi[i].DstReg.File = PROGRAM_TEMPORARY;
-	 vpi[i].DstReg.Index = i;
-	 vpi[i].DstReg.WriteMask = WRITEMASK_XYZW;
-	 vpi[i].DstReg.CondMask = COND_TR;
-
-	 vpi[i].SrcReg[0].File = PROGRAM_STATE_VAR;
-	 vpi[i].SrcReg[0].Index = 0;
-	 vpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE);
-      }
-
-      memcpy(&vpi[i], mesa_vp->Base.Instructions, mesa_vp->Base.NumInstructions * sizeof(struct prog_instruction));
-
-      free(mesa_vp->Base.Instructions);
-
-      mesa_vp->Base.Instructions = vpi;
-
-      mesa_vp->Base.NumInstructions += VSF_MAX_FRAGMENT_TEMPS;
-      vpi = &mesa_vp->Base.Instructions[mesa_vp->Base.NumInstructions-1];
-
-      assert(vpi->Opcode == OPCODE_END);
-   }
-#endif
-
 /* FIXME: is changing the prog safe to do here? */
    if (mesa_vp->IsPositionInvariant) {
       struct gl_program_parameter_list *paramList;
@@ -601,21 +567,6 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
 
    o_inst = vp->instr;
    for(vpi = mesa_vp->Base.Instructions; vpi->Opcode != OPCODE_END; vpi++, o_inst++){
-      if (u_temp_i < mesa_vp->Base.NumTemporaries) {
-	 if (R200_DEBUG & DEBUG_FALLBACKS) {
-	    fprintf(stderr, "Ran out of temps, num temps %d, us %d\n", mesa_vp->Base.NumTemporaries, u_temp_i);
-	 }
-	 return GL_FALSE;
-      }
-      u_temp_i = R200_VSF_MAX_TEMPS - 1;
-      if(o_inst - vp->instr >= R200_VSF_MAX_INST) {
-	 mesa_vp->Base.NumNativeInstructions = 129;
-	 if (R200_DEBUG & DEBUG_FALLBACKS) {
-	    fprintf(stderr, "more than 128 native instructions\n");
-	 }
-	 return GL_FALSE;
-      }
-
       operands = op_operands(vpi->Opcode);
       are_srcs_scalar = operands & SCALAR_FLAG;
       operands &= OP_MASK;
@@ -914,7 +865,7 @@ else {
 	 goto next;
 
       case OPCODE_END:
-	 break;
+	 assert(0);
       default:
 	 break;
       }
@@ -974,19 +925,30 @@ else {
 	 }
       }
       next:
+      if (mesa_vp->Base.NumNativeTemporaries <
+	 (mesa_vp->Base.NumTemporaries + (R200_VSF_MAX_TEMPS - 1 - u_temp_i))) {
+	 mesa_vp->Base.NumNativeTemporaries =
+	    mesa_vp->Base.NumTemporaries + (R200_VSF_MAX_TEMPS - 1 - u_temp_i);
+      }
+      if (u_temp_i < mesa_vp->Base.NumTemporaries) {
+	 if (R200_DEBUG & DEBUG_FALLBACKS) {
+	    fprintf(stderr, "Ran out of temps, num temps %d, us %d\n", mesa_vp->Base.NumTemporaries, u_temp_i);
+	 }
+	 return GL_FALSE;
+      }
+      u_temp_i = R200_VSF_MAX_TEMPS - 1;
+      if(o_inst - vp->instr >= R200_VSF_MAX_INST) {
+	 mesa_vp->Base.NumNativeInstructions = 129;
+	 if (R200_DEBUG & DEBUG_FALLBACKS) {
+	    fprintf(stderr, "more than 128 native instructions\n");
+	 }
+	 return GL_FALSE;
+      }
       if ((o_inst->op & R200_VSF_OUT_CLASS_MASK) == R200_VSF_OUT_CLASS_RESULT_POS) {
 	 vp->pos_end = (o_inst - vp->instr);
       }
    }
 
-   /* need to test again since some instructions require more than one (up to 3) native inst */
-   if(o_inst - vp->instr > R200_VSF_MAX_INST) {
-      mesa_vp->Base.NumNativeInstructions = 129;
-      if (R200_DEBUG & DEBUG_FALLBACKS) {
-	 fprintf(stderr, "more than 128 native instructions\n");
-      }
-      return GL_FALSE;
-   }
    vp->native = GL_TRUE;
    mesa_vp->Base.NumNativeInstructions = (o_inst - vp->instr);
 #if 0
@@ -1120,8 +1082,8 @@ r200ProgramStringNotify(GLcontext *ctx, GLenum target, struct gl_program *prog)
    switch(target) {
    case GL_VERTEX_PROGRAM_ARB:
       vp->translated = GL_FALSE;
-      memset(&vp->translated, 0, sizeof(struct r200_vertex_program) - sizeof(struct gl_vertex_program));
-      /*r200_translate_vertex_shader(vp);*/
+/*      memset(&vp->translated, 0, sizeof(struct r200_vertex_program) - sizeof(struct gl_vertex_program));*/
+      r200_translate_vertex_program(vp);
       break;
    }
    /* need this for tcl fallbacks */
