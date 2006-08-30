@@ -2643,6 +2643,10 @@ parse_fp_vector_src_reg(GLcontext * ctx, GLubyte ** inst,
 }
 
 
+/**
+ * Parse fragment program destination register.
+ * \return 1 if error, 0 if no error.
+ */
 static GLuint 
 parse_fp_dst_reg(GLcontext * ctx, GLubyte ** inst,
 		 struct var_cache **vc_head, struct arb_program *Program,
@@ -2666,6 +2670,7 @@ parse_fp_dst_reg(GLcontext * ctx, GLubyte ** inst,
 
 /**
  * Parse fragment program scalar src register.
+ * \return 1 if error, 0 if no error.
  */
 static GLuint
 parse_fp_scalar_src_reg (GLcontext * ctx, GLubyte ** inst,
@@ -2703,6 +2708,7 @@ parse_fp_scalar_src_reg (GLcontext * ctx, GLubyte ** inst,
 /**
  * This is a big mother that handles getting opcodes into the instruction
  * and handling the src & dst registers for fragment program instructions
+ * \return 1 if error, 0 if no error
  */
 static GLuint
 parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
@@ -3051,7 +3057,14 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
 	       /* TODO ARB_fragment_program_shadow code */
 	       break;
          }
-         Program->TexturesUsed[texcoord] |= (1<<fp->TexSrcTarget);
+         Program->TexturesUsed[texcoord] |= (1 << fp->TexSrcTarget);
+         /* Check that both "2D" and "CUBE" (for example) aren't both used */
+         if (_mesa_bitcount(Program->TexturesUsed[texcoord]) > 1) {
+            char *msg = "multiple targets used on one texture image unit";
+            _mesa_set_program_error(ctx, Program->Position, msg);
+            _mesa_error(ctx, GL_INVALID_OPERATION, msg);
+            return 1;
+         }
          break;
 
       case OP_TEX_KIL:
@@ -3060,6 +3073,9 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
             return 1;
          fp->Opcode = OPCODE_KIL;
          break;
+      default:
+         _mesa_problem(ctx, "bad type 0x%x in parse_fp_instruction()", type);
+         return 1;
    }
 
    return 0;
