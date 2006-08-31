@@ -961,7 +961,7 @@ lookup_extension(Display *dpy, const char *extName)
 {
    _XExtension *ext;
    for (ext = dpy->ext_procs; ext; ext = ext->next) {
-      if (strcmp(ext->name, extName) == 0) {
+      if (ext->name && strcmp(ext->name, extName) == 0) {
          return ext;
       }
    }
