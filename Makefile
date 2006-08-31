@@ -169,7 +169,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/docs/COPYING					\
 	$(DIRECTORY)/docs/README.*					\
 	$(DIRECTORY)/docs/RELNOTES*					\
-	$(DIRECTORY)/docs/VERSIONS					\
 	$(DIRECTORY)/docs/*.spec					\
 	$(DIRECTORY)/include/GL/internal/glcore.h			\
 	$(DIRECTORY)/include/GL/amesa.h					\
