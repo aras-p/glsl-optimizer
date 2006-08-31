@@ -1,0 +1,89 @@
+<HTML>
+
+<TITLE>Mesa Release Notes</TITLE>
+
+<head><link rel="stylesheet" type="text/css" href="mesa.css"></head>
+
+<BODY>
+
+<body bgcolor="#eeeeee">
+
+<H1>Mesa 6.5.1 Release Notes</H1>
+
+
+
+<H2>Introduction</H2>
+
+<p>
+Mesa uses an even/odd version number scheme like the Linux kernel.
+Odd numbered versions (such as 6.5) designate new developmental releases.
+Even numbered versions (such as 6.4) designate stable releases.
+</p>
+
+<p>
+Mesa 6.5.1 is a 6.5 follow-on development release mostly consisting of
+bug fixes (See the versions.html file)
+</p>
+
+
+<h2>New Features</h2>
+
+<ul>
+<li>Intel i965 "broadwater" DRI driver
+
+<li>GL_APPLE_vertex_array_object - allows encapsulation of a set of vertex
+	arrays in an object.
+
+<li>GL_EXT_texture_sRGB - non-linearly mapped texture formats
+
+<li>GL_EXT_gpu_program_parameters - addes a few new functions for setting
+	multiple vertex/fragment program parameters with one call.
+</ul>
+
+
+<h2>Internal code changes</h2>
+
+<p>
+A number of Mesa program-related structs were renamed.
+For example <i>struct vertex_program</i> is now <i>struct gl_vertex_program</i>.
+All the effected drivers have been updated.
+</p>
+
+<p>Ian Romanick updated the GL API dispatch code in a number of ways.
+First, many old/unused extensions were removed.
+Second, the static entrypoints for some extensions were removed.
+This means GL function pointers will have to be used more often
+(e.g. use glXGetProcAddressARB()).
+</p>
+
+
+<h2>To Do (someday) items</h2>
+<ul>
+<li>Switch to freeglut
+<li>Increase MAX_DRAWBUFFERS
+<li>Fix linux-glide target/driver.
+<li>Fix lambda calculation for frag progs.
+</ul>
+
+
+<h2>Driver Status</h2>
+
+<pre>
+Driver			Status
+----------------------	----------------------
+DRI drivers		varies with the driver
+XMesa/GLX (on Xlib)	implements OpenGL 1.5
+OSMesa (off-screen)	implements OpenGL 1.5
+Glide (3dfx Voodoo1/2)	implements OpenGL 1.3
+SVGA			implements OpenGL 1.3
+Wind River UGL		implements OpenGL 1.3
+Windows/Win32		implements OpenGL 1.5
+DJGPP			implements OpenGL 1.5
+GGI			implements OpenGL 1.3
+BeOS			implements OpenGL 1.5
+Allegro			needs updating
+D3D			needs updating
+</pre>
+
+</body>
+</html>

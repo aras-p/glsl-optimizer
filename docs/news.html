@@ -11,48 +11,23 @@
 <H1>News</H1>
 
 
+<h2>August 31, 2006</h2>
+<p>
+Mesa 6.5.1 has been released.  This is a new development release.
+</p>
+<a href="versions.html#6.5.1">Changes in version 6.5.1</a>
+<p>
+The MD5 checksums are:
+</p>
+<pre>
+TBD
+</pre>
+
 <h2>March 31, 2006</h2>
 <p>
 Mesa 6.5 has been released.  This is a new development release.
 </p>
-<pre>
-    New:
-	- OpenGL Shading Language support through GL_ARB_shader_objects,
-	  GL_ARB_shading_language_100, GL_ARB_vertex_shader and
-	  GL_ARB_fragment_shader (done by Michal Krol)
-	- GL_EXT_packed_depth_stencil extension
-	- GL_EXT_timer_query extension
-	- GL_EXT_framebuffer_blit extension
-	- GL_ARB_half_float_pixel
-	- GLX_MESA_copy_sub_buffer for DRI drivers (Dave Reveman)
-	- reflect demo improved to support multiple windows
-	- singlebuffer demo (shows no/little-flicker single-buffered rendering)
-	- r200: enable GL_ARB_texture_env_crossbar, separate the texture
-	  sampling unit bits from the texture env combine enable bits
-	- r200: add support for GL_ATI_fragment_shader
-	- added fast XOR-mode line drawing optimization
-	- radeon: add support for all 3 tmus, GL_ARB_texture_cube_map
-	  and GL_EXT_fog_coord
-	- MESA_GLX_ALPHA_BITS env var for xlib driver
-	- many DRI driver updates (including screen rotation support
-	  for the Intel DRI driver)
-    Changes:
-	- removed GL_HP_occlusion_test (use GL_ARB_occlusion_query instead)
-	- removed GL_SGIX/SGIS_pixel_texture extensions
-    Bug fixes:
-	- fixed glxcontextmodes.c datatype problem (bug 5835)
-	- fixed aix-gcc build/install bugs (bug 5874)
-	- fixed some bugs in texture env program generation
-	- glXCopyContext() didn't handle texture object bindings properly
-	- glXCopyContext() didn't copy all lighting state
-	- fixed FreeBSD config (Pedro Giffuni)
-	- fixed some minor framebuffer object bugs
-	- replaced dprintf() with _glu_printf() in GLU (bug 6244)
-	- fixed a number of thread safety bugs/regressions
-	- fixed a number of GLU tesselator bugs (John Shell, bug 6339)
-	- paletted texturing was broken w/ floating point palettes (K. Schultz)
-	- lots of assorted framebuffer object bug fixes
-</pre>
+<a href="versions.html#6.5">Changes in version 6.5</a>
 <p>
 The MD5 checksums are:
 </p>
@@ -73,15 +48,7 @@ ac1d585483617db0c91e5c15cb5ec3a3  MesaGLUT-6.5.tar.gz
 <p>
 Mesa 6.4.2 has been released.  This is primarily a bug-fix release.
 </p>
-<pre>
-    New items:
-	- added OSMesaColorClamp() function/feature
-	- added wglGetExtensionStringARB() function
-    Bug fixes:
-	- fixed some problems when building on Windows
-	- GLw header files weren't installed by installmesa script (bug 5396)
-	- GL/glfbdev.h file was missing from tarballs
-</pre>
+<a href="versions.html#6.4.2">Changes in version 6.4.2</a>
 <p>
 The MD5 checksums are:
 </p>
@@ -102,21 +69,7 @@ fe1523744fc05edc3811dfc6a1bf4181  MesaGLUT-6.4.2.zip
 <p>
 Mesa 6.4.1 has been released.  This is a stable, bug-fix release.
 </p>
-<pre>
-    Bug fixes:
-	- redefining a vertex program string didn't take effect in TNL module
-	- fixed occasional segfault upon vertex/fragment parsing error
-	- vertex program LIT instruction didn't handle 0^0=1 correctly
-	- fragment program fog option didn't work with glDrawPixels, glBitmap
-	- USE_MGL_NAMESPACE didn't work for x86-64
-	- OSMesa demos were missing from previous release tarballs
-	- fixed problem with float->ushort conversion in glClear (bug 4992)
-	- popping of GL_EYE_PLANE texgen state was broken (bug 4996)
-	- popping of GL_SPOT_DIRECTION light state was broken (bug 5005)
-	- fixed occasional triangle color interpolation problem on VMS
-	- work around invalid free() call (bug 5131)
-	- fixed BSD X server compilation problem by including stdint.h
-</pre>
+<a href="versions.html#6.4.1">Changes in version 6.4.1</a>
 <p>
 The MD5 checksums are:
 </p>
@@ -139,37 +92,7 @@ bd003bb4f981a4f91dee4c38644d4f3f  MesaGLUT-6.4.1.tar.bz2
 <p>
 Mesa 6.4 has been released.  This is a stable, bug-fix release.
 </p>
-<pre>
-    New:
-	- Added a fast XOR line drawing function in Xlib driver
-	- Added support for GL_ARB_texture_mirrored_repeat to savage
-	  driver (supported only on Savage4 hardware).
-    Changes:
-	- Mesa now packaged in three parts: Library, Demos and GLUT
-    Bug fixes:
-	- GLX_X_RENDERABLE token wasn't accepted by glXChooseFBConfig
-	- Some files were present multiple times in the 6.3.2 tarballs
-	- r200_vtxtmp_x86.S file was missing from 6.3.2 tarball (bug 4207)
-	- glxgears_fbconfig demo didn't work (bug 4237)
-	- fixed bug when bilinear sampling 2d textures with borders
-	- glXCreatePbuffer() could segfault instead of returning 0 (bug 4235)
-	- fixed undefined frexp and rand in X.org libGLcore.a (bug 4242)
-	- fixed a few problems with proxy color tables (bug 4270)
-	- fixed precision problem in Z clearing (bug 4395)
-	- glBitmap, glDraw/CopyPixels mistakenly generated selection hits
-	- fixed potential segfault caused by reading pixels outside
-	  of renderbuffer bounds
-	- glGetTexLevelParameter didn't accept GL_TEXTURE_DEPTH_SIZE_ARB
-	- fixed memory corruption bug involving software alpha buffers
-	- glReadPixels clipped by window bounds was sometimes broken
-	- glDraw/CopyPixels of stencil data ignored the stencil write mask
-	- glReadPixels from a texture bound to a framebuffer object didn't work
-	- glIsRender/FramebufferEXT weren't totally correct
-	- fixed a number of point size attenuation/fade bugs
-	- fixed glFogCoord bug 4729
-	- GLX encoding for transpose matrix functions was broken
-	- fixed broken fragment program KIL and SWZ instructions
-</pre>
+<a href="versions.html#6.4">Changes in version 6.4</a>
 <p>
 The MD5 checksums are:
 </p>
@@ -191,23 +114,7 @@ d8734f2c69bcf7ef9f5ae454a85743ba  MesaDemos-6.4.tar.gz
 Mesa 6.3.2 has been released.
 Note: there was no public release of version 6.3.1.
 </p>
-<pre>
-    New:
-	- The distribution now includes the DRI drivers and GLX code
-    Changes:
-	- Made the DRI "new" driver interface standard, remove old code
-    Bug fixes:
-	- GL_ARB_vertex/fragment_shader were mistakenly listed in the
-	  extensions string
-	- negative relative addressing in vertex programs was broken
-	- update/fix SPARC assembly code for vertex transformation
-	- fixed memory leak when freeing GLX drawables/renderbuffers
-	- fixed display list memory leak
-	- the GL_PIXEL_MAP_I_TO_I table is now floating point, not integer
-	- wglGetProcAddress() didn't handle wgl-functions
-	- fixed glxext.h cross-compile issue (Colin Harrison)
-	- assorted DRI driver fixes
-</pre>
+<a href="versions.html#6.3.2">Changes in version 6.3.1</a>
 <p>
 The MD5 checksums are:
 </p>
@@ -1226,6 +1133,6 @@ source code</a>.</p>
 
 
 <hr>
-$Id: news.html,v 3.28 2006/04/01 02:29:40 brianp Exp $
+$Id: news.html,v 3.29 2006/08/31 15:16:10 brianp Exp $
 </body>
 </html>
