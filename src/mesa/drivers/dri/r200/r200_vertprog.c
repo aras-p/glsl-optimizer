@@ -407,6 +407,7 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
    unsigned long hw_op;
 
    vp->native = GL_FALSE;
+   vp->translated = GL_TRUE;
 
    if (mesa_vp->Base.NumInstructions == 0)
       return GL_FALSE;
@@ -418,6 +419,18 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
       if (R200_DEBUG & DEBUG_FALLBACKS) {
 	 fprintf(stderr, "can't handle vert prog inputs 0x%x\n",
 	    mesa_vp->Base.InputsRead);
+      }
+      return GL_FALSE;
+   }
+
+   if ((mesa_vp->Base.OutputsWritten &
+      ~((1 << VERT_RESULT_HPOS) | (1 << VERT_RESULT_COL0) | (1 << VERT_RESULT_COL1) |
+      (1 << VERT_RESULT_FOGC) | (1 << VERT_RESULT_TEX0) | (1 << VERT_RESULT_TEX1) |
+      (1 << VERT_RESULT_TEX2) | (1 << VERT_RESULT_TEX3) | (1 << VERT_RESULT_TEX4) |
+      (1 << VERT_RESULT_TEX5) | (1 << VERT_RESULT_PSIZ))) != 0) {
+      if (R200_DEBUG & DEBUG_FALLBACKS) {
+	 fprintf(stderr, "can't handle vert prog outputs 0x%x\n",
+	    mesa_vp->Base.OutputsWritten);
       }
       return GL_FALSE;
    }
@@ -561,9 +574,12 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
    Haven't seen attr 14 used, maybe that's for the hw pointsize vec1 (which is
    not possibe to use with vertex progs as it is lacking in vert prog specification) */
 
-   assert(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS));
-
-   vp->translated = GL_TRUE;
+   if (!(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))) {
+      if (R200_DEBUG & DEBUG_FALLBACKS) {
+	 fprintf(stderr, "can't handle vert prog without position output\n");
+      }
+      return GL_FALSE;
+   }
 
    o_inst = vp->instr;
    for(vpi = mesa_vp->Base.Instructions; vpi->Opcode != OPCODE_END; vpi++, o_inst++){
