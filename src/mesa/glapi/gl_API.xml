@@ -6161,7 +6161,7 @@
     <function name="VertexAttrib1dvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="1"/>
-        <glx rop="4197"/>
+        <glx rop="4197" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttrib1fARB" offset="assign" vectorequiv="VertexAttrib1fvARB">
@@ -6195,7 +6195,7 @@
     <function name="VertexAttrib2dvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="2"/>
-        <glx rop="4198"/>
+        <glx rop="4198" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttrib2fARB" offset="assign" vectorequiv="VertexAttrib2fvARB">
@@ -6232,7 +6232,7 @@
     <function name="VertexAttrib3dvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="3"/>
-        <glx rop="4199"/>
+        <glx rop="4199" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttrib3fARB" offset="assign" vectorequiv="VertexAttrib3fvARB">
@@ -6272,7 +6272,7 @@
     <function name="VertexAttrib4dvARB" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="4"/>
-        <glx rop="4200"/>
+        <glx rop="4200" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttrib4fARB" offset="assign" vectorequiv="VertexAttrib4fvARB">
@@ -10669,7 +10669,7 @@
     <function name="VertexAttrib1svNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="1"/>
-        <glx rop="4189"/>
+        <glx rop="4265"/>
     </function>
 
     <function name="VertexAttrib2sNV" offset="assign" vectorequiv="VertexAttrib2svNV">
@@ -10681,7 +10681,7 @@
     <function name="VertexAttrib2svNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="2"/>
-        <glx rop="4190"/>
+        <glx rop="4266"/>
     </function>
 
     <function name="VertexAttrib3sNV" offset="assign" vectorequiv="VertexAttrib3svNV">
@@ -10694,7 +10694,7 @@
     <function name="VertexAttrib3svNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="3"/>
-        <glx rop="4191"/>
+        <glx rop="4267"/>
     </function>
 
     <function name="VertexAttrib4sNV" offset="assign" vectorequiv="VertexAttrib4svNV">
@@ -10708,7 +10708,7 @@
     <function name="VertexAttrib4svNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="4"/>
-        <glx rop="4192"/>
+        <glx rop="4268"/>
     </function>
 
     <function name="VertexAttrib1fNV" offset="assign" vectorequiv="VertexAttrib1fvNV">
@@ -10719,7 +10719,7 @@
     <function name="VertexAttrib1fvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="1"/>
-        <glx rop="4193"/>
+        <glx rop="4269"/>
     </function>
 
     <function name="VertexAttrib2fNV" offset="assign" vectorequiv="VertexAttrib2fvNV">
@@ -10731,7 +10731,7 @@
     <function name="VertexAttrib2fvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="2"/>
-        <glx rop="4194"/>
+        <glx rop="4270"/>
     </function>
 
     <function name="VertexAttrib3fNV" offset="assign" vectorequiv="VertexAttrib3fvNV">
@@ -10744,7 +10744,7 @@
     <function name="VertexAttrib3fvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="3"/>
-        <glx rop="4195"/>
+        <glx rop="4271"/>
     </function>
 
     <function name="VertexAttrib4fNV" offset="assign" vectorequiv="VertexAttrib4fvNV">
@@ -10758,7 +10758,7 @@
     <function name="VertexAttrib4fvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="4"/>
-        <glx rop="4196"/>
+        <glx rop="4272"/>
     </function>
 
     <function name="VertexAttrib1dNV" offset="assign" vectorequiv="VertexAttrib1dvNV">
@@ -10769,7 +10769,7 @@
     <function name="VertexAttrib1dvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="1"/>
-        <glx rop="4197" doubles_in_order="true"/>
+        <glx rop="4273" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttrib2dNV" offset="assign" vectorequiv="VertexAttrib2dvNV">
@@ -10781,7 +10781,7 @@
     <function name="VertexAttrib2dvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="2"/>
-        <glx rop="4198" doubles_in_order="true"/>
+        <glx rop="4274" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttrib3dNV" offset="assign" vectorequiv="VertexAttrib3dvNV">
@@ -10794,7 +10794,7 @@
     <function name="VertexAttrib3dvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="3"/>
-        <glx rop="4199" doubles_in_order="true"/>
+        <glx rop="4275" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttrib4dNV" offset="assign" vectorequiv="VertexAttrib4dvNV">
@@ -10808,7 +10808,7 @@
     <function name="VertexAttrib4dvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="4"/>
-        <glx rop="4200" doubles_in_order="true"/>
+        <glx rop="4276" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttrib4ubNV" offset="assign" vectorequiv="VertexAttrib4ubvNV">
@@ -10822,7 +10822,7 @@
     <function name="VertexAttrib4ubvNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLubyte *" count="4"/>
-        <glx rop="4201"/>
+        <glx rop="4277"/>
     </function>
 
     <function name="VertexAttribs1svNV" offset="assign">

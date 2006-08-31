@@ -6074,8 +6074,8 @@ __indirect_glVertexAttrib1dARB(GLuint index, GLdouble x)
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib1dvARB, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(&x), 8);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 8), (void *)(&x), 8);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
@@ -6087,8 +6087,8 @@ __indirect_glVertexAttrib1dvARB(GLuint index, const GLdouble * v)
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
     emit_header(gc->pc, X_GLrop_VertexAttrib1dvARB, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(v), 8);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 8), (void *)(v), 8);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
@@ -6152,9 +6152,9 @@ __indirect_glVertexAttrib2dARB(GLuint index, GLdouble x, GLdouble y)
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_VertexAttrib2dvARB, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(&x), 8);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(&y), 8);
-    (void) memcpy((void *)(gc->pc + 20), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 8), (void *)(&x), 8);
+    (void) memcpy((void *)(gc->pc + 16), (void *)(&y), 8);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
@@ -6166,8 +6166,8 @@ __indirect_glVertexAttrib2dvARB(GLuint index, const GLdouble * v)
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
     emit_header(gc->pc, X_GLrop_VertexAttrib2dvARB, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(v), 16);
-    (void) memcpy((void *)(gc->pc + 20), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 8), (void *)(v), 16);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
@@ -6233,10 +6233,10 @@ __indirect_glVertexAttrib3dARB(GLuint index, GLdouble x, GLdouble y, GLdouble z)
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 32;
     emit_header(gc->pc, X_GLrop_VertexAttrib3dvARB, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(&x), 8);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(&y), 8);
-    (void) memcpy((void *)(gc->pc + 20), (void *)(&z), 8);
-    (void) memcpy((void *)(gc->pc + 28), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 8), (void *)(&x), 8);
+    (void) memcpy((void *)(gc->pc + 16), (void *)(&y), 8);
+    (void) memcpy((void *)(gc->pc + 24), (void *)(&z), 8);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
@@ -6248,8 +6248,8 @@ __indirect_glVertexAttrib3dvARB(GLuint index, const GLdouble * v)
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 32;
     emit_header(gc->pc, X_GLrop_VertexAttrib3dvARB, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(v), 24);
-    (void) memcpy((void *)(gc->pc + 28), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 8), (void *)(v), 24);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
@@ -6424,11 +6424,11 @@ __indirect_glVertexAttrib4dARB(GLuint index, GLdouble x, GLdouble y, GLdouble z,
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 40;
     emit_header(gc->pc, X_GLrop_VertexAttrib4dvARB, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(&x), 8);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(&y), 8);
-    (void) memcpy((void *)(gc->pc + 20), (void *)(&z), 8);
-    (void) memcpy((void *)(gc->pc + 28), (void *)(&w), 8);
-    (void) memcpy((void *)(gc->pc + 36), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 8), (void *)(&x), 8);
+    (void) memcpy((void *)(gc->pc + 16), (void *)(&y), 8);
+    (void) memcpy((void *)(gc->pc + 24), (void *)(&z), 8);
+    (void) memcpy((void *)(gc->pc + 32), (void *)(&w), 8);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
@@ -6440,8 +6440,8 @@ __indirect_glVertexAttrib4dvARB(GLuint index, const GLdouble * v)
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 40;
     emit_header(gc->pc, X_GLrop_VertexAttrib4dvARB, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(v), 32);
-    (void) memcpy((void *)(gc->pc + 36), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 8), (void *)(v), 32);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
@@ -7541,7 +7541,7 @@ __indirect_glTrackMatrixNV(GLenum target, GLuint address, GLenum matrix, GLenum 
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib1dvNV 4197
+#define X_GLrop_VertexAttrib1dvNV 4273
 void
 __indirect_glVertexAttrib1dNV(GLuint index, GLdouble x)
 {
@@ -7554,7 +7554,7 @@ __indirect_glVertexAttrib1dNV(GLuint index, GLdouble x)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib1dvNV 4197
+#define X_GLrop_VertexAttrib1dvNV 4273
 void
 __indirect_glVertexAttrib1dvNV(GLuint index, const GLdouble * v)
 {
@@ -7567,7 +7567,7 @@ __indirect_glVertexAttrib1dvNV(GLuint index, const GLdouble * v)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib1fvNV 4193
+#define X_GLrop_VertexAttrib1fvNV 4269
 void
 __indirect_glVertexAttrib1fNV(GLuint index, GLfloat x)
 {
@@ -7580,7 +7580,7 @@ __indirect_glVertexAttrib1fNV(GLuint index, GLfloat x)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib1fvNV 4193
+#define X_GLrop_VertexAttrib1fvNV 4269
 void
 __indirect_glVertexAttrib1fvNV(GLuint index, const GLfloat * v)
 {
@@ -7593,7 +7593,7 @@ __indirect_glVertexAttrib1fvNV(GLuint index, const GLfloat * v)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib1svNV 4189
+#define X_GLrop_VertexAttrib1svNV 4265
 void
 __indirect_glVertexAttrib1sNV(GLuint index, GLshort x)
 {
@@ -7606,7 +7606,7 @@ __indirect_glVertexAttrib1sNV(GLuint index, GLshort x)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib1svNV 4189
+#define X_GLrop_VertexAttrib1svNV 4265
 void
 __indirect_glVertexAttrib1svNV(GLuint index, const GLshort * v)
 {
@@ -7619,7 +7619,7 @@ __indirect_glVertexAttrib1svNV(GLuint index, const GLshort * v)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib2dvNV 4198
+#define X_GLrop_VertexAttrib2dvNV 4274
 void
 __indirect_glVertexAttrib2dNV(GLuint index, GLdouble x, GLdouble y)
 {
@@ -7633,7 +7633,7 @@ __indirect_glVertexAttrib2dNV(GLuint index, GLdouble x, GLdouble y)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib2dvNV 4198
+#define X_GLrop_VertexAttrib2dvNV 4274
 void
 __indirect_glVertexAttrib2dvNV(GLuint index, const GLdouble * v)
 {
@@ -7646,7 +7646,7 @@ __indirect_glVertexAttrib2dvNV(GLuint index, const GLdouble * v)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib2fvNV 4194
+#define X_GLrop_VertexAttrib2fvNV 4270
 void
 __indirect_glVertexAttrib2fNV(GLuint index, GLfloat x, GLfloat y)
 {
@@ -7660,7 +7660,7 @@ __indirect_glVertexAttrib2fNV(GLuint index, GLfloat x, GLfloat y)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib2fvNV 4194
+#define X_GLrop_VertexAttrib2fvNV 4270
 void
 __indirect_glVertexAttrib2fvNV(GLuint index, const GLfloat * v)
 {
@@ -7673,7 +7673,7 @@ __indirect_glVertexAttrib2fvNV(GLuint index, const GLfloat * v)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib2svNV 4190
+#define X_GLrop_VertexAttrib2svNV 4266
 void
 __indirect_glVertexAttrib2sNV(GLuint index, GLshort x, GLshort y)
 {
@@ -7687,7 +7687,7 @@ __indirect_glVertexAttrib2sNV(GLuint index, GLshort x, GLshort y)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib2svNV 4190
+#define X_GLrop_VertexAttrib2svNV 4266
 void
 __indirect_glVertexAttrib2svNV(GLuint index, const GLshort * v)
 {
@@ -7700,7 +7700,7 @@ __indirect_glVertexAttrib2svNV(GLuint index, const GLshort * v)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib3dvNV 4199
+#define X_GLrop_VertexAttrib3dvNV 4275
 void
 __indirect_glVertexAttrib3dNV(GLuint index, GLdouble x, GLdouble y, GLdouble z)
 {
@@ -7715,7 +7715,7 @@ __indirect_glVertexAttrib3dNV(GLuint index, GLdouble x, GLdouble y, GLdouble z)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib3dvNV 4199
+#define X_GLrop_VertexAttrib3dvNV 4275
 void
 __indirect_glVertexAttrib3dvNV(GLuint index, const GLdouble * v)
 {
@@ -7728,7 +7728,7 @@ __indirect_glVertexAttrib3dvNV(GLuint index, const GLdouble * v)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib3fvNV 4195
+#define X_GLrop_VertexAttrib3fvNV 4271
 void
 __indirect_glVertexAttrib3fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z)
 {
@@ -7743,7 +7743,7 @@ __indirect_glVertexAttrib3fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib3fvNV 4195
+#define X_GLrop_VertexAttrib3fvNV 4271
 void
 __indirect_glVertexAttrib3fvNV(GLuint index, const GLfloat * v)
 {
@@ -7756,7 +7756,7 @@ __indirect_glVertexAttrib3fvNV(GLuint index, const GLfloat * v)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib3svNV 4191
+#define X_GLrop_VertexAttrib3svNV 4267
 void
 __indirect_glVertexAttrib3sNV(GLuint index, GLshort x, GLshort y, GLshort z)
 {
@@ -7771,7 +7771,7 @@ __indirect_glVertexAttrib3sNV(GLuint index, GLshort x, GLshort y, GLshort z)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib3svNV 4191
+#define X_GLrop_VertexAttrib3svNV 4267
 void
 __indirect_glVertexAttrib3svNV(GLuint index, const GLshort * v)
 {
@@ -7784,7 +7784,7 @@ __indirect_glVertexAttrib3svNV(GLuint index, const GLshort * v)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib4dvNV 4200
+#define X_GLrop_VertexAttrib4dvNV 4276
 void
 __indirect_glVertexAttrib4dNV(GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
@@ -7800,7 +7800,7 @@ __indirect_glVertexAttrib4dNV(GLuint index, GLdouble x, GLdouble y, GLdouble z, 
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib4dvNV 4200
+#define X_GLrop_VertexAttrib4dvNV 4276
 void
 __indirect_glVertexAttrib4dvNV(GLuint index, const GLdouble * v)
 {
@@ -7813,7 +7813,7 @@ __indirect_glVertexAttrib4dvNV(GLuint index, const GLdouble * v)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib4fvNV 4196
+#define X_GLrop_VertexAttrib4fvNV 4272
 void
 __indirect_glVertexAttrib4fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
@@ -7829,7 +7829,7 @@ __indirect_glVertexAttrib4fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLf
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib4fvNV 4196
+#define X_GLrop_VertexAttrib4fvNV 4272
 void
 __indirect_glVertexAttrib4fvNV(GLuint index, const GLfloat * v)
 {
@@ -7842,7 +7842,7 @@ __indirect_glVertexAttrib4fvNV(GLuint index, const GLfloat * v)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib4svNV 4192
+#define X_GLrop_VertexAttrib4svNV 4268
 void
 __indirect_glVertexAttrib4sNV(GLuint index, GLshort x, GLshort y, GLshort z, GLshort w)
 {
@@ -7858,7 +7858,7 @@ __indirect_glVertexAttrib4sNV(GLuint index, GLshort x, GLshort y, GLshort z, GLs
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib4svNV 4192
+#define X_GLrop_VertexAttrib4svNV 4268
 void
 __indirect_glVertexAttrib4svNV(GLuint index, const GLshort * v)
 {
@@ -7871,7 +7871,7 @@ __indirect_glVertexAttrib4svNV(GLuint index, const GLshort * v)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib4ubvNV 4201
+#define X_GLrop_VertexAttrib4ubvNV 4277
 void
 __indirect_glVertexAttrib4ubNV(GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w)
 {
@@ -7887,7 +7887,7 @@ __indirect_glVertexAttrib4ubNV(GLuint index, GLubyte x, GLubyte y, GLubyte z, GL
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_VertexAttrib4ubvNV 4201
+#define X_GLrop_VertexAttrib4ubvNV 4277
 void
 __indirect_glVertexAttrib4ubvNV(GLuint index, const GLubyte * v)
 {
