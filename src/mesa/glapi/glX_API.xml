@@ -145,6 +145,13 @@
     </function>
 </category>
 
+<category name="GLX_SGI_swap_control" number="40" window_system="glX">
+    <function name="SwapIntervalSGI">
+        <return type="int"/>
+        <glx vendorpriv="65536"/>
+    </function>
+</category>
+
 <category name="GLX_SGI_make_current_read" number="42" window_system="glX">
     <function name="MakeCurrentReadSGI">
 <!--        <param name="dpy" type="Display *"/>
