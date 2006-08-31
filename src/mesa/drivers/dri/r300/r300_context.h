@@ -820,6 +820,7 @@ struct r300_context {
 
 	GLboolean texmicrotile;
 	GLboolean span_dlocking;
+	GLboolean disable_lowimpact_fallback;
 };
 
 struct r300_buffer_object {

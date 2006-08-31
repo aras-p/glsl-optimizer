@@ -152,6 +152,17 @@ DRI_CONF_OPT_BEGIN_V(command_buffer_size,int,def, # min ":" # max ) \
         DRI_CONF_DESC(de,"Grösse des Befehlspuffers (in KB)") \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_DISABLE_S3TC(def) \
+DRI_CONF_OPT_BEGIN(disable_s3tc,bool,def) \
+        DRI_CONF_DESC(en,"Disable S3TC compression") \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_DISABLE_FALLBACK(def) \
+DRI_CONF_OPT_BEGIN(disable_lowimpact_fallback,bool,def) \
+        DRI_CONF_DESC(en,"Disable Low-impact fallback") \
+DRI_CONF_OPT_END
+
+
 const char __driConfigOptions[] =
 DRI_CONF_BEGIN
 	DRI_CONF_SECTION_PERFORMANCE
@@ -161,12 +172,14 @@ DRI_CONF_BEGIN
 		DRI_CONF_MAX_TEXTURE_IMAGE_UNITS(8, 2, 8)
 		DRI_CONF_MAX_TEXTURE_COORD_UNITS(8, 2, 8)
 		DRI_CONF_COMMAND_BUFFER_SIZE(8, 8, 32)
+		DRI_CONF_DISABLE_FALLBACK(false)
 	DRI_CONF_SECTION_END
 	DRI_CONF_SECTION_QUALITY
 		DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
 		DRI_CONF_DEF_MAX_ANISOTROPY(1.0, "1.0,2.0,4.0,8.0,16.0")
 		DRI_CONF_NO_NEG_LOD_BIAS(false)
                 DRI_CONF_FORCE_S3TC_ENABLE(false)
+		DRI_CONF_DISABLE_S3TC(false)
 		DRI_CONF_COLOR_REDUCTION(DRI_CONF_COLOR_REDUCTION_DITHER)
 		DRI_CONF_ROUND_MODE(DRI_CONF_ROUND_TRUNC)
 		DRI_CONF_DITHER_MODE(DRI_CONF_DITHER_XERRORDIFF)
@@ -175,7 +188,7 @@ DRI_CONF_BEGIN
 		DRI_CONF_NO_RAST(false)
 	DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 14;
+static const GLuint __driNConfigOptions = 16;
 
 #ifndef RADEON_DEBUG
 int RADEON_DEBUG = 0;
