@@ -137,7 +137,7 @@ GLboolean i915CreateContext( const __GLcontextModes *mesaVis,
     * hardware.
     */
    ctx->Const.MaxTextureUnits = I915_TEX_UNITS;
-   i = driQueryOptioni( &intel->intelScreen->optionCache, "allow_large_textures");
+   i = driQueryOptioni( &intel->optionCache, "allow_large_textures");
    driCalculateMaxTextureLevels( intel->texture_heaps,
 				 intel->nr_heaps,
 				 &intel->ctx.Const,

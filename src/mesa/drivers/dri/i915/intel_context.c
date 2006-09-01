@@ -388,7 +388,7 @@ GLboolean intelInitContext( intelContextPtr intel,
    intel->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
 
    intel->vblank_flags = (intel->intelScreen->irq_active != 0)
-       ? driGetDefaultVBlankFlags(&intelScreen->optionCache) : VBLANK_FLAG_NO_IRQ;
+       ? driGetDefaultVBlankFlags(&intel->optionCache) : VBLANK_FLAG_NO_IRQ;
 
    (*dri_interface->getUST)(&intel->swap_ust);
    _math_matrix_ctr (&intel->ViewportMatrix);

@@ -93,7 +93,7 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
     * FIXME: packed, but they're not in Intel graphics hardware.
     */
    intel->ctx.Const.MaxTextureUnits = I830_TEX_UNITS;
-   i = driQueryOptioni( &intel->intelScreen->optionCache, "allow_large_textures");
+   i = driQueryOptioni( &intel->optionCache, "allow_large_textures");
    driCalculateMaxTextureLevels( intel->texture_heaps,
 				 intel->nr_heaps,
 				 &intel->ctx.Const,
