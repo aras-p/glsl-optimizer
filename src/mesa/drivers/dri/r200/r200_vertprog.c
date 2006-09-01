@@ -991,6 +991,11 @@ void r200SetupVertexProg( GLcontext *ctx ) {
    TCL_FALLBACK(ctx, R200_TCL_FALLBACK_VERTEX_PROGRAM, fallback);
    if (fallback) return;
 
+   R200_STATECHANGE( rmesa, vap );
+   /* FIXME: fglrx sets R200_VAP_SINGLE_BUF_STATE_ENABLE too. Do we need it?
+             maybe only when using more than 64 inst / 96 param? */
+   rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] |= R200_VAP_PROG_VTX_SHADER_ENABLE /*| R200_VAP_SINGLE_BUF_STATE_ENABLE*/;
+
    R200_STATECHANGE( rmesa, pvs );
 
    rmesa->hw.pvs.cmd[PVS_CNTL_1] = (0 << R200_PVS_CNTL_1_PROGRAM_START_SHIFT) |
