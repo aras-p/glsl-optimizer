@@ -94,6 +94,8 @@ static void brw_set_dest( struct brw_instruction *insn,
 static void brw_set_src0( struct brw_instruction *insn,
 		      struct brw_reg reg )
 {
+   assert(reg.file != BRW_MESSAGE_REGISTER_FILE);
+
    insn->bits1.da1.src0_reg_file = reg.file;
    insn->bits1.da1.src0_reg_type = reg.type;
    insn->bits2.da1.src0_abs = reg.abs;
@@ -165,6 +167,8 @@ static void brw_set_src0( struct brw_instruction *insn,
 static void brw_set_src1( struct brw_instruction *insn,
 			  struct brw_reg reg )
 {
+   assert(reg.file != BRW_MESSAGE_REGISTER_FILE);
+
    insn->bits1.da1.src1_reg_file = reg.file;
    insn->bits1.da1.src1_reg_type = reg.type;
    insn->bits3.da1.src1_abs = reg.abs;

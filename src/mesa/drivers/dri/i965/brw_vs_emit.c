@@ -529,6 +529,11 @@ static void emit_lit_noalias( struct brw_vs_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct brw_instruction *if_insn;
+   struct brw_reg tmp = dst;
+   GLboolean need_tmp = (dst.file != BRW_GENERAL_REGISTER_FILE);
+
+   if (need_tmp) 
+      tmp = get_tmp(c);
    
    brw_MOV(p, brw_writemask(dst, WRITEMASK_YZ), brw_imm_f(0)); 
    brw_MOV(p, brw_writemask(dst, WRITEMASK_XW), brw_imm_f(1)); 
@@ -544,13 +549,13 @@ static void emit_lit_noalias( struct brw_vs_compile *c,
       brw_MOV(p, brw_writemask(dst, WRITEMASK_Y), brw_swizzle1(arg0,0));
 
       brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_G, brw_swizzle1(arg0,1), brw_imm_f(0));
-      brw_MOV(p, brw_writemask(dst, WRITEMASK_Z),  brw_swizzle1(arg0,1));
+      brw_MOV(p, brw_writemask(tmp, WRITEMASK_Z),  brw_swizzle1(arg0,1));
       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
       emit_math2(c, 
 		 BRW_MATH_FUNCTION_POW, 
 		 brw_writemask(dst, WRITEMASK_Z),
-		 brw_swizzle1(dst, 2),
+		 brw_swizzle1(tmp, 2),
 		 brw_swizzle1(arg0, 3),
 		 BRW_MATH_PRECISION_PARTIAL);      
    }
@@ -691,7 +696,13 @@ static void emit_swz( struct brw_vs_compile *c,
    GLuint ones_mask = 0;
    GLuint src_mask = 0;
    GLubyte src_swz[4];
+   GLboolean need_tmp = (src.NegateBase &&
+			 dst.file != BRW_GENERAL_REGISTER_FILE);
+   struct brw_reg tmp = dst;
    GLuint i;
+
+   if (need_tmp)
+      tmp = get_tmp(c);
 
    for (i = 0; i < 4; i++) {
       if (dst.dw1.bits.writemask & (1<<i)) {
@@ -728,17 +739,22 @@ static void emit_swz( struct brw_vs_compile *c,
 			 src_swz[0], src_swz[1], 
 			 src_swz[2], src_swz[3]);
 
-      brw_MOV(p, brw_writemask(dst, src_mask), arg0);
+      brw_MOV(p, brw_writemask(tmp, src_mask), arg0);
    } 
    
    if (zeros_mask) 
-      brw_MOV(p, brw_writemask(dst, zeros_mask), brw_imm_f(0));
+      brw_MOV(p, brw_writemask(tmp, zeros_mask), brw_imm_f(0));
 
    if (ones_mask) 
-      brw_MOV(p, brw_writemask(dst, ones_mask), brw_imm_f(1));
+      brw_MOV(p, brw_writemask(tmp, ones_mask), brw_imm_f(1));
 
    if (src.NegateBase)
-      brw_MOV(p, brw_writemask(dst, src.NegateBase), negate(dst));
+      brw_MOV(p, brw_writemask(tmp, src.NegateBase), negate(tmp));
+   
+   if (need_tmp) {
+      brw_MOV(p, dst, tmp);
+      release_tmp(c, tmp);
+   }
 }
 
 
