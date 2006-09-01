@@ -416,9 +416,17 @@ static void emit_log_noalias( struct brw_vs_compile *c,
 			      struct brw_reg arg0 )
 {
    struct brw_compile *p = &c->func;
-   struct brw_reg dst_ud = retype(dst, BRW_REGISTER_TYPE_UD);
+   struct brw_reg tmp = dst;
+   struct brw_reg tmp_ud = retype(tmp, BRW_REGISTER_TYPE_UD);
    struct brw_reg arg0_ud = retype(arg0, BRW_REGISTER_TYPE_UD);
+   GLboolean need_tmp = (dst.dw1.bits.writemask != 0xf ||
+			 dst.file != BRW_GENERAL_REGISTER_FILE);
 
+   if (need_tmp) {
+      tmp = get_tmp(c);
+      tmp_ud = retype(tmp, BRW_REGISTER_TYPE_UD);
+   }
+   
    /* Perform mant = frexpf(fabsf(x), &exp), adjust exp and mnt
     * according to spec:
     *
@@ -430,30 +438,30 @@ static void emit_log_noalias( struct brw_vs_compile *c,
     */
    if (dst.dw1.bits.writemask & WRITEMASK_XZ) {
       brw_AND(p, 
-	      brw_writemask(dst_ud, WRITEMASK_X),
+	      brw_writemask(tmp_ud, WRITEMASK_X),
 	      brw_swizzle1(arg0_ud, 0),
 	      brw_imm_ud((1U<<31)-1));
 
       brw_SHR(p, 
-	      brw_writemask(dst_ud, WRITEMASK_X), 
-	      dst_ud,
+	      brw_writemask(tmp_ud, WRITEMASK_X), 
+	      tmp_ud,
 	      brw_imm_ud(23));
 
       brw_ADD(p, 
-	      brw_writemask(dst, WRITEMASK_X), 
-	      retype(dst_ud, BRW_REGISTER_TYPE_D),	/* does it matter? */
+	      brw_writemask(tmp, WRITEMASK_X), 
+	      retype(tmp_ud, BRW_REGISTER_TYPE_D),	/* does it matter? */
 	      brw_imm_d(-127));
    }
 
    if (dst.dw1.bits.writemask & WRITEMASK_YZ) {
       brw_AND(p, 
-	      brw_writemask(dst_ud, WRITEMASK_Y),
+	      brw_writemask(tmp_ud, WRITEMASK_Y),
 	      brw_swizzle1(arg0_ud, 0),
 	      brw_imm_ud((1<<23)-1));
 
       brw_OR(p, 
-	     brw_writemask(dst_ud, WRITEMASK_Y), 
-	     dst_ud,
+	     brw_writemask(tmp_ud, WRITEMASK_Y), 
+	     tmp_ud,
 	     brw_imm_ud(127<<23));
    }
    
@@ -472,19 +480,24 @@ static void emit_log_noalias( struct brw_vs_compile *c,
        */
       emit_math1(c, 
 		 BRW_MATH_FUNCTION_LOG, 
-		 brw_writemask(dst, WRITEMASK_Z), 
-		 brw_swizzle1(dst, 1), 
+		 brw_writemask(tmp, WRITEMASK_Z), 
+		 brw_swizzle1(tmp, 1), 
 		 BRW_MATH_PRECISION_FULL);
       
       brw_ADD(p, 
-	      brw_writemask(dst, WRITEMASK_Z), 
-	      brw_swizzle1(dst, 2), 
-	      brw_swizzle1(dst, 0));
+	      brw_writemask(tmp, WRITEMASK_Z), 
+	      brw_swizzle1(tmp, 2), 
+	      brw_swizzle1(tmp, 0));
    }  
 
    if (dst.dw1.bits.writemask & WRITEMASK_W) {
       /* result[3] = 1.0; */
-      brw_MOV(p, brw_writemask(dst, WRITEMASK_W), brw_imm_f(1));
+      brw_MOV(p, brw_writemask(tmp, WRITEMASK_W), brw_imm_f(1));
+   }
+
+   if (need_tmp) {
+      brw_MOV(p, dst, tmp);
+      release_tmp(c, tmp);
    }
 }
 
@@ -635,10 +648,17 @@ static void emit_arl( struct brw_vs_compile *c,
 		      struct brw_reg arg0 )
 {
    struct brw_compile *p = &c->func;
+   struct brw_reg tmp = dst;
+   GLboolean need_tmp = (dst.file != BRW_GENERAL_REGISTER_FILE);
+   
+   if (need_tmp) 
+      tmp = get_tmp(c);
 
-   brw_RNDD(p, dst, arg0);
+   brw_RNDD(p, tmp, arg0);
+   brw_MUL(p, dst, tmp, brw_imm_d(16));
 
-   brw_MUL(p, dst, dst, brw_imm_d(16));
+   if (need_tmp)
+      release_tmp(c, tmp);
 }
 
 
