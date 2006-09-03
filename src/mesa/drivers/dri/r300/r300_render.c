@@ -394,20 +394,23 @@ int r300Fallback(GLcontext *ctx)
 	FALLBACK_IF(ctx->Polygon.OffsetFill); // GL_POLYGON_OFFSET_FILL
 	FALLBACK_IF(ctx->Fog.Enabled);
 #endif
-	FALLBACK_IF(ctx->Polygon.OffsetPoint); // GL_POLYGON_OFFSET_POINT
-	FALLBACK_IF(ctx->Polygon.OffsetLine); // GL_POLYGON_OFFSET_LINE
-	//FALLBACK_IF(ctx->Stencil.Enabled); // GL_STENCIL_TEST
-	
-	//FALLBACK_IF(ctx->Polygon.SmoothFlag); // GL_POLYGON_SMOOTH disabling to get blender going
-	FALLBACK_IF(ctx->Polygon.StippleFlag); // GL_POLYGON_STIPPLE
-	FALLBACK_IF(ctx->Multisample.Enabled); // GL_MULTISAMPLE_ARB
-	
-	
-	FALLBACK_IF(ctx->Line.StippleFlag);
-	
-	/* HW doesnt appear to directly support these */
-	FALLBACK_IF(ctx->Line.SmoothFlag); // GL_LINE_SMOOTH
-	FALLBACK_IF(ctx->Point.SmoothFlag); // GL_POINT_SMOOTH
+
+	if(!r300->disable_lowimpact_fallback){
+		FALLBACK_IF(ctx->Polygon.OffsetPoint); // GL_POLYGON_OFFSET_POINT
+		FALLBACK_IF(ctx->Polygon.OffsetLine); // GL_POLYGON_OFFSET_LINE
+		//FALLBACK_IF(ctx->Stencil.Enabled); // GL_STENCIL_TEST
+
+		//FALLBACK_IF(ctx->Polygon.SmoothFlag); // GL_POLYGON_SMOOTH disabling to get blender going
+		FALLBACK_IF(ctx->Polygon.StippleFlag); // GL_POLYGON_STIPPLE
+		FALLBACK_IF(ctx->Multisample.Enabled); // GL_MULTISAMPLE_ARB
+
+		FALLBACK_IF(ctx->Line.StippleFlag);
+
+		/* HW doesnt appear to directly support these */
+		FALLBACK_IF(ctx->Line.SmoothFlag); // GL_LINE_SMOOTH
+		FALLBACK_IF(ctx->Point.SmoothFlag); // GL_POINT_SMOOTH
+	}
+
 	/* Rest could be done with vertex fragments */
 	if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite)
 		FALLBACK_IF(ctx->Point.PointSprite); // GL_POINT_SPRITE_NV
