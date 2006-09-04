@@ -173,7 +173,7 @@ CHECK( texenv, (rmesa->state.envneeded & (1 << idx) && !ctx->ATIFragmentShader._
 CHECK( afs_pass1, (ctx->ATIFragmentShader._Enabled && (ctx->ATIFragmentShader.Current->NumPasses > 1)) )
 CHECK( afs, ctx->ATIFragmentShader._Enabled )
 CHECK( tex_cube, rmesa->state.texture.unit[idx].unitneeded & TEXTURE_CUBE_BIT )
-CHECK( fog, ctx->Fog.Enabled )
+TCL_CHECK( tcl_fog, ctx->Fog.Enabled )
 TCL_CHECK( tcl, GL_TRUE )
 TCL_CHECK( tcl_tex, rmesa->state.texture.unit[idx].unitneeded )
 TCL_CHECK( tcl_lighting, ctx->Light.Enabled )
@@ -360,7 +360,7 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( mtl[0], tcl_lighting, MTL_STATE_SIZE, "MTL0/material0", 0 );
    ALLOC_STATE( mtl[1], tcl_lighting, MTL_STATE_SIZE, "MTL1/material1", 1 );
    ALLOC_STATE( grd, tcl_or_vp, GRD_STATE_SIZE, "GRD/guard-band", 0 );
-   ALLOC_STATE( fog, fog, FOG_STATE_SIZE, "FOG/fog", 0 );
+   ALLOC_STATE( fog, tcl_fog, FOG_STATE_SIZE, "FOG/fog", 0 );
    ALLOC_STATE( glt, tcl_lighting, GLT_STATE_SIZE, "GLT/light-global", 0 );
    ALLOC_STATE( eye, tcl_lighting, EYE_STATE_SIZE, "EYE/eye-vector", 0 );
    ALLOC_STATE( mat[R200_MTX_MV], tcl, MAT_STATE_SIZE, "MAT/modelview", 0 );
