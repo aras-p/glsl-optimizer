@@ -1375,21 +1375,26 @@ static void build_pointsize( struct tnl_program *p )
    struct ureg out = register_output(p, VERT_RESULT_PSIZ);
    struct ureg ut = get_temp(p);
 
-   /* 1, -Z, Z * Z, 1 */      
-   emit_op1(p, OPCODE_MOV, ut, 0, swizzle1(get_identity_param(p), W));
-   emit_op2(p, OPCODE_MUL, ut, WRITEMASK_YZ, ut, ureg_negate(swizzle1(eye, Z)));
-   emit_op2(p, OPCODE_MUL, ut, WRITEMASK_Z, ut, ureg_negate(swizzle1(eye, Z)));
+   /* 1, Z, Z * Z, 1 */      
+   emit_op1(p, OPCODE_MOV, ut, WRITEMASK_XW, swizzle1(get_identity_param(p), W));
+   emit_op1(p, OPCODE_ABS, ut, WRITEMASK_YZ, swizzle1(eye, Z));
+   emit_op2(p, OPCODE_MUL, ut, WRITEMASK_Z, ut, ut);
 
 
    /* p1 +  p2 * dist + p3 * dist * dist, 0 */
-   emit_op2(p, OPCODE_DP3, ut, 0, ut, state_attenuation);
+   emit_op2(p, OPCODE_DP3, ut, WRITEMASK_X, ut, state_attenuation);
 
-   /* 1 / factor */
-   emit_op1(p, OPCODE_RCP, ut, 0, ut ); 
+   /* 1 / sqrt(factor) */
+   emit_op1(p, OPCODE_RSQ, ut, WRITEMASK_X, ut ); 
 
-   /* out = pointSize / factor */
-   emit_op2(p, OPCODE_MUL, out, WRITEMASK_X, ut, state_size); 
+   /* ut = pointSize / factor */
+   emit_op2(p, OPCODE_MUL, ut, WRITEMASK_X, ut, state_size); 
 
+   /* Clamp to min/max - state_size.[yz]
+    */
+   emit_op2(p, OPCODE_MAX, ut, WRITEMASK_X, ut, swizzle1(state_size, Y)); 
+   emit_op2(p, OPCODE_MIN, out, 0, swizzle1(ut, X), swizzle1(state_size, Z)); 
+   
    release_temp(p, ut);
 }
 
