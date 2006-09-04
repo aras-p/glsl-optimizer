@@ -383,6 +383,7 @@ do {										\
 
 int r300Fallback(GLcontext *ctx)
 {
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int i;
 
 	FALLBACK_IF(ctx->RenderMode != GL_RENDER);  // We do not do SELECT or FEEDBACK (yet ?)
