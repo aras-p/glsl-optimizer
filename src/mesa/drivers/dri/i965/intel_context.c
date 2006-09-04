@@ -78,7 +78,6 @@ int INTEL_DEBUG = (0);
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_secondary_color
-#define need_GL_NV_vertex_program
 #include "extension_helper.h"
 
 #ifndef VERBOSE
@@ -175,8 +174,6 @@ const struct dri_extension card_extensions[] =
     { "GL_MESA_pack_invert",               NULL },
     { "GL_MESA_ycbcr_texture",             NULL },
     { "GL_NV_blend_square",                NULL },
-    { "GL_NV_vertex_program",              GL_NV_vertex_program_functions },
-    { "GL_NV_vertex_program1_1",           NULL },
     { "GL_SGIS_generate_mipmap",           NULL },
     { NULL,                                NULL }
 };
