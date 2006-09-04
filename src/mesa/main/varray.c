@@ -34,10 +34,6 @@
 #include "arrayobj.h"
 #include "dispatch.h"
 
-#ifndef GL_BOOLEAN
-#define GL_BOOLEAN 0x9999
-#endif
-
 
 /**
  * Update the fields of a vertex array object.
@@ -434,7 +430,7 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
    }
 
    update_array(ctx, &ctx->Array.ArrayObj->EdgeFlag, _NEW_ARRAY_EDGEFLAG,
-                sizeof(GLboolean), 1, GL_BOOLEAN, stride, GL_FALSE, ptr);
+                sizeof(GLboolean), 1, GL_UNSIGNED_BYTE, stride, GL_FALSE, ptr);
 
    if (ctx->Driver.EdgeFlagPointer)
       ctx->Driver.EdgeFlagPointer( ctx, stride, ptr );
