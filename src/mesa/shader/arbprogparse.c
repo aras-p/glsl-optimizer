@@ -3759,7 +3759,7 @@ enable_parser_extensions(GLcontext *ctx, grammar id)
    /* These are not supported at this time */
    if ((ctx->Extensions.ARB_vertex_blend ||
         ctx->Extensions.EXT_vertex_weighting)
-       && !enable_ext(ctx, id, "point_parameters"))
+       && !enable_ext(ctx, id, "vertex_blend"))
       return GL_FALSE;
    if (ctx->Extensions.ARB_matrix_palette
        && !enable_ext(ctx, id, "matrix_palette"))
