@@ -1491,8 +1491,13 @@ parse_attrib_binding(GLcontext * ctx, const GLubyte ** inst,
                GLint weight;
                err = parse_weight_num (ctx, inst, Program, &weight);
                *inputReg = VERT_ATTRIB_WEIGHT;
+#if 1
+               /* hack for Warcraft (see bug 8060) */
+               _mesa_warning(ctx, "Application error: vertex program uses 'vertex.weight' but GL_ARB_vertex_blend not supported.");
+#else
                program_error(ctx, Program->Position,
                              "ARB_vertex_blend not supported");
+#endif
             }
             return 1;
 
@@ -3783,6 +3788,11 @@ enable_parser_extensions(GLcontext *ctx, grammar id)
    if (ctx->Extensions.ARB_draw_buffers
        && !enable_ext(ctx, id, "draw_buffers"))
       return GL_FALSE;
+
+#if 1
+   /* hack for Warcraft (see bug 8060) */
+   enable_ext(ctx, id, "vertex_blend");
+#endif
 
    return GL_TRUE;
 }
