@@ -242,7 +242,6 @@ static void make_state_key( GLcontext *ctx, struct state_key *key )
  */
 #define PREFER_DP4 1
 
-#define BRW_TNL_MAX_INSN 256
 
 /* Use uregs to represent registers internally, translate to Mesa's
  * expected formats on emit.  
@@ -269,6 +268,7 @@ struct tnl_program {
    const struct state_key *state;
    struct gl_vertex_program *program;
    
+   GLuint nr_instructions;
    GLuint temp_in_use;
    GLuint temp_reserved;
    
@@ -517,24 +517,28 @@ static void emit_op3fn(struct tnl_program *p,
 		       GLuint line)
 {
    GLuint nr = p->program->Base.NumInstructions++;
-   struct prog_instruction *inst = &p->program->Base.Instructions[nr];
       
-   if (p->program->Base.NumInstructions > BRW_TNL_MAX_INSN) {
-      _mesa_problem(0, "Out of instructions in emit_op3fn\n");
-      return;
+   if (nr >= p->nr_instructions) {
+      p->program->Base.Instructions = 
+	 _mesa_realloc(p->program->Base.Instructions,
+		       sizeof(struct prog_instruction) * p->nr_instructions,
+		       sizeof(struct prog_instruction) * (p->nr_instructions *= 2));
    }
-      
-   inst->Opcode = op; 
-   inst->StringPos = 0;
-   inst->Data = 0;
+
+   {      
+      struct prog_instruction *inst = &p->program->Base.Instructions[nr];
+      inst->Opcode = op; 
+      inst->StringPos = 0;
+      inst->Data = 0;
    
-   emit_arg( &inst->SrcReg[0], src0 );
-   emit_arg( &inst->SrcReg[1], src1 );
-   emit_arg( &inst->SrcReg[2], src2 );   
+      emit_arg( &inst->SrcReg[0], src0 );
+      emit_arg( &inst->SrcReg[1], src1 );
+      emit_arg( &inst->SrcReg[2], src2 );   
 
-   emit_dst( &inst->DstReg, dest, mask );
+      emit_dst( &inst->DstReg, dest, mask );
 
-   debug_insn(inst, fn, line);
+      debug_insn(inst, fn, line);
+   }
 }
 
    
@@ -1454,13 +1458,15 @@ static void build_new_tnl_program( const struct state_key *key,
    p.eye_normal = undef;
    p.identity = undef;
    p.temp_in_use = 0;
+   p.nr_instructions = 16;
    
    if (max_temps >= sizeof(int) * 8)
       p.temp_reserved = 0;
    else
       p.temp_reserved = ~((1<<max_temps)-1);
 
-   p.program->Base.Instructions = MALLOC(sizeof(struct prog_instruction) * BRW_TNL_MAX_INSN);
+   p.program->Base.Instructions = 
+      _mesa_malloc(sizeof(struct prog_instruction) * p.nr_instructions);
    p.program->Base.String = 0;
    p.program->Base.NumInstructions =
    p.program->Base.NumTemporaries =
