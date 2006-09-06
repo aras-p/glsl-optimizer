@@ -63,7 +63,6 @@ void brw_exec_init( GLcontext *ctx )
    ctx->Driver.FlushVertices = brw_exec_FlushVertices;
 
    exec->eval.recalculate_maps = 1;
-   exec->array.recalculate_inputs = 1;
 }
 
 
@@ -102,9 +101,6 @@ void brw_exec_invalidate_state( GLcontext *ctx, GLuint new_state )
    if (new_state & (_NEW_PROGRAM|_NEW_EVAL))
       exec->eval.recalculate_maps = 1;
 
-   if (new_state & (_NEW_PROGRAM|_NEW_ARRAY))
-      exec->array.recalculate_inputs = 1;
-   
    _ae_invalidate_state(ctx, new_state);
 }
 

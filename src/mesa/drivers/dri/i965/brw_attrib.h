@@ -50,8 +50,8 @@ enum {
 	BRW_ATTRIB_COLOR0 = 3,
 	BRW_ATTRIB_COLOR1 = 4,
 	BRW_ATTRIB_FOG = 5,
-	BRW_ATTRIB_SIX = 6,
-	BRW_ATTRIB_SEVEN = 7,
+	BRW_ATTRIB_INDEX = 6,        
+	BRW_ATTRIB_EDGEFLAG = 7,     
 	BRW_ATTRIB_TEX0 = 8,
 	BRW_ATTRIB_TEX1 = 9,
 	BRW_ATTRIB_TEX2 = 10,
@@ -60,62 +60,54 @@ enum {
 	BRW_ATTRIB_TEX5 = 13,
 	BRW_ATTRIB_TEX6 = 14,
 	BRW_ATTRIB_TEX7 = 15,
-	BRW_ATTRIB_MAT_FRONT_AMBIENT = 16,
-	BRW_ATTRIB_MAT_BACK_AMBIENT = 17,
-	BRW_ATTRIB_MAT_FRONT_DIFFUSE = 18,
-	BRW_ATTRIB_MAT_BACK_DIFFUSE = 19,
-	BRW_ATTRIB_MAT_FRONT_SPECULAR = 20,
-	BRW_ATTRIB_MAT_BACK_SPECULAR = 21,
-	BRW_ATTRIB_MAT_FRONT_EMISSION = 22,
-	BRW_ATTRIB_MAT_BACK_EMISSION = 23,
-	BRW_ATTRIB_MAT_FRONT_SHININESS = 24,
-	BRW_ATTRIB_MAT_BACK_SHININESS = 25,
-	BRW_ATTRIB_MAT_FRONT_INDEXES = 26,
-	BRW_ATTRIB_MAT_BACK_INDEXES = 27, 
-	BRW_ATTRIB_INDEX = 28,        
-	BRW_ATTRIB_EDGEFLAG = 29,     
 
-	BRW_ATTRIB_MAX = 30
+	BRW_ATTRIB_GENERIC0 = 16, /* Not used? */
+	BRW_ATTRIB_GENERIC1 = 17,
+	BRW_ATTRIB_GENERIC2 = 18,
+	BRW_ATTRIB_GENERIC3 = 19,
+	BRW_ATTRIB_GENERIC4 = 20,
+	BRW_ATTRIB_GENERIC5 = 21,
+	BRW_ATTRIB_GENERIC6 = 22,
+	BRW_ATTRIB_GENERIC7 = 23,
+	BRW_ATTRIB_GENERIC8 = 24,
+	BRW_ATTRIB_GENERIC9 = 25,
+	BRW_ATTRIB_GENERIC10 = 26,
+	BRW_ATTRIB_GENERIC11 = 27,
+	BRW_ATTRIB_GENERIC12 = 28,
+	BRW_ATTRIB_GENERIC13 = 29,
+	BRW_ATTRIB_GENERIC14 = 30,
+	BRW_ATTRIB_GENERIC15 = 31,
+
+	BRW_ATTRIB_MAT_FRONT_AMBIENT = 32, 
+	BRW_ATTRIB_MAT_BACK_AMBIENT = 33,
+	BRW_ATTRIB_MAT_FRONT_DIFFUSE = 34,
+	BRW_ATTRIB_MAT_BACK_DIFFUSE = 35,
+	BRW_ATTRIB_MAT_FRONT_SPECULAR = 36,
+	BRW_ATTRIB_MAT_BACK_SPECULAR = 37,
+	BRW_ATTRIB_MAT_FRONT_EMISSION = 38,
+	BRW_ATTRIB_MAT_BACK_EMISSION = 39,
+	BRW_ATTRIB_MAT_FRONT_SHININESS = 40,
+	BRW_ATTRIB_MAT_BACK_SHININESS = 41,
+	BRW_ATTRIB_MAT_FRONT_INDEXES = 42,
+	BRW_ATTRIB_MAT_BACK_INDEXES = 43, 
+
+	BRW_ATTRIB_MAX = 44
 } ;
 
 #define BRW_ATTRIB_FIRST_MATERIAL BRW_ATTRIB_MAT_FRONT_AMBIENT
 
-/* Will probably have to revise this scheme fairly shortly, eg. by
- * compacting all the MAT flags down to one bit, or by using two
- * dwords to store the flags.
- */
-#define BRW_BIT_POS                 (1<<0)
-#define BRW_BIT_WEIGHT              (1<<1)
-#define BRW_BIT_NORMAL              (1<<2)
-#define BRW_BIT_COLOR0              (1<<3)
-#define BRW_BIT_COLOR1              (1<<4)
-#define BRW_BIT_FOG                 (1<<5)
-#define BRW_BIT_SIX                 (1<<6)
-#define BRW_BIT_SEVEN               (1<<7)
-#define BRW_BIT_TEX0                (1<<8)
-#define BRW_BIT_TEX1                (1<<9)
-#define BRW_BIT_TEX2                (1<<10)
-#define BRW_BIT_TEX3                (1<<11)
-#define BRW_BIT_TEX4                (1<<12)
-#define BRW_BIT_TEX5                (1<<13)
-#define BRW_BIT_TEX6                (1<<14)
-#define BRW_BIT_TEX7                (1<<15)
-#define BRW_BIT_MAT_FRONT_AMBIENT   (1<<16)
-#define BRW_BIT_MAT_BACK_AMBIENT    (1<<17)
-#define BRW_BIT_MAT_FRONT_DIFFUSE   (1<<18)
-#define BRW_BIT_MAT_BACK_DIFFUSE    (1<<19)
-#define BRW_BIT_MAT_FRONT_SPECULAR  (1<<20)
-#define BRW_BIT_MAT_BACK_SPECULAR   (1<<21)
-#define BRW_BIT_MAT_FRONT_EMISSION  (1<<22)
-#define BRW_BIT_MAT_BACK_EMISSION   (1<<23)
-#define BRW_BIT_MAT_FRONT_SHININESS (1<<24)
-#define BRW_BIT_MAT_BACK_SHININESS  (1<<25)
-#define BRW_BIT_MAT_FRONT_INDEXES   (1<<26)
-#define BRW_BIT_MAT_BACK_INDEXES    (1<<27)
-#define BRW_BIT_INDEX               (1<<28)
-#define BRW_BIT_EDGEFLAG            (1<<29)
-
-
 #define BRW_MAX_COPIED_VERTS 3
+
+
+static inline GLuint64EXT brw_translate_inputs( GLboolean vp_enabled,
+						GLuint mesa_inputs )
+{
+   GLuint64EXT inputs = mesa_inputs;
+   if (vp_enabled)
+      return inputs;
+   else 
+      return (inputs & 0xffff) | ((inputs & 0xffff0000) << 16);
+}
+
 
 #endif

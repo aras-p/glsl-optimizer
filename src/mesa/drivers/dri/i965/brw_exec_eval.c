@@ -87,44 +87,44 @@ void brw_exec_eval_update( struct brw_exec_context *exec )
    }
 
    if (ctx->Eval.Map1Color4) 
-      set_active_eval1( exec, VERT_ATTRIB_COLOR0, 4, &ctx->EvalMap.Map1Color4 );
+      set_active_eval1( exec, BRW_ATTRIB_COLOR0, 4, &ctx->EvalMap.Map1Color4 );
       
    if (ctx->Eval.Map2Color4) 
-      set_active_eval2( exec, VERT_ATTRIB_COLOR0, 4, &ctx->EvalMap.Map2Color4 );
+      set_active_eval2( exec, BRW_ATTRIB_COLOR0, 4, &ctx->EvalMap.Map2Color4 );
 
    if (ctx->Eval.Map1TextureCoord4) 
-      set_active_eval1( exec, VERT_ATTRIB_TEX0, 4, &ctx->EvalMap.Map1Texture4 );
+      set_active_eval1( exec, BRW_ATTRIB_TEX0, 4, &ctx->EvalMap.Map1Texture4 );
    else if (ctx->Eval.Map1TextureCoord3) 
-      set_active_eval1( exec, VERT_ATTRIB_TEX0, 3, &ctx->EvalMap.Map1Texture3 );
+      set_active_eval1( exec, BRW_ATTRIB_TEX0, 3, &ctx->EvalMap.Map1Texture3 );
    else if (ctx->Eval.Map1TextureCoord2) 
-      set_active_eval1( exec, VERT_ATTRIB_TEX0, 2, &ctx->EvalMap.Map1Texture2 );
+      set_active_eval1( exec, BRW_ATTRIB_TEX0, 2, &ctx->EvalMap.Map1Texture2 );
    else if (ctx->Eval.Map1TextureCoord1) 
-      set_active_eval1( exec, VERT_ATTRIB_TEX0, 1, &ctx->EvalMap.Map1Texture1 );
+      set_active_eval1( exec, BRW_ATTRIB_TEX0, 1, &ctx->EvalMap.Map1Texture1 );
 
    if (ctx->Eval.Map2TextureCoord4) 
-      set_active_eval2( exec, VERT_ATTRIB_TEX0, 4, &ctx->EvalMap.Map2Texture4 );
+      set_active_eval2( exec, BRW_ATTRIB_TEX0, 4, &ctx->EvalMap.Map2Texture4 );
    else if (ctx->Eval.Map2TextureCoord3) 
-      set_active_eval2( exec, VERT_ATTRIB_TEX0, 3, &ctx->EvalMap.Map2Texture3 );
+      set_active_eval2( exec, BRW_ATTRIB_TEX0, 3, &ctx->EvalMap.Map2Texture3 );
    else if (ctx->Eval.Map2TextureCoord2) 
-      set_active_eval2( exec, VERT_ATTRIB_TEX0, 2, &ctx->EvalMap.Map2Texture2 );
+      set_active_eval2( exec, BRW_ATTRIB_TEX0, 2, &ctx->EvalMap.Map2Texture2 );
    else if (ctx->Eval.Map2TextureCoord1) 
-      set_active_eval2( exec, VERT_ATTRIB_TEX0, 1, &ctx->EvalMap.Map2Texture1 );
+      set_active_eval2( exec, BRW_ATTRIB_TEX0, 1, &ctx->EvalMap.Map2Texture1 );
 
    if (ctx->Eval.Map1Normal) 
-      set_active_eval1( exec, VERT_ATTRIB_NORMAL, 3, &ctx->EvalMap.Map1Normal );
+      set_active_eval1( exec, BRW_ATTRIB_NORMAL, 3, &ctx->EvalMap.Map1Normal );
 
    if (ctx->Eval.Map2Normal) 
-      set_active_eval2( exec, VERT_ATTRIB_NORMAL, 3, &ctx->EvalMap.Map2Normal );
+      set_active_eval2( exec, BRW_ATTRIB_NORMAL, 3, &ctx->EvalMap.Map2Normal );
 
    if (ctx->Eval.Map1Vertex4) 
-      set_active_eval1( exec, VERT_ATTRIB_POS, 4, &ctx->EvalMap.Map1Vertex4 );
+      set_active_eval1( exec, BRW_ATTRIB_POS, 4, &ctx->EvalMap.Map1Vertex4 );
    else if (ctx->Eval.Map1Vertex3) 
-      set_active_eval1( exec, VERT_ATTRIB_POS, 3, &ctx->EvalMap.Map1Vertex3 );
+      set_active_eval1( exec, BRW_ATTRIB_POS, 3, &ctx->EvalMap.Map1Vertex3 );
 
    if (ctx->Eval.Map2Vertex4) 
-      set_active_eval2( exec, VERT_ATTRIB_POS, 4, &ctx->EvalMap.Map2Vertex4 );
+      set_active_eval2( exec, BRW_ATTRIB_POS, 4, &ctx->EvalMap.Map2Vertex4 );
    else if (ctx->Eval.Map2Vertex3) 
-      set_active_eval2( exec, VERT_ATTRIB_POS, 3, &ctx->EvalMap.Map2Vertex3 );
+      set_active_eval2( exec, BRW_ATTRIB_POS, 3, &ctx->EvalMap.Map2Vertex3 );
 
    exec->eval.recalculate_maps = 0;
 }

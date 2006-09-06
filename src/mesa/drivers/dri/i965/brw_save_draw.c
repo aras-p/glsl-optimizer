@@ -76,7 +76,7 @@ static void _playback_copy_to_current( GLcontext *ctx,
    /* Colormaterial -- this kindof sucks.
     */
    if (ctx->Light.ColorMaterialEnabled) {
-      _mesa_update_color_material(ctx, ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
+      _mesa_update_color_material(ctx, ctx->Current.Attrib[BRW_ATTRIB_COLOR0]);
    }
 #endif
 

@@ -237,7 +237,7 @@ static void loopback_prim( GLcontext *ctx,
 	 
       /* Fire the vertex
        */
-      la[0].func( ctx, VERT_ATTRIB_POS, data );
+      la[0].func( ctx, BRW_ATTRIB_POS, data );
       data = tmp;
    }
 

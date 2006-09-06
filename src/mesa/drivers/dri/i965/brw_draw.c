@@ -160,7 +160,7 @@ static void update_current_size( struct gl_client_array *array)
    const GLfloat *ptr = (const GLfloat *)array->Ptr;
 
    assert(array->StrideB == 0);
-   assert(array->Type == GL_FLOAT);
+   assert(array->Type == GL_FLOAT || array->Type == GL_UNSIGNED_BYTE);
 
    if (ptr[3] != 1.0) 
       array->Size = 4;
@@ -192,17 +192,12 @@ static void brw_merge_inputs( struct brw_context *brw,
       if (arrays[i] && arrays[i]->Enabled)
       {
 	 brw->vb.inputs[i].glarray = arrays[i];
-	 brw->vb.info.varying[i/32] |= 1 << (i%32);
+	 brw->vb.info.varying |= 1 << i;
       }
       else 
       {
 	 brw->vb.inputs[i].glarray = &current_values[i];
-
-	 /* XXX: This will change on the Mesa trunk as Brian has moved
-	  * edgeflag, index into this range:
-	  */
-	 if (i < VERT_ATTRIB_GENERIC0)
-	    update_current_size(&current_values[i]);
+	 update_current_size(&current_values[i]);
       }
 
       brw->vb.info.sizes[i/16] |= (inputs[i].glarray->Size - 1) << ((i%16) * 2);
@@ -213,7 +208,7 @@ static void brw_merge_inputs( struct brw_context *brw,
    if (memcmp(brw->vb.info.sizes, old.sizes, sizeof(old.sizes)) != 0)
       brw->state.dirty.brw |= BRW_NEW_INPUT_DIMENSIONS;
 
-   if (memcmp(brw->vb.info.varying, old.varying, sizeof(old.varying)) != 0)
+   if (brw->vb.info.varying != old.varying)
       brw->state.dirty.brw |= BRW_NEW_INPUT_VARYING;
 }
 

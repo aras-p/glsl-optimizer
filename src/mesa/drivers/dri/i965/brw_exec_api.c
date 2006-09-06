@@ -45,9 +45,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 static void reset_attrfv( struct brw_exec_context *exec );
 
-static brw_attrfv_func choose[BRW_MAX_ATTR_CODEGEN+1][4]; /* +1 for ERROR_ATTRIB */
-static brw_attrfv_func generic_attr_func[BRW_MAX_ATTR_CODEGEN][4];
-
 
 /* Close off the last primitive, execute the buffer, restart the
  * primitive.  
@@ -135,7 +132,7 @@ static void brw_exec_copy_to_current( struct brw_exec_context *exec )
    GLcontext *ctx = exec->ctx;
    GLuint i;
 
-   for (i = BRW_ATTRIB_POS+1 ; i < BRW_ATTRIB_INDEX ; i++) {
+   for (i = BRW_ATTRIB_POS+1 ; i < BRW_ATTRIB_MAX ; i++) {
       if (exec->vtx.attrsz[i]) {
          /* Note: the exec->vtx.current[i] pointers point into the
           * ctx->Current.Attrib and ctx->Light.Material.Attrib arrays.
@@ -166,15 +163,13 @@ static void brw_exec_copy_to_current( struct brw_exec_context *exec )
       ctx->Current.EdgeFlag = (exec->vtx.CurrentFloatEdgeFlag == 1.0);
    }
 
-#if 1
    /* Colormaterial -- this kindof sucks.
     */
    if (ctx->Light.ColorMaterialEnabled &&
-       exec->vtx.attrsz[VERT_ATTRIB_COLOR0]) {
+       exec->vtx.attrsz[BRW_ATTRIB_COLOR0]) {
       _mesa_update_color_material(ctx, 
-				  ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
+				  ctx->Current.Attrib[BRW_ATTRIB_COLOR0]);
    }
-#endif
 
    ctx->Driver.NeedFlush &= ~FLUSH_UPDATE_CURRENT;
 }
@@ -304,41 +299,32 @@ static void brw_exec_wrap_upgrade_vertex( struct brw_exec_context *exec,
       exec->vtx.vert_count += exec->vtx.copied.nr;
       exec->vtx.copied.nr = 0;
    }
-
-   /* For codegen - attrptr's may have changed, so need to redo
-    * codegen.  Might be a reasonable place to try & detect attributes
-    * in the vertex which aren't being submitted any more.
-    */
-   for (i = 0 ; i < BRW_ATTRIB_MAX ; i++) 
-      if (exec->vtx.attrsz[i]) {
-	 GLuint j = exec->vtx.attrsz[i] - 1;
-
-	 if (i < BRW_MAX_ATTR_CODEGEN)
-	    exec->vtx.tabfv[i][j] = choose[i][j];
-      }
-
 }
 
 
-static void brw_exec_fixup_vertex( struct brw_exec_context *exec,
+static void brw_exec_fixup_vertex( GLcontext *ctx,
 				   GLuint attr, GLuint sz )
 {
-   static const GLfloat id[4] = { 0, 0, 0, 1 };
+   struct brw_exec_context *exec = IMM_CONTEXT(ctx)->exec;
    int i;
 
-   if (exec->vtx.attrsz[attr] < sz) {
+   if (sz > exec->vtx.attrsz[attr]) {
       /* New size is larger.  Need to flush existing vertices and get
        * an enlarged vertex format.
        */
       brw_exec_wrap_upgrade_vertex( exec, attr, sz );
    }
-   else if (exec->vtx.attrsz[attr] > sz) {
+   else if (sz < exec->vtx.active_sz[attr]) {
+      static const GLfloat id[4] = { 0, 0, 0, 1 };
+
       /* New size is smaller - just need to fill in some
        * zeros.  Don't need to flush or wrap.
        */
       for (i = sz ; i <= exec->vtx.attrsz[attr] ; i++)
 	 exec->vtx.attrptr[attr][i-1] = id[i-1];
    }
+
+   exec->vtx.active_sz[attr] = sz;
 
    /* Does setting NeedFlush belong here?  Necessitates resetting
     * vtxfmt on each flush (otherwise flags won't get reset
@@ -351,230 +337,48 @@ static void brw_exec_fixup_vertex( struct brw_exec_context *exec,
 }
 
 
-/* Helper function for 'CHOOSE' macro.  Do what's necessary when an
- * entrypoint is called for the first time.
+
+
+/* 
  */
-
-static brw_attrfv_func do_choose( GLuint attr, GLuint sz )
-{ 
-   GET_CURRENT_CONTEXT( ctx ); 
-   struct brw_exec_context *exec = IMM_CONTEXT(ctx)->exec;
-   GLuint oldsz = exec->vtx.attrsz[attr];
-
-   assert(attr < BRW_MAX_ATTR_CODEGEN);
-
-   if (oldsz != sz) {
-      /* Reset any active pointers for this attribute 
-       */
-      if (oldsz)
-	 exec->vtx.tabfv[attr][oldsz-1] = choose[attr][oldsz-1];
-   
-      brw_exec_fixup_vertex( exec, attr, sz );
- 
-   }
-
-   /* Codegen?
-    */
-
-   /* Else use generic version:
-    */
-   exec->vtx.tabfv[attr][sz-1] = generic_attr_func[attr][sz-1];
-
-   return exec->vtx.tabfv[attr][sz-1];
-}
-
-
-
-#define CHOOSE( ATTR, N )				\
-static void choose_##ATTR##_##N( const GLfloat *v )	\
-{							\
-   brw_attrfv_func f = do_choose(ATTR, N);			\
-   f( v );						\
-}
-
-#define CHOOSERS( ATTRIB ) \
-   CHOOSE( ATTRIB, 1 )				\
-   CHOOSE( ATTRIB, 2 )				\
-   CHOOSE( ATTRIB, 3 )				\
-   CHOOSE( ATTRIB, 4 )				\
-
-
-#define INIT_CHOOSERS(ATTR)				\
-   choose[ATTR][0] = choose_##ATTR##_1;				\
-   choose[ATTR][1] = choose_##ATTR##_2;				\
-   choose[ATTR][2] = choose_##ATTR##_3;				\
-   choose[ATTR][3] = choose_##ATTR##_4;
-
-CHOOSERS( 0 )
-CHOOSERS( 1 )
-CHOOSERS( 2 )
-CHOOSERS( 3 )
-CHOOSERS( 4 )
-CHOOSERS( 5 )
-CHOOSERS( 6 )
-CHOOSERS( 7 )
-CHOOSERS( 8 )
-CHOOSERS( 9 )
-CHOOSERS( 10 )
-CHOOSERS( 11 )
-CHOOSERS( 12 )
-CHOOSERS( 13 )
-CHOOSERS( 14 )
-CHOOSERS( 15 )
-
-static void error_attrib( const GLfloat *unused )
-{
-   GET_CURRENT_CONTEXT( ctx );
-   (void) unused;
-   _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib" );
-}   
-
-
-
-static void reset_attrfv( struct brw_exec_context *exec )
-{   
-   GLuint i;
-
-   for (i = 0 ; i < BRW_ATTRIB_MAX ; i++) 
-      if (exec->vtx.attrsz[i]) {
-	 GLint j = exec->vtx.attrsz[i] - 1;
-	 exec->vtx.attrsz[i] = 0;
-
-	 if (i < BRW_MAX_ATTR_CODEGEN) {
-            while (j >= 0) {
-	       exec->vtx.tabfv[i][j] = choose[i][j];
-               j--;
-            }
-         }
-      }
-
-   exec->vtx.vertex_size = 0;
-}
-      
-
-
-/* Materials:  
- * 
- * These are treated as per-vertex attributes, at indices above where
- * the NV_vertex_program leaves off.  There are a lot of good things
- * about treating materials this way.  
- *
- * However: I don't want to double the number of generated functions
- * just to cope with this, so I unroll the 'C' varients of CHOOSE and
- * ATTRF into this function, and dispense with codegen and
- * second-level dispatch.
- *
- * There is no aliasing of material attributes with other entrypoints.
- */
-#define OTHER_ATTR( exec, A, N, params )		\
-do {							\
-   if (exec->vtx.attrsz[A] != N) {			\
-      brw_exec_fixup_vertex( exec, A, N );			\
-   }							\
-							\
-   {							\
-      GLfloat *dest = exec->vtx.attrptr[A];		\
-      if (N>0) dest[0] = (params)[0];			\
-      if (N>1) dest[1] = (params)[1];			\
-      if (N>2) dest[2] = (params)[2];			\
-      if (N>3) dest[3] = (params)[3];			\
-   }							\
-} while (0)
-
-
-#define MAT( exec, ATTR, N, face, params )			\
+#define ATTR( A, N, V0, V1, V2, V3 )				\
 do {								\
-   if (face != GL_BACK)						\
-      OTHER_ATTR( exec, ATTR, N, params ); /* front */	\
-   if (face != GL_FRONT)					\
-      OTHER_ATTR( exec, ATTR + 1, N, params ); /* back */	\
+   struct brw_exec_context *exec = IMM_CONTEXT(ctx)->exec;	\
+								\
+   if (exec->vtx.active_sz[A] != N)				\
+      brw_exec_fixup_vertex(ctx, A, N);			\
+								\
+   {								\
+      GLfloat *dest = exec->vtx.attrptr[A];			\
+      if (N>0) dest[0] = V0;					\
+      if (N>1) dest[1] = V1;					\
+      if (N>2) dest[2] = V2;					\
+      if (N>3) dest[3] = V3;					\
+   }								\
+								\
+   if ((A) == 0) {						\
+      GLuint i;							\
+								\
+      for (i = 0; i < exec->vtx.vertex_size; i++)		\
+	 exec->vtx.vbptr[i] = exec->vtx.vertex[i];		\
+								\
+      exec->vtx.vbptr += exec->vtx.vertex_size;			\
+      exec->ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;	\
+								\
+      if (++exec->vtx.vert_count >= exec->vtx.max_vert)		\
+	 brw_exec_vtx_wrap( exec );				\
+   }								\
 } while (0)
 
 
-/* Colormaterial is dealt with later on.
- */
-static void GLAPIENTRY brw_exec_Materialfv( GLenum face, GLenum pname, 
-			       const GLfloat *params )
-{
-   GET_CURRENT_CONTEXT( ctx ); 
-   struct brw_exec_context *exec = IMM_CONTEXT(ctx)->exec;
+#define ERROR() _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ )
+#define TAG(x) brw_##x
 
-   switch (face) {
-   case GL_FRONT:
-   case GL_BACK:
-   case GL_FRONT_AND_BACK:
-      break;
-      
-   default:
-      _mesa_error( ctx, GL_INVALID_ENUM, "glMaterialfv" );
-      return;
-   }
-
-   switch (pname) {
-   case GL_EMISSION:
-      MAT( exec, BRW_ATTRIB_MAT_FRONT_EMISSION, 4, face, params );
-      break;
-   case GL_AMBIENT:
-      MAT( exec, BRW_ATTRIB_MAT_FRONT_AMBIENT, 4, face, params );
-      break;
-   case GL_DIFFUSE:
-      MAT( exec, BRW_ATTRIB_MAT_FRONT_DIFFUSE, 4, face, params );
-      break;
-   case GL_SPECULAR:
-      MAT( exec, BRW_ATTRIB_MAT_FRONT_SPECULAR, 4, face, params );
-      break;
-   case GL_SHININESS:
-      MAT( exec, BRW_ATTRIB_MAT_FRONT_SHININESS, 1, face, params );
-      break;
-   case GL_COLOR_INDEXES:
-      MAT( exec, BRW_ATTRIB_MAT_FRONT_INDEXES, 3, face, params );
-      break;
-   case GL_AMBIENT_AND_DIFFUSE:
-      MAT( exec, BRW_ATTRIB_MAT_FRONT_AMBIENT, 4, face, params );
-      MAT( exec, BRW_ATTRIB_MAT_FRONT_DIFFUSE, 4, face, params );
-      break;
-   default:
-      _mesa_error( ctx, GL_INVALID_ENUM, "glMaterialfv" );
-      return;
-   }
-}
+#include "brw_attrib_tmp.h"
 
 
-static void GLAPIENTRY brw_exec_EdgeFlag( GLboolean b )
-{
-   GET_CURRENT_CONTEXT( ctx ); 
-   struct brw_exec_context *exec = IMM_CONTEXT(ctx)->exec;
-   GLfloat f = (GLfloat)b;
 
-   OTHER_ATTR( exec, BRW_ATTRIB_EDGEFLAG, 1, &f );
-}
 
-#if 0
-static void GLAPIENTRY brw_exec_EdgeFlagv( const GLboolean *v )
-{
-   GET_CURRENT_CONTEXT( ctx ); 
-   struct brw_exec_context *exec = IMM_CONTEXT(ctx)->exec;
-   GLfloat f = (GLfloat)v[0];
-
-   OTHER_ATTR( exec, BRW_ATTRIB_EDGEFLAG, 1, &f );
-}
-#endif
-
-static void GLAPIENTRY brw_exec_Indexf( GLfloat f )
-{
-   GET_CURRENT_CONTEXT( ctx ); 
-   struct brw_exec_context *exec = IMM_CONTEXT(ctx)->exec;
-
-   OTHER_ATTR( exec, BRW_ATTRIB_INDEX, 1, &f );
-}
-
-static void GLAPIENTRY brw_exec_Indexfv( const GLfloat *v )
-{
-   GET_CURRENT_CONTEXT( ctx ); 
-   struct brw_exec_context *exec = IMM_CONTEXT(ctx)->exec;
-
-   OTHER_ATTR( exec, BRW_ATTRIB_INDEX, 1, v );
-}
 
 /* Eval
  */
@@ -583,7 +387,6 @@ static void GLAPIENTRY brw_exec_EvalCoord1f( GLfloat u )
    GET_CURRENT_CONTEXT( ctx );
    struct brw_exec_context *exec = IMM_CONTEXT(ctx)->exec;
 
-   /* TODO: use a CHOOSE() function for this: */
    {
       GLint i;
       if (exec->eval.recalculate_maps) 
@@ -592,7 +395,7 @@ static void GLAPIENTRY brw_exec_EvalCoord1f( GLfloat u )
       for (i = 0 ; i <= BRW_ATTRIB_INDEX ; i++) {
 	 if (exec->eval.map1[i].map) 
 	    if (exec->vtx.attrsz[i] != exec->eval.map1[i].sz)
-	       brw_exec_fixup_vertex( exec, i, exec->eval.map1[i].sz );
+	       brw_exec_fixup_vertex( ctx, i, exec->eval.map1[i].sz );
       }
    }
 
@@ -611,7 +414,6 @@ static void GLAPIENTRY brw_exec_EvalCoord2f( GLfloat u, GLfloat v )
    GET_CURRENT_CONTEXT( ctx );
    struct brw_exec_context *exec = IMM_CONTEXT(ctx)->exec;
 
-   /* TODO: use a CHOOSE() function for this: */
    {
       GLint i;
       if (exec->eval.recalculate_maps) 
@@ -619,13 +421,13 @@ static void GLAPIENTRY brw_exec_EvalCoord2f( GLfloat u, GLfloat v )
 
       for (i = 0 ; i <= BRW_ATTRIB_INDEX ; i++) {
 	 if (exec->eval.map2[i].map) 
-	    if (exec->vtx.attrsz[i] != exec->eval.map2[i].sz)
-	       brw_exec_fixup_vertex( exec, i, exec->eval.map2[i].sz );
+	    if (exec->vtx.active_sz[i] != exec->eval.map2[i].sz)
+	       brw_exec_fixup_vertex( ctx, i, exec->eval.map2[i].sz );
       }
 
       if (ctx->Eval.AutoNormal) 
-	 if (exec->vtx.attrsz[BRW_ATTRIB_NORMAL] != 3)
-	    brw_exec_fixup_vertex( exec, BRW_ATTRIB_NORMAL, 3 );
+	 if (exec->vtx.active_sz[BRW_ATTRIB_NORMAL] != 3)
+	    brw_exec_fixup_vertex( ctx, BRW_ATTRIB_NORMAL, 3 );
    }
 
    _mesa_memcpy( exec->vtx.copied.buffer, exec->vtx.vertex, 
@@ -750,8 +552,6 @@ static void brw_exec_vtxfmt_init( struct brw_exec_context *exec )
    vfmt->Begin = brw_exec_Begin;
    vfmt->CallList = _mesa_CallList;
    vfmt->CallLists = _mesa_CallLists;
-   vfmt->EdgeFlag = brw_exec_EdgeFlag;
-/*    vfmt->EdgeFlagv = brw_exec_EdgeFlagv; */
    vfmt->End = brw_exec_End;
    vfmt->EvalCoord1f = brw_exec_EvalCoord1f;
    vfmt->EvalCoord1fv = brw_exec_EvalCoord1fv;
@@ -759,13 +559,71 @@ static void brw_exec_vtxfmt_init( struct brw_exec_context *exec )
    vfmt->EvalCoord2fv = brw_exec_EvalCoord2fv;
    vfmt->EvalPoint1 = brw_exec_EvalPoint1;
    vfmt->EvalPoint2 = brw_exec_EvalPoint2;
-   vfmt->Indexf = brw_exec_Indexf;
-   vfmt->Indexfv = brw_exec_Indexfv;
-   vfmt->Materialfv = brw_exec_Materialfv;
 
    vfmt->Rectf = _mesa_noop_Rectf;
    vfmt->EvalMesh1 = _mesa_noop_EvalMesh1;
    vfmt->EvalMesh2 = _mesa_noop_EvalMesh2;
+
+
+   /* from attrib_tmp.h:
+    */
+   vfmt->Color3f = brw_Color3f;
+   vfmt->Color3fv = brw_Color3fv;
+   vfmt->Color4f = brw_Color4f;
+   vfmt->Color4fv = brw_Color4fv;
+   vfmt->FogCoordfEXT = brw_FogCoordfEXT;
+   vfmt->FogCoordfvEXT = brw_FogCoordfvEXT;
+   vfmt->MultiTexCoord1fARB = brw_MultiTexCoord1f;
+   vfmt->MultiTexCoord1fvARB = brw_MultiTexCoord1fv;
+   vfmt->MultiTexCoord2fARB = brw_MultiTexCoord2f;
+   vfmt->MultiTexCoord2fvARB = brw_MultiTexCoord2fv;
+   vfmt->MultiTexCoord3fARB = brw_MultiTexCoord3f;
+   vfmt->MultiTexCoord3fvARB = brw_MultiTexCoord3fv;
+   vfmt->MultiTexCoord4fARB = brw_MultiTexCoord4f;
+   vfmt->MultiTexCoord4fvARB = brw_MultiTexCoord4fv;
+   vfmt->Normal3f = brw_Normal3f;
+   vfmt->Normal3fv = brw_Normal3fv;
+   vfmt->SecondaryColor3fEXT = brw_SecondaryColor3fEXT;
+   vfmt->SecondaryColor3fvEXT = brw_SecondaryColor3fvEXT;
+   vfmt->TexCoord1f = brw_TexCoord1f;
+   vfmt->TexCoord1fv = brw_TexCoord1fv;
+   vfmt->TexCoord2f = brw_TexCoord2f;
+   vfmt->TexCoord2fv = brw_TexCoord2fv;
+   vfmt->TexCoord3f = brw_TexCoord3f;
+   vfmt->TexCoord3fv = brw_TexCoord3fv;
+   vfmt->TexCoord4f = brw_TexCoord4f;
+   vfmt->TexCoord4fv = brw_TexCoord4fv;
+   vfmt->Vertex2f = brw_Vertex2f;
+   vfmt->Vertex2fv = brw_Vertex2fv;
+   vfmt->Vertex3f = brw_Vertex3f;
+   vfmt->Vertex3fv = brw_Vertex3fv;
+   vfmt->Vertex4f = brw_Vertex4f;
+   vfmt->Vertex4fv = brw_Vertex4fv;
+   
+   vfmt->VertexAttrib1fARB = brw_VertexAttrib1fARB;
+   vfmt->VertexAttrib1fvARB = brw_VertexAttrib1fvARB;
+   vfmt->VertexAttrib2fARB = brw_VertexAttrib2fARB;
+   vfmt->VertexAttrib2fvARB = brw_VertexAttrib2fvARB;
+   vfmt->VertexAttrib3fARB = brw_VertexAttrib3fARB;
+   vfmt->VertexAttrib3fvARB = brw_VertexAttrib3fvARB;
+   vfmt->VertexAttrib4fARB = brw_VertexAttrib4fARB;
+   vfmt->VertexAttrib4fvARB = brw_VertexAttrib4fvARB;
+
+   vfmt->VertexAttrib1fNV = brw_VertexAttrib1fNV;
+   vfmt->VertexAttrib1fvNV = brw_VertexAttrib1fvNV;
+   vfmt->VertexAttrib2fNV = brw_VertexAttrib2fNV;
+   vfmt->VertexAttrib2fvNV = brw_VertexAttrib2fvNV;
+   vfmt->VertexAttrib3fNV = brw_VertexAttrib3fNV;
+   vfmt->VertexAttrib3fvNV = brw_VertexAttrib3fvNV;
+   vfmt->VertexAttrib4fNV = brw_VertexAttrib4fNV;
+   vfmt->VertexAttrib4fvNV = brw_VertexAttrib4fvNV;
+
+   vfmt->Materialfv = brw_Materialfv;
+
+   vfmt->EdgeFlag = brw_EdgeFlag;
+   vfmt->Indexf = brw_Indexf;
+   vfmt->Indexfv = brw_Indexfv;
+
 }
 
 
@@ -791,35 +649,6 @@ void brw_exec_vtx_init( struct brw_exec_context *exec )
 {
    GLcontext *ctx = exec->ctx;
    GLuint i;
-   static int firsttime = 1;
-   
-   if (firsttime) {
-      firsttime = 0;
-
-      INIT_CHOOSERS( 0 );
-      INIT_CHOOSERS( 1 );
-      INIT_CHOOSERS( 2 );
-      INIT_CHOOSERS( 3 );
-      INIT_CHOOSERS( 4 );
-      INIT_CHOOSERS( 5 );
-      INIT_CHOOSERS( 6 );
-      INIT_CHOOSERS( 7 );
-      INIT_CHOOSERS( 8 );
-      INIT_CHOOSERS( 9 );
-      INIT_CHOOSERS( 10 );
-      INIT_CHOOSERS( 11 );
-      INIT_CHOOSERS( 12 );
-      INIT_CHOOSERS( 13 );
-      INIT_CHOOSERS( 14 );
-      INIT_CHOOSERS( 15 );
-
-      choose[ERROR_ATTRIB][0] = error_attrib;
-      choose[ERROR_ATTRIB][1] = error_attrib;
-      choose[ERROR_ATTRIB][2] = error_attrib;
-      choose[ERROR_ATTRIB][3] = error_attrib;
-
-      brw_exec_generic_attr_table_init( generic_attr_func );
-   }
 
    /* Allocate a buffer object.  Will just reuse this object
     * continuously.
@@ -829,16 +658,14 @@ void brw_exec_vtx_init( struct brw_exec_context *exec )
 
    brw_exec_current_init( exec );
    brw_exec_vtxfmt_init( exec );
-   brw_exec_vtx_generic_init( exec );
 
    /* Hook our functions into the dispatch table.
     */
    _mesa_install_exec_vtxfmt( exec->ctx, &exec->vtxfmt );
 
-   memcpy( exec->vtx.tabfv, choose, sizeof(choose) );
-
    for (i = 0 ; i < BRW_ATTRIB_MAX ; i++) {
       exec->vtx.attrsz[i] = 0;
+      exec->vtx.active_sz[i] = 0;
       exec->vtx.inputs[i] = &exec->vtx.arrays[i];
    }
  
@@ -875,3 +702,15 @@ void brw_exec_FlushVertices( GLcontext *ctx, GLuint flags )
 }
 
 
+static void reset_attrfv( struct brw_exec_context *exec )
+{   
+   GLuint i;
+
+   for (i = 0 ; i < BRW_ATTRIB_MAX ; i++) {
+      exec->vtx.attrsz[i] = 0;
+      exec->vtx.active_sz[i] = 0;
+   }
+
+   exec->vtx.vertex_size = 0;
+}
+      

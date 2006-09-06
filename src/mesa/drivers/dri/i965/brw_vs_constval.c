@@ -176,6 +176,8 @@ static void calc_wm_input_sizes( struct brw_context *brw )
    struct tracker t;
    GLuint insn;
    GLuint i;
+   GLuint64EXT inputs = brw_translate_inputs(brw->intel.ctx.VertexProgram._Enabled,
+					     vp->program.Base.InputsRead);
 
    memset(&t, 0, sizeof(t));
 
@@ -184,7 +186,7 @@ static void calc_wm_input_sizes( struct brw_context *brw )
       t.twoside = 1;
 
    for (i = 0; i < BRW_ATTRIB_MAX; i++) 
-      if (vp->program.Base.InputsRead & (1<<i))
+      if (inputs & (1<<i))
 	 set_active_component(&t, PROGRAM_INPUT, i, 
 			      szflag[get_input_size(brw, i)]);
       

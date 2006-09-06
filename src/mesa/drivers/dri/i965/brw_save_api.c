@@ -563,32 +563,20 @@ static void _save_upgrade_vertex( GLcontext *ctx,
    }
 }
 
-
-
-
-/* Helper function for 'CHOOSE' macro.  Do what's necessary when an
- * entrypoint is called for the first time.
- */
-static void do_choose( GLuint attr, GLuint sz, 
-		       void (*attr_func)( const GLfloat *),
-		       void (*choose1)( const GLfloat *),
-		       void (*choose2)( const GLfloat *),
-		       void (*choose3)( const GLfloat *),
-		       void (*choose4)( const GLfloat *),
-		       const GLfloat *v )
-{ 
-   GET_CURRENT_CONTEXT( ctx ); 
+static void save_fixup_vertex( GLcontext *ctx, GLuint attr, GLuint sz )
+{
    struct brw_save_context *save = IMM_CONTEXT(ctx)->save; 
-   static GLfloat id[4] = { 0, 0, 0, 1 };
-   int i;
 
-   if (save->attrsz[attr] < sz) {
+   if (sz > save->attrsz[attr]) {
       /* New size is larger.  Need to flush existing vertices and get
        * an enlarged vertex format.
        */
       _save_upgrade_vertex( ctx, attr, sz );
    }
-   else {
+   else if (sz < save->active_sz[attr]) {
+      static GLfloat id[4] = { 0, 0, 0, 1 };
+      GLuint i;
+
       /* New size is equal or smaller - just need to fill in some
        * zeros.
        */
@@ -596,20 +584,25 @@ static void do_choose( GLuint attr, GLuint sz,
 	 save->attrptr[attr][i-1] = id[i-1];
    }
 
-   /* Reset any active pointers for this attribute 
-    */
-   save->tabfv[attr][0] = choose1;
-   save->tabfv[attr][1] = choose2;
-   save->tabfv[attr][2] = choose3;
-   save->tabfv[attr][3] = choose4;
-
-   /* Update the secondary dispatch table with the new function
-    */
-   save->tabfv[attr][sz-1] = attr_func;
-
-   (*attr_func)(v);
+   save->active_sz[attr] = sz;
 }
 
+static void _save_reset_vertex( GLcontext *ctx )
+{
+   struct brw_save_context *save = IMM_CONTEXT(ctx)->save;
+   GLuint i;
+
+   for (i = 0 ; i < BRW_ATTRIB_MAX ; i++) {
+      save->attrsz[i] = 0;
+      save->active_sz[i] = 0;
+   }
+      
+   save->vertex_size = 0;
+}
+
+
+
+#define ERROR()   _mesa_compile_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
 
 
 /* Only one size for each attribute may be active at once.  Eg. if
@@ -618,602 +611,37 @@ static void do_choose( GLuint attr, GLuint sz,
  * 3f version won't otherwise set color[3] to 1.0 -- this is the job
  * of the chooser function when switching between Color4f and Color3f.
  */
-#define ATTRFV( ATTR, N )					\
-static void save_choose_##ATTR##_##N( const GLfloat *v );	\
+#define ATTR( A, N, V0, V1, V2, V3 )				\
+do {								\
+   struct brw_save_context *save = IMM_CONTEXT(ctx)->save;	\
 								\
-static void save_attrib_##ATTR##_##N( const GLfloat *v )	\
-{								\
-   GET_CURRENT_CONTEXT( ctx );					\
-   struct brw_save_context *save = IMM_CONTEXT(ctx)->save;				\
+   if (save->active_sz[A] != N)				\
+      save_fixup_vertex(ctx, A, N);				\
 								\
-   if ((ATTR) == 0) {						\
+   {								\
+      GLfloat *dest = save->attrptr[A];			\
+      if (N>0) dest[0] = V0;					\
+      if (N>1) dest[1] = V1;					\
+      if (N>2) dest[2] = V2;					\
+      if (N>3) dest[3] = V3;					\
+   }								\
+								\
+   if ((A) == 0) {						\
       GLuint i;							\
 								\
-      if (N>0) save->vbptr[0] = v[0];			\
-      if (N>1) save->vbptr[1] = v[1];			\
-      if (N>2) save->vbptr[2] = v[2];			\
-      if (N>3) save->vbptr[3] = v[3];			\
+      for (i = 0; i < save->vertex_size; i++)			\
+	 save->vbptr[i] = save->vertex[i];			\
 								\
-      for (i = N; i < save->vertex_size; i++)		\
-	 save->vbptr[i] = save->vertex[i];		\
+      save->vbptr += save->vertex_size;				\
 								\
-      save->vbptr += save->vertex_size;			\
-								\
-      if (++save->vert_count >= save->max_vert)				\
+      if (++save->vert_count >= save->max_vert)			\
 	 _save_wrap_filled_vertex( ctx );			\
    }								\
-   else {							\
-      GLfloat *dest = save->attrptr[ATTR];			\
-      if (N>0) dest[0] = v[0];					\
-      if (N>1) dest[1] = v[1];					\
-      if (N>2) dest[2] = v[2];					\
-      if (N>3) dest[3] = v[3];					\
-   }								\
-}
-
-#define CHOOSE( ATTR, N )					\
-static void save_choose_##ATTR##_##N( const GLfloat *v )	\
-{								\
-   do_choose(ATTR, N,						\
-	     save_attrib_##ATTR##_##N,				\
-	     save_choose_##ATTR##_1,				\
-	     save_choose_##ATTR##_2,				\
-	     save_choose_##ATTR##_3,				\
-	     save_choose_##ATTR##_4,				\
-	     v );						\
-}
-
-#define INIT(ATTR)					\
-static void save_init_##ATTR( struct brw_save_context *save )		\
-{							\
-   save->tabfv[ATTR][0] = save_choose_##ATTR##_1;	\
-   save->tabfv[ATTR][1] = save_choose_##ATTR##_2;	\
-   save->tabfv[ATTR][2] = save_choose_##ATTR##_3;	\
-   save->tabfv[ATTR][3] = save_choose_##ATTR##_4;	\
-}
-   
-#define ATTRS( ATTRIB )				\
-   ATTRFV( ATTRIB, 1 )				\
-   ATTRFV( ATTRIB, 2 )				\
-   ATTRFV( ATTRIB, 3 )				\
-   ATTRFV( ATTRIB, 4 )				\
-   CHOOSE( ATTRIB, 1 )				\
-   CHOOSE( ATTRIB, 2 )				\
-   CHOOSE( ATTRIB, 3 )				\
-   CHOOSE( ATTRIB, 4 )				\
-   INIT( ATTRIB )				\
-
-
-/* Generate a lot of functions.  These are the actual worker
- * functions, which are equivalent to those generated via codegen
- * elsewhere.
- */
-ATTRS( 0 )
-ATTRS( 1 )
-ATTRS( 2 )
-ATTRS( 3 )
-ATTRS( 4 )
-ATTRS( 5 )
-ATTRS( 6 )
-ATTRS( 7 )
-ATTRS( 8 )
-ATTRS( 9 )
-ATTRS( 10 )
-ATTRS( 11 )
-ATTRS( 12 )
-ATTRS( 13 )
-ATTRS( 14 )
-ATTRS( 15 )
-
-
-static void _save_reset_vertex( GLcontext *ctx )
-{
-   struct brw_save_context *save = IMM_CONTEXT(ctx)->save;
-   GLuint i;
-
-   save_init_0( save );
-   save_init_1( save );
-   save_init_2( save );
-   save_init_3( save );
-   save_init_4( save );
-   save_init_5( save );
-   save_init_6( save );
-   save_init_7( save );
-   save_init_8( save );
-   save_init_9( save );
-   save_init_10( save );
-   save_init_11( save );
-   save_init_12( save );
-   save_init_13( save );
-   save_init_14( save );
-   save_init_15( save );
-      
-   for (i = 0 ; i < BRW_ATTRIB_MAX ; i++)
-      save->attrsz[i] = 0;
-      
-   save->vertex_size = 0;
-}
-
-
-
-/* Cope with aliasing of classic Vertex, Normal, etc. and the fan-out
- * of glMultTexCoord and glProgramParamterNV by routing all these
- * through a second level dispatch table.
- */
-#define DISPATCH_ATTRFV( ATTR, COUNT, P )	\
-do {						\
-   GET_CURRENT_CONTEXT( ctx ); 			\
-   struct brw_save_context *save = IMM_CONTEXT(ctx)->save; 		\
-   save->tabfv[ATTR][COUNT-1]( P );		\
 } while (0)
 
-#define DISPATCH_ATTR1FV( ATTR, V ) DISPATCH_ATTRFV( ATTR, 1, V )
-#define DISPATCH_ATTR2FV( ATTR, V ) DISPATCH_ATTRFV( ATTR, 2, V )
-#define DISPATCH_ATTR3FV( ATTR, V ) DISPATCH_ATTRFV( ATTR, 3, V )
-#define DISPATCH_ATTR4FV( ATTR, V ) DISPATCH_ATTRFV( ATTR, 4, V )
+#define TAG(x) _save_##x
 
-#define DISPATCH_ATTR1F( ATTR, S ) DISPATCH_ATTRFV( ATTR, 1, &(S) )
-
-#if defined(USE_X86_ASM) && 0 /* will break register calling convention */
-/* Naughty cheat:
- */
-#define DISPATCH_ATTR2F( ATTR, S,T ) DISPATCH_ATTRFV( ATTR, 2, &(S) )
-#define DISPATCH_ATTR3F( ATTR, S,T,R ) DISPATCH_ATTRFV( ATTR, 3, &(S) )
-#define DISPATCH_ATTR4F( ATTR, S,T,R,Q ) DISPATCH_ATTRFV( ATTR, 4, &(S) )
-#else
-/* Safe:
- */
-#define DISPATCH_ATTR2F( ATTR, S,T ) 		\
-do { 						\
-   GLfloat v[2]; 				\
-   v[0] = S; v[1] = T;				\
-   DISPATCH_ATTR2FV( ATTR, v );			\
-} while (0)
-#define DISPATCH_ATTR3F( ATTR, S,T,R ) 		\
-do { 						\
-   GLfloat v[3]; 				\
-   v[0] = S; v[1] = T; v[2] = R;		\
-   DISPATCH_ATTR3FV( ATTR, v );			\
-} while (0)
-#define DISPATCH_ATTR4F( ATTR, S,T,R,Q )	\
-do { 						\
-   GLfloat v[4]; 				\
-   v[0] = S; v[1] = T; v[2] = R; v[3] = Q;	\
-   DISPATCH_ATTR4FV( ATTR, v );			\
-} while (0)
-#endif
-
-
-static void enum_error( void )
-{
-   GET_CURRENT_CONTEXT( ctx );
-   _mesa_compile_error( ctx, GL_INVALID_ENUM, "glVertexAttrib" );
-}
-
-static void GLAPIENTRY _save_Vertex2f( GLfloat x, GLfloat y )
-{
-   DISPATCH_ATTR2F( BRW_ATTRIB_POS, x, y );
-}
-
-static void GLAPIENTRY _save_Vertex2fv( const GLfloat *v )
-{
-   DISPATCH_ATTR2FV( BRW_ATTRIB_POS, v );
-}
-
-static void GLAPIENTRY _save_Vertex3f( GLfloat x, GLfloat y, GLfloat z )
-{
-   DISPATCH_ATTR3F( BRW_ATTRIB_POS, x, y, z );
-}
-
-static void GLAPIENTRY _save_Vertex3fv( const GLfloat *v )
-{
-   DISPATCH_ATTR3FV( BRW_ATTRIB_POS, v );
-}
-
-static void GLAPIENTRY _save_Vertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
-{
-   DISPATCH_ATTR4F( BRW_ATTRIB_POS, x, y, z, w );
-}
-
-static void GLAPIENTRY _save_Vertex4fv( const GLfloat *v )
-{
-   DISPATCH_ATTR4FV( BRW_ATTRIB_POS, v );
-}
-
-static void GLAPIENTRY _save_TexCoord1f( GLfloat x )
-{
-   DISPATCH_ATTR1F( BRW_ATTRIB_TEX0, x );
-}
-
-static void GLAPIENTRY _save_TexCoord1fv( const GLfloat *v )
-{
-   DISPATCH_ATTR1FV( BRW_ATTRIB_TEX0, v );
-}
-
-static void GLAPIENTRY _save_TexCoord2f( GLfloat x, GLfloat y )
-{
-   DISPATCH_ATTR2F( BRW_ATTRIB_TEX0, x, y );
-}
-
-static void GLAPIENTRY _save_TexCoord2fv( const GLfloat *v )
-{
-   DISPATCH_ATTR2FV( BRW_ATTRIB_TEX0, v );
-}
-
-static void GLAPIENTRY _save_TexCoord3f( GLfloat x, GLfloat y, GLfloat z )
-{
-   DISPATCH_ATTR3F( BRW_ATTRIB_TEX0, x, y, z );
-}
-
-static void GLAPIENTRY _save_TexCoord3fv( const GLfloat *v )
-{
-   DISPATCH_ATTR3FV( BRW_ATTRIB_TEX0, v );
-}
-
-static void GLAPIENTRY _save_TexCoord4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
-{
-   DISPATCH_ATTR4F( BRW_ATTRIB_TEX0, x, y, z, w );
-}
-
-static void GLAPIENTRY _save_TexCoord4fv( const GLfloat *v )
-{
-   DISPATCH_ATTR4FV( BRW_ATTRIB_TEX0, v );
-}
-
-static void GLAPIENTRY _save_Normal3f( GLfloat x, GLfloat y, GLfloat z )
-{
-   DISPATCH_ATTR3F( BRW_ATTRIB_NORMAL, x, y, z );
-}
-
-static void GLAPIENTRY _save_Normal3fv( const GLfloat *v )
-{
-   DISPATCH_ATTR3FV( BRW_ATTRIB_NORMAL, v );
-}
-
-static void GLAPIENTRY _save_FogCoordfEXT( GLfloat x )
-{
-   DISPATCH_ATTR1F( BRW_ATTRIB_FOG, x );
-}
-
-static void GLAPIENTRY _save_FogCoordfvEXT( const GLfloat *v )
-{
-   DISPATCH_ATTR1FV( BRW_ATTRIB_FOG, v );
-}
-
-static void GLAPIENTRY _save_Color3f( GLfloat x, GLfloat y, GLfloat z )
-{
-   DISPATCH_ATTR3F( BRW_ATTRIB_COLOR0, x, y, z );
-}
-
-static void GLAPIENTRY _save_Color3fv( const GLfloat *v )
-{
-   DISPATCH_ATTR3FV( BRW_ATTRIB_COLOR0, v );
-}
-
-static void GLAPIENTRY _save_Color4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
-{
-   DISPATCH_ATTR4F( BRW_ATTRIB_COLOR0, x, y, z, w );
-}
-
-static void GLAPIENTRY _save_Color4fv( const GLfloat *v )
-{
-   DISPATCH_ATTR4FV( BRW_ATTRIB_COLOR0, v );
-}
-
-static void GLAPIENTRY _save_SecondaryColor3fEXT( GLfloat x, GLfloat y, GLfloat z )
-{
-   DISPATCH_ATTR3F( BRW_ATTRIB_COLOR1, x, y, z );
-}
-
-static void GLAPIENTRY _save_SecondaryColor3fvEXT( const GLfloat *v )
-{
-   DISPATCH_ATTR3FV( BRW_ATTRIB_COLOR1, v );
-}
-
-static void GLAPIENTRY _save_MultiTexCoord1f( GLenum target, GLfloat x  )
-{
-   GLuint attr = (target & 0x7) + BRW_ATTRIB_TEX0;
-   DISPATCH_ATTR1F( attr, x );
-}
-
-static void GLAPIENTRY _save_MultiTexCoord1fv( GLenum target, const GLfloat *v )
-{
-   GLuint attr = (target & 0x7) + BRW_ATTRIB_TEX0;
-   DISPATCH_ATTR1FV( attr, v );
-}
-
-static void GLAPIENTRY _save_MultiTexCoord2f( GLenum target, GLfloat x, GLfloat y )
-{
-   GLuint attr = (target & 0x7) + BRW_ATTRIB_TEX0;
-   DISPATCH_ATTR2F( attr, x, y );
-}
-
-static void GLAPIENTRY _save_MultiTexCoord2fv( GLenum target, const GLfloat *v )
-{
-   GLuint attr = (target & 0x7) + BRW_ATTRIB_TEX0;
-   DISPATCH_ATTR2FV( attr, v );
-}
-
-static void GLAPIENTRY _save_MultiTexCoord3f( GLenum target, GLfloat x, GLfloat y,
-				    GLfloat z)
-{
-   GLuint attr = (target & 0x7) + BRW_ATTRIB_TEX0;
-   DISPATCH_ATTR3F( attr, x, y, z );
-}
-
-static void GLAPIENTRY _save_MultiTexCoord3fv( GLenum target, const GLfloat *v )
-{
-   GLuint attr = (target & 0x7) + BRW_ATTRIB_TEX0;
-   DISPATCH_ATTR3FV( attr, v );
-}
-
-static void GLAPIENTRY _save_MultiTexCoord4f( GLenum target, GLfloat x, GLfloat y,
-				    GLfloat z, GLfloat w )
-{
-   GLuint attr = (target & 0x7) + BRW_ATTRIB_TEX0;
-   DISPATCH_ATTR4F( attr, x, y, z, w );
-}
-
-static void GLAPIENTRY _save_MultiTexCoord4fv( GLenum target, const GLfloat *v )
-{
-   GLuint attr = (target & 0x7) + BRW_ATTRIB_TEX0;
-   DISPATCH_ATTR4FV( attr, v );
-}
-
-static void GLAPIENTRY _save_VertexAttrib1fNV( GLuint index, GLfloat x )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR1F( index, x );
-   else
-      enum_error(); 
-}
-
-static void GLAPIENTRY _save_VertexAttrib1fvNV( GLuint index, const GLfloat *v )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR1FV( index, v );
-   else
-      enum_error();
-}
-
-static void GLAPIENTRY _save_VertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR2F( index, x, y );
-   else
-      enum_error();
-}
-
-static void GLAPIENTRY _save_VertexAttrib2fvNV( GLuint index, const GLfloat *v )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR2FV( index, v );
-   else
-      enum_error();
-}
-
-static void GLAPIENTRY _save_VertexAttrib3fNV( GLuint index, GLfloat x, GLfloat y, 
-				  GLfloat z )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR3F( index, x, y, z );
-   else
-      enum_error();
-}
-
-static void GLAPIENTRY _save_VertexAttrib3fvNV( GLuint index, const GLfloat *v )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR3FV( index, v );
-   else
-      enum_error();
-}
-
-static void GLAPIENTRY _save_VertexAttrib4fNV( GLuint index, GLfloat x, GLfloat y,
-				  GLfloat z, GLfloat w )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR4F( index, x, y, z, w );
-   else
-      enum_error();
-}
-
-static void GLAPIENTRY _save_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR4FV( index, v );
-   else
-      enum_error();
-}
-
-
-static void GLAPIENTRY
-_save_VertexAttrib1fARB( GLuint index, GLfloat x )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR1F( index, x );
-   else
-      enum_error(); 
-}
-
-static void GLAPIENTRY
-_save_VertexAttrib1fvARB( GLuint index, const GLfloat *v )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR1FV( index, v );
-   else
-      enum_error();
-}
-
-static void GLAPIENTRY
-_save_VertexAttrib2fARB( GLuint index, GLfloat x, GLfloat y )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR2F( index, x, y );
-   else
-      enum_error();
-}
-
-static void GLAPIENTRY
-_save_VertexAttrib2fvARB( GLuint index, const GLfloat *v )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR2FV( index, v );
-   else
-      enum_error();
-}
-
-static void GLAPIENTRY
-_save_VertexAttrib3fARB( GLuint index, GLfloat x, GLfloat y, GLfloat z )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR3F( index, x, y, z );
-   else
-      enum_error();
-}
-
-static void GLAPIENTRY
-_save_VertexAttrib3fvARB( GLuint index, const GLfloat *v )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR3FV( index, v );
-   else
-      enum_error();
-}
-
-static void GLAPIENTRY
-_save_VertexAttrib4fARB( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR4F( index, x, y, z, w );
-   else
-      enum_error();
-}
-
-static void GLAPIENTRY
-_save_VertexAttrib4fvARB( GLuint index, const GLfloat *v )
-{
-   if (index < BRW_ATTRIB_FIRST_MATERIAL)
-      DISPATCH_ATTR4FV( index, v );
-   else
-      enum_error();
-}
-
-
-/* Materials:  
- * 
- * These are treated as per-vertex attributes, at indices above where
- * the NV_vertex_program leaves off.  There are a lot of good things
- * about treating materials this way.  
- *
- * However: I don't want to double the number of generated functions
- * just to cope with this, so I unroll the 'C' varients of CHOOSE and
- * ATTRF into this function, and dispense with codegen and
- * second-level dispatch.
- *
- * There is no aliasing of material attributes with other entrypoints.
- */
-#define MAT_ATTR( A, N, params )			\
-do {							\
-   if (save->attrsz[A] < N) {			\
-      _save_upgrade_vertex( ctx, A, N );		\
-   }							\
-							\
-   {							\
-      GLfloat *dest = save->attrptr[A];	      	\
-      if (N>0) dest[0] = params[0];			\
-      if (N>1) dest[1] = params[1];			\
-      if (N>2) dest[2] = params[2];			\
-      if (N>3) dest[3] = params[3];			\
-   }							\
-} while (0)
-
-
-#define MAT( ATTR, N, face, params )			\
-do {							\
-   if (face != GL_BACK)					\
-      MAT_ATTR( ATTR, N, params ); /* front */		\
-   if (face != GL_FRONT)				\
-      MAT_ATTR( ATTR + 1, N, params ); /* back */	\
-} while (0)
-
-
-/* NOTE: Have to remove/deal-with colormaterial crossovers, probably
- * later on - in the meantime just store everything.  
- */
-static void GLAPIENTRY _save_Materialfv( GLenum face, GLenum pname, 
-			       const GLfloat *params )
-{
-   GET_CURRENT_CONTEXT( ctx ); 
-   struct brw_save_context *save = IMM_CONTEXT(ctx)->save;
-
-   switch (pname) {
-   case GL_EMISSION:
-      MAT( BRW_ATTRIB_MAT_FRONT_EMISSION, 4, face, params );
-      break;
-   case GL_AMBIENT:
-      MAT( BRW_ATTRIB_MAT_FRONT_AMBIENT, 4, face, params );
-      break;
-   case GL_DIFFUSE:
-      MAT( BRW_ATTRIB_MAT_FRONT_DIFFUSE, 4, face, params );
-      break;
-   case GL_SPECULAR:
-      MAT( BRW_ATTRIB_MAT_FRONT_SPECULAR, 4, face, params );
-      break;
-   case GL_SHININESS:
-      MAT( BRW_ATTRIB_MAT_FRONT_SHININESS, 1, face, params );
-      break;
-   case GL_COLOR_INDEXES:
-      MAT( BRW_ATTRIB_MAT_FRONT_INDEXES, 3, face, params );
-      break;
-   case GL_AMBIENT_AND_DIFFUSE:
-      MAT( BRW_ATTRIB_MAT_FRONT_AMBIENT, 4, face, params );
-      MAT( BRW_ATTRIB_MAT_FRONT_DIFFUSE, 4, face, params );
-      break;
-   default:
-      _mesa_compile_error( ctx, GL_INVALID_ENUM, "glMaterialfv" );
-      return;
-   }
-}
-
-
-#define IDX_ATTR( A, IDX )				\
-do {							\
-   GET_CURRENT_CONTEXT( ctx );				\
-   struct brw_save_context *save = IMM_CONTEXT(ctx)->save;			\
-							\
-   if (save->attrsz[A] < 1) {			\
-      _save_upgrade_vertex( ctx, A, 1 );		\
-   }							\
-							\
-   {							\
-      GLfloat *dest = save->attrptr[A];		\
-      dest[0] = IDX;				\
-   }							\
-} while (0)
-
-
-static void GLAPIENTRY _save_EdgeFlag( GLboolean b )
-{
-   IDX_ATTR( BRW_ATTRIB_EDGEFLAG, (GLfloat)b );
-}
-
-#if 0
-static void GLAPIENTRY _save_EdgeFlagv( const GLboolean *v )
-{
-   IDX_ATTR( BRW_ATTRIB_EDGEFLAG, (GLfloat)(v[0]) );
-}
-#endif
-
-static void GLAPIENTRY _save_Indexf( GLfloat f )
-{
-   IDX_ATTR( BRW_ATTRIB_INDEX, f );
-}
-
-static void GLAPIENTRY _save_Indexfv( const GLfloat *f )
-{
-   IDX_ATTR( BRW_ATTRIB_INDEX, f[0] );
-}
+#include "brw_attrib_tmp.h"
 
 
 
@@ -1496,7 +924,6 @@ static void _save_vtxfmt_init( GLcontext *ctx )
    vfmt->Color4f = _save_Color4f;
    vfmt->Color4fv = _save_Color4fv;
    vfmt->EdgeFlag = _save_EdgeFlag;
-/*    vfmt->EdgeFlagv = _save_EdgeFlagv; */
    vfmt->End = _save_End;
    vfmt->FogCoordfEXT = _save_FogCoordfEXT;
    vfmt->FogCoordfvEXT = _save_FogCoordfvEXT;
@@ -1529,14 +956,6 @@ static void _save_vtxfmt_init( GLcontext *ctx )
    vfmt->Vertex3fv = _save_Vertex3fv;
    vfmt->Vertex4f = _save_Vertex4f;
    vfmt->Vertex4fv = _save_Vertex4fv;
-   vfmt->VertexAttrib1fNV = _save_VertexAttrib1fNV;
-   vfmt->VertexAttrib1fvNV = _save_VertexAttrib1fvNV;
-   vfmt->VertexAttrib2fNV = _save_VertexAttrib2fNV;
-   vfmt->VertexAttrib2fvNV = _save_VertexAttrib2fvNV;
-   vfmt->VertexAttrib3fNV = _save_VertexAttrib3fNV;
-   vfmt->VertexAttrib3fvNV = _save_VertexAttrib3fvNV;
-   vfmt->VertexAttrib4fNV = _save_VertexAttrib4fNV;
-   vfmt->VertexAttrib4fvNV = _save_VertexAttrib4fvNV;
    vfmt->VertexAttrib1fARB = _save_VertexAttrib1fARB;
    vfmt->VertexAttrib1fvARB = _save_VertexAttrib1fvARB;
    vfmt->VertexAttrib2fARB = _save_VertexAttrib2fARB;
@@ -1545,6 +964,15 @@ static void _save_vtxfmt_init( GLcontext *ctx )
    vfmt->VertexAttrib3fvARB = _save_VertexAttrib3fvARB;
    vfmt->VertexAttrib4fARB = _save_VertexAttrib4fARB;
    vfmt->VertexAttrib4fvARB = _save_VertexAttrib4fvARB;
+
+   vfmt->VertexAttrib1fNV = _save_VertexAttrib1fNV;
+   vfmt->VertexAttrib1fvNV = _save_VertexAttrib1fvNV;
+   vfmt->VertexAttrib2fNV = _save_VertexAttrib2fNV;
+   vfmt->VertexAttrib2fvNV = _save_VertexAttrib2fvNV;
+   vfmt->VertexAttrib3fNV = _save_VertexAttrib3fNV;
+   vfmt->VertexAttrib3fvNV = _save_VertexAttrib3fvNV;
+   vfmt->VertexAttrib4fNV = _save_VertexAttrib4fNV;
+   vfmt->VertexAttrib4fvNV = _save_VertexAttrib4fvNV;
    
    /* This will all require us to fallback to saving the list as opcodes:
     */ 

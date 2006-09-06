@@ -213,7 +213,8 @@ struct brw_vs_prog_data {
    GLuint urb_read_length;
    GLuint total_grf;
    GLuint outputs_written;
-   GLuint inputs_read;
+
+   GLuint64EXT inputs_read;
 
    /* Used for calculating urb partitions:
     */
@@ -399,7 +400,7 @@ struct brw_vertex_element {
 
 
 struct brw_vertex_info {
-   GLuint varying[ATTRIB_BIT_DWORDS];  /* varying:1[BRW_ATTRIB_MAX] */
+   GLuint64EXT varying;  /* varying:1[BRW_ATTRIB_MAX] */
    GLuint sizes[ATTRIB_BIT_DWORDS * 2]; /* sizes:2[BRW_ATTRIB_MAX] */
 };
 

@@ -95,9 +95,9 @@ struct brw_exec_context
       GLuint max_vert;
       struct brw_exec_copied_vtx copied;
 
-      brw_attrfv_func tabfv[BRW_MAX_ATTR_CODEGEN+1][4]; /* plus 1 for ERROR_ATTRIB */
-
       GLubyte attrsz[BRW_ATTRIB_MAX];
+      GLubyte active_sz[BRW_ATTRIB_MAX];
+
       GLfloat *attrptr[BRW_ATTRIB_MAX]; 
       struct gl_client_array arrays[BRW_ATTRIB_MAX];
       const struct gl_client_array *inputs[BRW_ATTRIB_MAX];
@@ -111,10 +111,7 @@ struct brw_exec_context
    } eval;
 
    struct {
-      GLboolean recalculate_inputs;
       const struct gl_client_array *inputs[BRW_ATTRIB_MAX];
-      const struct gl_client_array *attrib_arrays[BRW_ATTRIB_MAX];
-      const struct gl_client_array *legacy_arrays[BRW_ATTRIB_MAX];
 
       struct gl_buffer_object *index_obj;
    } array;
@@ -149,12 +146,5 @@ void brw_exec_do_EvalCoord2f( struct brw_exec_context *exec,
 
 void brw_exec_do_EvalCoord1f( struct brw_exec_context *exec,
 				     GLfloat u);
-
-
-
-void brw_exec_vtx_generic_init( struct brw_exec_context *exec );
-
-void brw_exec_generic_attr_table_init( brw_attrfv_func (*tab)[4] );
-
 
 #endif

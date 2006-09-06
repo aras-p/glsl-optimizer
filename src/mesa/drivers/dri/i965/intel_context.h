@@ -192,16 +192,6 @@ struct intel_context
    GLuint ClearColor;
    GLuint ClearDepth;
 
-   /* Offsets of fields within the current vertex:
-    */
-   GLuint coloroffset;
-   GLuint specoffset;
-   GLuint wpos_offset;
-   GLuint wpos_size;
-
-   struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
-   GLuint vertex_attr_count;
-
    GLfloat depth_scale;
    GLfloat polygon_offset_scale; /* dependent on depth_scale, bpp */
    GLuint depth_clear_mask;

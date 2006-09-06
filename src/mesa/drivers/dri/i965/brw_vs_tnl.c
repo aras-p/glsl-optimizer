@@ -147,7 +147,7 @@ static void make_state_key( GLcontext *ctx, struct state_key *key )
 
       /* BRW_NEW_INPUT_VARYING */
       for (i = BRW_ATTRIB_MAT_FRONT_AMBIENT ; i < BRW_ATTRIB_INDEX ; i++) 
-	 if (brw->vb.info.varying[0] & (1<<i)) 
+	 if (brw->vb.info.varying & (1<<i)) 
 	    key->light_material_mask |= 1<<(i-BRW_ATTRIB_MAT_FRONT_AMBIENT);
 
       for (i = 0; i < MAX_LIGHTS; i++) {
@@ -374,6 +374,14 @@ static void release_temps( struct tnl_program *p )
 
 static struct ureg register_input( struct tnl_program *p, GLuint input )
 {
+   /* Cram the material flags into the generic range.  We'll translate
+    * them back later.
+    */
+   if (input >= BRW_ATTRIB_MAT_FRONT_AMBIENT)
+      input -= BRW_ATTRIB_MAT_FRONT_AMBIENT;
+
+   assert(input < 32);
+
    p->program->Base.InputsRead |= (1<<input);
    return make_ureg(PROGRAM_INPUT, input);
 }
@@ -637,7 +645,7 @@ static void emit_passthrough( struct tnl_program *p,
 static struct ureg get_eye_position( struct tnl_program *p )
 {
    if (is_undef(p->eye_position)) {
-      struct ureg pos = register_input( p, VERT_ATTRIB_POS ); 
+      struct ureg pos = register_input( p, BRW_ATTRIB_POS ); 
       struct ureg modelview[4];
 
       p->eye_position = reserve_temp(p);
@@ -667,7 +675,7 @@ static struct ureg get_eye_z( struct tnl_program *p )
       return swizzle1(p->eye_position, Z);
    }
    else if (!is_undef(p->eye_z)) {
-      struct ureg pos = register_input( p, VERT_ATTRIB_POS ); 
+      struct ureg pos = register_input( p, BRW_ATTRIB_POS ); 
       struct ureg modelview2;
 
       p->eye_z = reserve_temp(p);
@@ -700,7 +708,7 @@ static struct ureg get_eye_position_normalized( struct tnl_program *p )
 static struct ureg get_eye_normal( struct tnl_program *p )
 {
    if (is_undef(p->eye_normal)) {
-      struct ureg normal = register_input(p, VERT_ATTRIB_NORMAL );
+      struct ureg normal = register_input(p, BRW_ATTRIB_NORMAL );
       struct ureg mvinv[3];
 
       register_matrix_param6( p, STATE_MATRIX, STATE_MODELVIEW, 0, 0, 2,
@@ -733,7 +741,7 @@ static struct ureg get_eye_normal( struct tnl_program *p )
 
 static void build_hpos( struct tnl_program *p )
 {
-   struct ureg pos = register_input( p, VERT_ATTRIB_POS ); 
+   struct ureg pos = register_input( p, BRW_ATTRIB_POS ); 
    struct ureg hpos = register_output( p, VERT_RESULT_HPOS );
    struct ureg mvp[4];
 
@@ -777,7 +785,7 @@ static struct ureg get_material( struct tnl_program *p, GLuint side,
    GLuint attrib = material_attrib(side, property);
 
    if (p->color_materials & (1<<attrib))
-      return register_input(p, VERT_ATTRIB_COLOR0);
+      return register_input(p, BRW_ATTRIB_COLOR0);
    else if (p->materials & (1<<attrib)) 
       return register_input( p, attrib + BRW_ATTRIB_MAT_FRONT_AMBIENT );
    else
@@ -1147,7 +1155,7 @@ static void build_fog( struct tnl_program *p )
       input = swizzle1(get_eye_position(p), Z);
    }
    else {
-      input = swizzle1(register_input(p, VERT_ATTRIB_FOG), X);
+      input = swizzle1(register_input(p, BRW_ATTRIB_FOG), X);
    }
 
    if (p->state->fog_option &&
@@ -1289,7 +1297,7 @@ static void build_texture_transform( struct tnl_program *p )
 	    for (j = 0; j < 4; j++) {
 	       switch (modes[j]) {
 	       case TXG_OBJ_LINEAR: {
-		  struct ureg obj = register_input(p, VERT_ATTRIB_POS);
+		  struct ureg obj = register_input(p, BRW_ATTRIB_POS);
 		  struct ureg plane = 
 		     register_param3(p, STATE_TEXGEN, i,
 				     STATE_TEXGEN_OBJECT_S + j);
@@ -1338,7 +1346,7 @@ static void build_texture_transform( struct tnl_program *p )
 	    }
 
 	    if (copy_mask) {
-	       struct ureg in = register_input(p, VERT_ATTRIB_TEX0+i);
+	       struct ureg in = register_input(p, BRW_ATTRIB_TEX0+i);
 	       emit_op1(p, OPCODE_MOV, out_texgen, copy_mask, in );
 	    }
 	 }
@@ -1347,7 +1355,7 @@ static void build_texture_transform( struct tnl_program *p )
 	    struct ureg texmat[4];
 	    struct ureg in = (!is_undef(out_texgen) ? 
 			      out_texgen : 
-			      register_input(p, VERT_ATTRIB_TEX0+i));
+			      register_input(p, BRW_ATTRIB_TEX0+i));
 	    if (PREFER_DP4) {
 	       register_matrix_param6( p, STATE_MATRIX, STATE_TEXTURE, i, 
 				       0, 3, STATE_MATRIX, texmat );
@@ -1363,7 +1371,7 @@ static void build_texture_transform( struct tnl_program *p )
 	 release_temps(p);
       } 
       else {
-	 emit_passthrough(p, VERT_ATTRIB_TEX0+i, VERT_RESULT_TEX0+i);
+	 emit_passthrough(p, BRW_ATTRIB_TEX0+i, VERT_RESULT_TEX0+i);
       }
    }
 }
@@ -1415,10 +1423,10 @@ static void build_tnl_program( struct tnl_program *p )
 	 build_lighting(p);
       else {
 	 if (p->state->fragprog_inputs_read & FRAG_BIT_COL0)
-	    emit_passthrough(p, VERT_ATTRIB_COLOR0, VERT_RESULT_COL0);
+	    emit_passthrough(p, BRW_ATTRIB_COLOR0, VERT_RESULT_COL0);
 
 	 if (p->state->fragprog_inputs_read & FRAG_BIT_COL1)
-	    emit_passthrough(p, VERT_ATTRIB_COLOR1, VERT_RESULT_COL1);
+	    emit_passthrough(p, BRW_ATTRIB_COLOR1, VERT_RESULT_COL1);
       }
    }
 

@@ -42,7 +42,6 @@ DRIVER_SOURCES = \
 	brw_exec_array.c \
 	brw_exec_draw.c \
 	brw_exec_eval.c \
-	brw_exec_generic.c \
 	brw_fallback.c \
 	brw_gs.c \
 	brw_gs_emit.c \

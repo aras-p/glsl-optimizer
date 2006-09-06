@@ -37,44 +37,6 @@
 #include "brw_exec.h"
 #include "brw_fallback.h"
 
-static GLboolean enabled( const struct gl_client_array *array )
-{
-   return array && array->Enabled;
-}
-
-static void merge_enabled_arrays( const struct gl_client_array *inputs[],
-				  const struct gl_client_array *arrays[],
-				  GLuint nr )
-{
-   GLuint i;
-   for (i = 0; i < nr; i++)
-      if (!enabled(inputs[i]) && enabled(arrays[i]))
-	 inputs[i] = arrays[i];
-}
-
-  
-/* _NEW_PROGRAM, _NEW_CLIENT */
-static void recalculate_inputs( struct brw_exec_context *exec )
-{
-   if (exec->ctx->VertexProgram._Enabled) {
-      memcpy( exec->array.inputs, 
-	      exec->array.attrib_arrays, 
-	      sizeof(exec->array.inputs) );
-
-      merge_enabled_arrays( exec->array.inputs, 
-			    exec->array.legacy_arrays, 
-			    BRW_ATTRIB_MAX );     
-   }
-   else {
-      memcpy( exec->array.inputs, 
-	      exec->array.legacy_arrays, 
-	      sizeof(exec->array.inputs) );
-   }
-
-   exec->array.recalculate_inputs = 0;
-}
-
-
 static GLuint get_max_index( GLuint count, GLuint type, 
 			     const GLvoid *indices )
 {
@@ -140,11 +102,6 @@ brw_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
    if (ctx->NewState)
       _mesa_update_state( ctx );
       
-   /* Bind all inputs, derive varying and size information:
-    */
-   if (exec->array.recalculate_inputs)
-      recalculate_inputs( exec );
-
    prim[0].begin = 1;
    prim[0].end = 1;
    prim[0].weak = 0;
@@ -202,9 +159,6 @@ brw_exec_DrawRangeElements(GLenum mode,
    if (ctx->NewState)
       _mesa_update_state( ctx );
       
-   if (exec->array.recalculate_inputs)
-      recalculate_inputs( exec );
-
    ib.count = count;
    ib.type = type; 
    ib.obj = ctx->Array.ElementArrayBufferObj;
@@ -274,8 +228,8 @@ brw_exec_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *ind
  */
 
 
-static void init_legacy_arrays( GLcontext *ctx, 
-				const struct gl_client_array *arrays[] )
+static void init_arrays( GLcontext *ctx, 
+			 const struct gl_client_array *arrays[] )
 {
    struct gl_array_object *obj = ctx->Array.ArrayObj;
    GLuint i;
@@ -293,17 +247,9 @@ static void init_legacy_arrays( GLcontext *ctx,
 
    arrays[BRW_ATTRIB_INDEX] = &obj->Index;
    arrays[BRW_ATTRIB_EDGEFLAG] = &obj->EdgeFlag;
-}
 
-
-static void init_attrib_arrays( GLcontext *ctx,
-				const struct gl_client_array *arrays[] )
-{
-   struct gl_array_object *obj = ctx->Array.ArrayObj;
-   GLuint i;
-
-   for (i = 0; i < BRW_ATTRIB_FIRST_MATERIAL; i++)
-      arrays[i] = &obj->VertexAttrib[i];
+   for (i = BRW_ATTRIB_GENERIC0; i <= BRW_ATTRIB_GENERIC15; i++)
+      arrays[i] = &obj->VertexAttrib[i - BRW_ATTRIB_GENERIC0];
 }
 
 
@@ -313,8 +259,7 @@ void brw_exec_array_init( struct brw_exec_context *exec )
 {
    GLcontext *ctx = exec->ctx;
 
-   init_legacy_arrays(ctx, exec->array.legacy_arrays);
-   init_attrib_arrays(ctx, exec->array.attrib_arrays);
+   init_arrays(ctx, exec->array.inputs);
 
 #if 1
    exec->vtxfmt.DrawArrays = brw_exec_DrawArrays;
@@ -325,8 +270,6 @@ void brw_exec_array_init( struct brw_exec_context *exec )
    exec->vtxfmt.DrawElements = _mesa_noop_DrawElements;
    exec->vtxfmt.DrawRangeElements = _mesa_noop_DrawRangeElements;
 #endif
-
-   exec->array.recalculate_inputs = 1;
 
    exec->array.index_obj = ctx->Driver.NewBufferObject(ctx, 1, GL_ARRAY_BUFFER_ARB);
 }

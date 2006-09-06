@@ -116,6 +116,7 @@ struct brw_save_context {
    const struct gl_client_array *inputs[BRW_ATTRIB_MAX];
 
    GLubyte attrsz[BRW_ATTRIB_MAX];
+   GLubyte active_sz[BRW_ATTRIB_MAX];
    GLuint vertex_size;
 
    GLfloat *buffer;
@@ -145,8 +146,6 @@ struct brw_save_context {
 
    GLfloat *current[BRW_ATTRIB_MAX]; /* points into ctx->ListState */
    GLubyte *currentsz[BRW_ATTRIB_MAX];
-
-   void (*tabfv[BRW_ATTRIB_MAX][4])( const GLfloat * );
 };
 
 
