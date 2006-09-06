@@ -1494,12 +1494,13 @@ parse_attrib_binding(GLcontext * ctx, const GLubyte ** inst,
 #if 1
                /* hack for Warcraft (see bug 8060) */
                _mesa_warning(ctx, "Application error: vertex program uses 'vertex.weight' but GL_ARB_vertex_blend not supported.");
+               break;
 #else
                program_error(ctx, Program->Position,
                              "ARB_vertex_blend not supported");
+               return 1;
 #endif
             }
-            return 1;
 
          case VERTEX_ATTRIB_NORMAL:
             *inputReg = VERT_ATTRIB_NORMAL;
