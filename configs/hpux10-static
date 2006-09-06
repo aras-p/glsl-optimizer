@@ -8,8 +8,8 @@ CONFIG_NAME = hpux10-static
 CC = cc
 CXX = aCC
 
-CFLAGS = +O3 +DAportable +z -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM
-CXXFLAGS = +O3 +DAportable +Z -Aa -D_HPUX_SOURCE
+CFLAGS = -O +DAportable +z -Ae -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM
+CXXFLAGS = -O +DAportable +Z -Ae -D_HPUX_SOURCE
 
 MKLIB_OPTIONS = -static
 

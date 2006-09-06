@@ -8,9 +8,9 @@ CONFIG_NAME = hpux11-32
 CC = cc
 CXX = aCC
 
-CFLAGS = +z -Ae +O2 +Onolimit +Oaggressive -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM -DPTHREADS
+CFLAGS = +z -Ae -O +Onolimit -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM -DPTHREADS
 
-CXXFLAGS = +z -Aa +O2 +Onolimit +Oaggressive -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DPTHREADS
+CXXFLAGS = +z -Ae -O +Onolimit -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DPTHREADS
 
 MKLIB_OPTIONS =
 

@@ -8,9 +8,9 @@ CONFIG_NAME = hpux11-32-static
 CC = cc
 CXX = aCC
 
-CFLAGS = +O3 +DA2.0 -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM
+CFLAGS = -O +DA2.0 -Ae -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM
 
-CXXFLAGS = +O3 +DA2.0 -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include
+CXXFLAGS = -O +DA2.0 -Ae -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include
 
 MKLIB_OPTIONS = -static
 

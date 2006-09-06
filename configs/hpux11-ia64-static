@@ -8,9 +8,9 @@ CONFIG_NAME = hpux11-ia64-static
 CC = cc
 CXX = aCC
 
-CFLAGS = +O3 +DD64 -Aa -D_HPUX_SOURCE +DSmckinley -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM -DPTHREADS
+CFLAGS = -O +DD64 -Ae -D_HPUX_SOURCE +DSmckinley -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM -DPTHREADS
 
-CXXFLAGS = +O3 +DD64 -Aa -D_HPUX_SOURCE +DSmckinley -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DPTHREADS
+CXXFLAGS = -O +DD64 -Ae -D_HPUX_SOURCE +DSmckinley -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DPTHREADS
 
 MKLIB_OPTIONS = -static
 
