@@ -357,6 +357,9 @@ static void intelDestroyScreen(__DRIscreenPrivate *sPriv)
    intelScreenPrivate *intelScreen = (intelScreenPrivate *)sPriv->private;
 
    intelUnmapScreenRegions(intelScreen);
+
+   driDestroyOptionInfo (&intelScreen->optionCache);
+
    FREE(intelScreen);
    sPriv->private = NULL;
 }
