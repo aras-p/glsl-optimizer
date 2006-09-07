@@ -178,7 +178,7 @@ GLboolean intel_batchbuffer_flush( struct intel_batchbuffer *batch )
     */
    offset = bmBufferOffset(batch->intel, batch->buffer);
 
-   if (!bmValidateBuffers( batch->intel )) {
+   if (bmValidateBuffers( batch->intel ) != 0) {
       assert(intel->locked);
       bmReleaseBuffers( batch->intel );
       retval = GL_FALSE;

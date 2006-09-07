@@ -138,8 +138,6 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
    driInitExtensions( ctx, brw_extensions, GL_FALSE );
 
    brw_aub_init( brw );
-   brw->intel.vtbl.aub_wrap = brw_aub_wrap;
-
 
    brw_init_attribs( brw );
    brw_init_metaops( brw );

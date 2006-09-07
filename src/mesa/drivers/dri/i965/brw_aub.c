@@ -270,7 +270,7 @@ static void brw_aub_dump_bmp( struct intel_context *intel,
 /* Attempt to prevent monster aubfiles by closing and reopening when
  * the state pools wrap.
  */
-void brw_aub_wrap( struct intel_context *intel )
+static void brw_aub_wrap( struct intel_context *intel )
 {
    struct brw_context *brw = brw_context(&intel->ctx);   
    if (intel->aub_file) {

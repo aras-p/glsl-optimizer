@@ -165,6 +165,5 @@ struct intel_context;
 
 int brw_aub_init( struct brw_context *brw );
 void brw_aub_destroy( struct brw_context *brw );
-void brw_aub_wrap( struct intel_context *intel );
 
 #endif

@@ -598,7 +598,7 @@ int bmInitPool( struct intel_context *intel,
 		unsigned flags)
 {
    struct bufmgr *bm = intel->bm;
-   int retval;
+   int retval = 0;
 
    LOCK(bm);
    {
@@ -842,7 +842,7 @@ int bmBufferSubData(struct intel_context *intel,
 		     const void *data )
 {
    struct bufmgr *bm = intel->bm;
-   int retval;
+   int retval = 0;
 
    if (size == 0) 
       return 0;
@@ -969,7 +969,7 @@ unsigned bmBufferOffset(struct intel_context *intel,
 			struct buffer *buf)
 {
    struct bufmgr *bm = intel->bm;
-   unsigned retval;
+   unsigned retval = 0;
 
    LOCK(bm);
    {
@@ -1037,7 +1037,7 @@ void *bmMapBuffer( struct intel_context *intel,
 		   unsigned flags )
 {
    struct bufmgr *bm = intel->bm;
-   void *retval;
+   void *retval = NULL;
 
    LOCK(bm);
    {
@@ -1147,7 +1147,7 @@ void bmBufferSetInvalidateCB(struct intel_context *intel,
 int bmValidateBuffers( struct intel_context *intel )
 {
    struct bufmgr *bm = intel->bm;
-   int retval;
+   int retval = 0;
 
    LOCK(bm);
    {
@@ -1206,12 +1206,12 @@ int bmValidateBuffers( struct intel_context *intel )
 	 bm->need_fence = 1;
       }
 
-      retval = !bm->fail;
+      retval = bm->fail ? -1 : 0;
    }
    UNLOCK(bm);
 
 
-   if (!retval)
+   if (retval != 0)
       _mesa_printf("%s failed\n", __FUNCTION__);
 
    return retval;
