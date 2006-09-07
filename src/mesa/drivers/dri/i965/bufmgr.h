@@ -84,7 +84,8 @@ int bmInitPool( struct intel_context *,
  * understood, and drivers can just pass the calls through without too
  * much thunking.
  */
-void bmGenBuffers(struct intel_context *, const char *, unsigned n, struct buffer **buffers);
+void bmGenBuffers(struct intel_context *, const char *, unsigned n, struct buffer **buffers,
+		  int align );
 void bmDeleteBuffers(struct intel_context *, unsigned n, struct buffer **buffers);
 
 

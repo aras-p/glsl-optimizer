@@ -163,10 +163,16 @@ static GLboolean alloc_from_pool( struct intel_context *intel,
    struct bufmgr *bm = intel->bm;
    struct pool *pool = &bm->pool[pool_nr];
    struct block *block = (struct block *)calloc(sizeof *block, 1);
+   GLuint sz, align = (1<<buf->alignment);
+
    if (!block)
       return GL_FALSE;
 
-   block->mem = mmAllocMem(pool->heap, buf->size, buf->alignment, 0);
+   sz = (buf->size + align-1) & ~(align-1);
+
+   block->mem = mmAllocMem(pool->heap, 
+			   sz, 
+			   buf->alignment, 0);
    if (!block->mem) {
       free(block);
       return GL_FALSE;
@@ -621,14 +627,14 @@ int bmInitPool( struct intel_context *intel,
    return retval;
 }
 
-static struct buffer *do_GenBuffer(struct intel_context *intel, const char *name)
+static struct buffer *do_GenBuffer(struct intel_context *intel, const char *name, int align)
 {
    struct bufmgr *bm = intel->bm;
    struct buffer *buf = calloc(sizeof(*buf), 1);
 
    buf->id = ++bm->buf_nr;
    buf->name = name;
-   buf->alignment = 12;	/* page-alignment to fit in with AGP swapping */
+   buf->alignment = align ? align : 6;	
    buf->flags = BM_MEM_AGP|BM_MEM_VRAM|BM_MEM_LOCAL;
 
    return buf;
@@ -638,7 +644,8 @@ static struct buffer *do_GenBuffer(struct intel_context *intel, const char *name
 
 void bmGenBuffers(struct intel_context *intel, 
 		  const char *name, unsigned n, 
-		  struct buffer **buffers)
+		  struct buffer **buffers,
+		  int align )
 {
    struct bufmgr *bm = intel->bm;
    LOCK(bm);
@@ -646,7 +653,7 @@ void bmGenBuffers(struct intel_context *intel,
       int i;
 
       for (i = 0; i < n; i++)
-	 buffers[i] = do_GenBuffer(intel, name);
+	 buffers[i] = do_GenBuffer(intel, name, align);
    }
    UNLOCK(bm);
 }
@@ -694,7 +701,7 @@ struct buffer *bmGenBufferStatic(struct intel_context *intel,
       if (bm->pool[pool].static_buffer)
 	 buf = bm->pool[pool].static_buffer;
       else {
-	 buf = do_GenBuffer(intel, "static");
+	 buf = do_GenBuffer(intel, "static", 12);
    
 	 bm->pool[pool].static_buffer = buf;
 	 assert(!buf->block);

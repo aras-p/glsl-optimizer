@@ -79,7 +79,7 @@ static void upload_wm_unit(struct brw_context *brw )
        */      
 
       if (!brw->wm.scratch_buffer) {
-	 bmGenBuffers(intel, "wm scratch", 1, &brw->wm.scratch_buffer);
+	 bmGenBuffers(intel, "wm scratch", 1, &brw->wm.scratch_buffer, 12);
 	 bmBufferSetInvalidateCB(intel,
 				 brw->wm.scratch_buffer,
 				 invalidate_scratch_cb,

@@ -52,7 +52,7 @@ static struct gl_buffer_object *intel_bufferobj_alloc( GLcontext *ctx,
 
    /* XXX:  We generate our own handle, which is different to 'name' above.
     */
-   bmGenBuffers(intel, "bufferobj", 1, &obj->buffer);
+   bmGenBuffers(intel, "bufferobj", 1, &obj->buffer, 6);
    assert(obj->buffer);
 
    return &obj->Base;

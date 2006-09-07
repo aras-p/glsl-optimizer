@@ -82,7 +82,7 @@ struct intel_region *intel_region_alloc( struct intel_context *intel,
    region->height = height; 	/* needed? */
    region->refcount = 1;
 
-   bmGenBuffers(intel, "tex", 1, &region->buffer);
+   bmGenBuffers(intel, "tex", 1, &region->buffer, 6);
    bmBufferData(intel, region->buffer, pitch * cpp * height, NULL, 0);
 
    return region;

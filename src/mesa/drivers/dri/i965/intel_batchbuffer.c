@@ -92,7 +92,7 @@ struct intel_batchbuffer *intel_batchbuffer_alloc( struct intel_context *intel )
 
    batch->intel = intel;
 
-   bmGenBuffers(intel, "batch", 1, &batch->buffer);
+   bmGenBuffers(intel, "batch", 1, &batch->buffer, 12);
 
    bmBufferSetInvalidateCB(intel, batch->buffer,
 			   intel_batchbuffer_reset_cb,
