@@ -1253,7 +1253,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 
    m->nr_inputs = m->nr_outputs = 0;
 
-   for (i = 0; i < _TNL_ATTRIB_MAX; i++) {
+   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
       if (program->Base.InputsRead & (1<<i) ||
 	  (i == VERT_ATTRIB_POS && program->IsPositionInvariant)) {
 	 GLuint j = m->nr_inputs++;

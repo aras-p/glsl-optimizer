@@ -152,7 +152,7 @@ struct output {
 struct arb_vp_machine {
    GLfloat (*File[4])[4];	/* All values referencable from the program. */
 
-   struct input input[_TNL_ATTRIB_MAX];
+   struct input input[VERT_ATTRIB_MAX];
    GLuint nr_inputs;
 
    struct output output[VERT_RESULT_MAX];
