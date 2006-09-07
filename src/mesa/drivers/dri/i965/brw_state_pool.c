@@ -47,6 +47,7 @@ GLboolean brw_pool_alloc( struct brw_mem_pool *pool,
    size = (size + 3) & ~3;
 
    if (pool->offset + fixup + size >= pool->size) {
+      _mesa_printf("%s failed\n", __FUNCTION__);
       assert(0);
       exit(0);
    }

@@ -268,7 +268,7 @@ static void set_dirty( struct intel_context *intel,
 }
 
 
-static int evict_lru( struct intel_context *intel, GLuint max_fence )
+static int evict_lru( struct intel_context *intel, GLuint max_fence, GLuint *pool )
 {
    struct bufmgr *bm = intel->bm;
    struct block *block, *tmp;
@@ -292,6 +292,7 @@ static int evict_lru( struct intel_context *intel, GLuint max_fence )
 	    block->buf->block = NULL;
 
 	    free_block(intel, block);
+	    *pool = i;
 	    return 1;
 	 }
       }
@@ -305,7 +306,7 @@ static int evict_lru( struct intel_context *intel, GLuint max_fence )
 #define foreach_s_rev(ptr, t, list)   \
         for(ptr=(list)->prev,t=(ptr)->prev; list != ptr; ptr=t, t=(t)->prev)
 
-static int evict_mru( struct intel_context *intel)
+static int evict_mru( struct intel_context *intel, GLuint *pool )
 {
    struct bufmgr *bm = intel->bm;
    struct block *block, *tmp;
@@ -325,6 +326,7 @@ static int evict_mru( struct intel_context *intel)
 	    block->buf->block = NULL;
 
 	    free_block(intel, block);
+	    *pool = i;
 	    return 1;
 	 }
       }
@@ -432,6 +434,8 @@ static GLboolean alloc_block( struct intel_context *intel,
    struct bufmgr *bm = intel->bm;
    int i;
 
+   assert(intel->locked);
+
    DBG("%s 0x%x bytes (%s)\n", __FUNCTION__, buf->size, buf->name);
 
    for (i = 0; i < bm->nr_pools; i++) {
@@ -453,6 +457,7 @@ static GLboolean alloc_block( struct intel_context *intel,
 static GLboolean evict_and_alloc_block( struct intel_context *intel,
 					struct buffer *buf )
 {
+   GLuint pool;
    struct bufmgr *bm = intel->bm;
 
    assert(buf->block == NULL);
@@ -478,16 +483,16 @@ static GLboolean evict_and_alloc_block( struct intel_context *intel,
 
    /* Look for memory blocks not used for >1 frame:
     */
-   while (evict_lru(intel, intel->second_last_swap_fence))
-      if (alloc_block(intel, buf))
+   while (evict_lru(intel, intel->second_last_swap_fence, &pool))
+      if (alloc_from_pool(intel, pool, buf))
 	 return GL_TRUE;
 
    /* If we're not thrashing, allow lru eviction to dig deeper into
     * recently used textures.  We'll probably be thrashing soon:
     */
    if (!intel->thrashing) {
-      while (evict_lru(intel, 0))
-	 if (alloc_block(intel, buf))
+      while (evict_lru(intel, 0, &pool))
+	 if (alloc_from_pool(intel, pool, buf))
 	    return GL_TRUE;
    }
 
@@ -514,7 +519,7 @@ static GLboolean evict_and_alloc_block( struct intel_context *intel,
    if (!is_empty_list(&bm->on_hardware)) {
       bmSetFence(intel);
 
-      if (!is_empty_list(&bm->fenced)) {
+      while (!is_empty_list(&bm->fenced)) {
 	 GLuint fence = bm->fenced.next->fence;
 	 bmFinishFence(intel, fence);
       }
@@ -528,9 +533,14 @@ static GLboolean evict_and_alloc_block( struct intel_context *intel,
 	 return GL_TRUE;
    }
 
-   while (evict_mru(intel))
-      if (alloc_block(intel, buf))
+   while (evict_mru(intel, &pool))
+      if (alloc_from_pool(intel, pool, buf))
 	 return GL_TRUE;
+
+   DBG("%s 0x%x bytes failed\n", __FUNCTION__, buf->size);
+
+   assert(is_empty_list(&bm->on_hardware));
+   assert(is_empty_list(&bm->fenced));
 
    return GL_FALSE;
 }
@@ -742,13 +752,14 @@ static void wait_quiescent(struct intel_context *intel,
 /* If buffer size changes, free and reallocate.  Otherwise update in
  * place.
  */
-void bmBufferData(struct intel_context *intel, 
-		  struct buffer *buf, 
-		  unsigned size, 
-		  const void *data, 
-		  unsigned flags )
+int bmBufferData(struct intel_context *intel, 
+		 struct buffer *buf, 
+		 unsigned size, 
+		 const void *data, 
+		 unsigned flags )
 {
    struct bufmgr *bm = intel->bm;
+   int retval = 0;
 
    LOCK(bm);
    {
@@ -780,13 +791,19 @@ void bmBufferData(struct intel_context *intel,
 
       buf->size = size;
       if (buf->block) {
-	 assert (buf->block->mem->size == size);
+	 assert (buf->block->mem->size >= size);
       }
 
       if (buf->flags & (BM_NO_BACKING_STORE|BM_NO_EVICT)) {
-	 if (data != NULL) {      
-	    if (!buf->block && !evict_and_alloc_block(intel, buf))
-	       assert(0);
+
+	 assert(intel->locked || data == NULL);
+
+	 if (data != NULL) {
+	    if (!buf->block && !evict_and_alloc_block(intel, buf)) {
+	       bm->fail = 1;
+	       retval = -1;
+	       goto out;
+	    }
 
 	    wait_quiescent(intel, buf->block);
 
@@ -810,22 +827,25 @@ void bmBufferData(struct intel_context *intel,
 	 }
       }
    }
+ out:
    UNLOCK(bm);
+   return retval;
 }
 
 
 /* Update the buffer in place, in whatever space it is currently resident:
  */
-void bmBufferSubData(struct intel_context *intel, 
+int bmBufferSubData(struct intel_context *intel, 
 		     struct buffer *buf, 
 		     unsigned offset, 
 		     unsigned size, 
 		     const void *data )
 {
    struct bufmgr *bm = intel->bm;
+   int retval;
 
    if (size == 0) 
-      return;
+      return 0;
 
    LOCK(bm); 
    {
@@ -834,8 +854,14 @@ void bmBufferSubData(struct intel_context *intel,
       assert(offset+size <= buf->size);
 
       if (buf->flags & (BM_NO_EVICT|BM_NO_BACKING_STORE)) {
-	 if (!buf->block && !evict_and_alloc_block(intel, buf))
-	    assert(0);
+
+	 assert(intel->locked);
+
+	 if (!buf->block && !evict_and_alloc_block(intel, buf)) {
+	    bm->fail = 1;
+	    retval = -1;
+	    goto out;
+	 }
 	 
 	 if (!(buf->flags & BM_NO_FENCE_SUBDATA))
 	    wait_quiescent(intel, buf->block);
@@ -854,12 +880,14 @@ void bmBufferSubData(struct intel_context *intel,
 	 do_memcpy(buf->backing_store + offset, data, size); 
       }
    }
+ out:
    UNLOCK(bm);
+   return retval;
 }
 
 
 
-void bmBufferDataAUB(struct intel_context *intel, 
+int bmBufferDataAUB(struct intel_context *intel, 
 		     struct buffer *buf, 
 		     unsigned size, 
 		     const void *data, 
@@ -867,14 +895,14 @@ void bmBufferDataAUB(struct intel_context *intel,
 		     unsigned aubtype,
 		     unsigned aubsubtype )
 {
-   bmBufferData(intel, buf, size, data, flags);
+   int retval = bmBufferData(intel, buf, size, data, flags);
    
 
    /* This only works because in this version of the buffer manager we
     * allocate all buffers statically in agp space and so can emit the
     * uploads to the aub file with the correct offsets as they happen.
     */
-   if (data && intel->aub_file) {
+   if (retval == 0 && data && intel->aub_file) {
 
       if (buf->block && !buf->dirty) {
 	 intel->vtbl.aub_gtt_data(intel,
@@ -886,10 +914,12 @@ void bmBufferDataAUB(struct intel_context *intel,
 	 buf->aub_dirty = 0;
       }
    }
+   
+   return retval;
 }
 		       
 
-void bmBufferSubDataAUB(struct intel_context *intel, 
+int bmBufferSubDataAUB(struct intel_context *intel, 
 			struct buffer *buf, 
 			unsigned offset, 
 			unsigned size, 
@@ -897,7 +927,7 @@ void bmBufferSubDataAUB(struct intel_context *intel,
 			unsigned aubtype,
 			unsigned aubsubtype )
 {
-   bmBufferSubData(intel, buf, offset, size, data);
+   int retval = bmBufferSubData(intel, buf, offset, size, data);
    
 
    /* This only works because in this version of the buffer manager we
@@ -905,7 +935,7 @@ void bmBufferSubDataAUB(struct intel_context *intel,
     * uploads to the aub file with the correct offsets as they happen.
     */
    if (intel->aub_file) {
-      if (buf->block && !buf->dirty)
+      if (retval == 0 && buf->block && !buf->dirty)
 	 intel->vtbl.aub_gtt_data(intel,
 				      buf->block->mem->ofs + offset,
 				      ((const char *)buf->block->virtual) + offset,
@@ -913,6 +943,8 @@ void bmBufferSubDataAUB(struct intel_context *intel,
 				      aubtype,
 				      aubsubtype);
    }
+
+   return retval;
 }
 
 void bmUnmapBufferAUB( struct intel_context *intel, 
@@ -1016,8 +1048,12 @@ void *bmMapBuffer( struct intel_context *intel,
 	 retval = NULL;
       }
       else if (buf->flags & (BM_NO_BACKING_STORE|BM_NO_EVICT)) {
+
+	 assert(intel->locked);
+
 	 if (!buf->block && !evict_and_alloc_block(intel, buf)) {
 	    _mesa_printf("%s: alloc failed\n", __FUNCTION__);
+	    bm->fail = 1;
 	    retval = NULL;
 	 }
 	 else {
@@ -1116,6 +1152,7 @@ int bmValidateBuffers( struct intel_context *intel )
    LOCK(bm);
    {
       DBG("%s fail %d\n", __FUNCTION__, bm->fail);
+      assert(intel->locked);
 
       if (!bm->fail) {
 	 struct block *block, *tmp;
@@ -1170,10 +1207,12 @@ int bmValidateBuffers( struct intel_context *intel )
       }
 
       retval = !bm->fail;
-      bm->fail = 0;
-      assert(is_empty_list(&bm->referenced));
    }
    UNLOCK(bm);
+
+
+   if (!retval)
+      _mesa_printf("%s failed\n", __FUNCTION__);
 
    return retval;
 }
@@ -1188,6 +1227,7 @@ void bmReleaseBuffers( struct intel_context *intel )
    LOCK(bm);
    {
       struct block *block, *tmp;
+      assert(intel->locked);
 
       foreach_s (block, tmp, &bm->referenced) {
 
@@ -1220,8 +1260,6 @@ void bmReleaseBuffers( struct intel_context *intel )
 
 	 block->referenced = 0;
       }
-
-      bm->fail = 0;
    }
    UNLOCK(bm);
 }
@@ -1310,7 +1348,11 @@ void bm_fake_NotifyContendedLockTake( struct intel_context *intel )
       assert(is_empty_list(&bm->referenced));
 
       bm->need_fence = 1;
+      bm->fail = 0;
       bmFinishFence(intel, bmSetFence(intel));
+
+      assert(is_empty_list(&bm->fenced));
+      assert(is_empty_list(&bm->on_hardware));
 
       for (i = 0; i < bm->nr_pools; i++) {
 	 if (!(bm->pool[i].flags & BM_NO_EVICT)) {
@@ -1325,3 +1367,53 @@ void bm_fake_NotifyContendedLockTake( struct intel_context *intel )
 }
 
 
+
+void bmEvictAll( struct intel_context *intel )
+{
+   struct bufmgr *bm = intel->bm;
+
+   LOCK(bm);
+   {
+      struct block *block, *tmp;
+      GLuint i;
+
+      DBG("%s\n", __FUNCTION__);
+
+      assert(is_empty_list(&bm->referenced));
+
+      bm->need_fence = 1;
+      bm->fail = 0;
+      bmFinishFence(intel, bmSetFence(intel));
+
+      assert(is_empty_list(&bm->fenced));
+      assert(is_empty_list(&bm->on_hardware));
+
+      for (i = 0; i < bm->nr_pools; i++) {
+	 if (!(bm->pool[i].flags & BM_NO_EVICT)) {
+	    foreach_s(block, tmp, &bm->pool[i].lru) {
+	       assert(bmTestFence(intel, block->fence));
+	       set_dirty(intel, block->buf);
+	       block->buf->block = NULL;
+
+	       free_block(intel, block);
+	    }
+	 }
+      }
+   }
+   UNLOCK(bm);
+}
+
+
+GLboolean bmError( struct intel_context *intel )
+{
+   struct bufmgr *bm = intel->bm;
+   GLboolean retval;
+
+   LOCK(bm);
+   {
+      retval = bm->fail;
+   }
+   UNLOCK(bm);
+
+   return retval;
+}

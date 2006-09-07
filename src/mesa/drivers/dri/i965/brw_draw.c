@@ -265,14 +265,14 @@ static GLboolean check_fallbacks( struct brw_context *brw,
 }
 
 
-GLboolean brw_draw_prims( GLcontext *ctx,
-			  const struct gl_client_array *arrays[],
-			  const struct brw_draw_prim *prim,
-			  GLuint nr_prims,
-			  const struct brw_draw_index_buffer *ib,
-			  GLuint min_index,
-			  GLuint max_index,
-			  GLuint flags )
+static GLboolean brw_try_draw_prims( GLcontext *ctx,
+				     const struct gl_client_array *arrays[],
+				     const struct brw_draw_prim *prim,
+				     GLuint nr_prims,
+				     const struct brw_draw_index_buffer *ib,
+				     GLuint min_index,
+				     GLuint max_index,
+				     GLuint flags )
 {
    struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
@@ -338,9 +338,12 @@ GLboolean brw_draw_prims( GLcontext *ctx,
     * way around this, as not every flush is due to a buffer filling
     * up.
     */
-   intel_batchbuffer_flush( brw->intel.batch );
+   if (!intel_batchbuffer_flush( brw->intel.batch )) {
+      DBG("%s intel_batchbuffer_flush failed\n", __FUNCTION__);
+      retval = GL_FALSE;
+   }
 
-   if (intel->thrashing) {
+   if (retval && intel->thrashing) {
       bmSetFence(intel);
    }
 
@@ -359,8 +362,47 @@ GLboolean brw_draw_prims( GLcontext *ctx,
    }
 
    UNLOCK_HARDWARE(intel);
+
+   if (!retval)
+      _mesa_printf("%s failed\n", __FUNCTION__);
+
    return retval;
 }
+
+
+GLboolean brw_draw_prims( GLcontext *ctx,
+			  const struct gl_client_array *arrays[],
+			  const struct brw_draw_prim *prim,
+			  GLuint nr_prims,
+			  const struct brw_draw_index_buffer *ib,
+			  GLuint min_index,
+			  GLuint max_index,
+			  GLuint flags )
+{
+   struct intel_context *intel = intel_context(ctx);
+   GLboolean retval;
+
+   retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index, flags);
+
+   
+   if (!retval && bmError(intel)) {
+
+      DBG("retrying\n");
+      /* This looks like out-of-memory but potentially we have
+       * situation where there is enough memory but it has become
+       * fragmented.  Clear out all heaps and start from scratch by
+       * faking a contended lock event:  (done elsewhere)
+       */
+
+      /* Then try a second time only to upload textures and draw the
+       * primitives:
+       */
+      retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index, flags);
+   }
+
+   return retval;
+}
+
 
 static void brw_invalidate_vbo_cb( struct intel_context *intel, void *ptr )
 {

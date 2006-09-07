@@ -340,7 +340,7 @@ static struct ureg get_temp( struct tnl_program *p )
    int bit = ffs( ~p->temp_in_use );
    if (!bit) {
       fprintf(stderr, "%s: out of temporaries\n", __FILE__);
-      abort();
+      assert(0);
    }
 
    if (bit > p->program->Base.NumTemporaries)

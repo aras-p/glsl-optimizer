@@ -62,14 +62,15 @@ static void intel_batchbuffer_reset_cb( struct intel_context *intel,
    batch->ptr = NULL;
 }
 
-void intel_batchbuffer_map( struct intel_batchbuffer *batch )
+GLubyte *intel_batchbuffer_map( struct intel_batchbuffer *batch )
 {
    if (!batch->map) {
       batch->map = bmMapBuffer(batch->intel, batch->buffer, 
 			       BM_MEM_AGP|BM_MEM_LOCAL|BM_CLIENT|BM_WRITE);
       batch->ptr += (unsigned long)batch->map;
    }
-   assert(batch->map);
+
+   return batch->map;
 }
 
 void intel_batchbuffer_unmap( struct intel_batchbuffer *batch )
@@ -122,18 +123,19 @@ void intel_batchbuffer_free( struct intel_batchbuffer *batch )
 #define MI_BATCH_BUFFER_END 	(0xA<<23)
 
 
-void intel_batchbuffer_flush( struct intel_batchbuffer *batch )
+GLboolean intel_batchbuffer_flush( struct intel_batchbuffer *batch )
 {
    struct intel_context *intel = batch->intel;
    GLuint used = batch->ptr - (batch->map + batch->offset);
    GLuint offset;
    GLboolean ignore_cliprects = (batch->flags & INTEL_BATCH_CLIPRECTS) ? GL_FALSE : GL_TRUE;
+   GLint retval = GL_TRUE;
 
    assert(intel->locked);
 
    if (used == 0) {
       bmReleaseBuffers( batch->intel );
-      return;
+      return GL_TRUE;
    }
 
    /* Throw away non-effective packets.  
@@ -148,7 +150,7 @@ void intel_batchbuffer_flush( struct intel_batchbuffer *batch )
       sched_yield();
       LOCK_HARDWARE(intel);
 
-      return;
+      return GL_TRUE;
    }
 
 
@@ -177,7 +179,10 @@ void intel_batchbuffer_flush( struct intel_batchbuffer *batch )
    offset = bmBufferOffset(batch->intel, batch->buffer);
 
    if (!bmValidateBuffers( batch->intel )) {
-      assert(0);
+      assert(intel->locked);
+      bmReleaseBuffers( batch->intel );
+      retval = GL_FALSE;
+      goto out;
    }
 
 
@@ -208,8 +213,14 @@ void intel_batchbuffer_flush( struct intel_batchbuffer *batch )
 
    /* Reset the buffer:
     */
+ out:
    intel_batchbuffer_reset( batch );
    intel_batchbuffer_map( batch );
+
+   if (!retval)
+      DBG("%s failed\n", __FUNCTION__);
+
+   return retval;
 }
 
 

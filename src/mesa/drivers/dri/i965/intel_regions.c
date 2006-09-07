@@ -52,6 +52,8 @@ GLubyte *intel_region_map(struct intel_context *intel, struct intel_region *regi
    DBG("%s\n", __FUNCTION__);
    if (!region->map_refcount++) {
       region->map = bmMapBuffer(intel, region->buffer, 0);
+      if (!region->map)
+	 region->map_refcount--;
    }
 
    return region->map;
@@ -198,15 +200,14 @@ void _mesa_copy_rect( GLubyte *dst,
  *
  * Currently always memcpy.
  */
-void intel_region_data(struct intel_context *intel, 
-		       struct intel_region *dst,
-		       GLuint dst_offset,
-		       GLuint dstx, GLuint dsty,
-		       const void *src, GLuint src_pitch,
-		       GLuint srcx, GLuint srcy,
-		       GLuint width, GLuint height)
+GLboolean intel_region_data(struct intel_context *intel, 
+			    struct intel_region *dst,
+			    GLuint dst_offset,
+			    GLuint dstx, GLuint dsty,
+			    const void *src, GLuint src_pitch,
+			    GLuint srcx, GLuint srcy,
+			    GLuint width, GLuint height)
 {
-   
    DBG("%s\n", __FUNCTION__);
 
    if (width == dst->pitch && 
@@ -216,29 +217,33 @@ void intel_region_data(struct intel_context *intel,
        srcx == 0 &&
        srcy == 0) 
    {
-      bmBufferDataAUB(intel,
-		      dst->buffer,
-		      dst->cpp * width * dst->height,
-		      src,
-		      0,
-		      0, /* DW_NOTYPE */
-		      0);
+      return (bmBufferDataAUB(intel,
+			      dst->buffer,
+			      dst->cpp * width * dst->height,
+			      src, 0, 0, 0) == 0);
    }
    else {
-      assert (dst_offset + dstx + width + 
-	      (dsty + height - 1) * dst->pitch * dst->cpp <= 
-	      dst->pitch * dst->cpp * dst->height);
+      GLubyte *map = intel_region_map(intel, dst);
 
-      _mesa_copy_rect(intel_region_map(intel, dst) + dst_offset,
-		      dst->cpp,
-		      dst->pitch,
-		      dstx, dsty,
-		      width, height,
-		      src,
-		      src_pitch,
-		      srcx, srcy);      
-
-      intel_region_unmap(intel, dst);
+      if (map) {
+	 assert (dst_offset + dstx + width + 
+		 (dsty + height - 1) * dst->pitch * dst->cpp <= 
+		 dst->pitch * dst->cpp * dst->height);
+	 
+	 _mesa_copy_rect(map + dst_offset,
+			 dst->cpp,
+			 dst->pitch,
+			 dstx, dsty,
+			 width, height,
+			 src,
+			 src_pitch,
+			 srcx, srcy);      
+	 
+	 intel_region_unmap(intel, dst);
+	 return GL_TRUE;
+      }
+      else 
+	 return GL_FALSE;
    }
 }
 			  

@@ -57,10 +57,10 @@ struct intel_batchbuffer *intel_batchbuffer_alloc( struct intel_context *intel )
 void intel_batchbuffer_free( struct intel_batchbuffer *batch );
 
 
-void intel_batchbuffer_flush( struct intel_batchbuffer *batch );
+GLboolean intel_batchbuffer_flush( struct intel_batchbuffer *batch );
 
 void intel_batchbuffer_unmap( struct intel_batchbuffer *batch );
-void intel_batchbuffer_map( struct intel_batchbuffer *batch );
+GLubyte *intel_batchbuffer_map( struct intel_batchbuffer *batch );
 
 
 /* Unlike bmBufferData, this currently requires the buffer be mapped.

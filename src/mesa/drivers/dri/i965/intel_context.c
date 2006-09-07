@@ -536,6 +536,13 @@ GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
    return GL_TRUE;
 }
 
+
+static void lost_hardware( struct intel_context *intel )
+{
+   bm_fake_NotifyContendedLockTake( intel ); 
+   intel->vtbl.lost_hardware( intel );
+}
+
 static void intelContendedLock( struct intel_context *intel, GLuint flags )
 {
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
@@ -560,16 +567,7 @@ static void intelContendedLock( struct intel_context *intel, GLuint flags )
     */
    if (sarea->ctxOwner != me) {
       sarea->ctxOwner = me;
-
-      /* Should also fence the frontbuffer even if ctxOwner doesn't
-       * change:
-       */
-      bm_fake_NotifyContendedLockTake( intel );
-
-
-      /* 
-       */
-      intel->vtbl.lost_hardware( intel );
+      lost_hardware(intel);
    }
 
    /* Drawable changed?
@@ -606,19 +604,16 @@ void LOCK_HARDWARE( struct intel_context *intel )
    intel->locked = 1;
 
    if (intel->aub_wrap) {
-      /* Should also fence the frontbuffer even if ctxOwner doesn't
-       * change:
-       */
       bm_fake_NotifyContendedLockTake( intel ); 
-
-      /* 
-       */
       intel->vtbl.lost_hardware( intel );
       intel->vtbl.aub_wrap(intel);
-
       intel->aub_wrap = 0;
    }
 
+   if (bmError(intel)) {
+      bmEvictAll(intel);
+      intel->vtbl.lost_hardware( intel );
+   }
 
    /* Make sure nothing has been emitted prior to getting the lock: 
     */
@@ -626,7 +621,18 @@ void LOCK_HARDWARE( struct intel_context *intel )
 
    /* XXX: postpone, may not be needed:
     */
-   intel_batchbuffer_map(intel->batch);
+   if (!intel_batchbuffer_map(intel->batch)) {
+      bmEvictAll(intel);
+      intel->vtbl.lost_hardware( intel );
+
+      /* This could only fail if the batchbuffer was greater in size
+       * than the available texture memory:
+       */
+      if (!intel_batchbuffer_map(intel->batch)) {
+	 _mesa_printf("double failure to map batchbuffer\n");
+	 assert(0);
+      }
+   }
 }
  
   

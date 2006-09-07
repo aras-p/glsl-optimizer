@@ -91,13 +91,13 @@ void intel_region_unmap(struct intel_context *intel,
 
 /* Upload data to a rectangular sub-region
  */
-void intel_region_data(struct intel_context *intel, 
-		       struct intel_region *dest,
-		       GLuint dest_offset,
-		       GLuint destx, GLuint desty,
-		       const void *src, GLuint src_stride,
-		       GLuint srcx, GLuint srcy,
-		       GLuint width, GLuint height);
+GLboolean intel_region_data(struct intel_context *intel, 
+			    struct intel_region *dest,
+			    GLuint dest_offset,
+			    GLuint destx, GLuint desty,
+			    const void *src, GLuint src_stride,
+			    GLuint srcx, GLuint srcy,
+			    GLuint width, GLuint height);
 			  
 /* Copy rectangular sub-regions
  */

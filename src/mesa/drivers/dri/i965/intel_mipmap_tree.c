@@ -214,13 +214,13 @@ GLuint intel_miptree_image_offset(struct intel_mipmap_tree *mt,
 
 /* Upload data for a particular image.
  */
-void intel_miptree_image_data(struct intel_context *intel, 
-			      struct intel_mipmap_tree *dst,
-			      GLuint face,
-			      GLuint level,
-			      const void *src, 
-			      GLuint src_row_pitch,
-			      GLuint src_image_pitch)
+GLboolean intel_miptree_image_data(struct intel_context *intel, 
+				   struct intel_mipmap_tree *dst,
+				   GLuint face,
+				   GLuint level,
+				   const void *src, 
+				   GLuint src_row_pitch,
+				   GLuint src_image_pitch)
 {
    GLuint depth = dst->level[level].depth;
    GLuint dst_offset = intel_miptree_image_offset(dst, face, level);
@@ -229,17 +229,19 @@ void intel_miptree_image_data(struct intel_context *intel,
 
    DBG("%s\n", __FUNCTION__);
    for (i = 0; i < depth; i++) {
-      intel_region_data(intel,
-			dst->region, 
-			dst_offset + dst_depth_offset[i],
-			0,
-			0,
-			src,
-			src_row_pitch,
-			0, 0,	/* source x,y */
-			dst->level[level].width,
-			dst->level[level].height);
+      if (!intel_region_data(intel,
+			     dst->region, 
+			     dst_offset + dst_depth_offset[i],
+			     0,
+			     0,
+			     src,
+			     src_row_pitch,
+			     0, 0,	/* source x,y */
+			     dst->level[level].width,
+			     dst->level[level].height))
+	 return GL_FALSE;
       src += src_image_pitch;
    }
+   return GL_TRUE;
 }
 

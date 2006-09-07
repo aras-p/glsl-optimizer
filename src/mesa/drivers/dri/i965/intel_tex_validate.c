@@ -89,21 +89,21 @@ static void intel_calculate_first_last_level( struct intel_texture_object *intel
    intelObj->lastLevel = lastLevel;
 }
 
-static void copy_image_data_to_tree( struct intel_context *intel,
-				     struct intel_texture_object *intelObj,
-				     struct gl_texture_image *texImage,
-				     GLuint face,
-				     GLuint level)
+static GLboolean copy_image_data_to_tree( struct intel_context *intel,
+					  struct intel_texture_object *intelObj,
+					  struct gl_texture_image *texImage,
+					  GLuint face,
+					  GLuint level)
 {
-   intel_miptree_image_data(intel,
-			    intelObj->mt,
-			    face,
-			    level,
-			    texImage->Data,
-			    texImage->RowStride,
-			    (texImage->RowStride * 
-			     texImage->Height * 
-			     texImage->TexFormat->TexelBytes));
+   return intel_miptree_image_data(intel,
+				   intelObj->mt,
+				   face,
+				   level,
+				   texImage->Data,
+				   texImage->RowStride,
+				   (texImage->RowStride * 
+				    texImage->Height * 
+				    texImage->TexFormat->TexelBytes));
 }
 
 static void intel_texture_invalidate( struct intel_texture_object *intelObj )
@@ -129,7 +129,6 @@ GLuint intel_finalize_mipmap_tree( struct intel_context *intel,
 				   struct gl_texture_object *tObj )
 {
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
-
    GLuint face, i;
    GLuint nr_faces = 0;
    struct gl_texture_image *firstImage;
@@ -226,16 +225,22 @@ GLuint intel_finalize_mipmap_tree( struct intel_context *intel,
 				  i,
 				  texImage->Data);
 
-		  copy_image_data_to_tree(intel,
-					  intelObj,
-					  texImage,
-					  face,
-					  i);
+		  if (!copy_image_data_to_tree(intel,
+					       intelObj,
+					       texImage,
+					       face,
+					       i))
+		     return GL_FALSE;
 
 	       }
 	    }
-	    intelObj->dirty_images[face] = 0;
 	 }
+      }
+
+      /* Only clear the dirty flags if everything went ok:
+       */
+      for (face = 0; face < nr_faces; face++) {
+	 intelObj->dirty_images[face] = 0;
       }
 
       intelObj->dirty = 0;
