@@ -776,7 +776,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 
    if (INTEL_DEBUG & DEBUG_WM) {
       _mesa_printf("\n\n\npre-fp:\n");
-/*       _mesa_print_program(&fp->program); */
+      _mesa_print_program(&fp->program.Base); 
       _mesa_printf("\n");
    }
 

@@ -276,6 +276,7 @@ static void upload_depthbuffer(struct brw_context *brw)
    bd.dword1.bits.tiled_surface = intel->depth_region->tiled;
    bd.dword1.bits.surface_type = BRW_SURFACE_2D;
 
+   /* BRW_NEW_LOCK */
    bd.dword2_base_addr = bmBufferOffset(intel, region->buffer);    
 
    bd.dword3.bits.mipmap_layout = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
@@ -292,7 +293,7 @@ static void upload_depthbuffer(struct brw_context *brw)
 const struct brw_tracked_state brw_depthbuffer = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_CONTEXT | BRW_NEW_FENCE,
+      .brw = BRW_NEW_CONTEXT | BRW_NEW_LOCK,
       .cache = 0
    },
    .update = upload_depthbuffer
@@ -505,9 +506,11 @@ static void upload_state_base_address( struct brw_context *brw )
    sba.header.opcode = CMD_STATE_BASE_ADDRESS;
    sba.header.length = 0x4;
 
+   /* BRW_NEW_LOCK */
    sba.bits0.general_state_address = bmBufferOffset(intel, brw->pool[BRW_GS_POOL].buffer) >> 5;
    sba.bits0.modify_enable = 1;
 
+   /* BRW_NEW_LOCK */
    sba.bits1.surface_state_address = bmBufferOffset(intel, brw->pool[BRW_SS_POOL].buffer) >> 5;
    sba.bits1.modify_enable = 1;
 
@@ -522,7 +525,7 @@ static void upload_state_base_address( struct brw_context *brw )
 const struct brw_tracked_state brw_state_base_address = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_CONTEXT | BRW_NEW_FENCE,
+      .brw = BRW_NEW_CONTEXT | BRW_NEW_LOCK,
       .cache = 0
    },
    .update = upload_state_base_address

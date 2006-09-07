@@ -98,6 +98,10 @@ static void upload_wm_unit(struct brw_context *brw )
 		   
       assert(per_thread <= 12 * 1024);
       wm.thread2.per_thread_scratch_space = (per_thread / 1024) - 1;
+
+      /* XXX: could make this dynamic as this is so rarely active:
+       */
+      /* BRW_NEW_LOCK */
       wm.thread2.scratch_space_base_pointer = 
 	 bmBufferOffset(intel, brw->wm.scratch_buffer) >> 10;
    }
@@ -179,7 +183,7 @@ const struct brw_tracked_state brw_wm_unit = {
 
       .brw = (BRW_NEW_FRAGMENT_PROGRAM | 
 	      BRW_NEW_CURBE_OFFSETS |
-	      BRW_NEW_FENCE),
+	      BRW_NEW_LOCK),
 
       .cache = (CACHE_NEW_SURFACE | 
 		CACHE_NEW_WM_PROG | 

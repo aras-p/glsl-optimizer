@@ -201,6 +201,7 @@ static const struct dri_debug_control debug_control[] =
     { "sing",  DEBUG_SINGLE_THREAD },
     { "thre",  DEBUG_SINGLE_THREAD },
     { "wm",    DEBUG_WM },
+    { "vs",    DEBUG_VS },
     { NULL,    0 }
 };
 
@@ -558,7 +559,6 @@ static void intelContendedLock( struct intel_context *intel, GLuint flags )
    /* Lost context?
     */
    if (sarea->ctxOwner != me) {
-      intel->perf_boxes |= I830_BOX_LOST_CONTEXT;
       sarea->ctxOwner = me;
 
       /* Should also fence the frontbuffer even if ctxOwner doesn't
@@ -571,12 +571,6 @@ static void intelContendedLock( struct intel_context *intel, GLuint flags )
        */
       intel->vtbl.lost_hardware( intel );
    }
-
-   /* Because the X server issues drawing commands without properly
-    * fencing them, we need to be paraniod about waiting for hardware
-    * rendering to finish after a contended lock.
-    */
-   intel->flushBeforeFallback = GL_TRUE;
 
    /* Drawable changed?
     */

@@ -209,13 +209,6 @@ void intelSpanRenderStart( GLcontext *ctx )
 
    LOCK_HARDWARE(intel);
 
-#if 0
-   if (intel->flushBeforeFallback) {
-      intelFinish(&intel->ctx);
-      intel->flushBeforeFallback = GL_FALSE;
-   }
-#endif
-
    /* Just map the framebuffer and all textures.  Bufmgr code will
     * take care of waiting on the necessary fences:
     */

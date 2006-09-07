@@ -174,8 +174,6 @@ struct intel_context
    
    GLboolean aub_wrap;
 
-   GLboolean flushBeforeFallback;
-
    struct intel_batchbuffer *batch;
 
    struct {
@@ -200,7 +198,6 @@ struct intel_context
    GLboolean hw_stencil;
    GLboolean hw_stipple;
    GLboolean depth_buffer_is_float;
-   GLboolean perf_boxes;
    GLboolean no_hw;
    GLboolean no_rast;
    GLboolean thrashing;
@@ -385,6 +382,7 @@ extern int INTEL_DEBUG;
 #define DEBUG_SINGLE_THREAD   0x8000
 #define DEBUG_WM        0x10000
 #define DEBUG_URB       0x20000
+#define DEBUG_VS        0x40000
 
 
 #define PCI_CHIP_845_G			0x2562

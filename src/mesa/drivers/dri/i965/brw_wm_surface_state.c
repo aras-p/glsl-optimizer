@@ -137,6 +137,7 @@ void brw_update_texture_surface( GLcontext *ctx,
     */
 /*    surf->ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
 
+   /* BRW_NEW_LOCK */
    surf->ss1.base_addr = bmBufferOffset(intel,
 					intelObj->mt->region->buffer);
 
@@ -198,6 +199,7 @@ static void upload_wm_surfaces(struct brw_context *brw )
       surf.ss0.writedisable_blue =  !brw->attribs.Color->ColorMask[2];
       surf.ss0.writedisable_alpha = !brw->attribs.Color->ColorMask[3];
 
+      /* BRW_NEW_LOCK */
       surf.ss1.base_addr = bmBufferOffset(&brw->intel, region->buffer);
 
 
@@ -240,7 +242,7 @@ const struct brw_tracked_state brw_wm_surfaces = {
    .dirty = {
       .mesa = _NEW_COLOR | _NEW_TEXTURE | _NEW_BUFFERS,
       .brw = (BRW_NEW_CONTEXT | 
-	      BRW_NEW_FENCE),	/* required for bmBufferOffset */
+	      BRW_NEW_LOCK),	/* required for bmBufferOffset */
       .cache = 0
    },
    .update = upload_wm_surfaces

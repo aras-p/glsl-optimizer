@@ -123,6 +123,8 @@ static void brw_note_unlock( struct intel_context *intel )
 
    brw_pool_check_wrap(brw, &brw->pool[BRW_GS_POOL]);
    brw_pool_check_wrap(brw, &brw->pool[BRW_SS_POOL]);
+
+   brw_context(&intel->ctx)->state.dirty.brw |= BRW_NEW_LOCK;
 }
 
 
