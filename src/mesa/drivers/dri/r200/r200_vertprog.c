@@ -989,7 +989,7 @@ void r200SetupVertexProg( GLcontext *ctx ) {
    fallback = !(vp->native && r200VertexProgUpdateParams(ctx, vp) &&
       rmesa->r200Screen->drmSupportsVertexProgram);
    TCL_FALLBACK(ctx, R200_TCL_FALLBACK_VERTEX_PROGRAM, fallback);
-   if (fallback) return;
+   if (rmesa->TclFallback) return;
 
    R200_STATECHANGE( rmesa, vap );
    /* FIXME: fglrx sets R200_VAP_SINGLE_BUF_STATE_ENABLE too. Do we need it?

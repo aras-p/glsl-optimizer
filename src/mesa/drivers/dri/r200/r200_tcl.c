@@ -545,7 +545,6 @@ static void transition_to_swtnl( GLcontext *ctx )
     * need to put the card into D3D mode to make it work:
     */
    R200_STATECHANGE( rmesa, vap );
-   /* not sure if it's strictly necessary to disable VAP_PROG_VTX_SHADER_ENABLE in addition to VAP_TCL_ENABLE) */
    rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] &= ~(R200_VAP_TCL_ENABLE|R200_VAP_PROG_VTX_SHADER_ENABLE);
 }
 
