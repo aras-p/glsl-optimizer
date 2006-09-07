@@ -634,7 +634,7 @@ static struct buffer *do_GenBuffer(struct intel_context *intel, const char *name
 
    buf->id = ++bm->buf_nr;
    buf->name = name;
-   buf->alignment = align ? align : 6;	
+   buf->alignment = align;	
    buf->flags = BM_MEM_AGP|BM_MEM_VRAM|BM_MEM_LOCAL;
 
    return buf;

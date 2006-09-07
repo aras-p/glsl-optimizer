@@ -95,7 +95,7 @@ static void brw_init_pool( struct brw_context *brw,
    pool->size = size;   
    pool->brw = brw;
    
-   bmGenBuffers(&brw->intel, "pool", 1, &pool->buffer, 0);
+   bmGenBuffers(&brw->intel, "pool", 1, &pool->buffer, 12);
 
    /* Also want to say not to wait on fences when data is presented
     */
