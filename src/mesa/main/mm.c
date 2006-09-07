@@ -43,7 +43,7 @@ mmDumpMemInfo(const struct mem_block *heap)
       fprintf(stderr, "\nFree list:\n");
 
       for(p = heap->next_free; p != heap; p = p->next_free) {
-	 fprintf(stderr, "  Offset:%08x, Size:%08x, %c%c\n",p->ofs,p->size,
+	 fprintf(stderr, " FREE Offset:%08x, Size:%08x, %c%c\n",p->ofs,p->size,
 		 p->free ? 'F':'.',
 		 p->reserved ? 'R':'.');
       }
@@ -85,7 +85,7 @@ mmInit(int ofs, int size)
    block->size = size;
    block->free = 1;
 
-   return (struct mem_block *)heap;
+   return heap;
 }
 
 
@@ -120,7 +120,7 @@ SliceBlock(struct mem_block *p,
       p = newblock;
    }
 
-   /* break right, also [p, newblock, p->next], then p = newblock*/
+   /* break right, also [p, newblock, p->next] */
    if (size < p->size) {
       newblock = (struct mem_block*) _mesa_calloc(sizeof(struct mem_block));
       if (!newblock)
@@ -150,6 +150,9 @@ SliceBlock(struct mem_block *p,
     */
    p->next_free->prev_free = p->prev_free;
    p->prev_free->next_free = p->next_free;
+
+   p->next_free = 0;
+   p->prev_free = 0;
 
    p->reserved = reserved;
    return p;
@@ -182,6 +185,7 @@ mmAllocMem(struct mem_block *heap, int size, int align2, int startSearch)
    if (p == heap) 
       return NULL;
 
+   assert(p->free);
    p = SliceBlock(p,startofs,size,0,mask+1);
 
    return p;
@@ -211,6 +215,8 @@ Join2Blocks(struct mem_block *p)
 
    if (p->free && p->next->free) {
       struct mem_block *q = p->next;
+
+      assert(p->ofs + p->size == q->ofs);
       p->size += q->size;
 
       p->next = q->next;
@@ -228,6 +234,8 @@ Join2Blocks(struct mem_block *p)
 int
 mmFreeMem(struct mem_block *b)
 {
+   struct mem_block *heap = b->heap;
+
    if (!b)
       return 0;
 
@@ -247,7 +255,7 @@ mmFreeMem(struct mem_block *b)
    b->prev_free->next_free = b;
 
    Join2Blocks(b);
-   if (b->prev)
+   if (b->prev != b->heap)
       Join2Blocks(b->prev);
 
    return 0;
