@@ -672,7 +672,7 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa, GLuint 
 	if (nmesa->screen->card_type==NV_10) {
 		int size;
 
-#define NV10_SET_VERTEX_ATTRIB(i,j,k) \
+#define NV10_SET_VERTEX_ATTRIB(i,j) \
 	do {	\
 		size = attr_size[j] << 4;	\
 		size |= (attr_size[j]*4) << 8;	\
