@@ -286,9 +286,11 @@ static struct {
 #define VERT_COPY_SPEC( v0, v1 )			\
 	do {							\
 		if (specoffset) {					\
-			v0->f[specoffset][0] = v1->f[specoffset][0];	\
-			v0->f[specoffset][1] = v1->f[specoffset][1];	\
-			v0->f[specoffset][2] = v1->f[specoffset][2];	\
+			nouveau_color_t *spec0 = (nouveau_color_t *)&((v0)->ui[specoffset]);	\
+			nouveau_color_t *spec1 = (nouveau_color_t *)&((v1)->ui[specoffset]);	\
+			spec0->red   = spec1->red;	\
+			spec0->green = spec1->green;	\
+			spec0->blue  = spec1->blue; 	\
 		}							\
 	} while (0)
 
