@@ -272,15 +272,7 @@ static struct {
 		color->alpha=(c)[3];					\
 	} while (0)
 
-#define VERT_COPY_RGBA( v0, v1 )					\
-	do {								\
-		if (coloroffset) {					\
-			v0->f[coloroffset][0] = v1->f[coloroffset][0];	\
-			v0->f[coloroffset][1] = v1->f[coloroffset][1];	\
-			v0->f[coloroffset][2] = v1->f[coloroffset][2];	\
-			v0->f[coloroffset][3] = v1->f[coloroffset][3];	\
-		}							\
-	} while (0)
+#define VERT_COPY_RGBA( v0, v1 ) v0->ui[coloroffset] = v1->ui[coloroffset]
 
 #define VERT_SET_SPEC( v, c )							\
 	do {									\
