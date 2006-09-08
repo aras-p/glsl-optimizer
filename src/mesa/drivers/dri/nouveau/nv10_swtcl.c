@@ -327,7 +327,7 @@ static const GLuint hw_prim[GL_POLYGON+1] = {
 };
 
 #define RASTERIZE(x) nv10RasterPrimitive( ctx, x, hw_prim[x] )
-#define RENDER_PRIMITIVE nmesa->renderPrimitive
+#define RENDER_PRIMITIVE nmesa->current_primitive
 #define TAG(x) x
 #define IND NOUVEAU_FALLBACK_BIT
 #include "tnl_dd/t_dd_unfilled.h"
