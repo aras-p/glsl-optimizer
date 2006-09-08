@@ -65,6 +65,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NV20_VERTEX_ATTRIBUTE_TYPE_MASK                    0x0000000f
 #define NV20_VERTEX_ATTRIBUTE_TYPE_FLOAT                   0x00000002
 #define NV20_VERTEX_ATTRIBUTE_SIZE_MASK                    0x000000f0
+#define NV10_VERTEX_ATTRIBUTE(i)                           (0x00000d04+i*8)
+#define NV10_VERTEX_SET_FORMAT                             0x00000cf0
 
 /* Rendering commands */
 #define NV10_PRIMITIVE                                     0x00000dfc
