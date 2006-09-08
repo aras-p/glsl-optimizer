@@ -170,40 +170,51 @@ static inline void nv10_draw_point(nouveauContextPtr nmesa,
  *          Macros for nouveau_dd_tritmp.h to draw basic primitives        *
  ***********************************************************************/
 
-#define TRI(a, b, c)                                        \
-	do {                                                \
-		if (DO_FALLBACK)                            \
-		nmesa->draw_tri(nmesa, a, b, c);            \
-		else                                        \
-		nv10_draw_triangle(nmesa, a, b, c);         \
-	} while (0)
+#define CTX_ARG nouveauContextPtr nmesa
+#define VERTEX nouveauVertex
 
-#define QUAD(a, b, c, d)                                    \
-	do {                                                \
-		if (DO_FALLBACK) {                          \
-			nmesa->draw_tri(nmesa, a, b, d);    \
-			nmesa->draw_tri(nmesa, b, c, d);    \
-		}                                           \
-		else                                        \
-		nv10_draw_quad(nmesa, a, b, c, d);          \
-	} while (0)
+#undef TAG
+#define TAG(x) nouveau_##x
 
-#define LINE(v0, v1)                                        \
-	do {                                                \
-		if (DO_FALLBACK)                            \
-		nmesa->draw_line(nmesa, v0, v1);            \
-		else                                        \
-		nv10_draw_line(nmesa, v0, v1);              \
-	} while (0)
+static __inline void TAG(quad)( CTX_ARG,
+				VERTEX *v0,
+				VERTEX *v1,
+				VERTEX *v2,
+				VERTEX *v3 )
+{
+	(*nmesa->draw_tri)(nmesa, v0, v1, v3);
+	(*nmesa->draw_tri)(nmesa, v1, v2, v3);
+	/* FIXME: Need to add nmesa->draw_quad in nouveau_context ? */
+	/* nv10_draw_quad(nmesa, v0, v1, v2, v3); */
+}
 
-#define POINT(v0)                                           \
-	do {                                                \
-		if (DO_FALLBACK)                            \
-		nmesa->draw_point(nmesa, v0);               \
-		else                                        \
-		nv10_draw_point(nmesa, v0);                 \
-	} while (0)
+static __inline void TAG(triangle)( CTX_ARG,
+				    VERTEX *v0,
+				    VERTEX *v1,
+				    VERTEX *v2 )
+{
+	(*nmesa->draw_tri)(nmesa, v0, v1, v2);
+}
 
+static __inline void TAG(line)( CTX_ARG,
+				VERTEX *v0,
+				VERTEX *v1 )
+{
+	(*nmesa->draw_line)(nmesa, v0, v1);
+}
+
+static __inline void TAG(point)( CTX_ARG,
+				 VERTEX *v0 )
+{
+	(*nmesa->draw_point)(nmesa, v0);
+}
+
+#define QUAD( a, b, c, d ) nouveau_quad( nmesa, a, b, c, d )
+#define TRI( a, b, c )     nouveau_triangle( nmesa, a, b, c )
+#define LINE( a, b )       nouveau_line( nmesa, a, b )
+#define POINT( a )         nouveau_point( nmesa, a )
+
+#undef TAG
 
 /***********************************************************************
  *              Build render functions from dd templates               *
