@@ -166,48 +166,16 @@ static inline void nv10_draw_point(nouveauContextPtr nmesa,
 
 
 
-/***********************************************************************
- *          Macros for nouveau_dd_tritmp.h to draw basic primitives        *
- ***********************************************************************/
-
 #define CTX_ARG nouveauContextPtr nmesa
 #define VERTEX nouveauVertex
 
 #undef TAG
 #define TAG(x) nouveau_##x
+#include "tnl_dd/t_dd_triemit.h"
 
-static __inline void TAG(quad)( CTX_ARG,
-				VERTEX *v0,
-				VERTEX *v1,
-				VERTEX *v2,
-				VERTEX *v3 )
-{
-	(*nmesa->draw_tri)(nmesa, v0, v1, v3);
-	(*nmesa->draw_tri)(nmesa, v1, v2, v3);
-	/* FIXME: Need to add nmesa->draw_quad in nouveau_context ? */
-	/* nv10_draw_quad(nmesa, v0, v1, v2, v3); */
-}
-
-static __inline void TAG(triangle)( CTX_ARG,
-				    VERTEX *v0,
-				    VERTEX *v1,
-				    VERTEX *v2 )
-{
-	(*nmesa->draw_tri)(nmesa, v0, v1, v2);
-}
-
-static __inline void TAG(line)( CTX_ARG,
-				VERTEX *v0,
-				VERTEX *v1 )
-{
-	(*nmesa->draw_line)(nmesa, v0, v1);
-}
-
-static __inline void TAG(point)( CTX_ARG,
-				 VERTEX *v0 )
-{
-	(*nmesa->draw_point)(nmesa, v0);
-}
+/***********************************************************************
+ *          Macros for nouveau_dd_tritmp.h to draw basic primitives        *
+ ***********************************************************************/
 
 #define QUAD( a, b, c, d ) nouveau_quad( nmesa, a, b, c, d )
 #define TRI( a, b, c )     nouveau_triangle( nmesa, a, b, c )
