@@ -57,6 +57,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_array_api.h"
+#include "tnl/t_save_api.h"
 
 #include "dispatch.h"
 
@@ -106,6 +107,12 @@ static void count_funcs( r200ContextPtr rmesa )
    count_func( "FogCoordfvEXT", &rmesa->vb.dfn_cache.FogCoordfvEXT );*/
 }
 
+static void r200NewList( GLcontext *ctx, GLuint list, GLenum mode )
+{
+   VFMT_FALLBACK( __FUNCTION__ );
+   _tnl_NewList( ctx, list, mode );
+   return;
+}
 
 void r200_copy_to_current( GLcontext *ctx ) 
 {
@@ -395,6 +402,7 @@ static void VFMT_FALLBACK_OUTSIDE_BEGIN_END( const char *caller )
 
    _tnl_wakeup_exec( ctx );
    ctx->Driver.FlushVertices = r200FlushVertices;
+   ctx->Driver.NewList = _tnl_NewList;
 
    assert( rmesa->dma.flush == 0 );
    rmesa->vb.fell_back = GL_TRUE;
@@ -853,6 +861,7 @@ static void r200VtxfmtValidate( GLcontext *ctx )
 
 	 _mesa_install_exec_vtxfmt( ctx, &rmesa->vb.vtxfmt );
 	 ctx->Driver.FlushVertices = r200VtxFmtFlushVertices;
+	 ctx->Driver.NewList = r200NewList;
 	 rmesa->vb.installed = GL_TRUE;
       }
       else if (R200_DEBUG & DEBUG_VFMT)
@@ -867,6 +876,7 @@ static void r200VtxfmtValidate( GLcontext *ctx )
 	    rmesa->dma.flush( rmesa );
 	 _tnl_wakeup_exec( ctx );
 	 ctx->Driver.FlushVertices = r200FlushVertices;
+	 ctx->Driver.NewList =_tnl_NewList;
 	 rmesa->vb.installed = GL_FALSE;
       }
    }      

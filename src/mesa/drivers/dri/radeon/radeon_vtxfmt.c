@@ -48,6 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_array_api.h"
+#include "tnl/t_save_api.h"
 
 #include "radeon_context.h"
 #include "radeon_state.h"
@@ -343,6 +344,7 @@ static void VFMT_FALLBACK_OUTSIDE_BEGIN_END( const char *caller )
 
    _tnl_wakeup_exec( ctx );
    ctx->Driver.FlushVertices = radeonFlushVertices;
+   ctx->Driver.NewList =_tnl_NewList;
 
    assert( rmesa->dma.flush == 0 );
    rmesa->vb.fell_back = GL_TRUE;
@@ -464,6 +466,12 @@ static void VFMT_FALLBACK( const char *caller )
    }
 }
 
+static void radeonNewList( GLcontext *ctx, GLuint list, GLenum mode )
+{
+   VFMT_FALLBACK( __FUNCTION__ );
+   _tnl_NewList( ctx, list, mode );
+   return;
+}
 
 
 static void wrap_buffer( void )
@@ -717,6 +725,7 @@ static void radeonVtxfmtValidate( GLcontext *ctx )
 
 	 _mesa_install_exec_vtxfmt( ctx, &rmesa->vb.vtxfmt );
 	 ctx->Driver.FlushVertices = radeonVtxfmtFlushVertices;
+	 ctx->Driver.NewList = radeonNewList;
 	 rmesa->vb.installed = GL_TRUE;
       }
       else if (RADEON_DEBUG & DEBUG_VFMT)
@@ -731,6 +740,7 @@ static void radeonVtxfmtValidate( GLcontext *ctx )
 	    rmesa->dma.flush( rmesa );
 	 _tnl_wakeup_exec( ctx );
 	 ctx->Driver.FlushVertices = radeonFlushVertices;
+	 ctx->Driver.NewList =_tnl_NewList;
 	 rmesa->vb.installed = GL_FALSE;
       }
    }      
