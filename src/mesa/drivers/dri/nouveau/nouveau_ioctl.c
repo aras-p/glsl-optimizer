@@ -39,15 +39,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 void nouveauIoctlInitFifo()
 {
 	int ret;
-	int fifo_num;
 	__DRIscreenPrivate *sPriv;
 	drm_nouveau_fifo_init_t fifo_init;
 
-	fifo_init.fifo_num=&fifo_num;
 	ret = drmCommandWriteRead(sPriv->fd, DRM_NOUVEAU_FIFO_INIT, &fifo_init, sizeof(fifo_init));
 	if (ret)
 		FATAL("Fifo initialization ioctl failed (returned %d)\n",ret);
-	MESSAGE("Fifo init ok. Got number %d\n",fifo_num);
+	MESSAGE("Fifo init ok. Channel %d\n", fifo_init.channel);
 	// XXX needs more stuff
 }
 
