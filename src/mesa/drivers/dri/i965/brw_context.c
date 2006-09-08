@@ -162,6 +162,14 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
    brw_exec_init( ctx );
    brw_save_init( ctx );
 
+   {
+      const char *filename = getenv("INTEL_REPLAY");
+      if (filename) {
+	 brw_playback_aubfile(brw, filename);
+	 exit(0);
+      }
+   }
+
    return GL_TRUE;
 }
 

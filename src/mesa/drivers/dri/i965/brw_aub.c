@@ -291,6 +291,9 @@ int brw_aub_init( struct brw_context *brw )
 
    i++;
 
+   if (_mesa_getenv("INTEL_REPLAY"))
+      return 0;
+
    if (_mesa_getenv("INTEL_AUBFILE")) {
       val = snprintf(filename, sizeof(filename), "%s%d.aub", _mesa_getenv("INTEL_AUBFILE"), i%4);
       _mesa_printf("--> Aub file: %s\n", filename);

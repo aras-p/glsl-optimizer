@@ -400,6 +400,12 @@ GLboolean brw_draw_prims( GLcontext *ctx,
       retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index, flags);
    }
 
+   if (intel->aub_file) {
+      intelFinish( &intel->ctx );
+      intel->aub_wrap = 1;
+   }
+
+
    return retval;
 }
 

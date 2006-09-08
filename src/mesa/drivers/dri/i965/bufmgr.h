@@ -186,6 +186,10 @@ void bmReleaseBuffers( struct intel_context * );
 GLboolean bmError( struct intel_context * );
 void bmEvictAll( struct intel_context * );
 
+void *bmFindVirtual( struct intel_context *intel,
+		     unsigned int offset,
+		     size_t sz );
+
 /* This functionality is used by the buffer manager, not really sure
  * if we need to be exposing it in this way, probably libdrm will
  * offer equivalent calls.

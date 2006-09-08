@@ -650,6 +650,21 @@ static struct buffer *do_GenBuffer(struct intel_context *intel, const char *name
    return buf;
 }
 
+
+void *bmFindVirtual( struct intel_context *intel,
+		     unsigned int offset,
+		     size_t sz )
+{
+   struct bufmgr *bm = intel->bm;
+   int i;
+
+   for (i = 0; i < bm->nr_pools; i++)
+      if (offset >= bm->pool[i].low_offset &&
+	  offset + sz <= bm->pool[i].low_offset + bm->pool[i].size)
+	 return bm->pool[i].virtual + offset;
+
+   return NULL;
+}
  
 
 void bmGenBuffers(struct intel_context *intel, 
