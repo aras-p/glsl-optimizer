@@ -167,6 +167,11 @@ static inline void nv10_draw_point(nouveauContextPtr nmesa,
 
 
 #define CTX_ARG nouveauContextPtr nmesa
+#define GET_VERTEX_DWORDS() nmesa->vertex_size
+#define LOCAL_VARS						\
+   nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);		\
+   const char *nouveauverts = (char *)nmesa->verts;
+#define VERT(x) (r200Vertex *)(r200verts + ((x) * vertsize * sizeof(int)))
 #define VERTEX nouveauVertex
 
 #undef TAG
@@ -269,6 +274,7 @@ static struct {
 #define VERT_RESTORE_SPEC( idx ) if (specoffset) v[idx]->f[specoffset] = spec[idx]
 
 
+#undef LOCAL_VARS
 #define LOCAL_VARS(n)                                                          \
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);                  \
 GLuint color[n], spec[n];                                                      \
