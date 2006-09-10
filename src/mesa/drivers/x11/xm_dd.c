@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -620,6 +620,7 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
       _swrast_validate_derived( ctx );
 
    if (xrb->pixmap &&
+       xrb->Base.AlphaBits == 0 &&
        format == GL_BGRA &&
        type == GL_UNSIGNED_BYTE &&
        (swrast->_RasterMask & ~CLIP_BIT) == 0 && /* no blend, z-test, etc */
