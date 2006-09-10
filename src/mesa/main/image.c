@@ -39,6 +39,22 @@
 #include "pixel.h"
 
 
+/**
+ * NOTE:
+ * Normally, BYTE_TO_FLOAT(0) returns 0.00392  That causes problems when
+ * we later convert the float to a packed integer value (such as for
+ * GL_RGB5_A1) because we'll wind up with a non-zero value.
+ *
+ * We redefine the macros here so zero is handled correctly.
+ */
+#undef BYTE_TO_FLOAT
+#define BYTE_TO_FLOAT(B)    ((B) == 0 ? 0.0F : ((2.0F * (B) + 1.0F) * (1.0F/255.0F)))
+
+#undef SHORT_TO_FLOAT
+#define SHORT_TO_FLOAT(S)   ((S) == 0 ? 0.0F : ((2.0F * (S) + 1.0F) * (1.0F/65535.0F)))
+
+
+
 /** Compute ceiling of integer quotient of A divided by B. */
 #define CEILING( A, B )  ( (A) % (B) == 0 ? (A)/(B) : (A)/(B)+1 )
 
@@ -398,10 +414,6 @@ _mesa_is_legal_format_and_type( GLcontext *ctx, GLenum format, GLenum type )
             case GL_INT:
             case GL_UNSIGNED_INT:
             case GL_FLOAT:
-            case GL_UNSIGNED_BYTE_3_3_2:
-            case GL_UNSIGNED_BYTE_2_3_3_REV:
-            case GL_UNSIGNED_SHORT_5_6_5:
-            case GL_UNSIGNED_SHORT_5_6_5_REV:
                return GL_TRUE;
             case GL_HALF_FLOAT_ARB:
                return ctx->Extensions.ARB_half_float_pixel;
@@ -417,6 +429,10 @@ _mesa_is_legal_format_and_type( GLcontext *ctx, GLenum format, GLenum type )
             case GL_INT:
             case GL_UNSIGNED_INT:
             case GL_FLOAT:
+            case GL_UNSIGNED_BYTE_3_3_2:
+            case GL_UNSIGNED_BYTE_2_3_3_REV:
+            case GL_UNSIGNED_SHORT_5_6_5:
+            case GL_UNSIGNED_SHORT_5_6_5_REV:
                return GL_TRUE;
             case GL_HALF_FLOAT_ARB:
                return ctx->Extensions.ARB_half_float_pixel;
