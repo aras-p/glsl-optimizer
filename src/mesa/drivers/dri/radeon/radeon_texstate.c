@@ -1197,6 +1197,9 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
       fprintf(stderr, "%s: border\n", __FUNCTION__);
       return GL_FALSE;
    }
+   /* yuv conversion only works in first unit */
+   if (unit != 0 && (t->pp_txfilter & RADEON_YUV_TO_RGB))
+      return GL_FALSE;
 
    /* Update state if this is a different texture object to last
     * time.
