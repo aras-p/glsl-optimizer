@@ -848,6 +848,7 @@ static void import_tex_obj_state( radeonContextPtr rmesa,
 				  radeonTexObjPtr texobj )
 {
    GLuint *cmd = RADEON_DB_STATE( tex[unit] );
+   GLuint se_coord_fmt = rmesa->hw.set.cmd[SET_SE_COORDFMT];
 
    cmd[TEX_PP_TXFILTER] &= ~TEXOBJ_TXFILTER_MASK;
    cmd[TEX_PP_TXFILTER] |= texobj->pp_txfilter & TEXOBJ_TXFILTER_MASK;
@@ -856,31 +857,40 @@ static void import_tex_obj_state( radeonContextPtr rmesa,
    cmd[TEX_PP_TXOFFSET] = texobj->pp_txoffset;
    cmd[TEX_PP_BORDER_COLOR] = texobj->pp_border_color;
 
-   if (texobj->base.tObj->Target == GL_TEXTURE_CUBE_MAP) {
-      GLuint *cube_cmd = RADEON_DB_STATE( cube[unit] );
-      GLuint bytesPerFace = texobj->base.totalSize / 6;
-      ASSERT(texobj->base.totalSize % 6 == 0);
-
-      cube_cmd[CUBE_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
-      /* dont know if this setup conforms to OpenGL.. 
-       * at least it matches the behavior of mesa software renderer
-       */
-      cube_cmd[CUBE_PP_CUBIC_OFFSET_0] = texobj->pp_txoffset; /* right */
-      cube_cmd[CUBE_PP_CUBIC_OFFSET_1] = texobj->pp_txoffset + 1 * bytesPerFace; /* left */
-      cube_cmd[CUBE_PP_CUBIC_OFFSET_2] = texobj->pp_txoffset + 2 * bytesPerFace; /* top */
-      cube_cmd[CUBE_PP_CUBIC_OFFSET_3] = texobj->pp_txoffset + 3 * bytesPerFace; /* bottom */
-      cube_cmd[CUBE_PP_CUBIC_OFFSET_4] = texobj->pp_txoffset + 4 * bytesPerFace; /* front */
-      RADEON_DB_STATECHANGE( rmesa, &rmesa->hw.cube[unit] );
-      cmd[TEX_PP_TXOFFSET] = texobj->pp_txoffset + 5 * bytesPerFace; /* back */
-   }
-   else if (texobj->base.tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
+   if (texobj->base.tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
       GLuint *txr_cmd = RADEON_DB_STATE( txr[unit] );
       txr_cmd[TXR_PP_TEX_SIZE] = texobj->pp_txsize; /* NPOT only! */
       txr_cmd[TXR_PP_TEX_PITCH] = texobj->pp_txpitch; /* NPOT only! */
       RADEON_DB_STATECHANGE( rmesa, &rmesa->hw.txr[unit] );
+      se_coord_fmt |= RADEON_VTX_ST0_NONPARAMETRIC << unit;
+   }
+   else {
+      se_coord_fmt &= ~(RADEON_VTX_ST0_NONPARAMETRIC << unit);
+
+      if (texobj->base.tObj->Target == GL_TEXTURE_CUBE_MAP) {
+	 GLuint *cube_cmd = RADEON_DB_STATE( cube[unit] );
+	 GLuint bytesPerFace = texobj->base.totalSize / 6;
+	 ASSERT(texobj->base.totalSize % 6 == 0);
+
+	 cube_cmd[CUBE_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
+	 /* dont know if this setup conforms to OpenGL.. 
+	  * at least it matches the behavior of mesa software renderer
+	  */
+	 cube_cmd[CUBE_PP_CUBIC_OFFSET_0] = texobj->pp_txoffset; /* right */
+	 cube_cmd[CUBE_PP_CUBIC_OFFSET_1] = texobj->pp_txoffset + 1 * bytesPerFace; /* left */
+	 cube_cmd[CUBE_PP_CUBIC_OFFSET_2] = texobj->pp_txoffset + 2 * bytesPerFace; /* top */
+	 cube_cmd[CUBE_PP_CUBIC_OFFSET_3] = texobj->pp_txoffset + 3 * bytesPerFace; /* bottom */
+	 cube_cmd[CUBE_PP_CUBIC_OFFSET_4] = texobj->pp_txoffset + 4 * bytesPerFace; /* front */
+	 RADEON_DB_STATECHANGE( rmesa, &rmesa->hw.cube[unit] );
+	 cmd[TEX_PP_TXOFFSET] = texobj->pp_txoffset + 5 * bytesPerFace; /* back */
+      }
    }
 
    RADEON_DB_STATECHANGE( rmesa, &rmesa->hw.tex[unit] );
+   if (se_coord_fmt != rmesa->hw.set.cmd[SET_SE_COORDFMT]) {
+      RADEON_STATECHANGE( rmesa, set );
+      rmesa->hw.set.cmd[SET_SE_COORDFMT] = se_coord_fmt;
+   }
 
    texobj->dirty_state &= ~(1<<unit);
 }

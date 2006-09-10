@@ -493,8 +493,12 @@ static void transition_to_hwtnl( GLcontext *ctx )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   GLuint se_coord_fmt = (RADEON_VTX_W0_IS_NOT_1_OVER_W0 |
-			  RADEON_TEX1_W_ROUTING_USE_Q1);
+   GLuint se_coord_fmt = rmesa->hw.set.cmd[SET_SE_COORDFMT];
+
+   se_coord_fmt &= ~(RADEON_VTX_XY_PRE_MULT_1_OVER_W0 |
+		     RADEON_VTX_Z_PRE_MULT_1_OVER_W0 |
+		     RADEON_VTX_W0_IS_NOT_1_OVER_W0);
+   se_coord_fmt |= RADEON_VTX_W0_IS_NOT_1_OVER_W0;
 
    if ( se_coord_fmt != rmesa->hw.set.cmd[SET_SE_COORDFMT] ) {
       RADEON_STATECHANGE( rmesa, set );
