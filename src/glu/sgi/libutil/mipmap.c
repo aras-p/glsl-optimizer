@@ -6590,16 +6590,16 @@ static void halve1DimagePackedPixel(int components,
  * Contributed by Gerk Huisma <gerk@five-d.demon.nl>.
  */
 
-typedef GLAPI void (GLAPIENTRY *TexImage3Dproc)( GLenum target, GLint level,
+typedef void (GLAPIENTRY *TexImage3Dproc)( GLenum target, GLint level,
 						 GLenum internalFormat,
 						 GLsizei width, GLsizei height,
 						 GLsizei depth, GLint border,
 						 GLenum format, GLenum type,
 						 const GLvoid *pixels );
 
-static TexImage3Dproc pTexImage3D;
+GLAPI TexImage3Dproc pTexImage3D;
 
-#ifndef WIN32
+#ifndef _WIN32
 #  include <dlfcn.h>
 #  include <sys/types.h>
 #else
@@ -6614,7 +6614,7 @@ static void gluTexImage3D( GLenum target, GLint level,
 			   const GLvoid *pixels )
 {
    if (!pTexImage3D) {
-#ifdef WIN32
+#ifdef _WIN32
       pTexImage3D = (TexImage3Dproc) wglGetProcAddress("glTexImage3D");
       if (!pTexImage3D)
 	 pTexImage3D = (TexImage3Dproc) wglGetProcAddress("glTexImage3DEXT");
