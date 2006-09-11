@@ -414,6 +414,10 @@ _mesa_is_legal_format_and_type( GLcontext *ctx, GLenum format, GLenum type )
             case GL_INT:
             case GL_UNSIGNED_INT:
             case GL_FLOAT:
+            case GL_UNSIGNED_BYTE_3_3_2:
+            case GL_UNSIGNED_BYTE_2_3_3_REV:
+            case GL_UNSIGNED_SHORT_5_6_5:
+            case GL_UNSIGNED_SHORT_5_6_5_REV:
                return GL_TRUE;
             case GL_HALF_FLOAT_ARB:
                return ctx->Extensions.ARB_half_float_pixel;
@@ -422,6 +426,9 @@ _mesa_is_legal_format_and_type( GLcontext *ctx, GLenum format, GLenum type )
          }
       case GL_BGR:
          switch (type) {
+            /* NOTE: no packed types are supported with BGR.  That's
+             * intentional, according to the GL spec.
+             */
             case GL_BYTE:
             case GL_UNSIGNED_BYTE:
             case GL_SHORT:
@@ -429,10 +436,6 @@ _mesa_is_legal_format_and_type( GLcontext *ctx, GLenum format, GLenum type )
             case GL_INT:
             case GL_UNSIGNED_INT:
             case GL_FLOAT:
-            case GL_UNSIGNED_BYTE_3_3_2:
-            case GL_UNSIGNED_BYTE_2_3_3_REV:
-            case GL_UNSIGNED_SHORT_5_6_5:
-            case GL_UNSIGNED_SHORT_5_6_5_REV:
                return GL_TRUE;
             case GL_HALF_FLOAT_ARB:
                return ctx->Extensions.ARB_half_float_pixel;
