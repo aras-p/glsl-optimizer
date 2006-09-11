@@ -427,7 +427,8 @@ _mesa_update_draw_buffer_bounds(GLcontext *ctx)
  * etc. are satisfied by the fields of ctx->DrawBuffer->Visual.  These can
  * change depending on the renderbuffer bindings.  This function updates
  * the given framebuffer's Visual from the current renderbuffer bindings.
- * This is only intended for user-created framebuffers.
+ *
+ * This may apply to user-created framebuffers or window system framebuffers.
  *
  * Also note: ctx->DrawBuffer->Visual.depthBits might not equal
  * ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer.DepthBits.
@@ -481,6 +482,18 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
       fb->Visual.haveStencilBuffer = GL_TRUE;
       fb->Visual.stencilBits
          = fb->Attachment[BUFFER_STENCIL].Renderbuffer->StencilBits;
+   }
+
+   if (fb->Attachment[BUFFER_ACCUM].Renderbuffer) {
+      fb->Visual.haveAccumBuffer = GL_TRUE;
+      fb->Visual.accumRedBits
+         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->RedBits;
+      fb->Visual.accumGreenBits
+         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->GreenBits;
+      fb->Visual.accumBlueBits
+         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->BlueBits;
+      fb->Visual.accumAlphaBits
+         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->AlphaBits;
    }
 
    compute_depth_max(fb);
