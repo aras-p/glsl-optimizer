@@ -140,10 +140,7 @@ static void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h
 
 	if (ctx->Scissor.Enabled) {
 		/* We don't pipeline cliprect changes */
-		if (IS_R200_CLASS(radeon->radeonScreen))
-			R200_FIREVERTICES((r200ContextPtr)radeon);
-		else
-			r300Flush(ctx);
+		r300Flush(ctx);
 
 		radeonUpdateScissor(ctx);
 	}
@@ -196,10 +193,7 @@ void radeonEnable(GLcontext* ctx, GLenum cap, GLboolean state)
 	switch(cap) {
 	case GL_SCISSOR_TEST:
 		/* We don't pipeline cliprect & scissor changes */
-		if (IS_R200_CLASS(radeon->radeonScreen))
-			R200_FIREVERTICES((r200ContextPtr)radeon);
-		else
-			r300Flush(ctx);
+		r300Flush(ctx);
 
 		radeon->state.scissor.enabled = state;
 		radeonUpdateScissor(ctx);

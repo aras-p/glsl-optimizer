@@ -207,6 +207,10 @@ struct r300_texture_env_state {
 	GLenum envMode;
 };
 
+
+/* The blit width for texture uploads
+ */
+#define R300_BLIT_WIDTH_BYTES 1024
 #define R300_MAX_TEXTURE_UNITS 8
 
 struct r300_texture_state {

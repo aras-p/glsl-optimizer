@@ -884,8 +884,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define R300_TX_PITCH_0			    0x4500 /* obvious missing in gap */
 #define R300_TX_OFFSET_0                    0x4540
-
-/* BEGIN: Guess from R200 */
+	/* BEGIN: Guess from R200 */
 #       define R300_TXO_ENDIAN_NO_SWAP           (0 << 0)
 #       define R300_TXO_ENDIAN_BYTE_SWAP         (1 << 0)
 #       define R300_TXO_ENDIAN_WORD_SWAP         (2 << 0)
@@ -894,7 +893,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_TXO_MICRO_TILE               (1 << 3)
 #       define R300_TXO_OFFSET_MASK              0xffffffe0
 #       define R300_TXO_OFFSET_SHIFT             5
-/* END: Guess from R200 */
+	/* END: Guess from R200 */
 
 /* 32 bit chroma key */
 #define R300_TX_CHROMA_KEY_0                      0x4580
@@ -1244,35 +1243,34 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_BLEND_ENABLE                     (1 << 0)
 #       define R300_BLEND_UNKNOWN                    (3 << 1)
 #       define R300_BLEND_NO_SEPARATE                (1 << 3)
- /* the following are shared between CBLEND and ABLEND */
+/* the following are shared between CBLEND and ABLEND */
 #       define R300_FCN_MASK                         (3  << 12)
 #       define R300_COMB_FCN_ADD_CLAMP               (0  << 12)
 #       define R300_COMB_FCN_ADD_NOCLAMP             (1  << 12)
 #       define R300_COMB_FCN_SUB_CLAMP               (2  << 12)
 #       define R300_COMB_FCN_SUB_NOCLAMP             (3  << 12)
-#       define R300_SRC_BLEND_GL_ZERO                (32 << 16)
-#       define R300_SRC_BLEND_GL_ONE                 (33 << 16)
-#       define R300_SRC_BLEND_GL_SRC_COLOR           (34 << 16)
-#       define R300_SRC_BLEND_GL_ONE_MINUS_SRC_COLOR (35 << 16)
-#       define R300_SRC_BLEND_GL_DST_COLOR           (36 << 16)
-#       define R300_SRC_BLEND_GL_ONE_MINUS_DST_COLOR (37 << 16)
-#       define R300_SRC_BLEND_GL_SRC_ALPHA           (38 << 16)
-#       define R300_SRC_BLEND_GL_ONE_MINUS_SRC_ALPHA (39 << 16)
-#       define R300_SRC_BLEND_GL_DST_ALPHA           (40 << 16)
-#       define R300_SRC_BLEND_GL_ONE_MINUS_DST_ALPHA (41 << 16)
-#       define R300_SRC_BLEND_GL_SRC_ALPHA_SATURATE  (42 << 16)
-#       define R300_SRC_BLEND_MASK                   (63 << 16)
-#       define R300_DST_BLEND_GL_ZERO                (32 << 24)
-#       define R300_DST_BLEND_GL_ONE                 (33 << 24)
-#       define R300_DST_BLEND_GL_SRC_COLOR           (34 << 24)
-#       define R300_DST_BLEND_GL_ONE_MINUS_SRC_COLOR (35 << 24)
-#       define R300_DST_BLEND_GL_DST_COLOR           (36 << 24)
-#       define R300_DST_BLEND_GL_ONE_MINUS_DST_COLOR (37 << 24)
-#       define R300_DST_BLEND_GL_SRC_ALPHA           (38 << 24)
-#       define R300_DST_BLEND_GL_ONE_MINUS_SRC_ALPHA (39 << 24)
-#       define R300_DST_BLEND_GL_DST_ALPHA           (40 << 24)
-#       define R300_DST_BLEND_GL_ONE_MINUS_DST_ALPHA (41 << 24)
-#       define R300_DST_BLEND_MASK                   (63 << 24)
+#       define R300_COMB_FCN_MIN                     (4  << 12)
+#       define R300_COMB_FCN_MAX                     (5  << 12)
+#       define R300_COMB_FCN_RSUB_CLAMP              (6  << 12)
+#       define R300_COMB_FCN_RSUB_NOCLAMP            (7  << 12)
+#       define R300_BLEND_GL_ZERO                    (32)
+#       define R300_BLEND_GL_ONE                     (33)
+#       define R300_BLEND_GL_SRC_COLOR               (34)
+#       define R300_BLEND_GL_ONE_MINUS_SRC_COLOR     (35)
+#       define R300_BLEND_GL_DST_COLOR               (36)
+#       define R300_BLEND_GL_ONE_MINUS_DST_COLOR     (37)
+#       define R300_BLEND_GL_SRC_ALPHA               (38)
+#       define R300_BLEND_GL_ONE_MINUS_SRC_ALPHA     (39)
+#       define R300_BLEND_GL_DST_ALPHA               (40)
+#       define R300_BLEND_GL_ONE_MINUS_DST_ALPHA     (41)
+#       define R300_BLEND_GL_SRC_ALPHA_SATURATE      (42)
+#       define R300_BLEND_GL_CONST_COLOR             (43)
+#       define R300_BLEND_GL_ONE_MINUS_CONST_COLOR   (44)
+#       define R300_BLEND_GL_CONST_ALPHA             (45)
+#       define R300_BLEND_GL_ONE_MINUS_CONST_ALPHA   (46)
+#       define R300_BLEND_MASK                       (63)
+#       define R300_SRC_BLEND_SHIFT                  (16)
+#       define R300_DST_BLEND_SHIFT                  (24)
 #define R300_RB3D_COLORMASK                 0x4E0C
 #       define R300_COLORMASK0_B                 (1<<0)
 #       define R300_COLORMASK0_G                 (1<<1)
@@ -1559,5 +1557,22 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_PACKET3_3D_DRAW_INDX_2         0x00003600
 
 /* END: Packet 3 commands */
+
+
+/* Color formats for 2d packets
+ */
+#define R300_CP_COLOR_FORMAT_CI8	2
+#define R300_CP_COLOR_FORMAT_ARGB1555	3
+#define R300_CP_COLOR_FORMAT_RGB565	4
+#define R300_CP_COLOR_FORMAT_ARGB8888	6
+#define R300_CP_COLOR_FORMAT_RGB332	7
+#define R300_CP_COLOR_FORMAT_RGB8	9
+#define R300_CP_COLOR_FORMAT_ARGB4444	15
+
+/*
+ * CP type-3 packets
+ */
+#define R300_CP_CMD_BITBLT_MULTI	0xC0009B00
+
 
 #endif /* _R300_REG_H */

@@ -116,23 +116,23 @@ static void r300UploadGARTClientSubImage(r300ContextPtr rmesa,
 	 */
 	switch (texFormat->TexelBytes) {
 	case 1:
-		blit_format = R200_CP_COLOR_FORMAT_CI8;
+		blit_format = R300_CP_COLOR_FORMAT_CI8;
 		srcPitch = t->image[0][0].width * texFormat->TexelBytes;
 		dstPitch = t->image[0][0].width * texFormat->TexelBytes;
 		break;
 	case 2:
-		blit_format = R200_CP_COLOR_FORMAT_RGB565;
+		blit_format = R300_CP_COLOR_FORMAT_RGB565;
 		srcPitch = t->image[0][0].width * texFormat->TexelBytes;
 		dstPitch = t->image[0][0].width * texFormat->TexelBytes;
 		break;
 	case 4:
-		blit_format = R200_CP_COLOR_FORMAT_ARGB8888;
+		blit_format = R300_CP_COLOR_FORMAT_ARGB8888;
 		srcPitch = t->image[0][0].width * texFormat->TexelBytes;
 		dstPitch = t->image[0][0].width * texFormat->TexelBytes;
 		break;
 	case 8:
 	case 16:
-		blit_format = R200_CP_COLOR_FORMAT_CI8;
+		blit_format = R300_CP_COLOR_FORMAT_CI8;
 		srcPitch = t->image[0][0].width * texFormat->TexelBytes;
 		dstPitch = t->image[0][0].width * texFormat->TexelBytes;
 		break;
@@ -179,17 +179,17 @@ static void r300UploadRectSubImage(r300ContextPtr rmesa,
 
 	switch (texFormat->TexelBytes) {
 	case 1:
-		blit_format = R200_CP_COLOR_FORMAT_CI8;
+		blit_format = R300_CP_COLOR_FORMAT_CI8;
 		break;
 	case 2:
-		blit_format = R200_CP_COLOR_FORMAT_RGB565;
+		blit_format = R300_CP_COLOR_FORMAT_RGB565;
 		break;
 	case 4:
-		blit_format = R200_CP_COLOR_FORMAT_ARGB8888;
+		blit_format = R300_CP_COLOR_FORMAT_ARGB8888;
 		break;
 	case 8:
 	case 16:
-		blit_format = R200_CP_COLOR_FORMAT_CI8;
+		blit_format = R300_CP_COLOR_FORMAT_CI8;
 		break;
 	default:
 		return;
@@ -457,8 +457,8 @@ static void uploadSubImage( r300ContextPtr rmesa, r300TexObjPtr t,
          needed (only with dxt1 since 2 dxt3/dxt5 blocks already use 32 Byte). */
       /* set tex.height to 1/4 since 1 "macropixel" (dxt-block) has 4 real pixels. Needed
          so the kernel module reads the right amount of data. */
-      tex.format = R200_TXFORMAT_I8; /* any 1-byte texel format */
-      tex.pitch = (BLIT_WIDTH_BYTES / 64);
+      tex.format = RADEON_TXFORMAT_I8; /* any 1-byte texel format */
+      tex.pitch = (R300_BLIT_WIDTH_BYTES / 64);
       tex.height = (imageHeight + 3) / 4;
       tex.width = (imageWidth + 3) / 4;
       if ((t->format & R300_TX_FORMAT_DXT1) == R300_TX_FORMAT_DXT1)

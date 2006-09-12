@@ -544,9 +544,9 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		size = 64*256;
 
 	if (RADEON_DEBUG & (DEBUG_IOCTL|DEBUG_DMA)) {
-		fprintf(stderr, "sizeof(drm_r300_cmd_header_t)=%ld\n",
+		fprintf(stderr, "sizeof(drm_r300_cmd_header_t)=%u\n",
 			sizeof(drm_r300_cmd_header_t));
-		fprintf(stderr, "sizeof(drm_radeon_cmd_buffer_t)=%ld\n",
+		fprintf(stderr, "sizeof(drm_radeon_cmd_buffer_t)=%u\n",
 			sizeof(drm_radeon_cmd_buffer_t));
 		fprintf(stderr,
 			"Allocating %d bytes command buffer (max state is %d bytes)\n",
@@ -603,7 +603,7 @@ void r300EmitBlit(r300ContextPtr rmesa,
 
 	cmd[0].header.cmd_type = R300_CMD_PACKET3;
 	cmd[0].header.pad0 = R300_CMD_PACKET3_RAW;
-	cmd[1].u = R200_CP_CMD_BITBLT_MULTI | (5 << 16);
+	cmd[1].u = R300_CP_CMD_BITBLT_MULTI | (5 << 16);
 	cmd[2].u = (RADEON_GMC_SRC_PITCH_OFFSET_CNTL |
 		    RADEON_GMC_DST_PITCH_OFFSET_CNTL |
 		    RADEON_GMC_BRUSH_NONE |

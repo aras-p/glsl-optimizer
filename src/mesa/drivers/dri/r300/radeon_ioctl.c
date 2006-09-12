@@ -183,10 +183,7 @@ void radeonCopyBuffer(const __DRIdrawablePrivate * dPriv,
 			(void *)radeon->glCtx);
 	}
 
-	if (IS_R200_CLASS(radeon->radeonScreen))
-		R200_FIREVERTICES((r200ContextPtr)radeon);
-	else
-		r300Flush(radeon->glCtx);
+	r300Flush(radeon->glCtx);
 
 	LOCK_HARDWARE(radeon);
 
@@ -283,10 +280,7 @@ void radeonPageFlip(const __DRIdrawablePrivate * dPriv)
 			radeon->sarea->pfCurrentPage);
 	}
 
-	if (IS_R200_CLASS(radeon->radeonScreen))
-		R200_FIREVERTICES((r200ContextPtr)radeon);
-	else
-		r300Flush(radeon->glCtx);
+	r300Flush(radeon->glCtx);
 	LOCK_HARDWARE(radeon);
 
 	if (!dPriv->numClipRects) {

@@ -41,7 +41,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "xf86drm.h"
 #include "drm.h"
+#if 0
 #include "r200_context.h"
+#endif
 #include "radeon_drm.h"
 
 extern void radeonCopyBuffer(const __DRIdrawablePrivate * drawable,

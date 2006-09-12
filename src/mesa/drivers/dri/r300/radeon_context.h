@@ -40,6 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_screen.h"
 #include "drm.h"
 #include "dri_util.h"
+#include "colormac.h"
 
 struct radeon_context;
 typedef struct radeon_context radeonContextRec;

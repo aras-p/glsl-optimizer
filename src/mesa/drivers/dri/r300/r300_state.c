@@ -100,55 +100,54 @@ static int blend_factor(GLenum factor, GLboolean is_src)
 
 	switch (factor) {
 	case GL_ZERO:
-		func = R200_BLEND_GL_ZERO;
+		func = R300_BLEND_GL_ZERO;
 		break;
 	case GL_ONE:
-		func = R200_BLEND_GL_ONE;
+		func = R300_BLEND_GL_ONE;
 		break;
 	case GL_DST_COLOR:
-		func = R200_BLEND_GL_DST_COLOR;
+		func = R300_BLEND_GL_DST_COLOR;
 		break;
 	case GL_ONE_MINUS_DST_COLOR:
-		func = R200_BLEND_GL_ONE_MINUS_DST_COLOR;
+		func = R300_BLEND_GL_ONE_MINUS_DST_COLOR;
 		break;
 	case GL_SRC_COLOR:
-		func = R200_BLEND_GL_SRC_COLOR;
+		func = R300_BLEND_GL_SRC_COLOR;
 		break;
 	case GL_ONE_MINUS_SRC_COLOR:
-		func = R200_BLEND_GL_ONE_MINUS_SRC_COLOR;
+		func = R300_BLEND_GL_ONE_MINUS_SRC_COLOR;
 		break;
 	case GL_SRC_ALPHA:
-		func = R200_BLEND_GL_SRC_ALPHA;
+		func = R300_BLEND_GL_SRC_ALPHA;
 		break;
 	case GL_ONE_MINUS_SRC_ALPHA:
-		func = R200_BLEND_GL_ONE_MINUS_SRC_ALPHA;
+		func = R300_BLEND_GL_ONE_MINUS_SRC_ALPHA;
 		break;
 	case GL_DST_ALPHA:
-		func = R200_BLEND_GL_DST_ALPHA;
+		func = R300_BLEND_GL_DST_ALPHA;
 		break;
 	case GL_ONE_MINUS_DST_ALPHA:
-		func = R200_BLEND_GL_ONE_MINUS_DST_ALPHA;
+		func = R300_BLEND_GL_ONE_MINUS_DST_ALPHA;
 		break;
 	case GL_SRC_ALPHA_SATURATE:
-		func =
-		    (is_src) ? R200_BLEND_GL_SRC_ALPHA_SATURATE :
-		    R200_BLEND_GL_ZERO;
+		func = (is_src) ? R300_BLEND_GL_SRC_ALPHA_SATURATE :
+		R300_BLEND_GL_ZERO;
 		break;
 	case GL_CONSTANT_COLOR:
-		func = R200_BLEND_GL_CONST_COLOR;
+		func = R300_BLEND_GL_CONST_COLOR;
 		break;
 	case GL_ONE_MINUS_CONSTANT_COLOR:
-		func = R200_BLEND_GL_ONE_MINUS_CONST_COLOR;
+		func = R300_BLEND_GL_ONE_MINUS_CONST_COLOR;
 		break;
 	case GL_CONSTANT_ALPHA:
-		func = R200_BLEND_GL_CONST_ALPHA;
+		func = R300_BLEND_GL_CONST_ALPHA;
 		break;
 	case GL_ONE_MINUS_CONSTANT_ALPHA:
-		func = R200_BLEND_GL_ONE_MINUS_CONST_ALPHA;
+		func = R300_BLEND_GL_ONE_MINUS_CONST_ALPHA;
 		break;
 	default:
 		fprintf(stderr, "unknown blend factor %x\n", factor);
-		func = (is_src) ? R200_BLEND_GL_ONE : R200_BLEND_GL_ZERO;
+		func = (is_src) ? R300_BLEND_GL_ONE : R300_BLEND_GL_ZERO;
 	}
 	return func;
 }
@@ -158,10 +157,10 @@ static int blend_factor(GLenum factor, GLboolean is_src)
  * This is done in a single
  * function because some blend equations (i.e., \c GL_MIN and \c GL_MAX)
  * change the interpretation of the blend function.
- * Also, make sure that blend function and blend equation are set to their default
- * value if color blending is not enabled, since at least blend equations GL_MIN
- * and GL_FUNC_REVERSE_SUBTRACT will cause wrong results otherwise for
- * unknown reasons.
+ * Also, make sure that blend function and blend equation are set to their
+ * default value if color blending is not enabled, since at least blend
+ * equations GL_MIN and GL_FUNC_REVERSE_SUBTRACT will cause wrong results
+ * otherwise for unknown reasons.
  */
 
 /* helper function */
@@ -200,12 +199,12 @@ static void r300_set_blend_cntl(r300ContextPtr r300, int func, int eqn, int cbit
 static void r300_set_blend_state(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	int func = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
-	    (R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT);
-	int eqn = R200_COMB_FCN_ADD_CLAMP;
-	int funcA = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
-	    (R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT);
-	int eqnA = R200_COMB_FCN_ADD_CLAMP;
+	int func = (R300_BLEND_GL_ONE << R300_SRC_BLEND_SHIFT) |
+	    (R300_BLEND_GL_ZERO << R300_DST_BLEND_SHIFT);
+	int eqn = R300_COMB_FCN_ADD_CLAMP;
+	int funcA = (R300_BLEND_GL_ONE << R300_SRC_BLEND_SHIFT) |
+	    (R300_BLEND_GL_ZERO << R300_DST_BLEND_SHIFT);
+	int eqnA = R300_COMB_FCN_ADD_CLAMP;
 
 	if (ctx->Color._LogicOpEnabled || !ctx->Color.BlendEnabled) {
 		r300_set_blend_cntl(r300,
@@ -214,8 +213,8 @@ static void r300_set_blend_state(GLcontext * ctx)
 		return;
 	}
 
-	func = (blend_factor(ctx->Color.BlendSrcRGB, GL_TRUE) << R200_SRC_BLEND_SHIFT) |
-		(blend_factor(ctx->Color.BlendDstRGB, GL_FALSE) << R200_DST_BLEND_SHIFT);
+	func = (blend_factor(ctx->Color.BlendSrcRGB, GL_TRUE) << R300_SRC_BLEND_SHIFT) |
+		(blend_factor(ctx->Color.BlendDstRGB, GL_FALSE) << R300_DST_BLEND_SHIFT);
 
 	switch (ctx->Color.BlendEquationRGB) {
 	case GL_FUNC_ADD:
@@ -227,19 +226,19 @@ static void r300_set_blend_state(GLcontext * ctx)
 		break;
 
 	case GL_FUNC_REVERSE_SUBTRACT:
-		eqn = R200_COMB_FCN_RSUB_CLAMP;
+		eqn = R300_COMB_FCN_RSUB_CLAMP;
 		break;
 
 	case GL_MIN:
-		eqn = R200_COMB_FCN_MIN;
-		func = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
-		    (R200_BLEND_GL_ONE << R200_DST_BLEND_SHIFT);
+		eqn = R300_COMB_FCN_MIN;
+		func = (R300_BLEND_GL_ONE << R300_SRC_BLEND_SHIFT) |
+		    (R300_BLEND_GL_ONE << R300_DST_BLEND_SHIFT);
 		break;
 
 	case GL_MAX:
-		eqn = R200_COMB_FCN_MAX;
-		func = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
-		    (R200_BLEND_GL_ONE << R200_DST_BLEND_SHIFT);
+		eqn = R300_COMB_FCN_MAX;
+		func = (R300_BLEND_GL_ONE << R300_SRC_BLEND_SHIFT) |
+		    (R300_BLEND_GL_ONE << R300_DST_BLEND_SHIFT);
 		break;
 
 	default:
@@ -250,8 +249,8 @@ static void r300_set_blend_state(GLcontext * ctx)
 	}
 
 
-	funcA = (blend_factor(ctx->Color.BlendSrcA, GL_TRUE) << R200_SRC_BLEND_SHIFT) |
-		(blend_factor(ctx->Color.BlendDstA, GL_FALSE) << R200_DST_BLEND_SHIFT);
+	funcA = (blend_factor(ctx->Color.BlendSrcA, GL_TRUE) << R300_SRC_BLEND_SHIFT) |
+		(blend_factor(ctx->Color.BlendDstA, GL_FALSE) << R300_DST_BLEND_SHIFT);
 
 	switch (ctx->Color.BlendEquationA) {
 	case GL_FUNC_ADD:
@@ -263,19 +262,19 @@ static void r300_set_blend_state(GLcontext * ctx)
 		break;
 
 	case GL_FUNC_REVERSE_SUBTRACT:
-		eqnA = R200_COMB_FCN_RSUB_CLAMP;
+		eqnA = R300_COMB_FCN_RSUB_CLAMP;
 		break;
 
 	case GL_MIN:
-		eqnA = R200_COMB_FCN_MIN;
-		funcA = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
-		    (R200_BLEND_GL_ONE << R200_DST_BLEND_SHIFT);
+		eqnA = R300_COMB_FCN_MIN;
+		funcA = (R300_BLEND_GL_ONE << R300_SRC_BLEND_SHIFT) |
+		    (R300_BLEND_GL_ONE << R300_DST_BLEND_SHIFT);
 		break;
 
 	case GL_MAX:
-		eqnA = R200_COMB_FCN_MAX;
-		funcA = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
-		    (R200_BLEND_GL_ONE << R200_DST_BLEND_SHIFT);
+		eqnA = R300_COMB_FCN_MAX;
+		funcA = (R300_BLEND_GL_ONE << R300_SRC_BLEND_SHIFT) |
+		    (R300_BLEND_GL_ONE << R300_DST_BLEND_SHIFT);
 		break;
 
 	default:
@@ -974,15 +973,15 @@ void r300UpdateViewportOffset( GLcontext *ctx )
 	GLfloat tx = v[MAT_TX] + xoffset + SUBPIXEL_X;
 	GLfloat ty = (- v[MAT_TY]) + yoffset + SUBPIXEL_Y;
 
-	if ( rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] != r300PackFloat32(tx) ||
-		rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] != r300PackFloat32(ty))
+	if ( rmesa->hw.vpt.cmd[R300_VPT_XOFFSET] != r300PackFloat32(tx) ||
+		rmesa->hw.vpt.cmd[R300_VPT_YOFFSET] != r300PackFloat32(ty))
 	{
 	/* Note: this should also modify whatever data the context reset
 	 * code uses...
 	 */
 	R300_STATECHANGE( rmesa, vpt );
-	rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] = r300PackFloat32(tx);
-	rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] = r300PackFloat32(ty);
+	rmesa->hw.vpt.cmd[R300_VPT_XOFFSET] = r300PackFloat32(tx);
+	rmesa->hw.vpt.cmd[R300_VPT_YOFFSET] = r300PackFloat32(ty);
       
 	}
 
@@ -2186,12 +2185,12 @@ void r300InitState(r300ContextPtr r300)
 	switch (ctx->Visual.depthBits) {
 	case 16:
 		r300->state.depth.scale = 1.0 / (GLfloat) 0xffff;
-		depth_fmt = R200_DEPTH_FORMAT_16BIT_INT_Z;
+		depth_fmt = R300_DEPTH_FORMAT_16BIT_INT_Z;
 		r300->state.stencil.clear = 0x00000000;
 		break;
 	case 24:
 		r300->state.depth.scale = 1.0 / (GLfloat) 0xffffff;
-		depth_fmt = R200_DEPTH_FORMAT_24BIT_INT_Z;
+		depth_fmt = R300_DEPTH_FORMAT_24BIT_INT_Z;
 		r300->state.stencil.clear = 0x00ff0000;
 		break;
 	default:
