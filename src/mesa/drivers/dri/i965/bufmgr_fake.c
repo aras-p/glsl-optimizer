@@ -1067,7 +1067,7 @@ void *bmMapBuffer( struct intel_context *intel,
 	 assert(intel->locked);
 
 	 if (!buf->block && !evict_and_alloc_block(intel, buf)) {
-	    _mesa_printf("%s: alloc failed\n", __FUNCTION__);
+	    DBG("%s: alloc failed\n", __FUNCTION__);
 	    bm->fail = 1;
 	    retval = NULL;
 	 }
@@ -1083,7 +1083,7 @@ void *bmMapBuffer( struct intel_context *intel,
 	 }
       }
       else {
-	       DBG("%s - set buf %d dirty\n", __FUNCTION__, buf->id);
+	 DBG("%s - set buf %d dirty\n", __FUNCTION__, buf->id);
 	 set_dirty(intel, buf);
 
 	 if (buf->backing_store == 0)
@@ -1227,7 +1227,7 @@ int bmValidateBuffers( struct intel_context *intel )
 
 
    if (retval != 0)
-      _mesa_printf("%s failed\n", __FUNCTION__);
+      DBG("%s failed\n", __FUNCTION__);
 
    return retval;
 }

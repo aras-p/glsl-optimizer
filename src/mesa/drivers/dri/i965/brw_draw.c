@@ -364,7 +364,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    UNLOCK_HARDWARE(intel);
 
    if (!retval)
-      _mesa_printf("%s failed\n", __FUNCTION__);
+      DBG("%s failed\n", __FUNCTION__);
 
    return retval;
 }
