@@ -53,7 +53,11 @@ static void upload_vs_unit( struct brw_context *brw )
    /* BRW_NEW_URB_FENCE  */
    vs.thread4.nr_urb_entries = brw->urb.nr_vs_entries; 
    vs.thread4.urb_entry_allocation_size = brw->urb.vsize - 1;
-   vs.thread4.max_threads = MIN2(brw->urb.nr_vs_entries, 16) - 1;
+   vs.thread4.max_threads = MIN2(
+      MAX2(0, (brw->urb.nr_vs_entries - 6) / 2 - 1), 
+      15);
+
+
 
    if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
       vs.thread4.max_threads = 0; 
