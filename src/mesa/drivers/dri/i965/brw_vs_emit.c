@@ -893,6 +893,13 @@ void brw_vs_emit( struct brw_vs_compile *c )
    GLuint nr_insns = c->vp->program.Base.NumInstructions;
    GLuint insn;
 
+
+   if (INTEL_DEBUG & DEBUG_VS) {
+      _mesa_printf("\n\n\nvs-emit:\n");
+      _mesa_print_program(&c->vp->program.Base); 
+      _mesa_printf("\n");
+   }
+
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_access_mode(p, BRW_ALIGN_16);
    
