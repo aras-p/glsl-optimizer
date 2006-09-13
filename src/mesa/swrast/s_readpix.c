@@ -382,7 +382,7 @@ read_rgba_pixels( GLcontext *ctx,
              fb->Visual.greenBits < CHAN_BITS ||
              fb->Visual.blueBits < CHAN_BITS) {
             /* Requantize the color values into floating point and go from
-             * there.  This fixes conformance failures with 16-bit color
+             * there.  This fixes conformance failures with 5/6/5 color
              * buffers, for example.
              */
             GLfloat rgbaf[MAX_WIDTH][4];
