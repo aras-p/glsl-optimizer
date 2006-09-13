@@ -215,7 +215,7 @@ static void r200_set_blend_state( GLcontext * ctx )
    R200_STATECHANGE( rmesa, ctx );
 
    if (rmesa->r200Screen->drmSupportsBlendColor) {
-      if (ctx->Color._LogicOpEnabled) {
+      if (ctx->Color.ColorLogicOpEnabled) {
          rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =  cntl | R200_ROP_ENABLE;
          rmesa->hw.ctx.cmd[CTX_RB3D_ABLENDCNTL] = eqn | func;
          rmesa->hw.ctx.cmd[CTX_RB3D_CBLENDCNTL] = eqn | func;
@@ -231,7 +231,7 @@ static void r200_set_blend_state( GLcontext * ctx )
       }
    }
    else {
-      if (ctx->Color._LogicOpEnabled) {
+      if (ctx->Color.ColorLogicOpEnabled) {
          rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =  cntl | R200_ROP_ENABLE;
          rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
          return;
