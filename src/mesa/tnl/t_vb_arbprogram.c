@@ -116,8 +116,8 @@ static void do_RSW( struct arb_vp_machine *m, union instruction op )
 {
    GLfloat *result = m->File[0][op.rsw.dst];
    const GLfloat *arg0 = m->File[op.rsw.file0][op.rsw.idx0];
-   GLuint swz = op.rsw.swz;
-   GLuint neg = op.rsw.neg;
+   const GLuint swz = op.rsw.swz;
+   const GLuint neg = op.rsw.neg;
    GLfloat tmp[4];
 
    /* Need a temporary to be correct in the case where result == arg0.
@@ -144,8 +144,8 @@ static void do_SWZ( struct arb_vp_machine *m, union instruction op )
 {
    GLfloat *result = m->File[0][op.rsw.dst];
    const GLfloat *arg0 = m->File[op.rsw.file0][op.rsw.idx0];
-   GLuint swz = op.rsw.swz;
-   GLuint neg = op.rsw.neg;
+   const GLuint swz = op.rsw.swz;
+   const GLuint neg = op.rsw.neg;
    GLfloat tmp[6];
    tmp[4] = 0.0;
    tmp[5] = 1.0;
@@ -303,9 +303,9 @@ static void do_EXP( struct arb_vp_machine *m, union instruction op )
 {
    GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
-   GLfloat tmp = arg0[0];
-   GLfloat flr_tmp = FLOORF(tmp);
-   GLfloat frac_tmp = tmp - flr_tmp;
+   const GLfloat tmp = arg0[0];
+   const GLfloat flr_tmp = FLOORF(tmp);
+   const GLfloat frac_tmp = tmp - flr_tmp;
 
    result[0] = LDEXPF(1.0, (int)flr_tmp);
    result[1] = frac_tmp;
@@ -352,7 +352,7 @@ static void do_LIT( struct arb_vp_machine *m, union instruction op )
 {
    GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
-   GLfloat tmp[4];
+   GLfloat tmp[4]; /* use temp in case arg0 == result register */
 
    tmp[0] = 1.0;
    tmp[1] = arg0[0];
@@ -364,7 +364,6 @@ static void do_LIT( struct arb_vp_machine *m, union instruction op )
    }
    tmp[3] = 1.0;
 
-
    COPY_4V(result, tmp);
 }
 
@@ -375,9 +374,9 @@ static void do_LOG( struct arb_vp_machine *m, union instruction op )
 {
    GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
-   GLfloat tmp = FABSF(arg0[0]);
+   const GLfloat tmp = FABSF(arg0[0]);
    int exponent;
-   GLfloat mantissa = FREXPF(tmp, &exponent);
+   const GLfloat mantissa = FREXPF(tmp, &exponent);
 
    result[0] = (GLfloat) (exponent - 1);
    result[1] = 2.0 * mantissa; /* map [.5, 1) -> [1, 2) */
@@ -449,7 +448,7 @@ static void do_POW( struct arb_vp_machine *m, union instruction op )
 static void do_REL( struct arb_vp_machine *m, union instruction op )
 {
    GLfloat *result = m->File[0][op.alu.dst];
-   GLuint idx = (op.alu.idx0 + (GLint)m->File[0][REG_ADDR][0]) & (MAX_NV_VERTEX_PROGRAM_PARAMS-1);
+   const GLuint idx = (op.alu.idx0 + (GLint)m->File[0][REG_ADDR][0]) & (MAX_NV_VERTEX_PROGRAM_PARAMS-1);
    const GLfloat *arg0 = m->File[op.alu.file0][idx];
 
    result[0] = arg0[0];
