@@ -259,6 +259,12 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[2] = FLOAT_TO_BOOLEAN(ctx->Current.RasterPos[2]);
          params[3] = FLOAT_TO_BOOLEAN(ctx->Current.RasterPos[3]);
          break;
+      case GL_CURRENT_RASTER_SECONDARY_COLOR:
+         params[0] = FLOAT_TO_BOOLEAN(ctx->Current.RasterSecondaryColor[0]);
+         params[1] = FLOAT_TO_BOOLEAN(ctx->Current.RasterSecondaryColor[1]);
+         params[2] = FLOAT_TO_BOOLEAN(ctx->Current.RasterSecondaryColor[2]);
+         params[3] = FLOAT_TO_BOOLEAN(ctx->Current.RasterSecondaryColor[3]);
+         break;
       case GL_CURRENT_RASTER_TEXTURE_COORDS:
          {
          const GLuint texUnit = ctx->Texture.CurrentUnit;
@@ -2077,6 +2083,12 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[2] = ctx->Current.RasterPos[2];
          params[3] = ctx->Current.RasterPos[3];
          break;
+      case GL_CURRENT_RASTER_SECONDARY_COLOR:
+         params[0] = ctx->Current.RasterSecondaryColor[0];
+         params[1] = ctx->Current.RasterSecondaryColor[1];
+         params[2] = ctx->Current.RasterSecondaryColor[2];
+         params[3] = ctx->Current.RasterSecondaryColor[3];
+         break;
       case GL_CURRENT_RASTER_TEXTURE_COORDS:
          {
          const GLuint texUnit = ctx->Texture.CurrentUnit;
@@ -3894,6 +3906,12 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[1] = IROUND(ctx->Current.RasterPos[1]);
          params[2] = IROUND(ctx->Current.RasterPos[2]);
          params[3] = IROUND(ctx->Current.RasterPos[3]);
+         break;
+      case GL_CURRENT_RASTER_SECONDARY_COLOR:
+         params[0] = FLOAT_TO_INT(ctx->Current.RasterSecondaryColor[0]);
+         params[1] = FLOAT_TO_INT(ctx->Current.RasterSecondaryColor[1]);
+         params[2] = FLOAT_TO_INT(ctx->Current.RasterSecondaryColor[2]);
+         params[3] = FLOAT_TO_INT(ctx->Current.RasterSecondaryColor[3]);
          break;
       case GL_CURRENT_RASTER_TEXTURE_COORDS:
          {

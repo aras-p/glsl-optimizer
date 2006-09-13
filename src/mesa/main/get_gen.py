@@ -2,7 +2,7 @@
 
 # Mesa 3-D graphics library
 #
-# Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+# Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -157,6 +157,11 @@ StateVars = [
 	   "ctx->Current.RasterPos[1]",
 	   "ctx->Current.RasterPos[2]",
 	   "ctx->Current.RasterPos[3]"], "", None ),
+	( "GL_CURRENT_RASTER_SECONDARY_COLOR", GLfloatN,
+	  ["ctx->Current.RasterSecondaryColor[0]",
+	   "ctx->Current.RasterSecondaryColor[1]",
+	   "ctx->Current.RasterSecondaryColor[2]",
+	   "ctx->Current.RasterSecondaryColor[3]"], "", None ),
 	( "GL_CURRENT_RASTER_TEXTURE_COORDS", GLfloat,
 	  ["ctx->Current.RasterTexCoords[texUnit][0]",
 	   "ctx->Current.RasterTexCoords[texUnit][1]",
