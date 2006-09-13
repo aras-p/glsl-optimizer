@@ -311,7 +311,7 @@ radeonChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
       case GL_UNSIGNED_SHORT_1_5_5_5_REV:
 	 return _dri_texformat_argb1555;
       default:
-         return do32bpt ? _dri_texformat_rgba8888 : _dri_texformat_argb4444;
+         return do32bpt ? _dri_texformat_argb8888 : _dri_texformat_argb4444;
       }
 
    case 3:
@@ -328,7 +328,7 @@ radeonChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
       case GL_UNSIGNED_SHORT_5_6_5_REV:
 	 return _dri_texformat_rgb565;
       default:
-         return do32bpt ? _dri_texformat_rgba8888 : _dri_texformat_rgb565;
+         return do32bpt ? _dri_texformat_argb8888 : _dri_texformat_rgb565;
       }
 
    case GL_RGBA8:
@@ -336,7 +336,7 @@ radeonChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGBA12:
    case GL_RGBA16:
       return !force16bpt ?
-	  _dri_texformat_rgba8888 : _dri_texformat_argb4444;
+	  _dri_texformat_argb8888 : _dri_texformat_argb4444;
 
    case GL_RGBA4:
    case GL_RGBA2:
@@ -349,7 +349,7 @@ radeonChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      return !force16bpt ? _dri_texformat_rgba8888 : _dri_texformat_rgb565;
+      return !force16bpt ? _dri_texformat_argb8888 : _dri_texformat_rgb565;
 
    case GL_RGB5:
    case GL_RGB4:
