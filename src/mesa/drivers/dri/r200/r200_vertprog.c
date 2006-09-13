@@ -1099,12 +1099,14 @@ static void
 r200ProgramStringNotify(GLcontext *ctx, GLenum target, struct gl_program *prog)
 {
    struct r200_vertex_program *vp = (void *)prog;
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
    switch(target) {
    case GL_VERTEX_PROGRAM_ARB:
       vp->translated = GL_FALSE;
 /*      memset(&vp->translated, 0, sizeof(struct r200_vertex_program) - sizeof(struct gl_vertex_program));*/
       r200_translate_vertex_program(vp);
+      rmesa->curr_vp_hw = NULL;
       break;
    }
    /* need this for tcl fallbacks */
