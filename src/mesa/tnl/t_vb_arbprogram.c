@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -106,11 +106,6 @@ static GLfloat ApproxExp2(GLfloat t)
 static GLfloat ApproxPower(GLfloat x, GLfloat y)
 {
    return (GLfloat) _mesa_pow(x, y);
-}
-
-static GLfloat rough_approx_log2_0_1(GLfloat x)
-{
-   return LOG2(x);
 }
 
 
@@ -314,7 +309,7 @@ static void do_EXP( struct arb_vp_machine *m, union instruction op )
 
    result[0] = LDEXPF(1.0, (int)flr_tmp);
    result[1] = frac_tmp;
-   result[2] = LDEXPF(rough_approx_log2_0_1(frac_tmp), (int)flr_tmp);
+   result[2] = RoughApproxExp2(tmp);
    result[3] = 1.0F;
 }
 
