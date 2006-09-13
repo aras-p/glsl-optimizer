@@ -1970,6 +1970,8 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
 
    case GL_LIGHTING:
       r200UpdateSpecular(ctx);
+      /* for reflection map fixup - might set recheck_texgen for all units too */
+      rmesa->NewGLState |= _NEW_TEXTURE;
       break;
 
    case GL_LINE_SMOOTH:

@@ -1304,11 +1304,13 @@ static GLboolean r200_validate_texgen( GLcontext *ctx, GLuint unit )
    case GL_REFLECTION_MAP_NV:
       rmesa->TexGenNeedNormals[unit] = GL_TRUE;
       tgi |= R200_TEXGEN_INPUT_EYE_REFLECT<<inputshift;
-      set_texgen_matrix( rmesa, unit, 
-	 (texUnit->TexGenEnabled & S_BIT) ? reflect : I,
-	 (texUnit->TexGenEnabled & T_BIT) ? reflect + 4 : I + 4,
-	 (texUnit->TexGenEnabled & R_BIT) ? reflect + 8 : I + 8,
-	 I + 12);
+      /* pretty weird, must only negate when lighting is enabled? */
+      if (ctx->Light.Enabled)
+	 set_texgen_matrix( rmesa, unit, 
+	    (texUnit->TexGenEnabled & S_BIT) ? reflect : I,
+	    (texUnit->TexGenEnabled & T_BIT) ? reflect + 4 : I + 4,
+	    (texUnit->TexGenEnabled & R_BIT) ? reflect + 8 : I + 8,
+	    I + 12);
       break;
 
    case GL_NORMAL_MAP_NV:
