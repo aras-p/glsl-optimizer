@@ -1137,7 +1137,10 @@ static void import_tex_obj_state( r200ContextPtr rmesa,
 				  int unit,
 				  r200TexObjPtr texobj )
 {
-   GLuint *cmd = R200_DB_STATE( tex[unit] );
+/* do not use RADEON_DB_STATE to avoid stale texture caches */
+   GLuint *cmd = &rmesa->hw.tex[unit].cmd[TEX_CMD_0];
+
+   R200_STATECHANGE( rmesa, tex[unit] );
 
    cmd[TEX_PP_TXFILTER] &= ~TEXOBJ_TXFILTER_MASK;
    cmd[TEX_PP_TXFILTER] |= texobj->pp_txfilter & TEXOBJ_TXFILTER_MASK;
@@ -1156,9 +1159,11 @@ static void import_tex_obj_state( r200ContextPtr rmesa,
    }
 
    if (texobj->base.tObj->Target == GL_TEXTURE_CUBE_MAP) {
-      GLuint *cube_cmd = R200_DB_STATE( cube[unit] );
+      GLuint *cube_cmd = &rmesa->hw.cube[unit].cmd[CUBE_CMD_0];
       GLuint bytesPerFace = texobj->base.totalSize / 6;
       ASSERT(texobj->base.totalSize % 6 == 0);
+
+      R200_STATECHANGE( rmesa, cube[unit] );
       cube_cmd[CUBE_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
       if (rmesa->r200Screen->drmSupportsFragShader) {
 	 /* that value is submitted twice. could change cube atom
@@ -1170,9 +1175,7 @@ static void import_tex_obj_state( r200ContextPtr rmesa,
       cube_cmd[CUBE_PP_CUBIC_OFFSET_F3] = texobj->pp_txoffset + 3 * bytesPerFace;
       cube_cmd[CUBE_PP_CUBIC_OFFSET_F4] = texobj->pp_txoffset + 4 * bytesPerFace;
       cube_cmd[CUBE_PP_CUBIC_OFFSET_F5] = texobj->pp_txoffset + 5 * bytesPerFace;
-      R200_DB_STATECHANGE( rmesa, &rmesa->hw.cube[unit] );
    }
-   R200_DB_STATECHANGE( rmesa, &rmesa->hw.tex[unit] );
 
    texobj->dirty_state &= ~(1<<unit);
 }
