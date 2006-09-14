@@ -503,7 +503,6 @@ int r300EmitArrays(GLcontext *ctx)
 		
 		comp_size = _mesa_sizeof_type(VB->AttribPtr[tab[i]].type);
 		
-#if MESA_LITTLE_ENDIAN
 		for (fix = 0; fix <= 4 - VB->AttribPtr[tab[i]].size; fix++) {
 			if ((rmesa->state.aos[i].aos_offset - comp_size * fix) % 4)
 				continue;
@@ -511,7 +510,6 @@ int r300EmitArrays(GLcontext *ctx)
 			found = 1;
 			break;
 		}
-#endif
 		
 		if (found) {
 			if (fix > 0) {
