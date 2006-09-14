@@ -372,54 +372,78 @@ GLboolean r300_run_vb_render(GLcontext *ctx,
 	return GL_FALSE;
 }
 
-#define FALLBACK_IF(expr) \
-do {										\
-	if (expr) {								\
-		if (1 || RADEON_DEBUG & DEBUG_FALLBACKS)			\
-			WARN_ONCE("Software fallback:%s\n", #expr);		\
-		return R300_FALLBACK_RAST;					\
-	}									\
-} while(0)
+#define FALLBACK_IF(expr)						\
+	do {								\
+		if (expr) {						\
+			if (1 || RADEON_DEBUG & DEBUG_FALLBACKS)	\
+				WARN_ONCE("Software fallback:%s\n",	\
+					  #expr);			\
+			return R300_FALLBACK_RAST;			\
+		}							\
+	} while(0)
 
 int r300Fallback(GLcontext *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int i;
 
-	FALLBACK_IF(ctx->RenderMode != GL_RENDER);  // We do not do SELECT or FEEDBACK (yet ?)
-	
-#if 0 /* These should work now.. */
+	/* We do not do SELECT or FEEDBACK (yet ?)
+	 * Is it worth doing them ?
+	 */
+	FALLBACK_IF(ctx->RenderMode != GL_RENDER);
+
+#if 0
+	/* These should work now.. */
 	FALLBACK_IF(ctx->Color.DitherFlag);
-	FALLBACK_IF(ctx->Color.AlphaEnabled); // GL_ALPHA_TEST
-	FALLBACK_IF(ctx->Color.BlendEnabled); // GL_BLEND
-	FALLBACK_IF(ctx->Polygon.OffsetFill); // GL_POLYGON_OFFSET_FILL
+	/* GL_ALPHA_TEST */
+	FALLBACK_IF(ctx->Color.AlphaEnabled);
+	/* GL_BLEND */
+	FALLBACK_IF(ctx->Color.BlendEnabled);
+	/* GL_POLYGON_OFFSET_FILL */
+	FALLBACK_IF(ctx->Polygon.OffsetFill);
+	/* FOG seems to trigger an unknown output
+	 *  in vertex program.
+	 */
 	FALLBACK_IF(ctx->Fog.Enabled);
 #endif
 
 	if(!r300->disable_lowimpact_fallback){
-		FALLBACK_IF(ctx->Polygon.OffsetPoint); // GL_POLYGON_OFFSET_POINT
-		FALLBACK_IF(ctx->Polygon.OffsetLine); // GL_POLYGON_OFFSET_LINE
-		//FALLBACK_IF(ctx->Stencil.Enabled); // GL_STENCIL_TEST
-
-		//FALLBACK_IF(ctx->Polygon.SmoothFlag); // GL_POLYGON_SMOOTH disabling to get blender going
-		FALLBACK_IF(ctx->Polygon.StippleFlag); // GL_POLYGON_STIPPLE
-		FALLBACK_IF(ctx->Multisample.Enabled); // GL_MULTISAMPLE_ARB
-
+		/* GL_POLYGON_OFFSET_POINT */
+		FALLBACK_IF(ctx->Polygon.OffsetPoint);
+		/* GL_POLYGON_OFFSET_LINE */
+		FALLBACK_IF(ctx->Polygon.OffsetLine);
+#if 0
+		/* GL_STENCIL_TEST */
+		FALLBACK_IF(ctx->Stencil.Enabled);
+		/* GL_POLYGON_SMOOTH disabling to get blender going */
+		FALLBACK_IF(ctx->Polygon.SmoothFlag);
+#endif
+		/* GL_POLYGON_STIPPLE */
+		FALLBACK_IF(ctx->Polygon.StippleFlag);
+		/* GL_MULTISAMPLE_ARB */
+		FALLBACK_IF(ctx->Multisample.Enabled);
+		/* blender ? */
 		FALLBACK_IF(ctx->Line.StippleFlag);
-
-		/* HW doesnt appear to directly support these */
-		FALLBACK_IF(ctx->Line.SmoothFlag); // GL_LINE_SMOOTH
-		FALLBACK_IF(ctx->Point.SmoothFlag); // GL_POINT_SMOOTH
+		/* GL_LINE_SMOOTH */
+		FALLBACK_IF(ctx->Line.SmoothFlag);
+		/* GL_POINT_SMOOTH */
+		FALLBACK_IF(ctx->Point.SmoothFlag);
 	}
 
-	/* Rest could be done with vertex fragments */
-	if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite)
-		FALLBACK_IF(ctx->Point.PointSprite); // GL_POINT_SPRITE_NV
+	/* Fallback for LOGICOP */
+	FALLBACK_IF(ctx->Color.ColorLogicOpEnabled);
 
+	/* Rest could be done with vertex fragments */
+	if (ctx->Extensions.NV_point_sprite ||
+	    ctx->Extensions.ARB_point_sprite)
+		/* GL_POINT_SPRITE_NV */
+		FALLBACK_IF(ctx->Point.PointSprite);
+
+	/* Fallback for rectangular texture */
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
 		if (ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_RECT_BIT)
 			return R300_FALLBACK_TCL;
-		
+
 	return R300_FALLBACK_NONE;
 }
 
