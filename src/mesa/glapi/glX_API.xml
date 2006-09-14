@@ -211,11 +211,11 @@
 
 <category name="GLX_EXT_texture_from_pixmap">
     <function name="BindTexImageEXT">
-        <glx vendorpriv="5152"/>
+        <glx vendorpriv="1330"/>
     </function>
 
     <function name="ReleaseTexImageEXT">
-        <glx vendorpriv="5153"/>
+        <glx vendorpriv="1331"/>
     </function>
 </category>
 
