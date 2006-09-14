@@ -53,9 +53,9 @@ static const struct {
    GLuint min_entry_size;
    GLuint max_entry_size;
 } limits[CS+1] = {
-   { 8, 24, 1, 5 },			/* vs */
+   { 8, 32, 1, 5 },			/* vs */
    { 4, 8,  1, 5 },			/* gs */
-   { 6, 12, 1, 5 },			/* clp */
+   { 6, 8,  1, 5 },			/* clp */
    { 1, 8,  1, 12 },		        /* sf */
    { 1, 4,  1, 32 }			/* cs */
 };
