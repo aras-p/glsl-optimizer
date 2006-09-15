@@ -18,6 +18,7 @@ SOURCES = \
 	arbfptexture.c \
 	arbfptrig.c \
 	arbnpot.c \
+	arbnpot-mipmap.c \
 	arbvptest1.c \
 	arbvptest3.c \
 	arbvptorus.c \
