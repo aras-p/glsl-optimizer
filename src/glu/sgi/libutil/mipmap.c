@@ -6597,7 +6597,7 @@ typedef void (GLAPIENTRY *TexImage3Dproc)( GLenum target, GLint level,
 						 GLenum format, GLenum type,
 						 const GLvoid *pixels );
 
-GLAPI TexImage3Dproc pTexImage3D;
+static TexImage3Dproc pTexImage3D = 0;
 
 #ifndef _WIN32
 #  include <dlfcn.h>
