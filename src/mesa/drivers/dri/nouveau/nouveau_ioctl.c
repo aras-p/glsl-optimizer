@@ -44,8 +44,13 @@ void nouveauIoctlInitFifo(nouveauContextPtr nmesa)
 	ret = drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_FIFO_INIT, &fifo_init, sizeof(fifo_init));
 	if (ret)
 		FATAL("Fifo initialization ioctl failed (returned %d)\n",ret);
-	MESSAGE("Fifo init ok. Channel %d\n", fifo_init.channel);
-	// XXX needs more stuff
+	MESSAGE("Fifo init ok. Using context %d\n", fifo_init.channel);
+
+	// XXX needs more stuff :
+	// - map the command buffer
+	// - map the fifo control regs
+	// - create the 3D object
+
 }
 
 void nouveauIoctlInitFunctions(struct dd_function_table *functions)

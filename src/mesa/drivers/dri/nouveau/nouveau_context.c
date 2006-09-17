@@ -71,7 +71,6 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	struct dd_function_table functions;
 	nouveauContextPtr nmesa;
 	nouveauScreenPtr screen;
-	int i;
 
 	/* Allocate the context */
 	nmesa = (nouveauContextPtr) CALLOC( sizeof(*nmesa) );
@@ -129,16 +128,18 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	switch(nmesa->screen->card_type)
 	{
 		case NV_03:
+			//nv03TriInitFunctions( ctx );
+			break;
 		case NV_04:
 		case NV_05:
-		default:
-			//nv03TriInitFunctions( ctx );
+			//nv04TriInitFunctions( ctx );
 			break;
 		case NV_10:
 		case NV_20:
 		case NV_30:
 		case NV_40:
 		case G_70:
+		default:
 			nv10TriInitFunctions( ctx );
 			break;
 	}
