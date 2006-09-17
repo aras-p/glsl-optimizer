@@ -26,8 +26,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 
-#ifndef __NOUVEAU_TRIS_H__
-#define __NOUVEAU_TRIS_H__
+#ifndef __NOUVEAU_SWTCL_H__
+#define __NOUVEAU_SWTCL_H__
 
 #include "nouveau_context.h"
 
@@ -50,6 +50,6 @@ extern void nouveauRunPipeline( GLcontext *ctx );
 extern void nouveauTriInitFunctions( GLcontext *ctx );
 
 
-#endif /* __NOUVEAU_TRIS_H__ */
+#endif /* __NOUVEAU_SWTCL_H__ */
 
 

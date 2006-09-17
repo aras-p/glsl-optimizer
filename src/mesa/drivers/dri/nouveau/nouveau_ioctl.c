@@ -36,13 +36,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_msg.h"
 
 // here we call the fifo initialization ioctl and fill in stuff accordingly
-void nouveauIoctlInitFifo()
+void nouveauIoctlInitFifo(nouveauContextPtr nmesa)
 {
 	int ret;
-	__DRIscreenPrivate *sPriv;
 	drm_nouveau_fifo_init_t fifo_init;
 
-	ret = drmCommandWriteRead(sPriv->fd, DRM_NOUVEAU_FIFO_INIT, &fifo_init, sizeof(fifo_init));
+	ret = drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_FIFO_INIT, &fifo_init, sizeof(fifo_init));
 	if (ret)
 		FATAL("Fifo initialization ioctl failed (returned %d)\n",ret);
 	MESSAGE("Fifo init ok. Channel %d\n", fifo_init.channel);

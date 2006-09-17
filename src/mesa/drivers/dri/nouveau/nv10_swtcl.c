@@ -40,7 +40,7 @@
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 
-#include "nouveau_tris.h"
+#include "nouveau_swtcl.h"
 #include "nv10_swtcl.h"
 #include "nouveau_context.h"
 #include "nouveau_span.h"

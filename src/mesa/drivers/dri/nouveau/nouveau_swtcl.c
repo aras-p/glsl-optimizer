@@ -24,8 +24,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
+/* Common software TCL code */
+
 #include "nouveau_context.h"
-#include "nouveau_tris.h"
+#include "nouveau_swtcl.h"
 #include "nv10_swtcl.h"
 #include "nouveau_span.h"
 #include "swrast/swrast.h"

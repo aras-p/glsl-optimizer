@@ -28,7 +28,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __NOUVEAU_IOCTL_H__
 #define __NOUVEAU_IOCTL_H__
 
-extern void nouveauIoctlInitFifo();
+#include "nouveau_context.h"
+
+extern void nouveauIoctlInitFifo(nouveauContextPtr nmesa);
 extern void nouveauIoctlInitFunctions(struct dd_function_table *functions);
 
 #endif /* __NOUVEAU_IOCTL_H__ */

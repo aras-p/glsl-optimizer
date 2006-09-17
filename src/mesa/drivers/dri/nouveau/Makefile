@@ -16,7 +16,7 @@ DRIVER_SOURCES = \
 	nouveau_span.c           \
 	nouveau_state.c		 \
 	nouveau_tex.c            \
-	nouveau_tris.c           \
+	nouveau_swtcl.c          \
 	nv10_swtcl.c
 
 C_SOURCES = \
