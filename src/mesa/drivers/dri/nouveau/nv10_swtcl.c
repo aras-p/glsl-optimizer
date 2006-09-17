@@ -171,7 +171,7 @@ static inline void nv10_draw_point(nouveauContextPtr nmesa,
 #define LOCAL_VARS						\
    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);		\
    const char *nouveauverts = (char *)nmesa->verts;
-#define VERT(x) (r200Vertex *)(r200verts + ((x) * vertsize * sizeof(int)))
+#define VERT(x) (nouveauVertex *)(nouveauverts + ((x) * vertsize * sizeof(int)))
 #define VERTEX nouveauVertex
 
 #undef TAG
@@ -182,10 +182,39 @@ static inline void nv10_draw_point(nouveauContextPtr nmesa,
  *          Macros for nouveau_dd_tritmp.h to draw basic primitives        *
  ***********************************************************************/
 
-#define QUAD( a, b, c, d ) nouveau_quad( nmesa, a, b, c, d )
-#define TRI( a, b, c )     nouveau_triangle( nmesa, a, b, c )
-#define LINE( a, b )       nouveau_line( nmesa, a, b )
-#define POINT( a )         nouveau_point( nmesa, a )
+#define TRI(a, b, c)                                        \
+	do {                                                \
+		if (DO_FALLBACK)                            \
+		nmesa->draw_tri(nmesa, a, b, c);            \
+		else                                        \
+		nv10_draw_triangle(nmesa, a, b, c);         \
+	} while (0)
+
+#define QUAD(a, b, c, d)                                    \
+	do {                                                \
+		if (DO_FALLBACK) {                          \
+			nmesa->draw_tri(nmesa, a, b, d);    \
+			nmesa->draw_tri(nmesa, b, c, d);    \
+		}                                           \
+		else                                        \
+		nv10_draw_quad(nmesa, a, b, c, d);          \
+	} while (0)
+
+#define LINE(v0, v1)                                        \
+	do {                                                \
+		if (DO_FALLBACK)                            \
+		nmesa->draw_line(nmesa, v0, v1);            \
+		else                                        \
+		nv10_draw_line(nmesa, v0, v1);              \
+	} while (0)
+
+#define POINT(v0)                                           \
+	do {                                                \
+		if (DO_FALLBACK)                            \
+		nmesa->draw_point(nmesa, v0);               \
+		else                                        \
+		nv10_draw_point(nmesa, v0);                 \
+	} while (0)
 
 #undef TAG
 
@@ -467,7 +496,7 @@ static void nouveauRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
 {
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-	GLuint prim = NOUVEAU_CONTEXT(ctx)->renderPrimitive;
+	GLuint prim = NOUVEAU_CONTEXT(ctx)->current_primitive;
 
 	/* Render the new vertices as an unclipped polygon.
 	 */

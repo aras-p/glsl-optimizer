@@ -103,9 +103,9 @@ typedef struct nouveau_context {
 
 	/* The drawing fallbacks */
 	GLuint Fallback;
-	nouveau_tri_func* draw_tri;
-	nouveau_line_func* draw_line;
-	nouveau_point_func* draw_point;
+	nouveau_tri_func draw_tri;
+	nouveau_line_func draw_line;
+	nouveau_point_func draw_point;
 
 	/* Cliprects information */
 	GLuint numClipRects;
