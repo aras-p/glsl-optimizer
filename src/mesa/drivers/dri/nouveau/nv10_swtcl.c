@@ -52,8 +52,9 @@
 /* XXX hack for now */
 #define channel 1
 
-static void nv10RenderPrimitive( GLcontext *ctx, GLenum prim );
 static void nv10RasterPrimitive( GLcontext *ctx, GLenum rprim, GLuint hwprim );
+static void nv10RenderPrimitive( GLcontext *ctx, GLenum prim );
+static void nv10ResetLineStipple( GLcontext *ctx );
 
 
 
@@ -466,7 +467,7 @@ const GLuint vertsize = nmesa->vertex_size;          \
 const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;       \
 const GLboolean stipple = ctx->Line.StippleFlag;		\
 (void) elt; (void) stipple;
-#define RESET_STIPPLE	if ( stipple ) nouveauResetLineStipple( ctx );
+#define RESET_STIPPLE	if ( stipple ) nv10ResetLineStipple( ctx );
 #define RESET_OCCLUSION
 #define PRESERVE_VB_DEFS
 #define ELT(x) x
@@ -650,6 +651,7 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa, GLuint 
 	for(i=8;i<16;i++)
 	{
 		if (index&(1<<i))
+			/* FIXME that is very dubious */
 			attr_size[i]=VB->TexCoordPtr[i];
 		else
 			attr_size[i]=0;
@@ -713,13 +715,13 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa, GLuint 
 		NV10_SET_VERTEX_ATTRIB(0, _TNL_ATTRIB_POS);
 		NV10_SET_VERTEX_ATTRIB(1, _TNL_ATTRIB_COLOR0);
 		NV10_SET_VERTEX_ATTRIB(2, _TNL_ATTRIB_COLOR1);
-		NV10_SET_VERTEX_ATTRIB(3, _TNL_ATTRIB_TX0);
-		NV10_SET_VERTEX_ATTRIB(4, _TNL_ATTRIB_TX1);
+		NV10_SET_VERTEX_ATTRIB(3, _TNL_ATTRIB_TEX0);
+		NV10_SET_VERTEX_ATTRIB(4, _TNL_ATTRIB_TEX1);
 		NV10_SET_VERTEX_ATTRIB(5, _TNL_ATTRIB_NORMAL);
 		NV10_SET_VERTEX_ATTRIB(6, _TNL_ATTRIB_WEIGHT);
 		NV10_SET_VERTEX_ATTRIB(7, _TNL_ATTRIB_FOG);
 
-		BEGIN_RING_SIZE(channel, NV10_VERTEX_SET_FORMAT);
+		BEGIN_RING_SIZE(channel, NV10_VERTEX_SET_FORMAT,1);
 		OUT_RING(0);
 	} else if (nmesa->screen->card_type==NV_20) {
 		for(i=0;i<16;i++)
@@ -749,11 +751,11 @@ static void nv10ChooseVertexState( GLcontext *ctx )
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
-	GLuint index = tnl->render_inputs;
+	GLuint index = tnl->render_inputs_bitset;
 
-	if (index!=nmesa->render_inputs)
+	if (index!=nmesa->render_inputs_bitset)
 	{
-		nmesa->render_inputs=index;
+		nmesa->render_inputs_bitset=index;
 		nv10OutputVertexFormat(nmesa,index);
 	}
 }
@@ -766,6 +768,7 @@ static void nv10ChooseVertexState( GLcontext *ctx )
 
 static void nv10RenderStart(GLcontext *ctx)
 {
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 
 	if (nmesa->new_state) {
@@ -816,6 +819,11 @@ static void nv10RenderPrimitive( GLcontext *ctx, GLuint prim )
 	nv10RasterPrimitive( ctx, prim, hw_prim[prim] );
 }
 
+static void nv10ResetLineStipple( GLcontext *ctx )
+{
+	/* FIXME do something here */
+}
+
 
 /**********************************************************************/
 /*                            Initialization.                         */
@@ -836,7 +844,7 @@ void nv10TriInitFunctions(GLcontext *ctx)
 	tnl->Driver.Render.Start = nv10RenderStart;
 	tnl->Driver.Render.Finish = nv10RenderFinish;
 	tnl->Driver.Render.PrimitiveNotify = nv10RenderPrimitive;
-	tnl->Driver.Render.ResetLineStipple = nouveauResetLineStipple;
+	tnl->Driver.Render.ResetLineStipple = nv10ResetLineStipple;
 	tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
 	tnl->Driver.Render.CopyPV = _tnl_copy_pv;
 	tnl->Driver.Render.Interp = _tnl_interp;

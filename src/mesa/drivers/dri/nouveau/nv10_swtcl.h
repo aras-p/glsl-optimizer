@@ -33,7 +33,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extern void nv10Fallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 extern void nv10FinishPrimitive(struct nouveau_context *nmesa);
-extern void nv10RenderStart(GLcontext *ctx);
 extern void nv10TriInitFunctions(GLcontext *ctx);
 #define FALLBACK( nmesa, bit, mode ) nouveauFallback( nmesa->glCtx, bit, mode )
 
