@@ -48,6 +48,7 @@
 #include "nouveau_reg.h"
 #include "nouveau_tex.h"
 #include "nouveau_fifo.h"
+#include "nouveau_msg.h"
 
 /* XXX hack for now */
 #define channel 1
@@ -651,8 +652,7 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa, GLuint 
 	for(i=8;i<16;i++)
 	{
 		if (index&(1<<i))
-			/* FIXME that is very dubious */
-			attr_size[i]=VB->TexCoordPtr[i];
+			attr_size[i]=VB->TexCoordPtr[i]->size;
 		else
 			attr_size[i]=0;
 	}
@@ -822,6 +822,7 @@ static void nv10RenderPrimitive( GLcontext *ctx, GLuint prim )
 static void nv10ResetLineStipple( GLcontext *ctx )
 {
 	/* FIXME do something here */
+	WARN_ONCE("Unimplemented nv10ResetLineStipple\n");
 }
 
 

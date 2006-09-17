@@ -74,7 +74,6 @@ void nouveau_fallback_point(struct nouveau_context *nmesa,
 void nouveauFallback(struct nouveau_context *nmesa, GLuint bit, GLboolean mode)
 {
 	GLcontext *ctx = nmesa->glCtx;
-	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	GLuint oldfallback = nmesa->Fallback;
 
 	if (mode) {
