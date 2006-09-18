@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -119,7 +119,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    span->arrayMask |= SPAN_INDEX;
 #endif
 #if FLAGS & TEXTURE
-   span->arrayMask |= SPAN_TEXTURE;
+   span->arrayMask |= (SPAN_TEXTURE | SPAN_LAMBDA);
    if (ctx->FragmentProgram._Active) {
       /* Don't divide texture s,t,r by q (use TXP to do that) */
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
@@ -150,7 +150,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    span->arrayMask |= SPAN_COVERAGE;
 #endif
 #if FLAGS & SPRITE
-   span->arrayMask |= SPAN_TEXTURE;
+   span->arrayMask |= (SPAN_TEXTURE | SPAN_LAMBDA);
 #endif
 
    /* Compute point size if not known to be one */
@@ -232,12 +232,14 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       /* check if we need to flush */
       if (span->end + (xmax-xmin+1) * (ymax-ymin+1) >= MAX_WIDTH ||
           (swrast->_RasterMask & (BLEND_BIT | LOGIC_OP_BIT | MASKING_BIT))) {
+         if (span->end > 0) {
 #if FLAGS & RGBA
-         _swrast_write_rgba_span(ctx, span);
+            _swrast_write_rgba_span(ctx, span);
 #else
-         _swrast_write_index_span(ctx, span);
+            _swrast_write_index_span(ctx, span);
 #endif
-         span->end = 0;
+            span->end = 0;
+         }
       }
 
       /*
@@ -279,6 +281,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
             for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
                if (ctx->Texture._EnabledCoordUnits & (1 << u)) {
                   COPY_4V(span->array->texcoords[u][count], texcoord[u]);
+                  span->array->lambda[u][count] = 0.0;
                }
             }
 #endif
@@ -343,6 +346,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
                      span->array->texcoords[u][count][1] = t;
                      span->array->texcoords[u][count][2] = r;
                      span->array->texcoords[u][count][3] = 1.0F;
+                     span->array->lambda[u][count] = 0.0; /* XXX fix? */
                   }
                   else {
                      COPY_4V(span->array->texcoords[u][count], vert->texcoord[u]);
