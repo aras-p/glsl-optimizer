@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -590,13 +590,13 @@ compute_min_mag_ranges(const struct gl_texture_object *tObj,
    }
 #endif /* DEBUG */
 
-   if (lambda[0] <= minMagThresh && lambda[n-1] <= minMagThresh) {
+   if (lambda[0] <= minMagThresh && (n <= 1 || lambda[n-1] <= minMagThresh)) {
       /* magnification for whole span */
       *magStart = 0;
       *magEnd = n;
       *minStart = *minEnd = 0;
    }
-   else if (lambda[0] > minMagThresh && lambda[n-1] > minMagThresh) {
+   else if (lambda[0] > minMagThresh && (n <=1 || lambda[n-1] > minMagThresh)) {
       /* minification for whole span */
       *minStart = 0;
       *minEnd = n;
