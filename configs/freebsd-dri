@@ -16,10 +16,10 @@ X11_INCLUDES = -I/usr/X11R6/include
 DEFINES = -DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER \
 	-DGLX_DIRECT_RENDERING -DHAVE_ALIAS -DHAVE_POSIX_MEMALIGN
 
-CFLAGS = -Wmissing-prototypes -g -std=c99 -Wundef -fPIC -ffast-math \
+CFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) -Wmissing-prototypes -std=c99 -Wundef -ffast-math \
 	$(ASM_FLAGS) $(X11_INCLUDES) $(DEFINES)
 
-CXXFLAGS = $(DEFINES) -Wall -g -ansi -pedantic -fPIC
+CXXFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(DEFINES) -Wall -ansi -pedantic $(ASM_FLAGS) $(X11_INCLUDES) 
 
 ASM_SOURCES = 
 
@@ -29,7 +29,7 @@ DRI_LIB_DEPS = -L/usr/local/lib -lm -lpthread -lexpat $(LIBDRM_LIB)
 GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXxf86vm -lm -lpthread $(LIBDRM_LIB)
 
 GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -L/usr/X11R6/lib -lGLU -lGL -lX11 -lXmu -lXt -lXi -lm
-GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -L/usr/X11R6/lib -lGL -lXt -lXm -lX11
+GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -L/usr/X11R6/lib -lGL -lXt -lX11
 
 
 # Directories
