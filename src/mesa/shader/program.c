@@ -917,6 +917,15 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
 	    case STATE_NORMAL_SCALE:
                ASSIGN_4V(value, ctx->_ModelViewInvScale, 0, 0, 1);
                break;
+	    case STATE_TEXRECT_SCALE: {
+   	       const int unit = (int) state[2];
+	       const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
+	       if (texObj) {
+		  struct gl_texture_image *texImage = texObj->Image[0][0];
+		  ASSIGN_4V(value, 1.0 / texImage->Width, 1.0 / texImage->Height, 0, 1);
+	       }
+               break;
+	    }
 	    default:
                _mesa_problem(ctx, "Bad state switch in _mesa_fetch_state()");
                return;
@@ -988,6 +997,8 @@ static GLuint make_state_flags(const GLint state[])
       switch (state[1]) {
       case STATE_NORMAL_SCALE:
 	 return _NEW_MODELVIEW;
+      case STATE_TEXRECT_SCALE:
+	 return _NEW_TEXTURE;
       default:
          _mesa_problem(NULL, "unexpected int. state in make_state_flags()");
 	 return 0;
