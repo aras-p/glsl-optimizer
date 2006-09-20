@@ -35,6 +35,7 @@
 #include "intel_span.h"
 #include "intel_ioctl.h"
 #include "intel_tex.h"
+#include "intel_batchbuffer.h"
 #include "swrast/swrast.h"
 
 #undef DBG
@@ -213,7 +214,7 @@ void intelSpanRenderStart( GLcontext *ctx )
       intel_batchbuffer_flush(intel->batch);
       intel->need_flush = 0;
       UNLOCK_HARDWARE(intel);
-      intelFinish(intel);
+      intelFinish(&intel->ctx);
    }
 
 
