@@ -124,9 +124,30 @@ get_dispatch(Display *dpy)
    
 
 
-/* Set by glXMakeCurrent() and glXMakeContextCurrent() only */
+/**
+ * GLX API current context.
+ */
+#if defined(GLX_USE_TLS)
+PUBLIC __thread void * CurrentContext
+    __attribute__((tls_model("initial-exec")));
+#elif defined(THREADS)
+static _glthread_TSD ContextTSD;         /**< Per-thread context pointer */
+#else
 static GLXContext CurrentContext = 0;
-#define __glXGetCurrentContext() CurrentContext;
+#endif
+
+
+static void
+SetCurrentContext(GLXContext c)
+{
+#if defined(GLX_USE_TLS)
+   CurrentContext = context;
+#elif defined(THREADS)
+   _glthread_SetTSD(&ContextTSD, c);
+#else
+   CurrentContext = c;
+#endif
+}
 
 
 /*
@@ -186,6 +207,8 @@ glXDestroyContext(Display *dpy, GLXContext ctx)
    GET_DISPATCH(dpy, t);
    if (!t)
       return;
+   if (glXGetCurrentContext() == ctx)
+      SetCurrentContext(NULL);
    (t->DestroyContext)(dpy, ctx);
 }
 
@@ -215,7 +238,13 @@ glXGetConfig(Display *dpy, XVisualInfo *visinfo, int attrib, int *value)
 GLXContext PUBLIC
 glXGetCurrentContext(void)
 {
+#if defined(GLX_USE_TLS)
    return CurrentContext;
+#elif defined(THREADS)
+   return _glthread_GetTSD(&ContextTSD);
+#else
+   return CurrentContext;
+#endif
 }
 
 
@@ -249,7 +278,7 @@ glXMakeCurrent(Display *dpy, GLXDrawable drawable, GLXContext ctx)
    }
    b = (*t->MakeCurrent)(dpy, drawable, ctx);
    if (b) {
-      CurrentContext = ctx;
+      SetCurrentContext(ctx);
    }
    return b;
 }
@@ -524,7 +553,7 @@ glXMakeContextCurrent(Display *dpy, GLXDrawable draw, GLXDrawable read, GLXConte
       return False;
    b = (t->MakeContextCurrent)(dpy, draw, read, ctx);
    if (b) {
-      CurrentContext = ctx;
+      SetCurrentContext(ctx);
    }
    return b;
 }
