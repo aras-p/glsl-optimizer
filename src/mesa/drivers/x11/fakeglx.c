@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -1388,7 +1388,7 @@ Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
       xmvis = create_glx_visual( dpy, visinfo );
       if (!xmvis) {
          /* unusable visual */
-         FREE(glxCtx);
+         _mesa_free(glxCtx);
          return NULL;
       }
    }
@@ -1396,7 +1396,7 @@ Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
    glxCtx->xmesaContext = XMesaCreateContext(xmvis,
                                    shareCtx ? shareCtx->xmesaContext : NULL);
    if (!glxCtx->xmesaContext) {
-      FREE(glxCtx);
+      _mesa_free(glxCtx);
       return NULL;
    }
 
@@ -1617,6 +1617,7 @@ Fake_glXDestroyContext( Display *dpy, GLXContext ctx )
    MakeCurrent_PrevReadBuffer = 0;
    XMesaDestroyContext( glxCtx->xmesaContext );
    XMesaGarbageCollect();
+   _mesa_free(glxCtx);
 }
 
 
@@ -2277,7 +2278,7 @@ Fake_glXCreateNewContext( Display *dpy, GLXFBConfig config,
    glxCtx->xmesaContext = XMesaCreateContext(xmvis,
                                    shareCtx ? shareCtx->xmesaContext : NULL);
    if (!glxCtx->xmesaContext) {
-      FREE(glxCtx);
+      _mesa_free(glxCtx);
       return NULL;
    }
 
@@ -2500,7 +2501,7 @@ Fake_glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, int re
    glxCtx->xmesaContext = XMesaCreateContext(xmvis,
                                    shareCtx ? shareCtx->xmesaContext : NULL);
    if (!glxCtx->xmesaContext) {
-      FREE(glxCtx);
+      _mesa_free(glxCtx);
       return NULL;
    }
 
