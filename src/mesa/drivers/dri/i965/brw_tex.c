@@ -75,7 +75,9 @@ brwChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGB5:
    case GL_RGB4:
    case GL_R3_G3_B2:
-/*       return &_mesa_texformat_rgb888; */
+      /* Broadwater doesn't support RGB textures, so these must be
+       * stored as ARGB.
+       */
       return &_mesa_texformat_argb8888;
 
    case GL_ALPHA:

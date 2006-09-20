@@ -98,6 +98,8 @@ static GLuint brw_parameter_state_flags(const enum state_index state[])
       switch (state[1]) {
       case STATE_NORMAL_SCALE:
 	 return _NEW_MODELVIEW;
+      case STATE_TEXRECT_SCALE:
+	 return _NEW_TEXTURE;
       default:
 	 assert(0);
 	 return 0;
