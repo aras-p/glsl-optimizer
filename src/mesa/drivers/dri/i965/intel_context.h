@@ -176,16 +176,6 @@ struct intel_context
 
    struct intel_batchbuffer *batch;
 
-   struct {
-      GLuint id;
-      GLuint primitive;
-      GLubyte *start_ptr;      
-      void (*flush)( struct intel_context * );
-   } prim;
-
-   GLboolean locked;
-   GLboolean strict_conformance;
-
    GLubyte clear_chan[4];
    GLuint ClearColor;
    GLuint ClearDepth;
@@ -201,6 +191,10 @@ struct intel_context
    GLboolean no_hw;
    GLboolean no_rast;
    GLboolean thrashing;
+   GLboolean locked;
+   GLboolean strict_conformance;
+   GLboolean need_flush;
+
 
    
    /* AGP memory buffer manager:
@@ -214,21 +208,11 @@ struct intel_context
    GLmatrix ViewportMatrix;
    GLenum render_primitive;
    GLenum reduced_primitive;
-   GLuint vertex_size;
-   GLubyte *verts;			/* points to tnl->clipspace.vertex_buf */
-
 
    struct intel_region *front_region;
    struct intel_region *back_region;
    struct intel_region *draw_region;
    struct intel_region *depth_region;
-
-
-   /* Fallback rasterization functions 
-    */
-   intel_point_func draw_point;
-   intel_line_func draw_line;
-   intel_tri_func draw_tri;
 
    /* These refer to the current draw (front vs. back) buffer:
     */
@@ -496,6 +480,13 @@ extern GLboolean intel_intersect_cliprects( drm_clip_rect_t *dest,
 					    const drm_clip_rect_t *b );
 
 
+/* ================================================================
+ * intel_pixel_copy.c:
+ */
+void intelCopyPixels(GLcontext * ctx,
+                     GLint srcx, GLint srcy,
+                     GLsizei width, GLsizei height,
+                     GLint destx, GLint desty, GLenum type);
 
 #define _NEW_WINDOW_POS 0x40000000
 

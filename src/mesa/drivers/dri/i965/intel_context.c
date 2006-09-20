@@ -255,9 +255,13 @@ void intelInitDriverFunctions( struct dd_function_table *functions )
     */
    functions->Accum = _swrast_Accum;
    functions->Bitmap = _swrast_Bitmap;
-   functions->CopyPixels = _swrast_CopyPixels;
    functions->ReadPixels = _swrast_ReadPixels;
    functions->DrawPixels = _swrast_DrawPixels;
+
+   /* CopyPixels can be accelerated even with the current memory
+    * manager:
+    */
+   functions->CopyPixels = intelCopyPixels;
 
    intelInitTextureFuncs( functions );
    intelInitStateFuncs( functions );
@@ -445,8 +449,6 @@ GLboolean intelInitContext( struct intel_context *intel,
 /* 			  DRI_TEXMGR_DO_TEXTURE_2D |  */
 /* 			  DRI_TEXMGR_DO_TEXTURE_RECT ); */
 
-
-   intel->prim.primitive = ~0;
 
    if (getenv("INTEL_NO_RAST")) {
       fprintf(stderr, "disabling 3D rasterization\n");
