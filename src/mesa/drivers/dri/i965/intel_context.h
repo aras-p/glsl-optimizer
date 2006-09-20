@@ -204,8 +204,6 @@ struct intel_context
 
    /* State for intelvb.c and inteltris.c.
     */
-   GLuint RenderIndex;
-   GLmatrix ViewportMatrix;
    GLenum render_primitive;
    GLenum reduced_primitive;
 

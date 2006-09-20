@@ -378,8 +378,6 @@ GLboolean intelInitContext( struct intel_context *intel,
       exit(1);
    }
  
-   _math_matrix_ctr (&intel->ViewportMatrix);
-
    driInitExtensions( ctx, card_extensions, 
 		      GL_TRUE );
 
