@@ -646,6 +646,56 @@ swizzle_copy(GLubyte *dst, GLuint dstComponents, const GLubyte *src,
    }
 }
 
+/* Help! I'm just making this up!
+ *
+ * This should take the incoming Type, Endian pair and produce a
+ * mapping from that data when examined through a (char *) pointer
+ * natively, to the equivalent of what that data would look like if it
+ * were presented as GL_UNSIGNED_BYTEs on a littleEndian machine... I
+ * think...
+ */
+static const GLubyte map_identity[6] = { 0, 1, 2, 3, 4, 5 };
+static const GLubyte map_3210[6] = { 3, 2, 1, 0, 4, 5 };
+
+
+static const GLubyte *
+type_endian_mapping( GLenum srcType, GLboolean littleEndian )
+{
+
+   switch (srcType) {
+   case GL_UNSIGNED_BYTE:
+      if (littleEndian)
+	 return map_identity;
+      else
+	 return map_3210;
+   case GL_UNSIGNED_INT_8_8_8_8:
+      return map_identity;
+   case GL_UNSIGNED_INT_8_8_8_8_REV:
+      return map_3210;
+   default:
+      return NULL;
+   }
+}
+
+/* This will have to change to support GL_UNSIGNED_SHORT input types.
+ * It's making my mind swim at the moment though.
+ */
+static const GLubyte *
+byteswap_mapping( GLenum srcType )
+{
+   switch (srcType) {
+   case GL_UNSIGNED_BYTE:
+      return map_identity;
+   case GL_UNSIGNED_INT_8_8_8_8:
+   case GL_UNSIGNED_INT_8_8_8_8_REV:
+      return map_3210;
+   default:
+      return NULL;
+   }
+}
+
+
+
 
 /**
  * Transfer a GLubyte texture image with component swizzling.
@@ -654,9 +704,12 @@ static void
 _mesa_swizzle_ubyte_image(GLcontext *ctx, 
 			  GLuint dimensions,
 			  GLenum srcFormat,
+			  GLenum srcType,
+			  GLboolean littleEndian,
+
 			  GLenum baseInternalFormat,
 
-			  const GLubyte *dstMap,
+			  const GLubyte *rgba2dst,
 			  GLuint dstComponents,
 
 			  GLvoid *dstAddr,
@@ -669,7 +722,7 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
 			  const struct gl_pixelstore_attrib *srcPacking )
 {
    GLint srcComponents = _mesa_components_in_format(srcFormat);
-   const GLubyte *srcmap, *rgbamap;
+   const GLubyte *src2base, *base2rgba, *srctype2ubyte_le, *swap;
    GLubyte map[4];
    GLint i;
    const GLint srcRowStride =
@@ -689,11 +742,14 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
     * correctly deal with RGBA->RGB->RGBA conversions where the final
     * A value must be 0xff regardless of the incoming alpha values.
     */
-   srcmap = compute_component_mapping(srcFormat, baseInternalFormat);
-   rgbamap = compute_component_mapping(baseInternalFormat, GL_RGBA);
+   src2base = compute_component_mapping(srcFormat, baseInternalFormat);
+   base2rgba = compute_component_mapping(baseInternalFormat, GL_RGBA);
+   swap = byteswap_mapping(srcType);
+   srctype2ubyte_le = type_endian_mapping(srcType, littleEndian);
+
 
    for (i = 0; i < 4; i++)
-      map[i] = srcmap[rgbamap[dstMap[i]]];
+      map[i] = srctype2ubyte_le[swap[src2base[base2rgba[rgba2dst[i]]]]];
 
 /*    _mesa_printf("map %d %d %d %d\n", map[0], map[1], map[2], map[3]);  */
 
@@ -1151,25 +1207,33 @@ _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
                      srcAddr, srcPacking);
    }
    else if (!ctx->_ImageTransferState &&
-	    !srcPacking->SwapBytes &&
-	    srcType == GL_UNSIGNED_BYTE && 
-	    dstFormat == &_mesa_texformat_rgba8888 &&
-	    littleEndian &&
+	    (srcType == GL_UNSIGNED_BYTE ||
+	     srcType == GL_UNSIGNED_INT_8_8_8_8 ||
+	     srcType == GL_UNSIGNED_INT_8_8_8_8_REV) &&
 	    can_swizzle(baseInternalFormat) &&
 	    can_swizzle(srcFormat)) {
+
       GLubyte dstmap[4];
 
       /* dstmap - how to swizzle from RGBA to dst format:
-       *
-       * FIXME - add !litteEndian and _rev varients:
        */
-      dstmap[3] = 0;
-      dstmap[2] = 1;
-      dstmap[1] = 2;
-      dstmap[0] = 3;
+      if (dstFormat == &_mesa_texformat_rgba8888) {
+	 dstmap[3] = 0;
+	 dstmap[2] = 1;
+	 dstmap[1] = 2;
+	 dstmap[0] = 3;
+      }
+      else {
+	 dstmap[3] = 3;
+	 dstmap[2] = 2;
+	 dstmap[1] = 1;
+	 dstmap[0] = 0;
+      }
       
       _mesa_swizzle_ubyte_image(ctx, dims,
 				srcFormat,
+				srcType,
+				littleEndian,
 				baseInternalFormat,
 				dstmap, 4,
 				dstAddr, dstXoffset, dstYoffset, dstZoffset,
@@ -1359,10 +1423,9 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
       }
    }
    else if (!ctx->_ImageTransferState &&
-	    !srcPacking->SwapBytes &&
-	    dstFormat == &_mesa_texformat_argb8888 &&
-	    srcType == GL_UNSIGNED_BYTE && 
-	    littleEndian &&
+	    (srcType == GL_UNSIGNED_BYTE ||
+	     srcType == GL_UNSIGNED_INT_8_8_8_8 ||
+	     srcType == GL_UNSIGNED_INT_8_8_8_8_REV) &&
 	    can_swizzle(baseInternalFormat) &&	   
 	    can_swizzle(srcFormat)) {
 
@@ -1370,13 +1433,25 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 
       /* dstmap - how to swizzle from RGBA to dst format:
        */
-      dstmap[3] = 3;		/* alpha */
-      dstmap[2] = 0;		/* red */
-      dstmap[1] = 1;		/* green */
-      dstmap[0] = 2;		/* blue */
+      if (dstFormat == &_mesa_texformat_argb8888) {
+	 dstmap[3] = 3;		/* alpha */
+	 dstmap[2] = 0;		/* red */
+	 dstmap[1] = 1;		/* green */
+	 dstmap[0] = 2;		/* blue */
+      }
+      else {
+	 assert(dstFormat == &_mesa_texformat_argb8888_rev);
+	 dstmap[3] = 2;
+	 dstmap[2] = 1;
+	 dstmap[1] = 0;
+	 dstmap[0] = 3;
+      }
  
       _mesa_swizzle_ubyte_image(ctx, dims,
 				srcFormat,
+				srcType,
+				littleEndian,
+
 				baseInternalFormat,
 				dstmap, 4,
 				dstAddr, dstXoffset, dstYoffset, dstZoffset,
