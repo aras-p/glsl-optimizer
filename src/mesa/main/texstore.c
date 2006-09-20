@@ -607,7 +607,10 @@ static void
 _mesa_swizzle_ubyte_image(GLcontext *ctx, 
 			  GLuint dimensions,
 			  GLenum srcFormat,
-			  const GLubyte *dstmap, GLint dstComponents,
+			  GLenum baseInternalFormat,
+
+			  const GLubyte *dstMap,
+			  GLuint dstComponents,
 
 			  GLvoid *dstAddr,
 			  GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
@@ -619,9 +622,8 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
 			  const struct gl_pixelstore_attrib *srcPacking )
 {
    GLint srcComponents = _mesa_components_in_format(srcFormat);
-   GLubyte srcmap[6], map[4];
+   GLubyte srcmap[6], rgbamap[6], map[4];
    GLint i;
-
    const GLint srcRowStride =
       _mesa_image_row_stride(srcPacking, srcWidth,
                              srcFormat, GL_UNSIGNED_BYTE);
@@ -635,10 +637,15 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
 
    (void) ctx;
 
-   compute_component_mapping(srcFormat, GL_RGBA, srcmap);
+   /* Translate from src->baseInternal->GL_RGBA->dst.  This will
+    * correctly deal with RGBA->RGB->RGBA conversions where the final
+    * A value must be 0xff regardless of the incoming alpha values.
+    */
+   compute_component_mapping(srcFormat, baseInternalFormat, srcmap);
+   compute_component_mapping(baseInternalFormat, GL_RGBA, rgbamap);
 
    for (i = 0; i < 4; i++)
-      map[i] = srcmap[dstmap[i]];
+      map[i] = srcmap[rgbamap[dstMap[i]]];
 
    if (srcRowStride == srcWidth * srcComponents &&
        dimensions < 3) {
@@ -1218,6 +1225,8 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
             !srcPacking->SwapBytes &&
 	    dstFormat == &_mesa_texformat_argb8888 &&
             srcFormat == GL_RGB &&
+	    (baseInternalFormat == GL_RGBA ||
+	     baseInternalFormat == GL_RGB) &&
             srcType == GL_UNSIGNED_BYTE) {
 
       int img, row, col;
@@ -1246,6 +1255,7 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
             !srcPacking->SwapBytes &&
 	    dstFormat == &_mesa_texformat_argb8888 &&
             srcFormat == GL_RGBA &&
+	    baseInternalFormat == GL_RGBA &&
             (srcType == GL_UNSIGNED_BYTE && littleEndian)) {
       GLint img, row, col;
       /* For some reason, streaming copies to write-combined regions
@@ -1280,6 +1290,7 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
             !srcPacking->SwapBytes &&
 	    dstFormat == &_mesa_texformat_argb8888 &&
             srcFormat == GL_RGBA &&
+	    baseInternalFormat == GL_RGBA &&
             srcType == GL_UNSIGNED_BYTE) {
 
       GLint img, row, col;
@@ -1309,17 +1320,12 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 	    dstFormat == &_mesa_texformat_argb8888 &&
 	    srcType == GL_UNSIGNED_BYTE && 
 	    littleEndian &&
-	    /* Three texture formats involved: srcFormat,
-	     * baseInternalFormat and destFormat (GL_RGBA). Only two
-	     * may differ. _mesa_swizzle_ubyte_image can't handle two
-	     * propagations at once correctly. */
-	    (srcFormat == baseInternalFormat ||
-	     baseInternalFormat == GL_RGBA) &&
+	    can_swizzle(baseInternalFormat) &&	   
 	    can_swizzle(srcFormat)) {
 
       GLubyte dstmap[4];
 
-      /* dstmap - how to swizzle from GL_RGBA to dst format:
+      /* dstmap - how to swizzle from RGBA to dst format:
        */
       dstmap[3] = 3;		/* alpha */
       dstmap[2] = 0;		/* red */
@@ -1328,6 +1334,7 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
  
       _mesa_swizzle_ubyte_image(ctx, dims,
 				srcFormat,
+				baseInternalFormat,
 				dstmap, 4,
 				dstAddr, dstXoffset, dstYoffset, dstZoffset,
 				dstRowStride,
