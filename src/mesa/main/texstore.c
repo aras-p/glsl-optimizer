@@ -65,7 +65,10 @@
 #include "texstore.h"
 
 
-static const GLint ZERO = 4, ONE = 5;
+enum {
+   ZERO = 4, 
+   ONE = 5
+};
 
 static GLboolean can_swizzle(GLenum logicalBaseFormat)
 {
@@ -82,90 +85,120 @@ static GLboolean can_swizzle(GLenum logicalBaseFormat)
    }
 }
 
+enum {
+   IDX_LUMINANCE = 0,
+   IDX_ALPHA,
+   IDX_INTENSITY,
+   IDX_LUMINANCE_ALPHA,
+   IDX_RGB,
+   IDX_RGBA,
+   MAX_IDX
+};
+
+#define MAP1(from,to,x)     MAP4(from, to, x, ZERO, ZERO, ZERO)
+#define MAP2(from,to,x,y)   MAP4(from, to, x, y, ZERO, ZERO)
+#define MAP3(from,to,x,y,z) MAP4(from, to, x, y, z, ZERO)
+#define MAP4(from,to,x,y,z,w) { IDX_##from, IDX_##to, { x, y, z, w, ZERO, ONE } }
+
+
+static struct {
+   GLubyte from;
+   GLubyte to;
+   GLubyte map[6];
+} mappings[MAX_IDX][MAX_IDX] = 
+{
+   {
+      MAP1(LUMINANCE,       LUMINANCE, 0),
+      MAP1(ALPHA,           LUMINANCE, ZERO),
+      MAP1(INTENSITY,       LUMINANCE, 0),
+      MAP1(LUMINANCE_ALPHA, LUMINANCE, 0),
+      MAP1(RGB,             LUMINANCE, 0),
+      MAP1(RGBA,            LUMINANCE, 0),
+   },
+
+   {
+      MAP1(LUMINANCE,       ALPHA, ONE),
+      MAP1(ALPHA,           ALPHA, 0),
+      MAP1(INTENSITY,       ALPHA, 0),
+      MAP1(LUMINANCE_ALPHA, ALPHA, 1),
+      MAP1(RGB,             ALPHA, ONE),
+      MAP1(RGBA,            ALPHA, 3),
+   },
+
+   {
+      MAP1(LUMINANCE,       INTENSITY, 0),
+      MAP1(ALPHA,           INTENSITY, ZERO),
+      MAP1(INTENSITY,       INTENSITY, 0),
+      MAP1(LUMINANCE_ALPHA, INTENSITY, 0),
+      MAP1(RGB,             INTENSITY, 0),
+      MAP1(RGBA,            INTENSITY, 0),
+   },
+
+   {
+      MAP2(LUMINANCE,       LUMINANCE_ALPHA, 0, ONE),
+      MAP2(ALPHA,           LUMINANCE_ALPHA, ZERO, 0),
+      MAP2(INTENSITY,       LUMINANCE_ALPHA, 0, ONE),
+      MAP2(LUMINANCE_ALPHA, LUMINANCE_ALPHA, 0, 1),
+      MAP2(RGB,             LUMINANCE_ALPHA, 0, ONE),
+      MAP2(RGBA,            LUMINANCE_ALPHA, 0, 3),
+   },
+
+   {
+      MAP2(LUMINANCE,       LUMINANCE_ALPHA, 0, ONE),
+      MAP2(ALPHA,           LUMINANCE_ALPHA, ZERO, 0),
+      MAP2(INTENSITY,       LUMINANCE_ALPHA, 0, ONE),
+      MAP2(LUMINANCE_ALPHA, LUMINANCE_ALPHA, 0, 1),
+      MAP2(RGB,             LUMINANCE_ALPHA, 0, ONE),
+      MAP2(RGBA,            LUMINANCE_ALPHA, 0, 3),
+   },
+
+   {
+      MAP4(LUMINANCE,       RGBA, 0, 0, 0, ONE),
+      MAP4(ALPHA,           RGBA, ZERO, ZERO, ZERO, 0),
+      MAP4(INTENSITY,       RGBA, 0, 0, 0, ONE),
+      MAP4(LUMINANCE_ALPHA, RGBA, 0, 0, 0, 1),
+      MAP4(RGB,             RGBA, 0, 1, 2, ONE),
+      MAP4(RGBA,            RGBA, 0, 1, 2, 3),
+   }
+};
+
+
+
+   
+
+
+static int get_map_idx( GLenum value )
+{
+   switch (value) {
+   case GL_LUMINANCE: return IDX_LUMINANCE;
+   case GL_ALPHA: return IDX_ALPHA;
+   case GL_INTENSITY: return IDX_INTENSITY;
+   case GL_LUMINANCE_ALPHA: return IDX_LUMINANCE_ALPHA;
+   case GL_RGB: return IDX_RGB;
+   case GL_RGBA: return IDX_RGBA;
+   default:
+      _mesa_problem(NULL, "Unexpected inFormat");
+      return 0;
+   }
+}   
+
 
 /**
  * When promoting texture formats (see below) we need to compute the
  * mapping of dest components back to source components.
  * This function does that.
- * \param logicalBaseFormat  the logical format of the texture
- * \param textureBaseFormat  the final texture format
- * \return map[4]  the four mapping values
+ * \param inFormat  the incoming format of the texture
+ * \param outFormat  the final texture format
+ * \return map[6]  a full 6-component map
  */
-static void
-compute_component_mapping(GLenum logicalBaseFormat, GLenum textureBaseFormat,
-                          GLubyte map[6])
+static const GLubyte *
+compute_component_mapping(GLenum inFormat, GLenum outFormat)
 {
-   map[ZERO] = ZERO;
-   map[ONE] = ONE;
-
-   /* compute mapping from dest components back to src components */
-   switch (textureBaseFormat) {
-   case GL_RGB:
-   case GL_RGBA:
-      switch (logicalBaseFormat) {
-      case GL_LUMINANCE:
-         map[0] = map[1] = map[2] = 0;
-         if (textureBaseFormat == GL_RGBA)
-            map[3] = ONE;
-         break;
-      case GL_ALPHA:
-         ASSERT(textureBaseFormat == GL_RGBA);
-         map[0] = map[1] = map[2] = ZERO;
-         map[3] = 0;
-         break;
-      case GL_INTENSITY:
-         map[0] = map[1] = map[2] = 0;
-         if (textureBaseFormat == GL_RGBA)
-            map[3] = 0;
-         break;
-      case GL_LUMINANCE_ALPHA:
-         ASSERT(textureBaseFormat == GL_RGBA);
-         map[0] = map[1] = map[2] = 0;
-         map[3] = 1;
-         break;
-      case GL_RGB:
-         ASSERT(textureBaseFormat == GL_RGBA);
-         map[0] = 0;
-         map[1] = 1;
-         map[2] = 2;
-         map[3] = ONE;
-         break;
-      case GL_RGBA:
-         ASSERT(textureBaseFormat == GL_RGBA);
-         map[0] = 0;
-         map[1] = 1;
-         map[2] = 2;
-         map[3] = 3;
-         break;
-      default:
-         _mesa_problem(NULL, "Unexpected logicalBaseFormat");
-         map[0] = map[1] = map[2] = map[3] = 0;
-      }
-      break;
-   case GL_LUMINANCE_ALPHA:
-      switch (logicalBaseFormat) {
-      case GL_LUMINANCE:
-         map[0] = 0;
-         map[1] = ONE;
-         break;
-      case GL_ALPHA:
-         map[0] = ZERO;
-         map[1] = 0;
-         break;
-      case GL_INTENSITY:
-         map[0] = 0;
-         map[1] = 0;
-         break;
-      default:
-         _mesa_problem(NULL, "Unexpected logicalBaseFormat");
-         map[0] = map[1] = 0;
-      }
-      break;
-   default:
-      _mesa_problem(NULL, "Unexpected textureBaseFormat");
-      map[0] = map[1] = 0;
-      break;
-   }   
+   int in = get_map_idx(inFormat);
+   int out = get_map_idx(outFormat);
+   assert(mappings[out][in].from == in);
+   assert(mappings[out][in].to == out);
+   return mappings[out][in].map;
 }
 
 
@@ -350,7 +383,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
       GLint logComponents = _mesa_components_in_format(logicalBaseFormat);
       GLfloat *newImage;
       GLint i, n;
-      GLubyte map[6];
+      const GLubyte *map;
 
       /* we only promote up to RGB, RGBA and LUMINANCE_ALPHA formats for now */
       ASSERT(textureBaseFormat == GL_RGB || textureBaseFormat == GL_RGBA ||
@@ -368,7 +401,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
          return NULL;
       }
 
-      compute_component_mapping(logicalBaseFormat, textureBaseFormat, map);
+      map = compute_component_mapping(logicalBaseFormat, textureBaseFormat);
 
       n = srcWidth * srcHeight * srcDepth;
       for (i = 0; i < n; i++) {
@@ -504,7 +537,7 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
       GLint logComponents = _mesa_components_in_format(logicalBaseFormat);
       GLchan *newImage;
       GLint i, n;
-      GLubyte map[6];
+      const GLubyte *map;
 
       /* we only promote up to RGB, RGBA and LUMINANCE_ALPHA formats for now */
       ASSERT(textureBaseFormat == GL_RGB || textureBaseFormat == GL_RGBA ||
@@ -522,7 +555,7 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
          return NULL;
       }
 
-      compute_component_mapping(logicalBaseFormat, textureBaseFormat, map);
+      map = compute_component_mapping(logicalBaseFormat, textureBaseFormat);
 
       n = srcWidth * srcHeight * srcDepth;
       for (i = 0; i < n; i++) {
@@ -622,7 +655,8 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
 			  const struct gl_pixelstore_attrib *srcPacking )
 {
    GLint srcComponents = _mesa_components_in_format(srcFormat);
-   GLubyte srcmap[6], rgbamap[6], map[4];
+   const GLubyte *srcmap, *rgbamap;
+   GLubyte map[4];
    GLint i;
    const GLint srcRowStride =
       _mesa_image_row_stride(srcPacking, srcWidth,
@@ -641,8 +675,8 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
     * correctly deal with RGBA->RGB->RGBA conversions where the final
     * A value must be 0xff regardless of the incoming alpha values.
     */
-   compute_component_mapping(srcFormat, baseInternalFormat, srcmap);
-   compute_component_mapping(baseInternalFormat, GL_RGBA, rgbamap);
+   srcmap = compute_component_mapping(srcFormat, baseInternalFormat);
+   rgbamap = compute_component_mapping(baseInternalFormat, GL_RGBA);
 
    for (i = 0; i < 4; i++)
       map[i] = srcmap[rgbamap[dstMap[i]]];
