@@ -539,18 +539,13 @@ GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
 }
 
 
-static void lost_hardware( struct intel_context *intel )
-{
-   bm_fake_NotifyContendedLockTake( intel ); 
-   intel->vtbl.lost_hardware( intel );
-}
-
 static void intelContendedLock( struct intel_context *intel, GLuint flags )
 {
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    __DRIscreenPrivate *sPriv = intel->driScreen;
    volatile drmI830Sarea * sarea = intel->sarea;
    int me = intel->hHWContext;
+   int my_bufmgr = bmCtxId(intel);
 
    drmGetLock(intel->driFd, intel->hHWContext, flags);
 
@@ -564,12 +559,23 @@ static void intelContendedLock( struct intel_context *intel, GLuint flags )
 
 
    intel->locked = 1;
+   intel->need_flush = 1;
 
    /* Lost context?
     */
    if (sarea->ctxOwner != me) {
+      DBG("Lost Context: sarea->ctxOwner %x me %x\n", sarea->ctxOwner, me);
       sarea->ctxOwner = me;
-      lost_hardware(intel);
+      intel->vtbl.lost_hardware( intel );
+   }
+
+   /* As above, but don't evict the texture data on transitions
+    * between contexts which all share a local buffer manager.
+    */
+   if (sarea->texAge != my_bufmgr) {
+      DBG("Lost Textures: sarea->texAge %x my_bufmgr %x\n", sarea->ctxOwner, my_bufmgr);
+      sarea->texAge = my_bufmgr;
+      bm_fake_NotifyContendedLockTake( intel ); 
    }
 
    /* Drawable changed?

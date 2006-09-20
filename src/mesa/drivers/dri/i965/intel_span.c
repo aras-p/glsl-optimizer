@@ -207,6 +207,16 @@ void intelSpanRenderStart( GLcontext *ctx )
 {
    struct intel_context *intel = intel_context(ctx);
 
+   if (intel->need_flush) {
+      LOCK_HARDWARE(intel);
+      intel->vtbl.emit_flush(intel, 0);
+      intel_batchbuffer_flush(intel->batch);
+      intel->need_flush = 0;
+      UNLOCK_HARDWARE(intel);
+      intelFinish(intel);
+   }
+
+
    LOCK_HARDWARE(intel);
 
    /* Just map the framebuffer and all textures.  Bufmgr code will

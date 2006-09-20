@@ -328,6 +328,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
 	 brw_emit_prim(brw, &prim[i]);   
       }
       
+      intel->need_flush = GL_TRUE;
       retval = GL_TRUE;
    }
 

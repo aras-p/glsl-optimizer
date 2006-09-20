@@ -182,6 +182,8 @@ void bmUnmapBufferAUB( struct intel_context *,
 int bmValidateBuffers( struct intel_context * );
 void bmReleaseBuffers( struct intel_context * );
 
+GLuint bmCtxId( struct intel_context *intel );
+
 
 GLboolean bmError( struct intel_context * );
 void bmEvictAll( struct intel_context * );
