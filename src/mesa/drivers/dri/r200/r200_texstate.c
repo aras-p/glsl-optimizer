@@ -71,15 +71,47 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define _INVALID(f) \
     [ MESA_FORMAT_ ## f ] = { 0xffffffff, 0 }
 #define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_RGBA_DXT5) \
-			     && (tx_table[f].format != 0xffffffff) )
+			     && (tx_table_le[f].format != 0xffffffff) )
 
 static const struct {
    GLuint format, filter;
 }
-tx_table[] =
+tx_table_be[] =
+{
+   [ MESA_FORMAT_RGBA8888 ] = { R200_TXFORMAT_ABGR8888 | R200_TXFORMAT_ALPHA_IN_MAP, 0 },
+   _ALPHA_REV(RGBA8888),
+   _ALPHA(ARGB8888),
+   _ALPHA_REV(ARGB8888),
+   _INVALID(RGB888),
+   _COLOR(RGB565),
+   _COLOR_REV(RGB565),
+   _ALPHA(ARGB4444),
+   _ALPHA_REV(ARGB4444),
+   _ALPHA(ARGB1555),
+   _ALPHA_REV(ARGB1555),
+   _ALPHA(AL88),
+   _ALPHA_REV(AL88),
+   _ALPHA(A8),
+   _COLOR(L8),
+   _ALPHA(I8),
+   _INVALID(CI8),
+   _YUV(YCBCR),
+   _YUV(YCBCR_REV),
+   _INVALID(RGB_FXT1),
+   _INVALID(RGBA_FXT1),
+   _COLOR(RGB_DXT1),
+   _ALPHA(RGBA_DXT1),
+   _ALPHA(RGBA_DXT3),
+   _ALPHA(RGBA_DXT5),
+};
+
+static const struct {
+   GLuint format, filter;
+}
+tx_table_le[] =
 {
    _ALPHA(RGBA8888),
-   _ALPHA_REV(RGBA8888),
+   [ MESA_FORMAT_RGBA8888_REV ] = { R200_TXFORMAT_ABGR8888 | R200_TXFORMAT_ALPHA_IN_MAP, 0 },
    _ALPHA(ARGB8888),
    _ALPHA_REV(ARGB8888),
    _INVALID(RGB888),
@@ -129,6 +161,8 @@ static void r200SetTexImages( r200ContextPtr rmesa,
    GLint i, texelBytes;
    GLint numLevels;
    GLint log2Width, log2Height, log2Depth;
+   const GLuint ui = 1;
+   const GLubyte littleEndian = *((const GLubyte *) &ui);
 
    /* Set the hardware texture format
     */
@@ -138,8 +172,14 @@ static void r200SetTexImages( r200ContextPtr rmesa,
    t->pp_txfilter &= ~R200_YUV_TO_RGB;
 
    if ( VALID_FORMAT( baseImage->TexFormat->MesaFormat ) ) {
-      t->pp_txformat |= tx_table[ baseImage->TexFormat->MesaFormat ].format;
-      t->pp_txfilter |= tx_table[ baseImage->TexFormat->MesaFormat ].filter;
+      if (littleEndian) {
+	 t->pp_txformat |= tx_table_le[ baseImage->TexFormat->MesaFormat ].format;
+	 t->pp_txfilter |= tx_table_le[ baseImage->TexFormat->MesaFormat ].filter;
+      }
+      else {
+	 t->pp_txformat |= tx_table_be[ baseImage->TexFormat->MesaFormat ].format;
+	 t->pp_txfilter |= tx_table_be[ baseImage->TexFormat->MesaFormat ].filter;
+      }
    }
    else {
       _mesa_problem(NULL, "unexpected texture format in %s", __FUNCTION__);

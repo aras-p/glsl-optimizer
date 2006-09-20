@@ -305,6 +305,27 @@ static r200TexObjPtr r200AllocTexObj( struct gl_texture_object *texObj )
    return t;
 }
 
+/* try to find a format which will only need a memcopy */
+static const struct gl_texture_format *
+r200Choose8888TexFormat( GLenum srcFormat, GLenum srcType )
+{
+   const GLuint ui = 1;
+   const GLubyte littleEndian = *((const GLubyte *) &ui);
+
+   if ((srcFormat == GL_RGBA && srcType == GL_UNSIGNED_INT_8_8_8_8) ||
+       (srcFormat == GL_RGBA && srcType == GL_UNSIGNED_BYTE && !littleEndian) ||
+       (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_INT_8_8_8_8_REV) ||
+       (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_BYTE && littleEndian)) {
+      return &_mesa_texformat_rgba8888;
+   }
+   else if ((srcFormat == GL_RGBA && srcType == GL_UNSIGNED_INT_8_8_8_8_REV) ||
+       (srcFormat == GL_RGBA && srcType == GL_UNSIGNED_BYTE && littleEndian) ||
+       (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_INT_8_8_8_8) ||
+       (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_BYTE && !littleEndian)) {
+      return &_mesa_texformat_rgba8888_rev;
+   }
+   else return _dri_texformat_argb8888;
+}
 
 static const struct gl_texture_format *
 r200ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
@@ -332,7 +353,8 @@ r200ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
       case GL_UNSIGNED_SHORT_1_5_5_5_REV:
 	 return _dri_texformat_argb1555;
       default:
-         return do32bpt ? _dri_texformat_rgba8888 : _dri_texformat_argb4444;
+         return do32bpt ?
+	    r200Choose8888TexFormat(format, type) : _dri_texformat_argb4444;
       }
 
    case 3:
@@ -349,7 +371,7 @@ r200ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
       case GL_UNSIGNED_SHORT_5_6_5_REV:
 	 return _dri_texformat_rgb565;
       default:
-         return do32bpt ? _dri_texformat_rgba8888 : _dri_texformat_rgb565;
+         return do32bpt ? _dri_texformat_argb8888 : _dri_texformat_rgb565;
       }
 
    case GL_RGBA8:
@@ -357,7 +379,7 @@ r200ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGBA12:
    case GL_RGBA16:
       return !force16bpt ?
-	  _dri_texformat_rgba8888 : _dri_texformat_argb4444;
+	  r200Choose8888TexFormat(format, type) : _dri_texformat_argb4444;
 
    case GL_RGBA4:
    case GL_RGBA2:
@@ -370,7 +392,7 @@ r200ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      return !force16bpt ? _dri_texformat_rgba8888 : _dri_texformat_rgb565;
+      return !force16bpt ? _dri_texformat_argb8888 : _dri_texformat_rgb565;
 
    case GL_RGB5:
    case GL_RGB4:

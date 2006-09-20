@@ -51,14 +51,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_RGBA_DXT5			\
 			   || ((f) >= MESA_FORMAT_RGBA_FLOAT32 &&	\
 			       (f) <= MESA_FORMAT_INTENSITY_FLOAT16))	\
-			  && tx_table[f].flag )
+			  && tx_table_le[f].flag )
 
 #define _ASSIGN(entry, format)				\
 	[ MESA_FORMAT_ ## entry ] = { format, 0, 1}
 
 static const struct {
 	GLuint format, filter, flag;
-} tx_table[] = {
+} tx_table_be[] = {
 	/*
 	 * Note that the _REV formats are the same as the non-REV formats.
 	 * This is because the REV and non-REV formats are identical as a
@@ -68,10 +68,51 @@ static const struct {
 	 * byte-swapping), the R300 sees the REV and non-REV formats
 	 * identically.  -- paulus
 	 */
-	    _ASSIGN(RGBA8888, R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8)),
+	    _ASSIGN(RGBA8888, R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8)),
 	    _ASSIGN(RGBA8888_REV, R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8)),
-	    _ASSIGN(ARGB8888, R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8)),
+	    _ASSIGN(ARGB8888, R300_EASY_TX_FORMAT(W, Z, Y, X, W8Z8Y8X8)),
 	    _ASSIGN(ARGB8888_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8)),
+	    _ASSIGN(RGB888, 0xffffffff),
+	    _ASSIGN(RGB565, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
+	    _ASSIGN(RGB565_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
+	    _ASSIGN(ARGB4444, R300_EASY_TX_FORMAT(X, Y, Z, W, W4Z4Y4X4)),
+	    _ASSIGN(ARGB4444_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W4Z4Y4X4)),
+	    _ASSIGN(ARGB1555, R300_EASY_TX_FORMAT(X, Y, Z, W, W1Z5Y5X5)),
+	    _ASSIGN(ARGB1555_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W1Z5Y5X5)),
+	    _ASSIGN(AL88, R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8)),
+	    _ASSIGN(AL88_REV, R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8)),
+	    _ASSIGN(RGB332, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z3Y3X2)),
+	    _ASSIGN(A8, R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X8)),
+	    _ASSIGN(L8, R300_EASY_TX_FORMAT(X, X, X, ONE, X8)),
+	    _ASSIGN(I8, R300_EASY_TX_FORMAT(X, X, X, X, X8)),
+	    _ASSIGN(CI8, R300_EASY_TX_FORMAT(X, X, X, X, X8)),
+	    _ASSIGN(YCBCR, R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8)|R300_TX_FORMAT_YUV_MODE ),
+	    _ASSIGN(YCBCR_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8)|R300_TX_FORMAT_YUV_MODE),
+	    _ASSIGN(RGB_DXT1, R300_EASY_TX_FORMAT(X, Y, Z, ONE, DXT1)),
+	    _ASSIGN(RGBA_DXT1, R300_EASY_TX_FORMAT(X, Y, Z, W, DXT1)),
+	    _ASSIGN(RGBA_DXT3, R300_EASY_TX_FORMAT(X, Y, Z, W, DXT3)),
+	    _ASSIGN(RGBA_DXT5, R300_EASY_TX_FORMAT(Y, Z, W, X, DXT5)),
+	    _ASSIGN(RGBA_FLOAT32, R300_EASY_TX_FORMAT(Z, Y, X, W, FL_R32G32B32A32)),
+	    _ASSIGN(RGBA_FLOAT16, R300_EASY_TX_FORMAT(Z, Y, X, W, FL_R16G16B16A16)),
+	    _ASSIGN(RGB_FLOAT32, 0xffffffff),
+	    _ASSIGN(RGB_FLOAT16, 0xffffffff),
+	    _ASSIGN(ALPHA_FLOAT32, R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, FL_I32)),
+	    _ASSIGN(ALPHA_FLOAT16, R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, FL_I16)),
+	    _ASSIGN(LUMINANCE_FLOAT32, R300_EASY_TX_FORMAT(X, X, X, ONE, FL_I32)),
+	    _ASSIGN(LUMINANCE_FLOAT16, R300_EASY_TX_FORMAT(X, X, X, ONE, FL_I16)),
+	    _ASSIGN(LUMINANCE_ALPHA_FLOAT32, R300_EASY_TX_FORMAT(X, X, X, Y, FL_I32A32)),
+	    _ASSIGN(LUMINANCE_ALPHA_FLOAT16, R300_EASY_TX_FORMAT(X, X, X, Y, FL_I16A16)),
+	    _ASSIGN(INTENSITY_FLOAT32, R300_EASY_TX_FORMAT(X, X, X, X, FL_I32)),
+	    _ASSIGN(INTENSITY_FLOAT16, R300_EASY_TX_FORMAT(X, X, X, X, FL_I16)),
+	    };
+
+static const struct {
+	GLuint format, filter, flag;
+} tx_table_le[] = {
+	    _ASSIGN(RGBA8888, R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8)),
+	    _ASSIGN(RGBA8888_REV, R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8)),
+	    _ASSIGN(ARGB8888, R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8)),
+	    _ASSIGN(ARGB8888_REV, R300_EASY_TX_FORMAT(W, Z, Y, X, W8Z8Y8X8)),
 	    _ASSIGN(RGB888, 0xffffffff),
 	    _ASSIGN(RGB565, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
 	    _ASSIGN(RGB565_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
@@ -130,15 +171,24 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	GLint i, texelBytes;
 	GLint numLevels;
 	GLint log2Width, log2Height, log2Depth;
+	const GLuint ui = 1;
+	const GLubyte littleEndian = *((const GLubyte *) &ui);
 
 	/* Set the hardware texture format
 	 */
-	if (VALID_FORMAT(baseImage->TexFormat->MesaFormat) &&
-	    tx_table[baseImage->TexFormat->MesaFormat].flag) {
-		t->format =
-		    tx_table[baseImage->TexFormat->MesaFormat].format;
-		t->filter |=
-		    tx_table[baseImage->TexFormat->MesaFormat].filter;
+	if (VALID_FORMAT(baseImage->TexFormat->MesaFormat)) {
+		if (littleEndian) {
+			t->format =
+			    tx_table_le[baseImage->TexFormat->MesaFormat].format;
+			t->filter |=
+			    tx_table_le[baseImage->TexFormat->MesaFormat].filter;
+		}
+		else {
+			t->format =
+			    tx_table_be[baseImage->TexFormat->MesaFormat].format;
+			t->filter |=
+			    tx_table_be[baseImage->TexFormat->MesaFormat].filter;
+		}
 	} else {
 		_mesa_problem(NULL, "unexpected texture format in %s",
 			      __FUNCTION__);

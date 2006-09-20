@@ -374,6 +374,10 @@ static void uploadSubImage( r200ContextPtr rmesa, r200TexObjPtr t,
       tex.height = imageHeight;
       tex.width = imageWidth;
       tex.format = t->pp_txformat & R200_TXFORMAT_FORMAT_MASK;
+      if (tex.format == R200_TXFORMAT_ABGR8888) {
+	 /* drm will refuse abgr8888 textures. */
+	 tex.format = R200_TXFORMAT_ARGB8888;
+      }
       tex.pitch = MAX2((texImage->Width * texImage->TexFormat->TexelBytes) / 64, 1);
       tex.offset += tmp.x & ~1023;
       tmp.x = tmp.x % 1024;
