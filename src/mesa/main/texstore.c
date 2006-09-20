@@ -63,7 +63,7 @@
 #include "texformat.h"
 #include "teximage.h"
 #include "texstore.h"
-
+#include "enums.h"
 
 enum {
    ZERO = 4, 
@@ -101,7 +101,7 @@ enum {
 #define MAP4(from,to,x,y,z,w) { IDX_##from, IDX_##to, { x, y, z, w, ZERO, ONE } }
 
 
-static struct {
+static const struct {
    GLubyte from;
    GLubyte to;
    GLubyte map[6];
@@ -137,25 +137,25 @@ static struct {
    {
       MAP2(LUMINANCE,       LUMINANCE_ALPHA, 0, ONE),
       MAP2(ALPHA,           LUMINANCE_ALPHA, ZERO, 0),
-      MAP2(INTENSITY,       LUMINANCE_ALPHA, 0, ONE),
+      MAP2(INTENSITY,       LUMINANCE_ALPHA, 0, 0),
       MAP2(LUMINANCE_ALPHA, LUMINANCE_ALPHA, 0, 1),
       MAP2(RGB,             LUMINANCE_ALPHA, 0, ONE),
       MAP2(RGBA,            LUMINANCE_ALPHA, 0, 3),
    },
 
    {
-      MAP2(LUMINANCE,       LUMINANCE_ALPHA, 0, ONE),
-      MAP2(ALPHA,           LUMINANCE_ALPHA, ZERO, 0),
-      MAP2(INTENSITY,       LUMINANCE_ALPHA, 0, ONE),
-      MAP2(LUMINANCE_ALPHA, LUMINANCE_ALPHA, 0, 1),
-      MAP2(RGB,             LUMINANCE_ALPHA, 0, ONE),
-      MAP2(RGBA,            LUMINANCE_ALPHA, 0, 3),
+      MAP3(LUMINANCE,       RGB, 0, 0, 0),
+      MAP3(ALPHA,           RGB, ZERO, ZERO, ZERO),
+      MAP3(INTENSITY,       RGB, 0, 0, 0),
+      MAP3(LUMINANCE_ALPHA, RGB, 0, 0, 0),
+      MAP3(RGB,             RGB, 0, 1, 2),
+      MAP3(RGBA,            RGB, 0, 1, 2),
    },
 
    {
       MAP4(LUMINANCE,       RGBA, 0, 0, 0, ONE),
       MAP4(ALPHA,           RGBA, ZERO, ZERO, ZERO, 0),
-      MAP4(INTENSITY,       RGBA, 0, 0, 0, ONE),
+      MAP4(INTENSITY,       RGBA, 0, 0, 0, 0),
       MAP4(LUMINANCE_ALPHA, RGBA, 0, 0, 0, 1),
       MAP4(RGB,             RGBA, 0, 1, 2, ONE),
       MAP4(RGBA,            RGBA, 0, 1, 2, 3),
@@ -196,8 +196,22 @@ compute_component_mapping(GLenum inFormat, GLenum outFormat)
 {
    int in = get_map_idx(inFormat);
    int out = get_map_idx(outFormat);
-   assert(mappings[out][in].from == in);
-   assert(mappings[out][in].to == out);
+   ASSERT(mappings[out][in].from == in);
+   ASSERT(mappings[out][in].to == out); 
+   
+   /*
+       const GLubyte *map = mappings[out][in].map;
+      _mesa_printf("from %x/%s to %x/%s map %d %d %d %d %d %d\n",
+		   inFormat, _mesa_lookup_enum_by_nr(inFormat),
+		   outFormat, _mesa_lookup_enum_by_nr(outFormat),
+		   map[0], 
+		   map[1], 
+		   map[2], 
+		   map[3], 
+		   map[4], 
+		   map[5]); 
+   */
+
    return mappings[out][in].map;
 }
 
@@ -680,6 +694,8 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
 
    for (i = 0; i < 4; i++)
       map[i] = srcmap[rgbamap[dstMap[i]]];
+
+/*    _mesa_printf("map %d %d %d %d\n", map[0], map[1], map[2], map[3]);  */
 
    if (srcRowStride == srcWidth * srcComponents &&
        dimensions < 3) {
