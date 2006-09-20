@@ -1150,23 +1150,16 @@ _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
                      srcAddr, srcPacking);
    }
-#if 0
-   /* broken? */
    else if (!ctx->_ImageTransferState &&
 	    !srcPacking->SwapBytes &&
 	    srcType == GL_UNSIGNED_BYTE && 
 	    dstFormat == &_mesa_texformat_rgba8888 &&
 	    littleEndian &&
-	    /* Three texture formats involved: srcFormat,
-	     * baseInternalFormat and destFormat (GL_RGBA). Only two
-	     * may differ. _mesa_swizzle_ubyte_image can't handle two
-	     * propagations at once correctly. */
-	    (srcFormat == baseInternalFormat ||
-	     baseInternalFormat == GL_RGBA) &&
+	    can_swizzle(baseInternalFormat) &&
 	    can_swizzle(srcFormat)) {
       GLubyte dstmap[4];
 
-      /* dstmap - how to swizzle from GL_RGBA to dst format:
+      /* dstmap - how to swizzle from RGBA to dst format:
        *
        * FIXME - add !litteEndian and _rev varients:
        */
@@ -1177,13 +1170,13 @@ _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
       
       _mesa_swizzle_ubyte_image(ctx, dims,
 				srcFormat,
+				baseInternalFormat,
 				dstmap, 4,
 				dstAddr, dstXoffset, dstYoffset, dstZoffset,
-				dstRowStride, dstImageStride,
+				dstRowStride, dstImageOffsets,
 				srcWidth, srcHeight, srcDepth, srcAddr,
 				srcPacking);      
    }
-#endif
    else {
       /* general path */
       const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
