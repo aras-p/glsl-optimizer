@@ -1216,6 +1216,47 @@ static void set_texgen_matrix( r200ContextPtr rmesa,
 }
 
 
+static GLuint r200_need_dis_texgen(const GLbitfield texGenEnabled,
+				   const GLfloat *planeS,
+				   const GLfloat *planeT,
+				   const GLfloat *planeR,
+				   const GLfloat *planeQ)
+{
+   GLuint needtgenable = 0;
+
+   if (!(texGenEnabled & S_BIT)) {
+      if (((texGenEnabled & T_BIT) && planeT[0] != 0.0) ||
+	 ((texGenEnabled & R_BIT) && planeR[0] != 0.0) ||
+	 ((texGenEnabled & Q_BIT) && planeQ[0] != 0.0)) {
+	 needtgenable |= S_BIT;
+      }
+   }
+   if (!(texGenEnabled & T_BIT)) {
+      if (((texGenEnabled & S_BIT) && planeS[1] != 0.0) ||
+	 ((texGenEnabled & R_BIT) && planeR[1] != 0.0) ||
+	 ((texGenEnabled & Q_BIT) && planeQ[1] != 0.0)) {
+	 needtgenable |= T_BIT;
+     }
+   }
+   if (!(texGenEnabled & R_BIT)) {
+      if (((texGenEnabled & S_BIT) && planeS[2] != 0.0) ||
+	 ((texGenEnabled & T_BIT) && planeT[2] != 0.0) ||
+	 ((texGenEnabled & Q_BIT) && planeQ[2] != 0.0)) {
+	 needtgenable |= R_BIT;
+      }
+   }
+   if (!(texGenEnabled & Q_BIT)) {
+      if (((texGenEnabled & S_BIT) && planeS[3] != 0.0) ||
+	 ((texGenEnabled & T_BIT) && planeT[3] != 0.0) ||
+	 ((texGenEnabled & R_BIT) && planeR[3] != 0.0)) {
+	 needtgenable |= Q_BIT;
+      }
+   }
+
+   return needtgenable;
+}
+
+
 /*
  * Returns GL_FALSE if fallback required.  
  */
@@ -1285,28 +1326,72 @@ static GLboolean r200_validate_texgen( GLcontext *ctx, GLuint unit )
       return GL_FALSE;
    }
 
+/* we CANNOT do mixed mode if the texgen mode requires a plane where the input
+   is not enabled for texgen, since the planes are concatenated into texmat,
+   and thus the input will come from texcoord rather than tex gen equation!
+   Either fallback or just hope that those texcoords aren't really needed...
+   Assuming the former will cause lots of unnecessary fallbacks, the latter will
+   generate bogus results sometimes - it's pretty much impossible to really know
+   when a fallback is needed, depends on texmat and what sort of texture is bound
+   etc, - for now fallback if we're missing either S or T bits, there's a high
+   probability we need the texcoords in that case.
+   That's a lot of work for some obscure texgen mixed mode fixup - why oh why
+   doesn't the chip just directly accept the plane parameters :-(. */
    switch (mode) {
-   case GL_OBJECT_LINEAR:
+   case GL_OBJECT_LINEAR: {
+      GLuint needtgenable = r200_need_dis_texgen( texUnit->TexGenEnabled,
+				texUnit->ObjectPlaneS, texUnit->ObjectPlaneT,
+				texUnit->ObjectPlaneR, texUnit->ObjectPlaneQ );
+      if (needtgenable & (S_BIT | T_BIT)) {
+	 if (R200_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "fallback mixed texgen / obj plane, 0x%x\n",
+		 texUnit->TexGenEnabled);
+	 return GL_FALSE;
+      }
+      if (needtgenable & (R_BIT)) {
+	 tgcm &= ~(R200_TEXGEN_COMP_R << (unit * 4));
+      }
+      if (needtgenable & (Q_BIT)) {
+	 tgcm &= ~(R200_TEXGEN_COMP_Q << (unit * 4));
+      }
+
       tgi |= R200_TEXGEN_INPUT_OBJ << inputshift;
       set_texgen_matrix( rmesa, unit, 
 	 (texUnit->TexGenEnabled & S_BIT) ? texUnit->ObjectPlaneS : I,
 	 (texUnit->TexGenEnabled & T_BIT) ? texUnit->ObjectPlaneT : I + 4,
 	 (texUnit->TexGenEnabled & R_BIT) ? texUnit->ObjectPlaneR : I + 8,
 	 (texUnit->TexGenEnabled & Q_BIT) ? texUnit->ObjectPlaneQ : I + 12);
+      }
       break;
 
-   case GL_EYE_LINEAR:
+   case GL_EYE_LINEAR: {
+      GLuint needtgenable = r200_need_dis_texgen( texUnit->TexGenEnabled,
+				texUnit->EyePlaneS, texUnit->EyePlaneT,
+				texUnit->EyePlaneR, texUnit->EyePlaneQ );
+      if (needtgenable & (S_BIT | T_BIT)) {
+	 if (R200_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "fallback mixed texgen / eye plane, 0x%x\n",
+		 texUnit->TexGenEnabled);
+	 return GL_FALSE;
+      }
+      if (needtgenable & (R_BIT)) {
+	 tgcm &= ~(R200_TEXGEN_COMP_R << (unit * 4));
+      }
+      if (needtgenable & (Q_BIT)) {
+	 tgcm &= ~(R200_TEXGEN_COMP_Q << (unit * 4));
+      }
       tgi |= R200_TEXGEN_INPUT_EYE << inputshift;
-      set_texgen_matrix( rmesa, unit, 
+      set_texgen_matrix( rmesa, unit,
 	 (texUnit->TexGenEnabled & S_BIT) ? texUnit->EyePlaneS : I,
 	 (texUnit->TexGenEnabled & T_BIT) ? texUnit->EyePlaneT : I + 4,
 	 (texUnit->TexGenEnabled & R_BIT) ? texUnit->EyePlaneR : I + 8,
 	 (texUnit->TexGenEnabled & Q_BIT) ? texUnit->EyePlaneQ : I + 12);
+      }
       break;
 
    case GL_REFLECTION_MAP_NV:
       rmesa->TexGenNeedNormals[unit] = GL_TRUE;
-      tgi |= R200_TEXGEN_INPUT_EYE_REFLECT<<inputshift;
+      tgi |= R200_TEXGEN_INPUT_EYE_REFLECT << inputshift;
       /* pretty weird, must only negate when lighting is enabled? */
       if (ctx->Light.Enabled)
 	 set_texgen_matrix( rmesa, unit, 
