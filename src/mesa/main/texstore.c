@@ -79,11 +79,19 @@ static GLboolean can_swizzle(GLenum logicalBaseFormat)
    case GL_INTENSITY:
    case GL_ALPHA:
    case GL_LUMINANCE:
+   case GL_RED:
+   case GL_GREEN:
+   case GL_BLUE:
+   case GL_BGR:
+   case GL_BGRA:
+   case GL_ABGR_EXT:
       return GL_TRUE;
    default:
       return GL_FALSE;
    }
 }
+
+
 
 enum {
    IDX_LUMINANCE = 0,
@@ -92,74 +100,99 @@ enum {
    IDX_LUMINANCE_ALPHA,
    IDX_RGB,
    IDX_RGBA,
+   IDX_RED,
+   IDX_GREEN,
+   IDX_BLUE,
+   IDX_BGR,
+   IDX_BGRA,
+   IDX_ABGR,
    MAX_IDX
 };
 
-#define MAP1(from,to,x)     MAP4(from, to, x, ZERO, ZERO, ZERO)
-#define MAP2(from,to,x,y)   MAP4(from, to, x, y, ZERO, ZERO)
-#define MAP3(from,to,x,y,z) MAP4(from, to, x, y, z, ZERO)
-#define MAP4(from,to,x,y,z,w) { IDX_##from, IDX_##to, { x, y, z, w, ZERO, ONE } }
+#define MAP1(x)       MAP4(x, ZERO, ZERO, ZERO)
+#define MAP2(x,y)     MAP4(x, y, ZERO, ZERO)
+#define MAP3(x,y,z)   MAP4(x, y, z, ZERO)
+#define MAP4(x,y,z,w) { x, y, z, w, ZERO, ONE }
 
 
 static const struct {
-   GLubyte from;
-   GLubyte to;
-   GLubyte map[6];
-} mappings[MAX_IDX][MAX_IDX] = 
+   GLubyte format_idx;
+   GLubyte to_rgba[6];
+   GLubyte from_rgba[6];
+} mappings[MAX_IDX] = 
 {
    {
-      MAP1(LUMINANCE,       LUMINANCE, 0),
-      MAP1(ALPHA,           LUMINANCE, ZERO),
-      MAP1(INTENSITY,       LUMINANCE, 0),
-      MAP1(LUMINANCE_ALPHA, LUMINANCE, 0),
-      MAP1(RGB,             LUMINANCE, 0),
-      MAP1(RGBA,            LUMINANCE, 0),
+      IDX_LUMINANCE,
+      MAP4(0,0,0,ONE),
+      MAP1(0)
    },
 
    {
-      MAP1(LUMINANCE,       ALPHA, ONE),
-      MAP1(ALPHA,           ALPHA, 0),
-      MAP1(INTENSITY,       ALPHA, 0),
-      MAP1(LUMINANCE_ALPHA, ALPHA, 1),
-      MAP1(RGB,             ALPHA, ONE),
-      MAP1(RGBA,            ALPHA, 3),
+      IDX_ALPHA,
+      MAP4(ZERO, ZERO, ZERO, 0),
+      MAP1(3)
    },
 
    {
-      MAP1(LUMINANCE,       INTENSITY, 0),
-      MAP1(ALPHA,           INTENSITY, ZERO),
-      MAP1(INTENSITY,       INTENSITY, 0),
-      MAP1(LUMINANCE_ALPHA, INTENSITY, 0),
-      MAP1(RGB,             INTENSITY, 0),
-      MAP1(RGBA,            INTENSITY, 0),
+      IDX_INTENSITY,
+      MAP4(0, 0, 0, 0),
+      MAP1(0),
    },
 
    {
-      MAP2(LUMINANCE,       LUMINANCE_ALPHA, 0, ONE),
-      MAP2(ALPHA,           LUMINANCE_ALPHA, ZERO, 0),
-      MAP2(INTENSITY,       LUMINANCE_ALPHA, 0, 0),
-      MAP2(LUMINANCE_ALPHA, LUMINANCE_ALPHA, 0, 1),
-      MAP2(RGB,             LUMINANCE_ALPHA, 0, ONE),
-      MAP2(RGBA,            LUMINANCE_ALPHA, 0, 3),
+      IDX_LUMINANCE_ALPHA,
+      MAP4(0,0,0,1),
+      MAP2(0,3)
    },
 
    {
-      MAP3(LUMINANCE,       RGB, 0, 0, 0),
-      MAP3(ALPHA,           RGB, ZERO, ZERO, ZERO),
-      MAP3(INTENSITY,       RGB, 0, 0, 0),
-      MAP3(LUMINANCE_ALPHA, RGB, 0, 0, 0),
-      MAP3(RGB,             RGB, 0, 1, 2),
-      MAP3(RGBA,            RGB, 0, 1, 2),
+      IDX_RGB,
+      MAP4(0,1,2,ONE),
+      MAP3(0,1,2)
    },
 
    {
-      MAP4(LUMINANCE,       RGBA, 0, 0, 0, ONE),
-      MAP4(ALPHA,           RGBA, ZERO, ZERO, ZERO, 0),
-      MAP4(INTENSITY,       RGBA, 0, 0, 0, 0),
-      MAP4(LUMINANCE_ALPHA, RGBA, 0, 0, 0, 1),
-      MAP4(RGB,             RGBA, 0, 1, 2, ONE),
-      MAP4(RGBA,            RGBA, 0, 1, 2, 3),
-   }
+      IDX_RGBA,
+      MAP4(0,1,2,3),
+      MAP4(0,1,2,3),
+   },
+
+
+   {
+      IDX_RED,
+      MAP4(0, ZERO, ZERO, ONE),
+      MAP1(0),
+   },
+
+   {
+      IDX_GREEN,
+      MAP4(ZERO, 0, ZERO, ONE),
+      MAP1(1),
+   },
+
+   {
+      IDX_BLUE,
+      MAP4(ZERO, ZERO, 0, ONE),
+      MAP1(2),
+   },
+
+   {
+      IDX_BGR,
+      MAP4(2,1,0,ONE),
+      MAP3(2,1,0)
+   },
+
+   {
+      IDX_BGRA,
+      MAP4(2,1,0,3),
+      MAP4(2,1,0,3)
+   },
+
+   {
+      IDX_ABGR,
+      MAP4(3,2,1,0),
+      MAP4(3,2,1,0)
+   },
 };
 
 
@@ -176,6 +209,12 @@ static int get_map_idx( GLenum value )
    case GL_LUMINANCE_ALPHA: return IDX_LUMINANCE_ALPHA;
    case GL_RGB: return IDX_RGB;
    case GL_RGBA: return IDX_RGBA;
+   case GL_RED: return IDX_RED;
+   case GL_GREEN: return IDX_GREEN;
+   case GL_BLUE: return IDX_BLUE;
+   case GL_BGR: return IDX_BGR;
+   case GL_BGRA: return IDX_BGRA;
+   case GL_ABGR_EXT: return IDX_ABGR;
    default:
       _mesa_problem(NULL, "Unexpected inFormat");
       return 0;
@@ -191,28 +230,33 @@ static int get_map_idx( GLenum value )
  * \param outFormat  the final texture format
  * \return map[6]  a full 6-component map
  */
-static const GLubyte *
-compute_component_mapping(GLenum inFormat, GLenum outFormat)
+static void
+compute_component_mapping(GLenum inFormat, GLenum outFormat, 
+			  GLubyte *map)
 {
    int in = get_map_idx(inFormat);
    int out = get_map_idx(outFormat);
-   ASSERT(mappings[out][in].from == in);
-   ASSERT(mappings[out][in].to == out); 
+   const GLubyte *in2rgba = mappings[in].to_rgba;
+   const GLubyte *rgba2out = mappings[out].from_rgba;
+   int i;
    
-   /*
-       const GLubyte *map = mappings[out][in].map;
-      _mesa_printf("from %x/%s to %x/%s map %d %d %d %d %d %d\n",
-		   inFormat, _mesa_lookup_enum_by_nr(inFormat),
-		   outFormat, _mesa_lookup_enum_by_nr(outFormat),
-		   map[0], 
-		   map[1], 
-		   map[2], 
-		   map[3], 
-		   map[4], 
-		   map[5]); 
-   */
+   for (i = 0; i < 4; i++)
+      map[i] = in2rgba[rgba2out[i]];
 
-   return mappings[out][in].map;
+   map[ZERO] = ZERO;
+   map[ONE] = ONE;   
+
+/*
+   _mesa_printf("from %x/%s to %x/%s map %d %d %d %d %d %d\n",
+		inFormat, _mesa_lookup_enum_by_nr(inFormat),
+		outFormat, _mesa_lookup_enum_by_nr(outFormat),
+		map[0], 
+		map[1], 
+		map[2], 
+		map[3], 
+		map[4], 
+		map[5]); 
+*/
 }
 
 
@@ -397,7 +441,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
       GLint logComponents = _mesa_components_in_format(logicalBaseFormat);
       GLfloat *newImage;
       GLint i, n;
-      const GLubyte *map;
+      GLubyte map[6];
 
       /* we only promote up to RGB, RGBA and LUMINANCE_ALPHA formats for now */
       ASSERT(textureBaseFormat == GL_RGB || textureBaseFormat == GL_RGBA ||
@@ -415,7 +459,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
          return NULL;
       }
 
-      map = compute_component_mapping(logicalBaseFormat, textureBaseFormat);
+      compute_component_mapping(logicalBaseFormat, textureBaseFormat, map);
 
       n = srcWidth * srcHeight * srcDepth;
       for (i = 0; i < n; i++) {
@@ -551,7 +595,7 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
       GLint logComponents = _mesa_components_in_format(logicalBaseFormat);
       GLchan *newImage;
       GLint i, n;
-      const GLubyte *map;
+      GLubyte map[6];
 
       /* we only promote up to RGB, RGBA and LUMINANCE_ALPHA formats for now */
       ASSERT(textureBaseFormat == GL_RGB || textureBaseFormat == GL_RGBA ||
@@ -569,7 +613,7 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
          return NULL;
       }
 
-      map = compute_component_mapping(logicalBaseFormat, textureBaseFormat);
+      compute_component_mapping(logicalBaseFormat, textureBaseFormat, map);
 
       n = srcWidth * srcHeight * srcDepth;
       for (i = 0; i < n; i++) {
@@ -643,6 +687,14 @@ swizzle_copy(GLubyte *dst, GLuint dstComponents, const GLubyte *src,
 	 dst += 2;
       }
       break;
+   case 1:
+      for (i = 0; i < count; i++) {
+ 	 COPY_4UBV(tmp, src); 
+	 src += srcComponents;      
+	 dst[0] = tmp[map[0]];
+	 dst += 1;
+      }
+      break;
    }
 }
 
@@ -659,8 +711,10 @@ static const GLubyte map_3210[6] = { 3, 2, 1, 0, 4, 5 };
 
 
 static const GLubyte *
-type_endian_mapping( GLenum srcType, GLboolean littleEndian )
+type_endian_mapping( GLenum srcType )
 {
+   const GLuint ui = 1;
+   const GLubyte littleEndian = *((const GLubyte *) &ui);
 
    switch (srcType) {
    case GL_UNSIGNED_BYTE:
@@ -705,7 +759,6 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
 			  GLuint dimensions,
 			  GLenum srcFormat,
 			  GLenum srcType,
-			  GLboolean littleEndian,
 
 			  GLenum baseInternalFormat,
 
@@ -722,8 +775,8 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
 			  const struct gl_pixelstore_attrib *srcPacking )
 {
    GLint srcComponents = _mesa_components_in_format(srcFormat);
-   const GLubyte *src2base, *base2rgba, *srctype2ubyte_le, *swap;
-   GLubyte map[4];
+   const GLubyte *srctype2ubyte_le, *swap;
+   GLubyte map[4], src2base[6], base2rgba[6];
    GLint i;
    const GLint srcRowStride =
       _mesa_image_row_stride(srcPacking, srcWidth,
@@ -742,10 +795,10 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
     * correctly deal with RGBA->RGB->RGBA conversions where the final
     * A value must be 0xff regardless of the incoming alpha values.
     */
-   src2base = compute_component_mapping(srcFormat, baseInternalFormat);
-   base2rgba = compute_component_mapping(baseInternalFormat, GL_RGBA);
+   compute_component_mapping(srcFormat, baseInternalFormat, src2base);
+   compute_component_mapping(baseInternalFormat, GL_RGBA, base2rgba);
    swap = byteswap_mapping(srcType);
-   srctype2ubyte_le = type_endian_mapping(srcType, littleEndian);
+   srctype2ubyte_le = type_endian_mapping(srcType);
 
 
    for (i = 0; i < 4; i++)
@@ -929,6 +982,33 @@ _mesa_texstore_rgba(TEXSTORE_PARAMS)
             srcRow = (GLchan *) ((GLubyte *) srcRow + srcRowStride);
          }
       }
+   }
+   else if (!ctx->_ImageTransferState &&
+	    CHAN_TYPE == GL_UNSIGNED_BYTE &&
+	    (srcType == GL_UNSIGNED_BYTE ||
+	     srcType == GL_UNSIGNED_INT_8_8_8_8 ||
+	     srcType == GL_UNSIGNED_INT_8_8_8_8_REV) &&
+	    can_swizzle(baseInternalFormat) &&
+	    can_swizzle(srcFormat)) {
+
+      GLubyte dstmap[4];
+
+      /* dstmap - how to swizzle from RGBA to dst format:
+       */
+      dstmap[3] = 0;
+      dstmap[2] = 1;
+      dstmap[1] = 2;
+      dstmap[0] = 3;
+      
+      _mesa_swizzle_ubyte_image(ctx, dims,
+				srcFormat,
+				srcType,
+				baseInternalFormat,
+				dstmap, 4,
+				dstAddr, dstXoffset, dstYoffset, dstZoffset,
+				dstRowStride, dstImageOffsets,
+				srcWidth, srcHeight, srcDepth, srcAddr,
+				srcPacking);      
    }
    else {
       /* general path */
@@ -1169,7 +1249,6 @@ _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
    const GLuint ui = 1;
    const GLubyte littleEndian = *((const GLubyte *) &ui);
 
-   (void)littleEndian;
    ASSERT(dstFormat == &_mesa_texformat_rgba8888 ||
           dstFormat == &_mesa_texformat_rgba8888_rev);
    ASSERT(dstFormat->TexelBytes == 4);
@@ -1233,7 +1312,6 @@ _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
       _mesa_swizzle_ubyte_image(ctx, dims,
 				srcFormat,
 				srcType,
-				littleEndian,
 				baseInternalFormat,
 				dstmap, 4,
 				dstAddr, dstXoffset, dstYoffset, dstZoffset,
@@ -1450,7 +1528,6 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
       _mesa_swizzle_ubyte_image(ctx, dims,
 				srcFormat,
 				srcType,
-				littleEndian,
 
 				baseInternalFormat,
 				dstmap, 4,
@@ -1556,6 +1633,30 @@ _mesa_texstore_rgb888(TEXSTORE_PARAMS)
          }
       }
    }
+   else if (!ctx->_ImageTransferState &&
+	    srcType == GL_UNSIGNED_BYTE &&
+	    can_swizzle(baseInternalFormat) &&
+	    can_swizzle(srcFormat)) {
+
+      GLubyte dstmap[4];
+
+      /* dstmap - how to swizzle from RGBA to dst format:
+       */
+      dstmap[0] = 0;
+      dstmap[1] = 1;
+      dstmap[2] = 2;
+      dstmap[3] = ONE;		/* ? */
+      
+      _mesa_swizzle_ubyte_image(ctx, dims,
+				srcFormat,
+				srcType,
+				baseInternalFormat,
+				dstmap, 3,
+				dstAddr, dstXoffset, dstYoffset, dstZoffset,
+				dstRowStride, dstImageOffsets,
+				srcWidth, srcHeight, srcDepth, srcAddr,
+				srcPacking);      
+   }
    else {
       /* general path */
       const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
@@ -1658,6 +1759,30 @@ _mesa_texstore_bgr888(TEXSTORE_PARAMS)
          }
       }
    }
+   else if (!ctx->_ImageTransferState &&
+	    srcType == GL_UNSIGNED_BYTE &&
+	    can_swizzle(baseInternalFormat) &&
+	    can_swizzle(srcFormat)) {
+
+      GLubyte dstmap[4];
+
+      /* dstmap - how to swizzle from RGBA to dst format:
+       */
+      dstmap[0] = 2;
+      dstmap[1] = 1;
+      dstmap[2] = 0;
+      dstmap[3] = ONE;		/* ? */
+      
+      _mesa_swizzle_ubyte_image(ctx, dims,
+				srcFormat,
+				srcType,
+				baseInternalFormat,
+				dstmap, 3,
+				dstAddr, dstXoffset, dstYoffset, dstZoffset,
+				dstRowStride, dstImageOffsets,
+				srcWidth, srcHeight, srcDepth, srcAddr,
+				srcPacking);      
+   }   
    else {
       /* general path */
       const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
@@ -1854,6 +1979,36 @@ _mesa_texstore_al88(TEXSTORE_PARAMS)
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
                      srcAddr, srcPacking);
    }
+   else if (!ctx->_ImageTransferState &&
+	    srcType == GL_UNSIGNED_BYTE &&
+	    can_swizzle(baseInternalFormat) &&
+	    can_swizzle(srcFormat)) {
+
+      GLubyte dstmap[4];
+
+      /* dstmap - how to swizzle from RGBA to dst format:
+       */
+      if (dstFormat == &_mesa_texformat_al88) {
+	 dstmap[0] = 0;
+	 dstmap[1] = 3;
+      }
+      else {
+	 dstmap[0] = 3;
+	 dstmap[1] = 0;
+      }
+      dstmap[2] = ZERO;		/* ? */
+      dstmap[3] = ONE;		/* ? */
+      
+      _mesa_swizzle_ubyte_image(ctx, dims,
+				srcFormat,
+				srcType,
+				baseInternalFormat,
+				dstmap, 2,
+				dstAddr, dstXoffset, dstYoffset, dstZoffset,
+				dstRowStride, dstImageOffsets,
+				srcWidth, srcHeight, srcDepth, srcAddr,
+				srcPacking);      
+   }   
    else {
       /* general path */
       const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
@@ -1974,6 +2129,35 @@ _mesa_texstore_a8(TEXSTORE_PARAMS)
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
                      srcAddr, srcPacking);
    }
+   else if (!ctx->_ImageTransferState &&
+	    srcType == GL_UNSIGNED_BYTE &&
+	    can_swizzle(baseInternalFormat) &&
+	    can_swizzle(srcFormat)) {
+
+      GLubyte dstmap[4];
+
+      /* dstmap - how to swizzle from RGBA to dst format:
+       */
+      if (dstFormat == &_mesa_texformat_a8) {
+	 dstmap[0] = 3;
+      }
+      else {
+	 dstmap[0] = 0;
+      }
+      dstmap[1] = ZERO;		/* ? */
+      dstmap[2] = ZERO;		/* ? */
+      dstmap[3] = ONE;		/* ? */
+      
+      _mesa_swizzle_ubyte_image(ctx, dims,
+				srcFormat,
+				srcType,
+				baseInternalFormat,
+				dstmap, 1,
+				dstAddr, dstXoffset, dstYoffset, dstZoffset,
+				dstRowStride, dstImageOffsets,
+				srcWidth, srcHeight, srcDepth, srcAddr,
+				srcPacking);      
+   }   
    else {
       /* general path */
       const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
