@@ -74,9 +74,6 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
 
    if (!rect)
    {
-      /* This is a really crappy way to do wait-for-vblank.  I guess
-       * it sortof works in the single-application case.
-       */
        UNLOCK_HARDWARE( intel );
        driWaitForVBlank( dPriv, &intel->vbl_seq, intel->vblank_flags, & missed_target );
        LOCK_HARDWARE( intel );
@@ -292,7 +289,7 @@ void intelEmitCopyBlit( struct intel_context *intel,
    /* Initial y values don't seem to work with negative pitches.  If
     * we adjust the offsets manually (below), it seems to work fine.
     */
-   if (0) {
+   if (1) {
       BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
       OUT_BATCH( CMD );
       OUT_BATCH( dst_pitch | BR13 );
