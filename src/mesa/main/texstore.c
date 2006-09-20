@@ -991,20 +991,46 @@ _mesa_texstore_rgba(TEXSTORE_PARAMS)
 	    can_swizzle(baseInternalFormat) &&
 	    can_swizzle(srcFormat)) {
 
-      GLubyte dstmap[4];
+      const GLubyte *dstmap;
+      GLuint components;
 
       /* dstmap - how to swizzle from RGBA to dst format:
        */
-      dstmap[3] = 0;
-      dstmap[2] = 1;
-      dstmap[1] = 2;
-      dstmap[0] = 3;
-      
+      if (dstFormat == &_mesa_texformat_rgba) {
+	 dstmap = mappings[IDX_RGBA].from_rgba;
+	 components = 4;
+      }
+      else if (dstFormat == &_mesa_texformat_rgb) {
+	 dstmap = mappings[IDX_RGB].from_rgba;
+	 components = 3;
+      }
+      else if (dstFormat == &_mesa_texformat_alpha) {
+	 dstmap = mappings[IDX_ALPHA].from_rgba;
+	 components = 1;
+      }
+      else if (dstFormat == &_mesa_texformat_luminance) {
+	 dstmap = mappings[IDX_LUMINANCE].from_rgba;
+	 components = 1;
+      }
+      else if (dstFormat == &_mesa_texformat_luminance_alpha) {
+	 dstmap = mappings[IDX_LUMINANCE_ALPHA].from_rgba;
+	 components = 2;
+      }
+      else if (dstFormat == &_mesa_texformat_intensity) {
+	 dstmap = mappings[IDX_INTENSITY].from_rgba;
+	 components = 1;
+      }
+      else {
+	 ASSERT(0);
+	 dstmap = map_identity;
+	 components = 4;
+      }
+
       _mesa_swizzle_ubyte_image(ctx, dims,
 				srcFormat,
 				srcType,
 				baseInternalFormat,
-				dstmap, 4,
+				dstmap, components,
 				dstAddr, dstXoffset, dstYoffset, dstZoffset,
 				dstRowStride, dstImageOffsets,
 				srcWidth, srcHeight, srcDepth, srcAddr,
