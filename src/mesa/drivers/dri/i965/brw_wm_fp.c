@@ -769,6 +769,27 @@ static void validate_src_regs( struct brw_wm_compile *c,
 	 
 
 
+static void print_insns( const struct prog_instruction *insn,
+			 GLuint nr )
+{
+   GLuint i;
+   for (i = 0; i < nr; i++, insn++) {
+      _mesa_printf("%3d: ", i);
+      if (insn->Opcode < MAX_OPCODE)
+	 _mesa_print_instruction(insn);
+      else if (insn->Opcode < MAX_WM_OPCODE) {
+	 GLuint idx = insn->Opcode - MAX_OPCODE;
+
+	 _mesa_print_alu_instruction(insn,
+				     wm_opcode_strings[idx],
+				     3);
+      }
+      else 
+	 _mesa_printf("UNKNOWN\n");
+	   
+   }
+}
+
 void brw_wm_pass_fp( struct brw_wm_compile *c )
 {
    struct brw_fragment_program *fp = c->fp;
@@ -867,7 +888,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 
    if (INTEL_DEBUG & DEBUG_WM) {
       _mesa_printf("\n\n\npass_fp:\n");
-/*       _mesa_debug_fp_inst(c->nr_fp_insns, c->prog_instructions, wm_opcode_strings, wm_file_strings);  */
+      print_insns( c->prog_instructions, c->nr_fp_insns );
       _mesa_printf("\n");
    }
 }
