@@ -252,15 +252,15 @@ _generic_GetInfoLogLength (struct gl2_generic_intf **intf)
 }
 
 static struct gl2_generic_intf _generic_vftbl = {
-	{
-		_unknown_AddRef,
-		_unknown_Release,
-		_generic_QueryInterface
-	},
-	_generic_Delete,
-	NULL,		/* abstract GetType */
-	_generic_GetName,
-	_generic_GetDeleteStatus,
+   {
+      _unknown_AddRef,
+      _unknown_Release,
+      _generic_QueryInterface
+   },
+   _generic_Delete,
+   NULL,		/* abstract GetType */
+   _generic_GetName,
+   _generic_GetDeleteStatus,
    _generic_GetInfoLog,
    _generic_GetInfoLogLength
 };
@@ -1184,9 +1184,23 @@ _program_UpdateFixedAttrib (struct gl2_program_intf **intf, GLuint index, GLvoid
 	}
 }
 
+
+/**
+ * Called during fragment shader execution to either load a varying
+ * register with values, or fetch values from a varying register.
+ * \param intf  the internal program?
+ * \param index  which varying register, one of the SLANG_FRAGMENT_FIXED_*
+ *               values for example.
+ * \param data  source values to load (or dest to write to)
+ * \param offset  indicates a texture unit or generic varying attribute
+ * \param size  number of bytes to copy
+ * \param write  if true, write to the varying register, else store values
+ *               in 'data'
+ */
 static GLvoid
-_program_UpdateFixedVarying (struct gl2_program_intf **intf, GLuint index, GLvoid *data,
-                             GLuint offset, GLuint size, GLboolean write)
+_program_UpdateFixedVarying(struct gl2_program_intf **intf, GLuint index,
+                            GLvoid *data,
+                            GLuint offset, GLuint size, GLboolean write)
 {
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
 	slang_program *pro = &impl->_obj.prog;
