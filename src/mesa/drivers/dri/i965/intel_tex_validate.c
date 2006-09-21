@@ -166,12 +166,15 @@ GLuint intel_finalize_mipmap_tree( struct intel_context *intel,
     * target, imageFormat, etc.
     */
    if (intelObj->mt &&
-       (intelObj->mt->first_level != intelObj->firstLevel ||
-	intelObj->mt->last_level != intelObj->lastLevel ||
+       (intelObj->mt->target != intelObj->base.Target ||
 	intelObj->mt->internal_format != firstImage->InternalFormat ||
+	intelObj->mt->first_level != intelObj->firstLevel ||
+	intelObj->mt->last_level != intelObj->lastLevel ||
 	intelObj->mt->width0 != firstImage->Width ||
 	intelObj->mt->height0 != firstImage->Height ||
-	intelObj->mt->depth0 != firstImage->Depth)) 
+	intelObj->mt->depth0 != firstImage->Depth ||
+	intelObj->mt->cpp != firstImage->TexFormat->TexelBytes ||
+	intelObj->mt->compressed != firstImage->IsCompressed)) 
    {
       intel_miptree_destroy(intel, intelObj->mt);
       intelObj->mt = NULL;
