@@ -177,7 +177,6 @@ __glutSetupColormap(XVisualInfo * vi, GLUTcolormap ** colormap, Colormap * cmap)
     }
     break;
   case TrueColor:
-  case DirectColor:
     *colormap = NULL;   /* NULL if RGBA */
 
     /* Hewlett-Packard supports a feature called "HP Color
@@ -253,6 +252,28 @@ __glutSetupColormap(XVisualInfo * vi, GLUTcolormap ** colormap, Colormap * cmap)
     /* XXX DirectColor probably needs ramps hand initialized! */
     *cmap = XCreateColormap(__glutDisplay, __glutRoot,
       vi->visual, AllocNone);
+    break;
+  case DirectColor:
+    *colormap = NULL;   /* NULL if RGBA */
+    *cmap = XCreateColormap(__glutDisplay, __glutRoot,
+                            vi->visual, AllocAll);
+    if (vi->depth == 24) {
+      /* init the red, green, blue maps to linear ramps */
+      XColor xc[256];
+      int i;
+      for (i = 0; i < 256; i++) {
+        xc[i].pixel = (i << 16) | (i << 8) | i;
+        xc[i].red = (i << 8) | i;
+        xc[i].green = (i << 8) | i;
+        xc[i].blue = (i << 8) | i;
+        xc[i].flags = DoRed | DoGreen | DoBlue;
+      }
+      XStoreColors(__glutDisplay, *cmap, xc, 256);
+    }
+    else {
+       fprintf(stderr, "GLUT Error: DirectColor visuals other than 24-bits "
+               "not fully supported.\n");
+    }
     break;
   case StaticColor:
   case StaticGray:
