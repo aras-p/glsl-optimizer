@@ -296,7 +296,10 @@ _mesa_buffer_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
 {
    (void) ctx; (void) target;
 
-   if (bufObj->Data && ((GLuint) (size + offset) <= bufObj->Size)) {
+   /* this should have been caught in _mesa_BufferSubData() */
+   ASSERT((GLuint) (size + offset) <= bufObj->Size);
+
+   if (bufObj->Data) {
       _mesa_memcpy( (GLubyte *) bufObj->Data + offset, data, size );
    }
 }
@@ -336,9 +339,9 @@ _mesa_buffer_get_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
 /**
  * Fallback function called via ctx->Driver.MapBuffer().
  * Hardware drivers that really implement buffer objects should never use
- * function.
+ * this function.
  *
- * The input parameters will have been already tested for errors.
+ * The function parameters will have been already tested for errors.
  *
  * \param ctx     GL context.
  * \param target  Buffer object target on which to operate.
