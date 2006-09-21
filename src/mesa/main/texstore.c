@@ -1668,9 +1668,9 @@ _mesa_texstore_rgb888(TEXSTORE_PARAMS)
 
       /* dstmap - how to swizzle from RGBA to dst format:
        */
-      dstmap[0] = 0;
+      dstmap[0] = 2;
       dstmap[1] = 1;
-      dstmap[2] = 2;
+      dstmap[2] = 0;
       dstmap[3] = ONE;		/* ? */
       
       _mesa_swizzle_ubyte_image(ctx, dims,
@@ -1794,9 +1794,9 @@ _mesa_texstore_bgr888(TEXSTORE_PARAMS)
 
       /* dstmap - how to swizzle from RGBA to dst format:
        */
-      dstmap[0] = 2;
+      dstmap[0] = 0;
       dstmap[1] = 1;
-      dstmap[2] = 0;
+      dstmap[2] = 2;
       dstmap[3] = ONE;		/* ? */
       
       _mesa_swizzle_ubyte_image(ctx, dims,
