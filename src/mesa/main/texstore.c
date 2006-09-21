@@ -27,7 +27,7 @@
  *   Brian Paul
  */
 
-/*
+/**
  * The GL texture image functions in teximage.c basically just do
  * error checking and data structure allocation.  They in turn call
  * device driver functions which actually copy/convert/store the user's
@@ -65,12 +65,19 @@
 #include "texstore.h"
 #include "enums.h"
 
+
 enum {
    ZERO = 4, 
    ONE = 5
 };
 
-static GLboolean can_swizzle(GLenum logicalBaseFormat)
+
+/**
+ * Return GL_TRUE if the given image format is one that be converted
+ * to another format by swizzling.
+ */
+static GLboolean
+can_swizzle(GLenum logicalBaseFormat)
 {
    switch (logicalBaseFormat) {
    case GL_RGBA:
@@ -197,10 +204,11 @@ static const struct {
 
 
 
-   
-
-
-static int get_map_idx( GLenum value )
+/**
+ * Convert a GL image format enum to an IDX_* value (see above).
+ */
+static int
+get_map_idx(GLenum value)
 {
    switch (value) {
    case GL_LUMINANCE: return IDX_LUMINANCE;
@@ -234,10 +242,10 @@ static void
 compute_component_mapping(GLenum inFormat, GLenum outFormat, 
 			  GLubyte *map)
 {
-   int in = get_map_idx(inFormat);
-   int out = get_map_idx(outFormat);
-   const GLubyte *in2rgba = mappings[in].to_rgba;
-   const GLubyte *rgba2out = mappings[out].from_rgba;
+   const int inFmt = get_map_idx(inFormat);
+   const int outFmt = get_map_idx(outFormat);
+   const GLubyte *in2rgba = mappings[inFmt].to_rgba;
+   const GLubyte *rgba2out = mappings[outFmt].from_rgba;
    int i;
    
    for (i = 0; i < 4; i++)
@@ -643,14 +651,16 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
  * \param dstComponents  number of color components in destination pixels
  * \param src  source pixels
  * \param srcComponents  number of color components in source pixels
- * \param map  the swizzle mapping
+ * \param map  the swizzle mapping.  map[X] says where to find the X component
+ *             in the source image's pixels.  For example, if the source image
+ *             is GL_BGRA and X = red, map[0] yields 2.
  * \param count  number of pixels to copy/swizzle.
  */
 static void
 swizzle_copy(GLubyte *dst, GLuint dstComponents, const GLubyte *src, 
              GLuint srcComponents, const GLubyte *map, GLuint count)
 {
-   GLubyte tmp[8];
+   GLubyte tmp[6];
    GLuint i;
 
    tmp[ZERO] = 0x0;
@@ -738,7 +748,6 @@ byteswap_mapping( GLboolean swapBytes,
       return NULL;
    }
 }
-
 
 
 
@@ -1013,9 +1022,8 @@ _mesa_texstore_rgba(TEXSTORE_PARAMS)
 	 components = 1;
       }
       else {
-	 ASSERT(0);
-	 dstmap = map_identity;
-	 components = 4;
+         _mesa_problem(ctx, "Unexpected dstFormat in _mesa_texstore_rgba");
+         return GL_FALSE;
       }
 
       _mesa_swizzle_ubyte_image(ctx, dims,
@@ -1261,6 +1269,9 @@ _mesa_texstore_rgb565(TEXSTORE_PARAMS)
 }
 
 
+/**
+ * Store a texture in MESA_FORMAT_RGBA8888 or MESA_FORMAT_RGBA8888_REV.
+ */
 GLboolean
 _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
 {
