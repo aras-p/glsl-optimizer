@@ -698,42 +698,36 @@ swizzle_copy(GLubyte *dst, GLuint dstComponents, const GLubyte *src,
    }
 }
 
-/* Help! I'm just making this up!
- *
- * This should take the incoming Type, Endian pair and produce a
- * mapping from that data when examined through a (char *) pointer
- * natively, to the equivalent of what that data would look like if it
- * were presented as GL_UNSIGNED_BYTEs on a littleEndian machine... I
- * think...
+
+static const GLubyte map_identity[6] = { 0, 1, 2, 3, ZERO, ONE };
+static const GLubyte map_3210[6] = { 3, 2, 1, 0, ZERO, ONE };
+
+/* Deal with the _REV input types:
  */
-static const GLubyte map_identity[6] = { 0, 1, 2, 3, 4, 5 };
-static const GLubyte map_3210[6] = { 3, 2, 1, 0, 4, 5 };
-
-
 static const GLubyte *
-type_endian_mapping( GLenum srcType )
+type_mapping( GLenum srcType )
 {
    switch (srcType) {
    case GL_UNSIGNED_BYTE:
-      if (_mesa_little_endian())
-	 return map_identity;
-      else
-	 return map_3210;
-   case GL_UNSIGNED_INT_8_8_8_8:
       return map_identity;
-   case GL_UNSIGNED_INT_8_8_8_8_REV:
+   case GL_UNSIGNED_INT_8_8_8_8:
       return map_3210;
+   case GL_UNSIGNED_INT_8_8_8_8_REV:
+      return map_identity;
    default:
       return NULL;
    }
 }
 
-/* This will have to change to support GL_UNSIGNED_SHORT input types.
- * It's making my mind swim at the moment though.
+/* Mapping required if input type is 
  */
 static const GLubyte *
-byteswap_mapping( GLenum srcType )
+byteswap_mapping( GLboolean swapBytes,
+		  GLenum srcType )
 {
+   if (!swapBytes) 
+      return map_identity;
+
    switch (srcType) {
    case GL_UNSIGNED_BYTE:
       return map_identity;
@@ -772,7 +766,7 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
 			  const struct gl_pixelstore_attrib *srcPacking )
 {
    GLint srcComponents = _mesa_components_in_format(srcFormat);
-   const GLubyte *srctype2ubyte_le, *swap;
+   const GLubyte *srctype2ubyte, *swap;
    GLubyte map[4], src2base[6], base2rgba[6];
    GLint i;
    const GLint srcRowStride =
@@ -794,12 +788,12 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
     */
    compute_component_mapping(srcFormat, baseInternalFormat, src2base);
    compute_component_mapping(baseInternalFormat, GL_RGBA, base2rgba);
-   swap = byteswap_mapping(srcType);
-   srctype2ubyte_le = type_endian_mapping(srcType);
+   swap = byteswap_mapping(srcPacking->SwapBytes, srcType);
+   srctype2ubyte = type_mapping(srcType);
 
 
    for (i = 0; i < 4; i++)
-      map[i] = srctype2ubyte_le[swap[src2base[base2rgba[rgba2dst[i]]]]];
+      map[i] = srctype2ubyte[swap[src2base[base2rgba[rgba2dst[i]]]]];
 
 /*    _mesa_printf("map %d %d %d %d\n", map[0], map[1], map[2], map[3]);  */
 
@@ -981,6 +975,7 @@ _mesa_texstore_rgba(TEXSTORE_PARAMS)
       }
    }
    else if (!ctx->_ImageTransferState &&
+	    _mesa_little_endian() &&
 	    CHAN_TYPE == GL_UNSIGNED_BYTE &&
 	    (srcType == GL_UNSIGNED_BYTE ||
 	     srcType == GL_UNSIGNED_INT_8_8_8_8 ||
@@ -1308,6 +1303,7 @@ _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
                      srcAddr, srcPacking);
    }
    else if (!ctx->_ImageTransferState &&
+	    littleEndian && 
 	    (srcType == GL_UNSIGNED_BYTE ||
 	     srcType == GL_UNSIGNED_INT_8_8_8_8 ||
 	     srcType == GL_UNSIGNED_INT_8_8_8_8_REV) &&
@@ -1522,6 +1518,7 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
       }
    }
    else if (!ctx->_ImageTransferState &&
+	    littleEndian &&
 	    (srcType == GL_UNSIGNED_BYTE ||
 	     srcType == GL_UNSIGNED_INT_8_8_8_8 ||
 	     srcType == GL_UNSIGNED_INT_8_8_8_8_REV) &&
@@ -1654,6 +1651,7 @@ _mesa_texstore_rgb888(TEXSTORE_PARAMS)
       }
    }
    else if (!ctx->_ImageTransferState &&
+	    littleEndian &&
 	    srcType == GL_UNSIGNED_BYTE &&
 	    can_swizzle(baseInternalFormat) &&
 	    can_swizzle(srcFormat)) {
@@ -1779,6 +1777,7 @@ _mesa_texstore_bgr888(TEXSTORE_PARAMS)
       }
    }
    else if (!ctx->_ImageTransferState &&
+	    littleEndian &&
 	    srcType == GL_UNSIGNED_BYTE &&
 	    can_swizzle(baseInternalFormat) &&
 	    can_swizzle(srcFormat)) {
@@ -1998,6 +1997,7 @@ _mesa_texstore_al88(TEXSTORE_PARAMS)
                      srcAddr, srcPacking);
    }
    else if (!ctx->_ImageTransferState &&
+	    littleEndian &&
 	    srcType == GL_UNSIGNED_BYTE &&
 	    can_swizzle(baseInternalFormat) &&
 	    can_swizzle(srcFormat)) {
@@ -2148,6 +2148,7 @@ _mesa_texstore_a8(TEXSTORE_PARAMS)
                      srcAddr, srcPacking);
    }
    else if (!ctx->_ImageTransferState &&
+	    _mesa_little_endian() &&
 	    srcType == GL_UNSIGNED_BYTE &&
 	    can_swizzle(baseInternalFormat) &&
 	    can_swizzle(srcFormat)) {
