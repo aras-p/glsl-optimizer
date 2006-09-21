@@ -34,11 +34,15 @@ To add a new GL extension to Mesa you have to do at least the following.
    corresponding Python scripts.
 </li>
 <li>
-   Find an existing extension that's similar to the new one and search
-   the sources for code related to that extension.
-   Implement new code as needed.
-   In general, new state variables will be added to mtypes.h.  If the
-   extension is rather large, try to implement it in a new source file.
+   Add a new entry to the <code>gl_extensions</code> struct in mtypes.h
+</li>
+<li>
+   Update the <code>extensions.c</code> file.
+</li>
+<li>
+   From this point, the best way to proceed is to find another extension,
+   similar to the new one, that's already implemented in Mesa and use it
+   as an example.
 </li>
 <li>
    If the new extension adds new GL state, the functions in get.c, enable.c
