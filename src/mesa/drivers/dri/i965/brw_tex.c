@@ -59,26 +59,36 @@ brwChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
-   case GL_RGBA4:
-   case GL_RGBA2:
-   case GL_RGB5_A1:
       return &_mesa_texformat_argb8888; 
-/*       return &_mesa_texformat_rgba8888_rev; */
 
-   case 3:
-   case GL_RGB:
-   case GL_COMPRESSED_RGB:
    case GL_RGB8:
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-   case GL_RGB5:
-   case GL_RGB4:
-   case GL_R3_G3_B2:
-      /* Broadwater doesn't support RGB textures, so these must be
+      /* Broadwater doesn't support RGB888 textures, so these must be
        * stored as ARGB.
        */
       return &_mesa_texformat_argb8888;
+
+   case 3:
+   case GL_COMPRESSED_RGB:
+   case GL_RGB:
+      if (format == GL_RGB &&
+	  type == GL_UNSIGNED_SHORT_5_6_5)
+	 return &_mesa_texformat_rgb565;
+      else
+	 return &_mesa_texformat_argb8888;
+
+
+   case GL_RGB5:
+   case GL_RGB5_A1:
+      return &_mesa_texformat_argb1555;
+
+   case GL_R3_G3_B2:
+   case GL_RGBA2:
+   case GL_RGBA4:
+   case GL_RGB4:
+      return &_mesa_texformat_argb4444;
 
    case GL_ALPHA:
    case GL_ALPHA4:
