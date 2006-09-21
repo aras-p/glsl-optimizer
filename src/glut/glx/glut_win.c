@@ -349,12 +349,29 @@ getVisualInfoRGB(unsigned int mode)
     __glutScreen, list);
 }
 
+static XVisualInfo *
+getVisualInfoID(int id)
+{
+   XVisualInfo temp;
+   int count;
+   temp.visualid = id;
+   return XGetVisualInfo(__glutDisplay, VisualIDMask, &temp, &count);
+}
+
+
 XVisualInfo *
 __glutGetVisualInfo(unsigned int mode)
 {
+  char *visStr;
   /* XXX GLUT_LUMINANCE not implemented for GLUT 3.0. */
   if (GLUT_WIND_IS_LUMINANCE(mode))
     return NULL;
+
+  visStr = getenv("GLUT_FORCE_VISUAL");
+  if (visStr) {
+     int id = atoi(visStr);
+     return getVisualInfoID(id);
+  }
 
   if (GLUT_WIND_IS_RGB(mode))
     return getVisualInfoRGB(mode);
