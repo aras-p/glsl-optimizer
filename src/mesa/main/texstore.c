@@ -713,12 +713,9 @@ static const GLubyte map_3210[6] = { 3, 2, 1, 0, 4, 5 };
 static const GLubyte *
 type_endian_mapping( GLenum srcType )
 {
-   const GLuint ui = 1;
-   const GLubyte littleEndian = *((const GLubyte *) &ui);
-
    switch (srcType) {
    case GL_UNSIGNED_BYTE:
-      if (littleEndian)
+      if (_mesa_little_endian())
 	 return map_identity;
       else
 	 return map_3210;
@@ -1272,8 +1269,7 @@ _mesa_texstore_rgb565(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
 {
-   const GLuint ui = 1;
-   const GLubyte littleEndian = *((const GLubyte *) &ui);
+   const GLboolean littleEndian = _mesa_little_endian();
 
    ASSERT(dstFormat == &_mesa_texformat_rgba8888 ||
           dstFormat == &_mesa_texformat_rgba8888_rev);
@@ -1395,8 +1391,7 @@ _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 {
-   const GLuint ui = 1;
-   const GLubyte littleEndian = *((const GLubyte *) &ui);
+   const GLboolean littleEndian = _mesa_little_endian();
 
    ASSERT(dstFormat == &_mesa_texformat_argb8888 ||
           dstFormat == &_mesa_texformat_argb8888_rev);
@@ -1613,8 +1608,7 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_rgb888(TEXSTORE_PARAMS)
 {
-   const GLuint ui = 1;
-   const GLubyte littleEndian = *((const GLubyte *) &ui);
+   const GLboolean littleEndian = _mesa_little_endian();
 
    ASSERT(dstFormat == &_mesa_texformat_rgb888);
    ASSERT(dstFormat->TexelBytes == 3);
@@ -1739,8 +1733,7 @@ _mesa_texstore_rgb888(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_bgr888(TEXSTORE_PARAMS)
 {
-   const GLuint ui = 1;
-   const GLubyte littleEndian = *((const GLubyte *) &ui);
+   const GLboolean littleEndian = _mesa_little_endian();
 
    ASSERT(dstFormat == &_mesa_texformat_bgr888);
    ASSERT(dstFormat->TexelBytes == 3);
@@ -1983,8 +1976,7 @@ _mesa_texstore_argb1555(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_al88(TEXSTORE_PARAMS)
 {
-   const GLuint ui = 1;
-   const GLubyte littleEndian = *((const GLubyte *) &ui);
+   const GLboolean littleEndian = _mesa_little_endian();
 
    ASSERT(dstFormat == &_mesa_texformat_al88 ||
           dstFormat == &_mesa_texformat_al88_rev);
@@ -2265,8 +2257,7 @@ _mesa_texstore_ci8(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_ycbcr(TEXSTORE_PARAMS)
 {
-   const GLuint ui = 1;
-   const GLubyte littleEndian = *((const GLubyte *) &ui);
+   const GLboolean littleEndian = _mesa_little_endian();
    (void) ctx; (void) dims; (void) baseInternalFormat;
 
    ASSERT((dstFormat == &_mesa_texformat_ycbcr) ||
@@ -2521,8 +2512,7 @@ _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_srgb8(TEXSTORE_PARAMS)
 {
-   const GLuint ui = 1;
-   const GLubyte littleEndian = *((const GLubyte *) &ui);
+   const GLboolean littleEndian = _mesa_little_endian();
    const struct gl_texture_format *newDstFormat;
    StoreTexImageFunc store;
    GLboolean k;
@@ -2553,8 +2543,7 @@ _mesa_texstore_srgb8(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_srgba8(TEXSTORE_PARAMS)
 {
-   const GLuint ui = 1;
-   const GLubyte littleEndian = *((const GLubyte *) &ui);
+   const GLboolean littleEndian = _mesa_little_endian();
    const struct gl_texture_format *newDstFormat;
    GLboolean k;
 
@@ -2602,8 +2591,7 @@ _mesa_texstore_sl8(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_sla8(TEXSTORE_PARAMS)
 {
-   const GLuint ui = 1;
-   const GLubyte littleEndian = *((const GLubyte *) &ui);
+   const GLboolean littleEndian = _mesa_little_endian();
    const struct gl_texture_format *newDstFormat;
    GLboolean k;
 
