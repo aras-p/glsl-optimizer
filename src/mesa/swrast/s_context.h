@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -79,11 +79,9 @@
  * These arrays are separated out of sw_span to conserve memory.
  */
 struct span_arrays {
-   /* XXX the next three fields could go into a union */
-   GLchan  rgb[MAX_WIDTH][3];
    GLchan  rgba[MAX_WIDTH][4];
-   GLuint  index[MAX_WIDTH];
    GLchan  spec[MAX_WIDTH][4]; /* specular color */
+   GLuint  index[MAX_WIDTH];
    GLint   x[MAX_WIDTH];  /**< X/Y used for point/line rendering only */
    GLint   y[MAX_WIDTH];  /**< X/Y used for point/line rendering only */
    GLuint  z[MAX_WIDTH];

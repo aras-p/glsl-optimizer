@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -163,6 +163,7 @@ _swrast_culltriangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )						\
    GLuint i;								\
+   GLchan rgb[MAX_WIDTH][3];						\
    span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
    span.intTex[1] -= FIXED_HALF;					\
    for (i = 0; i < span.end; i++) {					\
@@ -170,13 +171,13 @@ _swrast_culltriangle( GLcontext *ctx,
       GLint t = FixedToInt(span.intTex[1]) & tmask;			\
       GLint pos = (t << twidth_log2) + s;				\
       pos = pos + pos + pos;  /* multiply by 3 */			\
-      span.array->rgb[i][RCOMP] = texture[pos];				\
-      span.array->rgb[i][GCOMP] = texture[pos+1];			\
-      span.array->rgb[i][BCOMP] = texture[pos+2];			\
+      rgb[i][RCOMP] = texture[pos];					\
+      rgb[i][GCOMP] = texture[pos+1];					\
+      rgb[i][BCOMP] = texture[pos+2];					\
       span.intTex[0] += span.intTexStep[0];				\
       span.intTex[1] += span.intTexStep[1];				\
    }									\
-   rb->PutRowRGB(ctx, rb, span.end, span.x, span.y, span.array->rgb, NULL);
+   rb->PutRowRGB(ctx, rb, span.end, span.x, span.y, rgb, NULL);
 
 #include "s_tritemp.h"
 
@@ -214,6 +215,7 @@ _swrast_culltriangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )						\
    GLuint i;				    				\
+   GLchan rgb[MAX_WIDTH][3];						\
    span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
    span.intTex[1] -= FIXED_HALF;					\
    for (i = 0; i < span.end; i++) {					\
@@ -223,9 +225,9 @@ _swrast_culltriangle( GLcontext *ctx,
          GLint t = FixedToInt(span.intTex[1]) & tmask;			\
          GLint pos = (t << twidth_log2) + s;				\
          pos = pos + pos + pos;  /* multiply by 3 */			\
-         span.array->rgb[i][RCOMP] = texture[pos];			\
-         span.array->rgb[i][GCOMP] = texture[pos+1];			\
-         span.array->rgb[i][BCOMP] = texture[pos+2];			\
+         rgb[i][RCOMP] = texture[pos];					\
+         rgb[i][GCOMP] = texture[pos+1];				\
+         rgb[i][BCOMP] = texture[pos+2];				\
          zRow[i] = z;							\
          span.array->mask[i] = 1;					\
       }									\
@@ -236,8 +238,7 @@ _swrast_culltriangle( GLcontext *ctx,
       span.intTex[1] += span.intTexStep[1];				\
       span.z += span.zStep;						\
    }									\
-   rb->PutRowRGB(ctx, rb, span.end, span.x, span.y,			\
-                 span.array->rgb, span.array->mask);
+   rb->PutRowRGB(ctx, rb, span.end, span.x, span.y, rgb, span.array->mask);
 
 #include "s_tritemp.h"
 

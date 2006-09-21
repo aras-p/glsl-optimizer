@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -243,14 +243,14 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                GLint row;
                ASSERT(drawWidth <= MAX_WIDTH);
                for (row=0; row<drawHeight; row++) {
+                  GLchan rgb[MAX_WIDTH][3];
                   GLint i;
 		  for (i=0;i<drawWidth;i++) {
-                     span.array->rgb[i][0] = src[i];
-                     span.array->rgb[i][1] = src[i];
-                     span.array->rgb[i][2] = src[i];
+                     rgb[i][0] = src[i];
+                     rgb[i][1] = src[i];
+                     rgb[i][2] = src[i];
 		  }
-                  rb->PutRowRGB(ctx, rb, drawWidth, destX, destY,
-                                span.array->rgb, NULL);
+                  rb->PutRowRGB(ctx, rb, drawWidth, destX, destY, rgb, NULL);
                   src += rowLength;
                   destY++;
                }
@@ -260,15 +260,15 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                GLint row;
                ASSERT(drawWidth <= MAX_WIDTH);
                for (row=0; row<drawHeight; row++) {
+                  GLchan rgb[MAX_WIDTH][3];
                   GLint i;
                   for (i=0;i<drawWidth;i++) {
-                     span.array->rgb[i][0] = src[i];
-                     span.array->rgb[i][1] = src[i];
-                     span.array->rgb[i][2] = src[i];
+                     rgb[i][0] = src[i];
+                     rgb[i][1] = src[i];
+                     rgb[i][2] = src[i];
                   }
                   destY--;
-                  rb->PutRow(ctx, rb, drawWidth, destX, destY,
-                             span.array->rgb, NULL);
+                  rb->PutRow(ctx, rb, drawWidth, destX, destY, rgb, NULL);
                   src += rowLength;
                }
             }
@@ -277,17 +277,18 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                GLint row;
                ASSERT(drawWidth <= MAX_WIDTH);
                for (row=0; row<drawHeight; row++) {
+                  GLchan rgb[MAX_WIDTH][3];
                   GLint i;
 		  for (i=0;i<drawWidth;i++) {
-                     span.array->rgb[i][0] = src[i];
-                     span.array->rgb[i][1] = src[i];
-                     span.array->rgb[i][2] = src[i];
+                     rgb[i][0] = src[i];
+                     rgb[i][1] = src[i];
+                     rgb[i][2] = src[i];
 		  }
                   span.x = destX;
                   span.y = destY;
                   span.end = drawWidth;
                   _swrast_write_zoomed_rgb_span(ctx, imgX, imgY, &span,
-                             (CONST GLchan (*)[3]) span.array->rgb);
+                             (CONST GLchan (*)[3]) rgb);
                   src += rowLength;
                   destY++;
                }
