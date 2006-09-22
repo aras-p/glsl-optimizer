@@ -289,15 +289,11 @@ void intelEmitCopyBlit( struct intel_context *intel,
    /* Initial y values don't seem to work with negative pitches.  If
     * we adjust the offsets manually (below), it seems to work fine.
     *
-    * However, on broadwater at least, only the top version works
-    * correctly with overlapping blits.  Luckily we don't need
-    * negative pitches and overlapping blits at the same time, as far
-    * as I know anyhow.
-    *
-    * Further, the current i965 driver never requires negative
-    * pitches, so just use the old-style blits for now.
+    * On the other hand, if we always adjust, the hardware doesn't
+    * know which blit directions to use, so overlapping copypixels get
+    * the wrong result.
     */
-   if (1) {
+   if (dst_pitch > 0 && src_pitch > 0) {
       BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
       OUT_BATCH( CMD );
       OUT_BATCH( dst_pitch | BR13 );
