@@ -98,7 +98,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
       rasterMask |= MULTI_DRAW_BIT; /* all color index bits disabled */
    }
 
-   if (ctx->FragmentProgram._Active) {
+   if (ctx->FragmentProgram._Enabled) {
       rasterMask |= FRAGPROG_BIT;
    }
 
@@ -206,7 +206,7 @@ _swrast_update_fog_state( GLcontext *ctx )
 
    /* determine if fog is needed, and if so, which fog mode */
    swrast->_FogEnabled = GL_FALSE;
-   if (ctx->FragmentProgram._Active) {
+   if (ctx->FragmentProgram._Enabled) {
       if (ctx->FragmentProgram._Current->Base.Target==GL_FRAGMENT_PROGRAM_ARB) {
          const struct gl_fragment_program *fp
             = ctx->FragmentProgram._Current;
@@ -230,7 +230,7 @@ _swrast_update_fog_state( GLcontext *ctx )
 static void
 _swrast_update_fragment_program( GLcontext *ctx )
 {
-   if (ctx->FragmentProgram._Active) {
+   if (ctx->FragmentProgram._Enabled) {
       const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
       _mesa_load_state_parameters(ctx, fp->Base.Parameters);
    }
@@ -299,7 +299,7 @@ _swrast_validate_triangle( GLcontext *ctx,
 
    if (ctx->Texture._EnabledUnits == 0
        && NEED_SECONDARY_COLOR(ctx)
-       && !ctx->FragmentProgram._Active) {
+       && !ctx->FragmentProgram._Enabled) {
       /* separate specular color, but no texture */
       swrast->SpecTriangle = swrast->Triangle;
       swrast->Triangle = _swrast_add_spec_terms_triangle;
@@ -322,7 +322,7 @@ _swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 
    if (ctx->Texture._EnabledUnits == 0
        && NEED_SECONDARY_COLOR(ctx)
-       && !ctx->FragmentProgram._Active) {
+       && !ctx->FragmentProgram._Enabled) {
       swrast->SpecLine = swrast->Line;
       swrast->Line = _swrast_add_spec_terms_line;
    }
@@ -345,7 +345,7 @@ _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
 
    if (ctx->Texture._EnabledUnits == 0
        && NEED_SECONDARY_COLOR(ctx)
-       && !ctx->FragmentProgram._Active) {
+       && !ctx->FragmentProgram._Enabled) {
       swrast->SpecPoint = swrast->Point;
       swrast->Point = _swrast_add_spec_terms_point;
    }

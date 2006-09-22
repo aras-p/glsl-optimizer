@@ -129,7 +129,7 @@ _swrast_span_default_texcoords( GLcontext *ctx, struct sw_span *span )
    GLuint i;
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
       const GLfloat *tc = ctx->Current.RasterTexCoords[i];
-      if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled) {
+      if (ctx->FragmentProgram._Enabled || ctx->ATIFragmentShader._Enabled) {
          COPY_4V(span->tex[i], tc);
       }
       else if (tc[3] > 0.0F) {
@@ -410,7 +410,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
             if (obj) {
                const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
                needLambda = (obj->MinFilter != obj->MagFilter)
-                  || ctx->FragmentProgram._Active;
+                  || ctx->FragmentProgram._Enabled;
                texW = img->WidthScale;
                texH = img->HeightScale;
             }
@@ -435,7 +435,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled ||
+               if (ctx->FragmentProgram._Enabled || ctx->ATIFragmentShader._Enabled ||
                    ctx->ShaderObjects._FragmentShaderPresent) {
                   /* do perspective correction but don't divide s, t, r by q */
                   const GLfloat dwdx = span->dwdx;
@@ -487,7 +487,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled ||
+               if (ctx->FragmentProgram._Enabled || ctx->ATIFragmentShader._Enabled ||
                    ctx->ShaderObjects._FragmentShaderPresent) {
                   /* do perspective correction but don't divide s, t, r by q */
                   const GLfloat dwdx = span->dwdx;
@@ -546,7 +546,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
       if (obj) {
          const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
          needLambda = (obj->MinFilter != obj->MagFilter)
-            || ctx->FragmentProgram._Active;
+            || ctx->FragmentProgram._Enabled;
          texW = (GLfloat) img->WidthScale;
          texH = (GLfloat) img->HeightScale;
       }
@@ -571,7 +571,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled ||
+         if (ctx->FragmentProgram._Enabled || ctx->ATIFragmentShader._Enabled ||
              ctx->ShaderObjects._FragmentShaderPresent) {
             /* do perspective correction but don't divide s, t, r by q */
             const GLfloat dwdx = span->dwdx;
@@ -623,7 +623,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled ||
+         if (ctx->FragmentProgram._Enabled || ctx->ATIFragmentShader._Enabled ||
              ctx->ShaderObjects._FragmentShaderPresent) {
             /* do perspective correction but don't divide s, t, r by q */
             const GLfloat dwdx = span->dwdx;
@@ -1120,7 +1120,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
    const GLbitfield origInterpMask = span->interpMask;
    const GLbitfield origArrayMask = span->arrayMask;
    const GLboolean deferredTexture = !(ctx->Color.AlphaEnabled ||
-                                       ctx->FragmentProgram._Active ||
+                                       ctx->FragmentProgram._Enabled ||
                                        ctx->ShaderObjects._FragmentShaderPresent);
 
    ASSERT(span->primitive == GL_POINT  ||  span->primitive == GL_LINE ||
@@ -1205,7 +1205,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
       }
       else
 #endif
-      if (ctx->FragmentProgram._Active) {
+      if (ctx->FragmentProgram._Enabled) {
          /* frag prog may need Z values */
          if (span->interpMask & SPAN_Z)
             _swrast_span_interpolate_z(ctx, span);
@@ -1292,7 +1292,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
       }
       else
 #endif
-      if (ctx->FragmentProgram._Active)
+      if (ctx->FragmentProgram._Enabled)
          _swrast_exec_fragment_program( ctx, span );
       else if (ctx->ATIFragmentShader._Enabled)
          _swrast_exec_fragment_shader( ctx, span );
