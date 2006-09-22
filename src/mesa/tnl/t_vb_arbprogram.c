@@ -1182,7 +1182,8 @@ do_ndc_cliptest(GLcontext *ctx, struct arb_vp_machine *m)
 
    /* Test userclip planes.  This contributes to VB->ClipMask.
     */
-   if (ctx->Transform.ClipPlanesEnabled && !ctx->VertexProgram._Enabled) {
+   if (ctx->Transform.ClipPlanesEnabled && (!ctx->VertexProgram._Enabled ||
+      ctx->VertexProgram.Current->IsPositionInvariant)) {
       userclip( ctx,
 		VB->ClipPtr,
 		m->clipmask,
