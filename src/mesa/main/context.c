@@ -1713,6 +1713,8 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
          if (readBuffer != drawBuffer && !readBuffer->Initialized) {
             initialize_framebuffer_size(newCtx, readBuffer);
          }
+
+	 _mesa_resizebuffers(newCtx);
 #endif
          if (newCtx->FirstTimeCurrent) {
             /* set initial viewport and scissor size now */

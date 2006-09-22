@@ -591,11 +591,9 @@ _mesa_ReadBuffer(GLenum buffer)
  * \note This function should only be called through the GL API, not
  * from device drivers (as was done in the past).
  */
-void GLAPIENTRY
-_mesa_ResizeBuffersMESA( void )
-{
-   GET_CURRENT_CONTEXT(ctx);
 
+void _mesa_resizebuffers( GLcontext *ctx )
+{
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx );
 
    if (MESA_VERBOSE & VERBOSE_API)
@@ -635,6 +633,14 @@ _mesa_ResizeBuffersMESA( void )
    }
 
    ctx->NewState |= _NEW_BUFFERS;  /* to update scissor / window bounds */
+}
+
+void GLAPIENTRY
+_mesa_ResizeBuffersMESA( void )
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   _mesa_resizebuffers( ctx );
 }
 
 

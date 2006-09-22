@@ -78,4 +78,6 @@ extern void
 _mesa_set_scissor(GLcontext *ctx, 
                   GLint x, GLint y, GLsizei width, GLsizei height);
 
+extern void _mesa_resizebuffers( GLcontext *ctx );
+
 #endif
