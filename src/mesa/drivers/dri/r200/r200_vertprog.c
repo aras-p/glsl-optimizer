@@ -587,8 +587,46 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp)
       are_srcs_scalar = operands & SCALAR_FLAG;
       operands &= OP_MASK;
 
-      for(i = 0; i < operands; i++)
+      for(i = 0; i < operands; i++) {
 	 src[i] = vpi->SrcReg[i];
+	 /* hack up default attrib values as per spec as swizzling.
+	    normal, fog, secondary color. Crazy?
+	    May need more if we don't submit vec4 elements? */
+	 if (src[i].File == PROGRAM_INPUT) {
+	    if (src[i].Index == VERT_ATTRIB_NORMAL) {
+	       int j;
+	       for (j = 0; j < 4; j++) {
+		  if (GET_SWZ(src[i].Swizzle, j) == SWIZZLE_W) {
+		     src[i].Swizzle &= ~(SWIZZLE_W << (j*3));
+		     src[i].Swizzle |= SWIZZLE_ONE << (j*3);
+		  }
+	       }
+	    }
+	    else if (src[i].Index == VERT_ATTRIB_COLOR1) {
+	       int j;
+	       for (j = 0; j < 4; j++) {
+		  if (GET_SWZ(src[i].Swizzle, j) == SWIZZLE_W) {
+		     src[i].Swizzle &= ~(SWIZZLE_W << (j*3));
+		     src[i].Swizzle |= SWIZZLE_ZERO << (j*3);
+		  }
+	       }
+	    }
+	    else if (src[i].Index == VERT_ATTRIB_FOG) {
+	       int j;
+	       for (j = 0; j < 4; j++) {
+		  if (GET_SWZ(src[i].Swizzle, j) == SWIZZLE_W) {
+		     src[i].Swizzle &= ~(SWIZZLE_W << (j*3));
+		     src[i].Swizzle |= SWIZZLE_ONE << (j*3);
+		  }
+		  else if ((GET_SWZ(src[i].Swizzle, j) == SWIZZLE_Y) ||
+			    GET_SWZ(src[i].Swizzle, j) == SWIZZLE_Z) {
+		     src[i].Swizzle &= ~(SWIZZLE_W << (j*3));
+		     src[i].Swizzle |= SWIZZLE_ZERO << (j*3);
+		  }
+	       }
+	    }
+	 }
+      }
 
       if(operands == 3){
 	 if( CMP_SRCS(src[1], src[2]) || CMP_SRCS(src[0], src[2]) ){
