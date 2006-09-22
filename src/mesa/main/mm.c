@@ -234,8 +234,6 @@ Join2Blocks(struct mem_block *p)
 int
 mmFreeMem(struct mem_block *b)
 {
-   struct mem_block *heap = b->heap;
-
    if (!b)
       return 0;
 
