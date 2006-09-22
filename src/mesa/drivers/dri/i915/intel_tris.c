@@ -43,6 +43,12 @@
 #include "intel_reg.h"
 #include "intel_span.h"
 
+/* XXX we shouldn't include these headers in this file, but we need them
+ * for fallbackStrings, below.
+ */
+#include "i830_context.h"
+#include "i915_context.h"
+
 static void intelRenderPrimitive( GLcontext *ctx, GLenum prim );
 static void intelRasterPrimitive( GLcontext *ctx, GLenum rprim, GLuint hwprim );
 
@@ -825,28 +831,46 @@ static void intelRenderPrimitive( GLcontext *ctx, GLenum prim )
 /*           Transition to/from hardware rasterization.               */
 /**********************************************************************/
 
-static char *fallbackStrings[] = {
-   "Texture",
-   "Draw buffer",
-   "Read buffer",
-   "Color mask",
-   "Render mode",
-   "Stencil",
-   "Stipple",
-   "User disable"
+static struct {
+   GLuint bit;
+   const char *str;
+} fallbackStrings[] = {
+   { INTEL_FALLBACK_DRAW_BUFFER, "Draw buffer" },
+   { INTEL_FALLBACK_READ_BUFFER, "Read buffer" },
+   { INTEL_FALLBACK_USER, "User" },
+   { INTEL_FALLBACK_NO_BATCHBUFFER, "No Batchbuffer" },
+   { INTEL_FALLBACK_NO_TEXMEM, "No Texmem" },
+   { INTEL_FALLBACK_RENDERMODE, "Rendermode" },
+
+   { I830_FALLBACK_TEXTURE, "i830 texture" },
+   { I830_FALLBACK_COLORMASK, "i830 colormask" },
+   { I830_FALLBACK_STENCIL, "i830 stencil" },
+   { I830_FALLBACK_STIPPLE, "i830 stipple" },
+   { I830_FALLBACK_LOGICOP, "i830 logicop" },
+
+   { I915_FALLBACK_TEXTURE, "i915 texture" },
+   { I915_FALLBACK_COLORMASK, "i915 colormask" },
+   { I915_FALLBACK_STENCIL, "i915 stencil" },
+   { I915_FALLBACK_STIPPLE, "i915 stipple" },
+   { I915_FALLBACK_PROGRAM, "i915 program" },
+   { I915_FALLBACK_LOGICOP, "i915 logicop" },
+   { I915_FALLBACK_POLYGON_SMOOTH, "i915 polygon smooth" },
+   { I915_FALLBACK_POINT_SMOOTH, "i915 point smooth" },
+
+   { 0, NULL }
 };
 
 
-static char *getFallbackString(GLuint bit)
+static const char *
+getFallbackString(GLuint bit)
 {
-   int i = 0;
-   while (bit > 1) {
-      i++;
-      bit >>= 1;
+   int i;
+   for (i = 0; fallbackStrings[i].bit; i++) {
+      if (fallbackStrings[i].bit == bit)
+         return fallbackStrings[i].str;
    }
-   return fallbackStrings[i];
+   return "unknown fallback bit";
 }
-
 
 
 void intelFallback( intelContextPtr intel, GLuint bit, GLboolean mode )
@@ -860,8 +884,8 @@ void intelFallback( intelContextPtr intel, GLuint bit, GLboolean mode )
       if (oldfallback == 0) {
          intelFlush(ctx);
          if (INTEL_DEBUG & DEBUG_FALLBACKS) 
-            fprintf(stderr, "ENTER FALLBACK %x: %s\n",
-                    bit, getFallbackString( bit ));
+            fprintf(stderr, "ENTER FALLBACK 0x%x: %s\n",
+                    bit, getFallbackString(bit));
          _swsetup_Wakeup( ctx );
          intel->RenderIndex = ~0;
       }
@@ -871,7 +895,8 @@ void intelFallback( intelContextPtr intel, GLuint bit, GLboolean mode )
       if (oldfallback == bit) {
          _swrast_flush( ctx );
          if (INTEL_DEBUG & DEBUG_FALLBACKS) 
-            fprintf(stderr, "LEAVE FALLBACK %s\n", getFallbackString( bit ));
+            fprintf(stderr, "LEAVE FALLBACK 0x%x: %s\n",
+                    bit, getFallbackString(bit));
          tnl->Driver.Render.Start = intelRenderStart;
          tnl->Driver.Render.PrimitiveNotify = intelRenderPrimitive;
          tnl->Driver.Render.Finish = intelRenderFinish;
