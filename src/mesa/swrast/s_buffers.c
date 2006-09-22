@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -59,12 +59,18 @@ clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
    CLAMPED_FLOAT_TO_CHAN(clearColor[ACOMP], ctx->Color.ClearColor[3]);
 
    for (i = 0; i < height; i++) {
+      struct sw_span span;
       GLchan rgba[MAX_WIDTH][4];
       GLint j;
       for (j = 0; j < width; j++) {
          COPY_CHAN4(rgba[j], clearColor);
       }
-      _swrast_mask_rgba_array( ctx, rb, width, x, y + i, rgba );
+      /* setup span struct for masking */
+      INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
+      span.x = x;
+      span.y = y + i;
+      _swrast_mask_rgba_span(ctx, rb, &span, rgba);
+      /* write masked row */
       rb->PutRow(ctx, rb, width, x, y + i, rgba, NULL);
    }
 }
@@ -87,13 +93,19 @@ clear_ci_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
    ASSERT(rb->DataType == GL_UNSIGNED_INT);
 
    for (i = 0; i < height;i++) {
-      GLuint span[MAX_WIDTH];
+      struct sw_span span;
+      GLuint indexes[MAX_WIDTH];
       GLint j;
       for (j = 0; j < width;j++) {
-         span[j] = ctx->Color.ClearIndex;
+         indexes[j] = ctx->Color.ClearIndex;
       }
-      _swrast_mask_ci_array(ctx, rb, width, x, y + i, span);
-      rb->PutRow(ctx, rb, width, x, y + i, span, NULL);
+      /* setup span struct for masking */
+      INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
+      span.x = x;
+      span.y = y + i;
+      _swrast_mask_ci_span(ctx, rb, &span, indexes);
+      /* write masked row */
+      rb->PutRow(ctx, rb, width, x, y + i, indexes, NULL);
    }
 }
 

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -519,7 +519,11 @@ accum_return(GLcontext *ctx, GLfloat value,
          for (buffer = 0; buffer < fb->_NumColorDrawBuffers[0]; buffer++) {
             struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[0][buffer];
             if (masking) {
-               _swrast_mask_rgba_array(ctx, rb, width, xpos, ypos + i, rgba);
+               struct sw_span span;
+               INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
+               span.x = xpos;
+               span.y = ypos + i;
+               _swrast_mask_rgba_span(ctx, rb, &span, rgba);
             }
             rb->PutRow(ctx, rb, width, xpos, ypos + i, rgba, NULL);
          }
