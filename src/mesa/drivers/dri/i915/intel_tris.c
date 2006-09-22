@@ -792,104 +792,104 @@ static void intelRasterPrimitive( GLcontext *ctx, GLenum rprim, GLuint hwprim )
 }
 
 
- /* 
-  */
- static void intelRenderPrimitive( GLcontext *ctx, GLenum prim )
- {
-    intelContextPtr intel = INTEL_CONTEXT(ctx);
+/* 
+ */
+static void intelRenderPrimitive( GLcontext *ctx, GLenum prim )
+{
+   intelContextPtr intel = INTEL_CONTEXT(ctx);
 
-    if (0)
-       fprintf(stderr, "%s %s\n", __FUNCTION__, _mesa_lookup_enum_by_nr(prim));
+   if (0)
+      fprintf(stderr, "%s %s\n", __FUNCTION__, _mesa_lookup_enum_by_nr(prim));
 
-    /* Let some clipping routines know which primitive they're dealing
-     * with.
-     */
-    intel->render_primitive = prim;
+   /* Let some clipping routines know which primitive they're dealing
+    * with.
+    */
+   intel->render_primitive = prim;
 
-    /* Shortcircuit this when called from t_dd_rendertmp.h for unfilled
-     * triangles.  The rasterized primitive will always be reset by
-     * lower level functions in that case, potentially pingponging the
-     * state:
-     */
-    if (reduced_prim[prim] == GL_TRIANGLES && 
-	(ctx->_TriangleCaps & DD_TRI_UNFILLED))
-       return;
+   /* Shortcircuit this when called from t_dd_rendertmp.h for unfilled
+    * triangles.  The rasterized primitive will always be reset by
+    * lower level functions in that case, potentially pingponging the
+    * state:
+    */
+   if (reduced_prim[prim] == GL_TRIANGLES && 
+       (ctx->_TriangleCaps & DD_TRI_UNFILLED))
+      return;
 
-    /* Set some primitive-dependent state and Start? a new primitive.
-     */
-    intelRasterPrimitive( ctx, reduced_prim[prim], hw_prim[prim] );
- }
-
-
- /**********************************************************************/
- /*           Transition to/from hardware rasterization.               */
- /**********************************************************************/
-
- static char *fallbackStrings[] = {
-    "Texture",
-    "Draw buffer",
-    "Read buffer",
-    "Color mask",
-    "Render mode",
-    "Stencil",
-    "Stipple",
-    "User disable"
- };
+   /* Set some primitive-dependent state and Start? a new primitive.
+    */
+   intelRasterPrimitive( ctx, reduced_prim[prim], hw_prim[prim] );
+}
 
 
- static char *getFallbackString(GLuint bit)
- {
-    int i = 0;
-    while (bit > 1) {
-       i++;
-       bit >>= 1;
-    }
-    return fallbackStrings[i];
- }
+/**********************************************************************/
+/*           Transition to/from hardware rasterization.               */
+/**********************************************************************/
+
+static char *fallbackStrings[] = {
+   "Texture",
+   "Draw buffer",
+   "Read buffer",
+   "Color mask",
+   "Render mode",
+   "Stencil",
+   "Stipple",
+   "User disable"
+};
+
+
+static char *getFallbackString(GLuint bit)
+{
+   int i = 0;
+   while (bit > 1) {
+      i++;
+      bit >>= 1;
+   }
+   return fallbackStrings[i];
+}
 
 
 
- void intelFallback( intelContextPtr intel, GLuint bit, GLboolean mode )
- {
-    GLcontext *ctx = &intel->ctx;
-    TNLcontext *tnl = TNL_CONTEXT(ctx);
-    GLuint oldfallback = intel->Fallback;
+void intelFallback( intelContextPtr intel, GLuint bit, GLboolean mode )
+{
+   GLcontext *ctx = &intel->ctx;
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   GLuint oldfallback = intel->Fallback;
 
-    if (mode) {
-       intel->Fallback |= bit;
-       if (oldfallback == 0) {
-	  intelFlush(ctx);
-	  if (INTEL_DEBUG & DEBUG_FALLBACKS) 
-	     fprintf(stderr, "ENTER FALLBACK %x: %s\n",
-		     bit, getFallbackString( bit ));
-	  _swsetup_Wakeup( ctx );
-	  intel->RenderIndex = ~0;
-       }
-    }
-    else {
-       intel->Fallback &= ~bit;
-       if (oldfallback == bit) {
-	  _swrast_flush( ctx );
-	  if (INTEL_DEBUG & DEBUG_FALLBACKS) 
-	     fprintf(stderr, "LEAVE FALLBACK %s\n", getFallbackString( bit ));
-	  tnl->Driver.Render.Start = intelRenderStart;
-	  tnl->Driver.Render.PrimitiveNotify = intelRenderPrimitive;
-	  tnl->Driver.Render.Finish = intelRenderFinish;
-	  tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
-	  tnl->Driver.Render.CopyPV = _tnl_copy_pv;
-	  tnl->Driver.Render.Interp = _tnl_interp;
+   if (mode) {
+      intel->Fallback |= bit;
+      if (oldfallback == 0) {
+         intelFlush(ctx);
+         if (INTEL_DEBUG & DEBUG_FALLBACKS) 
+            fprintf(stderr, "ENTER FALLBACK %x: %s\n",
+                    bit, getFallbackString( bit ));
+         _swsetup_Wakeup( ctx );
+         intel->RenderIndex = ~0;
+      }
+   }
+   else {
+      intel->Fallback &= ~bit;
+      if (oldfallback == bit) {
+         _swrast_flush( ctx );
+         if (INTEL_DEBUG & DEBUG_FALLBACKS) 
+            fprintf(stderr, "LEAVE FALLBACK %s\n", getFallbackString( bit ));
+         tnl->Driver.Render.Start = intelRenderStart;
+         tnl->Driver.Render.PrimitiveNotify = intelRenderPrimitive;
+         tnl->Driver.Render.Finish = intelRenderFinish;
+         tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
+         tnl->Driver.Render.CopyPV = _tnl_copy_pv;
+         tnl->Driver.Render.Interp = _tnl_interp;
 
-	  _tnl_invalidate_vertex_state( ctx, ~0 );
-	  _tnl_invalidate_vertices( ctx, ~0 );
-	  _tnl_install_attrs( ctx, 
-			      intel->vertex_attrs, 
-			      intel->vertex_attr_count,
-			      intel->ViewportMatrix.m, 0 ); 
+         _tnl_invalidate_vertex_state( ctx, ~0 );
+         _tnl_invalidate_vertices( ctx, ~0 );
+         _tnl_install_attrs( ctx, 
+                             intel->vertex_attrs, 
+                             intel->vertex_attr_count,
+                             intel->ViewportMatrix.m, 0 ); 
 
-	  intel->NewGLState |= _INTEL_NEW_RENDERSTATE;
-       }
-    }
- }
+         intel->NewGLState |= _INTEL_NEW_RENDERSTATE;
+      }
+   }
+}
 
 
 
