@@ -29,33 +29,32 @@ static GLboolean ScaleAndBias = GL_FALSE;
 static GLboolean Benchmark = GL_FALSE;
 static GLubyte *TempImage = NULL;
 
-#if 0
+#define COMBO 1
+#if COMBO == 0
 #define ReadFormat ImgFormat
 #define ReadType GL_UNSIGNED_BYTE
-#endif
-#if 1
+#elif COMBO == 1
 static GLenum ReadFormat = GL_RGBA;
 static GLenum ReadType = GL_UNSIGNED_BYTE;
-#endif
-#if 0
+#elif COMBO == 2
 static GLenum ReadFormat = GL_RGB;
 static GLenum ReadType = GL_UNSIGNED_BYTE;
-#endif
-#if 0
+#elif COMBO == 3
 static GLenum ReadFormat = GL_RGB;
 static GLenum ReadType = GL_UNSIGNED_SHORT_5_6_5;
-#endif
-#if 0
+#elif COMBO == 4
 static GLenum ReadFormat = GL_RGBA;
 static GLenum ReadType = GL_UNSIGNED_SHORT_1_5_5_5_REV;
-#endif
-#if 0
+#elif COMBO == 5
 static GLenum ReadFormat = GL_BGRA;
 static GLenum ReadType = GL_UNSIGNED_SHORT_5_5_5_1;
-#endif
-#if 0
+#elif COMBO == 6
 static GLenum ReadFormat = GL_BGRA;
 static GLenum ReadType = GL_UNSIGNED_SHORT_4_4_4_4_REV;
+#elif COMBO == 7
+static GLenum ReadFormat = GL_RGBA;
+static GLenum ReadType = GL_HALF_FLOAT_ARB;
+#undef GL_OES_read_format
 #endif
 
 
@@ -313,8 +312,10 @@ Init( GLboolean ciMode )
 
    Reset();
 
-   /* allocate an extra 1KB in case we're tinkering with pack alignment */
-   TempImage = (GLubyte *) malloc(ImgWidth * ImgHeight * 4 * sizeof(GLubyte)
+   /* allocate large TempImage to store and image data type, plus an
+    * extra 1KB in case we're tinkering with pack alignment.
+    */
+   TempImage = (GLubyte *) malloc(ImgWidth * ImgHeight * 4 * 4
                                   + 1000);
    assert(TempImage);
 }
