@@ -48,6 +48,7 @@ clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
    const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
    const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
    GLchan clearColor[4];
+   struct sw_span span;
    GLint i;
 
    ASSERT(ctx->Visual.rgbMode);
@@ -58,20 +59,22 @@ clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
    CLAMPED_FLOAT_TO_CHAN(clearColor[BCOMP], ctx->Color.ClearColor[2]);
    CLAMPED_FLOAT_TO_CHAN(clearColor[ACOMP], ctx->Color.ClearColor[3]);
 
+   /* Initialize color span with clear color */
+   INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
+   for (i = 0; i < width; i++) {
+      COPY_CHAN4(span.array->rgba[i], clearColor);
+   }
+
+   /* Note that masking will change the color values, but only the
+    * channels for which the write mask is GL_FALSE.  The channels
+    * which which are write-enabled won't get modified.
+    */
    for (i = 0; i < height; i++) {
-      struct sw_span span;
-      GLchan rgba[MAX_WIDTH][4];
-      GLint j;
-      for (j = 0; j < width; j++) {
-         COPY_CHAN4(rgba[j], clearColor);
-      }
-      /* setup span struct for masking */
-      INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
       span.x = x;
       span.y = y + i;
-      _swrast_mask_rgba_span(ctx, rb, &span, rgba);
+      _swrast_mask_rgba_span(ctx, rb, &span, span.array->rgba);
       /* write masked row */
-      rb->PutRow(ctx, rb, width, x, y + i, rgba, NULL);
+      rb->PutRow(ctx, rb, width, x, y + i, span.array->rgba, NULL);
    }
 }
 
@@ -86,26 +89,29 @@ clear_ci_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
    const GLint y = ctx->DrawBuffer->_Ymin;
    const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
    const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
+   struct sw_span span;
    GLint i;
 
    ASSERT(!ctx->Visual.rgbMode);
    ASSERT(rb->PutRow);
    ASSERT(rb->DataType == GL_UNSIGNED_INT);
 
+   /* Initialize index span with clear index */
+   INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
+   for (i = 0; i < width;i++) {
+      span.array->index[i] = ctx->Color.ClearIndex;
+   }
+
+   /* Note that masking will change the color indexes, but only the
+    * bits for which the write mask is GL_FALSE.  The bits
+    * which are write-enabled won't get modified.
+    */
    for (i = 0; i < height;i++) {
-      struct sw_span span;
-      GLuint indexes[MAX_WIDTH];
-      GLint j;
-      for (j = 0; j < width;j++) {
-         indexes[j] = ctx->Color.ClearIndex;
-      }
-      /* setup span struct for masking */
-      INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
       span.x = x;
       span.y = y + i;
-      _swrast_mask_ci_span(ctx, rb, &span, indexes);
+      _swrast_mask_ci_span(ctx, rb, &span, span.array->index);
       /* write masked row */
-      rb->PutRow(ctx, rb, width, x, y + i, indexes, NULL);
+      rb->PutRow(ctx, rb, width, x, y + i, span.array->index, NULL);
    }
 }
 
