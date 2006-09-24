@@ -152,7 +152,7 @@ drawBox(GLfloat size, GLenum type)
 
   for (i = 5; i >= 0; i--) {
     glBegin(type);
-/*     glNormal3fv(&n[i][0]); */
+    glNormal3fv(&n[i][0]);
     glVertex3fv(&v[faces[i][0]][0]);
     glVertex3fv(&v[faces[i][1]][0]);
     glVertex3fv(&v[faces[i][2]][0]);
@@ -205,9 +205,9 @@ doughnut(GLfloat r, GLfloat R, GLint nsides, GLint rings)
       sinPhi = sin(phi);
       dist = R + r * cosPhi;
 
-/*       glNormal3f(cosTheta1 * cosPhi, -sinTheta1 * cosPhi, sinPhi); */
+      glNormal3f(cosTheta1 * cosPhi, -sinTheta1 * cosPhi, sinPhi);
       glVertex3f(cosTheta1 * dist, -sinTheta1 * dist, r * sinPhi);
-/*       glNormal3f(cosTheta * cosPhi, -sinTheta * cosPhi, sinPhi); */
+      glNormal3f(cosTheta * cosPhi, -sinTheta * cosPhi, sinPhi);
       glVertex3f(cosTheta * dist, -sinTheta * dist,  r * sinPhi);
     }
     glEnd();
@@ -222,10 +222,10 @@ void APIENTRY
 glutWireTorus(GLdouble innerRadius, GLdouble outerRadius,
   GLint nsides, GLint rings)
 {
-/*   glPushAttrib(GL_POLYGON_BIT); */
-/*   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); */
+  glPushAttrib(GL_POLYGON_BIT);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   doughnut(innerRadius, outerRadius, nsides, rings);
-/*   glPopAttrib(); */
+  glPopAttrib();
 }
 
 void APIENTRY
@@ -318,7 +318,7 @@ pentagon(int a, int b, int c, int d, int e, GLenum shadeType)
   normalize(n0);
 
   glBegin(shadeType);
-/*   glNormal3fv(n0); */
+  glNormal3fv(n0);
   glVertex3fv(&dodec[a][0]);
   glVertex3fv(&dodec[b][0]);
   glVertex3fv(&dodec[c][0]);
@@ -377,7 +377,7 @@ recorditem(GLfloat * n1, GLfloat * n2, GLfloat * n3,
   normalize(q1);
 
   glBegin(shadeType);
-/*   glNormal3fv(q1); */
+  glNormal3fv(q1);
   glVertex3fv(n1);
   glVertex3fv(n2);
   glVertex3fv(n3);

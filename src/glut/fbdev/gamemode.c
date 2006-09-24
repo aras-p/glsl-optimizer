@@ -263,7 +263,6 @@ void glutLeaveGameMode(void)
    KeyboardFunc = KeyFuncs[0];
    KeyboardUpFunc = KeyFuncs[1];
 
-
    DisplayFunc = NormFuncs[0];
    ReshapeFunc = NormFuncs[1];
    MouseFunc = NormFuncs[2];

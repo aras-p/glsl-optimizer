@@ -257,8 +257,12 @@ void glutSetCursor(int cursor)
 {
    if(cursor == GLUT_CURSOR_FULL_CROSSHAIR)
       cursor = GLUT_CURSOR_CROSSHAIR;
+
+   if(CurrentCursor >= 0 && CurrentCursor < NUM_CURSORS)
+      EraseCursor();
+
    CurrentCursor = cursor;
+
    MouseEnabled = 1;
-   EraseCursor();
    SwapCursor();
 }

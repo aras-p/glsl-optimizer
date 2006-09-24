@@ -103,6 +103,9 @@ void TestVisible(void) {
 
 static void Cleanup(void)
 {
+   /* do not handle this signal when cleaning up */
+   signal(SIGWINCH, SIG_IGN);
+
    if(GameMode)
       glutLeaveGameMode();
 
@@ -236,6 +239,7 @@ void glutInit (int *argcp, char **argv)
    signal(SIGSEGV, CrashHandler);
    signal(SIGINT, CrashHandler);
    signal(SIGTERM, CrashHandler);
+   signal(SIGABRT, CrashHandler);
 
    if(nomouse == 0)
       InitializeMouse();
@@ -271,7 +275,7 @@ void glutInit (int *argcp, char **argv)
       exit(0);
    }
 
-   /* Get the fixed screen info */
+   /* get the fixed screen info */
    if (ioctl(FrameBufferFD, FBIOGET_FSCREENINFO, &FixedInfo)) {
       sprintf(exiterror, "error: ioctl(FBIOGET_FSCREENINFO) failed: %s\n",
 	      strerror(errno));
@@ -410,10 +414,10 @@ void glutInitWindowSize (int width, int height)
 
 static void ProcessTimers(void)
 {
-   if(GlutTimers && GlutTimers->time < glutGet(GLUT_ELAPSED_TIME)) {
+   while(GlutTimers && GlutTimers->time <= glutGet(GLUT_ELAPSED_TIME)) {
       struct GlutTimer *timer = GlutTimers;
-      timer->func(timer->value);
       GlutTimers = timer->next;
+      timer->func(timer->value);
       free(timer);
    }
 }
@@ -669,6 +673,47 @@ void CreateVisual(void)
    }
 }
 
+static void ResizeVisual(void)
+{ 
+   if(!glFBDevMakeCurrent( Context, Buffer, Buffer )) {
+      sprintf(exiterror, "Failure to Make Current\n");
+      exit(0);
+   }
+
+   InitializeMenus();
+
+   if(ReshapeFunc)
+      ReshapeFunc(VarInfo.xres, VarInfo.yres);
+   Redisplay = 1;
+}
+
+static void SignalWinch(int arg)
+{
+   /* we can't change bitdepth without destroying the visual */
+   int bits_per_pixel = VarInfo.bits_per_pixel;
+   struct fb_bitfield red = VarInfo.red, green = VarInfo.green,
+                      blue = VarInfo.blue, transp = VarInfo.transp;
+
+   /* get the variable screen info */
+   if (ioctl(FrameBufferFD, FBIOGET_VSCREENINFO, &VarInfo)) {
+      sprintf(exiterror, "error: ioctl(FBIOGET_VSCREENINFO) failed: %s\n",
+	      strerror(errno));
+      exit(0);
+   }
+
+   /* restore bitdepth and color masks only */
+   VarInfo.bits_per_pixel = bits_per_pixel;
+   VarInfo.red = red;
+   VarInfo.green = green;
+   VarInfo.blue = blue;
+   VarInfo.transp = transp;
+
+   SetVideoMode();
+   CreateBuffer();
+
+   ResizeVisual();
+}
+
 int glutCreateWindow (const char *title)
 {
    if(Initialized == 0) {
@@ -712,6 +757,8 @@ int glutCreateWindow (const char *title)
    InitializeMenus();
 
    glutSetWindowTitle(title);
+
+   signal(SIGWINCH, SignalWinch);
 
    Visible = 1;
    VisibleSwitch = 1;
@@ -787,19 +834,13 @@ void glutReshapeWindow(int width, int height)
    if(!ParseFBModes(width, width, height, height, 0, MAX_VSYNC))
       return;
 
+   signal(SIGWINCH, SIG_IGN);
+
    SetVideoMode();
    CreateBuffer();
- 
-   if(!glFBDevMakeCurrent( Context, Buffer, Buffer )) {
-      sprintf(exiterror, "Failure to Make Current\n");
-      exit(0);
-   }
 
-   InitializeMenus();
-
-   if(ReshapeFunc)
-      ReshapeFunc(VarInfo.xres, VarInfo.yres);
-   Redisplay = 1;
+   ResizeVisual();
+   signal(SIGWINCH, SignalWinch);
 }
 
 void glutFullScreen(void)
@@ -836,6 +877,9 @@ static void UnIconifyWindow(int sig)
 	      strerror(errno));
       exit(0);
    }
+
+   RestoreColorMap();
+
    Redisplay = 1;
    VisibleSwitch = 1;
    Visible = 1;
@@ -848,6 +892,7 @@ void glutIconifyWindow(void)
    if (ioctl(FrameBufferFD, FBIOPUT_VSCREENINFO, &OrigVarInfo))
       fprintf(stderr, "ioctl(FBIOPUT_VSCREENINFO failed): %s\n",
 	      strerror(errno));
+
    raise(SIGSTOP);
 }
 
