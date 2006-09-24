@@ -467,9 +467,14 @@ accum_return(GLcontext *ctx, GLfloat value,
 
       /* XXX maybe transpose the 'i' and 'buffer' loops??? */
       for (i = 0; i < height; i++) {
-         GLchan rgba[MAX_WIDTH][4];
          GLshort accumRow[4 * MAX_WIDTH];
          GLshort *acc;
+         struct sw_span span;
+
+         /* init color span */
+         INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
+         span.x = xpos;
+         span.y = ypos + i;
 
          if (directAccess) {
             acc = (GLshort *) accumRb->GetPointer(ctx, accumRb, xpos, ypos +i);
@@ -487,10 +492,10 @@ accum_return(GLcontext *ctx, GLfloat value,
                ASSERT(acc[j * 4 + 1] < max);
                ASSERT(acc[j * 4 + 2] < max);
                ASSERT(acc[j * 4 + 3] < max);
-               rgba[j][RCOMP] = multTable[acc[j * 4 + 0]];
-               rgba[j][GCOMP] = multTable[acc[j * 4 + 1]];
-               rgba[j][BCOMP] = multTable[acc[j * 4 + 2]];
-               rgba[j][ACOMP] = multTable[acc[j * 4 + 3]];
+               span.array->rgba[j][RCOMP] = multTable[acc[j * 4 + 0]];
+               span.array->rgba[j][GCOMP] = multTable[acc[j * 4 + 1]];
+               span.array->rgba[j][BCOMP] = multTable[acc[j * 4 + 2]];
+               span.array->rgba[j][ACOMP] = multTable[acc[j * 4 + 3]];
             }
          }
          else {
@@ -508,10 +513,10 @@ accum_return(GLcontext *ctx, GLfloat value,
                GLint b = IROUND( (GLfloat) (acc[j * 4 + 2]) * scale );
                GLint a = IROUND( (GLfloat) (acc[j * 4 + 3]) * scale );
 #endif
-               rgba[j][RCOMP] = CLAMP( r, 0, CHAN_MAX );
-               rgba[j][GCOMP] = CLAMP( g, 0, CHAN_MAX );
-               rgba[j][BCOMP] = CLAMP( b, 0, CHAN_MAX );
-               rgba[j][ACOMP] = CLAMP( a, 0, CHAN_MAX );
+               span.array->rgba[j][RCOMP] = CLAMP( r, 0, CHAN_MAX );
+               span.array->rgba[j][GCOMP] = CLAMP( g, 0, CHAN_MAX );
+               span.array->rgba[j][BCOMP] = CLAMP( b, 0, CHAN_MAX );
+               span.array->rgba[j][ACOMP] = CLAMP( a, 0, CHAN_MAX );
             }
          }
 
@@ -519,13 +524,9 @@ accum_return(GLcontext *ctx, GLfloat value,
          for (buffer = 0; buffer < fb->_NumColorDrawBuffers[0]; buffer++) {
             struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[0][buffer];
             if (masking) {
-               struct sw_span span;
-               INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
-               span.x = xpos;
-               span.y = ypos + i;
-               _swrast_mask_rgba_span(ctx, rb, &span, rgba);
+               _swrast_mask_rgba_span(ctx, rb, &span, span.array->rgba);
             }
-            rb->PutRow(ctx, rb, width, xpos, ypos + i, rgba, NULL);
+            rb->PutRow(ctx, rb, width, xpos, ypos + i, span.array->rgba, NULL);
          }
       }
    }
