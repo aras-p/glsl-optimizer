@@ -949,11 +949,11 @@ _swrast_write_index_span( GLcontext *ctx, struct sw_span *span)
          ASSERT(rb->_BaseFormat == GL_COLOR_INDEX);
 
          if (ctx->Color.IndexLogicOpEnabled) {
-            _swrast_logicop_ci_span(ctx, rb, span, span->array->index);
+            _swrast_logicop_ci_span(ctx, rb, span);
          }
 
          if (ctx->Color.IndexMask != 0xffffffff) {
-            _swrast_mask_ci_span(ctx, rb, span, span->array->index);
+            _swrast_mask_ci_span(ctx, rb, span);
          }
 
          if ((span->interpMask & SPAN_INDEX) && span->indexStep == 0) {
@@ -1327,14 +1327,14 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
          ASSERT(rb->_BaseFormat == GL_RGBA);
 
          if (ctx->Color._LogicOpEnabled) {
-            _swrast_logicop_rgba_span(ctx, rb, span, span->array->rgba);
+            _swrast_logicop_rgba_span(ctx, rb, span);
          }
          else if (ctx->Color.BlendEnabled) {
-            _swrast_blend_span(ctx, rb, span, span->array->rgba);
+            _swrast_blend_span(ctx, rb, span);
          }
 
          if (colorMask != 0xffffffff) {
-            _swrast_mask_rgba_span(ctx, rb, span, span->array->rgba);
+            _swrast_mask_rgba_span(ctx, rb, span);
          }
 
          if (span->arrayMask & SPAN_XY) {

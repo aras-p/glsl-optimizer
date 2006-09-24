@@ -72,7 +72,7 @@ clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
    for (i = 0; i < height; i++) {
       span.x = x;
       span.y = y + i;
-      _swrast_mask_rgba_span(ctx, rb, &span, span.array->rgba);
+      _swrast_mask_rgba_span(ctx, rb, &span);
       /* write masked row */
       rb->PutRow(ctx, rb, width, x, y + i, span.array->rgba, NULL);
    }
@@ -109,7 +109,7 @@ clear_ci_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
    for (i = 0; i < height;i++) {
       span.x = x;
       span.y = y + i;
-      _swrast_mask_ci_span(ctx, rb, &span, span.array->index);
+      _swrast_mask_ci_span(ctx, rb, &span);
       /* write masked row */
       rb->PutRow(ctx, rb, width, x, y + i, span.array->index, NULL);
    }

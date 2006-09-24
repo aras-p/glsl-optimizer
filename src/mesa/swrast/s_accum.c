@@ -524,7 +524,7 @@ accum_return(GLcontext *ctx, GLfloat value,
          for (buffer = 0; buffer < fb->_NumColorDrawBuffers[0]; buffer++) {
             struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[0][buffer];
             if (masking) {
-               _swrast_mask_rgba_span(ctx, rb, &span, span.array->rgba);
+               _swrast_mask_rgba_span(ctx, rb, &span);
             }
             rb->PutRow(ctx, rb, width, xpos, ypos + i, span.array->rgba, NULL);
          }

@@ -38,17 +38,16 @@
 
 /**
  * Apply the color mask to a span of rgba values.
- * \param rgba  the array of incoming colors
  */
 void
 _swrast_mask_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                       const struct sw_span *span, GLchan rgba[][4])
+                       struct sw_span *span)
 {
    GLchan dest[MAX_WIDTH][4];
 #if CHAN_BITS == 8
    GLuint srcMask = *((GLuint*)ctx->Color.ColorMask);
    GLuint dstMask = ~srcMask;
-   GLuint *rgba32 = (GLuint *) rgba;
+   GLuint *rgba32 = (GLuint *) span->array->rgba;
    GLuint *dest32 = (GLuint *) dest;
 #else
    const GLboolean rMask = ctx->Color.ColorMask[RCOMP];
@@ -76,10 +75,10 @@ _swrast_mask_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
    }
 #else
    for (i = 0; i < n; i++) {
-      if (!rMask)  rgba[i][RCOMP] = dest[i][RCOMP];
-      if (!gMask)  rgba[i][GCOMP] = dest[i][GCOMP];
-      if (!bMask)  rgba[i][BCOMP] = dest[i][BCOMP];
-      if (!aMask)  rgba[i][ACOMP] = dest[i][ACOMP];
+      if (!rMask)  span->array->rgba[i][RCOMP] = dest[i][RCOMP];
+      if (!gMask)  span->array->rgba[i][GCOMP] = dest[i][GCOMP];
+      if (!bMask)  span->array->rgba[i][BCOMP] = dest[i][BCOMP];
+      if (!aMask)  span->array->rgba[i][ACOMP] = dest[i][ACOMP];
    }
 #endif
 }
@@ -87,14 +86,14 @@ _swrast_mask_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 /**
  * Apply the index mask to a span of color index values.
- * \param index  the array of incoming color indexes
  */
 void
 _swrast_mask_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                     const struct sw_span *span, GLuint index[])
+                     struct sw_span *span)
 {
    const GLuint srcMask = ctx->Color.IndexMask;
    const GLuint dstMask = ~srcMask;
+   GLuint *index = span->array->index;
    GLuint dest[MAX_WIDTH];
    GLuint i;
 

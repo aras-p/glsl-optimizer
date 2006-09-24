@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.5.2
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -183,9 +183,10 @@ logicop_uint(GLcontext *ctx, GLuint n, GLuint src[], const GLuint dest[],
  */
 void
 _swrast_logicop_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                        const struct sw_span *span, GLuint index[])
+                        struct sw_span *span)
 {
    GLuint dest[MAX_WIDTH];
+   GLuint *index = span->array->index;
 
    ASSERT(span->end < MAX_WIDTH);
    ASSERT(rb->DataType == GL_UNSIGNED_INT);
@@ -210,7 +211,7 @@ _swrast_logicop_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
  */
 void
 _swrast_logicop_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                          const struct sw_span *span, GLchan rgba[][4])
+                          struct sw_span *span)
 {
    GLchan dest[MAX_WIDTH][4];
 
@@ -229,13 +230,13 @@ _swrast_logicop_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
    /* XXX make this a runtime test */
 #if CHAN_TYPE == GL_UNSIGNED_BYTE
    /* treat 4*GLubyte as GLuint */
-   logicop_uint(ctx, span->end, (GLuint *) rgba,
+   logicop_uint(ctx, span->end, (GLuint *) span->array->rgba,
                 (const GLuint *) dest, span->array->mask);
 #elif CHAN_TYPE == GL_UNSIGNED_SHORT
-   logicop_ushort(ctx, 4 * span->end, (GLushort *) rgba,
+   logicop_ushort(ctx, 4 * span->end, (GLushort *) span->array->rgba,
                   (const GLushort *) dest, span->array->mask);
 #elif CHAN_TYPE == GL_FLOAT
-   logicop_uint(ctx, 4 * span->end, (GLuint *) rgba,
+   logicop_uint(ctx, 4 * span->end, (GLuint *) span->array->rgba,
                 (const GLuint *) dest, span->array->mask);
 #endif
    (void) logicop_ubyte;

@@ -33,11 +33,11 @@
 
 extern void
 _swrast_mask_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                       const struct sw_span *span, GLchan rgba[][4]);
+                       struct sw_span *span);
 
 
 extern void
 _swrast_mask_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                     const struct sw_span *span, GLuint index[]);
+                     struct sw_span *span);
 
 #endif
