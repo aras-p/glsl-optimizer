@@ -43,44 +43,63 @@ void
 _swrast_mask_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
                        struct sw_span *span)
 {
-   GLchan dest[MAX_WIDTH][4];
-#if CHAN_BITS == 8
-   GLuint srcMask = *((GLuint*)ctx->Color.ColorMask);
-   GLuint dstMask = ~srcMask;
-   GLuint *rgba32 = (GLuint *) span->array->rgba;
-   GLuint *dest32 = (GLuint *) dest;
-#else
-   const GLboolean rMask = ctx->Color.ColorMask[RCOMP];
-   const GLboolean gMask = ctx->Color.ColorMask[GCOMP];
-   const GLboolean bMask = ctx->Color.ColorMask[BCOMP];
-   const GLboolean aMask = ctx->Color.ColorMask[ACOMP];
-#endif
    const GLuint n = span->end;
-   GLuint i;
+   void *rbPixels;
 
    ASSERT(n < MAX_WIDTH);
    ASSERT(span->arrayMask & SPAN_RGBA);
+   ASSERT(rb->DataType == span->array->ChanType);
 
-   if (span->arrayMask & SPAN_XY) {
-      _swrast_get_values(ctx, rb, n, span->array->x, span->array->y,
-                         dest, 4 * sizeof(GLchan));
+   rbPixels = _swrast_get_dest_rgba(ctx, rb, span);
+
+   /*
+    * Do component masking.
+    * Note that we're not using span->array->mask[] here.  We could...
+    */
+   if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+      /* treat 4xGLubyte as 1xGLuint */
+      const GLuint srcMask = *((GLuint *) ctx->Color.ColorMask);
+      const GLuint dstMask = ~srcMask;
+      const GLuint *dst = (const GLuint *) rbPixels;
+      GLuint *src = (GLuint *) span->array->color.sz1.rgba;
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         src[i] = (src[i] & srcMask) | (dst[i] & dstMask);
+      }
+   }
+   else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
+      /* 2-byte components */
+      /* XXX try to use 64-bit arithmetic someday */
+      const GLushort rMask = ctx->Color.ColorMask[RCOMP] ? 0xffff : 0x0;
+      const GLushort gMask = ctx->Color.ColorMask[GCOMP] ? 0xffff : 0x0;
+      const GLushort bMask = ctx->Color.ColorMask[BCOMP] ? 0xffff : 0x0;
+      const GLushort aMask = ctx->Color.ColorMask[ACOMP] ? 0xffff : 0x0;
+      const GLushort (*dst)[4] = (const GLushort (*)[4]) rbPixels;
+      GLushort (*src)[4] = span->array->color.sz2.rgba;
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         src[i][RCOMP] = (src[i][RCOMP] & rMask) | (dst[i][RCOMP] & ~rMask);
+         src[i][GCOMP] = (src[i][GCOMP] & gMask) | (dst[i][GCOMP] & ~gMask);
+         src[i][BCOMP] = (src[i][BCOMP] & bMask) | (dst[i][BCOMP] & ~bMask);
+         src[i][ACOMP] = (src[i][ACOMP] & aMask) | (dst[i][ACOMP] & ~aMask);
+      }
    }
    else {
-      _swrast_read_rgba_span(ctx, rb, n, span->x, span->y, dest);
+      /* 4-byte components */
+      const GLuint rMask = ctx->Color.ColorMask[RCOMP] ? ~0x0 : 0x0;
+      const GLuint gMask = ctx->Color.ColorMask[GCOMP] ? ~0x0 : 0x0;
+      const GLuint bMask = ctx->Color.ColorMask[BCOMP] ? ~0x0 : 0x0;
+      const GLuint aMask = ctx->Color.ColorMask[ACOMP] ? ~0x0 : 0x0;
+      const GLuint (*dst)[4] = (const GLuint (*)[4]) rbPixels;
+      GLuint (*src)[4] = (GLuint (*)[4]) span->array->color.sz4.rgba;
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         src[i][RCOMP] = (src[i][RCOMP] & rMask) | (dst[i][RCOMP] & ~rMask);
+         src[i][GCOMP] = (src[i][GCOMP] & gMask) | (dst[i][GCOMP] & ~gMask);
+         src[i][BCOMP] = (src[i][BCOMP] & bMask) | (dst[i][BCOMP] & ~bMask);
+         src[i][ACOMP] = (src[i][ACOMP] & aMask) | (dst[i][ACOMP] & ~aMask);
+      }
    }
-
-#if CHAN_BITS == 8
-   for (i = 0; i < n; i++) {
-      rgba32[i] = (rgba32[i] & srcMask) | (dest32[i] & dstMask);
-   }
-#else
-   for (i = 0; i < n; i++) {
-      if (!rMask)  span->array->rgba[i][RCOMP] = dest[i][RCOMP];
-      if (!gMask)  span->array->rgba[i][GCOMP] = dest[i][GCOMP];
-      if (!bMask)  span->array->rgba[i][BCOMP] = dest[i][BCOMP];
-      if (!aMask)  span->array->rgba[i][ACOMP] = dest[i][ACOMP];
-   }
-#endif
 }
 
 

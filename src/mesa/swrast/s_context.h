@@ -69,6 +69,22 @@
 #define SPAN_VARYING     0x2000
 /*@}*/
 
+#if 0
+/* alternate arrangement for code below */
+struct arrays2 {
+   union {
+      GLubyte  sz1[MAX_WIDTH][4]; /* primary color */
+      GLushort sz2[MAX_WIDTH][4];
+      GLfloat  sz4[MAX_WIDTH][4];
+   } rgba;
+   union {
+      GLubyte  sz1[MAX_WIDTH][4]; /* specular color and temp storage */
+      GLushort sz2[MAX_WIDTH][4];
+      GLfloat  sz4[MAX_WIDTH][4];
+   } spec;
+};
+#endif
+
 
 /**
  * \struct span_arrays 
@@ -79,8 +95,25 @@
  * These arrays are separated out of sw_span to conserve memory.
  */
 struct span_arrays {
-   GLchan  rgba[MAX_WIDTH][4];
-   GLchan  spec[MAX_WIDTH][4]; /* specular color */
+   GLenum ChanType; /**< Color channel type, GL_UNSIGNED_BYTE, GL_FLOAT */
+   union {
+      struct {
+         GLubyte rgba[MAX_WIDTH][4]; /**< primary color */
+         GLubyte spec[MAX_WIDTH][4]; /**< specular color and temp storage */
+      } sz1;
+      struct {
+         GLushort rgba[MAX_WIDTH][4];
+         GLushort spec[MAX_WIDTH][4];
+      } sz2;
+      struct {
+         GLfloat rgba[MAX_WIDTH][4];
+         GLfloat spec[MAX_WIDTH][4];
+      } sz4;
+   } color;
+   /** XXX these are temporary fields, pointing into above color arrays */
+   GLchan (*rgba)[4];
+   GLchan (*spec)[4];
+
    GLuint  index[MAX_WIDTH];
    GLint   x[MAX_WIDTH];  /**< X/Y used for point/line rendering only */
    GLint   y[MAX_WIDTH];  /**< X/Y used for point/line rendering only */
@@ -218,7 +251,8 @@ typedef void (*texture_sample_func)(GLcontext *ctx,
 
 typedef void (_ASMAPIP blend_func)( GLcontext *ctx, GLuint n,
                                     const GLubyte mask[],
-                                    GLchan src[][4], CONST GLchan dst[][4] );
+                                    GLchan src[][4], CONST GLchan dst[][4],
+                                    GLenum chanType);
 
 typedef void (*swrast_point_func)( GLcontext *ctx, const SWvertex *);
 
@@ -291,7 +325,6 @@ typedef struct
    GLfloat _BackfaceSign;
    GLboolean _PreferPixelFog;    /* Compute fog blend factor per fragment? */
    GLboolean _AnyTextureCombine;
-   GLchan _FogColor[3];
    GLboolean _FogEnabled;
    GLenum _FogMode;  /* either GL_FOG_MODE or fragment program's fog mode */
 

@@ -933,7 +933,7 @@ _swrast_write_index_span( GLcontext *ctx, struct sw_span *span)
     */
    {
       struct gl_framebuffer *fb = ctx->DrawBuffer;
-      const GLuint output = 0; /* only frag progs can write to others */
+      const GLuint output = 0; /* only frag progs can write to other outputs */
       const GLuint numDrawBuffers = fb->_NumColorDrawBuffers[output];
       GLuint indexSave[MAX_WIDTH];
       GLuint buf;
@@ -1311,7 +1311,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
     */
    {
       struct gl_framebuffer *fb = ctx->DrawBuffer;
-      const GLuint output = 0; /* only frag progs can write to others */
+      const GLuint output = 0; /* only frag progs can write to other outputs */
       const GLuint numDrawBuffers = fb->_NumColorDrawBuffers[output];
       GLchan rgbaSave[MAX_WIDTH][4];
       GLuint buf;
@@ -1321,6 +1321,8 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
          _mesa_memcpy(rgbaSave, span->array->rgba,
                       4 * span->end * sizeof(GLchan));
       }
+
+      /* XXX check that span's ChanType == rb's DataType, convert if needed */
 
       for (buf = 0; buf < numDrawBuffers; buf++) {
          struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[output][buf];
@@ -1529,6 +1531,7 @@ _swrast_get_values(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 /**
  * Wrapper for gl_renderbuffer::PutRow() which does clipping.
+ * \param valueSize  size of each value (pixel) in bytes
  */
 void
 _swrast_put_row(GLcontext *ctx, struct gl_renderbuffer *rb,
@@ -1563,6 +1566,7 @@ _swrast_put_row(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 /**
  * Wrapper for gl_renderbuffer::GetRow() which does clipping.
+ * \param valueSize  size of each value (pixel) in bytes
  */
 void
 _swrast_get_row(GLcontext *ctx, struct gl_renderbuffer *rb,
@@ -1591,4 +1595,49 @@ _swrast_get_row(GLcontext *ctx, struct gl_renderbuffer *rb,
    }
 
    rb->GetRow(ctx, rb, count, x, y, (GLubyte *) values + skip * valueSize);
+}
+
+
+/**
+ * Get RGBA pixels from the given renderbuffer.  Put the pixel colors into
+ * the span's specular color arrays.  The specular color arrays should no
+ * longer be needed by time this function is called.
+ * Used by blending, logicop and masking functions.
+ * \return pointer to the colors we read.
+ */
+void *
+_swrast_get_dest_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
+                      struct sw_span *span)
+{
+   GLuint pixelSize;
+   void *rbPixels;
+
+   /*
+    * Determine pixel size (in bytes).
+    * Point rbPixels to a temporary space (use specular color arrays).
+    */
+   if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+      pixelSize = 4 * sizeof(GLubyte);
+      rbPixels = span->array->color.sz1.spec;
+   }
+   else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
+      pixelSize = 4 * sizeof(GLushort);
+      rbPixels = span->array->color.sz2.spec;
+   }
+   else {
+      pixelSize = 4 * sizeof(GLfloat);
+      rbPixels = span->array->color.sz4.spec;
+   }
+
+   /* Get destination values from renderbuffer */
+   if (span->arrayMask & SPAN_XY) {
+      _swrast_get_values(ctx, rb, span->end, span->array->x, span->array->y,
+                         rbPixels, pixelSize);
+   }
+   else {
+      _swrast_get_row(ctx, rb, span->end, span->x, span->y,
+                      rbPixels, pixelSize);
+   }
+
+   return rbPixels;
 }

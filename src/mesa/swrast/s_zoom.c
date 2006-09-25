@@ -144,6 +144,18 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const struct sw_span *span,
    zoomed.x = x0;
    zoomed.end = zoomedWidth;
    zoomed.array = &zoomed_arrays;
+   zoomed_arrays.ChanType = CHAN_TYPE;
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
+   zoomed_arrays.rgba = zoomed_arrays.color.sz1.rgba;
+   zoomed_arrays.spec = zoomed_arrays.color.sz1.spec;
+#elif CHAN_TYPE == GL_UNSIGNED_SHORT
+   zoomed_arrays.rgba = zoomed_arrays.color.sz2.rgba;
+   zoomed_arrays.spec = zoomed_arrays.color.sz2.spec;
+#else
+   zoomed_arrays.rgba = zoomed_arrays.color.sz4.rgba;
+   zoomed_arrays.spec = zoomed_arrays.color.sz4.spec;
+#endif
+
 
    /* copy fog interp info */
    zoomed.fog = span->fog;

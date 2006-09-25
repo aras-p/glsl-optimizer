@@ -82,4 +82,9 @@ _swrast_get_row(GLcontext *ctx, struct gl_renderbuffer *rb,
                 GLuint count, GLint x, GLint y,
                 GLvoid *values, GLuint valueSize);
 
+
+extern void *
+_swrast_get_dest_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
+                      struct sw_span *span);
+
 #endif

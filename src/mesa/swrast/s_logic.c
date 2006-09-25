@@ -33,20 +33,25 @@
 #include "s_span.h"
 
 
-#define LOGIC_OP_LOOP(MODE)			\
+/**
+ * We do all logic ops on 4-byte GLuints.
+ * Depending on bytes per pixel, the mask array elements correspond to
+ * 1, 2 or 4 GLuints.
+ */
+#define LOGIC_OP_LOOP(MODE, MASKSTRIDE)		\
 do {						\
    GLuint i;					\
    switch (MODE) {				\
       case GL_CLEAR:				\
          for (i = 0; i < n; i++) {		\
-	    if (mask[i]) {			\
+	    if (mask[i / MASKSTRIDE]) {		\
 	       src[i] = 0;			\
 	    }					\
 	 }					\
 	 break;					\
       case GL_SET:				\
          for (i = 0; i < n; i++) {		\
-	    if (mask[i]) {			\
+	    if (mask[i / MASKSTRIDE]) {		\
 	       src[i] = ~0;			\
 	    }					\
 	 }					\
@@ -56,91 +61,91 @@ do {						\
 	 break;					\
       case GL_COPY_INVERTED:			\
          for (i = 0; i < n; i++) {		\
-	    if (mask[i]) {			\
+	    if (mask[i / MASKSTRIDE]) {		\
 	       src[i] = ~src[i];		\
 	    }					\
 	 }					\
 	 break;					\
       case GL_NOOP:				\
          for (i = 0; i < n; i++) {		\
-	    if (mask[i]) {			\
+	    if (mask[i / MASKSTRIDE]) {		\
 	       src[i] = dest[i];		\
 	    }					\
 	 }					\
 	 break;					\
       case GL_INVERT:				\
          for (i = 0; i < n; i++) {		\
-	    if (mask[i]) {			\
+	    if (mask[i / MASKSTRIDE]) {		\
 	       src[i] = ~dest[i];		\
 	    }					\
 	 }					\
 	 break;					\
       case GL_AND:				\
          for (i = 0; i < n; i++) {		\
-	    if (mask[i]) {			\
+	    if (mask[i / MASKSTRIDE]) {		\
 	       src[i] &= dest[i];		\
 	    }					\
 	 }					\
 	 break;					\
       case GL_NAND:				\
          for (i = 0; i < n; i++) {		\
-	    if (mask[i]) {			\
+	    if (mask[i / MASKSTRIDE]) {		\
 	       src[i] = ~(src[i] & dest[i]);	\
 	    }					\
 	 }					\
 	 break;					\
       case GL_OR:				\
          for (i = 0; i < n; i++) {		\
-	    if (mask[i]) {			\
+	    if (mask[i / MASKSTRIDE]) {		\
 	       src[i] |= dest[i];		\
 	    }					\
 	 }					\
 	 break;					\
       case GL_NOR:				\
          for (i = 0; i < n; i++) {		\
-	    if (mask[i]) {			\
+	    if (mask[i / MASKSTRIDE]) {		\
 	       src[i] = ~(src[i] | dest[i]);	\
 	    }					\
 	 }					\
 	 break;					\
       case GL_XOR:				\
          for (i = 0; i < n; i++) {		\
-	    if (mask[i]) {			\
+	    if (mask[i / MASKSTRIDE]) {		\
 	       src[i] ^= dest[i];		\
 	    }					\
 	 }					\
 	 break;					\
       case GL_EQUIV:				\
          for (i = 0; i < n; i++) {		\
-	    if (mask[i]) {			\
+	    if (mask[i / MASKSTRIDE]) {		\
 	       src[i] = ~(src[i] ^ dest[i]);	\
 	    }					\
 	 }					\
 	 break;					\
       case GL_AND_REVERSE:			\
          for (i = 0; i < n; i++) {		\
-	    if (mask[i]) {			\
+	    if (mask[i / MASKSTRIDE]) {		\
 	       src[i] = src[i] & ~dest[i];	\
 	    }					\
 	 }					\
 	 break;					\
       case GL_AND_INVERTED:			\
          for (i = 0; i < n; i++) {		\
-	    if (mask[i]) {			\
+	    if (mask[i / MASKSTRIDE]) {		\
 	       src[i] = ~src[i] & dest[i];	\
 	    }					\
 	 }					\
 	 break;					\
       case GL_OR_REVERSE:			\
          for (i = 0; i < n; i++) {		\
-	    if (mask[i]) {			\
+	    if (mask[i / MASKSTRIDE]) {		\
 	       src[i] = src[i] | ~dest[i];	\
 	    }					\
 	 }					\
 	 break;					\
       case GL_OR_INVERTED:			\
          for (i = 0; i < n; i++) {		\
-	    if (mask[i]) {			\
+	    if (mask[i / MASKSTRIDE]) {		\
 	       src[i] = ~src[i] | dest[i];	\
 	    }					\
 	 }					\
@@ -152,27 +157,27 @@ do {						\
 
 
 
-static void
-logicop_ubyte(GLcontext *ctx, GLuint n, GLubyte src[], const GLubyte dest[],
+static INLINE void
+logicop_uint1(GLcontext *ctx, GLuint n, GLuint src[], const GLuint dest[],
               const GLubyte mask[])
 {
-   LOGIC_OP_LOOP(ctx->Color.LogicOp);
+   LOGIC_OP_LOOP(ctx->Color.LogicOp, 1);
 }
 
 
-static void
-logicop_ushort(GLcontext *ctx, GLuint n, GLushort src[], const GLushort dest[],
-               const GLubyte mask[])
+static INLINE void
+logicop_uint2(GLcontext *ctx, GLuint n, GLuint src[], const GLuint dest[],
+              const GLubyte mask[])
 {
-   LOGIC_OP_LOOP(ctx->Color.LogicOp);
+   LOGIC_OP_LOOP(ctx->Color.LogicOp, 2);
 }
 
 
-static void
-logicop_uint(GLcontext *ctx, GLuint n, GLuint src[], const GLuint dest[],
-             const GLubyte mask[])
+static INLINE void
+logicop_uint4(GLcontext *ctx, GLuint n, GLuint src[], const GLuint dest[],
+              const GLubyte mask[])
 {
-   LOGIC_OP_LOOP(ctx->Color.LogicOp);
+   LOGIC_OP_LOOP(ctx->Color.LogicOp, 4);
 }
 
 
@@ -200,7 +205,7 @@ _swrast_logicop_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->GetRow(ctx, rb, span->end, span->x, span->y, dest);
    }
 
-   logicop_uint(ctx, span->end, index, dest, span->array->mask);
+   logicop_uint1(ctx, span->end, index, dest, span->array->mask);
 }
 
 
@@ -213,33 +218,29 @@ void
 _swrast_logicop_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
                           struct sw_span *span)
 {
-   GLchan dest[MAX_WIDTH][4];
+   void *rbPixels;
 
    ASSERT(span->end < MAX_WIDTH);
    ASSERT(span->arrayMask & SPAN_RGBA);
-   ASSERT(rb->DataType == CHAN_TYPE);
+   ASSERT(rb->DataType == span->array->ChanType);
 
-   if (span->arrayMask & SPAN_XY) {
-      _swrast_get_values(ctx, rb, span->end, span->array->x, span->array->y,
-                         dest, 4 * sizeof(GLchan));
+   rbPixels = _swrast_get_dest_rgba(ctx, rb, span);
+
+   if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+      /* treat 4*GLubyte as GLuint */
+      logicop_uint1(ctx, span->end,
+                    (GLuint *) span->array->color.sz1.rgba,
+                    (const GLuint *) rbPixels, span->array->mask);
+   }
+   else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
+      /* treat 2*GLushort as GLuint */
+      logicop_uint2(ctx, 2 * span->end,
+                    (GLuint *) span->array->color.sz2.rgba,
+                    (const GLuint *) rbPixels, span->array->mask);
    }
    else {
-      _swrast_read_rgba_span(ctx, rb, span->end, span->x, span->y, dest);
+      logicop_uint4(ctx, 4 * span->end,
+                    (GLuint *) span->array->color.sz4.rgba,
+                    (const GLuint *) rbPixels, span->array->mask);
    }
-
-   /* XXX make this a runtime test */
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-   /* treat 4*GLubyte as GLuint */
-   logicop_uint(ctx, span->end, (GLuint *) span->array->rgba,
-                (const GLuint *) dest, span->array->mask);
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-   logicop_ushort(ctx, 4 * span->end, (GLushort *) span->array->rgba,
-                  (const GLushort *) dest, span->array->mask);
-#elif CHAN_TYPE == GL_FLOAT
-   logicop_uint(ctx, 4 * span->end, (GLuint *) span->array->rgba,
-                (const GLuint *) dest, span->array->mask);
-#endif
-   (void) logicop_ubyte;
-   (void) logicop_ushort;
-   (void) logicop_uint;
 }
