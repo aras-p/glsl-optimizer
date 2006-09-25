@@ -248,6 +248,7 @@ struct _tnl_dynfn_generators {
 struct tnl_vtx {
    GLfloat buffer[VERT_BUFFER_SIZE];
    GLubyte attrsz[_TNL_ATTRIB_MAX];
+   GLubyte active_sz[_TNL_ATTRIB_MAX];
    GLuint vertex_size;
    struct tnl_prim prim[TNL_MAX_PRIM];
    GLuint prim_count;

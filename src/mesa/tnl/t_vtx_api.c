@@ -321,19 +321,25 @@ static void _tnl_fixup_vertex( GLcontext *ctx, GLuint attr, GLuint sz )
    static const GLfloat id[4] = { 0, 0, 0, 1 };
    int i;
 
+   if (0) 
+      _mesa_printf("%s attr %d sz %d -> %d\n",
+		   __FUNCTION__, attr, tnl->vtx.attrsz[attr], sz);
+
    if (tnl->vtx.attrsz[attr] < sz) {
       /* New size is larger.  Need to flush existing vertices and get
        * an enlarged vertex format.
        */
       _tnl_wrap_upgrade_vertex( ctx, attr, sz );
    }
-   else if (tnl->vtx.attrsz[attr] > sz) {
+   else if (sz < tnl->vtx.active_sz[attr]) {
       /* New size is smaller - just need to fill in some
        * zeros.  Don't need to flush or wrap.
        */
       for (i = sz ; i <= tnl->vtx.attrsz[attr] ; i++)
 	 tnl->vtx.attrptr[attr][i-1] = id[i-1];
    }
+
+   tnl->vtx.active_sz[attr] = sz;
 
    /* Does setting NeedFlush belong here?  Necessitates resetting
     * vtxfmt on each flush (otherwise flags won't get reset
@@ -398,7 +404,7 @@ static tnl_attrfv_func do_choose( GLuint attr, GLuint sz )
 { 
    GET_CURRENT_CONTEXT( ctx ); 
    TNLcontext *tnl = TNL_CONTEXT(ctx); 
-   GLuint oldsz = tnl->vtx.attrsz[attr];
+   GLuint oldsz = tnl->vtx.active_sz[attr];
 
    assert(attr < _TNL_MAX_ATTR_CODEGEN);
 
@@ -519,6 +525,7 @@ reset_attrfv(TNLcontext *tnl)
       if (tnl->vtx.attrsz[i]) {
 	 GLint j = tnl->vtx.attrsz[i] - 1;
 	 tnl->vtx.attrsz[i] = 0;
+	 tnl->vtx.active_sz[i] = 0;
 
 	 if (i < _TNL_MAX_ATTR_CODEGEN) {
             while (j >= 0) {
@@ -550,7 +557,7 @@ reset_attrfv(TNLcontext *tnl)
  */
 #define OTHER_ATTR( A, N, params )			\
 do {							\
-   if (tnl->vtx.attrsz[A] != N) {			\
+   if (tnl->vtx.active_sz[A] != N) {			\
       _tnl_fixup_vertex( ctx, A, N );			\
    }							\
 							\
@@ -650,7 +657,7 @@ static void GLAPIENTRY _tnl_EvalCoord1f( GLfloat u )
 
       for (i = 0; i < _TNL_NUM_EVAL; i++) {
 	 if (tnl->vtx.eval.map1[i].map) 
-	    if (tnl->vtx.attrsz[i] != tnl->vtx.eval.map1[i].sz)
+	    if (tnl->vtx.active_sz[i] != tnl->vtx.eval.map1[i].sz)
 	       _tnl_fixup_vertex( ctx, i, tnl->vtx.eval.map1[i].sz );
       }
    }
@@ -678,12 +685,12 @@ static void GLAPIENTRY _tnl_EvalCoord2f( GLfloat u, GLfloat v )
 
       for (i = 0; i < _TNL_NUM_EVAL; i++) {
 	 if (tnl->vtx.eval.map2[i].map) 
-	    if (tnl->vtx.attrsz[i] != tnl->vtx.eval.map2[i].sz)
+	    if (tnl->vtx.active_sz[i] != tnl->vtx.eval.map2[i].sz)
 	       _tnl_fixup_vertex( ctx, i, tnl->vtx.eval.map2[i].sz );
       }
 
       if (ctx->Eval.AutoNormal) 
-	 if (tnl->vtx.attrsz[_TNL_ATTRIB_NORMAL] != 3)
+	 if (tnl->vtx.active_sz[_TNL_ATTRIB_NORMAL] != 3)
 	    _tnl_fixup_vertex( ctx, _TNL_ATTRIB_NORMAL, 3 );
    }
 
@@ -1005,8 +1012,10 @@ void _tnl_vtx_init( GLcontext *ctx )
 
    _mesa_memcpy( tnl->vtx.tabfv, choose, sizeof(choose) );
 
-   for (i = 0 ; i < _TNL_ATTRIB_MAX ; i++) 
+   for (i = 0 ; i < _TNL_ATTRIB_MAX ; i++) {
       tnl->vtx.attrsz[i] = 0;
+      tnl->vtx.active_sz[i] = 0;
+   }
 
    tnl->vtx.vertex_size = 0;
    tnl->vtx.have_materials = 0;
