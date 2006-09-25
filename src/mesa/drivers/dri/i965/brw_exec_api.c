@@ -394,7 +394,7 @@ static void GLAPIENTRY brw_exec_EvalCoord1f( GLfloat u )
 
       for (i = 0 ; i <= BRW_ATTRIB_INDEX ; i++) {
 	 if (exec->eval.map1[i].map) 
-	    if (exec->vtx.attrsz[i] != exec->eval.map1[i].sz)
+	    if (exec->vtx.active_sz[i] != exec->eval.map1[i].sz)
 	       brw_exec_fixup_vertex( ctx, i, exec->eval.map1[i].sz );
       }
    }
