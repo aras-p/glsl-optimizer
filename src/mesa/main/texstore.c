@@ -721,9 +721,9 @@ type_mapping( GLenum srcType )
    case GL_UNSIGNED_BYTE:
       return map_identity;
    case GL_UNSIGNED_INT_8_8_8_8:
-      return map_3210;
+      return _mesa_little_endian() ? map_3210 : map_identity;
    case GL_UNSIGNED_INT_8_8_8_8_REV:
-      return map_identity;
+      return _mesa_little_endian() ? map_identity : map_3210;
    default:
       return NULL;
    }
@@ -984,7 +984,6 @@ _mesa_texstore_rgba(TEXSTORE_PARAMS)
       }
    }
    else if (!ctx->_ImageTransferState &&
-	    _mesa_little_endian() &&
 	    CHAN_TYPE == GL_UNSIGNED_BYTE &&
 	    (srcType == GL_UNSIGNED_BYTE ||
 	     srcType == GL_UNSIGNED_INT_8_8_8_8 ||
@@ -1314,7 +1313,6 @@ _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
                      srcAddr, srcPacking);
    }
    else if (!ctx->_ImageTransferState &&
-	    littleEndian && 
 	    (srcType == GL_UNSIGNED_BYTE ||
 	     srcType == GL_UNSIGNED_INT_8_8_8_8 ||
 	     srcType == GL_UNSIGNED_INT_8_8_8_8_REV) &&
@@ -1325,7 +1323,8 @@ _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
 
       /* dstmap - how to swizzle from RGBA to dst format:
        */
-      if (dstFormat == &_mesa_texformat_rgba8888) {
+      if ((littleEndian && dstFormat == &_mesa_texformat_rgba8888) ||
+	  (!littleEndian && dstFormat == &_mesa_texformat_rgba8888_rev)) {
 	 dstmap[3] = 0;
 	 dstmap[2] = 1;
 	 dstmap[1] = 2;
@@ -1529,7 +1528,6 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
       }
    }
    else if (!ctx->_ImageTransferState &&
-	    littleEndian &&
 	    (srcType == GL_UNSIGNED_BYTE ||
 	     srcType == GL_UNSIGNED_INT_8_8_8_8 ||
 	     srcType == GL_UNSIGNED_INT_8_8_8_8_REV) &&
@@ -1540,14 +1538,16 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 
       /* dstmap - how to swizzle from RGBA to dst format:
        */
-      if (dstFormat == &_mesa_texformat_argb8888) {
+      if ((littleEndian && dstFormat == &_mesa_texformat_argb8888) ||
+	  (!littleEndian && dstFormat == &_mesa_texformat_argb8888_rev)) {
 	 dstmap[3] = 3;		/* alpha */
 	 dstmap[2] = 0;		/* red */
 	 dstmap[1] = 1;		/* green */
 	 dstmap[0] = 2;		/* blue */
       }
       else {
-	 assert(dstFormat == &_mesa_texformat_argb8888_rev);
+	 assert((littleEndian && dstFormat == &_mesa_texformat_argb8888_rev) ||
+		(!littleEndian && dstFormat == &_mesa_texformat_argb8888));
 	 dstmap[3] = 2;
 	 dstmap[2] = 1;
 	 dstmap[1] = 0;
@@ -1662,7 +1662,6 @@ _mesa_texstore_rgb888(TEXSTORE_PARAMS)
       }
    }
    else if (!ctx->_ImageTransferState &&
-	    littleEndian &&
 	    srcType == GL_UNSIGNED_BYTE &&
 	    can_swizzle(baseInternalFormat) &&
 	    can_swizzle(srcFormat)) {
@@ -1788,7 +1787,6 @@ _mesa_texstore_bgr888(TEXSTORE_PARAMS)
       }
    }
    else if (!ctx->_ImageTransferState &&
-	    littleEndian &&
 	    srcType == GL_UNSIGNED_BYTE &&
 	    can_swizzle(baseInternalFormat) &&
 	    can_swizzle(srcFormat)) {
@@ -2017,7 +2015,8 @@ _mesa_texstore_al88(TEXSTORE_PARAMS)
 
       /* dstmap - how to swizzle from RGBA to dst format:
        */
-      if (dstFormat == &_mesa_texformat_al88) {
+      if ((littleEndian && dstFormat == &_mesa_texformat_al88) ||
+	  (!littleEndian && dstFormat == &_mesa_texformat_al88_rev)) {
 	 dstmap[0] = 0;
 	 dstmap[1] = 3;
       }
@@ -2159,7 +2158,6 @@ _mesa_texstore_a8(TEXSTORE_PARAMS)
                      srcAddr, srcPacking);
    }
    else if (!ctx->_ImageTransferState &&
-	    _mesa_little_endian() &&
 	    srcType == GL_UNSIGNED_BYTE &&
 	    can_swizzle(baseInternalFormat) &&
 	    can_swizzle(srcFormat)) {
