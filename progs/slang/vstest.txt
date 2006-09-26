@@ -10,7 +10,7 @@
 
 #version 110
 
-//#extension MESA_shader_debug: require
+#extension MESA_shader_debug: require
 
 attribute vec4 Attribute1;
 attribute vec4 Attribute2;

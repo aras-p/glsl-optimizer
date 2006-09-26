@@ -31,6 +31,10 @@ $vertex
 
 $code
 
+#version 110
+
+#extension MESA_shader_debug: require
+
 void main () {
    gl_Position = gl_ModelViewMatrix * gl_Vertex;
    gl_FrontColor = vec4 (1.0);
@@ -156,6 +160,10 @@ $vertex
 
 $code
 
+#version 110
+
+#extension MESA_shader_debug: require
+
 attribute float _Zero;
 attribute float _One;
 attribute float _Two;
@@ -247,6 +255,10 @@ $attrib _Two
 $vertex
 
 $code
+
+#version 110
+
+#extension MESA_shader_debug: require
 
 attribute vec4 _One;
 attribute vec4 _Two;
@@ -463,6 +475,10 @@ $attrib _MinusThree
 $vertex
 
 $code
+
+#version 110
+
+#extension MESA_shader_debug: require
 
 attribute float _Two;
 attribute float _Two2;
@@ -722,6 +738,10 @@ $vertex
 
 $code
 
+#version 110
+
+#extension MESA_shader_debug: require
+
 attribute float _False;
 attribute float _True;
 attribute float _False2;
@@ -917,6 +937,10 @@ $vertex
 
 $code
 
+#version 110
+
+#extension MESA_shader_debug: require
+
 attribute float _Zero;
 attribute float _One;
 attribute float _Two;
@@ -984,6 +1008,10 @@ $attrib _Two4
 $vertex
 
 $code
+
+#version 110
+
+#extension MESA_shader_debug: require
 
 attribute float _Zero;
 attribute float _One;
@@ -1140,6 +1168,10 @@ $attrib _Two4
 $vertex
 
 $code
+
+#version 110
+
+#extension MESA_shader_debug: require
 
 attribute float _Zero;
 attribute float _One;
@@ -1349,6 +1381,10 @@ $vertex
 
 $code
 
+#version 110
+
+#extension MESA_shader_debug: require
+
 attribute vec4 _Zero;
 attribute vec4 _One;
 attribute vec4 _Two;
@@ -1423,6 +1459,10 @@ $attrib _Three4
 $vertex
 
 $code
+
+#version 110
+
+#extension MESA_shader_debug: require
 
 attribute float _One;
 attribute vec4 _Two4;
