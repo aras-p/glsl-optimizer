@@ -47,11 +47,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/swrast.h"
 
 #include "radeon_screen.h"
-#include "r200_context.h"
 #include "radeon_ioctl.h"
 #include "radeon_macros.h"
 #include "radeon_reg.h"
-#include "r200_state.h"
 
 #include "r300_state.h"
 
@@ -292,12 +290,6 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 			
 			r300UpdateWindow(radeon->glCtx);
 			r300UpdateViewportOffset(radeon->glCtx);
-#if R200_MERGED
-			if (IS_R200_CLASS(radeon->radeonScreen)) {
-				r200UpdateWindow(radeon->glCtx);
-				r200UpdateViewportOffset(radeon->glCtx);
-			}
-#endif
 		}
 
 		_mesa_make_current(radeon->glCtx,
@@ -311,13 +303,7 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 					   driDrawPriv->w, driDrawPriv->h);
 		}
 
-		_mesa_update_state(radeon->glCtx);
-
-#if R200_MERGED
-		if (IS_R200_CLASS(radeon->radeonScreen))
-			r200ValidateState(radeon->glCtx);
-#endif
-		
+		_mesa_update_state(radeon->glCtx);		
 	} else {
 		if (RADEON_DEBUG & DEBUG_DRI)
 			fprintf(stderr, "%s ctx is null\n", __FUNCTION__);
