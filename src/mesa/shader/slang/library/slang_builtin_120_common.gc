@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.6
  *
  * Copyright (C) 2006  Brian Paul   All Rights Reserved.
  *
@@ -80,7 +80,7 @@ mat4 outerProduct (vec4 c, vec4 r) {
 
 mat2x3 outerProduct (vec3 c, vec2 r) {
     return mat2x3 (
-        c.x * r.x, c.y * r.x, c.z * r.x
+        c.x * r.x, c.y * r.x, c.z * r.x,
         c.x * r.y, c.y * r.y, c.z * r.y
     );
 }
@@ -105,7 +105,7 @@ mat4x2 outerProduct (vec2 c, vec4 r) {
         c.x * r.x, c.y * r.x,
         c.x * r.y, c.y * r.y,
         c.x * r.z, c.y * r.z,
-        c.x * r.w, c.y * r.w,
+        c.x * r.w, c.y * r.w
     );
 }
 

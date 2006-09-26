@@ -1,12 +1,13 @@
 #include "../../grammar/grammar_crt.h"
 #include "../../grammar/grammar_crt.c"
+#include <stdlib.h>
 #include <stdio.h>
 
 static const char *slang_shader_syn =
 #include "slang_shader_syn.h"
 ;
 
-static void gc_to_bin (grammar id, const char *in, const char *out)
+static int gc_to_bin (grammar id, const char *in, const char *out)
 {
 	FILE *f;
 	byte *source, *prod;
@@ -16,7 +17,7 @@ static void gc_to_bin (grammar id, const char *in, const char *out)
 
 	f = fopen (in, "r");
 	if (f == NULL)
-		return;
+		return 1;
 	fseek (f, 0, SEEK_END);
 	size = ftell (f);
 	fseek (f, 0, SEEK_SET);
@@ -27,7 +28,7 @@ static void gc_to_bin (grammar id, const char *in, const char *out)
 	if (!grammar_fast_check (id, source, &prod, &size, 65536))
 	{
 		grammar_alloc_free (source);
-		return;
+		return 1;
 	}
 
 	f = fopen (out, "w");
@@ -59,29 +60,23 @@ static void gc_to_bin (grammar id, const char *in, const char *out)
 	fprintf (f, "\n");
 	fclose (f);
 	grammar_alloc_free (prod);
+   return 0;
 }
 
-int main ()
+int main (int argc, char *argv[])
 {
-	grammar id;
+   grammar id;
 
-	id = grammar_load_from_text ((const byte *) slang_shader_syn);
-	if (id == 0)
-		return 1;
-
-	grammar_set_reg8 (id, (const byte *) "parsing_builtin", 1);
-
-	grammar_set_reg8 (id, (const byte *) "shader_type", 1);
-	gc_to_bin (id, "slang_core.gc", "slang_core_gc.h");
-	gc_to_bin (id, "slang_common_builtin.gc", "slang_common_builtin_gc.h");
-	gc_to_bin (id, "slang_fragment_builtin.gc", "slang_fragment_builtin_gc.h");
-   gc_to_bin (id, "slang_builtin_vec4.gc", "slang_builtin_vec4_gc.h");
-
-	grammar_set_reg8 (id, (const byte *) "shader_type", 2);
-	gc_to_bin (id, "slang_vertex_builtin.gc", "slang_vertex_builtin_gc.h");
-
-	grammar_destroy (id);
-
-	return 0;
+   id = grammar_load_from_text ((const byte *) slang_shader_syn);
+   if (id == 0)
+      return 1;
+   grammar_set_reg8 (id, (const byte *) "parsing_builtin", 1);
+   grammar_set_reg8 (id, (const byte *) "shader_type", atoi (argv[1]));
+   if (gc_to_bin (id, argv[2], argv[3])) {
+      grammar_destroy (id);
+      return 1;
+   }
+   grammar_destroy (id);
+   return 0;
 }
 

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.6
  *
  * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
@@ -23,7 +23,7 @@
  */
 
 /**
- * \file slang_version.syn
+ * \file slang_pp_version.syn
  * slang #version directive syntax
  * \author Michal Krol
  */
