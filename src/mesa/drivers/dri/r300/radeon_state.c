@@ -46,10 +46,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
 
-#include "r200_context.h"
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
-#include "r200_state.h"
 #include "r300_ioctl.h"
 
 

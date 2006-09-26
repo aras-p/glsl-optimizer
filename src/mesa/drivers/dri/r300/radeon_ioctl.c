@@ -40,16 +40,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "macros.h"
 #include "context.h"
 #include "swrast/swrast.h"
-#include "r200_context.h"
 #include "r300_context.h"
-#include "r200_state.h"
 #include "radeon_ioctl.h"
-#include "r200_ioctl.h"
 #include "r300_ioctl.h"
-#if R200_MERGED
-#include "r200_tcl.h"
-#include "r200_sanity.h"
-#endif
 #include "r300_state.h"
 #include "radeon_reg.h"
 
@@ -245,10 +238,7 @@ void radeonCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	UNLOCK_HARDWARE(radeon);
 	if (!rect)
 	{
-	    if (IS_R200_CLASS(radeon->radeonScreen))
-		((r200ContextPtr)radeon)->hw.all_dirty = GL_TRUE;
-	    else
-		((r300ContextPtr)radeon)->hw.all_dirty = GL_TRUE;
+	    ((r300ContextPtr)radeon)->hw.all_dirty = GL_TRUE;
 
 	    radeon->swap_count++;
 	    (*dri_interface->getUST) (&ust);
@@ -334,14 +324,6 @@ void radeonPageFlip(const __DRIdrawablePrivate * dPriv)
 		radeon->state.color.drawPitch = radeon->radeonScreen->backPitch;
 	}
 
-	if (IS_R200_CLASS(radeon->radeonScreen)) {
-		r200ContextPtr r200 = (r200ContextPtr)radeon;
-
-		R200_STATECHANGE(r200, ctx);
-		r200->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = radeon->state.color.drawOffset
-			+ radeon->radeonScreen->fbLocation;
-		r200->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = radeon->state.color.drawPitch;
-	}
 	if (IS_R300_CLASS(radeon->radeonScreen)) {
 		r300ContextPtr r300 = (r300ContextPtr)radeon;
 		R300_STATECHANGE(r300, cb);
@@ -372,7 +354,7 @@ void radeonWaitForIdleLocked(radeonContextPtr radeon)
 
 	if (ret < 0) {
 		UNLOCK_HARDWARE(radeon);
-		fprintf(stderr, "Error: R200 timed out... exiting\n");
+		fprintf(stderr, "Error: R300 timed out... exiting\n");
 		exit(-1);
 	}
 }
@@ -390,10 +372,6 @@ void radeonFlush(GLcontext * ctx)
 
 	if (IS_R300_CLASS(radeon->radeonScreen))
 		r300Flush(ctx);
-#if R200_MERGED
-	else
-		r200Flush(ctx);
-#endif	
 }
 
 

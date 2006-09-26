@@ -33,12 +33,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <string.h>
 
-#include "r200_context.h"
 #include "radeon_lock.h"
-#if R200_MERGED
-#include "r200_tex.h"
-#endif
-#include "r200_state.h"
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
 #include "r300_context.h"
@@ -79,35 +74,6 @@ static void radeonUpdatePageFlipping(radeonContextPtr radeon)
 /**
  * Called by radeonGetLock() after the lock has been obtained.
  */
-#if R200_MERGED
-static void r200RegainedLock(r200ContextPtr r200)
-{
-	__DRIdrawablePrivate *dPriv = r200->radeon.dri.drawable;
-	int i;
-
-	if (r200->radeon.lastStamp != dPriv->lastStamp) {
-		radeonUpdatePageFlipping(&r200->radeon);
-		R200_STATECHANGE(r200, ctx);
-		r200->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] =
-			r200->radeon.state.color.drawOffset
-			+ r200->radeon.radeonScreen->fbLocation;
-		r200->hw.ctx.cmd[CTX_RB3D_COLORPITCH] =
-			r200->radeon.state.color.drawPitch;
-
-		if (r200->radeon.glCtx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT)
-			radeonSetCliprects(&r200->radeon, GL_BACK_LEFT);
-		else
-			radeonSetCliprects(&r200->radeon, GL_FRONT_LEFT);
-		r200UpdateViewportOffset(r200->radeon.glCtx);
-		r200->radeon.lastStamp = dPriv->lastStamp;
-	}
-
-	for (i = 0; i < r200->nr_heaps; i++) {
-		DRI_AGE_TEXTURES(r200->texture_heaps[i]);
-	}
-}
-#endif
-
 static void r300RegainedLock(radeonContextPtr radeon)
 {
 	__DRIdrawablePrivate *dPriv = radeon->dri.drawable;
@@ -173,10 +139,6 @@ void radeonGetLock(radeonContextPtr radeon, GLuint flags)
 
 	if (IS_R300_CLASS(radeon->radeonScreen))
 		r300RegainedLock(radeon);
-#if R200_MERGED
-	else
-		r200RegainedLock((r200ContextPtr)radeon);
-#endif
 	
 	radeon->lost_context = GL_TRUE;
 }
