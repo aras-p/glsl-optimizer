@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.6
  *
  * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
@@ -33,6 +33,9 @@ extern "C" {
 
 GLboolean
 _slang_preprocess_version (const char *, GLuint *, GLuint *, slang_info_log *);
+
+GLboolean
+_slang_preprocess_directives (slang_string *output, const char *input, slang_info_log *);
 
 #ifdef __cplusplus
 }

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.6
  *
  * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
@@ -43,6 +43,42 @@ extern "C" {
 #define slang_string_length(str) _mesa_strlen (str)
 
 char *slang_string_concat (char *, const char *);
+
+/* slang_string */
+
+typedef struct
+{
+   char *data;
+   GLuint length;
+   GLuint capacity;
+   GLboolean fail;
+} slang_string;
+
+GLvoid
+slang_string_init (slang_string *);
+
+GLvoid
+slang_string_free (slang_string *);
+
+GLvoid
+slang_string_reset (slang_string *);
+
+GLvoid
+slang_string_push (slang_string *, const slang_string *);
+
+GLvoid
+slang_string_pushc (slang_string *, const char);
+
+GLvoid
+slang_string_pushs (slang_string *, const char *, GLuint);
+
+GLvoid
+slang_string_pushi (slang_string *, GLint);
+
+const char *
+slang_string_cstr (slang_string *);
+
+/* slang_atom */
 
 typedef GLvoid *slang_atom;
 

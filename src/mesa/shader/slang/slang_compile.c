@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.6
  *
  * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
@@ -1918,10 +1918,11 @@ static GLboolean
 compile_with_grammar (grammar id, const char *source, slang_code_unit *unit, slang_unit_type type,
                       slang_info_log *infolog, slang_code_unit *builtin)
 {
-	byte *prod;
+   byte *prod;
    GLuint size, start, version;
+   slang_string preprocessed;
 
-	/* retrieve version */
+   /* First retrieve the version number. */
    if (!_slang_preprocess_version (source, &version, &start, infolog))
       return GL_FALSE;
 
@@ -1930,22 +1931,31 @@ compile_with_grammar (grammar id, const char *source, slang_code_unit *unit, sla
       return GL_FALSE;
    }
 
-	/* check the syntax and generate its binary representation */
-	if (!grammar_fast_check (id, (const byte *) source + start, &prod, &size, 65536))
-	{
-		char buf[1024];
-		unsigned int pos;
-		grammar_get_last_error ( (unsigned char*) buf, 1024, (int*) &pos);
+   /* Now preprocess the source string. */
+   slang_string_init (&preprocessed);
+   if (!_slang_preprocess_directives (&preprocessed, &source[start], infolog)) {
+      slang_string_free (&preprocessed);
+      slang_info_log_error (infolog, "failed to preprocess the source.");
+      return GL_FALSE;
+   }
+
+   /* Finally check the syntax and generate its binary representation. */
+   if (!grammar_fast_check (id, (const byte *) (slang_string_cstr (&preprocessed)), &prod, &size, 65536)) {
+      char buf[1024];
+      GLint pos;
+
+      slang_string_free (&preprocessed);
+      grammar_get_last_error ((byte *) (buf), sizeof (buf), &pos);
       slang_info_log_error (infolog, buf);
       return GL_FALSE;
-	}
+   }
+   slang_string_free (&preprocessed);
 
-	/* syntax is okay - translate it to internal representation */
+   /* Syntax is okay - translate it to internal representation. */
    if (!compile_binary (prod, unit, type, infolog, builtin, &builtin[SLANG_BUILTIN_TOTAL - 1])) {
       grammar_alloc_free (prod);
       return GL_FALSE;
    }
-
    grammar_alloc_free (prod);
    return GL_TRUE;
 }

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.6
  *
  * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
@@ -34,6 +34,99 @@
 char *slang_string_concat (char *dst, const char *src)
 {
 	return _mesa_strcpy (dst + _mesa_strlen (dst), src);
+}
+
+/* slang_string */
+
+GLvoid
+slang_string_init (slang_string *self)
+{
+   self->data = NULL;
+   self->capacity = 0;
+   self->length = 0;
+   self->fail = GL_FALSE;
+}
+
+GLvoid
+slang_string_free (slang_string *self)
+{
+   if (self->data != NULL)
+      _mesa_free (self->data);
+}
+
+GLvoid
+slang_string_reset (slang_string *self)
+{
+   self->length = 0;
+   self->fail = GL_FALSE;
+}
+
+static GLboolean
+grow (slang_string *self, GLuint size)
+{
+   if (self->fail)
+      return GL_FALSE;
+   if (size > self->capacity) {
+      /* do not overflow 32-bit range */
+      assert (size < 0x80000000);
+
+      self->data = (char *) (_mesa_realloc (self->data, self->capacity, size * 2));
+      self->capacity = size * 2;
+      if (self->data == NULL) {
+         self->capacity = 0;
+         self->fail = GL_TRUE;
+         return GL_FALSE;
+      }
+   }
+   return GL_TRUE;
+}
+
+GLvoid
+slang_string_push (slang_string *self, const slang_string *str)
+{
+   if (str->fail) {
+      self->fail = GL_TRUE;
+      return;
+   }
+   if (grow (self, self->length + str->length)) {
+      _mesa_memcpy (&self->data[self->length], str->data, str->length);
+      self->length += str->length;
+   }
+}
+
+GLvoid
+slang_string_pushc (slang_string *self, const char c)
+{
+   if (grow (self, self->length + 1)) {
+      self->data[self->length] = c;
+      self->length++;
+   }
+}
+
+GLvoid
+slang_string_pushs (slang_string *self, const char *cstr, GLuint len)
+{
+   if (grow (self, self->length + len)) {
+      _mesa_memcpy (&self->data[self->length], cstr, len);
+      self->length += len;
+   }
+}
+
+GLvoid
+slang_string_pushi (slang_string *self, GLint i)
+{
+   char buffer[12];
+
+   _mesa_sprintf (buffer, "%d", i);
+   slang_string_pushs (self, buffer, strlen (buffer));
+}
+
+const char *
+slang_string_cstr (slang_string *self)
+{
+   if (grow (self, self->length + 1))
+      self->data[self->length] = '\0';
+   return self->data;
 }
 
 /* slang_atom_pool */
