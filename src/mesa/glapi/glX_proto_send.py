@@ -24,9 +24,25 @@
 #
 # Authors:
 #    Ian Romanick <idr@us.ibm.com>
+#    Jeremy Kolb <jkolb@brandeis.edu>
 
 import gl_XML, glX_XML, glX_proto_common, license
 import sys, getopt, copy, string
+
+def convertStringForXCB(str):
+    tmp = ""
+    special = [ "ARB" ]
+    i = 0
+    while i < len(str):
+        if str[i:i+3] in special:
+            tmp = '%s_%s' % (tmp, string.lower(str[i:i+3]))
+            i = i + 2;
+        elif str[i].isupper():
+            tmp = '%s_%s' % (tmp, string.lower(str[i]))
+        else:
+            tmp = '%s%s' % (tmp, str[i])
+        i += 1
+    return tmp
 
 def hash_pixel_function(func):
 	"""Generate a 'unique' key for a pixel function.  The key is based on
@@ -153,8 +169,8 @@ class PrintGlxProtoStubs(glX_proto_common.glx_print_proto):
 		print '#include <GL/glxproto.h>'
 		print '#ifdef USE_XCB'
 		print '#include <X11/xcl.h>'
-		print '#include <X11/XCB/xcb.h>'
-		print '#include <X11/XCB/glx.h>'
+		print '#include <xcb/xcb.h>'
+		print '#include <xcb/glx.h>'
 		print '#endif /* USE_XCB */'
 
 		print ''
@@ -544,9 +560,9 @@ generic_%u_byte( GLint rop, const void * ptr )
 			print '#ifdef USE_XCB'
 			if self.debug:
 				print '        printf("\\tUsing XCB.\\n");'
-			print '        XCBConnection *c = XCBConnectionOfDisplay(dpy);'
+			print '        xcb_connection_t *c = XGetXCBConnection(dpy);'
 			print '        (void) __glXFlushRenderBuffer(gc, gc->pc);'
-			xcb_name = 'XCBGlx%s' % f.name
+			xcb_name = 'xcb_glx%s' % convertStringForXCB(f.name)
 
 			iparams=[]
 			extra_iparams = []
@@ -563,7 +579,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 					
 						# Hardcode this in.  lsb_first param (apparently always GL_FALSE)
 						# also present in GetPolygonStipple, but taken care of above.
-						if xcb_name == "XCBGlxReadPixels": 
+						if xcb_name == "xcb_glx_read_pixels": 
 							extra_iparams.append("0")
 				else:
 					iparams.append(p.name)
@@ -572,16 +588,16 @@ generic_%u_byte( GLint rop, const void * ptr )
 			xcb_request = '%s(%s)' % (xcb_name, ", ".join(["c", "gc->currentContextTag"] + iparams + extra_iparams))
 
 			if f.needs_reply():
-				print '        %sRep *reply = %sReply(c, %s, NULL);' % (xcb_name, xcb_name, xcb_request)
+				print '        %s_reply_t *reply = %s_reply(c, %s, NULL);' % (xcb_name, xcb_name, xcb_request)
 				if output and f.reply_always_array:
-					print '        (void)memcpy(%s, %sData(reply), %sDataLength(reply) * sizeof(%s));' % (output.name, xcb_name, xcb_name, output.get_base_type_string())
+					print '        (void)memcpy(%s, %s_data(reply), %s_data_length(reply) * sizeof(%s));' % (output.name, xcb_name, xcb_name, output.get_base_type_string())
 
 				elif output and not f.reply_always_array:
 					if not output.is_image():
-						print '        if (%sDataLength(reply) == 0)' % (xcb_name)
+						print '        if (%s_data_length(reply) == 0)' % (xcb_name)
 						print '            (void)memcpy(%s, &reply->datum, sizeof(reply->datum));' % (output.name)
 						print '        else'
-					print '        (void)memcpy(%s, %sData(reply), %sDataLength(reply) * sizeof(%s));' % (output.name, xcb_name, xcb_name, output.get_base_type_string())
+					print '        (void)memcpy(%s, %s_data(reply), %s_data_length(reply) * sizeof(%s));' % (output.name, xcb_name, xcb_name, output.get_base_type_string())
 
 
 				if f.return_type != 'void':
