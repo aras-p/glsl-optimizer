@@ -65,8 +65,8 @@
 
 #ifdef USE_XCB
 #include <X11/xcl.h>
-#include <X11/XCB/xcb.h>
-#include <X11/XCB/glx.h>
+#include <xcb/xcb.h>
+#include <xcb/glx.h>
 #endif
 
 #include <assert.h>
@@ -1284,7 +1284,7 @@ GLubyte *__glXFlushRenderBuffer(__GLXcontext *ctx, GLubyte *pc)
 {
     Display * const dpy = ctx->currentDpy;
 #ifdef USE_XCB
-    XCBConnection *c = XCBConnectionOfDisplay(dpy);
+    xcb_connection_t *c = XGetXCBConnection(dpy);
 #else
     xGLXRenderReq *req;
 #endif /* USE_XCB */
@@ -1292,7 +1292,7 @@ GLubyte *__glXFlushRenderBuffer(__GLXcontext *ctx, GLubyte *pc)
 
     if ( (dpy != NULL) && (size > 0) ) {
 #ifdef USE_XCB
-	XCBGlxRender(c, ctx->currentContextTag, size, (char *)ctx->buf);
+	xcb_glx_render(c, ctx->currentContextTag, size, (char *)ctx->buf);
 #else
 	/* Send the entire buffer as an X request */
 	LockDisplay(dpy);
@@ -1335,8 +1335,8 @@ void __glXSendLargeChunk(__GLXcontext *gc, GLint requestNumber,
 {
     Display *dpy = gc->currentDpy;
 #ifdef USE_XCB
-    XCBConnection *c = XCBConnectionOfDisplay(dpy);
-    XCBGlxRenderLarge(c, gc->currentContextTag, requestNumber, totalRequests, dataLen, data);
+    xcb_connection_t *c = XGetXCBConnection(dpy);
+    xcb_glx_render_large(c, gc->currentContextTag, requestNumber, totalRequests, dataLen, data);
 #else
     xGLXRenderLargeReq *req;
     
