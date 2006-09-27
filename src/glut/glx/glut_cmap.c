@@ -249,7 +249,6 @@ __glutSetupColormap(XVisualInfo * vi, GLUTcolormap ** colormap, Colormap * cmap)
        private one. */
     /* XXX Should do a better job of internal sharing for
        privately allocated TrueColor colormaps. */
-    /* XXX DirectColor probably needs ramps hand initialized! */
     *cmap = XCreateColormap(__glutDisplay, __glutRoot,
       vi->visual, AllocNone);
     break;
