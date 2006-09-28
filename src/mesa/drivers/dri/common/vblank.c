@@ -268,6 +268,30 @@ void driDrawableInitVBlank( __DRIdrawablePrivate *priv, GLuint flags,
 
 /****************************************************************************/
 /**
+ * Returns the current swap interval of the given drawable.
+ */
+
+unsigned
+driGetVBlankInterval( const  __DRIdrawablePrivate *priv, GLuint flags )
+{
+   if ( (flags & VBLANK_FLAG_INTERVAL) != 0 ) {
+      /* this must have been initialized when the drawable was first bound
+       * to a direct rendering context. */
+      assert ( priv->pdraw->swap_interval != (unsigned)-1 );
+
+      return priv->pdraw->swap_interval;
+   }
+   else if ( (flags & (VBLANK_FLAG_THROTTLE | VBLANK_FLAG_SYNC)) != 0 ) {
+      return 1;
+   }
+   else {
+      return 0;
+   }
+}
+
+
+/****************************************************************************/
+/**
  * Waits for the vertical blank for use with glXSwapBuffers.
  * 
  * \param vbl_seq  Vertical blank sequence number (MSC) after the last buffer
@@ -310,20 +334,7 @@ driWaitForVBlank( const  __DRIdrawablePrivate *priv, GLuint * vbl_seq,
     */
 
    original_seq = *vbl_seq;
-
-   if ( (flags & VBLANK_FLAG_INTERVAL) != 0 ) {
-      interval = priv->pdraw->swap_interval;
-      /* this must have been initialized when the drawable was first bound
-       * to a direct rendering context. */
-      assert ( interval != (unsigned)-1 );
-   }
-   else if ( (flags & (VBLANK_FLAG_THROTTLE | VBLANK_FLAG_SYNC)) != 0 ) {
-      interval = 1;
-   }
-   else {
-      interval = 0;
-   }
-
+   interval = driGetVBlankInterval(priv, flags);
    deadline = original_seq + interval;
 
    vbl.request.type = DRM_VBLANK_RELATIVE;

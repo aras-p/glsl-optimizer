@@ -51,6 +51,8 @@ extern int driWaitForMSC32( __DRIdrawablePrivate *priv,
 extern GLuint driGetDefaultVBlankFlags( const driOptionCache *optionCache );
 extern void driDrawableInitVBlank ( __DRIdrawablePrivate *priv, GLuint flags,
 				    GLuint *vbl_seq );
+extern unsigned driGetVBlankInterval( const  __DRIdrawablePrivate *priv,
+				      GLuint flags );
 extern int driWaitForVBlank( const __DRIdrawablePrivate *priv,
     GLuint * vbl_seq, GLuint flags, GLboolean * missed_deadline );
 
