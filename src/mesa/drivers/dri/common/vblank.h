@@ -53,6 +53,8 @@ extern void driDrawableInitVBlank ( __DRIdrawablePrivate *priv, GLuint flags,
 				    GLuint *vbl_seq );
 extern unsigned driGetVBlankInterval( const  __DRIdrawablePrivate *priv,
 				      GLuint flags );
+extern void driGetCurrentVBlank( const  __DRIdrawablePrivate *priv,
+				 GLuint flags, GLuint *vbl_seq );
 extern int driWaitForVBlank( const __DRIdrawablePrivate *priv,
     GLuint * vbl_seq, GLuint flags, GLboolean * missed_deadline );
 

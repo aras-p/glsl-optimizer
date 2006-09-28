@@ -292,6 +292,27 @@ driGetVBlankInterval( const  __DRIdrawablePrivate *priv, GLuint flags )
 
 /****************************************************************************/
 /**
+ * Returns the current vertical blank sequence number of the given drawable.
+ */
+
+void
+driGetCurrentVBlank( const  __DRIdrawablePrivate *priv, GLuint flags,
+		     GLuint *vbl_seq )
+{
+   drmVBlank vbl;
+
+   vbl.request.type = DRM_VBLANK_RELATIVE;
+   if ( flags & VBLANK_FLAG_SECONDARY ) {
+      vbl.request.type |= DRM_VBLANK_SECONDARY;
+   }
+   vbl.request.sequence = 0;
+
+   (void) do_wait( &vbl, vbl_seq, priv->driScreenPriv->fd );
+}
+
+
+/****************************************************************************/
+/**
  * Waits for the vertical blank for use with glXSwapBuffers.
  * 
  * \param vbl_seq  Vertical blank sequence number (MSC) after the last buffer
