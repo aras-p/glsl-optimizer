@@ -106,6 +106,8 @@ extern GLboolean driCheckDriDdxDrmVersions3(const char * driver_name,
     const __DRIversion * ddxActual, const __DRIutilversion2 * ddxExpected,
     const __DRIversion * drmActual, const __DRIversion * drmExpected);
 
+extern GLint driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 );
+
 extern GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
 					   GLint *x, GLint *y,
 					   GLsizei *width, GLsizei *height );
