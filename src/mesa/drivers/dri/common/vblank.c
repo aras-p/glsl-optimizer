@@ -260,7 +260,8 @@ void driDrawableInitVBlank( __DRIdrawablePrivate *priv, GLuint flags,
       drmVBlank vbl = { .request={ .type = DRM_VBLANK_RELATIVE, .sequence = 0 } };
       do_wait( &vbl, vbl_seq, priv->driScreenPriv->fd );
 
-      priv->pdraw->swap_interval = (flags & VBLANK_FLAG_THROTTLE) != 0 ? 1 : 0;
+      priv->pdraw->swap_interval = (flags & (VBLANK_FLAG_THROTTLE |
+					     VBLANK_FLAG_SYNC)) != 0 ? 1 : 0;
    }
 }
 
@@ -287,7 +288,7 @@ driWaitForVBlank( const  __DRIdrawablePrivate *priv, GLuint * vbl_seq,
    unsigned   original_seq;
    unsigned   deadline;
    unsigned   interval;
-
+   unsigned   diff;
 
    *missed_deadline = GL_FALSE;
    if ( (flags & (VBLANK_FLAG_INTERVAL |
@@ -310,6 +311,21 @@ driWaitForVBlank( const  __DRIdrawablePrivate *priv, GLuint * vbl_seq,
 
    original_seq = *vbl_seq;
 
+   if ( (flags & VBLANK_FLAG_INTERVAL) != 0 ) {
+      interval = priv->pdraw->swap_interval;
+      /* this must have been initialized when the drawable was first bound
+       * to a direct rendering context. */
+      assert ( interval != (unsigned)-1 );
+   }
+   else if ( (flags & (VBLANK_FLAG_THROTTLE | VBLANK_FLAG_SYNC)) != 0 ) {
+      interval = 1;
+   }
+   else {
+      interval = 0;
+   }
+
+   deadline = original_seq + interval;
+
    vbl.request.sequence = ((flags & VBLANK_FLAG_SYNC) != 0) ? 1 : 0;
    vbl.request.type = DRM_VBLANK_RELATIVE;
       
@@ -317,36 +333,24 @@ driWaitForVBlank( const  __DRIdrawablePrivate *priv, GLuint * vbl_seq,
       return -1;
    }
 
-	
+   diff = *vbl_seq - deadline;
+
+   /* No need to wait again if we've already reached the target */
+   if (diff <= (1 << 23)) {
+      *missed_deadline = (flags & VBLANK_FLAG_SYNC) ? (diff > 0) : GL_TRUE;
+      return 0;
+   }
+
+   /* Wait until the target vertical blank. */
    vbl.request.type = DRM_VBLANK_ABSOLUTE;
+   vbl.request.sequence = deadline;
 
-   if ( (flags & VBLANK_FLAG_INTERVAL) != 0 ) {
-      interval = priv->pdraw->swap_interval;
-      /* this must have been initialized when the drawable was first bound
-       * to a direct rendering context. */
-      assert ( interval != (unsigned)-1 );
-   }
-   else if ( (flags & VBLANK_FLAG_THROTTLE) != 0 ) {
-      interval = 1;
-   }
-   else {
-      interval = 0;
+   if ( do_wait( & vbl, vbl_seq, priv->driScreenPriv->fd ) != 0 ) {
+      return -1;
    }
 
-
-   /* Wait until the next vertical blank.  If the interval is zero, then
-    * the deadline is one vertical blank after the previous wait.
-    */
-
-   vbl.request.sequence = original_seq + interval;
-   if ( *vbl_seq < vbl.request.sequence ) {
-      if ( do_wait( & vbl, vbl_seq, priv->driScreenPriv->fd ) != 0 ) {
-	 return -1;
-      }
-   }
-
-   deadline = original_seq + ((interval == 0) ? 1 : interval);
-   *missed_deadline = ( *vbl_seq > deadline );
+   diff = *vbl_seq - deadline;
+   *missed_deadline = diff > 0 && diff <= (1 << 23);
 
    return 0;
 }
