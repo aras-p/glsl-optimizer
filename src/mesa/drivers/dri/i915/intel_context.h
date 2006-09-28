@@ -261,6 +261,8 @@ struct intel_context
 
    GLuint swap_count;
    GLuint swap_missed_count;
+
+   GLuint swap_scheduled;
 };
 
 
@@ -321,6 +323,13 @@ do {							\
     char __ret=0;					\
     DEBUG_CHECK_LOCK();					\
     assert(!(intel)->locked);				\
+    if ((intel)->swap_scheduled) {			\
+        drmVBlank vbl;					\
+        vbl.request.type = DRM_VBLANK_ABSOLUTE;		\
+        vbl.request.sequence = (intel)->vbl_seq;	\
+        drmWaitVBlank((intel)->driFd, &vbl);		\
+        (intel)->swap_scheduled = 0;			\
+    }							\
     DRM_CAS((intel)->driHwLock, (intel)->hHWContext,	\
         (DRM_LOCK_HELD|(intel)->hHWContext), __ret);	\
     if (__ret)						\

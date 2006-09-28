@@ -368,6 +368,7 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
 		      const drm_clip_rect_t	 *rect)
 {
    intelContextPtr intel;
+   const intelScreenPrivate *intelScreen;
    GLboolean   missed_target;
    int64_t ust;
 
@@ -382,97 +383,130 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
 
    intelFlush( &intel->ctx );
    
-   intelWaitForFrameCompletion( intel );
-   LOCK_HARDWARE( intel );
+   intelScreen = intel->intelScreen;
 
-   if (!rect)
-   {
-       UNLOCK_HARDWARE( intel );
-       driWaitForVBlank( dPriv, &intel->vbl_seq, intel->vblank_flags, & missed_target );
-       LOCK_HARDWARE( intel );
-   }
-   {
-      const intelScreenPrivate *intelScreen = intel->intelScreen;
-      const __DRIdrawablePrivate *dPriv = intel->driDrawable;
-      const int nbox = dPriv->numClipRects;
-      const drm_clip_rect_t *pbox = dPriv->pClipRects;
-      drm_clip_rect_t box;
-      const int cpp = intelScreen->cpp;
-      const int pitch = intelScreen->front.pitch; /* in bytes */
-      int i;
-      GLuint CMD, BR13;
-      BATCH_LOCALS;
+   if (!rect && !intel->swap_scheduled && intelScreen->drmMinor >= 6 &&
+       !(intel->vblank_flags & VBLANK_FLAG_NO_IRQ) &&
+       intelScreen->current_rotation == 0) {
+      unsigned int interval = driGetVBlankInterval(dPriv, intel->vblank_flags);
+      unsigned int target;
+      drm_i915_vblank_swap_t swap;
 
-      switch(cpp) {
-      case 2: 
-	 BR13 = (pitch) | (0xCC << 16) | (1<<24);
-	 CMD = XY_SRC_COPY_BLT_CMD;
-	 break;
-      case 4:
-	 BR13 = (pitch) | (0xCC << 16) | (1<<24) | (1<<25);
-	 CMD = (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
-		XY_SRC_COPY_BLT_WRITE_RGB);
-	 break;
-      default:
-	 BR13 = (pitch) | (0xCC << 16) | (1<<24);
-	 CMD = XY_SRC_COPY_BLT_CMD;
-	 break;
+      swap.drawable = dPriv->hHWDrawable;
+      swap.seqtype = DRM_VBLANK_ABSOLUTE;
+      target = swap.sequence = intel->vbl_seq + interval;
+
+      if (intel->vblank_flags & VBLANK_FLAG_SYNC) {
+	 swap.seqtype |= DRM_VBLANK_NEXTONMISS;
+      } else if (interval == 0) {
+	 goto noschedule;
       }
-   
-      if (0) 
-	 intel_draw_performance_boxes( intel );
 
-      for (i = 0 ; i < nbox; i++, pbox++) 
+      if (!drmCommandWriteRead(intel->driFd, DRM_I915_VBLANK_SWAP, &swap,
+                              sizeof(swap))) {
+        intel->swap_scheduled = 1;
+        intel->vbl_seq = swap.sequence;
+        swap.sequence -= target;
+        missed_target = swap.sequence > 0 && swap.sequence <= (1 << 23);
+      }
+   } else {
+      intel->swap_scheduled = 0;
+   }
+noschedule:
+
+   if (!intel->swap_scheduled) {
+      intelWaitForFrameCompletion( intel );
+      LOCK_HARDWARE( intel );
+
+      if (!rect)
       {
-	 if (pbox->x1 > pbox->x2 ||
-	     pbox->y1 > pbox->y2 ||
-	     pbox->x2 > intelScreen->width ||
-	     pbox->y2 > intelScreen->height) {
-            _mesa_warning(&intel->ctx, "Bad cliprect in intelCopyBuffer()");
-	    continue;
-         }
-
-	 box = *pbox;
-
-	 if (rect)
-	 {
-	     if (rect->x1 > box.x1)
-		 box.x1 = rect->x1;
-	     if (rect->y1 > box.y1)
-		 box.y1 = rect->y1;
-	     if (rect->x2 < box.x2)
-		 box.x2 = rect->x2;
-	     if (rect->y2 < box.y2)
-		 box.y2 = rect->y2;
-
-	     if (box.x1 > box.x2 || box.y1 > box.y2)
-		 continue;
-	 }
-
-	 BEGIN_BATCH( 8);
-	 OUT_BATCH( CMD );
-	 OUT_BATCH( BR13 );
-	 OUT_BATCH( (box.y1 << 16) | box.x1 );
-	 OUT_BATCH( (box.y2 << 16) | box.x2 );
-
-	 if (intel->sarea->pf_current_page == 0) 
-	    OUT_BATCH( intelScreen->front.offset );
-	 else
-	    OUT_BATCH( intelScreen->back.offset );			
-
-	 OUT_BATCH( (box.y1 << 16) | box.x1 );
-	 OUT_BATCH( BR13 & 0xffff );
-
-	 if (intel->sarea->pf_current_page == 0) 
-	    OUT_BATCH( intelScreen->back.offset );			
-	 else
-	    OUT_BATCH( intelScreen->front.offset );
-
-	 ADVANCE_BATCH();
+	 UNLOCK_HARDWARE( intel );
+	 driWaitForVBlank( dPriv, &intel->vbl_seq, intel->vblank_flags, & missed_target );
+	 LOCK_HARDWARE( intel );
       }
+      {
+	 const intelScreenPrivate *intelScreen = intel->intelScreen;
+	 const __DRIdrawablePrivate *dPriv = intel->driDrawable;
+	 const int nbox = dPriv->numClipRects;
+	 const drm_clip_rect_t *pbox = dPriv->pClipRects;
+	 drm_clip_rect_t box;
+	 const int cpp = intelScreen->cpp;
+	 const int pitch = intelScreen->front.pitch; /* in bytes */
+	 int i;
+	 GLuint CMD, BR13;
+	 BATCH_LOCALS;
+
+	 switch(cpp) {
+	 case 2: 
+	    BR13 = (pitch) | (0xCC << 16) | (1<<24);
+	    CMD = XY_SRC_COPY_BLT_CMD;
+	    break;
+	 case 4:
+	    BR13 = (pitch) | (0xCC << 16) | (1<<24) | (1<<25);
+	    CMD = (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
+		   XY_SRC_COPY_BLT_WRITE_RGB);
+	    break;
+	 default:
+	    BR13 = (pitch) | (0xCC << 16) | (1<<24);
+	    CMD = XY_SRC_COPY_BLT_CMD;
+	    break;
+	 }
+   
+	 if (0) 
+	    intel_draw_performance_boxes( intel );
+
+	 for (i = 0 ; i < nbox; i++, pbox++) 
+	 {
+	    if (pbox->x1 > pbox->x2 ||
+		pbox->y1 > pbox->y2 ||
+		pbox->x2 > intelScreen->width ||
+		pbox->y2 > intelScreen->height) {
+	       _mesa_warning(&intel->ctx, "Bad cliprect in intelCopyBuffer()");
+	       continue;
+	    }
+
+	    box = *pbox;
+
+	    if (rect)
+	    {
+	       if (rect->x1 > box.x1)
+		  box.x1 = rect->x1;
+	       if (rect->y1 > box.y1)
+		  box.y1 = rect->y1;
+	       if (rect->x2 < box.x2)
+		  box.x2 = rect->x2;
+	       if (rect->y2 < box.y2)
+		  box.y2 = rect->y2;
+
+	       if (box.x1 > box.x2 || box.y1 > box.y2)
+		  continue;
+	    }
+
+	    BEGIN_BATCH( 8);
+	    OUT_BATCH( CMD );
+	    OUT_BATCH( BR13 );
+	    OUT_BATCH( (box.y1 << 16) | box.x1 );
+	    OUT_BATCH( (box.y2 << 16) | box.x2 );
+
+	    if (intel->sarea->pf_current_page == 0) 
+	       OUT_BATCH( intelScreen->front.offset );
+	    else
+	       OUT_BATCH( intelScreen->back.offset );			
+
+	    OUT_BATCH( (box.y1 << 16) | box.x1 );
+	    OUT_BATCH( BR13 & 0xffff );
+
+	    if (intel->sarea->pf_current_page == 0) 
+	       OUT_BATCH( intelScreen->back.offset );			
+	    else
+	       OUT_BATCH( intelScreen->front.offset );
+
+	    ADVANCE_BATCH();
+	 }
+      }
+      intelFlushBatchLocked( intel, GL_TRUE, GL_TRUE, GL_TRUE );
+      UNLOCK_HARDWARE( intel );
    }
-   intelFlushBatchLocked( intel, GL_TRUE, GL_TRUE, GL_TRUE );
-   UNLOCK_HARDWARE( intel );
 
    if (!rect)
    {
