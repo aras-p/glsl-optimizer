@@ -285,7 +285,8 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 
 		if (radeon->dri.drawable != driDrawPriv) {
 			driDrawableInitVBlank(driDrawPriv,
-					      radeon->vblank_flags);
+					      radeon->vblank_flags,
+					      &radeon->vbl_seq);
 			radeon->dri.drawable = driDrawPriv;
 			
 			r300UpdateWindow(radeon->glCtx);

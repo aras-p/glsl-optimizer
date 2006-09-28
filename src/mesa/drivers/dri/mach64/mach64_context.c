@@ -308,7 +308,8 @@ mach64MakeCurrent( __DRIcontextPrivate *driContextPriv,
       }
 
       
-      driDrawableInitVBlank( driDrawPriv, newMach64Ctx->vblank_flags );
+      driDrawableInitVBlank( driDrawPriv, newMach64Ctx->vblank_flags,
+			     &newMach64Ctx->vbl_seq );
 
       if ( newMach64Ctx->driDrawable != driDrawPriv ) {
 	 newMach64Ctx->driDrawable = driDrawPriv;

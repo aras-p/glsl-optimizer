@@ -210,20 +210,6 @@ GLuint driGetDefaultVBlankFlags( const driOptionCache *optionCache )
 
 /****************************************************************************/
 /**
- * Sets the default swap interval when the drawable is first bound to a
- * direct rendering context.
- */
-
-void driDrawableInitVBlank( __DRIdrawablePrivate *priv, GLuint flags )
-{
-   if ( priv->pdraw->swap_interval == (unsigned)-1 ) {
-      priv->pdraw->swap_interval = (flags & VBLANK_FLAG_THROTTLE) != 0 ? 1 : 0;
-   }
-}
-
-
-/****************************************************************************/
-/**
  * Wrapper to call \c drmWaitVBlank.  The main purpose of this function is to
  * wrap the error message logging.  The error message should only be logged
  * the first time the \c drmWaitVBlank fails.  If \c drmWaitVBlank is
@@ -257,6 +243,25 @@ static int do_wait( drmVBlank * vbl, GLuint * vbl_seq, int fd )
 
    *vbl_seq = vbl->reply.sequence;
    return 0;
+}
+
+
+/****************************************************************************/
+/**
+ * Sets the default swap interval when the drawable is first bound to a
+ * direct rendering context.
+ */
+
+void driDrawableInitVBlank( __DRIdrawablePrivate *priv, GLuint flags,
+			    GLuint *vbl_seq )
+{
+   if ( priv->pdraw->swap_interval == (unsigned)-1 ) {
+      /* Get current vertical blank sequence */
+      drmVBlank vbl = { .request={ .type = DRM_VBLANK_RELATIVE, .sequence = 0 } };
+      do_wait( &vbl, vbl_seq, priv->driScreenPriv->fd );
+
+      priv->pdraw->swap_interval = (flags & VBLANK_FLAG_THROTTLE) != 0 ? 1 : 0;
+   }
 }
 
 

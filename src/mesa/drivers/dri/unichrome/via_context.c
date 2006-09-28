@@ -815,7 +815,8 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
         readBuffer = (GLframebuffer *)driReadPriv->driverPrivate;
 
 	if ( vmesa->driDrawable != driDrawPriv ) {
-	   driDrawableInitVBlank( driDrawPriv, vmesa->vblank_flags );
+	   driDrawableInitVBlank( driDrawPriv, vmesa->vblank_flags,
+				  &vmesa->vbl_seq );
 	   vmesa->driDrawable = driDrawPriv;
 	   if ( ! calculate_buffer_parameters( vmesa, drawBuffer ) ) {
 	      return GL_FALSE;

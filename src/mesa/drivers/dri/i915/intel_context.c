@@ -596,7 +596,8 @@ GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
 
       if ( intel->driDrawable != driDrawPriv ) {
 	 /* Shouldn't the readbuffer be stored also? */
-	 driDrawableInitVBlank( driDrawPriv, intel->vblank_flags );
+	 driDrawableInitVBlank( driDrawPriv, intel->vblank_flags,
+				&intel->vbl_seq );
 
 	 intel->driDrawable = driDrawPriv;
 	 intelWindowMoved( intel );

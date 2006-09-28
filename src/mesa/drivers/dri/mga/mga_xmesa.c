@@ -878,7 +878,8 @@ mgaMakeCurrent(__DRIcontextPrivate *driContextPriv,
       mgaContextPtr mmesa = (mgaContextPtr) driContextPriv->driverPrivate;
 
       if (mmesa->driDrawable != driDrawPriv) {
-	 driDrawableInitVBlank( driDrawPriv, mmesa->vblank_flags );
+	 driDrawableInitVBlank( driDrawPriv, mmesa->vblank_flags,
+				&mmesa->vbl_seq );
 	 mmesa->driDrawable = driDrawPriv;
 	 mmesa->dirty = ~0; 
 	 mmesa->dirty_cliprects = (MGA_FRONT|MGA_BACK); 

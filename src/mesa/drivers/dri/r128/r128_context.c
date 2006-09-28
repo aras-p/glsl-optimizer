@@ -345,7 +345,8 @@ r128MakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 newR128Ctx->dirty = R128_UPLOAD_ALL;
       }
 
-      driDrawableInitVBlank( driDrawPriv, newR128Ctx->vblank_flags );
+      driDrawableInitVBlank( driDrawPriv, newR128Ctx->vblank_flags,
+			     &newR128Ctx->vbl_seq );
       newR128Ctx->driDrawable = driDrawPriv;
 
       _mesa_make_current( newR128Ctx->glCtx,

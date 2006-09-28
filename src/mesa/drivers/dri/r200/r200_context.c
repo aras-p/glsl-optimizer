@@ -694,7 +694,8 @@ r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 fprintf(stderr, "%s ctx %p\n", __FUNCTION__, (void *)newCtx->glCtx);
 
       if ( newCtx->dri.drawable != driDrawPriv ) {
-	 driDrawableInitVBlank( driDrawPriv, newCtx->vblank_flags );
+	 driDrawableInitVBlank( driDrawPriv, newCtx->vblank_flags,
+				&newCtx->vbl_seq );
 	 newCtx->dri.drawable = driDrawPriv;
 	 r200UpdateWindow( newCtx->glCtx );
 	 r200UpdateViewportOffset( newCtx->glCtx );

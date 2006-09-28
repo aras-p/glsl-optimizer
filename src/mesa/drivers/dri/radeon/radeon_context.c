@@ -620,7 +620,8 @@ radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
 
       if ( newCtx->dri.drawable != driDrawPriv ) {
          /* XXX we may need to validate the drawable here!!! */
-	 driDrawableInitVBlank( driDrawPriv, newCtx->vblank_flags );
+	 driDrawableInitVBlank( driDrawPriv, newCtx->vblank_flags,
+				&newCtx->vbl_seq );
 	 newCtx->dri.drawable = driDrawPriv;
 	 radeonUpdateWindow( newCtx->glCtx );
 	 radeonUpdateViewportOffset( newCtx->glCtx );
