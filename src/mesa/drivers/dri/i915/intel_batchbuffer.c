@@ -402,6 +402,10 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
 	 goto noschedule;
       }
 
+      if ( intel->vblank_flags & VBLANK_FLAG_SECONDARY ) {
+	 swap.seqtype |= DRM_VBLANK_SECONDARY;
+      }
+
       if (!drmCommandWriteRead(intel->driFd, DRM_I915_VBLANK_SWAP, &swap,
                               sizeof(swap))) {
         intel->swap_scheduled = 1;
