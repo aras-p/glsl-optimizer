@@ -112,6 +112,21 @@ typedef struct {
 	int rotated_size;
 	int rotated_pitch;
 	int virtualX, virtualY;
+
+	unsigned int front_tiled;
+	unsigned int back_tiled;
+	unsigned int depth_tiled;
+	unsigned int rotated_tiled;
+	unsigned int rotated2_tiled;
+
+	int pipeA_x;
+	int pipeA_y;
+	int pipeA_w;
+	int pipeA_h;
+	int pipeB_x;
+	int pipeB_y;
+	int pipeB_w;
+	int pipeB_h;
 } drmI830Sarea;
 
 /* Flags for perf_boxes
