@@ -326,9 +326,12 @@ driWaitForVBlank( const  __DRIdrawablePrivate *priv, GLuint * vbl_seq,
 
    deadline = original_seq + interval;
 
-   vbl.request.sequence = ((flags & VBLANK_FLAG_SYNC) != 0) ? 1 : 0;
    vbl.request.type = DRM_VBLANK_RELATIVE;
-      
+   if ( flags & VBLANK_FLAG_SECONDARY ) {
+      vbl.request.type |= DRM_VBLANK_SECONDARY;
+   }
+   vbl.request.sequence = ((flags & VBLANK_FLAG_SYNC) != 0) ? 1 : 0;
+
    if ( do_wait( & vbl, vbl_seq, priv->driScreenPriv->fd ) != 0 ) {
       return -1;
    }
@@ -343,6 +346,9 @@ driWaitForVBlank( const  __DRIdrawablePrivate *priv, GLuint * vbl_seq,
 
    /* Wait until the target vertical blank. */
    vbl.request.type = DRM_VBLANK_ABSOLUTE;
+   if ( flags & VBLANK_FLAG_SECONDARY ) {
+      vbl.request.type |= DRM_VBLANK_SECONDARY;
+   }
    vbl.request.sequence = deadline;
 
    if ( do_wait( & vbl, vbl_seq, priv->driScreenPriv->fd ) != 0 ) {

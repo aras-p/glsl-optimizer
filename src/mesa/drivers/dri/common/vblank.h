@@ -42,6 +42,8 @@
 					  */
 #define VBLANK_FLAG_NO_IRQ    (1U << 7)  /* DRM has no IRQ to wait on.
 					  */
+#define VBLANK_FLAG_SECONDARY (1U << 8)  /* Wait for secondary vblank.
+					  */
 
 extern int driGetMSC32( __DRIscreenPrivate * priv, int64_t * count );
 extern int driWaitForMSC32( __DRIdrawablePrivate *priv,
