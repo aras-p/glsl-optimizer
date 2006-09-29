@@ -35,6 +35,7 @@
 #include "context.h"
 #include "convolve.h"
 #include "image.h"
+#include "mipmap.h"
 #include "texcompress.h"
 #include "texformat.h"
 #include "texstore.h"
