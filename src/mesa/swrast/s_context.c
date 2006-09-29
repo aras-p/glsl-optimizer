@@ -291,6 +291,7 @@ _swrast_validate_triangle( GLcontext *ctx,
 
    _swrast_validate_derived( ctx );
    swrast->choose_triangle( ctx );
+   ASSERT(swrast->Triangle);
 
    if (ctx->Texture._EnabledUnits == 0
        && NEED_SECONDARY_COLOR(ctx)
@@ -314,6 +315,7 @@ _swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 
    _swrast_validate_derived( ctx );
    swrast->choose_line( ctx );
+   ASSERT(swrast->Line);
 
    if (ctx->Texture._EnabledUnits == 0
        && NEED_SECONDARY_COLOR(ctx)
@@ -355,13 +357,13 @@ _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
  */
 static void _ASMAPI
 _swrast_validate_blend_func(GLcontext *ctx, GLuint n, const GLubyte mask[],
-                            GLchan src[][4], CONST GLchan dst[][4],
+                            GLvoid *src, const GLvoid *dst,
                             GLenum chanType )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   _swrast_validate_derived( ctx );
-   _swrast_choose_blend_func( ctx );
+   _swrast_validate_derived( ctx ); /* why is this needed? */
+   _swrast_choose_blend_func( ctx, chanType );
 
    swrast->BlendFunc( ctx, n, mask, src, dst, chanType );
 }

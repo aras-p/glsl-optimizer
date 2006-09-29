@@ -37,7 +37,7 @@ _swrast_blend_span(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 extern void
-_swrast_choose_blend_func(GLcontext *ctx);
+_swrast_choose_blend_func(GLcontext *ctx, GLenum chanType);
 
 
 #endif

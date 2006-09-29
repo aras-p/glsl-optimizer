@@ -251,7 +251,7 @@ typedef void (*texture_sample_func)(GLcontext *ctx,
 
 typedef void (_ASMAPIP blend_func)( GLcontext *ctx, GLuint n,
                                     const GLubyte mask[],
-                                    GLchan src[][4], CONST GLchan dst[][4],
+                                    GLvoid *src, const GLvoid *dst,
                                     GLenum chanType);
 
 typedef void (*swrast_point_func)( GLcontext *ctx, const SWvertex *);
