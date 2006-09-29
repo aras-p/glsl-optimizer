@@ -9,8 +9,8 @@
 <H1>Function Name Mangling</H1>
 
 <p>
-If you want to use Mesa and native OpenGL in the same application at
-the same time you may find it useful to compile Mesa with
+If you want to use both Mesa and another OpenGL library in the same
+application at the same time you may find it useful to compile Mesa with
 <i>name mangling</i>.
 This results in all the Mesa functions being prefixed with
 <b>mgl</b> instead of <b>gl</b>.
@@ -18,9 +18,7 @@ This results in all the Mesa functions being prefixed with
 
 <p>
 To do this, recompile Mesa with the compiler flag -DUSE_MGL_NAMESPACE.
-Add the flag to the other compiler flags in Make-config (if using the
-old-style build system) or in src/Makefile if using GNU autoconf/
-automake to build Mesa.
+Add the flag to CFLAGS in the configuration file which you want to use.
 </p>
 
 
