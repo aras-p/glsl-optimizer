@@ -33,6 +33,7 @@
 #include "fbobject.h"
 #include "framebuffer.h"
 #include "hash.h"
+#include "mipmap.h"
 #include "renderbuffer.h"
 #include "state.h"
 #include "teximage.h"

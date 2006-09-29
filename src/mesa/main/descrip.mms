@@ -56,6 +56,7 @@ SOURCES =accum.c \
 	light.c \
 	lines.c \
 	matrix.c \
+	mipmap.c \
 	mm.c \
 	occlude.c \
 	pixel.c \
@@ -118,6 +119,7 @@ imports.obj,\
 light.obj,\
 lines.obj,\
 matrix.obj,\
+mipmap.obj,\
 mm.obj,\
 occlude.obj,\
 pixel.obj,\
@@ -193,6 +195,7 @@ imports.obj : imports.c vsnprintf.c
 light.obj : light.c
 lines.obj : lines.c
 matrix.obj : matrix.c
+mipmap.obj : mipmap.c
 mm.obj : mm.c
 occlude.obj : occlude.c
 pixel.obj : pixel.c

@@ -393,6 +393,10 @@ SOURCE=..\..\..\..\src\mesa\main\matrix.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\main\mipmap.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\main\mm.c
 # End Source File
 # Begin Source File

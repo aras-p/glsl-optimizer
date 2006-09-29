@@ -33,6 +33,7 @@
 #include "colortab.h"
 #include "convolve.h"
 #include "context.h"
+#include "mipmap.h"
 #include "simple_list.h"
 #include "texcompress.h"
 #include "texformat.h"

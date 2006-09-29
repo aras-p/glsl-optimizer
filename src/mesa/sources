@@ -39,6 +39,7 @@ MAIN_SOURCES = \
 	main/light.c \
 	main/lines.c \
 	main/matrix.c \
+	main/mipmap.c \
 	main/mm.c \
 	main/occlude.c \
 	main/pixel.c \

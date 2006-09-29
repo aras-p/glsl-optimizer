@@ -43,6 +43,7 @@
 #include "convolve.h"
 #include "image.h"
 #include "macros.h"
+#include "mipmap.h"
 #include "texformat.h"
 #include "teximage.h"
 #include "texstore.h"

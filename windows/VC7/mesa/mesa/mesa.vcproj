@@ -288,6 +288,9 @@
 				RelativePath="..\..\..\..\src\mesa\main\matrix.c">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\mipmap.c">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\mm.c">
 			</File>
 			<File

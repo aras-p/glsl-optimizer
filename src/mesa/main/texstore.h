@@ -201,27 +201,6 @@ _mesa_store_compressed_texsubimage3d(GLcontext *ctx, GLenum target,
 
 
 extern void
-_mesa_generate_mipmap(GLcontext *ctx, GLenum target,
-                      const struct gl_texture_unit *texUnit,
-                      struct gl_texture_object *texObj);
-
-
-extern void
-_mesa_rescale_teximage2d(GLuint bytesPerPixel,
-                         GLuint srcStrideInPixels,
-                         GLuint dstRowStride,
-                         GLint srcWidth, GLint srcHeight,
-                         GLint dstWidth, GLint dstHeight,
-                         const GLvoid *srcImage, GLvoid *dstImage);
-
-extern void
-_mesa_upscale_teximage2d(GLsizei inWidth, GLsizei inHeight,
-                         GLsizei outWidth, GLsizei outHeight,
-                         GLint comps, const GLchan *src, GLint srcRowStride,
-                         GLchan *dest);
-
-
-extern void
 _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                    GLenum format, GLenum type, GLvoid *pixels,
                    struct gl_texture_object *texObj,
