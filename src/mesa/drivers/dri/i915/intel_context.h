@@ -34,6 +34,7 @@
 #include "drm.h"
 #include "mm.h"
 #include "texmem.h"
+#include "vblank.h"
 
 #include "intel_screen.h"
 #include "i915_drm.h"
@@ -326,6 +327,10 @@ do {							\
     if ((intel)->swap_scheduled) {			\
         drmVBlank vbl;					\
         vbl.request.type = DRM_VBLANK_ABSOLUTE;		\
+        if ((intel)->vblank_flags &			\
+            VBLANK_FLAG_SECONDARY) {			\
+            vbl.request.type |= DRM_VBLANK_SECONDARY;	\
+        }						\
         vbl.request.sequence = (intel)->vbl_seq;	\
         drmWaitVBlank((intel)->driFd, &vbl);		\
         (intel)->swap_scheduled = 0;			\
