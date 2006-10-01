@@ -51,7 +51,7 @@
    GLboolean ltor;
    GLfloat majDx, majDy;  /* major (i.e. long) edge dx and dy */
    
-   struct sw_span span;
+   SWspan span;
    
 #ifdef DO_Z
    GLfloat zPlane[4];
@@ -279,7 +279,7 @@
          while (coverage > 0.0F) {
             /* (cx,cy) = center of fragment */
             const GLfloat cx = ix + 0.5F, cy = iy + 0.5F;
-            struct span_arrays *array = span.array;
+            SWspanarrays *array = span.array;
 #ifdef DO_INDEX
             array->coverage[count] = (GLfloat) compute_coveragei(pMin, pMid, pMax, ix, iy);
 #else
@@ -383,7 +383,7 @@
          while (coverage > 0.0F) {
             /* (cx,cy) = center of fragment */
             const GLfloat cx = ix + 0.5F, cy = iy + 0.5F;
-            struct span_arrays *array = span.array;
+            SWspanarrays *array = span.array;
 #ifdef DO_INDEX
             array->coverage[ix] = (GLfloat) compute_coveragei(pMin, pMax, pMid, ix, iy);
 #else
@@ -452,7 +452,7 @@
          /* shift all values to the left */
          /* XXX this is temporary */
          {
-            struct span_arrays *array = span.array;
+            SWspanarrays *array = span.array;
             GLint j;
             for (j = 0; j < (GLint) n; j++) {
 #ifdef DO_RGBA
@@ -482,7 +482,7 @@
 #ifdef DO_MULTITEX
          /* shift texcoords */
          {
-            struct span_arrays *array = span.array;
+            SWspanarrays *array = span.array;
             GLuint unit;
             for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
                if (ctx->Texture.Unit[unit]._ReallyEnabled) {

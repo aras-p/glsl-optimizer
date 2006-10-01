@@ -259,7 +259,7 @@ struct ati_fs_opcode_st ati_fs_opcodes[] = {
 
 static void
 handle_pass_op(struct atifs_machine *machine, struct atifs_setupinst *texinst,
-	       const struct sw_span *span, GLuint column, GLuint idx)
+	       const SWspan *span, GLuint column, GLuint idx)
 {
    GLuint swizzle = texinst->swizzle;
    GLuint pass_tex = texinst->src;
@@ -279,7 +279,7 @@ handle_pass_op(struct atifs_machine *machine, struct atifs_setupinst *texinst,
 
 static void
 handle_sample_op(GLcontext * ctx, struct atifs_machine *machine,
-		 struct atifs_setupinst *texinst, const struct sw_span *span,
+		 struct atifs_setupinst *texinst, const SWspan *span,
 		 GLuint column, GLuint idx)
 {
 /* sample from unit idx using texinst->src as coords */
@@ -307,7 +307,7 @@ do {						\
 static GLboolean
 execute_shader(GLcontext * ctx,
 	       const struct ati_fragment_shader *shader, GLuint maxInst,
-	       struct atifs_machine *machine, const struct sw_span *span,
+	       struct atifs_machine *machine, const SWspan *span,
 	       GLuint column)
 {
    GLuint pc;
@@ -548,7 +548,7 @@ execute_shader(GLcontext * ctx,
 static void
 init_machine(GLcontext * ctx, struct atifs_machine *machine,
 	     const struct ati_fragment_shader *shader,
-	     const struct sw_span *span, GLuint col)
+	     const SWspan *span, GLuint col)
 {
    GLint i, j;
 
@@ -582,7 +582,7 @@ init_machine(GLcontext * ctx, struct atifs_machine *machine,
  * Execute the current fragment program, operating on the given span.
  */
 void
-_swrast_exec_fragment_shader(GLcontext * ctx, struct sw_span *span)
+_swrast_exec_fragment_shader(GLcontext * ctx, SWspan *span)
 {
    const struct ati_fragment_shader *shader = ctx->ATIFragmentShader.Current;
    GLuint i;

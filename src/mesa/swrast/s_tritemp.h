@@ -216,7 +216,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #endif
    GLinterp vMin_fx, vMin_fy, vMid_fx, vMid_fy, vMax_fx, vMax_fy;
 
-   struct sw_span span;
+   SWspan span;
 
    INIT_SPAN(span, GL_POLYGON, 0, 0, 0);
 

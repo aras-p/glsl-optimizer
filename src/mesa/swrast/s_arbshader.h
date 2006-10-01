@@ -30,7 +30,7 @@
 
 #if FEATURE_ARB_fragment_shader
 
-extern void _swrast_exec_arbshader (GLcontext *ctx, struct sw_span *span);
+extern void _swrast_exec_arbshader (GLcontext *ctx, SWspan *span);
 
 #endif /* FEATURE_ARB_fragment_shader */
 

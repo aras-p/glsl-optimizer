@@ -48,7 +48,7 @@ clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
    const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
    const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
    GLchan clearColor[4];
-   struct sw_span span;
+   SWspan span;
    GLint i;
 
    ASSERT(ctx->Visual.rgbMode);
@@ -89,7 +89,7 @@ clear_ci_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
    const GLint y = ctx->DrawBuffer->_Ymin;
    const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
    const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
-   struct sw_span span;
+   SWspan span;
    GLint i;
 
    ASSERT(!ctx->Visual.rgbMode);

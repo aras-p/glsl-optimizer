@@ -984,8 +984,7 @@ _swrast_choose_blend_func(GLcontext *ctx, GLenum chanType)
  * pixel coordinates.
  */
 void
-_swrast_blend_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                   struct sw_span *span)
+_swrast_blend_span(GLcontext *ctx, struct gl_renderbuffer *rb, SWspan *span)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    void *rbPixels;

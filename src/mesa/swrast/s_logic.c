@@ -188,7 +188,7 @@ logicop_uint4(GLcontext *ctx, GLuint n, GLuint src[], const GLuint dest[],
  */
 void
 _swrast_logicop_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                        struct sw_span *span)
+                        SWspan *span)
 {
    GLuint dest[MAX_WIDTH];
    GLuint *index = span->array->index;
@@ -216,7 +216,7 @@ _swrast_logicop_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
  */
 void
 _swrast_logicop_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                          struct sw_span *span)
+                          SWspan *span)
 {
    void *rbPixels;
 

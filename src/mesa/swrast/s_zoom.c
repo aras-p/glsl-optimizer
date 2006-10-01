@@ -119,11 +119,11 @@ unzoom_x(GLfloat zoomX, GLint imageX, GLint zx)
  * index/depth_span().
  */
 static void
-zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const struct sw_span *span,
+zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
            const GLvoid *src, GLenum format )
 {
-   struct sw_span zoomed;
-   struct span_arrays zoomed_arrays;  /* this is big! */
+   SWspan zoomed;
+   SWspanarrays zoomed_arrays;  /* this is big! */
    GLint x0, x1, y0, y1;
    GLint zoomedWidth;
 
@@ -287,7 +287,7 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const struct sw_span *span,
 
 void
 _swrast_write_zoomed_rgba_span( GLcontext *ctx, GLint imgX, GLint imgY,
-                               const struct sw_span *span,
+                               const SWspan *span,
                                CONST GLchan rgba[][4])
 {
    zoom_span(ctx, imgX, imgY, span, (const GLvoid *) rgba, GL_RGBA);
@@ -296,7 +296,7 @@ _swrast_write_zoomed_rgba_span( GLcontext *ctx, GLint imgX, GLint imgY,
 
 void
 _swrast_write_zoomed_rgb_span(GLcontext *ctx, GLint imgX, GLint imgY,
-                              const struct sw_span *span,
+                              const SWspan *span,
                               CONST GLchan rgb[][3])
 {
    zoom_span(ctx, imgX, imgY, span, (const GLvoid *) rgb, GL_RGB);
@@ -305,7 +305,7 @@ _swrast_write_zoomed_rgb_span(GLcontext *ctx, GLint imgX, GLint imgY,
 
 void
 _swrast_write_zoomed_index_span(GLcontext *ctx, GLint imgX, GLint imgY,
-                                const struct sw_span *span)
+                                const SWspan *span)
 {
    zoom_span(ctx, imgX, imgY, span,
              (const GLvoid *) span->array->index, GL_COLOR_INDEX);
@@ -314,7 +314,7 @@ _swrast_write_zoomed_index_span(GLcontext *ctx, GLint imgX, GLint imgY,
 
 void
 _swrast_write_zoomed_depth_span(GLcontext *ctx, GLint imgX, GLint imgY,
-                                const struct sw_span *span)
+                                const SWspan *span)
 {
    zoom_span(ctx, imgX, imgY, span,
              (const GLvoid *) span->array->z, GL_DEPTH_COMPONENT);

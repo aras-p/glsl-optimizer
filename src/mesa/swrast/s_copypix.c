@@ -135,7 +135,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    const GLuint transferOps = ctx->_ImageTransferState;
    GLfloat *dest, *tmpImage, *convImage;
-   struct sw_span span;
+   SWspan span;
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
 
@@ -253,7 +253,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
    const GLuint transferOps = ctx->_ImageTransferState;
-   struct sw_span span;
+   SWspan span;
 
    if (!ctx->ReadBuffer->_ColorReadBuffer) {
       /* no readbuffer - OK */
@@ -387,7 +387,7 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    const GLboolean shift_or_offset = ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset;
    GLint overlapping;
-   struct sw_span span;
+   SWspan span;
 
    if (!ctx->ReadBuffer->_ColorReadBuffer) {
       /* no readbuffer - OK */
@@ -530,7 +530,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    GLint j;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
-   struct sw_span span;
+   SWspan span;
 
    if (!readRb) {
       /* no readbuffer - OK */

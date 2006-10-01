@@ -33,7 +33,7 @@
 
 
 extern GLboolean
-_swrast_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span);
+_swrast_stencil_and_ztest_span(GLcontext *ctx, SWspan *span);
 
 
 extern void

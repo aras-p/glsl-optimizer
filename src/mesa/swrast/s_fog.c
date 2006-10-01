@@ -107,7 +107,7 @@ do {									\
  * _PreferPixelFog should be in sync with that state!
  */
 void
-_swrast_fog_rgba_span( const GLcontext *ctx, struct sw_span *span )
+_swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLfloat rFog = ctx->Fog.Color[RCOMP] * CHAN_MAX;
@@ -263,7 +263,7 @@ _swrast_fog_rgba_span( const GLcontext *ctx, struct sw_span *span )
  * As above, but color index mode.
  */
 void
-_swrast_fog_ci_span( const GLcontext *ctx, struct sw_span *span )
+_swrast_fog_ci_span( const GLcontext *ctx, SWspan *span )
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLuint haveW = (span->interpMask & SPAN_W);

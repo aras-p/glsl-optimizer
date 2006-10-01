@@ -61,7 +61,7 @@ compute_stipple_mask( GLcontext *ctx, GLuint len, GLubyte mask[] )
  * To draw a wide line we can simply redraw the span N times, side by side.
  */
 static void
-draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
+draw_wide_line( GLcontext *ctx, SWspan *span, GLboolean xMajor )
 {
    GLint width, start;
 

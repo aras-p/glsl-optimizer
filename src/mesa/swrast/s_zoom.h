@@ -31,21 +31,21 @@
 
 extern void
 _swrast_write_zoomed_rgba_span(GLcontext *ctx, GLint imgX, GLint imgY,
-                               const struct sw_span *span,
+                               const SWspan *span,
                                CONST GLchan rgb[][4]);
 
 extern void
 _swrast_write_zoomed_rgb_span(GLcontext *ctx, GLint imgX, GLint imgY,
-                              const struct sw_span *span,
+                              const SWspan *span,
                               CONST GLchan rgb[][3]);
 
 extern void
 _swrast_write_zoomed_index_span(GLcontext *ctx, GLint imgX, GLint imgY,
-                                const struct sw_span *span);
+                                const SWspan *span);
 
 extern void
 _swrast_write_zoomed_depth_span(GLcontext *ctx, GLint imgX, GLint imgY,
-                                const struct sw_span *span);
+                                const SWspan *span);
 
 
 extern void

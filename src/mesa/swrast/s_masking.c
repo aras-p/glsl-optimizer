@@ -41,7 +41,7 @@
  */
 void
 _swrast_mask_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                       struct sw_span *span)
+                       SWspan *span)
 {
    const GLuint n = span->end;
    void *rbPixels;
@@ -108,7 +108,7 @@ _swrast_mask_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
  */
 void
 _swrast_mask_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                     struct sw_span *span)
+                     SWspan *span)
 {
    const GLuint srcMask = ctx->Color.IndexMask;
    const GLuint dstMask = ~srcMask;

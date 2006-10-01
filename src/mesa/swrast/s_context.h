@@ -49,7 +49,7 @@
 
 /**
  * \defgroup SpanFlags SPAN_XXX-flags
- * Bitmasks to indicate which span_arrays need to be computed
+ * Bitmasks to indicate which sw_span_arrays need to be computed
  * (sw_span::interpMask) or have already been filled in (sw_span::arrayMask)
  */
 /*@{*/
@@ -87,14 +87,14 @@ struct arrays2 {
 
 
 /**
- * \struct span_arrays 
+ * \sw_span_arrays 
  * \brief Arrays of fragment values.
  *
  * These will either be computed from the x/xStep values above or
  * filled in by glDraw/CopyPixels, etc.
  * These arrays are separated out of sw_span to conserve memory.
  */
-struct span_arrays {
+typedef struct sw_span_arrays {
    GLenum ChanType; /**< Color channel type, GL_UNSIGNED_BYTE, GL_FLOAT */
    union {
       struct {
@@ -126,11 +126,11 @@ struct span_arrays {
 
    /** This mask indicates which fragments are alive or culled */
    GLubyte mask[MAX_WIDTH];
-};
+} SWspanarrays;
 
 
 /**
- * \struct sw_span
+ * \SWspan
  * \brief Contains data for either a horizontal line or a set of
  * pixels that are passed through a pipeline of functions before being
  * drawn.
@@ -151,7 +151,7 @@ struct span_arrays {
  * stream of these structures which would be consumed by one or more
  * span-processing threads which could run in parallel.
  */
-struct sw_span {
+typedef struct sw_span {
    GLint x, y;
 
    /** Only need to process pixels between start <= i < end */
@@ -228,8 +228,9 @@ struct sw_span {
     * a lot of memory.  The span_arrays struct is about 400KB while the
     * sw_span struct is only about 512 bytes.
     */
-   struct span_arrays *array;
-};
+   SWspanarrays *array;
+} SWspan;
+
 
 
 #define INIT_SPAN(S, PRIMITIVE, END, INTERP_MASK, ARRAY_MASK)	\
@@ -304,7 +305,7 @@ typedef void (*validate_texture_image_func)(GLcontext *ctx,
 
 /**
  * \struct SWcontext
- * \brief SWContext?
+ * \brief  Per-context state that's private to the software rasterizer module.
  */
 typedef struct
 {
@@ -387,12 +388,12 @@ typedef struct
     * this object is big and causes problems when allocated on the stack
     * on some systems.
     */
-   struct span_arrays *SpanArrays;
+   SWspanarrays *SpanArrays;
 
    /**
     * Used to buffer N GL_POINTS, instead of rendering one by one.
     */
-   struct sw_span PointSpan;
+   SWspan PointSpan;
 
    /** Internal hooks, kept up to date by the same mechanism as above.
     */

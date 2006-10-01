@@ -503,7 +503,7 @@ depth_test_span32( GLcontext *ctx, GLuint n,
  * Apply depth test to span of fragments.
  */
 static GLuint
-depth_test_span( GLcontext *ctx, struct sw_span *span)
+depth_test_span( GLcontext *ctx, SWspan *span)
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->_DepthBuffer;
@@ -1051,7 +1051,7 @@ direct_depth_test_pixels32(GLcontext *ctx, GLuint *zStart, GLuint stride,
 
 
 static GLuint
-depth_test_pixels( GLcontext *ctx, struct sw_span *span )
+depth_test_pixels( GLcontext *ctx, SWspan *span )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->_DepthBuffer;
@@ -1101,7 +1101,7 @@ depth_test_pixels( GLcontext *ctx, struct sw_span *span )
  * \return approx number of pixels that passed (only zero is reliable)
  */
 GLuint
-_swrast_depth_test_span( GLcontext *ctx, struct sw_span *span)
+_swrast_depth_test_span( GLcontext *ctx, SWspan *span)
 {
    if (span->arrayMask & SPAN_XY)
       return depth_test_pixels(ctx, span);
@@ -1118,7 +1118,7 @@ _swrast_depth_test_span( GLcontext *ctx, struct sw_span *span)
  * \return GL_TRUE if any fragments pass, GL_FALSE if no fragments pass
  */
 GLboolean
-_swrast_depth_bounds_test( GLcontext *ctx, struct sw_span *span )
+_swrast_depth_bounds_test( GLcontext *ctx, SWspan *span )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->_DepthBuffer;

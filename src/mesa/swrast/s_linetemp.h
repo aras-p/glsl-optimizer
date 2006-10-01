@@ -70,7 +70,7 @@
 static void
 NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 {
-   struct sw_span span;
+   SWspan span;
    GLuint interpFlags = 0;
    GLint x0 = (GLint) vert0->win[0];
    GLint x1 = (GLint) vert1->win[0];

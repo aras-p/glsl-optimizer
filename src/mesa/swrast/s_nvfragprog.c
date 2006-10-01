@@ -193,7 +193,7 @@ fetch_vector4( GLcontext *ctx,
 static GLboolean
 fetch_vector4_deriv( GLcontext *ctx,
                      const struct prog_src_register *source,
-                     const struct sw_span *span,
+                     const SWspan *span,
                      char xOrY, GLint column, GLfloat result[4] )
 {
    GLfloat src[4];
@@ -478,7 +478,7 @@ static void
 init_machine_deriv( GLcontext *ctx,
                     const struct fp_machine *machine,
                     const struct gl_fragment_program *program,
-                    const struct sw_span *span, char xOrY,
+                    const SWspan *span, char xOrY,
                     struct fp_machine *dMachine )
 {
    GLuint u;
@@ -589,7 +589,7 @@ init_machine_deriv( GLcontext *ctx,
 static GLboolean
 execute_program( GLcontext *ctx,
                  const struct gl_fragment_program *program, GLuint maxInst,
-                 struct fp_machine *machine, const struct sw_span *span,
+                 struct fp_machine *machine, const SWspan *span,
                  GLuint column )
 {
    GLuint pc;
@@ -1382,7 +1382,7 @@ execute_program( GLcontext *ctx,
 static void
 init_machine( GLcontext *ctx, struct fp_machine *machine,
               const struct gl_fragment_program *program,
-              const struct sw_span *span, GLuint col )
+              const SWspan *span, GLuint col )
 {
    GLuint inputsRead = program->Base.InputsRead;
    GLuint u;
@@ -1456,7 +1456,7 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
  * Execute the current fragment program, operating on the given span.
  */
 void
-_swrast_exec_fragment_program( GLcontext *ctx, struct sw_span *span )
+_swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
 {
    const struct gl_fragment_program *program = ctx->FragmentProgram._Current;
    GLuint i;

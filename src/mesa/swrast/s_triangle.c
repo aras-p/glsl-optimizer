@@ -279,7 +279,7 @@ ilerp_2d(GLint ia, GLint ib, GLint v00, GLint v10, GLint v01, GLint v11)
  * texture env modes.
  */
 static INLINE void
-affine_span(GLcontext *ctx, struct sw_span *span,
+affine_span(GLcontext *ctx, SWspan *span,
             struct affine_info *info)
 {
    GLchan sample[4];  /* the filtered texture sample */
@@ -602,7 +602,7 @@ struct persp_info
 
 
 static INLINE void
-fast_persp_span(GLcontext *ctx, struct sw_span *span,
+fast_persp_span(GLcontext *ctx, SWspan *span,
 		struct persp_info *info)
 {
    GLchan sample[4];  /* the filtered texture sample */

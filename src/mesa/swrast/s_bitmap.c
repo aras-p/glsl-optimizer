@@ -51,7 +51,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLint row, col;
    GLuint count = 0;
-   struct sw_span span;
+   SWspan span;
 
    ASSERT(ctx->RenderMode == GL_RENDER);
 
@@ -188,7 +188,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLint row, col;
-   struct sw_span span;
+   SWspan span;
 
    ASSERT(ctx->RenderMode == GL_RENDER);
    ASSERT(bitmap);

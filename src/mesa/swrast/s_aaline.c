@@ -76,7 +76,7 @@ struct LineInfo
    GLfloat texWidth[MAX_TEXTURE_COORD_UNITS];
    GLfloat texHeight[MAX_TEXTURE_COORD_UNITS];
 
-   struct sw_span span;
+   SWspan span;
 };
 
 

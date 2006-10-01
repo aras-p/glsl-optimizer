@@ -92,7 +92,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    GLuint u;
 #endif
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   struct sw_span *span = &(swrast->PointSpan);
+   SWspan *span = &(swrast->PointSpan);
 
    /* Cull primitives with malformed coordinates.
     */

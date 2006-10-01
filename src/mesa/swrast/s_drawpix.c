@@ -54,7 +54,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
    const GLint imgX = x, imgY = y;
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   struct sw_span span;
+   SWspan span;
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
 
@@ -459,7 +459,7 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
    const GLint imgX = x, imgY = y;
    const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
    GLint row, skipPixels;
-   struct sw_span span;
+   SWspan span;
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_INDEX);
 
@@ -565,7 +565,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    const GLboolean scaleOrBias
       = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
-   struct sw_span span;
+   SWspan span;
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_Z);
 
@@ -683,7 +683,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    GLboolean quickDraw;
    GLfloat *convImage = NULL;
    GLuint transferOps = ctx->_ImageTransferState;
-   struct sw_span span;
+   SWspan span;
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
 

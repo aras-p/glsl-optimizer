@@ -90,7 +90,7 @@ do {						\
  *          1 if one or more pixels passed the alpha test.
  */
 GLint
-_swrast_alpha_test(const GLcontext *ctx, struct sw_span *span)
+_swrast_alpha_test(const GLcontext *ctx, SWspan *span)
 {
    const GLuint n = span->end;
    GLubyte *mask = span->array->mask;

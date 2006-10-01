@@ -469,7 +469,7 @@ accum_return(GLcontext *ctx, GLfloat value,
       for (i = 0; i < height; i++) {
          GLshort accumRow[4 * MAX_WIDTH];
          GLshort *acc;
-         struct sw_span span;
+         SWspan span;
 
          /* init color span */
          INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);

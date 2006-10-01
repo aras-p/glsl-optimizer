@@ -56,7 +56,7 @@
  * Used during setup for glDraw/CopyPixels.
  */
 void
-_swrast_span_default_z( GLcontext *ctx, struct sw_span *span )
+_swrast_span_default_z( GLcontext *ctx, SWspan *span )
 {
    const GLfloat depthMax = ctx->DrawBuffer->_DepthMaxF;
    if (ctx->DrawBuffer->Visual.depthBits <= 16)
@@ -73,7 +73,7 @@ _swrast_span_default_z( GLcontext *ctx, struct sw_span *span )
  * Used during setup for glDraw/CopyPixels.
  */
 void
-_swrast_span_default_fog( GLcontext *ctx, struct sw_span *span )
+_swrast_span_default_fog( GLcontext *ctx, SWspan *span )
 {
    span->fog = _swrast_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
    span->fogStep = span->dfogdx = span->dfogdy = 0.0F;
@@ -86,7 +86,7 @@ _swrast_span_default_fog( GLcontext *ctx, struct sw_span *span )
  * Used during setup for glDraw/CopyPixels.
  */
 void
-_swrast_span_default_color( GLcontext *ctx, struct sw_span *span )
+_swrast_span_default_color( GLcontext *ctx, SWspan *span )
 {
    if (ctx->Visual.rgbMode) {
       GLchan r, g, b, a;
@@ -124,7 +124,7 @@ _swrast_span_default_color( GLcontext *ctx, struct sw_span *span )
  * Used during setup for glDraw/CopyPixels.
  */
 void
-_swrast_span_default_texcoords( GLcontext *ctx, struct sw_span *span )
+_swrast_span_default_texcoords( GLcontext *ctx, SWspan *span )
 {
    GLuint i;
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
@@ -154,7 +154,7 @@ _swrast_span_default_texcoords( GLcontext *ctx, struct sw_span *span )
  * \param specular  if true, interpolate specular, else interpolate rgba.
  */
 static void
-interpolate_colors(GLcontext *ctx, struct sw_span *span, GLboolean specular)
+interpolate_colors(GLcontext *ctx, SWspan *span, GLboolean specular)
 {
    const GLuint n = span->end;
    GLuint i;
@@ -366,7 +366,7 @@ interpolate_colors(GLcontext *ctx, struct sw_span *span, GLboolean specular)
 
 /* Fill in the span.color.index array from the interpolation values */
 static void
-interpolate_indexes(GLcontext *ctx, struct sw_span *span)
+interpolate_indexes(GLcontext *ctx, SWspan *span)
 {
    GLfixed index = span->index;
    const GLint indexStep = span->indexStep;
@@ -398,7 +398,7 @@ interpolate_indexes(GLcontext *ctx, struct sw_span *span)
 
 /* Fill in the span.array.fog values from the interpolation values */
 static void
-interpolate_fog(const GLcontext *ctx, struct sw_span *span)
+interpolate_fog(const GLcontext *ctx, SWspan *span)
 {
    GLfloat *fog = span->array->fog;
    const GLfloat fogStep = span->fogStep;
@@ -418,7 +418,7 @@ interpolate_fog(const GLcontext *ctx, struct sw_span *span)
 
 /* Fill in the span.zArray array from the interpolation values */
 void
-_swrast_span_interpolate_z( const GLcontext *ctx, struct sw_span *span )
+_swrast_span_interpolate_z( const GLcontext *ctx, SWspan *span )
 {
    const GLuint n = span->end;
    GLuint i;
@@ -506,7 +506,7 @@ _swrast_compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
  * or user-written code.
  */
 static void
-interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
+interpolate_texcoords(GLcontext *ctx, SWspan *span)
 {
    ASSERT(span->interpMask & SPAN_TEXTURE);
    ASSERT(!(span->arrayMask & SPAN_TEXTURE));
@@ -790,7 +790,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
  * Fill in the span.varying array from the interpolation values.
  */
 static void
-interpolate_varying(GLcontext *ctx, struct sw_span *span)
+interpolate_varying(GLcontext *ctx, SWspan *span)
 {
    GLuint i, j;
 
@@ -822,7 +822,7 @@ interpolate_varying(GLcontext *ctx, struct sw_span *span)
  * Apply the current polygon stipple pattern to a span of pixels.
  */
 static void
-stipple_polygon_span( GLcontext *ctx, struct sw_span *span )
+stipple_polygon_span( GLcontext *ctx, SWspan *span )
 {
    const GLuint highbit = 0x80000000;
    const GLuint stipple = ctx->PolygonStipple[span->y % 32];
@@ -855,7 +855,7 @@ stipple_polygon_span( GLcontext *ctx, struct sw_span *span )
  *           GL_FALSE  nothing visible
  */
 static GLuint
-clip_span( GLcontext *ctx, struct sw_span *span )
+clip_span( GLcontext *ctx, SWspan *span )
 {
    const GLint xmin = ctx->DrawBuffer->_Xmin;
    const GLint xmax = ctx->DrawBuffer->_Xmax;
@@ -923,7 +923,7 @@ clip_span( GLcontext *ctx, struct sw_span *span )
  * to their original values before returning.
  */
 void
-_swrast_write_index_span( GLcontext *ctx, struct sw_span *span)
+_swrast_write_index_span( GLcontext *ctx, SWspan *span)
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLbitfield origInterpMask = span->interpMask;
@@ -1154,7 +1154,7 @@ _swrast_write_index_span( GLcontext *ctx, struct sw_span *span)
  * GL_LIGHT_MODEL_COLOR_CONTROL = GL_SEPARATE_SPECULAR_COLOR.
  */
 static void
-add_specular(GLcontext *ctx, struct sw_span *span)
+add_specular(GLcontext *ctx, SWspan *span)
 {
    switch (span->array->ChanType) {
    case GL_UNSIGNED_BYTE:
@@ -1214,7 +1214,7 @@ add_specular(GLcontext *ctx, struct sw_span *span)
  * Convert the span's color arrays to the given type.
  */
 static void
-convert_color_type(GLcontext *ctx, struct sw_span *span, GLenum newType)
+convert_color_type(GLcontext *ctx, SWspan *span, GLenum newType)
 {
    const GLubyte *mask = span->array->mask;
    GLubyte (*rgba1)[4] = span->array->color.sz1.rgba;
@@ -1315,7 +1315,7 @@ convert_color_type(GLcontext *ctx, struct sw_span *span, GLenum newType)
  * to their original values before returning.
  */
 void
-_swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
+_swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 {
    const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -1859,7 +1859,7 @@ _swrast_get_row(GLcontext *ctx, struct gl_renderbuffer *rb,
  */
 void *
 _swrast_get_dest_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
-                      struct sw_span *span)
+                      SWspan *span)
 {
    GLuint pixelSize;
    void *rbPixels;

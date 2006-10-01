@@ -406,7 +406,7 @@ do_stencil_test( GLcontext *ctx, GLuint face, GLuint n, GLstencil stencil[],
  *
  */
 static GLboolean
-stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span, GLuint face)
+stencil_and_ztest_span(GLcontext *ctx, SWspan *span, GLuint face)
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->_StencilBuffer;
@@ -900,7 +900,7 @@ stencil_test_pixels( GLcontext *ctx, GLuint face, GLuint n,
  *         GL_TRUE - one or more fragments passed the testing
  */
 static GLboolean
-stencil_and_ztest_pixels( GLcontext *ctx, struct sw_span *span, GLuint face )
+stencil_and_ztest_pixels( GLcontext *ctx, SWspan *span, GLuint face )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->_StencilBuffer;
@@ -1007,7 +1007,7 @@ stencil_and_ztest_pixels( GLcontext *ctx, struct sw_span *span, GLuint face )
  * GL_FALSE = all fragments failed.
  */
 GLboolean
-_swrast_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span)
+_swrast_stencil_and_ztest_span(GLcontext *ctx, SWspan *span)
 {
    /* span->facing can only be non-zero if using two-sided stencil */
    ASSERT(ctx->Stencil._TestTwoSide || span->facing == 0);

@@ -38,7 +38,7 @@
 #if FEATURE_ARB_fragment_shader
 
 void
-_swrast_exec_arbshader(GLcontext *ctx, struct sw_span *span)
+_swrast_exec_arbshader(GLcontext *ctx, SWspan *span)
 {
    struct gl2_program_intf **pro;
    GLuint i;

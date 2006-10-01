@@ -671,7 +671,7 @@ _swrast_CreateContext( GLcontext *ctx )
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
       swrast->TextureSample[i] = NULL;
 
-   swrast->SpanArrays = MALLOC_STRUCT(span_arrays);
+   swrast->SpanArrays = MALLOC_STRUCT(sw_span_arrays);
    if (!swrast->SpanArrays) {
       FREE(swrast);
       return GL_FALSE;
