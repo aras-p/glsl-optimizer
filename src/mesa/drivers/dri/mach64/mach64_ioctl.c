@@ -105,7 +105,7 @@ void mach64FlushVerticesLocked( mach64ContextPtr mmesa )
    int prim = mmesa->hw_primitive;
    int fd = mmesa->driScreen->fd;
    drm_mach64_vertex_t vertex;
-   int i, ret;
+   int i;
 
    mmesa->num_verts = 0;
    mmesa->vert_used = 0;
@@ -123,6 +123,9 @@ void mach64FlushVerticesLocked( mach64ContextPtr mmesa )
       mmesa->dirty |= MACH64_UPLOAD_CLIPRECTS;
 
    if ( !count || !(mmesa->dirty & MACH64_UPLOAD_CLIPRECTS) ) {
+      int to = 0;
+      int ret;
+
       /* FIXME: Is this really necessary */
       if ( nbox == 1 )
 	 mmesa->sarea->nbox = 0;
@@ -133,7 +136,10 @@ void mach64FlushVerticesLocked( mach64ContextPtr mmesa )
       vertex.buf = buffer;
       vertex.used = count;
       vertex.discard = 1;
-      ret = drmCommandWrite( fd, DRM_MACH64_VERTEX, &vertex, sizeof(drm_mach64_vertex_t) );
+      do {
+	 ret = drmCommandWrite( fd, DRM_MACH64_VERTEX,
+				&vertex, sizeof(drm_mach64_vertex_t) );
+      } while ( ( ret == -EAGAIN ) && ( to++ < MACH64_TIMEOUT ) );
       if ( ret ) {
 	 UNLOCK_HARDWARE( mmesa );
 	 fprintf( stderr, "Error flushing vertex buffer: return = %d\n", ret );
@@ -146,6 +152,8 @@ void mach64FlushVerticesLocked( mach64ContextPtr mmesa )
 	 int nr = MIN2( i + MACH64_NR_SAREA_CLIPRECTS, nbox );
 	 drm_clip_rect_t *b = mmesa->sarea->boxes;
 	 int discard = 0;
+	 int to = 0;
+	 int ret;
 
 	 mmesa->sarea->nbox = nr - i;
 	 for ( ; i < nr ; i++ ) {
@@ -164,7 +172,10 @@ void mach64FlushVerticesLocked( mach64ContextPtr mmesa )
 	 vertex.buf = buffer;
 	 vertex.used = count;
 	 vertex.discard = discard;
-	 ret = drmCommandWrite( fd, DRM_MACH64_VERTEX, &vertex, sizeof(drm_mach64_vertex_t) );
+	 do {
+	    ret = drmCommandWrite( fd, DRM_MACH64_VERTEX,
+				   &vertex, sizeof(drm_mach64_vertex_t) );
+	 } while ( ( ret == -EAGAIN ) && ( to++ < MACH64_TIMEOUT ) );
 	 if ( ret ) {
 	    UNLOCK_HARDWARE( mmesa );
 	    fprintf( stderr, "Error flushing vertex buffer: return = %d\n", ret );
@@ -180,14 +191,15 @@ void mach64FlushVerticesLocked( mach64ContextPtr mmesa )
  * Texture uploads
  */
 
-void mach64FireBlitLocked( mach64ContextPtr mmesa, drmBufPtr buffer,
+void mach64FireBlitLocked( mach64ContextPtr mmesa, void *buffer,
 			   GLint offset, GLint pitch, GLint format,
 			   GLint x, GLint y, GLint width, GLint height )
 {
    drm_mach64_blit_t blit;
-   GLint ret;
+   int to = 0;
+   int ret;
 
-   blit.idx = buffer->idx;
+   blit.buf = buffer;
    blit.offset = offset;
    blit.pitch = pitch;
    blit.format = format;
@@ -196,8 +208,10 @@ void mach64FireBlitLocked( mach64ContextPtr mmesa, drmBufPtr buffer,
    blit.width = width;
    blit.height = height;
 
-   ret = drmCommandWrite( mmesa->driFd, DRM_MACH64_BLIT, 
-                          &blit, sizeof(drm_mach64_blit_t) );
+   do {
+      ret = drmCommandWrite( mmesa->driFd, DRM_MACH64_BLIT, 
+			     &blit, sizeof(drm_mach64_blit_t) );
+   } while ( ( ret == -EAGAIN ) && ( to++ < MACH64_TIMEOUT ) );
 
    if ( ret ) {
       UNLOCK_HARDWARE( mmesa );

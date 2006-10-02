@@ -74,7 +74,7 @@ static __inline void *mach64AllocDmaLocked( mach64ContextPtr mmesa, int bytes )
    return head;
 }
 
-extern void mach64FireBlitLocked( mach64ContextPtr mmesa, drmBufPtr buffer,
+extern void mach64FireBlitLocked( mach64ContextPtr mmesa, void *buffer,
 				  GLint offset, GLint pitch, GLint format,
 				  GLint x, GLint y, GLint width, GLint height );
 

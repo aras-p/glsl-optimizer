@@ -520,7 +520,7 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
    __DRIscreenPrivate *psp;
    static const __DRIversion ddx_expected = { 6, 4, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
-   static const __DRIversion drm_expected = { 1, 0, 0 };
+   static const __DRIversion drm_expected = { 2, 0, 0 };
 
    dri_interface = interface;
 

@@ -569,27 +569,17 @@ static void mach64UploadLocalSubImage( mach64ContextPtr mmesa,
 	 remaining > 0 ;
 	 remaining -= rows, y += rows, i++ )
    {
-       drmBufPtr buffer;
-       CARD32 *dst;
-
        height = MIN2(remaining, rows);
-
-       /* Grab the dma buffer for the texture blit */
-       buffer = mach64GetBufferLocked( mmesa );
-
-       dst = (CARD32 *)((char *)buffer->address + MACH64_HOSTDATA_BLIT_OFFSET);
 
        assert(image->Data);
 
        {
           const GLubyte *src = (const GLubyte *) image->Data +
              (y * image->Width + x) * image->TexFormat->TexelBytes;
-          const GLuint bytes = width * height * image->TexFormat->TexelBytes;
-          memcpy(dst, src, bytes);
-       }
 
-       mach64FireBlitLocked( mmesa, buffer, offset, pitch, format,
-			     x, y, width, height );
+          mach64FireBlitLocked( mmesa, (void *)src, offset, pitch, format,
+				x, y, width, height );
+       }
 
    }
 
