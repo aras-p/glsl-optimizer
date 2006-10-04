@@ -806,8 +806,6 @@ static const char gl_string_table[] =
     "glGenRenderbuffersEXT\0"
     "glGenerateMipmapEXT\0"
     "glGetFramebufferAttachmentParameterivEXT\0"
-    "glGetQueryObjecti64vEXT\0"
-    "glGetQueryObjectui64vEXT\0"
     "glGetRenderbufferParameterivEXT\0"
     "glIsFramebufferEXT\0"
     "glIsRenderbufferEXT\0"
@@ -815,6 +813,8 @@ static const char gl_string_table[] =
     "glBlitFramebufferEXT\0"
     "glProgramEnvParameters4fvEXT\0"
     "glProgramLocalParameters4fvEXT\0"
+    "glGetQueryObjecti64vEXT\0"
+    "glGetQueryObjectui64vEXT\0"
     "glArrayElementEXT\0"
     "glBindTextureEXT\0"
     "glDrawArraysEXT\0"
@@ -1042,8 +1042,8 @@ extern void gl_dispatch_stub_737(void);
 extern void gl_dispatch_stub_738(void);
 extern void gl_dispatch_stub_745(void);
 extern void gl_dispatch_stub_746(void);
-extern void gl_dispatch_stub_760(void);
-extern void gl_dispatch_stub_761(void);
+extern void gl_dispatch_stub_764(void);
+extern void gl_dispatch_stub_765(void);
 extern void gl_dispatch_stub_766(void);
 extern void gl_dispatch_stub_767(void);
 extern void gl_dispatch_stub_768(void);
@@ -1810,15 +1810,15 @@ static const glprocs_table_t static_functions[] = {
     NAME_FUNC_OFFSET( 13331, glGenRenderbuffersEXT, _gloffset_GenRenderbuffersEXT ),
     NAME_FUNC_OFFSET( 13353, glGenerateMipmapEXT, _gloffset_GenerateMipmapEXT ),
     NAME_FUNC_OFFSET( 13373, glGetFramebufferAttachmentParameterivEXT, _gloffset_GetFramebufferAttachmentParameterivEXT ),
-    NAME_FUNC_OFFSET( 13414, gl_dispatch_stub_760, _gloffset_GetQueryObjecti64vEXT ),
-    NAME_FUNC_OFFSET( 13438, gl_dispatch_stub_761, _gloffset_GetQueryObjectui64vEXT ),
-    NAME_FUNC_OFFSET( 13463, glGetRenderbufferParameterivEXT, _gloffset_GetRenderbufferParameterivEXT ),
-    NAME_FUNC_OFFSET( 13495, glIsFramebufferEXT, _gloffset_IsFramebufferEXT ),
-    NAME_FUNC_OFFSET( 13514, glIsRenderbufferEXT, _gloffset_IsRenderbufferEXT ),
-    NAME_FUNC_OFFSET( 13534, glRenderbufferStorageEXT, _gloffset_RenderbufferStorageEXT ),
-    NAME_FUNC_OFFSET( 13559, gl_dispatch_stub_766, _gloffset_BlitFramebufferEXT ),
-    NAME_FUNC_OFFSET( 13580, gl_dispatch_stub_767, _gloffset_ProgramEnvParameters4fvEXT ),
-    NAME_FUNC_OFFSET( 13609, gl_dispatch_stub_768, _gloffset_ProgramLocalParameters4fvEXT ),
+    NAME_FUNC_OFFSET( 13414, glGetRenderbufferParameterivEXT, _gloffset_GetRenderbufferParameterivEXT ),
+    NAME_FUNC_OFFSET( 13446, glIsFramebufferEXT, _gloffset_IsFramebufferEXT ),
+    NAME_FUNC_OFFSET( 13465, glIsRenderbufferEXT, _gloffset_IsRenderbufferEXT ),
+    NAME_FUNC_OFFSET( 13485, glRenderbufferStorageEXT, _gloffset_RenderbufferStorageEXT ),
+    NAME_FUNC_OFFSET( 13510, gl_dispatch_stub_764, _gloffset_BlitFramebufferEXT ),
+    NAME_FUNC_OFFSET( 13531, gl_dispatch_stub_765, _gloffset_ProgramEnvParameters4fvEXT ),
+    NAME_FUNC_OFFSET( 13560, gl_dispatch_stub_766, _gloffset_ProgramLocalParameters4fvEXT ),
+    NAME_FUNC_OFFSET( 13591, gl_dispatch_stub_767, _gloffset_GetQueryObjecti64vEXT ),
+    NAME_FUNC_OFFSET( 13615, gl_dispatch_stub_768, _gloffset_GetQueryObjectui64vEXT ),
     NAME_FUNC_OFFSET( 13640, glArrayElement, _gloffset_ArrayElement ),
     NAME_FUNC_OFFSET( 13658, glBindTexture, _gloffset_BindTexture ),
     NAME_FUNC_OFFSET( 13675, glDrawArrays, _gloffset_DrawArrays ),

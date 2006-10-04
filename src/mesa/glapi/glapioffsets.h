@@ -792,15 +792,15 @@
 #define _gloffset_GenRenderbuffersEXT 757
 #define _gloffset_GenerateMipmapEXT 758
 #define _gloffset_GetFramebufferAttachmentParameterivEXT 759
-#define _gloffset_GetQueryObjecti64vEXT 760
-#define _gloffset_GetQueryObjectui64vEXT 761
-#define _gloffset_GetRenderbufferParameterivEXT 762
-#define _gloffset_IsFramebufferEXT 763
-#define _gloffset_IsRenderbufferEXT 764
-#define _gloffset_RenderbufferStorageEXT 765
-#define _gloffset_BlitFramebufferEXT 766
-#define _gloffset_ProgramEnvParameters4fvEXT 767
-#define _gloffset_ProgramLocalParameters4fvEXT 768
+#define _gloffset_GetRenderbufferParameterivEXT 760
+#define _gloffset_IsFramebufferEXT 761
+#define _gloffset_IsRenderbufferEXT 762
+#define _gloffset_RenderbufferStorageEXT 763
+#define _gloffset_BlitFramebufferEXT 764
+#define _gloffset_ProgramEnvParameters4fvEXT 765
+#define _gloffset_ProgramLocalParameters4fvEXT 766
+#define _gloffset_GetQueryObjecti64vEXT 767
+#define _gloffset_GetQueryObjectui64vEXT 768
 #define _gloffset_FIRST_DYNAMIC 769
 
 #else
@@ -1157,8 +1157,6 @@
 #define _gloffset_GenRenderbuffersEXT driDispatchRemapTable[GenRenderbuffersEXT_remap_index]
 #define _gloffset_GenerateMipmapEXT driDispatchRemapTable[GenerateMipmapEXT_remap_index]
 #define _gloffset_GetFramebufferAttachmentParameterivEXT driDispatchRemapTable[GetFramebufferAttachmentParameterivEXT_remap_index]
-#define _gloffset_GetQueryObjecti64vEXT driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index]
-#define _gloffset_GetQueryObjectui64vEXT driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index]
 #define _gloffset_GetRenderbufferParameterivEXT driDispatchRemapTable[GetRenderbufferParameterivEXT_remap_index]
 #define _gloffset_IsFramebufferEXT driDispatchRemapTable[IsFramebufferEXT_remap_index]
 #define _gloffset_IsRenderbufferEXT driDispatchRemapTable[IsRenderbufferEXT_remap_index]
@@ -1166,6 +1164,8 @@
 #define _gloffset_BlitFramebufferEXT driDispatchRemapTable[BlitFramebufferEXT_remap_index]
 #define _gloffset_ProgramEnvParameters4fvEXT driDispatchRemapTable[ProgramEnvParameters4fvEXT_remap_index]
 #define _gloffset_ProgramLocalParameters4fvEXT driDispatchRemapTable[ProgramLocalParameters4fvEXT_remap_index]
+#define _gloffset_GetQueryObjecti64vEXT driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index]
+#define _gloffset_GetQueryObjectui64vEXT driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index]
 
 #endif /* !defined(IN_DRI_DRIVER) */
 

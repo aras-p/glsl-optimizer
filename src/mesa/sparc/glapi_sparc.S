@@ -825,12 +825,12 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 		.globl glGenRenderbuffersEXT ; .type glGenRenderbuffersEXT,#function
 		.globl glGenerateMipmapEXT ; .type glGenerateMipmapEXT,#function
 		.globl glGetFramebufferAttachmentParameterivEXT ; .type glGetFramebufferAttachmentParameterivEXT,#function
-		.globl gl_dispatch_stub_760 ; .type gl_dispatch_stub_760,#function
-		.globl gl_dispatch_stub_761 ; .type gl_dispatch_stub_761,#function
 		.globl glGetRenderbufferParameterivEXT ; .type glGetRenderbufferParameterivEXT,#function
 		.globl glIsFramebufferEXT ; .type glIsFramebufferEXT,#function
 		.globl glIsRenderbufferEXT ; .type glIsRenderbufferEXT,#function
 		.globl glRenderbufferStorageEXT ; .type glRenderbufferStorageEXT,#function
+		.globl gl_dispatch_stub_764 ; .type gl_dispatch_stub_764,#function
+		.globl gl_dispatch_stub_765 ; .type gl_dispatch_stub_765,#function
 		.globl gl_dispatch_stub_766 ; .type gl_dispatch_stub_766,#function
 		.globl gl_dispatch_stub_767 ; .type gl_dispatch_stub_767,#function
 		.globl gl_dispatch_stub_768 ; .type gl_dispatch_stub_768,#function
@@ -1597,12 +1597,12 @@ _mesa_sparc_glapi_begin:
 	GL_STUB(glGenRenderbuffersEXT, _gloffset_GenRenderbuffersEXT)
 	GL_STUB(glGenerateMipmapEXT, _gloffset_GenerateMipmapEXT)
 	GL_STUB(glGetFramebufferAttachmentParameterivEXT, _gloffset_GetFramebufferAttachmentParameterivEXT)
-	GL_STUB(gl_dispatch_stub_760, _gloffset__dispatch_stub_760)
-	GL_STUB(gl_dispatch_stub_761, _gloffset__dispatch_stub_761)
 	GL_STUB(glGetRenderbufferParameterivEXT, _gloffset_GetRenderbufferParameterivEXT)
 	GL_STUB(glIsFramebufferEXT, _gloffset_IsFramebufferEXT)
 	GL_STUB(glIsRenderbufferEXT, _gloffset_IsRenderbufferEXT)
 	GL_STUB(glRenderbufferStorageEXT, _gloffset_RenderbufferStorageEXT)
+	GL_STUB(gl_dispatch_stub_764, _gloffset__dispatch_stub_764)
+	GL_STUB(gl_dispatch_stub_765, _gloffset__dispatch_stub_765)
 	GL_STUB(gl_dispatch_stub_766, _gloffset__dispatch_stub_766)
 	GL_STUB(gl_dispatch_stub_767, _gloffset__dispatch_stub_767)
 	GL_STUB(gl_dispatch_stub_768, _gloffset__dispatch_stub_768)

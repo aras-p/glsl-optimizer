@@ -2338,12 +2338,6 @@
 #define CALL_GetFramebufferAttachmentParameterivEXT(disp, parameters) (*((disp)->GetFramebufferAttachmentParameterivEXT)) parameters
 #define GET_GetFramebufferAttachmentParameterivEXT(disp) ((disp)->GetFramebufferAttachmentParameterivEXT)
 #define SET_GetFramebufferAttachmentParameterivEXT(disp, fn) ((disp)->GetFramebufferAttachmentParameterivEXT = fn)
-#define CALL_GetQueryObjecti64vEXT(disp, parameters) (*((disp)->GetQueryObjecti64vEXT)) parameters
-#define GET_GetQueryObjecti64vEXT(disp) ((disp)->GetQueryObjecti64vEXT)
-#define SET_GetQueryObjecti64vEXT(disp, fn) ((disp)->GetQueryObjecti64vEXT = fn)
-#define CALL_GetQueryObjectui64vEXT(disp, parameters) (*((disp)->GetQueryObjectui64vEXT)) parameters
-#define GET_GetQueryObjectui64vEXT(disp) ((disp)->GetQueryObjectui64vEXT)
-#define SET_GetQueryObjectui64vEXT(disp, fn) ((disp)->GetQueryObjectui64vEXT = fn)
 #define CALL_GetRenderbufferParameterivEXT(disp, parameters) (*((disp)->GetRenderbufferParameterivEXT)) parameters
 #define GET_GetRenderbufferParameterivEXT(disp) ((disp)->GetRenderbufferParameterivEXT)
 #define SET_GetRenderbufferParameterivEXT(disp, fn) ((disp)->GetRenderbufferParameterivEXT = fn)
@@ -2365,6 +2359,12 @@
 #define CALL_ProgramLocalParameters4fvEXT(disp, parameters) (*((disp)->ProgramLocalParameters4fvEXT)) parameters
 #define GET_ProgramLocalParameters4fvEXT(disp) ((disp)->ProgramLocalParameters4fvEXT)
 #define SET_ProgramLocalParameters4fvEXT(disp, fn) ((disp)->ProgramLocalParameters4fvEXT = fn)
+#define CALL_GetQueryObjecti64vEXT(disp, parameters) (*((disp)->GetQueryObjecti64vEXT)) parameters
+#define GET_GetQueryObjecti64vEXT(disp) ((disp)->GetQueryObjecti64vEXT)
+#define SET_GetQueryObjecti64vEXT(disp, fn) ((disp)->GetQueryObjecti64vEXT = fn)
+#define CALL_GetQueryObjectui64vEXT(disp, parameters) (*((disp)->GetQueryObjectui64vEXT)) parameters
+#define GET_GetQueryObjectui64vEXT(disp) ((disp)->GetQueryObjectui64vEXT)
+#define SET_GetQueryObjectui64vEXT(disp, fn) ((disp)->GetQueryObjectui64vEXT = fn)
 
 #else
 
@@ -2723,15 +2723,15 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define GenRenderbuffersEXT_remap_index 349
 #define GenerateMipmapEXT_remap_index 350
 #define GetFramebufferAttachmentParameterivEXT_remap_index 351
-#define GetQueryObjecti64vEXT_remap_index 352
-#define GetQueryObjectui64vEXT_remap_index 353
-#define GetRenderbufferParameterivEXT_remap_index 354
-#define IsFramebufferEXT_remap_index 355
-#define IsRenderbufferEXT_remap_index 356
-#define RenderbufferStorageEXT_remap_index 357
-#define BlitFramebufferEXT_remap_index 358
-#define ProgramEnvParameters4fvEXT_remap_index 359
-#define ProgramLocalParameters4fvEXT_remap_index 360
+#define GetRenderbufferParameterivEXT_remap_index 352
+#define IsFramebufferEXT_remap_index 353
+#define IsRenderbufferEXT_remap_index 354
+#define RenderbufferStorageEXT_remap_index 355
+#define BlitFramebufferEXT_remap_index 356
+#define ProgramEnvParameters4fvEXT_remap_index 357
+#define ProgramLocalParameters4fvEXT_remap_index 358
+#define GetQueryObjecti64vEXT_remap_index 359
+#define GetQueryObjectui64vEXT_remap_index 360
 
 #define CALL_StencilFuncSeparate(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint, GLuint)), driDispatchRemapTable[StencilFuncSeparate_remap_index], parameters)
 #define GET_StencilFuncSeparate(disp) GET_by_offset(disp, driDispatchRemapTable[StencilFuncSeparate_remap_index])
@@ -3789,12 +3789,6 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_GetFramebufferAttachmentParameterivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLint *)), driDispatchRemapTable[GetFramebufferAttachmentParameterivEXT_remap_index], parameters)
 #define GET_GetFramebufferAttachmentParameterivEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetFramebufferAttachmentParameterivEXT_remap_index])
 #define SET_GetFramebufferAttachmentParameterivEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetFramebufferAttachmentParameterivEXT_remap_index], fn)
-#define CALL_GetQueryObjecti64vEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint64EXT *)), driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index], parameters)
-#define GET_GetQueryObjecti64vEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index])
-#define SET_GetQueryObjecti64vEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index], fn)
-#define CALL_GetQueryObjectui64vEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLuint64EXT *)), driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], parameters)
-#define GET_GetQueryObjectui64vEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index])
-#define SET_GetQueryObjectui64vEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], fn)
 #define CALL_GetRenderbufferParameterivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), driDispatchRemapTable[GetRenderbufferParameterivEXT_remap_index], parameters)
 #define GET_GetRenderbufferParameterivEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetRenderbufferParameterivEXT_remap_index])
 #define SET_GetRenderbufferParameterivEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetRenderbufferParameterivEXT_remap_index], fn)
@@ -3816,6 +3810,12 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_ProgramLocalParameters4fvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLsizei, const GLfloat *)), driDispatchRemapTable[ProgramLocalParameters4fvEXT_remap_index], parameters)
 #define GET_ProgramLocalParameters4fvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameters4fvEXT_remap_index])
 #define SET_ProgramLocalParameters4fvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramLocalParameters4fvEXT_remap_index], fn)
+#define CALL_GetQueryObjecti64vEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint64EXT *)), driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index], parameters)
+#define GET_GetQueryObjecti64vEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index])
+#define SET_GetQueryObjecti64vEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index], fn)
+#define CALL_GetQueryObjectui64vEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLuint64EXT *)), driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], parameters)
+#define GET_GetQueryObjectui64vEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index])
+#define SET_GetQueryObjectui64vEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], fn)
 
 #endif /* !defined(IN_DRI_DRIVER) */
 
