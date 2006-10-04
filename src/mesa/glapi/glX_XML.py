@@ -505,6 +505,13 @@ class glx_function(gl_XML.gl_function):
 		return None
 
 
+	def client_supported_for_indirect(self):
+		"""Returns true if the function is supported on the client
+		side for indirect rendering."""
+
+		return not self.ignore and (self.offset != -1) and (self.glx_rop or self.glx_sop or self.glx_vendorpriv or self.vectorequiv or self.client_handcode)
+
+
 class glx_function_iterator:
 	"""Class to iterate over a list of glXFunctions"""
 
@@ -519,10 +526,10 @@ class glx_function_iterator:
 
 	def next(self):
 		f = self.iterator.next()
-		if f.ignore or not (f.glx_rop or f.glx_sop or f.glx_vendorpriv or f.vectorequiv or f.client_handcode):
-			return self.next()
-		else:
+		if f.client_supported_for_indirect():
 			return f
+		else:
+			return self.next()
 
 
 class glx_api(gl_XML.gl_api):
