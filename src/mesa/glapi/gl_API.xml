@@ -11433,8 +11433,6 @@
     <enum name="MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB" count="1" value="0x8B4C"/>
 </category>
 
-<xi:include href="EXT_framebuffer_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
 <!-- Extension number 307 is a GLX extension. -->
 <!-- Extension number 308 is a GLX extension. -->
 
@@ -11443,12 +11441,65 @@
     <enum name="COMPRESSED_RGBA_S3TC_DXT1_EXT"            value="0x83F1"/>
 </category>
 
+<xi:include href="EXT_framebuffer_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<category name="GL_EXT_framebuffer_blit" number="316">
+    <enum name="READ_FRAMEBUFFER_EXT" value="0x8CA8"/>
+    <enum name="DRAW_FRAMEBUFFER_EXT" value="0x8CA9"/>
+    <enum name="DRAW_FRAMEBUFFER_BINDING_EXT" value="0x8CA6"/>
+    <enum name="READ_FRAMEBUFFER_BINDING_EXT" value="0x8CAA"/>
+    <function name="BlitFramebufferEXT" offset="assign" static_dispatch="false">
+        <param name="srcX0" type="GLint"/>
+        <param name="srcY0" type="GLint"/>
+        <param name="srcX1" type="GLint"/>
+        <param name="srcY1" type="GLint"/>
+        <param name="dstX0" type="GLint"/>
+        <param name="dstY0" type="GLint"/>
+        <param name="dstX1" type="GLint"/>
+        <param name="dstY1" type="GLint"/>
+        <param name="mask" type="GLbitfield"/>
+        <param name="filter" type="GLenum"/>
+    </function>
+</category>
+
 <!-- Unnumbered extensions sorted by name. -->
 
 <category name="GL_ATI_blend_equation_separate">
     <function name="BlendEquationSeparateATI" alias="BlendEquationSeparateEXT" static_dispatch="false">
         <param name="modeRGB" type="GLenum"/>
         <param name="modeA" type="GLenum"/>
+    </function>
+</category>
+
+<category name="GL_EXT_gpu_program_parameters">
+    <function name="ProgramEnvParameters4fvEXT" offset="assign" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="index" type="GLuint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="params" type="const GLfloat *"/>
+    </function>
+
+    <function name="ProgramLocalParameters4fvEXT" offset="assign" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="index" type="GLuint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="params" type="const GLfloat *"/>
+    </function>
+</category>
+
+<category name="GL_EXT_timer_query">
+    <enum name="TIME_ELAPSED_EXT" value="0x88BF"/>
+    <type name="int64EXT"                  size="8"/>
+    <type name="uint64EXT" unsigned="true" size="8"/>
+    <function name="GetQueryObjecti64vEXT" offset="assign" static_dispatch="false">
+        <param name="id" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint64EXT *"/>
+    </function>
+    <function name="GetQueryObjectui64vEXT" offset="assign" static_dispatch="false">
+        <param name="id" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLuint64EXT *"/>
     </function>
 </category>
 
@@ -11567,57 +11618,6 @@
     <function name="LoadIdentityDeformationMapSGIX">
         <param name="mask" type="GLenum"/>
     </function>
-</category>
-
-<category name="GL_EXT_timer_query" number="310">
-    <enum name="TIME_ELAPSED_EXT" value="0x88BF"/>
-    <type name="int64EXT"                  size="8"/>
-    <type name="uint64EXT" unsigned="true" size="8"/>
-    <function name="GetQueryObjecti64vEXT" offset="assign" static_dispatch="false">
-        <param name="id" type="GLuint"/>
-        <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint64EXT *"/>
-    </function>
-    <function name="GetQueryObjectui64vEXT" offset="assign" static_dispatch="false">
-        <param name="id" type="GLuint"/>
-        <param name="pname" type="GLenum"/>
-        <param name="params" type="GLuint64EXT *"/>
-    </function>
-</category>
-
-<category name="GL_EXT_framebuffer_blit" number="316">
-    <enum name="READ_FRAMEBUFFER_EXT" value="0x8CA8"/>
-    <enum name="DRAW_FRAMEBUFFER_EXT" value="0x8CA9"/>
-    <enum name="DRAW_FRAMEBUFFER_BINDING_EXT" value="0x8CA6"/>
-    <enum name="READ_FRAMEBUFFER_BINDING_EXT" value="0x8CAA"/>
-    <function name="BlitFramebufferEXT" offset="assign" static_dispatch="false">
-        <param name="srcX0" type="GLint"/>
-        <param name="srcY0" type="GLint"/>
-        <param name="srcX1" type="GLint"/>
-        <param name="srcY1" type="GLint"/>
-        <param name="dstX0" type="GLint"/>
-        <param name="dstY0" type="GLint"/>
-        <param name="dstX1" type="GLint"/>
-        <param name="dstY1" type="GLint"/>
-        <param name="mask" type="GLbitfield"/>
-        <param name="filter" type="GLenum"/>
-    </function>
-</category>
-
-<category name="GL_EXT_gpu_program_parameters" number="319">
-    <function name="ProgramEnvParameters4fvEXT" offset="assign" static_dispatch="false">
-        <param name="target" type="GLenum"/>
-	<param name="index" type="GLuint"/>
-	<param name="count" type="GLsizei"/>
-	<param name="params" type="const GLfloat *"/>
-    </function>	
-
-    <function name="ProgramLocalParameters4fvEXT" offset="assign" static_dispatch="false">
-        <param name="target" type="GLenum"/>
-	<param name="index" type="GLuint"/>
-	<param name="count" type="GLsizei"/>
-	<param name="params" type="const GLfloat *"/>
-    </function>	
 </category>
 
 </OpenGLAPI>
