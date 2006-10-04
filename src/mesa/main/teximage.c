@@ -1596,7 +1596,7 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
    }
    else if (dimensions == 2) {
       if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
-          target <=GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB) {
+          target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB) {
          if (!ctx->Extensions.ARB_texture_cube_map) {
             _mesa_error( ctx, GL_INVALID_ENUM, "glTexSubImage2D(target)" );
             return GL_TRUE;
