@@ -884,87 +884,18 @@ __GLapi * __glXNewIndirectAPI( void )
 		return
 
 
-	def printCategory(self, category_group, show_num):
-		cat_keys = category_group.keys()
-		cat_keys.sort()
-		for cat_num in cat_keys:
-			first = 1
-			for offset in category_group[ cat_num ]:
-				[cat_name, func_name] = category_group[ cat_num ][ offset ]
-
-				if first:
-					print ''
-					if show_num:
-						print '    /* %3u. %s */' % (cat_num, cat_name)
-					else:
-						print '    /* %s */' % (cat_name)
-					print ''
-					first = 0
-
-				print '    glAPI->%s = __indirect_gl%s;' % (func_name, func_name)
-		
-
 	def printBody(self, api):
-		core_categories = {}
-		arb_categories = {}
-		other_categories = {}
-		next_unnum = 1000
+		for [name, number] in api.categoryIterate():
+			if number != None:
+				preamble = '\n    /* %3u. %s */\n\n' % (int(number), name)
+			else:
+				preamble = '\n    /* %s */\n\n' % (name)
 
-		for func in api.functionIterateGlx():
-			[cat, num] = api.get_category_for_name( func.name )
+			for func in api.functionIterateByCategory(name):
+				if func.client_supported_for_indirect():
+					print '%s    glAPI->%s = __indirect_gl%s;' % (preamble, func.name, func.name)
+					preamble = ''
 
-			# There are three groups of "categories" that we
-			# care about here.  We want to separate the core GL
-			# version categories from extensions.  We also want to
-			# separate the ARB extensions from the non-ARB
-			# extensions.
-			#
-			# This is done by first trying to convert the category
-			# name to a floating point number.  All core GL
-			# versions are of the form "N.M" where both N and M
-			# are integers.  If the cast to float fails, an
-			# exception will be thrown.  Once down that path, 
-			# we can look at the start of the extension string.
-			# If it begins with "GL_ARB_", it's an ARB extension.
-			#
-			# Once the categories are separated, the are ordered
-			# by number.  The un-numbered non-ARB extensions
-			# (e.g., GL_INGR_blend_func_separate) are assigned
-			# arbitrary numbers starting at 1000.
-			#
-			# FIXME In order to maintain repeatability, the
-			# FIXME unnumbered extensions should be put in their
-			# FIXME own dictionary and ordered by name (since they
-			# FIXME have no number).
-
-			try:
-				num = float(cat)
-				if not core_categories.has_key( num ):
-					core_categories[ num ] = {}
-
-				core_categories[ num ][ func.offset ] = [cat, func.name]
-
-			except Exception, e:
-				if not num:
-					num = next_unnum
-					next_unnum += 1
-				else:
-					num = int(num)
-
-				if cat.startswith( "GL_ARB_" ):
-					if not arb_categories.has_key( num ):
-						arb_categories[ num ] = {}
-
-					arb_categories[ num ][ func.offset ] = [cat, func.name]
-				else:
-					if not other_categories.has_key( num ):
-						other_categories[ num ] = {}
-
-					other_categories[ num ][ func.offset ] = [cat, func.name]
-
-		self.printCategory( core_categories,  0 )
-		self.printCategory( arb_categories,   1 )
-		self.printCategory( other_categories, 1 )
 		return
 
 

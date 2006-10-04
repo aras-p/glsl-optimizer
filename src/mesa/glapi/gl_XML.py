@@ -44,58 +44,11 @@ def parse_GL_API( file_name, factory = None ):
 	# dispatch offsets to the functions that request that their offsets
 	# be assigned by the scripts.  Typically this means all functions
 	# that are not part of the ABI.
-	#
-	# To bring some sanity to the generated offsets, we group all
-	# functions into four groups.  The groups have offsets assigned to
-	# their functions in order.  The groups are:
-	#
-	# 1. Core GL versions, sorted by version number.
-	# 2. ARB extensions, sorted by extension number.
-	# 3. Non-ARB extensions, sorted by extension number.
-	# 4. Un-numbered, non-ARB extensions, sorted by extension name.
 
-	lists = [{}, {}, {}, {}]
-
-	for func in api.functionIterateAll():
+	for func in api.functionIterateByCategory():
 		if func.assign_offset:
-			[cat_name, cat_number] = api.category_dict[func.name]
-
-			try:
-				core_version = float(cat_name)
-			except Exception,e:
-				core_version = 0.0
-
-			if core_version > 0.0:
-				func_cat_type = 0
-				key = cat_name
-			elif cat_name.startswith( "GL_ARB_" ):
-				func_cat_type = 1
-				key = int(cat_number)
-			else:
-				if cat_number != None:
-					func_cat_type = 2
-					key = int(cat_number)
-				else:
-					func_cat_type = 3
-					key = cat_name
-
-			if not lists[func_cat_type].has_key(key):
-				lists[func_cat_type][key] = {}
-
-			lists[func_cat_type][key][func.name] = func
-
-	for func_cat_type in range(0,4):
-		keys = lists[func_cat_type].keys()
-		keys.sort()
-
-		for key in keys:
-			names = lists[func_cat_type][key].keys()
-			names.sort()
-
-			for name in names:
-				func = lists[func_cat_type][key][name]
-				func.offset = api.next_offset;
-				api.next_offset += 1
+			func.offset = api.next_offset;
+			api.next_offset += 1
 
 	doc.freeDoc()
 
@@ -314,6 +267,41 @@ def real_category_name(c):
 		return "GL_VERSION_" + c.replace(".", "_")
 	else:
 		return c
+
+
+def classify_category(name, number):
+	"""Based on the category name and number, select a numerical class for it.
+	
+	Categories are divided into four classes numbered 0 through 3.  The
+	classes are:
+
+		0. Core GL versions, sorted by version number.
+		1. ARB extensions, sorted by extension number.
+		2. Non-ARB extensions, sorted by extension number.
+		3. Un-numbered extensions, sorted by extension name.
+	"""
+
+	try:
+		core_version = float(name)
+	except Exception,e:
+		core_version = 0.0
+
+	if core_version > 0.0:
+		cat_type = 0
+		key = name
+	elif name.startswith("GL_ARB_") or name.startswith("GLX_ARB_") or name.startswith("WGL_ARB_"):
+		cat_type = 1
+		key = int(number)
+	else:
+		if number != None:
+			cat_type = 2
+			key = int(number)
+		else:
+			cat_type = 3
+			key = name
+
+
+	return [cat_type, key]
 
 
 def create_parameter_string(parameters, include_names):
@@ -773,7 +761,9 @@ class gl_api:
 		self.functions_by_name = {}
 		self.enums_by_name = {}
 		self.types_by_name = {}
+
 		self.category_dict = {}
+		self.categories = [{}, {}, {}, {}]
 
 		self.factory = factory
 
@@ -811,6 +801,9 @@ class gl_api:
 		cat_name = cat.nsProp( "name", None )
 		cat_number = cat.nsProp( "number", None )
 
+		[cat_type, key] = classify_category(cat_name, cat_number)
+		self.categories[cat_type][key] = [cat_name, cat_number]
+
 		child = cat.children
 		while child:
 			if child.type == "element":
@@ -842,6 +835,43 @@ class gl_api:
 			child = child.next
 
 		return
+
+
+	def functionIterateByCategory(self, cat = None):
+		"""Iterate over functions by category.
+		
+		If cat is None, all known functions are iterated in category
+		order.  See classify_category for details of the ordering.
+		Within a category, functions are sorted by name.  If cat is
+		not None, then only functions in that category are iterated.
+		"""
+		lists = [{}, {}, {}, {}]
+
+		for func in self.functionIterateAll():
+			[cat_name, cat_number] = self.category_dict[func.name]
+
+			if (cat == None) or (cat == cat_name):
+				[func_cat_type, key] = classify_category(cat_name, cat_number)
+
+				if not lists[func_cat_type].has_key(key):
+					lists[func_cat_type][key] = {}
+
+				lists[func_cat_type][key][func.name] = func
+
+
+		functions = []
+		for func_cat_type in range(0,4):
+			keys = lists[func_cat_type].keys()
+			keys.sort()
+
+			for key in keys:
+				names = lists[func_cat_type][key].keys()
+				names.sort()
+
+				for name in names:
+					functions.append(lists[func_cat_type][key][name])
+
+		return functions.__iter__()
 
 
 	def functionIterateByOffset(self):
@@ -877,6 +907,25 @@ class gl_api:
 		for enum in keys:
 			list.append( self.enums_by_name[ enum ] )
 
+		return list.__iter__()
+
+
+	def categoryIterate(self):
+		"""Iterate over categories.
+		
+		Iterate over all known categories in the order specified by
+		classify_category.  Each iterated value is a tuple of the
+		name and number (which may be None) of the category.
+		"""
+
+		list = []
+		for cat_type in range(0,4):
+			keys = self.categories[cat_type].keys()
+			keys.sort()
+			
+			for key in keys:
+				list.append(self.categories[cat_type][key])
+				
 		return list.__iter__()
 
 
