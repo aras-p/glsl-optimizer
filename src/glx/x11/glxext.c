@@ -1582,7 +1582,7 @@ USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
     }
 
     oldGC = __glXGetCurrentContext();
-    oldOpcode = (gc == oldGC) ? opcode : __glXSetupForCommand(dpy);
+    oldOpcode = (gc == oldGC) ? opcode : __glXSetupForCommand(oldGC->currentDpy);
     if (!oldOpcode) {
 	return GL_FALSE;
     }
