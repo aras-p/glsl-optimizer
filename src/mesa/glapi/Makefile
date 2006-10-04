@@ -37,6 +37,8 @@ API_XML = gl_API.xml \
 COMMON = gl_XML.py license.py $(API_XML) typeexpr.py
 COMMON_GLX = $(COMMON) glX_API.xml glX_XML.py glX_proto_common.py
 
+INDENT_FLAGS = -i4 -nut -br -brs -npcs -ce
+
 all: $(OUTPUTS)
 
 server: $(SERVER_OUTPUTS)
@@ -73,7 +75,7 @@ dispatch.h: $(COMMON) gl_table.py
 	$(PYTHON2) $(PYTHON_FLAGS) extension_helper.py > ../drivers/dri/common/extension_helper.h
 
 ../../glx/x11/indirect.c: $(COMMON_GLX) glX_proto_send.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_send.py -m proto > ../../glx/x11/indirect.c
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_send.py -m proto | indent $(INDENT_FLAGS) > ../../glx/x11/indirect.c
 
 ../../glx/x11/indirect.h: $(COMMON_GLX) glX_proto_send.py
 	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_send.py -m init_h > ../../glx/x11/indirect.h
@@ -82,10 +84,10 @@ dispatch.h: $(COMMON) gl_table.py
 	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_send.py -m init_c > ../../glx/x11/indirect_init.c
 
 ../../glx/x11/indirect_size.h: $(COMMON_GLX) glX_proto_size.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_h --only-set -h _INDIRECT_SIZE_H_ > ../../glx/x11/indirect_size.h
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_h --only-set -h _INDIRECT_SIZE_H_ | indent $(INDENT_FLAGS) > ../../glx/x11/indirect_size.h
 
 ../../glx/x11/indirect_size.c: $(COMMON_GLX) glX_proto_size.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_c --only-set > ../../glx/x11/indirect_size.c
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_c --only-set | indent $(INDENT_FLAGS) > ../../glx/x11/indirect_size.c
 
 $(GLX_DIR)/indirect_dispatch.c: $(COMMON_GLX) glX_proto_recv.py
 	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_recv.py -m dispatch_c > $@
@@ -97,10 +99,10 @@ $(GLX_DIR)/indirect_dispatch.h: $(COMMON_GLX) glX_proto_recv.py glX_API.xml
 	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_recv.py -m dispatch_h -f gl_and_glX_API.xml -s > $@
 
 $(GLX_DIR)/indirect_size_get.h: $(COMMON_GLX) glX_proto_size.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_h --only-get -h '_INDIRECT_SIZE_GET_H_' > $@
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_h --only-get -h '_INDIRECT_SIZE_GET_H_' | indent $(INDENT_FLAGS) > $@
 
 $(GLX_DIR)/indirect_size_get.c: $(COMMON_GLX) glX_proto_size.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_c > $@
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_c | indent $(INDENT_FLAGS) > $@
 
 $(GLX_DIR)/indirect_table.c: $(COMMON_GLX) glX_server_table.py glX_API.xml
 	$(PYTHON2) $(PYTHON_FLAGS) glX_server_table.py -f gl_and_glX_API.xml > $@

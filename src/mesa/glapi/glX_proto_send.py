@@ -397,25 +397,25 @@ generic_%u_byte( GLint rop, const void * ptr )
 		return
 
 
-	def common_emit_one_arg(self, p, pc, indent, adjust, extra_offset):
+	def common_emit_one_arg(self, p, pc, adjust, extra_offset):
 		if p.is_array():
 			src_ptr = p.name
 		else:
 			src_ptr = "&" + p.name
 
 		if not extra_offset:
-			print '%s    (void) memcpy((void *)(%s + %u), (void *)(%s), %s);' \
-			    % (indent, pc, p.offset + adjust, src_ptr, p.size_string() )
+			print '(void) memcpy((void *)(%s + %u), (void *)(%s), %s);' \
+			    % (pc, p.offset + adjust, src_ptr, p.size_string() )
 		else:
-			print '%s    (void) memcpy((void *)(%s + %u + %s), (void *)(%s), %s);' \
-			    % (indent, pc, p.offset + adjust, extra_offset, src_ptr, p.size_string() )
+			print '(void) memcpy((void *)(%s + %u + %s), (void *)(%s), %s);' \
+			    % (pc, p.offset + adjust, extra_offset, src_ptr, p.size_string() )
 
-	def common_emit_args(self, f, pc, indent, adjust, skip_vla):
+	def common_emit_args(self, f, pc, adjust, skip_vla):
 		extra_offset = None
 
 		for p in f.parameterIterateGlxSend( not skip_vla ):
 			if p.name != f.img_reset:
-				self.common_emit_one_arg(p, pc, indent, adjust, extra_offset)
+				self.common_emit_one_arg(p, pc, adjust, extra_offset)
 				
 				if p.is_variable_length():
 					temp = p.size_string()
@@ -427,7 +427,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 		return
 
 
-	def pixel_emit_args(self, f, pc, indent, large):
+	def pixel_emit_args(self, f, pc, large):
 		"""Emit the arguments for a pixel function.  This differs from
 		common_emit_args in that pixel functions may require padding
 		be inserted (i.e., for the missing width field for
@@ -441,10 +441,10 @@ generic_%u_byte( GLint rop, const void * ptr )
 
 		for param in f.parameterIterateGlxSend():
 			if not param.is_image():
-				self.common_emit_one_arg(param, pc, indent, adjust, None)
+				self.common_emit_one_arg(param, pc, adjust, None)
 
 				if f.pad_after(param):
-					print '%s    (void) memcpy((void *)(%s + %u), zero, 4);' % (indent, pc, (param.offset + param.size()) + adjust)
+					print '(void) memcpy((void *)(%s + %u), zero, 4);' % (pc, (param.offset + param.size()) + adjust)
 
 			else:
 				[dim, width, height, depth, extent] = param.get_dimensions()
@@ -455,9 +455,9 @@ generic_%u_byte( GLint rop, const void * ptr )
 
 				if param.img_null_flag:
 					if large:
-						print '%s    (void) memcpy((void *)(%s + %u), zero, 4);' % (indent, pc, (param.offset - 4) + adjust)
+						print '(void) memcpy((void *)(%s + %u), zero, 4);' % (pc, (param.offset - 4) + adjust)
 					else:
-						print '%s    (void) memcpy((void *)(%s + %u), (void *)((%s == NULL) ? one : zero), 4);' % (indent, pc, (param.offset - 4) + adjust, param.name)
+						print '(void) memcpy((void *)(%s + %u), (void *)((%s == NULL) ? one : zero), 4);' % (pc, (param.offset - 4) + adjust, param.name)
 
 
 				pixHeaderPtr = "%s + %u" % (pc, adjust)
@@ -469,27 +469,26 @@ generic_%u_byte( GLint rop, const void * ptr )
 					else:
 						condition = 'compsize > 0'
 
-					print '%s    if (%s) {' % (indent, condition)
-					print '%s        (*gc->fillImage)(gc, %s, %s, %s, %s, %s, %s, %s, %s, %s);' % (indent, dim_str, width, height, depth, param.img_format, param.img_type, param.name, pcPtr, pixHeaderPtr)
-					print '%s    }' % (indent)
-					print '%s    else {' % (indent)
-					print '%s        (void) memcpy( %s, default_pixel_store_%uD, default_pixel_store_%uD_size );' % (indent, pixHeaderPtr, dim, dim)
-					print '%s    }' % (indent)
+					print 'if (%s) {' % (condition)
+					print '    (*gc->fillImage)(gc, %s, %s, %s, %s, %s, %s, %s, %s, %s);' % (dim_str, width, height, depth, param.img_format, param.img_type, param.name, pcPtr, pixHeaderPtr)
+					print '} else {'
+					print '    (void) memcpy( %s, default_pixel_store_%uD, default_pixel_store_%uD_size );' % (pixHeaderPtr, dim, dim)
+					print '}'
 				else:
-					print '%s    __glXSendLargeImage(gc, compsize, %s, %s, %s, %s, %s, %s, %s, %s, %s);' % (indent, dim_str, width, height, depth, param.img_format, param.img_type, param.name, pcPtr, pixHeaderPtr)
+					print '__glXSendLargeImage(gc, compsize, %s, %s, %s, %s, %s, %s, %s, %s, %s);' % (dim_str, width, height, depth, param.img_format, param.img_type, param.name, pcPtr, pixHeaderPtr)
 
 		return
 
 
-	def large_emit_begin(self, indent, f, op_name = None):
+	def large_emit_begin(self, f, op_name = None):
 		if not op_name:
 			op_name = f.opcode_real_name()
 
-		print '%s    const GLint op = %s;' % (indent, op_name)
-		print '%s    const GLuint cmdlenLarge = cmdlen + 4;' % (indent)
-		print '%s    GLubyte * const pc = __glXFlushRenderBuffer(gc, gc->pc);' % (indent)
-		print '%s    (void) memcpy((void *)(pc + 0), (void *)(&cmdlenLarge), 4);' % (indent)
-		print '%s    (void) memcpy((void *)(pc + 4), (void *)(&op), 4);' % (indent)
+		print 'const GLint op = %s;' % (op_name)
+		print 'const GLuint cmdlenLarge = cmdlen + 4;'
+		print 'GLubyte * const pc = __glXFlushRenderBuffer(gc, gc->pc);'
+		print '(void) memcpy((void *)(pc + 0), (void *)(&cmdlenLarge), 4);'
+		print '(void) memcpy((void *)(pc + 4), (void *)(&op), 4);'
 		return
 
 
@@ -619,7 +618,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 		else:
 			print '        %s __glXSetupSingleRequest(gc, %s, cmdlen);' % (pc_decl, f.opcode_name())
 
-		self.common_emit_args(f, "pc", "    ", 0, 0)
+		self.common_emit_args(f, "pc", 0, 0)
 
 		images = f.get_images()
 
@@ -722,39 +721,36 @@ generic_%u_byte( GLint rop, const void * ptr )
 
 
 		if self.common_func_print_just_start(f):
-			indent = "    "
 			trailer = "    }"
 		else:
-			indent = ""
 			trailer = None
 
 
 		if f.can_be_large:
-			print '%s    if (cmdlen <= gc->maxSmallRenderCommandSize) {' % (indent)
-			print '%s        if ( (gc->pc + cmdlen) > gc->bufEnd ) {' % (indent)
-			print '%s            (void) __glXFlushRenderBuffer(gc, gc->pc);' % (indent)
-			print '%s        }' % (indent)
-			indent += "    "
+			print 'if (cmdlen <= gc->maxSmallRenderCommandSize) {'
+			print '    if ( (gc->pc + cmdlen) > gc->bufEnd ) {'
+			print '        (void) __glXFlushRenderBuffer(gc, gc->pc);'
+			print '    }'
 
 		if f.glx_rop == ~0:
 			opcode = "opcode"
 		else:
 			opcode = f.opcode_real_name()
 
-		print '%s    emit_header(gc->pc, %s, cmdlen);' % (indent, opcode)
+		print 'emit_header(gc->pc, %s, cmdlen);' % (opcode)
 
-		self.pixel_emit_args( f, "gc->pc", indent, 0 )
-		print '%s    gc->pc += cmdlen;' % (indent)
-		print '%s    if (gc->pc > gc->limit) { (void) __glXFlushRenderBuffer(gc, gc->pc); }' % (indent)
+		self.pixel_emit_args( f, "gc->pc", 0 )
+		print 'gc->pc += cmdlen;'
+		print 'if (gc->pc > gc->limit) { (void) __glXFlushRenderBuffer(gc, gc->pc); }'
 
 		if f.can_be_large:
-			print '%s}' % (indent)
-			print '%selse {' % (indent)
+			print '}'
+			print 'else {'
 
-			self.large_emit_begin(indent, f, opcode)
-			self.pixel_emit_args( f, "pc", indent, 1 )
+			self.large_emit_begin(f, opcode)
+			self.pixel_emit_args(f, "pc", 1)
 
-			print '%s}' % (indent)
+			print '}'
 
 		if trailer: print trailer
 		return
@@ -777,42 +773,39 @@ generic_%u_byte( GLint rop, const void * ptr )
 					return
 
 		if self.common_func_print_just_start(f):
-			indent = "    "
 			trailer = "    }"
 		else:
-			indent = ""
 			trailer = None
 
 		if self.debug:
-			print '%s    printf( "Enter %%s...\\n", "gl%s" );' % (indent, f.name)
+			print 'printf( "Enter %%s...\\n", "gl%s" );' % (f.name)
 
 		if f.can_be_large:
-			print '%s    if (cmdlen <= gc->maxSmallRenderCommandSize) {' % (indent)
-			print '%s        if ( (gc->pc + cmdlen) > gc->bufEnd ) {' % (indent)
-			print '%s            (void) __glXFlushRenderBuffer(gc, gc->pc);' % (indent)
-			print '%s        }' % (indent)
-			indent += "    "
+			print 'if (cmdlen <= gc->maxSmallRenderCommandSize) {'
+			print '    if ( (gc->pc + cmdlen) > gc->bufEnd ) {'
+			print '        (void) __glXFlushRenderBuffer(gc, gc->pc);'
+			print '    }'
 
-		print '%s    emit_header(gc->pc, %s, cmdlen);' % (indent, f.opcode_real_name())
+		print 'emit_header(gc->pc, %s, cmdlen);' % (f.opcode_real_name())
 
-		self.common_emit_args(f, "gc->pc", indent, 4, 0)
-		print '%s    gc->pc += cmdlen;' % (indent)
-		print '%s    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }' % (indent)
+		self.common_emit_args(f, "gc->pc", 4, 0)
+		print 'gc->pc += cmdlen;'
+		print 'if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }'
 
 		if f.can_be_large:
-			print '%s}' % (indent)
-			print '%selse {' % (indent)
+			print '}'
+			print 'else {'
 
-			self.large_emit_begin(indent, f)
-			self.common_emit_args(f, "pc", indent, 8, 1)
+			self.large_emit_begin(f)
+			self.common_emit_args(f, "pc", 8, 1)
 
 			p = f.variable_length_parameter()
-			print '%s    __glXSendLargeCommand(gc, pc, %u, %s, %s);' % (indent, p.offset + 8, p.name, p.size_string())
-			print '%s}' % (indent)
+			print '    __glXSendLargeCommand(gc, pc, %u, %s, %s);' % (p.offset + 8, p.name, p.size_string())
+			print '}'
 
 		if self.debug:
-			print '%s    __indirect_glFinish();' % (indent)
-			print '%s    printf( "Exit %%s.\\n", "gl%s" );' % (indent, f.name)
+			print '__indirect_glFinish();'
+			print 'printf( "Exit %%s.\\n", "gl%s" );' % (f.name)
 
 		if trailer: print trailer
 		return

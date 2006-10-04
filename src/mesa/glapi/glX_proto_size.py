@@ -277,7 +277,7 @@ class glx_server_enum_function(glx_enum_function):
 		for o in keys:
 			p = f.parameters_by_name[ foo[o] ]
 
-			printer.common_emit_one_arg(p, "pc", "    ", 0)
+			printer.common_emit_one_arg(p, "pc", 0)
 			fixup.append( p.name )
 
 
@@ -544,11 +544,11 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 		return
 
 
-	def common_emit_one_arg(self, p, pc, indent, adjust):
+	def common_emit_one_arg(self, p, pc, adjust):
 		offset = p.offset
 		dst = p.string()
 		src = '(%s *)' % (p.type_string())
-		print '%s%-18s = *%11s(%s + %u);' % (indent, dst, src, pc, offset + adjust);
+		print '%-18s = *%11s(%s + %u);' % (dst, src, pc, offset + adjust);
 		return
 
 
@@ -582,7 +582,7 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 		img = f.images[0]
 		for p in f.parameterIterateGlxSend():
 			if p.name in [w, h, d, img.img_format, img.img_type, img.img_target]:
-				self.common_emit_one_arg( p, "pc", "    ", 0 )
+				self.common_emit_one_arg(p, "pc", 0)
 				fixup.append( p.name )
 
 		print ''
@@ -640,7 +640,7 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 			self.common_func_print_just_header(f)
 
 			for p in params:
-				self.common_emit_one_arg(p, "pc", "    ", 0 )
+				self.common_emit_one_arg(p, "pc", 0)
 
 
 			print ''
