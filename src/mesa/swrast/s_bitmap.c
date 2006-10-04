@@ -193,20 +193,8 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
    span.x = px;
    span.y = py;
    /*span.end = width;*/
-   if (ctx->Visual.rgbMode) {
-      span.interpMask |= SPAN_RGBA;
-      span.red   = FloatToFixed(ctx->Current.RasterColor[0] * CHAN_MAXF);
-      span.green = FloatToFixed(ctx->Current.RasterColor[1] * CHAN_MAXF);
-      span.blue  = FloatToFixed(ctx->Current.RasterColor[2] * CHAN_MAXF);
-      span.alpha = FloatToFixed(ctx->Current.RasterColor[3] * CHAN_MAXF);
-      span.redStep = span.greenStep = span.blueStep = span.alphaStep = 0;
-   }
-   else {
-      span.interpMask |= SPAN_INDEX;
-      span.index = FloatToFixed(ctx->Current.RasterIndex);
-      span.indexStep = 0;
-   }
 
+   _swrast_span_default_color(ctx, &span);
    if (ctx->Depth.Test)
       _swrast_span_default_z(ctx, &span);
    if (swrast->_FogEnabled)
