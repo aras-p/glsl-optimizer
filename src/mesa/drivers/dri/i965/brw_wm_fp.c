@@ -60,9 +60,11 @@ static const char *wm_opcode_strings[] = {
    "FB_WRITE"
 };
 
+#if 0
 static const char *wm_file_strings[] = {   
    "PAYLOAD"
 };
+#endif
 
 
 /***********************************************************************
