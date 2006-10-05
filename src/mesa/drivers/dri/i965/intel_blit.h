@@ -62,5 +62,16 @@ extern void intelEmitFillBlit( struct intel_context *intel,
 			       GLshort w, GLshort h,
 			       GLuint color );
 
+void
+intelEmitImmediateColorExpandBlit(struct intel_context *intel,
+				  GLuint cpp,
+				  GLubyte *src_bits, GLuint src_size,
+				  GLuint fg_color,
+				  GLshort dst_pitch,
+				  struct buffer *dst_buffer,
+				  GLuint dst_offset,
+				  GLboolean dst_tiled,
+				  GLshort dst_x, GLshort dst_y, 
+				  GLshort w, GLshort h);
 
 #endif

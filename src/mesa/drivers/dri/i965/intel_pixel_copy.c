@@ -74,7 +74,7 @@ copypix_src_region(struct intel_context *intel, GLenum type)
  * Check if any fragment operations are in effect which might effect
  * glDraw/CopyPixels.
  */
-static GLboolean
+GLboolean
 intel_check_blit_fragment_ops(GLcontext * ctx)
 {
    if (ctx->NewState)
@@ -83,6 +83,7 @@ intel_check_blit_fragment_ops(GLcontext * ctx)
    /* Could do logicop with the blitter: 
     */
    return !(ctx->_ImageTransferState ||
+	    ctx->RenderMode != GL_RENDER ||
             ctx->Color.AlphaEnabled ||
             ctx->Depth.Test ||
             ctx->Fog.Enabled ||
@@ -90,8 +91,8 @@ intel_check_blit_fragment_ops(GLcontext * ctx)
             !ctx->Color.ColorMask[0] ||
             !ctx->Color.ColorMask[1] ||
             !ctx->Color.ColorMask[2] ||
-            !ctx->Color.ColorMask[3] ||
-            ctx->Color.ColorLogicOpEnabled ||
+            !ctx->Color.ColorMask[3] ||	/* can do this! */
+            ctx->Color.ColorLogicOpEnabled || /* can do this! */
             ctx->Texture._EnabledUnits ||
 	    ctx->FragmentProgram._Enabled);
 }
@@ -150,7 +151,7 @@ do_blit_copypixels(GLcontext * ctx,
 	 GLint dx = dstx - srcx;
          GLint dy = dsty - srcy;
 
-         if (!_mesa_clip_to_region(x, y, x+w, y+h, &dstx, &dsty, &width, &height))
+         if (!_mesa_clip_to_region(x, y, x+w-1, y+h-1, &dstx, &dsty, &width, &height))
             goto out;
 	 
          srcx = dstx - dx;

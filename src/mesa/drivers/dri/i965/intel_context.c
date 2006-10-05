@@ -258,7 +258,6 @@ void intelInitDriverFunctions( struct dd_function_table *functions )
    /* Pixel path fallbacks.
     */
    functions->Accum = _swrast_Accum;
-   functions->Bitmap = _swrast_Bitmap;
    functions->ReadPixels = _swrast_ReadPixels;
    functions->DrawPixels = _swrast_DrawPixels;
 
@@ -266,6 +265,12 @@ void intelInitDriverFunctions( struct dd_function_table *functions )
     * manager:
     */
    functions->CopyPixels = intelCopyPixels;
+   functions->Bitmap = intelBitmap;
+
+   if (getenv("INTEL_NO_BLIT")) {
+      functions->Bitmap = _swrast_Bitmap;
+      functions->CopyPixels = _swrast_CopyPixels;
+   }
 
    intelInitTextureFuncs( functions );
    intelInitStateFuncs( functions );

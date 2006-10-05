@@ -39,6 +39,7 @@
 #include "intel_context.h"
 #include "intel_blit.h"
 #include "intel_regions.h"
+#include "intel_structs.h"
 
 #include "bufmgr.h"
 
@@ -492,4 +493,99 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
    UNLOCK_HARDWARE( intel );
 }
 
+
+
+#define BR13_565  0x1
+#define BR13_8888 0x3
+
+
+void
+intelEmitImmediateColorExpandBlit(struct intel_context *intel,
+				  GLuint cpp,
+				  GLubyte *src_bits, GLuint src_size,
+				  GLuint fg_color,
+				  GLshort dst_pitch,
+				  struct buffer *dst_buffer,
+				  GLuint dst_offset,
+				  GLboolean dst_tiled,
+				  GLshort x, GLshort y, 
+				  GLshort w, GLshort h)
+{
+   struct xy_setup_blit setup;
+   struct xy_text_immediate_blit text;
+   int dwords = ((src_size + 7) & ~7) / 4;
+
+
+   if (w < 0 || h < 0) 
+      return;
+
+   dst_pitch *= cpp;
+
+   if (dst_tiled) 
+      dst_pitch /= 4;
+
+   DBG("%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d, %d bytes %d dwords\n",
+       __FUNCTION__,
+       dst_buffer, dst_pitch, dst_offset, x, y, w, h, src_size, dwords);
+
+   memset(&setup, 0, sizeof(setup));
+   
+   setup.br0.client = CLIENT_2D;
+   setup.br0.opcode = OPCODE_XY_SETUP_BLT;
+   setup.br0.write_alpha = (cpp == 4);
+   setup.br0.write_rgb = (cpp == 4);
+   setup.br0.dst_tiled = dst_tiled;
+   setup.br0.length = (sizeof(setup) / sizeof(int)) - 2;
+      
+   setup.br13.dest_pitch = dst_pitch;
+   setup.br13.rop = 0xcc;
+   setup.br13.color_depth = (cpp == 4) ? BR13_8888 : BR13_565;
+   setup.br13.clipping_enable = 0;
+   setup.br13.mono_source_transparency = 1;
+
+   setup.dw2.clip_y1 = 0;
+   setup.dw2.clip_x1 = 0;
+   setup.dw3.clip_y2 = 100;
+   setup.dw3.clip_x2 = 100;
+
+   setup.dest_base_addr = bmBufferOffset(intel, dst_buffer) + dst_offset;
+   setup.background_color = 0;
+   setup.foreground_color = fg_color;
+   setup.pattern_base_addr = 0;
+
+   memset(&text, 0, sizeof(text));
+   text.dw0.client = CLIENT_2D;
+   text.dw0.opcode = OPCODE_XY_TEXT_IMMEDIATE_BLT;
+   text.dw0.pad0 = 0;
+   text.dw0.byte_packed = 1;	/* ?maybe? */
+   text.dw0.pad1 = 0;
+   text.dw0.dst_tiled = dst_tiled;
+   text.dw0.pad2 = 0;
+   text.dw0.length = (sizeof(text)/sizeof(int)) - 2 + dwords;
+   text.dw1.dest_y1 = y;	/* duplicates info in setup blit */
+   text.dw1.dest_x1 = x;
+   text.dw2.dest_y2 = y + h;
+   text.dw2.dest_x2 = x + w;
+
+   intel_batchbuffer_require_space( intel->batch,
+				    sizeof(setup) + 
+				    sizeof(text) + 
+				    dwords,
+				    INTEL_BATCH_NO_CLIPRECTS );
+
+   intel_batchbuffer_data( intel->batch,
+			   &setup,
+			   sizeof(setup),
+			   INTEL_BATCH_NO_CLIPRECTS );
+
+   intel_batchbuffer_data( intel->batch,
+			   &text,
+			   sizeof(text),
+			   INTEL_BATCH_NO_CLIPRECTS );
+
+   intel_batchbuffer_data( intel->batch,
+			   src_bits,
+			   dwords * 4,
+			   INTEL_BATCH_NO_CLIPRECTS );
+}
 

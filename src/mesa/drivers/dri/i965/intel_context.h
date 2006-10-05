@@ -486,6 +486,14 @@ void intelCopyPixels(GLcontext * ctx,
                      GLsizei width, GLsizei height,
                      GLint destx, GLint desty, GLenum type);
 
+GLboolean intel_check_blit_fragment_ops(GLcontext * ctx);
+
+void intelBitmap(GLcontext * ctx,
+		 GLint x, GLint y,
+		 GLsizei width, GLsizei height,
+		 const struct gl_pixelstore_attrib *unpack,
+		 const GLubyte * pixels);
+
 #define _NEW_WINDOW_POS 0x40000000
 
 
