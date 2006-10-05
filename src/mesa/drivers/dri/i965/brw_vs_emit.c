@@ -797,13 +797,21 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 
    /* Build ndc coords?   TODO: Shortcircuit when w is known to be one.
     */
-   ndc = get_tmp(c);
-   emit_math1(c, BRW_MATH_FUNCTION_INV, ndc, brw_swizzle1(pos, 3), BRW_MATH_PRECISION_FULL);
-   brw_MUL(p, brw_writemask(ndc, WRITEMASK_XYZ), pos, ndc);
+   if (!c->key.know_w_is_one) {
+      ndc = get_tmp(c);
+      emit_math1(c, BRW_MATH_FUNCTION_INV, ndc, brw_swizzle1(pos, 3), BRW_MATH_PRECISION_FULL);
+      brw_MUL(p, brw_writemask(ndc, WRITEMASK_XYZ), pos, ndc);
+   }
+   else {
+      ndc = pos;
+   }
 
    /* This includes the workaround for -ve rhw, so is no longer an
     * optional step:
     */
+   if ((c->prog_data.outputs_written & (1<<VERT_RESULT_PSIZ)) ||
+       c->key.nr_userclip ||
+       !c->key.know_w_is_one)
    {
       struct brw_reg header1 = retype(get_tmp(c), BRW_REGISTER_TYPE_UD);
       GLuint i;
@@ -836,26 +844,26 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        * Later, clipping will detect ucp[6] and ensure the primitive is
        * clipped against all fixed planes.
        */
-      brw_CMP(p,
-	      vec8(brw_null_reg()),
-	      BRW_CONDITIONAL_L,
-	      brw_swizzle1(ndc, 3),
-	      brw_imm_f(0));
+      if (!c->key.know_w_is_one) {
+	 brw_CMP(p,
+		 vec8(brw_null_reg()),
+		 BRW_CONDITIONAL_L,
+		 brw_swizzle1(ndc, 3),
+		 brw_imm_f(0));
    
-      brw_OR(p, brw_writemask(header1, WRITEMASK_W), header1, brw_imm_ud(1<<6));
-      brw_MOV(p, ndc, brw_imm_f(0));
-      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-
-
-
-
-
+	 brw_OR(p, brw_writemask(header1, WRITEMASK_W), header1, brw_imm_ud(1<<6));
+	 brw_MOV(p, ndc, brw_imm_f(0));
+	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+      }
 
       brw_set_access_mode(p, BRW_ALIGN_1);	/* why? */
       brw_MOV(p, retype(brw_message_reg(1), BRW_REGISTER_TYPE_UD), header1);
       brw_set_access_mode(p, BRW_ALIGN_16);
 
       release_tmp(c, header1);
+   }
+   else {
+      brw_MOV(p, retype(brw_message_reg(1), BRW_REGISTER_TYPE_UD), brw_imm_ud(0));
    }
 
 

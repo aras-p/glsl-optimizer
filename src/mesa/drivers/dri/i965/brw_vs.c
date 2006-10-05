@@ -105,6 +105,11 @@ static void brw_upload_vs_prog( struct brw_context *brw )
    key.copy_edgeflag = (brw->attribs.Polygon->FrontMode != GL_FILL ||
 			brw->attribs.Polygon->BackMode != GL_FILL);
 
+   /* BRW_NEW_METAOPS
+    */
+   if (brw->metaops.active)
+      key.know_w_is_one = 1;
+
    /* Make an early check for the key.
     */
    if (brw_search_cache(&brw->cache[BRW_VS_PROG], 
@@ -122,7 +127,7 @@ static void brw_upload_vs_prog( struct brw_context *brw )
 const struct brw_tracked_state brw_vs_prog = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM | _NEW_POLYGON,
-      .brw   = BRW_NEW_VERTEX_PROGRAM,
+      .brw   = BRW_NEW_VERTEX_PROGRAM | BRW_NEW_METAOPS,
       .cache = 0
    },
    .update = brw_upload_vs_prog
