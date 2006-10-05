@@ -87,7 +87,7 @@ intelMapScreenRegions(__DRIscreenPrivate *sPriv)
        * the renderbuffer address to point to the beginning of the
        * renderbuffer.
        */
-      intelScreen->front.map = sPriv->pFB;
+      intelScreen->front.map = (char *)sPriv->pFB;
       if (intelScreen->front.map == NULL) {
 	 fprintf(stderr, "Failed to find framebuffer mapping\n");
 	 return GL_FALSE;
