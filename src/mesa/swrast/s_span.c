@@ -1212,11 +1212,15 @@ add_specular(GLcontext *ctx, SWspan *span)
 
 /**
  * Convert the span's color arrays to the given type.
+ * XXX this could be put into image.c and reused in several places.
  */
 static void
 convert_color_type(GLcontext *ctx, SWspan *span, GLenum newType)
 {
    const GLubyte *mask = span->array->mask;
+   /* XXX NOTE: These all point to the same memory!
+    * We need to use temporaray storage when converting, below.
+    */
    GLubyte (*rgba1)[4] = span->array->color.sz1.rgba;
    GLushort (*rgba2)[4] = span->array->color.sz2.rgba;
    GLfloat (*rgba4)[4] = span->array->color.sz4.rgba;
@@ -1226,77 +1230,89 @@ convert_color_type(GLcontext *ctx, SWspan *span, GLenum newType)
    switch (span->array->ChanType) {
    case GL_UNSIGNED_BYTE:
       if (newType == GL_UNSIGNED_SHORT) {
+         GLushort newVals[MAX_WIDTH][4];
          GLuint i;
          for (i = 0; i < span->end; i++) {
             if (mask[i]) {
-               rgba2[i][RCOMP] = UBYTE_TO_USHORT(rgba1[i][RCOMP]);
-               rgba2[i][GCOMP] = UBYTE_TO_USHORT(rgba1[i][GCOMP]);
-               rgba2[i][BCOMP] = UBYTE_TO_USHORT(rgba1[i][BCOMP]);
-               rgba2[i][ACOMP] = UBYTE_TO_USHORT(rgba1[i][ACOMP]);
+               newVals[i][RCOMP] = UBYTE_TO_USHORT(rgba1[i][RCOMP]);
+               newVals[i][GCOMP] = UBYTE_TO_USHORT(rgba1[i][GCOMP]);
+               newVals[i][BCOMP] = UBYTE_TO_USHORT(rgba1[i][BCOMP]);
+               newVals[i][ACOMP] = UBYTE_TO_USHORT(rgba1[i][ACOMP]);
             }
          }
+         _mesa_memcpy(rgba2, newVals, span->end * 4 * sizeof(GLushort));
       }
       else {
+         GLfloat newVals[MAX_WIDTH][4];
          GLuint i;
          ASSERT(newType == GL_FLOAT);
          for (i = 0; i < span->end; i++) {
             if (mask[i]) {
-               rgba4[i][RCOMP] = UBYTE_TO_FLOAT(rgba1[i][RCOMP]);
-               rgba4[i][GCOMP] = UBYTE_TO_FLOAT(rgba1[i][GCOMP]);
-               rgba4[i][BCOMP] = UBYTE_TO_FLOAT(rgba1[i][BCOMP]);
-               rgba4[i][ACOMP] = UBYTE_TO_FLOAT(rgba1[i][ACOMP]);
+               newVals[i][RCOMP] = UBYTE_TO_FLOAT(rgba1[i][RCOMP]);
+               newVals[i][GCOMP] = UBYTE_TO_FLOAT(rgba1[i][GCOMP]);
+               newVals[i][BCOMP] = UBYTE_TO_FLOAT(rgba1[i][BCOMP]);
+               newVals[i][ACOMP] = UBYTE_TO_FLOAT(rgba1[i][ACOMP]);
             }
          }
+         _mesa_memcpy(rgba4, newVals, span->end * 4 * sizeof(GLfloat));
       }
       break;
    case GL_UNSIGNED_SHORT:
       if (newType == GL_UNSIGNED_BYTE) {
+         GLubyte newVals[MAX_WIDTH][4];
          GLuint i;
          for (i = 0; i < span->end; i++) {
             if (mask[i]) {
-               rgba1[i][RCOMP] = USHORT_TO_UBYTE(rgba2[i][RCOMP]);
-               rgba1[i][GCOMP] = USHORT_TO_UBYTE(rgba2[i][GCOMP]);
-               rgba1[i][BCOMP] = USHORT_TO_UBYTE(rgba2[i][BCOMP]);
-               rgba1[i][ACOMP] = USHORT_TO_UBYTE(rgba2[i][ACOMP]);
+               newVals[i][RCOMP] = USHORT_TO_UBYTE(rgba2[i][RCOMP]);
+               newVals[i][GCOMP] = USHORT_TO_UBYTE(rgba2[i][GCOMP]);
+               newVals[i][BCOMP] = USHORT_TO_UBYTE(rgba2[i][BCOMP]);
+               newVals[i][ACOMP] = USHORT_TO_UBYTE(rgba2[i][ACOMP]);
             }
          }
+         _mesa_memcpy(rgba1, newVals, span->end * 4 * sizeof(GLubyte));
       }
       else {
+         GLfloat newVals[MAX_WIDTH][4];
          GLuint i;
          ASSERT(newType == GL_FLOAT);
          for (i = 0; i < span->end; i++) {
             if (mask[i]) {
-               rgba4[i][RCOMP] = USHORT_TO_FLOAT(rgba2[i][RCOMP]);
-               rgba4[i][GCOMP] = USHORT_TO_FLOAT(rgba2[i][GCOMP]);
-               rgba4[i][BCOMP] = USHORT_TO_FLOAT(rgba2[i][BCOMP]);
-               rgba4[i][ACOMP] = USHORT_TO_FLOAT(rgba2[i][ACOMP]);
+               newVals[i][RCOMP] = USHORT_TO_FLOAT(rgba2[i][RCOMP]);
+               newVals[i][GCOMP] = USHORT_TO_FLOAT(rgba2[i][GCOMP]);
+               newVals[i][BCOMP] = USHORT_TO_FLOAT(rgba2[i][BCOMP]);
+               newVals[i][ACOMP] = USHORT_TO_FLOAT(rgba2[i][ACOMP]);
             }
          }
+         _mesa_memcpy(rgba4, newVals, span->end * 4 * sizeof(GLfloat));
       }
       break;
    case GL_FLOAT:
       if (newType == GL_UNSIGNED_BYTE) {
+         GLubyte newVals[MAX_WIDTH][4];
          GLuint i;
          for (i = 0; i < span->end; i++) {
             if (mask[i]) {
-               UNCLAMPED_FLOAT_TO_UBYTE(rgba1[i][RCOMP], rgba4[i][RCOMP]);
-               UNCLAMPED_FLOAT_TO_UBYTE(rgba1[i][GCOMP], rgba4[i][GCOMP]);
-               UNCLAMPED_FLOAT_TO_UBYTE(rgba1[i][BCOMP], rgba4[i][BCOMP]);
-               UNCLAMPED_FLOAT_TO_UBYTE(rgba1[i][ACOMP], rgba4[i][ACOMP]);
+               UNCLAMPED_FLOAT_TO_UBYTE(newVals[i][RCOMP], rgba4[i][RCOMP]);
+               UNCLAMPED_FLOAT_TO_UBYTE(newVals[i][GCOMP], rgba4[i][GCOMP]);
+               UNCLAMPED_FLOAT_TO_UBYTE(newVals[i][BCOMP], rgba4[i][BCOMP]);
+               UNCLAMPED_FLOAT_TO_UBYTE(newVals[i][ACOMP], rgba4[i][ACOMP]);
             }
          }
+         _mesa_memcpy(rgba1, newVals, span->end * 4 * sizeof(GLubyte));
       }
       else {
+         GLushort newVals[MAX_WIDTH][4];
          GLuint i;
          ASSERT(newType == GL_UNSIGNED_SHORT);
          for (i = 0; i < span->end; i++) {
             if (mask[i]) {
-               UNCLAMPED_FLOAT_TO_USHORT(rgba2[i][RCOMP], rgba4[i][RCOMP]);
-               UNCLAMPED_FLOAT_TO_USHORT(rgba2[i][GCOMP], rgba4[i][GCOMP]);
-               UNCLAMPED_FLOAT_TO_USHORT(rgba2[i][BCOMP], rgba4[i][BCOMP]);
-               UNCLAMPED_FLOAT_TO_USHORT(rgba2[i][ACOMP], rgba4[i][ACOMP]);
+               UNCLAMPED_FLOAT_TO_USHORT(newVals[i][RCOMP], rgba4[i][RCOMP]);
+               UNCLAMPED_FLOAT_TO_USHORT(newVals[i][GCOMP], rgba4[i][GCOMP]);
+               UNCLAMPED_FLOAT_TO_USHORT(newVals[i][BCOMP], rgba4[i][BCOMP]);
+               UNCLAMPED_FLOAT_TO_USHORT(newVals[i][ACOMP], rgba4[i][ACOMP]);
             }
          }
+         _mesa_memcpy(rgba2, newVals, span->end * 4 * sizeof(GLushort));
       }
       break;
    default:
