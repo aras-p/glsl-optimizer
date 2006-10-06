@@ -193,9 +193,8 @@ read_stencil_pixels( GLcontext *ctx,
 
 
 /**
- * Optimized glReadPixels for particular pixel formats:
- *   GL_UNSIGNED_BYTE, GL_RGBA
- * when pixel scaling, biasing and mapping are disabled.
+ * Optimized glReadPixels for particular pixel formats when pixel
+ * scaling, biasing, mapping, etc. are disabled.
  */
 static GLboolean
 read_fast_rgba_pixels( GLcontext *ctx,
@@ -207,6 +206,10 @@ read_fast_rgba_pixels( GLcontext *ctx,
 {
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
 
+   /* clipping should have already been done */
+   ASSERT(x + width <= rb->Width);
+   ASSERT(y + height <= rb->Height);
+
    /* can't do scale, bias, mapping, etc */
    if (ctx->_ImageTransferState)
        return GL_FALSE;
@@ -215,57 +218,40 @@ read_fast_rgba_pixels( GLcontext *ctx,
    if (packing->Alignment != 1 || packing->SwapBytes || packing->LsbFirst)
       return GL_FALSE;
 
-   {
-      GLint srcX = x;
-      GLint srcY = y;
-      GLint readWidth = width;           /* actual width read */
-      GLint readHeight = height;         /* actual height read */
-      GLint skipPixels = packing->SkipPixels;
-      GLint skipRows = packing->SkipRows;
-      GLint rowLength;
+   /* if the pixel format exactly matches the renderbuffer format */
+   if (format == GL_RGBA && rb->DataType == type) {
+      GLint rowLength = (packing->RowLength > 0) ? packing->RowLength : width;
+      GLint pixelSize, row;
+      GLubyte *dest;
 
-      if (packing->RowLength > 0)
-         rowLength = packing->RowLength;
-      else
-         rowLength = width;
-
-      /*
-       * Ready to read!
-       * The window region at (destX, destY) of size (readWidth, readHeight)
-       * will be read back.
-       * We'll write pixel data to buffer pointed to by "pixels" but we'll
-       * skip "skipRows" rows and skip "skipPixels" pixels/row.
-       */
-#if CHAN_BITS == 8
-      if (format == GL_RGBA && type == GL_UNSIGNED_BYTE)
-#elif CHAN_BITS == 16
-      if (format == GL_RGBA && type == GL_UNSIGNED_SHORT)
-#else
-      if (0)
-#endif
-      {
-         GLchan *dest = (GLchan *) pixels
-                      + (skipRows * rowLength + skipPixels) * 4;
-         GLint row;
-
-         if (packing->Invert) {
-            /* start at top and go down */
-            dest += (readHeight - 1) * rowLength * 4;
-            rowLength = -rowLength;
-         }
-
-         ASSERT(rb->GetRow);
-         for (row=0; row<readHeight; row++) {
-            rb->GetRow(ctx, rb, readWidth, srcX, srcY, dest);
-            dest += rowLength * 4;
-            srcY++;
-         }
-         return GL_TRUE;
-      }
+      if (type == GL_UNSIGNED_BYTE)
+         pixelSize = 4 * sizeof(GLubyte);
+      else if (type == GL_UNSIGNED_SHORT)
+         pixelSize = 4 * sizeof(GLushort);
       else {
-         /* can't do this format/type combination */
-         return GL_FALSE;
+         ASSERT(type == GL_FLOAT);
+         pixelSize = 4 * sizeof(GLfloat);
       }
+
+      dest = (GLubyte *) pixels
+         + (packing->SkipRows * rowLength + packing->SkipPixels) * pixelSize;
+
+      if (packing->Invert) {
+         /* start at top and go down */
+         dest += (height - 1) * rowLength * pixelSize;
+         rowLength = -rowLength;
+      }
+
+      ASSERT(rb->GetRow);
+      for (row = 0; row < height; row++) {
+         rb->GetRow(ctx, rb, width, x, y + row, dest);
+         dest += rowLength * pixelSize;
+      }
+      return GL_TRUE;
+   }
+   else {
+      /* can't do this format/type combination */
+      return GL_FALSE;
    }
 }
 
