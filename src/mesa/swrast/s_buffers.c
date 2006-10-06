@@ -47,22 +47,41 @@ clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
    const GLint y = ctx->DrawBuffer->_Ymin;
    const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
    const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
-   GLchan clearColor[4];
    SWspan span;
    GLint i;
 
    ASSERT(ctx->Visual.rgbMode);
    ASSERT(rb->PutRow);
 
-   CLAMPED_FLOAT_TO_CHAN(clearColor[RCOMP], ctx->Color.ClearColor[0]);
-   CLAMPED_FLOAT_TO_CHAN(clearColor[GCOMP], ctx->Color.ClearColor[1]);
-   CLAMPED_FLOAT_TO_CHAN(clearColor[BCOMP], ctx->Color.ClearColor[2]);
-   CLAMPED_FLOAT_TO_CHAN(clearColor[ACOMP], ctx->Color.ClearColor[3]);
-
    /* Initialize color span with clear color */
+   /* XXX optimize for clearcolor == black/zero (bzero) */
    INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
-   for (i = 0; i < width; i++) {
-      COPY_CHAN4(span.array->rgba[i], clearColor);
+   span.array->ChanType = rb->DataType;
+   if (span.array->ChanType == GL_UNSIGNED_BYTE) {
+      GLubyte clearColor[4];
+      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[RCOMP], ctx->Color.ClearColor[0]);
+      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[GCOMP], ctx->Color.ClearColor[1]);
+      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[BCOMP], ctx->Color.ClearColor[2]);
+      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[ACOMP], ctx->Color.ClearColor[3]);
+      for (i = 0; i < width; i++) {
+         COPY_4UBV(span.array->rgba[i], clearColor);
+      }
+   }
+   else if (span.array->ChanType == GL_UNSIGNED_SHORT) {
+      GLushort clearColor[4];
+      UNCLAMPED_FLOAT_TO_USHORT(clearColor[RCOMP], ctx->Color.ClearColor[0]);
+      UNCLAMPED_FLOAT_TO_USHORT(clearColor[GCOMP], ctx->Color.ClearColor[1]);
+      UNCLAMPED_FLOAT_TO_USHORT(clearColor[BCOMP], ctx->Color.ClearColor[2]);
+      UNCLAMPED_FLOAT_TO_USHORT(clearColor[ACOMP], ctx->Color.ClearColor[3]);
+      for (i = 0; i < width; i++) {
+         COPY_4V(span.array->rgba[i], clearColor);
+      }
+   }
+   else {
+      ASSERT(span.array->ChanType == GL_FLOAT);
+      for (i = 0; i < width; i++) {
+         COPY_4V(span.array->rgba[i], ctx->Color.ClearColor);
+      }
    }
 
    /* Note that masking will change the color values, but only the
