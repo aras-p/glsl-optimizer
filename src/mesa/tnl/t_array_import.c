@@ -327,9 +327,10 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
       }
       else if (index >= VERT_ATTRIB_GENERIC1 &&
                index <= VERT_ATTRIB_GENERIC15) {
-         if (program && !program->IsNVProgram) {
+         const GLuint arrayIndex = index - VERT_ATTRIB_GENERIC0;
+         if (program && !program->IsNVProgram &&
+	     ctx->Array.ArrayObj->VertexAttrib[arrayIndex].Enabled) {
             /* GL_ARB_vertex_program: bind a generic attribute array */
-            const GLuint arrayIndex = index - VERT_ATTRIB_GENERIC0;
             _tnl_import_attrib(ctx, arrayIndex, GL_FALSE, GL_TRUE);
             VB->AttribPtr[index] = &tmp->Attribs[arrayIndex];
          }
