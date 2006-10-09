@@ -32,7 +32,7 @@
 #include "indirect_size.h"
 #include <GL/glxproto.h>
 #ifdef USE_XCB
-#include <X11/xcl.h>
+#include <X11/Xlib-xcb.h>
 #include <xcb/xcb.h>
 #include <xcb/glx.h>
 #endif /* USE_XCB */
