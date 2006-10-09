@@ -168,7 +168,7 @@ class PrintGlxProtoStubs(glX_proto_common.glx_print_proto):
 		print '#include "indirect_size.h"'
 		print '#include <GL/glxproto.h>'
 		print '#ifdef USE_XCB'
-		print '#include <X11/xcl.h>'
+		print '#include <X11/Xlib-xcb.h>'
 		print '#include <xcb/xcb.h>'
 		print '#include <xcb/glx.h>'
 		print '#endif /* USE_XCB */'
