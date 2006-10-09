@@ -1016,11 +1016,11 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	if (!_XReply(dpy, (xReply*) &reply, 0, False)) {
 	    /* Something is busted. Punt. */
 	    UnlockDisplay(dpy);
+	    SyncHandle();
 	    FreeScreenConfigs(priv);
 	    return GL_FALSE;
 	}
 
-	UnlockDisplay(dpy);
 	if (!reply.numVisuals) {
 	    /* This screen does not support GL rendering */
 	    UnlockDisplay(dpy);
