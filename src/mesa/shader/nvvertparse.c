@@ -62,8 +62,8 @@ struct parse_state {
    GLboolean isStateProgram;
    GLboolean isPositionInvariant;
    GLboolean isVersion1_1;
-   GLuint inputsRead;
-   GLuint outputsWritten;
+   GLbitfield inputsRead;
+   GLbitfield outputsWritten;
    GLboolean anyProgRegsWritten;
    GLuint numInst;                 /* number of instructions parsed */
 };
