@@ -2099,7 +2099,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                            "glGetProgramRegisterfvMESA(registerName)");
                return;
             }
-            COPY_4V(v, ctx->VertexProgram.Temporaries[i]);
+            COPY_4V(v, ctx->VertexProgram.Machine.Temporaries[i]);
          }
          else if (reg[0] == 'v' && reg[1] == '[') {
             /* Vertex Input attribute */
@@ -2110,7 +2110,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                _mesa_sprintf(number, "%d", i);
                if (_mesa_strncmp(reg + 2, name, 4) == 0 ||
                    _mesa_strncmp(reg + 2, number, _mesa_strlen(number)) == 0) {
-                  COPY_4V(v, ctx->VertexProgram.Inputs[i]);
+                  COPY_4V(v, ctx->VertexProgram.Machine.Inputs[i]);
                   return;
                }
             }

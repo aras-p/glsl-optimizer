@@ -1913,29 +1913,40 @@ struct gl_program_state
 
 
 /**
- * State vars for GL_ARB/GL_NV_vertex_program
+ * Virtual vertex program machine state.
+ * Only used during program execution (may be moved someday):
  */
-struct gl_vertex_program_state
+struct gl_vertex_program_machine
 {
-   GLboolean Enabled;                  /**< GL_VERTEX_PROGRAM_ARB/NV */
-   GLboolean _Enabled;                 /**< Enabled and valid program? */
-   GLboolean PointSizeEnabled;         /**< GL_VERTEX_PROGRAM_POINT_SIZE_ARB/NV */
-   GLboolean TwoSideEnabled;           /**< GL_VERTEX_PROGRAM_TWO_SIDE_ARB/NV */
-   struct gl_vertex_program *Current;  /**< ptr to currently bound program */
-   const struct gl_vertex_program *_Current;    /**< ptr to currently bound
-					          program, including internal
-					          (t_vp_build.c) programs */
-
-   GLenum TrackMatrix[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
-   GLenum TrackMatrixTransform[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
-
-   GLfloat Parameters[MAX_NV_VERTEX_PROGRAM_PARAMS][4]; /* Env params */
-   /* Only used during program execution (may be moved someday): */
    GLfloat Temporaries[MAX_NV_VERTEX_PROGRAM_TEMPS][4];
    GLfloat Inputs[MAX_NV_VERTEX_PROGRAM_INPUTS][4];
    GLuint InputsSize[MAX_NV_VERTEX_PROGRAM_INPUTS];
    GLfloat Outputs[MAX_NV_VERTEX_PROGRAM_OUTPUTS][4];
    GLint AddressReg[4];
+};
+
+
+/**
+ * Context state for vertex programs.
+ */
+struct gl_vertex_program_state
+{
+   GLboolean Enabled;               /**< GL_VERTEX_PROGRAM_ARB/NV */
+   GLboolean _Enabled;              /**< Enabled and valid program? */
+   GLboolean PointSizeEnabled;      /**< GL_VERTEX_PROGRAM_POINT_SIZE_ARB/NV */
+   GLboolean TwoSideEnabled;        /**< GL_VERTEX_PROGRAM_TWO_SIDE_ARB/NV */
+   struct gl_vertex_program *Current;  /**< ptr to currently bound program */
+   const struct gl_vertex_program *_Current;    /**< ptr to currently bound
+					          program, including internal
+					          (t_vp_build.c) programs */
+
+   GLfloat Parameters[MAX_NV_VERTEX_PROGRAM_PARAMS][4]; /**< Env params */
+
+   struct gl_vertex_program_machine Machine;
+
+   /* For GL_NV_vertex_program only: */
+   GLenum TrackMatrix[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
+   GLenum TrackMatrixTransform[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
 
 #if FEATURE_MESA_program_debug
    GLprogramcallbackMESA Callback;
@@ -1947,7 +1958,7 @@ struct gl_vertex_program_state
 
 
 /**
- * Context state for GL_ARB/NV_fragment_program
+ * Context state for fragment programs.
  */
 struct gl_fragment_program_state
 {

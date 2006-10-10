@@ -118,7 +118,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 	    const GLuint size = VB->AttribPtr[attr]->size;
 	    const GLuint stride = VB->AttribPtr[attr]->stride;
 	    const GLfloat *data = (GLfloat *) (ptr + stride * i);
-	    COPY_CLEAN_4V(ctx->VertexProgram.Inputs[attr], size, data);
+	    COPY_CLEAN_4V(ctx->VertexProgram.Machine.Inputs[attr], size, data);
 	 }
       }
 
@@ -129,19 +129,19 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       /* Fixup fog an point size results if needed */
       if (ctx->Fog.Enabled &&
           (program->Base.OutputsWritten & (1 << VERT_RESULT_FOGC)) == 0) {
-         ctx->VertexProgram.Outputs[VERT_RESULT_FOGC][0] = 1.0;
+         ctx->VertexProgram.Machine.Outputs[VERT_RESULT_FOGC][0] = 1.0;
       }
 
       if (ctx->VertexProgram.PointSizeEnabled &&
           (program->Base.OutputsWritten & (1 << VERT_RESULT_PSIZ)) == 0) {
-         ctx->VertexProgram.Outputs[VERT_RESULT_PSIZ][0] = ctx->Point.Size;
+         ctx->VertexProgram.Machine.Outputs[VERT_RESULT_PSIZ][0] = ctx->Point.Size;
       }
 
       /* copy the output registers into the VB->attribs arrays */
       /* XXX (optimize) could use a conditional and smaller loop limit here */
       for (attr = 0; attr < 15; attr++) {
          COPY_4V(store->attribs[attr].data[i],
-                 ctx->VertexProgram.Outputs[attr]);
+                 ctx->VertexProgram.Machine.Outputs[attr]);
       }
    }
 

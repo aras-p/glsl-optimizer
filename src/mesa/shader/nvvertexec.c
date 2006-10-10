@@ -50,20 +50,20 @@ void
 _mesa_init_vp_per_vertex_registers(GLcontext *ctx)
 {
    /* Input registers get initialized from the current vertex attribs */
-   MEMCPY(ctx->VertexProgram.Inputs, ctx->Current.Attrib,
+   MEMCPY(ctx->VertexProgram.Machine.Inputs, ctx->Current.Attrib,
           MAX_VERTEX_PROGRAM_ATTRIBS * 4 * sizeof(GLfloat));
 
    if (ctx->VertexProgram.Current->IsNVProgram) {
       GLuint i;
       /* Output/result regs are initialized to [0,0,0,1] */
       for (i = 0; i < MAX_NV_VERTEX_PROGRAM_OUTPUTS; i++) {
-         ASSIGN_4V(ctx->VertexProgram.Outputs[i], 0.0F, 0.0F, 0.0F, 1.0F);
+         ASSIGN_4V(ctx->VertexProgram.Machine.Outputs[i], 0.0F, 0.0F, 0.0F, 1.0F);
       }
       /* Temp regs are initialized to [0,0,0,0] */
       for (i = 0; i < MAX_NV_VERTEX_PROGRAM_TEMPS; i++) {
-         ASSIGN_4V(ctx->VertexProgram.Temporaries[i], 0.0F, 0.0F, 0.0F, 0.0F);
+         ASSIGN_4V(ctx->VertexProgram.Machine.Temporaries[i], 0.0F, 0.0F, 0.0F, 0.0F);
       }
-      ASSIGN_4V(ctx->VertexProgram.AddressReg, 0, 0, 0, 0);
+      ASSIGN_4V(ctx->VertexProgram.Machine.AddressReg, 0, 0, 0, 0);
    }
 }
 
@@ -161,7 +161,7 @@ _mesa_init_vp_per_primitive_registers(GLcontext *ctx)
       }
    }
    else {
-      /* Using and ARB vertex program */
+      /* ARB vertex program */
       if (ctx->VertexProgram.Current->Base.Parameters) {
          /* Grab the state GL state and put into registers */
          _mesa_load_state_parameters(ctx,
@@ -182,30 +182,30 @@ _mesa_dump_vp_state( const struct gl_vertex_program_state *state )
    _mesa_printf("VertexIn:\n");
    for (i = 0; i < MAX_NV_VERTEX_PROGRAM_INPUTS; i++) {
       _mesa_printf("%d: %f %f %f %f   ", i,
-                   state->Inputs[i][0],
-                   state->Inputs[i][1],
-                   state->Inputs[i][2],
-                   state->Inputs[i][3]);
+                   state->Machine.Inputs[i][0],
+                   state->Machine.Inputs[i][1],
+                   state->Machine.Inputs[i][2],
+                   state->Machine.Inputs[i][3]);
    }
    _mesa_printf("\n");
 
    _mesa_printf("VertexOut:\n");
    for (i = 0; i < MAX_NV_VERTEX_PROGRAM_OUTPUTS; i++) {
       _mesa_printf("%d: %f %f %f %f   ", i,
-                  state->Outputs[i][0],
-                  state->Outputs[i][1],
-                  state->Outputs[i][2],
-                  state->Outputs[i][3]);
+                  state->Machine.Outputs[i][0],
+                  state->Machine.Outputs[i][1],
+                  state->Machine.Outputs[i][2],
+                  state->Machine.Outputs[i][3]);
    }
    _mesa_printf("\n");
 
    _mesa_printf("Registers:\n");
    for (i = 0; i < MAX_NV_VERTEX_PROGRAM_TEMPS; i++) {
       _mesa_printf("%d: %f %f %f %f   ", i,
-                  state->Temporaries[i][0],
-                  state->Temporaries[i][1],
-                  state->Temporaries[i][2],
-                  state->Temporaries[i][3]);
+                  state->Machine.Temporaries[i][0],
+                  state->Machine.Temporaries[i][1],
+                  state->Machine.Temporaries[i][2],
+                  state->Machine.Temporaries[i][3]);
    }
    _mesa_printf("\n");
 
@@ -231,7 +231,7 @@ get_register_pointer( const struct prog_src_register *source,
                       const struct gl_vertex_program_state *state )
 {
    if (source->RelAddr) {
-      const GLint reg = source->Index + state->AddressReg[0];
+      const GLint reg = source->Index + state->Machine.AddressReg[0];
       ASSERT( (source->File == PROGRAM_ENV_PARAM) || 
         (source->File == PROGRAM_STATE_VAR) );
       if (reg < 0 || reg > MAX_NV_VERTEX_PROGRAM_PARAMS)
@@ -245,14 +245,14 @@ get_register_pointer( const struct prog_src_register *source,
       switch (source->File) {
          case PROGRAM_TEMPORARY:
             ASSERT(source->Index < MAX_NV_VERTEX_PROGRAM_TEMPS);
-            return state->Temporaries[source->Index];
+            return state->Machine.Temporaries[source->Index];
          case PROGRAM_INPUT:
             ASSERT(source->Index < MAX_NV_VERTEX_PROGRAM_INPUTS);
-            return state->Inputs[source->Index];
+            return state->Machine.Inputs[source->Index];
          case PROGRAM_OUTPUT:
             /* This is only needed for the PRINT instruction */
             ASSERT(source->Index < MAX_NV_VERTEX_PROGRAM_OUTPUTS);
-            return state->Outputs[source->Index];
+            return state->Machine.Outputs[source->Index];
          case PROGRAM_LOCAL_PARAM:
             ASSERT(source->Index < MAX_PROGRAM_LOCAL_PARAMS);
             return state->Current->Base.LocalParams[source->Index];
@@ -329,10 +329,10 @@ store_vector4( const struct prog_dst_register *dest,
    GLfloat *dst;
    switch (dest->File) {
       case PROGRAM_TEMPORARY:
-         dst = state->Temporaries[dest->Index];
+         dst = state->Machine.Temporaries[dest->Index];
          break;
       case PROGRAM_OUTPUT:
-         dst = state->Outputs[dest->Index];
+         dst = state->Machine.Outputs[dest->Index];
          break;
       case PROGRAM_ENV_PARAM:
          {
@@ -390,9 +390,9 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct gl_vertex_program *progra
     * by the MVP matrix and store in the vertex position result register.
     */
    if (ctx->VertexProgram.Current->IsPositionInvariant) {
-      TRANSFORM_POINT( ctx->VertexProgram.Outputs[VERT_RESULT_HPOS], 
+      TRANSFORM_POINT( ctx->VertexProgram.Machine.Outputs[VERT_RESULT_HPOS], 
                        ctx->_ModelProjectMatrix.m, 
-                       ctx->VertexProgram.Inputs[VERT_ATTRIB_POS]);
+                       ctx->VertexProgram.Machine.Inputs[VERT_ATTRIB_POS]);
 
       /* XXX: This could go elsewhere */
       ctx->VertexProgram.Current->Base.OutputsWritten |= VERT_BIT_POS;
@@ -636,7 +636,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct gl_vertex_program *progra
             {
                GLfloat t[4];
                fetch_vector4( &inst->SrcReg[0], state, t );
-               state->AddressReg[0] = (GLint) FLOORF(t[0]);
+               state->Machine.AddressReg[0] = (GLint) FLOORF(t[0]);
             }
             break;
          case OPCODE_DPH:
