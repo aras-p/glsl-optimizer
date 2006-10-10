@@ -48,8 +48,10 @@ static void i915_render_start( intelContextPtr intel )
 
    if (ctx->FragmentProgram._Active) 
       i915ValidateFragmentProgram( i915 );
-   else 
+   else {
+      assert(!ctx->_MaintainTexEnvProgram);
       i915ValidateTextureProgram( i915 );
+   }
 }
 
 

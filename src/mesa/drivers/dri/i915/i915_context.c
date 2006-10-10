@@ -50,6 +50,7 @@ static const struct dri_extension i915_extensions[] =
     { "GL_ARB_depth_texture",              NULL },
     { "GL_ARB_fragment_program",           NULL },
     { "GL_ARB_shadow",                     NULL },
+    { "GL_ARB_texture_env_crossbar",       NULL },
     { "GL_EXT_shadow_funcs",               NULL },
     /* ARB extn won't work if not enabled */
     { "GL_SGIX_depth_texture",             NULL },
@@ -165,6 +166,7 @@ GLboolean i915CreateContext( const __GLcontextModes *mesaVis,
 						I915_MAX_TEX_INSN);
    ctx->Const.FragmentProgram.MaxNativeTexIndirections = I915_MAX_TEX_INDIRECT;
    ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0; /* I don't think we have one */
+   ctx->_MaintainTexEnvProgram = 1;
 
 
    driInitExtensions( ctx, i915_extensions, GL_FALSE );

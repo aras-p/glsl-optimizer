@@ -955,6 +955,17 @@ void i915ValidateFragmentProgram( i915ContextPtr i915 )
    GLuint s2 = S2_TEXCOORD_NONE;
    int i, offset = 0;
 
+   if (i915->current_program != p) 
+   {
+      if (i915->current_program) {
+	 i915->current_program->on_hardware = 0;
+	 i915->current_program->params_uptodate = 0;
+      }
+      
+      i915->current_program = p;
+   }
+
+
    /* Important:
     */
    VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;

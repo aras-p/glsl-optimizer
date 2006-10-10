@@ -591,6 +591,11 @@ void i915ValidateTextureProgram( i915ContextPtr i915 )
    intel->specoffset = 0;
    offset = 0;
 
+   if (i915->current_program) {
+      i915->current_program->on_hardware = 0;
+      i915->current_program->params_uptodate = 0;
+   }
+
    if (i915->vertex_fog == I915_FOG_PIXEL) {
       EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, S4_VFMT_XYZW, 16 );
       RENDERINPUTS_CLEAR( index_bitset, _TNL_ATTRIB_FOG );
