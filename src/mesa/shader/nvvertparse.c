@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1395,6 +1395,8 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
       }
       program->Base.Instructions = newInst;
       program->Base.InputsRead = parseState.inputsRead;
+      if (parseState.isPositionInvariant)
+         program->Base.InputsRead |= VERT_BIT_POS;
       program->Base.NumInstructions = parseState.numInst;
       program->Base.OutputsWritten = parseState.outputsWritten;
       program->IsPositionInvariant = parseState.isPositionInvariant;
