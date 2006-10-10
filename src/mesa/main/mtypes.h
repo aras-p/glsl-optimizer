@@ -1809,18 +1809,6 @@ struct gl_evaluators
 
 
 /**
- * State used during execution of fragment programs.
- */
-struct fp_machine
-{
-   GLfloat Temporaries[MAX_NV_FRAGMENT_PROGRAM_TEMPS][4];
-   GLfloat Inputs[MAX_NV_FRAGMENT_PROGRAM_INPUTS][4];
-   GLfloat Outputs[MAX_NV_FRAGMENT_PROGRAM_OUTPUTS][4];
-   GLuint CondCodes[4];
-};
-
-
-/**
  * Names of the various vertex/fragment program register files, etc.
  * NOTE: first four tokens must fit into 2 bits (see t_vb_arbprogram.c)
  * All values should fit in a 4-bit field.
@@ -1963,14 +1951,13 @@ struct gl_vertex_program_state
  */
 struct gl_fragment_program_state
 {
-   GLboolean Enabled;                    /* GL_VERTEX_PROGRAM_NV */
-   GLboolean _Enabled;                   /* Enabled and valid program? */
-   GLboolean _Active;
-   struct gl_fragment_program *Current;  /* ptr to currently bound program */
-   const struct gl_fragment_program *_Current; /* ptr to currently active program 
+   GLboolean Enabled;     /**< User-set fragment program enable flag */
+   GLboolean _Enabled;    /**< Fragment program enabled and valid? */
+   GLboolean _Active;     /**< Is a user program or internal program active? */
+   struct gl_fragment_program *Current;  /**< User-bound program */
+   const struct gl_fragment_program *_Current; /**< currently active program 
 					       (including internal programs) */
-   struct fp_machine Machine;            /* machine state */
-   GLfloat Parameters[MAX_NV_FRAGMENT_PROGRAM_PARAMS][4]; /* Env params */
+   GLfloat Parameters[MAX_NV_FRAGMENT_PROGRAM_PARAMS][4]; /**< Env params */
 
 #if FEATURE_MESA_program_debug
    GLprogramcallbackMESA Callback;

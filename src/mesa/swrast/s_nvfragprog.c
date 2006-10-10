@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -43,6 +43,51 @@
 
 /* if 1, print some debugging info */
 #define DEBUG_FRAG 0
+
+
+/**
+ * Virtual machine state used during execution of a fragment programs.
+ */
+struct fp_machine
+{
+   GLfloat Temporaries[MAX_NV_FRAGMENT_PROGRAM_TEMPS][4];
+   GLfloat Inputs[MAX_NV_FRAGMENT_PROGRAM_INPUTS][4];
+   GLfloat Outputs[MAX_NV_FRAGMENT_PROGRAM_OUTPUTS][4];
+   GLuint CondCodes[4];
+};
+
+
+#if FEATURE_MESA_program_debug
+static struct fp_machine *CurrentMachine = NULL;
+
+/**
+ * For GL_MESA_program_debug.
+ * Return current value (4*GLfloat) of a fragment program register.
+ * Called via ctx->Driver.GetFragmentProgramRegister().
+ */
+void
+_swrast_get_program_register(GLcontext *ctx, enum register_file file,
+                             GLuint index, GLfloat val[4])
+{
+   if (CurrentMachine) {
+      switch (file) {
+      case PROGRAM_INPUT:
+         COPY_4V(val, CurrentMachine->Inputs[index]);
+         break;
+      case PROGRAM_OUTPUT:
+         COPY_4V(val, CurrentMachine->Outputs[index]);
+         break;
+      case PROGRAM_TEMPORARY:
+         COPY_4V(val, CurrentMachine->Temporaries[index]);
+         break;
+      default:
+         _mesa_problem(NULL,
+                       "bad register file in _swrast_get_program_register");
+      }
+   }
+}
+#endif /* FEATURE_MESA_program_debug */
+
 
 /**
  * Fetch a texel.
@@ -1379,6 +1424,15 @@ execute_program( GLcontext *ctx,
 }
 
 
+/**
+ * Initialize the virtual fragment program machine state prior to running
+ * fragment program on a fragment.  This involves initializing the input
+ * registers, condition codes, etc.
+ * \param machine  the virtual machine state to init
+ * \param program  the fragment program we're about to run
+ * \param span  the span of pixels we'll operate on
+ * \param col  which element (column) of the span we'll operate on
+ */
 static void
 init_machine( GLcontext *ctx, struct fp_machine *machine,
               const struct gl_fragment_program *program,
@@ -1451,37 +1505,30 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
 }
 
 
-
 /**
- * Execute the current fragment program, operating on the given span.
+ * Run fragment program on the pixels in span from 'start' to 'end' - 1.
  */
-void
-_swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
+static void
+run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
 {
    const struct gl_fragment_program *program = ctx->FragmentProgram._Current;
+   struct fp_machine machine;
    GLuint i;
 
-   ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
+   CurrentMachine = &machine;
 
-   if (program->Base.Parameters) {
-      _mesa_load_state_parameters(ctx, program->Base.Parameters);
-   }   
-
-   for (i = 0; i < span->end; i++) {
+   for (i = start; i < end; i++) {
       if (span->array->mask[i]) {
-         init_machine(ctx, &ctx->FragmentProgram.Machine,
-                      ctx->FragmentProgram._Current, span, i);
+         init_machine(ctx, &machine, program, span, i);
 
-         if (!execute_program(ctx, program, ~0,
-                              &ctx->FragmentProgram.Machine, span, i)) {
+         if (!execute_program(ctx, program, ~0, &machine, span, i)) {
             span->array->mask[i] = GL_FALSE;  /* killed fragment */
             span->writeAll = GL_FALSE;
          }
 
          /* Store output registers */
          {
-            const GLfloat *colOut
-               = ctx->FragmentProgram.Machine.Outputs[FRAG_RESULT_COLR];
+            const GLfloat *colOut = machine.Outputs[FRAG_RESULT_COLR];
             UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][RCOMP], colOut[0]);
             UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][GCOMP], colOut[1]);
             UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][BCOMP], colOut[2]);
@@ -1489,8 +1536,7 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
          }
          /* depth value */
          if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
-            const GLfloat depth
-               = ctx->FragmentProgram.Machine.Outputs[FRAG_RESULT_DEPR][2];
+            const GLfloat depth = machine.Outputs[FRAG_RESULT_DEPR][2];
             if (depth <= 0.0)
                span->array->z[i] = 0;
             else if (depth >= 1.0)
@@ -1500,6 +1546,26 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
          }
       }
    }
+   CurrentMachine = NULL;
+}
+
+
+/**
+ * Execute the current fragment program for all the fragments
+ * in the given span.
+ */
+void
+_swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
+{
+   const struct gl_fragment_program *program = ctx->FragmentProgram._Current;
+
+   ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
+
+   if (program->Base.Parameters) {
+      _mesa_load_state_parameters(ctx, program->Base.Parameters);
+   }   
+
+   run_program(ctx, span, 0, span->end);
 
    if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
       span->interpMask &= ~SPAN_Z;

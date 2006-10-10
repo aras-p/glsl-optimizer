@@ -2163,7 +2163,8 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                            "glGetProgramRegisterfvMESA(registerName)");
                return;
             }
-            COPY_4V(v, ctx->FragmentProgram.Machine.Temporaries[i]);
+            ctx->Driver.GetFragmentProgramRegister(ctx, PROGRAM_TEMPORARY,
+                                                   i, v);
          }
          else if (reg[0] == 'f' && reg[1] == '[') {
             /* Fragment input attribute */
@@ -2171,7 +2172,8 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
             for (i = 0; i < ctx->Const.FragmentProgram.MaxAttribs; i++) {
                const char *name = _mesa_nv_fragment_input_register_name(i);
                if (_mesa_strncmp(reg + 2, name, 4) == 0) {
-                  COPY_4V(v, ctx->FragmentProgram.Machine.Inputs[i]);
+                  ctx->Driver.GetFragmentProgramRegister(ctx,
+                                                         PROGRAM_INPUT, i, v);
                   return;
                }
             }
@@ -2181,15 +2183,18 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
          }
          else if (_mesa_strcmp(reg, "o[COLR]") == 0) {
             /* Fragment output color */
-            COPY_4V(v, ctx->FragmentProgram.Machine.Outputs[FRAG_RESULT_COLR]);
+            ctx->Driver.GetFragmentProgramRegister(ctx, PROGRAM_OUTPUT,
+                                                   FRAG_RESULT_COLR, v);
          }
          else if (_mesa_strcmp(reg, "o[COLH]") == 0) {
             /* Fragment output color */
-            COPY_4V(v, ctx->FragmentProgram.Machine.Outputs[FRAG_RESULT_COLH]);
+            ctx->Driver.GetFragmentProgramRegister(ctx, PROGRAM_OUTPUT,
+                                                   FRAG_RESULT_COLH, v);
          }
          else if (_mesa_strcmp(reg, "o[DEPR]") == 0) {
             /* Fragment output depth */
-            COPY_4V(v, ctx->FragmentProgram.Machine.Outputs[FRAG_RESULT_DEPR]);
+            ctx->Driver.GetFragmentProgramRegister(ctx, PROGRAM_OUTPUT,
+                                                   FRAG_RESULT_DEPR, v);
          }
          else {
             /* try user-defined identifiers */
@@ -2210,5 +2215,4 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                      "glGetProgramRegisterfvMESA(target)");
          return;
    }
-
 }

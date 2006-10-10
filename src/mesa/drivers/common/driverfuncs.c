@@ -126,6 +126,9 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->BindProgram = NULL;
    driver->NewProgram = _mesa_new_program;
    driver->DeleteProgram = _mesa_delete_program;
+#if FEATURE_MESA_program_debug
+   driver->GetFragmentProgramRegister = _swrast_get_program_register;
+#endif /* FEATURE_MESA_program_debug */
 
    /* simple state commands */
    driver->AlphaFunc = NULL;
