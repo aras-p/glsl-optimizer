@@ -9,5 +9,4 @@ nvvertexec.c \
 nvvertparse.c \
 program.c \
 programopt.c \
-shaderobjects.c \
-3dlabs.c
+shaderobjects.c
