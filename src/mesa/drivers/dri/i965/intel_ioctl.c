@@ -43,6 +43,26 @@
 #include "drm.h"
 #include "bufmgr.h"
 
+static int intelWaitIdleLocked( struct intel_context *intel )
+{
+   static int in_wait_idle = 0;
+   unsigned int fence;
+
+   if (!in_wait_idle) {
+      if (INTEL_DEBUG & DEBUG_SYNC) {
+	 fprintf(stderr, "waiting for idle\n");
+      }
+
+      in_wait_idle = 1;
+      fence = bmSetFence(intel);
+      intelWaitIrq(intel, fence);
+      in_wait_idle = 0;
+
+      return bmTestFence(intel, fence);
+   } else {
+      return 1;
+   }
+}
 
 int intelEmitIrqLocked( struct intel_context *intel )
 {
@@ -140,7 +160,11 @@ void intel_batch_ioctl( struct intel_context *intel,
 	 UNLOCK_HARDWARE(intel);
 	 exit(1);
       }
-   }      
+
+      if (INTEL_DEBUG & DEBUG_SYNC) {
+	intelWaitIdleLocked(intel);
+      }
+   }
 }
 
 void intel_cmd_ioctl( struct intel_context *intel, 
@@ -172,5 +196,9 @@ void intel_cmd_ioctl( struct intel_context *intel,
 	 UNLOCK_HARDWARE(intel);
 	 exit(1);
       }
-   }      
+
+      if (INTEL_DEBUG & DEBUG_SYNC) {
+	intelWaitIdleLocked(intel);
+      }
+   }
 }
