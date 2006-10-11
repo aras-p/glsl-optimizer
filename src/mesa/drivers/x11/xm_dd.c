@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -602,36 +602,37 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
                          const struct gl_pixelstore_attrib *unpack,
                          const GLvoid *pixels )
 {
-   struct xmesa_renderbuffer *xrb
-      = (struct xmesa_renderbuffer *) ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped;
-
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const SWcontext *swrast = SWRAST_CONTEXT( ctx );
-   XMesaDisplay *dpy = xmesa->xm_visual->display;
-   XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
-   const XMesaGC gc = xmbuf->gc;
-
-   ASSERT(dpy);
-   ASSERT(gc);
-   ASSERT(xmesa->xm_visual->dithered_pf == PF_8R8G8B);
-   ASSERT(xmesa->xm_visual->undithered_pf == PF_8R8G8B);
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb->Wrapped;
 
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-   if (xrb->pixmap &&
-       xrb->Base.AlphaBits == 0 &&
+   if (ctx->DrawBuffer->Name == 0 &&
        format == GL_BGRA &&
        type == GL_UNSIGNED_BYTE &&
        (swrast->_RasterMask & ~CLIP_BIT) == 0 && /* no blend, z-test, etc */
        ctx->_ImageTransferState == 0 &&  /* no color tables, scale/bias, etc */
        ctx->Pixel.ZoomX == 1.0 &&        /* no zooming */
-       ctx->Pixel.ZoomY == 1.0) {
+       ctx->Pixel.ZoomY == 1.0 &&
+       xrb->pixmap &&
+       xrb->Base.AlphaBits == 0)
+   {
+      const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+      XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
+      XMesaDisplay *dpy = xmesa->xm_visual->display;
+      const XMesaGC gc = xmbuf->gc;
       int dstX = x;
       int dstY = y;
       int w = width;
       int h = height;
       struct gl_pixelstore_attrib clippedUnpack = *unpack;
+
+      ASSERT(xmesa->xm_visual->dithered_pf == PF_8R8G8B);
+      ASSERT(xmesa->xm_visual->undithered_pf == PF_8R8G8B);
+      ASSERT(dpy);
+      ASSERT(gc);
 
       if (unpack->BufferObj->Name) {
          /* unpack from PBO */
