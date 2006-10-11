@@ -722,6 +722,17 @@ class gl_function( gl_item ):
 		
 		return create_parameter_string( self.parameters, 1 )
 
+	def get_called_parameter_string(self):
+		p_string = ""
+		comma = ""
+
+		for p in self.parameterIterator():
+			p_string = p_string + comma + p.name
+			comma = ", "
+
+		return p_string
+
+
 	def is_static_entry_point(self, name):
 		return name in self.static_entry_points
 

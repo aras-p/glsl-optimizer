@@ -50,12 +50,17 @@ class PrintGlxDispatch_h(gl_XML.gl_print_base):
 	def printBody(self, api):
 		for func in api.functionIterateAll():
 			if not func.ignore and not func.vectorequiv:
-				if func.glx_rop != 0:
+				if func.glx_rop:
 					print 'extern HIDDEN void __glXDisp_%s(GLbyte * pc);' % (func.name)
 					print 'extern HIDDEN void __glXDispSwap_%s(GLbyte * pc);' % (func.name)
-				elif func.glx_sop != 0 or func.glx_vendorpriv != 0:
+				elif func.glx_sop or func.glx_vendorpriv:
 					print 'extern HIDDEN int __glXDisp_%s(struct __GLXclientStateRec *, GLbyte *);' % (func.name)
 					print 'extern HIDDEN int __glXDispSwap_%s(struct __GLXclientStateRec *, GLbyte *);' % (func.name)
+
+					if func.glx_sop and func.glx_vendorpriv:
+						n = func.glx_vendorpriv_names[0]
+						print 'extern HIDDEN int __glXDisp_%s(struct __GLXclientStateRec *, GLbyte *);' % (n)
+						print 'extern HIDDEN int __glXDispSwap_%s(struct __GLXclientStateRec *, GLbyte *);' % (n)
 
 		return
 
@@ -129,12 +134,15 @@ class PrintGlxDispatchFunctions(glX_proto_common.glx_print_proto):
 
 		for func in api.functionIterateByOffset():
 			if not func.ignore and not func.server_handcode and not func.vectorequiv and (func.glx_rop or func.glx_sop or func.glx_vendorpriv):
-				self.printFunction(func)
+				self.printFunction(func, func.name)
+				if func.glx_sop and func.glx_vendorpriv:
+					self.printFunction(func, func.glx_vendorpriv_names[0])
+					
 
 		return
 
 
-	def printFunction(self, f):
+	def printFunction(self, f, name):
 		if (f.glx_sop or f.glx_vendorpriv) and (len(f.get_images()) != 0):
 			return
 
@@ -144,9 +152,9 @@ class PrintGlxDispatchFunctions(glX_proto_common.glx_print_proto):
 			base = '__glXDispSwap'
 
 		if f.glx_rop:
-			print 'void %s_%s(GLbyte * pc)' % (base, f.name)
+			print 'void %s_%s(GLbyte * pc)' % (base, name)
 		else:
-			print 'int %s_%s(__GLXclientState *cl, GLbyte *pc)' % (base, f.name)
+			print 'int %s_%s(__GLXclientState *cl, GLbyte *pc)' % (base, name)
 
 		print '{'
 
@@ -154,9 +162,9 @@ class PrintGlxDispatchFunctions(glX_proto_common.glx_print_proto):
 			self.printRenderFunction(f)
 		elif f.glx_sop or f.glx_vendorpriv:
 			if len(f.get_images()) == 0: 
-				self.printSingleFunction(f)
+				self.printSingleFunction(f, name)
 		else:
-			print "/* Missing GLX protocol for %s. */" % (f.name)
+			print "/* Missing GLX protocol for %s. */" % (name)
 
 		print '}'
 		print ''
@@ -384,8 +392,8 @@ class PrintGlxDispatchFunctions(glX_proto_common.glx_print_proto):
 		return
 
 
-	def printSingleFunction(self, f):
-		if f.glx_sop:
+	def printSingleFunction(self, f, name):
+		if name not in f.glx_vendorpriv_names:
 			print '    xGLXSingleReq * const req = (xGLXSingleReq *) pc;'
 		else:
 			print '    xGLXVendorPrivateReq * const req = (xGLXVendorPrivateReq *) pc;'
@@ -398,7 +406,7 @@ class PrintGlxDispatchFunctions(glX_proto_common.glx_print_proto):
 		    print '    __GLXcontext * const cx = __glXForceCurrent(cl, req->contextTag, &error);'
 
 		print ''
-		if f.glx_sop:
+		if name not in f.glx_vendorpriv_names:
 			print '    pc += __GLX_SINGLE_HDR_SIZE;'
 		else:
 			print '    pc += __GLX_VENDPRIV_HDR_SIZE;'

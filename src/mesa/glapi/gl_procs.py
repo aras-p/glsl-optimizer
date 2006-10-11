@@ -26,7 +26,7 @@
 #    Ian Romanick <idr@us.ibm.com>
 
 import license
-import gl_XML
+import gl_XML, glX_XML
 import sys, getopt
 
 class PrintGlProcs(gl_XML.gl_print_base):
@@ -37,28 +37,34 @@ class PrintGlProcs(gl_XML.gl_print_base):
 		self.name = "gl_procs.py (from Mesa)"
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
-(C) Copyright IBM Corporation 2004""", "BRIAN PAUL, IBM")
+(C) Copyright IBM Corporation 2004, 2006""", "BRIAN PAUL, IBM")
 
 
 	def printRealHeader(self):
-		print '/* This file is only included by glapi.c and is used for'
-		print ' * the GetProcAddress() function'
-		print ' */'
-		print ''
-		print 'typedef struct {'
-		print '    GLint Name_offset;'
-		print '#ifdef NEED_FUNCTION_POINTER'
-		print '    _glapi_proc Address;'
-		print '#endif'
-		print '    GLuint Offset;'
-		print '} glprocs_table_t;'
-		print ''
-		print '#ifdef NEED_FUNCTION_POINTER'
-		print '#  define NAME_FUNC_OFFSET(n,f,o) { n , (_glapi_proc) f , o }'
-		print '#else'
-		print '#  define NAME_FUNC_OFFSET(n,f,o) { n , o }'
-		print '#endif'
-		print ''
+		print """
+/* This file is only included by glapi.c and is used for
+ * the GetProcAddress() function
+ */
+
+typedef struct {
+    GLint Name_offset;
+#if defined(NEED_FUNCTION_POINTER) || defined(GLX_INDIRECT_RENDERING)
+    _glapi_proc Address;
+#endif
+    GLuint Offset;
+} glprocs_table_t;
+
+#if   !defined(NEED_FUNCTION_POINTER) && !defined(GLX_INDIRECT_RENDERING)
+#  define NAME_FUNC_OFFSET(n,f1,f2,f3,o) { n , o }
+#elif  defined(NEED_FUNCTION_POINTER) && !defined(GLX_INDIRECT_RENDERING)
+#  define NAME_FUNC_OFFSET(n,f1,f2,f3,o) { n , (_glapi_proc) f1 , o }
+#elif  defined(NEED_FUNCTION_POINTER) &&  defined(GLX_INDIRECT_RENDERING)
+#  define NAME_FUNC_OFFSET(n,f1,f2,f3,o) { n , (_glapi_proc) f2 , o }
+#elif !defined(NEED_FUNCTION_POINTER) &&  defined(GLX_INDIRECT_RENDERING)
+#  define NAME_FUNC_OFFSET(n,f1,f2,f3,o) { n , (_glapi_proc) f3 , o }
+#endif
+
+"""
 		return
 
 	def printRealFooter(self):
@@ -89,7 +95,7 @@ class PrintGlProcs(gl_XML.gl_print_base):
 		for func in api.functionIterateByOffset():
 			name = func.dispatch_name()
 			self.printFunctionString(func.name)
-			table.append((base_offset, name, func.name))
+			table.append((base_offset, "gl" + name, "gl" + name, "NULL", func.name))
 
 			# The length of the function's name, plus 2 for "gl",
 			# plus 1 for the NUL.
@@ -102,7 +108,13 @@ class PrintGlProcs(gl_XML.gl_print_base):
 				if n != func.name:
 					name = func.dispatch_name()
 					self.printFunctionString( n )
-					table.append((base_offset, name, func.name))
+					
+					if func.has_different_protocol(n):
+						alt_name = "gl" + func.static_glx_name(n)
+						table.append((base_offset, "gl" + name, alt_name, alt_name, func.name))
+					else:
+						table.append((base_offset, "gl" + name, "gl" + name, "NULL", func.name))
+
 					base_offset += len(n) + 3
 
 
@@ -113,22 +125,22 @@ class PrintGlProcs(gl_XML.gl_print_base):
 
 		print ''
 		print '/* FIXME: Having these (incorrect) prototypes here is ugly. */'
-		print '#ifdef NEED_FUNCTION_POINTER'
+		print '#if defined(NEED_FUNCTION_POINTER) || defined(GLX_INDIRECT_RENDERING)'
 		for func in api.functionIterateByOffset():
 			for n in func.entry_points:
-				if not func.is_static_entry_point(func.name):
+				if (not func.is_static_entry_point(func.name)) or (func.has_different_protocol(n) and not func.is_static_entry_point(n)):
 					print 'extern void gl_dispatch_stub_%u(void);' % (func.offset)
 					break
 
-		print '#endif /* NEED_FUNCTION_POINTER */'
+		print '#endif /* defined(NEED_FUNCTION_POINTER) || defined(GLX_INDIRECT_RENDERING) */'
 
 		print ''
 		print 'static const glprocs_table_t static_functions[] = {'
 
-		for (offset, disp_name, real_name) in table:
-			print '    NAME_FUNC_OFFSET( %5u, gl%s, _gloffset_%s ),' % (offset, disp_name, real_name)
+		for info in table:
+			print '    NAME_FUNC_OFFSET(%5u, %s, %s, %s, _gloffset_%s),' % info
 
-		print '    NAME_FUNC_OFFSET( -1, NULL, 0 )'
+		print '    NAME_FUNC_OFFSET(-1, NULL, NULL, NULL, 0)'
 		print '};'
 		return
 
@@ -136,9 +148,9 @@ class PrintGlProcs(gl_XML.gl_print_base):
 def show_usage():
 	print "Usage: %s [-f input_file_name] [-m mode]" % sys.argv[0]
 	print "mode can be one of:"
-	print "    long  - Create code for compilers that can handle very "
+	print "    long  - Create code for compilers that can handle very"
 	print "            long string constants. (default)"
-	print "    short - Create code for compilers that can only handle "
+	print "    short - Create code for compilers that can only handle"
 	print "            ANSI C89 string constants."
 	sys.exit(1)
 
@@ -162,7 +174,6 @@ if __name__ == '__main__':
 			else:
 				show_usage()
 
-	api = gl_XML.parse_GL_API( file_name )
-
-	printer = PrintGlProcs( long_string )
-	printer.Print( api )
+	api = gl_XML.parse_GL_API(file_name, glX_XML.glx_item_factory())
+	printer = PrintGlProcs(long_string)
+	printer.Print(api)

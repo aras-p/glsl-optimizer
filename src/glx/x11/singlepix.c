@@ -36,6 +36,10 @@
 
 #include "packsingle.h"
 #include "indirect.h"
+#include "dispatch.h"
+#include "glthread.h"
+#include "glapioffsets.h"
+#include <GL/glxproto.h>
 
 void __indirect_glGetSeparableFilter(GLenum target, GLenum format, GLenum type,
 			  GLvoid *row, GLvoid *column, GLvoid *span)
@@ -102,4 +106,86 @@ void __indirect_glGetSeparableFilter(GLenum target, GLenum format, GLenum type,
     }
     __GLX_SINGLE_END();
     
+}
+
+
+#define CONCAT(a,b) a ## b
+#define NAME(o) CONCAT(gl_dispatch_stub_, o)
+
+void NAME(_gloffset_GetSeparableFilter)(GLenum target, GLenum format, GLenum type,
+					GLvoid *row, GLvoid *column, GLvoid *span)
+{
+    __GLXcontext * const gc = __glXGetCurrentContext();
+
+    if (gc->isDirect) {
+	CALL_GetSeparableFilter(GET_DISPATCH(),
+				(target, format, type, row, column, span));
+	return;
+    }
+    else {
+        Display *const dpy = gc->currentDpy;
+	const GLuint cmdlen = __GLX_PAD(13);
+
+	if (dpy != NULL) {
+	    const __GLXattribute * const state = gc->client_state_private;
+	    xGLXGetSeparableFilterReply reply;
+	    GLubyte const *pc =
+	      __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
+				      X_GLvop_GetSeparableFilterEXT, cmdlen);
+	    unsigned compsize;
+
+
+	    (void) memcpy((void *) (pc + 0), (void *) (&target), 4);
+	    (void) memcpy((void *) (pc + 4), (void *) (&format), 4);
+	    (void) memcpy((void *) (pc + 8), (void *) (&type), 4);
+	    *(int8_t *) (pc + 12) = state->storePack.swapEndian;
+
+	    (void) _XReply(dpy, (xReply *) & reply, 0, False);
+
+	    compsize = reply.length << 2;
+
+	    if (compsize != 0) {
+		const GLint width = reply.width;
+		const GLint height = reply.height;
+		const GLint widthsize =
+		  __glImageSize(width, 1, 1, format, type, 0);
+		const GLint heightsize =
+		  __glImageSize(height, 1, 1, format, type, 0);
+		GLubyte * const buf =
+		  (GLubyte*) Xmalloc((widthsize > heightsize) ? widthsize : heightsize);
+
+		if (buf == NULL) {
+		    /* Throw data away */
+		    _XEatData(dpy, compsize);
+		    __glXSetError(gc, GL_OUT_OF_MEMORY);
+
+		    UnlockDisplay(dpy);
+		    SyncHandle();
+		    return;
+		} else {
+		    int extra;
+		    
+		    extra = 4 - (widthsize & 3);
+		    _XRead(dpy, (char *)buf, widthsize);
+		    if (extra < 4) {
+			_XEatData(dpy, extra);
+		    }
+
+		    __glEmptyImage(gc, 1, width, 1, 1, format, type, buf,
+				   row);
+
+		    extra = 4 - (heightsize & 3);
+		    _XRead(dpy, (char *)buf, heightsize);
+		    if (extra < 4) {
+			_XEatData(dpy, extra);
+		    }
+
+		    __glEmptyImage(gc, 1, height, 1, 1, format, type, buf,
+				   column);
+
+		    Xfree((char*) buf);
+		}
+	    }
+	}
+    }
 }

@@ -207,7 +207,12 @@ class function_table:
 							else:
 								size_name = ""
 
-							temp = [op, "__glXDisp_%s" % (func.name), "__glXDispSwap_%s" % (func.name), size, size_name]
+							if func.glx_vendorpriv == op:
+								func_name = func.glx_vendorpriv_names[0]
+							else:
+								func_name = func.name
+
+							temp = [op, "__glXDisp_%s" % (func_name), "__glXDispSwap_%s" % (func_name), size, size_name]
 						else:
 							temp = [op, "NULL", "NULL", 0, ""]
 
@@ -368,9 +373,9 @@ class PrintGlxDispatchTables(glX_proto_common.glx_print_proto):
 			if not f.ignore and f.vectorequiv == None:
 				if f.glx_rop != 0:
 					self.rop_functions.append(f.glx_rop, f)
-				elif f.glx_sop != 0:
+				if f.glx_sop != 0:
 					self.sop_functions.append(f.glx_sop, f)
-				elif f.glx_vendorpriv != 0:
+				if f.glx_vendorpriv != 0:
 					self.vop_functions.append(f.glx_vendorpriv, f)
 
 		self.sop_functions.Print()

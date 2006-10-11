@@ -81,6 +81,8 @@ class glx_function(gl_XML.gl_function):
 		self.glx_sop = 0
 		self.glx_vendorpriv = 0
 
+		self.glx_vendorpriv_names = []
+
 		# If this is set to true, it means that GLdouble parameters should be
 		# written to the GLX protocol packet in the order they appear in the
 		# prototype.  This is different from the "classic" ordering.  In the
@@ -116,7 +118,8 @@ class glx_function(gl_XML.gl_function):
 		self.vectorequiv = element.nsProp( "vectorequiv", None )
 
 
-		if element.nsProp( "name", None ) == self.name:
+		name = element.nsProp("name", None)
+		if name == self.name:
 			for param in self.parameters:
 				self.parameters_by_name[ param.name ] = param
 				
@@ -137,18 +140,13 @@ class glx_function(gl_XML.gl_function):
 
 					if rop:
 						self.glx_rop = int(rop)
-					else:
-						self.glx_rop = 0
 
 					if sop:
 						self.glx_sop = int(sop)
-					else:
-						self.glx_sop = 0
 
 					if vop:
 						self.glx_vendorpriv = int(vop)
-					else:
-						self.glx_vendorpriv = 0
+						self.glx_vendorpriv_names.append(name)
 
 					self.img_reset = child.nsProp( 'img_reset', None )
 
@@ -447,6 +445,13 @@ class glx_function(gl_XML.gl_function):
 			raise RuntimeError('Function "%s" has no opcode.' % (self.name))
 
 
+	def opcode_vendor_name(self, name):
+		if name in self.glx_vendorpriv_names:
+			return "X_GLvop_%s" % (name)
+		else:
+			raise RuntimeError('Function "%s" has no VendorPrivate opcode.' % (name))
+
+
 	def opcode_real_name(self):
 		"""Get the true protocol enum name for the GLX opcode
 		
@@ -503,6 +508,28 @@ class glx_function(gl_XML.gl_function):
 						return "woffset"
 
 		return None
+
+
+	def has_different_protocol(self, name):
+		"""Returns true if the named version of the function uses different protocol from the other versions.
+		
+		Some functions, such as glDeleteTextures and
+		glDeleteTexturesEXT are functionally identical, but have
+		different protocol.  This function returns true if the
+		named function is an alias name and that named version uses
+		different protocol from the function that is aliased.
+		"""
+
+		return (name in self.glx_vendorpriv_names) and self.glx_sop
+
+
+	def static_glx_name(self, name):
+		if self.has_different_protocol(name):
+			for n in self.glx_vendorpriv_names:
+				if n in self.static_entry_points:
+					return n
+				
+		return self.static_name(name)
 
 
 	def client_supported_for_indirect(self):

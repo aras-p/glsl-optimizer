@@ -25,7 +25,7 @@
 # Authors:
 #    Ian Romanick <idr@us.ibm.com>
 
-import gl_XML
+import gl_XML, glX_XML
 import license
 import sys, getopt
 
@@ -79,6 +79,9 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 		else:
 			dispatch = "DISPATCH"
 
+		if f.has_different_protocol(name):
+			print '#ifndef GLX_INDIRECT_RENDERING'
+
 		if not f.is_static_entry_point(name):
 			print '%s %s KEYWORD2 NAME(%s)(%s);' % (keyword, f.return_type, n, f.get_parameter_string(name))
 			print ''
@@ -92,6 +95,8 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 			print '   %s(%s, (%s), (F, "gl%s(%s);\\n", %s));' \
 				% (dispatch, f.name, p_string, name, t_string, o_string)
 		print '}'
+		if f.has_different_protocol(name):
+			print '#endif /* GLX_INDIRECT_RENDERING */'
 		print ''
 		return
 
@@ -194,8 +199,14 @@ static _glapi_proc UNUSED_TABLE_NAME[] = {"""
 			for n in f.entry_points:
 				if n != f.name:
 					if f.is_static_entry_point(n):
-						print '   TABLE_ENTRY(%s),' % (n)
+						text = '   TABLE_ENTRY(%s),' % (n)
 
+						if f.has_different_protocol(n):
+							print '#ifndef GLX_INDIRECT_RENDERING'
+							print text
+							print '#endif'
+						else:
+							print text
 		print '};'
 		print '#endif /*UNUSED_TABLE_NAME*/'
 		print ''
@@ -233,7 +244,7 @@ if __name__ == '__main__':
 		if arg == "-f":
 			file_name = val
 
-	api = gl_XML.parse_GL_API( file_name )
+	api = gl_XML.parse_GL_API(file_name, glX_XML.glx_item_factory())
 
 	printer = PrintGlOffsets()
 	printer.Print(api)

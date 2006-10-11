@@ -7869,7 +7869,6 @@ _mesa_init_dlist_table(struct _glapi_table *table)
 
    /* GL 1.1 */
    SET_AreTexturesResident(table, exec_AreTexturesResident);
-   SET_AreTexturesResidentEXT(table, exec_AreTexturesResident);
    SET_BindTexture(table, save_BindTexture);
    SET_ColorPointer(table, exec_ColorPointer);
    SET_CopyTexImage1D(table, save_CopyTexImage1D);
@@ -7881,12 +7880,10 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_EdgeFlagPointer(table, exec_EdgeFlagPointer);
    SET_EnableClientState(table, exec_EnableClientState);
    SET_GenTextures(table, exec_GenTextures);
-   SET_GenTexturesEXT(table, exec_GenTextures);
    SET_GetPointerv(table, exec_GetPointerv);
    SET_IndexPointer(table, exec_IndexPointer);
    SET_InterleavedArrays(table, exec_InterleavedArrays);
    SET_IsTexture(table, exec_IsTexture);
-   SET_IsTextureEXT(table, exec_IsTexture);
    SET_NormalPointer(table, exec_NormalPointer);
    SET_PopClientAttrib(table, exec_PopClientAttrib);
    SET_PrioritizeTextures(table, save_PrioritizeTextures);
@@ -7925,31 +7922,18 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_CopyConvolutionFilter1D(table, exec_CopyConvolutionFilter1D);
    SET_CopyConvolutionFilter2D(table, exec_CopyConvolutionFilter2D);
    SET_GetColorTable(table, exec_GetColorTable);
-   SET_GetColorTableSGI(table, exec_GetColorTable);
    SET_GetColorTableParameterfv(table, exec_GetColorTableParameterfv);
-   SET_GetColorTableParameterfvSGI(table, exec_GetColorTableParameterfv);
    SET_GetColorTableParameteriv(table, exec_GetColorTableParameteriv);
-   SET_GetColorTableParameterivSGI(table, exec_GetColorTableParameteriv);
    SET_GetConvolutionFilter(table, exec_GetConvolutionFilter);
-   SET_GetConvolutionFilterEXT(table, exec_GetConvolutionFilter);
    SET_GetConvolutionParameterfv(table, exec_GetConvolutionParameterfv);
-   SET_GetConvolutionParameterfvEXT(table, exec_GetConvolutionParameterfv);
    SET_GetConvolutionParameteriv(table, exec_GetConvolutionParameteriv);
-   SET_GetConvolutionParameterivEXT(table, exec_GetConvolutionParameteriv);
    SET_GetHistogram(table, exec_GetHistogram);
-   SET_GetHistogramEXT(table, exec_GetHistogram);
    SET_GetHistogramParameterfv(table, exec_GetHistogramParameterfv);
-   SET_GetHistogramParameterfvEXT(table, exec_GetHistogramParameterfv);
    SET_GetHistogramParameteriv(table, exec_GetHistogramParameteriv);
-   SET_GetHistogramParameterivEXT(table, exec_GetHistogramParameteriv);
    SET_GetMinmax(table, exec_GetMinmax);
-   SET_GetMinmaxEXT(table, exec_GetMinmax);
    SET_GetMinmaxParameterfv(table, exec_GetMinmaxParameterfv);
-   SET_GetMinmaxParameterfvEXT(table, exec_GetMinmaxParameterfv);
    SET_GetMinmaxParameteriv(table, exec_GetMinmaxParameteriv);
-   SET_GetMinmaxParameterivEXT(table, exec_GetMinmaxParameteriv);
    SET_GetSeparableFilter(table, exec_GetSeparableFilter);
-   SET_GetSeparableFilterEXT(table, exec_GetSeparableFilter);
    SET_Histogram(table, save_Histogram);
    SET_Minmax(table, save_Minmax);
    SET_ResetHistogram(table, save_ResetHistogram);
@@ -7975,10 +7959,10 @@ _mesa_init_dlist_table(struct _glapi_table *table)
 #if 0
    SET_ColorTableSGI(table, save_ColorTable);
    SET_ColorSubTableSGI(table, save_ColorSubTable);
-#endif
    SET_GetColorTableSGI(table, exec_GetColorTable);
    SET_GetColorTableParameterfvSGI(table, exec_GetColorTableParameterfv);
    SET_GetColorTableParameterivSGI(table, exec_GetColorTableParameteriv);
+#endif
 
    /* 30. GL_EXT_vertex_array */
    SET_ColorPointerEXT(table, exec_ColorPointerEXT);

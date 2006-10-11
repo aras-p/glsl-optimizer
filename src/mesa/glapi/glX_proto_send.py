@@ -166,6 +166,8 @@ class PrintGlxProtoStubs(glX_proto_common.glx_print_proto):
 		print '#include "indirect.h"'
 		print '#include "glxclient.h"'
 		print '#include "indirect_size.h"'
+		print '#include "dispatch.h"'
+		print '#include "glthread.h"'
 		print '#include <GL/glxproto.h>'
 		print '#ifdef USE_XCB'
 		print '#include <X11/Xlib-xcb.h>'
@@ -341,26 +343,44 @@ const GLuint __glXDefaultPixelStore[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 						generated_stubs.append(h)
 
 						fake_func = glx_pixel_function_stub( func, n )
-						self.printFunction( fake_func )
+						self.printFunction(fake_func, fake_func.name)
 
 
-			self.printFunction( func )
+			self.printFunction(func, func.name)
+			if func.glx_sop and func.glx_vendorpriv:
+				self.printFunction(func, func.glx_vendorpriv_names[0])
 
 		return
 
 
-	def printFunction(self, func):
+	def printFunction(self, func, name):
+		footer = '}\n'
 		if func.glx_rop == ~0:
 			print 'static %s' % (func.return_type)
 			print '%s( unsigned opcode, unsigned dim, %s )' % (func.name, func.get_parameter_string())
+			print '{'
 		else:
-			print '#define %s %d' % (func.opcode_name(), func.opcode_value())
+			if func.has_different_protocol(name):
+				if func.return_type == "void":
+					ret_string = ''
+				else:
+					ret_string = "return "
 
-			print '%s' % (func.return_type)
-			print '__indirect_gl%s(%s)' % (func.name, func.get_parameter_string())
+				func_name = func.static_glx_name(name)
+				print '#define %s %d' % (func.opcode_vendor_name(name), func.glx_vendorpriv)
+				print '%s gl%s(%s)' % (func.return_type, func_name, func.get_parameter_string())
+				print '{'
+				print '    __GLXcontext * const gc = __glXGetCurrentContext();'
+				print ''
+				print '    if (gc->isDirect) {'
+				print '    %sCALL_%s(GET_DISPATCH(), (%s));' % (ret_string, func.name, func.get_called_parameter_string())
+				print '    } else {'
+				footer = '}\n}\n'
+			else:
+				print '#define %s %d' % (func.opcode_name(), func.opcode_value())
 
-
-		print '{'
+				print '%s __indirect_gl%s(%s)' % (func.return_type, name, func.get_parameter_string())
+				print '{'
 
 
 		if func.glx_rop != 0 or func.vectorequiv != None:
@@ -369,14 +389,12 @@ const GLuint __glXDefaultPixelStore[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 			else:
 				self.printRenderFunction(func)
 		elif func.glx_sop != 0 or func.glx_vendorpriv != 0:
-			self.printSingleFunction(func)
+			self.printSingleFunction(func, name)
 			pass
 		else:
-			print "/* Missing GLX protocol for %s. */" % (func.name)
+			print "/* Missing GLX protocol for %s. */" % (name)
 
-		print '}'
-		print ''
-
+		print footer
 		return
 
 
@@ -547,13 +565,13 @@ generic_%u_byte( GLint rop, const void * ptr )
 			return 0
 
 
-	def printSingleFunction(self, f):
+	def printSingleFunction(self, f, name):
 		self.common_func_print_just_start(f)
 
 		if self.debug:
 			print '        printf( "Enter %%s...\\n", "gl%s" );' % (f.name)
 
-		if f.glx_vendorpriv == 0:
+		if name not in f.glx_vendorpriv_names:
 
 			# XCB specific:
 			print '#ifdef USE_XCB'
@@ -561,7 +579,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 				print '        printf("\\tUsing XCB.\\n");'
 			print '        xcb_connection_t *c = XGetXCBConnection(dpy);'
 			print '        (void) __glXFlushRenderBuffer(gc, gc->pc);'
-			xcb_name = 'xcb_glx%s' % convertStringForXCB(f.name)
+			xcb_name = 'xcb_glx%s' % convertStringForXCB(name)
 
 			iparams=[]
 			extra_iparams = []
@@ -613,8 +631,8 @@ generic_%u_byte( GLint rop, const void * ptr )
 		else:
 			pc_decl = "(void)"
 
-		if f.glx_vendorpriv != 0:
-			print '        %s __glXSetupVendorRequest(gc, %s, %s, cmdlen);' % (pc_decl, f.opcode_real_name(), f.opcode_name())
+		if name in f.glx_vendorpriv_names:
+			print '        %s __glXSetupVendorRequest(gc, %s, %s, cmdlen);' % (pc_decl, f.opcode_real_name(), f.opcode_vendor_name(name))
 		else:
 			print '        %s __glXSetupSingleRequest(gc, %s, cmdlen);' % (pc_decl, f.opcode_name())
 
@@ -686,12 +704,12 @@ generic_%u_byte( GLint rop, const void * ptr )
 			print '        __indirect_glFinish();'
 
 		if self.debug:
-			print '        printf( "Exit %%s.\\n", "gl%s" );' % (f.name)
+			print '        printf( "Exit %%s.\\n", "gl%s" );' % (name)
 
 
 		print '        UnlockDisplay(dpy); SyncHandle();'
 
-		if f.glx_vendorpriv == 0:
+		if name not in f.glx_vendorpriv_names:
 			print '#endif /* USE_XCB */'
 
 		print '    }'
@@ -940,7 +958,20 @@ extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupVendorRequest(
 
 	def printBody(self, api):
 		for func in api.functionIterateGlx():
-			print 'extern HIDDEN %s __indirect_gl%s(%s);' % (func.return_type, func.name, func.get_parameter_string())
+			params = func.get_parameter_string()
+
+			print 'extern HIDDEN %s __indirect_gl%s(%s);' % (func.return_type, func.name, params)
+
+			for n in func.entry_points:
+				if func.has_different_protocol(n):
+					asdf = func.static_glx_name(n)
+					if asdf not in func.static_entry_points:
+						print 'extern HIDDEN %s gl%s(%s);' % (func.return_type, asdf, params)
+					else:
+						print 'GLAPI %s GLAPIENTRY gl%s(%s);' % (func.return_type, asdf, params)
+						
+					break
+
 
 
 def show_usage():

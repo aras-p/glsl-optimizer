@@ -588,18 +588,6 @@ __GLapi * __glXNewIndirectAPI( void )
 
     glAPI->DrawBuffersARB = __indirect_glDrawBuffersARB;
 
-    /*  14. GL_SGI_color_table */
-
-    glAPI->GetColorTableParameterfvSGI = __indirect_glGetColorTableParameterfvSGI;
-    glAPI->GetColorTableParameterivSGI = __indirect_glGetColorTableParameterivSGI;
-    glAPI->GetColorTableSGI = __indirect_glGetColorTableSGI;
-
-    /*  20. GL_EXT_texture_object */
-
-    glAPI->AreTexturesResidentEXT = __indirect_glAreTexturesResidentEXT;
-    glAPI->GenTexturesEXT = __indirect_glGenTexturesEXT;
-    glAPI->IsTextureEXT = __indirect_glIsTextureEXT;
-
     /*  25. GL_SGIS_multisample */
 
     glAPI->SampleMaskSGIS = __indirect_glSampleMaskSGIS;

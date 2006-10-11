@@ -25,7 +25,8 @@
 # Authors:
 #    Ian Romanick <idr@us.ibm.com>
 
-import gl_XML, license
+import license
+import gl_XML, glX_XML
 import sys, getopt, copy
 
 def should_use_push(registers):
@@ -292,7 +293,14 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 			for n in f.entry_points:
 				if n != f.name:
 					if f.is_static_entry_point(n):
-						print '\t.globl GL_PREFIX(%s) ; .set GL_PREFIX(%s), GL_PREFIX(%s)' % (n, n, dispatch)
+						text = '\t.globl GL_PREFIX(%s) ; .set GL_PREFIX(%s), GL_PREFIX(%s)' % (n, n, dispatch)
+
+						if f.has_different_protocol(n):
+							print '#ifndef GLX_INDIRECT_RENDERING'
+							print text
+							print '#endif'
+						else:
+							print text
 
 		return
 
@@ -321,6 +329,5 @@ if __name__ == '__main__':
 		print "ERROR: Invalid mode \"%s\" specified." % mode
 		show_usage()
 
-	api = gl_XML.parse_GL_API( file_name )
-
-	printer.Print( api )
+	api = gl_XML.parse_GL_API(file_name, glX_XML.glx_item_factory())
+	printer.Print(api)
