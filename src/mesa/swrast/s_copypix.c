@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -226,7 +226,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          span.end = width;
          if (zoom) {
             _swrast_write_zoomed_rgba_span(ctx, destx, desty, &span, 
-                                        (CONST GLchan (*)[4])span.array->rgba);
+                                           span.array->rgba);
          }
          else {
             _swrast_write_rgba_span(ctx, &span);
@@ -362,7 +362,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          span.end = width;
          if (zoom) {
             _swrast_write_zoomed_rgba_span(ctx, destx, desty, &span,
-                                       (CONST GLchan (*)[4]) span.array->rgba);
+                                           span.array->rgba);
          }
          else {
             _swrast_write_rgba_span(ctx, &span);
@@ -605,7 +605,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       if (fb->Visual.rgbMode) {
          if (zoom)
             _swrast_write_zoomed_rgba_span(ctx, destx, desty, &span, 
-                                       (const GLchan (*)[4]) span.array->rgba);
+                                           span.array->rgba);
          else
             _swrast_write_rgba_span(ctx, &span);
       }

@@ -130,8 +130,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
             span.x = destX;
             span.y = destY + row;
             span.end = drawWidth;
-            _swrast_write_zoomed_rgba_span(ctx, imgX, imgY, &span,
-                                           (CONST GLchan (*)[4]) src);
+            _swrast_write_zoomed_rgba_span(ctx, imgX, imgY, &span, src);
             src += unpack.RowLength * 4;
          }
       }
@@ -156,8 +155,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
             span.x = destX;
             span.y = destY;
             span.end = drawWidth;
-            _swrast_write_zoomed_rgb_span(ctx, imgX, imgY, &span, 
-                                          (CONST GLchan (*)[3]) src);
+            _swrast_write_zoomed_rgb_span(ctx, imgX, imgY, &span, src);
             src += unpack.RowLength * 3;
                destY++;
          }
@@ -200,8 +198,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
             span.x = destX;
             span.y = destY;
             span.end = drawWidth;
-            _swrast_write_zoomed_rgb_span(ctx, imgX, imgY, &span,
-                                          (CONST GLchan (*)[3]) rgb);
+            _swrast_write_zoomed_rgb_span(ctx, imgX, imgY, &span, rgb);
             src += unpack.RowLength;
             destY++;
          }
@@ -247,7 +244,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
             span.y = destY;
             span.end = drawWidth;
             _swrast_write_zoomed_rgba_span(ctx, imgX, imgY, &span,
-                                           (CONST GLchan (*)[4]) span.array->rgba);
+                                           span.array->rgba);
             src += unpack.RowLength*2;
             destY++;
          }
@@ -281,7 +278,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                span.y = destY;
                span.end = drawWidth;
                _swrast_write_zoomed_rgba_span(ctx, imgX, imgY, &span,
-                                              (CONST GLchan (*)[4]) span.array->rgba);
+                                              span.array->rgba);
                src += unpack.RowLength;
                destY++;
             }
@@ -677,7 +674,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
             }
             else if (zoom) {
                _swrast_write_zoomed_rgba_span(ctx, imgX, imgY, &span,
-                                       (CONST GLchan (*)[4]) span.array->rgba);
+                                              span.array->rgba);
             }
             else {
                _swrast_write_rgba_span(ctx, &span);

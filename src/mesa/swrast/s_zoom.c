@@ -343,20 +343,18 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
 
 
 void
-_swrast_write_zoomed_rgba_span( GLcontext *ctx, GLint imgX, GLint imgY,
-                               const SWspan *span,
-                               CONST GLchan rgba[][4])
+_swrast_write_zoomed_rgba_span(GLcontext *ctx, GLint imgX, GLint imgY,
+                               const SWspan *span, const GLvoid *rgba)
 {
-   zoom_span(ctx, imgX, imgY, span, (const GLvoid *) rgba, GL_RGBA);
+   zoom_span(ctx, imgX, imgY, span, rgba, GL_RGBA);
 }
 
 
 void
 _swrast_write_zoomed_rgb_span(GLcontext *ctx, GLint imgX, GLint imgY,
-                              const SWspan *span,
-                              CONST GLchan rgb[][3])
+                              const SWspan *span, const GLvoid *rgb)
 {
-   zoom_span(ctx, imgX, imgY, span, (const GLvoid *) rgb, GL_RGB);
+   zoom_span(ctx, imgX, imgY, span, rgb, GL_RGB);
 }
 
 
