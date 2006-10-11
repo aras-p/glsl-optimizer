@@ -1,0 +1,3 @@
+MESA_GLAPI_SOURCES = \
+glapi.c \
+glthread.c

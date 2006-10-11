@@ -1,0 +1,3 @@
+MESA_SWRAST_SETUP_SOURCES = \
+ss_context.c \
+ss_triangle.c

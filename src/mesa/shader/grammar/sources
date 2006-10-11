@@ -1,0 +1,2 @@
+MESA_SHADER_GRAMMAR_SOURCES = \
+grammar_mesa.c
