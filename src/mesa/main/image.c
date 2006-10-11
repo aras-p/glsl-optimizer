@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -4243,11 +4243,127 @@ _mesa_unpack_image( GLuint dimensions,
 #endif /* _HAVE_FULL_GL */
 
 
+
 /**
- * Perform clipping for glDrawPixels.  The image's window position
- * and size, and the unpack SkipPixels and SkipRows are adjusted so
- * that the image region is entirely within the window and scissor bounds.
- * NOTE: this will only work when glPixelZoom is (1, 1).
+ * Convert an array of RGBA colors from one datatype to another.
+ * NOTE: we assume that src may equal dst.
+ */
+void
+_mesa_convert_colors(GLenum srcType, const GLvoid *src,
+                     GLenum dstType, GLvoid *dst,
+                     GLuint count, const GLubyte mask[])
+{
+   ASSERT(srcType != dstType);
+
+   switch (srcType) {
+   case GL_UNSIGNED_BYTE:
+      if (dstType == GL_UNSIGNED_SHORT) {
+         const GLubyte (*rgba1)[4] = (const GLubyte (*)[4]) src;
+         GLushort newVals[MAX_WIDTH][4];
+         GLuint i;
+         for (i = 0; i < count; i++) {
+            if (!mask || mask[i]) {
+               newVals[i][RCOMP] = UBYTE_TO_USHORT(rgba1[i][RCOMP]);
+               newVals[i][GCOMP] = UBYTE_TO_USHORT(rgba1[i][GCOMP]);
+               newVals[i][BCOMP] = UBYTE_TO_USHORT(rgba1[i][BCOMP]);
+               newVals[i][ACOMP] = UBYTE_TO_USHORT(rgba1[i][ACOMP]);
+            }
+         }
+         _mesa_memcpy(dst, newVals, count * 4 * sizeof(GLushort));
+      }
+      else {
+         const GLubyte (*rgba1)[4] = (const GLubyte (*)[4]) src;
+         GLfloat newVals[MAX_WIDTH][4];
+         GLuint i;
+         ASSERT(dstType == GL_FLOAT);
+         for (i = 0; i < count; i++) {
+            if (!mask || mask[i]) {
+               newVals[i][RCOMP] = UBYTE_TO_FLOAT(rgba1[i][RCOMP]);
+               newVals[i][GCOMP] = UBYTE_TO_FLOAT(rgba1[i][GCOMP]);
+               newVals[i][BCOMP] = UBYTE_TO_FLOAT(rgba1[i][BCOMP]);
+               newVals[i][ACOMP] = UBYTE_TO_FLOAT(rgba1[i][ACOMP]);
+            }
+         }
+         _mesa_memcpy(dst, newVals, count * 4 * sizeof(GLfloat));
+      }
+      break;
+   case GL_UNSIGNED_SHORT:
+      if (dstType == GL_UNSIGNED_BYTE) {
+         const GLushort (*rgba2)[4] = (const GLushort (*)[4]) src;
+         GLubyte newVals[MAX_WIDTH][4];
+         GLuint i;
+         for (i = 0; i < count; i++) {
+            if (!mask || mask[i]) {
+               newVals[i][RCOMP] = USHORT_TO_UBYTE(rgba2[i][RCOMP]);
+               newVals[i][GCOMP] = USHORT_TO_UBYTE(rgba2[i][GCOMP]);
+               newVals[i][BCOMP] = USHORT_TO_UBYTE(rgba2[i][BCOMP]);
+               newVals[i][ACOMP] = USHORT_TO_UBYTE(rgba2[i][ACOMP]);
+            }
+         }
+         _mesa_memcpy(dst, newVals, count * 4 * sizeof(GLubyte));
+      }
+      else {
+         const GLushort (*rgba2)[4] = (const GLushort (*)[4]) src;
+         GLfloat newVals[MAX_WIDTH][4];
+         GLuint i;
+         ASSERT(dstType == GL_FLOAT);
+         for (i = 0; i < count; i++) {
+            if (!mask || mask[i]) {
+               newVals[i][RCOMP] = USHORT_TO_FLOAT(rgba2[i][RCOMP]);
+               newVals[i][GCOMP] = USHORT_TO_FLOAT(rgba2[i][GCOMP]);
+               newVals[i][BCOMP] = USHORT_TO_FLOAT(rgba2[i][BCOMP]);
+               newVals[i][ACOMP] = USHORT_TO_FLOAT(rgba2[i][ACOMP]);
+            }
+         }
+         _mesa_memcpy(dst, newVals, count * 4 * sizeof(GLfloat));
+      }
+      break;
+   case GL_FLOAT:
+      if (dstType == GL_UNSIGNED_BYTE) {
+         const GLfloat (*rgba4)[4] = (const GLfloat (*)[4]) src;
+         GLubyte newVals[MAX_WIDTH][4];
+         GLuint i;
+         for (i = 0; i < count; i++) {
+            if (!mask || mask[i]) {
+               UNCLAMPED_FLOAT_TO_UBYTE(newVals[i][RCOMP], rgba4[i][RCOMP]);
+               UNCLAMPED_FLOAT_TO_UBYTE(newVals[i][GCOMP], rgba4[i][GCOMP]);
+               UNCLAMPED_FLOAT_TO_UBYTE(newVals[i][BCOMP], rgba4[i][BCOMP]);
+               UNCLAMPED_FLOAT_TO_UBYTE(newVals[i][ACOMP], rgba4[i][ACOMP]);
+            }
+         }
+         _mesa_memcpy(dst, newVals, count * 4 * sizeof(GLubyte));
+      }
+      else {
+         const GLfloat (*rgba4)[4] = (const GLfloat (*)[4]) src;
+         GLushort newVals[MAX_WIDTH][4];
+         GLuint i;
+         ASSERT(dstType == GL_UNSIGNED_SHORT);
+         for (i = 0; i < count; i++) {
+            if (!mask || mask[i]) {
+               UNCLAMPED_FLOAT_TO_USHORT(newVals[i][RCOMP], rgba4[i][RCOMP]);
+               UNCLAMPED_FLOAT_TO_USHORT(newVals[i][GCOMP], rgba4[i][GCOMP]);
+               UNCLAMPED_FLOAT_TO_USHORT(newVals[i][BCOMP], rgba4[i][BCOMP]);
+               UNCLAMPED_FLOAT_TO_USHORT(newVals[i][ACOMP], rgba4[i][ACOMP]);
+            }
+         }
+         _mesa_memcpy(dst, newVals, count * 4 * sizeof(GLushort));
+      }
+      break;
+   default:
+      _mesa_problem(NULL, "Invalid datatype in _mesa_convert_colors");
+   }
+}
+
+
+
+
+/**
+ * Perform basic clipping for glDrawPixels.  The image's position and size
+ * and the unpack SkipPixels and SkipRows are adjusted so that the image
+ * region is entirely within the window and scissor bounds.
+ * NOTE: this will only work when glPixelZoom is (1, 1) or (1, -1).
+ * If Pixel.ZoomY is -1, *destY will be changed to be the first row which
+ * we'll actually write.  Beforehand, *destY-1 is the first drawing row.
  *
  * \return  GL_TRUE if image is ready for drawing or
  *          GL_FALSE if image was completely clipped away (draw nothing)
@@ -4264,7 +4380,8 @@ _mesa_clip_drawpixels(const GLcontext *ctx,
       unpack->RowLength = *width;
    }
 
-   ASSERT(ctx->Pixel.ZoomX == 1.0F && ctx->Pixel.ZoomY == 1.0F);
+   ASSERT(ctx->Pixel.ZoomX == 1.0F);
+   ASSERT(ctx->Pixel.ZoomY == 1.0F || ctx->Pixel.ZoomY == -1.0F);
 
    /* left clipping */
    if (*destX < buffer->_Xmin) {
@@ -4279,15 +4396,30 @@ _mesa_clip_drawpixels(const GLcontext *ctx,
    if (*width <= 0)
       return GL_FALSE;
 
-   /* bottom clipping */
-   if (*destY < buffer->_Ymin) {
-      unpack->SkipRows += (buffer->_Ymin - *destY);
-      *height -= (buffer->_Ymin - *destY);
-      *destY = buffer->_Ymin;
+   if (ctx->Pixel.ZoomY == 1.0F) {
+      /* bottom clipping */
+      if (*destY < buffer->_Ymin) {
+         unpack->SkipRows += (buffer->_Ymin - *destY);
+         *height -= (buffer->_Ymin - *destY);
+         *destY = buffer->_Ymin;
+      }
+      /* top clipping */
+      if (*destY + *height > buffer->_Ymax)
+         *height -= (*destY + *height - buffer->_Ymax);
    }
-   /* top clipping */
-   if (*destY + *height > buffer->_Ymax)
-      *height -= (*destY + *height - buffer->_Ymax);
+   else { /* upside down */
+      /* top clipping */
+      if (*destY > buffer->_Ymax) {
+         unpack->SkipRows += (*destY - buffer->_Ymax);
+         *height -= (*destY - buffer->_Ymax);
+         *destY = buffer->_Ymax;
+      }
+      /* bottom clipping */
+      if (*destY - *height < buffer->_Ymin)
+         *height -= (buffer->_Ymin - (*destY - *height));
+      /* adjust destY so it's the first row to write to */
+      (*destY)--;
+   }
 
    if (*height <= 0)
       return GL_TRUE;

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -201,6 +201,12 @@ _mesa_unpack_image( GLuint dimensions,
                     GLsizei width, GLsizei height, GLsizei depth,
                     GLenum format, GLenum type, const GLvoid *pixels,
                     const struct gl_pixelstore_attrib *unpack );
+
+
+extern void
+_mesa_convert_colors(GLenum srcType, const GLvoid *src,
+                     GLenum dstType, GLvoid *dst,
+                     GLuint count, const GLubyte mask[]);
 
 
 extern GLboolean
