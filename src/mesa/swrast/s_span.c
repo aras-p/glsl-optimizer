@@ -35,6 +35,7 @@
 #include "context.h"
 #include "macros.h"
 #include "imports.h"
+#include "image.h"
 
 #include "s_atifragshader.h"
 #include "s_alpha.h"
@@ -343,7 +344,9 @@ interpolate_colors(GLcontext *ctx, SWspan *span, GLboolean specular)
                db = span->blueStep;
                da = span->alphaStep;
             }
+            /*
             ASSERT(CHAN_TYPE == GL_FLOAT);
+            */
             for (i = 0; i < n; i++) {
                rgba[i][RCOMP] = r;
                rgba[i][GCOMP] = g;
@@ -1217,107 +1220,30 @@ add_specular(GLcontext *ctx, SWspan *span)
 static void
 convert_color_type(GLcontext *ctx, SWspan *span, GLenum newType)
 {
-   const GLubyte *mask = span->array->mask;
-   /* XXX NOTE: These all point to the same memory!
-    * We need to use temporaray storage when converting, below.
-    */
-   GLubyte (*rgba1)[4] = span->array->color.sz1.rgba;
-   GLushort (*rgba2)[4] = span->array->color.sz2.rgba;
-   GLfloat (*rgba4)[4] = span->array->color.sz4.rgba;
-
-   ASSERT(span->array->ChanType != newType);
-
-   switch (span->array->ChanType) {
-   case GL_UNSIGNED_BYTE:
-      if (newType == GL_UNSIGNED_SHORT) {
-         GLushort newVals[MAX_WIDTH][4];
-         GLuint i;
-         for (i = 0; i < span->end; i++) {
-            if (mask[i]) {
-               newVals[i][RCOMP] = UBYTE_TO_USHORT(rgba1[i][RCOMP]);
-               newVals[i][GCOMP] = UBYTE_TO_USHORT(rgba1[i][GCOMP]);
-               newVals[i][BCOMP] = UBYTE_TO_USHORT(rgba1[i][BCOMP]);
-               newVals[i][ACOMP] = UBYTE_TO_USHORT(rgba1[i][ACOMP]);
-            }
-         }
-         _mesa_memcpy(rgba2, newVals, span->end * 4 * sizeof(GLushort));
-      }
-      else {
-         GLfloat newVals[MAX_WIDTH][4];
-         GLuint i;
-         ASSERT(newType == GL_FLOAT);
-         for (i = 0; i < span->end; i++) {
-            if (mask[i]) {
-               newVals[i][RCOMP] = UBYTE_TO_FLOAT(rgba1[i][RCOMP]);
-               newVals[i][GCOMP] = UBYTE_TO_FLOAT(rgba1[i][GCOMP]);
-               newVals[i][BCOMP] = UBYTE_TO_FLOAT(rgba1[i][BCOMP]);
-               newVals[i][ACOMP] = UBYTE_TO_FLOAT(rgba1[i][ACOMP]);
-            }
-         }
-         _mesa_memcpy(rgba4, newVals, span->end * 4 * sizeof(GLfloat));
-      }
-      break;
-   case GL_UNSIGNED_SHORT:
-      if (newType == GL_UNSIGNED_BYTE) {
-         GLubyte newVals[MAX_WIDTH][4];
-         GLuint i;
-         for (i = 0; i < span->end; i++) {
-            if (mask[i]) {
-               newVals[i][RCOMP] = USHORT_TO_UBYTE(rgba2[i][RCOMP]);
-               newVals[i][GCOMP] = USHORT_TO_UBYTE(rgba2[i][GCOMP]);
-               newVals[i][BCOMP] = USHORT_TO_UBYTE(rgba2[i][BCOMP]);
-               newVals[i][ACOMP] = USHORT_TO_UBYTE(rgba2[i][ACOMP]);
-            }
-         }
-         _mesa_memcpy(rgba1, newVals, span->end * 4 * sizeof(GLubyte));
-      }
-      else {
-         GLfloat newVals[MAX_WIDTH][4];
-         GLuint i;
-         ASSERT(newType == GL_FLOAT);
-         for (i = 0; i < span->end; i++) {
-            if (mask[i]) {
-               newVals[i][RCOMP] = USHORT_TO_FLOAT(rgba2[i][RCOMP]);
-               newVals[i][GCOMP] = USHORT_TO_FLOAT(rgba2[i][GCOMP]);
-               newVals[i][BCOMP] = USHORT_TO_FLOAT(rgba2[i][BCOMP]);
-               newVals[i][ACOMP] = USHORT_TO_FLOAT(rgba2[i][ACOMP]);
-            }
-         }
-         _mesa_memcpy(rgba4, newVals, span->end * 4 * sizeof(GLfloat));
-      }
-      break;
-   case GL_FLOAT:
-      if (newType == GL_UNSIGNED_BYTE) {
-         GLubyte newVals[MAX_WIDTH][4];
-         GLuint i;
-         for (i = 0; i < span->end; i++) {
-            if (mask[i]) {
-               UNCLAMPED_FLOAT_TO_UBYTE(newVals[i][RCOMP], rgba4[i][RCOMP]);
-               UNCLAMPED_FLOAT_TO_UBYTE(newVals[i][GCOMP], rgba4[i][GCOMP]);
-               UNCLAMPED_FLOAT_TO_UBYTE(newVals[i][BCOMP], rgba4[i][BCOMP]);
-               UNCLAMPED_FLOAT_TO_UBYTE(newVals[i][ACOMP], rgba4[i][ACOMP]);
-            }
-         }
-         _mesa_memcpy(rgba1, newVals, span->end * 4 * sizeof(GLubyte));
-      }
-      else {
-         GLushort newVals[MAX_WIDTH][4];
-         GLuint i;
-         ASSERT(newType == GL_UNSIGNED_SHORT);
-         for (i = 0; i < span->end; i++) {
-            if (mask[i]) {
-               UNCLAMPED_FLOAT_TO_USHORT(newVals[i][RCOMP], rgba4[i][RCOMP]);
-               UNCLAMPED_FLOAT_TO_USHORT(newVals[i][GCOMP], rgba4[i][GCOMP]);
-               UNCLAMPED_FLOAT_TO_USHORT(newVals[i][BCOMP], rgba4[i][BCOMP]);
-               UNCLAMPED_FLOAT_TO_USHORT(newVals[i][ACOMP], rgba4[i][ACOMP]);
-            }
-         }
-         _mesa_memcpy(rgba2, newVals, span->end * 4 * sizeof(GLushort));
-      }
-      break;
-   default:
-      _mesa_problem(ctx, "Invalid datatype in convert_color_type");
+   GLvoid *src, *dst;
+   if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+      src = span->array->color.sz1.rgba;
    }
+   else if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+      src = span->array->color.sz2.rgba;
+   }
+   else {
+      src = span->array->color.sz4.rgba;
+   }
+   if (newType == GL_UNSIGNED_BYTE) {
+      dst = span->array->color.sz1.rgba;
+   }
+   else if (newType == GL_UNSIGNED_BYTE) {
+      dst = span->array->color.sz2.rgba;
+   }
+   else {
+      dst = span->array->color.sz4.rgba;
+   }
+
+   _mesa_convert_colors(span->array->ChanType, src,
+                        newType, dst,
+                        span->end, span->array->mask);
+
    span->array->ChanType = newType;
 }
 
@@ -1594,7 +1520,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 
       for (buf = 0; buf < numDrawBuffers; buf++) {
          struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[output][buf];
-         ASSERT(rb->_BaseFormat == GL_RGBA);
+         ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB);
 
          if (ctx->Color._LogicOpEnabled) {
             _swrast_logicop_rgba_span(ctx, rb, span);
@@ -1610,7 +1536,6 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
          if (span->arrayMask & SPAN_XY) {
             /* array of pixel coords */
             ASSERT(rb->PutValues);
-            ASSERT(rb->_BaseFormat == GL_RGB || rb->_BaseFormat == GL_RGBA);
             rb->PutValues(ctx, rb, span->end,
                           span->array->x, span->array->y,
                           span->array->rgba, span->array->mask);
@@ -1618,7 +1543,6 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
          else {
             /* horizontal run of pixels */
             ASSERT(rb->PutRow);
-            ASSERT(rb->_BaseFormat == GL_RGB || rb->_BaseFormat == GL_RGBA);
             rb->PutRow(ctx, rb, span->end, span->x, span->y, span->array->rgba,
                        span->writeAll ? NULL: span->array->mask);
          }
