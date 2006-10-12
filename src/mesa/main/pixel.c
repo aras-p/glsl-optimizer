@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1686,49 +1686,6 @@ _mesa_map_ci( const GLcontext *ctx, GLuint n, GLuint index[] )
       const GLuint j = index[i] & mask;
       index[i] = IROUND(ctx->Pixel.MapItoI[j]);
    }
-}
-
-
-/*
- * Map color indexes to rgba values.
- */
-void
-_mesa_map_ci_to_rgba_chan( const GLcontext *ctx, GLuint n,
-                           const GLuint index[], GLchan rgba[][4] )
-{
-#if CHAN_BITS == 8
-   GLuint rmask = ctx->Pixel.MapItoRsize - 1;
-   GLuint gmask = ctx->Pixel.MapItoGsize - 1;
-   GLuint bmask = ctx->Pixel.MapItoBsize - 1;
-   GLuint amask = ctx->Pixel.MapItoAsize - 1;
-   const GLubyte *rMap = ctx->Pixel.MapItoR8;
-   const GLubyte *gMap = ctx->Pixel.MapItoG8;
-   const GLubyte *bMap = ctx->Pixel.MapItoB8;
-   const GLubyte *aMap = ctx->Pixel.MapItoA8;
-   GLuint i;
-   for (i=0;i<n;i++) {
-      rgba[i][RCOMP] = rMap[index[i] & rmask];
-      rgba[i][GCOMP] = gMap[index[i] & gmask];
-      rgba[i][BCOMP] = bMap[index[i] & bmask];
-      rgba[i][ACOMP] = aMap[index[i] & amask];
-   }
-#else
-   GLuint rmask = ctx->Pixel.MapItoRsize - 1;
-   GLuint gmask = ctx->Pixel.MapItoGsize - 1;
-   GLuint bmask = ctx->Pixel.MapItoBsize - 1;
-   GLuint amask = ctx->Pixel.MapItoAsize - 1;
-   const GLfloat *rMap = ctx->Pixel.MapItoR;
-   const GLfloat *gMap = ctx->Pixel.MapItoG;
-   const GLfloat *bMap = ctx->Pixel.MapItoB;
-   const GLfloat *aMap = ctx->Pixel.MapItoA;
-   GLuint i;
-   for (i=0;i<n;i++) {
-      CLAMPED_FLOAT_TO_CHAN(rgba[i][RCOMP], rMap[index[i] & rmask]);
-      CLAMPED_FLOAT_TO_CHAN(rgba[i][GCOMP], gMap[index[i] & gmask]);
-      CLAMPED_FLOAT_TO_CHAN(rgba[i][BCOMP], bMap[index[i] & bmask]);
-      CLAMPED_FLOAT_TO_CHAN(rgba[i][ACOMP], aMap[index[i] & amask]);
-   }
-#endif
 }
 
 

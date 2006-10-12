@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -109,12 +109,6 @@ _mesa_shift_and_offset_ci(const GLcontext *ctx, GLuint n,
 
 extern void
 _mesa_map_ci(const GLcontext *ctx, GLuint n, GLuint index[]);
-
-
-extern void
-_mesa_map_ci_to_rgba_chan(const GLcontext *ctx,
-                          GLuint n, const GLuint index[],
-                          GLchan rgba[][4]);
 
 
 extern void
