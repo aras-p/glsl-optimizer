@@ -307,7 +307,7 @@ accum_accum(GLcontext *ctx, GLfloat value,
 
          /* read colors from color buffer */
          _swrast_read_rgba_span(ctx, ctx->ReadBuffer->_ColorReadBuffer, width,
-                                xpos, ypos + i, rgba);
+                                xpos, ypos + i, CHAN_TYPE, rgba);
 
          /* do accumulation */
          if (swrast->_IntegerAccumMode) {
@@ -391,7 +391,7 @@ accum_load(GLcontext *ctx, GLfloat value,
 
          /* read colors from color buffer */
          _swrast_read_rgba_span(ctx, ctx->ReadBuffer->_ColorReadBuffer, width,
-                                xpos, ypos + i, rgba);
+                                xpos, ypos + i, CHAN_TYPE, rgba);
 
          /* do load */
          if (swrast->_IntegerAccumMode) {

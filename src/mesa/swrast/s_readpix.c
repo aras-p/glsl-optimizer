@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -197,7 +197,7 @@ read_stencil_pixels( GLcontext *ctx,
  * scaling, biasing, mapping, etc. are disabled.
  */
 static GLboolean
-read_fast_rgba_pixels( GLcontext *ctx,
+fast_read_rgba_pixels( GLcontext *ctx,
                        GLint x, GLint y,
                        GLsizei width, GLsizei height,
                        GLenum format, GLenum type,
@@ -206,53 +206,59 @@ read_fast_rgba_pixels( GLcontext *ctx,
 {
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
 
+   ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB);
+
    /* clipping should have already been done */
    ASSERT(x + width <= rb->Width);
    ASSERT(y + height <= rb->Height);
 
-   /* can't do scale, bias, mapping, etc */
-   if (ctx->_ImageTransferState)
-       return GL_FALSE;
-
-   /* can't do fancy pixel packing */
-   if (packing->Alignment != 1 || packing->SwapBytes || packing->LsbFirst)
+   /* check for things we can't handle here */
+   if (ctx->_ImageTransferState ||
+       packing->SwapBytes ||
+       packing->LsbFirst) {
       return GL_FALSE;
+   }
 
-   /* if the pixel format exactly matches the renderbuffer format */
    if (format == GL_RGBA && rb->DataType == type) {
-      GLint rowLength = (packing->RowLength > 0) ? packing->RowLength : width;
-      GLint pixelSize, row;
-      GLubyte *dest;
-
-      if (type == GL_UNSIGNED_BYTE)
-         pixelSize = 4 * sizeof(GLubyte);
-      else if (type == GL_UNSIGNED_SHORT)
-         pixelSize = 4 * sizeof(GLushort);
-      else {
-         ASSERT(type == GL_FLOAT);
-         pixelSize = 4 * sizeof(GLfloat);
-      }
-
-      dest = (GLubyte *) pixels
-         + (packing->SkipRows * rowLength + packing->SkipPixels) * pixelSize;
-
-      if (packing->Invert) {
-         /* start at top and go down */
-         dest += (height - 1) * rowLength * pixelSize;
-         rowLength = -rowLength;
-      }
-
+      const GLint dstStride = _mesa_image_row_stride(packing, width,
+                                                     format, type);
+      GLubyte *dest = _mesa_image_address2d(packing, pixels, width, height,
+                                            format, type, 0, 0);
+      GLint row;
       ASSERT(rb->GetRow);
       for (row = 0; row < height; row++) {
          rb->GetRow(ctx, rb, width, x, y + row, dest);
-         dest += rowLength * pixelSize;
+         dest += dstStride;
       }
       return GL_TRUE;
    }
-   else {
-      /* can't do this format/type combination */
-      return GL_FALSE;
+
+   if (format == GL_RGB &&
+       rb->DataType == GL_UNSIGNED_BYTE &&
+       type == GL_UNSIGNED_BYTE) {
+      const GLint dstStride = _mesa_image_row_stride(packing, width,
+                                                     format, type);
+      GLubyte *dest = _mesa_image_address2d(packing, pixels, width, height,
+                                            format, type, 0, 0);
+      GLint row;
+      ASSERT(rb->GetRow);
+      for (row = 0; row < height; row++) {
+         GLubyte tempRow[MAX_WIDTH][4];
+         GLint col;
+         rb->GetRow(ctx, rb, width, x, y + row, tempRow);
+         /* convert RGBA to RGB */
+         for (col = 0; col < width; col++) {
+            dest[col * 3 + 0] = tempRow[col][0];
+            dest[col * 3 + 1] = tempRow[col][1];
+            dest[col * 3 + 2] = tempRow[col][2];
+         }
+         dest += dstStride;
+      }
+      return GL_TRUE;
    }
+
+   /* not handled */
+   return GL_FALSE;
 }
 
 
@@ -267,14 +273,15 @@ read_rgba_pixels( GLcontext *ctx,
                   GLenum format, GLenum type, GLvoid *pixels,
                   const struct gl_pixelstore_attrib *packing )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *rb = fb->_ColorReadBuffer;
 
    ASSERT(rb);
 
    /* Try optimized path first */
-   if (read_fast_rgba_pixels( ctx, x, y, width, height,
-                              format, type, pixels, packing )) {
+   if (fast_read_rgba_pixels(ctx, x, y, width, height,
+                             format, type, pixels, packing)) {
       return; /* done! */
    }
 
@@ -301,9 +308,8 @@ read_rgba_pixels( GLcontext *ctx,
       /* read full RGBA, FLOAT image */
       dest = tmpImage;
       for (row = 0; row < height; row++, y++) {
-         GLchan rgba[MAX_WIDTH][4];
          if (fb->Visual.rgbMode) {
-            _swrast_read_rgba_span(ctx, rb, width, x, y, rgba);
+            _swrast_read_rgba_span(ctx, rb, width, x, y, GL_FLOAT, dest);
          }
          else {
             GLuint index[MAX_WIDTH];
@@ -312,11 +318,11 @@ read_rgba_pixels( GLcontext *ctx,
             if (ctx->Pixel.IndexShift != 0 || ctx->Pixel.IndexOffset !=0 ) {
                _mesa_map_ci(ctx, width, index);
             }
-            _mesa_map_ci_to_rgba_chan(ctx, width, index, rgba);
+            _mesa_map_ci_to_rgba(ctx, width, index, (GLfloat (*)[4]) dest);
          }
-         _mesa_pack_rgba_span_chan(ctx, width, (const GLchan (*)[4]) rgba,
-                              GL_RGBA, GL_FLOAT, dest, &ctx->DefaultPacking,
-                              transferOps & IMAGE_PRE_CONVOLUTION_BITS);
+         _mesa_apply_rgba_transfer_ops(ctx, 
+                                      transferOps & IMAGE_PRE_CONVOLUTION_BITS,
+                                      width, (GLfloat (*)[4]) dest);
          dest += width * 4;
       }
 
@@ -346,24 +352,35 @@ read_rgba_pixels( GLcontext *ctx,
    }
    else {
       /* no convolution */
+      const GLint dstStride
+         = _mesa_image_row_stride(packing, width, format, type);
+      GLfloat (*rgba)[4] = swrast->SpanArrays->color.sz4.rgba;
       GLint row;
+      GLubyte *dst = _mesa_image_address2d(packing, pixels, width, height,
+                                           format, type, 0, 0);
+
       for (row = 0; row < height; row++, y++) {
-         GLchan rgba[MAX_WIDTH][4];
-         GLvoid *dst;
+
+         /* Get float rgba pixels */
          if (fb->Visual.rgbMode) {
-            _swrast_read_rgba_span(ctx, rb, width, x, y, rgba);
+            _swrast_read_rgba_span(ctx, rb, width, x, y, GL_FLOAT, rgba);
          }
          else {
+            /* read CI and convert to RGBA */
             GLuint index[MAX_WIDTH];
             ASSERT(rb->DataType == GL_UNSIGNED_INT);
             rb->GetRow(ctx, rb, width, x, y, index);
             if (ctx->Pixel.IndexShift != 0 || ctx->Pixel.IndexOffset != 0) {
                _mesa_map_ci(ctx, width, index);
             }
-            _mesa_map_ci_to_rgba_chan(ctx, width, index, rgba);
+            _mesa_map_ci_to_rgba(ctx, width, index, rgba);
          }
-         dst = _mesa_image_address2d(packing, pixels, width, height,
-                                     format, type, row, 0);
+
+         /* pack the row of RGBA pixels into user's buffer */
+#if 0
+         /* XXX may need to rejuvinate this code if we get conformance
+          * falures on 16bpp displays (i.e. 5/6/5).
+          */
          if (fb->Visual.redBits < CHAN_BITS ||
              fb->Visual.greenBits < CHAN_BITS ||
              fb->Visual.blueBits < CHAN_BITS) {
@@ -379,12 +396,15 @@ read_rgba_pixels( GLcontext *ctx,
                                        format, type, dst, packing,
                                        ctx->_ImageTransferState);
          }
-         else {
-            /* GLubytes are fine */
-            _mesa_pack_rgba_span_chan(ctx, width, (CONST GLchan (*)[4]) rgba,
-                                 format, type, dst, packing,
-                                 ctx->_ImageTransferState);
+         else
+#endif
+         {
+            _mesa_pack_rgba_span_float(ctx, width, (CONST GLfloat (*)[4]) rgba,
+                                       format, type, dst,
+                                       packing, ctx->_ImageTransferState);
          }
+
+         dst += dstStride;
       }
    }
 }

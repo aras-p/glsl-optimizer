@@ -432,6 +432,16 @@ _swrast_validate_derived( GLcontext *ctx );
 
 
 
+/**
+ * Size of an RGBA pixel, in bytes, for given datatype.
+ */
+#define RGBA_PIXEL_SIZE(TYPE)                                     \
+         ((TYPE == GL_UNSIGNED_BYTE) ? 4 * sizeof(GLubyte) :      \
+          ((TYPE == GL_UNSIGNED_SHORT) ? 4 * sizeof(GLushort)     \
+           : 4 * sizeof(GLfloat)))
+
+
+
 /*
  * XXX these macros are just bandages for now in order to make
  * CHAN_BITS==32 compile cleanly.

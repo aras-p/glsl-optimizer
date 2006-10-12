@@ -41,11 +41,12 @@
 
 
 
-/*
+/**
  * Determine if there's overlap in an image copy.
  * This test also compensates for the fact that copies are done from
  * bottom to top and overlaps can sometimes be handled correctly
  * without making a temporary image copy.
+ * \return GL_TRUE if the regions overlap, GL_FALSE otherwise.
  */
 static GLboolean
 regions_overlap(GLint srcx, GLint srcy,
@@ -87,41 +88,6 @@ regions_overlap(GLint srcx, GLint srcy,
 
 
 /**
- * Convert GLfloat[n][4] colors to GLchan[n][4].
- * XXX maybe move into image.c
- */
-static void
-float_span_to_chan(GLuint n, CONST GLfloat in[][4], GLchan out[][4])
-{
-   GLuint i;
-   for (i = 0; i < n; i++) {
-      UNCLAMPED_FLOAT_TO_CHAN(out[i][RCOMP], in[i][RCOMP]);
-      UNCLAMPED_FLOAT_TO_CHAN(out[i][GCOMP], in[i][GCOMP]);
-      UNCLAMPED_FLOAT_TO_CHAN(out[i][BCOMP], in[i][BCOMP]);
-      UNCLAMPED_FLOAT_TO_CHAN(out[i][ACOMP], in[i][ACOMP]);
-   }
-}
-
-
-/**
- * Convert GLchan[n][4] colors to GLfloat[n][4].
- * XXX maybe move into image.c
- */
-static void
-chan_span_to_float(GLuint n, CONST GLchan in[][4], GLfloat out[][4])
-{
-   GLuint i;
-   for (i = 0; i < n; i++) {
-      out[i][RCOMP] = CHAN_TO_FLOAT(in[i][RCOMP]);
-      out[i][GCOMP] = CHAN_TO_FLOAT(in[i][GCOMP]);
-      out[i][BCOMP] = CHAN_TO_FLOAT(in[i][BCOMP]);
-      out[i][ACOMP] = CHAN_TO_FLOAT(in[i][ACOMP]);
-   }
-}
-
-
-
-/*
  * RGBA copypixels with convolution.
  */
 static void
@@ -129,11 +95,11 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                       GLint width, GLint height, GLint destx, GLint desty)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   struct gl_renderbuffer *drawRb = NULL;
-   GLboolean quick_draw;
    GLint row;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    const GLuint transferOps = ctx->_ImageTransferState;
+   const GLboolean sink = (ctx->Pixel.MinMaxEnabled && ctx->MinMax.Sink)
+      || (ctx->Pixel.HistogramEnabled && ctx->Histogram.Sink);
    GLfloat *dest, *tmpImage, *convImage;
    SWspan span;
 
@@ -144,17 +110,6 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (swrast->_FogEnabled)
       _swrast_span_default_fog(ctx, &span);
 
-
-   if (SWRAST_CONTEXT(ctx)->_RasterMask == 0
-       && !zoom
-       && destx >= 0
-       && destx + width <= (GLint) ctx->DrawBuffer->Width) {
-      quick_draw = GL_TRUE;
-      drawRb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
-   }
-   else {
-      quick_draw = GL_FALSE;
-   }
 
    /* allocate space for GLfloat image */
    tmpImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
@@ -169,15 +124,11 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       return;
    }
 
-   /* read source image */
+   /* read source image as float/RGBA */
    dest = tmpImage;
    for (row = 0; row < height; row++) {
-      GLchan rgba[MAX_WIDTH][4];
-      /* Read GLchan and convert to GLfloat */
       _swrast_read_rgba_span(ctx, ctx->ReadBuffer->_ColorReadBuffer,
-                             width, srcx, srcy + row, rgba);
-      chan_span_to_float(width, (CONST GLchan (*)[4]) rgba,
-                         (GLfloat (*)[4]) dest);
+                             width, srcx, srcy + row, GL_FLOAT, dest);
       dest += 4 * width;
    }
 
@@ -207,38 +158,36 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                                     width, rgba);
    }
 
-   /* write the new image */
-   for (row = 0; row < height; row++) {
-      const GLfloat *src = convImage + row * width * 4;
-      GLint dy;
+   if (!sink) {
+      /* write the new image */
+      for (row = 0; row < height; row++) {
+         const GLfloat *src = convImage + row * width * 4;
+         GLvoid *rgba = span.array->color.sz1.rgba; /* row storage */
 
-      /* convert floats back to chan */
-      float_span_to_chan(width, (const GLfloat (*)[4]) src, span.array->rgba);
+         /* copy convolved colors into span array */
+         _mesa_memcpy(rgba, src, width * 4 * sizeof(GLfloat));
 
-      /* write row to framebuffer */
-      dy = desty + row;
-      if (quick_draw && dy >= 0 && dy < (GLint) ctx->DrawBuffer->Height) {
-         drawRb->PutRow(ctx, drawRb, width, destx, dy, span.array->rgba, NULL);
-      }
-      else {
+         /* write span */
          span.x = destx;
-         span.y = dy;
+         span.y = desty + row;
          span.end = width;
+         span.array->ChanType = GL_FLOAT;
          if (zoom) {
-            _swrast_write_zoomed_rgba_span(ctx, destx, desty, &span, 
-                                           span.array->rgba);
+            _swrast_write_zoomed_rgba_span(ctx, destx, desty, &span, rgba);
          }
          else {
             _swrast_write_rgba_span(ctx, &span);
          }
       }
+      /* restore this */
+      span.array->ChanType = CHAN_TYPE;
    }
 
    _mesa_free(convImage);
 }
 
 
-/*
+/**
  * RGBA copypixels
  */
 static void
@@ -246,10 +195,8 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                  GLint width, GLint height, GLint destx, GLint desty)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   struct gl_renderbuffer *drawRb;
-   GLchan *tmpImage,*p;
-   GLboolean quick_draw;
-   GLint sy, dy, stepy, j;
+   GLfloat *tmpImage, *p;
+   GLint sy, dy, stepy, row;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
    const GLuint transferOps = ctx->_ImageTransferState;
@@ -259,8 +206,6 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* no readbuffer - OK */
       return;
    }
-
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
 
    if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
       copy_conv_rgba_pixels(ctx, srcx, srcy, width, height, destx, desty);
@@ -289,35 +234,23 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       overlapping = GL_FALSE;
    }
 
+   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
    if (ctx->Depth.Test)
       _swrast_span_default_z(ctx, &span);
    if (swrast->_FogEnabled)
       _swrast_span_default_fog(ctx, &span);
 
-   if (SWRAST_CONTEXT(ctx)->_RasterMask == 0
-       && !zoom
-       && destx >= 0
-       && destx + width <= (GLint) ctx->DrawBuffer->Width) {
-      quick_draw = GL_TRUE;
-      drawRb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
-   }
-   else {
-      quick_draw = GL_FALSE;
-      drawRb = NULL;
-   }
-
    if (overlapping) {
-      GLint ssy = sy;
-      tmpImage = (GLchan *) _mesa_malloc(width * height * sizeof(GLchan) * 4);
+      tmpImage = (GLfloat *) _mesa_malloc(width * height * sizeof(GLfloat) * 4);
       if (!tmpImage) {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
          return;
       }
-      /* read the source image */
+      /* read the source image as RGBA/float */
       p = tmpImage;
-      for (j = 0; j < height; j++, ssy += stepy) {
+      for (row = 0; row < height; row++) {
          _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
-                                 width, srcx, ssy, (GLchan (*)[4]) p );
+                                 width, srcx, sy + row, GL_FLOAT, p );
          p += width * 4;
       }
       p = tmpImage;
@@ -327,48 +260,42 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       p = NULL;
    }
 
-   for (j = 0; j < height; j++, sy += stepy, dy += stepy) {
-      /* Get source pixels */
+   ASSERT(width < MAX_WIDTH);
+
+   for (row = 0; row < height; row++, sy += stepy, dy += stepy) {
+      GLvoid *rgba = span.array->color.sz4.rgba;
+
+      /* Get row/span of source pixels */
       if (overlapping) {
          /* get from buffered image */
-         ASSERT(width < MAX_WIDTH);
-         _mesa_memcpy(span.array->rgba, p, width * sizeof(GLchan) * 4);
+         _mesa_memcpy(rgba, p, width * sizeof(GLfloat) * 4);
          p += width * 4;
       }
       else {
          /* get from framebuffer */
-         ASSERT(width < MAX_WIDTH);
          _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
-                                 width, srcx, sy, span.array->rgba );
+                                 width, srcx, sy, GL_FLOAT, rgba );
       }
 
       if (transferOps) {
-         GLfloat rgbaFloat[MAX_WIDTH][4];
-         /* convert to float, transfer, convert back to chan */
-         chan_span_to_float(width, (CONST GLchan (*)[4]) span.array->rgba,
-                            rgbaFloat);
-         _mesa_apply_rgba_transfer_ops(ctx, transferOps, width, rgbaFloat);
-         float_span_to_chan(width, (CONST GLfloat (*)[4]) rgbaFloat,
-                            span.array->rgba);
+         _mesa_apply_rgba_transfer_ops(ctx, transferOps, width,
+                                       (GLfloat (*)[4]) rgba);
       }
 
       /* Write color span */
-      if (quick_draw && dy >= 0 && dy < (GLint) ctx->DrawBuffer->Height) {
-         drawRb->PutRow(ctx, drawRb, width, destx, dy, span.array->rgba, NULL);
+      span.x = destx;
+      span.y = dy;
+      span.end = width;
+      span.array->ChanType = GL_FLOAT;
+      if (zoom) {
+         _swrast_write_zoomed_rgba_span(ctx, destx, desty, &span, rgba);
       }
       else {
-         span.x = destx;
-         span.y = dy;
-         span.end = width;
-         if (zoom) {
-            _swrast_write_zoomed_rgba_span(ctx, destx, desty, &span,
-                                           span.array->rgba);
-         }
-         else {
-            _swrast_write_rgba_span(ctx, &span);
-         }
+         _swrast_write_rgba_span(ctx, &span);
       }
    }
+
+   span.array->ChanType = CHAN_TYPE; /* restore */
 
    if (overlapping)
       _mesa_free(tmpImage);
@@ -902,6 +829,87 @@ copy_depth_stencil_pixels(GLcontext *ctx,
 }
 
 
+
+/**
+ * Try to do a fast copy pixels.
+ */
+static GLboolean
+fast_copy_pixels(GLcontext *ctx,
+                 GLint srcX, GLint srcY, GLsizei width, GLsizei height,
+                 GLint dstX, GLint dstY, GLenum type)
+{
+   struct gl_framebuffer *srcFb = ctx->ReadBuffer;
+   struct gl_framebuffer *dstFb = ctx->DrawBuffer;
+   struct gl_renderbuffer *srcRb, *dstRb;
+   GLint row, yStep;
+
+   if (SWRAST_CONTEXT(ctx)->_RasterMask != 0x0 ||
+       ctx->Pixel.ZoomX != 1.0F ||
+       ctx->Pixel.ZoomY != 1.0F ||
+       ctx->_ImageTransferState) {
+      /* can't handle these */
+      return GL_FALSE;
+   }
+
+   if (type == GL_COLOR) {
+      if (dstFb->_NumColorDrawBuffers[0] != 1)
+         return GL_FALSE;
+      srcRb = srcFb->_ColorReadBuffer;
+      dstRb = dstFb->_ColorDrawBuffers[0][0];
+   }
+   else if (type == GL_STENCIL) {
+      srcRb = srcFb->_StencilBuffer;
+      dstRb = dstFb->_StencilBuffer;
+   }
+   else if (type == GL_DEPTH) {
+      srcRb = srcFb->_DepthBuffer;
+      dstRb = dstFb->_DepthBuffer;
+   }
+   else if (type == GL_DEPTH_STENCIL_EXT) {
+      /* XXX correct? */
+      srcRb = srcFb->Attachment[BUFFER_DEPTH].Renderbuffer;
+      dstRb = dstFb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   }
+
+   /* src and dst renderbuffers must be same format and type */
+   if (!srcRb || !dstRb ||
+       srcRb->DataType != dstRb->DataType ||
+       srcRb->_BaseFormat != dstRb->_BaseFormat) {
+      return GL_FALSE;
+   }
+
+   /* clipping not supported */
+   if (srcX < 0 || srcX + width > srcFb->Width ||
+       srcY < 0 || srcY + height > srcFb->Width ||
+       dstX < dstFb->_Xmin || dstX + width > dstFb->_Xmax ||
+       dstY < dstFb->_Ymin || dstY + height > dstFb->_Ymax) {
+      return GL_FALSE;
+   }
+
+   /* overlapping src/dst doesn't matter, just determine Y direction */
+   if (srcY < dstY) {
+      /* top-down  max-to-min */
+      srcY = srcY + height - 1;
+      dstY = dstY + height - 1;
+      yStep = -1;
+   }
+   else {
+      /* bottom-up  min-to-max */
+      yStep = 1;
+   }
+
+   for (row = 0; row < height; row++) {
+      GLuint temp[MAX_WIDTH][4];
+      srcRb->GetRow(ctx, srcRb, width, srcX, srcY, temp);
+      dstRb->PutRow(ctx, dstRb, width, dstX, dstY, temp, NULL);
+      srcY += yStep;
+      dstY += yStep;
+   }
+
+   return GL_TRUE;
+}
+
+
 /**
  * Do software-based glCopyPixels.
  * By time we get here, all parameters will have been error-checked.
@@ -917,26 +925,28 @@ _swrast_CopyPixels( GLcontext *ctx,
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-   switch (type) {
-   case GL_COLOR:
-      if (ctx->Visual.rgbMode) {
-         copy_rgba_pixels( ctx, srcx, srcy, width, height, destx, desty );
+   if (!fast_copy_pixels(ctx, srcx, srcy, width, height, destx, desty, type)) {
+      switch (type) {
+      case GL_COLOR:
+         if (ctx->Visual.rgbMode) {
+            copy_rgba_pixels( ctx, srcx, srcy, width, height, destx, desty );
+         }
+         else {
+            copy_ci_pixels( ctx, srcx, srcy, width, height, destx, desty );
+         }
+         break;
+      case GL_DEPTH:
+         copy_depth_pixels( ctx, srcx, srcy, width, height, destx, desty );
+         break;
+      case GL_STENCIL:
+         copy_stencil_pixels( ctx, srcx, srcy, width, height, destx, desty );
+         break;
+      case GL_DEPTH_STENCIL_EXT:
+         copy_depth_stencil_pixels(ctx, srcx, srcy, width, height, destx, desty);
+         break;
+      default:
+         _mesa_problem(ctx, "unexpected type in _swrast_CopyPixels");
       }
-      else {
-         copy_ci_pixels( ctx, srcx, srcy, width, height, destx, desty );
-      }
-      break;
-   case GL_DEPTH:
-      copy_depth_pixels( ctx, srcx, srcy, width, height, destx, desty );
-      break;
-   case GL_STENCIL:
-      copy_stencil_pixels( ctx, srcx, srcy, width, height, destx, desty );
-      break;
-   case GL_DEPTH_STENCIL_EXT:
-      copy_depth_stencil_pixels(ctx, srcx, srcy, width, height, destx, desty);
-      break;
-   default:
-      _mesa_problem(ctx, "unexpected type in _swrast_CopyPixels");
    }
 
    RENDER_FINISH(swrast,ctx);

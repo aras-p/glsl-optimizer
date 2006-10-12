@@ -40,16 +40,17 @@
 #include "s_zoom.h"
 
 
+
 /**
  * Try to do a fast and simple RGB(a) glDrawPixels.
  * Return:  GL_TRUE if success, GL_FALSE if slow path must be used instead
  */
 static GLboolean
-fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
-                 GLsizei width, GLsizei height,
-                 GLenum format, GLenum type,
-                 const struct gl_pixelstore_attrib *userUnpack,
-                 const GLvoid *pixels)
+fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
+                      GLsizei width, GLsizei height,
+                      GLenum format, GLenum type,
+                      const struct gl_pixelstore_attrib *userUnpack,
+                      const GLvoid *pixels)
 {
    const GLint imgX = x, imgY = y;
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
@@ -63,7 +64,6 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
 
    if ((swrast->_RasterMask & ~CLIP_BIT) ||
        ctx->Texture._EnabledCoordUnits ||
-       userUnpack->Alignment != 1 ||
        userUnpack->SwapBytes ||
        ctx->_ImageTransferState) {
       /* can't handle any of those conditions */
@@ -100,26 +100,25 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
    else {
       /* non-simple zooming */
       simpleZoom = GL_FALSE;
+      yStep = 1;
       if (unpack.RowLength == 0)
          unpack.RowLength = width;
    }
 
    /*
     * Ready to draw!
-    * The window region at (destX, destY) of size (drawWidth, drawHeight)
-    * will be written to.
-    * We'll take pixel data from buffer pointed to by "pixels" but we'll
-    * skip "unpack.SkipRows" rows and skip "unpack.SkipPixels" pixels/row.
     */
 
-   if (format == GL_RGBA && type == CHAN_TYPE && rbType == CHAN_TYPE) {
-      const GLchan *src = (const GLchan *) pixels
-         + (unpack.SkipRows * unpack.RowLength + unpack.SkipPixels) * 4;
+   if (format == GL_RGBA && type == rbType) {
+      const GLubyte *src = _mesa_image_address2d(&unpack, pixels, width,
+                                                 height, format, type, 0, 0);
+      const GLint srcStride = _mesa_image_row_stride(&unpack, width,
+                                                     format, type);
       if (simpleZoom) {
          GLint row;
          for (row = 0; row < drawHeight; row++) {
             rb->PutRow(ctx, rb, drawWidth, destX, destY, src, NULL);
-            src += unpack.RowLength * 4;
+            src += srcStride;
             destY += yStep;
          }
       }
@@ -130,21 +129,25 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
             span.x = destX;
             span.y = destY + row;
             span.end = drawWidth;
+            span.array->ChanType = rbType;
             _swrast_write_zoomed_rgba_span(ctx, imgX, imgY, &span, src);
-            src += unpack.RowLength * 4;
+            src += srcStride;
          }
+         span.array->ChanType = CHAN_TYPE;
       }
       return GL_TRUE;
    }
 
-   if (format == GL_RGB && type == CHAN_TYPE && rbType == CHAN_TYPE) {
-      const GLchan *src = (const GLchan *) pixels
-         + (unpack.SkipRows * unpack.RowLength + unpack.SkipPixels) * 3;
+   if (format == GL_RGB && type == rbType) {
+      const GLubyte *src = _mesa_image_address2d(&unpack, pixels, width,
+                                                 height, format, type, 0, 0);
+      const GLint srcStride = _mesa_image_row_stride(&unpack, width,
+                                                     format, type);
       if (simpleZoom) {
          GLint row;
          for (row = 0; row < drawHeight; row++) {
             rb->PutRowRGB(ctx, rb, drawWidth, destX, destY, src, NULL);
-            src += unpack.RowLength * 3;
+            src += srcStride;
             destY += yStep;
          }
       }
@@ -155,13 +158,19 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
             span.x = destX;
             span.y = destY;
             span.end = drawWidth;
+            span.array->ChanType = rbType;
             _swrast_write_zoomed_rgb_span(ctx, imgX, imgY, &span, src);
-            src += unpack.RowLength * 3;
-               destY++;
+            src += srcStride;
+            destY++;
          }
+         span.array->ChanType = CHAN_TYPE;
       }
       return GL_TRUE;
    }
+
+   /* Remaining cases haven't been tested with alignment != 1 */
+   if (userUnpack->Alignment != 1)
+      return GL_FALSE;
 
    if (format == GL_LUMINANCE && type == CHAN_TYPE && rbType == CHAN_TYPE) {
       const GLchan *src = (const GLchan *) pixels
@@ -530,7 +539,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
 
 
 
-/*
+/**
  * Draw RGBA image.
  */
 static void
@@ -542,40 +551,23 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLint imgX = x, imgY = y;
-   struct gl_renderbuffer *rb = NULL; /* only used for quickDraw path */
    const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
-   GLboolean quickDraw;
    GLfloat *convImage = NULL;
    GLuint transferOps = ctx->_ImageTransferState;
    SWspan span;
 
    /* Try an optimized glDrawPixels first */
-   if (fast_draw_pixels(ctx, x, y, width, height, format, type, unpack, pixels))
+   if (fast_draw_rgba_pixels(ctx, x, y, width, height, format, type,
+                             unpack, pixels))
       return;
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
-
    if (ctx->Depth.Test)
       _swrast_span_default_z(ctx, &span);
    if (swrast->_FogEnabled)
       _swrast_span_default_fog(ctx, &span);
    if (ctx->Texture._EnabledCoordUnits)
       _swrast_span_default_texcoords(ctx, &span);
-
-   if (swrast->_RasterMask == 0 && !zoom && x >= 0 && y >= 0
-       && x + width <= (GLint) ctx->DrawBuffer->Width
-       && y + height <= (GLint) ctx->DrawBuffer->Height
-       && ctx->DrawBuffer->_NumColorDrawBuffers[0] == 1) {
-      rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
-      if (rb->DataType == format)
-         quickDraw = GL_TRUE;
-      else
-         quickDraw = GL_FALSE;
-   }
-   else {
-      quickDraw = GL_FALSE;
-      rb = NULL;
-   }
 
    if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
       /* Convolution has to be handled specially.  We'll create an
@@ -628,6 +620,13 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       transferOps &= IMAGE_POST_CONVOLUTION_BITS;
    }
 
+   if (ctx->DrawBuffer->_NumColorDrawBuffers[0] > 0 &&
+       ctx->DrawBuffer->_ColorDrawBuffers[0][0]->DataType != GL_FLOAT &&
+       ctx->Color.ClampFragmentColor != GL_FALSE) {
+      /* need to clamp colors before applying fragment ops */
+      transferOps |= IMAGE_CLAMP_BIT;
+   }
+
    /*
     * General solution
     */
@@ -636,53 +635,51 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
          || (ctx->Pixel.HistogramEnabled && ctx->Histogram.Sink);
       const GLbitfield interpMask = span.interpMask;
       const GLbitfield arrayMask = span.arrayMask;
+      const GLint srcStride
+         = _mesa_image_row_stride(unpack, width, format, type);
       GLint skipPixels = 0;
+      /* use span array for temp color storage */
+      GLfloat *rgba = (GLfloat *) span.array->color.sz4.rgba;
 
       /* if the span is wider than MAX_WIDTH we have to do it in chunks */
       while (skipPixels < width) {
          const GLint spanWidth = MIN2(width - skipPixels, MAX_WIDTH);
+         const GLubyte *source = _mesa_image_address2d(unpack, pixels,
+                               width, height, format, type, 0, skipPixels);
          GLint row;
 
-         ASSERT(span.end <= MAX_WIDTH);
-
          for (row = 0; row < height; row++) {
-            const GLvoid *source = _mesa_image_address2d(unpack,
-                     pixels, width, height, format, type, row, skipPixels);
-
-            /* Set these for each row since the _swrast_write_* function may
-             * change them while clipping.
-             */
-            span.array->ChanType = CHAN_TYPE;
-            span.x = x + skipPixels;
-            span.y = y + row;
-            span.end = spanWidth;
-            span.arrayMask = arrayMask;
-            span.interpMask = interpMask;
-
-            _mesa_unpack_color_span_chan(ctx, spanWidth, GL_RGBA,
-                                         (GLchan *) span.array->rgba,
-                                         format, type, source, unpack,
-                                         transferOps);
-
-            if (sink)
-               continue;
-
+            /* get image row as float/RGBA */
+            _mesa_unpack_color_span_float(ctx, spanWidth, GL_RGBA, rgba,
+                                     format, type, source, unpack,
+                                     transferOps);
             /* draw the span */
-            if (quickDraw) {
-               rb->PutRow(ctx, rb, span.end, span.x, span.y,
-                          span.array->rgba, NULL);
+            if (!sink) {
+               /* Set these for each row since the _swrast_write_* functions
+                * may change them while clipping/rendering.
+                */
+               span.array->ChanType = GL_FLOAT;
+               span.x = x + skipPixels;
+               span.y = y + row;
+               span.end = spanWidth;
+               span.arrayMask = arrayMask;
+               span.interpMask = interpMask;
+               if (zoom) {
+                  _swrast_write_zoomed_rgba_span(ctx, imgX, imgY, &span, rgba);
+               }
+               else {
+                  _swrast_write_rgba_span(ctx, &span);
+               }
             }
-            else if (zoom) {
-               _swrast_write_zoomed_rgba_span(ctx, imgX, imgY, &span,
-                                              span.array->rgba);
-            }
-            else {
-               _swrast_write_rgba_span(ctx, &span);
-            }
-         }
+
+            source += srcStride;
+         } /* for row */
 
          skipPixels += spanWidth;
-      }
+      } /* while skipPixels < width */
+
+      /* XXX this is ugly/temporary, to undo above change */
+      span.array->ChanType = CHAN_TYPE;
    }
 
    if (convImage) {

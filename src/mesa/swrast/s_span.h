@@ -60,8 +60,8 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span);
 
 
 extern void
-_swrast_read_rgba_span( GLcontext *ctx, struct gl_renderbuffer *rb,
-                        GLuint n, GLint x, GLint y, GLchan rgba[][4] );
+_swrast_read_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
+                       GLuint n, GLint x, GLint y, GLenum type, GLvoid *rgba);
 
 extern void
 _swrast_read_index_span( GLcontext *ctx, struct gl_renderbuffer *rb,

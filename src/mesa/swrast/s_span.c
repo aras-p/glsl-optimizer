@@ -1560,14 +1560,16 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 }
 
 
-
 /**
  * Read RGBA pixels from frame buffer.  Clipping will be done to prevent
  * reading ouside the buffer's boundaries.
+ * \param type  datatype for returned colors
+ * \param rgba  the returned colors
  */
 void
 _swrast_read_rgba_span( GLcontext *ctx, struct gl_renderbuffer *rb,
-                        GLuint n, GLint x, GLint y, GLchan rgba[][4] )
+                        GLuint n, GLint x, GLint y, GLenum dstType,
+                        GLvoid *rgba)
 {
    const GLint bufWidth = (GLint) rb->Width;
    const GLint bufHeight = (GLint) rb->Height;
@@ -1609,8 +1611,18 @@ _swrast_read_rgba_span( GLcontext *ctx, struct gl_renderbuffer *rb,
       ASSERT(rb);
       ASSERT(rb->GetRow);
       ASSERT(rb->_BaseFormat == GL_RGB || rb->_BaseFormat == GL_RGBA);
-      ASSERT(rb->DataType == CHAN_TYPE);
-      rb->GetRow(ctx, rb, length, x + skip, y, rgba + skip);
+
+      if (rb->DataType == dstType) {
+         rb->GetRow(ctx, rb, length, x + skip, y,
+                    (GLubyte *) rgba + skip * RGBA_PIXEL_SIZE(rb->DataType));
+      }
+      else {
+         GLuint temp[MAX_WIDTH * 4];
+         rb->GetRow(ctx, rb, length, x + skip, y, temp);
+         _mesa_convert_colors(rb->DataType, temp,
+                   dstType, (GLubyte *) rgba + skip * RGBA_PIXEL_SIZE(dstType),
+                   length, NULL);
+      }
    }
 }
 
@@ -1801,7 +1813,7 @@ void *
 _swrast_get_dest_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
                       SWspan *span)
 {
-   GLuint pixelSize;
+   const GLuint pixelSize = RGBA_PIXEL_SIZE(span->array->ChanType);
    void *rbPixels;
 
    /*
@@ -1809,15 +1821,12 @@ _swrast_get_dest_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
     * Point rbPixels to a temporary space (use specular color arrays).
     */
    if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-      pixelSize = 4 * sizeof(GLubyte);
       rbPixels = span->array->color.sz1.spec;
    }
    else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
-      pixelSize = 4 * sizeof(GLushort);
       rbPixels = span->array->color.sz2.spec;
    }
    else {
-      pixelSize = 4 * sizeof(GLfloat);
       rbPixels = span->array->color.sz4.spec;
    }
 
