@@ -262,6 +262,41 @@ fast_read_rgba_pixels( GLcontext *ctx,
 }
 
 
+/**
+ * When we're using a low-precision color buffer (like 16-bit 5/6/5)
+ * we have to adjust our color values a bit to pass conformance.
+ * The problem is when a 5 or 6-bit color value is convert to an 8-bit
+ * value and then a floating point value, the floating point values don't
+ * increment uniformly as the 5 or 6-bit value is incremented.
+ *
+ * This function adjusts floating point values to compensate.
+ */
+static void
+adjust_colors(GLcontext *ctx, GLuint n, GLfloat rgba[][4])
+{
+   const GLuint rShift = 8 - ctx->Visual.redBits;
+   const GLuint gShift = 8 - ctx->Visual.greenBits;
+   const GLuint bShift = 8 - ctx->Visual.blueBits;
+   const GLfloat rScale = 1.0F / (GLfloat) ((1 << ctx->Visual.redBits  ) - 1);
+   const GLfloat gScale = 1.0F / (GLfloat) ((1 << ctx->Visual.greenBits) - 1);
+   const GLfloat bScale = 1.0F / (GLfloat) ((1 << ctx->Visual.blueBits ) - 1);
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      GLint r, g, b;
+      /* convert float back to ubyte */
+      CLAMPED_FLOAT_TO_UBYTE(r, rgba[i][RCOMP]);
+      CLAMPED_FLOAT_TO_UBYTE(g, rgba[i][GCOMP]);
+      CLAMPED_FLOAT_TO_UBYTE(b, rgba[i][BCOMP]);
+      /* using only the N most significant bits of the ubyte value, convert to
+       * float in [0,1].
+       */
+      rgba[i][RCOMP] = (GLfloat) (r >> rShift) * rScale;
+      rgba[i][GCOMP] = (GLfloat) (g >> gShift) * gScale;
+      rgba[i][BCOMP] = (GLfloat) (b >> bShift) * bScale;
+   }
+}
+
+
 
 /*
  * Read R, G, B, A, RGB, L, or LA pixels.
@@ -376,33 +411,17 @@ read_rgba_pixels( GLcontext *ctx,
             _mesa_map_ci_to_rgba(ctx, width, index, rgba);
          }
 
+         /* apply fudge factor for shallow color buffers */
+         if (fb->Visual.redBits < 8 ||
+             fb->Visual.greenBits < 8 ||
+             fb->Visual.blueBits < 8) {
+            adjust_colors(ctx, width, rgba);
+         }
+
          /* pack the row of RGBA pixels into user's buffer */
-#if 0
-         /* XXX may need to rejuvinate this code if we get conformance
-          * falures on 16bpp displays (i.e. 5/6/5).
-          */
-         if (fb->Visual.redBits < CHAN_BITS ||
-             fb->Visual.greenBits < CHAN_BITS ||
-             fb->Visual.blueBits < CHAN_BITS) {
-            /* Requantize the color values into floating point and go from
-             * there.  This fixes conformance failures with 5/6/5 color
-             * buffers, for example.
-             */
-            GLfloat rgbaf[MAX_WIDTH][4];
-            _mesa_chan_to_float_span(ctx, width,
-                                     (CONST GLchan (*)[4]) rgba, rgbaf);
-            _mesa_pack_rgba_span_float(ctx, width,
-                                       (CONST GLfloat (*)[4]) rgbaf,
-                                       format, type, dst, packing,
-                                       ctx->_ImageTransferState);
-         }
-         else
-#endif
-         {
-            _mesa_pack_rgba_span_float(ctx, width, (CONST GLfloat (*)[4]) rgba,
-                                       format, type, dst,
-                                       packing, ctx->_ImageTransferState);
-         }
+         _mesa_pack_rgba_span_float(ctx, width, (CONST GLfloat (*)[4]) rgba,
+                                    format, type, dst,
+                                    packing, ctx->_ImageTransferState);
 
          dst += dstStride;
       }
