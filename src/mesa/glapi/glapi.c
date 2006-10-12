@@ -998,13 +998,6 @@ _glapi_check_table(const struct _glapi_table *table)
       assert(blendColorOffset == offset);
    }
    {
-      GLuint istextureOffset = _glapi_get_proc_offset("glIsTextureEXT");
-      char *istextureFunc = (char*) &table->IsTextureEXT;
-      GLuint offset = (istextureFunc - (char *) table) / sizeof(void *);
-      assert(istextureOffset == _gloffset_IsTextureEXT);
-      assert(istextureOffset == offset);
-   }
-   {
       GLuint secondaryColor3fOffset = _glapi_get_proc_offset("glSecondaryColor3fEXT");
       char *secondaryColor3fFunc = (char*) &table->SecondaryColor3fEXT;
       GLuint offset = (secondaryColor3fFunc - (char *) table) / sizeof(void *);
