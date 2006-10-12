@@ -1714,14 +1714,13 @@ _mesa_map_ci_to_rgba( const GLcontext *ctx, GLuint n,
 }
 
 
-/*
- * Map 8-bit color indexes to rgb values.
+/**
+ * Map ubyte color indexes to ubyte/RGBA values.
  */
 void
-_mesa_map_ci8_to_rgba( const GLcontext *ctx, GLuint n, const GLubyte index[],
-                       GLchan rgba[][4] )
+_mesa_map_ci8_to_rgba8(const GLcontext *ctx, GLuint n, const GLubyte index[],
+                       GLubyte rgba[][4])
 {
-#if CHAN_BITS == 8
    GLuint rmask = ctx->Pixel.MapItoRsize - 1;
    GLuint gmask = ctx->Pixel.MapItoGsize - 1;
    GLuint bmask = ctx->Pixel.MapItoBsize - 1;
@@ -1737,23 +1736,6 @@ _mesa_map_ci8_to_rgba( const GLcontext *ctx, GLuint n, const GLubyte index[],
       rgba[i][BCOMP] = bMap[index[i] & bmask];
       rgba[i][ACOMP] = aMap[index[i] & amask];
    }
-#else
-   GLuint rmask = ctx->Pixel.MapItoRsize - 1;
-   GLuint gmask = ctx->Pixel.MapItoGsize - 1;
-   GLuint bmask = ctx->Pixel.MapItoBsize - 1;
-   GLuint amask = ctx->Pixel.MapItoAsize - 1;
-   const GLfloat *rMap = ctx->Pixel.MapItoR;
-   const GLfloat *gMap = ctx->Pixel.MapItoG;
-   const GLfloat *bMap = ctx->Pixel.MapItoB;
-   const GLfloat *aMap = ctx->Pixel.MapItoA;
-   GLuint i;
-   for (i=0;i<n;i++) {
-      CLAMPED_FLOAT_TO_CHAN(rgba[i][RCOMP], rMap[index[i] & rmask]);
-      CLAMPED_FLOAT_TO_CHAN(rgba[i][GCOMP], gMap[index[i] & gmask]);
-      CLAMPED_FLOAT_TO_CHAN(rgba[i][BCOMP], bMap[index[i] & bmask]);
-      CLAMPED_FLOAT_TO_CHAN(rgba[i][ACOMP], aMap[index[i] & amask]);
-   }
-#endif
 }
 
 
@@ -1809,52 +1791,6 @@ _mesa_scale_and_bias_depth(const GLcontext *ctx, GLuint n,
 }
 
 
-/*
- * This function converts an array of GLchan colors to GLfloat colors.
- * Most importantly, it undoes the non-uniform quantization of pixel
- * values introduced when we convert shallow (< 8 bit) pixel values
- * to GLubytes in the ctx->Driver.ReadRGBASpan() functions.
- * This fixes a number of OpenGL conformance failures when running on
- * 16bpp displays, for example.
- */
-void
-_mesa_chan_to_float_span(const GLcontext *ctx, GLuint n,
-                         CONST GLchan rgba[][4], GLfloat rgbaf[][4])
-{
-#if CHAN_TYPE == GL_FLOAT
-   MEMCPY(rgbaf, rgba, n * 4 * sizeof(GLfloat));
-#else
-   const GLuint rShift = CHAN_BITS - ctx->Visual.redBits;
-   const GLuint gShift = CHAN_BITS - ctx->Visual.greenBits;
-   const GLuint bShift = CHAN_BITS - ctx->Visual.blueBits;
-   GLuint aShift;
-   const GLfloat rScale = 1.0F / (GLfloat) ((1 << ctx->Visual.redBits  ) - 1);
-   const GLfloat gScale = 1.0F / (GLfloat) ((1 << ctx->Visual.greenBits) - 1);
-   const GLfloat bScale = 1.0F / (GLfloat) ((1 << ctx->Visual.blueBits ) - 1);
-   GLfloat aScale;
-   GLuint i;
-
-   if (ctx->Visual.alphaBits > 0) {
-      aShift = CHAN_BITS - ctx->Visual.alphaBits;
-      aScale = 1.0F / (GLfloat) ((1 << ctx->Visual.alphaBits) - 1);
-   }
-   else {
-      aShift = 0;
-      aScale = 1.0F / CHAN_MAXF;
-   }
-
-   for (i = 0; i < n; i++) {
-      const GLint r = rgba[i][RCOMP] >> rShift;
-      const GLint g = rgba[i][GCOMP] >> gShift;
-      const GLint b = rgba[i][BCOMP] >> bShift;
-      const GLint a = rgba[i][ACOMP] >> aShift;
-      rgbaf[i][RCOMP] = (GLfloat) r * rScale;
-      rgbaf[i][GCOMP] = (GLfloat) g * gScale;
-      rgbaf[i][BCOMP] = (GLfloat) b * bScale;
-      rgbaf[i][ACOMP] = (GLfloat) a * aScale;
-   }
-#endif
-}
 
 /**********************************************************************/
 /*****                    State Management                        *****/
