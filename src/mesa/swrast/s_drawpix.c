@@ -261,33 +261,35 @@ fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
       return GL_TRUE;
    }
 
-   if (format==GL_COLOR_INDEX && type==GL_UNSIGNED_BYTE) {
+   if (format == GL_COLOR_INDEX && type == GL_UNSIGNED_BYTE) {
       const GLubyte *src = (const GLubyte *) pixels
          + unpack.SkipRows * unpack.RowLength + unpack.SkipPixels;
-      if (ctx->Visual.rgbMode && rbType == CHAN_TYPE) {
-         /* convert CI data to RGBA */
+      if (ctx->Visual.rgbMode && rbType == GL_UNSIGNED_BYTE) {
+         /* convert ubyte/CI data to ubyte/RGBA */
          if (simpleZoom) {
             GLint row;
             for (row = 0; row < drawHeight; row++) {
                ASSERT(drawWidth <= MAX_WIDTH);
-               _mesa_map_ci8_to_rgba(ctx, drawWidth, src, span.array->rgba);
+               _mesa_map_ci8_to_rgba8(ctx, drawWidth, src,
+                                      span.array->color.sz1.rgba);
                rb->PutRow(ctx, rb, drawWidth, destX, destY,
-                          span.array->rgba, NULL);
+                          span.array->color.sz1.rgba, NULL);
                src += unpack.RowLength;
                destY += yStep;
             }
          }
          else {
-            /* with zooming */
+            /* ubyte/CI to ubyte/RGBA with zooming */
             GLint row;
             for (row = 0; row < drawHeight; row++) {
                ASSERT(drawWidth <= MAX_WIDTH);
-               _mesa_map_ci8_to_rgba(ctx, drawWidth, src, span.array->rgba);
+               _mesa_map_ci8_to_rgba8(ctx, drawWidth, src,
+                                      span.array->color.sz1.rgba);
                span.x = destX;
                span.y = destY;
                span.end = drawWidth;
                _swrast_write_zoomed_rgba_span(ctx, imgX, imgY, &span,
-                                              span.array->rgba);
+                                              span.array->color.sz1.rgba);
                src += unpack.RowLength;
                destY++;
             }
