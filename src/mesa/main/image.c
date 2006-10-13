@@ -3479,9 +3479,7 @@ _mesa_pack_index_span( const GLcontext *ctx, GLuint n,
    if (transferOps & (IMAGE_MAP_COLOR_BIT | IMAGE_SHIFT_OFFSET_BIT)) {
       /* make a copy of input */
       _mesa_memcpy(indexes, source, n * sizeof(GLuint));
-      if (transferOps) {
-         _mesa_apply_ci_transfer_ops(ctx, transferOps, n, indexes);
-      }
+      _mesa_apply_ci_transfer_ops(ctx, transferOps, n, indexes);
       source = indexes;
    }
 
