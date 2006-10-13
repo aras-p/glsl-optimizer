@@ -36,66 +36,6 @@
 #include "shader/arbprogparse.h"
 #include "shader/program_instruction.h"
 
-static const char *fp_opcode_string[] = {
-   "ABS",		/* ARB_f_p only */
-   "ADD",
-   "CMP",		/* ARB_f_p only */
-   "COS",
-   "DDX",		/* NV_f_p only */
-   "DDY",		/* NV_f_p only */
-   "DP3",
-   "DP4",
-   "DPH",		/* ARB_f_p only */
-   "DST",
-   "END",		/* private opcode */
-   "EX2",
-   "FLR",
-   "FRC",
-   "KIL",		/* ARB_f_p only */
-   "KIL_NV",		/* NV_f_p only */
-   "LG2",
-   "LIT",
-   "LRP",
-   "MAD",
-   "MAX",
-   "MIN",
-   "MOV",
-   "MUL",
-   "PK2H",		/* NV_f_p only */
-   "PK2US",		/* NV_f_p only */
-   "PK4B",		/* NV_f_p only */
-   "PK4UB",		/* NV_f_p only */
-   "POW",
-   "PRINT",		/* Mesa only */
-   "RCP",
-   "RFL",		/* NV_f_p only */
-   "RSQ",
-   "SCS",		/* ARB_f_p only */
-   "SEQ",		/* NV_f_p only */
-   "SFL",		/* NV_f_p only */
-   "SGE",		/* NV_f_p only */
-   "SGT",		/* NV_f_p only */
-   "SIN",
-   "SLE",		/* NV_f_p only */
-   "SLT",
-   "SNE",		/* NV_f_p only */
-   "STR",		/* NV_f_p only */
-   "SUB",
-   "SWZ",		/* ARB_f_p only */
-   "TEX",
-   "TXB",		/* ARB_f_p only */
-   "TXD",		/* NV_f_p only */
-   "TXP",		/* ARB_f_p only */
-   "TXP_NV",		/* NV_f_p only */
-   "UP2H",		/* NV_f_p only */
-   "UP2US",		/* NV_f_p only */
-   "UP4B",		/* NV_f_p only */
-   "UP4UB",		/* NV_f_p only */
-   "X2D",		/* NV_f_p only - 2d mat mul */
-   "XPD",		/* ARB_f_p only - cross product */
-};
-
-
 
 void brw_wm_print_value( struct brw_wm_compile *c,
 		       struct brw_wm_value *value )
@@ -194,7 +134,7 @@ void brw_wm_print_insn( struct brw_wm_compile *c,
       _mesa_printf(" = FB_WRITE");
       break;
    default:
-      _mesa_printf(" = %s", fp_opcode_string[inst->opcode]);
+      _mesa_printf(" = %s", _mesa_opcode_string(inst->opcode));
       break;
    }
 
