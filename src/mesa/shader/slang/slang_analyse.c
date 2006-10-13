@@ -36,8 +36,8 @@ GLboolean _slang_analyse_texture_usage (slang_program *prog)
 {
 	GLuint i, count = 0;
 
-	slang_texture_usages_dtr (&prog->texture_usage);
-	slang_texture_usages_ctr (&prog->texture_usage);
+	_slang_texture_usages_dtr (&prog->texture_usage);
+	_slang_texture_usages_ctr (&prog->texture_usage);
 
 	/*
 	 * We could do a full code analysis to find out which uniforms are actually used.

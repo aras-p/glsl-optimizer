@@ -758,7 +758,7 @@ _program_destructor (struct gl2_unknown_intf **intf)
 	ShDestruct (impl->_obj.uniforms);
 #endif
 	_container_destructor (intf);
-	slang_program_dtr (&impl->_obj.prog);
+	_slang_program_dtr (&impl->_obj.prog);
 }
 
 static struct gl2_unknown_intf **
@@ -825,7 +825,7 @@ _program_Link (struct gl2_program_intf **intf)
 	impl->_obj.link_status = GL_FALSE;
 	_mesa_free ((void *) impl->_obj._container._generic.info_log);
 	impl->_obj._container._generic.info_log = NULL;
-	slang_program_rst (&impl->_obj.prog);
+	_slang_program_rst (&impl->_obj.prog);
 
 #if USE_3DLABS_FRONTEND
 	handles = (ShHandle *) _mesa_malloc (impl->_obj._container.attached_count * sizeof (ShHandle));
@@ -1538,7 +1538,7 @@ _program_OverrideAttribBinding (struct gl2_program_intf **intf, GLuint index, co
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) (intf);
 	slang_program *pro = &impl->_obj.prog;
 
-	if (!slang_attrib_overrides_add (&pro->attrib_overrides, index, name))
+	if (!_slang_attrib_overrides_add (&pro->attrib_overrides, index, name))
 		_mesa_error (ctx, GL_OUT_OF_MEMORY, "_program_OverrideAttribBinding");
 }
 
@@ -1641,7 +1641,7 @@ _program_constructor (struct gl2_program_impl *impl)
 	impl->_obj.linker = ShConstructLinker (EShExVertexFragment, 0);
 	impl->_obj.uniforms = ShConstructUniformMap ();
 #endif
-	slang_program_ctr (&impl->_obj.prog);
+	_slang_program_ctr (&impl->_obj.prog);
 }
 
 struct gl2_fragment_shader_obj
