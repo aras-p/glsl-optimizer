@@ -535,6 +535,7 @@ static void emit_op3fn(struct tnl_program *p,
 
    {      
       struct prog_instruction *inst = &p->program->Base.Instructions[nr];
+      memset(inst, 0, sizeof(*inst));
       inst->Opcode = op; 
       inst->StringPos = 0;
       inst->Data = 0;
