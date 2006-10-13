@@ -807,7 +807,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
       data = ADD_POINTERS(buf, data);
    }
 
-   _mesa_pack_rgba_span_float(ctx, table->Size, (const GLfloat (*)[4]) rgba,
+   _mesa_pack_rgba_span_float(ctx, table->Size, rgba,
                               format, type, data, &ctx->Pack, 0x0);
 
    if (ctx->Pack.BufferObj->Name) {

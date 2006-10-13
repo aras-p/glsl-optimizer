@@ -398,7 +398,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
             GLfloat *dst = tempImage + img * (convWidth * convHeight * 4);
             for (row = 0; row < convHeight; row++) {
                _mesa_pack_rgba_span_float(ctx, convWidth,
-                                          (const GLfloat (*)[4]) src,
+                                          (GLfloat (*)[4]) src,
                                           logicalBaseFormat, GL_FLOAT,
                                           dst, &ctx->DefaultPacking,
                                           postConvTransferOps);
@@ -3607,10 +3607,9 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                for (col = 0; col < width; col++) {
                   (*texImage->FetchTexelf)(texImage, col, row, img, rgba[col]);
                }
-               _mesa_pack_rgba_span_float(ctx, width,
-                                          (const GLfloat (*)[4]) rgba,
-                                          format, type, dest, &ctx->Pack,
-                                          0 /* no image transfer */);
+               _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
+                                          format, type, dest,
+                                          &ctx->Pack, 0x0 /*image xfer ops*/);
             } /* format */
          } /* row */
       } /* img */

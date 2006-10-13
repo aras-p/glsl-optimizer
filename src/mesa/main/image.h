@@ -116,8 +116,7 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
                               GLuint n, GLfloat rgba[][4]);
 
 extern void
-_mesa_pack_rgba_span_float( GLcontext *ctx,
-                            GLuint n, CONST GLfloat rgba[][4],
+_mesa_pack_rgba_span_float( GLcontext *ctx, GLuint n, GLfloat rgba[][4],
                             GLenum dstFormat, GLenum dstType, GLvoid *dstAddr,
                             const struct gl_pixelstore_attrib *dstPacking,
                             GLbitfield transferOps );

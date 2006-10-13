@@ -1065,18 +1065,18 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
  * by the dstFormat, dstType and dstPacking.  Used by glReadPixels,
  * glGetConvolutionFilter(), etc.
  * Incoming colors will be clamped to [0,1] if needed.
+ * Note: the rgba values will be modified by this function when any pixel
+ * transfer ops are enabled.
  */
 void
-_mesa_pack_rgba_span_float( GLcontext *ctx,
-                            GLuint n, CONST GLfloat rgbaIn[][4],
-                            GLenum dstFormat, GLenum dstType,
-                            GLvoid *dstAddr,
-                            const struct gl_pixelstore_attrib *dstPacking,
-                            GLbitfield transferOps )
+_mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
+                           GLenum dstFormat, GLenum dstType,
+                           GLvoid *dstAddr,
+                           const struct gl_pixelstore_attrib *dstPacking,
+                           GLbitfield transferOps)
 {
+   GLfloat luminance[MAX_WIDTH];
    const GLint comps = _mesa_components_in_format(dstFormat);
-   GLfloat rgbaCopy[MAX_WIDTH][4], luminance[MAX_WIDTH];
-   const GLfloat (*rgba)[4];
    GLuint i;
 
    if (dstType != GL_FLOAT) {
@@ -1085,18 +1085,10 @@ _mesa_pack_rgba_span_float( GLcontext *ctx,
    }
 
    if (transferOps) {
-      /* make copy of incoming data */
-      _mesa_memcpy(rgbaCopy, rgbaIn, n * 4 * sizeof(GLfloat));
-      _mesa_apply_rgba_transfer_ops(ctx, transferOps, n, rgbaCopy);
-      rgba = (const GLfloat (*)[4]) rgbaCopy;
-
+      _mesa_apply_rgba_transfer_ops(ctx, transferOps, n, rgba);
       if ((transferOps & IMAGE_MIN_MAX_BIT) && ctx->MinMax.Sink) {
          return;
       }
-   }
-   else {
-      /* use incoming data, not a copy */
-      rgba = (const GLfloat (*)[4]) rgbaIn;
    }
 
    if (dstFormat == GL_LUMINANCE || dstFormat == GL_LUMINANCE_ALPHA) {
