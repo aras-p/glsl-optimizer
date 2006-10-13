@@ -103,15 +103,6 @@ _mesa_lookup_rgba_ubyte(const struct gl_color_table *table,
 
 
 extern void
-_mesa_shift_and_offset_ci(const GLcontext *ctx, GLuint n,
-                          GLuint indexes[]);
-
-
-extern void
-_mesa_map_ci(const GLcontext *ctx, GLuint n, GLuint index[]);
-
-
-extern void
 _mesa_map_ci_to_rgba(const GLcontext *ctx,
                      GLuint n, const GLuint index[], GLfloat rgba[][4]);
 
@@ -119,15 +110,6 @@ _mesa_map_ci_to_rgba(const GLcontext *ctx,
 extern void
 _mesa_map_ci8_to_rgba8(const GLcontext *ctx, GLuint n, const GLubyte index[],
                        GLubyte rgba[][4]);
-
-
-extern void
-_mesa_shift_and_offset_stencil(const GLcontext *ctx, GLuint n,
-                               GLstencil indexes[]);
-
-
-extern void
-_mesa_map_stencil(const GLcontext *ctx, GLuint n, GLstencil index[]);
 
 
 extern void

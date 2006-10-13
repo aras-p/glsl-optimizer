@@ -115,6 +115,17 @@ extern void
 _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
                               GLuint n, GLfloat rgba[][4]);
 
+
+extern void
+_mesa_apply_ci_transfer_ops(const GLcontext *ctx, GLbitfield transferOps,
+                            GLuint n, GLuint indexes[]);
+
+
+extern void
+_mesa_apply_stencil_transfer_ops(const GLcontext *ctx, GLuint n,
+                                 GLstencil stencil[]);
+
+
 extern void
 _mesa_pack_rgba_span_float( GLcontext *ctx, GLuint n, GLfloat rgba[][4],
                             GLenum dstFormat, GLenum dstType, GLvoid *dstAddr,

@@ -406,13 +406,7 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
          _mesa_unpack_index_span(ctx, spanWidth, destType, values,
                                  type, source, unpack,
                                  ctx->_ImageTransferState);
-         if (ctx->_ImageTransferState & IMAGE_SHIFT_OFFSET_BIT) {
-            _mesa_shift_and_offset_stencil(ctx, spanWidth, values);
-         }
-         if (ctx->Pixel.MapStencilFlag) {
-            _mesa_map_stencil(ctx, spanWidth, values);
-         }
-
+         _mesa_apply_stencil_transfer_ops(ctx, spanWidth, values);
          if (zoom) {
             _swrast_write_zoomed_stencil_span(ctx, x, y, spanWidth,
                                               spanX, spanY, values);

@@ -1059,6 +1059,95 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
 }
 
 
+/*
+ * Apply color index shift and offset to an array of pixels.
+ */
+static void
+shift_and_offset_ci( const GLcontext *ctx, GLuint n, GLuint indexes[] )
+{
+   GLint shift = ctx->Pixel.IndexShift;
+   GLint offset = ctx->Pixel.IndexOffset;
+   GLuint i;
+   if (shift > 0) {
+      for (i=0;i<n;i++) {
+         indexes[i] = (indexes[i] << shift) + offset;
+      }
+   }
+   else if (shift < 0) {
+      shift = -shift;
+      for (i=0;i<n;i++) {
+         indexes[i] = (indexes[i] >> shift) + offset;
+      }
+   }
+   else {
+      for (i=0;i<n;i++) {
+         indexes[i] = indexes[i] + offset;
+      }
+   }
+}
+
+
+
+/**
+ * Apply color index shift, offset and table lookup to an array
+ * of color indexes;
+ */
+void
+_mesa_apply_ci_transfer_ops(const GLcontext *ctx, GLbitfield transferOps,
+                            GLuint n, GLuint indexes[])
+{
+   if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
+      shift_and_offset_ci(ctx, n, indexes);
+   }
+   if (transferOps & IMAGE_MAP_COLOR_BIT) {
+      const GLuint mask = ctx->Pixel.MapItoIsize - 1;
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         const GLuint j = indexes[i] & mask;
+         indexes[i] = IROUND(ctx->Pixel.MapItoI[j]);
+      }
+   }
+}
+
+
+/**
+ * Apply stencil index shift, offset and table lookup to an array
+ * of stencil values.
+ */
+void
+_mesa_apply_stencil_transfer_ops(const GLcontext *ctx, GLuint n,
+                                 GLstencil stencil[])
+{
+   if (ctx->Pixel.IndexShift != 0 || ctx->Pixel.IndexOffset != 0) {
+      const GLint offset = ctx->Pixel.IndexOffset;
+      GLint shift = ctx->Pixel.IndexShift;
+      GLuint i;
+      if (shift > 0) {
+         for (i = 0; i < n; i++) {
+            stencil[i] = (stencil[i] << shift) + offset;
+         }
+      }
+      else if (shift < 0) {
+         shift = -shift;
+         for (i = 0; i < n; i++) {
+            stencil[i] = (stencil[i] >> shift) + offset;
+         }
+      }
+      else {
+         for (i = 0; i < n; i++) {
+            stencil[i] = stencil[i] + offset;
+         }
+      }
+   }
+   if (ctx->Pixel.MapStencilFlag) {
+      GLuint mask = ctx->Pixel.MapStoSsize - 1;
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         stencil[i] = ctx->Pixel.MapStoS[ stencil[i] & mask ];
+      }
+   }
+}
+
 
 /**
  * Used to pack an array [][4] of RGBA float colors as specified
@@ -2013,7 +2102,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
                      GLenum srcFormat, GLenum srcType, const GLvoid *src,
                      const struct gl_pixelstore_attrib *unpack )
 {
-   assert(srcFormat == GL_COLOR_INDEX);
+   ASSERT(srcFormat == GL_COLOR_INDEX || srcFormat == GL_STENCIL_INDEX);
 
    ASSERT(srcType == GL_BITMAP ||
           srcType == GL_UNSIGNED_BYTE ||
@@ -2926,17 +3015,10 @@ _mesa_unpack_color_span_chan( GLcontext *ctx,
          extract_uint_indexes(n, indexes, srcFormat, srcType, source,
                               srcPacking);
 
-         if (dstFormat == GL_COLOR_INDEX
-             && (transferOps & IMAGE_MAP_COLOR_BIT)) {
-            _mesa_map_ci(ctx, n, indexes);
-         }
-         if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
-            _mesa_shift_and_offset_ci(ctx, n, indexes);
-         }
-
          if (dstFormat == GL_COLOR_INDEX) {
-            /* convert to GLchan and return */
             GLuint i;
+            _mesa_apply_ci_transfer_ops(ctx, transferOps, n, indexes);
+            /* convert to GLchan and return */
             for (i = 0; i < n; i++) {
                dest[i] = (GLchan) (indexes[i] & 0xff);
             }
@@ -2944,6 +3026,9 @@ _mesa_unpack_color_span_chan( GLcontext *ctx,
          }
          else {
             /* Convert indexes to RGBA */
+            if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
+               shift_and_offset_ci(ctx, n, indexes);
+            }
             _mesa_map_ci_to_rgba(ctx, n, indexes, rgba);
          }
 
@@ -3150,17 +3235,10 @@ _mesa_unpack_color_span_float( GLcontext *ctx,
          extract_uint_indexes(n, indexes, srcFormat, srcType, source,
                               srcPacking);
 
-         if (dstFormat == GL_COLOR_INDEX
-             && (transferOps & IMAGE_MAP_COLOR_BIT)) {
-            _mesa_map_ci(ctx, n, indexes);
-         }
-         if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
-            _mesa_shift_and_offset_ci(ctx, n, indexes);
-         }
-
          if (dstFormat == GL_COLOR_INDEX) {
-            /* convert to GLchan and return */
             GLuint i;
+            _mesa_apply_ci_transfer_ops(ctx, transferOps, n, indexes);
+            /* convert to GLchan and return */
             for (i = 0; i < n; i++) {
                dest[i] = (GLchan) (indexes[i] & 0xff);
             }
@@ -3168,6 +3246,9 @@ _mesa_unpack_color_span_float( GLcontext *ctx,
          }
          else {
             /* Convert indexes to RGBA */
+            if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
+               shift_and_offset_ci(ctx, n, indexes);
+            }
             _mesa_map_ci_to_rgba(ctx, n, indexes, rgba);
          }
 
@@ -3350,14 +3431,8 @@ _mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
       extract_uint_indexes(n, indexes, GL_COLOR_INDEX, srcType, source,
                            srcPacking);
 
-      if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
-         /* shift and offset indexes */
-         _mesa_shift_and_offset_ci(ctx, n, indexes);
-      }
-      if (transferOps & IMAGE_MAP_COLOR_BIT) {
-         /* Apply lookup table */
-         _mesa_map_ci(ctx, n, indexes);
-      }
+      if (transferOps)
+         _mesa_apply_ci_transfer_ops(ctx, transferOps, n, indexes);
 
       /* convert to dest type */
       switch (dstType) {
@@ -3404,11 +3479,8 @@ _mesa_pack_index_span( const GLcontext *ctx, GLuint n,
    if (transferOps & (IMAGE_MAP_COLOR_BIT | IMAGE_SHIFT_OFFSET_BIT)) {
       /* make a copy of input */
       _mesa_memcpy(indexes, source, n * sizeof(GLuint));
-      if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
-         _mesa_shift_and_offset_ci( ctx, n, indexes);
-      }
-      if (transferOps & IMAGE_MAP_COLOR_BIT) {
-         _mesa_map_ci(ctx, n, indexes);
+      if (transferOps) {
+         _mesa_apply_ci_transfer_ops(ctx, transferOps, n, indexes);
       }
       source = indexes;
    }
@@ -3570,13 +3642,13 @@ _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
       GLuint indexes[MAX_WIDTH];
       assert(n <= MAX_WIDTH);
 
-      extract_uint_indexes(n, indexes, GL_COLOR_INDEX, srcType, source,
+      extract_uint_indexes(n, indexes, GL_STENCIL_INDEX, srcType, source,
                            srcPacking);
 
       if (transferOps) {
          if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
             /* shift and offset indexes */
-            _mesa_shift_and_offset_ci(ctx, n, indexes);
+            shift_and_offset_ci(ctx, n, indexes);
          }
 
          if (ctx->Pixel.MapStencilFlag) {
@@ -3632,12 +3704,7 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
        ctx->Pixel.MapStencilFlag) {
       /* make a copy of input */
       _mesa_memcpy(stencil, source, n * sizeof(GLstencil));
-      if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset) {
-         _mesa_shift_and_offset_stencil( ctx, n, stencil );
-      }
-      if (ctx->Pixel.MapStencilFlag) {
-         _mesa_map_stencil( ctx, n, stencil );
-      }
+      _mesa_apply_stencil_transfer_ops(ctx, n, stencil);
       source = stencil;
    }
 
@@ -4066,15 +4133,11 @@ _mesa_pack_depth_stencil_span(const GLcontext *ctx, GLuint n, GLuint *dest,
       depthVals = depthCopy;
    }
 
-   if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset) {
+   if (ctx->Pixel.IndexShift ||
+       ctx->Pixel.IndexOffset ||
+       ctx->Pixel.MapStencilFlag) {
       _mesa_memcpy(stencilCopy, stencilVals, n * sizeof(GLstencil));
-      _mesa_shift_and_offset_stencil(ctx, n, stencilCopy);
-      stencilVals = stencilCopy;
-   }
-   if (ctx->Pixel.MapStencilFlag) {
-      if (stencilVals != stencilCopy)
-         _mesa_memcpy(stencilCopy, stencilVals, n * sizeof(GLstencil));
-      _mesa_map_stencil(ctx, n, stencilCopy);
+      _mesa_apply_stencil_transfer_ops(ctx, n, stencilCopy);
       stencilVals = stencilCopy;
    }
 

@@ -1407,49 +1407,6 @@ _mesa_lookup_rgba_ubyte(const struct gl_color_table *table,
 
 
 /*
- * Apply color index shift and offset to an array of pixels.
- */
-void
-_mesa_shift_and_offset_ci( const GLcontext *ctx, GLuint n, GLuint indexes[] )
-{
-   GLint shift = ctx->Pixel.IndexShift;
-   GLint offset = ctx->Pixel.IndexOffset;
-   GLuint i;
-   if (shift > 0) {
-      for (i=0;i<n;i++) {
-         indexes[i] = (indexes[i] << shift) + offset;
-      }
-   }
-   else if (shift < 0) {
-      shift = -shift;
-      for (i=0;i<n;i++) {
-         indexes[i] = (indexes[i] >> shift) + offset;
-      }
-   }
-   else {
-      for (i=0;i<n;i++) {
-         indexes[i] = indexes[i] + offset;
-      }
-   }
-}
-
-
-/*
- * Apply color index mapping to color indexes.
- */
-void
-_mesa_map_ci( const GLcontext *ctx, GLuint n, GLuint index[] )
-{
-   const GLuint mask = ctx->Pixel.MapItoIsize - 1;
-   GLuint i;
-   for (i = 0; i < n; i++) {
-      const GLuint j = index[i] & mask;
-      index[i] = IROUND(ctx->Pixel.MapItoI[j]);
-   }
-}
-
-
-/*
  * Map color indexes to float rgba values.
  */
 void
@@ -1495,44 +1452,6 @@ _mesa_map_ci8_to_rgba8(const GLcontext *ctx, GLuint n, const GLubyte index[],
       rgba[i][GCOMP] = gMap[index[i] & gmask];
       rgba[i][BCOMP] = bMap[index[i] & bmask];
       rgba[i][ACOMP] = aMap[index[i] & amask];
-   }
-}
-
-
-void
-_mesa_shift_and_offset_stencil( const GLcontext *ctx, GLuint n,
-                                GLstencil stencil[] )
-{
-   GLuint i;
-   GLint shift = ctx->Pixel.IndexShift;
-   GLint offset = ctx->Pixel.IndexOffset;
-   if (shift > 0) {
-      for (i=0;i<n;i++) {
-         stencil[i] = (stencil[i] << shift) + offset;
-      }
-   }
-   else if (shift < 0) {
-      shift = -shift;
-      for (i=0;i<n;i++) {
-         stencil[i] = (stencil[i] >> shift) + offset;
-      }
-   }
-   else {
-      for (i=0;i<n;i++) {
-         stencil[i] = stencil[i] + offset;
-      }
-   }
-
-}
-
-
-void
-_mesa_map_stencil( const GLcontext *ctx, GLuint n, GLstencil stencil[] )
-{
-   GLuint mask = ctx->Pixel.MapStoSsize - 1;
-   GLuint i;
-   for (i=0;i<n;i++) {
-      stencil[i] = ctx->Pixel.MapStoS[ stencil[i] & mask ];
    }
 }
 

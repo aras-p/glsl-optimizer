@@ -309,6 +309,7 @@ read_rgba_pixels( GLcontext *ctx,
                   const struct gl_pixelstore_attrib *packing )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   const GLbitfield transferOps = ctx->_ImageTransferState;
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *rb = fb->_ColorReadBuffer;
 
@@ -324,7 +325,6 @@ read_rgba_pixels( GLcontext *ctx,
    ASSERT(width <= MAX_WIDTH);
 
    if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
-      const GLbitfield transferOps = ctx->_ImageTransferState;
       GLfloat *dest, *src, *tmpImage, *convImage;
       GLint row;
 
@@ -350,9 +350,9 @@ read_rgba_pixels( GLcontext *ctx,
             GLuint index[MAX_WIDTH];
             ASSERT(rb->DataType == GL_UNSIGNED_INT);
             rb->GetRow(ctx, rb, width, x, y, index);
-            if (ctx->Pixel.IndexShift != 0 || ctx->Pixel.IndexOffset !=0 ) {
-               _mesa_map_ci(ctx, width, index);
-            }
+            _mesa_apply_ci_transfer_ops(ctx,
+                                        transferOps & IMAGE_SHIFT_OFFSET_BIT,
+                                        width, index);
             _mesa_map_ci_to_rgba(ctx, width, index, (GLfloat (*)[4]) dest);
          }
          _mesa_apply_rgba_transfer_ops(ctx, 
@@ -404,9 +404,9 @@ read_rgba_pixels( GLcontext *ctx,
             GLuint index[MAX_WIDTH];
             ASSERT(rb->DataType == GL_UNSIGNED_INT);
             rb->GetRow(ctx, rb, width, x, y, index);
-            if (ctx->Pixel.IndexShift != 0 || ctx->Pixel.IndexOffset != 0) {
-               _mesa_map_ci(ctx, width, index);
-            }
+            _mesa_apply_ci_transfer_ops(ctx,
+                                        transferOps & IMAGE_SHIFT_OFFSET_BIT,
+                                        width, index);
             _mesa_map_ci_to_rgba(ctx, width, index, rgba);
          }
 

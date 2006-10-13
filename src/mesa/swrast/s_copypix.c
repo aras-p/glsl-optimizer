@@ -312,7 +312,6 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    GLint sy, dy, stepy;
    GLint j;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
-   const GLboolean shift_or_offset = ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset;
    GLint overlapping;
    SWspan span;
 
@@ -382,13 +381,9 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
                                   width, srcx, sy, span.array->index );
       }
 
-      /* Apply shift, offset, look-up table */
-      if (shift_or_offset) {
-         _mesa_shift_and_offset_ci( ctx, width, span.array->index );
-      }
-      if (ctx->Pixel.MapColorFlag) {
-         _mesa_map_ci( ctx, width, span.array->index );
-      }
+      if (ctx->_ImageTransferState)
+         _mesa_apply_ci_transfer_ops(ctx, ctx->_ImageTransferState,
+                                     width, span.array->index);
 
       /* write color indexes */
       span.x = destx;
@@ -561,7 +556,6 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    GLint j;
    GLstencil *p, *tmpImage;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
-   const GLboolean shift_or_offset = ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset;
    GLint overlapping;
 
    if (!rb) {
@@ -622,13 +616,7 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
          _swrast_read_stencil_span( ctx, rb, width, srcx, sy, stencil );
       }
 
-      /* Apply shift, offset, look-up table */
-      if (shift_or_offset) {
-         _mesa_shift_and_offset_stencil( ctx, width, stencil );
-      }
-      if (ctx->Pixel.MapStencilFlag) {
-         _mesa_map_stencil( ctx, width, stencil );
-      }
+      _mesa_apply_stencil_transfer_ops(ctx, width, stencil);
 
       /* Write stencil values */
       if (zoom) {
@@ -664,8 +652,6 @@ copy_depth_stencil_pixels(GLcontext *ctx,
    const GLfloat depthScale = ctx->DrawBuffer->_DepthMaxF;
    const GLuint stencilMask = ctx->Stencil.WriteMask[0];
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
-   const GLboolean shiftOrOffset
-      = ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset;
    const GLboolean scaleOrBias
       = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
    GLint overlapping;
@@ -755,13 +741,7 @@ copy_depth_stencil_pixels(GLcontext *ctx,
                                       width, srcX, sy, stencil);
          }
 
-         /* Apply shift, offset, look-up table */
-         if (shiftOrOffset) {
-            _mesa_shift_and_offset_stencil(ctx, width, stencil);
-         }
-         if (ctx->Pixel.MapStencilFlag) {
-            _mesa_map_stencil(ctx, width, stencil);
-         }
+         _mesa_apply_stencil_transfer_ops(ctx, width, stencil);
 
          /* Write values */
          if (zoom) {
