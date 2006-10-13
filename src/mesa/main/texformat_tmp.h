@@ -1060,6 +1060,7 @@ static void FETCH(ci8)( const struct gl_texture_image *texImage,
 {
    const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
    const struct gl_color_table *palette;
+   GLubyte texelUB[4];
    GLuint index;
    GET_CURRENT_CONTEXT(ctx);
 
@@ -1075,91 +1076,61 @@ static void FETCH(ci8)( const struct gl_texture_image *texImage,
    /* Mask the index against size of palette to avoid going out of bounds */
    index = (*src) & (palette->Size - 1);
 
-   if (palette->Type == GL_FLOAT) {
-      const GLfloat *ftable = (const GLfloat *) palette->Table;
+   {
+      const GLubyte *table = palette->TableUB;
       switch (palette->_BaseFormat) {
       case GL_ALPHA:
-         texel[RCOMP] =
-         texel[GCOMP] =
-         texel[BCOMP] = 0;
-         texel[ACOMP] = (GLchan) (ftable[index] * CHAN_MAX);
-         return;
+         texelUB[RCOMP] =
+         texelUB[GCOMP] =
+         texelUB[BCOMP] = 0;
+         texelUB[ACOMP] = table[index];
+         break;;
       case GL_LUMINANCE:
-         texel[RCOMP] =
-         texel[GCOMP] =
-         texel[BCOMP] = (GLchan) (ftable[index] * CHAN_MAX);
-         texel[ACOMP] = CHAN_MAX;
+         texelUB[RCOMP] =
+         texelUB[GCOMP] =
+         texelUB[BCOMP] = table[index];
+         texelUB[ACOMP] = 255;
          break;
       case GL_INTENSITY:
-         texel[RCOMP] =
-         texel[GCOMP] =
-         texel[BCOMP] =
-         texel[ACOMP] = ftable[index] * CHAN_MAX;
-         return;
+         texelUB[RCOMP] =
+         texelUB[GCOMP] =
+         texelUB[BCOMP] =
+         texelUB[ACOMP] = table[index];
+         break;;
       case GL_LUMINANCE_ALPHA:
-         texel[RCOMP] =
-         texel[GCOMP] =
-         texel[BCOMP] = (GLchan) (ftable[index * 2 + 0] * CHAN_MAX);
-         texel[ACOMP] = (GLchan) (ftable[index * 2 + 1] * CHAN_MAX);
-         return;
+         texelUB[RCOMP] =
+         texelUB[GCOMP] =
+         texelUB[BCOMP] = table[index * 2 + 0];
+         texelUB[ACOMP] = table[index * 2 + 1];
+         break;;
       case GL_RGB:
-         texel[RCOMP] = (GLchan) (ftable[index * 3 + 0] * CHAN_MAX);
-         texel[GCOMP] = (GLchan) (ftable[index * 3 + 1] * CHAN_MAX);
-         texel[BCOMP] = (GLchan) (ftable[index * 3 + 2] * CHAN_MAX);
-         texel[ACOMP] = CHAN_MAX;
-         return;
+         texelUB[RCOMP] = table[index * 3 + 0];
+         texelUB[GCOMP] = table[index * 3 + 1];
+         texelUB[BCOMP] = table[index * 3 + 2];
+         texelUB[ACOMP] = 255;
+         break;;
       case GL_RGBA:
-         texel[RCOMP] = (GLchan) (ftable[index * 4 + 0] * CHAN_MAX);
-         texel[GCOMP] = (GLchan) (ftable[index * 4 + 1] * CHAN_MAX);
-         texel[BCOMP] = (GLchan) (ftable[index * 4 + 2] * CHAN_MAX);
-         texel[ACOMP] = (GLchan) (ftable[index * 4 + 3] * CHAN_MAX);
-         return;
-      default:
-         _mesa_problem(ctx, "Bad palette format in fetch_texel_ci8");
-       }
-   }
-   else {
-      const GLchan *table = (const GLchan *) palette->Table;
-      switch (palette->_BaseFormat) {
-      case GL_ALPHA:
-         texel[RCOMP] =
-         texel[GCOMP] =
-         texel[BCOMP] = 0;
-         texel[ACOMP] = table[index];
-         return;
-      case GL_LUMINANCE:
-         texel[RCOMP] =
-         texel[GCOMP] =
-         texel[BCOMP] = table[index];
-         texel[ACOMP] = CHAN_MAX;
-         break;
-      case GL_INTENSITY:
-         texel[RCOMP] =
-         texel[GCOMP] =
-         texel[BCOMP] =
-         texel[ACOMP] = table[index];
-         return;
-      case GL_LUMINANCE_ALPHA:
-         texel[RCOMP] =
-         texel[GCOMP] =
-         texel[BCOMP] = table[index * 2 + 0];
-         texel[ACOMP] = table[index * 2 + 1];
-         return;
-      case GL_RGB:
-         texel[RCOMP] = table[index * 3 + 0];
-         texel[GCOMP] = table[index * 3 + 1];
-         texel[BCOMP] = table[index * 3 + 2];
-         texel[ACOMP] = CHAN_MAX;
-         return;
-      case GL_RGBA:
-         texel[RCOMP] = table[index * 4 + 0];
-         texel[GCOMP] = table[index * 4 + 1];
-         texel[BCOMP] = table[index * 4 + 2];
-         texel[ACOMP] = table[index * 4 + 3];
-         return;
+         texelUB[RCOMP] = table[index * 4 + 0];
+         texelUB[GCOMP] = table[index * 4 + 1];
+         texelUB[BCOMP] = table[index * 4 + 2];
+         texelUB[ACOMP] = table[index * 4 + 3];
+         break;;
       default:
          _mesa_problem(ctx, "Bad palette format in fetch_texel_ci8");
       }
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
+      COPY_4UBV(texel, texelUB);
+#elif CHAN_TYPE == GL_UNSIGNED_SHORT
+      texel[0] = UBYTE_TO_USHORT(texelUB[0]);
+      texel[1] = UBYTE_TO_USHORT(texelUB[1]);
+      texel[2] = UBYTE_TO_USHORT(texelUB[2]);
+      texel[3] = UBYTE_TO_USHORT(texelUB[3]);
+#else
+      texel[0] = UBYTE_TO_FLOAT(texelUB[0]);
+      texel[1] = UBYTE_TO_FLOAT(texelUB[1]);
+      texel[2] = UBYTE_TO_FLOAT(texelUB[2]);
+      texel[3] = UBYTE_TO_FLOAT(texelUB[3]);
+#endif
    }
 }
 

@@ -328,8 +328,8 @@ void viaEmitState(struct via_context *vmesa)
 	 /* KW:  This test never succeeds:
 	  */
 	 if (t->regTexFM == HC_HTXnFM_Index8) {
-	    struct gl_color_table *table = &texObj->Palette;
-	    GLfloat *tableF = (GLfloat *)table->Table;
+	    const struct gl_color_table *table = &texObj->Palette;
+	    const GLfloat *tableF = table->TableF;
 
 	    BEGIN_RING(2 + table->Size);
 	    OUT_RING( HC_HEADER2 );
@@ -453,8 +453,8 @@ void viaEmitState(struct via_context *vmesa)
 	 /* KW:  This test never succeeds:
 	  */
 	 if (t->regTexFM == HC_HTXnFM_Index8) {
-	    struct gl_color_table *table = &texObj->Palette;
-	    GLfloat *tableF = (GLfloat *)table->Table;
+	    const struct gl_color_table *table = &texObj->Palette;
+	    const GLfloat *tableF = table->TableF;
 
 	    BEGIN_RING(2 + table->Size);
 	    OUT_RING( HC_HEADER2 );

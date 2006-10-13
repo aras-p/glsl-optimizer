@@ -1132,7 +1132,13 @@ _swrast_texture_span( GLcontext *ctx, SWspan *span )
 
          /* GL_SGI_texture_color_table */
          if (texUnit->ColorTableEnabled) {
-            _mesa_lookup_rgba_chan(&texUnit->ColorTable, span->end, texels);
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
+            _mesa_lookup_rgba_ubyte(&texUnit->ColorTable, span->end, texels);
+#elif CHAN_TYPE == GL_UNSIGNED_SHORT
+            _mesa_lookup_rgba_ubyte(&texUnit->ColorTable, span->end, texels);
+#else
+            _mesa_lookup_rgba_float(&texUnit->ColorTable, span->end, texels);
+#endif
          }
       }
    }

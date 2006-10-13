@@ -1171,200 +1171,88 @@ void
 _mesa_lookup_rgba_float(const struct gl_color_table *table,
                         GLuint n, GLfloat rgba[][4])
 {
-   if (!table->Table || table->Size == 0)
+   const GLint max = table->Size - 1;
+   const GLfloat scale = (GLfloat) max;
+   const GLfloat *lut = table->TableF;
+   GLuint i;
+
+   if (!table->TableF || table->Size == 0)
       return;
 
    switch (table->_BaseFormat) {
       case GL_INTENSITY:
          /* replace RGBA with I */
-         if (table->Type == GL_FLOAT) {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLfloat *lut = (const GLfloat *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint j = IROUND(rgba[i][RCOMP] * scale);
-               GLfloat c = lut[CLAMP(j, 0, max)];
-               rgba[i][RCOMP] = rgba[i][GCOMP] =
-                  rgba[i][BCOMP] = rgba[i][ACOMP] = c;
-            }
-         }
-         else {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLchan *lut = (const GLchan *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint j = IROUND(rgba[i][RCOMP] * scale);
-               GLfloat c = CHAN_TO_FLOAT(lut[CLAMP(j, 0, max)]);
-               rgba[i][RCOMP] = rgba[i][GCOMP] =
-                  rgba[i][BCOMP] = rgba[i][ACOMP] = c;
-            }
+         for (i = 0; i < n; i++) {
+            GLint j = IROUND(rgba[i][RCOMP] * scale);
+            GLfloat c = lut[CLAMP(j, 0, max)];
+            rgba[i][RCOMP] =
+            rgba[i][GCOMP] =
+            rgba[i][BCOMP] =
+            rgba[i][ACOMP] = c;
          }
          break;
       case GL_LUMINANCE:
          /* replace RGB with L */
-         if (table->Type == GL_FLOAT) {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLfloat *lut = (const GLfloat *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint j = IROUND(rgba[i][RCOMP] * scale);
-               GLfloat c = lut[CLAMP(j, 0, max)];
-               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = c;
-            }
-         }
-         else {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLchan *lut = (const GLchan *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint j = IROUND(rgba[i][RCOMP] * scale);
-               GLfloat c = CHAN_TO_FLOAT(lut[CLAMP(j, 0, max)]);
-               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = c;
-            }
+         for (i = 0; i < n; i++) {
+            GLint j = IROUND(rgba[i][RCOMP] * scale);
+            GLfloat c = lut[CLAMP(j, 0, max)];
+            rgba[i][RCOMP] =
+            rgba[i][GCOMP] =
+            rgba[i][BCOMP] = c;
          }
          break;
       case GL_ALPHA:
          /* replace A with A */
-         if (table->Type == GL_FLOAT) {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLfloat *lut = (const GLfloat *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint j = IROUND(rgba[i][ACOMP] * scale);
-               rgba[i][ACOMP] = lut[CLAMP(j, 0, max)];
-            }
-         }
-         else {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLchan *lut = (const GLchan *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint j = IROUND(rgba[i][ACOMP] * scale);
-               rgba[i][ACOMP] = CHAN_TO_FLOAT(lut[CLAMP(j, 0, max)]);
-            }
+         for (i = 0; i < n; i++) {
+            GLint j = IROUND(rgba[i][ACOMP] * scale);
+            rgba[i][ACOMP] = lut[CLAMP(j, 0, max)];
          }
          break;
       case GL_LUMINANCE_ALPHA:
          /* replace RGBA with LLLA */
-         if (table->Type == GL_FLOAT) {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLfloat *lut = (const GLfloat *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint jL = IROUND(rgba[i][RCOMP] * scale);
-               GLint jA = IROUND(rgba[i][ACOMP] * scale);
-               GLfloat luminance, alpha;
-               jL = CLAMP(jL, 0, max);
-               jA = CLAMP(jA, 0, max);
-               luminance = lut[jL * 2 + 0];
-               alpha     = lut[jA * 2 + 1];
-               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = luminance;
-               rgba[i][ACOMP] = alpha;;
-            }
-         }
-         else {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLchan *lut = (const GLchan *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint jL = IROUND(rgba[i][RCOMP] * scale);
-               GLint jA = IROUND(rgba[i][ACOMP] * scale);
-               GLfloat luminance, alpha;
-               jL = CLAMP(jL, 0, max);
-               jA = CLAMP(jA, 0, max);
-               luminance = CHAN_TO_FLOAT(lut[jL * 2 + 0]);
-               alpha     = CHAN_TO_FLOAT(lut[jA * 2 + 1]);
-               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = luminance;
-               rgba[i][ACOMP] = alpha;;
-            }
+         for (i = 0; i < n; i++) {
+            GLint jL = IROUND(rgba[i][RCOMP] * scale);
+            GLint jA = IROUND(rgba[i][ACOMP] * scale);
+            GLfloat luminance, alpha;
+            jL = CLAMP(jL, 0, max);
+            jA = CLAMP(jA, 0, max);
+            luminance = lut[jL * 2 + 0];
+            alpha     = lut[jA * 2 + 1];
+            rgba[i][RCOMP] =
+            rgba[i][GCOMP] =
+            rgba[i][BCOMP] = luminance;
+            rgba[i][ACOMP] = alpha;;
          }
          break;
       case GL_RGB:
          /* replace RGB with RGB */
-         if (table->Type == GL_FLOAT) {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLfloat *lut = (const GLfloat *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint jR = IROUND(rgba[i][RCOMP] * scale);
-               GLint jG = IROUND(rgba[i][GCOMP] * scale);
-               GLint jB = IROUND(rgba[i][BCOMP] * scale);
-               jR = CLAMP(jR, 0, max);
-               jG = CLAMP(jG, 0, max);
-               jB = CLAMP(jB, 0, max);
-               rgba[i][RCOMP] = lut[jR * 3 + 0];
-               rgba[i][GCOMP] = lut[jG * 3 + 1];
-               rgba[i][BCOMP] = lut[jB * 3 + 2];
-            }
-         }
-         else {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLchan *lut = (const GLchan *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint jR = IROUND(rgba[i][RCOMP] * scale);
-               GLint jG = IROUND(rgba[i][GCOMP] * scale);
-               GLint jB = IROUND(rgba[i][BCOMP] * scale);
-               jR = CLAMP(jR, 0, max);
-               jG = CLAMP(jG, 0, max);
-               jB = CLAMP(jB, 0, max);
-               rgba[i][RCOMP] = CHAN_TO_FLOAT(lut[jR * 3 + 0]);
-               rgba[i][GCOMP] = CHAN_TO_FLOAT(lut[jG * 3 + 1]);
-               rgba[i][BCOMP] = CHAN_TO_FLOAT(lut[jB * 3 + 2]);
-            }
+         for (i = 0; i < n; i++) {
+            GLint jR = IROUND(rgba[i][RCOMP] * scale);
+            GLint jG = IROUND(rgba[i][GCOMP] * scale);
+            GLint jB = IROUND(rgba[i][BCOMP] * scale);
+            jR = CLAMP(jR, 0, max);
+            jG = CLAMP(jG, 0, max);
+            jB = CLAMP(jB, 0, max);
+            rgba[i][RCOMP] = lut[jR * 3 + 0];
+            rgba[i][GCOMP] = lut[jG * 3 + 1];
+            rgba[i][BCOMP] = lut[jB * 3 + 2];
          }
          break;
       case GL_RGBA:
          /* replace RGBA with RGBA */
-         if (table->Type == GL_FLOAT) {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLfloat *lut = (const GLfloat *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint jR = IROUND(rgba[i][RCOMP] * scale);
-               GLint jG = IROUND(rgba[i][GCOMP] * scale);
-               GLint jB = IROUND(rgba[i][BCOMP] * scale);
-               GLint jA = IROUND(rgba[i][ACOMP] * scale);
-               jR = CLAMP(jR, 0, max);
-               jG = CLAMP(jG, 0, max);
-               jB = CLAMP(jB, 0, max);
-               jA = CLAMP(jA, 0, max);
-               rgba[i][RCOMP] = lut[jR * 4 + 0];
-               rgba[i][GCOMP] = lut[jG * 4 + 1];
-               rgba[i][BCOMP] = lut[jB * 4 + 2];
-               rgba[i][ACOMP] = lut[jA * 4 + 3];
-            }
-         }
-         else {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLchan *lut = (const GLchan *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint jR = IROUND(rgba[i][RCOMP] * scale);
-               GLint jG = IROUND(rgba[i][GCOMP] * scale);
-               GLint jB = IROUND(rgba[i][BCOMP] * scale);
-               GLint jA = IROUND(rgba[i][ACOMP] * scale);
-               jR = CLAMP(jR, 0, max);
-               jG = CLAMP(jG, 0, max);
-               jB = CLAMP(jB, 0, max);
-               jA = CLAMP(jA, 0, max);
-               rgba[i][RCOMP] = CHAN_TO_FLOAT(lut[jR * 4 + 0]);
-               rgba[i][GCOMP] = CHAN_TO_FLOAT(lut[jG * 4 + 1]);
-               rgba[i][BCOMP] = CHAN_TO_FLOAT(lut[jB * 4 + 2]);
-               rgba[i][ACOMP] = CHAN_TO_FLOAT(lut[jA * 4 + 3]);
-            }
+         for (i = 0; i < n; i++) {
+            GLint jR = IROUND(rgba[i][RCOMP] * scale);
+            GLint jG = IROUND(rgba[i][GCOMP] * scale);
+            GLint jB = IROUND(rgba[i][BCOMP] * scale);
+            GLint jA = IROUND(rgba[i][ACOMP] * scale);
+            jR = CLAMP(jR, 0, max);
+            jG = CLAMP(jG, 0, max);
+            jB = CLAMP(jB, 0, max);
+            jA = CLAMP(jA, 0, max);
+            rgba[i][RCOMP] = lut[jR * 4 + 0];
+            rgba[i][GCOMP] = lut[jG * 4 + 1];
+            rgba[i][BCOMP] = lut[jB * 4 + 2];
+            rgba[i][ACOMP] = lut[jA * 4 + 3];
          }
          break;
       default:
@@ -1376,271 +1264,143 @@ _mesa_lookup_rgba_float(const struct gl_color_table *table,
 
 
 /**
- * Apply a color table lookup to an array of GLchan RGBA colors.
+ * Apply a color table lookup to an array of ubyte/RGBA colors.
  */
 void
-_mesa_lookup_rgba_chan(const struct gl_color_table *table,
-                       GLuint n, GLchan rgba[][4])
+_mesa_lookup_rgba_ubyte(const struct gl_color_table *table,
+                        GLuint n, GLubyte rgba[][4])
 {
-   if (!table->Table || table->Size == 0)
+   const GLubyte *lut = table->TableUB;
+   const GLfloat scale = (GLfloat) (table->Size - 1) / 255.0;
+   GLuint i;
+
+   if (!table->TableUB || table->Size == 0)
       return;
 
    switch (table->_BaseFormat) {
-      case GL_INTENSITY:
-         /* replace RGBA with I */
-         if (table->Type == GL_FLOAT) {
-            const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
-            const GLfloat *lut = (const GLfloat *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint j = IROUND((GLfloat) rgba[i][RCOMP] * scale);
-               GLchan c;
-               CLAMPED_FLOAT_TO_CHAN(c, lut[j]);
-               rgba[i][RCOMP] = rgba[i][GCOMP] =
-                  rgba[i][BCOMP] = rgba[i][ACOMP] = c;
-            }
+   case GL_INTENSITY:
+      /* replace RGBA with I */
+      if (table->Size == 256) {
+         for (i = 0; i < n; i++) {
+            const GLubyte c = lut[rgba[i][RCOMP]];
+            rgba[i][RCOMP] =
+            rgba[i][GCOMP] =
+            rgba[i][BCOMP] =
+            rgba[i][ACOMP] = c;
          }
-         else {
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-            if (table->Size == 256) {
-               /* common case */
-               const GLchan *lut = (const GLchan *) table->Table;
-               GLuint i;
-               for (i = 0; i < n; i++) {
-                  const GLchan c = lut[rgba[i][RCOMP]];
-                  rgba[i][RCOMP] = rgba[i][GCOMP] =
-                     rgba[i][BCOMP] = rgba[i][ACOMP] = c;
-               }
-            }
-            else
-#endif
-            {
-               const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
-               const GLchan *lut = (const GLchan *) table->Table;
-               GLuint i;
-               for (i = 0; i < n; i++) {
-                  GLint j = IROUND((GLfloat) rgba[i][RCOMP] * scale);
-                  rgba[i][RCOMP] = rgba[i][GCOMP] =
-                     rgba[i][BCOMP] = rgba[i][ACOMP] = lut[j];
-               }
-            }
+      }
+      else {
+         for (i = 0; i < n; i++) {
+            GLint j = IROUND((GLfloat) rgba[i][RCOMP] * scale);
+            rgba[i][RCOMP] =
+            rgba[i][GCOMP] =
+            rgba[i][BCOMP] =
+            rgba[i][ACOMP] = lut[j];
          }
-         break;
-      case GL_LUMINANCE:
-         /* replace RGB with L */
-         if (table->Type == GL_FLOAT) {
-            const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
-            const GLfloat *lut = (const GLfloat *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint j = IROUND((GLfloat) rgba[i][RCOMP] * scale);
-               GLchan c;
-               CLAMPED_FLOAT_TO_CHAN(c, lut[j]);
-               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = c;
-            }
+      }
+      break;
+   case GL_LUMINANCE:
+      /* replace RGB with L */
+      if (table->Size == 256) {
+         for (i = 0; i < n; i++) {
+            const GLubyte c = lut[rgba[i][RCOMP]];
+            rgba[i][RCOMP] =
+            rgba[i][GCOMP] =
+            rgba[i][BCOMP] = c;
          }
-         else {
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-            if (table->Size == 256) {
-               /* common case */
-               const GLchan *lut = (const GLchan *) table->Table;
-               GLuint i;
-               for (i = 0; i < n; i++) {
-                  const GLchan c = lut[rgba[i][RCOMP]];
-                  rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = c;
-               }
-            }
-            else
-#endif
-            {
-               const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
-               const GLchan *lut = (const GLchan *) table->Table;
-               GLuint i;
-               for (i = 0; i < n; i++) {
-                  GLint j = IROUND((GLfloat) rgba[i][RCOMP] * scale);
-                  rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = lut[j];
-               }
-            }
+      }
+      else {
+         for (i = 0; i < n; i++) {
+            GLint j = IROUND((GLfloat) rgba[i][RCOMP] * scale);
+            rgba[i][RCOMP] =
+            rgba[i][GCOMP] =
+            rgba[i][BCOMP] = lut[j];
          }
-         break;
-      case GL_ALPHA:
-         /* replace A with A */
-         if (table->Type == GL_FLOAT) {
-            const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
-            const GLfloat *lut = (const GLfloat *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint j = IROUND((GLfloat) rgba[i][ACOMP] * scale);
-               GLchan c;
-               CLAMPED_FLOAT_TO_CHAN(c, lut[j]);
-               rgba[i][ACOMP] = c;
-            }
+      }
+      break;
+   case GL_ALPHA:
+      /* replace A with A */
+      if (table->Size == 256) {
+         for (i = 0; i < n; i++) {
+            rgba[i][ACOMP] = lut[rgba[i][ACOMP]];
          }
-         else {
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-            if (table->Size == 256) {
-               /* common case */
-               const GLchan *lut = (const GLchan *) table->Table;
-               GLuint i;
-               for (i = 0; i < n; i++) {
-                  rgba[i][ACOMP] = lut[rgba[i][ACOMP]];
-               }
-            }
-            else
-#endif
-            {
-               const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
-               const GLchan *lut = (const GLchan *) table->Table;
-               GLuint i;
-               for (i = 0; i < n; i++) {
-                  GLint j = IROUND((GLfloat) rgba[i][ACOMP] * scale);
-                  rgba[i][ACOMP] = lut[j];
-               }
-            }
+      }
+      else {
+         for (i = 0; i < n; i++) {
+            GLint j = IROUND((GLfloat) rgba[i][ACOMP] * scale);
+            rgba[i][ACOMP] = lut[j];
          }
-         break;
-      case GL_LUMINANCE_ALPHA:
-         /* replace RGBA with LLLA */
-         if (table->Type == GL_FLOAT) {
-            const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
-            const GLfloat *lut = (const GLfloat *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint jL = IROUND((GLfloat) rgba[i][RCOMP] * scale);
-               GLint jA = IROUND((GLfloat) rgba[i][ACOMP] * scale);
-               GLchan luminance, alpha;
-               CLAMPED_FLOAT_TO_CHAN(luminance, lut[jL * 2 + 0]);
-               CLAMPED_FLOAT_TO_CHAN(alpha, lut[jA * 2 + 1]);
-               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = luminance;
-               rgba[i][ACOMP] = alpha;;
-            }
+      }
+      break;
+   case GL_LUMINANCE_ALPHA:
+      /* replace RGBA with LLLA */
+      if (table->Size == 256) {
+         for (i = 0; i < n; i++) {
+            GLchan l = lut[rgba[i][RCOMP] * 2 + 0];
+            GLchan a = lut[rgba[i][ACOMP] * 2 + 1];;
+            rgba[i][RCOMP] =
+            rgba[i][GCOMP] =
+            rgba[i][BCOMP] = l;
+            rgba[i][ACOMP] = a;
          }
-         else {
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-            if (table->Size == 256) {
-               /* common case */
-               const GLchan *lut = (const GLchan *) table->Table;
-               GLuint i;
-               for (i = 0; i < n; i++) {
-                  GLchan l = lut[rgba[i][RCOMP] * 2 + 0];
-                  GLchan a = lut[rgba[i][ACOMP] * 2 + 1];;
-                  rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = l;
-                  rgba[i][ACOMP] = a;
-               }
-            }
-            else
-#endif
-            {
-               const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
-               const GLchan *lut = (const GLchan *) table->Table;
-               GLuint i;
-               for (i = 0; i < n; i++) {
-                  GLint jL = IROUND((GLfloat) rgba[i][RCOMP] * scale);
-                  GLint jA = IROUND((GLfloat) rgba[i][ACOMP] * scale);
-                  GLchan luminance = lut[jL * 2 + 0];
-                  GLchan alpha     = lut[jA * 2 + 1];
-                  rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = luminance;
-                  rgba[i][ACOMP] = alpha;
-               }
-            }
+      }
+      else {
+         for (i = 0; i < n; i++) {
+            GLint jL = IROUND((GLfloat) rgba[i][RCOMP] * scale);
+            GLint jA = IROUND((GLfloat) rgba[i][ACOMP] * scale);
+            GLchan luminance = lut[jL * 2 + 0];
+            GLchan alpha     = lut[jA * 2 + 1];
+            rgba[i][RCOMP] =
+            rgba[i][GCOMP] =
+            rgba[i][BCOMP] = luminance;
+            rgba[i][ACOMP] = alpha;
          }
-         break;
-      case GL_RGB:
-         /* replace RGB with RGB */
-         if (table->Type == GL_FLOAT) {
-            const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
-            const GLfloat *lut = (const GLfloat *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint jR = IROUND((GLfloat) rgba[i][RCOMP] * scale);
-               GLint jG = IROUND((GLfloat) rgba[i][GCOMP] * scale);
-               GLint jB = IROUND((GLfloat) rgba[i][BCOMP] * scale);
-               CLAMPED_FLOAT_TO_CHAN(rgba[i][RCOMP], lut[jR * 3 + 0]);
-               CLAMPED_FLOAT_TO_CHAN(rgba[i][GCOMP], lut[jG * 3 + 1]);
-               CLAMPED_FLOAT_TO_CHAN(rgba[i][BCOMP], lut[jB * 3 + 2]);
-            }
+      }
+      break;
+   case GL_RGB:
+      if (table->Size == 256) {
+         for (i = 0; i < n; i++) {
+            rgba[i][RCOMP] = lut[rgba[i][RCOMP] * 3 + 0];
+            rgba[i][GCOMP] = lut[rgba[i][GCOMP] * 3 + 1];
+            rgba[i][BCOMP] = lut[rgba[i][BCOMP] * 3 + 2];
          }
-         else {
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-            if (table->Size == 256) {
-               /* common case */
-               const GLchan *lut = (const GLchan *) table->Table;
-               GLuint i;
-               for (i = 0; i < n; i++) {
-                  rgba[i][RCOMP] = lut[rgba[i][RCOMP] * 3 + 0];
-                  rgba[i][GCOMP] = lut[rgba[i][GCOMP] * 3 + 1];
-                  rgba[i][BCOMP] = lut[rgba[i][BCOMP] * 3 + 2];
-               }
-            }
-            else
-#endif
-            {
-               const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
-               const GLchan *lut = (const GLchan *) table->Table;
-               GLuint i;
-               for (i = 0; i < n; i++) {
-                  GLint jR = IROUND((GLfloat) rgba[i][RCOMP] * scale);
-                  GLint jG = IROUND((GLfloat) rgba[i][GCOMP] * scale);
-                  GLint jB = IROUND((GLfloat) rgba[i][BCOMP] * scale);
-                  rgba[i][RCOMP] = lut[jR * 3 + 0];
-                  rgba[i][GCOMP] = lut[jG * 3 + 1];
-                  rgba[i][BCOMP] = lut[jB * 3 + 2];
-               }
-            }
+      }
+      else {
+         for (i = 0; i < n; i++) {
+            GLint jR = IROUND((GLfloat) rgba[i][RCOMP] * scale);
+            GLint jG = IROUND((GLfloat) rgba[i][GCOMP] * scale);
+            GLint jB = IROUND((GLfloat) rgba[i][BCOMP] * scale);
+            rgba[i][RCOMP] = lut[jR * 3 + 0];
+            rgba[i][GCOMP] = lut[jG * 3 + 1];
+            rgba[i][BCOMP] = lut[jB * 3 + 2];
          }
-         break;
-      case GL_RGBA:
-         /* replace RGBA with RGBA */
-         if (table->Type == GL_FLOAT) {
-            const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
-            const GLfloat *lut = (const GLfloat *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint jR = IROUND((GLfloat) rgba[i][RCOMP] * scale);
-               GLint jG = IROUND((GLfloat) rgba[i][GCOMP] * scale);
-               GLint jB = IROUND((GLfloat) rgba[i][BCOMP] * scale);
-               GLint jA = IROUND((GLfloat) rgba[i][ACOMP] * scale);
-               CLAMPED_FLOAT_TO_CHAN(rgba[i][RCOMP], lut[jR * 4 + 0]);
-               CLAMPED_FLOAT_TO_CHAN(rgba[i][GCOMP], lut[jG * 4 + 1]);
-               CLAMPED_FLOAT_TO_CHAN(rgba[i][BCOMP], lut[jB * 4 + 2]);
-               CLAMPED_FLOAT_TO_CHAN(rgba[i][ACOMP], lut[jA * 4 + 3]);
-            }
+      }
+      break;
+   case GL_RGBA:
+      if (table->Size == 256) {
+         for (i = 0; i < n; i++) {
+            rgba[i][RCOMP] = lut[rgba[i][RCOMP] * 4 + 0];
+            rgba[i][GCOMP] = lut[rgba[i][GCOMP] * 4 + 1];
+            rgba[i][BCOMP] = lut[rgba[i][BCOMP] * 4 + 2];
+            rgba[i][ACOMP] = lut[rgba[i][ACOMP] * 4 + 3];
          }
-         else {
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-            if (table->Size == 256) {
-               /* common case */
-               const GLchan *lut = (const GLchan *) table->Table;
-               GLuint i;
-               for (i = 0; i < n; i++) {
-                  rgba[i][RCOMP] = lut[rgba[i][RCOMP] * 4 + 0];
-                  rgba[i][GCOMP] = lut[rgba[i][GCOMP] * 4 + 1];
-                  rgba[i][BCOMP] = lut[rgba[i][BCOMP] * 4 + 2];
-                  rgba[i][ACOMP] = lut[rgba[i][ACOMP] * 4 + 3];
-               }
-            }
-            else
-#endif
-            {
-               const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
-               const GLfloat *lut = (const GLfloat *) table->Table;
-               GLuint i;
-               for (i = 0; i < n; i++) {
-                  GLint jR = IROUND((GLfloat) rgba[i][RCOMP] * scale);
-                  GLint jG = IROUND((GLfloat) rgba[i][GCOMP] * scale);
-                  GLint jB = IROUND((GLfloat) rgba[i][BCOMP] * scale);
-                  GLint jA = IROUND((GLfloat) rgba[i][ACOMP] * scale);
-                  CLAMPED_FLOAT_TO_CHAN(rgba[i][RCOMP], lut[jR * 4 + 0]);
-                  CLAMPED_FLOAT_TO_CHAN(rgba[i][GCOMP], lut[jG * 4 + 1]);
-                  CLAMPED_FLOAT_TO_CHAN(rgba[i][BCOMP], lut[jB * 4 + 2]);
-                  CLAMPED_FLOAT_TO_CHAN(rgba[i][ACOMP], lut[jA * 4 + 3]);
-               }
-            }
+      }
+      else {
+         for (i = 0; i < n; i++) {
+            GLint jR = IROUND((GLfloat) rgba[i][RCOMP] * scale);
+            GLint jG = IROUND((GLfloat) rgba[i][GCOMP] * scale);
+            GLint jB = IROUND((GLfloat) rgba[i][BCOMP] * scale);
+            GLint jA = IROUND((GLfloat) rgba[i][ACOMP] * scale);
+            CLAMPED_FLOAT_TO_CHAN(rgba[i][RCOMP], lut[jR * 4 + 0]);
+            CLAMPED_FLOAT_TO_CHAN(rgba[i][GCOMP], lut[jG * 4 + 1]);
+            CLAMPED_FLOAT_TO_CHAN(rgba[i][BCOMP], lut[jB * 4 + 2]);
+            CLAMPED_FLOAT_TO_CHAN(rgba[i][ACOMP], lut[jA * 4 + 3]);
          }
-         break;
-      default:
-         _mesa_problem(NULL, "Bad format in _mesa_lookup_rgba_chan");
-         return;
+      }
+      break;
+   default:
+      _mesa_problem(NULL, "Bad format in _mesa_lookup_rgba_chan");
+      return;
    }
 }
 

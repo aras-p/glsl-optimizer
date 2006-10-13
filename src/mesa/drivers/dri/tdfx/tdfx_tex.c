@@ -594,12 +594,10 @@ tdfxIsTextureResident(GLcontext *ctx, struct gl_texture_object *tObj)
 static GrTexTable_t
 convertPalette(FxU32 data[256], const struct gl_color_table *table)
 {
-    const GLubyte *tableUB = (const GLubyte *) table->Table;
+    const GLubyte *tableUB = table->TableUB;
     GLint width = table->Size;
     FxU32 r, g, b, a;
     GLint i;
-
-    ASSERT(table->Type == GL_UNSIGNED_BYTE);
 
     switch (table->_BaseFormat) {
     case GL_INTENSITY:
