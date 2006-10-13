@@ -555,7 +555,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    const GLint imgX = x, imgY = y;
    const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
    GLfloat *convImage = NULL;
-   GLuint transferOps = ctx->_ImageTransferState;
+   GLbitfield transferOps = ctx->_ImageTransferState;
    SWspan span;
 
    /* Try an optimized glDrawPixels first */

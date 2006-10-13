@@ -97,7 +97,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLint row;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
-   const GLuint transferOps = ctx->_ImageTransferState;
+   const GLbitfield transferOps = ctx->_ImageTransferState;
    const GLboolean sink = (ctx->Pixel.MinMaxEnabled && ctx->MinMax.Sink)
       || (ctx->Pixel.HistogramEnabled && ctx->Histogram.Sink);
    GLfloat *dest, *tmpImage, *convImage;

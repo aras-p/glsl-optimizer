@@ -324,7 +324,7 @@ read_rgba_pixels( GLcontext *ctx,
    ASSERT(width <= MAX_WIDTH);
 
    if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
-      const GLuint transferOps = ctx->_ImageTransferState;
+      const GLbitfield transferOps = ctx->_ImageTransferState;
       GLfloat *dest, *src, *tmpImage, *convImage;
       GLint row;
 

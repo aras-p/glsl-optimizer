@@ -990,7 +990,7 @@ _mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
  * as indicated by the transferOps bitmask
  */
 void
-_mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLuint transferOps,
+_mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLbitfield transferOps,
                               GLuint n, GLfloat rgba[][4])
 {
    /* scale & bias */
@@ -1072,7 +1072,7 @@ _mesa_pack_rgba_span_float( GLcontext *ctx,
                             GLenum dstFormat, GLenum dstType,
                             GLvoid *dstAddr,
                             const struct gl_pixelstore_attrib *dstPacking,
-                            GLuint transferOps )
+                            GLbitfield transferOps )
 {
    const GLint comps = _mesa_components_in_format(dstFormat);
    GLfloat rgbaCopy[MAX_WIDTH][4], luminance[MAX_WIDTH];
@@ -2752,7 +2752,7 @@ _mesa_unpack_color_span_chan( GLcontext *ctx,
                               GLenum srcFormat, GLenum srcType,
                               const GLvoid *source,
                               const struct gl_pixelstore_attrib *srcPacking,
-                              GLuint transferOps )
+                              GLbitfield transferOps )
 {
    ASSERT(dstFormat == GL_ALPHA ||
           dstFormat == GL_LUMINANCE ||
@@ -3092,7 +3092,7 @@ _mesa_unpack_color_span_float( GLcontext *ctx,
                                GLenum srcFormat, GLenum srcType,
                                const GLvoid *source,
                                const struct gl_pixelstore_attrib *srcPacking,
-                               GLuint transferOps )
+                               GLbitfield transferOps )
 {
    ASSERT(dstFormat == GL_ALPHA ||
           dstFormat == GL_LUMINANCE ||
@@ -3318,7 +3318,7 @@ _mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
                          GLenum dstType, GLvoid *dest,
                          GLenum srcType, const GLvoid *source,
                          const struct gl_pixelstore_attrib *srcPacking,
-                         GLuint transferOps )
+                         GLbitfield transferOps )
 {
    ASSERT(srcType == GL_BITMAP ||
           srcType == GL_UNSIGNED_BYTE ||
@@ -3401,7 +3401,7 @@ void
 _mesa_pack_index_span( const GLcontext *ctx, GLuint n,
                        GLenum dstType, GLvoid *dest, const GLuint *source,
                        const struct gl_pixelstore_attrib *dstPacking,
-                       GLuint transferOps )
+                       GLbitfield transferOps )
 {
    GLuint indexes[MAX_WIDTH];
 
@@ -3537,7 +3537,7 @@ _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
                            GLenum dstType, GLvoid *dest,
                            GLenum srcType, const GLvoid *source,
                            const struct gl_pixelstore_attrib *srcPacking,
-                           GLuint transferOps )
+                           GLbitfield transferOps )
 {
    ASSERT(srcType == GL_BITMAP ||
           srcType == GL_UNSIGNED_BYTE ||
