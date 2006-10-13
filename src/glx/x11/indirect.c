@@ -32,6 +32,7 @@
 #include "indirect_size.h"
 #include "dispatch.h"
 #include "glthread.h"
+#include "glapi.h"
 #include <GL/glxproto.h>
 #ifdef USE_XCB
 #include <X11/Xlib-xcb.h>
