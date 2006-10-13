@@ -46,7 +46,7 @@ struct intel_batchbuffer {
    struct buffer *buffer;
 
    GLuint flags;
-   GLuint offset;
+   unsigned long offset;
 
    GLubyte *map;
    GLubyte *ptr; 
