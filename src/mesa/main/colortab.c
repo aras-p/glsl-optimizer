@@ -808,7 +808,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
    }
 
    _mesa_pack_rgba_span_float(ctx, table->Size, (const GLfloat (*)[4]) rgba,
-                        format, type, data, &ctx->Pack, GL_FALSE);
+                              format, type, data, &ctx->Pack, 0x0);
 
    if (ctx->Pack.BufferObj->Name) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
