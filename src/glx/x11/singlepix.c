@@ -37,6 +37,7 @@
 #include "packsingle.h"
 #include "indirect.h"
 #include "dispatch.h"
+#include "glapi.h"
 #include "glthread.h"
 #include "glapioffsets.h"
 #include <GL/glxproto.h>
