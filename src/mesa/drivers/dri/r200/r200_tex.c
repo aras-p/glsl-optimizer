@@ -115,7 +115,7 @@ static void r200SetTexWrap( r200TexObjPtr t, GLenum swrap, GLenum twrap, GLenum 
       t->pp_txfilter |= R200_CLAMP_T_CLAMP_LAST;
       break;
    case GL_CLAMP_TO_BORDER:
-      t->pp_txfilter |= R200_CLAMP_T_CLAMP_GL | R200_BORDER_MODE_D3D;
+      t->pp_txfilter |= R200_CLAMP_T_CLAMP_GL;
       is_clamp_to_border = GL_TRUE;
       break;
    case GL_MIRRORED_REPEAT:
@@ -1005,7 +1005,16 @@ static void r200TexEnv( GLcontext *ctx, GLenum target,
       }
       break;
    }
-
+   case GL_COORD_REPLACE_ARB:
+      if (ctx->Point.PointSprite) {
+	 R200_STATECHANGE( rmesa, spr );
+	 if ((GLenum)param[0]) {
+	    rmesa->hw.spr.cmd[SPR_POINT_SPRITE_CNTL] |= R200_PS_GEN_TEX_0 << unit;
+	 } else {
+	    rmesa->hw.spr.cmd[SPR_POINT_SPRITE_CNTL] &= ~(R200_PS_GEN_TEX_0 << unit);
+	 }
+      }
+      break;
    default:
       return;
    }

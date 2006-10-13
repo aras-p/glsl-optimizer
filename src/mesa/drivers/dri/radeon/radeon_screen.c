@@ -130,6 +130,7 @@ extern const struct dri_extension blend_extensions[];
 extern const struct dri_extension ARB_vp_extension[];
 extern const struct dri_extension NV_vp_extension[];
 extern const struct dri_extension ATI_fs_extension[];
+extern const struct dri_extension point_extensions[];
 
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 
@@ -1042,6 +1043,7 @@ __driCreateNewScreen_20050727( __DRInativeDisplay *dpy,
       driInitSingleExtension( NULL, ARB_vp_extension );
       driInitSingleExtension( NULL, NV_vp_extension );
       driInitSingleExtension( NULL, ATI_fs_extension );
+      driInitExtensions( NULL, point_extensions, GL_FALSE );
 #endif
    }
 

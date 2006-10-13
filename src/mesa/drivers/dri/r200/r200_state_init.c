@@ -398,10 +398,14 @@ void r200InitState( r200ContextPtr rmesa )
    else {
       ALLOC_STATE( prf, never, PRF_STATE_SIZE, "PRF/performance-tri", 0 );
    }
-   if (rmesa->r200Screen->drmSupportsPointSprites)
+   if (rmesa->r200Screen->drmSupportsPointSprites) {
       ALLOC_STATE( spr, always, SPR_STATE_SIZE, "SPR/pointsprite", 0 );
-   else
+      ALLOC_STATE( ptp, tcl, PTP_STATE_SIZE, "PTP/pointparams", 0 );
+   }
+   else {
       ALLOC_STATE (spr, never, SPR_STATE_SIZE, "SPR/pointsprite", 0 );
+      ALLOC_STATE (ptp, never, PTP_STATE_SIZE, "PTP/pointparams", 0 );
+   }
 
    r200SetUpAtomList( rmesa );
 
@@ -546,6 +550,11 @@ void r200InitState( r200ContextPtr rmesa )
 	 cmdvec( R200_VS_UCP_ADDR + i, 1, 4 );
    }
 
+   rmesa->hw.ptp.cmd[PTP_CMD_0] =
+      cmdvec( R200_VS_PNT_SPRITE_VPORT_SCALE, 1, 4 );
+   rmesa->hw.ptp.cmd[PTP_CMD_1] =
+      cmdvec( R200_VS_PNT_SPRITE_ATT_CONST, 1, 12 );
+
    /* Initial Harware state:
     */
    rmesa->hw.ctx.cmd[CTX_PP_MISC] = (R200_ALPHA_TEST_PASS
@@ -653,6 +662,7 @@ void r200InitState( r200ContextPtr rmesa )
 				     R200_ALPHA_SHADE_GOURAUD |
 				     R200_SPECULAR_SHADE_GOURAUD |
 				     R200_FOG_SHADE_GOURAUD |
+				     R200_DISC_FOG_SHADE_GOURAUD |
 				     R200_VTX_PIX_CENTER_OGL |
 				     R200_ROUND_MODE_TRUNC |
 				     R200_ROUND_PREC_8TH_PIX);
@@ -931,7 +941,31 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.eye.cmd[EYE_Z] = IEEE_ONE;
    rmesa->hw.eye.cmd[EYE_RESCALE_FACTOR] = IEEE_ONE;
 
-   rmesa->hw.spr.cmd[SPR_POINT_SPRITE_CNTL] = R200_POINTSIZE_SEL_STATE;
+   rmesa->hw.spr.cmd[SPR_POINT_SPRITE_CNTL] =
+      R200_PS_SE_SEL_STATE | R200_PS_MULT_CONST;
+
+   /* ptp_eye is presumably used to calculate the attenuation wrt a different
+      location? In any case, since point attenuation triggers _needeyecoords,
+      it is constant. Probably ignored as long as R200_PS_USE_MODEL_EYE_VEC
+      isn't set */
+   rmesa->hw.ptp.cmd[PTP_EYE_X] = 0;
+   rmesa->hw.ptp.cmd[PTP_EYE_Y] = 0;
+   rmesa->hw.ptp.cmd[PTP_EYE_Z] = IEEE_ONE | 0x80000000; /* -1.0 */
+   rmesa->hw.ptp.cmd[PTP_EYE_3] = 0;
+   /* no idea what the ptp_vport_scale values are good for, except the
+      PTSIZE one - hopefully doesn't matter */
+   rmesa->hw.ptp.cmd[PTP_VPORT_SCALE_0] = IEEE_ONE;
+   rmesa->hw.ptp.cmd[PTP_VPORT_SCALE_1] = IEEE_ONE;
+   rmesa->hw.ptp.cmd[PTP_VPORT_SCALE_PTSIZE] = IEEE_ONE;
+   rmesa->hw.ptp.cmd[PTP_VPORT_SCALE_3] = IEEE_ONE;
+   rmesa->hw.ptp.cmd[PTP_ATT_CONST_QUAD] = 0;
+   rmesa->hw.ptp.cmd[PTP_ATT_CONST_LIN] = 0;
+   rmesa->hw.ptp.cmd[PTP_ATT_CONST_CON] = IEEE_ONE;
+   rmesa->hw.ptp.cmd[PTP_ATT_CONST_3] = 0;
+   rmesa->hw.ptp.cmd[PTP_CLAMP_MIN] = IEEE_ONE;
+   rmesa->hw.ptp.cmd[PTP_CLAMP_MAX] = 0x44ffe000; /* 2047 */
+   rmesa->hw.ptp.cmd[PTP_CLAMP_2] = 0;
+   rmesa->hw.ptp.cmd[PTP_CLAMP_3] = 0;
 
    r200LightingSpaceChange( ctx );
 

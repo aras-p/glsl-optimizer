@@ -445,9 +445,29 @@ struct r200_state_atom {
 
 /* SPR - point sprite state
  */
-#define SPR_CMD_0             0
-#define SPR_POINT_SPRITE_CNTL 1
-#define SPR_STATE_SIZE        2
+#define SPR_CMD_0              0
+#define SPR_POINT_SPRITE_CNTL  1
+#define SPR_STATE_SIZE         2
+
+#define PTP_CMD_0              0
+#define PTP_VPORT_SCALE_0      1
+#define PTP_VPORT_SCALE_1      2
+#define PTP_VPORT_SCALE_PTSIZE 3
+#define PTP_VPORT_SCALE_3      4
+#define PTP_CMD_1              5
+#define PTP_ATT_CONST_QUAD     6
+#define PTP_ATT_CONST_LIN      7
+#define PTP_ATT_CONST_CON      8
+#define PTP_ATT_CONST_3        9
+#define PTP_EYE_X             10
+#define PTP_EYE_Y             11
+#define PTP_EYE_Z             12
+#define PTP_EYE_3             13
+#define PTP_CLAMP_MIN         14
+#define PTP_CLAMP_MAX         15
+#define PTP_CLAMP_2           16
+#define PTP_CLAMP_3           17
+#define PTP_STATE_SIZE        18
 
 #define VTX_COLOR(v,n)   (((v)>>(R200_VTX_COLOR_0_SHIFT+(n)*2))&\
                          R200_VTX_COLOR_MASK)
@@ -614,6 +634,7 @@ struct r200_hw_state {
    struct r200_state_atom vpp[2];
    struct r200_state_atom atf;
    struct r200_state_atom spr;
+   struct r200_state_atom ptp;
 
    int max_state_size;	/* Number of bytes necessary for a full state emit. */
    GLboolean is_dirty, all_dirty;

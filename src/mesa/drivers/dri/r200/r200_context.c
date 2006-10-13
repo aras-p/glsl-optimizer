@@ -75,6 +75,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_EXT_blend_equation_separate
 #define need_GL_EXT_blend_func_separate
 #define need_GL_NV_vertex_program
+#define need_GL_ARB_point_parameters
 #include "extension_helper.h"
 
 #define DRIVER_DATE	"20060602"
@@ -170,7 +171,7 @@ const struct dri_extension blend_extensions[] = {
     { "GL_EXT_blend_func_separate",        GL_EXT_blend_func_separate_functions },
     { NULL,                                NULL }
 };
-							 
+
 const struct dri_extension ARB_vp_extension[] = {
     { "GL_ARB_vertex_program",             GL_ARB_vertex_program_functions }
 };
@@ -181,6 +182,12 @@ const struct dri_extension NV_vp_extension[] = {
 
 const struct dri_extension ATI_fs_extension[] = {
     { "GL_ATI_fragment_shader",            GL_ATI_fragment_shader_functions }
+};
+
+const struct dri_extension point_extensions[] = {
+    { "GL_ARB_point_sprite",               NULL },
+    { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
+    { NULL,                                NULL }
 };
 
 extern const struct tnl_pipeline_stage _r200_render_stage;
@@ -200,9 +207,9 @@ static const struct tnl_pipeline_stage *r200_pipeline[] = {
    &_tnl_fog_coordinate_stage,
    &_tnl_texgen_stage,
    &_tnl_texture_transform_stage,
+   &_tnl_point_attenuation_stage,
    &_tnl_arb_vertex_program_stage,
    &_tnl_vertex_program_stage,
-
    /* Try again to go to tcl? 
     *     - no good for asymmetric-twoside (do with multipass)
     *     - no good for asymmetric-unfilled (do with multipass)
@@ -485,6 +492,8 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 
    if ((ctx->Const.MaxTextureUnits == 6) && rmesa->r200Screen->drmSupportsFragShader)
       driInitSingleExtension( ctx, ATI_fs_extension );
+   if (rmesa->r200Screen->drmSupportsPointSprites)
+      driInitExtensions( ctx, point_extensions, GL_FALSE );
 #if 0
    r200InitDriverFuncs( ctx );
    r200InitIoctlFuncs( ctx );

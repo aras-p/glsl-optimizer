@@ -117,6 +117,11 @@ static void r200SetVertexFormat( GLcontext *ctx )
       offset = 3;
    }
 
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POINTSIZE )) {
+      EMIT_ATTR( _TNL_ATTRIB_POINTSIZE, EMIT_1F, R200_VTX_POINT_SIZE );
+      offset += 1;
+   }
+
    rmesa->swtcl.coloroffset = offset;
 #if MESA_LITTLE_ENDIAN 
    EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA, (R200_VTX_PK_RGBA << R200_VTX_COLOR_0_SHIFT) );
@@ -349,7 +354,9 @@ static INLINE GLuint reduced_hw_prim( GLcontext *ctx, GLuint prim)
 {
    switch (prim) {
    case GL_POINTS:
-      return (ctx->_TriangleCaps & DD_POINT_SIZE) ?
+      return (ctx->Point.PointSprite ||
+	 ((ctx->_TriangleCaps & (DD_POINT_SIZE | DD_POINT_ATTEN)) &&
+	 !(ctx->_TriangleCaps & (DD_POINT_SMOOTH)))) ?
 	 R200_VF_PRIM_POINT_SPRITES : R200_VF_PRIM_POINTS;
    case GL_LINES:
    /* fallthrough */
@@ -632,6 +639,17 @@ static void r200RasterPrimitive( GLcontext *ctx, GLuint hwprim )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
    if (rmesa->swtcl.hw_primitive != hwprim) {
+      /* need to disable perspective-correct texturing for point sprites */
+      if ((hwprim & 0xf) == R200_VF_PRIM_POINT_SPRITES && ctx->Point.PointSprite) {
+	 if (rmesa->hw.set.cmd[SET_RE_CNTL] & R200_PERSPECTIVE_ENABLE) {
+	    R200_STATECHANGE( rmesa, set );
+	    rmesa->hw.set.cmd[SET_RE_CNTL] &= ~R200_PERSPECTIVE_ENABLE;
+	 }
+      }
+      else if (!(rmesa->hw.set.cmd[SET_RE_CNTL] & R200_PERSPECTIVE_ENABLE)) {
+	 R200_STATECHANGE( rmesa, set );
+	 rmesa->hw.set.cmd[SET_RE_CNTL] |= R200_PERSPECTIVE_ENABLE;
+      }
       R200_NEWPRIM( rmesa );
       rmesa->swtcl.hw_primitive = hwprim;
    }

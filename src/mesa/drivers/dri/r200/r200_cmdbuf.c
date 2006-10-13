@@ -107,8 +107,8 @@ void r200SetUpAtomList( r200ContextPtr rmesa )
       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.mtl[i] );
    for (i = 0; i < 6; ++i)
        insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.ucp[i] );
-   /* FIXME: is this a good place to insert that atom ? */
    insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.spr );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.ptp );
    insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.prf );
    insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.pvs );
    insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vpp[0] );

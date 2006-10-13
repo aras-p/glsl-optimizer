@@ -68,7 +68,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define HAVE_ELTS        1
 
 
-#define HW_POINTS           ((ctx->_TriangleCaps & DD_POINT_SIZE) ? \
+#define HW_POINTS           ((ctx->Point.PointSprite || \
+				((ctx->_TriangleCaps & (DD_POINT_SIZE | DD_POINT_ATTEN)) && \
+	 			!(ctx->_TriangleCaps & (DD_POINT_SMOOTH)))) ? \
 				R200_VF_PRIM_POINT_SPRITES : R200_VF_PRIM_POINTS)
 #define HW_LINES            R200_VF_PRIM_LINES
 #define HW_LINE_LOOP        0
@@ -268,6 +270,17 @@ void r200TclPrimitive( GLcontext *ctx,
 
    if (newprim != rmesa->tcl.hw_primitive ||
        !discrete_prim[hw_prim&0xf]) {
+      /* need to disable perspective-correct texturing for point sprites */
+      if ((prim & PRIM_MODE_MASK) == GL_POINTS && ctx->Point.PointSprite) {
+	 if (rmesa->hw.set.cmd[SET_RE_CNTL] & R200_PERSPECTIVE_ENABLE) {
+	    R200_STATECHANGE( rmesa, set );
+	    rmesa->hw.set.cmd[SET_RE_CNTL] &= ~R200_PERSPECTIVE_ENABLE;
+	 }
+      }
+      else if (!(rmesa->hw.set.cmd[SET_RE_CNTL] & R200_PERSPECTIVE_ENABLE)) {
+	 R200_STATECHANGE( rmesa, set );
+	 rmesa->hw.set.cmd[SET_RE_CNTL] |= R200_PERSPECTIVE_ENABLE;
+      }
       R200_NEWPRIM( rmesa );
       rmesa->tcl.hw_primitive = newprim;
    }
@@ -447,7 +460,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
 	 out_vtxfmt0 |= R200_VTX_FP_RGBA << R200_VTX_COLOR_1_SHIFT;
 	 out_compsel |= R200_OUTPUT_COLOR_1;
       }
-      /* FIXME: probably not everything is set up for fogc and psiz to work correctly */
+      /* FIXME: probably not everything is set up for fogc to work correctly */
       if (vp_out & (1 << VERT_RESULT_FOGC)) {
 	 out_vtxfmt0 |= R200_VTX_DISCRETE_FOG;
          out_compsel |= R200_OUTPUT_DISCRETE_FOG;

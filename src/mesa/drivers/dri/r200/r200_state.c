@@ -686,10 +686,80 @@ static void r200FrontFace( GLcontext *ctx, GLenum mode )
 static void r200PointSize( GLcontext *ctx, GLfloat size )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   GLfloat *fcmd = (GLfloat *)rmesa->hw.ptp.cmd;
 
    R200_STATECHANGE( rmesa, cst );
+   R200_STATECHANGE( rmesa, ptp );
    rmesa->hw.cst.cmd[CST_RE_POINTSIZE] &= ~0xffff;
    rmesa->hw.cst.cmd[CST_RE_POINTSIZE] |= ((GLuint)(ctx->Point.Size * 16.0));
+/* this is the size param of the point size calculation (point size reg value
+   is not used when calculation is active). */
+   fcmd[PTP_VPORT_SCALE_PTSIZE] = ctx->Point.Size;
+}
+
+static void r200PointParameter( GLcontext *ctx, GLenum pname, const GLfloat *params)
+{
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   GLfloat *fcmd = (GLfloat *)rmesa->hw.ptp.cmd;
+
+   switch (pname) {
+   case GL_POINT_SIZE_MIN:
+   /* Can clamp both in tcl and setup - just set both (as does fglrx) */
+      R200_STATECHANGE( rmesa, lin );
+      R200_STATECHANGE( rmesa, ptp );
+      rmesa->hw.lin.cmd[LIN_SE_LINE_WIDTH] &= 0xffff;
+      rmesa->hw.lin.cmd[LIN_SE_LINE_WIDTH] |= (GLuint)(ctx->Point.MinSize * 16.0) << 16;
+      fcmd[PTP_CLAMP_MIN] = ctx->Point.MinSize;
+      break;
+   case GL_POINT_SIZE_MAX:
+      R200_STATECHANGE( rmesa, cst );
+      R200_STATECHANGE( rmesa, ptp );
+      rmesa->hw.cst.cmd[CST_RE_POINTSIZE] &= 0xffff;
+      rmesa->hw.cst.cmd[CST_RE_POINTSIZE] |= (GLuint)(ctx->Point.MaxSize * 16.0) << 16;
+      fcmd[PTP_CLAMP_MAX] = ctx->Point.MaxSize;
+      break;
+   case GL_POINT_DISTANCE_ATTENUATION:
+      R200_STATECHANGE( rmesa, vtx );
+      R200_STATECHANGE( rmesa, spr );
+      R200_STATECHANGE( rmesa, ptp );
+      GLfloat *fcmd = (GLfloat *)rmesa->hw.ptp.cmd;
+      rmesa->hw.spr.cmd[SPR_POINT_SPRITE_CNTL] &=
+	 ~(R200_PS_MULT_MASK | R200_PS_LIN_ATT_ZERO | R200_PS_SE_SEL_STATE);
+      /* can't rely on ctx->Point._Attenuated here and test for NEW_POINT in
+	 r200ValidateState looks like overkill */
+      if (ctx->Point.Params[0] != 1.0 ||
+	  ctx->Point.Params[1] != 0.0 ||
+	  ctx->Point.Params[2] != 0.0 ||
+	  (ctx->VertexProgram.Enabled && ctx->VertexProgram.PointSizeEnabled)) {
+	 /* all we care for vp would be the ps_se_sel_state setting */
+	 fcmd[PTP_ATT_CONST_QUAD] = ctx->Point.Params[2];
+	 fcmd[PTP_ATT_CONST_LIN] = ctx->Point.Params[1];
+	 fcmd[PTP_ATT_CONST_CON] = ctx->Point.Params[0];
+	 rmesa->hw.spr.cmd[SPR_POINT_SPRITE_CNTL] |= R200_PS_MULT_ATTENCONST;
+	 if (ctx->Point.Params[1] == 0.0)
+	    rmesa->hw.spr.cmd[SPR_POINT_SPRITE_CNTL] |= R200_PS_LIN_ATT_ZERO;
+/* FIXME: setting this here doesn't look quite ok - we only want to do
+          that if we're actually drawing points probably */
+	 rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL] |= R200_OUTPUT_PT_SIZE;
+	 rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] |= R200_VTX_POINT_SIZE;
+      }
+      else {
+	 rmesa->hw.spr.cmd[SPR_POINT_SPRITE_CNTL] |=
+	    R200_PS_SE_SEL_STATE | R200_PS_MULT_CONST;
+	 rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL] &= ~R200_OUTPUT_PT_SIZE;
+	 rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] &= ~R200_VTX_POINT_SIZE;
+      }
+      break;
+   case GL_POINT_FADE_THRESHOLD_SIZE:
+      /* don't support multisampling, so doesn't matter. */
+      break;
+   /* can't do these but don't need them.
+   case GL_POINT_SPRITE_R_MODE_NV:
+   case GL_POINT_SPRITE_COORD_ORIGIN: */
+   default:
+      fprintf(stderr, "bad pname parameter in r200PointParameter\n");
+      return;
+   }
 }
 
 /* =============================================================
@@ -1382,20 +1452,23 @@ static void r200ShadeModel( GLcontext *ctx, GLenum mode )
    s &= ~(R200_DIFFUSE_SHADE_MASK |
 	  R200_ALPHA_SHADE_MASK |
 	  R200_SPECULAR_SHADE_MASK |
-	  R200_FOG_SHADE_MASK);
+	  R200_FOG_SHADE_MASK |
+	  R200_DISC_FOG_SHADE_MASK);
 
    switch ( mode ) {
    case GL_FLAT:
       s |= (R200_DIFFUSE_SHADE_FLAT |
 	    R200_ALPHA_SHADE_FLAT |
 	    R200_SPECULAR_SHADE_FLAT |
-	    R200_FOG_SHADE_FLAT);
+	    R200_FOG_SHADE_FLAT |
+	    R200_DISC_FOG_SHADE_FLAT);
       break;
    case GL_SMOOTH:
       s |= (R200_DIFFUSE_SHADE_GOURAUD |
 	    R200_ALPHA_SHADE_GOURAUD |
 	    R200_SPECULAR_SHADE_GOURAUD |
-	    R200_FOG_SHADE_GOURAUD);
+	    R200_FOG_SHADE_GOURAUD |
+	    R200_DISC_FOG_SHADE_GOURAUD);
       break;
    default:
       return;
@@ -2032,6 +2105,19 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
 #endif
 
+   case GL_POINT_SPRITE_ARB:
+      R200_STATECHANGE( rmesa, spr );
+      if ( state ) {
+	 int i;
+	 for (i = 0; i < 6; i++) {
+	    rmesa->hw.spr.cmd[SPR_POINT_SPRITE_CNTL] |=
+		ctx->Point.CoordReplace[i] << (R200_PS_GEN_TEX_0_SHIFT + i);
+	 }
+      } else {
+	 rmesa->hw.spr.cmd[SPR_POINT_SPRITE_CNTL] &= ~R200_PS_GEN_TEX_MASK;
+      }
+      break;
+
    case GL_POLYGON_OFFSET_FILL:
       R200_STATECHANGE( rmesa, set );
       if ( state ) {
@@ -2165,6 +2251,11 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
       else {
 	 /* picked up later */
       }
+      r200PointParameter( ctx, GL_POINT_DISTANCE_ATTENUATION, NULL );
+      break;
+
+   case GL_VERTEX_PROGRAM_POINT_SIZE_ARB:
+      r200PointParameter( ctx, GL_POINT_DISTANCE_ATTENUATION, NULL );
       break;
 
    case GL_FRAGMENT_SHADER_ATI:
@@ -2516,6 +2607,7 @@ void r200InitStateFuncs( struct dd_function_table *functions )
    functions->PolygonMode		= r200PolygonMode;
    functions->PolygonOffset		= r200PolygonOffset;
    functions->PolygonStipple		= r200PolygonStipple;
+   functions->PointParameterfv		= r200PointParameter;
    functions->PointSize			= r200PointSize;
    functions->RenderMode		= r200RenderMode;
    functions->Scissor			= r200Scissor;
