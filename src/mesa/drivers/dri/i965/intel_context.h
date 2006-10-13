@@ -329,8 +329,8 @@ static inline void * __memcpy(void * to, const void * from, size_t n)
  */
 static inline void *do_memcpy( void *dest, const void *src, size_t n )
 {
-   if ( (((unsigned)src) & 63) ||
-	(((unsigned)dest) & 63)) {
+   if ( (((unsigned long)src) & 63) ||
+	(((unsigned long)dest) & 63)) {
       return  __memcpy(dest, src, n);	
    }
    else
