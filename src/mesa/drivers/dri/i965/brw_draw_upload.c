@@ -435,6 +435,7 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
 	    ptr = input->glarray->Ptr;
 	 }
 	 else if (interleave != input->glarray->StrideB ||
+		  (const char *)input->glarray->Ptr - (const char *)ptr < 0 ||
 		  (const char *)input->glarray->Ptr - (const char *)ptr > interleave) {
 	    interleave = 0;
 	 }
