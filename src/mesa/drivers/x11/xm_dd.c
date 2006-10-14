@@ -23,6 +23,11 @@
  */
 
 
+/**
+ * \file xm_dd.h
+ * General device driver functions for Xlib driver.
+ */
+
 #include "glxheader.h"
 #include "bufferobj.h"
 #include "buffers.h"
@@ -89,47 +94,12 @@ const int xmesa_kernel1[16] = {
 };
 
 
-/*
- * Return the size (width, height) of the X window for the given GLframebuffer.
- * Output:  width - width of buffer in pixels.
- *          height - height of buffer in pixels.
- */
+/** XXX obsolete ***/
 static void
 get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 {
-   /* We can do this cast because the first field in the XMesaBuffer
-    * struct is a GLframebuffer struct.  If this weren't true, we'd
-    * need a pointer from the GLframebuffer to the XMesaBuffer.
-    */
-   const XMesaBuffer xmBuffer = (XMesaBuffer) buffer;
-   unsigned int winwidth, winheight;
-#ifdef XFree86Server
-   /* XFree86 GLX renderer */
-   winwidth = MIN2(xmBuffer->frontxrb->drawable->width, MAX_WIDTH);
-   winheight = MIN2(xmBuffer->frontxrb->drawable->height, MAX_HEIGHT);
-#else
-   Window root;
-   Status stat;
-   int winx, winy;
-   unsigned int bw, d;
-
-   _glthread_LOCK_MUTEX(_xmesa_lock);
-   XSync(xmBuffer->xm_visual->display, 0); /* added for Chromium */
-
-   stat = XGetGeometry( xmBuffer->xm_visual->display, xmBuffer->frontxrb->pixmap,
-                 &root, &winx, &winy, &winwidth, &winheight, &bw, &d );
-   _glthread_UNLOCK_MUTEX(_xmesa_lock);
-
-   if (!stat) {
-      /* probably querying a window that's recently been destroyed */
-      _mesa_warning(NULL, "XGetGeometry failed!\n");
-      *width = *height = 1;
-      return;
-   }
-#endif
-
-   *width = winwidth;
-   *height = winheight;
+   XMesaBuffer b = XMESA_BUFFER(buffer);
+   xmesa_get_window_size(b->display, b, width, height);
 }
 
 
@@ -564,26 +534,6 @@ clear_buffers( GLcontext *ctx, GLbitfield mask,
    }
    if (mask)
       _swrast_Clear( ctx, mask, all, x, y, width, height );
-}
-
-
-/**
- * Called by ctx->Driver.ResizeBuffers()
- * Resize the front/back colorbuffers to match the latest window size.
- */
-void
-xmesa_resize_buffers(GLcontext *ctx, GLframebuffer *buffer,
-                     GLuint width, GLuint height)
-{
-   /* We can do this cast because the first field in the XMesaBuffer
-    * struct is a GLframebuffer struct.  If this weren't true, we'd
-    * need a pointer from the GLframebuffer to the XMesaBuffer.
-    */
-   XMesaBuffer xmBuffer = (XMesaBuffer) buffer;
-
-   xmesa_alloc_back_buffer(xmBuffer, width, height);
-
-   _mesa_resize_framebuffer(ctx, buffer, width, height);
 }
 
 
@@ -1121,33 +1071,6 @@ choose_tex_format( GLcontext *ctx, GLint internalFormat,
 
 
 /**
- * Get the current drawing (and reading) window's size and update the
- * corresponding gl_framebuffer(s) if needed.
- */
-static void
-update_framebuffer_size(GLcontext *ctx)
-{
-   struct gl_framebuffer *fb = ctx->WinSysDrawBuffer;
-   GLuint newWidth, newHeight;
-   get_buffer_size(fb, &newWidth, &newHeight);
-   if (newWidth != fb->Width || newHeight != fb->Height) {
-      xmesa_resize_buffers(ctx, fb, newWidth, newHeight);
-   }
-
-   if (ctx->WinSysReadBuffer != ctx->WinSysDrawBuffer) {
-      /* Update readbuffer's size */
-      struct gl_framebuffer *fb = ctx->WinSysReadBuffer;
-      GLuint newWidth, newHeight;
-      get_buffer_size(fb, &newWidth, &newHeight);
-      if (newWidth != fb->Width || newHeight != fb->Height) {
-         xmesa_resize_buffers(ctx, fb, newWidth, newHeight);
-         ctx->NewState |= _NEW_BUFFERS;
-      }
-   }
-}
-
-
-/**
  * Called by glViewport.
  * This is a good time for us to poll the current X window size and adjust
  * our renderbuffers to match the current window size.
@@ -1161,11 +1084,15 @@ update_framebuffer_size(GLcontext *ctx)
 static void
 xmesa_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
+   XMesaContext xmctx = XMESA_CONTEXT(ctx);
+   XMesaBuffer xmdrawbuf = XMESA_BUFFER(ctx->WinSysDrawBuffer);
+   XMesaBuffer xmreadbuf = XMESA_BUFFER(ctx->WinSysReadBuffer);
+   xmesa_check_and_update_buffer_size(xmctx, xmdrawbuf);
+   xmesa_check_and_update_buffer_size(xmctx, xmreadbuf);
    (void) x;
    (void) y;
    (void) w;
    (void) h;
-   update_framebuffer_size(ctx);
 }
 
 
@@ -1258,7 +1185,6 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->ColorMask = color_mask;
    driver->Enable = enable;
    driver->Clear = clear_buffers;
-   driver->ResizeBuffers = xmesa_resize_buffers;
    driver->Viewport = xmesa_viewport;
 #ifndef XFree86Server
    driver->CopyPixels = xmesa_CopyPixels;

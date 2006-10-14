@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,11 +23,224 @@
  */
 
 
+/**
+ * \file xm_buffer.h
+ * Framebuffer and renderbuffer-related functions.
+ */
+
+
 #include "glxheader.h"
 #include "GL/xmesa.h"
 #include "xmesaP.h"
 #include "imports.h"
 #include "renderbuffer.h"
+
+
+#ifndef XFree86Server
+static volatile int mesaXErrorFlag = 0;
+
+/**
+ * Catches potential Xlib errors.
+ */
+static int
+mesaHandleXError(XMesaDisplay *dpy, XErrorEvent *event)
+{
+   (void) dpy;
+   (void) event;
+   mesaXErrorFlag = 1;
+   return 0;
+}
+#endif
+
+
+/**
+ * Allocate a shared memory XImage back buffer for the given XMesaBuffer.
+ * Return:  GL_TRUE if success, GL_FALSE if error
+ */
+#ifndef XFree86Server
+static GLboolean
+alloc_back_shm_ximage(XMesaBuffer b, GLuint width, GLuint height)
+{
+#ifdef USE_XSHM
+   /*
+    * We have to do a _lot_ of error checking here to be sure we can
+    * really use the XSHM extension.  It seems different servers trigger
+    * errors at different points if the extension won't work.  Therefore
+    * we have to be very careful...
+    */
+   GC gc;
+   int (*old_handler)(XMesaDisplay *, XErrorEvent *);
+
+   if (width == 0 || height == 0) {
+      /* this will be true the first time we're called on 'b' */
+      return GL_FALSE;
+   }
+
+   b->backxrb->ximage = XShmCreateImage(b->xm_visual->display,
+                                        b->xm_visual->visinfo->visual,
+                                        b->xm_visual->visinfo->depth,
+                                        ZPixmap, NULL, &b->shminfo,
+                                        width, height);
+   if (b->backxrb->ximage == NULL) {
+      _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (XShmCreateImage), disabling.\n");
+      b->shm = 0;
+      return GL_FALSE;
+   }
+
+   b->shminfo.shmid = shmget(IPC_PRIVATE, b->backxrb->ximage->bytes_per_line
+			     * b->backxrb->ximage->height, IPC_CREAT|0777);
+   if (b->shminfo.shmid < 0) {
+      _mesa_warning(NULL, "shmget failed while allocating back buffer.\n");
+      XDestroyImage(b->backxrb->ximage);
+      b->backxrb->ximage = NULL;
+      _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (shmget), disabling.\n");
+      b->shm = 0;
+      return GL_FALSE;
+   }
+
+   b->shminfo.shmaddr = b->backxrb->ximage->data
+                      = (char*)shmat(b->shminfo.shmid, 0, 0);
+   if (b->shminfo.shmaddr == (char *) -1) {
+      _mesa_warning(NULL, "shmat() failed while allocating back buffer.\n");
+      XDestroyImage(b->backxrb->ximage);
+      shmctl(b->shminfo.shmid, IPC_RMID, 0);
+      b->backxrb->ximage = NULL;
+      _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (shmat), disabling.\n");
+      b->shm = 0;
+      return GL_FALSE;
+   }
+
+   b->shminfo.readOnly = False;
+   mesaXErrorFlag = 0;
+   old_handler = XSetErrorHandler(mesaHandleXError);
+   /* This may trigger the X protocol error we're ready to catch: */
+   XShmAttach(b->xm_visual->display, &b->shminfo);
+   XSync(b->xm_visual->display, False);
+
+   if (mesaXErrorFlag) {
+      /* we are on a remote display, this error is normal, don't print it */
+      XFlush(b->xm_visual->display);
+      mesaXErrorFlag = 0;
+      XDestroyImage(b->backxrb->ximage);
+      shmdt(b->shminfo.shmaddr);
+      shmctl(b->shminfo.shmid, IPC_RMID, 0);
+      b->backxrb->ximage = NULL;
+      b->shm = 0;
+      (void) XSetErrorHandler(old_handler);
+      return GL_FALSE;
+   }
+
+   shmctl(b->shminfo.shmid, IPC_RMID, 0); /* nobody else needs it */
+
+   /* Finally, try an XShmPutImage to be really sure the extension works */
+   gc = XCreateGC(b->xm_visual->display, b->frontxrb->drawable, 0, NULL);
+   XShmPutImage(b->xm_visual->display, b->frontxrb->drawable, gc,
+		 b->backxrb->ximage, 0, 0, 0, 0, 1, 1 /*one pixel*/, False);
+   XSync(b->xm_visual->display, False);
+   XFreeGC(b->xm_visual->display, gc);
+   (void) XSetErrorHandler(old_handler);
+   if (mesaXErrorFlag) {
+      XFlush(b->xm_visual->display);
+      mesaXErrorFlag = 0;
+      XDestroyImage(b->backxrb->ximage);
+      shmdt(b->shminfo.shmaddr);
+      shmctl(b->shminfo.shmid, IPC_RMID, 0);
+      b->backxrb->ximage = NULL;
+      b->shm = 0;
+      return GL_FALSE;
+   }
+
+   return GL_TRUE;
+#else
+   /* Can't compile XSHM support */
+   return GL_FALSE;
+#endif
+}
+#endif
+
+
+
+/**
+ * Setup an off-screen pixmap or Ximage to use as the back buffer.
+ * Input:  b - the X/Mesa buffer
+ */
+static void
+alloc_back_buffer(XMesaBuffer b, GLuint width, GLuint height)
+{
+   if (width == 0 || height == 0)
+      return;
+
+   if (b->db_mode == BACK_XIMAGE) {
+      /* Deallocate the old backxrb->ximage, if any */
+      if (b->backxrb->ximage) {
+#if defined(USE_XSHM) && !defined(XFree86Server)
+	 if (b->shm) {
+	    XShmDetach(b->xm_visual->display, &b->shminfo);
+	    XDestroyImage(b->backxrb->ximage);
+	    shmdt(b->shminfo.shmaddr);
+	 }
+	 else
+#endif
+	   XMesaDestroyImage(b->backxrb->ximage);
+	 b->backxrb->ximage = NULL;
+      }
+
+      /* Allocate new back buffer */
+#ifdef XFree86Server
+      /* Allocate a regular XImage for the back buffer. */
+      b->backxrb->ximage = XMesaCreateImage(b->xm_visual->BitsPerPixel,
+                                            width, height, NULL);
+      {
+#else
+      if (b->shm == 0 || !alloc_back_shm_ximage(b, width, height)) {
+	 /* Allocate a regular XImage for the back buffer. */
+	 b->backxrb->ximage = XCreateImage(b->xm_visual->display,
+                                      b->xm_visual->visinfo->visual,
+                                      GET_VISUAL_DEPTH(b->xm_visual),
+				      ZPixmap, 0,   /* format, offset */
+				      NULL,
+                                      width, height,
+				      8, 0);  /* pad, bytes_per_line */
+#endif
+	 if (!b->backxrb->ximage) {
+	    _mesa_warning(NULL, "alloc_back_buffer: XCreateImage failed.\n");
+            return;
+	 }
+         b->backxrb->ximage->data = (char *) MALLOC(b->backxrb->ximage->height
+                                        * b->backxrb->ximage->bytes_per_line);
+         if (!b->backxrb->ximage->data) {
+            _mesa_warning(NULL, "alloc_back_buffer: MALLOC failed.\n");
+            XMesaDestroyImage(b->backxrb->ximage);
+            b->backxrb->ximage = NULL;
+         }
+         else {
+            /* this call just updates the width/origin fields in the xrb */
+            b->backxrb->Base.AllocStorage(NULL, &b->backxrb->Base, 
+                                          b->backxrb->Base.InternalFormat,
+                                          b->backxrb->ximage->width,
+                                          b->backxrb->ximage->height);
+         }
+      }
+      b->backxrb->pixmap = None;
+   }
+   else if (b->db_mode == BACK_PIXMAP) {
+      if (!width)
+         width = 1;
+      if (!height)
+         height = 1;
+
+      /* Free the old back pixmap */
+      if (b->backxrb->pixmap) {
+	 XMesaFreePixmap(b->xm_visual->display, b->backxrb->pixmap);
+      }
+      /* Allocate new back pixmap */
+      b->backxrb->pixmap = XMesaCreatePixmap(b->xm_visual->display,
+                                             b->frontxrb->drawable,
+                                             width, height,
+                                             GET_VISUAL_DEPTH(b->xm_visual));
+      b->backxrb->ximage = NULL;
+   }
+}
 
 
 static void
@@ -68,7 +281,6 @@ xmesa_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 /**
  * Reallocate renderbuffer storage for back color buffer.
- * XXX we should resize the back pixmap/ximage here.
  */
 static GLboolean
 xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
@@ -76,7 +288,12 @@ xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 {
    struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb);
 
+   /* reallocate the back buffer XImage or Pixmap */
+   assert(xrb->Parent);
+   alloc_back_buffer(xrb->Parent, width, height);
+
    /* same as front buffer */
+   /* XXX why is this here? */
    (void) xmesa_alloc_front_storage(ctx, rb, internalFormat, width, height);
 
    /* plus... */

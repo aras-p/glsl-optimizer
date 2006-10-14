@@ -81,8 +81,9 @@ enum pixel_format {
 };
 
 
-/*
- * "Derived" from GLvisual.  Basically corresponds to an XVisualInfo.
+/**
+ * Visual inforation, derived from GLvisual.
+ * Basically corresponds to an XVisualInfo.
  */
 struct xmesa_visual {
    GLvisual mesa_visual;	/* Device independent visual parameters */
@@ -127,8 +128,9 @@ struct xmesa_visual {
 };
 
 
-/*
- * "Derived" from __GLcontextRec.  Basically corresponds to a GLXContext.
+/**
+ * Context info, dDerived from GLcontext.
+ * Basically corresponds to a GLXContext.
  */
 struct xmesa_context {
    GLcontext mesa;		/* the core library context (containment) */
@@ -146,7 +148,9 @@ struct xmesa_context {
 };
 
 
-
+/**
+ * Types of X/GLX drawables we might render into.
+ */
 typedef enum {
    WINDOW,          /* An X window */
    GLXWINDOW,       /* GLX window */
@@ -155,9 +159,11 @@ typedef enum {
 } BufferType;
 
 
-/* Values for db_mode: */
+/** Values for db_mode: */
+/*@{*/
 #define BACK_PIXMAP	1
 #define BACK_XIMAGE	2
+/*@}*/
 
 
 /**
@@ -175,6 +181,7 @@ struct xmesa_renderbuffer
 {
    struct gl_renderbuffer Base;  /* Base class */
 
+   XMesaBuffer Parent;  /**< The XMesaBuffer this renderbuffer belongs to */
    XMesaDrawable drawable;	/* Usually the X window ID */
    XMesaPixmap pixmap;	/* Back color buffer */
    XMesaImage *ximage;	/* The back buffer, if not using a Pixmap */
@@ -194,8 +201,9 @@ struct xmesa_renderbuffer
 };
 
 
-/*
- * "Derived" from GLframebuffer.  Basically corresponds to a GLXDrawable.
+/**
+ * Framebuffer information, derived from.
+ * Basically corresponds to a GLXDrawable.
  */
 struct xmesa_buffer {
    GLframebuffer mesa_buffer;	/* depth, stencil, accum, etc buffers */
@@ -264,7 +272,7 @@ struct xmesa_buffer {
 };
 
 
-/*
+/**
  * If pixelformat==PF_TRUECOLOR:
  */
 #define PACK_TRUECOLOR( PIXEL, R, G, B )	\
@@ -273,7 +281,7 @@ struct xmesa_buffer {
          | xmesa->xm_visual->BtoPixel[B];	\
 
 
-/*
+/**
  * If pixelformat==PF_TRUEDITHER:
  */
 #define PACK_TRUEDITHER( PIXEL, X, Y, R, G, B )			\
@@ -286,14 +294,14 @@ struct xmesa_buffer {
 
 
 
-/*
+/**
  * If pixelformat==PF_8A8B8G8R:
  */
 #define PACK_8A8B8G8R( R, G, B, A )	\
 	( ((A) << 24) | ((B) << 16) | ((G) << 8) | (R) )
 
 
-/*
+/**
  * Like PACK_8A8B8G8R() but don't use alpha.  This is usually an acceptable
  * shortcut.
  */
@@ -301,19 +309,19 @@ struct xmesa_buffer {
 
 
 
-/*
+/**
  * If pixelformat==PF_8R8G8B:
  */
 #define PACK_8R8G8B( R, G, B)	 ( ((R) << 16) | ((G) << 8) | (B) )
 
 
-/*
+/**
  * If pixelformat==PF_5R6G5B:
  */
 #define PACK_5R6G5B( R, G, B)	 ( (((R) & 0xf8) << 8) | (((G) & 0xfc) << 3) | ((B) >> 3) )
 
 
-/*
+/**
  * If pixelformat==PF_8A8R8G8B:
  */
 #define PACK_8A8R8G8B( R, G, B, A )	\
@@ -321,7 +329,7 @@ struct xmesa_buffer {
 
 
 
-/*
+/**
  * If pixelformat==PF_DITHER:
  *
  * Improved 8-bit RGB dithering code contributed by Bob Mercier
@@ -398,7 +406,7 @@ extern const int xmesa_kernel8[DITH_DY * DITH_DX];
 
 
 
-/*
+/**
  * If pixelformat==PF_LOOKUP:
  */
 #define _dither_lookup(C, c)   (((unsigned)((DITH_N * (C - 1) + 1) * c)) >> 12)
@@ -412,8 +420,7 @@ extern const int xmesa_kernel8[DITH_DY * DITH_DX];
 		        _dither_lookup(DITH_B, (B)))]
 
 
-
-/*
+/**
  * If pixelformat==PF_HPCR:
  *
  *      HP Color Recovery dithering               (ad@lms.be 30/08/95)
@@ -433,7 +440,7 @@ extern const short xmesa_HPCR_DRGB[3][2][16];
 
 
 
-/*
+/**
  * If pixelformat==PF_1BIT:
  */
 extern const int xmesa_kernel1[16];
@@ -444,20 +451,20 @@ extern const int xmesa_kernel1[16];
 
 
 
-/*
+/**
  * If pixelformat==PF_GRAYSCALE:
  */
 #define GRAY_RGB( R, G, B )   XMESA_BUFFER(ctx->DrawBuffer)->color_table[((R) + (G) + (B))/3]
 
 
 
-/*
+/**
  * Converts a GL window Y coord to an X window Y coord:
  */
 #define YFLIP(XRB, Y)  ((XRB)->bottom - (Y))
 
 
-/*
+/**
  * Return the address of a 1, 2 or 4-byte pixel in the buffer's XImage:
  * X==0 is left, Y==0 is bottom.
  */
@@ -475,23 +482,6 @@ extern const int xmesa_kernel1[16];
 
 
 
-
-/*
- * Return pointer to XMesaContext corresponding to a Mesa GLcontext.
- * Since we're using structure containment, it's just a cast!.
- * XXX should use inlined function for better type safety.
- */
-#define XMESA_CONTEXT(MESACTX)  ((XMesaContext) (MESACTX))
-
-/*
- * Return pointer to XMesaBuffer corresponding to a Mesa GLframebuffer.
- * Since we're using structure containment, it's just a cast!.
- * XXX should use inlined function for better type safety.
- */
-#define XMESA_BUFFER(MESABUFF)  ((XMesaBuffer) (MESABUFF))
-
-
-
 /*
  * External functions:
  */
@@ -506,21 +496,25 @@ xmesa_color_to_pixel( GLcontext *ctx,
                       GLuint pixelFormat );
 
 extern void
-xmesa_alloc_back_buffer(XMesaBuffer b, GLuint width, GLuint height);
+xmesa_get_window_size(XMesaDisplay *dpy, XMesaBuffer b,
+                      GLuint *width, GLuint *height);
 
-extern void xmesa_resize_buffers(GLcontext *ctx, GLframebuffer *buffer,
-                                 GLuint width, GLuint height);
+extern void
+xmesa_check_and_update_buffer_size(XMesaContext xmctx, XMesaBuffer drawBuffer);
 
-extern void xmesa_init_driver_functions( XMesaVisual xmvisual,
-                                         struct dd_function_table *driver );
+extern void
+xmesa_init_driver_functions( XMesaVisual xmvisual,
+                             struct dd_function_table *driver );
 
-extern void xmesa_update_state( GLcontext *ctx, GLbitfield new_state );
+extern void
+xmesa_update_state( GLcontext *ctx, GLbitfield new_state );
 
 extern void
 xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
                              enum pixel_format pixelformat, GLint depth);
 
-extern void xmesa_destroy_buffers_on_display(XMesaDisplay *dpy);
+extern void
+xmesa_destroy_buffers_on_display(XMesaDisplay *dpy);
 
 
 /**
@@ -530,6 +524,30 @@ static INLINE struct xmesa_renderbuffer *
 xmesa_renderbuffer(struct gl_renderbuffer *rb)
 {
    return (struct xmesa_renderbuffer *) rb;
+}
+
+
+/**
+ * Return pointer to XMesaContext corresponding to a Mesa GLcontext.
+ * Since we're using structure containment, it's just a cast!.
+ * XXX should use inlined function for better type safety.
+ */
+static INLINE XMesaContext
+XMESA_CONTEXT(GLcontext *ctx)
+{
+   return (XMesaContext) ctx;
+}
+
+
+/**
+ * Return pointer to XMesaBuffer corresponding to a Mesa GLframebuffer.
+ * Since we're using structure containment, it's just a cast!.
+ * XXX should use inlined function for better type safety.
+ */
+static INLINE XMesaBuffer
+XMESA_BUFFER(GLframebuffer *b)
+{
+   return (XMesaBuffer) b;
 }
 
 
