@@ -4,7 +4,7 @@
  * See Mesa/include/GL/osmesa.h for documentation of the OSMesa functions.
  *
  * If you want to render BIG images you'll probably have to increase
- * MAX_WIDTH and MAX_HEIGHT in src/config.h.
+ * MAX_WIDTH and MAX_Height in src/config.h.
  *
  * This program is in the public domain.
  *
@@ -27,8 +27,8 @@
 
 #define SAVE_TARGA
 
-#define WIDTH 400
-#define HEIGHT 400
+static int Width = 400;
+static int Height = 400;
 
 
 static void
@@ -175,10 +175,10 @@ write_targa(const char *filename, const GLubyte *buffer, int width, int height)
       fputc (0x00, f);
       fputc (0x00, f);	/* Y-origin of Image	*/
       fputc (0x00, f);
-      fputc (WIDTH & 0xff, f);      /* Image Width	*/
-      fputc ((WIDTH>>8) & 0xff, f);
-      fputc (HEIGHT & 0xff, f);     /* Image Height	*/
-      fputc ((HEIGHT>>8) & 0xff, f);
+      fputc (Width & 0xff, f);      /* Image Width	*/
+      fputc ((Width>>8) & 0xff, f);
+      fputc (Height & 0xff, f);     /* Image Height	*/
+      fputc ((Height>>8) & 0xff, f);
       fputc (0x18, f);		/* Pixel Depth, 0x18 => 24 Bits	*/
       fputc (0x20, f);		/* Image Descriptor	*/
       fclose(f);
@@ -248,36 +248,43 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
 int
 main(int argc, char *argv[])
 {
+   OSMesaContext ctx;
    void *buffer;
-   int i;
    char *filename = NULL;
+
+   if (argc < 2) {
+      fprintf(stderr, "Usage:\n");
+      fprintf(stderr, "  osdemo filename [width height]\n");
+      return 0;
+   }
+
+   filename = argv[1];
+   if (argc == 4) {
+      Width = atoi(argv[2]);
+      Height = atoi(argv[3]);
+   }
 
    /* Create an RGBA-mode context */
 #if OSMESA_MAJOR_VERSION * 100 + OSMESA_MINOR_VERSION >= 305
    /* specify Z, stencil, accum sizes */
-   OSMesaContext ctx = OSMesaCreateContextExt( OSMESA_RGBA, 16, 0, 0, NULL );
+   ctx = OSMesaCreateContextExt( OSMESA_RGBA, 16, 0, 0, NULL );
 #else
-   OSMesaContext ctx = OSMesaCreateContext( OSMESA_RGBA, NULL );
+   ctx = OSMesaCreateContext( OSMESA_RGBA, NULL );
 #endif
    if (!ctx) {
       printf("OSMesaCreateContext failed!\n");
       return 0;
    }
 
-   for (i = 1; i < argc; i++) {
-      if (argv[i][0] != '-')
-         filename = argv[i];
-   }
-
    /* Allocate the image buffer */
-   buffer = malloc( WIDTH * HEIGHT * 4 * sizeof(GLubyte) );
+   buffer = malloc( Width * Height * 4 * sizeof(GLubyte) );
    if (!buffer) {
       printf("Alloc image buffer failed!\n");
       return 0;
    }
 
    /* Bind the buffer to the context and make it current */
-   if (!OSMesaMakeCurrent( ctx, buffer, GL_UNSIGNED_BYTE, WIDTH, HEIGHT )) {
+   if (!OSMesaMakeCurrent( ctx, buffer, GL_UNSIGNED_BYTE, Width, Height )) {
       printf("OSMesaMakeCurrent failed!\n");
       return 0;
    }
@@ -295,9 +302,9 @@ main(int argc, char *argv[])
 
    if (filename != NULL) {
 #ifdef SAVE_TARGA
-      write_targa(filename, buffer, WIDTH, HEIGHT);
+      write_targa(filename, buffer, Width, Height);
 #else
-      write_ppm(filename, buffer, WIDTH, HEIGHT);
+      write_ppm(filename, buffer, Width, Height);
 #endif
    }
    else {
