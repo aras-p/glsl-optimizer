@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -1184,44 +1184,26 @@ static void setup_monochrome( XMesaVisual v, XMesaBuffer b )
 
 
 
-/*
- * When a context is "made current" for the first time, we can finally
- * finish initializing the context's visual and buffer information.
- * Input:  v - the XMesaVisual to initialize
- *         b - the XMesaBuffer to initialize (may be NULL)
- *         rgb_flag - TRUE = RGBA mode, FALSE = color index mode
- *         window - the window/pixmap we're rendering into
- *         cmap - the colormap associated with the window/pixmap
- * Return:  GL_TRUE=success, GL_FALSE=failure
+/**
+ * When a context is bound for the first time, we can finally finish
+ * initializing the context's visual and buffer information.
+ * \param v  the XMesaVisual to initialize
+ * \param b  the XMesaBuffer to initialize (may be NULL)
+ * \param rgb_flag  TRUE = RGBA mode, FALSE = color index mode
+ * \param window  the window/pixmap we're rendering into
+ * \param cmap  the colormap associated with the window/pixmap
+ * \return GL_TRUE=success, GL_FALSE=failure
  */
-static GLboolean initialize_visual_and_buffer( int client,
-                                               XMesaVisual v,
-                                               XMesaBuffer b,
-                                               GLboolean rgb_flag,
-                                               XMesaDrawable window,
-                                               XMesaColormap cmap )
+static GLboolean
+initialize_visual_and_buffer(int client, XMesaVisual v, XMesaBuffer b,
+                             GLboolean rgb_flag, XMesaDrawable window,
+                             XMesaColormap cmap)
 {
-   struct xmesa_renderbuffer *front_xrb, *back_xrb;
-#ifndef XFree86Server
-   XGCValues gcvalues;
-#endif
-
-   if (b) {
-      assert(b->xm_visual == v);
-   }
-
-   if (b) {
-      front_xrb = b->frontxrb;
-      back_xrb = b->backxrb;
-   }
-   else {
-      front_xrb = back_xrb = NULL;
-   }
+   ASSERT(!b || b->xm_visual == v);
 
    /* Save true bits/pixel */
    v->BitsPerPixel = bits_per_pixel(v);
    assert(v->BitsPerPixel > 0);
-
 
    if (rgb_flag==GL_FALSE) {
       /* COLOR-INDEXED WINDOW:
@@ -1236,18 +1218,18 @@ static GLboolean initialize_visual_and_buffer( int client,
        * We support RGB rendering into almost any kind of visual.
        */
       const int xclass = v->mesa_visual.visualType;
-      if (xclass==GLX_TRUE_COLOR || xclass==GLX_DIRECT_COLOR) {
+      if (xclass == GLX_TRUE_COLOR || xclass == GLX_DIRECT_COLOR) {
 	 setup_truecolor( v, b, cmap );
       }
-      else if (xclass==GLX_STATIC_GRAY && GET_VISUAL_DEPTH(v)==1) {
+      else if (xclass == GLX_STATIC_GRAY && GET_VISUAL_DEPTH(v) == 1) {
 	 setup_monochrome( v, b );
       }
-      else if (xclass==GLX_GRAY_SCALE || xclass==GLX_STATIC_GRAY) {
+      else if (xclass == GLX_GRAY_SCALE || xclass == GLX_STATIC_GRAY) {
          if (!setup_grayscale( client, v, b, cmap )) {
             return GL_FALSE;
          }
       }
-      else if ((xclass==GLX_PSEUDO_COLOR || xclass==GLX_STATIC_COLOR)
+      else if ((xclass == GLX_PSEUDO_COLOR || xclass == GLX_STATIC_COLOR)
                && GET_VISUAL_DEPTH(v)>=4 && GET_VISUAL_DEPTH(v)<=16) {
 	 if (!setup_dithered_color( client, v, b, cmap )) {
             return GL_FALSE;
@@ -1320,9 +1302,12 @@ static GLboolean initialize_visual_and_buffer( int client,
          dixChangeGC(NullClient, b->swapgc, GCGraphicsExposures, v, NULL);
       }
 #else
-      gcvalues.graphics_exposures = False;
-      b->swapgc = XCreateGC( v->display, window,
-                              GCGraphicsExposures, &gcvalues);
+      {
+         XGCValues gcvalues;
+         gcvalues.graphics_exposures = False;
+         b->swapgc = XCreateGC(v->display, window,
+                               GCGraphicsExposures, &gcvalues);
+      }
 #endif
       XMesaSetFunction( v->display, b->swapgc, GXcopy );
       /*
@@ -1331,17 +1316,16 @@ static GLboolean initialize_visual_and_buffer( int client,
        * Initialize whole stuff
        * Patch contributed by Jacques Leroy March 8, 1998.
        */
-      if (v->hpcr_clear_flag && back_xrb->pixmap) {
-	int i;
-	for (i=0; i<16; i++)
-        {
-	   XMesaPutPixel(v->hpcr_clear_ximage, i, 0, 0);
-	   XMesaPutPixel(v->hpcr_clear_ximage, i, 1, 0);
-        }
-        XMesaPutImage(b->display, (XMesaDrawable) v->hpcr_clear_pixmap,
-		      b->cleargc, v->hpcr_clear_ximage, 0, 0, 0, 0, 16, 2);
-	XMesaSetFillStyle( v->display, b->cleargc, FillTiled);
-	XMesaSetTile( v->display, b->cleargc, v->hpcr_clear_pixmap );
+      if (v->hpcr_clear_flag && b->backxrb && b->backxrb->pixmap) {
+         int i;
+         for (i = 0; i < 16; i++) {
+            XMesaPutPixel(v->hpcr_clear_ximage, i, 0, 0);
+            XMesaPutPixel(v->hpcr_clear_ximage, i, 1, 0);
+         }
+         XMesaPutImage(b->display, (XMesaDrawable) v->hpcr_clear_pixmap,
+                       b->cleargc, v->hpcr_clear_ximage, 0, 0, 0, 0, 16, 2);
+         XMesaSetFillStyle( v->display, b->cleargc, FillTiled);
+         XMesaSetTile( v->display, b->cleargc, v->hpcr_clear_pixmap );
       }
 
       /* Initialize the row buffer XImage for use in write_color_span() */
@@ -1504,18 +1488,16 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
    XMesaVisual v;
    GLint red_bits, green_bits, blue_bits, alpha_bits;
 
+#ifndef XFree86Server
    /* For debugging only */
    if (_mesa_getenv("MESA_XSYNC")) {
       /* This makes debugging X easier.
        * In your debugger, set a breakpoint on _XError to stop when an
        * X protocol error is generated.
        */
-#ifdef XFree86Server
-      /* NOT_NEEDED */
-#else
       XSynchronize( display, 1 );
-#endif
    }
+#endif
 
    v = (XMesaVisual) CALLOC_STRUCT(xmesa_visual);
    if (!v) {
@@ -1592,7 +1574,7 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
 
    {
       const int xclass = v->mesa_visual.visualType;
-      if (xclass==GLX_TRUE_COLOR || xclass==GLX_DIRECT_COLOR) {
+      if (xclass == GLX_TRUE_COLOR || xclass == GLX_DIRECT_COLOR) {
          red_bits   = _mesa_bitcount(GET_REDMASK(v));
          green_bits = _mesa_bitcount(GET_GREENMASK(v));
          blue_bits  = _mesa_bitcount(GET_BLUEMASK(v));
