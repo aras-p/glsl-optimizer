@@ -1376,20 +1376,24 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
     */
    _glapi_check_multithread();
 
+   /* Set the framebuffer's size.  This causes the
+    * osmesa_renderbuffer_storage() function to get called.
+    */
+   _mesa_resize_framebuffer(&osmesa->mesa, osmesa->gl_buffer, width, height);
+   osmesa->gl_buffer->Initialized = GL_TRUE; /* XXX TEMPORARY? */
+
    _mesa_make_current( &osmesa->mesa, osmesa->gl_buffer, osmesa->gl_buffer );
 
+   /* Set the color renderbuffer's pointer to the user buffer,
+    * update row pointers, etc.
+    */
    if (osmesa->userRowLength)
       osmesa->rowlength = osmesa->userRowLength;
    else
       osmesa->rowlength = width;
-
    osmesa->rb->Data = buffer;
    osmesa->rb->DataType = type;
    compute_row_addresses( osmesa );
-
-   /* update the color renderbuffer's format, type, width, height */
-   osmesa_renderbuffer_storage(&osmesa->mesa, osmesa->rb,
-                               osmesa->rb->InternalFormat, width, height);
 
    /* Remove renderbuffer attachment, then re-add.  This installs the
     * renderbuffer adaptor/wrapper if needed.
