@@ -860,7 +860,7 @@ fast_copy_pixels(GLcontext *ctx,
 
    /* clipping not supported */
    if (srcX < 0 || srcX + width > srcFb->Width ||
-       srcY < 0 || srcY + height > srcFb->Width ||
+       srcY < 0 || srcY + height > srcFb->Height ||
        dstX < dstFb->_Xmin || dstX + width > dstFb->_Xmax ||
        dstY < dstFb->_Ymin || dstY + height > dstFb->_Ymax) {
       return GL_FALSE;
