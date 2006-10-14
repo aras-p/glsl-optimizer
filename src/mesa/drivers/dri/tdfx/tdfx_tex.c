@@ -670,7 +670,7 @@ tdfxUpdateTexturePalette(GLcontext * ctx, struct gl_texture_object *tObj)
         tdfxTexInfo *ti;
         
         /* This might be a proxy texture. */
-        if (!tObj->Palette.Table)
+        if (!tObj->Palette.TableUB)
             return;
             
         if (!tObj->DriverData)
