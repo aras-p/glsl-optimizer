@@ -214,7 +214,8 @@ IDirectFBGL_Mesa_Lock( IDirectFBGL *thiz )
      if (data->width != width || data->height != height) {
           data->width  = width;
           data->height = height;
-          _mesa_ResizeBuffersMESA();
+          _mesa_resize_framebuffer(&data->context, 
+                                   &data->framebuffer, width, height);
      }
 
      data->locked = DFB_TRUE;
@@ -355,10 +356,19 @@ dfbGetBufferSize( GLframebuffer *buffer, GLuint *width, GLuint *height )
      *height = (GLuint) data->height;
 }
 
+/**
+ * We only implement this function as a mechanism to check if the
+ * framebuffer size has changed (and update corresponding state).
+ */
 static void
 dfbSetViewport( GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h )
 {
-     _mesa_ResizeBuffersMESA();
+   GLuint newWidth, newHeight;
+   GLframebuffer *buffer = ctx->WinSysDrawBuffer;
+   dfbGetBufferSize( buffer, &newWidth, &newHeight );
+   if (buffer->Width != newWidth || buffer->Height != newHeight) {
+      _mesa_resize_framebuffer(ctx, buffer, newWidth, newHeight );
+   }
 }
 
 static void

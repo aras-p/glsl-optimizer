@@ -157,11 +157,27 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 }
 
 
+/**
+ * We only implement this function as a mechanism to check if the
+ * framebuffer size has changed (and update corresponding state).
+ */
 static void
 viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
-   /* poll for window size change and realloc software Z/stencil/etc if needed */
-   _mesa_ResizeBuffersMESA();
+   GLuint newWidth, newHeight;
+   GLframebuffer *buffer;
+
+   buffer = ctx->WinSysDrawBuffer;
+   get_buffer_size( buffer, &newWidth, &newHeight );
+   if (buffer->Width != newWidth || buffer->Height != newHeight) {
+      _mesa_resize_framebuffer(ctx, buffer, newWidth, newHeight );
+   }
+
+   buffer = ctx->WinSysReadBuffer;
+   get_buffer_size( buffer, &newWidth, &newHeight );
+   if (buffer->Width != newWidth || buffer->Height != newHeight) {
+      _mesa_resize_framebuffer(ctx, buffer, newWidth, newHeight );
+   }
 }
 
 

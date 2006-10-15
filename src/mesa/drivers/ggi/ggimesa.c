@@ -257,10 +257,18 @@ static void gl_ggiGetSize(GLframebuffer *fb, GLuint *width, GLuint *height)
 	printf("returning %d, %d\n", *width, *height);
 }
 
+/**
+ * We only implement this function as a mechanism to check if the
+ * framebuffer size has changed (and update corresponding state).
+ */
 static void gl_ggiViewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
-   /* poll for window size change and realloc software Z/stencil/etc if needed */
-   _mesa_ResizeBuffersMESA();
+   GLuint newWidth, newHeight;
+   GLframebuffer *buffer = ctx->WinSysDrawBuffer;
+   gl_ggiGetSize( buffer, &newWidth, &newHeight );
+   if (buffer->Width != newWidth || buffer->Height != newHeight) {
+      _mesa_resize_framebuffer(ctx, buffer, newWidth, newHeight );
+   }
 }
 
 
