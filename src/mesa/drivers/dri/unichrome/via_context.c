@@ -557,8 +557,8 @@ viaCreateContext(const __GLcontextModes *visual,
     driContextPriv->driverPrivate = vmesa;
 
     ctx = vmesa->glCtx;
-    
-    ctx->Const.MaxTextureLevels = 10;    
+
+    ctx->Const.MaxTextureLevels = 11;
     ctx->Const.MaxTextureUnits = 2;
     ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
     ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;

@@ -513,6 +513,13 @@ static GLboolean viaSetTexImages(GLcontext *ctx,
 
    numLevels = lastLevel - firstLevel + 1;
 
+   /* The hardware only supports 10 mipmap levels. Ignore higher levels.
+    */
+   if (numLevels > 10) {
+      lastLevel -= numLevels - 10;
+      numLevels = 10;
+   }
+
    /* save these values, check if they effect the residency of the
     * texture:
     */
