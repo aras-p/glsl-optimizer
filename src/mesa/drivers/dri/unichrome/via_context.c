@@ -481,7 +481,7 @@ viaCreateContext(const __GLcontextModes *visual,
     /* Parse configuration files.
      */
     driParseConfigFiles (&vmesa->optionCache, &viaScreen->optionCache,
-			 sPriv->myNum, "via");
+			 sPriv->myNum, "unichrome");
 
     /* pick back buffer */
     vmesa->hasBack = visual->doubleBufferMode;
@@ -558,7 +558,11 @@ viaCreateContext(const __GLcontextModes *visual,
 
     ctx = vmesa->glCtx;
 
-    ctx->Const.MaxTextureLevels = 11;
+    if (driQueryOptionb(&vmesa->optionCache, "excess_mipmap"))
+        ctx->Const.MaxTextureLevels = 11;
+    else
+        ctx->Const.MaxTextureLevels = 10;
+
     ctx->Const.MaxTextureUnits = 2;
     ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
     ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
@@ -656,19 +660,13 @@ viaCreateContext(const __GLcontextModes *visual,
        VIA_DEBUG = driParseDebugString( getenv( "VIA_DEBUG" ),
 					debug_control );
 
-    if (getenv("VIA_NO_RAST"))
+    if (getenv("VIA_NO_RAST") ||
+        driQueryOptionb(&vmesa->optionCache, "no_rast"))
        FALLBACK(vmesa, VIA_FALLBACK_USER_DISABLE, 1);
 
-    /* I don't understand why this isn't working:
-     */
     vmesa->vblank_flags =
        vmesa->viaScreen->irqEnabled ?
         driGetDefaultVBlankFlags(&vmesa->optionCache) : VBLANK_FLAG_NO_IRQ;
-
-    /* Hack this up in its place:
-     */
-    vmesa->vblank_flags = (getenv("VIA_VSYNC") ? 
-			   VBLANK_FLAG_SYNC : VBLANK_FLAG_NO_IRQ);
 
     if (getenv("VIA_PAGEFLIP"))
        vmesa->allowPageFlip = 1;
@@ -727,7 +725,9 @@ viaDestroyContext(__DRIcontextPrivate *driContextPriv)
 	assert (is_empty_list(&vmesa->tex_image_list[VIA_MEM_SYSTEM]));
 	assert (is_empty_list(&vmesa->freed_tex_buffers));
 
-        FREE(vmesa);
+	driDestroyOptionCache(&vmesa->optionCache);
+
+	FREE(vmesa);
     }
 }
 

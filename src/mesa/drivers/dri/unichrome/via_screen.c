@@ -46,15 +46,15 @@
 #include "GL/internal/dri_interface.h"
 #include "drirenderbuffer.h"
 
-/* Radeon configuration
- */
 #include "xmlpool.h"
 
 const char __driConfigOptions[] =
 DRI_CONF_BEGIN
     DRI_CONF_SECTION_PERFORMANCE
-        DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
         DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+    DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_QUALITY
+        DRI_CONF_EXCESS_MIPMAP(false)
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_DEBUG
         DRI_CONF_NO_RAST(false)
@@ -131,7 +131,6 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
     viaScreen->fbOffset = 0;
     viaScreen->fbSize = gDRIPriv->fbSize;
     viaScreen->irqEnabled = gDRIPriv->irqEnabled;
-    viaScreen->irqEnabled = 1;
 
     if (VIA_DEBUG & DEBUG_DRI) {
 	fprintf(stderr, "deviceID = %08x\n", viaScreen->deviceID);
@@ -200,6 +199,8 @@ viaDestroyScreen(__DRIscreenPrivate *sPriv)
         drmUnmap(viaScreen->agpLinearStart, gDRIPriv->agp.size);
 
     via_free_empty_buffers(viaScreen->bufs);
+
+    driDestroyOptionInfo(&viaScreen->optionCache);
 
     FREE(viaScreen);
     sPriv->private = NULL;
