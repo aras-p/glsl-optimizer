@@ -1,11 +1,6 @@
-/**
- * \file buffers.c
- * Frame buffer management.
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -26,6 +21,13 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
+
+/**
+ * \file buffers.c
+ * General framebuffer-related functions, like glClear, glScissor, etc.
+ */
+
 
 
 #include "glheader.h"
@@ -581,6 +583,9 @@ _mesa_ReadBuffer(GLenum buffer)
 #if _HAVE_FULL_GL
 
 /**
+ * XXX THIS IS OBSOLETE - drivers should take care of detecting window
+ * size changes and act accordingly, likely calling _mesa_resize_framebuffer().
+ *
  * GL_MESA_resize_buffers extension.
  *
  * When this function is called, we'll ask the window system how large
@@ -635,6 +640,10 @@ void _mesa_resizebuffers( GLcontext *ctx )
    ctx->NewState |= _NEW_BUFFERS;  /* to update scissor / window bounds */
 }
 
+
+/*
+ * XXX THIS IS OBSOLETE
+ */
 void GLAPIENTRY
 _mesa_ResizeBuffersMESA( void )
 {

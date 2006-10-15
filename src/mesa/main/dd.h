@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,8 +52,7 @@ struct mesa_display_list;
 struct dd_function_table {
    /**
     * Return a string as needed by glGetString().
-    *
-    * Only the GL_RENDERER token must be implemented.  Otherwise, NULL can be
+    * Only the GL_RENDERER query must be implemented.  Otherwise, NULL can be
     * returned.
     */
    const GLubyte * (*GetString)( GLcontext *ctx, GLenum name );
@@ -70,19 +69,20 @@ struct dd_function_table {
     * Get the width and height of the named buffer/window.
     *
     * Mesa uses this to determine when the driver's window size has changed.
+    * XXX OBSOLETE: this function will be removed in the future.
     */
    void (*GetBufferSize)( GLframebuffer *buffer,
                           GLuint *width, GLuint *height );
 
    /**
     * Resize the given framebuffer to the given size.
+    * XXX OBSOLETE: this function will be removed in the future.
     */
    void (*ResizeBuffers)( GLcontext *ctx, GLframebuffer *fb,
                           GLuint width, GLuint height);
 
    /**
     * Called whenever an error is generated.  
-    *
     * __GLcontextRec::ErrorValue contains the error value.
     */
    void (*Error)( GLcontext *ctx );
