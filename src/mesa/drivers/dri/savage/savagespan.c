@@ -234,10 +234,7 @@ void savageDDInitSpanFuncs( GLcontext *ctx )
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
    swdd->SpanRenderStart = savageSpanRenderStart;
 
-   /* Pixel path fallbacks.
-    */
-   ctx->Driver.Accum = _swrast_Accum;
-   ctx->Driver.Bitmap = _swrast_Bitmap;
+   /* XXX these should probably be plugged in elsewhere */
    ctx->Driver.CopyPixels = savageCopyPixels;
    ctx->Driver.DrawPixels = savageDrawPixels;
    ctx->Driver.ReadPixels = savageReadPixels;

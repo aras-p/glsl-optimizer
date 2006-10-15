@@ -482,14 +482,6 @@ r200Bitmap( GLcontext *ctx, GLint px, GLint py,
 
 void r200InitPixelFuncs( GLcontext *ctx )
 {
-   /* Pixel path fallbacks.
-    */
-   ctx->Driver.Accum = _swrast_Accum;
-   ctx->Driver.Bitmap = _swrast_Bitmap;
-   ctx->Driver.CopyPixels = _swrast_CopyPixels;
-   ctx->Driver.DrawPixels = _swrast_DrawPixels;
-   ctx->Driver.ReadPixels = _swrast_ReadPixels;
-
    if (!getenv("R200_NO_BLITS")) {
       ctx->Driver.ReadPixels = r200ReadPixels;  
       ctx->Driver.DrawPixels = r200DrawPixels; 

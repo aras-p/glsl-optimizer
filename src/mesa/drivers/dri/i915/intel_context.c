@@ -266,10 +266,6 @@ void intelInitDriverFunctions( struct dd_function_table *functions )
    functions->GetBufferSize = intelBufferSize;
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
-   functions->CopyColorTable = _swrast_CopyColorTable;
-   functions->CopyColorSubTable = _swrast_CopyColorSubTable;
-   functions->CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-   functions->CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 
    intelInitTextureFuncs( functions );
    intelInitPixelFuncs( functions );

@@ -1695,11 +1695,6 @@ void savageDDInitStateFuncs(GLcontext *ctx)
     ctx->Driver.CullFace = 0;
     ctx->Driver.FrontFace = 0;
 #endif /* end #if HW_CULL */
-    ctx->Driver.PolygonMode=NULL;
-    ctx->Driver.PolygonStipple = 0;
-    ctx->Driver.LineStipple = 0;
-    ctx->Driver.LineWidth = 0;
-    ctx->Driver.LogicOpcode = 0;
     ctx->Driver.DrawBuffer = savageDDDrawBuffer;
     ctx->Driver.ReadBuffer = savageDDReadBuffer;
     ctx->Driver.ClearColor = savageDDClearColor;
@@ -1707,9 +1702,6 @@ void savageDDInitStateFuncs(GLcontext *ctx)
     ctx->Driver.DepthRange = savageDepthRange;
     ctx->Driver.Viewport = savageViewport;
     ctx->Driver.RenderMode = savageRenderMode;
-
-    ctx->Driver.ClearIndex = 0;
-    ctx->Driver.IndexMask = 0;
 
     if (SAVAGE_CONTEXT( ctx )->savageScreen->chipset >= S3_SAVAGE4) {
 	ctx->Driver.Enable = savageDDEnable_s4;
@@ -1736,11 +1728,4 @@ void savageDDInitStateFuncs(GLcontext *ctx)
 	ctx->Driver.StencilMaskSeparate = NULL;
 	ctx->Driver.StencilOpSeparate = NULL;
     }
-
-   /* Swrast hooks for imaging extensions:
-    */
-   ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
-   ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
-   ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-   ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 }

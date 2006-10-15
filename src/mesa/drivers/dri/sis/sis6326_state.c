@@ -727,27 +727,9 @@ void sis6326DDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.Enable			= sis6326DDEnable;
    ctx->Driver.FrontFace	 	= sis6326DDFrontFace;
    ctx->Driver.Fogfv			= sis6326DDFogfv;
-   ctx->Driver.Hint			= NULL;
-   ctx->Driver.Lightfv			= NULL;
    ctx->Driver.LogicOpcode	 	= sis6326DDLogicOpCode;
-   ctx->Driver.PolygonMode		= NULL;
-   ctx->Driver.PolygonStipple		= NULL;
-   ctx->Driver.RenderMode	 	= NULL;
    ctx->Driver.Scissor			= sis6326DDScissor;
    ctx->Driver.ShadeModel		= sis6326DDShadeModel;
    ctx->Driver.LightModelfv		= sis6326DDLightModelfv;
    ctx->Driver.Viewport			= sis6326DDViewport;
-
-   /* Pixel path fallbacks. */
-   ctx->Driver.Accum			= _swrast_Accum;
-   ctx->Driver.Bitmap			= _swrast_Bitmap;
-   ctx->Driver.CopyPixels		= _swrast_CopyPixels;
-   ctx->Driver.DrawPixels		= _swrast_DrawPixels;
-   ctx->Driver.ReadPixels		= _swrast_ReadPixels;
-
-   /* Swrast hooks for imaging extensions: */
-   ctx->Driver.CopyColorTable		= _swrast_CopyColorTable;
-   ctx->Driver.CopyColorSubTable	= _swrast_CopyColorSubTable;
-   ctx->Driver.CopyConvolutionFilter1D	= _swrast_CopyConvolutionFilter1D;
-   ctx->Driver.CopyConvolutionFilter2D	= _swrast_CopyConvolutionFilter2D;
 }

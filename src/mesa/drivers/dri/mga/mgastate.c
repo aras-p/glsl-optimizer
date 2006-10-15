@@ -1221,12 +1221,5 @@ void mgaDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.ClearIndex = 0;
    ctx->Driver.IndexMask = 0;
 
-   /* Swrast hooks for imaging extensions:
-    */
-   ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
-   ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
-   ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-   ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
-
    TNL_CONTEXT(ctx)->Driver.RunPipeline = mgaRunPipeline;
 }

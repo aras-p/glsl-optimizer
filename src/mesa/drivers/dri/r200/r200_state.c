@@ -2616,13 +2616,6 @@ void r200InitStateFuncs( struct dd_function_table *functions )
    functions->StencilMaskSeparate	= r200StencilMaskSeparate;
    functions->StencilOpSeparate		= r200StencilOpSeparate;
    functions->Viewport			= r200Viewport;
-
-   /* Swrast hooks for imaging extensions:
-    */
-   functions->CopyColorTable		= _swrast_CopyColorTable;
-   functions->CopyColorSubTable		= _swrast_CopyColorSubTable;
-   functions->CopyConvolutionFilter1D	= _swrast_CopyConvolutionFilter1D;
-   functions->CopyConvolutionFilter2D	= _swrast_CopyConvolutionFilter2D;
 }
 
 

@@ -1400,19 +1400,15 @@ void tdfxDDInitStateFuncs( GLcontext *ctx )
 
    ctx->Driver.UpdateState		= tdfxDDInvalidateState;
 
-
-   /* State notification callbacks:
-    */
    ctx->Driver.ClearColor		= tdfxDDClearColor;
    ctx->Driver.DrawBuffer		= tdfxDDDrawBuffer;
    ctx->Driver.ReadBuffer		= tdfxDDReadBuffer;
-
-   ctx->Driver.ColorMask		= tdfxDDColorMask;
 
    ctx->Driver.AlphaFunc		= tdfxDDAlphaFunc;
    ctx->Driver.BlendEquationSeparate	= tdfxDDBlendEquationSeparate;
    ctx->Driver.BlendFuncSeparate	= tdfxDDBlendFuncSeparate;
    ctx->Driver.ClearDepth		= tdfxDDClearDepth;
+   ctx->Driver.ColorMask		= tdfxDDColorMask;
    ctx->Driver.CullFace			= tdfxDDCullFace;
    ctx->Driver.FrontFace		= tdfxDDFrontFace;
    ctx->Driver.DepthFunc		= tdfxDDDepthFunc;
@@ -1434,11 +1430,4 @@ void tdfxDDInitStateFuncs( GLcontext *ctx )
    }
 
    ctx->Driver.Viewport			= tdfxDDViewport;
-
-   /* Swrast hooks for imaging extensions:
-    */
-   ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
-   ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
-   ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-   ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 }

@@ -494,18 +494,9 @@ intelCopyPixels( GLcontext *ctx,
 
 void intelInitPixelFuncs( struct dd_function_table *functions )
 {
-   /* Pixel path fallbacks.
-    */
-   functions->Accum = _swrast_Accum;
-   functions->Bitmap = _swrast_Bitmap;
    functions->CopyPixels = intelCopyPixels;
-
    if (!getenv("INTEL_NO_BLITS")) {
       functions->ReadPixels = intelReadPixels;  
       functions->DrawPixels = intelDrawPixels; 
-   }
-   else {
-      functions->ReadPixels = _swrast_ReadPixels;
-      functions->DrawPixels = _swrast_DrawPixels;
    }
 }
