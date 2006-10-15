@@ -405,7 +405,9 @@ r200ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_ALPHA12:
    case GL_ALPHA16:
    case GL_COMPRESSED_ALPHA:
-      return _dri_texformat_a8;
+   /* can't use a8 format since interpreting hw I8 as a8 would result
+      in wrong rgb values (same as alpha value instead of 0). */
+      return _dri_texformat_al88;
 
    case 1:
    case GL_LUMINANCE:

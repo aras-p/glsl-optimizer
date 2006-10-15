@@ -523,9 +523,10 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 
    /* Set the texture environment state.  Isn't this nice and clean?
     * The chip will automagically set the texture alpha to 0xff when
-    * the texture format does not include an alpha component.  This
+    * the texture format does not include an alpha component. This
     * reduces the amount of special-casing we have to do, alpha-only
-    * textures being a notable exception.
+    * textures being a notable exception. Doesn't work for luminance
+    * textures realized with I8 and ALPHA_IN_MAP not set neither (on r100).
     */
     /* Don't cache these results.
     */
@@ -555,7 +556,10 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	 assert(op <= 3);
 	 switch ( srcRGBi ) {
 	 case GL_TEXTURE:
-	    color_arg[i] = radeon_texture_color[op][unit];
+	    if (texUnit->_Current->Image[0][0]->_BaseFormat == GL_ALPHA)
+	       color_arg[i] = radeon_zero_color[op];
+	    else
+	       color_arg[i] = radeon_texture_color[op][unit];
 	    break;
 	 case GL_CONSTANT:
 	    color_arg[i] = radeon_tfactor_color[op];
@@ -574,12 +578,17 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	    break;
 	 case GL_TEXTURE0:
 	 case GL_TEXTURE1:
-	 case GL_TEXTURE2:
+	 case GL_TEXTURE2: {
+	    GLuint txunit = srcRGBi - GL_TEXTURE0;
+	    if (ctx->Texture.Unit[txunit]._Current->Image[0][0]->_BaseFormat == GL_ALPHA)
+	       color_arg[i] = radeon_zero_color[op];
+	    else
 	 /* implement ogl 1.4/1.5 core spec here, not specification of
 	  * GL_ARB_texture_env_crossbar (which would require disabling blending
 	  * instead of undefined results when referencing not enabled texunit) */
-	   color_arg[i] = radeon_texture_color[op][srcRGBi - GL_TEXTURE0];
-	   break;
+	      color_arg[i] = radeon_texture_color[op][txunit];
+	    }
+	    break;
 	 default:
 	    return GL_FALSE;
 	 }
@@ -592,7 +601,10 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	 assert(op <= 1);
 	 switch ( srcAi ) {
 	 case GL_TEXTURE:
-	    alpha_arg[i] = radeon_texture_alpha[op][unit];
+	    if (texUnit->_Current->Image[0][0]->_BaseFormat == GL_LUMINANCE)
+	       alpha_arg[i] = radeon_zero_alpha[op+1];
+	    else
+	       alpha_arg[i] = radeon_texture_alpha[op][unit];
 	    break;
 	 case GL_CONSTANT:
 	    alpha_arg[i] = radeon_tfactor_alpha[op];
@@ -611,9 +623,14 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	    break;
 	 case GL_TEXTURE0:
 	 case GL_TEXTURE1:
-	 case GL_TEXTURE2:
-	   alpha_arg[i] = radeon_texture_alpha[op][srcAi - GL_TEXTURE0];
-	   break;
+	 case GL_TEXTURE2: {    
+	    GLuint txunit = srcAi - GL_TEXTURE0;
+	    if (ctx->Texture.Unit[txunit]._Current->Image[0][0]->_BaseFormat == GL_LUMINANCE)
+	       alpha_arg[i] = radeon_zero_alpha[op+1];
+	    else
+	       alpha_arg[i] = radeon_texture_alpha[op][txunit];
+	    }
+	    break;
 	 default:
 	    return GL_FALSE;
 	 }
