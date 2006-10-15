@@ -93,6 +93,5 @@ static void mgaBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
 void mgaInitDriverFuncs( struct dd_function_table *functions )
 {
    functions->GetBufferSize = mgaBufferSize;
-   functions->ResizeBuffers = _mesa_resize_framebuffer;
    functions->GetString = mgaGetString;
 }

@@ -137,7 +137,6 @@ init_core_functions( struct dd_function_table *functions )
 {
    functions->GetString = get_string;
    functions->UpdateState = update_state;
-   functions->ResizeBuffers = _mesa_resize_framebuffer;
    functions->GetBufferSize = get_buffer_size;
    functions->Viewport = viewport;
 

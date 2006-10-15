@@ -576,7 +576,6 @@ viaCreateContext(const __GLcontextModes *visual,
     ctx->Const.PointSizeGranularity = 1.0;
 
     ctx->Driver.GetBufferSize = viaBufferSize;
-/*    ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;  *//* FIXME ?? */
     ctx->Driver.GetString = viaGetString;
 
     ctx->DriverCtx = (void *)vmesa;

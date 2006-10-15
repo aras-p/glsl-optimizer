@@ -277,7 +277,6 @@ i810CreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.PointSizeGranularity = 1.0;
 
    ctx->Driver.GetBufferSize = i810BufferSize;
-   ctx->Driver.ResizeBuffers = _mesa_resize_framebuffer;
    ctx->Driver.GetString = i810GetString;
 
    /* Who owns who?

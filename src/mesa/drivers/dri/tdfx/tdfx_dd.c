@@ -168,7 +168,6 @@ void tdfxDDInitDriverFuncs( const __GLcontextModes *visual,
 
    functions->GetString		= tdfxDDGetString;
    functions->GetBufferSize	= tdfxDDGetBufferSize;
-   functions->ResizeBuffers     = _mesa_resize_framebuffer;
 
    /* Accelerated paths
     */

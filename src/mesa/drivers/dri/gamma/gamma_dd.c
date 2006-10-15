@@ -105,7 +105,6 @@ void gammaDDInitExtensions( GLcontext *ctx )
 void gammaDDInitDriverFuncs( GLcontext *ctx )
 {
    ctx->Driver.GetBufferSize		= gammaDDGetBufferSize;
-   ctx->Driver.ResizeBuffers            = _swrast_alloc_buffers;
    ctx->Driver.GetString		= gammaDDGetString;
 
    ctx->Driver.Error			= NULL;
@@ -117,7 +116,6 @@ void gammaDDInitDriverFuncs( GLcontext *ctx )
    ctx->Driver.CopyPixels               = _swrast_CopyPixels;
    ctx->Driver.DrawPixels               = _swrast_DrawPixels;
    ctx->Driver.ReadPixels               = _swrast_ReadPixels;
-   ctx->Driver.ResizeBuffers            = _swrast_alloc_buffers;
 
    /* Swrast hooks for imaging extensions:
     */

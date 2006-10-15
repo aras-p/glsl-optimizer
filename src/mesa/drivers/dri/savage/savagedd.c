@@ -114,6 +114,5 @@ static void savageBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *heigh
 void savageDDInitDriverFuncs( GLcontext *ctx )
 {
    ctx->Driver.GetBufferSize = savageBufferSize;
-   ctx->Driver.ResizeBuffers = _mesa_resize_framebuffer;
    ctx->Driver.GetString = savageDDGetString;
 }

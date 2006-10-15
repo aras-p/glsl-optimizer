@@ -264,7 +264,6 @@ void intelInitDriverFunctions( struct dd_function_table *functions )
    functions->Flush = intelglFlush;
    functions->Finish = intelFinish;
    functions->GetBufferSize = intelBufferSize;
-   functions->ResizeBuffers = _mesa_resize_framebuffer;
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
    functions->CopyColorTable = _swrast_CopyColorTable;

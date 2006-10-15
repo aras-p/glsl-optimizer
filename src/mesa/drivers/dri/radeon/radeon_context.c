@@ -187,7 +187,6 @@ static const struct tnl_pipeline_stage *radeon_pipeline[] = {
 static void radeonInitDriverFuncs( struct dd_function_table *functions )
 {
     functions->GetBufferSize	= radeonGetBufferSize;
-    functions->ResizeBuffers	= _mesa_resize_framebuffer;
     functions->GetString	= radeonGetString;
 }
 

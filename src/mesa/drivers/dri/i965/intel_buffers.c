@@ -549,7 +549,6 @@ void intelInitBufferFuncs( struct dd_function_table *functions )
 {
    functions->Clear = intelClear;
    functions->GetBufferSize = intelBufferSize;
-   functions->ResizeBuffers = _mesa_resize_framebuffer;
    functions->DrawBuffer = intelDrawBuffer;
    functions->ReadBuffer = intelReadBuffer;
 }

@@ -141,7 +141,6 @@ static void r128Finish( GLcontext *ctx )
 void r128InitDriverFuncs( struct dd_function_table *functions )
 {
    functions->GetBufferSize	= r128GetBufferSize;
-   functions->ResizeBuffers	= _mesa_resize_framebuffer;
    functions->GetString		= r128GetString;
    functions->Finish		= r128Finish;
    functions->Flush		= r128Flush;

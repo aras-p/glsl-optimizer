@@ -234,7 +234,6 @@ static const struct tnl_pipeline_stage *r200_pipeline[] = {
 static void r200InitDriverFuncs( struct dd_function_table *functions )
 {
     functions->GetBufferSize		= r200GetBufferSize;
-    functions->ResizeBuffers            = _mesa_resize_framebuffer;
     functions->GetString		= r200GetString;
 
     functions->Error			= NULL;
