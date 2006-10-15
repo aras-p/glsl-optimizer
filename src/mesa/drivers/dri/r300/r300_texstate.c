@@ -172,18 +172,16 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	GLint numLevels;
 	GLint log2Width, log2Height, log2Depth;
 	const GLuint ui = 1;
-	const GLubyte littleEndian = *((const GLubyte *) &ui);
 
 	/* Set the hardware texture format
 	 */
 	if (VALID_FORMAT(baseImage->TexFormat->MesaFormat)) {
-		if (littleEndian) {
+		if (_mesa_little_endian()) {
 			t->format =
 			    tx_table_le[baseImage->TexFormat->MesaFormat].format;
 			t->filter |=
 			    tx_table_le[baseImage->TexFormat->MesaFormat].filter;
-		}
-		else {
+		} else {
 			t->format =
 			    tx_table_be[baseImage->TexFormat->MesaFormat].format;
 			t->filter |=
