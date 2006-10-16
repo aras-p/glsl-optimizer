@@ -323,6 +323,7 @@ static GLboolean DoBindContext(__DRInativeDisplay *dpy,
 
     /* Bind the drawable to the context */
     pcp->driDrawablePriv = pdp;
+    pcp->driReadablePriv = prp;
     pdp->driContextPriv = pcp;
     pdp->refcount++;
     if ( pdp != prp ) {
@@ -336,6 +337,12 @@ static GLboolean DoBindContext(__DRInativeDisplay *dpy,
     if (!pdp->pStamp || *pdp->pStamp != pdp->lastStamp) {
 	DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
 	__driUtilUpdateDrawableInfo(pdp);
+	DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
+    }
+
+    if ((pdp != prp) && (!pdp->pStamp || *pdp->pStamp != pdp->lastStamp)) {
+	DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
+	__driUtilUpdateDrawableInfo(prp);
 	DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
     }
 
@@ -402,7 +409,8 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
     __DRIscreenPrivate *psp;
     __DRIcontextPrivate *pcp = pdp->driContextPriv;
     
-    if (!pcp || (pdp != pcp->driDrawablePriv)) {
+    if (!pcp 
+	|| ((pdp != pcp->driDrawablePriv) && (pdp != pcp->driReadablePriv))) {
 	/* ERROR!!! */
 	return;
     }

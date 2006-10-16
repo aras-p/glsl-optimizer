@@ -355,9 +355,14 @@ struct __DRIcontextPrivateRec {
     __DRInativeDisplay *display;
 
     /**
-     * Pointer to drawable currently bound to this context.
+     * Pointer to drawable currently bound to this context for drawing.
      */
     __DRIdrawablePrivate *driDrawablePriv;
+
+    /**
+     * Pointer to drawable currently bound to this context for reading.
+     */
+    __DRIdrawablePrivate *driReadablePriv;
 
     /**
      * Pointer to screen on which this context was created.
