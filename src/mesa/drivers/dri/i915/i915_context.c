@@ -167,6 +167,7 @@ GLboolean i915CreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.FragmentProgram.MaxNativeTexIndirections = I915_MAX_TEX_INDIRECT;
    ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0; /* I don't think we have one */
    ctx->_MaintainTexEnvProgram = 1;
+   ctx->_UseTexEnvProgram = 1;
 
 
    driInitExtensions( ctx, i915_extensions, GL_FALSE );
