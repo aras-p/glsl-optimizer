@@ -327,9 +327,14 @@ _mesa_resize_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb,
    fb->Width = width;
    fb->Height = height;
 
-   /* to update scissor / window bounds */
-   if (ctx)
+   if (ctx) {
+      /* update scissor / window bounds */
       _mesa_update_draw_buffer_bounds(ctx);
+      /* Signal new buffer state so that swrast will update its clipping
+       * info (the CLIP_BIT flag).
+       */
+      ctx->NewState |= _NEW_BUFFERS;
+   }
 }
 
 
