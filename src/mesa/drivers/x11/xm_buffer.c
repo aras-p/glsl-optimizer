@@ -213,13 +213,6 @@ alloc_back_buffer(XMesaBuffer b, GLuint width, GLuint height)
             XMesaDestroyImage(b->backxrb->ximage);
             b->backxrb->ximage = NULL;
          }
-         else {
-            /* this call just updates the width/origin fields in the xrb */
-            b->backxrb->Base.AllocStorage(NULL, &b->backxrb->Base, 
-                                          b->backxrb->Base.InternalFormat,
-                                          b->backxrb->ximage->width,
-                                          b->backxrb->ximage->height);
-         }
       }
       b->backxrb->pixmap = None;
    }
