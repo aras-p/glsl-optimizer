@@ -133,7 +133,7 @@ void _mesa_init_all_sparc_transform_asm(void)
 	   _mesa_sparc_rescale_normals;
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_MATH
    _math_test_all_transform_functions("sparc");
    _math_test_all_cliptest_functions("sparc");
    _math_test_all_normal_transform_functions("sparc");

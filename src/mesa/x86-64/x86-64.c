@@ -1,4 +1,4 @@
-/* $Id: x86-64.c,v 1.2 2005/09/19 20:12:33 brianp Exp $ */
+/* $Id: x86-64.c,v 1.3 2006/10/16 20:57:09 idr Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -105,7 +105,7 @@ void _mesa_init_all_x86_64_transform_asm(void)
       _mesa_x86_64_transform_points4_2d;
    */
    
-#ifdef DEBUG
+#ifdef DEBUG_MATH
    _math_test_all_transform_functions("x86_64");
    _math_test_all_cliptest_functions("x86_64");
    _math_test_all_normal_transform_functions("x86_64");
