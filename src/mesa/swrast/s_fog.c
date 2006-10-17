@@ -110,14 +110,29 @@ void
 _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const GLfloat rFog = ctx->Fog.Color[RCOMP] * CHAN_MAX;
-   const GLfloat gFog = ctx->Fog.Color[GCOMP] * CHAN_MAX;
-   const GLfloat bFog = ctx->Fog.Color[BCOMP] * CHAN_MAX;
+   GLfloat rFog, gFog, bFog;
    const GLuint haveW = (span->interpMask & SPAN_W);
 
    ASSERT(swrast->_FogEnabled);
    ASSERT((span->interpMask | span->arrayMask) & SPAN_FOG);
    ASSERT(span->arrayMask & SPAN_RGBA);
+
+   if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+      rFog = ctx->Fog.Color[RCOMP] * 255.0;
+      gFog = ctx->Fog.Color[GCOMP] * 255.0;
+      bFog = ctx->Fog.Color[BCOMP] * 255.0;
+   }
+   else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
+      rFog = ctx->Fog.Color[RCOMP] * 65535.0;
+      gFog = ctx->Fog.Color[GCOMP] * 65535.0;
+      bFog = ctx->Fog.Color[BCOMP] * 65535.0;
+   }
+   else {
+      rFog = ctx->Fog.Color[RCOMP];
+      gFog = ctx->Fog.Color[GCOMP];
+      bFog = ctx->Fog.Color[BCOMP];
+   }
+
 
    /* NOTE: if haveW is true, that means the fog start/step values are
     * perspective-corrected and we have to divide each fog coord by W.
