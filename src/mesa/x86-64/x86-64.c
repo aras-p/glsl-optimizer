@@ -1,4 +1,4 @@
-/* $Id: x86-64.c,v 1.3 2006/10/16 20:57:09 idr Exp $ */
+/* $Id: x86-64.c,v 1.4 2006/10/17 17:03:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,6 +44,9 @@
 
 DECLARE_XFORM_GROUP( x86_64, 4 )
 
+#else
+/* just to silence warning below */
+#include "x86-64.h"
 #endif
 
 /*
