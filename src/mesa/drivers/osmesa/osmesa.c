@@ -64,8 +64,6 @@ struct osmesa_context
    struct gl_renderbuffer *rb;  /*< The user's colorbuffer */
    GLframebuffer *gl_buffer;	/*< The framebuffer, containing user's rb */
    GLenum format;		/*< User-specified context format */
-   GLint width, height;		/*< size of image buffer */
-   GLint rowlength;		/*< number of pixels per row */
    GLint userRowLength;		/*< user-specified number of pixels per row */
    GLint rInd, gInd, bInd, aInd;/*< index offsets for RGBA formats */
    GLvoid *rowaddr[MAX_HEIGHT];	/*< address of first pixel in each image row */
@@ -116,23 +114,6 @@ osmesa_update_state( GLcontext *ctx, GLuint new_state )
    _tnl_InvalidateState( ctx, new_state );
 }
 
-
-/**
- * Just return the current buffer size.
- * There's no window to track the size of.
- */
-static void
-get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
-{
-   /* don't use GET_CURRENT_CONTEXT(ctx) here - it's a problem on Windows */
-   GLcontext *ctx = (GLcontext *) _glapi_get_context();
-   (void) buffer;
-   if (ctx) {
-      OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-      *width = osmesa->width;
-      *height = osmesa->height;
-   }
-}
 
 
 /**********************************************************************/
@@ -597,7 +578,9 @@ osmesa_choose_line_function( GLcontext *ctx )
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   if (CHAN_BITS != 8)                    return NULL;
+   if (osmesa->rb->DataType != GL_UNSIGNED_BYTE)
+      return NULL;
+
    if (ctx->RenderMode != GL_RENDER)      return NULL;
    if (ctx->Line.SmoothFlag)              return NULL;
    if (ctx->Texture._EnabledUnits)        return NULL;
@@ -706,7 +689,9 @@ osmesa_choose_triangle_function( GLcontext *ctx )
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   if (CHAN_BITS != 8)                  return (swrast_tri_func) NULL;
+   if (osmesa->rb->DataType != GL_UNSIGNED_BYTE)
+      return (swrast_tri_func) NULL;
+
    if (ctx->RenderMode != GL_RENDER)    return (swrast_tri_func) NULL;
    if (ctx->Polygon.SmoothFlag)         return (swrast_tri_func) NULL;
    if (ctx->Polygon.StippleFlag)        return (swrast_tri_func) NULL;
@@ -759,6 +744,72 @@ osmesa_choose_line( GLcontext *ctx )
 }
 
 
+
+/**
+ * Recompute the values of the context's rowaddr array.
+ */
+static void
+compute_row_addresses( OSMesaContext osmesa )
+{
+   GLint bytesPerPixel, bytesPerRow, i;
+   GLubyte *origin = (GLubyte *) osmesa->rb->Data;
+   GLint bpc; /* bytes per channel */
+   GLint rowlength; /* in pixels */
+   GLint height = osmesa->rb->Height;
+
+   if (osmesa->userRowLength)
+      rowlength = osmesa->userRowLength;
+   else
+      rowlength = osmesa->rb->Width;
+
+   if (osmesa->rb->DataType == GL_UNSIGNED_BYTE)
+      bpc = 1;
+   else if (osmesa->rb->DataType == GL_UNSIGNED_SHORT)
+      bpc = 2;
+   else if (osmesa->rb->DataType == GL_FLOAT)
+      bpc = 4;
+   else {
+      _mesa_problem(&osmesa->mesa,
+                    "Unexpected datatype in osmesa::compute_row_addresses");
+      return;
+   }
+
+   if (osmesa->format == OSMESA_COLOR_INDEX) {
+      /* CI mode */
+      bytesPerPixel = 1 * sizeof(GLubyte);
+   }
+   else if ((osmesa->format == OSMESA_RGB) || (osmesa->format == OSMESA_BGR)) {
+      /* RGB mode */
+      bytesPerPixel = 3 * bpc;
+   }
+   else if (osmesa->format == OSMESA_RGB_565) {
+      /* 5/6/5 RGB pixel in 16 bits */
+      bytesPerPixel = 2;
+   }
+   else {
+      /* RGBA mode */
+      bytesPerPixel = 4 * bpc;
+   }
+
+   bytesPerRow = rowlength * bytesPerPixel;
+
+   if (osmesa->yup) {
+      /* Y=0 is bottom line of window */
+      for (i = 0; i < height; i++) {
+         osmesa->rowaddr[i] = (GLvoid *) ((GLubyte *) origin + i * bytesPerRow);
+      }
+   }
+   else {
+      /* Y=0 is top line of window */
+      for (i = 0; i < height; i++) {
+         GLint j = height - i - 1;
+         osmesa->rowaddr[i] = (GLvoid *) ((GLubyte *) origin + j * bytesPerRow);
+      }
+   }
+}
+
+
+
 /**
  * Don't use _mesa_delete_renderbuffer since we can't free rb->Data.
  */
@@ -787,6 +838,11 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       bpc = 16;
    else
       bpc = 32;
+
+   rb->RedBits =
+   rb->GreenBits =
+   rb->BlueBits =
+   rb->AlphaBits = bpc;
 
    /* Note: we can ignoring internalFormat for "window-system" renderbuffers */
    (void) internalFormat;
@@ -970,6 +1026,8 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
    rb->Width = width;
    rb->Height = height;
 
+   compute_row_addresses( osmesa );
+
    return GL_TRUE;
 }
 
@@ -1001,65 +1059,6 @@ new_osmesa_renderbuffer(GLcontext *ctx, GLenum format, GLenum type)
    }
    return rb;
 }
-
-
-
-/**
- * Recompute the values of the context's rowaddr array.
- */
-static void
-compute_row_addresses( OSMesaContext osmesa )
-{
-   GLint bytesPerPixel, bytesPerRow, i;
-   GLubyte *origin = (GLubyte *) osmesa->rb->Data;
-   GLint bpc; /* bytes per channel */
-
-   if (osmesa->rb->DataType == GL_UNSIGNED_BYTE)
-      bpc = 1;
-   else if (osmesa->rb->DataType == GL_UNSIGNED_SHORT)
-      bpc = 2;
-   else if (osmesa->rb->DataType == GL_FLOAT)
-      bpc = 4;
-   else {
-      _mesa_problem(&osmesa->mesa,
-                    "Unexpected datatype in osmesa::compute_row_addresses");
-      return;
-   }
-
-   if (osmesa->format == OSMESA_COLOR_INDEX) {
-      /* CI mode */
-      bytesPerPixel = 1 * sizeof(GLubyte);
-   }
-   else if ((osmesa->format == OSMESA_RGB) || (osmesa->format == OSMESA_BGR)) {
-      /* RGB mode */
-      bytesPerPixel = 3 * bpc;
-   }
-   else if (osmesa->format == OSMESA_RGB_565) {
-      /* 5/6/5 RGB pixel in 16 bits */
-      bytesPerPixel = 2;
-   }
-   else {
-      /* RGBA mode */
-      bytesPerPixel = 4 * bpc;
-   }
-
-   bytesPerRow = osmesa->rowlength * bytesPerPixel;
-
-   if (osmesa->yup) {
-      /* Y=0 is bottom line of window */
-      for (i = 0; i < MAX_HEIGHT; i++) {
-         osmesa->rowaddr[i] = (GLvoid *) ((GLubyte *) origin + i * bytesPerRow);
-      }
-   }
-   else {
-      /* Y=0 is top line of window */
-      for (i = 0; i < MAX_HEIGHT; i++) {
-         GLint j = osmesa->height - i - 1;
-         osmesa->rowaddr[i] = (GLvoid *) ((GLubyte *) origin + j * bytesPerRow);
-      }
-   }
-}
-
 
 
 /**********************************************************************/
@@ -1210,7 +1209,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       /* override with our functions */
       functions.GetString = get_string;
       functions.UpdateState = osmesa_update_state;
-      functions.GetBufferSize = get_buffer_size;
+      functions.GetBufferSize = NULL;
 
       if (!_mesa_initialize_context(&osmesa->mesa,
                                     osmesa->gl_visual,
@@ -1248,10 +1247,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
                                    GL_FALSE /* aux */ );
 
       osmesa->format = format;
-      osmesa->width = 0;
-      osmesa->height = 0;
       osmesa->userRowLength = 0;
-      osmesa->rowlength = 0;
       osmesa->yup = GL_TRUE;
       osmesa->rInd = rind;
       osmesa->gInd = gind;
@@ -1354,20 +1350,14 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
       return GL_FALSE;
    }
 
+#if 0
    if (!(type == GL_UNSIGNED_BYTE ||
          (type == GL_UNSIGNED_SHORT && CHAN_BITS >= 16) ||
          (type == GL_FLOAT && CHAN_BITS == 32))) {
       /* i.e. is sizeof(type) * 8 > CHAN_BITS? */
       return GL_FALSE;
    }
-
-   /* Need to set these before calling _mesa_make_current() since the first
-    * time the context is bound, _mesa_make_current() will call our
-    * get_buffer_size() function to initialize the viewport.  These are the
-    * values returned by get_buffer_size():
-    */
-   osmesa->width = width;
-   osmesa->height = height;
+#endif
 
    osmesa_update_state( &osmesa->mesa, 0 );
 
@@ -1375,6 +1365,13 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
     * GL rendering from multiple threads.
     */
    _glapi_check_multithread();
+
+   /* Set renderbuffer fields.  Set width/height = 0 to force 
+    * osmesa_renderbuffer_storage() being called by _mesa_resize_framebuffer()
+    */
+   osmesa->rb->Data = buffer;
+   osmesa->rb->DataType = type;
+   osmesa->rb->Width = osmesa->rb->Height = 0;
 
    /* Set the framebuffer's size.  This causes the
     * osmesa_renderbuffer_storage() function to get called.
@@ -1384,19 +1381,8 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
 
    _mesa_make_current( &osmesa->mesa, osmesa->gl_buffer, osmesa->gl_buffer );
 
-   /* Set the color renderbuffer's pointer to the user buffer,
-    * update row pointers, etc.
-    */
-   if (osmesa->userRowLength)
-      osmesa->rowlength = osmesa->userRowLength;
-   else
-      osmesa->rowlength = width;
-   osmesa->rb->Data = buffer;
-   osmesa->rb->DataType = type;
-   compute_row_addresses( osmesa );
-
    /* Remove renderbuffer attachment, then re-add.  This installs the
-    * renderbuffer adaptor/wrapper if needed.
+    * renderbuffer adaptor/wrapper if needed (for bpp conversion).
     */
    _mesa_remove_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT);
    _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT, osmesa->rb);
@@ -1438,7 +1424,6 @@ OSMesaPixelStore( GLint pname, GLint value )
             return;
          }
          osmesa->userRowLength = value;
-         osmesa->rowlength = value ? value : osmesa->width;
          break;
       case OSMESA_Y_UP:
          osmesa->yup = value ? GL_TRUE : GL_FALSE;
@@ -1459,10 +1444,16 @@ OSMesaGetIntegerv( GLint pname, GLint *value )
 
    switch (pname) {
       case OSMESA_WIDTH:
-         *value = osmesa->width;
+         if (osmesa->gl_buffer)
+            *value = osmesa->gl_buffer->Width;
+         else
+            *value = 0;
          return;
       case OSMESA_HEIGHT:
-         *value = osmesa->height;
+         if (osmesa->gl_buffer)
+            *value = osmesa->gl_buffer->Height;
+         else
+            *value = 0;
          return;
       case OSMESA_FORMAT:
          *value = osmesa->format;
@@ -1520,8 +1511,8 @@ OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
       return GL_FALSE;
    }
    else {
-      *width = c->gl_buffer->Width;
-      *height = c->gl_buffer->Height;
+      *width = rb->Width;
+      *height = rb->Height;
       if (c->gl_visual->depthBits <= 16)
          *bytesPerValue = sizeof(GLushort);
       else
