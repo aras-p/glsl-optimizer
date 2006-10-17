@@ -1890,7 +1890,7 @@ xmesa_check_and_update_buffer_size(XMesaContext xmctx, XMesaBuffer drawBuffer)
       _mesa_resize_framebuffer(&(xmctx->mesa),
                                &(drawBuffer->mesa_buffer), width, height);
    }
-   drawBuffer->mesa_buffer.Initialized = GL_TRUE;
+   drawBuffer->mesa_buffer.Initialized = GL_TRUE; /* XXX TEMPORARY? */
 }
 
 
@@ -1937,10 +1937,8 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
        */
       _glapi_check_multithread();
 
-      if (!drawBuffer->mesa_buffer.Initialized)
-         xmesa_check_and_update_buffer_size(c, drawBuffer);
-
-      if (!readBuffer->mesa_buffer.Initialized)
+      xmesa_check_and_update_buffer_size(c, drawBuffer);
+      if (readBuffer != drawBuffer)
          xmesa_check_and_update_buffer_size(c, readBuffer);
 
       _mesa_make_current(&(c->mesa),

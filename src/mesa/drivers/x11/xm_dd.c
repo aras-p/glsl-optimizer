@@ -94,15 +94,6 @@ const int xmesa_kernel1[16] = {
 };
 
 
-/** XXX obsolete ***/
-static void
-get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
-{
-   XMesaBuffer b = XMESA_BUFFER(buffer);
-   xmesa_get_window_size(b->display, b, width, height);
-}
-
-
 static void
 finish_or_flush( GLcontext *ctx )
 {
@@ -1176,7 +1167,7 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
 {
    driver->GetString = get_string;
    driver->UpdateState = xmesa_update_state;
-   driver->GetBufferSize = get_buffer_size;
+   driver->GetBufferSize = NULL; /* OBSOLETE */
    driver->Flush = finish_or_flush;
    driver->Finish = finish_or_flush;
    driver->ClearIndex = clear_index;
