@@ -92,7 +92,7 @@ int prevLockLine;
  * Mesa's Driver Functions
  ***************************************/
 
-#define DRIVER_DATE                     "20050225"
+#define DRIVER_DATE "20061017"
 
 const GLubyte *intelGetString( GLcontext *ctx, GLenum name )
 {
@@ -132,27 +132,6 @@ const GLubyte *intelGetString( GLcontext *ctx, GLenum name )
    default:
       return NULL;
    }
-}
-
-static void intelBufferSize(GLframebuffer *buffer,
-			   GLuint *width, GLuint *height)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   intelContextPtr intel = INTEL_CONTEXT(ctx);
-   /* Need to lock to make sure the driDrawable is uptodate.  This
-    * information is used to resize Mesa's software buffers, so it has
-    * to be correct.
-    */
-   LOCK_HARDWARE(intel);
-   if (intel->driDrawable) {
-      *width = intel->driDrawable->w;
-      *height = intel->driDrawable->h;
-   }
-   else {
-      *width = 0;
-      *height = 0;
-   }
-   UNLOCK_HARDWARE(intel);
 }
 
 
@@ -263,7 +242,7 @@ void intelInitDriverFunctions( struct dd_function_table *functions )
    functions->Clear = intelClear;
    functions->Flush = intelglFlush;
    functions->Finish = intelFinish;
-   functions->GetBufferSize = intelBufferSize;
+   functions->GetBufferSize = NULL; /* OBSOLETE */
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
 
