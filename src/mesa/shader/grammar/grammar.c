@@ -2410,6 +2410,7 @@ static match_result match (dict *di, const byte *text, unsigned int *index, rule
                     }
                     else if (result == mr_matched)
                     {
+                        assert(ind > 0);
                         if (barray_push (ba, sp->m_emits, text[ind - 1], save_ind, &ctx) ||
                             barray_append (ba, &array))
                         {
@@ -2469,6 +2470,7 @@ static match_result match (dict *di, const byte *text, unsigned int *index, rule
         if (status == mr_matched)
         {
             if (sp->m_emits)
+                assert(ind > 0);
                 if (barray_push (ba, sp->m_emits, text[ind - 1], save_ind, &ctx))
                 {
                     free_regbyte_ctx_stack (ctx, *rbc);
@@ -2629,6 +2631,7 @@ static match_result fast_match (dict *di, const byte *text, unsigned int *index,
                         {
                             if (sp->m_emits != NULL)
                             {
+                                assert(ind > 0);
                                 if (emit_push (sp->m_emits, _BP->_F + _P, text[ind - 1], save_ind, &ctx))
                                 {
                                     free_regbyte_ctx_stack (ctx, *rbc);
@@ -2686,6 +2689,7 @@ static match_result fast_match (dict *di, const byte *text, unsigned int *index,
         if (status == mr_matched)
         {
             if (sp->m_emits != NULL)
+                assert(ind > 0);
                 if (emit_push (sp->m_emits, _BP->_F + _P, text[ind - 1], save_ind, &ctx))
                 {
                     free_regbyte_ctx_stack (ctx, *rbc);
