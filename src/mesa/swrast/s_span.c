@@ -1218,6 +1218,37 @@ add_specular(GLcontext *ctx, SWspan *span)
 
 
 /**
+ * Apply antialiasing coverage value to alpha values.
+ */
+static void
+apply_aa_coverage(SWspan *span)
+{
+   const GLfloat *coverage = span->array->coverage;
+   GLuint i;
+   if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+      GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
+      for (i = 0; i < span->end; i++) {
+         ASSERT(coverage[i] >= 0.0);
+         ASSERT(coverage[i] <= 1.0);
+         UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][ACOMP], rgba[i][ACOMP] * coverage[i]);
+      }
+   }
+   else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
+      GLushort (*rgba)[4] = span->array->color.sz2.rgba;
+      for (i = 0; i < span->end; i++) {
+         UNCLAMPED_FLOAT_TO_USHORT(rgba[i][ACOMP], rgba[i][ACOMP] * coverage[i]);
+      }
+   }
+   else {
+      GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
+      for (i = 0; i < span->end; i++) {
+         rgba[i][ACOMP] = rgba[i][ACOMP] * coverage[i];
+      }
+   }
+}
+
+
+/**
  * Convert the span's color arrays to the given type.
  * XXX this could be put into image.c and reused in several places.
  */
@@ -1476,12 +1507,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 
    /* Antialias coverage application */
    if (span->arrayMask & SPAN_COVERAGE) {
-      GLchan (*rgba)[4] = span->array->rgba;
-      GLfloat *coverage = span->array->coverage;
-      GLuint i;
-      for (i = 0; i < span->end; i++) {
-         rgba[i][ACOMP] = (GLchan) (rgba[i][ACOMP] * coverage[i]);
-      }
+      apply_aa_coverage(span);
    }
 
    /* Clamp color/alpha values over the range [0.0, 1.0] before storage */
