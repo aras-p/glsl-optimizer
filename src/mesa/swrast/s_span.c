@@ -169,6 +169,7 @@ interpolate_colors(GLcontext *ctx, SWspan *span, GLboolean specular)
    if (span->interpMask & SPAN_FLAT) {
       /* constant color */
       switch (span->array->ChanType) {
+#if CHAN_BITS != 32
       case GL_UNSIGNED_BYTE:
          {
             GLubyte (*rgba)[4] = specular
@@ -213,6 +214,7 @@ interpolate_colors(GLcontext *ctx, SWspan *span, GLboolean specular)
             }
          }
          break;
+#endif
       case GL_FLOAT:
          {
             GLfloat (*rgba)[4] = specular ? 
@@ -243,6 +245,7 @@ interpolate_colors(GLcontext *ctx, SWspan *span, GLboolean specular)
    else {
       /* interpolate */
       switch (span->array->ChanType) {
+#if CHAN_BITS != 32
       case GL_UNSIGNED_BYTE:
          {
             GLubyte (*rgba)[4] = specular
@@ -319,6 +322,7 @@ interpolate_colors(GLcontext *ctx, SWspan *span, GLboolean specular)
             }
          }
          break;
+#endif
       case GL_FLOAT:
          {
             GLfloat (*rgba)[4] = specular ? 
@@ -1503,6 +1507,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
       const GLuint numDrawBuffers = fb->_NumColorDrawBuffers[output];
       GLchan rgbaSave[MAX_WIDTH][4];
       GLuint buf;
+      const GLenum chanType = span->array->ChanType; /* save */
 
       if (numDrawBuffers > 0) {
          if (fb->_ColorDrawBuffers[output][0]->DataType
@@ -1553,6 +1558,8 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
                          4 * span->end * sizeof(GLchan));
          }
       } /* for buf */
+
+      span->array->ChanType = chanType; /* restore */
    }
 
    span->interpMask = origInterpMask;
