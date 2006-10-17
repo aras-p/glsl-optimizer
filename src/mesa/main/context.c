@@ -1629,11 +1629,12 @@ static void
 initialize_framebuffer_size(GLcontext *ctx, GLframebuffer *fb)
 {
    GLuint width, height;
-   ASSERT(ctx->Driver.GetBufferSize);
-   ctx->Driver.GetBufferSize(fb, &width, &height);
-   if (ctx->Driver.ResizeBuffers)
-      ctx->Driver.ResizeBuffers(ctx, fb, width, height);
-   fb->Initialized = GL_TRUE;
+   if (ctx->Driver.GetBufferSize) {
+      ctx->Driver.GetBufferSize(fb, &width, &height);
+      if (ctx->Driver.ResizeBuffers)
+         ctx->Driver.ResizeBuffers(ctx, fb, width, height);
+      fb->Initialized = GL_TRUE;
+   }
 }
 
 

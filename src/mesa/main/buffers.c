@@ -604,6 +604,10 @@ void _mesa_resizebuffers( GLcontext *ctx )
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glResizeBuffersMESA\n");
 
+   if (!ctx->Driver.GetBufferSize) {
+      return;
+   }
+
    if (ctx->WinSysDrawBuffer) {
       GLuint newWidth, newHeight;
       GLframebuffer *buffer = ctx->WinSysDrawBuffer;
