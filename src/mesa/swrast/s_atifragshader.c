@@ -31,6 +31,18 @@
 
 
 /**
+ * State for executing ATI fragment shader.
+ */
+struct atifs_machine
+{
+   GLfloat Registers[6][4];         /** six temporary registers */
+   GLfloat PrevPassRegisters[6][4];
+   GLfloat Inputs[2][4];   /** Primary, secondary input colors */
+};
+
+
+
+/**
  * Fetch a texel.
  */
 static void
@@ -545,70 +557,101 @@ execute_shader(GLcontext * ctx,
    return GL_TRUE;
 }
 
+
+/**
+ * Init fragment shader virtual machine state.
+ */
 static void
 init_machine(GLcontext * ctx, struct atifs_machine *machine,
 	     const struct ati_fragment_shader *shader,
 	     const SWspan *span, GLuint col)
 {
+   GLfloat (*inputs)[4] = machine->Inputs;
    GLint i, j;
 
    for (i = 0; i < 6; i++) {
       for (j = 0; j < 4; j++)
-	 ctx->ATIFragmentShader.Machine.Registers[i][j] = 0.0;
+	 machine->Registers[i][j] = 0.0;
    }
 
-   ctx->ATIFragmentShader.Machine.Inputs[ATI_FS_INPUT_PRIMARY][0] =
-      CHAN_TO_FLOAT(span->array->rgba[col][0]);
-   ctx->ATIFragmentShader.Machine.Inputs[ATI_FS_INPUT_PRIMARY][1] =
-      CHAN_TO_FLOAT(span->array->rgba[col][1]);
-   ctx->ATIFragmentShader.Machine.Inputs[ATI_FS_INPUT_PRIMARY][2] =
-      CHAN_TO_FLOAT(span->array->rgba[col][2]);
-   ctx->ATIFragmentShader.Machine.Inputs[ATI_FS_INPUT_PRIMARY][3] =
-      CHAN_TO_FLOAT(span->array->rgba[col][3]);
-
-   ctx->ATIFragmentShader.Machine.Inputs[ATI_FS_INPUT_SECONDARY][0] =
-      CHAN_TO_FLOAT(span->array->spec[col][0]);
-   ctx->ATIFragmentShader.Machine.Inputs[ATI_FS_INPUT_SECONDARY][1] =
-      CHAN_TO_FLOAT(span->array->spec[col][1]);
-   ctx->ATIFragmentShader.Machine.Inputs[ATI_FS_INPUT_SECONDARY][2] =
-      CHAN_TO_FLOAT(span->array->spec[col][2]);
-   ctx->ATIFragmentShader.Machine.Inputs[ATI_FS_INPUT_SECONDARY][3] =
-      CHAN_TO_FLOAT(span->array->spec[col][3]);
+   if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+      GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
+      GLubyte (*spec)[4] = span->array->color.sz1.spec;
+      inputs[ATI_FS_INPUT_PRIMARY][0] = UBYTE_TO_FLOAT(rgba[col][0]);
+      inputs[ATI_FS_INPUT_PRIMARY][1] = UBYTE_TO_FLOAT(rgba[col][1]);
+      inputs[ATI_FS_INPUT_PRIMARY][2] = UBYTE_TO_FLOAT(rgba[col][2]);
+      inputs[ATI_FS_INPUT_PRIMARY][3] = UBYTE_TO_FLOAT(rgba[col][3]); 
+      inputs[ATI_FS_INPUT_SECONDARY][0] = UBYTE_TO_FLOAT(spec[col][0]);
+      inputs[ATI_FS_INPUT_SECONDARY][1] = UBYTE_TO_FLOAT(spec[col][1]);
+      inputs[ATI_FS_INPUT_SECONDARY][2] = UBYTE_TO_FLOAT(spec[col][2]);
+      inputs[ATI_FS_INPUT_SECONDARY][3] = UBYTE_TO_FLOAT(spec[col][3]);
+  }
+   else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
+      GLushort (*rgba)[4] = span->array->color.sz2.rgba;
+      GLushort (*spec)[4] = span->array->color.sz2.spec;
+      inputs[ATI_FS_INPUT_PRIMARY][0] = USHORT_TO_FLOAT(rgba[col][0]);
+      inputs[ATI_FS_INPUT_PRIMARY][1] = USHORT_TO_FLOAT(rgba[col][1]);
+      inputs[ATI_FS_INPUT_PRIMARY][2] = USHORT_TO_FLOAT(rgba[col][2]);
+      inputs[ATI_FS_INPUT_PRIMARY][3] = USHORT_TO_FLOAT(rgba[col][3]);
+      inputs[ATI_FS_INPUT_SECONDARY][0] = USHORT_TO_FLOAT(spec[col][0]);
+      inputs[ATI_FS_INPUT_SECONDARY][1] = USHORT_TO_FLOAT(spec[col][1]);
+      inputs[ATI_FS_INPUT_SECONDARY][2] = USHORT_TO_FLOAT(spec[col][2]);
+      inputs[ATI_FS_INPUT_SECONDARY][3] = USHORT_TO_FLOAT(spec[col][3]);
+   }
+   else {
+      GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
+      GLfloat (*spec)[4] = span->array->color.sz4.spec;
+      COPY_4V(inputs[ATI_FS_INPUT_PRIMARY], rgba[col]);
+      COPY_4V(inputs[ATI_FS_INPUT_SECONDARY], spec[col]);
+   }
 }
 
 
 
 /**
- * Execute the current fragment program, operating on the given span.
+ * Execute the current ATI shader program, operating on the given span.
  */
 void
 _swrast_exec_fragment_shader(GLcontext * ctx, SWspan *span)
 {
    const struct ati_fragment_shader *shader = ctx->ATIFragmentShader.Current;
+   struct atifs_machine machine;
    GLuint i;
 
    ctx->_CurrentProgram = GL_FRAGMENT_SHADER_ATI;
 
    for (i = 0; i < span->end; i++) {
       if (span->array->mask[i]) {
-	 init_machine(ctx, &ctx->ATIFragmentShader.Machine,
-		      ctx->ATIFragmentShader.Current, span, i);
+	 init_machine(ctx, &machine, shader, span, i);
 	 /* can't really happen... */
-	 if (!execute_shader(ctx, shader, ~0,
-			    &ctx->ATIFragmentShader.Machine, span, i)) {
+	 if (!execute_shader(ctx, shader, ~0, &machine, span, i)) {
 	    span->array->mask[i] = GL_FALSE;
             span->writeAll = GL_FALSE;
 	 }
 
+         /* store result color */
 	 {
-	    const GLfloat *colOut =
-	       ctx->ATIFragmentShader.Machine.Registers[0];
-
-	    /*fprintf(stderr,"outputs %f %f %f %f\n", colOut[0], colOut[1], colOut[2], colOut[3]); */
-	    UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][RCOMP], colOut[0]);
-	    UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][GCOMP], colOut[1]);
-	    UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][BCOMP], colOut[2]);
-	    UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][ACOMP], colOut[3]);
+	    const GLfloat *colOut = machine.Registers[0];
+	    /*fprintf(stderr,"outputs %f %f %f %f\n",
+              colOut[0], colOut[1], colOut[2], colOut[3]); */
+            if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+               GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
+               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][RCOMP], colOut[0]);
+               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][GCOMP], colOut[1]);
+               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][BCOMP], colOut[2]);
+               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][ACOMP], colOut[3]);
+            }
+            else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
+               GLushort (*rgba)[4] = span->array->color.sz2.rgba;
+               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][RCOMP], colOut[0]);
+               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][GCOMP], colOut[1]);
+               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][BCOMP], colOut[2]);
+               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][ACOMP], colOut[3]);
+            }
+            else {
+               GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
+               COPY_4V(rgba[i], colOut);
+            }
 	 }
       }
    }

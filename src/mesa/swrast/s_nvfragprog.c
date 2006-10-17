@@ -1468,17 +1468,45 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
    if (inputsRead & (1 << FRAG_ATTRIB_COL0)) {
       GLfloat *col0 = machine->Inputs[FRAG_ATTRIB_COL0];
       ASSERT(span->arrayMask & SPAN_RGBA);
-      col0[0] = CHAN_TO_FLOAT(span->array->rgba[col][RCOMP]);
-      col0[1] = CHAN_TO_FLOAT(span->array->rgba[col][GCOMP]);
-      col0[2] = CHAN_TO_FLOAT(span->array->rgba[col][BCOMP]);
-      col0[3] = CHAN_TO_FLOAT(span->array->rgba[col][ACOMP]);
+      if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+         GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
+         col0[0] = UBYTE_TO_FLOAT(rgba[col][RCOMP]);
+         col0[1] = UBYTE_TO_FLOAT(rgba[col][GCOMP]);
+         col0[2] = UBYTE_TO_FLOAT(rgba[col][BCOMP]);
+         col0[3] = UBYTE_TO_FLOAT(rgba[col][ACOMP]);
+      }
+      else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
+         GLushort (*rgba)[4] = span->array->color.sz2.rgba;
+         col0[0] = USHORT_TO_FLOAT(rgba[col][RCOMP]);
+         col0[1] = USHORT_TO_FLOAT(rgba[col][GCOMP]);
+         col0[2] = USHORT_TO_FLOAT(rgba[col][BCOMP]);
+         col0[3] = USHORT_TO_FLOAT(rgba[col][ACOMP]);
+      }
+      else {
+         GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
+         COPY_4V(col0, rgba[col]);
+      }
    }
    if (inputsRead & (1 << FRAG_ATTRIB_COL1)) {
       GLfloat *col1 = machine->Inputs[FRAG_ATTRIB_COL1];
-      col1[0] = CHAN_TO_FLOAT(span->array->spec[col][RCOMP]);
-      col1[1] = CHAN_TO_FLOAT(span->array->spec[col][GCOMP]);
-      col1[2] = CHAN_TO_FLOAT(span->array->spec[col][BCOMP]);
-      col1[3] = CHAN_TO_FLOAT(span->array->spec[col][ACOMP]);
+      if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+         GLubyte (*rgba)[4] = span->array->color.sz1.spec;
+         col1[0] = UBYTE_TO_FLOAT(rgba[col][RCOMP]);
+         col1[1] = UBYTE_TO_FLOAT(rgba[col][GCOMP]);
+         col1[2] = UBYTE_TO_FLOAT(rgba[col][BCOMP]);
+         col1[3] = UBYTE_TO_FLOAT(rgba[col][ACOMP]);
+      }
+      else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
+         GLushort (*rgba)[4] = span->array->color.sz2.spec;
+         col1[0] = USHORT_TO_FLOAT(rgba[col][RCOMP]);
+         col1[1] = USHORT_TO_FLOAT(rgba[col][GCOMP]);
+         col1[2] = USHORT_TO_FLOAT(rgba[col][BCOMP]);
+         col1[3] = USHORT_TO_FLOAT(rgba[col][ACOMP]);
+      }
+      else {
+         GLfloat (*rgba)[4] = span->array->color.sz4.spec;
+         COPY_4V(col1, rgba[col]);
+      }
    }
    if (inputsRead & (1 << FRAG_ATTRIB_FOGC)) {
       GLfloat *fogc = machine->Inputs[FRAG_ATTRIB_FOGC];
@@ -1529,10 +1557,24 @@ run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
          /* Store output registers */
          {
             const GLfloat *colOut = machine.Outputs[FRAG_RESULT_COLR];
-            UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][RCOMP], colOut[0]);
-            UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][GCOMP], colOut[1]);
-            UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][BCOMP], colOut[2]);
-            UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][ACOMP], colOut[3]);
+            if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+               GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
+               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][RCOMP], colOut[0]);
+               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][GCOMP], colOut[1]);
+               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][BCOMP], colOut[2]);
+               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][ACOMP], colOut[3]);
+            }
+            else if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+               GLushort (*rgba)[4] = span->array->color.sz2.rgba;
+               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][RCOMP], colOut[0]);
+               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][GCOMP], colOut[1]);
+               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][BCOMP], colOut[2]);
+               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][ACOMP], colOut[3]);
+            }
+            else {
+               GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
+               COPY_4V(rgba[i], colOut);
+            }
          }
          /* depth value */
          if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
@@ -1546,6 +1588,7 @@ run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
          }
       }
    }
+
    CurrentMachine = NULL;
 }
 

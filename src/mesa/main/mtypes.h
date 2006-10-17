@@ -1989,17 +1989,6 @@ struct atifs_instruction;
 struct atifs_setupinst;
 
 /**
- * State for executing ATI fragment shader.
- */
-struct atifs_machine
-{
-   GLfloat Registers[6][4];         /** six temporary registers */
-   GLfloat PrevPassRegisters[6][4];
-   GLfloat Inputs[2][4];   /** Primary, secondary input colors */
-};
-
-
-/**
  * ATI fragment shader
  */
 struct ati_fragment_shader
@@ -2029,7 +2018,6 @@ struct gl_ati_fragment_shader_state
    GLboolean _Enabled;                      /** enabled and valid shader? */
    GLboolean Compiling;
    GLfloat GlobalConstants[8][4];
-   struct atifs_machine Machine;            /* machine state */
    struct ati_fragment_shader *Current;
 };
 
