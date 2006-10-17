@@ -151,223 +151,239 @@ _swrast_span_default_texcoords( GLcontext *ctx, SWspan *span )
 
 
 /**
- * Interpolate colors to fill in the span->array->color array.
- * \param specular  if true, interpolate specular, else interpolate rgba.
+ * Interpolate primary colors to fill in the span->array->color array.
  */
 static void
-interpolate_colors(GLcontext *ctx, SWspan *span, GLboolean specular)
+interpolate_colors(SWspan *span)
 {
    const GLuint n = span->end;
    GLuint i;
-   (void) ctx;
 
-   if (!specular) {
-      ASSERT((span->interpMask & SPAN_RGBA)  &&
-             !(span->arrayMask & SPAN_RGBA));
-   }
+   ASSERT((span->interpMask & SPAN_RGBA)  &&
+          !(span->arrayMask & SPAN_RGBA));
 
-   if (span->interpMask & SPAN_FLAT) {
-      /* constant color */
-      switch (span->array->ChanType) {
+   switch (span->array->ChanType) {
 #if CHAN_BITS != 32
-      case GL_UNSIGNED_BYTE:
-         {
-            GLubyte (*rgba)[4] = specular
-               ? span->array->color.sz1.spec : span->array->color.sz1.rgba;
+   case GL_UNSIGNED_BYTE:
+      {
+         GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
+         if (span->interpMask & SPAN_FLAT) {
             GLubyte color[4];
-            if (specular) {
-               color[RCOMP] = FixedToInt(span->specRed);
-               color[GCOMP] = FixedToInt(span->specGreen);
-               color[BCOMP] = FixedToInt(span->specBlue);
-               color[ACOMP] = 0;
-            }
-            else {
-               color[RCOMP] = FixedToInt(span->red);
-               color[GCOMP] = FixedToInt(span->green);
-               color[BCOMP] = FixedToInt(span->blue);
-               color[ACOMP] = FixedToInt(span->alpha);
-            }
+            color[RCOMP] = FixedToInt(span->red);
+            color[GCOMP] = FixedToInt(span->green);
+            color[BCOMP] = FixedToInt(span->blue);
+            color[ACOMP] = FixedToInt(span->alpha);
             for (i = 0; i < n; i++) {
                COPY_4UBV(rgba[i], color);
             }
          }
-         break;
-      case GL_UNSIGNED_SHORT:
-         {
-            GLushort (*rgba)[4] = specular
-               ? span->array->color.sz2.spec : span->array->color.sz2.rgba;
+         else {
+            GLfixed r = span->red;
+            GLfixed g = span->green;
+            GLfixed b = span->blue;
+            GLfixed a = span->alpha;
+            GLint dr = span->redStep;
+            GLint dg = span->greenStep;
+            GLint db = span->blueStep;
+            GLint da = span->alphaStep;
+            for (i = 0; i < n; i++) {
+               rgba[i][RCOMP] = FixedToChan(r);
+               rgba[i][GCOMP] = FixedToChan(g);
+               rgba[i][BCOMP] = FixedToChan(b);
+               rgba[i][ACOMP] = FixedToChan(a);
+               r += dr;
+               g += dg;
+               b += db;
+               a += da;
+            }
+         }
+      }
+      break;
+   case GL_UNSIGNED_SHORT:
+      {
+         GLushort (*rgba)[4] = span->array->color.sz2.rgba;
+         if (span->interpMask & SPAN_FLAT) {
             GLushort color[4];
-            if (specular) {
-               color[RCOMP] = FixedToInt(span->specRed);
-               color[GCOMP] = FixedToInt(span->specGreen);
-               color[BCOMP] = FixedToInt(span->specBlue);
-               color[ACOMP] = 0;
-            }
-            else {
-               color[RCOMP] = FixedToInt(span->red);
-               color[GCOMP] = FixedToInt(span->green);
-               color[BCOMP] = FixedToInt(span->blue);
-               color[ACOMP] = FixedToInt(span->alpha);
-            }
+            color[RCOMP] = FixedToInt(span->red);
+            color[GCOMP] = FixedToInt(span->green);
+            color[BCOMP] = FixedToInt(span->blue);
+            color[ACOMP] = FixedToInt(span->alpha);
             for (i = 0; i < n; i++) {
                COPY_4V(rgba[i], color);
             }
          }
-         break;
+         else {
+            GLushort (*rgba)[4] = span->array->color.sz2.rgba;
+            GLfixed r, g, b, a;
+            GLint dr, dg, db, da;
+            r = span->red;
+            g = span->green;
+            b = span->blue;
+            a = span->alpha;
+            dr = span->redStep;
+            dg = span->greenStep;
+            db = span->blueStep;
+            da = span->alphaStep;
+            for (i = 0; i < n; i++) {
+               rgba[i][RCOMP] = FixedToChan(r);
+               rgba[i][GCOMP] = FixedToChan(g);
+               rgba[i][BCOMP] = FixedToChan(b);
+               rgba[i][ACOMP] = FixedToChan(a);
+               r += dr;
+               g += dg;
+               b += db;
+               a += da;
+            }
+         }
+      }
+      break;
 #endif
-      case GL_FLOAT:
-         {
-            GLfloat (*rgba)[4] = specular ? 
-               span->array->color.sz4.spec : span->array->color.sz4.rgba;
+   case GL_FLOAT:
+      {
+         GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
+         GLfloat r, g, b, a, dr, dg, db, da;
+         r = span->red;
+         g = span->green;
+         b = span->blue;
+         a = span->alpha;
+         if (span->interpMask & SPAN_FLAT) {
+            dr = dg = db = da = 0.0;
+         }
+         else {
+            dr = span->redStep;
+            dg = span->greenStep;
+            db = span->blueStep;
+            da = span->alphaStep;
+         }
+         for (i = 0; i < n; i++) {
+            rgba[i][RCOMP] = r;
+            rgba[i][GCOMP] = g;
+            rgba[i][BCOMP] = b;
+            rgba[i][ACOMP] = a;
+            r += dr;
+            g += dg;
+            b += db;
+            a += da;
+         }
+      }
+      break;
+   default:
+      _mesa_problem(NULL, "bad datatype in interpolate_colors");
+   }
+   span->arrayMask |= SPAN_RGBA;
+}
+
+
+/**
+ * Interpolate specular/secondary colors.
+ */
+static void
+interpolate_specular(SWspan *span)
+{
+   const GLuint n = span->end;
+   GLuint i;
+
+   switch (span->array->ChanType) {
+   case GL_UNSIGNED_BYTE:
+      {
+         GLubyte (*spec)[4] = span->array->color.sz1.spec;
+         if (span->interpMask & SPAN_FLAT) {
+            GLubyte color[4];
+            color[RCOMP] = FixedToInt(span->specRed);
+            color[GCOMP] = FixedToInt(span->specGreen);
+            color[BCOMP] = FixedToInt(span->specBlue);
+            color[ACOMP] = 0;
+            for (i = 0; i < n; i++) {
+               COPY_4UBV(spec[i], color);
+            }
+         }
+         else {
+            GLfixed r = span->specRed;
+            GLfixed g = span->specGreen;
+            GLfixed b = span->specBlue;
+            GLint dr = span->specRedStep;
+            GLint dg = span->specGreenStep;
+            GLint db = span->specBlueStep;
+            for (i = 0; i < n; i++) {
+               spec[i][RCOMP] = CLAMP(FixedToChan(r), 0, 255);
+               spec[i][GCOMP] = CLAMP(FixedToChan(g), 0, 255);
+               spec[i][BCOMP] = CLAMP(FixedToChan(b), 0, 255);
+               spec[i][ACOMP] = 0;
+               r += dr;
+               g += dg;
+               b += db;
+            }
+         }
+      }
+      break;
+   case GL_UNSIGNED_SHORT:
+      {
+         GLushort (*spec)[4] = span->array->color.sz2.spec;
+         if (span->interpMask & SPAN_FLAT) {
+            GLushort color[4];
+            color[RCOMP] = FixedToInt(span->specRed);
+            color[GCOMP] = FixedToInt(span->specGreen);
+            color[BCOMP] = FixedToInt(span->specBlue);
+            color[ACOMP] = 0;
+            for (i = 0; i < n; i++) {
+               COPY_4V(spec[i], color);
+            }
+         }
+         else {
+            GLfixed r = FloatToFixed(span->specRed);
+            GLfixed g = FloatToFixed(span->specGreen);
+            GLfixed b = FloatToFixed(span->specBlue);
+            GLint dr = FloatToFixed(span->specRedStep);
+            GLint dg = FloatToFixed(span->specGreenStep);
+            GLint db = FloatToFixed(span->specBlueStep);
+            for (i = 0; i < n; i++) {
+               spec[i][RCOMP] = FixedToInt(r);
+               spec[i][GCOMP] = FixedToInt(g);
+               spec[i][BCOMP] = FixedToInt(b);
+               spec[i][ACOMP] = 0;
+               r += dr;
+               g += dg;
+               b += db;
+            }
+         }
+      }
+      break;
+   case GL_FLOAT:
+      {
+         GLfloat (*spec)[4] = span->array->color.sz4.spec;
+         if (span->interpMask & SPAN_FLAT) {
             GLfloat color[4];
-            ASSERT(CHAN_TYPE == GL_FLOAT);
-            if (specular) {
-               color[RCOMP] = span->specRed;
-               color[GCOMP] = span->specGreen;
-               color[BCOMP] = span->specBlue;
-               color[ACOMP] = 0.0F;
-            }
-            else {
-               color[RCOMP] = span->red;
-               color[GCOMP] = span->green;
-               color[BCOMP] = span->blue;
-               color[ACOMP] = span->alpha;
-            }
+            color[RCOMP] = span->specRed;
+            color[GCOMP] = span->specGreen;
+            color[BCOMP] = span->specBlue;
+            color[ACOMP] = 0.0F;
             for (i = 0; i < n; i++) {
-               COPY_4V(rgba[i], color);
+               COPY_4V(spec[i], color);
             }
          }
-         break;
-      default:
-         _mesa_problem(ctx, "bad datatype in interpolate_colors");
+         else {
+            GLfloat r = span->specRed;
+            GLfloat g = span->specGreen;
+            GLfloat b = span->specBlue;
+            GLfloat dr = span->specRedStep;
+            GLfloat dg = span->specGreenStep;
+            GLfloat db = span->specBlueStep;
+            for (i = 0; i < n; i++) {
+               spec[i][RCOMP] = r;
+               spec[i][GCOMP] = g;
+               spec[i][BCOMP] = b;
+               spec[i][ACOMP] = 0.0F;
+               r += dr;
+               g += dg;
+               b += db;
+            }
+         }
       }
+      break;
+   default:
+      _mesa_problem(NULL, "bad datatype in interpolate_specular");
    }
-   else {
-      /* interpolate */
-      switch (span->array->ChanType) {
-#if CHAN_BITS != 32
-      case GL_UNSIGNED_BYTE:
-         {
-            GLubyte (*rgba)[4] = specular
-               ? span->array->color.sz1.spec : span->array->color.sz1.rgba;
-            GLfixed r, g, b, a;
-            GLint dr, dg, db, da;
-            if (specular) {
-               r = span->specRed;
-               g = span->specGreen;
-               b = span->specBlue;
-               a = 0;
-               dr = span->specRedStep;
-               dg = span->specGreenStep;
-               db = span->specBlueStep;
-               da = 0;
-            }
-            else {
-               r = span->red;
-               g = span->green;
-               b = span->blue;
-               a = span->alpha;
-               dr = span->redStep;
-               dg = span->greenStep;
-               db = span->blueStep;
-               da = span->alphaStep;
-            }
-            for (i = 0; i < n; i++) {
-               rgba[i][RCOMP] = FixedToChan(r);
-               rgba[i][GCOMP] = FixedToChan(g);
-               rgba[i][BCOMP] = FixedToChan(b);
-               rgba[i][ACOMP] = FixedToChan(a);
-               r += dr;
-               g += dg;
-               b += db;
-               a += da;
-            }
-         }
-         break;
-      case GL_UNSIGNED_SHORT:
-         {
-            GLushort (*rgba)[4] = specular
-               ? span->array->color.sz2.spec : span->array->color.sz2.rgba;
-            GLfixed r, g, b, a;
-            GLint dr, dg, db, da;
-            if (specular) {
-               r = span->specRed;
-               g = span->specGreen;
-               b = span->specBlue;
-               a = 0;
-               dr = span->specRedStep;
-               dg = span->specGreenStep;
-               db = span->specBlueStep;
-               da = 0;
-            }
-            else {
-               r = span->red;
-               g = span->green;
-               b = span->blue;
-               a = span->alpha;
-               dr = span->redStep;
-               dg = span->greenStep;
-               db = span->blueStep;
-               da = span->alphaStep;
-            }
-            for (i = 0; i < n; i++) {
-               rgba[i][RCOMP] = FixedToChan(r);
-               rgba[i][GCOMP] = FixedToChan(g);
-               rgba[i][BCOMP] = FixedToChan(b);
-               rgba[i][ACOMP] = FixedToChan(a);
-               r += dr;
-               g += dg;
-               b += db;
-               a += da;
-            }
-         }
-         break;
-#endif
-      case GL_FLOAT:
-         {
-            GLfloat (*rgba)[4] = specular ? 
-               span->array->color.sz4.spec : span->array->color.sz4.rgba;
-            GLfloat r, g, b, a, dr, dg, db, da;
-            if (specular) {
-               r = span->specRed;
-               g = span->specGreen;
-               b = span->specBlue;
-               a = 0.0F;
-               dr = span->specRedStep;
-               dg = span->specGreenStep;
-               db = span->specBlueStep;
-               da = 0.0F;
-            }
-            else {
-               r = span->red;
-               g = span->green;
-               b = span->blue;
-               a = span->alpha;
-               dr = span->redStep;
-               dg = span->greenStep;
-               db = span->blueStep;
-               da = span->alphaStep;
-            }
-            /*
-            ASSERT(CHAN_TYPE == GL_FLOAT);
-            */
-            for (i = 0; i < n; i++) {
-               rgba[i][RCOMP] = r;
-               rgba[i][GCOMP] = g;
-               rgba[i][BCOMP] = b;
-               rgba[i][ACOMP] = a;
-               r += dr;
-               g += dg;
-               b += db;
-               a += da;
-            }
-         }
-         break;
-      default:
-         _mesa_problem(ctx, "bad datatype in interpolate_colors");
-      }
-   }
-   span->arrayMask |= (specular ? SPAN_SPEC : SPAN_RGBA);
+   span->arrayMask |= SPAN_SPEC;
 }
 
 
@@ -1228,15 +1244,17 @@ apply_aa_coverage(SWspan *span)
    if (span->array->ChanType == GL_UNSIGNED_BYTE) {
       GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
       for (i = 0; i < span->end; i++) {
+         const GLfloat a = rgba[i][ACOMP] * coverage[i];
+         rgba[i][ACOMP] = (GLubyte) CLAMP(a, 0.0, 255.0);
          ASSERT(coverage[i] >= 0.0);
          ASSERT(coverage[i] <= 1.0);
-         UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][ACOMP], rgba[i][ACOMP] * coverage[i]);
       }
    }
    else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
       GLushort (*rgba)[4] = span->array->color.sz2.rgba;
       for (i = 0; i < span->end; i++) {
-         UNCLAMPED_FLOAT_TO_USHORT(rgba[i][ACOMP], rgba[i][ACOMP] * coverage[i]);
+         const GLfloat a = rgba[i][ACOMP] * coverage[i];
+         rgba[i][ACOMP] = (GLushort) CLAMP(a, 0.0, 65535.0);
       }
    }
    else {
@@ -1367,10 +1385,10 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    if (!deferredTexture) {
       /* Now we need the rgba array, fill it in if needed */
       if ((span->interpMask & SPAN_RGBA) && (span->arrayMask & SPAN_RGBA) == 0)
-         interpolate_colors(ctx, span, GL_FALSE);
+         interpolate_colors(span);
 
       if (span->interpMask & SPAN_SPEC)
-         interpolate_colors(ctx, span, GL_TRUE);
+         interpolate_specular(span);
 
       if (span->interpMask & SPAN_FOG)
          interpolate_fog(ctx, span);
@@ -1455,10 +1473,10 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    if (deferredTexture) {
       /* Now we need the rgba array, fill it in if needed */
       if ((span->interpMask & SPAN_RGBA) && (span->arrayMask & SPAN_RGBA) == 0)
-         interpolate_colors(ctx, span, GL_FALSE);
+         interpolate_colors(span);
 
       if (span->interpMask & SPAN_SPEC)
-         interpolate_colors(ctx, span, GL_TRUE);
+         interpolate_specular(span);
 
       if (span->interpMask & SPAN_FOG)
          interpolate_fog(ctx, span);
@@ -1487,7 +1505,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
           (ctx->Light.Enabled &&
            ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)) {
          if (span->interpMask & SPAN_SPEC) {
-            interpolate_colors(ctx, span, GL_TRUE);
+            interpolate_specular(span);
          }
          if (span->arrayMask & SPAN_SPEC) {
             add_specular(ctx, span);
