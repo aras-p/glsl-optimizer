@@ -1466,47 +1466,14 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
       wpos[3] = span->w + col * span->dwdx;
    }
    if (inputsRead & (1 << FRAG_ATTRIB_COL0)) {
-      GLfloat *col0 = machine->Inputs[FRAG_ATTRIB_COL0];
       ASSERT(span->arrayMask & SPAN_RGBA);
-      if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-         GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
-         col0[0] = UBYTE_TO_FLOAT(rgba[col][RCOMP]);
-         col0[1] = UBYTE_TO_FLOAT(rgba[col][GCOMP]);
-         col0[2] = UBYTE_TO_FLOAT(rgba[col][BCOMP]);
-         col0[3] = UBYTE_TO_FLOAT(rgba[col][ACOMP]);
-      }
-      else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
-         GLushort (*rgba)[4] = span->array->color.sz2.rgba;
-         col0[0] = USHORT_TO_FLOAT(rgba[col][RCOMP]);
-         col0[1] = USHORT_TO_FLOAT(rgba[col][GCOMP]);
-         col0[2] = USHORT_TO_FLOAT(rgba[col][BCOMP]);
-         col0[3] = USHORT_TO_FLOAT(rgba[col][ACOMP]);
-      }
-      else {
-         GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
-         COPY_4V(col0, rgba[col]);
-      }
+      COPY_4V(machine->Inputs[FRAG_ATTRIB_COL0],
+              span->array->color.sz4.rgba[col]);
    }
    if (inputsRead & (1 << FRAG_ATTRIB_COL1)) {
-      GLfloat *col1 = machine->Inputs[FRAG_ATTRIB_COL1];
-      if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-         GLubyte (*rgba)[4] = span->array->color.sz1.spec;
-         col1[0] = UBYTE_TO_FLOAT(rgba[col][RCOMP]);
-         col1[1] = UBYTE_TO_FLOAT(rgba[col][GCOMP]);
-         col1[2] = UBYTE_TO_FLOAT(rgba[col][BCOMP]);
-         col1[3] = UBYTE_TO_FLOAT(rgba[col][ACOMP]);
-      }
-      else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
-         GLushort (*rgba)[4] = span->array->color.sz2.spec;
-         col1[0] = USHORT_TO_FLOAT(rgba[col][RCOMP]);
-         col1[1] = USHORT_TO_FLOAT(rgba[col][GCOMP]);
-         col1[2] = USHORT_TO_FLOAT(rgba[col][BCOMP]);
-         col1[3] = USHORT_TO_FLOAT(rgba[col][ACOMP]);
-      }
-      else {
-         GLfloat (*rgba)[4] = span->array->color.sz4.spec;
-         COPY_4V(col1, rgba[col]);
-      }
+      ASSERT(span->arrayMask & SPAN_SPEC);
+      COPY_4V(machine->Inputs[FRAG_ATTRIB_COL1],
+              span->array->color.sz4.spec[col]);
    }
    if (inputsRead & (1 << FRAG_ATTRIB_FOGC)) {
       GLfloat *fogc = machine->Inputs[FRAG_ATTRIB_FOGC];
@@ -1554,29 +1521,11 @@ run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
             span->writeAll = GL_FALSE;
          }
 
-         /* Store output registers */
-         {
-            const GLfloat *colOut = machine.Outputs[FRAG_RESULT_COLR];
-            if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-               GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
-               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][RCOMP], colOut[0]);
-               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][GCOMP], colOut[1]);
-               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][BCOMP], colOut[2]);
-               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][ACOMP], colOut[3]);
-            }
-            else if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-               GLushort (*rgba)[4] = span->array->color.sz2.rgba;
-               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][RCOMP], colOut[0]);
-               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][GCOMP], colOut[1]);
-               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][BCOMP], colOut[2]);
-               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][ACOMP], colOut[3]);
-            }
-            else {
-               GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
-               COPY_4V(rgba[i], colOut);
-            }
-         }
-         /* depth value */
+         /* Store result color */
+         COPY_4V(span->array->color.sz4.rgba[i],
+                 machine.Outputs[FRAG_RESULT_COLR]);
+
+         /* Store result depth/z */
          if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
             const GLfloat depth = machine.Outputs[FRAG_RESULT_DEPR][2];
             if (depth <= 0.0)
@@ -1601,6 +1550,9 @@ void
 _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
 {
    const struct gl_fragment_program *program = ctx->FragmentProgram._Current;
+
+   /* incoming colors should be floats */
+   ASSERT(span->array->ChanType == GL_FLOAT);
 
    ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
 

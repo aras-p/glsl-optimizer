@@ -574,36 +574,8 @@ init_machine(GLcontext * ctx, struct atifs_machine *machine,
 	 machine->Registers[i][j] = 0.0;
    }
 
-   if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-      GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
-      GLubyte (*spec)[4] = span->array->color.sz1.spec;
-      inputs[ATI_FS_INPUT_PRIMARY][0] = UBYTE_TO_FLOAT(rgba[col][0]);
-      inputs[ATI_FS_INPUT_PRIMARY][1] = UBYTE_TO_FLOAT(rgba[col][1]);
-      inputs[ATI_FS_INPUT_PRIMARY][2] = UBYTE_TO_FLOAT(rgba[col][2]);
-      inputs[ATI_FS_INPUT_PRIMARY][3] = UBYTE_TO_FLOAT(rgba[col][3]); 
-      inputs[ATI_FS_INPUT_SECONDARY][0] = UBYTE_TO_FLOAT(spec[col][0]);
-      inputs[ATI_FS_INPUT_SECONDARY][1] = UBYTE_TO_FLOAT(spec[col][1]);
-      inputs[ATI_FS_INPUT_SECONDARY][2] = UBYTE_TO_FLOAT(spec[col][2]);
-      inputs[ATI_FS_INPUT_SECONDARY][3] = UBYTE_TO_FLOAT(spec[col][3]);
-  }
-   else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
-      GLushort (*rgba)[4] = span->array->color.sz2.rgba;
-      GLushort (*spec)[4] = span->array->color.sz2.spec;
-      inputs[ATI_FS_INPUT_PRIMARY][0] = USHORT_TO_FLOAT(rgba[col][0]);
-      inputs[ATI_FS_INPUT_PRIMARY][1] = USHORT_TO_FLOAT(rgba[col][1]);
-      inputs[ATI_FS_INPUT_PRIMARY][2] = USHORT_TO_FLOAT(rgba[col][2]);
-      inputs[ATI_FS_INPUT_PRIMARY][3] = USHORT_TO_FLOAT(rgba[col][3]);
-      inputs[ATI_FS_INPUT_SECONDARY][0] = USHORT_TO_FLOAT(spec[col][0]);
-      inputs[ATI_FS_INPUT_SECONDARY][1] = USHORT_TO_FLOAT(spec[col][1]);
-      inputs[ATI_FS_INPUT_SECONDARY][2] = USHORT_TO_FLOAT(spec[col][2]);
-      inputs[ATI_FS_INPUT_SECONDARY][3] = USHORT_TO_FLOAT(spec[col][3]);
-   }
-   else {
-      GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
-      GLfloat (*spec)[4] = span->array->color.sz4.spec;
-      COPY_4V(inputs[ATI_FS_INPUT_PRIMARY], rgba[col]);
-      COPY_4V(inputs[ATI_FS_INPUT_SECONDARY], spec[col]);
-   }
+   COPY_4V(inputs[ATI_FS_INPUT_PRIMARY], span->array->color.sz4.rgba[col]);
+   COPY_4V(inputs[ATI_FS_INPUT_SECONDARY], span->array->color.sz4.spec[col]);
 }
 
 
@@ -617,6 +589,9 @@ _swrast_exec_fragment_shader(GLcontext * ctx, SWspan *span)
    const struct ati_fragment_shader *shader = ctx->ATIFragmentShader.Current;
    struct atifs_machine machine;
    GLuint i;
+
+   /* incoming colors should be floats */
+   ASSERT(span->array->ChanType == GL_FLOAT);
 
    ctx->_CurrentProgram = GL_FRAGMENT_SHADER_ATI;
 
@@ -632,26 +607,9 @@ _swrast_exec_fragment_shader(GLcontext * ctx, SWspan *span)
          /* store result color */
 	 {
 	    const GLfloat *colOut = machine.Registers[0];
-	    /*fprintf(stderr,"outputs %f %f %f %f\n",
+            /*fprintf(stderr,"outputs %f %f %f %f\n",
               colOut[0], colOut[1], colOut[2], colOut[3]); */
-            if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-               GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
-               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][RCOMP], colOut[0]);
-               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][GCOMP], colOut[1]);
-               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][BCOMP], colOut[2]);
-               UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][ACOMP], colOut[3]);
-            }
-            else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
-               GLushort (*rgba)[4] = span->array->color.sz2.rgba;
-               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][RCOMP], colOut[0]);
-               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][GCOMP], colOut[1]);
-               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][BCOMP], colOut[2]);
-               UNCLAMPED_FLOAT_TO_USHORT(rgba[i][ACOMP], colOut[3]);
-            }
-            else {
-               GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
-               COPY_4V(rgba[i], colOut);
-            }
+            COPY_4V(span->array->color.sz4.rgba[i], colOut);
 	 }
       }
    }

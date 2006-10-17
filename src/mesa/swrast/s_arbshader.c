@@ -43,6 +43,8 @@ _swrast_exec_arbshader(GLcontext *ctx, SWspan *span)
    struct gl2_program_intf **pro;
    GLuint i;
 
+   ASSERT(span->array->ChanType == GL_FLOAT);
+
    if (!ctx->ShaderObjects._FragmentShaderPresent)
       return;
 
@@ -57,6 +59,9 @@ _swrast_exec_arbshader(GLcontext *ctx, SWspan *span)
          GLuint j;
          GLboolean discard;
 
+         /*
+          * Load input attributes
+          */
          vec[0] = (GLfloat) span->x + i;
          vec[1] = (GLfloat) span->y;
          vec[2] = (GLfloat) span->array->z[i] / ctx->DrawBuffer->_DepthMaxF;
@@ -64,32 +69,22 @@ _swrast_exec_arbshader(GLcontext *ctx, SWspan *span)
          (**pro).UpdateFixedVarying(pro, SLANG_FRAGMENT_FIXED_FRAGCOORD, vec,
                                     0, 4 * sizeof(GLfloat), GL_TRUE);
 
-         vec[0] = CHAN_TO_FLOAT(span->array->rgba[i][RCOMP]);
-         vec[1] = CHAN_TO_FLOAT(span->array->rgba[i][GCOMP]);
-         vec[2] = CHAN_TO_FLOAT(span->array->rgba[i][BCOMP]);
-         vec[3] = CHAN_TO_FLOAT(span->array->rgba[i][ACOMP]);
-         (**pro).UpdateFixedVarying(pro, SLANG_FRAGMENT_FIXED_COLOR, vec, 0,
-                                    4 * sizeof(GLfloat), GL_TRUE);
+         (**pro).UpdateFixedVarying(pro, SLANG_FRAGMENT_FIXED_COLOR,
+                                    span->array->color.sz4.rgba[i],
+                                    0, 4 * sizeof(GLfloat), GL_TRUE);
 
-         vec[0] = CHAN_TO_FLOAT(span->array->spec[i][RCOMP]);
-         vec[1] = CHAN_TO_FLOAT(span->array->spec[i][GCOMP]);
-         vec[2] = CHAN_TO_FLOAT(span->array->spec[i][BCOMP]);
-         vec[3] = CHAN_TO_FLOAT(span->array->spec[i][ACOMP]);
          (**pro).UpdateFixedVarying(pro, SLANG_FRAGMENT_FIXED_SECONDARYCOLOR,
-                                    vec, 0, 4 * sizeof(GLfloat), GL_TRUE);
+                                    span->array->color.sz4.spec[i],
+                                    0, 4 * sizeof(GLfloat), GL_TRUE);
 
          for (j = 0; j < ctx->Const.MaxTextureCoordUnits; j++) {
-            vec[0] = span->array->texcoords[j][i][0];
-            vec[1] = span->array->texcoords[j][i][1];
-            vec[2] = span->array->texcoords[j][i][2];
-            vec[3] = span->array->texcoords[j][i][3];
             (**pro).UpdateFixedVarying(pro, SLANG_FRAGMENT_FIXED_TEXCOORD,
-                                       vec, j, 4 * sizeof(GLfloat), GL_TRUE);
+                                       span->array->texcoords[j][i],
+                                       j, 4 * sizeof(GLfloat), GL_TRUE);
          }
 
          for (j = 0; j < MAX_VARYING_VECTORS; j++) {
             GLuint k;
-
             for (k = 0; k < VARYINGS_PER_VECTOR; k++) {
                (**pro).UpdateVarying(pro, j * VARYINGS_PER_VECTOR + k,
                                      &span->array->varying[i][j][k],
@@ -99,6 +94,9 @@ _swrast_exec_arbshader(GLcontext *ctx, SWspan *span)
 
          _slang_exec_fragment_shader(pro);
 
+         /*
+          * Store results
+          */
          _slang_fetch_discard(pro, &discard);
          if (discard) {
             span->array->mask[i] = GL_FALSE;
@@ -107,10 +105,7 @@ _swrast_exec_arbshader(GLcontext *ctx, SWspan *span)
          else {
             (**pro).UpdateFixedVarying(pro, SLANG_FRAGMENT_FIXED_FRAGCOLOR,
                                        vec, 0, 4 * sizeof(GLfloat), GL_FALSE);
-            UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][RCOMP], vec[0]);
-            UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][GCOMP], vec[1]);
-            UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][BCOMP], vec[2]);
-            UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][ACOMP], vec[3]);
+            COPY_4V(span->array->color.sz4.rgba[i], vec);
          }
       }
    }

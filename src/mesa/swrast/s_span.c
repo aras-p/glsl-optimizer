@@ -1316,6 +1316,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLbitfield origInterpMask = span->interpMask;
    const GLbitfield origArrayMask = span->arrayMask;
+   const GLenum chanType = span->array->ChanType;
    const GLboolean deferredTexture = !(ctx->Color.AlphaEnabled ||
                                        ctx->FragmentProgram._Enabled ||
                                        ctx->ShaderObjects._FragmentShaderPresent);
@@ -1393,6 +1394,23 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
       if (span->interpMask & SPAN_FOG)
          interpolate_fog(ctx, span);
 
+      /* use float colors if running a fragment program or shader */
+      if (ctx->ShaderObjects._FragmentShaderPresent ||
+          ctx->FragmentProgram._Enabled ||
+          ctx->ATIFragmentShader._Enabled) {
+         const GLenum oldType = span->array->ChanType;
+         /* work with float colors */
+         if (oldType != GL_FLOAT) {
+            GLvoid *src = (oldType == GL_UNSIGNED_BYTE)
+               ? (GLvoid *) span->array->color.sz1.rgba
+               : (GLvoid *) span->array->color.sz2.rgba;
+            _mesa_convert_colors(oldType, src,
+                                 GL_FLOAT, span->array->color.sz4.rgba,
+                                 span->end, span->array->mask);
+            span->array->ChanType = GL_FLOAT;
+         }
+      }
+
       /* Compute fragment colors with fragment program or texture lookups */
 #if FEATURE_ARB_fragment_shader
       if (ctx->ShaderObjects._FragmentShaderPresent) {
@@ -1416,8 +1434,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
       /* Do the alpha test */
       if (ctx->Color.AlphaEnabled) {
          if (!_swrast_alpha_test(ctx, span)) {
-            span->arrayMask = origArrayMask;
-	    return;
+            goto end;
 	 }
       }
    }
@@ -1430,9 +1447,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
       if (ctx->Stencil.Enabled && ctx->DrawBuffer->Visual.stencilBits > 0) {
          /* Combined Z/stencil tests */
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
-            span->interpMask = origInterpMask;
-            span->arrayMask = origArrayMask;
-            return;
+            goto end;
          }
       }
       else if (ctx->DrawBuffer->Visual.depthBits > 0) {
@@ -1440,9 +1455,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
          ASSERT(ctx->Depth.Test);
          ASSERT(span->arrayMask & SPAN_Z);
          if (!_swrast_depth_test_span(ctx, span)) {
-            span->interpMask = origInterpMask;
-            span->arrayMask = origArrayMask;
-            return;
+            goto end;
          }
       }
    }
@@ -1461,9 +1474,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
     * the occlusion test.
     */
    if (colorMask == 0x0) {
-      span->interpMask = origInterpMask;
-      span->arrayMask = origArrayMask;
-      return;
+      goto end;
    }
 
    /* If we were able to defer fragment color computation to now, there's
@@ -1551,7 +1562,6 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
       const GLuint numDrawBuffers = fb->_NumColorDrawBuffers[output];
       GLchan rgbaSave[MAX_WIDTH][4];
       GLuint buf;
-      const GLenum chanType = span->array->ChanType; /* save */
 
       if (numDrawBuffers > 0) {
          if (fb->_ColorDrawBuffers[output][0]->DataType
@@ -1603,11 +1613,12 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
          }
       } /* for buf */
 
-      span->array->ChanType = chanType; /* restore */
    }
 
+end:
    span->interpMask = origInterpMask;
    span->arrayMask = origArrayMask;
+   span->array->ChanType = chanType; /* restore */
 }
 
 
