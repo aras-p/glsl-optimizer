@@ -153,8 +153,9 @@ TAG(clip_line)( GLcontext *ctx, GLuint v0, GLuint v1, GLubyte mask )
       v0 = newvert;
       newvert++;
    }
-   else
+   else {
       ASSERT(t0 == 0.0);
+   }
 
    if (VB->ClipMask[v1]) {
       INTERP_4F( t1, coord[newvert], coord[v1], coord[v0] );
@@ -167,8 +168,9 @@ TAG(clip_line)( GLcontext *ctx, GLuint v0, GLuint v1, GLubyte mask )
 
       newvert++;
    }
-   else
+   else {
       ASSERT(t1 == 0.0);
+   }
 
    tnl->Driver.Render.ClippedLine( ctx, v0, v1 );
 }
