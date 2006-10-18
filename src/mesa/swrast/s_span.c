@@ -1267,8 +1267,25 @@ apply_aa_coverage(SWspan *span)
 
 
 /**
+ * Clamp span's float colors to [0,1]
+ */
+static void
+clamp_colors(SWspan *span)
+{
+   GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
+   GLuint i;
+   ASSERT(span->array->ChanType == GL_FLOAT);
+   for (i = 0; i < span->end; i++) {
+      rgba[i][RCOMP] = CLAMP(rgba[i][RCOMP], 0.0F, 1.0F);
+      rgba[i][GCOMP] = CLAMP(rgba[i][GCOMP], 0.0F, 1.0F);
+      rgba[i][BCOMP] = CLAMP(rgba[i][BCOMP], 0.0F, 1.0F);
+      rgba[i][ACOMP] = CLAMP(rgba[i][ACOMP], 0.0F, 1.0F);
+   }
+}
+
+
+/**
  * Convert the span's color arrays to the given type.
- * XXX this could be put into image.c and reused in several places.
  */
 static void
 convert_color_type(GLcontext *ctx, SWspan *span, GLenum newType)
@@ -1321,10 +1338,13 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
                                        ctx->FragmentProgram._Enabled ||
                                        ctx->ShaderObjects._FragmentShaderPresent);
 
-   ASSERT(span->primitive == GL_POINT  ||  span->primitive == GL_LINE ||
-	  span->primitive == GL_POLYGON  ||  span->primitive == GL_BITMAP);
+   ASSERT(span->primitive == GL_POINT ||
+          span->primitive == GL_LINE ||
+	  span->primitive == GL_POLYGON ||
+          span->primitive == GL_BITMAP);
    ASSERT(span->end <= MAX_WIDTH);
    ASSERT((span->interpMask & span->arrayMask) == 0);
+   ASSERT((span->interpMask & SPAN_RGBA) ^ (span->arrayMask & SPAN_RGBA));
 
    /*
    printf("%s()  interp 0x%x  array 0x%x\n", __FUNCTION__,
@@ -1368,10 +1388,9 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    }
 
    /* Interpolate texcoords? */
-   if (ctx->Texture._EnabledCoordUnits
-       && (span->interpMask & SPAN_TEXTURE)
-       && (span->arrayMask & SPAN_TEXTURE) == 0) {
+   if (ctx->Texture._EnabledCoordUnits && (span->interpMask & SPAN_TEXTURE)) {
       interpolate_texcoords(ctx, span);
+      ASSERT(span->arrayMask & SPAN_TEXTURE);
    }
 
    if (ctx->ShaderObjects._FragmentShaderPresent) {
@@ -1385,7 +1404,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
     */
    if (!deferredTexture) {
       /* Now we need the rgba array, fill it in if needed */
-      if ((span->interpMask & SPAN_RGBA) && (span->arrayMask & SPAN_RGBA) == 0)
+      if (span->interpMask & SPAN_RGBA)
          interpolate_colors(span);
 
       if (span->interpMask & SPAN_SPEC)
@@ -1483,7 +1502,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
     */
    if (deferredTexture) {
       /* Now we need the rgba array, fill it in if needed */
-      if ((span->interpMask & SPAN_RGBA) && (span->arrayMask & SPAN_RGBA) == 0)
+      if (span->interpMask & SPAN_RGBA)
          interpolate_colors(span);
 
       if (span->interpMask & SPAN_SPEC)
@@ -1495,7 +1514,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 #if FEATURE_ARB_fragment_shader
       if (ctx->ShaderObjects._FragmentShaderPresent) {
          if (span->interpMask & SPAN_Z)
-            _swrast_span_interpolate_z (ctx, span);
+            _swrast_span_interpolate_z(ctx, span);
          _swrast_exec_arbshader (ctx, span);
       }
       else
@@ -1510,7 +1529,8 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 
    ASSERT(span->arrayMask & SPAN_RGBA);
 
-   if (!ctx->FragmentProgram._Enabled) {
+   if (!ctx->FragmentProgram._Enabled &&
+       !ctx->ShaderObjects._FragmentShaderPresent) {
       /* Add base and specular colors */
       if (ctx->Fog.ColorSumEnabled ||
           (ctx->Light.Enabled &&
@@ -1540,18 +1560,10 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    }
 
    /* Clamp color/alpha values over the range [0.0, 1.0] before storage */
-#if CHAN_TYPE == GL_FLOAT
-   if (ctx->Color.ClampFragmentColor) {
-      GLchan (*rgba)[4] = span->array->rgba;
-      GLuint i;
-      for (i = 0; i < span->end; i++) {
-         rgba[i][RCOMP] = CLAMP(rgba[i][RCOMP], 0.0, CHAN_MAXF);
-         rgba[i][GCOMP] = CLAMP(rgba[i][GCOMP], 0.0, CHAN_MAXF);
-         rgba[i][BCOMP] = CLAMP(rgba[i][BCOMP], 0.0, CHAN_MAXF);
-         rgba[i][ACOMP] = CLAMP(rgba[i][ACOMP], 0.0, CHAN_MAXF);
-      }
+   if (ctx->Color.ClampFragmentColor &&
+       span->array->ChanType == GL_FLOAT) {
+      clamp_colors(span);
    }
-#endif
 
    /*
     * Write to renderbuffers
