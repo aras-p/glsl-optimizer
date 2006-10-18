@@ -104,6 +104,7 @@ struct brw_compile {
    struct brw_instruction *current;
 
    GLuint flag_value;
+   GLboolean single_program_flow;
 };
 
 

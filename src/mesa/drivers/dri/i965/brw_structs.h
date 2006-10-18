@@ -519,7 +519,22 @@ struct thread3
 struct brw_clip_unit_state
 {
    struct thread0 thread0;
-   struct thread1 thread1;
+   struct
+   {
+      GLuint pad0:7;
+      GLuint sw_exception_enable:1;
+      GLuint pad1:3;
+      GLuint mask_stack_exception_enable:1;
+      GLuint pad2:1;
+      GLuint illegal_op_exception_enable:1;
+      GLuint pad3:2;
+      GLuint floating_point_mode:1;
+      GLuint thread_priority:1;
+      GLuint binding_table_entry_count:8;
+      GLuint pad4:5;
+      GLuint single_program_flow:1;
+   } thread1;
+
    struct thread2 thread2;
    struct thread3 thread3;
 
@@ -532,8 +547,8 @@ struct brw_clip_unit_state
       GLuint pad1:1;
       GLuint urb_entry_allocation_size:5; 
       GLuint pad2:1;
-      GLuint max_threads:6; 	/* may be less */
-      GLuint pad3:1;
+      GLuint max_threads:1; 	/* may be less */
+      GLuint pad3:6;
    } thread4;   
       
    struct
@@ -1322,6 +1337,7 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } generic;
 
+      GLint d;
       GLuint ud;
    } bits3;
 };
