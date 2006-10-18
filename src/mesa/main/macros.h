@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -511,7 +511,18 @@ do {                        \
       (DST)[1] += S;                \
 } while (0)
 
+/** Assign scalers to short vectors */
+#define ASSIGN_2V( V, V0, V1 )	\
+do {				\
+    V[0] = V0;			\
+    V[1] = V1;			\
+} while(0)
 
+/*@}*/
+
+
+/** \name Linear interpolation macros */
+/*@{*/
 
 /**
  * Linear interpolation
@@ -583,15 +594,6 @@ do {                                    \
    case 2: vec[to][1] = LINTERP( (t), (vec)[out][1], (vec)[in][1] );    \
    case 1: vec[to][0] = LINTERP( (t), (vec)[out][0], (vec)[in][0] );    \
    }                                    \
-} while(0)
-
-
-
-/** Assign scalers to short vectors */
-#define ASSIGN_2V( V, V0, V1 )  \
-do {                \
-    V[0] = V0;          \
-    V[1] = V1;          \
 } while(0)
 
 /*@}*/
