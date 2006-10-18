@@ -605,18 +605,18 @@ void r200PageFlip( const __DRIdrawablePrivate *dPriv )
 /* ================================================================
  * Buffer clear
  */
-static void r200Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
-			 GLint cx, GLint cy, GLint cw, GLint ch )
+static void r200Clear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
+                       GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
    GLuint flags = 0;
    GLuint color_mask = 0;
    GLint ret, i;
+   GLint cx, cy, cw, ch;
 
    if ( R200_DEBUG & DEBUG_IOCTL ) {
-      fprintf( stderr, "%s:  all=%d cx=%d cy=%d cw=%d ch=%d\n",
-	       __FUNCTION__, all, cx, cy, cw, ch );
+      fprintf( stderr, "r200Clear\n");
    }
 
    {
@@ -653,7 +653,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    if ( mask ) {
       if (R200_DEBUG & DEBUG_FALLBACKS)
 	 fprintf(stderr, "%s: swrast clear, mask: %x\n", __FUNCTION__, mask);
-      _swrast_Clear( ctx, mask, all, cx, cy, cw, ch );
+      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0 );
    }
 
    if ( !flags ) 
@@ -670,11 +670,17 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       }
    }
 
+   LOCK_HARDWARE( rmesa );
+
+   /* compute region after locking: */
+   cx = ctx->DrawBuffer->_Xmin;
+   cy = ctx->DrawBuffer->_Ymin;
+   cw = ctx->DrawBuffer->_Xmax - cx;
+   ch = ctx->DrawBuffer->_Ymax - cy;
+
    /* Flip top to bottom */
    cx += dPriv->x;
    cy  = dPriv->y + dPriv->h - cy - ch;
-
-   LOCK_HARDWARE( rmesa );
 
    /* Throttle the number of clear ioctls we do.
     */
@@ -717,7 +723,8 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       drm_radeon_clear_rect_t depth_boxes[RADEON_NR_SAREA_CLIPRECTS];
       GLint n = 0;
 
-      if ( !all ) {
+      if (cw != dPriv->w || ch != dPriv->h) {
+         /* clear subregion */
 	 for ( ; i < nr ; i++ ) {
 	    GLint x = box[i].x1;
 	    GLint y = box[i].y1;
@@ -739,6 +746,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	    n++;
 	 }
       } else {
+         /* clear whole window */
 	 for ( ; i < nr ; i++ ) {
 	    *b++ = box[i];
 	    n++;

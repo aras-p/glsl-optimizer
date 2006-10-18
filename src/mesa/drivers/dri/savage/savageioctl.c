@@ -327,11 +327,17 @@ static GLuint savageIntersectClipRects(drm_clip_rect_t *dest,
 }
 
 
-static void savageDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
-			   GLint cx, GLint cy, GLint cw, GLint ch ) 
+static void savageDDClear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
+			   GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo ) 
 {
-  savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
+   savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
    GLuint colorMask, depthMask, clearColor, clearDepth, flags;
+   GLint cx = ctx->DrawBuffer->_Xmin;
+   GLint cy = ctx->DrawBuffer->_Ymin;
+   GLint cw = ctx->DrawBuffer->_Xmax - cx;
+   GLint ch = ctx->DrawBuffer->_Ymax - cy;
+
+   /* XXX FIX ME: the cx,cy,cw,ch vars are currently ignored! */
 
    if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG)
        fprintf (stderr, "%s\n", __FUNCTION__);
@@ -420,7 +426,7 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    }
 
    if (mask) 
-      _swrast_Clear( ctx, mask, all, cx, cy, cw, ch );
+      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0 );
 }
 
 /*

@@ -48,8 +48,8 @@ static drmBufPtr i810_get_buffer_ioctl( i810ContextPtr imesa )
 
 #define DEPTH_SCALE ((1<<16)-1)
 
-static void i810Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
-		       GLint cx, GLint cy, GLint cw, GLint ch ) 
+static void i810Clear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
+		       GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo ) 
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
    __DRIdrawablePrivate *dPriv = imesa->driDrawable;
@@ -80,7 +80,15 @@ static void i810Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    }
 
    if (clear.flags) {
+      GLint cx, cy, cw, ch;
+
       LOCK_HARDWARE( imesa );
+
+      /* compute region after locking: */
+      cx = ctx->DrawBuffer->_Xmin;
+      cy = ctx->DrawBuffer->_Ymin;
+      cw = ctx->DrawBuffer->_Xmax - cx;
+      ch = ctx->DrawBuffer->_Ymax - cy;
 
       /* flip top to bottom */
       cy = dPriv->h-cy-ch;
@@ -94,7 +102,8 @@ static void i810Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	 drm_clip_rect_t *b = (drm_clip_rect_t *)imesa->sarea->boxes;
 	 int n = 0;
 
-	 if (!all) {
+	 if (cw != dPriv->w || ch != dPriv->h) {
+            /* clear sub region */
 	    for ( ; i < nr ; i++) {
 	       GLint x = box[i].x1;
 	       GLint y = box[i].y1;
@@ -116,6 +125,7 @@ static void i810Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	       n++;
 	    }
 	 } else {
+            /* clear whole buffer */
 	    for ( ; i < nr ; i++) {
 	       *b++ = box[i];
 	       n++;
@@ -132,7 +142,7 @@ static void i810Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    }
 
    if (mask) 
-      _swrast_Clear( ctx, mask, all, cx, cy, cw, ch );
+      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0 );
 }
 
 

@@ -204,8 +204,8 @@ drmBufPtr mga_get_buffer_ioctl( mgaContextPtr mmesa )
 
 
 static void
-mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
-            GLint cx, GLint cy, GLint cw, GLint ch )
+mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
+          GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
@@ -218,6 +218,7 @@ mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    int i;
    static int nrclears;
    drm_mga_clear_t clear;
+   GLint cx, cy, cw, ch;
 
    FLUSH_BATCH( mmesa );
 
@@ -250,6 +251,12 @@ mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    if ( flags ) {
       LOCK_HARDWARE( mmesa );
 
+      /* compute region after locking: */
+      cx = ctx->DrawBuffer->_Xmin;
+      cy = ctx->DrawBuffer->_Ymin;
+      cw = ctx->DrawBuffer->_Xmax - cx;
+      ch = ctx->DrawBuffer->_Ymax - cy;
+
       if ( mmesa->dirty_cliprects )
 	 mgaUpdateRects( mmesa, (MGA_FRONT | MGA_BACK) );
 
@@ -269,7 +276,8 @@ mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	 drm_clip_rect_t *b = mmesa->sarea->boxes;
 	 int n = 0;
 
-	 if (!all) {
+	 if (cw != dPriv->w || ch != dPriv->h) {
+            /* clear subregion */
 	    for ( ; i < nr ; i++) {
 	       GLint x = box[i].x1;
 	       GLint y = box[i].y1;
@@ -291,6 +299,7 @@ mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	       n++;
 	    }
 	 } else {
+            /* clear whole window */
 	    for ( ; i < nr ; i++) {
 	       *b++ = box[i];
 	       n++;
@@ -325,7 +334,7 @@ mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    }
 
    if (mask) 
-      _swrast_Clear( ctx, mask, all, cx, cy, cw, ch );
+      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0 );
 }
 
 

@@ -123,16 +123,22 @@ CreatorComputePageFillFixups(struct ff_fixups *fixups,
 }
 
 static void
-ffb_do_clear(ffbContextPtr fmesa, __DRIdrawablePrivate *dPriv,
-	     GLboolean all, GLint cx, GLint cy, GLint cwidth,
-	     GLint cheight)
+ffb_do_clear(GLcontext *ctx, __DRIdrawablePrivate *dPriv)
 {
+	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	FFBDRIPtr gDRIPriv = (FFBDRIPtr) fmesa->driScreen->pDevPriv;
 	ffb_fbcPtr ffb = fmesa->regs;
 	drm_clip_rect_t *box = dPriv->pClipRects;
 	int nc = dPriv->numClipRects;
+	GLint cx, cy, cw, ch;
 
-	cy  = dPriv->h - cy - cheight;
+	/* compute region after locking: */
+	cx = ctx->DrawBuffer->_Xmin;
+	cy = ctx->DrawBuffer->_Ymin;
+	cw = ctx->DrawBuffer->_Xmax - cx;
+	ch = ctx->DrawBuffer->_Ymax - cy;
+
+	cy  = dPriv->h - cy - ch;
 	cx += dPriv->x;
 	cy += dPriv->y;
 
@@ -144,25 +150,6 @@ ffb_do_clear(ffbContextPtr fmesa, __DRIdrawablePrivate *dPriv,
 		int paligned_y, paligned_x;
 		int paligned_h, paligned_w = 0;
 		int extra_work;
-
-		if (!all) {
-			if (x < cx) {
-				width -= cx - x;
-				x = cx;
-			}
-			if (y < cy) {
-				height -= cy - y;
-				y = cy;
-			}
-			if (x + width > cx + cwidth)
-				width = cx + cwidth - x;
-			if (y + height > cy + cheight)
-				height = cy + cheight - y;
-			if (width <= 0)
-				continue;
-			if (height <= 0)
-				continue;
-		}
 
 		if (BOX_AREA(width, height) < gDRIPriv->fastfill_small_area) {
 			FFBFifo(fmesa, 5);
@@ -262,17 +249,15 @@ ffb_do_clear(ffbContextPtr fmesa, __DRIdrawablePrivate *dPriv,
 	}
 }
 
-void ffbDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
-		GLint cx, GLint cy, GLint cwidth, GLint cheight)
+void ffbDDClear(GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
+		GLint cxFoo, GLint cyFoo, GLint cwidthFoo, GLint cheightFoo)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
 	unsigned int stcmask = BUFFER_BIT_STENCIL;
 
 #ifdef CLEAR_TRACE
-	fprintf(stderr, "ffbDDClear: mask(%08x) all(%d) "
-		"[x(%x)y(%x)w(%x)h(%x)]\n",
-		mask, (int) all, cx, cy, cwidth, cheight);
+	fprintf(stderr, "ffbDDClear: mask(%08x) \n", mask);
 #endif
 	if (!(fmesa->ffb_sarea->flags & FFB_DRI_FFB2PLUS))
 		stcmask = 0;
@@ -328,7 +313,7 @@ void ffbDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 			if (mask & stcmask)
 				ffb->consty = fmesa->clear_stencil;
 
-			ffb_do_clear(fmesa, dPriv, all, cx, cy, cwidth, cheight);
+			ffb_do_clear(ctx, dPriv);
 
 			FFBFifo(fmesa, 6);
 			ffb->ppc = fmesa->ppc;
@@ -349,6 +334,6 @@ void ffbDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 	}
 
 	if (mask) 
-		_swrast_Clear(ctx, mask, all, cx, cy, cwidth, cheight);
+		_swrast_Clear(ctx, mask, 0, 0, 0, 0, 0);
 }
 

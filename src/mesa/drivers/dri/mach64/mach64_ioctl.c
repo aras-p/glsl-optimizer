@@ -665,8 +665,8 @@ void mach64PerformanceBoxesLocked( mach64ContextPtr mmesa )
  * Buffer clear
  */
 
-static void mach64DDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
-			   GLint cx, GLint cy, GLint cw, GLint ch )
+static void mach64DDClear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
+			   GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT( ctx );
    __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
@@ -674,10 +674,10 @@ static void mach64DDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    GLuint flags = 0;
    GLint i;
    GLint ret;
+   GLint cx, cy, cw, ch;
 
    if ( MACH64_DEBUG & DEBUG_VERBOSE_API ) {
-      fprintf( stderr, "%s: all=%d %d,%d %dx%d\n",
-	       __FUNCTION__, all, cx, cy, cw, ch );
+      fprintf( stderr, "mach64DDClear\n");
    }
 
 #if ENABLE_PERF_BOXES
@@ -713,14 +713,19 @@ static void mach64DDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    }
 
    if ( mask )
-      _swrast_Clear( ctx, mask, all, cx, cy, cw, ch );
+      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0 );
 
    if ( !flags )
       return;
 
    LOCK_HARDWARE( mmesa );
 
-   /* This needs to be in the locked region, so updated drawable origin is used */
+   /* compute region after locking: */
+   cx = ctx->DrawBuffer->_Xmin;
+   cy = ctx->DrawBuffer->_Ymin;
+   cw = ctx->DrawBuffer->_Xmax - cx;
+   ch = ctx->DrawBuffer->_Ymax - cy;
+
    /* Flip top to bottom */
    cx += mmesa->drawX;
    cy  = mmesa->drawY + dPriv->h - cy - ch;
@@ -737,7 +742,8 @@ static void mach64DDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       drm_clip_rect_t *b = mmesa->sarea->boxes;
       GLint n = 0;
 
-      if ( !all ) {
+      if (cw != dPriv->w || ch != dPriv->h) {
+         /* clear subregion */
 	 for ( ; i < nr ; i++ ) {
 	    GLint x = box[i].x1;
 	    GLint y = box[i].y1;
@@ -759,6 +765,7 @@ static void mach64DDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	    n++;
 	 }
       } else {
+         /* clear whole window */
 	 for ( ; i < nr ; i++ ) {
 	    *b++ = box[i];
 	    n++;

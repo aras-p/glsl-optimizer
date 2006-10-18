@@ -203,7 +203,7 @@ static void viaFillBuffer(struct via_context *vmesa,
 
 
 static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
-                     GLint cx, GLint cy, GLint cw, GLint ch)
+                     GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo)
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
@@ -261,9 +261,16 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
    if (flag) {
       drm_clip_rect_t *boxes, *tmp_boxes = 0;
       int nr = 0;
+      GLint cx, cy, cw, ch;
 
       LOCK_HARDWARE(vmesa);
 	    
+      /* get region after locking: */
+      cx = ctx->DrawBuffer->_Xmin;
+      cy = ctx->DrawBuffer->_Ymin;
+      cw = ctx->DrawBuffer->_Xmax - cx;
+      ch = ctx->DrawBuffer->_Ymax - cy;
+
       /* flip top to bottom */
       cy = dPriv->h - cy - ch;
       cx += vmesa->drawX + vmesa->drawXoff;
@@ -328,7 +335,7 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
    }
    
    if (mask)
-      _swrast_Clear(ctx, mask, all, cx, cy, cw, ch);
+      _swrast_Clear(ctx, mask, 0, 0, 0, 0, 0);
 }
 
 

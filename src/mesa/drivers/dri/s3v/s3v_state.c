@@ -73,11 +73,17 @@ static void s3vDDBlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
  * Buffer clear
  */
 
-static void s3vDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
-			       GLint cx, GLint cy, GLint cw, GLint ch )
+static void s3vDDClear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
+                        GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo )
 {
 	s3vContextPtr vmesa = S3V_CONTEXT(ctx);
 	unsigned int _stride;
+        GLint cx = ctx->DrawBuffer->_Xmin;
+        GLint cy = ctx->DrawBuffer->_Ymin;
+        GLint cw = ctx->DrawBuffer->_Xmax - cx;
+        GLint ch = ctx->DrawBuffer->_Ymax - cy;
+
+        /* XXX FIX ME: the cx,cy,cw,ch vars are currently ignored! */
 
 	vmesa->restore_primitive = -1;
 
@@ -120,7 +126,7 @@ static void s3vDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	if (mask & BUFFER_BIT_DEPTH) { /* depth */
 		DEBUG(("BUFFER_BIT_DEPTH\n"));
 		
-		_stride = ((cw+31)&~31) * 2;
+		_stride = ((cw+31)&~31) * 2; /* XXX cw or Buffer->Width??? */
 
 		DMAOUT_CHECK(BITBLT_SRC_BASE, 15);
 	        	DMAOUT(0);
@@ -157,7 +163,7 @@ static void s3vDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	if ( mask )
 		DEBUG(("still masked ;3(\n")); */ /* yes */
 #else
-      _swrast_Clear( ctx, mask, all, cx, cy, cw, ch );
+      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0 );
 #endif
 }
 

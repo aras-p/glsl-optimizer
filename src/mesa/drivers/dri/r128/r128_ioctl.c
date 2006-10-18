@@ -399,8 +399,8 @@ void r128PageFlip( const __DRIdrawablePrivate *dPriv )
  * Buffer clear
  */
 
-static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
-			 GLint cx, GLint cy, GLint cw, GLint ch )
+static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
+                       GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = rmesa->driDrawable;
@@ -409,6 +409,7 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    GLint i;
    GLint ret;
    GLuint depthmask = 0;
+   GLint cx, cy, cw, ch;
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "%s:\n", __FUNCTION__ );
@@ -453,11 +454,17 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 
    if ( flags ) {
 
+      LOCK_HARDWARE( rmesa );
+
+      /* compute region after locking: */
+      cx = ctx->DrawBuffer->_Xmin;
+      cy = ctx->DrawBuffer->_Ymin;
+      cw = ctx->DrawBuffer->_Xmax - cx;
+      ch = ctx->DrawBuffer->_Ymax - cy;
+
       /* Flip top to bottom */
       cx += dPriv->x;
       cy  = dPriv->y + dPriv->h - cy - ch;
-
-      LOCK_HARDWARE( rmesa );
 
       /* FIXME: Do we actually need this?
        */
@@ -471,7 +478,8 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	 drm_clip_rect_t *b = rmesa->sarea->boxes;
 	 GLint n = 0;
 
-	 if ( !all ) {
+	 if (cw != dPriv->w || ch != dPriv->h) {
+            /* clear subregion */
 	    for ( ; i < nr ; i++ ) {
 	       GLint x = box[i].x1;
 	       GLint y = box[i].y1;
@@ -493,6 +501,7 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	       n++;
 	    }
 	 } else {
+            /* clear whole window */
 	    for ( ; i < nr ; i++ ) {
 	       *b++ = box[i];
 	       n++;
@@ -532,7 +541,7 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    }
 
    if ( mask )
-      _swrast_Clear( ctx, mask, all, cx, cy, cw, ch );
+      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0 );
 }
 
 
