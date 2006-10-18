@@ -70,7 +70,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_EXT_secondary_color
 #include "extension_helper.h"
 
-#define DRIVER_DATE	"20060327"
+#define DRIVER_DATE	"20061018"
 
 #include "vblank.h"
 #include "utils.h"
@@ -79,21 +79,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 int RADEON_DEBUG = (0);
 #endif
 
-
-/* Return the width and height of the given buffer.
- */
-static void radeonGetBufferSize( GLframebuffer *buffer,
-				 GLuint *width, GLuint *height )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-
-   LOCK_HARDWARE( rmesa );
-   *width  = rmesa->dri.drawable->w;
-   *height = rmesa->dri.drawable->h;
-
-   UNLOCK_HARDWARE( rmesa );
-}
 
 /* Return various strings for glGetString().
  */
@@ -186,7 +171,7 @@ static const struct tnl_pipeline_stage *radeon_pipeline[] = {
  */
 static void radeonInitDriverFuncs( struct dd_function_table *functions )
 {
-    functions->GetBufferSize	= radeonGetBufferSize;
+    functions->GetBufferSize	= NULL; /* OBSOLETE */
     functions->GetString	= radeonGetString;
 }
 
@@ -280,7 +265,8 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    /* Init radeon context data */
    rmesa->dri.context = driContextPriv;
    rmesa->dri.screen = sPriv;
-   rmesa->dri.drawable = NULL; /* Set by XMesaMakeCurrent */
+   rmesa->dri.drawable = NULL;
+   rmesa->dri.readable = NULL;
    rmesa->dri.hwContext = driContextPriv->hHWContext;
    rmesa->dri.hwLock = &sPriv->pSAREA->lock;
    rmesa->dri.fd = sPriv->fd;
@@ -621,11 +607,17 @@ radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
          /* XXX we may need to validate the drawable here!!! */
 	 driDrawableInitVBlank( driDrawPriv, newCtx->vblank_flags,
 				&newCtx->vbl_seq );
+      }
+      
+      if ( (newCtx->dri.drawable != driDrawPriv)
+	   || (newCtx->dri.readable != driReadPriv) ) {
 	 newCtx->dri.drawable = driDrawPriv;
+	 newCtx->dri.readable = driReadPriv;
+
 	 radeonUpdateWindow( newCtx->glCtx );
 	 radeonUpdateViewportOffset( newCtx->glCtx );
       }
-  
+
       _mesa_make_current( newCtx->glCtx,
 			  (GLframebuffer *) driDrawPriv->driverPrivate,
 			  (GLframebuffer *) driReadPriv->driverPrivate );

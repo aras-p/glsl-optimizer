@@ -1635,25 +1635,42 @@ static void radeonLogicOpCode( GLcontext *ctx, GLenum opcode )
  */
 void radeonSetCliprects( radeonContextPtr rmesa )
 {
-   __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
+   __DRIdrawablePrivate *const drawable = rmesa->dri.drawable;
+   __DRIdrawablePrivate *const readable = rmesa->dri.readable;
+   GLframebuffer *const draw_fb = (GLframebuffer*) drawable->driverPrivate;
+   GLframebuffer *const read_fb = (GLframebuffer*) readable->driverPrivate;
 
-   if (rmesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0]
+   if (draw_fb->_ColorDrawBufferMask[0]
        == BUFFER_BIT_BACK_LEFT) {
       /* Can't ignore 2d windows if we are page flipping.
        */
-      if ( dPriv->numBackClipRects == 0 || rmesa->doPageFlip ) {
-	 rmesa->numClipRects = dPriv->numClipRects;
-	 rmesa->pClipRects = dPriv->pClipRects;
+      if ( drawable->numBackClipRects == 0 || rmesa->doPageFlip ) {
+	 rmesa->numClipRects = drawable->numClipRects;
+	 rmesa->pClipRects = drawable->pClipRects;
       }
       else {
-	 rmesa->numClipRects = dPriv->numBackClipRects;
-	 rmesa->pClipRects = dPriv->pBackClipRects;
+	 rmesa->numClipRects = drawable->numBackClipRects;
+	 rmesa->pClipRects = drawable->pBackClipRects;
       }
    }
    else {
       /* front buffer (or none, or multiple buffers */
-      rmesa->numClipRects = dPriv->numClipRects;
-      rmesa->pClipRects = dPriv->pClipRects;
+      rmesa->numClipRects = drawable->numClipRects;
+      rmesa->pClipRects = drawable->pClipRects;
+   }
+
+   if ((draw_fb->Width != drawable->w) || (draw_fb->Height != drawable->h)) {
+      _mesa_resize_framebuffer(&rmesa->glCtx, draw_fb,
+			       drawable->w, drawable->h);
+      draw_fb->Initialized = GL_TRUE;
+   }
+
+   if (drawable != readable) {
+      if ((read_fb->Width != readable->w) || (read_fb->Height != readable->h)) {
+	 _mesa_resize_framebuffer(&rmesa->glCtx, read_fb,
+				  readable->w, readable->h);
+	 read_fb->Initialized = GL_TRUE;
+      }
    }
 
    if (rmesa->state.scissor.enabled)

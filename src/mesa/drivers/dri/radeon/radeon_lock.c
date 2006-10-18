@@ -71,7 +71,8 @@ radeonUpdatePageFlipping( radeonContextPtr rmesa )
  */
 void radeonGetLock( radeonContextPtr rmesa, GLuint flags )
 {
-   __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
+   __DRIdrawablePrivate *const drawable = rmesa->dri.drawable;
+   __DRIdrawablePrivate *const readable = rmesa->dri.readable;
    __DRIscreenPrivate *sPriv = rmesa->dri.screen;
    drm_radeon_sarea_t *sarea = rmesa->sarea;
 
@@ -85,14 +86,17 @@ void radeonGetLock( radeonContextPtr rmesa, GLuint flags )
     * Since the hardware state depends on having the latest drawable
     * clip rects, all state checking must be done _after_ this call.
     */
-   DRI_VALIDATE_DRAWABLE_INFO( sPriv, dPriv );
+   DRI_VALIDATE_DRAWABLE_INFO( sPriv, drawable );
+   if (drawable != readable) {
+      DRI_VALIDATE_DRAWABLE_INFO( sPriv, readable );
+   }
 
-   if ( rmesa->lastStamp != dPriv->lastStamp ) {
+   if ( rmesa->lastStamp != drawable->lastStamp ) {
       radeonUpdatePageFlipping( rmesa );
       radeonSetCliprects( rmesa );
       radeonUpdateViewportOffset( rmesa->glCtx );
-      driUpdateFramebufferSize(rmesa->glCtx, dPriv);
-      rmesa->lastStamp = dPriv->lastStamp;
+      driUpdateFramebufferSize(rmesa->glCtx, drawable);
+      rmesa->lastStamp = drawable->lastStamp;
    }
 
    RADEON_STATECHANGE( rmesa, ctx );

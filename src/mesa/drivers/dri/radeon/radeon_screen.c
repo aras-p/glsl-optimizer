@@ -727,6 +727,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	 (*glx_enable_extension)( psc, "GLX_MESA_allocate_memory" );
 
       (*glx_enable_extension)( psc, "GLX_MESA_copy_sub_buffer" );
+      (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
    }
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
