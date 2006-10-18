@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -125,6 +125,7 @@ TAG(clip_line)( GLcontext *ctx, GLuint v0, GLuint v1, GLubyte mask )
    GLfloat t0 = 0;
    GLfloat t1 = 0;
    GLuint p;
+   const GLuint v0_orig = v0;
 
    if (mask & 0x3f) {
       LINE_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
@@ -157,9 +158,13 @@ TAG(clip_line)( GLcontext *ctx, GLuint v0, GLuint v1, GLubyte mask )
       ASSERT(t0 == 0.0);
    }
 
+   /* Note: we need to use vertex v0_orig when computing the new
+    * interpolated/clipped vertex position, not the current v0 which
+    * may have got set when we clipped the other end of the line!
+    */
    if (VB->ClipMask[v1]) {
-      INTERP_4F( t1, coord[newvert], coord[v1], coord[v0] );
-      interp( ctx, t1, newvert, v1, v0, GL_FALSE );
+      INTERP_4F( t1, coord[newvert], coord[v1], coord[v0_orig] );
+      interp( ctx, t1, newvert, v1, v0_orig, GL_FALSE );
 
       if (ctx->Light.ShadeModel == GL_FLAT)
 	 tnl->Driver.Render.CopyPV( ctx, newvert, v1 );
