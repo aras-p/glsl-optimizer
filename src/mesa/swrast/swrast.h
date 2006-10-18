@@ -134,9 +134,7 @@ _swrast_Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	       GLint x, GLint y, GLint width, GLint height );
 
 extern void
-_swrast_Accum( GLcontext *ctx, GLenum op,
-	       GLfloat value, GLint xpos, GLint ypos,
-	       GLint width, GLint height );
+_swrast_Accum(GLcontext *ctx, GLenum op, GLfloat value);
 
 
 

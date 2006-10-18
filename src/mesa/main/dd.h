@@ -118,10 +118,9 @@ struct dd_function_table {
     */
    /*@{*/
    /**
-    * Execute glAccum command within the given scissor region.
+    * Execute glAccum command.
     */
-   void (*Accum)( GLcontext *ctx, GLenum op, GLfloat value,
-		  GLint xpos, GLint ypos, GLint width, GLint height );
+   void (*Accum)( GLcontext *ctx, GLenum op, GLfloat value );
    /*@}*/
 
 

@@ -541,12 +541,10 @@ accum_return(GLcontext *ctx, GLfloat value,
  * Software fallback for glAccum.
  */
 void
-_swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
-	       GLint xpos, GLint ypos,
-	       GLint width, GLint height )
-
+_swrast_Accum(GLcontext *ctx, GLenum op, GLfloat value)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GLint xpos, ypos, width, height;
 
    if (SWRAST_CONTEXT(ctx)->NewState)
       _swrast_validate_derived( ctx );
@@ -557,6 +555,14 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
    }
 
    RENDER_START(swrast, ctx);
+
+   /* Compute region after calling RENDER_START so that we know the
+    * drawbuffer's size/bounds are up to date.
+    */
+   xpos = ctx->DrawBuffer->_Xmin;
+   ypos = ctx->DrawBuffer->_Ymin;
+   width =  ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
+   height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
 
    switch (op) {
       case GL_ADD:

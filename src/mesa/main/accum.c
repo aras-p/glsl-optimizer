@@ -94,11 +94,7 @@ _mesa_Accum( GLenum op, GLfloat value )
    }
 
    if (ctx->RenderMode == GL_RENDER) {
-      GLint x = ctx->DrawBuffer->_Xmin;
-      GLint y = ctx->DrawBuffer->_Ymin;
-      GLint width =  ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
-      GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
-      ctx->Driver.Accum(ctx, op, value, x, y, width, height);
+      ctx->Driver.Accum(ctx, op, value);
    }
 }
 
