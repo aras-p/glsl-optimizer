@@ -211,7 +211,7 @@ color_mask(GLcontext *ctx,
  * Clear the front or back color buffer, if it's implemented with a pixmap.
  */
 static void
-clear_pixmap(GLcontext *ctx, struct xmesa_renderbuffer *xrb, GLboolean all,
+clear_pixmap(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
              GLint x, GLint y, GLint width, GLint height)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
@@ -224,92 +224,41 @@ clear_pixmap(GLcontext *ctx, struct xmesa_renderbuffer *xrb, GLboolean all,
    assert(xrb->pixmap);
    assert(xmbuf->cleargc);
 
-   if (all) {
-      XMesaFillRectangle( xmesa->display, xrb->pixmap, xmbuf->cleargc,
-                          0, 0, xrb->Base.Width + 1, xrb->Base.Height + 1 );
-   }
-   else {
-      XMesaFillRectangle( xmesa->display, xrb->pixmap, xmbuf->cleargc,
-                          x, xrb->Base.Height - y - height,
-                          width, height );
-   }
+   XMesaFillRectangle( xmesa->display, xrb->pixmap, xmbuf->cleargc,
+                       x, xrb->Base.Height - y - height,
+                       width, height );
 }
 
 
 static void
 clear_8bit_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
-                   GLboolean all, GLint x, GLint y, GLint width, GLint height )
+                   GLint x, GLint y, GLint width, GLint height )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-
-   if (all) {
-      const size_t n = xrb->ximage->bytes_per_line * xrb->Base.Height;
-      MEMSET( xrb->ximage->data, xmesa->clearpixel, n );
-   }
-   else {
-      GLint i;
-      for (i=0;i<height;i++) {
-         GLubyte *ptr = PIXEL_ADDR1(xrb, x, y + i);
-         MEMSET( ptr, xmesa->clearpixel, width );
-      }
+   GLint i;
+   for (i = 0; i < height; i++) {
+      GLubyte *ptr = PIXEL_ADDR1(xrb, x, y + i);
+      MEMSET( ptr, xmesa->clearpixel, width );
    }
 }
 
 
 static void
 clear_HPCR_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
-                   GLboolean all, GLint x, GLint y, GLint width, GLint height )
+                   GLint x, GLint y, GLint width, GLint height )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-
-   if (all) {
-      const GLuint c16 = xrb->ximage->bytes_per_line & ~0xf;
-      GLuint i;
-      GLubyte *ptr  = (GLubyte *) xrb->ximage->data;
-      for (i = 0; i < xrb->Base.Height; i++) {
-         GLuint j;
-         const GLubyte *sptr = xmesa->xm_visual->hpcr_clear_ximage_pattern[0];
-         if (i&1) {
-            sptr += 16;
-         }
-         for (j=0; j<c16; j+=16) {
-            ptr[0] = sptr[0];
-            ptr[1] = sptr[1];
-            ptr[2] = sptr[2];
-            ptr[3] = sptr[3];
-            ptr[4] = sptr[4];
-            ptr[5] = sptr[5];
-            ptr[6] = sptr[6];
-            ptr[7] = sptr[7];
-            ptr[8] = sptr[8];
-            ptr[9] = sptr[9];
-            ptr[10] = sptr[10];
-            ptr[11] = sptr[11];
-            ptr[12] = sptr[12];
-            ptr[13] = sptr[13];
-            ptr[14] = sptr[14];
-            ptr[15] = sptr[15];
-            ptr += 16;
-         }
-         for (; j < (GLuint) xrb->ximage->bytes_per_line; j++) {
-            *ptr = sptr[j&15];
-            ptr++;
-         }
+   GLint i;
+   for (i = y; i < y + height; i++) {
+      GLubyte *ptr = PIXEL_ADDR1( xrb, x, i );
+      int j;
+      const GLubyte *sptr = xmesa->xm_visual->hpcr_clear_ximage_pattern[0];
+      if (i & 1) {
+         sptr += 16;
       }
-   }
-   else {
-      GLint i;
-      for (i=y; i<y+height; i++) {
-         GLubyte *ptr = PIXEL_ADDR1( xrb, x, i );
-         int j;
-         const GLubyte *sptr = xmesa->xm_visual->hpcr_clear_ximage_pattern[0];
-         if (i&1) {
-            sptr += 16;
-         }
-         for (j=x; j<x+width; j++) {
-            *ptr = sptr[j&15];
-            ptr++;
-         }
+      for (j = x; j < x + width; j++) {
+         *ptr = sptr[j&15];
+         ptr++;
       }
    }
 }
@@ -317,42 +266,20 @@ clear_HPCR_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 
 static void
 clear_16bit_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
-                    GLboolean all, GLint x, GLint y, GLint width, GLint height)
+                    GLint x, GLint y, GLint width, GLint height)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   register GLuint pixel = (GLuint) xmesa->clearpixel;
+   GLuint pixel = (GLuint) xmesa->clearpixel;
+   GLint i, j;
 
    if (xmesa->swapbytes) {
       pixel = ((pixel >> 8) & 0x00ff) | ((pixel << 8) & 0xff00);
    }
 
-   if (all) {
-      GLuint *ptr4 = (GLuint *) xrb->ximage->data;
-      if ((pixel & 0xff) == ((pixel >> 8) & 0xff)) {
-         /* low and high bytes are equal so use memset() */
-         const GLuint n = xrb->ximage->bytes_per_line * xrb->Base.Height;
-         MEMSET( ptr4, pixel & 0xff, n );
-      }
-      else {
-         const GLuint n = xrb->ximage->bytes_per_line * xrb->Base.Height / 4;
-         GLuint i;
-         pixel = pixel | (pixel<<16);
-         for (i = 0; i < n; i++) {
-            ptr4[i] = pixel;
-         }
-         ptr4 += n;
-         /* might be one last GLushort to set */
-         if ((xrb->ximage->bytes_per_line * xrb->Base.Height) & 0x2)
-            *(GLushort *)ptr4 = pixel & 0xffff;
-      }
-   }
-   else {
-      GLint i, j;
-      for (j=0;j<height;j++) {
-         GLushort *ptr2 = PIXEL_ADDR2(xrb, x, y + j);
-         for (i=0;i<width;i++) {
-            *ptr2++ = pixel;
-         }
+   for (j = 0; j < height; j++) {
+      GLushort *ptr2 = PIXEL_ADDR2(xrb, x, y + j);
+      for (i = 0; i < width; i++) {
+         ptr2[i] = pixel;
       }
    }
 }
@@ -361,61 +288,31 @@ clear_16bit_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 /* Optimized code provided by Nozomi Ytow <noz@xfree86.org> */
 static void
 clear_24bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
-                   GLboolean all, GLint x, GLint y, GLint width, GLint height)
+                   GLint x, GLint y, GLint width, GLint height)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = xmesa->clearcolor[0];
    const GLubyte g = xmesa->clearcolor[1];
    const GLubyte b = xmesa->clearcolor[2];
 
-   if (all) {
-      if (r == g && g == b) {
-         /* same value for all three components (gray) */
-         const GLint w3 = xrb->Base.Width * 3;
-         const GLint h = xrb->Base.Height;
-         GLint i;
-         for (i = 0; i < h; i++) {
-            bgr_t *ptr3 = PIXEL_ADDR3(xrb, 0, i);
-            MEMSET(ptr3, r, w3);
-         }
-      }
-      else {
-         /* the usual case */
-         const GLint w = xrb->Base.Width;
-         const GLint h = xrb->Base.Height;
-         GLint i, j;
-         for (i = 0; i < h; i++) {
-            bgr_t *ptr3 = PIXEL_ADDR3(xrb, 0, i);
-            for (j = 0; j < w; j++) {
-               ptr3->r = r;
-               ptr3->g = g;
-               ptr3->b = b;
-               ptr3++;
-            }
-         }
+   if (r == g && g == b) {
+      /* same value for all three components (gray) */
+      GLint j;
+      for (j = 0; j < height; j++) {
+         bgr_t *ptr3 = PIXEL_ADDR3(xrb, x, y + j);
+         MEMSET(ptr3, r, 3 * width);
       }
    }
    else {
-      /* only clear subrect of color buffer */
-      if (r == g && g == b) {
-         /* same value for all three components (gray) */
-         GLint j;
-         for (j=0;j<height;j++) {
-            bgr_t *ptr3 = PIXEL_ADDR3(xrb, x, y + j);
-            MEMSET(ptr3, r, 3 * width);
-         }
-      }
-      else {
-         /* non-gray clear color */
-         GLint i, j;
-         for (j = 0; j < height; j++) {
-            bgr_t *ptr3 = PIXEL_ADDR3(xrb, x, y + j);
-            for (i = 0; i < width; i++) {
-               ptr3->r = r;
-               ptr3->g = g;
-               ptr3->b = b;
-               ptr3++;
-            }
+      /* non-gray clear color */
+      GLint i, j;
+      for (j = 0; j < height; j++) {
+         bgr_t *ptr3 = PIXEL_ADDR3(xrb, x, y + j);
+         for (i = 0; i < width; i++) {
+            ptr3->r = r;
+            ptr3->g = g;
+            ptr3->b = b;
+            ptr3++;
          }
       }
    }
@@ -424,7 +321,7 @@ clear_24bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 
 static void
 clear_32bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
-                   GLboolean all, GLint x, GLint y, GLint width, GLint height)
+                   GLint x, GLint y, GLint width, GLint height)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint pixel = (GLuint) xmesa->clearpixel;
@@ -439,10 +336,12 @@ clear_32bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
             | ((pixel << 24) & 0xff000000);
    }
 
-   if (all) {
+   if (width == xrb->Base.Width && height == xrb->Base.Height) {
+      /* clearing whole buffer */
       const GLuint n = xrb->Base.Width * xrb->Base.Height;
       GLuint *ptr4 = (GLuint *) xrb->ximage->data;
       if (pixel == 0) {
+         /* common case */
          _mesa_memset(ptr4, pixel, 4 * n);
       }
       else {
@@ -452,6 +351,7 @@ clear_32bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
       }
    }
    else {
+      /* clearing scissored region */
       GLint i, j;
       for (j = 0; j < height; j++) {
          GLuint *ptr4 = PIXEL_ADDR4(xrb, x, y + j);
@@ -465,14 +365,11 @@ clear_32bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 
 static void
 clear_nbit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
-                  GLboolean all, GLint x, GLint y, GLint width, GLint height)
+                  GLint x, GLint y, GLint width, GLint height)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xrb->ximage;
    GLint i, j;
-
-   /* We can ignore 'all' here - x, y, width, height are always right */
-   (void) all;
 
    /* TODO: optimize this */
    y = YFLIP(xrb, y);
@@ -487,12 +384,17 @@ clear_nbit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 
 static void
 clear_buffers( GLcontext *ctx, GLbitfield mask,
-               GLboolean all, GLint x, GLint y, GLint width, GLint height )
+               GLboolean all, GLint xFoo, GLint yFoo,
+               GLint widthFoo, GLint heightFoo )
 {
    if (ctx->DrawBuffer->Name == 0) {
       /* this is a window system framebuffer */
       const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask;
       XMesaBuffer b = XMESA_BUFFER(ctx->DrawBuffer);
+      const GLint x = ctx->DrawBuffer->_Xmin;
+      const GLint y = ctx->DrawBuffer->_Ymin;
+      const GLint width = ctx->DrawBuffer->_Xmax - x;
+      const GLint height = ctx->DrawBuffer->_Ymax - y;
 
       /* we can't handle color or index masking */
       if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {
@@ -502,8 +404,7 @@ clear_buffers( GLcontext *ctx, GLbitfield mask,
                = ctx->DrawBuffer->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
             if (b->frontxrb == xmesa_renderbuffer(frontRb)) {
                /* renderbuffer is not wrapped - great! */
-               b->frontxrb->clearFunc(ctx, b->frontxrb, all, x, y,
-                                      width, height);
+               b->frontxrb->clearFunc(ctx, b->frontxrb, x, y, width, height);
                mask &= ~BUFFER_BIT_FRONT_LEFT;
             }
             else {
@@ -516,15 +417,14 @@ clear_buffers( GLcontext *ctx, GLbitfield mask,
                = ctx->DrawBuffer->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
             if (b->backxrb == xmesa_renderbuffer(backRb)) {
                /* renderbuffer is not wrapped - great! */
-               b->backxrb->clearFunc(ctx, b->backxrb, all, x, y,
-                                     width, height);
+               b->backxrb->clearFunc(ctx, b->backxrb, x, y, width, height);
                mask &= ~BUFFER_BIT_BACK_LEFT;
             }
          }
       }
    }
    if (mask)
-      _swrast_Clear( ctx, mask, all, x, y, width, height );
+      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0);
 }
 
 
