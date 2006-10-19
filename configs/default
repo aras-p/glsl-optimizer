@@ -78,8 +78,7 @@ APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm
 
 
 # Installation directories (for make install)
-#INSTALL_DIR = /usr/local
-INSTALL_DIR = /tmp/mesa2
+INSTALL_DIR = /usr/local
 DRI_DRIVER_INSTALL_DIR = /usr/X11R6/lib/modules/dri
 
 # Where libGL will look for DRI hardware drivers
