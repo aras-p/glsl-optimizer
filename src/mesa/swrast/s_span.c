@@ -1322,6 +1322,63 @@ convert_color_type(GLcontext *ctx, SWspan *span, GLenum newType)
 
 
 /**
+ * Apply fragment shader, fragment program or normal texturing to span.
+ */
+static void
+shade_texture_span(GLcontext *ctx, SWspan *span)
+{
+   /* Now we need the rgba array, fill it in if needed */
+   if (span->interpMask & SPAN_RGBA)
+      interpolate_colors(span);
+
+   if (ctx->ShaderObjects._FragmentShaderPresent ||
+       ctx->FragmentProgram._Enabled ||
+       ctx->ATIFragmentShader._Enabled) {
+
+      /* use float colors if running a fragment program or shader */
+      const GLenum oldType = span->array->ChanType;
+      const GLenum newType = GL_FLOAT;
+      if (oldType != newType) {
+         GLvoid *src = (oldType == GL_UNSIGNED_BYTE)
+            ? (GLvoid *) span->array->color.sz1.rgba
+            : (GLvoid *) span->array->color.sz2.rgba;
+         _mesa_convert_colors(oldType, src,
+                              newType, span->array->color.sz4.rgba,
+                              span->end, span->array->mask);
+         span->array->ChanType = newType;
+      }
+
+      /* fragment programs/shaders may need specular, fog and Z coords */
+      if (span->interpMask & SPAN_SPEC)
+         interpolate_specular(span);
+
+      if (span->interpMask & SPAN_FOG)
+         interpolate_fog(ctx, span);
+
+      if (span->interpMask & SPAN_Z)
+         _swrast_span_interpolate_z (ctx, span);
+
+      /* Run fragment program/shader now */
+      if (ctx->ShaderObjects._FragmentShaderPresent) {
+         _swrast_exec_arbshader (ctx, span);
+      }
+      else if (ctx->FragmentProgram._Enabled) {
+         _swrast_exec_fragment_program(ctx, span);
+      }
+      else {
+         ASSERT(ctx->ATIFragmentShader._Enabled);
+         _swrast_exec_fragment_shader(ctx, span);
+      }
+   }
+   else if (ctx->Texture._EnabledUnits && (span->arrayMask & SPAN_TEXTURE)) {
+      /* conventional texturing */
+      _swrast_texture_span(ctx, span);
+   }
+}
+
+
+
+/**
  * Apply all the per-fragment operations to a span.
  * This now includes texturing (_swrast_write_texture_span() is history).
  * This function may modify any of the array values in the span.
@@ -1331,14 +1388,19 @@ convert_color_type(GLcontext *ctx, SWspan *span, GLenum newType)
 void
 _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 {
+   const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLbitfield origInterpMask = span->interpMask;
    const GLbitfield origArrayMask = span->arrayMask;
    const GLenum chanType = span->array->ChanType;
-   const GLboolean deferredTexture = !(ctx->Color.AlphaEnabled ||
-                                       ctx->FragmentProgram._Enabled ||
-                                       ctx->ShaderObjects._FragmentShaderPresent);
+   const GLboolean shader
+      = ctx->FragmentProgram._Enabled
+      || ctx->ShaderObjects._FragmentShaderPresent
+      || ctx->ATIFragmentShader._Enabled;
+   const GLboolean shaderOrTexture = shader || ctx->Texture._EnabledUnits;
+   const GLboolean deferredTexture
+      = shaderOrTexture && !ctx->Color.AlphaEnabled;
+
 
    ASSERT(span->primitive == GL_POINT ||
           span->primitive == GL_LINE ||
@@ -1403,61 +1465,14 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
     * testing in order to try to avoid computing colors that we won't
     * actually need.
     */
-   if (!deferredTexture) {
-      /* Now we need the rgba array, fill it in if needed */
-      if (span->interpMask & SPAN_RGBA)
-         interpolate_colors(span);
+   if (shaderOrTexture && !deferredTexture) {
+      shade_texture_span(ctx, span);
+   }
 
-      if (span->interpMask & SPAN_SPEC)
-         interpolate_specular(span);
-
-      if (span->interpMask & SPAN_FOG)
-         interpolate_fog(ctx, span);
-
-      /* XXX need this code below too? */
-
-      /* use float colors if running a fragment program or shader */
-      if (ctx->ShaderObjects._FragmentShaderPresent ||
-          ctx->FragmentProgram._Enabled ||
-          ctx->ATIFragmentShader._Enabled) {
-         const GLenum oldType = span->array->ChanType;
-         /* work with float colors */
-         if (oldType != GL_FLOAT) {
-            GLvoid *src = (oldType == GL_UNSIGNED_BYTE)
-               ? (GLvoid *) span->array->color.sz1.rgba
-               : (GLvoid *) span->array->color.sz2.rgba;
-            _mesa_convert_colors(oldType, src,
-                                 GL_FLOAT, span->array->color.sz4.rgba,
-                                 span->end, span->array->mask);
-            span->array->ChanType = GL_FLOAT;
-         }
-      }
-
-      /* Compute fragment colors with fragment program or texture lookups */
-#if FEATURE_ARB_fragment_shader
-      if (ctx->ShaderObjects._FragmentShaderPresent) {
-         if (span->interpMask & SPAN_Z)
-            _swrast_span_interpolate_z (ctx, span);
-         _swrast_exec_arbshader (ctx, span);
-      }
-      else
-#endif
-      if (ctx->FragmentProgram._Enabled) {
-         /* frag prog may need Z values */
-         if (span->interpMask & SPAN_Z)
-            _swrast_span_interpolate_z(ctx, span);
-         _swrast_exec_fragment_program( ctx, span );
-      }
-      else if (ctx->ATIFragmentShader._Enabled)
-         _swrast_exec_fragment_shader( ctx, span );
-      else if (ctx->Texture._EnabledUnits && (span->arrayMask & SPAN_TEXTURE))
-         _swrast_texture_span( ctx, span );
-
-      /* Do the alpha test */
-      if (ctx->Color.AlphaEnabled) {
-         if (!_swrast_alpha_test(ctx, span)) {
-            goto end;
-	 }
+   /* Do the alpha test */
+   if (ctx->Color.AlphaEnabled) {
+      if (!_swrast_alpha_test(ctx, span)) {
+         goto end;
       }
    }
 
@@ -1504,36 +1519,17 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
     * Z/stencil testing.
     */
    if (deferredTexture) {
-      /* Now we need the rgba array, fill it in if needed */
-      if (span->interpMask & SPAN_RGBA)
-         interpolate_colors(span);
+      ASSERT(shaderOrTexture);
+      shade_texture_span(ctx, span);
+   }
 
-      if (span->interpMask & SPAN_SPEC)
-         interpolate_specular(span);
-
-      if (span->interpMask & SPAN_FOG)
-         interpolate_fog(ctx, span);
-
-#if FEATURE_ARB_fragment_shader
-      if (ctx->ShaderObjects._FragmentShaderPresent) {
-         if (span->interpMask & SPAN_Z)
-            _swrast_span_interpolate_z(ctx, span);
-         _swrast_exec_arbshader (ctx, span);
-      }
-      else
-#endif
-      if (ctx->FragmentProgram._Enabled)
-         _swrast_exec_fragment_program( ctx, span );
-      else if (ctx->ATIFragmentShader._Enabled)
-         _swrast_exec_fragment_shader( ctx, span );
-      else if (ctx->Texture._EnabledUnits && (span->arrayMask & SPAN_TEXTURE))
-         _swrast_texture_span( ctx, span );
+   if ((span->arrayMask & SPAN_RGBA) == 0) {
+      interpolate_colors(span);
    }
 
    ASSERT(span->arrayMask & SPAN_RGBA);
 
-   if (!ctx->FragmentProgram._Enabled &&
-       !ctx->ShaderObjects._FragmentShaderPresent) {
+   if (!shader) {
       /* Add base and specular colors */
       if (ctx->Fog.ColorSumEnabled ||
           (ctx->Light.Enabled &&
@@ -1631,9 +1627,10 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    }
 
 end:
+   /* restore these values before returning */
    span->interpMask = origInterpMask;
    span->arrayMask = origArrayMask;
-   span->array->ChanType = chanType; /* restore */
+   span->array->ChanType = chanType;
 }
 
 
