@@ -284,6 +284,7 @@ interpolate_specular(SWspan *span)
    GLuint i;
 
    switch (span->array->ChanType) {
+#if CHAN_BITS != 32
    case GL_UNSIGNED_BYTE:
       {
          GLubyte (*spec)[4] = span->array->color.sz1.spec;
@@ -348,6 +349,7 @@ interpolate_specular(SWspan *span)
          }
       }
       break;
+#endif
    case GL_FLOAT:
       {
          GLfloat (*spec)[4] = span->array->color.sz4.spec;
@@ -1390,7 +1392,6 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    /* Interpolate texcoords? */
    if (ctx->Texture._EnabledCoordUnits && (span->interpMask & SPAN_TEXTURE)) {
       interpolate_texcoords(ctx, span);
-      ASSERT(span->arrayMask & SPAN_TEXTURE);
    }
 
    if (ctx->ShaderObjects._FragmentShaderPresent) {
@@ -1412,6 +1413,8 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 
       if (span->interpMask & SPAN_FOG)
          interpolate_fog(ctx, span);
+
+      /* XXX need this code below too? */
 
       /* use float colors if running a fragment program or shader */
       if (ctx->ShaderObjects._FragmentShaderPresent ||
