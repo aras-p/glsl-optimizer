@@ -27,8 +27,7 @@ MKLIB_OPTIONS =
 MKDEP = makedepend
 MKDEP_OPTIONS = -fdepend
 MAKE = make
-INSTALL = install
-COPY_LIBS = cp -f -d
+INSTALL = $(TOP)/bin/minstall
 
 # Python and flags (generally only needed by the developers)
 PYTHON2 = python
@@ -79,7 +78,8 @@ APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm
 
 
 # Installation directories (for make install)
-INSTALL_DIR = /usr/local
+#INSTALL_DIR = /usr/local
+INSTALL_DIR = /tmp/mesa2
 DRI_DRIVER_INSTALL_DIR = /usr/X11R6/lib/modules/dri
 
 # Where libGL will look for DRI hardware drivers

@@ -1,0 +1,88 @@
+#!/bin/sh
+
+
+# A minimal replacement for 'install' that supports installing symbolic links.
+# Only a limited number of options are supported:
+# -d dir          Create a directory
+# -m mode         Sets a file's mode when installing
+
+
+# If these commands aren't portable, we'll need some "if (arch)" type stuff
+SYMLINK="ln -s"
+MKDIR="mkdir -p"
+RM="rm -f"
+
+MODE=""
+
+if [ "$1" = "-d" ] ; then
+	# make a directory path
+	$MKDIR "$2"
+	exit 0
+fi
+
+if [ "$1" = "-m" ] ; then
+	# set file mode
+	MODE=$2
+	shift 2
+fi
+
+# install file(s) into destination
+if [ $# -ge 2 ] ; then
+
+	# Last cmd line arg is the dest dir
+	for FILE in $@ ; do
+		DEST="$FILE"
+	done
+
+	# Loop over args, moving them to DEST directory
+	I=1
+	for FILE in $@ ; do
+		if [ $I = $# ] ; then
+			# stop, don't want to install $DEST into $DEST
+			exit 0
+		fi
+
+		# determine file's type
+		if [ -h "$FILE" ] ; then
+			#echo $FILE is a symlink
+			# Unfortunately, cp -d isn't universal so we have to
+			# use a work-around.
+
+			# Use ls -l to find the target that the link points to
+			LL=`ls -l "$FILE"`
+			for L in $LL ; do
+				TARGET=$L
+			done
+			#echo $FILE is a symlink pointing to $TARGET
+
+			FILE=`basename "$FILE"`
+			# Go to $DEST and make the link
+			PWDSAVE="$PWD"
+			cd "$DEST"        # pushd
+				$RM "$FILE"
+				$SYMLINK "$TARGET" "$FILE"
+			cd "$PWDSAVE"     # popd
+
+		elif [ -f "$FILE" ] ; then
+			#echo "$FILE" is a regular file
+			cp "$FILE" "$DEST"
+			if [ $MODE ] ; then
+				FILE=`basename "$FILE"`
+				chmod $MODE "$DEST/$FILE"
+			fi
+		else
+			echo "Unknown type of argument: " "$FILE"
+			exit 1
+		fi
+
+		I=`expr $I + 1`
+	done
+
+	exit 0
+fi
+
+# If we get here, we didn't find anything to do
+echo "Usage:"
+echo "  install -d dir                      Create named directory"
+echo "  install [-m mode] file [...] dest   Install files in destination"
+

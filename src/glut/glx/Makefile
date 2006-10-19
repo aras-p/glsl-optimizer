@@ -100,7 +100,7 @@ install:
 	$(INSTALL) -d $(INSTALL_DIR)/include/GL
 	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
 	$(INSTALL) -m 644 $(TOP)/include/GL/glut.h $(INSTALL_DIR)/include/GL
-	$(COPY_LIBS) $(TOP)/$(LIB_DIR)/libglut* $(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) $(TOP)/$(LIB_DIR)/libglut* $(INSTALL_DIR)/$(LIB_DIR)
 
 
 clean:

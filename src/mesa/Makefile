@@ -155,10 +155,10 @@ install: default
 	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
 	$(INSTALL) -m 644 $(TOP)/include/GL/*.h $(INSTALL_DIR)/include/GL
 	@if [ -e $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) ]; then \
-		$(COPY_LIBS) $(TOP)/$(LIB_DIR)/libGL* $(INSTALL_DIR)/$(LIB_DIR); \
+		$(INSTALL) $(TOP)/$(LIB_DIR)/libGL* $(INSTALL_DIR)/$(LIB_DIR); \
 	fi
 	@if [ -e $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME) ]; then \
-		$(COPY_LIBS) $(TOP)/$(LIB_DIR)/libOSMesa* $(INSTALL_DIR)/$(LIB_DIR); \
+		$(INSTALL) $(TOP)/$(LIB_DIR)/libOSMesa* $(INSTALL_DIR)/$(LIB_DIR); \
 	fi
 	@if [ "${DRIVER_DIRS}" = "dri" ] ; then \
 		cd drivers/dri ; $(MAKE) install ; \
