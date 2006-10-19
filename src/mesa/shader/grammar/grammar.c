@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.6
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -368,9 +368,10 @@ static int str_equal_n (const byte *str1, const byte *str2, unsigned int n)
     return grammar_string_compare_n (str1, str2, n) == 0;
 }
 
-static unsigned int str_length (const byte *str)
+static int
+str_length (const byte *str)
 {
-    return grammar_string_length (str);
+   return (int) (grammar_string_length (str));
 }
 
 /*
@@ -655,7 +656,9 @@ static void error_destroy (error **er)
 }
 
 struct dict_;
-static byte *error_get_token (error *, struct dict_ *, const byte *, unsigned int);
+
+static byte *
+error_get_token (error *, struct dict_ *, const byte *, int);
 
 /*
     condition operand type typedef
@@ -1616,7 +1619,8 @@ static int get_error (const byte **text, error **er, map_str *maps)
     /* try to extract "token" from "...$token$..." */
     {
         byte *processed = NULL;
-        unsigned int len = 0, i = 0;
+        unsigned int len = 0;
+      int i = 0;
 
         if (string_grow (&processed, &len, '\0'))
         {
@@ -2274,12 +2278,13 @@ typedef enum match_result_
 } match_result;
 
 /*
-    This function does the main job. It parses the text and generates output data.
-*/
-static match_result match (dict *di, const byte *text, unsigned int *index, rule *ru, barray **ba,
-    int filtering_string, regbyte_ctx **rbc)
+ * This function does the main job. It parses the text and generates output data.
+ */
+static match_result
+match (dict *di, const byte *text, int *index, rule *ru, barray **ba, int filtering_string,
+       regbyte_ctx **rbc)
 {
-    unsigned int ind = *index;
+   int ind = *index;
     match_result status = mr_not_matched;
     spec *sp = ru->m_specs;
     regbyte_ctx *ctx = *rbc;
@@ -2287,7 +2292,7 @@ static match_result match (dict *di, const byte *text, unsigned int *index, rule
     /* for every specifier in the rule */
     while (sp)
     {
-        unsigned int i, len, save_ind = ind;
+      int i, len, save_ind = ind;
         barray *array = NULL;
 
         if (satisfies_condition (sp->m_cond, ctx))
@@ -2318,7 +2323,7 @@ static match_result match (dict *di, const byte *text, unsigned int *index, rule
                 if (!filtering_string && di->m_string)
                 {
                     barray *ba;
-                    unsigned int filter_index = 0;
+               int filter_index = 0;
                     match_result result;
                     regbyte_ctx *null_ctx = NULL;
 
@@ -2410,7 +2415,6 @@ static match_result match (dict *di, const byte *text, unsigned int *index, rule
                     }
                     else if (result == mr_matched)
                     {
-                        assert(ind > 0);
                         if (barray_push (ba, sp->m_emits, text[ind - 1], save_ind, &ctx) ||
                             barray_append (ba, &array))
                         {
@@ -2470,7 +2474,6 @@ static match_result match (dict *di, const byte *text, unsigned int *index, rule
         if (status == mr_matched)
         {
             if (sp->m_emits)
-                assert(ind > 0);
                 if (barray_push (ba, sp->m_emits, text[ind - 1], save_ind, &ctx))
                 {
                     free_regbyte_ctx_stack (ctx, *rbc);
@@ -2512,10 +2515,11 @@ static match_result match (dict *di, const byte *text, unsigned int *index, rule
     return mr_not_matched;
 }
 
-static match_result fast_match (dict *di, const byte *text, unsigned int *index, rule *ru, int *_PP, bytepool *_BP,
-    int filtering_string, regbyte_ctx **rbc)
+static match_result
+fast_match (dict *di, const byte *text, int *index, rule *ru, int *_PP, bytepool *_BP,
+            int filtering_string, regbyte_ctx **rbc)
 {
-    unsigned int ind = *index;
+   int ind = *index;
     int _P = filtering_string ? 0 : *_PP;
     int _P2;
     match_result status = mr_not_matched;
@@ -2525,7 +2529,7 @@ static match_result fast_match (dict *di, const byte *text, unsigned int *index,
     /* for every specifier in the rule */
     while (sp)
     {
-        unsigned int i, len, save_ind = ind;
+      int i, len, save_ind = ind;
 
         _P2 = _P + (sp->m_emits ? emit_size (sp->m_emits) : 0);
         if (bytepool_reserve (_BP, _P2))
@@ -2553,7 +2557,7 @@ static match_result fast_match (dict *di, const byte *text, unsigned int *index,
                 /* prefilter the stream */
                 if (!filtering_string && di->m_string)
                 {
-                    unsigned int filter_index = 0;
+               int filter_index = 0;
                     match_result result;
                     regbyte_ctx *null_ctx = NULL;
 
@@ -2631,7 +2635,6 @@ static match_result fast_match (dict *di, const byte *text, unsigned int *index,
                         {
                             if (sp->m_emits != NULL)
                             {
-                                assert(ind > 0);
                                 if (emit_push (sp->m_emits, _BP->_F + _P, text[ind - 1], save_ind, &ctx))
                                 {
                                     free_regbyte_ctx_stack (ctx, *rbc);
@@ -2689,7 +2692,6 @@ static match_result fast_match (dict *di, const byte *text, unsigned int *index,
         if (status == mr_matched)
         {
             if (sp->m_emits != NULL)
-                assert(ind > 0);
                 if (emit_push (sp->m_emits, _BP->_F + _P, text[ind - 1], save_ind, &ctx))
                 {
                     free_regbyte_ctx_stack (ctx, *rbc);
@@ -2726,14 +2728,15 @@ static match_result fast_match (dict *di, const byte *text, unsigned int *index,
     return mr_not_matched;
 }
 
-static byte *error_get_token (error *er, dict *di, const byte *text, unsigned int ind)
+static byte *
+error_get_token (error *er, dict *di, const byte *text, int ind)
 {
     byte *str = NULL;
 
     if (er->m_token)
     {
         barray *ba;
-        unsigned int filter_index = 0;
+      int filter_index = 0;
         regbyte_ctx *ctx = NULL;
 
         barray_create (&ba);
@@ -2994,7 +2997,7 @@ static int _grammar_check (grammar id, const byte *text, byte **prod, unsigned i
     unsigned int estimate_prod_size, int use_fast_path)
 {
     dict *di = NULL;
-    unsigned int index = 0;
+   int index = 0;
 
     clear_last_error ();
 
