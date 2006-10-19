@@ -136,14 +136,14 @@ _swrast_alpha_test(const GLcontext *ctx, SWspan *span)
          GLfixed alpha = span->alpha;
          GLubyte ref;
          CLAMPED_FLOAT_TO_UBYTE(ref, ctx->Color.AlphaRef);
-         ALPHA_TEST(alpha, alpha += alphaStep);
+         ALPHA_TEST(FixedToInt(alpha), alpha += alphaStep);
       }
       else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
          const GLfixed alphaStep = span->alphaStep;
          GLfixed alpha = span->alpha;
          GLushort ref;
          CLAMPED_FLOAT_TO_USHORT(ref, ctx->Color.AlphaRef);
-         ALPHA_TEST(alpha, alpha += alphaStep);
+         ALPHA_TEST(FixedToInt(alpha), alpha += alphaStep);
       }
       else {
          const GLfloat alphaStep = span->alphaStep;
