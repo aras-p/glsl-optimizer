@@ -32,13 +32,6 @@
 #include "s_fog.h"
 
 
-/** XXX temporary */
-#define UBYTE_RGBA  GLubyte (*rgba)[4] = span->array->color.sz1.rgba
-#define USHORT_RGBA  GLushort (*rgba)[4] = span->array->color.sz2.rgba
-#define FLOAT_RGBA  GLfloat (*rgba)[4] = span->array->color.sz4.rgba
-
-
-
 /**
  * Used to convert current raster distance to a fog factor in [0,1].
  */
@@ -153,15 +146,15 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
       case GL_LINEAR:
 #define COMPUTE_F  f = (fogEnd - FABSF(fogCoord) / w) * fogScale;
          if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-            UBYTE_RGBA;
+            GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
             FOG_LOOP(GLubyte, COMPUTE_F);
          }
          else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
-            USHORT_RGBA;
+            GLushort (*rgba)[4] = span->array->color.sz2.rgba;
             FOG_LOOP(GLushort, COMPUTE_F);
          }
          else {
-            FLOAT_RGBA;
+            GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
             ASSERT(span->array->ChanType == GL_FLOAT);
             FOG_LOOP(GLfloat, COMPUTE_F);
          }
@@ -171,15 +164,15 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
       case GL_EXP:
 #define COMPUTE_F  f = EXPF(density * FABSF(fogCoord) / w);
          if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-            UBYTE_RGBA;
+            GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
             FOG_LOOP(GLubyte, COMPUTE_F);
          }
          else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
-            USHORT_RGBA;
+            GLushort (*rgba)[4] = span->array->color.sz2.rgba;
             FOG_LOOP(GLushort, COMPUTE_F);
          }
          else {
-            FLOAT_RGBA;
+            GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
             ASSERT(span->array->ChanType == GL_FLOAT);
             FOG_LOOP(GLfloat, COMPUTE_F);
          }
@@ -193,15 +186,15 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
                       tmp = FLT_MIN_10_EXP; \
                    f = EXPF(tmp);
          if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-            UBYTE_RGBA;
+            GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
             FOG_LOOP(GLubyte, COMPUTE_F);
          }
          else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
-            USHORT_RGBA;
+            GLushort (*rgba)[4] = span->array->color.sz2.rgba;
             FOG_LOOP(GLushort, COMPUTE_F);
          }
          else {
-            FLOAT_RGBA;
+            GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
             ASSERT(span->array->ChanType == GL_FLOAT);
             FOG_LOOP(GLfloat, COMPUTE_F);
          }
@@ -219,7 +212,7 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
        */
       GLuint i;
       if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-         UBYTE_RGBA;
+         GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
          for (i = 0; i < span->end; i++) {
             const GLfloat f = span->array->fog[i];
             const GLfloat oneMinusF = 1.0F - f;
@@ -229,7 +222,7 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
          }
       }
       else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
-         USHORT_RGBA;
+         GLushort (*rgba)[4] = span->array->color.sz2.rgba;
          for (i = 0; i < span->end; i++) {
             const GLfloat f = span->array->fog[i];
             const GLfloat oneMinusF = 1.0F - f;
@@ -239,7 +232,7 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
          }
       }
       else {
-         FLOAT_RGBA;
+         GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
          ASSERT(span->array->ChanType == GL_FLOAT);
          for (i = 0; i < span->end; i++) {
             const GLfloat f = span->array->fog[i];
@@ -257,15 +250,15 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
        */
 #define COMPUTE_F f = fogCoord / w;
       if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-         UBYTE_RGBA;
+         GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
          FOG_LOOP(GLubyte, COMPUTE_F);
       }
       else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
-         USHORT_RGBA;
+         GLushort (*rgba)[4] = span->array->color.sz2.rgba;
          FOG_LOOP(GLushort, COMPUTE_F);
       }
       else {
-         FLOAT_RGBA;
+         GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
          ASSERT(span->array->ChanType == GL_FLOAT);
          FOG_LOOP(GLfloat, COMPUTE_F);
       }
