@@ -242,17 +242,6 @@ finish_pass(struct atifs_machine *machine)
    }
 }
 
-/**
- * Execute the given fragment shader
- * NOTE: we do everything in single-precision floating point; we don't
- * currently observe the single/half/fixed-precision qualifiers.
- * \param ctx - rendering context
- * \param program - the fragment program to execute
- * \param machine - machine state (register file)
- * \param maxInst - max number of instructions to execute
- * \return GL_TRUE if program completed or GL_FALSE if program executed KIL.
- */
-
 struct ati_fs_opcode_st ati_fs_opcodes[] = {
    {GL_ADD_ATI, 2},
    {GL_SUB_ATI, 2},
@@ -316,11 +305,21 @@ do {						\
    COPY_4V(src[optype][i], x); 			\
 } while (0)
 
-static GLboolean
-execute_shader(GLcontext * ctx,
-	       const struct ati_fragment_shader *shader, GLuint maxInst,
+
+
+/**
+ * Execute the given fragment shader.
+ * NOTE: we do everything in single-precision floating point
+ * \param ctx - rendering context
+ * \param shader - the shader to execute
+ * \param machine - virtual machine state
+ * \param span - the SWspan we're operating on
+ * \param column - which pixel [i] we're operating on in the span
+ */
+static void
+execute_shader(GLcontext *ctx, const struct ati_fragment_shader *shader,
 	       struct atifs_machine *machine, const SWspan *span,
-	       GLuint column)
+               GLuint column)
 {
    GLuint pc;
    struct atifs_instruction *inst;
@@ -554,7 +553,6 @@ execute_shader(GLcontext * ctx,
 	 }
       }
    }
-   return GL_TRUE;
 }
 
 
@@ -598,11 +596,8 @@ _swrast_exec_fragment_shader(GLcontext * ctx, SWspan *span)
    for (i = 0; i < span->end; i++) {
       if (span->array->mask[i]) {
 	 init_machine(ctx, &machine, shader, span, i);
-	 /* can't really happen... */
-	 if (!execute_shader(ctx, shader, ~0, &machine, span, i)) {
-	    span->array->mask[i] = GL_FALSE;
-            span->writeAll = GL_FALSE;
-	 }
+
+	 execute_shader(ctx, shader, &machine, span, i);
 
          /* store result color */
 	 {
