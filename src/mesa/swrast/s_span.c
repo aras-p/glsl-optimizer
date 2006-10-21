@@ -1423,11 +1423,15 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
       deferredTexture = GL_FALSE;
    }
    else if (shaderOrTexture) {
-      if (ctx->FragmentProgram._Enabled &&
-          (ctx->FragmentProgram.Current->Base.OutputsWritten
-           & (1 << FRAG_RESULT_DEPR))) {
-         /* Z comes from fragment program */
-         deferredTexture = GL_FALSE;
+      if (ctx->FragmentProgram._Enabled) {
+         if (ctx->FragmentProgram.Current->Base.OutputsWritten
+             & (1 << FRAG_RESULT_DEPR)) {
+            /* Z comes from fragment program */
+            deferredTexture = GL_FALSE;
+         }
+         else {
+            deferredTexture = GL_TRUE;
+         }
       }
       else if (ctx->ShaderObjects._FragmentShaderPresent) {
          /* XXX how do we test if Z is written by shader? */
