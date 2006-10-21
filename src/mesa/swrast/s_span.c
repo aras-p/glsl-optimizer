@@ -1402,9 +1402,12 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
       || ctx->ShaderObjects._FragmentShaderPresent
       || ctx->ATIFragmentShader._Enabled;
    const GLboolean shaderOrTexture = shader || ctx->Texture._EnabledUnits;
-   const GLboolean deferredTexture
-      = shaderOrTexture && !ctx->Color.AlphaEnabled;
+   GLboolean deferredTexture;
 
+   /*
+   printf("%s()  interp 0x%x  array 0x%x\n", __FUNCTION__,
+          span->interpMask, span->arrayMask);
+   */
 
    ASSERT(span->primitive == GL_POINT ||
           span->primitive == GL_LINE ||
@@ -1414,11 +1417,33 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    ASSERT((span->interpMask & span->arrayMask) == 0);
    ASSERT((span->interpMask & SPAN_RGBA) ^ (span->arrayMask & SPAN_RGBA));
 
-   /*
-   printf("%s()  interp 0x%x  array 0x%x\n", __FUNCTION__,
-          span->interpMask, span->arrayMask);
-   */
+   /* check for conditions that prevent deferred shading */
+   if (ctx->Color.AlphaEnabled) {
+      /* alpha test depends on post-texture/shader colors */
+      deferredTexture = GL_FALSE;
+   }
+   else if (shaderOrTexture) {
+      if (ctx->FragmentProgram._Enabled &&
+          (ctx->FragmentProgram.Current->Base.OutputsWritten
+           & (1 << FRAG_RESULT_DEPR))) {
+         /* Z comes from fragment program */
+         deferredTexture = GL_FALSE;
+      }
+      else if (ctx->ShaderObjects._FragmentShaderPresent) {
+         /* XXX how do we test if Z is written by shader? */
+         deferredTexture = GL_FALSE; /* never defer to be safe */
+      }
+      else {
+         /* ATI frag shader or conventional texturing */
+         deferredTexture = GL_TRUE;
+      }
+   }
+   else {
+      /* no texturing or shadering */
+      deferredTexture = GL_FALSE;
+   }
 
+   /* Fragment write masks */
    if (span->arrayMask & SPAN_MASK) {
       /* mask was initialized by caller, probably glBitmap */
       span->writeAll = GL_FALSE;
