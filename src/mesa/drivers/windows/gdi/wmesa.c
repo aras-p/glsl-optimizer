@@ -284,10 +284,14 @@ static void clear_color(GLcontext *ctx, const GLfloat color[4])
 static void clear(GLcontext *ctx, 
 		  GLbitfield mask, 
 		  GLboolean all, 
-		  GLint x, GLint y, 
-		  GLint width, GLint height) 
+		  GLint xFoo, GLint yFoo,
+		  GLint widthFoo, GLint heightFoo) 
 {
 #define FLIP(Y)  (ctx->DrawBuffer->Height - (Y) - 1)
+    const GLint x = ctx->DrawBuffer->_Xmin;
+    const GLint y = ctx->DrawBuffer->_Ymin;
+    const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
+    const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
 
     WMesaContext pwc = wmesa_context(ctx);
     WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
