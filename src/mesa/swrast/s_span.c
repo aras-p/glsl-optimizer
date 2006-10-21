@@ -1361,12 +1361,10 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
       if (span->interpMask & SPAN_Z)
          _swrast_span_interpolate_z (ctx, span);
 
-      if (ctx->ShaderObjects._FragmentShaderPresent)
-         interpolate_varying(ctx, span);
-
       /* Run fragment program/shader now */
       if (ctx->ShaderObjects._FragmentShaderPresent) {
-         _swrast_exec_arbshader (ctx, span);
+         interpolate_varying(ctx, span);
+         _swrast_exec_arbshader(ctx, span);
       }
       else if (ctx->FragmentProgram._Enabled) {
          _swrast_exec_fragment_program(ctx, span);
