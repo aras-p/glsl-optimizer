@@ -699,7 +699,8 @@ execute_program( GLcontext *ctx,
             {
                GLfloat a[4], result[4];
                fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
-               result[0] = result[1] = result[2] = result[3] = (GLfloat)_mesa_cos(a[0]);
+               result[0] = result[1] = result[2] = result[3]
+                  = (GLfloat) _mesa_cos(a[0]);
                store_vector4( inst, machine, result );
             }
             break;
@@ -753,8 +754,7 @@ execute_program( GLcontext *ctx,
                GLfloat a[4], b[4], result[4];
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a );
                fetch_vector4( ctx, &inst->SrcReg[1], machine, program, b );
-               result[0] = result[1] = result[2] = result[3] = 
-                  a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+               result[0] = result[1] = result[2] = result[3] = DOT3(a, b);
                store_vector4( inst, machine, result );
 #if DEBUG_FRAG
                printf("DP3 %g = (%g %g %g) . (%g %g %g)\n",
@@ -767,8 +767,7 @@ execute_program( GLcontext *ctx,
                GLfloat a[4], b[4], result[4];
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a );
                fetch_vector4( ctx, &inst->SrcReg[1], machine, program, b );
-               result[0] = result[1] = result[2] = result[3] = 
-                  a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
+               result[0] = result[1] = result[2] = result[3] = DOT4(a,b);
                store_vector4( inst, machine, result );
 #if DEBUG_FRAG
                printf("DP4 %g = (%g, %g %g %g) . (%g, %g %g %g)\n",
@@ -854,8 +853,7 @@ execute_program( GLcontext *ctx,
             {
                GLfloat a[4], result[4];
                fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
-               result[0] = result[1] = result[2] = result[3]
-                  = LOG2(a[0]);
+               result[0] = result[1] = result[2] = result[3] = LOG2(a[0]);
                store_vector4( inst, machine, result );
             }
             break;
@@ -1054,25 +1052,20 @@ execute_program( GLcontext *ctx,
                else if (IS_INF_OR_NAN(a[0]))
                   printf("RCP(inf)\n");
 #endif
-               result[0] = result[1] = result[2] = result[3]
-                  = 1.0F / a[0];
+               result[0] = result[1] = result[2] = result[3] = 1.0F / a[0];
                store_vector4( inst, machine, result );
             }
             break;
-         case OPCODE_RFL:
+         case OPCODE_RFL: /* reflection vector */
             {
-               GLfloat axis[4], dir[4], result[4], tmp[4];
+               GLfloat axis[4], dir[4], result[4], tmpX, tmpW;
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, axis );
                fetch_vector4( ctx, &inst->SrcReg[1], machine, program, dir );
-               tmp[3] = axis[0] * axis[0]
-                      + axis[1] * axis[1]
-                      + axis[2] * axis[2];
-               tmp[0] = (2.0F * (axis[0] * dir[0] +
-                                 axis[1] * dir[1] +
-                                 axis[2] * dir[2])) / tmp[3];
-               result[0] = tmp[0] * axis[0] - dir[0];
-               result[1] = tmp[0] * axis[1] - dir[1];
-               result[2] = tmp[0] * axis[2] - dir[2];
+               tmpW = DOT3(axis, axis);
+               tmpX = (2.0F * DOT3(axis, dir)) / tmpW;
+               result[0] = tmpX * axis[0] - dir[0];
+               result[1] = tmpX * axis[1] - dir[1];
+               result[2] = tmpX * axis[2] - dir[2];
                /* result[3] is never written! XXX enforce in parser! */
                store_vector4( inst, machine, result );
             }
@@ -1146,8 +1139,8 @@ execute_program( GLcontext *ctx,
             {
                GLfloat a[4], result[4];
                fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
-               result[0] = result[1] = result[2] = 
-		       result[3] = (GLfloat)_mesa_sin(a[0]);
+               result[0] = result[1] = result[2] = result[3]
+                  = (GLfloat) _mesa_sin(a[0]);
                store_vector4( inst, machine, result );
             }
             break;
@@ -1205,23 +1198,24 @@ execute_program( GLcontext *ctx,
                store_vector4( inst, machine, result );
             }
             break;
-         case OPCODE_SWZ:
+         case OPCODE_SWZ: /* extended swizzle */
             {
                const struct prog_src_register *source = &inst->SrcReg[0];
                const GLfloat *src = get_register_pointer(ctx, source,
                                                          machine, program);
                GLfloat result[4];
                GLuint i;
-
-               /* do extended swizzling here */
                for (i = 0; i < 4; i++) {
-                  if (GET_SWZ(source->Swizzle, i) == SWIZZLE_ZERO)
+                  const GLuint swz = GET_SWZ(source->Swizzle, i);
+                  if (swz == SWIZZLE_ZERO)
                      result[i] = 0.0;
-                  else if (GET_SWZ(source->Swizzle, i) == SWIZZLE_ONE)
+                  else if (swz == SWIZZLE_ONE)
                      result[i] = 1.0;
-                  else
-                     result[i] = src[GET_SWZ(source->Swizzle, i)];
-
+                  else {
+                     ASSERT(swz >= 0);
+                     ASSERT(swz <= 3);
+                     result[i] = src[swz];
+                  }
                   if (source->NegateBase & (1 << i))
                      result[i] = -result[i];
                }
