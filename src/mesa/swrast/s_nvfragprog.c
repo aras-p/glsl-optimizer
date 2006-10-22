@@ -53,7 +53,7 @@ struct fp_machine
    GLfloat Temporaries[MAX_NV_FRAGMENT_PROGRAM_TEMPS][4];
    GLfloat Inputs[MAX_NV_FRAGMENT_PROGRAM_INPUTS][4];
    GLfloat Outputs[MAX_NV_FRAGMENT_PROGRAM_OUTPUTS][4];
-   GLuint CondCodes[4];
+   GLuint CondCodes[4];  /**< COND_* value for x/y/z/w */
 };
 
 
@@ -1521,24 +1521,26 @@ run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
       if (span->array->mask[i]) {
          init_machine(ctx, &machine, program, span, i);
 
-         if (!execute_program(ctx, program, ~0, &machine, span, i)) {
-            span->array->mask[i] = GL_FALSE;  /* killed fragment */
-            span->writeAll = GL_FALSE;
+         if (execute_program(ctx, program, ~0, &machine, span, i)) {
+            /* Store result color */
+            COPY_4V(span->array->color.sz4.rgba[i],
+                    machine.Outputs[FRAG_RESULT_COLR]);
+
+            /* Store result depth/z */
+            if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
+               const GLfloat depth = machine.Outputs[FRAG_RESULT_DEPR][2];
+               if (depth <= 0.0)
+                  span->array->z[i] = 0;
+               else if (depth >= 1.0)
+                  span->array->z[i] = ctx->DrawBuffer->_DepthMax;
+               else
+                  span->array->z[i] = IROUND(depth * ctx->DrawBuffer->_DepthMaxF);
+            }
          }
-
-         /* Store result color */
-         COPY_4V(span->array->color.sz4.rgba[i],
-                 machine.Outputs[FRAG_RESULT_COLR]);
-
-         /* Store result depth/z */
-         if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
-            const GLfloat depth = machine.Outputs[FRAG_RESULT_DEPR][2];
-            if (depth <= 0.0)
-               span->array->z[i] = 0;
-            else if (depth >= 1.0)
-               span->array->z[i] = ctx->DrawBuffer->_DepthMax;
-            else
-               span->array->z[i] = IROUND(depth * ctx->DrawBuffer->_DepthMaxF);
+         else {
+            /* killed fragment */
+            span->array->mask[i] = GL_FALSE;
+            span->writeAll = GL_FALSE;
          }
       }
    }
