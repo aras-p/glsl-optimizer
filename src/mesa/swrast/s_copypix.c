@@ -845,7 +845,8 @@ fast_copy_pixels(GLcontext *ctx,
       srcRb = srcFb->_DepthBuffer;
       dstRb = dstFb->_DepthBuffer;
    }
-   else if (type == GL_DEPTH_STENCIL_EXT) {
+   else {
+      ASSERT(type == GL_DEPTH_STENCIL_EXT);
       /* XXX correct? */
       srcRb = srcFb->Attachment[BUFFER_DEPTH].Renderbuffer;
       dstRb = dstFb->Attachment[BUFFER_DEPTH].Renderbuffer;
