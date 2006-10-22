@@ -153,40 +153,33 @@ get_register_pointer( GLcontext *ctx,
                       const struct fp_machine *machine,
                       const struct gl_fragment_program *program )
 {
-   const GLfloat *src;
    switch (source->File) {
-      case PROGRAM_TEMPORARY:
-         ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_TEMPS);
-         src = machine->Temporaries[source->Index];
-         break;
-      case PROGRAM_INPUT:
-         ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_INPUTS);
-         src = machine->Inputs[source->Index];
-         break;
-      case PROGRAM_OUTPUT:
-         /* This is only for PRINT */
-         ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_OUTPUTS);
-         src = machine->Outputs[source->Index];
-         break;
-      case PROGRAM_LOCAL_PARAM:
-         ASSERT(source->Index < MAX_PROGRAM_LOCAL_PARAMS);
-         src = program->Base.LocalParams[source->Index];
-         break;
-      case PROGRAM_ENV_PARAM:
-         ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_PARAMS);
-         src = ctx->FragmentProgram.Parameters[source->Index];
-         break;
-      case PROGRAM_STATE_VAR:
-         /* Fallthrough */
-      case PROGRAM_NAMED_PARAM:
-         ASSERT(source->Index < (GLint) program->Base.Parameters->NumParameters);
-         src = program->Base.Parameters->ParameterValues[source->Index];
-         break;
-      default:
-         _mesa_problem(ctx, "Invalid input register file %d in fetch_vector4", source->File);
-         src = NULL;
+   case PROGRAM_TEMPORARY:
+      ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_TEMPS);
+      return machine->Temporaries[source->Index];
+   case PROGRAM_INPUT:
+      ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_INPUTS);
+      return machine->Inputs[source->Index];
+   case PROGRAM_OUTPUT:
+      /* This is only for PRINT */
+      ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_OUTPUTS);
+      return machine->Outputs[source->Index];
+   case PROGRAM_LOCAL_PARAM:
+      ASSERT(source->Index < MAX_PROGRAM_LOCAL_PARAMS);
+      return program->Base.LocalParams[source->Index];
+   case PROGRAM_ENV_PARAM:
+      ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_PARAMS);
+      return ctx->FragmentProgram.Parameters[source->Index];
+   case PROGRAM_STATE_VAR:
+      /* Fallthrough */
+   case PROGRAM_NAMED_PARAM:
+      ASSERT(source->Index < (GLint) program->Base.Parameters->NumParameters);
+      return program->Base.Parameters->ParameterValues[source->Index];
+   default:
+      _mesa_problem(ctx, "Invalid input register file %d in fetch_vector4",
+                    source->File);
+      return NULL;
    }
-   return src;
 }
 
 
@@ -204,10 +197,17 @@ fetch_vector4( GLcontext *ctx,
    const GLfloat *src = get_register_pointer(ctx, source, machine, program);
    ASSERT(src);
 
-   result[0] = src[GET_SWZ(source->Swizzle, 0)];
-   result[1] = src[GET_SWZ(source->Swizzle, 1)];
-   result[2] = src[GET_SWZ(source->Swizzle, 2)];
-   result[3] = src[GET_SWZ(source->Swizzle, 3)];
+   if (source->Swizzle == MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
+                                        SWIZZLE_Z, SWIZZLE_W)) {
+      /* no swizzling */
+      COPY_4V(result, src);
+   }
+   else {
+      result[0] = src[GET_SWZ(source->Swizzle, 0)];
+      result[1] = src[GET_SWZ(source->Swizzle, 1)];
+      result[2] = src[GET_SWZ(source->Swizzle, 2)];
+      result[3] = src[GET_SWZ(source->Swizzle, 3)];
+   }
 
    if (source->NegateBase) {
       result[0] = -result[0];
@@ -406,7 +406,7 @@ generate_cc( float value )
 
 /**
  * Test if the ccMaskRule is satisfied by the given condition code.
- * Used to mask destination writes according to the current condition codee.
+ * Used to mask destination writes according to the current condition code.
  */
 static INLINE GLboolean
 test_cc(GLuint condCode, GLuint ccMaskRule)
@@ -436,11 +436,9 @@ store_vector4( const struct prog_instruction *inst,
 {
    const struct prog_dst_register *dest = &(inst->DstReg);
    const GLboolean clamp = inst->SaturateMode == SATURATE_ZERO_ONE;
-   const GLboolean updateCC = inst->CondUpdate;
    GLfloat *dstReg;
    GLfloat dummyReg[4];
    GLfloat clampedValue[4];
-   GLboolean condWriteMask[4];
    GLuint writeMask = dest->WriteMask;
 
    switch (dest->File) {
@@ -476,39 +474,46 @@ store_vector4( const struct prog_instruction *inst,
    }
 
    if (dest->CondMask != COND_TR) {
-      condWriteMask[0] = GET_BIT(writeMask, 0)
-         && test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 0)], dest->CondMask);
-      condWriteMask[1] = GET_BIT(writeMask, 1)
-         && test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 1)], dest->CondMask);
-      condWriteMask[2] = GET_BIT(writeMask, 2)
-         && test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 2)], dest->CondMask);
-      condWriteMask[3] = GET_BIT(writeMask, 3)
-         && test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 3)], dest->CondMask);
-
-      writeMask = ((condWriteMask[0] << 0) |
-		   (condWriteMask[1] << 1) |
-		   (condWriteMask[2] << 2) |
-		   (condWriteMask[3] << 3));
+      /* condition codes may turn off some writes */
+      if (writeMask & WRITEMASK_X) {
+         if (!test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 0)],
+                      dest->CondMask))
+            writeMask &= ~WRITEMASK_X;
+      }
+      if (writeMask & WRITEMASK_Y) {
+         if (!test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 1)],
+                      dest->CondMask))
+            writeMask &= ~WRITEMASK_Y;
+      }
+      if (writeMask & WRITEMASK_Z) {
+         if (!test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 2)],
+                      dest->CondMask))
+            writeMask &= ~WRITEMASK_Z;
+      }
+      if (writeMask & WRITEMASK_W) {
+         if (!test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 3)],
+                      dest->CondMask))
+            writeMask &= ~WRITEMASK_W;
+      }
    }
 
-   if (GET_BIT(writeMask, 0)) {
+   if (writeMask & WRITEMASK_X)
       dstReg[0] = value[0];
-      if (updateCC)
-         machine->CondCodes[0] = generate_cc(value[0]);
-   }
-   if (GET_BIT(writeMask, 1)) {
+   if (writeMask & WRITEMASK_Y)
       dstReg[1] = value[1];
-      if (updateCC)
-         machine->CondCodes[1] = generate_cc(value[1]);
-   }
-   if (GET_BIT(writeMask, 2)) {
+   if (writeMask & WRITEMASK_Z)
       dstReg[2] = value[2];
-      if (updateCC)
-         machine->CondCodes[2] = generate_cc(value[2]);
-   }
-   if (GET_BIT(writeMask, 3)) {
+   if (writeMask & WRITEMASK_W)
       dstReg[3] = value[3];
-      if (updateCC)
+
+   if (inst->CondUpdate) {
+      if (writeMask & WRITEMASK_X)
+         machine->CondCodes[0] = generate_cc(value[0]);
+      if (writeMask & WRITEMASK_Y)
+         machine->CondCodes[1] = generate_cc(value[1]);
+      if (writeMask & WRITEMASK_Z)
+         machine->CondCodes[2] = generate_cc(value[2]);
+      if (writeMask & WRITEMASK_W)
          machine->CondCodes[3] = generate_cc(value[3]);
    }
 }
