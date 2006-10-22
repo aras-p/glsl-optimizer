@@ -164,6 +164,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/descrip.mms					\
 	$(DIRECTORY)/mms-config.					\
 	$(DIRECTORY)/bin/mklib						\
+	$(DIRECTORY)/bin/minstall					\
 	$(DIRECTORY)/configs/[a-z]*					\
 	$(DIRECTORY)/docs/*.html					\
 	$(DIRECTORY)/docs/COPYING					\
