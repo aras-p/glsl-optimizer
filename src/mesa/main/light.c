@@ -1340,6 +1340,7 @@ _mesa_init_lighting( GLcontext *ctx )
                                                NULL );
 
    ctx->Light.ColorMaterialEnabled = GL_FALSE;
+   ctx->Light.ClampVertexColor = GL_TRUE;
 
    /* Lighting miscellaneous */
    ctx->_ShineTabList = MALLOC_STRUCT( gl_shine_tab );

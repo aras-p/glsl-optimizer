@@ -202,7 +202,8 @@ fast_read_rgba_pixels( GLcontext *ctx,
                        GLsizei width, GLsizei height,
                        GLenum format, GLenum type,
                        GLvoid *pixels,
-                       const struct gl_pixelstore_attrib *packing )
+                       const struct gl_pixelstore_attrib *packing,
+                       GLbitfield transferOps)
 {
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
 
@@ -213,7 +214,7 @@ fast_read_rgba_pixels( GLcontext *ctx,
    ASSERT(y + height <= rb->Height);
 
    /* check for things we can't handle here */
-   if (ctx->_ImageTransferState ||
+   if (transferOps ||
        packing->SwapBytes ||
        packing->LsbFirst) {
       return GL_FALSE;
@@ -309,15 +310,20 @@ read_rgba_pixels( GLcontext *ctx,
                   const struct gl_pixelstore_attrib *packing )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const GLbitfield transferOps = ctx->_ImageTransferState;
+   GLbitfield transferOps = ctx->_ImageTransferState;
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *rb = fb->_ColorReadBuffer;
 
    ASSERT(rb);
 
+   if (type == GL_FLOAT && ((ctx->Color.ClampReadColor == GL_TRUE) ||
+                            (ctx->Color.ClampReadColor == GL_FIXED_ONLY_ARB &&
+                             rb->DataType != GL_FLOAT)))
+      transferOps |= IMAGE_CLAMP_BIT;
+
    /* Try optimized path first */
    if (fast_read_rgba_pixels(ctx, x, y, width, height,
-                             format, type, pixels, packing)) {
+                             format, type, pixels, packing, transferOps)) {
       return; /* done! */
    }
 
@@ -419,7 +425,7 @@ read_rgba_pixels( GLcontext *ctx,
 
          /* pack the row of RGBA pixels into user's buffer */
          _mesa_pack_rgba_span_float(ctx, width, rgba, format, type, dst,
-                                    packing, ctx->_ImageTransferState);
+                                    packing, transferOps);
 
          dst += dstStride;
       }

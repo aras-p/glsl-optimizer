@@ -888,6 +888,7 @@ struct gl_light_attrib
    GLenum ColorMaterialMode;		/**< GL_AMBIENT, GL_DIFFUSE, etc */
    GLbitfield ColorMaterialBitmask;	/**< bitmask formed from Face and Mode */
    GLboolean ColorMaterialEnabled;
+   GLenum ClampVertexColor;
 
    struct gl_light EnabledList;         /**< List sentinel */
 

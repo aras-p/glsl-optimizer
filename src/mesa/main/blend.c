@@ -516,6 +516,37 @@ _mesa_ColorMask( GLboolean red, GLboolean green,
 }
 
 
+extern void GLAPIENTRY
+_mesa_ClampColorARB(GLenum target, GLenum clamp)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (clamp != GL_TRUE && clamp != GL_FALSE && clamp != GL_FIXED_ONLY_ARB) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glClampColorARB(clamp)");
+      return;
+   }
+
+   switch (target) {
+   case GL_CLAMP_VERTEX_COLOR_ARB:
+      ctx->Light.ClampVertexColor = clamp;
+      break;
+   case GL_CLAMP_FRAGMENT_COLOR_ARB:
+      ctx->Color.ClampFragmentColor = clamp;
+      break;
+   case GL_CLAMP_READ_COLOR_ARB:
+      ctx->Color.ClampReadColor = clamp;
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glClampColorARB(target)");
+      return;
+   }
+}
+
+
+
+
 /**********************************************************************/
 /** \name Initialization */
 /*@{*/
