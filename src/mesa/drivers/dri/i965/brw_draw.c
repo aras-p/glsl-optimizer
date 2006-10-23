@@ -123,6 +123,23 @@ static GLuint trim(GLenum prim, GLuint length)
 }
 
 
+static void brw_emit_cliprect( struct brw_context *brw, 
+			       const drm_clip_rect_t *rect )
+{
+   struct brw_drawrect bdr;
+
+   bdr.header.opcode = CMD_DRAW_RECT;
+   bdr.header.length = sizeof(bdr)/4 - 2;
+   bdr.xmin = rect->x1;
+   bdr.xmax = rect->x2 - 1;
+   bdr.ymin = rect->y1;
+   bdr.ymax = rect->y2 - 1;
+   bdr.xorg = brw->intel.drawX;
+   bdr.yorg = brw->intel.drawY;
+
+   intel_batchbuffer_data( brw->intel.batch, &bdr, sizeof(bdr), 
+			   INTEL_BATCH_NO_CLIPRECTS);
+}
 
 
 static void brw_emit_prim( struct brw_context *brw, 
@@ -149,7 +166,7 @@ static void brw_emit_prim( struct brw_context *brw,
 
    if (prim_packet.verts_per_instance) {
       intel_batchbuffer_data( brw->intel.batch, &prim_packet, sizeof(prim_packet), 
-			      INTEL_BATCH_CLIPRECTS);
+			      INTEL_BATCH_NO_CLIPRECTS);
    }
 }
 
@@ -277,7 +294,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
    GLboolean retval = GL_FALSE;
-   GLuint i;
+   GLuint i, j;
 
    if (ctx->NewState)
       _mesa_update_state( ctx );
@@ -294,8 +311,17 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
     */
 
    LOCK_HARDWARE(intel);
+
+   if (brw->intel.numClipRects == 0) {
+      assert(intel->batch->ptr == intel->batch->map + intel->batch->offset);
+      UNLOCK_HARDWARE(intel);
+      return GL_TRUE;
+   }
+
    {
       assert(intel->locked);
+      
+
 
       /* Set the first primitive early, ahead of validate_state:
        */
@@ -322,10 +348,25 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
 	 goto out;
       }
 
-      /* Emit prims to batchbuffer: 
+      /* For single cliprect, state is already emitted: 
        */
-      for (i = 0; i < nr_prims; i++) {
-	 brw_emit_prim(brw, &prim[i]);   
+      if (brw->intel.numClipRects == 1) {
+	 for (i = 0; i < nr_prims; i++) {
+	    brw_emit_prim(brw, &prim[i]);   
+	 }
+      }
+      else {
+	 /* Otherwise, explicitly do the cliprects at this point:
+	  */
+	 for (j = 0; j < brw->intel.numClipRects; j++) {
+	    brw_emit_cliprect(brw, &brw->intel.pClipRects[j]);
+
+	    /* Emit prims to batchbuffer: 
+	     */
+	    for (i = 0; i < nr_prims; i++) {
+	       brw_emit_prim(brw, &prim[i]);   
+	    }
+	 }
       }
       
       intel->need_flush = GL_TRUE;

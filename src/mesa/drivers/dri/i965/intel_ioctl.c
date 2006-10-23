@@ -105,8 +105,7 @@ void intelWaitIrq( struct intel_context *intel, int seq )
 
 void intel_batch_ioctl( struct intel_context *intel, 
 			GLuint start_offset,
-			GLuint used,
-			GLboolean ignore_cliprects)
+			GLuint used)
 {
    drmI830BatchBuffer batch;
 
@@ -114,27 +113,24 @@ void intel_batch_ioctl( struct intel_context *intel,
    assert(used);
 
    if (0)
-      fprintf(stderr, "%s used %d offset %x..%x ignore_cliprects %d\n",
+      fprintf(stderr, "%s used %d offset %x..%x\n",
 	      __FUNCTION__, 
 	      used, 
 	      start_offset,
-	      start_offset + used,
-	      ignore_cliprects);
+	      start_offset + used);
 
    batch.start = start_offset;
    batch.used = used;
-   batch.cliprects = intel->pClipRects;
-   batch.num_cliprects = ignore_cliprects ? 0 : intel->numClipRects;
+   batch.cliprects = NULL;
+   batch.num_cliprects = 0;
    batch.DR1 = 0;
-   batch.DR4 = ((((GLuint)intel->drawX) & 0xffff) | 
-		(((GLuint)intel->drawY) << 16));
+   batch.DR4 = 0;
       
    if (INTEL_DEBUG & DEBUG_DMA)
-      fprintf(stderr, "%s: 0x%x..0x%x DR4: %x cliprects: %d\n",
+      fprintf(stderr, "%s: 0x%x..0x%x\n",
 	      __FUNCTION__, 
 	      batch.start, 
-	      batch.start + batch.used * 4,
-	      batch.DR4, batch.num_cliprects);
+	      batch.start + batch.used * 4);
 
    if (!intel->no_hw) {
       if (drmCommandWrite (intel->driFd, DRM_I830_BATCHBUFFER, &batch, 
@@ -148,8 +144,7 @@ void intel_batch_ioctl( struct intel_context *intel,
 
 void intel_cmd_ioctl( struct intel_context *intel, 
 		      char *buf,
-		      GLuint used,
-		      GLboolean ignore_cliprects)
+		      GLuint used)
 {
    drmI830CmdBuffer cmd;
 
@@ -159,17 +154,15 @@ void intel_cmd_ioctl( struct intel_context *intel,
    cmd.buf = buf;
    cmd.sz = used;
    cmd.cliprects = intel->pClipRects;
-   cmd.num_cliprects = ignore_cliprects ? 0 : intel->numClipRects;
+   cmd.num_cliprects = 0;
    cmd.DR1 = 0;
-   cmd.DR4 = ((((GLuint)intel->drawX) & 0xffff) | 
-	      (((GLuint)intel->drawY) << 16));
+   cmd.DR4 = 0;
       
    if (INTEL_DEBUG & DEBUG_DMA)
-      fprintf(stderr, "%s: 0x%x..0x%x DR4: %x cliprects: %d\n",
+      fprintf(stderr, "%s: 0x%x..0x%x\n",
 	      __FUNCTION__, 
 	      0, 
-	      0 + cmd.sz,
-	      cmd.DR4, cmd.num_cliprects);
+	      0 + cmd.sz);
 
    if (!intel->no_hw) {
       if (drmCommandWrite (intel->driFd, DRM_I830_CMDBUFFER, &cmd, 

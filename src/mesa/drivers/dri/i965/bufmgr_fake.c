@@ -1307,7 +1307,7 @@ unsigned bmSetFence( struct intel_context *intel )
       GLuint dword[2];
       dword[0] = intel->vtbl.flush_cmd();
       dword[1] = 0;
-      intel_cmd_ioctl(intel, (char *)&dword, sizeof(dword), GL_TRUE);
+      intel_cmd_ioctl(intel, (char *)&dword, sizeof(dword));
       
       intel->bm->last_fence = intelEmitIrqLocked( intel );
       

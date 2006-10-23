@@ -39,7 +39,7 @@ static void flush_and_fence( struct aub_state *s )
    buf[0] = intel->vtbl.flush_cmd();
    buf[1] = 0;
 
-   intel_cmd_ioctl(intel, (char *)&buf, sizeof(buf), GL_TRUE);
+   intel_cmd_ioctl(intel, (char *)&buf, sizeof(buf));
       
    intelWaitIrq( intel, intelEmitIrqLocked( intel ));
 }
@@ -64,7 +64,7 @@ static void flush_cmds( struct aub_state *s,
     * This differs slightly from how the stream was executed
     * initially as this would have been a batchbuffer.
     */
-   intel_cmd_ioctl(s->intel, (void *)data, len, GL_TRUE);
+   intel_cmd_ioctl(s->intel, (void *)data, len);
 
    if (1)
       flush_and_fence(s);
@@ -345,7 +345,7 @@ static int parse_block_header( struct aub_state *s )
       }
       case BH_COMMAND_WRITE:
 #if 0
-	 intel_cmd_ioctl(s->intel, (void *)data, len, GL_TRUE);
+	 intel_cmd_ioctl(s->intel, (void *)data, len);
 #else
 	 if (parse_commands(s, data, len) != 0)
 	    _mesa_printf("parse_commands failed\n");

@@ -74,7 +74,6 @@ const struct brw_tracked_state brw_blend_constant_color = {
 /***********************************************************************
  * Drawing rectangle -- Need for AUB file only.
  */
-
 static void upload_drawing_rect(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
@@ -83,13 +82,12 @@ static void upload_drawing_rect(struct brw_context *brw)
    int x1, y1;
    int x2, y2;
 
-   if (!brw->intel.aub_file) 
+   /* If there is a single cliprect, set it here.  Otherwise iterate
+    * over them in brw_draw_prim().
+    */
+   if (brw->intel.numClipRects > 1) 
       return; 
  
-   /* Basically calculate a single cliprect for the whole window.
-    * Don't bother iterating over cliprects at the moment.
-    */
-
    x1 = dPriv->x;
    y1 = dPriv->y;      
    x2 = dPriv->x + dPriv->w;
@@ -110,7 +108,10 @@ static void upload_drawing_rect(struct brw_context *brw)
    bdr.xorg = dPriv->x;
    bdr.yorg = dPriv->y;
 
-   BRW_CACHED_BATCH_STRUCT(brw, &bdr);
+   /* Can't use BRW_CACHED_BATCH_STRUCT because this is also emitted
+    * uncached in brw_draw.c:
+    */
+   BRW_BATCH_STRUCT(brw, &bdr);
 }
 
 const struct brw_tracked_state brw_drawing_rect = {

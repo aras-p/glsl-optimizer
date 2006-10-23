@@ -128,7 +128,6 @@ GLboolean intel_batchbuffer_flush( struct intel_batchbuffer *batch )
    struct intel_context *intel = batch->intel;
    GLuint used = batch->ptr - (batch->map + batch->offset);
    GLuint offset;
-   GLboolean ignore_cliprects = (batch->flags & INTEL_BATCH_CLIPRECTS) ? GL_FALSE : GL_TRUE;
    GLint retval = GL_TRUE;
 
    assert(intel->locked);
@@ -137,22 +136,6 @@ GLboolean intel_batchbuffer_flush( struct intel_batchbuffer *batch )
       bmReleaseBuffers( batch->intel );
       return GL_TRUE;
    }
-
-   /* Throw away non-effective packets.  
-    */
-   if (intel->numClipRects == 0 && !ignore_cliprects) {
-      batch->ptr = batch->map + batch->offset;
-      bmReleaseBuffers( batch->intel );
-      intel->vtbl.lost_hardware(intel);
-      batch->flags = 0;
-
-      UNLOCK_HARDWARE(intel);
-      sched_yield();
-      LOCK_HARDWARE(intel);
-
-      return GL_TRUE;
-   }
-
 
    /* Add the MI_BATCH_BUFFER_END.  Always add an MI_FLUSH - this is a
     * performance drain that we would like to avoid.
@@ -204,8 +187,7 @@ GLboolean intel_batchbuffer_flush( struct intel_batchbuffer *batch )
     */
    intel_batch_ioctl(batch->intel, 
 		     offset + batch->offset,
-		     used,
-		     ignore_cliprects);
+		     used);
 
    if (intel->aub_file && 
        intel->ctx.DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT)

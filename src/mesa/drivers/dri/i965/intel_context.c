@@ -577,12 +577,6 @@ static void intelContendedLock( struct intel_context *intel, GLuint flags )
    if (dPriv && intel->lastStamp != dPriv->lastStamp) {
       intelWindowMoved( intel );
       intel->lastStamp = dPriv->lastStamp;
-
-      /* This works because the lock is always grabbed before emitting
-       * commands and commands are always flushed prior to releasing
-       * the lock.
-       */
-      intel->NewGLState |= _NEW_WINDOW_POS; 
    }
 }
 

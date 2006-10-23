@@ -272,7 +272,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
    volatile drmI830Sarea *sarea;
 
    if (sPriv->devPrivSize != sizeof(I830DRIRec)) {
-      fprintf(stderr,"\nERROR!  sizeof(I830DRIRec) (%ld) does not match passed size from device driver (%d)\n", sizeof(I830DRIRec), sPriv->devPrivSize);
+      fprintf(stderr,"\nERROR!  sizeof(I830DRIRec) (%ld) does not match passed size from device driver (%d)\n", (unsigned long)sizeof(I830DRIRec), sPriv->devPrivSize);
       return GL_FALSE;
    }
 

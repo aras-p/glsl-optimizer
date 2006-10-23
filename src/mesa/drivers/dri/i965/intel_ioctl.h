@@ -35,12 +35,10 @@ int intelEmitIrqLocked( struct intel_context *intel );
 
 void intel_batch_ioctl( struct intel_context *intel, 
 			GLuint start_offset,
-			GLuint used,
-			GLboolean ignore_cliprects);
+			GLuint used);
 
 void intel_cmd_ioctl( struct intel_context *intel, 
 		      char *buf,
-		      GLuint used,
-		      GLboolean ignore_cliprects);
+		      GLuint used);
 
 #endif
