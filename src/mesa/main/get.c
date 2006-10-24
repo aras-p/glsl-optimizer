@@ -793,7 +793,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.RedBias);
          break;
       case GL_RED_BITS:
-         params[0] = INT_TO_BOOLEAN( ctx->DrawBuffer->Visual.redBits );
+         params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.redBits);
          break;
       case GL_RED_SCALE:
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.RedScale);
@@ -2617,7 +2617,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Pixel.RedBias;
          break;
       case GL_RED_BITS:
-         params[0] = (GLfloat)( ctx->DrawBuffer->Visual.redBits );
+         params[0] = (GLfloat)(ctx->DrawBuffer->Visual.redBits);
          break;
       case GL_RED_SCALE:
          params[0] = ctx->Pixel.RedScale;
@@ -4441,7 +4441,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Pixel.RedBias);
          break;
       case GL_RED_BITS:
-         params[0] =  ctx->DrawBuffer->Visual.redBits ;
+         params[0] = ctx->DrawBuffer->Visual.redBits;
          break;
       case GL_RED_SCALE:
          params[0] = IROUND(ctx->Pixel.RedScale);

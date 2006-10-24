@@ -385,7 +385,7 @@ StateVars = [
 	  ["ctx->ProjectionMatrixStack.Depth + 1"], "", None ),
 	( "GL_READ_BUFFER", GLenum, ["ctx->ReadBuffer->ColorReadBuffer"], "", None ),
 	( "GL_RED_BIAS", GLfloat, ["ctx->Pixel.RedBias"], "", None ),
-	( "GL_RED_BITS", GLint, [" ctx->DrawBuffer->Visual.redBits "], "", None ),
+	( "GL_RED_BITS", GLint, ["ctx->DrawBuffer->Visual.redBits"], "", None ),
 	( "GL_RED_SCALE", GLfloat, ["ctx->Pixel.RedScale"], "", None ),
 	( "GL_RENDER_MODE", GLenum, ["ctx->RenderMode"], "", None ),
 	( "GL_RESCALE_NORMAL", GLboolean,
