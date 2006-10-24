@@ -490,7 +490,7 @@ static void r200Fogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
       GLuint fog   = rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR];
 
       fog &= ~R200_FOG_USE_MASK;
-      if ( ctx->Fog.FogCoordinateSource == GL_FOG_COORD ) {
+      if ( ctx->Fog.FogCoordinateSource == GL_FOG_COORD || ctx->VertexProgram.Enabled) {
 	 fog   |= R200_FOG_USE_VTX_FOG;
 	 out_0 |= R200_VTX_DISCRETE_FOG;
       }
@@ -2219,10 +2219,9 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	       rmesa->hw.tcl.cmd[TCL_UCP_VERT_BLEND_CTL] &= ~(R200_UCP_ENABLE_0 << i);
 	    }*/
 	 }
-	 /* FIXME: ugly as hell. need to call everything which might change tcl_output_vtxfmt0/1 and compsel */
+	 /* ugly. Need to call everything which might change compsel. */
 	 r200UpdateSpecular( ctx );
-	 r200Fogfv( ctx, GL_FOG_COORD_SRC, NULL );
-#if 1
+#if 0
 	/* shouldn't be necessary, as it's picked up anyway in r200ValidateState (_NEW_PROGRAM),
 	   but without it doom3 locks up at always the same places. Why? */
 	/* FIXME: This can (and should) be replaced by a call to the TCL_STATE_FLUSH reg before
@@ -2251,7 +2250,9 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
       else {
 	 /* picked up later */
       }
+      /* call functions which change hw state based on ARB_vp enabled or not. */
       r200PointParameter( ctx, GL_POINT_DISTANCE_ATTENUATION, NULL );
+      r200Fogfv( ctx, GL_FOG_COORD_SRC, NULL );
       break;
 
    case GL_VERTEX_PROGRAM_POINT_SIZE_ARB:

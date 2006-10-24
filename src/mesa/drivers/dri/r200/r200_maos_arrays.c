@@ -420,12 +420,21 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
    }
 
    if (inputs & VERT_BIT_FOG) {
-      if (!rmesa->tcl.fog.buf)
-	 emit_vecfog( ctx, 
-		      &(rmesa->tcl.fog), 
-		      (char *)VB->FogCoordPtr->data,
-		      VB->FogCoordPtr->stride,
-		      count);
+      if (!rmesa->tcl.fog.buf) {
+	 if (ctx->VertexProgram._Enabled)
+	    emit_vector( ctx, 
+			 &(rmesa->tcl.fog), 
+			 (char *)VB->FogCoordPtr->data,
+			 1,
+			 VB->FogCoordPtr->stride,
+			 count);
+	 else
+	    emit_vecfog( ctx, 
+			 &(rmesa->tcl.fog), 
+			 (char *)VB->FogCoordPtr->data,
+			 VB->FogCoordPtr->stride,
+			 count);
+      }
 
       vfmt0 |= R200_VTX_DISCRETE_FOG;
       component[nr++] = &rmesa->tcl.fog;

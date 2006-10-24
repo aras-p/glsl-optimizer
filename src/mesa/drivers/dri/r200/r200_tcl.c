@@ -429,8 +429,11 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
       }
    }
    else {
-      GLuint out_vtxfmt0 = 0;
-      GLuint out_vtxfmt1 = 0;
+      /* vtx_tcl_output_vtxfmt_0/1 need to match configuration of "fragment
+	 part", since using some vertex interpolator later which is not in
+	 out_vtxfmt0/1 will lock up. It seems to be ok to write in vertex
+	 prog to a not enabled output however, so just don't mess with it.
+	 We only need to change compsel. */
       GLuint out_compsel = 0;
       GLuint vp_out = rmesa->curr_vp_hw->mesa_program.Base.OutputsWritten;
       /* can't handle other inputs, generic attribs etc. currently - should never arrive here */
@@ -439,50 +442,28 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
 	  VERT_BIT_FOG | VERT_BIT_TEX0 | VERT_BIT_TEX1 | VERT_BIT_TEX2 |
 	  VERT_BIT_TEX3 | VERT_BIT_TEX4 | VERT_BIT_TEX5)) == 0);
       inputs |= rmesa->curr_vp_hw->mesa_program.Base.InputsRead;
-      /* FIXME: this is a mess. Not really sure how to set up TCL_OUTPUT_VTXFMT
-	 in "undefined" cases (e.g. output needed later but not written by vertex program or vice versa)
-	 - however misconfiguration here will almost certainly lock up the chip.
-	 I think at the very least we need to enable tcl outputs which we write to. Maybe even need to
-	 fix up a vertex program so an output needed later always gets written?
-	 For now just set the compsel and output_vtxfmt to the outputs written.
-	 However, for simplicity we assume always all 4 values are written which may not be correct
-	 (but I don't know if it could lead to lockups). */
       assert(vp_out & (1 << VERT_RESULT_HPOS));
-      out_vtxfmt0 = R200_VTX_XY | R200_VTX_Z0 | R200_VTX_W0;
-      /* FIXME: need to always enable color_0 otherwise doom3's shadow vp (?) will lock up (?) */
-      out_vtxfmt0 |= R200_VTX_FP_RGBA << R200_VTX_COLOR_0_SHIFT;
       out_compsel = R200_OUTPUT_XYZW;
       if (vp_out & (1 << VERT_RESULT_COL0)) {
-	 out_vtxfmt0 |= R200_VTX_FP_RGBA << R200_VTX_COLOR_0_SHIFT;
 	 out_compsel |= R200_OUTPUT_COLOR_0;
       }
       if (vp_out & (1 << VERT_RESULT_COL1)) {
-	 out_vtxfmt0 |= R200_VTX_FP_RGBA << R200_VTX_COLOR_1_SHIFT;
 	 out_compsel |= R200_OUTPUT_COLOR_1;
       }
-      /* FIXME: probably not everything is set up for fogc to work correctly */
       if (vp_out & (1 << VERT_RESULT_FOGC)) {
-	 out_vtxfmt0 |= R200_VTX_DISCRETE_FOG;
          out_compsel |= R200_OUTPUT_DISCRETE_FOG;
       }
       if (vp_out & (1 << VERT_RESULT_PSIZ)) {
-	 out_vtxfmt0 |= R200_VTX_POINT_SIZE;
 	 out_compsel |= R200_OUTPUT_PT_SIZE;
       }
       for (i = VERT_RESULT_TEX0; i < VERT_RESULT_TEX6; i++) {
 	 if (vp_out & (1 << i)) {
-	    out_vtxfmt1 |= 4  << ((i - VERT_RESULT_TEX0) * 3);
 	    out_compsel |= R200_OUTPUT_TEX_0 << (i - VERT_RESULT_TEX0);
 	 }
       }
-      if ((rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] != out_vtxfmt0) ||
-	 (rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_1] != out_vtxfmt1) ||
-	 (rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL] != out_compsel)) {
+      if (rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL] != out_compsel) {
 	 R200_STATECHANGE( rmesa, vtx );
-	 rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] = out_vtxfmt0;
-	 rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_1] = out_vtxfmt1;
 	 rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL] = out_compsel;
-	 /* FIXME: should restore this when disabling vertex programs maybe? */
       }
    }
 
