@@ -1336,8 +1336,8 @@ _mesa_lookup_rgba_ubyte(const struct gl_color_table *table,
       /* replace RGBA with LLLA */
       if (table->Size == 256) {
          for (i = 0; i < n; i++) {
-            GLchan l = lut[rgba[i][RCOMP] * 2 + 0];
-            GLchan a = lut[rgba[i][ACOMP] * 2 + 1];;
+            GLubyte l = lut[rgba[i][RCOMP] * 2 + 0];
+            GLubyte a = lut[rgba[i][ACOMP] * 2 + 1];;
             rgba[i][RCOMP] =
             rgba[i][GCOMP] =
             rgba[i][BCOMP] = l;
@@ -1348,8 +1348,8 @@ _mesa_lookup_rgba_ubyte(const struct gl_color_table *table,
          for (i = 0; i < n; i++) {
             GLint jL = IROUND((GLfloat) rgba[i][RCOMP] * scale);
             GLint jA = IROUND((GLfloat) rgba[i][ACOMP] * scale);
-            GLchan luminance = lut[jL * 2 + 0];
-            GLchan alpha     = lut[jA * 2 + 1];
+            GLubyte luminance = lut[jL * 2 + 0];
+            GLubyte alpha     = lut[jA * 2 + 1];
             rgba[i][RCOMP] =
             rgba[i][GCOMP] =
             rgba[i][BCOMP] = luminance;
