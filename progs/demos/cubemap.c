@@ -454,6 +454,7 @@ static void usage(void)
 
 int main( int argc, char *argv[] )
 {
+   glutInit(&argc, argv);
    glutInitWindowPosition(0, 0);
    glutInitWindowSize(600, 500);
    glutInitDisplayMode( GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );
