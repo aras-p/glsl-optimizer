@@ -89,9 +89,8 @@ extern void r200SetupVertexProg( GLcontext *ctx );
 
 #define R200_VPI_OUT_OP_EXP                     (65 << 0)
 #define R200_VPI_OUT_OP_LOG                     (66 << 0)
-/* this is used for fog. Not sure what's different to normal EX2,
-   but for fog calcs seems to match sw tnl much more closely. */
-#define R200_VPI_OUT_OP_EXP_FOG                 (67 << 0)
+/* base e exp. Useful for fog. */
+#define R200_VPI_OUT_OP_EXP_E                   (67 << 0)
 
 #define R200_VPI_OUT_OP_LIT                     (68 << 0)
 #define R200_VPI_OUT_OP_POW                     (69 << 0)

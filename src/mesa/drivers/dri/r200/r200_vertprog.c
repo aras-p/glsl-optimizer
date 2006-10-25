@@ -543,8 +543,8 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp, G
       //_mesa_print_program(&mesa_vp->Base);
    }
 
-   /* for fogc, can't change mesa_vp, as it would hose swtnl
-      maybe should just copy whole prog ? */
+   /* for fogc, can't change mesa_vp, as it would hose swtnl, and exp with
+      base e isn't directly available neither. */
    if (mesa_vp->Base.OutputsWritten & VERT_RESULT_FOGC && !vp->fogpidx) {
       struct gl_program_parameter_list *paramList;
       GLint tokens[6] = { STATE_FOG_PARAMS, 0, 0, 0, 0, 0 };
@@ -1016,7 +1016,7 @@ else {
 	    o_inst->src1 = EASY_VSF_SOURCE(vp->fogpidx, X, X, X, X, PARAM, NONE);
 	    o_inst->src2 = UNUSED_SRC_1;
 	    o_inst++;
-	    o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_EXP_FOG,
+	    o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_EXP_E,
 		R200_VSF_OUT_CLASS_RESULT_FOGC,
 		VSF_FLAG_X);
 	    o_inst->src0 = EASY_VSF_SOURCE(fog_temp_i, X, X, X, X, TMP, ALL);
@@ -1038,7 +1038,7 @@ else {
 	    o_inst->src1 = EASY_VSF_SOURCE(fog_temp_i, X, X, X, X, TMP, NONE);
 	    o_inst->src2 = UNUSED_SRC_1;
 	    o_inst++;
-	    o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_EXP_FOG,
+	    o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_EXP_E,
 		R200_VSF_OUT_CLASS_RESULT_FOGC,
 		VSF_FLAG_X);
 	    o_inst->src0 = EASY_VSF_SOURCE(fog_temp_i, X, X, X, X, TMP, ALL);
