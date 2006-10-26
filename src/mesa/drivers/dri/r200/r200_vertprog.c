@@ -40,6 +40,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_ioctl.h"
 #include "r200_tcl.h"
 #include "program_instruction.h"
+#include "programopt.h"
 #include "tnl/tnl.h"
 
 #if SWIZZLE_X != VSF_IN_COMPONENT_X || \
@@ -387,16 +388,12 @@ static unsigned long op_operands(enum prog_opcode opcode)
 #define UNUSED_SRC_2 ((o_inst->src2 & ~15) | 9)
 
 
-/* DP4 version seems to trigger some hw peculiarity - fglrx does this on r200 however */
-#define PREFER_DP4
-
-
 /**
  * Generate an R200 vertex program from Mesa's internal representation.
  *
  * \return  GL_TRUE for success, GL_FALSE for failure.
  */
-static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp, GLenum fogmode)
+static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_vertex_program *vp)
 {
    struct gl_vertex_program *mesa_vp = &vp->mesa_program;
    struct prog_instruction *vpi;
@@ -410,7 +407,7 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp, G
 
    vp->native = GL_FALSE;
    vp->translated = GL_TRUE;
-   vp->fogmode = fogmode;
+   vp->fogmode = ctx->Fog.Mode;
 
    if (mesa_vp->Base.NumInstructions == 0)
       return GL_FALSE;
@@ -454,94 +451,8 @@ static GLboolean r200_translate_vertex_program(struct r200_vertex_program *vp, G
    if (mesa_vp->IsPositionInvariant &&
       /* make sure we only do this once */
        !(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))) {
-      struct gl_program_parameter_list *paramList;
-      GLint tokens[6] = { STATE_MATRIX, STATE_MVP, 0, 0, 0, STATE_MATRIX };
-
-#ifdef PREFER_DP4
-      tokens[5] = STATE_MATRIX;
-#else
-      tokens[5] = STATE_MATRIX_TRANSPOSE;
-#endif
-      paramList = mesa_vp->Base.Parameters;
-
-      vpi = malloc((mesa_vp->Base.NumInstructions + 4) * sizeof(struct prog_instruction));
-      memset(vpi, 0, 4 * sizeof(struct prog_instruction));
-
-      /* emit four dot product instructions to do MVP transformation */
-      for (i=0; i < 4; i++) {
-	 GLint idx;
-	 tokens[3] = tokens[4] = i;
-	 idx = _mesa_add_state_reference(paramList, tokens);
-#ifdef PREFER_DP4
-	 vpi[i].Opcode = OPCODE_DP4;
-	 vpi[i].StringPos = 0;
-	 vpi[i].Data = 0;
-
-	 vpi[i].DstReg.File = PROGRAM_OUTPUT;
-	 vpi[i].DstReg.Index = VERT_RESULT_HPOS;
-	 vpi[i].DstReg.WriteMask = 1 << i;
-	 vpi[i].DstReg.CondMask = COND_TR;
-
-	 vpi[i].SrcReg[0].File = PROGRAM_STATE_VAR;
-	 vpi[i].SrcReg[0].Index = idx;
-	 vpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
-
-	 vpi[i].SrcReg[1].File = PROGRAM_INPUT;
-	 vpi[i].SrcReg[1].Index = VERT_ATTRIB_POS;
-	 vpi[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
-#else
-	 if (i == 0)
-	    vpi[i].Opcode = OPCODE_MUL;
-	 else
-	    vpi[i].Opcode = OPCODE_MAD;
-
-	 vpi[i].StringPos = 0;
-	 vpi[i].Data = 0;
-
-	 if (i == 3)
-	    vpi[i].DstReg.File = PROGRAM_OUTPUT;
-	 else
-	    vpi[i].DstReg.File = PROGRAM_TEMPORARY;
-	 vpi[i].DstReg.Index = 0;
-	 vpi[i].DstReg.WriteMask = 0xf;
-	 vpi[i].DstReg.CondMask = COND_TR;
-
-	 vpi[i].SrcReg[0].File = PROGRAM_STATE_VAR;
-	 vpi[i].SrcReg[0].Index = idx;
-	 vpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
-
-	 vpi[i].SrcReg[1].File = PROGRAM_INPUT;
-	 vpi[i].SrcReg[1].Index = VERT_ATTRIB_POS;
-	 vpi[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(i, i, i, i);
-
-	 if (i > 0) {
-	    vpi[i].SrcReg[2].File = PROGRAM_TEMPORARY;
-	    vpi[i].SrcReg[2].Index = 0;
-	    vpi[i].SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
-	 }
-#endif	
+	 _mesa_insert_mvp_code(ctx, mesa_vp);
       }
-
-      /* now append original program after our new instructions */
-      memcpy(&vpi[i], mesa_vp->Base.Instructions, mesa_vp->Base.NumInstructions * sizeof(struct prog_instruction));
-
-      /* deallocate original program */
-      free(mesa_vp->Base.Instructions);
-
-      /* install new program */
-      mesa_vp->Base.Instructions = vpi;
-
-      mesa_vp->Base.NumInstructions += 4;
-      vpi = &mesa_vp->Base.Instructions[mesa_vp->Base.NumInstructions-1];
-
-      assert(vpi->Opcode == OPCODE_END);
-
-      mesa_vp->Base.InputsRead |= (1 << VERT_ATTRIB_POS);
-      mesa_vp->Base.OutputsWritten |= (1 << VERT_RESULT_HPOS);
-
-      //fprintf(stderr, "IsPositionInvariant is set!\n");
-      //_mesa_print_program(&mesa_vp->Base);
-   }
 
    /* for fogc, can't change mesa_vp, as it would hose swtnl, and exp with
       base e isn't directly available neither. */
@@ -1108,7 +1019,7 @@ void r200SetupVertexProg( GLcontext *ctx ) {
 
    if (!vp->translated || (ctx->Fog.Enabled && ctx->Fog.Mode != vp->fogmode)) {
       rmesa->curr_vp_hw = NULL;
-      r200_translate_vertex_program(vp, ctx->Fog.Mode);
+      r200_translate_vertex_program(ctx, vp);
    }
    /* could optimize setting up vertex progs away for non-tcl hw */
    fallback = !(vp->native && r200VertexProgUpdateParams(ctx, vp) &&
@@ -1231,7 +1142,7 @@ r200ProgramStringNotify(GLcontext *ctx, GLenum target, struct gl_program *prog)
       vp->translated = GL_FALSE;
       vp->fogpidx = 0;
 /*      memset(&vp->translated, 0, sizeof(struct r200_vertex_program) - sizeof(struct gl_vertex_program));*/
-      r200_translate_vertex_program(vp, ctx->Fog.Mode);
+      r200_translate_vertex_program(ctx, vp);
       rmesa->curr_vp_hw = NULL;
       break;
    }
@@ -1248,7 +1159,7 @@ r200IsProgramNative(GLcontext *ctx, GLenum target, struct gl_program *prog)
    case GL_VERTEX_STATE_PROGRAM_NV:
    case GL_VERTEX_PROGRAM_ARB:
       if (!vp->translated) {
-	 r200_translate_vertex_program(vp, ctx->Fog.Mode);
+	 r200_translate_vertex_program(ctx, vp);
       }
      /* does not take parameters etc. into account */
       return vp->native;
