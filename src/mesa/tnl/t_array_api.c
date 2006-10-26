@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -115,6 +115,12 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 {
    GET_CURRENT_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
+   /* It's tempting to get rid of this threshold value because we take
+    * very different paths if 'count' is less than or greater than 'thresh'.
+    * I've found/fixed at least one bug which only occured for particular
+    * array sizes.  Also, several conformance tests use very short arrays
+    * which means the long-array path doesn't get tested.  -Brian
+    */
    GLuint thresh = (ctx->Driver.NeedFlush & FLUSH_STORED_VERTICES) ? 30 : 10;
    
    if (MESA_VERBOSE & VERBOSE_API)
@@ -289,6 +295,18 @@ _tnl_DrawRangeElements(GLenum mode,
    ui_indices = (GLuint *)_ac_import_elements( ctx, GL_UNSIGNED_INT,
 					       count, type, indices );
 
+#ifdef DEBUG
+   /* check that array indices really fall inside [start, end] range */
+   {
+      GLuint i;
+      for (i = 0; i < count; i++) {
+         if (ui_indices[i] < start || ui_indices[i] > end) {
+            _mesa_warning(ctx, "Invalid array index in "
+                          "glDrawRangeElements(index=%u)", ui_indices[i]);
+         }
+      }
+   }
+#endif
 
    assert(!ctx->CompileFlag);
 
