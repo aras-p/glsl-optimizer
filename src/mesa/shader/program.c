@@ -1691,6 +1691,9 @@ _mesa_print_instruction(const struct prog_instruction *inst)
       print_src_reg(&inst->SrcReg[0]);
       _mesa_printf(";\n");
       break;
+   case OPCODE_END:
+      _mesa_printf("END;\n");
+      break;
    /* XXX may need for other special-case instructions */
    default:
       /* typical alu instruction */
