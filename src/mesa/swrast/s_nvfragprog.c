@@ -172,6 +172,8 @@ get_register_pointer( GLcontext *ctx,
       return ctx->FragmentProgram.Parameters[source->Index];
    case PROGRAM_STATE_VAR:
       /* Fallthrough */
+   case PROGRAM_CONSTANT:
+      /* Fallthrough */
    case PROGRAM_NAMED_PARAM:
       ASSERT(source->Index < (GLint) program->Base.Parameters->NumParameters);
       return program->Base.Parameters->ParameterValues[source->Index];
@@ -893,6 +895,14 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] * b[2] + (1.0F - a[2]) * c[2];
                result[3] = a[3] * b[3] + (1.0F - a[3]) * c[3];
                store_vector4( inst, machine, result );
+#if DEBUG_FRAG
+               printf("LRP (%g %g %g %g) = (%g %g %g %g), "
+                      "(%g %g %g %g), (%g %g %g %g)\n",
+                      result[0], result[1], result[2], result[3],
+                      a[0], a[1], a[2], a[3],
+                      b[0], b[1], b[2], b[3],
+                      c[0], c[1], c[2], c[3]);
+#endif
             }
             break;
          case OPCODE_MAD:
@@ -1196,6 +1206,11 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] - b[2];
                result[3] = a[3] - b[3];
                store_vector4( inst, machine, result );
+#if DEBUG_FRAG
+               printf("SUB (%g %g %g %g) = (%g %g %g %g) - (%g %g %g %g)\n",
+                      result[0], result[1], result[2], result[3],
+                      a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3]);
+#endif
             }
             break;
          case OPCODE_SWZ: /* extended swizzle */
