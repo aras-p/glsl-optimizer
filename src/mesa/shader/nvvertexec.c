@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -802,6 +802,22 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct gl_vertex_program *progra
    } /* for */
 
    ctx->_CurrentProgram = 0;
+}
+
+
+/**
+ * Execute a vertex state program.
+ * \sa _mesa_ExecuteProgramNV
+ */
+void
+_mesa_exec_vertex_state_program(GLcontext *ctx,
+                                struct gl_vertex_program *vprog,
+                                const GLfloat *params)
+{
+   _mesa_init_vp_per_vertex_registers(ctx);
+   _mesa_init_vp_per_primitive_registers(ctx);
+   COPY_4V(ctx->VertexProgram.Machine.Inputs[VERT_ATTRIB_POS], params);
+   _mesa_exec_vertex_program(ctx, vprog);
 }
 
 

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5.2
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,7 +35,13 @@ extern void
 _mesa_init_vp_per_primitive_registers(GLcontext *ctx);
 
 extern void
-_mesa_exec_vertex_program(GLcontext *ctx, const struct gl_vertex_program *program);
+_mesa_exec_vertex_program(GLcontext *ctx,
+                          const struct gl_vertex_program *program);
+
+extern void
+_mesa_exec_vertex_state_program(GLcontext *ctx,
+                                struct gl_vertex_program *vprog,
+                                const GLfloat *params);
 
 extern void
 _mesa_dump_vp_state( const struct gl_vertex_program_state *state );
