@@ -1,3 +1,0 @@
-MESA_ARRAY_CACHE_SOURCES = \
-ac_context.c \
-ac_import.c
