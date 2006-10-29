@@ -74,7 +74,7 @@
 #include "renderbuffer.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo_context.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
@@ -1555,7 +1555,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    /* Initialize the software rasterizer and helper modules.
     */
    if (!_swrast_CreateContext( mesaCtx ) ||
-       !_ac_CreateContext( mesaCtx ) ||
+       !_vbo_CreateContext( mesaCtx ) ||
        !_tnl_CreateContext( mesaCtx ) ||
        !_swsetup_CreateContext( mesaCtx )) {
       _mesa_free_context_data(&c->mesa);
@@ -1587,7 +1587,7 @@ void XMesaDestroyContext( XMesaContext c )
    _swsetup_DestroyContext( mesaCtx );
    _swrast_DestroyContext( mesaCtx );
    _tnl_DestroyContext( mesaCtx );
-   _ac_DestroyContext( mesaCtx );
+   _vbo_DestroyContext( mesaCtx );
    _mesa_free_context_data( mesaCtx );
    _mesa_free( c );
 }
