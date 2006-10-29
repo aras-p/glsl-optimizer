@@ -89,7 +89,7 @@ _mesa_dlopen(const char *libname, int flags)
    return dlopen(libname, flags);
 #endif
 #else
-   return (GenericFunc) NULL;
+   return (void *) NULL;
 #endif /* USE_EXTERNAL_DXTN_LIB */
 }
 
