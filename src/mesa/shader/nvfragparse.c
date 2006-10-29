@@ -1273,7 +1273,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
       GLubyte token[100];
 
       /* Initialize the instruction */
-      _mesa_init_instruction(inst);
+      _mesa_init_instructions(inst, 1);
 
       /* special instructions */
       if (Parse_String(parseState, "DEFINE")) {

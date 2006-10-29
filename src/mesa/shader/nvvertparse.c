@@ -1143,7 +1143,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
       struct prog_instruction *inst = program + parseState->numInst;
 
       /* Initialize the instruction */
-      _mesa_init_instruction(inst);
+      _mesa_init_instructions(inst, 1);
 
       if (Parse_String(parseState, "MOV")) {
          if (!Parse_UnaryOpInstruction(parseState, inst, OPCODE_MOV))

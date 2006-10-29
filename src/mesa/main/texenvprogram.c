@@ -474,7 +474,7 @@ emit_op(struct texenv_fragment_program *p,
    GLuint nr = p->program->Base.NumInstructions++;
    struct prog_instruction *inst = &p->program->Base.Instructions[nr];
       
-   _mesa_init_instruction(inst);
+   _mesa_init_instructions(inst, 1);
    inst->Opcode = op;
    
    emit_arg( &inst->SrcReg[0], src0 );

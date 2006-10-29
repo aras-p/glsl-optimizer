@@ -1307,26 +1307,32 @@ _mesa_load_state_parameters(GLcontext *ctx,
 
 /**
  * Initialize program instruction fields to defaults.
+ * \param inst  first instruction to initialize
+ * \param count  number of instructions to initialize
  */
 void
-_mesa_init_instruction(struct prog_instruction *inst)
+_mesa_init_instructions(struct prog_instruction *inst, GLuint count)
 {
-   _mesa_bzero(inst, sizeof(struct prog_instruction));
+   GLuint i;
 
-   inst->SrcReg[0].File = PROGRAM_UNDEFINED;
-   inst->SrcReg[0].Swizzle = SWIZZLE_NOOP;
-   inst->SrcReg[1].File = PROGRAM_UNDEFINED;
-   inst->SrcReg[1].Swizzle = SWIZZLE_NOOP;
-   inst->SrcReg[2].File = PROGRAM_UNDEFINED;
-   inst->SrcReg[2].Swizzle = SWIZZLE_NOOP;
+   _mesa_bzero(inst, count * sizeof(struct prog_instruction));
 
-   inst->DstReg.File = PROGRAM_UNDEFINED;
-   inst->DstReg.WriteMask = WRITEMASK_XYZW;
-   inst->DstReg.CondMask = COND_TR;
-   inst->DstReg.CondSwizzle = SWIZZLE_NOOP;
+   for (i = 0; i < count; i++) {
+      inst[i].SrcReg[0].File = PROGRAM_UNDEFINED;
+      inst[i].SrcReg[0].Swizzle = SWIZZLE_NOOP;
+      inst[i].SrcReg[1].File = PROGRAM_UNDEFINED;
+      inst[i].SrcReg[1].Swizzle = SWIZZLE_NOOP;
+      inst[i].SrcReg[2].File = PROGRAM_UNDEFINED;
+      inst[i].SrcReg[2].Swizzle = SWIZZLE_NOOP;
 
-   inst->SaturateMode = SATURATE_OFF;
-   inst->Precision = FLOAT32;
+      inst[i].DstReg.File = PROGRAM_UNDEFINED;
+      inst[i].DstReg.WriteMask = WRITEMASK_XYZW;
+      inst[i].DstReg.CondMask = COND_TR;
+      inst[i].DstReg.CondSwizzle = SWIZZLE_NOOP;
+
+      inst[i].SaturateMode = SATURATE_OFF;
+      inst[i].Precision = FLOAT32;
+   }
 }
 
 
