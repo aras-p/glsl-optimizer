@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -2571,8 +2571,6 @@ parse_fp_vector_src_reg(GLcontext * ctx, const GLubyte ** inst,
 
    reg->File = file;
    reg->Index = index;
-   reg->Abs = 0;		/* NV only */
-   reg->NegateAbs = 0;		/* NV only */
    reg->NegateBase = negate;
    reg->Swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1], swizzle[2], swizzle[3]);
    return 0;
@@ -2595,8 +2593,6 @@ parse_fp_dst_reg(GLcontext * ctx, const GLubyte ** inst,
    if (parse_masked_dst_reg (ctx, inst, vc_head, Program, &file, &idx, &mask))
       return 1;
 
-   reg->CondMask = 0;		/* NV only */
-   reg->CondSwizzle = 0;	/* NV only */
    reg->File = file;
    reg->Index = idx;
    reg->WriteMask = mask;
@@ -2632,8 +2628,6 @@ parse_fp_scalar_src_reg (GLcontext * ctx, const GLubyte ** inst,
 
    reg->File = File;
    reg->Index = Index;
-   reg->Abs = 0;		/* NV only */
-   reg->NegateAbs = 0;		/* NV only */
    reg->NegateBase = Negate;
    reg->Swizzle = (Swizzle[0] << 0);
 
