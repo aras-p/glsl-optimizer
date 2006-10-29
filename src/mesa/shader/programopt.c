@@ -137,7 +137,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    GLfloat fogVals[4];
    GLuint fogConsts;                /* constant values for EXP, EXP2 mode */
 
-   if (fprog->FogOption != GL_NONE) {
+   if (fprog->FogOption == GL_NONE) {
       _mesa_problem(ctx, "_mesa_append_fog_code() called for fragment program"
                     " with FogOption == GL_NONE");
       return;
