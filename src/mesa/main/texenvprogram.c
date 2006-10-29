@@ -33,7 +33,11 @@
 #include "shader/program.h"
 #include "shader/program_instruction.h"
 
-#define MAX_INSTRUCTIONS 100
+/**
+ * According to Glean's texCombine test, no more than 21 instructions
+ * are needed.  Allow a few extra just in case.
+ */
+#define MAX_INSTRUCTIONS 24
 
 #define DISASSEM (MESA_VERBOSE & VERBOSE_DISASSEM)
 
@@ -988,9 +992,10 @@ load_texunit_sources( struct texenv_fragment_program *p, int unit )
  * current texture env/combine mode.
  */
 static void
-create_new_program(struct state_key *key, GLcontext *ctx,
+create_new_program(GLcontext *ctx, struct state_key *key,
                    struct gl_fragment_program *program)
 {
+   struct prog_instruction instBuffer[MAX_INSTRUCTIONS];
    struct texenv_fragment_program p;
    GLuint unit;
    struct ureg cf, out;
@@ -1000,18 +1005,19 @@ create_new_program(struct state_key *key, GLcontext *ctx,
    p.state = key;
    p.program = program;
 
-   p.program->Base.Instructions =
-      (struct prog_instruction*) _mesa_malloc(sizeof(struct prog_instruction) * MAX_INSTRUCTIONS);
-   p.program->Base.NumInstructions = 0;
+   /* During code generation, use locally-allocated instruction buffer,
+    * then alloc dynamic storage below.
+    */
+   p.program->Base.Instructions = instBuffer;
    p.program->Base.Target = GL_FRAGMENT_PROGRAM_ARB;
    p.program->NumTexIndirections = 1;	/* correct? */
    p.program->NumTexInstructions = 0;
    p.program->NumAluInstructions = 0;
    p.program->Base.String = 0;
    p.program->Base.NumInstructions =
-      p.program->Base.NumTemporaries =
-      p.program->Base.NumParameters =
-      p.program->Base.NumAttributes = p.program->Base.NumAddressRegs = 0;
+   p.program->Base.NumTemporaries =
+   p.program->Base.NumParameters =
+   p.program->Base.NumAttributes = p.program->Base.NumAddressRegs = 0;
    p.program->Base.Parameters = _mesa_new_parameter_list();
 
    p.program->Base.InputsRead = 0;
@@ -1088,17 +1094,35 @@ create_new_program(struct state_key *key, GLcontext *ctx,
 
    ASSERT(p.program->Base.NumInstructions <= MAX_INSTRUCTIONS);
 
+   /* Allocate final instruction array */
+   {
+      static int max=0;
+      if (program->Base.NumInstructions> max) {
+         max = program->Base.NumInstructions;
+         printf("%d inst max\n", max);
+      }
+   }
+   program->Base.Instructions
+      = _mesa_alloc_instructions(program->Base.NumInstructions);
+   if (!program->Base.Instructions) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY,
+                  "generating tex env program");
+      return;
+   }
+   _mesa_memcpy(program->Base.Instructions, instBuffer,
+                sizeof(struct prog_instruction)
+                * program->Base.NumInstructions);
+
    /* Notify driver the fragment program has (actually) changed.
     */
-   if (ctx->Driver.ProgramStringNotify || DISASSEM) {
-      if (ctx->Driver.ProgramStringNotify)
-	 ctx->Driver.ProgramStringNotify( ctx, GL_FRAGMENT_PROGRAM_ARB, 
-					  &p.program->Base );
+   if (ctx->Driver.ProgramStringNotify) {
+      ctx->Driver.ProgramStringNotify( ctx, GL_FRAGMENT_PROGRAM_ARB, 
+                                       &p.program->Base );
+   }
 
-      if (DISASSEM) {
-	 _mesa_print_program(&p.program->Base);
-	 _mesa_printf("\n");
-      }
+   if (DISASSEM) {
+      _mesa_print_program(&p.program->Base);
+      _mesa_printf("\n");
    }
 }
 
@@ -1225,7 +1249,7 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
 	    (struct gl_fragment_program *) 
 	    ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
 		
-	 create_new_program(&key, ctx, ctx->_TexEnvProgram);
+	 create_new_program(ctx, &key, ctx->_TexEnvProgram);
 
 	 cache_item(&ctx->Texture.env_fp_cache, hash, &key, ctx->_TexEnvProgram);
       } else {
