@@ -883,7 +883,6 @@ mgaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 	 mmesa->driDrawable = driDrawPriv;
 	 mmesa->dirty = ~0; 
 	 mmesa->dirty_cliprects = (MGA_FRONT|MGA_BACK); 
-	 mmesa->mesa_drawable = driDrawPriv;
       }
 
       mmesa->driReadable = driReadPriv;

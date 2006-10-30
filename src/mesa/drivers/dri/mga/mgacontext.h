@@ -303,13 +303,6 @@ struct mga_context_t {
    __DRIdrawablePrivate *driDrawable;
    __DRIdrawablePrivate *driReadable;
 
-   /**
-    * Drawable used by Mesa for software fallbacks for reading and
-    * writing.  It is set by Mesa's \c SetBuffer callback, and will always be
-    * either \c mga_context_t::driDrawable or \c mga_context_t::driReadable.
-    */
-   __DRIdrawablePrivate *mesa_drawable;
-
    __DRIscreenPrivate *driScreen;
    struct mga_screen_private_s *mgaScreen;
    drm_mga_sarea_t *sarea;
