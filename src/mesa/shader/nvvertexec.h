@@ -28,14 +28,31 @@
 #ifndef NVVERTEXEC_H
 #define NVVERTEXEC_H
 
+
+/**
+ * Virtual vertex program machine state.
+ * Only used during program execution.
+ */
+struct vp_machine
+{
+   GLfloat Temporaries[MAX_NV_VERTEX_PROGRAM_TEMPS][4];
+   GLfloat Inputs[MAX_NV_VERTEX_PROGRAM_INPUTS][4];
+   GLuint InputsSize[MAX_NV_VERTEX_PROGRAM_INPUTS];
+   GLfloat Outputs[MAX_NV_VERTEX_PROGRAM_OUTPUTS][4];
+   GLint AddressReg[4];
+};
+
+
+
 extern void
-_mesa_init_vp_per_vertex_registers(GLcontext *ctx);
+_mesa_init_vp_per_vertex_registers(GLcontext *ctx, struct vp_machine *machine);
 
 extern void
 _mesa_init_vp_per_primitive_registers(GLcontext *ctx);
 
 extern void
 _mesa_exec_vertex_program(GLcontext *ctx,
+                          struct vp_machine *machine,
                           const struct gl_vertex_program *program);
 
 extern void
@@ -44,6 +61,7 @@ _mesa_exec_vertex_state_program(GLcontext *ctx,
                                 const GLfloat *params);
 
 extern void
-_mesa_dump_vp_state( const struct gl_vertex_program_state *state );
+_mesa_dump_vp_state( const struct gl_vertex_program_state *state,
+                     const struct vp_machine *machine);
 
 #endif

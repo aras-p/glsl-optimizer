@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -2108,7 +2108,9 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                            "glGetProgramRegisterfvMESA(registerName)");
                return;
             }
-            COPY_4V(v, ctx->VertexProgram.Machine.Temporaries[i]);
+#if 0 /* FIX ME */
+            ctx->Driver.GetVertexProgramRegister(ctx, PROGRAM_TEMPORARY, i, v);
+#endif
          }
          else if (reg[0] == 'v' && reg[1] == '[') {
             /* Vertex Input attribute */
@@ -2119,7 +2121,10 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                _mesa_sprintf(number, "%d", i);
                if (_mesa_strncmp(reg + 2, name, 4) == 0 ||
                    _mesa_strncmp(reg + 2, number, _mesa_strlen(number)) == 0) {
-                  COPY_4V(v, ctx->VertexProgram.Machine.Inputs[i]);
+#if 0 /* FIX ME */
+                  ctx->Driver.GetVertexProgramRegister(ctx, PROGRAM_INPUT,
+                                                       i, v);
+#endif
                   return;
                }
             }

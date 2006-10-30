@@ -1914,20 +1914,6 @@ struct gl_program_state
 
 
 /**
- * Virtual vertex program machine state.
- * Only used during program execution (may be moved someday):
- */
-struct gl_vertex_program_machine
-{
-   GLfloat Temporaries[MAX_NV_VERTEX_PROGRAM_TEMPS][4];
-   GLfloat Inputs[MAX_NV_VERTEX_PROGRAM_INPUTS][4];
-   GLuint InputsSize[MAX_NV_VERTEX_PROGRAM_INPUTS];
-   GLfloat Outputs[MAX_NV_VERTEX_PROGRAM_OUTPUTS][4];
-   GLint AddressReg[4];
-};
-
-
-/**
  * Context state for vertex programs.
  */
 struct gl_vertex_program_state
@@ -1942,8 +1928,6 @@ struct gl_vertex_program_state
 					          (t_vp_build.c) programs */
 
    GLfloat Parameters[MAX_NV_VERTEX_PROGRAM_PARAMS][4]; /**< Env params */
-
-   struct gl_vertex_program_machine Machine;
 
    /* For GL_NV_vertex_program only: */
    GLenum TrackMatrix[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
