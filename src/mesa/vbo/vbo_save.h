@@ -150,8 +150,6 @@ struct vbo_save_context {
 
 void vbo_save_init( GLcontext *ctx );
 void vbo_save_destroy( GLcontext *ctx );
-void vbo_save_wakeup( GLcontext *ctx );
-void vbo_save_invalidate_state( GLcontext *ctx, GLuint new_state );
 void vbo_save_fallback( GLcontext *ctx, GLboolean fallback );
 
 /* save_loopback.c:

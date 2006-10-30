@@ -214,6 +214,7 @@ GLboolean _vbo_CreateContext( GLcontext *ctx )
 void _vbo_InvalidateState( GLcontext *ctx, GLuint new_state )
 {
    _ae_invalidate_state(ctx, new_state);
+   vbo_exec_invalidate_state(ctx, new_state);
 }
 
 

@@ -35,6 +35,18 @@
 
 
 
+static void vbo_save_callback_init( GLcontext *ctx )
+{
+   ctx->Driver.NewList = vbo_save_NewList;
+   ctx->Driver.EndList = vbo_save_EndList;
+   ctx->Driver.SaveFlushVertices = vbo_save_SaveFlushVertices;
+   ctx->Driver.BeginCallList = vbo_save_BeginCallList;
+   ctx->Driver.EndCallList = vbo_save_EndCallList;
+   ctx->Driver.NotifySaveBegin = vbo_save_NotifyBegin;
+}
+
+
+
 void vbo_save_init( GLcontext *ctx )
 {
    struct vbo_save_context *save = &vbo_context(ctx)->save;
@@ -42,7 +54,7 @@ void vbo_save_init( GLcontext *ctx )
    save->ctx = ctx;
 
    vbo_save_api_init( save );
-   vbo_save_wakeup(ctx);
+   vbo_save_callback_init(ctx);
 
    ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
 }
@@ -66,29 +78,5 @@ void vbo_save_fallback( GLcontext *ctx, GLboolean fallback )
    else
       save->replay_flags &= ~VBO_SAVE_FALLBACK;
 }
-
-
-/* I don't see any reason to swap this code out on fallbacks.  It
- * wouldn't really mean anything to do so anyway as the old lists are
- * still around from pre-fallback.  Instead, the above code ensures
- * that vertices are routed back through immediate mode dispatch on
- * fallback.
- *
- * The below can be moved into init or removed:
- */
-void vbo_save_wakeup( GLcontext *ctx )
-{
-   ctx->Driver.NewList = vbo_save_NewList;
-   ctx->Driver.EndList = vbo_save_EndList;
-   ctx->Driver.SaveFlushVertices = vbo_save_SaveFlushVertices;
-   ctx->Driver.BeginCallList = vbo_save_BeginCallList;
-   ctx->Driver.EndCallList = vbo_save_EndCallList;
-   ctx->Driver.NotifySaveBegin = vbo_save_NotifyBegin;
-
-   /* Assume we haven't been getting state updates either:
-    */
-   vbo_save_invalidate_state( ctx, ~0 );
-}
-
 
 

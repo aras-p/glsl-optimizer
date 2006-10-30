@@ -37,8 +37,6 @@
 
 #include "vbo_context.h"
 
-
-
 void vbo_exec_init( GLcontext *ctx )
 {
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
@@ -54,11 +52,15 @@ void vbo_exec_init( GLcontext *ctx )
    vbo_exec_vtx_init( exec );
    vbo_exec_array_init( exec );
 
+   /* Hook our functions into exec and compile dispatch tables.
+    */
+   _mesa_install_exec_vtxfmt( ctx, &exec->vtxfmt );
+
    ctx->Driver.NeedFlush = 0;
    ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
    ctx->Driver.FlushVertices = vbo_exec_FlushVertices;
 
-   exec->eval.recalculate_maps = 1;
+   vbo_exec_invalidate_state( ctx, ~0 );
 }
 
 
@@ -90,21 +92,6 @@ void vbo_exec_invalidate_state( GLcontext *ctx, GLuint new_state )
 }
 
 
-void vbo_exec_wakeup( GLcontext *ctx )
-{
-   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
-
-   ctx->Driver.FlushVertices = vbo_exec_FlushVertices;
-   ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
-
-   /* Hook our functions into exec and compile dispatch tables.
-    */
-   _mesa_install_exec_vtxfmt( ctx, &exec->vtxfmt );
-
-   /* Assume we haven't been getting state updates either:
-    */
-   vbo_exec_invalidate_state( ctx, ~0 );
-}
 
 
 
