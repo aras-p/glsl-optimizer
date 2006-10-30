@@ -151,7 +151,7 @@ static void vbo_exec_bind_arrays( GLcontext *ctx )
    switch (get_program_mode(exec->ctx)) {
    case VP_NONE:
       memcpy(arrays,      vbo->legacy_currval, 16 * sizeof(arrays[0]));
-      memcpy(arrays + 16, vbo->mat_currval,    16 * sizeof(arrays[0]));
+      memcpy(arrays + 16, vbo->mat_currval,    MAT_ATTRIB_MAX * sizeof(arrays[0]));
       map = vbo->map_vp_none;
       break;
    case VP_NV:

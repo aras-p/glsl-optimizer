@@ -143,7 +143,7 @@ enum
    VERT_ATTRIB_COLOR1 = 4,
    VERT_ATTRIB_FOG = 5,
    VERT_ATTRIB_COLOR_INDEX = 6,
-   VERT_ATTRIB_SEVEN = 7,
+   VERT_ATTRIB_EDGEFLAG = 7,
    VERT_ATTRIB_TEX0 = 8,
    VERT_ATTRIB_TEX1 = 9,
    VERT_ATTRIB_TEX2 = 10,
@@ -183,7 +183,7 @@ enum
 #define VERT_BIT_COLOR1      (1 << VERT_ATTRIB_COLOR1)
 #define VERT_BIT_FOG         (1 << VERT_ATTRIB_FOG)
 #define VERT_BIT_COLOR_INDEX (1 << VERT_ATTRIB_COLOR_INDEX)
-#define VERT_BIT_SEVEN       (1 << VERT_ATTRIB_SEVEN)
+#define VERT_BIT_EDGEFLAG    (1 << VERT_ATTRIB_EDGEFLAG)
 #define VERT_BIT_TEX0        (1 << VERT_ATTRIB_TEX0)
 #define VERT_BIT_TEX1        (1 << VERT_ATTRIB_TEX1)
 #define VERT_BIT_TEX2        (1 << VERT_ATTRIB_TEX2)
@@ -616,11 +616,11 @@ struct gl_current_attrib
    /**
     * \name Current vertex attributes.
     * \note Values are valid only after FLUSH_VERTICES has been called.
+    * \note Index and Edgeflag current values are stored as floats in the 
+    * SIX and SEVEN attribute slots.
     */
    /*@{*/
    GLfloat Attrib[VERT_ATTRIB_MAX][4];	/**< Position, color, texcoords, etc */
-   GLfloat Index;			/**< Current color index */
-   GLboolean EdgeFlag;			/**< Current edge flag */
    /*@}*/
 
    /**
@@ -2604,7 +2604,7 @@ struct matrix_stack
 #define _NEW_ARRAY_COLOR1           VERT_BIT_COLOR1
 #define _NEW_ARRAY_FOGCOORD         VERT_BIT_FOG
 #define _NEW_ARRAY_INDEX            VERT_BIT_COLOR_INDEX
-#define _NEW_ARRAY_EDGEFLAG         VERT_BIT_SEVEN
+#define _NEW_ARRAY_EDGEFLAG         VERT_BIT_EDGEFLAG
 #define _NEW_ARRAY_TEXCOORD_0       VERT_BIT_TEX0
 #define _NEW_ARRAY_TEXCOORD_1       VERT_BIT_TEX1
 #define _NEW_ARRAY_TEXCOORD_2       VERT_BIT_TEX2

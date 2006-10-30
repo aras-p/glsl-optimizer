@@ -130,16 +130,27 @@ void vbo_exec_vtx_wrap( struct vbo_exec_context *exec )
 static void vbo_exec_copy_to_current( struct vbo_exec_context *exec )
 {
    GLcontext *ctx = exec->ctx;
+   struct vbo_context *vbo = vbo_context(ctx);
    GLuint i;
 
    for (i = VBO_ATTRIB_POS+1 ; i < VBO_ATTRIB_MAX ; i++) {
       if (exec->vtx.attrsz[i]) {
+	 GLfloat *current = (GLfloat *)vbo->currval[i].Ptr;
+
          /* Note: the exec->vtx.current[i] pointers point into the
           * ctx->Current.Attrib and ctx->Light.Material.Attrib arrays.
           */
-	 COPY_CLEAN_4V(exec->vtx.current[i], 
+	 COPY_CLEAN_4V(current, 
 		       exec->vtx.attrsz[i], 
 		       exec->vtx.attrptr[i]);
+
+	 
+	 /* Given that we explicitly state size here, there is no need
+	  * for the COPY_CLEAN above, could just copy 16 bytes and be
+	  * done.  The only problem is when Mesa accesses ctx->Current
+	  * directly.
+	  */
+	 vbo->currval[i].Size = exec->vtx.attrsz[i];
 
 	 /* This triggers rather too much recalculation of Mesa state
 	  * that doesn't get used (eg light positions).
@@ -148,19 +159,6 @@ static void vbo_exec_copy_to_current( struct vbo_exec_context *exec )
 	     i <= VBO_ATTRIB_MAT_BACK_INDEXES)
 	    ctx->NewState |= _NEW_LIGHT;
       }
-   }
-
-   /* color index is special (it's not a float[4] so COPY_CLEAN_4V above
-    * will trash adjacent memory!)
-    */
-   if (exec->vtx.attrsz[VBO_ATTRIB_INDEX]) {
-      ctx->Current.Index = exec->vtx.attrptr[VBO_ATTRIB_INDEX][0];
-   }
-
-   /* Edgeflag requires additional treatment:
-    */
-   if (exec->vtx.attrsz[VBO_ATTRIB_EDGEFLAG]) {
-      ctx->Current.EdgeFlag = (exec->vtx.CurrentFloatEdgeFlag == 1.0);
    }
 
    /* Colormaterial -- this kindof sucks.
@@ -178,21 +176,19 @@ static void vbo_exec_copy_to_current( struct vbo_exec_context *exec )
 static void vbo_exec_copy_from_current( struct vbo_exec_context *exec )
 {
    GLcontext *ctx = exec->ctx;
+   struct vbo_context *vbo = vbo_context(ctx);
    GLint i;
 
-   /* Edgeflag requires additional treatment:
-    */
-   exec->vtx.CurrentFloatEdgeFlag = 
-      (GLfloat)ctx->Current.EdgeFlag;
-   
-   for (i = VBO_ATTRIB_POS+1 ; i < VBO_ATTRIB_MAX ; i++) 
+   for (i = VBO_ATTRIB_POS+1 ; i < VBO_ATTRIB_MAX ; i++) {
+      const GLfloat *current = (GLfloat *)vbo->currval[i].Ptr;
       switch (exec->vtx.attrsz[i]) {
-      case 4: exec->vtx.attrptr[i][3] = exec->vtx.current[i][3];
-      case 3: exec->vtx.attrptr[i][2] = exec->vtx.current[i][2];
-      case 2: exec->vtx.attrptr[i][1] = exec->vtx.current[i][1];
-      case 1: exec->vtx.attrptr[i][0] = exec->vtx.current[i][0];
+      case 4: exec->vtx.attrptr[i][3] = current[3];
+      case 3: exec->vtx.attrptr[i][2] = current[2];
+      case 2: exec->vtx.attrptr[i][1] = current[1];
+      case 1: exec->vtx.attrptr[i][0] = current[0];
 	 break;
       }
+   }
 
    ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
 }
@@ -205,6 +201,7 @@ static void vbo_exec_wrap_upgrade_vertex( struct vbo_exec_context *exec,
 					  GLuint newsz )
 {
    GLcontext *ctx = exec->ctx;
+   struct vbo_context *vbo = vbo_context(ctx);
    GLint lastcount = exec->vtx.vert_count;
    GLfloat *tmp;
    GLuint oldsz;
@@ -281,7 +278,8 @@ static void vbo_exec_wrap_upgrade_vertex( struct vbo_exec_context *exec,
 		     data += oldsz;
 		     dest += newsz;
 		  } else {
-		     COPY_SZ_4V( dest, newsz, exec->vtx.current[j] );
+		     const GLfloat *current = (const GLfloat *)vbo->currval[j].Ptr;
+		     COPY_SZ_4V( dest, newsz, current );
 		     dest += newsz;
 		  }
 	       }
@@ -627,27 +625,10 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
 }
 
 
-static void vbo_exec_current_init( struct vbo_exec_context *exec ) 
-{
-   GLcontext *ctx = exec->ctx;
-   GLint i;
-
-   /* setup the pointers for the typical 16 vertex attributes */
-   for (i = 0; i < VBO_ATTRIB_FIRST_MATERIAL; i++) 
-      exec->vtx.current[i] = ctx->Current.Attrib[i];
-
-   /* setup pointers for the 12 material attributes */
-   for (i = 0; i < MAT_ATTRIB_MAX; i++)
-      exec->vtx.current[VBO_ATTRIB_FIRST_MATERIAL + i] = 
-	 ctx->Light.Material.Attrib[i];
-
-   exec->vtx.current[VBO_ATTRIB_INDEX] = &ctx->Current.Index;
-   exec->vtx.current[VBO_ATTRIB_EDGEFLAG] = &exec->vtx.CurrentFloatEdgeFlag;
-}
-
 void vbo_exec_vtx_init( struct vbo_exec_context *exec )
 {
    GLcontext *ctx = exec->ctx;
+   struct vbo_context *vbo = vbo_context(ctx);
    GLuint i;
 
    /* Allocate a buffer object.  Will just reuse this object
@@ -656,7 +637,6 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
    exec->vtx.bufferobj = ctx->Array.NullBufferObj;
    exec->vtx.buffer_map = ALIGN_MALLOC(VBO_VERT_BUFFER_SIZE * sizeof(GLfloat), 64);
 
-   vbo_exec_current_init( exec );
    vbo_exec_vtxfmt_init( exec );
 
    /* Hook our functions into the dispatch table.
@@ -668,7 +648,13 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
       exec->vtx.active_sz[i] = 0;
       exec->vtx.inputs[i] = &exec->vtx.arrays[i];
    }
- 
+   
+   {
+      struct gl_client_array *arrays = exec->vtx.arrays;
+      memcpy(arrays,      vbo->legacy_currval,  16 * sizeof(arrays[0]));
+      memcpy(arrays + 16, vbo->generic_currval, 16 * sizeof(arrays[0]));
+   }
+
    exec->vtx.vertex_size = 0;
 }
 

@@ -41,7 +41,7 @@
 static void _playback_copy_to_current( GLcontext *ctx,
 				       const struct vbo_save_vertex_list *node )
 {
-   struct vbo_save_context *save = &vbo_context(ctx)->save; 
+   struct vbo_context *vbo = vbo_context(ctx);
    GLfloat vertex[VBO_ATTRIB_MAX * 4], *data = vertex;
    GLuint i, offset;
 
@@ -55,7 +55,14 @@ static void _playback_copy_to_current( GLcontext *ctx,
 
    for (i = VBO_ATTRIB_POS+1 ; i <= VBO_ATTRIB_INDEX ; i++) {
       if (node->attrsz[i]) {
-	 COPY_CLEAN_4V(save->current[i], node->attrsz[i], data);
+	 GLfloat *current = (GLfloat *)vbo->currval[i].Ptr;
+
+	 COPY_CLEAN_4V(current, 
+		       node->attrsz[i], 
+		       data);
+
+	 vbo->currval[i].Size = node->attrsz[i];
+
 	 data += node->attrsz[i];
 
 	 if (i >= VBO_ATTRIB_MAT_FRONT_AMBIENT &&
@@ -64,20 +71,11 @@ static void _playback_copy_to_current( GLcontext *ctx,
       }
    }
 
-   /* Edgeflag requires special treatment:
-    */
-   if (node->attrsz[VBO_ATTRIB_EDGEFLAG]) {
-      ctx->Current.EdgeFlag = (data[0] == 1.0);
-   }
-
-
-#if 1
    /* Colormaterial -- this kindof sucks.
     */
    if (ctx->Light.ColorMaterialEnabled) {
       _mesa_update_color_material(ctx, ctx->Current.Attrib[VBO_ATTRIB_COLOR0]);
    }
-#endif
 
    /* CurrentExecPrimitive
     */
@@ -111,7 +109,7 @@ static void vbo_bind_vertex_list( GLcontext *ctx,
    switch (get_program_mode(ctx)) {
    case VP_NONE:
       memcpy(arrays,      vbo->legacy_currval, 16 * sizeof(arrays[0]));
-      memcpy(arrays + 16, vbo->mat_currval,    16 * sizeof(arrays[0]));
+      memcpy(arrays + 16, vbo->mat_currval,    MAT_ATTRIB_MAX * sizeof(arrays[0]));
       map = vbo->map_vp_none;
       break;
    case VP_NV:

@@ -49,12 +49,19 @@ static void vbo_save_callback_init( GLcontext *ctx )
 
 void vbo_save_init( GLcontext *ctx )
 {
-   struct vbo_save_context *save = &vbo_context(ctx)->save;
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_save_context *save = &vbo->save;
 
    save->ctx = ctx;
 
    vbo_save_api_init( save );
    vbo_save_callback_init(ctx);
+
+   {
+      struct gl_client_array *arrays = save->arrays;
+      memcpy(arrays,      vbo->legacy_currval,  16 * sizeof(arrays[0]));
+      memcpy(arrays + 16, vbo->generic_currval, 16 * sizeof(arrays[0]));
+   }
 
    ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
 }

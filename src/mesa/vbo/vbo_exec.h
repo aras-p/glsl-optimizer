@@ -87,9 +87,6 @@ struct vbo_exec_context
       GLfloat *vbptr;		     /* cursor, points into buffer */
       GLfloat vertex[VBO_ATTRIB_MAX*4]; /* current vertex */
 
-      GLfloat *current[VBO_ATTRIB_MAX]; /* points into ctx->Current, ctx->Light.Material */
-      GLfloat CurrentFloatEdgeFlag;
-
       GLuint vert_count;
       GLuint max_vert;
       struct vbo_exec_copied_vtx copied;

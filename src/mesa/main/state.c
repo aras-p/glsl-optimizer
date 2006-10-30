@@ -887,8 +887,8 @@ update_arrays( GLcontext *ctx )
 
    /* 7 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_SEVEN].Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_SEVEN]._MaxElement);
+       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG]._MaxElement);
    }
 
    /* 8..15 */

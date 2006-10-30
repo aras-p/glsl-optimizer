@@ -61,27 +61,14 @@ static void init_legacy_currval(GLcontext *ctx)
    for (i = 0; i < NR_LEGACY_ATTRIBS; i++) {
       struct gl_client_array *cl = &arrays[i];
 
-      switch (i) {
-      case VBO_ATTRIB_EDGEFLAG:
-	 cl->Type = GL_UNSIGNED_BYTE;
-	 cl->Ptr = (const void *)&ctx->Current.EdgeFlag;
-	 break;
-      case VBO_ATTRIB_INDEX:
-	 cl->Type = GL_FLOAT;
-	 cl->Ptr = (const void *)&ctx->Current.Index;
-	 break;
-      default:
-	 cl->Type = GL_FLOAT;
-	 cl->Ptr = (const void *)ctx->Current.Attrib[i];
-	 break;
-      }
-
-      /* This will have to be determined at runtime:
+      /* Size will have to be determined at runtime:
        */
       cl->Size = 1;
       cl->Stride = 0;
       cl->StrideB = 0;
       cl->Enabled = 1;
+      cl->Type = GL_FLOAT;
+      cl->Ptr = (const void *)ctx->Current.Attrib[i];
       cl->BufferObj = ctx->Array.NullBufferObj;
    }
 }
@@ -118,12 +105,12 @@ static void init_mat_currval(GLcontext *ctx)
    struct gl_client_array *arrays = vbo->mat_currval;
    GLuint i;
 
-   memset(arrays, 0, sizeof(*arrays) * NR_GENERIC_ATTRIBS);
+   memset(arrays, 0, sizeof(*arrays) * NR_MAT_ATTRIBS);
 
    /* Set up a constant (StrideB == 0) array for each current
     * attribute:
     */
-   for (i = 0; i < NR_GENERIC_ATTRIBS; i++) {
+   for (i = 0; i < NR_MAT_ATTRIBS; i++) {
       struct gl_client_array *cl = &arrays[i];
 
       /* Size is fixed for the material attributes, for others will
@@ -156,7 +143,23 @@ static void init_mat_currval(GLcontext *ctx)
    }
 }
 
+#if 0
 
+static void vbo_exec_current_init( struct vbo_exec_context *exec ) 
+{
+   GLcontext *ctx = exec->ctx;
+   GLint i;
+
+   /* setup the pointers for the typical 16 vertex attributes */
+   for (i = 0; i < VBO_ATTRIB_FIRST_MATERIAL; i++) 
+      exec->vtx.current[i] = ctx->Current.Attrib[i];
+
+   /* setup pointers for the 12 material attributes */
+   for (i = 0; i < MAT_ATTRIB_MAX; i++)
+      exec->vtx.current[VBO_ATTRIB_FIRST_MATERIAL + i] = 
+	 ctx->Light.Material.Attrib[i];
+}
+#endif
 
 GLboolean _vbo_CreateContext( GLcontext *ctx )
 {
@@ -171,13 +174,11 @@ GLboolean _vbo_CreateContext( GLcontext *ctx )
       return GL_FALSE;
    }
 
-   /* Hook our functions into exec and compile dispatch tables.  These
-    * will pretty much be permanently installed, which means that the
-    * vtxfmt mechanism can be removed now.
+   /* TODO: remove these pointers.
     */
-   vbo_exec_init( ctx );
-   vbo_save_init( ctx );
-
+   vbo->legacy_currval = &vbo->currval[VBO_ATTRIB_POS];
+   vbo->generic_currval = &vbo->currval[VBO_ATTRIB_GENERIC0];
+   vbo->mat_currval = &vbo->currval[VBO_ATTRIB_MAT_FRONT_AMBIENT];
 
    init_legacy_currval( ctx );
    init_generic_currval( ctx );
@@ -207,6 +208,14 @@ GLboolean _vbo_CreateContext( GLcontext *ctx )
    /* By default: 
     */
    vbo->draw_prims = _tnl_draw_prims;
+
+   /* Hook our functions into exec and compile dispatch tables.  These
+    * will pretty much be permanently installed, which means that the
+    * vtxfmt mechanism can be removed now.
+    */
+   vbo_exec_init( ctx );
+   vbo_save_init( ctx );
+
    
    return GL_TRUE;
 }
