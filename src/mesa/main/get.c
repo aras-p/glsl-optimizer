@@ -323,7 +323,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_EDGE_FLAG:
          {
          FLUSH_CURRENT(ctx, 0);
-         params[0] = (ctx->Current.Attrib[VERT_ATTRIB_EDGEFLAG][0] == 1.0F);
+         params[0] = (ctx->Current.Attrib[VERT_ATTRIB_EDGEFLAG][0] == 1.0);
          }
          break;
       case GL_FEEDBACK_BUFFER_SIZE:
@@ -2147,7 +2147,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_EDGE_FLAG:
          {
          FLUSH_CURRENT(ctx, 0);
-         params[0] = BOOLEAN_TO_FLOAT(ctx->Current.Attrib[VERT_ATTRIB_EDGEFLAG][0] == 1.0F);
+         params[0] = BOOLEAN_TO_FLOAT((ctx->Current.Attrib[VERT_ATTRIB_EDGEFLAG][0] == 1.0));
          }
          break;
       case GL_FEEDBACK_BUFFER_SIZE:
@@ -3971,7 +3971,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_EDGE_FLAG:
          {
          FLUSH_CURRENT(ctx, 0);
-         params[0] = BOOLEAN_TO_INT(ctx->Current.Attrib[VERT_ATTRIB_EDGEFLAG][0] == 1.0F);
+         params[0] = BOOLEAN_TO_INT((ctx->Current.Attrib[VERT_ATTRIB_EDGEFLAG][0] == 1.0));
          }
          break;
       case GL_FEEDBACK_BUFFER_SIZE:

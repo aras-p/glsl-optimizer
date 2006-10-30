@@ -190,7 +190,7 @@ StateVars = [
 	( "GL_DOUBLEBUFFER", GLboolean,
 	  ["ctx->DrawBuffer->Visual.doubleBufferMode"], "", None ),
 	( "GL_DRAW_BUFFER", GLenum, ["ctx->DrawBuffer->ColorDrawBuffer[0]"], "", None ),
-	( "GL_EDGE_FLAG", GLboolean, ["ctx->Current.EdgeFlag"],
+	( "GL_EDGE_FLAG", GLboolean, ["(ctx->Current.Attrib[VERT_ATTRIB_EDGEFLAG][0] == 1.0)"],
 	  "FLUSH_CURRENT(ctx, 0);", None ),
 	( "GL_FEEDBACK_BUFFER_SIZE", GLint, ["ctx->Feedback.BufferSize"], "", None ),
 	( "GL_FEEDBACK_BUFFER_TYPE", GLenum, ["ctx->Feedback.Type"], "", None ),
