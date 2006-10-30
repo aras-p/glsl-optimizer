@@ -55,9 +55,6 @@
 #include "vbo_save.h"
 #include "vbo_exec.h"
 
-GLboolean _vbo_CreateContext( GLcontext *ctx );
-void _vbo_DestroyContext( GLcontext *ctx );
-
 
 struct vbo_context {
    struct gl_client_array legacy_currval[16];

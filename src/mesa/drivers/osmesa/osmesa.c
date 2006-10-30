@@ -50,7 +50,7 @@
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 #include "drivers/common/driverfuncs.h"
-#include "vbo/vbo_context.h"
+#include "vbo/vbo.h"
 
 
 
@@ -111,6 +111,7 @@ osmesa_update_state( GLcontext *ctx, GLuint new_state )
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
    _tnl_InvalidateState( ctx, new_state );
+   _vbo_InvalidateState( ctx, new_state );
 }
 
 

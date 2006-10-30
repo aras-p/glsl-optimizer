@@ -26,6 +26,7 @@
  */
 
 #include "mtypes.h"
+#include "vbo.h"
 #include "vbo_context.h"
 #include "imports.h"
 #include "api_arrayelt.h"
@@ -210,7 +211,7 @@ GLboolean _vbo_CreateContext( GLcontext *ctx )
    return GL_TRUE;
 }
 
-void vbo_save_invalidate_state( GLcontext *ctx, GLuint new_state )
+void _vbo_InvalidateState( GLcontext *ctx, GLuint new_state )
 {
    _ae_invalidate_state(ctx, new_state);
 }
