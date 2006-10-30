@@ -178,8 +178,8 @@ get_register_pointer( GLcontext *ctx,
       ASSERT(source->Index < (GLint) program->Base.Parameters->NumParameters);
       return program->Base.Parameters->ParameterValues[source->Index];
    default:
-      _mesa_problem(ctx, "Invalid input register file %d in fetch_vector4",
-                    source->File);
+      _mesa_problem(ctx, "Invalid input register file %d in fp "
+                    "get_register_pointer", source->File);
       return NULL;
    }
 }
