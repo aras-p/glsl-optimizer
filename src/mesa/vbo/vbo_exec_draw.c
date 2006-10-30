@@ -132,25 +132,49 @@ static GLuint vbo_copy_vertices( struct vbo_exec_context *exec )
 }
 
 
+
 /* TODO: populate these as the vertex is defined:
  */
-static void vbo_exec_bind_arrays( struct vbo_exec_context *exec )
+static void vbo_exec_bind_arrays( GLcontext *ctx )
 {
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_exec_context *exec = &vbo->exec;
    struct gl_client_array *arrays = exec->vtx.arrays;
    GLuint count = exec->vtx.vert_count;
    GLubyte *data = exec->vtx.buffer_map;
+   const GLuint *map;
    GLuint attr;
 
-   memcpy(arrays,      exec->legacy_currval, 16 * sizeof(arrays[0]));
-   memcpy(arrays + 16, exec->mat_currval,    16 * sizeof(arrays[0]));
+   /* Install the default (ie Current) attributes first, then overlay
+    * all active ones.
+    */
+   switch (get_program_mode(exec->ctx)) {
+   case VP_NONE:
+      memcpy(arrays,      vbo->legacy_currval, 16 * sizeof(arrays[0]));
+      memcpy(arrays + 16, vbo->mat_currval,    16 * sizeof(arrays[0]));
+      map = vbo->map_vp_none;
+      break;
+   case VP_NV:
+   case VP_ARB:
+      /* The aliasing of attributes for NV vertex programs has already
+       * occurred.  NV vertex programs cannot access material values,
+       * nor attributes greater than VERT_ATTRIB_TEX7.  
+       */
+      memcpy(arrays,      vbo->legacy_currval,  16 * sizeof(arrays[0]));
+      memcpy(arrays + 16, vbo->generic_currval, 16 * sizeof(arrays[0]));
+      map = vbo->map_vp_arb;
+      break;
+   }
 
    /* Make all active attributes (including edgeflag) available as
     * arrays of floats.
     */
-   for (attr = 0; attr < VBO_ATTRIB_MAX ; attr++) {
-      if (exec->vtx.attrsz[attr]) {
+   for (attr = 0; attr < VERT_ATTRIB_MAX ; attr++) {
+      GLuint src = map[attr];
+
+      if (exec->vtx.attrsz[src]) {
 	 arrays[attr].Ptr = (void *)data;
-	 arrays[attr].Size = exec->vtx.attrsz[attr];
+	 arrays[attr].Size = exec->vtx.attrsz[src];
 	 arrays[attr].StrideB = exec->vtx.vertex_size * sizeof(GLfloat);
 	 arrays[attr].Stride = exec->vtx.vertex_size * sizeof(GLfloat);
 	 arrays[attr].Type = GL_FLOAT;
@@ -181,7 +205,7 @@ void vbo_exec_vtx_flush( struct vbo_exec_context *exec )
       if (exec->vtx.copied.nr != exec->vtx.vert_count) {
 	 GLcontext *ctx = exec->ctx;
 
-	 vbo_exec_bind_arrays( exec );
+	 vbo_exec_bind_arrays( ctx );
 
 	 vbo_context(ctx)->draw_prims( ctx, 
 				       exec->vtx.inputs, 

@@ -95,14 +95,36 @@ static void _playback_copy_to_current( GLcontext *ctx,
 /* Treat the vertex storage as a VBO, define vertex arrays pointing
  * into it:
  */
-static void vbo_bind_vertex_list( struct vbo_save_context *save,
+static void vbo_bind_vertex_list( GLcontext *ctx,
                                    const struct vbo_save_vertex_list *node )
 {
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_save_context *save = &vbo->save;
    struct gl_client_array *arrays = save->arrays;
    GLuint data = node->buffer_offset;
+   const GLuint *map;
    GLuint attr;
 
-   memset(arrays, 0, VBO_ATTRIB_MAX * sizeof(arrays[0]));
+   /* Install the default (ie Current) attributes first, then overlay
+    * all active ones.
+    */
+   switch (get_program_mode(ctx)) {
+   case VP_NONE:
+      memcpy(arrays,      vbo->legacy_currval, 16 * sizeof(arrays[0]));
+      memcpy(arrays + 16, vbo->mat_currval,    16 * sizeof(arrays[0]));
+      map = vbo->map_vp_none;
+      break;
+   case VP_NV:
+   case VP_ARB:
+      /* The aliasing of attributes for NV vertex programs has already
+       * occurred.  NV vertex programs cannot access material values,
+       * nor attributes greater than VERT_ATTRIB_TEX7.  
+       */
+      memcpy(arrays,      vbo->legacy_currval,  16 * sizeof(arrays[0]));
+      memcpy(arrays + 16, vbo->generic_currval, 16 * sizeof(arrays[0]));
+      map = vbo->map_vp_arb;
+      break;
+   }
 
    for (attr = 0; attr <= VBO_ATTRIB_INDEX; attr++) {
       if (node->attrsz[attr]) {
@@ -185,7 +207,7 @@ void vbo_save_playback_vertex_list( GLcontext *ctx, void *data )
          return;
       }
 
-      vbo_bind_vertex_list( save, node );
+      vbo_bind_vertex_list( ctx, node );
 
       vbo_context(ctx)->draw_prims( ctx, 
 				    save->inputs, 

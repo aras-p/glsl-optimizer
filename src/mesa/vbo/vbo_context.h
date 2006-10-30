@@ -60,6 +60,13 @@ void _vbo_DestroyContext( GLcontext *ctx );
 
 
 struct vbo_context {
+   struct gl_client_array legacy_currval[16];
+   struct gl_client_array generic_currval[16];
+   struct gl_client_array mat_currval[16];
+
+   GLuint map_vp_none[32];
+   GLuint map_vp_arb[32];
+
    struct vbo_exec_context exec;
    struct vbo_save_context save;
 

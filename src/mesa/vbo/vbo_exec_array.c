@@ -107,7 +107,8 @@ static void bind_array_obj( GLcontext *ctx )
 
 static void recalculate_input_bindings( GLcontext *ctx )
 {
-   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_exec_context *exec = &vbo->exec;
    const struct gl_client_array **inputs = &exec->array.inputs[0];
    GLuint i;
 
@@ -126,11 +127,11 @@ static void recalculate_input_bindings( GLcontext *ctx )
 	 if (exec->array.legacy_array[i]->Enabled)
 	    inputs[i] = exec->array.legacy_array[i];
 	 else
-	    inputs[i] = &exec->legacy_currval[i];
+	    inputs[i] = &vbo->legacy_currval[i];
       }
 
       for (i = 0; i < MAT_ATTRIB_MAX; i++) {
-	 inputs[VERT_ATTRIB_GENERIC0 + i] = &exec->mat_currval[i];
+	 inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->mat_currval[i];
       }
       break;
    case VP_NV:
@@ -144,7 +145,7 @@ static void recalculate_input_bindings( GLcontext *ctx )
 	 else if (exec->array.legacy_array[i]->Enabled)
 	    inputs[i] = exec->array.legacy_array[i];
 	 else
-	    inputs[i] = &exec->legacy_currval[i];
+	    inputs[i] = &vbo->legacy_currval[i];
       }
       break;
    case VP_ARB:
@@ -160,21 +161,21 @@ static void recalculate_input_bindings( GLcontext *ctx )
       else if (exec->array.legacy_array[0]->Enabled)
 	 inputs[0] = exec->array.legacy_array[0];
       else
-	 inputs[0] = &exec->legacy_currval[0];
+	 inputs[0] = &vbo->legacy_currval[0];
 
 
       for (i = 1; i <= VERT_ATTRIB_TEX7; i++) {
 	 if (exec->array.legacy_array[i]->Enabled)
 	    inputs[i] = exec->array.legacy_array[i];
 	 else
-	    inputs[i] = &exec->legacy_currval[i];
+	    inputs[i] = &vbo->legacy_currval[i];
       }
 
       for (i = 0; i < 16; i++) {
 	 if (exec->array.generic_array[0]->Enabled)
 	    inputs[VERT_ATTRIB_GENERIC0 + i] = exec->array.generic_array[i];
 	 else
-	    inputs[VERT_ATTRIB_GENERIC0 + i] = &exec->generic_currval[i];
+	    inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->generic_currval[i];
       }
       break;
    }

@@ -40,6 +40,123 @@ extern void _tnl_draw_prims( GLcontext *ctx,
 			     GLuint min_index,
 			     GLuint max_index );
 
+
+
+#define NR_LEGACY_ATTRIBS 16
+#define NR_GENERIC_ATTRIBS 16
+#define NR_MAT_ATTRIBS 12
+
+static void init_legacy_currval(GLcontext *ctx)
+{
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct gl_client_array *arrays = vbo->legacy_currval;
+   GLuint i;
+
+   memset(arrays, 0, sizeof(*arrays) * NR_LEGACY_ATTRIBS);
+
+   /* Set up a constant (StrideB == 0) array for each current
+    * attribute:
+    */
+   for (i = 0; i < NR_LEGACY_ATTRIBS; i++) {
+      struct gl_client_array *cl = &arrays[i];
+
+      switch (i) {
+      case VBO_ATTRIB_EDGEFLAG:
+	 cl->Type = GL_UNSIGNED_BYTE;
+	 cl->Ptr = (const void *)&ctx->Current.EdgeFlag;
+	 break;
+      case VBO_ATTRIB_INDEX:
+	 cl->Type = GL_FLOAT;
+	 cl->Ptr = (const void *)&ctx->Current.Index;
+	 break;
+      default:
+	 cl->Type = GL_FLOAT;
+	 cl->Ptr = (const void *)ctx->Current.Attrib[i];
+	 break;
+      }
+
+      /* This will have to be determined at runtime:
+       */
+      cl->Size = 1;
+      cl->Stride = 0;
+      cl->StrideB = 0;
+      cl->Enabled = 1;
+      cl->BufferObj = ctx->Array.NullBufferObj;
+   }
+}
+
+
+static void init_generic_currval(GLcontext *ctx)
+{
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct gl_client_array *arrays = vbo->generic_currval;
+   GLuint i;
+
+   memset(arrays, 0, sizeof(*arrays) * NR_GENERIC_ATTRIBS);
+
+   for (i = 0; i < NR_GENERIC_ATTRIBS; i++) {
+      struct gl_client_array *cl = &arrays[i];
+
+      /* This will have to be determined at runtime:
+       */
+      cl->Size = 1;
+
+      cl->Type = GL_FLOAT;
+      cl->Ptr = (const void *)ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + i];
+      cl->Stride = 0;
+      cl->StrideB = 0;
+      cl->Enabled = 1;
+      cl->BufferObj = ctx->Array.NullBufferObj;
+   }
+}
+
+
+static void init_mat_currval(GLcontext *ctx)
+{
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct gl_client_array *arrays = vbo->mat_currval;
+   GLuint i;
+
+   memset(arrays, 0, sizeof(*arrays) * NR_GENERIC_ATTRIBS);
+
+   /* Set up a constant (StrideB == 0) array for each current
+    * attribute:
+    */
+   for (i = 0; i < NR_GENERIC_ATTRIBS; i++) {
+      struct gl_client_array *cl = &arrays[i];
+
+      /* Size is fixed for the material attributes, for others will
+       * be determined at runtime:
+       */
+      switch (i - VERT_ATTRIB_GENERIC0) {
+      case MAT_ATTRIB_FRONT_SHININESS:
+      case MAT_ATTRIB_BACK_SHININESS:
+	 cl->Size = 1;
+	 break;
+      case MAT_ATTRIB_FRONT_INDEXES:
+      case MAT_ATTRIB_BACK_INDEXES:
+	 cl->Size = 3;
+	 break;
+      default:
+	 cl->Size = 4;
+	 break;
+      }
+
+      if (i < MAT_ATTRIB_MAX)
+	 cl->Ptr = (const void *)ctx->Light.Material.Attrib[i];
+      else 
+	 cl->Ptr = (const void *)ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + i];
+
+      cl->Type = GL_FLOAT;
+      cl->Stride = 0;
+      cl->StrideB = 0;
+      cl->Enabled = 1;
+      cl->BufferObj = ctx->Array.NullBufferObj;
+   }
+}
+
+
+
 GLboolean _vbo_CreateContext( GLcontext *ctx )
 {
    struct vbo_context *vbo = CALLOC_STRUCT(vbo_context);
@@ -59,6 +176,32 @@ GLboolean _vbo_CreateContext( GLcontext *ctx )
     */
    vbo_exec_init( ctx );
    vbo_save_init( ctx );
+
+
+   init_legacy_currval( ctx );
+   init_generic_currval( ctx );
+   init_mat_currval( ctx );
+
+   /* Build mappings from VERT_ATTRIB -> VBO_ATTRIB depending on type
+    * of vertex program active.
+    */
+   {
+      GLuint i;
+
+      /* When no vertex program, pull in the material attributes in
+       * the 16..32 generic range.
+       */
+      for (i = 0; i < 16; i++) 
+	 vbo->map_vp_none[i] = i;
+      for (i = 0; i < 12; i++) 
+	 vbo->map_vp_none[16+i] = VBO_ATTRIB_MAT_FRONT_AMBIENT + i;
+      for (i = 0; i < 4; i++)
+	 vbo->map_vp_none[28+i] = i;	
+      
+      for (i = 0; i < VERT_ATTRIB_MAX; i++)
+	 vbo->map_vp_arb[i] = i;
+   }
+
 
    /* By default: 
     */
@@ -82,5 +225,4 @@ void _vbo_DestroyContext( GLcontext *ctx )
 
    FREE(vbo_context(ctx));
    ctx->swtnl_im = NULL;
-
 }

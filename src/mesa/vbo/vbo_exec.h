@@ -75,10 +75,6 @@ struct vbo_exec_context
    GLcontext *ctx;   
    GLvertexformat vtxfmt;
 
-   struct gl_client_array legacy_currval[16];
-   struct gl_client_array generic_currval[16];
-   struct gl_client_array mat_currval[16];
-
    struct {
       struct gl_buffer_object *bufferobj;
       GLubyte *buffer_map;

@@ -38,119 +38,6 @@
 #include "vbo_context.h"
 
 
-#define NR_LEGACY_ATTRIBS 16
-#define NR_GENERIC_ATTRIBS 16
-#define NR_MAT_ATTRIBS 12
-
-static void init_legacy_currval(GLcontext *ctx)
-{
-   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
-   struct gl_client_array *arrays = exec->legacy_currval;
-   GLuint i;
-
-   memset(arrays, 0, sizeof(*arrays) * NR_LEGACY_ATTRIBS);
-
-   /* Set up a constant (StrideB == 0) array for each current
-    * attribute:
-    */
-   for (i = 0; i < NR_LEGACY_ATTRIBS; i++) {
-      struct gl_client_array *cl = &arrays[i];
-
-      switch (i) {
-      case VBO_ATTRIB_EDGEFLAG:
-	 cl->Type = GL_UNSIGNED_BYTE;
-	 cl->Ptr = (const void *)&ctx->Current.EdgeFlag;
-	 break;
-      case VBO_ATTRIB_INDEX:
-	 cl->Type = GL_FLOAT;
-	 cl->Ptr = (const void *)&ctx->Current.Index;
-	 break;
-      default:
-	 cl->Type = GL_FLOAT;
-	 cl->Ptr = (const void *)ctx->Current.Attrib[i];
-	 break;
-      }
-
-      /* This will have to be determined at runtime:
-       */
-      cl->Size = 1;
-      cl->Stride = 0;
-      cl->StrideB = 0;
-      cl->Enabled = 1;
-      cl->BufferObj = ctx->Array.NullBufferObj;
-   }
-}
-
-
-static void init_generic_currval(GLcontext *ctx)
-{
-   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
-   struct gl_client_array *arrays = exec->generic_currval;
-   GLuint i;
-
-   memset(arrays, 0, sizeof(*arrays) * NR_GENERIC_ATTRIBS);
-
-   for (i = 0; i < NR_GENERIC_ATTRIBS; i++) {
-      struct gl_client_array *cl = &arrays[i];
-
-      /* This will have to be determined at runtime:
-       */
-      cl->Size = 1;
-
-      cl->Type = GL_FLOAT;
-      cl->Ptr = (const void *)ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + i];
-      cl->Stride = 0;
-      cl->StrideB = 0;
-      cl->Enabled = 1;
-      cl->BufferObj = ctx->Array.NullBufferObj;
-   }
-}
-
-
-static void init_mat_currval(GLcontext *ctx)
-{
-   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
-   struct gl_client_array *arrays = exec->mat_currval;
-   GLuint i;
-
-   memset(arrays, 0, sizeof(*arrays) * NR_GENERIC_ATTRIBS);
-
-   /* Set up a constant (StrideB == 0) array for each current
-    * attribute:
-    */
-   for (i = 0; i < NR_GENERIC_ATTRIBS; i++) {
-      struct gl_client_array *cl = &arrays[i];
-
-      /* Size is fixed for the material attributes, for others will
-       * be determined at runtime:
-       */
-      switch (i - VERT_ATTRIB_GENERIC0) {
-      case MAT_ATTRIB_FRONT_SHININESS:
-      case MAT_ATTRIB_BACK_SHININESS:
-	 cl->Size = 1;
-	 break;
-      case MAT_ATTRIB_FRONT_INDEXES:
-      case MAT_ATTRIB_BACK_INDEXES:
-	 cl->Size = 3;
-	 break;
-      default:
-	 cl->Size = 4;
-	 break;
-      }
-
-      if (i < MAT_ATTRIB_MAX)
-	 cl->Ptr = (const void *)ctx->Light.Material.Attrib[i];
-      else 
-	 cl->Ptr = (const void *)ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + i];
-
-      cl->Type = GL_FLOAT;
-      cl->Stride = 0;
-      cl->StrideB = 0;
-      cl->Enabled = 1;
-      cl->BufferObj = ctx->Array.NullBufferObj;
-   }
-}
-
 
 void vbo_exec_init( GLcontext *ctx )
 {
@@ -166,10 +53,6 @@ void vbo_exec_init( GLcontext *ctx )
 
    vbo_exec_vtx_init( exec );
    vbo_exec_array_init( exec );
-
-   init_legacy_currval( ctx );
-   init_generic_currval( ctx );
-   init_mat_currval( ctx );
 
    ctx->Driver.NeedFlush = 0;
    ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
