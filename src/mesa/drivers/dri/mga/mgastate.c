@@ -774,12 +774,17 @@ static void mga_set_cliprects(mgaContextPtr mmesa)
 
 void mgaUpdateRects( mgaContextPtr mmesa, GLuint buffers )
 {
-   __DRIdrawablePrivate *driDrawable = mmesa->driDrawable;
+   __DRIdrawablePrivate *const driDrawable = mmesa->driDrawable;
+   __DRIdrawablePrivate *const driReadable = mmesa->driReadable;
    drm_mga_sarea_t *sarea = mmesa->sarea;
 
 
-   DRI_VALIDATE_DRAWABLE_INFO(mmesa->driScreen, driDrawable); 
    mmesa->dirty_cliprects = 0;	
+
+   driUpdateFramebufferSize(mmesa->glCtx, driDrawable);
+   if (driDrawable != driReadable) {
+      driUpdateFramebufferSize(mmesa->glCtx, driReadable);
+   }
 
    mga_set_cliprects(mmesa);
 
@@ -788,8 +793,6 @@ void mgaUpdateRects( mgaContextPtr mmesa, GLuint buffers )
 
    mgaUpdateClipping( mmesa->glCtx );
    mgaCalcViewport( mmesa->glCtx );
-
-   mmesa->dirty |= MGA_UPLOAD_CLIPRECTS;
 }
 
 
