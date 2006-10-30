@@ -568,7 +568,7 @@ static GLuint element_size( GLenum type )
 
 
 static void rebase_indices_to_vbo_indices( struct brw_context *brw, 
-					   const struct brw_draw_index_buffer *index_buffer,
+					   const struct vbo_index_buffer *index_buffer,
 					   struct gl_buffer_object **vbo_return,
 					   GLuint *offset_return )
 {
@@ -642,7 +642,7 @@ static void rebase_indices_to_vbo_indices( struct brw_context *brw,
 
 
 void brw_upload_indices( struct brw_context *brw,
-			 const struct brw_draw_index_buffer *index_buffer)
+			 const struct vbo_index_buffer *index_buffer)
 {
    struct intel_context *intel = &brw->intel;
    GLuint ib_size = get_size(index_buffer->type) * index_buffer->count;

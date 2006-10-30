@@ -143,7 +143,7 @@ static void brw_emit_cliprect( struct brw_context *brw,
 
 
 static void brw_emit_prim( struct brw_context *brw, 
-			   const struct brw_draw_prim *prim )
+			   const struct vbo_prim *prim )
 
 {
    struct brw_3d_primitive prim_packet;
@@ -230,7 +230,7 @@ static void brw_merge_inputs( struct brw_context *brw,
 }
 
 static GLboolean check_fallbacks( struct brw_context *brw,
-				  const struct brw_draw_prim *prim,
+				  const struct vbo_prim *prim,
 				  GLuint nr_prims )
 {
    GLuint i;
@@ -284,12 +284,11 @@ static GLboolean check_fallbacks( struct brw_context *brw,
 
 static GLboolean brw_try_draw_prims( GLcontext *ctx,
 				     const struct gl_client_array *arrays[],
-				     const struct brw_draw_prim *prim,
+				     const struct vbo_prim *prim,
 				     GLuint nr_prims,
-				     const struct brw_draw_index_buffer *ib,
+				     const struct _mesa_index_buffer *ib,
 				     GLuint min_index,
-				     GLuint max_index,
-				     GLuint flags )
+				     GLuint max_index )
 {
    struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
@@ -412,43 +411,47 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
 }
 
 
-GLboolean brw_draw_prims( GLcontext *ctx,
-			  const struct gl_client_array *arrays[],
-			  const struct brw_draw_prim *prim,
-			  GLuint nr_prims,
-			  const struct brw_draw_index_buffer *ib,
-			  GLuint min_index,
-			  GLuint max_index,
-			  GLuint flags )
+void brw_draw_prims( GLcontext *ctx,
+		     const struct gl_client_array *arrays[],
+		     const struct vbo_prim *prim,
+		     GLuint nr_prims,
+		     const struct _mesa_index_buffer *ib,
+		     GLuint min_index,
+		     GLuint max_index )
 {
    struct intel_context *intel = intel_context(ctx);
    GLboolean retval;
 
-   retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index, flags);
+   retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
 
    
+   /* This looks like out-of-memory but potentially we have
+    * situation where there is enough memory but it has become
+    * fragmented.  Clear out all heaps and start from scratch by
+    * faking a contended lock event:  (done elsewhere)
+    */
    if (!retval && bmError(intel)) {
-
       DBG("retrying\n");
-      /* This looks like out-of-memory but potentially we have
-       * situation where there is enough memory but it has become
-       * fragmented.  Clear out all heaps and start from scratch by
-       * faking a contended lock event:  (done elsewhere)
-       */
-
       /* Then try a second time only to upload textures and draw the
        * primitives:
        */
-      retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index, flags);
+      retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
+   }
+
+   /* Otherwise, we really are out of memory.  Pass the drawing
+    * command to the software tnl module and which will in turn call
+    * swrast to do the drawing.
+    */
+   if (!retval) {
+      brw_fallback();
+      _tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
+      brw_unfallback();
    }
 
    if (intel->aub_file && (INTEL_DEBUG & DEBUG_SYNC)) {
       intelFinish( &intel->ctx );
       intel->aub_wrap = 1;
    }
-
-
-   return retval;
 }
 
 

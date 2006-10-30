@@ -40,11 +40,6 @@ DRIVER_SOURCES = \
 	brw_eu_debug.c \
 	brw_eu_emit.c \
 	brw_eu_util.c \
-	brw_exec.c \
-	brw_exec_api.c \
-	brw_exec_array.c \
-	brw_exec_draw.c \
-	brw_exec_eval.c \
 	brw_fallback.c \
 	brw_gs.c \
 	brw_gs_emit.c \
@@ -53,9 +48,6 @@ DRIVER_SOURCES = \
 	brw_metaops.c \
 	brw_misc_state.c \
 	brw_program.c \
-	brw_save.c \
-	brw_save_api.c \
-	brw_save_draw.c \
 	brw_sf.c \
 	brw_sf_emit.c \
 	brw_sf_state.c \

@@ -156,11 +156,6 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 
    brw_ProgramCacheInit( ctx );
 
-   /* Hook our functions into exec and compile dispatch tables.  Only
-    * fallback on out-of-memory situations.
-    */
-   brw_exec_init( ctx );
-   brw_save_init( ctx );
 
    {
       const char *filename = getenv("INTEL_REPLAY");

@@ -303,7 +303,7 @@ static void meta_draw_quad(struct intel_context *intel,
    struct gl_client_array pos_array;
    struct gl_client_array color_array;
    struct gl_client_array *attribs[BRW_ATTRIB_MAX];
-   struct brw_draw_prim prim[1];
+   struct vbo_prim prim[1];
    GLfloat pos[4][3];
    GLubyte color[4];
 
@@ -395,8 +395,7 @@ static void meta_draw_quad(struct intel_context *intel,
 		       prim, 1,
 		       NULL,
 		       0,
-		       4,
-		       BRW_DRAW_LOCKED ))
+		       4 ))
    {
       /* This should not be possible:
        */

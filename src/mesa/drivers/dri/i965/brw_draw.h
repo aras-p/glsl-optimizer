@@ -33,40 +33,14 @@
 
 struct brw_context;
 
-struct brw_draw_prim {
-   GLuint mode:8;
-   GLuint indexed:1;
-   GLuint begin:1;
-   GLuint end:1;
-   GLuint weak:1;
-   GLuint pad:20;
-
-   GLuint start;
-   GLuint count;
-};
-
-struct brw_draw_index_buffer {
-   GLuint count;
-   GLenum type;
-   struct gl_buffer_object *obj;
-   const void *ptr;
-   GLuint rebase;
-};
-
-
-#define BRW_DRAW_SORTED           0x1
-#define BRW_DRAW_ALL_INTERLEAVED  0x2
-#define BRW_DRAW_NON_INTERLEAVED  0x4
-#define BRW_DRAW_LOCKED           0x8
 
 GLboolean brw_draw_prims( GLcontext *ctx,
 			  const struct gl_client_array *arrays[],
-			  const struct brw_draw_prim *prims,
+			  const struct vbo_prim *prims,
 			  GLuint nr_prims,
-			  const struct brw_draw_index_buffer *ib,
+			  const struct _mesa_index_buffer *ib,
 			  GLuint min_index,
-			  GLuint max_index,
-			  GLuint flags );
+			  GLuint max_index );
 
 void brw_draw_init( struct brw_context *brw );
 void brw_draw_destroy( struct brw_context *brw );
@@ -80,25 +54,12 @@ void brw_init_current_values(GLcontext *ctx,
 /* brw_draw_upload.c
  */
 void brw_upload_indices( struct brw_context *brw,
-			 const struct brw_draw_index_buffer *index_buffer);
+			 const struct _mesa_index_buffer *index_buffer);
 
 GLboolean brw_upload_vertices( struct brw_context *brw,
 			       GLuint min_index,
 			       GLuint max_index );
 
 
-/* Helpers for save, exec.  Should probably have their own file:
- */
-struct brw_exec_context;
-struct brw_save_context;
-
-struct brw_exec_save {
-   struct brw_exec_context *exec;
-   struct brw_save_context *save;
-};
-
-/* Doesn't really belong here:
- */
-#define IMM_CONTEXT(ctx) ((struct brw_exec_save *)((ctx)->swtnl_im))
 
 #endif

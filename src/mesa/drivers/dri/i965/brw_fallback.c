@@ -198,7 +198,7 @@ struct loopback_attr {
  */
 static void loopback_prim( GLcontext *ctx,
 			   const GLfloat *buffer,
-			   const struct brw_draw_prim *prim,
+			   const struct vbo_prim *prim,
 			   GLuint wrap_count,
 			   GLuint vertex_size,
 			   const struct loopback_attr *la, GLuint nr )
@@ -252,7 +252,7 @@ static void loopback_prim( GLcontext *ctx,
  * primitives.
  */
 static void loopback_weak_prim( GLcontext *ctx,
-				const struct brw_draw_prim *prim )
+				const struct vbo_prim *prim )
 {
    /* Use the prim_weak flag to ensure that if this primitive
     * wraps, we don't mistake future vertex_lists for part of the
@@ -271,7 +271,7 @@ static void loopback_weak_prim( GLcontext *ctx,
 void brw_loopback_vertex_list( GLcontext *ctx,
 			       const GLfloat *buffer,
 			       const GLubyte *attrsz,
-			       const struct brw_draw_prim *prim,
+			       const struct vbo_prim *prim,
 			       GLuint prim_count,
 			       GLuint wrap_count,
 			       GLuint vertex_size)
