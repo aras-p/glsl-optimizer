@@ -289,18 +289,16 @@ fetch_vector4( GLcontext *ctx,
                GLfloat result[4] )
 {
    const GLfloat *src = get_register_pointer(ctx, source, machine, program);
-
+   ASSERT(src);
+   result[0] = src[GET_SWZ(source->Swizzle, 0)];
+   result[1] = src[GET_SWZ(source->Swizzle, 1)];
+   result[2] = src[GET_SWZ(source->Swizzle, 2)];
+   result[3] = src[GET_SWZ(source->Swizzle, 3)];
    if (source->NegateBase) {
-      result[0] = -src[GET_SWZ(source->Swizzle, 0)];
-      result[1] = -src[GET_SWZ(source->Swizzle, 1)];
-      result[2] = -src[GET_SWZ(source->Swizzle, 2)];
-      result[3] = -src[GET_SWZ(source->Swizzle, 3)];
-   }
-   else {
-      result[0] = src[GET_SWZ(source->Swizzle, 0)];
-      result[1] = src[GET_SWZ(source->Swizzle, 1)];
-      result[2] = src[GET_SWZ(source->Swizzle, 2)];
-      result[3] = src[GET_SWZ(source->Swizzle, 3)];
+      result[0] = -result[0];
+      result[1] = -result[1];
+      result[2] = -result[2];
+      result[3] = -result[3];
    }
 }
 
@@ -317,11 +315,10 @@ fetch_vector1( GLcontext *ctx,
                GLfloat result[4] )
 {
    const GLfloat *src = get_register_pointer(ctx, source, machine, program);
+   ASSERT(src);
+   result[0] = src[GET_SWZ(source->Swizzle, 0)];
    if (source->NegateBase) {
-      result[0] = -src[GET_SWZ(source->Swizzle, 0)];
-   }
-   else {
-      result[0] = src[GET_SWZ(source->Swizzle, 0)];
+      result[0] = -result[0];
    }
 }
 
@@ -337,13 +334,14 @@ store_vector4( const struct prog_instruction *inst,
    const struct prog_dst_register *dest = &(inst->DstReg);
    GLfloat *dst;
    switch (dest->File) {
-      case PROGRAM_TEMPORARY:
-         dst = machine->Temporaries[dest->Index];
-         break;
       case PROGRAM_OUTPUT:
          dst = machine->Outputs[dest->Index];
          break;
+      case PROGRAM_TEMPORARY:
+         dst = machine->Temporaries[dest->Index];
+         break;
       case PROGRAM_ENV_PARAM:
+         /* Only for VP state programs */
          {
             /* a slight hack */
             GET_CURRENT_CONTEXT(ctx);
@@ -835,50 +833,3 @@ _mesa_exec_vertex_state_program(GLcontext *ctx,
    COPY_4V(machine.Inputs[VERT_ATTRIB_POS], params);
    _mesa_exec_vertex_program(ctx, &machine, vprog);
 }
-
-
-
-/**
-Thoughts on vertex program optimization:
-
-The obvious thing to do is to compile the vertex program into X86/SSE/3DNow!
-assembly code.  That will probably be a lot of work.
-
-Another approach might be to replace the vp_instruction->Opcode field with
-a pointer to a specialized C function which executes the instruction.
-In particular we can write functions which skip swizzling, negating,
-masking, relative addressing, etc. when they're not needed.
-
-For example:
-
-void simple_add( struct prog_instruction *inst )
-{
-   GLfloat *sum = machine->Registers[inst->DstReg.Register];
-   GLfloat *a = machine->Registers[inst->SrcReg[0].Register];
-   GLfloat *b = machine->Registers[inst->SrcReg[1].Register];
-   sum[0] = a[0] + b[0];
-   sum[1] = a[1] + b[1];
-   sum[2] = a[2] + b[2];
-   sum[3] = a[3] + b[3];
-}
-
-*/
-
-/*
-
-KW:
-
-A first step would be to 'vectorize' the programs in the same way as
-the normal transformation code in the tnl module.  Thus each opcode
-takes zero or more input vectors (registers) and produces one or more
-output vectors.
-
-These operations would intially be coded in C, with machine-specific
-assembly following, as is currently the case for matrix
-transformations in the math/ directory.  The preprocessing scheme for
-selecting simpler operations Brian describes above would also work
-here.
-
-This should give reasonable performance without excessive effort.
-
-*/
