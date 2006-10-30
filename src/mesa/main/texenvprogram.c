@@ -1095,13 +1095,6 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    ASSERT(p.program->Base.NumInstructions <= MAX_INSTRUCTIONS);
 
    /* Allocate final instruction array */
-   {
-      static int max=0;
-      if (program->Base.NumInstructions> max) {
-         max = program->Base.NumInstructions;
-         printf("%d inst max\n", max);
-      }
-   }
    program->Base.Instructions
       = _mesa_alloc_instructions(program->Base.NumInstructions);
    if (!program->Base.Instructions) {
