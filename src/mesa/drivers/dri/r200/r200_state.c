@@ -42,7 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "light.h"
 
 #include "swrast/swrast.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
@@ -53,7 +53,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_tcl.h"
 #include "r200_tex.h"
 #include "r200_swtcl.h"
-#include "r200_vtxfmt.h"
 #include "r200_vertprog.h"
 
 #include "drirenderbuffer.h"
@@ -2517,11 +2516,10 @@ static void r200InvalidateState( GLcontext *ctx, GLuint new_state )
 {
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
-   _ac_InvalidateState( ctx, new_state );
+   _vbo_InvalidateState( ctx, new_state );
    _tnl_InvalidateState( ctx, new_state );
    _ae_invalidate_state( ctx, new_state );
    R200_CONTEXT(ctx)->NewGLState |= new_state;
-   r200VtxfmtInvalidate( ctx );
 }
 
 /* A hack.  The r200 can actually cope just fine with materials
