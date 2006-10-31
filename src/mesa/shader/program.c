@@ -45,7 +45,7 @@
 static const char *
 make_state_string(const GLint stateTokens[6]);
 
-static GLuint 
+static GLbitfield
 make_state_flags(const GLint state[]);
 
 
@@ -485,8 +485,7 @@ _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
          paramList->Parameters[index].StateIndexes[i]
             = (enum state_index) stateTokens[i];
       }
-      paramList->StateFlags |= 
-	    make_state_flags(stateTokens);
+      paramList->StateFlags |= make_state_flags(stateTokens);
    }
 
    /* free name string here since we duplicated it in add_parameter() */
@@ -580,37 +579,29 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
       {
          /* state[1] is either 0=front or 1=back side */
          const GLuint face = (GLuint) state[1];
+         const struct gl_material *mat = &ctx->Light.Material;
+         ASSERT(face == 0 || face == 1);
+         /* we rely on tokens numbered so that _BACK_ == _FRONT_+ 1 */
+         ASSERT(MAT_ATTRIB_FRONT_AMBIENT + 1 == MAT_ATTRIB_BACK_AMBIENT);
+         /* XXX we could get rid of this switch entirely with a little
+          * work in arbprogparse.c's parse_state_single_item().
+          */
          /* state[2] is the material attribute */
          switch (state[2]) {
          case STATE_AMBIENT:
-            if (face == 0)
-               COPY_4V(value, ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_AMBIENT]);
-            else
-               COPY_4V(value, ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_AMBIENT]);
+            COPY_4V(value, mat->Attrib[MAT_ATTRIB_FRONT_AMBIENT + face]);
             return;
          case STATE_DIFFUSE:
-            if (face == 0)
-               COPY_4V(value, ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE]);
-            else
-               COPY_4V(value, ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_DIFFUSE]);
+            COPY_4V(value, mat->Attrib[MAT_ATTRIB_FRONT_DIFFUSE + face]);
             return;
          case STATE_SPECULAR:
-            if (face == 0)
-               COPY_4V(value, ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_SPECULAR]);
-            else
-               COPY_4V(value, ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_SPECULAR]);
+            COPY_4V(value, mat->Attrib[MAT_ATTRIB_FRONT_SPECULAR + face]);
             return;
          case STATE_EMISSION:
-            if (face == 0)
-               COPY_4V(value, ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_EMISSION]);
-            else
-               COPY_4V(value, ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_EMISSION]);
+            COPY_4V(value, mat->Attrib[MAT_ATTRIB_FRONT_EMISSION + face]);
             return;
          case STATE_SHININESS:
-            if (face == 0)
-               value[0] = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_SHININESS][0];
-            else
-               value[0] = ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_SHININESS][0];
+            value[0] = mat->Attrib[MAT_ATTRIB_FRONT_SHININESS + face][0];
             value[1] = 0.0F;
             value[2] = 0.0F;
             value[3] = 1.0F;
@@ -941,10 +932,14 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
 
 
 /**
- * Return a bit mask of the Mesa state flags under which a parameter's
- * value might change.
+ * Return a bitmask of the Mesa state flags (_NEW_* values) which would
+ * indicate that the given context state may have changed.
+ * The bitmask is used during validation to determine if we need to update
+ * vertex/fragment program parameters (like "state.material.color") when
+ * some GL state has changed.
  */
-static GLuint make_state_flags(const GLint state[])
+static GLbitfield
+make_state_flags(const GLint state[])
 {
    switch (state[0]) {
    case STATE_MATERIAL:
