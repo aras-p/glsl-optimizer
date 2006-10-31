@@ -46,7 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "api_arrayelt.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "texformat.h"
 
@@ -1806,7 +1806,7 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 	
 	_swrast_InvalidateState(ctx, new_state);
 	_swsetup_InvalidateState(ctx, new_state);
-	_ac_InvalidateState(ctx, new_state);
+	_vbo_InvalidateState(ctx, new_state);
 	_tnl_InvalidateState(ctx, new_state);
 	_ae_invalidate_state(ctx, new_state);
 

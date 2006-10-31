@@ -42,7 +42,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "api_arrayelt.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "tnl/t_vp_build.h"
 
@@ -352,7 +352,7 @@ GLboolean r300_run_vb_render(GLcontext *ctx,
 	r300EmitState(rmesa);
 	
 	for(i=0; i < VB->PrimitiveCount; i++){
-		GLuint prim = VB->Primitive[i].mode;
+		GLuint prim = _tnl_translate_prim(&VB->Primitive[i]);
 		GLuint start = VB->Primitive[i].start;
 		GLuint length = VB->Primitive[i].count;
 		

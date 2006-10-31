@@ -44,7 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
@@ -287,7 +287,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	/* Initialize the software rasterizer and helper modules.
 	 */
 	_swrast_CreateContext(ctx);
-	_ac_CreateContext(ctx);
+	_vbo_CreateContext(ctx);
 	_tnl_CreateContext(ctx);
 	_swsetup_CreateContext(ctx);
 	_swsetup_Wakeup(ctx);
@@ -300,7 +300,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 
 	/* Try and keep materials and vertices separate:
 	 */
-	_tnl_isolate_materials(ctx, GL_TRUE);
+/* 	_tnl_isolate_materials(ctx, GL_TRUE); */
 
 	/* Configure swrast and TNL to match hardware characteristics:
 	 */
@@ -478,7 +478,7 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 		_swsetup_DestroyContext(r300->radeon.glCtx);
 		_tnl_ProgramCacheDestroy(r300->radeon.glCtx);
 		_tnl_DestroyContext(r300->radeon.glCtx);
-		_ac_DestroyContext(r300->radeon.glCtx);
+		_vbo_DestroyContext(r300->radeon.glCtx);
 		_swrast_DestroyContext(r300->radeon.glCtx);
 		
 		if (r300->dma.current.buf) {

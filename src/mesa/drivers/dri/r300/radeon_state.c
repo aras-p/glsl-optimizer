@@ -41,7 +41,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "light.h"
 
 #include "swrast/swrast.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
@@ -134,8 +134,6 @@ void radeonUpdateScissor(GLcontext* ctx)
 
 static void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
-	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-
 	if (ctx->Scissor.Enabled) {
 		/* We don't pipeline cliprect changes */
 		r300Flush(ctx);
