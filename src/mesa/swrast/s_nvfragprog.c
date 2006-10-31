@@ -1265,21 +1265,20 @@ execute_program( GLcontext *ctx,
          case OPCODE_TEX: /* Both ARB and NV frag prog */
             /* Texel lookup */
             {
-               /* Note: we're using zero instead of lambda for the LOD.
-                * The problem is we didn't necessarily use the right partial
-                * derivatives when we called _swrast_compute_lambda() earlier.
-                * A texture can be sampled with any coordinate, not just
-                * fragment.texcoord[n].
-                * Use zero for now because that's better than using a bad
-                * lambda value (I've seen a few test programs fail otherwise).
-                * We need to overhaul this stuff someday.
+               /* Note: only use the precomputed lambda value when we're
+                * sampling texture unit [K] with texcoord[K].
+                * Otherwise, the lambda value may have no relation to the
+                * instruction's texcoord or texture image.  Using the wrong
+                * lambda is usually bad news.
+                * The rest of the time, just use zero (until we get a more
+                * sophisticated way of computing lambda).
                 */
-#ifdef LAMBDA_ZERO
-               GLfloat lambda = 0.0;
-#else
-               GLfloat lambda = span->array->lambda[inst->TexSrcUnit][column];
-#endif
-               GLfloat coord[4], color[4];
+               GLfloat coord[4], color[4], lambda;
+               if (inst->SrcReg[0].File == PROGRAM_INPUT &&
+                   inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0+inst->TexSrcUnit)
+                  lambda = span->array->lambda[inst->TexSrcUnit][column];
+               else
+                  lambda = 0.0;
                fetch_vector4(ctx, &inst->SrcReg[0], machine, program, coord);
                fetch_texel( ctx, coord, lambda, inst->TexSrcUnit, color );
 #if DEBUG_FRAG
@@ -1294,12 +1293,12 @@ execute_program( GLcontext *ctx,
          case OPCODE_TXB: /* GL_ARB_fragment_program only */
             /* Texel lookup with LOD bias */
             {
-#ifdef LAMBDA_ZERO
-               GLfloat lambda = 0.0;
-#else
-               GLfloat lambda = span->array->lambda[inst->TexSrcUnit][column];
-#endif
-               GLfloat coord[4], color[4], bias;
+               GLfloat coord[4], color[4], lambda, bias;
+               if (inst->SrcReg[0].File == PROGRAM_INPUT &&
+                   inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0+inst->TexSrcUnit)
+                  lambda = span->array->lambda[inst->TexSrcUnit][column];
+               else
+                  lambda = 0.0;
                fetch_vector4(ctx, &inst->SrcReg[0], machine, program, coord);
                /* coord[3] is the bias to add to lambda */
                bias = ctx->Texture.Unit[inst->TexSrcUnit].LodBias
@@ -1324,12 +1323,12 @@ execute_program( GLcontext *ctx,
          case OPCODE_TXP: /* GL_ARB_fragment_program only */
             /* Texture lookup w/ projective divide */
             {
-#ifdef LAMBDA_ZERO
-               GLfloat lambda = 0.0;
-#else
-               GLfloat lambda = span->array->lambda[inst->TexSrcUnit][column];
-#endif
-               GLfloat texcoord[4], color[4];
+               GLfloat texcoord[4], color[4], lambda;
+               if (inst->SrcReg[0].File == PROGRAM_INPUT &&
+                   inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0+inst->TexSrcUnit)
+                  lambda = span->array->lambda[inst->TexSrcUnit][column];
+               else
+                  lambda = 0.0;
                fetch_vector4(ctx, &inst->SrcReg[0], machine, program,texcoord);
 	       /* Not so sure about this test - if texcoord[3] is
 		* zero, we'd probably be fine except for an ASSERT in
@@ -1347,13 +1346,13 @@ execute_program( GLcontext *ctx,
          case OPCODE_TXP_NV: /* GL_NV_fragment_program only */
             /* Texture lookup w/ projective divide */
             {
-#ifdef LAMBDA_ZERO
-               GLfloat lambda = 0.0;
-#else
-               GLfloat lambda = span->array->lambda[inst->TexSrcUnit][column];
-#endif
-               GLfloat texcoord[4], color[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
+               GLfloat texcoord[4], color[4], lambda;
+               if (inst->SrcReg[0].File == PROGRAM_INPUT &&
+                   inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0+inst->TexSrcUnit)
+                  lambda = span->array->lambda[inst->TexSrcUnit][column];
+               else
+                  lambda = 0.0;
+               fetch_vector4(ctx, &inst->SrcReg[0], machine, program,texcoord);
                if (inst->TexSrcTarget != TEXTURE_CUBE_INDEX &&
 		   texcoord[3] != 0.0) {
                   texcoord[0] /= texcoord[3];
@@ -1598,7 +1597,7 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
 
    ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
 
-#if 1 /* we really shouldn't need this here... */
+#if 0 /* we really shouldn't need this here... */
    if (program->Base.Parameters) {
       _mesa_load_state_parameters(ctx, program->Base.Parameters);
    }
