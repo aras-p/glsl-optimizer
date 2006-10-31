@@ -1597,11 +1597,6 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
 
    ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
 
-#if 0 /* we really shouldn't need this here... */
-   if (program->Base.Parameters) {
-      _mesa_load_state_parameters(ctx, program->Base.Parameters);
-   }
-#endif
    run_program(ctx, span, 0, span->end);
 
    if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
