@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -48,6 +48,8 @@
 
 #ifdef __MINGW32__
 #define DXTN_LIBNAME "dxtn.dll"
+#define RTLD_LAZY 0
+#define RTLD_GLOBAL 0
 #elif defined(__DJGPP__)
 #define DXTN_LIBNAME "dxtn.dxe"
 #else
@@ -104,7 +106,7 @@ _mesa_dlsym(void *handle, const char *fname)
 {
 #if USE_EXTERNAL_DXTN_LIB
 #ifdef __MINGW32__
-   return (GenericFunc) GetProcAddress(handle, fname)
+   return (GenericFunc) GetProcAddress(handle, fname);
 #elif defined(__DJGPP__)
    /* need '_' prefix on symbol names */
    char fname2[1000];
