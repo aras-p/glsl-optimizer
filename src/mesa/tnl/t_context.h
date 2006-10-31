@@ -56,7 +56,7 @@
 #include "math/m_vector.h"
 #include "math/m_xform.h"
 
-#include "vbo/vbo_attrib.h"
+#include "vbo/vbo.h"
 
 #define MAX_PIPELINE_STAGES     30
 

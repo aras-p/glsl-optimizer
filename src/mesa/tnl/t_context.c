@@ -38,7 +38,7 @@
 #include "t_pipeline.h"
 #include "t_vp_build.h"
 
-#include "vbo/vbo_attrib.h"
+#include "vbo/vbo.h"
 
 GLboolean
 _tnl_CreateContext( GLcontext *ctx )
