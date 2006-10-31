@@ -41,6 +41,9 @@
 #include "s_span.h"
 
 
+/* See comments below for info about this */
+#define LAMBDA_ZERO 1
+
 /* if 1, print some debugging info */
 #define DEBUG_FRAG 0
 
@@ -660,6 +663,9 @@ execute_program( GLcontext *ctx,
                                        ctx->FragmentProgram.CallbackData);
       }
 
+#if DEBUG_FRAG
+      _mesa_print_instruction(inst);
+#endif
       switch (inst->Opcode) {
          case OPCODE_ABS:
             {
@@ -682,6 +688,12 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] + b[2];
                result[3] = a[3] + b[3];
                store_vector4( inst, machine, result );
+#if DEBUG_FRAG
+               printf("ADD (%g %g %g %g) = (%g %g %g %g) + (%g %g %g %g)\n",
+                      result[0], result[1], result[2], result[3], 
+                      a[0], a[1], a[2], a[3],
+                      b[0], b[1], b[2], b[3]);
+#endif
             }
             break;
          case OPCODE_CMP:
@@ -882,6 +894,11 @@ execute_program( GLcontext *ctx,
                }
                result[3] = 1.0F;
                store_vector4( inst, machine, result );
+#if DEBUG_FRAG
+               printf("LIT (%g %g %g %g) : (%g %g %g %g)\n",
+                      result[0], result[1], result[2], result[3],
+                      a[0], a[1], a[2], a[3]);
+#endif
             }
             break;
          case OPCODE_LRP:
@@ -916,6 +933,14 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] * b[2] + c[2];
                result[3] = a[3] * b[3] + c[3];
                store_vector4( inst, machine, result );
+#if DEBUG_FRAG
+               printf("MAD (%g %g %g %g) = (%g %g %g %g) * "
+                      "(%g %g %g %g) + (%g %g %g %g)\n",
+                      result[0], result[1], result[2], result[3],
+                      a[0], a[1], a[2], a[3],
+                      b[0], b[1], b[2], b[3],
+                      c[0], c[1], c[2], c[3]);
+#endif
             }
             break;
          case OPCODE_MAX:
@@ -1240,27 +1265,28 @@ execute_program( GLcontext *ctx,
          case OPCODE_TEX: /* Both ARB and NV frag prog */
             /* Texel lookup */
             {
-               GLfloat texcoord[4], color[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
-               /* Note: we pass 0 for LOD.  The ARB extension requires it
-                * while the NV extension says it's implementation dependant.
+               /* Note: we're using zero instead of lambda for the LOD.
+                * The problem is we didn't necessarily use the right partial
+                * derivatives when we called _swrast_compute_lambda() earlier.
+                * A texture can be sampled with any coordinate, not just
+                * fragment.texcoord[n].
+                * Use zero for now because that's better than using a bad
+                * lambda value (I've seen a few test programs fail otherwise).
+                * We need to overhaul this stuff someday.
                 */
-               /* KW: Previously lambda was passed as zero, but I
-		* believe this is incorrect, the spec seems to
-		* indicate rather that lambda should not be
-		* changed/biased, unlike TXB where texcoord[3] is
-		* added to the lambda calculations.  The lambda should
-		* still be calculated normally for TEX & TXP though,
-		* not set to zero.  Otherwise it's very difficult to
-		* implement normal GL semantics through the fragment
-		* shader.
-		*/
-               fetch_texel( ctx, texcoord, 
-			    span->array->lambda[inst->TexSrcUnit][column],
-			    inst->TexSrcUnit, color );
+#ifdef LAMBDA_ZERO
+               GLfloat lambda = 0.0;
+#else
+               GLfloat lambda = span->array->lambda[inst->TexSrcUnit][column];
+#endif
+               GLfloat coord[4], color[4];
+               fetch_vector4(ctx, &inst->SrcReg[0], machine, program, coord);
+               fetch_texel( ctx, coord, lambda, inst->TexSrcUnit, color );
 #if DEBUG_FRAG
-               if (color[3])
-                  printf("color[3] = %f\n", color[3]);
+               printf("TEX (%g, %g, %g, %g) = texture[%d][%g, %g, %g, %g], "
+                      "lod %f\n",
+                      color[0], color[1], color[2], color[3], inst->TexSrcUnit,
+                      coord[0], coord[1], coord[2], coord[3], lambda);
 #endif
                store_vector4( inst, machine, color );
             }
@@ -1268,16 +1294,18 @@ execute_program( GLcontext *ctx,
          case OPCODE_TXB: /* GL_ARB_fragment_program only */
             /* Texel lookup with LOD bias */
             {
-               GLfloat texcoord[4], color[4], bias, lambda;
-
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
-               /* texcoord[3] is the bias to add to lambda */
+#ifdef LAMBDA_ZERO
+               GLfloat lambda = 0.0;
+#else
+               GLfloat lambda = span->array->lambda[inst->TexSrcUnit][column];
+#endif
+               GLfloat coord[4], color[4], bias;
+               fetch_vector4(ctx, &inst->SrcReg[0], machine, program, coord);
+               /* coord[3] is the bias to add to lambda */
                bias = ctx->Texture.Unit[inst->TexSrcUnit].LodBias
                     + ctx->Texture.Unit[inst->TexSrcUnit]._Current->LodBias
-                    + texcoord[3];
-               lambda = span->array->lambda[inst->TexSrcUnit][column] + bias;
-               fetch_texel( ctx, texcoord, lambda,
-                            inst->TexSrcUnit, color );
+                    + coord[3];
+               fetch_texel(ctx, coord, lambda + bias, inst->TexSrcUnit, color);
                store_vector4( inst, machine, color );
             }
             break;
@@ -1296,8 +1324,13 @@ execute_program( GLcontext *ctx,
          case OPCODE_TXP: /* GL_ARB_fragment_program only */
             /* Texture lookup w/ projective divide */
             {
+#ifdef LAMBDA_ZERO
+               GLfloat lambda = 0.0;
+#else
+               GLfloat lambda = span->array->lambda[inst->TexSrcUnit][column];
+#endif
                GLfloat texcoord[4], color[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
+               fetch_vector4(ctx, &inst->SrcReg[0], machine, program,texcoord);
 	       /* Not so sure about this test - if texcoord[3] is
 		* zero, we'd probably be fine except for an ASSERT in
 		* IROUND_POS() which gets triggered by the inf values created.
@@ -1307,23 +1340,18 @@ execute_program( GLcontext *ctx,
 		  texcoord[1] /= texcoord[3];
 		  texcoord[2] /= texcoord[3];
 	       }
-               /* KW: Previously lambda was passed as zero, but I
-		* believe this is incorrect, the spec seems to
-		* indicate rather that lambda should not be
-		* changed/biased, unlike TXB where texcoord[3] is
-		* added to the lambda calculations.  The lambda should
-		* still be calculated normally for TEX & TXP though,
-		* not set to zero.
-		*/
-               fetch_texel( ctx, texcoord, 
-			    span->array->lambda[inst->TexSrcUnit][column],
-			    inst->TexSrcUnit, color );
+               fetch_texel( ctx, texcoord, lambda, inst->TexSrcUnit, color );
                store_vector4( inst, machine, color );
             }
             break;
          case OPCODE_TXP_NV: /* GL_NV_fragment_program only */
             /* Texture lookup w/ projective divide */
             {
+#ifdef LAMBDA_ZERO
+               GLfloat lambda = 0.0;
+#else
+               GLfloat lambda = span->array->lambda[inst->TexSrcUnit][column];
+#endif
                GLfloat texcoord[4], color[4];
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
                if (inst->TexSrcTarget != TEXTURE_CUBE_INDEX &&
@@ -1332,9 +1360,7 @@ execute_program( GLcontext *ctx,
                   texcoord[1] /= texcoord[3];
                   texcoord[2] /= texcoord[3];
                }
-               fetch_texel( ctx, texcoord,
-                            span->array->lambda[inst->TexSrcUnit][column],
-                            inst->TexSrcUnit, color );
+               fetch_texel( ctx, texcoord, lambda, inst->TexSrcUnit, color );
                store_vector4( inst, machine, color );
             }
             break;
@@ -1572,10 +1598,11 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
 
    ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
 
+#if 1 /* we really shouldn't need this here... */
    if (program->Base.Parameters) {
       _mesa_load_state_parameters(ctx, program->Base.Parameters);
-   }   
-
+   }
+#endif
    run_program(ctx, span, 0, span->end);
 
    if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
