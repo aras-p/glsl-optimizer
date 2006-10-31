@@ -33,7 +33,7 @@
 #include "colormac.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "tnl/tnl.h"
 
 #define ENABLELIGHTING 0
@@ -1664,7 +1664,7 @@ static void gammaDDUpdateState( GLcontext *ctx, GLuint new_state )
 {
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
-   _ac_InvalidateState( ctx, new_state );
+   _vbo_InvalidateState( ctx, new_state );
    _tnl_InvalidateState( ctx, new_state );
    GAMMA_CONTEXT(ctx)->new_gl_state |= new_state;
 }

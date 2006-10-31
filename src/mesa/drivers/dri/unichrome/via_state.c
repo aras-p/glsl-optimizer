@@ -40,7 +40,7 @@
 #include "via_3d_reg.h"
 
 #include "swrast/swrast.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "swrast_setup/swrast_setup.h"
 
@@ -1501,7 +1501,7 @@ static void viaInvalidateState(GLcontext *ctx, GLuint newState)
 
     _swrast_InvalidateState(ctx, newState);
     _swsetup_InvalidateState(ctx, newState);
-    _ac_InvalidateState(ctx, newState);
+    _vbo_InvalidateState(ctx, newState);
     _tnl_InvalidateState(ctx, newState);
 }
 

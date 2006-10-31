@@ -40,7 +40,7 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 
 #include "tnl/t_pipeline.h"
 
@@ -501,7 +501,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    /* Initialize the software rasterizer and helper modules.
     */
    _swrast_CreateContext( ctx );
-   _ac_CreateContext( ctx );
+   _vbo_CreateContext( ctx );
    _tnl_CreateContext( ctx );
    
    _swsetup_CreateContext( ctx );
@@ -591,7 +591,7 @@ savageDestroyContext(__DRIcontextPrivate *driContextPriv)
 
       _swsetup_DestroyContext(imesa->glCtx );
       _tnl_DestroyContext( imesa->glCtx );
-      _ac_DestroyContext( imesa->glCtx );
+      _vbo_DestroyContext( imesa->glCtx );
       _swrast_DestroyContext( imesa->glCtx );
 
       /* free the Mesa context */

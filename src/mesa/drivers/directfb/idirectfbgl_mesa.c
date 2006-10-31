@@ -53,7 +53,7 @@
 #include "texformat.h"
 #include "teximage.h"
 #include "texstore.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
