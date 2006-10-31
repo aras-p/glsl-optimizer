@@ -174,6 +174,8 @@ static void _tnl_copy_to_current( GLcontext *ctx )
    }
          
    ctx->Driver.NeedFlush &= ~FLUSH_UPDATE_CURRENT;
+
+   ctx->NewState |= _NEW_LIGHT;
 }
 
 
