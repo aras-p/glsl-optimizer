@@ -35,6 +35,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define __VBO_EXEC_H__
 
 #include "mtypes.h"
+#include "vbo.h"
 #include "vbo_attrib.h"
 
 

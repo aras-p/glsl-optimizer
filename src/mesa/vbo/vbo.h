@@ -32,6 +32,34 @@
 #ifndef _VBO_H
 #define _VBO_H
 
+#include "mtypes.h"
+
+struct _mesa_prim {
+   GLuint mode:8;
+   GLuint indexed:1;
+   GLuint begin:1;
+   GLuint end:1;
+   GLuint weak:1;
+   GLuint pad:20;
+
+   GLuint start;
+   GLuint count;
+};
+
+/* Would like to call this a "vbo_index_buffer", but this would be
+ * confusing as the indices are not neccessarily yet in a non-null
+ * buffer object.
+ */
+struct _mesa_index_buffer {
+   GLuint count;
+   GLenum type;
+   struct gl_buffer_object *obj;
+   const void *ptr;
+   GLuint rebase;
+};
+
+
+
 GLboolean _vbo_CreateContext( GLcontext *ctx );
 void _vbo_DestroyContext( GLcontext *ctx );
 void _vbo_InvalidateState( GLcontext *ctx, GLuint new_state );
