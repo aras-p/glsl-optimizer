@@ -34,8 +34,6 @@
 #include "brw_aub.h"
 #include "brw_defines.h"
 #include "brw_draw.h"
-#include "brw_exec.h"
-#include "brw_save.h"
 #include "brw_vs.h"
 #include "imports.h"
 #include "intel_tex.h"

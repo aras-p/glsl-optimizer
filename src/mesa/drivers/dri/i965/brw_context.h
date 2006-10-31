@@ -214,7 +214,7 @@ struct brw_vs_prog_data {
    GLuint total_grf;
    GLuint outputs_written;
 
-   GLuint64EXT inputs_read;
+   GLuint inputs_read;
 
    /* Used for calculating urb partitions:
     */
@@ -381,10 +381,10 @@ struct brw_cached_batch_item {
    
 
 
-/* Protect against a future where BRW_ATTRIB_MAX > 32.  Wouldn't life
+/* Protect against a future where VERT_ATTRIB_MAX > 32.  Wouldn't life
  * be easier if C allowed arrays of packed elements?
  */
-#define ATTRIB_BIT_DWORDS  ((BRW_ATTRIB_MAX+31)/32)
+#define ATTRIB_BIT_DWORDS  ((VERT_ATTRIB_MAX+31)/32)
 
 struct brw_vertex_element {
    const struct gl_client_array *glarray;
@@ -400,8 +400,8 @@ struct brw_vertex_element {
 
 
 struct brw_vertex_info {
-   GLuint64EXT varying;  /* varying:1[BRW_ATTRIB_MAX] */
-   GLuint sizes[ATTRIB_BIT_DWORDS * 2]; /* sizes:2[BRW_ATTRIB_MAX] */
+   GLuint varying;  /* varying:1[VERT_ATTRIB_MAX] */
+   GLuint sizes[ATTRIB_BIT_DWORDS * 2]; /* sizes:2[VERT_ATTRIB_MAX] */
 };
 
 
@@ -448,14 +448,13 @@ struct brw_context
    struct brw_cached_batch_item *cached_batch_items;
 
    struct {
-      /* Fallback values for inputs not supplied: 
-       */
-      struct gl_client_array current_values[BRW_ATTRIB_MAX];
 
       /* Arrays with buffer objects to copy non-bufferobj arrays into
        * for upload:
        */
-      struct gl_client_array vbo_array[BRW_ATTRIB_MAX];
+      struct gl_client_array vbo_array[VERT_ATTRIB_MAX];
+
+      struct brw_vertex_element inputs[VERT_ATTRIB_MAX];
 
 #define BRW_NR_UPLOAD_BUFS 17
 #define BRW_UPLOAD_INIT_SIZE (128*1024)
@@ -467,11 +466,6 @@ struct brw_context
 	 GLuint size;
 	 GLuint wrap;
       } upload;
-
-      /* Currenly bound arrays, including fallbacks to current_values
-       * above:
-       */
-      struct brw_vertex_element inputs[BRW_ATTRIB_MAX];
 
       /* Summary of size and varying of active arrays, so we can check
        * for changes to this state:

@@ -46,7 +46,6 @@
 #include "brw_context.h"
 #include "brw_defines.h"
 #include "brw_draw.h"
-#include "brw_attrib.h"
 #include "brw_fallback.h"
 
 #define INIT(brw, STRUCT, ATTRIB) 		\
@@ -302,8 +301,8 @@ static void meta_draw_quad(struct intel_context *intel,
    struct brw_context *brw = brw_context(&intel->ctx);
    struct gl_client_array pos_array;
    struct gl_client_array color_array;
-   struct gl_client_array *attribs[BRW_ATTRIB_MAX];
-   struct vbo_prim prim[1];
+   struct gl_client_array *attribs[VERT_ATTRIB_MAX];
+   struct _mesa_prim prim[1];
    GLfloat pos[4][3];
    GLubyte color[4];
 
@@ -353,29 +352,29 @@ static void meta_draw_quad(struct intel_context *intel,
    /* Ignoring texture coords. 
     */
 
-   memset(attribs, 0, BRW_ATTRIB_MAX * sizeof(*attribs));
+   memset(attribs, 0, VERT_ATTRIB_MAX * sizeof(*attribs));
 
-   attribs[BRW_ATTRIB_POS] = &pos_array;
-   attribs[BRW_ATTRIB_POS]->Ptr = 0;
-   attribs[BRW_ATTRIB_POS]->Type = GL_FLOAT;
-   attribs[BRW_ATTRIB_POS]->Enabled = 1;
-   attribs[BRW_ATTRIB_POS]->Size = 3;
-   attribs[BRW_ATTRIB_POS]->StrideB = 3 * sizeof(GLfloat);
-   attribs[BRW_ATTRIB_POS]->Stride = 3 * sizeof(GLfloat);
-   attribs[BRW_ATTRIB_POS]->_MaxElement = 4;
-   attribs[BRW_ATTRIB_POS]->Normalized = 0;
-   attribs[BRW_ATTRIB_POS]->BufferObj = brw->metaops.vbo;
+   attribs[VERT_ATTRIB_POS] = &pos_array;
+   attribs[VERT_ATTRIB_POS]->Ptr = 0;
+   attribs[VERT_ATTRIB_POS]->Type = GL_FLOAT;
+   attribs[VERT_ATTRIB_POS]->Enabled = 1;
+   attribs[VERT_ATTRIB_POS]->Size = 3;
+   attribs[VERT_ATTRIB_POS]->StrideB = 3 * sizeof(GLfloat);
+   attribs[VERT_ATTRIB_POS]->Stride = 3 * sizeof(GLfloat);
+   attribs[VERT_ATTRIB_POS]->_MaxElement = 4;
+   attribs[VERT_ATTRIB_POS]->Normalized = 0;
+   attribs[VERT_ATTRIB_POS]->BufferObj = brw->metaops.vbo;
 
-   attribs[BRW_ATTRIB_COLOR0] = &color_array;
-   attribs[BRW_ATTRIB_COLOR0]->Ptr = (const GLubyte *)sizeof(pos);
-   attribs[BRW_ATTRIB_COLOR0]->Type = GL_UNSIGNED_BYTE;
-   attribs[BRW_ATTRIB_COLOR0]->Enabled = 1;
-   attribs[BRW_ATTRIB_COLOR0]->Size = 4;
-   attribs[BRW_ATTRIB_COLOR0]->StrideB = 0;
-   attribs[BRW_ATTRIB_COLOR0]->Stride = 0;
-   attribs[BRW_ATTRIB_COLOR0]->_MaxElement = 1;
-   attribs[BRW_ATTRIB_COLOR0]->Normalized = 1;
-   attribs[BRW_ATTRIB_COLOR0]->BufferObj = brw->metaops.vbo;
+   attribs[VERT_ATTRIB_COLOR0] = &color_array;
+   attribs[VERT_ATTRIB_COLOR0]->Ptr = (const GLubyte *)sizeof(pos);
+   attribs[VERT_ATTRIB_COLOR0]->Type = GL_UNSIGNED_BYTE;
+   attribs[VERT_ATTRIB_COLOR0]->Enabled = 1;
+   attribs[VERT_ATTRIB_COLOR0]->Size = 4;
+   attribs[VERT_ATTRIB_COLOR0]->StrideB = 0;
+   attribs[VERT_ATTRIB_COLOR0]->Stride = 0;
+   attribs[VERT_ATTRIB_COLOR0]->_MaxElement = 1;
+   attribs[VERT_ATTRIB_COLOR0]->Normalized = 1;
+   attribs[VERT_ATTRIB_COLOR0]->BufferObj = brw->metaops.vbo;
    
    /* Just ignoring texture coordinates for now. 
     */
@@ -390,18 +389,12 @@ static void meta_draw_quad(struct intel_context *intel,
    prim[0].start = 0;
    prim[0].count = 4;
 
-   if (!brw_draw_prims(&brw->intel.ctx, 
-		       (const struct gl_client_array **)attribs,
-		       prim, 1,
-		       NULL,
-		       0,
-		       4 ))
-   {
-      /* This should not be possible:
-       */
-      _mesa_printf("brw_draw_prims failed in metaops!\n");
-      assert(0);
-   }
+   brw_draw_prims(&brw->intel.ctx, 
+		  (const struct gl_client_array **)attribs,
+		  prim, 1,
+		  NULL,
+		  0,
+		  4 );
 }
 
 

@@ -29,18 +29,18 @@
 #define BRW_DRAW_H
 
 #include "mtypes.h"		/* for GLcontext... */
-#include "brw_attrib.h"
+#include "vbo/vbo.h"
 
 struct brw_context;
 
 
-GLboolean brw_draw_prims( GLcontext *ctx,
-			  const struct gl_client_array *arrays[],
-			  const struct vbo_prim *prims,
-			  GLuint nr_prims,
-			  const struct _mesa_index_buffer *ib,
-			  GLuint min_index,
-			  GLuint max_index );
+void brw_draw_prims( GLcontext *ctx,
+		     const struct gl_client_array *arrays[],
+		     const struct _mesa_prim *prims,
+		     GLuint nr_prims,
+		     const struct _mesa_index_buffer *ib,
+		     GLuint min_index,
+		     GLuint max_index );
 
 void brw_draw_init( struct brw_context *brw );
 void brw_draw_destroy( struct brw_context *brw );

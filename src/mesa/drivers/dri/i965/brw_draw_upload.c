@@ -35,7 +35,6 @@
 
 #include "brw_draw.h"
 #include "brw_defines.h"
-#include "brw_attrib.h"
 #include "brw_context.h"
 #include "brw_aub.h"
 #include "brw_state.h"
@@ -337,7 +336,6 @@ copy_array_to_vbo_array( struct brw_context *brw,
    vbo_array->Enabled = 1;
    vbo_array->Normalized = array->Normalized;
    vbo_array->_MaxElement = array->_MaxElement;	/* ? */
-   vbo_array->Flags = array->Flags; /* ? */
    vbo_array->BufferObj = vbo;
 
    {
@@ -380,7 +378,6 @@ interleaved_vbo_array( struct brw_context *brw,
    vbo_array->Enabled = 1;
    vbo_array->Normalized = array->Normalized;
    vbo_array->_MaxElement = array->_MaxElement;	
-   vbo_array->Flags = array->Flags; /* ? */
    vbo_array->BufferObj = uploaded_array->BufferObj;
 
    return vbo_array;
@@ -400,10 +397,10 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
    const void *ptr = NULL;
    GLuint interleave = 0;
 
-   struct brw_vertex_element *enabled[BRW_ATTRIB_MAX];
+   struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
    GLuint nr_enabled = 0;
 
-   struct brw_vertex_element *upload[BRW_ATTRIB_MAX];
+   struct brw_vertex_element *upload[VERT_ATTRIB_MAX];
    GLuint nr_uploads = 0;
    
 
@@ -568,7 +565,7 @@ static GLuint element_size( GLenum type )
 
 
 static void rebase_indices_to_vbo_indices( struct brw_context *brw, 
-					   const struct vbo_index_buffer *index_buffer,
+					   const struct _mesa_index_buffer *index_buffer,
 					   struct gl_buffer_object **vbo_return,
 					   GLuint *offset_return )
 {
@@ -642,7 +639,7 @@ static void rebase_indices_to_vbo_indices( struct brw_context *brw,
 
 
 void brw_upload_indices( struct brw_context *brw,
-			 const struct vbo_index_buffer *index_buffer)
+			 const struct _mesa_index_buffer *index_buffer)
 {
    struct intel_context *intel = &brw->intel;
    GLuint ib_size = get_size(index_buffer->type) * index_buffer->count;

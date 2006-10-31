@@ -34,7 +34,6 @@ DRIVER_SOURCES = \
 	brw_context.c \
 	brw_curbe.c \
 	brw_draw.c \
-	brw_draw_current.c \
 	brw_draw_upload.c \
 	brw_eu.c \
 	brw_eu_debug.c \
