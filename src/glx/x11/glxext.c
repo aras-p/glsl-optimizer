@@ -754,9 +754,10 @@ int drmOpenOnce(void *unused,
    connection[nr_fds].refcount = 1;
    *newlyopened = 1;
 
-   fprintf(stderr, "saved connection %d for %s %d\n", 
-	  nr_fds, connection[nr_fds].BusID, 
-	  strcmp(BusID, connection[nr_fds].BusID));
+   if (0)
+      fprintf(stderr, "saved connection %d for %s %d\n", 
+              nr_fds, connection[nr_fds].BusID, 
+              strcmp(BusID, connection[nr_fds].BusID));
 
    nr_fds++;
 
