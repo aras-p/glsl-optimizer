@@ -120,7 +120,15 @@ extern void radeonTclFallback(GLcontext * ctx, GLuint bit, GLboolean mode);
 struct radeon_dri_mirror {
 	__DRIcontextPrivate *context;	/* DRI context */
 	__DRIscreenPrivate *screen;	/* DRI screen */
-	__DRIdrawablePrivate *drawable;	/* DRI drawable bound to this ctx */
+	/**
+	 * DRI drawable bound to this context for drawing.
+	 */
+	__DRIdrawablePrivate	*drawable;	
+
+	/**
+	 * DRI drawable bound to this context for reading.
+	 */
+	__DRIdrawablePrivate	*readable;
 
 	drm_context_t hwContext;
 	drm_hw_lock_t *hwLock;

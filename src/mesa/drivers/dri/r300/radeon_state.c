@@ -49,7 +49,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
 #include "r300_ioctl.h"
-
+#include "framebuffer.h"
 
 /* =============================================================
  * Scissoring
@@ -134,12 +134,9 @@ void radeonUpdateScissor(GLcontext* ctx)
 
 static void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
-	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-
 	if (ctx->Scissor.Enabled) {
 		/* We don't pipeline cliprect changes */
 		r300Flush(ctx);
-
 		radeonUpdateScissor(ctx);
 	}
 }
@@ -148,31 +145,46 @@ static void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h
 /**
  * Update cliprects and scissors.
  */
-void radeonSetCliprects(radeonContextPtr radeon, GLenum mode)
+void radeonSetCliprects(radeonContextPtr radeon)
 {
-	__DRIdrawablePrivate *dPriv = radeon->dri.drawable;
+	__DRIdrawablePrivate *const drawable = radeon->dri.drawable;
+	__DRIdrawablePrivate *const readable = radeon->dri.readable;
+	GLframebuffer *const draw_fb = (GLframebuffer*)drawable->driverPrivate;
+	GLframebuffer *const read_fb = (GLframebuffer*)readable->driverPrivate;
 
-	switch (mode) {
-	case GL_FRONT_LEFT:
-		radeon->numClipRects = dPriv->numClipRects;
-		radeon->pClipRects = dPriv->pClipRects;
-		break;
-	case GL_BACK_LEFT:
-		/* Can't ignore 2d windows if we are page flipping.
-		 */
-		if (dPriv->numBackClipRects == 0 || radeon->doPageFlip) {
-			radeon->numClipRects = dPriv->numClipRects;
-			radeon->pClipRects = dPriv->pClipRects;
+	if (draw_fb->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT) {
+		/* Can't ignore 2d windows if we are page flipping. */
+		if (drawable->numBackClipRects == 0 || radeon->doPageFlip) {
+			radeon->numClipRects = drawable->numClipRects;
+			radeon->pClipRects = drawable->pClipRects;
 		} else {
-			radeon->numClipRects = dPriv->numBackClipRects;
-			radeon->pClipRects = dPriv->pBackClipRects;
+			radeon->numClipRects = drawable->numBackClipRects;
+			radeon->pClipRects = drawable->pBackClipRects;
 		}
-		break;
-	default:
-		fprintf(stderr, "bad mode in radeonSetCliprects\n");
-		radeon->numClipRects = 0;
-		radeon->pClipRects = 0;
-		return;
+	} else {
+		/* front buffer (or none, or multiple buffers */
+		radeon->numClipRects = drawable->numClipRects;
+		radeon->pClipRects = drawable->pClipRects;
+	}
+
+	if ((draw_fb->Width != drawable->w) ||
+	    (draw_fb->Height != drawable->h)) {
+		printf("w,h %d %d\n",
+		       radeon->glCtx->DrawBuffer->Width,
+		       radeon->glCtx->DrawBuffer->Height);
+
+		_mesa_resize_framebuffer(radeon->glCtx, draw_fb,
+					 drawable->w, drawable->h);
+		draw_fb->Initialized = GL_TRUE;
+	}
+
+	if (drawable != readable) {
+		if ((read_fb->Width != readable->w) ||
+		    (read_fb->Height != readable->h)) {
+			_mesa_resize_framebuffer(radeon->glCtx, read_fb,
+						 readable->w, readable->h);
+			read_fb->Initialized = GL_TRUE;
+		}
 	}
 
 	if (radeon->state.scissor.enabled)
