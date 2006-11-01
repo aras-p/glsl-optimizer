@@ -883,7 +883,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       GLint border, bytesPerTexel;
 
       /* get src image parameters */
-      srcImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+      srcImage = _mesa_select_tex_image(ctx, texObj, target, level);
       ASSERT(srcImage);
       srcWidth = srcImage->Width;
       srcHeight = srcImage->Height;
@@ -922,7 +922,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       }
 
       /* get dest gl_texture_image */
-      dstImage = _mesa_get_tex_image(ctx, texUnit, target, level + 1);
+      dstImage = _mesa_get_tex_image(ctx, texObj, target, level + 1);
       if (!dstImage) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
          return;
