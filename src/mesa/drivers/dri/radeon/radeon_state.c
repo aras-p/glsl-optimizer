@@ -40,6 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "light.h"
 #include "state.h"
 #include "context.h"
+#include "framebuffer.h"
 
 #include "array_cache/acache.h"
 #include "tnl/tnl.h"
@@ -1660,14 +1661,14 @@ void radeonSetCliprects( radeonContextPtr rmesa )
    }
 
    if ((draw_fb->Width != drawable->w) || (draw_fb->Height != drawable->h)) {
-      _mesa_resize_framebuffer(&rmesa->glCtx, draw_fb,
+      _mesa_resize_framebuffer(rmesa->glCtx, draw_fb,
 			       drawable->w, drawable->h);
       draw_fb->Initialized = GL_TRUE;
    }
 
    if (drawable != readable) {
       if ((read_fb->Width != readable->w) || (read_fb->Height != readable->h)) {
-	 _mesa_resize_framebuffer(&rmesa->glCtx, read_fb,
+	 _mesa_resize_framebuffer(rmesa->glCtx, read_fb,
 				  readable->w, readable->h);
 	 read_fb->Initialized = GL_TRUE;
       }
