@@ -88,7 +88,8 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
       _mesa_warning(NULL, "no front buffer handle in intelMapScreenRegions!");
    }
 
-   _mesa_printf("Back 0x%08x ", intelScreen->back.handle);
+   if (0)
+      _mesa_printf("Back 0x%08x ", intelScreen->back.handle);
    if (drmMap(sPriv->fd,
               intelScreen->back.handle,
               intelScreen->back.size,
@@ -97,7 +98,8 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
       return GL_FALSE;
    }
 
-   _mesa_printf("Depth 0x%08x ", intelScreen->depth.handle);
+   if (0)
+      _mesa_printf("Depth 0x%08x ", intelScreen->depth.handle);
    if (drmMap(sPriv->fd,
               intelScreen->depth.handle,
               intelScreen->depth.size,
@@ -432,7 +434,7 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
 
    intelScreen->sarea_priv_offset = gDRIPriv->sarea_priv_offset;
 
-   if (1)
+   if (0)
       intelPrintDRIInfo(intelScreen, sPriv, gDRIPriv);
 
    intelScreen->drmMinor = sPriv->drmMinor;

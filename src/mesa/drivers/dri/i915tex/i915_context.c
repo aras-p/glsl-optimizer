@@ -114,7 +114,8 @@ i915CreateContext(const __GLcontextModes * mesaVis,
    if (!i915)
       return GL_FALSE;
 
-   _mesa_printf("\ntexmem-0-3 branch\n\n");
+   if (0)
+      _mesa_printf("\ntexmem-0-3 branch\n\n");
 
    i915InitVtbl(i915);
    i915InitMetaFuncs(i915);
