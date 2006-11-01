@@ -493,14 +493,16 @@ static void draw_poly(i915ContextPtr i915,
 
 
 void 
-i915ClearWithTris(intelContextPtr intel, GLbitfield mask,
-		  GLboolean all,
-		  GLint cx, GLint cy, GLint cw, GLint ch)
+i915ClearWithTris(intelContextPtr intel, GLbitfield buffers,
+		  GLboolean allFoo,
+		  GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo)
 {
    i915ContextPtr i915 = I915_CONTEXT( intel );
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    intelScreenPrivate *screen = intel->intelScreen;
    int x0, y0, x1, y1;
+   GLint cx, cy, cw, ch;
+   GLboolean all;
 
    SET_STATE( i915, meta ); 
    set_initial_state( i915 ); 
@@ -508,6 +510,14 @@ i915ClearWithTris(intelContextPtr intel, GLbitfield mask,
    set_vertex_format( i915 ); 
 
    LOCK_HARDWARE(intel);
+
+   /* get clear bounds after locking */
+   cx = intel->ctx.DrawBuffer->_Xmin;
+   cy = intel->ctx.DrawBuffer->_Ymin;
+   cw = intel->ctx.DrawBuffer->_Xmax - cx;
+   ch = intel->ctx.DrawBuffer->_Ymax - cy;
+   all = (cw == intel->ctx.DrawBuffer->Width &&
+          ch == intel->ctx.DrawBuffer->Height);
 
    if (!all) {
       x0 = cx;
@@ -525,7 +535,7 @@ i915ClearWithTris(intelContextPtr intel, GLbitfield mask,
     * The active cliprects will be applied as for any other geometry.
     */
 
-   if (mask & BUFFER_BIT_FRONT_LEFT) { 
+   if (buffers & BUFFER_BIT_FRONT_LEFT) { 
       set_no_depth_stencil_write( i915 );
       set_color_mask( i915, GL_TRUE );
       set_draw_region( i915, &screen->front );
@@ -536,7 +546,7 @@ i915ClearWithTris(intelContextPtr intel, GLbitfield mask,
 		0, 0, 0, 0);
    }
 
-   if (mask & BUFFER_BIT_BACK_LEFT) {
+   if (buffers & BUFFER_BIT_BACK_LEFT) {
       set_no_depth_stencil_write( i915 );
       set_color_mask( i915, GL_TRUE );
       set_draw_region( i915, &screen->back );
@@ -547,7 +557,7 @@ i915ClearWithTris(intelContextPtr intel, GLbitfield mask,
 		0, 0, 0, 0);
    }
 
-   if (mask & BUFFER_BIT_STENCIL) {
+   if (buffers & BUFFER_BIT_STENCIL) {
       set_stencil_replace( i915, 
 			   intel->ctx.Stencil.WriteMask[0], 
 			   intel->ctx.Stencil.Clear);

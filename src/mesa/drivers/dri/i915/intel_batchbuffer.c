@@ -621,13 +621,14 @@ void intelEmitCopyBlitLocked( intelContextPtr intel,
 
 
 
-void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
-		      GLint cx1, GLint cy1, GLint cw, GLint ch)
+void intelClearWithBlit(GLcontext *ctx, GLbitfield buffers, GLboolean allFoo,
+                        GLint cx1Foo, GLint cy1Foo, GLint cwFoo, GLint chFoo)
 {
    intelContextPtr intel = INTEL_CONTEXT( ctx );
    intelScreenPrivate *intelScreen = intel->intelScreen;
    GLuint clear_depth, clear_color;
-   GLint cx, cy;
+   GLint cx, cy, cw, ch;
+   GLboolean all;
    GLint pitch;
    GLint cpp = intelScreen->cpp;
    GLint i;
@@ -637,16 +638,24 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
    intelFlush( &intel->ctx );
    LOCK_HARDWARE( intel );
 
+   /* get clear bounds after locking */
+   cx = intel->ctx.DrawBuffer->_Xmin;
+   cy = intel->ctx.DrawBuffer->_Ymin;
+   cw = intel->ctx.DrawBuffer->_Xmax - cx;
+   ch = intel->ctx.DrawBuffer->_Ymax - cy;
+   all = (cw == intel->ctx.DrawBuffer->Width &&
+          ch == intel->ctx.DrawBuffer->Height);
+
    pitch = intelScreen->front.pitch;
 
    clear_color = intel->ClearColor;
    clear_depth = 0;
 
-   if (flags & BUFFER_BIT_DEPTH) {
+   if (buffers & BUFFER_BIT_DEPTH) {
       clear_depth = (GLuint)(ctx->Depth.Clear * intel->ClearDepth);
    }
 
-   if (flags & BUFFER_BIT_STENCIL) {
+   if (buffers & BUFFER_BIT_STENCIL) {
       clear_depth |= (ctx->Stencil.Clear & 0xff) << 24;
    }
 
@@ -661,8 +670,8 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
 	     XY_COLOR_BLT_WRITE_ALPHA | 
 	     XY_COLOR_BLT_WRITE_RGB);
       D_CMD = XY_COLOR_BLT_CMD;
-      if (flags & BUFFER_BIT_DEPTH) D_CMD |= XY_COLOR_BLT_WRITE_RGB;
-      if (flags & BUFFER_BIT_STENCIL) D_CMD |= XY_COLOR_BLT_WRITE_ALPHA;
+      if (buffers & BUFFER_BIT_DEPTH) D_CMD |= XY_COLOR_BLT_WRITE_RGB;
+      if (buffers & BUFFER_BIT_STENCIL) D_CMD |= XY_COLOR_BLT_WRITE_ALPHA;
       break;
    default:
       BR13 = (0xF0 << 16) | (pitch) | (1<<24);
@@ -672,17 +681,17 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
 
    {
       /* flip top to bottom */
-      cy = intel->driDrawable->h-cy1-ch;
-      cx = cx1 + intel->drawX;
+      cy = intel->driDrawable->h - cy - ch;
+      cx = cx + intel->drawX;
       cy += intel->drawY;
 
       /* adjust for page flipping */
       if ( intel->sarea->pf_current_page == 1 ) {
-	 GLuint tmp = flags;
+	 GLuint tmp = buffers;
 
-	 flags &= ~(BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT);
-	 if ( tmp & BUFFER_BIT_FRONT_LEFT ) flags |= BUFFER_BIT_BACK_LEFT;
-	 if ( tmp & BUFFER_BIT_BACK_LEFT )  flags |= BUFFER_BIT_FRONT_LEFT;
+	 buffers &= ~(BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT);
+	 if ( tmp & BUFFER_BIT_FRONT_LEFT ) buffers |= BUFFER_BIT_BACK_LEFT;
+	 if ( tmp & BUFFER_BIT_BACK_LEFT )  buffers |= BUFFER_BIT_FRONT_LEFT;
       }
 
       for (i = 0 ; i < intel->numClipRects ; i++) 
@@ -718,7 +727,7 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
 	     b.y2 > intelScreen->height)
 	    continue;
 
-	 if ( flags & BUFFER_BIT_FRONT_LEFT ) {	    
+	 if ( buffers & BUFFER_BIT_FRONT_LEFT ) {	    
 	    BEGIN_BATCH( 6);	    
 	    OUT_BATCH( CMD );
 	    OUT_BATCH( BR13 );
@@ -729,7 +738,7 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
 	    ADVANCE_BATCH();
 	 }
 
-	 if ( flags & BUFFER_BIT_BACK_LEFT ) {
+	 if ( buffers & BUFFER_BIT_BACK_LEFT ) {
 	    BEGIN_BATCH( 6); 
 	    OUT_BATCH( CMD );
 	    OUT_BATCH( BR13 );
@@ -740,7 +749,7 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
 	    ADVANCE_BATCH();
 	 }
 
-	 if ( flags & (BUFFER_BIT_STENCIL | BUFFER_BIT_DEPTH) ) {
+	 if ( buffers & (BUFFER_BIT_STENCIL | BUFFER_BIT_DEPTH) ) {
 	    BEGIN_BATCH( 6);
 	    OUT_BATCH( D_CMD );
 	    OUT_BATCH( BR13 );

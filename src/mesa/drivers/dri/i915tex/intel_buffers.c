@@ -281,7 +281,7 @@ intelWindowMoved(struct intel_context *intel)
 static void
 intelClearWithTris(struct intel_context *intel,
                    GLbitfield mask,
-                   GLboolean all, GLint cx, GLint cy, GLint cw, GLint ch)
+                   GLboolean allFoo, GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo)
 {
    GLcontext *ctx = &intel->ctx;
    drm_clip_rect_t clear;
@@ -293,22 +293,16 @@ intelClearWithTris(struct intel_context *intel,
 
    /* XXX FBO: was: intel->driDrawable->numClipRects */
    if (intel->numClipRects) {
+      GLint cx, cy, cw, ch;
       GLuint buf;
 
       intel->vtbl.install_meta_state(intel);
 
-
-      /* Refresh the cx/y/w/h values as they may have been invalidated
-       * by a new window position or size picked up when we did
-       * LOCK_HARDWARE above.  The values passed by mesa are not
-       * reliable.
-       */
-      {
-         cx = ctx->DrawBuffer->_Xmin;
-         cy = ctx->DrawBuffer->_Ymin;
-         ch = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
-         cw = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
-      }
+      /* Get clear bounds after locking */
+      cx = ctx->DrawBuffer->_Xmin;
+      cy = ctx->DrawBuffer->_Ymin;
+      ch = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
+      cw = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
 
       /* note: regardless of 'all', cx, cy, cw, ch are now correct */
       clear.x1 = cx;
@@ -542,7 +536,7 @@ intelRotateWindow(struct intel_context *intel,
 static void
 intelClear(GLcontext * ctx,
            GLbitfield mask,
-           GLboolean all, GLint cx, GLint cy, GLint cw, GLint ch)
+           GLboolean allFoo, GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo)
 {
    struct intel_context *intel = intel_context(ctx);
    const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask);
@@ -609,13 +603,13 @@ intelClear(GLcontext * ctx,
    intelFlush(ctx);             /* XXX intelClearWithBlit also does this */
 
    if (blit_mask)
-      intelClearWithBlit(ctx, blit_mask, all, cx, cy, cw, ch);
+      intelClearWithBlit(ctx, blit_mask, 0, 0, 0, 0, 0);
 
    if (tri_mask)
-      intelClearWithTris(intel, tri_mask, all, cx, cy, cw, ch);
+      intelClearWithTris(intel, tri_mask, 0, 0, 0, 0, 0);
 
    if (swrast_mask)
-      _swrast_Clear(ctx, swrast_mask, all, cx, cy, cw, ch);
+      _swrast_Clear(ctx, swrast_mask, 0, 0, 0, 0, 0);
 }
 
 

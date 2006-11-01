@@ -376,8 +376,8 @@ intelEmitCopyBlit(struct intel_context *intel,
  * \param mask  bitmask of BUFFER_BIT_* values indicating buffers to clear
  */
 void
-intelClearWithBlit(GLcontext * ctx, GLbitfield mask, GLboolean all,
-                   GLint cx, GLint cy, GLint cw, GLint ch)
+intelClearWithBlit(GLcontext * ctx, GLbitfield mask, GLboolean allFoo,
+                   GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo)
 {
    struct intel_context *intel = intel_context(ctx);
    GLuint clear_depth;
@@ -409,20 +409,15 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask, GLboolean all,
    LOCK_HARDWARE(intel);
 
    if (intel->numClipRects) {
+      GLint cx, cy, cw, ch;
       drm_clip_rect_t clear;
       int i;
 
-      /* Refresh the cx/y/w/h values as they may have been invalidated
-       * by a new window position or size picked up when we did
-       * LOCK_HARDWARE above.  The values passed by mesa are not
-       * reliable.
-       */
-      {
-         cx = ctx->DrawBuffer->_Xmin;
-         cy = ctx->DrawBuffer->_Ymin;
-         ch = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
-         cw = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
-      }
+      /* Get clear bounds after locking */
+      cx = ctx->DrawBuffer->_Xmin;
+      cy = ctx->DrawBuffer->_Ymin;
+      cw = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
+      ch = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
 
       if (intel->ctx.DrawBuffer->Name == 0) {
          /* clearing a window */
@@ -458,7 +453,9 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask, GLboolean all,
          const drm_clip_rect_t *box = &intel->pClipRects[i];
          drm_clip_rect_t b;
          GLuint buf;
-         GLuint clearMask = mask;       /* use copy, since we modify it below */
+         GLuint clearMask = mask;      /* use copy, since we modify it below */
+         GLboolean all = (cw == ctx->DrawBuffer->Width &&
+                          ch == ctx->DrawBuffer->Height);
 
          if (!all) {
             intel_intersect_cliprects(&b, &clear, box);

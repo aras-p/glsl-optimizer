@@ -375,8 +375,8 @@ void intelFinish( GLcontext *ctx  )
 }
 
 
-void intelClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
-		GLint cx, GLint cy, GLint cw, GLint ch)
+void intelClear(GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
+		GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo)
 {
    intelContextPtr intel = INTEL_CONTEXT( ctx );
    const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
@@ -429,13 +429,13 @@ void intelClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
    swrast_mask |= (mask & BUFFER_BIT_ACCUM);
 
    if (blit_mask) 
-      intelClearWithBlit( ctx, blit_mask, all, cx, cy, cw, ch );
+      intelClearWithBlit( ctx, blit_mask, 0, 0, 0, 0, 0);
 
    if (tri_mask) 
-      intel->vtbl.clear_with_tris( intel, tri_mask, all, cx, cy, cw, ch);
+      intel->vtbl.clear_with_tris( intel, tri_mask, 0, 0, 0, 0, 0);
 
    if (swrast_mask)
-      _swrast_Clear( ctx, swrast_mask, all, cx, cy, cw, ch );
+      _swrast_Clear( ctx, swrast_mask, 0, 0, 0, 0, 0);
 }
 
 
