@@ -48,9 +48,28 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * - WAIT_RING waits for size (in uint32_ts) to be available in the fifo
  */
 
+/* Enable for ring debugging.  Prints out writes to the ring buffer
+ * but does not actually write to it.
+ */
+#ifdef NOUVEAU_RING_DEBUG
+
+#define OUT_RINGp(ptr,sz) do {                                                  \
+int i; printf("OUT_RINGp:\n"); for(i=0;i<sz;i+=4) printf(" 0x%8x\n", ptr+sz);   \
+}while(0)
+
+#define OUT_RING(n) do {                                                        \
+    printf("OUT_RINGn: 0x%8x\n", n);                                            \
+}while(0)
+
+#define OUT_RINGf(n) do {                                                       \
+    printf("OUT_RINGf: 0x%8x\n", f);                                            \
+}while(0)
+
+#else
+
 #define OUT_RINGp(ptr,sz) do{							\
 	memcpy(nmesa->fifo.buffer+nmesa->fifo.current,ptr,sz);			\
-	nmesa->fifo.current+=sz;						\
+	nmesa->fifo.current+=(sz/sizeof(*ptr));					\
 }while(0)
 
 #define OUT_RING(n) do {							\
@@ -60,6 +79,8 @@ nmesa->fifo.buffer[nmesa->fifo.current++]=n;					\
 #define OUT_RINGf(n) do {							\
 *((float*)(nmesa->fifo.buffer+nmesa->fifo.current++))=n;			\
 }while(0)
+
+#endif
 
 extern void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size);
 
