@@ -2311,6 +2311,8 @@ struct gl_program_constants
    GLuint MaxNativeTemps;
    GLuint MaxNativeAddressRegs; /* vertex program only, for now */
    GLuint MaxNativeParameters;
+   /* For shaders */
+   GLuint MaxUniformComponents;
 };
 
 
@@ -2360,6 +2362,9 @@ struct gl_constants
    /* GL_EXT_framebuffer_object */
    GLuint MaxColorAttachments;
    GLuint MaxRenderbufferSize;
+   /* GL_ARB_vertex_shader */
+   GLuint MaxVertexTextureImageUnits;
+   GLuint MaxVaryingFloats;
 };
 
 

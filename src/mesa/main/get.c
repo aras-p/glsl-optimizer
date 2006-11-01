@@ -1863,7 +1863,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB:
          CHECK_EXT1(ARB_fragment_shader, "GetBooleanv");
-         params[0] = INT_TO_BOOLEAN(MAX_FRAGMENT_UNIFORM_COMPONENTS);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.FragmentProgram.MaxUniformComponents);
          break;
       case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB:
          CHECK_EXT1(ARB_fragment_shader, "GetBooleanv");
@@ -1871,15 +1871,15 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetBooleanv");
-         params[0] = INT_TO_BOOLEAN(MAX_VERTEX_UNIFORM_COMPONENTS);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.VertexProgram.MaxUniformComponents);
          break;
       case GL_MAX_VARYING_FLOATS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetBooleanv");
-         params[0] = INT_TO_BOOLEAN(MAX_VARYING_FLOATS);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxVaryingFloats);
          break;
       case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetBooleanv");
-         params[0] = INT_TO_BOOLEAN(MAX_VERTEX_TEXTURE_IMAGE_UNITS);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxVertexTextureImageUnits);
          break;
       case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetBooleanv");
@@ -3687,7 +3687,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB:
          CHECK_EXT1(ARB_fragment_shader, "GetFloatv");
-         params[0] = (GLfloat)(MAX_FRAGMENT_UNIFORM_COMPONENTS);
+         params[0] = (GLfloat)(ctx->Const.FragmentProgram.MaxUniformComponents);
          break;
       case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB:
          CHECK_EXT1(ARB_fragment_shader, "GetFloatv");
@@ -3695,15 +3695,15 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetFloatv");
-         params[0] = (GLfloat)(MAX_VERTEX_UNIFORM_COMPONENTS);
+         params[0] = (GLfloat)(ctx->Const.VertexProgram.MaxUniformComponents);
          break;
       case GL_MAX_VARYING_FLOATS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetFloatv");
-         params[0] = (GLfloat)(MAX_VARYING_FLOATS);
+         params[0] = (GLfloat)(ctx->Const.MaxVaryingFloats);
          break;
       case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetFloatv");
-         params[0] = (GLfloat)(MAX_VERTEX_TEXTURE_IMAGE_UNITS);
+         params[0] = (GLfloat)(ctx->Const.MaxVertexTextureImageUnits);
          break;
       case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetFloatv");
@@ -5511,7 +5511,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB:
          CHECK_EXT1(ARB_fragment_shader, "GetIntegerv");
-         params[0] = MAX_FRAGMENT_UNIFORM_COMPONENTS;
+         params[0] = ctx->Const.FragmentProgram.MaxUniformComponents;
          break;
       case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB:
          CHECK_EXT1(ARB_fragment_shader, "GetIntegerv");
@@ -5519,15 +5519,15 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetIntegerv");
-         params[0] = MAX_VERTEX_UNIFORM_COMPONENTS;
+         params[0] = ctx->Const.VertexProgram.MaxUniformComponents;
          break;
       case GL_MAX_VARYING_FLOATS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetIntegerv");
-         params[0] = MAX_VARYING_FLOATS;
+         params[0] = ctx->Const.MaxVaryingFloats;
          break;
       case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetIntegerv");
-         params[0] = MAX_VERTEX_TEXTURE_IMAGE_UNITS;
+         params[0] = ctx->Const.MaxVertexTextureImageUnits;
          break;
       case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetIntegerv");
