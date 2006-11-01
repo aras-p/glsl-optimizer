@@ -99,30 +99,24 @@ struct dd_function_table {
 
    /**
     * Clear the color/depth/stencil/accum buffer(s).
-    * \param mask  a bitmask of BUFFER_BIT_* flags indicating which
-    *              renderbuffers need to be cleared.
+    * \param buffers  a bitmask of BUFFER_BIT_* flags indicating which
+    *                 renderbuffers need to be cleared.
     */
    void (*Clear)( GLcontext *ctx, GLbitfield buffers );
 
    /**
-    * \name For hardware accumulation buffer
-    */
-   /*@{*/
-   /**
     * Execute glAccum command.
     */
    void (*Accum)( GLcontext *ctx, GLenum op, GLfloat value );
-   /*@}*/
 
 
    /**
-    * \name glDraw(), glRead(), glCopyPixels() and glBitmap() functions
+    * \name Image-related functions
     */
    /*@{*/
 
    /**
-    * This is called by glDrawPixels().
-    *
+    * Called by glDrawPixels().
     * \p unpack describes how to unpack the source image data.
     */
    void (*DrawPixels)( GLcontext *ctx,
@@ -141,19 +135,14 @@ struct dd_function_table {
 		       GLvoid *dest );
 
    /**
-    * Do a glCopyPixels().  
-    *
-    * This function must respect all rasterization state, glPixelTransfer(),
-    * glPixelZoom(), etc.
+    * Called by glCopyPixels().  
     */
    void (*CopyPixels)( GLcontext *ctx, GLint srcx, GLint srcy,
                        GLsizei width, GLsizei height,
                        GLint dstx, GLint dsty, GLenum type );
 
    /**
-    * This is called by glBitmap().  
-    *
-    * Works the same as dd_function_table::DrawPixels, above.
+    * Called by glBitmap().  
     */
    void (*Bitmap)( GLcontext *ctx,
 		   GLint x, GLint y, GLsizei width, GLsizei height,
