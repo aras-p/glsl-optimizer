@@ -44,7 +44,7 @@
 /* See comments below for info about this */
 #define LAMBDA_ZERO 1
 
-/* if 1, print some debugging info */
+/* debug predicate */
 #define DEBUG_FRAG 0
 
 
@@ -461,7 +461,7 @@ store_vector4( const struct prog_instruction *inst,
          return;
    }
 
-#if DEBUG_FRAG
+#if 0
    if (value[0] > 1.0e10 ||
        IS_INF_OR_NAN(value[0]) ||
        IS_INF_OR_NAN(value[1]) ||
@@ -649,9 +649,9 @@ execute_program( GLcontext *ctx,
 {
    GLuint pc;
 
-#if DEBUG_FRAG
-   printf("execute fragment program --------------------\n");
-#endif
+   if (DEBUG_FRAG) {
+      printf("execute fragment program --------------------\n");
+   }
 
    for (pc = 0; pc < maxInst; pc++) {
       const struct prog_instruction *inst = program->Base.Instructions + pc;
@@ -663,9 +663,10 @@ execute_program( GLcontext *ctx,
                                        ctx->FragmentProgram.CallbackData);
       }
 
-#if DEBUG_FRAG
-      _mesa_print_instruction(inst);
-#endif
+      if (DEBUG_FRAG) {
+         _mesa_print_instruction(inst);
+      }
+
       switch (inst->Opcode) {
          case OPCODE_ABS:
             {
@@ -688,12 +689,12 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] + b[2];
                result[3] = a[3] + b[3];
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("ADD (%g %g %g %g) = (%g %g %g %g) + (%g %g %g %g)\n",
-                      result[0], result[1], result[2], result[3], 
-                      a[0], a[1], a[2], a[3],
-                      b[0], b[1], b[2], b[3]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("ADD (%g %g %g %g) = (%g %g %g %g) + (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3], 
+                         a[0], a[1], a[2], a[3],
+                         b[0], b[1], b[2], b[3]);
+               }
             }
             break;
          case OPCODE_CMP:
@@ -770,10 +771,10 @@ execute_program( GLcontext *ctx,
                fetch_vector4( ctx, &inst->SrcReg[1], machine, program, b );
                result[0] = result[1] = result[2] = result[3] = DOT3(a, b);
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("DP3 %g = (%g %g %g) . (%g %g %g)\n",
-                      result[0], a[0], a[1], a[2], b[0], b[1], b[2]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("DP3 %g = (%g %g %g) . (%g %g %g)\n",
+                         result[0], a[0], a[1], a[2], b[0], b[1], b[2]);
+               }
             }
             break;
          case OPCODE_DP4:
@@ -783,10 +784,11 @@ execute_program( GLcontext *ctx,
                fetch_vector4( ctx, &inst->SrcReg[1], machine, program, b );
                result[0] = result[1] = result[2] = result[3] = DOT4(a,b);
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("DP4 %g = (%g, %g %g %g) . (%g, %g %g %g)\n",
-                      result[0], a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("DP4 %g = (%g, %g %g %g) . (%g, %g %g %g)\n",
+                         result[0], a[0], a[1], a[2], a[3],
+                         b[0], b[1], b[2], b[3]);
+               }
             }
             break;
          case OPCODE_DPH:
@@ -894,11 +896,11 @@ execute_program( GLcontext *ctx,
                }
                result[3] = 1.0F;
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("LIT (%g %g %g %g) : (%g %g %g %g)\n",
-                      result[0], result[1], result[2], result[3],
-                      a[0], a[1], a[2], a[3]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("LIT (%g %g %g %g) : (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3],
+                         a[0], a[1], a[2], a[3]);
+               }
             }
             break;
          case OPCODE_LRP:
@@ -912,14 +914,14 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] * b[2] + (1.0F - a[2]) * c[2];
                result[3] = a[3] * b[3] + (1.0F - a[3]) * c[3];
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("LRP (%g %g %g %g) = (%g %g %g %g), "
-                      "(%g %g %g %g), (%g %g %g %g)\n",
-                      result[0], result[1], result[2], result[3],
-                      a[0], a[1], a[2], a[3],
-                      b[0], b[1], b[2], b[3],
-                      c[0], c[1], c[2], c[3]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("LRP (%g %g %g %g) = (%g %g %g %g), "
+                         "(%g %g %g %g), (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3],
+                         a[0], a[1], a[2], a[3],
+                         b[0], b[1], b[2], b[3],
+                         c[0], c[1], c[2], c[3]);
+               }
             }
             break;
          case OPCODE_MAD:
@@ -933,14 +935,14 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] * b[2] + c[2];
                result[3] = a[3] * b[3] + c[3];
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("MAD (%g %g %g %g) = (%g %g %g %g) * "
-                      "(%g %g %g %g) + (%g %g %g %g)\n",
-                      result[0], result[1], result[2], result[3],
-                      a[0], a[1], a[2], a[3],
-                      b[0], b[1], b[2], b[3],
-                      c[0], c[1], c[2], c[3]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("MAD (%g %g %g %g) = (%g %g %g %g) * "
+                         "(%g %g %g %g) + (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3],
+                         a[0], a[1], a[2], a[3],
+                         b[0], b[1], b[2], b[3],
+                         c[0], c[1], c[2], c[3]);
+               }
             }
             break;
          case OPCODE_MAX:
@@ -953,12 +955,12 @@ execute_program( GLcontext *ctx,
                result[2] = MAX2(a[2], b[2]);
                result[3] = MAX2(a[3], b[3]);
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("MAX (%g %g %g %g) = (%g %g %g %g), (%g %g %g %g)\n",
-                      result[0], result[1], result[2], result[3], 
-                      a[0], a[1], a[2], a[3],
-                      b[0], b[1], b[2], b[3]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("MAX (%g %g %g %g) = (%g %g %g %g), (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3], 
+                         a[0], a[1], a[2], a[3],
+                         b[0], b[1], b[2], b[3]);
+               }
             }
             break;
          case OPCODE_MIN:
@@ -978,10 +980,10 @@ execute_program( GLcontext *ctx,
                GLfloat result[4];
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, result );
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("MOV (%g %g %g %g)\n",
-                      result[0], result[1], result[2], result[3]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("MOV (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3]);
+               }
             }
             break;
          case OPCODE_MUL:
@@ -994,12 +996,12 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] * b[2];
                result[3] = a[3] * b[3];
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("MUL (%g %g %g %g) = (%g %g %g %g) * (%g %g %g %g)\n",
-                      result[0], result[1], result[2], result[3], 
-                      a[0], a[1], a[2], a[3],
-                      b[0], b[1], b[2], b[3]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("MUL (%g %g %g %g) = (%g %g %g %g) * (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3], 
+                         a[0], a[1], a[2], a[3],
+                         b[0], b[1], b[2], b[3]);
+               }
             }
             break;
          case OPCODE_PK2H: /* pack two 16-bit floats in one 32-bit float */
@@ -1081,12 +1083,12 @@ execute_program( GLcontext *ctx,
             {
                GLfloat a[4], result[4];
                fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
-#if DEBUG_FRAG
-               if (a[0] == 0)
-                  printf("RCP(0)\n");
-               else if (IS_INF_OR_NAN(a[0]))
-                  printf("RCP(inf)\n");
-#endif
+               if (DEBUG_FRAG) {
+                  if (a[0] == 0)
+                     printf("RCP(0)\n");
+                  else if (IS_INF_OR_NAN(a[0]))
+                     printf("RCP(inf)\n");
+               }
                result[0] = result[1] = result[2] = result[3] = 1.0F / a[0];
                store_vector4( inst, machine, result );
             }
@@ -1112,9 +1114,9 @@ execute_program( GLcontext *ctx,
                a[0] = FABSF(a[0]);
                result[0] = result[1] = result[2] = result[3] = INV_SQRTF(a[0]);
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("RSQ %g = 1/sqrt(|%g|)\n", result[0], a[0]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("RSQ %g = 1/sqrt(|%g|)\n", result[0], a[0]);
+               }
             }
             break;
          case OPCODE_SCS: /* sine and cos */
@@ -1231,11 +1233,11 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] - b[2];
                result[3] = a[3] - b[3];
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("SUB (%g %g %g %g) = (%g %g %g %g) - (%g %g %g %g)\n",
-                      result[0], result[1], result[2], result[3],
-                      a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("SUB (%g %g %g %g) = (%g %g %g %g) - (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3],
+                         a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3]);
+               }
             }
             break;
          case OPCODE_SWZ: /* extended swizzle */
@@ -1281,12 +1283,13 @@ execute_program( GLcontext *ctx,
                   lambda = 0.0;
                fetch_vector4(ctx, &inst->SrcReg[0], machine, program, coord);
                fetch_texel( ctx, coord, lambda, inst->TexSrcUnit, color );
-#if DEBUG_FRAG
-               printf("TEX (%g, %g, %g, %g) = texture[%d][%g, %g, %g, %g], "
-                      "lod %f\n",
-                      color[0], color[1], color[2], color[3], inst->TexSrcUnit,
-                      coord[0], coord[1], coord[2], coord[3], lambda);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("TEX (%g, %g, %g, %g) = texture[%d][%g, %g, %g, %g], "
+                         "lod %f\n",
+                         color[0], color[1], color[2], color[3],
+                         inst->TexSrcUnit,
+                         coord[0], coord[1], coord[2], coord[3], lambda);
+               }
                store_vector4( inst, machine, color );
             }
             break;
