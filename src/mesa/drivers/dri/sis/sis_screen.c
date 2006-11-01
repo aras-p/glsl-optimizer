@@ -209,7 +209,7 @@ sisCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                  const __GLcontextModes *mesaVis,
                  GLboolean isPixmap )
 {
-   sisScreenPtr screen = (sisScreenPtr) driScrnPriv->private;
+   /*sisScreenPtr screen = (sisScreenPtr) driScrnPriv->private;*/
    struct gl_framebuffer *fb;
 
    if (isPixmap)
