@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.6
  *
  * Copyright (C) 2006  Brian Paul   All Rights Reserved.
  *
@@ -106,6 +106,15 @@ _swrast_exec_arbshader(GLcontext *ctx, SWspan *span)
             (**pro).UpdateFixedVarying(pro, SLANG_FRAGMENT_FIXED_FRAGCOLOR,
                                        vec, 0, 4 * sizeof(GLfloat), GL_FALSE);
             COPY_4V(span->array->color.sz4.rgba[i], vec);
+            
+            (**pro).UpdateFixedVarying(pro, SLANG_FRAGMENT_FIXED_FRAGDEPTH, vec, 0,
+                                       sizeof (GLfloat), GL_FALSE);
+            if (vec[0] <= 0.0f)
+               span->array->z[i] = 0;
+            else if (vec[0] >= 1.0f)
+               span->array->z[i] = ctx->DrawBuffer->_DepthMax;
+            else
+               span->array->z[i] = IROUND(vec[0] * ctx->DrawBuffer->_DepthMaxF);
          }
       }
    }
