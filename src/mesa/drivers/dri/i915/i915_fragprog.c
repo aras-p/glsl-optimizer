@@ -937,6 +937,8 @@ static void i915ProgramStringNotify( GLcontext *ctx,
       ctx->Driver.Enable( ctx, GL_FRAGMENT_PROGRAM_ARB, 
 			  ctx->FragmentProgram.Enabled );
    }
+
+   _tnl_program_string(ctx, target, prog);
 }
 
 
