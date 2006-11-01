@@ -29,6 +29,7 @@
 #include "macros.h"
 #include "enums.h"
 
+#include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "intel_batchbuffer.h"
 
