@@ -129,7 +129,9 @@ typedef struct nouveau_context {
 	/* Configuration cache */
 	driOptionCache optionCache;
 
+        /* vblank stuff */
         uint32_t vblank_flags;
+        uint32_t vblank_seq;
 
         GLuint new_state;
         GLuint new_render_state;
