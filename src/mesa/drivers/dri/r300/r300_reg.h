@@ -1001,6 +1001,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *  - DP4: Use OUTC_DP4, OUTA_DP4
  *  - DP3: Use OUTC_DP3, OUTA_DP4, appropriate alpha operands
  *  - DPH: Use OUTC_DP4, OUTA_DP4, appropriate alpha operands
+ *  - CMPH: If ARG2 > 0.5, return ARG0, else return ARG1
  *  - CMP: If ARG2 < 0, return ARG1, else return ARG0
  *  - FLR: use FRC+MAD
  *  - XPD: use MAD+MAD
@@ -1138,6 +1139,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_FPI0_OUTC_DP4                (2 << 23)
 #       define R300_FPI0_OUTC_MIN                (4 << 23)
 #       define R300_FPI0_OUTC_MAX                (5 << 23)
+#       define R300_FPI0_OUTC_CMPH               (7 << 23)
 #       define R300_FPI0_OUTC_CMP                (8 << 23)
 #       define R300_FPI0_OUTC_FRC                (9 << 23)
 #       define R300_FPI0_OUTC_REPL_ALPHA         (10 << 23)
