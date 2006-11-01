@@ -69,8 +69,7 @@ sis6326UpdateZPattern(sisContextPtr smesa, GLclampd z)
 }
 
 void
-sis6326DDClear(GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
-               GLint xFoo, GLint yFoo, GLint widthFoo, GLint heightFoo)
+sis6326DDClear(GLcontext *ctx, GLbitfield mask)
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    GLint x1, y1, width1, height1;
@@ -110,7 +109,7 @@ sis6326DDClear(GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
    UNLOCK_HARDWARE();
 
    if (mask != 0)
-      _swrast_Clear(ctx, mask, 0, 0, 0, 0, 0);
+      _swrast_Clear(ctx, mask);
 }
 
 

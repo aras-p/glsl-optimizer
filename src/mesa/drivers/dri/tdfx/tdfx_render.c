@@ -46,9 +46,7 @@
 
 /* Clear the color and/or depth buffers.
  */
-static void tdfxClear( GLcontext *ctx,
-                       GLbitfield mask, GLboolean all,
-                       GLint xFoo, GLint yFoo, GLint widthFoo, GLint heightFoo)
+static void tdfxClear( GLcontext *ctx, GLbitfield mask )
 {
    tdfxContextPtr fxMesa = (tdfxContextPtr) ctx->DriverCtx;
    GLbitfield softwareMask = mask & (BUFFER_BIT_ACCUM);
@@ -312,7 +310,7 @@ static void tdfxClear( GLcontext *ctx,
    }
 
    if (softwareMask)
-      _swrast_Clear( ctx, softwareMask, 0, 0, 0, 0, 0);
+      _swrast_Clear(ctx, softwareMask);
 }
 
 

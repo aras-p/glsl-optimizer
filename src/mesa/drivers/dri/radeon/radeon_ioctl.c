@@ -1021,8 +1021,7 @@ void radeonPageFlip( const __DRIdrawablePrivate *dPriv )
  */
 #define RADEON_MAX_CLEARS	256
 
-static void radeonClear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
-			 GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo )
+static void radeonClear( GLcontext *ctx, GLbitfield mask )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
@@ -1071,7 +1070,7 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
    if ( mask ) {
       if (RADEON_DEBUG & DEBUG_FALLBACKS)
 	 fprintf(stderr, "%s: swrast clear, mask: %x\n", __FUNCTION__, mask);
-      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0 );
+      _swrast_Clear( ctx, mask );
    }
 
    if ( !flags ) 

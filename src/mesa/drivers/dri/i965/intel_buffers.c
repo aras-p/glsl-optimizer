@@ -224,12 +224,11 @@ void intelWindowMoved( struct intel_context *intel )
  * machine independent.  Maybe we'll get there one day.
  */
 static void intelClearWithTris(struct intel_context *intel, 
-			       GLbitfield mask,
-			       GLboolean all,
-			       GLint cx, GLint cy, 
-			       GLint cw, GLint ch)
+			       GLbitfield mask)
 {
+   GLcontext *ctx = &intel->ctx;
    drm_clip_rect_t clear;
+   GLint cx, cy, cw, ch;
 
    if (INTEL_DEBUG & DEBUG_DRI)
       _mesa_printf("%s %x\n", __FUNCTION__, mask);
@@ -238,18 +237,11 @@ static void intelClearWithTris(struct intel_context *intel,
 
       intel->vtbl.install_meta_state(intel);
 
-      /* Refresh the cx/y/w/h values as they may have been invalidated
-       * by a new window position or size picked up when we did
-       * LOCK_HARDWARE above.  The values passed by mesa are not
-       * reliable.
-       */
-      {
-	 GLcontext *ctx = &intel->ctx;
-	 cx = ctx->DrawBuffer->_Xmin;
-	 cy = ctx->DrawBuffer->_Ymin;
-	 ch = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
-	 cw  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
-      }
+      /* Get clear bounds after locking */
+      cx = ctx->DrawBuffer->_Xmin;
+      cy = ctx->DrawBuffer->_Ymin;
+      cw = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
+      ch = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
 
       clear.x1 = cx;
       clear.y1 = cy;
@@ -327,11 +319,7 @@ static void intelClearWithTris(struct intel_context *intel,
 
 
 
-static void intelClear(GLcontext *ctx, 
-		       GLbitfield mask, 
-		       GLboolean all,
-		       GLint cx, GLint cy, 
-		       GLint cw, GLint ch)
+static void intelClear(GLcontext *ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context( ctx );
    const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
@@ -340,8 +328,7 @@ static void intelClear(GLcontext *ctx,
    GLbitfield swrast_mask = 0;
 
    if (INTEL_DEBUG & DEBUG_DRI)
-      fprintf(stderr, "%s %x all %d dims %d,%d %dx%d\n", __FUNCTION__,
-	      mask, all, cx, cy, cw, ch);
+      fprintf(stderr, "%s %x\n", __FUNCTION__, mask);
 
 
    if (mask & BUFFER_BIT_FRONT_LEFT) {
@@ -392,13 +379,13 @@ static void intelClear(GLcontext *ctx,
    intelFlush( ctx );
 
    if (blit_mask)
-      intelClearWithBlit( ctx, blit_mask, all, cx, cy, cw, ch );
+      intelClearWithBlit( ctx, blit_mask );
 
    if (tri_mask) 
-      intelClearWithTris( intel, tri_mask, all, cx, cy, cw, ch);
+      intelClearWithTris( intel, tri_mask );
 
    if (swrast_mask)
-      _swrast_Clear( ctx, swrast_mask, all, cx, cy, cw, ch );
+      _swrast_Clear( ctx, swrast_mask );
 }
 
 

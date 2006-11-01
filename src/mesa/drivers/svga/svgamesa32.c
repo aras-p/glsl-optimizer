@@ -1,4 +1,4 @@
-/* $Id: svgamesa32.c,v 1.12 2002/11/11 18:42:42 brianp Exp $ */
+/* $Id: svgamesa32.c,v 1.13 2006/11/01 19:35:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,10 +85,14 @@ void __clear_color32( GLcontext *ctx, const GLfloat color[4] )
    SVGAMesa->clear_truecolor = (col[0] << 16) | (col[1] << 8) | col[2];
 }
 
-void __clear32( GLcontext *ctx, GLbitfield mask, GLboolean all,
-                GLint x, GLint y, GLint width, GLint height )
+void __clear32( GLcontext *ctx, GLbitfield mask )
 {
    int i,j;
+   int x = ctx->DrawBuffer->_Xmin;
+   int y = ctx->DrawBuffer->_Ymin;
+   int width = ctx->DrawBuffer->_Xmax - x;
+   int height = ctx->DrawBuffer->_Ymax - y;
+   GLboolean all = (width == ctx->DrawBuffer->Width && height == ctx->DrawBuffer->height)
    
    if (mask & DD_FRONT_LEFT_BIT) {
       if (all) {
@@ -124,7 +128,7 @@ void __clear32( GLcontext *ctx, GLbitfield mask, GLboolean all,
    }
 
    if (mask)
-      _swrast_Clear( ctx, mask, all, x, y, width, height );
+      _swrast_Clear( ctx, mask );
 }
 
 void __write_rgba_span32( const GLcontext *ctx, GLuint n, GLint x, GLint y,

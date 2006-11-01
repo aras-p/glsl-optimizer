@@ -327,8 +327,7 @@ static GLuint savageIntersectClipRects(drm_clip_rect_t *dest,
 }
 
 
-static void savageDDClear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
-			   GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo ) 
+static void savageDDClear( GLcontext *ctx, GLbitfield mask )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
    GLuint colorMask, depthMask, clearColor, clearDepth, flags;
@@ -426,7 +425,7 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
    }
 
    if (mask) 
-      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0 );
+      _swrast_Clear( ctx, mask );
 }
 
 /*

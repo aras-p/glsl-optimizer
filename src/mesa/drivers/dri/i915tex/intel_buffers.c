@@ -279,9 +279,7 @@ intelWindowMoved(struct intel_context *intel)
  * machine independent.  Maybe we'll get there one day.
  */
 static void
-intelClearWithTris(struct intel_context *intel,
-                   GLbitfield mask,
-                   GLboolean allFoo, GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo)
+intelClearWithTris(struct intel_context *intel, GLbitfield mask)
 {
    GLcontext *ctx = &intel->ctx;
    drm_clip_rect_t clear;
@@ -534,9 +532,7 @@ intelRotateWindow(struct intel_context *intel,
  * Called by ctx->Driver.Clear.
  */
 static void
-intelClear(GLcontext * ctx,
-           GLbitfield mask,
-           GLboolean allFoo, GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo)
+intelClear(GLcontext *ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
    const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask);
@@ -603,13 +599,13 @@ intelClear(GLcontext * ctx,
    intelFlush(ctx);             /* XXX intelClearWithBlit also does this */
 
    if (blit_mask)
-      intelClearWithBlit(ctx, blit_mask, 0, 0, 0, 0, 0);
+      intelClearWithBlit(ctx, blit_mask);
 
    if (tri_mask)
-      intelClearWithTris(intel, tri_mask, 0, 0, 0, 0, 0);
+      intelClearWithTris(intel, tri_mask);
 
    if (swrast_mask)
-      _swrast_Clear(ctx, swrast_mask, 0, 0, 0, 0, 0);
+      _swrast_Clear(ctx, swrast_mask);
 }
 
 

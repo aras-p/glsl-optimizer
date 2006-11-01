@@ -383,9 +383,7 @@ clear_nbit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 
 
 static void
-clear_buffers( GLcontext *ctx, GLbitfield mask,
-               GLboolean all, GLint xFoo, GLint yFoo,
-               GLint widthFoo, GLint heightFoo )
+clear_buffers(GLcontext *ctx, GLbitfield buffers)
 {
    if (ctx->DrawBuffer->Name == 0) {
       /* this is a window system framebuffer */
@@ -398,33 +396,33 @@ clear_buffers( GLcontext *ctx, GLbitfield mask,
 
       /* we can't handle color or index masking */
       if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {
-         if (mask & BUFFER_BIT_FRONT_LEFT) {
+         if (buffers & BUFFER_BIT_FRONT_LEFT) {
             /* clear front color buffer */
             struct gl_renderbuffer *frontRb
                = ctx->DrawBuffer->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
             if (b->frontxrb == xmesa_renderbuffer(frontRb)) {
                /* renderbuffer is not wrapped - great! */
                b->frontxrb->clearFunc(ctx, b->frontxrb, x, y, width, height);
-               mask &= ~BUFFER_BIT_FRONT_LEFT;
+               buffers &= ~BUFFER_BIT_FRONT_LEFT;
             }
             else {
                /* we can't directly clear an alpha-wrapped color buffer */
             }
          }
-         if (mask & BUFFER_BIT_BACK_LEFT) {
+         if (buffers & BUFFER_BIT_BACK_LEFT) {
             /* clear back color buffer */
             struct gl_renderbuffer *backRb
                = ctx->DrawBuffer->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
             if (b->backxrb == xmesa_renderbuffer(backRb)) {
                /* renderbuffer is not wrapped - great! */
                b->backxrb->clearFunc(ctx, b->backxrb, x, y, width, height);
-               mask &= ~BUFFER_BIT_BACK_LEFT;
+               buffers &= ~BUFFER_BIT_BACK_LEFT;
             }
          }
       }
    }
-   if (mask)
-      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0);
+   if (buffers)
+      _swrast_Clear(ctx, buffers);
 }
 
 

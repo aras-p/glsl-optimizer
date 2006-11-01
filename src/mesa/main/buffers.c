@@ -141,10 +141,6 @@ _mesa_Clear( GLbitfield mask )
    }
 
    if (ctx->RenderMode == GL_RENDER) {
-      const GLint x = ctx->DrawBuffer->_Xmin;
-      const GLint y = ctx->DrawBuffer->_Ymin;
-      const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
-      const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
       GLbitfield bufferMask;
 
       /* don't clear depth buffer if depth writing disabled */
@@ -177,8 +173,7 @@ _mesa_Clear( GLbitfield mask )
       }
 
       ASSERT(ctx->Driver.Clear);
-      ctx->Driver.Clear( ctx, bufferMask, (GLboolean) !ctx->Scissor.Enabled,
-			 x, y, width, height );
+      ctx->Driver.Clear(ctx, bufferMask);
    }
 }
 

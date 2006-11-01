@@ -399,8 +399,7 @@ void r128PageFlip( const __DRIdrawablePrivate *dPriv )
  * Buffer clear
  */
 
-static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
-                       GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo )
+static void r128Clear( GLcontext *ctx, GLbitfield mask )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = rmesa->driDrawable;
@@ -541,7 +540,7 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
    }
 
    if ( mask )
-      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0 );
+      _swrast_Clear( ctx, mask );
 }
 
 

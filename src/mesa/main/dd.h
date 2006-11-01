@@ -99,19 +99,10 @@ struct dd_function_table {
 
    /**
     * Clear the color/depth/stencil/accum buffer(s).
-    *
-    * \param mask a bitmask of the DD_*_BIT values defined above that indicates
-    * which buffers need to be cleared.
-    * \param all if true then clear the whole buffer, else clear only the
-    * region defined by <tt>(x, y, width, height)</tt>.
-    * 
-    * This function must obey the glColorMask(), glIndexMask() and
-    * glStencilMask() settings!
-    * Software Mesa can do masked clears if the device driver can't.
+    * \param mask  a bitmask of BUFFER_BIT_* flags indicating which
+    *              renderbuffers need to be cleared.
     */
-   void (*Clear)( GLcontext *ctx, GLbitfield mask, GLboolean all,
-		  GLint x, GLint y, GLint width, GLint height );
-
+   void (*Clear)( GLcontext *ctx, GLbitfield buffers );
 
    /**
     * \name For hardware accumulation buffer

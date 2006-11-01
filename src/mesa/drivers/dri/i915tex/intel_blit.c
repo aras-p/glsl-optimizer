@@ -376,8 +376,7 @@ intelEmitCopyBlit(struct intel_context *intel,
  * \param mask  bitmask of BUFFER_BIT_* values indicating buffers to clear
  */
 void
-intelClearWithBlit(GLcontext * ctx, GLbitfield mask, GLboolean allFoo,
-                   GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo)
+intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
    GLuint clear_depth;
