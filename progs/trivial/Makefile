@@ -38,7 +38,9 @@ SOURCES = \
 	quad-offset-unfilled.c \
 	quad-unfilled.c \
 	quad-tex-2d.c \
+	quad-tex-pbo.c \
 	quad-tex-3d.c \
+	quad-tex-dep.c \
 	quad.c \
 	quads.c \
 	quadstrip.c \
