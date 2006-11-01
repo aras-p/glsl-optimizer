@@ -979,7 +979,9 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    }
 
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
-
+   if (ctx->Driver.Flush) {  
+      ctx->Driver.Flush(ctx);
+   }
    if (framebuffer) {
       /* Binding a user-created framebuffer object */
       newFb = _mesa_lookup_framebuffer(ctx, framebuffer);
@@ -1548,7 +1550,9 @@ _mesa_GenerateMipmapEXT(GLenum target)
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
    /* XXX this might not handle cube maps correctly */
+   _mesa_lock_texture(ctx, texObj);
    _mesa_generate_mipmap(ctx, target, texUnit, texObj);
+   _mesa_unlock_texture(ctx, texObj);
 }
 
 

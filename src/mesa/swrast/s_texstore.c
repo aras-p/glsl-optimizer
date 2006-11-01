@@ -254,7 +254,7 @@ _swrast_copy_teximage1d( GLcontext *ctx, GLenum target, GLint level,
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    ASSERT(texObj);
-   texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+   texImage = _mesa_select_tex_image(ctx, texObj, target, level);
    ASSERT(texImage);
 
    ASSERT(ctx->Driver.TexImage1D);
@@ -331,7 +331,7 @@ _swrast_copy_teximage2d( GLcontext *ctx, GLenum target, GLint level,
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    ASSERT(texObj);
-   texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+   texImage = _mesa_select_tex_image(ctx, texObj, target, level);
    ASSERT(texImage);
 
    ASSERT(ctx->Driver.TexImage2D);
@@ -400,7 +400,7 @@ _swrast_copy_texsubimage1d( GLcontext *ctx, GLenum target, GLint level,
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    ASSERT(texObj);
-   texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+   texImage = _mesa_select_tex_image(ctx, texObj, target, level);
    ASSERT(texImage);
 
    ASSERT(ctx->Driver.TexImage1D);
@@ -474,7 +474,7 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    ASSERT(texObj);
-   texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+   texImage = _mesa_select_tex_image(ctx, texObj, target, level);
    ASSERT(texImage);
 
    ASSERT(ctx->Driver.TexImage2D);
@@ -547,7 +547,7 @@ _swrast_copy_texsubimage3d( GLcontext *ctx,
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    ASSERT(texObj);
-   texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+   texImage = _mesa_select_tex_image(ctx, texObj, target, level);
    ASSERT(texImage);
 
    ASSERT(ctx->Driver.TexImage3D);

@@ -735,6 +735,10 @@ alloc_shared_state( GLcontext *ctx )
    ss->DefaultCubeMap->RefCount += MAX_TEXTURE_IMAGE_UNITS;
    ss->DefaultRect->RefCount += MAX_TEXTURE_IMAGE_UNITS;
 
+   _glthread_INIT_MUTEX(ss->TexMutex);
+   ss->TextureStateStamp = 0;
+
+
 #if FEATURE_EXT_framebuffer_object
    ss->FrameBuffers = _mesa_NewHashTable();
    if (!ss->FrameBuffers)

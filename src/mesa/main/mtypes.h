@@ -2063,6 +2063,19 @@ struct gl_shared_state
    /*@}*/
 
    /**
+    * \name Thread safety and statechange notification for texture
+    * objects. 
+    *
+    * \todo Improve the granularity of locking.
+    */
+   /*@{*/
+   _glthread_Mutex TexMutex;		   /**< texobj thread safety */
+   GLuint TextureStateStamp;	           /**< state notification for shared tex  */
+   /*@}*/
+
+
+
+   /**
     * \name Vertex/fragment programs
     */
    /*@{*/
@@ -2930,6 +2943,8 @@ struct __GLcontextRec
    GLboolean _NeedEyeCoords;
    GLboolean _ForceEyeCoords; 
    GLenum _CurrentProgram;    /* currently executing program */
+
+   GLuint TextureStateTimestamp; /* detect changes to shared state */
 
    struct gl_shine_tab *_ShineTable[2]; /**< Active shine tables */
    struct gl_shine_tab *_ShineTabList;  /**< MRU list of inactive shine tables */

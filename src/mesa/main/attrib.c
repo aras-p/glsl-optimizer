@@ -337,6 +337,8 @@ _mesa_PushAttrib(GLbitfield mask)
    if (mask & GL_TEXTURE_BIT) {
       struct gl_texture_attrib *attr;
       GLuint u;
+
+      _mesa_lock_context_textures(ctx);
       /* Bump the texture object reference counts so that they don't
        * inadvertantly get deleted.
        */
@@ -362,6 +364,9 @@ _mesa_PushAttrib(GLbitfield mask)
          _mesa_copy_texture_object(&attr->Unit[u].SavedRect,
                                    attr->Unit[u].CurrentRect);
       }
+
+      _mesa_unlock_context_textures(ctx);
+
       newnode = new_attrib_node( GL_TEXTURE_BIT );
       newnode->data = attr;
       newnode->next = head;
