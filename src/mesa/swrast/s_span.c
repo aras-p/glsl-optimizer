@@ -353,32 +353,38 @@ interpolate_specular(SWspan *span)
    case GL_FLOAT:
       {
          GLfloat (*spec)[4] = span->array->color.sz4.spec;
+#if CHAN_BITS <= 16
+         GLfloat r = CHAN_TO_FLOAT(FixedToChan(span->specRed));
+         GLfloat g = CHAN_TO_FLOAT(FixedToChan(span->specGreen));
+         GLfloat b = CHAN_TO_FLOAT(FixedToChan(span->specBlue));
+#else
+         GLfloat r = span->specRed;
+         GLfloat g = span->specGreen;
+         GLfloat b = span->specBlue;
+#endif
+         GLfloat dr, dg, db;
          if (span->interpMask & SPAN_FLAT) {
-            GLfloat color[4];
-            color[RCOMP] = span->specRed;
-            color[GCOMP] = span->specGreen;
-            color[BCOMP] = span->specBlue;
-            color[ACOMP] = 0.0F;
-            for (i = 0; i < n; i++) {
-               COPY_4V(spec[i], color);
-            }
+            dr = dg = db = 0.0;
          }
          else {
-            GLfloat r = span->specRed;
-            GLfloat g = span->specGreen;
-            GLfloat b = span->specBlue;
-            GLfloat dr = span->specRedStep;
-            GLfloat dg = span->specGreenStep;
-            GLfloat db = span->specBlueStep;
-            for (i = 0; i < n; i++) {
-               spec[i][RCOMP] = r;
-               spec[i][GCOMP] = g;
-               spec[i][BCOMP] = b;
-               spec[i][ACOMP] = 0.0F;
-               r += dr;
-               g += dg;
-               b += db;
-            }
+#if CHAN_BITS <= 16
+            dr = CHAN_TO_FLOAT(FixedToChan(span->specRedStep));
+            dg = CHAN_TO_FLOAT(FixedToChan(span->specGreenStep));
+            db = CHAN_TO_FLOAT(FixedToChan(span->specBlueStep));
+#else
+            dr = span->specRedStep;
+            dg = span->specGreenStep;
+            db = span->specBlueStep;
+#endif
+         }
+         for (i = 0; i < n; i++) {
+            spec[i][RCOMP] = r;
+            spec[i][GCOMP] = g;
+            spec[i][BCOMP] = b;
+            spec[i][ACOMP] = 0.0F;
+            r += dr;
+            g += dg;
+            b += db;
          }
       }
       break;
