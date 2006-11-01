@@ -39,9 +39,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 void nouveauIoctlInitFifo(nouveauContextPtr nmesa)
 {
 	int ret;
-	drm_nouveau_fifo_init_t fifo_init;
+	drm_nouveau_fifo_alloc_t fifo_init;
 
-	ret = drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_FIFO_INIT, &fifo_init, sizeof(fifo_init));
+	ret = drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_FIFO_ALLOC, &fifo_init, sizeof(fifo_init));
 	if (ret)
 		FATAL("Fifo initialization ioctl failed (returned %d)\n",ret);
 	MESSAGE("Fifo init ok. Using context %d\n", fifo_init.channel);

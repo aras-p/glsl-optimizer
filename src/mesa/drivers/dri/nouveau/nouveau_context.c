@@ -188,7 +188,7 @@ GLboolean nouveauMakeCurrent( __DRIcontextPrivate *driContextPriv,
 		nouveauContextPtr oldNOUVEAUCtx = ctx ? NOUVEAU_CONTEXT(ctx) : NULL;
 		nouveauContextPtr newNOUVEAUCtx = (nouveauContextPtr) driContextPriv->driverPrivate;
 
-		driDrawableInitVBlank( driDrawPriv, newNOUVEAUCtx->vblank_flags );
+		driDrawableInitVBlank(driDrawPriv, newNOUVEAUCtx->vblank_flags, &newNOUVEAUCtx->vblank_seq );
 		newNOUVEAUCtx->driDrawable = driDrawPriv;
 
 		_mesa_make_current( newNOUVEAUCtx->glCtx,
