@@ -132,10 +132,10 @@ static void r200UpdateFSArith( GLcontext *ctx )
    R200_STATECHANGE( rmesa, afs[1] );
 
    if (shader->NumPasses < 2) {
-      afs_cmd = rmesa->hw.afs[1].cmd;
+      afs_cmd = (GLuint *) rmesa->hw.afs[1].cmd;
    }
    else {
-      afs_cmd = rmesa->hw.afs[0].cmd;
+      afs_cmd = (GLuint *) rmesa->hw.afs[0].cmd;
    }
    for (pass = 0; pass < shader->NumPasses; pass++) {
       GLuint opnum = 0;
@@ -317,7 +317,7 @@ static void r200UpdateFSArith( GLcontext *ctx )
 		SET_INST(opnum, 1), SET_INST_2(opnum, 1));*/
          opnum++;
       }
-      afs_cmd = rmesa->hw.afs[1].cmd;
+      afs_cmd = (GLuint *) rmesa->hw.afs[1].cmd;
    }
    rmesa->afs_loaded = ctx->ATIFragmentShader.Current;
 }
