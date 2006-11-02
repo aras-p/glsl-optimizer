@@ -24,7 +24,6 @@
  * Authors:
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgastate.c,v 1.13 2002/10/30 12:51:36 alanh Exp $ */
 
 
 #include "mtypes.h"
@@ -49,6 +48,8 @@
 #include "swrast_setup/swrast_setup.h"
 
 #include "xmlpool.h"
+#include "drirenderbuffer.h"
+
 
 static void updateSpecularLighting( GLcontext *ctx );
 
@@ -196,7 +197,7 @@ static void mgaDDBlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB,
    mmesa->hw.blend_func = (src | dst);
 
    FALLBACK( ctx, MGA_FALLBACK_BLEND,
-             ctx->Color.BlendEnabled && !RGBA_LOGICOP_ENALBED(ctx) &&
+             ctx->Color.BlendEnabled && !RGBA_LOGICOP_ENABLED(ctx) &&
              mmesa->hw.blend_func == (AC_src_src_alpha_sat | AC_dst_zero) );
 }
 
