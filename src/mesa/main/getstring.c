@@ -110,8 +110,10 @@ _mesa_GetString( GLenum name )
                    ctx->Extensions.EXT_shadow_funcs) {
                   if (ctx->Extensions.ARB_draw_buffers &&
                       ctx->Extensions.ARB_point_sprite &&
-                      ctx->Extensions.ARB_texture_non_power_of_two &&
-                      ctx->Extensions.ATI_separate_stencil) {
+                      ctx->Extensions.ARB_shader_objects &&
+                      ctx->Extensions.ARB_vertex_shader &&
+                      ctx->Extensions.ARB_fragment_shader &&
+                      ctx->Extensions.ARB_texture_non_power_of_two) {
                      return (const GLubyte *) version_2_0;
                   }
                   else {
