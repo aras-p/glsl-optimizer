@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -36,6 +36,7 @@
 #include "imports.h"
 #include "macros.h"
 #include "mtypes.h"
+#include "program.h"
 
 
 void GLAPIENTRY
@@ -176,6 +177,29 @@ _mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer)
    }
 
    *pointer = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[index].Ptr;
+}
+
+
+/**
+ * Determine if id names a vertex or fragment program.
+ * \note Not compiled into display lists.
+ * \note Called from both glIsProgramNV and glIsProgramARB.
+ * \param id is the program identifier
+ * \return GL_TRUE if id is a program, else GL_FALSE.
+ */
+GLboolean GLAPIENTRY
+_mesa_IsProgramARB(GLuint id)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
+
+   if (id == 0)
+      return GL_FALSE;
+
+   if (_mesa_lookup_program(ctx, id))
+      return GL_TRUE;
+   else
+      return GL_FALSE;
 }
 
 

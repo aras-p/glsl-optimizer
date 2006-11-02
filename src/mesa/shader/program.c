@@ -1973,30 +1973,6 @@ _mesa_GenPrograms(GLsizei n, GLuint *ids)
 }
 
 
-/**
- * Determine if id names a vertex or fragment program.
- * \note Not compiled into display lists.
- * \note Called from both glIsProgramNV and glIsProgramARB.
- * \param id is the program identifier
- * \return GL_TRUE if id is a program, else GL_FALSE.
- */
-GLboolean GLAPIENTRY
-_mesa_IsProgram(GLuint id)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
-
-   if (id == 0)
-      return GL_FALSE;
-
-   if (_mesa_lookup_program(ctx, id))
-      return GL_TRUE;
-   else
-      return GL_FALSE;
-}
-
-
-
 /**********************************************************************/
 /* GL_MESA_program_debug extension                                    */
 /**********************************************************************/

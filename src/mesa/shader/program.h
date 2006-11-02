@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -289,9 +289,6 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids);
 
 extern void GLAPIENTRY
 _mesa_GenPrograms(GLsizei n, GLuint *ids);
-
-extern GLboolean GLAPIENTRY
-_mesa_IsProgram(GLuint id);
 
 
 

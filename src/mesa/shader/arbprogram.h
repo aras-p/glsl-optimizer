@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.5.2
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,6 +49,10 @@ _mesa_GetVertexAttribivARB(GLuint index, GLenum pname, GLint *params);
 
 extern void GLAPIENTRY
 _mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer);
+
+
+extern GLboolean GLAPIENTRY
+_mesa_IsProgramARB(GLuint id);
 
 
 extern void GLAPIENTRY
