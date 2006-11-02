@@ -699,6 +699,7 @@ swizzle_copy(GLubyte *dst, GLuint dstComponents, const GLubyte *src,
       }
       break;
    case 1:
+      /* XXX investigate valgrind invalid read when running demos/texenv.c */
       for (i = 0; i < count; i++) {
  	 COPY_4UBV(tmp, src); 
 	 src += srcComponents;      
