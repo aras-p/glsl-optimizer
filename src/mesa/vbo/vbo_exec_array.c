@@ -156,6 +156,13 @@ static void recalculate_input_bindings( GLcontext *ctx )
 	 else
 	    inputs[i] = &vbo->legacy_currval[i];
       }
+
+      /* Could use just about anything, just to fill in the empty
+       * slots:
+       */
+      for (i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++)
+	 inputs[i] = &vbo->generic_currval[i - VERT_ATTRIB_GENERIC0];
+
       break;
    case VP_ARB:
       /* ARB_vertex_program - Only the attribute zero (position) array
