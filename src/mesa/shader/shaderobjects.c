@@ -1157,6 +1157,99 @@ _mesa_GetAttribLocationARB(GLhandleARB programObj, const GLcharARB * name)
    return loc;
 }
 
+
+/**
+ ** OpenGL 2.0 functions which basically wrap the ARB_shader functions
+ **/
+
+void GLAPIENTRY
+_mesa_AttachShader(GLuint program, GLuint shader)
+{
+   _mesa_AttachObjectARB(program, shader);
+}
+
+
+GLuint GLAPIENTRY
+_mesa_CreateShader(GLenum type)
+{
+   return (GLuint) _mesa_CreateShaderObjectARB(type);
+}
+
+GLuint GLAPIENTRY
+_mesa_CreateProgram(void)
+{
+   return (GLuint) _mesa_CreateProgramObjectARB();
+}
+
+void GLAPIENTRY
+_mesa_DeleteProgram(GLuint program)
+{
+   _mesa_DeleteObjectARB(program);
+}
+
+
+void GLAPIENTRY
+_mesa_DeleteShader(GLuint shader)
+{
+   _mesa_DeleteObjectARB(shader);
+}
+
+void GLAPIENTRY
+_mesa_DetachShader(GLuint program, GLuint shader)
+{
+   _mesa_DetachObjectARB(program, shader);
+}
+
+void GLAPIENTRY
+_mesa_GetAttachedShaders(GLuint program, GLsizei maxCount,
+                         GLsizei *count, GLuint *obj)
+{
+   _mesa_GetAttachedObjectsARB(program, maxCount, count, obj);
+}
+
+void GLAPIENTRY
+_mesa_GetProgramiv(GLuint program, GLenum pname, GLint *params)
+{
+   /* XXX to do */
+}
+
+void GLAPIENTRY
+_mesa_GetProgramInfoLog(GLuint program, GLsizei bufSize,
+                        GLsizei *length, GLchar *infoLog)
+{
+   _mesa_GetInfoLogARB(program, bufSize, length, infoLog);
+}
+
+void GLAPIENTRY
+_mesa_GetShaderiv(GLuint shader, GLenum pname, GLint *params)
+{
+   /* XXX to do */
+}
+
+void GLAPIENTRY
+_mesa_GetShaderInfoLog(GLuint shader, GLsizei bufSize,
+                       GLsizei *length, GLchar *infoLog)
+{
+   _mesa_GetInfoLogARB(shader, bufSize, length, infoLog);
+}
+
+GLboolean GLAPIENTRY
+_mesa_IsProgram2(GLuint program)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GET_GENERIC(gen, program, "glIsProgram");
+   return gen ? GL_TRUE : GL_FALSE;
+}
+
+GLboolean GLAPIENTRY
+_mesa_IsShader(GLuint shader)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GET_GENERIC(gen, shader, "glIsProgram");
+   return gen ? GL_TRUE : GL_FALSE;
+}
+
+
 #endif
 
 GLvoid

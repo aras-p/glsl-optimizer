@@ -270,6 +270,51 @@ _mesa_GetAttribLocationARB (GLhandleARB, const GLcharARB *);
 
 #endif /* FEATURE_ARB_vertex_shader */
 
+
+/* 2.0 */
+extern void GLAPIENTRY
+_mesa_AttachShader(GLuint program, GLuint shader);
+
+extern GLuint GLAPIENTRY
+_mesa_CreateShader(GLenum);
+
+extern GLuint GLAPIENTRY
+_mesa_CreateProgram(void);
+
+extern void GLAPIENTRY
+_mesa_DeleteProgram(GLuint program);
+
+extern void GLAPIENTRY
+_mesa_DeleteShader(GLuint shader);
+
+extern void GLAPIENTRY
+_mesa_DetachShader(GLuint program, GLuint shader);
+
+extern void GLAPIENTRY
+_mesa_GetAttachedShaders(GLuint program, GLsizei maxCount,
+                         GLsizei *count, GLuint *obj);
+
+extern void GLAPIENTRY
+_mesa_GetProgramiv(GLuint program, GLenum pname, GLint *params);
+
+extern void GLAPIENTRY
+_mesa_GetProgramInfoLog(GLuint program, GLsizei bufSize,
+                        GLsizei *length, GLchar *infoLog);
+
+extern void GLAPIENTRY
+_mesa_GetShaderiv(GLuint shader, GLenum pname, GLint *params);
+
+extern void GLAPIENTRY
+_mesa_GetShaderInfoLog(GLuint shader, GLsizei bufSize,
+                       GLsizei *length, GLchar *infoLog);
+
+extern GLboolean GLAPIENTRY
+_mesa_IsProgram2(GLuint program);
+
+extern GLboolean GLAPIENTRY
+_mesa_IsShader(GLuint shader);
+
+
 #endif /* FEATURE_ARB_shader_objects */
 
 extern void
