@@ -983,9 +983,7 @@ update_color(GLcontext *ctx)
    /* This is needed to support 1.1's RGB logic ops AND
     * 1.0's blending logicops.
     */
-   ctx->Color._LogicOpEnabled = (ctx->Color.ColorLogicOpEnabled ||
-                                 (ctx->Color.BlendEnabled &&
-                                  ctx->Color.BlendEquationRGB == GL_LOGIC_OP));
+   ctx->Color._LogicOpEnabled = RGBA_LOGICOP_ENABLED(ctx);
 }
 
 
