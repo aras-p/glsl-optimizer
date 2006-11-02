@@ -648,7 +648,8 @@ _mesa_ResizeBuffersMESA( void )
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   _mesa_resizebuffers( ctx );
+   if (ctx->Extensions.MESA_resize_buffers)
+      _mesa_resizebuffers( ctx );
 }
 
 
