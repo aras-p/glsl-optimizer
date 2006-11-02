@@ -113,14 +113,15 @@ static void mgaDDAlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 static void updateBlendLogicOp(GLcontext *ctx)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
+   GLboolean logicOp = RGBA_LOGICOP_ENABLED(ctx);
 
    MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
 
    mmesa->hw.blend_func_enable =
-      (ctx->Color.BlendEnabled && !ctx->Color._LogicOpEnabled) ? ~0 : 0;
+      (ctx->Color.BlendEnabled && !logicOp) ? ~0 : 0;
 
    FALLBACK( ctx, MGA_FALLBACK_BLEND,
-             ctx->Color.BlendEnabled && !ctx->Color._LogicOpEnabled &&
+             ctx->Color.BlendEnabled && !logicOp &&
              mmesa->hw.blend_func == (AC_src_src_alpha_sat | AC_dst_zero) );
 }
 
@@ -195,7 +196,7 @@ static void mgaDDBlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB,
    mmesa->hw.blend_func = (src | dst);
 
    FALLBACK( ctx, MGA_FALLBACK_BLEND,
-             ctx->Color.BlendEnabled && !ctx->Color._LogicOpEnabled &&
+             ctx->Color.BlendEnabled && !RGBA_LOGICOP_ENALBED(ctx) &&
              mmesa->hw.blend_func == (AC_src_src_alpha_sat | AC_dst_zero) );
 }
 
@@ -965,7 +966,7 @@ void mgaEmitHwStateLocked( mgaContextPtr mmesa )
 	  ? mmesa->hw.zmode : (DC_zmode_nozcmp | DC_atype_i);
 
       mmesa->setup.dwgctl &= DC_bop_MASK;
-      mmesa->setup.dwgctl |= (ctx->Color._LogicOpEnabled)
+      mmesa->setup.dwgctl |= RGBA_LOGICOP_ENABLED(ctx)
 	  ? mmesa->hw.rop : mgarop_NoBLK[ GL_COPY & 0x0f ];
 
       mmesa->setup.alphactrl &= AC_src_MASK & AC_dst_MASK & AC_atmode_MASK

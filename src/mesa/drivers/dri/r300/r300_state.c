@@ -206,7 +206,7 @@ static void r300_set_blend_state(GLcontext * ctx)
 	    (R300_BLEND_GL_ZERO << R300_DST_BLEND_SHIFT);
 	int eqnA = R300_COMB_FCN_ADD_CLAMP;
 
-	if (ctx->Color._LogicOpEnabled || !ctx->Color.BlendEnabled) {
+	if (RGBA_LOGICOP_ENABLED(ctx) || !ctx->Color.BlendEnabled) {
 		r300_set_blend_cntl(r300,
 			func, eqn, 0,
 			func, eqn);

@@ -144,7 +144,7 @@ i915EvalLogicOpBlendState(GLcontext * ctx)
 
    I915_STATECHANGE(i915, I915_UPLOAD_CTX);
 
-   if (ctx->Color._LogicOpEnabled) {
+   if (RGBA_LOGICOP_ENABLED(ctx)) {
       i915->state.Ctx[I915_CTXREG_LIS5] |= S5_LOGICOP_ENABLE;
       i915->state.Ctx[I915_CTXREG_LIS6] &= ~S6_CBUF_BLEND_ENABLE;
    }

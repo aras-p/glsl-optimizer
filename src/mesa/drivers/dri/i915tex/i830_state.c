@@ -231,7 +231,7 @@ i830EvalLogicOpBlendState(GLcontext * ctx)
 
    I830_STATECHANGE(i830, I830_UPLOAD_CTX);
 
-   if (ctx->Color._LogicOpEnabled) {
+   if (RGBA_LOGICOP_ENABLED(ctx)) {
       i830->state.Ctx[I830_CTXREG_ENABLES_1] &= ~(ENABLE_COLOR_BLEND |
                                                   ENABLE_LOGIC_OP_MASK);
       i830->state.Ctx[I830_CTXREG_ENABLES_1] |= (DISABLE_COLOR_BLEND |
