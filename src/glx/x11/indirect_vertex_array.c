@@ -123,10 +123,8 @@ __glXInitVertexArrayState( __GLXcontext * gc )
     struct array_state_vector * arrays;
 
     unsigned array_count;
-    unsigned texture_units = 1;
-    unsigned i;
-    unsigned j;
-    unsigned vertex_program_attribs = 0;
+    int texture_units = 1, vertex_program_attribs = 0;
+    unsigned i, j;
 
     GLboolean got_fog = GL_FALSE;
     GLboolean got_secondary_color = GL_FALSE;

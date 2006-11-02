@@ -473,6 +473,19 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 		.globl glMultiTexCoord4ivARB ; .type glMultiTexCoord4ivARB,#function
 		.globl glMultiTexCoord4sARB ; .type glMultiTexCoord4sARB,#function
 		.globl glMultiTexCoord4svARB ; .type glMultiTexCoord4svARB,#function
+		.globl glAttachShader ; .type glAttachShader,#function
+		.globl glCreateProgram ; .type glCreateProgram,#function
+		.globl glCreateShader ; .type glCreateShader,#function
+		.globl glDeleteProgram ; .type glDeleteProgram,#function
+		.globl glDeleteShader ; .type glDeleteShader,#function
+		.globl glDetachShader ; .type glDetachShader,#function
+		.globl glGetAttachedShaders ; .type glGetAttachedShaders,#function
+		.globl glGetProgramInfoLog ; .type glGetProgramInfoLog,#function
+		.globl glGetProgramiv ; .type glGetProgramiv,#function
+		.globl glGetShaderInfoLog ; .type glGetShaderInfoLog,#function
+		.globl glGetShaderiv ; .type glGetShaderiv,#function
+		.globl glIsProgram ; .type glIsProgram,#function
+		.globl glIsShader ; .type glIsShader,#function
 		.globl glStencilFuncSeparate ; .type glStencilFuncSeparate,#function
 		.globl glStencilMaskSeparate ; .type glStencilMaskSeparate,#function
 		.globl glStencilOpSeparate ; .type glStencilOpSeparate,#function
@@ -608,14 +621,14 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 		.globl glGetAttribLocationARB ; .type glGetAttribLocationARB,#function
 		.globl glDrawBuffersARB ; .type glDrawBuffersARB,#function
 		.globl glPolygonOffsetEXT ; .type glPolygonOffsetEXT,#function
-		.globl gl_dispatch_stub_543 ; .type gl_dispatch_stub_543,#function
-		.globl gl_dispatch_stub_544 ; .type gl_dispatch_stub_544,#function
-		.globl gl_dispatch_stub_545 ; .type gl_dispatch_stub_545,#function
-		.globl gl_dispatch_stub_546 ; .type gl_dispatch_stub_546,#function
-		.globl gl_dispatch_stub_547 ; .type gl_dispatch_stub_547,#function
-		.globl gl_dispatch_stub_548 ; .type gl_dispatch_stub_548,#function
-		.globl gl_dispatch_stub_549 ; .type gl_dispatch_stub_549,#function
-		.globl gl_dispatch_stub_550 ; .type gl_dispatch_stub_550,#function
+		.globl gl_dispatch_stub_556 ; .type gl_dispatch_stub_556,#function
+		.globl gl_dispatch_stub_557 ; .type gl_dispatch_stub_557,#function
+		.globl gl_dispatch_stub_558 ; .type gl_dispatch_stub_558,#function
+		.globl gl_dispatch_stub_559 ; .type gl_dispatch_stub_559,#function
+		.globl gl_dispatch_stub_560 ; .type gl_dispatch_stub_560,#function
+		.globl gl_dispatch_stub_561 ; .type gl_dispatch_stub_561,#function
+		.globl gl_dispatch_stub_562 ; .type gl_dispatch_stub_562,#function
+		.globl gl_dispatch_stub_563 ; .type gl_dispatch_stub_563,#function
 		.globl glColorPointerEXT ; .type glColorPointerEXT,#function
 		.globl glEdgeFlagPointerEXT ; .type glEdgeFlagPointerEXT,#function
 		.globl glIndexPointerEXT ; .type glIndexPointerEXT,#function
@@ -626,8 +639,8 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 		.globl glPointParameterfvEXT ; .type glPointParameterfvEXT,#function
 		.globl glLockArraysEXT ; .type glLockArraysEXT,#function
 		.globl glUnlockArraysEXT ; .type glUnlockArraysEXT,#function
-		.globl gl_dispatch_stub_561 ; .type gl_dispatch_stub_561,#function
-		.globl gl_dispatch_stub_562 ; .type gl_dispatch_stub_562,#function
+		.globl gl_dispatch_stub_574 ; .type gl_dispatch_stub_574,#function
+		.globl gl_dispatch_stub_575 ; .type gl_dispatch_stub_575,#function
 		.globl glSecondaryColor3bEXT ; .type glSecondaryColor3bEXT,#function
 		.globl glSecondaryColor3bvEXT ; .type glSecondaryColor3bvEXT,#function
 		.globl glSecondaryColor3dEXT ; .type glSecondaryColor3dEXT,#function
@@ -652,7 +665,7 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 		.globl glFogCoorddvEXT ; .type glFogCoorddvEXT,#function
 		.globl glFogCoordfEXT ; .type glFogCoordfEXT,#function
 		.globl glFogCoordfvEXT ; .type glFogCoordfvEXT,#function
-		.globl gl_dispatch_stub_587 ; .type gl_dispatch_stub_587,#function
+		.globl gl_dispatch_stub_600 ; .type gl_dispatch_stub_600,#function
 		.globl glBlendFuncSeparateEXT ; .type glBlendFuncSeparateEXT,#function
 		.globl glFlushVertexArrayRangeNV ; .type glFlushVertexArrayRangeNV,#function
 		.globl glVertexArrayRangeNV ; .type glVertexArrayRangeNV,#function
@@ -694,15 +707,15 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 		.globl glWindowPos4ivMESA ; .type glWindowPos4ivMESA,#function
 		.globl glWindowPos4sMESA ; .type glWindowPos4sMESA,#function
 		.globl glWindowPos4svMESA ; .type glWindowPos4svMESA,#function
-		.globl gl_dispatch_stub_629 ; .type gl_dispatch_stub_629,#function
-		.globl gl_dispatch_stub_630 ; .type gl_dispatch_stub_630,#function
-		.globl gl_dispatch_stub_631 ; .type gl_dispatch_stub_631,#function
-		.globl gl_dispatch_stub_632 ; .type gl_dispatch_stub_632,#function
-		.globl gl_dispatch_stub_633 ; .type gl_dispatch_stub_633,#function
-		.globl gl_dispatch_stub_634 ; .type gl_dispatch_stub_634,#function
-		.globl gl_dispatch_stub_635 ; .type gl_dispatch_stub_635,#function
-		.globl gl_dispatch_stub_636 ; .type gl_dispatch_stub_636,#function
-		.globl gl_dispatch_stub_637 ; .type gl_dispatch_stub_637,#function
+		.globl gl_dispatch_stub_642 ; .type gl_dispatch_stub_642,#function
+		.globl gl_dispatch_stub_643 ; .type gl_dispatch_stub_643,#function
+		.globl gl_dispatch_stub_644 ; .type gl_dispatch_stub_644,#function
+		.globl gl_dispatch_stub_645 ; .type gl_dispatch_stub_645,#function
+		.globl gl_dispatch_stub_646 ; .type gl_dispatch_stub_646,#function
+		.globl gl_dispatch_stub_647 ; .type gl_dispatch_stub_647,#function
+		.globl gl_dispatch_stub_648 ; .type gl_dispatch_stub_648,#function
+		.globl gl_dispatch_stub_649 ; .type gl_dispatch_stub_649,#function
+		.globl gl_dispatch_stub_650 ; .type gl_dispatch_stub_650,#function
 		.globl glAreProgramsResidentNV ; .type glAreProgramsResidentNV,#function
 		.globl glBindProgramNV ; .type glBindProgramNV,#function
 		.globl glDeleteProgramsNV ; .type glDeleteProgramsNV,#function
@@ -783,19 +796,19 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 		.globl glSetFragmentShaderConstantATI ; .type glSetFragmentShaderConstantATI,#function
 		.globl glPointParameteriNV ; .type glPointParameteriNV,#function
 		.globl glPointParameterivNV ; .type glPointParameterivNV,#function
-		.globl gl_dispatch_stub_718 ; .type gl_dispatch_stub_718,#function
-		.globl gl_dispatch_stub_719 ; .type gl_dispatch_stub_719,#function
-		.globl gl_dispatch_stub_720 ; .type gl_dispatch_stub_720,#function
-		.globl gl_dispatch_stub_721 ; .type gl_dispatch_stub_721,#function
-		.globl gl_dispatch_stub_722 ; .type gl_dispatch_stub_722,#function
+		.globl gl_dispatch_stub_731 ; .type gl_dispatch_stub_731,#function
+		.globl gl_dispatch_stub_732 ; .type gl_dispatch_stub_732,#function
+		.globl gl_dispatch_stub_733 ; .type gl_dispatch_stub_733,#function
+		.globl gl_dispatch_stub_734 ; .type gl_dispatch_stub_734,#function
+		.globl gl_dispatch_stub_735 ; .type gl_dispatch_stub_735,#function
 		.globl glGetProgramNamedParameterdvNV ; .type glGetProgramNamedParameterdvNV,#function
 		.globl glGetProgramNamedParameterfvNV ; .type glGetProgramNamedParameterfvNV,#function
 		.globl glProgramNamedParameter4dNV ; .type glProgramNamedParameter4dNV,#function
 		.globl glProgramNamedParameter4dvNV ; .type glProgramNamedParameter4dvNV,#function
 		.globl glProgramNamedParameter4fNV ; .type glProgramNamedParameter4fNV,#function
 		.globl glProgramNamedParameter4fvNV ; .type glProgramNamedParameter4fvNV,#function
-		.globl gl_dispatch_stub_729 ; .type gl_dispatch_stub_729,#function
-		.globl gl_dispatch_stub_730 ; .type gl_dispatch_stub_730,#function
+		.globl gl_dispatch_stub_742 ; .type gl_dispatch_stub_742,#function
+		.globl gl_dispatch_stub_743 ; .type gl_dispatch_stub_743,#function
 		.globl glBindFramebufferEXT ; .type glBindFramebufferEXT,#function
 		.globl glBindRenderbufferEXT ; .type glBindRenderbufferEXT,#function
 		.globl glCheckFramebufferStatusEXT ; .type glCheckFramebufferStatusEXT,#function
@@ -813,11 +826,11 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 		.globl glIsFramebufferEXT ; .type glIsFramebufferEXT,#function
 		.globl glIsRenderbufferEXT ; .type glIsRenderbufferEXT,#function
 		.globl glRenderbufferStorageEXT ; .type glRenderbufferStorageEXT,#function
-		.globl gl_dispatch_stub_748 ; .type gl_dispatch_stub_748,#function
-		.globl gl_dispatch_stub_749 ; .type gl_dispatch_stub_749,#function
-		.globl gl_dispatch_stub_750 ; .type gl_dispatch_stub_750,#function
-		.globl gl_dispatch_stub_751 ; .type gl_dispatch_stub_751,#function
-		.globl gl_dispatch_stub_752 ; .type gl_dispatch_stub_752,#function
+		.globl gl_dispatch_stub_761 ; .type gl_dispatch_stub_761,#function
+		.globl gl_dispatch_stub_762 ; .type gl_dispatch_stub_762,#function
+		.globl gl_dispatch_stub_763 ; .type gl_dispatch_stub_763,#function
+		.globl gl_dispatch_stub_764 ; .type gl_dispatch_stub_764,#function
+		.globl gl_dispatch_stub_765 ; .type gl_dispatch_stub_765,#function
 		.globl _mesa_sparc_glapi_begin ; .type _mesa_sparc_glapi_begin,#function
 _mesa_sparc_glapi_begin:
 
@@ -1229,6 +1242,19 @@ _mesa_sparc_glapi_begin:
 	GL_STUB(glMultiTexCoord4ivARB, _gloffset_MultiTexCoord4ivARB)
 	GL_STUB(glMultiTexCoord4sARB, _gloffset_MultiTexCoord4sARB)
 	GL_STUB(glMultiTexCoord4svARB, _gloffset_MultiTexCoord4svARB)
+	GL_STUB(glAttachShader, _gloffset_AttachShader)
+	GL_STUB(glCreateProgram, _gloffset_CreateProgram)
+	GL_STUB(glCreateShader, _gloffset_CreateShader)
+	GL_STUB(glDeleteProgram, _gloffset_DeleteProgram)
+	GL_STUB(glDeleteShader, _gloffset_DeleteShader)
+	GL_STUB(glDetachShader, _gloffset_DetachShader)
+	GL_STUB(glGetAttachedShaders, _gloffset_GetAttachedShaders)
+	GL_STUB(glGetProgramInfoLog, _gloffset_GetProgramInfoLog)
+	GL_STUB(glGetProgramiv, _gloffset_GetProgramiv)
+	GL_STUB(glGetShaderInfoLog, _gloffset_GetShaderInfoLog)
+	GL_STUB(glGetShaderiv, _gloffset_GetShaderiv)
+	GL_STUB(glIsProgram, _gloffset_IsProgram)
+	GL_STUB(glIsShader, _gloffset_IsShader)
 	GL_STUB(glStencilFuncSeparate, _gloffset_StencilFuncSeparate)
 	GL_STUB(glStencilMaskSeparate, _gloffset_StencilMaskSeparate)
 	GL_STUB(glStencilOpSeparate, _gloffset_StencilOpSeparate)
@@ -1364,14 +1390,14 @@ _mesa_sparc_glapi_begin:
 	GL_STUB(glGetAttribLocationARB, _gloffset_GetAttribLocationARB)
 	GL_STUB(glDrawBuffersARB, _gloffset_DrawBuffersARB)
 	GL_STUB(glPolygonOffsetEXT, _gloffset_PolygonOffsetEXT)
-	GL_STUB(gl_dispatch_stub_543, _gloffset__dispatch_stub_543)
-	GL_STUB(gl_dispatch_stub_544, _gloffset__dispatch_stub_544)
-	GL_STUB(gl_dispatch_stub_545, _gloffset__dispatch_stub_545)
-	GL_STUB(gl_dispatch_stub_546, _gloffset__dispatch_stub_546)
-	GL_STUB(gl_dispatch_stub_547, _gloffset__dispatch_stub_547)
-	GL_STUB(gl_dispatch_stub_548, _gloffset__dispatch_stub_548)
-	GL_STUB(gl_dispatch_stub_549, _gloffset__dispatch_stub_549)
-	GL_STUB(gl_dispatch_stub_550, _gloffset__dispatch_stub_550)
+	GL_STUB(gl_dispatch_stub_556, _gloffset__dispatch_stub_556)
+	GL_STUB(gl_dispatch_stub_557, _gloffset__dispatch_stub_557)
+	GL_STUB(gl_dispatch_stub_558, _gloffset__dispatch_stub_558)
+	GL_STUB(gl_dispatch_stub_559, _gloffset__dispatch_stub_559)
+	GL_STUB(gl_dispatch_stub_560, _gloffset__dispatch_stub_560)
+	GL_STUB(gl_dispatch_stub_561, _gloffset__dispatch_stub_561)
+	GL_STUB(gl_dispatch_stub_562, _gloffset__dispatch_stub_562)
+	GL_STUB(gl_dispatch_stub_563, _gloffset__dispatch_stub_563)
 	GL_STUB(glColorPointerEXT, _gloffset_ColorPointerEXT)
 	GL_STUB(glEdgeFlagPointerEXT, _gloffset_EdgeFlagPointerEXT)
 	GL_STUB(glIndexPointerEXT, _gloffset_IndexPointerEXT)
@@ -1382,8 +1408,8 @@ _mesa_sparc_glapi_begin:
 	GL_STUB(glPointParameterfvEXT, _gloffset_PointParameterfvEXT)
 	GL_STUB(glLockArraysEXT, _gloffset_LockArraysEXT)
 	GL_STUB(glUnlockArraysEXT, _gloffset_UnlockArraysEXT)
-	GL_STUB(gl_dispatch_stub_561, _gloffset__dispatch_stub_561)
-	GL_STUB(gl_dispatch_stub_562, _gloffset__dispatch_stub_562)
+	GL_STUB(gl_dispatch_stub_574, _gloffset__dispatch_stub_574)
+	GL_STUB(gl_dispatch_stub_575, _gloffset__dispatch_stub_575)
 	GL_STUB(glSecondaryColor3bEXT, _gloffset_SecondaryColor3bEXT)
 	GL_STUB(glSecondaryColor3bvEXT, _gloffset_SecondaryColor3bvEXT)
 	GL_STUB(glSecondaryColor3dEXT, _gloffset_SecondaryColor3dEXT)
@@ -1408,7 +1434,7 @@ _mesa_sparc_glapi_begin:
 	GL_STUB(glFogCoorddvEXT, _gloffset_FogCoorddvEXT)
 	GL_STUB(glFogCoordfEXT, _gloffset_FogCoordfEXT)
 	GL_STUB(glFogCoordfvEXT, _gloffset_FogCoordfvEXT)
-	GL_STUB(gl_dispatch_stub_587, _gloffset__dispatch_stub_587)
+	GL_STUB(gl_dispatch_stub_600, _gloffset__dispatch_stub_600)
 	GL_STUB(glBlendFuncSeparateEXT, _gloffset_BlendFuncSeparateEXT)
 	GL_STUB(glFlushVertexArrayRangeNV, _gloffset_FlushVertexArrayRangeNV)
 	GL_STUB(glVertexArrayRangeNV, _gloffset_VertexArrayRangeNV)
@@ -1450,15 +1476,15 @@ _mesa_sparc_glapi_begin:
 	GL_STUB(glWindowPos4ivMESA, _gloffset_WindowPos4ivMESA)
 	GL_STUB(glWindowPos4sMESA, _gloffset_WindowPos4sMESA)
 	GL_STUB(glWindowPos4svMESA, _gloffset_WindowPos4svMESA)
-	GL_STUB(gl_dispatch_stub_629, _gloffset__dispatch_stub_629)
-	GL_STUB(gl_dispatch_stub_630, _gloffset__dispatch_stub_630)
-	GL_STUB(gl_dispatch_stub_631, _gloffset__dispatch_stub_631)
-	GL_STUB(gl_dispatch_stub_632, _gloffset__dispatch_stub_632)
-	GL_STUB(gl_dispatch_stub_633, _gloffset__dispatch_stub_633)
-	GL_STUB(gl_dispatch_stub_634, _gloffset__dispatch_stub_634)
-	GL_STUB(gl_dispatch_stub_635, _gloffset__dispatch_stub_635)
-	GL_STUB(gl_dispatch_stub_636, _gloffset__dispatch_stub_636)
-	GL_STUB(gl_dispatch_stub_637, _gloffset__dispatch_stub_637)
+	GL_STUB(gl_dispatch_stub_642, _gloffset__dispatch_stub_642)
+	GL_STUB(gl_dispatch_stub_643, _gloffset__dispatch_stub_643)
+	GL_STUB(gl_dispatch_stub_644, _gloffset__dispatch_stub_644)
+	GL_STUB(gl_dispatch_stub_645, _gloffset__dispatch_stub_645)
+	GL_STUB(gl_dispatch_stub_646, _gloffset__dispatch_stub_646)
+	GL_STUB(gl_dispatch_stub_647, _gloffset__dispatch_stub_647)
+	GL_STUB(gl_dispatch_stub_648, _gloffset__dispatch_stub_648)
+	GL_STUB(gl_dispatch_stub_649, _gloffset__dispatch_stub_649)
+	GL_STUB(gl_dispatch_stub_650, _gloffset__dispatch_stub_650)
 	GL_STUB(glAreProgramsResidentNV, _gloffset_AreProgramsResidentNV)
 	GL_STUB(glBindProgramNV, _gloffset_BindProgramNV)
 	GL_STUB(glDeleteProgramsNV, _gloffset_DeleteProgramsNV)
@@ -1539,19 +1565,19 @@ _mesa_sparc_glapi_begin:
 	GL_STUB(glSetFragmentShaderConstantATI, _gloffset_SetFragmentShaderConstantATI)
 	GL_STUB(glPointParameteriNV, _gloffset_PointParameteriNV)
 	GL_STUB(glPointParameterivNV, _gloffset_PointParameterivNV)
-	GL_STUB(gl_dispatch_stub_718, _gloffset__dispatch_stub_718)
-	GL_STUB(gl_dispatch_stub_719, _gloffset__dispatch_stub_719)
-	GL_STUB(gl_dispatch_stub_720, _gloffset__dispatch_stub_720)
-	GL_STUB(gl_dispatch_stub_721, _gloffset__dispatch_stub_721)
-	GL_STUB(gl_dispatch_stub_722, _gloffset__dispatch_stub_722)
+	GL_STUB(gl_dispatch_stub_731, _gloffset__dispatch_stub_731)
+	GL_STUB(gl_dispatch_stub_732, _gloffset__dispatch_stub_732)
+	GL_STUB(gl_dispatch_stub_733, _gloffset__dispatch_stub_733)
+	GL_STUB(gl_dispatch_stub_734, _gloffset__dispatch_stub_734)
+	GL_STUB(gl_dispatch_stub_735, _gloffset__dispatch_stub_735)
 	GL_STUB(glGetProgramNamedParameterdvNV, _gloffset_GetProgramNamedParameterdvNV)
 	GL_STUB(glGetProgramNamedParameterfvNV, _gloffset_GetProgramNamedParameterfvNV)
 	GL_STUB(glProgramNamedParameter4dNV, _gloffset_ProgramNamedParameter4dNV)
 	GL_STUB(glProgramNamedParameter4dvNV, _gloffset_ProgramNamedParameter4dvNV)
 	GL_STUB(glProgramNamedParameter4fNV, _gloffset_ProgramNamedParameter4fNV)
 	GL_STUB(glProgramNamedParameter4fvNV, _gloffset_ProgramNamedParameter4fvNV)
-	GL_STUB(gl_dispatch_stub_729, _gloffset__dispatch_stub_729)
-	GL_STUB(gl_dispatch_stub_730, _gloffset__dispatch_stub_730)
+	GL_STUB(gl_dispatch_stub_742, _gloffset__dispatch_stub_742)
+	GL_STUB(gl_dispatch_stub_743, _gloffset__dispatch_stub_743)
 	GL_STUB(glBindFramebufferEXT, _gloffset_BindFramebufferEXT)
 	GL_STUB(glBindRenderbufferEXT, _gloffset_BindRenderbufferEXT)
 	GL_STUB(glCheckFramebufferStatusEXT, _gloffset_CheckFramebufferStatusEXT)
@@ -1569,11 +1595,11 @@ _mesa_sparc_glapi_begin:
 	GL_STUB(glIsFramebufferEXT, _gloffset_IsFramebufferEXT)
 	GL_STUB(glIsRenderbufferEXT, _gloffset_IsRenderbufferEXT)
 	GL_STUB(glRenderbufferStorageEXT, _gloffset_RenderbufferStorageEXT)
-	GL_STUB(gl_dispatch_stub_748, _gloffset__dispatch_stub_748)
-	GL_STUB(gl_dispatch_stub_749, _gloffset__dispatch_stub_749)
-	GL_STUB(gl_dispatch_stub_750, _gloffset__dispatch_stub_750)
-	GL_STUB(gl_dispatch_stub_751, _gloffset__dispatch_stub_751)
-	GL_STUB(gl_dispatch_stub_752, _gloffset__dispatch_stub_752)
+	GL_STUB(gl_dispatch_stub_761, _gloffset__dispatch_stub_761)
+	GL_STUB(gl_dispatch_stub_762, _gloffset__dispatch_stub_762)
+	GL_STUB(gl_dispatch_stub_763, _gloffset__dispatch_stub_763)
+	GL_STUB(gl_dispatch_stub_764, _gloffset__dispatch_stub_764)
+	GL_STUB(gl_dispatch_stub_765, _gloffset__dispatch_stub_765)
 
 		.globl _mesa_sparc_glapi_end ; .type _mesa_sparc_glapi_end,#function
 _mesa_sparc_glapi_end:
@@ -1663,6 +1689,43 @@ _mesa_sparc_glapi_end:
 	.globl glCompressedTexSubImage2D ; .type glCompressedTexSubImage2D,#function ; glCompressedTexSubImage2D = glCompressedTexSubImage2DARB
 	.globl glCompressedTexSubImage3D ; .type glCompressedTexSubImage3D,#function ; glCompressedTexSubImage3D = glCompressedTexSubImage3DARB
 	.globl glGetCompressedTexImage ; .type glGetCompressedTexImage,#function ; glGetCompressedTexImage = glGetCompressedTexImageARB
+	.globl glDisableVertexAttribArray ; .type glDisableVertexAttribArray,#function ; glDisableVertexAttribArray = glDisableVertexAttribArrayARB
+	.globl glEnableVertexAttribArray ; .type glEnableVertexAttribArray,#function ; glEnableVertexAttribArray = glEnableVertexAttribArrayARB
+	.globl glGetVertexAttribdv ; .type glGetVertexAttribdv,#function ; glGetVertexAttribdv = glGetVertexAttribdvARB
+	.globl glGetVertexAttribfv ; .type glGetVertexAttribfv,#function ; glGetVertexAttribfv = glGetVertexAttribfvARB
+	.globl glGetVertexAttribiv ; .type glGetVertexAttribiv,#function ; glGetVertexAttribiv = glGetVertexAttribivARB
+	.globl glVertexAttrib1d ; .type glVertexAttrib1d,#function ; glVertexAttrib1d = glVertexAttrib1dARB
+	.globl glVertexAttrib1dv ; .type glVertexAttrib1dv,#function ; glVertexAttrib1dv = glVertexAttrib1dvARB
+	.globl glVertexAttrib1f ; .type glVertexAttrib1f,#function ; glVertexAttrib1f = glVertexAttrib1fARB
+	.globl glVertexAttrib1fv ; .type glVertexAttrib1fv,#function ; glVertexAttrib1fv = glVertexAttrib1fvARB
+	.globl glVertexAttrib1s ; .type glVertexAttrib1s,#function ; glVertexAttrib1s = glVertexAttrib1sARB
+	.globl glVertexAttrib1sv ; .type glVertexAttrib1sv,#function ; glVertexAttrib1sv = glVertexAttrib1svARB
+	.globl glVertexAttrib2d ; .type glVertexAttrib2d,#function ; glVertexAttrib2d = glVertexAttrib2dARB
+	.globl glVertexAttrib2dv ; .type glVertexAttrib2dv,#function ; glVertexAttrib2dv = glVertexAttrib2dvARB
+	.globl glVertexAttrib2f ; .type glVertexAttrib2f,#function ; glVertexAttrib2f = glVertexAttrib2fARB
+	.globl glVertexAttrib2fv ; .type glVertexAttrib2fv,#function ; glVertexAttrib2fv = glVertexAttrib2fvARB
+	.globl glVertexAttrib2s ; .type glVertexAttrib2s,#function ; glVertexAttrib2s = glVertexAttrib2sARB
+	.globl glVertexAttrib2sv ; .type glVertexAttrib2sv,#function ; glVertexAttrib2sv = glVertexAttrib2svARB
+	.globl glVertexAttrib3d ; .type glVertexAttrib3d,#function ; glVertexAttrib3d = glVertexAttrib3dARB
+	.globl glVertexAttrib3dv ; .type glVertexAttrib3dv,#function ; glVertexAttrib3dv = glVertexAttrib3dvARB
+	.globl glVertexAttrib3f ; .type glVertexAttrib3f,#function ; glVertexAttrib3f = glVertexAttrib3fARB
+	.globl glVertexAttrib3fv ; .type glVertexAttrib3fv,#function ; glVertexAttrib3fv = glVertexAttrib3fvARB
+	.globl glVertexAttrib3s ; .type glVertexAttrib3s,#function ; glVertexAttrib3s = glVertexAttrib3sARB
+	.globl glVertexAttrib3sv ; .type glVertexAttrib3sv,#function ; glVertexAttrib3sv = glVertexAttrib3svARB
+	.globl glVertexAttrib4Nbv ; .type glVertexAttrib4Nbv,#function ; glVertexAttrib4Nbv = glVertexAttrib4NbvARB
+	.globl glVertexAttrib4Niv ; .type glVertexAttrib4Niv,#function ; glVertexAttrib4Niv = glVertexAttrib4NivARB
+	.globl glVertexAttrib4Nsv ; .type glVertexAttrib4Nsv,#function ; glVertexAttrib4Nsv = glVertexAttrib4NsvARB
+	.globl glVertexAttrib4Nub ; .type glVertexAttrib4Nub,#function ; glVertexAttrib4Nub = glVertexAttrib4NubARB
+	.globl glVertexAttrib4Nubv ; .type glVertexAttrib4Nubv,#function ; glVertexAttrib4Nubv = glVertexAttrib4NubvARB
+	.globl glVertexAttrib4Nuiv ; .type glVertexAttrib4Nuiv,#function ; glVertexAttrib4Nuiv = glVertexAttrib4NuivARB
+	.globl glVertexAttrib4Nusv ; .type glVertexAttrib4Nusv,#function ; glVertexAttrib4Nusv = glVertexAttrib4NusvARB
+	.globl glVertexAttrib4d ; .type glVertexAttrib4d,#function ; glVertexAttrib4d = glVertexAttrib4dARB
+	.globl glVertexAttrib4dv ; .type glVertexAttrib4dv,#function ; glVertexAttrib4dv = glVertexAttrib4dvARB
+	.globl glVertexAttrib4f ; .type glVertexAttrib4f,#function ; glVertexAttrib4f = glVertexAttrib4fARB
+	.globl glVertexAttrib4fv ; .type glVertexAttrib4fv,#function ; glVertexAttrib4fv = glVertexAttrib4fvARB
+	.globl glVertexAttrib4s ; .type glVertexAttrib4s,#function ; glVertexAttrib4s = glVertexAttrib4sARB
+	.globl glVertexAttrib4sv ; .type glVertexAttrib4sv,#function ; glVertexAttrib4sv = glVertexAttrib4svARB
+	.globl glVertexAttribPointer ; .type glVertexAttribPointer,#function ; glVertexAttribPointer = glVertexAttribPointerARB
 	.globl glBindBuffer ; .type glBindBuffer,#function ; glBindBuffer = glBindBufferARB
 	.globl glBufferData ; .type glBufferData,#function ; glBufferData = glBufferDataARB
 	.globl glBufferSubData ; .type glBufferSubData,#function ; glBufferSubData = glBufferSubDataARB
@@ -1682,6 +1745,38 @@ _mesa_sparc_glapi_end:
 	.globl glGetQueryObjectuiv ; .type glGetQueryObjectuiv,#function ; glGetQueryObjectuiv = glGetQueryObjectuivARB
 	.globl glGetQueryiv ; .type glGetQueryiv,#function ; glGetQueryiv = glGetQueryivARB
 	.globl glIsQuery ; .type glIsQuery,#function ; glIsQuery = glIsQueryARB
+	.globl glCompileShader ; .type glCompileShader,#function ; glCompileShader = glCompileShaderARB
+	.globl glGetActiveUniform ; .type glGetActiveUniform,#function ; glGetActiveUniform = glGetActiveUniformARB
+	.globl glGetShaderSource ; .type glGetShaderSource,#function ; glGetShaderSource = glGetShaderSourceARB
+	.globl glGetUniformLocation ; .type glGetUniformLocation,#function ; glGetUniformLocation = glGetUniformLocationARB
+	.globl glGetUniformfv ; .type glGetUniformfv,#function ; glGetUniformfv = glGetUniformfvARB
+	.globl glGetUniformiv ; .type glGetUniformiv,#function ; glGetUniformiv = glGetUniformivARB
+	.globl glLinkProgram ; .type glLinkProgram,#function ; glLinkProgram = glLinkProgramARB
+	.globl glShaderSource ; .type glShaderSource,#function ; glShaderSource = glShaderSourceARB
+	.globl glUniform1f ; .type glUniform1f,#function ; glUniform1f = glUniform1fARB
+	.globl glUniform1fv ; .type glUniform1fv,#function ; glUniform1fv = glUniform1fvARB
+	.globl glUniform1i ; .type glUniform1i,#function ; glUniform1i = glUniform1iARB
+	.globl glUniform1iv ; .type glUniform1iv,#function ; glUniform1iv = glUniform1ivARB
+	.globl glUniform2f ; .type glUniform2f,#function ; glUniform2f = glUniform2fARB
+	.globl glUniform2fv ; .type glUniform2fv,#function ; glUniform2fv = glUniform2fvARB
+	.globl glUniform2i ; .type glUniform2i,#function ; glUniform2i = glUniform2iARB
+	.globl glUniform2iv ; .type glUniform2iv,#function ; glUniform2iv = glUniform2ivARB
+	.globl glUniform3f ; .type glUniform3f,#function ; glUniform3f = glUniform3fARB
+	.globl glUniform3fv ; .type glUniform3fv,#function ; glUniform3fv = glUniform3fvARB
+	.globl glUniform3i ; .type glUniform3i,#function ; glUniform3i = glUniform3iARB
+	.globl glUniform3iv ; .type glUniform3iv,#function ; glUniform3iv = glUniform3ivARB
+	.globl glUniform4f ; .type glUniform4f,#function ; glUniform4f = glUniform4fARB
+	.globl glUniform4fv ; .type glUniform4fv,#function ; glUniform4fv = glUniform4fvARB
+	.globl glUniform4i ; .type glUniform4i,#function ; glUniform4i = glUniform4iARB
+	.globl glUniform4iv ; .type glUniform4iv,#function ; glUniform4iv = glUniform4ivARB
+	.globl glUniformMatrix2fv ; .type glUniformMatrix2fv,#function ; glUniformMatrix2fv = glUniformMatrix2fvARB
+	.globl glUniformMatrix3fv ; .type glUniformMatrix3fv,#function ; glUniformMatrix3fv = glUniformMatrix3fvARB
+	.globl glUniformMatrix4fv ; .type glUniformMatrix4fv,#function ; glUniformMatrix4fv = glUniformMatrix4fvARB
+	.globl glUseProgram ; .type glUseProgram,#function ; glUseProgram = glUseProgramObjectARB
+	.globl glValidateProgram ; .type glValidateProgram,#function ; glValidateProgram = glValidateProgramARB
+	.globl glBindAttribLocation ; .type glBindAttribLocation,#function ; glBindAttribLocation = glBindAttribLocationARB
+	.globl glGetActiveAttrib ; .type glGetActiveAttrib,#function ; glGetActiveAttrib = glGetActiveAttribARB
+	.globl glGetAttribLocation ; .type glGetAttribLocation,#function ; glGetAttribLocation = glGetAttribLocationARB
 	.globl glDrawBuffers ; .type glDrawBuffers,#function ; glDrawBuffers = glDrawBuffersARB
 	.globl glDrawBuffersATI ; .type glDrawBuffersATI,#function ; glDrawBuffersATI = glDrawBuffersARB
 	.globl glPointParameterf ; .type glPointParameterf,#function ; glPointParameterf = glPointParameterfEXT
