@@ -135,7 +135,6 @@ static const struct {
    { OFF, "GL_ATI_texture_env_combine3",       F(ATI_texture_env_combine3)},
    { OFF, "GL_ATI_texture_mirror_once",        F(ATI_texture_mirror_once)},
    { OFF, "GL_ATI_fragment_shader",            F(ATI_fragment_shader)},
-   { OFF, "GL_ATI_separate_stencil",           F(ATI_separate_stencil)},
    { OFF, "GL_IBM_multimode_draw_arrays",      F(IBM_multimode_draw_arrays) },
    { ON,  "GL_IBM_rasterpos_clip",             F(IBM_rasterpos_clip) },
    { OFF, "GL_IBM_texture_mirrored_repeat",    F(ARB_texture_mirrored_repeat)},
@@ -223,7 +222,6 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #endif
    ctx->Extensions.ATI_texture_env_combine3 = GL_TRUE;
    ctx->Extensions.ATI_texture_mirror_once = GL_TRUE;
-   ctx->Extensions.ATI_separate_stencil = GL_TRUE;
    ctx->Extensions.EXT_blend_color = GL_TRUE;
    ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
    ctx->Extensions.EXT_blend_func_separate = GL_TRUE;
@@ -390,7 +388,6 @@ _mesa_enable_2_0_extensions(GLcontext *ctx)
 #if FEATURE_ARB_shading_language_100
    ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
 #endif
-   ctx->Extensions.ATI_separate_stencil = GL_TRUE;
    ctx->Extensions.EXT_stencil_two_side = GL_FALSE; /* obsolete */
 #if FEATURE_ARB_vertex_shader
    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
