@@ -227,7 +227,12 @@ _swrast_update_fragment_program(GLcontext *ctx, GLbitfield newState)
 {
    if (ctx->FragmentProgram._Enabled) {
       const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
+#if 0
+      /* XXX Need a way to trigger the initial loading of parameters
+       * even when there's no recent state changes.
+       */
       if (fp->Base.Parameters->StateFlags & newState)
+#endif
          _mesa_load_state_parameters(ctx, fp->Base.Parameters);
    }
 }
