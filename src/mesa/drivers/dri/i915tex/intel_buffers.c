@@ -105,32 +105,6 @@ intel_readbuf_region(struct intel_context *intel)
 
 
 
-static void
-intelBufferSize(GLframebuffer * buffer, GLuint * width, GLuint * height)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   struct intel_context *intel = intel_context(ctx);
-   /* Need to lock to make sure the driDrawable is uptodate.  This
-    * information is used to resize Mesa's software buffers, so it has
-    * to be correct.
-    */
-   /* XXX This isn't 100% correct, the given buffer might not be
-    * bound to the current context!
-    */
-   LOCK_HARDWARE(intel);
-   if (intel->driDrawable) {
-      *width = intel->driDrawable->w;
-      *height = intel->driDrawable->h;
-   }
-   else {
-      *width = 0;
-      *height = 0;
-   }
-   UNLOCK_HARDWARE(intel);
-}
-
-
-
 /**
  * Update the following fields for rendering to a user-created FBO:
  *   intel->numClipRects
@@ -949,8 +923,6 @@ void
 intelInitBufferFuncs(struct dd_function_table *functions)
 {
    functions->Clear = intelClear;
-   functions->GetBufferSize = intelBufferSize;
-   functions->ResizeBuffers = _mesa_resize_framebuffer;
    functions->DrawBuffer = intelDrawBuffer;
    functions->ReadBuffer = intelReadBuffer;
 }
