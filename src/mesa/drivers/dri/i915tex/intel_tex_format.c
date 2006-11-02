@@ -136,6 +136,10 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
    case GL_DEPTH_COMPONENT32:
       return &_mesa_texformat_z16;
 
+   case GL_DEPTH_STENCIL_EXT:
+   case GL_DEPTH24_STENCIL8_EXT:
+      return &_mesa_texformat_z24_s8;
+
    default:
       fprintf(stderr, "unexpected texture format %s in %s\n",
               _mesa_lookup_enum_by_nr(internalFormat), __FUNCTION__);

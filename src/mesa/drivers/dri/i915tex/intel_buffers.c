@@ -827,7 +827,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
     ***/
    if (fb->_DepthBuffer && fb->_DepthBuffer->Wrapped) {
       irbDepth = intel_renderbuffer(fb->_DepthBuffer->Wrapped);
-      if (irbDepth->region) {
+      if (irbDepth && irbDepth->region) {
          FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, GL_FALSE);
          depthRegion = irbDepth->region;
       }
