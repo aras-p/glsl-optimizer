@@ -84,12 +84,12 @@ _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
 
 
 extern struct gl_texture_image *
-_mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
+_mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_object *texObj,
                        GLenum target, GLint level);
 
 
 extern struct gl_texture_image *
-_mesa_get_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
+_mesa_get_tex_image(GLcontext *ctx, struct gl_texture_object *texObj,
                     GLenum target, GLint level);
 
 
@@ -105,6 +105,23 @@ extern GLboolean
 _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
                          GLint internalFormat, GLenum format, GLenum type,
                          GLint width, GLint height, GLint depth, GLint border);
+
+
+/* Lock a texture for updating.  See also _mesa_lock_context_textures().
+ */
+static INLINE void _mesa_lock_texture(GLcontext *ctx,
+				      struct gl_texture_object *texObj)
+{
+   _glthread_LOCK_MUTEX(ctx->Shared->TexMutex);
+   ctx->Shared->TextureStateStamp++;
+   (void) texObj;
+}
+
+static INLINE void _mesa_unlock_texture(GLcontext *ctx,
+					struct gl_texture_object *texObj)
+{
+   _glthread_UNLOCK_MUTEX(ctx->Shared->TexMutex);
+}
 
 /*@}*/
 

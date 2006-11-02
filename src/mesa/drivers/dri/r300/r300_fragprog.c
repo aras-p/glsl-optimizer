@@ -82,7 +82,8 @@ static const struct {
 	{ "LG2", 1, R300_FPI0_OUTC_REPL_ALPHA, R300_FPI2_OUTA_LG2 },
 	{ "RCP", 1, R300_FPI0_OUTC_REPL_ALPHA, R300_FPI2_OUTA_RCP },
 	{ "RSQ", 1, R300_FPI0_OUTC_REPL_ALPHA, R300_FPI2_OUTA_RSQ },
-	{ "REPL_ALPHA", 1, R300_FPI0_OUTC_REPL_ALPHA, PFS_INVAL }
+	{ "REPL_ALPHA", 1, R300_FPI0_OUTC_REPL_ALPHA, PFS_INVAL },
+	{ "CMPH", 3, R300_FPI0_OUTC_CMPH, PFS_INVAL },
 };
 
 #define MAKE_SWZ3(x, y, z) (MAKE_SWIZZLE4(SWIZZLE_##x, \
@@ -180,7 +181,7 @@ static const pfs_reg_t undef = {
 	valid: GL_FALSE
 };
 
-/* constant zero source */
+/* constant one source */
 static const pfs_reg_t pfs_one = {
 	type: REG_TYPE_CONST,
 	index: 0,
@@ -189,7 +190,16 @@ static const pfs_reg_t pfs_one = {
 	valid: GL_TRUE
 };
 
-/* constant one source */
+/* constant half source */
+static const pfs_reg_t pfs_half = {
+	type: REG_TYPE_CONST,
+	index: 0,
+	v_swz: SWIZZLE_HHH,
+	s_swz: SWIZZLE_HALF,
+	valid: GL_TRUE
+};
+
+/* constant zero source */
 static const pfs_reg_t pfs_zero = {
 	type: REG_TYPE_CONST,
 	index: 0,
@@ -319,7 +329,6 @@ static pfs_reg_t emit_param4fv(struct r300_fragment_program *rp,
 	return r;
 }
 
-#if 0
 static pfs_reg_t emit_const4fv(struct r300_fragment_program *rp, GLfloat *cp)
 { 
 	pfs_reg_t r = undef;
@@ -330,13 +339,11 @@ static pfs_reg_t emit_const4fv(struct r300_fragment_program *rp, GLfloat *cp)
 		ERROR("Out of hw constants!\n");
 		return r;
 	}
-	
-	COPY_4V(rp->constant[r.index], cp);
 
+	COPY_4V(rp->constant[r.index], cp);
 	r.valid = GL_TRUE;
 	return r;
 }
-#endif
 
 static __inline pfs_reg_t negate(pfs_reg_t r)
 {
@@ -773,13 +780,15 @@ static void emit_tex(struct r300_fragment_program *rp,
 		cs->dest_in_node = 0;
 	}
 	
-	if (rp->cur_node == 0) rp->first_node_has_tex = 1;
+	if (rp->cur_node == 0)
+		rp->first_node_has_tex = 1;
 
-    rp->tex.inst[rp->tex.length++] = 0
-        | (hwsrc << R300_FPITX_SRC_SHIFT)
-        | (hwdest << R300_FPITX_DST_SHIFT)
-        | (unit << R300_FPITX_IMAGE_SHIFT)
-        | (opcode << R300_FPITX_OPCODE_SHIFT); /* not entirely sure about this */
+	rp->tex.inst[rp->tex.length++] = 0
+		| (hwsrc << R300_FPITX_SRC_SHIFT)
+		| (hwdest << R300_FPITX_DST_SHIFT)
+		| (unit << R300_FPITX_IMAGE_SHIFT)
+		/* not entirely sure about this */
+		| (opcode << R300_FPITX_OPCODE_SHIFT);
 
 	cs->dest_in_node |= (1 << hwdest); 
 	if (coord.type != REG_TYPE_CONST)
@@ -884,7 +893,7 @@ static void emit_arith(struct r300_fragment_program *rp, int op,
 
 	vop = r300_fpop[op].v_op;
 	sop = r300_fpop[op].s_op;
-	argc = r300_fpop[op].argc;	
+	argc = r300_fpop[op].argc;
 
 	if ((mask & WRITEMASK_XYZ) || vop == R300_FPI0_OUTC_DP3)
 		emit_vop = GL_TRUE;
@@ -1039,7 +1048,9 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 	const struct prog_instruction *inst = mp->Base.Instructions;
 	struct prog_instruction *fpi;
 	pfs_reg_t src[3], dest, temp;
+	pfs_reg_t cnst;
 	int flags, mask = 0;
+	GLfloat cnstv[4] = {0.0, 0.0, 0.0, 0.0};
 
 	if (!inst || inst[0].Opcode == OPCODE_END) {
 		ERROR("empty program?\n");
@@ -1179,7 +1190,66 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 				   flags);
 			break;
 		case OPCODE_LIT:
-			ERROR("LIT not implemented\n");
+			/* LIT
+			 * if (s.x < 0) t.x = 0; else t.x = s.x;
+			 * if (s.y < 0) t.y = 0; else t.y = s.y;
+			 * if (s.w >  128.0) t.w =  128.0; else t.w = s.w;
+			 * if (s.w < -128.0) t.w = -128.0; else t.w = s.w;
+			 * r.x = 1.0
+			 * if (t.x > 0) r.y = pow(t.y, t.w); else r.y = 0;
+			 * Also r.y = 0 if t.y < 0
+			 * For the t.x > 0 FGLRX use the CMPH opcode which
+			 * change the compare to (t.x + 0.5) > 0.5 we may
+			 * save one instruction by doing CMP -t.x 
+			 */
+			cnstv[0] = cnstv[1] = cnstv[2] = cnstv[4] = 0.50001;
+			src[0] = t_src(rp, fpi->SrcReg[0]);
+			temp = get_temp_reg(rp);
+			cnst = emit_const4fv(rp, cnstv);
+			emit_arith(rp, PFS_OP_CMP, temp,
+				   WRITEMASK_X | WRITEMASK_Y,
+				   src[0], pfs_zero, src[0], flags);
+			emit_arith(rp, PFS_OP_MIN, temp, WRITEMASK_Z,
+				   swizzle(keep(src[0]), W, W, W, W),
+				   cnst, undef, flags);
+			emit_arith(rp, PFS_OP_LG2, temp, WRITEMASK_W,
+				   swizzle(temp, Y, Y, Y, Y),
+				   undef, undef, flags);
+			emit_arith(rp, PFS_OP_MAX, temp, WRITEMASK_Z,
+				   temp, negate(cnst), undef, flags);
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_W,
+				   temp, swizzle(temp, Z, Z, Z, Z),
+				   pfs_zero, flags);
+			emit_arith(rp, PFS_OP_EX2, temp, WRITEMASK_W,
+				   temp, undef, undef, flags);
+			emit_arith(rp, PFS_OP_MAD, dest, WRITEMASK_Y,
+				   swizzle(keep(temp), X, X, X, X),
+				   pfs_one, pfs_zero, flags);
+#if 0
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
+				   temp, pfs_one, pfs_half, flags);
+			emit_arith(rp, PFS_OP_CMPH, temp, WRITEMASK_Z,
+				   swizzle(keep(temp), W, W, W, W),
+				   pfs_zero, swizzle(keep(temp), X, X, X, X),
+				   flags);
+#else
+			emit_arith(rp, PFS_OP_CMP, temp, WRITEMASK_Z,
+				   pfs_zero,
+				   swizzle(keep(temp), W, W, W, W),
+				   negate(swizzle(keep(temp), X, X, X, X)),
+				   flags);
+#endif
+			emit_arith(rp, PFS_OP_CMP, dest, WRITEMASK_Z,
+				   pfs_zero, temp,
+				   negate(swizzle(keep(temp), Y, Y, Y, Y)),
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, dest,
+				   WRITEMASK_X | WRITEMASK_W,
+				   pfs_one,
+				   pfs_one,
+				   pfs_zero,
+				   flags);
+			free_temp(rp, temp);
 			break;
 		case OPCODE_LRP:
 			src[0] = t_src(rp, fpi->SrcReg[0]);
@@ -1345,7 +1415,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			return GL_FALSE;
 
 	}
-	
+
 	return GL_TRUE;
 }
 

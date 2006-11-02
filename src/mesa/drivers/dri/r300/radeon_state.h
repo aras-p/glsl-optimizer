@@ -34,7 +34,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_context.h"
 
 extern void radeonRecalcScissorRects(radeonContextPtr radeon);
-extern void radeonSetCliprects(radeonContextPtr radeon, GLenum mode);
+extern void radeonSetCliprects(radeonContextPtr radeon);
 extern void radeonUpdateScissor(GLcontext* ctx);
 
 extern void radeonEnable(GLcontext* ctx, GLenum cap, GLboolean state);

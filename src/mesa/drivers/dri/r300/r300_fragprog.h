@@ -78,7 +78,8 @@ typedef struct r300_fragment_program_swizzle {
 #define PFS_OP_RCP 9
 #define PFS_OP_RSQ 10
 #define PFS_OP_REPL_ALPHA 11
-#define MAX_PFS_OP 11
+#define PFS_OP_CMPH 12
+#define MAX_PFS_OP 12
 
 #define PFS_FLAG_SAT	(1 << 0)
 #define PFS_FLAG_ABS	(1 << 1)

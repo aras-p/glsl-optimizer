@@ -204,8 +204,7 @@ drmBufPtr mga_get_buffer_ioctl( mgaContextPtr mmesa )
 
 
 static void
-mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
-          GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo )
+mgaClear( GLcontext *ctx, GLbitfield mask )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
@@ -334,7 +333,7 @@ mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
    }
 
    if (mask) 
-      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0 );
+      _swrast_Clear( ctx, mask );
 }
 
 

@@ -697,7 +697,11 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
       if (textures[i] > 0) {
          struct gl_texture_object *delObj
             = _mesa_lookup_texture(ctx, textures[i]);
+
          if (delObj) {
+	    GLboolean delete;
+
+	    _mesa_lock_texture(ctx, delObj);
 
             /* Check if texture is bound to any framebuffer objects.
              * If so, unbind.
@@ -724,7 +728,14 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
              * XXX all RefCount accesses should be protected by a mutex.
              */
             delObj->RefCount--;
-            if (delObj->RefCount == 0) {
+	    delete = (delObj->RefCount == 0);
+	    _mesa_unlock_texture(ctx, delObj);
+
+	    /* We know that refcount went to zero above, so this is
+	     * the only pointer left to delObj, so we don't have to
+	     * worry about locking any more:
+	     */
+            if (delete) {
                ASSERT(delObj->Name != 0); /* Never delete default tex objs */
                ASSERT(ctx->Driver.DeleteTexture);
                (*ctx->Driver.DeleteTexture)(ctx, delObj);
@@ -1052,4 +1063,30 @@ _mesa_IsTexture( GLuint texture )
    return t && t->Target;
 }
 
+/* Simplest implementation of texture locking: Grab the a new mutex in
+ * the shared context.  Examine the shared context state timestamp and
+ * if there has been a change, set the appropriate bits in
+ * ctx->NewState.
+ *
+ * See also _mesa_lock/unlock_texture in texobj.h
+ */
+void _mesa_lock_context_textures( GLcontext *ctx )
+{
+   _glthread_LOCK_MUTEX(ctx->Shared->TexMutex);
+
+   if (ctx->Shared->TextureStateStamp != ctx->TextureStateTimestamp) {
+      ctx->NewState |= _NEW_TEXTURE;
+      ctx->TextureStateTimestamp = ctx->Shared->TextureStateStamp;
+   }
+}
+
+
+void _mesa_unlock_context_textures( GLcontext *ctx )
+{
+   assert(ctx->Shared->TextureStateStamp == ctx->TextureStateTimestamp);
+   _glthread_UNLOCK_MUTEX(ctx->Shared->TexMutex);
+}
+
 /*@}*/
+
+

@@ -978,17 +978,19 @@ StateVars = [
 
 	# GL_ARB_fragment_shader
 	( "GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB", GLint,
-	  ["MAX_FRAGMENT_UNIFORM_COMPONENTS"], "", ["ARB_fragment_shader"] ),
+	  ["ctx->Const.FragmentProgram.MaxUniformComponents"], "",
+	  ["ARB_fragment_shader"] ),
 	( "GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB", GLenum,
 	  ["ctx->Hint.FragmentShaderDerivative"], "", ["ARB_fragment_shader"] ),
 
 	# GL_ARB_vertex_shader
 	( "GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB", GLint,
-	  ["MAX_VERTEX_UNIFORM_COMPONENTS"], "", ["ARB_vertex_shader"] ),
+	  ["ctx->Const.VertexProgram.MaxUniformComponents"], "",
+	  ["ARB_vertex_shader"] ),
 	( "GL_MAX_VARYING_FLOATS_ARB", GLint,
-	  ["MAX_VARYING_FLOATS"], "", ["ARB_vertex_shader"] ),
+	  ["ctx->Const.MaxVaryingFloats"], "", ["ARB_vertex_shader"] ),
 	( "GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB", GLint,
-	  ["MAX_VERTEX_TEXTURE_IMAGE_UNITS"], "", ["ARB_vertex_shader"] ),
+	  ["ctx->Const.MaxVertexTextureImageUnits"], "", ["ARB_vertex_shader"] ),
 	( "GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB", GLint,
 	  ["MAX_COMBINED_TEXTURE_IMAGE_UNITS"], "", ["ARB_vertex_shader"] )
 ]

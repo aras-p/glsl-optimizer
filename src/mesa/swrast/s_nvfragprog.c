@@ -41,7 +41,10 @@
 #include "s_span.h"
 
 
-/* if 1, print some debugging info */
+/* See comments below for info about this */
+#define LAMBDA_ZERO 1
+
+/* debug predicate */
 #define DEBUG_FRAG 0
 
 
@@ -178,8 +181,8 @@ get_register_pointer( GLcontext *ctx,
       ASSERT(source->Index < (GLint) program->Base.Parameters->NumParameters);
       return program->Base.Parameters->ParameterValues[source->Index];
    default:
-      _mesa_problem(ctx, "Invalid input register file %d in fetch_vector4",
-                    source->File);
+      _mesa_problem(ctx, "Invalid input register file %d in fp "
+                    "get_register_pointer", source->File);
       return NULL;
    }
 }
@@ -458,7 +461,7 @@ store_vector4( const struct prog_instruction *inst,
          return;
    }
 
-#if DEBUG_FRAG
+#if 0
    if (value[0] > 1.0e10 ||
        IS_INF_OR_NAN(value[0]) ||
        IS_INF_OR_NAN(value[1]) ||
@@ -646,9 +649,9 @@ execute_program( GLcontext *ctx,
 {
    GLuint pc;
 
-#if DEBUG_FRAG
-   printf("execute fragment program --------------------\n");
-#endif
+   if (DEBUG_FRAG) {
+      printf("execute fragment program --------------------\n");
+   }
 
    for (pc = 0; pc < maxInst; pc++) {
       const struct prog_instruction *inst = program->Base.Instructions + pc;
@@ -658,6 +661,10 @@ execute_program( GLcontext *ctx,
          ctx->FragmentProgram.CurrentPosition = inst->StringPos;
          ctx->FragmentProgram.Callback(program->Base.Target,
                                        ctx->FragmentProgram.CallbackData);
+      }
+
+      if (DEBUG_FRAG) {
+         _mesa_print_instruction(inst);
       }
 
       switch (inst->Opcode) {
@@ -682,6 +689,12 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] + b[2];
                result[3] = a[3] + b[3];
                store_vector4( inst, machine, result );
+               if (DEBUG_FRAG) {
+                  printf("ADD (%g %g %g %g) = (%g %g %g %g) + (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3], 
+                         a[0], a[1], a[2], a[3],
+                         b[0], b[1], b[2], b[3]);
+               }
             }
             break;
          case OPCODE_CMP:
@@ -758,10 +771,10 @@ execute_program( GLcontext *ctx,
                fetch_vector4( ctx, &inst->SrcReg[1], machine, program, b );
                result[0] = result[1] = result[2] = result[3] = DOT3(a, b);
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("DP3 %g = (%g %g %g) . (%g %g %g)\n",
-                      result[0], a[0], a[1], a[2], b[0], b[1], b[2]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("DP3 %g = (%g %g %g) . (%g %g %g)\n",
+                         result[0], a[0], a[1], a[2], b[0], b[1], b[2]);
+               }
             }
             break;
          case OPCODE_DP4:
@@ -771,10 +784,11 @@ execute_program( GLcontext *ctx,
                fetch_vector4( ctx, &inst->SrcReg[1], machine, program, b );
                result[0] = result[1] = result[2] = result[3] = DOT4(a,b);
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("DP4 %g = (%g, %g %g %g) . (%g, %g %g %g)\n",
-                      result[0], a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("DP4 %g = (%g, %g %g %g) . (%g, %g %g %g)\n",
+                         result[0], a[0], a[1], a[2], a[3],
+                         b[0], b[1], b[2], b[3]);
+               }
             }
             break;
          case OPCODE_DPH:
@@ -882,6 +896,11 @@ execute_program( GLcontext *ctx,
                }
                result[3] = 1.0F;
                store_vector4( inst, machine, result );
+               if (DEBUG_FRAG) {
+                  printf("LIT (%g %g %g %g) : (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3],
+                         a[0], a[1], a[2], a[3]);
+               }
             }
             break;
          case OPCODE_LRP:
@@ -895,14 +914,14 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] * b[2] + (1.0F - a[2]) * c[2];
                result[3] = a[3] * b[3] + (1.0F - a[3]) * c[3];
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("LRP (%g %g %g %g) = (%g %g %g %g), "
-                      "(%g %g %g %g), (%g %g %g %g)\n",
-                      result[0], result[1], result[2], result[3],
-                      a[0], a[1], a[2], a[3],
-                      b[0], b[1], b[2], b[3],
-                      c[0], c[1], c[2], c[3]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("LRP (%g %g %g %g) = (%g %g %g %g), "
+                         "(%g %g %g %g), (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3],
+                         a[0], a[1], a[2], a[3],
+                         b[0], b[1], b[2], b[3],
+                         c[0], c[1], c[2], c[3]);
+               }
             }
             break;
          case OPCODE_MAD:
@@ -916,6 +935,14 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] * b[2] + c[2];
                result[3] = a[3] * b[3] + c[3];
                store_vector4( inst, machine, result );
+               if (DEBUG_FRAG) {
+                  printf("MAD (%g %g %g %g) = (%g %g %g %g) * "
+                         "(%g %g %g %g) + (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3],
+                         a[0], a[1], a[2], a[3],
+                         b[0], b[1], b[2], b[3],
+                         c[0], c[1], c[2], c[3]);
+               }
             }
             break;
          case OPCODE_MAX:
@@ -928,12 +955,12 @@ execute_program( GLcontext *ctx,
                result[2] = MAX2(a[2], b[2]);
                result[3] = MAX2(a[3], b[3]);
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("MAX (%g %g %g %g) = (%g %g %g %g), (%g %g %g %g)\n",
-                      result[0], result[1], result[2], result[3], 
-                      a[0], a[1], a[2], a[3],
-                      b[0], b[1], b[2], b[3]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("MAX (%g %g %g %g) = (%g %g %g %g), (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3], 
+                         a[0], a[1], a[2], a[3],
+                         b[0], b[1], b[2], b[3]);
+               }
             }
             break;
          case OPCODE_MIN:
@@ -953,10 +980,10 @@ execute_program( GLcontext *ctx,
                GLfloat result[4];
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, result );
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("MOV (%g %g %g %g)\n",
-                      result[0], result[1], result[2], result[3]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("MOV (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3]);
+               }
             }
             break;
          case OPCODE_MUL:
@@ -969,12 +996,12 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] * b[2];
                result[3] = a[3] * b[3];
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("MUL (%g %g %g %g) = (%g %g %g %g) * (%g %g %g %g)\n",
-                      result[0], result[1], result[2], result[3], 
-                      a[0], a[1], a[2], a[3],
-                      b[0], b[1], b[2], b[3]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("MUL (%g %g %g %g) = (%g %g %g %g) * (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3], 
+                         a[0], a[1], a[2], a[3],
+                         b[0], b[1], b[2], b[3]);
+               }
             }
             break;
          case OPCODE_PK2H: /* pack two 16-bit floats in one 32-bit float */
@@ -1056,12 +1083,12 @@ execute_program( GLcontext *ctx,
             {
                GLfloat a[4], result[4];
                fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
-#if DEBUG_FRAG
-               if (a[0] == 0)
-                  printf("RCP(0)\n");
-               else if (IS_INF_OR_NAN(a[0]))
-                  printf("RCP(inf)\n");
-#endif
+               if (DEBUG_FRAG) {
+                  if (a[0] == 0)
+                     printf("RCP(0)\n");
+                  else if (IS_INF_OR_NAN(a[0]))
+                     printf("RCP(inf)\n");
+               }
                result[0] = result[1] = result[2] = result[3] = 1.0F / a[0];
                store_vector4( inst, machine, result );
             }
@@ -1087,9 +1114,9 @@ execute_program( GLcontext *ctx,
                a[0] = FABSF(a[0]);
                result[0] = result[1] = result[2] = result[3] = INV_SQRTF(a[0]);
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("RSQ %g = 1/sqrt(|%g|)\n", result[0], a[0]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("RSQ %g = 1/sqrt(|%g|)\n", result[0], a[0]);
+               }
             }
             break;
          case OPCODE_SCS: /* sine and cos */
@@ -1206,11 +1233,11 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] - b[2];
                result[3] = a[3] - b[3];
                store_vector4( inst, machine, result );
-#if DEBUG_FRAG
-               printf("SUB (%g %g %g %g) = (%g %g %g %g) - (%g %g %g %g)\n",
-                      result[0], result[1], result[2], result[3],
-                      a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3]);
-#endif
+               if (DEBUG_FRAG) {
+                  printf("SUB (%g %g %g %g) = (%g %g %g %g) - (%g %g %g %g)\n",
+                         result[0], result[1], result[2], result[3],
+                         a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3]);
+               }
             }
             break;
          case OPCODE_SWZ: /* extended swizzle */
@@ -1240,44 +1267,47 @@ execute_program( GLcontext *ctx,
          case OPCODE_TEX: /* Both ARB and NV frag prog */
             /* Texel lookup */
             {
-               GLfloat texcoord[4], color[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
-               /* Note: we pass 0 for LOD.  The ARB extension requires it
-                * while the NV extension says it's implementation dependant.
+               /* Note: only use the precomputed lambda value when we're
+                * sampling texture unit [K] with texcoord[K].
+                * Otherwise, the lambda value may have no relation to the
+                * instruction's texcoord or texture image.  Using the wrong
+                * lambda is usually bad news.
+                * The rest of the time, just use zero (until we get a more
+                * sophisticated way of computing lambda).
                 */
-               /* KW: Previously lambda was passed as zero, but I
-		* believe this is incorrect, the spec seems to
-		* indicate rather that lambda should not be
-		* changed/biased, unlike TXB where texcoord[3] is
-		* added to the lambda calculations.  The lambda should
-		* still be calculated normally for TEX & TXP though,
-		* not set to zero.  Otherwise it's very difficult to
-		* implement normal GL semantics through the fragment
-		* shader.
-		*/
-               fetch_texel( ctx, texcoord, 
-			    span->array->lambda[inst->TexSrcUnit][column],
-			    inst->TexSrcUnit, color );
-#if DEBUG_FRAG
-               if (color[3])
-                  printf("color[3] = %f\n", color[3]);
-#endif
+               GLfloat coord[4], color[4], lambda;
+               if (inst->SrcReg[0].File == PROGRAM_INPUT &&
+                   inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0+inst->TexSrcUnit)
+                  lambda = span->array->lambda[inst->TexSrcUnit][column];
+               else
+                  lambda = 0.0;
+               fetch_vector4(ctx, &inst->SrcReg[0], machine, program, coord);
+               fetch_texel( ctx, coord, lambda, inst->TexSrcUnit, color );
+               if (DEBUG_FRAG) {
+                  printf("TEX (%g, %g, %g, %g) = texture[%d][%g, %g, %g, %g], "
+                         "lod %f\n",
+                         color[0], color[1], color[2], color[3],
+                         inst->TexSrcUnit,
+                         coord[0], coord[1], coord[2], coord[3], lambda);
+               }
                store_vector4( inst, machine, color );
             }
             break;
          case OPCODE_TXB: /* GL_ARB_fragment_program only */
             /* Texel lookup with LOD bias */
             {
-               GLfloat texcoord[4], color[4], bias, lambda;
-
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
-               /* texcoord[3] is the bias to add to lambda */
+               GLfloat coord[4], color[4], lambda, bias;
+               if (inst->SrcReg[0].File == PROGRAM_INPUT &&
+                   inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0+inst->TexSrcUnit)
+                  lambda = span->array->lambda[inst->TexSrcUnit][column];
+               else
+                  lambda = 0.0;
+               fetch_vector4(ctx, &inst->SrcReg[0], machine, program, coord);
+               /* coord[3] is the bias to add to lambda */
                bias = ctx->Texture.Unit[inst->TexSrcUnit].LodBias
                     + ctx->Texture.Unit[inst->TexSrcUnit]._Current->LodBias
-                    + texcoord[3];
-               lambda = span->array->lambda[inst->TexSrcUnit][column] + bias;
-               fetch_texel( ctx, texcoord, lambda,
-                            inst->TexSrcUnit, color );
+                    + coord[3];
+               fetch_texel(ctx, coord, lambda + bias, inst->TexSrcUnit, color);
                store_vector4( inst, machine, color );
             }
             break;
@@ -1296,8 +1326,13 @@ execute_program( GLcontext *ctx,
          case OPCODE_TXP: /* GL_ARB_fragment_program only */
             /* Texture lookup w/ projective divide */
             {
-               GLfloat texcoord[4], color[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
+               GLfloat texcoord[4], color[4], lambda;
+               if (inst->SrcReg[0].File == PROGRAM_INPUT &&
+                   inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0+inst->TexSrcUnit)
+                  lambda = span->array->lambda[inst->TexSrcUnit][column];
+               else
+                  lambda = 0.0;
+               fetch_vector4(ctx, &inst->SrcReg[0], machine, program,texcoord);
 	       /* Not so sure about this test - if texcoord[3] is
 		* zero, we'd probably be fine except for an ASSERT in
 		* IROUND_POS() which gets triggered by the inf values created.
@@ -1307,34 +1342,27 @@ execute_program( GLcontext *ctx,
 		  texcoord[1] /= texcoord[3];
 		  texcoord[2] /= texcoord[3];
 	       }
-               /* KW: Previously lambda was passed as zero, but I
-		* believe this is incorrect, the spec seems to
-		* indicate rather that lambda should not be
-		* changed/biased, unlike TXB where texcoord[3] is
-		* added to the lambda calculations.  The lambda should
-		* still be calculated normally for TEX & TXP though,
-		* not set to zero.
-		*/
-               fetch_texel( ctx, texcoord, 
-			    span->array->lambda[inst->TexSrcUnit][column],
-			    inst->TexSrcUnit, color );
+               fetch_texel( ctx, texcoord, lambda, inst->TexSrcUnit, color );
                store_vector4( inst, machine, color );
             }
             break;
          case OPCODE_TXP_NV: /* GL_NV_fragment_program only */
             /* Texture lookup w/ projective divide */
             {
-               GLfloat texcoord[4], color[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
+               GLfloat texcoord[4], color[4], lambda;
+               if (inst->SrcReg[0].File == PROGRAM_INPUT &&
+                   inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0+inst->TexSrcUnit)
+                  lambda = span->array->lambda[inst->TexSrcUnit][column];
+               else
+                  lambda = 0.0;
+               fetch_vector4(ctx, &inst->SrcReg[0], machine, program,texcoord);
                if (inst->TexSrcTarget != TEXTURE_CUBE_INDEX &&
 		   texcoord[3] != 0.0) {
                   texcoord[0] /= texcoord[3];
                   texcoord[1] /= texcoord[3];
                   texcoord[2] /= texcoord[3];
                }
-               fetch_texel( ctx, texcoord,
-                            span->array->lambda[inst->TexSrcUnit][column],
-                            inst->TexSrcUnit, color );
+               fetch_texel( ctx, texcoord, lambda, inst->TexSrcUnit, color );
                store_vector4( inst, machine, color );
             }
             break;
@@ -1571,10 +1599,6 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
    ASSERT(span->array->ChanType == GL_FLOAT);
 
    ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
-
-   if (program->Base.Parameters) {
-      _mesa_load_state_parameters(ctx, program->Base.Parameters);
-   }   
 
    run_program(ctx, span, 0, span->end);
 

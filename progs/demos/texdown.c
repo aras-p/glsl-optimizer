@@ -38,13 +38,39 @@
 #include <GL/glut.h>
 
 
-static GLsizei MaxSize = 1024;
-static GLsizei TexWidth = 256, TexHeight = 256, TexBorder = 0;
+static GLsizei MaxSize = 2048;
+static GLsizei TexWidth = 1024, TexHeight = 1024, TexBorder = 0;
 static GLboolean ScaleAndBias = GL_FALSE;
 static GLboolean SubImage = GL_FALSE;
 static GLdouble DownloadRate = 0.0;  /* texels/sec */
 
 static GLuint Mode = 0;
+
+
+/* Try and avoid L2 cache effects by cycling through a small number of
+ * textures.
+ * 
+ * At the initial size of 1024x1024x4 == 4mbyte, say 8 textures will
+ * keep us out of most caches at 32mb total.
+ *
+ * This turns into a fairly interesting question of what exactly you
+ * expect to be in cache in normal usage, and what you think should be
+ * outside.  There's no rules for this, no reason to favour one usage
+ * over another except what the application you care about happens to
+ * resemble most closely.
+ *
+ * - Should the client texture image be in L2 cache?  Has it just been
+ *   generated or read from disk?
+ * - Does the application really use >1 texture, or is it constantly 
+ *   updating one image in-place?
+ *
+ * Different answers will favour different texture upload mechanisms.
+ * To upload an image that is purely outside of cache, a DMA-based
+ * upload will probably win, whereas for small, in-cache textures,
+ * copying looks good.
+ */
+#define NR_TEXOBJ 4
+static GLuint TexObj[NR_TEXOBJ];
 
 
 struct FormatRec {
@@ -116,25 +142,57 @@ TypeStr(GLenum type)
    }
 }
 
+/* On x86, there is a performance cliff for memcpy to texture memory
+ * for sources below 64 byte alignment.  We do our best with this in
+ * the driver, but it is better if the images are correctly aligned to
+ * start with:
+ */
+#define ALIGN (1<<12)
+
+static unsigned align(unsigned value, unsigned a)
+{
+   return (value + a - 1) & ~(a-1);
+}
+
+static int MIN2(int a, int b)
+{
+   return a < b ? a : b;
+}
 
 static void
 MeasureDownloadRate(void)
 {
    const int w = TexWidth + 2 * TexBorder;
    const int h = TexHeight + 2 * TexBorder;
-   const int bytes = w * h * BytesPerTexel(Format);
+   const int image_bytes = align(w * h * BytesPerTexel(Format), ALIGN);
+   const int bytes = image_bytes * NR_TEXOBJ;
+   GLubyte *orig_texImage, *orig_getImage;
    GLubyte *texImage, *getImage;
    GLdouble t0, t1, time;
    int count;
    int i;
+   int offset = 0;
+   GLdouble total = 0;		/* ints will tend to overflow */
 
-   texImage = (GLubyte *) malloc(bytes);
-   getImage = (GLubyte *) malloc(bytes);
-   if (!texImage || !getImage) {
+   printf("allocating %d bytes for %d %dx%d images\n",
+	  bytes, NR_TEXOBJ, w, h);
+
+   orig_texImage = (GLubyte *) malloc(bytes + ALIGN);
+   orig_getImage = (GLubyte *) malloc(image_bytes + ALIGN);
+   if (!orig_texImage || !orig_getImage) {
       DownloadRate = 0.0;
       return;
    }
 
+   printf("alloc %p %p\n", orig_texImage, orig_getImage);
+
+   texImage = (GLubyte *)align((unsigned)orig_texImage, ALIGN);
+   getImage = (GLubyte *)align((unsigned)orig_getImage, ALIGN);   
+
+   for (i = 1; !(((unsigned)texImage) & i); i<<=1)
+      ;
+   printf("texture image alignment: %d bytes (%p)\n", i, texImage);
+      
    for (i = 0; i < bytes; i++) {
       texImage[i] = i & 0xff;
    }
@@ -166,16 +224,50 @@ MeasureDownloadRate(void)
    count = 0;
    t0 = glutGet(GLUT_ELAPSED_TIME) * 0.001;
    do {
+      int img = count%NR_TEXOBJ;
+      GLubyte *img_ptr = texImage + img * image_bytes;
+
+      glBindTexture(GL_TEXTURE_2D, TexObj[img]);
+
       if (SubImage && count > 0) {
-         glTexSubImage2D(GL_TEXTURE_2D, 0, -TexBorder, -TexBorder, w, h,
+	 /* Only update a portion of the image each iteration.  This
+	  * is presumably why you'd want to use texsubimage, otherwise
+	  * you may as well just call teximage again.
+	  *
+	  * A bigger question is whether to use a pointer that moves
+	  * with each call, ie does the incoming data come from L2
+	  * cache under normal circumstances, or is it pulled from
+	  * uncached memory?  
+	  * 
+	  * There's a good argument to say L2 cache, ie you'd expect
+	  * the data to have been recently generated.  It's possible
+	  * that it could have come from a file read, which may or may
+	  * not have gone through the cpu.
+	  */
+         glTexSubImage2D(GL_TEXTURE_2D, 0, 
+			 -TexBorder, 
+			 -TexBorder + offset * h/8, 
+			 w, 
+			 h/8,
                          FormatTable[Format].Format,
-                         FormatTable[Format].Type, texImage);
+                         FormatTable[Format].Type, 
+#if 1
+			 texImage /* likely in L2$ */
+#else
+			 img_ptr + offset * bytes/8 /* unlikely in L2$ */
+#endif
+	    );
+	 offset += 1;
+	 offset %= 8;
+	 total += w * h / 8;
       }
       else {
          glTexImage2D(GL_TEXTURE_2D, 0,
                       FormatTable[Format].IntFormat, w, h, TexBorder,
                       FormatTable[Format].Format,
-                      FormatTable[Format].Type, texImage);
+                      FormatTable[Format].Type, 
+		      img_ptr);
+	 total += w*h;
       }
 
       /* draw a tiny polygon to force texture into texram */
@@ -192,25 +284,12 @@ MeasureDownloadRate(void)
 
    glDisable(GL_TEXTURE_2D);
 
-   printf("w*h=%d  count=%d  time=%f\n", w*h, count, time);
-   DownloadRate = w * h * count / time;
+   printf("total texels=%f  time=%f\n", total, time);
+   DownloadRate = total / time;
 
-#if 0
-   if (!ScaleAndBias) {
-      /* verify texture readback */
-      glGetTexImage(GL_TEXTURE_2D, 0,
-                    FormatTable[Format].Format,
-                    FormatTable[Format].Type, getImage);
-      for (i = 0; i < w * h; i++) {
-         if (texImage[i] != getImage[i]) {
-            printf("[%d] %d != %d\n", i, texImage[i], getImage[i]);
-         }
-      }
-   }
-#endif
 
-   free(texImage);
-   free(getImage);
+   free(orig_texImage); 
+   free(orig_getImage); 
 
    {
       GLint err = glGetError();

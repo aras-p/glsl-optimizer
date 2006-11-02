@@ -395,13 +395,15 @@ static void draw_poly(i830ContextPtr i830,
 
 void 
 i830ClearWithTris(intelContextPtr intel, GLbitfield mask,
-		  GLboolean all,
-		  GLint cx, GLint cy, GLint cw, GLint ch)
+		  GLboolean allFoo,
+		  GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo)
 {
    i830ContextPtr i830 = I830_CONTEXT( intel );
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    intelScreenPrivate *screen = intel->intelScreen;
    int x0, y0, x1, y1;
+   GLint cx, cy, cw, ch;
+   GLboolean all;
 
    INTEL_FIREVERTICES(intel);
    SET_STATE( i830, meta );
@@ -410,6 +412,14 @@ i830ClearWithTris(intelContextPtr intel, GLbitfield mask,
    set_vertex_format( i830 ); 
 
    LOCK_HARDWARE(intel);
+
+   /* get clear bounds after locking */
+   cx = intel->ctx.DrawBuffer->_Xmin;
+   cy = intel->ctx.DrawBuffer->_Ymin;
+   cw = intel->ctx.DrawBuffer->_Xmax - cx;
+   ch = intel->ctx.DrawBuffer->_Ymax - cy;
+   all = (cw == intel->ctx.DrawBuffer->Width &&
+          ch == intel->ctx.DrawBuffer->Height);
 
    if(!all) {
       x0 = cx;

@@ -223,11 +223,12 @@ _swrast_update_fog_state( GLcontext *ctx )
  * program parameters with current state values.
  */
 static void
-_swrast_update_fragment_program( GLcontext *ctx )
+_swrast_update_fragment_program(GLcontext *ctx, GLbitfield newState)
 {
    if (ctx->FragmentProgram._Enabled) {
       const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
-      _mesa_load_state_parameters(ctx, fp->Base.Parameters);
+      if (fp->Base.Parameters->StateFlags & newState)
+         _mesa_load_state_parameters(ctx, fp->Base.Parameters);
    }
 }
 
@@ -521,8 +522,18 @@ _swrast_validate_derived( GLcontext *ctx )
       if (swrast->NewState & (_NEW_FOG | _NEW_PROGRAM))
          _swrast_update_fog_state( ctx );
 
-      if (swrast->NewState & _NEW_PROGRAM)
-	 _swrast_update_fragment_program( ctx );
+      if (swrast->NewState & (_NEW_MODELVIEW |
+                              _NEW_PROJECTION |
+                              _NEW_TEXTURE_MATRIX |
+                              _NEW_FOG |
+                              _NEW_LIGHT |
+                              _NEW_LINE |
+                              _NEW_TEXTURE |
+                              _NEW_TRANSFORM |
+                              _NEW_POINT |
+                              _NEW_VIEWPORT |
+                              _NEW_PROGRAM))
+	 _swrast_update_fragment_program( ctx, swrast->NewState );
 
       if (swrast->NewState & _NEW_TEXTURE)
          _swrast_update_texture_samplers( ctx );

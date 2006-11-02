@@ -249,8 +249,7 @@ ffb_do_clear(GLcontext *ctx, __DRIdrawablePrivate *dPriv)
 	}
 }
 
-void ffbDDClear(GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
-		GLint cxFoo, GLint cyFoo, GLint cwidthFoo, GLint cheightFoo)
+void ffbDDClear(GLcontext *ctx, GLbitfield mask)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
@@ -334,6 +333,6 @@ void ffbDDClear(GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
 	}
 
 	if (mask) 
-		_swrast_Clear(ctx, mask, 0, 0, 0, 0, 0);
+		_swrast_Clear(ctx, mask);
 }
 

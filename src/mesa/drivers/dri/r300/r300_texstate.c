@@ -171,7 +171,6 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	GLint i, texelBytes;
 	GLint numLevels;
 	GLint log2Width, log2Height, log2Depth;
-	const GLuint ui = 1;
 
 	/* Set the hardware texture format
 	 */

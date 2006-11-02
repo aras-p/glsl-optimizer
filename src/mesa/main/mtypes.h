@@ -1910,20 +1910,6 @@ struct gl_program_state
 
 
 /**
- * Virtual vertex program machine state.
- * Only used during program execution (may be moved someday):
- */
-struct gl_vertex_program_machine
-{
-   GLfloat Temporaries[MAX_NV_VERTEX_PROGRAM_TEMPS][4];
-   GLfloat Inputs[MAX_NV_VERTEX_PROGRAM_INPUTS][4];
-   GLuint InputsSize[MAX_NV_VERTEX_PROGRAM_INPUTS];
-   GLfloat Outputs[MAX_NV_VERTEX_PROGRAM_OUTPUTS][4];
-   GLint AddressReg[4];
-};
-
-
-/**
  * Context state for vertex programs.
  */
 struct gl_vertex_program_state
@@ -1938,8 +1924,6 @@ struct gl_vertex_program_state
 					          (t_vp_build.c) programs */
 
    GLfloat Parameters[MAX_NV_VERTEX_PROGRAM_PARAMS][4]; /**< Env params */
-
-   struct gl_vertex_program_machine Machine;
 
    /* For GL_NV_vertex_program only: */
    GLenum TrackMatrix[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
@@ -2073,6 +2057,19 @@ struct gl_shared_state
    struct gl_texture_object *DefaultCubeMap;
    struct gl_texture_object *DefaultRect;
    /*@}*/
+
+   /**
+    * \name Thread safety and statechange notification for texture
+    * objects. 
+    *
+    * \todo Improve the granularity of locking.
+    */
+   /*@{*/
+   _glthread_Mutex TexMutex;		   /**< texobj thread safety */
+   GLuint TextureStateStamp;	           /**< state notification for shared tex  */
+   /*@}*/
+
+
 
    /**
     * \name Vertex/fragment programs
@@ -2323,6 +2320,8 @@ struct gl_program_constants
    GLuint MaxNativeTemps;
    GLuint MaxNativeAddressRegs; /* vertex program only, for now */
    GLuint MaxNativeParameters;
+   /* For shaders */
+   GLuint MaxUniformComponents;
 };
 
 
@@ -2372,6 +2371,9 @@ struct gl_constants
    /* GL_EXT_framebuffer_object */
    GLuint MaxColorAttachments;
    GLuint MaxRenderbufferSize;
+   /* GL_ARB_vertex_shader */
+   GLuint MaxVertexTextureImageUnits;
+   GLuint MaxVaryingFloats;
 };
 
 
@@ -2471,6 +2473,7 @@ struct gl_extensions
    GLboolean ATI_texture_mirror_once;
    GLboolean ATI_texture_env_combine3;
    GLboolean ATI_fragment_shader;
+   GLboolean ATI_separate_stencil;
    GLboolean IBM_rasterpos_clip;
    GLboolean IBM_multimode_draw_arrays;
    GLboolean MESA_pack_invert;
@@ -2937,6 +2940,8 @@ struct __GLcontextRec
    GLboolean _NeedEyeCoords;
    GLboolean _ForceEyeCoords; 
    GLenum _CurrentProgram;    /* currently executing program */
+
+   GLuint TextureStateTimestamp; /* detect changes to shared state */
 
    struct gl_shine_tab *_ShineTable[2]; /**< Active shine tables */
    struct gl_shine_tab *_ShineTabList;  /**< MRU list of inactive shine tables */

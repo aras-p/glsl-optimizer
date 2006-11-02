@@ -150,8 +150,7 @@ void tridentCopyBuffer( const __DRIdrawablePrivate *dPriv )
 }
 
 
-static void tridentDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
-                            GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo)
+static void tridentDDClear( GLcontext *ctx, GLbitfield mask )
 {
    tridentContextPtr tmesa = TRIDENT_CONTEXT(ctx);
    unsigned char *MMIO = tmesa->tridentScreen->mmio.map;
@@ -297,7 +296,7 @@ if (flags & DRM_TRIDENT_FRONT) {
    UNLOCK_HARDWARE(tmesa);
 
    if ( mask )
-      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0);
+      _swrast_Clear( ctx, mask );
 }
 
 static void tridentDDShadeModel( GLcontext *ctx, GLenum mode )

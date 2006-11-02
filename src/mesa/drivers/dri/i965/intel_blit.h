@@ -35,8 +35,7 @@ struct buffer;
 
 extern void intelCopyBuffer( const __DRIdrawablePrivate *dpriv,
 			     const drm_clip_rect_t *rect );
-extern void intelClearWithBlit(GLcontext *ctx, GLbitfield mask, GLboolean all,
-			     GLint cx1, GLint cy1, GLint cw, GLint ch);
+extern void intelClearWithBlit(GLcontext *ctx, GLbitfield mask);
 
 extern void intelEmitCopyBlit( struct intel_context *intel,
 			       GLuint cpp,

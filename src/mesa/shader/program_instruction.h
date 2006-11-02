@@ -343,7 +343,7 @@ struct prog_instruction
 
 
 extern void
-_mesa_init_instruction(struct prog_instruction *inst);
+_mesa_init_instructions(struct prog_instruction *inst, GLuint count);
 
 extern GLuint
 _mesa_num_inst_src_regs(enum prog_opcode opcode);

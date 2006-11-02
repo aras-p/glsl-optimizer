@@ -665,8 +665,7 @@ void mach64PerformanceBoxesLocked( mach64ContextPtr mmesa )
  * Buffer clear
  */
 
-static void mach64DDClear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
-			   GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo )
+static void mach64DDClear( GLcontext *ctx, GLbitfield mask )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT( ctx );
    __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
@@ -713,7 +712,7 @@ static void mach64DDClear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
    }
 
    if ( mask )
-      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0 );
+      _swrast_Clear( ctx, mask );
 
    if ( !flags )
       return;

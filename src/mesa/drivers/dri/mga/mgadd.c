@@ -41,7 +41,7 @@
 #include "mga_xmesa.h"
 #include "utils.h"
 
-#define DRIVER_DATE	"20050609"
+#define DRIVER_DATE	"20061030"
 
 
 /***************************************
@@ -74,24 +74,7 @@ static const GLubyte *mgaGetString( GLcontext *ctx, GLenum name )
 }
 
 
-static void mgaBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
-
-   /* Need to lock to make sure the driDrawable is uptodate.  This
-    * information is used to resize Mesa's software buffers, so it has
-    * to be correct.
-    */
-   LOCK_HARDWARE( mmesa );
-   *width = mmesa->driDrawable->w;
-   *height = mmesa->driDrawable->h;
-   UNLOCK_HARDWARE( mmesa );
-}
-
-
 void mgaInitDriverFuncs( struct dd_function_table *functions )
 {
-   functions->GetBufferSize = mgaBufferSize;
    functions->GetString = mgaGetString;
 }

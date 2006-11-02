@@ -1,4 +1,4 @@
-/* $Id: svgamesa8.c,v 1.9 2005/05/04 20:11:39 brianp Exp $ */
+/* $Id: svgamesa8.c,v 1.9.10.1 2006/11/02 12:02:17 alanh Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,10 +60,14 @@ void __clear_index8( GLcontext *ctx, GLuint index )
    SVGAMesa->clear_index = index;
 }
 
-void __clear8( GLcontext *ctx, GLbitfield mask, GLboolean all,
-               GLint x, GLint y, GLint width, GLint height )
+void __clear8( GLcontext *ctx, GLbitfield mask )
 {
    int i,j;
+   int x = ctx->DrawBuffer->_Xmin;
+   int y = ctx->DrawBuffer->_Ymin;
+   int width = ctx->DrawBuffer->_Xmax - x;
+   int height = ctx->DrawBuffer->_Ymax - y;
+   GLboolean all = (width == ctx->DrawBuffer->Width && height == ctx->DrawBuffer->height)
    
    if (mask & DD_FRONT_LEFT_BIT) {
       if (all) { 
@@ -95,7 +99,7 @@ void __clear8( GLcontext *ctx, GLbitfield mask, GLboolean all,
    }
 
    if (mask)
-      _swrast_Clear( ctx, mask, all, x, y, width, height );
+      _swrast_Clear( ctx, mask );
 }
 
 void __write_ci32_span8( const GLcontext *ctx, struct gl_renderbuffer *rb,

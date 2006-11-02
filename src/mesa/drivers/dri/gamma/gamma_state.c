@@ -205,8 +205,7 @@ static void gammaDDBlendFuncSeparate( GLcontext *ctx,
  * Buffer clear
  */
 
-static void gammaDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
-			       GLint cx, GLint cy, GLint cw, GLint ch )
+static void gammaDDClear( GLcontext *ctx, GLbitfield mask )
 {
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);
    GLINTDRIPtr gDRIPriv = (GLINTDRIPtr)gmesa->driScreen->pDevPriv;
@@ -410,7 +409,7 @@ static void gammaDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 #endif
 
    if ( mask )
-      _swrast_Clear( ctx, mask, all, cx, cy, cw, ch );
+      _swrast_Clear( ctx, mask );
 }
 
 /* =============================================================

@@ -735,6 +735,10 @@ alloc_shared_state( GLcontext *ctx )
    ss->DefaultCubeMap->RefCount += MAX_TEXTURE_IMAGE_UNITS;
    ss->DefaultRect->RefCount += MAX_TEXTURE_IMAGE_UNITS;
 
+   _glthread_INIT_MUTEX(ss->TexMutex);
+   ss->TextureStateStamp = 0;
+
+
 #if FEATURE_EXT_framebuffer_object
    ss->FrameBuffers = _mesa_NewHashTable();
    if (!ss->FrameBuffers)
@@ -1048,6 +1052,7 @@ _mesa_init_constants( GLcontext *ctx )
    ctx->Const.VertexProgram.MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
    ctx->Const.VertexProgram.MaxEnvParams = MAX_NV_VERTEX_PROGRAM_PARAMS;
    ctx->Const.VertexProgram.MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
+   ctx->Const.VertexProgram.MaxUniformComponents = MAX_VERTEX_UNIFORM_COMPONENTS;
    init_natives(&ctx->Const.VertexProgram);
 #endif
 #if FEATURE_ARB_fragment_program
@@ -1061,6 +1066,7 @@ _mesa_init_constants( GLcontext *ctx )
    ctx->Const.FragmentProgram.MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
    ctx->Const.FragmentProgram.MaxEnvParams = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
    ctx->Const.FragmentProgram.MaxAddressRegs = MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
+   ctx->Const.FragmentProgram.MaxUniformComponents = MAX_FRAGMENT_UNIFORM_COMPONENTS;
    init_natives(&ctx->Const.FragmentProgram);
 #endif
    ctx->Const.MaxProgramMatrices = MAX_PROGRAM_MATRICES;
@@ -1085,6 +1091,11 @@ _mesa_init_constants( GLcontext *ctx )
 #if FEATURE_EXT_framebuffer_object
    ctx->Const.MaxColorAttachments = MAX_COLOR_ATTACHMENTS;
    ctx->Const.MaxRenderbufferSize = MAX_WIDTH;
+#endif
+
+#if FEATURE_ARB_vertex_shader
+   ctx->Const.MaxVertexTextureImageUnits = MAX_VERTEX_TEXTURE_IMAGE_UNITS;
+   ctx->Const.MaxVaryingFloats = MAX_VARYING_FLOATS;
 #endif
 
    /* sanity checks */

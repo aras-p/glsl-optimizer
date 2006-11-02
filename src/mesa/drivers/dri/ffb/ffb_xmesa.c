@@ -568,8 +568,7 @@ ffbMakeCurrent(__DRIcontextPrivate *driContextPriv,
 			 */
 			ffbDDClear(fmesa->glCtx,
 				   (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT |
-				    BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL),
-				   1, 0, 0, 0, 0);
+				    BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL));
 		}
 	} else {
 		_mesa_make_current(NULL, NULL, NULL);

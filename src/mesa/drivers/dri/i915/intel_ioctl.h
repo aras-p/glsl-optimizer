@@ -32,8 +32,7 @@
 
 extern void intelWaitAgeLocked( intelContextPtr intel, int age, GLboolean unlock );
 
-extern void intelClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
-		       GLint cx, GLint cy, GLint cw, GLint ch);
+extern void intelClear(GLcontext *ctx, GLbitfield mask);
 
 extern void intelPageFlip( const __DRIdrawablePrivate *dpriv );
 

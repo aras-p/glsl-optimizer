@@ -322,14 +322,14 @@ void intelEmitCopyBlit( struct intel_context *intel,
 
 
 
-void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
-		      GLint cx1, GLint cy1, GLint cw, GLint ch)
+void intelClearWithBlit(GLcontext *ctx, GLbitfield flags)
 {
    struct intel_context *intel = intel_context( ctx );
    intelScreenPrivate *intelScreen = intel->intelScreen;
    GLuint clear_depth, clear_color;
-   GLint cx, cy;
+   GLint cx, cy, cw, ch;
    GLint cpp = intelScreen->cpp;
+   GLboolean all;
    GLint i;
    struct intel_region *front = intel->front_region;
    struct intel_region *back = intel->back_region;
@@ -376,21 +376,16 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
    intelFlush( &intel->ctx );
    LOCK_HARDWARE( intel );
    {
-      /* Refresh the cx/y/w/h values as they may have been invalidated
-       * by a new window position or size picked up when we did
-       * LOCK_HARDWARE above.  The values passed by mesa are not
-       * reliable.
-       */
-      {
-	  cx = ctx->DrawBuffer->_Xmin;
-	  cy = ctx->DrawBuffer->_Ymin;
-	  ch = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
-	  cw  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
-      }
+      /* get clear bounds after locking */
+      cx = ctx->DrawBuffer->_Xmin;
+      cy = ctx->DrawBuffer->_Ymin;
+      ch = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
+      cw = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
+      all = (cw == ctx->DrawBuffer->Width && ch == ctx->DrawBuffer->Height);
 
       /* flip top to bottom */
-      cy = intel->driDrawable->h-cy1-ch;
-      cx = cx1 + intel->drawX;
+      cy = intel->driDrawable->h - cy - ch;
+      cx = cx + intel->drawX;
       cy += intel->drawY;
 
       /* adjust for page flipping */

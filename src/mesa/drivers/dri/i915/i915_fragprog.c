@@ -29,6 +29,7 @@
 #include "macros.h"
 #include "enums.h"
 
+#include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "intel_batchbuffer.h"
 
@@ -937,6 +938,8 @@ static void i915ProgramStringNotify( GLcontext *ctx,
       ctx->Driver.Enable( ctx, GL_FRAGMENT_PROGRAM_ARB, 
 			  ctx->FragmentProgram.Enabled );
    }
+
+   _tnl_program_string(ctx, target, prog);
 }
 
 

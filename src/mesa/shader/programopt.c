@@ -85,8 +85,8 @@ _mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog)
     * newInst[2] = DP4 result.position.z, mvp.row[2], vertex.position;
     * newInst[3] = DP4 result.position.w, mvp.row[3], vertex.position;
     */
+   _mesa_init_instructions(newInst, 4);
    for (i = 0; i < 4; i++) {
-      _mesa_init_instruction(newInst + i);
       newInst[i].Opcode = OPCODE_DP4;
       newInst[i].DstReg.File = PROGRAM_OUTPUT;
       newInst[i].DstReg.Index = VERT_RESULT_HPOS;
@@ -137,7 +137,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    GLfloat fogVals[4];
    GLuint fogConsts;                /* constant values for EXP, EXP2 mode */
 
-   if (fprog->FogOption != GL_NONE) {
+   if (fprog->FogOption == GL_NONE) {
       _mesa_problem(ctx, "_mesa_append_fog_code() called for fragment program"
                     " with FogOption == GL_NONE");
       return;
@@ -191,8 +191,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    }
    assert(inst->Opcode == OPCODE_END); /* we'll overwrite this inst */
 
-   for (i = 0; i < 6; i++)
-      _mesa_init_instruction(inst + i);
+   _mesa_init_instructions(inst, 6);
 
    /* emit instructions to compute fog blending factor */
    if (fprog->FogOption == GL_LINEAR) {

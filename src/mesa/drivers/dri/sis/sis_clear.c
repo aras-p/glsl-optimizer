@@ -95,8 +95,7 @@ sisUpdateZStencilPattern( sisContextPtr smesa, GLclampd z, GLint stencil )
 }
 
 void
-sisDDClear( GLcontext * ctx, GLbitfield mask, GLboolean allFoo,
-	    GLint xFoo, GLint yFoo, GLint widthFoo, GLint heightFoo )
+sisDDClear( GLcontext * ctx, GLbitfield mask )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -145,7 +144,7 @@ sisDDClear( GLcontext * ctx, GLbitfield mask, GLboolean allFoo,
    UNLOCK_HARDWARE();
 
    if (mask != 0)
-      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0);
+      _swrast_Clear( ctx, mask);
 }
 
 
@@ -329,9 +328,7 @@ sis_clear_color_buffer( GLcontext *ctx, GLenum mask, GLint x, GLint y,
 			GLint width, GLint height )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
-
    int count;
-   GLuint depth = smesa->bytesPerPixel;
    drm_clip_rect_t *pExtents = NULL;
    GLint xx, yy;
    GLint x0, y0, width0, height0;
@@ -378,8 +375,6 @@ sis_clear_color_buffer( GLcontext *ctx, GLenum mask, GLint x, GLint y,
 
       if (width <= 0 || height <= 0)
 	continue;
-
-      int cmd;
 
       mWait3DCmdQueue (8);
       MMIO(REG_SRC_PITCH, (smesa->bytesPerPixel == 4) ? 

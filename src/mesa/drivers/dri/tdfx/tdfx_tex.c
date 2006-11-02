@@ -1404,7 +1404,6 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
          GLint mipWidth, mipHeight;
          tdfxMipMapLevel *mip;
          struct gl_texture_image *mipImage;
-         const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
          const GLint maxLevels = _mesa_max_texture_levels(ctx, texObj->Target);
    
          assert(!texImage->IsCompressed);
@@ -1425,7 +1424,7 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
                              mipWidth, mipHeight, border,
                              format, type,
                              NULL);
-            mipImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+            mipImage = _mesa_select_tex_image(ctx, texObj, target, level);
             mip = TDFX_TEXIMAGE_DATA(mipImage);
             _mesa_halve2x2_teximage2d(ctx,
                                       texImage,
@@ -1514,7 +1513,6 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
       GLint mipWidth, mipHeight;
       tdfxMipMapLevel *mip;
       struct gl_texture_image *mipImage;
-      const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       const GLint maxLevels = _mesa_max_texture_levels(ctx, texObj->Target);
 
       assert(!texImage->IsCompressed);
@@ -1534,7 +1532,7 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
             break;
          }
          ++level;
-         mipImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+         mipImage = _mesa_select_tex_image(ctx, texObj, target, level);
          mip = TDFX_TEXIMAGE_DATA(mipImage);
          _mesa_halve2x2_teximage2d(ctx,
                                    texImage,

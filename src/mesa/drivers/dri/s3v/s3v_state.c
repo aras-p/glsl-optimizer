@@ -73,8 +73,7 @@ static void s3vDDBlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
  * Buffer clear
  */
 
-static void s3vDDClear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
-                        GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo )
+static void s3vDDClear( GLcontext *ctx, GLbitfield mask )
 {
 	s3vContextPtr vmesa = S3V_CONTEXT(ctx);
 	unsigned int _stride;
@@ -163,7 +162,7 @@ static void s3vDDClear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
 	if ( mask )
 		DEBUG(("still masked ;3(\n")); */ /* yes */
 #else
-      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0 );
+      _swrast_Clear( ctx, mask );
 #endif
 }
 

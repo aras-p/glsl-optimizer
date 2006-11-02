@@ -48,8 +48,7 @@ static drmBufPtr i810_get_buffer_ioctl( i810ContextPtr imesa )
 
 #define DEPTH_SCALE ((1<<16)-1)
 
-static void i810Clear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
-		       GLint cxFoo, GLint cyFoo, GLint cwFoo, GLint chFoo ) 
+static void i810Clear( GLcontext *ctx, GLbitfield mask )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
    __DRIdrawablePrivate *dPriv = imesa->driDrawable;
@@ -142,7 +141,7 @@ static void i810Clear( GLcontext *ctx, GLbitfield mask, GLboolean allFoo,
    }
 
    if (mask) 
-      _swrast_Clear( ctx, mask, 0, 0, 0, 0, 0 );
+      _swrast_Clear( ctx, mask );
 }
 
 

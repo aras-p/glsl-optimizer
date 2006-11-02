@@ -281,11 +281,7 @@ static void clear_color(GLcontext *ctx, const GLfloat color[4])
  * Clearing of the other non-color buffers is left to the swrast. 
  */ 
 
-static void clear(GLcontext *ctx, 
-		  GLbitfield mask, 
-		  GLboolean all, 
-		  GLint xFoo, GLint yFoo,
-		  GLint widthFoo, GLint heightFoo) 
+static void clear(GLcontext *ctx, GLbitfield mask)
 {
 #define FLIP(Y)  (ctx->DrawBuffer->Height - (Y) - 1)
     const GLint x = ctx->DrawBuffer->_Xmin;
@@ -303,7 +299,7 @@ static void clear(GLcontext *ctx,
 	ctx->Color.ColorMask[1] != 0xff ||
 	ctx->Color.ColorMask[2] != 0xff ||
 	ctx->Color.ColorMask[3] != 0xff) {
-	_swrast_Clear(ctx, mask, all, x, y, width, height); 
+	_swrast_Clear(ctx, mask);
 	return;
     }
 
@@ -322,7 +318,8 @@ static void clear(GLcontext *ctx,
 	
 	/* Try for a fast clear - clearing entire buffer with a single
 	 * byte value. */
-	if (all) { /* entire buffer */
+	if (width == ctx->DrawBuffer->Width &&
+            height == ctx->DrawBuffer->Height) { /* entire buffer */
 	    /* Now check for an easy clear value */
 	    switch (bytesPerPixel) {
 	    case 1:
@@ -435,7 +432,7 @@ static void clear(GLcontext *ctx,
     
     /* Call swrast if there is anything left to clear (like DEPTH) */ 
     if (mask) 
-	_swrast_Clear(ctx, mask, all, x, y, width, height); 
+	_swrast_Clear(ctx, mask);
   
 #undef FLIP
 } 

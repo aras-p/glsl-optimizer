@@ -460,7 +460,6 @@ static void update_depth(GLcontext* ctx)
 static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	uint32_t newval;
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s( %s = %s )\n", __FUNCTION__,

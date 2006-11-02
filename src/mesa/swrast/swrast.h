@@ -130,8 +130,7 @@ _swrast_BlitFramebuffer(GLcontext *ctx,
                         GLbitfield mask, GLenum filter);
 
 extern void
-_swrast_Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
-	       GLint x, GLint y, GLint width, GLint height );
+_swrast_Clear(GLcontext *ctx, GLbitfield buffers);
 
 extern void
 _swrast_Accum(GLcontext *ctx, GLenum op, GLfloat value);

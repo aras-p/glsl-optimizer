@@ -313,10 +313,14 @@ static void gl_ggiSetClearColor(GLcontext *ctx, const GLfloat color[4])
 	ggi_ctx->clearcolor = col;
 }
 
-static void gl_ggiClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
-			GLint x, GLint y, GLint width, GLint height)
+static void gl_ggiClear(GLcontext *ctx, GLbitfield mask)
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
+        int x = ctx->DrawBuffer->_Xmin;
+        int y = ctx->DrawBuffer->_Ymin;
+        int w = ctx->DrawBuffer->_Xmax - x;
+        int h = ctx->DrawBuffer->_Ymax - y;
+        GLboolean all = (w == ctx->DrawBuffer->Width && h == ctx->DrawBuffer->height)
 	
 	GGIMESADPRINT_CORE("gl_ggiClear() called\n");
 
@@ -336,7 +340,7 @@ static void gl_ggiClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 
 		mask &= ~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT);
 	}
-	_swrast_Clear(ctx, mask, all, x, y, width, height);
+	_swrast_Clear(ctx, mask);
 	
 }
 

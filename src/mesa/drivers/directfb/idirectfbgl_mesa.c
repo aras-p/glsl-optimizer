@@ -372,10 +372,14 @@ dfbSetViewport( GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h )
 }
 
 static void
-dfbClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
-          GLint x, GLint y, GLint width, GLint height )
+dfbClear( GLcontext *ctx, GLbitfield mask )
 {
      IDirectFBGL_data *data = (IDirectFBGL_data*) ctx->DriverCtx;
+     int x = ctx->DrawBuffer->_Xmin;
+     int y = ctx->DrawBuffer->_Ymin;
+     int width = ctx->DrawBuffer->_Xmax - x;
+     int height = ctx->DrawBuffer->_Ymax - y;
+     GLboolean all = (width == ctx->DrawBuffer->Width && height == ctx->DrawBuffer->height)
      
      if (mask & BUFFER_BIT_FRONT_LEFT &&
          ctx->Color.ColorMask[0]      &&
@@ -420,7 +424,7 @@ dfbClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
      }
      
      if (mask)
-          _swrast_Clear( ctx, mask, all, x, y, width, height );
+          _swrast_Clear( ctx, mask );
 }        
           
      

@@ -293,17 +293,14 @@ clear_color_buffers(GLcontext *ctx)
 /**
  * Called via the device driver's ctx->Driver.Clear() function if the
  * device driver can't clear one or more of the buffers itself.
- * \param mask  bitfield of BUFER_BIT_* values indicating which renderbuffers
- *              are to be cleared.
+ * \param buffers  bitfield of BUFFER_BIT_* values indicating which
+ *                 renderbuffers are to be cleared.
  * \param all  if GL_TRUE, clear whole buffer, else clear specified region.
  */
 void
-_swrast_Clear(GLcontext *ctx, GLbitfield mask,
-	      GLboolean all, GLint x, GLint y, GLint width, GLint height)
+_swrast_Clear(GLcontext *ctx, GLbitfield buffers)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-
-   (void) all; (void) x; (void) y; (void) width; (void) height;
 
 #ifdef DEBUG_FOO
    {
@@ -319,25 +316,25 @@ _swrast_Clear(GLcontext *ctx, GLbitfield mask,
          BUFFER_BIT_AUX1 |
          BUFFER_BIT_AUX2 |
          BUFFER_BIT_AUX3;
-      assert((mask & (~legalBits)) == 0);
+      assert((buffers & (~legalBits)) == 0);
    }
 #endif
 
    RENDER_START(swrast,ctx);
 
    /* do software clearing here */
-   if (mask) {
-      if (mask & ctx->DrawBuffer->_ColorDrawBufferMask[0]) {
+   if (buffers) {
+      if (buffers & ctx->DrawBuffer->_ColorDrawBufferMask[0]) {
          clear_color_buffers(ctx);
       }
-      if (mask & BUFFER_BIT_DEPTH) {
+      if (buffers & BUFFER_BIT_DEPTH) {
          _swrast_clear_depth_buffer(ctx, ctx->DrawBuffer->_DepthBuffer);
       }
-      if (mask & BUFFER_BIT_ACCUM) {
+      if (buffers & BUFFER_BIT_ACCUM) {
          _swrast_clear_accum_buffer(ctx,
                        ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
       }
-      if (mask & BUFFER_BIT_STENCIL) {
+      if (buffers & BUFFER_BIT_STENCIL) {
          _swrast_clear_stencil_buffer(ctx, ctx->DrawBuffer->_StencilBuffer);
       }
    }

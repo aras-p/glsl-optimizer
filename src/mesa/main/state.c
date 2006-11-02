@@ -1003,7 +1003,7 @@ update_color(GLcontext *ctx)
  * _mesa_update_lighting() and _mesa_update_tnl_spaces().
  */
 void
-_mesa_update_state( GLcontext *ctx )
+_mesa_update_state_locked( GLcontext *ctx )
 {
    GLbitfield new_state = ctx->NewState;
 
@@ -1083,5 +1083,18 @@ _mesa_update_state( GLcontext *ctx )
    ctx->Driver.UpdateState(ctx, new_state);
    ctx->Array.NewState = 0;
 }
+
+
+/* This is the usual entrypoint for state updates:
+ */
+void
+_mesa_update_state( GLcontext *ctx )
+{
+   _mesa_lock_context_textures(ctx);
+   _mesa_update_state_locked(ctx);
+   _mesa_unlock_context_textures(ctx);
+}
+
+
 
 /*@}*/

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -77,10 +77,7 @@ _mesa_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
       return;
    }
    
-   _mesa_init_vp_per_vertex_registers(ctx);
-   _mesa_init_vp_per_primitive_registers(ctx);
-   COPY_4V(ctx->VertexProgram.Machine.Inputs[VERT_ATTRIB_POS], params);
-   _mesa_exec_vertex_program(ctx, vprog);
+   _mesa_exec_vertex_state_program(ctx, vprog, params);
 }
 
 

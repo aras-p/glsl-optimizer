@@ -744,32 +744,12 @@ static void mgaDDLogicOp( GLcontext *ctx, GLenum opcode )
 }
 
 
-static void mgaXMesaSetFrontClipRects( mgaContextPtr mmesa )
+static void mga_set_cliprects(mgaContextPtr mmesa)
 {
    __DRIdrawablePrivate *driDrawable = mmesa->driDrawable;
 
-   if (driDrawable->numClipRects == 0) {
-       static drm_clip_rect_t zeroareacliprect = {0,0,0,0};
-       mmesa->numClipRects = 1;
-       mmesa->pClipRects = &zeroareacliprect;
-   } else {
-       mmesa->numClipRects = driDrawable->numClipRects;
-       mmesa->pClipRects = driDrawable->pClipRects;
-   }
-   mmesa->drawX = driDrawable->x;
-   mmesa->drawY = driDrawable->y;
-
-   mmesa->setup.dstorg = mmesa->drawOffset;
-   mmesa->dirty |= MGA_UPLOAD_CONTEXT | MGA_UPLOAD_CLIPRECTS;
-}
-
-
-static void mgaXMesaSetBackClipRects( mgaContextPtr mmesa )
-{
-   __DRIdrawablePrivate *driDrawable = mmesa->driDrawable;
-
-   if (driDrawable->numBackClipRects == 0)
-   {
+   if ((mmesa->draw_buffer != MGA_FRONT)
+       || (driDrawable->numBackClipRects == 0)) {
       if (driDrawable->numClipRects == 0) {
 	  static drm_clip_rect_t zeroareacliprect = {0,0,0,0};
 	  mmesa->numClipRects = 1;
@@ -794,25 +774,25 @@ static void mgaXMesaSetBackClipRects( mgaContextPtr mmesa )
 
 void mgaUpdateRects( mgaContextPtr mmesa, GLuint buffers )
 {
-   __DRIdrawablePrivate *driDrawable = mmesa->driDrawable;
+   __DRIdrawablePrivate *const driDrawable = mmesa->driDrawable;
+   __DRIdrawablePrivate *const driReadable = mmesa->driReadable;
    drm_mga_sarea_t *sarea = mmesa->sarea;
 
 
-   DRI_VALIDATE_DRAWABLE_INFO(mmesa->driScreen, driDrawable); 
    mmesa->dirty_cliprects = 0;	
 
-   if (mmesa->draw_buffer == MGA_FRONT)
-      mgaXMesaSetFrontClipRects( mmesa );
-   else
-      mgaXMesaSetBackClipRects( mmesa );
+   driUpdateFramebufferSize(mmesa->glCtx, driDrawable);
+   if (driDrawable != driReadable) {
+      driUpdateFramebufferSize(mmesa->glCtx, driReadable);
+   }
+
+   mga_set_cliprects(mmesa);
 
    sarea->req_drawable = driDrawable->draw;
    sarea->req_draw_buffer = mmesa->draw_buffer;
 
    mgaUpdateClipping( mmesa->glCtx );
    mgaCalcViewport( mmesa->glCtx );
-
-   mmesa->dirty |= MGA_UPLOAD_CLIPRECTS;
 }
 
 
@@ -828,23 +808,21 @@ static void mgaDDDrawBuffer(GLcontext *ctx, GLenum mode )
    switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
    case BUFFER_BIT_FRONT_LEFT:
       mmesa->setup.dstorg = mmesa->mgaScreen->frontOffset;
-      mmesa->dirty |= MGA_UPLOAD_CONTEXT;
       mmesa->draw_buffer = MGA_FRONT;
-      mgaXMesaSetFrontClipRects( mmesa );
-      FALLBACK( ctx, MGA_FALLBACK_DRAW_BUFFER, GL_FALSE );
       break;
    case BUFFER_BIT_BACK_LEFT:
       mmesa->setup.dstorg = mmesa->mgaScreen->backOffset;
       mmesa->draw_buffer = MGA_BACK;
-      mmesa->dirty |= MGA_UPLOAD_CONTEXT;
-      mgaXMesaSetBackClipRects( mmesa );
-      FALLBACK( ctx, MGA_FALLBACK_DRAW_BUFFER, GL_FALSE );
       break;
    default:
       /* GL_NONE or GL_FRONT_AND_BACK or stereo left&right, etc */
       FALLBACK( ctx, MGA_FALLBACK_DRAW_BUFFER, GL_TRUE );
       return;
    }
+
+   mmesa->dirty |= MGA_UPLOAD_CONTEXT;
+   mga_set_cliprects(mmesa);
+   FALLBACK(ctx, MGA_FALLBACK_DRAW_BUFFER, GL_FALSE);
 }
 
 
