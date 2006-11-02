@@ -81,7 +81,8 @@ static GLuint get_max_index( GLuint count, GLuint type,
  */
 static void bind_array_obj( GLcontext *ctx )
 {
-   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_exec_context *exec = &vbo->exec;
    GLuint i;
 
    /* TODO: Fix the ArrayObj struct to keep legacy arrays in an array
@@ -89,6 +90,7 @@ static void bind_array_obj( GLcontext *ctx )
     * go away.
     */
    exec->array.legacy_array[VERT_ATTRIB_POS] = &ctx->Array.ArrayObj->Vertex;
+   exec->array.legacy_array[VERT_ATTRIB_WEIGHT] = &vbo->legacy_currval[i];
    exec->array.legacy_array[VERT_ATTRIB_NORMAL] = &ctx->Array.ArrayObj->Normal;
    exec->array.legacy_array[VERT_ATTRIB_COLOR0] = &ctx->Array.ArrayObj->Color;
    exec->array.legacy_array[VERT_ATTRIB_COLOR1] = &ctx->Array.ArrayObj->SecondaryColor;
@@ -133,6 +135,13 @@ static void recalculate_input_bindings( GLcontext *ctx )
       for (i = 0; i < MAT_ATTRIB_MAX; i++) {
 	 inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->mat_currval[i];
       }
+
+      /* Could use just about anything, just to fill in the empty
+       * slots:
+       */
+      for (i = MAT_ATTRIB_MAX; i < VERT_ATTRIB_MAX; i++)
+	 inputs[i] = &vbo->generic_currval[i - VERT_ATTRIB_GENERIC0];
+
       break;
    case VP_NV:
       /* NV_vertex_program - attribute arrays alias and override
