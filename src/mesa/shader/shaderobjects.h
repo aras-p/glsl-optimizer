@@ -309,7 +309,7 @@ _mesa_GetShaderInfoLog(GLuint shader, GLsizei bufSize,
                        GLsizei *length, GLchar *infoLog);
 
 extern GLboolean GLAPIENTRY
-_mesa_IsProgram2(GLuint program);
+_mesa_IsProgram(GLuint program);
 
 extern GLboolean GLAPIENTRY
 _mesa_IsShader(GLuint shader);

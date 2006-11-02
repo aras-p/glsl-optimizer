@@ -1234,7 +1234,7 @@ _mesa_GetShaderInfoLog(GLuint shader, GLsizei bufSize,
 }
 
 GLboolean GLAPIENTRY
-_mesa_IsProgram2(GLuint program)
+_mesa_IsProgram(GLuint program)
 {
    GET_CURRENT_CONTEXT(ctx);
    GET_GENERIC(gen, program, "glIsProgram");
