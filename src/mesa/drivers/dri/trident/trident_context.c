@@ -50,6 +50,7 @@
 
 #include "drivers/common/driverfuncs.h"
 #include "dri_util.h"
+#include "utils.h"
 
 static const struct tnl_pipeline_stage *trident_pipeline[] = {
    &_tnl_vertex_transform_stage, 
