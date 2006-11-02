@@ -39,17 +39,6 @@
 #include "t_vertex.h"
 #include "tnl.h"
 
-#define CONVERT( TYPE, MACRO ) do {		\
-   GLuint i, j;					\
-   for (i = 0; i < count; i++) {		\
-      const TYPE *in = (TYPE *)ptr;			\
-      for (j = 0; j < sz; j++) {		\
-	 *fptr++ = MACRO(*in);			\
-	 in++;					\
-      }						\
-      ptr += input->StrideB;			\
-   }						\
-} while (0)
 
 
 static GLfloat *get_space(GLcontext *ctx, GLuint bytes)
@@ -70,6 +59,34 @@ static void free_space(GLcontext *ctx)
       _mesa_free(tnl->block[i]);
    tnl->nr_blocks = 0;
 }
+
+
+/* Convert the incoming array to GLfloats.  Understands the
+ * array->Normalized flag and selects the correct conversion method.
+ */
+#define CONVERT( TYPE, MACRO ) do {		\
+   GLuint i, j;					\
+   if (input->Normalized) {			\
+      for (i = 0; i < count; i++) {		\
+	 const TYPE *in = (TYPE *)ptr;		\
+	 for (j = 0; j < sz; j++) {		\
+	    *fptr++ = MACRO(*in);		\
+	    in++;				\
+	 }					\
+	 ptr += input->StrideB;			\
+      }						\
+   } else {					\
+      for (i = 0; i < count; i++) {		\
+	 const TYPE *in = (TYPE *)ptr;		\
+	 for (j = 0; j < sz; j++) {		\
+	    *fptr++ = (GLfloat)(*in);		\
+	    in++;				\
+	 }					\
+	 ptr += input->StrideB;			\
+      }						\
+   }						\
+} while (0)
+
 
 
 /* Adjust pointer to point at first requested element, convert to
@@ -140,6 +157,27 @@ static void _tnl_import_array( GLcontext *ctx,
    VB->AttribPtr[attrib]->storage = NULL;
 }
 
+#define CLIPVERTS  ((6 + MAX_CLIP_PLANES) * 2)
+
+
+static GLboolean *_tnl_import_edgeflag( GLcontext *ctx,
+					const GLvector4f *input,
+					GLuint count)
+{
+   const GLubyte *ptr = (const GLubyte *)input->data;
+   const GLuint stride = input->stride;
+   GLboolean *space = (GLboolean *)get_space(ctx, count + CLIPVERTS);
+   GLboolean *bptr = space;
+   GLuint i;
+
+   for (i = 0; i < count; i++) {
+      *bptr++ = ((GLfloat *)ptr)[0] == 1.0;
+      ptr += stride;
+   }
+
+   return space;
+}
+
 
 static void bind_inputs( GLcontext *ctx, 
 			 const struct gl_client_array *inputs[],
@@ -200,15 +238,17 @@ static void bind_inputs( GLcontext *ctx,
       VB->TexCoordPtr[i] = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i];
    }
 
-#if 0
-   /* odd-ball vertex attribute 
+   /* Clipping and drawing code still requires this to be a packed
+    * array of ubytes which can be written into.  TODO: Fix and
+    * remove.
     */
    if (ctx->Polygon.FrontMode != GL_FILL ||
        ctx->Polygon.BackMode != GL_FILL)
    {
-      VB->EdgeFlag = _tnl_import_edgeflag( ctx, VB->AttribPtr[_TNL_ATTRIB_EDGEFLAG]);
+      VB->EdgeFlag = _tnl_import_edgeflag( ctx, 
+					   VB->AttribPtr[_TNL_ATTRIB_EDGEFLAG],
+					   VB->Count );
    }
-#endif
 
 }
 
