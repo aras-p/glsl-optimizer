@@ -655,9 +655,6 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 }
 
 
-extern _glthread_Mutex lockMutex;
-
-
 /* Lock the hardware and validate our state.  
  */
 void LOCK_HARDWARE( struct intel_context *intel )
