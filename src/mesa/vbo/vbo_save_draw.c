@@ -124,7 +124,7 @@ static void vbo_bind_vertex_list( GLcontext *ctx,
       break;
    }
 
-   for (attr = 0; attr <= VBO_ATTRIB_INDEX; attr++) {
+   for (attr = 0; attr < VBO_ATTRIB_MAX; attr++) {
       if (node->attrsz[attr]) {
 	 arrays[attr].Ptr = (const GLubyte *)data;
 	 arrays[attr].Size = node->attrsz[attr];
