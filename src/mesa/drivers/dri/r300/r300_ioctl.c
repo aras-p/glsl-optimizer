@@ -570,9 +570,10 @@ void r300Flush(GLcontext * ctx)
 #ifdef USER_BUFFERS
 #include "radeon_mm.h"
 
-void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
+void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size)
 {
 	struct r300_dma_buffer *dmabuf;
+	size = MAX2(size, RADEON_BUFFER_SIZE*16);
 	
 	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA))
 		fprintf(stderr, "%s\n", __FUNCTION__);
@@ -591,20 +592,20 @@ void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
 	dmabuf->buf = (void *)1; /* hack */
 	dmabuf->refcount = 1;
 
-	dmabuf->id = radeon_mm_alloc(rmesa, 4, RADEON_BUFFER_SIZE*16);
+	dmabuf->id = radeon_mm_alloc(rmesa, 4, size);
 	if (dmabuf->id == 0) {
 		LOCK_HARDWARE(&rmesa->radeon);	/* no need to validate */
 		
 		r300FlushCmdBufLocked(rmesa, __FUNCTION__);
 		radeonWaitForIdleLocked(&rmesa->radeon);
 		
-		dmabuf->id = radeon_mm_alloc(rmesa, 4, RADEON_BUFFER_SIZE*16);
+		dmabuf->id = radeon_mm_alloc(rmesa, 4, size);
 
 #ifdef HW_VBOS
 		if (dmabuf->id == 0) {
 			/* Just kick all */
 			r300_evict_vbos(rmesa->radeon.glCtx, /*RADEON_BUFFER_SIZE*16*/1<<30);
-			dmabuf->id = radeon_mm_alloc(rmesa, 4, RADEON_BUFFER_SIZE*16);
+			dmabuf->id = radeon_mm_alloc(rmesa, 4, size);
 		}
 #endif
 		UNLOCK_HARDWARE(&rmesa->radeon);
@@ -617,7 +618,7 @@ void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
 			
 	rmesa->dma.current.buf = dmabuf;
 	rmesa->dma.current.address = radeon_mm_ptr(rmesa, dmabuf->id);
-	rmesa->dma.current.end = RADEON_BUFFER_SIZE*16;
+	rmesa->dma.current.end = size;
 	rmesa->dma.current.start = 0;
 	rmesa->dma.current.ptr = 0;
 }
@@ -665,7 +666,8 @@ void r300AllocDmaRegion(r300ContextPtr rmesa,
 	    (rmesa->dma.current.ptr + alignment) & ~alignment;
 
 	if (rmesa->dma.current.ptr + bytes > rmesa->dma.current.end)
-		r300RefillCurrentDmaRegion(rmesa);
+		r300RefillCurrentDmaRegion(rmesa,
+					   (bytes + 0x7) & ~0x7);
 
 	region->start = rmesa->dma.current.start;
 	region->ptr = rmesa->dma.current.start;

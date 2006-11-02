@@ -213,7 +213,7 @@ int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
 		}
 		goto again;
 #else
-		WARN_ONCE("Ran out of GART memory!\nPlease consider adjusting GARTSize option.\n");
+		WARN_ONCE("Ran out of GART memory (for %d)!\nPlease consider adjusting GARTSize option.\n", size);
 		return 0;
 #endif
 	}

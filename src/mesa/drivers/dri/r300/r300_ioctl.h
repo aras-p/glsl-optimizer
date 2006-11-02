@@ -50,7 +50,6 @@ extern GLuint r300GartOffsetFromVirtual(r300ContextPtr rmesa,
 
 extern void r300Flush(GLcontext * ctx);
 
-extern void r300RefillCurrentDmaRegion(r300ContextPtr rmesa);
 extern void r300ReleaseDmaRegion(r300ContextPtr rmesa,
 			  struct r300_dma_region *region, const char *caller);
 extern void r300AllocDmaRegion(r300ContextPtr rmesa,

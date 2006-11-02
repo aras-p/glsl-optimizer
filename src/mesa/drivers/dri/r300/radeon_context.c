@@ -267,12 +267,14 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 			fprintf(stderr, "%s ctx %p\n", __FUNCTION__,
 				radeon->glCtx);
 
-		if ( (radeon->dri.drawable != driDrawPriv)
-		     || (radeon->dri.readable != driReadPriv) ) {
-
+		if (radeon->dri.drawable != driDrawPriv) {
 			driDrawableInitVBlank(driDrawPriv,
 					      radeon->vblank_flags,
 					      &radeon->vbl_seq);
+		}
+
+		if (radeon->dri.drawable != driDrawPriv ||
+		    radeon->dri.readable != driReadPriv) {
 			radeon->dri.drawable = driDrawPriv;
 			radeon->dri.readable = driReadPriv;
 
