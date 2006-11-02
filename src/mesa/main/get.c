@@ -1833,6 +1833,9 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_STENCIL_BACK_VALUE_MASK:
          params[0] = INT_TO_BOOLEAN(ctx->Stencil.ValueMask[1]);
          break;
+      case GL_STENCIL_BACK_WRITEMASK:
+         params[0] = INT_TO_BOOLEAN(ctx->Stencil.WriteMask[1]);
+         break;
       case GL_STENCIL_BACK_REF:
          params[0] = INT_TO_BOOLEAN(ctx->Stencil.Ref[1]);
          break;
@@ -3657,6 +3660,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_STENCIL_BACK_VALUE_MASK:
          params[0] = (GLfloat)(ctx->Stencil.ValueMask[1]);
          break;
+      case GL_STENCIL_BACK_WRITEMASK:
+         params[0] = (GLfloat)(ctx->Stencil.WriteMask[1]);
+         break;
       case GL_STENCIL_BACK_REF:
          params[0] = (GLfloat)(ctx->Stencil.Ref[1]);
          break;
@@ -5480,6 +5486,9 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_STENCIL_BACK_VALUE_MASK:
          params[0] = ctx->Stencil.ValueMask[1];
+         break;
+      case GL_STENCIL_BACK_WRITEMASK:
+         params[0] = ctx->Stencil.WriteMask[1];
          break;
       case GL_STENCIL_BACK_REF:
          params[0] = ctx->Stencil.Ref[1];
