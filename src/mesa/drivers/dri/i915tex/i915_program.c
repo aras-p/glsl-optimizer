@@ -379,16 +379,13 @@ i915_emit_param4fv(struct i915_fragment_program * p, const GLfloat * values)
 
 
 
-
 void
 i915_program_error(struct i915_fragment_program *p, const char *msg)
 {
-   /* XXX we shouldn't print anything to stdout, record GL error or
-    * call _mesa_problem()
-    */
-   fprintf(stderr, "%s\n", msg);
+   _mesa_problem(NULL, "i915_program_error: %s", msg);
    p->error = 1;
 }
+
 
 void
 i915_init_program(struct i915_context *i915, struct i915_fragment_program *p)
