@@ -108,7 +108,8 @@ static void _tnl_import_array( GLcontext *ctx,
 
    if (input->Type != GL_FLOAT) {
       const GLuint sz = input->Size;
-      GLfloat *fptr = get_space(ctx, count * sz * sizeof(GLfloat));
+      char *buf = get_space(ctx, count * sz * sizeof(GLfloat));
+      GLfloat *fptr = (GLfloat *)buf;
 
       switch (input->Type) {
       case GL_BYTE: 
@@ -137,7 +138,7 @@ static void _tnl_import_array( GLcontext *ctx,
 	 break;
       }
 
-      ptr = (const char *)fptr;
+      ptr = buf;
       stride = sz * sizeof(GLfloat);
    }
 
@@ -197,7 +198,7 @@ static void bind_inputs( GLcontext *ctx,
       if (inputs[i]->BufferObj->Name) { 
 	 if (!inputs[i]->BufferObj->Pointer) {
 	    bo[*nr_bo] = inputs[i]->BufferObj;
-	    *nr_bo++;
+	    (*nr_bo)++;
 	    ctx->Driver.MapBuffer(ctx, 
 				  GL_ARRAY_BUFFER,
 				  GL_READ_ONLY_ARB,
@@ -268,7 +269,7 @@ static void bind_indicies( GLcontext *ctx,
 
    if (ib->obj->Name && !ib->obj->Pointer) {
       bo[*nr_bo] = ib->obj;
-      *nr_bo++;
+      (*nr_bo)++;
       ctx->Driver.MapBuffer(ctx, 
 			    GL_ELEMENT_ARRAY_BUFFER,
 			    GL_READ_ONLY_ARB,
