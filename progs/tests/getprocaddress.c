@@ -268,6 +268,75 @@ test_VertexAttrib4dvNV(generic_func func)
 }
 
 
+static GLboolean
+test_StencilFuncSeparate(generic_func func)
+{
+#ifdef GL_VERSION_2_0
+   PFNGLSTENCILFUNCSEPARATEPROC stencilFuncSeparate = (PFNGLSTENCILFUNCSEPARATEPROC) func;
+   GLint frontFunc, backFunc;
+   GLint frontRef, backRef;
+   GLint frontMask, backMask;
+   (*stencilFuncSeparate)(GL_BACK, GL_GREATER, 2, 0xa);
+   glGetIntegerv(GL_STENCIL_FUNC, &frontFunc);
+   glGetIntegerv(GL_STENCIL_BACK_FUNC, &backFunc);
+   glGetIntegerv(GL_STENCIL_REF, &frontRef);
+   glGetIntegerv(GL_STENCIL_BACK_REF, &backRef);
+   glGetIntegerv(GL_STENCIL_VALUE_MASK, &frontMask);
+   glGetIntegerv(GL_STENCIL_BACK_VALUE_MASK, &backMask);
+   if (frontFunc != GL_ALWAYS ||
+       backFunc != GL_GREATER ||
+       frontRef != 0 ||
+       backRef != 2 ||
+       frontMask == 0xa || /* might be 0xff or ~0 */
+       backMask != 0xa)
+      return GL_FALSE;
+#endif
+   return GL_TRUE;
+}
+
+static GLboolean
+test_StencilOpSeparate(generic_func func)
+{
+#ifdef GL_VERSION_2_0
+   PFNGLSTENCILOPSEPARATEPROC stencilOpSeparate = (PFNGLSTENCILOPSEPARATEPROC) func;
+   GLint frontFail, backFail;
+   GLint frontZFail, backZFail;
+   GLint frontZPass, backZPass;
+   (*stencilOpSeparate)(GL_BACK, GL_INCR, GL_DECR, GL_INVERT);
+   glGetIntegerv(GL_STENCIL_FAIL, &frontFail);
+   glGetIntegerv(GL_STENCIL_BACK_FAIL, &backFail);
+   glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &frontZFail);
+   glGetIntegerv(GL_STENCIL_BACK_PASS_DEPTH_FAIL, &backZFail);
+   glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &frontZPass);
+   glGetIntegerv(GL_STENCIL_BACK_PASS_DEPTH_PASS, &backZPass);
+   if (frontFail != GL_KEEP ||
+       backFail != GL_INCR ||
+       frontZFail != GL_KEEP ||
+       backZFail != GL_DECR ||
+       frontZPass != GL_KEEP ||
+       backZPass != GL_INVERT)
+      return GL_FALSE;
+#endif
+   return GL_TRUE;
+}
+
+static GLboolean
+test_StencilMaskSeparate(generic_func func)
+{
+#ifdef GL_VERSION_2_0
+   PFNGLSTENCILMASKSEPARATEPROC stencilMaskSeparate = (PFNGLSTENCILMASKSEPARATEPROC) func;
+   GLint frontMask, backMask;
+   (*stencilMaskSeparate)(GL_BACK, 0x1b);
+   glGetIntegerv(GL_STENCIL_WRITEMASK, &frontMask);
+   glGetIntegerv(GL_STENCIL_BACK_WRITEMASK, &backMask);
+   if (frontMask == 0x1b ||
+       backMask != 0x1b)
+      return GL_FALSE;
+#endif
+   return GL_TRUE;
+}
+
+
 /*
  * The following file is auto-generated with Python.
  */
@@ -302,12 +371,19 @@ check_functions( const char *extensions )
 
    for (entry = functions; entry->name; entry++) {
       if (entry->name[0] == '-') {
-         /* XXX update for OpenGL 2.0 */
+         const char *version = (const char *) glGetString(GL_VERSION);
          if (entry->name[1] == '1') {
-            /* check GL version X.Y */
-            const char *version = (const char *) glGetString(GL_VERSION);
-            if (version[0] == entry->name[1] &&
-                version[1] == entry->name[2] &&
+            /* check GL version 1.x */
+            if (version[0] == '1' &&
+                version[1] == '.' &&
+                version[2] >= entry->name[3])
+               doTests = 1;
+            else
+               doTests = 0;
+         }
+         else if (entry->name[1] == '2') {
+            if (version[0] == '2' &&
+                version[1] == '.' &&
                 version[2] >= entry->name[3])
                doTests = 1;
             else
@@ -377,12 +453,14 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect)
       GLX_RED_SIZE, 1,
       GLX_GREEN_SIZE, 1,
       GLX_BLUE_SIZE, 1,
+      GLX_STENCIL_SIZE, 1,
       None };
    int attribDouble[] = {
       GLX_RGBA,
       GLX_RED_SIZE, 1,
       GLX_GREEN_SIZE, 1,
       GLX_BLUE_SIZE, 1,
+      GLX_STENCIL_SIZE, 1,
       GLX_DOUBLEBUFFER,
       None };
 
