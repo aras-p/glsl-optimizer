@@ -86,7 +86,7 @@ int INTEL_DEBUG = (0);
 #include "extension_helper.h"
 
 
-#define DRIVER_DATE                     "20060929"
+#define DRIVER_DATE                     "20061102"
 
 _glthread_Mutex lockMutex;
 static GLboolean lockMutexInit = GL_FALSE;
