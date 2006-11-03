@@ -98,25 +98,23 @@ lookup_handle(GLcontext * ctx, GLhandleARB handle, enum gl2_uiid uiid,
    struct gl2_shader_intf **x = (struct gl2_shader_intf **)\
                                 lookup_handle (ctx, handle, UIID_SHADER, function);
 
-#define GET_LINKED_PROGRAM(x, handle, function)\
-   GET_PROGRAM(x, handle, function);\
-   if (x != NULL && (**x).GetLinkStatus (x) == GL_FALSE) {\
-      RELEASE_PROGRAM(x);\
-      x = NULL;\
-      _mesa_error (ctx, GL_INVALID_OPERATION, function);\
+
+#define GET_LINKED_PROGRAM(x, handle, function)              \
+   GET_PROGRAM(x, handle, function);                         \
+   if (x && (**x).GetLinkStatus(x) == GL_FALSE) {            \
+      RELEASE_PROGRAM(x);                                    \
+      _mesa_error(ctx, GL_INVALID_OPERATION, function);      \
+      x = NULL;                                              \
    }
 
-#define GET_CURRENT_LINKED_PROGRAM(x, function)\
-   struct gl2_program_intf **x = NULL;\
-   if (ctx->ShaderObjects.CurrentProgram == NULL)\
-      _mesa_error (ctx, GL_INVALID_OPERATION, function);\
-   else {\
-      x = ctx->ShaderObjects.CurrentProgram;\
-      if (x != NULL && (**x).GetLinkStatus (x) == GL_FALSE) {\
-         x = NULL;\
-         _mesa_error (ctx, GL_INVALID_OPERATION, function);\
-      }\
+#define GET_CURRENT_LINKED_PROGRAM(x, function)                         \
+   struct gl2_program_intf **x = ctx->ShaderObjects.CurrentProgram;     \
+   if (!x || (**x).GetLinkStatus(x) == GL_FALSE) {                      \
+      _mesa_error(ctx, GL_INVALID_OPERATION, function);                 \
+      return;                                                           \
    }
+
+
 
 #define IS_NAME_WITH_GL_PREFIX(x) ((x)[0] == 'g' && (x)[1] == 'l' && (x)[2] == '_')
 
@@ -362,9 +360,6 @@ uniform(GLint location, GLsizei count, const GLvoid *values, GLenum type,
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   if (!pro)
-      return;
-
    if (!(**pro).WriteUniform(pro, location, count, values, type))
       _mesa_error(ctx, GL_INVALID_OPERATION, caller);
 }
@@ -511,9 +506,6 @@ uniform_matrix(GLint cols, GLint rows, const char *caller,
    }
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (!pro)
-      return; /* no error? */
 
    if (transpose) {
       GLfloat *trans, *pt;
@@ -820,7 +812,7 @@ _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB * name)
    GLint loc = -1;
    GET_LINKED_PROGRAM(pro, programObj, "glGetUniformLocationARB");
 
-   if (pro == NULL)
+   if (!pro)
       return -1;
 
    if (name == NULL)
@@ -862,11 +854,13 @@ _mesa_GetUniformfvARB(GLhandleARB programObj, GLint location, GLfloat * params)
    GET_CURRENT_CONTEXT(ctx);
    GET_LINKED_PROGRAM(pro, programObj, "glGetUniformfvARB");
 
-   if (pro != NULL) {
-      if (!(**pro).ReadUniform(pro, location, 1, params, GL_FLOAT))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfvARB");
-      RELEASE_PROGRAM(pro);
-   }
+   if (!pro)
+      return;
+
+   if (!(**pro).ReadUniform(pro, location, 1, params, GL_FLOAT))
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfvARB");
+
+   RELEASE_PROGRAM(pro);
 }
 
 GLvoid GLAPIENTRY
@@ -875,11 +869,12 @@ _mesa_GetUniformivARB(GLhandleARB programObj, GLint location, GLint * params)
    GET_CURRENT_CONTEXT(ctx);
    GET_LINKED_PROGRAM(pro, programObj, "glGetUniformivARB");
 
-   if (pro != NULL) {
-      if (!(**pro).ReadUniform(pro, location, 1, params, GL_INT))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformivARB");
-      RELEASE_PROGRAM(pro);
-   }
+   if (!pro)
+      return;
+
+   if (!(**pro).ReadUniform(pro, location, 1, params, GL_INT))
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformivARB");
+   RELEASE_PROGRAM(pro);
 }
 
 GLvoid GLAPIENTRY
@@ -946,7 +941,7 @@ _mesa_GetAttribLocationARB(GLhandleARB programObj, const GLcharARB * name)
    GLint loc = -1;
    GET_LINKED_PROGRAM(pro, programObj, "glGetAttribLocationARB");
 
-   if (pro == NULL)
+   if (!pro)
       return -1;
 
    if (name == NULL)
