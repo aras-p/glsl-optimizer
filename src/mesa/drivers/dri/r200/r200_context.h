@@ -725,8 +725,8 @@ struct r200_tcl_info {
    GLint last_offset;
    GLuint hw_primitive;
 
-/* FIXME: what's the maximum number of components? */
-   struct r200_dma_region *aos_components[11];
+/* hw can handle 12 components max */
+   struct r200_dma_region *aos_components[12];
    GLuint nr_aos_components;
 
    GLuint *Elts;
@@ -738,6 +738,7 @@ struct r200_tcl_info {
    struct r200_dma_region fog;
    struct r200_dma_region tex[R200_MAX_TEXTURE_UNITS];
    struct r200_dma_region norm;
+   struct r200_dma_region generic[16];
 };
 
 

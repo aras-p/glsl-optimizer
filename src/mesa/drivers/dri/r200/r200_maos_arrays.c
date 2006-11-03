@@ -385,8 +385,8 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
    GLuint vfmt0 = 0, vfmt1 = 0;
    GLuint count = VB->Count;
    GLuint i;
-   
-   if (1) {
+
+   if (inputs & VERT_BIT_POS) {
       if (!rmesa->tcl.obj.buf) 
 	 emit_vector( ctx, 
 		      &rmesa->tcl.obj, 
@@ -404,7 +404,6 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
       }
       component[nr++] = &rmesa->tcl.obj;
    }
-   
 
    if (inputs & VERT_BIT_NORMAL) {
       if (!rmesa->tcl.norm.buf)
@@ -481,7 +480,7 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
       vfmt0 |= R200_VTX_FP_RGB << R200_VTX_COLOR_1_SHIFT; 
       component[nr++] = &rmesa->tcl.spec;
    }
-      
+
    for ( i = 0 ; i < ctx->Const.MaxTextureUnits ; i++ ) {
       if (inputs & (VERT_BIT_TEX0 << i)) {
 	 if (!rmesa->tcl.tex[i].buf)
@@ -494,6 +493,50 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
 
 	 vfmt1 |= VB->TexCoordPtr[i]->size << (i * 3);
 	 component[nr++] = &rmesa->tcl.tex[i];
+      }
+   }
+
+   if (ctx->VertexProgram._Enabled) {
+      int *vp_inputs = rmesa->curr_vp_hw->inputs;
+      for ( i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++ ) {
+	 if (inputs & (1 << i)) {
+	    int geninput = i - VERT_ATTRIB_GENERIC0;
+	    if (!rmesa->tcl.generic[geninput].buf) {
+	       emit_vector( ctx,
+			  &(rmesa->tcl.generic[geninput]),
+			  (char *)VB->AttribPtr[i]->data,
+			  4,
+			  VB->AttribPtr[i]->stride,
+			  count );
+	    }
+	    component[nr++] = &rmesa->tcl.generic[geninput];
+	    switch (vp_inputs[i]) {
+	    case 0:
+	       vfmt0 |=  R200_VTX_W0 | R200_VTX_Z0;
+	       break;
+	    case 2:
+	    case 3:
+	    case 4:
+	    case 5:
+	       vfmt0 |= R200_VTX_FP_RGBA << (R200_VTX_COLOR_0_SHIFT + (vp_inputs[i] - 2) * 2);
+	       break;
+	    case 6:
+	    case 7:
+	    case 8:
+	    case 9:
+	    case 10:
+	    case 11:
+	       vfmt1 |= 4 << (R200_VTX_TEX0_COMP_CNT_SHIFT + (vp_inputs[i] - 6) * 3);
+	       break;
+	    case 13:
+	       vfmt0 |= R200_VTX_XY1 | R200_VTX_Z1 | R200_VTX_W1;
+	       break;
+	    case 1:
+	    case 12:
+	    default:
+	       assert(0);
+	    }
+	 }
       }
    }
 
@@ -522,7 +565,7 @@ void r200ReleaseArrays( GLcontext *ctx, GLuint newinputs )
 
    if (newinputs & VERT_BIT_NORMAL) 
       r200ReleaseDmaRegion( rmesa, &rmesa->tcl.norm, __FUNCTION__ );
-      
+
    if (newinputs & VERT_BIT_FOG) 
       r200ReleaseDmaRegion( rmesa, &rmesa->tcl.fog, __FUNCTION__ );
 
@@ -536,4 +579,14 @@ void r200ReleaseArrays( GLcontext *ctx, GLuint newinputs )
       if (newinputs & VERT_BIT_TEX(unit))
 	 r200ReleaseDmaRegion( rmesa, &rmesa->tcl.tex[unit], __FUNCTION__ );
    }
+
+   if (ctx->VertexProgram._Enabled) {
+      int i;
+      for (i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++) {
+	 if (newinputs & (1 << i))
+	    r200ReleaseDmaRegion( rmesa,
+	       &rmesa->tcl.generic[i - VERT_ATTRIB_GENERIC0], __FUNCTION__ );
+      }
+   }
+
 }

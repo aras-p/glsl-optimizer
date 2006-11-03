@@ -436,11 +436,13 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
 	 We only need to change compsel. */
       GLuint out_compsel = 0;
       GLuint vp_out = rmesa->curr_vp_hw->mesa_program.Base.OutputsWritten;
+#if 0
       /* can't handle other inputs, generic attribs etc. currently - should never arrive here */
       assert ((rmesa->curr_vp_hw->mesa_program.Base.InputsRead &
 	 ~(VERT_BIT_POS | VERT_BIT_NORMAL | VERT_BIT_COLOR0 | VERT_BIT_COLOR1 |
 	  VERT_BIT_FOG | VERT_BIT_TEX0 | VERT_BIT_TEX1 | VERT_BIT_TEX2 |
 	  VERT_BIT_TEX3 | VERT_BIT_TEX4 | VERT_BIT_TEX5)) == 0);
+#endif
       inputs |= rmesa->curr_vp_hw->mesa_program.Base.InputsRead;
       assert(vp_out & (1 << VERT_RESULT_HPOS));
       out_compsel = R200_OUTPUT_XYZW;
@@ -577,7 +579,7 @@ static void transition_to_hwtnl( GLcontext *ctx )
       rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] &= ~R200_FOG_USE_MASK;
       rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] |= R200_FOG_USE_VTX_FOG;
    }
-   
+
    R200_STATECHANGE( rmesa, vte );
    rmesa->hw.vte.cmd[VTE_SE_VTE_CNTL] &= ~(R200_VTX_XY_FMT|R200_VTX_Z_FMT);
    rmesa->hw.vte.cmd[VTE_SE_VTE_CNTL] |= R200_VTX_W0_FMT;

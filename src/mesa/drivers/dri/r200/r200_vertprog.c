@@ -404,6 +404,8 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
    unsigned long hw_op;
    int dofogfix = 0;
    int fog_temp_i = 0;
+   int free_inputs;
+   int array_count = 0;
 
    vp->native = GL_FALSE;
    vp->translated = GL_TRUE;
@@ -412,6 +414,7 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
    if (mesa_vp->Base.NumInstructions == 0)
       return GL_FALSE;
 
+#if 0
    if ((mesa_vp->Base.InputsRead &
       ~(VERT_BIT_POS | VERT_BIT_NORMAL | VERT_BIT_COLOR0 | VERT_BIT_COLOR1 |
       VERT_BIT_FOG | VERT_BIT_TEX0 | VERT_BIT_TEX1 | VERT_BIT_TEX2 |
@@ -422,6 +425,7 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
       }
       return GL_FALSE;
    }
+#endif
 
    if ((mesa_vp->Base.OutputsWritten &
       ~((1 << VERT_RESULT_HPOS) | (1 << VERT_RESULT_COL0) | (1 << VERT_RESULT_COL1) |
@@ -470,39 +474,95 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
    else
       mesa_vp->Base.NumNativeParameters = 0;
 
-   for(i=0; i < VERT_ATTRIB_MAX; i++)
+   for(i = 0; i < VERT_ATTRIB_MAX; i++)
       vp->inputs[i] = -1;
+   free_inputs = 0x2ffd;
+
 /* fglrx uses fixed inputs as follows for conventional attribs.
-   generic attribs use non-fixed assignment, fglrx will always use the lowest attrib values available.
-   There are 12 generic attribs possible, corresponding to attrib 0, 2-11 and 13 in a hw vertex prog.
-   attr 1 and 12 are not available for generic attribs as those cannot be made vec4 (correspond to
-   vertex normal/weight)
+   generic attribs use non-fixed assignment, fglrx will always use the
+   lowest attrib values available. We'll just do the same.
+   There are 12 generic attribs possible, corresponding to attrib 0, 2-11
+   and 13 in a hw vertex prog.
+   attr 1 and 12 aren't used for generic attribs as those cannot be made vec4
+   (correspond to vertex normal/weight - maybe weight actually could be made vec4).
+   Additionally, not more than 12 arrays in total are possible I think.
    attr 0 is pos, R200_VTX_XY1|R200_VTX_Z1|R200_VTX_W1 in R200_SE_VTX_FMT_0
    attr 2-5 use colors 0-3 (R200_VTX_FP_RGBA << R200_VTX_COLOR_0/1/2/3_SHIFT in R200_SE_VTX_FMT_0)
    attr 6-11 use tex 0-5 (4 << R200_VTX_TEX0/1/2/3/4/5_COMP_CNT_SHIFT in R200_SE_VTX_FMT_1)
    attr 13 uses vtx1 pos (R200_VTX_XY1|R200_VTX_Z1|R200_VTX_W1 in R200_SE_VTX_FMT_0)
-   generic attribs would require some more work (dma regions, renaming). */
+*/
 
-/* may look different when using idx buf / input_route instead of se_vtx_fmt? */
-   vp->inputs[VERT_ATTRIB_POS] = 0;
-   vp->inputs[VERT_ATTRIB_WEIGHT] = 12;
-   vp->inputs[VERT_ATTRIB_NORMAL] = 1;
-   vp->inputs[VERT_ATTRIB_COLOR0] = 2;
-   vp->inputs[VERT_ATTRIB_COLOR1] = 3;
-   vp->inputs[VERT_ATTRIB_FOG] = 15;
-   vp->inputs[VERT_ATTRIB_TEX0] = 6;
-   vp->inputs[VERT_ATTRIB_TEX1] = 7;
-   vp->inputs[VERT_ATTRIB_TEX2] = 8;
-   vp->inputs[VERT_ATTRIB_TEX3] = 9;
-   vp->inputs[VERT_ATTRIB_TEX4] = 10;
-   vp->inputs[VERT_ATTRIB_TEX5] = 11;
 /* attr 4,5 and 13 are only used with generic attribs.
    Haven't seen attr 14 used, maybe that's for the hw pointsize vec1 (which is
    not possibe to use with vertex progs as it is lacking in vert prog specification) */
+/* may look different when using idx buf / input_route instead of se_vtx_fmt? */
+   if (mesa_vp->Base.InputsRead & VERT_BIT_POS) {
+      vp->inputs[VERT_ATTRIB_POS] = 0;
+      free_inputs &= ~(1 << 0);
+      array_count++;
+   }
+   if (mesa_vp->Base.InputsRead & VERT_ATTRIB_WEIGHT) {
+   /* we don't actually handle that later. Then again, we don't have to... */
+      vp->inputs[VERT_ATTRIB_WEIGHT] = 12;
+      array_count++;
+   }
+   if (mesa_vp->Base.InputsRead & VERT_BIT_NORMAL) {
+      vp->inputs[VERT_ATTRIB_NORMAL] = 1;
+      array_count++;
+   }
+   if (mesa_vp->Base.InputsRead & VERT_BIT_COLOR0) {
+      vp->inputs[VERT_ATTRIB_COLOR0] = 2;
+      free_inputs &= ~(1 << 2);
+      array_count++;
+   }
+   if (mesa_vp->Base.InputsRead & VERT_BIT_COLOR1) {
+      vp->inputs[VERT_ATTRIB_COLOR1] = 3;
+      free_inputs &= ~(1 << 3);
+      array_count++;
+   }
+   if (mesa_vp->Base.InputsRead & VERT_BIT_FOG) {
+      vp->inputs[VERT_ATTRIB_FOG] = 15; array_count++;
+   }
+   for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX5; i++) {
+      if (mesa_vp->Base.InputsRead & (1 << i)) {
+	 vp->inputs[i] = i - VERT_ATTRIB_TEX0 + 6;
+	 free_inputs &= ~(1 << (i - VERT_ATTRIB_TEX0 + 6));
+	 array_count++;
+      }
+   }
+   /* using VERT_ATTRIB_TEX6/7 would be illegal */
+   /* completely ignore aliasing? */
+   for (i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++) {
+      int j;
+   /* completely ignore aliasing? */
+      if (mesa_vp->Base.InputsRead & (1 << i)) {
+	 array_count++;
+	 if (array_count > 12) {
+	    if (R200_DEBUG & DEBUG_FALLBACKS) {
+	       fprintf(stderr, "more than 12 attribs used in vert prog\n");
+	    }
+	    return GL_FALSE;
+	 }
+	 for (j = 0; j < 14; j++) {
+	    /* will always find one due to limited array_count */
+	    if (free_inputs & (1 << j)) {
+	       free_inputs &= ~(1 << j);
+	       vp->inputs[i] = j;
+	       break;
+	    }
+	 }
+      }
+   }
 
    if (!(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))) {
       if (R200_DEBUG & DEBUG_FALLBACKS) {
 	 fprintf(stderr, "can't handle vert prog without position output\n");
+      }
+      return GL_FALSE;
+   }
+   if (free_inputs & 1) {
+      if (R200_DEBUG & DEBUG_FALLBACKS) {
+	 fprintf(stderr, "can't handle vert prog without position input\n");
       }
       return GL_FALSE;
    }
