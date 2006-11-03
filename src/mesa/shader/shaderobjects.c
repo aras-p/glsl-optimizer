@@ -1097,16 +1097,28 @@ GLboolean GLAPIENTRY
 _mesa_IsProgram(GLuint program)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GET_GENERIC(gen, program, "glIsProgram");
-   return gen ? GL_TRUE : GL_FALSE;
+   GET_PROGRAM(pro, program, "glIsProgram");
+   if (pro) {
+      RELEASE_PROGRAM(pro);
+      return GL_TRUE;
+   }
+   else {
+      return GL_FALSE;
+   }
 }
 
 GLboolean GLAPIENTRY
 _mesa_IsShader(GLuint shader)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GET_GENERIC(gen, shader, "glIsProgram");
-   return gen ? GL_TRUE : GL_FALSE;
+   GET_SHADER(sh, shader, "glIsProgram");
+   if (sh) {
+      RELEASE_SHADER(sh);
+      return GL_TRUE;
+   }
+   else {
+      return GL_FALSE;
+   }
 }
 
 
