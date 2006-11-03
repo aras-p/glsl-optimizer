@@ -40,6 +40,7 @@
 
 # if defined(USE_MGL_NAMESPACE)
 #  define GL_PREFIX(n) GLNAME(CONCAT(mgl,n))
+#  define _glapi_Dispatch _mglapi_Dispatch
 # else
 #  define GL_PREFIX(n) GLNAME(CONCAT(gl,n))
 # endif
