@@ -349,299 +349,146 @@ _mesa_ValidateProgramARB(GLhandleARB programObj)
    }
 }
 
-GLvoid GLAPIENTRY
-_mesa_Uniform1fARB(GLint location, GLfloat v0)
+
+/**
+ * Helper function for all the _mesa_Uniform*() functions below.
+ */
+static INLINE void
+uniform(GLint location, GLsizei count, const GLvoid *values, GLenum type,
+        const char *caller)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform1fARB");
+   GET_CURRENT_LINKED_PROGRAM(pro, caller);
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   if (pro != NULL) {
-      if (!(**pro).WriteUniform(pro, location, 1, &v0, GL_FLOAT))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform1fARB");
-   }
+   if (!pro)
+      return;
+
+   if (!(**pro).WriteUniform(pro, location, count, values, type))
+      _mesa_error(ctx, GL_INVALID_OPERATION, caller);
+}
+
+
+GLvoid GLAPIENTRY
+_mesa_Uniform1fARB(GLint location, GLfloat v0)
+{
+   uniform(location, 1, &v0, GL_FLOAT, "glUniform1fARB");
 }
 
 GLvoid GLAPIENTRY
 _mesa_Uniform2fARB(GLint location, GLfloat v0, GLfloat v1)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform2fARB");
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      GLfloat v[2];
-      v[0] = v0;
-      v[1] = v1;
-
-      if (!(**pro).WriteUniform(pro, location, 1, v, GL_FLOAT_VEC2))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform2fARB");
-   }
+   GLfloat v[2];
+   v[0] = v0;
+   v[1] = v1;
+   uniform(location, 1, v, GL_FLOAT_VEC2, "glUniform2fARB");
 }
 
 GLvoid GLAPIENTRY
 _mesa_Uniform3fARB(GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform3fARB");
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      GLfloat v[3];
-      v[0] = v0;
-      v[1] = v1;
-      v[2] = v2;
-
-      if (!(**pro).WriteUniform(pro, location, 1, v, GL_FLOAT_VEC3))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform3fARB");
-   }
+   GLfloat v[3];
+   v[0] = v0;
+   v[1] = v1;
+   v[2] = v2;
+   uniform(location, 1, v, GL_FLOAT_VEC3, "glUniform3fARB");
 }
 
 GLvoid GLAPIENTRY
 _mesa_Uniform4fARB(GLint location, GLfloat v0, GLfloat v1, GLfloat v2,
                    GLfloat v3)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform4fARB");
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      GLfloat v[4];
-      v[0] = v0;
-      v[1] = v1;
-      v[2] = v2;
-      v[3] = v3;
-
-      if (!(**pro).WriteUniform(pro, location, 1, v, GL_FLOAT_VEC4))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform4fARB");
-   }
+   GLfloat v[4];
+   v[0] = v0;
+   v[1] = v1;
+   v[2] = v2;
+   v[3] = v3;
+   uniform(location, 1, v, GL_FLOAT_VEC4, "glUniform4fARB");
 }
 
 GLvoid GLAPIENTRY
 _mesa_Uniform1iARB(GLint location, GLint v0)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform1iARB");
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      if (!(**pro).WriteUniform(pro, location, 1, &v0, GL_INT))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform1iARB");
-   }
+   uniform(location, 1, &v0, GL_INT, "glUniform1iARB");
 }
 
 GLvoid GLAPIENTRY
 _mesa_Uniform2iARB(GLint location, GLint v0, GLint v1)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform2iARB");
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      GLint v[2];
-      v[0] = v0;
-      v[1] = v1;
-
-      if (!(**pro).WriteUniform(pro, location, 1, v, GL_INT_VEC2))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform2iARB");
-   }
+   GLint v[2];
+   v[0] = v0;
+   v[1] = v1;
+   uniform(location, 1, v, GL_INT_VEC2, "glUniform2iARB");
 }
 
 GLvoid GLAPIENTRY
 _mesa_Uniform3iARB(GLint location, GLint v0, GLint v1, GLint v2)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform3iARB");
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      GLint v[3];
-      v[0] = v0;
-      v[1] = v1;
-      v[2] = v2;
-
-      if (!(**pro).WriteUniform(pro, location, 1, v, GL_INT_VEC3))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform3iARB");
-   }
+   GLint v[3];
+   v[0] = v0;
+   v[1] = v1;
+   v[2] = v2;
+   uniform(location, 1, v, GL_INT_VEC3, "glUniform3iARB");
 }
 
 GLvoid GLAPIENTRY
 _mesa_Uniform4iARB(GLint location, GLint v0, GLint v1, GLint v2, GLint v3)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform4iARB");
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      GLint v[4];
-      v[0] = v0;
-      v[1] = v1;
-      v[2] = v2;
-      v[3] = v3;
-
-      if (!(**pro).WriteUniform(pro, location, 1, v, GL_INT_VEC4))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform4iARB");
-   }
+   GLint v[4];
+   v[0] = v0;
+   v[1] = v1;
+   v[2] = v2;
+   v[3] = v3;
+   uniform(location, 1, v, GL_INT_VEC4, "glUniform4iARB");
 }
 
 GLvoid GLAPIENTRY
 _mesa_Uniform1fvARB(GLint location, GLsizei count, const GLfloat * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform1fvARB");
-
-   if (value == NULL) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniform1fvARB");
-      return;
-   }
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      if (!(**pro).WriteUniform(pro, location, count, value, GL_FLOAT))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform1fvARB");
-   }
+   uniform(location, count, value, GL_FLOAT, "glUniform1fvARB");
 }
 
 GLvoid GLAPIENTRY
 _mesa_Uniform2fvARB(GLint location, GLsizei count, const GLfloat * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform2fvARB");
-
-   if (value == NULL) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniform2fvARB");
-      return;
-   }
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      if (!(**pro).WriteUniform(pro, location, count, value, GL_FLOAT_VEC2))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform2fvARB");
-   }
+   uniform(location, count, value, GL_FLOAT_VEC2, "glUniform2fvARB");
 }
 
 GLvoid GLAPIENTRY
 _mesa_Uniform3fvARB(GLint location, GLsizei count, const GLfloat * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform3fvARB");
-
-   if (value == NULL) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniform3fvARB");
-      return;
-   }
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      if (!(**pro).WriteUniform(pro, location, count, value, GL_FLOAT_VEC3))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform3fvARB");
-   }
+   uniform(location, count, value, GL_FLOAT_VEC3, "glUniform3fvARB");
 }
 
 GLvoid GLAPIENTRY
 _mesa_Uniform4fvARB(GLint location, GLsizei count, const GLfloat * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform4fvARB");
-
-   if (value == NULL) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniform4fvARB");
-      return;
-   }
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      if (!(**pro).WriteUniform(pro, location, count, value, GL_FLOAT_VEC4))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform4fvARB");
-   }
+   uniform(location, count, value, GL_FLOAT_VEC4, "glUniform4fvARB");
 }
 
 GLvoid GLAPIENTRY
 _mesa_Uniform1ivARB(GLint location, GLsizei count, const GLint * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform1ivARB");
-
-   if (value == NULL) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniform1ivARB");
-      return;
-   }
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      if (!(**pro).WriteUniform(pro, location, count, value, GL_INT))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform1ivARB");
-   }
+   uniform(location, count, value, GL_INT, "glUniform1ivARB");
 }
 
 GLvoid GLAPIENTRY
 _mesa_Uniform2ivARB(GLint location, GLsizei count, const GLint * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform2ivARB");
-
-   if (value == NULL) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniform2ivARB");
-      return;
-   }
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      if (!(**pro).WriteUniform(pro, location, count, value, GL_INT_VEC2))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform2ivARB");
-   }
+   uniform(location, count, value, GL_INT_VEC2, "glUniform2ivARB");
 }
 
 GLvoid GLAPIENTRY
 _mesa_Uniform3ivARB(GLint location, GLsizei count, const GLint * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform3ivARB");
-
-   if (value == NULL) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniform3ivARB");
-      return;
-   }
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      if (!(**pro).WriteUniform(pro, location, count, value, GL_INT_VEC3))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform3ivARB");
-   }
+   uniform(location, count, value, GL_INT_VEC3, "glUniform3ivARB");
 }
 
 GLvoid GLAPIENTRY
 _mesa_Uniform4ivARB(GLint location, GLsizei count, const GLint * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniform4ivARB");
-
-   if (value == NULL) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniform4ivARB");
-      return;
-   }
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      if (!(**pro).WriteUniform(pro, location, count, value, GL_INT_VEC4))
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform4ivARB");
-   }
+   uniform(location, count, value, GL_INT_VEC4, "glUniform4ivARB");
 }
 
 
@@ -1015,10 +862,8 @@ _mesa_GetUniformfvARB(GLhandleARB programObj, GLint location, GLfloat * params)
    GET_CURRENT_CONTEXT(ctx);
    GET_LINKED_PROGRAM(pro, programObj, "glGetUniformfvARB");
 
-   /* XXX error-check location here */
-
    if (pro != NULL) {
-      if (!(**pro).ReadUniform(pro, location, 1, params))
+      if (!(**pro).ReadUniform(pro, location, 1, params, GL_FLOAT))
          _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfvARB");
       RELEASE_PROGRAM(pro);
    }
@@ -1031,7 +876,8 @@ _mesa_GetUniformivARB(GLhandleARB programObj, GLint location, GLint * params)
    GET_LINKED_PROGRAM(pro, programObj, "glGetUniformivARB");
 
    if (pro != NULL) {
-      /* TODO */
+      if (!(**pro).ReadUniform(pro, location, 1, params, GL_INT))
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformivARB");
       RELEASE_PROGRAM(pro);
    }
 }

@@ -105,7 +105,7 @@ struct gl2_program_intf
    GLboolean (* WriteUniform) (struct gl2_program_intf **, GLint loc, GLsizei count,
                                const GLvoid *data, GLenum type);
    GLboolean (* ReadUniform) (struct gl2_program_intf **, GLint loc, GLsizei count,
-                               GLfloat *data);
+                               GLvoid *data, GLenum type);
    GLvoid (* GetActiveAttrib) (struct gl2_program_intf **, GLuint index, GLsizei maxLength,
                                GLsizei *length, GLint *size, GLenum *type, GLchar *name);
    GLuint (* GetActiveAttribMaxLength) (struct gl2_program_intf **);

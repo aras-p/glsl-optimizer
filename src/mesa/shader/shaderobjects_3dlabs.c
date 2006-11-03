@@ -1383,6 +1383,10 @@ _program_GetUniformLocation(struct gl2_program_intf **intf,
    return -1;
 }
 
+/**
+ * Write a uniform variable into program's memory.
+ * \return GL_TRUE for success, GL_FALSE if error
+ */
 static GLboolean
 _program_WriteUniform(struct gl2_program_intf **intf, GLint loc,
                       GLsizei count, const GLvoid * data, GLenum type)
@@ -1396,9 +1400,7 @@ _program_WriteUniform(struct gl2_program_intf **intf, GLint loc,
    GLboolean convert_int_to_float = GL_FALSE;
    GLboolean types_match = GL_FALSE;
 
-   if (loc == -1)
-      return GL_TRUE;
-   if (loc >= uniforms->count)
+   if (loc < 0 || loc >= uniforms->count)
       return GL_FALSE;
 
    uniform = &uniforms->table[loc];
@@ -1460,86 +1462,161 @@ _program_WriteUniform(struct gl2_program_intf **intf, GLint loc,
       break;
    }
 
-   if (convert_float_to_bool) {
-      for (i = 0; i < SLANG_SHADER_MAX; i++)
-         if (uniform->address[i] != ~0) {
+   for (i = 0; i < SLANG_SHADER_MAX; i++) {
+      if (uniform->address[i] != ~0) {
+         void *dest
+            = &impl->_obj.prog.machines[i]->mem[uniform->address[i] / 4];
+         /* total number of values to copy */
+         GLuint total
+            = count * slang_export_data_quant_components(uniform->quant);
+         GLuint j;
+         if (convert_float_to_bool) {
             const GLfloat *src = (GLfloat *) (data);
-            GLfloat *dst = (GLfloat *)
-               (&impl->_obj.prog.machines[i]->mem[uniform->address[i] / 4]);
-            GLuint j;
-            GLuint total =
-               count * slang_export_data_quant_components(uniform->quant);
-
+            GLfloat *dst = (GLfloat *) dest;
             for (j = 0; j < total; j++)
                dst[j] = src[j] != 0.0f ? 1.0f : 0.0f;
+            break;
          }
-   }
-   else if (convert_int_to_bool) {
-      for (i = 0; i < SLANG_SHADER_MAX; i++)
-         if (uniform->address[i] != ~0) {
-            const GLuint *src = (GLuint *) (data);
-            GLfloat *dst = (GLfloat *)
-               (&impl->_obj.prog.machines[i]->mem[uniform->address[i] / 4]);
-            GLuint j;
-            GLuint total =
-               count * slang_export_data_quant_components(uniform->quant);
-
+         else if (convert_int_to_bool) {
+            const GLint *src = (GLint *) (data);
+            GLfloat *dst = (GLfloat *) dest;
             for (j = 0; j < total; j++)
                dst[j] = src[j] ? 1.0f : 0.0f;
+            break;
          }
-   }
-   else if (convert_int_to_float) {
-      for (i = 0; i < SLANG_SHADER_MAX; i++)
-         if (uniform->address[i] != ~0) {
-            const GLuint *src = (GLuint *) (data);
-            GLfloat *dst = (GLfloat *)
-               (&impl->_obj.prog.machines[i]->mem[uniform->address[i] / 4]);
-            GLuint j;
-            GLuint total =
-               count * slang_export_data_quant_components(uniform->quant);
-
+         else if (convert_int_to_float) {
+            const GLint *src = (GLint *) (data);
+            GLfloat *dst = (GLfloat *) dest;
             for (j = 0; j < total; j++)
                dst[j] = (GLfloat) src[j];
+            break;
          }
-   }
-   else {
-      for (i = 0; i < SLANG_SHADER_MAX; i++)
-         if (uniform->address[i] != ~0) {
-            _mesa_memcpy(&impl->_obj.prog.machines[i]->
-                         mem[uniform->address[i] / 4], data,
-                         count *
-                         slang_export_data_quant_size(uniform->quant));
+         else {
+            _mesa_memcpy(dest, data, total * sizeof(GLfloat));
+            break;
          }
+         break;
+      }
    }
    return GL_TRUE;
 }
 
+/**
+ * Read a uniform variable from program's memory.
+ * \return GL_TRUE for success, GL_FALSE if error
+ */
 static GLboolean
 _program_ReadUniform(struct gl2_program_intf **intf, GLint loc,
-                     GLsizei count, GLfloat *data)
+                     GLsizei count, GLvoid *data, GLenum type)
 {
    struct gl2_program_impl *impl = (struct gl2_program_impl *) (intf);
    const slang_uniform_bindings *uniforms = &impl->_obj.prog.uniforms;
    const slang_uniform_binding *uniform;
-   GLint i, j;
+   GLuint i;
+   GLboolean convert_bool_to_float = GL_FALSE;
+   GLboolean convert_bool_to_int = GL_FALSE;
+   GLboolean convert_float_to_int = GL_FALSE;
+   GLboolean types_match = GL_FALSE;
 
    if (loc < 0 || loc >= uniforms->count)
       return GL_FALSE;
 
    uniform = &uniforms->table[loc];
 
-   /* loop over shader types (fragment, vertex) */
+   if (slang_export_data_quant_struct(uniform->quant))
+      return GL_FALSE;
+
+   switch (slang_export_data_quant_type(uniform->quant)) {
+   case GL_BOOL_ARB:
+      types_match = (type == GL_FLOAT) || (type == GL_INT);
+      if (type == GL_FLOAT)
+         convert_bool_to_float = GL_TRUE;
+      else
+         convert_bool_to_int = GL_TRUE;
+      break;
+   case GL_BOOL_VEC2_ARB:
+      types_match = (type == GL_FLOAT_VEC2_ARB) || (type == GL_INT_VEC2_ARB);
+      if (type == GL_FLOAT_VEC2_ARB)
+         convert_bool_to_float = GL_TRUE;
+      else
+         convert_bool_to_int = GL_TRUE;
+      break;
+   case GL_BOOL_VEC3_ARB:
+      types_match = (type == GL_FLOAT_VEC3_ARB) || (type == GL_INT_VEC3_ARB);
+      if (type == GL_FLOAT_VEC3_ARB)
+         convert_bool_to_float = GL_TRUE;
+      else
+         convert_bool_to_int = GL_TRUE;
+      break;
+   case GL_BOOL_VEC4_ARB:
+      types_match = (type == GL_FLOAT_VEC4_ARB) || (type == GL_INT_VEC4_ARB);
+      if (type == GL_FLOAT_VEC4_ARB)
+         convert_bool_to_float = GL_TRUE;
+      else
+         convert_bool_to_int = GL_TRUE;
+      break;
+   case GL_SAMPLER_1D_ARB:
+   case GL_SAMPLER_2D_ARB:
+   case GL_SAMPLER_3D_ARB:
+   case GL_SAMPLER_CUBE_ARB:
+   case GL_SAMPLER_1D_SHADOW_ARB:
+   case GL_SAMPLER_2D_SHADOW_ARB:
+      types_match = (type == GL_INT);
+      break;
+   default:
+      /* uniform is a float type */
+      types_match = (type == GL_FLOAT);
+      break;
+   }
+
+   if (!types_match)
+      return GL_FALSE;
+
+   switch (type) {
+   case GL_INT:
+   case GL_INT_VEC2_ARB:
+   case GL_INT_VEC3_ARB:
+   case GL_INT_VEC4_ARB:
+      convert_float_to_int = GL_TRUE;
+      break;
+   }
+
    for (i = 0; i < SLANG_SHADER_MAX; i++) {
       if (uniform->address[i] != ~0) {
-         GLfloat *src = (GLfloat *)
-            (&impl->_obj.prog.machines[i]->mem[uniform->address[i] / 4]);
-         GLuint total =
-            count * slang_export_data_quant_components(uniform->quant);
-         for (j = 0; j < total; j++)
-            data[j] = src[j];
+         /* XXX if bools are really implemented as floats, some of this
+          * could probably be culled out.
+          */
+         const void *source
+            = &impl->_obj.prog.machines[i]->mem[uniform->address[i] / 4];
+         /* total number of values to copy */
+         const GLuint total
+            = count * slang_export_data_quant_components(uniform->quant);
+         GLuint j;
+         if (convert_bool_to_float) {
+            GLfloat *dst = (GLfloat *) (data);
+            const GLfloat *src = (GLfloat *) source;
+            for (j = 0; j < total; j++)
+               dst[j] = src[j] == 0.0 ? 0.0 : 1.0;
+         }
+         else if (convert_bool_to_int) {
+            GLint *dst = (GLint *) (data);
+            const GLfloat *src = (GLfloat *) source;
+            for (j = 0; j < total; j++)
+               dst[j] = src[j] == 0.0 ? 0 : 1;
+         }
+         else if (convert_float_to_int) {
+            GLint *dst = (GLint *) (data);
+            const GLfloat *src = (GLfloat *) source;
+            for (j = 0; j < total; j++)
+               dst[j] = (GLint) src[j];
+         }
+         else {
+            /* no type conversion needed */
+            _mesa_memcpy(data, source, total * sizeof(GLfloat));
+         }
          break;
-      }
-   }
+      } /* if */
+   } /* for */
 
    return GL_TRUE;
 }
