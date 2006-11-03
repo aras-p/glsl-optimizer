@@ -235,10 +235,6 @@ static void r200InitDriverFuncs( struct dd_function_table *functions )
 {
     functions->GetBufferSize		= r200GetBufferSize;
     functions->GetString		= r200GetString;
-
-    functions->Error			= NULL;
-    functions->DrawPixels		= NULL;
-    functions->Bitmap			= NULL;
 }
 
 static const struct dri_debug_control debug_control[] =
