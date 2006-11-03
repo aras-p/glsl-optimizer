@@ -5,7 +5,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -28,8 +28,8 @@
  */
 
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef MESA_CONFIG_H_INCLUDED
+#define MESA_CONFIG_H_INCLUDED
 
 /**
  * \name OpenGL implementation limits
@@ -323,4 +323,4 @@
 #define MAX_CLIPPED_VERTICES ((2 * (6 + MAX_CLIP_PLANES))+1)
 
 
-#endif /* CONFIG_H */
+#endif /* MESA_CONFIG_H_INCLUDED */
