@@ -18,16 +18,31 @@ Mesa 6.5.2 is a 6.5 follow-on development release mostly consisting of
 
 <h2>MD5 checksums</h2>
 <pre>
+TBD
 </pre>
 
 
-<h2>New Features</h2>
+<h2>New features</h2>
 <ul>
+<li>New DRI memory manager system.  Currently used by the i915tex driver.
+Other DRI drivers will be updated to use the new memory manager in coming
+months.
+<br>
+To use the new driver you'll need the most recent DRM library and drivers
+(version 2.2 or later) and a recent xf86-video-intel driver module from X.org.
+<br>
+New features resulting from this work include:
+<ul>
+<li>EXT_framebuffer_objects, render to texture
+<li>ARB_pixel_buffer_objects
+<li>Accelerated CopyTexSubimage, DrawPixels, ReadPixels, CopyPixels
+<li>Accelerated texture uploads from pixel buffer objects
+<li>Potentially texturing directly from the pixel buffer object (zero 
+copy texturing).
+</ul>
+<li>New Intel i965 DRI driver
 <li>New <code>minstall</code> script to replace normal install program
 <li>Faster fragment program execution in software
-</ul>
-
-<h2>Changes</h2>
 </ul>
 
 <h2>Bug fixes</h2>
@@ -39,11 +54,19 @@ Mesa 6.5.2 is a 6.5 follow-on development release mostly consisting of
 <li>glDrawPixels into a user-created framebuffer object could crash Xlib driver
 <li>Line clipping was broken in some circumstances
 <li>fragment.fogcoord register didn't always contain the correct value
+<li>RGBA logicops didn't work reliably in some DRI drivers
+<li>Fixed broken RGBA LogicOps in Intel DRI drivers
+<li>Fixed some fragment program bugs in Intel i915 DRI driver
 </ul>
 
 
 <h2>Internal code changes</h2>
 
+<ul>
+<li>The device driver functions ResizeBuffers and GetBufferSize have been
+decprecated.
+<li>OpenGL 2.0 and 2.1 support is nearly done.
+</ul>
 
 
 <h2>To Do (someday) items</h2>
