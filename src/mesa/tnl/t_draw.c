@@ -41,13 +41,13 @@
 
 
 
-static GLfloat *get_space(GLcontext *ctx, GLuint bytes)
+static GLubyte *get_space(GLcontext *ctx, GLuint bytes)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLubyte *space = _mesa_malloc(bytes);
    
    tnl->block[tnl->nr_blocks++] = space;
-   return (GLfloat *)space;
+   return space;
 }
 
 
@@ -97,7 +97,7 @@ static void _tnl_import_array( GLcontext *ctx,
 			       GLuint start,
 			       GLuint end,
 			       const struct gl_client_array *input,
-			       const char *ptr )
+			       const GLubyte *ptr )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
@@ -108,7 +108,7 @@ static void _tnl_import_array( GLcontext *ctx,
 
    if (input->Type != GL_FLOAT) {
       const GLuint sz = input->Size;
-      char *buf = get_space(ctx, count * sz * sizeof(GLfloat));
+      GLubyte *buf = get_space(ctx, count * sz * sizeof(GLfloat));
       GLfloat *fptr = (GLfloat *)buf;
 
       switch (input->Type) {
@@ -263,6 +263,8 @@ static void bind_indicies( GLcontext *ctx,
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
+   GLuint i;
+   void *ptr;
 
    if (!ib)
       return;
@@ -278,18 +280,30 @@ static void bind_indicies( GLcontext *ctx,
       assert(ib->obj->Pointer);
    }
 
-   VB->Elts = (GLuint *)ADD_POINTERS(ib->obj->Pointer, 
-				     ib->ptr);
-   
-   VB->Elts += ib->rebase;
+   ptr = ADD_POINTERS(ib->obj->Pointer, ib->ptr);
 
-   switch (ib->type) {
-   case GL_UNSIGNED_INT:
-      return;
-   case GL_UNSIGNED_SHORT:
-      break;
-   case GL_UNSIGNED_BYTE:
-      break;
+   if (ib->type == GL_UNSIGNED_INT) {
+      VB->Elts = (GLuint *) ptr;
+      VB->Elts += ib->rebase;
+   }
+   else {
+      GLuint *elts = (GLuint *)get_space(ctx, ib->count * sizeof(GLuint));
+      VB->Elts = elts;
+
+      switch (ib->type) {
+      case GL_UNSIGNED_SHORT: {
+	 const GLushort *in = ((GLushort *)ptr) + ib->rebase;
+	 for (i = 0; i < ib->count; i++) 
+	    *elts++ = *in++;
+	 break;
+      }
+      case GL_UNSIGNED_BYTE: {
+	 const GLubyte *in = ((GLubyte *)ptr) + ib->rebase;
+	 for (i = 0; i < ib->count; i++) 
+	    *elts++ = *in++;
+	 break;
+      }
+      }      
    }
 }
 
