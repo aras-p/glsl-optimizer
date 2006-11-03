@@ -58,6 +58,7 @@ static const struct {
    { OFF, "GL_ARB_point_sprite",               F(ARB_point_sprite) },
    { OFF, "GL_ARB_shader_objects",             F(ARB_shader_objects) },
    { OFF, "GL_ARB_shading_language_100",       F(ARB_shading_language_100) },
+   { OFF, "GL_ARB_shading_language_120",       F(ARB_shading_language_120) },
    { OFF, "GL_ARB_shadow",                     F(ARB_shadow) },
    { OFF, "GL_ARB_shadow_ambient",             F(SGIX_shadow_ambient) },
    { OFF, "GL_ARB_texture_border_clamp",       F(ARB_texture_border_clamp) },
