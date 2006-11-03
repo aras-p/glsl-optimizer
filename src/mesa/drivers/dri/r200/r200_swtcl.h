@@ -42,7 +42,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern void r200InitSwtcl( GLcontext *ctx );
 extern void r200DestroySwtcl( GLcontext *ctx );
 
-extern void r200FlushVertices( GLcontext *ctx, GLuint flags );
 extern void r200ChooseRenderState( GLcontext *ctx );
 extern void r200ChooseVertexState( GLcontext *ctx );
 
