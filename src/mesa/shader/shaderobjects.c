@@ -1013,7 +1013,7 @@ _mesa_GetProgramiv(GLuint program, GLenum pname, GLint *params)
 
    switch (pname) {
    case GL_DELETE_STATUS:
-      *params = 0; /* XXX fix */
+      *params = (**pro)._container._generic.GetDeleteStatus((struct gl2_generic_inf **) pro);
       break; 
    case GL_LINK_STATUS:
       *params = (**pro).GetLinkStatus(pro);
@@ -1055,7 +1055,35 @@ _mesa_GetProgramInfoLog(GLuint program, GLsizei bufSize,
 void GLAPIENTRY
 _mesa_GetShaderiv(GLuint shader, GLenum pname, GLint *params)
 {
-   /* XXX to do */
+   GET_CURRENT_CONTEXT(ctx);
+   GET_SHADER(sh, shader, "glGetShaderiv");
+
+   if (!sh)
+      return;
+
+   switch (pname) {
+   case GL_SHADER_TYPE:
+      *params = (**sh).GetSubType(sh);
+      break;
+   case GL_DELETE_STATUS:
+      *params = (**sh)._generic.GetDeleteStatus((struct gl2_generic_inf **) sh);
+      break;
+   case GL_COMPILE_STATUS:
+      *params = (**sh).GetCompileStatus(sh);
+      break;
+   case GL_INFO_LOG_LENGTH:
+      *params = (**sh)._generic.GetInfoLogLength((struct gl2_generic_inf **)sh);
+      break;
+   case GL_SHADER_SOURCE_LENGTH:
+      {
+         const GLchar *src = (**sh).GetSource(sh);
+         *params = src ? (_mesa_strlen(src) + 1) : 0;
+      }
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetShaderiv(pname)");
+      return;
+   }
 }
 
 void GLAPIENTRY
