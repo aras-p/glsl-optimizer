@@ -67,8 +67,8 @@ lookup_handle(GLcontext * ctx, GLhandleARB handle, enum gl2_uiid uiid,
       return NULL;
    }
    _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
-   unk = (struct gl2_unknown_intf **)
-      (_mesa_HashLookup(ctx->Shared->GL2Objects, handle));
+   unk = (struct gl2_unknown_intf **) _mesa_HashLookup(ctx->Shared->GL2Objects,
+                                                       handle);
    _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
    if (unk == NULL) {
@@ -1005,7 +1005,44 @@ _mesa_GetAttachedShaders(GLuint program, GLsizei maxCount,
 void GLAPIENTRY
 _mesa_GetProgramiv(GLuint program, GLenum pname, GLint *params)
 {
-   /* XXX to do */
+   GET_CURRENT_CONTEXT(ctx);
+   GET_PROGRAM(pro, program, "glGetProgramiv");
+
+   if (!pro)
+      return;
+
+   switch (pname) {
+   case GL_DELETE_STATUS:
+      *params = 0; /* XXX fix */
+      break; 
+   case GL_LINK_STATUS:
+      *params = (**pro).GetLinkStatus(pro);
+      break;
+   case GL_VALIDATE_STATUS:
+      *params = (**pro).GetValidateStatus(pro);
+      break;
+   case GL_INFO_LOG_LENGTH:
+      *params = (**pro)._container._generic.GetInfoLogLength( (struct gl2_unknown_inf **) pro );
+      break;
+   case GL_ATTACHED_SHADERS:
+      *params = (**pro)._container.GetAttachedCount( (struct gl2_unknown_inf **) pro );
+      break;
+   case GL_ACTIVE_ATTRIBUTES:
+      *params = (**pro).GetActiveAttribCount(pro);
+      break;
+   case GL_ACTIVE_ATTRIBUTE_MAX_LENGTH:
+      *params = (**pro).GetActiveAttribMaxLength(pro);
+      break;
+   case GL_ACTIVE_UNIFORMS:
+      *params = (**pro).GetActiveUniformCount(pro);
+      break;
+   case GL_ACTIVE_UNIFORM_MAX_LENGTH:
+      *params = (**pro).GetActiveUniformMaxLength(pro);
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramiv(pname)");
+      return;
+   }
 }
 
 void GLAPIENTRY
