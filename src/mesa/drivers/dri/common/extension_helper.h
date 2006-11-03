@@ -426,6 +426,13 @@ static const char ReadInstrumentsSGIX_names[] =
     "";
 #endif
 
+#if defined(need_GL_VERSION_2_1)
+static const char UniformMatrix2x4fv_names[] = 
+    "iiip\0" /* Parameter signature */
+    "glUniformMatrix2x4fv\0"
+    "";
+#endif
+
 #if defined(need_GL_SUN_vertex)
 static const char Color4ubVertex3fvSUN_names[] = 
     "pp\0" /* Parameter signature */
@@ -469,10 +476,10 @@ static const char FragmentLightModelivSGIX_names[] =
     "";
 #endif
 
-#if defined(need_GL_ATI_fragment_shader)
-static const char ColorFragmentOp3ATI_names[] = 
-    "iiiiiiiiiiiii\0" /* Parameter signature */
-    "glColorFragmentOp3ATI\0"
+#if defined(need_GL_VERSION_2_1)
+static const char UniformMatrix4x3fv_names[] = 
+    "iiip\0" /* Parameter signature */
+    "glUniformMatrix4x3fv\0"
     "";
 #endif
 
@@ -2122,6 +2129,13 @@ static const char BindFramebufferEXT_names[] =
     "";
 #endif
 
+#if defined(need_GL_SGIX_reference_plane)
+static const char ReferencePlaneSGIX_names[] = 
+    "p\0" /* Parameter signature */
+    "glReferencePlaneSGIX\0"
+    "";
+#endif
+
 #if defined(need_GL_VERSION_2_0) || defined(need_GL_ARB_shader_objects)
 static const char ValidateProgramARB_names[] = 
     "i\0" /* Parameter signature */
@@ -2309,6 +2323,13 @@ static const char SecondaryColor3ivEXT_names[] =
     "p\0" /* Parameter signature */
     "glSecondaryColor3iv\0"
     "glSecondaryColor3ivEXT\0"
+    "";
+#endif
+
+#if defined(need_GL_VERSION_2_1)
+static const char UniformMatrix4x2fv_names[] = 
+    "iiip\0" /* Parameter signature */
+    "glUniformMatrix4x2fv\0"
     "";
 #endif
 
@@ -3195,6 +3216,13 @@ static const char MultiTexCoord4fvARB_names[] =
     "ip\0" /* Parameter signature */
     "glMultiTexCoord4fv\0"
     "glMultiTexCoord4fvARB\0"
+    "";
+#endif
+
+#if defined(need_GL_VERSION_2_1)
+static const char UniformMatrix2x3fv_names[] = 
+    "iiip\0" /* Parameter signature */
+    "glUniformMatrix2x3fv\0"
     "";
 #endif
 
@@ -4378,10 +4406,10 @@ static const char Tangent3bvEXT_names[] =
     "";
 #endif
 
-#if defined(need_GL_SGIX_reference_plane)
-static const char ReferencePlaneSGIX_names[] = 
-    "p\0" /* Parameter signature */
-    "glReferencePlaneSGIX\0"
+#if defined(need_GL_VERSION_2_1)
+static const char UniformMatrix3x4fv_names[] = 
+    "iiip\0" /* Parameter signature */
+    "glUniformMatrix3x4fv\0"
     "";
 #endif
 
@@ -4538,6 +4566,13 @@ static const char GetFragmentLightfvSGIX_names[] =
 static const char GetFinalCombinerInputParameterfvNV_names[] = 
     "iip\0" /* Parameter signature */
     "glGetFinalCombinerInputParameterfvNV\0"
+    "";
+#endif
+
+#if defined(need_GL_ATI_fragment_shader)
+static const char ColorFragmentOp3ATI_names[] = 
+    "iiiiiiiiiiiii\0" /* Parameter signature */
+    "glColorFragmentOp3ATI\0"
     "";
 #endif
 
@@ -4743,6 +4778,13 @@ static const char VertexAttribs4svNV_names[] =
 static const char EdgeFlagPointerListIBM_names[] = 
     "ipi\0" /* Parameter signature */
     "glEdgeFlagPointerListIBM\0"
+    "";
+#endif
+
+#if defined(need_GL_VERSION_2_1)
+static const char UniformMatrix3x2fv_names[] = 
+    "iiip\0" /* Parameter signature */
+    "glUniformMatrix3x2fv\0"
     "";
 #endif
 
@@ -5116,7 +5158,6 @@ static const struct dri_extension_function GL_ATI_draw_buffers_functions[] = {
 
 #if defined(need_GL_ATI_fragment_shader)
 static const struct dri_extension_function GL_ATI_fragment_shader_functions[] = {
-    { ColorFragmentOp3ATI_names, ColorFragmentOp3ATI_remap_index, -1 },
     { ColorFragmentOp2ATI_names, ColorFragmentOp2ATI_remap_index, -1 },
     { DeleteFragmentShaderATI_names, DeleteFragmentShaderATI_remap_index, -1 },
     { SetFragmentShaderConstantATI_names, SetFragmentShaderConstantATI_remap_index, -1 },
@@ -5128,6 +5169,7 @@ static const struct dri_extension_function GL_ATI_fragment_shader_functions[] = 
     { PassTexCoordATI_names, PassTexCoordATI_remap_index, -1 },
     { BeginFragmentShaderATI_names, BeginFragmentShaderATI_remap_index, -1 },
     { BindFragmentShaderATI_names, BindFragmentShaderATI_remap_index, -1 },
+    { ColorFragmentOp3ATI_names, ColorFragmentOp3ATI_remap_index, -1 },
     { GenFragmentShadersATI_names, GenFragmentShadersATI_remap_index, -1 },
     { EndFragmentShaderATI_names, EndFragmentShaderATI_remap_index, -1 },
     { NULL, 0, 0 }
@@ -6267,6 +6309,18 @@ static const struct dri_extension_function GL_VERSION_2_0_functions[] = {
     { VertexAttrib4NubvARB_names, VertexAttrib4NubvARB_remap_index, -1 },
     { VertexAttrib2sARB_names, VertexAttrib2sARB_remap_index, -1 },
     { VertexAttrib1fvARB_names, VertexAttrib1fvARB_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_VERSION_2_1)
+static const struct dri_extension_function GL_VERSION_2_1_functions[] = {
+    { UniformMatrix2x4fv_names, UniformMatrix2x4fv_remap_index, -1 },
+    { UniformMatrix4x3fv_names, UniformMatrix4x3fv_remap_index, -1 },
+    { UniformMatrix4x2fv_names, UniformMatrix4x2fv_remap_index, -1 },
+    { UniformMatrix2x3fv_names, UniformMatrix2x3fv_remap_index, -1 },
+    { UniformMatrix3x4fv_names, UniformMatrix3x4fv_remap_index, -1 },
+    { UniformMatrix3x2fv_names, UniformMatrix3x2fv_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
