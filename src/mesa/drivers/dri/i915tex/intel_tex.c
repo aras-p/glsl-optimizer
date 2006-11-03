@@ -75,6 +75,31 @@ intelFreeTextureImageData(GLcontext * ctx, struct gl_texture_image *texImage)
 }
 
 
+/* The system memcpy (at least on ubuntu 5.10) has problems copying
+ * to agp (writecombined) memory from a source which isn't 64-byte
+ * aligned - there is a 4x performance falloff.
+ *
+ * The x86 __memcpy is immune to this but is slightly slower
+ * (10%-ish) than the system memcpy.
+ *
+ * The sse_memcpy seems to have a slight cliff at 64/32 bytes, but
+ * isn't much faster than x86_memcpy for agp copies.
+ * 
+ * TODO: switch dynamically.
+ */
+static void *
+do_memcpy(void *dest, const void *src, size_t n)
+{
+   if ((((unsigned) src) & 63) || (((unsigned) dest) & 63)) {
+      return __memcpy(dest, src, n);
+   }
+   else
+      return memcpy(dest, src, n);
+}
+
+
+#if DO_DEBUG
+
 #ifndef __x86_64__
 static unsigned
 fastrdtsc(void)
@@ -109,29 +134,6 @@ time_diff(unsigned t, unsigned t2)
 }
 
 
-/* The system memcpy (at least on ubuntu 5.10) has problems copying
- * to agp (writecombined) memory from a source which isn't 64-byte
- * aligned - there is a 4x performance falloff.
- *
- * The x86 __memcpy is immune to this but is slightly slower
- * (10%-ish) than the system memcpy.
- *
- * The sse_memcpy seems to have a slight cliff at 64/32 bytes, but
- * isn't much faster than x86_memcpy for agp copies.
- * 
- * TODO: switch dynamically.
- */
-static void *
-do_memcpy(void *dest, const void *src, size_t n)
-{
-   if ((((unsigned) src) & 63) || (((unsigned) dest) & 63)) {
-      return __memcpy(dest, src, n);
-   }
-   else
-      return memcpy(dest, src, n);
-}
-
-
 static void *
 timed_memcpy(void *dest, const void *src, size_t n)
 {
@@ -151,6 +153,7 @@ timed_memcpy(void *dest, const void *src, size_t n)
    _mesa_printf("timed_memcpy: %u %u --> %f clocks/byte\n", t1, t2, rate);
    return ret;
 }
+#endif /* DO_DEBUG */
 
 
 void
@@ -175,8 +178,10 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->UpdateTexturePalette = 0;
    functions->IsTextureResident = intelIsTextureResident;
 
+#if DO_DEBUG
    if (INTEL_DEBUG & DEBUG_BUFMGR)
       functions->TextureMemCpy = timed_memcpy;
    else
+#endif
       functions->TextureMemCpy = do_memcpy;
 }
