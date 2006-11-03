@@ -290,7 +290,9 @@ vbo_exec_DrawRangeElements(GLenum mode,
 
    if (ctx->NewState)
       _mesa_update_state( ctx );
-      
+
+   bind_arrays( ctx );
+
    ib.count = count;
    ib.type = type; 
    ib.obj = ctx->Array.ElementArrayBufferObj;
