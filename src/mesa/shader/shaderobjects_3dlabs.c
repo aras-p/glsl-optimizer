@@ -1514,6 +1514,37 @@ _program_WriteUniform(struct gl2_program_intf **intf, GLint loc,
    return GL_TRUE;
 }
 
+static GLboolean
+_program_ReadUniform(struct gl2_program_intf **intf, GLint loc,
+                     GLsizei count, GLfloat *data)
+{
+   struct gl2_program_impl *impl = (struct gl2_program_impl *) (intf);
+   const slang_uniform_bindings *uniforms = &impl->_obj.prog.uniforms;
+   const slang_uniform_binding *uniform;
+   GLint i, j;
+
+   if (loc < 0 || loc >= uniforms->count)
+      return GL_FALSE;
+
+   uniform = &uniforms->table[loc];
+
+   /* loop over shader types (fragment, vertex) */
+   for (i = 0; i < SLANG_SHADER_MAX; i++) {
+      if (uniform->address[i] != ~0) {
+         GLfloat *src = (GLfloat *)
+            (&impl->_obj.prog.machines[i]->mem[uniform->address[i] / 4]);
+         GLuint total =
+            count * slang_export_data_quant_components(uniform->quant);
+         for (j = 0; j < total; j++)
+            data[j] = src[j];
+         break;
+      }
+   }
+
+   return GL_TRUE;
+}
+
+
 static GLvoid
 _program_GetActiveAttrib(struct gl2_program_intf **intf, GLuint index,
                          GLsizei maxLength, GLsizei * length, GLint * size,
@@ -1647,6 +1678,7 @@ static struct gl2_program_intf _program_vftbl = {
    _program_GetActiveUniformCount,
    _program_GetUniformLocation,
    _program_WriteUniform,
+   _program_ReadUniform,
    _program_GetActiveAttrib,
    _program_GetActiveAttribMaxLength,
    _program_GetActiveAttribCount,

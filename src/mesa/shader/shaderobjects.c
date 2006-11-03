@@ -50,6 +50,8 @@
 #define RELEASE_SHADER(x)\
    (**x)._generic._unknown.Release ((struct gl2_unknown_intf **) (x))
 
+
+
 static struct gl2_unknown_intf **
 lookup_handle(GLcontext * ctx, GLhandleARB handle, enum gl2_uiid uiid,
               const char *function)
@@ -57,20 +59,21 @@ lookup_handle(GLcontext * ctx, GLhandleARB handle, enum gl2_uiid uiid,
    struct gl2_unknown_intf **unk;
 
    /*
-    * Note: _mesa_HashLookup() requires non-zero input values, so the passed-in handle value
-    *       must be checked beforehand.
+    * Note: _mesa_HashLookup() requires non-zero input values, so the
+    * passed-in handle value must be checked beforehand.
     */
    if (handle == 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, function);
       return NULL;
    }
    _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
-   unk =
-      (struct gl2_unknown_intf
-       **) (_mesa_HashLookup(ctx->Shared->GL2Objects, handle));
+   unk = (struct gl2_unknown_intf **)
+      (_mesa_HashLookup(ctx->Shared->GL2Objects, handle));
    _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
-   if (unk == NULL)
+
+   if (unk == NULL) {
       _mesa_error(ctx, GL_INVALID_VALUE, function);
+   }
    else {
       unk = (**unk).QueryInterface(unk, uiid);
       if (unk == NULL)
@@ -641,138 +644,88 @@ _mesa_Uniform4ivARB(GLint location, GLsizei count, const GLint * value)
    }
 }
 
-GLvoid GLAPIENTRY
-_mesa_UniformMatrix2fvARB(GLint location, GLsizei count, GLboolean transpose,
-                          const GLfloat * value)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniformMatrix2fvARB");
 
-   if (value == NULL) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix2fvARB");
+/**
+ * Helper function used by UniformMatrix**vARB() functions below.
+ */
+static void
+uniform_matrix(GLint cols, GLint rows, const char *caller,
+               GLenum matrixType,
+               GLint location, GLsizei count, GLboolean transpose,
+               const GLfloat *values)
+{
+   const GLint matElements = rows * cols;
+   GET_CURRENT_CONTEXT(ctx);
+   GET_CURRENT_LINKED_PROGRAM(pro, caller);
+
+   if (values == NULL) {
+      _mesa_error(ctx, GL_INVALID_VALUE, caller);
       return;
    }
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   if (pro != NULL) {
-      if (transpose) {
-         GLfloat *trans, *pt;
-         const GLfloat *pv;
+   if (!pro)
+      return; /* no error? */
 
-         trans = (GLfloat *) _mesa_malloc(count * 4 * sizeof(GLfloat));
-         if (trans == NULL) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glUniformMatrix2fvARB");
-            return;
-         }
-         for (pt = trans, pv = value; pt != trans + count * 4;
-              pt += 4, pv += 4) {
-            pt[0] = pv[0];
-            pt[1] = pv[2];
-            pt[2] = pv[1];
-            pt[3] = pv[3];
-         }
-         if (!(**pro).
-             WriteUniform(pro, location, count, trans, GL_FLOAT_MAT2))
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glUniformMatrix2fvARB");
-         _mesa_free(trans);
+   if (transpose) {
+      GLfloat *trans, *pt;
+      const GLfloat *pv;
+      GLint i, j, k;
+
+      trans = (GLfloat *) _mesa_malloc(count * matElements * sizeof(GLfloat));
+      if (!trans) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, caller);
+         return;
       }
-      else {
-         if (!(**pro).
-             WriteUniform(pro, location, count, value, GL_FLOAT_MAT2))
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glUniformMatrix2fvARB");
+
+      pt = trans;
+      pv = values;
+      for (i = 0; i < count; i++) {
+         /* transpose from pv matrix into pt matrix */
+         for (j = 0; j < cols; j++) {
+            for (k = 0; k < rows; k++) {
+               /* XXX verify this */
+               pt[j * rows + k] = pv[k * cols + j];
+            }
+         }
+         pt += matElements;
+         pv += matElements;
       }
+
+      if (!(**pro).WriteUniform(pro, location, count, trans, matrixType))
+         _mesa_error(ctx, GL_INVALID_OPERATION, caller);
+      _mesa_free(trans);
    }
+   else {
+      if (!(**pro).WriteUniform(pro, location, count, values, matrixType))
+         _mesa_error(ctx, GL_INVALID_OPERATION, caller);
+   }
+}
+
+
+GLvoid GLAPIENTRY
+_mesa_UniformMatrix2fvARB(GLint location, GLsizei count, GLboolean transpose,
+                          const GLfloat * value)
+{
+   uniform_matrix(2, 2, "glUniformMatrix2fvARB", GL_FLOAT_MAT2,
+                  location, count, transpose, value);
 }
 
 GLvoid GLAPIENTRY
 _mesa_UniformMatrix3fvARB(GLint location, GLsizei count, GLboolean transpose,
                           const GLfloat * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniformMatrix3fvARB");
-
-   if (value == NULL) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix3fvARB");
-      return;
-   }
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      if (transpose) {
-         GLfloat *trans, *pt;
-         const GLfloat *pv;
-
-         trans = (GLfloat *) _mesa_malloc(count * 9 * sizeof(GLfloat));
-         if (trans == NULL) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glUniformMatrix3fvARB");
-            return;
-         }
-         for (pt = trans, pv = value; pt != trans + count * 9;
-              pt += 9, pv += 9) {
-            pt[0] = pv[0];
-            pt[1] = pv[3];
-            pt[2] = pv[6];
-            pt[3] = pv[1];
-            pt[4] = pv[4];
-            pt[5] = pv[7];
-            pt[6] = pv[2];
-            pt[7] = pv[5];
-            pt[8] = pv[8];
-         }
-         if (!(**pro).
-             WriteUniform(pro, location, count, trans, GL_FLOAT_MAT3))
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glUniformMatrix3fvARB");
-         _mesa_free(trans);
-      }
-      else {
-         if (!(**pro).
-             WriteUniform(pro, location, count, value, GL_FLOAT_MAT3))
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glUniformMatrix3fvARB");
-      }
-   }
+   uniform_matrix(3, 3, "glUniformMatrix3fvARB", GL_FLOAT_MAT3,
+                  location, count, transpose, value);
 }
 
 GLvoid GLAPIENTRY
 _mesa_UniformMatrix4fvARB(GLint location, GLsizei count, GLboolean transpose,
                           const GLfloat * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GET_CURRENT_LINKED_PROGRAM(pro, "glUniformMatrix4fvARB");
-
-   if (value == NULL) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix4fvARB");
-      return;
-   }
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (pro != NULL) {
-      if (transpose) {
-         GLfloat *trans, *pt;
-         const GLfloat *pv;
-
-         trans = (GLfloat *) _mesa_malloc(count * 16 * sizeof(GLfloat));
-         if (trans == NULL) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glUniformMatrix4fvARB");
-            return;
-         }
-         for (pt = trans, pv = value; pt != trans + count * 16;
-              pt += 16, pv += 16) {
-            _math_transposef(pt, pv);
-         }
-         if (!(**pro).
-             WriteUniform(pro, location, count, trans, GL_FLOAT_MAT4))
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glUniformMatrix4fvARB");
-         _mesa_free(trans);
-      }
-      else {
-         if (!(**pro).
-             WriteUniform(pro, location, count, value, GL_FLOAT_MAT4))
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glUniformMatrix4fvARB");
-      }
-   }
+   uniform_matrix(4, 4, "glUniformMatrix4fvARB", GL_FLOAT_MAT4,
+                  location, count, transpose, value);
 }
 
 static GLboolean
@@ -783,8 +736,8 @@ _mesa_get_object_parameter(GLhandleARB obj, GLenum pname, GLvoid * params,
    GLint *ipar = (GLint *) params;
 
    /* set default values */
-   *integral = GL_TRUE;         /* indicates param type, TRUE: GLint, FALSE: GLfloat */
-   *size = 1;                   /* param array size */
+   *integral = GL_TRUE; /* indicates param type, TRUE: GLint, FALSE: GLfloat */
+   *size = 1;           /* param array size */
 
    switch (pname) {
    case GL_OBJECT_TYPE_ARB:
@@ -830,7 +783,6 @@ _mesa_get_object_parameter(GLhandleARB obj, GLenum pname, GLvoid * params,
          case GL_OBJECT_SHADER_SOURCE_LENGTH_ARB:
             {
                const GLcharARB *src = (**sha).GetSource(sha);
-
                if (src == NULL)
                   *ipar = 0;
                else
@@ -904,14 +856,14 @@ _mesa_GetObjectParameterfvARB(GLhandleARB obj, GLenum pname, GLfloat * params)
 
    assert(sizeof(GLfloat) == sizeof(GLint));
 
-   if (_mesa_get_object_parameter
-       (obj, pname, (GLvoid *) params, &integral, &size))
+   if (_mesa_get_object_parameter(obj, pname, (GLvoid *) params,
+                                  &integral, &size)) {
       if (integral) {
          GLint i;
-
          for (i = 0; i < size; i++)
             params[i] = (GLfloat) ((GLint *) params)[i];
       }
+   }
 }
 
 GLvoid GLAPIENTRY
@@ -928,14 +880,14 @@ _mesa_GetObjectParameterivARB(GLhandleARB obj, GLenum pname, GLint * params)
 
    assert(sizeof(GLfloat) == sizeof(GLint));
 
-   if (_mesa_get_object_parameter
-       (obj, pname, (GLvoid *) params, &integral, &size))
+   if (_mesa_get_object_parameter(obj, pname, (GLvoid *) params,
+                                  &integral, &size)) {
       if (!integral) {
          GLint i;
-
          for (i = 0; i < size; i++)
             params[i] = (GLint) ((GLfloat *) params)[i];
       }
+   }
 }
 
 
@@ -1058,14 +1010,16 @@ _mesa_GetActiveUniformARB(GLhandleARB programObj, GLuint index,
 }
 
 GLvoid GLAPIENTRY
-_mesa_GetUniformfvARB(GLhandleARB programObj, GLint location,
-                      GLfloat * params)
+_mesa_GetUniformfvARB(GLhandleARB programObj, GLint location, GLfloat * params)
 {
    GET_CURRENT_CONTEXT(ctx);
    GET_LINKED_PROGRAM(pro, programObj, "glGetUniformfvARB");
 
+   /* XXX error-check location here */
+
    if (pro != NULL) {
-      /* TODO */
+      if (!(**pro).ReadUniform(pro, location, 1, params))
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfvARB");
       RELEASE_PROGRAM(pro);
    }
 }
@@ -1248,6 +1202,62 @@ _mesa_IsShader(GLuint shader)
    GET_GENERIC(gen, shader, "glIsProgram");
    return gen ? GL_TRUE : GL_FALSE;
 }
+
+
+/**
+ ** 2.1 functions
+ **/
+
+void GLAPIENTRY
+_mesa_UniformMatrix2x3fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value)
+{
+   uniform_matrix(2, 3, "glUniformMatrix2x3fv", GL_FLOAT_MAT2x3,
+                  location, count, transpose, value);
+}
+
+void GLAPIENTRY
+_mesa_UniformMatrix3x2fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value)
+{
+   uniform_matrix(3, 2, "glUniformMatrix3x2fv", GL_FLOAT_MAT3x2,
+                  location, count, transpose, value);
+}
+
+void GLAPIENTRY
+_mesa_UniformMatrix2x4fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value)
+{
+   uniform_matrix(2, 4, "glUniformMatrix2x4fv", GL_FLOAT_MAT2x4,
+                  location, count, transpose, value);
+}
+
+void GLAPIENTRY
+_mesa_UniformMatrix4x2fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value)
+{
+   uniform_matrix(4, 2, "glUniformMatrix4x2fv", GL_FLOAT_MAT4x2,
+                  location, count, transpose, value);
+}
+
+void GLAPIENTRY
+_mesa_UniformMatrix3x4fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value)
+{
+   uniform_matrix(3, 4, "glUniformMatrix3x4fv", GL_FLOAT_MAT3x4,
+                  location, count, transpose, value);
+}
+
+void GLAPIENTRY
+_mesa_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value)
+{
+   uniform_matrix(4, 3, "glUniformMatrix4x3fv", GL_FLOAT_MAT4x3,
+                  location, count, transpose, value);
+}
+
+
+
 
 
 #endif

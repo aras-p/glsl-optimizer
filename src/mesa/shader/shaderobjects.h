@@ -104,6 +104,8 @@ struct gl2_program_intf
    GLint (* GetUniformLocation) (struct gl2_program_intf **, const GLchar *name);
    GLboolean (* WriteUniform) (struct gl2_program_intf **, GLint loc, GLsizei count,
                                const GLvoid *data, GLenum type);
+   GLboolean (* ReadUniform) (struct gl2_program_intf **, GLint loc, GLsizei count,
+                               GLfloat *data);
    GLvoid (* GetActiveAttrib) (struct gl2_program_intf **, GLuint index, GLsizei maxLength,
                                GLsizei *length, GLint *size, GLenum *type, GLchar *name);
    GLuint (* GetActiveAttribMaxLength) (struct gl2_program_intf **);
@@ -313,6 +315,34 @@ _mesa_IsProgram(GLuint program);
 
 extern GLboolean GLAPIENTRY
 _mesa_IsShader(GLuint shader);
+
+
+
+/* 2.1 */
+extern void GLAPIENTRY
+_mesa_UniformMatrix2x3fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value);
+
+extern void GLAPIENTRY
+_mesa_UniformMatrix3x2fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value);
+
+extern void GLAPIENTRY
+_mesa_UniformMatrix2x4fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value);
+
+extern void GLAPIENTRY
+_mesa_UniformMatrix4x2fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value);
+
+extern void GLAPIENTRY
+_mesa_UniformMatrix3x4fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value);
+
+extern void GLAPIENTRY
+_mesa_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value);
+
 
 
 #endif /* FEATURE_ARB_shader_objects */
