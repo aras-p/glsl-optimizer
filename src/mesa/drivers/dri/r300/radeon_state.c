@@ -169,10 +169,6 @@ void radeonSetCliprects(radeonContextPtr radeon)
 
 	if ((draw_fb->Width != drawable->w) ||
 	    (draw_fb->Height != drawable->h)) {
-		printf("w,h %d %d\n",
-		       radeon->glCtx->DrawBuffer->Width,
-		       radeon->glCtx->DrawBuffer->Height);
-
 		_mesa_resize_framebuffer(radeon->glCtx, draw_fb,
 					 drawable->w, drawable->h);
 		draw_fb->Initialized = GL_TRUE;

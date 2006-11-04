@@ -28,14 +28,14 @@
 /*
  * Authors:
  *   Ben Skeggs <darktama@iinet.net.au>
+ *   Jerome Glisse <j.glisse@gmail.com>
  */
 
 /*TODO'S
  *
- * - COS/SIN/SCS/LIT instructions
+ * - COS/SIN/SCS instructions
  * - Depth write, WPOS/FOGC inputs
  * - FogOption
- * - Negate on individual components (implement in swizzle code?)
  * - Verify results of opcodes for accuracy, I've only checked them
  *   in specific cases.
  * - and more...
@@ -503,9 +503,6 @@ static pfs_reg_t t_src(struct r300_fragment_program *rp,
 		       struct prog_src_register fpsrc)
 {
 	pfs_reg_t r = undef;
-#if 0
-	pfs_reg_t n = undef;
-#endif
 
 	switch (fpsrc.File) {
 	case PROGRAM_TEMPORARY:
@@ -538,40 +535,6 @@ static pfs_reg_t t_src(struct r300_fragment_program *rp,
 	/* no point swizzling ONE/ZERO/HALF constants... */
 	if (r.v_swz < SWIZZLE_111 || r.s_swz < SWIZZLE_ZERO)
 		r = do_swizzle(rp, r, fpsrc.Swizzle, fpsrc.NegateBase);
-#if 0
-	/* WRONG! Need to be able to do individual component negation,
-	 * should probably handle this in the swizzling code unless
-	 * all components are negated, then we can do this natively */
-	if ((fpsrc.NegateBase & 0xf) == 0xf)
-		r.negate = GL_TRUE;
-
-	r.negate_s = (fpsrc.NegateBase >> 3) & 1;
-
-	if ((fpsrc.NegateBase & 0x7) == 0x0) {
-		r.negate_v = 0;
-	} else if ((fpsrc.NegateBase & 0x7) == 0x7) {
-		r.negate_v = 1;
-	} else {
-		if (r.type != REG_TYPE_TEMP) {
-			n = get_temp_reg(rp);
-			emit_arith(rp, PFS_OP_MAD, n, 0x7 ^ fpsrc.NegateBase,
-				   keep(r), pfs_one, pfs_zero, 0);
-			r.negate_v = 1;
-			emit_arith(rp, PFS_OP_MAD, n,
-				   fpsrc.NegateBase & 0x7 | WRITEMASK_W,
-				   r, pfs_one, pfs_zero, 0);
-			r.negate_v = 0;
-			r = n;
-		} else {
-			r.negate_v = 1;
-			emit_arith(rp, PFS_OP_MAD, r,
-				   fpsrc.NegateBase & 0x7 | WRITEMASK_W,
-				   r, pfs_one, pfs_zero, 0);
-			r.negate_v = 0;
-		}
-	}
-#endif
-
 	return r;
 }
 
@@ -580,6 +543,8 @@ static pfs_reg_t t_scalar_src(struct r300_fragment_program *rp,
 {
 	struct prog_src_register src = fpsrc;
 	int sc = GET_SWZ(fpsrc.Swizzle, 0); /* X */
+
+	printf("sc %d\n",sc);
 	
 	src.Swizzle = ((sc<<0)|(sc<<3)|(sc<<6)|(sc<<9));
 
@@ -1094,7 +1059,65 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 				   flags);
 			break;
 		case OPCODE_COS:
-			ERROR("COS not implemented\n");
+			/*
+			 * cos using taylor serie:
+			 * cos(x) = 1 - x^2/2! + x^4/4! - x^6/6!
+			 */
+//			printf("swz %d\n", src[0].v_swz);
+			temp = get_temp_reg(rp);
+			cnstv[0] = 0.5;
+			cnstv[1] = 0.041666667;
+			cnstv[2] = 0.001388889;
+			cnstv[4] = 0.0;
+			cnst = emit_const4fv(rp, cnstv);
+			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
+
+			emit_arith(rp, PFS_OP_MAD, temp,
+				   WRITEMASK_XYZ,
+				   src[0],
+				   src[0],
+				   pfs_zero,
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, temp,
+				   WRITEMASK_Y | WRITEMASK_Z,
+				   temp, temp,
+				   pfs_zero,
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, temp,
+				   WRITEMASK_Z,
+				   temp,
+				   swizzle(temp, X, X, X, W),
+				   pfs_zero,
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, temp,
+				   WRITEMASK_XYZ,
+				   temp, cnst,
+				   pfs_zero,
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, temp,
+				   WRITEMASK_X,
+				   pfs_one,
+				   pfs_one,
+				   negate(temp),
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, temp,
+				   WRITEMASK_X,
+				   temp,
+				   pfs_one,
+				   swizzle(temp, Y, Y, Y, W),
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, temp,
+				   WRITEMASK_X,
+				   temp,
+				   pfs_one,
+				   negate(swizzle(temp, Z, Z, Z, W)),
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, dest, mask,
+				   swizzle(temp, X, X, X, X),
+				   pfs_one,
+				   pfs_zero,
+				   flags);
+			free_temp(rp, temp);
 			break;
 		case OPCODE_DP3:
 			src[0] = t_src(rp, fpi->SrcReg[0]);
@@ -1578,7 +1601,7 @@ void r300_translate_fragment_shader(struct r300_fragment_program *rp)
 		assert(rp->alu_end >= 0);
 	
 		rp->translated = GL_TRUE;
-		if (0) dump_program(rp);
+		if (1) dump_program(rp);
 	}
 
 	update_params(rp);
