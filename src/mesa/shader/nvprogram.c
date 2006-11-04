@@ -360,7 +360,7 @@ _mesa_GetVertexAttribdvNV(GLuint index, GLenum pname, GLdouble *params)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index == 0 || index >= MAX_NV_VERTEX_PROGRAM_INPUTS) {
+   if (index >= MAX_NV_VERTEX_PROGRAM_INPUTS) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetVertexAttribdvNV(index)");
       return;
    }
@@ -376,6 +376,11 @@ _mesa_GetVertexAttribdvNV(GLuint index, GLenum pname, GLdouble *params)
          params[0] = ctx->Array.ArrayObj->VertexAttrib[index].Type;
          break;
       case GL_CURRENT_ATTRIB_NV:
+         if (index == 0) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glGetVertexAttribdvNV(index == 0)");
+            return;
+         }
 	 FLUSH_CURRENT(ctx, 0);
          COPY_4V(params, ctx->Current.Attrib[index]);
          break;
@@ -396,7 +401,7 @@ _mesa_GetVertexAttribfvNV(GLuint index, GLenum pname, GLfloat *params)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index == 0 || index >= MAX_NV_VERTEX_PROGRAM_INPUTS) {
+   if (index >= MAX_NV_VERTEX_PROGRAM_INPUTS) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetVertexAttribdvNV(index)");
       return;
    }
@@ -412,6 +417,11 @@ _mesa_GetVertexAttribfvNV(GLuint index, GLenum pname, GLfloat *params)
          params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Type;
          break;
       case GL_CURRENT_ATTRIB_NV:
+         if (index == 0) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glGetVertexAttribfvNV(index == 0)");
+            return;
+         }
 	 FLUSH_CURRENT(ctx, 0);
          COPY_4V(params, ctx->Current.Attrib[index]);
          break;
@@ -432,7 +442,7 @@ _mesa_GetVertexAttribivNV(GLuint index, GLenum pname, GLint *params)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index == 0 || index >= MAX_NV_VERTEX_PROGRAM_INPUTS) {
+   if (index >= MAX_NV_VERTEX_PROGRAM_INPUTS) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetVertexAttribdvNV(index)");
       return;
    }
@@ -448,6 +458,11 @@ _mesa_GetVertexAttribivNV(GLuint index, GLenum pname, GLint *params)
          params[0] = ctx->Array.ArrayObj->VertexAttrib[index].Type;
          break;
       case GL_CURRENT_ATTRIB_NV:
+         if (index == 0) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glGetVertexAttribivNV(index == 0)");
+            return;
+         }
 	 FLUSH_CURRENT(ctx, 0);
          params[0] = (GLint) ctx->Current.Attrib[index][0];
          params[1] = (GLint) ctx->Current.Attrib[index][1];
