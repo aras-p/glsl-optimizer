@@ -102,7 +102,7 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index == 0 || index >= MAX_VERTEX_PROGRAM_ATTRIBS) {
+   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetVertexAttribfvARB(index)");
       return;
    }
@@ -124,6 +124,11 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
          params[0] = ctx->Array.ArrayObj->VertexAttrib[index].Normalized;
          break;
       case GL_CURRENT_VERTEX_ATTRIB_ARB:
+         if (index == 0) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glGetVertexAttribfvARB(pname)");
+            return;
+         }
          FLUSH_CURRENT(ctx, 0);
          COPY_4V(params, ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index]);
          break;
