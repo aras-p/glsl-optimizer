@@ -126,7 +126,7 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
       case GL_CURRENT_VERTEX_ATTRIB_ARB:
          if (index == 0) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
-                        "glGetVertexAttribfvARB(pname)");
+                        "glGetVertexAttribfvARB(index==0)");
             return;
          }
          FLUSH_CURRENT(ctx, 0);
