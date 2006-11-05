@@ -501,7 +501,7 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
       free_inputs &= ~(1 << 0);
       array_count++;
    }
-   if (mesa_vp->Base.InputsRead & VERT_ATTRIB_WEIGHT) {
+   if (mesa_vp->Base.InputsRead & VERT_BIT_WEIGHT) {
    /* we don't actually handle that later. Then again, we don't have to... */
       vp->inputs[VERT_ATTRIB_WEIGHT] = 12;
       array_count++;
