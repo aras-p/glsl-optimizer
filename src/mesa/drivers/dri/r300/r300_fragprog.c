@@ -1063,7 +1063,6 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			 * cos using taylor serie:
 			 * cos(x) = 1 - x^2/2! + x^4/4! - x^6/6!
 			 */
-//			printf("swz %d\n", src[0].v_swz);
 			temp = get_temp_reg(rp);
 			cnstv[0] = 0.5;
 			cnstv[1] = 0.041666667;
@@ -1374,7 +1373,70 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			free_temp(rp, temp);
 			break;
 		case OPCODE_SIN:
-			ERROR("SIN not implemented\n");
+			/*
+			 * sin using taylor serie:
+			 * sin(x) = x - x^3/3! + x^5/5! - x^7/7!
+			 */
+			temp = get_temp_reg(rp);
+			cnstv[0] = 0.333333333;
+			cnstv[1] = 0.008333333;
+			cnstv[2] = 0.000198413;
+			cnstv[4] = 0.0;
+			cnst = emit_const4fv(rp, cnstv);
+			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
+
+			emit_arith(rp, PFS_OP_MAD, temp,
+				   WRITEMASK_XYZ,
+				   src[0],
+				   src[0],
+				   pfs_zero,
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, temp,
+				   WRITEMASK_Y | WRITEMASK_Z,
+				   temp, temp,
+				   pfs_zero,
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, temp,
+				   WRITEMASK_Z,
+				   temp,
+				   swizzle(temp, X, X, X, W),
+				   pfs_zero,
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, temp,
+				   WRITEMASK_XYZ,
+				   src[0],
+				   temp,
+				   pfs_zero,
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, temp,
+				   WRITEMASK_XYZ,
+				   temp, cnst,
+				   pfs_zero,
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, temp,
+				   WRITEMASK_X,
+				   src[0],
+				   pfs_one,
+				   negate(temp),
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, temp,
+				   WRITEMASK_X,
+				   temp,
+				   pfs_one,
+				   swizzle(temp, Y, Y, Y, W),
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, temp,
+				   WRITEMASK_X,
+				   temp,
+				   pfs_one,
+				   negate(swizzle(temp, Z, Z, Z, W)),
+				   flags);
+			emit_arith(rp, PFS_OP_MAD, dest, mask,
+				   swizzle(temp, X, X, X, X),
+				   pfs_one,
+				   pfs_zero,
+				   flags);
+			free_temp(rp, temp);
 			break;
 		case OPCODE_SLT:
 			src[0] = t_src(rp, fpi->SrcReg[0]);
