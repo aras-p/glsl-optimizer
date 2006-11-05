@@ -384,7 +384,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint inputs = VERT_BIT_POS | VERT_BIT_COLOR0;
+   GLuint inputs = 0;
    GLuint i;
 
    /* TODO: separate this from the swtnl pipeline 
@@ -404,6 +404,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
       r200ValidateState( ctx );
 
    if (!ctx->VertexProgram._Enabled) {
+      inputs = VERT_BIT_POS | VERT_BIT_COLOR0;
    /* NOTE: inputs != tnl->render_inputs - these are the untransformed
     * inputs.
     */
