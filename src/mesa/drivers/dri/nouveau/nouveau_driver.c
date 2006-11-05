@@ -25,7 +25,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************/
 
 #include "nouveau_context.h"
-#include "nouveau_ioctl.h"
 //#include "nouveau_state.h"
 #include "nouveau_lock.h"
 #include "nouveau_fifo.h"
@@ -64,35 +63,7 @@ static const GLubyte *nouveauGetString( GLcontext *ctx, GLenum name )
 			return (GLubyte *)DRIVER_AUTHOR;
 
 		case GL_RENDERER:
-			switch(nmesa->screen->card_type)
-			{
-				case NV_03:
-					card_name="Riva 128";
-					break;
-				case NV_04:
-					card_name="TNT";
-					break;
-				case NV_05:
-					card_name="TNT2";
-					break;
-				case NV_10:
-					card_name="GeForce 1/2/4Mx";
-					break;
-				case NV_20:
-					card_name="GeForce 3/4Ti";
-					break;
-				case NV_30:
-					card_name="GeForce FX 5x00";
-					break;
-				case NV_40:
-					card_name="GeForce FX 6x00";
-					break;
-				case G_70:
-					card_name="GeForce FX 7x00";
-					break;
-				default:
-					break;
-			}
+			card_name=nmesa->screen->card->name;
 
 			switch(nmesa->screen->bus_type)
 			{

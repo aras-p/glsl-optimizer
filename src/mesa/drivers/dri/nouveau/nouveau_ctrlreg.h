@@ -1,6 +1,6 @@
 /**************************************************************************
 
-Copyright 2006 Stephane Marchesin
+Copyright 2006 Stephane Marchesin, Sylvain Munaut
 All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,37 +24,19 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
-#include <errno.h>
-#include "mtypes.h"
-#include "macros.h"
-#include "dd.h"
-#include "swrast/swrast.h"
 
 
-#include "nouveau_ioctl.h"
-#include "nouveau_context.h"
-#include "nouveau_msg.h"
 
-// here we call the fifo initialization ioctl and fill in stuff accordingly
-void nouveauIoctlInitFifo(nouveauContextPtr nmesa)
-{
-	int ret;
-	drm_nouveau_fifo_alloc_t fifo_init;
+#define NV03_STATUS                                        0x004006b0
+#define NV04_STATUS                                        0x00400700
 
-	ret = drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_FIFO_ALLOC, &fifo_init, sizeof(fifo_init));
-	if (ret)
-		FATAL("Fifo initialization ioctl failed (returned %d)\n",ret);
-	MESSAGE("Fifo init ok. Using context %d\n", fifo_init.channel);
+#define NV03_FIFO_REGS_SIZE                                0x10000
+#    define NV03_FIFO_REGS_DMAPUT                          0x00000040
+#    define NV03_FIFO_REGS_DMAGET                          0x00000044
 
-	// XXX needs more stuff :
-	// - map the command buffer
-	// - map the fifo control regs
-	// - create the 3D object
+/* Fifo commands. These are not regs, neither masks */
+#define NV03_FIFO_CMD_JUMP                                 0x20000000
+#define NV03_FIFO_CMD_JUMP_OFFSET_MASK                     0x1ffffffc
+#define NV03_FIFO_CMD_REWIND                               (NV03_FIFO_CMD_JUMP | (0 & NV03_FIFO_CMD_JUMP_OFFSET_MASK))
 
-}
-
-void nouveauIoctlInitFunctions(struct dd_function_table *functions)
-{
-	// nothing for now
-}
 

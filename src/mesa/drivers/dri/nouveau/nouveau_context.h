@@ -36,13 +36,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "mtypes.h"
 #include "tnl/t_vertex.h"
 
-#include "nouveau_reg.h"
 #include "nouveau_screen.h"
 
 #include "xmlconfig.h"
 
 typedef struct nouveau_fifo_t{
 	u_int32_t* buffer;
+	u_int32_t* mmio;
 	u_int32_t current;
 	u_int32_t put;
 	u_int32_t free;
@@ -79,9 +79,6 @@ typedef struct nouveau_context {
 
 	/* The per-context fifo */
 	nouveau_fifo fifo;
-
-	/* The fifo control regs */
-	volatile unsigned char* fifo_mmio;
 
 	/* The read-only regs */
 	volatile unsigned char* mmio;

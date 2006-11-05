@@ -25,14 +25,25 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************/
 
 
+#include "vblank.h"
+#include <errno.h>
+#include "mtypes.h"
+#include "macros.h"
+#include "dd.h"
+#include "swrast/swrast.h"
+#include "nouveau_context.h"
+#include "nouveau_msg.h"
 #include "nouveau_fifo.h"
 #include "nouveau_lock.h"
-#include "vblank.h"
+
 
 #define RING_SKIPS 8
 
 void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size)
 {
+#ifdef NOUVEAU_RING_DEBUG
+	return;
+#endif
 	u_int32_t fifo_get;
 	while(nmesa->fifo.free < size+1) {
 		fifo_get = NV_FIFO_READ(NV03_FIFO_REGS_DMAGET);
@@ -58,15 +69,17 @@ void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size)
 
 /* 
  * Wait for the card to be idle 
- * XXX we should also wait for an empty fifo
  */
 void nouveauWaitForIdleLocked(nouveauContextPtr nmesa)
 {
 	int i,status;
 
+	FIRE_RING();
+	while(RING_AHEAD()>0);
+
 	for(i=0;i<1000000;i++) /* 1 second */
 	{
-		switch(nmesa->screen->card_type)
+		switch(nmesa->screen->card->type)
 		{
 			case NV_03:
 				status=NV_READ(NV03_STATUS);
@@ -94,4 +107,23 @@ void nouveauWaitForIdle(nouveauContextPtr nmesa)
 	nouveauWaitForIdleLocked(nmesa);
 	UNLOCK_HARDWARE(nmesa);
 }
+
+// here we call the fifo initialization ioctl and fill in stuff accordingly
+void nouveauFifoInit(nouveauContextPtr nmesa)
+{
+	drm_nouveau_fifo_alloc_t fifo_init;
+
+	int ret;
+	ret=drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_FIFO_ALLOC, &fifo_init, sizeof(fifo_init));
+	if (ret)
+		FATAL("Fifo initialization ioctl failed (returned %d)\n",ret);
+
+	if (drmMap(nmesa->driFd, fifo_init.cmdbuf, fifo_init.cmdbuf_size, &nmesa->fifo.buffer))
+		FATAL("Unable to map the fifo\n",ret);
+	if (drmMap(nmesa->driFd, fifo_init.ctrl, fifo_init.ctrl_size, &nmesa->fifo.mmio))
+		FATAL("Unable to map the control regs\n",ret);
+
+	MESSAGE("Fifo init ok. Using context %d\n", fifo_init.channel);
+}
+
 

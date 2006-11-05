@@ -26,7 +26,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "nouveau_context.h"
 #include "nouveau_state.h"
-#include "nouveau_ioctl.h"
 #include "nouveau_swtcl.h"
 #include "nouveau_fifo.h"
 

@@ -44,14 +44,11 @@
 #include "nv10_swtcl.h"
 #include "nouveau_context.h"
 #include "nouveau_span.h"
-#include "nouveau_ioctl.h"
 #include "nouveau_reg.h"
 #include "nouveau_tex.h"
 #include "nouveau_fifo.h"
 #include "nouveau_msg.h"
-
-/* XXX hack for now */
-#define channel 1
+#include "nouveau_object.h"
 
 static void nv10RasterPrimitive( GLcontext *ctx, GLenum rprim, GLuint hwprim );
 static void nv10RenderPrimitive( GLcontext *ctx, GLenum prim );
@@ -76,29 +73,31 @@ static void nv10ResetLineStipple( GLcontext *ctx );
 
 static inline void nv10StartPrimitive(struct nouveau_context* nmesa)
 {
-	if (nmesa->screen->card_type==NV_10)
-		BEGIN_RING_SIZE(channel,NV10_PRIMITIVE,1);
-	else if (nmesa->screen->card_type==NV_20)
-		BEGIN_RING_SIZE(channel,NV20_PRIMITIVE,1);
+	if (nmesa->screen->card->type==NV_10)
+		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_BEGIN_END,1);
+	else if (nmesa->screen->card->type==NV_20)
+		BEGIN_RING_SIZE(NvSub3D,NV20_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	else
-		BEGIN_RING_SIZE(channel,NV30_PRIMITIVE,1);
+		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	OUT_RING(nmesa->current_primitive);
 
-	if (nmesa->screen->card_type==NV_10)
-		BEGIN_RING_PRIM(channel,NV10_BEGIN_VERTICES,NOUVEAU_MIN_PRIM_SIZE);
+	if (nmesa->screen->card->type==NV_10)
+		BEGIN_RING_PRIM(NvSub3D,NV10_TCL_PRIMITIVE_3D_VERTEX_ARRAY_DATA,NOUVEAU_MIN_PRIM_SIZE);
+	else if (nmesa->screen->card->type==NV_20)
+		BEGIN_RING_PRIM(NvSub3D,NV20_TCL_PRIMITIVE_3D_VERTEX_DATA,NOUVEAU_MIN_PRIM_SIZE);
 	else
-		BEGIN_RING_PRIM(channel,NV20_BEGIN_VERTICES,NOUVEAU_MIN_PRIM_SIZE);
+		BEGIN_RING_PRIM(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_DATA,NOUVEAU_MIN_PRIM_SIZE);
 }
 
 inline void nv10FinishPrimitive(struct nouveau_context *nmesa)
 {
 	FINISH_RING_PRIM();
-	if (nmesa->screen->card_type==NV_10)
-		BEGIN_RING_SIZE(channel,NV10_PRIMITIVE,1);
-	else if (nmesa->screen->card_type==NV_20)
-		BEGIN_RING_SIZE(channel,NV20_PRIMITIVE,1);
+	if (nmesa->screen->card->type==NV_10)
+		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_BEGIN_END,1);
+	else if (nmesa->screen->card->type==NV_20)
+		BEGIN_RING_SIZE(NvSub3D,NV20_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	else
-		BEGIN_RING_SIZE(channel,NV30_PRIMITIVE,1);
+		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	OUT_RING(0x0);
 	FIRE_RING();
 }
@@ -700,15 +699,17 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa, GLuint 
 	/* 
 	 * Tell the hardware about the vertex format
 	 */
-	if (nmesa->screen->card_type==NV_10) {
+	if (nmesa->screen->card->type==NV_10) {
 		int size;
+
+#define NV_VERTEX_ATTRIBUTE_TYPE_FLOAT 2
 
 #define NV10_SET_VERTEX_ATTRIB(i,j) \
 	do {	\
 		size = attr_size[j] << 4;	\
 		size |= (attr_size[j]*4) << 8;	\
-		size |= NV20_VERTEX_ATTRIBUTE_TYPE_FLOAT;	\
-		BEGIN_RING_SIZE(channel, NV10_VERTEX_ATTRIBUTE(i),1);	\
+		size |= NV_VERTEX_ATTRIBUTE_TYPE_FLOAT;	\
+		BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VERTEX_ATTR(i),1);	\
 		OUT_RING(size);	\
 	} while (0)
 
@@ -721,27 +722,27 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa, GLuint 
 		NV10_SET_VERTEX_ATTRIB(6, _TNL_ATTRIB_WEIGHT);
 		NV10_SET_VERTEX_ATTRIB(7, _TNL_ATTRIB_FOG);
 
-		BEGIN_RING_SIZE(channel, NV10_VERTEX_SET_FORMAT,1);
+		BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VERTEX_ARRAY_VALIDATE,1);
 		OUT_RING(0);
-	} else if (nmesa->screen->card_type==NV_20) {
+	} else if (nmesa->screen->card->type==NV_20) {
 		for(i=0;i<16;i++)
 		{
 			int size=attr_size[i];
-			BEGIN_RING_SIZE(channel,NV20_VERTEX_ATTRIBUTE(i),1);
-			OUT_RING(NV20_VERTEX_ATTRIBUTE_TYPE_FLOAT|(size*0x10));
+			BEGIN_RING_SIZE(NvSub3D,NV20_TCL_PRIMITIVE_3D_VERTEX_ATTR(i),1);
+			OUT_RING(NV_VERTEX_ATTRIBUTE_TYPE_FLOAT|(size*0x10));
 		}
 	} else {
-		BEGIN_RING_SIZE(channel,NV30_VERTEX_ATTRIBUTES,slots);
+		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_ATTR0_POS,slots);
 		for(i=0;i<slots;i++)
 		{
 			int size=attr_size[i];
-			OUT_RING(NV20_VERTEX_ATTRIBUTE_TYPE_FLOAT|(size*0x10));
+			OUT_RING(NV_VERTEX_ATTRIBUTE_TYPE_FLOAT|(size*0x10));
 		}
-		BEGIN_RING_SIZE(channel,NV30_UNKNOWN_0,1);
+		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_UNK_0,1);
 		OUT_RING(0);
-		BEGIN_RING_SIZE(channel,NV30_UNKNOWN_0,1);
+		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_UNK_0,1);
 		OUT_RING(0);
-		BEGIN_RING_SIZE(channel,NV30_UNKNOWN_0,1);
+		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_UNK_0,1);
 		OUT_RING(0);
 	}
 }

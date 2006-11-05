@@ -30,11 +30,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define __NOUVEAU_FIFO_H__
 
 #include "nouveau_context.h"
+#include "nouveau_ctrlreg.h"
 
 #define NV_READ(reg) *(volatile u_int32_t *)(nmesa->mmio + (reg))
 
-#define NV_FIFO_READ(reg) *(volatile u_int32_t *)(nmesa->fifo_mmio + (reg))
-#define NV_FIFO_WRITE(reg,value) *(volatile u_int32_t *)(nmesa->fifo_mmio + (reg)) = value;
+#define NV_FIFO_READ(reg) *(volatile u_int32_t *)(nmesa->fifo.mmio + (reg))
+#define NV_FIFO_WRITE(reg,value) *(volatile u_int32_t *)(nmesa->fifo.mmio + (reg)) = value;
 
 /* 
  * Ring/fifo interface
@@ -44,7 +45,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * - Output stuff to the ring with either OUT_RINGp (outputs a raw mem chunk), OUT_RING (1 uint32_t) or OUT_RINGf (1 float)
  * - RING_AVAILABLE returns the available fifo (in uint32_ts)
  * - RING_AHEAD returns how much ahead of the last submission point we are
- * - FIRE_RING fire whatever we have that wasn't fired before
+ * - FIRE_RING fires whatever we have that wasn't fired before
  * - WAIT_RING waits for size (in uint32_ts) to be available in the fifo
  */
 
@@ -112,6 +113,7 @@ extern void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size);
 }while(0)
 
 extern void nouveauWaitForIdle(nouveauContextPtr nmesa);
+extern void nouveauFifoInit(nouveauContextPtr nmesa);
 
 #endif /* __NOUVEAU_FIFO_H__ */
 

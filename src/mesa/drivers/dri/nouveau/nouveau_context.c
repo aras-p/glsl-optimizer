@@ -39,10 +39,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drivers/common/driverfuncs.h"
 
 #include "nouveau_context.h"
-#include "nouveau_ioctl.h"
 #include "nouveau_driver.h"
 //#include "nouveau_state.h"
 #include "nouveau_span.h"
+#include "nouveau_object.h"
+#include "nouveau_fifo.h"
 #include "nouveau_tex.h"
 #include "nv10_swtcl.h"
 
@@ -77,12 +78,15 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	if ( !nmesa )
 		return GL_FALSE;
 
-	/* Init default driver functions then plug in our Radeon-specific functions
+	/* Create the hardware context */
+	nouveauFifoInit(nmesa);
+	nouveauObjectInit(nmesa);
+
+	/* Init default driver functions then plug in our nouveau-specific functions
 	 * (the texture functions are especially important)
 	 */
 	_mesa_init_driver_functions( &functions );
 	nouveauDriverInitFunctions( &functions );
-	nouveauIoctlInitFunctions( &functions );
 	nouveauTexInitFunctions( &functions );
 
 	/* Allocate the Mesa context */
@@ -125,7 +129,7 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	_tnl_CreateContext( ctx );
 	_swsetup_CreateContext( ctx );
 
-	switch(nmesa->screen->card_type)
+	switch(nmesa->screen->card->type)
 	{
 		case NV_03:
 			//nv03TriInitFunctions( ctx );

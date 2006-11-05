@@ -25,12 +25,25 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************/
 
 
-#ifndef __NOUVEAU_IOCTL_H__
-#define __NOUVEAU_IOCTL_H__
+#ifndef __NOUVEAU_CARD_H__
+#define __NOUVEAU_CARD_H__
 
-#include "nouveau_context.h"
+#include "dri_util.h"
+#include "drm.h"
+#include "nouveau_drm.h"
 
-extern void nouveauIoctlInitFifo(nouveauContextPtr nmesa);
-extern void nouveauIoctlInitFunctions(struct dd_function_table *functions);
+typedef struct nouveau_card_t {
+	uint16_t id; /* last 4 digits of pci id, last digit is always 0 */
+	char* name; /* the user-friendly card name */
+	uint32_t class_3d; /* the object class this card uses for 3D */
+	uint32_t type; /* the major card family */
+	uint32_t flags;
+}
+nouveau_card;
 
-#endif /* __NOUVEAU_IOCTL_H__ */
+#define NV_HAS_LMA 0x00000001
+
+extern nouveau_card* nouveau_card_lookup(uint32_t device_id);
+
+#endif
+

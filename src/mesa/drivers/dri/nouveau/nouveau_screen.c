@@ -24,38 +24,26 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
+#include "nouveau_context.h"
+#include "nouveau_screen.h"
+#include "nouveau_object.h"
 
-#ifndef __NOUVEAU_SCREEN_H__
-#define __NOUVEAU_SCREEN_H__
+static nouveauScreenPtr nouveauCreateScreen(__DRIscreenPrivate *sPriv)
+{
+	nouveauScreenPtr screen;
+	NOUVEAUDRIPtr dri_priv=(NOUVEAUDRIPtr)sPriv->pDevPriv;
 
-#include "xmlconfig.h"
+	screen->card=nouveau_card_lookup(dri_priv->device_id);
+}
 
-#include "nouveau_dri.h"
-#include "nouveau_card.h"
+static GLboolean nouveauInitDriver(__DRIscreenPrivate *sPriv)
+{
+	sPriv->private = (void *) nouveauCreateScreen( sPriv );
+	if ( !sPriv->private ) {
+		nouveauDestroyScreen( sPriv );
+		return GL_FALSE;
+	}
 
-typedef struct {
-	nouveau_card* card;
-	u_int32_t bus_type;
-	u_int32_t agp_mode;
+	return GL_TRUE;
+}
 
-        GLint fbFormat;
-
-	GLuint frontOffset;
-	GLuint frontPitch;
-	GLuint backOffset;
-	GLuint backPitch;
-
-	GLuint depthOffset;
-	GLuint depthPitch;
-	GLuint spanOffset;
-
-	__DRIscreenPrivate *driScreen;
-	unsigned int sarea_priv_offset;
-
-	/* Configuration cache with default values for all contexts */
-	driOptionCache optionCache;
-
-} nouveauScreenRec, *nouveauScreenPtr;
-
-
-#endif /* __NOUVEAU_SCREEN_H__ */
