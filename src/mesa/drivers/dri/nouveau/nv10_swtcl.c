@@ -664,7 +664,7 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa, GLuint 
 		if (index&(1<<i))
 		{
 			slots=i+1;
-			if (i==0)
+			if (i==_TNL_ATTRIB_POS)
 			{
 				/* special-case POS */
 				EMIT_ATTR(_TNL_ATTRIB_POS,EMIT_3F_VIEWPORT);
