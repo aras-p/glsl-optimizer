@@ -722,68 +722,6 @@ static const __DRIinterfaceMethods interface_methods = {
     __glXGetMscRateOML,
 };
 
-#define DRM_MAX_FDS 16
-static struct {
-   char *BusID;
-   int fd;
-   int refcount;
-} connection[DRM_MAX_FDS];
-
-static int nr_fds = 0;
-
-int drmOpenOnce(void *unused, 
-		const char *BusID,
-		int *newlyopened)
-{
-   int i;
-   int fd;
-   
-   for (i = 0; i < nr_fds; i++)
-      if (strcmp(BusID, connection[i].BusID) == 0) {
-	 connection[i].refcount++;
-	 *newlyopened = 0;
-	 return connection[i].fd;
-      }
-
-   fd = drmOpen(unused, BusID);
-   if (fd <= 0 || nr_fds == DRM_MAX_FDS)
-      return fd;
-   
-   connection[nr_fds].BusID = strdup(BusID);
-   connection[nr_fds].fd = fd;
-   connection[nr_fds].refcount = 1;
-   *newlyopened = 1;
-
-   if (0)
-      fprintf(stderr, "saved connection %d for %s %d\n", 
-              nr_fds, connection[nr_fds].BusID, 
-              strcmp(BusID, connection[nr_fds].BusID));
-
-   nr_fds++;
-
-   return fd;   
-}
-
-void drmCloseOnce(int fd)
-{
-   int i;
-
-   
-
-   for (i = 0; i < nr_fds; i++) {
-      if (fd == connection[i].fd) {
-	 if (--connection[i].refcount == 0) {
-	    drmClose(connection[i].fd);
-	    free(connection[i].BusID);
-	    
-	    if (i < --nr_fds) 
-	       connection[i] = connection[nr_fds];
-
-	    return;
-	 }
-      }
-   }
-}
 
 
 /**
