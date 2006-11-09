@@ -102,7 +102,6 @@ static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
  */
 static void radeonInitDriverFuncs(struct dd_function_table *functions)
 {
-	functions->GetBufferSize = NULL;
 	functions->GetString = radeonGetString;
 }
 

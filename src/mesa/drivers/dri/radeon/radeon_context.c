@@ -171,7 +171,6 @@ static const struct tnl_pipeline_stage *radeon_pipeline[] = {
  */
 static void radeonInitDriverFuncs( struct dd_function_table *functions )
 {
-    functions->GetBufferSize	= NULL; /* OBSOLETE */
     functions->GetString	= radeonGetString;
 }
 
