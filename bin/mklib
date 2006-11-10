@@ -283,7 +283,9 @@ case $ARCH in
 	    ar -ruv ${LIBNAME} ${OBJECTS}
 	    FINAL_LIBS=${LIBNAME}
 	else
-	    LIBNAME="lib${LIBNAME}.so"
+	    if [ $NOPREFIX = 0 ] ; then
+		LIBNAME="lib${LIBNAME}.so"
+	    fi
 	    echo "mklib: Making SunOS shared library: " ${LIBNAME}
 
 	    if [ "x$LINK" = "x" ] ; then
@@ -333,9 +335,14 @@ case $ARCH in
 
 	    # for debug:
 	    #echo "mklib: linker is" ${LINK} ${OPTS}
-	    rm -f ${LIBNAME}.${MAJOR} ${LIBNAME}
-	    ${LINK} ${OPTS} -o ${LIBNAME}.${MAJOR} ${OBJECTS} ${DEPS}
-	    ln -s ${LIBNAME}.${MAJOR} ${LIBNAME}
+	    if [ $NOPREFIX = 1 ] ; then
+		rm -f ${LIBNAME}
+		${LINK} ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+	    else
+		rm -f ${LIBNAME}.${MAJOR} ${LIBNAME}
+		${LINK} ${OPTS} -o ${LIBNAME}.${MAJOR} ${OBJECTS} ${DEPS}
+		ln -s ${LIBNAME}.${MAJOR} ${LIBNAME}
+	    fi
 	    FINAL_LIBS="${LIBNAME}.${MAJOR} ${LIBNAME}"
 	fi
 	;;
