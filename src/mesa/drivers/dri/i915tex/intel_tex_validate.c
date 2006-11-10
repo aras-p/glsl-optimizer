@@ -165,6 +165,10 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    /* May need to create a new tree:
     */
    if (!intelObj->mt) {
+      int comp_byte = 0;
+      
+      if (firstImage->base.IsCompressed)
+	 comp_byte = intel_compressed_num_bytes(firstImage->base.TexFormat->MesaFormat);
       intelObj->mt = intel_miptree_create(intel,
                                           intelObj->base.Target,
                                           firstImage->base.InternalFormat,
@@ -175,7 +179,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
                                           firstImage->base.Depth,
                                           firstImage->base.TexFormat->
                                           TexelBytes,
-                                          firstImage->base.IsCompressed);
+                                          comp_byte);
    }
 
    /* Pull in any images not in the object's tree:

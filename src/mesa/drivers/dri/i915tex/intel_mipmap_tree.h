@@ -121,7 +121,7 @@ struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLuint height0,
                                                GLuint depth0,
                                                GLuint cpp,
-                                               GLboolean compressed);
+                                               GLuint compress_byte);
 
 void intel_miptree_reference(struct intel_mipmap_tree **dst,
                              struct intel_mipmap_tree *src);

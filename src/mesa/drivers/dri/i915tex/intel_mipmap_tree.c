@@ -56,7 +56,7 @@ intel_miptree_create(struct intel_context *intel,
                      GLuint last_level,
                      GLuint width0,
                      GLuint height0,
-                     GLuint depth0, GLuint cpp, GLboolean compressed)
+                     GLuint depth0, GLuint cpp, GLuint compress_byte)
 {
    GLboolean ok;
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
@@ -72,8 +72,8 @@ intel_miptree_create(struct intel_context *intel,
    mt->width0 = width0;
    mt->height0 = height0;
    mt->depth0 = depth0;
-   mt->cpp = compressed ? 2 : cpp;
-   mt->compressed = compressed;
+   mt->cpp = compress_byte ? compress_byte : cpp;
+   mt->compressed = compress_byte ? 1 : 0;
    mt->refcount = 1; 
 
    switch (intel->intelScreen->deviceID) {
@@ -302,11 +302,15 @@ intel_miptree_image_data(struct intel_context *intel,
    GLuint dst_offset = intel_miptree_image_offset(dst, face, level);
    const GLuint *dst_depth_offset = intel_miptree_depth_offsets(dst, level);
    GLuint i;
+   GLuint height = 0;
 
    DBG("%s\n", __FUNCTION__);
    for (i = 0; i < depth; i++) {
+      height = dst->level[level].height;
+      if(dst->compressed)
+	 height /= 4;
       intel_region_data(intel->intelScreen, dst->region, dst_offset + dst_depth_offset[i], 0, 0, src, src_row_pitch, 0, 0,   /* source x,y */
-                        dst->level[level].width, dst->level[level].height);
+                        dst->level[level].width, height);
 
       src += src_image_pitch;
    }
@@ -329,6 +333,8 @@ intel_miptree_image_copy(struct intel_context *intel,
    const GLuint *src_depth_offset = intel_miptree_depth_offsets(src, level);
    GLuint i;
 
+   if (dst->compressed)
+      height /= 4;
    for (i = 0; i < depth; i++) {
       intel_region_copy(intel->intelScreen,
                         dst->region, dst_offset + dst_depth_offset[i],
