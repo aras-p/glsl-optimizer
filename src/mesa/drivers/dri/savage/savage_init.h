@@ -83,8 +83,7 @@ typedef struct {
 #include "savagecontext.h"
 
 extern void savageGetLock( savageContextPtr imesa, GLuint flags );
-extern void savageXMesaSetBackClipRects( savageContextPtr imesa );
-extern void savageXMesaSetFrontClipRects( savageContextPtr imesa );
+extern void savageXMesaSetClipRects(savageContextPtr imesa);
 
 
 #define GET_DISPATCH_AGE( imesa ) imesa->sarea->last_dispatch

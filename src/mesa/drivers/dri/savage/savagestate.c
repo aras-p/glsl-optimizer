@@ -647,23 +647,20 @@ static void savageDDDrawBuffer(GLcontext *ctx, GLenum mode )
     case BUFFER_BIT_FRONT_LEFT:
         imesa->IsDouble = GL_FALSE;
 	imesa->regs.s4.destCtrl.ni.offset = imesa->savageScreen->frontOffset>>11;
-
-        imesa->NotFirstFrame = GL_FALSE;
-        savageXMesaSetFrontClipRects( imesa );
-	FALLBACK( ctx, SAVAGE_FALLBACK_DRAW_BUFFER, GL_FALSE );
 	break;
     case BUFFER_BIT_BACK_LEFT:
         imesa->IsDouble = GL_TRUE;
 	imesa->regs.s4.destCtrl.ni.offset = imesa->savageScreen->backOffset>>11;
-        imesa->NotFirstFrame = GL_FALSE;
-        savageXMesaSetBackClipRects( imesa );
-	FALLBACK( ctx, SAVAGE_FALLBACK_DRAW_BUFFER, GL_FALSE );
 	break;
     default:
 	FALLBACK( ctx, SAVAGE_FALLBACK_DRAW_BUFFER, GL_TRUE );
 	return;
     }
     
+    imesa->NotFirstFrame = GL_FALSE;
+    savageXMesaSetClipRects(imesa);
+    FALLBACK(ctx, SAVAGE_FALLBACK_DRAW_BUFFER, GL_FALSE);
+
     if (destCtrl != imesa->regs.s4.destCtrl.ui)
         imesa->dirty |= SAVAGE_UPLOAD_GLOBAL;
 }

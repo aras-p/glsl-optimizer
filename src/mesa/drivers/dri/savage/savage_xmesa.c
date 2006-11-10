@@ -724,34 +724,18 @@ void XMesaSwapBuffers(__DRIdrawablePrivate *driDrawPriv)
 }
 #endif
 
-void savageXMesaSetFrontClipRects( savageContextPtr imesa )
+
+void savageXMesaSetClipRects(savageContextPtr imesa)
 {
    __DRIdrawablePrivate *dPriv = imesa->driDrawable;
 
-   imesa->numClipRects = dPriv->numClipRects;
-   imesa->pClipRects = dPriv->pClipRects;
-   imesa->drawX = dPriv->x;
-   imesa->drawY = dPriv->y;
-
-   savageCalcViewport( imesa->glCtx );
-}
-
-
-void savageXMesaSetBackClipRects( savageContextPtr imesa )
-{
-   __DRIdrawablePrivate *dPriv = imesa->driDrawable;
-
-   if (dPriv->numBackClipRects == 0) 
-   {
-
-
+   if ((dPriv->numBackClipRects == 0)
+       || (imesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT)) {
       imesa->numClipRects = dPriv->numClipRects;
       imesa->pClipRects = dPriv->pClipRects;
       imesa->drawX = dPriv->x;
       imesa->drawY = dPriv->y;
    } else {
-
-
       imesa->numClipRects = dPriv->numBackClipRects;
       imesa->pClipRects = dPriv->pBackClipRects;
       imesa->drawX = dPriv->backX;
@@ -770,16 +754,7 @@ static void savageXMesaWindowMoved( savageContextPtr imesa )
    if (0)
       fprintf(stderr, "savageXMesaWindowMoved\n\n");
 
-   switch (imesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0]) {
-   case BUFFER_BIT_FRONT_LEFT:
-      savageXMesaSetFrontClipRects( imesa );
-      break;
-   case BUFFER_BIT_BACK_LEFT:
-      savageXMesaSetBackClipRects( imesa );
-      break;
-   default:
-       break;
-   }
+   savageXMesaSetClipRects(imesa);
 
    driUpdateFramebufferSize(imesa->glCtx, drawable);
    if (drawable != readable) {
