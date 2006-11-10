@@ -182,6 +182,7 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 	  (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
        }
 
+       (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
        (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
     }
 

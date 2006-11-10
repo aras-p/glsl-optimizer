@@ -98,6 +98,18 @@ struct via_renderbuffer {
 			 * at (drawX,drawY) in screen space.
 			 */
    char *origMap;
+
+   int drawX;                   /* origin of drawable in draw buffer */
+   int drawY;    
+   int drawW;                  
+   int drawH;    
+
+   int drawXoff;		/* drawX is 32byte aligned - this is
+				 * the delta to the real origin, in
+				 * pixel units.
+				 */
+
+   __DRIdrawablePrivate *dPriv;
 };
 
 
@@ -272,16 +284,6 @@ struct via_context {
 
    struct via_renderbuffer *drawBuffer;
 
-   int drawX;                   /* origin of drawable in draw buffer */
-   int drawY;    
-   int drawW;                  
-   int drawH;    
-
-   int drawXoff;		/* drawX is 32byte aligned - this is
-				 * the delta to the real origin, in
-				 * pixel units.
-				 */
-
    GLuint numClipRects;         /* cliprects for that buffer */
    drm_clip_rect_t *pClipRects;
 
@@ -294,7 +296,16 @@ struct via_context {
    int driFd;
    __DRInativeDisplay *display;
 
-   __DRIdrawablePrivate *driDrawable;
+   /**
+    * DRI drawable bound to this context for drawing.
+    */
+   __DRIdrawablePrivate	*driDrawable;
+
+   /**
+    * DRI drawable bound to this context for reading.
+    */
+   __DRIdrawablePrivate	*driReadable;
+
    __DRIscreenPrivate *driScreen;
    viaScreenPrivate *viaScreen;
    drm_via_sarea_t *sarea;

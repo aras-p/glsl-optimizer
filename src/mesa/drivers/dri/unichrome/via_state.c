@@ -476,6 +476,9 @@ void viaEmitState(struct via_context *vmesa)
     */
    if (ctx->Polygon.StippleFlag) {
       GLuint *stipple = &ctx->PolygonStipple[0];
+      __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
+      struct via_renderbuffer *const vrb = 
+	(struct via_renderbuffer *) dPriv->driverPrivate;
       GLint i;
         
       BEGIN_RING(38);
@@ -498,9 +501,9 @@ void viaEmitState(struct via_context *vmesa)
       OUT_RING( HC_HEADER2 );                     
       OUT_RING( (HC_ParaType_NotTex << 16) );
       OUT_RING( (HC_SubA_HSPXYOS << 24) | 
-		(((32- vmesa->drawXoff) & 0x1f) << HC_HSPXOS_SHIFT));
+		(((32- vrb->drawXoff) & 0x1f) << HC_HSPXOS_SHIFT));
       OUT_RING( (HC_SubA_HSPXYOS << 24) | 
-		(((32 - vmesa->drawXoff) & 0x1f) << HC_HSPXOS_SHIFT));
+		(((32 - vrb->drawXoff) & 0x1f) << HC_HSPXOS_SHIFT));
 
       ADVANCE_RING();
    }
@@ -720,15 +723,18 @@ static void viaColorMask(GLcontext *ctx,
 void viaCalcViewport(GLcontext *ctx)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
+    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
+    struct via_renderbuffer *const vrb = 
+      (struct via_renderbuffer *) dPriv->driverPrivate;
     const GLfloat *v = ctx->Viewport._WindowMap.m;
     GLfloat *m = vmesa->ViewportMatrix.m;
     
     /* See also via_translate_vertex.
      */
     m[MAT_SX] =   v[MAT_SX];
-    m[MAT_TX] =   v[MAT_TX] + SUBPIXEL_X + vmesa->drawXoff;
+    m[MAT_TX] =   v[MAT_TX] + SUBPIXEL_X + vrb->drawXoff;
     m[MAT_SY] = - v[MAT_SY];
-    m[MAT_TY] = - v[MAT_TY] + vmesa->driDrawable->h + SUBPIXEL_Y;
+    m[MAT_TY] = - v[MAT_TY] + dPriv->h + SUBPIXEL_Y;
     m[MAT_SZ] =   v[MAT_SZ] * (1.0 / vmesa->depth_max);
     m[MAT_TZ] =   v[MAT_TZ] * (1.0 / vmesa->depth_max);
 }
