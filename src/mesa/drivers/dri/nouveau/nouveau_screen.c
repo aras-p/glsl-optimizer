@@ -28,10 +28,31 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_screen.h"
 #include "nouveau_object.h"
 
+#include "xmlpool.h"
+
+PUBLIC const char __driConfigOptions[] =
+DRI_CONF_BEGIN
+    DRI_CONF_SECTION_DEBUG
+        DRI_CONF_NO_RAST(false)
+    DRI_CONF_SECTION_END
+DRI_CONF_END;
+static const GLuint __driNConfigOptions = 1;
+
 static nouveauScreenPtr nouveauCreateScreen(__DRIscreenPrivate *sPriv)
 {
 	nouveauScreenPtr screen;
 	NOUVEAUDRIPtr dri_priv=(NOUVEAUDRIPtr)sPriv->pDevPriv;
+
+	/* allocate screen */
+	screen = (nouveauScreenPtr) CALLOC( sizeof(*screen) );
+	if ( !screen ) {         
+		__driUtilMessage("%s: Could not allocate memory for screen structure",__FUNCTION__);
+		return NULL;
+	}
+
+	
+	/* parse information in __driConfigOptions */
+	driParseOptionInfo (&screen->optionCache,__driConfigOptions, __driNConfigOptions);
 
 	screen->card=nouveau_card_lookup(dri_priv->device_id);
 }
