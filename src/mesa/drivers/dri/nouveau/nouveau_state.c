@@ -54,20 +54,6 @@ static __inline__ GLuint nouveauPackColor(GLuint format,
    }
 }
 
-static void nouveauDDClearColor(GLcontext *ctx, const GLfloat color[4])
-{
-   nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-   GLubyte c[4];
-
-   CLAMPED_FLOAT_TO_UBYTE(c[0], color[0]);
-   CLAMPED_FLOAT_TO_UBYTE(c[1], color[1]);
-   CLAMPED_FLOAT_TO_UBYTE(c[2], color[2]);
-   CLAMPED_FLOAT_TO_UBYTE(c[3], color[3]);
-
-   nmesa->clear_color = nouveauPackColor( nmesa->screen->fbFormat,
-				      c[0], c[1], c[2], c[3] );
-}
-
 static void nouveauCalcViewport(GLcontext *ctx)
 {
     /* Calculate the Viewport Matrix */

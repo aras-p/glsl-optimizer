@@ -83,6 +83,7 @@ typedef struct nouveau_context {
 	/* The read-only regs */
 	volatile unsigned char* mmio;
 
+	/* FIXME : do we want to put all state into a separate struct ? */
 	/* State for tris */
 	GLuint color_offset;
 	GLuint specular_offset;
@@ -93,10 +94,11 @@ typedef struct nouveau_context {
 	struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
 	GLuint vertex_attr_count;
 
-        /* Clear state */
-        GLuint clear_color;
-        GLuint clear_depth;
-        GLuint clear_stencil;
+	/* Depth/stencil clear state */
+	uint32_t clear_value;
+
+	/* Light state */
+	uint32_t enabled_lights;
 
 	/* The drawing fallbacks */
 	GLuint Fallback;

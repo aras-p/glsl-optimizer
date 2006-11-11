@@ -19,7 +19,8 @@ DRIVER_SOURCES = \
 	nouveau_state.c          \
 	nouveau_tex.c            \
 	nouveau_swtcl.c          \
-	nv10_swtcl.c
+	nv10_swtcl.c             \
+	nv30_state.c
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \
