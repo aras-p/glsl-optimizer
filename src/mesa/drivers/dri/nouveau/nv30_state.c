@@ -433,7 +433,13 @@ void nv30PointParameterfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
 }
 
 /** Specify the diameter of rasterized points */
-void (*PointSize)(GLcontext *ctx, GLfloat size);
+void nv30PointSize(GLcontext *ctx, GLfloat size)
+{
+    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+    BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_POINT_SIZE, 1);
+    OUT_RINFf(size);
+}
+
 /** Select a polygon rasterization mode */
 void (*PolygonMode)(GLcontext *ctx, GLenum face, GLenum mode);
 /** Set the scale and units used to calculate depth values */
@@ -467,6 +473,14 @@ void (*TexParameter)(GLcontext *ctx, GLenum target,
 		struct gl_texture_object *texObj,
 		GLenum pname, const GLfloat *params);
 void (*TextureMatrix)(GLcontext *ctx, GLuint unit, const GLmatrix *mat);
+
 /** Set the viewport */
-void (*Viewport)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
+void nv30Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+{
+    /* TODO: Where do the VIEWPORT_XFRM_* regs come in? */
+    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+    BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VIEWPORT_DIMS_0, 2);
+    OUT_RING((w << 16) | x);
+    OUT_RING((h << 16) | y);
+}
 
