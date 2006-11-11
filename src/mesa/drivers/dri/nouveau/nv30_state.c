@@ -437,7 +437,7 @@ void nv30PointSize(GLcontext *ctx, GLfloat size)
 {
     nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
     BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_POINT_SIZE, 1);
-    OUT_RINFf(size);
+    OUT_RINGf(size);
 }
 
 /** Select a polygon rasterization mode */
