@@ -28,6 +28,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __NOUVEAU_TEX_H__
 #define __NOUVEAU_TEX_H__
 
+#include <errno.h>
+#include "mtypes.h"
+#include "macros.h"
+#include "dd.h"
+
 extern void nouveauTexInitFunctions( struct dd_function_table *functions );
 
 #endif /* __NOUVEAU_TEX_H__ */

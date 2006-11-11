@@ -28,7 +28,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_tex.h"
 
 // XXX needs some love
-void nouveauInitTextureFuncs( struct dd_function_table *functions )
+void nouveauTexInitFunctions( struct dd_function_table *functions )
 {
 /*
    functions->TexEnv			= nouveauTexEnv;
