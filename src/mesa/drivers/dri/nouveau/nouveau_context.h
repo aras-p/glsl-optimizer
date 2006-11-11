@@ -98,6 +98,7 @@ typedef struct nouveau_context {
 	uint32_t clear_value;
 
 	/* Light state */
+	GLboolean lighting_enabled;
 	uint32_t enabled_lights;
 
 	/* The drawing fallbacks */

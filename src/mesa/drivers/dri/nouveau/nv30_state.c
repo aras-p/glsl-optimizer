@@ -230,11 +230,21 @@ void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 			{
 			uint32_t mask=0x11<<(2*(cap-GL_LIGHT0));
 			nmesa->enabled_lights=((nmesa->enabled_lights&mask)|(mask*state));
-			BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_ENABLED_LIGHTS, 1);
-			OUT_RING(nmesa->enabled_lights);
+			if (nmesa->lighting_enabled)
+			{
+				BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_ENABLED_LIGHTS, 1);
+				OUT_RING(nmesa->enabled_lights);
+			}
 			break;
 			}
-//		case GL_LIGHTING:
+		case GL_LIGHTING:
+			nmesa->lighting_enabled=state;
+			BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_ENABLED_LIGHTS, 1);
+			if (nmesa->lighting_enabled)
+				OUT_RING(nmesa->enabled_lights);
+			else
+				OUT_RING(0x0);
+			break;
 //		case GL_LINE_SMOOTH:
 //		case GL_LINE_STIPPLE:
 //		case GL_MAP1_COLOR_4:
