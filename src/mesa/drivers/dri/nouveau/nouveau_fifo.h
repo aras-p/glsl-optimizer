@@ -32,6 +32,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_context.h"
 #include "nouveau_ctrlreg.h"
 
+//#define NOUVEAU_RING_DEBUG
+
 #define NV_READ(reg) *(volatile u_int32_t *)(nmesa->mmio + (reg))
 
 #define NV_FIFO_READ(reg) *(volatile u_int32_t *)(nmesa->fifo.mmio + (reg))

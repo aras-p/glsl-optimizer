@@ -113,6 +113,10 @@ GLboolean nouveauFifoInit(nouveauContextPtr nmesa)
 {
 	drm_nouveau_fifo_alloc_t fifo_init;
 
+#ifdef NOUVEAU_RING_DEBUG
+	return GL_TRUE;
+#endif
+
 	int ret;
 	ret=drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_FIFO_ALLOC, &fifo_init, sizeof(fifo_init));
 	if (ret) {
@@ -129,7 +133,11 @@ GLboolean nouveauFifoInit(nouveauContextPtr nmesa)
 		return GL_FALSE;
 	}
 
+	/* Setup our initial FIFO tracking params */
+	nmesa->fifo.free = fifo_init.cmdbuf_size >> 2;
+
 	MESSAGE("Fifo init ok. Using context %d\n", fifo_init.channel);
+	return GL_TRUE;
 }
 
 

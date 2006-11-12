@@ -182,6 +182,10 @@ extern GLboolean nouveauMakeCurrent( __DRIcontextPrivate *driContextPriv,
 
 extern GLboolean nouveauUnbindContext( __DRIcontextPrivate *driContextPriv );
 
+extern void nouveauSwapBuffers(__DRIdrawablePrivate *dPriv);
+
+extern void nouveauCopySubBuffer(__DRIdrawablePrivate *dPriv,
+				 int x, int y, int w, int h);
 
 #endif /* __NOUVEAU_CONTEXT_H__ */
 

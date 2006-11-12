@@ -61,6 +61,11 @@ static const struct dri_debug_control debug_control[] =
 	{ NULL,    0 }
 };
 
+const struct dri_extension common_extensions[] =
+{
+	{ NULL,    0 }
+};
+
 /* Create the device specific context.
  */
 GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
@@ -214,3 +219,13 @@ GLboolean nouveauUnbindContext( __DRIcontextPrivate *driContextPriv )
 {
 	return GL_TRUE;
 }
+
+void nouveauSwapBuffers(__DRIdrawablePrivate *dPriv)
+{
+}
+
+void nouveauCopySubBuffer(__DRIdrawablePrivate *dPriv,
+			  int x, int y, int w, int h)
+{
+}
+
