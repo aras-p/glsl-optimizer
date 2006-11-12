@@ -78,6 +78,16 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	if ( !nmesa )
 		return GL_FALSE;
 
+	nmesa->driContext = driContextPriv;
+	nmesa->driScreen = sPriv;
+	nmesa->driDrawable = NULL;
+	nmesa->hHWContext = driContextPriv->hHWContext;
+	nmesa->driHwLock = &sPriv->pSAREA->lock;
+	nmesa->driFd = sPriv->fd;
+
+	nmesa->screen = (nouveauScreenPtr)(sPriv->private);
+	screen=nmesa->screen;
+
 	/* Create the hardware context */
 	if (!nouveauFifoInit(nmesa))
 	   return GL_FALSE;
@@ -103,16 +113,6 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	}
 	driContextPriv->driverPrivate = nmesa;
 	ctx = nmesa->glCtx;
-
-	nmesa->driContext = driContextPriv;
-	nmesa->driScreen = sPriv;
-	nmesa->driDrawable = NULL;
-	nmesa->hHWContext = driContextPriv->hHWContext;
-	nmesa->driHwLock = &sPriv->pSAREA->lock;
-	nmesa->driFd = sPriv->fd;
-
-	nmesa->screen = (nouveauScreenPtr)(sPriv->private);
-	screen=nmesa->screen;
 
 	/* Parse configuration files */
 	driParseConfigFiles (&nmesa->optionCache, &screen->optionCache,
