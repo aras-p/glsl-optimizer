@@ -109,19 +109,25 @@ void nouveauWaitForIdle(nouveauContextPtr nmesa)
 }
 
 // here we call the fifo initialization ioctl and fill in stuff accordingly
-void nouveauFifoInit(nouveauContextPtr nmesa)
+GLboolean nouveauFifoInit(nouveauContextPtr nmesa)
 {
 	drm_nouveau_fifo_alloc_t fifo_init;
 
 	int ret;
 	ret=drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_FIFO_ALLOC, &fifo_init, sizeof(fifo_init));
-	if (ret)
+	if (ret) {
 		FATAL("Fifo initialization ioctl failed (returned %d)\n",ret);
+		return GL_FALSE;
+	}
 
-	if (drmMap(nmesa->driFd, fifo_init.cmdbuf, fifo_init.cmdbuf_size, &nmesa->fifo.buffer))
+	if (drmMap(nmesa->driFd, fifo_init.cmdbuf, fifo_init.cmdbuf_size, &nmesa->fifo.buffer)) {
 		FATAL("Unable to map the fifo\n",ret);
-	if (drmMap(nmesa->driFd, fifo_init.ctrl, fifo_init.ctrl_size, &nmesa->fifo.mmio))
+		return GL_FALSE;
+	}
+	if (drmMap(nmesa->driFd, fifo_init.ctrl, fifo_init.ctrl_size, &nmesa->fifo.mmio)) {
 		FATAL("Unable to map the control regs\n",ret);
+		return GL_FALSE;
+	}
 
 	MESSAGE("Fifo init ok. Using context %d\n", fifo_init.channel);
 }

@@ -113,7 +113,7 @@ extern void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size);
 }while(0)
 
 extern void nouveauWaitForIdle(nouveauContextPtr nmesa);
-extern void nouveauFifoInit(nouveauContextPtr nmesa);
+extern GLboolean nouveauFifoInit(nouveauContextPtr nmesa);
 
 #endif /* __NOUVEAU_FIFO_H__ */
 

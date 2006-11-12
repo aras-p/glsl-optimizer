@@ -54,7 +54,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	                fprintf(stderr, "File %s function %s line %d\n", __FILE__, __FUNCTION__, __LINE__); \
 	                fprintf(stderr,  a, ## __VA_ARGS__);\
 	                fprintf(stderr, "***************************************************************************\n");\
-			exit(0);\
 	        }while(0)
 
 #define FATAL(a, ...) do{\
@@ -62,7 +61,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	                fprintf(stderr, "File %s function %s line %d\n", __FILE__, __FUNCTION__, __LINE__); \
 	                fprintf(stderr,  a, ## __VA_ARGS__);\
 	                fprintf(stderr, "***************************************************************************\n");\
-			exit(0);\
 	        }while(0)
 
 #endif /* __NOUVEAU_MSG_H__ */

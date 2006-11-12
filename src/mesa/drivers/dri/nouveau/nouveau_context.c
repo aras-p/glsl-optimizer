@@ -79,7 +79,8 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 		return GL_FALSE;
 
 	/* Create the hardware context */
-	nouveauFifoInit(nmesa);
+	if (!nouveauFifoInit(nmesa))
+	   return GL_FALSE;
 	nouveauObjectInit(nmesa);
 
 	/* Init default driver functions then plug in our nouveau-specific functions
