@@ -1,3 +1,5 @@
+#ifndef __NOUVEAU_OBJECT_H__
+#define __NOUVEAU_OBJECT_H__
 
 #include "nouveau_context.h"
 
@@ -11,3 +13,4 @@ enum DMASubchannel {
 	NvSub3D		= 1,
 };
 
+#endif
