@@ -393,7 +393,7 @@ static __GLcontextModes *tdfxFillInModes(unsigned pixel_bits,
 			    m->accumRedBits	= accum ? 16 : 0;
 			    m->accumGreenBits	= accum ? 16 : 0;
 			    m->accumBlueBits	= accum ? 16 : 0;
-			    m->accumAlphaBits	= accum ? 16 : 0;
+			    m->accumAlphaBits	= (accum && deep) ? 16 : 0;
 			    m->stencilBits	= stencil ? 8 : 0;
 			    m->depthBits	= deep
 			    			  ? (depth ? 24 : 0)
