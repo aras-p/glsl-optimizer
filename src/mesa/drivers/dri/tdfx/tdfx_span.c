@@ -976,7 +976,7 @@ tdfxDDWriteDepthPixels(GLcontext * ctx, struct gl_renderbuffer *rb,
 	 GetFbParams(fxMesa, &info, &backBufferInfo,
 		     &ReadParams, sizeof(GLushort));
 	 for (i = 0; i < n; i++) {
-	    if (mask[i] && visible_pixel(fxMesa, x[i], y[i])) {
+	    if ((!mask || mask[i]) && visible_pixel(fxMesa, x[i], y[i])) {
 	       xpos = x[i] + fxMesa->x_offset;
 	       ypos = bottom - y[i];
 	       d16 = depth[i];
@@ -1000,7 +1000,7 @@ tdfxDDWriteDepthPixels(GLcontext * ctx, struct gl_renderbuffer *rb,
 	 GetFbParams(fxMesa, &info, &backBufferInfo,
 		     &ReadParams, sizeof(GLuint));
 	 for (i = 0; i < n; i++) {
-	    if (mask[i]) {
+	    if (!mask || mask[i]) {
 	       if (visible_pixel(fxMesa, x[i], y[i])) {
 		  xpos = x[i] + fxMesa->x_offset;
 		  ypos = bottom - y[i];
