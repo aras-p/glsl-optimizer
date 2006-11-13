@@ -23,19 +23,14 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_context.c,v 1.12 2003/05/08 09:25:35 herrb Exp $ */
 
-/*
- * New fixes:
- *	Daniel Borca <dborca@users.sourceforge.net>, 19 Jul 2004
+/**
+ * \file tdfx_context.c
+ * Context management functions for 3Dfx hardware.
  *
- * Original rewrite:
- *	Gareth Hughes <gareth@valinux.com>, 29 Sep - 1 Oct 2000
- *
- * Authors:
- *	Gareth Hughes <gareth@valinux.com>
- *	Brian Paul <brianp@valinux.com>
- *
+ * \author Gareth Hughes <gareth@valinux.com> (original rewrite 29 Sep - 1 Oct 2000)
+ * \author Brian Paul <brianp@valinux.com>
+ * \author Daniel Borca <dborca@users.sourceforge.net> (new fixes 19 Jul 2004)
  */
 
 #include <dlfcn.h>
@@ -703,6 +698,7 @@ tdfxMakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 UNLOCK_HARDWARE( newFx );
       }
 
+       driUpdateFramebufferSize(newCtx, driDrawPriv);
       _mesa_make_current( newCtx,
                           (GLframebuffer *) driDrawPriv->driverPrivate,
                           (GLframebuffer *) driReadPriv->driverPrivate );

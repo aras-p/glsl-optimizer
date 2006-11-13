@@ -23,16 +23,13 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_dd.c,v 1.10 2002/10/30 12:52:00 alanh Exp $ */
 
-/*
- * Original rewrite:
- *	Gareth Hughes <gareth@valinux.com>, 29 Sep - 1 Oct 2000
- *
- * Authors:
- *	Gareth Hughes <gareth@valinux.com>
- *	Brian Paul <brianp@valinux.com>
- *
+/**
+ * \file tdfx_dd.c
+ * Device driver interface functions for 3Dfx based cards.
+ * 
+ * \author Gareth Hughes <gareth@valinux.com> (Original rewrite 29 Sep - 1 Oct 2000)
+ * \author Brian Paul <brianp@valinux.com>
  */
 
 #include "tdfx_context.h"
@@ -50,7 +47,7 @@
 #endif
 
 
-#define TDFX_DATE	"20040719"
+#define DRIVER_DATE	"20061113"
 
 
 /* These are used in calls to FX_grColorMaskv() */
@@ -81,7 +78,7 @@ static const GLubyte *tdfxDDGetString( GLcontext *ctx, GLenum name )
       UNLOCK_HARDWARE(fxMesa);
 
       strcpy( buffer, "Mesa DRI " );
-      strcat( buffer, TDFX_DATE );
+      strcat( buffer, DRIVER_DATE );
       strcat( buffer, " " );
 
       if ( strcmp( hardware, "Voodoo3 (tm)" ) == 0 ) {
@@ -138,21 +135,6 @@ static const GLubyte *tdfxDDGetString( GLcontext *ctx, GLenum name )
 }
 
 
-/* Return uptodate buffer size information.
- */
-static void tdfxDDGetBufferSize( GLframebuffer *buffer,
-				 GLuint *width, GLuint *height )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-
-   LOCK_HARDWARE( fxMesa );
-   *width = fxMesa->width;
-   *height = fxMesa->height;
-   UNLOCK_HARDWARE( fxMesa );
-}
-
-
 #define VISUAL_EQUALS_RGBA(vis, r, g, b, a)        \
    ((vis->redBits == r) &&                         \
     (vis->greenBits == g) &&                       \
@@ -167,7 +149,6 @@ void tdfxDDInitDriverFuncs( const __GLcontextModes *visual,
    }
 
    functions->GetString		= tdfxDDGetString;
-   functions->GetBufferSize	= tdfxDDGetBufferSize;
 
    /* Accelerated paths
     */
