@@ -38,6 +38,7 @@
 #include "tdfx_vb.h"
 #include "tdfx_pixels.h"
 
+#include "utils.h"
 #include "context.h"
 #include "enums.h"
 #include "framebuffer.h"
@@ -108,6 +109,55 @@ static const GLubyte *tdfxDDGetString( GLcontext *ctx, GLenum name )
 }
 
 
+static void
+tdfxBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+{
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
+
+   (void) q;
+
+   if (target == GL_SAMPLES_PASSED_ARB) {
+      LOCK_HARDWARE(fxMesa);
+      fxMesa->Glide.grFinish();
+      fxMesa->Glide.grReset(GR_STATS_PIXELS);
+      UNLOCK_HARDWARE(fxMesa);
+   }
+}
+
+
+static void
+tdfxEndQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+{
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
+   FxI32 total_pixels;
+   FxI32 z_fail_pixels;
+
+
+   if (target == GL_SAMPLES_PASSED_ARB) {
+      LOCK_HARDWARE(fxMesa);
+      fxMesa->Glide.grFinish();
+
+      fxMesa->Glide.grGet(GR_STATS_PIXELS_DEPTHFUNC_FAIL, sizeof(FxI32),
+			  &z_fail_pixels);
+      fxMesa->Glide.grGet(GR_STATS_PIXELS_IN, sizeof(FxI32), &total_pixels);
+
+      q->Result = total_pixels - z_fail_pixels;
+      
+      /* Apparently, people have seen z_fail_pixels > total_pixels under
+       * some conditions on some 3Dfx hardware.  The occlusion query spec
+       * requires that we clamp to 0.
+       */
+      if (q->Result < 0) {
+	 q->Result = 0;
+      }
+
+      q->Ready = GL_TRUE;
+
+      UNLOCK_HARDWARE(fxMesa);
+   }
+}
+
+
 #define VISUAL_EQUALS_RGBA(vis, r, g, b, a)        \
    ((vis->redBits == r) &&                         \
     (vis->greenBits == g) &&                       \
@@ -121,7 +171,9 @@ void tdfxDDInitDriverFuncs( const __GLcontextModes *visual,
       fprintf( stderr, "tdfx: %s()\n", __FUNCTION__ );
    }
 
-   functions->GetString		= tdfxDDGetString;
+   functions->GetString         = tdfxDDGetString;
+   functions->BeginQuery        = tdfxBeginQuery;
+   functions->EndQuery          = tdfxEndQuery;
 
    /* Accelerated paths
     */
