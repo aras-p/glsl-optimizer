@@ -135,6 +135,8 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	_tnl_CreateContext( ctx );
 	_swsetup_CreateContext( ctx );
 
+	_math_matrix_ctr(&nmesa->viewport);
+
 	switch(nmesa->screen->card->type)
 	{
 		case NV_03:
