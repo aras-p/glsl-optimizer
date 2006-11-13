@@ -1015,8 +1015,11 @@ SetupSingleTexEnvVoodoo3(GLcontext *ctx, int unit,
       }
       break;
 
-   default:
+   default: {
+      (void) memcpy(&colorComb, &fxMesa->ColorCombine, sizeof(colorComb));
+      (void) memcpy(&alphaComb, &fxMesa->AlphaCombine, sizeof(alphaComb));
       _mesa_problem(ctx, "bad texture env mode in %s", __FUNCTION__);
+   }
    }
 
    if (colorComb.Function != fxMesa->ColorCombine.Function ||
