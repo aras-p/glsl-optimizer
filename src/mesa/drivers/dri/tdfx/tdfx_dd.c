@@ -64,67 +64,40 @@ static const GLubyte *tdfxDDGetString( GLcontext *ctx, GLenum name )
 {
    tdfxContextPtr fxMesa = (tdfxContextPtr) ctx->DriverCtx;
 
-   switch ( name ) {
+   switch (name) {
    case GL_RENDERER:
    {
       /* The renderer string must be per-context state to handle
        * multihead correctly.
        */
-      char *buffer = fxMesa->rendererString;
-      char hardware[100];
+      char *const buffer = fxMesa->rendererString;
+      char hardware[64];
 
       LOCK_HARDWARE(fxMesa);
-      strcpy( hardware, fxMesa->Glide.grGetString(GR_HARDWARE) );
+      strncpy(hardware, fxMesa->Glide.grGetString(GR_HARDWARE),
+	      sizeof(hardware));
+      hardware[sizeof(hardware) - 1] = '\0';
       UNLOCK_HARDWARE(fxMesa);
 
-      strcpy( buffer, "Mesa DRI " );
-      strcat( buffer, DRIVER_DATE );
-      strcat( buffer, " " );
-
-      if ( strcmp( hardware, "Voodoo3 (tm)" ) == 0 ) {
-	 strcat( buffer, "Voodoo3" );
+      if ((strncmp(hardware, "Voodoo3", 7) == 0)
+	  || (strncmp(hardware, "Voodoo4", 7) == 0)
+	  || (strncmp(hardware, "Voodoo5", 7) == 0)) {
+	 hardware[7] = '\0';
       }
-      else if ( strcmp( hardware, "Voodoo Banshee (tm)" ) == 0 ) {
-	 strcat( buffer, "VoodooBanshee" );
-      }
-      else if ( strcmp( hardware, "Voodoo4 (tm)" ) == 0 ) {
-	 strcat( buffer, "Voodoo4" );
-      }
-      else if ( strcmp( hardware, "Voodoo5 (tm)" ) == 0 ) {
-	 strcat( buffer, "Voodoo5" );
+      else if (strncmp(hardware, "Voodoo Banshee", 14) == 0) {
+	 strcpy(&hardware[6], "Banshee");
       }
       else {
 	 /* unexpected result: replace spaces with hyphens */
 	 int i;
-	 for ( i = 0 ; hardware[i] && i < 60 ; i++ ) {
-	    if ( hardware[i] == ' ' || hardware[i] == '\t' )
+	 for (i = 0; hardware[i] && (i < sizeof(hardware)); i++) {
+	    if (hardware[i] == ' ' || hardware[i] == '\t') {
 	       hardware[i] = '-';
+	    }
 	 }
-         strcat( buffer, hardware );
       }
 
-      /* Append any CPU-specific information.
-       */
-#ifdef USE_X86_ASM
-      if ( _mesa_x86_cpu_features ) {
-	 strncat( buffer, " x86", 4 );
-      }
-#endif
-#ifdef USE_MMX_ASM
-      if ( cpu_has_mmx ) {
-	 strncat( buffer, "/MMX", 4 );
-      }
-#endif
-#ifdef USE_3DNOW_ASM
-      if ( cpu_has_3dnow ) {
-	 strncat( buffer, "/3DNow!", 7 );
-      }
-#endif
-#ifdef USE_SSE_ASM
-      if ( cpu_has_xmm ) {
-	 strncat( buffer, "/SSE", 4 );
-      }
-#endif
+      (void) driGetRendererString(buffer, hardware, DRIVER_DATE, 0);
       return (const GLubyte *) buffer;
    }
    case GL_VENDOR:
