@@ -554,7 +554,7 @@ _swrast_ReadPixels( GLcontext *ctx,
    /* Do all needed clipping here, so that we can forget about it later */
    if (!_mesa_clip_readpixels(ctx, &x, &y, &width, &height, &clippedPacking)) {
       /* The ReadPixels region is totally outside the window bounds */
-      return;
+      goto end;
    }
 
    if (clippedPacking.BufferObj->Name) {
