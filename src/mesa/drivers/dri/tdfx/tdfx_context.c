@@ -657,8 +657,10 @@ tdfxMakeCurrent( __DRIcontextPrivate *driContextPriv,
       GLcontext *newCtx = newFx->glCtx;
       GET_CURRENT_CONTEXT(curCtx);
 
-      if ( newFx->driDrawable != driDrawPriv ) {
+      if ((newFx->driDrawable != driDrawPriv)
+	  || (newFx->driReadable != driReadPriv)) {
 	 newFx->driDrawable = driDrawPriv;
+	 newFx->driReadable = driReadPriv;
 	 newFx->dirty = ~0;
       }
       else {
@@ -674,6 +676,11 @@ tdfxMakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 }
 	 /* [dBorca] tunnel2 requires this */
 	 newFx->dirty = ~0;
+      }
+
+      driUpdateFramebufferSize(newCtx, driDrawPriv);
+      if (driDrawPriv != driReadPriv) {
+	 driUpdateFramebufferSize(newCtx, driReadPriv);
       }
 
       if ( !newFx->Glide.Initialized ) {
@@ -700,7 +707,6 @@ tdfxMakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 UNLOCK_HARDWARE( newFx );
       }
 
-       driUpdateFramebufferSize(newCtx, driDrawPriv);
       _mesa_make_current( newCtx,
                           (GLframebuffer *) driDrawPriv->driverPrivate,
                           (GLframebuffer *) driReadPriv->driverPrivate );
