@@ -31,53 +31,71 @@ extern "C" {
 
 struct slang_code_unit_;
 
+/**
+ * Types of functions.
+ */
 typedef enum slang_function_kind_
 {
-	slang_func_ordinary,
-	slang_func_constructor,
-	slang_func_operator
+   slang_func_ordinary,
+   slang_func_constructor,
+   slang_func_operator
 } slang_function_kind;
 
 typedef struct slang_fixup_table_
 {
-	GLuint *table;
-	GLuint count;
+   GLuint *table;
+   GLuint count;
 } slang_fixup_table;
 
-void slang_fixup_table_init (slang_fixup_table *);
-void slang_fixup_table_free (slang_fixup_table *);
+extern void slang_fixup_table_init(slang_fixup_table *);
+extern void slang_fixup_table_free(slang_fixup_table *);
 
+
+/**
+ * Description of a compiled shader function.
+ */
 typedef struct slang_function_
 {
-	slang_function_kind kind;
-	slang_variable header;
-	slang_variable_scope *parameters;
-	unsigned int param_count;
-	slang_operation *body;
-	unsigned int address;
-	slang_fixup_table fixups;
+   slang_function_kind kind;
+   slang_variable header;
+   slang_variable_scope *parameters;
+   unsigned int param_count;
+   slang_operation *body;      /**< The instruction tree */
+   unsigned int address;
+   slang_fixup_table fixups;
 } slang_function;
 
-int slang_function_construct (slang_function *);
-void slang_function_destruct (slang_function *);
+extern int slang_function_construct(slang_function *);
+extern void slang_function_destruct(slang_function *);
 
+
+/**
+ * Basically, a list of compiled functions.
+ */
 typedef struct slang_function_scope_
 {
-	slang_function *functions;
+   slang_function *functions;
    GLuint num_functions;
-	struct slang_function_scope_ *outer_scope;
+   struct slang_function_scope_ *outer_scope;
 } slang_function_scope;
 
-extern GLvoid
-_slang_function_scope_ctr (slang_function_scope *);
 
-void slang_function_scope_destruct (slang_function_scope *);
-int slang_function_scope_find_by_name (slang_function_scope *, slang_atom, int);
-slang_function *slang_function_scope_find (slang_function_scope *, slang_function *, int);
+extern GLvoid
+_slang_function_scope_ctr(slang_function_scope *);
+
+extern void
+slang_function_scope_destruct(slang_function_scope *);
+
+extern int
+slang_function_scope_find_by_name(slang_function_scope *, slang_atom, int);
+
+extern slang_function *
+slang_function_scope_find(slang_function_scope *, slang_function *, int);
 
 extern GLboolean
-_slang_build_export_code_table (slang_export_code_table *, slang_function_scope *,
-                                struct slang_code_unit_ *);
+_slang_build_export_code_table(slang_export_code_table *, slang_function_scope *,
+                               struct slang_code_unit_ *);
+
 
 #ifdef __cplusplus
 }
