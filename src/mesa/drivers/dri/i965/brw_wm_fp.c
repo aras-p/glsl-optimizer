@@ -432,7 +432,7 @@ static struct prog_src_register search_or_add_const4f( struct brw_wm_compile *c,
 	 return src_reg(PROGRAM_STATE_VAR, idx);
    }
    
-   idx = _mesa_add_unnamed_constant( paramList, values );
+   idx = _mesa_add_unnamed_constant( paramList, values, 4 );
 
    return src_reg(PROGRAM_STATE_VAR, idx);
 }

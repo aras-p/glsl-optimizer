@@ -238,11 +238,12 @@ _mesa_add_named_parameter(struct gl_program_parameter_list *paramList,
 
 extern GLint
 _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
-                         const char *name, const GLfloat values[4]);
+                         const char *name, const GLfloat values[4],
+                         GLuint size);
 
 extern GLint
 _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
-                           const GLfloat values[4]);
+                           const GLfloat values[4], GLuint size);
 
 extern GLint
 _mesa_add_state_reference(struct gl_program_parameter_list *paramList,

@@ -172,7 +172,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    fogVals[1] = 1.0 / SQRTF(log(2.0));
    fogVals[2] = 0.0;
    fogVals[3] = 0.0;
-   fogConsts = _mesa_add_unnamed_constant(fprog->Base.Parameters, fogVals);
+   fogConsts = _mesa_add_unnamed_constant(fprog->Base.Parameters, fogVals, 4);
 
    /* Scan program to find where result.color is written */
    inst = newInst;

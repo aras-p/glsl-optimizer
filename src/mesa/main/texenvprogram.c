@@ -575,7 +575,7 @@ static struct ureg register_const4f( struct texenv_fragment_program *p,
    values[1] = s1;
    values[2] = s2;
    values[3] = s3;
-   idx = _mesa_add_unnamed_constant( p->program->Base.Parameters, values );
+   idx = _mesa_add_unnamed_constant( p->program->Base.Parameters, values, 4 );
    return make_ureg(PROGRAM_STATE_VAR, idx);
 }
 

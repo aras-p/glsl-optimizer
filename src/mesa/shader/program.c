@@ -437,9 +437,11 @@ _mesa_add_named_parameter(struct gl_program_parameter_list *paramList,
  */
 GLint
 _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
-                         const char *name, const GLfloat values[4])
+                         const char *name, const GLfloat values[4],
+                         GLuint size)
 {
    GLuint pos, swizzle;
+   ASSERT(size == 4); /* XXX future feature */
    /* check if we already have this constant */
    if (_mesa_lookup_parameter_constant(paramList, values, 4, &pos, &swizzle)) {
       return pos;
@@ -459,9 +461,10 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
  */
 GLint
 _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
-                           const GLfloat values[4])
+                           const GLfloat values[4], GLuint size)
 {
    GLuint pos, swizzle;
+   ASSERT(size == 4); /* XXX future feature */
    /* check if we already have this constant */
    if (_mesa_lookup_parameter_constant(paramList, values, 4, &pos, &swizzle)) {
       return pos;

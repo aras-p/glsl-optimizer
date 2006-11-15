@@ -1810,7 +1810,7 @@ parse_param_elements (GLcontext * ctx, const GLubyte ** inst,
          parse_constant (inst, const_values, Program, use);
          idx = _mesa_add_named_constant(Program->Base.Parameters,
                                         (char *) param_var->name,
-                                        const_values);
+                                        const_values, 4);
          if (param_var->param_binding_begin == ~0U)
             param_var->param_binding_begin = idx;
          param_var->param_binding_length++;
