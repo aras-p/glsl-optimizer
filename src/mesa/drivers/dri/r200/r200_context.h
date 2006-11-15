@@ -699,6 +699,7 @@ struct r200_dri_mirror {
    __DRIcontextPrivate	*context;	/* DRI context */
    __DRIscreenPrivate	*screen;	/* DRI screen */
    __DRIdrawablePrivate	*drawable;	/* DRI drawable bound to this ctx */
+   __DRIdrawablePrivate	*readable;	/* DRI readable bound to this ctx */
 
    drm_context_t hwContext;
    drm_hw_lock_t *hwLock;
