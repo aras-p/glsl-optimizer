@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -77,12 +77,6 @@ struct arb_program
 };
 
 
-#ifndef __extension__
-#if !defined(__GNUC__) || (__GNUC__ < 2) || \
-    ((__GNUC__ == 2) && (__GNUC_MINOR__ <= 7))
-# define __extension__
-#endif
-#endif
 
 /* TODO:
  *    Fragment Program Stuff:
@@ -168,10 +162,11 @@ struct arb_program
 
 typedef GLubyte *production;
 
+
 /**
  * This is the text describing the rules to parse the grammar
  */
-__extension__ static char arb_grammar_text[] =
+LONGSTRING static char arb_grammar_text[] =
 #include "arbprogram_syn.h"
 ;
 
@@ -4053,7 +4048,8 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    program->Base.Parameters    = ap.Base.Parameters;
 
 #if DEBUG_FP
-   _mesa_print_program(&program.Base);
+   _mesa_printf("____________Fragment program %u ________\n", program->Base.ID);
+   _mesa_print_program(&program->Base);
 #endif
 }
 
@@ -4105,6 +4101,7 @@ _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
    program->Base.Parameters = ap.Base.Parameters; 
 
 #if DEBUG_VP
+   _mesa_printf("____________Vertex program %u __________\n", program->Base.ID);
    _mesa_print_program(&program->Base);
 #endif
 }

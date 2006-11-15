@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.6
+ * Version:  6.5.2
  *
  * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
@@ -32,15 +32,15 @@
 #include "grammar_mesa.h"
 #include "slang_preprocess.h"
 
-static const char *slang_pp_directives_syn =
+LONGSTRING static const char *slang_pp_directives_syn =
 #include "library/slang_pp_directives_syn.h"
 ;
 
-static const char *slang_pp_expression_syn =
+LONGSTRING static const char *slang_pp_expression_syn =
 #include "library/slang_pp_expression_syn.h"
 ;
 
-static const char *slang_pp_version_syn =
+LONGSTRING static const char *slang_pp_version_syn =
 #include "library/slang_pp_version_syn.h"
 ;
 
