@@ -307,14 +307,14 @@ _mesa_UseProgramObjectARB(GLhandleARB programObj)
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    if (programObj != 0) {
-      GET_PROGRAM(pro, programObj, "glUseProgramObjectARB");
+      GET_PROGRAM(pro, programObj, "glUseProgramObjectARB(program)");
 
       if (pro == NULL)
          return;
 
       if ((**pro).GetLinkStatus(pro) == GL_FALSE) {
          RELEASE_PROGRAM(pro);
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUseProgramObjectARB");
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glUseProgramObjectARB(not linked)");
          return;
       }
 
