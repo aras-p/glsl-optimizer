@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
  * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
@@ -29,85 +29,97 @@
 extern "C" {
 #endif
 
+/**
+ * Types of slang operations.
+ * These are the basic intermediate code representations.
+ * [foo] indicates a sub-tree or reference to another type of node
+ */
 typedef enum slang_operation_type_
 {
 	slang_oper_none,
-	slang_oper_block_no_new_scope,
-	slang_oper_block_new_scope,
-	slang_oper_variable_decl,
+	slang_oper_block_no_new_scope,  /* "{" sequence "}" */
+	slang_oper_block_new_scope,     /* "{" sequence "}" */
+	slang_oper_variable_decl, /* [type] [var] or [var] = [expr] */
 	slang_oper_asm,
-	slang_oper_break,
-	slang_oper_continue,
-	slang_oper_discard,
-	slang_oper_return,
-	slang_oper_expression,
-	slang_oper_if,
-	slang_oper_while,
-	slang_oper_do,
-	slang_oper_for,
-	slang_oper_void,
-	slang_oper_literal_bool,
-	slang_oper_literal_int,
-	slang_oper_literal_float,
-	slang_oper_identifier,
-	slang_oper_sequence,
-	slang_oper_assign,
-	slang_oper_addassign,
-	slang_oper_subassign,
-	slang_oper_mulassign,
-	slang_oper_divassign,
+	slang_oper_break,         /* "break" statement */
+	slang_oper_continue,      /* "continue" statement */
+	slang_oper_discard,       /* "discard" (kill fragment) statement */
+	slang_oper_return,        /* "return" [expr]  */
+	slang_oper_expression,    /* [expr] */
+	slang_oper_if,            /* "if" [0] then [1] else [2] */
+	slang_oper_while,         /* "while" [cond] [body] */
+	slang_oper_do,            /* "do" [body] "while" [cond] */
+	slang_oper_for,           /* "for" [init] [while] [incr] [body] */
+	slang_oper_void,          /* nop */
+	slang_oper_literal_bool,  /* "true" or "false" */
+	slang_oper_literal_int,   /* integer literal */
+	slang_oper_literal_float, /* float literal */
+	slang_oper_identifier,    /* var name, func name, etc */
+	slang_oper_sequence,      /* [expr] "," [expr] "," etc */
+	slang_oper_assign,        /* [var] "=" [expr] */
+	slang_oper_addassign,     /* [var] "+=" [expr] */
+	slang_oper_subassign,     /* [var] "-=" [expr] */
+	slang_oper_mulassign,     /* [var] "*=" [expr] */
+	slang_oper_divassign,     /* [var] "/=" [expr] */
 	/*slang_oper_modassign,*/
 	/*slang_oper_lshassign,*/
 	/*slang_oper_rshassign,*/
 	/*slang_oper_orassign,*/
 	/*slang_oper_xorassign,*/
 	/*slang_oper_andassign,*/
-	slang_oper_select,
-	slang_oper_logicalor,
-	slang_oper_logicalxor,
-	slang_oper_logicaland,
+	slang_oper_select,        /* [expr] "?" [expr] ":" [expr] */
+	slang_oper_logicalor,     /* [expr] "||" [expr] */
+	slang_oper_logicalxor,    /* [expr] "^^" [expr] */
+	slang_oper_logicaland,    /* [expr] "&&" [expr] */
 	/*slang_oper_bitor,*/
 	/*slang_oper_bitxor,*/
 	/*slang_oper_bitand,*/
-	slang_oper_equal,
-	slang_oper_notequal,
-	slang_oper_less,
-	slang_oper_greater,
-	slang_oper_lessequal,
-	slang_oper_greaterequal,
+	slang_oper_equal,         /* [expr] "==" [expr] */
+	slang_oper_notequal,      /* [expr] "!=" [expr] */
+	slang_oper_less,          /* [expr] "<" [expr] */
+	slang_oper_greater,       /* [expr] ">" [expr] */
+	slang_oper_lessequal,     /* [expr] "<=" [expr] */
+	slang_oper_greaterequal,  /* [expr] ">=" [expr] */
 	/*slang_oper_lshift,*/
 	/*slang_oper_rshift,*/
-	slang_oper_add,
-	slang_oper_subtract,
-	slang_oper_multiply,
-	slang_oper_divide,
+	slang_oper_add,           /* [expr] "+" [expr] */
+	slang_oper_subtract,      /* [expr] "-" [expr] */
+	slang_oper_multiply,      /* [expr] "*" [expr] */
+	slang_oper_divide,        /* [expr] "/" [expr] */
 	/*slang_oper_modulus,*/
-	slang_oper_preincrement,
-	slang_oper_predecrement,
-	slang_oper_plus,
-	slang_oper_minus,
+	slang_oper_preincrement,  /* "++" [var] */
+	slang_oper_predecrement,  /* "--" [var] */
+	slang_oper_plus,          /* "-" [expr] */
+	slang_oper_minus,         /* "+" [expr] */
 	/*slang_oper_complement,*/
-	slang_oper_not,
-	slang_oper_subscript,
-	slang_oper_call,
-	slang_oper_field,
-	slang_oper_postincrement,
-	slang_oper_postdecrement
+	slang_oper_not,           /* "!" [expr] */
+	slang_oper_subscript,     /* [expr] "[" [expr] "]" */
+	slang_oper_call,          /* [func name] [param] [param] [...] */
+	slang_oper_field,         /* i.e.: ".next" or ".xzy" or ".xxx" etc */
+	slang_oper_postincrement, /* [var] "++" */
+	slang_oper_postdecrement  /* [var] "--" */
 } slang_operation_type;
 
+
+/**
+ * A slang_operation is basically a compiled instruction (such as assignment,
+ * a while-loop, a conditiona, a function call, etc).
+ */
 typedef struct slang_operation_
 {
 	slang_operation_type type;
 	struct slang_operation_ *children;
 	unsigned int num_children;
-	float literal;		/* type: bool, literal_int, literal_float */
-	slang_atom a_id;	/* type: asm, identifier, call, field */
-	slang_variable_scope *locals;
+	float literal;       /**< Used for float, int and bool values */
+	slang_atom a_id;     /**< type: asm, identifier, call, field */
+	slang_variable_scope *locals;  /**< local vars for scope */
 } slang_operation;
 
-int slang_operation_construct (slang_operation *);
-void slang_operation_destruct (slang_operation *);
-int slang_operation_copy (slang_operation *, const slang_operation *);
+
+extern int slang_operation_construct (slang_operation *);
+extern void slang_operation_destruct (slang_operation *);
+extern int slang_operation_copy (slang_operation *, const slang_operation *);
+
 
 #ifdef __cplusplus
 }
