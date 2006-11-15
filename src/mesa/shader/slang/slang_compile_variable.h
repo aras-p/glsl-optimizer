@@ -76,7 +76,7 @@ typedef struct slang_variable_
 	struct slang_operation_ *initializer;
 	unsigned int address;
 	unsigned int size;
-	int global;
+	GLboolean global;
 } slang_variable;
 
 int slang_variable_construct (slang_variable *);

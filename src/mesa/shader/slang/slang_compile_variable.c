@@ -183,7 +183,7 @@ int slang_variable_construct (slang_variable *var)
 	var->initializer = NULL;
 	var->address = ~0;
 	var->size = 0;
-	var->global = 0;
+	var->global = GL_FALSE;
 	return 1;
 }
 
