@@ -131,31 +131,53 @@ slang_assembly_typeinfo_destruct(slang_assembly_typeinfo * ti)
 
 /* _slang_typeof_operation() */
 
+/**
+ * Determine the return type of a function.
+ * \param name  name of the function
+ * \param params  array of function parameters
+ * \param num_params  number of parameters
+ * \param space  namespace to use
+ * \param spec  returns the function's type
+ * \param atoms  atom pool
+ * \return GL_TRUE for success, GL_FALSE if failure
+ */
 static GLboolean
-typeof_existing_function(const char *name, slang_operation * params,
-                         GLuint num_params, slang_assembly_name_space * space,
-                         slang_type_specifier * spec, slang_atom_pool * atoms)
+typeof_existing_function(const char *name, const slang_operation * params,
+                         GLuint num_params,
+                         const slang_assembly_name_space * space,
+                         slang_type_specifier * spec,
+                         slang_atom_pool * atoms)
 {
    slang_atom atom;
    GLboolean exists;
 
    atom = slang_atom_pool_atom(atoms, name);
-   if (!_slang_typeof_function
-       (atom, params, num_params, space, spec, &exists, atoms))
+   if (!_slang_typeof_function(atom, params, num_params, space, spec,
+                               &exists, atoms))
       return GL_FALSE;
    return exists;
 }
 
 GLboolean
-_slang_typeof_operation(slang_assemble_ctx * A, slang_operation * op,
+_slang_typeof_operation(const slang_assemble_ctx * A,
+                        const slang_operation * op,
                         slang_assembly_typeinfo * ti)
 {
    return _slang_typeof_operation_(op, &A->space, ti, A->atoms);
 }
 
+
+/**
+ * Determine the return type of an operation.
+ * \param op  the operation node
+ * \param space  the namespace to use
+ * \param ti  the returned type
+ * \param atoms  atom pool
+ * \return GL_TRUE for success, GL_FALSE if failure
+ */
 GLboolean
-_slang_typeof_operation_(slang_operation * op,
-                         slang_assembly_name_space * space,
+_slang_typeof_operation_(const slang_operation * op,
+                         const slang_assembly_name_space * space,
                          slang_assembly_typeinfo * ti,
                          slang_atom_pool * atoms)
 {
@@ -247,23 +269,23 @@ _slang_typeof_operation_(slang_operation * op,
       /*case slang_oper_lshift: */
       /*case slang_oper_rshift: */
    case slang_oper_add:
-      if (!typeof_existing_function
-          ("+", op->children, 2, space, &ti->spec, atoms))
+      if (!typeof_existing_function("+", op->children, 2, space,
+                                    &ti->spec, atoms))
          return GL_FALSE;
       break;
    case slang_oper_subtract:
-      if (!typeof_existing_function
-          ("-", op->children, 2, space, &ti->spec, atoms))
+      if (!typeof_existing_function("-", op->children, 2, space,
+                                    &ti->spec, atoms))
          return GL_FALSE;
       break;
    case slang_oper_multiply:
-      if (!typeof_existing_function
-          ("*", op->children, 2, space, &ti->spec, atoms))
+      if (!typeof_existing_function("*", op->children, 2, space,
+                                    &ti->spec, atoms))
          return GL_FALSE;
       break;
    case slang_oper_divide:
-      if (!typeof_existing_function
-          ("/", op->children, 2, space, &ti->spec, atoms))
+      if (!typeof_existing_function("/", op->children, 2, space,
+                                    &ti->spec, atoms))
          return GL_FALSE;
       break;
       /*case slang_oper_modulus: */
@@ -311,9 +333,8 @@ _slang_typeof_operation_(slang_operation * op,
       {
          GLboolean exists;
 
-         if (!_slang_typeof_function
-             (op->a_id, op->children, op->num_children, space, &ti->spec,
-              &exists, atoms))
+         if (!_slang_typeof_function(op->a_id, op->children, op->num_children,
+                                     space, &ti->spec, &exists, atoms))
             return GL_FALSE;
          if (!exists) {
             slang_struct *s =
@@ -468,27 +489,38 @@ _slang_typeof_operation_(slang_operation * op,
    return GL_TRUE;
 }
 
-/* _slang_typeof_function() */
 
+
+/**
+ * Determine the return type of a function.
+ * \param a_name  the function name
+ * \param param  function parameters (overloading)
+ * \param num_params  number of parameters to function
+ * \param space  namespace to search
+ * \param exists  returns GL_TRUE or GL_FALSE to indicate existance of function
+ * \return GL_TRUE for success, GL_FALSE if failure (bad function name)
+ */
 GLboolean
-_slang_typeof_function(slang_atom a_name, slang_operation * params,
-                       GLuint num_params, slang_assembly_name_space * space,
+_slang_typeof_function(slang_atom a_name, const slang_operation * params,
+                       GLuint num_params,
+                       const slang_assembly_name_space * space,
                        slang_type_specifier * spec, GLboolean * exists,
                        slang_atom_pool * atoms)
 {
-   slang_function *fun;
-
-   fun =
-      _slang_locate_function(space->funcs, a_name, params, num_params, space,
-                             atoms);
+   slang_function *fun = _slang_locate_function(space->funcs, a_name, params,
+                                                num_params, space, atoms);
    *exists = fun != NULL;
-   if (fun == NULL)
-      return GL_TRUE;
+   if (!fun)
+      return GL_TRUE;  /* yes, not false */
    return slang_type_specifier_copy(spec, &fun->header.type.specifier);
 }
 
-/* _slang_type_is_matrix() */
 
+
+/**
+ * Determine if a type is a matrix.
+ * \return GL_TRUE if is a matrix, GL_FALSE otherwise.
+ */
 GLboolean
 _slang_type_is_matrix(slang_type_specifier_type ty)
 {
@@ -502,8 +534,11 @@ _slang_type_is_matrix(slang_type_specifier_type ty)
    }
 }
 
-/* _slang_type_is_vector() */
 
+/**
+ * Determine if a type is a vector.
+ * \return GL_TRUE if is a vector, GL_FALSE otherwise.
+ */
 GLboolean
 _slang_type_is_vector(slang_type_specifier_type ty)
 {
@@ -523,8 +558,10 @@ _slang_type_is_vector(slang_type_specifier_type ty)
    }
 }
 
-/* _slang_type_base_of_vector() */
 
+/**
+ * Given a vector type, return the type of the vector's elements
+ */
 slang_type_specifier_type
 _slang_type_base(slang_type_specifier_type ty)
 {
@@ -555,8 +592,10 @@ _slang_type_base(slang_type_specifier_type ty)
    }
 }
 
-/* _slang_type_dim */
 
+/**
+ * Return the number of elements in a vector or matrix type
+ */
 GLuint
 _slang_type_dim(slang_type_specifier_type ty)
 {

@@ -232,9 +232,9 @@ collect_locals(slang_assemble_ctx * A, slang_operation * op, GLuint * size)
 /* _slang_locate_function() */
 
 slang_function *
-_slang_locate_function(slang_function_scope * funcs, slang_atom a_name,
-                       slang_operation * params, GLuint num_params,
-                       slang_assembly_name_space * space,
+_slang_locate_function(const slang_function_scope * funcs, slang_atom a_name,
+                       const slang_operation * params, GLuint num_params,
+                       const slang_assembly_name_space * space,
                        slang_atom_pool * atoms)
 {
    GLuint i;

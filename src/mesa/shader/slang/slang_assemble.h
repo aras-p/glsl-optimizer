@@ -216,12 +216,17 @@ typedef struct slang_assemble_ctx_
 } slang_assemble_ctx;
 
 extern struct slang_function_ *
-_slang_locate_function(struct slang_function_scope_ *funcs, slang_atom name,
-                       struct slang_operation_ *params, GLuint num_params,
-                       slang_assembly_name_space *space, slang_atom_pool *);
+_slang_locate_function(const struct slang_function_scope_ *funcs,
+                       slang_atom name, const struct slang_operation_ *params,
+                       GLuint num_params,
+                       const slang_assembly_name_space *space,
+                       slang_atom_pool *);
 
 extern GLboolean
 _slang_assemble_function(slang_assemble_ctx *, struct slang_function_ *);
+
+extern GLboolean
+_slang_assemble_function2(slang_assemble_ctx * , struct slang_function_ *);
 
 extern GLboolean
 _slang_cleanup_stack(slang_assemble_ctx *, struct slang_operation_ *);
