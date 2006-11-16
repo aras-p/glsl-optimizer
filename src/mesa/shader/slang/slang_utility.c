@@ -160,16 +160,11 @@ void slang_atom_pool_destruct (slang_atom_pool *pool)
 	}
 }
 
-/**
- * Search atom pool for atom with the given name.
- * If name is not found, create new atom (but don't insert into pool?)
- */
-slang_atom slang_atom_pool_atom (const slang_atom_pool *pool, const char *id)
+slang_atom slang_atom_pool_atom (slang_atom_pool *pool, const char *id)
 {
 	GLuint hash;
 	const char *p = id;
-	slang_atom_entry * const * entry;
-	slang_atom_entry **newEntry = NULL;
+	slang_atom_entry **entry;
 
 	hash = 0;
 	while (*p != '\0')
@@ -192,15 +187,15 @@ slang_atom slang_atom_pool_atom (const slang_atom_pool *pool, const char *id)
 		entry = &(**entry).next;
 	}
 
-	*newEntry = (slang_atom_entry *) slang_alloc_malloc (sizeof (slang_atom_entry));
-	if (*newEntry == NULL)
+	*entry = (slang_atom_entry *) slang_alloc_malloc (sizeof (slang_atom_entry));
+	if (*entry == NULL)
 		return SLANG_ATOM_NULL;
 
-	(**newEntry).next = NULL;
-	(**newEntry).id = slang_string_duplicate (id);
-	if ((**newEntry).id == NULL)
+	(**entry).next = NULL;
+	(**entry).id = slang_string_duplicate (id);
+	if ((**entry).id == NULL)
 		return SLANG_ATOM_NULL;
-	return (slang_atom) (**newEntry).id;
+	return (slang_atom) (**entry).id;
 }
 
 const char *slang_atom_pool_id (slang_atom_pool *pool, slang_atom atom)
