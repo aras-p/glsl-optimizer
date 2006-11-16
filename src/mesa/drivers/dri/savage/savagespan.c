@@ -33,7 +33,6 @@
 #define DBG 0
 
 #define LOCAL_VARS						\
-   savageContextPtr imesa = SAVAGE_CONTEXT(ctx);		\
    driRenderbuffer *drb = (driRenderbuffer *) rb;		\
    __DRIdrawablePrivate *const dPriv = drb->dPriv;		\
    GLuint cpp   = drb->cpp;					\
@@ -44,7 +43,6 @@
    (void) p
 
 #define LOCAL_DEPTH_VARS					\
-   savageContextPtr imesa = SAVAGE_CONTEXT(ctx);		\
    driRenderbuffer *drb = (driRenderbuffer *) rb;		\
    __DRIdrawablePrivate *const dPriv = drb->dPriv;		\
    GLuint zpp   = drb->cpp;					\
