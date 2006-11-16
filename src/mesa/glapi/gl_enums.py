@@ -148,7 +148,7 @@ int _mesa_lookup_enum_by_name( const char *symbol )
 
 		string_offsets = {}
 		i = 0;
-		print 'static const char enum_string_table[] = '
+		print 'LONGSTRING static const char enum_string_table[] = '
 		for [name, enum] in name_table:
 			print '   "%s\\0"' % (name)
 			string_offsets[ name ] = i

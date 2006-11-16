@@ -34,7 +34,7 @@ typedef struct {
    int n;
 } enum_elt;
 
-static const char enum_string_table[] = 
+LONGSTRING static const char enum_string_table[] = 
    "GL_2D\0"
    "GL_2_BYTES\0"
    "GL_3D\0"
