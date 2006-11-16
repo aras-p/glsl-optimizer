@@ -440,12 +440,14 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
                          const char *name, const GLfloat values[4],
                          GLuint size)
 {
+#if 0 /* disable this for now -- we need to save the name! */
    GLuint pos, swizzle;
    ASSERT(size == 4); /* XXX future feature */
    /* check if we already have this constant */
    if (_mesa_lookup_parameter_constant(paramList, values, 4, &pos, &swizzle)) {
       return pos;
    }
+#endif
    return add_parameter(paramList, name, values, PROGRAM_CONSTANT);
 }
 
