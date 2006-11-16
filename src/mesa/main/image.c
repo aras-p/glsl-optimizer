@@ -1168,7 +1168,7 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
    const GLint comps = _mesa_components_in_format(dstFormat);
    GLuint i;
 
-   if (dstType != GL_FLOAT) {
+   if (dstType != GL_FLOAT || ctx->Color.ClampReadColor == GL_TRUE) {
       /* need to clamp to [0, 1] */
       transferOps |= IMAGE_CLAMP_BIT;
    }
@@ -1182,7 +1182,7 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
 
    if (dstFormat == GL_LUMINANCE || dstFormat == GL_LUMINANCE_ALPHA) {
       /* compute luminance values */
-      if (ctx->Color.ClampReadColor == GL_TRUE || dstType != GL_FLOAT) {
+      if (dstType != GL_FLOAT || ctx->Color.ClampReadColor == GL_TRUE) {
          for (i = 0; i < n; i++) {
             GLfloat sum = rgba[i][RCOMP] + rgba[i][GCOMP] + rgba[i][BCOMP];
             luminance[i] = CLAMP(sum, 0.0F, 1.0F);
@@ -4173,7 +4173,7 @@ _mesa_unpack_image( GLuint dimensions,
    if (width <= 0 || height <= 0 || depth <= 0)
       return NULL;  /* generate error later */
 
-   if (format == GL_BITMAP) {
+   if (type == GL_BITMAP) {
       bytesPerRow = (width + 7) >> 3;
       flipBytes = !unpack->LsbFirst;
       swap2 = swap4 = GL_FALSE;
