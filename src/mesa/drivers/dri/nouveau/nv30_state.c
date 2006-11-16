@@ -444,14 +444,15 @@ static void nv30PointSize(GLcontext *ctx, GLfloat size)
 static void nv30PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	int method;
 
-	if (face == GL_FRONT)
-		method = NV30_TCL_PRIMITIVE_3D_POLYGON_MODE_FRONT;
-	else
-		method = NV30_TCL_PRIMITIVE_3D_POLYGON_MODE_BACK;
-	BEGIN_RING_SIZE(NvSub3D, method, 1);
-	OUT_RING(mode);
+	if (face == GL_FRONT || face == GL_FRONT_AND_BACK) {
+		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_POLYGON_MODE_FRONT, 1);
+		OUT_RING(mode);
+	}
+	if (face == GL_BACK || face == GL_FRONT_AND_BACK) {
+		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_POLYGON_MODE_BACK, 1);
+		OUT_RING(mode);
+	}
 }
 
 /** Set the scale and units used to calculate depth values */
@@ -466,14 +467,62 @@ void (*RenderMode)(GLcontext *ctx, GLenum mode );
 void (*Scissor)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
 /** Select flat or smooth shading */
 void (*ShadeModel)(GLcontext *ctx, GLenum mode);
+
 /** OpenGL 2.0 two-sided StencilFunc */
-void (*StencilFuncSeparate)(GLcontext *ctx, GLenum face, GLenum func,
-		GLint ref, GLuint mask);
+static void nv30StencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func,
+		GLint ref, GLuint mask)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	if (face == GL_FRONT || face == GL_FRONT_AND_BACK) {
+		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_STENCIL_FRONT_FUNC_FUNC, 3);
+		OUT_RING(func);
+		OUT_RING(ref);
+		OUT_RING(mask);
+	}
+	if (face == GL_BACK || face == GL_FRONT_AND_BACK) {
+		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_STENCIL_BACK_FUNC_FUNC, 3);
+		OUT_RING(func);
+		OUT_RING(ref);
+		OUT_RING(mask);
+	}
+}
+
 /** OpenGL 2.0 two-sided StencilMask */
-void (*StencilMaskSeparate)(GLcontext *ctx, GLenum face, GLuint mask);
+static void nv30StencilMaskSeparate(GLcontext *ctx, GLenum face, GLuint mask)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	if (face == GL_FRONT || face == GL_FRONT_AND_BACK) {
+		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_STENCIL_FRONT_MASK, 1);
+		OUT_RING(mask);
+	}
+	if (face == GL_BACK || face == GL_FRONT_AND_BACK) {
+		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_STENCIL_BACK_MASK, 1);
+		OUT_RING(mask);
+	}
+}
+
 /** OpenGL 2.0 two-sided StencilOp */
-void (*StencilOpSeparate)(GLcontext *ctx, GLenum face, GLenum fail,
-		GLenum zfail, GLenum zpass);
+static void nv30StencilOpSeparate(GLcontext *ctx, GLenum face, GLenum fail,
+		GLenum zfail, GLenum zpass)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	if (face == GL_FRONT || face == GL_FRONT_AND_BACK) {
+		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_STENCIL_FRONT_OP_FAIL, 1);
+		OUT_RING(fail);
+		OUT_RING(zfail);
+		OUT_RING(zpass);
+	}
+	if (face == GL_BACK || face == GL_FRONT_AND_BACK) {
+		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_STENCIL_BACK_OP_FAIL, 1);
+		OUT_RING(fail);
+		OUT_RING(zfail);
+		OUT_RING(zpass);
+	}
+}
+
 /** Control the generation of texture coordinates */
 void (*TexGen)(GLcontext *ctx, GLenum coord, GLenum pname,
 		const GLfloat *params);
@@ -531,9 +580,11 @@ void nv30InitStateFuncs(struct dd_function_table *func)
 	func->RenderMode		= nv30RenderMode;
 	func->Scissor			= nv30Scissor;
 	func->ShadeModel		= nv30ShaderModel;
+#endif
 	func->StencilFuncSeparate	= nv30StencilFuncSeparate;
 	func->StencilMaskSeparate	= nv30StencilMaskSeparate;
 	func->StencilOpSeparate		= nv30StencilOpSeparate;
+#if 0
 	func->TexGen			= nv30TexGen;
 	func->TexParameter		= nv30TexParameter;
 	func->TextureMatrix		= nv30TextureMatrix;
