@@ -53,6 +53,11 @@ typedef struct {
    AEarray arrays[32];
    AEattrib attribs[VERT_ATTRIB_MAX + 1];
    GLuint NewState;
+
+   struct gl_buffer_object *vbo[VERT_ATTRIB_MAX];
+   GLuint nr_vbos;
+   GLboolean mapped_vbos;
+
 } AEcontext;
 
 #define AE_CONTEXT(ctx) ((AEcontext *)(ctx)->aelt_context)
@@ -1063,6 +1068,18 @@ void _ae_destroy_context( GLcontext *ctx )
    }
 }
 
+static void check_vbo( AEcontext *actx,
+		       struct gl_buffer_object *vbo )
+{
+   if (vbo->Name && !vbo->Pointer) {
+      GLuint i;
+      for (i = 0; i < actx->nr_vbos; i++)
+	 if (actx->vbo[i] == vbo)
+	    return;
+      actx->vbo[actx->nr_vbos++] = vbo;
+   }
+}
+
 
 /**
  * Make a list of per-vertex functions to call for each glArrayElement call.
@@ -1081,31 +1098,37 @@ static void _ae_update_state( GLcontext *ctx )
   if (ctx->Array.ArrayObj->Index.Enabled) {
       aa->array = &ctx->Array.ArrayObj->Index;
       aa->offset = IndexFuncs[TYPE_IDX(aa->array->Type)];
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    if (ctx->Array.ArrayObj->EdgeFlag.Enabled) {
       aa->array = &ctx->Array.ArrayObj->EdgeFlag;
       aa->offset = _gloffset_EdgeFlagv;
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    if (ctx->Array.ArrayObj->Normal.Enabled) {
       aa->array = &ctx->Array.ArrayObj->Normal;
       aa->offset = NormalFuncs[TYPE_IDX(aa->array->Type)];
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    if (ctx->Array.ArrayObj->Color.Enabled) {
       aa->array = &ctx->Array.ArrayObj->Color;
       aa->offset = ColorFuncs[aa->array->Size-3][TYPE_IDX(aa->array->Type)];
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    if (ctx->Array.ArrayObj->SecondaryColor.Enabled) {
       aa->array = &ctx->Array.ArrayObj->SecondaryColor;
       aa->offset = SecondaryColorFuncs[TYPE_IDX(aa->array->Type)];
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    if (ctx->Array.ArrayObj->FogCoord.Enabled) {
       aa->array = &ctx->Array.ArrayObj->FogCoord;
       aa->offset = FogCoordFuncs[TYPE_IDX(aa->array->Type)];
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
@@ -1120,11 +1143,12 @@ static void _ae_update_state( GLcontext *ctx )
                                  [at->array->Size-1]
                                  [TYPE_IDX(at->array->Type)];
          at->index = VERT_ATTRIB_TEX0 + i;
+	 check_vbo(actx, aa->array->BufferObj);
          at++;
       }
    }
 
-   /* generic vertex attribute arrays */
+   /* generic vertex attribute arrays */   
    for (i = 1; i < VERT_ATTRIB_MAX; i++) {  /* skip zero! */
       struct gl_client_array *attribArray = &ctx->Array.ArrayObj->VertexAttrib[i];
       if (attribArray->Enabled) {
@@ -1146,6 +1170,7 @@ static void _ae_update_state( GLcontext *ctx )
                                      [TYPE_IDX(at->array->Type)];
          }
          at->index = i;
+	 check_vbo(actx, aa->array->BufferObj);
          at++;
       }
    }
@@ -1158,13 +1183,17 @@ static void _ae_update_state( GLcontext *ctx )
       aa->array = &ctx->Array.ArrayObj->VertexAttrib[0];
       assert(aa->array->Size >= 2); /* XXX fix someday? */
       aa->offset = VertexFuncs[aa->array->Size-2][TYPE_IDX(aa->array->Type)];
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    else if (ctx->Array.ArrayObj->Vertex.Enabled) {
       aa->array = &ctx->Array.ArrayObj->Vertex;
       aa->offset = VertexFuncs[aa->array->Size-2][TYPE_IDX(aa->array->Type)];
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
+
+   check_vbo(actx, ctx->Array.ElementArrayBufferObj);
 
    ASSERT(at - actx->attribs <= VERT_ATTRIB_MAX);
    ASSERT(aa - actx->arrays < 32);
@@ -1172,6 +1201,45 @@ static void _ae_update_state( GLcontext *ctx )
    aa->offset = -1;  /* terminate the list */
 
    actx->NewState = 0;
+}
+
+void _ae_map_vbos( GLcontext *ctx )
+{
+   AEcontext *actx = AE_CONTEXT(ctx);
+   GLuint i;
+   
+   if (actx->mapped_vbos)
+      return;
+
+   if (actx->NewState)
+      _ae_update_state(ctx);
+
+   for (i = 0; i < actx->nr_vbos; i++)
+      ctx->Driver.MapBuffer(ctx,
+			    GL_ARRAY_BUFFER_ARB,
+			    GL_DYNAMIC_DRAW_ARB,
+			    actx->vbo[i]);
+
+   actx->mapped_vbos = GL_TRUE;
+}
+
+void _ae_unmap_vbos( GLcontext *ctx )
+{
+   AEcontext *actx = AE_CONTEXT(ctx);
+   GLuint i;
+
+   if (actx->mapped_vbos)
+      return;
+
+   if (actx->NewState)
+      _ae_update_state(ctx);
+
+   for (i = 0; i < actx->nr_vbos; i++)
+      ctx->Driver.UnmapBuffer(ctx,
+			      GL_ARRAY_BUFFER_ARB,
+			      actx->vbo[i]);
+
+   actx->mapped_vbos = GL_TRUE;
 }
 
 
@@ -1188,15 +1256,24 @@ void GLAPIENTRY _ae_loopback_array_elt( GLint elt )
    const AEarray *aa;
    const AEattrib *at;
    const struct _glapi_table * const disp = GET_DISPATCH();
+   GLboolean do_map;
 
-
-   if (actx->NewState)
+   if (actx->NewState) {
+      assert(!actx->mapped_vbos);
       _ae_update_state( ctx );
+   }
 
+   do_map = actx->nr_vbos && !actx->mapped_vbos;
+
+   /* 
+    */
+   if (do_map)
+      _ae_map_vbos(ctx);
+   
    /* generic attributes */
    for (at = actx->attribs; at->func; at++) {
       const GLubyte *src
-         = ADD_POINTERS(at->array->BufferObj->Data, at->array->Ptr)
+         = ADD_POINTERS(at->array->BufferObj->Pointer, at->array->Ptr)
          + elt * at->array->StrideB;
       at->func( at->index, src );
    }
@@ -1204,15 +1281,21 @@ void GLAPIENTRY _ae_loopback_array_elt( GLint elt )
    /* conventional arrays */
    for (aa = actx->arrays; aa->offset != -1 ; aa++) {
       const GLubyte *src
-         = ADD_POINTERS(aa->array->BufferObj->Data, aa->array->Ptr)
+         = ADD_POINTERS(aa->array->BufferObj->Pointer, aa->array->Ptr)
          + elt * aa->array->StrideB;
       CALL_by_offset( disp, (array_func), aa->offset, 
 		      ((const void *) src) );
    }
+
+   if (do_map)
+      _ae_unmap_vbos(ctx);
 }
 
 
 void _ae_invalidate_state( GLcontext *ctx, GLuint new_state )
 {
-   AE_CONTEXT(ctx)->NewState |= new_state;
+   AEcontext *actx = AE_CONTEXT(ctx);
+
+   assert(!actx->mapped_vbos);
+   actx->NewState |= new_state;
 }

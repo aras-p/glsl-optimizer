@@ -1413,10 +1413,14 @@ static void GLAPIENTRY _save_OBE_DrawArrays(GLenum mode, GLint start, GLsizei co
    if (!_mesa_validate_DrawArrays( ctx, mode, start, count ))
       return;
 
+   _ae_map_vbos( ctx );
+
    _save_NotifyBegin( ctx, mode | PRIM_WEAK );
    for (i = 0; i < count; i++)
        CALL_ArrayElement(GET_DISPATCH(), (start + i));
    CALL_End(GET_DISPATCH(), ());
+
+   _ae_unmap_vbos( ctx );
 }
 
 
@@ -1428,6 +1432,8 @@ static void GLAPIENTRY _save_OBE_DrawElements(GLenum mode, GLsizei count, GLenum
 
    if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices ))
       return;
+
+   _ae_map_vbos( ctx );
 
    _save_NotifyBegin( ctx, mode | PRIM_WEAK );
 
@@ -1450,6 +1456,8 @@ static void GLAPIENTRY _save_OBE_DrawElements(GLenum mode, GLsizei count, GLenum
    }
 
    CALL_End(GET_DISPATCH(), ());
+
+   _ae_unmap_vbos( ctx );
 }
 
 static void GLAPIENTRY _save_OBE_DrawRangeElements(GLenum mode,
