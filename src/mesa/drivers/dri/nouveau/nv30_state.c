@@ -34,7 +34,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "mtypes.h"
 #include "colormac.h"
 
-void nv30AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
+static void nv30AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	GLubyte ubRef;
@@ -45,7 +45,7 @@ void nv30AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 	OUT_RING(ubRef);    /* NV30_TCL_PRIMITIVE_3D_ALPHA_FUNC_REF  */
 }
 
-void nv30BlendColor(GLcontext *ctx, const GLfloat color[4])
+static void nv30BlendColor(GLcontext *ctx, const GLfloat color[4])
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx); 
 	GLubyte cf[4];
@@ -59,7 +59,7 @@ void nv30BlendColor(GLcontext *ctx, const GLfloat color[4])
 	OUT_RING(PACK_COLOR_8888(cf[3], cf[1], cf[2], cf[0]));
 }
 
-void nv30BlendEquationSeparate(GLcontext *ctx, GLenum modeRGB, GLenum modeA)
+static void nv30BlendEquationSeparate(GLcontext *ctx, GLenum modeRGB, GLenum modeA)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_BLEND_EQUATION, 1);
@@ -67,7 +67,7 @@ void nv30BlendEquationSeparate(GLcontext *ctx, GLenum modeRGB, GLenum modeA)
 }
 
 
-void nv30BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, GLenum dfactorRGB,
+static void nv30BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, GLenum dfactorRGB,
 		GLenum sfactorA, GLenum dfactorA)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -76,7 +76,7 @@ void nv30BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, GLenum dfactorRGB,
 	OUT_RING((dfactorA<<16) | dfactorRGB);
 }
 
-void nv30ClearColor(GLcontext *ctx, const GLfloat color[4])
+static void nv30ClearColor(GLcontext *ctx, const GLfloat color[4])
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	GLubyte c[4];
@@ -85,7 +85,7 @@ void nv30ClearColor(GLcontext *ctx, const GLfloat color[4])
 	OUT_RING(PACK_COLOR_8888(c[3],c[0],c[1],c[2]));
 }
 
-void nv30ClearDepth(GLcontext *ctx, GLclampd d)
+static void nv30ClearDepth(GLcontext *ctx, GLclampd d)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	nmesa->clear_value=((nmesa->clear_value&0x000000FF)|(((uint32_t)(d*0xFFFFFF))<<8));
@@ -97,7 +97,7 @@ void nv30ClearDepth(GLcontext *ctx, GLclampd d)
    void (*ClearIndex)(GLcontext *ctx, GLuint index)
  */
 
-void nv30ClearStencil(GLcontext *ctx, GLint s)
+static void nv30ClearStencil(GLcontext *ctx, GLint s)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	nmesa->clear_value=((nmesa->clear_value&0xFFFFFF00)|(s&0x000000FF));
@@ -105,7 +105,7 @@ void nv30ClearStencil(GLcontext *ctx, GLint s)
 	OUT_RING(nmesa->clear_value);
 }
 
-void nv30ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
+static void nv30ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_CLIP_PLANE_A(plane), 4);
@@ -115,7 +115,7 @@ void nv30ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
 	OUT_RINGf(equation[3]);
 }
 
-void nv30ColorMask(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
+static void nv30ColorMask(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
 		GLboolean bmask, GLboolean amask )
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -123,40 +123,40 @@ void nv30ColorMask(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
 	OUT_RING(((amask && 0x01) << 24) | ((rmask && 0x01) << 16) | ((gmask && 0x01)<< 8) | ((bmask && 0x01) << 0));
 }
 
-void nv30ColorMaterial(GLcontext *ctx, GLenum face, GLenum mode)
+static void nv30ColorMaterial(GLcontext *ctx, GLenum face, GLenum mode)
 {
 	// TODO I need love
 }
 
-void nv30CullFace(GLcontext *ctx, GLenum mode)
+static void nv30CullFace(GLcontext *ctx, GLenum mode)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_CULL_FACE, 1);
 	OUT_RING(mode);
 }
 
-void nv30FrontFace(GLcontext *ctx, GLenum mode)
+static void nv30FrontFace(GLcontext *ctx, GLenum mode)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FRONT_FACE, 1);
 	OUT_RING(mode);
 }
 
-void nv30DepthFunc(GLcontext *ctx, GLenum func)
+static void nv30DepthFunc(GLcontext *ctx, GLenum func)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_DEPTH_FUNC, 1);
 	OUT_RING(func);
 }
 
-void nv30DepthMask(GLcontext *ctx, GLboolean flag)
+static void nv30DepthMask(GLcontext *ctx, GLboolean flag)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_DEPTH_WRITE_ENABLE, 1);
 	OUT_RING(flag);
 }
 
-void nv30DepthRange(GLcontext *ctx, GLclampd nearval, GLclampd farval)
+static void nv30DepthRange(GLcontext *ctx, GLclampd nearval, GLclampd farval)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_DEPTH_RANGE_NEAR, 2);
@@ -169,7 +169,7 @@ void nv30DepthRange(GLcontext *ctx, GLclampd nearval, GLclampd farval)
 /** Specify the buffers for writing for fragment programs*/
 //void (*DrawBuffers)( GLcontext *ctx, GLsizei n, const GLenum *buffers );
 
-void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
+static void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	switch(cap)
@@ -311,7 +311,7 @@ void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 	}
 }
 
-void nv30Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
+static void nv30Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
 {
     nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
     switch(pname)
@@ -327,14 +327,14 @@ void nv30Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
 
 }
    
-void nv30Hint(GLcontext *ctx, GLenum target, GLenum mode)
+static void nv30Hint(GLcontext *ctx, GLenum target, GLenum mode)
 {
 	// TODO I need love (fog and line_smooth hints)
 }
 
 // void (*IndexMask)(GLcontext *ctx, GLuint mask);
 
-void nv30Lightfv(GLcontext *ctx, GLenum light, GLenum pname, const GLfloat *params )
+static void nv30Lightfv(GLcontext *ctx, GLenum light, GLenum pname, const GLfloat *params )
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	/* not sure where the fourth param value goes...*/
@@ -401,31 +401,31 @@ void nv30Lightfv(GLcontext *ctx, GLenum light, GLenum pname, const GLfloat *para
 }
 
 /** Set the lighting model parameters */
-void (*LightModelfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);
+static void (*LightModelfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);
 
 
-void nv30LineStipple(GLcontext *ctx, GLint factor, GLushort pattern )
+static void nv30LineStipple(GLcontext *ctx, GLint factor, GLushort pattern )
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LINE_STIPPLE_PATTERN, 1);
 	OUT_RING((pattern << 16) | factor);
 }
 
-void nv30LineWidth(GLcontext *ctx, GLfloat width)
+static void nv30LineWidth(GLcontext *ctx, GLfloat width)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LINE_WIDTH_SMOOTH, 1);
 	OUT_RINGf(width);
 }
 
-void nv30LogicOpcode(GLcontext *ctx, GLenum opcode)
+static void nv30LogicOpcode(GLcontext *ctx, GLenum opcode)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LOGIC_OP_OP, 1);
 	OUT_RING(opcode);
 }
 
-void nv30PointParameterfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
+static void nv30PointParameterfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
 {
 	/*TODO: not sure what goes here. */
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -433,15 +433,27 @@ void nv30PointParameterfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
 }
 
 /** Specify the diameter of rasterized points */
-void nv30PointSize(GLcontext *ctx, GLfloat size)
+static void nv30PointSize(GLcontext *ctx, GLfloat size)
 {
-    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-    BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_POINT_SIZE, 1);
-    OUT_RINGf(size);
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_POINT_SIZE, 1);
+	OUT_RINGf(size);
 }
 
 /** Select a polygon rasterization mode */
-void (*PolygonMode)(GLcontext *ctx, GLenum face, GLenum mode);
+static void nv30PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	int method;
+
+	if (face == GL_FRONT)
+		method = NV30_TCL_PRIMITIVE_3D_POLYGON_MODE_FRONT;
+	else
+		method = NV30_TCL_PRIMITIVE_3D_POLYGON_MODE_BACK;
+	BEGIN_RING_SIZE(NvSub3D, method, 1);
+	OUT_RING(mode);
+}
+
 /** Set the scale and units used to calculate depth values */
 void (*PolygonOffset)(GLcontext *ctx, GLfloat factor, GLfloat units);
 /** Set the polygon stippling pattern */
@@ -475,12 +487,57 @@ void (*TexParameter)(GLcontext *ctx, GLenum target,
 void (*TextureMatrix)(GLcontext *ctx, GLuint unit, const GLmatrix *mat);
 
 /** Set the viewport */
-void nv30Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+static void nv30Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
     /* TODO: Where do the VIEWPORT_XFRM_* regs come in? */
     nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
     BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VIEWPORT_DIMS_0, 2);
     OUT_RING((w << 16) | x);
     OUT_RING((h << 16) | y);
+}
+
+void nv30InitStateFuncs(struct dd_function_table *func)
+{
+	func->AlphaFunc			= nv30AlphaFunc;
+	func->BlendColor		= nv30BlendColor;
+	func->BlendEquationSeparate	= nv30BlendEquationSeparate;
+	func->BlendFuncSeparate		= nv30BlendFuncSeparate;
+	func->ClearColor		= nv30ClearColor;
+	func->ClearDepth		= nv30ClearDepth;
+	func->ClearStencil		= nv30ClearStencil;
+	func->ClipPlane			= nv30ClipPlane;
+	func->ColorMask			= nv30ColorMask;
+	func->ColorMaterial		= nv30ColorMaterial;
+	func->CullFace			= nv30CullFace;
+	func->FrontFace			= nv30FrontFace;
+	func->DepthFunc			= nv30DepthFunc;
+	func->DepthMask			= nv30DepthMask;
+	func->DepthRange		= nv30DepthRange;
+	func->Enable			= nv30Enable;
+	func->Fogfv			= nv30Fogfv;
+	func->Hint			= nv30Hint;
+	func->Lightfv			= nv30Lightfv;
+/*	func->LightModelfv		= nv30LightModelfv; */
+	func->LineStipple		= nv30LineStipple;
+	func->LineWidth			= nv30LineWidth;
+	func->LogicOpcode		= nv30LogicOpcode;
+	func->PointParameterfv		= nv30PointParameterfv;
+	func->PointSize			= nv30PointSize;
+	func->PolygonMode		= nv30PolygonMode;
+#if 0
+	func->PolygonOffset		= nv30PolygonOffset;
+	func->PolygonStipple		= nv30PolygonStipple;
+	func->ReadBuffer		= nv30ReadBuffer;
+	func->RenderMode		= nv30RenderMode;
+	func->Scissor			= nv30Scissor;
+	func->ShadeModel		= nv30ShaderModel;
+	func->StencilFuncSeparate	= nv30StencilFuncSeparate;
+	func->StencilMaskSeparate	= nv30StencilMaskSeparate;
+	func->StencilOpSeparate		= nv30StencilOpSeparate;
+	func->TexGen			= nv30TexGen;
+	func->TexParameter		= nv30TexParameter;
+	func->TextureMatrix		= nv30TextureMatrix;
+#endif
+	func->Viewport			= nv30Viewport;
 }
 
