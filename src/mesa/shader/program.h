@@ -189,7 +189,8 @@ enum state_index {
    STATE_INTERNAL,		/* Mesa additions */
    STATE_NORMAL_SCALE,
    STATE_TEXRECT_SCALE,
-   STATE_POSITION_NORMALIZED    /* normalized light position */
+   STATE_POSITION_NORMALIZED,   /* normalized light position */
+   STATE_INTERNAL_DRIVER	/* first available state index for drivers (must be last) */
 };
 
 

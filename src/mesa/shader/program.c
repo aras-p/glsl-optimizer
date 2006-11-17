@@ -993,7 +993,9 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
                break;
 	    }
 	    default:
-               _mesa_problem(ctx, "Bad state switch in _mesa_fetch_state()");
+	       /* unknown state indexes are silently ignored
+	       *  should be handled by the driver.
+	       */
                return;
          }
       }
@@ -1070,7 +1072,9 @@ make_state_flags(const GLint state[])
       case STATE_TEXRECT_SCALE:
 	 return _NEW_TEXTURE;
       default:
-         _mesa_problem(NULL, "unexpected int. state in make_state_flags()");
+         /* unknown state indexes are silently ignored and
+         *  no flag set, since it is handled by the driver.
+         */
 	 return 0;
       }
 
@@ -1342,7 +1346,7 @@ make_state_string(const GLint state[6])
    case STATE_INTERNAL:
       break;
    default:
-      _mesa_problem(NULL, "Invalid state in maka_state_string");
+      _mesa_problem(NULL, "Invalid state in make_state_string");
       break;
    }
 
