@@ -3,7 +3,7 @@
 #include "nouveau_reg.h"
 
 static nouveau_card nouveau_card_list[]={
-//x0010,	"Riva 128",			????,				NV_03,	0},
+//{0x0010,	"Riva 128",			????,				NV_03,	0},
 {0x0020,	"TNT/TNT2",			NV04_DX6_MULTITEX_TRIANGLE,	NV_04,	0},
 {0x00A0,	"TNT2",				NV04_DX6_MULTITEX_TRIANGLE,	NV_04,	0},
 {0x0100,	"GeForce",			NV10_TCL_PRIMITIVE_3D,		NV_10,	0},
