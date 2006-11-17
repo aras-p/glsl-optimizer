@@ -549,6 +549,7 @@ struct r300_stencilbuffer_state {
 /* Can be tested with colormat currently. */
 #define VSF_MAX_FRAGMENT_TEMPS (14)
 
+#define STATE_R300_WINDOW_DIMENSION (STATE_INTERNAL_DRIVER+0)
 
 struct r300_vertex_shader_fragment {
 	int length;
@@ -623,6 +624,7 @@ struct r300_vertex_program {
 	
 	int pos_end;
 	int num_temporaries; /* Number of temp vars used by program */
+	int wpos_idx;
 	int inputs[VERT_ATTRIB_MAX];
 	int outputs[VERT_RESULT_MAX];
 	int native;

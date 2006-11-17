@@ -958,16 +958,154 @@ static void position_invariant(struct gl_program *prog)
 	assert(vpi->Opcode == OPCODE_END);
 }
 
+static void insert_wpos(struct r300_vertex_program *vp,
+		       struct gl_program *prog,
+		       GLint pos)
+{
+
+	GLint tokens[6] = { STATE_INTERNAL, STATE_R300_WINDOW_DIMENSION, 0, 0, 0, 0 };
+	struct prog_instruction *vpi;
+	struct prog_instruction *vpi_insert;
+	GLuint temp_index;
+	GLuint window_index;
+	int i = 0;
+	
+	vpi = malloc((prog->NumInstructions + 5) * sizeof(struct prog_instruction));
+	memcpy(vpi, prog->Instructions, (pos+1) * sizeof(struct prog_instruction));
+	
+	vpi_insert = &vpi[pos];
+
+	/* make a copy before outputting VERT_RESULT_HPOS */
+	vpi_insert->DstReg.File = vpi_insert->SrcReg[2].File;
+	vpi_insert->DstReg.Index = temp_index = vpi_insert->SrcReg[2].Index;
+	
+	vpi_insert++;
+	memset(vpi_insert, 0, 5 * sizeof(struct prog_instruction));
+
+	vpi_insert[i].Opcode = OPCODE_MOV;
+
+	vpi_insert[i].DstReg.File = PROGRAM_OUTPUT;
+	vpi_insert[i].DstReg.Index = VERT_RESULT_HPOS;
+	vpi_insert[i].DstReg.WriteMask = WRITEMASK_XYZW;
+	vpi_insert[i].DstReg.CondMask = COND_TR;
+
+	vpi_insert[i].SrcReg[0].File = PROGRAM_TEMPORARY;
+	vpi_insert[i].SrcReg[0].Index = temp_index;
+	vpi_insert[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+	i++;
+
+	/* perspective divide */
+	vpi_insert[i].Opcode = OPCODE_RCP;
+
+	vpi_insert[i].DstReg.File = PROGRAM_TEMPORARY;
+	vpi_insert[i].DstReg.Index = temp_index;
+	vpi_insert[i].DstReg.WriteMask = WRITEMASK_W;
+	vpi_insert[i].DstReg.CondMask = COND_TR;
+
+	vpi_insert[i].SrcReg[0].File = PROGRAM_TEMPORARY;
+	vpi_insert[i].SrcReg[0].Index = temp_index;
+	vpi_insert[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_W, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO);
+	i++;
+
+	vpi_insert[i].Opcode = OPCODE_MUL;
+
+	vpi_insert[i].DstReg.File = PROGRAM_TEMPORARY;
+	vpi_insert[i].DstReg.Index = temp_index;
+	vpi_insert[i].DstReg.WriteMask = WRITEMASK_XYZ;
+	vpi_insert[i].DstReg.CondMask = COND_TR;
+
+	vpi_insert[i].SrcReg[0].File = PROGRAM_TEMPORARY;
+	vpi_insert[i].SrcReg[0].Index = temp_index;
+	vpi_insert[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
+
+	vpi_insert[i].SrcReg[1].File = PROGRAM_TEMPORARY;
+	vpi_insert[i].SrcReg[1].Index = temp_index;
+	vpi_insert[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_ZERO);
+	i++;
+
+	/* viewport transformation */
+	window_index = _mesa_add_state_reference(prog->Parameters, tokens);
+
+	vpi_insert[i].Opcode = OPCODE_MAD;
+
+	vpi_insert[i].DstReg.File = PROGRAM_TEMPORARY;
+	vpi_insert[i].DstReg.Index = temp_index;
+	vpi_insert[i].DstReg.WriteMask = WRITEMASK_XYZ;
+	vpi_insert[i].DstReg.CondMask = COND_TR;
+
+	vpi_insert[i].SrcReg[0].File = PROGRAM_TEMPORARY;
+	vpi_insert[i].SrcReg[0].Index = temp_index;
+	vpi_insert[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
+
+	vpi_insert[i].SrcReg[1].File = PROGRAM_STATE_VAR;
+	vpi_insert[i].SrcReg[1].Index = window_index;
+	vpi_insert[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_ZERO);
+
+	vpi_insert[i].SrcReg[2].File = PROGRAM_STATE_VAR;
+	vpi_insert[i].SrcReg[2].Index = window_index;
+	vpi_insert[i].SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_ZERO);
+	i++;
+
+	vpi_insert[i].Opcode = OPCODE_MUL;
+
+	vpi_insert[i].DstReg.File = PROGRAM_OUTPUT;
+	vpi_insert[i].DstReg.Index = VERT_RESULT_TEX0+vp->wpos_idx;
+	vpi_insert[i].DstReg.WriteMask = WRITEMASK_XYZW;
+	vpi_insert[i].DstReg.CondMask = COND_TR;
+
+	vpi_insert[i].SrcReg[0].File = PROGRAM_TEMPORARY;
+	vpi_insert[i].SrcReg[0].Index = temp_index;
+	vpi_insert[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+
+	vpi_insert[i].SrcReg[1].File = PROGRAM_STATE_VAR;
+	vpi_insert[i].SrcReg[1].Index = window_index;
+	vpi_insert[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_ONE, SWIZZLE_ONE);
+	i++;
+
+	memcpy(&vpi_insert[i], &prog->Instructions[pos+1], (prog->NumInstructions-(pos+1)) * sizeof(struct prog_instruction));
+
+	free(prog->Instructions);
+
+	prog->Instructions = vpi;
+
+	prog->NumInstructions += i;
+	vpi = &prog->Instructions[prog->NumInstructions-1];
+
+	assert(vpi->Opcode == OPCODE_END);
+}
+
+static void pos_as_texcoord(struct r300_vertex_program *vp,
+			    struct gl_program *prog)
+{
+	struct prog_instruction *vpi;
+	int pos = 0;
+	
+	for(vpi = prog->Instructions; vpi->Opcode != OPCODE_END; vpi++, pos++){
+		if( vpi->DstReg.File == PROGRAM_OUTPUT &&
+		    vpi->DstReg.Index == VERT_RESULT_HPOS ){
+			insert_wpos(vp, prog, pos);
+			break;
+		}
+	}
+
+}
+
 static struct r300_vertex_program *build_program(struct r300_vertex_program_key *wanted_key,
-						 struct gl_vertex_program *mesa_vp)
+						 struct gl_vertex_program *mesa_vp,
+						 GLint wpos_idx)
 {
 	struct r300_vertex_program *vp;
 
 	vp = _mesa_calloc(sizeof(*vp));
 	_mesa_memcpy(&vp->key, wanted_key, sizeof(vp->key));
 
+	vp->wpos_idx = wpos_idx;
+
 	if(mesa_vp->IsPositionInvariant)
 		position_invariant(&mesa_vp->Base);
+
+	if(wpos_idx > -1)
+		pos_as_texcoord(vp, &mesa_vp->Base);
 
 	assert(mesa_vp->Base.NumInstructions);
 
@@ -986,11 +1124,27 @@ void r300_select_vertex_shader(r300ContextPtr r300)
 	GLint i;
 	struct r300_vertex_program_cont *vpc;
 	struct r300_vertex_program *vp;
+	GLint wpos_idx;
 
 	vpc = (struct r300_vertex_program_cont *)ctx->VertexProgram._Current;
 	InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
 
 	wanted_key.OutputsWritten |= 1 << VERT_RESULT_HPOS;
+
+	wpos_idx = -1;
+	if (InputsRead & FRAG_BIT_WPOS){
+		for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
+			if (!(InputsRead & (FRAG_BIT_TEX0 << i)))
+				break;
+		
+		if(i == ctx->Const.MaxTextureUnits){
+			fprintf(stderr, "\tno free texcoord found\n");
+			exit(0);
+		}
+
+		InputsRead |= (FRAG_BIT_TEX0 << i);
+		wpos_idx = i;
+	}
 
 	if (InputsRead & FRAG_BIT_COL0)
 		wanted_key.OutputsWritten |= 1 << VERT_RESULT_COL0;
@@ -1013,7 +1167,7 @@ void r300_select_vertex_shader(r300ContextPtr r300)
 
 	//_mesa_print_program(&vpc->mesa_program.Base);
 
-	vp = build_program(&wanted_key, &vpc->mesa_program);
+	vp = build_program(&wanted_key, &vpc->mesa_program, wpos_idx);
 	vp->next = vpc->progs;
 	vpc->progs = vp;
 

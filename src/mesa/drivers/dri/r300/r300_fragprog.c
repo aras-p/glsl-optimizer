@@ -1555,6 +1555,13 @@ static void init_program(struct r300_fragment_program *rp)
 	}
 	InputsRead &= ~FRAG_BITS_TEX_ANY;
 
+	/* fragment position treated as a texcoord */
+	if (InputsRead & FRAG_BIT_WPOS) {
+		cs->inputs[FRAG_ATTRIB_WPOS].refcount = 0;
+		cs->inputs[FRAG_ATTRIB_WPOS].reg = get_hw_temp(rp);
+	}
+	InputsRead &= ~FRAG_BIT_WPOS;
+
 	/* Then primary colour */
 	if (InputsRead & FRAG_BIT_COL0) {
 		cs->inputs[FRAG_ATTRIB_COL0].refcount = 0;
