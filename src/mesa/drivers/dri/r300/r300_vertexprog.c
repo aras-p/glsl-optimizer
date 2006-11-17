@@ -95,7 +95,7 @@ static struct{
 };
 #undef OPN
 	
-int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp, float *dst)
+int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program_cont *vp, float *dst)
 {
 	int pi;
 	struct gl_vertex_program *mesa_vp = &vp->mesa_program;
@@ -177,17 +177,9 @@ static unsigned long t_dst_class(enum register_file file)
 
 static unsigned long t_dst_index(struct r300_vertex_program *vp, struct prog_dst_register *dst)
 {
-	if(dst->File == PROGRAM_OUTPUT) {
-		if (vp->outputs[dst->Index] != -1)
-			return vp->outputs[dst->Index];
-		else {
-			WARN_ONCE("Unknown output %d\n", dst->Index);
-			return 10;
-		}
-	}else if(dst->File == PROGRAM_ADDRESS) {
-		assert(dst->Index == 0);
-	}
-	
+	if(dst->File == PROGRAM_OUTPUT)
+		return vp->outputs[dst->Index];
+
 	return dst->Index;
 }
 
@@ -335,6 +327,18 @@ static unsigned long op_operands(enum prog_opcode opcode)
 	return 0;
 }
 
+static GLboolean valid_dst(struct r300_vertex_program *vp, struct prog_dst_register *dst)
+{
+	if(dst->File == PROGRAM_OUTPUT && vp->outputs[dst->Index] == -1){
+		WARN_ONCE("Output %d not used by fragment program\n", dst->Index);
+		return GL_FALSE;
+	}else if(dst->File == PROGRAM_ADDRESS) {
+		assert(dst->Index == 0);
+	}
+	
+	return GL_TRUE;
+}
+
 /* TODO: Get rid of t_src_class call */
 #define CMP_SRCS(a, b) ((a.RelAddr != b.RelAddr) || (a.Index != b.Index && \
 		       ((t_src_class(a.File) == VSF_IN_CLASS_PARAM && \
@@ -384,10 +388,8 @@ static unsigned long op_operands(enum prog_opcode opcode)
 		u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1; \
 	} while (0)
 
-void r300_translate_vertex_shader(struct r300_vertex_program *vp)
+static void r300_translate_vertex_shader(struct r300_vertex_program *vp, struct prog_instruction *vpi)
 {
-	struct gl_vertex_program *mesa_vp= &vp->mesa_program;
-	struct prog_instruction *vpi;
 	int i, cur_reg=0;
 	VERTEX_SHADER_INSTRUCTION *o_inst;
 	unsigned long operands;
@@ -399,131 +401,9 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 	int u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1;
 	struct prog_src_register src[3];
 
-	if (mesa_vp->Base.NumInstructions == 0)
-		return;
-
-	if (getenv("R300_VP_SAFETY")) {
-		WARN_ONCE("R300_VP_SAFETY enabled.\n");
-		
-		vpi = malloc((mesa_vp->Base.NumInstructions + VSF_MAX_FRAGMENT_TEMPS) * sizeof(struct prog_instruction));
-		memset(vpi, 0, VSF_MAX_FRAGMENT_TEMPS * sizeof(struct prog_instruction));
-		
-		for (i=0; i < VSF_MAX_FRAGMENT_TEMPS; i++) {
-			vpi[i].Opcode = OPCODE_MOV;
-			vpi[i].StringPos = 0;
-			vpi[i].Data = 0;
-			
-			vpi[i].DstReg.File = PROGRAM_TEMPORARY;
-			vpi[i].DstReg.Index = i;
-			vpi[i].DstReg.WriteMask = WRITEMASK_XYZW;
-			vpi[i].DstReg.CondMask = COND_TR;
-					
-			vpi[i].SrcReg[0].File = PROGRAM_STATE_VAR;
-			vpi[i].SrcReg[0].Index = 0;
-			vpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE);
-		}
-		
-		memcpy(&vpi[i], mesa_vp->Base.Instructions, mesa_vp->Base.NumInstructions * sizeof(struct prog_instruction));
-		
-		free(mesa_vp->Base.Instructions);
-		
-		mesa_vp->Base.Instructions = vpi;
-		
-		mesa_vp->Base.NumInstructions += VSF_MAX_FRAGMENT_TEMPS;
-		vpi = &mesa_vp->Base.Instructions[mesa_vp->Base.NumInstructions-1];
-		
-		assert(vpi->Opcode == OPCODE_END);
-	}
-	
-	if (mesa_vp->IsPositionInvariant) {
-		struct gl_program_parameter_list *paramList;
-		GLint tokens[6] = { STATE_MATRIX, STATE_MVP, 0, 0, 0, STATE_MATRIX };
-
-#ifdef PREFER_DP4
-		tokens[5] = STATE_MATRIX;
-#else
-		tokens[5] = STATE_MATRIX_TRANSPOSE;
-#endif
-		paramList = mesa_vp->Base.Parameters;
-		
-		vpi = malloc((mesa_vp->Base.NumInstructions + 4) * sizeof(struct prog_instruction));
-		memset(vpi, 0, 4 * sizeof(struct prog_instruction));
-		
-		for (i=0; i < 4; i++) {
-			GLint idx;
-			tokens[3] = tokens[4] = i;
-			idx = _mesa_add_state_reference(paramList, tokens);
-#ifdef PREFER_DP4
-			vpi[i].Opcode = OPCODE_DP4;
-			vpi[i].StringPos = 0;
-			vpi[i].Data = 0;
-			
-			vpi[i].DstReg.File = PROGRAM_OUTPUT;
-			vpi[i].DstReg.Index = VERT_RESULT_HPOS;
-			vpi[i].DstReg.WriteMask = 1 << i;
-			vpi[i].DstReg.CondMask = COND_TR;
-					
-			vpi[i].SrcReg[0].File = PROGRAM_STATE_VAR;
-			vpi[i].SrcReg[0].Index = idx;
-			vpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
-			
-			vpi[i].SrcReg[1].File = PROGRAM_INPUT;
-			vpi[i].SrcReg[1].Index = VERT_ATTRIB_POS;
-			vpi[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
-#else
-			if (i == 0)
-				vpi[i].Opcode = OPCODE_MUL;
-			else
-				vpi[i].Opcode = OPCODE_MAD;
-			
-			vpi[i].StringPos = 0;
-			vpi[i].Data = 0;
-			
-			if (i == 3)
-				vpi[i].DstReg.File = PROGRAM_OUTPUT;
-			else
-				vpi[i].DstReg.File = PROGRAM_TEMPORARY;
-			vpi[i].DstReg.Index = 0;
-			vpi[i].DstReg.WriteMask = 0xf;
-			vpi[i].DstReg.CondMask = COND_TR;
-					
-			vpi[i].SrcReg[0].File = PROGRAM_STATE_VAR;
-			vpi[i].SrcReg[0].Index = idx;
-			vpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
-			
-			vpi[i].SrcReg[1].File = PROGRAM_INPUT;
-			vpi[i].SrcReg[1].Index = VERT_ATTRIB_POS;
-			vpi[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(i, i, i, i);
-			
-			if (i > 0) {
-				vpi[i].SrcReg[2].File = PROGRAM_TEMPORARY;
-				vpi[i].SrcReg[2].Index = 0;
-				vpi[i].SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
-			}
-#endif					
-		}
-		
-		memcpy(&vpi[i], mesa_vp->Base.Instructions, mesa_vp->Base.NumInstructions * sizeof(struct prog_instruction));
-		
-		free(mesa_vp->Base.Instructions);
-		
-		mesa_vp->Base.Instructions = vpi;
-		
-		mesa_vp->Base.NumInstructions += 4;
-		vpi = &mesa_vp->Base.Instructions[mesa_vp->Base.NumInstructions-1];
-		
-		assert(vpi->Opcode == OPCODE_END);
-		
-		mesa_vp->Base.InputsRead |= (1 << VERT_ATTRIB_POS);
-		mesa_vp->Base.OutputsWritten |= (1 << VERT_RESULT_HPOS);
-		
-		//fprintf(stderr, "IsPositionInvariant is set!\n");
-		//_mesa_print_program(&mesa_vp->Base);
-	}
-	
 	vp->pos_end=0; /* Not supported yet */
 	vp->program.length=0;
-	vp->num_temporaries=mesa_vp->Base.NumTemporaries;
+	/*vp->num_temporaries=mesa_vp->Base.NumTemporaries;*/
 	
 	for(i=0; i < VERT_ATTRIB_MAX; i++)
 		vp->inputs[i] = -1;
@@ -531,42 +411,49 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 	for(i=0; i < VERT_RESULT_MAX; i++)
 		vp->outputs[i] = -1;
 	
-	assert(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS));
+	assert(vp->key.OutputsWritten & (1 << VERT_RESULT_HPOS));
 	
 	/* Assign outputs */
-	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))
+	if(vp->key.OutputsWritten & (1 << VERT_RESULT_HPOS))
 		vp->outputs[VERT_RESULT_HPOS] = cur_reg++;
 	
-	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_PSIZ))
+	if(vp->key.OutputsWritten & (1 << VERT_RESULT_PSIZ))
 		vp->outputs[VERT_RESULT_PSIZ] = cur_reg++;
 	
-	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_COL0))
+	if(vp->key.OutputsWritten & (1 << VERT_RESULT_COL0))
 		vp->outputs[VERT_RESULT_COL0] = cur_reg++;
 	
-	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_COL1))
+	if(vp->key.OutputsWritten & (1 << VERT_RESULT_COL1))
 		vp->outputs[VERT_RESULT_COL1] = cur_reg++;
 	
 #if 0 /* Not supported yet */
-	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_BFC0))
+	if(vp->key.OutputsWritten & (1 << VERT_RESULT_BFC0))
 		vp->outputs[VERT_RESULT_BFC0] = cur_reg++;
 	
-	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_BFC1))
+	if(vp->key.OutputsWritten & (1 << VERT_RESULT_BFC1))
 		vp->outputs[VERT_RESULT_BFC1] = cur_reg++;
 	
-	if(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_FOGC))
+	if(vp->key.OutputsWritten & (1 << VERT_RESULT_FOGC))
 		vp->outputs[VERT_RESULT_FOGC] = cur_reg++;
 #endif
 	
 	for(i=VERT_RESULT_TEX0; i <= VERT_RESULT_TEX7; i++)
-		if(mesa_vp->Base.OutputsWritten & (1 << i))
+		if(vp->key.OutputsWritten & (1 << i))
 			vp->outputs[i] = cur_reg++;
 	
 	vp->translated = GL_TRUE;
 	vp->native = GL_TRUE;
 	
 	o_inst=vp->program.body.i;
-	for(vpi=mesa_vp->Base.Instructions; vpi->Opcode != OPCODE_END; vpi++, o_inst++){
+	for(; vpi->Opcode != OPCODE_END; vpi++, o_inst++){
 		FREE_TEMPS();
+
+		if(!valid_dst(vp, &vpi->DstReg))
+		{
+			/* redirect result to unused temp */
+			vpi->DstReg.File = PROGRAM_TEMPORARY;
+			vpi->DstReg.Index = u_temp_i;
+		}
 		
 		operands=op_operands(vpi->Opcode);
 		are_srcs_scalar=operands & SCALAR_FLAG;
@@ -987,3 +874,148 @@ void r300_translate_vertex_shader(struct r300_vertex_program *vp)
 #endif
 }
 
+static void position_invariant(struct gl_program *prog)
+{
+	struct prog_instruction *vpi;
+	struct gl_program_parameter_list *paramList;
+	int i;
+
+	GLint tokens[6] = { STATE_MATRIX, STATE_MVP, 0, 0, 0, STATE_MATRIX };
+
+#ifdef PREFER_DP4
+	tokens[5] = STATE_MATRIX;
+#else
+	tokens[5] = STATE_MATRIX_TRANSPOSE;
+#endif
+	paramList = prog->Parameters;
+
+	vpi = malloc((prog->NumInstructions + 4) * sizeof(struct prog_instruction));
+	memset(vpi, 0, 4 * sizeof(struct prog_instruction));
+
+	for (i=0; i < 4; i++) {
+		GLint idx;
+		tokens[3] = tokens[4] = i;
+		idx = _mesa_add_state_reference(paramList, tokens);
+#ifdef PREFER_DP4
+		vpi[i].Opcode = OPCODE_DP4;
+		vpi[i].StringPos = 0;
+		vpi[i].Data = 0;
+
+		vpi[i].DstReg.File = PROGRAM_OUTPUT;
+		vpi[i].DstReg.Index = VERT_RESULT_HPOS;
+		vpi[i].DstReg.WriteMask = 1 << i;
+		vpi[i].DstReg.CondMask = COND_TR;
+
+		vpi[i].SrcReg[0].File = PROGRAM_STATE_VAR;
+		vpi[i].SrcReg[0].Index = idx;
+		vpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+
+		vpi[i].SrcReg[1].File = PROGRAM_INPUT;
+		vpi[i].SrcReg[1].Index = VERT_ATTRIB_POS;
+		vpi[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+#else
+		if (i == 0)
+			vpi[i].Opcode = OPCODE_MUL;
+		else
+			vpi[i].Opcode = OPCODE_MAD;
+
+		vpi[i].StringPos = 0;
+		vpi[i].Data = 0;
+
+		if (i == 3)
+			vpi[i].DstReg.File = PROGRAM_OUTPUT;
+		else
+			vpi[i].DstReg.File = PROGRAM_TEMPORARY;
+		vpi[i].DstReg.Index = 0;
+		vpi[i].DstReg.WriteMask = 0xf;
+		vpi[i].DstReg.CondMask = COND_TR;
+
+		vpi[i].SrcReg[0].File = PROGRAM_STATE_VAR;
+		vpi[i].SrcReg[0].Index = idx;
+		vpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+
+		vpi[i].SrcReg[1].File = PROGRAM_INPUT;
+		vpi[i].SrcReg[1].Index = VERT_ATTRIB_POS;
+		vpi[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(i, i, i, i);
+
+		if (i > 0) {
+			vpi[i].SrcReg[2].File = PROGRAM_TEMPORARY;
+			vpi[i].SrcReg[2].Index = 0;
+			vpi[i].SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+		}
+#endif					
+	}
+
+	memcpy(&vpi[i], prog->Instructions, prog->NumInstructions * sizeof(struct prog_instruction));
+
+	free(prog->Instructions);
+
+	prog->Instructions = vpi;
+
+	prog->NumInstructions += 4;
+	vpi = &prog->Instructions[prog->NumInstructions-1];
+
+	assert(vpi->Opcode == OPCODE_END);
+}
+
+static struct r300_vertex_program *build_program(struct r300_vertex_program_key *wanted_key,
+						 struct gl_vertex_program *mesa_vp)
+{
+	struct r300_vertex_program *vp;
+
+	vp = _mesa_calloc(sizeof(*vp));
+	_mesa_memcpy(&vp->key, wanted_key, sizeof(vp->key));
+
+	if(mesa_vp->IsPositionInvariant)
+		position_invariant(&mesa_vp->Base);
+
+	assert(mesa_vp->Base.NumInstructions);
+
+	vp->num_temporaries=mesa_vp->Base.NumTemporaries;
+
+	r300_translate_vertex_shader(vp, mesa_vp->Base.Instructions);
+
+	return vp;	
+}
+
+void r300_select_vertex_shader(r300ContextPtr r300)
+{
+	GLcontext *ctx = ctx = r300->radeon.glCtx;
+	GLuint InputsRead;
+	struct r300_vertex_program_key wanted_key = { 0 };
+	GLint i;
+	struct r300_vertex_program_cont *vpc;
+	struct r300_vertex_program *vp;
+
+	vpc = (struct r300_vertex_program_cont *)ctx->VertexProgram._Current;
+	InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
+
+	wanted_key.OutputsWritten |= 1 << VERT_RESULT_HPOS;
+
+	if (InputsRead & FRAG_BIT_COL0)
+		wanted_key.OutputsWritten |= 1 << VERT_RESULT_COL0;
+
+	if ((InputsRead & FRAG_BIT_COL1) /*||
+	    (InputsRead & FRAG_BIT_FOGC)*/)
+		wanted_key.OutputsWritten |= 1 << VERT_RESULT_COL1;
+	
+	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
+		if (InputsRead & (FRAG_BIT_TEX0 << i))
+			wanted_key.OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
+
+	wanted_key.InputsRead = vpc->mesa_program.Base.InputsRead;
+
+	for (vp = vpc->progs; vp; vp = vp->next)
+		if (_mesa_memcmp(&vp->key, &wanted_key, sizeof(wanted_key)) == 0) {
+			r300->selected_vp = vp;
+			return ;
+		}
+
+	//_mesa_print_program(&vpc->mesa_program.Base);
+
+	vp = build_program(&wanted_key, &vpc->mesa_program);
+	vp->next = vpc->progs;
+	vpc->progs = vp;
+
+	r300->selected_vp = vp;
+}

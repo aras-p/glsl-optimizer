@@ -1285,7 +1285,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	int i;
 
 	if(hw_tcl_on)
-		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->Base.OutputsWritten;
+		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
 	else
 		RENDERINPUTS_COPY( OutputsWritten.index_bitset, r300->state.render_inputs_bitset );
 
@@ -1610,7 +1610,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 
 	((drm_r300_cmd_header_t*)rmesa->hw.vpp.cmd)->vpu.count = 0;
 	R300_STATECHANGE(rmesa, vpp);
-	param_count = r300VertexProgUpdateParams(ctx, prog, (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
+	param_count = r300VertexProgUpdateParams(ctx, (struct r300_vertex_program_cont *)ctx->VertexProgram._Current/*prog*/, (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
 	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
 	param_count /= 4;
 	
@@ -1669,9 +1669,10 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 			TNL_CONTEXT(ctx)->vb.AttribPtr[i] = rmesa->temp_attrib[i];
 		}
 		
+		r300_select_vertex_shader(rmesa);
 		vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
-		if (vp->translated == GL_FALSE)
-			r300_translate_vertex_shader(vp);
+		/*if (vp->translated == GL_FALSE)
+			r300_translate_vertex_shader(vp);*/
 		if (vp->translated == GL_FALSE) {
 			fprintf(stderr, "Failing back to sw-tcl\n");
 			hw_tcl_on = future_hw_tcl_on = 0;
