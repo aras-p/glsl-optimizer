@@ -114,7 +114,7 @@ typedef struct nouveau_context {
 
 	/* The rendering context information */
 	GLenum current_primitive; /* the current primitive enum */
-	GLuint render_inputs_bitset; /* the current render inputs */
+	DECLARE_RENDERINPUTS(render_inputs_bitset); /* the current render inputs */
 
 	nouveauScreenRec *screen;
 	drm_nouveau_sarea_t *sarea;

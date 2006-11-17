@@ -627,10 +627,11 @@ static void nv10ChooseRenderState(GLcontext *ctx)
 
 
 
-static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa, GLuint index)
+static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 {
 	GLcontext* ctx=nmesa->glCtx;
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	DECLARE_RENDERINPUTS(index);
 	struct vertex_buffer *VB = &tnl->vb;
 	int attr_size[16];
 	int default_attr_size[8]={3,3,3,4,3,1,4,4};
@@ -638,20 +639,22 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa, GLuint 
 	int slots=0;
 	int total_size=0;
 
+	RENDERINPUTS_COPY(index, nmesa->render_inputs_bitset);
+
 	/*
 	 * Determine attribute sizes
 	 */
 	for(i=0;i<8;i++)
 	{
-		if (index&(1<<i))
+		if (RENDERINPUTS_TEST(index, i))
 			attr_size[i]=default_attr_size[i];
 		else
 			attr_size[i]=0;
 	}
 	for(i=8;i<16;i++)
 	{
-		if (index&(1<<i))
-			attr_size[i]=VB->TexCoordPtr[i]->size;
+		if (RENDERINPUTS_TEST(index, i))
+			attr_size[i]=VB->TexCoordPtr[i-8]->size;
 		else
 			attr_size[i]=0;
 	}
@@ -661,7 +664,7 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa, GLuint 
 	 */
 	for(i=0;i<16;i++)
 	{
-		if (index&(1<<i))
+		if (RENDERINPUTS_TEST(index, i))
 		{
 			slots=i+1;
 			if (i==_TNL_ATTRIB_POS)
@@ -752,12 +755,13 @@ static void nv10ChooseVertexState( GLcontext *ctx )
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
-	GLuint index = tnl->render_inputs_bitset;
-
-	if (index!=nmesa->render_inputs_bitset)
+	DECLARE_RENDERINPUTS(index);
+	
+	RENDERINPUTS_COPY(index, tnl->render_inputs_bitset);
+	if (!RENDERINPUTS_EQUAL(index, nmesa->render_inputs_bitset))
 	{
-		nmesa->render_inputs_bitset=index;
-		nv10OutputVertexFormat(nmesa,index);
+		RENDERINPUTS_COPY(nmesa->render_inputs_bitset, index);
+		nv10OutputVertexFormat(nmesa);
 	}
 }
 
