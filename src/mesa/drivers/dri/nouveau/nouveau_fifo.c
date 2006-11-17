@@ -46,19 +46,19 @@ void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size)
 #endif
 	u_int32_t fifo_get;
 	while(nmesa->fifo.free < size+1) {
-		fifo_get = NV_FIFO_READ(NV03_FIFO_REGS_DMAGET);
+		fifo_get = NV_FIFO_READ_GET();
 
 		if(nmesa->fifo.put >= fifo_get) {
 			nmesa->fifo.free = nmesa->fifo.max - nmesa->fifo.current;
 			if(nmesa->fifo.free < size+1) {
-				OUT_RING(NV03_FIFO_CMD_REWIND);							\
+				OUT_RING(NV03_FIFO_CMD_JUMP | nmesa->fifo.put_base);
 				if(fifo_get <= RING_SKIPS) {
 					if(nmesa->fifo.put <= RING_SKIPS) /* corner case - will be idle */
-						NV_FIFO_WRITE(NV03_FIFO_REGS_DMAPUT, RING_SKIPS + 1);
-					do { fifo_get = NV_FIFO_READ(NV03_FIFO_REGS_DMAGET); }
+						NV_FIFO_WRITE_PUT(RING_SKIPS + 1);
+					do { fifo_get = NV_FIFO_READ_GET(); }
 					while(fifo_get <= RING_SKIPS);
 				}
-				NV_FIFO_WRITE(NV03_FIFO_REGS_DMAPUT, RING_SKIPS);
+				NV_FIFO_WRITE_PUT(RING_SKIPS);
 				nmesa->fifo.current = nmesa->fifo.put = RING_SKIPS;
 				nmesa->fifo.free = fifo_get - (RING_SKIPS + 1);
 			}
@@ -134,7 +134,11 @@ GLboolean nouveauFifoInit(nouveauContextPtr nmesa)
 	}
 
 	/* Setup our initial FIFO tracking params */
-	nmesa->fifo.free = fifo_init.cmdbuf_size >> 2;
+	nmesa->fifo.put_base = fifo_init.put_base;
+	nmesa->fifo.current  = 0;
+	nmesa->fifo.put      = 0;
+	nmesa->fifo.max      = (fifo_init.cmdbuf_size >> 2) - 1;
+	nmesa->fifo.free     = nmesa->fifo.max - nmesa->fifo.current;
 
 	MESSAGE("Fifo init ok. Using context %d\n", fifo_init.channel);
 	return GL_TRUE;

@@ -43,6 +43,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 typedef struct nouveau_fifo_t{
 	u_int32_t* buffer;
 	u_int32_t* mmio;
+	u_int32_t put_base;
 	u_int32_t current;
 	u_int32_t put;
 	u_int32_t free;

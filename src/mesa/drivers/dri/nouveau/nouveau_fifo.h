@@ -38,6 +38,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define NV_FIFO_READ(reg) *(volatile u_int32_t *)(nmesa->fifo.mmio + (reg))
 #define NV_FIFO_WRITE(reg,value) *(volatile u_int32_t *)(nmesa->fifo.mmio + (reg)) = value;
+#define NV_FIFO_READ_GET() ((NV_FIFO_READ(NV03_FIFO_REGS_DMAGET) - nmesa->fifo.put_base) >> 2)
+#define NV_FIFO_WRITE_PUT(val) NV_FIFO_WRITE(NV03_FIFO_REGS_DMAPUT, ((val)<<2) + nmesa->fifo.put_base)
 
 /* 
  * Ring/fifo interface
@@ -107,11 +109,11 @@ extern void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size);
 
 #define RING_AHEAD() ((nmesa->fifo.put<=nmesa->fifo.current)?(nmesa->fifo.current-nmesa->fifo.put):nmesa->fifo.max-nmesa->fifo.put+nmesa->fifo.current)
 
-#define FIRE_RING() do {							\
-	if (nmesa->fifo.current!=nmesa->fifo.put) {\
-		nmesa->fifo.put=nmesa->fifo.current;\
-		NV_FIFO_WRITE(NV03_FIFO_REGS_DMAPUT,nmesa->fifo.put);\
-	}\
+#define FIRE_RING() do {                             \
+	if (nmesa->fifo.current!=nmesa->fifo.put) {  \
+		nmesa->fifo.put=nmesa->fifo.current; \
+		NV_FIFO_WRITE_PUT(nmesa->fifo.put);  \
+	}                                            \
 }while(0)
 
 extern void nouveauWaitForIdle(nouveauContextPtr nmesa);
