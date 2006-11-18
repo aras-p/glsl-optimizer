@@ -193,7 +193,7 @@ static void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 			OUT_RING(state);
 			break;
 		case GL_COLOR_LOGIC_OP:
-			BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LOGIC_OP_ENABLE, 1);
+			BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_COLOR_LOGIC_OP_ENABLE, 1);
 			OUT_RING(state);
 			break;
 //		case GL_COLOR_MATERIAL:
@@ -421,7 +421,7 @@ static void nv30LineWidth(GLcontext *ctx, GLfloat width)
 static void nv30LogicOpcode(GLcontext *ctx, GLenum opcode)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LOGIC_OP_OP, 1);
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_COLOR_LOGIC_OP_OP, 1);
 	OUT_RING(opcode);
 }
 

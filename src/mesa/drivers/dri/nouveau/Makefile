@@ -20,6 +20,8 @@ DRIVER_SOURCES = \
 	nouveau_tex.c            \
 	nouveau_swtcl.c          \
 	nv10_swtcl.c             \
+	nv10_state.c             \
+	nv20_state.c             \
 	nv30_state.c
 
 C_SOURCES = \
