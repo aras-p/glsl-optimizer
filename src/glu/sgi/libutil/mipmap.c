@@ -3863,10 +3863,7 @@ static int gluBuild2DMipmapLevelsCore(GLenum target, GLint internalFormat,
 
     glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
     glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-#if 0
-    /* don't change ROW_LENGTH until the non-power-of-two path below */
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-#endif
 
     level = userLevel;
 
@@ -3874,10 +3871,12 @@ static int gluBuild2DMipmapLevelsCore(GLenum target, GLint internalFormat,
     if (width == newwidth && height == newheight) {
 	/* Use usersImage for level userLevel */
 	if (baseLevel <= level && level <= maxLevel) {
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, psm.unpack_row_length);
 	glTexImage2D(target, level, internalFormat, width,
 		height, 0, format, type,
 		usersImage);
 	}
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	if(levels == 0) { /* we're done. clean up and return */
 	  glPixelStorei(GL_UNPACK_ALIGNMENT, psm.unpack_alignment);
 	  glPixelStorei(GL_UNPACK_SKIP_ROWS, psm.unpack_skip_rows);
@@ -4115,10 +4114,6 @@ static int gluBuild2DMipmapLevelsCore(GLenum target, GLint internalFormat,
 	/* level userLevel+1 is in srcImage; level userLevel already saved */
 	level = userLevel+1;
     } else { /* user's image is *not* nice power-of-2 sized square */
-#if 1
-       /* see above */
-       glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-#endif
 	memreq = image_size(newwidth, newheight, format, type);
 	switch(type) {
 	    case GL_UNSIGNED_BYTE:
