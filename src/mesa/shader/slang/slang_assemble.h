@@ -42,56 +42,65 @@ typedef enum slang_assembly_type_
    slang_asm_float_move,
    slang_asm_float_push,
    slang_asm_float_deref,
-   slang_asm_float_add,
+   slang_asm_float_add,       /* a = pop(); b = pop(); push(a + b); */
    slang_asm_float_multiply,
    slang_asm_float_divide,
-   slang_asm_float_negate,
-   slang_asm_float_less,
+   slang_asm_float_negate,    /* push(-pop()) */
+   slang_asm_float_less,      /* a = pop(); b = pop(); push(a < b); */
    slang_asm_float_equal_exp,
    slang_asm_float_equal_int,
-   slang_asm_float_to_int,
-   slang_asm_float_sine,
+   slang_asm_float_to_int,    /* push(floatToInt(pop())) */
+   slang_asm_float_sine,      /* push(sin(pop()) */
    slang_asm_float_arcsine,
    slang_asm_float_arctan,
-   slang_asm_float_power,
+   slang_asm_float_power,     /* push(pow(pop(), pop())) */
    slang_asm_float_log2,
    slang_asm_float_floor,
    slang_asm_float_ceil,
-   slang_asm_float_noise1,
-   slang_asm_float_noise2,
+   slang_asm_float_noise1,    /* push(noise1(pop()) */
+   slang_asm_float_noise2,    /* push(noise2(pop(), pop())) */
    slang_asm_float_noise3,
    slang_asm_float_noise4,
+
    slang_asm_int_copy,
    slang_asm_int_move,
    slang_asm_int_push,
    slang_asm_int_deref,
    slang_asm_int_to_float,
    slang_asm_int_to_addr,
+
    slang_asm_bool_copy,
    slang_asm_bool_move,
    slang_asm_bool_push,
    slang_asm_bool_deref,
+
    slang_asm_addr_copy,
    slang_asm_addr_push,
    slang_asm_addr_deref,
    slang_asm_addr_add,
    slang_asm_addr_multiply,
+
    slang_asm_vec4_tex1d,
    slang_asm_vec4_tex2d,
    slang_asm_vec4_tex3d,
    slang_asm_vec4_texcube,
    slang_asm_vec4_shad1d,
    slang_asm_vec4_shad2d,
+
    slang_asm_jump,
    slang_asm_jump_if_zero,
+
    slang_asm_enter,
    slang_asm_leave,
+
    slang_asm_local_alloc,
    slang_asm_local_free,
    slang_asm_local_addr,
    slang_asm_global_addr,
-   slang_asm_call,
+
+   slang_asm_call,          /* push(ip); jump(inst->param[0]); */
    slang_asm_return,
+
    slang_asm_discard,
    slang_asm_exit,
    /* GL_MESA_shader_debug */
@@ -113,19 +122,28 @@ typedef enum slang_assembly_type_
    slang_asm__last
 } slang_assembly_type;
 
+
+/**
+ * An assembly-level shader instruction.
+ */
 typedef struct slang_assembly_
 {
-   slang_assembly_type type;
-   GLfloat literal;
-   GLuint param[2];
+   slang_assembly_type type;  /**< The instruction opcode */
+   GLfloat literal;           /**< float literal */
+   GLuint param[2];           /**< Two integer/address parameters */
 } slang_assembly;
 
+
+/**
+ * A list of slang_assembly instructions
+ */
 typedef struct slang_assembly_file_
 {
    slang_assembly *code;
    GLuint count;
    GLuint capacity;
 } slang_assembly_file;
+
 
 extern GLvoid
 _slang_assembly_file_ctr(slang_assembly_file *);

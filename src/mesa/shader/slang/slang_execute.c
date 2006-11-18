@@ -59,6 +59,11 @@ slang_machine_dtr(slang_machine * self)
 #endif
 }
 
+
+/**
+ * Initialize the shader virtual machine.
+ * NOTE: stack grows downward in memory.
+ */
 void
 slang_machine_init(slang_machine * mach)
 {
@@ -71,7 +76,7 @@ slang_machine_init(slang_machine * mach)
 
 #if DEBUG_SLANG
 
-foo static void
+static void
 dump_instruction(FILE * f, slang_assembly * a, unsigned int i)
 {
    fprintf(f, "%.5u:\t", i);
@@ -362,7 +367,7 @@ _slang_execute2(const slang_assembly_file * file, slang_machine * mach)
    stack = mach->mem + SLANG_MACHINE_GLOBAL_SIZE;
 
    while (!mach->exit) {
-      slang_assembly *a = &file->code[mach->ip];
+      const slang_assembly *a = &file->code[mach->ip];
 
 #if DEBUG_SLANG
       if (f != NULL && a->type != slang_asm_none) {
@@ -386,8 +391,13 @@ _slang_execute2(const slang_assembly_file * file, slang_machine * mach)
       case slang_asm_float_copy:
       case slang_asm_int_copy:
       case slang_asm_bool_copy:
-         mach->mem[(stack[mach->sp + a->param[0] / 4]._addr + a->param[1]) /
-                   4]._float = stack[mach->sp]._float;
+         /* store top value on stack to memory */
+         {
+            GLuint address
+               = (stack[mach->sp + a->param[0] / 4]._addr + a->param[1]) / 4;
+            GLfloat value = stack[mach->sp]._float;
+            mach->mem[address]._float = value;
+         }
          mach->sp++;
          break;
       case slang_asm_float_move:
@@ -400,15 +410,18 @@ _slang_execute2(const slang_assembly_file * file, slang_machine * mach)
       case slang_asm_float_push:
       case slang_asm_int_push:
       case slang_asm_bool_push:
+         /* push float/int/bool literal onto stop of stack */
          mach->sp--;
          stack[mach->sp]._float = a->literal;
          break;
       case slang_asm_float_deref:
       case slang_asm_int_deref:
       case slang_asm_bool_deref:
+         /* load value from memory, replace stop of stack with it */
          stack[mach->sp]._float = mach->mem[stack[mach->sp]._addr / 4]._float;
          break;
       case slang_asm_float_add:
+         /* pop two top floats, push sum */
          stack[mach->sp + 1]._float += stack[mach->sp]._float;
          mach->sp++;
          break;
@@ -425,8 +438,8 @@ _slang_execute2(const slang_assembly_file * file, slang_machine * mach)
          break;
       case slang_asm_float_less:
          stack[mach->sp + 1]._float =
-            stack[mach->sp + 1]._float <
-            stack[mach->sp]._float ? (GLfloat) 1 : (GLfloat) 0;
+            (stack[mach->sp + 1]._float < stack[mach->sp]._float)
+            ? (GLfloat) 1 : (GLfloat) 0;
          mach->sp++;
          break;
       case slang_asm_float_equal_exp:
@@ -436,6 +449,7 @@ _slang_execute2(const slang_assembly_file * file, slang_machine * mach)
          mach->sp++;
          break;
       case slang_asm_float_equal_int:
+         /* pop top two values, compare, push 0 or 1 */
          mach->sp--;
          stack[mach->sp]._float =
             (stack[mach->sp + 1 + a->param[0] / 4]._float ==
