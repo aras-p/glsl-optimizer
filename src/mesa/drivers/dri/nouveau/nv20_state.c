@@ -468,8 +468,15 @@ void (*ReadBuffer)( GLcontext *ctx, GLenum buffer );
 void (*RenderMode)(GLcontext *ctx, GLenum mode );
 /** Define the scissor box */
 void (*Scissor)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
+
 /** Select flat or smooth shading */
-void (*ShadeModel)(GLcontext *ctx, GLenum mode);
+void nv20ShadeModel(GLcontext *ctx, GLenum mode)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	BEGIN_RING_SIZE(NvSub3D, NV20_TCL_PRIMITIVE_3D_SHADE_MODEL, 1);
+	OUT_RING(mode);
+}
 
 /** OpenGL 2.0 two-sided StencilFunc */
 static void nv20StencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func,
@@ -560,8 +567,8 @@ void nv20InitStateFuncs(struct dd_function_table *func)
 	func->ReadBuffer		= nv20ReadBuffer;
 	func->RenderMode		= nv20RenderMode;
 	func->Scissor			= nv20Scissor;
-	func->ShadeModel		= nv20ShaderModel;
 #endif
+	func->ShadeModel		= nv20ShadeModel;
 	func->StencilFuncSeparate	= nv20StencilFuncSeparate;
 	func->StencilMaskSeparate	= nv20StencilMaskSeparate;
 	func->StencilOpSeparate		= nv20StencilOpSeparate;

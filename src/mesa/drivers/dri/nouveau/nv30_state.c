@@ -466,7 +466,13 @@ void (*RenderMode)(GLcontext *ctx, GLenum mode );
 /** Define the scissor box */
 void (*Scissor)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
 /** Select flat or smooth shading */
-void (*ShadeModel)(GLcontext *ctx, GLenum mode);
+void nv30ShadeModel(GLcontext *ctx, GLenum mode)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SHADE_MODEL, 1);
+	OUT_RING(mode);
+}
 
 /** OpenGL 2.0 two-sided StencilFunc */
 static void nv30StencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func,
@@ -579,8 +585,8 @@ void nv30InitStateFuncs(struct dd_function_table *func)
 	func->ReadBuffer		= nv30ReadBuffer;
 	func->RenderMode		= nv30RenderMode;
 	func->Scissor			= nv30Scissor;
-	func->ShadeModel		= nv30ShaderModel;
 #endif
+	func->ShadeModel		= nv30ShadeModel;
 	func->StencilFuncSeparate	= nv30StencilFuncSeparate;
 	func->StencilMaskSeparate	= nv30StencilMaskSeparate;
 	func->StencilOpSeparate		= nv30StencilOpSeparate;

@@ -463,16 +463,49 @@ void (*ReadBuffer)( GLcontext *ctx, GLenum buffer );
 void (*RenderMode)(GLcontext *ctx, GLenum mode );
 /** Define the scissor box */
 void (*Scissor)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
+
 /** Select flat or smooth shading */
-void (*ShadeModel)(GLcontext *ctx, GLenum mode);
+void nv10ShadeModel(GLcontext *ctx, GLenum mode)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_SHADE_MODEL, 1);
+	OUT_RING(mode);
+}
+
 /** OpenGL 2.0 two-sided StencilFunc */
-void (*StencilFuncSeparate)(GLcontext *ctx, GLenum face, GLenum func,
-		GLint ref, GLuint mask);
+static void nv10StencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func,
+		GLint ref, GLuint mask)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_STENCIL_FUNC_FUNC, 3);
+	OUT_RING(func);
+	OUT_RING(ref);
+	OUT_RING(mask);
+}
+
 /** OpenGL 2.0 two-sided StencilMask */
-void (*StencilMaskSeparate)(GLcontext *ctx, GLenum face, GLuint mask);
+static void nv10StencilMaskSeparate(GLcontext *ctx, GLenum face, GLuint mask)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_STENCIL_MASK, 1);
+	OUT_RING(mask);
+}
+
 /** OpenGL 2.0 two-sided StencilOp */
-void (*StencilOpSeparate)(GLcontext *ctx, GLenum face, GLenum fail,
-		GLenum zfail, GLenum zpass);
+static void nv10StencilOpSeparate(GLcontext *ctx, GLenum face, GLenum fail,
+		GLenum zfail, GLenum zpass)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_STENCIL_OP_FAIL, 1);
+	OUT_RING(fail);
+	OUT_RING(zfail);
+	OUT_RING(zpass);
+}
+
 /** Control the generation of texture coordinates */
 void (*TexGen)(GLcontext *ctx, GLenum coord, GLenum pname,
 		const GLfloat *params);
