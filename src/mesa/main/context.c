@@ -876,6 +876,16 @@ delete_arrayobj_cb(GLuint id, void *data, void *userData)
    _mesa_delete_array_object(ctx, arrayObj);
 }
 
+/**
+ * Callback for deleting an shader object.  Called by _mesa_HashDeleteAll().
+ */
+static void
+delete_shaderobj_cb(GLuint id, void *data, void *userData)
+{
+   /* XXX probably need to fix this */
+   _mesa_free(data);
+}
+
 
 /**
  * Deallocate a shared state object and all children structures.
@@ -938,6 +948,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_DeleteHashTable(ss->ArrayObjects);
 
 #if FEATURE_ARB_shader_objects
+   _mesa_HashDeleteAll(ss->GL2Objects, delete_shaderobj_cb, ctx);
    _mesa_DeleteHashTable(ss->GL2Objects);
 #endif
 
