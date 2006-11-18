@@ -1094,6 +1094,56 @@ static const char gl_string_table[] =
     "glBlendEquationSeparateATI\0"
     ;
 
+
+#ifdef USE_MGL_NAMESPACE
+#define gl_dispatch_stub_343 mgl_dispatch_stub_343
+#define gl_dispatch_stub_344 mgl_dispatch_stub_344
+#define gl_dispatch_stub_345 mgl_dispatch_stub_345
+#define gl_dispatch_stub_356 mgl_dispatch_stub_356
+#define gl_dispatch_stub_357 mgl_dispatch_stub_357
+#define gl_dispatch_stub_358 mgl_dispatch_stub_358
+#define gl_dispatch_stub_359 mgl_dispatch_stub_359
+#define gl_dispatch_stub_361 mgl_dispatch_stub_361
+#define gl_dispatch_stub_362 mgl_dispatch_stub_362
+#define gl_dispatch_stub_363 mgl_dispatch_stub_363
+#define gl_dispatch_stub_364 mgl_dispatch_stub_364
+#define gl_dispatch_stub_365 mgl_dispatch_stub_365
+#define gl_dispatch_stub_366 mgl_dispatch_stub_366
+#define gl_dispatch_stub_562 mgl_dispatch_stub_562
+#define gl_dispatch_stub_563 mgl_dispatch_stub_563
+#define gl_dispatch_stub_564 mgl_dispatch_stub_564
+#define gl_dispatch_stub_565 mgl_dispatch_stub_565
+#define gl_dispatch_stub_566 mgl_dispatch_stub_566
+#define gl_dispatch_stub_567 mgl_dispatch_stub_567
+#define gl_dispatch_stub_568 mgl_dispatch_stub_568
+#define gl_dispatch_stub_569 mgl_dispatch_stub_569
+#define gl_dispatch_stub_580 mgl_dispatch_stub_580
+#define gl_dispatch_stub_581 mgl_dispatch_stub_581
+#define gl_dispatch_stub_606 mgl_dispatch_stub_606
+#define gl_dispatch_stub_648 mgl_dispatch_stub_648
+#define gl_dispatch_stub_649 mgl_dispatch_stub_649
+#define gl_dispatch_stub_650 mgl_dispatch_stub_650
+#define gl_dispatch_stub_651 mgl_dispatch_stub_651
+#define gl_dispatch_stub_652 mgl_dispatch_stub_652
+#define gl_dispatch_stub_653 mgl_dispatch_stub_653
+#define gl_dispatch_stub_654 mgl_dispatch_stub_654
+#define gl_dispatch_stub_655 mgl_dispatch_stub_655
+#define gl_dispatch_stub_656 mgl_dispatch_stub_656
+#define gl_dispatch_stub_737 mgl_dispatch_stub_737
+#define gl_dispatch_stub_738 mgl_dispatch_stub_738
+#define gl_dispatch_stub_739 mgl_dispatch_stub_739
+#define gl_dispatch_stub_740 mgl_dispatch_stub_740
+#define gl_dispatch_stub_741 mgl_dispatch_stub_741
+#define gl_dispatch_stub_748 mgl_dispatch_stub_748
+#define gl_dispatch_stub_749 mgl_dispatch_stub_749
+#define gl_dispatch_stub_767 mgl_dispatch_stub_767
+#define gl_dispatch_stub_768 mgl_dispatch_stub_768
+#define gl_dispatch_stub_769 mgl_dispatch_stub_769
+#define gl_dispatch_stub_770 mgl_dispatch_stub_770
+#define gl_dispatch_stub_771 mgl_dispatch_stub_771
+#endif /* USE_MGL_NAMESPACE */
+
+
 /* FIXME: Having these (incorrect) prototypes here is ugly. */
 #if defined(NEED_FUNCTION_POINTER) || defined(GLX_INDIRECT_RENDERING)
 extern void gl_dispatch_stub_343(void);

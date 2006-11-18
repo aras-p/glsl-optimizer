@@ -124,6 +124,16 @@ typedef struct {
 			print '};'
 
 		print ''
+		print ''
+		print "#ifdef USE_MGL_NAMESPACE"
+		for func in api.functionIterateByOffset():
+			for n in func.entry_points:
+				if (not func.is_static_entry_point(func.name)) or (func.has_different_protocol(n) and not func.is_static_entry_point(n)):
+					print '#define gl_dispatch_stub_%u mgl_dispatch_stub_%u' % (func.offset, func.offset)
+					break
+		print "#endif /* USE_MGL_NAMESPACE */"
+		print ''
+		print ''
 		print '/* FIXME: Having these (incorrect) prototypes here is ugly. */'
 		print '#if defined(NEED_FUNCTION_POINTER) || defined(GLX_INDIRECT_RENDERING)'
 		for func in api.functionIterateByOffset():
