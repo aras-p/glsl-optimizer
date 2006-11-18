@@ -47,6 +47,25 @@ slang_fixup_table_free(slang_fixup_table * fix)
    slang_fixup_table_init(fix);
 }
 
+/**
+ * Add a new fixup address to the table.
+ */
+GLboolean
+slang_fixup_save(slang_fixup_table *fixups, GLuint address)
+{
+   fixups->table = (GLuint *)
+      slang_alloc_realloc(fixups->table,
+                          fixups->count * sizeof(GLuint),
+                          (fixups->count + 1) * sizeof(GLuint));
+   if (fixups->table == NULL)
+      return GL_FALSE;
+   fixups->table[fixups->count] = address;
+   fixups->count++;
+   return GL_TRUE;
+}
+
+
+
 /* slang_function */
 
 int

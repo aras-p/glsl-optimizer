@@ -41,14 +41,20 @@ typedef enum slang_function_kind_
    slang_func_operator
 } slang_function_kind;
 
+
+/**
+ * When we need to fill in addresses which we won't know until the future,
+ * we keep track of them with a fix-up table.
+ */
 typedef struct slang_fixup_table_
 {
-   GLuint *table;
+   GLuint *table;     /**< array[count] of addresses */
    GLuint count;
 } slang_fixup_table;
 
 extern void slang_fixup_table_init(slang_fixup_table *);
 extern void slang_fixup_table_free(slang_fixup_table *);
+extern GLboolean slang_fixup_save(slang_fixup_table *fixups, GLuint address);
 
 
 /**

@@ -289,24 +289,18 @@ _slang_assemble_function(slang_assemble_ctx * A, slang_function * fun)
    fun->address = A->file->count;
 
    if (fun->body == NULL) {
-      /* jump to the actual function body - we do not know it, so add the instruction
-       * to fixup table */
-      fun->fixups.table = (GLuint *)
-         slang_alloc_realloc(fun->fixups.table,
-                             fun->fixups.count * sizeof(GLuint),
-                             (fun->fixups.count + 1) * sizeof(GLuint));
-      if (fun->fixups.table == NULL)
+      /* jump to the actual function body - we do not know it, so add
+       * the instruction to fixup table
+       */
+      if (!slang_fixup_save(&fun->fixups, fun->address))
          return GL_FALSE;
-      fun->fixups.table[fun->fixups.count] = fun->address;
-      fun->fixups.count++;
       if (!PUSH(A->file, slang_asm_jump))
          return GL_FALSE;
       return GL_TRUE;
    }
    else {
-      GLuint i;
-
       /* resolve all fixup table entries and delete it */
+      GLuint i;
       for (i = 0; i < fun->fixups.count; i++)
          A->file->code[fun->fixups.table[i]].param[0] = fun->address;
       slang_fixup_table_free(&fun->fixups);
