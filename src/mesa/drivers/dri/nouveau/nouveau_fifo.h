@@ -74,7 +74,7 @@ int i; printf("OUT_RINGp:\n"); for(i=0;i<sz;i+=4) printf(" 0x%8x\n", ptr+sz);   
 
 #define OUT_RINGp(ptr,sz) do{							\
 	memcpy(nmesa->fifo.buffer+nmesa->fifo.current,ptr,sz);			\
-	nmesa->fifo.current+=(sz/sizeof(*ptr));					\
+	nmesa->fifo.current+=(sz/4);						\
 }while(0)
 
 #define OUT_RING(n) do {							\

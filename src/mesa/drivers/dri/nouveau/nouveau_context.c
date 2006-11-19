@@ -137,6 +137,9 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 
 	_math_matrix_ctr(&nmesa->viewport);
 
+	nouveauDDInitStateFuncs( ctx );
+	nouveauSpanInitFunctions( ctx );
+	nouveauDDInitState( nmesa );
 	switch(nmesa->screen->card->type)
 	{
 		case NV_03:
@@ -155,9 +158,6 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 			nv10TriInitFunctions( ctx );
 			break;
 	}
-	nouveauDDInitStateFuncs( ctx );
-	nouveauSpanInitFunctions( ctx );
-	nouveauDDInitState( nmesa );
 
 	driContextPriv->driverPrivate = (void *)nmesa;
 

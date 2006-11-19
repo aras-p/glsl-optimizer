@@ -71,7 +71,7 @@ static void nv10ResetLineStipple( GLcontext *ctx );
 /* the size above which we fire the ring. this is a performance-tunable */
 #define NOUVEAU_FIRE_SIZE (2048/4)
 
-static inline void nv10StartPrimitive(struct nouveau_context* nmesa)
+static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t primitive,uint32_t size)
 {
 	if (nmesa->screen->card->type==NV_10)
 		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_BEGIN_END,1);
@@ -79,14 +79,14 @@ static inline void nv10StartPrimitive(struct nouveau_context* nmesa)
 		BEGIN_RING_SIZE(NvSub3D,NV20_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	else
 		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_BEGIN_END,1);
-	OUT_RING(nmesa->current_primitive);
+	OUT_RING(primitive);
 
 	if (nmesa->screen->card->type==NV_10)
-		BEGIN_RING_PRIM(NvSub3D,NV10_TCL_PRIMITIVE_3D_VERTEX_ARRAY_DATA,NOUVEAU_MIN_PRIM_SIZE);
+		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_VERTEX_ARRAY_DATA,size);
 	else if (nmesa->screen->card->type==NV_20)
-		BEGIN_RING_PRIM(NvSub3D,NV20_TCL_PRIMITIVE_3D_VERTEX_DATA,NOUVEAU_MIN_PRIM_SIZE);
+		BEGIN_RING_SIZE(NvSub3D,NV20_TCL_PRIMITIVE_3D_VERTEX_DATA,size);
 	else
-		BEGIN_RING_PRIM(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_DATA,NOUVEAU_MIN_PRIM_SIZE);
+		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_DATA,size);
 }
 
 inline void nv10FinishPrimitive(struct nouveau_context *nmesa)
@@ -105,15 +105,8 @@ inline void nv10FinishPrimitive(struct nouveau_context *nmesa)
 
 static inline void nv10ExtendPrimitive(struct nouveau_context* nmesa, int size)
 {
-	/* when the fifo has enough stuff (2048 bytes) or there is not enough room, fire */
-	if ((RING_AHEAD()>=NOUVEAU_FIRE_SIZE)||(RING_AVAILABLE()<size/4))
-	{
-		nv10FinishPrimitive(nmesa);
-		nv10StartPrimitive(nmesa);
-	}
-
 	/* make sure there's enough room. if not, wait */
-	if (RING_AVAILABLE()<size/4)
+	if (RING_AVAILABLE()<size)
 	{
 		WAIT_RING(nmesa,size);
 	}
@@ -165,379 +158,185 @@ static inline void nv10_draw_point(nouveauContextPtr nmesa,
 	OUT_RINGp(v0,vertsize);
 }
 
-
-
-#define CTX_ARG nouveauContextPtr nmesa
-#define GET_VERTEX_DWORDS() nmesa->vertex_size
-#define LOCAL_VARS						\
-   nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);		\
-   const char *nouveauverts = (char *)nmesa->verts;
-#define VERT(x) (nouveauVertex *)(nouveauverts + ((x) * vertsize * sizeof(int)))
-#define VERTEX nouveauVertex
-
-#undef TAG
-#define TAG(x) nouveau_##x
-#include "tnl_dd/t_dd_triemit.h"
-
-/***********************************************************************
- *          Macros for nouveau_dd_tritmp.h to draw basic primitives        *
- ***********************************************************************/
-
-#define TRI(a, b, c)                                        \
-	do {                                                \
-		if (DO_FALLBACK)                            \
-		nmesa->draw_tri(nmesa, a, b, c);            \
-		else                                        \
-		nv10_draw_triangle(nmesa, a, b, c);         \
-	} while (0)
-
-#define QUAD(a, b, c, d)                                    \
-	do {                                                \
-		if (DO_FALLBACK) {                          \
-			nmesa->draw_tri(nmesa, a, b, d);    \
-			nmesa->draw_tri(nmesa, b, c, d);    \
-		}                                           \
-		else                                        \
-		nv10_draw_quad(nmesa, a, b, c, d);          \
-	} while (0)
-
-#define LINE(v0, v1)                                        \
-	do {                                                \
-		if (DO_FALLBACK)                            \
-		nmesa->draw_line(nmesa, v0, v1);            \
-		else                                        \
-		nv10_draw_line(nmesa, v0, v1);              \
-	} while (0)
-
-#define POINT(v0)                                           \
-	do {                                                \
-		if (DO_FALLBACK)                            \
-		nmesa->draw_point(nmesa, v0);               \
-		else                                        \
-		nv10_draw_point(nmesa, v0);                 \
-	} while (0)
-
-#undef TAG
-
-/***********************************************************************
- *              Build render functions from dd templates               *
- ***********************************************************************/
-
-#define NOUVEAU_OFFSET_BIT         0x01
-#define NOUVEAU_TWOSIDE_BIT        0x02
-#define NOUVEAU_UNFILLED_BIT       0x04
-#define NOUVEAU_FALLBACK_BIT       0x08
-#define NOUVEAU_MAX_TRIFUNC        0x10
-
-
-static struct {
-	tnl_points_func          points;
-	tnl_line_func            line;
-	tnl_triangle_func        triangle;
-	tnl_quad_func            quad;
-} rast_tab[NOUVEAU_MAX_TRIFUNC + 1];
-
-
-#define DO_FALLBACK (IND & NOUVEAU_FALLBACK_BIT)
-#define DO_OFFSET   (IND & NOUVEAU_OFFSET_BIT)
-#define DO_UNFILLED (IND & NOUVEAU_UNFILLED_BIT)
-#define DO_TWOSIDE  (IND & NOUVEAU_TWOSIDE_BIT)
-#define DO_FLAT      0
-#define DO_TRI       1
-#define DO_QUAD      1
-#define DO_LINE      1
-#define DO_POINTS    1
-#define DO_FULL_QUAD 1
-
-#define HAVE_RGBA         1
-#define HAVE_SPEC         1
-#define HAVE_BACK_COLORS  0
-#define HAVE_HW_FLATSHADE 1
-#define VERTEX            nouveauVertex
-#define TAB               rast_tab
-
-
-#define DEPTH_SCALE 1.0
-#define UNFILLED_TRI unfilled_tri
-#define UNFILLED_QUAD unfilled_quad
-#define VERT_X(_v) _v->v.x
-#define VERT_Y(_v) _v->v.y
-#define VERT_Z(_v) _v->v.z
-#define AREA_IS_CCW(a) (a > 0)
-#define GET_VERTEX(e) (nmesa->verts + (e * nmesa->vertex_size * sizeof(int)))
-
-#define VERT_SET_RGBA( v, c )  					\
-	do {								\
-		nouveau_color_t *color = (nouveau_color_t *)&((v)->f[coloroffset]);	\
-		color->red=(c)[0];					\
-		color->green=(c)[1];					\
-		color->blue=(c)[2];					\
-		color->alpha=(c)[3];					\
-	} while (0)
-
-#define VERT_COPY_RGBA( v0, v1 ) v0->ui[coloroffset] = v1->ui[coloroffset]
-
-#define VERT_SET_SPEC( v, c )							\
-	do {									\
-		if (specoffset) {						\
-			nouveau_color_t *color = (nouveau_color_t *)&((v)->f[specoffset]);	\
-			UNCLAMPED_FLOAT_TO_UBYTE(color->red, (c)[0]);		\
-			UNCLAMPED_FLOAT_TO_UBYTE(color->green, (c)[1]);		\
-			UNCLAMPED_FLOAT_TO_UBYTE(color->blue, (c)[2]);		\
-		}								\
-	} while (0)
-#define VERT_COPY_SPEC( v0, v1 )			\
-	do {							\
-		if (specoffset) {					\
-			nouveau_color_t *spec0 = (nouveau_color_t *)&((v0)->ui[specoffset]);	\
-			nouveau_color_t *spec1 = (nouveau_color_t *)&((v1)->ui[specoffset]);	\
-			spec0->red   = spec1->red;	\
-			spec0->green = spec1->green;	\
-			spec0->blue  = spec1->blue; 	\
-		}							\
-	} while (0)
-
-
-#define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->f[coloroffset]
-#define VERT_RESTORE_RGBA( idx ) v[idx]->f[coloroffset] = color[idx]
-#define VERT_SAVE_SPEC( idx )    if (specoffset) spec[idx] = v[idx]->f[specoffset]
-#define VERT_RESTORE_SPEC( idx ) if (specoffset) v[idx]->f[specoffset] = spec[idx]
-
-
-#undef LOCAL_VARS
-#define LOCAL_VARS(n)                                                          \
-	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);                  \
-GLuint color[n], spec[n];                                                      \
-GLuint coloroffset = nmesa->color_offset;                                      \
-GLuint specoffset = nmesa->specular_offset;                                    \
-(void)color; (void)spec; (void)coloroffset; (void)specoffset;
-
-
-/***********************************************************************
- *                Helpers for rendering unfilled primitives            *
- ***********************************************************************/
-
-static const GLuint hw_prim[GL_POLYGON+1] = {
-	GL_POINTS+1,
-	GL_LINES+1,
-	GL_LINES+1,
-	GL_LINES+1,
-	GL_TRIANGLES+1,
-	GL_TRIANGLES+1,
-	GL_TRIANGLES+1,
-	GL_QUADS+1,
-	GL_QUADS+1,
-	GL_TRIANGLES+1
-};
-
-#define RASTERIZE(x) nv10RasterPrimitive( ctx, x, hw_prim[x] )
-#define RENDER_PRIMITIVE nmesa->current_primitive
-#define TAG(x) x
-#define IND NOUVEAU_FALLBACK_BIT
-#include "tnl_dd/t_dd_unfilled.h"
-#undef IND
-#undef RASTERIZE
-
-/***********************************************************************
- *                      Generate GL render functions                   *
- ***********************************************************************/
-#define RASTERIZE(x)
-
-#define IND (0)
-#define TAG(x) x
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (NOUVEAU_OFFSET_BIT)
-#define TAG(x) x##_offset
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (NOUVEAU_TWOSIDE_BIT)
-#define TAG(x) x##_twoside
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (NOUVEAU_TWOSIDE_BIT|NOUVEAU_OFFSET_BIT)
-#define TAG(x) x##_twoside_offset
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (NOUVEAU_UNFILLED_BIT)
-#define TAG(x) x##_unfilled
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (NOUVEAU_OFFSET_BIT|NOUVEAU_UNFILLED_BIT)
-#define TAG(x) x##_offset_unfilled
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (NOUVEAU_TWOSIDE_BIT|NOUVEAU_UNFILLED_BIT)
-#define TAG(x) x##_twoside_unfilled
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (NOUVEAU_TWOSIDE_BIT|NOUVEAU_OFFSET_BIT|NOUVEAU_UNFILLED_BIT)
-#define TAG(x) x##_twoside_offset_unfilled
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (NOUVEAU_FALLBACK_BIT)
-#define TAG(x) x##_fallback
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (NOUVEAU_OFFSET_BIT|NOUVEAU_FALLBACK_BIT)
-#define TAG(x) x##_offset_fallback
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (NOUVEAU_TWOSIDE_BIT|NOUVEAU_FALLBACK_BIT)
-#define TAG(x) x##_twoside_fallback
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (NOUVEAU_TWOSIDE_BIT|NOUVEAU_OFFSET_BIT|NOUVEAU_FALLBACK_BIT)
-#define TAG(x) x##_twoside_offset_fallback
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (NOUVEAU_UNFILLED_BIT|NOUVEAU_FALLBACK_BIT)
-#define TAG(x) x##_unfilled_fallback
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (NOUVEAU_OFFSET_BIT|NOUVEAU_UNFILLED_BIT|NOUVEAU_FALLBACK_BIT)
-#define TAG(x) x##_offset_unfilled_fallback
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (NOUVEAU_TWOSIDE_BIT|NOUVEAU_UNFILLED_BIT|NOUVEAU_FALLBACK_BIT)
-#define TAG(x) x##_twoside_unfilled_fallback
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (NOUVEAU_TWOSIDE_BIT|NOUVEAU_OFFSET_BIT|NOUVEAU_UNFILLED_BIT| \
-		NOUVEAU_FALLBACK_BIT)
-#define TAG(x) x##_twoside_offset_unfilled_fallback
-#include "tnl_dd/t_dd_tritmp.h"
-
-
-/* Catchall case for flat, separate specular triangles */
-#undef  DO_FALLBACK
-#undef  DO_OFFSET
-#undef  DO_UNFILLED
-#undef  DO_TWOSIDE
-#undef  DO_FLAT
-#define DO_FALLBACK (0)
-#define DO_OFFSET   (ctx->_TriangleCaps & DD_TRI_OFFSET)
-#define DO_UNFILLED (ctx->_TriangleCaps & DD_TRI_UNFILLED)
-#define DO_TWOSIDE  (ctx->_TriangleCaps & DD_TRI_LIGHT_TWOSIDE)
-#define DO_FLAT     1
-#define TAG(x) x##_flat_specular
-#define IND NOUVEAU_MAX_TRIFUNC
-#include "tnl_dd/t_dd_tritmp.h"
-
-
-static void init_rast_tab(void)
-{
-	init();
-	init_offset();
-	init_twoside();
-	init_twoside_offset();
-	init_unfilled();
-	init_offset_unfilled();
-	init_twoside_unfilled();
-	init_twoside_offset_unfilled();
-	init_fallback();
-	init_offset_fallback();
-	init_twoside_fallback();
-	init_twoside_offset_fallback();
-	init_unfilled_fallback();
-	init_offset_unfilled_fallback();
-	init_twoside_unfilled_fallback();
-	init_twoside_offset_unfilled_fallback();
-
-	init_flat_specular();	/* special! */
-}
-
-
 /**********************************************************************/
 /*               Render unclipped begin/end objects                   */
 /**********************************************************************/
-#define IND 0
-#define V(x) (nouveauVertex *)(vertptr + ((x) * vertsize * sizeof(int)))
-#define RENDER_POINTS(start, count)   \
-	for (; start < count; start++) POINT(V(ELT(start)));
-#define RENDER_LINE(v0, v1)         LINE(V(v0), V(v1))
-#define RENDER_TRI( v0, v1, v2)     TRI( V(v0), V(v1), V(v2))
-#define RENDER_QUAD(v0, v1, v2, v3) QUAD(V(v0), V(v1), V(v2), V(v3))
-#define INIT(x) nv10RasterPrimitive(ctx, x, hw_prim[x])
-#undef LOCAL_VARS
-#define LOCAL_VARS                                              \
-	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);                     \
-GLubyte *vertptr = (GLubyte *)nmesa->verts;                 \
-const GLuint vertsize = nmesa->vertex_size;          \
-const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;       \
-const GLboolean stipple = ctx->Line.StippleFlag;		\
-(void) elt; (void) stipple;
-#define RESET_STIPPLE	if ( stipple ) nv10ResetLineStipple( ctx );
-#define RESET_OCCLUSION
-#define PRESERVE_VB_DEFS
-#define ELT(x) x
-#define TAG(x) nouveau_##x##_verts
-#include "tnl/t_vb_rendertmp.h"
-#undef ELT
-#undef TAG
-#define TAG(x) nouveau_##x##_elts
-#define ELT(x) elt[x]
-#include "tnl/t_vb_rendertmp.h"
-#undef ELT
-#undef TAG
-#undef NEED_EDGEFLAG_SETUP
-#undef EDGEFLAG_GET
-#undef EDGEFLAG_SET
-#undef RESET_OCCLUSION
 
-
-/**********************************************************************/
-/*                   Render clipped primitives                        */
-/**********************************************************************/
-
-
-
-static void nouveauRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
-		GLuint n)
-{
-	TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-	GLuint prim = NOUVEAU_CONTEXT(ctx)->current_primitive;
-
-	/* Render the new vertices as an unclipped polygon.
-	 */
-	{
-		GLuint *tmp = VB->Elts;
-		VB->Elts = (GLuint *)elts;
-		tnl->Driver.Render.PrimTabElts[GL_POLYGON](ctx, 0, n,
-				PRIM_BEGIN|PRIM_END);
-		VB->Elts = tmp;
-	}
-
-	/* Restore the render primitive
-	 */
-	if (prim != GL_POLYGON &&
-			prim != GL_POLYGON + 1)
-		tnl->Driver.Render.PrimitiveNotify( ctx, prim );
-}
-
-static void nouveauRenderClippedLine(GLcontext *ctx, GLuint ii, GLuint jj)
-{
-	TNLcontext *tnl = TNL_CONTEXT(ctx);
-	tnl->Driver.Render.Line(ctx, ii, jj);
-}
-
-static void nouveauFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
-		GLuint n)
+static inline void nv10_render_generic_primitive_verts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags,GLuint prim)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	GLuint vertsize = nmesa->vertex_size;
-	nv10ExtendPrimitive(nmesa, (n - 2) * 3 * 4 * vertsize);
 	GLubyte *vertptr = (GLubyte *)nmesa->verts;
-	const GLuint *start = (const GLuint *)V(elts[0]);
-	int i;
+	GLuint vertsize = nmesa->vertex_size;
+	GLuint size_dword = vertsize*(count-start);
 
-	for (i = 2; i < n; i++) {
-		OUT_RINGp(V(elts[i-1]),vertsize);
-		OUT_RINGp(V(elts[i]),vertsize);
-		OUT_RINGp(start,vertsize);
-	}
+	nv10ExtendPrimitive(nmesa, size_dword);
+	nv10StartPrimitive(nmesa,prim+1,size_dword);
+	OUT_RINGp((nouveauVertex*)(vertptr+(start*vertsize*4)),size_dword);
+	nv10FinishPrimitive(nmesa);
 }
+
+static void nv10_render_points_verts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_verts(ctx,start,count,flags,GL_POINTS);
+}
+
+static void nv10_render_lines_verts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_verts(ctx,start,count,flags,GL_LINES);
+}
+
+static void nv10_render_line_strip_verts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_verts(ctx,start,count,flags,GL_LINE_STRIP);
+}
+
+static void nv10_render_line_loop_verts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_verts(ctx,start,count,flags,GL_LINE_LOOP);
+}
+
+static void nv10_render_triangles_verts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_verts(ctx,start,count,flags,GL_TRIANGLES);
+}
+
+static void nv10_render_tri_strip_verts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_verts(ctx,start,count,flags,GL_TRIANGLE_STRIP);
+}
+
+static void nv10_render_tri_fan_verts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_verts(ctx,start,count,flags,GL_TRIANGLE_FAN);
+}
+
+static void nv10_render_quads_verts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_verts(ctx,start,count,flags,GL_QUADS);
+}
+
+static void nv10_render_quad_strip_verts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_verts(ctx,start,count,flags,GL_QUAD_STRIP);
+}
+
+static void nv10_render_poly_verts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_verts(ctx,start,count,flags,GL_POLYGON);
+}
+
+static void nv10_render_noop_verts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+}
+
+static inline void nv10_render_generic_primitive_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags,GLuint prim)
+{
+	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
+	GLubyte *vertptr = (GLubyte *)nmesa->verts;
+	GLuint vertsize = nmesa->vertex_size;
+	GLuint size_dword = vertsize*(count-start);
+	const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;
+	GLuint j;
+
+	nv10ExtendPrimitive(nmesa, size_dword);
+	nv10StartPrimitive(nmesa,prim+1,size_dword);
+	for (j=start; j<count; j++ ) {
+		OUT_RINGp((nouveauVertex*)(vertptr+(elt[j]*vertsize*4)),vertsize);
+	}
+	nv10FinishPrimitive(nmesa);
+}
+
+static void (*nv10_render_tab_verts[GL_POLYGON+2])(GLcontext *,
+							   GLuint,
+							   GLuint,
+							   GLuint) =
+{
+   nv10_render_points_verts,
+   nv10_render_lines_verts,
+   nv10_render_line_loop_verts,
+   nv10_render_line_strip_verts,
+   nv10_render_triangles_verts,
+   nv10_render_tri_strip_verts,
+   nv10_render_tri_fan_verts,
+   nv10_render_quads_verts,
+   nv10_render_quad_strip_verts,
+   nv10_render_poly_verts,
+   nv10_render_noop_verts,
+};
+
+
+static void nv10_render_points_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_elts(ctx,start,count,flags,GL_POINTS);
+}
+
+static void nv10_render_lines_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_elts(ctx,start,count,flags,GL_LINES);
+}
+
+static void nv10_render_line_strip_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_elts(ctx,start,count,flags,GL_LINE_STRIP);
+}
+
+static void nv10_render_line_loop_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_elts(ctx,start,count,flags,GL_LINE_LOOP);
+}
+
+static void nv10_render_triangles_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_elts(ctx,start,count,flags,GL_TRIANGLES);
+}
+
+static void nv10_render_tri_strip_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_elts(ctx,start,count,flags,GL_TRIANGLE_STRIP);
+}
+
+static void nv10_render_tri_fan_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_elts(ctx,start,count,flags,GL_TRIANGLE_FAN);
+}
+
+static void nv10_render_quads_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_elts(ctx,start,count,flags,GL_QUADS);
+}
+
+static void nv10_render_quad_strip_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_elts(ctx,start,count,flags,GL_QUAD_STRIP);
+}
+
+static void nv10_render_poly_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+	nv10_render_generic_primitive_elts(ctx,start,count,flags,GL_POLYGON);
+}
+
+static void nv10_render_noop_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
+{
+}
+
+static void (*nv10_render_tab_elts[GL_POLYGON+2])(GLcontext *,
+							   GLuint,
+							   GLuint,
+							   GLuint) =
+{
+   nv10_render_points_elts,
+   nv10_render_lines_elts,
+   nv10_render_line_loop_elts,
+   nv10_render_line_strip_elts,
+   nv10_render_triangles_elts,
+   nv10_render_tri_strip_elts,
+   nv10_render_tri_fan_elts,
+   nv10_render_quads_elts,
+   nv10_render_quad_strip_elts,
+   nv10_render_poly_elts,
+   nv10_render_noop_elts,
+};
+
 
 /**********************************************************************/
 /*                    Choose render functions                         */
@@ -571,58 +370,15 @@ static void nv10ChooseRenderState(GLcontext *ctx)
 {
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	GLuint flags = ctx->_TriangleCaps;
-	GLuint index = 0;
 
 	nmesa->draw_point = nv10_draw_point;
 	nmesa->draw_line = nv10_draw_line;
 	nmesa->draw_tri = nv10_draw_triangle;
 
-	if (flags & (ANY_FALLBACK_FLAGS|ANY_RASTER_FLAGS)) {
-		if (flags & DD_TRI_LIGHT_TWOSIDE)    index |= NOUVEAU_TWOSIDE_BIT;
-		if (flags & DD_TRI_OFFSET)           index |= NOUVEAU_OFFSET_BIT;
-		if (flags & DD_TRI_UNFILLED)         index |= NOUVEAU_UNFILLED_BIT;
-		if (flags & ANY_FALLBACK_FLAGS)      index |= NOUVEAU_FALLBACK_BIT;
-
-		/* Hook in fallbacks for specific primitives.
-		 */
-		if (flags & POINT_FALLBACK)
-			nmesa->draw_point = nouveau_fallback_point;
-
-		if (flags & LINE_FALLBACK)
-			nmesa->draw_line = nouveau_fallback_line;
-
-		if (flags & TRI_FALLBACK)
-			nmesa->draw_tri = nouveau_fallback_tri;
-	}
-
-
-	if ((flags & DD_SEPARATE_SPECULAR) &&
-			ctx->Light.ShadeModel == GL_FLAT) {
-		index = NOUVEAU_MAX_TRIFUNC;	/* flat specular */
-	}
-
-	if (nmesa->render_index != index) {
-		nmesa->render_index = index;
-
-		tnl->Driver.Render.Points = rast_tab[index].points;
-		tnl->Driver.Render.Line = rast_tab[index].line;
-		tnl->Driver.Render.Triangle = rast_tab[index].triangle;
-		tnl->Driver.Render.Quad = rast_tab[index].quad;
-
-		if (index == 0) {
-			tnl->Driver.Render.PrimTabVerts = nouveau_render_tab_verts;
-			tnl->Driver.Render.PrimTabElts = nouveau_render_tab_elts;
-			tnl->Driver.Render.ClippedLine = line; /* from tritmp.h */
-			tnl->Driver.Render.ClippedPolygon = nouveauFastRenderClippedPoly;
-		}
-		else {
-			tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
-			tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
-			tnl->Driver.Render.ClippedLine = nouveauRenderClippedLine;
-			tnl->Driver.Render.ClippedPolygon = nouveauRenderClippedPoly;
-		}
-	}
+	tnl->Driver.Render.PrimTabVerts = nv10_render_tab_verts;
+	tnl->Driver.Render.PrimTabElts = nv10_render_tab_elts;
+	tnl->Driver.Render.ClippedLine = NULL;
+	tnl->Driver.Render.ClippedPolygon = NULL;
 }
 
 
@@ -817,6 +573,19 @@ void nv10RasterPrimitive(GLcontext *ctx,
 	}
 }
 
+static const GLuint hw_prim[GL_POLYGON+1] = {
+	GL_POINTS+1,
+	GL_LINES+1,
+	GL_LINE_STRIP+1,
+	GL_LINE_LOOP+1,
+	GL_TRIANGLES+1,
+	GL_TRIANGLE_STRIP+1,
+	GL_TRIANGLE_FAN+1,
+	GL_QUADS+1,
+	GL_QUAD_STRIP+1,
+	GL_POLYGON+1
+};
+
 /* Callback for mesa:
  */
 static void nv10RenderPrimitive( GLcontext *ctx, GLuint prim )
@@ -839,12 +608,6 @@ void nv10TriInitFunctions(GLcontext *ctx)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
-	static int firsttime = 1;
-
-	if (firsttime) {
-		init_rast_tab();
-		firsttime = 0;
-	}
 
 	tnl->Driver.RunPipeline = nouveauRunPipeline;
 	tnl->Driver.Render.Start = nv10RenderStart;
@@ -856,10 +619,9 @@ void nv10TriInitFunctions(GLcontext *ctx)
 	tnl->Driver.Render.Interp = _tnl_interp;
 
 	_tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
-			(6 + 2*ctx->Const.MaxTextureUnits) * sizeof(GLfloat) );
+			16 * sizeof(GLfloat) );
 
 	nmesa->verts = (GLubyte *)tnl->clipspace.vertex_buf;
-
 }
 
 
