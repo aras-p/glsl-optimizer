@@ -36,8 +36,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define NV_READ(reg) *(volatile u_int32_t *)(nmesa->mmio + (reg))
 
-#define NV_FIFO_READ(reg) *(volatile u_int32_t *)(nmesa->fifo.mmio + (reg))
-#define NV_FIFO_WRITE(reg,value) *(volatile u_int32_t *)(nmesa->fifo.mmio + (reg)) = value;
+#define NV_FIFO_READ(reg) *(volatile u_int32_t *)(nmesa->fifo.mmio + (reg/4))
+#define NV_FIFO_WRITE(reg,value) *(volatile u_int32_t *)(nmesa->fifo.mmio + (reg/4)) = value;
 #define NV_FIFO_READ_GET() ((NV_FIFO_READ(NV03_FIFO_REGS_DMAGET) - nmesa->fifo.put_base) >> 2)
 #define NV_FIFO_WRITE_PUT(val) NV_FIFO_WRITE(NV03_FIFO_REGS_DMAPUT, ((val)<<2) + nmesa->fifo.put_base)
 
