@@ -516,13 +516,13 @@ static void nv30StencilOpSeparate(GLcontext *ctx, GLenum face, GLenum fail,
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 
 	if (face == GL_FRONT || face == GL_FRONT_AND_BACK) {
-		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_STENCIL_FRONT_OP_FAIL, 1);
+		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_STENCIL_FRONT_OP_FAIL, 3);
 		OUT_RING(fail);
 		OUT_RING(zfail);
 		OUT_RING(zpass);
 	}
 	if (face == GL_BACK || face == GL_FRONT_AND_BACK) {
-		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_STENCIL_BACK_OP_FAIL, 1);
+		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_STENCIL_BACK_OP_FAIL, 3);
 		OUT_RING(fail);
 		OUT_RING(zfail);
 		OUT_RING(zpass);
