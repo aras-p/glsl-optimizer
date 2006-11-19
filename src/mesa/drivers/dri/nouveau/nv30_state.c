@@ -34,6 +34,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "mtypes.h"
 #include "colormac.h"
 
+#define NOUVEAU_CARD_USING_SHADERS (nmesa->screen->card->type >= NV_40)
+
 static void nv30AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -229,6 +231,10 @@ static void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 		case GL_LIGHT7:
 			{
 			uint32_t mask=0x11<<(2*(cap-GL_LIGHT0));
+
+			if (NOUVEAU_CARD_USING_SHADERS)
+				break;
+
 			nmesa->enabled_lights=((nmesa->enabled_lights&mask)|(mask*state));
 			if (nmesa->lighting_enabled)
 			{
@@ -238,6 +244,9 @@ static void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 			break;
 			}
 		case GL_LIGHTING:
+			if (NOUVEAU_CARD_USING_SHADERS)
+				break;
+
 			nmesa->lighting_enabled=state;
 			BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_ENABLED_LIGHTS, 1);
 			if (nmesa->lighting_enabled)
@@ -337,6 +346,10 @@ static void nv30Hint(GLcontext *ctx, GLenum target, GLenum mode)
 static void nv30Lightfv(GLcontext *ctx, GLenum light, GLenum pname, const GLfloat *params )
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	if (NOUVEAU_CARD_USING_SHADERS)
+	   return;
+
 	/* not sure where the fourth param value goes...*/
 	switch(pname)
 	{
@@ -469,8 +482,9 @@ void (*ReadBuffer)( GLcontext *ctx, GLenum buffer );
 void (*RenderMode)(GLcontext *ctx, GLenum mode );
 /** Define the scissor box */
 void (*Scissor)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
+
 /** Select flat or smooth shading */
-void nv30ShadeModel(GLcontext *ctx, GLenum mode)
+static void nv30ShadeModel(GLcontext *ctx, GLenum mode)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 
