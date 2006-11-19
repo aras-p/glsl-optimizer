@@ -91,7 +91,6 @@ static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t pri
 
 inline void nv10FinishPrimitive(struct nouveau_context *nmesa)
 {
-	FINISH_RING_PRIM();
 	if (nmesa->screen->card->type==NV_10)
 		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	else if (nmesa->screen->card->type==NV_20)
