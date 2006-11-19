@@ -56,18 +56,6 @@ static void nv10ResetLineStipple( GLcontext *ctx );
 
 
 
-/***********************************************************************
- *                    Emit primitives as inline vertices               *
- ***********************************************************************/
-#define LINE_FALLBACK (0)
-#define POINT_FALLBACK (0)
-#define TRI_FALLBACK (0)
-#define ANY_FALLBACK_FLAGS (POINT_FALLBACK|LINE_FALLBACK|TRI_FALLBACK)
-#define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET|DD_TRI_UNFILLED)
-
-
-/* the free room we want before we start a vertex batch. this is a performance-tunable */
-#define NOUVEAU_MIN_PRIM_SIZE (32/4)
 /* the size above which we fire the ring. this is a performance-tunable */
 #define NOUVEAU_FIRE_SIZE (2048/4)
 
@@ -341,21 +329,6 @@ static void (*nv10_render_tab_elts[GL_POLYGON+2])(GLcontext *,
 /*                    Choose render functions                         */
 /**********************************************************************/
 
-
-
-
-#define _NOUVEAU_NEW_VERTEX (_NEW_TEXTURE |                         \
-		_DD_NEW_SEPARATE_SPECULAR |            \
-		_DD_NEW_TRI_UNFILLED |                 \
-		_DD_NEW_TRI_LIGHT_TWOSIDE |            \
-		_NEW_FOG)
-
-#define _NOUVEAU_NEW_RENDERSTATE (_DD_NEW_LINE_STIPPLE |            \
-		_DD_NEW_TRI_UNFILLED |            \
-		_DD_NEW_TRI_LIGHT_TWOSIDE |       \
-		_DD_NEW_TRI_OFFSET |              \
-		_DD_NEW_TRI_STIPPLE |             \
-		_NEW_POLYGONSTIPPLE)
 
 #define EMIT_ATTR( ATTR, STYLE )					\
 do {									\
