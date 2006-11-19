@@ -10,7 +10,7 @@ enum DMAObjects {
 };
 
 enum DMASubchannel {
-	NvSub3D		= 1,
+	NvSub3D		= 7,
 };
 
 #endif
