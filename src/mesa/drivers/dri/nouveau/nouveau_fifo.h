@@ -100,9 +100,10 @@ extern void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size);
 }while(0)
 
 #define BEGIN_RING_SIZE(subchannel,tag,size) do {					\
-	if (nmesa->fifo.free<size)							\
+	if (nmesa->fifo.free <= (size))							\
 		WAIT_RING(nmesa,(size));						\
-	OUT_RING( (size<<18) | ((subchannel) << 13) | (tag));				\
+	OUT_RING( ((size)<<18) | ((subchannel) << 13) | (tag));				\
+	nmesa->fifo.free -= ((size) + 1);                                               \
 }while(0)
 
 #define RING_AVAILABLE() (nmesa->fifo.free-1)

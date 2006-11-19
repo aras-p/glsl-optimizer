@@ -112,6 +112,7 @@ void nouveauWaitForIdle(nouveauContextPtr nmesa)
 GLboolean nouveauFifoInit(nouveauContextPtr nmesa)
 {
 	drm_nouveau_fifo_alloc_t fifo_init;
+	int i;
 
 #ifdef NOUVEAU_RING_DEBUG
 	return GL_TRUE;
@@ -139,6 +140,10 @@ GLboolean nouveauFifoInit(nouveauContextPtr nmesa)
 	nmesa->fifo.put      = 0;
 	nmesa->fifo.max      = (fifo_init.cmdbuf_size >> 2) - 1;
 	nmesa->fifo.free     = nmesa->fifo.max - nmesa->fifo.current;
+
+	for (i=0; i<RING_SKIPS; i++)
+	   OUT_RING(0);
+	nmesa->fifo.free -= RING_SKIPS;
 
 	MESSAGE("Fifo init ok. Using context %d\n", fifo_init.channel);
 	return GL_TRUE;
