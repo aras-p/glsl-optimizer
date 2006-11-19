@@ -32,7 +32,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_context.h"
 #include "nouveau_ctrlreg.h"
 
-#define NOUVEAU_RING_DEBUG
+//#define NOUVEAU_RING_DEBUG
 
 #define NV_READ(reg) *(volatile u_int32_t *)(nmesa->mmio + (reg))
 
@@ -59,15 +59,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifdef NOUVEAU_RING_DEBUG
 
 #define OUT_RINGp(ptr,sz) do {                                                  \
-int i; printf("OUT_RINGp:\n"); for(i=0;i<sz;i+=4) printf(" 0x%8x\n", ptr+sz);   \
+uint32_t* p=(uint32_t*)ptr;							\
+int i; printf("OUT_RINGp:\n"); for(i=0;i<sz;i++) printf(" 0x%08x\n", *(p+i)); 	\
 }while(0)
 
 #define OUT_RING(n) do {                                                        \
-    printf("OUT_RINGn: 0x%8x\n", n);                                            \
+    printf("OUT_RINGn: 0x%08x\n", n);                                           \
 }while(0)
 
 #define OUT_RINGf(n) do {                                                       \
-    printf("OUT_RINGf: 0x%8x\n", n);                                            \
+    printf("OUT_RINGf: 0x%08x\n", n);                                           \
 }while(0)
 
 #else
