@@ -414,8 +414,12 @@ static void nv30LineStipple(GLcontext *ctx, GLint factor, GLushort pattern )
 static void nv30LineWidth(GLcontext *ctx, GLfloat width)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	GLubyte ubWidth;
+
+	CLAMPED_FLOAT_TO_UBYTE(ubWidth, width);
+
 	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LINE_WIDTH_SMOOTH, 1);
-	OUT_RINGf(width);
+	OUT_RING(ubWidth);
 }
 
 static void nv30LogicOpcode(GLcontext *ctx, GLenum opcode)
