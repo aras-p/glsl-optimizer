@@ -82,11 +82,11 @@ static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t pri
 	OUT_RING(primitive);
 
 	if (nmesa->screen->card->type==NV_10)
-		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_VERTEX_ARRAY_DATA,size);
+		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_VERTEX_ARRAY_DATA|NONINC_METHOD,size);
 	else if (nmesa->screen->card->type==NV_20)
-		BEGIN_RING_SIZE(NvSub3D,NV20_TCL_PRIMITIVE_3D_VERTEX_DATA,size);
+		BEGIN_RING_SIZE(NvSub3D,NV20_TCL_PRIMITIVE_3D_VERTEX_DATA|NONINC_METHOD,size);
 	else
-		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_DATA,size);
+		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_DATA|NONINC_METHOD,size);
 }
 
 inline void nv10FinishPrimitive(struct nouveau_context *nmesa)

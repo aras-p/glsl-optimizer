@@ -40,3 +40,5 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NV03_FIFO_CMD_REWIND                               (NV03_FIFO_CMD_JUMP | (0 & NV03_FIFO_CMD_JUMP_OFFSET_MASK))
 
 
+#define NONINC_METHOD                                      0x40000000
+
