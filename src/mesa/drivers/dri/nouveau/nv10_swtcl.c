@@ -549,8 +549,6 @@ static void nv10RenderStart(GLcontext *ctx)
 
 static void nv10RenderFinish(GLcontext *ctx)
 {
-	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	nv10FinishPrimitive(nmesa);
 }
 
 
@@ -618,7 +616,7 @@ void nv10TriInitFunctions(GLcontext *ctx)
 	tnl->Driver.Render.Interp = _tnl_interp;
 
 	_tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
-			16 * sizeof(GLfloat) );
+			64 * sizeof(GLfloat) );
 
 	nmesa->verts = (GLubyte *)tnl->clipspace.vertex_buf;
 }

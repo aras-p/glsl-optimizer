@@ -60,7 +60,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define OUT_RINGp(ptr,sz) do {                                                  \
 uint32_t* p=(uint32_t*)ptr;							\
-int i; printf("OUT_RINGp:\n"); for(i=0;i<sz;i++) printf(" 0x%08x\n", *(p+i)); 	\
+int i; printf("OUT_RINGp: (size 0x%x dwords)\n",sz); for(i=0;i<sz;i++) printf(" 0x%08x\n", *(p+i)); 	\
 }while(0)
 
 #define OUT_RING(n) do {                                                        \
@@ -74,8 +74,8 @@ int i; printf("OUT_RINGp:\n"); for(i=0;i<sz;i++) printf(" 0x%08x\n", *(p+i)); 	\
 #else
 
 #define OUT_RINGp(ptr,sz) do{							\
-	memcpy(nmesa->fifo.buffer+nmesa->fifo.current,ptr,sz);			\
-	nmesa->fifo.current+=(sz/4);						\
+	memcpy(nmesa->fifo.buffer+nmesa->fifo.current,ptr,sz*4);		\
+	nmesa->fifo.current+=sz;						\
 }while(0)
 
 #define OUT_RING(n) do {							\
