@@ -527,7 +527,7 @@ static void _save_upgrade_vertex( GLcontext *ctx,
 
       /* Need to note this and fix up at runtime (or loopback):
        */
-      if (save->currentsz[attr][0] == 0) {
+      if (attr != VBO_ATTRIB_POS && save->currentsz[attr][0] == 0) {
 	 assert(oldsz == 0);
 	 save->dangling_attr_ref = GL_TRUE;
       }
