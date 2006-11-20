@@ -159,6 +159,8 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 			break;
 	}
 
+        nouveauInitState(ctx);
+
 	driContextPriv->driverPrivate = (void *)nmesa;
 
 	NOUVEAU_DEBUG = driParseDebugString( getenv( "NOUVEAU_DEBUG" ),

@@ -32,8 +32,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern void nouveauDDInitState(nouveauContextPtr nmesa);
 extern void nouveauDDInitStateFuncs(GLcontext *ctx);
 
+extern void nv10InitStateFuncs(struct dd_function_table *func);
+extern void nv20InitStateFuncs(struct dd_function_table *func);
 extern void nv30InitStateFuncs(struct dd_function_table *func);
 
+extern void nouveauInitState(GLcontext *ctx);
 /*
 extern void nouveauDDUpdateState(GLcontext *ctx);
 extern void nouveauDDUpdateHWState(GLcontext *ctx);
