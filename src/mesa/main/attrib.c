@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -1009,9 +1009,6 @@ _mesa_PopAttrib(void)
                                  (GLfloat) light->Model.TwoSide);
                _mesa_LightModelf(GL_LIGHT_MODEL_COLOR_CONTROL,
                                  (GLfloat) light->Model.ColorControl);
-               /* materials */
-               MEMCPY(&ctx->Light.Material, &light->Material,
-                      sizeof(struct gl_material));
                /* shade model */
                _mesa_ShadeModel(light->ShadeModel);
                /* color material */
@@ -1019,6 +1016,9 @@ _mesa_PopAttrib(void)
                                    light->ColorMaterialMode);
                _mesa_set_enable(ctx, GL_COLOR_MATERIAL,
                                 light->ColorMaterialEnabled);
+               /* materials */
+               MEMCPY(&ctx->Light.Material, &light->Material,
+                      sizeof(struct gl_material));
             }
             break;
          case GL_LINE_BIT:
