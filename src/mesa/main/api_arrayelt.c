@@ -1228,18 +1228,17 @@ void _ae_unmap_vbos( GLcontext *ctx )
    AEcontext *actx = AE_CONTEXT(ctx);
    GLuint i;
 
-   if (actx->mapped_vbos)
+   if (!actx->mapped_vbos)
       return;
 
-   if (actx->NewState)
-      _ae_update_state(ctx);
+   assert (!actx->NewState);
 
    for (i = 0; i < actx->nr_vbos; i++)
       ctx->Driver.UnmapBuffer(ctx,
 			      GL_ARRAY_BUFFER_ARB,
 			      actx->vbo[i]);
 
-   actx->mapped_vbos = GL_TRUE;
+   actx->mapped_vbos = GL_FALSE;
 }
 
 
