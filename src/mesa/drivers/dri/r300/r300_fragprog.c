@@ -544,8 +544,6 @@ static pfs_reg_t t_scalar_src(struct r300_fragment_program *rp,
 	struct prog_src_register src = fpsrc;
 	int sc = GET_SWZ(fpsrc.Swizzle, 0); /* X */
 
-	printf("sc %d\n",sc);
-	
 	src.Swizzle = ((sc<<0)|(sc<<3)|(sc<<6)|(sc<<9));
 
 	return t_src(rp, src);
@@ -1670,7 +1668,7 @@ void r300_translate_fragment_shader(struct r300_fragment_program *rp)
 		assert(rp->alu_end >= 0);
 	
 		rp->translated = GL_TRUE;
-		if (1) dump_program(rp);
+		if (0) dump_program(rp);
 	}
 
 	update_params(rp);
