@@ -1,7 +1,6 @@
 # Makefile for core library for VMS
-# contributed by Jouk Jansen  joukj@hrem.stm.tudelft.nl
-# Last revision : 1 June 2005
-
+# contributed by Jouk Jansen  joukj@hrem.nano.tudelft.nl
+# Last revision : 20 November 2006
 .first
 	define gl [---.include.gl]
 	define math [-.math]
@@ -16,7 +15,7 @@ VPATH = RCS
 
 INCDIR = [---.include],[.grammar],[-.main],[-.glapi],[.slang]
 LIBDIR = [---.lib]
-CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)/float=ieee/ieee=denorm
+CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1,"__extension__=")/name=(as_is,short)/float=ieee/ieee=denorm
 
 SOURCES = \
 	atifragshader.c \
