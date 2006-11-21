@@ -38,7 +38,10 @@
 #include "brw_draw.h"
 #include "brw_fallback.h"
 
-
+/*
+ * After playback, copy everything but the position from the
+ * last vertex to the saved state
+ */
 static void _playback_copy_to_current( GLcontext *ctx,
 				       const struct brw_save_vertex_list *node )
 {
@@ -47,21 +50,30 @@ static void _playback_copy_to_current( GLcontext *ctx,
    GLuint i, offset;
 
    if (node->count)
-      offset = node->buffer_offset + (node->count-1) * node->vertex_size;
+      offset = (node->buffer_offset + 
+		(node->count-1) * node->vertex_size * sizeof(GLfloat));
    else
       offset = node->buffer_offset;
 
-   ctx->Driver.GetBufferSubData( ctx, 0, offset, node->vertex_size, 
+   ctx->Driver.GetBufferSubData( ctx, 0, offset, 
+				 node->vertex_size * sizeof(GLfloat), 
 				 data, node->vertex_store->bufferobj );
 
-   for (i = BRW_ATTRIB_POS+1 ; i <= BRW_ATTRIB_INDEX ; i++) {
+   for (i = 0 ; i < BRW_ATTRIB_MAX ; i++) {
       if (node->attrsz[i]) {
-	 COPY_CLEAN_4V(save->current[i], node->attrsz[i], data);
-	 data += node->attrsz[i];
+	 if (i != BRW_ATTRIB_POS)
+	    COPY_CLEAN_4V(save->current[i], node->attrsz[i], data);
 
 	 if (i >= BRW_ATTRIB_MAT_FRONT_AMBIENT &&
 	     i <= BRW_ATTRIB_MAT_BACK_INDEXES)
 	    ctx->NewState |= _NEW_LIGHT;
+
+	 /* Edgeflag requires special treatment:
+	  */
+	 if (i == BRW_ATTRIB_EDGEFLAG)
+	    ctx->Current.EdgeFlag = (data[0] == 1.0);
+
+	 data += node->attrsz[i] * sizeof(GLfloat);
       }
    }
 
@@ -105,7 +117,7 @@ static void brw_bind_vertex_list( struct brw_save_context *save,
 
    memset(arrays, 0, BRW_ATTRIB_MAX * sizeof(arrays[0]));
 
-   for (attr = 0; attr <= BRW_ATTRIB_INDEX; attr++) {
+   for (attr = 0; attr < BRW_ATTRIB_MAX; attr++) {
       if (node->attrsz[attr]) {
 	 arrays[attr].Ptr = (const GLubyte *)data;
 	 arrays[attr].Size = node->attrsz[attr];

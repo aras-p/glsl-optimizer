@@ -417,7 +417,7 @@ static void _save_copy_to_current( GLcontext *ctx )
    struct brw_save_context *save = IMM_CONTEXT(ctx)->save; 
    GLuint i;
 
-   for (i = BRW_ATTRIB_POS+1 ; i <= BRW_ATTRIB_INDEX ; i++) {
+   for (i = BRW_ATTRIB_POS+1 ; i < BRW_ATTRIB_MAX ; i++) {
       if (save->attrsz[i]) {
 	 save->currentsz[i][0] = save->attrsz[i];
 	 COPY_CLEAN_4V(save->current[i], 
@@ -445,7 +445,7 @@ static void _save_copy_from_current( GLcontext *ctx )
    struct brw_save_context *save = IMM_CONTEXT(ctx)->save; 
    GLint i;
 
-   for (i = BRW_ATTRIB_POS+1 ; i <= BRW_ATTRIB_INDEX ; i++) 
+   for (i = BRW_ATTRIB_POS+1 ; i < BRW_ATTRIB_MAX ; i++) 
       switch (save->attrsz[i]) {
       case 4: save->attrptr[i][3] = save->current[i][3];
       case 3: save->attrptr[i][2] = save->current[i][2];
@@ -1121,7 +1121,7 @@ static void _save_current_init( GLcontext *ctx )
       save->current[i] = ctx->ListState.CurrentAttrib[i];
    }
 
-   for (i = BRW_ATTRIB_FIRST_MATERIAL; i < BRW_ATTRIB_INDEX; i++) {
+   for (i = BRW_ATTRIB_FIRST_MATERIAL; i <= BRW_ATTRIB_LAST_MATERIAL; i++) {
       const GLuint j = i - BRW_ATTRIB_FIRST_MATERIAL;
       ASSERT(j < MAT_ATTRIB_MAX);
       save->currentsz[i] = &ctx->ListState.ActiveMaterialSize[j];
