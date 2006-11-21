@@ -92,9 +92,9 @@ intel_check_blit_fragment_ops(GLcontext * ctx)
             !ctx->Color.ColorMask[1] ||
             !ctx->Color.ColorMask[2] ||
             !ctx->Color.ColorMask[3] ||	/* can do this! */
-            ctx->Color.ColorLogicOpEnabled || /* can do this! */
             ctx->Texture._EnabledUnits ||
-	    ctx->FragmentProgram._Enabled);
+	    ctx->FragmentProgram._Enabled ||
+	    ctx->Color.BlendEnabled);
 }
 
 
@@ -210,7 +210,9 @@ do_blit_copypixels(GLcontext * ctx,
 			   rect.x1 + delta_x, 
 			   rect.y1 + delta_y,       /* srcx, srcy */
                            rect.x1, rect.y1,    /* dstx, dsty */
-                           rect.x2 - rect.x1, rect.y2 - rect.y1);
+                           rect.x2 - rect.x1, rect.y2 - rect.y1,
+			   ctx->Color.ColorLogicOpEnabled ?
+			   ctx->Color.LogicOp : GL_COPY);
       }
 
       intel->need_flush = GL_TRUE;
