@@ -43,7 +43,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************
 
-   Created from objects.c rev. 1.335
+   Created from objects.c rev. 1.345
 */
 
 #ifndef _NOUVEAU_REG_H
