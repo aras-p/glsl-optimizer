@@ -1143,7 +1143,7 @@ static void _ae_update_state( GLcontext *ctx )
                                  [at->array->Size-1]
                                  [TYPE_IDX(at->array->Type)];
          at->index = VERT_ATTRIB_TEX0 + i;
-	 check_vbo(actx, aa->array->BufferObj);
+	 check_vbo(actx, at->array->BufferObj);
          at++;
       }
    }
@@ -1170,7 +1170,7 @@ static void _ae_update_state( GLcontext *ctx )
                                      [TYPE_IDX(at->array->Type)];
          }
          at->index = i;
-	 check_vbo(actx, aa->array->BufferObj);
+	 check_vbo(actx, at->array->BufferObj);
          at++;
       }
    }
