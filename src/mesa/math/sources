@@ -7,3 +7,19 @@ m_matrix.c \
 m_translate.c \
 m_vector.c \
 m_xform.c
+
+MESA_MATH_HEADERS = \
+m_clip_tmp.h \
+m_copy_tmp.h \
+m_debug.h \
+m_debug_util.h \
+m_dotprod_tmp.h \
+m_eval.h \
+m_matrix.h \
+m_norm_tmp.h \
+m_trans_tmp.h \
+m_translate.h \
+m_vector.h \
+m_xform.h \
+m_xform_tmp.h \
+mathmod.h
