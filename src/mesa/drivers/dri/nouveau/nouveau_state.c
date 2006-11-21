@@ -158,8 +158,10 @@ void nouveauDDInitState(nouveauContextPtr nmesa)
         case NV_03:
         case NV_04:
         case NV_05:
+            /* No TCL engines for these ones */
+            break;
         case NV_10:
-            //nv10InitStateFuncs(&nmesa->glCtx->Driver);
+            nv10InitStateFuncs(&nmesa->glCtx->Driver);
             break;
         case NV_20:
             nv20InitStateFuncs(&nmesa->glCtx->Driver);
