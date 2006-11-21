@@ -1051,7 +1051,7 @@ GLboolean _ae_create_context( GLcontext *ctx )
    FogCoordFuncs[6] = _gloffset_FogCoordfvEXT;
    FogCoordFuncs[7] = _gloffset_FogCoorddvEXT;
 
-   ctx->aelt_context = MALLOC( sizeof(AEcontext) );
+   ctx->aelt_context = CALLOC( sizeof(AEcontext) );
    if (!ctx->aelt_context)
       return GL_FALSE;
 
@@ -1220,7 +1220,8 @@ void _ae_map_vbos( GLcontext *ctx )
 			    GL_DYNAMIC_DRAW_ARB,
 			    actx->vbo[i]);
 
-   actx->mapped_vbos = GL_TRUE;
+   if (actx->nr_vbos)
+      actx->mapped_vbos = GL_TRUE;
 }
 
 void _ae_unmap_vbos( GLcontext *ctx )
