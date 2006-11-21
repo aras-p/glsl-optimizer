@@ -470,7 +470,7 @@ void (*RenderMode)(GLcontext *ctx, GLenum mode );
 void (*Scissor)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
 
 /** Select flat or smooth shading */
-void nv20ShadeModel(GLcontext *ctx, GLenum mode)
+static void nv20ShadeModel(GLcontext *ctx, GLenum mode)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 
