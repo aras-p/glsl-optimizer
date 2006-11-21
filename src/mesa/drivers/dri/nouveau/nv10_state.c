@@ -34,7 +34,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "mtypes.h"
 #include "colormac.h"
 
-void nv10AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
+static void nv10AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	GLubyte ubRef;
@@ -45,7 +45,7 @@ void nv10AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 	OUT_RING_CACHE(ubRef);    /* NV10_TCL_PRIMITIVE_3D_ALPHA_FUNC_REF  */
 }
 
-void nv10BlendColor(GLcontext *ctx, const GLfloat color[4])
+static void nv10BlendColor(GLcontext *ctx, const GLfloat color[4])
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx); 
 	GLubyte cf[4];
@@ -59,7 +59,7 @@ void nv10BlendColor(GLcontext *ctx, const GLfloat color[4])
 	OUT_RING_CACHE(PACK_COLOR_8888(cf[3], cf[1], cf[2], cf[0]));
 }
 
-void nv10BlendEquationSeparate(GLcontext *ctx, GLenum modeRGB, GLenum modeA)
+static void nv10BlendEquationSeparate(GLcontext *ctx, GLenum modeRGB, GLenum modeA)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_BLEND_EQUATION, 1);
@@ -67,7 +67,7 @@ void nv10BlendEquationSeparate(GLcontext *ctx, GLenum modeRGB, GLenum modeA)
 }
 
 
-void nv10BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, GLenum dfactorRGB,
+static void nv10BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, GLenum dfactorRGB,
 		GLenum sfactorA, GLenum dfactorA)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -77,21 +77,12 @@ void nv10BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, GLenum dfactorRGB,
 }
 
 /*
-void nv30ClearColor(GLcontext *ctx, const GLfloat color[4])
+static void nv10ClearColor(GLcontext *ctx, const GLfloat color[4])
 {
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	GLubyte c[4];
-	UNCLAMPED_FLOAT_TO_RGBA_CHAN(c,color);
-	BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_CLEAR_VALUE_ARGB, 1);
-	OUT_RING_CACHE(PACK_COLOR_8888(c[3],c[0],c[1],c[2]));
 }
 
-void nv30ClearDepth(GLcontext *ctx, GLclampd d)
+static void nv10ClearDepth(GLcontext *ctx, GLclampd d)
 {
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	nmesa->clear_value=((nmesa->clear_value&0x000000FF)|(((uint32_t)(d*0xFFFFFF))<<8));
-	BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_CLEAR_VALUE_DEPTH, 1);
-	OUT_RING_CACHE(nmesa->clear_value);
 }
 */
 
@@ -100,16 +91,12 @@ void nv30ClearDepth(GLcontext *ctx, GLclampd d)
  */
 
 /*
-void nv30ClearStencil(GLcontext *ctx, GLint s)
+static void nv10ClearStencil(GLcontext *ctx, GLint s)
 {
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	nmesa->clear_value=((nmesa->clear_value&0xFFFFFF00)|(s&0x000000FF));
-	BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_CLEAR_VALUE_DEPTH, 1);
-	OUT_RING_CACHE(nmesa->clear_value);
 }
 */
 
-void nv10ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
+static void nv10ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_CLIP_PLANE_A(plane), 4);
@@ -120,7 +107,7 @@ void nv10ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
 }
 
 /* Seems does not support alpha in color mask */
-void nv10ColorMask(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
+static void nv10ColorMask(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
 		GLboolean bmask, GLboolean amask )
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -128,40 +115,40 @@ void nv10ColorMask(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
 	OUT_RING_CACHE(/*((amask && 0x01) << 24) |*/ ((rmask && 0x01) << 16) | ((gmask && 0x01)<< 8) | ((bmask && 0x01) << 0));
 }
 
-void nv10ColorMaterial(GLcontext *ctx, GLenum face, GLenum mode)
+static void nv10ColorMaterial(GLcontext *ctx, GLenum face, GLenum mode)
 {
-	// TODO I need sex
+	// TODO I need love
 }
 
-void nv10CullFace(GLcontext *ctx, GLenum mode)
+static void nv10CullFace(GLcontext *ctx, GLenum mode)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_CULL_FACE, 1);
 	OUT_RING_CACHE(mode);
 }
 
-void nv10FrontFace(GLcontext *ctx, GLenum mode)
+static void nv10FrontFace(GLcontext *ctx, GLenum mode)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_FRONT_FACE, 1);
 	OUT_RING_CACHE(mode);
 }
 
-void nv10DepthFunc(GLcontext *ctx, GLenum func)
+static void nv10DepthFunc(GLcontext *ctx, GLenum func)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_DEPTH_FUNC, 1);
 	OUT_RING_CACHE(func);
 }
 
-void nv10DepthMask(GLcontext *ctx, GLboolean flag)
+static void nv10DepthMask(GLcontext *ctx, GLboolean flag)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_DEPTH_WRITE_ENABLE, 1);
 	OUT_RING_CACHE(flag);
 }
 
-void nv10DepthRange(GLcontext *ctx, GLclampd nearval, GLclampd farval)
+static void nv10DepthRange(GLcontext *ctx, GLclampd nearval, GLclampd farval)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_DEPTH_RANGE_NEAR, 2);
@@ -174,7 +161,7 @@ void nv10DepthRange(GLcontext *ctx, GLclampd nearval, GLclampd farval)
 /** Specify the buffers for writing for fragment programs*/
 //void (*DrawBuffers)( GLcontext *ctx, GLsizei n, const GLenum *buffers );
 
-void nv10Enable(GLcontext *ctx, GLenum cap, GLboolean state)
+static void nv10Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	switch(cap)
@@ -185,7 +172,7 @@ void nv10Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 			break;
 //		case GL_AUTO_NORMAL:
 		case GL_BLEND:
-			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_BLEND_ENABLE, 1);
+			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_BLEND_FUNC_ENABLE, 1);
 			OUT_RING_CACHE(state);
 			break;
 		case GL_CLIP_PLANE0:
@@ -295,10 +282,6 @@ void nv10Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_POLYGON_SMOOTH_ENABLE, 1);
 			OUT_RING_CACHE(state);
 			break;
-		case GL_POINT_SMOOTH:
-			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_POINT_SMOOTH_ENABLE, 1);
-			OUT_RING_CACHE(state);
-			break;
 //		case GL_POLYGON_STIPPLE:
 //		case GL_POST_COLOR_MATRIX_COLOR_TABLE:
 //		case GL_POST_CONVOLUTION_COLOR_TABLE:
@@ -306,6 +289,7 @@ void nv10Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 //		case GL_SCISSOR_TEST:
 //		case GL_SEPARABLE_2D:
 		case GL_STENCIL_TEST:
+			// TODO BACK and FRONT ?
 			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_STENCIL_ENABLE, 1);
 			OUT_RING_CACHE(state);
 			break;
@@ -319,7 +303,7 @@ void nv10Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 	}
 }
 
-void nv10Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
+static void nv10Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
 {
     nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
     switch(pname)
@@ -335,108 +319,106 @@ void nv10Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
 
 }
    
-void nv10Hint(GLcontext *ctx, GLenum target, GLenum mode)
+static void nv10Hint(GLcontext *ctx, GLenum target, GLenum mode)
 {
-	// TODO I need sex (fog and line_smooth hints)
+	// TODO I need love (fog and line_smooth hints)
 }
 
 // void (*IndexMask)(GLcontext *ctx, GLuint mask);
 
-void nv10Lightfv(GLcontext *ctx, GLenum light, GLenum pname, const GLfloat *params )
+static void nv10Lightfv(GLcontext *ctx, GLenum light, GLenum pname, const GLfloat *params )
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	/* not sure where the fourth param value goes...*/
 	switch(pname)
 	{
 		case GL_AMBIENT:
-			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_AMBIENT(light), 3);
+			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_FRONT_SIDE_PRODUCT_AMBIENT_A(light), 3);
 			OUT_RING_CACHEf(params[0]);
 			OUT_RING_CACHEf(params[1]);
 			OUT_RING_CACHEf(params[2]);
 			break;
 		case GL_DIFFUSE:
-			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_DIFFUSE(light), 3);
+			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_FRONT_SIDE_PRODUCT_DIFFUSE_A(light), 3);
 			OUT_RING_CACHEf(params[0]);
 			OUT_RING_CACHEf(params[1]);
 			OUT_RING_CACHEf(params[2]);
 			break;
 		case GL_SPECULAR:
-			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_SPECULAR(light), 3);
+			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_FRONT_SIDE_PRODUCT_SPECULAR_A(light), 3);
 			OUT_RING_CACHEf(params[0]);
 			OUT_RING_CACHEf(params[1]);
 			OUT_RING_CACHEf(params[2]);
 			break;
-#if 0
+#if 0 /* FIXME, should be easy to do */
 		case GL_SPOT_DIRECTION:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_DIR_X(light), 3);
+			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_SPOT_DIR_X(light), 3);
 			OUT_RING_CACHEf(params[0]);
 			OUT_RING_CACHEf(params[1]);
 			OUT_RING_CACHEf(params[2]);
 			break;
+#endif
 		case GL_POSITION:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_POSITION_X(light), 3);
+			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_POSITION_X(light), 3);
 			OUT_RING_CACHEf(params[0]);
 			OUT_RING_CACHEf(params[1]);
 			OUT_RING_CACHEf(params[2]);
 			break;
+#if 0 /* FIXME, should be easy to do */
 		case GL_SPOT_EXPONENT:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_EXPONENT(light), 1);
+			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_SPOT_EXPONENT(light), 1);
 			OUT_RING_CACHEf(*params);
 			break;
 		case GL_SPOT_CUTOFF:
 			/* you can't factor these */
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_CUTOFF_A(light), 1);
+			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_SPOT_CUTOFF_A(light), 1);
 			OUT_RING_CACHEf(params[0]);
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_CUTOFF_B(light), 1);
+			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_SPOT_CUTOFF_B(light), 1);
 			OUT_RING_CACHEf(params[1]);
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_CUTOFF_C(light), 1);
+			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_SPOT_CUTOFF_C(light), 1);
 			OUT_RING_CACHEf(params[2]);
 			break;
+#endif
 		case GL_CONSTANT_ATTENUATION:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_CONSTANT_ATTENUATION(light), 1);
+			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_CONSTANT_ATTENUATION(light), 1);
 			OUT_RING_CACHEf(*params);
 			break;
 		case GL_LINEAR_ATTENUATION:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_LINEAR_ATTENUATION(light), 1);
+			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_LINEAR_ATTENUATION(light), 1);
 			OUT_RING_CACHEf(*params);
 			break;
 		case GL_QUADRATIC_ATTENUATION:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_QUADRATIC_ATTENUATION(light), 1);
+			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_QUADRATIC_ATTENUATION(light), 1);
 			OUT_RING_CACHEf(*params);
 			break;
-#endif
 		default:
 			break;
 	}
 }
 
 /** Set the lighting model parameters */
-void (*LightModelfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);
+static void (*LightModelfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);
 
-/*
-void nv30LineStipple(GLcontext *ctx, GLint factor, GLushort pattern )
+
+static void nv10LineStipple(GLcontext *ctx, GLint factor, GLushort pattern )
 {
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LINE_STIPPLE_PATTERN, 1);
-	OUT_RING_CACHE((pattern << 16) | factor);
 }
 
-void nv30LineWidth(GLcontext *ctx, GLfloat width)
+static void nv10LineWidth(GLcontext *ctx, GLfloat width)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LINE_WIDTH_SMOOTH, 1);
-	OUT_RING_CACHEf(width);
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LINE_WIDTH, 1);
+	OUT_RING_CACHE(((int) (width * 8.0)) & -4);
 }
-*/
 
-void nv10LogicOpcode(GLcontext *ctx, GLenum opcode)
+static void nv10LogicOpcode(GLcontext *ctx, GLenum opcode)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LOGIC_OP, 1);
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_COLOR_LOGIC_OP_OP, 1);
 	OUT_RING_CACHE(opcode);
 }
 
-void nv10PointParameterfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
+static void nv10PointParameterfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
 {
 	/*TODO: not sure what goes here. */
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -444,15 +426,28 @@ void nv10PointParameterfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
 }
 
 /** Specify the diameter of rasterized points */
-void nv10PointSize(GLcontext *ctx, GLfloat size)
+static void nv10PointSize(GLcontext *ctx, GLfloat size)
 {
-    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-    BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_POINT_SIZE, 1);
-    OUT_RING_CACHEf(size);
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_POINT_SIZE, 1);
+	OUT_RING_CACHE(((int) (size * 8.0)) & -4);
 }
 
 /** Select a polygon rasterization mode */
-void (*PolygonMode)(GLcontext *ctx, GLenum face, GLenum mode);
+static void nv10PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	if (face == GL_FRONT || face == GL_FRONT_AND_BACK) {
+		BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_POLYGON_MODE_FRONT, 1);
+		OUT_RING_CACHE(mode);
+	}
+	if (face == GL_BACK || face == GL_FRONT_AND_BACK) {
+		BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_POLYGON_MODE_BACK, 1);
+		OUT_RING_CACHE(mode);
+	}
+}
+
 /** Set the scale and units used to calculate depth values */
 void (*PolygonOffset)(GLcontext *ctx, GLfloat factor, GLfloat units);
 /** Set the polygon stippling pattern */
@@ -519,12 +514,61 @@ void (*TexParameter)(GLcontext *ctx, GLenum target,
 void (*TextureMatrix)(GLcontext *ctx, GLuint unit, const GLmatrix *mat);
 
 /** Set the viewport */
-void nv10Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+static void nv10Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
     /* TODO: Where do the VIEWPORT_XFRM_* regs come in? */
     nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
     BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 2);
     OUT_RING_CACHE((w << 16) | x);
     OUT_RING_CACHE((h << 16) | y);
+}
+
+void nv10InitStateFuncs(struct dd_function_table *func)
+{
+	func->AlphaFunc			= nv10AlphaFunc;
+	func->BlendColor		= nv10BlendColor;
+	func->BlendEquationSeparate	= nv10BlendEquationSeparate;
+	func->BlendFuncSeparate		= nv10BlendFuncSeparate;
+#if 0
+	func->ClearColor		= nv10ClearColor;
+	func->ClearDepth		= nv10ClearDepth;
+	func->ClearStencil		= nv10ClearStencil;
+#endif
+	func->ClipPlane			= nv10ClipPlane;
+	func->ColorMask			= nv10ColorMask;
+	func->ColorMaterial		= nv10ColorMaterial;
+	func->CullFace			= nv10CullFace;
+	func->FrontFace			= nv10FrontFace;
+	func->DepthFunc			= nv10DepthFunc;
+	func->DepthMask			= nv10DepthMask;
+	func->DepthRange		= nv10DepthRange;
+	func->Enable			= nv10Enable;
+	func->Fogfv			= nv10Fogfv;
+	func->Hint			= nv10Hint;
+	func->Lightfv			= nv10Lightfv;
+/*	func->LightModelfv		= nv10LightModelfv; */
+	func->LineStipple		= nv10LineStipple;
+	func->LineWidth			= nv10LineWidth;
+	func->LogicOpcode		= nv10LogicOpcode;
+	func->PointParameterfv		= nv10PointParameterfv;
+	func->PointSize			= nv10PointSize;
+	func->PolygonMode		= nv10PolygonMode;
+#if 0
+	func->PolygonOffset		= nv10PolygonOffset;
+	func->PolygonStipple		= nv10PolygonStipple;
+	func->ReadBuffer		= nv10ReadBuffer;
+	func->RenderMode		= nv10RenderMode;
+	func->Scissor			= nv10Scissor;
+#endif
+	func->ShadeModel		= nv10ShadeModel;
+	func->StencilFuncSeparate	= nv10StencilFuncSeparate;
+	func->StencilMaskSeparate	= nv10StencilMaskSeparate;
+	func->StencilOpSeparate		= nv10StencilOpSeparate;
+#if 0
+	func->TexGen			= nv10TexGen;
+	func->TexParameter		= nv10TexParameter;
+	func->TextureMatrix		= nv10TextureMatrix;
+#endif
+	func->Viewport			= nv10Viewport;
 }
 
