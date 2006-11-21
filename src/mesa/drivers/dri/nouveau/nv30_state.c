@@ -477,19 +477,19 @@ static void nv30PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
 static void nv30PolygonOffset(GLcontext *ctx, GLfloat factor, GLfloat units)
 {
         nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-        BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_POLYGON_OFFSET_FACTOR, 2);
-        OUT_RINGf(factor);
+        BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_POLYGON_OFFSET_FACTOR, 2);
+        OUT_RING_CACHEf(factor);
 
         /* Looks like we always multiply units by 2.0... according to the dumps.*/
-        OUT_RINGf(units * 2.0);
+        OUT_RING_CACHEf(units * 2.0);
 }
 
 /** Set the polygon stippling pattern */
 static void nv30PolygonStipple(GLcontext *ctx, const GLubyte *mask )
 {
         nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-        BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_POLYGON_STIPPLE_PATTERN(0), 32);
-        OUT_RINGp(mask, 32);
+        BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_POLYGON_STIPPLE_PATTERN(0), 32);
+        OUT_RING_CACHEp(mask, 32);
 }
 
 /* Specifies the current buffer for reading */
@@ -501,9 +501,9 @@ void (*RenderMode)(GLcontext *ctx, GLenum mode );
 static void nv30Scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
         nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-        BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SCISSOR_WIDTH_XPOS, 2);
-        OUT_RING((w << 16) | x);
-        OUT_RING((y << 16) | y);
+        BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SCISSOR_WIDTH_XPOS, 2);
+        OUT_RING_CACHE((w << 16) | x);
+        OUT_RING_CACHE((y << 16) | y);
 }
 
 /** Select flat or smooth shading */
@@ -584,9 +584,9 @@ void (*TexParameter)(GLcontext *ctx, GLenum target,
 static void nv30TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
 {
         nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-        BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_TX_MATRIX(unit, 0), 16);
+        BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_TX_MATRIX(unit, 0), 16);
         /*XXX: This SHOULD work.*/
-        OUT_RINGp(mat->m, 16);
+        OUT_RING_CACHEp(mat->m, 16);
 }
 
 /** Set the viewport */

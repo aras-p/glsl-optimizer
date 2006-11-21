@@ -112,6 +112,11 @@ extern void nouveau_state_cache_init(nouveauContextPtr nmesa);
 	nmesa->state_cache.current_pos++;							\
 }while(0)
 
+#define OUT_RING_CACHEp(ptr,sz) do {							\
+uint32_t* p=(uint32_t*)(ptr);								\
+int i; for(i=0;i<sz;i++) OUT_RING_CACHE(*(p+i)); 					\
+}while(0)
+
 #define BEGIN_RING_SIZE(subchannel,tag,size) do {					\
 	nouveau_state_cache_flush(nmesa);						\
 	if (nmesa->fifo.free <= (size))							\
