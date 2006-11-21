@@ -571,7 +571,8 @@ void SetVideoMode(void)
    }
 
    /* initialize colormap */
-   LoadColorMap();
+   if(FixedInfo.visual != FB_VISUAL_TRUECOLOR)
+      LoadColorMap();
 }
 
 void CreateBuffer()
@@ -786,6 +787,7 @@ void glutDestroyWindow(int win)
    glFBDevDestroyContext(Context);
    glFBDevDestroyBuffer(Buffer);
    glFBDevDestroyVisual(Visual);
+  
    Visual = NULL;
 }
 

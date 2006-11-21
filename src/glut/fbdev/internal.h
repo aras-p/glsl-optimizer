@@ -72,14 +72,13 @@ extern GLFBDevVisualPtr Visual;
 #define REVERSECMAPSIZE (1<<REVERSECMAPSIZELOG)
 
 extern unsigned short RedColorMap[256],
-                        GreenColorMap[256],
-                        BlueColorMap[256];
+                      GreenColorMap[256],
+                      BlueColorMap[256];
 extern unsigned char ReverseColorMap[REVERSECMAPSIZE]
                                     [REVERSECMAPSIZE]
                                     [REVERSECMAPSIZE];
-void LoadOldColorMap(void);
+
 void LoadColorMap(void);
-void UnloadColorMap(void);
 void RestoreColorMap(void);
 
 /* --- mouse --- */

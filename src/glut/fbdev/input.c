@@ -53,7 +53,7 @@
 int GpmMouse;
 #endif
 
-int CurrentVT;
+int CurrentVT = 0;
 int ConsoleFD = -1;
 
 int KeyboardModifiers;
@@ -529,14 +529,14 @@ static void VTSwitchHandler(int sig)
       /* this is a hack to turn the cursor off */
       ioctl(FrameBufferFD, FBIOPUT_VSCREENINFO, &VarInfo);
 
-      RestoreColorMap();
+      if(FixedInfo.visual != FB_VISUAL_TRUECOLOR)
+         RestoreColorMap();
 
       Active = 1;
       Visible = 1;
       VisibleSwitch = 1;
 
       Redisplay = 1;
-
       break;
    }
 }

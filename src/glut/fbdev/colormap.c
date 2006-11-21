@@ -24,6 +24,7 @@
  * Written by Sean D'Epagnier (c) 2006
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <linux/fb.h>
@@ -37,7 +38,7 @@
 #define TORMAP(x)(unsigned short)((x<0?0:x>1?1:x)*(GLfloat)(REVERSECMAPSIZE-1))
 #define FROMCMAP(x) (GLfloat)x / (GLfloat)((1<<16) - 1)
 
-static struct fb_cmap ColorMap;
+static struct fb_cmap ColorMap, OriginalColorMap;
 
 unsigned short RedColorMap[256], GreenColorMap[256], BlueColorMap[256];
 

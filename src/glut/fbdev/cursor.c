@@ -28,8 +28,10 @@
    to render the cursor, this is faster, it would be good to use a hardware
    cursor if it exists instead */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <string.h>
 
 #include <linux/fb.h>
 

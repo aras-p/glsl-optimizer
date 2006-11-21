@@ -24,6 +24,7 @@
  * Written by Sean D'Epagnier (c) 2006
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 

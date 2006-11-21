@@ -24,6 +24,8 @@
  * Written by Sean D'Epagnier (c) 2006
  */
 
+#include <stdlib.h>
+
 #include <GL/glut.h>
 
 #include "internal.h"
