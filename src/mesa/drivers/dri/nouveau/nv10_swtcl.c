@@ -61,6 +61,7 @@ static void nv10ResetLineStipple( GLcontext *ctx );
 
 static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t primitive,uint32_t size)
 {
+	// FIXME the primitive type can probably go trough the caching system as well
 	if (nmesa->screen->card->type==NV_10)
 		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	else if (nmesa->screen->card->type==NV_20)
@@ -79,6 +80,7 @@ static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t pri
 
 inline void nv10FinishPrimitive(struct nouveau_context *nmesa)
 {
+	// FIXME this is probably not needed
 	if (nmesa->screen->card->type==NV_10)
 		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	else if (nmesa->screen->card->type==NV_20)
@@ -216,23 +218,6 @@ static void nv10_render_noop_verts(GLcontext *ctx,GLuint start,GLuint count,GLui
 {
 }
 
-static inline void nv10_render_generic_primitive_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags,GLuint prim)
-{
-	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	GLubyte *vertptr = (GLubyte *)nmesa->verts;
-	GLuint vertsize = nmesa->vertex_size;
-	GLuint size_dword = vertsize*(count-start);
-	const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;
-	GLuint j;
-
-	nv10ExtendPrimitive(nmesa, size_dword);
-	nv10StartPrimitive(nmesa,prim+1,size_dword);
-	for (j=start; j<count; j++ ) {
-		OUT_RINGp((nouveauVertex*)(vertptr+(elt[j]*vertsize*4)),vertsize);
-	}
-	nv10FinishPrimitive(nmesa);
-}
-
 static void (*nv10_render_tab_verts[GL_POLYGON+2])(GLcontext *,
 							   GLuint,
 							   GLuint,
@@ -251,6 +236,23 @@ static void (*nv10_render_tab_verts[GL_POLYGON+2])(GLcontext *,
    nv10_render_noop_verts,
 };
 
+
+static inline void nv10_render_generic_primitive_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags,GLuint prim)
+{
+	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
+	GLubyte *vertptr = (GLubyte *)nmesa->verts;
+	GLuint vertsize = nmesa->vertex_size;
+	GLuint size_dword = vertsize*(count-start);
+	const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;
+	GLuint j;
+
+	nv10ExtendPrimitive(nmesa, size_dword);
+	nv10StartPrimitive(nmesa,prim+1,size_dword);
+	for (j=start; j<count; j++ ) {
+		OUT_RINGp((nouveauVertex*)(vertptr+(elt[j]*vertsize*4)),vertsize);
+	}
+	nv10FinishPrimitive(nmesa);
+}
 
 static void nv10_render_points_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags)
 {
@@ -440,8 +442,8 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 		size = attr_size[j] << 4;	\
 		size |= (attr_size[j]*4) << 8;	\
 		size |= NV_VERTEX_ATTRIBUTE_TYPE_FLOAT;	\
-		BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VERTEX_ATTR(i),1);	\
-		OUT_RING(size);	\
+		BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VERTEX_ATTR(i),1);	\
+		OUT_RING_CACHE(size);	\
 	} while (0)
 
 		NV10_SET_VERTEX_ATTRIB(0, _TNL_ATTRIB_POS);
@@ -453,22 +455,23 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 		NV10_SET_VERTEX_ATTRIB(6, _TNL_ATTRIB_WEIGHT);
 		NV10_SET_VERTEX_ATTRIB(7, _TNL_ATTRIB_FOG);
 
-		BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VERTEX_ARRAY_VALIDATE,1);
-		OUT_RING(0);
+		BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VERTEX_ARRAY_VALIDATE,1);
+		OUT_RING_CACHE(0);
 	} else if (nmesa->screen->card->type==NV_20) {
 		for(i=0;i<16;i++)
 		{
 			int size=attr_size[i];
-			BEGIN_RING_SIZE(NvSub3D,NV20_TCL_PRIMITIVE_3D_VERTEX_ATTR(i),1);
-			OUT_RING(NV_VERTEX_ATTRIBUTE_TYPE_FLOAT|(size*0x10));
+			BEGIN_RING_CACHE(NvSub3D,NV20_TCL_PRIMITIVE_3D_VERTEX_ATTR(i),1);
+			OUT_RING_CACHE(NV_VERTEX_ATTRIBUTE_TYPE_FLOAT|(size*0x10));
 		}
 	} else {
-		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_ATTR0_POS,slots);
+		BEGIN_RING_CACHE(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_ATTR0_POS,slots);
 		for(i=0;i<slots;i++)
 		{
 			int size=attr_size[i];
-			OUT_RING(NV_VERTEX_ATTRIBUTE_TYPE_FLOAT|(size*0x10));
+			OUT_RING_CACHE(NV_VERTEX_ATTRIBUTE_TYPE_FLOAT|(size*0x10));
 		}
+		// FIXME this is probably not needed
 		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_UNK_0,1);
 		OUT_RING(0);
 		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_UNK_0,1);

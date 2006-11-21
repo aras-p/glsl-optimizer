@@ -45,7 +45,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Ring/fifo interface
  *
  * - Begin a ring section with BEGIN_RING_SIZE (if you know the full size in advance)
- * - Begin a ring section with BEGIN_RING_PRIM otherwise (and then finish with FINISH_RING_PRIM)
  * - Output stuff to the ring with either OUT_RINGp (outputs a raw mem chunk), OUT_RING (1 uint32_t) or OUT_RINGf (1 float)
  * - RING_AVAILABLE returns the available fifo (in uint32_ts)
  * - RING_AHEAD returns how much ahead of the last submission point we are
@@ -59,7 +58,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifdef NOUVEAU_RING_DEBUG
 
 #define OUT_RINGp(ptr,sz) do {                                                  \
-uint32_t* p=(uint32_t*)ptr;							\
+uint32_t* p=(uint32_t*)(ptr);							\
 int i; printf("OUT_RINGp: (size 0x%x dwords)\n",sz); for(i=0;i<sz;i++) printf(" 0x%08x\n", *(p+i)); 	\
 }while(0)
 
@@ -74,33 +73,47 @@ int i; printf("OUT_RINGp: (size 0x%x dwords)\n",sz); for(i=0;i<sz;i++) printf(" 
 #else
 
 #define OUT_RINGp(ptr,sz) do{							\
-	memcpy(nmesa->fifo.buffer+nmesa->fifo.current,ptr,sz*4);		\
-	nmesa->fifo.current+=sz;						\
+	memcpy(nmesa->fifo.buffer+nmesa->fifo.current,ptr,(sz)*4);		\
+	nmesa->fifo.current+=(sz);						\
 }while(0)
 
 #define OUT_RING(n) do {							\
-nmesa->fifo.buffer[nmesa->fifo.current++]=n;					\
+nmesa->fifo.buffer[nmesa->fifo.current++]=(n);					\
 }while(0)
 
 #define OUT_RINGf(n) do {							\
-*((float*)(nmesa->fifo.buffer+nmesa->fifo.current++))=n;			\
+*((float*)(nmesa->fifo.buffer+nmesa->fifo.current++))=(n);			\
 }while(0)
 
 #endif
 
 extern void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size);
+extern void nouveau_state_cache_flush(nouveauContextPtr nmesa);
+extern void nouveau_state_cache_init(nouveauContextPtr nmesa);
 
-#define BEGIN_RING_PRIM(subchannel,tag,size) do {					\
-	if (nmesa->fifo.free<size)							\
-		WAIT_RING(nmesa,(size));						\
-	OUT_RING( ((subchannel) << 13) | (tag));					\
+#define BEGIN_RING_CACHE(subchannel,tag,size) do {					\
+	nmesa->state_cache.dirty=1;	 						\
+	nmesa->state_cache.current_pos=((tag)/4);					\
 }while(0)
 
-#define FINISH_RING_PRIM() do{								\
-	nmesa->fifo.buffer[nmesa->fifo.put]|=((nmesa->fifo.current-nmesa->fifo.put) << 18);		\
+#define OUT_RING_CACHE(n) do {									\
+	if (nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value!=(n))	{	\
+		nmesa->state_cache.atoms[nmesa->state_cache.current_pos].dirty=1; 		\
+		nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value=(n);		\
+	}											\
+	nmesa->state_cache.current_pos++;							\
+}while(0)
+
+#define OUT_RING_CACHEf(n) do {									\
+	if ((*(float*)(&nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value))!=(n)){	\
+		nmesa->state_cache.atoms[nmesa->state_cache.current_pos].dirty=1;	 	\
+		(*(float*)(&nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value))=(n);\
+	}											\
+	nmesa->state_cache.current_pos++;							\
 }while(0)
 
 #define BEGIN_RING_SIZE(subchannel,tag,size) do {					\
+	nouveau_state_cache_flush(nmesa);						\
 	if (nmesa->fifo.free <= (size))							\
 		WAIT_RING(nmesa,(size));						\
 	OUT_RING( ((size)<<18) | ((subchannel) << 13) | (tag));				\

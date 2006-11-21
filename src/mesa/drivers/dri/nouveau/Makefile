@@ -22,7 +22,8 @@ DRIVER_SOURCES = \
 	nv10_swtcl.c             \
 	nv10_state.c             \
 	nv20_state.c             \
-	nv30_state.c
+	nv30_state.c             \
+	nouveau_state_cache.c
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \

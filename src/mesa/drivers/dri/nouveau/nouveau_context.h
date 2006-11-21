@@ -37,6 +37,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_vertex.h"
 
 #include "nouveau_screen.h"
+#include "nouveau_state_cache.h"
 
 #include "xmlconfig.h"
 
@@ -73,7 +74,6 @@ typedef void (*nouveau_line_func)( struct nouveau_context*,
 typedef void (*nouveau_point_func)( struct nouveau_context*,
 		nouveauVertex * );
 
-
 typedef struct nouveau_context {
 	/* Mesa context */
 	GLcontext *glCtx;
@@ -101,6 +101,9 @@ typedef struct nouveau_context {
 	/* Light state */
 	GLboolean lighting_enabled;
 	uint32_t enabled_lights;
+
+	/* Cached state */
+	nouveau_state_cache state_cache;
 
 	/* The drawing fallbacks */
 	GLuint Fallback;

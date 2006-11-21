@@ -108,8 +108,6 @@ static void nouveauDDUpdateHWState(GLcontext *ctx)
 
     if ( new_state || nmesa->new_render_state & _NEW_TEXTURE )
     {
-        FINISH_RING_PRIM();
-
         nmesa->new_state = 0;
 
         /* Update the various parts of the context's state.
@@ -174,6 +172,7 @@ void nouveauDDInitState(nouveauContextPtr nmesa)
         default:
             break;
     }
+    nouveau_state_cache_init(nmesa);
 }
 
 /* Initialize the driver's state functions */
@@ -231,95 +230,98 @@ void nouveauDDInitStateFuncs(GLcontext *ctx)
    ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 }
 
+#define STATE_INIT(a) if (ctx->Driver.a) ctx->Driver.a
+
 void nouveauInitState(GLcontext *ctx)
 {
     /*
      * Mesa should do this for us:
      */
-    ctx->Driver.AlphaFunc( ctx, 
+
+    STATE_INIT(AlphaFunc)( ctx, 
             ctx->Color.AlphaFunc,
             ctx->Color.AlphaRef);
 
-    ctx->Driver.BlendColor( ctx,
+    STATE_INIT(BlendColor)( ctx,
             ctx->Color.BlendColor );
 
-    ctx->Driver.BlendEquationSeparate( ctx, 
+    STATE_INIT(BlendEquationSeparate)( ctx, 
             ctx->Color.BlendEquationRGB,
             ctx->Color.BlendEquationA);
 
-    ctx->Driver.BlendFuncSeparate( ctx,
+    STATE_INIT(BlendFuncSeparate)( ctx,
             ctx->Color.BlendSrcRGB,
             ctx->Color.BlendDstRGB,
             ctx->Color.BlendSrcA,
             ctx->Color.BlendDstA);
 
-    ctx->Driver.ColorMask( ctx, 
+    STATE_INIT(ColorMask)( ctx, 
             ctx->Color.ColorMask[RCOMP],
             ctx->Color.ColorMask[GCOMP],
             ctx->Color.ColorMask[BCOMP],
             ctx->Color.ColorMask[ACOMP]);
 
-    ctx->Driver.CullFace( ctx, ctx->Polygon.CullFaceMode );
-    ctx->Driver.DepthFunc( ctx, ctx->Depth.Func );
-    ctx->Driver.DepthMask( ctx, ctx->Depth.Mask );
+    STATE_INIT(CullFace)( ctx, ctx->Polygon.CullFaceMode );
+    STATE_INIT(DepthFunc)( ctx, ctx->Depth.Func );
+    STATE_INIT(DepthMask)( ctx, ctx->Depth.Mask );
 
-    ctx->Driver.Enable( ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled );
-    ctx->Driver.Enable( ctx, GL_BLEND, ctx->Color.BlendEnabled );
-    ctx->Driver.Enable( ctx, GL_COLOR_LOGIC_OP, ctx->Color.ColorLogicOpEnabled );
-    ctx->Driver.Enable( ctx, GL_COLOR_SUM, ctx->Fog.ColorSumEnabled );
-    ctx->Driver.Enable( ctx, GL_CULL_FACE, ctx->Polygon.CullFlag );
-    ctx->Driver.Enable( ctx, GL_DEPTH_TEST, ctx->Depth.Test );
-    ctx->Driver.Enable( ctx, GL_DITHER, ctx->Color.DitherFlag );
-    ctx->Driver.Enable( ctx, GL_FOG, ctx->Fog.Enabled );
-    ctx->Driver.Enable( ctx, GL_LIGHTING, ctx->Light.Enabled );
-    ctx->Driver.Enable( ctx, GL_LINE_SMOOTH, ctx->Line.SmoothFlag );
-    ctx->Driver.Enable( ctx, GL_POLYGON_STIPPLE, ctx->Polygon.StippleFlag );
-    ctx->Driver.Enable( ctx, GL_SCISSOR_TEST, ctx->Scissor.Enabled );
-    ctx->Driver.Enable( ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled );
-    ctx->Driver.Enable( ctx, GL_TEXTURE_1D, GL_FALSE );
-    ctx->Driver.Enable( ctx, GL_TEXTURE_2D, GL_FALSE );
-    ctx->Driver.Enable( ctx, GL_TEXTURE_RECTANGLE_NV, GL_FALSE );
-    ctx->Driver.Enable( ctx, GL_TEXTURE_3D, GL_FALSE );
-    ctx->Driver.Enable( ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE );
+    STATE_INIT(Enable)( ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled );
+    STATE_INIT(Enable)( ctx, GL_BLEND, ctx->Color.BlendEnabled );
+    STATE_INIT(Enable)( ctx, GL_COLOR_LOGIC_OP, ctx->Color.ColorLogicOpEnabled );
+    STATE_INIT(Enable)( ctx, GL_COLOR_SUM, ctx->Fog.ColorSumEnabled );
+    STATE_INIT(Enable)( ctx, GL_CULL_FACE, ctx->Polygon.CullFlag );
+    STATE_INIT(Enable)( ctx, GL_DEPTH_TEST, ctx->Depth.Test );
+    STATE_INIT(Enable)( ctx, GL_DITHER, ctx->Color.DitherFlag );
+    STATE_INIT(Enable)( ctx, GL_FOG, ctx->Fog.Enabled );
+    STATE_INIT(Enable)( ctx, GL_LIGHTING, ctx->Light.Enabled );
+    STATE_INIT(Enable)( ctx, GL_LINE_SMOOTH, ctx->Line.SmoothFlag );
+    STATE_INIT(Enable)( ctx, GL_POLYGON_STIPPLE, ctx->Polygon.StippleFlag );
+    STATE_INIT(Enable)( ctx, GL_SCISSOR_TEST, ctx->Scissor.Enabled );
+    STATE_INIT(Enable)( ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled );
+    STATE_INIT(Enable)( ctx, GL_TEXTURE_1D, GL_FALSE );
+    STATE_INIT(Enable)( ctx, GL_TEXTURE_2D, GL_FALSE );
+    STATE_INIT(Enable)( ctx, GL_TEXTURE_RECTANGLE_NV, GL_FALSE );
+    STATE_INIT(Enable)( ctx, GL_TEXTURE_3D, GL_FALSE );
+    STATE_INIT(Enable)( ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE );
 
-    ctx->Driver.Fogfv( ctx, GL_FOG_COLOR, ctx->Fog.Color );
-    ctx->Driver.Fogfv( ctx, GL_FOG_MODE, 0 );
-    ctx->Driver.Fogfv( ctx, GL_FOG_DENSITY, &ctx->Fog.Density );
-    ctx->Driver.Fogfv( ctx, GL_FOG_START, &ctx->Fog.Start );
-    ctx->Driver.Fogfv( ctx, GL_FOG_END, &ctx->Fog.End );
+    STATE_INIT(Fogfv)( ctx, GL_FOG_COLOR, ctx->Fog.Color );
+    STATE_INIT(Fogfv)( ctx, GL_FOG_MODE, 0 );
+    STATE_INIT(Fogfv)( ctx, GL_FOG_DENSITY, &ctx->Fog.Density );
+    STATE_INIT(Fogfv)( ctx, GL_FOG_START, &ctx->Fog.Start );
+    STATE_INIT(Fogfv)( ctx, GL_FOG_END, &ctx->Fog.End );
 
-    ctx->Driver.FrontFace( ctx, ctx->Polygon.FrontFace );
+    STATE_INIT(FrontFace)( ctx, ctx->Polygon.FrontFace );
 
     {
         GLfloat f = (GLfloat)ctx->Light.Model.ColorControl;
-        ctx->Driver.LightModelfv( ctx, GL_LIGHT_MODEL_COLOR_CONTROL, &f );
+        STATE_INIT(LightModelfv)( ctx, GL_LIGHT_MODEL_COLOR_CONTROL, &f );
     }
 
-    ctx->Driver.LineWidth( ctx, ctx->Line.Width );
-    ctx->Driver.LogicOpcode( ctx, ctx->Color.LogicOp );
-    ctx->Driver.PointSize( ctx, ctx->Point.Size );
-    ctx->Driver.PolygonStipple( ctx, (const GLubyte *)ctx->PolygonStipple );
-    ctx->Driver.Scissor( ctx, ctx->Scissor.X, ctx->Scissor.Y,
+    STATE_INIT(LineWidth)( ctx, ctx->Line.Width );
+    STATE_INIT(LogicOpcode)( ctx, ctx->Color.LogicOp );
+    STATE_INIT(PointSize)( ctx, ctx->Point.Size );
+    STATE_INIT(PolygonStipple)( ctx, (const GLubyte *)ctx->PolygonStipple );
+    STATE_INIT(Scissor)( ctx, ctx->Scissor.X, ctx->Scissor.Y,
             ctx->Scissor.Width, ctx->Scissor.Height );
-    ctx->Driver.ShadeModel( ctx, ctx->Light.ShadeModel );
-    ctx->Driver.StencilFuncSeparate( ctx, GL_FRONT,
+    STATE_INIT(ShadeModel)( ctx, ctx->Light.ShadeModel );
+    STATE_INIT(StencilFuncSeparate)( ctx, GL_FRONT,
             ctx->Stencil.Function[0],
             ctx->Stencil.Ref[0],
             ctx->Stencil.ValueMask[0] );
-    ctx->Driver.StencilFuncSeparate( ctx, GL_BACK,
+    STATE_INIT(StencilFuncSeparate)( ctx, GL_BACK,
             ctx->Stencil.Function[1],
             ctx->Stencil.Ref[1],
             ctx->Stencil.ValueMask[1] );
-    ctx->Driver.StencilMaskSeparate( ctx, GL_FRONT, ctx->Stencil.WriteMask[0] );
-    ctx->Driver.StencilMaskSeparate( ctx, GL_BACK, ctx->Stencil.WriteMask[1] );
-    ctx->Driver.StencilOpSeparate( ctx, GL_FRONT,
+    STATE_INIT(StencilMaskSeparate)( ctx, GL_FRONT, ctx->Stencil.WriteMask[0] );
+    STATE_INIT(StencilMaskSeparate)( ctx, GL_BACK, ctx->Stencil.WriteMask[1] );
+    STATE_INIT(StencilOpSeparate)( ctx, GL_FRONT,
             ctx->Stencil.FailFunc[0],
             ctx->Stencil.ZFailFunc[0],
             ctx->Stencil.ZPassFunc[0]);
-    ctx->Driver.StencilOpSeparate( ctx, GL_BACK,
+    STATE_INIT(StencilOpSeparate)( ctx, GL_BACK,
             ctx->Stencil.FailFunc[1],
             ctx->Stencil.ZFailFunc[1],
             ctx->Stencil.ZPassFunc[1]);
 
-    ctx->Driver.DrawBuffer( ctx, ctx->Color.DrawBuffer[0] );
+    STATE_INIT(DrawBuffer)( ctx, ctx->Color.DrawBuffer[0] );
 }
