@@ -203,7 +203,7 @@ PUBLIC Bool XF86DRIOpenConnection(dpy, screen, hSAREA, busIdString)
 
     *hSAREA = rep.hSAREALow;
     if (sizeof(drm_handle_t) == 8) {
-       const int shift = 32; /* var to prevent warning on next line */
+       int shift = 32; /* var to prevent warning on next line */
        *hSAREA |= ((drm_handle_t) rep.hSAREAHigh) << shift;
     }
 
@@ -566,7 +566,7 @@ PUBLIC Bool XF86DRIGetDeviceInfo(dpy, screen, hFrameBuffer,
 
     *hFrameBuffer = rep.hFrameBufferLow;
     if (sizeof(drm_handle_t) == 8) {
-       const int shift = 32; /* var to prevent warning on next line */
+       int shift = 32; /* var to prevent warning on next line */
        *hFrameBuffer |= ((drm_handle_t) rep.hFrameBufferHigh) << shift;
     }
 
