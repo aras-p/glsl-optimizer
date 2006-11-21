@@ -362,7 +362,7 @@ static void r200UpdateFSRouting( GLcontext *ctx ) {
 
    if (shader->NumPasses < 2) {
       for (reg = 0; reg < R200_MAX_TEXTURE_UNITS; reg++) {
-	 struct gl_texture_object *texObj = ctx->Texture.Unit[reg]._Current;
+	 GLbitfield targetbit = ctx->Texture.Unit[reg]._ReallyEnabled;
          R200_STATECHANGE( rmesa, tex[reg] );
 	 rmesa->hw.tex[reg].cmd[TEX_PP_TXMULTI_CTL] = 0;
 	 if (shader->SetupInst[0][reg].Opcode) {
@@ -385,15 +385,16 @@ static void r200UpdateFSRouting( GLcontext *ctx ) {
 	       else {
 		  txformat_x |= R200_TEXCOORD_PROJ;
 	       }
+	       rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_0_ENABLE << reg;
 	    }
-	    else if (texObj->Target == GL_TEXTURE_3D) {
+	    else if (targetbit == TEXTURE_3D_BIT) {
 	       txformat_x |= R200_TEXCOORD_VOLUME;
 	    }
-	    else if (texObj->Target == GL_TEXTURE_CUBE_MAP) {
+	    else if (targetbit == TEXTURE_CUBE_BIT) {
 	       txformat_x |= R200_TEXCOORD_CUBIC_ENV;
 	    }
 	    else if (shader->SetupInst[0][reg].swizzle == GL_SWIZZLE_STR_ATI ||
-		shader->SetupInst[0][reg].swizzle == GL_SWIZZLE_STQ_ATI) {
+	       shader->SetupInst[0][reg].swizzle == GL_SWIZZLE_STQ_ATI) {
 	       txformat_x |= R200_TEXCOORD_NONPROJ;
 	    }
 	    else {
@@ -401,16 +402,16 @@ static void r200UpdateFSRouting( GLcontext *ctx ) {
 	    }
 	    rmesa->hw.tex[reg].cmd[TEX_PP_TXFORMAT] = txformat;
 	    rmesa->hw.tex[reg].cmd[TEX_PP_TXFORMAT_X] = txformat_x;
-	    /* is this a good idea? Could potentially sample from not enabled unit.
-	       results are probably undefined anyway (?) but I hope it doesn't lock up... */
-	    rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_0_ENABLE << reg;
+	    /* enabling texturing when unit isn't correctly configured may not be safe */
+	    if (targetbit)
+	       rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_0_ENABLE << reg;
 	 }
       }
 
    } else {
       /* setup 1st pass */
       for (reg = 0; reg < R200_MAX_TEXTURE_UNITS; reg++) {
-	 struct gl_texture_object *texObj = ctx->Texture.Unit[reg]._Current;
+	 GLbitfield targetbit = ctx->Texture.Unit[reg]._ReallyEnabled;
 	 R200_STATECHANGE( rmesa, tex[reg] );
 	 GLuint txformat_multi = 0;
 	 if (shader->SetupInst[0][reg].Opcode) {
@@ -425,11 +426,12 @@ static void r200UpdateFSRouting( GLcontext *ctx ) {
 	       else {
 		  txformat_multi |= R200_PASS1_TEXCOORD_PROJ;
 	       }
+	       rmesa->hw.cst.cmd[CST_PP_CNTL_X] |= R200_PPX_TEX_0_ENABLE << reg;
 	    }
-	    else if (texObj->Target == GL_TEXTURE_3D) {
+	    else if (targetbit == TEXTURE_3D_BIT) {
 	       txformat_multi |= R200_PASS1_TEXCOORD_VOLUME;
 	    }
-	    else if (texObj->Target == GL_TEXTURE_CUBE_MAP) {
+	    else if (targetbit == TEXTURE_CUBE_BIT) {
 	       txformat_multi |= R200_PASS1_TEXCOORD_CUBIC_ENV;
 	    }
 	    else if (shader->SetupInst[0][reg].swizzle == GL_SWIZZLE_STR_ATI ||
@@ -439,14 +441,15 @@ static void r200UpdateFSRouting( GLcontext *ctx ) {
 	    else {
 	       txformat_multi |= R200_PASS1_TEXCOORD_PROJ;
 	    }
-	    rmesa->hw.cst.cmd[CST_PP_CNTL_X] |= R200_PPX_TEX_0_ENABLE << reg;
+	    if (targetbit)
+	       rmesa->hw.cst.cmd[CST_PP_CNTL_X] |= R200_PPX_TEX_0_ENABLE << reg;
 	 }
          rmesa->hw.tex[reg].cmd[TEX_PP_TXMULTI_CTL] = txformat_multi;
       }
 
       /* setup 2nd pass */
       for (reg=0; reg < R200_MAX_TEXTURE_UNITS; reg++) {
-	 struct gl_texture_object *texObj = ctx->Texture.Unit[reg]._Current;
+	 GLbitfield targetbit = ctx->Texture.Unit[reg]._ReallyEnabled;
 	 if (shader->SetupInst[1][reg].Opcode) {
 	    GLuint coord = shader->SetupInst[1][reg].src;
 	    GLuint txformat = rmesa->hw.tex[reg].cmd[TEX_PP_TXFORMAT]
@@ -463,15 +466,16 @@ static void r200UpdateFSRouting( GLcontext *ctx ) {
 	       else {
 		  txformat_x |= R200_TEXCOORD_PROJ;
 	       }
+	       rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_0_ENABLE << reg;
 	    }
-	    else if (texObj->Target == GL_TEXTURE_3D) {
+	    else if (targetbit == TEXTURE_3D_BIT) {
 	       txformat_x |= R200_TEXCOORD_VOLUME;
 	    }
-	    else if (texObj->Target == GL_TEXTURE_CUBE_MAP) {
+	    else if (targetbit == TEXTURE_CUBE_BIT) {
 	       txformat_x |= R200_TEXCOORD_CUBIC_ENV;
 	    }
 	    else if (shader->SetupInst[1][reg].swizzle == GL_SWIZZLE_STR_ATI ||
-		shader->SetupInst[1][reg].swizzle == GL_SWIZZLE_STQ_ATI) {
+	       shader->SetupInst[1][reg].swizzle == GL_SWIZZLE_STQ_ATI) {
 	       txformat_x |= R200_TEXCOORD_NONPROJ;
 	    }
 	    else {
@@ -488,7 +492,8 @@ static void r200UpdateFSRouting( GLcontext *ctx ) {
 	    }
 	    rmesa->hw.tex[reg].cmd[TEX_PP_TXFORMAT_X] = txformat_x;
 	    rmesa->hw.tex[reg].cmd[TEX_PP_TXFORMAT] = txformat;
-	    rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_0_ENABLE << reg;
+	    if (targetbit)
+	       rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_0_ENABLE << reg;
 	 }
       }
    }
