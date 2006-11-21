@@ -318,7 +318,8 @@ intel_region_copy(intelScreenPrivate *intelScreen,
                      dst->cpp,
                      src->pitch, src->buffer, src_offset,
                      dst->pitch, dst->buffer, dst_offset,
-                     srcx, srcy, dstx, dsty, width, height);
+                     srcx, srcy, dstx, dsty, width, height,
+		     GL_COPY);
 }
 
 /* Fill a rectangular sub-region.  Need better logic about when to
@@ -433,7 +434,9 @@ intel_region_cow(intelScreenPrivate *intelScreen, struct intel_region *region)
 			region->buffer, 0,
 			region->pitch,
 			pbo->buffer, 0,
-			0, 0, 0, 0, region->pitch, region->height);
+			0, 0, 0, 0, 
+			region->pitch, region->height,
+			GL_COPY);
       
       intel_batchbuffer_flush(intel->batch);
       UNLOCK_HARDWARE(intel);
@@ -445,7 +448,9 @@ intel_region_cow(intelScreenPrivate *intelScreen, struct intel_region *region)
 			region->buffer, 0,
 			region->pitch,
 			pbo->buffer, 0,
-			0, 0, 0, 0, region->pitch, region->height);
+			0, 0, 0, 0, 
+			region->pitch, region->height,
+			GL_COPY);
       
       intel_batchbuffer_flush(intel->batch);
    }

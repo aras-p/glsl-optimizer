@@ -271,7 +271,8 @@ do_blit_readpixels(GLcontext * ctx,
                            rect.y1,
                            rect.x1 - src_rect.x1,
                            rect.y2 - src_rect.y2,
-                           rect.x2 - rect.x1, rect.y2 - rect.y1);
+                           rect.x2 - rect.x1, rect.y2 - rect.y1,
+			   GL_COPY);
       }
 
       fence = intel_batchbuffer_flush(intel->batch);
@@ -280,11 +281,12 @@ do_blit_readpixels(GLcontext * ctx,
    }
    UNLOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects)
+   if (fence) {
       driFenceFinish(fence, DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW, 
 		     GL_FALSE);
+      driFenceUnReference(fence);
+   }
 
-   driFenceUnReference(fence);
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s - DONE\n", __FUNCTION__);
 

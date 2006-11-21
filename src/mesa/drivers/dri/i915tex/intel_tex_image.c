@@ -232,7 +232,8 @@ try_pbo_upload(struct intel_context *intel,
                         intelImage->mt->cpp,
                         src_stride, src_buffer, src_offset,
                         dst_stride, dst_buffer, dst_offset,
-                        0, 0, 0, 0, width, height);
+                        0, 0, 0, 0, width, height,
+			GL_COPY);
 
       intel_batchbuffer_flush(intel->batch);
    }

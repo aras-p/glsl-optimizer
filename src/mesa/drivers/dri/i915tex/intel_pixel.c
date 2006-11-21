@@ -56,8 +56,9 @@ intel_check_blit_fragment_ops(GLcontext * ctx)
             !ctx->Color.ColorMask[1] ||
             !ctx->Color.ColorMask[2] ||
             !ctx->Color.ColorMask[3] ||
-            ctx->Color.ColorLogicOpEnabled ||
-            ctx->Texture._EnabledUnits || ctx->FragmentProgram._Enabled);
+            ctx->Texture._EnabledUnits || 
+	    ctx->FragmentProgram._Enabled ||
+	    ctx->Color.BlendEnabled);
 }
 
 
