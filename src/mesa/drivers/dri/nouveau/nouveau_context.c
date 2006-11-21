@@ -45,6 +45,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_object.h"
 #include "nouveau_fifo.h"
 #include "nouveau_tex.h"
+#include "nouveau_msg.h"
 #include "nv10_swtcl.h"
 
 #include "vblank.h"

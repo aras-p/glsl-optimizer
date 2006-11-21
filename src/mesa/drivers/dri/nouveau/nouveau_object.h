@@ -7,10 +7,12 @@ void nouveauObjectInit(nouveauContextPtr nmesa);
 
 enum DMAObjects {
 	Nv3D                    = 0x80000019,
+	NvDmaFB			= 0xD0FB0001
 };
 
 enum DMASubchannel {
 	NvSub3D		= 7,
 };
 
+extern void nouveauObjectOnSubchannel(nouveauContextPtr nmesa, int subchannel, int handle);
 #endif
