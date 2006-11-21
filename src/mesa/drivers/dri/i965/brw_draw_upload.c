@@ -393,7 +393,7 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = intel_context(ctx);
-   GLuint tmp = brw->vs.prog_data->inputs_read; 
+   GLuint64EXT tmp = brw->vs.prog_data->inputs_read; 
    struct brw_vertex_element_packet vep;
    struct brw_array_state vbp;
    GLuint i;
@@ -414,10 +414,10 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
     */
    
    while (tmp) {
-      GLuint i = ffs(tmp)-1;
+      GLuint i = ffsll(tmp)-1;
       struct brw_vertex_element *input = &brw->vb.inputs[i];
 
-      tmp &= ~(1<<i);
+      tmp &= ~((GLuint64EXT)1<<i);
       enabled[nr_enabled++] = input;
 
       input->index = i;

@@ -209,7 +209,7 @@ static void brw_merge_inputs( struct brw_context *brw,
       if (arrays[i] && arrays[i]->Enabled)
       {
 	 brw->vb.inputs[i].glarray = arrays[i];
-	 brw->vb.info.varying |= 1 << i;
+	 brw->vb.info.varying |= (GLuint64EXT) 1 << i;
       }
       else 
       {

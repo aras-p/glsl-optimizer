@@ -146,8 +146,8 @@ static void make_state_key( GLcontext *ctx, struct state_key *key )
       }
 
       /* BRW_NEW_INPUT_VARYING */
-      for (i = BRW_ATTRIB_MAT_FRONT_AMBIENT ; i < BRW_ATTRIB_INDEX ; i++) 
-	 if (brw->vb.info.varying & (1<<i)) 
+      for (i = BRW_ATTRIB_MAT_FRONT_AMBIENT ; i < BRW_ATTRIB_MAX ; i++) 
+	 if (brw->vb.info.varying & ((GLuint64EXT)1<<i)) 
 	    key->light_material_mask |= 1<<(i-BRW_ATTRIB_MAT_FRONT_AMBIENT);
 
       for (i = 0; i < MAX_LIGHTS; i++) {
@@ -374,16 +374,17 @@ static void release_temps( struct tnl_program *p )
 
 static struct ureg register_input( struct tnl_program *p, GLuint input )
 {
+   GLuint orig_input = input;
    /* Cram the material flags into the generic range.  We'll translate
     * them back later.
     */
    if (input >= BRW_ATTRIB_MAT_FRONT_AMBIENT)
-      input -= BRW_ATTRIB_MAT_FRONT_AMBIENT;
+      input -= BRW_ATTRIB_MAT_FRONT_AMBIENT - BRW_ATTRIB_GENERIC0;
 
    assert(input < 32);
 
    p->program->Base.InputsRead |= (1<<input);
-   return make_ureg(PROGRAM_INPUT, input);
+   return make_ureg(PROGRAM_INPUT, orig_input);
 }
 
 static struct ureg register_output( struct tnl_program *p, GLuint output )
