@@ -1299,11 +1299,19 @@ void _ae_invalidate_state( GLcontext *ctx, GLuint new_state )
 {
    AEcontext *actx = AE_CONTEXT(ctx);
 
-   /* It is possible to raise a statechange between begin/end pairs as
-    * the glMaterial calls will raise _NEW_LIGHT eventually.  However,
-    * within a DrawArrays or DrawElements call (which cannot emit
-    * material data), it should never be possible.
+   
+   /* Only interested in this subset of mesa state.  Need to prune
+    * this down as both tnl/ and the drivers can raise statechanges
+    * for arcane reasons in the middle of seemingly atomic operations
+    * like DrawElements, over which we'd like to keep a known set of
+    * arrays and vbo's mapped.  
+    *
+    * Luckily, neither the drivers nor tnl muck with the state that
+    * concerns us here:
     */
-   assert(!actx->mapped_vbos);
-   actx->NewState |= new_state;
+   new_state &= _NEW_ARRAY | _NEW_PROGRAM;
+   if (new_state) {
+      assert(!actx->mapped_vbos);
+      actx->NewState |= new_state;
+   }
 }
