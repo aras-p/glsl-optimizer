@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
  * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#if !defined SLANG_COMPILE_FUNCTION_H
+#ifndef SLANG_COMPILE_FUNCTION_H
 #define SLANG_COMPILE_FUNCTION_H
 
 #if defined __cplusplus
@@ -63,12 +63,12 @@ extern GLboolean slang_fixup_save(slang_fixup_table *fixups, GLuint address);
 typedef struct slang_function_
 {
    slang_function_kind kind;
-   slang_variable header;
-   slang_variable_scope *parameters;
+   slang_variable header;      /**< The function's name and return type */
+   slang_variable_scope *parameters; /**< array [param_count] */
    unsigned int param_count;
    slang_operation *body;      /**< The instruction tree */
-   unsigned int address;
-   slang_fixup_table fixups;
+   unsigned int address;       /**< Address of this func in memory */
+   slang_fixup_table fixups;   /**< Mem locations which need func's address */
 } slang_function;
 
 extern int slang_function_construct(slang_function *);
@@ -99,7 +99,8 @@ extern slang_function *
 slang_function_scope_find(slang_function_scope *, slang_function *, int);
 
 extern GLboolean
-_slang_build_export_code_table(slang_export_code_table *, slang_function_scope *,
+_slang_build_export_code_table(slang_export_code_table *,
+                               slang_function_scope *,
                                struct slang_code_unit_ *);
 
 
@@ -107,5 +108,4 @@ _slang_build_export_code_table(slang_export_code_table *, slang_function_scope *
 }
 #endif
 
-#endif
-
+#endif /* SLANG_COMPILE_FUNCTION_H */
