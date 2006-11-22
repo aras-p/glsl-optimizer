@@ -171,11 +171,10 @@ static void _tnl_copy_to_current( GLcontext *ctx )
 
    if (tnl->vtx.have_materials) {
       tnl->Driver.NotifyMaterialChange( ctx );
+      ctx->NewState |= _NEW_LIGHT;
    }
          
    ctx->Driver.NeedFlush &= ~FLUSH_UPDATE_CURRENT;
-
-   ctx->NewState |= _NEW_LIGHT;
 }
 
 
