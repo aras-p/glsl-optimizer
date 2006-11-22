@@ -150,6 +150,7 @@ static void _playback_copy_to_current( GLcontext *ctx,
 
    if (node->have_materials) {
       tnl->Driver.NotifyMaterialChange( ctx );
+      ctx->NewState |= _NEW_LIGHT;
    }
 
    /* CurrentExecPrimitive
