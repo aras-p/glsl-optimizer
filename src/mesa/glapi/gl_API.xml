@@ -2364,9 +2364,9 @@
         <param name="target" type="GLenum"/>
         <param name="u1" type="GLdouble"/>
         <param name="u2" type="GLdouble"/>
-        <param name="stride" type="GLint"/>
+        <param name="stride" type="GLint" client_only="true"/>
         <param name="order" type="GLint"/>
-        <param name="points" type="const GLdouble *"/>
+        <param name="points" type="const GLdouble *" variable_param="order"/>
         <glx rop="143" handcode="true"/>
     </function>
 
@@ -2374,9 +2374,9 @@
         <param name="target" type="GLenum"/>
         <param name="u1" type="GLfloat"/>
         <param name="u2" type="GLfloat"/>
-        <param name="stride" type="GLint"/>
+        <param name="stride" type="GLint" client_only="true"/>
         <param name="order" type="GLint"/>
-        <param name="points" type="const GLfloat *"/>
+        <param name="points" type="const GLfloat *" variable_param="order"/>
         <glx rop="144" handcode="true"/>
     </function>
 
@@ -2384,13 +2384,13 @@
         <param name="target" type="GLenum"/>
         <param name="u1" type="GLdouble"/>
         <param name="u2" type="GLdouble"/>
-        <param name="ustride" type="GLint"/>
+        <param name="ustride" type="GLint" client_only="true"/>
         <param name="uorder" type="GLint"/>
         <param name="v1" type="GLdouble"/>
         <param name="v2" type="GLdouble"/>
-        <param name="vstride" type="GLint"/>
+        <param name="vstride" type="GLint" client_only="true"/>
         <param name="vorder" type="GLint"/>
-        <param name="points" type="const GLdouble *"/>
+        <param name="points" type="const GLdouble *" variable_param="uorder"/>
         <glx rop="145" handcode="true"/>
     </function>
 
@@ -2398,13 +2398,13 @@
         <param name="target" type="GLenum"/>
         <param name="u1" type="GLfloat"/>
         <param name="u2" type="GLfloat"/>
-        <param name="ustride" type="GLint"/>
+        <param name="ustride" type="GLint" client_only="true"/>
         <param name="uorder" type="GLint"/>
         <param name="v1" type="GLfloat"/>
         <param name="v2" type="GLfloat"/>
-        <param name="vstride" type="GLint"/>
+        <param name="vstride" type="GLint" client_only="true"/>
         <param name="vorder" type="GLint"/>
-        <param name="points" type="const GLfloat *"/>
+        <param name="points" type="const GLfloat *" variable_param="uorder"/>
         <glx rop="146" handcode="true"/>
     </function>
 

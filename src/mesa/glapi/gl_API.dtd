@@ -40,6 +40,7 @@
                    mode                (get | set) "set">
 <!ATTLIST param    name                NMTOKEN #REQUIRED
                    type                CDATA   #REQUIRED
+		   client_only	       (true | false) "false"
                    count               NMTOKEN #IMPLIED
                    counter             (true | false) "false"
                    count_scale         NMTOKEN "1"
@@ -79,6 +80,9 @@ will just mean adding a '<glx ignore="true"/>' tag.
 param:
      name - name of the parameter
      type - fully qualified type (e.g., with "const", etc.)
+     client_only - boolean flag set on parameters which are interpreted only
+         by the client and are not present in the protocol encoding (e.g.,
+	 the stride parameters to Map1f, etc.)
      count - for counted arrays (e.g., the 'lists' parameter to glCallLists),
          the parameter or literal that represents the count.  For functions
          like glVertex3fv it will be a litteral, for others it will be one of
