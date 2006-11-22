@@ -68,8 +68,8 @@ typedef enum slang_type_specifier_type_
 typedef struct slang_type_specifier_
 {
    slang_type_specifier_type type;
-   struct slang_struct_ *_struct;         /**< type: spec_struct */
-   struct slang_type_specifier_ *_array;  /**< type: spec_array */
+   struct slang_struct_ *_struct;         /**< used if type == spec_struct */
+   struct slang_type_specifier_ *_array;  /**< used if type == spec_array */
 } slang_type_specifier;
 
 

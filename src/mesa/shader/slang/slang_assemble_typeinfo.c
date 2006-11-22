@@ -594,7 +594,7 @@ _slang_type_base(slang_type_specifier_type ty)
 
 
 /**
- * Return the number of elements in a vector or matrix type
+ * Return the dimensionality of a vector or matrix type.
  */
 GLuint
 _slang_type_dim(slang_type_specifier_type ty)
