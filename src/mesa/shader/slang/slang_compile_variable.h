@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#if !defined SLANG_COMPILE_VARIABLE_H
+#ifndef SLANG_COMPILE_VARIABLE_H
 #define SLANG_COMPILE_VARIABLE_H
 
 #if defined __cplusplus
@@ -68,9 +68,28 @@ slang_fully_specified_type_copy(slang_fully_specified_type *,
 				const slang_fully_specified_type *);
 
 
+/**
+ * A shading language program variable.
+ */
+typedef struct slang_variable_
+{
+   slang_fully_specified_type type; /**< Variable's data type */
+   slang_atom a_name;               /**< The variable's name (char *) */
+   GLuint array_len;                /**< only if type == slang_spec_array */
+   struct slang_operation_ *initializer; /**< Optional initializer code */
+   GLuint address;                  /**< Storage location */
+   GLuint address2;                 /**< Storage location */
+   GLuint size;                     /**< Variable's size in bytes */
+   GLboolean global;                /**< A global var? */
+} slang_variable;
+
+
+/**
+ * Basically a list of variables, with a pointer to the parent scope.
+ */
 typedef struct slang_variable_scope_
 {
-   struct slang_variable_ *variables;
+   slang_variable *variables;  /**< Array [num_variables] */
    GLuint num_variables;
    struct slang_variable_scope_ *outer_scope;
 } slang_variable_scope;
@@ -84,18 +103,6 @@ slang_variable_scope_destruct(slang_variable_scope *);
 extern int
 slang_variable_scope_copy(slang_variable_scope *,
                           const slang_variable_scope *);
-
-
-typedef struct slang_variable_
-{
-   slang_fully_specified_type type;
-   slang_atom a_name;
-   GLuint array_len;            /* type: spec_array */
-   struct slang_operation_ *initializer;
-   unsigned int address;
-   unsigned int size;
-   GLboolean global;
-} slang_variable;
 
 
 extern int
@@ -116,8 +123,9 @@ _slang_build_export_data_table(slang_export_data_table *,
                                slang_variable_scope *);
 
 
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* SLANG_COMPILE_VARIABLE_H */
