@@ -247,8 +247,8 @@ slang_variable_copy(slang_variable * x, const slang_variable * y)
 }
 
 slang_variable *
-_slang_locate_variable(slang_variable_scope * scope, slang_atom a_name,
-                       GLboolean all)
+_slang_locate_variable(const slang_variable_scope * scope,
+                       const slang_atom a_name, GLboolean all)
 {
    GLuint i;
 
