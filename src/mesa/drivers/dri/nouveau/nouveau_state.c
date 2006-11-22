@@ -257,6 +257,10 @@ void nouveauInitState(GLcontext *ctx)
             ctx->Color.BlendSrcA,
             ctx->Color.BlendDstA);
 
+    STATE_INIT(ClearColor)( ctx, ctx->Color.ClearColor);
+    STATE_INIT(ClearDepth)( ctx, ctx->Depth.Clear);
+    STATE_INIT(ClearStencil)( ctx, ctx->Stencil.Clear);
+
     STATE_INIT(ColorMask)( ctx, 
             ctx->Color.ColorMask[RCOMP],
             ctx->Color.ColorMask[GCOMP],
@@ -266,6 +270,7 @@ void nouveauInitState(GLcontext *ctx)
     STATE_INIT(CullFace)( ctx, ctx->Polygon.CullFaceMode );
     STATE_INIT(DepthFunc)( ctx, ctx->Depth.Func );
     STATE_INIT(DepthMask)( ctx, ctx->Depth.Mask );
+    STATE_INIT(DepthRange)( ctx, ctx->Viewport.Near, ctx->Viewport.Far );
 
     STATE_INIT(Enable)( ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled );
     STATE_INIT(Enable)( ctx, GL_BLEND, ctx->Color.BlendEnabled );
@@ -277,6 +282,12 @@ void nouveauInitState(GLcontext *ctx)
     STATE_INIT(Enable)( ctx, GL_FOG, ctx->Fog.Enabled );
     STATE_INIT(Enable)( ctx, GL_LIGHTING, ctx->Light.Enabled );
     STATE_INIT(Enable)( ctx, GL_LINE_SMOOTH, ctx->Line.SmoothFlag );
+    STATE_INIT(Enable)( ctx, GL_LINE_STIPPLE, ctx->Line.StippleFlag );
+    STATE_INIT(Enable)( ctx, GL_POINT_SMOOTH, ctx->Point.SmoothFlag );
+    STATE_INIT(Enable)( ctx, GL_POLYGON_OFFSET_FILL, ctx->Polygon.OffsetFill);
+    STATE_INIT(Enable)( ctx, GL_POLYGON_OFFSET_LINE, ctx->Polygon.OffsetLine);
+    STATE_INIT(Enable)( ctx, GL_POLYGON_OFFSET_POINT, ctx->Polygon.OffsetPoint);
+    STATE_INIT(Enable)( ctx, GL_POLYGON_SMOOTH, ctx->Polygon.SmoothFlag );
     STATE_INIT(Enable)( ctx, GL_POLYGON_STIPPLE, ctx->Polygon.StippleFlag );
     STATE_INIT(Enable)( ctx, GL_SCISSOR_TEST, ctx->Scissor.Enabled );
     STATE_INIT(Enable)( ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled );
@@ -299,9 +310,15 @@ void nouveauInitState(GLcontext *ctx)
         STATE_INIT(LightModelfv)( ctx, GL_LIGHT_MODEL_COLOR_CONTROL, &f );
     }
 
+    STATE_INIT(LineStipple)( ctx, ctx->Line.StippleFactor, ctx->Line.StipplePattern );
     STATE_INIT(LineWidth)( ctx, ctx->Line.Width );
     STATE_INIT(LogicOpcode)( ctx, ctx->Color.LogicOp );
     STATE_INIT(PointSize)( ctx, ctx->Point.Size );
+    STATE_INIT(PolygonMode)( ctx, GL_FRONT, ctx->Polygon.FrontMode );
+    STATE_INIT(PolygonMode)( ctx, GL_BACK, ctx->Polygon.BackMode );
+    STATE_INIT(PolygonOffset)( ctx,
+	    ctx->Polygon.OffsetFactor,
+	    ctx->Polygon.OffsetUnits );
     STATE_INIT(PolygonStipple)( ctx, (const GLubyte *)ctx->PolygonStipple );
     STATE_INIT(Scissor)( ctx, ctx->Scissor.X, ctx->Scissor.Y,
             ctx->Scissor.Width, ctx->Scissor.Height );
@@ -324,6 +341,10 @@ void nouveauInitState(GLcontext *ctx)
             ctx->Stencil.FailFunc[1],
             ctx->Stencil.ZFailFunc[1],
             ctx->Stencil.ZPassFunc[1]);
+
+    STATE_INIT(Viewport)( ctx,
+	    ctx->Viewport.X, ctx->Viewport.Y,
+	    ctx->Viewport.Width, ctx->Viewport.Height );
 
     STATE_INIT(DrawBuffer)( ctx, ctx->Color.DrawBuffer[0] );
 }
