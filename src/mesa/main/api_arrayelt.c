@@ -1076,6 +1076,7 @@ static void check_vbo( AEcontext *actx,
       for (i = 0; i < actx->nr_vbos; i++)
 	 if (actx->vbo[i] == vbo)
 	    return;
+      assert(actx->nr_vbos < VERT_ATTRIB_MAX);
       actx->vbo[actx->nr_vbos++] = vbo;
    }
 }
@@ -1093,6 +1094,8 @@ static void _ae_update_state( GLcontext *ctx )
    AEarray *aa = actx->arrays;
    AEattrib *at = actx->attribs;
    GLuint i;
+
+   actx->nr_vbos = 0;
 
    /* conventional vertex arrays */
   if (ctx->Array.ArrayObj->Index.Enabled) {
@@ -1296,6 +1299,11 @@ void _ae_invalidate_state( GLcontext *ctx, GLuint new_state )
 {
    AEcontext *actx = AE_CONTEXT(ctx);
 
+   /* It is possible to raise a statechange between begin/end pairs as
+    * the glMaterial calls will raise _NEW_LIGHT eventually.  However,
+    * within a DrawArrays or DrawElements call (which cannot emit
+    * material data), it should never be possible.
+    */
    assert(!actx->mapped_vbos);
    actx->NewState |= new_state;
 }
