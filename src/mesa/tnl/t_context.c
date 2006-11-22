@@ -246,10 +246,7 @@ void
 _tnl_need_projected_coords( GLcontext *ctx, GLboolean mode )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   if (tnl->NeedNdcCoords != mode) {
-      tnl->NeedNdcCoords = mode;
-      _tnl_InvalidateState( ctx, _NEW_PROJECTION );
-   }
+   tnl->NeedNdcCoords = mode;
 }
 
 void
