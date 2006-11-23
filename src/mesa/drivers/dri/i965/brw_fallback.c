@@ -280,6 +280,9 @@ void brw_loopback_vertex_list( GLcontext *ctx,
    GLuint i, nr = 0;
 
    for (i = 0 ; i <= BRW_ATTRIB_TEX7 ; i++) {
+      if (i == BRW_ATTRIB_INDEX || i == BRW_ATTRIB_EDGEFLAG)
+                   continue;
+
       if (attrsz[i]) {
 	 la[nr].target = i;
 	 la[nr].sz = attrsz[i];
