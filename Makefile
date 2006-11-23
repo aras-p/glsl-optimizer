@@ -211,7 +211,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/glapi/sources				\
 	$(DIRECTORY)/src/mesa/array_cache/*.[ch]			\
 	$(DIRECTORY)/src/mesa/array_cache/descrip.mms			\
-	$(DIRECTORY)/src/mesa/array_cache/sourcess			\
+	$(DIRECTORY)/src/mesa/array_cache/sources			\
 	$(DIRECTORY)/src/mesa/math/*.[ch]				\
 	$(DIRECTORY)/src/mesa/math/descrip.mms				\
 	$(DIRECTORY)/src/mesa/math/sources				\
