@@ -156,6 +156,11 @@ do {						\
  */
 extern void i830InitVtbl(struct i830_context *i830);
 
+extern void
+i830_state_draw_region(struct intel_context *intel,
+                       struct i830_hw_state *state,
+                       struct intel_region *color_region,
+                       struct intel_region *depth_region);
 /* i830_context.c
  */
 extern GLboolean
