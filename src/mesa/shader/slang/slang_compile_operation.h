@@ -35,7 +35,7 @@ extern "C" {
  * These are the basic intermediate code representations.
  * [foo] indicates a sub-tree or reference to another type of node
  */
-   typedef enum slang_operation_type_
+typedef enum slang_operation_type_
 {
    slang_oper_none,
    slang_oper_block_no_new_scope,       /* "{" sequence "}" */
@@ -105,6 +105,8 @@ extern "C" {
 /**
  * A slang_operation is basically a compiled instruction (such as assignment,
  * a while-loop, a conditional, a multiply, a function call, etc).
+ * NOTE: This structure could have been implemented as a union of simpler
+ * structs which would correspond to the operation types above.
  */
 typedef struct slang_operation_
 {
