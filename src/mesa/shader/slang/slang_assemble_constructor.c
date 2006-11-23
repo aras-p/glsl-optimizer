@@ -171,9 +171,9 @@ sizeof_argument(slang_assemble_ctx * A, GLuint * size, slang_operation * op)
 
    if (!slang_storage_aggregate_construct(&agg))
       goto end1;
-   if (!_slang_aggregate_variable
-       (&agg, &ti.spec, 0, A->space.funcs, A->space.structs, A->space.vars,
-        A->mach, A->file, A->atoms))
+   if (!_slang_aggregate_variable(&agg, &ti.spec, 0, A->space.funcs,
+                                  A->space.structs, A->space.vars,
+                                  A->mach, A->file, A->atoms))
       goto end;
 
    *size = _slang_sizeof_aggregate(&agg);
@@ -185,6 +185,7 @@ sizeof_argument(slang_assemble_ctx * A, GLuint * size, slang_operation * op)
    slang_assembly_typeinfo_destruct(&ti);
    return result;
 }
+
 
 static GLboolean
 constructor_aggregate(slang_assemble_ctx * A,
@@ -202,9 +203,9 @@ constructor_aggregate(slang_assemble_ctx * A,
 
    if (!slang_storage_aggregate_construct(&agg))
       goto end1;
-   if (!_slang_aggregate_variable
-       (&agg, &ti.spec, 0, A->space.funcs, A->space.structs, A->space.vars,
-        A->mach, A->file, A->atoms))
+   if (!_slang_aggregate_variable(&agg, &ti.spec, 0, A->space.funcs,
+                                  A->space.structs, A->space.vars,
+                                  A->mach, A->file, A->atoms))
       goto end2;
 
    if (!slang_storage_aggregate_construct(&flat_agg))
@@ -245,8 +246,9 @@ constructor_aggregate(slang_assemble_ctx * A,
    return result;
 }
 
+
 GLboolean
-_slang_assemble_constructor(slang_assemble_ctx * A, slang_operation * op)
+_slang_assemble_constructor(slang_assemble_ctx * A, const slang_operation * op)
 {
    slang_assembly_typeinfo ti;
    GLboolean result = GL_FALSE;
@@ -263,9 +265,9 @@ _slang_assemble_constructor(slang_assemble_ctx * A, slang_operation * op)
    /* create an aggregate of the constructor */
    if (!slang_storage_aggregate_construct(&agg))
       goto end1;
-   if (!_slang_aggregate_variable
-       (&agg, &ti.spec, 0, A->space.funcs, A->space.structs, A->space.vars,
-        A->mach, A->file, A->atoms))
+   if (!_slang_aggregate_variable(&agg, &ti.spec, 0, A->space.funcs,
+                                  A->space.structs, A->space.vars,
+                                  A->mach, A->file, A->atoms))
       goto end2;
 
    /* calculate size of the constructor */
@@ -334,12 +336,12 @@ _slang_assemble_constructor(slang_assemble_ctx * A, slang_operation * op)
 GLboolean
 _slang_assemble_constructor_from_swizzle(slang_assemble_ctx * A,
                                          const slang_swizzle * swz,
-                                         slang_type_specifier * spec,
-                                         slang_type_specifier * master_spec)
+                                         const slang_type_specifier * spec,
+                                         const slang_type_specifier * master_spec)
 {
-   GLuint master_rows, i;
+   const GLuint master_rows = _slang_type_dim(master_spec->type);
+   GLuint i;
 
-   master_rows = _slang_type_dim(master_spec->type);
    for (i = 0; i < master_rows; i++) {
       switch (_slang_type_base(master_spec->type)) {
       case slang_spec_bool:
@@ -361,19 +363,22 @@ _slang_assemble_constructor_from_swizzle(slang_assemble_ctx * A,
          break;
       }
    }
+
    if (!slang_assembly_file_push_label(A->file, slang_asm_local_free, 4))
       return GL_FALSE;
-   for (i = swz->num_components; i > 0; i--) {
-      GLuint n = i - 1;
 
-      if (!slang_assembly_file_push_label2
-          (A->file, slang_asm_local_addr, A->local.swizzle_tmp, 16))
+   for (i = swz->num_components; i > 0; i--) {
+      const GLuint n = i - 1;
+
+      if (!slang_assembly_file_push_label2(A->file, slang_asm_local_addr,
+                                           A->local.swizzle_tmp, 16))
          return GL_FALSE;
-      if (!slang_assembly_file_push_label
-          (A->file, slang_asm_addr_push, swz->swizzle[n] * 4))
+      if (!slang_assembly_file_push_label(A->file, slang_asm_addr_push,
+                                          swz->swizzle[n] * 4))
          return GL_FALSE;
       if (!slang_assembly_file_push(A->file, slang_asm_addr_add))
          return GL_FALSE;
+
       switch (_slang_type_base(master_spec->type)) {
       case slang_spec_bool:
          if (!slang_assembly_file_push(A->file, slang_asm_bool_deref))

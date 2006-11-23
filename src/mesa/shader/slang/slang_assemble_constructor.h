@@ -41,13 +41,14 @@ _slang_multiply_swizzles(slang_swizzle *, const slang_swizzle *,
                          const slang_swizzle *);
 
 extern GLboolean
-_slang_assemble_constructor(slang_assemble_ctx *, struct slang_operation_ *);
+_slang_assemble_constructor(slang_assemble_ctx *,
+                            const struct slang_operation_ *);
 
 extern GLboolean
 _slang_assemble_constructor_from_swizzle(slang_assemble_ctx *,
                                          const slang_swizzle *,
-                                         slang_type_specifier *,
-                                         slang_type_specifier *);
+                                         const slang_type_specifier *,
+                                         const slang_type_specifier *);
 
 #ifdef __cplusplus
 }

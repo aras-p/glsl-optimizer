@@ -31,7 +31,7 @@ extern "C" {
 
 
 extern GLboolean
-_slang_assemble_assignment(slang_assemble_ctx *, struct slang_operation_ *);
+_slang_assemble_assignment(slang_assemble_ctx *, const struct slang_operation_ *);
 
 extern GLboolean
 _slang_assemble_assign(slang_assemble_ctx *, struct slang_operation_ *,

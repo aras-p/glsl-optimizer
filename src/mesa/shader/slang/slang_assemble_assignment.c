@@ -147,7 +147,7 @@ assign_aggregate(slang_assemble_ctx * A, const slang_storage_aggregate * agg,
 
 
 GLboolean
-_slang_assemble_assignment(slang_assemble_ctx * A, slang_operation * op)
+_slang_assemble_assignment(slang_assemble_ctx * A, const slang_operation * op)
 {
    slang_assembly_typeinfo ti;
    GLboolean result = GL_FALSE;
