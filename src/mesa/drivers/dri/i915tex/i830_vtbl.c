@@ -451,14 +451,16 @@ i830_emit_state(struct intel_context *intel)
       OUT_BATCH(state->Buffer[I830_DESTREG_CBUFADDR1]);
       OUT_RELOC(state->draw_region->buffer,
                 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-                DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
+                DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE,
+                state->draw_region->draw_offset);
 
       if (state->depth_region) {
          OUT_BATCH(state->Buffer[I830_DESTREG_DBUFADDR0]);
          OUT_BATCH(state->Buffer[I830_DESTREG_DBUFADDR1]);
          OUT_RELOC(state->depth_region->buffer,
                    DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-                   DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
+                   DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE,
+                   state->depth_region->draw_offset);
       }
 
       OUT_BATCH(state->Buffer[I830_DESTREG_DV0]);
@@ -469,7 +471,7 @@ i830_emit_state(struct intel_context *intel)
       OUT_BATCH(state->Buffer[I830_DESTREG_SR2]);
       ADVANCE_BATCH();
    }
-
+   
    if (dirty & I830_UPLOAD_STIPPLE) {
       DBG("I830_UPLOAD_STIPPLE:\n");
       emit(i830, state->Stipple, sizeof(state->Stipple));

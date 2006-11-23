@@ -1042,6 +1042,7 @@ i830_init_packets(struct i830_context *i830)
 
    i830->state.Buffer[I830_DESTREG_DV0] = _3DSTATE_DST_BUF_VARS_CMD;
 
+#if 0
    switch (screen->fbFormat) {
    case DV_PF_565:
       i830->state.Buffer[I830_DESTREG_DV1] = (DSTORG_HORT_BIAS(0x8) |   /* .5 */
@@ -1058,7 +1059,7 @@ i830_init_packets(struct i830_context *i830)
                                               DEPTH_FRMT_24_FIXED_8_OTHER);
       break;
    }
-
+#endif
    i830->state.Buffer[I830_DESTREG_SENABLE] = (_3DSTATE_SCISSOR_ENABLE_CMD |
                                                DISABLE_SCISSOR_RECT);
    i830->state.Buffer[I830_DESTREG_SR0] = _3DSTATE_SCISSOR_RECT_0_CMD;
