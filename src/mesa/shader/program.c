@@ -207,6 +207,7 @@ _mesa_init_program_struct( GLcontext *ctx, struct gl_program *prog,
       prog->Target = target;
       prog->Resident = GL_TRUE;
       prog->RefCount = 1;
+      prog->Format = GL_PROGRAM_FORMAT_ASCII_ARB;
    }
 
    return prog;
@@ -284,6 +285,9 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
    (void) ctx;
    ASSERT(prog);
 
+   if (prog == &_mesa_DummyProgram)
+      return;
+                 
    if (prog->String)
       _mesa_free(prog->String);
 

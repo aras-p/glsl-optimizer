@@ -195,13 +195,15 @@ _mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer)
 GLboolean GLAPIENTRY
 _mesa_IsProgramARB(GLuint id)
 {
+   struct gl_program *prog = NULL; 
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
    if (id == 0)
       return GL_FALSE;
 
-   if (_mesa_lookup_program(ctx, id))
+   prog = _mesa_lookup_program(ctx, id);
+   if (prog && (prog != &_mesa_DummyProgram))
       return GL_TRUE;
    else
       return GL_FALSE;
@@ -765,6 +767,7 @@ void GLAPIENTRY
 _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string)
 {
    const struct gl_program *prog;
+   char *dst = (char *) string;
    GET_CURRENT_CONTEXT(ctx);
 
    if (!ctx->_CurrentProgram)
@@ -788,5 +791,8 @@ _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string)
       return;
    }
 
-   _mesa_memcpy(string, prog->String, _mesa_strlen((char *) prog->String));
+   if (prog->String)
+      _mesa_memcpy(dst, prog->String, _mesa_strlen((char *) prog->String));
+   else
+      *dst = '\0';
 }
