@@ -34,6 +34,12 @@
 
 
 
+/**
+ * Checks if a field selector is a general swizzle (an r-value swizzle
+ * with replicated components or an l-value swizzle mask) for a
+ * vector.  Returns GL_TRUE if this is the case, <swz> is filled with
+ * swizzle information.  Returns GL_FALSE otherwise.
+ */
 GLboolean
 _slang_is_swizzle(const char *field, GLuint rows, slang_swizzle * swz)
 {
@@ -108,6 +114,11 @@ _slang_is_swizzle(const char *field, GLuint rows, slang_swizzle * swz)
 
 
 
+/**
+ * Checks if a general swizzle is an l-value swizzle - these swizzles
+ * do not have duplicated fields.  Returns GL_TRUE if this is a
+ * swizzle mask.  Returns GL_FALSE otherwise
+ */
 GLboolean
 _slang_is_swizzle_mask(const slang_swizzle * swz, GLuint rows)
 {
@@ -129,6 +140,10 @@ _slang_is_swizzle_mask(const slang_swizzle * swz, GLuint rows)
 
 
 
+/**
+ * Combines (multiplies) two swizzles to form single swizzle.
+ * Example: "vec.wzyx.yx" --> "vec.zw".
+ */
 GLvoid
 _slang_multiply_swizzles(slang_swizzle * dst, const slang_swizzle * left,
                          const slang_swizzle * right)
