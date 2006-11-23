@@ -427,7 +427,11 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 			total_size+=attr_size[i];
 		}
 	}
-	nmesa->vertex_size=total_size;
+	nmesa->vertex_size=_tnl_install_attrs( ctx,
+			nmesa->vertex_attrs, 
+			nmesa->vertex_attr_count,
+			NULL, 0 );
+	assert(nmesa->vertex_size==total_size*4);
 
 	/* 
 	 * Tell the hardware about the vertex format
