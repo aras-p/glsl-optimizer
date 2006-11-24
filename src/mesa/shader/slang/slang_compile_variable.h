@@ -81,6 +81,7 @@ typedef struct slang_variable_
    GLuint address2;                 /**< Storage location */
    GLuint size;                     /**< Variable's size in bytes */
    GLboolean global;                /**< A global var? */
+   void *aux;                       /**< Used during code gen */
 } slang_variable;
 
 
@@ -104,6 +105,8 @@ extern int
 slang_variable_scope_copy(slang_variable_scope *,
                           const slang_variable_scope *);
 
+slang_variable *
+slang_variable_scope_grow(slang_variable_scope *);
 
 extern int
 slang_variable_construct(slang_variable *);

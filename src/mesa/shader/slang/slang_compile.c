@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.6
+ * Version:  6.5.2
  *
  * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
@@ -42,14 +42,16 @@
  * may be accepted resulting in undefined behaviour.
  */
 
-/* slang_var_pool */
 
+
+/**
+ * Allocate storage for a variable of 'size' bytes from given pool.
+ * Return the allocated address for the variable.
+ */
 static GLuint
 slang_var_pool_alloc(slang_var_pool * pool, unsigned int size)
 {
-   GLuint addr;
-
-   addr = pool->next_addr;
+   const GLuint addr = pool->next_addr;
    pool->next_addr += size;
    return addr;
 }
@@ -432,22 +434,13 @@ parse_struct_field(slang_parse_ctx * C, slang_output_ctx * O,
       return 0;
 
    do {
-      slang_variable *var;
-
-      st->fields->variables =
-         (slang_variable *) slang_alloc_realloc(st->fields->variables,
-                                                st->fields->num_variables *
-                                                sizeof(slang_variable),
-                                                (st->fields->num_variables +
-                                                 1) * sizeof(slang_variable));
-      if (st->fields->variables == NULL) {
+      slang_variable *var = slang_variable_scope_grow(st->fields);
+      if (!var) {
          slang_info_log_memory(C->L);
          return 0;
       }
-      var = &st->fields->variables[st->fields->num_variables];
       if (!slang_variable_construct(var))
          return 0;
-      st->fields->num_variables++;
       if (!parse_struct_field_var(C, &o, var, sp))
          return 0;
    }
@@ -1222,6 +1215,7 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
             if (!parse_child_operation(C, O, op, 0))
                return 0;
          C->I++;
+
          if (!C->parsing_builtin
              && !slang_function_scope_find_by_name(O->funs, op->a_id, 1)) {
             const char *id;
@@ -1479,20 +1473,13 @@ parse_function_prototype(slang_parse_ctx * C, slang_output_ctx * O,
 
    /* parse function parameters */
    while (*C->I++ == PARAMETER_NEXT) {
-      slang_variable *p;
-
-      func->parameters->variables = (slang_variable *)
-         slang_alloc_realloc(func->parameters->variables,
-                             func->parameters->num_variables * sizeof(slang_variable),
-                             (func->parameters->num_variables + 1) * sizeof(slang_variable));
-      if (func->parameters->variables == NULL) {
+      slang_variable *p = slang_variable_scope_grow(func->parameters);
+      if (!p) {
          slang_info_log_memory(C->L);
          return 0;
       }
-      p = &func->parameters->variables[func->parameters->num_variables];
       if (!slang_variable_construct(p))
          return 0;
-      func->parameters->num_variables++;
       if (!parse_parameter_declaration(C, O, p))
          return 0;
    }
@@ -1662,18 +1649,13 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       return 1;
 
    /* make room for the new variable and initialize it */
-   O->vars->variables = (slang_variable *)
-      slang_alloc_realloc(O->vars->variables,
-                          O->vars->num_variables * sizeof(slang_variable),
-                          (O->vars->num_variables + 1) * sizeof(slang_variable));
-   if (O->vars->variables == NULL) {
+   var = slang_variable_scope_grow(O->vars);
+   if (!var) {
       slang_info_log_memory(C->L);
       return 0;
    }
-   var = &O->vars->variables[O->vars->num_variables];
    if (!slang_variable_construct(var))
       return 0;
-   O->vars->num_variables++;
 
    /* copy the declarator qualifier type, parse the identifier */
    var->global = C->global_scope;

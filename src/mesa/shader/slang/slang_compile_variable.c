@@ -181,6 +181,27 @@ slang_variable_scope_copy(slang_variable_scope * x,
    return 1;
 }
 
+
+/**
+ * Grow the variable list by one.
+ * \return  pointer to space for the new variable.
+ */
+slang_variable *
+slang_variable_scope_grow(slang_variable_scope *scope)
+{
+   const int n = scope->num_variables;
+   scope->variables = (slang_variable *)
+         slang_alloc_realloc(scope->variables,
+                             n * sizeof(slang_variable),
+                             (n + 1) * sizeof(slang_variable));
+   if (!scope->variables)
+      return NULL;
+   scope->num_variables++;
+   return scope->variables + n;
+}
+
+
+
 /* slang_variable */
 
 int
