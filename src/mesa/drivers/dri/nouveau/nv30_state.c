@@ -347,6 +347,8 @@ static void nv30Hint(GLcontext *ctx, GLenum target, GLenum mode)
 static void nv30Lightfv(GLcontext *ctx, GLenum light, GLenum pname, const GLfloat *params )
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	GLint p = light - GL_LIGHT0;
+	struct gl_light *l = &ctx->Light.Light[p];
 
 	if (NOUVEAU_CARD_USING_SHADERS)
 	   return;
@@ -355,58 +357,69 @@ static void nv30Lightfv(GLcontext *ctx, GLenum light, GLenum pname, const GLfloa
 	switch(pname)
 	{
 		case GL_AMBIENT:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_FRONT_SIDE_PRODUCT_AMBIENT_R(light), 3);
+			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_FRONT_SIDE_PRODUCT_AMBIENT_R(p), 3);
 			OUT_RING_CACHEf(params[0]);
 			OUT_RING_CACHEf(params[1]);
 			OUT_RING_CACHEf(params[2]);
 			break;
 		case GL_DIFFUSE:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_FRONT_SIDE_PRODUCT_DIFFUSE_R(light), 3);
+			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_FRONT_SIDE_PRODUCT_DIFFUSE_R(p), 3);
 			OUT_RING_CACHEf(params[0]);
 			OUT_RING_CACHEf(params[1]);
 			OUT_RING_CACHEf(params[2]);
 			break;
 		case GL_SPECULAR:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_FRONT_SIDE_PRODUCT_SPECULAR_R(light), 3);
+			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_FRONT_SIDE_PRODUCT_SPECULAR_R(p), 3);
 			OUT_RING_CACHEf(params[0]);
 			OUT_RING_CACHEf(params[1]);
 			OUT_RING_CACHEf(params[2]);
 			break;
 		case GL_SPOT_DIRECTION:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_DIR_X(light), 3);
-			OUT_RING_CACHEf(params[0]);
-			OUT_RING_CACHEf(params[1]);
-			OUT_RING_CACHEf(params[2]);
+			{
+				GLfloat x,y,z;
+				x = -2.0 * (1.0 + l->_CosCutoff) * l->_NormDirection[0];
+				y = -2.0 * (1.0 + l->_CosCutoff) * l->_NormDirection[1];
+				z = -2.0 * (1.0 + l->_CosCutoff) * l->_NormDirection[2];
+				BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_DIR_X(p), 3);
+				OUT_RING_CACHEf(x);
+				OUT_RING_CACHEf(y);
+				OUT_RING_CACHEf(z);
+			}
 			break;
 		case GL_POSITION:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_POSITION_X(light), 3);
+			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_POSITION_X(p), 3);
 			OUT_RING_CACHEf(params[0]);
 			OUT_RING_CACHEf(params[1]);
 			OUT_RING_CACHEf(params[2]);
 			break;
 		case GL_SPOT_EXPONENT:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_EXPONENT(light), 1);
+			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_EXPONENT(p), 1);
 			OUT_RING_CACHEf(*params);
 			break;
 		case GL_SPOT_CUTOFF:
 			/* you can't factor these */
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_CUTOFF_A(light), 1);
-			OUT_RING_CACHEf(params[0]);
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_CUTOFF_B(light), 1);
-			OUT_RING_CACHEf(params[1]);
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_CUTOFF_C(light), 1);
-			OUT_RING_CACHEf(params[2]);
+			{
+				GLfloat c;
+				c = -2.0 * (0.5 + l->_CosCutoff);
+
+				BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_CUTOFF_A(p), 1);
+				OUT_RING_CACHEf(params[0]);
+				BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_CUTOFF_B(p), 1);
+				OUT_RING_CACHEf(params[1]);
+				BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_CUTOFF_C(p), 1);
+				OUT_RING_CACHEf(c);
+			}
 			break;
 		case GL_CONSTANT_ATTENUATION:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_CONSTANT_ATTENUATION(light), 1);
+			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_CONSTANT_ATTENUATION(p), 1);
 			OUT_RING_CACHEf(*params);
 			break;
 		case GL_LINEAR_ATTENUATION:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_LINEAR_ATTENUATION(light), 1);
+			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_LINEAR_ATTENUATION(p), 1);
 			OUT_RING_CACHEf(*params);
 			break;
 		case GL_QUADRATIC_ATTENUATION:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_QUADRATIC_ATTENUATION(light), 1);
+			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_QUADRATIC_ATTENUATION(p), 1);
 			OUT_RING_CACHEf(*params);
 			break;
 		default:
