@@ -184,7 +184,7 @@ slang_variable_scope_copy(slang_variable_scope * x,
 
 /**
  * Grow the variable list by one.
- * \return  pointer to space for the new variable.
+ * \return  pointer to space for the new variable (will be initialized)
  */
 slang_variable *
 slang_variable_scope_grow(slang_variable_scope *scope)
@@ -196,7 +196,12 @@ slang_variable_scope_grow(slang_variable_scope *scope)
                              (n + 1) * sizeof(slang_variable));
    if (!scope->variables)
       return NULL;
+
    scope->num_variables++;
+
+   if (!slang_variable_construct(scope->variables + n))
+      return NULL;
+
    return scope->variables + n;
 }
 

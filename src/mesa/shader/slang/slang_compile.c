@@ -439,8 +439,6 @@ parse_struct_field(slang_parse_ctx * C, slang_output_ctx * O,
          slang_info_log_memory(C->L);
          return 0;
       }
-      if (!slang_variable_construct(var))
-         return 0;
       if (!parse_struct_field_var(C, &o, var, sp))
          return 0;
    }
@@ -1478,8 +1476,6 @@ parse_function_prototype(slang_parse_ctx * C, slang_output_ctx * O,
          slang_info_log_memory(C->L);
          return 0;
       }
-      if (!slang_variable_construct(p))
-         return 0;
       if (!parse_parameter_declaration(C, O, p))
          return 0;
    }
@@ -1654,8 +1650,6 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       slang_info_log_memory(C->L);
       return 0;
    }
-   if (!slang_variable_construct(var))
-      return 0;
 
    /* copy the declarator qualifier type, parse the identifier */
    var->global = C->global_scope;
