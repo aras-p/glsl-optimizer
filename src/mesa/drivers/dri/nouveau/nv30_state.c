@@ -516,7 +516,7 @@ static void nv30Scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
         nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
         BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SCISSOR_WIDTH_XPOS, 2);
         OUT_RING_CACHE((w << 16) | x);
-        OUT_RING_CACHE((y << 16) | y);
+        OUT_RING_CACHE((h << 16) | y);
 }
 
 /** Select flat or smooth shading */
