@@ -54,7 +54,7 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 	nouveauCreateContextObject(nmesa, Nv3D, nmesa->screen->card->class_3d, 0, 0, 0, 0);
 	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
 /* We need to know vram size.. */
-#if 0	
+#if 0
 	nouveauCreateDmaObject( nmesa, NvDmaFB,
 				0, (256*1024*1024),
 				0 /*NV_DMA_TARGET_FB*/, 0 /*NV_DMA_ACCESS_RW*/);

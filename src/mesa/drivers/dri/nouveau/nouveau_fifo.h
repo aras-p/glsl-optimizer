@@ -33,6 +33,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_ctrlreg.h"
 
 //#define NOUVEAU_RING_DEBUG
+//#define NOUVEAU_STATE_CACHE_DISABLE
 
 #define NV_READ(reg) *(volatile u_int32_t *)(nmesa->mmio + (reg))
 
@@ -63,11 +64,11 @@ int i; printf("OUT_RINGp: (size 0x%x dwords)\n",sz); for(i=0;i<sz;i++) printf(" 
 }while(0)
 
 #define OUT_RING(n) do {                                                        \
-    printf("OUT_RINGn: 0x%08x\n", n);                                           \
+    printf("OUT_RINGn: 0x%08x (%s)\n", n, __func__);                            \
 }while(0)
 
 #define OUT_RINGf(n) do {                                                       \
-    printf("OUT_RINGf: 0x%08x\n", n);                                           \
+    printf("OUT_RINGf: %.04f (%s)\n", n, __func__);                             \
 }while(0)
 
 #else
@@ -87,10 +88,24 @@ nmesa->fifo.buffer[nmesa->fifo.current++]=(n);					\
 
 #endif
 
+#define BEGIN_RING_SIZE(subchannel,tag,size) do {					\
+	nouveau_state_cache_flush(nmesa);						\
+	if (nmesa->fifo.free <= (size))							\
+		WAIT_RING(nmesa,(size));						\
+	OUT_RING( ((size)<<18) | ((subchannel) << 13) | (tag));				\
+	nmesa->fifo.free -= ((size) + 1);                                               \
+}while(0)
+
 extern void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size);
 extern void nouveau_state_cache_flush(nouveauContextPtr nmesa);
 extern void nouveau_state_cache_init(nouveauContextPtr nmesa);
 
+#ifdef NOUVEAU_STATE_CACHE_DISABLE
+#define BEGIN_RING_CACHE(subc,tag,size) BEGIN_RING_SIZE((subc), (tag), (size))
+#define OUT_RING_CACHE(n) OUT_RING((n))
+#define OUT_RING_CACHEf(n) OUT_RINGf((n))
+#define OUT_RING_CACHEp(ptr, sz) OUT_RINGp((ptr), (sz))
+#else
 #define BEGIN_RING_CACHE(subchannel,tag,size) do {					\
 	nmesa->state_cache.dirty=1;	 						\
 	nmesa->state_cache.current_pos=((tag)/4);					\
@@ -116,14 +131,7 @@ extern void nouveau_state_cache_init(nouveauContextPtr nmesa);
 uint32_t* p=(uint32_t*)(ptr);								\
 int i; for(i=0;i<sz;i++) OUT_RING_CACHE(*(p+i)); 					\
 }while(0)
-
-#define BEGIN_RING_SIZE(subchannel,tag,size) do {					\
-	nouveau_state_cache_flush(nmesa);						\
-	if (nmesa->fifo.free <= (size))							\
-		WAIT_RING(nmesa,(size));						\
-	OUT_RING( ((size)<<18) | ((subchannel) << 13) | (tag));				\
-	nmesa->fifo.free -= ((size) + 1);                                               \
-}while(0)
+#endif
 
 #define RING_AVAILABLE() (nmesa->fifo.free-1)
 

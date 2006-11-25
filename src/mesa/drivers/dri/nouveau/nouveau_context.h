@@ -38,6 +38,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "nouveau_screen.h"
 #include "nouveau_state_cache.h"
+#include "nouveau_shader.h"
 
 #include "xmlconfig.h"
 
@@ -118,6 +119,12 @@ typedef struct nouveau_context {
 	/* The rendering context information */
 	GLenum current_primitive; /* the current primitive enum */
 	DECLARE_RENDERINPUTS(render_inputs_bitset); /* the current render inputs */
+
+	/* Shader state */
+	nvsFunc VPfunc;
+	nvsFunc FPfunc;
+	nouveauShader *current_fragprog;
+	nouveauShader *current_vertprog;
 
 	nouveauScreenRec *screen;
 	drm_nouveau_sarea_t *sarea;

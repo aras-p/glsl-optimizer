@@ -37,6 +37,7 @@ extern void nv20InitStateFuncs(struct dd_function_table *func);
 extern void nv30InitStateFuncs(struct dd_function_table *func);
 
 extern void nouveauInitState(GLcontext *ctx);
+
 /*
 extern void nouveauDDUpdateState(GLcontext *ctx);
 extern void nouveauDDUpdateHWState(GLcontext *ctx);

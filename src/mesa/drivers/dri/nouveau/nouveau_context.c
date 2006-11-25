@@ -35,6 +35,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
+#include "tnl/t_vp_build.h"
 
 #include "drivers/common/driverfuncs.h"
 
@@ -129,6 +130,13 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 
 
 	nmesa->current_primitive = -1;
+
+	nouveauShaderInitFuncs(ctx);
+	/* Install Mesa's fixed-function shader support */
+	if (nmesa->screen->card->type >= NV_40) {
+		ctx->_MaintainTnlProgram    = GL_TRUE;
+		ctx->_MaintainTexEnvProgram = GL_TRUE;
+	}
 
 	/* Initialize the swrast */
 	_swrast_CreateContext( ctx );

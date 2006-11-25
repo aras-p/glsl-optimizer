@@ -327,7 +327,7 @@ static void nv30Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
     switch(pname)
     {
         case GL_FOG_MODE:
-            BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_MODE, 1);
+            //BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_MODE, 1);
             //OUT_RING_CACHE (params);
             break;
             /* TODO: unsure about the rest.*/
