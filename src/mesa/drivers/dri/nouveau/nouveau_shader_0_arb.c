@@ -125,6 +125,7 @@ struct pass0_rec {
    int next_temp;
    int swzconst_done;
    int swzconst_id;
+   nvsRegister const_half;
 };
 
 #define X NVS_SWZ_X
@@ -488,6 +489,7 @@ pass0_emulate_instruction(nouveauShader *nvs, struct prog_instruction *inst)
    nvsFunc *shader = nvs->func;
    nvsRegister src[3], dest, temp;
    nvsInstruction *nvsinst;
+   struct pass0_rec *rec = nvs->pass_rec;
    unsigned int mask = pass0_make_mask(inst->DstReg.WriteMask);
    int i, sat;
 
@@ -561,11 +563,26 @@ pass0_emulate_instruction(nouveauShader *nvs, struct prog_instruction *inst)
       }
       break;
    case OPCODE_RSQ:
+      if (rec->const_half.file != NVS_FILE_CONST) {
+	 GLfloat const_half[4] = { 0.5, 0.0, 0.0, 0.0 };
+	 pass0_make_reg(nvs, &rec->const_half, NVS_FILE_CONST,
+	       _mesa_add_unnamed_constant(nvs->mesa.vp.Base.Parameters,
+		  			  const_half, 4));
+	 COPY_4V(nvs->params[rec->const_half.index].val, const_half);
+      }
       pass0_make_reg(nvs, &temp, NVS_FILE_TEMP, -1);
       pass0_emit(nvs, NVS_OP_LG2, temp, SMASK_X, 0,
-	    nvsAbs(nvsSwizzle(src[0], X, X, X, X)), nvr_unused, nvr_unused);
+	    	 nvsAbs(nvsSwizzle(src[0], X, X, X, X)),
+		 nvr_unused,
+		 nvr_unused);
+      pass0_emit(nvs, NVS_OP_MUL, temp, SMASK_X, 0,
+	    	 nvsSwizzle(temp, X, X, X, X),
+		 nvsNegate(rec->const_half),
+		 nvr_unused);
       pass0_emit(nvs, NVS_OP_EX2, dest, mask, sat,
-	    nvsSwizzle(temp, X, X, X, X), nvr_unused, nvr_unused);
+	    	 nvsSwizzle(temp, X, X, X, X),
+		 nvr_unused,
+		 nvr_unused);
       break;
    case OPCODE_SCS:
       if (mask & SMASK_X)
@@ -607,7 +624,6 @@ static GLboolean
 pass0_translate_instructions(nouveauShader *nvs)
 {
    struct gl_program *prog = (struct gl_program *)&nvs->mesa.vp;
-   struct pass0_rec *rec = nvs->pass_rec;
    nvsFunc *shader = nvs->func;
    int ipos;
 
