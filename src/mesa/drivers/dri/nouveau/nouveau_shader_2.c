@@ -130,8 +130,12 @@ pass2_add_instruction(nvsPtr nvs, nvsInstruction *inst,
 	    nvs->inputs_read |= (1 << reg.index);
 	 shader->SetSource(shader, &reg, op->srcpos[i]);
 	 srcpos_used |= (1<<op->srcpos[i]);
-	 if (reg.file == NVS_FILE_CONST && shader->GetSourceConstVal)
-	    nvs->params[reg.index].hw_index = nvs->program_current + 4;
+	 if (reg.file == NVS_FILE_CONST && shader->GetSourceConstVal) {
+	    int idx_slot = nvs->params[reg.index].hw_index_cnt++;
+	    nvs->params[reg.index].hw_index = realloc(
+		  nvs->params[reg.index].hw_index, sizeof(int) * idx_slot+1);
+	    nvs->params[reg.index].hw_index[idx_slot] = nvs->program_current + 4;
+	 }
       }
    }
    for (i = 0; i < 3; i++) {

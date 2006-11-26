@@ -60,11 +60,15 @@ NV30FPUploadToHW(GLcontext *ctx, nouveauShader *nvs)
 static void
 NV30FPUpdateConst(GLcontext *ctx, nouveauShader *nvs, int id)
 {
-   uint32_t *current = nvs->program + nvs->params[id].hw_index;
    uint32_t *new     = nvs->params[id].source_val ?
       nvs->params[id].source_val : nvs->params[id].val;
+   uint32_t *current;
+   int i;
 
-   COPY_4V(current, new);
+   for (i=0; i<nvs->params[id].hw_index_cnt; i++) {
+      current = nvs->program + nvs->params[id].hw_index[i];
+      COPY_4V(current, new);
+   }
    nvs->on_hardware = 0;
 }
 

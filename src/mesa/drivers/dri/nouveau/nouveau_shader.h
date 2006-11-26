@@ -47,7 +47,11 @@ typedef struct _nouveauShader {
    struct {
       GLfloat  *source_val;	/* NULL if invariant */
       float	val[4];
-      int	hw_index;	/* hw-specific value */
+      /* Hardware-specific tracking, currently only nv30_fragprog
+       * makes use of it.
+       */
+      int	*hw_index;
+      int        hw_index_cnt;
    } params[NVS_MAX_CONSTS];
 
    struct {
