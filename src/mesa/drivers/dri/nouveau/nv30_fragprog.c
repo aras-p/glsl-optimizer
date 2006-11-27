@@ -61,7 +61,7 @@ static void
 NV30FPUpdateConst(GLcontext *ctx, nouveauShader *nvs, int id)
 {
    uint32_t *new     = nvs->params[id].source_val ?
-      nvs->params[id].source_val : nvs->params[id].val;
+      (uint32_t*)nvs->params[id].source_val : (uint32_t*)nvs->params[id].val;
    uint32_t *current;
    int i;
 
@@ -101,6 +101,7 @@ NV30FPSupportsOpcode(nvsFunc *shader, nvsOpcode op)
 static void
 NV30FPSetOpcode(nvsFunc *shader, unsigned int opcode, int slot)
 {
+   shader->inst[0] &= ~NV30_FP_OP_OPCODE_MASK;
    shader->inst[0] |= (opcode << NV30_FP_OP_OPCODE_SHIFT);
 }
 
@@ -139,7 +140,10 @@ NV30FPSetCondition(nvsFunc *shader, int on, nvsCond cond, int reg,
 	break;
    }
 
+   shader->inst[1] &= ~NV30_FP_OP_COND_MASK;
    shader->inst[1] |= (hwcond << NV30_FP_OP_COND_SHIFT);
+
+   shader->inst[1] &= ~NV30_FP_OP_COND_SWZ_ALL_MASK;
    shader->inst[1] |= (swz[NVS_SWZ_X] << NV30_FP_OP_COND_SWZ_X_SHIFT);
    shader->inst[1] |= (swz[NVS_SWZ_Y] << NV30_FP_OP_COND_SWZ_Y_SHIFT);
    shader->inst[1] |= (swz[NVS_SWZ_Z] << NV30_FP_OP_COND_SWZ_Z_SHIFT);
@@ -149,7 +153,7 @@ NV30FPSetCondition(nvsFunc *shader, int on, nvsCond cond, int reg,
 static void
 NV30FPSetResult(nvsFunc *shader, nvsRegister *reg, unsigned int mask, int slot)
 {
-   unsigned int hwreg, hwmask = 0;
+   unsigned int hwreg;
 
    if (mask & SMASK_X) shader->inst[0] |= NV30_FP_OP_OUT_X;
    if (mask & SMASK_Y) shader->inst[0] |= NV30_FP_OP_OUT_Y;
@@ -160,8 +164,11 @@ NV30FPSetResult(nvsFunc *shader, nvsRegister *reg, unsigned int mask, int slot)
       hwreg = 0; /* FIXME: this is only fragment.color */
       /* This is *not* correct, I have no idea what it is either */
       shader->inst[0] |= NV30_FP_OP_UNK0_7;
-   } else
+   } else {
+      shader->inst[0] &= ~NV30_FP_OP_UNK0_7;
       hwreg = reg->index;
+   }
+   shader->inst[0] &= ~NV30_FP_OP_OUT_REG_SHIFT;
    shader->inst[0] |= (hwreg  << NV30_FP_OP_OUT_REG_SHIFT);
 }
 
@@ -197,6 +204,7 @@ NV30FPSetSource(nvsFunc *shader, nvsRegister *reg, int pos)
 		hwin = NV30_FP_OP_INPUT_SRC_COL0;
 		break;
 	 }
+	 shader->inst[0] &= ~NV30_FP_OP_INPUT_SRC_MASK;
 	 shader->inst[0] |= (hwin << NV30_FP_OP_INPUT_SRC_SHIFT);
 	 hwsrc |= (hwin << NV30_FP_REG_SRC_SHIFT);
       }
@@ -220,24 +228,14 @@ NV30FPSetSource(nvsFunc *shader, nvsRegister *reg, int pos)
    hwsrc |= (reg->swizzle[NVS_SWZ_Z] << NV30_FP_REG_SWZ_Z_SHIFT);
    hwsrc |= (reg->swizzle[NVS_SWZ_W] << NV30_FP_REG_SWZ_W_SHIFT);
 
+   shader->inst[pos+1] &= ~NV30_FP_REG_ALL_MASK;
    shader->inst[pos+1] |= hwsrc;
-}
-
-static void
-NV30FPSetUnusedSource(nvsFunc *shader, int pos)
-{
-   shader->inst[pos+1] |= (
-	 (NV30_FP_REG_TYPE_INPUT << NV30_FP_REG_TYPE_SHIFT) |
-	 (NVS_SWZ_X << NV30_FP_REG_SWZ_X_SHIFT) |
-	 (NVS_SWZ_Y << NV30_FP_REG_SWZ_Y_SHIFT) |
-	 (NVS_SWZ_Z << NV30_FP_REG_SWZ_Z_SHIFT) |
-	 (NVS_SWZ_W << NV30_FP_REG_SWZ_W_SHIFT)
-	 );
 }
 
 static void
 NV30FPSetTexImageUnit(nvsFunc *shader, int unit)
 {
+   shader->inst[0] &= ~NV30_FP_OP_TEX_UNIT_SHIFT;
    shader->inst[0] |= (unit << NV30_FP_OP_TEX_UNIT_SHIFT);
 }
 
@@ -248,10 +246,26 @@ NV30FPSetSaturate(nvsFunc *shader)
 }
 
 static void
+NV30FPInitInstruction(nvsFunc *shader)
+{
+   unsigned int hwsrc;
+
+   shader->inst[0] = 0;
+
+   hwsrc = (NV30_FP_REG_TYPE_INPUT << NV30_FP_REG_TYPE_SHIFT) |
+      	   (NVS_SWZ_X << NV30_FP_REG_SWZ_X_SHIFT) |
+	   (NVS_SWZ_Y << NV30_FP_REG_SWZ_Y_SHIFT) |
+	   (NVS_SWZ_Z << NV30_FP_REG_SWZ_Z_SHIFT) |
+	   (NVS_SWZ_W << NV30_FP_REG_SWZ_W_SHIFT);
+   shader->inst[1] = hwsrc;
+   shader->inst[2] = hwsrc;
+   shader->inst[3] = hwsrc;
+}
+
+static void
 NV30FPSetLastInst(nvsFunc *shader)
 {
-   shader->inst[0] |= 1;
-	 
+   shader->inst[0] |= 1; 
 }
 
 /*******************************************************************************
@@ -669,13 +683,13 @@ NV30FPInitShaderFuncs(nvsFunc * shader)
    shader->UploadToHW		= NV30FPUploadToHW;
    shader->UpdateConst		= NV30FPUpdateConst;
 
+   shader->InitInstruction	= NV30FPInitInstruction;
    shader->SupportsOpcode	= NV30FPSupportsOpcode;
    shader->SetOpcode		= NV30FPSetOpcode;
    shader->SetCCUpdate		= NV30FPSetCCUpdate;
    shader->SetCondition		= NV30FPSetCondition;
    shader->SetResult		= NV30FPSetResult;
    shader->SetSource		= NV30FPSetSource;
-   shader->SetUnusedSource	= NV30FPSetUnusedSource;
    shader->SetTexImageUnit	= NV30FPSetTexImageUnit;
    shader->SetSaturate		= NV30FPSetSaturate;
    shader->SetLastInst		= NV30FPSetLastInst;

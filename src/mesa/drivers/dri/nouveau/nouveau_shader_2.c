@@ -34,6 +34,8 @@
 #include "macros.h"
 #include "enums.h"
 
+#include "program.h"
+
 #include "nouveau_shader.h"
 
 struct pass2_rec {
@@ -100,7 +102,7 @@ pass2_add_instruction(nvsPtr nvs, nvsInstruction *inst,
    nvsSwzComp default_swz[4] = { NVS_SWZ_X, NVS_SWZ_Y, NVS_SWZ_Z, NVS_SWZ_W };
    nvsFunc *shader = nvs->func;
    nvsRegister reg;
-   int i, srcpos_used = ~7;
+   int i;
 
    shader->SetOpcode(shader, op->NV, slot);
    if (inst->saturate	) shader->SetSaturate(shader);
@@ -129,7 +131,6 @@ pass2_add_instruction(nvsPtr nvs, nvsInstruction *inst,
 	 if (reg.file == NVS_FILE_ATTRIB)
 	    nvs->inputs_read |= (1 << reg.index);
 	 shader->SetSource(shader, &reg, op->srcpos[i]);
-	 srcpos_used |= (1<<op->srcpos[i]);
 	 if (reg.file == NVS_FILE_CONST && shader->GetSourceConstVal) {
 	    int idx_slot = nvs->params[reg.index].hw_index_cnt++;
 	    nvs->params[reg.index].hw_index = realloc(
@@ -137,10 +138,6 @@ pass2_add_instruction(nvsPtr nvs, nvsInstruction *inst,
 	    nvs->params[reg.index].hw_index[idx_slot] = nvs->program_current + 4;
 	 }
       }
-   }
-   for (i = 0; i < 3; i++) {
-      if (!(srcpos_used & (1<<i)))
-	 shader->SetUnusedSource(shader, i);
    }
 
    reg = pass2_mangle_reg(nvs, inst, inst->dest);
@@ -153,9 +150,9 @@ static int
 pass2_assemble_instruction(nvsPtr nvs, nvsInstruction *inst, int last)
 {
    nvsFunc *shader = nvs->func;
-   struct _op_xlat *op, *op2;
-   unsigned int hw_inst[8] = {0,0,0,0,0,0,0,0,0};
-   int slot, slot2;
+   struct _op_xlat *op;
+   unsigned int hw_inst[8];
+   int slot;
    int instsz;
    int i;
 
@@ -164,6 +161,7 @@ pass2_assemble_instruction(nvsPtr nvs, nvsInstruction *inst, int last)
    /* Assemble this instruction */
    if (!(op = shader->GetOPTXFromSOP(inst->op, &slot)))
       return 0;
+   shader->InitInstruction(shader);
    pass2_add_instruction(nvs, inst, op, slot);
    if (last)
       shader->SetLastInst(shader);

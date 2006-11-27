@@ -351,6 +351,7 @@
 #define NV30_FP_OP_INDEX_INPUT					(1 << 30)
 
 //== Register selection ==
+#define NV30_FP_REG_ALL_MASK					(0x1FFFF<<0)
 #define NV30_FP_REG_TYPE_SHIFT					0
 #define NV30_FP_REG_TYPE_MASK					(3 << 0)
 #	define NV30_FP_REG_TYPE_TEMP	0

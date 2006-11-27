@@ -19,8 +19,13 @@ NV40VPSupportsOpcode(nvsFunc * shader, nvsOpcode op)
 static void
 NV40VPSetOpcode(nvsFunc *shader, unsigned int opcode, int slot)
 {
-   if (slot) shader->inst[1] |= (opcode << NV40_VP_INST_SCA_OPCODE_SHIFT);
-   else      shader->inst[1] |= (opcode << NV40_VP_INST_VEC_OPCODE_SHIFT);
+   if (slot) {
+      shader->inst[1] &= ~NV40_VP_INST_SCA_OPCODE_MASK;
+      shader->inst[1] |= (opcode << NV40_VP_INST_SCA_OPCODE_SHIFT);
+   } else {
+      shader->inst[1] &= ~NV40_VP_INST_VEC_OPCODE_MASK;
+      shader->inst[1] |= (opcode << NV40_VP_INST_VEC_OPCODE_SHIFT);
+   }
 }
 
 static void
@@ -36,7 +41,9 @@ NV40VPSetCondition(nvsFunc *shader, int on, nvsCond cond, int reg,
    unsigned int hwcond;
 
    if (on ) shader->inst[0] |= NV40_VP_INST_COND_TEST_ENABLE;
+   else     shader->inst[0] &= ~NV40_VP_INST_COND_TEST_ENABLE;
    if (reg) shader->inst[0] |= NV40_VP_INST_COND_REG_SELECT_1;
+   else     shader->inst[0] &= ~NV40_VP_INST_COND_REG_SELECT_1;
 
    switch (cond) {
    case NVS_COND_TR: hwcond = NV40_VP_INST_COND_TR; break;
@@ -52,8 +59,10 @@ NV40VPSetCondition(nvsFunc *shader, int on, nvsCond cond, int reg,
 	hwcond = NV40_VP_INST_COND_TR;
 	break;
    }
+   shader->inst[0] &= ~NV40_VP_INST_COND_MASK;
    shader->inst[0] |= (hwcond << NV40_VP_INST_COND_SHIFT);
 
+   shader->inst[0] &= ~NV40_VP_INST_COND_SWZ_ALL_MASK;
    shader->inst[0] |= (swizzle[NVS_SWZ_X] << NV40_VP_INST_COND_SWZ_X_SHIFT);
    shader->inst[0] |= (swizzle[NVS_SWZ_Y] << NV40_VP_INST_COND_SWZ_Y_SHIFT);
    shader->inst[0] |= (swizzle[NVS_SWZ_Z] << NV40_VP_INST_COND_SWZ_Z_SHIFT);
@@ -95,25 +104,31 @@ NV40VPSetResult(nvsFunc *shader, nvsRegister * dest, unsigned int mask,
 	hwidx = 0;
 	break;
       }
+      shader->inst[3] &= ~NV40_VP_INST_DEST_MASK;
       shader->inst[3] |= (hwidx << NV40_VP_INST_DEST_SHIFT);
 
-      if (slot) {
-	 shader->inst[3] |= NV40_VP_INST_SCA_RESULT;
-	 shader->inst[3] |= NV40_VP_INST_SCA_DEST_TEMP_MASK;
-      } else {
-	 shader->inst[0] |= NV40_VP_INST_VEC_RESULT;
-	 shader->inst[0] |= NV40_VP_INST_VEC_DEST_TEMP_MASK | (1<<20);
-      }
+      if (slot) shader->inst[3] |= NV40_VP_INST_SCA_RESULT;
+      else      shader->inst[0] |= NV40_VP_INST_VEC_RESULT;
    } else {
       /* NVS_FILE_TEMP || NVS_FILE_ADDRESS */
-      if (slot)
+      if (slot) {
+	 shader->inst[3] &= ~NV40_VP_INST_SCA_RESULT;
+	 shader->inst[3] &= ~NV40_VP_INST_SCA_DEST_TEMP_MASK;
 	 shader->inst[3] |= (dest->index << NV40_VP_INST_SCA_DEST_TEMP_SHIFT);
-      else
+      } else {
+	 shader->inst[0] &= ~NV40_VP_INST_VEC_RESULT;
+	 shader->inst[0] &= ~(NV40_VP_INST_VEC_DEST_TEMP_MASK | (1<<20));
 	 shader->inst[0] |= (dest->index << NV40_VP_INST_VEC_DEST_TEMP_SHIFT);
+      }
    }
 
-   if (slot) shader->inst[3] |= (hwmask << NV40_VP_INST_SCA_WRITEMASK_SHIFT);
-   else      shader->inst[3] |= (hwmask << NV40_VP_INST_VEC_WRITEMASK_SHIFT);
+   if (slot) {
+      shader->inst[3] &= ~NV40_VP_INST_SCA_WRITEMASK_MASK;
+      shader->inst[3] |= (hwmask << NV40_VP_INST_SCA_WRITEMASK_SHIFT);
+   } else {
+      shader->inst[3] &= ~NV40_VP_INST_VEC_WRITEMASK_MASK;
+      shader->inst[3] |= (hwmask << NV40_VP_INST_VEC_WRITEMASK_SHIFT);
+   }
 }
 
 static void
@@ -121,6 +136,8 @@ NV40VPInsertSource(nvsFunc *shader, unsigned int hw, int pos)
 {
    switch (pos) {
    case 0:
+      shader->inst[1] &= ~NV40_VP_INST_SRC0H_MASK;
+      shader->inst[2] &= ~NV40_VP_INST_SRC0L_MASK;
       shader->inst[1] |= ((hw & NV40_VP_SRC0_HIGH_MASK) >>
 	    NV40_VP_SRC0_HIGH_SHIFT)
 	 << NV40_VP_INST_SRC0H_SHIFT;
@@ -128,10 +145,13 @@ NV40VPInsertSource(nvsFunc *shader, unsigned int hw, int pos)
 	 << NV40_VP_INST_SRC0L_SHIFT;
       break;
    case 1:
+      shader->inst[2] &= ~NV40_VP_INST_SRC1_MASK;
       shader->inst[2] |= hw
 	 << NV40_VP_INST_SRC1_SHIFT;
       break;
    case 2:
+      shader->inst[2] &= ~NV40_VP_INST_SRC2H_MASK;
+      shader->inst[3] &= ~NV40_VP_INST_SRC2L_MASK;
       shader->inst[2] |= ((hw & NV40_VP_SRC2_HIGH_MASK) >>
 	    NV40_VP_SRC2_HIGH_SHIFT)
 	 << NV40_VP_INST_SRC2H_SHIFT;
@@ -155,24 +175,34 @@ NV40VPSetSource(nvsFunc *shader, nvsRegister * src, int pos)
    case NVS_FILE_ATTRIB:
       hw |= (NV40_VP_SRC_REG_TYPE_INPUT << NV40_VP_SRC_REG_TYPE_SHIFT);
 
+      shader->inst[1] &= ~NV40_VP_INST_INPUT_SRC_MASK;
       shader->inst[1] |= (src->index << NV40_VP_INST_INPUT_SRC_SHIFT);
       if (src->indexed) {
 	 shader->inst[0] |= NV40_VP_INST_INDEX_INPUT;
 	 if (src->addr_reg)
 	    shader->inst[0] |= NV40_VP_INST_ADDR_REG_SELECT_1;
+	 else
+	    shader->inst[0] &= ~NV40_VP_INST_ADDR_REG_SELECT_1;
+	 shader->inst[0] &= ~NV40_VP_INST_ADDR_SWZ_SHIFT;
 	 shader->inst[0] |= (src->addr_comp << NV40_VP_INST_ADDR_SWZ_SHIFT);
-      }
+      } else
+	 shader->inst[0] &= ~NV40_VP_INST_INDEX_INPUT;
       break;
    case NVS_FILE_CONST:
       hw |= (NV40_VP_SRC_REG_TYPE_CONST << NV40_VP_SRC_REG_TYPE_SHIFT);
 
+      shader->inst[1] &= ~NV40_VP_INST_CONST_SRC_MASK;
       shader->inst[1] |= (src->index << NV40_VP_INST_CONST_SRC_SHIFT);
       if (src->indexed) {
 	 shader->inst[3] |= NV40_VP_INST_INDEX_CONST;
 	 if (src->addr_reg)
 	    shader->inst[0] |= NV40_VP_INST_ADDR_REG_SELECT_1;
+	 else
+	    shader->inst[0] &= ~NV40_VP_INST_ADDR_REG_SELECT_1;
+	 shader->inst[0] &= ~NV40_VP_INST_ADDR_SWZ_MASK;
 	 shader->inst[0] |= (src->addr_comp << NV40_VP_INST_ADDR_SWZ_SHIFT);
-      }
+      } else
+	 shader->inst[3] &= ~NV40_VP_INST_INDEX_CONST;
       break;
    case NVS_FILE_TEMP:
       hw |= (NV40_VP_SRC_REG_TYPE_TEMP << NV40_VP_SRC_REG_TYPE_SHIFT);
@@ -189,6 +219,8 @@ NV40VPSetSource(nvsFunc *shader, nvsRegister * src, int pos)
 	 hw |= NV40_VP_SRC_NEGATE;
       if (src->abs)
 	 shader->inst[0] |= (1 << (21 + pos));
+      else
+	 shader->inst[0] &= ~(1 << (21 + pos));
       hw |= (src->swizzle[0] << NV40_VP_SRC_SWZ_X_SHIFT);
       hw |= (src->swizzle[1] << NV40_VP_SRC_SWZ_Y_SHIFT);
       hw |= (src->swizzle[2] << NV40_VP_SRC_SWZ_Z_SHIFT);
@@ -199,21 +231,30 @@ NV40VPSetSource(nvsFunc *shader, nvsRegister * src, int pos)
 }
 
 static void
-NV40VPSetUnusedSource(nvsFunc *shader, int pos)
+NV40VPInitInstruction(nvsFunc *shader)
 {
-   unsigned int hw;
+   unsigned int hwsrc = 0;
 
-   hw = ((NV40_VP_SRC_REG_TYPE_INPUT << NV40_VP_SRC_REG_TYPE_SHIFT) |
-	 (NVS_SWZ_X << NV40_VP_SRC_SWZ_X_SHIFT) |
-	 (NVS_SWZ_Y << NV40_VP_SRC_SWZ_Y_SHIFT) |
-	 (NVS_SWZ_Z << NV40_VP_SRC_SWZ_Z_SHIFT) |
-	 (NVS_SWZ_W << NV40_VP_SRC_SWZ_W_SHIFT));
-
-   NV40VPInsertSource(shader, hw, pos);
+   shader->inst[0] = /*NV40_VP_INST_VEC_RESULT | */
+      		     NV40_VP_INST_VEC_DEST_TEMP_MASK | (1<<20);
+   shader->inst[1] = 0;
+   shader->inst[2] = 0;
+   shader->inst[3] = NV40_VP_INST_SCA_RESULT |
+      		     NV40_VP_INST_SCA_DEST_TEMP_MASK |
+		     NV40_VP_INST_DEST_MASK;
+   
+   hwsrc = (NV40_VP_SRC_REG_TYPE_INPUT << NV40_VP_SRC_REG_TYPE_SHIFT) |
+      	   (NVS_SWZ_X << NV40_VP_SRC_SWZ_X_SHIFT) |
+      	   (NVS_SWZ_Y << NV40_VP_SRC_SWZ_Y_SHIFT) |
+      	   (NVS_SWZ_Z << NV40_VP_SRC_SWZ_Z_SHIFT) |
+      	   (NVS_SWZ_W << NV40_VP_SRC_SWZ_W_SHIFT);
+   NV40VPInsertSource(shader, hwsrc, 0);
+   NV40VPInsertSource(shader, hwsrc, 1);
+   NV40VPInsertSource(shader, hwsrc, 2);
 }
 
 static void
-NV40VPSetLastInst(nvsFunc *shader, int pos)
+NV40VPSetLastInst(nvsFunc *shader)
 {
    shader->inst[3] |= 1;
 }
@@ -611,13 +652,13 @@ NV40VPInitShaderFuncs(nvsFunc * shader)
    MOD_OPCODE(NVVP_TX_SOP, NV40_VP_INST_OP_PUSHA, NVS_OP_PUSHA,  3, -1, -1);
    MOD_OPCODE(NVVP_TX_SOP, NV40_VP_INST_OP_POPA , NVS_OP_POPA , -1, -1, -1);
 
+   shader->InitInstruction	= NV40VPInitInstruction;
    shader->SupportsOpcode	= NV40VPSupportsOpcode;
    shader->SetOpcode		= NV40VPSetOpcode;
    shader->SetCCUpdate		= NV40VPSetCCUpdate;
    shader->SetCondition		= NV40VPSetCondition;
    shader->SetResult		= NV40VPSetResult;
    shader->SetSource		= NV40VPSetSource;
-   shader->SetUnusedSource	= NV40VPSetUnusedSource;
    shader->SetLastInst		= NV40VPSetLastInst;
 
    shader->HasMergedInst	= NV40VPHasMergedInst;

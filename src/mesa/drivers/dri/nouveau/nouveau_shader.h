@@ -256,6 +256,7 @@ struct _nvsFunc {
    struct _op_xlat*(*GetOPTXRec)	(nvsFunc *, int merged);
    struct _op_xlat*(*GetOPTXFromSOP)	(nvsOpcode, int *id);
 
+   void		(*InitInstruction)	(nvsFunc *);
    int		(*SupportsOpcode)	(nvsFunc *, nvsOpcode);
    void		(*SetOpcode)		(nvsFunc *, unsigned int opcode,
 	 				 int slot);
@@ -265,7 +266,6 @@ struct _nvsFunc {
    void		(*SetResult)		(nvsFunc *, nvsRegister *,
 	 				 unsigned int mask, int slot);
    void		(*SetSource)		(nvsFunc *, nvsRegister *, int pos);
-   void		(*SetUnusedSource)	(nvsFunc *, int pos);
    void		(*SetTexImageUnit)	(nvsFunc *, int unit);
    void		(*SetSaturate)		(nvsFunc *);
    void		(*SetLastInst)		(nvsFunc *);
