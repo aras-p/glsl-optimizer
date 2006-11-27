@@ -1086,7 +1086,7 @@ _mesa_init_constants( GLcontext *ctx )
    /* If we're running in the X server, do bounds checking to prevent
     * segfaults and server crashes!
     */
-#if defined(XFree86LOADER) && defined(IN_MODULE)
+#if defined(XFree86Server)
    ctx->Const.CheckArrayBounds = GL_TRUE;
 #else
    ctx->Const.CheckArrayBounds = GL_FALSE;
