@@ -50,7 +50,6 @@
 
 #define SET_STATE( i830, STATE )		\
 do {						\
-   assert(!i830->intel.prim.flush); \
    i830->current->emitted = 0;			\
    i830->current = &i830->STATE;		\
    i830->current->emitted = 0;			\
@@ -907,7 +906,6 @@ i830RotateWindow(intelContextPtr intel, __DRIdrawablePrivate *dPriv,
 
    } /* cliprect loop */
 
-   assert(!intel->prim.flush); 
    intelFlushBatchLocked( intel, GL_FALSE, GL_FALSE, GL_FALSE );
 
  done:
