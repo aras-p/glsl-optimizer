@@ -52,6 +52,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define DRM_I830_INIT_HEAP                0x0a
 #define DRM_I830_CMDBUFFER                0x0b
 #define DRM_I830_DESTROY_HEAP             0x0c
+#define DRM_I830_SET_VBLANK_PIPE          0x0d
+#define DRM_I830_GET_VBLANK_PIPE          0x0e
 
 typedef struct {
    enum {
@@ -208,5 +210,11 @@ typedef struct {
 	int region;
 } drmI830MemDestroyHeap;
 
+#define DRM_I830_VBLANK_PIPE_A  1
+#define DRM_I830_VBLANK_PIPE_B  2
+
+typedef struct {
+        int pipe;
+} drmI830VBlankPipe;
 
 #endif /* _I830_DRM_H_ */
