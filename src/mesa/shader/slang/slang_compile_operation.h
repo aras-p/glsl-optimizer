@@ -32,7 +32,7 @@ extern "C" {
 
 /**
  * Types of slang operations.
- * These are the basic intermediate code representations.
+ * These are the types of the AST (abstract syntax tree) nodes.
  * [foo] indicates a sub-tree or reference to another type of node
  */
 typedef enum slang_operation_type_
@@ -105,6 +105,7 @@ typedef enum slang_operation_type_
 /**
  * A slang_operation is basically a compiled instruction (such as assignment,
  * a while-loop, a conditional, a multiply, a function call, etc).
+ * The AST (abstract syntax tree) is built from these nodes.
  * NOTE: This structure could have been implemented as a union of simpler
  * structs which would correspond to the operation types above.
  */
@@ -112,16 +113,24 @@ typedef struct slang_operation_
 {
    slang_operation_type type;
    struct slang_operation_ *children;
-   unsigned int num_children;
-   float literal;            /**< Used for float, int and bool values */
-   slang_atom a_id;          /**< type: asm, identifier, call, field */
+   GLuint num_children;
+   GLfloat literal;            /**< Used for float, int and bool values */
+   slang_atom a_id;            /**< type: asm, identifier, call, field */
    slang_variable_scope *locals;       /**< local vars for scope */
 } slang_operation;
 
 
-extern int slang_operation_construct(slang_operation *);
-extern void slang_operation_destruct(slang_operation *);
-extern int slang_operation_copy(slang_operation *, const slang_operation *);
+extern GLboolean
+slang_operation_construct(slang_operation *);
+
+extern void
+slang_operation_destruct(slang_operation *);
+
+extern GLboolean
+slang_operation_copy(slang_operation *, const slang_operation *);
+
+extern slang_operation *
+slang_operation_new(GLuint count);
 
 
 #ifdef __cplusplus
