@@ -400,6 +400,8 @@ _mesa_EndFragmentShaderATI(void)
       }
    }
 #endif
+   if (ctx->Driver.ProgramStringNotify)
+      ctx->Driver.ProgramStringNotify( ctx, GL_FRAGMENT_SHADER_ATI, NULL );
 }
 
 void GLAPIENTRY

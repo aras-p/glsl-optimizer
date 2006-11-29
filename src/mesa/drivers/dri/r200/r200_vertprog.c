@@ -1205,6 +1205,9 @@ r200ProgramStringNotify(GLcontext *ctx, GLenum target, struct gl_program *prog)
       r200_translate_vertex_program(ctx, vp);
       rmesa->curr_vp_hw = NULL;
       break;
+   case GL_FRAGMENT_SHADER_ATI:
+      rmesa->afs_loaded = NULL;
+      break;
    }
    /* need this for tcl fallbacks */
    _tnl_program_string(ctx, target, prog);
