@@ -80,8 +80,6 @@ intel_check_blit_fragment_ops(GLcontext * ctx)
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   /* Could do logicop with the blitter: 
-    */
    return !(ctx->_ImageTransferState ||
 	    ctx->RenderMode != GL_RENDER ||
             ctx->Color.AlphaEnabled ||
@@ -223,6 +221,65 @@ do_blit_copypixels(GLcontext * ctx,
    return GL_TRUE;
 }
 
+/**
+ * CopyPixels with metaops.  We can support (most) fragment options that way.
+ */
+static GLboolean
+do_meta_copypixels(GLcontext * ctx,
+                   GLint srcx, GLint srcy,
+                   GLsizei width, GLsizei height,
+                   GLint dstx, GLint dsty, GLenum type)
+{
+   struct intel_context *intel = intel_context(ctx);
+
+   /* We're going to cheat and use texturing to get the source region
+    * duplicated.  Trying to cope with the case where texturing is
+    * already applied to fragments would be messy (and it's an unusual
+    * thing to want anyway), so we leave that to swrast.
+    *
+    * We don't want to worry about any case other than GL_COLOR, either
+    * (though we could, with a bit more work).
+    *
+    * PixelMap, PixelTransfer, PixelZoom etc. could also be handled with
+    * a bit more intelligence in metaops.
+    */
+   if( ctx->_ImageTransferState ||
+       ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F ||
+       ctx->RenderMode != GL_RENDER ||
+       ctx->Texture._EnabledUnits ||
+       ctx->FragmentProgram._Enabled ||
+       type != GL_COLOR )
+      return GL_FALSE;
+
+   /* We don't yet handle copying between two different buffers (which
+    * would really only require filling out a new surface state for
+    * the source instead of aliasing the draw one).  Nor do we handle
+    * overlapping source/dest rectangles (since I assume there is no
+    * way to force the hardware to guarantee the drawing order that
+    * the GL specifies -- if so, the fastest approach might be to use
+    * the blitter to copy the source to a temporary surface and then
+    * map that back onto the destination).  Of course, overlapping
+    * areas in different buffers would be fine.
+    */
+   if( ctx->Color.DrawBuffer[0] != ctx->ReadBuffer->ColorReadBuffer ||
+       ( abs( srcx - dstx ) < width && abs( srcy - dsty ) < height ) )
+      return GL_FALSE;
+   
+   intel->vtbl.install_meta_state( intel, META_VERTEX_ONLY );
+
+   intel->vtbl.meta_frame_buffer_texture( intel, srcx - dstx, srcy - dsty );
+   
+   intel->vtbl.meta_draw_quad( intel,
+			       dstx, dstx + width,
+			       dsty, dsty + height,
+			       ctx->Current.RasterPos[ 2 ],
+			       0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0 );
+   
+   intel->vtbl.leave_meta_state( intel );
+   
+   return GL_TRUE;
+}
+   
 void
 intelCopyPixels(GLcontext * ctx,
                 GLint srcx, GLint srcy,
@@ -235,6 +292,12 @@ intelCopyPixels(GLcontext * ctx,
    if (do_blit_copypixels(ctx, srcx, srcy, width, height, destx, desty, type))
       return;
 
+   if (INTEL_DEBUG & DEBUG_PIXEL)
+      _mesa_printf("fallback to do_meta_copypixels\n");
+   
+   if (do_meta_copypixels(ctx, srcx, srcy, width, height, destx, desty, type))
+      return;
+   
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("fallback to _swrast_CopyPixels\n");
 

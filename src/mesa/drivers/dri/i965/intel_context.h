@@ -86,6 +86,11 @@ struct intel_texture_object
 
 
 
+/* Identifiers for use with install_meta_state below */
+enum
+{
+   META_FULL, META_VERTEX_ONLY
+};
 
 struct intel_context
 {
@@ -132,7 +137,8 @@ struct intel_context
 
       /* Metaops: 
        */
-      void (*install_meta_state)( struct intel_context *intel );
+      void (*install_meta_state)( struct intel_context *intel,
+				  GLenum state );
       void (*leave_meta_state)( struct intel_context *intel );
 
       void (*meta_draw_region)( struct intel_context *intel,
@@ -151,6 +157,8 @@ struct intel_context
       void (*meta_no_stencil_write)( struct intel_context *intel );
       void (*meta_no_depth_write)( struct intel_context *intel );
       void (*meta_no_texture)( struct intel_context *intel );
+      void (*meta_frame_buffer_texture)( struct intel_context *intel,
+					 GLint xoff, GLint yoff );
 
       void (*meta_draw_quad)(struct intel_context *intel, 
 			     GLfloat x0, GLfloat x1,
@@ -218,6 +226,7 @@ struct intel_context
    int drawY;
    GLuint numClipRects;		/* cliprects for that buffer */
    drm_clip_rect_t *pClipRects;
+   struct gl_texture_object *frame_buffer_texobj;
 
    GLboolean scissor;
    drm_clip_rect_t draw_rect;

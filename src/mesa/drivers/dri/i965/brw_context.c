@@ -156,6 +156,8 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 
    brw_ProgramCacheInit( ctx );
 
+   brw_FrameBufferTexInit( brw );
+
    /* Hook our functions into exec and compile dispatch tables.  Only
     * fallback on out-of-memory situations.
     */

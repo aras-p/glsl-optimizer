@@ -235,7 +235,7 @@ static void intelClearWithTris(struct intel_context *intel,
 
    {
 
-      intel->vtbl.install_meta_state(intel);
+      intel->vtbl.install_meta_state(intel, META_FULL);
 
       /* Get clear bounds after locking */
       cx = ctx->DrawBuffer->_Xmin;

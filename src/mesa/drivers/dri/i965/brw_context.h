@@ -485,7 +485,7 @@ struct brw_context
        */
       struct brw_state_pointers attribs;
       struct gl_vertex_program *vp;
-      struct gl_fragment_program *fp;
+      struct gl_fragment_program *fp, *fp_tex;
 
       struct gl_buffer_object *vbo;
 
@@ -493,6 +493,8 @@ struct brw_context
       struct intel_region *saved_depth_region;
 
       GLuint restore_draw_mask;
+      struct gl_fragment_program *restore_fp;
+      
       GLboolean active;
    } metaops;
 
@@ -672,6 +674,8 @@ void brw_destroy_state( struct brw_context *brw );
  */
 void brwUpdateTextureState( struct intel_context *intel );
 void brwInitTextureFuncs( struct dd_function_table *functions );
+void brw_FrameBufferTexInit( struct brw_context *brw );
+void brw_FrameBufferTexDestroy( struct brw_context *brw );
 
 /*======================================================================
  * brw_metaops.c
