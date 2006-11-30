@@ -51,6 +51,8 @@ extern int Swapping, VTSwitch;
 
 void TestVisible(void);
 int ParseFBModes(int, int, int, int, int, int);
+void SetVideoMode(void);
+void CreateBuffer(void);
 void CreateVisual(void);
 
 extern int FrameBufferFD;
@@ -84,7 +86,8 @@ void RestoreColorMap(void);
 /* --- mouse --- */
 extern int MouseX, MouseY;
 extern int CurrentCursor;
-extern int MouseEnabled;
+extern int MouseVisible;
+extern int LastMouseTime;
 extern int NumMouseButtons;
 
 void InitializeCursor(void);

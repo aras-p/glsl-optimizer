@@ -24,6 +24,7 @@
  * Written by Sean D'Epagnier (c) 2006
  */
 
+#include <stdlib.h>
 #include <GL/gl.h>
 
 void glutEstablishOverlay(void)

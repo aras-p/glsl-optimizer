@@ -92,12 +92,18 @@ static void FillReverseColorMap(void)
 
 void RestoreColorMap(void)
 {
+   if(FixedInfo.visual == FB_VISUAL_TRUECOLOR)
+      return;
+
    if (ioctl(FrameBufferFD, FBIOPUTCMAP, (void *) &ColorMap) < 0)
       sprintf(exiterror, "ioctl(FBIOPUTCMAP) failed!\n");
 }
 
 void LoadColorMap(void)
 {
+   if(FixedInfo.visual == FB_VISUAL_TRUECOLOR)
+      return;
+
    ColorMap.start = 0;
    ColorMap.red   = RedColorMap;
    ColorMap.green = GreenColorMap;
