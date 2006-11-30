@@ -405,6 +405,7 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
    int dofogfix = 0;
    int fog_temp_i = 0;
    int free_inputs;
+   int free_inputs_conv;
    int array_count = 0;
 
    vp->native = GL_FALSE;
@@ -530,6 +531,7 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
 	 array_count++;
       }
    }
+   free_inputs_conv = free_inputs;
    /* using VERT_ATTRIB_TEX6/7 would be illegal */
    /* completely ignore aliasing? */
    for (i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++) {
@@ -548,11 +550,13 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
 	    if (free_inputs & (1 << j)) {
 	       free_inputs &= ~(1 << j);
 	       vp->inputs[i] = j;
+	       vp->rev_inputs[j] = i;
 	       break;
 	    }
 	 }
       }
    }
+   vp->gen_inputs_mapped = free_inputs ^ free_inputs_conv;
 
    if (!(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))) {
       if (R200_DEBUG & DEBUG_FALLBACKS) {

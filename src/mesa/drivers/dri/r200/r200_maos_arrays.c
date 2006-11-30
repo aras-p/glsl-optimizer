@@ -385,6 +385,14 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
    GLuint vfmt0 = 0, vfmt1 = 0;
    GLuint count = VB->Count;
    GLuint i;
+   GLuint generic_in_mapped = 0;
+   struct r200_vertex_program *vp = NULL;
+
+   /* this looks way more complicated than necessary... */
+   if (ctx->VertexProgram._Enabled) {
+      vp = rmesa->curr_vp_hw;
+      generic_in_mapped = vp->gen_inputs_mapped;
+   }
 
    if (inputs & VERT_BIT_POS) {
       if (!rmesa->tcl.obj.buf) 
@@ -403,6 +411,19 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
 	 break;
       }
       component[nr++] = &rmesa->tcl.obj;
+   }
+   else if (generic_in_mapped & (1 << 0)) {
+      int geninput = vp->rev_inputs[0] - VERT_ATTRIB_GENERIC0;
+      if (!rmesa->tcl.generic[geninput].buf) {
+         emit_vector( ctx,
+		      &(rmesa->tcl.generic[geninput]),
+		      (char *)VB->AttribPtr[geninput + VERT_ATTRIB_GENERIC0]->data,
+		      4,
+		      VB->AttribPtr[geninput + VERT_ATTRIB_GENERIC0]->stride,
+		      count );
+      }
+      component[nr++] = &rmesa->tcl.generic[geninput];
+      vfmt0 |=  R200_VTX_W0 | R200_VTX_Z0;
    }
 
    if (inputs & VERT_BIT_NORMAL) {
@@ -463,6 +484,23 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
 
       component[nr++] = &rmesa->tcl.rgba;
    }
+/*	vfmt0 |= R200_VTX_PK_RGBA << R200_VTX_COLOR_0_SHIFT;
+	emit_ubyte_rgba( ctx, &rmesa->tcl.rgba, 
+		(char *)VB->ColorPtr[0]->data, 4,
+		      VB->ColorPtr[0]->stride, count);*/
+   else if (generic_in_mapped & (1 << 2)) {
+      int geninput = vp->rev_inputs[2] - VERT_ATTRIB_GENERIC0;
+      if (!rmesa->tcl.generic[geninput].buf) {
+         emit_vector( ctx,
+		      &(rmesa->tcl.generic[geninput]),
+		      (char *)VB->AttribPtr[geninput + VERT_ATTRIB_GENERIC0]->data,
+		      4,
+		      VB->AttribPtr[geninput + VERT_ATTRIB_GENERIC0]->stride,
+		      count );
+      }
+      component[nr++] = &rmesa->tcl.generic[geninput];
+      vfmt0 |= R200_VTX_FP_RGBA << R200_VTX_COLOR_0_SHIFT;
+   }
 
 
    if (inputs & VERT_BIT_COLOR1) {
@@ -480,8 +518,49 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
       vfmt0 |= R200_VTX_FP_RGB << R200_VTX_COLOR_1_SHIFT; 
       component[nr++] = &rmesa->tcl.spec;
    }
+   else if (generic_in_mapped & (1 << 3)) {
+      int geninput = vp->rev_inputs[3] - VERT_ATTRIB_GENERIC0;
+      if (!rmesa->tcl.generic[geninput].buf) {
+         emit_vector( ctx,
+		      &(rmesa->tcl.generic[geninput]),
+		      (char *)VB->AttribPtr[geninput + VERT_ATTRIB_GENERIC0]->data,
+		      4,
+		      VB->AttribPtr[geninput + VERT_ATTRIB_GENERIC0]->stride,
+		      count );
+      }
+      component[nr++] = &rmesa->tcl.generic[geninput];
+      vfmt0 |= R200_VTX_FP_RGBA << R200_VTX_COLOR_1_SHIFT;
+   }
 
-   for ( i = 0 ; i < ctx->Const.MaxTextureUnits ; i++ ) {
+   if (generic_in_mapped & (1 << 4)) {
+      int geninput = vp->rev_inputs[4] - VERT_ATTRIB_GENERIC0;
+      if (!rmesa->tcl.generic[geninput].buf) {
+         emit_vector( ctx,
+		      &(rmesa->tcl.generic[geninput]),
+		      (char *)VB->AttribPtr[geninput + VERT_ATTRIB_GENERIC0]->data,
+		      4,
+		      VB->AttribPtr[geninput + VERT_ATTRIB_GENERIC0]->stride,
+		      count );
+      }
+      component[nr++] = &rmesa->tcl.generic[geninput];
+      vfmt0 |= R200_VTX_FP_RGBA << R200_VTX_COLOR_2_SHIFT;
+   }
+
+   if (generic_in_mapped & (1 << 5)) {
+      int geninput = vp->rev_inputs[5] - VERT_ATTRIB_GENERIC0;
+      if (!rmesa->tcl.generic[geninput].buf) {
+         emit_vector( ctx,
+		      &(rmesa->tcl.generic[geninput]),
+		      (char *)VB->AttribPtr[geninput + VERT_ATTRIB_GENERIC0]->data,
+		      4,
+		      VB->AttribPtr[geninput + VERT_ATTRIB_GENERIC0]->stride,
+		      count );
+      }
+      component[nr++] = &rmesa->tcl.generic[geninput];
+      vfmt0 |= R200_VTX_FP_RGBA << R200_VTX_COLOR_3_SHIFT;
+   }
+
+   for ( i = 0 ; i < 6 ; i++ ) {
       if (inputs & (VERT_BIT_TEX0 << i)) {
 	 if (!rmesa->tcl.tex[i].buf)
 	     emit_vector( ctx, 
@@ -494,8 +573,37 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
 	 vfmt1 |= VB->TexCoordPtr[i]->size << (i * 3);
 	 component[nr++] = &rmesa->tcl.tex[i];
       }
+      else if (generic_in_mapped & (1 << (i + 6))) {
+	 int geninput = vp->rev_inputs[i + 6] - VERT_ATTRIB_GENERIC0;
+	 if (!rmesa->tcl.generic[geninput].buf) {
+            emit_vector( ctx,
+			 &(rmesa->tcl.generic[geninput]),
+			(char *)VB->AttribPtr[geninput + VERT_ATTRIB_GENERIC0]->data,
+			4,
+			VB->AttribPtr[geninput + VERT_ATTRIB_GENERIC0]->stride,
+			count );
+	 }
+	 component[nr++] = &rmesa->tcl.generic[geninput];
+	 vfmt1 |= 4 << (R200_VTX_TEX0_COMP_CNT_SHIFT + (i * 3));
+      }
    }
 
+   if (generic_in_mapped & (1 << 13)) {
+      int geninput = vp->rev_inputs[13] - VERT_ATTRIB_GENERIC0;
+      if (!rmesa->tcl.generic[geninput].buf) {
+         emit_vector( ctx,
+		      &(rmesa->tcl.generic[geninput]),
+		      (char *)VB->AttribPtr[geninput + VERT_ATTRIB_GENERIC0]->data,
+		      4,
+		      VB->AttribPtr[geninput + VERT_ATTRIB_GENERIC0]->stride,
+		      count );
+      }
+      component[nr++] = &rmesa->tcl.generic[geninput];
+      vfmt0 |= R200_VTX_XY1 | R200_VTX_Z1 | R200_VTX_W1;
+   }
+
+/* doesn't work. Wrong order with mixed generic & conventional! */
+/*
    if (ctx->VertexProgram._Enabled) {
       int *vp_inputs = rmesa->curr_vp_hw->inputs;
       for ( i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++ ) {
@@ -539,6 +647,7 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
 	 }
       }
    }
+*/
 
    if (vfmt0 != rmesa->hw.vtx.cmd[VTX_VTXFMT_0] ||
        vfmt1 != rmesa->hw.vtx.cmd[VTX_VTXFMT_1]) { 
