@@ -185,7 +185,7 @@ IDirectFBGL_Mesa_Lock( IDirectFBGL *thiz )
      IDirectFBSurface *surface;
      int               width   = 0;
      int               height  = 0;
-     DFBResult         err;
+     DFBResult         ret;
      
      DIRECT_INTERFACE_GET_DATA( IDirectFBGL );
 
@@ -198,11 +198,11 @@ IDirectFBGL_Mesa_Lock( IDirectFBGL *thiz )
      surface = data->surface;
      surface->GetSize( surface, &width, &height );
      
-     err = surface->Lock( surface, DSLF_READ | DSLF_WRITE, 
+     ret = surface->Lock( surface, DSLF_READ | DSLF_WRITE, 
                           (void*)&data->video.start, &data->video.pitch );
-     if (err != DFB_OK) {
+     if (ret) {
           D_ERROR( "DirectFBGL/Mesa: couldn't lock surface.\n" );
-          return err;
+          return ret;
      }
      data->video.end = data->video.start + (height-1) * data->video.pitch;
 
@@ -270,7 +270,7 @@ IDirectFBGL_Mesa_GetAttributes( IDirectFBGL     *thiz,
      attributes->accum_green_size = visual->accumGreenBits;
      attributes->accum_blue_size  = visual->accumBlueBits;
      attributes->accum_alpha_size = visual->accumAlphaBits;
-     attributes->double_buffer    = (caps & DSCAPS_FLIPPING) ? 1 : 0;
+     attributes->double_buffer    = ((caps & DSCAPS_FLIPPING) != 0);
      attributes->stereo           = (visual->stereoMode != 0);
 
      return DFB_OK;
@@ -288,6 +288,8 @@ Probe( void *data )
 static DFBResult
 Construct( IDirectFBGL *thiz, IDirectFBSurface *surface )
 {
+     DFBResult ret;
+     
      /* Initialize global resources. */
      if (directfbgl_init())
           return DFB_INIT;
@@ -296,12 +298,17 @@ Construct( IDirectFBGL *thiz, IDirectFBSurface *surface )
      DIRECT_ALLOCATE_INTERFACE_DATA( thiz, IDirectFBGL );
  
      /* Initialize interface data. */
-     data->ref     = 1;
-     data->surface = surface;
+     data->ref = 1;
 
-     surface->AddRef( surface );
-     surface->GetPixelFormat( surface, &data->format );
-     surface->GetSize( surface, &data->width, &data->height );
+     /* Duplicate destination surface. */
+     ret = surface->GetSubSurface( surface, NULL, &data->surface );
+     if (ret) {
+          IDirectFBGL_Mesa_Destruct( thiz );
+          return ret;
+     }
+
+     data->surface->GetPixelFormat( data->surface, &data->format );
+     data->surface->GetSize( data->surface, &data->width, &data->height );
 
      /* Configure visual. */
      if (!directfbgl_init_visual( &data->visual, data->format )) {
@@ -375,11 +382,6 @@ static void
 dfbClear( GLcontext *ctx, GLbitfield mask )
 {
      IDirectFBGL_data *data = (IDirectFBGL_data*) ctx->DriverCtx;
-     int x = ctx->DrawBuffer->_Xmin;
-     int y = ctx->DrawBuffer->_Ymin;
-     int width = ctx->DrawBuffer->_Xmax - x;
-     int height = ctx->DrawBuffer->_Ymax - y;
-     GLboolean all = (width == ctx->DrawBuffer->Width && height == ctx->DrawBuffer->height)
      
      if (mask & BUFFER_BIT_FRONT_LEFT &&
          ctx->Color.ColorMask[0]      &&
@@ -388,7 +390,7 @@ dfbClear( GLcontext *ctx, GLbitfield mask )
          ctx->Color.ColorMask[3])
      {
           DFBRegion clip;
-          __u8 a, r, g, b;
+          GLubyte   a, r, g, b;
           
           UNCLAMPED_FLOAT_TO_UBYTE( a, ctx->Color.ClearColor[ACOMP] );
           UNCLAMPED_FLOAT_TO_UBYTE( r, ctx->Color.ClearColor[RCOMP] );
@@ -397,25 +399,13 @@ dfbClear( GLcontext *ctx, GLbitfield mask )
 
           data->surface->Unlock( data->surface );
 
-#if DIRECTFB_VERSION_CODE >= VERSION_CODE(0,9,25)
-          data->surface->GetClip( data->surface, &clip );
-#else
-          (void)clip;
-#endif
-          
-          if (all) {
-               data->surface->SetClip( data->surface, NULL );
-          }
-          else {
-               DFBRegion reg = { x1:x, y1:y, x2:x+width-1, y2:y+height-1 };
-               data->surface->SetClip( data->surface, &reg );
-          }
+          clip.x1 = ctx->DrawBuffer->_Xmin;
+          clip.y1 = ctx->DrawBuffer->_Ymin;
+          clip.x2 = ctx->DrawBuffer->_Xmax - 1;
+          clip.y2 = ctx->DrawBuffer->_Ymax - 1;
+          data->surface->SetClip( data->surface, &clip );
           
           data->surface->Clear( data->surface, r, g, b, a );
-
-#if DIRECTFB_VERSION_CODE >= VERSION_CODE(0,9,25)
-          data->surface->SetClip( data->surface, &clip );
-#endif
           
           data->surface->Lock( data->surface, DSLF_READ | DSLF_WRITE,
                                (void*)&data->video.start, &data->video.pitch );
@@ -790,6 +780,7 @@ directfbgl_create_context( GLcontext             *context,
                data->render.GetRow        = get_row_RGB332;
                data->render.GetValues     = get_values_RGB332;
                data->render.PutRow        = put_row_RGB332;
+               data->render.PutRowRGB     = put_row_rgb_RGB332;
                data->render.PutMonoRow    = put_mono_row_RGB332;
                data->render.PutValues     = put_values_RGB332;
                data->render.PutMonoValues = put_mono_values_RGB332;
@@ -798,6 +789,7 @@ directfbgl_create_context( GLcontext             *context,
                data->render.GetRow        = get_row_ARGB4444;
                data->render.GetValues     = get_values_ARGB4444;
                data->render.PutRow        = put_row_ARGB4444;
+               data->render.PutRowRGB     = put_row_rgb_ARGB4444;
                data->render.PutMonoRow    = put_mono_row_ARGB4444;
                data->render.PutValues     = put_values_ARGB4444;
                data->render.PutMonoValues = put_mono_values_ARGB4444;
@@ -806,6 +798,7 @@ directfbgl_create_context( GLcontext             *context,
                data->render.GetRow        = get_row_ARGB2554;
                data->render.GetValues     = get_values_ARGB2554;
                data->render.PutRow        = put_row_ARGB2554;
+               data->render.PutRowRGB     = put_row_rgb_ARGB2554;
                data->render.PutMonoRow    = put_mono_row_ARGB2554;
                data->render.PutValues     = put_values_ARGB2554;
                data->render.PutMonoValues = put_mono_values_ARGB2554;
@@ -814,6 +807,7 @@ directfbgl_create_context( GLcontext             *context,
                data->render.GetRow        = get_row_ARGB1555;
                data->render.GetValues     = get_values_ARGB1555;
                data->render.PutRow        = put_row_ARGB1555;
+               data->render.PutRowRGB     = put_row_rgb_ARGB1555;
                data->render.PutMonoRow    = put_mono_row_ARGB1555;
                data->render.PutValues     = put_values_ARGB1555;
                data->render.PutMonoValues = put_mono_values_ARGB1555;
@@ -822,6 +816,7 @@ directfbgl_create_context( GLcontext             *context,
                data->render.GetRow        = get_row_RGB16;
                data->render.GetValues     = get_values_RGB16;
                data->render.PutRow        = put_row_RGB16;
+               data->render.PutRowRGB     = put_row_rgb_RGB16;
                data->render.PutMonoRow    = put_mono_row_RGB16;
                data->render.PutValues     = put_values_RGB16;
                data->render.PutMonoValues = put_mono_values_RGB16;
@@ -830,6 +825,7 @@ directfbgl_create_context( GLcontext             *context,
                data->render.GetRow        = get_row_RGB24;
                data->render.GetValues     = get_values_RGB24;
                data->render.PutRow        = put_row_RGB24;
+               data->render.PutRowRGB     = put_row_rgb_RGB24;
                data->render.PutMonoRow    = put_mono_row_RGB24;
                data->render.PutValues     = put_values_RGB24;
                data->render.PutMonoValues = put_mono_values_RGB24;
@@ -838,6 +834,7 @@ directfbgl_create_context( GLcontext             *context,
                data->render.GetRow        = get_row_RGB32;
                data->render.GetValues     = get_values_RGB32;
                data->render.PutRow        = put_row_RGB32;
+               data->render.PutRowRGB     = put_row_rgb_RGB32;
                data->render.PutMonoRow    = put_mono_row_RGB32;
                data->render.PutValues     = put_values_RGB32;
                data->render.PutMonoValues = put_mono_values_RGB32;
@@ -846,6 +843,7 @@ directfbgl_create_context( GLcontext             *context,
                data->render.GetRow        = get_row_ARGB;
                data->render.GetValues     = get_values_ARGB;
                data->render.PutRow        = put_row_ARGB;
+               data->render.PutRowRGB     = put_row_rgb_ARGB;
                data->render.PutMonoRow    = put_mono_row_ARGB;
                data->render.PutValues     = put_values_ARGB;
                data->render.PutMonoValues = put_mono_values_ARGB;
@@ -854,6 +852,7 @@ directfbgl_create_context( GLcontext             *context,
                data->render.GetRow        = get_row_AiRGB;
                data->render.GetValues     = get_values_AiRGB;
                data->render.PutRow        = put_row_AiRGB;
+               data->render.PutRowRGB     = put_row_rgb_AiRGB;
                data->render.PutMonoRow    = put_mono_row_AiRGB;
                data->render.PutValues     = put_values_AiRGB;
                data->render.PutMonoValues = put_mono_values_AiRGB;
