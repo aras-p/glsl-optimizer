@@ -85,8 +85,8 @@ typedef struct {
      int                     height;
      
      struct {
-          __u8              *start;
-          __u8              *end;
+          GLubyte           *start;
+          GLubyte           *end;
           int                pitch;
      } video;
 
@@ -213,10 +213,10 @@ IDirectFBGL_Mesa_Lock( IDirectFBGL *thiz )
                          &data->framebuffer, &data->framebuffer );
      
      if (data->width != width || data->height != height) {
+          _mesa_resize_framebuffer( &data->context, 
+                                    &data->framebuffer, width, height );
           data->width  = width;
-          data->height = height;
-          _mesa_resize_framebuffer(&data->context, 
-                                   &data->framebuffer, width, height);
+          data->height = height;                        
      }
 
      data->locked++;
@@ -394,23 +394,21 @@ dfbGetBufferSize( GLframebuffer *buffer, GLuint *width, GLuint *height )
 static void
 dfbSetViewport( GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h )
 {
-   GLuint newWidth, newHeight;
-   GLframebuffer *buffer = ctx->WinSysDrawBuffer;
-   dfbGetBufferSize( buffer, &newWidth, &newHeight );
-   if (buffer->Width != newWidth || buffer->Height != newHeight) {
-      _mesa_resize_framebuffer(ctx, buffer, newWidth, newHeight );
-   }
+     /* Nothing to do (the surface can't be resized while it's locked). */
+     return;
 }
 
 static void
 dfbClear( GLcontext *ctx, GLbitfield mask )
 {
      IDirectFBGL_data *data = (IDirectFBGL_data*) ctx->DriverCtx;
-     
-     if (mask & BUFFER_BIT_FRONT_LEFT &&
-         ctx->Color.ColorMask[0]      &&
-         ctx->Color.ColorMask[1]      &&
-         ctx->Color.ColorMask[2]      &&
+ 
+#define BUFFER_BIT_MASK (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT | \
+                         BUFFER_BIT_BACK_LEFT  | BUFFER_BIT_BACK_RIGHT  )
+     if (mask & BUFFER_BIT_MASK  &&
+         ctx->Color.ColorMask[0] &&
+         ctx->Color.ColorMask[1] &&
+         ctx->Color.ColorMask[2] &&
          ctx->Color.ColorMask[3])
      {
           DFBRegion clip;
@@ -421,27 +419,29 @@ dfbClear( GLcontext *ctx, GLbitfield mask )
           UNCLAMPED_FLOAT_TO_UBYTE( g, ctx->Color.ClearColor[GCOMP] );
           UNCLAMPED_FLOAT_TO_UBYTE( b, ctx->Color.ClearColor[BCOMP] );
 
-          data->surface->Unlock( data->surface );
-
           clip.x1 = ctx->DrawBuffer->_Xmin;
           clip.y1 = ctx->DrawBuffer->_Ymin;
           clip.x2 = ctx->DrawBuffer->_Xmax - 1;
           clip.y2 = ctx->DrawBuffer->_Ymax - 1;
           data->surface->SetClip( data->surface, &clip );
           
+          data->surface->Unlock( data->surface );
+          
           data->surface->Clear( data->surface, r, g, b, a );
           
           data->surface->Lock( data->surface, DSLF_READ | DSLF_WRITE,
                                (void*)&data->video.start, &data->video.pitch );
+          data->video.end = data->video.start + (data->height-1) * data->video.pitch;
+          data->render.Data = data->video.start;
           
-          mask &= ~BUFFER_BIT_FRONT_LEFT;
+          mask &= ~BUFFER_BIT_MASK;
      }
+#undef BUFFER_BIT_MASK
      
      if (mask)
           _swrast_Clear( ctx, mask );
-}        
-          
-     
+}
+
 
 /************************ RenderBuffer functions *****************************/
 
