@@ -6,7 +6,7 @@ Requirements
 ============
 
   To build Mesa with DirectFB (DirectFBGL) support you need:
-     - DirectFB at least 0.9.21 (http://directfb.org)
+     - DirectFB at least 1.0.0 (http://directfb.org)
      - pkg-config at least 0.9 (http://pkgconfig.sf.net)
 
 

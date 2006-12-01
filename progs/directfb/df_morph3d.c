@@ -159,9 +159,9 @@ So the angle is:
 #include <unistd.h>
 
 #include <directfb.h>
+#include <directfbgl.h>
 
 #include <GL/gl.h>
-#include <GL/directfbgl.h>
 
 
 /* the super interface */

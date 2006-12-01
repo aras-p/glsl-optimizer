@@ -25,24 +25,16 @@
 
 #include <pthread.h>
 
-#include <direct/messages.h>
-#include <direct/interface.h>
-#include <direct/mem.h>
-
 #include <directfb.h>
 #include <directfb_version.h>
 
-#define VERSION_CODE( M, m, r )  (((M) * 1000) + ((m) * 100) + ((r)))
-#define DIRECTFB_VERSION_CODE    VERSION_CODE( DIRECTFB_MAJOR_VERSION, \
-                                               DIRECTFB_MINOR_VERSION, \
-                                               DIRECTFB_MICRO_VERSION )
+#include <directfbgl.h>
 
+#include <direct/mem.h>
+#include <direct/messages.h>
+#include <direct/interface.h>
 
-#ifdef CLAMP
-# undef CLAMP
-#endif 
-
-#include "GL/directfbgl.h"
+#undef CLAMP
 #include "glheader.h"
 #include "buffers.h"
 #include "context.h"
@@ -62,6 +54,12 @@
 #include "drivers/common/driverfuncs.h"
 
 
+#define VERSION_CODE( M, m, r )  (((M) * 1000) + ((m) * 100) + ((r)))
+#define DIRECTFB_VERSION_CODE    VERSION_CODE( DIRECTFB_MAJOR_VERSION, \
+                                               DIRECTFB_MINOR_VERSION, \
+                                               DIRECTFB_MICRO_VERSION )
+
+
 static DFBResult
 Probe( void *data );
 
@@ -79,7 +77,7 @@ DIRECT_INTERFACE_IMPLEMENTATION( IDirectFBGL, Mesa )
 typedef struct {
      int                     ref;       /* reference counter */
      
-     DFBBoolean              locked;
+     int                     locked;
      
      IDirectFBSurface       *surface;
      DFBSurfacePixelFormat   format;
@@ -189,8 +187,10 @@ IDirectFBGL_Mesa_Lock( IDirectFBGL *thiz )
      
      DIRECT_INTERFACE_GET_DATA( IDirectFBGL );
 
-     if (data->locked)
-          return DFB_LOCKED;
+     if (data->locked) {
+          data->locked++;
+          return DFB_OK;
+     }
 
      if (directfbgl_lock())
           return DFB_LOCKED;
@@ -202,6 +202,7 @@ IDirectFBGL_Mesa_Lock( IDirectFBGL *thiz )
                           (void*)&data->video.start, &data->video.pitch );
      if (ret) {
           D_ERROR( "DirectFBGL/Mesa: couldn't lock surface.\n" );
+          directfbgl_unlock();
           return ret;
      }
      data->video.end = data->video.start + (height-1) * data->video.pitch;
@@ -218,7 +219,7 @@ IDirectFBGL_Mesa_Lock( IDirectFBGL *thiz )
                                    &data->framebuffer, width, height);
      }
 
-     data->locked = DFB_TRUE;
+     data->locked++;
      
      return DFB_OK;
 }
@@ -230,14 +231,14 @@ IDirectFBGL_Mesa_Unlock( IDirectFBGL *thiz )
 
      if (!data->locked)
           return DFB_OK;
-
-     _mesa_make_current( NULL, NULL, NULL );
+          
+     if (--data->locked == 0) {
+          _mesa_make_current( NULL, NULL, NULL );
      
-     data->surface->Unlock( data->surface );
+          data->surface->Unlock( data->surface );
 
-     directfbgl_unlock();
-
-     data->locked = DFB_FALSE;
+          directfbgl_unlock();
+     }
      
      return DFB_OK;
 }
@@ -275,6 +276,26 @@ IDirectFBGL_Mesa_GetAttributes( IDirectFBGL     *thiz,
 
      return DFB_OK;
 }
+
+#if DIRECTFBGL_INTERFACE_VERSION >= 1
+static DFBResult
+IDirectFBGL_Mesa_GetProcAddress( IDirectFBGL  *thiz,
+                                 const char   *name,
+                                 void        **ret_address )
+{
+     DIRECT_INTERFACE_GET_DATA( IDirectFBGL );
+
+     if (!name)
+          return DFB_INVARG;
+          
+     if (!ret_address)
+          return DFB_INVARG;
+          
+     *ret_address = _glapi_get_proc_address( name );
+          
+     return (*ret_address) ? DFB_OK : DFB_UNSUPPORTED;
+}
+#endif
 
 
 /* exported symbols */
@@ -326,11 +347,14 @@ Construct( IDirectFBGL *thiz, IDirectFBSurface *surface )
      }
 
      /* Assign interface pointers. */
-     thiz->AddRef        = IDirectFBGL_Mesa_AddRef;
-     thiz->Release       = IDirectFBGL_Mesa_Release;
-     thiz->Lock          = IDirectFBGL_Mesa_Lock;
-     thiz->Unlock        = IDirectFBGL_Mesa_Unlock;
-     thiz->GetAttributes = IDirectFBGL_Mesa_GetAttributes;
+     thiz->AddRef         = IDirectFBGL_Mesa_AddRef;
+     thiz->Release        = IDirectFBGL_Mesa_Release;
+     thiz->Lock           = IDirectFBGL_Mesa_Lock;
+     thiz->Unlock         = IDirectFBGL_Mesa_Unlock;
+     thiz->GetAttributes  = IDirectFBGL_Mesa_GetAttributes;
+#if DIRECTFBGL_INTERFACE_VERSION >= 1
+     thiz->GetProcAddress = IDirectFBGL_Mesa_GetProcAddress;
+#endif 
 
      return DFB_OK;
 }

@@ -27,9 +27,9 @@
 #include <math.h>
 
 #include <directfb.h>
+#include <directfbgl.h>
 
 #include <GL/glu.h>
-#include <GL/directfbgl.h>
 
 #include "util/showbuffer.c"
 #include "util/readtex.c"
