@@ -411,13 +411,18 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
     
     if (!pcp 
 	|| ((pdp != pcp->driDrawablePriv) && (pdp != pcp->driReadablePriv))) {
-	/* ERROR!!! */
-	return;
+	/* ERROR!!! 
+	 * ...but we must ignore it. There can be many contexts bound to a
+	 * drawable.
+	 */
     }
 
     psp = pdp->driScreenPriv;
     if (!psp) {
 	/* ERROR!!! */
+       _mesa_problem("Warning! Possible infinite loop due to bug "
+		     "in file %s, line %d\n",
+		     __FILE__, __LINE__);
 	return;
     }
 
