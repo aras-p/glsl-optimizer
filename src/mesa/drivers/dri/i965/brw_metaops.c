@@ -95,26 +95,22 @@ static void init_attribs( struct brw_context *brw )
    DUP(brw, gl_fragment_program_state, FragmentProgram);
 }
 
-static void install_vertex_attribs( struct brw_context *brw )
+static void install_attribs( struct brw_context *brw )
 {
+   INSTALL(brw, Color, _NEW_COLOR);
+   INSTALL(brw, Depth, _NEW_DEPTH);
+   INSTALL(brw, Fog, _NEW_FOG);
    INSTALL(brw, Hint, _NEW_HINT);
    INSTALL(brw, Light, _NEW_LIGHT);
    INSTALL(brw, Line, _NEW_LINE);
    INSTALL(brw, Point, _NEW_POINT);
    INSTALL(brw, Polygon, _NEW_POLYGON);
-   INSTALL(brw, Transform, _NEW_TRANSFORM);
-   INSTALL(brw, Viewport, _NEW_VIEWPORT);
-   INSTALL(brw, VertexProgram, _NEW_PROGRAM);
-}
-
-static void install_fragment_attribs( struct brw_context *brw )
-{
-   INSTALL(brw, Color, _NEW_COLOR);
-   INSTALL(brw, Depth, _NEW_DEPTH);
-   INSTALL(brw, Fog, _NEW_FOG);
    INSTALL(brw, Scissor, _NEW_SCISSOR);
    INSTALL(brw, Stencil, _NEW_STENCIL);
    INSTALL(brw, Texture, _NEW_TEXTURE);
+   INSTALL(brw, Transform, _NEW_TRANSFORM);
+   INSTALL(brw, Viewport, _NEW_VIEWPORT);
+   INSTALL(brw, VertexProgram, _NEW_PROGRAM);
    INSTALL(brw, FragmentProgram, _NEW_PROGRAM);
 }
 
@@ -301,6 +297,36 @@ static void meta_no_texture( struct intel_context *intel )
    brw->state.dirty.mesa |= _NEW_TEXTURE | _NEW_PROGRAM;
 }
 
+static void meta_texture_blend_replace(struct intel_context *intel)
+{
+   struct brw_context *brw = brw_context(&intel->ctx);
+
+   brw->metaops.attribs.Texture->CurrentUnit = 0;
+   brw->metaops.attribs.Texture->_EnabledUnits = 1;
+   brw->metaops.attribs.Texture->_EnabledCoordUnits = 1;
+   brw->metaops.attribs.Texture->Unit[ 0 ].Enabled = TEXTURE_2D_BIT;
+   brw->metaops.attribs.Texture->Unit[ 0 ]._ReallyEnabled = TEXTURE_2D_BIT;
+   brw->metaops.attribs.Texture->Unit[ 0 ].Current2D =
+      intel->frame_buffer_texobj;
+   brw->metaops.attribs.Texture->Unit[ 0 ]._Current =
+      intel->frame_buffer_texobj;
+
+   brw->state.dirty.mesa |= _NEW_TEXTURE | _NEW_PROGRAM;
+}
+
+static void meta_import_pixel_state(struct intel_context *intel)
+{
+   struct brw_context *brw = brw_context(&intel->ctx);
+   
+   RESTORE(brw, Color, _NEW_COLOR);
+   RESTORE(brw, Depth, _NEW_DEPTH);
+   RESTORE(brw, Fog, _NEW_FOG);
+   RESTORE(brw, Scissor, _NEW_SCISSOR);
+   RESTORE(brw, Stencil, _NEW_STENCIL);
+   RESTORE(brw, Texture, _NEW_TEXTURE);
+   RESTORE(brw, FragmentProgram, _NEW_PROGRAM);
+}
+
 static void meta_frame_buffer_texture( struct intel_context *intel,
 				       GLint xoff, GLint yoff )
 {
@@ -327,17 +353,7 @@ static void meta_frame_buffer_texture( struct intel_context *intel,
    brw->metaops.fp_tex->Base.LocalParams[ 1 ][ 2 ] = 0.0;
    brw->metaops.fp_tex->Base.LocalParams[ 1 ][ 3 ] = 1.0;
    
-   brw->metaops.attribs.Texture->CurrentUnit = 0;
-   brw->metaops.attribs.Texture->_EnabledUnits = 1;
-   brw->metaops.attribs.Texture->_EnabledCoordUnits = 1;
-   brw->metaops.attribs.Texture->Unit[ 0 ].Enabled = TEXTURE_2D_BIT;
-   brw->metaops.attribs.Texture->Unit[ 0 ]._ReallyEnabled = TEXTURE_2D_BIT;
-   brw->metaops.attribs.Texture->Unit[ 0 ].Current2D =
-      intel->frame_buffer_texobj;
-   brw->metaops.attribs.Texture->Unit[ 0 ]._Current =
-      intel->frame_buffer_texobj;
-
-   brw->state.dirty.mesa |= _NEW_TEXTURE | _NEW_PROGRAM;
+   brw->state.dirty.mesa |= _NEW_PROGRAM;
 }
 
 
@@ -486,9 +502,7 @@ static void install_meta_state( struct intel_context *intel,
       init_metaops_state(brw);
    }
 
-   install_vertex_attribs(brw);
-   if( state == META_FULL )
-      install_fragment_attribs(brw);
+   install_attribs(brw);
    
    meta_no_texture(&brw->intel);
    meta_flat_shade(&brw->intel);
@@ -539,11 +553,11 @@ void brw_init_metaops( struct brw_context *brw )
    brw->intel.vtbl.meta_depth_replace = meta_depth_replace;
    brw->intel.vtbl.meta_color_mask = meta_color_mask;
    brw->intel.vtbl.meta_no_texture = meta_no_texture;
+   brw->intel.vtbl.meta_import_pixel_state = meta_import_pixel_state;
    brw->intel.vtbl.meta_frame_buffer_texture = meta_frame_buffer_texture;
    brw->intel.vtbl.meta_draw_region = meta_draw_region;
    brw->intel.vtbl.meta_draw_quad = meta_draw_quad;
-
-/*    brw->intel.vtbl.meta_texture_blend_replace = meta_texture_blend_replace; */
+   brw->intel.vtbl.meta_texture_blend_replace = meta_texture_blend_replace;
 /*    brw->intel.vtbl.meta_tex_rect_source = meta_tex_rect_source; */
 /*    brw->intel.vtbl.meta_draw_format = set_draw_format; */
 }
