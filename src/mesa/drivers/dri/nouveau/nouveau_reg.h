@@ -43,7 +43,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************
 
-   Created from objects.c rev. 1.346
+   Created from objects.c rev. 1.350
 */
 
 #ifndef _NOUVEAU_REG_H
@@ -185,7 +185,7 @@ Object NV04_DX6_MULTITEX_TRIANGLE used on: NV04 NV10 NV15
 #	define		NV04_DX6_MULTITEX_TRIANGLE_DRAW				0x00000540	/* Parameters: v0 v1 v2 v3 v4 v5 */
 
 /****************************************** 
-Object NV04_COLOR_KEY used on: NV04 NV10 NV15 NV20 
+Object NV04_COLOR_KEY used on: NV04 NV10 NV15 NV20 NV40 
 */
 #define			NV04_COLOR_KEY						0x00000057
 #	define		NV04_COLOR_KEY_SET_DMA_NOTIFY				0x00000180
@@ -272,7 +272,7 @@ Object NV05_IMAGE_FROM_CPU used on: NV04
 #	define		NV05_IMAGE_FROM_CPU_COLOR( d)				(0x00000400 + d * 0x0004)
 
 /****************************************** 
-Object NV_IMAGE_BLIT used on: NV04 NV10 NV15 NV20 
+Object NV_IMAGE_BLIT used on: NV04 NV10 NV15 NV20 NV40 
 */
 #define			NV_IMAGE_BLIT						0x0000005f
 #	define		NV_IMAGE_BLIT_DMA_NOTIFY				0x00000180
@@ -512,9 +512,9 @@ Object NV10_TCL_PRIMITIVE_3D used on: NV10
 #	define		NV10_TCL_PRIMITIVE_3D_VERTEX_ARRAY_DATA			0x00001800
 
 /****************************************** 
-Object NV15_TCL_PRIMITIVE_3D used on: NV15 
+Object NV11_TCL_PRIMITIVE_3D used on: NV15 
 */
-#define			NV15_TCL_PRIMITIVE_3D					0x00000096
+#define			NV11_TCL_PRIMITIVE_3D					0x00000096
 #	define		NV10_TCL_PRIMITIVE_3D_NOP				0x00000100
 #	define		NV10_TCL_PRIMITIVE_3D_NOTIFY				0x00000104
 #	define		NV10_TCL_PRIMITIVE_3D_SET_DMA_NOTIFY			0x00000180

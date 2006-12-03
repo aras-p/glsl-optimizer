@@ -162,7 +162,8 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 		case NV_20:
 		case NV_30:
 		case NV_40:
-		case G_70:
+		case NV_44:
+		case NV_50:
 		default:
 			nv10TriInitFunctions( ctx );
 			break;

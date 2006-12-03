@@ -1,48 +1,18 @@
 
 #include "nouveau_card.h"
 #include "nouveau_reg.h"
-
-static nouveau_card nouveau_card_list[]={
-//{0x0010,	"Riva 128",			????,				NV_03,	0},
-{0x0020,	"TNT/TNT2",			NV04_DX6_MULTITEX_TRIANGLE,	NV_04,	0},
-{0x00A0,	"TNT2",				NV04_DX6_MULTITEX_TRIANGLE,	NV_04,	0},
-{0x0100,	"GeForce",			NV10_TCL_PRIMITIVE_3D,		NV_10,	0},
-{0x0110,	"GeForce 2 MX",			NV15_TCL_PRIMITIVE_3D|0x1100,	NV_10,	0},
-{0x01A0,	"NForce",			NV15_TCL_PRIMITIVE_3D|0x1100,	NV_10,	0},
-{0x0150,	"GeForce 2",			NV15_TCL_PRIMITIVE_3D,		NV_10,	0},
-{0x0170,	"GeForce 4 MX",			NV15_TCL_PRIMITIVE_3D|0x1700,	NV_10,	NV_HAS_LMA},
-{0x0180,	"GeForce 4 MX",			NV15_TCL_PRIMITIVE_3D|0x1700,	NV_10,	NV_HAS_LMA},
-{0x01F0,	"NForce 2",			NV15_TCL_PRIMITIVE_3D|0x1700,	NV_10,	NV_HAS_LMA},
-{0x0200,	"GeForce 3",			NV20_TCL_PRIMITIVE_3D|0x2000,	NV_20,	NV_HAS_LMA},
-{0x0250,	"GeForce 4 Ti",			NV20_TCL_PRIMITIVE_3D|0x2500,	NV_20,	NV_HAS_LMA},
-{0x0280,	"GeForce 4 Ti",			NV20_TCL_PRIMITIVE_3D|0x2500,	NV_20,	NV_HAS_LMA},
-{0x0320,	"GeForce FX 5200/5500",		NV30_TCL_PRIMITIVE_3D|0x3400,	NV_30,	NV_HAS_LMA},
-{0x0310,	"GeForce FX 5600",		NV30_TCL_PRIMITIVE_3D|0x3000,	NV_30,	NV_HAS_LMA},
-{0x0340,	"GeForce FX 5700",		NV30_TCL_PRIMITIVE_3D|0x3500,	NV_30,	NV_HAS_LMA},
-{0x0300,	"GeForce FX 5800",		NV30_TCL_PRIMITIVE_3D|0x3000,	NV_30,	NV_HAS_LMA},
-{0x0330,	"GeForce FX 5900",		NV30_TCL_PRIMITIVE_3D|0x3500,	NV_30,	NV_HAS_LMA},
-{0x0240,	"GeForce 6100",			NV30_TCL_PRIMITIVE_3D|0x4400,	NV_40,	NV_HAS_LMA},
-{0x0160,	"GeForce 6200",			NV30_TCL_PRIMITIVE_3D|0x4400,	NV_40,	NV_HAS_LMA},
-{0x0220,	"GeForce 6200",			NV30_TCL_PRIMITIVE_3D|0x4400,	NV_40,	NV_HAS_LMA},
-{0x0140,	"GeForce 6200/6600",		NV30_TCL_PRIMITIVE_3D|0x4000,	NV_40,	NV_HAS_LMA},
-{0x0040,	"GeForce 6800",			NV30_TCL_PRIMITIVE_3D|0x4000,	NV_40,	NV_HAS_LMA},
-{0x00C0,	"GeForce 6800",			NV30_TCL_PRIMITIVE_3D|0x4000,	NV_40,	NV_HAS_LMA},
-{0x0210,	"GeForce 6800",			NV30_TCL_PRIMITIVE_3D|0x4000,	NV_40,	NV_HAS_LMA},
-{0x01D0,	"GeForce 7200/7300/7400",	NV30_TCL_PRIMITIVE_3D|0x4400,	NV_40,	NV_HAS_LMA},
-{0x0390,	"GeForce 7300/7600",		NV30_TCL_PRIMITIVE_3D|0x4000,	NV_40,	NV_HAS_LMA},
-{0x02E0,	"GeForce 7300/7600",		NV30_TCL_PRIMITIVE_3D|0x4000,	NV_40,	NV_HAS_LMA},
-{0x0090,	"GeForce 7800",			NV30_TCL_PRIMITIVE_3D|0x4000,	NV_40,	NV_HAS_LMA},
-{0x0290,	"GeForce 7900",			NV30_TCL_PRIMITIVE_3D|0x4000,	NV_40,	NV_HAS_LMA},
-/* catchall */
-{0x0000,	"Unknown card",			NV30_TCL_PRIMITIVE_3D|0x4000,	NV_40,	NV_HAS_LMA},
-};
+#include "nouveau_drm.h"
+// FIXME hack for now
+#define NV15_TCL_PRIMITIVE_3D 0x0096
+#define NV17_TCL_PRIMITIVE_3D 0x0099
+#include "nouveau_card_list.h"
 
 
 nouveau_card* nouveau_card_lookup(uint32_t device_id)
 {
 	int i;
 	for(i=0;i<sizeof(nouveau_card_list)/sizeof(nouveau_card)-1;i++)
-		if (nouveau_card_list[i].id==(device_id&0xfff0))
+		if (nouveau_card_list[i].id==(device_id&0xffff))
 			break;
 	return &(nouveau_card_list[i]);
 }

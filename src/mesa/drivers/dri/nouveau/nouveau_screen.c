@@ -338,7 +338,7 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
 	__DRIscreenPrivate *psp;
 	static const __DRIversion ddx_expected = { 1, 2, 0 };
 	static const __DRIversion dri_expected = { 4, 0, 0 };
-	static const __DRIversion drm_expected = { 1, 0, 0 };
+	static const __DRIversion drm_expected = { 0, 0, 1 };
 
 	dri_interface = interface;
 
@@ -348,6 +348,10 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
 					drm_version, & drm_expected)) {
 		return NULL;
 	}
+
+	// temporary lock step versioning
+	if (drm_expected.patch!=drm_version->patch)
+		return NULL;
 
 	psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
 				       ddx_version, dri_version, drm_version,

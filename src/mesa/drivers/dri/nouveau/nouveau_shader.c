@@ -173,10 +173,11 @@ nouveauShaderInitFuncs(GLcontext * ctx)
       NV30FPInitShaderFuncs(&nmesa->FPfunc);
       break;
    case NV_40:
-   case G_70:
+   case NV_44:
       NV40VPInitShaderFuncs(&nmesa->VPfunc);
       NV40FPInitShaderFuncs(&nmesa->FPfunc);
       break;
+   case NV_50:
    default:
       return;
    }

@@ -90,7 +90,8 @@ void nouveauWaitForIdleLocked(nouveauContextPtr nmesa)
 			case NV_20:
 			case NV_30:
 			case NV_40:
-			case G_70:
+			case NV_44:
+			case NV_50:
 			default:
 				status=NV_READ(NV04_STATUS);
 				break;

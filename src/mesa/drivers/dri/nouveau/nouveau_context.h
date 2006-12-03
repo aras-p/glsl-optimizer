@@ -155,18 +155,6 @@ typedef struct nouveau_context {
 
 #define NOUVEAU_CONTEXT(ctx)		((nouveauContextPtr)(ctx->DriverCtx))
 
-/* Flags for what context state needs to be updated: */
-#define NOUVEAU_NEW_ALPHA		0x0001
-#define NOUVEAU_NEW_DEPTH		0x0002
-#define NOUVEAU_NEW_FOG	        	0x0004
-#define NOUVEAU_NEW_CLIP		0x0008
-#define NOUVEAU_NEW_CULL		0x0010
-#define NOUVEAU_NEW_MASKS		0x0020
-#define NOUVEAU_NEW_RENDER_NOT	        0x0040
-#define NOUVEAU_NEW_WINDOW		0x0080
-#define NOUVEAU_NEW_CONTEXT	        0x0100
-#define NOUVEAU_NEW_ALL		        0x01ff
-
 /* Flags for software fallback cases: */
 #define NOUVEAU_FALLBACK_TEXTURE		0x0001
 #define NOUVEAU_FALLBACK_DRAW_BUFFER		0x0002
