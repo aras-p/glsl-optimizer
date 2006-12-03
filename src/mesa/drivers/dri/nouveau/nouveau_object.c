@@ -33,7 +33,7 @@ static GLboolean nouveauCreateDmaObject(nouveauContextPtr nmesa,
 	dma.target = target;
 	dma.access = access;
 	dma.offset = offset;
-	dma.handle = handle;
+	dma.size   = size;
 	ret = drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_DMA_OBJECT_INIT,
 				  &dma, sizeof(dma));
 	return ret == 0;
