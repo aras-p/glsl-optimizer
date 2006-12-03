@@ -61,7 +61,6 @@ static void nv10ResetLineStipple( GLcontext *ctx );
 
 static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t primitive,uint32_t size)
 {
-	// FIXME the primitive type can probably go trough the caching system as well
 	if (nmesa->screen->card->type==NV_10)
 		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	else if (nmesa->screen->card->type==NV_20)
@@ -80,7 +79,6 @@ static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t pri
 
 inline void nv10FinishPrimitive(struct nouveau_context *nmesa)
 {
-	// FIXME this is probably not needed
 	if (nmesa->screen->card->type==NV_10)
 		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	else if (nmesa->screen->card->type==NV_20)
@@ -156,11 +154,11 @@ static inline void nv10_render_generic_primitive_verts(GLcontext *ctx,GLuint sta
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLubyte *vertptr = (GLubyte *)nmesa->verts;
 	GLuint vertsize = nmesa->vertex_size;
-	GLuint size_dword = vertsize*(count-start);
+	GLuint size_dword = vertsize*(count-start)/4;
 
 	nv10ExtendPrimitive(nmesa, size_dword);
 	nv10StartPrimitive(nmesa,prim+1,size_dword);
-	OUT_RINGp((nouveauVertex*)(vertptr+(start*vertsize*4)),size_dword);
+	OUT_RINGp((nouveauVertex*)(vertptr+(start*vertsize)),size_dword);
 	nv10FinishPrimitive(nmesa);
 }
 
@@ -242,14 +240,14 @@ static inline void nv10_render_generic_primitive_elts(GLcontext *ctx,GLuint star
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLubyte *vertptr = (GLubyte *)nmesa->verts;
 	GLuint vertsize = nmesa->vertex_size;
-	GLuint size_dword = vertsize*(count-start);
+	GLuint size_dword = vertsize*(count-start)/4;
 	const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;
 	GLuint j;
 
 	nv10ExtendPrimitive(nmesa, size_dword);
 	nv10StartPrimitive(nmesa,prim+1,size_dword);
 	for (j=start; j<count; j++ ) {
-		OUT_RINGp((nouveauVertex*)(vertptr+(elt[j]*vertsize*4)),vertsize);
+		OUT_RINGp((nouveauVertex*)(vertptr+(elt[j]*vertsize)),vertsize);
 	}
 	nv10FinishPrimitive(nmesa);
 }
