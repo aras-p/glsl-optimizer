@@ -427,7 +427,7 @@ _mesa_Scalef( GLfloat x, GLfloat y, GLfloat z )
 
 
 /**
- * Multiply the current matrix with a general scaling matrix.
+ * Multiply the current matrix with a translation matrix.
  *
  * \param x translation vector x coordinate.
  * \param y translation vector y coordinate.

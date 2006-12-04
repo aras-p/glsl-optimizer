@@ -3703,7 +3703,7 @@ parse_instructions(GLcontext * ctx, const GLubyte * inst,
 
 
 /* XXX temporary */
-__extension__ static char core_grammar_text[] =
+LONGSTRING static char core_grammar_text[] =
 #include "grammar_syn.h"
 ;
 

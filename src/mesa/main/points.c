@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -244,19 +244,9 @@ _mesa_update_point(GLcontext *ctx)
 			    ctx->Point.MinSize,
 			    ctx->Point.MaxSize);
 
-   if (ctx->Point._Size == 1.0F)
-      ctx->_TriangleCaps &= ~DD_POINT_SIZE;
-   else
-      ctx->_TriangleCaps |= DD_POINT_SIZE;
-
    ctx->Point._Attenuated = (ctx->Point.Params[0] != 1.0 ||
                              ctx->Point.Params[1] != 0.0 ||
                              ctx->Point.Params[2] != 0.0);
-
-   if (ctx->Point._Attenuated)
-      ctx->_TriangleCaps |= DD_POINT_ATTEN;
-   else
-      ctx->_TriangleCaps &= ~DD_POINT_ATTEN;
 }
 
 

@@ -20,6 +20,7 @@ DRIVER_SOURCES = \
 	intel_batchbuffer.c \
 	intel_mipmap_tree.c \
 	i915_tex_layout.c \
+	intel_tex_layout.c \
 	intel_tex_image.c \
 	intel_tex_subimage.c \
 	intel_tex_copy.c \
@@ -59,8 +60,10 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-
+DRIVER_DEFINES = -I../intel
 
 include ../Makefile.template
+
+intel_tex_layout.o: ../intel/intel_tex_layout.c
 
 symlinks:

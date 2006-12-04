@@ -26,6 +26,8 @@ GLX_DIR   = $(XORG_BASE)/GL/glx
 SERVER_OUTPUTS = $(GLX_DIR)/indirect_dispatch.c \
 	$(GLX_DIR)/indirect_dispatch_swap.c \
 	$(GLX_DIR)/indirect_dispatch.h \
+	$(GLX_DIR)/indirect_reqsize.c \
+	$(GLX_DIR)/indirect_reqsize.h \
 	$(GLX_DIR)/indirect_size_get.c \
 	$(GLX_DIR)/indirect_size_get.h \
 	$(GLX_DIR)/indirect_table.c
@@ -37,7 +39,7 @@ API_XML = gl_API.xml \
 COMMON = gl_XML.py glX_XML.py license.py $(API_XML) typeexpr.py
 COMMON_GLX = $(COMMON) glX_API.xml glX_XML.py glX_proto_common.py
 
-INDENT_FLAGS = -i4 -nut -br -brs -npcs -ce
+INDENT_FLAGS = -i4 -nut -br -brs -npcs -ce -T GLubyte -T GLbyte -T Bool
 
 all: $(OUTPUTS)
 
@@ -103,6 +105,12 @@ $(GLX_DIR)/indirect_size_get.h: $(COMMON_GLX) glX_proto_size.py
 
 $(GLX_DIR)/indirect_size_get.c: $(COMMON_GLX) glX_proto_size.py
 	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_c | indent $(INDENT_FLAGS) > $@
+
+$(GLX_DIR)/indirect_reqsize.h: $(COMMON_GLX) glX_proto_size.py
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m reqsize_h --only-get -h '_INDIRECT_SIZE_GET_H_' | indent $(INDENT_FLAGS) -l200 > $@
+
+$(GLX_DIR)/indirect_reqsize.c: $(COMMON_GLX) glX_proto_size.py
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m reqsize_c | indent $(INDENT_FLAGS) > $@
 
 $(GLX_DIR)/indirect_table.c: $(COMMON_GLX) glX_server_table.py glX_API.xml
 	$(PYTHON2) $(PYTHON_FLAGS) glX_server_table.py -f gl_and_glX_API.xml > $@

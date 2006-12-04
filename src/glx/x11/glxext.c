@@ -48,6 +48,8 @@
 #include <stdio.h>
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
+#include <X11/extensions/Xfixes.h>
+#include <X11/extensions/Xdamage.h>
 #include <assert.h>
 #include "indirect_init.h"
 #include "glapi.h"
@@ -698,6 +700,68 @@ static __DRIfuncPtr get_proc_address( const char * proc_name )
     return NULL;
 }
 
+#ifdef XDAMAGE_1_1_INTERFACE
+static GLboolean has_damage_post(__DRInativeDisplay *dpy)
+{
+    static GLboolean inited = GL_FALSE;
+    static GLboolean has_damage;
+
+    if (!inited) {
+	int major, minor;
+
+	if (XDamageQueryVersion(dpy, &major, &minor) &&
+	    major == 1 && minor >= 1)
+	{
+	    has_damage = GL_TRUE;
+	} else {
+	    has_damage = GL_FALSE;
+	}
+	inited = GL_TRUE;
+    }
+
+    return has_damage;
+}
+#endif /* XDAMAGE_1_1_INTERFACE */
+
+static void __glXReportDamage(__DRInativeDisplay *dpy, int screen,
+			      __DRIid drawable,
+			      int x, int y,
+			      drm_clip_rect_t *rects, int num_rects,
+			      GLboolean front_buffer)
+{
+#ifdef XDAMAGE_1_1_INTERFACE
+    XRectangle *xrects;
+    XserverRegion region;
+    int i;
+    int x_off, y_off;
+
+    if (!has_damage_post(dpy))
+	return;
+
+    if (front_buffer) {
+	x_off = x;
+	y_off = y;
+	drawable = RootWindow(dpy, screen);
+    } else{
+	x_off = 0;
+	y_off = 0;
+    }
+
+    xrects = malloc(sizeof(XRectangle) * num_rects);
+    if (xrects == NULL)
+	return;
+
+    for (i = 0; i < num_rects; i++) {
+	xrects[i].x = rects[i].x1 + x_off;
+	xrects[i].y = rects[i].y1 + y_off;
+	xrects[i].width = rects[i].x2 - rects[i].x1;
+	xrects[i].height = rects[i].y2 - rects[i].y1;
+    }
+    region = XFixesCreateRegion(dpy, xrects, num_rects);
+    XDamagePost(dpy, drawable, region);
+    XFixesDestroyRegion(dpy, region);
+#endif
+}
 
 /**
  * Table of functions exported by the loader to the driver.
@@ -720,6 +784,8 @@ static const __DRIinterfaceMethods interface_methods = {
 
     __glXGetUST,
     __glXGetMscRateOML,
+
+    __glXReportDamage,
 };
 
 

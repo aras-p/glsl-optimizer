@@ -127,7 +127,7 @@ static void display(void)
    GLfloat tcm = 4.0;
     printf("BASE_LEVEL = %d  MAX_LEVEL = %d  MIN_LOD = %f MAX_LOD = %f Bias = %.2g  filter = %s\n",
            BaseLevel, MaxLevel, MinLod, MaxLod, LodBias,
-           NearestFilter ? "LINEAR" : "NEAREST");
+           NearestFilter ? "NEAREST" : "LINEAR");
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, BaseLevel);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MaxLevel);
 

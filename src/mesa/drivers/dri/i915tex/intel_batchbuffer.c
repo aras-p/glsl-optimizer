@@ -252,6 +252,7 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
 {
    struct intel_context *intel = batch->intel;
    GLuint used = batch->ptr - batch->map;
+   GLboolean was_locked = intel->locked;
 
    if (used == 0)
       return batch->last_fence;
@@ -278,17 +279,14 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
    /* TODO: Just pass the relocation list and dma buffer up to the
     * kernel.
     */
-   if (!intel->locked) {
-      assert(!(batch->flags & INTEL_BATCH_NO_CLIPRECTS));
-
+   if (!was_locked)
       LOCK_HARDWARE(intel);
-      do_flush_locked(batch, used, GL_FALSE, GL_TRUE);
+
+   do_flush_locked(batch, used, !(batch->flags & INTEL_BATCH_CLIPRECTS),
+		   GL_FALSE);
+
+   if (!was_locked)
       UNLOCK_HARDWARE(intel);
-   }
-   else {
-      GLboolean ignore_cliprects = !(batch->flags & INTEL_BATCH_CLIPRECTS);
-      do_flush_locked(batch, used, ignore_cliprects, GL_FALSE);
-   }
 
    /* Reset the buffer:
     */
