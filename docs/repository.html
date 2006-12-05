@@ -1,0 +1,107 @@
+<HTML>
+
+<TITLE>Cocd Repository</TITLE>
+
+<link rel="stylesheet" type="text/css" href="mesa.css"></head>
+
+<BODY>
+
+<h1>Code Repository</h1>
+
+<p>
+As of December 5, 2006, Mesa is using
+<a href="http://git.or.cz/"target="_parent">git</a>
+as its source code management system.
+CVS was used previously.
+The old CVS repository should no longer be used.
+</p>
+
+The master git repository is hosted on
+<a href="http://www.freedesktop.org" target="_parent">freedesktop.org</a>.
+</p>
+
+<p>
+You may access the repository either as an
+<a href="#anonymous">anonymous user</a> (read-only) or as a
+<a href="#developer">developer</a>
+(read/write).
+</p>
+
+<p>
+You may also 
+<a href="http://gitweb.freedesktop.org/?p=mesa/mesa.git"
+target="_parent">browse the git repository</a>.
+</p>
+
+
+<a name="anonymous">
+<H2>Anonymous git Access</H2>
+
+<p>
+To get the Mesa sources anonymously (read-only):
+</p>
+
+<ol>
+<li>Install the git software on your computer if needed.<br><br>
+<li>Get an initial, local copy of the repository with:
+    <pre>
+    git clone git://anongit.freedesktop.org/git/mesa/mesa
+    </pre>
+<li>Later, you can update your tree from the master repository with:
+    <pre>
+    git pull origin
+    </pre>
+</ol>
+
+
+<a name="developer">
+<H2>Developer git Access</H2>
+
+<p>
+Mesa developers need to first have an account on
+<a href="http://www.freedesktop.org" target="_parent">freedesktop.org</a>.
+To get an account, please ask Brian or the other Mesa developers for
+permission.
+Then, if there are no objections, follow this
+<a href="http://www.freedesktop.org/wiki/AccountRequests" target="_parent">
+procedure</a>.
+</p>
+
+<p>
+Once your account is established:
+</p>
+
+<ol>
+<li>Install the git software on your computer if needed.<br><br>
+<li>Get an initial, local copy of the repository with:
+    <pre>
+    git clone git+ssh://username@git.freedesktop.org/git/mesa/mesa
+    </pre>
+    Replace <em>username</em> with your actual login name.<br><br>
+<li>Later, you can update your tree from the master repository with:
+    <pre>
+    git pull origin
+    </pre>
+</ol>
+
+
+<a name="developer">
+<H2>Development Branches</H2>
+
+<p>
+At any given time, there may be several active branches in Mesa's
+repository.
+Generally, the trunk contains the latest development (unstable)
+code while a branch has the latest stable code.
+</p>
+
+<p>
+Questions about active Mesa development branches should be posted to
+the mesa3d-dev mailing list.
+</p>
+
+
+</body>
+</html>
+
+
