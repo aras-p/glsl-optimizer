@@ -1,0 +1,7 @@
+*.a
+*.o
+*.so
+depend
+depend.bak
+lib
+lib64
