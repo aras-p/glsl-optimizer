@@ -1176,16 +1176,6 @@ default_fprintf(__GLcontext *gc, void *stream, const char *fmt, ...)
    return r;
 }
 
-/**
- * \todo this really is driver-specific and can't be here 
- */
-static __GLdrawablePrivate *
-default_GetDrawablePrivate(__GLcontext *gc)
-{
-   (void) gc;
-   return NULL;
-}
-
 /*@}*/
 
 
@@ -1222,6 +1212,7 @@ _mesa_init_default_imports(__GLimports *imports, void *driverCtx)
    imports->fopen = default_fopen;
    imports->fclose = default_fclose;
    imports->fprintf = default_fprintf;
-   imports->getDrawablePrivate = default_GetDrawablePrivate;
+   imports->getDrawablePrivate = NULL; /* driver-specific */
+   imports->getReadablePrivate = NULL; /* driver-specific */
    imports->other = driverCtx;
 }

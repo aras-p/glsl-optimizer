@@ -292,13 +292,8 @@ _mesa_forceCurrent(__GLcontext *gc)
 GLboolean
 _mesa_notifyResize(__GLcontext *gc)
 {
-   GLint x, y;
-   GLuint width, height;
-   __GLdrawablePrivate *d = gc->imports.getDrawablePrivate(gc);
-   if (!d || !d->getDrawableSize)
-      return GL_FALSE;
-   d->getDrawableSize( d, &x, &y, &width, &height );
    /* update viewport, resize software buffers, etc. */
+   (void) gc;
    return GL_TRUE;
 }
 
