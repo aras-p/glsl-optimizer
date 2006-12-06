@@ -1078,14 +1078,8 @@ _mesa_init_constants( GLcontext *ctx )
    ctx->Const.MaxProgramMatrices = MAX_PROGRAM_MATRICES;
    ctx->Const.MaxProgramMatrixStackDepth = MAX_PROGRAM_MATRIX_STACK_DEPTH;
 
-   /* If we're running in the X server, do bounds checking to prevent
-    * segfaults and server crashes!
-    */
-#if defined(XFree86Server)
-   ctx->Const.CheckArrayBounds = GL_TRUE;
-#else
+   /* CheckArrayBounds is overriden by drivers/x11 for X server */
    ctx->Const.CheckArrayBounds = GL_FALSE;
-#endif
 
    /* GL_ARB_draw_buffers */
    ctx->Const.MaxDrawBuffers = MAX_DRAW_BUFFERS;

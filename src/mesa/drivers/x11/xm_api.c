@@ -1545,6 +1545,13 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
     _mesa_enable_extension(mesaCtx, "GL_EXT_timer_query");
 #endif
 
+#ifdef XFree86Server
+   /* If we're running in the X server, do bounds checking to prevent
+    * segfaults and server crashes!
+    */
+   mesaCtx->Const.CheckArrayBounds = GL_TRUE;
+#endif
+
    /* finish up xmesa context initializations */
    c->swapbytes = CHECK_BYTE_ORDER(v) ? GL_FALSE : GL_TRUE;
    c->xm_visual = v;
