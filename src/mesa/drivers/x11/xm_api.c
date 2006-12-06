@@ -80,10 +80,6 @@
 #include "tnl/t_pipeline.h"
 #include "drivers/common/driverfuncs.h"
 
-#ifdef XFree86Server
-#include <GL/glxtokens.h>
-#endif
-
 /**
  * Global X driver lock
  */
@@ -179,9 +175,7 @@ static int host_byte_order( void )
  */
 static int check_for_xshm( XMesaDisplay *display )
 {
-#if defined(XFree86Server)
-   return 0;
-#elif defined(USE_XSHM)
+#if defined(USE_XSHM) && !defined(XFree86Server)
    int major, minor, ignore;
    Bool pixmaps;
 
@@ -1359,11 +1353,6 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
       return NULL;
    }
 
-   /*
-    * In the X server, NULL is passed in for the display.  It will have
-    * to be set before using this visual.  See XMesaSetVisualDisplay()
-    * below.
-    */
    v->display = display;
 
    /* Save a copy of the XVisualInfo struct because the user may X_mesa_free()
@@ -1466,12 +1455,6 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
    /* XXX minor hack */
    v->mesa_visual.level = level;
    return v;
-}
-
-
-void XMesaSetVisualDisplay( XMesaDisplay *dpy, XMesaVisual v )
-{
-    v->display = dpy;
 }
 
 
@@ -1986,6 +1969,10 @@ XMesaBuffer XMesaGetCurrentReadBuffer( void )
 GLboolean XMesaForceCurrent(XMesaContext c)
 {
    if (c) {
+#ifdef XGLServer
+      _glapi_set_dispatch(c->mesa.CurrentDispatch);
+#endif
+
       if (&(c->mesa) != _mesa_get_current_context()) {
 	 _mesa_make_current(&c->mesa, c->mesa.DrawBuffer, c->mesa.ReadBuffer);
       }
@@ -2001,6 +1988,13 @@ GLboolean XMesaLoseCurrent(XMesaContext c)
 {
    (void) c;
    _mesa_make_current(NULL, NULL, NULL);
+   return GL_TRUE;
+}
+
+
+GLboolean XMesaCopyContext( XMesaContext xm_src, XMesaContext xm_dst, GLuint mask )
+{
+   _mesa_copy_context(&xm_src->mesa, &xm_dst->mesa, mask);
    return GL_TRUE;
 }
 
@@ -2423,15 +2417,6 @@ void XMesaGarbageCollect( void )
 #endif
       }
    }
-}
-
-
-void XMesaReset( void )
-{
-    while (XMesaBufferList)
-	XMesaDestroyBuffer(XMesaBufferList);
-
-    XMesaBufferList = NULL;
 }
 
 

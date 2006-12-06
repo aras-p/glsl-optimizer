@@ -53,10 +53,6 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 
-#ifdef XFree86Server
-#include <GL/glxtokens.h>
-#endif
-
 
 
 /*
