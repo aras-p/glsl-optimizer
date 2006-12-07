@@ -91,8 +91,6 @@ void mach64GetLock( mach64ContextPtr mmesa, GLuint flags )
    }
 
    for ( i = mmesa->firstTexHeap ; i < mmesa->lastTexHeap ; i++ ) {
-      if ( mmesa->texHeap[i] && (sarea->tex_age[i] != mmesa->lastTexAge[i]) ) {
-	 mach64AgeTextures( mmesa, i );
-      }
+      DRI_AGE_TEXTURES( mmesa->texture_heaps[i] );
    }
 }

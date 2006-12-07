@@ -116,21 +116,20 @@ mach64AllocTexObj( struct gl_texture_object *texObj )
       fprintf( stderr, "%s( %p )\n", __FUNCTION__, texObj );
 
    t = (mach64TexObjPtr) CALLOC_STRUCT( mach64_texture_object );
+   texObj->DriverData = t;
    if ( !t )
       return NULL;
 
    /* Initialize non-image-dependent parts of the state:
     */
-   t->tObj = texObj;
+   t->base.tObj = texObj;
+   t->base.dirty_images[0] = (1 << 0);
 
-   t->offset = 0;
+   t->bufAddr = 0;
 
-   t->dirty = 1;
-
-   make_empty_list( t );
+   make_empty_list( (driTextureObject *) t );
 
    mach64SetTexWrap( t, texObj->WrapS, texObj->WrapT );
-   /*mach64SetTexMaxAnisotropy( t, texObj->MaxAnisotropy );*/
    mach64SetTexFilter( t, texObj->MinFilter, texObj->MagFilter );
    mach64SetTexBorderColor( t, texObj->_BorderChan );
 
@@ -251,18 +250,17 @@ static void mach64TexImage1D( GLcontext *ctx, GLenum target, GLint level,
 			    struct gl_texture_image *texImage )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
-   mach64TexObjPtr t = (mach64TexObjPtr) texObj->DriverData;
+   driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
    if ( t ) {
-      mach64SwapOutTexObj( mmesa, t );
+      driSwapOutTextureObject( t );
    }
    else {
-      t = mach64AllocTexObj(texObj);
+      t = (driTextureObject *) mach64AllocTexObj(texObj);
       if (!t) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
          return;
       }
-      texObj->DriverData = t;
    }
 
    /* Note, this will call mach64ChooseTextureFormat */
@@ -285,19 +283,18 @@ static void mach64TexSubImage1D( GLcontext *ctx,
 				 struct gl_texture_image *texImage )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
-   mach64TexObjPtr t = (mach64TexObjPtr) texObj->DriverData;
+   driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
    assert( t ); /* this _should_ be true */
    if ( t ) {
-      mach64SwapOutTexObj( mmesa, t );
+      driSwapOutTextureObject( t );
    }
    else {
-      t = mach64AllocTexObj(texObj);
+      t = (driTextureObject *) mach64AllocTexObj(texObj);
       if (!t) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage1D");
          return;
       }
-      texObj->DriverData = t;
    }
 
    _mesa_store_texsubimage1d(ctx, target, level, xoffset, width,
@@ -316,18 +313,17 @@ static void mach64TexImage2D( GLcontext *ctx, GLenum target, GLint level,
 			      struct gl_texture_image *texImage )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
-   mach64TexObjPtr t = (mach64TexObjPtr) texObj->DriverData;
+   driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
    if ( t ) {
-      mach64SwapOutTexObj( mmesa, t );
+      driSwapOutTextureObject( t );
    }
    else {
-      t = mach64AllocTexObj(texObj);
+      t = (driTextureObject *) mach64AllocTexObj(texObj);
       if (!t) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
          return;
       }
-      texObj->DriverData = t;
    }
 
    /* Note, this will call mach64ChooseTextureFormat */
@@ -350,19 +346,18 @@ static void mach64TexSubImage2D( GLcontext *ctx,
 				 struct gl_texture_image *texImage )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
-   mach64TexObjPtr t = (mach64TexObjPtr) texObj->DriverData;
+   driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
    assert( t ); /* this _should_ be true */
    if ( t ) {
-      mach64SwapOutTexObj( mmesa, t );
+      driSwapOutTextureObject( t );
    }
    else {
-      t = mach64AllocTexObj(texObj);
+      t = (driTextureObject *) mach64AllocTexObj(texObj);
       if (!t) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage2D");
          return;
       }
-      texObj->DriverData = t;
    }
 
    _mesa_store_texsubimage2d(ctx, target, level, xoffset, yoffset, width,
@@ -371,44 +366,6 @@ static void mach64TexSubImage2D( GLcontext *ctx,
 
    mmesa->new_state |= MACH64_NEW_TEXTURE;
 }
-
-/* Due to the way we must program texture state into the Rage Pro,
- * we must leave these calculations to the absolute last minute.
- */
-void mach64EmitTexStateLocked( mach64ContextPtr mmesa,
-			       mach64TexObjPtr t0,
-			       mach64TexObjPtr t1 )
-{
-   drm_mach64_sarea_t *sarea = mmesa->sarea;
-   drm_mach64_context_regs_t *regs = &(mmesa->setup);
-
-   /* for multitex, both textures must be local or AGP */
-   if ( t0 && t1 )
-      assert(t0->heap == t1->heap);
-
-   if ( t0 ) {
-      if (t0->heap == MACH64_CARD_HEAP) {
-#if ENABLE_PERF_BOXES
-	 mmesa->c_texsrc_card++;
-#endif
-	 mmesa->setup.tex_cntl &= ~MACH64_TEX_SRC_AGP;
-      } else {
-#if ENABLE_PERF_BOXES
-	 mmesa->c_texsrc_agp++;
-#endif
-	 mmesa->setup.tex_cntl |= MACH64_TEX_SRC_AGP;
-      }
-      mmesa->setup.tex_offset = t0->offset;
-   }
-
-   if ( t1 ) {
-      mmesa->setup.secondary_tex_off = t1->offset;
-   }
-
-   memcpy( &sarea->context_state.tex_size_pitch, &regs->tex_size_pitch,
-	   MACH64_NR_TEXTURE_REGS * sizeof(GLuint) );
-}
-
 
 /* ================================================================
  * Device Driver API texture functions
@@ -491,24 +448,23 @@ static void mach64DDTexParameter( GLcontext *ctx, GLenum target,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexParameter");
          return;
       }
-      tObj->DriverData = t;
    }
 
    switch ( pname ) {
    case GL_TEXTURE_MIN_FILTER:
    case GL_TEXTURE_MAG_FILTER:
-      if ( t->bound ) FLUSH_BATCH( mmesa );
+      if ( t->base.bound ) FLUSH_BATCH( mmesa );
       mach64SetTexFilter( t, tObj->MinFilter, tObj->MagFilter );
       break;
 
    case GL_TEXTURE_WRAP_S:
    case GL_TEXTURE_WRAP_T:
-      if ( t->bound ) FLUSH_BATCH( mmesa );
+      if ( t->base.bound ) FLUSH_BATCH( mmesa );
       mach64SetTexWrap( t, tObj->WrapS, tObj->WrapT );
       break;
 
    case GL_TEXTURE_BORDER_COLOR:
-      if ( t->bound ) FLUSH_BATCH( mmesa );
+      if ( t->base.bound ) FLUSH_BATCH( mmesa );
       mach64SetTexBorderColor( t, tObj->_BorderChan );
       break;
 
@@ -522,8 +478,8 @@ static void mach64DDTexParameter( GLcontext *ctx, GLenum target,
        * For mach64 we're only concerned with the base level
        * since that's the only texture we upload.
        */
-      if ( t->bound ) FLUSH_BATCH( mmesa );
-      mach64SwapOutTexObj( mmesa, t );
+      if ( t->base.bound ) FLUSH_BATCH( mmesa );
+      driSwapOutTextureObject( (driTextureObject *) t );
       break;
 
    default:
@@ -547,7 +503,7 @@ static void mach64DDBindTexture( GLcontext *ctx, GLenum target,
    FLUSH_BATCH( mmesa );
 
    if ( mmesa->CurrentTexObj[unit] ) {
-      mmesa->CurrentTexObj[unit]->bound &= ~(unit+1);
+      mmesa->CurrentTexObj[unit]->base.bound &= ~(1 << unit);
       mmesa->CurrentTexObj[unit] = NULL;
    }
 
@@ -558,32 +514,36 @@ static void mach64DDDeleteTexture( GLcontext *ctx,
 				   struct gl_texture_object *tObj )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
-   mach64TexObjPtr t = (mach64TexObjPtr)tObj->DriverData;
+   driTextureObject * t = (driTextureObject *) tObj->DriverData;
 
    if ( t ) {
       if ( t->bound && mmesa ) {
 	 FLUSH_BATCH( mmesa );
 
-	 mmesa->CurrentTexObj[t->bound-1] = 0;
 	 mmesa->new_state |= MACH64_NEW_TEXTURE;
       }
 
-      mach64DestroyTexObj( mmesa, t );
-      tObj->DriverData = NULL;
+      driDestroyTextureObject( t );
+
       /* Free mipmap images and the texture object itself */
       _mesa_delete_texture_object(ctx, tObj);
-
    }
 }
 
-static GLboolean mach64DDIsTextureResident( GLcontext *ctx,
-					    struct gl_texture_object *tObj )
+/**
+ * Allocate a new texture object.
+ * Called via ctx->Driver.NewTextureObject.
+ * Note: we could use containment here to 'derive' the driver-specific
+ * texture object from the core mesa gl_texture_object.  Not done at this time.
+ */
+static struct gl_texture_object *
+mach64NewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
-   mach64TexObjPtr t = (mach64TexObjPtr)tObj->DriverData;
-
-   return ( t && t->memBlock );
+   struct gl_texture_object *obj;
+   obj = _mesa_new_texture_object(ctx, name, target);
+   mach64AllocTexObj( obj );
+   return obj;
 }
-
 
 void mach64InitTextureFuncs( struct dd_function_table *functions )
 {
@@ -593,18 +553,15 @@ void mach64InitTextureFuncs( struct dd_function_table *functions )
    functions->TexSubImage1D		= mach64TexSubImage1D;
    functions->TexImage2D		= mach64TexImage2D;
    functions->TexSubImage2D		= mach64TexSubImage2D;
-   functions->TexImage3D               = _mesa_store_teximage3d;
-   functions->TexSubImage3D            = _mesa_store_texsubimage3d;
-   functions->CopyTexImage1D           = _swrast_copy_teximage1d;
-   functions->CopyTexImage2D           = _swrast_copy_teximage2d;
-   functions->CopyTexSubImage1D        = _swrast_copy_texsubimage1d;
-   functions->CopyTexSubImage2D        = _swrast_copy_texsubimage2d;
-   functions->CopyTexSubImage3D        = _swrast_copy_texsubimage3d;
    functions->TexParameter		= mach64DDTexParameter;
    functions->BindTexture		= mach64DDBindTexture;
+   functions->NewTextureObject		= mach64NewTextureObject;
    functions->DeleteTexture		= mach64DDDeleteTexture;
+   functions->IsTextureResident		= driIsTextureResident;
+
    functions->UpdateTexturePalette	= NULL;
    functions->ActiveTexture		= NULL;
-   functions->IsTextureResident	= mach64DDIsTextureResident;
-   functions->PrioritizeTexture	= NULL;
+   functions->PrioritizeTexture		= NULL;
+
+   driInitTextureFormats();
 }
