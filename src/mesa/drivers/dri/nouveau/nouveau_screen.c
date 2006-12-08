@@ -234,8 +234,8 @@ nouveauFillInModes( unsigned pixel_bits, unsigned depth_bits,
 		GLenum type;
 	} fb_format_array[] = {
 		{ GL_RGB , GL_UNSIGNED_SHORT_5_6_5     },
-		{ GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV },
-		{ GL_RGB , GL_UNSIGNED_INT_8_8_8_8_REV },
+		{ GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV },
+		{ GL_BGR , GL_UNSIGNED_INT_8_8_8_8_REV },
 	};
 
 	/* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
