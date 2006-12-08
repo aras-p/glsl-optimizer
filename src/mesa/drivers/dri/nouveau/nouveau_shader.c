@@ -184,7 +184,6 @@ nouveauShaderInitFuncs(GLcontext * ctx)
       return;
    }
 
-   _mesa_enable_extension(ctx, "GL_ARB_vertex_program");
    ctx->Const.VertexProgram.MaxNativeInstructions    = nmesa->VPfunc.MaxInst;
    ctx->Const.VertexProgram.MaxNativeAluInstructions = nmesa->VPfunc.MaxInst;
    ctx->Const.VertexProgram.MaxNativeTexInstructions = nmesa->VPfunc.MaxInst;
@@ -196,8 +195,6 @@ nouveauShaderInitFuncs(GLcontext * ctx)
    ctx->Const.VertexProgram.MaxNativeParameters      = nmesa->VPfunc.MaxConst;
 
    if (nmesa->screen->card->type >= NV_30) {
-      _mesa_enable_extension(ctx, "GL_ARB_fragment_program");
-
       ctx->Const.FragmentProgram.MaxNativeInstructions    = nmesa->FPfunc.MaxInst;
       ctx->Const.FragmentProgram.MaxNativeAluInstructions = nmesa->FPfunc.MaxInst;
       ctx->Const.FragmentProgram.MaxNativeTexInstructions = nmesa->FPfunc.MaxInst;

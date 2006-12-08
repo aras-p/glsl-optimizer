@@ -65,7 +65,40 @@ static const struct dri_debug_control debug_control[] =
 	{ NULL,    0 }
 };
 
+#define need_GL_ARB_vertex_program
+#include "extension_helper.h"
+
 const struct dri_extension common_extensions[] =
+{
+	{ NULL,    0 }
+};
+
+const struct dri_extension nv10_extensions[] =
+{
+	{ NULL,    0 }
+};
+
+const struct dri_extension nv20_extensions[] =
+{
+	{ NULL,    0 }
+};
+
+const struct dri_extension nv30_extensions[] =
+{
+	{ "GL_ARB_fragment_program",	NULL                            },
+	{ NULL,    0 }
+};
+
+const struct dri_extension nv40_extensions[] =
+{
+   /* ARB_vp can be moved to nv20/30 once the shader backend has been
+    * written for those cards.
+    */
+	{ "GL_ARB_vertex_program",	GL_ARB_vertex_program_functions },
+	{ NULL, 0 }
+};
+
+const struct dri_extension nv50_extensions[] =
 {
 	{ NULL,    0 }
 };
@@ -137,6 +170,18 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	nmesa->sarea = (drm_nouveau_sarea_t *)((char *)sPriv->pSAREA +
 			screen->sarea_priv_offset);
 
+	/* Enable any supported extensions */
+	driInitExtensions(ctx, common_extensions, GL_TRUE);
+	if (nmesa->screen->card->type >= NV_10)
+		driInitExtensions(ctx, nv10_extensions, GL_FALSE);
+	if (nmesa->screen->card->type >= NV_20)
+		driInitExtensions(ctx, nv20_extensions, GL_FALSE);
+	if (nmesa->screen->card->type >= NV_30)
+		driInitExtensions(ctx, nv30_extensions, GL_FALSE);
+	if (nmesa->screen->card->type >= NV_40)
+		driInitExtensions(ctx, nv40_extensions, GL_FALSE);
+	if (nmesa->screen->card->type >= NV_50)
+		driInitExtensions(ctx, nv50_extensions, GL_FALSE);
 
 	nmesa->current_primitive = -1;
 

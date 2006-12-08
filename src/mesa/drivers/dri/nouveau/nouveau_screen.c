@@ -53,6 +53,11 @@ DRI_CONF_END;
 static const GLuint __driNConfigOptions = 1;
 
 extern const struct dri_extension common_extensions[];
+extern const struct dri_extension nv10_extensions[];
+extern const struct dri_extension nv20_extensions[];
+extern const struct dri_extension nv30_extensions[];
+extern const struct dri_extension nv40_extensions[];
+extern const struct dri_extension nv50_extensions[];
 
 static nouveauScreenPtr nouveauCreateScreen(__DRIscreenPrivate *sPriv)
 {
@@ -352,6 +357,11 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
 		 * Hello chicken.  Hello egg.  How are you two today?
 		 */
 		driInitExtensions( NULL, common_extensions, GL_FALSE );
+		driInitExtensions( NULL,   nv10_extensions, GL_FALSE );
+		driInitExtensions( NULL,   nv10_extensions, GL_FALSE );
+		driInitExtensions( NULL,   nv30_extensions, GL_FALSE );
+		driInitExtensions( NULL,   nv40_extensions, GL_FALSE );
+		driInitExtensions( NULL,   nv50_extensions, GL_FALSE );
 	}
 
 	return (void *) psp;
