@@ -406,7 +406,7 @@ static void nv10Lightfv(GLcontext *ctx, GLenum light, GLenum pname, const GLfloa
 		case SPOTLIGHT_UPDATE_EXPONENT:
 			{
 				GLfloat cc,lc,qc;
-				cc = 1.0;	/* These need to be correctly computed */
+				cc = 1.0;	/* FIXME: These need to be correctly computed */
 				lc = 0.0;
 				qc = 2.0;
 				BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_SPOT_CUTOFF_A(p), 3);
@@ -418,7 +418,7 @@ static void nv10Lightfv(GLcontext *ctx, GLenum light, GLenum pname, const GLfloa
 		case SPOTLIGHT_UPDATE_ALL:
 			{
 				GLfloat cc,lc,qc, x,y,z, c;
-				cc = 1.0;	/* These need to be correctly computed */
+				cc = 1.0;	/* FIXME: These need to be correctly computed */
 				lc = 0.0;
 				qc = 2.0;
 				x = -2.0 * (1.0 + l->_CosCutoff) * l->_NormDirection[0];
