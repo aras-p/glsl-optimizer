@@ -59,20 +59,33 @@ static void nouveauCalcViewport(GLcontext *ctx)
     /* Calculate the Viewport Matrix */
     
     nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+    nouveau_renderbuffer *nrb;
     const GLfloat *v = ctx->Viewport._WindowMap.m;
     GLfloat *m = nmesa->viewport.m;
+    GLfloat xoffset, yoffset;
     GLint h = 0;
-    
-    if (nmesa->driDrawable) 
-       h = nmesa->driDrawable->h + SUBPIXEL_Y;
-    
+  
+    nrb = nouveau_current_draw_buffer(ctx);
+    nmesa->depth_scale = 1.0 / ctx->DrawBuffer->_DepthMaxF;
+
+    if (nrb && nrb->map) {
+       /* Window */
+       xoffset = nrb->dPriv->x;
+       yoffset = nrb->dPriv->y;
+    } else {
+       /* Offscreen or back buffer */
+       xoffset = 0.0;
+       yoffset = 0.0;
+    }
+
     m[MAT_SX] =   v[MAT_SX];
-    m[MAT_TX] =   v[MAT_TX] + SUBPIXEL_X;
+    m[MAT_TX] =   v[MAT_TX] + xoffset + SUBPIXEL_X;
     m[MAT_SY] = - v[MAT_SY];
-    m[MAT_TY] = - v[MAT_TY] + h;
+    m[MAT_TY] =   v[MAT_TY] + yoffset + SUBPIXEL_Y;
     m[MAT_SZ] =   v[MAT_SZ] * nmesa->depth_scale;
     m[MAT_TZ] =   v[MAT_TZ] * nmesa->depth_scale;
 
+    nmesa->hw_func.WindowMoved(nmesa);
 }
 
 static void nouveauViewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
@@ -96,7 +109,7 @@ static void nouveauViewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei
     nouveauCalcViewport(ctx);
 }
 
-static void nouveauDepthRange(GLcontext *ctx)
+static void nouveauDepthRange(GLcontext *ctx, GLclampd near, GLclampd far)
 {
     nouveauCalcViewport(ctx);
 }
@@ -161,15 +174,15 @@ void nouveauDDInitState(nouveauContextPtr nmesa)
             /* No TCL engines for these ones */
             break;
         case NV_10:
-            nv10InitStateFuncs(&nmesa->glCtx->Driver);
+            nv10InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
             break;
         case NV_20:
-            nv20InitStateFuncs(&nmesa->glCtx->Driver);
+            nv20InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
             break;
         case NV_30:
         case NV_40:
         case NV_50:
-            nv30InitStateFuncs(&nmesa->glCtx->Driver);
+            nv30InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
             break;
         default:
             break;
@@ -270,7 +283,6 @@ void nouveauInitState(GLcontext *ctx)
     STATE_INIT(CullFace)( ctx, ctx->Polygon.CullFaceMode );
     STATE_INIT(DepthFunc)( ctx, ctx->Depth.Func );
     STATE_INIT(DepthMask)( ctx, ctx->Depth.Mask );
-    STATE_INIT(DepthRange)( ctx, ctx->Viewport.Near, ctx->Viewport.Far );
 
     STATE_INIT(Enable)( ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled );
     STATE_INIT(Enable)( ctx, GL_BLEND, ctx->Color.BlendEnabled );
@@ -320,8 +332,6 @@ void nouveauInitState(GLcontext *ctx)
 	    ctx->Polygon.OffsetFactor,
 	    ctx->Polygon.OffsetUnits );
     STATE_INIT(PolygonStipple)( ctx, (const GLubyte *)ctx->PolygonStipple );
-    STATE_INIT(Scissor)( ctx, ctx->Scissor.X, ctx->Scissor.Y,
-            ctx->Scissor.Width, ctx->Scissor.Height );
     STATE_INIT(ShadeModel)( ctx, ctx->Light.ShadeModel );
     STATE_INIT(StencilFuncSeparate)( ctx, GL_FRONT,
             ctx->Stencil.Function[0],
@@ -341,10 +351,4 @@ void nouveauInitState(GLcontext *ctx)
             ctx->Stencil.FailFunc[1],
             ctx->Stencil.ZFailFunc[1],
             ctx->Stencil.ZPassFunc[1]);
-
-    STATE_INIT(Viewport)( ctx,
-	    ctx->Viewport.X, ctx->Viewport.Y,
-	    ctx->Viewport.Width, ctx->Viewport.Height );
-
-    STATE_INIT(DrawBuffer)( ctx, ctx->Color.DrawBuffer[0] );
 }

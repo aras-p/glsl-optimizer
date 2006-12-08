@@ -304,10 +304,16 @@ static void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 //		case GL_POST_COLOR_MATRIX_COLOR_TABLE:
 //		case GL_POST_CONVOLUTION_COLOR_TABLE:
 //		case GL_RESCALE_NORMAL:
-//		case GL_SCISSOR_TEST:
+		case GL_SCISSOR_TEST:
+			/* No enable bit, nv30Scissor will adjust to max range */
+			ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+			      			 ctx->Scissor.Width, ctx->Scissor.Height);
+			break;
 //		case GL_SEPARABLE_2D:
 		case GL_STENCIL_TEST:
 			// TODO BACK and FRONT ?
+			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_STENCIL_FRONT_ENABLE, 1);
+			OUT_RING_CACHE(state);
 			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_STENCIL_BACK_ENABLE, 1);
 			OUT_RING_CACHE(state);
 			break;
@@ -514,9 +520,26 @@ void (*RenderMode)(GLcontext *ctx, GLenum mode );
 static void nv30Scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
         nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	nouveau_renderbuffer *nrb;
+
+	/* Adjust offsets if drawing to a window */
+	nrb = nouveau_current_draw_buffer(ctx);
+	if (nrb && nrb->map) {
+	   x += nrb->dPriv->x;
+	   y += nrb->dPriv->y;
+	}
+
+	/* There's no scissor enable bit, so adjust the scissor to cover the
+	 * maximum draw buffer bounds
+	 */
+	if (!ctx->Scissor.Enabled) {
+	   x = y = 0;
+	   w = h = 4095;
+	}
+
         BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SCISSOR_WIDTH_XPOS, 2);
-        OUT_RING_CACHE((w << 16) | x);
-        OUT_RING_CACHE((h << 16) | y);
+        OUT_RING_CACHE(((w) << 16) | x);
+        OUT_RING_CACHE(((h) << 16) | y);
 }
 
 /** Select flat or smooth shading */
@@ -602,18 +625,117 @@ static void nv30TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
         OUT_RING_CACHEp(mat->m, 16);
 }
 
-/** Set the viewport */
-static void nv30Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+static void nv30WindowMoved(nouveauContextPtr nmesa)
 {
-        /* TODO: Where do the VIEWPORT_XFRM_* regs come in? */
-        nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	GLcontext *ctx = nmesa->glCtx;
+	nouveau_renderbuffer *nrb;
+	GLfloat *v = nmesa->viewport.m;
+	GLuint w = ctx->Viewport.Width;
+	GLuint h = ctx->Viewport.Height;
+	GLuint x = ctx->Viewport.X;
+	GLuint y = ctx->Viewport.Y;
+
+	/* Adjust offsets if drawing to a window */
+	nrb = nouveau_current_draw_buffer(ctx);
+	if (nrb && nrb->map) {
+	   x += nrb->dPriv->x;
+	   y += nrb->dPriv->y;
+	}
+
         BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VIEWPORT_DIMS_0, 2);
         OUT_RING_CACHE((w << 16) | x);
         OUT_RING_CACHE((h << 16) | y);
+	/* something to do with clears, possibly doesn't belong here */
+	BEGIN_RING_CACHE(NvSub3D,
+	      NV30_TCL_PRIMITIVE_3D_VIEWPORT_COLOR_BUFFER_OFS0, 2);
+        OUT_RING_CACHE(((w+x) << 16) | x);
+        OUT_RING_CACHE(((h+y) << 16) | y);
+	/* viewport transform */
+	BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VIEWPORT_XFRM_OX, 8);
+	OUT_RING_CACHEf (v[MAT_TX]);
+	OUT_RING_CACHEf (v[MAT_TY]);
+	OUT_RING_CACHEf (v[MAT_TZ]);
+	OUT_RING_CACHEf (0.0);
+	OUT_RING_CACHEf (v[MAT_SX]);
+	OUT_RING_CACHEf (v[MAT_SY]);
+	OUT_RING_CACHEf (v[MAT_SZ]);
+	OUT_RING_CACHEf (0.0);
+
+	ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+	      		    ctx->Scissor.Width, ctx->Scissor.Height);
 }
 
-void nv30InitStateFuncs(struct dd_function_table *func)
+static GLboolean nv30InitCard(nouveauContextPtr nmesa)
 {
+	/* Need some love.. */
+	return GL_FALSE;
+}
+
+static GLboolean nv40InitCard(nouveauContextPtr nmesa)
+{
+	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
+
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SET_OBJECT1, 2);
+	OUT_RING(NvDmaFB);
+	OUT_RING(NvDmaFB);
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SET_OBJECT8, 1);
+	OUT_RING(NvDmaFB);
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SET_OBJECT4, 2);
+	OUT_RING(NvDmaFB);
+	OUT_RING(NvDmaFB);
+	BEGIN_RING_SIZE(NvSub3D, 0x0220, 1);
+	OUT_RING(1);
+	BEGIN_RING_SIZE(NvSub3D, 0x1fc8, 2);
+	OUT_RING(0xedcba987);
+	OUT_RING(0x00000021);
+	BEGIN_RING_SIZE(NvSub3D, 0x1d60, 1);
+	OUT_RING(0x03008000);
+
+	return GL_TRUE;
+}
+
+static GLboolean nv30BindBuffers(nouveauContextPtr nmesa, int num_color,
+      				 nouveau_renderbuffer **color,
+				 nouveau_renderbuffer *depth)
+{
+   nouveau_renderbuffer *nrb;
+   GLuint x, y, w, h;
+
+   /* Adjust offsets if drawing to a window */
+   nrb = nouveau_current_draw_buffer(nmesa->glCtx);
+   w = nrb->mesa.Width;
+   h = nrb->mesa.Height;
+   if (nrb && nrb->map) {
+      x = nrb->dPriv->x;
+      y = nrb->dPriv->y;
+   } else {
+      x = 0;
+      y = 0;
+   }
+
+   if (num_color != 1)
+      return GL_FALSE;
+   BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VIEWPORT_COLOR_BUFFER_DIM0, 5);
+   OUT_RING        (((w+x)<<16)|x);
+   OUT_RING        (((h+y)<<16)|y);
+   OUT_RING        (0x148);
+   OUT_RING        (color[0]->pitch);
+   OUT_RING        (color[0]->offset);
+
+   if (depth) {
+      BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_DEPTH_OFFSET, 1);
+      OUT_RING        (depth->offset);
+      BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LMA_DEPTH_BUFFER_PITCH, 1);
+      OUT_RING        (depth->pitch);
+   }
+
+   return GL_TRUE;
+}
+
+void nv30InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
 	func->AlphaFunc			= nv30AlphaFunc;
 	func->BlendColor		= nv30BlendColor;
 	func->BlendEquationSeparate	= nv30BlendEquationSeparate;
@@ -628,7 +750,6 @@ void nv30InitStateFuncs(struct dd_function_table *func)
 	func->FrontFace			= nv30FrontFace;
 	func->DepthFunc			= nv30DepthFunc;
 	func->DepthMask			= nv30DepthMask;
-	func->DepthRange		= nv30DepthRange;
 	func->Enable			= nv30Enable;
 	func->Fogfv			= nv30Fogfv;
 	func->Hint			= nv30Hint;
@@ -656,6 +777,13 @@ void nv30InitStateFuncs(struct dd_function_table *func)
 	func->TexParameter		= nv30TexParameter;
 #endif
 	func->TextureMatrix		= nv30TextureMatrix;
-	func->Viewport			= nv30Viewport;
+
+
+	if (nmesa->screen->card->type >= NV_40)
+	   nmesa->hw_func.InitCard	= nv40InitCard;
+	else 
+	   nmesa->hw_func.InitCard	= nv30InitCard;
+	nmesa->hw_func.BindBuffers	= nv30BindBuffers;
+	nmesa->hw_func.WindowMoved	= nv30WindowMoved;
 }
 

@@ -2,6 +2,7 @@
 #define __SHADER_COMMON_H__
 
 #include "mtypes.h"
+#include "nouveau_buffers.h"
 
 typedef struct _nvsFunc nvsFunc;
 
@@ -40,6 +41,7 @@ typedef struct _nouveauShader {
    unsigned int program_alloc_size;
    unsigned int program_start_id;
    unsigned int program_current;
+   nouveau_mem *program_buffer;
    unsigned int inputs_read;
    unsigned int outputs_written;
    int		inst_count;

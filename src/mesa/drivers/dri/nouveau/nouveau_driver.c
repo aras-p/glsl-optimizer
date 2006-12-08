@@ -36,6 +36,35 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "utils.h"
 
+/* Wrapper for DRM_NOUVEAU_GETPARAM ioctl */
+GLboolean nouveauDRMGetParam(nouveauContextPtr nmesa,
+			     unsigned int      param,
+			     uint64_t*         value)
+{
+	drm_nouveau_getparam_t getp;
+
+	getp.param = param;
+	if (!value || drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_GETPARAM,
+					  &getp, sizeof(getp)))
+		return GL_FALSE;
+	*value = getp.value;
+	return GL_TRUE;
+}
+
+/* Wrapper for DRM_NOUVEAU_GETPARAM ioctl */
+GLboolean nouveauDRMSetParam(nouveauContextPtr nmesa,
+			     unsigned int      param,
+			     uint64_t          value)
+{
+	drm_nouveau_setparam_t setp;
+
+	setp.param = param;
+	setp.value = value;
+	if (drmCommandWrite(nmesa->driFd, DRM_NOUVEAU_SETPARAM, &setp,
+				sizeof(setp)))
+		return GL_FALSE;
+	return GL_TRUE;
+}
 
 /* Return the width and height of the current color buffer */
 static void nouveauGetBufferSize( GLframebuffer *buffer,

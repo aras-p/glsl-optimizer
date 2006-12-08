@@ -10,6 +10,7 @@
 #include "nouveau_shader.h"
 #include "nouveau_object.h"
 #include "nouveau_msg.h"
+#include "nouveau_buffers.h"
 #include "nv30_shader.h"
 
 unsigned int NVFP_TX_AOP_COUNT = 64;
@@ -19,31 +20,22 @@ struct _op_xlat NVFP_TX_AOP[64];
  * Support routines
  */
 
-/*XXX: bad bad bad bad */
-static uint64_t	 fragprog_ofs;
-static uint32_t *fragprog_buf = NULL;
-
 static void
 NV30FPUploadToHW(GLcontext *ctx, nouveauShader *nvs)
 {
    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
    drm_nouveau_mem_alloc_t mem;
 
-   if (!fragprog_buf) {
-      mem.flags		= NOUVEAU_MEM_FB|NOUVEAU_MEM_MAPPED;
-      mem.size		= nvs->program_size * sizeof(uint32_t);
-      mem.alignment	= 0;
-      mem.region_offset	= &fragprog_ofs;
-      if (drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_MEM_ALLOC, &mem,
-	       		      sizeof(mem))) {
-	 fprintf(stderr, "MEM_ALLOC fail\n");
-	 return;
-      }
+   if (!nvs->program_buffer) {
+      nouveau_mem *fpbuf;
 
-      if (drmMap(nmesa->driFd, fragprog_ofs, mem.size, &fragprog_buf)) {
-	 fprintf(stderr, "MEM_MAP fail\n");
+      fpbuf = nouveau_mem_alloc(ctx, NOUVEAU_MEM_FB|NOUVEAU_MEM_MAPPED,
+	    			nvs->program_size * sizeof(uint32_t), 0);
+      if (!fpbuf) {
+	 fprintf(stderr, "fragprog vram alloc fail!\n");
 	 return;
       }
+      nvs->program_buffer = fpbuf;
    }
 
    /*XXX: should do a DMA.. and not copy over a possibly in-use program.. */
@@ -52,9 +44,10 @@ NV30FPUploadToHW(GLcontext *ctx, nouveauShader *nvs)
     * caches the program somewhere? so, maybe not so bad to just clobber the
     * old program in vram..
     */
-   memcpy(fragprog_buf, nvs->program, nvs->program_size * sizeof(uint32_t));
+   memcpy(nvs->program_buffer->map, nvs->program,
+	  nvs->program_size * sizeof(uint32_t));
    BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FP_ACTIVE_PROGRAM, 1);
-   OUT_RING(((uint32_t)fragprog_ofs-0xE0000000)|1);
+   OUT_RING(nouveau_mem_gpu_offset_get(ctx, nvs->program_buffer) | 1);
 }
 
 static void

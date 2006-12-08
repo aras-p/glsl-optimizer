@@ -29,6 +29,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_lock.h"
 
 #include "drirenderbuffer.h"
+#include "framebuffer.h"
 
 
 /* Update the hardware state.  This is called if another context has
@@ -56,6 +57,23 @@ void nouveauGetLock( nouveauContextPtr nmesa, GLuint flags )
     * clip rects, all state checking must be done _after_ this call.
     */
    DRI_VALIDATE_DRAWABLE_INFO( sPriv, dPriv );
+
+   /* If timestamps don't match, the window has been changed */
+   if (nmesa->lastStamp != dPriv->lastStamp) {
+      struct gl_framebuffer *fb = (struct gl_framebuffer *)dPriv->driverPrivate;
+
+      /* _mesa_resize_framebuffer will take care of calling the renderbuffer's
+       * AllocStorage function if we need more memory to hold it */
+      if (fb->Width != dPriv->w || fb->Height != dPriv->h) {
+	 _mesa_resize_framebuffer(nmesa->glCtx, fb, dPriv->w, dPriv->h);
+	 /* resize buffers, will call nouveau_window_moved */
+	 nouveau_build_framebuffer(nmesa->glCtx, fb);
+      } else {
+	 nouveau_window_moved(nmesa->glCtx);
+      }
+
+      nmesa->lastStamp = dPriv->lastStamp;
+   }
 
    nmesa->numClipRects = dPriv->numClipRects;
    nmesa->pClipRects = dPriv->pClipRects;

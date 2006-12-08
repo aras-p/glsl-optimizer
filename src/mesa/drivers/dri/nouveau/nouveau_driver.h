@@ -33,7 +33,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define DRIVER_AUTHOR	"Stephane Marchesin"
 
 extern void nouveauDriverInitFunctions( struct dd_function_table *functions );
-
+extern GLboolean nouveauDRMGetParam(nouveauContextPtr nmesa, unsigned int param,
+      				    uint64_t *value);
+extern GLboolean nouveauDRMSetParam(nouveauContextPtr nmesa, unsigned int param,
+      				    uint64_t value);
 
 #endif /* __NOUVEAU_DRIVER_H__ */
 

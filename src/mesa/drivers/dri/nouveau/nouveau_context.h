@@ -38,6 +38,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "nouveau_screen.h"
 #include "nouveau_state_cache.h"
+#include "nouveau_buffers.h"
 #include "nouveau_shader.h"
 
 #include "xmlconfig.h"
@@ -75,6 +76,17 @@ typedef void (*nouveau_line_func)( struct nouveau_context*,
 typedef void (*nouveau_point_func)( struct nouveau_context*,
 		nouveauVertex * );
 
+typedef struct nouveau_hw_func_t {
+	/* Initialise any card-specific non-GL related state */
+	GLboolean (*InitCard)(struct nouveau_context *);
+	/* Update buffer offset/pitch/format */
+	GLboolean (*BindBuffers)(struct nouveau_context *, int num_color,
+				 nouveau_renderbuffer **color,
+				 nouveau_renderbuffer *depth);
+	/* Update anything that depends on the window position/size */
+	void      (*WindowMoved)(struct nouveau_context *);
+} nouveau_hw_func;
+
 typedef struct nouveau_context {
 	/* Mesa context */
 	GLcontext *glCtx;
@@ -84,6 +96,13 @@ typedef struct nouveau_context {
 
 	/* The read-only regs */
 	volatile unsigned char* mmio;
+
+	/* Physical addresses of AGP/VRAM apertures */
+	uint64_t vram_phys;
+	uint64_t agp_phys;
+
+	/* Additional hw-specific functions */
+	nouveau_hw_func hw_func;
 
 	/* FIXME : do we want to put all state into a separate struct ? */
 	/* State for tris */
@@ -132,6 +151,7 @@ typedef struct nouveau_context {
 	__DRIcontextPrivate  *driContext;    /* DRI context */
 	__DRIscreenPrivate   *driScreen;     /* DRI screen */
 	__DRIdrawablePrivate *driDrawable;   /* DRI drawable bound to this ctx */
+	GLint lastStamp;
 
 	drm_context_t hHWContext;
 	drm_hw_lock_t *driHwLock;

@@ -132,6 +132,8 @@ nvsUpdateShader(GLcontext *ctx, nouveauShader *nvs)
 	  */
 	 nvs->func->UpdateConst(ctx, nvs, i);
       } else if (plist->Parameters[i].Type == PROGRAM_STATE_VAR) {
+	 if (!nvs->params[i].source_val) /* this is a workaround when consts aren't alloc'd from id=0.. */
+	    continue;
 	 /* update any changed state parameters */
 	 if (!TEST_EQ_4V(nvs->params[i].val, nvs->params[i].source_val))
 	    nvs->func->UpdateConst(ctx, nvs, i);

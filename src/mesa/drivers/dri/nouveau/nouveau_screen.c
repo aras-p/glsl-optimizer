@@ -120,86 +120,69 @@ nouveauCreateBuffer(__DRIscreenPrivate *driScrnPriv,
                     GLboolean isPixmap)
 {
 	nouveauScreenPtr screen = (nouveauScreenPtr) driScrnPriv->private;
+	nouveau_renderbuffer  *nrb;
+	struct gl_framebuffer *fb;
+	const GLboolean swAccum = mesaVis->accumRedBits > 0;
+	const GLboolean swStencil = mesaVis->stencilBits > 0 && mesaVis->depthBits != 24;
 
-	if (isPixmap) {
+	if (isPixmap)
 		return GL_FALSE; /* not implemented */
-	}
-	else {
-		const GLboolean swDepth = GL_FALSE;
-		const GLboolean swAlpha = GL_FALSE;
-		const GLboolean swAccum = mesaVis->accumRedBits > 0;
-		const GLboolean swStencil = mesaVis->stencilBits > 0 && mesaVis->depthBits != 24;
-		struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
 
-		/* front color renderbuffer */
-		{
-			driRenderbuffer *frontRb
-				= driNewRenderbuffer(GL_RGBA,
-						     driScrnPriv->pFB + screen->frontOffset,
-						     screen->fbFormat,
-						     screen->frontOffset, screen->frontPitch,
-						     driDrawPriv);
-			nouveauSpanSetFunctions(frontRb, mesaVis);
-			_mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
-		}
+	fb = _mesa_create_framebuffer(mesaVis);
+	if (!fb)
+		return GL_FALSE;
 
-		/* back color renderbuffer */
+	/* Front buffer */
+	nrb = nouveau_renderbuffer_new(GL_RGBA,
+				       driScrnPriv->pFB + screen->frontOffset,
+				       screen->frontOffset,
+				       screen->frontPitch * 4,
+				       driDrawPriv);
+	nouveauSpanSetFunctions(nrb, mesaVis);
+	_mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &nrb->mesa);
+
+	if (0 /* unified buffers if we choose to support them.. */) {
+	} else {
 		if (mesaVis->doubleBufferMode) {
-			driRenderbuffer *backRb
-				= driNewRenderbuffer(GL_RGBA,
-						     driScrnPriv->pFB + screen->backOffset,
-						     screen->fbFormat,
-						     screen->backOffset, screen->backPitch,
-						     driDrawPriv);
-			nouveauSpanSetFunctions(backRb, mesaVis);
-			_mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
+			nrb = nouveau_renderbuffer_new(GL_RGBA, NULL,
+						       0, 0,
+						       driDrawPriv);
+			nouveauSpanSetFunctions(nrb, mesaVis);
+			_mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &nrb->mesa);
 		}
 
-		/* depth renderbuffer */
-		if (mesaVis->depthBits == 16) {
-			driRenderbuffer *depthRb
-				= driNewRenderbuffer(GL_DEPTH_COMPONENT16,
-						     driScrnPriv->pFB + screen->depthOffset,
-						     screen->fbFormat,
-						     screen->depthOffset, screen->depthPitch,
-						     driDrawPriv);
-			nouveauSpanSetFunctions(depthRb, mesaVis);
-			_mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+		if (mesaVis->depthBits == 24 && mesaVis->stencilBits == 8) {
+			nrb = nouveau_renderbuffer_new(GL_DEPTH24_STENCIL8_EXT, NULL,
+						       0, 0,
+						       driDrawPriv);
+			nouveauSpanSetFunctions(nrb, mesaVis);
+			_mesa_add_renderbuffer(fb, BUFFER_DEPTH, &nrb->mesa);
+			_mesa_add_renderbuffer(fb, BUFFER_STENCIL, &nrb->mesa);
+		} else if (mesaVis->depthBits == 24) {
+			nrb = nouveau_renderbuffer_new(GL_DEPTH_COMPONENT24, NULL,
+						       0, 0,
+						       driDrawPriv);
+			nouveauSpanSetFunctions(nrb, mesaVis);
+			_mesa_add_renderbuffer(fb, BUFFER_DEPTH, &nrb->mesa);
+		} else if (mesaVis->depthBits == 16) {
+			nrb = nouveau_renderbuffer_new(GL_DEPTH_COMPONENT16, NULL,
+						       0, 0,
+						       driDrawPriv);
+			nouveauSpanSetFunctions(nrb, mesaVis);
+			_mesa_add_renderbuffer(fb, BUFFER_DEPTH, &nrb->mesa);
 		}
-		else if (mesaVis->depthBits == 24) {
-			driRenderbuffer *depthRb
-				= driNewRenderbuffer(GL_DEPTH_COMPONENT24,
-						     driScrnPriv->pFB + screen->depthOffset,
-						     screen->fbFormat,
-						     screen->depthOffset, screen->depthPitch,
-						     driDrawPriv);
-			nouveauSpanSetFunctions(depthRb, mesaVis);
-			_mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
-		}
-
-		/* stencil renderbuffer */
-		if (mesaVis->stencilBits > 0 && !swStencil) {
-			driRenderbuffer *stencilRb
-				= driNewRenderbuffer(GL_STENCIL_INDEX8_EXT,
-						     driScrnPriv->pFB + screen->depthOffset,
-						     screen->fbFormat,
-						     screen->depthOffset, screen->depthPitch,
-						     driDrawPriv);
-			nouveauSpanSetFunctions(stencilRb, mesaVis);
-			_mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
-		}
-
-		_mesa_add_soft_renderbuffers(fb,
-					     GL_FALSE, /* color */
-					     swDepth,
-					     swStencil,
-					     swAccum,
-					     swAlpha,
-					     GL_FALSE /* aux */);
-		driDrawPriv->driverPrivate = (void *) fb;
-
-		return (driDrawPriv->driverPrivate != NULL);
 	}
+
+	_mesa_add_soft_renderbuffers(fb,
+				     GL_FALSE, /* color */
+				     GL_FALSE, /* depth */
+				     swStencil,
+				     swAccum,
+				     GL_FALSE, /* alpha */
+				     GL_FALSE  /* aux */);
+
+	driDrawPriv->driverPrivate = (void *) fb;
+	return (driDrawPriv->driverPrivate != NULL);
 }
 
 
@@ -363,7 +346,8 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
 		*driver_modes = nouveauFillInModes(dri_priv->bpp,
 						   (dri_priv->bpp == 16) ? 16 : 24,
 						   (dri_priv->bpp == 16) ? 0  : 8,
-						   (dri_priv->back_offset != dri_priv->depth_offset));
+						   1
+						   );
 
 		/* Calling driInitExtensions here, with a NULL context pointer, does not actually
 		 * enable the extensions.  It just makes sure that all the dispatch offsets for all

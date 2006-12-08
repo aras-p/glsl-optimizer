@@ -8,6 +8,7 @@ LIBNAME = nouveau_dri.so
 MINIGLX_SOURCES = 
 
 DRIVER_SOURCES = \
+	nouveau_buffers.c        \
 	nouveau_card.c           \
 	nouveau_context.c        \
 	nouveau_driver.c         \

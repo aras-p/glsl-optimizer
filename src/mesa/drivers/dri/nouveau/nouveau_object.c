@@ -1,6 +1,7 @@
 
 #include "nouveau_fifo.h"
 #include "nouveau_object.h"
+#include "nouveau_reg.h"
 
 
 static GLboolean nouveauCreateContextObject(nouveauContextPtr nmesa, int handle, int class, uint32_t flags, uint32_t dma_in, uint32_t dma_out, uint32_t dma_notifier)
@@ -51,14 +52,30 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 	return;
 #endif
 
-	nouveauCreateContextObject(nmesa, Nv3D, nmesa->screen->card->class_3d, 0, 0, 0, 0);
-	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
 /* We need to know vram size.. */
-#if 0
 	nouveauCreateDmaObject( nmesa, NvDmaFB,
 				0, (256*1024*1024),
 				0 /*NV_DMA_TARGET_FB*/, 0 /*NV_DMA_ACCESS_RW*/);
+
+	nouveauCreateContextObject(nmesa, Nv3D, nmesa->screen->card->class_3d,
+	      			   0, 0, 0, 0);
+	nouveauCreateContextObject(nmesa, NvCtxSurf2D, NV10_CONTEXT_SURFACES_2D,
+	      			   0, 0, 0, 0);
+	nouveauCreateContextObject(nmesa, NvImageBlit, NV10_IMAGE_BLIT,
+	      			   NV_DMA_CONTEXT_FLAGS_PATCH_SRCCOPY, 0, 0, 0);
+
+#ifdef ALLOW_MULTI_SUBCHANNEL
+	nouveauObjectOnSubchannel(nmesa, NvSubCtxSurf2D, NvCtxSurf2D);
+	BEGIN_RING_SIZE(NvSubCtxSurf2D, NV10_CONTEXT_SURFACES_2D_SET_DMA_IN_MEMORY0, 2);
+	OUT_RING(NvDmaFB);
+	OUT_RING(NvDmaFB);
+
+	nouveauObjectOnSubchannel(nmesa, NvSubImageBlit, NvImageBlit);
+	BEGIN_RING_SIZE(NvSubImageBlit, NV10_IMAGE_BLIT_SET_CONTEXT_SURFACES_2D, 1);
+	OUT_RING(NvCtxSurf2D);
 #endif
+
+	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
 }
 
 

@@ -109,14 +109,10 @@ void nouveauSpanInitFunctions( GLcontext *ctx )
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
 void
-nouveauSpanSetFunctions(driRenderbuffer *drb, const GLvisual *vis)
+nouveauSpanSetFunctions(nouveau_renderbuffer *nrb, const GLvisual *vis)
 {
-   if (drb->Base.InternalFormat == GL_RGBA) {
-      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         nouveauInitPointers_RGB565(&drb->Base);
-      }
-      else {
-         nouveauInitPointers_ARGB8888(&drb->Base);
-      }
-   }
+   if (nrb->mesa._ActualFormat == GL_RGBA8)
+      nouveauInitPointers_ARGB8888(&nrb->mesa);
+   else if (nrb->mesa._ActualFormat == GL_RGB5)
+      nouveauInitPointers_RGB565(&nrb->mesa);
 }

@@ -32,6 +32,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "array_cache/acache.h"
+#include "framebuffer.h"
 
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
@@ -47,6 +48,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_fifo.h"
 #include "nouveau_tex.h"
 #include "nouveau_msg.h"
+#include "nouveau_reg.h"
 #include "nv10_swtcl.h"
 
 #include "vblank.h"
@@ -96,9 +98,16 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	screen=nmesa->screen;
 
 	/* Create the hardware context */
+	if (!nouveauDRMGetParam(nmesa, NOUVEAU_GETPARAM_FB_PHYSICAL,
+		 		&nmesa->vram_phys))
+	   return GL_FALSE;
+	if (!nouveauDRMGetParam(nmesa, NOUVEAU_GETPARAM_AGP_PHYSICAL,
+		 		&nmesa->agp_phys))
+	   return GL_FALSE;
 	if (!nouveauFifoInit(nmesa))
 	   return GL_FALSE;
 	nouveauObjectInit(nmesa);
+
 
 	/* Init default driver functions then plug in our nouveau-specific functions
 	 * (the texture functions are especially important)
@@ -169,6 +178,7 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 			break;
 	}
 
+	nmesa->hw_func.InitCard(nmesa);
         nouveauInitState(ctx);
 
 	driContextPriv->driverPrivate = (void *)nmesa;
@@ -208,17 +218,26 @@ GLboolean nouveauMakeCurrent( __DRIcontextPrivate *driContextPriv,
 		__DRIdrawablePrivate *driReadPriv )
 {
 	if ( driContextPriv ) {
-		GET_CURRENT_CONTEXT(ctx);
-		nouveauContextPtr oldNOUVEAUCtx = ctx ? NOUVEAU_CONTEXT(ctx) : NULL;
-		nouveauContextPtr newNOUVEAUCtx = (nouveauContextPtr) driContextPriv->driverPrivate;
+		nouveauContextPtr nmesa = (nouveauContextPtr) driContextPriv->driverPrivate;
+		struct gl_framebuffer *draw_fb =
+			(struct gl_framebuffer*)driDrawPriv->driverPrivate;
+		struct gl_framebuffer *read_fb =
+			(struct gl_framebuffer*)driReadPriv->driverPrivate;
 
-		driDrawableInitVBlank(driDrawPriv, newNOUVEAUCtx->vblank_flags, &newNOUVEAUCtx->vblank_seq );
-		newNOUVEAUCtx->driDrawable = driDrawPriv;
+		driDrawableInitVBlank(driDrawPriv, nmesa->vblank_flags, &nmesa->vblank_seq );
+		nmesa->driDrawable = driDrawPriv;
 
-		_mesa_make_current( newNOUVEAUCtx->glCtx,
-				(GLframebuffer *) driDrawPriv->driverPrivate,
-				(GLframebuffer *) driReadPriv->driverPrivate );
+		_mesa_resize_framebuffer(nmesa->glCtx, draw_fb,
+					 driDrawPriv->w, driDrawPriv->h);
+		if (draw_fb != read_fb) {
+			_mesa_resize_framebuffer(nmesa->glCtx, draw_fb,
+						 driReadPriv->w,
+						 driReadPriv->h);
+		}
+		_mesa_make_current(nmesa->glCtx, draw_fb, read_fb);
 
+		nouveau_build_framebuffer(nmesa->glCtx,
+		      			  driDrawPriv->driverPrivate);
 	} else {
 		_mesa_make_current( NULL, NULL, NULL );
 	}
@@ -234,8 +253,46 @@ GLboolean nouveauUnbindContext( __DRIcontextPrivate *driContextPriv )
 	return GL_TRUE;
 }
 
+static void nouveauDoSwapBuffers(nouveauContextPtr nmesa,
+				 __DRIdrawablePrivate *dPriv)
+{
+	struct gl_framebuffer *fb;
+	nouveau_renderbuffer *src, *dst;
+
+	fb = (struct gl_framebuffer *)dPriv->driverPrivate;
+	dst = (nouveau_renderbuffer*)
+		fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+	src = (nouveau_renderbuffer*)
+		fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+
+#ifdef ALLOW_MULTI_SUBCHANNEL
+	/* Ignore this.. it's a hack to test double-buffering, and not how
+	 * SwapBuffers should look :)
+	 */
+	BEGIN_RING_SIZE(NvSubCtxSurf2D, NV10_CONTEXT_SURFACES_2D_FORMAT, 4);
+	OUT_RING       (6); /* X8R8G8B8 */
+	OUT_RING       ((dst->pitch << 16) | src->pitch);
+	OUT_RING       (src->offset);
+	OUT_RING       (dst->offset);
+
+	BEGIN_RING_SIZE(NvSubImageBlit, NV10_IMAGE_BLIT_SET_POINT, 3);
+	OUT_RING       ((0 << 16) | 0); /* src point */
+	OUT_RING       ((0 << 16) | 0); /* dst point */
+	OUT_RING       ((fb->Height << 16) | fb->Width); /* width/height */
+#endif
+}
+
 void nouveauSwapBuffers(__DRIdrawablePrivate *dPriv)
 {
+	if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
+		nouveauContextPtr nmesa = dPriv->driContextPriv->driverPrivate;
+
+		if (nmesa->glCtx->Visual.doubleBufferMode) {
+			_mesa_notifySwapBuffers(nmesa->glCtx);
+			nouveauDoSwapBuffers(nmesa, dPriv);
+		}
+
+	}
 }
 
 void nouveauCopySubBuffer(__DRIdrawablePrivate *dPriv,
