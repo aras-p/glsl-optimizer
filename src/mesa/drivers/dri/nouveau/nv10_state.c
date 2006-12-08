@@ -369,7 +369,7 @@ static void nv10Lightfv(GLcontext *ctx, GLenum light, GLenum pname, const GLfloa
 			spotlightUpdate = SPOTLIGHT_UPDATE_DIRECTION;
 			break;
 		case GL_SPOT_EXPONENT:
-			spotlightUpdate = SPOTLIGHT_UPDATE_DIRECTION;
+			spotlightUpdate = SPOTLIGHT_UPDATE_EXPONENT;
 			break;
 		case GL_SPOT_CUTOFF:
 			spotlightUpdate = SPOTLIGHT_UPDATE_ALL;
