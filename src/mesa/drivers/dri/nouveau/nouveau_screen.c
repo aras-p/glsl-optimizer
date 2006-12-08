@@ -226,8 +226,17 @@ nouveauFillInModes( unsigned pixel_bits, unsigned depth_bits,
 	unsigned num_modes;
 	unsigned depth_buffer_factor;
 	unsigned back_buffer_factor;
-	GLenum fb_format;
-	GLenum fb_type;
+	unsigned fb_format_factor;
+	int i;
+
+	static const struct {
+		GLenum format;
+		GLenum type;
+	} fb_format_array[] = {
+		{ GL_RGB , GL_UNSIGNED_SHORT_5_6_5     },
+		{ GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV },
+		{ GL_RGB , GL_UNSIGNED_INT_8_8_8_8_REV },
+	};
 
 	/* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
 	 * support pageflipping at all.
@@ -236,58 +245,43 @@ nouveauFillInModes( unsigned pixel_bits, unsigned depth_bits,
 		GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
 	};
 
-	u_int8_t depth_bits_array[3];
-	u_int8_t stencil_bits_array[3];
+	u_int8_t depth_bits_array[4]   = { 0, 16, 24, 24 };
+	u_int8_t stencil_bits_array[4] = { 0,  0,  0,  8 };
 
-	depth_bits_array[0] = 0;
-	depth_bits_array[1] = depth_bits;
-	depth_bits_array[2] = depth_bits;
-
-	/* Just like with the accumulation buffer, always provide some modes
-	 * with a stencil buffer.  It will be a sw fallback, but some apps won't
-	 * care about that.
-	 */
-	stencil_bits_array[0] = 0;
-	stencil_bits_array[1] = 0;
-	stencil_bits_array[2] = (stencil_bits == 0) ? 8 : stencil_bits;
-
-	depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 3 : 1;
+	depth_buffer_factor = 4;
 	back_buffer_factor  = (have_back_buffer) ? 3 : 1;
 
-	num_modes = depth_buffer_factor * back_buffer_factor * 4;
-
-	if ( pixel_bits == 16 ) {
-		fb_format = GL_RGB;
-		fb_type = GL_UNSIGNED_SHORT_5_6_5;
-	} else {
-		fb_format = GL_BGRA;
-		fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
-	}
-
-	modes = (*dri_interface->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
+	num_modes = ((pixel_bits==16) ? 1 : 2) *
+		depth_buffer_factor * back_buffer_factor * 4;
+	modes = (*dri_interface->createContextModes)(num_modes,
+						     sizeof(__GLcontextModes));
 	m = modes;
-	if (!driFillInModes(&m, fb_format, fb_type,
-			    depth_bits_array, stencil_bits_array, depth_buffer_factor,
-			    back_buffer_modes, back_buffer_factor,
-			    GLX_TRUE_COLOR)) {
-		fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
-				__func__, __LINE__ );
-		return NULL;
-	}
-	if (!driFillInModes(&m, fb_format, fb_type,
-			    depth_bits_array, stencil_bits_array, depth_buffer_factor,
-			    back_buffer_modes, back_buffer_factor,
-			    GLX_DIRECT_COLOR)) {
-		fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
-				__func__, __LINE__ );
-		return NULL;
-	}
 
-	/* Mark the visual as slow if there are "fake" stencil bits.
-	 */
-	for ( m = modes ; m != NULL ; m = m->next ) {
-		if ( (m->stencilBits != 0) && (m->stencilBits != stencil_bits) ) {
-			m->visualRating = GLX_SLOW_CONFIG;
+	for (i=((pixel_bits==16)?0:1);i<((pixel_bits==16)?1:3);i++) {
+		if (!driFillInModes(&m, fb_format_array[i].format,
+					fb_format_array[i].type,
+					depth_bits_array,
+					stencil_bits_array,
+					depth_buffer_factor,
+					back_buffer_modes,
+					back_buffer_factor,
+					GLX_TRUE_COLOR)) {
+		fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
+				__func__, __LINE__ );
+		return NULL;
+		}
+
+		if (!driFillInModes(&m, fb_format_array[i].format,
+					fb_format_array[i].type,
+					depth_bits_array,
+					stencil_bits_array,
+					depth_buffer_factor,
+					back_buffer_modes,
+					back_buffer_factor,
+					GLX_DIRECT_COLOR)) {
+		fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
+				__func__, __LINE__ );
+		return NULL;
 		}
 	}
 
