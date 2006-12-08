@@ -90,7 +90,6 @@ static void nv30Clear(GLcontext *ctx, GLbitfield mask)
 		hw_bufs |= 0x03;
 
 	if (hw_bufs) {
-		/* should we flush the state cache before this? */
 		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_CLEAR_WHICH_BUFFERS, 1);
 		OUT_RING(hw_bufs);
 	}
