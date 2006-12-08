@@ -79,6 +79,23 @@ static void nv30BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, GLenum dfac
 	OUT_RING_CACHE((dfactorA<<16) | dfactorRGB);
 }
 
+static void nv30Clear(GLcontext *ctx, GLbitfield mask)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	GLuint hw_bufs = 0;
+
+	if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT))
+		hw_bufs |= 0xf0;
+	if (mask & (BUFFER_BIT_DEPTH))
+		hw_bufs |= 0x03;
+
+	if (hw_bufs) {
+		/* should we flush the state cache before this? */
+		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_CLEAR_WHICH_BUFFERS, 1);
+		OUT_RING(hw_bufs);
+	}
+}
+
 static void nv30ClearColor(GLcontext *ctx, const GLfloat color[4])
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -740,6 +757,7 @@ void nv30InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
 	func->BlendColor		= nv30BlendColor;
 	func->BlendEquationSeparate	= nv30BlendEquationSeparate;
 	func->BlendFuncSeparate		= nv30BlendFuncSeparate;
+	func->Clear			= nv30Clear;
 	func->ClearColor		= nv30ClearColor;
 	func->ClearDepth		= nv30ClearDepth;
 	func->ClearStencil		= nv30ClearStencil;

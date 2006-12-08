@@ -239,7 +239,10 @@ nouveau_build_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
    _mesa_update_draw_buffer_bounds(ctx);
 
    color[0] = (nouveau_renderbuffer *)fb->_ColorDrawBuffers[0][0];
-   depth    = (nouveau_renderbuffer *)fb->_DepthBuffer;
+   if (fb->_DepthBuffer && fb->_DepthBuffer->Wrapped)
+      depth = (nouveau_renderbuffer *)fb->_DepthBuffer->Wrapped;
+   else
+      depth = (nouveau_renderbuffer *)fb->_DepthBuffer;
 
    if (!nmesa->hw_func.BindBuffers(nmesa, 1, color, depth))
       return GL_FALSE;
