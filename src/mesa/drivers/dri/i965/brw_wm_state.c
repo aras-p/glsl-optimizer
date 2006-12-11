@@ -168,7 +168,7 @@ static void upload_wm_unit(struct brw_context *brw )
       wm.wm5.line_stipple = 1;
    }
 
-   if (INTEL_DEBUG & DEBUG_STATS)
+   if (INTEL_DEBUG & DEBUG_STATS || intel->stats_wm)
       wm.wm4.stats_enable = 1;
 
    brw->wm.state_gs_offset = brw_cache_data( &brw->cache[BRW_WM_UNIT], &wm );
