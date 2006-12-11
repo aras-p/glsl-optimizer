@@ -95,7 +95,7 @@ void intelWaitIrq( struct intel_context *intel, int seq )
 {
    if (!intel->no_hw) {
       drmI830IrqWait iw;
-      int ret;
+      int ret, lastdispatch;
       
       if (0)
 	 fprintf(stderr, "%s %d\n", __FUNCTION__, seq );
@@ -103,11 +103,12 @@ void intelWaitIrq( struct intel_context *intel, int seq )
       iw.irq_seq = seq;
 	
       do {
+	 lastdispatch = intel->sarea->last_dispatch;
 	 ret = drmCommandWrite( intel->driFd, DRM_I830_IRQ_WAIT, &iw, sizeof(iw) );
 
 	 /* This seems quite often to return before it should!?! 
 	  */
-      } while (ret == -EAGAIN || ret == -EINTR || (ret == 0 && seq > intel->sarea->last_dispatch));
+      } while (ret == -EAGAIN || ret == -EINTR || (ret == -EBUSY && lastdispatch != intel->sarea->last_dispatch) || (ret == 0 && seq > intel->sarea->last_dispatch));
       
 
       if ( ret ) {
