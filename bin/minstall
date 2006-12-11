@@ -65,7 +65,7 @@ if [ $# -ge 2 ] ; then
 
 		elif [ -f "$FILE" ] ; then
 			#echo "$FILE" is a regular file
-			$RM "$DEST/$FILE"
+			$RM "$DEST/`basename $FILE`"
 			cp "$FILE" "$DEST"
 			if [ $MODE ] ; then
 				FILE=`basename "$FILE"`
