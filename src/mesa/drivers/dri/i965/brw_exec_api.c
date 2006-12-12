@@ -42,6 +42,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "dispatch.h"
 
 #include "brw_exec.h"
+#include "intel_context.h"
+
 
 static void reset_attrfv( struct brw_exec_context *exec );
 
@@ -522,6 +524,14 @@ static void GLAPIENTRY brw_exec_Begin( GLenum mode )
       
 }
 
+static GLuint brw_max_prim( GLcontext *ctx )
+{
+        struct intel_context *intel = intel_context( ctx );
+        if (intel->numClipRects <= 1)
+                return BRW_MAX_PRIM;
+        return BRW_MAX_PRIM/intel->numClipRects;
+}
+
 static void GLAPIENTRY brw_exec_End( void )
 {
    GET_CURRENT_CONTEXT( ctx ); 
@@ -536,7 +546,7 @@ static void GLAPIENTRY brw_exec_End( void )
 
       ctx->Driver.CurrentExecPrimitive = GL_POLYGON+1;
 
-      if (exec->vtx.prim_count == BRW_MAX_PRIM)
+      if (exec->vtx.prim_count >= brw_max_prim(ctx))
 	 brw_exec_vtx_flush( exec );	
    }
    else 
