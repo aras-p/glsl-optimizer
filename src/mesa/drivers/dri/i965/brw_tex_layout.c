@@ -138,7 +138,7 @@ GLboolean brw_miptree_layout( struct intel_mipmap_tree *mt )
 	 
 	 /* Layout_below: step right after second mipmap.
 	  */
-	 if (level == mt->first_level + 1) {
+	 if (level == mt->first_level + 1 && mt->pitch > 4) {
 	    x += mt->pitch / 2;
 	    x = (x + 3) & ~ 3;
 	 }
