@@ -81,6 +81,7 @@ struct gl2_shader_intf
    GLvoid (* SetSource) (struct gl2_shader_intf **, GLcharARB *, GLint *, GLsizei);
    const GLcharARB *(* GetSource) (struct gl2_shader_intf **);
    GLvoid (* Compile) (struct gl2_shader_intf **);
+   struct gl_program *Program;
 };
 
 struct gl2_program_intf
@@ -114,6 +115,7 @@ struct gl2_program_intf
    GLvoid (* OverrideAttribBinding) (struct gl2_program_intf **, GLuint, const GLchar *);
    GLvoid (* WriteAttrib) (struct gl2_program_intf **, GLuint, const GLfloat *);
    GLvoid (* UpdateVarying) (struct gl2_program_intf **, GLuint, GLfloat *, GLboolean);
+   struct gl_linked_program *Linked;
 };
 
 struct gl2_fragment_shader_intf
@@ -343,6 +345,15 @@ extern void GLAPIENTRY
 _mesa_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value);
 
+
+extern struct gl_linked_program *
+_mesa_new_linked_program(GLcontext *ctx, GLuint name);
+
+extern struct gl_linked_program *
+_mesa_lookup_linked_program(GLcontext *ctx, GLuint name);
+
+extern struct gl_program *
+_mesa_lookup_shader(GLcontext *ctx, GLuint name);
 
 
 #endif /* FEATURE_ARB_shader_objects */

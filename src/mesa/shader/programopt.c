@@ -136,6 +136,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    GLuint colorTemp, fogFactorTemp; /* temporary registerss */
    GLfloat fogVals[4];
    GLuint fogConsts;                /* constant values for EXP, EXP2 mode */
+   GLuint swizzle;
 
    if (fprog->FogOption == GL_NONE) {
       _mesa_problem(ctx, "_mesa_append_fog_code() called for fragment program"
@@ -172,7 +173,9 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    fogVals[1] = 1.0 / SQRTF(log(2.0));
    fogVals[2] = 0.0;
    fogVals[3] = 0.0;
-   fogConsts = _mesa_add_unnamed_constant(fprog->Base.Parameters, fogVals, 4);
+   fogConsts = _mesa_add_unnamed_constant(fprog->Base.Parameters,
+                                          fogVals, 4, &swizzle);
+   ASSERT(swizzle == SWIZZLE_NOOP);
 
    /* Scan program to find where result.color is written */
    inst = newInst;

@@ -32,8 +32,10 @@
 #include "glheader.h"
 #include "context.h"
 #include "hash.h"
+#include "macros.h"
 #include "shaderobjects.h"
 #include "shaderobjects_3dlabs.h"
+#include "slang_link.h"
 
 
 #if FEATURE_ARB_shader_objects
@@ -198,8 +200,8 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
    }
 
    /*
-    * This array holds offsets of where the appropriate string ends, thus the last
-    * element will be set to the total length of the source code.
+    * This array holds offsets of where the appropriate string ends, thus the
+    * last element will be set to the total length of the source code.
     */
    offsets = (GLint *) _mesa_malloc(count * sizeof(GLint));
    if (offsets == NULL) {
@@ -224,9 +226,8 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
          offsets[i] += offsets[i - 1];
    }
 
-   source =
-      (GLcharARB *) _mesa_malloc((offsets[count - 1] + 1) *
-                                 sizeof(GLcharARB));
+   source = (GLcharARB *) _mesa_malloc((offsets[count - 1] + 1) *
+                                       sizeof(GLcharARB));
    if (source == NULL) {
       _mesa_free((GLvoid *) offsets);
       RELEASE_SHADER(sha);
@@ -296,6 +297,13 @@ _mesa_LinkProgramARB(GLhandleARB programObj)
       }
       RELEASE_PROGRAM(pro);
    }
+#if NEW_SLANG
+   {
+      struct gl_linked_program *linked
+         = _mesa_lookup_linked_program(ctx, programObj);
+      _slang_link2(ctx, programObj, linked);
+   }
+#endif
 }
 
 GLvoid GLAPIENTRY
@@ -333,6 +341,15 @@ _mesa_UseProgramObjectARB(GLhandleARB programObj)
    if (ctx->ShaderObjects.CurrentProgram != NULL)
       RELEASE_PROGRAM(ctx->ShaderObjects.CurrentProgram);
    ctx->ShaderObjects.CurrentProgram = program;
+
+#if NEW_SLANG
+   if (programObj) {
+      ctx->ShaderObjects.Linked = _mesa_lookup_linked_program(ctx, programObj);
+   }
+   else {
+      ctx->ShaderObjects.Linked = NULL;
+   }
+#endif
 }
 
 GLvoid GLAPIENTRY
@@ -359,6 +376,27 @@ uniform(GLint location, GLsizei count, const GLvoid *values, GLenum type,
    GET_CURRENT_LINKED_PROGRAM(pro, caller);
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+
+#if NEW_SLANG
+   if (ctx->ShaderObjects.Linked) {
+      struct gl_linked_program *linked = ctx->ShaderObjects.Linked;
+      if (location >= 0 && location < linked->NumUniforms) {
+         GLfloat *v = linked->Uniforms[location].Value;
+         const GLfloat *fValues = (const GLfloat *) values; /* XXX */
+         GLint i;
+         if (type == GL_FLOAT_VEC4)
+            count *= 4;
+         else if (type == GL_FLOAT_VEC3)
+            count *= 3;
+         else
+            abort();
+         
+         for (i = 0; i < count; i++)
+            v[i] = fValues[i];
+         return;
+      }
+   }
+#endif
 
    if (!(**pro).WriteUniform(pro, location, count, values, type))
       _mesa_error(ctx, GL_INVALID_OPERATION, caller);
@@ -808,6 +846,20 @@ _mesa_GetAttachedObjectsARB(GLhandleARB containerObj, GLsizei maxCount,
 GLint GLAPIENTRY
 _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB * name)
 {
+#if NEW_SLANG
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (ctx->ShaderObjects.Linked) {
+      struct gl_linked_program *linked = ctx->ShaderObjects.Linked;
+      GLuint loc;
+      for (loc = 0; loc < linked->NumUniforms; loc++) {
+         if (!strcmp(linked->Uniforms[loc].Name, name)) {
+            return loc;
+         }
+      }
+   }
+   return -1;
+#else
    GET_CURRENT_CONTEXT(ctx);
    GLint loc = -1;
    GET_LINKED_PROGRAM(pro, programObj, "glGetUniformLocationARB");
@@ -823,6 +875,7 @@ _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB * name)
    }
    RELEASE_PROGRAM(pro);
    return loc;
+#endif
 }
 
 GLvoid GLAPIENTRY
@@ -961,6 +1014,35 @@ void GLAPIENTRY
 _mesa_AttachShader(GLuint program, GLuint shader)
 {
    _mesa_AttachObjectARB(program, shader);
+#if NEW_SLANG
+   {
+      GET_CURRENT_CONTEXT(ctx);
+      struct gl_linked_program *linked
+         = _mesa_lookup_linked_program(ctx, program);
+      struct gl_program *prog
+         = _mesa_lookup_shader(ctx, shader);
+      const GLuint n = linked->NumShaders;
+      GLuint i;
+      if (!linked || !prog) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glAttachShader(bad program or shader name)");
+         return;
+      }
+      for (i = 0; i < n; i++) {
+         if (linked->Shaders[i] == prog) {
+            /* already attached */
+            return;
+         }
+      }
+      /* append to list */
+      linked->Shaders = _mesa_realloc(linked->Shaders,
+                                      n * sizeof(struct gl_program *),
+                                      (n + 1) * sizeof(struct gl_program *));
+      linked->Shaders[n] = prog;
+      prog->RefCount++;
+      linked->NumShaders++;
+   }
+#endif
 }
 
 
@@ -1000,6 +1082,24 @@ _mesa_GetAttachedShaders(GLuint program, GLsizei maxCount,
                          GLsizei *count, GLuint *obj)
 {
    _mesa_GetAttachedObjectsARB(program, maxCount, count, obj);
+#if NEW_SLANG
+   {
+      GET_CURRENT_CONTEXT(ctx);
+      struct gl_linked_program *linked
+         = _mesa_lookup_linked_program(ctx, program);
+      if (linked) {
+         GLuint i;
+         for (i = 0; i < maxCount && i < linked->NumShaders; i++) {
+            obj[i] = linked->Shaders[i]->Id;
+         }
+         if (count)
+            *count = i;
+      }
+      else {
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glGetAttachedShaders");
+      }
+   }
+#endif
 }
 
 void GLAPIENTRY
@@ -1176,9 +1276,48 @@ _mesa_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
 
 
 
+#ifdef NEW_SLANG
+
+struct gl_linked_program *
+_mesa_new_linked_program(GLcontext *ctx, GLuint name)
+{
+   struct gl_linked_program *linked;
+   linked = CALLOC_STRUCT(gl_linked_program);
+   linked->Name = name;
+   return linked;
+}
 
 
-#endif
+struct gl_linked_program *
+_mesa_lookup_linked_program(GLcontext *ctx, GLuint name)
+{
+   GET_PROGRAM(pro, name, "_mesa_lookup_linked_program");
+   if (pro) {
+      if (!(*pro)->Linked) {
+         (*pro)->Linked = _mesa_new_linked_program(ctx, name);
+      }
+      return (*pro)->Linked;
+   }
+   return NULL;
+}
+
+
+struct gl_program *
+_mesa_lookup_shader(GLcontext *ctx, GLuint name)
+{
+   GET_SHADER(sh, name, "_mesa_lookup_shader");
+   if (sh)
+      return (*sh)->Program;
+   return NULL;
+}
+
+
+#endif /* NEW_SLANG */
+
+
+#endif /* FEATURE_ARB_shader_objects */
+
+
 
 GLvoid
 _mesa_init_shaderobjects(GLcontext * ctx)

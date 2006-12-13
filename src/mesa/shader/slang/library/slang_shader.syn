@@ -1192,7 +1192,12 @@ note: this is an extension to the standard language specification - normally sla
       __asm statements
 */
 asm_argument
-    variable_identifier .or floatconstant;
+    var_with_field .or
+    variable_identifier .or
+    floatconstant;
+
+var_with_field
+    variable_identifier .and dot .and field_selection .emit OP_FIELD;
 
 /*
     <translation_unit>                  ::= <external_declaration>

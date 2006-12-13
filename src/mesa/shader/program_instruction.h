@@ -91,8 +91,10 @@
  * Program instruction opcodes, for both vertex and fragment programs.
  * \note changes to this opcode list must be reflected in t_vb_arbprogram.c
  */
+typedef enum prog_opcode {
                      /* ARB_vp   ARB_fp   NV_vp   NV_fp */
-enum prog_opcode {   /*---------------------------------*/
+                     /*---------------------------------*/
+   OPCODE_NOP = 0,
    OPCODE_ABS,       /*   X        X       1.1          */
    OPCODE_ADD,       /*   X        X       X       X    */
    OPCODE_ARA,       /*                    2            */
@@ -164,7 +166,7 @@ enum prog_opcode {   /*---------------------------------*/
    OPCODE_X2D,       /*                            X    */
    OPCODE_XPD,       /*   X        X                    */
    MAX_OPCODE
-};
+} gl_inst_opcode;
 
 
 /**
@@ -263,7 +265,7 @@ struct prog_dst_register
  */
 struct prog_instruction
 {
-   enum prog_opcode Opcode;
+   gl_inst_opcode Opcode;
 #if FEATURE_MESA_program_debug
    GLshort StringPos;
 #endif
@@ -344,6 +346,8 @@ struct prog_instruction
     * For BRA and CAL instructions, the location to jump to.
     */
    GLuint BranchTarget;
+
+   const char *Comment;
 };
 
 
@@ -351,10 +355,10 @@ extern void
 _mesa_init_instructions(struct prog_instruction *inst, GLuint count);
 
 extern GLuint
-_mesa_num_inst_src_regs(enum prog_opcode opcode);
+_mesa_num_inst_src_regs(gl_inst_opcode opcode);
 
 extern const char *
-_mesa_opcode_string(enum prog_opcode opcode);
+_mesa_opcode_string(gl_inst_opcode opcode);
 
 
 #endif /* PROG_INSTRUCTION_H */

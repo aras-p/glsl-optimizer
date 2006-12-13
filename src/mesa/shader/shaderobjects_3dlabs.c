@@ -34,6 +34,7 @@
 #include "imports.h"
 #include "hash.h"
 #include "macros.h"
+#include "program.h"
 #include "shaderobjects.h"
 #include "shaderobjects_3dlabs.h"
 
@@ -600,6 +601,7 @@ _shader_GetSource(struct gl2_shader_intf **intf)
 static GLvoid
 _shader_Compile(struct gl2_shader_intf **intf)
 {
+   GET_CURRENT_CONTEXT(ctx);
    struct gl2_shader_impl *impl = (struct gl2_shader_impl *) intf;
 #if USE_3DLABS_FRONTEND
    char **strings;
@@ -677,12 +679,18 @@ _shader_Compile(struct gl2_shader_intf **intf)
    impl->_obj._generic.info_log =
       _mesa_strdup(ShGetInfoLog(impl->_obj._3dlabs_shhandle._obj.handle));
 #else
-   if (impl->_vftbl->GetSubType(intf) == GL_FRAGMENT_SHADER)
+   /* NEW_SLANG */
+   if (impl->_vftbl->GetSubType(intf) == GL_FRAGMENT_SHADER) {
       type = slang_unit_fragment_shader;
-   else
+      (*intf)->Program = _mesa_new_program(ctx, GL_FRAGMENT_PROGRAM_ARB, 1);
+   }
+   else {
       type = slang_unit_vertex_shader;
+      (*intf)->Program = _mesa_new_program(ctx, GL_VERTEX_PROGRAM_ARB, 1);
+   }
    slang_info_log_construct(&info_log);
-   if (_slang_compile(impl->_obj.source, &impl->_obj.code, type, &info_log))
+   if (_slang_compile(impl->_obj.source, &impl->_obj.code, type, &info_log,
+                      (*intf)->Program))
       impl->_obj.compile_status = GL_TRUE;
    if (info_log.text != NULL)
       impl->_obj._generic.info_log = _mesa_strdup(info_log.text);

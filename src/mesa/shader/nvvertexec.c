@@ -63,7 +63,9 @@ _mesa_init_vp_per_vertex_registers(GLcontext *ctx, struct vp_machine *machine)
       for (i = 0; i < MAX_NV_VERTEX_PROGRAM_TEMPS; i++) {
          ASSIGN_4V(machine->Temporaries[i], 0.0F, 0.0F, 0.0F, 0.0F);
       }
-      ASSIGN_4V(machine->AddressReg, 0, 0, 0, 0);
+      for (i = 0; i < MAX_VERTEX_PROGRAM_ADDRESS_REGS; i++) {
+         ASSIGN_4V(machine->AddressReg[i], 0, 0, 0, 0);
+      }
    }
 }
 
@@ -201,7 +203,7 @@ _mesa_dump_vp_state( const struct gl_vertex_program_state *state,
    _mesa_printf("\n");
 
    _mesa_printf("Registers:\n");
-   for (i = 0; i < MAX_NV_VERTEX_PROGRAM_TEMPS; i++) {
+   for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
       _mesa_printf("%d: %f %f %f %f   ", i,
                   machine->Temporaries[i][0],
                   machine->Temporaries[i][1],
@@ -234,25 +236,27 @@ get_register_pointer( GLcontext *ctx,
                       const struct gl_vertex_program *program )
 {
    if (source->RelAddr) {
-      const GLint reg = source->Index + machine->AddressReg[0];
-      ASSERT( (source->File == PROGRAM_ENV_PARAM) || 
-        (source->File == PROGRAM_STATE_VAR) );
+      const GLint reg = source->Index + machine->AddressReg[0][0];
+      ASSERT(source->File == PROGRAM_ENV_PARAM || 
+             source->File == PROGRAM_STATE_VAR ||
+             source->File == PROGRAM_LOCAL_PARAM);
       if (reg < 0 || reg > MAX_NV_VERTEX_PROGRAM_PARAMS)
          return ZeroVec;
       else if (source->File == PROGRAM_ENV_PARAM)
          return ctx->VertexProgram.Parameters[reg];
       else {
-         ASSERT(source->File == PROGRAM_LOCAL_PARAM);
+         ASSERT(source->File == PROGRAM_LOCAL_PARAM ||
+                source->File == PROGRAM_STATE_VAR);
          return program->Base.Parameters->ParameterValues[reg];
       }
    }
    else {
       switch (source->File) {
          case PROGRAM_TEMPORARY:
-            ASSERT(source->Index < MAX_NV_VERTEX_PROGRAM_TEMPS);
+            ASSERT(source->Index < MAX_PROGRAM_TEMPS);
             return machine->Temporaries[source->Index];
          case PROGRAM_INPUT:
-            ASSERT(source->Index < MAX_NV_VERTEX_PROGRAM_INPUTS);
+            ASSERT(source->Index < VERT_ATTRIB_MAX);
             return machine->Inputs[source->Index];
          case PROGRAM_OUTPUT:
             /* This is only needed for the PRINT instruction */
@@ -265,6 +269,12 @@ get_register_pointer( GLcontext *ctx,
             ASSERT(source->Index < MAX_NV_VERTEX_PROGRAM_PARAMS);
             return ctx->VertexProgram.Parameters[source->Index];
          case PROGRAM_STATE_VAR:
+            /* Fallthrough */
+         case PROGRAM_CONSTANT:
+            /* Fallthrough */
+         case PROGRAM_UNIFORM:
+            /* Fallthrough */
+         case PROGRAM_NAMED_PARAM:
             ASSERT(source->Index < program->Base.Parameters->NumParameters);
             return program->Base.Parameters->ParameterValues[source->Index];
          default:
@@ -644,7 +654,7 @@ _mesa_exec_vertex_program(GLcontext *ctx,
             {
                GLfloat t[4];
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               machine->AddressReg[0] = (GLint) FLOORF(t[0]);
+               machine->AddressReg[0][0] = (GLint) FLOORF(t[0]);
             }
             break;
          case OPCODE_DPH:

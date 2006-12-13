@@ -35,11 +35,11 @@
  */
 struct vp_machine
 {
-   GLfloat Temporaries[MAX_NV_VERTEX_PROGRAM_TEMPS][4];
-   GLfloat Inputs[MAX_NV_VERTEX_PROGRAM_INPUTS][4];
-   GLuint InputsSize[MAX_NV_VERTEX_PROGRAM_INPUTS];
-   GLfloat Outputs[MAX_NV_VERTEX_PROGRAM_OUTPUTS][4];
-   GLint AddressReg[4];
+   GLfloat Temporaries[MAX_PROGRAM_TEMPS][4];
+   GLfloat Inputs[VERT_ATTRIB_MAX][4];
+   GLuint InputsSize[VERT_ATTRIB_MAX];
+   GLfloat Outputs[VERT_RESULT_MAX][4];
+   GLint AddressReg[MAX_VERTEX_PROGRAM_ADDRESS_REGS][4];
 };
 
 

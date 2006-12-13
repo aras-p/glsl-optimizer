@@ -128,8 +128,8 @@ _mesa_realloc_instructions(struct prog_instruction *oldInst,
  * A string such as "state.light[0].ambient" gets translated into a
  * sequence of tokens such as [ STATE_LIGHT, 0, STATE_AMBIENT ].
  */
-enum state_index {
-   STATE_MATERIAL,
+typedef enum gl_state_index_ {
+   STATE_MATERIAL = 100,  /* start at 100 so small ints are seen as ints */
 
    STATE_LIGHT,
    STATE_LIGHTMODEL_AMBIENT,
@@ -191,7 +191,7 @@ enum state_index {
    STATE_TEXRECT_SCALE,
    STATE_POSITION_NORMALIZED,   /* normalized light position */
    STATE_INTERNAL_DRIVER	/* first available state index for drivers (must be last) */
-};
+} gl_state_index;
 
 
 
@@ -205,7 +205,10 @@ struct gl_program_parameter
 {
    const char *Name;          /**< Null-terminated string */
    enum register_file Type; /**< PROGRAM_NAMED_PARAM, CONSTANT or STATE_VAR */
-   enum state_index StateIndexes[6];   /**< Global state reference */
+   /**
+    * A sequence of STATE_* tokens and integers to identify GL state.
+    */
+   gl_state_index StateIndexes[6];
 };
 
 
@@ -244,7 +247,16 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
 
 extern GLint
 _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
-                           const GLfloat values[4], GLuint size);
+                           const GLfloat values[4], GLuint size,
+                           GLuint *swizzleOut);
+
+extern GLint
+_mesa_add_uniform(struct gl_program_parameter_list *paramList,
+                  const char *name, GLuint size);
+
+extern GLint
+_mesa_add_varying(struct gl_program_parameter_list *paramList,
+                  const char *name, GLuint size);
 
 extern GLint
 _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
@@ -261,7 +273,7 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
 extern GLboolean
 _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *paramList,
                                 const GLfloat v[], GLsizei vSize,
-                                GLuint *posOut, GLuint *swizzleOut);
+                                GLint *posOut, GLuint *swizzleOut);
 
 extern void
 _mesa_load_state_parameters(GLcontext *ctx,

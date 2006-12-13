@@ -203,6 +203,7 @@ _mesa_init_program_struct( GLcontext *ctx, struct gl_program *prog,
 {
    (void) ctx;
    if (prog) {
+      _mesa_bzero(prog, sizeof(*prog));
       prog->Id = id;
       prog->Target = target;
       prog->Resident = GL_TRUE;
@@ -304,6 +305,10 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
       _mesa_free_parameter_list(prog->Parameters);
    }
 
+   if (prog->Varying) {
+      _mesa_free_parameter_list(prog->Varying);
+   }
+
    /* XXX this is a little ugly */
    if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
       struct gl_vertex_program *vprog = (struct gl_vertex_program *) prog;
@@ -364,13 +369,14 @@ _mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
  * Add a new parameter to a parameter list.
  * \param paramList  the list to add the parameter to
  * \param name  the parameter name, will be duplicated/copied!
- * \param values  initial parameter value, 4 GLfloats
+ * \param values  initial parameter value, up to 4 GLfloats
+ * \param size  number of elements in 'values' vector (1..4)
  * \param type  type of parameter, such as 
  * \return  index of new parameter in the list, or -1 if error (out of mem)
  */
 static GLint
 add_parameter(struct gl_program_parameter_list *paramList,
-              const char *name, const GLfloat values[4],
+              const char *name, const GLfloat values[4], GLuint size,
               enum register_file type)
 {
    const GLuint n = paramList->NumParameters;
@@ -425,7 +431,7 @@ GLint
 _mesa_add_named_parameter(struct gl_program_parameter_list *paramList,
                           const char *name, const GLfloat values[4])
 {
-   return add_parameter(paramList, name, values, PROGRAM_NAMED_PARAM);
+   return add_parameter(paramList, name, values, 4, PROGRAM_NAMED_PARAM);
 }
 
 
@@ -445,14 +451,16 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
                          GLuint size)
 {
 #if 0 /* disable this for now -- we need to save the name! */
-   GLuint pos, swizzle;
+   GLint pos;
+   GLuint swizzle;
    ASSERT(size == 4); /* XXX future feature */
    /* check if we already have this constant */
    if (_mesa_lookup_parameter_constant(paramList, values, 4, &pos, &swizzle)) {
       return pos;
    }
 #endif
-   return add_parameter(paramList, name, values, PROGRAM_CONSTANT);
+   size = 4; /** XXX fix */
+   return add_parameter(paramList, name, values, size, PROGRAM_CONSTANT);
 }
 
 
@@ -463,20 +471,85 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
  *
  * \param paramList  the parameter list
  * \param values  four float values
+ * \param swizzleOut  returns swizzle mask for accessing the constant
  * \return index/position of the new parameter in the parameter list.
  */
 GLint
 _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
-                           const GLfloat values[4], GLuint size)
+                           const GLfloat values[4], GLuint size,
+                           GLuint *swizzleOut)
 {
-   GLuint pos, swizzle;
-   ASSERT(size == 4); /* XXX future feature */
+   GLint pos;
+   GLuint swizzle;
+   ASSERT(size >= 1);
+   ASSERT(size <= 4);
+   size = 4; /* XXX temporary */
    /* check if we already have this constant */
-   if (_mesa_lookup_parameter_constant(paramList, values, 4, &pos, &swizzle)) {
+   if (_mesa_lookup_parameter_constant(paramList, values,
+                                       size, &pos, &swizzle)) {
       return pos;
    }
-   return add_parameter(paramList, NULL, values, PROGRAM_CONSTANT);
+   return add_parameter(paramList, NULL, values, size, PROGRAM_CONSTANT);
 }
+
+
+GLint
+_mesa_add_uniform(struct gl_program_parameter_list *paramList,
+                  const char *name, GLuint size)
+{
+   GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
+   if (i >= 0 && paramList->Parameters[i].Type == PROGRAM_UNIFORM) {
+      /* already in list */
+      return i;
+   }
+   else {
+      assert(size == 4);
+      i = add_parameter(paramList, name, NULL, size, PROGRAM_UNIFORM);
+      return i;
+   }
+}
+
+
+GLint
+_mesa_add_varying(struct gl_program_parameter_list *paramList,
+                  const char *name, GLuint size)
+{
+   GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
+   if (i >= 0 && paramList->Parameters[i].Type == PROGRAM_VARYING) {
+      /* already in list */
+      return i;
+   }
+   else {
+      assert(size == 4);
+      i = add_parameter(paramList, name, NULL, size, PROGRAM_VARYING);
+      return i;
+   }
+}
+
+
+
+
+#if 0 /* not used yet */
+/**
+ * Returns the number of 4-component registers needed to store a piece
+ * of GL state.  For matrices this may be as many as 4 registers,
+ * everything else needs
+ * just 1 register.
+ */
+static GLuint
+sizeof_state_reference(const GLint *stateTokens)
+{
+   if (stateTokens[0] == STATE_MATRIX) {
+      GLuint rows = stateTokens[4] - stateTokens[3] + 1;
+      assert(rows >= 1);
+      assert(rows <= 4);
+      return rows;
+   }
+   else {
+      return 1;
+   }
+}
+#endif
 
 
 /**
@@ -492,18 +565,34 @@ GLint
 _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
                           const GLint *stateTokens)
 {
-   /* XXX we should probably search the current parameter list to see if
-    * the new state reference is already present.
-    */
+   const GLuint size = 4; /* XXX fix */
+   const char *name;
    GLint index;
-   const char *name = make_state_string(stateTokens);
 
-   index = add_parameter(paramList, name, NULL, PROGRAM_STATE_VAR);
+   /* Check if the state reference is already in the list */
+   for (index = 0; index < paramList->NumParameters; index++) {
+      GLuint i, match = 0;
+      for (i = 0; i < 6; i++) {
+         if (paramList->Parameters[index].StateIndexes[i] == stateTokens[i]) {
+            match++;
+         }
+         else {
+            break;
+         }
+      }
+      if (match == 6) {
+         /* this state reference is already in the parameter list */
+         return index;
+      }
+   }
+
+   name = make_state_string(stateTokens);
+   index = add_parameter(paramList, name, NULL, size, PROGRAM_STATE_VAR);
    if (index >= 0) {
       GLuint i;
       for (i = 0; i < 6; i++) {
          paramList->Parameters[index].StateIndexes[i]
-            = (enum state_index) stateTokens[i];
+            = (gl_state_index) stateTokens[i];
       }
       paramList->StateFlags |= make_state_flags(stateTokens);
    }
@@ -523,29 +612,11 @@ GLfloat *
 _mesa_lookup_parameter_value(const struct gl_program_parameter_list *paramList,
                              GLsizei nameLen, const char *name)
 {
-   GLuint i;
-
-   if (!paramList)
+   GLuint i = _mesa_lookup_parameter_index(paramList, nameLen, name);
+   if (i < 0)
       return NULL;
-
-   if (nameLen == -1) {
-      /* name is null-terminated */
-      for (i = 0; i < paramList->NumParameters; i++) {
-         if (paramList->Parameters[i].Name &&
-	     _mesa_strcmp(paramList->Parameters[i].Name, name) == 0)
-            return paramList->ParameterValues[i];
-      }
-   }
-   else {
-      /* name is not null-terminated, use nameLen */
-      for (i = 0; i < paramList->NumParameters; i++) {
-         if (paramList->Parameters[i].Name &&
-	     _mesa_strncmp(paramList->Parameters[i].Name, name, nameLen) == 0
-             && _mesa_strlen(paramList->Parameters[i].Name) == (size_t)nameLen)
-            return paramList->ParameterValues[i];
-      }
-   }
-   return NULL;
+   else
+      return paramList->ParameterValues[i];
 }
 
 
@@ -601,7 +672,7 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
 GLboolean
 _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *paramList,
                                 const GLfloat v[], GLsizei vSize,
-                                GLuint *posOut, GLuint *swizzleOut)
+                                GLint *posOut, GLuint *swizzleOut)
 {
    GLuint i;
 
@@ -625,6 +696,8 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *paramLis
                if (paramList->ParameterValues[i][shift + j] == v[j]) {
                   matched++;
                   swizzle[j] = shift + j;
+                  ASSERT(swizzle[j] >= SWIZZLE_X);
+                  ASSERT(swizzle[j] <= SWIZZLE_W);
                }
             }
             if (matched == vSize) {
@@ -638,6 +711,7 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *paramLis
       }
    }
 
+   *posOut = -1;
    return GL_FALSE;
 }
 
@@ -650,7 +724,7 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *paramLis
  * The program parser will produce the state[] values.
  */
 static void
-_mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
+_mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
                   GLfloat *value)
 {
    switch (state[0]) {
@@ -876,16 +950,16 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
       {
          /* state[1] = modelview, projection, texture, etc. */
          /* state[2] = which texture matrix or program matrix */
-         /* state[3] = first column to fetch */
-         /* state[4] = last column to fetch */
+         /* state[3] = first row to fetch */
+         /* state[4] = last row to fetch */
          /* state[5] = transpose, inverse or invtrans */
 
          const GLmatrix *matrix;
-         const enum state_index mat = state[1];
+         const gl_state_index mat = state[1];
          const GLuint index = (GLuint) state[2];
-         const GLuint first = (GLuint) state[3];
-         const GLuint last = (GLuint) state[4];
-         const enum state_index modifier = state[5];
+         const GLuint firstRow = (GLuint) state[3];
+         const GLuint lastRow = (GLuint) state[4];
+         const gl_state_index modifier = state[5];
          const GLfloat *m;
          GLuint row, i;
          if (mat == STATE_MODELVIEW) {
@@ -920,7 +994,7 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
          }
          if (modifier == STATE_MATRIX_TRANSPOSE ||
              modifier == STATE_MATRIX_INVTRANS) {
-            for (i = 0, row = first; row <= last; row++) {
+            for (i = 0, row = firstRow; row <= lastRow; row++) {
                value[i++] = m[row * 4 + 0];
                value[i++] = m[row * 4 + 1];
                value[i++] = m[row * 4 + 2];
@@ -928,7 +1002,7 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
             }
          }
          else {
-            for (i = 0, row = first; row <= last; row++) {
+            for (i = 0, row = firstRow; row <= lastRow; row++) {
                value[i++] = m[row + 0];
                value[i++] = m[row + 4];
                value[i++] = m[row + 8];
@@ -1101,7 +1175,7 @@ append(char *dst, const char *src)
 
 
 static void
-append_token(char *dst, enum state_index k)
+append_token(char *dst, gl_state_index k)
 {
    switch (k) {
    case STATE_MATERIAL:
@@ -1268,17 +1342,17 @@ make_state_string(const GLint state[6])
    char tmp[30];
 
    append(str, "state.");
-   append_token(str, (enum state_index) state[0]);
+   append_token(str, (gl_state_index) state[0]);
 
    switch (state[0]) {
    case STATE_MATERIAL:
       append_face(str, state[1]);
-      append_token(str, (enum state_index) state[2]);
+      append_token(str, (gl_state_index) state[2]);
       break;
    case STATE_LIGHT:
       append(str, "light");
       append_index(str, state[1]); /* light number [i]. */
-      append_token(str, (enum state_index) state[2]); /* coefficients */
+      append_token(str, (gl_state_index) state[2]); /* coefficients */
       break;
    case STATE_LIGHTMODEL_AMBIENT:
       append(str, "lightmodel.ambient");
@@ -1294,11 +1368,11 @@ make_state_string(const GLint state[6])
    case STATE_LIGHTPROD:
       append_index(str, state[1]); /* light number [i]. */
       append_face(str, state[2]);
-      append_token(str, (enum state_index) state[3]);
+      append_token(str, (gl_state_index) state[3]);
       break;
    case STATE_TEXGEN:
       append_index(str, state[1]); /* tex unit [i] */
-      append_token(str, (enum state_index) state[2]); /* plane coef */
+      append_token(str, (gl_state_index) state[2]); /* plane coef */
       break;
    case STATE_TEXENV_COLOR:
       append_index(str, state[1]); /* tex unit [i] */
@@ -1318,23 +1392,23 @@ make_state_string(const GLint state[6])
       {
          /* state[1] = modelview, projection, texture, etc. */
          /* state[2] = which texture matrix or program matrix */
-         /* state[3] = first column to fetch */
-         /* state[4] = last column to fetch */
+         /* state[3] = first row to fetch */
+         /* state[4] = last row to fetch */
          /* state[5] = transpose, inverse or invtrans */
-         const enum state_index mat = (enum state_index) state[1];
+         const gl_state_index mat = (gl_state_index) state[1];
          const GLuint index = (GLuint) state[2];
-         const GLuint first = (GLuint) state[3];
-         const GLuint last = (GLuint) state[4];
-         const enum state_index modifier = (enum state_index) state[5];
+         const GLuint firstRow = (GLuint) state[3];
+         const GLuint lastRow = (GLuint) state[4];
+         const gl_state_index modifier = (gl_state_index) state[5];
          append_token(str, mat);
          if (index)
             append_index(str, index);
          if (modifier)
             append_token(str, modifier);
-         if (first == last)
-            _mesa_sprintf(tmp, ".row[%d]", first);
+         if (firstRow == lastRow)
+            _mesa_sprintf(tmp, ".row[%d]", firstRow);
          else
-            _mesa_sprintf(tmp, ".row[%d..%d]", first, last);
+            _mesa_sprintf(tmp, ".row[%d..%d]", firstRow, lastRow);
          append(str, tmp);
       }
       break;
@@ -1344,7 +1418,7 @@ make_state_string(const GLint state[6])
    case STATE_VERTEX_PROGRAM:
       /* state[1] = {STATE_ENV, STATE_LOCAL} */
       /* state[2] = parameter index          */
-      append_token(str, (enum state_index) state[1]);
+      append_token(str, (gl_state_index) state[1]);
       append_index(str, state[2]);
       break;
    case STATE_INTERNAL:
@@ -1456,7 +1530,7 @@ _mesa_realloc_instructions(struct prog_instruction *oldInst,
  */
 struct instruction_info
 {
-   enum prog_opcode Opcode;
+   gl_inst_opcode Opcode;
    const char *Name;
    GLuint NumSrcRegs;
 };
@@ -1466,14 +1540,15 @@ struct instruction_info
  * \note Opcode should equal array index!
  */
 static const struct instruction_info InstInfo[MAX_OPCODE] = {
+   { OPCODE_NOP,    "NOP",   0 },
    { OPCODE_ABS,    "ABS",   1 },
    { OPCODE_ADD,    "ADD",   2 },
    { OPCODE_ARA,    "ARA",   1 },
    { OPCODE_ARL,    "ARL",   1 },
    { OPCODE_ARL_NV, "ARL",   1 },
    { OPCODE_ARR,    "ARL",   1 },
-   { OPCODE_BRA,    "BRA",   1 },
-   { OPCODE_CAL,    "CAL",   1 },
+   { OPCODE_BRA,    "BRA",   0 },
+   { OPCODE_CAL,    "CAL",   0 },
    { OPCODE_CMP,    "CMP",   3 },
    { OPCODE_COS,    "COS",   1 },
    { OPCODE_DDX,    "DDX",   1 },
@@ -1508,7 +1583,7 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_PUSHA,  "PUSHA", 0 },
    { OPCODE_RCC,    "RCC",   1 },
    { OPCODE_RCP,    "RCP",   1 },
-   { OPCODE_RET,    "RET",   1 },
+   { OPCODE_RET,    "RET",   0 },
    { OPCODE_RFL,    "RFL",   1 },
    { OPCODE_RSQ,    "RSQ",   1 },
    { OPCODE_SCS,    "SCS",   1 },
@@ -1543,9 +1618,10 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
  * Return the number of src registers for the given instruction/opcode.
  */
 GLuint
-_mesa_num_inst_src_regs(enum prog_opcode opcode)
+_mesa_num_inst_src_regs(gl_inst_opcode opcode)
 {
    ASSERT(opcode == InstInfo[opcode].Opcode);
+   ASSERT(OPCODE_XPD == InstInfo[OPCODE_XPD].Opcode);
    return InstInfo[opcode].NumSrcRegs;
 }
 
@@ -1554,7 +1630,7 @@ _mesa_num_inst_src_regs(enum prog_opcode opcode)
  * Return string name for given program opcode.
  */
 const char *
-_mesa_opcode_string(enum prog_opcode opcode)
+_mesa_opcode_string(gl_inst_opcode opcode)
 {
    ASSERT(opcode < MAX_OPCODE);
    return InstInfo[opcode].Name;
@@ -1583,12 +1659,16 @@ program_file_string(enum register_file f)
       return "NAMED";
    case PROGRAM_CONSTANT:
       return "CONST";
+   case PROGRAM_UNIFORM:
+      return "UNIFORM";
+   case PROGRAM_VARYING:
+      return "VARYING";
    case PROGRAM_WRITE_ONLY:
       return "WRITE_ONLY";
    case PROGRAM_ADDRESS:
       return "ADDR";
    default:
-      return "!unkown!";
+      return "Unknown program file!";
    }
 }
 
@@ -1685,6 +1765,16 @@ print_src_reg(const struct prog_src_register *srcReg)
                                srcReg->NegateBase, GL_FALSE));
 }
 
+static void
+print_comment(const struct prog_instruction *inst)
+{
+   if (inst->Comment)
+      _mesa_printf(";  # %s\n", inst->Comment);
+   else
+      _mesa_printf(";\n");
+}
+
+
 void
 _mesa_print_alu_instruction(const struct prog_instruction *inst,
 			    const char *opcode_string, 
@@ -1704,6 +1794,9 @@ _mesa_print_alu_instruction(const struct prog_instruction *inst,
 		   inst->DstReg.Index,
 		   writemask_string(inst->DstReg.WriteMask));
    }
+   else {
+      _mesa_printf(" ???");
+   }
 
    if (numRegs > 0)
       _mesa_printf(", ");
@@ -1714,7 +1807,10 @@ _mesa_print_alu_instruction(const struct prog_instruction *inst,
 	 _mesa_printf(", ");
    }
 
-   _mesa_printf(";\n");
+   if (inst->Comment)
+      _mesa_printf("  # %s", inst->Comment);
+
+   print_comment(inst);
 }
 
 
@@ -1735,18 +1831,21 @@ _mesa_print_instruction(const struct prog_instruction *inst)
                       swizzle_string(inst->SrcReg[0].Swizzle,
                                      inst->SrcReg[0].NegateBase, GL_FALSE));
       }
-      _mesa_printf(";\n");
+      if (inst->Comment)
+         _mesa_printf("  # %s", inst->Comment);
+      print_comment(inst);
       break;
    case OPCODE_SWZ:
       _mesa_printf("SWZ");
       if (inst->SaturateMode == SATURATE_ZERO_ONE)
          _mesa_printf("_SAT");
       print_dst_reg(&inst->DstReg);
-      _mesa_printf("%s[%d], %s;\n",
+      _mesa_printf("%s[%d], %s",
                    program_file_string((enum register_file) inst->SrcReg[0].File),
                    inst->SrcReg[0].Index,
                    swizzle_string(inst->SrcReg[0].Swizzle,
                                   inst->SrcReg[0].NegateBase, GL_TRUE));
+      print_comment(inst);
       break;
    case OPCODE_TEX:
    case OPCODE_TXP:
@@ -1768,17 +1867,26 @@ _mesa_print_instruction(const struct prog_instruction *inst)
       default:
          ;
       }
-      _mesa_printf("\n");
+      print_comment(inst);
       break;
    case OPCODE_ARL:
       _mesa_printf("ARL addr.x, ");
       print_src_reg(&inst->SrcReg[0]);
-      _mesa_printf(";\n");
+      print_comment(inst);
+      break;
+   case OPCODE_BRA:
+      _mesa_printf("BRA %u", inst->BranchTarget);
+      print_comment(inst);
+      break;
+   case OPCODE_CAL:
+      _mesa_printf("CAL %u", inst->BranchTarget);
+      print_comment(inst);
       break;
    case OPCODE_END:
-      _mesa_printf("END;\n");
+      _mesa_printf("END");
+      print_comment(inst);
       break;
-   /* XXX may need for other special-case instructions */
+   /* XXX may need other special-case instructions */
    default:
       /* typical alu instruction */
       _mesa_print_alu_instruction(inst,
@@ -1820,7 +1928,7 @@ _mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog)
 	
    _mesa_load_state_parameters(ctx, prog->Parameters);
 			
-#if 0	
+#if 0
    _mesa_printf("Local Params:\n");
    for (i = 0; i < MAX_PROGRAM_LOCAL_PARAMS; i++){
       const GLfloat *p = prog->LocalParams[i];
@@ -1831,8 +1939,10 @@ _mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog)
    for (i = 0; i < prog->Parameters->NumParameters; i++){
       struct gl_program_parameter *param = prog->Parameters->Parameters + i;
       const GLfloat *v = prog->Parameters->ParameterValues[i];
-      _mesa_printf("param[%d] %s = {%.3f, %.3f, %.3f, %.3f};\n",
-                   i, param->Name, v[0], v[1], v[2], v[3]);
+      _mesa_printf("param[%d] %s %s = {%.3f, %.3f, %.3f, %.3f};\n",
+                   i,
+                   program_file_string(prog->Parameters->Parameters[i].Type),
+                   param->Name, v[0], v[1], v[2], v[3]);
    }
 }
 
