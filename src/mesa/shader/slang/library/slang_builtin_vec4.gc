@@ -181,10 +181,10 @@ float dot (vec3 v, vec3 u) {
     return v4.x;
 }
 
-float dot (vec4 v, vec4 u) {
-    __asm vec4_dot v, u;
-    return v.x;
-}
+//float dot (vec4 v, vec4 u) {
+//    __asm vec4_dot v, u;
+//    return v.x;
+//}
 
 
 float length (vec3 v) {
@@ -199,14 +199,10 @@ float length (vec4 v) {
 }
 
 
-vec3 normalize (vec3 v) {
-    vec4 u = vec4 (v, 0.0);
-    vec4 w = u;
-    __asm vec4_dot      u, u;
-    float l = sqrt (u.x);
-    __asm float_to_vec4 u, l;
-    __asm vec4_divide   w, u;
-    return w.xyz;
+vec3 normalize (vec3 v)
+{
+   float s = inversesqrt(dot(v,v));  
+   __retVal = v * s;
 }
 
 vec4 normalize (vec4 v) {

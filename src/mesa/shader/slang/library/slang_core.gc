@@ -23,68 +23,92 @@
  */
 
 //
-// This file defines nearly all constructors and operators for built-in data types, using
-// extended language syntax. In general, compiler treats constructors and operators as
-// ordinary functions with some exceptions. For example, the language does not allow
-// functions to be called in constant expressions - here the exception is made to allow it.
+// This file defines nearly all constructors and operators for built-in data
+// types, using extended language syntax. In general, compiler treats
+// constructors and operators as ordinary functions with some exceptions.
+// For example, the language does not allow functions to be called in
+// constant expressions - here the exception is made to allow it.
 //
-// Each implementation provides its own version of this file. Each implementation can define
-// the required set of operators and constructors in its own fashion.
+// Each implementation provides its own version of this file. Each
+// implementation can define the required set of operators and constructors
+// in its own fashion.
 //
-// The extended language syntax is only present when compiling this file. It is implicitly
-// included at the very beginning of the compiled shader, so no built-in functions can be
-// used.
+// The extended language syntax is only present when compiling this file.
+// It is implicitly included at the very beginning of the compiled shader,
+// so no built-in functions can be used.
 //
-// To communicate with the implementation, a special extended "__asm" keyword is used, followed
-// by an instruction name (any valid identifier), a destination variable identifier and a
-// a list of zero or more source variable identifiers. A variable identifier is a variable name
-// declared earlier in the code (as a function parameter, local or global variable).
-// An instruction name designates an instruction that must be exported by the implementation.
-// Each instruction receives data from source variable identifiers and returns data in the
-// destination variable identifier.
+// To communicate with the implementation, a special extended "__asm" keyword
+// is used, followed by an instruction name (any valid identifier), a
+// destination variable identifier and a list of zero or more source
+// variable identifiers.
 //
-// It is up to the implementation how to define a particular operator or constructor. If it is
-// expected to being used rarely, it can be defined in terms of other operators and constructors,
+// A variable identifier is a variable name declared earlier in the code
+// (as a function parameter, local or global variable).
+//
+// An instruction name designates an instruction that must be exported
+// by the implementation.  Each instruction receives data from source
+// variable identifiers and returns data in the destination variable
+// identifier.
+//
+// It is up to the implementation how to define a particular operator
+// or constructor. If it is expected to being used rarely, it can be
+// defined in terms of other operators and constructors,
 // for example:
 //
 // ivec2 __operator + (const ivec2 x, const ivec2 y) {
 //    return ivec2 (x[0] + y[0], x[1] + y[1]);
 // }
 //
-// If a particular operator or constructor is expected to be used very often or is an atomic
-// operation (that is, an operation that cannot be expressed in terms of other operations or
-// would create a dependency cycle) it must be defined using one or more __asm constructs.
+// If a particular operator or constructor is expected to be used very
+// often or is an atomic operation (that is, an operation that cannot be
+// expressed in terms of other operations or would create a dependency
+// cycle) it must be defined using one or more __asm constructs.
 //
-// Each implementation must define constructors for all scalar types (bool, float, int).
-// There are 9 scalar-to-scalar constructors (including identity constructors). However,
-// since the language introduces special constructors (like matrix constructor with a single
+// Each implementation must define constructors for all scalar types
+// (bool, float, int).  There are 9 scalar-to-scalar constructors
+// (including identity constructors). However, since the language
+// introduces special constructors (like matrix constructor with a single
 // scalar value), implementations must also implement these cases.
 // The compiler provides the following algorithm when resolving a constructor:
 // - try to find a constructor with a prototype matching ours,
-// - if no constructor is found and this is a scalar-to-scalar constructor, raise an error,
+// - if no constructor is found and this is a scalar-to-scalar constructor,
+//   raise an error,
 // - if a constructor is found, execute it and return,
-// - count the size of the constructor parameter list - if it is less than the size of
-//   our constructor's type, raise an error,
-// - for each parameter in the list do a recursive constructor matching for appropriate
-//   scalar fields in the constructed variable,
+// - count the size of the constructor parameter list - if it is less than
+//   the size of our constructor's type, raise an error,
+// - for each parameter in the list do a recursive constructor matching for
+//   appropriate scalar fields in the constructed variable,
 //
-// Each implementation must also define a set of operators that deal with built-in data types.
+// Each implementation must also define a set of operators that deal with
+// built-in data types.
 // There are four kinds of operators:
-// 1) Operators that are implemented only by the compiler: "()" (function call), "," (sequence)
-//    and "?:" (selection).
-// 2) Operators that are implemented by the compiler by expressing it in terms of other operators:
+// 1) Operators that are implemented only by the compiler: "()" (function
+//    call), "," (sequence) and "?:" (selection).
+// 2) Operators that are implemented by the compiler by expressing it in
+//    terms of other operators:
 //    - "." (field selection) - translated to subscript access,
-//    - "&&" (logical and) - translated to "<left_expr> ? <right_expr> : false",
+//    - "&&" (logical and) - translated to "<left_expr> ? <right_expr> :
+//      false",
 //    - "||" (logical or) - translated to "<left_expr> ? true : <right_expr>",
-// 3) Operators that can be defined by the implementation and if the required prototype is not
-//    found, standard behaviour is used:
-//    - "==", "!=", "=" (equality, assignment) - compare or assign matching fields one-by-one;
-//      note that at least operators for scalar data types must be defined by the implementation
-//      to get it work,
-// 4) All other operators not mentioned above. If no required prototype is found, an error is
-//    raised. An implementation must follow the language specification to provide all valid
-//    operator prototypes.
+// 3) Operators that can be defined by the implementation and if the required
+//    prototype is not found, standard behaviour is used:
+//    - "==", "!=", "=" (equality, assignment) - compare or assign
+//      matching fields one-by-one;
+//      note that at least operators for scalar data types must be defined
+//      by the implementation to get it work,
+// 4) All other operators not mentioned above. If no required prototype is
+//    found, an error is raised. An implementation must follow the language
+//    specification to provide all valid operator prototypes.
 //
+
+//bp:
+vec4 vec4(const float a1, const float b1, const float c1, const float d1)
+{
+   __retVal.x = a1;
+   __retVal.y = b1;
+   __retVal.z = c1;
+   __retVal.w = d1;
+}
 
 int __constructor (const float f) {
     int i;
@@ -154,6 +178,7 @@ vec3 __constructor (const bool b) {
     return vec3 (b ? 1.0 : 0.0);
 }
 
+//bp: TODO replace with asm == f.xxxx
 vec4 __constructor (const float f) {
     return vec4 (f, f, f, f);
 }
@@ -307,9 +332,11 @@ void __operator /= (inout float a, const float b) {
 }
 
 float __operator + (const float a, const float b) {
-    float c;
-    __asm float_add c, a, b;
-    return c;
+//    float c;
+//    __asm float_add c, a, b;
+//    return c;
+//bp:
+   __asm float_add __retVal, a, b;
 }
 
 void __operator += (inout int a, const int b) {
@@ -330,9 +357,11 @@ void __operator -= (inout int a, const int b) {
 }
 
 float __operator * (const float a, const float b) {
-    float c;
-    __asm float_multiply c, a, b;
-    return c;
+//    float c;
+//    __asm float_multiply c, a, b;
+//    return c;
+//bp:
+    __asm float_multiply __retVal, a, b;
 }
 
 void __operator *= (inout int a, const int b) {
@@ -340,9 +369,11 @@ void __operator *= (inout int a, const int b) {
 }
 
 float __operator / (const float a, const float b) {
-    float c;
-    __asm float_divide c, a, b;
-    return c;
+//    float c;
+//    __asm float_divide c, a, b;
+//    return c;
+//bp:
+   __asm float_divide __retVal, a, b;
 }
 
 void __operator /= (inout int a, const int b) {
@@ -535,12 +566,22 @@ void __operator -= (inout mat3 m, const mat3 n) {
     m[2] -= n[2];
 }
 
-vec3 __operator * (const mat3 m, const vec3 v) {
-    return vec3 (
-        v.x * m[0].x + v.y * m[1].x + v.z * m[2].x,
-        v.x * m[0].y + v.y * m[1].y + v.z * m[2].y,
-        v.x * m[0].z + v.y * m[1].z + v.z * m[2].z
-    );
+//bp:
+vec3 __operator * (const mat3 m, const vec3 v)
+{
+   vec3 r1, r2, r3;
+   r1.x = m[0].x;
+   r1.y = m[1].x;
+   r1.z = m[2].x;
+   r2.x = m[0].y;
+   r2.y = m[1].y;
+   r2.z = m[2].y;
+   r3.x = m[0].z;
+   r3.y = m[1].z;
+   r3.z = m[2].z;
+   __asm vec3_dot __retVal.x, r1, v;
+   __asm vec3_dot __retVal.y, r2, v;
+   __asm vec3_dot __retVal.z, r3, v;
 }
 
 mat3 __operator * (const mat3 m, const mat3 n) {
@@ -571,13 +612,57 @@ void __operator -= (inout mat4 m, const mat4 n) {
     m[3] -= n[3];
 }
 
-vec4 __operator * (const mat4 m, const vec4 v) {
-    return vec4 (
-        v.x * m[0].x + v.y * m[1].x + v.z * m[2].x + v.w * m[3].x,
-        v.x * m[0].y + v.y * m[1].y + v.z * m[2].y + v.w * m[3].y,
-        v.x * m[0].z + v.y * m[1].z + v.z * m[2].z + v.w * m[3].z,
-        v.x * m[0].w + v.y * m[1].w + v.z * m[2].w + v.w * m[3].w
-    );
+
+
+
+//// dot  (formerly in slang_common_builtin.gc)
+
+float dot(const float a, const float b)
+{
+   return a * b;
+}
+
+float dot(const vec2 a, const vec2 b)
+{
+   return a.x * b.x + a.y * b.y;
+}
+
+float dot(const vec3 a, const vec3 b)
+{
+    __asm vec3_dot __retVal, a, b;
+}
+
+float dot(const vec4 a, const vec4 b)
+{
+    __asm vec4_dot __retVal, a, b;
+}
+
+
+
+
+vec4 __operator * (const mat4 m, const vec4 v)
+{
+   vec4 r1, r2, r3, r4;
+   r1.x = m[0].x;
+   r1.y = m[1].x;
+   r1.z = m[2].x;
+   r1.w = m[3].x;
+   r2.x = m[0].y;
+   r2.y = m[1].y;
+   r2.z = m[2].y;
+   r2.w = m[3].y;
+   r3.x = m[0].z;
+   r3.y = m[1].z;
+   r3.z = m[2].z;
+   r3.w = m[3].z;
+   r4.x = m[0].w;
+   r4.y = m[1].w;
+   r4.z = m[2].w;
+   r4.w = m[3].w;
+   __asm vec4_dot __retVal.x, r1, v;
+   __asm vec4_dot __retVal.y, r2, v;
+   __asm vec4_dot __retVal.z, r3, v;
+   __asm vec4_dot __retVal.w, r4, v;
 }
 
 mat4 __operator * (const mat4 m, const mat4 n) {
@@ -768,6 +853,11 @@ vec4 __operator * (const vec4 v, const mat4 m) {
         v.x * m[1].x + v.y * m[1].y + v.z * m[1].z + v.w * m[1].w,
         v.x * m[2].x + v.y * m[2].y + v.z * m[2].z + v.w * m[2].w,
         v.x * m[3].x + v.y * m[3].y + v.z * m[3].z + v.w * m[3].w
+//bp:
+//          dot(v, m[0]),
+//          dot(v, m[1]),
+//          dot(v, m[2]),
+//          dot(v, m[3])
     );
 }
 
@@ -776,10 +866,12 @@ void __operator *= (inout vec4 v, const mat4 m) {
 }
 
 float __operator - (const float a, const float b) {
-    float c;
-    __asm float_negate c, b;
-    __asm float_add    c, a, c;
-    return c;
+//    float c;
+//    __asm float_negate c, b;
+//    __asm float_add    c, a, c;
+//    return c;
+//bp:
+   __asm float_subtract __retVal, a, b;
 }
 
 int __operator + (const int a, const int b) {
@@ -855,8 +947,10 @@ vec3 __operator / (const vec3 v, const vec3 u) {
     return vec3 (v.x / u.x, v.y / u.y, v.z / u.z);
 }
 
-vec4 __operator + (const vec4 v, const vec4 u) {
-    return vec4 (v.x + u.x, v.y + u.y, v.z + u.z, v.w + u.w);
+vec4 __operator + (const vec4 vadd, const vec4 uadd) {
+//    return vec4 (v.x + u.x, v.y + u.y, v.z + u.z, v.w + u.w);
+//bp:
+   __asm vec4_add __retVal, vadd, uadd;
 }
 
 vec4 __operator - (const vec4 v, const vec4 u) {
@@ -864,7 +958,10 @@ vec4 __operator - (const vec4 v, const vec4 u) {
 }
 
 vec4 __operator * (const vec4 v, const vec4 u) {
-    return vec4 (v.x * u.x, v.y * u.y, v.z * u.z, v.w * u.w);
+//    return vec4 (v.x * u.x, v.y * u.y, v.z * u.z, v.w * u.w);
+//    return v;
+//bp:
+    __asm vec4_multiply __retVal, v, u;
 }
 
 vec4 __operator / (const vec4 v, const vec4 u) {
@@ -1007,8 +1104,10 @@ vec3 __operator * (const float a, const vec3 u) {
     return vec3 (a * u.x, a * u.y, a * u.z);
 }
 
-vec3 __operator * (const vec3 v, const float b) {
-    return vec3 (v.x * b, v.y * b, v.z * b);
+//bp:
+vec3 __operator * (const vec3 v, const float b)
+{
+   __retVal.xyz = v.xyz * b.xxx;
 }
 
 vec3 __operator / (const float a, const vec3 u) {
@@ -1039,8 +1138,10 @@ vec4 __operator * (const float a, const vec4 u) {
     return vec4 (a * u.x, a * u.y, a * u.z, a * u.w);
 }
 
-vec4 __operator * (const vec4 v, const float b) {
-    return vec4 (v.x * b, v.y * b, v.z * b, v.w * b);
+//bp:
+vec4 __operator * (const vec4 v, const float b)
+{
+    __asm vec4_multiply __retVal.xyzw, v.xyzw, b.xxxx;
 }
 
 vec4 __operator / (const float a, const vec4 u) {
