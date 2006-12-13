@@ -66,7 +66,7 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
    intelFlush( &intel->ctx );
 
 
-   bmFinishFence(intel, intel->last_swap_fence);
+   bmFinishFenceLock(intel, intel->last_swap_fence);
 
    /* The LOCK_HARDWARE is required for the cliprects.  Buffer offsets
     * should work regardless.
@@ -155,7 +155,7 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
 
    intel_batchbuffer_flush( intel->batch );
    intel->second_last_swap_fence = intel->last_swap_fence;
-   intel->last_swap_fence = bmSetFence( intel );
+   intel->last_swap_fence = bmSetFenceLock( intel );
    UNLOCK_HARDWARE( intel );
 
    if (!rect)
