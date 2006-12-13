@@ -86,7 +86,7 @@ _tnl_CreateContext( GLcontext *ctx )
    _tnl_array_init( ctx );
    _tnl_vtx_init( ctx );
 
-   if (ctx->_MaintainTnlProgram) {
+   if (ctx->VertexProgram._MaintainTnlProgram) {
       _tnl_ProgramCacheInit( ctx );
       _tnl_install_pipeline( ctx, _tnl_vp_pipeline );
    } else {
@@ -136,7 +136,7 @@ _tnl_DestroyContext( GLcontext *ctx )
    _tnl_destroy_pipeline( ctx );
    _ae_destroy_context( ctx );
 
-   if (ctx->_MaintainTnlProgram)
+   if (ctx->VertexProgram._MaintainTnlProgram)
       _tnl_ProgramCacheDestroy( ctx );
 
    FREE(tnl);
@@ -183,7 +183,7 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
    }
 
    if (ctx->Fog.Enabled ||
-       (ctx->FragmentProgram._Active &&
+       (ctx->FragmentProgram._Current &&
         (ctx->FragmentProgram._Current->FogOption != GL_NONE ||
          ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_FOGC)))
       RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_FOG );
@@ -199,8 +199,13 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
        (ctx->VertexProgram._Enabled && ctx->VertexProgram.PointSizeEnabled))
       RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POINTSIZE );
 
+#if NEW_SLANG
+   RENDERINPUTS_SET_RANGE( tnl->render_inputs_bitset,
+                           _TNL_FIRST_GENERIC, _TNL_LAST_GENERIC );
+#else
    if (ctx->ShaderObjects._VertexShaderPresent || ctx->ShaderObjects._FragmentShaderPresent)
       RENDERINPUTS_SET_RANGE( tnl->render_inputs_bitset, _TNL_FIRST_GENERIC, _TNL_LAST_GENERIC );
+#endif
 }
 
 

@@ -382,11 +382,14 @@ static struct ureg register_const4f( struct tnl_program *p,
 {
    GLfloat values[4];
    GLint idx;
+   GLuint swizzle;
    values[0] = s0;
    values[1] = s1;
    values[2] = s2;
    values[3] = s3;
-   idx = _mesa_add_unnamed_constant( p->program->Base.Parameters, values, 4 );
+   idx = _mesa_add_unnamed_constant( p->program->Base.Parameters, values, 4,
+                                     &swizzle );
+   ASSERT(swizzle == SWIZZLE_NOOP);
    return make_ureg(PROGRAM_STATE_VAR, idx);
 }
 
@@ -1495,7 +1498,7 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
    GLuint hash;
    const struct gl_vertex_program *prev = ctx->VertexProgram._Current;
 
-   if (ctx->VertexProgram._Enabled == GL_FALSE) { 
+   if (!ctx->VertexProgram._Current) {
       /* Grab all the relevent state and put it in a single structure:
        */
       key = make_state_key(ctx);
@@ -1503,45 +1506,42 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 
       /* Look for an already-prepared program for this state:
        */
-      ctx->_TnlProgram = (struct gl_vertex_program *)
+      ctx->VertexProgram._TnlProgram = (struct gl_vertex_program *)
 	 search_cache( tnl->vp_cache, hash, key, sizeof(*key) );
    
       /* OK, we'll have to build a new one:
        */
-      if (!ctx->_TnlProgram) {
+      if (!ctx->VertexProgram._TnlProgram) {
 	 if (0)
 	    _mesa_printf("Build new TNL program\n");
 	 
-	 ctx->_TnlProgram = (struct gl_vertex_program *)
+	 ctx->VertexProgram._TnlProgram = (struct gl_vertex_program *)
 	    ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0); 
 
-	 create_new_program( key, ctx->_TnlProgram, 
+	 create_new_program( key, ctx->VertexProgram._TnlProgram, 
 			     ctx->Const.VertexProgram.MaxTemps );
 
 	 if (ctx->Driver.ProgramStringNotify)
 	    ctx->Driver.ProgramStringNotify( ctx, GL_VERTEX_PROGRAM_ARB, 
-					     &ctx->_TnlProgram->Base );
+                                       &ctx->VertexProgram._TnlProgram->Base );
 
-	 cache_item(tnl->vp_cache, hash, key, ctx->_TnlProgram );
+	 cache_item(tnl->vp_cache, hash, key, ctx->VertexProgram._TnlProgram );
       }
       else {
 	 FREE(key);
 	 if (0) 
 	    _mesa_printf("Found existing TNL program for key %x\n", hash);
       }
-      ctx->VertexProgram._Current = ctx->_TnlProgram;
-   }
-   else {
-      ctx->VertexProgram._Current = ctx->VertexProgram.Current;
+      ctx->VertexProgram._Current = ctx->VertexProgram._TnlProgram;
    }
 
    /* Tell the driver about the change.  Could define a new target for
     * this?
     */
-   if (ctx->VertexProgram._Current != prev &&
-       ctx->Driver.BindProgram) 
+   if (ctx->VertexProgram._Current != prev && ctx->Driver.BindProgram) {
       ctx->Driver.BindProgram(ctx, GL_VERTEX_PROGRAM_ARB,
                             (struct gl_program *) ctx->VertexProgram._Current);
+   }
 }
 
 void _tnl_ProgramCacheInit( GLcontext *ctx )

@@ -132,7 +132,7 @@ void _tnl_run_pipeline( GLcontext *ctx )
     * (ie const or non-const).
     */
    if (check_input_changes( ctx ) || tnl->pipeline.new_state) {
-      if (ctx->_MaintainTnlProgram)
+      if (ctx->VertexProgram._MaintainTnlProgram)
 	 _tnl_UpdateFixedFunctionProgram( ctx );
 
       for (i = 0; i < tnl->pipeline.nr_stages ; i++) {
@@ -207,9 +207,6 @@ const struct tnl_pipeline_stage *_tnl_default_pipeline[] = {
 #if defined(FEATURE_NV_vertex_program) || defined(FEATURE_ARB_vertex_program)
    &_tnl_arb_vertex_program_stage,
    &_tnl_vertex_program_stage, 
-#endif
-#if FEATURE_ARB_vertex_shader
-   &_tnl_arb_vertex_shader_stage,
 #endif
    &_tnl_render_stage,
    NULL 

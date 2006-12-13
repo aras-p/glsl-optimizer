@@ -39,6 +39,7 @@
 #include "light.h"
 #include "macros.h"
 #include "imports.h"
+#include "program.h"
 #include "simple_list.h"
 #include "mtypes.h"
 #include "program_instruction.h"
@@ -55,7 +56,7 @@
  */
 struct vp_stage_data {
    /** The results of running the vertex program go into these arrays. */
-   GLvector4f attribs[15];
+   GLvector4f attribs[VERT_RESULT_MAX];
 
    GLvector4f ndcCoords;              /**< normalized device coords */
    GLubyte *clipmask;                 /**< clip flags */
@@ -75,16 +76,14 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vp_stage_data *store = VP_STAGE_DATA(stage);
    struct vertex_buffer *VB = &tnl->vb;
-   struct gl_vertex_program *program = ctx->VertexProgram.Current;
+   struct gl_vertex_program *program = ctx->VertexProgram._Current;
    struct vp_machine machine;
    GLuint i;
 
-   if (ctx->ShaderObjects._VertexShaderPresent)
+   if (!program || !program->IsNVProgram)
       return GL_TRUE;
 
-   if (!ctx->VertexProgram._Enabled ||
-       !program->IsNVProgram)
-      return GL_TRUE;
+   _mesa_load_state_parameters(ctx, program->Base.Parameters);
 
    /* load program parameter registers (they're read-only) */
    _mesa_init_vp_per_primitive_registers(ctx);
@@ -140,9 +139,16 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 
       /* copy the output registers into the VB->attribs arrays */
       /* XXX (optimize) could use a conditional and smaller loop limit here */
-      for (attr = 0; attr < 15; attr++) {
+      for (attr = 0; attr < VERT_RESULT_MAX; attr++) {
          COPY_4V(store->attribs[attr].data[i], machine.Outputs[attr]);
       }
+#if 0
+      printf("HPOS: %f %f %f %f\n",
+             machine.Outputs[0][0], 
+             machine.Outputs[0][1], 
+             machine.Outputs[0][2], 
+             machine.Outputs[0][3]);
+#endif
    }
 
    /* Setup the VB pointers so that the next pipeline stages get
@@ -227,8 +233,7 @@ static GLboolean init_vp( GLcontext *ctx,
       return GL_FALSE;
 
    /* Allocate arrays of vertex output values */
-   /* XXX change '15' to a named constant */
-   for (i = 0; i < 15; i++) {
+   for (i = 0; i < VERT_RESULT_MAX; i++) {
       _mesa_vector4f_alloc( &store->attribs[i], 0, size, 32 );
       store->attribs[i].size = 4;
    }

@@ -123,8 +123,7 @@ void _tnl_update_eval( GLcontext *ctx )
     * We do this after the conventional attributes since the spec says that
     * these generic maps have higher priority.
     */
-   if (ctx->VertexProgram._Enabled &&
-       ctx->VertexProgram._Current &&
+   if (ctx->VertexProgram._Current &&
        ctx->VertexProgram._Current->IsNVProgram) {
       for (attr = 0; attr < 16; attr++) {
 	 if (ctx->Eval.Map1Attrib[attr]) 

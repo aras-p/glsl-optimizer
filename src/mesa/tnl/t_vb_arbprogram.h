@@ -56,6 +56,22 @@
 #define REG_TMP0   5
 #define REG_TMP11  16
 #define REG_OUT0   17
+#define REG_OUT23  40
+#define REG_IN0    41
+#define REG_IN31   72
+#define REG_ID     73		/* 0,0,0,1 */
+#define REG_ONES   74		/* 1,1,1,1 */
+#define REG_SWZ    75		/* 1,-1,0,0 */
+#define REG_NEG    76		/* -1,-1,-1,-1 */
+#define REG_LIT    77           /* 1,0,0,1 */
+#define REG_LIT2    78           /* 1,0,0,1 */
+#define REG_SCRATCH 79		/* internal temporary. XXX we can't actually use this because 70 doesn't fit in the 5-bit 'dst' instruction field! */
+#define REG_UNDEF  127		/* special case - never used */
+#define REG_MAX    128
+#define REG_INVALID ~0
+
+
+#if 0
 #define REG_OUT14  31
 #define REG_IN0    32
 #define REG_IN31   63
@@ -69,6 +85,7 @@
 #define REG_UNDEF  127		/* special case - never used */
 #define REG_MAX    128
 #define REG_INVALID ~0
+#endif
 
 /* ARB_vp instructions are broken down into one or more of the
  * following micro-instructions, each representable in a 64 bit packed
@@ -76,16 +93,16 @@
  */
 struct reg {
    GLuint file:2;
-   GLuint idx:7;
+   GLuint idx:8;
 };
 
 
 union instruction {
    struct {
       GLuint opcode:7;
-      GLuint dst:5;
+      GLuint dst:6;
       GLuint file0:2;
-      GLuint idx0:7;
+      GLuint idx0:8;
       GLuint file1:2;
       GLuint idx1:7;
       GLuint pad:2;
@@ -94,18 +111,18 @@ union instruction {
 
    struct {
       GLuint opcode:7;
-      GLuint dst:5;
+      GLuint dst:6;
       GLuint file0:2;
-      GLuint idx0:7;
+      GLuint idx0:8;
       GLuint neg:4;
       GLuint swz:12;		/* xyzw01 */
    } rsw;
 
    struct {
       GLuint opcode:7;
-      GLuint dst:5;
+      GLuint dst:6;
       GLuint file:2;
-      GLuint idx:7;
+      GLuint idx:8;
       GLuint mask:4;
       GLuint pad:7;
       GLuint pad2;
