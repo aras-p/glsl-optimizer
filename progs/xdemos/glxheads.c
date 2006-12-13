@@ -57,7 +57,7 @@ static int NumHeads = 0;
 static void
 Error(const char *display, const char *msg)
 {
-   fprintf(stderr, "Error on display %s - %s\n", display, msg);
+   fprintf(stderr, "Error on display %s - %s\n", XDisplayName(display), msg);
    exit(1);
 }
 
