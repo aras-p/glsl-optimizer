@@ -423,7 +423,21 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
 		      count );
       }
       component[nr++] = &rmesa->tcl.generic[geninput];
-      vfmt0 |=  R200_VTX_W0 | R200_VTX_Z0;
+      vfmt0 |= R200_VTX_W0 | R200_VTX_Z0;
+   }
+
+   if (inputs & VERT_BIT_WEIGHT) {
+      if (!rmesa->tcl.weight.buf)
+	 emit_vector( ctx, 
+		      &rmesa->tcl.weight, 
+		      (char *)VB->AttribPtr[VERT_ATTRIB_WEIGHT]->data,
+		      VB->AttribPtr[VERT_ATTRIB_WEIGHT]->size,
+		      VB->AttribPtr[VERT_ATTRIB_WEIGHT]->stride,
+		      count);
+
+      assert(VB->AttribPtr[VERT_ATTRIB_WEIGHT]->size <= 4);
+      vfmt0 |= VB->AttribPtr[VERT_ATTRIB_WEIGHT]->size << R200_VTX_WEIGHT_COUNT_SHIFT;
+      component[nr++] = &rmesa->tcl.weight;
    }
 
    if (inputs & VERT_BIT_NORMAL) {
@@ -671,6 +685,9 @@ void r200ReleaseArrays( GLcontext *ctx, GLuint newinputs )
 
    if (newinputs & VERT_BIT_POS) 
      r200ReleaseDmaRegion( rmesa, &rmesa->tcl.obj, __FUNCTION__ );
+
+   if (newinputs & VERT_BIT_WEIGHT) 
+     r200ReleaseDmaRegion( rmesa, &rmesa->tcl.weight, __FUNCTION__ );
 
    if (newinputs & VERT_BIT_NORMAL) 
       r200ReleaseDmaRegion( rmesa, &rmesa->tcl.norm, __FUNCTION__ );
