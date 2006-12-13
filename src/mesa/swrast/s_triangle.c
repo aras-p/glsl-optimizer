@@ -883,8 +883,8 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 
 /*
  * This is the big one!
- * Interpolate Z, RGB, Alpha, specular, fog, N sets of texture coordinates, and varying floats.
- * Yup, it's slow.
+ * Interpolate Z, RGB, Alpha, specular, fog, N sets of texture coordinates,
+ * and varying floats.  Yup, it's slow.
  */
 #define NAME multitextured_triangle
 #define INTERP_Z 1
@@ -1073,8 +1073,9 @@ _swrast_choose_triangle( GLcontext *ctx )
          }
       }
 
-      if (ctx->Texture._EnabledCoordUnits || ctx->FragmentProgram._Enabled ||
-          ctx->ATIFragmentShader._Enabled || ctx->ShaderObjects._FragmentShaderPresent) {
+      if (ctx->Texture._EnabledCoordUnits ||
+          ctx->FragmentProgram._Current ||
+          ctx->ATIFragmentShader._Enabled) {
          /* Ugh, we do a _lot_ of tests to pick the best textured tri func */
          const struct gl_texture_object *texObj2D;
          const struct gl_texture_image *texImg;
@@ -1089,9 +1090,8 @@ _swrast_choose_triangle( GLcontext *ctx )
 
          /* First see if we can use an optimized 2-D texture function */
          if (ctx->Texture._EnabledCoordUnits == 0x1
-             && !ctx->FragmentProgram._Enabled
+             && !ctx->FragmentProgram._Current
              && !ctx->ATIFragmentShader._Enabled
-             && !ctx->ShaderObjects._FragmentShaderPresent
              && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
              && texObj2D->WrapS == GL_REPEAT
              && texObj2D->WrapT == GL_REPEAT
@@ -1137,7 +1137,8 @@ _swrast_choose_triangle( GLcontext *ctx )
 	 }
          else {
             /* general case textured triangles */
-            if (ctx->Texture._EnabledCoordUnits > 1) {
+            if (ctx->Texture._EnabledCoordUnits > 1 ||
+                ctx->FragmentProgram._Current) {
                USE(multitextured_triangle);
             }
             else {

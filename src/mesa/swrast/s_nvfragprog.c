@@ -53,9 +53,9 @@
  */
 struct fp_machine
 {
-   GLfloat Temporaries[MAX_NV_FRAGMENT_PROGRAM_TEMPS][4];
-   GLfloat Inputs[MAX_NV_FRAGMENT_PROGRAM_INPUTS][4];
-   GLfloat Outputs[MAX_NV_FRAGMENT_PROGRAM_OUTPUTS][4];
+   GLfloat Temporaries[MAX_PROGRAM_TEMPS][4];
+   GLfloat Inputs[FRAG_ATTRIB_MAX][4];
+   GLfloat Outputs[FRAG_RESULT_MAX][4];
    GLuint CondCodes[4];  /**< COND_* value for x/y/z/w */
 
    GLuint CallStack[MAX_PROGRAM_CALL_DEPTH]; /**< For CAL/RET instructions */
@@ -161,14 +161,14 @@ get_register_pointer( GLcontext *ctx,
 {
    switch (source->File) {
    case PROGRAM_TEMPORARY:
-      ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_TEMPS);
+      ASSERT(source->Index < MAX_PROGRAM_TEMPS);
       return machine->Temporaries[source->Index];
    case PROGRAM_INPUT:
-      ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_INPUTS);
+      ASSERT(source->Index < FRAG_ATTRIB_MAX);
       return machine->Inputs[source->Index];
    case PROGRAM_OUTPUT:
       /* This is only for PRINT */
-      ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_OUTPUTS);
+      ASSERT(source->Index < FRAG_RESULT_MAX);
       return machine->Outputs[source->Index];
    case PROGRAM_LOCAL_PARAM:
       ASSERT(source->Index < MAX_PROGRAM_LOCAL_PARAMS);
@@ -179,6 +179,8 @@ get_register_pointer( GLcontext *ctx,
    case PROGRAM_STATE_VAR:
       /* Fallthrough */
    case PROGRAM_CONSTANT:
+      /* Fallthrough */
+   case PROGRAM_UNIFORM:
       /* Fallthrough */
    case PROGRAM_NAMED_PARAM:
       ASSERT(source->Index < (GLint) program->Base.Parameters->NumParameters);
@@ -539,7 +541,7 @@ init_machine_deriv( GLcontext *ctx,
                     const SWspan *span, char xOrY,
                     struct fp_machine *dMachine )
 {
-   GLuint u;
+   GLuint u, v;
 
    ASSERT(xOrY == 'X' || xOrY == 'Y');
 
@@ -623,6 +625,17 @@ init_machine_deriv( GLcontext *ctx,
             tex[2] += span->texStepY[u][2];
             tex[3] += span->texStepY[u][3];
          }
+      }
+   }
+
+   for (v = 0; v < ctx->Const.MaxVarying; v++) {
+      if (program->Base.InputsRead & (1 << (FRAG_ATTRIB_VAR0 + v))) {
+         GLfloat *var = (GLfloat*) machine->Inputs[FRAG_ATTRIB_VAR0 + v];
+         /* XXXX finish this */
+         var[0] += span->varStepX[v][0];
+         var[1] += span->varStepX[v][1];
+         var[2] += span->varStepX[v][2];
+         var[3] += span->varStepX[v][3];
       }
    }
 
@@ -1531,7 +1544,7 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
               const SWspan *span, GLuint col )
 {
    GLuint inputsRead = program->Base.InputsRead;
-   GLuint u;
+   GLuint u, v;
 
    if (ctx->FragmentProgram.CallbackEnabled)
       inputsRead = ~0;
@@ -1581,6 +1594,18 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
          /*ASSERT(ctx->Texture._EnabledCoordUnits & (1 << u));*/
          COPY_4V(tex, span->array->texcoords[u][col]);
          /*ASSERT(tex[0] != 0 || tex[1] != 0 || tex[2] != 0);*/
+      }
+   }
+   for (v = 0; v < ctx->Const.MaxVarying; v++) {
+      if (inputsRead & (1 << (FRAG_ATTRIB_VAR0 + v))) {
+#if 0
+         printf("Frag Var %d: %f %f %f\n", col,
+                span->array->varying[col][v][0],
+                span->array->varying[col][v][1],
+                span->array->varying[col][v][2]);
+#endif
+         COPY_4V(machine->Inputs[FRAG_ATTRIB_VAR0 + v],
+                 span->array->varying[col][v]);
       }
    }
 

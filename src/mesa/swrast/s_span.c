@@ -130,7 +130,7 @@ _swrast_span_default_texcoords( GLcontext *ctx, SWspan *span )
    GLuint i;
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
       const GLfloat *tc = ctx->Current.RasterTexCoords[i];
-      if (ctx->FragmentProgram._Enabled || ctx->ATIFragmentShader._Enabled) {
+      if (ctx->FragmentProgram._Current || ctx->ATIFragmentShader._Enabled) {
          COPY_4V(span->tex[i], tc);
       }
       else if (tc[3] > 0.0F) {
@@ -555,7 +555,7 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
             if (obj) {
                const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
                needLambda = (obj->MinFilter != obj->MagFilter)
-                  || ctx->FragmentProgram._Enabled;
+                  || ctx->FragmentProgram._Current;
                texW = img->WidthScale;
                texH = img->HeightScale;
             }
@@ -580,8 +580,8 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               if (ctx->FragmentProgram._Enabled || ctx->ATIFragmentShader._Enabled ||
-                   ctx->ShaderObjects._FragmentShaderPresent) {
+               if (ctx->FragmentProgram._Current
+                   || ctx->ATIFragmentShader._Enabled) {
                   /* do perspective correction but don't divide s, t, r by q */
                   const GLfloat dwdx = span->dwdx;
                   GLfloat w = span->w;
@@ -632,8 +632,8 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               if (ctx->FragmentProgram._Enabled || ctx->ATIFragmentShader._Enabled ||
-                   ctx->ShaderObjects._FragmentShaderPresent) {
+               if (ctx->FragmentProgram._Current ||
+                   ctx->ATIFragmentShader._Enabled) {
                   /* do perspective correction but don't divide s, t, r by q */
                   const GLfloat dwdx = span->dwdx;
                   GLfloat w = span->w;
@@ -691,7 +691,7 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
       if (obj) {
          const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
          needLambda = (obj->MinFilter != obj->MagFilter)
-            || ctx->FragmentProgram._Enabled;
+            || ctx->FragmentProgram._Current;
          texW = (GLfloat) img->WidthScale;
          texH = (GLfloat) img->HeightScale;
       }
@@ -716,8 +716,8 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         if (ctx->FragmentProgram._Enabled || ctx->ATIFragmentShader._Enabled ||
-             ctx->ShaderObjects._FragmentShaderPresent) {
+         if (ctx->FragmentProgram._Current
+             || ctx->ATIFragmentShader._Enabled) {
             /* do perspective correction but don't divide s, t, r by q */
             const GLfloat dwdx = span->dwdx;
             GLfloat w = span->w;
@@ -768,8 +768,8 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         if (ctx->FragmentProgram._Enabled || ctx->ATIFragmentShader._Enabled ||
-             ctx->ShaderObjects._FragmentShaderPresent) {
+         if (ctx->FragmentProgram._Current
+             || ctx->ATIFragmentShader._Enabled) {
             /* do perspective correction but don't divide s, t, r by q */
             const GLfloat dwdx = span->dwdx;
             GLfloat w = span->w;
@@ -1340,8 +1340,7 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
    if (ctx->Texture._EnabledCoordUnits && (span->interpMask & SPAN_TEXTURE))
       interpolate_texcoords(ctx, span);
 
-   if (ctx->ShaderObjects._FragmentShaderPresent ||
-       ctx->FragmentProgram._Enabled ||
+   if (ctx->FragmentProgram._Current ||
        ctx->ATIFragmentShader._Enabled) {
 
       /* use float colors if running a fragment program or shader */
@@ -1367,12 +1366,11 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
       if (span->interpMask & SPAN_Z)
          _swrast_span_interpolate_z (ctx, span);
 
-      /* Run fragment program/shader now */
-      if (ctx->ShaderObjects._FragmentShaderPresent) {
+      if (ctx->ShaderObjects.Linked && span->interpMask & SPAN_VARYING)
          interpolate_varying(ctx, span);
-         _swrast_exec_arbshader(ctx, span);
-      }
-      else if (ctx->FragmentProgram._Enabled) {
+
+      /* Run fragment program/shader now */
+      if (ctx->FragmentProgram._Current) {
          _swrast_exec_fragment_program(ctx, span);
       }
       else {
@@ -1403,10 +1401,8 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    const GLbitfield origInterpMask = span->interpMask;
    const GLbitfield origArrayMask = span->arrayMask;
    const GLenum chanType = span->array->ChanType;
-   const GLboolean shader
-      = ctx->FragmentProgram._Enabled
-      || ctx->ShaderObjects._FragmentShaderPresent
-      || ctx->ATIFragmentShader._Enabled;
+   const GLboolean shader = (ctx->FragmentProgram._Current
+                             || ctx->ATIFragmentShader._Enabled);
    const GLboolean shaderOrTexture = shader || ctx->Texture._EnabledUnits;
    GLboolean deferredTexture;
 
@@ -1429,19 +1425,15 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
       deferredTexture = GL_FALSE;
    }
    else if (shaderOrTexture) {
-      if (ctx->FragmentProgram._Enabled) {
+      if (ctx->FragmentProgram._Current) {
          if (ctx->FragmentProgram.Current->Base.OutputsWritten
              & (1 << FRAG_RESULT_DEPR)) {
-            /* Z comes from fragment program */
+            /* Z comes from fragment program/shader */
             deferredTexture = GL_FALSE;
          }
          else {
             deferredTexture = GL_TRUE;
          }
-      }
-      else if (ctx->ShaderObjects._FragmentShaderPresent) {
-         /* XXX how do we test if Z is written by shader? */
-         deferredTexture = GL_FALSE; /* never defer to be safe */
       }
       else {
          /* ATI frag shader or conventional texturing */
