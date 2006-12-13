@@ -735,6 +735,7 @@ struct r200_tcl_info {
    GLuint *Elts;
 
    struct r200_dma_region indexed_verts;
+   struct r200_dma_region weight;
    struct r200_dma_region obj;
    struct r200_dma_region rgba;
    struct r200_dma_region spec;

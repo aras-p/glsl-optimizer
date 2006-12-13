@@ -749,7 +749,7 @@ main(int argc, char *argv[])
 
    dpy = XOpenDisplay(dpyName);
    if (!dpy) {
-      printf("Error: couldn't open display %s\n", dpyName);
+      printf("Error: couldn't open display %s\n", XDisplayName(dpyName));
       return -1;
    }
 

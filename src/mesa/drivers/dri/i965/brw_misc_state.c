@@ -88,10 +88,10 @@ static void upload_drawing_rect(struct brw_context *brw)
    if (brw->intel.numClipRects > 1) 
       return; 
  
-   x1 = dPriv->x;
-   y1 = dPriv->y;      
-   x2 = dPriv->x + dPriv->w;
-   y2 = dPriv->y + dPriv->h;
+   x1 = brw->intel.pClipRects[0].x1;
+   y1 = brw->intel.pClipRects[0].y1;
+   x2 = brw->intel.pClipRects[0].x2;
+   y2 = brw->intel.pClipRects[0].y2;
 	 
    if (x1 < 0) x1 = 0;
    if (y1 < 0) y1 = 0;

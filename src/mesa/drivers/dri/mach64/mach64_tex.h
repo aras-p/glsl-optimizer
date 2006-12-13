@@ -34,24 +34,14 @@
 
 extern void mach64UpdateTextureState( GLcontext *ctx );
 
-extern void mach64SwapOutTexObj( mach64ContextPtr mach64ctx,
-				 mach64TexObjPtr t );
-
 extern void mach64UploadTexImages( mach64ContextPtr mach64ctx,
 				   mach64TexObjPtr t );
 
 extern void mach64UploadMultiTexImages( mach64ContextPtr mach64ctx,
 					mach64TexObjPtr t0, mach64TexObjPtr t1 );
 
-extern void mach64AgeTextures( mach64ContextPtr mach64ctx, int heap );
 extern void mach64DestroyTexObj( mach64ContextPtr mach64ctx,
 				 mach64TexObjPtr t );
-
-extern void mach64UpdateTexLRU( mach64ContextPtr mach64ctx,
-				mach64TexObjPtr t );
-
-extern void mach64PrintLocalLRU( mach64ContextPtr mach64ctx, int heap );
-extern void mach64PrintGlobalLRU( mach64ContextPtr mach64ctx, int heap );
 
 extern void mach64EmitTexStateLocked( mach64ContextPtr mmesa,
 				      mach64TexObjPtr t0,
