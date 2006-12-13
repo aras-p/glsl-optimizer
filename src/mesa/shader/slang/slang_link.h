@@ -316,6 +316,9 @@ enum
    SLANG_COMMON_CODE_MAX
 };
 
+/**
+ * XXX promote this to mtypes.h?
+ */
 typedef struct
 {
    slang_active_variables active_uniforms;
@@ -344,6 +347,11 @@ _slang_program_rst (slang_program *);
 
 extern GLboolean
 _slang_link (slang_program *, slang_code_object **, GLuint);
+
+
+extern void
+_slang_link2(GLcontext *ctx, GLhandleARB h,
+             struct gl_linked_program *linked);
 
 #ifdef __cplusplus
 }

@@ -41,14 +41,14 @@ slang_operation_construct(slang_operation * oper)
    oper->type = slang_oper_none;
    oper->children = NULL;
    oper->num_children = 0;
-   oper->literal = (float) 0;
+   oper->literal[0] = 0.0;
    oper->a_id = SLANG_ATOM_NULL;
-   oper->locals =
-      (slang_variable_scope *)
-      slang_alloc_malloc(sizeof(slang_variable_scope));
+   oper->locals = _slang_variable_scope_new(NULL);
    if (oper->locals == NULL)
       return GL_FALSE;
    _slang_variable_scope_ctr(oper->locals);
+   oper->fun = NULL;
+   oper->var = NULL;
    return GL_TRUE;
 }
 
@@ -62,6 +62,9 @@ slang_operation_destruct(slang_operation * oper)
    slang_alloc_free(oper->children);
    slang_variable_scope_destruct(oper->locals);
    slang_alloc_free(oper->locals);
+   oper->children = NULL;
+   oper->num_children = 0;
+   oper->locals = NULL;
 }
 
 /**
@@ -96,12 +99,21 @@ slang_operation_copy(slang_operation * x, const slang_operation * y)
          return GL_FALSE;
       }
    }
-   z.literal = y->literal;
+   z.literal[0] = y->literal[0];
+   z.literal[1] = y->literal[1];
+   z.literal[2] = y->literal[2];
+   z.literal[3] = y->literal[3];
    z.a_id = y->a_id;
-   if (!slang_variable_scope_copy(z.locals, y->locals)) {
-      slang_operation_destruct(&z);
-      return GL_FALSE;
+   if (y->locals) {
+      if (!slang_variable_scope_copy(z.locals, y->locals)) {
+         slang_operation_destruct(&z);
+         return GL_FALSE;
+      }
    }
+#if 0
+   z.var = y->var;
+   z.fun = y->fun;
+#endif
    slang_operation_destruct(x);
    *x = z;
    return GL_TRUE;
@@ -111,5 +123,77 @@ slang_operation_copy(slang_operation * x, const slang_operation * y)
 slang_operation *
 slang_operation_new(GLuint count)
 {
-   return (slang_operation *) _mesa_calloc(count * sizeof(slang_operation));
+   slang_operation *ops
+       = (slang_operation *) _mesa_malloc(count * sizeof(slang_operation));
+   assert(count > 0);
+   if (ops) {
+      GLuint i;
+      for (i = 0; i < count; i++)
+         slang_operation_construct(ops + i);
+   }
+   return ops;
 }
+
+
+slang_operation *
+slang_operation_grow(GLuint *numChildren, slang_operation **children)
+{
+   slang_operation *ops;
+
+   ops = (slang_operation *)
+      slang_alloc_realloc(*children,
+                          *numChildren * sizeof(slang_operation),
+                          (*numChildren + 1) * sizeof(slang_operation));
+   if (ops) {
+      slang_operation *newOp = ops + *numChildren;
+      if (!slang_operation_construct(newOp)) {
+         _mesa_free(ops);
+         *children = NULL;
+         return NULL;
+      }
+      *children = ops;
+      (*numChildren)++;
+      return newOp;
+   }
+   return NULL;
+}
+
+/**
+ * Insert a new slang_operation into an array.
+ * \param numChildren  pointer to current number of children (in/out)
+ * \param children  address of array (in/out)
+ * \param pos  position to insert
+ * \return  pointer to the new operation
+ */
+slang_operation *
+slang_operation_insert(GLuint *numChildren, slang_operation **children,
+                       GLuint pos)
+{
+   slang_operation *ops;
+
+   assert(pos <= *numChildren);
+
+   ops = (slang_operation *)
+      _mesa_malloc((*numChildren + 1) * sizeof(slang_operation));
+   if (ops) {
+      slang_operation *newOp;
+      newOp = ops + pos;
+      if (pos > 0)
+         _mesa_memcpy(ops, *children, pos * sizeof(slang_operation));
+      if (pos < *numChildren)
+         _mesa_memcpy(newOp + 1, (*children) + pos,
+                      (*numChildren - pos) * sizeof(slang_operation));
+
+      if (!slang_operation_construct(newOp)) {
+         _mesa_free(ops);
+         *numChildren = 0;
+         *children = NULL;
+         return NULL;
+      }
+      *children = ops;
+      (*numChildren)++;
+      return newOp;
+   }
+   return NULL;
+}
+

@@ -392,12 +392,16 @@ _slang_execute2(const slang_assembly_file * file, slang_machine * mach)
       case slang_asm_int_copy:
       case slang_asm_bool_copy:
          /* store top value on stack to memory */
+#if 0
          {
             GLuint address
                = (stack[mach->sp + a->param[0] / 4]._addr + a->param[1]) / 4;
             GLfloat value = stack[mach->sp]._float;
             mach->mem[address]._float = value;
          }
+#else
+         mach->mem[(stack[mach->sp + a->param[0] / 4]._addr +a->param[1]) / 4]._float = stack[mach->sp]._float;
+#endif
          mach->sp++;
          break;
       case slang_asm_float_move:
@@ -423,6 +427,10 @@ _slang_execute2(const slang_assembly_file * file, slang_machine * mach)
       case slang_asm_float_add:
          /* pop two top floats, push sum */
          stack[mach->sp + 1]._float += stack[mach->sp]._float;
+         mach->sp++;
+         break;
+      case slang_asm_float_subtract:
+         stack[mach->sp + 1]._float -= stack[mach->sp]._float;
          mach->sp++;
          break;
       case slang_asm_float_multiply:
@@ -476,12 +484,14 @@ _slang_execute2(const slang_assembly_file * file, slang_machine * mach)
       case slang_asm_float_log2:
          stack[mach->sp]._float = LOG2(stack[mach->sp]._float);
          break;
+#if 0
       case slang_asm_float_floor:
          stack[mach->sp]._float = FLOORF(stack[mach->sp]._float);
          break;
       case slang_asm_float_ceil:
          stack[mach->sp]._float = CEILF(stack[mach->sp]._float);
          break;
+#endif
       case slang_asm_float_noise1:
          stack[mach->sp]._float =
             _slang_library_noise1(stack[mach->sp]._float);
@@ -718,6 +728,7 @@ _slang_execute2(const slang_assembly_file * file, slang_machine * mach)
                -mach->mem[(da + 12) / 4]._float;
          }
          break;
+#if 0
       case slang_asm_vec4_dot:
          /* [vec4] | vec4 > [float] */
          {
@@ -730,6 +741,7 @@ _slang_execute2(const slang_assembly_file * file, slang_machine * mach)
             mach->sp += 4;
          }
          break;
+#endif
       case slang_asm_vec4_copy:
          /* [vec4] | vec4 > [vec4] */
          {
@@ -766,6 +778,19 @@ _slang_execute2(const slang_assembly_file * file, slang_machine * mach)
             else {
                stack[mach->sp]._float = 0.0f;
             }
+         }
+         break;
+      case slang_asm_vec4_dot:
+      case slang_asm_vec3_dot:
+         {
+            /* XXX almost certainly wrong */
+            GLuint da = stack[mach->sp + 4]._addr;
+            mach->mem[da / 4]._float =
+               mach->mem[da / 4]._float * stack[mach->sp]._float +
+               mach->mem[(da + 4) / 4]._float * stack[mach->sp + 1]._float +
+               mach->mem[(da + 8) / 4]._float * stack[mach->sp + 2]._float +
+               mach->mem[(da + 12) / 4]._float * stack[mach->sp + 3]._float;
+            mach->sp += 4;
          }
          break;
       default:

@@ -25,6 +25,8 @@
 #if !defined SLANG_COMPILE_H
 #define SLANG_COMPILE_H
 
+#include "imports.h"
+#include "mtypes.h"
 #include "slang_export.h"
 #include "slang_execute.h"
 #include "slang_compile_variable.h"
@@ -107,7 +109,7 @@ int slang_info_log_warning (slang_info_log *, const char *, ...);
 void slang_info_log_memory (slang_info_log *);
 
 extern GLboolean
-_slang_compile (const char *, slang_code_object *, slang_unit_type, slang_info_log *);
+_slang_compile (const char *, slang_code_object *, slang_unit_type, slang_info_log *, struct gl_program *program);
 
 #ifdef __cplusplus
 }

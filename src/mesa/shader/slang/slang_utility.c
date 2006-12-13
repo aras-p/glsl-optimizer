@@ -220,3 +220,16 @@ slang_atom_pool_id(slang_atom_pool * pool, slang_atom atom)
 	return (const char *) (atom);
 }
 
+
+/**
+ * Generate a new, unique atom with given prefix.
+ */
+slang_atom
+slang_atom_pool_gen(slang_atom_pool * pool, const char *prefix)
+{
+   char name[1000];
+   static int nextFree = 100;
+   sprintf(name, "%s%d", prefix, nextFree);
+   nextFree++;
+   return slang_atom_pool_atom(pool, name);
+}

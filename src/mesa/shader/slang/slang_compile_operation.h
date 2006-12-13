@@ -46,6 +46,8 @@ typedef enum slang_operation_type_
    slang_oper_continue,         /* "continue" statement */
    slang_oper_discard,          /* "discard" (kill fragment) statement */
    slang_oper_return,           /* "return" [expr]  */
+   slang_oper_goto,             /* jump to label */
+   slang_oper_label,            /* a jump target */
    slang_oper_expression,       /* [expr] */
    slang_oper_if,               /* "if" [0] then [1] else [2] */
    slang_oper_while,            /* "while" [cond] [body] */
@@ -114,9 +116,13 @@ typedef struct slang_operation_
    slang_operation_type type;
    struct slang_operation_ *children;
    GLuint num_children;
-   GLfloat literal;            /**< Used for float, int and bool values */
-   slang_atom a_id;            /**< type: asm, identifier, call, field */
-   slang_variable_scope *locals;       /**< local vars for scope */
+   GLfloat literal[4];           /**< Used for float, int and bool values */
+   slang_atom a_id;              /**< type: asm, identifier, call, field */
+   slang_variable_scope *locals; /**< local vars for scope */
+   struct slang_function_ *fun;  /**< If type == slang_oper_call */
+   struct slang_variable_ *var;  /**< If type == slang_oper_identier */
+   slang_fully_specified_type *datatype; /**< Type of this operation */
+   slang_assembly_typeinfo ti;
 } slang_operation;
 
 
@@ -131,6 +137,13 @@ slang_operation_copy(slang_operation *, const slang_operation *);
 
 extern slang_operation *
 slang_operation_new(GLuint count);
+
+extern slang_operation *
+slang_operation_grow(GLuint *numChildren, slang_operation **children);
+
+extern slang_operation *
+slang_operation_insert(GLuint *numChildren, slang_operation **children,
+                       GLuint pos);
 
 
 #ifdef __cplusplus

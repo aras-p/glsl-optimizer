@@ -25,6 +25,8 @@
 #ifndef SLANG_ASSEMBLE_H
 #define SLANG_ASSEMBLE_H
 
+#include "imports.h"
+#include "mtypes.h"
 #include "slang_utility.h"
 
 #if defined __cplusplus
@@ -43,6 +45,7 @@ typedef enum slang_assembly_type_
    slang_asm_float_push,
    slang_asm_float_deref,
    slang_asm_float_add,       /* a = pop(); b = pop(); push(a + b); */
+   slang_asm_float_subtract,
    slang_asm_float_multiply,
    slang_asm_float_divide,
    slang_asm_float_negate,    /* push(-pop()) */
@@ -51,11 +54,17 @@ typedef enum slang_assembly_type_
    slang_asm_float_equal_int,
    slang_asm_float_to_int,    /* push(floatToInt(pop())) */
    slang_asm_float_sine,      /* push(sin(pop()) */
+   slang_asm_float_cosine,
    slang_asm_float_arcsine,
    slang_asm_float_arctan,
    slang_asm_float_power,     /* push(pow(pop(), pop())) */
+   slang_asm_float_exp,
+   slang_asm_float_exp2,
+   slang_asm_float_rsq,
+   slang_asm_float_rcp,
    slang_asm_float_log2,
-   slang_asm_float_floor,
+   slang_asm_float_min,
+   slang_asm_float_max,
    slang_asm_float_ceil,
    slang_asm_float_noise1,    /* push(noise1(pop()) */
    slang_asm_float_noise2,    /* push(noise2(pop(), pop())) */
@@ -114,7 +123,19 @@ typedef enum slang_assembly_type_
    slang_asm_vec4_multiply,
    slang_asm_vec4_divide,
    slang_asm_vec4_negate,
+   slang_asm_vec4_min,
+   slang_asm_vec4_max,
+   slang_asm_vec4_seq,
+   slang_asm_vec4_sne,
+   slang_asm_vec4_sge,
+   slang_asm_vec4_sgt,
    slang_asm_vec4_dot,
+   slang_asm_vec3_dot,
+   slang_asm_vec3_cross,
+   slang_asm_vec4_floor,
+   slang_asm_vec4_frac,
+   slang_asm_vec4_abs,
+
    slang_asm_vec4_copy,
    slang_asm_vec4_deref,
    slang_asm_vec4_equal_int,
@@ -231,6 +252,7 @@ typedef struct slang_assemble_ctx_
    slang_assembly_local_info local;
    slang_ref_type ref;
    slang_swizzle swz;
+   struct gl_program *program;
 } slang_assemble_ctx;
 
 extern struct slang_function_ *
@@ -242,9 +264,6 @@ _slang_locate_function(const struct slang_function_scope_ *funcs,
 
 extern GLboolean
 _slang_assemble_function(slang_assemble_ctx *, struct slang_function_ *);
-
-extern GLboolean
-_slang_assemble_function2(slang_assemble_ctx * , struct slang_function_ *);
 
 extern GLboolean
 _slang_cleanup_stack(slang_assemble_ctx *, struct slang_operation_ *);

@@ -127,6 +127,16 @@ slang_fully_specified_type_copy(slang_fully_specified_type * x,
  * slang_variable_scope
  */
 
+slang_variable_scope *
+_slang_variable_scope_new(slang_variable_scope *parent)
+{
+   slang_variable_scope *s;
+   s = (slang_variable_scope *) _mesa_calloc(sizeof(slang_variable_scope));
+   s->outer_scope = parent;
+   return s;
+}
+
+
 GLvoid
 _slang_variable_scope_ctr(slang_variable_scope * self)
 {
@@ -218,9 +228,11 @@ slang_variable_construct(slang_variable * var)
    var->array_len = 0;
    var->initializer = NULL;
    var->address = ~0;
-   var->address2 = 0;
    var->size = 0;
    var->global = GL_FALSE;
+   var->declared = GL_FALSE;
+   var->used = GL_FALSE;
+   var->aux = NULL;
    return 1;
 }
 
@@ -248,8 +260,8 @@ slang_variable_copy(slang_variable * x, const slang_variable * y)
    z.a_name = y->a_name;
    z.array_len = y->array_len;
    if (y->initializer != NULL) {
-      z.initializer =
-         (slang_operation *) slang_alloc_malloc(sizeof(slang_operation));
+      z.initializer
+         = (slang_operation *) slang_alloc_malloc(sizeof(slang_operation));
       if (z.initializer == NULL) {
          slang_variable_destruct(&z);
          return 0;

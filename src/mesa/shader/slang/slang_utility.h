@@ -102,6 +102,10 @@ GLvoid slang_atom_pool_destruct (slang_atom_pool *);
 slang_atom slang_atom_pool_atom (slang_atom_pool *, const char *);
 const char *slang_atom_pool_id (slang_atom_pool *, slang_atom);
 
+slang_atom
+slang_atom_pool_gen(slang_atom_pool * pool, const char *prefix);
+
+
 #ifdef __cplusplus
 }
 #endif
