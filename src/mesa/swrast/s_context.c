@@ -31,7 +31,7 @@
 #include "context.h"
 #include "colormac.h"
 #include "mtypes.h"
-#include "program.h"
+#include "prog_statevars.h"
 #include "teximage.h"
 #include "swrast.h"
 #include "s_blend.h"

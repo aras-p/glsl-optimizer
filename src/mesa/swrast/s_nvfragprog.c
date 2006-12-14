@@ -34,7 +34,9 @@
 #include "glheader.h"
 #include "colormac.h"
 #include "context.h"
-#include "program_instruction.h"
+#include "prog_instruction.h"
+#include "prog_parameter.h"
+#include "prog_print.h"
 #include "program.h"
 
 #include "s_nvfragprog.h"
