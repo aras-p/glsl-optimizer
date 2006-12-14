@@ -49,6 +49,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_tex.h"
 #include "nouveau_msg.h"
 #include "nouveau_reg.h"
+#include "nouveau_lock.h"
 #include "nv10_swtcl.h"
 
 #include "vblank.h"
@@ -303,6 +304,8 @@ static void nouveauDoSwapBuffers(nouveauContextPtr nmesa,
 {
 	struct gl_framebuffer *fb;
 	nouveau_renderbuffer *src, *dst;
+	drm_clip_rect_t *box;
+	int nbox, i;
 
 	fb = (struct gl_framebuffer *)dPriv->driverPrivate;
 	dst = (nouveau_renderbuffer*)
@@ -311,19 +314,29 @@ static void nouveauDoSwapBuffers(nouveauContextPtr nmesa,
 		fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
 
 #ifdef ALLOW_MULTI_SUBCHANNEL
-	/* Ignore this.. it's a hack to test double-buffering, and not how
-	 * SwapBuffers should look :)
-	 */
-	BEGIN_RING_SIZE(NvSubCtxSurf2D, NV10_CONTEXT_SURFACES_2D_FORMAT, 4);
-	OUT_RING       (6); /* X8R8G8B8 */
-	OUT_RING       ((dst->pitch << 16) | src->pitch);
-	OUT_RING       (src->offset);
-	OUT_RING       (dst->offset);
+	LOCK_HARDWARE(nmesa);
+	nbox = dPriv->numClipRects;
+	box  = dPriv->pClipRects;
 
-	BEGIN_RING_SIZE(NvSubImageBlit, NV10_IMAGE_BLIT_SET_POINT, 3);
-	OUT_RING       ((0 << 16) | 0); /* src point */
-	OUT_RING       ((0 << 16) | 0); /* dst point */
-	OUT_RING       ((fb->Height << 16) | fb->Width); /* width/height */
+	if (nbox) {
+		BEGIN_RING_SIZE(NvSubCtxSurf2D,
+				NV10_CONTEXT_SURFACES_2D_FORMAT, 4);
+		OUT_RING       (6); /* X8R8G8B8 */
+		OUT_RING       ((dst->pitch << 16) | src->pitch);
+		OUT_RING       (src->offset);
+		OUT_RING       (dst->offset);
+	}
+
+	for (i=0; i<nbox; i++, box++) {
+		BEGIN_RING_SIZE(NvSubImageBlit, NV10_IMAGE_BLIT_SET_POINT, 3);
+		OUT_RING       (((box->y1 - dPriv->y) << 16) |
+				(box->x1 - dPriv->x));
+		OUT_RING       ((box->y1 << 16) | box->x1);
+		OUT_RING       (((box->y2 - box->y1) << 16) |
+				(box->x2 - box->x1));
+	}
+
+	UNLOCK_HARDWARE(nmesa);
 #endif
 }
 
