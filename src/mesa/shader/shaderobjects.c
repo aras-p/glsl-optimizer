@@ -34,6 +34,7 @@
 #include "hash.h"
 #include "macros.h"
 #include "program.h"
+#include "prog_parameter.h"
 #include "shaderobjects.h"
 #include "shaderobjects_3dlabs.h"
 #include "slang_link.h"
