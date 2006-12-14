@@ -35,6 +35,7 @@
 #include "program.h"
 #include "prog_instruction.h"
 #include "prog_parameter.h"
+#include "prog_print.h"
 #include "shaderobjects.h"
 #include "slang_link.h"
 
