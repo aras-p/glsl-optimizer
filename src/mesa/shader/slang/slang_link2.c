@@ -33,127 +33,248 @@
 #include "hash.h"
 #include "macros.h"
 #include "program.h"
+#include "program_instruction.h"
 #include "shaderobjects.h"
 #include "slang_link.h"
 
 
 
 
-#define RELEASE_GENERIC(x)\
-   (**x)._unknown.Release ((struct gl2_unknown_intf **) (x))
-
-#define RELEASE_CONTAINER(x)\
-   (**x)._generic._unknown.Release ((struct gl2_unknown_intf **) (x))
-
-#define RELEASE_PROGRAM(x)\
-   (**x)._container._generic._unknown.Release ((struct gl2_unknown_intf **) (x))
-
-#define RELEASE_SHADER(x)\
-   (**x)._generic._unknown.Release ((struct gl2_unknown_intf **) (x))
-
-
-
-static struct gl2_unknown_intf **
-lookup_handle(GLcontext * ctx, GLhandleARB handle, enum gl2_uiid uiid,
-              const char *function)
+static GLboolean
+link_varying_vars(struct gl_linked_program *linked, struct gl_program *prog)
 {
-   struct gl2_unknown_intf **unk;
+   GLuint *map, i, firstVarying, newFile;
+   GLbitfield varsWritten, varsRead;
 
-   /*
-    * Note: _mesa_HashLookup() requires non-zero input values, so the
-    * passed-in handle value must be checked beforehand.
-    */
-   if (handle == 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, function);
-      return NULL;
+   map = (GLuint *) malloc(prog->Varying->NumParameters * sizeof(GLuint));
+   if (!map)
+      return GL_FALSE;
+
+   for (i = 0; i < prog->Varying->NumParameters; i++) {
+      /* see if this varying is in the linked varying list */
+      const struct gl_program_parameter *var
+         = prog->Varying->Parameters + i;
+
+      GLint j = _mesa_lookup_parameter_index(linked->Varying, -1, var->Name);
+      if (j >= 0) {
+         /* already in list, check size */
+         if (var->Size != linked->Varying->Parameters[j].Size) {
+            /* error */
+            return GL_FALSE;
+         }
+      }
+      else {
+         /* not already in linked list */
+         j = _mesa_add_varying(linked->Varying, var->Name, var->Size);
+      }
+      ASSERT(j >= 0);
+
+      map[i] = j;
    }
-   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
-   unk = (struct gl2_unknown_intf **) _mesa_HashLookup(ctx->Shared->GL2Objects,
-                                                       handle);
-   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
-   if (unk == NULL) {
-      _mesa_error(ctx, GL_INVALID_VALUE, function);
+
+   /* Varying variables are treated like other vertex program outputs
+    * (and like other fragment program inputs).  The position of the
+    * first varying differs for vertex/fragment programs...
+    * Also, replace File=PROGRAM_VARYING with File=PROGRAM_INPUT/OUTPUT.
+    */
+   if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
+      firstVarying = VERT_RESULT_VAR0;
+      newFile = PROGRAM_OUTPUT;
    }
    else {
-      unk = (**unk).QueryInterface(unk, uiid);
-      if (unk == NULL)
-         _mesa_error(ctx, GL_INVALID_OPERATION, function);
+      assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
+      firstVarying = FRAG_ATTRIB_VAR0;
+      newFile = PROGRAM_INPUT;
    }
-   return unk;
+
+   /* keep track of which varying vars we read and write */
+   varsWritten = varsRead = 0x0;
+
+   /* OK, now scan the program/shader instructions looking for varying vars,
+    * replacing the old index with the new index.
+    */
+   for (i = 0; i < prog->NumInstructions; i++) {
+      struct prog_instruction *inst = prog->Instructions + i;
+      GLuint j;
+
+      if (inst->DstReg.File == PROGRAM_VARYING) {
+         inst->DstReg.File = newFile;
+         inst->DstReg.Index = map[ inst->DstReg.Index ] + firstVarying;
+         varsWritten |= (1 << inst->DstReg.Index);
+      }
+
+      for (j = 0; j < 3; j++) {
+         if (inst->SrcReg[j].File == PROGRAM_VARYING) {
+            inst->SrcReg[j].File = newFile;
+            inst->SrcReg[j].Index = map[ inst->SrcReg[j].Index ] + firstVarying;
+            varsRead |= (1 << inst->DstReg.Index);
+         }
+      }
+      /* XXX update program OutputsWritten, InputsRead */
+   }
+
+   if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
+      prog->OutputsWritten |= varsWritten;
+   }
+   else {
+      assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
+      prog->InputsRead |= varsRead;
+   }
+
+
+   free(map);
+
+   return GL_TRUE;
 }
 
-#define GET_GENERIC(x, handle, function)\
-   struct gl2_generic_intf **x = (struct gl2_generic_intf **)\
-                                 lookup_handle (ctx, handle, UIID_GENERIC, function);
 
-#define GET_CONTAINER(x, handle, function)\
-   struct gl2_container_intf **x = (struct gl2_container_intf **)\
-                                   lookup_handle (ctx, handle, UIID_CONTAINER, function);
-
-#define GET_PROGRAM(x, handle, function)\
-   struct gl2_program_intf **x = (struct gl2_program_intf **)\
-                                 lookup_handle (ctx, handle, UIID_PROGRAM, function);
-
-#define GET_SHADER(x, handle, function)\
-   struct gl2_shader_intf **x = (struct gl2_shader_intf **)\
-                                lookup_handle (ctx, handle, UIID_SHADER, function);
-
-
-static void
-prelink(GLhandleARB programObj, struct gl_linked_program *linked)
+static GLboolean
+is_uniform(enum register_file file)
 {
-   GET_CURRENT_CONTEXT(ctx);
+   return (file == PROGRAM_ENV_PARAM ||
+           file == PROGRAM_STATE_VAR ||
+           file == PROGRAM_NAMED_PARAM ||
+           file == PROGRAM_CONSTANT ||
+           file == PROGRAM_UNIFORM);
+}
 
-   linked->VertexProgram = NULL;
-   linked->FragmentProgram = NULL;
 
-   if (programObj != 0) {
-      GET_PROGRAM(program, programObj, "glUseProgramObjectARB(program)");
+static GLboolean
+link_uniform_vars(struct gl_linked_program *linked, struct gl_program *prog)
+{
+   GLuint *map, i;
 
-      if (program == NULL)
-         return;
+   map = (GLuint *) malloc(prog->Parameters->NumParameters * sizeof(GLuint));
+   if (!map)
+      return GL_FALSE;
 
-      /* XXX terrible hack to find the real vertex/fragment programs */
-      {
-         GLuint handle;
-         GLsizei cnt, i;
-         cnt = (**program)._container.GetAttachedCount((struct gl2_container_intf **) (program));
+   for (i = 0; i < prog->Parameters->NumParameters; i++) {
+      /* see if this uniform is in the linked uniform list */
+      const struct gl_program_parameter *p = prog->Parameters->Parameters + i;
+      const GLfloat *pVals = prog->Parameters->ParameterValues[i];
+      GLint j;
 
-         for (i = 0; i < cnt; i++) {
-            struct gl2_generic_intf **x
-               = (**program)._container.GetAttached((struct gl2_container_intf **) program, i);
-            handle = (**x).GetName(x);
-            {
-               struct gl_program *prog;
-               GET_SHADER(sha, handle, "foo");
-               if (sha && (*sha)->Program) {
-                  prog = (*sha)->Program;
-                  if (prog->Target == GL_VERTEX_PROGRAM_ARB)
-                     linked->VertexProgram = (struct gl_vertex_program *) prog;
-                  else if (prog->Target == GL_FRAGMENT_PROGRAM_ARB)
-                     linked->FragmentProgram = (struct gl_fragment_program *) prog;
-               }
-            }
-#if 0
-            if (linked->VertexProgram)
-               printf("Found vert prog %p %d\n",
-                      linked->VertexProgram,
-                      linked->VertexProgram->Base.NumInstructions);
-            if (linked->FragmentProgram)
-               printf("Found frag prog %p %d\n",
-                      linked->FragmentProgram,
-                      linked->FragmentProgram->Base.NumInstructions);
-#endif
-            RELEASE_GENERIC(x);
+      /* sanity check */
+      assert(is_uniform(p->Type));
+
+      if (p->Name) {
+         j = _mesa_lookup_parameter_index(linked->Uniforms, -1, p->Name);
+      }
+      else {
+         GLuint swizzle;
+         ASSERT(p->Type == PROGRAM_CONSTANT);
+         if (_mesa_lookup_parameter_constant(linked->Uniforms, pVals,
+                                             p->Size, &j, &swizzle)) {
+            assert(j >= 0);
+         }
+         else {
+            j = -1;
          }
       }
 
+      if (j >= 0) {
+         /* already in list, check size XXX check this */
+         assert(p->Size == linked->Uniforms->Parameters[j].Size);
+      }
+      else {
+         /* not already in linked list */
+         switch (p->Type) {
+         case PROGRAM_ENV_PARAM:
+            j = _mesa_add_named_parameter(linked->Uniforms, p->Name, pVals);
+         case PROGRAM_CONSTANT:
+            j = _mesa_add_named_constant(linked->Uniforms, p->Name, pVals, p->Size);
+            break;
+         case PROGRAM_STATE_VAR:
+            j = _mesa_add_state_reference(linked->Uniforms, (const GLint *) p->StateIndexes);
+            break;
+         case PROGRAM_UNIFORM:
+            j = _mesa_add_uniform(linked->Uniforms, p->Name, p->Size);
+            break;
+         default:
+            abort();
+         }
+
+      }
+      ASSERT(j >= 0);
+
+      map[i] = j;
+   }
+
+
+   /* OK, now scan the program/shader instructions looking for varying vars,
+    * replacing the old index with the new index.
+    */
+   for (i = 0; i < prog->NumInstructions; i++) {
+      struct prog_instruction *inst = prog->Instructions + i;
+      GLuint j;
+
+      if (is_uniform(inst->DstReg.File)) {
+         inst->DstReg.Index = map[ inst->DstReg.Index ];
+      }
+
+      for (j = 0; j < 3; j++) {
+         if (is_uniform(inst->SrcReg[j].File)) {
+            inst->SrcReg[j].Index = map[ inst->SrcReg[j].Index ];
+         }
+      }
+      /* XXX update program OutputsWritten, InputsRead */
+   }
+
+   free(map);
+
+   return GL_TRUE;
+}
+
+
+static void
+free_linked_program_data(GLcontext *ctx, struct gl_linked_program *linked)
+{
+   if (linked->VertexProgram) {
+      if (linked->VertexProgram->Base.Parameters == linked->Uniforms) {
+         /* to prevent a double-free in the next call */
+         linked->VertexProgram->Base.Parameters = NULL;
+      }
+      _mesa_delete_program(ctx, &linked->VertexProgram->Base);
+      linked->VertexProgram = NULL;
+   }
+
+   if (linked->FragmentProgram) {
+      if (linked->FragmentProgram->Base.Parameters == linked->Uniforms) {
+         /* to prevent a double-free in the next call */
+         linked->FragmentProgram->Base.Parameters = NULL;
+      }
+      _mesa_delete_program(ctx, &linked->FragmentProgram->Base);
+      linked->FragmentProgram = NULL;
+   }
+
+
+   if (linked->Uniforms) {
+      _mesa_free_parameter_list(linked->Uniforms);
+      linked->Uniforms = NULL;
+   }
+
+   if (linked->Varying) {
+      _mesa_free_parameter_list(linked->Varying);
+      linked->Varying = NULL;
    }
 }
 
 
-
+/**
+ * Shader linker.  Currently:
+ *
+ * 1. The last attached vertex shader and fragment shader are linked.
+ * 2. Varying vars in the two shaders are combined so their locations
+ *    agree between the vertex and fragment stages.  They're treated as
+ *    vertex program output attribs and as fragment program input attribs.
+ * 3. Uniform vars (including state references, constants, etc) from the
+ *    vertex and fragment shaders are merged into one group.  Recall that
+ *    GLSL uniforms are shared by all linked shaders.
+ * 4. The vertex and fragment programs are cloned and modified to update
+ *    src/dst register references so they use the new, linked uniform/
+ *    varying storage locations.
+ */
 void
 _slang_link2(GLcontext *ctx,
              GLhandleARB programObj,
@@ -161,66 +282,66 @@ _slang_link2(GLcontext *ctx,
 {
    struct gl_vertex_program *vertProg;
    struct gl_fragment_program *fragProg;
+   GLuint i;
 
-   prelink(programObj, linked);
+   free_linked_program_data(ctx, linked);
 
-   vertProg = linked->VertexProgram;
-   fragProg = linked->FragmentProgram;
+   linked->Uniforms = _mesa_new_parameter_list();
+   linked->Varying = _mesa_new_parameter_list();
 
-   /* free old linked data, if any */
-   if (linked->NumUniforms > 0) {
-      GLuint i;
-      for (i = 0; i < linked->NumUniforms; i++) {
-         _mesa_free((char *) linked->Uniforms[i].Name);
-         linked->Uniforms[i].Name = NULL;
-         linked->Uniforms[i].Value = NULL;
-      }
-      linked->NumUniforms = 0;
+   /**
+    * Find attached vertex shader, fragment shader
+    */
+   vertProg = NULL;
+   fragProg = NULL;
+   for (i = 0; i < linked->NumShaders; i++) {
+      if (linked->Shaders[i]->Target == GL_VERTEX_PROGRAM_ARB)
+         vertProg = (struct gl_vertex_program *) linked->Shaders[i];
+      else if (linked->Shaders[i]->Target == GL_FRAGMENT_PROGRAM_ARB)
+         fragProg = (struct gl_fragment_program *) linked->Shaders[i];
+      else
+         _mesa_problem(ctx, "unexpected shader target in slang_link2()");
+   }
+   if (!vertProg || !fragProg) {
+      /* XXX is it legal to have one but not the other?? */
+      /* XXX record error */
+      linked->LinkStatus = GL_FALSE;
+      return;
    }
 
    /*
-    * Find uniforms.
-    * XXX what about dups?
+    * Make copies of the vertex/fragment programs now since we'll be
+    * changing src/dst registers after merging the uniforms and varying vars.
     */
-   if (vertProg) {
-      GLuint i;
-      for (i = 0; i < vertProg->Base.Parameters->NumParameters; i++) {
-         struct gl_program_parameter *p
-            = vertProg->Base.Parameters->Parameters + i;
-         if (p->Name) {
-            struct gl_uniform *u = linked->Uniforms + linked->NumUniforms;
-            u->Name = _mesa_strdup(p->Name);
-            u->Value = &vertProg->Base.Parameters->ParameterValues[i][0];
-            linked->NumUniforms++;
-            assert(linked->NumUniforms < MAX_UNIFORMS);
-         }
-      }
-   }
-   if (fragProg) {
-      GLuint i;
-      for (i = 0; i < fragProg->Base.Parameters->NumParameters; i++) {
-         struct gl_program_parameter *p
-            = fragProg->Base.Parameters->Parameters + i;
-         if (p->Name) {
-            struct gl_uniform *u = linked->Uniforms + linked->NumUniforms;
-            u->Name = _mesa_strdup(p->Name);
-            u->Value = &fragProg->Base.Parameters->ParameterValues[i][0];
-            linked->NumUniforms++;
-            assert(linked->NumUniforms < MAX_UNIFORMS);
-         }
-      }
-   }
+   linked->VertexProgram = (struct gl_vertex_program *)
+      _mesa_clone_program(ctx, &vertProg->Base);
+   linked->FragmentProgram = (struct gl_fragment_program *)
+      _mesa_clone_program(ctx, &fragProg->Base);
 
-   /* For varying:
-    * scan both programs for varyings, rewrite programs so they agree
-    * on locations of varyings.
-    */
+#if 1
+   printf("************** orig program\n");
+   _mesa_print_program(&fragProg->Base);
+   _mesa_print_program_parameters(ctx, &fragProg->Base);
+#endif
 
-   /**
-    * Linking should _copy_ the vertex and fragment shader code,
-    * rewriting varying references as we go along...
-    */
+   link_varying_vars(linked, &linked->VertexProgram->Base);
+   link_varying_vars(linked, &linked->FragmentProgram->Base);
 
-   linked->LinkStatus = (vertProg && fragProg);
+   link_uniform_vars(linked, &linked->VertexProgram->Base);
+   link_uniform_vars(linked, &linked->FragmentProgram->Base);
+
+   /* The vertex and fragment programs share a common set of uniforms now */
+   _mesa_free_parameter_list(linked->VertexProgram->Base.Parameters);
+   _mesa_free_parameter_list(linked->FragmentProgram->Base.Parameters);
+   linked->VertexProgram->Base.Parameters = linked->Uniforms;
+   linked->FragmentProgram->Base.Parameters = linked->Uniforms;
+
+#if 1
+   printf("************** linked/cloned\n");
+   _mesa_print_program(&linked->FragmentProgram->Base);
+   _mesa_print_program_parameters(ctx, &linked->FragmentProgram->Base);
+#endif
+
+   linked->LinkStatus = (linked->VertexProgram && linked->FragmentProgram);
 }
 
