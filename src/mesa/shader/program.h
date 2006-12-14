@@ -83,24 +83,9 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog);
 extern struct gl_program *
 _mesa_lookup_program(GLcontext *ctx, GLuint id);
 
-extern struct prog_instruction *
-_mesa_alloc_instructions(GLuint numInst);
-
-extern struct prog_instruction *
-_mesa_realloc_instructions(struct prog_instruction *oldInst,
-                           GLuint numOldInst, GLuint numNewInst);
 
 extern struct gl_program *
 _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog);
-
-
-
-
-extern void
-_mesa_print_program(const struct gl_program *prog);
-
-extern void
-_mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog);
 
 
 /*
