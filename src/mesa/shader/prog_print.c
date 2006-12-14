@@ -31,8 +31,6 @@
 #include "glheader.h"
 #include "context.h"
 #include "imports.h"
-#include "macros.h"
-#include "program.h"
 #include "prog_instruction.h"
 #include "prog_parameter.h"
 #include "prog_print.h"
