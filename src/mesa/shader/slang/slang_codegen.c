@@ -405,7 +405,7 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
                /* OK, replace this slang_oper_identifier with a new expr */
 	       assert(substNew[i]->type == slang_oper_identifier ||
                       substNew[i]->type == slang_oper_literal_float);
-#if 1 /* DEBUG only */
+#if 0 /* DEBUG only */
 	       if (substNew[i]->type == slang_oper_identifier) {
                   assert(substNew[i]->var);
                   assert(substNew[i]->var->a_name);
@@ -730,7 +730,7 @@ slang_assemble_function_call(slang_assemble_ctx *A, slang_function *fun,
 #endif
 
 
-#if 1
+#if 0
    assert(inlined->locals);
    printf("*** Inlined code for call to %s:\n",
           (char*) fun->header.a_name);
@@ -1231,8 +1231,9 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
      return 0;
 
    printf("\n*********** Assemble function2(%s)\n", (char*)fun->header.a_name);
-
+#if 0
    slang_print_function(fun, 1);
+#endif
 
    A->program->Parameters = _mesa_new_parameter_list();
    A->program->Varying = _mesa_new_parameter_list();
@@ -1254,11 +1255,13 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    CurFunction = NULL;
 
 
+#if 0
    printf("************* New body for %s *****\n", (char*)fun->header.a_name);
    slang_print_function(fun, 1);
 
    printf("************* IR for %s *******\n", (char*)fun->header.a_name);
    slang_print_ir(n, 0);
+#endif
 
    if (_mesa_strcmp((char*) fun->header.a_name, "main") == 0) {
       _slang_emit_code(n, A->program);
