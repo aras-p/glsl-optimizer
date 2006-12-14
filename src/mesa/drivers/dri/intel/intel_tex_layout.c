@@ -27,7 +27,7 @@
  /*
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
-  *   Michel Dänzer <keith@tungstengraphics.com>
+  *   Michel Dänzer <michel@tungstengraphics.com>
   */
 
 #include "intel_mipmap_tree.h"
