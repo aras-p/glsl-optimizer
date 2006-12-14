@@ -336,7 +336,5 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/shader \
 	-I$(TOP)/src/mesa/shader/grammar \
 	-I$(TOP)/src/mesa/shader/slang \
-	-I$(TOP)/src/mesa/shader/slang/OSDependent/Linux \
-	-I$(TOP)/src/mesa/shader/slang/OGLCompilersDLL \
 	-I$(TOP)/src/mesa/swrast \
 	-I$(TOP)/src/mesa/swrast_setup
