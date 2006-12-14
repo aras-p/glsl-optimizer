@@ -2,6 +2,7 @@
 #include "macros.h"
 
 #include "intel_context.h"
+#include "intel_batchbuffer.h"
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
 
@@ -155,9 +156,15 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
     * leaving the tree alone.
     */
    if (intelObj->mt &&
-       ((intelObj->mt->first_level > intelObj->firstLevel) ||
-        (intelObj->mt->last_level < intelObj->lastLevel) ||
-        (intelObj->mt->internal_format != firstImage->base.InternalFormat))) {
+       (intelObj->mt->target != intelObj->base.Target ||
+	intelObj->mt->internal_format != firstImage->base.InternalFormat ||
+	intelObj->mt->first_level != intelObj->firstLevel ||
+	intelObj->mt->last_level != intelObj->lastLevel ||
+	intelObj->mt->width0 != firstImage->base.Width ||
+	intelObj->mt->height0 != firstImage->base.Height ||
+	intelObj->mt->depth0 != firstImage->base.Depth ||
+	intelObj->mt->cpp != firstImage->base.TexFormat->TexelBytes ||
+	intelObj->mt->compressed != firstImage->base.IsCompressed)) {
       intel_miptree_release(intel, &intelObj->mt);
    }
 
@@ -197,6 +204,8 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
          }
       }
    }
+
+   intel_batchbuffer_flush(intel->batch);
 
    return GL_TRUE;
 }
