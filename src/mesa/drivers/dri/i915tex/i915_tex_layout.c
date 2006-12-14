@@ -212,7 +212,7 @@ i945_miptree_layout(struct intel_mipmap_tree * mt)
                y = mt->total_height - 4;
                x = (face - 4) * 8;
             }
-            else if (dim < 4) {
+            else if (dim < 4 && (face > 0 || mt->first_level > 0)) {
                y = mt->total_height - 4;
                x = face * 8;
             }
