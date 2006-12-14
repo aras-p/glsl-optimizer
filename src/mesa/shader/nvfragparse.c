@@ -39,14 +39,11 @@
 
 #include "glheader.h"
 #include "context.h"
-#include "hash.h"
 #include "imports.h"
 #include "macros.h"
-#include "mtypes.h"
 #include "prog_parameter.h"
 #include "prog_instruction.h"
 #include "nvfragparse.h"
-#include "nvprogram.h"
 #include "program.h"
 
 
