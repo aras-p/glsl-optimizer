@@ -33,10 +33,12 @@
 #include "context.h"
 #include "hash.h"
 #include "macros.h"
+#include "program.h"
 #include "shaderobjects.h"
 #include "shaderobjects_3dlabs.h"
 #include "slang_link.h"
 
+#define NEW_SLANG 1
 
 #if FEATURE_ARB_shader_objects
 
@@ -380,8 +382,8 @@ uniform(GLint location, GLsizei count, const GLvoid *values, GLenum type,
 #if NEW_SLANG
    if (ctx->ShaderObjects.Linked) {
       struct gl_linked_program *linked = ctx->ShaderObjects.Linked;
-      if (location >= 0 && location < linked->NumUniforms) {
-         GLfloat *v = linked->Uniforms[location].Value;
+      if (location >= 0 && location < linked->Uniforms->NumParameters) {
+         GLfloat *v = linked->Uniforms->ParameterValues[location];
          const GLfloat *fValues = (const GLfloat *) values; /* XXX */
          GLint i;
          if (type == GL_FLOAT_VEC4)
@@ -396,10 +398,10 @@ uniform(GLint location, GLsizei count, const GLvoid *values, GLenum type,
          return;
       }
    }
-#endif
-
+#else
    if (!(**pro).WriteUniform(pro, location, count, values, type))
       _mesa_error(ctx, GL_INVALID_OPERATION, caller);
+#endif
 }
 
 
@@ -850,10 +852,12 @@ _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB * name)
    GET_CURRENT_CONTEXT(ctx);
 
    if (ctx->ShaderObjects.Linked) {
-      struct gl_linked_program *linked = ctx->ShaderObjects.Linked;
+      const struct gl_linked_program *linked = ctx->ShaderObjects.Linked;
       GLuint loc;
-      for (loc = 0; loc < linked->NumUniforms; loc++) {
-         if (!strcmp(linked->Uniforms[loc].Name, name)) {
+      for (loc = 0; loc < linked->Uniforms->NumParameters; loc++) {
+         const struct gl_program_parameter *u
+            = linked->Uniforms->Parameters + loc;
+         if (u->Type == PROGRAM_UNIFORM && !strcmp(u->Name, name)) {
             return loc;
          }
       }
