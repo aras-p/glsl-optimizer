@@ -33,9 +33,6 @@
 
 #include "glheader.h"
 #include "context.h"
-#include "imports.h"
-#include "mtypes.h"
-#include "program.h"
 #include "prog_parameter.h"
 #include "prog_statevars.h"
 #include "programopt.h"
