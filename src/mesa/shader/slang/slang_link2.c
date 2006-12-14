@@ -33,7 +33,8 @@
 #include "hash.h"
 #include "macros.h"
 #include "program.h"
-#include "program_instruction.h"
+#include "prog_instruction.h"
+#include "prog_parameter.h"
 #include "shaderobjects.h"
 #include "slang_link.h"
 
@@ -108,7 +109,7 @@ link_varying_vars(struct gl_linked_program *linked, struct gl_program *prog)
          if (inst->SrcReg[j].File == PROGRAM_VARYING) {
             inst->SrcReg[j].File = newFile;
             inst->SrcReg[j].Index = map[ inst->SrcReg[j].Index ] + firstVarying;
-            varsRead |= (1 << inst->DstReg.Index);
+            varsRead |= (1 << inst->SrcReg[j].Index);
          }
       }
       /* XXX update program OutputsWritten, InputsRead */

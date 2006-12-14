@@ -33,7 +33,9 @@
 #include "get.h"
 #include "macros.h"
 #include "program.h"
-#include "program_instruction.h"
+#include "prog_instruction.h"
+#include "prog_parameter.h"
+#include "prog_statevars.h"
 #include "slang_emit.h"
 
 
@@ -554,6 +556,7 @@ static GLint
 slang_alloc_varying(struct gl_program *prog, const char *name)
 {
    GLint i = _mesa_add_varying(prog->Varying, name, 4); /* XXX fix size */
+#if 0
    if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
 #ifdef OLD_LINK
       i += VERT_RESULT_VAR0;
@@ -570,6 +573,7 @@ slang_alloc_varying(struct gl_program *prog, const char *name)
       prog->InputsRead |= (1 << (i + FRAG_ATTRIB_VAR0));
 #endif
    }
+#endif
    return i;
 }
 

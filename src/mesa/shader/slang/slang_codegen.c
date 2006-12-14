@@ -40,6 +40,8 @@
 #include "slang_ir.h"
 #include "mtypes.h"
 #include "program.h"
+#include "prog_instruction.h"
+#include "prog_parameter.h"
 #include "slang_print.h"
 
 

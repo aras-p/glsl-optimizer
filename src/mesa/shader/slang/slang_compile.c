@@ -31,6 +31,7 @@
 #include "imports.h"
 #include "context.h"
 #include "program.h"
+#include "prog_parameter.h"
 #include "grammar_mesa.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
