@@ -35,10 +35,12 @@
 #include "arbprogparse.h"
 #include "grammar_mesa.h"
 #include "program.h"
+#include "prog_parameter.h"
+#include "prog_statevars.h"
 #include "context.h"
 #include "macros.h"
 #include "mtypes.h"
-#include "program_instruction.h"
+#include "prog_instruction.h"
 
 
 /* For ARB programs, use the NV instruction limits */

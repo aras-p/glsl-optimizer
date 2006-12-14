@@ -45,7 +45,7 @@
 #include "mtypes.h"
 #include "nvprogram.h"
 #include "nvvertparse.h"
-#include "program_instruction.h"
+#include "prog_instruction.h"
 #include "program.h"
 
 

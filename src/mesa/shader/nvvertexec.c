@@ -34,7 +34,9 @@
 #include "macros.h"
 #include "mtypes.h"
 #include "nvvertexec.h"
-#include "program_instruction.h"
+#include "prog_parameter.h"
+#include "prog_statevars.h"
+#include "prog_instruction.h"
 #include "program.h"
 #include "math/m_matrix.h"
 
