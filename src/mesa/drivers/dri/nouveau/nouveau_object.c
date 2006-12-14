@@ -73,6 +73,8 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 	nouveauObjectOnSubchannel(nmesa, NvSubImageBlit, NvImageBlit);
 	BEGIN_RING_SIZE(NvSubImageBlit, NV10_IMAGE_BLIT_SET_CONTEXT_SURFACES_2D, 1);
 	OUT_RING(NvCtxSurf2D);
+	BEGIN_RING_SIZE(NvSubImageBlit, NV10_IMAGE_BLIT_SET_OPERATION, 1);
+	OUT_RING(3); /* SRCCOPY */
 #endif
 
 	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
