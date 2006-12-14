@@ -39,7 +39,6 @@
 
 #include "s_atifragshader.h"
 #include "s_alpha.h"
-#include "s_arbshader.h"
 #include "s_blend.h"
 #include "s_context.h"
 #include "s_depth.h"
