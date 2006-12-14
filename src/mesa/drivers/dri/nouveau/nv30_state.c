@@ -293,8 +293,10 @@ static void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 //		case GL_MAP2_VERTEX_4:
 //		case GL_MINMAX:
 		case GL_NORMALIZE:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_NORMALIZE_ENABLE, 1);
-			OUT_RING_CACHE(state);
+			if (nmesa->screen->card->type != NV_44) {
+				BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_NORMALIZE_ENABLE, 1);
+				OUT_RING_CACHE(state);
+			}
 			break;
 //		case GL_POINT_SMOOTH:
 		case GL_POLYGON_OFFSET_POINT:
