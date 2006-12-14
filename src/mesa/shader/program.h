@@ -121,6 +121,9 @@ extern struct prog_instruction *
 _mesa_realloc_instructions(struct prog_instruction *oldInst,
                            GLuint numOldInst, GLuint numNewInst);
 
+extern struct gl_program *
+_mesa_clone_program(GLcontext *ctx, const struct gl_program *prog);
+
 
 /**
  * Used for describing GL state referenced from inside ARB vertex and
@@ -203,8 +206,9 @@ typedef enum gl_state_index_ {
  */
 struct gl_program_parameter
 {
-   const char *Name;          /**< Null-terminated string */
+   const char *Name;        /**< Null-terminated string */
    enum register_file Type; /**< PROGRAM_NAMED_PARAM, CONSTANT or STATE_VAR */
+   GLuint Size;             /**< Number of components (1..4) */
    /**
     * A sequence of STATE_* tokens and integers to identify GL state.
     */
@@ -235,6 +239,14 @@ _mesa_new_parameter_list(void);
 
 extern void
 _mesa_free_parameter_list(struct gl_program_parameter_list *paramList);
+
+extern struct gl_program_parameter_list *
+_mesa_clone_parameter_list(const struct gl_program_parameter_list *list);
+
+extern GLint
+_mesa_add_parameter(struct gl_program_parameter_list *paramList,
+                    const char *name, const GLfloat values[4], GLuint size,
+                    enum register_file type);
 
 extern GLint
 _mesa_add_named_parameter(struct gl_program_parameter_list *paramList,

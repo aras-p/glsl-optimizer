@@ -365,6 +365,7 @@ _mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
 }
 
 
+
 /**
  * Add a new parameter to a parameter list.
  * \param paramList  the list to add the parameter to
@@ -374,10 +375,10 @@ _mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
  * \param type  type of parameter, such as 
  * \return  index of new parameter in the list, or -1 if error (out of mem)
  */
-static GLint
-add_parameter(struct gl_program_parameter_list *paramList,
-              const char *name, const GLfloat values[4], GLuint size,
-              enum register_file type)
+GLint
+_mesa_add_parameter(struct gl_program_parameter_list *paramList,
+                    const char *name, const GLfloat values[4], GLuint size,
+                    enum register_file type)
 {
    const GLuint n = paramList->NumParameters;
 
@@ -416,6 +417,7 @@ add_parameter(struct gl_program_parameter_list *paramList,
 
       paramList->Parameters[n].Name = name ? _mesa_strdup(name) : NULL;
       paramList->Parameters[n].Type = type;
+      paramList->Parameters[n].Size = size;
       if (values)
          COPY_4V(paramList->ParameterValues[n], values);
       return (GLint) n;
@@ -431,7 +433,7 @@ GLint
 _mesa_add_named_parameter(struct gl_program_parameter_list *paramList,
                           const char *name, const GLfloat values[4])
 {
-   return add_parameter(paramList, name, values, 4, PROGRAM_NAMED_PARAM);
+   return _mesa_add_parameter(paramList, name, values, 4, PROGRAM_NAMED_PARAM);
 }
 
 
@@ -460,7 +462,7 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
    }
 #endif
    size = 4; /** XXX fix */
-   return add_parameter(paramList, name, values, size, PROGRAM_CONSTANT);
+   return _mesa_add_parameter(paramList, name, values, size, PROGRAM_CONSTANT);
 }
 
 
@@ -489,7 +491,7 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
                                        size, &pos, &swizzle)) {
       return pos;
    }
-   return add_parameter(paramList, NULL, values, size, PROGRAM_CONSTANT);
+   return _mesa_add_parameter(paramList, NULL, values, size, PROGRAM_CONSTANT);
 }
 
 
@@ -504,7 +506,7 @@ _mesa_add_uniform(struct gl_program_parameter_list *paramList,
    }
    else {
       assert(size == 4);
-      i = add_parameter(paramList, name, NULL, size, PROGRAM_UNIFORM);
+      i = _mesa_add_parameter(paramList, name, NULL, size, PROGRAM_UNIFORM);
       return i;
    }
 }
@@ -521,7 +523,7 @@ _mesa_add_varying(struct gl_program_parameter_list *paramList,
    }
    else {
       assert(size == 4);
-      i = add_parameter(paramList, name, NULL, size, PROGRAM_VARYING);
+      i = _mesa_add_parameter(paramList, name, NULL, size, PROGRAM_VARYING);
       return i;
    }
 }
@@ -587,7 +589,7 @@ _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
    }
 
    name = make_state_string(stateTokens);
-   index = add_parameter(paramList, name, NULL, size, PROGRAM_STATE_VAR);
+   index = _mesa_add_parameter(paramList, name, NULL, size, PROGRAM_STATE_VAR);
    if (index >= 0) {
       GLuint i;
       for (i = 0; i < 6; i++) {
@@ -713,6 +715,36 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *paramLis
 
    *posOut = -1;
    return GL_FALSE;
+}
+
+
+struct gl_program_parameter_list *
+_mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
+{
+   struct gl_program_parameter_list *clone;
+   GLuint i;
+
+   clone = _mesa_new_parameter_list();
+   if (!clone)
+      return NULL;
+
+   /** Not too efficient, but correct */
+   for (i = 0; i < list->NumParameters; i++) {
+      struct gl_program_parameter *p = list->Parameters + i;
+      GLint j = _mesa_add_parameter(clone, p->Name, list->ParameterValues[i],
+                                    p->Size, p->Type);
+      ASSERT(j >= 0);
+      /* copy state indexes */
+      if (p->Type == PROGRAM_STATE_VAR) {
+         GLint k;
+         struct gl_program_parameter *q = clone->Parameters + j;
+         for (k = 0; k < 6; k++) {
+            q->StateIndexes[k] = p->StateIndexes[k];
+         }
+      }
+   }
+
+   return clone;
 }
 
 
@@ -1523,6 +1555,82 @@ _mesa_realloc_instructions(struct prog_instruction *oldInst,
 
    return newInst;
 }
+
+
+/**
+ * Return a copy of a program.
+ * XXX Problem here if the program object is actually OO-derivation
+ * made by a device driver.
+ */
+struct gl_program *
+_mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
+{
+   struct gl_program *clone;
+
+   clone = _mesa_new_program(ctx, prog->Target, prog->Id);
+   if (!clone)
+      return NULL;
+
+   assert(clone->Target == prog->Target);
+   clone->String = (GLubyte *) _mesa_strdup((char *) prog->String);
+   clone->RefCount = 1;
+   clone->Format = prog->Format;
+   clone->Instructions = _mesa_alloc_instructions(prog->NumInstructions);
+   if (!clone->Instructions) {
+      _mesa_delete_program(ctx, clone);
+      return NULL;
+   }
+   memcpy(clone->Instructions, prog->Instructions,
+          prog->NumInstructions * sizeof(struct prog_instruction));
+   clone->InputsRead = prog->InputsRead;
+   clone->OutputsWritten = prog->OutputsWritten;
+   clone->Parameters = _mesa_clone_parameter_list(prog->Parameters);
+   memcpy(clone->LocalParams, prog->LocalParams, sizeof(clone->LocalParams));
+   clone->Varying = _mesa_clone_parameter_list(prog->Varying);
+   memcpy(clone->LocalParams, prog->LocalParams, sizeof(clone->LocalParams));
+   clone->NumInstructions = prog->NumInstructions;
+   clone->NumTemporaries = prog->NumTemporaries;
+   clone->NumParameters = prog->NumParameters;
+   clone->NumAttributes = prog->NumAttributes;
+   clone->NumAddressRegs = prog->NumAddressRegs;
+   clone->NumNativeInstructions = prog->NumNativeInstructions;
+   clone->NumNativeTemporaries = prog->NumNativeTemporaries;
+   clone->NumNativeParameters = prog->NumNativeParameters;
+   clone->NumNativeAttributes = prog->NumNativeAttributes;
+   clone->NumNativeAddressRegs = prog->NumNativeAddressRegs;
+
+   switch (prog->Target) {
+   case GL_VERTEX_PROGRAM_ARB:
+      {
+         const struct gl_vertex_program *vp
+            = (const struct gl_vertex_program *) prog;
+         struct gl_vertex_program *vpc = (struct gl_vertex_program *) clone;
+         vpc->IsPositionInvariant = vp->IsPositionInvariant;
+      }
+      break;
+   case GL_FRAGMENT_PROGRAM_ARB:
+      {
+         const struct gl_fragment_program *fp
+            = (const struct gl_fragment_program *) prog;
+         struct gl_fragment_program *fpc = (struct gl_fragment_program *) clone;
+         memcpy(fpc->TexturesUsed, fp->TexturesUsed, sizeof(fp->TexturesUsed));
+         fpc->NumAluInstructions = fp->NumAluInstructions;
+         fpc->NumTexInstructions = fp->NumTexInstructions;
+         fpc->NumTexIndirections = fp->NumTexIndirections;
+         fpc->NumNativeAluInstructions = fp->NumNativeAluInstructions;
+         fpc->NumNativeTexInstructions = fp->NumNativeTexInstructions;
+         fpc->NumNativeTexIndirections = fp->NumNativeTexIndirections;
+         fpc->FogOption = fp->FogOption;
+         fpc->UsesKill = fp->UsesKill;
+      }
+      break;
+   default:
+      _mesa_problem(NULL, "Unexpected target in _mesa_clone_program");
+   }
+
+   return clone;
+}
+
 
 
 /**
