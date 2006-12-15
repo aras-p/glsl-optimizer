@@ -566,7 +566,7 @@ add_varying_binding (slang_varying_bindings *self, slang_export_data_quant *q, c
       }
    }
 
-   if (self->slot_count + slot_span > MAX_VARYING_FLOATS) {
+   if (self->slot_count + slot_span > MAX_VARYING * 4) {
       /* TODO: info log: error: MAX_VARYING_FLOATS exceeded */
       return GL_FALSE;
    }
