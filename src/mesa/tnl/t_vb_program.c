@@ -42,7 +42,8 @@
 #include "program.h"
 #include "simple_list.h"
 #include "mtypes.h"
-#include "program_instruction.h"
+#include "prog_instruction.h"
+#include "prog_statevars.h"
 #include "nvvertexec.h"
 #include "nvprogram.h"
 

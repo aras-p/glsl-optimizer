@@ -33,11 +33,14 @@
 #include "glheader.h"
 #include "macros.h"
 #include "enums.h"
+#include "program.h"
+#include "prog_instruction.h"
+#include "prog_parameter.h"
+#include "prog_print.h"
+#include "prog_statevars.h"
 #include "t_context.h" /* NOTE: very light dependency on this */
 #include "t_vp_build.h"
 
-#include "shader/program.h"
-#include "shader/program_instruction.h"
 
 struct state_key {
    unsigned light_global_enabled:1;

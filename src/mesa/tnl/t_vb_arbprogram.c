@@ -37,13 +37,15 @@
 #include "arbprogparse.h"
 #include "light.h"
 #include "program.h"
+#include "prog_instruction.h"
+#include "prog_parameter.h"
+#include "prog_statevars.h"
 #include "programopt.h"
 #include "math/m_matrix.h"
 #include "t_context.h"
 #include "t_pipeline.h"
 #include "t_vb_arbprogram.h"
 #include "tnl.h"
-#include "program_instruction.h"
 
 
 #define DISASSEM 0
