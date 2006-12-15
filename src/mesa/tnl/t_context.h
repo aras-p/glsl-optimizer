@@ -422,7 +422,7 @@ struct vertex_buffer
    GLvector4f  *ColorPtr[2];	                /* _TNL_BIT_COLOR0 */
    GLvector4f  *SecondaryColorPtr[2];           /* _TNL_BIT_COLOR1 */
    GLvector4f  *FogCoordPtr;	                /* _TNL_BIT_FOG */
-   GLvector4f  *VaryingPtr[MAX_VARYING_VECTORS];
+   GLvector4f  *VaryingPtr[MAX_VARYING];
 
    struct tnl_prim  *Primitive;	              
    GLuint      PrimitiveCount;	      

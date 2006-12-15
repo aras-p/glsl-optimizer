@@ -199,7 +199,7 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
        (ctx->VertexProgram._Enabled && ctx->VertexProgram.PointSizeEnabled))
       RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POINTSIZE );
 
-#if NEW_SLANG
+#if 1 /* XXX NEW_SLANG */
    RENDERINPUTS_SET_RANGE( tnl->render_inputs_bitset,
                            _TNL_FIRST_GENERIC, _TNL_LAST_GENERIC );
 #else
