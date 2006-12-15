@@ -43,7 +43,7 @@
 #include "mtypes.h"
 #include "arbprogparse.h"
 #include "program.h"
-#include "program_instruction.h"
+#include "prog_instruction.h"
 #include "math/m_matrix.h"
 #include "math/m_translate.h"
 #include "t_context.h"
