@@ -98,11 +98,11 @@ SWRAST_SOURCES = \
 	swrast/s_drawpix.c \
 	swrast/s_feedback.c \
 	swrast/s_fog.c \
+	swrast/s_fragprog.c \
 	swrast/s_imaging.c \
 	swrast/s_lines.c \
 	swrast/s_logic.c \
 	swrast/s_masking.c \
-	swrast/s_nvfragprog.c \
 	swrast/s_points.c \
 	swrast/s_readpix.c \
 	swrast/s_span.c \
@@ -157,9 +157,16 @@ SHADER_SOURCES = \
 	shader/nvvertexec.c \
 	shader/nvvertparse.c \
 	shader/program.c \
+	shader/prog_instruction.c \
+	shader/prog_parameter.c \
+	shader/prog_print.c \
+	shader/prog_statevars.c \
 	shader/programopt.c \
-	shader/shaderobjects.c \
-	shader/shaderobjects_3dlabs.c
+	shader/shader_api.c \
+
+
+##	shader/shaderobjects.c \
+##	shader/shaderobjects_3dlabs.c
 
 SLANG_SOURCES =	\
 	shader/slang/slang_analyse.c	\
