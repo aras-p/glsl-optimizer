@@ -181,9 +181,9 @@ typedef struct
 
 typedef struct
 {
-   slang_varying_binding bindings[MAX_VARYING_FLOATS];
+   slang_varying_binding bindings[MAX_VARYING * 4];
    GLuint binding_count;
-   slang_varying_slot slots[MAX_VARYING_FLOATS];
+   slang_varying_slot slots[MAX_VARYING * 4];
    GLuint slot_count;
 } slang_varying_bindings;
 /*@}*/
