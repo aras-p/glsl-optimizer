@@ -135,6 +135,17 @@ slang_operation_new(GLuint count)
 }
 
 
+/**
+ * Delete operation and all children
+ */
+void
+slang_operation_delete(slang_operation *oper)
+{
+   slang_operation_destruct(oper);
+   _mesa_free(oper);
+}
+
+
 slang_operation *
 slang_operation_grow(GLuint *numChildren, slang_operation **children)
 {

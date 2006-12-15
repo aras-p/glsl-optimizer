@@ -320,18 +320,6 @@ _slang_link2(GLcontext *ctx,
    linked->FragmentProgram = (struct gl_fragment_program *)
       _mesa_clone_program(ctx, &fragProg->Base);
 
-#if 1
-   printf("************** orig fragment program\n");
-   _mesa_print_program(&fragProg->Base);
-   _mesa_print_program_parameters(ctx, &fragProg->Base);
-#endif
-
-#if 1
-   printf("************** orig vertex program\n");
-   _mesa_print_program(&vertProg->Base);
-   _mesa_print_program_parameters(ctx, &fragProg->Base);
-#endif
-
    link_varying_vars(linked, &linked->VertexProgram->Base);
    link_varying_vars(linked, &linked->FragmentProgram->Base);
 
@@ -345,10 +333,22 @@ _slang_link2(GLcontext *ctx,
    linked->FragmentProgram->Base.Parameters = linked->Uniforms;
 
 #if 1
-   printf("************** linked/cloned frag prog\n");
+   printf("************** original fragment program\n");
+   _mesa_print_program(&fragProg->Base);
+   _mesa_print_program_parameters(ctx, &fragProg->Base);
+#endif
+#if 1
+   printf("************** linked fragment prog\n");
    _mesa_print_program(&linked->FragmentProgram->Base);
    _mesa_print_program_parameters(ctx, &linked->FragmentProgram->Base);
-   printf("************** linked/cloned vert prog\n");
+#endif
+#if 1
+   printf("************** original vertex program\n");
+   _mesa_print_program(&vertProg->Base);
+   _mesa_print_program_parameters(ctx, &fragProg->Base);
+#endif
+#if 1
+   printf("************** linked vertex prog\n");
    _mesa_print_program(&linked->VertexProgram->Base);
    _mesa_print_program_parameters(ctx, &linked->VertexProgram->Base);
 #endif

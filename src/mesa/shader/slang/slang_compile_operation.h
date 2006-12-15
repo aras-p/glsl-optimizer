@@ -138,6 +138,9 @@ slang_operation_copy(slang_operation *, const slang_operation *);
 extern slang_operation *
 slang_operation_new(GLuint count);
 
+extern void
+slang_operation_delete(slang_operation *oper);
+
 extern slang_operation *
 slang_operation_grow(GLuint *numChildren, slang_operation **children);
 

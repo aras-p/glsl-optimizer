@@ -130,6 +130,15 @@ _slang_new_ir_storage(enum register_file file, GLint index, GLint size)
 }
 
 
+slang_ir_storage *
+_slang_clone_ir_storage(slang_ir_storage *store)
+{
+   slang_ir_storage *clone
+      = _slang_new_ir_storage(store->File, store->Index, store->Size);
+   return clone;
+}
+
+
 static const char *
 swizzle_string(GLuint swizzle)
 {
@@ -194,10 +203,10 @@ sizeof_struct(const slang_struct *s)
 }
 
 
-static GLuint
-sizeof_type(const slang_fully_specified_type *t)
+GLuint
+_slang_sizeof_type_specifier(const slang_type_specifier *spec)
 {
-   switch (t->specifier.type) {
+   switch (spec->type) {
    case slang_spec_void:
       abort();
       return 0;
@@ -240,7 +249,7 @@ sizeof_type(const slang_fully_specified_type *t)
       abort();
       return 0;
    case slang_spec_struct:
-      return sizeof_struct(t->specifier._struct);
+      return sizeof_struct(spec->_struct);
    case slang_spec_array:
       return 1; /* XXX */
    default:
@@ -248,6 +257,14 @@ sizeof_type(const slang_fully_specified_type *t)
       return 0;
    }
    return 0;
+}
+
+
+
+static GLuint
+sizeof_type(const slang_fully_specified_type *t)
+{
+   return _slang_sizeof_type_specifier(&t->specifier);
 }
 
 
@@ -269,7 +286,7 @@ slang_print_ir(const slang_ir_node *n, int indent)
    switch (n->Opcode) {
    case IR_SEQ:
 #if IND
-      printf("SEQ  store %p\n", (void*) n->Store);
+      printf("SEQ  at %p\n", (void*) n);
 #endif
       assert(n->Children[0]);
       assert(n->Children[1]);
@@ -325,12 +342,22 @@ slang_print_ir(const slang_ir_node *n, int indent)
 
 
 static GLint
-alloc_temporary(slang_gen_context *gc)
+alloc_temporary(slang_gen_context *gc, GLint size)
 {
-   GLuint i;
+   const GLuint sz4 = (size + 3) / 4;
+   GLuint i, j;
+   ASSERT(size > 0); /* number of floats */
    for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
-      if (!gc->TempUsed[i]) {
-         gc->TempUsed[i] = GL_TRUE;
+      GLuint found = 0;
+      for (j = 0; j < sz4; j++) {
+         if (!gc->TempUsed[i + j]) {
+            found++;
+         }
+      }
+      if (found == sz4) {
+         /* found block of size/4 free regs */
+         for (j = 0; j < sz4; j++)
+            gc->TempUsed[i + j] = GL_TRUE;
          return i;
       }
    }
@@ -349,10 +376,14 @@ is_temporary(const slang_gen_context *gc, const slang_ir_storage *st)
 
 
 static void
-free_temporary(slang_gen_context *gc, GLuint r)
+free_temporary(slang_gen_context *gc, GLuint r, GLint size)
 {
-   if (gc->TempUsed[r])
-      gc->TempUsed[r] = GL_FALSE;
+   const GLuint sz4 = (size + 3) / 4;
+   GLuint i;
+   for (i = 0; i < sz4; i++) {
+      if (gc->TempUsed[r + i])
+         gc->TempUsed[r + i] = GL_FALSE;
+   }
 }
 
 
@@ -589,7 +620,7 @@ slang_alloc_temp_storage(slang_gen_context *gc, slang_ir_node *n, GLint size)
    assert(!n->Var);
    assert(!n->Store);
    assert(size > 0);
-   indx = alloc_temporary(gc);
+   indx = alloc_temporary(gc, size);
    n->Store = _slang_new_ir_storage(PROGRAM_TEMPORARY, indx, size);
 }
 
@@ -609,9 +640,12 @@ void
 slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
                       struct gl_program *prog)
 {
-   int k = 0;
+   assert(gc);
+   assert(n);
+   assert(prog);
+
    if (!n->Store) {
-      /**assert(n->Var);**/
+      /* allocate storage info for this node */
       if (n->Var && n->Var->aux) {
          /* node storage info = var storage info */
          n->Store = (slang_ir_storage *) n->Var->aux;
@@ -619,21 +653,19 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
       else {
          /* alloc new storage info */
          n->Store = _slang_new_ir_storage(PROGRAM_UNDEFINED, -1, -5);
-         k = 1;
-         /*XXX n->Store->Size = sizeof(var's type) */
          if (n->Var)
             n->Var->aux = n->Store;
       }
    }
 
    if (n->Opcode == IR_VAR_DECL) {
-      /* allocate storage for a user's variable */
+      /* storage declaration */
       assert(n->Var);
-      if (n->Store->Index < 0) {
+      if (n->Store->Index < 0) { /* XXX assert this? */
          assert(gc);
          n->Store->File = PROGRAM_TEMPORARY;
-         n->Store->Index = alloc_temporary(gc);
          n->Store->Size = sizeof_type(&n->Var->type);
+         n->Store->Index = alloc_temporary(gc, n->Store->Size);
          printf("alloc var %s storage at %d (size %d)\n",
                 (char *) n->Var->a_name,
                 n->Store->Index,
@@ -641,6 +673,7 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
          assert(n->Store->Size > 0);
          n->Var->declared = GL_TRUE;
       }
+      assert(n->Store->Size > 0);
       return;
    }
 
@@ -649,7 +682,12 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
       GLint i;
 
       assert(n->Var);
-      assert(prog);
+
+      if (n->Store->Size < 0) {
+         /* determine var/storage size now */
+         n->Store->Size = sizeof_type(&n->Var->type);
+         assert(n->Store->Size > 0);
+      }
 
 #if 0
       assert(n->Var->declared ||
@@ -665,7 +703,6 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
       if (i >= 0) {
          n->Store->File = PROGRAM_INPUT;
          n->Store->Index = i;
-         n->Store->Size = sizeof_type(&n->Var->type);
          assert(n->Store->Size > 0);
          prog->InputsRead |= (1 << i);
          return;
@@ -675,7 +712,6 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
       if (i >= 0) {
          n->Store->File = PROGRAM_OUTPUT;
          n->Store->Index = i;
-         n->Store->Size = sizeof_type(&n->Var->type);
          prog->OutputsWritten |= (1 << i);
          return;
       }
@@ -684,7 +720,6 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
       if (i >= 0) {
          n->Store->File = PROGRAM_STATE_VAR;
          n->Store->Index = i;
-         n->Store->Size = sizeof_type(&n->Var->type);
          return;
       }
 
@@ -692,7 +727,6 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
       if (i >= 0) {
          n->Store->File = PROGRAM_CONSTANT;
          n->Store->Index = i;
-         n->Store->Size = sizeof_type(&n->Var->type);
          return;
       }
 
@@ -702,7 +736,6 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
          if (i >= 0) {
             n->Store->File = PROGRAM_UNIFORM;
             n->Store->Index = i;
-            n->Store->Size = sizeof_type(&n->Var->type);
             return;
          }
       }
@@ -717,27 +750,17 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
 #else
             n->Store->File = PROGRAM_VARYING;
 #endif
-            n->Store->Size = sizeof_type(&n->Var->type);
             n->Store->Index = i;
             return;
          }
       }
 
-      /* what is this?!? */
-      /*
-      abort();
-      */
-   }
-
-   if (n->Store->File == PROGRAM_TEMPORARY && n->Store->Index < 0) {
-      /* unnamed intermediate temporary */
-      if (gc)
-         n->Store->Index = alloc_temporary(gc);
-      return;
-   }
-
-   if (gc && n->Store->File == PROGRAM_UNDEFINED && n->Store->Size < 0) {
-      abort();
+      if (n->Store->File == PROGRAM_UNDEFINED && n->Store->Index < 0) {
+         /* ordinary local var */
+         assert(n->Store->Size > 0);
+         n->Store->File = PROGRAM_TEMPORARY;
+         n->Store->Index = alloc_temporary(gc, n->Store->Size);
+      }
    }
 }
 
@@ -755,6 +778,7 @@ alloc_constant(const GLfloat v[], GLuint size, struct gl_program *prog)
 /**
  * Swizzle a swizzle.
  */
+#if 0
 static GLuint
 swizzle_compose(GLuint swz1, GLuint swz2)
 {
@@ -766,6 +790,7 @@ swizzle_compose(GLuint swz1, GLuint swz2)
    swz = MAKE_SWIZZLE4(s[0], s[1], s[2], s[3]);
    return swz;
 }
+#endif
 
 
 /**
@@ -783,6 +808,7 @@ storage_to_dst_reg(struct prog_dst_register *dst, const slang_ir_storage *st,
    };
    dst->File = st->File;
    dst->Index = st->Index;
+   assert(st->File != PROGRAM_UNDEFINED);
    assert(st->Size >= 1);
    assert(st->Size <= 4);
    dst->WriteMask = defaultWritemask[st->Size - 1] & writemask;
@@ -805,6 +831,7 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st,
      
    src->File = st->File;
    src->Index = st->Index;
+   assert(st->File != PROGRAM_UNDEFINED);
    assert(st->Size >= 1);
    assert(st->Size <= 4);
    /* XXX swizzling logic here may need some work */
@@ -945,7 +972,8 @@ gen(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
           * Just modify the RHS to put its result into the dest of this
           * MOVE operation.  Then, this MOVE is a no-op.
           */
-         free_temporary(gc, n->Children[1]->Store->Index);
+         free_temporary(gc, n->Children[1]->Store->Index,
+                        n->Children[1]->Store->Size);
          *n->Children[1]->Store = *n->Children[0]->Store;
          /* fixup the prev (RHS) instruction */
          storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
@@ -954,14 +982,40 @@ gen(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
       else
 #endif
       {
-         inst = new_instruction(prog, OPCODE_MOV);
-         storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
-         storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store,
-                            n->Children[1]->Swizzle);
-         if (n->Children[1]->Store->File == PROGRAM_TEMPORARY) {
-            free_temporary(gc, n->Children[1]->Store->Index);
+#if 1
+         if (n->Children[0]->Store->Size > 4) {
+            /* move matrix/struct etc */
+            slang_ir_storage dstStore = *n->Children[0]->Store;
+            slang_ir_storage srcStore = *n->Children[1]->Store;
+            GLint size = srcStore.Size;
+            ASSERT(n->Children[0]->Writemask == WRITEMASK_XYZW);
+            ASSERT(n->Children[1]->Swizzle == SWIZZLE_NOOP);
+            dstStore.Size = 4;
+            srcStore.Size = 4;
+            while (size >= 4) {
+               inst = new_instruction(prog, OPCODE_MOV);
+               inst->Comment = _mesa_strdup("IR_MOVE block");
+               storage_to_dst_reg(&inst->DstReg, &dstStore, n->Writemask);
+               storage_to_src_reg(&inst->SrcReg[0], &srcStore,
+                                  n->Children[1]->Swizzle);
+               srcStore.Index++;
+               dstStore.Index++;
+               size -= 4;
+            }
          }
-         inst->Comment = n->Comment;
+         else
+#endif
+         {
+            inst = new_instruction(prog, OPCODE_MOV);
+            storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
+            storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store,
+                               n->Children[1]->Swizzle);
+         }
+         if (n->Children[1]->Store->File == PROGRAM_TEMPORARY) {
+            free_temporary(gc, n->Children[1]->Store->Index,
+                           n->Children[1]->Store->Size);
+         }
+         /*inst->Comment = _mesa_strdup("IR_MOVE");*/
          n->Store = n->Children[0]->Store; /*XXX new */
          return inst;
       }
@@ -1012,14 +1066,24 @@ gen(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 }
 
 
+slang_gen_context *
+_slang_new_codegen_context(void)
+{
+   slang_gen_context *gc = (slang_gen_context *) _mesa_calloc(sizeof(*gc));
+   return gc;
+}
+
+
 
 GLboolean
-_slang_emit_code(slang_ir_node *n, struct gl_program *prog)
+_slang_emit_code(slang_ir_node *n, slang_gen_context *gc,
+                 struct gl_program *prog)
 {
-   slang_gen_context *gc;
    /*GET_CURRENT_CONTEXT(ctx);*/
 
-   gc = (slang_gen_context *) _mesa_calloc(sizeof(*gc));
+   /*
+   gc = _slang_new_codegen_context();
+   */
 
    printf("************ Begin generate code\n");
 

@@ -32,9 +32,8 @@
 #include "mtypes.h"
 
 
-typedef struct {
-   GLboolean TempUsed[MAX_PROGRAM_TEMPS];
-} slang_gen_context;
+extern slang_gen_context *
+_slang_new_codegen_context(void);
 
 
 extern void
@@ -45,12 +44,21 @@ extern slang_ir_storage *
 _slang_new_ir_storage(enum register_file file, GLint index, GLint size);
 
 
+extern slang_ir_storage *
+_slang_clone_ir_storage(slang_ir_storage *store);
+
+
+extern GLuint
+_slang_sizeof_type_specifier(const slang_type_specifier *spec);
+
+
 extern void
 slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
                       struct gl_program *prog);
 
 extern GLboolean
-_slang_emit_code(slang_ir_node *n, struct gl_program *prog);
+_slang_emit_code(slang_ir_node *n, slang_gen_context *gc,
+                 struct gl_program *prog);
 
 
 #endif /* SLANG_EMIT_H */
