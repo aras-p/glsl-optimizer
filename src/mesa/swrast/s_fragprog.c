@@ -22,15 +22,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/*
- * Regarding GL_NV_fragment_program:
- *
- * Portions of this software may use or implement intellectual
- * property owned and licensed by NVIDIA Corporation. NVIDIA disclaims
- * any and all warranties with respect to such intellectual property,
- * including any use thereof or modifications thereto.
- */
-
 #include "glheader.h"
 #include "colormac.h"
 #include "context.h"
@@ -39,7 +30,7 @@
 #include "prog_print.h"
 #include "program.h"
 
-#include "s_nvfragprog.h"
+#include "s_fragprog.h"
 #include "s_span.h"
 
 

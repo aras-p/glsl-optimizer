@@ -45,7 +45,7 @@
 #include "s_fog.h"
 #include "s_logic.h"
 #include "s_masking.h"
-#include "s_nvfragprog.h"
+#include "s_fragprog.h"
 #include "s_span.h"
 #include "s_stencil.h"
 #include "s_texcombine.h"

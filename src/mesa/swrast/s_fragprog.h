@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,15 +23,16 @@
  */
 
 
-#ifndef S_NVFRAGPROG_H
-#define S_NVFRAGPROG_H
+#ifndef S_FRAGPROG_H
+#define S_FRAGPROG_H
 
 
 #include "s_context.h"
 
 
 extern void
-_swrast_exec_fragment_program( GLcontext *ctx, SWspan *span );
+_swrast_exec_fragment_program(GLcontext *ctx, SWspan *span);
 
 
-#endif
+#endif /* S_FRAGPROG_H */
+
