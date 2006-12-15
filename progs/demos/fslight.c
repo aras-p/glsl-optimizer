@@ -20,6 +20,10 @@
 #include <GL/gl.h>
 #include <GL/glut.h>
 #include <GL/glext.h>
+#include "extfuncs.h"
+
+static char *FragProgFile = NULL;
+static char *VertProgFile = NULL;
 
 static GLfloat diffuse[4] = { 0.5f, 0.5f, 1.0f, 1.0f };
 static GLfloat specular[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
@@ -35,7 +39,7 @@ static GLint uDiffuse;
 static GLint uSpecular;
 
 static GLint win = 0;
-static GLboolean anim = GL_TRUE;
+static GLboolean anim = GL_FALSE;
 static GLboolean wire = GL_FALSE;
 static GLboolean pixelLight = GL_TRUE;
 
@@ -43,23 +47,6 @@ static GLint t0 = 0;
 static GLint frames = 0;
 
 static GLfloat xRot = 0.0f, yRot = 0.0f;
-
-static PFNGLCREATESHADERPROC glCreateShader_func = NULL;
-static PFNGLSHADERSOURCEPROC glShaderSource_func = NULL;
-static PFNGLGETSHADERSOURCEPROC glGetShaderSource_func = NULL;
-static PFNGLCOMPILESHADERPROC glCompileShader_func = NULL;
-static PFNGLCREATEPROGRAMPROC glCreateProgram_func = NULL;
-static PFNGLDELETEPROGRAMPROC glDeleteProgram_func = NULL;
-static PFNGLDELETESHADERPROC glDeleteShader_func = NULL;
-static PFNGLATTACHSHADERPROC glAttachShader_func = NULL;
-static PFNGLLINKPROGRAMPROC glLinkProgram_func = NULL;
-static PFNGLUSEPROGRAMPROC glUseProgram_func = NULL;
-static PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation_func = NULL;
-static PFNGLISPROGRAMPROC glIsProgram_func = NULL;
-static PFNGLISSHADERPROC glIsShader_func = NULL;
-static PFNGLUNIFORM3FVPROC glUniform3fv_func = NULL;
-static PFNGLUNIFORM3FVPROC glUniform4fv_func = NULL;
-
 
 
 static void
@@ -217,6 +204,131 @@ SpecialKey(int key, int x, int y)
 
 
 static void
+TestFunctions(void)
+{
+   printf("Error 0x%x at line %d\n", glGetError(), __LINE__);
+   {
+      GLfloat pos[3];
+      glUniform3fv_func(uLightPos, 1, lightPos);
+      glGetUniformfv_func(program, uLightPos, pos);
+      printf("Error 0x%x at line %d\n", glGetError(), __LINE__);
+      printf("Light pos %g %g %g\n", pos[0], pos[1], pos[2]);
+   }
+
+
+   {
+      GLfloat m[16], result[16];
+      GLint mPos;
+      int i;
+
+      for (i = 0; i < 16; i++)
+         m[i] = (float) i;
+
+      mPos = glGetUniformLocation_func(program, "m");
+      printf("Error 0x%x at line %d\n", glGetError(), __LINE__);
+      glUniformMatrix4fv_func(mPos, 1, GL_FALSE, m);
+      printf("Error 0x%x at line %d\n", glGetError(), __LINE__);
+
+      glGetUniformfv_func(program, mPos, result);
+      printf("Error 0x%x at line %d\n", glGetError(), __LINE__);
+
+      for (i = 0; i < 16; i++) {
+         printf("%8g %8g\n", m[i], result[i]);
+      }
+   }
+
+   assert(glIsProgram_func(program));
+   assert(glIsShader_func(fragShader));
+   assert(glIsShader_func(vertShader));
+
+   /* attached shaders */
+   {
+      GLuint shaders[20];
+      GLsizei count;
+      int i;
+      glGetAttachedShaders_func(program, 20, &count, shaders);
+      for (i = 0; i < count; i++) {
+         printf("Attached: %u\n", shaders[i]);
+         assert(shaders[i] == fragShader ||
+                shaders[i] == vertShader);
+      }
+   }
+
+   {
+      GLchar log[1000];
+      GLsizei len;
+      glGetShaderInfoLog_func(vertShader, 1000, &len, log);
+      printf("Vert Shader Info Log: %s\n", log);
+      glGetShaderInfoLog_func(fragShader, 1000, &len, log);
+      printf("Frag Shader Info Log: %s\n", log);
+      glGetProgramInfoLog_func(program, 1000, &len, log);
+      printf("Program Info Log: %s\n", log);
+   }
+}
+
+
+static void
+LoadAndCompileShader(GLuint shader, const char *text)
+{
+   GLint stat;
+
+   glShaderSource_func(shader, 1, (const GLchar **) &text, NULL);
+
+   glCompileShader_func(shader);
+
+   glGetShaderiv_func(shader, GL_COMPILE_STATUS, &stat);
+   if (!stat) {
+      GLchar log[1000];
+      GLsizei len;
+      glGetShaderInfoLog_func(shader, 1000, &len, log);
+      fprintf(stderr, "Problem compiling shader: %s\n", log);
+      exit(1);
+   }
+}
+
+
+/**
+ * Read a shader from a file.
+ */
+static void
+ReadShader(GLuint shader, const char *filename)
+{
+   const int max = 100*1000;
+   int n;
+   char *buffer = (char*) malloc(max);
+   FILE *f = fopen(filename, "r");
+   if (!f) {
+      fprintf(stderr, "Unable to open shader file %s\n", filename);
+      exit(1);
+   }
+
+   n = fread(buffer, 1, max, f);
+   printf("Read %d bytes from shader file %s\n", n, filename);
+   if (n > 0) {
+      buffer[n] = 0;
+      LoadAndCompileShader(shader, buffer);
+   }
+
+   fclose(f);
+   free(buffer);
+}
+
+
+static void
+CheckLink(GLuint prog)
+{
+   GLint stat;
+   glGetProgramiv_func(prog, GL_LINK_STATUS, &stat);
+   if (!stat) {
+      GLchar log[1000];
+      GLsizei len;
+      glGetProgramInfoLog_func(prog, 1000, &len, log);
+      fprintf(stderr, "Linker error:\n%s\n", log);
+   }
+}
+
+
+static void
 Init(void)
 {
    static const char *fragShaderText =
@@ -236,8 +348,6 @@ Init(void)
       "   gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
       "   normal = gl_NormalMatrix * gl_Normal;\n"
       "}\n";
-
-
    const char *version;
 
    version = (const char *) glGetString(GL_VERSION);
@@ -246,40 +356,33 @@ Init(void)
       /*exit(1);*/
    }
 
-
-   glCreateShader_func = (PFNGLCREATESHADERPROC) glutGetProcAddress("glCreateShader");
-   glDeleteShader_func = (PFNGLDELETESHADERPROC) glutGetProcAddress("glDeleteShader");
-   glDeleteProgram_func = (PFNGLDELETEPROGRAMPROC) glutGetProcAddress("glDeleteProgram");
-   glShaderSource_func = (PFNGLSHADERSOURCEPROC) glutGetProcAddress("glShaderSource");
-   glGetShaderSource_func = (PFNGLGETSHADERSOURCEPROC) glutGetProcAddress("glGetShaderSource");
-   glCompileShader_func = (PFNGLCOMPILESHADERPROC) glutGetProcAddress("glCompileShader");
-   glCreateProgram_func = (PFNGLCREATEPROGRAMPROC) glutGetProcAddress("glCreateProgram");
-   glAttachShader_func = (PFNGLATTACHSHADERPROC) glutGetProcAddress("glAttachShader");
-   glLinkProgram_func = (PFNGLLINKPROGRAMPROC) glutGetProcAddress("glLinkProgram");
-   glUseProgram_func = (PFNGLUSEPROGRAMPROC) glutGetProcAddress("glUseProgram");
-   glGetUniformLocation_func = (PFNGLGETUNIFORMLOCATIONPROC) glutGetProcAddress("glGetUniformLocation");
-   glIsProgram_func = (PFNGLISPROGRAMPROC) glutGetProcAddress("glIsProgram");
-   glIsShader_func = (PFNGLISSHADERPROC) glutGetProcAddress("glIsShader");
-   glUniform3fv_func = (PFNGLUNIFORM3FVPROC) glutGetProcAddress("glUniform3fv");
-   glUniform4fv_func = (PFNGLUNIFORM3FVPROC) glutGetProcAddress("glUniform4fv");
+   GetExtensionFuncs();
 
    fragShader = glCreateShader_func(GL_FRAGMENT_SHADER);
-   glShaderSource_func(fragShader, 1, &fragShaderText, NULL);
-   glCompileShader_func(fragShader);
+   if (FragProgFile)
+      ReadShader(fragShader, FragProgFile);
+   else
+      LoadAndCompileShader(fragShader, fragShaderText);
+
 
    vertShader = glCreateShader_func(GL_VERTEX_SHADER);
-   glShaderSource_func(vertShader, 1, &vertShaderText, NULL);
-   glCompileShader_func(vertShader);
+   if (VertProgFile)
+      ReadShader(vertShader, VertProgFile);
+   else
+      LoadAndCompileShader(vertShader, vertShaderText);
 
    program = glCreateProgram_func();
    glAttachShader_func(program, fragShader);
    glAttachShader_func(program, vertShader);
    glLinkProgram_func(program);
+   CheckLink(program);
    glUseProgram_func(program);
 
    uLightPos = glGetUniformLocation_func(program, "lightPos");
    uDiffuse = glGetUniformLocation_func(program, "diffuse");
    uSpecular = glGetUniformLocation_func(program, "specular");
+   printf("LightPos %d  DiffusePos %d  SpecularPos %d\n",
+          uLightPos, uDiffuse, uSpecular);
 
    glUniform4fv_func(uDiffuse, 1, diffuse);
    glUniform4fv_func(uSpecular, 1, specular);
@@ -296,7 +399,7 @@ Init(void)
    printf("Press p to toggle between per-pixel and per-vertex lighting\n");
 
    /* test glGetShaderSource() */
-   {
+   if (0) {
       GLsizei len = strlen(fragShaderText) + 1;
       GLsizei lenOut;
       GLchar *src =(GLchar *) malloc(len * sizeof(GLchar));
@@ -310,6 +413,26 @@ Init(void)
    assert(glIsProgram_func(program));
    assert(glIsShader_func(fragShader));
    assert(glIsShader_func(vertShader));
+
+   glColor3f(1, 0, 0);
+#if 0
+   TestFunctions();
+#endif
+}
+
+
+static void
+ParseOptions(int argc, char *argv[])
+{
+   int i;
+   for (i = 1; i < argc; i++) {
+      if (strcmp(argv[i], "-fs") == 0) {
+         FragProgFile = argv[i+1];
+      }
+      else if (strcmp(argv[i], "-vs") == 0) {
+         VertProgFile = argv[i+1];
+      }
+   }
 }
 
 
@@ -318,7 +441,7 @@ main(int argc, char *argv[])
 {
    glutInit(&argc, argv);
    glutInitWindowPosition( 0, 0);
-   glutInitWindowSize(200, 200);
+   glutInitWindowSize(100, 100);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    win = glutCreateWindow(argv[0]);
    glutReshapeFunc(Reshape);
@@ -327,6 +450,7 @@ main(int argc, char *argv[])
    glutDisplayFunc(Redisplay);
    if (anim)
       glutIdleFunc(Idle);
+   ParseOptions(argc, argv);
    Init();
    glutMainLoop();
    return 0;
