@@ -515,8 +515,11 @@ void (*PolygonStipple)(GLcontext *ctx, const GLubyte *mask );
 void (*ReadBuffer)( GLcontext *ctx, GLenum buffer );
 /** Set rasterization mode */
 void (*RenderMode)(GLcontext *ctx, GLenum mode );
+
 /** Define the scissor box */
-void (*Scissor)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
+static void nv20Scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+{
+}
 
 /** Select flat or smooth shading */
 static void nv20ShadeModel(GLcontext *ctx, GLenum mode)
@@ -582,8 +585,33 @@ static void nv20Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     OUT_RING_CACHE((h << 16) | y);
 }
 
-void nv20InitStateFuncs(struct dd_function_table *func)
+/* Initialise any card-specific non-GL related state */
+static GLboolean nv20InitCard(nouveauContextPtr nmesa)
 {
+   return GL_TRUE;
+}
+
+/* Update buffer offset/pitch/format */
+static GLboolean nv20BindBuffers(nouveauContextPtr nmesa, int num_color,
+				 nouveau_renderbuffer **color,
+				 nouveau_renderbuffer *depth)
+{
+   return GL_TRUE;
+}
+
+/* Update anything that depends on the window position/size */
+static void nv20WindowMoved(nouveauContextPtr nmesa)
+{
+}
+
+void nv20InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	nmesa->hw_func.InitCard		= nv20InitCard;
+	nmesa->hw_func.BindBuffers	= nv20BindBuffers;
+	nmesa->hw_func.WindowMoved	= nv20WindowMoved;
+
 	func->AlphaFunc			= nv20AlphaFunc;
 	func->BlendColor		= nv20BlendColor;
 	func->BlendEquationSeparate	= nv20BlendEquationSeparate;
@@ -615,8 +643,8 @@ void nv20InitStateFuncs(struct dd_function_table *func)
 	func->PolygonStipple		= nv20PolygonStipple;
 	func->ReadBuffer		= nv20ReadBuffer;
 	func->RenderMode		= nv20RenderMode;
-	func->Scissor			= nv20Scissor;
 #endif
+	func->Scissor			= nv20Scissor;
 	func->ShadeModel		= nv20ShadeModel;
 	func->StencilFuncSeparate	= nv20StencilFuncSeparate;
 	func->StencilMaskSeparate	= nv20StencilMaskSeparate;

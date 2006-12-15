@@ -500,8 +500,11 @@ void (*PolygonStipple)(GLcontext *ctx, const GLubyte *mask );
 void (*ReadBuffer)( GLcontext *ctx, GLenum buffer );
 /** Set rasterization mode */
 void (*RenderMode)(GLcontext *ctx, GLenum mode );
+
 /** Define the scissor box */
-void (*Scissor)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
+static void nv10Scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+{
+}
 
 /** Select flat or smooth shading */
 static void nv10ShadeModel(GLcontext *ctx, GLenum mode)
@@ -567,8 +570,29 @@ static void nv10Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     OUT_RING_CACHE((h << 16) | y);
 }
 
-void nv10InitStateFuncs(struct dd_function_table *func)
+/* Initialise any card-specific non-GL related state */
+static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 {
+   return GL_TRUE;
+}
+
+/* Update buffer offset/pitch/format */
+static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
+				 nouveau_renderbuffer **color,
+				 nouveau_renderbuffer *depth)
+{
+   return GL_TRUE;
+}
+
+/* Update anything that depends on the window position/size */
+static void nv10WindowMoved(nouveauContextPtr nmesa)
+{
+}
+
+void nv10InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
 	func->AlphaFunc			= nv10AlphaFunc;
 	func->BlendColor		= nv10BlendColor;
 	func->BlendEquationSeparate	= nv10BlendEquationSeparate;
@@ -602,8 +626,8 @@ void nv10InitStateFuncs(struct dd_function_table *func)
 	func->PolygonStipple		= nv10PolygonStipple;
 	func->ReadBuffer		= nv10ReadBuffer;
 	func->RenderMode		= nv10RenderMode;
-	func->Scissor			= nv10Scissor;
 #endif
+	func->Scissor			= nv10Scissor;
 	func->ShadeModel		= nv10ShadeModel;
 	func->StencilFuncSeparate	= nv10StencilFuncSeparate;
 	func->StencilMaskSeparate	= nv10StencilMaskSeparate;
@@ -614,5 +638,9 @@ void nv10InitStateFuncs(struct dd_function_table *func)
 	func->TextureMatrix		= nv10TextureMatrix;
 #endif
 	func->Viewport			= nv10Viewport;
+
+	nmesa->hw_func.InitCard		= nv10InitCard;
+	nmesa->hw_func.BindBuffers	= nv10BindBuffers;
+	nmesa->hw_func.WindowMoved	= nv10WindowMoved;
 }
 
