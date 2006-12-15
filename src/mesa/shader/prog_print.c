@@ -208,9 +208,6 @@ _mesa_print_alu_instruction(const struct prog_instruction *inst,
 	 _mesa_printf(", ");
    }
 
-   if (inst->Comment)
-      _mesa_printf("  # %s", inst->Comment);
-
    print_comment(inst);
 }
 
