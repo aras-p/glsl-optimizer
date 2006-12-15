@@ -52,6 +52,52 @@ static slang_ir_node *
 slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper);
 
 
+/**
+ * Map "_asm foo" to IR_FOO, etc.
+ */
+typedef struct
+{
+   const char *Name;
+   slang_ir_opcode Opcode;
+   GLuint HaveRetValue, NumParams;
+} slang_asm_info;
+
+
+static slang_asm_info AsmInfo[] = {
+   /* vec4 binary op */
+   { "vec4_add", IR_ADD, 1, 2 },
+   { "vec4_multiply", IR_MUL, 1, 2 },
+   { "vec4_dot", IR_DOT4, 1, 2 },
+   { "vec3_dot", IR_DOT3, 1, 2 },
+   { "vec3_cross", IR_CROSS, 1, 2 },
+   { "vec4_min", IR_MIN, 1, 2 },
+   { "vec4_max", IR_MAX, 1, 2 },
+   { "vec4_seq", IR_SEQ, 1, 2 },
+   { "vec4_sge", IR_SGE, 1, 2 },
+   { "vec4_sgt", IR_SGT, 1, 2 },
+   /* vec4 unary */
+   { "vec4_floor", IR_FLOOR, 1, 1 },
+   { "vec4_frac", IR_FRAC, 1, 1 },
+   { "vec4_abs", IR_ABS, 1, 1 },
+   /* float binary op */
+   { "float_add", IR_ADD, 1, 2 },
+   { "float_subtract", IR_SUB, 1, 2 },
+   { "float_multiply", IR_MUL, 1, 2 },
+   { "float_divide", IR_DIV, 1, 2 },
+   { "float_power", IR_POW, 1, 2 },
+   /* unary op */
+   { "int_to_float", IR_I_TO_F, 1, 1 },
+   { "float_exp", IR_EXP, 1, 1 },
+   { "float_exp2", IR_EXP2, 1, 1 },
+   { "float_log2", IR_LOG2, 1, 1 },
+   { "float_rsq", IR_RSQ, 1, 1 },
+   { "float_rcp", IR_RCP, 1, 1 },
+   { "float_sine", IR_SIN, 1, 1 },
+   { "float_cosine", IR_COS, 1, 1 },
+   { NULL, IR_NOP, 0, 0 }
+};
+
+
 
 static slang_ir_node *
 new_node(slang_ir_opcode op, slang_ir_node *left, slang_ir_node *right)
@@ -737,52 +783,6 @@ slang_assemble_function_call(slang_assemble_ctx *A, slang_function *fun,
 
    return n;
 }
-
-
-/**
- * Map "_asm foo" to IR_FOO, etc.
- */
-typedef struct
-{
-   const char *Name;
-   slang_ir_opcode Opcode;
-   GLuint HaveRetValue, NumParams;
-} slang_asm_info;
-
-
-static slang_asm_info AsmInfo[] = {
-   /* vec4 binary op */
-   { "vec4_add", IR_ADD, 1, 2 },
-   { "vec4_multiply", IR_MUL, 1, 2 },
-   { "vec4_dot", IR_DOT4, 1, 2 },
-   { "vec3_dot", IR_DOT3, 1, 2 },
-   { "vec3_cross", IR_CROSS, 1, 2 },
-   { "vec4_min", IR_MIN, 1, 2 },
-   { "vec4_max", IR_MAX, 1, 2 },
-   { "vec4_seq", IR_SEQ, 1, 2 },
-   { "vec4_sge", IR_SGE, 1, 2 },
-   { "vec4_sgt", IR_SGT, 1, 2 },
-   /* vec4 unary */
-   { "vec4_floor", IR_FLOOR, 1, 1 },
-   { "vec4_frac", IR_FRAC, 1, 1 },
-   { "vec4_abs", IR_ABS, 1, 1 },
-   /* float binary op */
-   { "float_add", IR_ADD, 1, 2 },
-   { "float_subtract", IR_SUB, 1, 2 },
-   { "float_multiply", IR_MUL, 1, 2 },
-   { "float_divide", IR_DIV, 1, 2 },
-   { "float_power", IR_POW, 1, 2 },
-   /* unary op */
-   { "int_to_float", IR_I_TO_F, 1, 1 },
-   { "float_exp", IR_EXP, 1, 1 },
-   { "float_exp2", IR_EXP2, 1, 1 },
-   { "float_log2", IR_LOG2, 1, 1 },
-   { "float_rsq", IR_RSQ, 1, 1 },
-   { "float_rcp", IR_RCP, 1, 1 },
-   { "float_sine", IR_SIN, 1, 1 },
-   { "float_cosine", IR_COS, 1, 1 },
-   { NULL, IR_NOP, 0, 0 }
-};
 
 
 static slang_asm_info *

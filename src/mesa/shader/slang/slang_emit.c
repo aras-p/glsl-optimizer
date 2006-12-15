@@ -982,7 +982,6 @@ gen(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
       else
 #endif
       {
-#if 1
          if (n->Children[0]->Store->Size > 4) {
             /* move matrix/struct etc */
             slang_ir_storage dstStore = *n->Children[0]->Store;
@@ -1003,9 +1002,7 @@ gen(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
                size -= 4;
             }
          }
-         else
-#endif
-         {
+         else {
             inst = new_instruction(prog, OPCODE_MOV);
             storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
             storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store,
