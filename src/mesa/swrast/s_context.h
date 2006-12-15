@@ -122,7 +122,7 @@ typedef struct sw_span_arrays {
    GLfloat texcoords[MAX_TEXTURE_COORD_UNITS][MAX_WIDTH][4];
    GLfloat lambda[MAX_TEXTURE_COORD_UNITS][MAX_WIDTH];
    GLfloat coverage[MAX_WIDTH];
-   GLfloat varying[MAX_WIDTH][MAX_VARYING_VECTORS][VARYINGS_PER_VECTOR];
+   GLfloat varying[MAX_WIDTH][MAX_VARYING][4];
 
    /** This mask indicates which fragments are alive or culled */
    GLubyte mask[MAX_WIDTH];
@@ -200,9 +200,9 @@ typedef struct sw_span {
    GLfloat texStepX[MAX_TEXTURE_COORD_UNITS][4];
    GLfloat texStepY[MAX_TEXTURE_COORD_UNITS][4];
    GLfixed intTex[2], intTexStep[2];  /* s, t only */
-   GLfloat var[MAX_VARYING_VECTORS][VARYINGS_PER_VECTOR];
-   GLfloat varStepX[MAX_VARYING_VECTORS][VARYINGS_PER_VECTOR];
-   GLfloat varStepY[MAX_VARYING_VECTORS][VARYINGS_PER_VECTOR];
+   GLfloat var[MAX_VARYING][4];
+   GLfloat varStepX[MAX_VARYING][4];
+   GLfloat varStepY[MAX_VARYING][4];
 
    /* partial derivatives wrt X and Y. */
    GLfloat dzdx, dzdy;

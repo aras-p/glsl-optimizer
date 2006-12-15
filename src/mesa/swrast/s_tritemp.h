@@ -144,14 +144,14 @@
 
 
 #ifdef INTERP_VARYING
-#define VARYING_LOOP(CODE)\
-   {\
-      GLuint iv, ic;\
-      for (iv = 0; iv < MAX_VARYING_VECTORS; iv++) {\
-         for (ic = 0; ic < VARYINGS_PER_VECTOR; ic++) {\
-            CODE\
-         }\
-      }\
+#define VARYING_LOOP(CODE)                     \
+   {                                           \
+      GLuint iv, ic;                           \
+      for (iv = 0; iv < MAX_VARYING; iv++) {   \
+         for (ic = 0; ic < 4; ic++) {          \
+            CODE                               \
+         }                                     \
+      }                                        \
    }
 #endif
 
@@ -780,9 +780,9 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
          GLfloat dvOuter[MAX_TEXTURE_COORD_UNITS], dvInner[MAX_TEXTURE_COORD_UNITS];
 #endif
 #ifdef INTERP_VARYING
-         GLfloat varLeft[MAX_VARYING_VECTORS][VARYINGS_PER_VECTOR];
-         GLfloat dvarOuter[MAX_VARYING_VECTORS][VARYINGS_PER_VECTOR];
-         GLfloat dvarInner[MAX_VARYING_VECTORS][VARYINGS_PER_VECTOR];
+         GLfloat varLeft[MAX_VARYING][4];
+         GLfloat dvarOuter[MAX_VARYING][4];
+         GLfloat dvarInner[MAX_VARYING][4];
 #endif
 
          for (subTriangle=0; subTriangle<=1; subTriangle++) {

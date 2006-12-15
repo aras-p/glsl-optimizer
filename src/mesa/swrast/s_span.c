@@ -829,8 +829,8 @@ interpolate_varying(GLcontext *ctx, SWspan *span)
 
    span->arrayMask |= SPAN_VARYING;
 
-   for (i = 0; i < MAX_VARYING_VECTORS; i++) {
-      for (j = 0; j < VARYINGS_PER_VECTOR; j++) {
+   for (i = 0; i < MAX_VARYING; i++) {
+      for (j = 0; j < 4; j++) {
          const GLfloat dvdx = span->varStepX[i][j];
          GLfloat v = span->var[i][j];
          const GLfloat dwdx = span->dwdx;
