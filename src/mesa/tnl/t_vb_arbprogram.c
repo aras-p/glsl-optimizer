@@ -832,6 +832,7 @@ static struct reg cvp_load_reg( struct compilation *cp,
 
    switch (file) {
    case PROGRAM_TEMPORARY:
+      assert(REG_TMP0 + index <= REG_TMP11);
       return cvp_make_reg(FILE_REG, REG_TMP0 + index);
 
    case PROGRAM_INPUT:
