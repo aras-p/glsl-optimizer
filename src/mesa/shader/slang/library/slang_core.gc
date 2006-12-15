@@ -307,6 +307,18 @@ mat4 __constructor (const bool b) {
     return mat4 (b ? 1.0 : 0.0);
 }
 
+
+mat4 __constructor (const vec4 r0, const vec4 r1, const vec4 r2, const vec4 r3)
+{
+   __retVal[0] = r0;
+   __retVal[1] = r1;
+   __retVal[2] = r2;
+   __retVal[3] = r3;
+}
+
+
+
+
 void __operator += (inout float a, const float b) {
     __asm float_add a, a, b;
 }
@@ -1040,12 +1052,21 @@ mat3 __operator / (const mat3 m, const mat3 n) {
     return mat3 (m[0] / n[0], m[1] / n[1], m[2] / n[2]);
 }
 
-mat4 __operator + (const mat4 m, const mat4 n) {
-    return mat4 (m[0] + n[0], m[1] + n[1], m[2] + n[2], m[3] + n[3]);
+
+mat4 __operator + (const mat4 m, const mat4 n)
+{
+   __retVal[0] = m[0] + n[0];
+   __retVal[1] = m[1] + n[1];
+   __retVal[2] = m[2] + n[2];
+   __retVal[3] = m[3] + n[3];
 }
 
-mat4 __operator - (const mat4 m, const mat4 n) {
-    return mat4 (m[0] - n[0], m[1] - n[1], m[2] - n[2], m[3] - n[3]);
+mat4 __operator - (const mat4 m, const mat4 n)
+{
+   __retVal[0] = m[0] - n[0];
+   __retVal[1] = m[1] - n[1];
+   __retVal[2] = m[2] - n[2];
+   __retVal[3] = m[3] - n[3];
 }
 
 mat4 __operator / (const mat4 m, const mat4 n) {
