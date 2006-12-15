@@ -706,6 +706,8 @@ alloc_shared_state( GLcontext *ctx )
 
 #if FEATURE_ARB_shader_objects
    ss->GL2Objects = _mesa_NewHashTable ();
+   ss->ShaderObjects = _mesa_NewHashTable();
+   ss->ProgramObjects = _mesa_NewHashTable();
 #endif
 
    ss->Default1D = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_1D);
@@ -782,8 +784,11 @@ alloc_shared_state( GLcontext *ctx )
       _mesa_DeleteHashTable (ss->ArrayObjects);
 
 #if FEATURE_ARB_shader_objects
-   if (ss->GL2Objects)
+   if (ss->GL2Objects) {
       _mesa_DeleteHashTable (ss->GL2Objects);
+      _mesa_DeleteHashTable (ss->ShaderObjects);
+      _mesa_DeleteHashTable (ss->ProgramObjects);
+   }
 #endif
 
 #if FEATURE_EXT_framebuffer_object
@@ -1063,9 +1068,10 @@ _mesa_init_constants( GLcontext *ctx )
    ctx->Const.VertexProgram.MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
    ctx->Const.VertexProgram.MaxEnvParams = MAX_NV_VERTEX_PROGRAM_PARAMS;
    ctx->Const.VertexProgram.MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
-   ctx->Const.VertexProgram.MaxUniformComponents = MAX_VERTEX_UNIFORM_COMPONENTS;
+   ctx->Const.VertexProgram.MaxUniformComponents = 4 * MAX_UNIFORMS;
    init_natives(&ctx->Const.VertexProgram);
 #endif
+
 #if FEATURE_ARB_fragment_program
    ctx->Const.FragmentProgram.MaxInstructions = MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS;
    ctx->Const.FragmentProgram.MaxAluInstructions = MAX_FRAGMENT_PROGRAM_ALU_INSTRUCTIONS;
@@ -1077,7 +1083,7 @@ _mesa_init_constants( GLcontext *ctx )
    ctx->Const.FragmentProgram.MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
    ctx->Const.FragmentProgram.MaxEnvParams = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
    ctx->Const.FragmentProgram.MaxAddressRegs = MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
-   ctx->Const.FragmentProgram.MaxUniformComponents = MAX_FRAGMENT_UNIFORM_COMPONENTS;
+   ctx->Const.FragmentProgram.MaxUniformComponents = 4 * MAX_UNIFORMS;
    init_natives(&ctx->Const.FragmentProgram);
 #endif
    ctx->Const.MaxProgramMatrices = MAX_PROGRAM_MATRICES;
@@ -1106,7 +1112,7 @@ _mesa_init_constants( GLcontext *ctx )
 
 #if FEATURE_ARB_vertex_shader
    ctx->Const.MaxVertexTextureImageUnits = MAX_VERTEX_TEXTURE_IMAGE_UNITS;
-   ctx->Const.MaxVaryingFloats = MAX_VARYING_FLOATS;
+   ctx->Const.MaxVarying = MAX_VARYING;
 #endif
 
    /* sanity checks */
@@ -1114,6 +1120,11 @@ _mesa_init_constants( GLcontext *ctx )
                                              ctx->Const.MaxTextureCoordUnits));
    ASSERT(ctx->Const.FragmentProgram.MaxLocalParams <= MAX_PROGRAM_LOCAL_PARAMS);
    ASSERT(ctx->Const.VertexProgram.MaxLocalParams <= MAX_PROGRAM_LOCAL_PARAMS);
+
+   ASSERT(MAX_NV_FRAGMENT_PROGRAM_TEMPS <= MAX_PROGRAM_TEMPS);
+   ASSERT(MAX_NV_VERTEX_PROGRAM_TEMPS <= MAX_PROGRAM_TEMPS);
+   ASSERT(MAX_NV_VERTEX_PROGRAM_INPUTS <= VERT_ATTRIB_MAX);
+   ASSERT(MAX_NV_VERTEX_PROGRAM_OUTPUTS <= VERT_RESULT_MAX);
 }
 
 
@@ -1351,12 +1362,14 @@ _mesa_initialize_context( GLcontext *ctx,
    ctx->TnlModule.SwapCount = 0;
 #endif
 
-   ctx->_MaintainTexEnvProgram = (_mesa_getenv("MESA_TEX_PROG") != NULL);
-   ctx->_UseTexEnvProgram = ctx->_MaintainTexEnvProgram;
-
-   ctx->_MaintainTnlProgram = (_mesa_getenv("MESA_TNL_PROG") != NULL);
-   if (ctx->_MaintainTnlProgram)
-      ctx->_MaintainTexEnvProgram = 1; /* this is required... */
+   ctx->VertexProgram._MaintainTnlProgram
+      = (_mesa_getenv("MESA_TNL_PROG") != NULL);
+   if (ctx->VertexProgram._MaintainTnlProgram)
+      /* this is required... */
+      ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
+   else
+      ctx->FragmentProgram._MaintainTexEnvProgram
+         = (_mesa_getenv("MESA_TEX_PROG") != NULL);
 
    ctx->FirstTimeCurrent = GL_TRUE;
 
@@ -1678,6 +1691,10 @@ void
 _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
                     GLframebuffer *readBuffer )
 {
+#if 0
+   GET_CURRENT_CONTEXT(oldCtx);
+#endif
+
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(newCtx, "_mesa_make_current()\n");
 
@@ -1697,6 +1714,30 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
          return;
       }
    }
+
+#if 0 /** XXX enable this someday */
+   if (oldCtx && oldCtx != newCtx) {
+      /* unbind old context's draw/read buffers */
+      if (oldCtx->DrawBuffer && oldCtx->DrawBuffer->Name == 0) {
+         oldCtx->DrawBuffer->RefCount--;
+         oldCtx->DrawBuffer = NULL;
+      }
+      if (oldCtx->ReadBuffer && oldCtx->ReadBuffer->Name == 0) {
+         oldCtx->ReadBuffer->RefCount--;
+         oldCtx->ReadBuffer = NULL;
+      }
+      if (oldCtx->WinSysDrawBuffer) {
+         ASSERT(oldCtx->WinSysDrawBuffer->Name == 0);
+         oldCtx->WinSysDrawBuffer->RefCount--;
+         oldCtx->WinSysDrawBuffer = NULL;
+      }
+      if (oldCtx->WinSysReadBuffer) {
+         ASSERT(oldCtx->WinSysReadBuffer->Name == 0);
+         oldCtx->WinSysReadBuffer->RefCount--;
+         oldCtx->WinSysReadBuffer = NULL;
+      }
+   }
+#endif
 
    /* We used to call _glapi_check_multithread() here.  Now do it in drivers */
    _glapi_set_context((void *) newCtx);

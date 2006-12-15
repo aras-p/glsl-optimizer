@@ -1878,7 +1878,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_MAX_VARYING_FLOATS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetBooleanv");
-         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxVaryingFloats);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxVarying * 4);
          break;
       case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetBooleanv");
@@ -3705,7 +3705,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_MAX_VARYING_FLOATS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetFloatv");
-         params[0] = (GLfloat)(ctx->Const.MaxVaryingFloats);
+         params[0] = (GLfloat)(ctx->Const.MaxVarying * 4);
          break;
       case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetFloatv");
@@ -5532,7 +5532,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_MAX_VARYING_FLOATS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetIntegerv");
-         params[0] = ctx->Const.MaxVaryingFloats;
+         params[0] = ctx->Const.MaxVarying * 4;
          break;
       case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetIntegerv");

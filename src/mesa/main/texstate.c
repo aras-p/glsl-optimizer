@@ -2920,9 +2920,11 @@ update_texture_state( GLcontext *ctx )
 {
    GLuint unit;
 
+#if 0 /** XXX NEW_SLANG */
 #if FEATURE_ARB_fragment_shader
    struct gl2_program_intf **prog = ctx->ShaderObjects.CurrentProgram;
    GLbitfield progteximageusage[MAX_TEXTURE_IMAGE_UNITS];
+#endif
 #endif
 
    ctx->NewState |= _NEW_TEXTURE; /* TODO: only set this if there are 
@@ -2934,6 +2936,7 @@ update_texture_state( GLcontext *ctx )
    ctx->Texture._TexMatEnabled = 0;
    ctx->Texture._TexGenEnabled = 0;
 
+#if 00 /* XXX NEW_SLANG */
 #if FEATURE_ARB_fragment_shader
    /*
     * Grab texture image usage state from shader program. It must be
@@ -2944,6 +2947,7 @@ update_texture_state( GLcontext *ctx )
       (**prog).GetTextureImageUsage (prog, progteximageusage);
    }
 #endif /* FEATURE_ARB_fragment_shader */
+#endif
 
    /*
     * Update texture unit state.
@@ -2957,11 +2961,13 @@ update_texture_state( GLcontext *ctx )
       texUnit->_GenFlags = 0;
 
       /* Get the bitmask of texture enables */
+#if 000 /* XXX NEW_SLANG */
 #if FEATURE_ARB_fragment_shader
       if (ctx->ShaderObjects._FragmentShaderPresent) {
          enableBits = progteximageusage[unit];
       }
       else
+#endif
 #endif
       if (ctx->FragmentProgram._Enabled) {
          enableBits = ctx->FragmentProgram.Current->TexturesUsed[unit];
@@ -3085,12 +3091,15 @@ update_texture_state( GLcontext *ctx )
    /* Fragment programs may need texture coordinates but not the
     * corresponding texture images.
     */
+#if 0  /* XXX NEW_SLANG */
    if (ctx->ShaderObjects.CurrentProgram != NULL) {
       ctx->Texture._EnabledCoordUnits |= (1 << ctx->Const.MaxTextureCoordUnits) - 1;
    }
-   else if (ctx->FragmentProgram._Enabled) {
+   else
+#endif
+   if (ctx->FragmentProgram._Enabled) {
       ctx->Texture._EnabledCoordUnits |=
-         (ctx->FragmentProgram.Current->Base.InputsRead >> FRAG_ATTRIB_TEX0);
+         (ctx->FragmentProgram._Current->Base.InputsRead >> FRAG_ATTRIB_TEX0);
    }
 }
 

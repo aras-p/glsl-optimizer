@@ -28,10 +28,11 @@
 #include "glheader.h"
 #include "macros.h"
 #include "enums.h"
+#include "prog_parameter.h"
+#include "prog_instruction.h"
+#include "prog_print.h"
+#include "prog_statevars.h"
 #include "texenvprogram.h"
-
-#include "shader/program.h"
-#include "shader/program_instruction.h"
 
 /**
  * According to Glean's texCombine test, no more than 21 instructions
@@ -570,12 +571,14 @@ static struct ureg register_const4f( struct texenv_fragment_program *p,
 				     GLfloat s3)
 {
    GLfloat values[4];
-   GLuint idx;
+   GLuint idx, swizzle;
    values[0] = s0;
    values[1] = s1;
    values[2] = s2;
    values[3] = s3;
-   idx = _mesa_add_unnamed_constant( p->program->Base.Parameters, values, 4 );
+   idx = _mesa_add_unnamed_constant( p->program->Base.Parameters, values, 4,
+                                     &swizzle );
+   ASSERT(swizzle == SWIZZLE_NOOP);
    return make_ureg(PROGRAM_STATE_VAR, idx);
 }
 
@@ -1221,44 +1224,55 @@ static GLuint hash_key( const struct state_key *key )
    return hash;
 }
 
-void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
+
+/**
+ * If _MaintainTexEnvProgram is set we'll generate a fragment program that
+ * implements the current texture env/combine mode.
+ * This function generates that program and puts it into effect.
+ */
+void
+_mesa_UpdateTexEnvProgram( GLcontext *ctx )
 {
    struct state_key key;
    GLuint hash;
    const struct gl_fragment_program *prev = ctx->FragmentProgram._Current;
 	
-   if (!ctx->FragmentProgram._Enabled) {
+   ASSERT(ctx->FragmentProgram._MaintainTexEnvProgram);
+
+   /* If a conventional fragment program/shader isn't in effect... */
+   if (!ctx->FragmentProgram._Current) {
       make_state_key(ctx, &key);
       hash = hash_key(&key);
       
-      ctx->FragmentProgram._Current =
-      ctx->_TexEnvProgram =
-	 search_cache(&ctx->Texture.env_fp_cache, hash, &key, sizeof(key));
-	
-      if (!ctx->_TexEnvProgram) {
-	 if (0) _mesa_printf("Building new texenv proggy for key %x\n", hash);
-		
-	 ctx->FragmentProgram._Current = ctx->_TexEnvProgram = 
-	    (struct gl_fragment_program *) 
-	    ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
-		
-	 create_new_program(ctx, &key, ctx->_TexEnvProgram);
+      ctx->FragmentProgram._TexEnvProgram =
+         search_cache(&ctx->Texture.env_fp_cache, hash, &key, sizeof(key));
 
-	 cache_item(&ctx->Texture.env_fp_cache, hash, &key, ctx->_TexEnvProgram);
-      } else {
-	 if (0) _mesa_printf("Found existing texenv program for key %x\n", hash);
+      if (!ctx->FragmentProgram._TexEnvProgram) {
+         if (0)
+            _mesa_printf("Building new texenv proggy for key %x\n", hash);
+
+         /* create new tex env program */
+         ctx->FragmentProgram._TexEnvProgram = (struct gl_fragment_program *) 
+            ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
+
+         create_new_program(ctx, &key, ctx->FragmentProgram._TexEnvProgram);
+
+         cache_item(&ctx->Texture.env_fp_cache, hash, &key,
+                    ctx->FragmentProgram._TexEnvProgram);
       }
+      else {
+         if (0)
+            _mesa_printf("Found existing texenv program for key %x\n", hash);
+      }
+      ctx->FragmentProgram._Current = ctx->FragmentProgram._TexEnvProgram;
    } 
-   else {
-      ctx->FragmentProgram._Current = ctx->FragmentProgram.Current;
-   }
 
    /* Tell the driver about the change.  Could define a new target for
     * this?
     */
    if (ctx->FragmentProgram._Current != prev && ctx->Driver.BindProgram) {
       ctx->Driver.BindProgram(ctx, GL_FRAGMENT_PROGRAM_ARB,
-                             (struct gl_program *) ctx->FragmentProgram._Current);
+                         (struct gl_program *) ctx->FragmentProgram._Current);
    }
 }
 

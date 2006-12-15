@@ -409,7 +409,9 @@ _mesa_enable_2_1_extensions(GLcontext *ctx)
 #if FEATURE_EXT_texture_sRGB
    ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
 #endif
-   /* plus: shading language extensions, non-square uniform matrices */
+#ifdef FEATURE_ARB_shading_language_120
+   ctx->Extensions.ARB_shading_language_120 = GL_TRUE;
+#endif
 }
 
 

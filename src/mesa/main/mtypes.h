@@ -213,22 +213,6 @@ enum
 #define VERT_BIT_GENERIC(g)  (1 << (VERT_ATTRIB_GENERIC0 + (g)))
 /*@}*/
 
-/**
- * GLSL allows shader writers to allocate vertex result attributes (varyings) in
- * single float component granularity. This is in contrast to vertex / fragment
- * programs, where result attributes (actually texcoords) were allocated
- * in 4-component vectors of floats granularity.
- * For performance reasons, it would be optimal to stick with this scheme on a scalar
- * processor. Varyings will likely be allocated as 3-component vectors, so statistically
- * we win 2 floats.
- * The constant VARYINGS_PER_VECTOR tells us how much of float components we pack into
- * one result vector. For scalar processor it would be 1, for vector processor - 4.
- * 
- * NOTE: Currently we pack varyings into vertex attributes.
- */
-#define VARYINGS_PER_VECTOR 2
-#define VARYING_EMIT_STYLE  EMIT_2F
-#define MAX_VARYING_VECTORS ((MAX_VARYING_FLOATS + VARYINGS_PER_VECTOR - 1) / VARYINGS_PER_VECTOR)
 
 /**
  * Indexes for vertex program result attributes
@@ -250,7 +234,8 @@ enum
 #define VERT_RESULT_BFC0 13
 #define VERT_RESULT_BFC1 14
 #define VERT_RESULT_EDGE 15
-#define VERT_RESULT_MAX  16
+#define VERT_RESULT_VAR0 16  /**< shader varying */
+#define VERT_RESULT_MAX  (VERT_RESULT_VAR0 + MAX_VARYING)
 /*@}*/
 
 
@@ -271,7 +256,8 @@ enum
    FRAG_ATTRIB_TEX5 = 9,
    FRAG_ATTRIB_TEX6 = 10,
    FRAG_ATTRIB_TEX7 = 11,
-   FRAG_ATTRIB_MAX = 12
+   FRAG_ATTRIB_VAR0 = 12,  /**< shader varying */
+   FRAG_ATTRIB_MAX = (FRAG_ATTRIB_VAR0 + MAX_VARYING)
 };
 
 /**
@@ -305,12 +291,13 @@ enum
 /**
  * Fragment program results
  */
-/*@{*/
-#define FRAG_RESULT_COLR  0
-#define FRAG_RESULT_COLH  1
-#define FRAG_RESULT_DEPR  2
-#define FRAG_RESULT_MAX   3
-/*@}*/
+enum
+{
+   FRAG_RESULT_COLR = 0,
+   FRAG_RESULT_COLH = 1,
+   FRAG_RESULT_DEPR = 2,
+   FRAG_RESULT_MAX = 3
+};
 
 
 /**
@@ -1811,22 +1798,30 @@ struct gl_evaluators
 
 /**
  * Names of the various vertex/fragment program register files, etc.
+ *
  * NOTE: first four tokens must fit into 2 bits (see t_vb_arbprogram.c)
  * All values should fit in a 4-bit field.
+ *
+ * NOTE: PROGRAM_ENV_PARAM, PROGRAM_STATE_VAR, PROGRAM_NAMED_PARAM,
+ * PROGRAM_CONSTANT, and PROGRAM_UNIFORM can all be considered to
+ * be "uniform" variables since they can only be set outside glBegin/End.
+ * They're also all stored in the same Parameters array.
  */
 enum register_file
 {
-   PROGRAM_TEMPORARY = 0,
-   PROGRAM_LOCAL_PARAM = 1,
-   PROGRAM_ENV_PARAM = 2,
-   PROGRAM_STATE_VAR = 3,
-   PROGRAM_INPUT = 4,
-   PROGRAM_OUTPUT = 5,
-   PROGRAM_NAMED_PARAM = 6,
-   PROGRAM_CONSTANT = 7,
-   PROGRAM_WRITE_ONLY = 8,
-   PROGRAM_ADDRESS = 9,
-   PROGRAM_UNDEFINED = 10,  /* invalid value */
+   PROGRAM_TEMPORARY = 0,   /**< machine->Temporary[] */
+   PROGRAM_LOCAL_PARAM = 1, /**< gl_program->LocalParams[] */
+   PROGRAM_ENV_PARAM = 2,   /**< gl_program->Parameters[] */
+   PROGRAM_STATE_VAR = 3,   /**< gl_program->Parameters[] */
+   PROGRAM_INPUT = 4,       /**< machine->Inputs[] */
+   PROGRAM_OUTPUT = 5,      /**< machine->Outputs[] */
+   PROGRAM_NAMED_PARAM = 6, /**< gl_program->Parameters[] */
+   PROGRAM_CONSTANT = 7,    /**< gl_program->Parameters[] */
+   PROGRAM_UNIFORM = 8,     /**< gl_program->Parameters[] */
+   PROGRAM_VARYING = 9,     /**< machine->Inputs[]/Outputs[] */
+   PROGRAM_WRITE_ONLY = 10, /**< A dummy, write-only register */
+   PROGRAM_ADDRESS = 11,    /**< machine->AddressReg */
+   PROGRAM_UNDEFINED = 12,  /**< Invalid value */
    PROGRAM_FILE_MAX
 };
 
@@ -1857,6 +1852,9 @@ struct gl_program
    struct gl_program_parameter_list *Parameters;
    /** Numbered local parameters */
    GLfloat LocalParams[MAX_PROGRAM_LOCAL_PARAMS][4];
+
+   /** Vertex/fragment shader varying vars */
+   struct gl_program_parameter_list *Varying;
 
    /** Logical counts */
    /*@{*/
@@ -1923,15 +1921,21 @@ struct gl_vertex_program_state
    GLboolean PointSizeEnabled;      /**< GL_VERTEX_PROGRAM_POINT_SIZE_ARB/NV */
    GLboolean TwoSideEnabled;        /**< GL_VERTEX_PROGRAM_TWO_SIDE_ARB/NV */
    struct gl_vertex_program *Current;  /**< ptr to currently bound program */
-   const struct gl_vertex_program *_Current;    /**< ptr to currently bound
-					          program, including internal
-					          (t_vp_build.c) programs */
+
+   /** Currently enabled and valid program (including internal programs) */
+   struct gl_vertex_program *_Current;
 
    GLfloat Parameters[MAX_NV_VERTEX_PROGRAM_PARAMS][4]; /**< Env params */
 
    /* For GL_NV_vertex_program only: */
    GLenum TrackMatrix[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
    GLenum TrackMatrixTransform[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
+
+   /** Should fixed-function T&L be implemented with a vertex prog? */
+   GLboolean _MaintainTnlProgram;
+
+   /** Program to emulate fixed-function T&L (see above) */
+   struct gl_vertex_program *_TnlProgram;
 
 #if FEATURE_MESA_program_debug
    GLprogramcallbackMESA Callback;
@@ -1949,11 +1953,18 @@ struct gl_fragment_program_state
 {
    GLboolean Enabled;     /**< User-set fragment program enable flag */
    GLboolean _Enabled;    /**< Fragment program enabled and valid? */
-   GLboolean _Active;     /**< Is a user program or internal program active? */
    struct gl_fragment_program *Current;  /**< User-bound program */
-   const struct gl_fragment_program *_Current; /**< currently active program 
-					       (including internal programs) */
+
+   /** Currently enabled and valid program (including internal programs) */
+   struct gl_fragment_program *_Current;
+
    GLfloat Parameters[MAX_NV_FRAGMENT_PROGRAM_PARAMS][4]; /**< Env params */
+
+   /** Should fixed-function texturing be implemented with a fragment prog? */
+   GLboolean _MaintainTexEnvProgram;
+
+   /** Program to emulate fixed-function texture env/combine (see above) */
+   struct gl_fragment_program *_TexEnvProgram;
 
 #if FEATURE_MESA_program_debug
    GLprogramcallbackMESA Callback;
@@ -2030,6 +2041,41 @@ struct gl_query_state
 };
 
 
+
+/**
+ * A GLSL shader object
+ * A collection of one or more gl_programs...
+ */
+struct gl_shader
+{
+   GLenum Type;  /**< GL_FRAGMENT_SHADER || GL_VERTEX_SHADER */
+   GLuint Name;  /**< AKA the handle */
+   GLchar *Source;  /**< Source code string */
+   GLboolean CompileStatus;
+   GLuint NumPrograms;  /**< size of Programs[] array */
+   struct gl_program **Programs;  /**< Post-compile assembly code */
+};
+
+
+/**
+ * This corresponds to a GLSL "program" and is basically a linked collection
+ * of "shaders" (which are Mesa gl_programs).
+ * Yes, the terminology is a bit confusing.
+ */
+struct gl_linked_program
+{
+   GLenum Type;
+   GLuint Name;  /**< aka handle or ID */
+   GLuint NumShaders;          /**< total number of shaders in this program */
+   struct gl_program **Shaders; /**< List of the shaders */
+   struct gl_vertex_program *VertexProgram;     /**< Linked vertex program */
+   struct gl_fragment_program *FragmentProgram; /**< Linked fragment prog */
+   GLboolean LinkStatus;   /**< GL_LINK_STATUS */
+   struct gl_program_parameter_list *Uniforms; /**< Plus constants, etc */
+   struct gl_program_parameter_list *Varying;
+};   
+
+
 /**
  * Context state for vertex/fragment shaders.
  */
@@ -2038,6 +2084,7 @@ struct gl_shader_objects_state
    struct gl2_program_intf **CurrentProgram;
    GLboolean _VertexShaderPresent;
    GLboolean _FragmentShaderPresent;
+   struct gl_linked_program *Linked; /* XXX temporary here */
 };
 
 
@@ -2099,6 +2146,8 @@ struct gl_shared_state
 
 #if FEATURE_ARB_shader_objects
    struct _mesa_HashTable *GL2Objects;
+   struct _mesa_HashTable *ShaderObjects;
+   struct _mesa_HashTable *ProgramObjects;
 #endif
 
 #if FEATURE_EXT_framebuffer_object
@@ -2377,7 +2426,7 @@ struct gl_constants
    GLuint MaxRenderbufferSize;
    /* GL_ARB_vertex_shader */
    GLuint MaxVertexTextureImageUnits;
-   GLuint MaxVaryingFloats;
+   GLuint MaxVarying;
 };
 
 
@@ -2914,13 +2963,6 @@ struct __GLcontextRec
    struct gl_vertex_program_state VertexProgram;   /**< GL_ARB/NV_vertex_program */
    struct gl_fragment_program_state FragmentProgram;  /**< GL_ARB/NV_vertex_program */
    struct gl_ati_fragment_shader_state ATIFragmentShader;  /**< GL_ATI_fragment_shader */
-
-   struct gl_fragment_program *_TexEnvProgram;     /**< Texture state as fragment program */
-   struct gl_vertex_program *_TnlProgram;          /**< Fixed func TNL state as vertex program */
-
-   GLboolean _MaintainTnlProgram;
-   GLboolean _MaintainTexEnvProgram;
-   GLboolean _UseTexEnvProgram;
 
    struct gl_query_state Query;  /**< GL_ARB_occlusion_query */
 
