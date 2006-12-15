@@ -42,6 +42,9 @@
 #define _SWSETUP_NEW_RENDERINDEX (_NEW_POLYGON|_NEW_LIGHT|_NEW_PROGRAM)
 
 
+#define VARYING_EMIT_STYLE  EMIT_4F
+
+
 GLboolean
 _swsetup_CreateContext( GLcontext *ctx )
 {
@@ -147,12 +150,15 @@ _swsetup_RenderStart( GLcontext *ctx )
          }
       }
 
-      if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_GENERIC, _TNL_LAST_GENERIC )) {
-          for (i = 0; i < MAX_VERTEX_ATTRIBS; i++) {
-              if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_GENERIC(i) )) {
-                  EMIT_ATTR( _TNL_ATTRIB_GENERIC(i), VARYING_EMIT_STYLE, attribute[i] );
-              }
-          }
+      /* shader varying vars */
+      if (RENDERINPUTS_TEST_RANGE( index_bitset,
+                                   _TNL_FIRST_GENERIC, _TNL_LAST_GENERIC )) {
+         for (i = 0; i < ctx->Const.MaxVarying; i++) {
+            if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_GENERIC(i) )) {
+               EMIT_ATTR( _TNL_ATTRIB_GENERIC(i), VARYING_EMIT_STYLE,
+                          attribute[i] );
+            }
+         }
       }
 
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POINTSIZE ))
