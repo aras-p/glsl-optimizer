@@ -708,7 +708,7 @@ execute_program( GLcontext *ctx,
             break;
          case OPCODE_BRA: /* conditional branch */
             {
-               /* NOTE: The return is conditional! */
+               /* NOTE: The branch is conditional! */
                const GLuint swizzle = inst->DstReg.CondSwizzle;
                const GLuint condMask = inst->DstReg.CondMask;
                if (test_cc(machine->CondCodes[GET_SWZ(swizzle, 0)], condMask) ||
@@ -1043,6 +1043,8 @@ execute_program( GLcontext *ctx,
                          b[0], b[1], b[2], b[3]);
                }
             }
+            break;
+         case OPCODE_NOP:
             break;
          case OPCODE_PK2H: /* pack two 16-bit floats in one 32-bit float */
             {
