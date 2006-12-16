@@ -87,7 +87,6 @@ static slang_ir_info IrInfo[] = {
    { IR_CJUMP, "IR_CJUMP", 0, 0, 0 },
    { IR_CALL, "IR_CALL", 0, 0, 0 },
    { IR_MOVE, "IR_MOVE", 0, 0, 1 },
-   { IR_LESS, "IR_LESS", 0, 1, 2 },
    { IR_NOT, "IR_NOT", 0, 1, 1 },
    { IR_VAR, "IR_VAR", 0, 0, 0 },
    { IR_VAR_DECL, "IR_VAR_DECL", 0, 0, 0 },
@@ -866,21 +865,23 @@ new_instruction(struct gl_program *prog, gl_inst_opcode opcode)
 
 
 static struct prog_instruction *
-gen(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog);
+emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog);
 
 
 /**
  * Generate code for a simple binary-op instruction.
  */
 static struct prog_instruction *
-gen_binop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
+emit_binop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 {
    struct prog_instruction *inst;
    const slang_ir_info *info = slang_find_ir_info(n->Opcode);
    assert(info);
 
-   gen(gc, n->Children[0], prog);
-   gen(gc, n->Children[1], prog);
+   assert(info->InstOpcode != OPCODE_NOP);
+
+   emit(gc, n->Children[0], prog);
+   emit(gc, n->Children[1], prog);
    inst = new_instruction(prog, info->InstOpcode);
    /* alloc temp storage for the result: */
    if (!n->Store || n->Store->File == PROGRAM_UNDEFINED) {
@@ -901,7 +902,7 @@ gen_binop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 
 
 static struct prog_instruction *
-gen_unop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
+emit_unop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 {
    struct prog_instruction *inst;
    const slang_ir_info *info = slang_find_ir_info(n->Opcode);
@@ -909,7 +910,7 @@ gen_unop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 
    assert(info->NumParams == 1);
 
-   gen(gc, n->Children[0], prog);
+   emit(gc, n->Children[0], prog);
 
    inst = new_instruction(prog, info->InstOpcode);
    /*slang_resolve_storage(gc, n, prog);*/
@@ -929,7 +930,7 @@ gen_unop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 
 
 static struct prog_instruction *
-gen(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
+emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 {
    struct prog_instruction *inst;
    if (!n)
@@ -939,8 +940,8 @@ gen(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    case IR_SEQ:
       assert(n->Children[0]);
       assert(n->Children[1]);
-      gen(gc, n->Children[0], prog);
-      inst = gen(gc, n->Children[1], prog);
+      emit(gc, n->Children[0], prog);
+      inst = emit(gc, n->Children[1], prog);
       n->Store = n->Children[1]->Store;
       return inst;
       break;
@@ -962,9 +963,9 @@ gen(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    case IR_MOVE:
       /* rhs */
       assert(n->Children[1]);
-      inst = gen(gc, n->Children[1], prog);
+      inst = emit(gc, n->Children[1], prog);
       /* lhs */
-      gen(gc, n->Children[0], prog);
+      emit(gc, n->Children[0], prog);
 
 #if 1
       if (inst && is_temporary(gc, n->Children[1]->Store)) {
@@ -1032,7 +1033,7 @@ gen(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    case IR_POW:
    case IR_EXP:
    case IR_EXP2:
-      return gen_binop(gc, n, prog);
+      return emit_binop(gc, n, prog);
       break;
    case IR_RSQ:
    case IR_RCP:
@@ -1041,7 +1042,7 @@ gen(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    case IR_ABS:
    case IR_SIN:
    case IR_COS:
-      return gen_unop(gc, n, prog);
+      return emit_unop(gc, n, prog);
       break;
    case IR_LABEL:
       /*printf("LAB: %s\n", n->Target);*/
@@ -1056,7 +1057,7 @@ gen(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
       n->Store = alloc_constant(n->Value, 4, prog); /*XXX fix size */
       break;
    default:
-      printf("gen: ?\n");
+      printf("emit: ?\n");
       abort();
    }
    return NULL;
@@ -1084,7 +1085,7 @@ _slang_emit_code(slang_ir_node *n, slang_gen_context *gc,
 
    printf("************ Begin generate code\n");
 
-   gen(gc, n, prog);
+   (void) emit(gc, n, prog);
 
    {
       struct prog_instruction *inst;

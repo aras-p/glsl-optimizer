@@ -74,7 +74,6 @@ typedef enum
    IR_ABS,
    IR_SIN,
    IR_COS,
-   IR_LESS,
    IR_NOT,
    IR_VAR,
    IR_VAR_DECL,

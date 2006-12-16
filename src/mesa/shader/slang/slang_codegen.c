@@ -963,10 +963,32 @@ slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
                         );
       }
       break;
-   case slang_oper_less:
-      return new_node(IR_LESS,
+   case slang_oper_equal:
+      return new_node(IR_SEQUAL,
                       slang_assemble_operation(A, &oper->children[0]),
                       slang_assemble_operation(A, &oper->children[1]));
+   case slang_oper_notequal:
+      return new_node(IR_SNEQUAL,
+                      slang_assemble_operation(A, &oper->children[0]),
+                      slang_assemble_operation(A, &oper->children[1]));
+   case slang_oper_greater:
+      return new_node(IR_SGT,
+                      slang_assemble_operation(A, &oper->children[0]),
+                      slang_assemble_operation(A, &oper->children[1]));
+   case slang_oper_less:
+      /* child[0] < child[1]  ---->   child[1] > child[0] */
+      return new_node(IR_SGT,
+                      slang_assemble_operation(A, &oper->children[1]),
+                      slang_assemble_operation(A, &oper->children[0]));
+   case slang_oper_greaterequal:
+      return new_node(IR_SGE,
+                      slang_assemble_operation(A, &oper->children[0]),
+                      slang_assemble_operation(A, &oper->children[1]));
+   case slang_oper_lessequal:
+      /* child[0] <= child[1]  ---->   child[1] >= child[0] */
+      return new_node(IR_SGE,
+                      slang_assemble_operation(A, &oper->children[1]),
+                      slang_assemble_operation(A, &oper->children[0]));
    case slang_oper_add:
       {
 	 slang_ir_node *n;
