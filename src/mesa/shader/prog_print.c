@@ -77,6 +77,9 @@ program_file_string(enum register_file f)
 /**
  * Return a string representation of the given swizzle word.
  * If extended is true, use extended (comma-separated) format.
+ * \param swizzle  the swizzle field
+ * \param negateBase  4-bit negation vector
+ * \param extended  if true, also allow 0, 1 values
  */
 static const char *
 swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
@@ -146,6 +149,25 @@ writemask_string(GLuint writeMask)
    s[i] = 0;
    return s;
 }
+
+
+static const char *
+condcode_string(GLuint condcode)
+{
+   switch (condcode) {
+   case COND_GT:  return "GT";
+   case COND_EQ:  return "EQ";
+   case COND_LT:  return "LT";
+   case COND_UN:  return "UN";
+   case COND_GE:  return "GE";
+   case COND_LE:  return "LE";
+   case COND_NE:  return "NE";
+   case COND_TR:  return "TR";
+   case COND_FL:  return "FL";
+   default: return "cond???";
+   }
+}
+
 
 static void
 print_dst_reg(const struct prog_dst_register *dstReg)
@@ -273,7 +295,10 @@ _mesa_print_instruction(const struct prog_instruction *inst)
       print_comment(inst);
       break;
    case OPCODE_BRA:
-      _mesa_printf("BRA %u", inst->BranchTarget);
+      _mesa_printf("BRA %u (%s.%s)",
+                   inst->BranchTarget,
+                   condcode_string(inst->DstReg.CondMask),
+                   swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE));
       print_comment(inst);
       break;
    case OPCODE_CAL:
@@ -282,6 +307,10 @@ _mesa_print_instruction(const struct prog_instruction *inst)
       break;
    case OPCODE_END:
       _mesa_printf("END");
+      print_comment(inst);
+      break;
+   case OPCODE_NOP:
+      _mesa_printf("NOP");
       print_comment(inst);
       break;
    /* XXX may need other special-case instructions */
