@@ -1026,6 +1026,13 @@ static void cvp_emit_inst( struct compilation *cp,
       }
       break;
 
+   case OPCODE_NOP:
+      break;
+
+   case OPCODE_BRA:
+      /* XXX implement */
+      break;
+
    default:
       result = cvp_choose_result( cp, &inst->DstReg, &fixup );
       nr_args = _mesa_num_inst_src_regs(inst->Opcode);
