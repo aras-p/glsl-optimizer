@@ -930,6 +930,29 @@ emit_unop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 
 
 static struct prog_instruction *
+emit_label(const char *target, struct gl_program *prog)
+{
+   struct prog_instruction *inst;
+   inst = new_instruction(prog, OPCODE_NOP);
+   inst->Comment = _mesa_strdup(target);
+   return inst;
+}
+
+
+static struct prog_instruction *
+emit_cjump(const char *target, struct gl_program *prog)
+{
+   struct prog_instruction *inst;
+   inst = new_instruction(prog, OPCODE_BRA);
+   inst->DstReg.CondMask = COND_EQ;  /* branch if equal to zero */
+   inst->DstReg.CondSwizzle = SWIZZLE_X;
+   inst->Comment = _mesa_strdup(target);
+   return inst;
+}
+
+
+
+static struct prog_instruction *
 emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 {
    struct prog_instruction *inst;
@@ -1045,8 +1068,7 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
       return emit_unop(gc, n, prog);
       break;
    case IR_LABEL:
-      /*printf("LAB: %s\n", n->Target);*/
-      break;
+      return emit_label(n->Target, prog);
    case IR_JUMP:
 #if 0
       inst = new_instruction(prog, OPCODE_BRA);
@@ -1056,6 +1078,8 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    case IR_FLOAT:
       n->Store = alloc_constant(n->Value, 4, prog); /*XXX fix size */
       break;
+   case IR_CJUMP:
+      return emit_cjump(n->Target, prog);
    default:
       printf("emit: ?\n");
       abort();

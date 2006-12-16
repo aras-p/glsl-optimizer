@@ -931,13 +931,13 @@ slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
       /* list of operations */
       assert(oper->num_children > 0);
       {
-         slang_ir_node *n, *first = NULL;
+         slang_ir_node *n, *tree = NULL;
          GLuint i;
          for (i = 0; i < oper->num_children; i++) {
             n = slang_assemble_operation(A, &oper->children[i]);
-            first = first ? new_seq(first, n) : n;
+            tree = tree ? new_seq(tree, n) : n;
          }
-         return first;
+         return tree;
       }
       break;
    case slang_oper_expression:
@@ -945,6 +945,7 @@ slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
       break;
    case slang_oper_while:
       {
+         slang_ir_node *tree;
          slang_ir_node *nStartLabel = new_label("while-start");
          slang_ir_node *nCond = slang_assemble_operation(A, &oper->children[0]);
          slang_ir_node *nNotCond = new_node(IR_NOT, nCond, NULL);
@@ -953,14 +954,13 @@ slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
          slang_ir_node *nCJump = new_cjump(nNotCond, "while-end");
          slang_ir_node *nJump = new_jump("while-start");
 
-         return new_seq(nStartLabel,
-                        new_seq(nCJump,
-                                new_seq(nBody,
-                                        new_seq(nJump,
-                                                nEndLabel)
-                                        )
-                                )
-                        );
+         tree = new_seq(nStartLabel, nCond);
+         tree = new_seq(tree, nNotCond);
+         tree = new_seq(tree, nBody);
+         tree = new_seq(tree, nEndLabel);
+         tree = new_seq(tree, nCJump);
+         tree = new_seq(tree, nJump);
+         return tree;
       }
       break;
    case slang_oper_equal:
@@ -977,9 +977,20 @@ slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
                       slang_assemble_operation(A, &oper->children[1]));
    case slang_oper_less:
       /* child[0] < child[1]  ---->   child[1] > child[0] */
+#if 0
+      {
+	 slang_ir_node *n;
+         assert(oper->num_children == 2);
+         /* XXX tranpose children */
+	 n = slang_assemble_function_call_name(A, "<", oper, NULL);
+	 return n;
+      }
+#else
+      /** the operands must be ints or floats, not vectors */
       return new_node(IR_SGT,
                       slang_assemble_operation(A, &oper->children[1]),
                       slang_assemble_operation(A, &oper->children[0]));
+#endif
    case slang_oper_greaterequal:
       return new_node(IR_SGE,
                       slang_assemble_operation(A, &oper->children[0]),
@@ -1101,6 +1112,15 @@ slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
 	 return n;
       }
       break;
+   case slang_oper_mulassign:
+      {
+	 slang_ir_node *n;
+         assert(oper->num_children == 2);
+         /* XXX tranpose children */
+	 n = slang_assemble_function_call_name(A, "*=", oper, NULL);
+	 return n;
+      }
+      break;
    case slang_oper_asm:
       return slang_assemble_asm(A, oper, NULL);
    case slang_oper_call:
@@ -1122,6 +1142,25 @@ slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
 	 slang_ir_node *n = new_var(A, oper, aVar, SWIZZLE_NOOP);
 	 assert(oper->var);
 	 return n;
+      }
+      break;
+   case slang_oper_if:
+      {
+         slang_ir_node *cond, *bra, *body, *endif, *tree;
+
+         cond = slang_assemble_operation(A, &oper->children[0]);
+         /*assert(cond->Store);*/
+         bra = new_node(IR_CJUMP, NULL, NULL);
+         bra->Target = _mesa_strdup("__endif");
+
+         body = slang_assemble_operation(A, &oper->children[1]);
+
+         endif = new_label("__endif");
+
+         tree = new_seq(cond, bra);
+         tree = new_seq(tree, body);
+         tree = new_seq(tree, endif);
+         return tree;
       }
       break;
    case slang_oper_field:
@@ -1214,13 +1253,13 @@ slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
       break;
    case slang_oper_sequence:
       {
-         slang_ir_node *top = NULL;
+         slang_ir_node *tree = NULL;
          GLuint i;
          for (i = 0; i < oper->num_children; i++) {
             slang_ir_node *n = slang_assemble_operation(A, &oper->children[i]);
-            top = top ? new_seq(top, n) : n;
+            tree = tree ? new_seq(tree, n) : n;
          }
-         return top;
+         return tree;
       }
       break;
    case slang_oper_none:
