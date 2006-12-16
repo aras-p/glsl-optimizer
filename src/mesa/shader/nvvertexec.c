@@ -816,6 +816,11 @@ _mesa_exec_vertex_program(GLcontext *ctx,
          case OPCODE_END:
             ctx->_CurrentProgram = 0;
             return;
+         case OPCODE_BRA:
+            /* XXX implement */
+            /* FALLTHROUGH */
+         case OPCODE_NOP:
+            break;
          default:
             /* bad instruction opcode */
             _mesa_problem(ctx, "Bad VP Opcode in _mesa_exec_vertex_program");
