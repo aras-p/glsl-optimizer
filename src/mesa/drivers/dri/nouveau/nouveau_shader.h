@@ -349,6 +349,9 @@ nvsSwizzle(nvsRegister reg, nvsSwzComp x, nvsSwzComp y,
 
 extern GLboolean nvsUpdateShader(GLcontext *ctx, nouveauShader *nvs);
 extern void nvsDisasmHWShader(nvsPtr);
+extern void nvsDumpFragmentList(nvsFragmentList *f, int lvl);
+extern nouveauShader *nvsBuildTextShader(GLcontext *ctx, GLenum target,
+      					 const char *text);
 
 extern void NV20VPInitShaderFuncs(nvsFunc *);
 extern void NV30VPInitShaderFuncs(nvsFunc *);

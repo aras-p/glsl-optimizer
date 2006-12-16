@@ -144,6 +144,7 @@ typedef struct nouveau_context {
 	nvsFunc FPfunc;
 	nouveauShader *current_fragprog;
 	nouveauShader *current_vertprog;
+	nouveauShader *passthrough_vp;
 
 	nouveauScreenRec *screen;
 	drm_nouveau_sarea_t *sarea;

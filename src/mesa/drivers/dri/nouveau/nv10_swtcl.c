@@ -366,6 +366,15 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 	int i;
 	int slots=0;
 	int total_size=0;
+	/* t_vertex_generic dereferences a NULL pointer if we
+	 * pass NULL as the vp transform...
+	 */
+	const GLfloat ident_vp[16] = {
+	   1.0, 0.0, 0.0, 0.0,
+	   0.0, 1.0, 0.0, 0.0,
+	   0.0, 0.0, 1.0, 0.0,
+	   0.0, 0.0, 0.0, 1.0
+	};
 
 	RENDERINPUTS_COPY(index, nmesa->render_inputs_bitset);
 
@@ -425,10 +434,11 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 			total_size+=attr_size[i];
 		}
 	}
+
 	nmesa->vertex_size=_tnl_install_attrs( ctx,
 			nmesa->vertex_attrs, 
 			nmesa->vertex_attr_count,
-			NULL, 0 );
+			ident_vp, 0 );
 	assert(nmesa->vertex_size==total_size*4);
 
 	/* 
@@ -467,6 +477,8 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 			OUT_RING_CACHE(NV_VERTEX_ATTRIBUTE_TYPE_FLOAT|(size*0x10));
 		}
 	} else {
+		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_DO_VERTICES, 1);
+		OUT_RING(0);
 		BEGIN_RING_CACHE(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_ATTR0_POS,slots);
 		for(i=0;i<slots;i++)
 		{
@@ -495,6 +507,19 @@ static void nv10ChooseVertexState( GLcontext *ctx )
 	{
 		RENDERINPUTS_COPY(nmesa->render_inputs_bitset, index);
 		nv10OutputVertexFormat(nmesa);
+	}
+
+	if (nmesa->screen->card->type >= NV_40) {
+		/* Ensure passthrough shader is being used, and mvp matrix
+		 * is up to date
+		 */
+		nvsUpdateShader(ctx, nmesa->passthrough_vp);
+		BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VP_IN_REG, 2);
+		OUT_RING_CACHE  (0xff09);   /*IN : POS, COL, TC0-7 */
+		OUT_RING_CACHE  (0x3fc001); /*OUT: COL, TC0-7, POS implied */
+
+		/* Update texenv shader / user fragprog */
+		nvsUpdateShader(ctx, (nouveauShader*)ctx->FragmentProgram._Current);
 	}
 }
 

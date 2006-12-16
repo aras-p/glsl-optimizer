@@ -37,6 +37,7 @@
 
 #include "program.h"
 #include "tnl/tnl.h"
+#include "shader/arbprogparse.h"
 
 #include "nouveau_context.h"
 #include "nouveau_shader.h"
@@ -161,6 +162,63 @@ nvsUpdateShader(GLcontext *ctx, nouveauShader *nvs)
    return GL_TRUE;
 }
 
+nouveauShader *
+nvsBuildTextShader(GLcontext *ctx, GLenum target, const char *text)
+{
+   nouveauShader *nvs;
+
+   nvs = CALLOC_STRUCT(_nouveauShader);
+   if (!nvs)
+      return NULL;
+
+   if (target == GL_VERTEX_PROGRAM_ARB) {
+      _mesa_init_vertex_program(ctx, &nvs->mesa.vp, GL_VERTEX_PROGRAM_ARB, 0);
+      _mesa_parse_arb_vertex_program(ctx,
+	    			     GL_VERTEX_PROGRAM_ARB,
+				     text,
+				     strlen(text),
+				     &nvs->mesa.vp);
+   } else if (target == GL_FRAGMENT_PROGRAM_ARB) {
+      _mesa_init_fragment_program(ctx, &nvs->mesa.fp, GL_VERTEX_PROGRAM_ARB, 0);
+      _mesa_parse_arb_fragment_program(ctx,
+	    			       GL_FRAGMENT_PROGRAM_ARB,
+				       text,
+				       strlen(text),
+				       &nvs->mesa.fp);
+   }
+
+   nouveau_shader_pass0_arb(ctx, nvs);
+   nouveau_shader_pass1(nvs);
+   nouveau_shader_pass2(nvs);
+
+   return nvs;
+}
+
+static void
+nvsBuildPassthroughVP(GLcontext *ctx)
+{
+   nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+   const char *vp_text =
+      "!!ARBvp1.0\n"
+      "OPTION ARB_position_invariant;"
+      ""
+      "MOV result.color, vertex.color;\n"
+      "MOV result.texcoord[0], vertex.texcoord[0];\n"
+      "MOV result.texcoord[1], vertex.texcoord[1];\n"
+      "MOV result.texcoord[2], vertex.texcoord[2];\n"
+      "MOV result.texcoord[3], vertex.texcoord[3];\n"
+      "MOV result.texcoord[4], vertex.texcoord[4];\n"
+      "MOV result.texcoord[5], vertex.texcoord[5];\n"
+      "MOV result.texcoord[6], vertex.texcoord[6];\n"
+      "MOV result.texcoord[7], vertex.texcoord[7];\n"
+      "END";
+
+   nmesa->passthrough_vp = nvsBuildTextShader(ctx,
+	 				      GL_VERTEX_PROGRAM_ARB,
+					      vp_text);
+}
+
 void
 nouveauShaderInitFuncs(GLcontext * ctx)
 {
@@ -183,6 +241,11 @@ nouveauShaderInitFuncs(GLcontext * ctx)
    default:
       return;
    }
+
+   /* Build a vertex program that simply passes through all attribs.
+    * Needed to do swtcl on nv40
+    */
+   nvsBuildPassthroughVP(ctx);
 
    ctx->Const.VertexProgram.MaxNativeInstructions    = nmesa->VPfunc.MaxInst;
    ctx->Const.VertexProgram.MaxNativeAluInstructions = nmesa->VPfunc.MaxInst;
@@ -446,7 +509,7 @@ nvsDumpReg(nvsInstruction * inst, nvsRegister * reg)
       printf(")");
 }
 
-void
+static void
 nvsDumpInstruction(nvsInstruction * inst, int slot, int lvl)
 {
    struct _opcode_info *opr = &ops[inst->op];
