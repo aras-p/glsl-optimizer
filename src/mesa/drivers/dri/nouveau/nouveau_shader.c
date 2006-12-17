@@ -245,7 +245,8 @@ nouveauShaderInitFuncs(GLcontext * ctx)
    /* Build a vertex program that simply passes through all attribs.
     * Needed to do swtcl on nv40
     */
-   nvsBuildPassthroughVP(ctx);
+   if (nmesa->screen->card->type >= NV_40)
+      nvsBuildPassthroughVP(ctx);
 
    ctx->Const.VertexProgram.MaxNativeInstructions    = nmesa->VPfunc.MaxInst;
    ctx->Const.VertexProgram.MaxNativeAluInstructions = nmesa->VPfunc.MaxInst;
