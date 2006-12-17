@@ -134,15 +134,17 @@ typedef void (*mach64_line_func)( mach64ContextPtr,
 typedef void (*mach64_point_func)( mach64ContextPtr,
 				     mach64Vertex * );
 
-#ifdef TEXMEM
 struct mach64_texture_object {
    driTextureObject   base;
 
-   GLuint offset;
+   GLuint bufAddr;
 
-   GLuint dirty;
-   GLuint age;
+   GLint heap; /* same as base.heap->heapId */
 
+   /* For communicating values from mach64AllocTexObj(), mach64SetTexImages()
+    * to mach64UpdateTextureUnit(). Alternately, we can use the tObj values or
+    * set the context registers directly.
+    */
    GLint widthLog2;
    GLint heightLog2;
    GLint maxLog2;
@@ -150,49 +152,13 @@ struct mach64_texture_object {
    GLint hasAlpha;
    GLint textureFormat;
 
-   /* Have to keep these separate due to how they are programmed.
-    * FIXME: Why don't we just use the tObj values?
-    */
    GLboolean BilinearMin;
    GLboolean BilinearMag;
    GLboolean ClampS;
    GLboolean ClampT;
 };
-#else
-struct mach64_texture_object {
-   struct mach64_texture_object *next;
-   struct mach64_texture_object *prev;
-   struct gl_texture_object *tObj;
-
-   struct mem_block *memBlock;
-   GLuint offset;
-   GLuint size;
-
-   GLuint dirty;
-   GLuint age;
-
-   GLint bound;
-   GLint heap;
-
-   GLint widthLog2;
-   GLint heightLog2;
-   GLint maxLog2;
-
-   GLint hasAlpha;
-   GLint textureFormat;
-
-   /* Have to keep these separate due to how they are programmed.
-    * FIXME: Why don't we just use the tObj values?
-    */
-   GLboolean BilinearMin;
-   GLboolean BilinearMag;
-   GLboolean ClampS;
-   GLboolean ClampT;
-};
-#endif
 
 typedef struct mach64_texture_object mach64TexObj, *mach64TexObjPtr;
-
 
 struct mach64_context {
    GLcontext *glCtx;
@@ -229,17 +195,10 @@ struct mach64_context {
    /* Texture object bookkeeping
     */
    mach64TexObjPtr CurrentTexObj[2];
-#ifdef TEXMEM
-   unsigned nr_heaps;
-   driTexHeap * texture_heaps[ R128_NR_TEX_HEAPS ];
-   driTextureObject swapped;
-#else
-   mach64TexObj TexObjList[MACH64_NR_TEX_HEAPS];
-   mach64TexObj SwappedOut;
-   struct mem_block *texHeap[MACH64_NR_TEX_HEAPS];
-   GLuint lastTexAge[MACH64_NR_TEX_HEAPS];
+
    GLint firstTexHeap, lastTexHeap;
-#endif
+   driTexHeap *texture_heaps[MACH64_NR_TEX_HEAPS];
+   driTextureObject swapped;
 
    /* Fallback rasterization functions
     */

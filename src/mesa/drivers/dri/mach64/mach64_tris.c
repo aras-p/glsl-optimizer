@@ -1583,7 +1583,10 @@ static void mach64FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
    mach64ContextPtr mmesa = MACH64_CONTEXT( ctx );
    const GLuint vertsize = mmesa->vertex_size;
    GLint a;
-   GLfloat ooa;
+   union {
+      GLfloat f;
+      CARD32 u;
+   } ooa;
    GLuint xy;
    const GLuint xyoffset = 9;
    GLint xx[3], yy[3]; /* 2 fractional bits for hardware */
@@ -1621,7 +1624,7 @@ static void mach64FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
       return;
    }
    
-   ooa = 16.0 / a;
+   ooa.f = 16.0 / a;
    
    vb = (CARD32 *)mach64AllocDmaLow( mmesa, vbsiz * sizeof(CARD32) );
    vbchk = vb + vbsiz;
@@ -1629,7 +1632,7 @@ static void mach64FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
    COPY_VERTEX( vb, vertsize, v0, 1 );
    COPY_VERTEX( vb, vertsize, v1, 2 );
    COPY_VERTEX_OOA( vb, vertsize, v2, 3 );
-   LE32_OUT( vb++, *(CARD32 *)&ooa );
+   LE32_OUT( vb++, ooa.u );
 
    i = 3;
    while (1) {
@@ -1644,10 +1647,10 @@ static void mach64FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 	      
       a = (xx[0] - xx[2]) * (yy[1] - yy[2]) -
 	  (yy[0] - yy[2]) * (xx[1] - xx[2]);
-      ooa = 16.0 / a;
+      ooa.f = 16.0 / a;
    
       COPY_VERTEX_OOA( vb, vertsize, v0, 1 );
-      LE32_OUT( vb++, *(CARD32 *)&ooa );
+      LE32_OUT( vb++, ooa.u );
       
       if (i >= n)
 	 break;
@@ -1660,10 +1663,10 @@ static void mach64FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 	      
       a = (xx[0] - xx[2]) * (yy[1] - yy[2]) -
 	  (yy[0] - yy[2]) * (xx[1] - xx[2]);
-      ooa = 16.0 / a;
+      ooa.f = 16.0 / a;
    
       COPY_VERTEX_OOA( vb, vertsize, v1, 2 );
-      LE32_OUT( vb++, *(CARD32 *)&ooa );
+      LE32_OUT( vb++, ooa.u );
    }
 
    assert( vb == vbchk );

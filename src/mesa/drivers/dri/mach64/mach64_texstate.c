@@ -47,11 +47,6 @@ static void mach64SetTexImages( mach64ContextPtr mmesa,
 {
    mach64TexObjPtr t = (mach64TexObjPtr) tObj->DriverData;
    struct gl_texture_image *baseImage = tObj->Image[0][tObj->BaseLevel];
-#if 0
-   int log2Pitch, log2Height, log2Size, log2MinSize;
-   int i;
-   GLint firstLevel, lastLevel;
-#endif
    int totalSize;
 
    assert(t);
@@ -92,77 +87,17 @@ static void mach64SetTexImages( mach64ContextPtr mmesa,
       _mesa_problem(mmesa->glCtx, "Bad texture format in %s", __FUNCTION__);
    };
 
-#if 0
-   /* Compute which mipmap levels we really want to send to the hardware.
-    * This depends on the base image size, GL_TEXTURE_MIN_LOD,
-    * GL_TEXTURE_MAX_LOD, GL_TEXTURE_BASE_LEVEL, and GL_TEXTURE_MAX_LEVEL.
-    * Yes, this looks overly complicated, but it's all needed.
-    */
-   firstLevel = tObj->BaseLevel + (GLint) (tObj->MinLod + 0.5);
-   firstLevel = MAX2(firstLevel, tObj->BaseLevel);
-   lastLevel = tObj->BaseLevel + (GLint) (tObj->MaxLod + 0.5);
-   lastLevel = MAX2(lastLevel, tObj->BaseLevel);
-   lastLevel = MIN2(lastLevel, tObj->BaseLevel + baseImage->MaxLog2);
-   lastLevel = MIN2(lastLevel, tObj->MaxLevel);
-   lastLevel = MAX2(firstLevel, lastLevel); /* need at least one level */
+   totalSize = ( baseImage->Height *
+		 baseImage->Width *
+		 baseImage->TexFormat->TexelBytes );
 
-   log2Pitch = tObj->Image[firstLevel]->WidthLog2;
-   log2Height = tObj->Image[firstLevel]->HeightLog2;
-   log2Size = MAX2(log2Pitch, log2Height);
-   log2MinSize = log2Size;
+   totalSize = (totalSize + 31) & ~31;
 
-   t->dirty = 0;
-   totalSize = 0;
-   for ( i = firstLevel; i <= lastLevel; i++ ) {
-      const struct gl_texture_image *texImage;
-
-      texImage = tObj->Image[i];
-      if ( !texImage || !texImage->Data ) {
-         lastLevel = i - 1;
-	 break;
-      }
-
-      log2MinSize = texImage->MaxLog2;
-
-      t->image[i - firstLevel].offset = totalSize;
-      t->image[i - firstLevel].width  = tObj->Image[i]->Width;
-      t->image[i - firstLevel].height = tObj->Image[i]->Height;
-
-      t->dirty |= (1 << i);
-
-      totalSize += (tObj->Image[i]->Height *
-		    tObj->Image[i]->Width *
-		    tObj->Image[i]->TexFormat->TexelBytes);
-
-      /* Offsets must be 32-byte aligned for host data blits and tiling */
-      totalSize = (totalSize + 31) & ~31;
-   }
-
-   t->totalSize = totalSize;
-   t->firstLevel = firstLevel;
-   t->lastLevel = lastLevel;
+   t->base.totalSize = totalSize;
+   t->base.firstLevel = tObj->BaseLevel;
+   t->base.lastLevel = tObj->BaseLevel;
 
    /* Set the texture format */
-   t->setup.tex_cntl &= ~(0xf << 16);
-   t->setup.tex_cntl |= t->textureFormat;
-
-   t->setup.tex_combine_cntl = 0x00000000;  /* XXX is this right? */
-
-   t->setup.tex_size_pitch = ((log2Pitch   << R128_TEX_PITCH_SHIFT) |
-			      (log2Size    << R128_TEX_SIZE_SHIFT) |
-			      (log2Height  << R128_TEX_HEIGHT_SHIFT) |
-			      (log2MinSize << R128_TEX_MIN_SIZE_SHIFT));
-
-   for ( i = 0 ; i < R128_MAX_TEXTURE_LEVELS ; i++ ) {
-      t->setup.tex_offset[i]  = 0x00000000;
-   }
-
-   if (firstLevel == lastLevel)
-      t->setup.tex_cntl |= R128_MIP_MAP_DISABLE;
-   else
-      t->setup.tex_cntl &= ~R128_MIP_MAP_DISABLE;
-
-#else
    if ( ( baseImage->_BaseFormat == GL_RGBA ) ||
 	( baseImage->_BaseFormat == GL_ALPHA ) ||
 	( baseImage->_BaseFormat == GL_LUMINANCE_ALPHA ) ) {
@@ -171,15 +106,9 @@ static void mach64SetTexImages( mach64ContextPtr mmesa,
       t->hasAlpha = 0;
    }
 
-   totalSize = ( baseImage->Width * baseImage->Height * 
-      baseImage->TexFormat->TexelBytes );
-   totalSize = (totalSize + 31) & ~31;
-   t->size = totalSize;
    t->widthLog2 = baseImage->WidthLog2;
    t->heightLog2 = baseImage->HeightLog2;
    t->maxLog2 = baseImage->MaxLog2;
-   
-#endif
 }
 
 static void mach64UpdateTextureEnv( GLcontext *ctx, int unit )
@@ -387,17 +316,17 @@ static void mach64UpdateTextureUnit( GLcontext *ctx, int unit )
       }
 
       /* Upload teximages */
-      if (t->dirty) {
+      if (t->base.dirty_images[0]) {
          mach64SetTexImages( mmesa, tObj );
 	 mmesa->dirty |= (MACH64_UPLOAD_TEX0IMAGE << unit);
       }
 
       /* Bind to the given texture unit */
       mmesa->CurrentTexObj[unit] = t;
-      t->bound |= (1 << unit);
+      t->base.bound |= (1 << unit);
 
-      if ( t->memBlock )
-         mach64UpdateTexLRU( mmesa, t );
+      if ( t->base.memBlock )
+         driUpdateTextureLRU( (driTextureObject *) t ); /* XXX: should be locked! */
 
       /* register setup */
       if ( unit == 0 ) {
@@ -515,8 +444,8 @@ void mach64UpdateTextureState( GLcontext *ctx )
    FALLBACK( mmesa, MACH64_FALLBACK_TEXTURE, GL_FALSE );
 
    /* Unbind any currently bound textures */
-   if ( mmesa->CurrentTexObj[0] ) mmesa->CurrentTexObj[0]->bound = 0;
-   if ( mmesa->CurrentTexObj[1] ) mmesa->CurrentTexObj[1]->bound = 0;
+   if ( mmesa->CurrentTexObj[0] ) mmesa->CurrentTexObj[0]->base.bound = 0;
+   if ( mmesa->CurrentTexObj[1] ) mmesa->CurrentTexObj[1]->base.bound = 0;
    mmesa->CurrentTexObj[0] = NULL;
    mmesa->CurrentTexObj[1] = NULL;
 
@@ -554,5 +483,43 @@ void mach64UpdateTextureState( GLcontext *ctx )
 
    mmesa->dirty |= (MACH64_UPLOAD_SCALE_3D_CNTL |
 		    MACH64_UPLOAD_TEXTURE);
+}
+
+
+/* Due to the way we must program texture state into the Rage Pro,
+ * we must leave these calculations to the absolute last minute.
+ */
+void mach64EmitTexStateLocked( mach64ContextPtr mmesa,
+			       mach64TexObjPtr t0,
+			       mach64TexObjPtr t1 )
+{
+   drm_mach64_sarea_t *sarea = mmesa->sarea;
+   drm_mach64_context_regs_t *regs = &(mmesa->setup);
+
+   /* for multitex, both textures must be local or AGP */
+   if ( t0 && t1 )
+      assert(t0->heap == t1->heap);
+
+   if ( t0 ) {
+      if (t0->heap == MACH64_CARD_HEAP) {
+#if ENABLE_PERF_BOXES
+	 mmesa->c_texsrc_card++;
+#endif
+	 mmesa->setup.tex_cntl &= ~MACH64_TEX_SRC_AGP;
+      } else {
+#if ENABLE_PERF_BOXES
+	 mmesa->c_texsrc_agp++;
+#endif
+	 mmesa->setup.tex_cntl |= MACH64_TEX_SRC_AGP;
+      }
+      mmesa->setup.tex_offset = t0->bufAddr;
+   }
+
+   if ( t1 ) {
+      mmesa->setup.secondary_tex_off = t1->bufAddr;
+   }
+
+   memcpy( &sarea->context_state.tex_size_pitch, &regs->tex_size_pitch,
+	   MACH64_NR_TEXTURE_REGS * sizeof(GLuint) );
 }
 
