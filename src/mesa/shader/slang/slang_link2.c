@@ -230,6 +230,47 @@ link_uniform_vars(struct gl_linked_program *linked, struct gl_program *prog)
 
 
 /**
+ * XXX Temporary
+ */
+static void
+slang_resolve_branches(struct gl_program *prog)
+{
+   struct target {
+      const char *Name;
+      GLuint Pos;
+   };
+   struct target targets[500];
+   GLuint numTargets = 0;
+   GLuint i, j;
+
+   for (i = 0; i < prog->NumInstructions; i++) {
+      struct prog_instruction *inst = prog->Instructions + i;
+      if (inst->Opcode == OPCODE_NOP && inst->Comment) {
+         targets[numTargets].Name = inst->Comment;
+         targets[numTargets].Pos = i;
+         numTargets++;
+      }
+   }
+
+   for (i = 0; i < prog->NumInstructions; i++) {
+      struct prog_instruction *inst = prog->Instructions + i;
+      if (inst->Opcode == OPCODE_BRA) {
+         for (j = 0; j < numTargets; j++) {
+            if (!strcmp(inst->Comment, targets[j].Name)) {
+               inst->BranchTarget = targets[j].Pos;
+               break;
+            }
+         }
+         if (j == numTargets) {
+            abort();
+         }
+      }
+   }
+}
+
+
+
+/**
  * Shader linker.  Currently:
  *
  * 1. The last attached vertex shader and fragment shader are linked.
@@ -297,6 +338,9 @@ _slang_link2(GLcontext *ctx,
    _mesa_free_parameter_list(linked->FragmentProgram->Base.Parameters);
    linked->VertexProgram->Base.Parameters = linked->Uniforms;
    linked->FragmentProgram->Base.Parameters = linked->Uniforms;
+
+   slang_resolve_branches(&linked->VertexProgram->Base);
+   slang_resolve_branches(&linked->FragmentProgram->Base);
 
 #if 1
    printf("************** original fragment program\n");

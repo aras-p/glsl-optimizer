@@ -897,6 +897,12 @@ emit_binop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store,
                       n->Children[1]->Swizzle);
    inst->Comment = n->Comment;
+
+   if (inst->Opcode == OPCODE_SGT) {
+      /* update cond codes */
+      inst->CondUpdate = GL_TRUE;
+   }
+
    return inst;
 }
 
@@ -946,6 +952,18 @@ emit_cjump(const char *target, struct gl_program *prog)
    inst = new_instruction(prog, OPCODE_BRA);
    inst->DstReg.CondMask = COND_EQ;  /* branch if equal to zero */
    inst->DstReg.CondSwizzle = SWIZZLE_X;
+   inst->Comment = _mesa_strdup(target);
+   return inst;
+}
+
+
+static struct prog_instruction *
+emit_jump(const char *target, struct gl_program *prog)
+{
+   struct prog_instruction *inst;
+   inst = new_instruction(prog, OPCODE_BRA);
+   inst->DstReg.CondMask = COND_TR;  /* always branch */
+   /*inst->DstReg.CondSwizzle = SWIZZLE_X;*/
    inst->Comment = _mesa_strdup(target);
    return inst;
 }
@@ -1069,15 +1087,11 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
       break;
    case IR_LABEL:
       return emit_label(n->Target, prog);
-   case IR_JUMP:
-#if 0
-      inst = new_instruction(prog, OPCODE_BRA);
-      inst->Comment = _mesa_strdup(n->Target);
-#endif
-      break;
    case IR_FLOAT:
       n->Store = alloc_constant(n->Value, 4, prog); /*XXX fix size */
       break;
+   case IR_JUMP:
+      return emit_jump(n->Target, prog);
    case IR_CJUMP:
       return emit_cjump(n->Target, prog);
    default:

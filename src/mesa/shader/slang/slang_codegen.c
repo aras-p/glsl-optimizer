@@ -122,10 +122,10 @@ new_seq(slang_ir_node *left, slang_ir_node *right)
 }
 
 static slang_ir_node *
-new_label(const char *name)
+new_label(slang_atom labName)
 {
    slang_ir_node *n = new_node(IR_LABEL, NULL, NULL);
-   n->Target = _mesa_strdup(name);
+   n->Target = (char *) labName; /*_mesa_strdup(name);*/
    return n;
 }
 
@@ -141,20 +141,20 @@ new_float_literal(float x, float y, float z, float w)
 }
 
 static slang_ir_node *
-new_cjump(slang_ir_node *cond, const char *target)
+new_cjump(slang_atom target)
 {
-   slang_ir_node *n = new_node(IR_CJUMP, cond, NULL);
-   n->Target = _mesa_strdup(target);
+   slang_ir_node *n = new_node(IR_CJUMP, NULL, NULL);
+   if (n)
+      n->Target = (char *) target;
    return n;
 }
 
 static slang_ir_node *
-new_jump(const char *target)
+new_jump(slang_atom target)
 {
    slang_ir_node *n = new_node(IR_JUMP, NULL, NULL);
-   if (n) {
-      n->Target = _mesa_strdup(target);
-   }
+   if (n)
+      n->Target = (char *) target;
    return n;
 }
 
@@ -893,6 +893,16 @@ slang_assemble_asm(slang_assemble_ctx *A, slang_operation *oper,
 
 
 
+static GLboolean
+_slang_is_noop(const slang_operation *oper)
+{
+   if (!oper ||
+       oper->type == slang_oper_void ||
+       (oper->num_children == 1 && oper->children[0].type == slang_oper_void))
+      return GL_TRUE;
+   else
+      return GL_FALSE;
+}
 
 
 /**
@@ -923,6 +933,88 @@ slang_assemble_function_call_name(slang_assemble_ctx *A, const char *name,
 
 
 static slang_ir_node *
+_slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
+{
+   /*
+    * label "__whileStart"
+    * eval expr (child[0]), updating condcodes
+    * branch if false to "__endWhile"
+    * code body
+    * jump "__whileStart"
+    * label "__endWhile"
+    */
+   slang_atom startAtom = slang_atom_pool_gen(A->atoms, "__startWhile");
+   slang_atom endAtom = slang_atom_pool_gen(A->atoms, "__endWhile");
+   slang_ir_node *startLab, *cond, *bra, *body, *jump, *endLab, *tree;
+
+   startLab = new_label(startAtom);
+   cond = slang_assemble_operation(A, &oper->children[0]);
+   tree = new_seq(startLab, cond);
+
+   bra = new_cjump(endAtom);
+   tree = new_seq(tree, bra);
+
+   body = slang_assemble_operation(A, &oper->children[1]);
+   tree = new_seq(tree, body);
+
+   jump = new_jump(startAtom);
+   tree = new_seq(tree, jump);
+
+   endLab = new_label(endAtom);
+   tree = new_seq(tree, endLab);
+
+   return tree;
+}
+
+
+static slang_ir_node *
+_slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
+{
+   /*
+    * eval expr (child[0]), updating condcodes
+    * branch if false to _else or _endif
+    * "true" code block
+    * if haveElseClause clause:
+    *    jump "__endif"
+    *    label "__else"
+    *    "false" code block
+    * label "__endif"
+    */
+   const GLboolean haveElseClause = !_slang_is_noop(&oper->children[2]);
+   slang_ir_node *cond, *bra, *trueBody, *endifLab, *tree;
+   slang_atom elseAtom = slang_atom_pool_gen(A->atoms, "__else");
+   slang_atom endifAtom = slang_atom_pool_gen(A->atoms, "__endif");
+
+   cond = slang_assemble_operation(A, &oper->children[0]);
+   /*assert(cond->Store);*/
+   bra = new_cjump(haveElseClause ? elseAtom : endifAtom);
+   tree = new_seq(cond, bra);
+
+   trueBody = slang_assemble_operation(A, &oper->children[1]);
+   tree = new_seq(tree, trueBody);
+
+   if (haveElseClause) {
+      /* else clause */
+      slang_ir_node *jump, *elseLab, *falseBody;
+      jump = new_jump(endifAtom);
+      tree = new_seq(tree, jump);
+
+      elseLab = new_label(elseAtom);
+      tree = new_seq(tree, elseLab);
+
+      falseBody = slang_assemble_operation(A, &oper->children[2]);
+      tree = new_seq(tree, falseBody);
+   }
+
+   endifLab = new_label(endifAtom);
+   tree = new_seq(tree, endifLab);
+
+   return tree;
+}
+
+
+
+static slang_ir_node *
 slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
 {
    switch (oper->type) {
@@ -944,25 +1036,7 @@ slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
       return slang_assemble_operation(A, &oper->children[0]);
       break;
    case slang_oper_while:
-      {
-         slang_ir_node *tree;
-         slang_ir_node *nStartLabel = new_label("while-start");
-         slang_ir_node *nCond = slang_assemble_operation(A, &oper->children[0]);
-         slang_ir_node *nNotCond = new_node(IR_NOT, nCond, NULL);
-         slang_ir_node *nBody = slang_assemble_operation(A, &oper->children[1]);
-         slang_ir_node *nEndLabel = new_label("while-end");
-         slang_ir_node *nCJump = new_cjump(nNotCond, "while-end");
-         slang_ir_node *nJump = new_jump("while-start");
-
-         tree = new_seq(nStartLabel, nCond);
-         tree = new_seq(tree, nNotCond);
-         tree = new_seq(tree, nBody);
-         tree = new_seq(tree, nEndLabel);
-         tree = new_seq(tree, nCJump);
-         tree = new_seq(tree, nJump);
-         return tree;
-      }
-      break;
+      return _slang_gen_while(A, oper);
    case slang_oper_equal:
       return new_node(IR_SEQUAL,
                       slang_assemble_operation(A, &oper->children[0]),
@@ -1145,24 +1219,7 @@ slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
       }
       break;
    case slang_oper_if:
-      {
-         slang_ir_node *cond, *bra, *body, *endif, *tree;
-
-         cond = slang_assemble_operation(A, &oper->children[0]);
-         /*assert(cond->Store);*/
-         bra = new_node(IR_CJUMP, NULL, NULL);
-         bra->Target = _mesa_strdup("__endif");
-
-         body = slang_assemble_operation(A, &oper->children[1]);
-
-         endif = new_label("__endif");
-
-         tree = new_seq(cond, bra);
-         tree = new_seq(tree, body);
-         tree = new_seq(tree, endif);
-         return tree;
-      }
-      break;
+      return _slang_gen_if(A, oper);
    case slang_oper_field:
       {
          slang_assembly_typeinfo ti;
