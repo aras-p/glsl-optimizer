@@ -45,7 +45,12 @@
 #include "slang_print.h"
 
 
+/**
+ * XXX move these into the slang_assemble_ctx struct
+ */
 static slang_function *CurFunction = NULL;
+static slang_atom CurLoopBreak = 0;
+static slang_atom CurLoopCont = 0;
 
 
 static slang_ir_node *
@@ -116,6 +121,7 @@ new_node(slang_ir_opcode op, slang_ir_node *left, slang_ir_node *right)
 static slang_ir_node *
 new_seq(slang_ir_node *left, slang_ir_node *right)
 {
+   /* XXX if either left or right is null, just return pointer to other?? */
    assert(left);
    assert(right);
    return new_node(IR_SEQ, left, right);
@@ -140,6 +146,9 @@ new_float_literal(float x, float y, float z, float w)
    return n;
 }
 
+/**
+ * XXX maybe pass an IR node as second param to indicate the jump target???
+ */
 static slang_ir_node *
 new_cjump(slang_atom target)
 {
@@ -149,6 +158,9 @@ new_cjump(slang_atom target)
    return n;
 }
 
+/**
+ * XXX maybe pass an IR node as second param to indicate the jump target???
+ */
 static slang_ir_node *
 new_jump(slang_atom target)
 {
@@ -932,20 +944,29 @@ slang_assemble_function_call_name(slang_assemble_ctx *A, const char *name,
 }
 
 
+/**
+ * Generate IR tree for a while-loop.
+ */
 static slang_ir_node *
 _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
 {
    /*
-    * label "__whileStart"
+    * label "__startWhile"
     * eval expr (child[0]), updating condcodes
     * branch if false to "__endWhile"
     * code body
-    * jump "__whileStart"
+    * jump "__startWhile"
     * label "__endWhile"
     */
    slang_atom startAtom = slang_atom_pool_gen(A->atoms, "__startWhile");
    slang_atom endAtom = slang_atom_pool_gen(A->atoms, "__endWhile");
    slang_ir_node *startLab, *cond, *bra, *body, *jump, *endLab, *tree;
+   slang_atom prevLoopBreak = CurLoopBreak;
+   slang_atom prevLoopCont = CurLoopCont;
+
+   /* Push this loop */
+   CurLoopBreak = endAtom;
+   CurLoopCont = startAtom;
 
    startLab = new_label(startAtom);
    cond = slang_assemble_operation(A, &oper->children[0]);
@@ -963,10 +984,79 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    endLab = new_label(endAtom);
    tree = new_seq(tree, endLab);
 
+   /* Pop this loop */
+   CurLoopBreak = prevLoopBreak;
+   CurLoopCont = prevLoopCont;
+
    return tree;
 }
 
 
+/**
+ * Generate IR tree for a for-loop.
+ */
+static slang_ir_node *
+_slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
+{
+   /*
+    * init code (child[0])
+    * label "__startFor"
+    * eval expr (child[1]), updating condcodes
+    * branch if false to "__endFor"
+    * code body (child[3])
+    * label "__continueFor"
+    * incr code (child[2])
+    * jump "__startFor"
+    * label "__endFor"
+    */
+   slang_atom startAtom = slang_atom_pool_gen(A->atoms, "__startFor");
+   slang_atom contAtom = slang_atom_pool_gen(A->atoms, "__continueFor");
+   slang_atom endAtom = slang_atom_pool_gen(A->atoms, "__endFor");
+   slang_ir_node *init, *startLab, *cond, *bra, *body, *contLab;
+   slang_ir_node *incr, *jump, *endLab, *tree;
+   slang_atom prevLoopBreak = CurLoopBreak;
+   slang_atom prevLoopCont = CurLoopCont;
+
+   /* Push this loop */
+   CurLoopBreak = endAtom;
+   CurLoopCont = contAtom;
+
+   init = slang_assemble_operation(A, &oper->children[0]);
+   startLab = new_label(startAtom);
+   tree = new_seq(init, startLab);
+
+   cond = slang_assemble_operation(A, &oper->children[1]);
+   tree = new_seq(tree, cond);
+
+   bra = new_cjump(endAtom);
+   tree = new_seq(tree, bra);
+
+   body = slang_assemble_operation(A, &oper->children[3]);
+   tree = new_seq(tree, body);
+
+   contLab = new_label(contAtom);
+   tree = new_seq(tree, contLab);
+
+   incr = slang_assemble_operation(A, &oper->children[2]);
+   tree = new_seq(tree, incr);
+
+   jump = new_jump(startAtom);
+   tree = new_seq(tree, jump);
+
+   endLab = new_label(endAtom);
+   tree = new_seq(tree, endLab);
+
+   /* Pop this loop */
+   CurLoopBreak = prevLoopBreak;
+   CurLoopCont = prevLoopCont;
+
+   return tree;
+}
+
+
+/**
+ * Generate IR tree for an if/then/else conditional.
+ */
 static slang_ir_node *
 _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
 {
@@ -1037,6 +1127,15 @@ slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
       break;
    case slang_oper_while:
       return _slang_gen_while(A, oper);
+   case slang_oper_for:
+      return _slang_gen_for(A, oper);
+   case slang_oper_break:
+      ASSERT(CurLoopBreak);
+      return new_jump(CurLoopBreak);
+   case slang_oper_continue:
+      ASSERT(CurLoopCont);
+      return new_jump(CurLoopCont);
+      break;
    case slang_oper_equal:
       return new_node(IR_SEQUAL,
                       slang_assemble_operation(A, &oper->children[0]),
