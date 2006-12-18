@@ -206,16 +206,15 @@ _mesa_print_alu_instruction(const struct prog_instruction *inst,
    GLuint j;
 
    _mesa_printf("%s", opcode_string);
+   if (inst->CondUpdate)
+      _mesa_printf(".C");
 
    /* frag prog only */
    if (inst->SaturateMode == SATURATE_ZERO_ONE)
       _mesa_printf("_SAT");
 
    if (inst->DstReg.File != PROGRAM_UNDEFINED) {
-      _mesa_printf(" %s[%d]%s",
-		   program_file_string((enum register_file) inst->DstReg.File),
-		   inst->DstReg.Index,
-		   writemask_string(inst->DstReg.WriteMask));
+      print_dst_reg(&inst->DstReg);
    }
    else {
       _mesa_printf(" ???");
