@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.6
+ * Version:  6.5.3
  *
  * Copyright (C) 2006  Brian Paul   All Rights Reserved.
  *
@@ -23,9 +23,9 @@
  */
 
 /**
- * \file slang_link.c
- * slang linker
- * \author Michal Krol
+ * \file slang_link2.c
+ * GLSL linker
+ * \author Brian Paul
  */
 
 #include "imports.h"
@@ -36,7 +36,7 @@
 #include "prog_instruction.h"
 #include "prog_parameter.h"
 #include "prog_print.h"
-#include "shaderobjects.h"
+#include "shader_api.h"
 #include "slang_link.h"
 
 
@@ -229,40 +229,6 @@ link_uniform_vars(struct gl_linked_program *linked, struct gl_program *prog)
 }
 
 
-static void
-free_linked_program_data(GLcontext *ctx, struct gl_linked_program *linked)
-{
-   if (linked->VertexProgram) {
-      if (linked->VertexProgram->Base.Parameters == linked->Uniforms) {
-         /* to prevent a double-free in the next call */
-         linked->VertexProgram->Base.Parameters = NULL;
-      }
-      _mesa_delete_program(ctx, &linked->VertexProgram->Base);
-      linked->VertexProgram = NULL;
-   }
-
-   if (linked->FragmentProgram) {
-      if (linked->FragmentProgram->Base.Parameters == linked->Uniforms) {
-         /* to prevent a double-free in the next call */
-         linked->FragmentProgram->Base.Parameters = NULL;
-      }
-      _mesa_delete_program(ctx, &linked->FragmentProgram->Base);
-      linked->FragmentProgram = NULL;
-   }
-
-
-   if (linked->Uniforms) {
-      _mesa_free_parameter_list(linked->Uniforms);
-      linked->Uniforms = NULL;
-   }
-
-   if (linked->Varying) {
-      _mesa_free_parameter_list(linked->Varying);
-      linked->Varying = NULL;
-   }
-}
-
-
 /**
  * Shader linker.  Currently:
  *
@@ -286,7 +252,7 @@ _slang_link2(GLcontext *ctx,
    struct gl_fragment_program *fragProg;
    GLuint i;
 
-   free_linked_program_data(ctx, linked);
+   _mesa_free_linked_program_data(ctx, linked);
 
    linked->Uniforms = _mesa_new_parameter_list();
    linked->Varying = _mesa_new_parameter_list();
