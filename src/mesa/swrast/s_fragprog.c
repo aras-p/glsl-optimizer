@@ -656,7 +656,8 @@ execute_program( GLcontext *ctx,
                  struct fp_machine *machine, const SWspan *span,
                  GLuint column )
 {
-   GLuint pc;
+   const GLuint MAX_EXEC = 5000;
+   GLuint pc, total = 0;
 
    if (DEBUG_FRAG) {
       printf("execute fragment program --------------------\n");
@@ -717,6 +718,9 @@ execute_program( GLcontext *ctx,
                    test_cc(machine->CondCodes[GET_SWZ(swizzle, 3)], condMask)) {
                   /* take branch */
                   pc = inst->BranchTarget;
+                  /*
+                  printf("Take branch to %u\n", pc);
+                  */
                }
             }
             break;
@@ -1518,6 +1522,12 @@ execute_program( GLcontext *ctx,
             _mesa_problem(ctx, "Bad opcode %d in _mesa_exec_fragment_program",
                           inst->Opcode);
             return GL_TRUE; /* return value doesn't matter */
+
+      }
+      total++;
+      if (total > MAX_EXEC) {
+         _mesa_problem(ctx, "Infinite loop detected in fragment program");
+         abort();
       }
    }
    return GL_TRUE;
