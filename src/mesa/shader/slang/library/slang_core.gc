@@ -687,6 +687,7 @@ vec4 __operator * (const mat4 m, const vec4 v)
    __asm vec4_dot __retVal.w, r4, v;
 }
 
+// xxx move
 mat4 __operator * (const mat4 m, const mat4 n) {
     return mat4 (m * n[0], m * n[1], m * n[2], m * n[3]);
 }
@@ -870,6 +871,7 @@ void __operator *= (inout vec3 v, const mat3 m) {
 }
 
 
+
 vec4 __operator * (const vec4 v, const mat4 m)
 {
    __retVal.x = dot(v, m[0]);
@@ -878,7 +880,9 @@ vec4 __operator * (const vec4 v, const mat4 m)
    __retVal.w = dot(v, m[3]);
 }
 
-void __operator *= (inout vec4 v, const mat4 m) {
+void __operator *= (inout vec4 v, const mat4 m)
+{
+// xxx improve codegen for this case
     v = v * m;
 }
 
@@ -1676,11 +1680,13 @@ mat4 __operator ++ (inout mat4 m, const int) {
     return mat4 (m[0]++, m[1]++, m[2]++, m[3]++);
 }
 
-bool __operator < (const float a, const float b) {
-    bool c;
-    __asm float_less c, a, b;
-    return c;
+
+// XXX are the inequality operators for floats/ints really needed????
+bool __operator < (const float a, const float b)
+{
+   __asm vec4_sgt __retVal.x, b, a;
 }
+
 
 bool __operator < (const int a, const int b) {
     return float (a) < float (b);
