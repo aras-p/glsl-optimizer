@@ -326,30 +326,36 @@ mat4 __constructor (const vec4 r0, const vec4 r1, const vec4 r2, const vec4 r3)
 }
 
 
+//// operator +=
 
-
-void __operator += (inout float a, const float b) {
-    __asm float_add a, a, b;
+void __operator += (inout float a, const float b)
+{
+    __asm vec4_add a.x, a, b;
 }
+
+void __operator -= (inout float a, const float b)
+{
+    __asm vec4_subtract a.x, a, b;
+}
+
+void __operator *= (inout float a, const float b)
+{
+    __asm vec4_multiply a.x, a, b;
+}
+
+void __operator /= (inout float a, const float b)
+{
+   float w; // = 1 / b
+   __asm float_rcp w.x, b;
+   __asm vec4_multiply a.x, a, w;
+}
+
+
 
 float __operator - (const float a) {
     float b;
     __asm float_negate b, a;
     return b;
-}
-
-void __operator -= (inout float a, const float b) {
-    float c;
-    __asm float_negate c, b;
-    __asm float_add a, a, c;
-}
-
-void __operator *= (inout float a, const float b) {
-    __asm float_multiply a, a, b;
-}
-
-void __operator /= (inout float a, const float b) {
-    __asm float_divide a, a, b;
 }
 
 float __operator + (const float a, const float b) {
