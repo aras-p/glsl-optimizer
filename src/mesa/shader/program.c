@@ -358,9 +358,11 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
           prog->NumInstructions * sizeof(struct prog_instruction));
    clone->InputsRead = prog->InputsRead;
    clone->OutputsWritten = prog->OutputsWritten;
-   clone->Parameters = _mesa_clone_parameter_list(prog->Parameters);
+   if (prog->Parameters)
+      clone->Parameters = _mesa_clone_parameter_list(prog->Parameters);
    memcpy(clone->LocalParams, prog->LocalParams, sizeof(clone->LocalParams));
-   clone->Varying = _mesa_clone_parameter_list(prog->Varying);
+   if (prog->Varying)
+      clone->Varying = _mesa_clone_parameter_list(prog->Varying);
    memcpy(clone->LocalParams, prog->LocalParams, sizeof(clone->LocalParams));
    clone->NumInstructions = prog->NumInstructions;
    clone->NumTemporaries = prog->NumTemporaries;
