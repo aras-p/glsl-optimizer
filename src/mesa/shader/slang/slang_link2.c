@@ -318,6 +318,13 @@ _slang_link2(GLcontext *ctx,
       return;
    }
 
+   if (!vertProg->Base.Varying || !fragProg->Base.Varying) {
+      /* temporary */
+      _mesa_problem(ctx, "vertex/fragment program lacks varying list!");
+      linked->LinkStatus = GL_FALSE;
+      return;
+   }  
+
    /*
     * Make copies of the vertex/fragment programs now since we'll be
     * changing src/dst registers after merging the uniforms and varying vars.
