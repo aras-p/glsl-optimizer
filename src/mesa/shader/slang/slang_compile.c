@@ -2097,7 +2097,7 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
       slang_string_free(&preprocessed);
       grammar_get_last_error((byte *) (buf), sizeof(buf), &pos);
       slang_info_log_error(infolog, buf);
-      RETURN_ERROR("syntax error", 0);
+      RETURN_ERROR("syntax error (possibly in library code)", 0);
    }
    slang_string_free(&preprocessed);
 
