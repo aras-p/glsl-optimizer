@@ -1269,6 +1269,7 @@ slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
 	 slang_ir_node *n, *c0, *c1;
 	 GLuint mask = WRITEMASK_XYZW;
 	 if (lhs->type == slang_oper_field) {
+            /* XXXX this is a hack! */
 	    /* writemask */
 	    if (!slang_is_writemask((char *) lhs->a_id, &mask))
 	       mask = WRITEMASK_XYZW;
@@ -1281,7 +1282,11 @@ slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
          /*
          assert(c1->Opcode != IR_SEQ);
          */
-	 n->Writemask = mask;
+         if (c0->Writemask != WRITEMASK_XYZW)
+            /* XXX this is a hack! */
+            n->Writemask = c0->Writemask;
+         else
+            n->Writemask = mask;
 	 return n;
       }
       break;
@@ -1363,13 +1368,18 @@ slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
       /* array dereference */
       if (oper->children[1].type == slang_oper_literal_int) {
          /* compile-time constant index - OK */
-         slang_assembly_typeinfo elem_ti;
+         slang_assembly_typeinfo array_ti, elem_ti;
          slang_ir_node *base;
          GLint index;
 
          /* get type of array element */
          slang_assembly_typeinfo_construct(&elem_ti);
          _slang_typeof_operation(A, oper, &elem_ti);
+
+         /* get type of array */
+         slang_assembly_typeinfo_construct(&array_ti);
+         _slang_typeof_operation(A, &oper->children[0], &array_ti);
+
 
          base = slang_assemble_operation(A, &oper->children[0]);
          assert(base->Opcode == IR_VAR);
@@ -1379,9 +1389,22 @@ slang_assemble_operation(slang_assemble_ctx * A, slang_operation *oper)
          /*printf("element[%d]\n", index);*/
          /* new storage info since we don't want to change the original */
          base->Store = _slang_clone_ir_storage(base->Store);
-         /* bias Index by array subscript, update storage size */
-         base->Store->Index += index;
-         base->Store->Size = _slang_sizeof_type_specifier(&elem_ti.spec);
+         if (_slang_type_is_vector(array_ti.spec.type)) {
+            /* scalar element (float) of a basic vector (vec3) */
+            const GLuint max = _slang_type_dim(array_ti.spec.type);
+            if (index >= max) {
+               RETURN_ERROR("array index out of bounds", 0);
+            }
+            assert(index < 4);
+            /* use swizzle to access the element */
+            base->Swizzle = SWIZZLE_X + index;
+            base->Writemask = WRITEMASK_X << index;
+         }
+         else {
+            /* bias Index by array subscript, update storage size */
+            base->Store->Index += index;
+            base->Store->Size = _slang_sizeof_type_specifier(&elem_ti.spec);
+         }
          return base;
       }
       else {
