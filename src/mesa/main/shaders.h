@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.3
  *
- * Copyright (C) 2004-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2004-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,126 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef SHADEROBJECTS_H
-#define SHADEROBJECTS_H
 
-#include "context.h"
+#ifndef SHADERS_H
+#define SHADERS_H
 
-#if FEATURE_ARB_shader_objects
 
-/**
- * gl2 unique interface identifier.
- * Each gl2 interface has its own interface id used for object queries.
- */
-enum gl2_uiid
-{
-   UIID_UNKNOWN,		/* supported by all objects */
-   UIID_GENERIC,		/* generic object */
-   UIID_CONTAINER,		/* contains generic objects */
-   UIID_SHADER,			/* shader object */
-   UIID_FRAGMENT_SHADER,	/* fragment shader */
-   UIID_VERTEX_SHADER,		/* vertex shader */
-   UIID_PROGRAM,		/* program object */
-   UIID_3DLABS_SHHANDLE,         /* encapsulates 3DLabs' ShHandle */
-   UIID_DEBUG                    /* debug object */
-};
-
-struct gl2_unknown_intf
-{
-   GLvoid (* AddRef) (struct gl2_unknown_intf **);
-   GLvoid (* Release) (struct gl2_unknown_intf **);
-   struct gl2_unknown_intf **(* QueryInterface) (struct gl2_unknown_intf **, enum gl2_uiid uiid);
-};
-
-struct gl2_generic_intf
-{
-   struct gl2_unknown_intf _unknown;
-   GLvoid (* Delete) (struct gl2_generic_intf **);
-   GLenum (* GetType) (struct gl2_generic_intf **);
-   GLhandleARB (* GetName) (struct gl2_generic_intf **);
-   GLboolean (* GetDeleteStatus) (struct gl2_generic_intf **);
-   GLvoid (* GetInfoLog) (struct gl2_generic_intf **, GLsizei, GLcharARB *);
-   GLsizei (* GetInfoLogLength) (struct gl2_generic_intf **);
-};
-
-struct gl2_container_intf
-{
-   struct gl2_generic_intf _generic;
-   GLboolean (* Attach) (struct gl2_container_intf **, struct gl2_generic_intf **);
-   GLboolean (* Detach) (struct gl2_container_intf **, struct gl2_generic_intf **);
-   GLsizei (* GetAttachedCount) (struct gl2_container_intf **);
-   struct gl2_generic_intf **(* GetAttached) (struct gl2_container_intf **, GLuint);
-};
-
-struct gl2_shader_intf
-{
-   struct gl2_generic_intf _generic;
-   GLenum (* GetSubType) (struct gl2_shader_intf **);
-   GLboolean (* GetCompileStatus) (struct gl2_shader_intf **);
-   GLvoid (* SetSource) (struct gl2_shader_intf **, GLcharARB *, GLint *, GLsizei);
-   const GLcharARB *(* GetSource) (struct gl2_shader_intf **);
-   GLvoid (* Compile) (struct gl2_shader_intf **);
-   struct gl_program *Program;
-};
-
-struct gl2_program_intf
-{
-   struct gl2_container_intf _container;
-   GLboolean (* GetLinkStatus) (struct gl2_program_intf **);
-   GLboolean (* GetValidateStatus) (struct gl2_program_intf **);
-   GLvoid (* Link) (struct gl2_program_intf **);
-   GLvoid (* Validate) (struct gl2_program_intf **);
-   GLvoid (* UpdateFixedUniforms) (struct gl2_program_intf **);
-   GLvoid (* UpdateFixedAttrib) (struct gl2_program_intf **, GLuint, GLvoid *, GLuint, GLuint,
-                                 GLboolean);
-   GLvoid (* UpdateFixedVarying) (struct gl2_program_intf **, GLuint, GLvoid *, GLuint, GLuint,
-                                  GLboolean);
-   GLvoid (* GetTextureImageUsage) (struct gl2_program_intf **, GLbitfield *);
-   GLboolean (* IsShaderPresent) (struct gl2_program_intf **, GLenum);
-   GLvoid (* GetActiveUniform) (struct gl2_program_intf **, GLuint index, GLsizei maxLength,
-                                GLsizei *length, GLint *size, GLenum *type, GLchar *name);
-   GLuint (* GetActiveUniformMaxLength) (struct gl2_program_intf **);
-   GLuint (* GetActiveUniformCount) (struct gl2_program_intf **);
-   GLint (* GetUniformLocation) (struct gl2_program_intf **, const GLchar *name);
-   GLboolean (* WriteUniform) (struct gl2_program_intf **, GLint loc, GLsizei count,
-                               const GLvoid *data, GLenum type);
-   GLboolean (* ReadUniform) (struct gl2_program_intf **, GLint loc, GLsizei count,
-                               GLvoid *data, GLenum type);
-   GLvoid (* GetActiveAttrib) (struct gl2_program_intf **, GLuint index, GLsizei maxLength,
-                               GLsizei *length, GLint *size, GLenum *type, GLchar *name);
-   GLuint (* GetActiveAttribMaxLength) (struct gl2_program_intf **);
-   GLuint (* GetActiveAttribCount) (struct gl2_program_intf **);
-   GLint (* GetAttribLocation) (struct gl2_program_intf **, const GLchar *name);
-   GLvoid (* OverrideAttribBinding) (struct gl2_program_intf **, GLuint, const GLchar *);
-   GLvoid (* WriteAttrib) (struct gl2_program_intf **, GLuint, const GLfloat *);
-   GLvoid (* UpdateVarying) (struct gl2_program_intf **, GLuint, GLfloat *, GLboolean);
-   struct gl_linked_program *Linked;
-};
-
-struct gl2_fragment_shader_intf
-{
-   struct gl2_shader_intf _shader;
-};
-
-struct gl2_vertex_shader_intf
-{
-   struct gl2_shader_intf _shader;
-};
-
-struct gl2_3dlabs_shhandle_intf
-{
-   struct gl2_unknown_intf _unknown;
-   GLvoid *(* GetShHandle) (struct gl2_3dlabs_shhandle_intf **);
-};
-
-struct gl2_debug_intf
-{
-   struct gl2_generic_intf _generic;
-   GLvoid (* ClearDebugLog) (struct gl2_debug_intf **, GLenum logType, GLenum shaderType);
-   GLvoid (* GetDebugLog) (struct gl2_debug_intf **, GLenum logType, GLenum shaderType,
-                           GLsizei maxLength, GLsizei *length, GLcharARB *infoLog);
-   GLsizei (* GetDebugLogLength) (struct gl2_debug_intf **, GLenum logType, GLenum shaderType);
-};
+#include "glheader.h"
+#include "mtypes.h"
 
 
 extern void GLAPIENTRY
@@ -346,19 +233,9 @@ _mesa_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value);
 
 
-extern struct gl_linked_program *
-_mesa_new_linked_program(GLcontext *ctx, GLuint name);
-
-extern struct gl_linked_program *
-_mesa_lookup_linked_program(GLcontext *ctx, GLuint name);
-
-extern struct gl_program *
-_mesa_lookup_shader(GLcontext *ctx, GLuint name);
-
-
-#endif /* FEATURE_ARB_shader_objects */
-
+/*** XXXX temporary here ! */
 extern void
-_mesa_init_shaderobjects (GLcontext *ctx);
+_mesa_init_shader_state(GLcontext *ctx);
 
-#endif /* SHADEROBJECTS_H */
+
+#endif /* SHADERS_H */
