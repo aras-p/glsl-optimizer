@@ -706,7 +706,6 @@ alloc_shared_state( GLcontext *ctx )
 
 #if FEATURE_ARB_shader_objects
    ss->ShaderObjects = _mesa_NewHashTable();
-   ss->ProgramObjects = _mesa_NewHashTable();
 #endif
 
    ss->Default1D = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_1D);
@@ -785,8 +784,6 @@ alloc_shared_state( GLcontext *ctx )
 #if FEATURE_ARB_shader_objects
    if (ss->ShaderObjects)
       _mesa_DeleteHashTable (ss->ShaderObjects);
-   if (ss->ProgramObjects)
-      _mesa_DeleteHashTable (ss->ProgramObjects);
 #endif
 
 #if FEATURE_EXT_framebuffer_object

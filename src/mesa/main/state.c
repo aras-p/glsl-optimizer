@@ -949,8 +949,7 @@ update_arrays( GLcontext *ctx )
 static void
 update_program(GLcontext *ctx)
 {
-   const struct gl_linked_program *linked = ctx->Shader.CurrentProgram;
-
+   const struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
 
    /* These _Enabled flags indicate if the program is enabled AND valid. */
    ctx->VertexProgram._Enabled = ctx->VertexProgram.Enabled
@@ -973,10 +972,10 @@ update_program(GLcontext *ctx)
 
    ctx->FragmentProgram._Current = NULL;
 
-   if (linked && linked->LinkStatus) {
+   if (shProg && shProg->LinkStatus) {
       /* Use shader programs */
-      ctx->VertexProgram._Current = linked->VertexProgram;
-      ctx->FragmentProgram._Current = linked->FragmentProgram;
+      ctx->VertexProgram._Current = shProg->VertexProgram;
+      ctx->FragmentProgram._Current = shProg->FragmentProgram;
    }
    else {
       if (ctx->VertexProgram._Enabled) {

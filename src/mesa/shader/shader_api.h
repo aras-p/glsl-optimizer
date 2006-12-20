@@ -38,24 +38,24 @@
 extern void
 _mesa_init_shader_state(GLcontext * ctx);
 
-extern struct gl_linked_program *
-_mesa_new_linked_program(GLcontext *ctx, GLuint name);
+extern struct gl_shader_program *
+_mesa_new_shader_program(GLcontext *ctx, GLuint name);
 
 extern void
-_mesa_free_linked_program_data(GLcontext *ctx,
-                               struct gl_linked_program *linked);
+_mesa_free_shader_program_data(GLcontext *ctx,
+                               struct gl_shader_program *shProg);
 
 extern void
-_mesa_delete_linked_program(GLcontext *ctx, struct gl_linked_program *linked);
+_mesa_delete_shader_program(GLcontext *ctx, struct gl_shader_program *shProg);
 
-extern struct gl_linked_program *
-_mesa_lookup_linked_program(GLcontext *ctx, GLuint name);
+extern struct gl_shader_program *
+_mesa_lookup_shader_program(GLcontext *ctx, GLuint name);
 
 
 extern struct gl_shader *
 _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
 
-extern struct gl_program *
+extern struct gl_shader *
 _mesa_lookup_shader(GLcontext *ctx, GLuint name);
 
 

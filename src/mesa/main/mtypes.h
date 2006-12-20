@@ -45,6 +45,12 @@
 
 
 /**
+ * Special, internal token
+ */
+#define GL_SHADER_PROGRAM 0x9999
+
+
+/**
  * Color channel data type.
  */
 #if CHAN_BITS == 8
@@ -2044,13 +2050,13 @@ struct gl_query_state
 
 /**
  * A GLSL shader object
- * A collection of one or more gl_programs...
  */
 struct gl_shader
 {
-   GLenum Type;  /**< GL_FRAGMENT_SHADER || GL_VERTEX_SHADER */
+   GLenum Type;  /**< GL_FRAGMENT_SHADER || GL_VERTEX_SHADER (first field!) */
    GLuint Name;  /**< AKA the handle */
-   GLchar *Source;  /**< Source code string */
+   GLint RefCount;
+   const GLchar *Source;  /**< Source code string */
    GLboolean CompileStatus;
    GLboolean DeletePending;
    GLuint NumPrograms;  /**< size of Programs[] array */
@@ -2061,15 +2067,14 @@ struct gl_shader
 
 /**
  * This corresponds to a GLSL "program" and is basically a linked collection
- * of "shaders" (which are Mesa gl_programs).
- * Yes, the terminology is a bit confusing.
+ * of "shaders".
  */
-struct gl_linked_program
+struct gl_shader_program
 {
-   GLenum Type;
+   GLenum Type;  /**< Always GL_SHADER_PROGRAM (internal token) */
    GLuint Name;  /**< aka handle or ID */
    GLuint NumShaders;          /**< total number of shaders in this program */
-   struct gl_program **Shaders; /**< List of the shaders */
+   struct gl_shader **Shaders; /**< List of the shaders */
    struct gl_vertex_program *VertexProgram;     /**< Linked vertex program */
    struct gl_fragment_program *FragmentProgram; /**< Linked fragment prog */
    struct gl_program_parameter_list *Uniforms; /**< Plus constants, etc */
@@ -2089,7 +2094,7 @@ struct gl_shader_state
 {
    GLboolean _VertexShaderPresent;
    GLboolean _FragmentShaderPresent;
-   struct gl_linked_program *CurrentProgram;
+   struct gl_shader_program *CurrentProgram;
 };
 
 
@@ -2150,8 +2155,8 @@ struct gl_shared_state
 #endif
 
 #if FEATURE_ARB_shader_objects
+   /** Table of both gl_shader and gl_shader_program objects */
    struct _mesa_HashTable *ShaderObjects;
-   struct _mesa_HashTable *ProgramObjects;
 #endif
 
 #if FEATURE_EXT_framebuffer_object

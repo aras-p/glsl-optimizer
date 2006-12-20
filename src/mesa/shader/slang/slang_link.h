@@ -351,7 +351,7 @@ _slang_link (slang_program *, slang_code_object **, GLuint);
 
 extern void
 _slang_link2(GLcontext *ctx, GLhandleARB h,
-             struct gl_linked_program *linked);
+             struct gl_shader_program *shProg);
 
 #ifdef __cplusplus
 }

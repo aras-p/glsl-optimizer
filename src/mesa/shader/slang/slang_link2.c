@@ -43,7 +43,7 @@
 
 
 static GLboolean
-link_varying_vars(struct gl_linked_program *linked, struct gl_program *prog)
+link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
 {
    GLuint *map, i, firstVarying, newFile;
    GLbitfield varsWritten, varsRead;
@@ -57,17 +57,17 @@ link_varying_vars(struct gl_linked_program *linked, struct gl_program *prog)
       const struct gl_program_parameter *var
          = prog->Varying->Parameters + i;
 
-      GLint j = _mesa_lookup_parameter_index(linked->Varying, -1, var->Name);
+      GLint j = _mesa_lookup_parameter_index(shProg->Varying, -1, var->Name);
       if (j >= 0) {
          /* already in list, check size */
-         if (var->Size != linked->Varying->Parameters[j].Size) {
+         if (var->Size != shProg->Varying->Parameters[j].Size) {
             /* error */
             return GL_FALSE;
          }
       }
       else {
          /* not already in linked list */
-         j = _mesa_add_varying(linked->Varying, var->Name, var->Size);
+         j = _mesa_add_varying(shProg->Varying, var->Name, var->Size);
       }
       ASSERT(j >= 0);
 
@@ -143,7 +143,7 @@ is_uniform(enum register_file file)
 
 
 static GLboolean
-link_uniform_vars(struct gl_linked_program *linked, struct gl_program *prog)
+link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
 {
    GLuint *map, i;
 
@@ -161,12 +161,12 @@ link_uniform_vars(struct gl_linked_program *linked, struct gl_program *prog)
       assert(is_uniform(p->Type));
 
       if (p->Name) {
-         j = _mesa_lookup_parameter_index(linked->Uniforms, -1, p->Name);
+         j = _mesa_lookup_parameter_index(shProg->Uniforms, -1, p->Name);
       }
       else {
          GLuint swizzle;
          ASSERT(p->Type == PROGRAM_CONSTANT);
-         if (_mesa_lookup_parameter_constant(linked->Uniforms, pVals,
+         if (_mesa_lookup_parameter_constant(shProg->Uniforms, pVals,
                                              p->Size, &j, &swizzle)) {
             assert(j >= 0);
          }
@@ -177,21 +177,21 @@ link_uniform_vars(struct gl_linked_program *linked, struct gl_program *prog)
 
       if (j >= 0) {
          /* already in list, check size XXX check this */
-         assert(p->Size == linked->Uniforms->Parameters[j].Size);
+         assert(p->Size == shProg->Uniforms->Parameters[j].Size);
       }
       else {
          /* not already in linked list */
          switch (p->Type) {
          case PROGRAM_ENV_PARAM:
-            j = _mesa_add_named_parameter(linked->Uniforms, p->Name, pVals);
+            j = _mesa_add_named_parameter(shProg->Uniforms, p->Name, pVals);
          case PROGRAM_CONSTANT:
-            j = _mesa_add_named_constant(linked->Uniforms, p->Name, pVals, p->Size);
+            j = _mesa_add_named_constant(shProg->Uniforms, p->Name, pVals, p->Size);
             break;
          case PROGRAM_STATE_VAR:
-            j = _mesa_add_state_reference(linked->Uniforms, (const GLint *) p->StateIndexes);
+            j = _mesa_add_state_reference(shProg->Uniforms, (const GLint *) p->StateIndexes);
             break;
          case PROGRAM_UNIFORM:
-            j = _mesa_add_uniform(linked->Uniforms, p->Name, p->Size);
+            j = _mesa_add_uniform(shProg->Uniforms, p->Name, p->Size);
             break;
          default:
             abort();
@@ -287,41 +287,41 @@ slang_resolve_branches(struct gl_program *prog)
 void
 _slang_link2(GLcontext *ctx,
              GLhandleARB programObj,
-             struct gl_linked_program *linked)
+             struct gl_shader_program *shProg)
 {
    struct gl_vertex_program *vertProg;
    struct gl_fragment_program *fragProg;
    GLuint i;
 
-   _mesa_free_linked_program_data(ctx, linked);
+   _mesa_free_shader_program_data(ctx, shProg);
 
-   linked->Uniforms = _mesa_new_parameter_list();
-   linked->Varying = _mesa_new_parameter_list();
+   shProg->Uniforms = _mesa_new_parameter_list();
+   shProg->Varying = _mesa_new_parameter_list();
 
    /**
     * Find attached vertex shader, fragment shader
     */
    vertProg = NULL;
    fragProg = NULL;
-   for (i = 0; i < linked->NumShaders; i++) {
-      if (linked->Shaders[i]->Target == GL_VERTEX_PROGRAM_ARB)
-         vertProg = (struct gl_vertex_program *) linked->Shaders[i];
-      else if (linked->Shaders[i]->Target == GL_FRAGMENT_PROGRAM_ARB)
-         fragProg = (struct gl_fragment_program *) linked->Shaders[i];
+   for (i = 0; i < shProg->NumShaders; i++) {
+      if (shProg->Shaders[i]->Type == GL_VERTEX_SHADER)
+         vertProg = (struct gl_vertex_program *) shProg->Shaders[i]->Programs[0];
+      else if (shProg->Shaders[i]->Type == GL_FRAGMENT_SHADER)
+         fragProg = (struct gl_fragment_program *) shProg->Shaders[i]->Programs[0];
       else
          _mesa_problem(ctx, "unexpected shader target in slang_link2()");
    }
    if (!vertProg || !fragProg) {
       /* XXX is it legal to have one but not the other?? */
       /* XXX record error */
-      linked->LinkStatus = GL_FALSE;
+      shProg->LinkStatus = GL_FALSE;
       return;
    }
 
    if (!vertProg->Base.Varying || !fragProg->Base.Varying) {
       /* temporary */
       _mesa_problem(ctx, "vertex/fragment program lacks varying list!");
-      linked->LinkStatus = GL_FALSE;
+      shProg->LinkStatus = GL_FALSE;
       return;
    }  
 
@@ -329,25 +329,25 @@ _slang_link2(GLcontext *ctx,
     * Make copies of the vertex/fragment programs now since we'll be
     * changing src/dst registers after merging the uniforms and varying vars.
     */
-   linked->VertexProgram = (struct gl_vertex_program *)
+   shProg->VertexProgram = (struct gl_vertex_program *)
       _mesa_clone_program(ctx, &vertProg->Base);
-   linked->FragmentProgram = (struct gl_fragment_program *)
+   shProg->FragmentProgram = (struct gl_fragment_program *)
       _mesa_clone_program(ctx, &fragProg->Base);
 
-   link_varying_vars(linked, &linked->VertexProgram->Base);
-   link_varying_vars(linked, &linked->FragmentProgram->Base);
+   link_varying_vars(shProg, &shProg->VertexProgram->Base);
+   link_varying_vars(shProg, &shProg->FragmentProgram->Base);
 
-   link_uniform_vars(linked, &linked->VertexProgram->Base);
-   link_uniform_vars(linked, &linked->FragmentProgram->Base);
+   link_uniform_vars(shProg, &shProg->VertexProgram->Base);
+   link_uniform_vars(shProg, &shProg->FragmentProgram->Base);
 
    /* The vertex and fragment programs share a common set of uniforms now */
-   _mesa_free_parameter_list(linked->VertexProgram->Base.Parameters);
-   _mesa_free_parameter_list(linked->FragmentProgram->Base.Parameters);
-   linked->VertexProgram->Base.Parameters = linked->Uniforms;
-   linked->FragmentProgram->Base.Parameters = linked->Uniforms;
+   _mesa_free_parameter_list(shProg->VertexProgram->Base.Parameters);
+   _mesa_free_parameter_list(shProg->FragmentProgram->Base.Parameters);
+   shProg->VertexProgram->Base.Parameters = shProg->Uniforms;
+   shProg->FragmentProgram->Base.Parameters = shProg->Uniforms;
 
-   slang_resolve_branches(&linked->VertexProgram->Base);
-   slang_resolve_branches(&linked->FragmentProgram->Base);
+   slang_resolve_branches(&shProg->VertexProgram->Base);
+   slang_resolve_branches(&shProg->FragmentProgram->Base);
 
 #if 1
    printf("************** original fragment program\n");
@@ -356,8 +356,8 @@ _slang_link2(GLcontext *ctx,
 #endif
 #if 1
    printf("************** linked fragment prog\n");
-   _mesa_print_program(&linked->FragmentProgram->Base);
-   _mesa_print_program_parameters(ctx, &linked->FragmentProgram->Base);
+   _mesa_print_program(&shProg->FragmentProgram->Base);
+   _mesa_print_program_parameters(ctx, &shProg->FragmentProgram->Base);
 #endif
 #if 1
    printf("************** original vertex program\n");
@@ -366,10 +366,10 @@ _slang_link2(GLcontext *ctx,
 #endif
 #if 1
    printf("************** linked vertex prog\n");
-   _mesa_print_program(&linked->VertexProgram->Base);
-   _mesa_print_program_parameters(ctx, &linked->VertexProgram->Base);
+   _mesa_print_program(&shProg->VertexProgram->Base);
+   _mesa_print_program_parameters(ctx, &shProg->VertexProgram->Base);
 #endif
 
-   linked->LinkStatus = (linked->VertexProgram && linked->FragmentProgram);
+   shProg->LinkStatus = (shProg->VertexProgram && shProg->FragmentProgram);
 }
 

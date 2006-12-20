@@ -2223,6 +2223,7 @@ compile_object(grammar * id, const char *source, slang_code_object * object,
 }
 
 
+#if 0
 static void
 slang_create_uniforms(const slang_export_data_table *exports,
                       struct gl_program *program)
@@ -2237,15 +2238,33 @@ slang_create_uniforms(const slang_export_data_table *exports,
       }
    }
 }
+#endif
 
 
 GLboolean
 _slang_compile(const char *source, slang_code_object * object,
                slang_unit_type type, slang_info_log * infolog,
-               struct gl_program *program)
+               struct gl_shader *shader)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_program *program;
    GLboolean success;
    grammar id = 0;
+
+   /* XXX temporary hack */
+   if (!shader->Programs) {
+      GLenum progTarget;
+      if (shader->Type == GL_VERTEX_SHADER)
+         progTarget = GL_VERTEX_PROGRAM_ARB;
+      else
+         progTarget = GL_FRAGMENT_PROGRAM_ARB;
+      shader->Programs
+         = (struct gl_program **) malloc(sizeof(struct gl_program*));
+      shader->Programs[0] = _mesa_new_program(ctx, progTarget, 1);
+      shader->NumPrograms = 1;
+   }
+   program = shader->Programs[0];
+   assert(program);
 
    _slang_code_object_dtr(object);
    _slang_code_object_ctr(object);
@@ -2265,7 +2284,7 @@ _slang_compile(const char *source, slang_code_object * object,
 #if NEW_SLANG
    {
       GET_CURRENT_CONTEXT(ctx);
-      slang_create_uniforms(&object->expdata, program);
+      slang_create_uniforms(&object->expdata, shader);
       _mesa_print_program(program);
       _mesa_print_program_parameters(ctx, program);
    }
