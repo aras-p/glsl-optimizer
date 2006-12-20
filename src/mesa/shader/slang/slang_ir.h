@@ -44,11 +44,12 @@
 typedef enum
 {
    IR_NOP = 0,
-   IR_SEQ,
+   IR_SEQ,     /* sequence (eval left, then right) */
    IR_LABEL,   /* target of a jump or cjump */
    IR_JUMP,    /* unconditional jump */
    IR_CJUMP,   /* conditional jump */
-   IR_CALL,
+   IR_COND,    /* conditional expression */
+   IR_CALL,    /* call subroutine */
    IR_MOVE,
    IR_ADD,
    IR_SUB,
@@ -56,27 +57,27 @@ typedef enum
    IR_DIV,
    IR_DOT4,
    IR_DOT3,
-   IR_CROSS,
+   IR_CROSS,   /* vec3 cross product */
    IR_MIN,
    IR_MAX,
-   IR_SEQUAL,
-   IR_SNEQUAL,
-   IR_SGE,
-   IR_SGT,
-   IR_POW,
-   IR_EXP,
-   IR_EXP2,
-   IR_LOG2,
-   IR_RSQ,
-   IR_RCP,
+   IR_SEQUAL,  /* Set if not equal */
+   IR_SNEQUAL, /* Set if equal */
+   IR_SGE,     /* Set if greater or equal */
+   IR_SGT,     /* Set if greater than */
+   IR_POW,     /* x^y */
+   IR_EXP,     /* e^x */
+   IR_EXP2,    /* 2^x */
+   IR_LOG2,    /* log base 2 */
+   IR_RSQ,     /* 1/sqrt() */
+   IR_RCP,     /* recipricol */
    IR_FLOOR,
    IR_FRAC,
    IR_ABS,
-   IR_SIN,
-   IR_COS,
-   IR_NOT,
-   IR_VAR,
-   IR_VAR_DECL,
+   IR_SIN,     /* sine */
+   IR_COS,     /* cosine */
+   IR_NOT,     /* logical not */
+   IR_VAR,     /* variable reference */
+   IR_VAR_DECL,/* var declaration */
    IR_FLOAT,
    IR_FIELD,
    IR_I_TO_F

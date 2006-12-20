@@ -813,6 +813,14 @@ _slang_is_noop(const slang_operation *oper)
 }
 
 
+static slang_ir_node *
+_slang_gen_cond(slang_ir_node *n)
+{
+   slang_ir_node *c = new_node(IR_COND, n, NULL);
+   return c;
+}
+
+
 /**
  * Assemble a function call, given a particular function name.
  * \param name  the function's name (operators like '*' are possible).
@@ -866,6 +874,7 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
 
    startLab = new_label(startAtom);
    cond = _slang_gen_operation(A, &oper->children[0]);
+   cond = _slang_gen_cond(cond);
    tree = new_seq(startLab, cond);
 
    bra = new_cjump(endAtom);
@@ -922,6 +931,7 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
    tree = new_seq(init, startLab);
 
    cond = _slang_gen_operation(A, &oper->children[1]);
+   cond = _slang_gen_cond(cond);
    tree = new_seq(tree, cond);
 
    bra = new_cjump(endAtom);
@@ -972,6 +982,7 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
    slang_atom endifAtom = slang_atom_pool_gen(A->atoms, "__endif");
 
    cond = _slang_gen_operation(A, &oper->children[0]);
+   cond = _slang_gen_cond(cond);
    /*assert(cond->Store);*/
    bra = new_cjump(haveElseClause ? elseAtom : endifAtom);
    tree = new_seq(cond, bra);

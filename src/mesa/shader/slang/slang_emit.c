@@ -85,6 +85,7 @@ static slang_ir_info IrInfo[] = {
    { IR_LABEL, "IR_LABEL", 0, 0, 0 },
    { IR_JUMP, "IR_JUMP", 0, 0, 0 },
    { IR_CJUMP, "IR_CJUMP", 0, 0, 0 },
+   { IR_COND, "IR_COND", 0, 0, 0 },
    { IR_CALL, "IR_CALL", 0, 0, 0 },
    { IR_MOVE, "IR_MOVE", 0, 0, 1 },
    { IR_NOT, "IR_NOT", 0, 1, 1 },
@@ -299,6 +300,10 @@ slang_print_ir(const slang_ir_node *n, int indent)
       break;
    case IR_LABEL:
       printf("LABEL: %s\n", n->Target);
+      break;
+   case IR_COND:
+      printf("COND\n");
+      slang_print_ir(n->Children[0], indent + 3);
       break;
    case IR_JUMP:
       printf("JUMP %s\n", n->Target);
@@ -897,12 +902,6 @@ emit_binop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store,
                       n->Children[1]->Swizzle);
    inst->Comment = n->Comment;
-
-   if (inst->Opcode == OPCODE_SGT) {
-      /* update cond codes */
-      inst->CondUpdate = GL_TRUE;
-   }
-
    return inst;
 }
 
@@ -1075,7 +1074,6 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    case IR_EXP:
    case IR_EXP2:
       return emit_binop(gc, n, prog);
-      break;
    case IR_RSQ:
    case IR_RCP:
    case IR_FLOOR:
@@ -1084,12 +1082,40 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    case IR_SIN:
    case IR_COS:
       return emit_unop(gc, n, prog);
-      break;
    case IR_LABEL:
       return emit_label(n->Target, prog);
    case IR_FLOAT:
       n->Store = alloc_constant(n->Value, 4, prog); /*XXX fix size */
       break;
+   case IR_COND:
+      {
+         /* Conditional expression (in if/while/for stmts).
+          * Need to update condition code register.
+          * Next instruction is typically an IR_CJUMP.
+          */
+         /* last child expr instruction: */
+         struct prog_instruction *inst = emit(gc, n->Children[0], prog);
+         if (inst) {
+            /* set inst's CondUpdate flag */
+            inst->CondUpdate = GL_TRUE;
+            return inst; /* XXX or null? */
+         }
+         else {
+            /* This'll happen for things like "if (i) ..." where no code
+             * is normally generated for the expression "i".
+             * Generate a move instruction just to set condition codes.
+             */
+            slang_alloc_temp_storage(gc, n, 1);
+            inst = new_instruction(prog, OPCODE_MOV);
+            inst->CondUpdate = GL_TRUE;
+            storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+            storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
+                               n->Children[0]->Swizzle);
+            free_temporary(gc, n->Store->Index, n->Store->Size);
+            return inst; /* XXX or null? */
+         }
+      }
+      return NULL;
    case IR_JUMP:
       return emit_jump(n->Target, prog);
    case IR_CJUMP:
