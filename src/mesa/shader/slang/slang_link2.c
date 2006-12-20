@@ -269,6 +269,23 @@ slang_resolve_branches(struct gl_program *prog)
 }
 
 
+/** cast wrapper */
+static struct gl_vertex_program *
+vertex_program(struct gl_program *prog)
+{
+   assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
+   return (struct gl_vertex_program *) prog;
+}
+
+
+/** cast wrapper */
+static struct gl_fragment_program *
+fragment_program(struct gl_program *prog)
+{
+   assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
+   return (struct gl_fragment_program *) prog;
+}
+
 
 /**
  * Shader linker.  Currently:
@@ -305,9 +322,9 @@ _slang_link2(GLcontext *ctx,
    fragProg = NULL;
    for (i = 0; i < shProg->NumShaders; i++) {
       if (shProg->Shaders[i]->Type == GL_VERTEX_SHADER)
-         vertProg = (struct gl_vertex_program *) shProg->Shaders[i]->Programs[0];
+         vertProg = vertex_program(shProg->Shaders[i]->Programs[0]);
       else if (shProg->Shaders[i]->Type == GL_FRAGMENT_SHADER)
-         fragProg = (struct gl_fragment_program *) shProg->Shaders[i]->Programs[0];
+         fragProg = fragment_program(shProg->Shaders[i]->Programs[0]);
       else
          _mesa_problem(ctx, "unexpected shader target in slang_link2()");
    }
@@ -329,10 +346,10 @@ _slang_link2(GLcontext *ctx,
     * Make copies of the vertex/fragment programs now since we'll be
     * changing src/dst registers after merging the uniforms and varying vars.
     */
-   shProg->VertexProgram = (struct gl_vertex_program *)
-      _mesa_clone_program(ctx, &vertProg->Base);
-   shProg->FragmentProgram = (struct gl_fragment_program *)
-      _mesa_clone_program(ctx, &fragProg->Base);
+   shProg->VertexProgram
+      = vertex_program(_mesa_clone_program(ctx, &vertProg->Base));
+   shProg->FragmentProgram
+      = fragment_program(_mesa_clone_program(ctx, &fragProg->Base));
 
    link_varying_vars(shProg, &shProg->VertexProgram->Base);
    link_varying_vars(shProg, &shProg->FragmentProgram->Base);
