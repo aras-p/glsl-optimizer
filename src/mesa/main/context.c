@@ -131,7 +131,7 @@
 #include "math/m_xform.h"
 #include "math/mathmod.h"
 #endif
-#include "shaderobjects.h"
+#include "shaders.h"
 
 #ifdef USE_SPARC_ASM
 #include "sparc/sparc.h"
@@ -705,7 +705,6 @@ alloc_shared_state( GLcontext *ctx )
    ss->ArrayObjects = _mesa_NewHashTable();
 
 #if FEATURE_ARB_shader_objects
-   ss->GL2Objects = _mesa_NewHashTable ();
    ss->ShaderObjects = _mesa_NewHashTable();
    ss->ProgramObjects = _mesa_NewHashTable();
 #endif
@@ -784,11 +783,10 @@ alloc_shared_state( GLcontext *ctx )
       _mesa_DeleteHashTable (ss->ArrayObjects);
 
 #if FEATURE_ARB_shader_objects
-   if (ss->GL2Objects) {
-      _mesa_DeleteHashTable (ss->GL2Objects);
+   if (ss->ShaderObjects)
       _mesa_DeleteHashTable (ss->ShaderObjects);
+   if (ss->ProgramObjects)
       _mesa_DeleteHashTable (ss->ProgramObjects);
-   }
 #endif
 
 #if FEATURE_EXT_framebuffer_object
@@ -953,8 +951,11 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_DeleteHashTable(ss->ArrayObjects);
 
 #if FEATURE_ARB_shader_objects
-   _mesa_HashDeleteAll(ss->GL2Objects, delete_shaderobj_cb, ctx);
-   _mesa_DeleteHashTable(ss->GL2Objects);
+   /* XXX SLANG TO-DO */
+   /*
+   struct _mesa_HashTable *ShaderObjects;
+   struct _mesa_HashTable *ProgramObjects;
+   */
 #endif
 
 #if FEATURE_EXT_framebuffer_object
@@ -1202,7 +1203,7 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_query( ctx );
    _mesa_init_rastpos( ctx );
    _mesa_init_scissor( ctx );
-   _mesa_init_shaderobjects (ctx);
+   _mesa_init_shader_state( ctx );
    _mesa_init_stencil( ctx );
    _mesa_init_transform( ctx );
    _mesa_init_varray( ctx );

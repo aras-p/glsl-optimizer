@@ -93,7 +93,7 @@
 #include "texenvprogram.h"
 #endif
 #if FEATURE_ARB_shader_objects
-#include "shaderobjects.h"
+#include "shaders.h"
 #endif
 #include "debug.h"
 #include "dispatch.h"
@@ -949,7 +949,7 @@ update_arrays( GLcontext *ctx )
 static void
 update_program(GLcontext *ctx)
 {
-   const struct gl_linked_program *linked = ctx->ShaderObjects.Linked;
+   const struct gl_linked_program *linked = ctx->Shader.CurrentProgram;
 
 
    /* These _Enabled flags indicate if the program is enabled AND valid. */

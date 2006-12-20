@@ -41,7 +41,7 @@
 #include "texenvprogram.h"
 #include "mtypes.h"
 #include "math/m_xform.h"
-#include "shaderobjects.h"
+/*#include "shaderobjects.h"*/
 
 
 

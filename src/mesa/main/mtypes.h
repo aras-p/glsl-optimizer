@@ -7,9 +7,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2052,8 +2052,10 @@ struct gl_shader
    GLuint Name;  /**< AKA the handle */
    GLchar *Source;  /**< Source code string */
    GLboolean CompileStatus;
+   GLboolean DeletePending;
    GLuint NumPrograms;  /**< size of Programs[] array */
    struct gl_program **Programs;  /**< Post-compile assembly code */
+   GLchar *InfoLog;
 };
 
 
@@ -2070,21 +2072,24 @@ struct gl_linked_program
    struct gl_program **Shaders; /**< List of the shaders */
    struct gl_vertex_program *VertexProgram;     /**< Linked vertex program */
    struct gl_fragment_program *FragmentProgram; /**< Linked fragment prog */
-   GLboolean LinkStatus;   /**< GL_LINK_STATUS */
    struct gl_program_parameter_list *Uniforms; /**< Plus constants, etc */
    struct gl_program_parameter_list *Varying;
+   struct gl_program_parameter_list *Attributes; /**< Vertex attributes */
+   GLboolean LinkStatus;   /**< GL_LINK_STATUS */
+   GLboolean Validated;
+   GLboolean DeletePending;
+   GLchar *InfoLog;
 };   
 
 
 /**
- * Context state for vertex/fragment shaders.
+ * Context state for GLSL vertex/fragment shaders.
  */
-struct gl_shader_objects_state
+struct gl_shader_state
 {
-   struct gl2_program_intf **CurrentProgram;
    GLboolean _VertexShaderPresent;
    GLboolean _FragmentShaderPresent;
-   struct gl_linked_program *Linked; /* XXX temporary here */
+   struct gl_linked_program *CurrentProgram;
 };
 
 
@@ -2145,7 +2150,6 @@ struct gl_shared_state
 #endif
 
 #if FEATURE_ARB_shader_objects
-   struct _mesa_HashTable *GL2Objects;
    struct _mesa_HashTable *ShaderObjects;
    struct _mesa_HashTable *ProgramObjects;
 #endif
@@ -2966,7 +2970,7 @@ struct __GLcontextRec
 
    struct gl_query_state Query;  /**< GL_ARB_occlusion_query */
 
-   struct gl_shader_objects_state ShaderObjects;	/* GL_ARB_shader_objects */
+   struct gl_shader_state Shader; /**< GLSL shader object state */
    /*@}*/
 
 #if FEATURE_EXT_framebuffer_object

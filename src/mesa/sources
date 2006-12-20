@@ -48,6 +48,7 @@ MAIN_SOURCES = \
 	main/rastpos.c \
 	main/rbadaptors.c \
 	main/renderbuffer.c \
+	main/shaders.c \
 	main/state.c \
 	main/stencil.c \
 	main/texcompress.c \
@@ -163,10 +164,6 @@ SHADER_SOURCES = \
 	shader/prog_statevars.c \
 	shader/programopt.c \
 	shader/shader_api.c \
-
-
-##	shader/shaderobjects.c \
-##	shader/shaderobjects_3dlabs.c
 
 SLANG_SOURCES =	\
 	shader/slang/slang_analyse.c	\

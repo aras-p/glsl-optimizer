@@ -1365,7 +1365,7 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
       if (span->interpMask & SPAN_Z)
          _swrast_span_interpolate_z (ctx, span);
 
-      if (ctx->ShaderObjects.Linked && span->interpMask & SPAN_VARYING)
+      if (ctx->Shader.CurrentProgram && span->interpMask & SPAN_VARYING)
          interpolate_varying(ctx, span);
 
       /* Run fragment program/shader now */
