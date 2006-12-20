@@ -976,7 +976,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
  * Initialize fields of gl_current_attrib (aka ctx->Current.*)
  */
 static void
-_mesa_init_current( GLcontext *ctx )
+_mesa_init_current(GLcontext *ctx)
 {
    GLuint i;
 
@@ -1019,7 +1019,7 @@ init_natives(struct gl_program_constants *prog)
  * some of these values (such as number of texture units).
  */
 static void 
-_mesa_init_constants( GLcontext *ctx )
+_mesa_init_constants(GLcontext *ctx)
 {
    assert(ctx);
 
@@ -1170,7 +1170,7 @@ check_context_limits(GLcontext *ctx)
  * functions for the more complex data structures.
  */
 static GLboolean
-init_attrib_groups( GLcontext *ctx )
+init_attrib_groups(GLcontext *ctx)
 {
    assert(ctx);
 
@@ -1293,11 +1293,11 @@ alloc_dispatch_table(void)
  * \param driverContext pointer to driver-specific context data
  */
 GLboolean
-_mesa_initialize_context( GLcontext *ctx,
-                          const GLvisual *visual,
-                          GLcontext *share_list,
-                          const struct dd_function_table *driverFunctions,
-                          void *driverContext )
+_mesa_initialize_context(GLcontext *ctx,
+                         const GLvisual *visual,
+                         GLcontext *share_list,
+                         const struct dd_function_table *driverFunctions,
+                         void *driverContext)
 {
    ASSERT(driverContext);
    assert(driverFunctions->NewTextureObject);
@@ -1396,11 +1396,10 @@ _mesa_initialize_context( GLcontext *ctx,
  * \return pointer to a new __GLcontextRec or NULL if error.
  */
 GLcontext *
-_mesa_create_context( const GLvisual *visual,
-                      GLcontext *share_list,
-                      const struct dd_function_table *driverFunctions,
-                      void *driverContext )
-
+_mesa_create_context(const GLvisual *visual,
+                     GLcontext *share_list,
+                     const struct dd_function_table *driverFunctions,
+                     void *driverContext)
 {
    GLcontext *ctx;
 
@@ -1855,18 +1854,18 @@ _mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare)
 
 
 /**
- * Get current context for the calling thread.
- * 
- * \return pointer to the current GL context.
+ * \return pointer to the current GL context for this thread.
  * 
  * Calls _glapi_get_context(). This isn't the fastest way to get the current
- * context.  If you need speed, see the #GET_CURRENT_CONTEXT macro in context.h.
+ * context.  If you need speed, see the #GET_CURRENT_CONTEXT macro in
+ * context.h.
  */
 GLcontext *
 _mesa_get_current_context( void )
 {
    return (GLcontext *) _glapi_get_context();
 }
+
 
 /**
  * Get context's current API dispatch table.
@@ -1907,7 +1906,7 @@ _mesa_get_dispatch(GLcontext *ctx)
  * This is called via _mesa_error().
  */
 void
-_mesa_record_error( GLcontext *ctx, GLenum error )
+_mesa_record_error(GLcontext *ctx, GLenum error)
 {
    if (!ctx)
       return;
@@ -1918,9 +1917,10 @@ _mesa_record_error( GLcontext *ctx, GLenum error )
 
    /* Call device driver's error handler, if any.  This is used on the Mac. */
    if (ctx->Driver.Error) {
-      (*ctx->Driver.Error)( ctx );
+      ctx->Driver.Error(ctx);
    }
 }
+
 
 /**
  * Execute glFinish().
@@ -1929,14 +1929,15 @@ _mesa_record_error( GLcontext *ctx, GLenum error )
  * dd_function_table::Finish driver callback, if not NULL.
  */
 void GLAPIENTRY
-_mesa_Finish( void )
+_mesa_Finish(void)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    if (ctx->Driver.Finish) {
-      (*ctx->Driver.Finish)( ctx );
+      ctx->Driver.Finish(ctx);
    }
 }
+
 
 /**
  * Execute glFlush().
@@ -1945,12 +1946,12 @@ _mesa_Finish( void )
  * dd_function_table::Flush driver callback, if not NULL.
  */
 void GLAPIENTRY
-_mesa_Flush( void )
+_mesa_Flush(void)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    if (ctx->Driver.Flush) {
-      (*ctx->Driver.Flush)( ctx );
+      ctx->Driver.Flush(ctx);
    }
 }
 
