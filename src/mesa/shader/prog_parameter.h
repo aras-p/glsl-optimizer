@@ -115,9 +115,11 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
                              GLsizei nameLen, const char *name);
 
 extern GLboolean
-_mesa_lookup_parameter_constant(const struct gl_program_parameter_list *paramList,
+_mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
                                 const GLfloat v[], GLsizei vSize,
                                 GLint *posOut, GLuint *swizzleOut);
 
+extern GLuint
+_mesa_parameter_longest_name(const struct gl_program_parameter_list *list);
 
 #endif /* PROG_PARAMETER_H */

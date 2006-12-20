@@ -444,3 +444,22 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
 
    return clone;
 }
+
+
+/**
+ * Find longest name of any parameter in list.
+ */
+GLuint
+_mesa_parameter_longest_name(const struct gl_program_parameter_list *list)
+{
+   GLuint i, maxLen = 0;
+   if (!list)
+      return 0;
+   for (i = 0; i < list->NumParameters; i++) {
+      GLuint len = _mesa_strlen(list->Parameters[i].Name);
+      if (len > maxLen)
+         maxLen = len;
+   }
+   return maxLen;
+}
+
