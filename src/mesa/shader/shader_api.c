@@ -47,6 +47,161 @@
 
 
 
+/**
+ * Allocate a new gl_shader_program object, initialize it.
+ */
+struct gl_shader_program *
+_mesa_new_shader_program(GLcontext *ctx, GLuint name)
+{
+   struct gl_shader_program *shProg;
+   shProg = CALLOC_STRUCT(gl_shader_program);
+   if (shProg) {
+      shProg->Type = GL_SHADER_PROGRAM;
+      shProg->Name = name;
+      shProg->RefCount = 1;
+   }
+   return shProg;
+}
+
+
+void
+_mesa_free_shader_program_data(GLcontext *ctx,
+                               struct gl_shader_program *shProg)
+{
+   assert(shProg->Type == GL_SHADER_PROGRAM);
+
+   if (shProg->VertexProgram) {
+      if (shProg->VertexProgram->Base.Parameters == shProg->Uniforms) {
+         /* to prevent a double-free in the next call */
+         shProg->VertexProgram->Base.Parameters = NULL;
+      }
+      _mesa_delete_program(ctx, &shProg->VertexProgram->Base);
+      shProg->VertexProgram = NULL;
+   }
+
+   if (shProg->FragmentProgram) {
+      if (shProg->FragmentProgram->Base.Parameters == shProg->Uniforms) {
+         /* to prevent a double-free in the next call */
+         shProg->FragmentProgram->Base.Parameters = NULL;
+      }
+      _mesa_delete_program(ctx, &shProg->FragmentProgram->Base);
+      shProg->FragmentProgram = NULL;
+   }
+
+
+   if (shProg->Uniforms) {
+      _mesa_free_parameter_list(shProg->Uniforms);
+      shProg->Uniforms = NULL;
+   }
+
+   if (shProg->Varying) {
+      _mesa_free_parameter_list(shProg->Varying);
+      shProg->Varying = NULL;
+   }
+}
+
+
+
+void
+_mesa_free_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
+{
+   _mesa_free_shader_program_data(ctx, shProg);
+   _mesa_free(shProg);
+}
+
+
+/**
+ * Lookup a GLSL program object.
+ */
+struct gl_shader_program *
+_mesa_lookup_shader_program(GLcontext *ctx, GLuint name)
+{
+   struct gl_shader_program *shProg;
+   if (name) {
+      shProg = (struct gl_shader_program *)
+         _mesa_HashLookup(ctx->Shared->ShaderObjects, name);
+      /* Note that both gl_shader and gl_shader_program objects are kept
+       * in the same hash table.  Check the object's type to be sure it's
+       * what we're expecting.
+       */
+      if (shProg && shProg->Type != GL_SHADER_PROGRAM) {
+         return NULL;
+      }
+      return shProg;
+   }
+   return NULL;
+}
+
+
+/**
+ * Allocate a new gl_shader object, initialize it.
+ */
+struct gl_shader *
+_mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
+{
+   struct gl_shader *shader;
+   assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER);
+   shader = CALLOC_STRUCT(gl_shader);
+   if (shader) {
+      shader->Type = type;
+      shader->Name = name;
+      shader->RefCount = 1;
+   }
+   return shader;
+}
+
+
+void
+_mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
+{
+   GLuint i;
+   if (sh->Source)
+      _mesa_free((void *) sh->Source);
+   if (sh->InfoLog)
+      _mesa_free(sh->InfoLog);
+   for (i = 0; i < sh->NumPrograms; i++) {
+      assert(sh->Programs[i]);
+      _mesa_delete_program(ctx, sh->Programs[i]);
+   }
+   if (sh->Programs)
+      _mesa_free(sh->Programs);
+   _mesa_free(sh);
+}
+
+
+/**
+ * Lookup a GLSL shader object.
+ */
+struct gl_shader *
+_mesa_lookup_shader(GLcontext *ctx, GLuint name)
+{
+   if (name) {
+      struct gl_shader *sh = (struct gl_shader *)
+         _mesa_HashLookup(ctx->Shared->ShaderObjects, name);
+      /* Note that both gl_shader and gl_shader_program objects are kept
+       * in the same hash table.  Check the object's type to be sure it's
+       * what we're expecting.
+       */
+      if (sh && sh->Type == GL_SHADER_PROGRAM) {
+         assert(sh->Type == GL_VERTEX_SHADER ||
+                sh->Type == GL_FRAGMENT_SHADER);
+         return NULL;
+      }
+      return sh;
+   }
+   return NULL;
+}
+
+
+void
+_mesa_init_shader_state(GLcontext * ctx)
+{
+   ctx->Shader._FragmentShaderPresent = GL_FALSE;
+   ctx->Shader._VertexShaderPresent = GL_FALSE;
+}
+
+
+
 
 
 /**
@@ -834,162 +989,4 @@ _mesa_validate_program(GLcontext *ctx, GLuint program)
      processing exceeds the combined limit on the total number of texture
      image units allowed.
    */
-}
-
-
-
-/**********************************************************************/
-
-
-/**
- * Allocate a new gl_shader_program object, initialize it.
- */
-struct gl_shader_program *
-_mesa_new_shader_program(GLcontext *ctx, GLuint name)
-{
-   struct gl_shader_program *shProg;
-   shProg = CALLOC_STRUCT(gl_shader_program);
-   if (shProg) {
-      shProg->Type = GL_SHADER_PROGRAM;
-      shProg->Name = name;
-      shProg->RefCount = 1;
-   }
-   return shProg;
-}
-
-
-void
-_mesa_free_shader_program_data(GLcontext *ctx,
-                               struct gl_shader_program *shProg)
-{
-   assert(shProg->Type == GL_SHADER_PROGRAM);
-
-   if (shProg->VertexProgram) {
-      if (shProg->VertexProgram->Base.Parameters == shProg->Uniforms) {
-         /* to prevent a double-free in the next call */
-         shProg->VertexProgram->Base.Parameters = NULL;
-      }
-      _mesa_delete_program(ctx, &shProg->VertexProgram->Base);
-      shProg->VertexProgram = NULL;
-   }
-
-   if (shProg->FragmentProgram) {
-      if (shProg->FragmentProgram->Base.Parameters == shProg->Uniforms) {
-         /* to prevent a double-free in the next call */
-         shProg->FragmentProgram->Base.Parameters = NULL;
-      }
-      _mesa_delete_program(ctx, &shProg->FragmentProgram->Base);
-      shProg->FragmentProgram = NULL;
-   }
-
-
-   if (shProg->Uniforms) {
-      _mesa_free_parameter_list(shProg->Uniforms);
-      shProg->Uniforms = NULL;
-   }
-
-   if (shProg->Varying) {
-      _mesa_free_parameter_list(shProg->Varying);
-      shProg->Varying = NULL;
-   }
-}
-
-
-
-void
-_mesa_free_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
-{
-   _mesa_free_shader_program_data(ctx, shProg);
-   _mesa_free(shProg);
-}
-
-
-/**
- * Lookup a GLSL program object.
- */
-struct gl_shader_program *
-_mesa_lookup_shader_program(GLcontext *ctx, GLuint name)
-{
-   struct gl_shader_program *shProg;
-   if (name) {
-      shProg = (struct gl_shader_program *)
-         _mesa_HashLookup(ctx->Shared->ShaderObjects, name);
-      /* Note that both gl_shader and gl_shader_program objects are kept
-       * in the same hash table.  Check the object's type to be sure it's
-       * what we're expecting.
-       */
-      if (shProg && shProg->Type != GL_SHADER_PROGRAM) {
-         return NULL;
-      }
-      return shProg;
-   }
-   return NULL;
-}
-
-
-/**
- * Allocate a new gl_shader object, initialize it.
- */
-struct gl_shader *
-_mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
-{
-   struct gl_shader *shader;
-   assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER);
-   shader = CALLOC_STRUCT(gl_shader);
-   if (shader) {
-      shader->Type = type;
-      shader->Name = name;
-      shader->RefCount = 1;
-   }
-   return shader;
-}
-
-
-void
-_mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
-{
-   GLuint i;
-   if (sh->Source)
-      _mesa_free((void *) sh->Source);
-   if (sh->InfoLog)
-      _mesa_free(sh->InfoLog);
-   for (i = 0; i < sh->NumPrograms; i++) {
-      assert(sh->Programs[i]);
-      _mesa_delete_program(ctx, sh->Programs[i]);
-   }
-   if (sh->Programs)
-      _mesa_free(sh->Programs);
-   _mesa_free(sh);
-}
-
-
-/**
- * Lookup a GLSL shader object.
- */
-struct gl_shader *
-_mesa_lookup_shader(GLcontext *ctx, GLuint name)
-{
-   if (name) {
-      struct gl_shader *sh = (struct gl_shader *)
-         _mesa_HashLookup(ctx->Shared->ShaderObjects, name);
-      /* Note that both gl_shader and gl_shader_program objects are kept
-       * in the same hash table.  Check the object's type to be sure it's
-       * what we're expecting.
-       */
-      if (sh && sh->Type == GL_SHADER_PROGRAM) {
-         assert(sh->Type == GL_VERTEX_SHADER ||
-                sh->Type == GL_FRAGMENT_SHADER);
-         return NULL;
-      }
-      return sh;
-   }
-   return NULL;
-}
-
-
-void
-_mesa_init_shader_state(GLcontext * ctx)
-{
-   ctx->Shader._FragmentShaderPresent = GL_FALSE;
-   ctx->Shader._VertexShaderPresent = GL_FALSE;
 }
