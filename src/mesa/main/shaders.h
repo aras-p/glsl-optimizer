@@ -233,9 +233,4 @@ _mesa_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value);
 
 
-/*** XXXX temporary here ! */
-extern void
-_mesa_init_shader_state(GLcontext *ctx);
-
-
 #endif /* SHADERS_H */

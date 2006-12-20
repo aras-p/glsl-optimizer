@@ -126,6 +126,15 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
       return;
    }
 
+   if (!name)
+      return;
+
+   if (strncmp(name, "gl_", 3) == 0) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glBindAttribLocation(illegal name)");
+      return;
+   }
+
 #if 0 /* XXXX */
    if (name == NULL || index >= MAX_VERTEX_ATTRIBS)
       _mesa_error(ctx, GL_INVALID_VALUE, "glBindAttribLocationARB");
@@ -188,20 +197,32 @@ _mesa_delete_program2(GLcontext *ctx, GLuint name)
       return;
    }
 
-   /* XXX refcounting! */
+   /* always remove from hash table */
    _mesa_HashRemove(ctx->Shared->ShaderObjects, name);
-   _mesa_delete_shader_program(ctx, shProg);
+
+   shProg->DeletePending = GL_TRUE;
+
+   /* decrement refcount, delete if zero */
+   shProg->RefCount--;
+   if (shProg->RefCount <= 0) {
+      _mesa_free_shader_program(ctx, shProg);
+   }
 }
 
 
 void
 _mesa_delete_shader(GLcontext *ctx, GLuint shader)
 {
-   /* XXX refcounting! */
+   struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
+   if (!sh) {
+      return;
+   }
 
-   /*
-   _mesa_DeleteObjectARB(shader);
-   */
+   sh->DeletePending = GL_TRUE;
+   sh->RefCount--;
+   if (sh->RefCount <= 0) {
+      _mesa_free_shader(ctx, sh);
+   }
 }
 
 
@@ -223,6 +244,9 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
       if (shProg->Shaders[i]->Name == shader) {
          struct gl_shader **newList;
          /* found it */
+
+         shProg->Shaders[i]->RefCount--;
+
          /* alloc new, smaller array */
          newList = (struct gl_shader **)
             _mesa_malloc((n - 1) * sizeof(struct gl_shader *));
@@ -602,6 +626,7 @@ _mesa_shader_source(GLcontext *ctx, GLuint shader, const GLchar *source)
       _mesa_free((void *) sh->Source);
    }
    sh->Source = source;
+   sh->CompileStatus = GL_FALSE;
 }
 
 
@@ -667,6 +692,15 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
 void
 _mesa_use_program(GLcontext *ctx, GLuint program)
 {
+   /* unbind old */
+   if (ctx->Shader.CurrentProgram) {
+      ctx->Shader.CurrentProgram->RefCount--;
+      if (ctx->Shader.CurrentProgram->RefCount <= 0) {
+         _mesa_free_shader_program(ctx, ctx->Shader.CurrentProgram);
+      }
+      ctx->Shader.CurrentProgram = NULL;
+   }
+
    /* XXXX need to handle reference counting here! */
    if (program) {
       struct gl_shader_program *shProg;
@@ -677,6 +711,7 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
          return;
       }
       ctx->Shader.CurrentProgram = shProg;
+      shProg->RefCount++;
    }
    else {
       /* don't use a shader program */
@@ -817,6 +852,7 @@ _mesa_new_shader_program(GLcontext *ctx, GLuint name)
    if (shProg) {
       shProg->Type = GL_SHADER_PROGRAM;
       shProg->Name = name;
+      shProg->RefCount = 1;
    }
    return shProg;
 }
@@ -861,7 +897,7 @@ _mesa_free_shader_program_data(GLcontext *ctx,
 
 
 void
-_mesa_delete_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
+_mesa_free_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
 {
    _mesa_free_shader_program_data(ctx, shProg);
    _mesa_free(shProg);
@@ -903,8 +939,27 @@ _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
    if (shader) {
       shader->Type = type;
       shader->Name = name;
+      shader->RefCount = 1;
    }
    return shader;
+}
+
+
+void
+_mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
+{
+   GLuint i;
+   if (sh->Source)
+      _mesa_free((void *) sh->Source);
+   if (sh->InfoLog)
+      _mesa_free(sh->InfoLog);
+   for (i = 0; i < sh->NumPrograms; i++) {
+      assert(sh->Programs[i]);
+      _mesa_delete_program(ctx, sh->Programs[i]);
+   }
+   if (sh->Programs)
+      _mesa_free(sh->Programs);
+   _mesa_free(sh);
 }
 
 

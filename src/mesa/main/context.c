@@ -131,7 +131,7 @@
 #include "math/m_xform.h"
 #include "math/mathmod.h"
 #endif
-#include "shaders.h"
+#include "shader_api.h"
 
 #ifdef USE_SPARC_ASM
 #include "sparc/sparc.h"
@@ -877,13 +877,22 @@ delete_arrayobj_cb(GLuint id, void *data, void *userData)
 }
 
 /**
- * Callback for deleting an shader object.  Called by _mesa_HashDeleteAll().
+ * Callback for deleting shader and shader programs objects.
+ * Called by _mesa_HashDeleteAll().
  */
 static void
-delete_shaderobj_cb(GLuint id, void *data, void *userData)
+delete_shader_cb(GLuint id, void *data, void *userData)
 {
-   /* XXX probably need to fix this */
-   _mesa_free(data);
+   GLcontext *ctx = (GLcontext *) userData;
+   struct gl_shader *sh = (struct gl_shader *) data;
+   if (sh->Type == GL_FRAGMENT_SHADER || sh->Type == GL_VERTEX_SHADER) {
+      _mesa_free_shader(ctx, sh);
+   }
+   else {
+      struct gl_shader_program *shProg = (struct gl_shader_program *) data;
+      ASSERT(shProg->Type == GL_SHADER_PROGRAM);
+      _mesa_free_shader_program(ctx, shProg);
+   }
 }
 
 
@@ -948,11 +957,8 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_DeleteHashTable(ss->ArrayObjects);
 
 #if FEATURE_ARB_shader_objects
-   /* XXX SLANG TO-DO */
-   /*
-   struct _mesa_HashTable *ShaderObjects;
-   struct _mesa_HashTable *ProgramObjects;
-   */
+   _mesa_HashDeleteAll(ss->ShaderObjects, delete_shader_cb, ctx);
+   _mesa_DeleteHashTable(ss->ShaderObjects);
 #endif
 
 #if FEATURE_EXT_framebuffer_object

@@ -46,7 +46,7 @@ _mesa_free_shader_program_data(GLcontext *ctx,
                                struct gl_shader_program *shProg);
 
 extern void
-_mesa_delete_shader_program(GLcontext *ctx, struct gl_shader_program *shProg);
+_mesa_free_shader_program(GLcontext *ctx, struct gl_shader_program *shProg);
 
 extern struct gl_shader_program *
 _mesa_lookup_shader_program(GLcontext *ctx, GLuint name);
@@ -54,6 +54,9 @@ _mesa_lookup_shader_program(GLcontext *ctx, GLuint name);
 
 extern struct gl_shader *
 _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
+
+extern void
+_mesa_free_shader(GLcontext *ctx, struct gl_shader *sh);
 
 extern struct gl_shader *
 _mesa_lookup_shader(GLcontext *ctx, GLuint name);

@@ -2049,16 +2049,17 @@ struct gl_query_state
 
 
 /**
- * A GLSL shader object
+ * A GLSL shader object.
  */
 struct gl_shader
 {
    GLenum Type;  /**< GL_FRAGMENT_SHADER || GL_VERTEX_SHADER (first field!) */
    GLuint Name;  /**< AKA the handle */
-   GLint RefCount;
+   GLint RefCount;  /**< Reference count */
+   GLboolean DeletePending;
+
    const GLchar *Source;  /**< Source code string */
    GLboolean CompileStatus;
-   GLboolean DeletePending;
    GLuint NumPrograms;  /**< size of Programs[] array */
    struct gl_program **Programs;  /**< Post-compile assembly code */
    GLchar *InfoLog;
@@ -2066,15 +2067,19 @@ struct gl_shader
 
 
 /**
- * This corresponds to a GLSL "program" and is basically a linked collection
- * of "shaders".
+ * A GLSL program object.  Basically a linked collection of "shaders".
  */
 struct gl_shader_program
 {
    GLenum Type;  /**< Always GL_SHADER_PROGRAM (internal token) */
    GLuint Name;  /**< aka handle or ID */
-   GLuint NumShaders;          /**< total number of shaders in this program */
-   struct gl_shader **Shaders; /**< List of the shaders */
+   GLint RefCount;  /**< Reference count */
+   GLboolean DeletePending;
+
+   GLuint NumShaders;          /**< number of attached shaders */
+   struct gl_shader **Shaders; /**< List of attached the shaders */
+
+   /* post-link info: */
    struct gl_vertex_program *VertexProgram;     /**< Linked vertex program */
    struct gl_fragment_program *FragmentProgram; /**< Linked fragment prog */
    struct gl_program_parameter_list *Uniforms; /**< Plus constants, etc */
@@ -2082,7 +2087,6 @@ struct gl_shader_program
    struct gl_program_parameter_list *Attributes; /**< Vertex attributes */
    GLboolean LinkStatus;   /**< GL_LINK_STATUS */
    GLboolean Validated;
-   GLboolean DeletePending;
    GLchar *InfoLog;
 };   
 
