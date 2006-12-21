@@ -177,10 +177,9 @@ static void HandleKeyPress(unsigned char key, int up)
    } else
       if(KeyboardFunc)
          KeyboardFunc(key, MouseX, MouseY);
-
-   /* there was no keyboard handler to provide a way to exit the program */
-   if(key == 27)
-      exit(0); 
+      else
+         if(key == 27)
+            exit(0);  /* no handler, to provide a way to exit */
 }
 
 static void HandleSpecialPress(int key, int up)
@@ -410,14 +409,17 @@ static int ReadKey(void)
 	 labelval = '\b';
 	 break;
       case K_ENTER:
-      case K_ENTER - 1: /* keypad enter */
 	 labelval = '\r'; break;
       }
 
+   /* likely a keypad input, but depends on keyboard mapping, ignore */
+   if(labelval == 512)
+      return 1;
+
    /* dispatch callback */
-   if(specialkey) {
+   if(specialkey)
       HandleSpecialPress(specialkey, release);
-   } else {
+   else {
       char c = labelval;
 
       if(KeyboardLedState & LED_CAP) {
@@ -607,38 +609,11 @@ void InitializeVT(int usestdin)
 
    signal(SIGIO, SIG_IGN);
 
-   /* save old terminos settings */
-   if (tcgetattr(0, &OldTermios) < 0) {
-      sprintf(exiterror, "tcgetattr failed\n");
-      exit(0);
-   }
-
-   tio = OldTermios;
-
-   /* terminos settings for straight-through mode */  
-   tio.c_lflag &= ~(ICANON | ECHO  | ISIG);
-   tio.c_iflag &= ~(ISTRIP | IGNCR | ICRNL | INLCR | IXOFF | IXON);
-   tio.c_iflag |= IGNBRK;
-
-   tio.c_cc[VMIN]  = 0;
-   tio.c_cc[VTIME] = 0;
-
-   if (tcsetattr(0, TCSANOW, &tio) < 0) {
-      sprintf(exiterror, "tcsetattr failed\n");
-      exit(0);
-   }
-
    Active = 1;
 
    if(usestdin) {
       ConsoleFD = 0;
-      return;
-   }
-
-   /* enable sigio for input */
-   if(fcntl(0, F_SETFL, O_ASYNC) < 0) {
-      sprintf(exiterror, "Failed to set O_ASYNC mode on fd 0\n");
-      exit(0);
+      goto setattribs;
    }
 
    /* detect the current vt if it was not specified */
@@ -655,7 +630,7 @@ void InitializeVT(int usestdin)
 	 fprintf(stderr, "Defaulting to stdin input\n");
 	 ConsoleFD = 0;
 	 close(fd);
-	 return;
+         goto setattribs;
       }
 
       CurrentVT =  st.v_active;
@@ -673,7 +648,7 @@ void InitializeVT(int usestdin)
       sprintf(exiterror, "error couldn't open %s,"
 	      " defaulting to stdin \n", console);
       ConsoleFD = 0;
-      return;
+      goto setattribs;
    }
 
    signal(SIGUSR1, VTSwitchHandler);
@@ -683,7 +658,7 @@ void InitializeVT(int usestdin)
       sprintf(exiterror,"Failed to grab %s, defaulting to stdin\n", console);
       close(ConsoleFD);
       ConsoleFD = 0;
-      return;
+      goto setattribs;
    }
 
    vt = OldVTMode;
@@ -715,7 +690,7 @@ void InitializeVT(int usestdin)
       exit(0);
    }
 
-   fcntl(0, F_SETOWN, getpid());
+   fcntl(ConsoleFD, F_SETOWN, getpid());
 
    if(ioctl(ConsoleFD, KDGETMODE, &OldMode) < 0)
       sprintf(exiterror, "Warning: Failed to get terminal mode\n");
@@ -728,12 +703,39 @@ void InitializeVT(int usestdin)
 
    if(ioctl(ConsoleFD, KDSKBMODE, K_MEDIUMRAW) < 0) {
       sprintf(exiterror, "ioctl KDSKBMODE failed!\n");
-      tcsetattr(0, TCSANOW, &OldTermios);
       exit(0);
    }
 
    if(ioctl(ConsoleFD, KDGKBLED, &KeyboardLedState) < 0) {
       sprintf(exiterror, "ioctl KDGKBLED failed!\n");
+      exit(0);
+   }
+
+ setattribs:
+   /* enable async input input */
+   if(fcntl(ConsoleFD, F_SETFL, O_ASYNC) < 0) {
+      sprintf(exiterror, "Failed to set O_ASYNC mode on fd %d\n", ConsoleFD);
+      exit(0);
+   }
+
+   /* save old terminos settings */
+   if (tcgetattr(ConsoleFD, &OldTermios) < 0) {
+      sprintf(exiterror, "tcgetattr failed\n");
+      exit(0);
+   }
+
+   tio = OldTermios;
+
+   /* terminos settings for straight-through mode */  
+   tio.c_lflag &= ~(ICANON | ECHO  | ISIG);
+   tio.c_iflag &= ~(ISTRIP | IGNCR | ICRNL | INLCR | IXOFF | IXON);
+   tio.c_iflag |= IGNBRK;
+
+   tio.c_cc[VMIN]  = 0;
+   tio.c_cc[VTIME] = 0;
+
+   if (tcsetattr(ConsoleFD, TCSANOW, &tio) < 0) {
+      sprintf(exiterror, "tcsetattr failed\n");
       exit(0);
    }
 }
@@ -743,8 +745,8 @@ void RestoreVT(void)
    if(ConsoleFD < 0)
       return;
 
-   if (tcsetattr(0, TCSANOW, &OldTermios) < 0)
-      fprintf(stderr, "tcsetattr failed\n");
+   if (tcsetattr(ConsoleFD, TCSANOW, &OldTermios) < 0)
+      sprintf(exiterror, "tcsetattr failed\n");
 
    /* setting the mode to text from graphics restores the colormap */
    if(
