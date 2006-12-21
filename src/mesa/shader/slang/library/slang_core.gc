@@ -808,30 +808,9 @@ ivec4 __operator / (const ivec4 v, const int b) {
 
 //// Unary negation operator
 
-float __operator - (const float a)
-{
-    float b;
-    __asm float_negate b, a;
-    return b;
-}
-
-vec2 __operator - (const vec2 v)
-{
-    return vec2 (-v.x, -v.y);
-}
-
-vec3 __operator - (const vec3 v)
-{
-    return vec3 (-v.x, -v.y, -v.z);
-}
-
-vec4 __operator - (const vec4 v)
-{
-    return vec4 (-v.x, -v.y, -v.z, -v.w);
-}
-
 int __operator - (const int a)
 {
+// XXX redo
     float x;
     int b;
     __asm int_to_float x, a;
@@ -842,17 +821,61 @@ int __operator - (const int a)
 
 ivec2 __operator - (const ivec2 v)
 {
+// XXX redo
     return ivec2 (-v.x, -v.y);
 }
 
 ivec3 __operator - (const ivec3 v)
 {
+// XXX redo
     return ivec3 (-v.x, -v.y, -v.z);
 }
 
 ivec4 __operator - (const ivec4 v)
 {
+// XXX redo
     return ivec4 (-v.x, -v.y, -v.z, -v.w);
+}
+
+float __operator - (const float a)
+{
+   __asm vec4_negate __retVal.x, a;
+}
+
+vec2 __operator - (const vec2 v)
+{
+   __asm vec4_negate __retVal.xy, v.xy;
+}
+
+vec3 __operator - (const vec3 v)
+{
+   __asm vec4_negate __retVal.xyz, v.xyz;
+}
+
+vec4 __operator - (const vec4 v)
+{
+   __asm vec4_negate __retVal, v;
+}
+
+mat2 __operator - (const mat2 m)
+{
+   __retVal[0] = -m[0];
+   __retVal[1] = -m[1];
+}
+
+mat3 __operator - (const mat3 m)
+{
+   __retVal[0] = -m[0];
+   __retVal[1] = -m[1];
+   __retVal[2] = -m[2];
+}
+
+mat4 __operator - (const mat4 m)
+{
+   __retVal[0] = -m[0];
+   __retVal[1] = -m[1];
+   __retVal[2] = -m[2];
+   __retVal[3] = -m[3];
 }
 
 
@@ -878,7 +901,6 @@ float dot(const vec4 a, const vec4 b)
 {
     __asm vec4_dot __retVal, a, b;
 }
-
 
 
 
@@ -1340,8 +1362,8 @@ mat3 __operator * (const mat3 m, const mat3 n)
 mat3 __operator / (const mat3 m, const mat3 n)
 {
     __retVal[0] = m[0] / n[0];
-    __retVal[0] = m[1] / n[1];
-    __retVal[0] = m[2] / n[2];
+    __retVal[1] = m[1] / n[1];
+    __retVal[2] = m[2] / n[2];
 }
 
 
@@ -1403,11 +1425,190 @@ mat4 __operator * (const mat4 m, const mat4 n)
 mat4 __operator / (const mat4 m, const mat4 n)
 {
     __retVal[0] = m[0] / n[0];
-    __retVal[0] = m[1] / n[1];
-    __retVal[0] = m[2] / n[2];
-    __retVal[0] = m[3] / n[3];
+    __retVal[1] = m[1] / n[1];
+    __retVal[2] = m[2] / n[2];
+    __retVal[3] = m[3] / n[3];
 }
 
+
+//// mat2/float operations
+
+mat2 __operator + (const float a, const mat2 n)
+{
+   __retVal[0] = a + n[0];
+   __retVal[1] = a + n[1];
+}
+
+mat2 __operator + (const mat2 m, const float b)
+{
+   __retVal[0] = m[0] + b;
+   __retVal[1] = m[1] + b;
+}
+
+mat2 __operator - (const float a, const mat2 n)
+{
+   __retVal[0] = a - n[0];
+   __retVal[1] = a - n[1];
+}
+
+mat2 __operator - (const mat2 m, const float b)
+{
+   __retVal[0] = m[0] - b;
+   __retVal[1] = m[1] - b;
+}
+
+mat2 __operator * (const float a, const mat2 n)
+{
+   __retVal[0] = a * n[0];
+   __retVal[1] = a * n[1];
+}
+
+mat2 __operator * (const mat2 m, const float b)
+{
+   __retVal[0] = m[0] * b;
+   __retVal[1] = m[1] * b;
+}
+
+mat2 __operator / (const float a, const mat2 n)
+{
+   __retVal[0] = a / n[0];
+   __retVal[1] = a / n[1];
+}
+
+mat2 __operator / (const mat2 m, const float b)
+{
+   __retVal[0] = m[0] / b;
+   __retVal[1] = m[1] / b;
+}
+
+
+//// mat3/float operations
+
+mat3 __operator + (const float a, const mat3 n)
+{
+   __retVal[0] = a + n[0];
+   __retVal[1] = a + n[1];
+   __retVal[2] = a + n[2];
+}
+
+mat3 __operator + (const mat3 m, const float b)
+{
+   __retVal[0] = m[0] + b;
+   __retVal[1] = m[1] + b;
+   __retVal[2] = m[2] + b;
+}
+
+mat3 __operator - (const float a, const mat3 n)
+{
+   __retVal[0] = a - n[0];
+   __retVal[1] = a - n[1];
+   __retVal[2] = a - n[2];
+}
+
+mat3 __operator - (const mat3 m, const float b)
+{
+   __retVal[0] = m[0] - b;
+   __retVal[1] = m[1] - b;
+   __retVal[2] = m[2] - b;
+}
+
+mat3 __operator * (const float a, const mat3 n)
+{
+   __retVal[0] = a * n[0];
+   __retVal[1] = a * n[1];
+   __retVal[2] = a * n[2];
+}
+
+mat3 __operator * (const mat3 m, const float b)
+{
+   __retVal[0] = m[0] * b;
+   __retVal[1] = m[1] * b;
+   __retVal[2] = m[2] * b;
+}
+
+mat3 __operator / (const float a, const mat3 n)
+{
+   __retVal[0] = a / n[0];
+   __retVal[1] = a / n[1];
+   __retVal[2] = a / n[2];
+}
+
+mat3 __operator / (const mat3 m, const float b)
+{
+   __retVal[0] = m[0] / b;
+   __retVal[1] = m[1] / b;
+   __retVal[2] = m[2] / b;
+}
+
+
+//// mat4/float operations
+
+mat4 __operator + (const float a, const mat4 n)
+{
+   __retVal[0] = a + n[0];
+   __retVal[1] = a + n[1];
+   __retVal[2] = a + n[2];
+   __retVal[3] = a + n[3];
+}
+
+mat4 __operator + (const mat4 m, const float b)
+{
+   __retVal[0] = m[0] + b;
+   __retVal[1] = m[1] + b;
+   __retVal[2] = m[2] + b;
+   __retVal[3] = m[3] + b;
+}
+
+mat4 __operator - (const float a, const mat4 n)
+{
+   __retVal[0] = a - n[0];
+   __retVal[1] = a - n[1];
+   __retVal[2] = a - n[2];
+   __retVal[3] = a - n[3];
+}
+
+mat4 __operator - (const mat4 m, const float b)
+{
+   __retVal[0] = m[0] - b;
+   __retVal[1] = m[1] - b;
+   __retVal[2] = m[2] - b;
+   __retVal[3] = m[3] - b;
+}
+
+mat4 __operator * (const float a, const mat4 n)
+{
+   __retVal[0] = a * n[0];
+   __retVal[1] = a * n[1];
+   __retVal[2] = a * n[2];
+   __retVal[3] = a * n[3];
+}
+
+mat4 __operator * (const mat4 m, const float b)
+{
+   __retVal[0] = m[0] * b;
+   __retVal[1] = m[1] * b;
+   __retVal[2] = m[2] * b;
+   __retVal[3] = m[3] * b;
+}
+
+mat4 __operator / (const float a, const mat4 n)
+{
+   __retVal[0] = a / n[0];
+   __retVal[1] = a / n[1];
+   __retVal[2] = a / n[2];
+   __retVal[3] = a / n[3];
+}
+
+mat4 __operator / (const mat4 m, const float b)
+{
+   __retVal[0] = m[0] / b;
+   __retVal[1] = m[1] / b;
+   __retVal[2] = m[2] / b;
+   __retVal[3] = m[3] / b;
+}
+
+
+////end
 
 
 
@@ -1674,101 +1875,6 @@ void __operator *= (inout vec4 v, const mat4 m)
 //next
 
 
-mat2 __operator + (const float a, const mat2 n) {
-    return mat2 (a + n[0], a + n[1]);
-}
-
-mat2 __operator + (const mat2 m, const float b) {
-    return mat2 (m[0] + b, m[1] + b);
-}
-
-mat2 __operator - (const float a, const mat2 n) {
-    return mat2 (a - n[0], a - n[1]);
-}
-
-mat2 __operator - (const mat2 m, const float b) {
-    return mat2 (m[0] - b, m[1] - b);
-}
-
-mat2 __operator * (const float a, const mat2 n) {
-    return mat2 (a * n[0], a * n[1]);
-}
-
-mat2 __operator * (const mat2 m, const float b) {
-    return mat2 (m[0] * b, m[1] * b);
-}
-
-mat2 __operator / (const float a, const mat2 n) {
-    return mat2 (a / n[0], a / n[1]);
-}
-
-mat2 __operator / (const mat2 m, const float b) {
-    return mat2 (m[0] / b, m[1] / b);
-}
-
-mat3 __operator + (const float a, const mat3 n) {
-    return mat3 (a + n[0], a + n[1], a + n[2]);
-}
-
-mat3 __operator + (const mat3 m, const float b) {
-    return mat3 (m[0] + b, m[1] + b, m[2] + b);
-}
-
-mat3 __operator - (const float a, const mat3 n) {
-    return mat3 (a - n[0], a - n[1], a - n[2]);
-}
-
-mat3 __operator - (const mat3 m, const float b) {
-    return mat3 (m[0] - b, m[1] - b, m[2] - b);
-}
-
-mat3 __operator * (const float a, const mat3 n) {
-    return mat3 (a * n[0], a * n[1], a * n[2]);
-}
-
-mat3 __operator * (const mat3 m, const float b) {
-    return mat3 (m[0] * b, m[1] * b, m[2] * b);
-}
-
-mat3 __operator / (const float a, const mat3 n) {
-    return mat3 (a / n[0], a / n[1], a / n[2]);
-}
-
-mat3 __operator / (const mat3 m, const float b) {
-    return mat3 (m[0] / b, m[1] / b, m[2] / b);
-}
-
-mat4 __operator + (const float a, const mat4 n) {
-    return mat4 (a + n[0], a + n[1], a + n[2], a + n[3]);
-}
-
-mat4 __operator + (const mat4 m, const float b) {
-    return mat4 (m[0] + b, m[1] + b, m[2] + b, m[3] + b);
-}
-
-mat4 __operator - (const float a, const mat4 n) {
-    return mat4 (a - n[0], a - n[1], a - n[2], a - n[3]);
-}
-
-mat4 __operator - (const mat4 m, const float b) {
-    return mat4 (m[0] - b, m[1] - b, m[2] - b, m[3] - b);
-}
-
-mat4 __operator * (const float a, const mat4 n) {
-    return mat4 (a * n[0], a * n[1], a * n[2], a * n[3]);
-}
-
-mat4 __operator * (const mat4 m, const float b) {
-    return mat4 (m[0] * b, m[1] * b, m[2] * b, m[3] * b);
-}
-
-mat4 __operator / (const float a, const mat4 n) {
-    return mat4 (a / n[0], a / n[1], a / n[2], a / n[3]);
-}
-
-mat4 __operator / (const mat4 m, const float b) {
-    return mat4 (m[0] / b, m[1] / b, m[2] / b, m[3] / b);
-}
 
 ivec2 __operator + (const int a, const ivec2 u) {
     return ivec2 (a) + u;
@@ -1777,18 +1883,6 @@ ivec2 __operator + (const int a, const ivec2 u) {
 
 
 
-
-mat2 __operator - (const mat2 m) {
-    return mat2 (-m[0], -m[1]);
-}
-
-mat3 __operator - (const mat3 m) {
-    return mat3 (-m[0], -m[1], -m[2]);
-}
-
-mat4 __operator - (const mat4 m) {
-    return mat4 (-m[0], -m[1], -m[2], -m[3]);
-}
 
 void __operator -- (inout float a) {
     a -= 1.0;
