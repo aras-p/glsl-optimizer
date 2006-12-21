@@ -848,6 +848,173 @@ void __operator /= (inout vec4 v, const vec4 u)
 
 
 
+//// ivec2/int assignment operators
+
+void __operator += (inout ivec2 v, const int a)
+{
+   v.x += a;
+   v.y += a;
+}
+
+void __operator -= (inout ivec2 v, const int a)
+{
+   v.x -= a;
+   v.y -= a;
+}
+
+void __operator *= (inout ivec2 v, const int a)
+{
+   v.x *= a;
+   v.y *= a;
+}
+
+void __operator /= (inout ivec2 v, const int a)
+{
+// XXX rcp
+    v.x /= a;
+    v.y /= a;
+}
+
+
+//// ivec3/int assignment operators
+
+void __operator += (inout ivec3 v, const int a)
+{
+   v.x += a;
+   v.y += a;
+   v.z += a;
+}
+
+void __operator -= (inout ivec3 v, const int a)
+{
+   v.x -= a;
+   v.y -= a;
+   v.z -= a;
+}
+
+void __operator *= (inout ivec3 v, const int a)
+{
+   v.x *= a;
+   v.y *= a;
+   v.z *= a;
+}
+
+void __operator /= (inout ivec3 v, const int a)
+{
+    v.x /= a;
+    v.y /= a;
+    v.z /= a;
+}
+
+
+//// ivec4/int assignment operators
+
+void __operator += (inout ivec4 v, const int a)
+{
+   __asm vec4_add v, v, a.xxxx;
+}
+
+void __operator -= (inout ivec4 v, const int a)
+{
+   __asm vec4_subtract v, v, a.xxxx;
+}
+
+void __operator *= (inout ivec4 v, const int a)
+{
+   __asm vec4_multiply v, v, a.xxxx;
+}
+
+void __operator /= (inout ivec4 v, const int a)
+{
+    v.x /= a;
+    v.y /= a;
+    v.z /= a;
+    v.w /= a;
+}
+
+
+
+//// vec2/float assignment operators
+
+void __operator += (inout vec2 v, const float a)
+{
+   __asm vec4_add v.xy, v, a.xx;
+}
+
+void __operator -= (inout vec2 v, const float a)
+{
+   __asm vec4_subtract v.xy, v, a.xx;
+}
+
+void __operator *= (inout vec2 v, const float a)
+{
+   __asm vec4_multiply v.xy, v, a.xx;
+}
+
+void __operator /= (inout vec2 v, const float a)
+{
+// XXX rcp
+    v.x /= a;
+    v.y /= a;
+}
+
+
+//// vec3/float assignment operators
+
+void __operator += (inout vec3 v, const float a)
+{
+   __asm vec4_add v.xyz, v, a.xxx;
+}
+
+void __operator -= (inout vec3 v, const float a)
+{
+   __asm vec4_subtract v.xyz, v, a.xxx;
+}
+
+void __operator *= (inout vec3 v, const float a)
+{
+   __asm vec4_multiply v.xyz, v, a.xxx;
+}
+
+void __operator /= (inout vec3 v, const float a)
+{
+    v.x /= a;
+    v.y /= a;
+    v.z /= a;
+}
+
+
+//// vec4/float assignment operators
+
+void __operator += (inout vec4 v, const float a)
+{
+   __asm vec4_add v, v, a.xxxx;
+}
+
+void __operator -= (inout vec4 v, const float a)
+{
+   __asm vec4_subtract v, v, a.xxxx;
+}
+
+void __operator *= (inout vec4 v, const float a)
+{
+   __asm vec4_multiply v, v, a.xxxx;
+}
+
+void __operator /= (inout vec4 v, const float a)
+{
+    v.x /= a;
+    v.y /= a;
+    v.z /= a;
+    v.w /= a;
+}
+
+
+
+
+
+
+
 void __operator += (inout mat2 m, const mat2 n) {
     m[0] += n[0];
     m[1] += n[1];
@@ -962,77 +1129,6 @@ void __operator /= (inout mat4 m, const mat4 n) {
     m[3] /= n[3];
 }
 
-void __operator += (inout vec2 v, const float a) {
-    v.x += a;
-    v.y += a;
-}
-
-void __operator -= (inout vec2 v, const float a) {
-    v.x -= a;
-    v.y -= a;
-}
-
-void __operator *= (inout vec2 v, const float a) {
-    v.x *= a;
-    v.y *= a;
-}
-
-void __operator /= (inout vec2 v, const float a) {
-    v.x /= a;
-    v.y /= a;
-}
-
-void __operator += (inout vec3 v, const float a) {
-    v.x += a;
-    v.y += a;
-    v.z += a;
-}
-
-void __operator -= (inout vec3 v, const float a) {
-    v.x -= a;
-    v.y -= a;
-    v.z -= a;
-}
-
-void __operator *= (inout vec3 v, const float a) {
-    v.x *= a;
-    v.y *= a;
-    v.z *= a;
-}
-
-void __operator /= (inout vec3 v, const float a) {
-    v.x /= a;
-    v.y /= a;
-    v.z /= a;
-}
-
-void __operator += (inout vec4 v, const float a) {
-    v.x += a;
-    v.y += a;
-    v.z += a;
-    v.w += a;
-}
-
-void __operator -= (inout vec4 v, const float a) {
-    v.x -= a;
-    v.y -= a;
-    v.z -= a;
-    v.w -= a;
-}
-
-void __operator *= (inout vec4 v, const float a) {
-    v.x *= a;
-    v.y *= a;
-    v.z *= a;
-    v.w *= a;
-}
-
-void __operator /= (inout vec4 v, const float a) {
-    v.x /= a;
-    v.y /= a;
-    v.z /= a;
-    v.w /= a;
-}
 
 void __operator += (inout mat2 m, const float a) {
     m[0] += a;
