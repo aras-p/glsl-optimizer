@@ -605,172 +605,113 @@ ivec4 __operator - (const ivec4 v)
 
 
 
+//// dot product
 
-
-
-
-//// operator +=
-
-void __operator += (inout float a, const float b)
+float dot(const float a, const float b)
 {
-    __asm vec4_add a.x, a, b;
+   return a * b;
 }
 
-void __operator -= (inout float a, const float b)
+float dot(const vec2 a, const vec2 b)
 {
-    __asm vec4_subtract a.x, a, b;
+   return a.x * b.x + a.y * b.y;
 }
 
-void __operator *= (inout float a, const float b)
+float dot(const vec3 a, const vec3 b)
 {
-    __asm vec4_multiply a.x, a, b;
+    __asm vec3_dot __retVal, a, b;
 }
 
-void __operator /= (inout float a, const float b)
+float dot(const vec4 a, const vec4 b)
 {
-   float w; // = 1 / b
-   __asm float_rcp w.x, b;
-   __asm vec4_multiply a.x, a, w;
+    __asm vec4_dot __retVal, a, b;
 }
 
 
 
 
-void __operator += (inout int a, const int b) {
+//// int assignment operators
+
+void __operator += (inout int a, const int b)
+{
     a = int (float (a) + float (b));
 }
 
-
-void __operator -= (inout int a, const int b) {
+void __operator -= (inout int a, const int b)
+{
     a += -b;
 }
 
-
-
-void __operator *= (inout int a, const int b) {
+void __operator *= (inout int a, const int b)
+{
     a = int (float (a) * float (b));
 }
 
-
-void __operator /= (inout int a, const int b) {
+void __operator /= (inout int a, const int b)
+{
     a = int (float (a) / float (b));
 }
 
-void __operator += (inout vec2 v, const vec2 u) {
+
+//// ivec2 assignment operators
+
+void __operator += (inout ivec2 v, const ivec2 u)
+{
     v.x += u.x;
     v.y += u.y;
 }
 
-void __operator -= (inout vec2 v, const vec2 u) {
+void __operator -= (inout ivec2 v, const ivec2 u)
+{
     v.x -= u.x;
     v.y -= u.y;
 }
 
-void __operator *= (inout vec2 v, const vec2 u) {
+void __operator *= (inout ivec2 v, const ivec2 u)
+{
     v.x *= u.x;
     v.y *= u.y;
 }
 
-void __operator /= (inout vec2 v, const vec2 u) {
+void __operator /= (inout ivec2 v, const ivec2 u)
+{
     v.x /= u.x;
     v.y /= u.y;
 }
 
-void __operator += (inout vec3 v, const vec3 u) {
-    v.x += u.x;
-    v.y += u.y;
-    v.z += u.z;
-}
 
-void __operator -= (inout vec3 v, const vec3 u) {
-    v.x -= u.x;
-    v.y -= u.y;
-    v.z -= u.z;
-}
+//// ivec3 assignment operators
 
-void __operator *= (inout vec3 v, const vec3 u) {
-    v.x *= u.x;
-    v.y *= u.y;
-    v.z *= u.z;
-}
-
-void __operator /= (inout vec3 v, const vec3 u) {
-    v.x /= u.x;
-    v.y /= u.y;
-    v.z /= u.z;
-}
-
-void __operator += (inout vec4 v, const vec4 u) {
-    v.x += u.x;
-    v.y += u.y;
-    v.z += u.z;
-    v.w += u.w;
-}
-
-void __operator -= (inout vec4 v, const vec4 u) {
-    v.x -= u.x;
-    v.y -= u.y;
-    v.z -= u.z;
-    v.w -= u.w;
-}
-
-void __operator *= (inout vec4 v, const vec4 u) {
-    v.x *= u.x;
-    v.y *= u.y;
-    v.z *= u.z;
-    v.w *= u.w;
-}
-
-void __operator /= (inout vec4 v, const vec4 u) {
-    v.x /= u.x;
-    v.y /= u.y;
-    v.z /= u.z;
-    v.w /= u.w;
-}
-
-void __operator += (inout ivec2 v, const ivec2 u) {
-    v.x += u.x;
-    v.y += u.y;
-}
-
-void __operator -= (inout ivec2 v, const ivec2 u) {
-    v.x -= u.x;
-    v.y -= u.y;
-}
-
-void __operator *= (inout ivec2 v, const ivec2 u) {
-    v.x *= u.x;
-    v.y *= u.y;
-}
-
-void __operator /= (inout ivec2 v, const ivec2 u) {
-    v.x /= u.x;
-    v.y /= u.y;
-}
-
-void __operator += (inout ivec3 v, const ivec3 u) {
+void __operator += (inout ivec3 v, const ivec3 u)
+{
     v.x += u.x;
     v.y += u.y;
     v.z += u.z;
 }
 
-void __operator -= (inout ivec3 v, const ivec3 u) {
+void __operator -= (inout ivec3 v, const ivec3 u)
+{
     v.x -= u.x;
     v.y -= u.y;
     v.z -= u.z;
 }
 
-void __operator *= (inout ivec3 v, const ivec3 u) {
+void __operator *= (inout ivec3 v, const ivec3 u)
+{
     v.x *= u.x;
     v.y *= u.y;
     v.z *= u.z;
 }
 
-void __operator /= (inout ivec3 v, const ivec3 u) {
+void __operator /= (inout ivec3 v, const ivec3 u)
+{
     v.x /= u.x;
     v.y /= u.y;
     v.z /= u.z;
 }
+
+
+//// ivec4 assignment operators
 
 void __operator += (inout ivec4 v, const ivec4 u) {
     v.x += u.x;
@@ -799,6 +740,113 @@ void __operator /= (inout ivec4 v, const ivec4 u) {
     v.z /= u.z;
     v.w /= u.w;
 }
+
+
+//// float assignment operators
+
+void __operator += (inout float a, const float b)
+{
+    __asm vec4_add a.x, a, b;
+}
+
+void __operator -= (inout float a, const float b)
+{
+    __asm vec4_subtract a.x, a, b;
+}
+
+void __operator *= (inout float a, const float b)
+{
+    __asm vec4_multiply a.x, a, b;
+}
+
+void __operator /= (inout float a, const float b)
+{
+   float w; // = 1 / b
+   __asm float_rcp w.x, b;
+   __asm vec4_multiply a.x, a, w;
+}
+
+
+//// vec2 assignment operators
+
+void __operator += (inout vec2 v, const vec2 u)
+{
+    v.x += u.x;
+    v.y += u.y;
+}
+
+void __operator -= (inout vec2 v, const vec2 u)
+{
+    v.x -= u.x;
+    v.y -= u.y;
+}
+
+void __operator *= (inout vec2 v, const vec2 u)
+{
+    v.x *= u.x;
+    v.y *= u.y;
+}
+
+void __operator /= (inout vec2 v, const vec2 u)
+{
+    v.x /= u.x;
+    v.y /= u.y;
+}
+
+
+//// vec3 assignment operators
+
+void __operator += (inout vec3 v, const vec3 u)
+{
+   __asm vec4_add v.xyz, v, u;
+}
+
+void __operator -= (inout vec3 v, const vec3 u)
+{
+   __asm vec4_subtract v.xyz, v, u;
+}
+
+void __operator *= (inout vec3 v, const vec3 u)
+{
+   __asm vec4_multiply v.xyz, v, u;
+}
+
+void __operator /= (inout vec3 v, const vec3 u)
+{
+// XXX rcp
+    v.x /= u.x;
+    v.y /= u.y;
+    v.z /= u.z;
+}
+
+
+//// vec4 assignment operators
+
+void __operator += (inout vec4 v, const vec4 u)
+{
+   __asm vec4_add v, v, u;
+}
+
+void __operator -= (inout vec4 v, const vec4 u)
+{
+   __asm vec4_subtract v, v, u;
+}
+
+void __operator *= (inout vec4 v, const vec4 u)
+{
+   __asm vec4_multiply v, v, u;
+}
+
+void __operator /= (inout vec4 v, const vec4 u)
+{
+// XXX rcp
+    v.x /= u.x;
+    v.y /= u.y;
+    v.z /= u.z;
+    v.w /= u.w;
+}
+
+
 
 void __operator += (inout mat2 m, const mat2 n) {
     m[0] += n[0];
@@ -845,28 +893,6 @@ void __operator -= (inout mat3 m, const mat3 n) {
     m[2] -= n[2];
 }
 
-
-//// dot  (formerly in slang_common_builtin.gc)
-
-float dot(const float a, const float b)
-{
-   return a * b;
-}
-
-float dot(const vec2 a, const vec2 b)
-{
-   return a.x * b.x + a.y * b.y;
-}
-
-float dot(const vec3 a, const vec3 b)
-{
-    __asm vec3_dot __retVal, a, b;
-}
-
-float dot(const vec4 a, const vec4 b)
-{
-    __asm vec4_dot __retVal, a, b;
-}
 
 
 
