@@ -520,7 +520,6 @@ update_specular(GLcontext * ctx)
    /* A hack to trigger the rebuild of the fragment program.
     */
    intel_context(ctx)->NewGLState |= _NEW_TEXTURE;
-   I915_CONTEXT(ctx)->tex_program.translated = 0;
 }
 
 static void
