@@ -737,6 +737,10 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
       for (loc = 0; loc < shProg->Uniforms->NumParameters; loc++) {
          const struct gl_program_parameter *u
             = shProg->Uniforms->Parameters + loc;
+         /* XXX this is a temporary simplification / short-cut.
+          * We need to handle things like "e.c[0].b" as seen in the
+          * GLSL orange book, page 189.
+          */
          if (u->Type == PROGRAM_UNIFORM && !strcmp(u->Name, name)) {
             return loc;
          }
