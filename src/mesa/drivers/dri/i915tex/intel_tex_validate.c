@@ -110,6 +110,8 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    GLuint nr_faces = 0;
    struct intel_texture_image *firstImage;
 
+   GLboolean need_flush = GL_FALSE;
+
    /* We know/require this is true by now: 
     */
    assert(intelObj->base.Complete);
@@ -201,11 +203,13 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
           */
          if (intelObj->mt != intelImage->mt) {
             copy_image_data_to_tree(intel, intelObj, intelImage);
+	    need_flush = GL_TRUE;
          }
       }
    }
 
-   intel_batchbuffer_flush(intel->batch);
+   if (need_flush)
+      intel_batchbuffer_flush(intel->batch);
 
    return GL_TRUE;
 }
