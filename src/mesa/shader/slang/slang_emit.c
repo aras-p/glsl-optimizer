@@ -963,7 +963,7 @@ emit_negation(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    inst->Comment = n->Comment;
 
    return inst;
-#endif
+#else
    /* XXX this is something we can optimize for, with a bit of work.*/
    abort();
    return NULL;
@@ -1120,7 +1120,7 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    case IR_COS:
       return emit_unop(gc, n, prog);
    case IR_NEG:
-      return emit_negation(gc, n, prog):
+      return emit_negation(gc, n, prog);
    case IR_LABEL:
       return emit_label(n->Target, prog);
    case IR_FLOAT:
