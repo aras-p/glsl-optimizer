@@ -344,8 +344,6 @@ _mesa_print_program(const struct gl_program *prog)
 void
 _mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog)
 {
-   GLint i;
-
    _mesa_printf("InputsRead: 0x%x\n", prog->InputsRead);
    _mesa_printf("OutputsWritten: 0x%x\n", prog->OutputsWritten);
    _mesa_printf("NumInstructions=%d\n", prog->NumInstructions);
@@ -363,13 +361,21 @@ _mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog)
       _mesa_printf("%2d: %f, %f, %f, %f\n", i, p[0], p[1], p[2], p[3]);
    }
 #endif	
+   _mesa_print_parameter_list(prog->Parameters);
+}
 
-   for (i = 0; i < prog->Parameters->NumParameters; i++){
-      struct gl_program_parameter *param = prog->Parameters->Parameters + i;
-      const GLfloat *v = prog->Parameters->ParameterValues[i];
-      _mesa_printf("param[%d] %s %s = {%.3f, %.3f, %.3f, %.3f};\n",
-                   i,
-                   program_file_string(prog->Parameters->Parameters[i].Type),
+
+void
+_mesa_print_parameter_list(const struct gl_program_parameter_list *list)
+{
+   GLuint i;
+   _mesa_printf("param list %p\n", (void *) list);
+   for (i = 0; i < list->NumParameters; i++){
+      struct gl_program_parameter *param = list->Parameters + i;
+      const GLfloat *v = list->ParameterValues[i];
+      _mesa_printf("param[%d] sz=%d %s %s = {%.3f, %.3f, %.3f, %.3f};\n",
+                   i, param->Size,
+                   program_file_string(list->Parameters[i].Type),
                    param->Name, v[0], v[1], v[2], v[3]);
    }
 }

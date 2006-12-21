@@ -41,5 +41,8 @@ _mesa_print_program(const struct gl_program *prog);
 extern void
 _mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog);
 
+extern void
+_mesa_print_parameter_list(const struct gl_program_parameter_list *list);
+
 
 #endif /* PROG_PRINT_H */
