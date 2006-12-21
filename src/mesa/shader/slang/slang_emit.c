@@ -78,6 +78,7 @@ static slang_ir_info IrInfo[] = {
    { IR_FLOOR, "IR_FLOOR", OPCODE_FLR, 4, 1 },
    { IR_FRAC, "IR_FRAC", OPCODE_FRC, 4, 1 },
    { IR_ABS, "IR_ABS", OPCODE_ABS, 4, 1 },
+   { IR_NEG, "IR_NEG", OPCODE_NOP, 4, 1 },  /* XXX fix!!!! */
    { IR_SIN, "IR_SIN", OPCODE_SIN, 1, 1 },
    { IR_COS, "IR_COS", OPCODE_COS, 1, 1 },
    /* other */
@@ -937,6 +938,40 @@ emit_unop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 
 
 static struct prog_instruction *
+emit_negation(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
+{
+#if 0
+   struct prog_instruction *inst;
+   const slang_ir_info *info = slang_find_ir_info(n->Opcode);
+   assert(info);
+
+   assert(info->NumParams == 1);
+
+   emit(gc, n->Children[0], prog);
+
+   inst = new_instruction(prog, info->InstOpcode);
+   /*slang_resolve_storage(gc, n, prog);*/
+
+   if (!n->Store)
+      slang_alloc_temp_storage(gc, n, info->ResultSize);
+
+   storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+
+   storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
+                      n->Children[0]->Swizzle);
+
+   inst->Comment = n->Comment;
+
+   return inst;
+#endif
+   /* XXX this is something we can optimize for, with a bit of work.*/
+   abort();
+   return NULL;
+#endif
+}
+
+
+static struct prog_instruction *
 emit_label(const char *target, struct gl_program *prog)
 {
    struct prog_instruction *inst;
@@ -1084,6 +1119,8 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    case IR_SIN:
    case IR_COS:
       return emit_unop(gc, n, prog);
+   case IR_NEG:
+      return emit_negation(gc, n, prog):
    case IR_LABEL:
       return emit_label(n->Target, prog);
    case IR_FLOAT:

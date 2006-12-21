@@ -84,6 +84,7 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_floor", IR_FLOOR, 1, 1 },
    { "vec4_frac", IR_FRAC, 1, 1 },
    { "vec4_abs", IR_ABS, 1, 1 },
+   { "vec4_neg", IR_NEG, 1, 1 },
    /* float binary op */
    { "float_add", IR_ADD, 1, 2 },
    { "float_subtract", IR_SUB, 1, 2 },

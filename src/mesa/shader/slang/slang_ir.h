@@ -72,7 +72,8 @@ typedef enum
    IR_RCP,     /* recipricol */
    IR_FLOOR,
    IR_FRAC,
-   IR_ABS,
+   IR_ABS,     /* absolute value */
+   IR_NEG,     /* negate */
    IR_SIN,     /* sine */
    IR_COS,     /* cosine */
    IR_NOT,     /* logical not */
