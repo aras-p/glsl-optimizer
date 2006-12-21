@@ -147,15 +147,20 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
 {
    GLuint *map, i;
 
+#if 0
+      _mesa_print_parameter_list(prog->Parameters);
+#endif
+
    map = (GLuint *) malloc(prog->Parameters->NumParameters * sizeof(GLuint));
    if (!map)
       return GL_FALSE;
 
-   for (i = 0; i < prog->Parameters->NumParameters; i++) {
+   for (i = 0; i < prog->Parameters->NumParameters; /* incr below*/) {
       /* see if this uniform is in the linked uniform list */
       const struct gl_program_parameter *p = prog->Parameters->Parameters + i;
       const GLfloat *pVals = prog->Parameters->ParameterValues[i];
       GLint j;
+      GLint size;
 
       /* sanity check */
       assert(is_uniform(p->Type));
@@ -177,13 +182,16 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
 
       if (j >= 0) {
          /* already in list, check size XXX check this */
+#if 0
          assert(p->Size == shProg->Uniforms->Parameters[j].Size);
+#endif
       }
       else {
          /* not already in linked list */
          switch (p->Type) {
          case PROGRAM_ENV_PARAM:
             j = _mesa_add_named_parameter(shProg->Uniforms, p->Name, pVals);
+            break;
          case PROGRAM_CONSTANT:
             j = _mesa_add_named_constant(shProg->Uniforms, p->Name, pVals, p->Size);
             break;
@@ -200,11 +208,27 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
       }
       ASSERT(j >= 0);
 
-      map[i] = j;
+      size = p->Size;
+      while (size > 0) {
+         map[i] = j;
+         i++;
+         j++;
+         size -= 4;
+      }
+
    }
 
+#if 0
+   {
+      GLuint i;
+      for (i = 0; i < prog->Parameters->NumParameters; i++) {
+         printf("map[%d] = %d\n", i, map[i]);
+      }
+      _mesa_print_parameter_list(shProg->Uniforms);
+   }
+#endif
 
-   /* OK, now scan the program/shader instructions looking for varying vars,
+   /* OK, now scan the program/shader instructions looking for uniform vars,
     * replacing the old index with the new index.
     */
    for (i = 0; i < prog->NumInstructions; i++) {

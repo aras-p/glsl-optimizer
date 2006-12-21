@@ -191,7 +191,7 @@ storage_string(const slang_ir_storage *st)
       sprintf(s, "%s[%d..%d]", files[st->File], st->Index,
               st->Index + st->Size - 1);
 #endif
-   sprintf(s, "%s", files[st->File]);
+   sprintf(s, "%s[%d]", files[st->File], st->Index);
    return s;
 }
 
@@ -533,15 +533,15 @@ slang_lookup_statevar(const char *name, GLint index,
    };
    static const struct state_info state[] = {
       { "gl_ModelViewMatrix", 4, SWIZZLE_NOOP,
-        { STATE_MATRIX, STATE_MODELVIEW, 0, 0, 0, STATE_MATRIX_TRANSPOSE } },
+        { STATE_MATRIX, STATE_MODELVIEW, 0, 0, 0, 0 } },
       { "gl_NormalMatrix", 3, SWIZZLE_NOOP,
-        { STATE_MATRIX, STATE_MODELVIEW, 0, 0, 0, STATE_MATRIX_INVTRANS } },
+        { STATE_MATRIX, STATE_MODELVIEW, 0, 0, 0, 0 } },
       { "gl_ProjectionMatrix", 4, SWIZZLE_NOOP,
-        { STATE_MATRIX, STATE_PROJECTION, 0, 0, 0, STATE_MATRIX_TRANSPOSE } },
+        { STATE_MATRIX, STATE_PROJECTION, 0, 0, 0, 0 } },
       { "gl_ModelViewProjectionMatrix", 4, SWIZZLE_NOOP,
-        { STATE_MATRIX, STATE_MVP, 0, 0, 0, STATE_MATRIX_TRANSPOSE } },
+        { STATE_MATRIX, STATE_MVP, 0, 0, 0, 0 } },
       { "gl_TextureMatrix", 4, SWIZZLE_NOOP,
-        { STATE_MATRIX, STATE_TEXTURE, 0, 0, 0, STATE_MATRIX_TRANSPOSE } },
+        { STATE_MATRIX, STATE_TEXTURE, 0, 0, 0, 0 } },
       { NULL, 0, 0, {0, 0, 0, 0, 0, 0} }
    };
    GLuint i;
@@ -580,9 +580,9 @@ slang_lookup_statevar(const char *name, GLint index,
 
 
 static GLint
-slang_alloc_uniform(struct gl_program *prog, const char *name)
+slang_alloc_uniform(struct gl_program *prog, const char *name, GLuint size)
 {
-   GLint i = _mesa_add_uniform(prog->Parameters, name, 4);
+   GLint i = _mesa_add_uniform(prog->Parameters, name, size);
    return i;
 }
 
@@ -736,7 +736,9 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
 
       /* probably a uniform or varying */
       if (n->Var->type.qualifier == slang_qual_uniform) {
-         i = slang_alloc_uniform(prog, (char *) n->Var->a_name);
+         GLint size = n->Store->Size;
+         assert(size > 0);
+         i = slang_alloc_uniform(prog, (char *) n->Var->a_name, size);
          if (i >= 0) {
             n->Store->File = PROGRAM_UNIFORM;
             n->Store->Index = i;

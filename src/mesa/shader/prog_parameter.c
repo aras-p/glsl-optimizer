@@ -66,36 +66,41 @@ _mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
 
 /**
  * Add a new parameter to a parameter list.
+ * Note that parameter values are usually 4-element GLfloat vectors.
+ * When size > 4 we'll allocate a sequential block of parameters to
+ * store all the values (in blocks of 4).
+ *
  * \param paramList  the list to add the parameter to
  * \param name  the parameter name, will be duplicated/copied!
  * \param values  initial parameter value, up to 4 GLfloats
- * \param size  number of elements in 'values' vector (1..4)
+ * \param size  number of elements in 'values' vector (1..4, or more)
  * \param type  type of parameter, such as 
  * \return  index of new parameter in the list, or -1 if error (out of mem)
  */
 GLint
 _mesa_add_parameter(struct gl_program_parameter_list *paramList,
-                    const char *name, const GLfloat values[4], GLuint size,
+                    const char *name, const GLfloat *values, GLuint size,
                     enum register_file type)
 {
-   const GLuint n = paramList->NumParameters;
+   const GLuint oldNum = paramList->NumParameters;
+   const GLuint sz4 = (size + 3) / 4; /* no. of new param slots needed */
 
-   if (n == paramList->Size) {
-      /* Need to grow the parameter list array */
-      if (paramList->Size == 0)
-	 paramList->Size = 8;
-      else
-         paramList->Size *= 2;
+   assert(size > 0);
+   assert(size <= 16);  /* XXX anything larger than a matrix??? */
+
+   if (oldNum + sz4 > paramList->Size) {
+      /* Need to grow the parameter list array (alloc some extra) */
+      paramList->Size = paramList->Size + 4 * sz4;
 
       /* realloc arrays */
       paramList->Parameters = (struct gl_program_parameter *)
 	 _mesa_realloc(paramList->Parameters,
-		       n * sizeof(struct gl_program_parameter),
+		       oldNum * sizeof(struct gl_program_parameter),
 		       paramList->Size * sizeof(struct gl_program_parameter));
 
       paramList->ParameterValues = (GLfloat (*)[4])
          _mesa_align_realloc(paramList->ParameterValues,         /* old buf */
-                             n * 4 * sizeof(GLfloat),            /* old size */
+                             oldNum * 4 * sizeof(GLfloat),      /* old size */
                              paramList->Size * 4 *sizeof(GLfloat), /* new sz */
                              16);
    }
@@ -108,17 +113,25 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
       return -1;
    }
    else {
-      paramList->NumParameters = n + 1;
+      GLuint i;
 
-      _mesa_memset(&paramList->Parameters[n], 0, 
-		   sizeof(struct gl_program_parameter));
+      paramList->NumParameters = oldNum + sz4;
 
-      paramList->Parameters[n].Name = name ? _mesa_strdup(name) : NULL;
-      paramList->Parameters[n].Type = type;
-      paramList->Parameters[n].Size = size;
-      if (values)
-         COPY_4V(paramList->ParameterValues[n], values);
-      return (GLint) n;
+      _mesa_memset(&paramList->Parameters[oldNum], 0, 
+		   sz4 * sizeof(struct gl_program_parameter));
+
+      for (i = 0; i < sz4; i++) {
+         struct gl_program_parameter *p = paramList->Parameters + oldNum + i;
+         p->Name = name ? _mesa_strdup(name) : NULL;
+         p->Type = type;
+         p->Size = size;
+         if (values) {
+            COPY_4V(paramList->ParameterValues[oldNum + i], values);
+            values += 4;
+         }
+         size -= 4;
+      }
+      return (GLint) oldNum;
    }
 }
 
@@ -203,7 +216,6 @@ _mesa_add_uniform(struct gl_program_parameter_list *paramList,
       return i;
    }
    else {
-      assert(size == 4);
       i = _mesa_add_parameter(paramList, name, NULL, size, PROGRAM_UNIFORM);
       return i;
    }
@@ -429,8 +441,9 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
    /** Not too efficient, but correct */
    for (i = 0; i < list->NumParameters; i++) {
       struct gl_program_parameter *p = list->Parameters + i;
+      GLuint size = MIN2(p->Size, 4);
       GLint j = _mesa_add_parameter(clone, p->Name, list->ParameterValues[i],
-                                    p->Size, p->Type);
+                                    size, p->Type);
       ASSERT(j >= 0);
       /* copy state indexes */
       if (p->Type == PROGRAM_STATE_VAR) {
@@ -439,6 +452,9 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
          for (k = 0; k < 6; k++) {
             q->StateIndexes[k] = p->StateIndexes[k];
          }
+      }
+      else {
+         clone->Parameters[j].Size = p->Size;
       }
    }
 

@@ -596,25 +596,34 @@ void __operator -= (inout mat3 m, const mat3 n) {
     m[2] -= n[2];
 }
 
-vec3 __operator * (const mat3 m, const vec3 v)
+
+//// dot  (formerly in slang_common_builtin.gc)
+
+float dot(const float a, const float b)
 {
-   vec3 r1, r2, r3;
-   r1.x = m[0].x;
-   r1.y = m[1].x;
-   r1.z = m[2].x;
-   r2.x = m[0].y;
-   r2.y = m[1].y;
-   r2.z = m[2].y;
-   r3.x = m[0].z;
-   r3.y = m[1].z;
-   r3.z = m[2].z;
-   __asm vec3_dot __retVal.x, r1, v;
-   __asm vec3_dot __retVal.y, r2, v;
-   __asm vec3_dot __retVal.z, r3, v;
+   return a * b;
 }
 
+float dot(const vec2 a, const vec2 b)
+{
+   return a.x * b.x + a.y * b.y;
+}
+
+float dot(const vec3 a, const vec3 b)
+{
+    __asm vec3_dot __retVal, a, b;
+}
+
+float dot(const vec4 a, const vec4 b)
+{
+    __asm vec4_dot __retVal, a, b;
+}
+
+
+
+
 mat3 __operator * (const mat3 m, const mat3 n) {
-    return mat3 (m * n[0], m * n[1], m * n[2]);
+//    return mat3 (m * n[0], m * n[1], m * n[2]);
 }
 
 void __operator *= (inout mat3 m, const mat3 n) {
@@ -643,57 +652,24 @@ void __operator -= (inout mat4 m, const mat4 n) {
 
 
 
-//// dot  (formerly in slang_common_builtin.gc)
-
-float dot(const float a, const float b)
+vec4 __operator * (const mat4 mx, const vec4 v)
 {
-   return a * b;
+   __retVal.x = dot(v, mx[0]);
+   __retVal.y = dot(v, mx[1]);
+   __retVal.z = dot(v, mx[2]);
+   __retVal.w = dot(v, mx[3]);
 }
 
-float dot(const vec2 a, const vec2 b)
+//matmul
+vec3 __operator * (const mat3 m, const vec3 v)
 {
-   return a.x * b.x + a.y * b.y;
-}
-
-float dot(const vec3 a, const vec3 b)
-{
-    __asm vec3_dot __retVal, a, b;
-}
-
-float dot(const vec4 a, const vec4 b)
-{
-    __asm vec4_dot __retVal, a, b;
+   __retVal.x = dot(v, m[0]);
+   __retVal.y = dot(v, m[1]);
+   __retVal.z = dot(v, m[2]);
 }
 
 
-
-
-vec4 __operator * (const mat4 m, const vec4 v)
-{
-   vec4 r1, r2, r3, r4;
-   r1.x = m[0].x;
-   r1.y = m[1].x;
-   r1.z = m[2].x;
-   r1.w = m[3].x;
-   r2.x = m[0].y;
-   r2.y = m[1].y;
-   r2.z = m[2].y;
-   r2.w = m[3].y;
-   r3.x = m[0].z;
-   r3.y = m[1].z;
-   r3.z = m[2].z;
-   r3.w = m[3].z;
-   r4.x = m[0].w;
-   r4.y = m[1].w;
-   r4.z = m[2].w;
-   r4.w = m[3].w;
-   __asm vec4_dot __retVal.x, r1, v;
-   __asm vec4_dot __retVal.y, r2, v;
-   __asm vec4_dot __retVal.z, r3, v;
-   __asm vec4_dot __retVal.w, r4, v;
-}
-
-// xxx move
+// xxx move this
 mat4 __operator * (const mat4 m, const mat4 n) {
     return mat4 (m * n[0], m * n[1], m * n[2], m * n[3]);
 }
@@ -864,27 +840,63 @@ void __operator *= (inout vec2 v, const mat2 m) {
     v = v * m;
 }
 
-vec3 __operator * (const vec3 v, const mat3 m) {
-    return vec3 (
-        v.x * m[0].x + v.y * m[0].y + v.z * m[0].z,
-        v.x * m[1].x + v.y * m[1].y + v.z * m[1].z,
-        v.x * m[2].x + v.y * m[2].y + v.z * m[2].z
-    );
-}
-
 void __operator *= (inout vec3 v, const mat3 m) {
-    v = v * m;
+//    v = v * m;
 }
 
 
 
 vec4 __operator * (const vec4 v, const mat4 m)
 {
-   __retVal.x = dot(v, m[0]);
-   __retVal.y = dot(v, m[1]);
-   __retVal.z = dot(v, m[2]);
-   __retVal.w = dot(v, m[3]);
+   vec4 r1, r2, r3, r4;
+   r1.x = m[0].x;
+   r1.y = m[1].x;
+   r1.z = m[2].x;
+   r1.w = m[3].x;
+   r2.x = m[0].y;
+   r2.y = m[1].y;
+   r2.z = m[2].y;
+   r2.w = m[3].y;
+   r3.x = m[0].z;
+   r3.y = m[1].z;
+   r3.z = m[2].z;
+   r3.w = m[3].z;
+   r4.x = m[0].w;
+   r4.y = m[1].w;
+   r4.z = m[2].w;
+   r4.w = m[3].w;
+   __asm vec4_dot __retVal.x, r1, v;
+   __asm vec4_dot __retVal.y, r2, v;
+   __asm vec4_dot __retVal.z, r3, v;
+   __asm vec4_dot __retVal.w, r4, v;
 }
+
+// matmul
+vec3 __operator * (const vec3 v, const mat3 m)
+{
+   vec3 r1, r2, r3;
+   r1.x = m[0].x;
+   r1.y = m[1].x;
+   r1.z = m[2].x;
+   r2.x = m[0].y;
+   r2.y = m[1].y;
+   r2.z = m[2].y;
+   r3.x = m[0].z;
+   r3.y = m[1].z;
+   r3.z = m[2].z;
+   __asm vec3_dot __retVal.x, r1, v;
+   __asm vec3_dot __retVal.y, r2, v;
+   __asm vec3_dot __retVal.z, r3, v;
+}
+
+
+
+
+
+
+
+
+
 
 void __operator *= (inout vec4 v, const mat4 m)
 {

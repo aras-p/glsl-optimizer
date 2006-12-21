@@ -77,7 +77,7 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list);
 
 extern GLint
 _mesa_add_parameter(struct gl_program_parameter_list *paramList,
-                    const char *name, const GLfloat values[4], GLuint size,
+                    const char *name, const GLfloat *values, GLuint size,
                     enum register_file type);
 
 extern GLint

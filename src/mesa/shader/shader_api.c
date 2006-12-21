@@ -882,26 +882,34 @@ void
 _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
               const GLvoid *values, GLenum type)
 {
-   if (ctx->Shader.CurrentProgram) {
-      struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
-      if (location >= 0 && location < shProg->Uniforms->NumParameters) {
-         GLfloat *v = shProg->Uniforms->ParameterValues[location];
-         const GLfloat *fValues = (const GLfloat *) values; /* XXX */
-         GLint i;
-         if (type == GL_FLOAT_VEC4)
-            count *= 4;
-         else if (type == GL_FLOAT_VEC3)
-            count *= 3;
-         else
-            abort();
-         
-         for (i = 0; i < count; i++)
-            v[i] = fValues[i];
-         return;
-      }
-   }
-   else {
+   struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+
+   if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(program not linked)");
+      return;
+   }
+
+   if (location < 0 || location >= shProg->Uniforms->NumParameters) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glUniform(location)");
+      return;
+   }
+
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+
+   {
+      GLfloat *v = shProg->Uniforms->ParameterValues[location];
+      const GLfloat *fValues = (const GLfloat *) values; /* XXX */
+      GLint i;
+      if (type == GL_FLOAT_VEC4)
+         count *= 4;
+      else if (type == GL_FLOAT_VEC3)
+         count *= 3;
+      else
+         abort();
+
+      for (i = 0; i < count; i++)
+         v[i] = fValues[i];
+      return;
    }
 }
 
@@ -914,52 +922,45 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
                      GLenum matrixType, GLint location, GLsizei count,
                      GLboolean transpose, const GLfloat *values)
 {
-   const char *caller = "glUniformMatrix";
-   const GLint matElements = rows * cols;
-
+   struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+   if (!shProg || !shProg->LinkStatus) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+         "glUniformMatrix(program not linked)");
+      return;
+   }
+   if (location < 0 || location >= shProg->Uniforms->NumParameters) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix(location)");
+      return;
+   }
    if (values == NULL) {
-      _mesa_error(ctx, GL_INVALID_VALUE, caller);
+      _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix");
       return;
    }
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
+   /*
+    * Note: the _columns_ of a matrix are stored in program registers, not
+    * the rows.
+    */
+   /* XXXX need to test 3x3 and 2x2 matrices... */
    if (transpose) {
-      GLfloat *trans, *pt;
-      const GLfloat *pv;
-      GLint i, j, k;
-
-      trans = (GLfloat *) _mesa_malloc(count * matElements * sizeof(GLfloat));
-      if (!trans) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, caller);
-         return;
-      }
-
-      pt = trans;
-      pv = values;
-      for (i = 0; i < count; i++) {
-         /* transpose from pv matrix into pt matrix */
-         for (j = 0; j < cols; j++) {
-            for (k = 0; k < rows; k++) {
-               /* XXX verify this */
-               pt[j * rows + k] = pv[k * cols + j];
-            }
+      GLuint row, col;
+      for (col = 0; col < cols; col++) {
+         GLfloat *v = shProg->Uniforms->ParameterValues[location + col];
+         for (row = 0; row < rows; row++) {
+            v[row] = values[col * rows + row];
          }
-         pt += matElements;
-         pv += matElements;
       }
-
-#ifdef OLD
-      if (!(**pro).WriteUniform(pro, location, count, trans, matrixType))
-         _mesa_error(ctx, GL_INVALID_OPERATION, caller);
-#endif
-      _mesa_free(trans);
    }
    else {
-#ifdef OLD
-      if (!(**pro).WriteUniform(pro, location, count, values, matrixType))
-         _mesa_error(ctx, GL_INVALID_OPERATION, caller);
-#endif
+      GLuint row, col;
+      for (col = 0; col < cols; col++) {
+         GLfloat *v = shProg->Uniforms->ParameterValues[location + col];
+         for (row = 0; row < rows; row++) {
+            v[row] = values[row * cols + col];
+         }
+      }
    }
 }
 
