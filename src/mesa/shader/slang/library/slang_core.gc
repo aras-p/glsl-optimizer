@@ -705,6 +705,10 @@ vec4 __operator / (const vec4 v, const float b)
 
 //// Basic ivec2/int operators
 
+ivec2 __operator + (const int a, const ivec2 u) {
+    return ivec2 (a) + u;
+}
+
 ivec2 __operator + (const ivec2 v, const int b) {
     return v + ivec2 (b);
 }
@@ -1608,6 +1612,93 @@ mat4 __operator / (const mat4 m, const float b)
 }
 
 
+
+//// matrix / vector products
+
+vec2 __operator * (const mat2 m, const vec2 v)
+{
+   __retVal.x = dot(m[0], v);
+   __retVal.y = dot(m[1], v);
+}
+
+vec2 __operator * (const vec2 v, const mat2 m)
+{
+   vec2 r0, r1;
+   r0.x = m[0].x;
+   r0.y = m[1].x;
+   r1.x = m[0].y;
+   r1.y = m[1].y;
+   __retVal.x = dot(v, r0);
+   __retVal.y = dot(v, r1);
+}
+
+vec3 __operator * (const mat3 m, const vec3 v)
+{
+   __retVal.x = dot(m[0], v);
+   __retVal.y = dot(m[1], v);
+   __retVal.z = dot(m[2], v);
+}
+
+vec3 __operator * (const vec3 v, const mat3 m)
+{
+   vec3 r0, r1, r2;
+   r0.x = m[0].x;
+   r0.y = m[1].x;
+   r0.z = m[2].x;
+   r1.x = m[0].y;
+   r1.y = m[1].y;
+   r1.z = m[2].y;
+   r2.x = m[0].z;
+   r2.y = m[1].z;
+   r2.z = m[2].z;
+   __asm vec3_dot __retVal.x, v, r0;
+   __asm vec3_dot __retVal.y, v, r1;
+   __asm vec3_dot __retVal.z, v, r2;
+}
+
+vec4 __operator * (const mat4 m, const vec4 v)
+{
+   __retVal.x = dot(m[0], v);
+   __retVal.y = dot(m[1], v);
+   __retVal.z = dot(m[2], v);
+   __retVal.w = dot(m[3], v);
+}
+
+vec4 __operator * (const vec4 v, const mat4 m)
+{
+   vec4 r0, r1, r2, r3;
+   r0.x = m[0].x;
+   r0.y = m[1].x;
+   r0.z = m[2].x;
+   r0.w = m[3].x;
+   r1.x = m[0].y;
+   r1.y = m[1].y;
+   r1.z = m[2].y;
+   r1.w = m[3].y;
+   r2.x = m[0].z;
+   r2.y = m[1].z;
+   r2.z = m[2].z;
+   r2.w = m[3].z;
+   r3.x = m[0].w;
+   r3.y = m[1].w;
+   r3.z = m[2].w;
+   r3.w = m[3].w;
+   __asm vec4_dot __retVal.x, v, r0;
+   __asm vec4_dot __retVal.y, v, r1;
+   __asm vec4_dot __retVal.z, v, r2;
+   __asm vec4_dot __retVal.w, v, r3;
+}
+
+
+
+
+
+
+
+
+
+
+
 ////end
 
 
@@ -1622,14 +1713,6 @@ void __operator -= (inout mat2 m, const mat2 n) {
     m[0] -= n[0];
     m[1] -= n[1];
 }
-
-vec2 __operator * (const mat2 m, const vec2 v) {
-    return vec2 (
-        v.x * m[0].x + v.y * m[1].x,
-        v.x * m[0].y + v.y * m[1].y
-    );
-}
-
 
 
 
@@ -1684,22 +1767,6 @@ void __operator -= (inout mat4 m, const mat4 n) {
 }
 
 
-
-vec4 __operator * (const mat4 mx, const vec4 v)
-{
-   __retVal.x = dot(v, mx[0]);
-   __retVal.y = dot(v, mx[1]);
-   __retVal.z = dot(v, mx[2]);
-   __retVal.w = dot(v, mx[3]);
-}
-
-//matmul
-vec3 __operator * (const mat3 m, const vec3 v)
-{
-   __retVal.x = dot(v, m[0]);
-   __retVal.y = dot(v, m[1]);
-   __retVal.z = dot(v, m[2]);
-}
 
 
 
@@ -1787,12 +1854,6 @@ void __operator /= (inout mat4 m, const float a) {
     m[3] /= a;
 }
 
-vec2 __operator * (const vec2 v, const mat2 m) {
-    return vec2 (
-        v.x * m[0].x + v.y * m[0].y,
-        v.x * m[1].x + v.y * m[1].y
-    );
-}
 
 void __operator *= (inout vec2 v, const mat2 m) {
     v = v * m;
@@ -1801,53 +1862,6 @@ void __operator *= (inout vec2 v, const mat2 m) {
 void __operator *= (inout vec3 v, const mat3 m) {
 //    v = v * m;
 }
-
-
-
-vec4 __operator * (const vec4 v, const mat4 m)
-{
-   vec4 r1, r2, r3, r4;
-   r1.x = m[0].x;
-   r1.y = m[1].x;
-   r1.z = m[2].x;
-   r1.w = m[3].x;
-   r2.x = m[0].y;
-   r2.y = m[1].y;
-   r2.z = m[2].y;
-   r2.w = m[3].y;
-   r3.x = m[0].z;
-   r3.y = m[1].z;
-   r3.z = m[2].z;
-   r3.w = m[3].z;
-   r4.x = m[0].w;
-   r4.y = m[1].w;
-   r4.z = m[2].w;
-   r4.w = m[3].w;
-   __asm vec4_dot __retVal.x, r1, v;
-   __asm vec4_dot __retVal.y, r2, v;
-   __asm vec4_dot __retVal.z, r3, v;
-   __asm vec4_dot __retVal.w, r4, v;
-}
-
-// matmul
-vec3 __operator * (const vec3 v, const mat3 m)
-{
-   vec3 r1, r2, r3;
-   r1.x = m[0].x;
-   r1.y = m[1].x;
-   r1.z = m[2].x;
-   r2.x = m[0].y;
-   r2.y = m[1].y;
-   r2.z = m[2].y;
-   r3.x = m[0].z;
-   r3.y = m[1].z;
-   r3.z = m[2].z;
-   __asm vec3_dot __retVal.x, r1, v;
-   __asm vec3_dot __retVal.y, r2, v;
-   __asm vec3_dot __retVal.z, r3, v;
-}
-
-
 
 
 
@@ -1873,12 +1887,6 @@ void __operator *= (inout vec4 v, const mat4 m)
 
 
 //next
-
-
-
-ivec2 __operator + (const int a, const ivec2 u) {
-    return ivec2 (a) + u;
-}
 
 
 
