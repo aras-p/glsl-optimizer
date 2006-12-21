@@ -859,6 +859,7 @@ static struct reg cvp_load_reg( struct compilation *cp,
 
    case PROGRAM_STATE_VAR:
    case PROGRAM_CONSTANT:
+   case PROGRAM_UNIFORM:
       reg = cvp_make_reg(FILE_STATE_PARAM, index);
       if (rel) 
 	 return cvp_emit_rel(cp, reg, tmpreg);
@@ -870,7 +871,7 @@ static struct reg cvp_load_reg( struct compilation *cp,
    case PROGRAM_WRITE_ONLY:
    case PROGRAM_ADDRESS:
    default:
-      _mesa_problem(NULL, "Invalid register file %d in cvp_load_reg()");
+      _mesa_problem(NULL, "Invalid register file %d in cvp_load_reg()", file);
       assert(0);
       return tmpreg;		/* can't happen */
    }
