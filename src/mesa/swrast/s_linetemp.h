@@ -37,6 +37,7 @@
  *    INTERP_INDEX    - if defined, interpolate color index values
  *    INTERP_TEX      - if defined, interpolate unit 0 texcoords
  *    INTERP_MULTITEX - if defined, interpolate multi-texcoords
+ *    INTERP_VARYING  - if defined, interpolate GLSL varyings
  *
  * When one can directly address pixels in the color buffer the following
  * macros can be defined and used to directly compute pixel addresses during
@@ -330,6 +331,34 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
             span.texStepY[u][2] = 0.0F;
             span.texStepY[u][3] = 0.0F;
 	 }
+      }
+   }
+#endif
+#ifdef INTERP_VARYING
+   interpFlags |= SPAN_VARYING;
+   { /* XXX review this */
+      const GLfloat invLen = 1.0F / numPixels;
+      GLuint v;
+      for (v = 0; v < MAX_VARYING; v++) {
+         const GLfloat invw0 = vert0->win[3];
+         const GLfloat invw1 = vert1->win[3];
+         GLfloat ds, dt, dr, dq;
+         span.var[v][0] = invw0 * vert0->varying[v][0];
+         span.var[v][1] = invw0 * vert0->varying[v][1];
+         span.var[v][2] = invw0 * vert0->varying[v][2];
+         span.var[v][3] = invw0 * vert0->varying[v][3];
+         ds = (invw1 * vert1->varying[v][0]) - span.var[v][0];
+         dt = (invw1 * vert1->varying[v][1]) - span.var[v][1];
+         dr = (invw1 * vert1->varying[v][2]) - span.var[v][2];
+         dq = (invw1 * vert1->varying[v][3]) - span.var[v][3];
+         span.varStepX[v][0] = ds * invLen;
+         span.varStepX[v][1] = dt * invLen;
+         span.varStepX[v][2] = dr * invLen;
+         span.varStepX[v][3] = dq * invLen;
+         span.varStepY[v][0] = 0.0F;
+         span.varStepY[v][1] = 0.0F;
+         span.varStepY[v][2] = 0.0F;
+         span.varStepY[v][3] = 0.0F;
       }
    }
 #endif
