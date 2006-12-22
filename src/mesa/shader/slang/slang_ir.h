@@ -24,7 +24,7 @@
 
 /**
  * \file slang_ir.h
- * Mesa GLSL Itermediate Representation tree types and constants.
+ * Mesa GLSL Intermediate Representation tree types and constants.
  * \author Brian Paul
  */
 
@@ -69,7 +69,7 @@ typedef enum
    IR_EXP2,    /* 2^x */
    IR_LOG2,    /* log base 2 */
    IR_RSQ,     /* 1/sqrt() */
-   IR_RCP,     /* recipricol */
+   IR_RCP,     /* reciprocol */
    IR_FLOOR,
    IR_FRAC,
    IR_ABS,     /* absolute value */
