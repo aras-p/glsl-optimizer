@@ -89,6 +89,7 @@ nouveau_renderbuffer_pixelformat(nouveau_renderbuffer *nrb,
 	 nrb->mesa.AlphaBits	= 8;
 	 nrb->cpp		= 4;
 	 break;
+      case GL_RGB:
       case GL_RGB5:
 	 nrb->mesa._BaseFormat	= GL_RGB;
 	 nrb->mesa._ActualFormat= GL_RGB5;

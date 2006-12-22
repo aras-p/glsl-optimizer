@@ -790,7 +790,10 @@ static GLboolean nv30BindBuffers(nouveauContextPtr nmesa, int num_color,
    BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VIEWPORT_COLOR_BUFFER_DIM0, 5);
    OUT_RING        (((w+x)<<16)|x);
    OUT_RING        (((h+y)<<16)|y);
-   OUT_RING        (0x148);
+   if (color[0]->mesa._ActualFormat == GL_RGBA8)
+      OUT_RING        (0x148);
+   else
+      OUT_RING        (0x143);
    OUT_RING        (color[0]->pitch);
    OUT_RING        (color[0]->offset);
 

@@ -319,7 +319,10 @@ static void nouveauDoSwapBuffers(nouveauContextPtr nmesa,
 	if (nbox) {
 		BEGIN_RING_SIZE(NvSubCtxSurf2D,
 				NV10_CONTEXT_SURFACES_2D_FORMAT, 4);
-		OUT_RING       (6); /* X8R8G8B8 */
+		if (src->mesa._ActualFormat == GL_RGBA8)
+			OUT_RING       (6); /* X8R8G8B8 */
+		else
+			OUT_RING       (4); /* R5G6B5 */
 		OUT_RING       ((dst->pitch << 16) | src->pitch);
 		OUT_RING       (src->offset);
 		OUT_RING       (dst->offset);

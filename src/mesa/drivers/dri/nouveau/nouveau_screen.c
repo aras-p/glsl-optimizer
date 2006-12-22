@@ -129,6 +129,7 @@ nouveauCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 	struct gl_framebuffer *fb;
 	const GLboolean swAccum = mesaVis->accumRedBits > 0;
 	const GLboolean swStencil = mesaVis->stencilBits > 0 && mesaVis->depthBits != 24;
+	GLenum color_format = screen->fbFormat == 4 ? GL_RGBA8 : GL_RGB5;
 
 	if (isPixmap)
 		return GL_FALSE; /* not implemented */
@@ -138,10 +139,10 @@ nouveauCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 		return GL_FALSE;
 
 	/* Front buffer */
-	nrb = nouveau_renderbuffer_new(GL_RGBA,
+	nrb = nouveau_renderbuffer_new(color_format,
 				       driScrnPriv->pFB + screen->frontOffset,
 				       screen->frontOffset,
-				       screen->frontPitch * 4,
+				       screen->frontPitch * screen->fbFormat,
 				       driDrawPriv);
 	nouveauSpanSetFunctions(nrb, mesaVis);
 	_mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &nrb->mesa);
@@ -149,7 +150,7 @@ nouveauCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 	if (0 /* unified buffers if we choose to support them.. */) {
 	} else {
 		if (mesaVis->doubleBufferMode) {
-			nrb = nouveau_renderbuffer_new(GL_RGBA, NULL,
+			nrb = nouveau_renderbuffer_new(color_format, NULL,
 						       0, 0,
 						       driDrawPriv);
 			nouveauSpanSetFunctions(nrb, mesaVis);
