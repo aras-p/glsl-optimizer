@@ -1691,68 +1691,65 @@ vec4 __operator * (const vec4 v, const mat4 m)
 
 
 
+//// mat2 assignment operators
 
-
-
-
-
-
-
-
-////end
-
-
-
-
-void __operator += (inout mat2 m, const mat2 n) {
+void __operator += (inout mat2 m, const mat2 n)
+{
     m[0] += n[0];
     m[1] += n[1];
 }
 
-void __operator -= (inout mat2 m, const mat2 n) {
+void __operator -= (inout mat2 m, const mat2 n)
+{
     m[0] -= n[0];
     m[1] -= n[1];
 }
 
-
-
-void __operator *= (inout mat2 m, const mat2 n) {
+void __operator *= (inout mat2 m, const mat2 n)
+{
     m = m * n;
 }
 
-void __operator /= (inout mat2 m, const mat2 n) {
+void __operator /= (inout mat2 m, const mat2 n)
+{
     m[0] /= n[0];
     m[1] /= n[1];
 }
 
-void __operator += (inout mat3 m, const mat3 n) {
+
+//// mat3 assignment operators
+
+void __operator += (inout mat3 m, const mat3 n)
+{
     m[0] += n[0];
     m[1] += n[1];
     m[2] += n[2];
 }
 
-void __operator -= (inout mat3 m, const mat3 n) {
+void __operator -= (inout mat3 m, const mat3 n)
+{
     m[0] -= n[0];
     m[1] -= n[1];
     m[2] -= n[2];
 }
 
-
-
-
-
-
-void __operator *= (inout mat3 m, const mat3 n) {
+void __operator *= (inout mat3 m, const mat3 n)
+{
     m = m * n;
 }
 
-void __operator /= (inout mat3 m, const mat3 n) {
+void __operator /= (inout mat3 m, const mat3 n)
+{
     m[0] /= n[0];
     m[1] /= n[1];
     m[2] /= n[2];
 }
 
-void __operator += (inout mat4 m, const mat4 n) {
+
+// mat4 assignment operators
+
+void __operator += (inout mat4 m, const mat4 n)
+{
     m[0] += n[0];
     m[1] += n[1];
     m[2] += n[2];
@@ -1766,21 +1763,21 @@ void __operator -= (inout mat4 m, const mat4 n) {
     m[3] -= n[3];
 }
 
-
-
-
-
-void __operator *= (inout mat4 m, const mat4 n) {
+void __operator *= (inout mat4 m, const mat4 n)
+{
     m = m * n;
 }
 
-void __operator /= (inout mat4 m, const mat4 n) {
+void __operator /= (inout mat4 m, const mat4 n)
+{
     m[0] /= n[0];
     m[1] /= n[1];
     m[2] /= n[2];
     m[3] /= n[3];
 }
 
+
+//// mat2/float assignment operators
 
 void __operator += (inout mat2 m, const float a) {
     m[0] += a;
@@ -1801,6 +1798,9 @@ void __operator /= (inout mat2 m, const float a) {
     m[0] /= a;
     m[1] /= a;
 }
+
+
+//// mat3/float assignment operators
 
 void __operator += (inout mat3 m, const float a) {
     m[0] += a;
@@ -1825,6 +1825,9 @@ void __operator /= (inout mat3 m, const float a) {
     m[1] /= a;
     m[2] /= a;
 }
+
+
+//// mat4/float assignment operators
 
 void __operator += (inout mat4 m, const float a) {
     m[0] += a;
@@ -1855,106 +1858,103 @@ void __operator /= (inout mat4 m, const float a) {
 }
 
 
-void __operator *= (inout vec2 v, const mat2 m) {
+
+//// vec/mat assignment operators
+
+void __operator *= (inout vec2 v, const mat2 m)
+{
     v = v * m;
 }
 
-void __operator *= (inout vec3 v, const mat3 m) {
-//    v = v * m;
+void __operator *= (inout vec3 v, const mat3 m)
+{
+    v = v * m;
 }
-
-
-
-
-
-
-
 
 void __operator *= (inout vec4 v, const mat4 m)
 {
-// xxx improve codegen for this case
     v = v * m;
 }
 
 
 
+//// pre-decrement operators
 
-
-
-
-
-
-
-
-//next
-
-
-
-
-
-void __operator -- (inout float a) {
-    a -= 1.0;
-}
-
-void __operator -- (inout int a) {
+void __operator -- (inout int a)
+{
     a -= 1;
 }
 
-void __operator -- (inout vec2 v) {
+void __operator -- (inout ivec2 v)
+{
     --v.x;
     --v.y;
 }
 
-void __operator -- (inout vec3 v) {
-    --v.x;
-    --v.y;
-    --v.z;
-}
-
-void __operator -- (inout vec4 v) {
-    --v.x;
-    --v.y;
-    --v.z;
-    --v.w;
-}
-
-void __operator -- (inout ivec2 v) {
-    --v.x;
-    --v.y;
-}
-
-void __operator -- (inout ivec3 v) {
+void __operator -- (inout ivec3 v)
+{
     --v.x;
     --v.y;
     --v.z;
 }
 
-void __operator -- (inout ivec4 v) {
+void __operator -- (inout ivec4 v)
+{
     --v.x;
     --v.y;
     --v.z;
     --v.w;
 }
 
-void __operator -- (inout mat2 m) {
+void __operator -- (inout float a)
+{
+    a -= 1.0;
+}
+
+void __operator -- (inout vec2 v)
+{
+   vec2 one = vec1(1.0, 1.0);
+   v = v - one;
+}
+
+void __operator -- (inout vec3 v)
+{
+   vec3 one = vec1(1.0, 1.0, 1.0);
+   v = v - one;
+}
+
+void __operator -- (inout vec4 v)
+{
+   vec4 one = vec1(1.0, 1.0, 1.0, 1.0);
+   v = v - one;
+}
+
+void __operator -- (inout mat2 m)
+{
     --m[0];
     --m[1];
 }
 
-void __operator -- (inout mat3 m) {
+void __operator -- (inout mat3 m)
+{
     --m[0];
     --m[1];
     --m[2];
 }
 
-void __operator -- (inout mat4 m) {
+void __operator -- (inout mat4 m)
+{
     --m[0];
     --m[1];
     --m[2];
     --m[3];
 }
 
-void __operator ++ (inout float a) {
+
+//// pre-increment operators
+
+void __operator ++ (inout float a)
+{
     a += 1.0;
 }
 
@@ -2016,9 +2016,12 @@ void __operator ++ (inout mat4 m) {
     ++m[3];
 }
 
+
+
+
 //
-// NOTE: postfix increment and decrement operators take additional dummy int parameter to
-//       distinguish their prototypes from prefix ones.
+// NOTE: post-increment and decrement operators take an additional
+// dummy int parameter to distinguish their prototypes from prefix ones.
 //
 
 float __operator -- (inout float a, const int) {
@@ -2118,6 +2121,10 @@ mat4 __operator ++ (inout mat4 m, const int) {
 }
 
 
+
+//// inequality operators
+
+
 // XXX are the inequality operators for floats/ints really needed????
 bool __operator < (const float a, const float b)
 {
@@ -2165,6 +2172,8 @@ bool __operator ^^ (const bool a, const bool b) {
     return a != b;
 }
 
+
+
 //
 // These operators are handled internally by the compiler:
 //
@@ -2179,6 +2188,8 @@ bool __operator ^^ (const bool a, const bool b) {
 bool __operator ! (const bool a) {
     return a == false;
 }
+
+
 
 //
 // MESA-specific extension functions.
