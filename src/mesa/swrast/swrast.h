@@ -73,7 +73,7 @@ typedef struct {
    GLfloat fog;
    GLfloat index;
    GLfloat pointSize;
-   GLfloat attribute[MAX_VERTEX_ATTRIBS][4];
+   GLfloat varying[MAX_VERTEX_ATTRIBS][4];
 } SWvertex;
 
 

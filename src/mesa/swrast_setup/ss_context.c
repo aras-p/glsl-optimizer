@@ -156,7 +156,7 @@ _swsetup_RenderStart( GLcontext *ctx )
          for (i = 0; i < ctx->Const.MaxVarying; i++) {
             if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_GENERIC(i) )) {
                EMIT_ATTR( _TNL_ATTRIB_GENERIC(i), VARYING_EMIT_STYLE,
-                          attribute[i] );
+                          varying[i] );
             }
          }
       }
