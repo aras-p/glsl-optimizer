@@ -78,7 +78,7 @@ static slang_ir_info IrInfo[] = {
    { IR_FLOOR, "IR_FLOOR", OPCODE_FLR, 4, 1 },
    { IR_FRAC, "IR_FRAC", OPCODE_FRC, 4, 1 },
    { IR_ABS, "IR_ABS", OPCODE_ABS, 4, 1 },
-   { IR_NEG, "IR_NEG", OPCODE_NOP, 4, 1 },  /* XXX fix!!!! */
+   { IR_NEG, "IR_NEG", 0/*spec case*/, 4, 1 },
    { IR_SIN, "IR_SIN", OPCODE_SIN, 1, 1 },
    { IR_COS, "IR_COS", OPCODE_COS, 1, 1 },
    /* other */
@@ -921,7 +921,6 @@ emit_unop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    emit(gc, n->Children[0], prog);
 
    inst = new_instruction(prog, info->InstOpcode);
-   /*slang_resolve_storage(gc, n, prog);*/
 
    if (!n->Store)
       slang_alloc_temp_storage(gc, n, info->ResultSize);
@@ -940,34 +939,24 @@ emit_unop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 static struct prog_instruction *
 emit_negation(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 {
-#if 0
+   /* Implement as MOV dst, -src; */
+   /* XXX we could look at the previous instruction and in some circumstances
+    * modify it to accomplish the negation.
+    */
    struct prog_instruction *inst;
-   const slang_ir_info *info = slang_find_ir_info(n->Opcode);
-   assert(info);
-
-   assert(info->NumParams == 1);
 
    emit(gc, n->Children[0], prog);
 
-   inst = new_instruction(prog, info->InstOpcode);
-   /*slang_resolve_storage(gc, n, prog);*/
-
    if (!n->Store)
-      slang_alloc_temp_storage(gc, n, info->ResultSize);
+      slang_alloc_temp_storage(gc, n, n->Children[0]->Store->Size);
 
+   inst = new_instruction(prog, OPCODE_MOV);
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
-
    storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
                       n->Children[0]->Swizzle);
-
+   inst->SrcReg[0].NegateBase = NEGATE_XYZW;
    inst->Comment = n->Comment;
-
    return inst;
-#else
-   /* XXX this is something we can optimize for, with a bit of work.*/
-   abort();
-   return NULL;
-#endif
 }
 
 

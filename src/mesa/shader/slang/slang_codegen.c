@@ -84,7 +84,7 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_floor", IR_FLOOR, 1, 1 },
    { "vec4_frac", IR_FRAC, 1, 1 },
    { "vec4_abs", IR_ABS, 1, 1 },
-   { "vec4_neg", IR_NEG, 1, 1 },
+   { "vec4_negate", IR_NEG, 1, 1 },
    /* float binary op */
    { "float_add", IR_ADD, 1, 2 },
    { "float_subtract", IR_SUB, 1, 2 },
@@ -1426,7 +1426,16 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 	 n = _slang_gen_function_call_name(A, "/", oper, NULL);
 	 return n;
       }
-
+   case slang_oper_minus:
+      {
+         slang_ir_node *n;
+         assert(oper->num_children == 1);
+	 n = _slang_gen_function_call_name(A, "-", oper, NULL);
+	 return n;
+      }
+   case slang_oper_plus:
+      /* +expr   --> do nothing */
+      return _slang_gen_operation(A, &oper->children[0]);
    case slang_oper_variable_decl:
       return _slang_gen_declaration(A, oper);
    case slang_oper_assign:
