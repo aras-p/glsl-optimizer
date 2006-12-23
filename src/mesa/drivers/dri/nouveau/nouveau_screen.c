@@ -232,7 +232,6 @@ nouveauFillInModes( unsigned pixel_bits, unsigned depth_bits,
 	unsigned num_modes;
 	unsigned depth_buffer_factor;
 	unsigned back_buffer_factor;
-	unsigned fb_format_factor;
 	int i;
 
 	static const struct {

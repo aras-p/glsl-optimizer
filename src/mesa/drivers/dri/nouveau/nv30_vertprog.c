@@ -6,9 +6,6 @@
 #include "nouveau_shader.h"
 #include "nv30_shader.h"
 
-extern nvsSwzComp NV20VP_TX_SWIZZLE[4];
-extern void NV20VPTXSwizzle(int hwswz, nvsSwzComp *swz);
-
 /*****************************************************************************
  * Support routines
  */

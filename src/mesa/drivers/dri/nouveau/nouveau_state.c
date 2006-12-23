@@ -59,11 +59,9 @@ static void nouveauCalcViewport(GLcontext *ctx)
     /* Calculate the Viewport Matrix */
     
     nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-    nouveau_renderbuffer *nrb;
     const GLfloat *v = ctx->Viewport._WindowMap.m;
     GLfloat *m = nmesa->viewport.m;
     GLfloat xoffset = nmesa->drawX, yoffset = nmesa->drawY;
-    GLint h = 0;
   
     nmesa->depth_scale = 1.0 / ctx->DrawBuffer->_DepthMaxF;
 

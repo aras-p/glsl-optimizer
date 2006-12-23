@@ -133,12 +133,14 @@ GLboolean nouveauFifoInit(nouveauContextPtr nmesa)
 		return GL_FALSE;
 	}
 
-	if (drmMap(nmesa->driFd, fifo_init.cmdbuf, fifo_init.cmdbuf_size, &nmesa->fifo.buffer)) {
-		FATAL("Unable to map the fifo\n",ret);
+	ret = drmMap(nmesa->driFd, fifo_init.cmdbuf, fifo_init.cmdbuf_size, &nmesa->fifo.buffer);
+	if (ret) {
+		FATAL("Unable to map the fifo (returned %d)\n",ret);
 		return GL_FALSE;
 	}
-	if (drmMap(nmesa->driFd, fifo_init.ctrl, fifo_init.ctrl_size, &nmesa->fifo.mmio)) {
-		FATAL("Unable to map the control regs\n",ret);
+	ret = drmMap(nmesa->driFd, fifo_init.ctrl, fifo_init.ctrl_size, &nmesa->fifo.mmio);
+	if (ret) {
+		FATAL("Unable to map the control regs (returned %d)\n",ret);
 		return GL_FALSE;
 	}
 

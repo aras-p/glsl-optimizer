@@ -24,7 +24,6 @@ static void
 NV30FPUploadToHW(GLcontext *ctx, nouveauShader *nvs)
 {
    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-   drm_nouveau_mem_alloc_t mem;
 
    if (!nvs->program_buffer) {
       nouveau_mem *fpbuf;

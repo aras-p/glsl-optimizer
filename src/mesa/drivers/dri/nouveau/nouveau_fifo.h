@@ -145,6 +145,7 @@ int i; for(i=0;i<sz;i++) OUT_RING_CACHE(*(p+i)); 					\
 }while(0)
 
 extern void nouveauWaitForIdle(nouveauContextPtr nmesa);
+extern void nouveauWaitForIdleLocked(nouveauContextPtr nmesa);
 extern GLboolean nouveauFifoInit(nouveauContextPtr nmesa);
 
 #endif /* __NOUVEAU_FIFO_H__ */

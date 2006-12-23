@@ -129,8 +129,7 @@ static void nouveauFinish( GLcontext *ctx )
 }
 
 /* glClear */
-static void nouveauClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
-		GLint cx, GLint cy, GLint cw, GLint ch )
+static void nouveauClear( GLcontext *ctx, GLbitfield mask )
 {
 	// XXX we really should do something here...
 }

@@ -573,7 +573,6 @@ void (*RenderMode)(GLcontext *ctx, GLenum mode );
 static void nv30Scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
         nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	nouveau_renderbuffer *nrb;
 
 	/* There's no scissor enable bit, so adjust the scissor to cover the
 	 * maximum draw buffer bounds
@@ -677,7 +676,6 @@ static void nv30TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
 static void nv30WindowMoved(nouveauContextPtr nmesa)
 {
 	GLcontext *ctx = nmesa->glCtx;
-	nouveau_renderbuffer *nrb;
 	GLfloat *v = nmesa->viewport.m;
 	GLuint w = ctx->Viewport.Width;
 	GLuint h = ctx->Viewport.Height;
@@ -759,11 +757,10 @@ static GLboolean nv30BindBuffers(nouveauContextPtr nmesa, int num_color,
       				 nouveau_renderbuffer **color,
 				 nouveau_renderbuffer *depth)
 {
-   nouveau_renderbuffer *nrb;
    GLuint x, y, w, h;
 
-   w = nrb->mesa.Width;
-   h = nrb->mesa.Height;
+   w = color[0]->mesa.Width;
+   h = color[0]->mesa.Height;
    x = nmesa->drawX;
    y = nmesa->drawY;
 

@@ -241,6 +241,9 @@ extern unsigned int NVFP_TX_BOP_COUNT;
 extern struct _op_xlat NVFP_TX_AOP[];
 extern struct _op_xlat NVFP_TX_BOP[];
 
+extern void NV20VPTXSwizzle(int hwswz, nvsSwzComp *swz);
+extern nvsSwzComp NV20VP_TX_SWIZZLE[4];
+
 #define SCAP_SRC_ABS	(1<<0)
 
 struct _nvsFunc {
