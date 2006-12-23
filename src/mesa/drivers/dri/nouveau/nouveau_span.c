@@ -37,12 +37,21 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define HAVE_HW_STENCIL_SPANS	0
 #define HAVE_HW_STENCIL_PIXELS	0
 
+#define HW_CLIPLOOP()							\
+   do {									\
+      int _nc = nmesa->numClipRects;					\
+      while ( _nc-- ) {							\
+	 int minx = nmesa->pClipRects[_nc].x1 - nmesa->drawX;		\
+	 int miny = nmesa->pClipRects[_nc].y1 - nmesa->drawY;		\
+	 int maxx = nmesa->pClipRects[_nc].x2 - nmesa->drawX;		\
+	 int maxy = nmesa->pClipRects[_nc].y2 - nmesa->drawY;
+
 #define LOCAL_VARS							\
    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);			\
-   __DRIscreenPrivate *sPriv = nmesa->driScreen;			\
-   __DRIdrawablePrivate *dPriv = nmesa->driDrawable;			\
-   driRenderbuffer *drb = (driRenderbuffer *) rb;			\
-   GLuint height = dPriv->h;						\
+   nouveau_renderbuffer *nrb = (nouveau_renderbuffer *)rb;		\
+   GLuint height = nrb->mesa.Height;					\
+   GLubyte *map = (GLubyte *)(nrb->map ? nrb->map : nrb->mem->map) +    \
+	 (nmesa->drawY * nrb->pitch) + (nmesa->drawX * nrb->cpp);       \
    GLuint p;								\
    (void) p;
 
@@ -64,8 +73,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define TAG(x)    nouveau##x##_RGB565
 #define TAG2(x,y) nouveau##x##_RGB565##y
-#define GET_PTR(X,Y) (sPriv->pFB + drb->flippedOffset		\
-     + ((dPriv->y + (Y)) * drb->flippedPitch + (dPriv->x + (X))) * drb->cpp)
+#define GET_PTR(X,Y) (map + (Y)*nrb->pitch + (X)*nrb->cpp)
 #include "spantmp2.h"
 
 
@@ -75,8 +83,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define TAG(x)    nouveau##x##_ARGB8888
 #define TAG2(x,y) nouveau##x##_ARGB8888##y
-#define GET_PTR(X,Y) (sPriv->pFB + drb->flippedOffset		\
-     + ((dPriv->y + (Y)) * drb->flippedPitch + (dPriv->x + (X))) * drb->cpp)
+#define GET_PTR(X,Y) (map + (Y)*nrb->pitch + (X)*nrb->cpp)
 #include "spantmp2.h"
 
 static void

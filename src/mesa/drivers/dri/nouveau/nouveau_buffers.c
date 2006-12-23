@@ -288,6 +288,12 @@ nouveau_build_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
    return GL_TRUE;
 }
 
+static void
+nouveauDrawBuffer(GLcontext *ctx, GLenum buffer)
+{
+   nouveau_build_framebuffer(ctx, ctx->DrawBuffer);
+}
+
 static struct gl_framebuffer *
 nouveauNewFramebuffer(GLcontext *ctx, GLuint name)
 {
@@ -341,6 +347,8 @@ nouveauFinishRenderTexture(GLcontext *ctx,
 void
 nouveauInitBufferFuncs(struct dd_function_table *func)
 {
+   func->DrawBuffer		 = nouveauDrawBuffer;
+
    func->NewFramebuffer		 = nouveauNewFramebuffer;
    func->NewRenderbuffer	 = nouveauNewRenderbuffer;
    func->BindFramebuffer	 = nouveauBindFramebuffer;

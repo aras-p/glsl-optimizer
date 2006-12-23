@@ -77,6 +77,12 @@ void nouveauWaitForIdleLocked(nouveauContextPtr nmesa)
 	FIRE_RING();
 	while(RING_AHEAD()>0);
 
+	/* We can't wait on PGRAPH going idle..
+	 *  1) We don't have the regs mapped
+	 *  2) PGRAPH may not go idle with multiple channels active
+	 * Look into replacing this with a NOTIFY/NOP + wait notifier sequence.
+	 */
+#if 0
 	for(i=0;i<1000000;i++) /* 1 second */
 	{
 		switch(nmesa->screen->card->type)
@@ -100,6 +106,7 @@ void nouveauWaitForIdleLocked(nouveauContextPtr nmesa)
 			return;
 		DO_USLEEP(1);
 	}
+#endif
 }
 
 void nouveauWaitForIdle(nouveauContextPtr nmesa)
