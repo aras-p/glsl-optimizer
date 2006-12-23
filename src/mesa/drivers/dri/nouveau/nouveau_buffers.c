@@ -214,10 +214,46 @@ nouveau_renderbuffer_new(GLenum internalFormat, GLvoid *map,
    return nrb;
 }
 
+static void
+nouveau_cliprects_drawable_set(nouveauContextPtr nmesa,
+      			       nouveau_renderbuffer *nrb)
+{
+   __DRIdrawablePrivate *dPriv = nrb->dPriv;
+
+   nmesa->numClipRects	= dPriv->numClipRects;
+   nmesa->pClipRects	= dPriv->pClipRects;
+   nmesa->drawX		= dPriv->x;
+   nmesa->drawY		= dPriv->y;
+}
+
+static void
+nouveau_cliprects_renderbuffer_set(nouveauContextPtr nmesa,
+      				   nouveau_renderbuffer *nrb)
+{
+   nmesa->numClipRects	= 1;
+   nmesa->pClipRects	= &nmesa->osClipRect;
+   nmesa->osClipRect.x1	= 0;
+   nmesa->osClipRect.y1	= 0;
+   nmesa->osClipRect.x2	= nrb->mesa.Width;
+   nmesa->osClipRect.y2	= nrb->mesa.Height;
+   nmesa->drawX		= 0;
+   nmesa->drawY		= 0;
+}
+
 void
 nouveau_window_moved(GLcontext *ctx)
 {
    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+   nouveau_renderbuffer *nrb;
+
+   nrb = (nouveau_renderbuffer *)ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+   if (!nrb)
+      return;
+
+   if (!nrb->dPriv)
+      nouveau_cliprects_renderbuffer_set(nmesa, nrb);
+   else
+      nouveau_cliprects_drawable_set(nmesa, nrb);
 
    /* Viewport depends on window size/position, nouveauCalcViewport
     * will take care of calling the hw-specific WindowMoved
@@ -250,26 +286,6 @@ nouveau_build_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
    nouveau_window_moved(ctx);
 
    return GL_TRUE;
-}
-
-nouveau_renderbuffer *
-nouveau_current_draw_buffer(GLcontext *ctx)
-{
-   struct gl_framebuffer *fb = ctx->DrawBuffer;
-   nouveau_renderbuffer *nrb;
-
-   if (!fb)
-      return NULL;
-
-   if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT)
-      nrb = (nouveau_renderbuffer *)
-	 fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-   else if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT)
-      nrb = (nouveau_renderbuffer *)
-	 fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-   else
-      nrb = NULL;
-   return nrb;
 }
 
 static struct gl_framebuffer *

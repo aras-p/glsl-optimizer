@@ -62,21 +62,10 @@ static void nouveauCalcViewport(GLcontext *ctx)
     nouveau_renderbuffer *nrb;
     const GLfloat *v = ctx->Viewport._WindowMap.m;
     GLfloat *m = nmesa->viewport.m;
-    GLfloat xoffset, yoffset;
+    GLfloat xoffset = nmesa->drawX, yoffset = nmesa->drawY;
     GLint h = 0;
   
-    nrb = nouveau_current_draw_buffer(ctx);
     nmesa->depth_scale = 1.0 / ctx->DrawBuffer->_DepthMaxF;
-
-    if (nrb && nrb->dPriv) {
-       /* Window */
-       xoffset = nrb->dPriv->x;
-       yoffset = nrb->dPriv->y;
-    } else {
-       /* Offscreen or back buffer */
-       xoffset = 0.0;
-       yoffset = 0.0;
-    }
 
     m[MAT_SX] =   v[MAT_SX];
     m[MAT_TX] =   v[MAT_TX] + xoffset + SUBPIXEL_X;

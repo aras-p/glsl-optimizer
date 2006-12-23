@@ -575,19 +575,15 @@ static void nv30Scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
         nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	nouveau_renderbuffer *nrb;
 
-	/* Adjust offsets if drawing to a window */
-	nrb = nouveau_current_draw_buffer(ctx);
-	if (nrb && nrb->dPriv) {
-	   x += nrb->dPriv->x;
-	   y += nrb->dPriv->y;
-	}
-
 	/* There's no scissor enable bit, so adjust the scissor to cover the
 	 * maximum draw buffer bounds
 	 */
 	if (!ctx->Scissor.Enabled) {
 	   x = y = 0;
 	   w = h = 4095;
+	} else {
+	   x += nmesa->drawX;
+	   y += nmesa->drawY;
 	}
 
         BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SCISSOR_WIDTH_XPOS, 2);
@@ -685,15 +681,8 @@ static void nv30WindowMoved(nouveauContextPtr nmesa)
 	GLfloat *v = nmesa->viewport.m;
 	GLuint w = ctx->Viewport.Width;
 	GLuint h = ctx->Viewport.Height;
-	GLuint x = ctx->Viewport.X;
-	GLuint y = ctx->Viewport.Y;
-
-	/* Adjust offsets if drawing to a window */
-	nrb = nouveau_current_draw_buffer(ctx);
-	if (nrb && nrb->dPriv) {
-	   x += nrb->dPriv->x;
-	   y += nrb->dPriv->y;
-	}
+	GLuint x = ctx->Viewport.X + nmesa->drawX;
+	GLuint y = ctx->Viewport.Y + nmesa->drawY;
 
         BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VIEWPORT_DIMS_0, 2);
         OUT_RING_CACHE((w << 16) | x);
@@ -773,17 +762,10 @@ static GLboolean nv30BindBuffers(nouveauContextPtr nmesa, int num_color,
    nouveau_renderbuffer *nrb;
    GLuint x, y, w, h;
 
-   /* Adjust offsets if drawing to a window */
-   nrb = nouveau_current_draw_buffer(nmesa->glCtx);
    w = nrb->mesa.Width;
    h = nrb->mesa.Height;
-   if (nrb && nrb->dPriv) {
-      x = nrb->dPriv->x;
-      y = nrb->dPriv->y;
-   } else {
-      x = 0;
-      y = 0;
-   }
+   x = nmesa->drawX;
+   y = nmesa->drawY;
 
    if (num_color != 1)
       return GL_FALSE;

@@ -134,6 +134,8 @@ typedef struct nouveau_context {
 	/* Cliprects information */
 	GLuint numClipRects;
 	drm_clip_rect_t *pClipRects;
+	drm_clip_rect_t osClipRect;
+	GLuint drawX, drawY;
 
 	/* The rendering context information */
 	GLenum current_primitive; /* the current primitive enum */
