@@ -577,7 +577,7 @@ static void nv30Scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 
 	/* Adjust offsets if drawing to a window */
 	nrb = nouveau_current_draw_buffer(ctx);
-	if (nrb && nrb->map) {
+	if (nrb && nrb->dPriv) {
 	   x += nrb->dPriv->x;
 	   y += nrb->dPriv->y;
 	}
@@ -690,7 +690,7 @@ static void nv30WindowMoved(nouveauContextPtr nmesa)
 
 	/* Adjust offsets if drawing to a window */
 	nrb = nouveau_current_draw_buffer(ctx);
-	if (nrb && nrb->map) {
+	if (nrb && nrb->dPriv) {
 	   x += nrb->dPriv->x;
 	   y += nrb->dPriv->y;
 	}
@@ -777,7 +777,7 @@ static GLboolean nv30BindBuffers(nouveauContextPtr nmesa, int num_color,
    nrb = nouveau_current_draw_buffer(nmesa->glCtx);
    w = nrb->mesa.Width;
    h = nrb->mesa.Height;
-   if (nrb && nrb->map) {
+   if (nrb && nrb->dPriv) {
       x = nrb->dPriv->x;
       y = nrb->dPriv->y;
    } else {

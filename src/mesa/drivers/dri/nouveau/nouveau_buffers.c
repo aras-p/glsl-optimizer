@@ -152,7 +152,7 @@ nouveau_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
    /* If this buffer isn't statically alloc'd, we may need to ask the
     * drm for more memory */
-   if (!nrb->map && (rb->Width != width || rb->Height != height)) {
+   if (!nrb->dPriv && (rb->Width != width || rb->Height != height)) {
       GLuint pitch;
 
       /* align pitches to 64 bytes */

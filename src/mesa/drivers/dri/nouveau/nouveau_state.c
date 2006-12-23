@@ -68,7 +68,7 @@ static void nouveauCalcViewport(GLcontext *ctx)
     nrb = nouveau_current_draw_buffer(ctx);
     nmesa->depth_scale = 1.0 / ctx->DrawBuffer->_DepthMaxF;
 
-    if (nrb && nrb->map) {
+    if (nrb && nrb->dPriv) {
        /* Window */
        xoffset = nrb->dPriv->x;
        yoffset = nrb->dPriv->y;
