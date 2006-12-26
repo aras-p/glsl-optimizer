@@ -40,6 +40,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_state_cache.h"
 #include "nouveau_buffers.h"
 #include "nouveau_shader.h"
+#include "nouveau_sync.h"
 
 #include "xmlconfig.h"
 
@@ -100,6 +101,9 @@ typedef struct nouveau_context {
 	/* Physical addresses of AGP/VRAM apertures */
 	uint64_t vram_phys;
 	uint64_t agp_phys;
+
+	/* Channel synchronisation */
+	nouveau_notifier *syncNotifier;
 
 	/* Additional hw-specific functions */
 	nouveau_hw_func hw_func;

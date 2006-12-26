@@ -4,7 +4,7 @@
 #include "nouveau_reg.h"
 
 
-static GLboolean nouveauCreateContextObject(nouveauContextPtr nmesa, int handle, int class, uint32_t flags, uint32_t dma_in, uint32_t dma_out, uint32_t dma_notifier)
+GLboolean nouveauCreateContextObject(nouveauContextPtr nmesa, int handle, int class, uint32_t flags, uint32_t dma_in, uint32_t dma_out, uint32_t dma_notifier)
 {
 	drm_nouveau_object_init_t cto;
 	int ret;
@@ -20,12 +20,12 @@ static GLboolean nouveauCreateContextObject(nouveauContextPtr nmesa, int handle,
 	return ret == 0;
 }
 
-static GLboolean nouveauCreateDmaObject(nouveauContextPtr nmesa,
-      					uint32_t handle,
-      					uint32_t offset,
-					uint32_t size,
-					int	 target,
-					int	 access)
+GLboolean nouveauCreateDmaObject(nouveauContextPtr nmesa,
+      				 uint32_t handle,
+				 uint32_t offset,
+				 uint32_t size,
+				 int	  target,
+				 int	  access)
 {
 	drm_nouveau_dma_object_init_t dma;
 	int ret;

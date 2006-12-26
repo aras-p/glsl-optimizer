@@ -222,6 +222,7 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 			break;
 	}
 
+	nouveauSyncInitFuncs(ctx);
 	nmesa->hw_func.InitCard(nmesa);
         nouveauInitState(ctx);
 

@@ -24,6 +24,7 @@ DRIVER_SOURCES = \
 	nouveau_shader_2.c       \
 	nouveau_tex.c            \
 	nouveau_swtcl.c          \
+	nouveau_sync.c           \
 	nv10_swtcl.c             \
 	nv10_state.c             \
 	nv20_state.c             \
