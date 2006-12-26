@@ -5,6 +5,65 @@
 
 #include "nouveau_context.h"
 #include "nouveau_buffers.h"
+#include "nouveau_object.h"
+#include "nouveau_fifo.h"
+#include "nouveau_reg.h"
+#include "nouveau_msg.h"
+
+#define MAX_MEMFMT_LENGTH 32768
+
+/* Unstrided blit using NV_MEMORY_TO_MEMORY_FORMAT */
+GLboolean
+nouveau_memformat_flat_emit(GLcontext *ctx,
+      			    nouveau_mem *dst, nouveau_mem *src,
+			    GLuint dst_offset, GLuint src_offset,
+			    GLuint size)
+{
+   nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+   uint32_t src_handle, dst_handle;
+   GLuint count;
+
+   if (src_offset + size > src->size) {
+      MESSAGE("src out of nouveau_mem bounds\n");
+      return GL_FALSE;
+   }
+   if (dst_offset + size > dst->size) {
+      MESSAGE("dst out of nouveau_mem bounds\n");
+      return GL_FALSE;
+   }
+
+   src_handle = (src->type & NOUVEAU_MEM_FB) ? NvDmaFB : NvDmaAGP;
+   dst_handle = (src->type & NOUVEAU_MEM_FB) ? NvDmaFB : NvDmaAGP;
+   src_offset += nouveau_mem_gpu_offset_get(ctx, src);
+   dst_offset += nouveau_mem_gpu_offset_get(ctx, dst);
+
+   BEGIN_RING_SIZE(NvSubMemFormat, NV_MEMORY_TO_MEMORY_FORMAT_OBJECT_IN, 2);
+   OUT_RING       (src_handle);
+   OUT_RING       (dst_handle);
+
+   count = (size / MAX_MEMFMT_LENGTH) + ((size % MAX_MEMFMT_LENGTH) ? 1 : 0);
+
+   while (count--) {
+      GLuint length = (size > MAX_MEMFMT_LENGTH) ? MAX_MEMFMT_LENGTH : size;
+
+      BEGIN_RING_SIZE(NvSubMemFormat, NV_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN, 8);
+      OUT_RING       (src_offset);
+      OUT_RING       (dst_offset);
+      OUT_RING       (0); /* pitch in */
+      OUT_RING       (0); /* pitch out */
+      OUT_RING       (length); /* line length */
+      OUT_RING       (1); /* number of lines */
+      OUT_RING       ((1 << 8) /* dst_inc */ | (1 << 0) /* src_inc */);
+      OUT_RING       (0); /* buffer notify? */
+      FIRE_RING();
+
+      src_offset += length;
+      dst_offset += length;
+      size       -= length;
+   }
+
+   return GL_TRUE;
+}
 
 void
 nouveau_mem_free(GLcontext *ctx, nouveau_mem *mem)

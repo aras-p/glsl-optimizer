@@ -52,10 +52,13 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 	return;
 #endif
 
-/* We need to know vram size.. */
+/* We need to know vram size.. and AGP size (and even if the card is AGP..) */
 	nouveauCreateDmaObject( nmesa, NvDmaFB,
 				0, (256*1024*1024),
 				0 /*NV_DMA_TARGET_FB*/, 0 /*NV_DMA_ACCESS_RW*/);
+	nouveauCreateDmaObject( nmesa, NvDmaAGP,
+	      			nmesa->agp_phys, (128*1024*1024),
+				3 /* AGP */, 0 /* RW */);
 
 	nouveauCreateContextObject(nmesa, Nv3D, nmesa->screen->card->class_3d,
 	      			   0, 0, 0, 0);
@@ -63,6 +66,9 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 	      			   0, 0, 0, 0);
 	nouveauCreateContextObject(nmesa, NvImageBlit, NV10_IMAGE_BLIT,
 	      			   NV_DMA_CONTEXT_FLAGS_PATCH_SRCCOPY, 0, 0, 0);
+	nouveauCreateContextObject(nmesa, NvMemFormat,
+	      			   NV_MEMORY_TO_MEMORY_FORMAT,
+	      			   0, 0, 0, 0);
 
 #ifdef ALLOW_MULTI_SUBCHANNEL
 	nouveauObjectOnSubchannel(nmesa, NvSubCtxSurf2D, NvCtxSurf2D);
@@ -75,6 +81,8 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 	OUT_RING(NvCtxSurf2D);
 	BEGIN_RING_SIZE(NvSubImageBlit, NV10_IMAGE_BLIT_SET_OPERATION, 1);
 	OUT_RING(3); /* SRCCOPY */
+
+	nouveauObjectOnSubchannel(nmesa, NvSubMemFormat, NvMemFormat);
 #endif
 
 	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
