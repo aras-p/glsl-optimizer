@@ -35,6 +35,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_msg.h"
 #include "nouveau_fifo.h"
 #include "nouveau_lock.h"
+#include "nouveau_object.h"
+#include "nouveau_sync.h"
 
 
 #define RING_SKIPS 8
@@ -68,45 +70,18 @@ void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size)
 }
 
 /* 
- * Wait for the card to be idle 
+ * Wait for the channel to be idle 
  */
 void nouveauWaitForIdleLocked(nouveauContextPtr nmesa)
 {
-	int i,status;
-
+	/* Wait for FIFO idle */
 	FIRE_RING();
 	while(RING_AHEAD()>0);
 
-	/* We can't wait on PGRAPH going idle..
-	 *  1) We don't have the regs mapped
-	 *  2) PGRAPH may not go idle with multiple channels active
-	 * Look into replacing this with a NOTIFY/NOP + wait notifier sequence.
+	/* Wait on notifier to indicate all commands in the channel have
+	 * been completed.
 	 */
-#if 0
-	for(i=0;i<1000000;i++) /* 1 second */
-	{
-		switch(nmesa->screen->card->type)
-		{
-			case NV_03:
-				status=NV_READ(NV03_STATUS);
-				break;
-			case NV_04:
-			case NV_05:
-			case NV_10:
-			case NV_20:
-			case NV_30:
-			case NV_40:
-			case NV_44:
-			case NV_50:
-			default:
-				status=NV_READ(NV04_STATUS);
-				break;
-		}
-		if (status)
-			return;
-		DO_USLEEP(1);
-	}
-#endif
+	nouveau_notifier_wait_nop(nmesa->glCtx, nmesa->syncNotifier, NvSub3D);
 }
 
 void nouveauWaitForIdle(nouveauContextPtr nmesa)

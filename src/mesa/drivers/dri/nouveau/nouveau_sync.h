@@ -32,5 +32,5 @@ extern GLboolean nouveau_notifier_wait_status(nouveau_notifier *r,
 extern void nouveau_notifier_wait_nop(GLcontext *ctx,
       				      nouveau_notifier *, GLuint subc);
 
-extern void nouveauSyncInitFuncs(GLcontext *ctx);
+extern GLboolean nouveauSyncInitFuncs(GLcontext *ctx);
 #endif

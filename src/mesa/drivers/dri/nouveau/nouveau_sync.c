@@ -106,10 +106,22 @@ nouveau_notifier_wait_nop(GLcontext *ctx, nouveau_notifier *notifier,
 	if (ret) MESSAGE("wait on notifier failed\n");
 }
 
-void nouveauSyncInitFuncs(GLcontext *ctx)
+GLboolean nouveauSyncInitFuncs(GLcontext *ctx)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 
 	nmesa->syncNotifier = nouveau_notifier_new(ctx, NvSyncNotify);
+	if (!nmesa->syncNotifier) {
+		MESSAGE("Failed to create channel sync notifier\n");
+		return GL_FALSE;
+	}
+
+	/* 0x180 is SET_DMA_NOTIFY, should be correct for all supported 3D
+	 * object classes
+	 */
+	BEGIN_RING_CACHE(NvSub3D, 0x180, 1);
+	OUT_RING_CACHE  (NvSyncNotify);
+
+	return GL_TRUE;
 }
 
