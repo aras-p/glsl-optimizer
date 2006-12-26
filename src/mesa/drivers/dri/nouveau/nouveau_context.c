@@ -63,6 +63,7 @@ int NOUVEAU_DEBUG = 0;
 
 static const struct dri_debug_control debug_control[] =
 {
+	{ "shaders", DEBUG_SHADERS },
 	{ NULL,    0 }
 };
 

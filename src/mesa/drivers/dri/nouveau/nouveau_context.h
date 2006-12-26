@@ -213,5 +213,10 @@ extern void nouveauSwapBuffers(__DRIdrawablePrivate *dPriv);
 extern void nouveauCopySubBuffer(__DRIdrawablePrivate *dPriv,
 				 int x, int y, int w, int h);
 
+/* Debugging utils: */
+extern int NOUVEAU_DEBUG;
+
+#define DEBUG_SHADERS 0x00000001
+
 #endif /* __NOUVEAU_CONTEXT_H__ */
 

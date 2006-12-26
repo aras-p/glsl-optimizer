@@ -36,6 +36,7 @@
 
 #include "program.h"
 
+#include "nouveau_context.h"
 #include "nouveau_shader.h"
 
 struct pass2_rec {
@@ -219,21 +220,23 @@ nouveau_shader_pass2(nvsPtr nvs)
    nvs->translated	= 1;
    nvs->on_hardware	= 0;
 
-#if 1
-   fflush(stdout); fflush(stderr);
-   fprintf(stderr, "----------------MESA PROGRAM\n");
-   fflush(stdout); fflush(stderr);
-   _mesa_print_program(&nvs->mesa.vp.Base);
-   fflush(stdout); fflush(stderr);
-   fprintf(stderr, "^^^^^^^^^^^^^^^^MESA PROGRAM\n");
-   fflush(stdout); fflush(stderr);
-   fprintf(stderr, "----------------NV40 PROGRAM\n");
-   fflush(stdout); fflush(stderr);
-   nvsDisasmHWShader(nvs);
-   fflush(stdout); fflush(stderr);
-   fprintf(stderr, "^^^^^^^^^^^^^^^^NV40 PROGRAM\n");
-   fflush(stdout); fflush(stderr);
-#endif
+   if (NOUVEAU_DEBUG & DEBUG_SHADERS) {
+      fflush(stdout); fflush(stderr);
+      fprintf(stderr, "----------------MESA PROGRAM target=%s, id=0x%x\n",
+	    _mesa_lookup_enum_by_nr(nvs->mesa.vp.Base.Target),
+	    nvs->mesa.vp.Base.Id);
+      fflush(stdout); fflush(stderr);
+      _mesa_print_program(&nvs->mesa.vp.Base);
+      fflush(stdout); fflush(stderr);
+      fprintf(stderr, "^^^^^^^^^^^^^^^^MESA PROGRAM\n");
+      fflush(stdout); fflush(stderr);
+      fprintf(stderr, "----------------NV PROGRAM\n");
+      fflush(stdout); fflush(stderr);
+      nvsDisasmHWShader(nvs);
+      fflush(stdout); fflush(stderr);
+      fprintf(stderr, "^^^^^^^^^^^^^^^^NV PROGRAM\n");
+      fflush(stdout); fflush(stderr);
+   }
 
    return GL_TRUE;
 }
