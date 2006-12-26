@@ -18,7 +18,10 @@ nouveau_notifier_new(GLcontext *ctx, GLuint handle)
 	if (!notifier)
 		return NULL;
 
-	notifier->mem = nouveau_mem_alloc(ctx, NOUVEAU_MEM_FB, 32, 0);
+	notifier->mem = nouveau_mem_alloc(ctx,
+					  NOUVEAU_MEM_FB | NOUVEAU_MEM_MAPPED,
+					  32,
+					  0);
 	if (!notifier->mem) {
 		FREE(notifier);
 		return NULL;
@@ -65,14 +68,14 @@ nouveau_notifier_wait_status(nouveau_notifier *notifier, GLuint status,
 	unsigned int time = 0;
 
 	while (time <= timeout) {
-		if (n[NV_NOTIFY_STATE] & NV_NOTIFY_STATE_ERROR_CODE_MASK) {
+		if (n[NV_NOTIFY_STATE/4] & NV_NOTIFY_STATE_ERROR_CODE_MASK) {
 			MESSAGE("Notifier returned error: 0x%04x\n",
 					n[NV_NOTIFY_STATE] &
 					NV_NOTIFY_STATE_ERROR_CODE_MASK);
 			return GL_FALSE;
 		}
 
-		if (((n[NV_NOTIFY_STATE] & NV_NOTIFY_STATE_STATUS_MASK) >>
+		if (((n[NV_NOTIFY_STATE/4] & NV_NOTIFY_STATE_STATUS_MASK) >>
 				NV_NOTIFY_STATE_STATUS_SHIFT) == status)
 			return GL_TRUE;
 
@@ -99,11 +102,12 @@ nouveau_notifier_wait_nop(GLcontext *ctx, nouveau_notifier *notifier,
 	OUT_RING       (NV_NOTIFY_STYLE_WRITE_ONLY);
 	BEGIN_RING_SIZE(subc, NV_NOP, 1);
 	OUT_RING       (0);
+	FIRE_RING();
 
 	ret = nouveau_notifier_wait_status(notifier,
 					   NV_NOTIFY_STATE_STATUS_COMPLETED,
 					   0 /* no timeout */);
-	if (ret) MESSAGE("wait on notifier failed\n");
+	if (ret == GL_FALSE) MESSAGE("wait on notifier failed\n");
 }
 
 GLboolean nouveauSyncInitFuncs(GLcontext *ctx)
