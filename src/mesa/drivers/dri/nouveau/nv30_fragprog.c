@@ -10,7 +10,7 @@
 #include "nouveau_shader.h"
 #include "nouveau_object.h"
 #include "nouveau_msg.h"
-#include "nouveau_buffers.h"
+#include "nouveau_bufferobj.h"
 #include "nv30_shader.h"
 
 unsigned int NVFP_TX_AOP_COUNT = 64;
@@ -24,29 +24,28 @@ static void
 NV30FPUploadToHW(GLcontext *ctx, nouveauShader *nvs)
 {
    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+   uint32_t offset;
 
-   if (!nvs->program_buffer) {
-      nouveau_mem *fpbuf;
+   if (!nvs->program_buffer)
+      nvs->program_buffer = ctx->Driver.NewBufferObject(ctx, 0,
+							GL_ARRAY_BUFFER_ARB);
 
-      fpbuf = nouveau_mem_alloc(ctx, NOUVEAU_MEM_FB|NOUVEAU_MEM_MAPPED,
-	    			nvs->program_size * sizeof(uint32_t), 0);
-      if (!fpbuf) {
-	 fprintf(stderr, "fragprog vram alloc fail!\n");
-	 return;
-      }
-      nvs->program_buffer = fpbuf;
-   }
+   /* Should use STATIC_DRAW_ARB if shader doesn't use changable params */
+   ctx->Driver.BufferData(ctx, GL_ARRAY_BUFFER_ARB,
+	 		  nvs->program_size * sizeof(uint32_t),
+			  (const GLvoid *)nvs->program,
+			  GL_DYNAMIC_DRAW_ARB,
+			  nvs->program_buffer);
 
-   /*XXX: should do a DMA.. and not copy over a possibly in-use program.. */
-   /* not using state cache here, updated programs at the same address
-    * seem to not take effect unless ACTIVE_PROGRAM is called again.  hw
-    * caches the program somewhere? so, maybe not so bad to just clobber the
-    * old program in vram..
+   offset = nouveau_bufferobj_gpu_ref(ctx, GL_READ_ONLY_ARB,
+	 			      nvs->program_buffer);
+
+   /* Not using state cache here, updated programs at the same address don't
+    * seem to take effect unless the ACTIVE_PROGRAM method is called again.
+    * HW caches the program somewhere?
     */
-   memcpy(nvs->program_buffer->map, nvs->program,
-	  nvs->program_size * sizeof(uint32_t));
    BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FP_ACTIVE_PROGRAM, 1);
-   OUT_RING(nouveau_mem_gpu_offset_get(ctx, nvs->program_buffer) | 1);
+   OUT_RING       (offset | 1);
 }
 
 static void
