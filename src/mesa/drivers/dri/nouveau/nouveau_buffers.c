@@ -91,7 +91,7 @@ nouveau_mem_alloc(GLcontext *ctx, int type, GLuint size, GLuint align)
    if (!mem)
       return NULL;
 
-   mema.flags     = mem->type = type;
+   mema.flags     = type;
    mema.size      = mem->size = size;
    mema.alignment = align;
    mem->map       = NULL;
@@ -102,6 +102,7 @@ nouveau_mem_alloc(GLcontext *ctx, int type, GLuint size, GLuint align)
       return NULL;
    }
    mem->offset = mema.region_offset;
+   mem->type   = mema.flags;
 
    if (type & NOUVEAU_MEM_MAPPED)
       ret = drmMap(nmesa->driFd, mem->offset, mem->size, &mem->map);

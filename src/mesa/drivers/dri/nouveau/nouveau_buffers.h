@@ -19,8 +19,10 @@ extern void nouveau_mem_free(GLcontext *ctx, nouveau_mem *mem);
 extern uint32_t nouveau_mem_gpu_offset_get(GLcontext *ctx, nouveau_mem *mem);
 
 extern GLboolean nouveau_memformat_flat_emit(GLcontext *ctx,
-      					     nouveau_mem *dst, nouveau_mem *src,
-					     GLuint dst_offset, GLuint src_offset,
+      					     nouveau_mem *dst,
+					     nouveau_mem *src,
+					     GLuint dst_offset,
+					     GLuint src_offset,
 					     GLuint size);
 
 typedef struct nouveau_renderbuffer_t {
