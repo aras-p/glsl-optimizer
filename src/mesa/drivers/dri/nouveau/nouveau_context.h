@@ -216,7 +216,8 @@ extern void nouveauCopySubBuffer(__DRIdrawablePrivate *dPriv,
 /* Debugging utils: */
 extern int NOUVEAU_DEBUG;
 
-#define DEBUG_SHADERS 0x00000001
+#define DEBUG_SHADERS	0x00000001
+#define DEBUG_MEM	0x00000002
 
 #endif /* __NOUVEAU_CONTEXT_H__ */
 

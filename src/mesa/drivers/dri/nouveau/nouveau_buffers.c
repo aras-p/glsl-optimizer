@@ -71,6 +71,11 @@ nouveau_mem_free(GLcontext *ctx, nouveau_mem *mem)
    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
    drm_nouveau_mem_free_t memf;
 
+   if (NOUVEAU_DEBUG & DEBUG_MEM)  {
+      fprintf(stderr, "%s: type=0x%x, offset=0x%x, size=0x%x\n",
+	    __func__, mem->type, (GLuint)mem->offset, (GLuint)mem->size);
+   }
+
    if (mem->map)
       drmUnmap(mem->map, mem->size);
    memf.flags         = mem->type;
@@ -86,6 +91,11 @@ nouveau_mem_alloc(GLcontext *ctx, int type, GLuint size, GLuint align)
    drm_nouveau_mem_alloc_t mema;
    nouveau_mem *mem;
    int ret;
+
+   if (NOUVEAU_DEBUG & DEBUG_MEM)  {
+      fprintf(stderr, "%s: requested: type=0x%x, size=0x%x, align=0x%x\n",
+	    __func__, type, (GLuint)size, align);
+   }
 
    mem = CALLOC(sizeof(nouveau_mem));
    if (!mem)
@@ -103,6 +113,11 @@ nouveau_mem_alloc(GLcontext *ctx, int type, GLuint size, GLuint align)
    }
    mem->offset = mema.region_offset;
    mem->type   = mema.flags;
+
+   if (NOUVEAU_DEBUG & DEBUG_MEM)  {
+      fprintf(stderr, "%s: actual: type=0x%x, offset=0x%x, size=0x%x\n",
+	    __func__, mem->type, (GLuint)mem->offset, (GLuint)mem->size);
+   }
 
    if (type & NOUVEAU_MEM_MAPPED)
       ret = drmMap(nmesa->driFd, mem->offset, mem->size, &mem->map);
