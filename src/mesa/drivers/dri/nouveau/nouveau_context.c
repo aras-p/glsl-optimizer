@@ -65,6 +65,7 @@ static const struct dri_debug_control debug_control[] =
 {
 	{ "shaders"   , DEBUG_SHADERS    },
 	{ "mem"       , DEBUG_MEM        },
+	{ "bufferobj" , DEBUG_BUFFEROBJ  },
 	{ NULL        , 0                }
 };
 
@@ -224,6 +225,7 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 			break;
 	}
 
+	nouveauInitBufferObjects(ctx);
 	if (!nouveauSyncInitFuncs(ctx))
 	   return GL_FALSE;
 	nmesa->hw_func.InitCard(nmesa);
