@@ -33,7 +33,7 @@ nouveau_memformat_flat_emit(GLcontext *ctx,
    }
 
    src_handle = (src->type & NOUVEAU_MEM_FB) ? NvDmaFB : NvDmaAGP;
-   dst_handle = (src->type & NOUVEAU_MEM_FB) ? NvDmaFB : NvDmaAGP;
+   dst_handle = (dst->type & NOUVEAU_MEM_FB) ? NvDmaFB : NvDmaAGP;
    src_offset += nouveau_mem_gpu_offset_get(ctx, src);
    dst_offset += nouveau_mem_gpu_offset_get(ctx, dst);
 
