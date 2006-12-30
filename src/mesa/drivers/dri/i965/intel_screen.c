@@ -230,16 +230,19 @@ intelUpdateScreenFromSAREA(intelScreenPrivate *intelScreen,
    intelScreen->front.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->front.handle = sarea->front_handle;
    intelScreen->front.size = sarea->front_size;
+   intelScreen->front.tiled = sarea->front_tiled;
 
    intelScreen->back.offset = sarea->back_offset;
    intelScreen->back.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->back.handle = sarea->back_handle;
    intelScreen->back.size = sarea->back_size;
-			 
+   intelScreen->back.tiled = sarea->back_tiled;
+
    intelScreen->depth.offset = sarea->depth_offset;
    intelScreen->depth.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->depth.handle = sarea->depth_handle;
    intelScreen->depth.size = sarea->depth_size;
+   intelScreen->depth.tiled = sarea->depth_tiled;
 
    intelScreen->tex.offset = sarea->tex_offset;
    intelScreen->logTextureGranularity = sarea->log_tex_granularity;
@@ -249,6 +252,7 @@ intelUpdateScreenFromSAREA(intelScreenPrivate *intelScreen,
    intelScreen->rotated.offset = sarea->rotated_offset;
    intelScreen->rotated.pitch = sarea->rotated_pitch * intelScreen->cpp;
    intelScreen->rotated.size = sarea->rotated_size;
+   intelScreen->rotated.tiled = sarea->rotated_tiled;
    intelScreen->current_rotation = sarea->rotation;
 #if 0
    matrix23Rotate(&intelScreen->rotMatrix,
