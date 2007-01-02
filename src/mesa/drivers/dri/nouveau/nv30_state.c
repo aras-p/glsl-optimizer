@@ -369,6 +369,7 @@ static void nv30Hint(GLcontext *ctx, GLenum target, GLenum mode)
 // void (*IndexMask)(GLcontext *ctx, GLuint mask);
 
 enum {
+	SPOTLIGHT_NO_UPDATE,
 	SPOTLIGHT_UPDATE_EXPONENT,
 	SPOTLIGHT_UPDATE_DIRECTION,
 	SPOTLIGHT_UPDATE_ALL
@@ -379,7 +380,7 @@ static void nv30Lightfv(GLcontext *ctx, GLenum light, GLenum pname, const GLfloa
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	GLint p = light - GL_LIGHT0;
 	struct gl_light *l = &ctx->Light.Light[p];
-	int spotlightUpdate = -1;
+	int spotlight_update = SPOTLIGHT_NO_UPDATE;
 
 	if (NOUVEAU_CARD_USING_SHADERS)
 	   return;
@@ -412,13 +413,13 @@ static void nv30Lightfv(GLcontext *ctx, GLenum light, GLenum pname, const GLfloa
 			OUT_RING_CACHEf(params[2]);
 			break;
 		case GL_SPOT_DIRECTION:
-			spotlightUpdate = SPOTLIGHT_UPDATE_DIRECTION;
+			spotlight_update = SPOTLIGHT_UPDATE_DIRECTION;
 			break;
 		case GL_SPOT_EXPONENT:
-			spotlightUpdate = SPOTLIGHT_UPDATE_EXPONENT;
+			spotlight_update = SPOTLIGHT_UPDATE_EXPONENT;
 			break;
 		case GL_SPOT_CUTOFF:
-			spotlightUpdate = SPOTLIGHT_UPDATE_ALL;
+			spotlight_update = SPOTLIGHT_UPDATE_ALL;
 			break;
 		case GL_CONSTANT_ATTENUATION:
 			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_CONSTANT_ATTENUATION(p), 1);
@@ -436,13 +437,14 @@ static void nv30Lightfv(GLcontext *ctx, GLenum light, GLenum pname, const GLfloa
 			break;
 	}
 
-	switch(spotlightUpdate) {
+	switch(spotlight_update) {
 		case SPOTLIGHT_UPDATE_DIRECTION:
 			{
 				GLfloat x,y,z;
-				x = -2.0 * (1.0 + l->_CosCutoff) * l->_NormDirection[0];
-				y = -2.0 * (1.0 + l->_CosCutoff) * l->_NormDirection[1];
-				z = -2.0 * (1.0 + l->_CosCutoff) * l->_NormDirection[2];
+				GLfloat spot_light_coef_a = 1.0 / (l->_CosCutoff - 1.0);
+				x = spot_light_coef_a * l->_NormDirection[0];
+				y = spot_light_coef_a * l->_NormDirection[1];
+				z = spot_light_coef_a * l->_NormDirection[2];
 				BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_DIR_X(p), 3);
 				OUT_RING_CACHEf(x);
 				OUT_RING_CACHEf(y);
@@ -464,13 +466,14 @@ static void nv30Lightfv(GLcontext *ctx, GLenum light, GLenum pname, const GLfloa
 		case SPOTLIGHT_UPDATE_ALL:
 			{
 				GLfloat cc,lc,qc, x,y,z, c;
+				GLfloat spot_light_coef_a = 1.0 / (l->_CosCutoff - 1.0);
 				cc = 1.0;	/* FIXME: These need to be correctly computed */
 				lc = 0.0;
 				qc = 2.0;
-				x = -2.0 * (1.0 + l->_CosCutoff) * l->_NormDirection[0];
-				y = -2.0 * (1.0 + l->_CosCutoff) * l->_NormDirection[1];
-				z = -2.0 * (1.0 + l->_CosCutoff) * l->_NormDirection[2];
-				c = -2.0 * (0.5 + l->_CosCutoff);
+				x = spot_light_coef_a * l->_NormDirection[0];
+				y = spot_light_coef_a * l->_NormDirection[1];
+				z = spot_light_coef_a * l->_NormDirection[2];
+				c = spot_light_coef_a + 1.0;
 				BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LIGHT_SPOT_CUTOFF_A(p), 7);
 				OUT_RING_CACHEf(cc);
 				OUT_RING_CACHEf(lc);
