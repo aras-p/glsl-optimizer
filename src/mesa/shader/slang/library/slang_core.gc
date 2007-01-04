@@ -452,7 +452,6 @@ ivec4 __operator / (const ivec4 v, const ivec4 u)
 
 float __operator + (const float a, const float b)
 {
-//   __asm float_add __retVal, a, b;
    __asm vec4_add __retVal.x, a, b;
 }
 

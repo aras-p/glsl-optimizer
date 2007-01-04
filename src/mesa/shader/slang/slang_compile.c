@@ -682,7 +682,7 @@ parse_type_specifier(slang_parse_ctx * C, slang_output_ctx * O,
 
          stru = slang_struct_scope_find(O->structs, a_name, 1);
          if (stru == NULL) {
-            slang_info_log_error(C->L, "%s: undeclared type name.",
+            slang_info_log_error(C->L, "undeclared type name '%s'",
                                  slang_atom_pool_id(C->atoms, a_name));
             return 0;
          }
@@ -714,7 +714,9 @@ parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
 {
    if (!parse_type_qualifier(C, &type->qualifier))
       return 0;
-   return parse_type_specifier(C, O, &type->specifier);
+   if (!parse_type_specifier(C, O, &type->specifier))
+      return 0;
+   return 1;
 }
 
 /* operation */
@@ -2241,35 +2243,21 @@ slang_create_uniforms(const slang_export_data_table *exports,
 #endif
 
 
-GLboolean
-_slang_compile(const char *source, slang_code_object * object,
+static GLboolean
+compile_shader(GLcontext *ctx, slang_code_object * object,
                slang_unit_type type, slang_info_log * infolog,
                struct gl_shader *shader)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   struct gl_program *program;
+   struct gl_program *program = shader->Programs[0];
    GLboolean success;
    grammar id = 0;
 
-   /* XXX temporary hack */
-   if (!shader->Programs) {
-      GLenum progTarget;
-      if (shader->Type == GL_VERTEX_SHADER)
-         progTarget = GL_VERTEX_PROGRAM_ARB;
-      else
-         progTarget = GL_FRAGMENT_PROGRAM_ARB;
-      shader->Programs
-         = (struct gl_program **) malloc(sizeof(struct gl_program*));
-      shader->Programs[0] = _mesa_new_program(ctx, progTarget, 1);
-      shader->NumPrograms = 1;
-   }
-   program = shader->Programs[0];
    assert(program);
 
    _slang_code_object_dtr(object);
    _slang_code_object_ctr(object);
 
-   success = compile_object(&id, source, object, type, infolog, program);
+   success = compile_object(&id, shader->Source, object, type, infolog, program);
    if (id != 0)
       grammar_destroy(id);
    if (!success)
@@ -2283,22 +2271,72 @@ _slang_compile(const char *source, slang_code_object * object,
 
 #if NEW_SLANG
    {
-      GET_CURRENT_CONTEXT(ctx);
       slang_create_uniforms(&object->expdata, shader);
       _mesa_print_program(program);
       _mesa_print_program_parameters(ctx, program);
    }
 #endif
 
-
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
-   /* XXX: lookup the @main label */
-   if (!_slang_x86_codegen
-       (&object->machine, &object->assembly,
-        object->expcode.entries[0].address))
-      return GL_FALSE;
-#endif
-
    return GL_TRUE;
+}
+
+
+
+GLboolean
+_slang_compile(GLcontext *ctx, struct gl_shader *shader)
+{
+   GLboolean success;
+   slang_info_log info_log;
+   slang_code_object obj;
+   slang_unit_type type;
+
+   if (shader->Type == GL_VERTEX_SHADER) {
+      type = slang_unit_vertex_shader;
+   }
+   else {
+      assert(shader->Type == GL_FRAGMENT_SHADER);
+      type = slang_unit_fragment_shader;
+   }
+
+   /* XXX temporary hack */
+   if (!shader->Programs) {
+      GLenum progTarget;
+      if (shader->Type == GL_VERTEX_SHADER)
+         progTarget = GL_VERTEX_PROGRAM_ARB;
+      else
+         progTarget = GL_FRAGMENT_PROGRAM_ARB;
+      shader->Programs
+         = (struct gl_program **) malloc(sizeof(struct gl_program*));
+      shader->Programs[0] = _mesa_new_program(ctx, progTarget, 1);
+      shader->NumPrograms = 1;
+   }
+
+   slang_info_log_construct(&info_log);
+   _slang_code_object_ctr(&obj);
+
+   success = compile_shader(ctx, &obj, type, &info_log, shader);
+
+   if (success) {
+#if 0
+      slang_create_uniforms(&object->expdata, shader);
+      _mesa_print_program(program);
+      _mesa_print_program_parameters(ctx, program);
+#endif
+   }
+   else {
+      /* XXX more work on info log needed here */
+      if (info_log.text) {
+         if (shader->InfoLog) {
+            free(shader->InfoLog);
+            shader->InfoLog = NULL;
+         }
+         shader->InfoLog = strdup(info_log.text);
+      }
+   }
+
+   slang_info_log_destruct(&info_log);
+   _slang_code_object_dtr(&obj);
+
+   return success;
 }
 

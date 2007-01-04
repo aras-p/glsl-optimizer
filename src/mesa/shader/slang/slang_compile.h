@@ -109,7 +109,7 @@ int slang_info_log_warning (slang_info_log *, const char *, ...);
 void slang_info_log_memory (slang_info_log *);
 
 extern GLboolean
-_slang_compile (const char *, slang_code_object *, slang_unit_type, slang_info_log *, struct gl_shader *shader);
+_slang_compile (GLcontext *ctx, struct gl_shader *shader);
 
 #ifdef __cplusplus
 }

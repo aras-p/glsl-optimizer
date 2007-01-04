@@ -240,7 +240,7 @@ _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
    GLuint i;
 
    if (!shProg || !sh) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
+      _mesa_error(ctx, GL_INVALID_VALUE,
                   "glAttachShader(bad program or shader name)");
       return;
    }
@@ -277,7 +277,7 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
       = _mesa_lookup_shader_program(ctx, program);
 
    if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glBindAttribLocation(program)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glBindAttribLocation(program)");
       return;
    }
 
@@ -348,7 +348,7 @@ _mesa_delete_program2(GLcontext *ctx, GLuint name)
 
    shProg = _mesa_lookup_shader_program(ctx, name);
    if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glDeleteProgram(name)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glDeleteProgram(name)");
       return;
    }
 
@@ -390,7 +390,7 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
    GLuint i, j;
 
    if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
+      _mesa_error(ctx, GL_INVALID_VALUE,
                   "glDetachShader(bad program or shader name)");
       return;
    }
@@ -424,7 +424,7 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
    }
 
    /* not found */
-   _mesa_error(ctx, GL_INVALID_OPERATION,
+   _mesa_error(ctx, GL_INVALID_VALUE,
                "glDetachShader(shader not found)");
 }
 
@@ -442,7 +442,7 @@ _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
    GLint sz;
 
    if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetActiveUniform");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform");
       return;
    }
 
@@ -477,7 +477,7 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
    GLint sz;
 
    if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetActiveUniform");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform");
       return;
    }
 
@@ -514,7 +514,7 @@ _mesa_get_attached_shaders(GLcontext *ctx, GLuint program, GLsizei maxCount,
          *count = i;
    }
    else {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetAttachedShaders");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetAttachedShaders");
    }
 }
 
@@ -527,7 +527,7 @@ _mesa_get_attrib_location(GLcontext *ctx, GLuint program,
       = _mesa_lookup_shader_program(ctx, program);
 
    if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetAttribLocation");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetAttribLocation");
       return -1;
    }
 
@@ -720,7 +720,7 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
       }
    }
    else {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfv(program)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetUniformfv(program)");
    }
 }
 
@@ -796,34 +796,13 @@ void
 _mesa_compile_shader(GLcontext *ctx, GLuint shaderObj)
 {
    struct gl_shader *sh = _mesa_lookup_shader(ctx, shaderObj);
-   slang_info_log info_log;
-   slang_code_object obj;
-   slang_unit_type type;
 
    if (!sh) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glCompileShader(shaderObj)");
       return;
    }
 
-   slang_info_log_construct(&info_log);
-   _slang_code_object_ctr(&obj);
-
-   if (sh->Type == GL_VERTEX_SHADER) {
-      type = slang_unit_vertex_shader;
-   }
-   else {
-      assert(sh->Type == GL_FRAGMENT_SHADER);
-      type = slang_unit_fragment_shader;
-   }
-
-   if (_slang_compile(sh->Source, &obj, type, &info_log, sh)) {
-      sh->CompileStatus = GL_TRUE;
-   }
-   else {
-      sh->CompileStatus = GL_FALSE;
-      /* XXX temporary */
-      _mesa_problem(ctx, "Program did not compile!");
-   }
+   sh->CompileStatus = _slang_compile(ctx, sh);
 }
 
 
@@ -837,7 +816,7 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
 
    shProg = _mesa_lookup_shader_program(ctx, program);
    if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glLinkProgram(program)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glLinkProgram(program)");
       return;
    }
 
@@ -865,7 +844,7 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
       struct gl_shader_program *shProg;
       shProg = _mesa_lookup_shader_program(ctx, program);
       if (!shProg) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
+         _mesa_error(ctx, GL_INVALID_VALUE,
                      "glUseProgramObjectARB(programObj)");
          return;
       }
@@ -975,7 +954,7 @@ _mesa_validate_program(GLcontext *ctx, GLuint program)
    struct gl_shader_program *shProg;
    shProg = _mesa_lookup_shader_program(ctx, program);
    if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glValidateProgram(program)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glValidateProgram(program)");
       return;
    }
    /* XXX temporary */
