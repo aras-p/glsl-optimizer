@@ -60,8 +60,11 @@ slang_operation_destruct(slang_operation * oper)
    for (i = 0; i < oper->num_children; i++)
       slang_operation_destruct(oper->children + i);
    slang_alloc_free(oper->children);
+#ifdef FREE_MEMORY
+   /* XXX revisit and fix memory coruption here ! */
    slang_variable_scope_destruct(oper->locals);
    slang_alloc_free(oper->locals);
+#endif
    oper->children = NULL;
    oper->num_children = 0;
    oper->locals = NULL;
