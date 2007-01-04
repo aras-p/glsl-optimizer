@@ -866,6 +866,7 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
               const GLvoid *values, GLenum type)
 {
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+   GLfloat *uniformVal;
 
    if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(program not linked)");
@@ -879,20 +880,50 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   {
-      GLfloat *v = shProg->Uniforms->ParameterValues[location];
-      const GLfloat *fValues = (const GLfloat *) values; /* XXX */
-      GLint i;
-      if (type == GL_FLOAT_VEC4)
-         count *= 4;
-      else if (type == GL_FLOAT_VEC3)
-         count *= 3;
-      else
-         abort();
+   uniformVal = shProg->Uniforms->ParameterValues[location];
 
-      for (i = 0; i < count; i++)
-         v[i] = fValues[i];
-      return;
+   if (type == GL_INT ||
+       type == GL_INT_VEC2 ||
+       type == GL_INT_VEC3 ||
+       type == GL_INT_VEC4) {
+      const GLint *iValues = (const GLint *) values;
+      switch (type) {
+      case GL_INT_VEC4:
+         uniformVal[3] = (GLfloat) iValues[3];
+         /* fall-through */
+      case GL_INT_VEC3:
+         uniformVal[2] = (GLfloat) iValues[2];
+         /* fall-through */
+      case GL_INT_VEC2:
+         uniformVal[1] = (GLfloat) iValues[1];
+         /* fall-through */
+      case GL_INT:
+         uniformVal[0] = (GLfloat) iValues[0];
+         break;
+      default:
+         _mesa_problem(ctx, "Invalid type in _mesa_uniform");
+         return;
+      }
+   }
+   else {
+      const GLfloat *fValues = (const GLfloat *) values; /* XXX */
+      switch (type) {
+      case GL_FLOAT_VEC4:
+         uniformVal[3] = fValues[3];
+         /* fall-through */
+      case GL_FLOAT_VEC3:
+         uniformVal[2] = fValues[2];
+         /* fall-through */
+      case GL_FLOAT_VEC2:
+         uniformVal[1] = fValues[1];
+         /* fall-through */
+      case GL_FLOAT:
+         uniformVal[0] = fValues[0];
+         break;
+      default:
+         _mesa_problem(ctx, "Invalid type in _mesa_uniform");
+         return;
+      }
    }
 }
 
