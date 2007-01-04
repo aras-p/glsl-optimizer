@@ -257,7 +257,7 @@ static const GLuint undef = REG(REG_TYPE_TEMP,
 				GL_FALSE);
 
 /* constant one source */
-static const GLuint pfs_one = REG(REG_TYPE_TEMP,
+static const GLuint pfs_one = REG(REG_TYPE_CONST,
 				  0,
 				  SWIZZLE_111,
 				  SWIZZLE_ONE,
@@ -265,7 +265,7 @@ static const GLuint pfs_one = REG(REG_TYPE_TEMP,
 				  GL_TRUE);
 
 /* constant half source */
-static const GLuint pfs_half = REG(REG_TYPE_TEMP,
+static const GLuint pfs_half = REG(REG_TYPE_CONST,
 				   0,
 				   SWIZZLE_HHH,
 				   SWIZZLE_HALF,
@@ -273,7 +273,7 @@ static const GLuint pfs_half = REG(REG_TYPE_TEMP,
 				   GL_TRUE);
 
 /* constant zero source */
-static const GLuint pfs_zero = REG(REG_TYPE_TEMP,
+static const GLuint pfs_zero = REG(REG_TYPE_CONST,
 				   0,
 				   SWIZZLE_000,
 				   SWIZZLE_ZERO,
@@ -463,7 +463,8 @@ static int swz_native(struct r300_fragment_program *rp,
 		      GLuint arbneg)
 {
 	/* Native swizzle, handle negation */
-	src |= ((arbneg >> 3) & 1) << REG_NEGS_SHIFT;
+	src = (src & ~REG_NEGS_SHIFT) |
+		(((arbneg >> 3) & 1) << REG_NEGS_SHIFT);
 
 	if ((arbneg & 0x7) == 0x0) {
 		src = src & ~REG_NEGV_MASK;
