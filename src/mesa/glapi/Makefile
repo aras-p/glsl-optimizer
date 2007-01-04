@@ -107,7 +107,7 @@ $(GLX_DIR)/indirect_size_get.c: $(COMMON_GLX) glX_proto_size.py
 	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_c | indent $(INDENT_FLAGS) > $@
 
 $(GLX_DIR)/indirect_reqsize.h: $(COMMON_GLX) glX_proto_size.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m reqsize_h --only-get -h '_INDIRECT_SIZE_GET_H_' | indent $(INDENT_FLAGS) > $@
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m reqsize_h --only-get -h '_INDIRECT_SIZE_GET_H_' | indent $(INDENT_FLAGS) -l200 > $@
 
 $(GLX_DIR)/indirect_reqsize.c: $(COMMON_GLX) glX_proto_size.py
 	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m reqsize_c | indent $(INDENT_FLAGS) > $@
