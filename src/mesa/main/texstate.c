@@ -2920,13 +2920,6 @@ update_texture_state( GLcontext *ctx )
 {
    GLuint unit;
 
-#if 0 /** XXX NEW_SLANG */
-#if FEATURE_ARB_fragment_shader
-   struct gl2_program_intf **prog = ctx->ShaderObjects.CurrentProgram;
-   GLbitfield progteximageusage[MAX_TEXTURE_IMAGE_UNITS];
-#endif
-#endif
-
    ctx->NewState |= _NEW_TEXTURE; /* TODO: only set this if there are 
 				   * actual changes. 
 				   */
@@ -2935,19 +2928,6 @@ update_texture_state( GLcontext *ctx )
    ctx->Texture._GenFlags = 0;
    ctx->Texture._TexMatEnabled = 0;
    ctx->Texture._TexGenEnabled = 0;
-
-#if 00 /* XXX NEW_SLANG */
-#if FEATURE_ARB_fragment_shader
-   /*
-    * Grab texture image usage state from shader program. It must be
-    * grabbed every time uniform sampler changes, so maybe there is a
-    * better place to perform these rather expensive computations.
-    */
-   if (ctx->ShaderObjects._FragmentShaderPresent) {
-      (**prog).GetTextureImageUsage (prog, progteximageusage);
-   }
-#endif /* FEATURE_ARB_fragment_shader */
-#endif
 
    /*
     * Update texture unit state.
@@ -2960,16 +2940,17 @@ update_texture_state( GLcontext *ctx )
       texUnit->_ReallyEnabled = 0;
       texUnit->_GenFlags = 0;
 
-      /* Get the bitmask of texture enables */
-#if 000 /* XXX NEW_SLANG */
-#if FEATURE_ARB_fragment_shader
-      if (ctx->ShaderObjects._FragmentShaderPresent) {
-         enableBits = progteximageusage[unit];
+      /* Get the bitmask of texture enables.
+       * enableBits will be a mask of the TEXTURE_*_BIT flags indicating
+       * which texture targets are enabled (fixed function) or referenced
+       * by a fragment shader/program.  When multiple flags are set, we'll
+       * settle on the one with highest priority (see texture_override below).
+       */
+      if (ctx->Shader.CurrentProgram &&
+          ctx->Shader.CurrentProgram->LinkStatus) {
+         enableBits = ctx->Shader.CurrentProgram->FragmentProgram->TexturesUsed[unit];
       }
-      else
-#endif
-#endif
-      if (ctx->FragmentProgram._Enabled) {
+      else if (ctx->FragmentProgram._Enabled) {
          enableBits = ctx->FragmentProgram.Current->TexturesUsed[unit];
       }
       else {
