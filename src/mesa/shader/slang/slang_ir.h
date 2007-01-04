@@ -79,6 +79,8 @@ typedef enum
    IR_NOT,     /* logical not */
    IR_VAR,     /* variable reference */
    IR_VAR_DECL,/* var declaration */
+   IR_TEX,     /* texture lookup */
+   IR_TEXB,    /* texture lookup with LOD bias */
    IR_FLOAT,
    IR_FIELD,
    IR_I_TO_F
@@ -106,10 +108,11 @@ typedef struct slang_ir_node_
    const char *Comment;
    const char *Target;
    GLuint Swizzle;
-   GLuint Writemask;  /**< If Op == IR_MOVE */
-   GLfloat Value[4];    /**< If Op == IR_FLOAT */
+   GLuint Writemask;  /**< If Opcode == IR_MOVE */
+   GLfloat Value[4];    /**< If Opcode == IR_FLOAT */
    slang_variable *Var;
    slang_ir_storage *Store;
+   GLuint TexTarget;   /**< If Opcode == IR_TEX or IR_TEXB */
 } slang_ir_node;
 
 

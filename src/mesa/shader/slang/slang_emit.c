@@ -92,6 +92,8 @@ static slang_ir_info IrInfo[] = {
    { IR_NOT, "IR_NOT", 0, 1, 1 },
    { IR_VAR, "IR_VAR", 0, 0, 0 },
    { IR_VAR_DECL, "IR_VAR_DECL", 0, 0, 0 },
+   { IR_TEX, "IR_TEX", OPCODE_TEX, 4, 1 },
+   { IR_TEXB, "IR_TEXB", OPCODE_TXB, 4, 2 },
    { IR_FLOAT, "IR_FLOAT", 0, 0, 0 },
    { IR_FIELD, "IR_FIELD", 0, 0, 0 },
    { IR_NOP, NULL, OPCODE_NOP, 0, 0 }
@@ -192,7 +194,10 @@ storage_string(const slang_ir_storage *st)
       sprintf(s, "%s[%d..%d]", files[st->File], st->Index,
               st->Index + st->Size - 1);
 #endif
-   sprintf(s, "%s[%d]", files[st->File], st->Index);
+   if (st->File == 1000)
+      sprintf(s, "sampler");
+   else
+      sprintf(s, "%s[%d]", files[st->File], st->Index);
    return s;
 }
 
@@ -247,8 +252,7 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
    case slang_spec_samplerCube:
    case slang_spec_sampler1DShadow:
    case slang_spec_sampler2DShadow:
-      abort();
-      return 0;
+      return 1; /* special case */
    case slang_spec_struct:
       return sizeof_struct(spec->_struct);
    case slang_spec_array:
@@ -261,11 +265,27 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
 }
 
 
-
 static GLuint
 sizeof_type(const slang_fully_specified_type *t)
 {
    return _slang_sizeof_type_specifier(&t->specifier);
+}
+
+
+static GLboolean
+is_sampler_type(const slang_fully_specified_type *t)
+{
+   switch (t->specifier.type) {
+   case slang_spec_sampler1D:
+   case slang_spec_sampler2D:
+   case slang_spec_sampler3D:
+   case slang_spec_samplerCube:
+   case slang_spec_sampler1DShadow:
+   case slang_spec_sampler2DShadow:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
 }
 
 
@@ -367,6 +387,15 @@ alloc_temporary(slang_gen_context *gc, GLint size)
       }
    }
    return -1;
+}
+
+
+static GLint
+alloc_sampler(slang_gen_context *gc)
+{
+   GLint sampler = gc->NumSamplers;
+   gc->NumSamplers++;
+   return sampler;
 }
 
 
@@ -637,9 +666,6 @@ slang_alloc_temp_storage(slang_gen_context *gc, slang_ir_node *n, GLint size)
  *   2. Allocate storage for user-declared variables.
  *   3. Allocate intermediate/unnamed storage for complex expressions.
  *   4. other?
- *
- * If gc or prog is NULL, we may only be able to determine the Store->File
- * but not an Index (register).
  */
 void
 slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
@@ -666,7 +692,14 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
    if (n->Opcode == IR_VAR_DECL) {
       /* storage declaration */
       assert(n->Var);
-      if (n->Store->Index < 0) { /* XXX assert this? */
+      if (is_sampler_type(&n->Var->type)) {
+         /* i.e. "uniform sampler2D tex;" */
+#define PROGRAM_SAMPLER 1000
+         n->Store->File = PROGRAM_SAMPLER;
+         n->Store->Size = 1; /* never used */
+         n->Store->Index = alloc_sampler(gc);
+      }
+      else if (n->Store->Index < 0) { /* XXX assert this? */
          assert(gc);
          n->Store->File = PROGRAM_TEMPORARY;
          n->Store->Size = sizeof_type(&n->Var->type);
@@ -994,6 +1027,32 @@ emit_jump(const char *target, struct gl_program *prog)
 }
 
 
+static struct prog_instruction *
+emit_tex(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
+{
+   struct gl_fragment_program *fProg = (struct gl_fragment_program *) prog;
+   struct prog_instruction *inst;
+   if (n->Opcode == IR_TEX) {
+      inst = new_instruction(prog, OPCODE_TEX);
+   }
+   else {
+      assert(n->Opcode == IR_TEXB);
+      inst = new_instruction(prog, OPCODE_TXB);
+   }
+
+   storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+
+   storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
+                      n->Children[0]->Swizzle);
+
+   inst->TexSrcTarget = n->TexTarget;
+   inst->TexSrcUnit = 0;  /* XXX temp */
+
+   fProg->TexturesUsed[inst->TexSrcUnit] |= (1 << inst->TexSrcTarget);
+
+   return inst;
+}
+
 
 static struct prog_instruction *
 emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
@@ -1108,6 +1167,9 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    case IR_SIN:
    case IR_COS:
       return emit_unop(gc, n, prog);
+   case IR_TEX:
+   case IR_TEXB:
+      return emit_tex(gc, n, prog);
    case IR_NEG:
       return emit_negation(gc, n, prog);
    case IR_LABEL:

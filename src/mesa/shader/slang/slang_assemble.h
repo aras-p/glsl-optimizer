@@ -245,6 +245,7 @@ typedef struct slang_assembly_name_space_
 
 typedef struct {
    GLboolean TempUsed[MAX_PROGRAM_TEMPS];
+   GLuint NumSamplers;
 } slang_gen_context;
 
 

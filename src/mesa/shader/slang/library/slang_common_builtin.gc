@@ -1629,10 +1629,9 @@ vec4 texture1DProj (sampler1D sampler, vec4 coord) {
     return texture1D (sampler, coord.s / coord.q);
 }
 
-vec4 texture2D (sampler2D sampler, vec2 coord) {
-    vec4 texel;
-    __asm vec4_tex2d texel, sampler, coord, 0.0;
-    return texel;
+vec4 texture2D(const sampler2D sampler, const vec2 coord)
+{
+    __asm vec4_tex2d __retVal, coord; // XXX sampler
 }
 
 vec4 texture2DProj (sampler2D sampler, vec3 coord) {

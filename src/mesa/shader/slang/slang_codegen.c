@@ -91,6 +91,9 @@ static slang_asm_info AsmInfo[] = {
    { "float_multiply", IR_MUL, 1, 2 },
    { "float_divide", IR_DIV, 1, 2 },
    { "float_power", IR_POW, 1, 2 },
+   /* texture / sampler */
+   { "vec4_tex2d", IR_TEX, 1, 1 },
+   { "vec4_texb2d", IR_TEXB, 1, 3 },
    /* unary op */
    { "int_to_float", IR_I_TO_F, 1, 1 },
    { "float_exp", IR_EXP, 1, 1 },
@@ -791,10 +794,15 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
       n0 = _slang_gen_operation(A, dest_oper);
       assert(n0->Var);
       assert(n0->Store);
-      free(n0);
 
       n->Store = n0->Store;
       n->Writemask = writemask;
+
+      free(n0);
+   }
+
+   if (info->Opcode == IR_TEX || info->Opcode == IR_TEXB) {
+      n->TexTarget = TEXTURE_2D_INDEX;
    }
 
    return n;
@@ -1571,7 +1579,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    CurFunction = fun;
 
    if (!CurFunction->end_label)
-      CurFunction->end_label = slang_atom_pool_gen(A->atoms, "__endOfFunction_Main");
+      CurFunction->end_label = slang_atom_pool_gen(A->atoms, "__endOfFunc_main_");
 
    n = _slang_gen_operation(A, fun->body);
 
@@ -1583,7 +1591,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    CurFunction = NULL;
 
 
-#if 0
+#if 1
    printf("************* New body for %s *****\n", (char*)fun->header.a_name);
    slang_print_function(fun, 1);
 
