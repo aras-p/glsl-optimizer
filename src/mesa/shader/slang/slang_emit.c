@@ -434,9 +434,13 @@ slang_find_input(GLenum target, const char *name, GLint index)
       { "gl_Normal", VERT_ATTRIB_NORMAL },
       { "gl_Color", VERT_ATTRIB_COLOR0 },
       { "gl_SecondaryColor", VERT_ATTRIB_COLOR1 },
+      { "gl_MultiTexCoord0", VERT_ATTRIB_TEX0 },
+      { "gl_MultiTexCoord1", VERT_ATTRIB_TEX1 },
+      { "gl_MultiTexCoord2", VERT_ATTRIB_TEX2 },
       { NULL, 0 }
    };
    static const struct input_info fragInputs[] = {
+      { "gl_TexCoord", FRAG_ATTRIB_TEX0 },
       { NULL, 0 }
    };
    const struct input_info *inputs;
