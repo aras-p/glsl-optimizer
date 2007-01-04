@@ -2919,6 +2919,18 @@ static void
 update_texture_state( GLcontext *ctx )
 {
    GLuint unit;
+   struct gl_fragment_program *fprog;
+
+   if (ctx->Shader.CurrentProgram &&
+       ctx->Shader.CurrentProgram->LinkStatus) {
+      fprog = ctx->Shader.CurrentProgram->FragmentProgram;
+   }
+   else if (ctx->FragmentProgram._Enabled) {
+      fprog = ctx->FragmentProgram.Current;
+   }
+   else {
+      fprog = NULL;
+   }
 
    ctx->NewState |= _NEW_TEXTURE; /* TODO: only set this if there are 
 				   * actual changes. 
@@ -2946,12 +2958,8 @@ update_texture_state( GLcontext *ctx )
        * by a fragment shader/program.  When multiple flags are set, we'll
        * settle on the one with highest priority (see texture_override below).
        */
-      if (ctx->Shader.CurrentProgram &&
-          ctx->Shader.CurrentProgram->LinkStatus) {
-         enableBits = ctx->Shader.CurrentProgram->FragmentProgram->TexturesUsed[unit];
-      }
-      else if (ctx->FragmentProgram._Enabled) {
-         enableBits = ctx->FragmentProgram.Current->TexturesUsed[unit];
+      if (fprog) {
+         enableBits = fprog->TexturesUsed[unit];
       }
       else {
          if (!texUnit->Enabled)
@@ -3068,24 +3076,25 @@ update_texture_state( GLcontext *ctx )
 	 ctx->Texture._TexMatEnabled |= ENABLE_TEXMAT(unit);
    }
 
+   /* XXX maybe move this below as an else-clause */
    ctx->Texture._EnabledCoordUnits = ctx->Texture._EnabledUnits;
+
    /* Fragment programs may need texture coordinates but not the
     * corresponding texture images.
     */
-#if 0  /* XXX NEW_SLANG */
-   if (ctx->ShaderObjects.CurrentProgram != NULL) {
-      ctx->Texture._EnabledCoordUnits |= (1 << ctx->Const.MaxTextureCoordUnits) - 1;
-   }
-   else
-#endif
-   if (ctx->FragmentProgram._Enabled) {
-      ctx->Texture._EnabledCoordUnits |=
-         (ctx->FragmentProgram._Current->Base.InputsRead >> FRAG_ATTRIB_TEX0);
+   if (fprog) {
+      const GLuint coordMask = (1 << MAX_TEXTURE_UNITS) - 1;
+      ctx->Texture._EnabledCoordUnits
+         |= (fprog->Base.InputsRead >> FRAG_ATTRIB_TEX0) & coordMask;
    }
 }
 
 
-void _mesa_update_texture( GLcontext *ctx, GLuint new_state )
+/**
+ * Update texture-related derived state.
+ */
+void
+_mesa_update_texture( GLcontext *ctx, GLuint new_state )
 {
    if (new_state & _NEW_TEXTURE_MATRIX)
       update_texture_matrices( ctx );
