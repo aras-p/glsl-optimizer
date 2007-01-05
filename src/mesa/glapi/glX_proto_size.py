@@ -447,17 +447,9 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 		print ''
 		print '#include <GL/gl.h>'
 		print '#include "glxserver.h"'
+		print '#include "glxbyteorder.h"'
 		print '#include "indirect_size.h"'
 		print '#include "indirect_reqsize.h"'
-		print ''
-		print '#if defined(linux)'
-		print '#  include <byteswap.h>'
-		print '#  define SWAP_32(v)  do { (v) = bswap_32(v); } while(0)'
-		print '#else'
-		print '#  include <X11/misc.h>'
-		print '#  define SWAP_32(v)  do { char tmp; swapl(&v, tmp); } while(0)'
-		print '#endif'
-		
 		print ''
 		print '#define __GLX_PAD(x)  (((x) + 3) & ~3)'
 		print ''
@@ -538,7 +530,7 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 		if fixup:
 			print '    if (swap) {'
 			for name in fixup:
-				print '        SWAP_32( %s );' % (name)
+				print '        %s = bswap_32(%s);' % (name, name)
 			print '    }'
 
 		return
