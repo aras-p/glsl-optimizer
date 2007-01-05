@@ -223,6 +223,23 @@ _mesa_add_uniform(struct gl_program_parameter_list *paramList,
 
 
 GLint
+_mesa_add_sampler(struct gl_program_parameter_list *paramList,
+                  const char *name)
+{
+   GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
+   if (i >= 0 && paramList->Parameters[i].Type == PROGRAM_SAMPLER) {
+      /* already in list */
+      return i;
+   }
+   else {
+      const GLint size = 1;
+      i = _mesa_add_parameter(paramList, name, NULL, size, PROGRAM_SAMPLER);
+      return i;
+   }
+}
+
+
+GLint
 _mesa_add_varying(struct gl_program_parameter_list *paramList,
                   const char *name, GLuint size)
 {

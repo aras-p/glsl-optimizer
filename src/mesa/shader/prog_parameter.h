@@ -35,10 +35,11 @@
 
 
 /**
- * Named program parameters 
- * Used for NV_fragment_program "DEFINE"d constants and "DECLARE"d parameters,
- * and ARB_fragment_program global state references.  For the later, Name
- * might be "state.light[0].diffuse", for example.
+ * Program parameter.
+ * Used for NV_fragment_program for "DEFINE"d constants and "DECLARE"d
+ * parameters.
+ * Also used by ARB_vertex/fragment_programs for state variables, etc.
+ * Used by shaders for uniforms, constants, varying vars, etc.
  */
 struct gl_program_parameter
 {
@@ -53,7 +54,7 @@ struct gl_program_parameter
 
 
 /**
- * A list of the above program_parameter instances.
+ * List of gl_program_parameter instances.
  */
 struct gl_program_parameter_list
 {
@@ -97,6 +98,10 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
 extern GLint
 _mesa_add_uniform(struct gl_program_parameter_list *paramList,
                   const char *name, GLuint size);
+
+extern GLint
+_mesa_add_sampler(struct gl_program_parameter_list *paramList,
+                  const char *name);
 
 extern GLint
 _mesa_add_varying(struct gl_program_parameter_list *paramList,
