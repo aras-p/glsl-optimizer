@@ -1031,8 +1031,6 @@ emit_tex(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    inst->TexSrcTarget = n->TexTarget;
    inst->TexSrcUnit = 0;  /* XXX temp */
 
-   prog->TexturesUsed[inst->TexSrcUnit] |= (1 << inst->TexSrcTarget);
-
    return inst;
 }
 
