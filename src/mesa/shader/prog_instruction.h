@@ -379,6 +379,12 @@ struct prog_instruction
     */
    GLuint BranchTarget;
 
+   /**
+    * For TEX instructions in shaders, the sampler to use for the
+    * texture lookup.
+    */
+   GLint Sampler;
+
    const char *Comment;
 };
 
