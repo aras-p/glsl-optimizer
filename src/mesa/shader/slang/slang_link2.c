@@ -138,6 +138,7 @@ is_uniform(enum register_file file)
            file == PROGRAM_STATE_VAR ||
            file == PROGRAM_NAMED_PARAM ||
            file == PROGRAM_CONSTANT ||
+           file == PROGRAM_SAMPLER ||
            file == PROGRAM_UNIFORM);
 }
 
@@ -148,7 +149,8 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
    GLuint *map, i;
 
 #if 0
-      _mesa_print_parameter_list(prog->Parameters);
+   printf("================ pre link uniforms ===============\n");
+   _mesa_print_parameter_list(shProg->Uniforms);
 #endif
 
    map = (GLuint *) malloc(prog->Parameters->NumParameters * sizeof(GLuint));
@@ -201,6 +203,9 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
          case PROGRAM_UNIFORM:
             j = _mesa_add_uniform(shProg->Uniforms, p->Name, p->Size);
             break;
+         case PROGRAM_SAMPLER:
+            j = _mesa_add_sampler(shProg->Uniforms, p->Name);
+            break;
          default:
             abort();
          }
@@ -217,6 +222,11 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
       }
 
    }
+
+#if 0
+   printf("================ post link uniforms ===============\n");
+   _mesa_print_parameter_list(shProg->Uniforms);
+#endif
 
 #if 0
    {
@@ -244,7 +254,14 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
             inst->SrcReg[j].Index = map[ inst->SrcReg[j].Index ];
          }
       }
-      /* XXX update program OutputsWritten, InputsRead */
+
+      if (inst->Opcode == OPCODE_TEX ||
+          inst->Opcode == OPCODE_TXB ||
+          inst->Opcode == OPCODE_TXB) {
+         printf("====== remap sampler from %d to %d\n",
+                inst->Sampler, map[ inst->Sampler ]);
+         inst->Sampler = map[ inst->Sampler ];
+      }
    }
 
    free(map);
@@ -257,7 +274,7 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
  * XXX Temporary
  */
 static void
-slang_resolve_branches(struct gl_program *prog)
+_slang_resolve_branches(struct gl_program *prog)
 {
    struct target {
       const char *Name;
@@ -294,20 +311,45 @@ slang_resolve_branches(struct gl_program *prog)
 
 
 /**
- * Scan program instructions to update the program's InputsRead and
- * OutputsWritten fields.
+ * Scan program for texture instructions, lookup sampler/uniform's value
+ * to determine which texture unit to use.
  * Also, update the program's TexturesUsed[] array.
  */
+void
+_slang_resolve_samplers(struct gl_shader_program *shProg,
+                        struct gl_program *prog)
+{
+   GLuint i;
+
+   for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
+      prog->TexturesUsed[i] = 0;
+
+   for (i = 0; i < prog->NumInstructions; i++) {
+      struct prog_instruction *inst = prog->Instructions + i;
+      if (inst->Opcode == OPCODE_TEX ||
+          inst->Opcode == OPCODE_TXB ||
+          inst->Opcode == OPCODE_TXB) {
+         GLint sampleUnit = (GLint) shProg->Uniforms->ParameterValues[inst->Sampler][0];
+         assert(sampleUnit < MAX_TEXTURE_IMAGE_UNITS);
+         inst->TexSrcUnit = sampleUnit;
+
+         prog->TexturesUsed[inst->TexSrcUnit] |= (1 << inst->TexSrcTarget);
+      }
+   }
+}
+
+
+/**
+ * Scan program instructions to update the program's InputsRead and
+ * OutputsWritten fields.
+ */
 static void
-slang_update_inputs_outputs(struct gl_program *prog)
+_slang_update_inputs_outputs(struct gl_program *prog)
 {
    GLuint i, j;
 
    prog->InputsRead = 0x0;
    prog->OutputsWritten = 0x0;
-
-   for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
-      prog->TexturesUsed[i] = 0;
 
    for (i = 0; i < prog->NumInstructions; i++) {
       const struct prog_instruction *inst = prog->Instructions + i;
@@ -319,12 +361,6 @@ slang_update_inputs_outputs(struct gl_program *prog)
       }
       if (inst->DstReg.File == PROGRAM_OUTPUT) {
          prog->OutputsWritten |= 1 << inst->DstReg.Index;
-      }
-
-      if (inst->Opcode == OPCODE_TEX ||
-          inst->Opcode == OPCODE_TXB ||
-          inst->Opcode == OPCODE_TXP) {
-         prog->TexturesUsed[inst->TexSrcUnit] |= (1 << inst->TexSrcTarget);
       }
    }
 }
@@ -425,11 +461,14 @@ _slang_link2(GLcontext *ctx,
    shProg->VertexProgram->Base.Parameters = shProg->Uniforms;
    shProg->FragmentProgram->Base.Parameters = shProg->Uniforms;
 
-   slang_resolve_branches(&shProg->VertexProgram->Base);
-   slang_resolve_branches(&shProg->FragmentProgram->Base);
-
-   slang_update_inputs_outputs(&shProg->VertexProgram->Base);
-   slang_update_inputs_outputs(&shProg->FragmentProgram->Base);
+   _slang_resolve_branches(&shProg->VertexProgram->Base);
+   _slang_resolve_branches(&shProg->FragmentProgram->Base);
+#if 1
+   _slang_resolve_samplers(shProg, &shProg->VertexProgram->Base);
+   _slang_resolve_samplers(shProg, &shProg->FragmentProgram->Base);
+#endif
+   _slang_update_inputs_outputs(&shProg->VertexProgram->Base);
+   _slang_update_inputs_outputs(&shProg->FragmentProgram->Base);
 
 #if 1
    printf("************** original fragment program\n");

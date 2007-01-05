@@ -184,6 +184,7 @@ storage_string(const slang_ir_storage *st)
       "UNIFORM",
       "WRITE_ONLY",
       "ADDRESS",
+      "SAMPLER",
       "UNDEFINED"
    };
    static char s[100];
@@ -194,10 +195,8 @@ storage_string(const slang_ir_storage *st)
       sprintf(s, "%s[%d..%d]", files[st->File], st->Index,
               st->Index + st->Size - 1);
 #endif
-   if (st->File == 1000)
-      sprintf(s, "sampler");
-   else
-      sprintf(s, "%s[%d]", files[st->File], st->Index);
+   assert(st->File < sizeof(files) / sizeof(files[0]));
+   sprintf(s, "%s[%d]", files[st->File], st->Index);
    return s;
 }
 
@@ -680,10 +679,12 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
       assert(n->Var);
       if (is_sampler_type(&n->Var->type)) {
          /* i.e. "uniform sampler2D tex;" */
-#define PROGRAM_SAMPLER 1000
          n->Store->File = PROGRAM_SAMPLER;
          n->Store->Size = 1; /* never used */
          n->Store->Index = alloc_sampler(gc);
+         n->Store->Index = slang_alloc_uniform(prog, (char *) n->Var->a_name, 1);
+         printf("********** Alloc sampler uniform %d\n", n->Store->Index);
+         abort(); /* this is a locally-declared sampler */
       }
       else if (n->Store->Index < 0) { /* XXX assert this? */
          assert(gc);
@@ -701,11 +702,17 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
       return;
    }
 
+   /*
+   assert(!is_sampler_type(&n->Var->type));
+   */
+
    if (n->Opcode == IR_VAR && n->Store->File == PROGRAM_UNDEFINED) {
       /* try to determine the storage for this variable */
       GLint i;
 
       assert(n->Var);
+
+      /*if (is_sampler(*/
 
       if (n->Store->Size < 0) {
          /* determine var/storage size now */
@@ -766,14 +773,7 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
       else if (n->Var->type.qualifier == slang_qual_varying) {
          i = slang_alloc_varying(prog, (char *) n->Var->a_name);
          if (i >= 0) {
-#ifdef OLD_LINK
-            if (prog->Target == GL_VERTEX_PROGRAM_ARB)
-               n->Store->File = PROGRAM_OUTPUT;
-            else
-               n->Store->File = PROGRAM_INPUT;
-#else
             n->Store->File = PROGRAM_VARYING;
-#endif
             n->Store->Index = i;
             return;
          }
@@ -1023,14 +1023,24 @@ emit_tex(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
       inst = new_instruction(prog, OPCODE_TXB);
    }
 
+   if (!n->Store)
+      slang_alloc_temp_storage(gc, n, 4);
+
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
 
-   storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
-                      n->Children[0]->Swizzle);
+   /* Child[1] is the coord */
+   storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store,
+                      n->Children[1]->Swizzle);
 
-   inst->TexSrcTarget = n->TexTarget;
-   inst->TexSrcUnit = 0;  /* XXX temp */
+   /* Child[0] is the sampler (a uniform which'll indicate the texture unit) */
+   assert(n->Children[0]->Store);
+   assert(n->Children[0]->Store->Size >= TEXTURE_1D_INDEX);
 
+   inst->Sampler = n->Children[0]->Store->Index; /* i.e. uniform's index */
+   inst->TexSrcTarget = n->Children[0]->Store->Size;
+   inst->TexSrcUnit = 27; /* Dummy value; the TexSrcUnit will be computed at
+                           * link time, using the sampler uniform's value.
+                           */
    return inst;
 }
 

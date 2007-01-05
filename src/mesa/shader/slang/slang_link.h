@@ -353,6 +353,11 @@ extern void
 _slang_link2(GLcontext *ctx, GLhandleARB h,
              struct gl_shader_program *shProg);
 
+extern void
+_slang_resolve_samplers(struct gl_shader_program *shProg,
+                        struct gl_program *prog);
+
+
 #ifdef __cplusplus
 }
 #endif

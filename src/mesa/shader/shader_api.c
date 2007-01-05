@@ -741,7 +741,8 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
           * We need to handle things like "e.c[0].b" as seen in the
           * GLSL orange book, page 189.
           */
-         if (u->Type == PROGRAM_UNIFORM && !strcmp(u->Name, name)) {
+         if ((u->Type == PROGRAM_UNIFORM ||
+              u->Type == PROGRAM_SAMPLER) && !strcmp(u->Name, name)) {
             return loc;
          }
       }
@@ -924,6 +925,12 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
          _mesa_problem(ctx, "Invalid type in _mesa_uniform");
          return;
       }
+   }
+
+   if (shProg->Uniforms->Parameters[location].Type == PROGRAM_SAMPLER) {
+      _slang_resolve_samplers(shProg, &shProg->VertexProgram->Base);
+      _slang_resolve_samplers(shProg, &shProg->FragmentProgram->Base);
+      FLUSH_VERTICES(ctx, _NEW_TEXTURE);
    }
 }
 

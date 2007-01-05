@@ -112,7 +112,6 @@ typedef struct slang_ir_node_
    GLfloat Value[4];    /**< If Opcode == IR_FLOAT */
    slang_variable *Var;
    slang_ir_storage *Store;
-   GLuint TexTarget;   /**< If Opcode == IR_TEX or IR_TEXB */
 } slang_ir_node;
 
 

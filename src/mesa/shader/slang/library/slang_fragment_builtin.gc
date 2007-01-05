@@ -60,19 +60,19 @@ vec4 texture1DProj (sampler1D sampler, vec4 coord, float bias) {
     return texture1D (sampler, coord.s / coord.q, bias);
 }
 
-vec4 texture2D (sampler2D sampler, vec2 coord, float bias) {
-    vec4 texel;
-    __asm vec4_tex2d texel, sampler, coord, bias;
-    return texel;
-}
+//vec4 texture2D (sampler2D sampler, vec2 coord, float bias) {
+//    vec4 texel;
+//    __asm vec4_tex2d texel, sampler, coord, bias;
+//    return texel;
+//}
 
-vec4 texture2DProj (sampler2D sampler, vec3 coord, float bias) {
-    return texture2D (sampler, vec2 (coord.s / coord.p, coord.t / coord.p), bias);
-}
+//vec4 texture2DProj (sampler2D sampler, vec3 coord, float bias) {
+//    return texture2D (sampler, vec2 (coord.s / coord.p, coord.t / coord.p), bias);
+//}
 
-vec4 texture2DProj (sampler2D sampler, vec4 coord, float bias) {
-    return texture2D (sampler, vec2 (coord.s / coord.q, coord.t / coord.q), bias);
-}
+//vec4 texture2DProj (sampler2D sampler, vec4 coord, float bias) {
+//    return texture2D (sampler, vec2 (coord.s / coord.q, coord.t / coord.q), bias);
+//}
 
 vec4 texture3D (sampler3D sampler, vec3 coord, float bias) {
     vec4 texel;

@@ -92,7 +92,9 @@ static slang_asm_info AsmInfo[] = {
    { "float_divide", IR_DIV, 1, 2 },
    { "float_power", IR_POW, 1, 2 },
    /* texture / sampler */
-   { "vec4_tex2d", IR_TEX, 1, 1 },
+   { "vec4_tex1d", IR_TEX, 1, 1 },
+   { "vec4_texb1d", IR_TEXB, 1, 3 },
+   { "vec4_tex2d", IR_TEX, 1, 2 },
    { "vec4_texb2d", IR_TEXB, 1, 3 },
    /* unary op */
    { "int_to_float", IR_I_TO_F, 1, 1 },
@@ -196,7 +198,7 @@ new_var(slang_assemble_ctx *A, slang_operation *oper,
    oper->var = v;
    n->Swizzle = swizzle;
    n->Var = v;
-   slang_resolve_storage(A->codegen/**NULL**/, n, A->program);
+   slang_resolve_storage(A->codegen, n, A->program);
    return n;
 }
 
@@ -799,10 +801,6 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
       n->Writemask = writemask;
 
       free(n0);
-   }
-
-   if (info->Opcode == IR_TEX || info->Opcode == IR_TEXB) {
-      n->TexTarget = TEXTURE_2D_INDEX;
    }
 
    return n;
@@ -1568,8 +1566,10 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    slang_print_function(fun, 1);
 #endif
 
-   A->program->Parameters = _mesa_new_parameter_list();
-   A->program->Varying = _mesa_new_parameter_list();
+   /* should have been allocated earlier: */
+   assert(A->program->Parameters );
+   assert(A->program->Varying);
+
    A->codegen = _slang_new_codegen_context();
 
    /*printf("** Begin Simplify\n");*/
@@ -1608,3 +1608,79 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 }
 
 
+static GLint
+sampler_to_texture_index(const slang_type_specifier_type type)
+{
+   switch (type) {
+   case slang_spec_sampler1D:
+      return TEXTURE_1D_INDEX;
+   case slang_spec_sampler2D:
+      return TEXTURE_2D_INDEX;
+   case slang_spec_sampler3D:
+      return TEXTURE_3D_INDEX;
+   case slang_spec_samplerCube:
+      return TEXTURE_CUBE_INDEX;
+   case slang_spec_sampler1DShadow:
+      return TEXTURE_1D_INDEX; /* XXX fix */
+   case slang_spec_sampler2DShadow:
+      return TEXTURE_2D_INDEX; /* XXX fix */
+   default:
+      return -1;
+   }
+}
+
+
+
+static GLint
+slang_alloc_sampler(struct gl_program *prog, const char *name)
+{
+   GLint i = _mesa_add_sampler(prog->Parameters, name);
+   return i;
+}
+
+
+/**
+ * Called by compiler when a global variable has been parsed/compiled.
+ * Here we examine the variable's type to determine what kind of register
+ * storage will be used.
+ *
+ * A uniform such as "gl_Position" will become the register specification
+ * (PROGRAM_OUTPUT, VERT_RESULT_HPOS).  Or, uniform "gl_FogFragCoord"
+ * will be (PROGRAM_INPUT, FRAG_ATTRIB_FOGC).
+ *
+ * Samplers are interesting.  For "uniform sampler2D tex;" we'll specify
+ * (PROGRAM_SAMPLER, index) where index is resolved at link-time to an
+ * actual texture unit (as specified by the user calling glUniform1i()).
+ */
+void
+_slang_codegen_global_variable(slang_variable *var, struct gl_program *prog)
+{
+   GLint texIndex;
+   slang_ir_storage *store = NULL;
+
+   texIndex = sampler_to_texture_index(var->type.specifier.type);
+
+   if (texIndex != -1) {
+      /* Texture sampler:
+       * store->File = PROGRAM_SAMPLER
+       * store->Index = sampler uniform location
+       * store->Size = texture type index (1D, 2D, 3D, cube, etc)
+       */
+      GLint samplerUniform = slang_alloc_sampler(prog, (char *) var->a_name);
+      store = _slang_new_ir_storage(PROGRAM_SAMPLER, samplerUniform, texIndex);
+      printf("SAMPLER ");
+   }
+   else if (var->type.qualifier == slang_qual_uniform) {
+      printf("UNIFORM ");
+   }
+
+   printf("CODEGEN VAR %s\n", (char*) var->a_name);
+
+   assert(!var->aux);
+#if 1
+   var->aux = store;
+#endif
+   /**
+      XXX allocate variable storage (aux), at least the register file.
+    */
+}

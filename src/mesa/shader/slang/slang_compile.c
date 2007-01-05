@@ -803,25 +803,7 @@ parse_child_operation(slang_parse_ctx * C, slang_output_ctx * O,
    slang_operation *ch;
 
    /* grow child array */
-#if 000
-   oper->children = (slang_operation *)
-      slang_alloc_realloc(oper->children,
-                          oper->num_children * sizeof(slang_operation),
-                          (oper->num_children + 1) * sizeof(slang_operation));
-   if (oper->children == NULL) {
-      slang_info_log_memory(C->L);
-      return 0;
-   }
-
-   ch = &oper->children[oper->num_children];
-   if (!slang_operation_construct(ch)) {
-      slang_info_log_memory(C->L);
-      return 0;
-   }
-   oper->num_children++;
-#else
    ch = slang_operation_grow(&oper->num_children, &oper->children);
-#endif
    if (statement)
       return parse_statement(C, O, ch);
    return parse_expression(C, O, ch);
@@ -860,44 +842,6 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
       /* local variable declaration, individual declarators are stored as
        * children identifiers
        */
-#if 000
-      oper->type = slang_oper_variable_decl;
-      {
-         const unsigned int first_var = O->vars->num_variables;
-
-         /* parse the declaration, note that there can be zero or more
-          * than one declarators
-          */
-         if (!parse_declaration(C, O))
-            return 0;
-         if (first_var < O->vars->num_variables) {
-            const unsigned int num_vars = O->vars->num_variables - first_var;
-            unsigned int i;
-
-            oper->children = (slang_operation *)
-               slang_alloc_malloc(num_vars * sizeof(slang_operation));
-            if (oper->children == NULL) {
-               slang_info_log_memory(C->L);
-               return 0;
-            }
-            for (oper->num_children = 0; oper->num_children < num_vars;
-                 oper->num_children++) {
-               if (!slang_operation_construct
-                   (&oper->children[oper->num_children])) {
-                  slang_info_log_memory(C->L);
-                  return 0;
-               }
-            }
-            for (i = first_var; i < O->vars->num_variables; i++) {
-               slang_operation *o = &oper->children[i - first_var];
-               o->type = slang_oper_identifier;
-               o->locals->outer_scope = O->vars;
-               o->a_id = O->vars->variables[i].a_name;
-            }
-         }
-      }
-#else
-
       oper->type = slang_oper_block_no_new_scope;
       {
          const unsigned int first_var = O->vars->num_variables;
@@ -925,9 +869,6 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
             }
          }
       }
-
-
-#endif
       break;
    case OP_ASM:
       /* the __asm statement, parse the mnemonic and all its arguments
@@ -1776,6 +1717,11 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       return 0;
    }
 
+#if 1
+   if (C->global_scope && O->program)
+      _slang_codegen_global_variable(var, O->program);
+#endif
+
    /* allocate global address space for a variable with a known size */
    if (C->global_scope
        && !(var->type.specifier.type == slang_spec_array
@@ -2309,6 +2255,9 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
          = (struct gl_program **) malloc(sizeof(struct gl_program*));
       shader->Programs[0] = _mesa_new_program(ctx, progTarget, 1);
       shader->NumPrograms = 1;
+
+      shader->Programs[0]->Parameters = _mesa_new_parameter_list();
+      shader->Programs[0]->Varying = _mesa_new_parameter_list();
    }
 
    slang_info_log_construct(&info_log);
