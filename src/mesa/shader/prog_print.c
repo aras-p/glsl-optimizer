@@ -68,6 +68,8 @@ program_file_string(enum register_file f)
       return "WRITE_ONLY";
    case PROGRAM_ADDRESS:
       return "ADDR";
+   case PROGRAM_SAMPLER:
+      return "SAMPLER";
    default:
       return "Unknown program file!";
    }
