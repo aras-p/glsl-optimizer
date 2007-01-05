@@ -1827,7 +1827,8 @@ enum register_file
    PROGRAM_VARYING = 9,     /**< machine->Inputs[]/Outputs[] */
    PROGRAM_WRITE_ONLY = 10, /**< A dummy, write-only register */
    PROGRAM_ADDRESS = 11,    /**< machine->AddressReg */
-   PROGRAM_UNDEFINED = 12,  /**< Invalid value */
+   PROGRAM_SAMPLER = 12,    /**< for shader samplers, compile-time only */
+   PROGRAM_UNDEFINED = 13,  /**< Invalid value */
    PROGRAM_FILE_MAX
 };
 
