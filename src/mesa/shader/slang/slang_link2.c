@@ -296,6 +296,7 @@ slang_resolve_branches(struct gl_program *prog)
 /**
  * Scan program instructions to update the program's InputsRead and
  * OutputsWritten fields.
+ * Also, update the program's TexturesUsed[] array.
  */
 static void
 slang_update_inputs_outputs(struct gl_program *prog)
@@ -304,6 +305,9 @@ slang_update_inputs_outputs(struct gl_program *prog)
 
    prog->InputsRead = 0x0;
    prog->OutputsWritten = 0x0;
+
+   for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
+      prog->TexturesUsed[i] = 0;
 
    for (i = 0; i < prog->NumInstructions; i++) {
       const struct prog_instruction *inst = prog->Instructions + i;
@@ -315,6 +319,12 @@ slang_update_inputs_outputs(struct gl_program *prog)
       }
       if (inst->DstReg.File == PROGRAM_OUTPUT) {
          prog->OutputsWritten |= 1 << inst->DstReg.Index;
+      }
+
+      if (inst->Opcode == OPCODE_TEX ||
+          inst->Opcode == OPCODE_TXB ||
+          inst->Opcode == OPCODE_TXP) {
+         prog->TexturesUsed[inst->TexSrcUnit] |= (1 << inst->TexSrcTarget);
       }
    }
 }
