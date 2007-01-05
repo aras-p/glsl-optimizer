@@ -1034,7 +1034,6 @@ emit_jump(const char *target, struct gl_program *prog)
 static struct prog_instruction *
 emit_tex(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 {
-   struct gl_fragment_program *fProg = (struct gl_fragment_program *) prog;
    struct prog_instruction *inst;
    if (n->Opcode == IR_TEX) {
       inst = new_instruction(prog, OPCODE_TEX);
@@ -1052,7 +1051,7 @@ emit_tex(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    inst->TexSrcTarget = n->TexTarget;
    inst->TexSrcUnit = 0;  /* XXX temp */
 
-   fProg->TexturesUsed[inst->TexSrcUnit] |= (1 << inst->TexSrcTarget);
+   prog->TexturesUsed[inst->TexSrcUnit] |= (1 << inst->TexSrcTarget);
 
    return inst;
 }

@@ -358,6 +358,8 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
           prog->NumInstructions * sizeof(struct prog_instruction));
    clone->InputsRead = prog->InputsRead;
    clone->OutputsWritten = prog->OutputsWritten;
+   memcpy(clone->TexturesUsed, prog->TexturesUsed, sizeof(prog->TexturesUsed));
+
    if (prog->Parameters)
       clone->Parameters = _mesa_clone_parameter_list(prog->Parameters);
    memcpy(clone->LocalParams, prog->LocalParams, sizeof(clone->LocalParams));
@@ -389,7 +391,6 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
          const struct gl_fragment_program *fp
             = (const struct gl_fragment_program *) prog;
          struct gl_fragment_program *fpc = (struct gl_fragment_program *) clone;
-         memcpy(fpc->TexturesUsed, fp->TexturesUsed, sizeof(fp->TexturesUsed));
          fpc->NumAluInstructions = fp->NumAluInstructions;
          fpc->NumTexInstructions = fp->NumTexInstructions;
          fpc->NumTexIndirections = fp->NumTexIndirections;

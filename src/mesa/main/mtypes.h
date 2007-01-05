@@ -1853,6 +1853,7 @@ struct gl_program
 
    GLbitfield InputsRead;     /* Bitmask of which input regs are read */
    GLbitfield OutputsWritten; /* Bitmask of which output regs are written to */
+   GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /**< TEXTURE_x_BIT bitmask */
 
    /** Named parameters, constants, etc. from program text */
    struct gl_program_parameter_list *Parameters;
@@ -1895,7 +1896,6 @@ struct gl_vertex_program
 struct gl_fragment_program
 {
    struct gl_program Base;   /**< base class */
-   GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /**< TEXTURE_x_BIT bitmask */
    GLuint NumAluInstructions; /**< GL_ARB_fragment_program */
    GLuint NumTexInstructions;
    GLuint NumTexIndirections;

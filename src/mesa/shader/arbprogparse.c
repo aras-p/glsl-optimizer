@@ -4038,7 +4038,7 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    program->Base.InputsRead      = ap.Base.InputsRead;
    program->Base.OutputsWritten  = ap.Base.OutputsWritten;
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
-      program->TexturesUsed[i] = ap.TexturesUsed[i];
+      program->Base.TexturesUsed[i] = ap.TexturesUsed[i];
    program->FogOption          = ap.FogOption;
 
    if (program->Base.Instructions)

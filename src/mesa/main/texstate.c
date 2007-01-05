@@ -2959,7 +2959,7 @@ update_texture_state( GLcontext *ctx )
        * settle on the one with highest priority (see texture_override below).
        */
       if (fprog) {
-         enableBits = fprog->TexturesUsed[unit];
+         enableBits = fprog->Base.TexturesUsed[unit];
       }
       else {
          if (!texUnit->Enabled)

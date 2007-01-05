@@ -1563,7 +1563,7 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
       program->Base.InputsRead = parseState.inputsRead;
       program->Base.OutputsWritten = parseState.outputsWritten;
       for (u = 0; u < ctx->Const.MaxTextureImageUnits; u++)
-         program->TexturesUsed[u] = parseState.texturesUsed[u];
+         program->Base.TexturesUsed[u] = parseState.texturesUsed[u];
 
       /* save program parameters */
       program->Base.Parameters = parseState.parameters;
