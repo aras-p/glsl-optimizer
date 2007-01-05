@@ -625,24 +625,6 @@ static GLint
 slang_alloc_varying(struct gl_program *prog, const char *name)
 {
    GLint i = _mesa_add_varying(prog->Varying, name, 4); /* XXX fix size */
-#if 0
-   if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
-#ifdef OLD_LINK
-      i += VERT_RESULT_VAR0;
-      prog->OutputsWritten |= (1 << i);
-#else
-      prog->OutputsWritten |= (1 << (i + VERT_RESULT_VAR0));
-#endif
-   }
-   else {
-#ifdef OLD_LINK
-      i += FRAG_ATTRIB_VAR0;
-      prog->InputsRead |= (1 << i);
-#else
-      prog->InputsRead |= (1 << (i + FRAG_ATTRIB_VAR0));
-#endif
-   }
-#endif
    return i;
 }
 
@@ -746,7 +728,6 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
          n->Store->File = PROGRAM_INPUT;
          n->Store->Index = i;
          assert(n->Store->Size > 0);
-         prog->InputsRead |= (1 << i);
          return;
       }
 
@@ -754,7 +735,6 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
       if (i >= 0) {
          n->Store->File = PROGRAM_OUTPUT;
          n->Store->Index = i;
-         prog->OutputsWritten |= (1 << i);
          return;
       }
 

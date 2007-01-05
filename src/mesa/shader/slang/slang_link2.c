@@ -293,6 +293,34 @@ slang_resolve_branches(struct gl_program *prog)
 }
 
 
+/**
+ * Scan program instructions to update the program's InputsRead and
+ * OutputsWritten fields.
+ */
+static void
+slang_update_inputs_outputs(struct gl_program *prog)
+{
+   GLuint i, j;
+
+   prog->InputsRead = 0x0;
+   prog->OutputsWritten = 0x0;
+
+   for (i = 0; i < prog->NumInstructions; i++) {
+      const struct prog_instruction *inst = prog->Instructions + i;
+      const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
+      for (j = 0; j < numSrc; j++) {
+         if (inst->SrcReg[j].File == PROGRAM_INPUT) {
+            prog->InputsRead |= 1 << inst->SrcReg[j].Index;
+         }
+      }
+      if (inst->DstReg.File == PROGRAM_OUTPUT) {
+         prog->OutputsWritten |= 1 << inst->DstReg.Index;
+      }
+   }
+}
+
+
+
 /** cast wrapper */
 static struct gl_vertex_program *
 vertex_program(struct gl_program *prog)
@@ -389,6 +417,9 @@ _slang_link2(GLcontext *ctx,
 
    slang_resolve_branches(&shProg->VertexProgram->Base);
    slang_resolve_branches(&shProg->FragmentProgram->Base);
+
+   slang_update_inputs_outputs(&shProg->VertexProgram->Base);
+   slang_update_inputs_outputs(&shProg->FragmentProgram->Base);
 
 #if 1
    printf("************** original fragment program\n");
