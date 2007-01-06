@@ -482,8 +482,27 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
 static void driSwapBuffers( __DRInativeDisplay *dpy, void *drawablePrivate )
 {
     __DRIdrawablePrivate *dPriv = (__DRIdrawablePrivate *) drawablePrivate;
+    drm_clip_rect_t rect;
+
     dPriv->swapBuffers(dPriv);
-    (void) dpy;
+
+    /* Check that we actually have the new damage report method */
+    if (api_ver < 20070105 || dri_interface->reportDamage == NULL)
+	return;
+
+    /* Assume it's affecting the whole drawable for now */
+    rect.x1 = 0;
+    rect.y1 = 0;
+    rect.x2 = rect.x1 + dPriv->w;
+    rect.y2 = rect.y1 + dPriv->h;
+
+    /* Report the damage.  Currently, all our drivers draw directly to the
+     * front buffer, so we report the damage there rather than to the backing
+     * store (if any).
+     */
+    (*dri_interface->reportDamage)(dpy, dPriv->screen, dPriv->draw,
+				   dPriv->x, dPriv->y,
+				   &rect, 1, GL_TRUE);
 }
 
 /**
