@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -80,14 +80,15 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    GLint numPixels;
    GLint xstep, ystep;
 #if defined(DEPTH_TYPE)
-   const GLint depthBits = ctx->Visual.depthBits;
+   const GLint depthBits = ctx->DrawBuffer->Visual.depthBits;
    const GLint fixedToDepthShift = depthBits <= 16 ? FIXED_SHIFT : 0;
    struct gl_renderbuffer *zrb = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
 #define FixedToDepth(F)  ((F) >> fixedToDepthShift)
    GLint zPtrXstep, zPtrYstep;
    DEPTH_TYPE *zPtr;
 #elif defined(INTERP_Z)
-   const GLint depthBits = ctx->Visual.depthBits;
+   const GLint depthBits = ctx->DrawBuffer->Visual.depthBits;
+/*ctx->Visual.depthBits;*/
 #endif
 #ifdef PIXEL_ADDRESS
    PIXEL_TYPE *pixelPtr;
@@ -268,7 +269,7 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
       }
       else {
          /* don't use fixed point */
-         span.z = (GLint) vert0->win[2];
+         span.z = (GLuint) vert0->win[2];
          span.zStep = (GLint) ((vert1->win[2] - vert0->win[2]) / numPixels);
       }
    }
