@@ -2883,8 +2883,9 @@ int __glXGetInternalVersion(void)
      * 20050727 - Gut all the old interfaces.  This breaks compatability with
      *            any DRI driver built to any previous version.
      * 20060314 - Added support for GLX_MESA_copy_sub_buffer.
+     * 20070105 - Added support for damage reporting.
      */
-    return 20060314;
+    return 20070105;
 }
 
 
