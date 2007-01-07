@@ -60,6 +60,7 @@
 #include "GL/internal/glcore.h"
 #include "glapitable.h"
 #include "glxextensions.h"
+#include "glxhash.h"
 #if defined( USE_XTHREADS )
 # include <X11/Xthreads.h>
 #elif defined( PTHREADS )
@@ -349,6 +350,11 @@ struct __GLXcontextRec {
      * Per context direct rendering interface functions and data.
      */
     __DRIcontext driContext;
+
+    /**
+     * Pointer to the mode used to create this context.
+     */
+    const __GLcontextModes * mode;
 #endif
     
     /**
@@ -456,6 +462,7 @@ typedef struct __GLXscreenConfigsRec {
      * Per screen direct rendering interface functions and data.
      */
     __DRIscreen driScreen;
+    __glxHashTable *drawHash;
 #endif
 
     /**

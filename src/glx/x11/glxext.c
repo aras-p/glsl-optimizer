@@ -61,6 +61,7 @@
 #include <inttypes.h>
 #include <sys/mman.h>
 #include "xf86dri.h"
+#include "xf86drm.h"
 #include "sarea.h"
 #include "dri_glx.h"
 #endif
@@ -366,6 +367,7 @@ static void FreeScreenConfigs(__GLXdisplayPrivate *priv)
 	    (*psc->driScreen.destroyScreen)(priv->dpy, i,
 					    psc->driScreen.private);
 	psc->driScreen.private = NULL;
+	__glxHashDestroy(psc->drawHash);
 #endif
     }
     XFree((char*) priv->screenConfigs);
@@ -781,7 +783,6 @@ static const __DRIinterfaceMethods interface_methods = {
     _gl_context_modes_destroy,
       
     __glXFindDRIScreen,
-    __glXWindowExists,
       
     XF86DRICreateContextWithConfig,
     XF86DRIDestroyContext,
@@ -816,7 +817,7 @@ static const __DRIinterfaceMethods interface_methods = {
  *       returned by the client-side driver.
  */
 static void *
-CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc,
+CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 		    __DRIdisplay * driDpy,
 		    PFNCREATENEWSCREENFUNC createNewScreen)
 {
@@ -937,13 +938,12 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc,
 
 				if ( status == 0 ) {
 				    __GLcontextModes * driver_modes = NULL;
-				    __GLXscreenConfigs *configs = psc->screenConfigs;
 
 				    err_msg = "InitDriver";
 				    err_extra = NULL;
 				    psp = (*createNewScreen)(dpy, scrn,
-							     psc,
-							     configs->configs,
+							     &psc->driScreen,
+							     psc->configs,
 							     & ddx_version,
 							     & dri_version,
 							     & drm_version,
@@ -954,7 +954,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc,
 							     & interface_methods,
 							     & driver_modes );
 
-				    filter_modes( & configs->configs,
+				    filter_modes( & psc->configs,
 						  driver_modes );
 				    _gl_context_modes_destroy( driver_modes );
 				}
@@ -1169,6 +1169,14 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	UnlockDisplay(dpy);
 
 #ifdef GLX_DIRECT_RENDERING
+	/* Create drawable hash */
+	psc->drawHash = __glxHashCreate();
+	if ( psc->drawHash == NULL ) {
+	    SyncHandle();
+	    FreeScreenConfigs(priv);
+	    return GL_FALSE;
+	}
+
         /* Initialize per screen dynamic client GLX extensions */
 	psc->ext_list_first_time = GL_TRUE;
 	/* Initialize the direct rendering per screen data and functions */
@@ -1181,7 +1189,7 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 
 		psc->driScreen.screenConfigs = (void *)psc;
 		psc->driScreen.private =
-		    CallCreateNewScreen(dpy, i, & psc->driScreen,
+		    CallCreateNewScreen(dpy, i, psc,
 					& priv->driDisplay,
 					priv->driDisplay.createNewScreen[i] );
 	    }
@@ -1617,20 +1625,64 @@ static Bool SendMakeCurrentRequest(Display *dpy, CARD8 opcode,
 
 
 #ifdef GLX_DIRECT_RENDERING
+static __DRIdrawable *
+FetchDRIDrawable( Display *dpy, GLXDrawable drawable, GLXContext gc)
+{
+    __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
+    __DRIdrawable *pdraw;
+    __GLXscreenConfigs *sc;
+    void *empty_attribute_list = NULL;
+
+    if (priv == NULL || priv->driDisplay.private == NULL)
+	return NULL;
+    
+    sc = &priv->screenConfigs[gc->screen];
+    if (__glxHashLookup(sc->drawHash, drawable, (void *) &pdraw) == 0)
+	return pdraw;
+
+    /* Allocate a new drawable */
+    pdraw = (__DRIdrawable *)Xmalloc(sizeof(__DRIdrawable));
+    if (!pdraw)
+	return NULL;
+
+    /* Create a new drawable */
+    pdraw->private =
+	(*sc->driScreen.createNewDrawable)(dpy,
+					   gc->mode,
+					   drawable, pdraw,
+					   GLX_WINDOW_BIT,
+					   empty_attribute_list);
+
+    if (!pdraw->private) {
+	/* ERROR!!! */
+	Xfree(pdraw);
+	return NULL;
+    }
+
+    if (__glxHashInsert(sc->drawHash, drawable, pdraw)) {
+	(*pdraw->destroyDrawable)(dpy, pdraw->private);
+	Xfree(pdraw);
+	return NULL;
+    }
+
+    return pdraw;
+}
+
 static Bool BindContextWrapper( Display *dpy, GLXContext gc,
 				GLXDrawable draw, GLXDrawable read )
 {
-    return (*gc->driContext.bindContext)(dpy, gc->screen, draw, read,
+    __DRIdrawable *pdraw = FetchDRIDrawable(dpy, draw, gc);
+    __DRIdrawable *pread = FetchDRIDrawable(dpy, read, gc);
+
+    return (*gc->driContext.bindContext)(dpy, gc->screen, pdraw, pread,
 					 & gc->driContext);
 }
 
 
 static Bool UnbindContextWrapper( GLXContext gc )
 {
-    return (*gc->driContext.unbindContext)(gc->currentDpy, gc->screen, 
-					   gc->currentDrawable,
-					   gc->currentReadable,
-					   & gc->driContext );
+    return (*gc->driContext.unbindContext)(gc->currentDpy, gc->screen,
+					   &gc->driContext );
 }
 #endif /* GLX_DIRECT_RENDERING */
 

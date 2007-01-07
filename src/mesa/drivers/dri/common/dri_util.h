@@ -490,11 +490,6 @@ struct __DRIscreenPrivateRec {
     __DRIcontextPrivate dummyContextPriv;
 
     /**
-     * Hash table to hold the drawable information for this screen.
-     */
-    void *drawHash;
-
-    /**
      * Device-dependent private information (not stored in the SAREA).
      * 
      * This pointer is never touched by the DRI layer.

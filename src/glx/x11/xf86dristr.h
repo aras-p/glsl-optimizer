@@ -50,9 +50,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *    4.0.0: Original
  *    4.0.1: Patch to bump clipstamp when windows are destroyed, 28 May 02
  *    4.1.0: Add transition from single to multi in DRMInfo rec, 24 Jun 02
+ *    5.0.0: Drop XIDs from DRI interface.
  */
-#define XF86DRI_MAJOR_VERSION	4
-#define XF86DRI_MINOR_VERSION	1
+#define XF86DRI_MAJOR_VERSION	5
+#define XF86DRI_MINOR_VERSION	0
 #define XF86DRI_PATCH_VERSION	0
 
 typedef struct _XF86DRIQueryVersion {

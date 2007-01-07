@@ -48,16 +48,16 @@
  * side library and the DRI (direct rendering infrastructure).
  */
 /*@{*/
-typedef struct __DRIdisplayRec  __DRIdisplay;
-typedef struct __DRIscreenRec   __DRIscreen;
-typedef struct __DRIcontextRec  __DRIcontext;
-typedef struct __DRIdrawableRec __DRIdrawable;
-typedef struct __DRIdriverRec   __DRIdriver;
-typedef struct __DRIframebufferRec __DRIframebuffer;
-typedef struct __DRIversionRec     __DRIversion;
-typedef struct __DRIinterfaceMethodsRec  __DRIinterfaceMethods;
-typedef unsigned long __DRIid;
-typedef void __DRInativeDisplay;
+typedef struct __DRIdisplayRec		__DRIdisplay;
+typedef struct __DRIscreenRec		__DRIscreen;
+typedef struct __DRIcontextRec		__DRIcontext;
+typedef struct __DRIdrawableRec		__DRIdrawable;
+typedef struct __DRIdriverRec		__DRIdriver;
+typedef struct __DRIframebufferRec	__DRIframebuffer;
+typedef struct __DRIversionRec		__DRIversion;
+typedef struct __DRIinterfaceMethodsRec	__DRIinterfaceMethods;
+typedef unsigned long			__DRIid;
+typedef void				__DRInativeDisplay;
 /*@}*/
 
 
@@ -106,7 +106,7 @@ typedef void *(CREATENEWSCREENFUNC)(__DRInativeDisplay *dpy, int scrn,
     const __DRIinterfaceMethods * interface,
     __GLcontextModes ** driver_modes);
 typedef CREATENEWSCREENFUNC* PFNCREATENEWSCREENFUNC;
-extern CREATENEWSCREENFUNC __driCreateNewScreen_20050727;
+extern CREATENEWSCREENFUNC __driCreateNewScreen_20070105;
 
 
 /**
@@ -170,16 +170,6 @@ struct __DRIinterfaceMethodsRec {
      * the wire protocol (e.g., EGL) will implement glorified no-op functions.
      */
     /*@{*/
-    /**
-     * Determine if the specified window ID still exists.
-     * 
-     * \note
-     * Implementations may assume that the driver will only pass an ID into
-     * this function that actually corresponds to a window.  On
-     * implementations where windows can only be destroyed by the DRI driver
-     * (e.g., EGL), this function is allowed to always return \c GL_TRUE.
-     */
-    GLboolean (*windowExists)(__DRInativeDisplay *dpy, __DRIid draw);
 
     /**
      * Create the server-side portion of the GL context.
@@ -307,12 +297,6 @@ struct __DRIscreenRec {
 			       int renderType, const int *attrs);
 
     /**
-     * Method to return a pointer to the DRI drawable data.
-     */
-    __DRIdrawable *(*getDrawable)(__DRInativeDisplay *dpy, __DRIid draw,
-				  void *drawablePrivate);
-
-    /**
      * Opaque pointer to private per screen direct rendering data.  \c NULL
      * if direct rendering is not supported on this screen.  Never
      * dereferenced in libGL.
@@ -393,27 +377,22 @@ struct __DRIcontextRec {
     void *private;
 
     /**
-     * Pointer to the mode used to create this context.
-     *
-     * \since Internal API version 20040317.
-     */
-    const __GLcontextModes * mode;
-
-    /**
      * Method to bind a DRI drawable to a DRI graphics context.
      *
      * \since Internal API version 20050727.
      */
-    GLboolean (*bindContext)(__DRInativeDisplay *dpy, int scrn, __DRIid draw,
-			 __DRIid read, __DRIcontext *ctx);
+    GLboolean (*bindContext)(__DRInativeDisplay *dpy, int scrn,
+			     __DRIdrawable *pdraw,
+			     __DRIdrawable *pread,
+			     __DRIcontext *ctx);
 
     /**
      * Method to unbind a DRI drawable from a DRI graphics context.
      *
      * \since Internal API version 20050727.
      */
-    GLboolean (*unbindContext)(__DRInativeDisplay *dpy, int scrn, __DRIid draw,
-			   __DRIid read, __DRIcontext *ctx);
+    GLboolean (*unbindContext)(__DRInativeDisplay *dpy, int scrn,
+			       __DRIcontext *ctx);
 };
 
 /**

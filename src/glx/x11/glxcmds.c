@@ -61,41 +61,92 @@ static const char __glXGLXClientVersion[] = "1.4";
 
 
 /****************************************************************************/
+
+#ifdef GLX_DIRECT_RENDERING
+
+static Bool windowExistsFlag;
+static int windowExistsErrorHandler(Display *dpy, XErrorEvent *xerr)
+{
+    if (xerr->error_code == BadWindow) {
+	windowExistsFlag = GL_FALSE;
+    }
+    return 0;
+}
+
+/**
+ * Find drawables in the local hash that have been destroyed on the
+ * server.
+ * 
+ * \param dpy    Display to destroy drawables for
+ * \param screen Screen number to destroy drawables for
+ */
+static void GarbageCollectDRIDrawables(Display *dpy, int screen)
+{
+    __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
+    __GLXscreenConfigs *sc;
+    __DRIid draw;
+    __DRIdrawable *pdraw;
+    XWindowAttributes xwa;
+    int (*oldXErrorHandler)(Display *, XErrorEvent *);
+
+    if (priv == NULL || priv->driDisplay.private == NULL)
+	return;
+
+    /* Set no-op error handler so Xlib doesn't bail out if the windows
+     * has alreay been destroyed on the server. */
+    XSync(dpy, GL_FALSE);
+    oldXErrorHandler = XSetErrorHandler(windowExistsErrorHandler);
+
+    sc = &priv->screenConfigs[screen];
+    if (__glxHashFirst(sc->drawHash, &draw, (void *)&pdraw) == 1) {
+	do {
+	    windowExistsFlag = GL_TRUE;
+	    XGetWindowAttributes(dpy, draw, &xwa); /* dummy request */
+	    if (!windowExistsFlag) {
+		/* Destroy the local drawable data, if the drawable no
+		   longer exists in the Xserver */
+		(*pdraw->destroyDrawable)(dpy, pdraw->private);
+		Xfree(pdraw);
+	    }
+	} while (__glxHashNext(sc->drawHash, &draw, (void *)&pdraw) == 1);
+    }
+
+    XSetErrorHandler(oldXErrorHandler);
+}
+
 /**
  * Get the __DRIdrawable for the drawable associated with a GLXContext
  * 
  * \param dpy       The display associated with \c drawable.
  * \param drawable  GLXDrawable whose __DRIdrawable part is to be retrieved.
+ * \param scrn_num  If non-NULL, the drawables screen is stored there
  * \returns  A pointer to the context's __DRIdrawable on success, or NULL if
  *           the drawable is not associated with a direct-rendering context.
  */
-
-#ifdef GLX_DIRECT_RENDERING
 static __DRIdrawable *
 GetDRIDrawable( Display *dpy, GLXDrawable drawable, int * const scrn_num )
 {
     __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
+    __DRIdrawable * const pdraw;
+    const unsigned  screen_count = ScreenCount(dpy);
+    unsigned   i;
+    __GLXscreenConfigs *sc;
 
-    if ( (priv != NULL) && (priv->driDisplay.private != NULL) ) {
-	const unsigned  screen_count = ScreenCount(dpy);
-	unsigned   i;
-
-	for ( i = 0 ; i < screen_count ; i++ ) {
-	    __DRIscreen * const psc = &priv->screenConfigs[i].driScreen;
-	    __DRIdrawable * const pdraw = (psc->private != NULL)
-	       ? (*psc->getDrawable)(dpy, drawable, psc->private) : NULL;
-
-	    if ( pdraw != NULL ) {
-		if ( scrn_num != NULL ) {
-		    *scrn_num = i;
-		}
-		return pdraw;
-	    }
+    if (priv == NULL || priv->driDisplay.private == NULL)
+	return NULL;
+    
+    for (i = 0; i < screen_count; i++) {
+	sc = &priv->screenConfigs[i];
+	if (__glxHashLookup(sc->drawHash, drawable, (void *) &pdraw) == 0) {
+	    if (scrn_num != NULL)
+		*scrn_num = i;
+	    return pdraw;
 	}
     }
 
     return NULL;
 }
+
 #endif
 
 
@@ -359,7 +410,7 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 		    gc->screen = mode->screen;
 		    gc->vid = mode->visualID;
 		    gc->fbconfigID = mode->fbconfigID;
-		    gc->driContext.mode = mode;
+		    gc->mode = mode;
 		}
 	    }
 	}
@@ -473,6 +524,7 @@ DestroyContext(Display *dpy, GLXContext gc)
 					     gc->driContext.private);
 	    gc->driContext.private = NULL;
 	}
+	GarbageCollectDRIDrawables(dpy, gc->screen);
     }
 #endif
 
@@ -1730,9 +1782,7 @@ static int __glXSwapIntervalMESA(unsigned int interval)
       if ( (psc != NULL) && (psc->driScreen.private != NULL)
 	   && __glXExtensionBitIsEnabled( psc, MESA_swap_control_bit ) ) {
 	 __DRIdrawable * const pdraw = 
-	     (*psc->driScreen.getDrawable)(gc->currentDpy,
-					   gc->currentDrawable,
-					   psc->driScreen.private);
+	     GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
 	 if ( pdraw != NULL ) {
 	    pdraw->swap_interval = interval;
 	    return 0;
@@ -1759,9 +1809,7 @@ static int __glXGetSwapIntervalMESA(void)
       if ( (psc != NULL) && (psc->driScreen.private != NULL)
 	   && __glXExtensionBitIsEnabled( psc, MESA_swap_control_bit ) ) {
 	 __DRIdrawable * const pdraw = 
-	     (*psc->driScreen.getDrawable)(gc->currentDpy,
-					   gc->currentDrawable,
-					   psc->driScreen.private);
+	     GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
 	 if ( pdraw != NULL ) {
 	    return pdraw->swap_interval;
 	 }
@@ -1919,9 +1967,7 @@ static int __glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count
       if ( __glXExtensionBitIsEnabled( psc, SGI_video_sync_bit )
 	   && psc->driScreen.private ) {
 	 __DRIdrawable * const pdraw = 
-	     (*psc->driScreen.getDrawable)(gc->currentDpy,
-					   gc->currentDrawable,
-					   psc->driScreen.private);
+	     GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
 	 if ( (pdraw != NULL) && (pdraw->waitForMSC != NULL) ) {
 	    int       ret;
 	    int64_t   msc;
@@ -2140,11 +2186,10 @@ Bool __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
       int   i;
 
 
-      GetDRIDrawable( dpy, drawable, & screen_num );
-      if ( (screen_num != -1)
-	   && XF86VidModeQueryVersion( dpy, & i, & i )
-	   && XF86VidModeGetModeLine( dpy, screen_num, & dot_clock,
-				      & mode_line ) ) {
+      if (GetDRIDrawable( dpy, drawable, & screen_num) != NULL
+	  && XF86VidModeQueryVersion( dpy, & i, & i )
+	  && XF86VidModeGetModeLine( dpy, screen_num, & dot_clock,
+				     & mode_line ) ) {
 	 unsigned   n = dot_clock * 1000;
 	 unsigned   d = mode_line.vtotal * mode_line.htotal;
 
@@ -2886,50 +2931,6 @@ int __glXGetInternalVersion(void)
      * 20070105 - Added support for damage reporting.
      */
     return 20070105;
-}
-
-
-
-static Bool windowExistsFlag;
-
-static int windowExistsErrorHandler(Display *dpy, XErrorEvent *xerr)
-{
-    if (xerr->error_code == BadWindow) {
-        windowExistsFlag = GL_FALSE;
-    }
-    return 0;
-}
-
-/**
- * Determine if a window associated with a \c GLXDrawable exists on the
- * X-server.  This function is not used internally by libGL.  It is provided
- * as a utility function for DRI drivers.
- * Drivers should not call this function directly.  They should instead use
- * \c glXGetProcAddress to obtain a pointer to the function.
- *
- * \param dpy  Display associated with the drawable to be queried.
- * \param draw \c GLXDrawable to test.
- * 
- * \returns \c GL_TRUE if a window exists that is associated with \c draw,
- *          otherwise \c GL_FALSE is returned.
- * 
- * \warning This function is not currently thread-safe.
- *
- * \sa glXGetProcAddress
- *
- * \since Internal API version 20021128.
- */
-Bool __glXWindowExists(Display *dpy, GLXDrawable draw)
-{
-    XWindowAttributes xwa;
-    int (*oldXErrorHandler)(Display *, XErrorEvent *);
-
-    XSync(dpy, GL_FALSE);
-    windowExistsFlag = GL_TRUE;
-    oldXErrorHandler = XSetErrorHandler(windowExistsErrorHandler);
-    XGetWindowAttributes(dpy, draw, &xwa); /* dummy request */
-    XSetErrorHandler(oldXErrorHandler);
-    return windowExistsFlag;
 }
 
 

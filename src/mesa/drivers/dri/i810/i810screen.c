@@ -431,7 +431,7 @@ static const struct __DriverAPIRec i810API = {
  *         failure.
  */
 PUBLIC
-void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+void * __driCreateNewScreen_20070105( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
 			     const __DRIversion * dri_version,
