@@ -492,8 +492,7 @@ static void meta_draw_quad(struct intel_context *intel,
 }
 
 
-static void install_meta_state( struct intel_context *intel,
-				GLenum state )
+static void install_meta_state( struct intel_context *intel )
 {
    GLcontext *ctx = &intel->ctx;
    struct brw_context *brw = brw_context(ctx);

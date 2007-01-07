@@ -114,7 +114,7 @@ static GLuint translate_texgen( GLboolean enabled, GLenum mode )
 static void make_state_key( GLcontext *ctx, struct state_key *key )
 {
    struct brw_context *brw = brw_context(ctx);
-   struct gl_fragment_program *fp = brw->fragment_program;
+   const struct gl_fragment_program *fp = brw->fragment_program;
    GLuint i;
 
    /* This now relies on texenvprogram.c being active:
@@ -1628,7 +1628,7 @@ const struct brw_tracked_state brw_tnl_vertprog = {
 
 static void update_active_vertprog( struct brw_context *brw )
 {
-   struct gl_vertex_program *prev = brw->vertex_program;
+   const struct gl_vertex_program *prev = brw->vertex_program;
 
    /* NEW_PROGRAM */
    if (brw->attribs.VertexProgram->_Enabled) {

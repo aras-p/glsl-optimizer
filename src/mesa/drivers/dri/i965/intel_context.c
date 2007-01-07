@@ -33,6 +33,7 @@
 #include "extensions.h"
 #include "framebuffer.h"
 #include "imports.h"
+#include "points.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -161,7 +162,6 @@ const struct dri_extension card_extensions[] =
     { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
     { "GL_ARB_vertex_program",             GL_ARB_vertex_program_functions },
     { "GL_ARB_window_pos",                 GL_ARB_window_pos_functions },
-    { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions},
     { "GL_EXT_blend_color",                GL_EXT_blend_color_functions },
     { "GL_EXT_blend_equation_separate",    GL_EXT_blend_equation_separate_functions },
     { "GL_EXT_blend_func_separate",        GL_EXT_blend_func_separate_functions },
@@ -187,7 +187,8 @@ const struct dri_extension card_extensions[] =
     { NULL,                                NULL }
 };
 
-
+static const struct dri_extension arb_oc_extension = 
+    { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions};
 
 static const struct dri_debug_control debug_control[] =
 {
@@ -414,6 +415,9 @@ GLboolean intelInitContext( struct intel_context *intel,
  
    driInitExtensions( ctx, card_extensions, 
 		      GL_TRUE );
+
+   if (intel->intelScreen->drmMinor >= 8)
+      driInitSingleExtension (ctx, &arb_oc_extension);
 
    INTEL_DEBUG  = driParseDebugString( getenv( "INTEL_DEBUG" ),
 				       debug_control );
