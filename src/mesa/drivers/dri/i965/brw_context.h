@@ -505,8 +505,8 @@ struct brw_context
 
    /* Active vertex program: 
     */
-   struct gl_vertex_program *vertex_program;
-   struct gl_fragment_program *fragment_program;
+   const struct gl_vertex_program *vertex_program;
+   const struct gl_fragment_program *fragment_program;
 
 
    /* For populating the gtt:

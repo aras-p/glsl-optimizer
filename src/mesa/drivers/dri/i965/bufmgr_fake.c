@@ -1329,9 +1329,11 @@ unsigned bmSetFence( struct intel_context *intel )
 
 unsigned bmSetFenceLock( struct intel_context *intel )
 {
+  unsigned last;
   LOCK(intel->bm);
-  bmSetFence(intel);
+  last = bmSetFence(intel);
   UNLOCK(intel->bm);
+  return last;
 }
 unsigned bmLockAndFence( struct intel_context *intel )
 {
