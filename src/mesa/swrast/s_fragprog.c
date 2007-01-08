@@ -1358,6 +1358,8 @@ execute_program( GLcontext *ctx,
          case OPCODE_TXB: /* GL_ARB_fragment_program only */
             /* Texel lookup with LOD bias */
             {
+               const struct gl_texture_unit *texUnit
+                  = &ctx->Texture.Unit[inst->TexSrcUnit];
                GLfloat coord[4], color[4], lambda, bias;
                if (inst->SrcReg[0].File == PROGRAM_INPUT &&
                    inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0+inst->TexSrcUnit)
@@ -1366,9 +1368,9 @@ execute_program( GLcontext *ctx,
                   lambda = 0.0;
                fetch_vector4(ctx, &inst->SrcReg[0], machine, program, coord);
                /* coord[3] is the bias to add to lambda */
-               bias = ctx->Texture.Unit[inst->TexSrcUnit].LodBias
-                    + ctx->Texture.Unit[inst->TexSrcUnit]._Current->LodBias
-                    + coord[3];
+               bias = texUnit->LodBias + coord[3];
+               if (texUnit->_Current)
+                  bias += texUnit->_Current->LodBias;
                fetch_texel(ctx, coord, lambda + bias, inst->TexSrcUnit, color);
                store_vector4( inst, machine, color );
             }
