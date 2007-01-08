@@ -626,14 +626,14 @@ static slang_asm_info AsmInfo[] = {
    { "float_divide", IR_DIV, 1, 2 },
    { "float_power", IR_POW, 1, 2 },
    /* texture / sampler */
-   { "vec4_tex1d", IR_TEX, 1, 1 },
-   { "vec4_texb1d", IR_TEXB, 1, 3 },  /* 1d w/ bias */
+   { "vec4_tex1d", IR_TEX, 1, 2 },
+   { "vec4_texb1d", IR_TEXB, 1, 2 },  /* 1d w/ bias */
    { "vec4_texp1d", IR_TEXP, 1, 2 },  /* 1d w/ projection */
    { "vec4_tex2d", IR_TEX, 1, 2 },
-   { "vec4_texb2d", IR_TEXB, 1, 3 },  /* 2d w/ bias */
+   { "vec4_texb2d", IR_TEXB, 1, 2 },  /* 2d w/ bias */
    { "vec4_texp2d", IR_TEXP, 1, 2 },  /* 2d w/ projection */
    { "vec4_tex3d", IR_TEX, 1, 2 },
-   { "vec4_texb3d", IR_TEXB, 1, 3 },  /* 3d w/ bias */
+   { "vec4_texb3d", IR_TEXB, 1, 2 },  /* 3d w/ bias */
    { "vec4_texp3d", IR_TEXP, 1, 2 },  /* 3d w/ projection */
 
    /* unary op */

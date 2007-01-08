@@ -1635,7 +1635,7 @@ vec4 texture1DProj(const sampler1D sampler, const vec4 coord)
 
 vec4 texture2D(const sampler2D sampler, const vec2 coord)
 {
-    __asm vec4_tex2d __retVal, sampler, coord;
+   __asm vec4_tex2d __retVal, sampler, coord;
 }
 
 vec4 texture2DProj(const sampler2D sampler, const vec3 coord)
@@ -1649,7 +1649,7 @@ vec4 texture2DProj(const sampler2D sampler, const vec3 coord)
 
 vec4 texture2DProj(const sampler2D sampler, const vec4 coord)
 {
-    __asm vec4_texp2d __retVal, coord;
+   __asm vec4_texp2d __retVal, sampler, coord;
 }
 
 

@@ -91,8 +91,8 @@ static slang_ir_info IrInfo[] = {
    { IR_VAR, "IR_VAR", 0, 0, 0 },
    { IR_VAR_DECL, "IR_VAR_DECL", 0, 0, 0 },
    { IR_TEX, "IR_TEX", OPCODE_TEX, 4, 1 },
-   { IR_TEXB, "IR_TEXB", OPCODE_TXB, 4, 2 },
-   { IR_TEXP, "IR_TEXP", OPCODE_TXP, 4, 2 },
+   { IR_TEXB, "IR_TEXB", OPCODE_TXB, 4, 1 },
+   { IR_TEXP, "IR_TEXP", OPCODE_TXP, 4, 1 },
    { IR_FLOAT, "IR_FLOAT", 0, 0, 0 },
    { IR_FIELD, "IR_FIELD", 0, 0, 0 },
    { IR_NOP, NULL, OPCODE_NOP, 0, 0 }

@@ -42,73 +42,111 @@ varying vec4 gl_SecondaryColor;
 varying vec4 gl_TexCoord[gl_MaxTextureCoords];
 varying float gl_FogFragCoord;
 
-//
-// 8.7 Texture Lookup Functions
-//
 
-vec4 texture1D (sampler1D sampler, float coord, float bias) {
-    vec4 texel;
-    __asm vec4_tex1d texel, sampler, coord, bias;
-    return texel;
+
+//// 8.7 Texture Lookup Functions (with bias)
+
+vec4 texture1D(const sampler1D sampler, const float coord, const float bias)
+{
+   vec4 coord4;
+   coord4.x = coord;
+   coord4.w = bias;
+   __asm vec4_texb1d __retVal, sampler, coord4;
 }
 
-vec4 texture1DProj (sampler1D sampler, vec2 coord, float bias) {
-    return texture1D (sampler, coord.s / coord.t, bias);
+vec4 texture1DProj(const sampler1D sampler, const vec2 coord, const float bias)
+{
+   // do projection here (there's no vec4_texbp1d instruction)
+   vec4 pcoord;
+   pcoord.x = coord.x / coord.y;
+   pcoord.w = bias;
+   __asm vec4_texb1d __retVal, sampler, pcoord;
 }
 
-vec4 texture1DProj (sampler1D sampler, vec4 coord, float bias) {
-    return texture1D (sampler, coord.s / coord.q, bias);
+vec4 texture1DProj(const sampler1D sampler, const vec4 coord, const float bias)
+{
+   // do projection here (there's no vec4_texbp1d instruction)
+   vec4 pcoord;
+   pcoord.x = coord.x / coord.z;
+   pcoord.w = bias;
+   __asm vec4_texb1d __retVal, sampler, pcoord;
 }
 
-//vec4 texture2D (sampler2D sampler, vec2 coord, float bias) {
-//    vec4 texel;
-//    __asm vec4_tex2d texel, sampler, coord, bias;
-//    return texel;
-//}
 
-//vec4 texture2DProj (sampler2D sampler, vec3 coord, float bias) {
-//    return texture2D (sampler, vec2 (coord.s / coord.p, coord.t / coord.p), bias);
-//}
-
-//vec4 texture2DProj (sampler2D sampler, vec4 coord, float bias) {
-//    return texture2D (sampler, vec2 (coord.s / coord.q, coord.t / coord.q), bias);
-//}
-
-vec4 texture3D (sampler3D sampler, vec3 coord, float bias) {
-    vec4 texel;
-    __asm vec4_tex3d texel, sampler, coord, bias;
-    return texel;
+vec4 texture2D(const sampler2D sampler, const vec2 coord, const float bias)
+{
+   vec4 coord4;
+   coord4.xy = coord.xy;
+   coord4.w = bias;
+   __asm vec4_texb2d __retVal, sampler, coord4;
 }
 
-vec4 texture3DProj (sampler3D sampler, vec4 coord, float bias) {
-    return texture3D (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q), bias);
+vec4 texture2DProj(const sampler2D sampler, const vec3 coord, const float bias)
+{
+   // do projection here (there's no vec4_texbp2d instruction)
+   vec4 pcoord;
+   pcoord.xy = coord.xy / coord.z;
+   pcoord.w = bias;
+   __asm vec4_texb2d __retVal, sampler, pcoord;
 }
 
-vec4 textureCube (samplerCube sampler, vec3 coord, float bias) {
-    vec4 texel;
-    __asm vec4_texcube texel, sampler, coord, bias;
-    return texel;
+vec4 texture2DProj(const sampler2D sampler, const vec4 coord, const float bias)
+{
+   // do projection here (there's no vec4_texbp2d instruction)
+   vec4 pcoord;
+   pcoord.xy = coord.xy / coord.w;
+   pcoord.w = bias;
+   __asm vec4_texb2d __retVal, sampler, pcoord;
 }
 
-vec4 shadow1D (sampler1DShadow sampler, vec3 coord, float bias) {
-    vec4 texel;
-    __asm vec4_shad1d texel, sampler, coord, bias;
-    return texel;
+
+vec4 texture3D(const sampler3D sampler, const vec3 coord, const float bias)
+{
+   vec4 coord4;
+   coord4.xyz = coord.xyz;
+   coord4.w = bias;
+   __asm vec4_texb3d __retVal, sampler, coord4;
 }
 
-vec4 shadow1DProj (sampler1DShadow sampler, vec4 coord, float bias) {
+vec4 texture3DProj(const sampler3D sampler, const vec4 coord, const float bias)
+{
+   // do projection here (there's no vec4_texbp3d instruction)
+   vec4 pcoord;
+   pcoord.xyz = coord.xyz / coord.w;
+   pcoord.w = bias;
+   __asm vec4_texb3d __retVal, sampler, pcoord;
+}
+
+
+vec4 textureCube(const samplerCube sampler, const vec3 coord, const float bias)
+{
+   __asm vec4_texcube __retVal, sampler, coord, bias;
+}
+
+
+vec4 shadow1D(const sampler1DShadow sampler, const vec3 coord, const float bias)
+{
+   __asm vec4_shad1d __retVal, sampler, coord, bias;
+}
+
+vec4 shadow1DProj(const sampler1DShadow sampler, const vec4 coord, const float bias)
+{
     return shadow1D (sampler, vec3 (coord.s / coord.q, 0.0, coord.p / coord.q), bias);
 }
 
-vec4 shadow2D (sampler2DShadow sampler, vec3 coord, float bias) {
-    vec4 texel;
-    __asm vec4_shad2d texel, sampler, coord, bias;
-    return texel;
+vec4 shadow2D(const sampler2DShadow sampler, const vec3 coord, const float bias)
+{
+   __asm vec4_shad2d __retVal, sampler, coord, bias;
 }
 
-vec4 shadow2DProj (sampler2DShadow sampler, vec4 coord, float bias) {
-    return shadow2D (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q), bias);
+vec4 shadow2DProj(const sampler2DShadow sampler, const vec4 coord, const float bias)
+{
+   return shadow2D (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q), bias);
 }
+
+
+
+
 
 //
 // 8.8 Fragment Processing Functions
