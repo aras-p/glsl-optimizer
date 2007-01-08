@@ -457,6 +457,7 @@ slang_lookup_constant(const char *name, GLint index,
          GLint pos;
          _mesa_GetFloatv(info[i].Token, &value);
          ASSERT(value >= 0.0);  /* sanity check that glGetFloatv worked */
+         /* XXX named constant! */
          pos = _mesa_add_unnamed_constant(paramList, &value, 1, &swizzle);
          return pos;
       }
@@ -585,16 +586,10 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
    if (n->Opcode == IR_VAR_DECL) {
       /* storage declaration */
       assert(n->Var);
-      if (is_sampler_type(&n->Var->type)) {
-         /* i.e. "uniform sampler2D tex;" */
-         n->Store->File = PROGRAM_SAMPLER;
-         n->Store->Size = 1; /* never used */
-         n->Store->Index = alloc_sampler(gc);
-         n->Store->Index = slang_alloc_uniform(prog, (char *) n->Var->a_name, 1);
-         printf("********** Alloc sampler uniform %d\n", n->Store->Index);
-         abort(); /* this is a locally-declared sampler */
-      }
-      else if (n->Store->Index < 0) { /* XXX assert this? */
+      assert(!is_sampler_type(&n->Var->type));
+      assert(n->Store->Index < 0);
+
+      if (n->Store->Index < 0) { /* XXX assert this? */
          assert(gc);
          n->Store->File = PROGRAM_TEMPORARY;
          n->Store->Size = sizeof_type(&n->Var->type);
@@ -614,12 +609,10 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
    assert(!is_sampler_type(&n->Var->type));
    */
    assert(n->Opcode == IR_VAR);
-
    assert(n->Store->File != PROGRAM_UNDEFINED);
 
-   if (n->Opcode == IR_VAR && (n->Store->File == PROGRAM_UNDEFINED
-                               || n->Store->Index < 0)) {
-      /* try to determine the storage for this variable */
+   if (n->Store->Index < 0) {
+      /* determine storage location for this var */
       GLint i;
 
       assert(n->Var);
@@ -627,42 +620,35 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
 
       if (n->Store->Size < 0) {
          /* determine var/storage size now */
+         abort();
          n->Store->Size = sizeof_type(&n->Var->type);
          assert(n->Store->Size > 0);
       }
 
-#if 0
-      assert(n->Var->declared ||
-             n->Var->type.qualifier == slang_qual_uniform ||
-             n->Var->type.qualifier == slang_qual_varying ||
-             n->Var->type.qualifier == slang_qual_fixedoutput ||
-             n->Var->type.qualifier == slang_qual_attribute ||
-             n->Var->type.qualifier == slang_qual_out ||
-             n->Var->type.qualifier == slang_qual_const);
-#endif
-
-      i = slang_lookup_statevar((char *) n->Var->a_name, 0, prog->Parameters);
-      if (i >= 0) {
-         assert(n->Store->File == PROGRAM_STATE_VAR /*||
-                                                      n->Store->File == PROGRAM_UNIFORM*/);
-         n->Store->File = PROGRAM_STATE_VAR;
-         n->Store->Index = i;
-         return;
+      if (n->Store->File == PROGRAM_STATE_VAR) {
+         i = slang_lookup_statevar((char *) n->Var->a_name, 0, prog->Parameters);
+         assert(i >= 0);
+         if (i >= 0) {
+            assert(n->Store->File == PROGRAM_STATE_VAR /*||
+                                    n->Store->File == PROGRAM_UNIFORM*/);
+            n->Store->File = PROGRAM_STATE_VAR;
+            n->Store->Index = i;
+            return;
+         }
       }
-
-      i = slang_lookup_constant((char *) n->Var->a_name, 0, prog->Parameters);
-      if (i >= 0) {
-         assert(n->Store->File == PROGRAM_CONSTANT);
-         n->Store->File = PROGRAM_CONSTANT;
-         n->Store->Index = i;
-         return;
+      else if (n->Store->File == PROGRAM_CONSTANT) {
+         i = slang_lookup_constant((char *) n->Var->a_name, 0,
+                                   prog->Parameters);
+         assert(i >= 0);
+         if (i >= 0) {
+            n->Store->File = PROGRAM_CONSTANT;
+            n->Store->Index = i;
+            return;
+         }
       }
-
-      if (n->Store->File == PROGRAM_UNDEFINED && n->Store->Index < 0) {
-         /* ordinary local var */
-         assert(n->Store->Size > 0);
-         n->Store->File = PROGRAM_TEMPORARY;
-         n->Store->Index = alloc_temporary(gc, n->Store->Size);
+      else {
+         /* what's this??? */
+         abort();
       }
    }
 }
@@ -941,17 +927,26 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
       return inst;
       break;
    case IR_VAR_DECL:
+#if 0000
       slang_resolve_storage(gc, n, prog);
+#endif
+      /* Storage should have already been resolved/allocated */
+      assert(n->Store->File != PROGRAM_UNDEFINED);
       assert(n->Store->Index >= 0);
       assert(n->Store->Size > 0);
       break;
    case IR_VAR:
       /*printf("Gen: var ref\n");*/
       {
+         assert(n->Store);
+         assert(n->Store->File != PROGRAM_UNDEFINED);
+         assert(n->Store->Index >= 0);
+#if 00
          int b = !n->Store || n->Store->Index < 0;
          if (b)
             slang_resolve_storage(gc, n, prog);
          /*assert(n->Store->Index >= 0);*/
+#endif
          assert(n->Store->Size > 0);
       }
       break;
@@ -1004,6 +999,7 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
             storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store,
                                n->Children[1]->Swizzle);
          }
+         /* XXX is this test correct? */
          if (n->Children[1]->Store->File == PROGRAM_TEMPORARY) {
             free_temporary(gc, n->Children[1]->Store->Index,
                            n->Children[1]->Store->Size);
