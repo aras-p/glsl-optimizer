@@ -745,6 +745,8 @@ static const struct
    {"float_noise4", slang_asm_float_noise4, slang_asm_float_copy},
    {"int_to_float", slang_asm_int_to_float, slang_asm_float_copy},
    {"vec4_tex1d", slang_asm_vec4_tex1d, slang_asm_none},
+   {"vec4_texb1d", slang_asm_vec4_tex1d, slang_asm_none},
+   {"vec4_texp1d", slang_asm_vec4_tex1d, slang_asm_none},
    {"vec4_tex2d", slang_asm_vec4_tex2d, slang_asm_none},
    {"vec4_texb2d", slang_asm_vec4_tex2d, slang_asm_none},
    {"vec4_texp2d", slang_asm_vec4_tex2d, slang_asm_none},
