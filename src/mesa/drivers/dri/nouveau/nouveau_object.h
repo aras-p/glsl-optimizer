@@ -3,7 +3,7 @@
 
 #include "nouveau_context.h"
 
-//#define ALLOW_MULTI_SUBCHANNEL
+#define ALLOW_MULTI_SUBCHANNEL
 
 void nouveauObjectInit(nouveauContextPtr nmesa);
 
