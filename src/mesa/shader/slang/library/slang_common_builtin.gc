@@ -1615,19 +1615,21 @@ bvec4 not (const bvec4 v)
 
 vec4 texture1D(const sampler1D sampler, const float coord)
 {
-    __asm vec4_tex1d __retVal, coord; // XXX sampler
+   __asm vec4_tex1d __retVal, sampler, coord;
 }
 
 vec4 texture1DProj(const sampler1D sampler, const vec2 coord)
 {
-   float pcoord = coord.s / coord.t;
-    __asm vec4_tex1d __retVal, pcoord; // XXX sampler
+   // new coord with .z moved to .w
+   vec4 coord4;
+   coord4.x = coord.x;
+   coord4.w = coord.y;
+   __asm vec4_texp1d __retVal, sampler, coord4;
 }
 
 vec4 texture1DProj(const sampler1D sampler, const vec4 coord)
 {
-   float pcoord = coord.s / coord.q;
-    __asm vec4_tex1d __retVal, pcoord; // XXX sampler
+   __asm vec4_texp1d __retVal, sampler, coord;
 }
 
 
