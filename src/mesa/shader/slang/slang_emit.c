@@ -420,91 +420,6 @@ free_temporary(slang_gen_context *gc, GLuint r, GLint size)
 }
 
 
-
-static GLint
-slang_find_input(GLenum target, const char *name, GLint index)
-{
-   struct input_info {
-      const char *Name;
-      GLuint Attrib;
-   };
-   static const struct input_info vertInputs[] = {
-      { "gl_Vertex", VERT_ATTRIB_POS },
-      { "gl_Normal", VERT_ATTRIB_NORMAL },
-      { "gl_Color", VERT_ATTRIB_COLOR0 },
-      { "gl_SecondaryColor", VERT_ATTRIB_COLOR1 },
-      { "gl_MultiTexCoord0", VERT_ATTRIB_TEX0 },
-      { "gl_MultiTexCoord1", VERT_ATTRIB_TEX1 },
-      { "gl_MultiTexCoord2", VERT_ATTRIB_TEX2 },
-      { NULL, 0 }
-   };
-   static const struct input_info fragInputs[] = {
-      { "gl_TexCoord", FRAG_ATTRIB_TEX0 },
-      { NULL, 0 }
-   };
-   const struct input_info *inputs;
-   GLuint i;
-
-   if (target == GL_VERTEX_PROGRAM_ARB) {
-      inputs = vertInputs;
-   }
-   else {
-      assert(target == GL_FRAGMENT_PROGRAM_ARB);
-      inputs = fragInputs;
-   }
-
-   for (i = 0; inputs[i].Name; i++) {
-      if (strcmp(inputs[i].Name, name) == 0) {
-         /* found */
-         return inputs[i].Attrib;
-      }
-   }
-   return -1;
-}
-
-
-static GLint
-slang_find_output(GLenum target, const char *name, GLint index)
-{
-   struct output_info {
-      const char *Name;
-      GLuint Attrib;
-   };
-   static const struct output_info vertOutputs[] = {
-      { "gl_Position", VERT_RESULT_HPOS },
-      { "gl_FrontColor", VERT_RESULT_COL0 },
-      { "gl_BackColor", VERT_RESULT_BFC0 },
-      { "gl_FrontSecondaryColor", VERT_RESULT_COL1 },
-      { "gl_BackSecondaryColor", VERT_RESULT_BFC1 },
-      { "gl_TexCoord", VERT_RESULT_TEX0 }, /* XXX indexed */
-      { "gl_FogFragCoord", VERT_RESULT_FOGC },
-      { NULL, 0 }
-   };
-   static const struct output_info fragOutputs[] = {
-      { "gl_FragColor", FRAG_RESULT_COLR },
-      { NULL, 0 }
-   };
-   const struct output_info *outputs;
-   GLuint i;
-
-   if (target == GL_VERTEX_PROGRAM_ARB) {
-      outputs = vertOutputs;
-   }
-   else {
-      assert(target == GL_FRAGMENT_PROGRAM_ARB);
-      outputs = fragOutputs;
-   }
-
-   for (i = 0; outputs[i].Name; i++) {
-      if (strcmp(outputs[i].Name, name) == 0) {
-         /* found */
-         return outputs[i].Attrib;
-      }
-   }
-   return -1;
-}
-
-
 /**
  * Lookup a named constant and allocate storage for the parameter in
  * the given parameter list.
@@ -620,13 +535,6 @@ slang_alloc_uniform(struct gl_program *prog, const char *name, GLuint size)
 }
 
 
-static GLint
-slang_alloc_varying(struct gl_program *prog, const char *name)
-{
-   GLint i = _mesa_add_varying(prog->Varying, name, 4); /* XXX fix size */
-   return i;
-}
-
 
 /**
  * Allocate temporary storage for an intermediate result (such as for
@@ -705,14 +613,17 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
    /*
    assert(!is_sampler_type(&n->Var->type));
    */
+   assert(n->Opcode == IR_VAR);
 
-   if (n->Opcode == IR_VAR && n->Store->File == PROGRAM_UNDEFINED) {
+   assert(n->Store->File != PROGRAM_UNDEFINED);
+
+   if (n->Opcode == IR_VAR && (n->Store->File == PROGRAM_UNDEFINED
+                               || n->Store->Index < 0)) {
       /* try to determine the storage for this variable */
       GLint i;
 
       assert(n->Var);
-
-      /*if (is_sampler(*/
+      assert(n->Store->Size > 0);
 
       if (n->Store->Size < 0) {
          /* determine var/storage size now */
@@ -730,23 +641,10 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
              n->Var->type.qualifier == slang_qual_const);
 #endif
 
-      i = slang_find_input(prog->Target, (char *) n->Var->a_name, 0);
-      if (i >= 0) {
-         n->Store->File = PROGRAM_INPUT;
-         n->Store->Index = i;
-         assert(n->Store->Size > 0);
-         return;
-      }
-
-      i = slang_find_output(prog->Target, (char *) n->Var->a_name, 0);
-      if (i >= 0) {
-         n->Store->File = PROGRAM_OUTPUT;
-         n->Store->Index = i;
-         return;
-      }
-
       i = slang_lookup_statevar((char *) n->Var->a_name, 0, prog->Parameters);
       if (i >= 0) {
+         assert(n->Store->File == PROGRAM_STATE_VAR /*||
+                                                      n->Store->File == PROGRAM_UNIFORM*/);
          n->Store->File = PROGRAM_STATE_VAR;
          n->Store->Index = i;
          return;
@@ -754,29 +652,10 @@ slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
 
       i = slang_lookup_constant((char *) n->Var->a_name, 0, prog->Parameters);
       if (i >= 0) {
+         assert(n->Store->File == PROGRAM_CONSTANT);
          n->Store->File = PROGRAM_CONSTANT;
          n->Store->Index = i;
          return;
-      }
-
-      /* probably a uniform or varying */
-      if (n->Var->type.qualifier == slang_qual_uniform) {
-         GLint size = n->Store->Size;
-         assert(size > 0);
-         i = slang_alloc_uniform(prog, (char *) n->Var->a_name, size);
-         if (i >= 0) {
-            n->Store->File = PROGRAM_UNIFORM;
-            n->Store->Index = i;
-            return;
-         }
-      }
-      else if (n->Var->type.qualifier == slang_qual_varying) {
-         i = slang_alloc_varying(prog, (char *) n->Var->a_name);
-         if (i >= 0) {
-            n->Store->File = PROGRAM_VARYING;
-            n->Store->Index = i;
-            return;
-         }
       }
 
       if (n->Store->File == PROGRAM_UNDEFINED && n->Store->Index < 0) {

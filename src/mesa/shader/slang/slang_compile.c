@@ -233,6 +233,7 @@ typedef struct slang_parse_ctx_
    int parsing_builtin;
    GLboolean global_scope;   /**< Is object being declared a global? */
    slang_atom_pool *atoms;
+   slang_unit_type type;     /**< Vertex vs. Fragment */
 } slang_parse_ctx;
 
 /* slang_output_ctx */
@@ -1718,8 +1719,8 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
    }
 
 #if 1
-   if (C->global_scope && O->program)
-      _slang_codegen_global_variable(var, O->program);
+   if (C->global_scope /*&& O->program*/)
+      _slang_codegen_global_variable(var, O->program, C->type);
 #endif
 
    /* allocate global address space for a variable with a known size */
@@ -1992,6 +1993,7 @@ compile_binary(const byte * prod, slang_code_unit * unit,
    C.parsing_builtin = (builtin == NULL);
    C.global_scope = GL_TRUE;
    C.atoms = &unit->object->atompool;
+   C.type = type;
 
    if (!check_revision(&C))
       return GL_FALSE;

@@ -1630,12 +1630,89 @@ sampler_to_texture_index(const slang_type_specifier_type type)
 }
 
 
+/**
+ * XXX return size too
+ */
+static GLint
+_slang_input_index(const char *name, GLenum target)
+{
+   struct input_info {
+      const char *Name;
+      GLuint Attrib;
+   };
+   static const struct input_info vertInputs[] = {
+      { "gl_Vertex", VERT_ATTRIB_POS },
+      { "gl_Normal", VERT_ATTRIB_NORMAL },
+      { "gl_Color", VERT_ATTRIB_COLOR0 },
+      { "gl_SecondaryColor", VERT_ATTRIB_COLOR1 },
+      { "gl_FogCoord", VERT_ATTRIB_FOG },
+      { "gl_MultiTexCoord0", VERT_ATTRIB_TEX0 },
+      { "gl_MultiTexCoord1", VERT_ATTRIB_TEX1 },
+      { "gl_MultiTexCoord2", VERT_ATTRIB_TEX2 },
+      { "gl_MultiTexCoord3", VERT_ATTRIB_TEX3 },
+      { "gl_MultiTexCoord4", VERT_ATTRIB_TEX4 },
+      { "gl_MultiTexCoord5", VERT_ATTRIB_TEX5 },
+      { "gl_MultiTexCoord6", VERT_ATTRIB_TEX6 },
+      { "gl_MultiTexCoord7", VERT_ATTRIB_TEX7 },
+      { NULL, 0 }
+   };
+   static const struct input_info fragInputs[] = {
+      { "gl_FragCoord", FRAG_ATTRIB_WPOS },
+      { "gl_Color", FRAG_ATTRIB_COL0 },
+      { "gl_SecondaryColor", FRAG_ATTRIB_COL1 },
+      { "gl_FogFragCoord", FRAG_ATTRIB_FOGC },
+      { "gl_TexCoord", FRAG_ATTRIB_TEX0 },
+      { NULL, 0 }
+   };
+   GLuint i;
+   const struct input_info *inputs
+      = (target == GL_VERTEX_PROGRAM_ARB) ? vertInputs : fragInputs;
+
+   for (i = 0; inputs[i].Name; i++) {
+      if (strcmp(inputs[i].Name, name) == 0) {
+         /* found */
+         return inputs[i].Attrib;
+      }
+   }
+   return -1;
+}
+
+
 
 static GLint
-slang_alloc_sampler(struct gl_program *prog, const char *name)
+_slang_output_index(const char *name, GLenum target)
 {
-   GLint i = _mesa_add_sampler(prog->Parameters, name);
-   return i;
+   struct output_info {
+      const char *Name;
+      GLuint Attrib;
+   };
+   static const struct output_info vertOutputs[] = {
+      { "gl_Position", VERT_RESULT_HPOS },
+      { "gl_FrontColor", VERT_RESULT_COL0 },
+      { "gl_BackColor", VERT_RESULT_BFC0 },
+      { "gl_FrontSecondaryColor", VERT_RESULT_COL1 },
+      { "gl_BackSecondaryColor", VERT_RESULT_BFC1 },
+      { "gl_TexCoord", VERT_RESULT_TEX0 }, /* XXX indexed */
+      { "gl_FogFragCoord", VERT_RESULT_FOGC },
+      { "gl_PointSize", VERT_RESULT_PSIZ },
+      { NULL, 0 }
+   };
+   static const struct output_info fragOutputs[] = {
+      { "gl_FragColor", FRAG_RESULT_COLR },
+      { "gl_FragDepth", FRAG_RESULT_DEPR },
+      { NULL, 0 }
+   };
+   GLuint i;
+   const struct output_info *outputs
+      = (target == GL_VERTEX_PROGRAM_ARB) ? vertOutputs : fragOutputs;
+
+   for (i = 0; outputs[i].Name; i++) {
+      if (strcmp(outputs[i].Name, name) == 0) {
+         /* found */
+         return outputs[i].Attrib;
+      }
+   }
+   return -1;
 }
 
 
@@ -1653,8 +1730,10 @@ slang_alloc_sampler(struct gl_program *prog, const char *name)
  * actual texture unit (as specified by the user calling glUniform1i()).
  */
 void
-_slang_codegen_global_variable(slang_variable *var, struct gl_program *prog)
+_slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
+                               slang_unit_type type)
 {
+   const char *varName = (char *) var->a_name;
    GLint texIndex;
    slang_ir_storage *store = NULL;
 
@@ -1666,15 +1745,98 @@ _slang_codegen_global_variable(slang_variable *var, struct gl_program *prog)
        * store->Index = sampler uniform location
        * store->Size = texture type index (1D, 2D, 3D, cube, etc)
        */
-      GLint samplerUniform = slang_alloc_sampler(prog, (char *) var->a_name);
+      GLint samplerUniform = _mesa_add_sampler(prog->Parameters, varName);
       store = _slang_new_ir_storage(PROGRAM_SAMPLER, samplerUniform, texIndex);
       printf("SAMPLER ");
    }
    else if (var->type.qualifier == slang_qual_uniform) {
+      /* Uniform variable */
+      const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
+      if (prog) {
+         /* user-defined uniform */
+         GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName, size);
+         store = _slang_new_ir_storage(PROGRAM_UNIFORM, uniformLoc, size);
+      }
+      else {
+         /* pre-defined uniform, like gl_ModelviewMatrix */
+         /* We know it's a uniform, but don't allocate storage unless
+          * it's really used.
+          */
+
+         store = _slang_new_ir_storage(PROGRAM_STATE_VAR, -1, size);
+
+      }
       printf("UNIFORM ");
    }
-
-   printf("CODEGEN VAR %s\n", (char*) var->a_name);
+   else if (var->type.qualifier == slang_qual_varying) {
+      const GLint size = 4; /* XXX fix */
+      if (prog) {
+         /* user-defined varying */
+         GLint varyingLoc = _mesa_add_varying(prog->Varying, varName, size);
+         store = _slang_new_ir_storage(PROGRAM_VARYING, varyingLoc, size);
+      }
+      else {
+         /* pre-defined varying, like gl_Color or gl_TexCoord */
+         if (type == slang_unit_fragment_builtin) {
+            GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB);
+            assert(index >= 0);
+            store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
+            assert(index < FRAG_ATTRIB_MAX);
+         }
+         else {
+            GLint index = _slang_output_index(varName, GL_VERTEX_PROGRAM_ARB);
+            assert(index >= 0);
+            assert(type == slang_unit_vertex_builtin);
+            store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
+            assert(index < VERT_RESULT_MAX);
+         }
+         printf("V/F ");
+      }
+      printf("VARYING ");
+   }
+   else if (var->type.qualifier == slang_qual_const) {
+      if (prog) {
+         abort();
+      }
+      else {
+         /* pre-defined global constant, like gl_MaxLights */
+         GLint size = -1;
+         store = _slang_new_ir_storage(PROGRAM_CONSTANT, -1, size);
+      }
+      printf("CONST ");
+   }
+   else if (var->type.qualifier == slang_qual_attribute) {
+      /* Vertex attribute */
+      GLint index = _slang_input_index(varName, GL_VERTEX_PROGRAM_ARB);
+      GLint size = 4; /* XXX? */
+      assert(index >= 0);
+      store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
+      printf("ATTRIB ");
+   }
+   else if (var->type.qualifier == slang_qual_fixedinput) {
+      GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB);
+      GLint size = 4; /* XXX? */
+      store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
+      printf("INPUT ");
+   }
+   else if (var->type.qualifier == slang_qual_fixedoutput) {
+      if (type == slang_unit_vertex_builtin) {
+         GLint index = _slang_output_index(varName, GL_VERTEX_PROGRAM_ARB);
+         GLint size = 4; /* XXX? */
+         store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
+      }
+      else {
+         assert(type == slang_unit_fragment_builtin);
+         GLint index = _slang_output_index(varName, GL_FRAGMENT_PROGRAM_ARB);
+         GLint size = 4; /* XXX? */
+         store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
+      }
+      printf("OUTPUT ");
+   }
+   else {
+      printf("other ");
+   }
+   printf("GLOBAL VAR %s  idx %d\n", (char*) var->a_name, store?store->Index:-2);
 
    assert(!var->aux);
 #if 1

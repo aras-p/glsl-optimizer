@@ -36,7 +36,8 @@ extern struct slang_ir_node_ *
 _slang_codegen_function(slang_assemble_ctx *A , struct slang_function_ *fun);
 
 extern void
-_slang_codegen_global_variable(slang_variable *var, struct gl_program *prog);
+_slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
+                               slang_unit_type type);
 
 
 #endif /* SLANG_CODEGEN_H */
