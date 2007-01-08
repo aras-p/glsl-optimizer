@@ -257,7 +257,7 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
 
       if (inst->Opcode == OPCODE_TEX ||
           inst->Opcode == OPCODE_TXB ||
-          inst->Opcode == OPCODE_TXB) {
+          inst->Opcode == OPCODE_TXP) {
          printf("====== remap sampler from %d to %d\n",
                 inst->Sampler, map[ inst->Sampler ]);
          inst->Sampler = map[ inst->Sampler ];
@@ -328,7 +328,7 @@ _slang_resolve_samplers(struct gl_shader_program *shProg,
       struct prog_instruction *inst = prog->Instructions + i;
       if (inst->Opcode == OPCODE_TEX ||
           inst->Opcode == OPCODE_TXB ||
-          inst->Opcode == OPCODE_TXB) {
+          inst->Opcode == OPCODE_TXP) {
          GLint sampleUnit = (GLint) shProg->Uniforms->ParameterValues[inst->Sampler][0];
          assert(sampleUnit < MAX_TEXTURE_IMAGE_UNITS);
          inst->TexSrcUnit = sampleUnit;

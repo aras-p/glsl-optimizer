@@ -189,6 +189,7 @@ is_sampler_type(const slang_fully_specified_type *t)
 static GLuint
 _slang_sizeof_struct(const slang_struct *s)
 {
+   /* XXX TBD */
    return 0;
 }
 
@@ -404,6 +405,8 @@ _slang_input_index(const char *name, GLenum target)
    const struct input_info *inputs
       = (target == GL_VERTEX_PROGRAM_ARB) ? vertInputs : fragInputs;
 
+   ASSERT(MAX_TEXTURE_UNITS == 8); /* if this fails, fix vertInputs above */
+
    for (i = 0; inputs[i].Name; i++) {
       if (strcmp(inputs[i].Name, name) == 0) {
          /* found */
@@ -476,6 +479,7 @@ _slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
    const char *varName = (char *) var->a_name;
    GLint texIndex;
    slang_ir_storage *store = NULL;
+   int dbg = 0;
 
    texIndex = sampler_to_texture_index(var->type.specifier.type);
 
@@ -487,7 +491,7 @@ _slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
        */
       GLint samplerUniform = _mesa_add_sampler(prog->Parameters, varName);
       store = _slang_new_ir_storage(PROGRAM_SAMPLER, samplerUniform, texIndex);
-      printf("SAMPLER ");
+      if (dbg) printf("SAMPLER ");
    }
    else if (var->type.qualifier == slang_qual_uniform) {
       /* Uniform variable */
@@ -506,7 +510,7 @@ _slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
          store = _slang_new_ir_storage(PROGRAM_STATE_VAR, -1, size);
 
       }
-      printf("UNIFORM ");
+      if (dbg) printf("UNIFORM ");
    }
    else if (var->type.qualifier == slang_qual_varying) {
       const GLint size = 4; /* XXX fix */
@@ -530,9 +534,9 @@ _slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
             store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
             assert(index < VERT_RESULT_MAX);
          }
-         printf("V/F ");
+         if (dbg) printf("V/F ");
       }
-      printf("VARYING ");
+      if (dbg) printf("VARYING ");
    }
    else if (var->type.qualifier == slang_qual_const) {
       if (prog) {
@@ -543,7 +547,7 @@ _slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
          GLint size = -1;
          store = _slang_new_ir_storage(PROGRAM_CONSTANT, -1, size);
       }
-      printf("CONST ");
+      if (dbg) printf("CONST ");
    }
    else if (var->type.qualifier == slang_qual_attribute) {
       /* Vertex attribute */
@@ -551,13 +555,13 @@ _slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
       GLint size = 4; /* XXX? */
       assert(index >= 0);
       store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
-      printf("ATTRIB ");
+      if (dbg) printf("ATTRIB ");
    }
    else if (var->type.qualifier == slang_qual_fixedinput) {
       GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB);
       GLint size = 4; /* XXX? */
       store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
-      printf("INPUT ");
+      if (dbg) printf("INPUT ");
    }
    else if (var->type.qualifier == slang_qual_fixedoutput) {
       if (type == slang_unit_vertex_builtin) {
@@ -571,20 +575,16 @@ _slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
          GLint size = 4; /* XXX? */
          store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
       }
-      printf("OUTPUT ");
+      if (dbg) printf("OUTPUT ");
    }
    else {
-      printf("other ");
+      if (dbg) printf("other ");
    }
-   printf("GLOBAL VAR %s  idx %d\n", (char*) var->a_name, store?store->Index:-2);
+   if (dbg) printf("GLOBAL VAR %s  idx %d\n", (char*) var->a_name, store?store->Index:-2);
 
    assert(!var->aux);
-#if 1
+
    var->aux = store;
-#endif
-   /**
-      XXX allocate variable storage (aux), at least the register file.
-    */
 }
 
 
@@ -627,9 +627,15 @@ static slang_asm_info AsmInfo[] = {
    { "float_power", IR_POW, 1, 2 },
    /* texture / sampler */
    { "vec4_tex1d", IR_TEX, 1, 1 },
-   { "vec4_texb1d", IR_TEXB, 1, 3 },
+   { "vec4_texb1d", IR_TEXB, 1, 3 },  /* 1d w/ bias */
+   { "vec4_texp1d", IR_TEXP, 1, 2 },  /* 1d w/ projection */
    { "vec4_tex2d", IR_TEX, 1, 2 },
-   { "vec4_texb2d", IR_TEXB, 1, 3 },
+   { "vec4_texb2d", IR_TEXB, 1, 3 },  /* 2d w/ bias */
+   { "vec4_texp2d", IR_TEXP, 1, 2 },  /* 2d w/ projection */
+   { "vec4_tex3d", IR_TEX, 1, 2 },
+   { "vec4_texb3d", IR_TEXB, 1, 3 },  /* 3d w/ bias */
+   { "vec4_texp3d", IR_TEXP, 1, 2 },  /* 3d w/ projection */
+
    /* unary op */
    { "int_to_float", IR_I_TO_F, 1, 1 },
    { "float_exp", IR_EXP, 1, 1 },

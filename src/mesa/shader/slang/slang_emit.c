@@ -92,6 +92,7 @@ static slang_ir_info IrInfo[] = {
    { IR_VAR_DECL, "IR_VAR_DECL", 0, 0, 0 },
    { IR_TEX, "IR_TEX", OPCODE_TEX, 4, 1 },
    { IR_TEXB, "IR_TEXB", OPCODE_TXB, 4, 2 },
+   { IR_TEXP, "IR_TEXP", OPCODE_TXP, 4, 2 },
    { IR_FLOAT, "IR_FLOAT", 0, 0, 0 },
    { IR_FIELD, "IR_FIELD", 0, 0, 0 },
    { IR_NOP, NULL, OPCODE_NOP, 0, 0 }
@@ -564,9 +565,12 @@ emit_tex(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    if (n->Opcode == IR_TEX) {
       inst = new_instruction(prog, OPCODE_TEX);
    }
-   else {
-      assert(n->Opcode == IR_TEXB);
+   else if (n->Opcode == IR_TEXB) {
       inst = new_instruction(prog, OPCODE_TXB);
+   }
+   else {
+      assert(n->Opcode == IR_TEXP);
+      inst = new_instruction(prog, OPCODE_TXP);
    }
 
    if (!n->Store)
@@ -700,6 +704,7 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
       return emit_unop(gc, n, prog);
    case IR_TEX:
    case IR_TEXB:
+   case IR_TEXP:
       return emit_tex(gc, n, prog);
    case IR_NEG:
       return emit_negation(gc, n, prog);

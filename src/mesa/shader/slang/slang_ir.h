@@ -81,6 +81,7 @@ typedef enum
    IR_VAR_DECL,/* var declaration */
    IR_TEX,     /* texture lookup */
    IR_TEXB,    /* texture lookup with LOD bias */
+   IR_TEXP,    /* texture lookup with projection */
    IR_FLOAT,
    IR_FIELD,
    IR_I_TO_F

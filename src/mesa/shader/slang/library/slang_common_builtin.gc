@@ -1633,37 +1633,41 @@ vec4 texture1DProj(const sampler1D sampler, const vec4 coord)
 
 vec4 texture2D(const sampler2D sampler, const vec2 coord)
 {
-    __asm vec4_tex2d __retVal, sampler, coord; // XXX sampler
+    __asm vec4_tex2d __retVal, sampler, coord;
 }
 
-//vec4 texture2DProj(const sampler2D sampler, const vec3 coord)
-//{
-//   vec2 pcoord = coord.st / coord.p;
-//    __asm vec4_tex2d __retVal, pcoord; // XXX sampler
-//}
-
-//vec4 texture2DProj(const sampler2D sampler, const vec4 coord)
-//{
-//   vec2 pcoord = coord.st / coord.q;
-//    __asm vec4_tex2d __retVal, pcoord; // XXX sampler
-//}
-
-
-vec4 texture3D (sampler3D sampler, vec3 coord) {
-    vec4 texel;
-    __asm vec4_tex3d texel, sampler, coord, 0.0;
-    return texel;
+vec4 texture2DProj(const sampler2D sampler, const vec3 coord)
+{
+   // new coord with .z moved to .w
+   vec4 coord4;
+   coord4.xy = coord.xy;
+   coord4.w = coord.z;
+    __asm vec4_texp2d __retVal, sampler, coord4;
 }
 
-vec4 texture3DProj (sampler3D sampler, vec4 coord) {
-    return texture3D (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q));
+vec4 texture2DProj(const sampler2D sampler, const vec4 coord)
+{
+    __asm vec4_texp2d __retVal, coord;
 }
 
-vec4 textureCube (samplerCube sampler, vec3 coord) {
-    vec4 texel;
-    __asm vec4_texcube texel, sampler, coord, 0.0;
-    return texel;
+
+vec4 texture3D(const sampler3D sampler, const vec3 coord)
+{
+   __asm vec4_tex3d __retVal, sampler, coord;
 }
+
+vec4 texture3DProj(const sampler3D sampler, const vec4 coord)
+{
+   __asm vec4_texp3d __retVal, sampler, coord;
+}
+
+
+vec4 textureCube(const samplerCube sampler, const vec3 coord)
+{
+   __asm vec4_texcube __retVal, sampler, coord;
+}
+
+
 
 vec4 shadow1D (sampler1DShadow sampler, vec3 coord) {
     vec4 texel;
