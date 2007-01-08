@@ -29,6 +29,7 @@
  */
 
 #include "imports.h"
+#include "get.h"
 #include "macros.h"
 #include "slang_assemble.h"
 #include "slang_codegen.h"
@@ -42,6 +43,7 @@
 #include "program.h"
 #include "prog_instruction.h"
 #include "prog_parameter.h"
+#include "prog_statevars.h"
 #include "slang_print.h"
 
 
@@ -55,6 +57,285 @@ static slang_atom CurLoopCont = 0;
 
 static slang_ir_node *
 _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper);
+
+
+
+
+/**
+ * Lookup a named constant and allocate storage for the parameter in
+ * the given parameter list.
+ * \return position of the constant in the paramList.
+ */
+static GLint
+slang_lookup_constant(const char *name, GLint index,
+                      struct gl_program_parameter_list *paramList)
+{
+   struct constant_info {
+      const char *Name;
+      const GLenum Token;
+   };
+   static const struct constant_info info[] = {
+      { "gl_MaxLights", GL_MAX_LIGHTS },
+      { "gl_MaxClipPlanes", GL_MAX_CLIP_PLANES },
+      { "gl_MaxTextureUnits", GL_MAX_TEXTURE_UNITS },
+      { "gl_MaxTextureCoords", GL_MAX_TEXTURE_COORDS },
+      { "gl_MaxVertexAttribs", GL_MAX_VERTEX_ATTRIBS },
+      { "gl_MaxVertexUniformComponents", GL_MAX_VERTEX_UNIFORM_COMPONENTS },
+      { "gl_MaxVaryingFloats", GL_MAX_VARYING_FLOATS },
+      { "gl_MaxVertexTextureImageUnits", GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS },
+      { "gl_MaxTextureImageUnits", GL_MAX_TEXTURE_IMAGE_UNITS },
+      { "gl_MaxFragmentUniformComponents", GL_MAX_FRAGMENT_UNIFORM_COMPONENTS },
+      { "gl_MaxCombinedTextureImageUnits", GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS },
+      { NULL, 0 }
+   };
+   GLuint i;
+   GLuint swizzle; /* XXX use this */
+
+   for (i = 0; info[i].Name; i++) {
+      if (strcmp(info[i].Name, name) == 0) {
+         /* found */
+         GLfloat value = -1.0;
+         GLint pos;
+         _mesa_GetFloatv(info[i].Token, &value);
+         ASSERT(value >= 0.0);  /* sanity check that glGetFloatv worked */
+         /* XXX named constant! */
+         pos = _mesa_add_unnamed_constant(paramList, &value, 1, &swizzle);
+         return pos;
+      }
+   }
+   return -1;
+}
+
+
+/**
+ * Determine if 'name' is a state variable.  If so, create a new program
+ * parameter for it, and return the param's index.  Else, return -1.
+ */
+static GLint
+slang_lookup_statevar(const char *name, GLint index,
+                      struct gl_program_parameter_list *paramList)
+{
+   struct state_info {
+      const char *Name;
+      const GLuint NumRows;  /** for matrices */
+      const GLuint Swizzle;
+      const GLint Indexes[6];
+   };
+   static const struct state_info state[] = {
+      { "gl_ModelViewMatrix", 4, SWIZZLE_NOOP,
+        { STATE_MATRIX, STATE_MODELVIEW, 0, 0, 0, 0 } },
+      { "gl_NormalMatrix", 3, SWIZZLE_NOOP,
+        { STATE_MATRIX, STATE_MODELVIEW, 0, 0, 0, 0 } },
+      { "gl_ProjectionMatrix", 4, SWIZZLE_NOOP,
+        { STATE_MATRIX, STATE_PROJECTION, 0, 0, 0, 0 } },
+      { "gl_ModelViewProjectionMatrix", 4, SWIZZLE_NOOP,
+        { STATE_MATRIX, STATE_MVP, 0, 0, 0, 0 } },
+      { "gl_TextureMatrix", 4, SWIZZLE_NOOP,
+        { STATE_MATRIX, STATE_TEXTURE, 0, 0, 0, 0 } },
+      { NULL, 0, 0, {0, 0, 0, 0, 0, 0} }
+   };
+   GLuint i;
+
+   for (i = 0; state[i].Name; i++) {
+      if (strcmp(state[i].Name, name) == 0) {
+         /* found */
+         if (paramList) {
+            if (state[i].NumRows > 1) {
+               /* a matrix */
+               GLuint j;
+               GLint pos[4], indexesCopy[6];
+               /* make copy of state tokens */
+               for (j = 0; j < 6; j++)
+                  indexesCopy[j] = state[i].Indexes[j];
+               /* load rows */
+               for (j = 0; j < state[i].NumRows; j++) {
+                  indexesCopy[3] = indexesCopy[4] = j; /* jth row of matrix */
+                  pos[j] = _mesa_add_state_reference(paramList, indexesCopy);
+                  assert(pos[j] >= 0);
+               }
+               return pos[0];
+            }
+            else {
+               /* non-matrix state */
+               GLint pos
+                  = _mesa_add_state_reference(paramList, state[i].Indexes);
+               assert(pos >= 0);
+               return pos;
+            }
+         }
+      }
+   }
+   return -1;
+}
+
+
+static GLboolean
+is_sampler_type(const slang_fully_specified_type *t)
+{
+   switch (t->specifier.type) {
+   case slang_spec_sampler1D:
+   case slang_spec_sampler2D:
+   case slang_spec_sampler3D:
+   case slang_spec_samplerCube:
+   case slang_spec_sampler1DShadow:
+   case slang_spec_sampler2DShadow:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
+static GLuint
+_slang_sizeof_struct(const slang_struct *s)
+{
+   return 0;
+}
+
+
+static GLuint
+_slang_sizeof_type_specifier(const slang_type_specifier *spec)
+{
+   switch (spec->type) {
+   case slang_spec_void:
+      abort();
+      return 0;
+   case slang_spec_bool:
+      return 1;
+   case slang_spec_bvec2:
+      return 2;
+   case slang_spec_bvec3:
+      return 3;
+   case slang_spec_bvec4:
+      return 4;
+   case slang_spec_int:
+      return 1;
+   case slang_spec_ivec2:
+      return 2;
+   case slang_spec_ivec3:
+      return 3;
+   case slang_spec_ivec4:
+      return 4;
+   case slang_spec_float:
+      return 1;
+   case slang_spec_vec2:
+      return 2;
+   case slang_spec_vec3:
+      return 3;
+   case slang_spec_vec4:
+      return 4;
+   case slang_spec_mat2:
+      return 2 * 2;
+   case slang_spec_mat3:
+      return 3 * 3;
+   case slang_spec_mat4:
+      return 4 * 4;
+   case slang_spec_sampler1D:
+   case slang_spec_sampler2D:
+   case slang_spec_sampler3D:
+   case slang_spec_samplerCube:
+   case slang_spec_sampler1DShadow:
+   case slang_spec_sampler2DShadow:
+      return 1; /* special case */
+   case slang_spec_struct:
+      return _slang_sizeof_struct(spec->_struct);
+   case slang_spec_array:
+      return 1; /* XXX */
+   default:
+      abort();
+      return 0;
+   }
+   return 0;
+}
+
+
+/**
+ * Allocate storage info for an IR node (n->Store).
+ * We may do any of the following:
+ *   1. Compute Store->File/Index for program inputs/outputs/uniforms/etc.
+ *   2. Allocate storage for user-declared variables.
+ *   3. Allocate intermediate/unnamed storage for complex expressions.
+ *   4. other?
+ */
+static void
+slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
+                      struct gl_program *prog)
+{
+   assert(gc);
+   assert(n);
+   assert(n->Opcode == IR_VAR_DECL || n->Opcode == IR_VAR);
+   assert(prog);
+
+   if (!n->Store) {
+      /* allocate storage info for this node */
+      if (n->Var && n->Var->aux) {
+         /* node storage info = var storage info */
+         n->Store = (slang_ir_storage *) n->Var->aux;
+      }
+      else {
+         /* alloc new storage info */
+         n->Store = _slang_new_ir_storage(PROGRAM_UNDEFINED, -1, -5);
+         if (n->Var)
+            n->Var->aux = n->Store;
+      }
+   }
+
+   if (n->Opcode == IR_VAR_DECL) {
+      /* variable declaration */
+      assert(n->Var);
+      assert(!is_sampler_type(&n->Var->type));
+      assert(n->Store->Index < 0);
+
+      n->Store->File = PROGRAM_TEMPORARY;
+      n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
+      assert(n->Store->Size > 0);
+      n->Store->Index = _slang_alloc_temporary(gc, n->Store->Size);
+      printf("alloc var %s storage at %d (size %d)\n",
+             (char *) n->Var->a_name,
+             n->Store->Index,
+             n->Store->Size);
+      assert(n->Store->Size > 0);
+      n->Var->declared = GL_TRUE;
+      return;
+   }
+
+   assert(n->Store->File != PROGRAM_UNDEFINED);
+
+   if (n->Store->Index < 0) {
+      /* determine storage location for this var */
+
+      assert(n->Var);
+      assert(n->Store->Size > 0);
+
+      if (n->Store->File == PROGRAM_STATE_VAR) {
+         GLint i = slang_lookup_statevar((char *) n->Var->a_name, 0,
+                                         prog->Parameters);
+         assert(i >= 0);
+         if (i >= 0) {
+            assert(n->Store->File == PROGRAM_STATE_VAR /*||
+                                    n->Store->File == PROGRAM_UNIFORM*/);
+            n->Store->File = PROGRAM_STATE_VAR;
+            n->Store->Index = i;
+            return;
+         }
+      }
+      else if (n->Store->File == PROGRAM_CONSTANT) {
+         GLint i = slang_lookup_constant((char *) n->Var->a_name, 0,
+                                         prog->Parameters);
+         assert(i >= 0);
+         if (i >= 0) {
+            n->Store->File = PROGRAM_CONSTANT;
+            n->Store->Index = i;
+            return;
+         }
+      }
+      else {
+         /* what's this??? */
+         abort();
+      }
+   }
+}
+
 
 
 /**

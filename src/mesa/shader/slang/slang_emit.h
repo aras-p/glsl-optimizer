@@ -48,13 +48,8 @@ extern slang_ir_storage *
 _slang_clone_ir_storage(slang_ir_storage *store);
 
 
-extern GLuint
-_slang_sizeof_type_specifier(const slang_type_specifier *spec);
-
-
-extern void
-slang_resolve_storage(slang_gen_context *gc, slang_ir_node *n,
-                      struct gl_program *prog);
+extern GLint
+_slang_alloc_temporary(slang_gen_context *gc, GLint size);
 
 extern GLboolean
 _slang_emit_code(slang_ir_node *n, slang_gen_context *gc,
