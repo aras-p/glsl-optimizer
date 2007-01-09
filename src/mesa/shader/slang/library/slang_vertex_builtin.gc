@@ -55,74 +55,133 @@ varying float gl_FogFragCoord;
 // Geometric Functions
 //
 
-vec4 ftransform () {
-    return gl_ModelViewProjectionMatrix * gl_Vertex;
+vec4 ftransform()
+{
+   __retVal = gl_ModelViewProjectionMatrix * gl_Vertex;
 }
+
+
 
 //
 // 8.7 Texture Lookup Functions
+// These are pretty much identical to the ones in slang_fragment_builtin.gc
+// When used in a vertex program, the texture sample instructions should not
+// be using a LOD term so it's effectively zero.  Adding 'lod' to that does
+// what we want.
 //
 
-vec4 texture1DLod (sampler1D sampler, float coord, float lod) {
-    vec4 texel;
-    __asm vec4_tex1d texel, sampler, coord, lod;
-    return texel;
+vec4 texture1DLod(const sampler1D sampler, const float coord, const float lod)
+{
+   vec4 coord4;
+   coord4.x = coord;
+   coord4.w = lod;
+   __asm vec4_texb1d __retVal, sampler, coord4;
 }
 
-vec4 texture1DProjLod (sampler1D sampler, vec2 coord, float lod) {
-    return texture1DLod (sampler, coord.s / coord.t, lod);
+vec4 texture1DProjLod(const sampler1D sampler, const vec2 coord, const float lod)
+{
+   vec4 pcoord;
+   pcoord.x = coord.x / coord.y;
+   pcoord.w = lod;
+   __asm vec4_texb1d __retVal, sampler, pcoord;
 }
 
-vec4 texture1DProjLod (sampler1D sampler, vec4 coord, float lod) {
-    return texture1DLod (sampler, coord.s / coord.q, lod);
+vec4 texture1DProjLod(const sampler1D sampler, const vec4 coord, const float lod)
+{
+   vec4 pcoord;
+   pcoord.x = coord.x / coord.z;
+   pcoord.w = lod;
+   __asm vec4_texb1d __retVal, sampler, pcoord;
 }
 
-vec4 texture2DLod (sampler2D sampler, vec2 coord, float lod) {
-    vec4 texel;
-    __asm vec4_tex2d texel, sampler, coord, lod;
-    return texel;
+
+
+vec4 texture2DLod(const sampler2D sampler, const vec2 coord, const float lod)
+{
+   vec4 coord4;
+   coord4.xy = coord.xy;
+   coord4.w = lod;
+   __asm vec4_texb2d __retVal, sampler, coord4;
 }
 
-vec4 texture2DProjLod (sampler2D sampler, vec3 coord, float lod) {
-    return texture2DLod (sampler, vec2 (coord.s / coord.p, coord.t / coord.p), lod);
+vec4 texture2DProjLod(const sampler2D sampler, const vec3 coord, const float lod)
+{
+   vec4 pcoord;
+   pcoord.xy = coord.xy / coord.z;
+   pcoord.w = lod;
+   __asm vec4_texb2d __retVal, sampler, pcoord;
 }
 
-vec4 texture2DProjLod (sampler2D sampler, vec4 coord, float lod) {
-    return texture2DLod (sampler, vec2 (coord.s / coord.q, coord.t / coord.q), lod);
+vec4 texture2DProjLod(const sampler2D sampler, const vec4 coord, const float lod)
+{
+   vec4 pcoord;
+   pcoord.xy = coord.xy / coord.z;
+   pcoord.w = lod;
+   __asm vec4_texb2d __retVal, sampler, pcoord;
 }
 
-vec4 texture3DLod (sampler3D sampler, vec3 coord, float lod) {
-    vec4 texel;
-    __asm vec4_tex3d texel, sampler, coord, lod;
-    return texel;
-}
-vec4 texture3DProjLod (sampler3D sampler, vec4 coord, float lod) {
-    return texture3DLod (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q), lod);
+
+vec4 texture3DLod(const sampler3D sampler, const vec3 coord, const float lod)
+{
+   vec4 coord4;
+   coord4.xyz = coord.xyz;
+   coord4.w = lod;
+   __asm vec4_texb3d __retVal, sampler, coord4;
 }
 
-vec4 textureCubeLod (samplerCube sampler, vec3 coord, float lod) {
-    vec4 texel;
-    __asm vec4_texcube texel, sampler, coord, lod;
-    return texel;
+vec4 texture3DProjLod(const sampler3D sampler, const vec4 coord, const float lod)
+{
+   // do projection here (there's no vec4_texbp3d instruction)
+   vec4 pcoord;
+   pcoord.xyz = coord.xyz / coord.w;
+   pcoord.w = lod;
+   __asm vec4_texb3d __retVal, sampler, pcoord;
 }
 
-vec4 shadow1DLod (sampler1DShadow sampler, vec3 coord, float lod) {
-    vec4 texel;
-    __asm vec4_shad1d texel, sampler, coord, lod;
-    return texel;
+
+vec4 textureCubeLod(const samplerCube sampler, const vec3 coord, const float lod)
+{
+   vec4 coord4;
+   coord4.xyz = coord;
+   coord4.w = lod;
+   __asm vec4_texcube __retVal, sampler, coord4;
 }
 
-vec4 shadow1DProjLod (sampler1DShadow sampler, vec4 coord, float lod) {
-    return shadow1DLod (sampler, vec3 (coord.s / coord.q, 0.0, coord.p / coord.q), lod);
+
+vec4 shadow1DLod(const sampler1DShadow sampler, const vec3 coord, const float lod)
+{
+   vec4 coord4;
+   coord4.xyz = coord;
+   coord4.w = lod;
+   __asm vec4_texb1d __retVal, sampler, coord4;
 }
 
-vec4 shadow2DLod (sampler2DShadow sampler, vec3 coord, float lod) {
-    vec4 texel;
-    __asm vec4_shad2d texel, sampler, coord, lod;
-    return texel;
+vec4 shadow1DProjLod(const sampler1DShadow sampler, const vec4 coord,
+                     const float lod)
+{
+   vec4 pcoord;
+   pcoord.x = coord.x / coord.w;
+   pcoord.z = coord.z;
+   pcoord.w = lod;
+   __asm vec4_texb1d __retVal, sampler, pcoord;
 }
 
-vec4 shadow2DProjLod (sampler2DShadow sampler, vec4 coord, float lod) {
-    return shadow2DLod (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q), lod);
+
+vec4 shadow2DLod(const sampler2DShadow sampler, const vec3 coord, const float lod)
+{
+   vec4 coord4;
+   coord4.xyz = coord;
+   coord4.w = lod;
+   __asm vec4_texb2d __retVal, sampler, coord4;
+}
+
+vec4 shadow2DProjLod(const sampler2DShadow sampler, const vec4 coord,
+                     const float lod)
+{
+   vec4 pcoord;
+   pcoord.xy = coord.xy / coord.w;
+   pcoord.z = coord.z;
+   pcoord.w = lod;
+   __asm vec4_texb2d __retVal, sampler, pcoord;
 }
 
