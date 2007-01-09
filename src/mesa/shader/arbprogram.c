@@ -720,22 +720,22 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
       const struct gl_fragment_program *fp = ctx->FragmentProgram.Current;
       switch (pname) {
          case GL_PROGRAM_ALU_INSTRUCTIONS_ARB:
-            *params = fp->NumNativeAluInstructions;
+            *params = fp->Base.NumNativeAluInstructions;
             return;
          case GL_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB:
-            *params = fp->NumAluInstructions;
+            *params = fp->Base.NumAluInstructions;
             return;
          case GL_PROGRAM_TEX_INSTRUCTIONS_ARB:
-            *params = fp->NumTexInstructions;
+            *params = fp->Base.NumTexInstructions;
             return;
          case GL_PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB:
-            *params = fp->NumNativeTexInstructions;
+            *params = fp->Base.NumNativeTexInstructions;
             return;
          case GL_PROGRAM_TEX_INDIRECTIONS_ARB:
-            *params = fp->NumTexIndirections;
+            *params = fp->Base.NumTexIndirections;
             return;
          case GL_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB:
-            *params = fp->NumNativeTexIndirections;
+            *params = fp->Base.NumNativeTexIndirections;
             return;
          case GL_MAX_PROGRAM_ALU_INSTRUCTIONS_ARB:
             *params = limits->MaxAluInstructions;

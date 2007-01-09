@@ -1871,6 +1871,9 @@ struct gl_program
    GLuint NumParameters;
    GLuint NumAttributes;
    GLuint NumAddressRegs;
+   GLuint NumAluInstructions;
+   GLuint NumTexInstructions;
+   GLuint NumTexIndirections;
    /*@}*/
    /** Native, actual h/w counts */
    /*@{*/
@@ -1879,6 +1882,9 @@ struct gl_program
    GLuint NumNativeParameters;
    GLuint NumNativeAttributes;
    GLuint NumNativeAddressRegs;
+   GLuint NumNativeAluInstructions;
+   GLuint NumNativeTexInstructions;
+   GLuint NumNativeTexIndirections;
    /*@}*/
 };
 
@@ -1897,12 +1903,6 @@ struct gl_vertex_program
 struct gl_fragment_program
 {
    struct gl_program Base;   /**< base class */
-   GLuint NumAluInstructions; /**< GL_ARB_fragment_program */
-   GLuint NumTexInstructions;
-   GLuint NumTexIndirections;
-   GLuint NumNativeAluInstructions; /**< GL_ARB_fragment_program */
-   GLuint NumNativeTexInstructions;
-   GLuint NumNativeTexIndirections;
    GLenum FogOption;
    GLboolean UsesKill;
 };

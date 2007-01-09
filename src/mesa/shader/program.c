@@ -376,6 +376,12 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
    clone->NumNativeParameters = prog->NumNativeParameters;
    clone->NumNativeAttributes = prog->NumNativeAttributes;
    clone->NumNativeAddressRegs = prog->NumNativeAddressRegs;
+   clone->NumAluInstructions = prog->NumAluInstructions;
+   clone->NumTexInstructions = prog->NumTexInstructions;
+   clone->NumTexIndirections = prog->NumTexIndirections;
+   clone->NumNativeAluInstructions = prog->NumNativeAluInstructions;
+   clone->NumNativeTexInstructions = prog->NumNativeTexInstructions;
+   clone->NumNativeTexIndirections = prog->NumNativeTexIndirections;
 
    switch (prog->Target) {
    case GL_VERTEX_PROGRAM_ARB:
@@ -391,12 +397,6 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
          const struct gl_fragment_program *fp
             = (const struct gl_fragment_program *) prog;
          struct gl_fragment_program *fpc = (struct gl_fragment_program *) clone;
-         fpc->NumAluInstructions = fp->NumAluInstructions;
-         fpc->NumTexInstructions = fp->NumTexInstructions;
-         fpc->NumTexIndirections = fp->NumTexIndirections;
-         fpc->NumNativeAluInstructions = fp->NumNativeAluInstructions;
-         fpc->NumNativeTexInstructions = fp->NumNativeTexInstructions;
-         fpc->NumNativeTexIndirections = fp->NumNativeTexIndirections;
          fpc->FogOption = fp->FogOption;
          fpc->UsesKill = fp->UsesKill;
       }

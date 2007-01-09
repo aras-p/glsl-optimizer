@@ -524,7 +524,7 @@ static struct ureg emit_arith( struct texenv_fragment_program *p,
    if (dest.file == PROGRAM_TEMPORARY)
       p->alu_temps |= 1 << dest.idx;
        
-   p->program->NumAluInstructions++;
+   p->program->Base.NumAluInstructions++;
    return dest;
 }
 
@@ -546,7 +546,7 @@ static struct ureg emit_texld( struct texenv_fragment_program *p,
    inst->TexSrcTarget = tex_idx;
    inst->TexSrcUnit = tex_unit;
 
-   p->program->NumTexInstructions++;
+   p->program->Base.NumTexInstructions++;
 
    /* Is this a texture indirection?
     */
@@ -554,7 +554,7 @@ static struct ureg emit_texld( struct texenv_fragment_program *p,
 	(p->temps_output & (1<<coord.idx))) ||
        (dest.file == PROGRAM_TEMPORARY &&
 	(p->alu_temps & (1<<dest.idx)))) {
-      p->program->NumTexIndirections++;
+      p->program->Base.NumTexIndirections++;
       p->temps_output = 1<<coord.idx;
       p->alu_temps = 0;
       assert(0);		/* KW: texture env crossbar */
@@ -1013,9 +1013,9 @@ create_new_program(GLcontext *ctx, struct state_key *key,
     */
    p.program->Base.Instructions = instBuffer;
    p.program->Base.Target = GL_FRAGMENT_PROGRAM_ARB;
-   p.program->NumTexIndirections = 1;	/* correct? */
-   p.program->NumTexInstructions = 0;
-   p.program->NumAluInstructions = 0;
+   p.program->Base.NumTexIndirections = 1;	/* correct? */
+   p.program->Base.NumTexInstructions = 0;
+   p.program->Base.NumAluInstructions = 0;
    p.program->Base.String = 0;
    p.program->Base.NumInstructions =
    p.program->Base.NumTemporaries =
@@ -1086,13 +1086,13 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    } else
       p.program->FogOption = GL_NONE;
 
-   if (p.program->NumTexIndirections > ctx->Const.FragmentProgram.MaxTexIndirections) 
+   if (p.program->Base.NumTexIndirections > ctx->Const.FragmentProgram.MaxTexIndirections) 
       program_error(&p, "Exceeded max nr indirect texture lookups");
 
-   if (p.program->NumTexInstructions > ctx->Const.FragmentProgram.MaxTexInstructions)
+   if (p.program->Base.NumTexInstructions > ctx->Const.FragmentProgram.MaxTexInstructions)
       program_error(&p, "Exceeded max TEX instructions");
 
-   if (p.program->NumAluInstructions > ctx->Const.FragmentProgram.MaxAluInstructions)
+   if (p.program->Base.NumAluInstructions > ctx->Const.FragmentProgram.MaxAluInstructions)
       program_error(&p, "Exceeded max ALU instructions");
 
    ASSERT(p.program->Base.NumInstructions <= MAX_INSTRUCTIONS);
