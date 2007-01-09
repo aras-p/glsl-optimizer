@@ -166,6 +166,9 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
       _mesa_error( ctx, GL_INVALID_ENUM, "glPolygonMode(face)" );
       return;
    }
+
+   if (ctx->Driver.PolygonMode)
+      ctx->Driver.PolygonMode(ctx, face, mode);
 }
 
 #if _HAVE_FULL_GL
