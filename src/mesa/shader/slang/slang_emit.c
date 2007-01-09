@@ -77,6 +77,8 @@ static slang_ir_info IrInfo[] = {
    { IR_FRAC, "IR_FRAC", OPCODE_FRC, 4, 1 },
    { IR_ABS, "IR_ABS", OPCODE_ABS, 4, 1 },
    { IR_NEG, "IR_NEG", 0/*spec case*/, 4, 1 },
+   { IR_DDX, "IR_DDX", OPCODE_DDX, 4, 1 },
+   { IR_DDX, "IR_DDY", OPCODE_DDX, 4, 1 },
    { IR_SIN, "IR_SIN", OPCODE_SIN, 1, 1 },
    { IR_COS, "IR_COS", OPCODE_COS, 1, 1 },
    /* other */
@@ -701,6 +703,8 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    case IR_ABS:
    case IR_SIN:
    case IR_COS:
+   case IR_DDX:
+   case IR_DDY:
       return emit_unop(gc, n, prog);
    case IR_TEX:
    case IR_TEXB:

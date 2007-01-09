@@ -74,6 +74,8 @@ typedef enum
    IR_FRAC,
    IR_ABS,     /* absolute value */
    IR_NEG,     /* negate */
+   IR_DDX,     /* derivative w.r.t. X */
+   IR_DDY,     /* derivative w.r.t. Y */
    IR_SIN,     /* sine */
    IR_COS,     /* cosine */
    IR_NOT,     /* logical not */

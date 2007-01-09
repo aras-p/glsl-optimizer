@@ -756,6 +756,8 @@ static const struct
    {"vec4_texcube", slang_asm_vec4_texcube, slang_asm_none},
    {"vec4_shad1d", slang_asm_vec4_shad1d, slang_asm_none},
    {"vec4_shad2d", slang_asm_vec4_shad2d, slang_asm_none},
+   {"vec4_ddx", 0, slang_asm_none},
+   {"vec4_ddy", 0, slang_asm_none},
     /* GL_MESA_shader_debug */
    {"float_print", slang_asm_float_deref, slang_asm_float_print},
    {"int_print", slang_asm_int_deref, slang_asm_int_print},
