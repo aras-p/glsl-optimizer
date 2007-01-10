@@ -5,12 +5,14 @@
 
 /* OpenGL 2.0 */
 static PFNGLATTACHSHADERPROC glAttachShader_func = NULL;
+static PFNGLBINDATTRIBLOCATIONPROC glBindAttribLocation_func = NULL;
 static PFNGLCOMPILESHADERPROC glCompileShader_func = NULL;
 static PFNGLCREATEPROGRAMPROC glCreateProgram_func = NULL;
 static PFNGLCREATESHADERPROC glCreateShader_func = NULL;
 static PFNGLDELETEPROGRAMPROC glDeleteProgram_func = NULL;
 static PFNGLDELETESHADERPROC glDeleteShader_func = NULL;
 static PFNGLGETATTACHEDSHADERSPROC glGetAttachedShaders_func = NULL;
+static PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation_func = NULL;
 static PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog_func = NULL;
 static PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog_func = NULL;
 static PFNGLGETSHADERIVPROC glGetShaderiv_func = NULL;
@@ -29,6 +31,8 @@ static PFNGLUNIFORMMATRIX2FVPROC glUniformMatrix2fv_func = NULL;
 static PFNGLUNIFORMMATRIX3FVPROC glUniformMatrix3fv_func = NULL;
 static PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv_func = NULL;
 static PFNGLUSEPROGRAMPROC glUseProgram_func = NULL;
+static PFNGLVERTEXATTRIB2FPROC glVertexAttrib2f_func = NULL;
+
 
 /* GL_ARB_vertex/fragment_program */
 static PFNGLBINDPROGRAMARBPROC glBindProgramARB_func = NULL;
@@ -54,12 +58,14 @@ GetExtensionFuncs(void)
 {
    /* OpenGL 2.0 */
    glAttachShader_func = (PFNGLATTACHSHADERPROC) glutGetProcAddress("glAttachShader");
+   glBindAttribLocation_func = (PFNGLBINDATTRIBLOCATIONPROC) glutGetProcAddress("glBindAttribLocation");
    glCompileShader_func = (PFNGLCOMPILESHADERPROC) glutGetProcAddress("glCompileShader");
    glCreateProgram_func = (PFNGLCREATEPROGRAMPROC) glutGetProcAddress("glCreateProgram");
    glCreateShader_func = (PFNGLCREATESHADERPROC) glutGetProcAddress("glCreateShader");
    glDeleteProgram_func = (PFNGLDELETEPROGRAMPROC) glutGetProcAddress("glDeleteProgram");
    glDeleteShader_func = (PFNGLDELETESHADERPROC) glutGetProcAddress("glDeleteShader");
    glGetAttachedShaders_func = (PFNGLGETATTACHEDSHADERSPROC) glutGetProcAddress("glGetAttachedShaders");
+   glGetAttribLocation_func = (PFNGLGETATTRIBLOCATIONPROC) glutGetProcAddress("glGetAttribLocation");
    glGetProgramInfoLog_func = (PFNGLGETPROGRAMINFOLOGPROC) glutGetProcAddress("glGetProgramInfoLog");
    glGetShaderInfoLog_func = (PFNGLGETSHADERINFOLOGPROC) glutGetProcAddress("glGetShaderInfoLog");
    glGetProgramiv_func = (PFNGLGETPROGRAMIVPROC) glutGetProcAddress("glGetProgramiv");
@@ -78,6 +84,8 @@ GetExtensionFuncs(void)
    glUniformMatrix3fv_func = (PFNGLUNIFORMMATRIX3FVPROC) glutGetProcAddress("glUniformMatrix3fv");
    glUniformMatrix4fv_func = (PFNGLUNIFORMMATRIX4FVPROC) glutGetProcAddress("glUniformMatrix4fv");
    glUseProgram_func = (PFNGLUSEPROGRAMPROC) glutGetProcAddress("glUseProgram");
+   glVertexAttrib2f_func = (PFNGLVERTEXATTRIB2FPROC) glutGetProcAddress("glVertexAttrib2f");
+
 
    /* GL_ARB_vertex/fragment_program */
    glBindProgramARB_func = (PFNGLBINDPROGRAMARBPROC) glutGetProcAddress("glBindProgramARB");
