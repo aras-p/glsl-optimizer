@@ -677,12 +677,30 @@ ATTRS( 13 )
 ATTRS( 14 )
 ATTRS( 15 )
 
+ATTRS( 16 )
+ATTRS( 17 )
+ATTRS( 18 )
+ATTRS( 19 )
+ATTRS( 20 )
+ATTRS( 21 )
+ATTRS( 22 )
+ATTRS( 23 )
+ATTRS( 24 )
+ATTRS( 25 )
+ATTRS( 26 )
+ATTRS( 27 )
+ATTRS( 28 )
+ATTRS( 29 )
+ATTRS( 30 )
+ATTRS( 31 )
+
 
 static void _save_reset_vertex( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint i;
 
+   /* conventional attributes */
    save_init_0( tnl );
    save_init_1( tnl );
    save_init_2( tnl );
@@ -699,6 +717,24 @@ static void _save_reset_vertex( GLcontext *ctx )
    save_init_13( tnl );
    save_init_14( tnl );
    save_init_15( tnl );
+
+   /* generic attributes */
+   save_init_16( tnl );
+   save_init_17( tnl );
+   save_init_18( tnl );
+   save_init_19( tnl );
+   save_init_20( tnl );
+   save_init_21( tnl );
+   save_init_22( tnl );
+   save_init_23( tnl );
+   save_init_24( tnl );
+   save_init_25( tnl );
+   save_init_26( tnl );
+   save_init_27( tnl );
+   save_init_28( tnl );
+   save_init_29( tnl );
+   save_init_30( tnl );
+   save_init_31( tnl );
       
    for (i = 0 ; i < _TNL_ATTRIB_MAX ; i++)
       tnl->save.attrsz[i] = 0;
@@ -1024,7 +1060,7 @@ static void GLAPIENTRY
 _save_VertexAttrib2fARB( GLuint index, GLfloat x, GLfloat y )
 {
    if (index < MAX_VERTEX_ATTRIBS)
-      DISPATCH_ATTR2F( index, x, y );
+      DISPATCH_ATTR2F( VERT_ATTRIB_GENERIC0 + index, x, y );
    else
       enum_error();
 }
