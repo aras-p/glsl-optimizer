@@ -1601,12 +1601,16 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
          /*ASSERT(ctx->Texture._EnabledCoordUnits & (1 << u));*/
          COPY_4V(tex, span->array->texcoords[u][col]);
          /*ASSERT(tex[0] != 0 || tex[1] != 0 || tex[2] != 0);*/
+#if 0
+         printf("Texcoord %d: %g %g %g %g\n", u,
+                tex[0], tex[1], tex[2], tex[3]);
+#endif
       }
    }
    for (v = 0; v < ctx->Const.MaxVarying; v++) {
       if (inputsRead & (1 << (FRAG_ATTRIB_VAR0 + v))) {
 #if 0
-         printf("Frag Var %d: %f %f %f\n", col,
+         printf("Frag Var %d at y=%d: %f %f %f\n", v, col,
                 span->array->varying[col][v][0],
                 span->array->varying[col][v][1],
                 span->array->varying[col][v][2]);
