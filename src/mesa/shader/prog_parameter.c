@@ -297,6 +297,8 @@ _mesa_add_attribute(struct gl_program_parameter_list *paramList,
       /* add */
       gl_state_index state[STATE_LENGTH];
       state[0] = attrib;
+      if (size < 0)
+         size = 4;
       i = _mesa_add_parameter(paramList, PROGRAM_INPUT, name,
                               size, NULL, state);
    }
