@@ -307,9 +307,10 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
       _slang_remap_attribute(&shProg->VertexProgram->Base, oldIndex, index);
    }
 
+#if 0
    printf("===== post BindAttrib:\n");
    _mesa_print_program(&shProg->VertexProgram->Base);
-
+#endif
 }
 
 

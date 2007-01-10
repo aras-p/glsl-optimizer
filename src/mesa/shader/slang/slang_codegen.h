@@ -29,14 +29,13 @@
 
 #include "imports.h"
 #include "slang_compile.h"
-#include "slang_ir.h"
 
 
-extern struct slang_ir_node_ *
+extern GLboolean
 _slang_codegen_function(slang_assemble_ctx *A , struct slang_function_ *fun);
 
-extern void
-_slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
+extern GLboolean
+_slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
                                slang_unit_type type);
 
 

@@ -38,6 +38,7 @@
 #include "slang_preprocess.h"
 #include "slang_storage.h"
 #include "slang_error.h"
+#include "slang_emit.h"
 
 #include "slang_print.h"
 
@@ -247,6 +248,7 @@ typedef struct slang_output_ctx_
    slang_var_pool *global_pool;
    slang_machine *machine;
    struct gl_program *program;
+   slang_gen_context *codegen;
 } slang_output_ctx;
 
 /* _slang_compile() */
@@ -1719,8 +1721,20 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
    }
 
 #if 1
-   if (C->global_scope /*&& O->program*/)
-      _slang_codegen_global_variable(var, O->program, C->type);
+   if (C->global_scope) {
+      slang_assemble_ctx A;
+
+      A.file = O->assembly;
+      A.mach = O->machine;
+      A.atoms = C->atoms;
+      A.space.funcs = O->funs;
+      A.space.structs = O->structs;
+      A.space.vars = O->vars;
+      A.codegen = O->codegen;
+      A.program = O->program;
+
+      _slang_codegen_global_variable(&A, var, C->type);
+   }
 #endif
 
    /* allocate global address space for a variable with a known size */
@@ -1880,6 +1894,7 @@ parse_function(slang_parse_ctx * C, slang_output_ctx * O, int definition,
       A.space.structs = O->structs;
       A.space.vars = O->vars;
       A.program = O->program;
+      A.codegen = O->codegen;
 
       _slang_reset_error();
 
@@ -1953,6 +1968,7 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
    o.global_pool = &unit->object->varpool;
    o.machine = &unit->object->machine;
    o.program = program;
+   o.codegen = _slang_new_codegen_context();
 
    /* parse individual functions and declarations */
    while (*C->I != EXTERNAL_NULL) {

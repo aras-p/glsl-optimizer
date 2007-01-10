@@ -291,10 +291,12 @@ slang_allocate_storage(slang_gen_context *gc, slang_ir_node *n,
       n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
       assert(n->Store->Size > 0);
       n->Store->Index = _slang_alloc_temporary(gc, n->Store->Size);
+      /*
       printf("alloc var %s storage at %d (size %d)\n",
              (char *) n->Var->a_name,
              n->Store->Index,
              n->Store->Size);
+      */
       assert(n->Store->Size > 0);
       n->Var->declared = GL_TRUE;
       return;
@@ -458,155 +460,6 @@ _slang_output_index(const char *name, GLenum target)
    return -1;
 }
 
-
-/**
- * Called by compiler when a global variable has been parsed/compiled.
- * Here we examine the variable's type to determine what kind of register
- * storage will be used.
- *
- * A uniform such as "gl_Position" will become the register specification
- * (PROGRAM_OUTPUT, VERT_RESULT_HPOS).  Or, uniform "gl_FogFragCoord"
- * will be (PROGRAM_INPUT, FRAG_ATTRIB_FOGC).
- *
- * Samplers are interesting.  For "uniform sampler2D tex;" we'll specify
- * (PROGRAM_SAMPLER, index) where index is resolved at link-time to an
- * actual texture unit (as specified by the user calling glUniform1i()).
- */
-void
-_slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
-                               slang_unit_type type)
-{
-   const char *varName = (char *) var->a_name;
-   GLint texIndex;
-   slang_ir_storage *store = NULL;
-   int dbg = 0;
-
-   texIndex = sampler_to_texture_index(var->type.specifier.type);
-
-   if (texIndex != -1) {
-      /* Texture sampler:
-       * store->File = PROGRAM_SAMPLER
-       * store->Index = sampler uniform location
-       * store->Size = texture type index (1D, 2D, 3D, cube, etc)
-       */
-      GLint samplerUniform = _mesa_add_sampler(prog->Parameters, varName);
-      store = _slang_new_ir_storage(PROGRAM_SAMPLER, samplerUniform, texIndex);
-      if (dbg) printf("SAMPLER ");
-   }
-   else if (var->type.qualifier == slang_qual_uniform) {
-      /* Uniform variable */
-      const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
-      if (prog) {
-         /* user-defined uniform */
-         GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName, size);
-         store = _slang_new_ir_storage(PROGRAM_UNIFORM, uniformLoc, size);
-      }
-      else {
-         /* pre-defined uniform, like gl_ModelviewMatrix */
-         /* We know it's a uniform, but don't allocate storage unless
-          * it's really used.
-          */
-
-         store = _slang_new_ir_storage(PROGRAM_STATE_VAR, -1, size);
-
-      }
-      if (dbg) printf("UNIFORM ");
-   }
-   else if (var->type.qualifier == slang_qual_varying) {
-      const GLint size = 4; /* XXX fix */
-      if (prog) {
-         /* user-defined varying */
-         GLint varyingLoc = _mesa_add_varying(prog->Varying, varName, size);
-         store = _slang_new_ir_storage(PROGRAM_VARYING, varyingLoc, size);
-      }
-      else {
-         /* pre-defined varying, like gl_Color or gl_TexCoord */
-         if (type == slang_unit_fragment_builtin) {
-            GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB);
-            assert(index >= 0);
-            store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
-            assert(index < FRAG_ATTRIB_MAX);
-         }
-         else {
-            GLint index = _slang_output_index(varName, GL_VERTEX_PROGRAM_ARB);
-            assert(index >= 0);
-            assert(type == slang_unit_vertex_builtin);
-            store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
-            assert(index < VERT_RESULT_MAX);
-         }
-         if (dbg) printf("V/F ");
-      }
-      if (dbg) printf("VARYING ");
-   }
-   else if (var->type.qualifier == slang_qual_const) {
-      if (prog) {
-         /* user-defined constant */
-         const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
-         /*
-         const GLint index = _mesa_add_named_constant(prog->Parameters);
-         */
-         printf("Global user constant\n");
-         abort(); /* XXX fix */
-      }
-      else {
-         /* pre-defined global constant, like gl_MaxLights */
-         GLint size = -1;
-         store = _slang_new_ir_storage(PROGRAM_CONSTANT, -1, size);
-      }
-      if (dbg) printf("CONST ");
-   }
-   else if (var->type.qualifier == slang_qual_attribute) {
-      if (prog) {
-         /* user-defined vertex attribute */
-         const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
-         const GLint attr = -1; /* unknown */
-         GLint index = _mesa_add_attribute(prog->Attributes, varName,
-                                           size, attr);
-         assert(index >= 0);
-         store = _slang_new_ir_storage(PROGRAM_INPUT,
-                                       VERT_ATTRIB_GENERIC0 + index, size);
-      }
-      else {
-         /* pre-defined vertex attrib */
-         GLint index = _slang_input_index(varName, GL_VERTEX_PROGRAM_ARB);
-         GLint size = 4; /* XXX? */
-         assert(index >= 0);
-         store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
-      }
-      if (dbg) printf("ATTRIB ");
-   }
-   else if (var->type.qualifier == slang_qual_fixedinput) {
-      GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB);
-      GLint size = 4; /* XXX? */
-      store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
-      if (dbg) printf("INPUT ");
-   }
-   else if (var->type.qualifier == slang_qual_fixedoutput) {
-      if (type == slang_unit_vertex_builtin) {
-         GLint index = _slang_output_index(varName, GL_VERTEX_PROGRAM_ARB);
-         GLint size = 4; /* XXX? */
-         store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
-      }
-      else {
-         assert(type == slang_unit_fragment_builtin);
-         GLint index = _slang_output_index(varName, GL_FRAGMENT_PROGRAM_ARB);
-         GLint size = 4; /* XXX? */
-         store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
-      }
-      if (dbg) printf("OUTPUT ");
-   }
-   else {
-      /* ordinary variable */
-      assert(prog);  /* shouldn't be any pre-defined, unqualified vars */
-      if (dbg) printf("other ");
-      abort();
-   }
-   if (dbg) printf("GLOBAL VAR %s  idx %d\n", (char*) var->a_name, store?store->Index:-2);
-
-   assert(!var->aux);
-
-   var->aux = store;
-}
 
 
 /**********************************************************************/
@@ -1023,10 +876,9 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
       /* allocate the return var */
       resultVar = slang_variable_scope_grow(commaSeq->locals);
       /*
-      printf("ALLOC __retVal from scope %p\n", (void*) commaSeq->locals);
-      */
       printf("Alloc __resultTemp in scope %p for retval of calling %s\n",
              (void*)commaSeq->locals, (char *) fun->header.a_name);
+      */
 
       resultVar->a_name = slang_atom_pool_atom(A->atoms, "__resultTmp");
       resultVar->type = fun->header.type; /* XXX copy? */
@@ -1071,9 +923,11 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
    substCount = 0;
    for (i = 0; i < totalArgs; i++) {
       slang_variable *p = &fun->parameters->variables[i];
+      /*
       printf("Param %d: %s %s \n", i,
              slang_type_qual_string(p->type.qualifier),
 	     (char *) p->a_name);
+      */
       if (p->type.qualifier == slang_qual_inout ||
 	  p->type.qualifier == slang_qual_out) {
 	 /* an output param */
@@ -2110,12 +1964,197 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 }
 
 
+
 /**
- * Produce an IR tree from a function AST.
+ * Called by compiler when a global variable has been parsed/compiled.
+ * Here we examine the variable's type to determine what kind of register
+ * storage will be used.
+ *
+ * A uniform such as "gl_Position" will become the register specification
+ * (PROGRAM_OUTPUT, VERT_RESULT_HPOS).  Or, uniform "gl_FogFragCoord"
+ * will be (PROGRAM_INPUT, FRAG_ATTRIB_FOGC).
+ *
+ * Samplers are interesting.  For "uniform sampler2D tex;" we'll specify
+ * (PROGRAM_SAMPLER, index) where index is resolved at link-time to an
+ * actual texture unit (as specified by the user calling glUniform1i()).
+ */
+GLboolean
+_slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
+                               slang_unit_type type)
+{
+   struct gl_program *prog = A->program;
+   const char *varName = (char *) var->a_name;
+   GLint texIndex;
+   slang_ir_storage *store = NULL;
+   int dbg = 0;
+   GLboolean codegen = GL_FALSE;  /* generate code for this global? */
+
+   texIndex = sampler_to_texture_index(var->type.specifier.type);
+
+   if (texIndex != -1) {
+      /* Texture sampler:
+       * store->File = PROGRAM_SAMPLER
+       * store->Index = sampler uniform location
+       * store->Size = texture type index (1D, 2D, 3D, cube, etc)
+       */
+      GLint samplerUniform = _mesa_add_sampler(prog->Parameters, varName);
+      store = _slang_new_ir_storage(PROGRAM_SAMPLER, samplerUniform, texIndex);
+      if (dbg) printf("SAMPLER ");
+   }
+   else if (var->type.qualifier == slang_qual_uniform) {
+      /* Uniform variable */
+      const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
+      if (prog) {
+         /* user-defined uniform */
+         GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName, size);
+         store = _slang_new_ir_storage(PROGRAM_UNIFORM, uniformLoc, size);
+      }
+      else {
+         /* pre-defined uniform, like gl_ModelviewMatrix */
+         /* We know it's a uniform, but don't allocate storage unless
+          * it's really used.
+          */
+
+         store = _slang_new_ir_storage(PROGRAM_STATE_VAR, -1, size);
+
+      }
+      if (dbg) printf("UNIFORM ");
+   }
+   else if (var->type.qualifier == slang_qual_varying) {
+      const GLint size = 4; /* XXX fix */
+      if (prog) {
+         /* user-defined varying */
+         GLint varyingLoc = _mesa_add_varying(prog->Varying, varName, size);
+         store = _slang_new_ir_storage(PROGRAM_VARYING, varyingLoc, size);
+      }
+      else {
+         /* pre-defined varying, like gl_Color or gl_TexCoord */
+         if (type == slang_unit_fragment_builtin) {
+            GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB);
+            assert(index >= 0);
+            store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
+            assert(index < FRAG_ATTRIB_MAX);
+         }
+         else {
+            GLint index = _slang_output_index(varName, GL_VERTEX_PROGRAM_ARB);
+            assert(index >= 0);
+            assert(type == slang_unit_vertex_builtin);
+            store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
+            assert(index < VERT_RESULT_MAX);
+         }
+         if (dbg) printf("V/F ");
+      }
+      if (dbg) printf("VARYING ");
+   }
+   else if (var->type.qualifier == slang_qual_const) {
+      if (prog) {
+         /* user-defined constant */
+         /*
+         const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
+         const GLint index = _mesa_add_named_constant(prog->Parameters);
+         */
+         printf("Global user constant\n");
+         abort(); /* XXX fix */
+      }
+      else {
+         /* pre-defined global constant, like gl_MaxLights */
+         GLint size = -1;
+         store = _slang_new_ir_storage(PROGRAM_CONSTANT, -1, size);
+      }
+      if (dbg) printf("CONST ");
+   }
+   else if (var->type.qualifier == slang_qual_attribute) {
+      if (prog) {
+         /* user-defined vertex attribute */
+         const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
+         const GLint attr = -1; /* unknown */
+         GLint index = _mesa_add_attribute(prog->Attributes, varName,
+                                           size, attr);
+         assert(index >= 0);
+         store = _slang_new_ir_storage(PROGRAM_INPUT,
+                                       VERT_ATTRIB_GENERIC0 + index, size);
+      }
+      else {
+         /* pre-defined vertex attrib */
+         GLint index = _slang_input_index(varName, GL_VERTEX_PROGRAM_ARB);
+         GLint size = 4; /* XXX? */
+         assert(index >= 0);
+         store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
+      }
+      if (dbg) printf("ATTRIB ");
+   }
+   else if (var->type.qualifier == slang_qual_fixedinput) {
+      GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB);
+      GLint size = 4; /* XXX? */
+      store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
+      if (dbg) printf("INPUT ");
+   }
+   else if (var->type.qualifier == slang_qual_fixedoutput) {
+      if (type == slang_unit_vertex_builtin) {
+         GLint index = _slang_output_index(varName, GL_VERTEX_PROGRAM_ARB);
+         GLint size = 4; /* XXX? */
+         store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
+      }
+      else {
+         assert(type == slang_unit_fragment_builtin);
+         GLint index = _slang_output_index(varName, GL_FRAGMENT_PROGRAM_ARB);
+         GLint size = 4; /* XXX? */
+         store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
+      }
+      if (dbg) printf("OUTPUT ");
+   }
+   else {
+      /* ordinary variable */
+      const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
+      const GLint index = -1;
+      store = _slang_new_ir_storage(PROGRAM_TEMPORARY, index, size);
+      codegen = GL_TRUE;
+      assert(prog);  /* shouldn't be any pre-defined, unqualified vars */
+   }
+   if (dbg) printf("GLOBAL VAR %s  idx %d\n", (char*) var->a_name,
+                   store ? store->Index : -2);
+
+   assert(!var->aux);
+   var->aux = store;  /* save var's storage info */
+
+   if (codegen) {
+      slang_ir_node *n;
+
+      n = new_node(IR_VAR_DECL, NULL, NULL);
+      if (!n)
+         return GL_FALSE;
+      n->Var = var;
+      var->declared = GL_TRUE;
+      slang_allocate_storage(A->codegen, n, A->program);
+
+      if (var->initializer) {
+         slang_ir_node *lhs, *rhs, *init;
+
+         /* Generate IR_MOVE instruction to initialize the variable */
+         lhs = new_node(IR_VAR, NULL, NULL);
+         lhs->Var = var;
+         lhs->Swizzle = SWIZZLE_NOOP;
+         lhs->Store = store;
+
+         rhs = _slang_gen_operation(A, var->initializer);
+         init = new_node(IR_MOVE, lhs, rhs);
+         n = new_seq(n, init);
+      }
+
+      /* emit code (n) */
+
+   }
+
+   return GL_TRUE;
+}
+
+
+/**
+ * Produce an IR tree from a function AST (fun->body).
  * Then call the code emitter to convert the IR tree into gl_program
  * instructions.
  */
-struct slang_ir_node_ *
+GLboolean
 _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 {
    slang_ir_node *n, *endLabel;
@@ -2125,11 +2164,13 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
       /* we only really generate code for main, all other functions get
        * inlined.
        */
-     return 0;
+      return GL_TRUE;  /* not an error */
    }
 
 #if 1
    printf("\n*********** codegen_function %s\n", (char *) fun->header.a_name);
+#endif
+#if 0
    slang_print_function(fun, 1);
 #endif
 
@@ -2137,11 +2178,11 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    assert(A->program->Parameters );
    assert(A->program->Varying);
 
-   A->codegen = _slang_new_codegen_context();
+   assert(A->codegen);
+   /*   A->codegen = _slang_new_codegen_context();*/
 
-   /*printf("** Begin Simplify\n");*/
+   /* fold constant expressions, etc. */
    slang_simplify(fun->body, &A->space, A->atoms);
-   /*printf("** End Simplify\n");*/
 
    CurFunction = fun;
 
@@ -2159,19 +2200,23 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    CurFunction = NULL;
 
 
-#if 1
+#if 0
    printf("************* New AST for %s *****\n", (char*)fun->header.a_name);
    slang_print_function(fun, 1);
+#endif
+#if 1
    printf("************* IR for %s *******\n", (char*)fun->header.a_name);
    slang_print_ir(n, 0);
-   printf("************* End assemble function2 ************\n\n");
+   printf("************* End codegen function ************\n\n");
 #endif
 
    success = _slang_emit_code(n, A->codegen, A->program);
 
    /* free codegen context */
+   /*
    _mesa_free(A->codegen);
+   */
 
-   return n;
+   return GL_TRUE;
 }
 
