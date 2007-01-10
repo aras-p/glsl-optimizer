@@ -364,16 +364,8 @@ _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
 
    name = _mesa_program_state_string(stateTokens);
    index = _mesa_add_parameter(paramList, PROGRAM_STATE_VAR, name,
-                               size, NULL, NULL);
-                               
-   if (index >= 0) {
-      GLuint i;
-      for (i = 0; i < STATE_LENGTH; i++) {
-         paramList->Parameters[index].StateIndexes[i]
-            = (gl_state_index) stateTokens[i];
-      }
-      paramList->StateFlags |= _mesa_program_state_flags(stateTokens);
-   }
+                               size, NULL, (gl_state_index *) stateTokens);
+   paramList->StateFlags |= _mesa_program_state_flags(stateTokens);
 
    /* free name string here since we duplicated it in add_parameter() */
    _mesa_free((void *) name);
