@@ -525,6 +525,19 @@ static slang_asm_info AsmInfo[] = {
 };
 
 
+/**
+ * Recursively free an IR tree.
+ */
+static void
+_slang_free_ir_tree(slang_ir_node *n)
+{
+   if (!n)
+      return;
+   _slang_free_ir_tree(n->Children[0]);
+   _slang_free_ir_tree(n->Children[1]);
+   free(n);
+}
+
 
 static slang_ir_node *
 new_node(slang_ir_opcode op, slang_ir_node *left, slang_ir_node *right)
@@ -1984,10 +1997,10 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
 {
    struct gl_program *prog = A->program;
    const char *varName = (char *) var->a_name;
+   GLboolean success = GL_TRUE;
    GLint texIndex;
    slang_ir_storage *store = NULL;
    int dbg = 0;
-   GLboolean codegen = GL_FALSE;  /* generate code for this global? */
 
    texIndex = sampler_to_texture_index(var->type.specifier.type);
 
@@ -2046,23 +2059,6 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       }
       if (dbg) printf("VARYING ");
    }
-   else if (var->type.qualifier == slang_qual_const) {
-      if (prog) {
-         /* user-defined constant */
-         /*
-         const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
-         const GLint index = _mesa_add_named_constant(prog->Parameters);
-         */
-         printf("Global user constant\n");
-         abort(); /* XXX fix */
-      }
-      else {
-         /* pre-defined global constant, like gl_MaxLights */
-         GLint size = -1;
-         store = _slang_new_ir_storage(PROGRAM_CONSTANT, -1, size);
-      }
-      if (dbg) printf("CONST ");
-   }
    else if (var->type.qualifier == slang_qual_attribute) {
       if (prog) {
          /* user-defined vertex attribute */
@@ -2103,30 +2099,29 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       }
       if (dbg) printf("OUTPUT ");
    }
+   else if (var->type.qualifier == slang_qual_const && !prog) {
+      /* pre-defined global constant, like gl_MaxLights */
+      GLint size = -1;
+      store = _slang_new_ir_storage(PROGRAM_CONSTANT, -1, size);
+      if (dbg) printf("CONST ");
+   }
    else {
-      /* ordinary variable */
+      /* ordinary variable (may be const) */
       const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
       const GLint index = -1;
-      store = _slang_new_ir_storage(PROGRAM_TEMPORARY, index, size);
-      codegen = GL_TRUE;
-      assert(prog);  /* shouldn't be any pre-defined, unqualified vars */
-   }
-   if (dbg) printf("GLOBAL VAR %s  idx %d\n", (char*) var->a_name,
-                   store ? store->Index : -2);
-
-   assert(!var->aux);
-   var->aux = store;  /* save var's storage info */
-
-   if (codegen) {
       slang_ir_node *n;
 
+      /* IR node to declare the variable */
       n = new_node(IR_VAR_DECL, NULL, NULL);
       if (!n)
          return GL_FALSE;
       n->Var = var;
       var->declared = GL_TRUE;
+      store = _slang_new_ir_storage(PROGRAM_TEMPORARY, index, size);
+      var->aux = store;  /* save var's storage info */
       slang_allocate_storage(A->codegen, n, A->program);
 
+      /* IR code for the var's initializer, if present */
       if (var->initializer) {
          slang_ir_node *lhs, *rhs, *init;
 
@@ -2136,16 +2131,26 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          lhs->Swizzle = SWIZZLE_NOOP;
          lhs->Store = store;
 
+         /* constant folding, etc */
+         slang_simplify(var->initializer, &A->space, A->atoms);
+
          rhs = _slang_gen_operation(A, var->initializer);
          init = new_node(IR_MOVE, lhs, rhs);
          n = new_seq(n, init);
       }
 
-      /* emit code (n) */
+      success = _slang_emit_code(n, A->codegen, A->program, GL_FALSE);
 
+      _slang_free_ir_tree(n);
    }
 
-   return GL_TRUE;
+   if (dbg) printf("GLOBAL VAR %s  idx %d\n", (char*) var->a_name,
+                   store ? store->Index : -2);
+
+
+   var->aux = store;  /* save var's storage info */
+
+   return success;
 }
 
 
@@ -2158,7 +2163,7 @@ GLboolean
 _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 {
    slang_ir_node *n, *endLabel;
-   GLboolean success;
+   GLboolean success = GL_TRUE;
 
    if (_mesa_strcmp((char *) fun->header.a_name, "main") != 0) {
       /* we only really generate code for main, all other functions get
@@ -2190,15 +2195,19 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    if (!CurFunction->end_label)
       CurFunction->end_label = slang_atom_pool_gen(A->atoms, "__endOfFunc_main_");
 
+   /* Generate IR tree for the function body code */
    n = _slang_gen_operation(A, fun->body);
 
-   if (n) {
-      endLabel = new_label(fun->end_label);
-      n = new_seq(n, endLabel);
+   if (!n) {
+      /* XXX record error */
+      return GL_FALSE;
    }
 
-   CurFunction = NULL;
+   /* append an end-of-function-label to IR tree */
+   endLabel = new_label(fun->end_label);
+   n = new_seq(n, endLabel);
 
+   CurFunction = NULL;
 
 #if 0
    printf("************* New AST for %s *****\n", (char*)fun->header.a_name);
@@ -2210,13 +2219,15 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    printf("************* End codegen function ************\n\n");
 #endif
 
-   success = _slang_emit_code(n, A->codegen, A->program);
+   /* Emit program instructions */
+   success = _slang_emit_code(n, A->codegen, A->program, GL_TRUE);
+   _slang_free_ir_tree(n);
 
    /* free codegen context */
    /*
    _mesa_free(A->codegen);
    */
 
-   return GL_TRUE;
+   return success;
 }
 

@@ -769,14 +769,16 @@ _slang_new_codegen_context(void)
 
 GLboolean
 _slang_emit_code(slang_ir_node *n, slang_gen_context *gc,
-                 struct gl_program *prog)
+                 struct gl_program *prog, GLboolean withEnd)
 {
    GLboolean success;
 
    if (emit(gc, n, prog)) {
       /* finish up by addeing the END opcode to program */
-      struct prog_instruction *inst;
-      inst = new_instruction(prog, OPCODE_END);
+      if (withEnd) {
+         struct prog_instruction *inst;
+         inst = new_instruction(prog, OPCODE_END);
+      }
       success = GL_TRUE;
    }
    else {

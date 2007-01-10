@@ -53,7 +53,7 @@ _slang_alloc_temporary(slang_gen_context *gc, GLint size);
 
 extern GLboolean
 _slang_emit_code(slang_ir_node *n, slang_gen_context *gc,
-                 struct gl_program *prog);
+                 struct gl_program *prog, GLboolean withEnd);
 
 
 #endif /* SLANG_EMIT_H */
