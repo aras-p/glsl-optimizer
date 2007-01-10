@@ -849,7 +849,6 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
       ctx->Shader.CurrentProgram = NULL;
    }
 
-   /* XXXX need to handle reference counting here! */
    if (program) {
       struct gl_shader_program *shProg;
       shProg = _mesa_lookup_shader_program(ctx, program);
@@ -916,7 +915,7 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       }
    }
    else {
-      const GLfloat *fValues = (const GLfloat *) values; /* XXX */
+      const GLfloat *fValues = (const GLfloat *) values;
       switch (type) {
       case GL_FLOAT_VEC4:
          uniformVal[3] = fValues[3];

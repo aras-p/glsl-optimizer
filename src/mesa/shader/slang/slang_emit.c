@@ -751,7 +751,7 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    case IR_CJUMP:
       return emit_cjump(n->Target, prog);
    default:
-      printf("emit: ?\n");
+      _mesa_problem(NULL, "Unexpected IR opcode in emit()\n");
       abort();
    }
    return NULL;
@@ -771,29 +771,24 @@ GLboolean
 _slang_emit_code(slang_ir_node *n, slang_gen_context *gc,
                  struct gl_program *prog)
 {
-   /*GET_CURRENT_CONTEXT(ctx);*/
+   GLboolean success;
 
-   /*
-   gc = _slang_new_codegen_context();
-   */
-
-   printf("************ Begin generate code\n");
-
-   (void) emit(gc, n, prog);
-
-   {
+   if (emit(gc, n, prog)) {
+      /* finish up by addeing the END opcode to program */
       struct prog_instruction *inst;
       inst = new_instruction(prog, OPCODE_END);
+      success = GL_TRUE;
+   }
+   else {
+      /* record an error? */
+      success = GL_FALSE;
    }
 
-   printf("************ End generate code (%u inst):\n", prog->NumInstructions);
-
 #if 0
+   printf("*********** End generate code (%u inst):\n", prog->NumInstructions);
    _mesa_print_program(prog);
    _mesa_print_program_parameters(ctx,prog);
 #endif
 
-   _mesa_free(gc);
-
-   return GL_FALSE;
+   return success;
 }

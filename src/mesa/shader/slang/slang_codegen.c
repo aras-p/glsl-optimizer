@@ -541,6 +541,11 @@ _slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
    else if (var->type.qualifier == slang_qual_const) {
       if (prog) {
          /* user-defined constant */
+         const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
+         /*
+         const GLint index = _mesa_add_named_constant(prog->Parameters);
+         */
+         printf("Global user constant\n");
          abort(); /* XXX fix */
       }
       else {
@@ -591,7 +596,10 @@ _slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
       if (dbg) printf("OUTPUT ");
    }
    else {
+      /* ordinary variable */
+      assert(prog);  /* shouldn't be any pre-defined, unqualified vars */
       if (dbg) printf("other ");
+      abort();
    }
    if (dbg) printf("GLOBAL VAR %s  idx %d\n", (char*) var->a_name, store?store->Index:-2);
 
@@ -2104,20 +2112,24 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 
 /**
  * Produce an IR tree from a function AST.
- * Then call the code emitter to convert the IR tree into a gl_program.
+ * Then call the code emitter to convert the IR tree into gl_program
+ * instructions.
  */
 struct slang_ir_node_ *
 _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 {
    slang_ir_node *n, *endLabel;
+   GLboolean success;
 
-   if (_mesa_strcmp((char *) fun->header.a_name, "main") != 0 &&
-       _mesa_strcmp((char *) fun->header.a_name, "foo") != 0 &&
-       _mesa_strcmp((char *) fun->header.a_name, "bar") != 0)
+   if (_mesa_strcmp((char *) fun->header.a_name, "main") != 0) {
+      /* we only really generate code for main, all other functions get
+       * inlined.
+       */
      return 0;
+   }
 
-   printf("\n*********** Assemble function2(%s)\n", (char*)fun->header.a_name);
 #if 1
+   printf("\n*********** codegen_function %s\n", (char *) fun->header.a_name);
    slang_print_function(fun, 1);
 #endif
 
@@ -2133,6 +2145,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 
    CurFunction = fun;
 
+   /* Create an end-of-function label */
    if (!CurFunction->end_label)
       CurFunction->end_label = slang_atom_pool_gen(A->atoms, "__endOfFunc_main_");
 
@@ -2147,17 +2160,17 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 
 
 #if 1
-   printf("************* New body for %s *****\n", (char*)fun->header.a_name);
+   printf("************* New AST for %s *****\n", (char*)fun->header.a_name);
    slang_print_function(fun, 1);
-
    printf("************* IR for %s *******\n", (char*)fun->header.a_name);
    slang_print_ir(n, 0);
    printf("************* End assemble function2 ************\n\n");
 #endif
 
-   if (_mesa_strcmp((char*) fun->header.a_name, "main") == 0) {
-      _slang_emit_code(n, A->codegen, A->program);
-   }
+   success = _slang_emit_code(n, A->codegen, A->program);
+
+   /* free codegen context */
+   _mesa_free(A->codegen);
 
    return n;
 }
