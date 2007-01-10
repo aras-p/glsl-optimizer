@@ -103,8 +103,6 @@ typedef enum gl_state_index_ {
    STATE_NORMAL_SCALE,
    STATE_TEXRECT_SCALE,
    STATE_POSITION_NORMALIZED,   /* normalized light position */
-   STATE_USER_ATTRIB,           /** shader vertex attrib: user-specified */
-   STATE_AUTO_ATTRIB,           /** shader vertex attrib: linker-specified */
    STATE_INTERNAL_DRIVER	/* first available state index for drivers (must be last) */
 } gl_state_index;
 

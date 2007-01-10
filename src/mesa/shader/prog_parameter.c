@@ -289,16 +289,14 @@ _mesa_add_attribute(struct gl_program_parameter_list *paramList,
    GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
    if (i >= 0) {
       /* replace */
-      ASSERT(paramList->Parameters[i].StateIndexes[0] == STATE_USER_ATTRIB);
       if (attrib < 0)
          attrib = i;
-      paramList->Parameters[i].StateIndexes[1] = attrib;
+      paramList->Parameters[i].StateIndexes[0] = attrib;
    }
    else {
       /* add */
       gl_state_index state[STATE_LENGTH];
-      state[0] = STATE_USER_ATTRIB;
-      state[1] = attrib;
+      state[0] = attrib;
       i = _mesa_add_parameter(paramList, PROGRAM_INPUT, name,
                               size, NULL, state);
    }

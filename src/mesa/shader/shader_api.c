@@ -554,7 +554,7 @@ _mesa_get_attrib_location(GLcontext *ctx, GLuint program,
    if (shProg->Attributes) {
       GLint i = _mesa_lookup_parameter_index(shProg->Attributes, -1, name);
       if (i >= 0) {
-         return shProg->Attributes->Parameters[i].StateIndexes[1];
+         return shProg->Attributes->Parameters[i].StateIndexes[0];
       }
    }
    return -1;

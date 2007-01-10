@@ -332,7 +332,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
     */
    usedAttributes = 0x0;
    for (i = 0; i < shProg->Attributes->NumParameters; i++) {
-      GLint attr = shProg->Attributes->Parameters[i].StateIndexes[1];
+      GLint attr = shProg->Attributes->Parameters[i].StateIndexes[0];
       usedAttributes |= attr;
    }
 
@@ -358,7 +358,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
             GLint attr;
             if (index >= 0) {
                /* found, user must have specified a binding */
-               attr = shProg->Attributes->Parameters[index].StateIndexes[1];
+               attr = shProg->Attributes->Parameters[index].StateIndexes[0];
             }
             else {
                /* not found, choose our own attribute number */
@@ -568,7 +568,9 @@ _slang_link2(GLcontext *ctx,
    _slang_resolve_samplers(shProg, &shProg->VertexProgram->Base);
    _slang_resolve_samplers(shProg, &shProg->FragmentProgram->Base);
 
-   _slang_resolve_attributes(shProg, &shProg->VertexProgram->Base);
+   if (!_slang_resolve_attributes(shProg, &shProg->VertexProgram->Base)) {
+      /*goto cleanup;*/
+   }
 
    _slang_update_inputs_outputs(&shProg->VertexProgram->Base);
    _slang_update_inputs_outputs(&shProg->FragmentProgram->Base);
