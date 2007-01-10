@@ -119,7 +119,7 @@ slang_lookup_statevar(const char *name, GLint index,
       const char *Name;
       const GLuint NumRows;  /** for matrices */
       const GLuint Swizzle;
-      const GLint Indexes[6];
+      const GLint Indexes[STATE_LENGTH];
    };
    static const struct state_info state[] = {
       { "gl_ModelViewMatrix", 4, SWIZZLE_NOOP,
@@ -143,9 +143,9 @@ slang_lookup_statevar(const char *name, GLint index,
             if (state[i].NumRows > 1) {
                /* a matrix */
                GLuint j;
-               GLint pos[4], indexesCopy[6];
+               GLint pos[4], indexesCopy[STATE_LENGTH];
                /* make copy of state tokens */
-               for (j = 0; j < 6; j++)
+               for (j = 0; j < STATE_LENGTH; j++)
                   indexesCopy[j] = state[i].Indexes[j];
                /* load rows */
                for (j = 0; j < state[i].NumRows; j++) {
@@ -554,8 +554,9 @@ _slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
       if (prog) {
          /* user-defined vertex attribute */
          const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
-         GLint index = _mesa_add_parameter(prog->Attributes, varName,
-                                           NULL, size, PROGRAM_INPUT);
+         const GLint attr = -1; /* unknown */
+         GLint index = _mesa_add_attribute(prog->Attributes, varName,
+                                           size, attr);
          assert(index >= 0);
          store = _slang_new_ir_storage(PROGRAM_INPUT,
                                        VERT_ATTRIB_GENERIC0 + index, size);

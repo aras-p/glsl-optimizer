@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,7 @@
 #define PROG_PARAMETER_H
 
 #include "mtypes.h"
+#include "prog_statevars.h"
 
 
 /**
@@ -49,7 +50,7 @@ struct gl_program_parameter
    /**
     * A sequence of STATE_* tokens and integers to identify GL state.
     */
-   GLuint StateIndexes[6];
+   GLuint StateIndexes[STATE_LENGTH];
 };
 
 
@@ -78,8 +79,9 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list);
 
 extern GLint
 _mesa_add_parameter(struct gl_program_parameter_list *paramList,
-                    const char *name, const GLfloat *values, GLuint size,
-                    enum register_file type);
+                    enum register_file type, const char *name,
+                    GLuint size, const GLfloat *values,
+                    const gl_state_index state[STATE_LENGTH]);
 
 extern GLint
 _mesa_add_named_parameter(struct gl_program_parameter_list *paramList,
@@ -109,11 +111,11 @@ _mesa_add_varying(struct gl_program_parameter_list *paramList,
 
 extern GLint
 _mesa_add_attribute(struct gl_program_parameter_list *paramList,
-                    const char *name, GLint attrib);
+                    const char *name, GLint size, GLint attrib);
 
 extern GLint
 _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
-                          const GLint *stateTokens);
+                          const GLint stateTokens[STATE_LENGTH]);
 
 extern GLfloat *
 _mesa_lookup_parameter_value(const struct gl_program_parameter_list *paramList,

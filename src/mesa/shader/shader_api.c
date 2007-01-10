@@ -278,8 +278,8 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
 {
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
-   GLint i;
-   GLint oldIndex;
+   const GLint size = -1; /* unknown size */
+   GLint i, oldIndex;
 
    if (!shProg) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glBindAttribLocation(program)");
@@ -298,7 +298,7 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
    oldIndex = _mesa_get_attrib_location(ctx, program, name);
 
    /* this will replace the current value if it's already in the list */
-   i = _mesa_add_attribute(shProg->Attributes, name, index);
+   i = _mesa_add_attribute(shProg->Attributes, name, size, index);
    if (i < 0) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindAttribLocation");
    }

@@ -323,6 +323,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
 {
    GLuint i, j;
    GLbitfield usedAttributes;
+   GLint size = 4; /* XXX fix */
 
    assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
 
@@ -369,7 +370,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
                   /* too many!  XXX record error log */
                   return GL_FALSE;
                }
-               _mesa_add_attribute(shProg->Attributes, name, attr);
+               _mesa_add_attribute(shProg->Attributes, name, size, attr);
             }
 
             inst->SrcReg[j].Index = VERT_ATTRIB_GENERIC0 + attr;

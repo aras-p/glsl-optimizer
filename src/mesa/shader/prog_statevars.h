@@ -29,6 +29,13 @@
 
 
 /**
+ * Number of STATE_* values we need to address any GL state.
+ * Used to dimension arrays.
+ */
+#define STATE_LENGTH 6
+
+
+/**
  * Used for describing GL state referenced from inside ARB vertex and
  * fragment programs.
  * A string such as "state.light[0].ambient" gets translated into a
@@ -109,11 +116,11 @@ _mesa_load_state_parameters(GLcontext *ctx,
 
 
 extern GLbitfield
-_mesa_program_state_flags(const GLint state[]);
+_mesa_program_state_flags(const GLint state[STATE_LENGTH]);
 
 
 extern const char *
-_mesa_program_state_string(const GLint state[6]);
+_mesa_program_state_string(const GLint state[STATE_LENGTH]);
 
 
 #endif /* PROG_STATEVARS_H */

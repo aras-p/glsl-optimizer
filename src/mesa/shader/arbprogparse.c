@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1719,7 +1719,7 @@ parse_param_elements (GLcontext * ctx, const GLubyte ** inst,
 {
    GLint idx;
    GLuint err = 0;
-   GLint state_tokens[6];
+   GLint state_tokens[STATE_LENGTH];
    GLfloat const_values[4];
 
    switch (*(*inst)++) {

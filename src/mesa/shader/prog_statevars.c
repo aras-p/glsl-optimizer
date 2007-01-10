@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -418,7 +418,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
  * some GL state has changed.
  */
 GLbitfield
-_mesa_program_state_flags(const GLint state[])
+_mesa_program_state_flags(const GLint state[STATE_LENGTH])
 {
    switch (state[0]) {
    case STATE_MATERIAL:
@@ -661,7 +661,7 @@ append_index(char *dst, GLint index)
  * Use _mesa_free() to deallocate the string.
  */
 const char *
-_mesa_program_state_string(const GLint state[6])
+_mesa_program_state_string(const GLint state[STATE_LENGTH])
 {
    char str[1000] = "";
    char tmp[30];
