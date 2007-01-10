@@ -1844,16 +1844,16 @@ struct gl_program_parameter_list;
 struct gl_program
 {
    GLuint Id;
-   GLubyte *String;          /**< Null-terminated program text */
+   GLubyte *String;  /**< Null-terminated program text */
    GLint RefCount;
-   GLenum Target;
-   GLenum Format;            /**< String encoding format */
+   GLenum Target;    /**< GL_VERTEX/FRAGMENT_PROGRAM_ARB, GL_FRAGMENT_PROGRAM_NV */
+   GLenum Format;    /**< String encoding format */
    GLboolean Resident;
 
    struct prog_instruction *Instructions;
 
-   GLbitfield InputsRead;     /* Bitmask of which input regs are read */
-   GLbitfield OutputsWritten; /* Bitmask of which output regs are written to */
+   GLbitfield InputsRead;     /**< Bitmask of which input regs are read */
+   GLbitfield OutputsWritten; /**< Bitmask of which output regs are written to */
    GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /**< TEXTURE_x_BIT bitmask */
 
    /** Named parameters, constants, etc. from program text */
@@ -1863,6 +1863,8 @@ struct gl_program
 
    /** Vertex/fragment shader varying vars */
    struct gl_program_parameter_list *Varying;
+   /** Vertex program user-defined attributes */
+   struct gl_program_parameter_list *Attributes;
 
    /** Logical counts */
    /*@{*/

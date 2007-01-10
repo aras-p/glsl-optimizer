@@ -36,6 +36,7 @@
 #include "prog_instruction.h"
 #include "prog_parameter.h"
 #include "prog_print.h"
+#include "prog_statevars.h"
 #include "shader_api.h"
 #include "slang_link.h"
 
@@ -311,31 +312,71 @@ _slang_resolve_branches(struct gl_program *prog)
 
 
 /**
- * Scan program for texture instructions, lookup sampler/uniform's value
- * to determine which texture unit to use.
- * Also, update the program's TexturesUsed[] array.
+ * Resolve binding of generic vertex attributes.
+ * For example, if the vertex shader declared "attribute vec4 foobar" we'll
+ * allocate a generic vertex attribute for "foobar" and plug that value into
+ * the vertex program instructions.
  */
-void
-_slang_resolve_samplers(struct gl_shader_program *shProg,
-                        struct gl_program *prog)
+static GLboolean
+_slang_resolve_attributes(struct gl_shader_program *shProg,
+                          struct gl_program *prog)
 {
-   GLuint i;
+   GLuint i, j;
+   GLbitfield usedAttributes;
 
-   for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
-      prog->TexturesUsed[i] = 0;
+   assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
 
+   /* Build a bitmask indicating which attribute indexes have been
+    * explicitly bound by the user with glBindAttributeLocation().
+    */
+   usedAttributes = 0x0;
+   for (i = 0; i < shProg->Attributes->NumParameters; i++) {
+      GLint attr = shProg->Attributes->Parameters[i].StateIndexes[1];
+      usedAttributes |= attr;
+   }
+
+   if (!shProg->Attributes)
+      shProg->Attributes = _mesa_new_parameter_list();
+
+   /*
+    * Scan program for generic attribute references
+    */
    for (i = 0; i < prog->NumInstructions; i++) {
       struct prog_instruction *inst = prog->Instructions + i;
-      if (inst->Opcode == OPCODE_TEX ||
-          inst->Opcode == OPCODE_TXB ||
-          inst->Opcode == OPCODE_TXP) {
-         GLint sampleUnit = (GLint) shProg->Uniforms->ParameterValues[inst->Sampler][0];
-         assert(sampleUnit < MAX_TEXTURE_IMAGE_UNITS);
-         inst->TexSrcUnit = sampleUnit;
+      for (j = 0; j < 3; j++) {
+         if (inst->SrcReg[j].File == PROGRAM_INPUT &&
+             inst->SrcReg[j].Index >= VERT_ATTRIB_GENERIC0) {
+            /* this is a generic attrib */
+            const GLint k = inst->SrcReg[j].Index - VERT_ATTRIB_GENERIC0;
+            const char *name = prog->Attributes->Parameters[k].Name;
+            /* See if this attrib name is in the program's attribute list
+             * (i.e. was bound by the user).
+             */
+            GLint index = _mesa_lookup_parameter_index(shProg->Attributes,
+                                                          -1, name);
+            GLint attr;
+            if (index >= 0) {
+               /* found, user must have specified a binding */
+               attr = shProg->Attributes->Parameters[index].StateIndexes[1];
+            }
+            else {
+               /* not found, choose our own attribute number */
+               for (attr = 0; attr < MAX_VERTEX_ATTRIBS; attr++) {
+                  if (((1 << attr) & usedAttributes) == 0)
+                     break;
+               }
+               if (attr == MAX_VERTEX_ATTRIBS) {
+                  /* too many!  XXX record error log */
+                  return GL_FALSE;
+               }
+               _mesa_add_attribute(shProg->Attributes, name, attr);
+            }
 
-         prog->TexturesUsed[inst->TexSrcUnit] |= (1 << inst->TexSrcTarget);
+            inst->SrcReg[j].Index = VERT_ATTRIB_GENERIC0 + attr;
+         }
       }
    }
+   return GL_TRUE;
 }
 
 
@@ -361,6 +402,65 @@ _slang_update_inputs_outputs(struct gl_program *prog)
       }
       if (inst->DstReg.File == PROGRAM_OUTPUT) {
          prog->OutputsWritten |= 1 << inst->DstReg.Index;
+      }
+   }
+}
+
+
+/**
+ * Scan a vertex program looking for instances of
+ * (PROGRAM_INPUT, VERT_ATTRIB_GENERIC0 + oldAttrib) and replace with
+ * (PROGRAM_INPUT, VERT_ATTRIB_GENERIC0 + newAttrib).
+ * This is used when the user calls glBindAttribLocation on an already linked
+ * shader program.
+ */
+void
+_slang_remap_attribute(struct gl_program *prog, GLuint oldAttrib, GLuint newAttrib)
+{
+   GLuint i, j;
+
+   assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
+
+   for (i = 0; i < prog->NumInstructions; i++) {
+      struct prog_instruction *inst = prog->Instructions + i;
+      for (j = 0; j < 3; j++) {
+         if (inst->SrcReg[j].File == PROGRAM_INPUT) {
+            if (inst->SrcReg[j].Index == VERT_ATTRIB_GENERIC0 + oldAttrib) {
+               inst->SrcReg[j].Index = VERT_ATTRIB_GENERIC0 + newAttrib;
+            }
+         }
+      }
+   }
+
+   _slang_update_inputs_outputs(prog);
+}
+
+
+
+/**
+ * Scan program for texture instructions, lookup sampler/uniform's value
+ * to determine which texture unit to use.
+ * Also, update the program's TexturesUsed[] array.
+ */
+void
+_slang_resolve_samplers(struct gl_shader_program *shProg,
+                        struct gl_program *prog)
+{
+   GLuint i;
+
+   for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
+      prog->TexturesUsed[i] = 0;
+
+   for (i = 0; i < prog->NumInstructions; i++) {
+      struct prog_instruction *inst = prog->Instructions + i;
+      if (inst->Opcode == OPCODE_TEX ||
+          inst->Opcode == OPCODE_TXB ||
+          inst->Opcode == OPCODE_TXP) {
+         GLint sampleUnit = (GLint) shProg->Uniforms->ParameterValues[inst->Sampler][0];
+         assert(sampleUnit < MAX_TEXTURE_IMAGE_UNITS);
+         inst->TexSrcUnit = sampleUnit;
+
+         prog->TexturesUsed[inst->TexSrcUnit] |= (1 << inst->TexSrcTarget);
       }
    }
 }
@@ -463,10 +563,12 @@ _slang_link2(GLcontext *ctx,
 
    _slang_resolve_branches(&shProg->VertexProgram->Base);
    _slang_resolve_branches(&shProg->FragmentProgram->Base);
-#if 1
+
    _slang_resolve_samplers(shProg, &shProg->VertexProgram->Base);
    _slang_resolve_samplers(shProg, &shProg->FragmentProgram->Base);
-#endif
+
+   _slang_resolve_attributes(shProg, &shProg->VertexProgram->Base);
+
    _slang_update_inputs_outputs(&shProg->VertexProgram->Base);
    _slang_update_inputs_outputs(&shProg->FragmentProgram->Base);
 

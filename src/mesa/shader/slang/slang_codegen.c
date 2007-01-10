@@ -540,7 +540,8 @@ _slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
    }
    else if (var->type.qualifier == slang_qual_const) {
       if (prog) {
-         abort();
+         /* user-defined constant */
+         abort(); /* XXX fix */
       }
       else {
          /* pre-defined global constant, like gl_MaxLights */
@@ -550,11 +551,22 @@ _slang_codegen_global_variable(slang_variable *var, struct gl_program *prog,
       if (dbg) printf("CONST ");
    }
    else if (var->type.qualifier == slang_qual_attribute) {
-      /* Vertex attribute */
-      GLint index = _slang_input_index(varName, GL_VERTEX_PROGRAM_ARB);
-      GLint size = 4; /* XXX? */
-      assert(index >= 0);
-      store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
+      if (prog) {
+         /* user-defined vertex attribute */
+         const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
+         GLint index = _mesa_add_parameter(prog->Attributes, varName,
+                                           NULL, size, PROGRAM_INPUT);
+         assert(index >= 0);
+         store = _slang_new_ir_storage(PROGRAM_INPUT,
+                                       VERT_ATTRIB_GENERIC0 + index, size);
+      }
+      else {
+         /* pre-defined vertex attrib */
+         GLint index = _slang_input_index(varName, GL_VERTEX_PROGRAM_ARB);
+         GLint size = 4; /* XXX? */
+         assert(index >= 0);
+         store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
+      }
       if (dbg) printf("ATTRIB ");
    }
    else if (var->type.qualifier == slang_qual_fixedinput) {

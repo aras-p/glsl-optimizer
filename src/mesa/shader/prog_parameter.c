@@ -239,6 +239,9 @@ _mesa_add_sampler(struct gl_program_parameter_list *paramList,
 }
 
 
+/**
+ * Add parameter representing a varying variable.
+ */
 GLint
 _mesa_add_varying(struct gl_program_parameter_list *paramList,
                   const char *name, GLuint size)
@@ -255,6 +258,31 @@ _mesa_add_varying(struct gl_program_parameter_list *paramList,
    }
 }
 
+
+/**
+ * Add parameter representing a vertex program attribute.
+ */
+GLint
+_mesa_add_attribute(struct gl_program_parameter_list *paramList,
+                    const char *name, GLint attrib)
+{
+   GLint size = 4; /* XXX ok? */
+   GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
+   if (i >= 0) {
+      /* replace */
+      ASSERT(paramList->Parameters[i].StateIndexes[0] == STATE_USER_ATTRIB);
+      paramList->Parameters[i].StateIndexes[1] = attrib;
+   }
+   else {
+      /* add */
+      i = _mesa_add_parameter(paramList, name, NULL, size, PROGRAM_INPUT);
+      if (i >= 0) {
+         paramList->Parameters[i].StateIndexes[0] = STATE_USER_ATTRIB;
+         paramList->Parameters[i].StateIndexes[1] = attrib;
+      }
+   }
+   return i;
+}
 
 
 

@@ -108,6 +108,10 @@ _mesa_add_varying(struct gl_program_parameter_list *paramList,
                   const char *name, GLuint size);
 
 extern GLint
+_mesa_add_attribute(struct gl_program_parameter_list *paramList,
+                    const char *name, GLint attrib);
+
+extern GLint
 _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
                           const GLint *stateTokens);
 

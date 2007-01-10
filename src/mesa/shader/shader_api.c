@@ -40,6 +40,8 @@
 #include "hash.h"
 #include "program.h"
 #include "prog_parameter.h"
+#include "prog_print.h"
+#include "prog_statevars.h"
 #include "shader_api.h"
 
 #include "slang_compile.h"
@@ -59,6 +61,7 @@ _mesa_new_shader_program(GLcontext *ctx, GLuint name)
       shProg->Type = GL_SHADER_PROGRAM;
       shProg->Name = name;
       shProg->RefCount = 1;
+      shProg->Attributes = _mesa_new_parameter_list();
    }
    return shProg;
 }
@@ -275,6 +278,8 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
 {
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
+   GLint i;
+   GLint oldIndex;
 
    if (!shProg) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glBindAttribLocation(program)");
@@ -290,15 +295,21 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
       return;
    }
 
-#if 0 /* XXXX */
-   if (name == NULL || index >= MAX_VERTEX_ATTRIBS)
-      _mesa_error(ctx, GL_INVALID_VALUE, "glBindAttribLocationARB");
-   else if (IS_NAME_WITH_GL_PREFIX(name))
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glBindAttribLocationARB");
-   else
-      (**pro).OverrideAttribBinding(pro, index, name);
-   RELEASE_PROGRAM(pro);
-#endif
+   oldIndex = _mesa_get_attrib_location(ctx, program, name);
+
+   /* this will replace the current value if it's already in the list */
+   i = _mesa_add_attribute(shProg->Attributes, name, index);
+   if (i < 0) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindAttribLocation");
+   }
+
+   if (shProg->VertexProgram && oldIndex >= 0) {
+      _slang_remap_attribute(&shProg->VertexProgram->Base, oldIndex, index);
+   }
+
+   printf("===== post BindAttrib:\n");
+   _mesa_print_program(&shProg->VertexProgram->Base);
+
 }
 
 
@@ -541,11 +552,9 @@ _mesa_get_attrib_location(GLcontext *ctx, GLuint program,
       return -1;
 
    if (shProg->Attributes) {
-      GLuint i;
-      for (i = 0; i < shProg->Attributes->NumParameters; i++) {
-         if (!strcmp(shProg->Attributes->Parameters[i].Name, name)) {
-            return i;
-         }
+      GLint i = _mesa_lookup_parameter_index(shProg->Attributes, -1, name);
+      if (i >= 0) {
+         return shProg->Attributes->Parameters[i].StateIndexes[1];
       }
    }
    return -1;
@@ -605,7 +614,7 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
       *params = shProg->NumShaders;
       break;
    case GL_ACTIVE_ATTRIBUTES:
-      *params = shProg->Uniforms ? shProg->Uniforms->NumParameters : 0;
+      *params = shProg->Attributes ? shProg->Attributes->NumParameters : 0;
       break;
    case GL_ACTIVE_ATTRIBUTE_MAX_LENGTH:
       *params = _mesa_parameter_longest_name(shProg->Attributes);
