@@ -1622,8 +1622,10 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
       return GL_FALSE;
 
    /* execute the expression */
+#if 0
    if (!_slang_execute2(A->file, &mach))
       return GL_FALSE;
+#endif
 
    /* restore the old assembly */
    if (!slang_assembly_file_restore_point_load(A->file, &point))

@@ -51,6 +51,10 @@ _slang_clone_ir_storage(slang_ir_storage *store);
 extern GLint
 _slang_alloc_temporary(slang_gen_context *gc, GLint size);
 
+extern void
+_slang_free_temporary(slang_gen_context *gc, GLuint r, GLint size);
+
+
 extern GLboolean
 _slang_emit_code(slang_ir_node *n, slang_gen_context *gc,
                  struct gl_program *prog, GLboolean withEnd);

@@ -285,6 +285,7 @@ _slang_alloc_temporary(slang_gen_context *gc, GLint size)
    const GLuint sz4 = (size + 3) / 4;
    GLuint i, j;
    ASSERT(size > 0); /* number of floats */
+
    for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
       GLuint found = 0;
       for (j = 0; j < sz4; j++) {
@@ -314,8 +315,8 @@ is_temporary(const slang_gen_context *gc, const slang_ir_storage *st)
 }
 
 
-static void
-free_temporary(slang_gen_context *gc, GLuint r, GLint size)
+void
+_slang_free_temporary(slang_gen_context *gc, GLuint r, GLint size)
 {
    const GLuint sz4 = (size + 3) / 4;
    GLuint i;
@@ -337,6 +338,7 @@ slang_alloc_temp_storage(slang_gen_context *gc, slang_ir_node *n, GLint size)
    assert(!n->Var);
    assert(!n->Store);
    assert(size > 0);
+   printf("Allocate binop temp:\n");
    indx = _slang_alloc_temporary(gc, size);
    n->Store = _slang_new_ir_storage(PROGRAM_TEMPORARY, indx, size);
 }
@@ -634,8 +636,8 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
           * Just modify the RHS to put its result into the dest of this
           * MOVE operation.  Then, this MOVE is a no-op.
           */
-         free_temporary(gc, n->Children[1]->Store->Index,
-                        n->Children[1]->Store->Size);
+         _slang_free_temporary(gc, n->Children[1]->Store->Index,
+                               n->Children[1]->Store->Size);
          *n->Children[1]->Store = *n->Children[0]->Store;
          /* fixup the prev (RHS) instruction */
          storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
@@ -672,8 +674,8 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
          }
          /* XXX is this test correct? */
          if (n->Children[1]->Store->File == PROGRAM_TEMPORARY) {
-            free_temporary(gc, n->Children[1]->Store->Index,
-                           n->Children[1]->Store->Size);
+            _slang_free_temporary(gc, n->Children[1]->Store->Index,
+                                  n->Children[1]->Store->Size);
          }
          /*inst->Comment = _mesa_strdup("IR_MOVE");*/
          n->Store = n->Children[0]->Store; /*XXX new */
@@ -741,7 +743,7 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
             storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
             storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
                                n->Children[0]->Swizzle);
-            free_temporary(gc, n->Store->Index, n->Store->Size);
+            _slang_free_temporary(gc, n->Store->Index, n->Store->Size);
             return inst; /* XXX or null? */
          }
       }

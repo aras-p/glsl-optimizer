@@ -55,6 +55,7 @@ _slang_record_error(const char *msg1, const char *msg2,
               msg1, msg2, pos, file, line);
 #endif
    }
+   abort();
 }
 
 

@@ -285,12 +285,16 @@ slang_allocate_storage(slang_gen_context *gc, slang_ir_node *n,
       /* variable declaration */
       assert(n->Var);
       assert(!is_sampler_type(&n->Var->type));
+      printf("Alloc storage for %p %s:\n", (void*) n->Var, (char*) n->Var->a_name);
+      /*
       assert(n->Store->Index < 0);
-
+      */
       n->Store->File = PROGRAM_TEMPORARY;
       n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
       assert(n->Store->Size > 0);
+      if (n->Store->Index < 0)
       n->Store->Index = _slang_alloc_temporary(gc, n->Store->Size);
+      printf("  Location = %d\n", n->Store->Index);
       /*
       printf("alloc var %s storage at %d (size %d)\n",
              (char *) n->Var->a_name,
@@ -302,7 +306,11 @@ slang_allocate_storage(slang_gen_context *gc, slang_ir_node *n,
       return;
    }
 
-   assert(n->Store->File != PROGRAM_UNDEFINED);
+   if (n->Store->File == PROGRAM_UNDEFINED) {
+      printf("*** Var %s  size %d\n", (char*) n->Var->a_name, n->Store->Size);
+
+      assert(n->Store->File != PROGRAM_UNDEFINED);
+   }
 
    if (n->Store->Index < 0) {
       /* determine storage location for this var */
@@ -479,6 +487,7 @@ typedef struct
 static slang_asm_info AsmInfo[] = {
    /* vec4 binary op */
    { "vec4_add", IR_ADD, 1, 2 },
+   { "vec4_subtract", IR_SUB, 1, 2 },
    { "vec4_multiply", IR_MUL, 1, 2 },
    { "vec4_dot", IR_DOT4, 1, 2 },
    { "vec3_dot", IR_DOT3, 1, 2 },
@@ -497,7 +506,6 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_ddy", IR_DDY, 1, 1 },
    /* float binary op */
    { "float_add", IR_ADD, 1, 2 },
-   { "float_subtract", IR_SUB, 1, 2 },
    { "float_multiply", IR_MUL, 1, 2 },
    { "float_divide", IR_DIV, 1, 2 },
    { "float_power", IR_POW, 1, 2 },
@@ -523,6 +531,54 @@ static slang_asm_info AsmInfo[] = {
    { "float_cosine", IR_COS, 1, 1 },
    { NULL, IR_NOP, 0, 0 }
 };
+
+
+#if 000 /* prototype for future symbol table scheme */
+
+#define MAX_DEPTH 100
+static slang_variable_scope *Stack[MAX_DEPTH];
+static int CurDepth;
+
+static void
+_slang_push_scope(slang_variable_scope *scope)
+{
+   Stack[CurDepth++] = scope;
+   assert(CurDepth < MAX_DEPTH);
+}
+
+static void
+_slang_pop_scope(void)
+{
+   CurDepth--;
+   assert(CurDepth >= 0);
+}
+
+static slang_variable_scope *
+_slang_current_scope(void)
+{
+   if (CurDepth > 0)
+      return Stack[CurDepth - 1];
+   else
+      return NULL;
+}
+
+static slang_variable *
+_slang_find_variable(slang_atom name)
+{
+   int i;
+   for (i = CurDepth - 1; i >= 0; i--) {
+      int j;
+      for (j = 0; j < Stack[i]->num_variables; j++) {
+         if (Stack[i]->variables[j].a_name == name) {
+            return Stack[i]->variables + j;
+         }
+      }
+   }
+   return NULL;
+}
+
+#endif
+
 
 
 /**
@@ -767,6 +823,9 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
          v = _slang_locate_variable(oper->locals, id, GL_TRUE);
 	 if (!v) {
 	    printf("var %s not found!\n", (char *) oper->a_id);
+            _slang_print_var_scope(oper->locals, 6);
+
+            abort();
 	    break;
 	 }
 
@@ -776,7 +835,7 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
                /* OK, replace this slang_oper_identifier with a new expr */
 	       assert(substNew[i]->type == slang_oper_identifier ||
                       substNew[i]->type == slang_oper_literal_float);
-#if 0 /* DEBUG only */
+#if 1 /* DEBUG only */
 	       if (substNew[i]->type == slang_oper_identifier) {
                   assert(substNew[i]->var);
                   assert(substNew[i]->var->a_name);
@@ -795,13 +854,46 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
 	 }
       }
       break;
-#if 0 /* XXX rely on default case below */
+#if 1 /* XXX rely on default case below */
    case slang_oper_return:
       /* do return replacement here too */
       assert(oper->num_children == 0 || oper->num_children == 1);
       if (oper->num_children == 1) {
-         slang_substitute(A, &oper->children[0],
+         /* replace:
+          *   return expr;
+          * with:
+          *   __retVal = expr;
+          *   return;
+          * then do substitutions on the assignment.
+          */
+         slang_operation *blockOper, *assignOper, *returnOper;
+         blockOper = slang_operation_new(1);
+         blockOper->type = slang_oper_block_no_new_scope;
+         blockOper->num_children = 2;
+         blockOper->children = slang_operation_new(2);
+         assignOper = blockOper->children + 0;
+         returnOper = blockOper->children + 1;
+
+         assignOper->type = slang_oper_assign;
+         assignOper->num_children = 2;
+         assignOper->children = slang_operation_new(2);
+         assignOper->children[0].type = slang_oper_identifier;
+         assignOper->children[0].a_id = slang_atom_pool_atom(A->atoms, "__retVal");
+         assignOper->children[0].locals->outer_scope = oper->locals;
+         assignOper->locals = oper->locals;
+         slang_operation_copy(&assignOper->children[1],
+                              &oper->children[0]);
+
+         returnOper->type = slang_oper_return;
+         assert(returnOper->num_children == 0);
+
+         /* do substitutions on the "__retVal = expr" sub-tree */
+         slang_substitute(A, assignOper,
                           substCount, substOld, substNew, GL_FALSE);
+
+         /* install new code */
+         slang_operation_copy(oper, blockOper);
+         slang_operation_destruct(blockOper);
       }
       break;
 #endif
@@ -936,11 +1028,11 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
    substCount = 0;
    for (i = 0; i < totalArgs; i++) {
       slang_variable *p = &fun->parameters->variables[i];
-      /*
+
       printf("Param %d: %s %s \n", i,
              slang_type_qual_string(p->type.qualifier),
 	     (char *) p->a_name);
-      */
+
       if (p->type.qualifier == slang_qual_inout ||
 	  p->type.qualifier == slang_qual_out) {
 	 /* an output param */
@@ -1072,6 +1164,9 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
 	  (char *) fun->header.a_name,
 	  fun->parameters->num_variables, numArgs);
 
+   /*
+   slang_print_tree(top, 0);
+   */
    return top;
 }
 
@@ -1122,6 +1217,8 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
 
    /* assemble what we just made XXX here??? */
    n = _slang_gen_operation(A, oper);
+
+   CurFunction->end_label = NULL;
 
    CurFunction = prevFunc;
 
@@ -1187,7 +1284,11 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
    assert(oper->type == slang_oper_asm);
 
    info = slang_find_asm_info((char *) oper->a_id);
-   assert(info);
+   if (!info) {
+      _mesa_problem(NULL, "undefined __asm function %s\n",
+                    (char *) oper->a_id);
+      assert(info);
+   }
    assert(info->NumParams <= 2);
 
    if (info->NumParams == oper->num_children) {
@@ -1258,6 +1359,21 @@ _slang_gen_cond(slang_ir_node *n)
 }
 
 
+static void print_funcs(struct slang_function_scope_ *scope)
+{
+   int i;
+   for (i = 0; i < scope->num_functions; i++) {
+      slang_function *f = &scope->functions[i];
+      printf("func %s\n", (char *) f->header.a_name);
+      if (strcmp("vec3", (char*) f->header.a_name) == 0)
+         printf("VEC3!\n");
+
+   }
+   if (scope->outer_scope)
+      print_funcs(scope->outer_scope);
+}
+
+
 /**
  * Assemble a function call, given a particular function name.
  * \param name  the function's name (operators like '*' are possible).
@@ -1278,6 +1394,11 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
    fun = _slang_locate_function(A->space.funcs, atom, params, param_count,
 				&A->space, A->atoms);
    if (!fun) {
+      print_funcs(A->space.funcs);
+
+   fun = _slang_locate_function(A->space.funcs, atom, params, param_count,
+				&A->space, A->atoms);
+
       RETURN_ERROR2("Undefined function", name, 0);
    }
 
@@ -1569,6 +1690,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
         printf("\n*** ASSEMBLE INITIALIZER %p\n", (void*) v->initializer);
       */
       rhs = _slang_gen_operation(A, &oper->children[0]);
+      assert(rhs);
       init = new_node(IR_MOVE, var, rhs);
       /*assert(rhs->Opcode != IR_SEQ);*/
       n = new_seq(varDecl, init);
@@ -1581,6 +1703,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
         printf("\n*** ASSEMBLE INITIALIZER %p\n", (void*) v->initializer);
       */
       rhs = _slang_gen_operation(A, v->initializer);
+      assert(rhs);
       init = new_node(IR_MOVE, var, rhs);
       /*
         assert(rhs->Opcode != IR_SEQ);
@@ -1641,6 +1764,7 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
       c0 = _slang_gen_operation(A, lhs);
       c1 = _slang_gen_operation(A, &oper->children[1]);
 
+      assert(c1);
       n = new_node(IR_MOVE, c0, c1);
       /*
         assert(c1->Opcode != IR_SEQ);
@@ -1777,6 +1901,26 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
                return NULL; /* error must have occured */
             tree = tree ? new_seq(tree, n) : n;
          }
+
+      if (oper->locals->num_variables > 0) {
+         int i;
+         /*
+         printf("\n****** Deallocate vars in scope!\n");
+         */
+         for (i = 0; i < oper->locals->num_variables; i++) {
+            slang_variable *v = oper->locals->variables + i;
+            if (v->aux) {
+               slang_ir_storage *store = (slang_ir_storage *) v->aux;
+               /*
+               printf("  Deallocate var %s\n", (char*) v->a_name);
+               */
+               assert(store->File == PROGRAM_TEMPORARY);
+               assert(store->Index >= 0);
+               _slang_free_temporary(A->codegen, store->Index, store->Size);
+            }
+         }
+      }
+
          return tree;
       }
       break;
@@ -2135,6 +2279,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          slang_simplify(var->initializer, &A->space, A->atoms);
 
          rhs = _slang_gen_operation(A, var->initializer);
+         assert(rhs);
          init = new_node(IR_MOVE, lhs, rhs);
          n = new_seq(n, init);
       }
@@ -2213,7 +2358,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    printf("************* New AST for %s *****\n", (char*)fun->header.a_name);
    slang_print_function(fun, 1);
 #endif
-#if 1
+#if 0
    printf("************* IR for %s *******\n", (char*)fun->header.a_name);
    slang_print_ir(n, 0);
    printf("************* End codegen function ************\n\n");

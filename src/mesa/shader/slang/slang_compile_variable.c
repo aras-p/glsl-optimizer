@@ -364,6 +364,9 @@ build_quant(slang_export_data_quant * q, const slang_variable * var)
    q->size = var->size;
    if (spec->type == slang_spec_array) {
       q->array_len = var->array_len;
+#if 1
+      if (var->array_len > 0)
+#endif
       q->size /= var->array_len;
       spec = spec->_array;
    }
