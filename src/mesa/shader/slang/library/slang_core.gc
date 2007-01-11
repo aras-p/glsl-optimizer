@@ -168,8 +168,12 @@ vec2 __constructor (const bool b) {
     return vec2 (b ? 1.0 : 0.0);
 }
 
-vec3 __constructor (const float f) {
-    return vec3 (f, f, f);
+vec3 __constructor(const float f)
+{
+//    return vec3 (f, f, f);
+   __retVal.x = f;
+   __retVal.y = f;
+   __retVal.z = f;
 }
 
 vec3 __constructor (const int i) {
@@ -181,6 +185,14 @@ vec3 __constructor (const int i) {
 vec3 __constructor (const bool b) {
     return vec3 (b ? 1.0 : 0.0);
 }
+
+vec3 __constructor(const vec4 v)
+{
+   __retVal.xyz = v.xyz;
+}
+
+
+
 
 //bp: TODO replace with asm == f.xxxx
 vec4 __constructor (const float f) {
@@ -339,7 +351,7 @@ int __operator + (const int a, const int b)
     int c;
     __asm int_to_float x, a;
     __asm int_to_float y, b;
-    __asm float_add    x, x, y;
+    __asm vec4_add    x.x, x.x, y.x;
     __asm float_to_int c, x;
     return c;
 }
@@ -351,7 +363,7 @@ int __operator - (const int a, const int b)
     __asm int_to_float x, a;
     __asm int_to_float y, b;
     __asm float_negate y, y;
-    __asm float_add    x, x, y;
+    __asm vec4_add    x.x, x.x, y.x;
     __asm float_to_int c, x;
     return c;
 }
