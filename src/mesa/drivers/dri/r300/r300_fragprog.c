@@ -463,7 +463,7 @@ static int swz_native(struct r300_fragment_program *rp,
 		      GLuint arbneg)
 {
 	/* Native swizzle, handle negation */
-	src = (src & ~REG_NEGS_SHIFT) |
+	src = (src & ~REG_NEGS_MASK) |
 		(((arbneg >> 3) & 1) << REG_NEGS_SHIFT);
 
 	if ((arbneg & 0x7) == 0x0) {
