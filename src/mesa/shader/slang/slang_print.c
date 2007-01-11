@@ -226,7 +226,7 @@ slang_print_tree(const slang_operation *op, int indent)
 
    case slang_oper_block_no_new_scope:
       spaces(indent);
-      printf("{ locals %p\n", (void*)op->locals);
+      printf("{ locals %p  outer %p\n", (void*)op->locals, (void*)op->locals->outer_scope);
       print_generic(op, NULL, indent+3);
       spaces(indent);
       printf("}\n");
@@ -1108,15 +1108,16 @@ _slang_print_var_scope(const slang_variable_scope *vars, int indent)
    GLuint i;
 
    spaces(indent);
-   printf("Var scope %p  %d vars\n", (void *) vars, vars->num_variables);
+   printf("Var scope %p  %d vars:\n", (void *) vars, vars->num_variables);
    for (i = 0; i < vars->num_variables; i++) {
       spaces(indent + 3);
       printf("%s\n", (char *) vars->variables[i].a_name);
    }
+   spaces(indent + 3);
+   printf("outer_scope = %p\n", (void*) vars->outer_scope);
 
    if (vars->outer_scope) {
       spaces(indent + 3);
-      printf("outer_scope = %p\n", (void*) vars->outer_scope);
       _slang_print_var_scope(vars->outer_scope, indent + 3);
    }
 }
