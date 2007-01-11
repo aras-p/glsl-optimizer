@@ -1329,8 +1329,10 @@ _slang_assemble_operation(slang_assemble_ctx * A, slang_operation * op,
       A->ref = slang_ref_forbid;
       break;
    case slang_oper_literal_float:
+#if 0
       if (ref == slang_ref_force)
          RETURN_NIL();
+#endif
       if (!PLIT(A->file, slang_asm_float_push, op->literal[0]))
          RETURN_OUT_OF_MEMORY();
       A->ref = slang_ref_forbid;
