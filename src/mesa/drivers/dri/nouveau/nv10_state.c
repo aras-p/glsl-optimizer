@@ -61,40 +61,42 @@ static void nv10BlendColor(GLcontext *ctx, const GLfloat color[4])
 
 static void nv10BlendEquationSeparate(GLcontext *ctx, GLenum modeRGB, GLenum modeA)
 {
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_BLEND_EQUATION, 1);
-	OUT_RING_CACHE((modeA<<16) | modeRGB);
+	/* Not for NV10 */
 }
 
 
 static void nv10BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, GLenum dfactorRGB,
 		GLenum sfactorA, GLenum dfactorA)
 {
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_BLEND_FUNC_SRC, 2);
-	OUT_RING_CACHE((sfactorA<<16) | sfactorRGB);
-	OUT_RING_CACHE((dfactorA<<16) | dfactorRGB);
+	/* Not for NV10 */
 }
 
-/*
+static void nv10Clear(GLcontext *ctx, GLbitfield mask)
+{
+	/* TODO */
+}
+
 static void nv10ClearColor(GLcontext *ctx, const GLfloat color[4])
 {
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	GLubyte c[4];
+	UNCLAMPED_FLOAT_TO_RGBA_CHAN(c,color);
+	nmesa->clear_color_value = PACK_COLOR_8888(c[3],c[0],c[1],c[2]);
 }
 
 static void nv10ClearDepth(GLcontext *ctx, GLclampd d)
 {
+	/* FIXME: check if 16 or 24/32 bits depth buffer */
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	nmesa->clear_value=((nmesa->clear_value&0x000000FF)|(((uint32_t)(d*0xFFFFFF))<<8));
 }
-*/
 
-/* we're don't support indexed buffers
-   void (*ClearIndex)(GLcontext *ctx, GLuint index)
- */
-
-/*
 static void nv10ClearStencil(GLcontext *ctx, GLint s)
 {
+	/* FIXME: not valid for 16 bits depth buffer (0 stencil bits) */
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	nmesa->clear_value=((nmesa->clear_value&0xFFFFFF00)|(s&0x000000FF));
 }
-*/
 
 static void nv10ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
 {
@@ -116,7 +118,7 @@ static void nv10ColorMask(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
 
 static void nv10ColorMaterial(GLcontext *ctx, GLenum face, GLenum mode)
 {
-	// TODO I need love
+	/* TODO I need love */
 }
 
 static void nv10CullFace(GLcontext *ctx, GLenum mode)
@@ -320,7 +322,7 @@ static void nv10Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
    
 static void nv10Hint(GLcontext *ctx, GLenum target, GLenum mode)
 {
-	// TODO I need love (fog and line_smooth hints)
+	/* TODO I need love (fog and line_smooth hints) */
 }
 
 // void (*IndexMask)(GLcontext *ctx, GLuint mask);
@@ -448,6 +450,7 @@ static void (*LightModelfv)(GLcontext *ctx, GLenum pname, const GLfloat *params)
 
 static void nv10LineStipple(GLcontext *ctx, GLint factor, GLushort pattern )
 {
+	/* Not for NV10 */
 }
 
 static void nv10LineWidth(GLcontext *ctx, GLfloat width)
@@ -471,7 +474,6 @@ static void nv10PointParameterfv(GLcontext *ctx, GLenum pname, const GLfloat *pa
 	
 }
 
-/** Specify the diameter of rasterized points */
 static void nv10PointSize(GLcontext *ctx, GLfloat size)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -479,7 +481,6 @@ static void nv10PointSize(GLcontext *ctx, GLfloat size)
 	OUT_RING_CACHE(((int) (size * 8.0)) & -4);
 }
 
-/** Select a polygon rasterization mode */
 static void nv10PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -495,9 +496,20 @@ static void nv10PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
 }
 
 /** Set the scale and units used to calculate depth values */
-void (*PolygonOffset)(GLcontext *ctx, GLfloat factor, GLfloat units);
+static void nv10PolygonOffset(GLcontext *ctx, GLfloat factor, GLfloat units)
+{
+        nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+        BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_POLYGON_OFFSET_FACTOR, 2);
+        OUT_RING_CACHEf(factor);
+        OUT_RING_CACHEf(units);
+}
+
 /** Set the polygon stippling pattern */
-void (*PolygonStipple)(GLcontext *ctx, const GLubyte *mask );
+static void nv10PolygonStipple(GLcontext *ctx, const GLubyte *mask )
+{
+	/* Not for NV10 */
+}
+
 /* Specifies the current buffer for reading */
 void (*ReadBuffer)( GLcontext *ctx, GLenum buffer );
 /** Set rasterization mode */
@@ -517,37 +529,21 @@ static void nv10ShadeModel(GLcontext *ctx, GLenum mode)
 	OUT_RING_CACHE(mode);
 }
 
-/** OpenGL 2.0 two-sided StencilFunc */
 static void nv10StencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func,
 		GLint ref, GLuint mask)
 {
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_STENCIL_FUNC_FUNC, 3);
-	OUT_RING_CACHE(func);
-	OUT_RING_CACHE(ref);
-	OUT_RING_CACHE(mask);
+	/* Not for NV10 */
 }
 
-/** OpenGL 2.0 two-sided StencilMask */
 static void nv10StencilMaskSeparate(GLcontext *ctx, GLenum face, GLuint mask)
 {
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_STENCIL_MASK, 1);
-	OUT_RING_CACHE(mask);
+	/* Not for NV10 */
 }
 
-/** OpenGL 2.0 two-sided StencilOp */
 static void nv10StencilOpSeparate(GLcontext *ctx, GLenum face, GLenum fail,
 		GLenum zfail, GLenum zpass)
 {
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_STENCIL_OP_FAIL, 1);
-	OUT_RING_CACHE(fail);
-	OUT_RING_CACHE(zfail);
-	OUT_RING_CACHE(zpass);
+	/* Not for NV10 */
 }
 
 /** Control the generation of texture coordinates */
@@ -560,7 +556,14 @@ void (*TexEnv)(GLcontext *ctx, GLenum target, GLenum pname,
 void (*TexParameter)(GLcontext *ctx, GLenum target,
 		struct gl_texture_object *texObj,
 		GLenum pname, const GLfloat *params);
-void (*TextureMatrix)(GLcontext *ctx, GLuint unit, const GLmatrix *mat);
+
+static void nv10TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
+{
+        nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+        BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_TX_MATRIX(unit, 0), 16);
+        /*XXX: This SHOULD work.*/
+        OUT_RING_CACHEp(mat->m, 16);
+}
 
 /** Set the viewport */
 static void nv10Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
@@ -597,13 +600,12 @@ void nv10InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
 
 	func->AlphaFunc			= nv10AlphaFunc;
 	func->BlendColor		= nv10BlendColor;
-	func->BlendEquationSeparate	= nv10BlendEquationSeparate;
-	func->BlendFuncSeparate		= nv10BlendFuncSeparate;
-#if 0
+	func->BlendEquationSeparate	= nv10BlendEquationSeparate;	/* Not for NV10 */
+	func->BlendFuncSeparate		= nv10BlendFuncSeparate;	/* Not for NV10 */
+	func->Clear			= nv10Clear;
 	func->ClearColor		= nv10ClearColor;
 	func->ClearDepth		= nv10ClearDepth;
 	func->ClearStencil		= nv10ClearStencil;
-#endif
 	func->ClipPlane			= nv10ClipPlane;
 	func->ColorMask			= nv10ColorMask;
 	func->ColorMaterial		= nv10ColorMaterial;
@@ -617,32 +619,26 @@ void nv10InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
 	func->Hint			= nv10Hint;
 	func->Lightfv			= nv10Lightfv;
 /*	func->LightModelfv		= nv10LightModelfv; */
-	func->LineStipple		= nv10LineStipple;
+	func->LineStipple		= nv10LineStipple;		/* Not for NV10 */
 	func->LineWidth			= nv10LineWidth;
 	func->LogicOpcode		= nv10LogicOpcode;
 	func->PointParameterfv		= nv10PointParameterfv;
 	func->PointSize			= nv10PointSize;
 	func->PolygonMode		= nv10PolygonMode;
-#if 0
 	func->PolygonOffset		= nv10PolygonOffset;
-	func->PolygonStipple		= nv10PolygonStipple;
-	func->ReadBuffer		= nv10ReadBuffer;
-	func->RenderMode		= nv10RenderMode;
-#endif
+	func->PolygonStipple		= nv10PolygonStipple;		/* Not for NV10 */
+/*	func->ReadBuffer		= nv10ReadBuffer;*/
+/*	func->RenderMode		= nv10RenderMode;*/
 	func->Scissor			= nv10Scissor;
 	func->ShadeModel		= nv10ShadeModel;
-	func->StencilFuncSeparate	= nv10StencilFuncSeparate;
-	func->StencilMaskSeparate	= nv10StencilMaskSeparate;
-	func->StencilOpSeparate		= nv10StencilOpSeparate;
-#if 0
-	func->TexGen			= nv10TexGen;
-	func->TexParameter		= nv10TexParameter;
+	func->StencilFuncSeparate	= nv10StencilFuncSeparate;	/* Not for NV10 */
+	func->StencilMaskSeparate	= nv10StencilMaskSeparate;	/* Not for NV10 */
+	func->StencilOpSeparate		= nv10StencilOpSeparate;	/* Not for NV10 */
+/*	func->TexGen			= nv10TexGen;*/
+/*	func->TexParameter		= nv10TexParameter;*/
 	func->TextureMatrix		= nv10TextureMatrix;
-#endif
-	func->Viewport			= nv10Viewport;
 
 	nmesa->hw_func.InitCard		= nv10InitCard;
 	nmesa->hw_func.BindBuffers	= nv10BindBuffers;
 	nmesa->hw_func.WindowMoved	= nv10WindowMoved;
 }
-
