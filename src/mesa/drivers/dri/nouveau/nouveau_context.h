@@ -119,7 +119,10 @@ typedef struct nouveau_context {
 	struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
 	GLuint vertex_attr_count;
 
-	/* Depth/stencil clear state */
+	/* Color buffer clear value */
+	uint32_t clear_color_value;
+
+	/* Depth/stencil clear value */
 	uint32_t clear_value;
 
 	/* Light state */
