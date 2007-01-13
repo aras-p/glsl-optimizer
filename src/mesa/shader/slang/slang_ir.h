@@ -45,6 +45,7 @@ typedef enum
 {
    IR_NOP = 0,
    IR_SEQ,     /* sequence (eval left, then right) */
+   IR_SCOPE,   /* new variable scope (one child) */
    IR_LABEL,   /* target of a jump or cjump */
    IR_JUMP,    /* unconditional jump */
    IR_CJUMP,   /* conditional jump */

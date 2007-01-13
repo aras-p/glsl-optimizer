@@ -188,7 +188,7 @@ find_scope(const slang_variable_scope *s, slang_atom name)
 {
    GLuint i;
    for (i = 0; i < s->num_variables; i++) {
-      if (s->variables[i].a_name == name)
+      if (s->variables[i]->a_name == name)
          return s;
    }
    if (s->outer_scope)
@@ -202,8 +202,8 @@ find_var(const slang_variable_scope *s, slang_atom name)
 {
    GLuint i;
    for (i = 0; i < s->num_variables; i++) {
-      if (s->variables[i].a_name == name)
-         return &s->variables[i];
+      if (s->variables[i]->a_name == name)
+         return s->variables[i];
    }
    if (s->outer_scope)
       return find_var(s->outer_scope, name);
@@ -621,7 +621,7 @@ slang_print_function(const slang_function *f, GLboolean body)
           (char *) f->header.a_name);
 
    for (i = 0; i < f->param_count; i++) {
-      print_variable(&f->parameters->variables[i], 3);
+      print_variable(f->parameters->variables[i], 3);
    }
 
    printf(")\n");
@@ -630,199 +630,6 @@ slang_print_function(const slang_function *f, GLboolean body)
 }
 
 
-
-
-/* operation */
-#define OP_END 0
-#define OP_BLOCK_BEGIN_NO_NEW_SCOPE 1
-#define OP_BLOCK_BEGIN_NEW_SCOPE 2
-#define OP_DECLARE 3
-#define OP_ASM 4
-#define OP_BREAK 5
-#define OP_CONTINUE 6
-#define OP_DISCARD 7
-#define OP_RETURN 8
-#define OP_EXPRESSION 9
-#define OP_IF 10
-#define OP_WHILE 11
-#define OP_DO 12
-#define OP_FOR 13
-#define OP_PUSH_VOID 14
-#define OP_PUSH_BOOL 15
-#define OP_PUSH_INT 16
-#define OP_PUSH_FLOAT 17
-#define OP_PUSH_IDENTIFIER 18
-#define OP_SEQUENCE 19
-#define OP_ASSIGN 20
-#define OP_ADDASSIGN 21
-#define OP_SUBASSIGN 22
-#define OP_MULASSIGN 23
-#define OP_DIVASSIGN 24
-/*#define OP_MODASSIGN 25*/
-/*#define OP_LSHASSIGN 26*/
-/*#define OP_RSHASSIGN 27*/
-/*#define OP_ORASSIGN 28*/
-/*#define OP_XORASSIGN 29*/
-/*#define OP_ANDASSIGN 30*/
-#define OP_SELECT 31
-#define OP_LOGICALOR 32
-#define OP_LOGICALXOR 33
-#define OP_LOGICALAND 34
-/*#define OP_BITOR 35*/
-/*#define OP_BITXOR 36*/
-/*#define OP_BITAND 37*/
-#define OP_EQUAL 38
-#define OP_NOTEQUAL 39
-#define OP_LESS 40
-#define OP_GREATER 41
-#define OP_LESSEQUAL 42
-#define OP_GREATEREQUAL 43
-/*#define OP_LSHIFT 44*/
-/*#define OP_RSHIFT 45*/
-#define OP_ADD 46
-#define OP_SUBTRACT 47
-#define OP_MULTIPLY 48
-#define OP_DIVIDE 49
-/*#define OP_MODULUS 50*/
-#define OP_PREINCREMENT 51
-#define OP_PREDECREMENT 52
-#define OP_PLUS 53
-#define OP_MINUS 54
-/*#define OP_COMPLEMENT 55*/
-#define OP_NOT 56
-#define OP_SUBSCRIPT 57
-#define OP_CALL 58
-#define OP_FIELD 59
-#define OP_POSTINCREMENT 60
-#define OP_POSTDECREMENT 61
-
-
-void
-slang_print_opcode(unsigned int opcode)
-{
-   switch (opcode) {
-   case OP_PUSH_VOID:
-      printf("OP_PUSH_VOID\n");
-      break;
-   case OP_PUSH_BOOL:
-      printf("OP_PUSH_BOOL\n");
-      break;
-   case OP_PUSH_INT:
-      printf("OP_PUSH_INT\n");
-      break;
-   case OP_PUSH_FLOAT:
-      printf("OP_PUSH_FLOAT\n");
-      break;
-   case OP_PUSH_IDENTIFIER:
-      printf("OP_PUSH_IDENTIFIER\n");
-      break;
-   case OP_SEQUENCE:
-      printf("OP_SEQUENCE\n");
-      break;
-   case OP_ASSIGN:
-      printf("OP_ASSIGN\n");
-      break;
-   case OP_ADDASSIGN:
-      printf("OP_ADDASSIGN\n");
-      break;
-   case OP_SUBASSIGN:
-      printf("OP_SUBASSIGN\n");
-      break;
-   case OP_MULASSIGN:
-      printf("OP_MULASSIGN\n");
-      break;
-   case OP_DIVASSIGN:
-      printf("OP_DIVASSIGN\n");
-      break;
-   /*case OP_MODASSIGN:*/
-   /*case OP_LSHASSIGN:*/
-   /*case OP_RSHASSIGN:*/
-   /*case OP_ORASSIGN:*/
-   /*case OP_XORASSIGN:*/
-   /*case OP_ANDASSIGN:*/
-   case OP_SELECT:
-      printf("OP_SELECT\n");
-      break;
-   case OP_LOGICALOR:
-      printf("OP_LOGICALOR\n");
-      break;
-   case OP_LOGICALXOR:
-      printf("OP_LOGICALXOR\n");
-      break;
-   case OP_LOGICALAND:
-      printf("OP_LOGICALAND\n");
-      break;
-   /*case OP_BITOR:*/
-   /*case OP_BITXOR:*/
-   /*case OP_BITAND:*/
-   case OP_EQUAL:
-      printf("OP_EQUAL\n");
-      break;
-   case OP_NOTEQUAL:
-      printf("OP_NOTEQUAL\n");
-      break;
-   case OP_LESS:
-      printf("OP_LESS\n");
-      break;
-   case OP_GREATER:
-      printf("OP_GREATER\n");
-      break;
-   case OP_LESSEQUAL:
-      printf("OP_LESSEQUAL\n");
-      break;
-   case OP_GREATEREQUAL:
-      printf("OP_GREATEREQUAL\n");
-      break;
-   /*case OP_LSHIFT:*/
-   /*case OP_RSHIFT:*/
-   case OP_ADD:
-      printf("OP_ADD\n");
-      break;
-   case OP_SUBTRACT:
-      printf("OP_SUBTRACT\n");
-      break;
-   case OP_MULTIPLY:
-      printf("OP_MULTIPLY\n");
-      break;
-   case OP_DIVIDE:
-      printf("OP_DIVIDE\n");
-      break;
-   /*case OP_MODULUS:*/
-   case OP_PREINCREMENT:
-      printf("OP_PREINCREMENT\n");
-      break;
-   case OP_PREDECREMENT:
-      printf("OP_PREDECREMENT\n");
-      break;
-   case OP_PLUS:
-      printf("OP_PLUS\n");
-      break;
-   case OP_MINUS:
-      printf("OP_MINUS\n");
-      break;
-   case OP_NOT:
-      printf("OP_NOT\n");
-      break;
-   /*case OP_COMPLEMENT:*/
-   case OP_SUBSCRIPT:
-      printf("OP_SUBSCRIPT\n");
-      break;
-   case OP_CALL:
-      printf("OP_CALL\n");
-      break;
-   case OP_FIELD:
-      printf("OP_FIELD\n");
-      break;
-   case OP_POSTINCREMENT:
-      printf("OP_POSTINCREMENT\n");
-      break;
-   case OP_POSTDECREMENT:
-      printf("OP_POSTDECREMENT\n");
-      break;
-   default:
-      printf("UNKNOWN OP %d\n", opcode);
-   }
-}
 
 
 
@@ -1083,6 +890,7 @@ slang_print_type(const slang_fully_specified_type *t)
 }
 
 
+#if 0
 static char *
 slang_var_string(const slang_variable *v)
 {
@@ -1092,6 +900,7 @@ slang_var_string(const slang_variable *v)
            slang_fq_type_string(&v->type));
    return str;
 }
+#endif
 
 
 void
@@ -1111,13 +920,13 @@ _slang_print_var_scope(const slang_variable_scope *vars, int indent)
    printf("Var scope %p  %d vars:\n", (void *) vars, vars->num_variables);
    for (i = 0; i < vars->num_variables; i++) {
       spaces(indent + 3);
-      printf("%s\n", (char *) vars->variables[i].a_name);
+      printf("%s (at %p)\n", (char *) vars->variables[i]->a_name, (void*) (vars->variables + i));
    }
    spaces(indent + 3);
    printf("outer_scope = %p\n", (void*) vars->outer_scope);
 
    if (vars->outer_scope) {
-      spaces(indent + 3);
+      /*spaces(indent + 3);*/
       _slang_print_var_scope(vars->outer_scope, indent + 3);
    }
 }

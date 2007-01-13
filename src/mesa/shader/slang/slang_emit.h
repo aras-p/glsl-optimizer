@@ -32,10 +32,6 @@
 #include "mtypes.h"
 
 
-extern slang_gen_context *
-_slang_new_codegen_context(void);
-
-
 extern void
 slang_print_ir(const slang_ir_node *n, int indent);
 
@@ -48,15 +44,8 @@ extern slang_ir_storage *
 _slang_clone_ir_storage(slang_ir_storage *store);
 
 
-extern GLint
-_slang_alloc_temporary(slang_gen_context *gc, GLint size);
-
-extern void
-_slang_free_temporary(slang_gen_context *gc, GLuint r, GLint size);
-
-
 extern GLboolean
-_slang_emit_code(slang_ir_node *n, slang_gen_context *gc,
+_slang_emit_code(slang_ir_node *n, slang_var_table *vartable,
                  struct gl_program *prog, GLboolean withEnd);
 
 

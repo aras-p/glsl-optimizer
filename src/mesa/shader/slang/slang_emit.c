@@ -34,6 +34,7 @@
 #include "program.h"
 #include "prog_instruction.h"
 #include "prog_parameter.h"
+#include "prog_print.h"
 #include "slang_emit.h"
 
 
@@ -83,6 +84,7 @@ static slang_ir_info IrInfo[] = {
    { IR_COS, "IR_COS", OPCODE_COS, 1, 1 },
    /* other */
    { IR_SEQ, "IR_SEQ", 0, 0, 0 },
+   { IR_SCOPE, "IR_SCOPE", 0, 0, 0 },
    { IR_LABEL, "IR_LABEL", 0, 0, 0 },
    { IR_JUMP, "IR_JUMP", 0, 0, 0 },
    { IR_CJUMP, "IR_CJUMP", 0, 0, 0 },
@@ -227,6 +229,11 @@ slang_print_ir(const slang_ir_node *n, int indent)
       slang_print_ir(n->Children[0], indent + IND);
       slang_print_ir(n->Children[1], indent + IND);
       break;
+   case IR_SCOPE:
+      printf("NEW SCOPE\n");
+      assert(!n->Children[1]);
+      slang_print_ir(n->Children[0], indent + 3);
+      break;
    case IR_MOVE:
       printf("MOVE (writemask = %s)\n", writemask_string(n->Writemask));
       slang_print_ir(n->Children[0], indent+3);
@@ -279,68 +286,33 @@ slang_print_ir(const slang_ir_node *n, int indent)
 }
 
 
-GLint
-_slang_alloc_temporary(slang_gen_context *gc, GLint size)
-{
-   const GLuint sz4 = (size + 3) / 4;
-   GLuint i, j;
-   ASSERT(size > 0); /* number of floats */
-
-   for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
-      GLuint found = 0;
-      for (j = 0; j < sz4; j++) {
-         if (!gc->TempUsed[i + j]) {
-            found++;
-         }
-      }
-      if (found == sz4) {
-         /* found block of size/4 free regs */
-         for (j = 0; j < sz4; j++)
-            gc->TempUsed[i + j] = GL_TRUE;
-         return i;
-      }
-   }
-   return -1;
-}
-
-
-
-static GLboolean
-is_temporary(const slang_gen_context *gc, const slang_ir_storage *st)
-{
-   if (st->File == PROGRAM_TEMPORARY && gc->TempUsed[st->Index])
-      return gc->TempUsed[st->Index];
-   else
-      return GL_FALSE;
-}
-
-
-void
-_slang_free_temporary(slang_gen_context *gc, GLuint r, GLint size)
-{
-   const GLuint sz4 = (size + 3) / 4;
-   GLuint i;
-   for (i = 0; i < sz4; i++) {
-      if (gc->TempUsed[r + i])
-         gc->TempUsed[r + i] = GL_FALSE;
-   }
-}
-
-
 /**
  * Allocate temporary storage for an intermediate result (such as for
  * a multiply or add, etc.
  */
 static void
-slang_alloc_temp_storage(slang_gen_context *gc, slang_ir_node *n, GLint size)
+alloc_temp_storage(slang_var_table *vt, slang_ir_node *n, GLint size)
 {
    GLint indx;
    assert(!n->Var);
    assert(!n->Store);
    assert(size > 0);
-   printf("Allocate binop temp:\n");
-   indx = _slang_alloc_temporary(gc, size);
+   indx = _slang_alloc_temp(vt, size);
    n->Store = _slang_new_ir_storage(PROGRAM_TEMPORARY, indx, size);
+}
+
+
+static void
+free_temp_storage(slang_var_table *vt, slang_ir_node *n)
+{
+   if (n->Store->File == PROGRAM_TEMPORARY && n->Store->Index >= 0) {
+      if (_slang_is_temp(vt, n->Store->Index)) {
+         _slang_free_temp(vt, n->Store->Index, n->Store->Size);
+         /* XXX free(store)? */
+         n->Store->Index = -1;
+         n->Store->Size = -1;
+      }
+   }
 }
 
 
@@ -445,14 +417,14 @@ new_instruction(struct gl_program *prog, gl_inst_opcode opcode)
 
 
 static struct prog_instruction *
-emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog);
+emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog);
 
 
 /**
  * Generate code for a simple binary-op instruction.
  */
 static struct prog_instruction *
-emit_binop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
+emit_binop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 {
    struct prog_instruction *inst;
    const slang_ir_info *info = slang_find_ir_info(n->Opcode);
@@ -460,25 +432,32 @@ emit_binop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 
    assert(info->InstOpcode != OPCODE_NOP);
 
-   emit(gc, n->Children[0], prog);
-   emit(gc, n->Children[1], prog);
+   /* gen code for children */
+   emit(vt, n->Children[0], prog);
+   emit(vt, n->Children[1], prog);
+
+   /* gen this instruction */
    inst = new_instruction(prog, info->InstOpcode);
-   /* alloc temp storage for the result: */
-   if (!n->Store || n->Store->File == PROGRAM_UNDEFINED) {
-      slang_alloc_temp_storage(gc, n, info->ResultSize);
-   }
-   storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
    storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
                       n->Children[0]->Swizzle);
    storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store,
                       n->Children[1]->Swizzle);
+   free_temp_storage(vt, n->Children[0]);
+   free_temp_storage(vt, n->Children[1]);
+
+   if (!n->Store) {
+      alloc_temp_storage(vt, n, info->ResultSize);
+   }
+   storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+
    inst->Comment = n->Comment;
+   /*_mesa_print_instruction(inst);*/
    return inst;
 }
 
 
 static struct prog_instruction *
-emit_unop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
+emit_unop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 {
    struct prog_instruction *inst;
    const slang_ir_info *info = slang_find_ir_info(n->Opcode);
@@ -486,26 +465,28 @@ emit_unop(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 
    assert(info->NumParams == 1);
 
-   emit(gc, n->Children[0], prog);
+   /* gen code for child */
+   emit(vt, n->Children[0], prog);
 
+   /* gen this instruction */
    inst = new_instruction(prog, info->InstOpcode);
-
-   if (!n->Store)
-      slang_alloc_temp_storage(gc, n, info->ResultSize);
-
-   storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
-
    storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
                       n->Children[0]->Swizzle);
+   free_temp_storage(vt, n->Children[0]);
+
+   if (!n->Store) {
+      alloc_temp_storage(vt, n, info->ResultSize);
+   }
+   storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
 
    inst->Comment = n->Comment;
-
+   /*_mesa_print_instruction(inst);*/
    return inst;
 }
 
 
 static struct prog_instruction *
-emit_negation(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
+emit_negation(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 {
    /* Implement as MOV dst, -src; */
    /* XXX we could look at the previous instruction and in some circumstances
@@ -513,10 +494,10 @@ emit_negation(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
     */
    struct prog_instruction *inst;
 
-   emit(gc, n->Children[0], prog);
+   emit(vt, n->Children[0], prog);
 
    if (!n->Store)
-      slang_alloc_temp_storage(gc, n, n->Children[0]->Store->Size);
+      alloc_temp_storage(vt, n, n->Children[0]->Store->Size);
 
    inst = new_instruction(prog, OPCODE_MOV);
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
@@ -563,7 +544,7 @@ emit_jump(const char *target, struct gl_program *prog)
 
 
 static struct prog_instruction *
-emit_tex(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
+emit_tex(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 {
    struct prog_instruction *inst;
    if (n->Opcode == IR_TEX) {
@@ -578,7 +559,7 @@ emit_tex(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    }
 
    if (!n->Store)
-      slang_alloc_temp_storage(gc, n, 4);
+      alloc_temp_storage(vt, n, 4);
 
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
 
@@ -600,7 +581,7 @@ emit_tex(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 
 
 static struct prog_instruction *
-emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
+emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 {
    struct prog_instruction *inst;
    if (!n)
@@ -610,34 +591,54 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    case IR_SEQ:
       assert(n->Children[0]);
       assert(n->Children[1]);
-      emit(gc, n->Children[0], prog);
-      inst = emit(gc, n->Children[1], prog);
+      emit(vt, n->Children[0], prog);
+      inst = emit(vt, n->Children[1], prog);
       n->Store = n->Children[1]->Store;
       return inst;
-      break;
+
+   case IR_SCOPE:
+      /* new variable scope */
+      vt = _slang_push_var_table(vt);
+      inst = emit(vt, n->Children[0], prog);
+      vt = _slang_pop_var_table(vt);
+      return inst;
+
    case IR_VAR_DECL:
+      /* Variable declaration - allocate a register for it */
+      assert(n->Store);
+      assert(n->Store->File != PROGRAM_UNDEFINED);
+      assert(n->Store->Size > 0);
+      if (n->Var->isTemp)
+         n->Store->Index = _slang_alloc_temp(vt, n->Store->Size);
+      else
+         n->Store->Index = _slang_alloc_var(vt, n->Store->Size);
+      break;
+
    case IR_VAR:
-      /* Storage should have already been resolved/allocated */
+      /* Reference to a variable
+       * Storage should have already been resolved/allocated.
+       */
       assert(n->Store);
       assert(n->Store->File != PROGRAM_UNDEFINED);
       assert(n->Store->Index >= 0);
       assert(n->Store->Size > 0);
       break;
+
    case IR_MOVE:
       /* rhs */
       assert(n->Children[1]);
-      inst = emit(gc, n->Children[1], prog);
+      inst = emit(vt, n->Children[1], prog);
       /* lhs */
-      emit(gc, n->Children[0], prog);
+      emit(vt, n->Children[0], prog);
 
 #if 1
-      if (inst && is_temporary(gc, n->Children[1]->Store)) {
+      if (inst && _slang_is_temp(vt, n->Children[1]->Store->Index)) {
          /* Peephole optimization:
           * Just modify the RHS to put its result into the dest of this
           * MOVE operation.  Then, this MOVE is a no-op.
           */
-         _slang_free_temporary(gc, n->Children[1]->Store->Index,
-                               n->Children[1]->Store->Size);
+         _slang_free_temp(vt, n->Children[1]->Store->Index,
+                          n->Children[1]->Store->Size);
          *n->Children[1]->Store = *n->Children[0]->Store;
          /* fixup the prev (RHS) instruction */
          storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
@@ -673,9 +674,9 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
                                n->Children[1]->Swizzle);
          }
          /* XXX is this test correct? */
-         if (n->Children[1]->Store->File == PROGRAM_TEMPORARY) {
-            _slang_free_temporary(gc, n->Children[1]->Store->Index,
-                                  n->Children[1]->Store->Size);
+         if (_slang_is_temp(vt, n->Children[1]->Store->Index)) {
+            _slang_free_temp(vt, n->Children[1]->Store->Index,
+                             n->Children[1]->Store->Size);
          }
          /*inst->Comment = _mesa_strdup("IR_MOVE");*/
          n->Store = n->Children[0]->Store; /*XXX new */
@@ -697,7 +698,7 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    case IR_POW:
    case IR_EXP:
    case IR_EXP2:
-      return emit_binop(gc, n, prog);
+      return emit_binop(vt, n, prog);
    case IR_RSQ:
    case IR_RCP:
    case IR_FLOOR:
@@ -707,13 +708,13 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
    case IR_COS:
    case IR_DDX:
    case IR_DDY:
-      return emit_unop(gc, n, prog);
+      return emit_unop(vt, n, prog);
    case IR_TEX:
    case IR_TEXB:
    case IR_TEXP:
-      return emit_tex(gc, n, prog);
+      return emit_tex(vt, n, prog);
    case IR_NEG:
-      return emit_negation(gc, n, prog);
+      return emit_negation(vt, n, prog);
    case IR_LABEL:
       return emit_label(n->Target, prog);
    case IR_FLOAT:
@@ -726,7 +727,7 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
           * Next instruction is typically an IR_CJUMP.
           */
          /* last child expr instruction: */
-         struct prog_instruction *inst = emit(gc, n->Children[0], prog);
+         struct prog_instruction *inst = emit(vt, n->Children[0], prog);
          if (inst) {
             /* set inst's CondUpdate flag */
             inst->CondUpdate = GL_TRUE;
@@ -737,13 +738,13 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
              * is normally generated for the expression "i".
              * Generate a move instruction just to set condition codes.
              */
-            slang_alloc_temp_storage(gc, n, 1);
+            alloc_temp_storage(vt, n, 1);
             inst = new_instruction(prog, OPCODE_MOV);
             inst->CondUpdate = GL_TRUE;
             storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
             storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
                                n->Children[0]->Swizzle);
-            _slang_free_temporary(gc, n->Store->Index, n->Store->Size);
+            _slang_free_temp(vt, n->Store->Index, n->Store->Size);
             return inst; /* XXX or null? */
          }
       }
@@ -760,23 +761,14 @@ emit(slang_gen_context *gc, slang_ir_node *n, struct gl_program *prog)
 }
 
 
-slang_gen_context *
-_slang_new_codegen_context(void)
-{
-   slang_gen_context *gc = (slang_gen_context *) _mesa_calloc(sizeof(*gc));
-   return gc;
-}
-
-
-
 GLboolean
-_slang_emit_code(slang_ir_node *n, slang_gen_context *gc,
+_slang_emit_code(slang_ir_node *n, slang_var_table *vt,
                  struct gl_program *prog, GLboolean withEnd)
 {
    GLboolean success;
 
-   if (emit(gc, n, prog)) {
-      /* finish up by addeing the END opcode to program */
+   if (emit(vt, n, prog)) {
+      /* finish up by adding the END opcode to program */
       if (withEnd) {
          struct prog_instruction *inst;
          inst = new_instruction(prog, OPCODE_END);
@@ -788,8 +780,8 @@ _slang_emit_code(slang_ir_node *n, slang_gen_context *gc,
       success = GL_FALSE;
    }
 
-#if 0
    printf("*********** End generate code (%u inst):\n", prog->NumInstructions);
+#if 0
    _mesa_print_program(prog);
    _mesa_print_program_parameters(ctx,prog);
 #endif

@@ -38,6 +38,7 @@
 #include "slang_error.h"
 #include "slang_simplify.h"
 #include "slang_emit.h"
+#include "slang_vartable.h"
 #include "slang_ir.h"
 #include "mtypes.h"
 #include "program.h"
@@ -259,10 +260,10 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
  *   4. other?
  */
 static void
-slang_allocate_storage(slang_gen_context *gc, slang_ir_node *n,
-                      struct gl_program *prog)
+slang_allocate_storage(slang_assemble_ctx *A, slang_ir_node *n)
 {
-   assert(gc);
+   struct gl_program *prog = A->program;
+   assert(A->vartable);
    assert(n);
    assert(n->Opcode == IR_VAR_DECL || n->Opcode == IR_VAR);
    assert(prog);
@@ -285,33 +286,22 @@ slang_allocate_storage(slang_gen_context *gc, slang_ir_node *n,
       /* variable declaration */
       assert(n->Var);
       assert(!is_sampler_type(&n->Var->type));
-      printf("Alloc storage for %p %s:\n", (void*) n->Var, (char*) n->Var->a_name);
-      /*
-      assert(n->Store->Index < 0);
-      */
       n->Store->File = PROGRAM_TEMPORARY;
       n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
       assert(n->Store->Size > 0);
-      if (n->Store->Index < 0)
-      n->Store->Index = _slang_alloc_temporary(gc, n->Store->Size);
-      printf("  Location = %d\n", n->Store->Index);
-      /*
-      printf("alloc var %s storage at %d (size %d)\n",
-             (char *) n->Var->a_name,
-             n->Store->Index,
-             n->Store->Size);
-      */
-      assert(n->Store->Size > 0);
-      n->Var->declared = GL_TRUE;
       return;
    }
 
+#if 00
    if (n->Store->File == PROGRAM_UNDEFINED) {
       printf("*** Var %s  size %d\n", (char*) n->Var->a_name, n->Store->Size);
-
       assert(n->Store->File != PROGRAM_UNDEFINED);
    }
+#endif
 
+   /**
+    ** XXX this all has to be redone
+    **/
    if (n->Store->Index < 0) {
       /* determine storage location for this var */
 
@@ -342,7 +332,6 @@ slang_allocate_storage(slang_gen_context *gc, slang_ir_node *n,
       }
       else {
          /* what's this??? */
-         abort();
       }
    }
 }
@@ -533,54 +522,6 @@ static slang_asm_info AsmInfo[] = {
 };
 
 
-#if 000 /* prototype for future symbol table scheme */
-
-#define MAX_DEPTH 100
-static slang_variable_scope *Stack[MAX_DEPTH];
-static int CurDepth;
-
-static void
-_slang_push_scope(slang_variable_scope *scope)
-{
-   Stack[CurDepth++] = scope;
-   assert(CurDepth < MAX_DEPTH);
-}
-
-static void
-_slang_pop_scope(void)
-{
-   CurDepth--;
-   assert(CurDepth >= 0);
-}
-
-static slang_variable_scope *
-_slang_current_scope(void)
-{
-   if (CurDepth > 0)
-      return Stack[CurDepth - 1];
-   else
-      return NULL;
-}
-
-static slang_variable *
-_slang_find_variable(slang_atom name)
-{
-   int i;
-   for (i = CurDepth - 1; i >= 0; i--) {
-      int j;
-      for (j = 0; j < Stack[i]->num_variables; j++) {
-         if (Stack[i]->variables[j].a_name == name) {
-            return Stack[i]->variables + j;
-         }
-      }
-   }
-   return NULL;
-}
-
-#endif
-
-
-
 /**
  * Recursively free an IR tree.
  */
@@ -675,15 +616,14 @@ new_var(slang_assemble_ctx *A, slang_operation *oper,
       printf("VAR NOT FOUND %s\n", (char *) name);
       assert(v);
    }
-   /** 
-   assert(v->declared);
-   **/
    assert(!oper->var || oper->var == v);
    v->used = GL_TRUE;
-   oper->var = v;
+
    n->Swizzle = swizzle;
    n->Var = v;
-   slang_allocate_storage(A->codegen, n, A->program);
+
+   slang_allocate_storage(A, n);
+
    return n;
 }
 
@@ -725,7 +665,7 @@ slang_is_writemask(const char *field, GLuint *mask)
 
 
 /**
- * Check if the given function is really just a wrapper for an
+ * Check if the given function is really just a wrapper for a
  * basic assembly instruction.
  */
 static GLboolean
@@ -753,7 +693,7 @@ slang_inline_asm_function(slang_assemble_ctx *A,
    slang_operation *inlined = slang_operation_new(1);
 
    /*assert(oper->type == slang_oper_call);  or vec4_add, etc */
-
+   printf("Inline asm %s\n", (char*) fun->header.a_name);
    inlined->type = fun->body->children[0].type;
    inlined->a_id = fun->body->children[0].a_id;
    inlined->num_children = numArgs;
@@ -833,9 +773,7 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
 	 for (i = 0; i < substCount; i++) {
 	    if (v == substOld[i]) {
                /* OK, replace this slang_oper_identifier with a new expr */
-	       assert(substNew[i]->type == slang_oper_identifier ||
-                      substNew[i]->type == slang_oper_literal_float);
-#if 1 /* DEBUG only */
+#if 0 /* DEBUG only */
 	       if (substNew[i]->type == slang_oper_identifier) {
                   assert(substNew[i]->var);
                   assert(substNew[i]->var->a_name);
@@ -843,7 +781,7 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
 			 (char*)v->a_name, (char*) substNew[i]->var->a_name,
 			 (void*) oper);
                }
-	       else
+	       else {
 		  printf("Substitute %s with %f in id node %p\n",
 			 (char*)v->a_name, substNew[i]->literal[0],
 			 (void*) oper);
@@ -958,15 +896,15 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
    substNew = (slang_operation **)
       _mesa_calloc(totalArgs * sizeof(slang_operation *));
 
-   printf("\nInline call to %s  (total vars=%d  nparams=%d)\n",
+   printf("Inline call to %s  (total vars=%d  nparams=%d)\n",
 	  (char *) fun->header.a_name,
 	  fun->parameters->num_variables, numArgs);
 
-
    if (haveRetValue && !returnOper) {
-      /* Create comma sequence for inlined code, the left child will be the
-       * function body and the right child will be a variable (__retVal)
-       * that will get the return value.
+      /* Create 3-child comma sequence for inlined code:
+       * child[0]:  declare __resultTmp
+       * child[1]:  inlined function body
+       * child[2]:  __resultTmp
        */
       slang_operation *commaSeq;
       slang_operation *declOper = NULL;
@@ -981,13 +919,13 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
       /* allocate the return var */
       resultVar = slang_variable_scope_grow(commaSeq->locals);
       /*
-      printf("Alloc __resultTemp in scope %p for retval of calling %s\n",
+      printf("Alloc __resultTmp in scope %p for retval of calling %s\n",
              (void*)commaSeq->locals, (char *) fun->header.a_name);
       */
 
       resultVar->a_name = slang_atom_pool_atom(A->atoms, "__resultTmp");
       resultVar->type = fun->header.type; /* XXX copy? */
-      /*resultVar->type.qualifier = slang_qual_out;*/
+      resultVar->isTemp = GL_TRUE;
 
       /* child[0] = __resultTmp declaration */
       declOper = &commaSeq->children[0];
@@ -1027,12 +965,12 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
     */
    substCount = 0;
    for (i = 0; i < totalArgs; i++) {
-      slang_variable *p = &fun->parameters->variables[i];
-
+      slang_variable *p = fun->parameters->variables[i];
+      /*
       printf("Param %d: %s %s \n", i,
              slang_type_qual_string(p->type.qualifier),
 	     (char *) p->a_name);
-
+      */
       if (p->type.qualifier == slang_qual_inout ||
 	  p->type.qualifier == slang_qual_out) {
 	 /* an output param */
@@ -1042,9 +980,10 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
          else
             arg = returnOper;
 	 paramMode[i] = SUBST;
-	 assert(arg->type == slang_oper_identifier
-		/*||arg->type == slang_oper_variable_decl*/);
-         slang_resolve_variable(arg);
+
+	 if (arg->type == slang_oper_identifier)
+            slang_resolve_variable(arg);
+
          /* replace parameter 'p' with argument 'arg' */
 	 substOld[substCount] = p;
 	 substNew[substCount] = arg; /* will get copied */
@@ -1073,15 +1012,14 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
       assert(paramMode[i]);
    }
 
-#if 00
-   printf("ABOUT to inline body %p with checksum %d\n",
-          (char *) fun->body, slang_checksum_tree(fun->body));
-#endif
-
    /* actual code inlining: */
    slang_operation_copy(inlined, fun->body);
 
-#if 000
+   /*** XXX review this */
+   assert(inlined->type = slang_oper_block_no_new_scope);
+   inlined->type = slang_oper_block_new_scope;
+
+#if 0
    printf("======================= orig body code ======================\n");
    printf("=== params scope = %p\n", (void*) fun->parameters);
    slang_print_tree(fun->body, 8);
@@ -1092,7 +1030,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
    /* do parameter substitution in inlined code: */
    slang_substitute(A, inlined, substCount, substOld, substNew, GL_FALSE);
 
-#if 000
+#if 0
    printf("======================= subst code ==========================\n");
    slang_print_tree(inlined, 8);
    printf("=============================================================\n");
@@ -1104,7 +1042,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
    numCopyIn = 0;
    for (i = 0; i < numArgs; i++) {
       if (paramMode[i] == COPY_IN) {
-	 slang_variable *p = &fun->parameters->variables[i];
+	 slang_variable *p = fun->parameters->variables[i];
 	 /* declare parameter 'p' */
 	 slang_operation *decl = slang_operation_insert(&inlined->num_children,
 							&inlined->children,
@@ -1138,7 +1076,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
 
    for (i = 0; i < totalArgs; i++) {
       if (paramMode[i] == COPY_OUT) {
-	 const slang_variable *p = &fun->parameters->variables[i];
+	 const slang_variable *p = fun->parameters->variables[i];
 	 /* actualCallVar = outParam */
 	 /*if (i > 0 || !haveRetValue)*/
 	 slang_operation *ass = slang_operation_insert(&inlined->num_children,
@@ -1215,7 +1153,6 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
    printf("\n");
 #endif
 
-   /* assemble what we just made XXX here??? */
    n = _slang_gen_operation(A, oper);
 
    CurFunction->end_label = NULL;
@@ -1323,7 +1260,6 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
          dest_oper = &dest_oper->children[0];
       }
 
-      assert(dest_oper->type == slang_oper_identifier);
       n0 = _slang_gen_operation(A, dest_oper);
       assert(n0->Var);
       assert(n0->Store);
@@ -1676,9 +1612,8 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       return NULL;
 
    varDecl->Var = v;
-   v->declared = GL_TRUE;
 
-   slang_allocate_storage(A->codegen, varDecl, A->program);
+   slang_allocate_storage(A, varDecl);
 
    if (oper->num_children > 0) {
       /* child is initializer */
@@ -1728,7 +1663,9 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
     */
    slang_atom aVar = oper->var ? oper->var->a_name : oper->a_id;
    slang_ir_node *n = new_var(A, oper, aVar, SWIZZLE_NOOP);
+   /*
    assert(oper->var);
+   */
    return n;
 }
 
@@ -1856,7 +1793,7 @@ _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
       /* new storage info since we don't want to change the original */
       base->Store = _slang_clone_ir_storage(base->Store);
       if (_slang_type_is_vector(array_ti.spec.type)) {
-         /* scalar element (float) of a basic vector (vec3) */
+         /* scalar element (float) of a basic vector (ex: vec3) */
          const GLuint max = _slang_type_dim(array_ti.spec.type);
          if (index >= max) {
             RETURN_ERROR("array index out of bounds", 0);
@@ -1888,39 +1825,60 @@ static slang_ir_node *
 _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 {
    switch (oper->type) {
-   case slang_oper_block_no_new_scope:
    case slang_oper_block_new_scope:
+      {
+         slang_ir_node *n;
+
+         A->vartable = _slang_push_var_table(A->vartable);
+
+         oper->type = slang_oper_block_no_new_scope; /* temp change */
+         n = _slang_gen_operation(A, oper);
+         oper->type = slang_oper_block_new_scope; /* restore */
+
+         A->vartable = _slang_pop_var_table(A->vartable);
+
+         if (n)
+            n = new_node(IR_SCOPE, n, NULL);
+         return n;
+      }
+      break;
+
+   case slang_oper_block_no_new_scope:
       /* list of operations */
       assert(oper->num_children > 0);
       {
          slang_ir_node *n, *tree = NULL;
          GLuint i;
+
          for (i = 0; i < oper->num_children; i++) {
             n = _slang_gen_operation(A, &oper->children[i]);
-            if (!n)
+            if (!n) {
+               _slang_free_ir_tree(tree);
                return NULL; /* error must have occured */
+            }
             tree = tree ? new_seq(tree, n) : n;
          }
 
-      if (oper->locals->num_variables > 0) {
-         int i;
-         /*
-         printf("\n****** Deallocate vars in scope!\n");
-         */
-         for (i = 0; i < oper->locals->num_variables; i++) {
-            slang_variable *v = oper->locals->variables + i;
-            if (v->aux) {
-               slang_ir_storage *store = (slang_ir_storage *) v->aux;
-               /*
-               printf("  Deallocate var %s\n", (char*) v->a_name);
-               */
-               assert(store->File == PROGRAM_TEMPORARY);
-               assert(store->Index >= 0);
-               _slang_free_temporary(A->codegen, store->Index, store->Size);
+#if 00
+         if (oper->locals->num_variables > 0) {
+            int i;
+            /*
+            printf("\n****** Deallocate vars in scope!\n");
+            */
+            for (i = 0; i < oper->locals->num_variables; i++) {
+               slang_variable *v = oper->locals->variables + i;
+               if (v->aux) {
+                  slang_ir_storage *store = (slang_ir_storage *) v->aux;
+                  /*
+                  printf("  Deallocate var %s\n", (char*) v->a_name);
+                  */
+                  assert(store->File == PROGRAM_TEMPORARY);
+                  assert(store->Index >= 0);
+                  _slang_free_temp(A->vartable, store->Index, store->Size);
+               }
             }
          }
-      }
-
+#endif
          return tree;
       }
       break;
@@ -2022,12 +1980,10 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       return _slang_gen_assignment(A, oper);
    case slang_oper_addassign:
       {
+         /* XXX this is broken */
 	 slang_ir_node *n;
          assert(oper->num_children == 2);
-	 n = _slang_gen_function_call_name(A, "+=", oper, NULL);
-         /* The result of this operation should be stored back into child[0] */
-         assert(n->Children[0]->Store);
-         n->Store = n->Children[0]->Store;
+	 n = _slang_gen_function_call_name(A, "+=", oper, &oper->children[0]);
 	 return n;
       }
    case slang_oper_subassign:
@@ -2171,9 +2127,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          /* We know it's a uniform, but don't allocate storage unless
           * it's really used.
           */
-
          store = _slang_new_ir_storage(PROGRAM_STATE_VAR, -1, size);
-
       }
       if (dbg) printf("UNIFORM ");
    }
@@ -2260,10 +2214,12 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       if (!n)
          return GL_FALSE;
       n->Var = var;
-      var->declared = GL_TRUE;
       store = _slang_new_ir_storage(PROGRAM_TEMPORARY, index, size);
       var->aux = store;  /* save var's storage info */
-      slang_allocate_storage(A->codegen, n, A->program);
+
+      slang_allocate_storage(A, n);
+
+      _slang_add_variable(A->vartable, var);
 
       /* IR code for the var's initializer, if present */
       if (var->initializer) {
@@ -2284,7 +2240,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          n = new_seq(n, init);
       }
 
-      success = _slang_emit_code(n, A->codegen, A->program, GL_FALSE);
+      success = _slang_emit_code(n, A->vartable, A->program, GL_FALSE);
 
       _slang_free_ir_tree(n);
    }
@@ -2328,8 +2284,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    assert(A->program->Parameters );
    assert(A->program->Varying);
 
-   assert(A->codegen);
-   /*   A->codegen = _slang_new_codegen_context();*/
+   assert(A->vartable);
 
    /* fold constant expressions, etc. */
    slang_simplify(fun->body, &A->space, A->atoms);
@@ -2340,8 +2295,16 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    if (!CurFunction->end_label)
       CurFunction->end_label = slang_atom_pool_gen(A->atoms, "__endOfFunc_main_");
 
+   /* push new vartable scope */
+   A->vartable = _slang_push_var_table(A->vartable);
+
    /* Generate IR tree for the function body code */
    n = _slang_gen_operation(A, fun->body);
+   if (n)
+      n = new_node(IR_SCOPE, n, NULL);
+
+   /* pop vartable, restore previous */
+   A->vartable = _slang_pop_var_table(A->vartable);
 
    if (!n) {
       /* XXX record error */
@@ -2361,11 +2324,13 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 #if 0
    printf("************* IR for %s *******\n", (char*)fun->header.a_name);
    slang_print_ir(n, 0);
+#endif
+#if 1
    printf("************* End codegen function ************\n\n");
 #endif
 
    /* Emit program instructions */
-   success = _slang_emit_code(n, A->codegen, A->program, GL_TRUE);
+   success = _slang_emit_code(n, A->vartable, A->program, GL_TRUE);
    _slang_free_ir_tree(n);
 
    /* free codegen context */

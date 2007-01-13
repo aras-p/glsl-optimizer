@@ -126,8 +126,8 @@ static GLboolean aggregate_variables (slang_storage_aggregate *agg, slang_variab
 	GLuint i;
 
 	for (i = 0; i < vars->num_variables; i++)
-		if (!_slang_aggregate_variable (agg, &vars->variables[i].type.specifier,
-				vars->variables[i].array_len, funcs, structs, globals, mach, file, atoms))
+		if (!_slang_aggregate_variable (agg, &vars->variables[i]->type.specifier,
+				vars->variables[i]->array_len, funcs, structs, globals, mach, file, atoms))
 			return GL_FALSE;
 	return GL_TRUE;
 }

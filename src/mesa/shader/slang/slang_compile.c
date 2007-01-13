@@ -39,6 +39,7 @@
 #include "slang_storage.h"
 #include "slang_error.h"
 #include "slang_emit.h"
+#include "slang_vartable.h"
 
 #include "slang_print.h"
 
@@ -98,7 +99,9 @@ _slang_code_object_ctr(slang_code_object * self)
    for (i = 0; i < SLANG_BUILTIN_TOTAL; i++)
       _slang_code_unit_ctr(&self->builtin[i], self);
    _slang_code_unit_ctr(&self->unit, self);
+#if 01
    _slang_assembly_file_ctr(&self->assembly);
+#endif
    slang_machine_ctr(&self->machine);
    self->varpool.next_addr = 0;
    slang_atom_pool_construct(&self->atompool);
@@ -116,7 +119,9 @@ _slang_code_object_dtr(slang_code_object * self)
    for (i = 0; i < SLANG_BUILTIN_TOTAL; i++)
       _slang_code_unit_dtr(&self->builtin[i]);
    _slang_code_unit_dtr(&self->unit);
+#if 01
    slang_assembly_file_destruct(&self->assembly);
+#endif
    slang_machine_dtr(&self->machine);
    slang_atom_pool_destruct(&self->atompool);
    slang_export_data_table_dtr(&self->expdata);
@@ -248,7 +253,7 @@ typedef struct slang_output_ctx_
    slang_var_pool *global_pool;
    slang_machine *machine;
    struct gl_program *program;
-   slang_gen_context *codegen;
+   slang_var_table *vartable;
 } slang_output_ctx;
 
 /* _slang_compile() */
@@ -868,7 +873,7 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
                slang_operation *o = &oper->children[i - first_var];
                o->type = slang_oper_variable_decl;
                o->locals->outer_scope = O->vars;
-               o->a_id = O->vars->variables[i].a_name;
+               o->a_id = O->vars->variables[i]->a_name;
             }
          }
       }
@@ -879,9 +884,6 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
        */
       oper->type = slang_oper_asm;
       oper->a_id = parse_identifier(C);
-      if (strcmp((char*)oper->a_id, "dot") == 0) {
-         printf("Assemble dot! **************************\n");
-      }
       if (oper->a_id == SLANG_ATOM_NULL)
          return 0;
       while (*C->I != OP_END) {
@@ -1547,15 +1549,19 @@ parse_function_definition(slang_parse_ctx * C, slang_output_ctx * O,
 static GLboolean
 initialize_global(slang_assemble_ctx * A, slang_variable * var)
 {
+#if 01
    slang_assembly_file_restore_point point;
+#endif
    slang_machine mach;
    slang_assembly_local_info save_local = A->local;
    slang_operation op_id, op_assign;
    GLboolean result;
 
+#if 01
    /* save the current assembly */
    if (!slang_assembly_file_restore_point_save(A->file, &point))
       return GL_FALSE;
+#endif
 
    /* setup the machine */
    mach = *A->mach;
@@ -1578,13 +1584,13 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
 
    /* put the variable into operation's scope */
    op_id.locals->variables =
-      (slang_variable *) slang_alloc_malloc(sizeof(slang_variable));
+      (slang_variable **) slang_alloc_malloc(sizeof(slang_variable *));
    if (op_id.locals->variables == NULL) {
       slang_operation_destruct(&op_id);
       return GL_FALSE;
    }
    op_id.locals->num_variables = 1;
-   op_id.locals->variables[0] = *var;
+   op_id.locals->variables[0] = var;
 
    /* construct the assignment expression */
    if (!slang_operation_construct(&op_assign)) {
@@ -1605,8 +1611,12 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
    op_assign.children[0] = op_id;
    op_assign.children[1] = *var->initializer;
 
+#if 0 /* this should go away */
    /* insert the actual expression */
    result = _slang_assemble_operation(A, &op_assign, slang_ref_forbid);
+#else
+   result = 1;
+#endif
 
    /* carefully destroy the operations */
    op_assign.num_children = 0;
@@ -1627,9 +1637,11 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
       return GL_FALSE;
 #endif
 
+#if 01
    /* restore the old assembly */
    if (!slang_assembly_file_restore_point_load(A->file, &point))
       return GL_FALSE;
+#endif
    A->local = save_local;
 
    /* now we copy the contents of the initialized variable back to the original machine */
@@ -1732,8 +1744,11 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       A.space.funcs = O->funs;
       A.space.structs = O->structs;
       A.space.vars = O->vars;
-      A.codegen = O->codegen;
       A.program = O->program;
+#if 0
+      A.codegen = O->codegen;
+#endif
+      A.vartable = O->vartable;
 
       _slang_codegen_global_variable(&A, var, C->type);
    }
@@ -1896,7 +1911,10 @@ parse_function(slang_parse_ctx * C, slang_output_ctx * O, int definition,
       A.space.structs = O->structs;
       A.space.vars = O->vars;
       A.program = O->program;
+#if 0
       A.codegen = O->codegen;
+#endif
+      A.vartable = O->vartable;
 
       _slang_reset_error();
 
@@ -1906,14 +1924,14 @@ parse_function(slang_parse_ctx * C, slang_output_ctx * O, int definition,
                             (*parsed_func_ret)->param_count);
 #endif
 
-
+#if 0
       if (!_slang_assemble_function(&A, *parsed_func_ret)) {
          /* propogate the error message back through the info log */
          C->L->text = _mesa_strdup(_slang_error_text());
          C->L->dont_free_text = GL_FALSE;
          return GL_FALSE;
       }
-
+#endif
 
 #if 0
       printf("**************************************\n");
@@ -1961,6 +1979,7 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
                 struct gl_program *program)
 {
    slang_output_ctx o;
+   GLboolean success;
 
    /* setup output context */
    o.funs = &unit->funs;
@@ -1970,7 +1989,7 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
    o.global_pool = &unit->object->varpool;
    o.machine = &unit->object->machine;
    o.program = program;
-   o.codegen = _slang_new_codegen_context();
+   o.vartable = _slang_push_var_table(NULL);
 
    /* parse individual functions and declarations */
    while (*C->I != EXTERNAL_NULL) {
@@ -1978,20 +1997,25 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
       case EXTERNAL_FUNCTION_DEFINITION:
          {
             slang_function *func;
-
-            if (!parse_function(C, &o, 1, &func))
-               return GL_FALSE;
+            success = parse_function(C, &o, 1, &func);
          }
          break;
       case EXTERNAL_DECLARATION:
-         if (!parse_declaration(C, &o))
-            return GL_FALSE;
+         success = parse_declaration(C, &o);
          break;
       default:
+         success = GL_FALSE;
+      }
+
+      if (!success) {
+         /* xxx free codegen */
+         _slang_pop_var_table(o.vartable);
          return GL_FALSE;
       }
    }
    C->I++;
+
+   _slang_pop_var_table(o.vartable);
    return GL_TRUE;
 }
 

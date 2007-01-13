@@ -10,10 +10,6 @@ extern void
 slang_print_tree(const slang_operation *op, int indent);
 
 
-extern void
-slang_print_opcode(unsigned int opcode);
-
-
 extern const char *
 slang_asm_string(slang_assembly_type t);
 
