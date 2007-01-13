@@ -25,6 +25,8 @@ static PFNGLISSHADERPROC glIsShader_func = NULL;
 static PFNGLLINKPROGRAMPROC glLinkProgram_func = NULL;
 static PFNGLSHADERSOURCEPROC glShaderSource_func = NULL;
 static PFNGLUNIFORM1IPROC glUniform1i_func = NULL;
+static PFNGLUNIFORM1FVPROC glUniform1fv_func = NULL;
+static PFNGLUNIFORM2FVPROC glUniform2fv_func = NULL;
 static PFNGLUNIFORM3FVPROC glUniform3fv_func = NULL;
 static PFNGLUNIFORM4FVPROC glUniform4fv_func = NULL;
 static PFNGLUNIFORMMATRIX2FVPROC glUniformMatrix2fv_func = NULL;
@@ -78,6 +80,8 @@ GetExtensionFuncs(void)
    glLinkProgram_func = (PFNGLLINKPROGRAMPROC) glutGetProcAddress("glLinkProgram");
    glShaderSource_func = (PFNGLSHADERSOURCEPROC) glutGetProcAddress("glShaderSource");
    glUniform1i_func = (PFNGLUNIFORM1IPROC) glutGetProcAddress("glUniform1i");
+   glUniform1fv_func = (PFNGLUNIFORM1FVPROC) glutGetProcAddress("glUniform1fv");
+   glUniform2fv_func = (PFNGLUNIFORM2FVPROC) glutGetProcAddress("glUniform2fv");
    glUniform3fv_func = (PFNGLUNIFORM3FVPROC) glutGetProcAddress("glUniform3fv");
    glUniform4fv_func = (PFNGLUNIFORM3FVPROC) glutGetProcAddress("glUniform4fv");
    glUniformMatrix2fv_func = (PFNGLUNIFORMMATRIX2FVPROC) glutGetProcAddress("glUniformMatrix2fv");
