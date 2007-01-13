@@ -28,6 +28,7 @@
 #include "imports.h"
 #include "mtypes.h"
 #include "slang_utility.h"
+#include "slang_vartable.h"
 
 #if defined __cplusplus
 extern "C" {
@@ -243,12 +244,6 @@ typedef struct slang_assembly_name_space_
 } slang_assembly_name_space;
 
 
-typedef struct {
-   GLboolean TempUsed[MAX_PROGRAM_TEMPS];
-   GLuint NumSamplers;
-} slang_gen_context;
-
-
 typedef struct slang_assemble_ctx_
 {
    slang_assembly_file *file;
@@ -260,7 +255,7 @@ typedef struct slang_assemble_ctx_
    slang_ref_type ref;
    slang_swizzle swz;
    struct gl_program *program;
-   slang_gen_context *codegen;
+   slang_var_table *vartable;
 } slang_assemble_ctx;
 
 extern struct slang_function_ *

@@ -153,8 +153,8 @@ int slang_struct_equal (const slang_struct *x, const slang_struct *y)
 		return 0;
 	for (i = 0; i < x->fields->num_variables; i++)
 	{
-		slang_variable *varx = &x->fields->variables[i];
-		slang_variable *vary = &y->fields->variables[i];
+		slang_variable *varx = x->fields->variables[i];
+		slang_variable *vary = y->fields->variables[i];
 
 		if (varx->a_name != vary->a_name)
 			return 0;

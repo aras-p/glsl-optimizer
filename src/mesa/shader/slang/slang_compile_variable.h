@@ -81,7 +81,7 @@ typedef struct slang_variable_
    GLuint size;                     /**< Variable's size in bytes */
    GLboolean global;                /**< A global var? */
    GLboolean used;                  /**< Ever referenced by code? */
-   GLboolean declared;              /**< Declared by slang_variable_decl? */
+   GLboolean isTemp;                /**< a named temporary (__resultTmp) */
    void *aux;                       /**< Used during code gen */
 } slang_variable;
 
@@ -91,7 +91,7 @@ typedef struct slang_variable_
  */
 typedef struct slang_variable_scope_
 {
-   slang_variable *variables;  /**< Array [num_variables] */
+   slang_variable **variables;  /**< Array [num_variables] of ptrs to vars */
    GLuint num_variables;
    struct slang_variable_scope_ *outer_scope;
 } slang_variable_scope;
@@ -110,7 +110,7 @@ extern int
 slang_variable_scope_copy(slang_variable_scope *,
                           const slang_variable_scope *);
 
-slang_variable *
+extern slang_variable *
 slang_variable_scope_grow(slang_variable_scope *);
 
 extern int

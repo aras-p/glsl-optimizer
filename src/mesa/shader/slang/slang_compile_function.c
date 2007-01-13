@@ -196,8 +196,8 @@ slang_function_scope_find(slang_function_scope * funcs, slang_function * fun,
          continue;
       for (j = haveRetValue; j < fun->param_count; j++) {
          if (!slang_type_specifier_equal
-             (&fun->parameters->variables[j].type.specifier,
-              &f->parameters->variables[j].type.specifier))
+             (&fun->parameters->variables[j]->type.specifier,
+              &f->parameters->variables[j]->type.specifier))
             break;
       }
       if (j == fun->param_count) {

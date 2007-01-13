@@ -218,7 +218,7 @@ sizeof_variables(slang_assemble_ctx * A, slang_variable_scope * vars,
    GLuint i;
 
    for (i = start; i < stop; i++)
-      if (!sizeof_variable2(A, &vars->variables[i], size))
+      if (!sizeof_variable2(A, vars->variables[i], size))
          return GL_FALSE;
    return GL_TRUE;
 }
@@ -270,7 +270,7 @@ _slang_locate_function(const slang_function_scope * funcs, slang_atom a_name,
             return NULL;
          }
          if (!slang_type_specifier_equal(&ti.spec,
-             &f->parameters->variables[j/* + haveRetValue*/].type.specifier)) {
+             &f->parameters->variables[j/* + haveRetValue*/]->type.specifier)) {
             slang_assembly_typeinfo_destruct(&ti);
             break;
          }
@@ -278,8 +278,8 @@ _slang_locate_function(const slang_function_scope * funcs, slang_atom a_name,
 
          /* "out" and "inout" formal parameter requires the actual parameter to be l-value */
          if (!ti.can_be_referenced &&
-             (f->parameters->variables[j/* + haveRetValue*/].type.qualifier == slang_qual_out ||
-              f->parameters->variables[j/* + haveRetValue*/].type.qualifier == slang_qual_inout))
+             (f->parameters->variables[j/* + haveRetValue*/]->type.qualifier == slang_qual_out ||
+              f->parameters->variables[j/* + haveRetValue*/]->type.qualifier == slang_qual_inout))
             break;
       }
       if (j == num_args)
@@ -599,8 +599,8 @@ _slang_assemble_function_call(slang_assemble_ctx * A, slang_function * fun,
 
    /* push the actual parameters on the stack */
    for (i = 0; i < param_count; i++) {
-      if (fun->parameters->variables[i /*+ haveRetValue*/].type.qualifier == slang_qual_inout ||
-          fun->parameters->variables[i /*+ haveRetValue*/].type.qualifier == slang_qual_out) {
+      if (fun->parameters->variables[i /*+ haveRetValue*/]->type.qualifier == slang_qual_inout ||
+          fun->parameters->variables[i /*+ haveRetValue*/]->type.qualifier == slang_qual_out) {
          if (!PLAB2(A->file, slang_asm_local_addr, A->local.addr_tmp, 4))
             return GL_FALSE;
          /* TODO: optimize the "out" parameter case */
@@ -644,8 +644,8 @@ _slang_assemble_function_call(slang_assemble_ctx * A, slang_function * fun,
 
       A->swz = p_swz[j];
       A->ref = p_ref[j];
-      if (fun->parameters->variables[j /*+ haveRetValue*/].type.qualifier == slang_qual_inout ||
-          fun->parameters->variables[j/* + haveRetValue*/].type.qualifier == slang_qual_out) {
+      if (fun->parameters->variables[j /*+ haveRetValue*/]->type.qualifier == slang_qual_inout ||
+          fun->parameters->variables[j/* + haveRetValue*/]->type.qualifier == slang_qual_out) {
          /* for output parameter copy the contents of the formal parameter
           * back to the original actual parameter
           */
@@ -1088,7 +1088,7 @@ handle_field(slang_assemble_ctx * A, slang_assembly_typeinfo * tia,
          slang_storage_aggregate agg;
          GLuint size;
 
-         field = &tib->spec._struct->fields->variables[i];
+         field = tib->spec._struct->fields->variables[i];
          if (!slang_storage_aggregate_construct(&agg))
             RETURN_NIL();
          if (!_slang_aggregate_variable(&agg, &field->type.specifier,

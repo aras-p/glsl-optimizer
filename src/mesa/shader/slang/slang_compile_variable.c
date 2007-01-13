@@ -123,6 +123,29 @@ slang_fully_specified_type_copy(slang_fully_specified_type * x,
    return 1;
 }
 
+
+static slang_variable *
+slang_variable_new(void)
+{
+   slang_variable *v = (slang_variable *) malloc(sizeof(slang_variable));
+   if (v) {
+      if (!slang_variable_construct(v)) {
+         free(v);
+         v = NULL;
+      }
+   }
+   return v;
+}
+
+
+static void
+slang_variable_delete(slang_variable * var)
+{
+   slang_variable_destruct(var);
+   free(var);
+}
+
+
 /*
  * slang_variable_scope
  */
@@ -152,8 +175,10 @@ slang_variable_scope_destruct(slang_variable_scope * scope)
 
    if (!scope)
       return;
-   for (i = 0; i < scope->num_variables; i++)
-      slang_variable_destruct(scope->variables + i);
+   for (i = 0; i < scope->num_variables; i++) {
+      if (scope->variables[i])
+         slang_variable_delete(scope->variables[i]);
+   }
    slang_alloc_free(scope->variables);
    /* do not free scope->outer_scope */
 }
@@ -166,21 +191,22 @@ slang_variable_scope_copy(slang_variable_scope * x,
    unsigned int i;
 
    _slang_variable_scope_ctr(&z);
-   z.variables = (slang_variable *)
-      slang_alloc_malloc(y->num_variables * sizeof(slang_variable));
+   z.variables = (slang_variable **)
+      _mesa_calloc(y->num_variables * sizeof(slang_variable *));
    if (z.variables == NULL) {
       slang_variable_scope_destruct(&z);
       return 0;
    }
    for (z.num_variables = 0; z.num_variables < y->num_variables;
         z.num_variables++) {
-      if (!slang_variable_construct(&z.variables[z.num_variables])) {
+      z.variables[z.num_variables] = slang_variable_new();
+      if (!z.variables[z.num_variables]) {
          slang_variable_scope_destruct(&z);
          return 0;
       }
    }
    for (i = 0; i < z.num_variables; i++) {
-      if (!slang_variable_copy(&z.variables[i], &y->variables[i])) {
+      if (!slang_variable_copy(z.variables[i], y->variables[i])) {
          slang_variable_scope_destruct(&z);
          return 0;
       }
@@ -200,19 +226,20 @@ slang_variable *
 slang_variable_scope_grow(slang_variable_scope *scope)
 {
    const int n = scope->num_variables;
-   scope->variables = (slang_variable *)
+   scope->variables = (slang_variable **)
          slang_alloc_realloc(scope->variables,
-                             n * sizeof(slang_variable),
-                             (n + 1) * sizeof(slang_variable));
+                             n * sizeof(slang_variable *),
+                             (n + 1) * sizeof(slang_variable *));
    if (!scope->variables)
       return NULL;
 
    scope->num_variables++;
 
-   if (!slang_variable_construct(scope->variables + n))
+   scope->variables[n] = slang_variable_new();
+   if (!scope->variables[n])
       return NULL;
 
-   return scope->variables + n;
+   return scope->variables[n];
 }
 
 
@@ -230,11 +257,12 @@ slang_variable_construct(slang_variable * var)
    var->address = ~0;
    var->size = 0;
    var->global = GL_FALSE;
-   var->declared = GL_FALSE;
+   var->isTemp = GL_FALSE;
    var->used = GL_FALSE;
    var->aux = NULL;
    return 1;
 }
+
 
 void
 slang_variable_destruct(slang_variable * var)
@@ -245,6 +273,7 @@ slang_variable_destruct(slang_variable * var)
       slang_alloc_free(var->initializer);
    }
 }
+
 
 int
 slang_variable_copy(slang_variable * x, const slang_variable * y)
@@ -291,8 +320,8 @@ _slang_locate_variable(const slang_variable_scope * scope,
    GLuint i;
 
    for (i = 0; i < scope->num_variables; i++)
-      if (a_name == scope->variables[i].a_name)
-         return &scope->variables[i];
+      if (a_name == scope->variables[i]->a_name)
+         return scope->variables[i];
    if (all && scope->outer_scope != NULL)
       return _slang_locate_variable(scope->outer_scope, a_name, 1);
    return NULL;
@@ -384,7 +413,7 @@ build_quant(slang_export_data_quant * q, const slang_variable * var)
          slang_export_data_quant_ctr(&q->structure[i]);
       for (i = 0; i < q->u.field_count; i++) {
          if (!build_quant(&q->structure[i],
-                          &spec->_struct->fields->variables[i]))
+                          spec->_struct->fields->variables[i]))
             return GL_FALSE;
       }
    }
@@ -400,7 +429,7 @@ _slang_build_export_data_table(slang_export_data_table * tbl,
    GLuint i;
 
    for (i = 0; i < vars->num_variables; i++) {
-      const slang_variable *var = &vars->variables[i];
+      const slang_variable *var = vars->variables[i];
       slang_export_data_entry *e;
 
       e = slang_export_data_table_add(tbl);
