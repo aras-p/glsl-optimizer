@@ -56,9 +56,6 @@ static void nv10ResetLineStipple( GLcontext *ctx );
 
 
 
-/* the size above which we fire the ring. this is a performance-tunable */
-#define NOUVEAU_FIRE_SIZE (2048/4)
-
 static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t primitive,uint32_t size)
 {
 	if (nmesa->screen->card->type==NV_10)
@@ -97,52 +94,6 @@ static inline void nv10ExtendPrimitive(struct nouveau_context* nmesa, int size)
 	{
 		WAIT_RING(nmesa,size);
 	}
-}
-
-static inline void nv10_draw_quad(nouveauContextPtr nmesa,
-		nouveauVertexPtr v0,
-		nouveauVertexPtr v1,
-		nouveauVertexPtr v2,
-		nouveauVertexPtr v3)
-{
-	GLuint vertsize = nmesa->vertex_size;
-	nv10ExtendPrimitive(nmesa, 4 * 4 * vertsize);
-
-	OUT_RINGp(v0,vertsize);
-	OUT_RINGp(v1,vertsize);
-	OUT_RINGp(v2,vertsize);
-	OUT_RINGp(v3,vertsize);
-}
-
-static inline void nv10_draw_triangle(nouveauContextPtr nmesa,
-		nouveauVertexPtr v0,
-		nouveauVertexPtr v1,
-		nouveauVertexPtr v2)
-{
-	GLuint vertsize = nmesa->vertex_size;
-	nv10ExtendPrimitive(nmesa, 3 * 4 * vertsize);
-
-	OUT_RINGp(v0,vertsize);
-	OUT_RINGp(v1,vertsize);
-	OUT_RINGp(v2,vertsize);
-}
-
-static inline void nv10_draw_line(nouveauContextPtr nmesa,
-		nouveauVertexPtr v0,
-		nouveauVertexPtr v1)
-{
-	GLuint vertsize = nmesa->vertex_size;
-	nv10ExtendPrimitive(nmesa, 2 * 4 * vertsize);
-	OUT_RINGp(v0,vertsize);
-	OUT_RINGp(v1,vertsize);
-}
-
-static inline void nv10_draw_point(nouveauContextPtr nmesa,
-		nouveauVertexPtr v0)
-{
-	GLuint vertsize = nmesa->vertex_size;
-	nv10ExtendPrimitive(nmesa, 1 * 4 * vertsize);
-	OUT_RINGp(v0,vertsize);
 }
 
 /**********************************************************************/
@@ -343,10 +294,6 @@ static void nv10ChooseRenderState(GLcontext *ctx)
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 
-	nmesa->draw_point = nv10_draw_point;
-	nmesa->draw_line = nv10_draw_line;
-	nmesa->draw_tri = nv10_draw_triangle;
-
 	tnl->Driver.Render.PrimTabVerts = nv10_render_tab_verts;
 	tnl->Driver.Render.PrimTabElts = nv10_render_tab_elts;
 	tnl->Driver.Render.ClippedLine = NULL;
@@ -536,11 +483,6 @@ static void nv10RenderStart(GLcontext *ctx)
 
 	if (nmesa->new_state) {
 		nmesa->new_render_state |= nmesa->new_state;
-	}
-
-	if (nmesa->Fallback) {
-		tnl->Driver.Render.Start(ctx);
-		return;
 	}
 
 	if (nmesa->new_render_state) {
