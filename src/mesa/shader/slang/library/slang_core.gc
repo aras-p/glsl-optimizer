@@ -209,6 +209,14 @@ vec4 __constructor (const bool b) {
     return vec4 (b ? 1.0 : 0.0);
 }
 
+vec4 __constructor(const vec3 v3, const float f)
+{
+   __retVal.xyz = v3;
+   __retVal.w = f;
+}
+
+
+
 ivec2 __constructor (const int i) {
     return ivec2 (i, i);
 }
@@ -1035,7 +1043,7 @@ void __operator /= (inout ivec4 v, const ivec4 u) {
 
 void __operator += (inout float a, const float b)
 {
-    __asm vec4_add a.x, a, b;
+    __asm vec4_add a.x, a.x, b;
 }
 
 void __operator -= (inout float a, const float b)
