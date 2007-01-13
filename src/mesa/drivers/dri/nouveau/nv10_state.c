@@ -106,13 +106,12 @@ static void nv10ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
 	OUT_RING_CACHEf(equation[3]);
 }
 
-/* Seems does not support alpha in color mask */
 static void nv10ColorMask(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
 		GLboolean bmask, GLboolean amask )
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_COLOR_MASK, 1);
-	OUT_RING_CACHE(/*((amask && 0x01) << 24) |*/ ((rmask && 0x01) << 16) | ((gmask && 0x01)<< 8) | ((bmask && 0x01) << 0));
+	OUT_RING_CACHE(((amask && 0x01) << 24) | ((rmask && 0x01) << 16) | ((gmask && 0x01)<< 8) | ((bmask && 0x01) << 0));
 }
 
 static void nv10ColorMaterial(GLcontext *ctx, GLenum face, GLenum mode)
