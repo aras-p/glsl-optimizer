@@ -596,10 +596,67 @@ static void nv10TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
         OUT_RING_CACHEp(mat->m, 16);
 }
 
+/* Update anything that depends on the window position/size */
+static void nv10WindowMoved(nouveauContextPtr nmesa)
+{
+	GLcontext *ctx = nmesa->glCtx;
+	GLfloat *v = nmesa->viewport.m;
+	GLuint w = ctx->Viewport.Width;
+	GLuint h = ctx->Viewport.Height;
+	GLuint x = ctx->Viewport.X + nmesa->drawX;
+	GLuint y = ctx->Viewport.Y + nmesa->drawY;
+	int i;
+
+        BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 2);
+        OUT_RING_CACHE((w << 16) | x);
+        OUT_RING_CACHE((h << 16) | y);
+
+	/* something to do with clears, possibly doesn't belong here */
+	BEGIN_RING_CACHE(NvSub3D,
+	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 2);
+        OUT_RING_CACHE(((w+x) << 16) | x | 0x800);
+        OUT_RING_CACHE(((h+y) << 16) | y | 0x800);
+	for (i=1; i<7; i++) {
+		BEGIN_RING_CACHE(NvSub3D,
+		      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(i), 2);
+        	OUT_RING_CACHE(0);
+	        OUT_RING_CACHE(0);
+	}
+
+	/* viewport transform */
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_ORIGIN_X, 4);
+	OUT_RING_CACHEf ((GLfloat) x);
+	OUT_RING_CACHEf ((GLfloat) (y+h));
+	OUT_RING_CACHEf (0.0);
+	OUT_RING_CACHEf (0.0);
+
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_SCALE_X, 4);
+	OUT_RING_CACHEf ((((GLfloat) w) * 0.5) - 2048.0);
+	OUT_RING_CACHEf ((((GLfloat) h) * 0.5) - 2048.0);
+	OUT_RING_CACHEf (16777215.0 * 0.5);
+	OUT_RING_CACHEf (0.0);
+}
+
 /* Initialise any card-specific non-GL related state */
 static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 {
-   return GL_FALSE;
+	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
+
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_SET_DMA_IN_MEMORY0, 2);
+	OUT_RING(NvDmaFB);	/* 184 dma_in_memory0 */
+	OUT_RING(NvDmaFB);	/* 188 dma_in_memory1 */
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_SET_DMA_IN_MEMORY2, 2);
+	OUT_RING(NvDmaFB);	/* 194 dma_in_memory2 */
+	OUT_RING(NvDmaFB);	/* 198 dma_in_memory3 */
+
+	BEGIN_RING_SIZE(NvSub3D, 0x02b4, 1);
+	OUT_RING(0);
+	BEGIN_RING_SIZE(NvSub3D, 0x0290, 1);
+	OUT_RING(0x00100001);
+	BEGIN_RING_SIZE(NvSub3D, 0x03f4, 1);
+	OUT_RING(0);
+
+	return GL_FALSE;
 }
 
 /* Update buffer offset/pitch/format */
@@ -607,12 +664,34 @@ static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
 				 nouveau_renderbuffer **color,
 				 nouveau_renderbuffer *depth)
 {
-   return GL_FALSE;
-}
+	GLuint x, y, w, h;
+	GLuint pitch, format;
 
-/* Update anything that depends on the window position/size */
-static void nv10WindowMoved(nouveauContextPtr nmesa)
-{
+	w = color[0]->mesa.Width;
+	h = color[0]->mesa.Height;
+	x = nmesa->drawX;
+	y = nmesa->drawY;
+
+	if (num_color != 1)
+		return GL_FALSE;
+
+        BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 6);
+        OUT_RING_CACHE((w << 16) | x);
+        OUT_RING_CACHE((h << 16) | y);
+	pitch = color[0]->pitch;
+	if (depth) {
+		pitch |= (depth->pitch << 16);
+	}
+	format = 0x108;
+	if (color[0]->mesa._ActualFormat != GL_RGBA8) {
+		/* FIXME: set 16 bits format */
+	}
+	OUT_RING(format);
+	OUT_RING(pitch);
+	OUT_RING(color[0]->offset);
+	OUT_RING(depth ? depth->offset : color[0]->offset);
+
+	return GL_TRUE;
 }
 
 void nv10InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
