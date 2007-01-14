@@ -2,9 +2,6 @@
 #include "nouveau_card.h"
 #include "nouveau_reg.h"
 #include "nouveau_drm.h"
-// FIXME hack for now
-#define NV15_TCL_PRIMITIVE_3D 0x0096
-#define NV17_TCL_PRIMITIVE_3D 0x0099
 #include "nouveau_card_list.h"
 
 
