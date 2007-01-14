@@ -45,6 +45,14 @@ static void nv10AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 	OUT_RING_CACHE(ubRef);    /* NV10_TCL_PRIMITIVE_3D_ALPHA_FUNC_REF  */
 }
 
+/*
+	Supported blend extensions on NV10
+		EXT_blend_color
+		EXT_blend_minmax
+		EXT_blend_subtract
+		NV_blend_square
+*/
+
 static void nv10BlendColor(GLcontext *ctx, const GLfloat color[4])
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx); 
@@ -61,14 +69,26 @@ static void nv10BlendColor(GLcontext *ctx, const GLfloat color[4])
 
 static void nv10BlendEquationSeparate(GLcontext *ctx, GLenum modeRGB, GLenum modeA)
 {
-	/* Not for NV10 */
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	assert( modeRGB == modeA );
+
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_BLEND_EQUATION, 1);
+	OUT_RING_CACHE(modeRGB);
 }
 
 
 static void nv10BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, GLenum dfactorRGB,
 		GLenum sfactorA, GLenum dfactorA)
 {
-	/* Not for NV10 */
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	assert( sfactorRGB == sfactorA );
+	assert( dfactorRGB == dfactorA );
+
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_BLEND_FUNC_SRC, 2);
+	OUT_RING_CACHE(sfactorRGB);
+	OUT_RING_CACHE(dfactorRGB);	/* NV10_TCL_PRIMITIVE_3D_BLEND_FUNC_DST */
 }
 
 static void nv10Clear(GLcontext *ctx, GLbitfield mask)
@@ -565,16 +585,6 @@ static void nv10TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
         OUT_RING_CACHEp(mat->m, 16);
 }
 
-/** Set the viewport */
-static void nv10Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
-{
-    /* TODO: Where do the VIEWPORT_XFRM_* regs come in? */
-    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-    BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 2);
-    OUT_RING_CACHE((w << 16) | x);
-    OUT_RING_CACHE((h << 16) | y);
-}
-
 /* Initialise any card-specific non-GL related state */
 static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 {
@@ -600,8 +610,8 @@ void nv10InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
 
 	func->AlphaFunc			= nv10AlphaFunc;
 	func->BlendColor		= nv10BlendColor;
-	func->BlendEquationSeparate	= nv10BlendEquationSeparate;	/* Not for NV10 */
-	func->BlendFuncSeparate		= nv10BlendFuncSeparate;	/* Not for NV10 */
+	func->BlendEquationSeparate	= nv10BlendEquationSeparate;
+	func->BlendFuncSeparate		= nv10BlendFuncSeparate;
 	func->Clear			= nv10Clear;
 	func->ClearColor		= nv10ClearColor;
 	func->ClearDepth		= nv10ClearDepth;
