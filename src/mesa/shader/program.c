@@ -1947,6 +1947,8 @@ _mesa_BindProgram(GLenum target, GLuint id)
 
    /* bind newProg */
    if (target == GL_VERTEX_PROGRAM_ARB) { /* == GL_VERTEX_PROGRAM_NV */
+      if (ctx->VertexProgram._Current == ctx->VertexProgram.Current)
+         ctx->VertexProgram._Current = (struct gl_vertex_program *) newProg;
       ctx->VertexProgram.Current = (struct gl_vertex_program *) newProg;
    }
    else if (target == GL_FRAGMENT_PROGRAM_NV ||
@@ -1969,7 +1971,7 @@ _mesa_BindProgram(GLenum target, GLuint id)
  * \note Not compiled into display lists.
  * \note Called by both glDeleteProgramsNV and glDeleteProgramsARB.
  */
-void GLAPIENTRY 
+void GLAPIENTRY
 _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
 {
    GLint i;
