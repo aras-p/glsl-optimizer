@@ -41,17 +41,9 @@ static void nv10AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 	CLAMPED_FLOAT_TO_UBYTE(ubRef, ref);
 
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_ALPHA_FUNC_FUNC, 2);
-	OUT_RING_CACHE(func);     /* NV10_TCL_PRIMITIVE_3D_ALPHA_FUNC_FUNC */
-	OUT_RING_CACHE(ubRef);    /* NV10_TCL_PRIMITIVE_3D_ALPHA_FUNC_REF  */
+	OUT_RING_CACHE(func);
+	OUT_RING_CACHE(ubRef);
 }
-
-/*
-	Supported blend extensions on NV10
-		EXT_blend_color
-		EXT_blend_minmax
-		EXT_blend_subtract
-		NV_blend_square
-*/
 
 static void nv10BlendColor(GLcontext *ctx, const GLfloat color[4])
 {
@@ -88,7 +80,7 @@ static void nv10BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, GLenum dfac
 
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_BLEND_FUNC_SRC, 2);
 	OUT_RING_CACHE(sfactorRGB);
-	OUT_RING_CACHE(dfactorRGB);	/* NV10_TCL_PRIMITIVE_3D_BLEND_FUNC_DST */
+	OUT_RING_CACHE(dfactorRGB);
 }
 
 static void nv10Clear(GLcontext *ctx, GLbitfield mask)
@@ -549,21 +541,40 @@ static void nv10ShadeModel(GLcontext *ctx, GLenum mode)
 	OUT_RING_CACHE(mode);
 }
 
+/** OpenGL 2.0 two-sided StencilFunc */
 static void nv10StencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func,
 		GLint ref, GLuint mask)
 {
-	/* Not for NV10 */
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	/* NV10 do not have separate FRONT and BACK stencils */
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_STENCIL_FUNC_FUNC, 3);
+	OUT_RING_CACHE(func);
+	OUT_RING_CACHE(ref);
+	OUT_RING_CACHE(mask);
 }
 
+/** OpenGL 2.0 two-sided StencilMask */
 static void nv10StencilMaskSeparate(GLcontext *ctx, GLenum face, GLuint mask)
 {
-	/* Not for NV10 */
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	/* NV10 do not have separate FRONT and BACK stencils */
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_STENCIL_MASK, 1);
+	OUT_RING_CACHE(mask);
 }
 
+/** OpenGL 2.0 two-sided StencilOp */
 static void nv10StencilOpSeparate(GLcontext *ctx, GLenum face, GLenum fail,
 		GLenum zfail, GLenum zpass)
 {
-	/* Not for NV10 */
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	/* NV10 do not have separate FRONT and BACK stencils */
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_STENCIL_OP_FAIL, 3);
+	OUT_RING_CACHE(fail);
+	OUT_RING_CACHE(zfail);
+	OUT_RING_CACHE(zpass);
 }
 
 /** Control the generation of texture coordinates */
@@ -641,9 +652,9 @@ void nv10InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
 /*	func->RenderMode		= nv10RenderMode;*/
 	func->Scissor			= nv10Scissor;
 	func->ShadeModel		= nv10ShadeModel;
-	func->StencilFuncSeparate	= nv10StencilFuncSeparate;	/* Not for NV10 */
-	func->StencilMaskSeparate	= nv10StencilMaskSeparate;	/* Not for NV10 */
-	func->StencilOpSeparate		= nv10StencilOpSeparate;	/* Not for NV10 */
+	func->StencilFuncSeparate	= nv10StencilFuncSeparate;
+	func->StencilMaskSeparate	= nv10StencilMaskSeparate;
+	func->StencilOpSeparate		= nv10StencilOpSeparate;
 /*	func->TexGen			= nv10TexGen;*/
 /*	func->TexParameter		= nv10TexParameter;*/
 	func->TextureMatrix		= nv10TextureMatrix;
