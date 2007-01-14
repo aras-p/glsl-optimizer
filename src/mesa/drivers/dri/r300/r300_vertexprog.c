@@ -1072,6 +1072,8 @@ static void insert_wpos(struct r300_vertex_program *vp,
 	vpi = &prog->Instructions[prog->NumInstructions-1];
 
 	assert(vpi->Opcode == OPCODE_END);
+	/* we need position, don't we ? :) */
+	prog->InputsRead |= (1 << VERT_ATTRIB_POS);
 }
 
 static void pos_as_texcoord(struct r300_vertex_program *vp,
@@ -1101,8 +1103,9 @@ static struct r300_vertex_program *build_program(struct r300_vertex_program_key 
 
 	vp->wpos_idx = wpos_idx;
 
-	if(mesa_vp->IsPositionInvariant)
+	if(mesa_vp->IsPositionInvariant) {
 		position_invariant(&mesa_vp->Base);
+	}
 
 	if(wpos_idx > -1)
 		pos_as_texcoord(vp, &mesa_vp->Base);
@@ -1158,6 +1161,10 @@ void r300_select_vertex_shader(r300ContextPtr r300)
 			wanted_key.OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
 
 	wanted_key.InputsRead = vpc->mesa_program.Base.InputsRead;
+	if(vpc->mesa_program.IsPositionInvariant) {
+		/* we wan't position don't we ? */
+		wanted_key.InputsRead |= (1 << VERT_ATTRIB_POS);
+	}
 
 	for (vp = vpc->progs; vp; vp = vp->next)
 		if (_mesa_memcmp(&vp->key, &wanted_key, sizeof(wanted_key)) == 0) {
@@ -1170,6 +1177,5 @@ void r300_select_vertex_shader(r300ContextPtr r300)
 	vp = build_program(&wanted_key, &vpc->mesa_program, wpos_idx);
 	vp->next = vpc->progs;
 	vpc->progs = vp;
-
 	r300->selected_vp = vp;
 }
