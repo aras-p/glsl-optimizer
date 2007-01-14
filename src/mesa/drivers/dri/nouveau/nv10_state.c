@@ -684,7 +684,7 @@ static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
 	}
 	format = 0x108;
 	if (color[0]->mesa._ActualFormat != GL_RGBA8) {
-		/* FIXME: set 16 bits format */
+		format = 0x103; /* R5G6B5 color buffer */
 	}
 	OUT_RING(format);
 	OUT_RING(pitch);
