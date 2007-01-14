@@ -588,7 +588,7 @@ static void nv10TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
 /* Initialise any card-specific non-GL related state */
 static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 {
-   return GL_TRUE;
+   return GL_FALSE;
 }
 
 /* Update buffer offset/pitch/format */
@@ -596,7 +596,7 @@ static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
 				 nouveau_renderbuffer **color,
 				 nouveau_renderbuffer *depth)
 {
-   return GL_TRUE;
+   return GL_FALSE;
 }
 
 /* Update anything that depends on the window position/size */
