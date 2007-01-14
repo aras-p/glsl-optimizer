@@ -31,6 +31,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "nouveau_context.h"
 #include "nouveau_ctrlreg.h"
+#include "nouveau_state_cache.h"
 
 //#define NOUVEAU_RING_DEBUG
 //#define NOUVEAU_STATE_CACHE_DISABLE
@@ -114,6 +115,7 @@ extern void nouveau_state_cache_init(nouveauContextPtr nmesa);
 #define OUT_RING_CACHE(n) do {									\
 	if (nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value!=(n))	{	\
 		nmesa->state_cache.atoms[nmesa->state_cache.current_pos].dirty=1; 		\
+		nmesa->state_cache.hdirty[nmesa->state_cache.current_pos/NOUVEAU_STATE_CACHE_HIER_SIZE]=1; 		\
 		nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value=(n);		\
 	}											\
 	nmesa->state_cache.current_pos++;							\
@@ -122,6 +124,7 @@ extern void nouveau_state_cache_init(nouveauContextPtr nmesa);
 #define OUT_RING_CACHEf(n) do {									\
 	if ((*(float*)(&nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value))!=(n)){	\
 		nmesa->state_cache.atoms[nmesa->state_cache.current_pos].dirty=1;	 	\
+		nmesa->state_cache.hdirty[nmesa->state_cache.current_pos/NOUVEAU_STATE_CACHE_HIER_SIZE]=1; 		\
 		(*(float*)(&nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value))=(n);\
 	}											\
 	nmesa->state_cache.current_pos++;							\

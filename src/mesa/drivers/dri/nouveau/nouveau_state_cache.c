@@ -25,6 +25,8 @@ void nouveau_state_cache_flush(nouveauContextPtr nmesa)
 	do
 	{
 		// jump to a dirty state
+		while((nmesa->state_cache.hdirty[i/NOUVEAU_STATE_CACHE_HIER_SIZE]==0)&&(i<NOUVEAU_STATE_CACHE_ENTRIES))
+			i=(i&~(NOUVEAU_STATE_CACHE_HIER_SIZE-1))+NOUVEAU_STATE_CACHE_HIER_SIZE;
 		while((nmesa->state_cache.atoms[i].dirty==0)&&(i<NOUVEAU_STATE_CACHE_ENTRIES))
 			i++;
 
@@ -42,11 +44,14 @@ void nouveau_state_cache_flush(nouveauContextPtr nmesa)
 			{
 				OUT_RING(nmesa->state_cache.atoms[i+j].value);
 				nmesa->state_cache.atoms[i+j].dirty=0;
+				if ((i+j)%NOUVEAU_STATE_CACHE_HIER_SIZE==0)
+					nmesa->state_cache.hdirty[(i+j)/NOUVEAU_STATE_CACHE_HIER_SIZE-1]=0;
 			}
 			i+=run;
 		}
 	}
 	while(i<NOUVEAU_STATE_CACHE_ENTRIES);
+	nmesa->state_cache.hdirty[NOUVEAU_STATE_CACHE_HIER_SIZE/NOUVEAU_STATE_CACHE_HIER_SIZE-1]=0;
 }
 
 
