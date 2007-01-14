@@ -348,17 +348,71 @@ static void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 static void nv30Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
 {
     nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+    if (NOUVEAU_CARD_USING_SHADERS)
+        return;
+
     switch(pname)
     {
-        case GL_FOG_MODE:
-            //BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_MODE, 1);
-            //OUT_RING_CACHE (params);
+    case GL_FOG_MODE:
+    {
+        int mode = 0;
+        /* The modes are different in GL and the card.  */
+        switch(ctx->Fog.Mode)
+        {
+        case GL_LINEAR:
+            mode = 0x804;
             break;
-            /* TODO: unsure about the rest.*/
-        default:
+        case GL_EXP:
+            mode = 0x802;
             break;
+        case GL_EXP2:
+            mode = 0x803;
+            break;
+        }
+	BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_MODE, 1);
+	OUT_RING_CACHE (mode);
+	break;
     }
-
+    case GL_FOG_COLOR:
+    {
+	GLubyte c[4];
+	UNCLAMPED_FLOAT_TO_RGBA_CHAN(c,params);
+        BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_COLOR, 1);
+        /* nvidia ignores the alpha channel */
+	OUT_RING_CACHE(PACK_COLOR_8888_REV(c[0],c[1],c[2],c[3]));
+        break;
+    }
+    case GL_FOG_DENSITY:
+    case GL_FOG_START:
+    case GL_FOG_END:
+    {
+        GLfloat f=0., c=0.;
+        switch(ctx->Fog.Mode)
+        {
+        case GL_LINEAR:
+            f = -1.0/(ctx->Fog.End - ctx->Fog.Start);
+            c = ctx->Fog.Start/(ctx->Fog.End - ctx->Fog.Start) + 2.001953;
+            break;
+        case GL_EXP:
+            f = -0.090168*ctx->Fog.Density;
+            c = 1.5;
+        case GL_EXP2:
+            f = -0.212330*ctx->Fog.Density;
+            c = 1.5;
+        }
+        BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_EQUATION_LINEAR, 1);
+        OUT_RING_CACHE(f);
+        BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_EQUATION_CONSTANT, 1);
+        OUT_RING_CACHE(c);
+        BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_EQUATION_QUADRATIC, 1);
+        OUT_RING_CACHE(0); /* Is this always the same? */
+        break;
+    }
+//    case GL_FOG_COORD_SRC:
+    default:
+        break;
+    }
 }
    
 static void nv30Hint(GLcontext *ctx, GLenum target, GLenum mode)
