@@ -499,11 +499,13 @@ static slang_asm_info AsmInfo[] = {
 static void
 _slang_free_ir_tree(slang_ir_node *n)
 {
+#if 0
    if (!n)
       return;
    _slang_free_ir_tree(n->Children[0]);
    _slang_free_ir_tree(n->Children[1]);
    free(n);
+#endif
 }
 
 
@@ -1641,6 +1643,24 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
 }
 
 
+#if 0
+static slang_ir_node *
+_slang_gen_logical_and(slang_assemble_ctx * A, slang_operation *oper)
+{
+   /*
+    * bool b;
+    * b = test(child[0]);
+    * if !b goto endLab;
+    * b = test(child[1]);
+    * endLab:
+    * (b)
+    */
+   slang_ir_node *temp;
+
+}
+#endif
+
+
 /**
  * Generate IR tree for an assignment (=).
  */
@@ -1923,7 +1943,6 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       return _slang_gen_assignment(A, oper);
    case slang_oper_addassign:
       {
-         /* XXX this is broken */
 	 slang_ir_node *n;
          assert(oper->num_children == 2);
 	 n = _slang_gen_function_call_name(A, "+=", oper, &oper->children[0]);
@@ -1951,6 +1970,27 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 	 n = _slang_gen_function_call_name(A, "/=", oper, &oper->children[0]);
 	 return n;
       }
+   case slang_oper_logicalor:
+      printf("OR\n");
+      abort();
+   case slang_oper_logicalxor:
+      printf("XOR\n");
+      abort();
+   case slang_oper_logicaland:
+      {
+	 slang_ir_node *n;
+         assert(oper->num_children == 2);
+	 n = _slang_gen_function_call_name(A, "__logicalAnd", oper, NULL);
+	 return n;
+      }
+#if 0
+      printf("AND\n");
+      return _slang_gen_logical_and(A, oper);
+#endif
+   case slang_oper_not:
+      printf("NOT\n");
+      abort();
+
    case slang_oper_asm:
       return _slang_gen_asm(A, oper, NULL);
    case slang_oper_call:
@@ -1977,17 +2017,46 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       return new_float_literal(oper->literal[0], 0, 0, 0);
    case slang_oper_literal_bool:
       return new_float_literal(oper->literal[0], 0, 0, 0);
-   case slang_oper_postincrement:
+
+   case slang_oper_postincrement:   /* var++ */
       /* XXX not 100% about this */
       {
 	 slang_ir_node *var = _slang_gen_operation(A, &oper->children[0]);
 	 slang_ir_node *one = new_float_literal(1.0, 1.0, 1.0, 1.0);
 	 slang_ir_node *sum = new_node(IR_ADD, var, one);
 	 slang_ir_node *assign = new_node(IR_MOVE, var, sum);
-         assert(sum->Opcode != IR_SEQ);
 	 return assign;
       }
-      break;
+
+   case slang_oper_postdecrement:   /* var-- */
+      /* XXX not 100% about this */
+      {
+	 slang_ir_node *var = _slang_gen_operation(A, &oper->children[0]);
+	 slang_ir_node *one = new_float_literal(1.0, 1.0, 1.0, 1.0);
+	 slang_ir_node *sum = new_node(IR_ADD, var, one);
+	 slang_ir_node *assign = new_node(IR_MOVE, var, sum);
+	 return assign;
+      }
+
+   case slang_oper_preincrement:   /* ++var */
+      {
+	 slang_ir_node *var = _slang_gen_operation(A, &oper->children[0]);
+	 slang_ir_node *one = new_float_literal(1.0, 1.0, 1.0, 1.0);
+	 slang_ir_node *sum = new_node(IR_ADD, var, one);
+	 slang_ir_node *assign = new_node(IR_MOVE, var, sum);
+         assign->Store = var->Store;
+	 return assign;
+      }
+   case slang_oper_predecrement:   /* --var */
+      {
+	 slang_ir_node *var = _slang_gen_operation(A, &oper->children[0]);
+	 slang_ir_node *one = new_float_literal(1.0, 1.0, 1.0, 1.0);
+	 slang_ir_node *sum = new_node(IR_SUB, var, one);
+	 slang_ir_node *assign = new_node(IR_MOVE, var, sum);
+         assign->Store = var->Store;
+	 return assign;
+      }
+
    case slang_oper_sequence:
       {
          slang_ir_node *tree = NULL;
@@ -1998,7 +2067,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
          }
          return tree;
       }
-      break;
+
    case slang_oper_none:
       return NULL;
    default:
