@@ -45,7 +45,8 @@ typedef void (*attr_func)( GLcontext *ctx, GLint target, const GLfloat * );
 
 
 /* This file makes heavy use of the aliasing of NV vertex attributes
- * with the legacy attributes. 
+ * with the legacy attributes, and also with ARB and Material
+ * attributes as currently implemented.
  */
 static void VertexAttrib1fvNV(GLcontext *ctx, GLint target, const GLfloat *v)
 {

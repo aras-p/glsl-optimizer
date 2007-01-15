@@ -375,7 +375,6 @@ void _tnl_draw_prims( GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLint max = VB->Size;
-   GLuint i;
 
 #ifdef TEST_SPLIT
    max = 8 + MAX_CLIPPED_VERTICES;
@@ -387,12 +386,15 @@ void _tnl_draw_prims( GLcontext *ctx,
    VB->Elts = NULL;
 
 #if 0
-   _mesa_printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
-   for (i = 0; i < nr_prims; i++)
-      _mesa_printf("prim %d: %s start %d count %d\n", i, 
-		   _mesa_lookup_enum_by_nr(prim[i].mode),
-		   prim[i].start,
-		   prim[i].count);
+   {
+      GLuint i;
+      _mesa_printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
+      for (i = 0; i < nr_prims; i++)
+	 _mesa_printf("prim %d: %s start %d count %d\n", i, 
+		      _mesa_lookup_enum_by_nr(prim[i].mode),
+		      prim[i].start,
+		      prim[i].count);
+   }
 #endif
 
    /* The software TNL pipeline has a fixed amount of storage for

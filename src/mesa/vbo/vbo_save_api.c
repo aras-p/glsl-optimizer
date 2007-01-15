@@ -598,8 +598,6 @@ do {								\
    if (save->active_sz[A] != N)				\
       save_fixup_vertex(ctx, A, N);				\
 								\
-   _mesa_printf("Attr %d, sz %d: %f %f %f %f\n", A, N, V0, V1, V2, V3 );	\
-								\
    {								\
       GLfloat *dest = save->attrptr[A];			\
       if (N>0) dest[0] = V0;					\

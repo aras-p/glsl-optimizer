@@ -49,9 +49,6 @@ struct split_context {
 
    const struct split_limits *limits;
 
-/*    GLuint out_maxindex; */
-/*    GLuint out_minindex; */
-
    struct _mesa_prim dstprim[MAX_PRIM];
    GLuint dstprim_nr;
 };
@@ -151,13 +148,6 @@ static void split_prims( struct split_context *split)
       GLuint available = align(split->limits->max_verts - csr - 1, 2); 
       assert(split->limits->max_verts >= csr);
 
-      _mesa_printf("%s: prim %d: %s %d..%d\n", __FUNCTION__,
-		   i,
-		   _mesa_lookup_enum_by_nr(prim->mode),
-		   prim->start, prim->count);
-
-      _mesa_printf("a: available %d\n", available);
-
       if (prim->count < first)
 	 continue;
       
@@ -171,15 +161,13 @@ static void split_prims( struct split_context *split)
 	 available = align(split->limits->max_verts - csr - 1, 2);
       }
       
-      _mesa_printf("b: available %d\n", available);
-
       if (available >= count) {
 	 struct _mesa_prim *outprim = next_outprim(split);
 	 *outprim = *prim;
 	 csr += prim->count;
 	 available = align(split->limits->max_verts - csr - 1, 2); 
       } 
-      else if (0 && split_inplace) {
+      else if (split_inplace) {
 	 GLuint j, nr;
 
 
@@ -207,8 +195,6 @@ static void split_prims( struct split_context *split)
 	    else {
 	       /* Wrapped the primitive: 
 		*/
-	       _mesa_printf("wrap %d %d\n", nr, first-incr);
-
 	       j += nr - (first - incr);
 	       flush_vertex(split);
 	       csr = 0;
