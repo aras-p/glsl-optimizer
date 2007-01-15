@@ -1969,10 +1969,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       {
 	 slang_ir_node *n;
          assert(oper->num_children == 2);
-	 n = _slang_gen_function_call_name(A, "-=", oper, NULL);
-         /* The result of this operation should be stored back into child[0] */
-         assert(n->Children[0]->Store);
-         n->Store = n->Children[0]->Store;
+	 n = _slang_gen_function_call_name(A, "-=", oper, &oper->children[0]);
 	 return n;
       }
       break;
@@ -1980,20 +1977,14 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       {
 	 slang_ir_node *n;
          assert(oper->num_children == 2);
-	 n = _slang_gen_function_call_name(A, "*=", oper, NULL);
-         /* The result of this operation should be stored back into child[0] */
-         assert(n->Children[0]->Store);
-         n->Store = n->Children[0]->Store;
+	 n = _slang_gen_function_call_name(A, "*=", oper, &oper->children[0]);
 	 return n;
       }
    case slang_oper_divassign:
       {
 	 slang_ir_node *n;
          assert(oper->num_children == 2);
-	 n = _slang_gen_function_call_name(A, "/=", oper, NULL);
-         /* The result of this operation should be stored back into child[0] */
-         assert(n->Children[0]->Store);
-         n->Store = n->Children[0]->Store;
+	 n = _slang_gen_function_call_name(A, "/=", oper, &oper->children[0]);
 	 return n;
       }
    case slang_oper_asm:
