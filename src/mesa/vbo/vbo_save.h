@@ -142,8 +142,6 @@ struct vbo_save_context {
 
    struct vbo_save_copied_vtx copied;
    
-   GLfloat CurrentFloatEdgeFlag;
-
    GLfloat *current[VBO_ATTRIB_MAX]; /* points into ctx->ListState */
    GLubyte *currentsz[VBO_ATTRIB_MAX];
 };

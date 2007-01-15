@@ -44,7 +44,9 @@
 typedef void (*attr_func)( GLcontext *ctx, GLint target, const GLfloat * );
 
 
-/* Wrapper functions in case glVertexAttrib*fvNV doesn't exist */
+/* This file makes heavy use of the aliasing of NV vertex attributes
+ * with the legacy attributes. 
+ */
 static void VertexAttrib1fvNV(GLcontext *ctx, GLint target, const GLfloat *v)
 {
    CALL_VertexAttrib1fvNV(ctx->Exec, (target, v));
@@ -71,118 +73,6 @@ static attr_func vert_attrfunc[4] = {
    VertexAttrib3fvNV,
    VertexAttrib4fvNV
 };
-
-#if 0
-static void VertexAttrib1fvARB(GLcontext *ctx, GLint target, const GLfloat *v)
-{
-   CALL_VertexAttrib1fvARB(ctx->Exec, (target, v));
-}
-
-static void VertexAttrib2fvARB(GLcontext *ctx, GLint target, const GLfloat *v)
-{
-   CALL_VertexAttrib2fvARB(ctx->Exec, (target, v));
-}
-
-static void VertexAttrib3fvARB(GLcontext *ctx, GLint target, const GLfloat *v)
-{
-   CALL_VertexAttrib3fvARB(ctx->Exec, (target, v));
-}
-
-static void VertexAttrib4fvARB(GLcontext *ctx, GLint target, const GLfloat *v)
-{
-   CALL_VertexAttrib4fvARB(ctx->Exec, (target, v));
-}
-
-
-static attr_func vert_attrfunc_arb[4] = {
-   VertexAttrib1fvARB,
-   VertexAttrib2fvARB,
-   VertexAttrib3fvARB,
-   VertexAttrib4fvARB
-};
-#endif
-
-
-
-
-
-
-static void mat_attr1fv( GLcontext *ctx, GLint target, const GLfloat *v )
-{
-   switch (target) {
-   case VBO_ATTRIB_MAT_FRONT_SHININESS:
-      CALL_Materialfv(ctx->Exec, ( GL_FRONT, GL_SHININESS, v ));
-      break;
-   case VBO_ATTRIB_MAT_BACK_SHININESS:
-      CALL_Materialfv(ctx->Exec, ( GL_BACK, GL_SHININESS, v ));
-      break;
-   }
-}
-
-
-static void mat_attr3fv( GLcontext *ctx, GLint target, const GLfloat *v )
-{
-   switch (target) {
-   case VBO_ATTRIB_MAT_FRONT_INDEXES:
-      CALL_Materialfv(ctx->Exec, ( GL_FRONT, GL_COLOR_INDEXES, v ));
-      break;
-   case VBO_ATTRIB_MAT_BACK_INDEXES:
-      CALL_Materialfv(ctx->Exec, ( GL_BACK, GL_COLOR_INDEXES, v ));
-      break;
-   }
-}
-
-
-static void mat_attr4fv( GLcontext *ctx, GLint target, const GLfloat *v )
-{
-   switch (target) {
-   case VBO_ATTRIB_MAT_FRONT_EMISSION:
-      CALL_Materialfv(ctx->Exec, ( GL_FRONT, GL_EMISSION, v ));
-      break;
-   case VBO_ATTRIB_MAT_BACK_EMISSION:
-      CALL_Materialfv(ctx->Exec, ( GL_BACK, GL_EMISSION, v ));
-      break;
-   case VBO_ATTRIB_MAT_FRONT_AMBIENT:
-      CALL_Materialfv(ctx->Exec, ( GL_FRONT, GL_AMBIENT, v ));
-      break;
-   case VBO_ATTRIB_MAT_BACK_AMBIENT:
-      CALL_Materialfv(ctx->Exec, ( GL_BACK, GL_AMBIENT, v ));
-      break;
-   case VBO_ATTRIB_MAT_FRONT_DIFFUSE:
-      CALL_Materialfv(ctx->Exec, ( GL_FRONT, GL_DIFFUSE, v ));
-      break;
-   case VBO_ATTRIB_MAT_BACK_DIFFUSE:
-      CALL_Materialfv(ctx->Exec, ( GL_BACK, GL_DIFFUSE, v ));
-      break;
-   case VBO_ATTRIB_MAT_FRONT_SPECULAR:
-      CALL_Materialfv(ctx->Exec, ( GL_FRONT, GL_SPECULAR, v ));
-      break;
-   case VBO_ATTRIB_MAT_BACK_SPECULAR:
-      CALL_Materialfv(ctx->Exec, ( GL_BACK, GL_SPECULAR, v ));
-      break;
-   }
-}
-
-
-static attr_func mat_attrfunc[4] = {
-   mat_attr1fv,
-   NULL,
-   mat_attr3fv,
-   mat_attr4fv
-};
-
-
-static void index_attr1fv(GLcontext *ctx, GLint target, const GLfloat *v)
-{
-   (void) target;
-   CALL_Indexf(ctx->Exec, (v[0]));
-}
-
-static void edgeflag_attr1fv(GLcontext *ctx, GLint target, const GLfloat *v)
-{
-   (void) target;
-   CALL_EdgeFlag(ctx->Exec, ((GLboolean)(v[0] == 1.0)));
-}
 
 struct loopback_attr {
    GLint target;
@@ -277,7 +167,10 @@ void vbo_loopback_vertex_list( GLcontext *ctx,
    struct loopback_attr la[VBO_ATTRIB_MAX];
    GLuint i, nr = 0;
 
-   for (i = 0 ; i <= VBO_ATTRIB_TEX7 ; i++) {
+   /* All Legacy, NV, ARB and Material attributes are routed through
+    * the NV attributes entrypoints:
+    */
+   for (i = 0 ; i < VBO_ATTRIB_MAX ; i++) {
       if (attrsz[i]) {
 	 la[nr].target = i;
 	 la[nr].sz = attrsz[i];
@@ -285,33 +178,6 @@ void vbo_loopback_vertex_list( GLcontext *ctx,
 	 nr++;
       }
    }
-
-   for (i = VBO_ATTRIB_MAT_FRONT_AMBIENT ; 
-	i <= VBO_ATTRIB_MAT_BACK_INDEXES ; 
-	i++) {
-      if (attrsz[i]) {
-	 la[nr].target = i;
-	 la[nr].sz = attrsz[i];
-	 la[nr].func = mat_attrfunc[attrsz[i]-1];
-	 nr++;
-      }
-   }
-
-   if (attrsz[VBO_ATTRIB_EDGEFLAG]) {
-      la[nr].target = VBO_ATTRIB_EDGEFLAG;
-      la[nr].sz = attrsz[VBO_ATTRIB_EDGEFLAG];
-      la[nr].func = edgeflag_attr1fv;
-      nr++;
-   }
-
-   if (attrsz[VBO_ATTRIB_INDEX]) {
-      la[nr].target = VBO_ATTRIB_INDEX;
-      la[nr].sz = attrsz[VBO_ATTRIB_INDEX];
-      la[nr].func = index_attr1fv;
-      nr++;
-   }
-
-   /* XXX ARB vertex attribs */
 
    for (i = 0 ; i < prim_count ; i++) {
       if ((prim[i].mode & VBO_SAVE_PRIM_WEAK) &&
