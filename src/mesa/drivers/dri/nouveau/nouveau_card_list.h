@@ -132,6 +132,7 @@ static nouveau_card nouveau_card_list[]={
 {0x0221,  "GeForce 6200",                          NV30_TCL_PRIMITIVE_3D|0x4400,  NV_44, 0},
 {0x0240,  "GeForce 6150",                          NV30_TCL_PRIMITIVE_3D|0x4400,  NV_44, 0},
 {0x0242,  "GeForce 6100",                          NV30_TCL_PRIMITIVE_3D|0x4400,  NV_44, 0},
+{0x0244,  "GeForce 6150 Go",                       NV30_TCL_PRIMITIVE_3D|0x4400,  NV_44, 0},
 {0x0250,  "GeForce4 Ti 4600",                      NV20_TCL_PRIMITIVE_3D|0x2500,  NV_25, 0},
 {0x0251,  "GeForce4 Ti 4400",                      NV20_TCL_PRIMITIVE_3D|0x2500,  NV_25, 0},
 {0x0252,  "GeForce4 Ti",                           NV20_TCL_PRIMITIVE_3D|0x2500,  NV_25, 0},
