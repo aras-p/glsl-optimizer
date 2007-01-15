@@ -256,6 +256,10 @@ typedef struct slang_assemble_ctx_
    slang_swizzle swz;
    struct gl_program *program;
    slang_var_table *vartable;
+
+   struct slang_function_ *CurFunction;
+   slang_atom CurLoopBreak;
+   slang_atom CurLoopCont;
 } slang_assemble_ctx;
 
 extern struct slang_function_ *

@@ -51,9 +51,11 @@
 /**
  * XXX move these into the slang_assemble_ctx struct
  */
+#if 0
 static slang_function *CurFunction = NULL;
 static slang_atom CurLoopBreak = 0;
 static slang_atom CurLoopCont = 0;
+#endif
 
 
 static slang_ir_node *
@@ -1050,7 +1052,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
                                                     &inlined->children,
                                                     inlined->num_children);
       lab->type = slang_oper_label;
-      lab->a_id = slang_atom_pool_atom(A->atoms, CurFunction->end_label);
+      lab->a_id = slang_atom_pool_atom(A->atoms, A->CurFunction->end_label);
    }
 
    for (i = 0; i < totalArgs; i++) {
@@ -1096,13 +1098,13 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
    slang_operation *inlined;
    slang_function *prevFunc;
 
-   prevFunc = CurFunction;
-   CurFunction = fun;
+   prevFunc = A->CurFunction;
+   A->CurFunction = fun;
 
-   if (!CurFunction->end_label) {
+   if (!A->CurFunction->end_label) {
       char name[200];
-      sprintf(name, "__endOfFunc_%s_", (char *) CurFunction->header.a_name);
-      CurFunction->end_label = slang_atom_pool_gen(A->atoms, name);
+      sprintf(name, "__endOfFunc_%s_", (char *) A->CurFunction->header.a_name);
+      A->CurFunction->end_label = slang_atom_pool_gen(A->atoms, name);
    }
 
    if (slang_is_asm_function(fun) && !dest) {
@@ -1134,9 +1136,9 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
 
    n = _slang_gen_operation(A, oper);
 
-   CurFunction->end_label = NULL;
+   A->CurFunction->end_label = NULL;
 
-   CurFunction = prevFunc;
+   A->CurFunction = prevFunc;
 
    return n;
 }
@@ -1338,12 +1340,12 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    slang_atom startAtom = slang_atom_pool_gen(A->atoms, "__startWhile");
    slang_atom endAtom = slang_atom_pool_gen(A->atoms, "__endWhile");
    slang_ir_node *startLab, *cond, *bra, *body, *jump, *endLab, *tree;
-   slang_atom prevLoopBreak = CurLoopBreak;
-   slang_atom prevLoopCont = CurLoopCont;
+   slang_atom prevLoopBreak = A->CurLoopBreak;
+   slang_atom prevLoopCont = A->CurLoopCont;
 
    /* Push this loop */
-   CurLoopBreak = endAtom;
-   CurLoopCont = startAtom;
+   A->CurLoopBreak = endAtom;
+   A->CurLoopCont = startAtom;
 
    startLab = new_label(startAtom);
    cond = _slang_gen_operation(A, &oper->children[0]);
@@ -1363,8 +1365,8 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    tree = new_seq(tree, endLab);
 
    /* Pop this loop */
-   CurLoopBreak = prevLoopBreak;
-   CurLoopCont = prevLoopCont;
+   A->CurLoopBreak = prevLoopBreak;
+   A->CurLoopCont = prevLoopCont;
 
    return tree;
 }
@@ -1392,12 +1394,12 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
    slang_atom endAtom = slang_atom_pool_gen(A->atoms, "__endFor");
    slang_ir_node *init, *startLab, *cond, *bra, *body, *contLab;
    slang_ir_node *incr, *jump, *endLab, *tree;
-   slang_atom prevLoopBreak = CurLoopBreak;
-   slang_atom prevLoopCont = CurLoopCont;
+   slang_atom prevLoopBreak = A->CurLoopBreak;
+   slang_atom prevLoopCont = A->CurLoopCont;
 
    /* Push this loop */
-   CurLoopBreak = endAtom;
-   CurLoopCont = contAtom;
+   A->CurLoopBreak = endAtom;
+   A->CurLoopCont = contAtom;
 
    init = _slang_gen_operation(A, &oper->children[0]);
    startLab = new_label(startAtom);
@@ -1426,8 +1428,8 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
    tree = new_seq(tree, endLab);
 
    /* Pop this loop */
-   CurLoopBreak = prevLoopBreak;
-   CurLoopCont = prevLoopCont;
+   A->CurLoopBreak = prevLoopBreak;
+   A->CurLoopCont = prevLoopCont;
 
    return tree;
 }
@@ -1501,7 +1503,7 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       slang_operation gotoOp;
       slang_operation_construct(&gotoOp);
       gotoOp.type = slang_oper_goto;
-      gotoOp.a_id = slang_atom_pool_atom(A->atoms, CurFunction->end_label);
+      gotoOp.a_id = slang_atom_pool_atom(A->atoms, A->CurFunction->end_label);
       /* assemble the new code */
       n = _slang_gen_operation(A, &gotoOp);
       /* destroy temp code */
@@ -1555,8 +1557,8 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       /* child[1]: goto __endOfFunction */
       jump = &block->children[1];
       jump->type = slang_oper_goto;
-      assert(CurFunction->end_label);
-      jump->a_id = slang_atom_pool_atom(A->atoms, CurFunction->end_label);
+      assert(A->CurFunction->end_label);
+      jump->a_id = slang_atom_pool_atom(A->atoms, A->CurFunction->end_label);
 
 #if 0 /* debug */
       printf("NEW RETURN:\n");
@@ -1869,15 +1871,15 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case slang_oper_for:
       return _slang_gen_for(A, oper);
    case slang_oper_break:
-      if (!CurLoopBreak) {
+      if (!A->CurLoopBreak) {
          RETURN_ERROR("'break' not in loop", 0);
       }
-      return new_jump(CurLoopBreak);
+      return new_jump(A->CurLoopBreak);
    case slang_oper_continue:
-      if (!CurLoopCont) {
+      if (!A->CurLoopCont) {
          RETURN_ERROR("'continue' not in loop", 0);
       }
-      return new_jump(CurLoopCont);
+      return new_jump(A->CurLoopCont);
    case slang_oper_equal:
       return new_node(IR_SEQUAL,
                       _slang_gen_operation(A, &oper->children[0]),
@@ -2258,11 +2260,11 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    /* fold constant expressions, etc. */
    slang_simplify(fun->body, &A->space, A->atoms);
 
-   CurFunction = fun;
+   A->CurFunction = fun;
 
    /* Create an end-of-function label */
-   if (!CurFunction->end_label)
-      CurFunction->end_label = slang_atom_pool_gen(A->atoms, "__endOfFunc_main_");
+   if (!A->CurFunction->end_label)
+      A->CurFunction->end_label = slang_atom_pool_gen(A->atoms, "__endOfFunc_main_");
 
    /* push new vartable scope */
    A->vartable = _slang_push_var_table(A->vartable);
@@ -2284,7 +2286,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    endLabel = new_label(fun->end_label);
    n = new_seq(n, endLabel);
 
-   CurFunction = NULL;
+   A->CurFunction = NULL;
 
 #if 0
    printf("************* New AST for %s *****\n", (char*)fun->header.a_name);
