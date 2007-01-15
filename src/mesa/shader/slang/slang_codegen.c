@@ -253,20 +253,15 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
 
 /**
  * Allocate storage info for an IR node (n->Store).
- * We may do any of the following:
- *   1. Compute Store->File/Index for program inputs/outputs/uniforms/etc.
- *   2. Allocate storage for user-declared variables.
- *   3. Allocate intermediate/unnamed storage for complex expressions.
- *   4. other?
+ * If n is an IR_VAR_DECL, allocate a temporary for the variable.
+ * Otherwise, if n is an IR_VAR, check if it's a uniform or constant
+ * that needs to have storage allocated.
  */
 static void
 slang_allocate_storage(slang_assemble_ctx *A, slang_ir_node *n)
 {
-   struct gl_program *prog = A->program;
    assert(A->vartable);
    assert(n);
-   assert(n->Opcode == IR_VAR_DECL || n->Opcode == IR_VAR);
-   assert(prog);
 
    if (!n->Store) {
       /* allocate storage info for this node */
@@ -291,47 +286,31 @@ slang_allocate_storage(slang_assemble_ctx *A, slang_ir_node *n)
       assert(n->Store->Size > 0);
       return;
    }
-
-#if 00
-   if (n->Store->File == PROGRAM_UNDEFINED) {
-      printf("*** Var %s  size %d\n", (char*) n->Var->a_name, n->Store->Size);
-      assert(n->Store->File != PROGRAM_UNDEFINED);
-   }
-#endif
-
-   /**
-    ** XXX this all has to be redone
-    **/
-   if (n->Store->Index < 0) {
-      /* determine storage location for this var */
-
+   else {
+      assert(n->Opcode == IR_VAR);
       assert(n->Var);
       assert(n->Store->Size > 0);
 
-      if (n->Store->File == PROGRAM_STATE_VAR) {
-         GLint i = slang_lookup_statevar((char *) n->Var->a_name, 0,
-                                         prog->Parameters);
-         assert(i >= 0);
-         if (i >= 0) {
-            assert(n->Store->File == PROGRAM_STATE_VAR /*||
-                                    n->Store->File == PROGRAM_UNIFORM*/);
-            n->Store->File = PROGRAM_STATE_VAR;
+      if (n->Store->Index < 0) {
+         const char *varName = (char *) n->Var->a_name;
+         struct gl_program *prog = A->program;
+         assert(prog);
+
+         /* determine storage location for this var.
+          * This is probably a pre-defined uniform or constant.
+          * We don't allocate storage for these until they're actually
+          * used to avoid wasting registers.
+          */
+         if (n->Store->File == PROGRAM_STATE_VAR) {
+            GLint i = slang_lookup_statevar(varName, 0, prog->Parameters);
+            assert(i >= 0);
             n->Store->Index = i;
-            return;
          }
-      }
-      else if (n->Store->File == PROGRAM_CONSTANT) {
-         GLint i = slang_lookup_constant((char *) n->Var->a_name, 0,
-                                         prog->Parameters);
-         assert(i >= 0);
-         if (i >= 0) {
-            n->Store->File = PROGRAM_CONSTANT;
+         else if (n->Store->File == PROGRAM_CONSTANT) {
+            GLint i = slang_lookup_constant(varName, 0, prog->Parameters);
+            assert(i >= 0);
             n->Store->Index = i;
-            return;
          }
-      }
-      else {
-         /* what's this??? */
       }
    }
 }
@@ -2199,7 +2178,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    }
    else if (var->type.qualifier == slang_qual_const && !prog) {
       /* pre-defined global constant, like gl_MaxLights */
-      GLint size = -1;
+      const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
       store = _slang_new_ir_storage(PROGRAM_CONSTANT, -1, size);
       if (dbg) printf("CONST ");
    }
@@ -2283,7 +2262,6 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    /* should have been allocated earlier: */
    assert(A->program->Parameters );
    assert(A->program->Varying);
-
    assert(A->vartable);
 
    /* fold constant expressions, etc. */
