@@ -302,6 +302,10 @@ alloc_temp_storage(slang_var_table *vt, slang_ir_node *n, GLint size)
 }
 
 
+/**
+ * Free temporary storage, if n->Store is, in fact, temp storage.
+ * Otherwise, no-op.
+ */
 static void
 free_temp_storage(slang_var_table *vt, slang_ir_node *n)
 {
@@ -316,6 +320,9 @@ free_temp_storage(slang_var_table *vt, slang_ir_node *n)
 }
 
 
+/**
+ * Allocate storage for a floating point constant.
+ */
 static slang_ir_storage *
 alloc_constant(const GLfloat v[], GLuint size, struct gl_program *prog)
 {
