@@ -1234,7 +1234,7 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
       n0 = _slang_gen_operation(A, dest_oper);
       assert(n0->Var);
       assert(n0->Store);
-
+      assert(!n->Store);
       n->Store = n0->Store;
       n->Writemask = writemask;
 
@@ -1735,58 +1735,30 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
 
 
 /**
- * Generate IR tree for an array element reference.
+ * Gen code for array indexing.
  */
 static slang_ir_node *
 _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
 {
-   if (oper->children[1].type == slang_oper_literal_int) {
-      /* compile-time constant index - OK */
-      slang_assembly_typeinfo array_ti, elem_ti;
-      slang_ir_node *base;
-      GLint index;
+   slang_assembly_typeinfo elem_ti;
+   slang_ir_node *elem, *array, *index;
+   GLint elemSize;
 
-      /* get type of array element */
-      slang_assembly_typeinfo_construct(&elem_ti);
-      _slang_typeof_operation(A, oper, &elem_ti);
+   /* size of array element */
+   slang_assembly_typeinfo_construct(&elem_ti);
+   _slang_typeof_operation(A, oper, &elem_ti);
+   elemSize = _slang_sizeof_type_specifier(&elem_ti.spec);
+   assert(elemSize >= 1);
 
-      /* get type of array */
-      slang_assembly_typeinfo_construct(&array_ti);
-      _slang_typeof_operation(A, &oper->children[0], &array_ti);
-
-
-      base = _slang_gen_operation(A, &oper->children[0]);
-      assert(base->Opcode == IR_VAR);
-      assert(base->Store);
-
-      index = (GLint) oper->children[1].literal[0];
-      /*printf("element[%d]\n", index);*/
-      /* new storage info since we don't want to change the original */
-      base->Store = _slang_clone_ir_storage(base->Store);
-      if (_slang_type_is_vector(array_ti.spec.type)) {
-         /* scalar element (float) of a basic vector (ex: vec3) */
-         const GLuint max = _slang_type_dim(array_ti.spec.type);
-         if (index >= max) {
-            RETURN_ERROR("array index out of bounds", 0);
-         }
-         assert(index < 4);
-         /* use swizzle to access the element */
-         base->Swizzle = SWIZZLE_X + index;
-         base->Writemask = WRITEMASK_X << index;
-      }
-      else {
-         /* bias Index by array subscript, update storage size */
-         base->Store->Index += index;
-         base->Store->Size = _slang_sizeof_type_specifier(&elem_ti.spec);
-      }
-      return base;
-   }
-   else {
-      /* run-time index - not supported yet - TBD */
-      abort();
-      return NULL;
-   }
+   array = _slang_gen_operation(A, &oper->children[0]);
+   index = _slang_gen_operation(A, &oper->children[1]);
+   elem = new_node(IR_ELEMENT, array, index);
+   elem->Store = _slang_new_ir_storage(array->Store->File,
+                                       array->Store->Index,
+                                       elemSize);
+   return elem;
 }
+
 
 
 /**

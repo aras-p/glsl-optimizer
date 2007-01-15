@@ -600,6 +600,7 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       assert(n->Children[1]);
       emit(vt, n->Children[0], prog);
       inst = emit(vt, n->Children[1], prog);
+      assert(!n->Store);
       n->Store = n->Children[1]->Store;
       return inst;
 
@@ -619,6 +620,7 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          n->Store->Index = _slang_alloc_temp(vt, n->Store->Size);
       else
          n->Store->Index = _slang_alloc_var(vt, n->Store->Size);
+      assert(n->Store->Index >= 0);
       break;
 
    case IR_VAR:
@@ -630,6 +632,28 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       assert(n->Store->Index >= 0);
       assert(n->Store->Size > 0);
       break;
+
+   case IR_ELEMENT:
+      /* Dereference array element.  Just resolve storage for the array
+       * element represented by this node.
+       */
+      assert(n->Store);
+      assert(n->Store->File != PROGRAM_UNDEFINED);
+      assert(n->Store->Size > 0);
+      if (n->Children[1]->Opcode == IR_FLOAT) {
+         /* OK, constant index */
+         const GLint arrayAddr = n->Children[0]->Store->Index;
+         const GLint index = n->Children[1]->Value[0];
+         n->Store->Index = arrayAddr + index;
+      }
+      else {
+         /* Problem: variable index */
+         const GLint arrayAddr = n->Children[0]->Store->Index;
+         const GLint index = 0;
+         _mesa_problem(NULL, "variable array indexes not supported yet!");
+         n->Store->Index = arrayAddr + index;
+      }
+      return NULL; /* no instruction */
 
    case IR_MOVE:
       /* rhs */
@@ -686,6 +710,7 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
                              n->Children[1]->Store->Size);
          }
          /*inst->Comment = _mesa_strdup("IR_MOVE");*/
+         assert(!n->Store);
          n->Store = n->Children[0]->Store; /*XXX new */
          return inst;
       }

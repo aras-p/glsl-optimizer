@@ -82,6 +82,7 @@ typedef enum
    IR_NOT,     /* logical not */
    IR_VAR,     /* variable reference */
    IR_VAR_DECL,/* var declaration */
+   IR_ELEMENT, /* array element */
    IR_TEX,     /* texture lookup */
    IR_TEXB,    /* texture lookup with LOD bias */
    IR_TEXP,    /* texture lookup with projection */
