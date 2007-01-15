@@ -360,8 +360,6 @@ vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *ind
 
 void vbo_exec_array_init( struct vbo_exec_context *exec )
 {
-   GLcontext *ctx = exec->ctx;
-
 #if 1
    exec->vtxfmt.DrawArrays = vbo_exec_DrawArrays;
    exec->vtxfmt.DrawElements = vbo_exec_DrawElements;
@@ -371,14 +369,10 @@ void vbo_exec_array_init( struct vbo_exec_context *exec )
    exec->vtxfmt.DrawElements = _mesa_noop_DrawElements;
    exec->vtxfmt.DrawRangeElements = _mesa_noop_DrawRangeElements;
 #endif
-
-   exec->array.index_obj = ctx->Driver.NewBufferObject(ctx, 1, GL_ARRAY_BUFFER_ARB);
 }
 
 
 void vbo_exec_array_destroy( struct vbo_exec_context *exec )
 {
-   GLcontext *ctx = exec->ctx;
-
-   ctx->Driver.DeleteBuffer(ctx, exec->array.index_obj);
+   /* nothing to do */
 }

@@ -130,9 +130,6 @@ struct vbo_exec_context
        * programs:
        */
       const struct gl_client_array *inputs[VERT_ATTRIB_MAX];
-
-
-      struct gl_buffer_object *index_obj;
    } array;
 };
 
