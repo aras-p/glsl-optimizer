@@ -47,6 +47,14 @@ extern void _tnl_draw_prims( GLcontext *ctx,
 #define NR_GENERIC_ATTRIBS 16
 #define NR_MAT_ATTRIBS 12
 
+static GLuint check_size( const GLfloat *attr )
+{
+   if (attr[3] != 1.0) return 4;
+   if (attr[2] != 0.0) return 3;
+   if (attr[1] != 0.0) return 2;
+   return 1;		
+}
+
 static void init_legacy_currval(GLcontext *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
@@ -63,7 +71,7 @@ static void init_legacy_currval(GLcontext *ctx)
 
       /* Size will have to be determined at runtime:
        */
-      cl->Size = 1;
+      cl->Size = check_size(ctx->Current.Attrib[i]);
       cl->Stride = 0;
       cl->StrideB = 0;
       cl->Enabled = 1;
@@ -88,7 +96,6 @@ static void init_generic_currval(GLcontext *ctx)
       /* This will have to be determined at runtime:
        */
       cl->Size = 1;
-
       cl->Type = GL_FLOAT;
       cl->Ptr = (const void *)ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + i];
       cl->Stride = 0;
