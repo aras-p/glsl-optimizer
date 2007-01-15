@@ -155,12 +155,26 @@ slang_simplify(slang_operation *oper,
       }
    }
    else if (n == 4 && isFloat[0] && isFloat[1] && isFloat[2] && isFloat[3]) {
+      /* vec4(flt, flt, flt, flt) constructor */
       if (oper->type == slang_oper_call) {
          if (strcmp((char *) oper->a_id, "vec4") == 0) {
             oper->literal[0] = oper->children[0].literal[0];
             oper->literal[1] = oper->children[1].literal[0];
             oper->literal[2] = oper->children[2].literal[0];
             oper->literal[3] = oper->children[3].literal[0];
+            slang_operation_destruct(oper);
+            oper->type = slang_oper_literal_float;
+         }
+      }
+   }
+   else if (n == 3 && isFloat[0] && isFloat[1] && isFloat[2]) {
+      /* vec3(flt, flt, flt) constructor */
+      if (oper->type == slang_oper_call) {
+         if (strcmp((char *) oper->a_id, "vec3") == 0) {
+            oper->literal[0] = oper->children[0].literal[0];
+            oper->literal[1] = oper->children[1].literal[0];
+            oper->literal[2] = oper->children[2].literal[0];
+            oper->literal[3] = 0.0;
             slang_operation_destruct(oper);
             oper->type = slang_oper_literal_float;
          }
