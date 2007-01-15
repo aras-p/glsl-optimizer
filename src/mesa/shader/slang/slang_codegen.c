@@ -48,16 +48,6 @@
 #include "slang_print.h"
 
 
-/**
- * XXX move these into the slang_assemble_ctx struct
- */
-#if 0
-static slang_function *CurFunction = NULL;
-static slang_atom CurLoopBreak = 0;
-static slang_atom CurLoopCont = 0;
-#endif
-
-
 static slang_ir_node *
 _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper);
 
