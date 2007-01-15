@@ -1303,10 +1303,10 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
    fun = _slang_locate_function(A->space.funcs, atom, params, param_count,
 				&A->space, A->atoms);
    if (!fun) {
+      /* XXX temporary */
       print_funcs(A->space.funcs);
-
-   fun = _slang_locate_function(A->space.funcs, atom, params, param_count,
-				&A->space, A->atoms);
+      fun = _slang_locate_function(A->space.funcs, atom, params, param_count,
+                                   &A->space, A->atoms);
 
       RETURN_ERROR2("Undefined function", name, 0);
    }
@@ -2027,7 +2027,6 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 	 slang_ir_node *assign = new_node(IR_MOVE, var, sum);
 	 return assign;
       }
-
    case slang_oper_postdecrement:   /* var-- */
       /* XXX not 100% about this */
       {
@@ -2040,21 +2039,17 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 
    case slang_oper_preincrement:   /* ++var */
       {
-	 slang_ir_node *var = _slang_gen_operation(A, &oper->children[0]);
-	 slang_ir_node *one = new_float_literal(1.0, 1.0, 1.0, 1.0);
-	 slang_ir_node *sum = new_node(IR_ADD, var, one);
-	 slang_ir_node *assign = new_node(IR_MOVE, var, sum);
-         assign->Store = var->Store;
-	 return assign;
+	 slang_ir_node *n;
+         assert(oper->num_children == 1);
+	 n = _slang_gen_function_call_name(A, "++", oper, NULL);
+	 return n;
       }
    case slang_oper_predecrement:   /* --var */
       {
-	 slang_ir_node *var = _slang_gen_operation(A, &oper->children[0]);
-	 slang_ir_node *one = new_float_literal(1.0, 1.0, 1.0, 1.0);
-	 slang_ir_node *sum = new_node(IR_SUB, var, one);
-	 slang_ir_node *assign = new_node(IR_MOVE, var, sum);
-         assign->Store = var->Store;
-	 return assign;
+	 slang_ir_node *n;
+         assert(oper->num_children == 1);
+	 n = _slang_gen_function_call_name(A, "--", oper, NULL);
+	 return n;
       }
 
    case slang_oper_sequence:

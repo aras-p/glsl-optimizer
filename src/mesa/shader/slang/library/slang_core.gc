@@ -102,13 +102,13 @@
 //
 
 //bp:
-vec4 vec4(const float a1, const float b1, const float c1, const float d1)
-{
-   __retVal.x = a1;
-   __retVal.y = b1;
-   __retVal.z = c1;
-   __retVal.w = d1;
-}
+//vec4 vec4(const float a1, const float b1, const float c1, const float d1)
+//{
+//   __retVal.x = a1;
+//   __retVal.y = b1;
+//   __retVal.z = c1;
+//   __retVal.w = d1;
+//}
 
 ////
 //// Assorted constructors
@@ -150,12 +150,14 @@ int __constructor (const int i) {
     return i;
 }
 
-float __constructor (const float f) {
-    return f;
+float __constructor(const float f)
+{
+   __retVal = f.x;
 }
 
-vec2 __constructor (const float f) {
-    return vec2 (f, f);
+vec2 __constructor(const float f)
+{
+   __retVal.xy = f.xx;
 }
 
 vec2 __constructor (const int i) {
@@ -170,10 +172,7 @@ vec2 __constructor (const bool b) {
 
 vec3 __constructor(const float f)
 {
-//    return vec3 (f, f, f);
-   __retVal.x = f;
-   __retVal.y = f;
-   __retVal.z = f;
+   __retVal.xyz = f.xxx;
 }
 
 vec3 __constructor (const int i) {
@@ -192,11 +191,9 @@ vec3 __constructor(const vec4 v)
 }
 
 
-
-
-//bp: TODO replace with asm == f.xxxx
-vec4 __constructor (const float f) {
-    return vec4 (f, f, f, f);
+vec4 __constructor(const float f)
+{
+   __retVal.xyzw = f.xxxx;
 }
 
 vec4 __constructor (const int i) {
@@ -1899,140 +1896,155 @@ void __operator *= (inout vec4 v, const mat4 m)
 
 //// pre-decrement operators
 
-void __operator -- (inout int a)
+int __operator --(inout int a)
 {
-    a -= 1;
+    a = a - 1;
+   __retVal = a;
 }
 
-void __operator -- (inout ivec2 v)
+ivec2 __operator --(inout ivec2 v)
 {
-    --v.x;
-    --v.y;
+   v = v - ivec2(1);
+   __retVal = v;
 }
 
-void __operator -- (inout ivec3 v)
+ivec3 __operator --(inout ivec3 v)
 {
-    --v.x;
-    --v.y;
-    --v.z;
+   v = v - ivec3(1);
+   __retVal = v;
 }
 
-void __operator -- (inout ivec4 v)
+ivec4 __operator --(inout ivec4 v)
 {
-    --v.x;
-    --v.y;
-    --v.z;
-    --v.w;
+   v = v - ivec4(1);
+   __retVal = v;
 }
 
-void __operator -- (inout float a)
+
+float __operator --(inout float a)
 {
-    a -= 1.0;
+   a = a - 1.0;
+   __retVal = a;
 }
 
-void __operator -- (inout vec2 v)
+vec2 __operator --(inout vec2 v)
 {
-   vec2 one = vec1(1.0, 1.0);
-   v = v - one;
+   v = v - vec2(1.0);
+   __retVal = v;
 }
 
-void __operator -- (inout vec3 v)
+vec3 __operator --(inout vec3 v)
 {
-   vec3 one = vec1(1.0, 1.0, 1.0);
-   v = v - one;
+   v = v - vec3(1.0);
+   __retVal = v;
 }
 
-void __operator -- (inout vec4 v)
+vec4 __operator --(inout vec4 v)
 {
-   vec4 one = vec1(1.0, 1.0, 1.0, 1.0);
-   v = v - one;
+   v = v - vec4(1.0);
+   __retVal = v;
 }
 
-void __operator -- (inout mat2 m)
+
+mat2 __operator --(inout mat2 m)
 {
-    --m[0];
-    --m[1];
+   m[0] = m[0] - vec2(1.0);
+   m[1] = m[1] - vec2(1.0);
+   __retVal = m;
 }
 
-void __operator -- (inout mat3 m)
+mat3 __operator --(inout mat3 m)
 {
-    --m[0];
-    --m[1];
-    --m[2];
+   m[0] = m[0] - vec3(1.0);
+   m[1] = m[1] - vec3(1.0);
+   m[2] = m[2] - vec3(1.0);
+   __retVal = m;
 }
 
-void __operator -- (inout mat4 m)
+mat4 __operator --(inout mat4 m)
 {
-    --m[0];
-    --m[1];
-    --m[2];
-    --m[3];
+   m[0] = m[0] - vec4(1.0);
+   m[1] = m[1] - vec4(1.0);
+   m[2] = m[2] - vec4(1.0);
+   m[3] = m[3] - vec4(1.0);
+   __retVal = m;
 }
 
 
 //// pre-increment operators
 
-void __operator ++ (inout float a)
+float __operator ++(inout int a)
 {
-    a += 1.0;
+    a = a + 1;
+    __retVal = a;
 }
 
-void __operator ++ (inout int a) {
-    a += 1;
+ivec2 __operator ++(inout ivec2 v)
+{
+   v = v + ivec2(1);
+   __retVal = v;
 }
 
-void __operator ++ (inout vec2 v) {
-    ++v.x;
-    ++v.y;
+ivec3 __operator ++(inout ivec3 v)
+{
+   v = v + ivec3(1);
+   __retVal = v;
 }
 
-void __operator ++ (inout vec3 v) {
-    ++v.x;
-    ++v.y;
-    ++v.z;
+ivec4 __operator ++(inout ivec4 v)
+{
+   v = v + ivec4(1);
+   __retVal = v;
 }
 
-void __operator ++ (inout vec4 v) {
-    ++v.x;
-    ++v.y;
-    ++v.z;
-    ++v.w;
+
+float __operator ++(inout float a)
+{
+    a = a + 1.0;
+    __retVal = a;
 }
 
-void __operator ++ (inout ivec2 v) {
-    ++v.x;
-    ++v.y;
+vec2 __operator ++(inout vec2 v)
+{
+   v = v + vec2(1.0);
+   __retVal = v;
 }
 
-void __operator ++ (inout ivec3 v) {
-    ++v.x;
-    ++v.y;
-    ++v.z;
+vec3 __operator ++(inout vec3 v)
+{
+   v = v + vec3(1.0);
+   __retVal = v;
 }
 
-void __operator ++ (inout ivec4 v) {
-    ++v.x;
-    ++v.y;
-    ++v.z;
-    ++v.w;
+vec4 __operator ++(inout vec4 v)
+{
+   v = v + vec4(1.0);
+   __retVal = v;
 }
 
-void __operator ++ (inout mat2 m) {
-    ++m[0];
-    ++m[1];
+
+mat2 __operator ++(inout mat2 m)
+{
+   m[0] = m[0] + vec2(1.0);
+   m[1] = m[1] + vec2(1.0);
+   __retVal = m;
 }
 
-void __operator ++ (inout mat3 m) {
-    ++m[0];
-    ++m[1];
-    ++m[2];
+mat3 __operator ++(inout mat3 m)
+{
+   m[0] = m[0] + vec3(1.0);
+   m[1] = m[1] + vec3(1.0);
+   m[2] = m[2] + vec3(1.0);
+   __retVal = m;
 }
 
-void __operator ++ (inout mat4 m) {
-    ++m[0];
-    ++m[1];
-    ++m[2];
-    ++m[3];
+mat4 __operator ++(inout mat4 m)
+{
+   m[0] = m[0] + vec4(1.0);
+   m[1] = m[1] + vec4(1.0);
+   m[2] = m[2] + vec4(1.0);
+   m[3] = m[3] + vec4(1.0);
+   __retVal = m;
 }
 
 
@@ -2206,6 +2218,13 @@ bool __operator ^^ (const bool a, const bool b) {
 
 bool __operator ! (const bool a) {
     return a == false;
+}
+
+bool __logicalAnd(const bool a, const bool b)
+{
+   if (a)
+      return b;
+   return false;
 }
 
 
