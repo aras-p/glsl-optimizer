@@ -71,6 +71,14 @@ static nouveauScreenPtr nouveauCreateScreen(__DRIscreenPrivate *sPriv)
 		return NULL;
 	}
 	
+	screen->card=nouveau_card_lookup(dri_priv->device_id);
+	if (!screen->card) {
+		__driUtilMessage("%s: Unknown card type 0x%04x:0x%04x\n",
+			__func__, dri_priv->device_id >> 16, dri_priv->device_id & 0xFFFF);
+		FREE(screen);
+		return NULL;
+	}
+
 	/* parse information in __driConfigOptions */
 	driParseOptionInfo (&screen->optionCache,__driConfigOptions, __driNConfigOptions);
 
@@ -82,7 +90,6 @@ static nouveauScreenPtr nouveauCreateScreen(__DRIscreenPrivate *sPriv)
 	screen->depthOffset = dri_priv->depth_offset;
 	screen->depthPitch  = dri_priv->depth_pitch;
 
-	screen->card=nouveau_card_lookup(dri_priv->device_id);
 	screen->driScreen = sPriv;
 	return screen;
 }
