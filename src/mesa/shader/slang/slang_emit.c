@@ -99,6 +99,7 @@ static slang_ir_info IrInfo[] = {
    { IR_TEXP, "IR_TEXP", OPCODE_TXP, 4, 1 },
    { IR_FLOAT, "IR_FLOAT", 0, 0, 0 },
    { IR_FIELD, "IR_FIELD", 0, 0, 0 },
+   { IR_ELEMENT, "IR_ELEMENT", 0, 0, 0 },
    { IR_NOP, NULL, OPCODE_NOP, 0, 0 }
 };
 
