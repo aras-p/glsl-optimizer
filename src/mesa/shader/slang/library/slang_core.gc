@@ -1973,7 +1973,7 @@ mat4 __operator --(inout mat4 m)
 
 //// pre-increment operators
 
-float __operator ++(inout int a)
+int __operator ++(inout int a)
 {
     a = a + 1;
     __retVal = a;
@@ -2049,105 +2049,135 @@ mat4 __operator ++(inout mat4 m)
 
 
 
+//// post-decrement
 
-//
-// NOTE: post-increment and decrement operators take an additional
-// dummy int parameter to distinguish their prototypes from prefix ones.
-//
-
-float __operator -- (inout float a, const int) {
-    float b = a;
-    --a;
-    return b;
+int __postDecr(inout int a)
+{
+   __retVal = a;
+   a = a - 1;
 }
 
-int __operator -- (inout int a, const int) {
-    int b = a;
-    --a;
-    return b;
+ivec2 __postDecr(inout ivec2 v)
+{
+   __retVal = v;
+   v = v - ivec2(1);
 }
 
-vec2 __operator -- (inout vec2 v, const int) {
-    return vec2 (v.x--, v.y--);
+ivec3 __postDecr(inout ivec3 v)
+{
+   __retVal = v;
+   v = v - ivec3(1);
 }
 
-vec3 __operator -- (inout vec3 v, const int) {
-    return vec3 (v.x--, v.y--, v.z--);
+ivec4 __postDecr(inout ivec4 v)
+{
+   __retVal = v;
+   v = v - ivec4(1);
 }
 
-vec4 __operator -- (inout vec4 v, const int) {
-    return vec4 (v.x--, v.y--, v.z--, v.w--);
+
+float __postDecr(inout float a)
+{
+   __retVal = v;
+   v = v - 1.0;
 }
 
-ivec2 __operator -- (inout ivec2 v, const int) {
-    return ivec2 (v.x--, v.y--);
+vec2 __postDecr(inout vec2 v)
+{
+   __retVal = v;
+   v = v - vec2(1.0);
 }
 
-ivec3 __operator -- (inout ivec3 v, const int) {
-    return ivec3 (v.x--, v.y--, v.z--);
+vec3 __postDecr(inout vec3 v)
+{
+   __retVal = v;
+   v = v - vec3(1.0);
 }
 
-ivec4 __operator -- (inout ivec4 v, const int) {
-    return ivec4 (v.x--, v.y--, v.z--, v.w--);
+vec4 __postDecr(inout vec4 v)
+{
+   __retVal = v;
+   v = v - vec4(1.0);
 }
 
-mat2 __operator -- (inout mat2 m, const int) {
-    return mat2 (m[0]--, m[1]--);
+
+mat2 __postDecr(inout mat2 m)
+{
+   __retVal = m;
+   m[0] = m[0] - vec2(1.0);
+   m[1] = m[1] - vec2(1.0);
 }
 
-mat3 __operator -- (inout mat3 m, const int) {
-    return mat3 (m[0]--, m[1]--, m[2]--);
+mat3 __postDecr(inout mat3 m)
+{
+   __retVal = m;
+   m[0] = m[0] - vec3(1.0);
+   m[1] = m[1] - vec3(1.0);
+   m[2] = m[2] - vec3(1.0);
 }
 
-mat4 __operator -- (inout mat4 m, const int) {
-    return mat4 (m[0]--, m[1]--, m[2]--, m[3]--);
+mat4 __postDecr(inout mat4 m)
+{
+   __retVal = m;
+   m[0] = m[0] - vec4(1.0);
+   m[1] = m[1] - vec4(1.0);
+   m[2] = m[2] - vec4(1.0);
+   m[3] = m[3] - vec4(1.0);
 }
 
-float __operator ++ (inout float a, const int) {
+
+//// post-increment
+
+float __postIncr(inout float a) {
     float b = a;
     ++a;
     return b;
 }
 
-int __operator ++ (inout int a, const int) {
-    int b = a;
-    ++a;
-    return b;
-}
-
-vec2 __operator ++ (inout vec2 v, const int) {
+vec2 __postIncr(inout vec2 v) {
     return vec2 (v.x++, v.y++);
 }
 
-vec3 __operator ++ (inout vec3 v, const int) {
+vec3 __postIncr(inout vec3 v) {
     return vec3 (v.x++, v.y++, v.z++);
 }
 
-vec4 __operator ++ (inout vec4 v, const int) {
-    return vec4 (v.x++, v.y++, v.z++, v.w++);
+vec4 __postIncr(inout vec4 v)
+{
+   __retVal = v;
+   v = v + vec4(1.0);
 }
 
-ivec2 __operator ++ (inout ivec2 v, const int) {
+
+int __postIncr(inout int a) {
+    int b = a;
+    ++a;
+    return b;
+}
+
+ivec2 __postIncr(inout ivec2 v) {
     return ivec2 (v.x++, v.y++);
 }
 
-ivec3 __operator ++ (inout ivec3 v, const int) {
+ivec3 __postIncr(inout ivec3 v) {
     return ivec3 (v.x++, v.y++, v.z++);
 }
 
-ivec4 __operator ++ (inout ivec4 v, const int) {
+ivec4 __postIncr(inout ivec4 v) {
     return ivec4 (v.x++, v.y++, v.z++, v.w++);
 }
 
-mat2 __operator ++ (inout mat2 m, const int) {
+
+
+mat2 __postIncr(inout mat2 m) {
     return mat2 (m[0]++, m[1]++);
 }
 
-mat3 __operator ++ (inout mat3 m, const int) {
+mat3 __postIncr(inout mat3 m) {
     return mat3 (m[0]++, m[1]++, m[2]++);
 }
 
-mat4 __operator ++ (inout mat4 m, const int) {
+mat4 __postIncr(inout mat4 m) {
     return mat4 (m[0]++, m[1]++, m[2]++, m[3]++);
 }
 

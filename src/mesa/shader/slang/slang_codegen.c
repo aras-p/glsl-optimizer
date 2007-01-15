@@ -2019,24 +2019,19 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       return new_float_literal(oper->literal[0], 0, 0, 0);
 
    case slang_oper_postincrement:   /* var++ */
-      /* XXX not 100% about this */
       {
-	 slang_ir_node *var = _slang_gen_operation(A, &oper->children[0]);
-	 slang_ir_node *one = new_float_literal(1.0, 1.0, 1.0, 1.0);
-	 slang_ir_node *sum = new_node(IR_ADD, var, one);
-	 slang_ir_node *assign = new_node(IR_MOVE, var, sum);
-	 return assign;
+	 slang_ir_node *n;
+         assert(oper->num_children == 1);
+	 n = _slang_gen_function_call_name(A, "__postIncr", oper, NULL);
+	 return n;
       }
    case slang_oper_postdecrement:   /* var-- */
-      /* XXX not 100% about this */
       {
-	 slang_ir_node *var = _slang_gen_operation(A, &oper->children[0]);
-	 slang_ir_node *one = new_float_literal(1.0, 1.0, 1.0, 1.0);
-	 slang_ir_node *sum = new_node(IR_ADD, var, one);
-	 slang_ir_node *assign = new_node(IR_MOVE, var, sum);
-	 return assign;
+	 slang_ir_node *n;
+         assert(oper->num_children == 1);
+	 n = _slang_gen_function_call_name(A, "__postDecr", oper, NULL);
+	 return n;
       }
-
    case slang_oper_preincrement:   /* ++var */
       {
 	 slang_ir_node *n;
