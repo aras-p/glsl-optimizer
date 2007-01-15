@@ -178,7 +178,7 @@ static void nv04_render_tri_fan_verts(GLcontext *ctx,GLuint start,GLuint count,G
 	for(i=start+1;i<count;i+=14)
 	{
 		int numvert=MIN2(15,count-i);
-		int numtri=numvert-2;
+		int numtri=numvert-1;
 		if (numvert<3)
 			break;
 
