@@ -1953,6 +1953,8 @@ _mesa_BindProgram(GLenum target, GLuint id)
    }
    else if (target == GL_FRAGMENT_PROGRAM_NV ||
             target == GL_FRAGMENT_PROGRAM_ARB) {
+      if (ctx->FragmentProgram._Current == ctx->FragmentProgram.Current)
+         ctx->FragmentProgram._Current = (struct gl_fragment_program *) newProg;
       ctx->FragmentProgram.Current = (struct gl_fragment_program *) newProg;
    }
    newProg->RefCount++;
