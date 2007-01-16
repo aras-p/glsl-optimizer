@@ -33,7 +33,10 @@ static PFNGLUNIFORMMATRIX2FVPROC glUniformMatrix2fv_func = NULL;
 static PFNGLUNIFORMMATRIX3FVPROC glUniformMatrix3fv_func = NULL;
 static PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv_func = NULL;
 static PFNGLUSEPROGRAMPROC glUseProgram_func = NULL;
+static PFNGLVERTEXATTRIB1FPROC glVertexAttrib1f_func = NULL;
 static PFNGLVERTEXATTRIB2FPROC glVertexAttrib2f_func = NULL;
+static PFNGLVERTEXATTRIB3FPROC glVertexAttrib3f_func = NULL;
+static PFNGLVERTEXATTRIB4FPROC glVertexAttrib4f_func = NULL;
 
 
 /* GL_ARB_vertex/fragment_program */
@@ -88,7 +91,10 @@ GetExtensionFuncs(void)
    glUniformMatrix3fv_func = (PFNGLUNIFORMMATRIX3FVPROC) glutGetProcAddress("glUniformMatrix3fv");
    glUniformMatrix4fv_func = (PFNGLUNIFORMMATRIX4FVPROC) glutGetProcAddress("glUniformMatrix4fv");
    glUseProgram_func = (PFNGLUSEPROGRAMPROC) glutGetProcAddress("glUseProgram");
+   glVertexAttrib1f_func = (PFNGLVERTEXATTRIB1FPROC) glutGetProcAddress("glVertexAttrib1f");
    glVertexAttrib2f_func = (PFNGLVERTEXATTRIB2FPROC) glutGetProcAddress("glVertexAttrib2f");
+   glVertexAttrib3f_func = (PFNGLVERTEXATTRIB3FPROC) glutGetProcAddress("glVertexAttrib3f");
+   glVertexAttrib4f_func = (PFNGLVERTEXATTRIB4FPROC) glutGetProcAddress("glVertexAttrib4f");
 
 
    /* GL_ARB_vertex/fragment_program */
