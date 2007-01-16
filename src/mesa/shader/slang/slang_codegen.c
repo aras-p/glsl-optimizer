@@ -1669,7 +1669,7 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
 {
    if (oper->children[0].type == slang_oper_identifier &&
        oper->children[1].type == slang_oper_call) {
-      /* Sspecial case of:  x = f(a, b)
+      /* Special case of:  x = f(a, b)
        * Replace with f(a, b, x)  (where x == hidden __retVal out param)
        */
       slang_ir_node *n;
