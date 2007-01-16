@@ -2274,8 +2274,11 @@ bool __operator ^^ (const bool a, const bool b) {
 // }
 //
 
-bool __operator ! (const bool a) {
-    return a == false;
+bool __logicalNot(const bool a)
+{
+   if (a)
+      return false;
+   return true;
 }
 
 bool __logicalAnd(const bool a, const bool b)
@@ -2283,6 +2286,20 @@ bool __logicalAnd(const bool a, const bool b)
    if (a)
       return b;
    return false;
+}
+
+bool __logicalOr(const bool a, const bool b)
+{
+   if (a)
+      return true;
+   return b;
+}
+
+bool __logicalXor(const bool a, const bool b)
+{
+   if (a)
+      return __logicalNot(b);
+   return b;
 }
 
 

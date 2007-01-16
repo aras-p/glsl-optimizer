@@ -2006,11 +2006,19 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 	 return n;
       }
    case slang_oper_logicalor:
-      printf("OR\n");
-      abort();
+      {
+	 slang_ir_node *n;
+         assert(oper->num_children == 2);
+	 n = _slang_gen_function_call_name(A, "__logicalOr", oper, NULL);
+	 return n;
+      }
    case slang_oper_logicalxor:
-      printf("XOR\n");
-      abort();
+      {
+	 slang_ir_node *n;
+         assert(oper->num_children == 2);
+	 n = _slang_gen_function_call_name(A, "__logicalXor", oper, NULL);
+	 return n;
+      }
    case slang_oper_logicaland:
       {
 	 slang_ir_node *n;
@@ -2018,13 +2026,13 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 	 n = _slang_gen_function_call_name(A, "__logicalAnd", oper, NULL);
 	 return n;
       }
-#if 0
-      printf("AND\n");
-      return _slang_gen_logical_and(A, oper);
-#endif
    case slang_oper_not:
-      printf("NOT\n");
-      abort();
+      {
+	 slang_ir_node *n;
+         assert(oper->num_children == 1);
+	 n = _slang_gen_function_call_name(A, "__logicalNot", oper, NULL);
+	 return n;
+      }
 
    case slang_oper_asm:
       return _slang_gen_asm(A, oper, NULL);
