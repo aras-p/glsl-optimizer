@@ -1760,23 +1760,58 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
 static slang_ir_node *
 _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
 {
-   slang_assembly_typeinfo elem_ti;
-   slang_ir_node *elem, *array, *index;
-   GLint elemSize;
+   slang_assembly_typeinfo array_ti;
 
-   /* size of array element */
-   slang_assembly_typeinfo_construct(&elem_ti);
-   _slang_typeof_operation(A, oper, &elem_ti);
-   elemSize = _slang_sizeof_type_specifier(&elem_ti.spec);
-   assert(elemSize >= 1);
+   /* get array's type info */
+   slang_assembly_typeinfo_construct(&array_ti);
+   _slang_typeof_operation(A, &oper->children[0], &array_ti);
 
-   array = _slang_gen_operation(A, &oper->children[0]);
-   index = _slang_gen_operation(A, &oper->children[1]);
-   elem = new_node(IR_ELEMENT, array, index);
-   elem->Store = _slang_new_ir_storage(array->Store->File,
-                                       array->Store->Index,
-                                       elemSize);
-   return elem;
+   if (_slang_type_is_vector(array_ti.spec.type)) {
+      /* indexing a simple vector type: "vec4 v; v[0]=p;" */
+      /* translate the index into a swizzle/writemask: "v.x=p" */
+      const GLuint max = _slang_type_dim(array_ti.spec.type);
+      GLint index;
+      slang_ir_node *n;
+
+      index = (GLint) oper->children[1].literal[0];
+      if (oper->children[1].type != slang_oper_literal_int ||
+          index >= max) {
+         RETURN_ERROR("Invalid array index", 0);
+      }
+
+      n = _slang_gen_operation(A, &oper->children[0]);
+      if (n) {
+         /* use swizzle to access the element */
+         n->Swizzle = SWIZZLE_X + index;
+         n->Writemask = WRITEMASK_X << index;
+      }
+      return n;
+   }
+   else {
+      /* conventional array */
+      slang_assembly_typeinfo elem_ti;
+      slang_ir_node *elem, *array, *index;
+      GLint elemSize;
+
+      /* size of array element */
+      slang_assembly_typeinfo_construct(&elem_ti);
+      _slang_typeof_operation(A, oper, &elem_ti);
+      elemSize = _slang_sizeof_type_specifier(&elem_ti.spec);
+      assert(elemSize >= 1);
+
+      array = _slang_gen_operation(A, &oper->children[0]);
+      index = _slang_gen_operation(A, &oper->children[1]);
+      if (array && index) {
+         elem = new_node(IR_ELEMENT, array, index);
+         elem->Store = _slang_new_ir_storage(array->Store->File,
+                                             array->Store->Index,
+                                             elemSize);
+         return elem;
+      }
+      else {
+         return NULL;
+      }
+   }
 }
 
 
