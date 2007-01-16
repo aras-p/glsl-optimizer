@@ -1911,20 +1911,9 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
                       _slang_gen_operation(A, &oper->children[1]));
    case slang_oper_less:
       /* child[0] < child[1]  ---->   child[1] > child[0] */
-#if 0
-      {
-	 slang_ir_node *n;
-         assert(oper->num_children == 2);
-         /* XXX tranpose children */
-	 n = _slang_gen_function_call_name(A, "<", oper, NULL);
-	 return n;
-      }
-#else
-      /** the operands must be ints or floats, not vectors */
       return new_node(IR_SGT,
                       _slang_gen_operation(A, &oper->children[1]),
                       _slang_gen_operation(A, &oper->children[0]));
-#endif
    case slang_oper_greaterequal:
       return new_node(IR_SGE,
                       _slang_gen_operation(A, &oper->children[0]),
