@@ -357,9 +357,10 @@ static void GLAPIENTRY TAG(VertexAttrib4fvARB)( GLuint index,
 }
 
 
-/* Although we don't export NV_vertex_program, these entrypoints are
+/* In addition to supporting NV_vertex_program, these entrypoints are
  * used by the display list and other code specifically because of
- * their property of aliasing with other attributes.
+ * their property of aliasing with other attributes.  (See
+ * vbo_save_loopback.c)
  */
 static void GLAPIENTRY TAG(VertexAttrib1fNV)( GLuint index, GLfloat x )
 {

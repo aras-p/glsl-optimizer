@@ -65,4 +65,40 @@ void _vbo_DestroyContext( GLcontext *ctx );
 void _vbo_InvalidateState( GLcontext *ctx, GLuint new_state );
 
 
+typedef void (*vbo_draw_func)( GLcontext *ctx,
+			       const struct gl_client_array **arrays,
+			       const struct _mesa_prim *prims,
+			       GLuint nr_prims,
+			       const struct _mesa_index_buffer *ib,
+			       GLuint min_index,
+			       GLuint max_index );
+
+
+
+
+/* Utility function to cope with various constraints on tnl modules or
+ * hardware.  This can be used to split an incoming set of arrays and
+ * primitives against the following constraints:
+ *    - Maximum number of indices in index buffer.
+ *    - Maximum number of vertices referenced by index buffer.
+ *    - Maximum hardware vertex buffer size.
+ */
+struct split_limits {
+   GLuint max_verts;
+   GLuint max_indices;
+   GLuint max_vb_size;		/* bytes */
+};
+
+
+void vbo_split_prims( GLcontext *ctx,
+		      const struct gl_client_array *arrays[],
+		      const struct _mesa_prim *prim,
+		      GLuint nr_prims,
+		      const struct _mesa_index_buffer *ib,
+		      GLuint min_index,
+		      GLuint max_index,
+		      vbo_draw_func draw,
+		      const struct split_limits *limits );
+
+
 #endif

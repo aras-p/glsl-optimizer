@@ -79,13 +79,7 @@ struct vbo_context {
    /* Callback into the driver.  This must always succeed, the driver
     * is responsible for initiating any fallback actions required:
     */
-   void (*draw_prims)( GLcontext *ctx,
-		       const struct gl_client_array *arrays[],
-		       const struct _mesa_prim *prims,
-		       GLuint nr_prims,
-		       const struct _mesa_index_buffer *ib,
-		       GLuint min_index,
-		       GLuint max_index );
+   vbo_draw_func draw_prims;
 };
 
 

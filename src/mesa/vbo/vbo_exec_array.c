@@ -81,7 +81,8 @@ static GLuint get_max_index( GLuint count, GLuint type,
  */
 static void bind_array_obj( GLcontext *ctx )
 {
-   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_exec_context *exec = &vbo->exec;
    GLuint i;
 
    /* TODO: Fix the ArrayObj struct to keep legacy arrays in an array
@@ -89,15 +90,16 @@ static void bind_array_obj( GLcontext *ctx )
     * go away.
     */
    exec->array.legacy_array[VERT_ATTRIB_POS] = &ctx->Array.ArrayObj->Vertex;
+   exec->array.legacy_array[VERT_ATTRIB_WEIGHT] = &vbo->legacy_currval[VERT_ATTRIB_WEIGHT];
    exec->array.legacy_array[VERT_ATTRIB_NORMAL] = &ctx->Array.ArrayObj->Normal;
    exec->array.legacy_array[VERT_ATTRIB_COLOR0] = &ctx->Array.ArrayObj->Color;
    exec->array.legacy_array[VERT_ATTRIB_COLOR1] = &ctx->Array.ArrayObj->SecondaryColor;
    exec->array.legacy_array[VERT_ATTRIB_FOG] = &ctx->Array.ArrayObj->FogCoord;
    exec->array.legacy_array[VERT_ATTRIB_COLOR_INDEX] = &ctx->Array.ArrayObj->Index;
-   exec->array.legacy_array[VBO_ATTRIB_EDGEFLAG] = &ctx->Array.ArrayObj->EdgeFlag;
+   exec->array.legacy_array[VERT_ATTRIB_EDGEFLAG] = &ctx->Array.ArrayObj->EdgeFlag;
 
    for (i = 0; i < 8; i++)
-      exec->array.legacy_array[VBO_ATTRIB_TEX0 + i] = &ctx->Array.ArrayObj->TexCoord[i];
+      exec->array.legacy_array[VERT_ATTRIB_TEX0 + i] = &ctx->Array.ArrayObj->TexCoord[i];
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
       exec->array.generic_array[i] = &ctx->Array.ArrayObj->VertexAttrib[i];
@@ -115,8 +117,6 @@ static void recalculate_input_bindings( GLcontext *ctx )
    exec->array.program_mode = get_program_mode(ctx);
    exec->array.enabled_flags = ctx->Array.ArrayObj->_Enabled;
 
-   /* TODO:  Get rid of NV_program (please!).
-    */
    switch (exec->array.program_mode) {
    case VP_NONE:
       /* When no vertex program is active, we put the material values
@@ -133,6 +133,13 @@ static void recalculate_input_bindings( GLcontext *ctx )
       for (i = 0; i < MAT_ATTRIB_MAX; i++) {
 	 inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->mat_currval[i];
       }
+
+      /* Could use just about anything, just to fill in the empty
+       * slots:
+       */
+      for (i = MAT_ATTRIB_MAX; i < VERT_ATTRIB_MAX; i++)
+	 inputs[i] = &vbo->generic_currval[i - VERT_ATTRIB_GENERIC0];
+
       break;
    case VP_NV:
       /* NV_vertex_program - attribute arrays alias and override
@@ -147,6 +154,13 @@ static void recalculate_input_bindings( GLcontext *ctx )
 	 else
 	    inputs[i] = &vbo->legacy_currval[i];
       }
+
+      /* Could use just about anything, just to fill in the empty
+       * slots:
+       */
+      for (i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++)
+	 inputs[i] = &vbo->generic_currval[i - VERT_ATTRIB_GENERIC0];
+
       break;
    case VP_ARB:
       /* ARB_vertex_program - Only the attribute zero (position) array
@@ -274,7 +288,9 @@ vbo_exec_DrawRangeElements(GLenum mode,
 
    if (ctx->NewState)
       _mesa_update_state( ctx );
-      
+
+   bind_arrays( ctx );
+
    ib.count = count;
    ib.type = type; 
    ib.obj = ctx->Array.ElementArrayBufferObj;
@@ -344,8 +360,6 @@ vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *ind
 
 void vbo_exec_array_init( struct vbo_exec_context *exec )
 {
-   GLcontext *ctx = exec->ctx;
-
 #if 1
    exec->vtxfmt.DrawArrays = vbo_exec_DrawArrays;
    exec->vtxfmt.DrawElements = vbo_exec_DrawElements;
@@ -355,14 +369,10 @@ void vbo_exec_array_init( struct vbo_exec_context *exec )
    exec->vtxfmt.DrawElements = _mesa_noop_DrawElements;
    exec->vtxfmt.DrawRangeElements = _mesa_noop_DrawRangeElements;
 #endif
-
-   exec->array.index_obj = ctx->Driver.NewBufferObject(ctx, 1, GL_ARRAY_BUFFER_ARB);
 }
 
 
 void vbo_exec_array_destroy( struct vbo_exec_context *exec )
 {
-   GLcontext *ctx = exec->ctx;
-
-   ctx->Driver.DeleteBuffer(ctx, exec->array.index_obj);
+   /* nothing to do */
 }

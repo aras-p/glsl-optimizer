@@ -415,25 +415,13 @@ static void _save_copy_to_current( GLcontext *ctx )
    struct vbo_save_context *save = &vbo_context(ctx)->save; 
    GLuint i;
 
-   for (i = VBO_ATTRIB_POS+1 ; i <= VBO_ATTRIB_INDEX ; i++) {
+   for (i = VBO_ATTRIB_POS+1 ; i < VBO_ATTRIB_MAX ; i++) {
       if (save->attrsz[i]) {
 	 save->currentsz[i][0] = save->attrsz[i];
 	 COPY_CLEAN_4V(save->current[i], 
-		    save->attrsz[i], 
-		    save->attrptr[i]);
+		       save->attrsz[i], 
+		       save->attrptr[i]);
       }
-   }
-
-   /* Edgeflag requires special treatment: 
-    *
-    * TODO: change edgeflag to GLfloat in Mesa.
-    */
-   if (save->attrsz[VBO_ATTRIB_EDGEFLAG]) {
-      ctx->ListState.ActiveEdgeFlag = 1;
-      save->CurrentFloatEdgeFlag = 
-	 save->attrptr[VBO_ATTRIB_EDGEFLAG][0];
-      ctx->ListState.CurrentEdgeFlag = 
-	 (save->CurrentFloatEdgeFlag == 1.0);
    }
 }
 
@@ -443,7 +431,7 @@ static void _save_copy_from_current( GLcontext *ctx )
    struct vbo_save_context *save = &vbo_context(ctx)->save; 
    GLint i;
 
-   for (i = VBO_ATTRIB_POS+1 ; i <= VBO_ATTRIB_INDEX ; i++) 
+   for (i = VBO_ATTRIB_POS+1 ; i < VBO_ATTRIB_MAX ; i++) {
       switch (save->attrsz[i]) {
       case 4: save->attrptr[i][3] = save->current[i][3];
       case 3: save->attrptr[i][2] = save->current[i][2];
@@ -451,12 +439,6 @@ static void _save_copy_from_current( GLcontext *ctx )
       case 1: save->attrptr[i][0] = save->current[i][0];
       case 0: break;
       }
-
-   /* Edgeflag requires special treatment:
-    */
-   if (save->attrsz[VBO_ATTRIB_EDGEFLAG]) {
-      save->CurrentFloatEdgeFlag = (GLfloat)ctx->ListState.CurrentEdgeFlag;
-      save->attrptr[VBO_ATTRIB_EDGEFLAG][0] = save->CurrentFloatEdgeFlag;
    }
 }
 
@@ -527,7 +509,7 @@ static void _save_upgrade_vertex( GLcontext *ctx,
 
       /* Need to note this and fix up at runtime (or loopback):
        */
-      if (save->currentsz[attr][0] == 0) {
+      if (attr != VBO_ATTRIB_POS && save->currentsz[attr][0] == 0) {
 	 assert(oldsz == 0);
 	 save->dangling_attr_ref = GL_TRUE;
       }
@@ -1106,23 +1088,19 @@ static void _save_current_init( GLcontext *ctx )
    struct vbo_save_context *save = &vbo_context(ctx)->save;
    GLint i;
 
-   for (i = 0; i < VBO_ATTRIB_FIRST_MATERIAL; i++) {
-      save->currentsz[i] = &ctx->ListState.ActiveAttribSize[i];
-      save->current[i] = ctx->ListState.CurrentAttrib[i];
+   for (i = VBO_ATTRIB_POS; i <= VBO_ATTRIB_GENERIC15; i++) {
+      const GLuint j = i - VBO_ATTRIB_POS;
+      ASSERT(j < VERT_ATTRIB_MAX);
+      save->currentsz[i] = &ctx->ListState.ActiveAttribSize[j];
+      save->current[i] = ctx->ListState.CurrentAttrib[j];
    }
 
-   for (i = VBO_ATTRIB_FIRST_MATERIAL; i < VBO_ATTRIB_INDEX; i++) {
+   for (i = VBO_ATTRIB_FIRST_MATERIAL; i <= VBO_ATTRIB_MAT_FRONT_AMBIENT; i++) {
       const GLuint j = i - VBO_ATTRIB_FIRST_MATERIAL;
       ASSERT(j < MAT_ATTRIB_MAX);
       save->currentsz[i] = &ctx->ListState.ActiveMaterialSize[j];
       save->current[i] = ctx->ListState.CurrentMaterial[j];
    }
-
-   save->currentsz[VBO_ATTRIB_INDEX] = &ctx->ListState.ActiveIndex;
-   save->current[VBO_ATTRIB_INDEX] = &ctx->ListState.CurrentIndex;
-
-   save->currentsz[VBO_ATTRIB_EDGEFLAG] = &ctx->ListState.ActiveEdgeFlag;
-   save->current[VBO_ATTRIB_EDGEFLAG] = &save->CurrentFloatEdgeFlag;
 }
 
 /**

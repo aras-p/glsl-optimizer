@@ -442,7 +442,6 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
     */
    _tnl_destroy_pipeline( ctx );
    _tnl_install_pipeline( ctx, r200_pipeline );
-   ctx->Driver.FlushVertices = r200FlushVertices;
 
    /* Try and keep materials and vertices separate:
     */
