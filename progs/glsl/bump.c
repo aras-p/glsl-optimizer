@@ -34,17 +34,19 @@ struct uniform_info {
 static struct uniform_info Uniforms[] = {
    { "LightPosition",       3, -1, { 0.57737, 0.57735, 0.57735, 0.0 } },
    { "SurfaceColor",        3, -1, { 0.8, 0.8, 0.2, 0 } },
-   { "BumpDensity",         1, -1, { 16.0, 0, 0, 0 } },
-   { "BumpSize",            1, -1, { 0.15, 0, 0, 0 } },
+   { "BumpDensity",         1, -1, { 10.0, 0, 0, 0 } },
+   { "BumpSize",            1, -1, { 0.125, 0, 0, 0 } },
    { "SpecularFactor",      1, -1, { 0.5, 0, 0, 0 } },
    { NULL, 0, 0, { 0, 0, 0, 0 } }
 };
 
 static GLint win = 0;
 
-static GLfloat xRot = 0.0f, yRot = 0.0f, zRot = 0.0f;
+static GLfloat xRot = 20.0f, yRot = 0.0f, zRot = 0.0f;
 
 static GLuint tangentAttrib;
+
+static GLboolean Anim = GL_FALSE;
 
 
 static void
@@ -75,6 +77,63 @@ Square(GLfloat size)
 
 
 static void
+Cube(GLfloat size)
+{
+   /* +X */
+   glPushMatrix();
+   glRotatef(90, 0, 1, 0);
+   glTranslatef(0, 0, size);
+   Square(size);
+   glPopMatrix();
+
+   /* -X */
+   glPushMatrix();
+   glRotatef(-90, 0, 1, 0);
+   glTranslatef(0, 0, size);
+   Square(size);
+   glPopMatrix();
+
+   /* +Y */
+   glPushMatrix();
+   glRotatef(90, 1, 0, 0);
+   glTranslatef(0, 0, size);
+   Square(size);
+   glPopMatrix();
+
+   /* -Y */
+   glPushMatrix();
+   glRotatef(-90, 1, 0, 0);
+   glTranslatef(0, 0, size);
+   Square(size);
+   glPopMatrix();
+
+
+   /* +Z */
+   glPushMatrix();
+   glTranslatef(0, 0, size);
+   Square(size);
+   glPopMatrix();
+
+   /* -Z */
+   glPushMatrix();
+   glRotatef(180, 0, 1, 0);
+   glTranslatef(0, 0, size);
+   Square(size);
+   glPopMatrix();
+
+}
+
+
+static void
+Idle(void)
+{
+   GLint t = glutGet(GLUT_ELAPSED_TIME);
+   yRot  = t * 0.05;
+   glutPostRedisplay();
+}
+
+
+static void
 Redisplay(void)
 {
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -84,7 +143,7 @@ Redisplay(void)
    glRotatef(yRot, 0.0f, 1.0f, 0.0f);
    glRotatef(zRot, 0.0f, 0.0f, 1.0f);
 
-   Square(2.0);
+   Cube(1.5);
 
    glPopMatrix();
 
@@ -128,6 +187,10 @@ Key(unsigned char key, int x, int y)
   (void) y;
 
    switch(key) {
+   case 'a':
+      Anim = !Anim;
+      glutIdleFunc(Anim ? Idle : NULL);
+      break;
    case 'z':
       zRot += step;
       break;
