@@ -377,6 +377,7 @@ static void halveImage_ubyte(GLint components, GLuint width, GLuint height,
 {
     int i, j, k;
     int newwidth, newheight;
+    int padBytes;
     GLubyte *s;
     const char *t;
 
@@ -390,6 +391,7 @@ static void halveImage_ubyte(GLint components, GLuint width, GLuint height,
 
     newwidth = width / 2;
     newheight = height / 2;
+    padBytes = ysize - (width*group_size);
     s = dataout;
     t = (const char *)datain;
 
@@ -405,6 +407,7 @@ static void halveImage_ubyte(GLint components, GLuint width, GLuint height,
 	    }
 	    t += group_size;
 	}
+	t += padBytes;
 	t += ysize;
     }
 }
@@ -476,6 +479,7 @@ static void halveImage_byte(GLint components, GLuint width, GLuint height,
 {
     int i, j, k;
     int newwidth, newheight;
+    int padBytes;
     GLbyte *s;
     const char *t;
 
@@ -489,6 +493,7 @@ static void halveImage_byte(GLint components, GLuint width, GLuint height,
 
     newwidth = width / 2;
     newheight = height / 2;
+    padBytes = ysize - (width*group_size);
     s = dataout;
     t = (const char *)datain;
 
@@ -504,6 +509,7 @@ static void halveImage_byte(GLint components, GLuint width, GLuint height,
 	    }
 	    t += group_size;
 	}
+	t += padBytes;
 	t += ysize;
     }
 }
@@ -573,6 +579,7 @@ static void halveImage_ushort(GLint components, GLuint width, GLuint height,
 {
     int i, j, k;
     int newwidth, newheight;
+    int padBytes;
     GLushort *s;
     const char *t;
 
@@ -586,6 +593,7 @@ static void halveImage_ushort(GLint components, GLuint width, GLuint height,
 
     newwidth = width / 2;
     newheight = height / 2;
+    padBytes = ysize - (width*group_size);
     s = dataout;
     t = (const char *)datain;
 
@@ -602,6 +610,7 @@ static void halveImage_ushort(GLint components, GLuint width, GLuint height,
 	    }
 	    t += group_size;
 	}
+	t += padBytes;
 	t += ysize;
     }
     else
@@ -616,6 +625,7 @@ static void halveImage_ushort(GLint components, GLuint width, GLuint height,
 	    }
 	    t += group_size;
 	}
+	t += padBytes;
 	t += ysize;
     }
 }
@@ -708,6 +718,7 @@ static void halveImage_short(GLint components, GLuint width, GLuint height,
 {
     int i, j, k;
     int newwidth, newheight;
+    int padBytes;
     GLshort *s;
     const char *t;
 
@@ -721,6 +732,7 @@ static void halveImage_short(GLint components, GLuint width, GLuint height,
 
     newwidth = width / 2;
     newheight = height / 2;
+    padBytes = ysize - (width*group_size);
     s = dataout;
     t = (const char *)datain;
 
@@ -737,6 +749,7 @@ static void halveImage_short(GLint components, GLuint width, GLuint height,
 	    }
 	    t += group_size;
 	}
+	t += padBytes;
 	t += ysize;
     }
     else
@@ -758,6 +771,7 @@ static void halveImage_short(GLint components, GLuint width, GLuint height,
 	    }
 	    t += group_size;
 	}
+	t += padBytes;
 	t += ysize;
     }
 }
@@ -850,6 +864,7 @@ static void halveImage_uint(GLint components, GLuint width, GLuint height,
 {
     int i, j, k;
     int newwidth, newheight;
+    int padBytes;
     GLuint *s;
     const char *t;
 
@@ -863,6 +878,7 @@ static void halveImage_uint(GLint components, GLuint width, GLuint height,
 
     newwidth = width / 2;
     newheight = height / 2;
+    padBytes = ysize - (width*group_size);
     s = dataout;
     t = (const char *)datain;
 
@@ -881,6 +897,7 @@ static void halveImage_uint(GLint components, GLuint width, GLuint height,
 	    }
 	    t += group_size;
 	}
+	t += padBytes;
 	t += ysize;
     }
     else
@@ -899,6 +916,7 @@ static void halveImage_uint(GLint components, GLuint width, GLuint height,
 	    }
 	    t += group_size;
 	}
+	t += padBytes;
 	t += ysize;
     }
 }
@@ -990,6 +1008,7 @@ static void halveImage_int(GLint components, GLuint width, GLuint height,
 {
     int i, j, k;
     int newwidth, newheight;
+    int padBytes;
     GLint *s;
     const char *t;
 
@@ -1003,6 +1022,7 @@ static void halveImage_int(GLint components, GLuint width, GLuint height,
 
     newwidth = width / 2;
     newheight = height / 2;
+    padBytes = ysize - (width*group_size);
     s = dataout;
     t = (const char *)datain;
 
@@ -1019,6 +1039,7 @@ static void halveImage_int(GLint components, GLuint width, GLuint height,
 	    }
 	    t += group_size;
 	}
+	t += padBytes;
 	t += ysize;
     }
     else
@@ -1041,6 +1062,7 @@ static void halveImage_int(GLint components, GLuint width, GLuint height,
 	    }
 	    t += group_size;
 	}
+	t += padBytes;
 	t += ysize;
     }
 }
@@ -1134,6 +1156,7 @@ static void halveImage_float(GLint components, GLuint width, GLuint height,
 {
     int i, j, k;
     int newwidth, newheight;
+    int padBytes;
     GLfloat *s;
     const char *t;
 
@@ -1147,6 +1170,7 @@ static void halveImage_float(GLint components, GLuint width, GLuint height,
 
     newwidth = width / 2;
     newheight = height / 2;
+    padBytes = ysize - (width*group_size);
     s = dataout;
     t = (const char *)datain;
 
@@ -1163,6 +1187,7 @@ static void halveImage_float(GLint components, GLuint width, GLuint height,
 	    }
 	    t += group_size;
 	}
+	t += padBytes;
 	t += ysize;
     }
     else
@@ -1183,6 +1208,7 @@ static void halveImage_float(GLint components, GLuint width, GLuint height,
 	    }
 	    t += group_size;
 	}
+	t += padBytes;
 	t += ysize;
     }
 }
@@ -3845,10 +3871,12 @@ static int gluBuild2DMipmapLevelsCore(GLenum target, GLint internalFormat,
     if (width == newwidth && height == newheight) {
 	/* Use usersImage for level userLevel */
 	if (baseLevel <= level && level <= maxLevel) {
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, psm.unpack_row_length);
 	glTexImage2D(target, level, internalFormat, width,
 		height, 0, format, type,
 		usersImage);
 	}
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	if(levels == 0) { /* we're done. clean up and return */
 	  glPixelStorei(GL_UNPACK_ALIGNMENT, psm.unpack_alignment);
 	  glPixelStorei(GL_UNPACK_SKIP_ROWS, psm.unpack_skip_rows);
@@ -8643,7 +8671,8 @@ static void halveImageSlice(int components,
    int halfHeight= height / 2;
    int halfDepth= depth / 2;
    const char *src= (const char *)dataIn;
-   int padBytes= rowSizeInBytes - (width * groupSizeInBytes);
+   int rowPadBytes= rowSizeInBytes - (width * groupSizeInBytes);
+   int imagePadBytes= imageSizeInBytes - (width*height*groupSizeInBytes);
    int outIndex= 0;
 
    assert((width == 1 || height == 1) && depth >= 2);
@@ -8727,7 +8756,7 @@ static void halveImageSlice(int components,
 	    /* skip over to next horizontal square of 4 */
 	    src+= groupSizeInBytes;
 	 } /* for jj */
-	 src+= padBytes;
+	 src+= rowPadBytes;
 
 	 src+= rowSizeInBytes;
       } /* for ii */
@@ -8772,11 +8801,12 @@ static void halveImageSlice(int components,
 
 	       src+= elementSizeInBytes;
 	    } /* for cc */
-	    src+= padBytes;
+	    src+= rowPadBytes;
 
 	    /* skip over to next vertical square of 4 */
 	    src+= rowSizeInBytes;
 	 } /* for jj */
+         src+= imagePadBytes;
 
 	 src+= imageSizeInBytes;
       } /* for ii */
@@ -8816,7 +8846,8 @@ static void halveImage3D(int components,
       int halfHeight= height / 2;
       int halfDepth= depth / 2;
       const char *src= (const char *) dataIn;
-      int padBytes= rowSizeInBytes - (width*groupSizeInBytes);
+      int rowPadBytes= rowSizeInBytes - (width*groupSizeInBytes);
+      int imagePadBytes= imageSizeInBytes - (width*height*groupSizeInBytes);
       int outIndex= 0;
 
       for (dd= 0; dd < halfDepth; dd++) {
@@ -8872,7 +8903,7 @@ static void halveImage3D(int components,
 	       src+= groupSizeInBytes;
 	    } /* for jj */
 	    /* skip past pad bytes, if any, to get to next row */
-	    src+= padBytes;
+	    src+= rowPadBytes;
 
 	    /* src is at beginning of a row here, but it's the second row of
 	     * the square block of 4 pixels that we just worked on so we
@@ -8886,6 +8917,9 @@ static void halveImage3D(int components,
 	     */
 	    src+= rowSizeInBytes;
 	 } /* for ii */
+
+	 /* skip past pad bytes, if any, to get to next image */
+	 src+= imagePadBytes;
 
 	 src+= imageSizeInBytes;
       } /* for dd */

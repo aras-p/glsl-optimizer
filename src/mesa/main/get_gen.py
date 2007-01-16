@@ -958,6 +958,7 @@ StateVars = [
 	# OpenGL 2.0
 	( "GL_STENCIL_BACK_FUNC", GLenum, ["ctx->Stencil.Function[1]"], "", None ),
 	( "GL_STENCIL_BACK_VALUE_MASK", GLint, ["ctx->Stencil.ValueMask[1]"], "", None ),
+	( "GL_STENCIL_BACK_WRITEMASK", GLint, ["ctx->Stencil.WriteMask[1]"], "", None ),
 	( "GL_STENCIL_BACK_REF", GLint, ["ctx->Stencil.Ref[1]"], "", None ),
 	( "GL_STENCIL_BACK_FAIL", GLenum, ["ctx->Stencil.FailFunc[1]"], "", None ),
 	( "GL_STENCIL_BACK_PASS_DEPTH_FAIL", GLenum, ["ctx->Stencil.ZFailFunc[1]"], "", None ),

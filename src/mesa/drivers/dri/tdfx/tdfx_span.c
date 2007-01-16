@@ -47,21 +47,19 @@
 
 
 #define LOCAL_VARS							\
-   __DRIdrawablePrivate *dPriv = fxMesa->driDrawable;			\
-   tdfxScreenPrivate *fxPriv = fxMesa->fxScreen;			\
-   GLboolean isFront = (ctx->DrawBuffer->_ColorDrawBufferMask[0]	\
-                      == BUFFER_BIT_FRONT_LEFT);			\
-   GLuint pitch = isFront ? (fxMesa->screen_width * BYTESPERPIXEL)	\
-                          : info.strideInBytes;				\
-   GLuint height = fxMesa->height;					\
+   driRenderbuffer *drb = (driRenderbuffer *) rb;			\
+   __DRIdrawablePrivate *const dPriv = drb->dPriv;			\
+   GLuint pitch = drb->backBuffer ? info.strideInBytes			\
+     : (drb->pitch * drb->cpp);						\
+   const GLuint bottom = dPriv->h - 1;					\
    char *buf = (char *)((char *)info.lfbPtr +				\
-			 dPriv->x * fxPriv->cpp +			\
-			 dPriv->y * pitch);				\
+			 (dPriv->x * drb->cpp) +			\
+			 (dPriv->y * pitch));				\
    GLuint p;								\
    (void) buf; (void) p;
 
 
-#define Y_FLIP(_y)		(height - _y - 1)
+#define Y_FLIP(_y)		(bottom - _y)
 
 
 #define HW_WRITE_LOCK()							\
@@ -71,10 +69,9 @@
    UNLOCK_HARDWARE( fxMesa );						\
    LOCK_HARDWARE( fxMesa );						\
    info.size = sizeof(GrLfbInfo_t);					\
-   if ( fxMesa->Glide.grLfbLock( GR_LFB_WRITE_ONLY,			\
-                   fxMesa->DrawBuffer, LFB_MODE,			\
-		   GR_ORIGIN_UPPER_LEFT, FXFALSE, &info ) )		\
-   {
+   if (fxMesa->Glide.grLfbLock(GR_LFB_WRITE_ONLY, fxMesa->DrawBuffer,	\
+			       LFB_MODE, GR_ORIGIN_UPPER_LEFT, FXFALSE,	\
+			       &info)) {
 
 #define HW_WRITE_UNLOCK()						\
       fxMesa->Glide.grLfbUnlock( GR_LFB_WRITE_ONLY, fxMesa->DrawBuffer );\
@@ -976,7 +973,7 @@ tdfxDDWriteDepthPixels(GLcontext * ctx, struct gl_renderbuffer *rb,
 	 GetFbParams(fxMesa, &info, &backBufferInfo,
 		     &ReadParams, sizeof(GLushort));
 	 for (i = 0; i < n; i++) {
-	    if (mask[i] && visible_pixel(fxMesa, x[i], y[i])) {
+	    if ((!mask || mask[i]) && visible_pixel(fxMesa, x[i], y[i])) {
 	       xpos = x[i] + fxMesa->x_offset;
 	       ypos = bottom - y[i];
 	       d16 = depth[i];
@@ -1000,7 +997,7 @@ tdfxDDWriteDepthPixels(GLcontext * ctx, struct gl_renderbuffer *rb,
 	 GetFbParams(fxMesa, &info, &backBufferInfo,
 		     &ReadParams, sizeof(GLuint));
 	 for (i = 0; i < n; i++) {
-	    if (mask[i]) {
+	    if (!mask || mask[i]) {
 	       if (visible_pixel(fxMesa, x[i], y[i])) {
 		  xpos = x[i] + fxMesa->x_offset;
 		  ypos = bottom - y[i];

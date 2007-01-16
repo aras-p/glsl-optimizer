@@ -123,6 +123,18 @@ void intelGetTexImage(GLcontext * ctx, GLenum target, GLint level,
                       struct gl_texture_object *texObj,
                       struct gl_texture_image *texImage);
 
+void intelCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
+				GLint internalFormat,
+				GLint width, GLint height, GLint border,
+				GLsizei imageSize, const GLvoid *data,
+				struct gl_texture_object *texObj,
+				struct gl_texture_image *texImage );
+
+void intelGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
+				GLvoid *pixels,
+				const struct gl_texture_object *texObj,
+				const struct gl_texture_image *texImage);
+
 GLuint intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit);
 
 void intel_tex_map_images(struct intel_context *intel,
@@ -130,5 +142,7 @@ void intel_tex_map_images(struct intel_context *intel,
 
 void intel_tex_unmap_images(struct intel_context *intel,
                             struct intel_texture_object *intelObj);
+
+int intel_compressed_num_bytes(GLuint mesaFormat);
 
 #endif

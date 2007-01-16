@@ -67,6 +67,7 @@ static void brw_destroy_context( struct intel_context *intel )
    brw_draw_destroy( brw );
 
    brw_ProgramCacheDestroy( ctx );
+   brw_FrameBufferTexDestroy( brw );
 }
 
 /* called from intelDrawBuffer()

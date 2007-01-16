@@ -206,7 +206,7 @@ static void r300_set_blend_state(GLcontext * ctx)
 	    (R300_BLEND_GL_ZERO << R300_DST_BLEND_SHIFT);
 	int eqnA = R300_COMB_FCN_ADD_CLAMP;
 
-	if (ctx->Color._LogicOpEnabled || !ctx->Color.BlendEnabled) {
+	if (RGBA_LOGICOP_ENABLED(ctx) || !ctx->Color.BlendEnabled) {
 		r300_set_blend_cntl(r300,
 			func, eqn, 0,
 			func, eqn);
@@ -1044,6 +1044,59 @@ r300UpdateDrawBuffer(GLcontext *ctx)
 #endif
 }
 
+static void r300FetchStateParameter(GLcontext *ctx, const enum state_index state[],
+                  GLfloat *value)
+{
+    r300ContextPtr r300 = R300_CONTEXT(ctx);
+
+    switch(state[0])
+    {
+    case STATE_INTERNAL:
+    	switch(state[1])
+	{
+	case STATE_R300_WINDOW_DIMENSION:
+	    value[0] = r300->radeon.dri.drawable->w;	/* width */
+    	    value[1] = r300->radeon.dri.drawable->h;	/* height */
+	    value[2] = 0.5F; 				/* for moving range [-1 1] -> [0 1] */
+    	    value[3] = 1.0F; 				/* not used */
+	    break;
+	default:;
+	}
+    default:;
+    }
+}
+
+/**
+ * Update R300's own internal state parameters.
+ * For now just STATE_R300_WINDOW_DIMENSION
+ */
+static void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state)
+{
+	struct r300_vertex_program_cont *vpc;
+	struct gl_program_parameter_list *paramList;
+	GLuint i;
+
+	if(!(new_state & (_NEW_BUFFERS|_NEW_PROGRAM)))
+	    return;
+
+	vpc = (struct r300_vertex_program_cont *)ctx->VertexProgram._Current;
+	if (!vpc)
+	    return;
+
+	paramList = vpc->mesa_program.Base.Parameters;
+
+	if (!paramList)
+	    return;
+
+	for (i = 0; i < paramList->NumParameters; i++) {
+		if (paramList->Parameters[i].Type == PROGRAM_STATE_VAR){
+			r300FetchStateParameter(ctx,
+				    paramList->Parameters[i].StateIndexes,
+				    paramList->ParameterValues[i]);
+		}
+	}
+}
+
 /* =============================================================
  * Polygon state
  */
@@ -1285,7 +1338,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	int i;
 
 	if(hw_tcl_on)
-		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->Base.OutputsWritten;
+		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
 	else
 		RENDERINPUTS_COPY( OutputsWritten.index_bitset, r300->state.render_inputs_bitset );
 
@@ -1303,6 +1356,20 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	fp_reg = in_texcoords = col_interp_nr = high_rr = 0;
 
 	r300->hw.rr.cmd[R300_RR_ROUTE_1] = 0;
+	
+	if (InputsRead & FRAG_BIT_WPOS){
+		for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
+			if (!(InputsRead & (FRAG_BIT_TEX0 << i)))
+				break;
+
+		if(i == ctx->Const.MaxTextureUnits){
+			fprintf(stderr, "\tno free texcoord found...\n");
+			exit(0);
+		}
+
+		InputsRead |= (FRAG_BIT_TEX0 << i);
+		InputsRead &= ~FRAG_BIT_WPOS;
+	}
 	
 	for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
 		r300->hw.ri.cmd[R300_RI_INTERP_0+i] = 0
@@ -1610,7 +1677,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 
 	((drm_r300_cmd_header_t*)rmesa->hw.vpp.cmd)->vpu.count = 0;
 	R300_STATECHANGE(rmesa, vpp);
-	param_count = r300VertexProgUpdateParams(ctx, prog, (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
+	param_count = r300VertexProgUpdateParams(ctx, (struct r300_vertex_program_cont *)ctx->VertexProgram._Current/*prog*/, (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
 	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
 	param_count /= 4;
 	
@@ -1669,9 +1736,10 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 			TNL_CONTEXT(ctx)->vb.AttribPtr[i] = rmesa->temp_attrib[i];
 		}
 		
+		r300_select_vertex_shader(rmesa);
 		vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
-		if (vp->translated == GL_FALSE)
-			r300_translate_vertex_shader(vp);
+		/*if (vp->translated == GL_FALSE)
+			r300_translate_vertex_shader(vp);*/
 		if (vp->translated == GL_FALSE) {
 			fprintf(stderr, "Failing back to sw-tcl\n");
 			hw_tcl_on = future_hw_tcl_on = 0;
@@ -1679,6 +1747,7 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 
 			return ;
 		}
+		r300UpdateStateParameters(ctx, _NEW_PROGRAM);
 	}
 	
 }
@@ -1812,6 +1881,9 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 	if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
 		r300UpdateDrawBuffer(ctx);
 	}
+
+	r300UpdateStateParameters(ctx, new_state);
+
 #ifndef CB_DPATH
 	/* Go inefficiency! */
 	r300ResetHwState(r300);

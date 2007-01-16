@@ -80,8 +80,6 @@ intel_check_blit_fragment_ops(GLcontext * ctx)
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   /* Could do logicop with the blitter: 
-    */
    return !(ctx->_ImageTransferState ||
 	    ctx->RenderMode != GL_RENDER ||
             ctx->Color.AlphaEnabled ||
@@ -92,12 +90,112 @@ intel_check_blit_fragment_ops(GLcontext * ctx)
             !ctx->Color.ColorMask[1] ||
             !ctx->Color.ColorMask[2] ||
             !ctx->Color.ColorMask[3] ||	/* can do this! */
-            ctx->Color.ColorLogicOpEnabled || /* can do this! */
             ctx->Texture._EnabledUnits ||
-	    ctx->FragmentProgram._Enabled);
+	    ctx->FragmentProgram._Enabled ||
+	    ctx->Color.BlendEnabled);
 }
 
+/* Doesn't work for overlapping regions.  Could do a double copy or
+ * just fallback.
+ */
+static GLboolean
+do_texture_copypixels(GLcontext * ctx,
+                      GLint srcx, GLint srcy,
+                      GLsizei width, GLsizei height,
+                      GLint dstx, GLint dsty, GLenum type)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_region *dst = intel_drawbuf_region(intel);
+   struct intel_region *src = copypix_src_region(intel, type);
+   GLenum src_format;
+   GLenum src_type;
 
+   DBG("%s %d,%d %dx%d --> %d,%d\n", __FUNCTION__, 
+       srcx, srcy, width, height, dstx, dsty);
+
+   if (!src || !dst || type != GL_COLOR ||
+       ctx->_ImageTransferState ||
+       ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F ||
+       ctx->RenderMode != GL_RENDER ||
+       ctx->Texture._EnabledUnits ||
+       ctx->FragmentProgram._Enabled ||
+       src != dst )
+       return GL_FALSE;
+   
+   /* Can't handle overlapping regions.  Don't have sufficient control
+    * over rasterization to pull it off in-place.  Punt on these for
+    * now.
+    * 
+    * XXX: do a copy to a temporary. 
+    */
+   if (src->buffer == dst->buffer) {
+      drm_clip_rect_t srcbox;
+      drm_clip_rect_t dstbox;
+      drm_clip_rect_t tmp;
+
+      srcbox.x1 = srcx;
+      srcbox.y1 = srcy;
+      srcbox.x2 = srcx + width - 1;
+      srcbox.y2 = srcy + height - 1;
+
+      dstbox.x1 = dstx;
+      dstbox.y1 = dsty;
+      dstbox.x2 = dstx + width - 1;
+      dstbox.y2 = dsty + height - 1;
+
+      DBG("src %d,%d %d,%d\n", srcbox.x1, srcbox.y1, srcbox.x2, srcbox.y2);
+      DBG("dst %d,%d %d,%d (%dx%d) (%f,%f)\n", dstbox.x1, dstbox.y1, dstbox.x2, dstbox.y2,
+	  width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
+
+      if (intel_intersect_cliprects(&tmp, &srcbox, &dstbox)) {
+         DBG("%s: regions overlap\n", __FUNCTION__);
+         return GL_FALSE;
+      }
+   }
+
+   intelFlush(&intel->ctx);
+
+   intel->vtbl.install_meta_state(intel);
+
+   /* Is this true?  Also will need to turn depth testing on according
+    * to state:
+    */
+   intel->vtbl.meta_no_stencil_write(intel);
+   intel->vtbl.meta_no_depth_write(intel);
+
+   /* Set the 3d engine to draw into the destination region:
+    */
+   intel->vtbl.meta_draw_region(intel, dst, intel->depth_region);
+
+   intel->vtbl.meta_import_pixel_state(intel);
+
+   if (src->cpp == 2) {
+      src_format = GL_RGB;
+      src_type = GL_UNSIGNED_SHORT_5_6_5;
+   }
+   else {
+      src_format = GL_BGRA;
+      src_type = GL_UNSIGNED_BYTE;
+   }
+
+   /* Set the frontbuffer up as a large rectangular texture.
+    */
+   intel->vtbl.meta_frame_buffer_texture( intel, srcx - dstx, srcy - dsty );
+
+   intel->vtbl.meta_texture_blend_replace(intel);
+   
+   if (intel->driDrawable->numClipRects)
+      intel->vtbl.meta_draw_quad( intel,
+				  dstx, dstx + width,
+				  dsty, dsty + height,
+				  ctx->Current.RasterPos[ 2 ],
+				  0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0 );
+   
+   intel->vtbl.leave_meta_state( intel );
+   
+   DBG("%s: success\n", __FUNCTION__);
+   return GL_TRUE;
+}
 
 /**
  * CopyPixels with the blitter.  Don't support zooming, pixel transfer, etc.
@@ -210,7 +308,9 @@ do_blit_copypixels(GLcontext * ctx,
 			   rect.x1 + delta_x, 
 			   rect.y1 + delta_y,       /* srcx, srcy */
                            rect.x1, rect.y1,    /* dstx, dsty */
-                           rect.x2 - rect.x1, rect.y2 - rect.y1);
+                           rect.x2 - rect.x1, rect.y2 - rect.y1,
+			   ctx->Color.ColorLogicOpEnabled ?
+			   ctx->Color.LogicOp : GL_COPY);
       }
 
       intel->need_flush = GL_TRUE;
@@ -233,6 +333,9 @@ intelCopyPixels(GLcontext * ctx,
    if (do_blit_copypixels(ctx, srcx, srcy, width, height, destx, desty, type))
       return;
 
+   if (do_texture_copypixels(ctx, srcx, srcy, width, height, destx, desty, type))
+      return;
+   
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("fallback to _swrast_CopyPixels\n");
 

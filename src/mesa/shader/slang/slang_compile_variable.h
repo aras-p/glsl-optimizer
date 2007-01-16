@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
  * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
@@ -22,74 +22,113 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#if !defined SLANG_COMPILE_VARIABLE_H
+#ifndef SLANG_COMPILE_VARIABLE_H
 #define SLANG_COMPILE_VARIABLE_H
 
 #if defined __cplusplus
 extern "C" {
 #endif
 
+
 typedef enum slang_type_qualifier_
 {
-	slang_qual_none,
-	slang_qual_const,
-	slang_qual_attribute,
-	slang_qual_varying,
-	slang_qual_uniform,
-	slang_qual_out,
-	slang_qual_inout,
-	slang_qual_fixedoutput,	/* internal */
-	slang_qual_fixedinput	/* internal */
+   slang_qual_none,
+   slang_qual_const,
+   slang_qual_attribute,
+   slang_qual_varying,
+   slang_qual_uniform,
+   slang_qual_out,
+   slang_qual_inout,
+   slang_qual_fixedoutput,      /* internal */
+   slang_qual_fixedinput        /* internal */
 } slang_type_qualifier;
 
-slang_type_specifier_type slang_type_specifier_type_from_string (const char *);
-const char *slang_type_specifier_type_to_string (slang_type_specifier_type);
+extern slang_type_specifier_type
+slang_type_specifier_type_from_string(const char *);
+
+extern const char *
+slang_type_specifier_type_to_string(slang_type_specifier_type);
+
+
 
 typedef struct slang_fully_specified_type_
 {
-	slang_type_qualifier qualifier;
-	slang_type_specifier specifier;
+   slang_type_qualifier qualifier;
+   slang_type_specifier specifier;
 } slang_fully_specified_type;
 
-int slang_fully_specified_type_construct (slang_fully_specified_type *);
-void slang_fully_specified_type_destruct (slang_fully_specified_type *);
-int slang_fully_specified_type_copy (slang_fully_specified_type *, const slang_fully_specified_type *);
+extern int
+slang_fully_specified_type_construct(slang_fully_specified_type *);
 
+extern void
+slang_fully_specified_type_destruct(slang_fully_specified_type *);
+
+extern int
+slang_fully_specified_type_copy(slang_fully_specified_type *,
+				const slang_fully_specified_type *);
+
+
+/**
+ * A shading language program variable.
+ */
+typedef struct slang_variable_
+{
+   slang_fully_specified_type type; /**< Variable's data type */
+   slang_atom a_name;               /**< The variable's name (char *) */
+   GLuint array_len;                /**< only if type == slang_spec_array */
+   struct slang_operation_ *initializer; /**< Optional initializer code */
+   GLuint address;                  /**< Storage location */
+   GLuint address2;                 /**< Storage location */
+   GLuint size;                     /**< Variable's size in bytes */
+   GLboolean global;                /**< A global var? */
+   void *aux;                       /**< Used during code gen */
+} slang_variable;
+
+
+/**
+ * Basically a list of variables, with a pointer to the parent scope.
+ */
 typedef struct slang_variable_scope_
 {
-	struct slang_variable_ *variables;
+   slang_variable *variables;  /**< Array [num_variables] */
    GLuint num_variables;
-	struct slang_variable_scope_ *outer_scope;
+   struct slang_variable_scope_ *outer_scope;
 } slang_variable_scope;
 
 extern GLvoid
-_slang_variable_scope_ctr (slang_variable_scope *);
+_slang_variable_scope_ctr(slang_variable_scope *);
 
-void slang_variable_scope_destruct (slang_variable_scope *);
-int slang_variable_scope_copy (slang_variable_scope *, const slang_variable_scope *);
+extern void
+slang_variable_scope_destruct(slang_variable_scope *);
 
-typedef struct slang_variable_
-{
-	slang_fully_specified_type type;
-	slang_atom a_name;
-	GLuint array_len;					/* type: spec_array */
-	struct slang_operation_ *initializer;
-	unsigned int address;
-	unsigned int size;
-	int global;
-} slang_variable;
+extern int
+slang_variable_scope_copy(slang_variable_scope *,
+                          const slang_variable_scope *);
 
-int slang_variable_construct (slang_variable *);
-void slang_variable_destruct (slang_variable *);
-int slang_variable_copy (slang_variable *, const slang_variable *);
+slang_variable *
+slang_variable_scope_grow(slang_variable_scope *);
 
-slang_variable *_slang_locate_variable (slang_variable_scope *, slang_atom a_name, GLboolean all);
+extern int
+slang_variable_construct(slang_variable *);
 
-GLboolean _slang_build_export_data_table (slang_export_data_table *, slang_variable_scope *);
+extern void
+slang_variable_destruct(slang_variable *);
+
+extern int
+slang_variable_copy(slang_variable *, const slang_variable *);
+
+extern slang_variable *
+_slang_locate_variable(const slang_variable_scope *, const slang_atom a_name,
+                       GLboolean all);
+
+extern GLboolean
+_slang_build_export_data_table(slang_export_data_table *,
+                               slang_variable_scope *);
+
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
-
+#endif /* SLANG_COMPILE_VARIABLE_H */

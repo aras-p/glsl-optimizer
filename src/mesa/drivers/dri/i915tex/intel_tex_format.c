@@ -136,6 +136,10 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
    case GL_DEPTH_COMPONENT32:
       return &_mesa_texformat_z16;
 
+   case GL_DEPTH_STENCIL_EXT:
+   case GL_DEPTH24_STENCIL8_EXT:
+      return &_mesa_texformat_z24_s8;
+
    default:
       fprintf(stderr, "unexpected texture format %s in %s\n",
               _mesa_lookup_enum_by_nr(internalFormat), __FUNCTION__);
@@ -143,4 +147,26 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
    }
 
    return NULL;                 /* never get here */
+}
+
+int intel_compressed_num_bytes(GLuint mesaFormat)
+{
+   int bytes = 0;
+   switch(mesaFormat) {
+     
+   case MESA_FORMAT_RGB_FXT1:
+   case MESA_FORMAT_RGBA_FXT1:
+   case MESA_FORMAT_RGB_DXT1:
+   case MESA_FORMAT_RGBA_DXT1:
+     bytes = 2;
+     break;
+     
+   case MESA_FORMAT_RGBA_DXT3:
+   case MESA_FORMAT_RGBA_DXT5:
+     bytes = 4;
+   default:
+     break;
+   }
+   
+   return bytes;
 }

@@ -86,7 +86,6 @@ struct intel_texture_object
 
 
 
-
 struct intel_context
 {
    GLcontext ctx;		/* the parent class */
@@ -148,9 +147,14 @@ struct intel_context
 
       void (*meta_depth_replace)( struct intel_context *intel );
 
+      void (*meta_texture_blend_replace) (struct intel_context * intel);
+      
       void (*meta_no_stencil_write)( struct intel_context *intel );
       void (*meta_no_depth_write)( struct intel_context *intel );
       void (*meta_no_texture)( struct intel_context *intel );
+      void (*meta_import_pixel_state) (struct intel_context * intel);
+      void (*meta_frame_buffer_texture)( struct intel_context *intel,
+					 GLint xoff, GLint yoff );
 
       void (*meta_draw_quad)(struct intel_context *intel, 
 			     GLfloat x0, GLfloat x1,
@@ -173,6 +177,7 @@ struct intel_context
    GLuint second_last_swap_fence;
    
    GLboolean aub_wrap;
+   GLboolean stats_wm;
 
    struct intel_batchbuffer *batch;
 
@@ -218,6 +223,7 @@ struct intel_context
    int drawY;
    GLuint numClipRects;		/* cliprects for that buffer */
    drm_clip_rect_t *pClipRects;
+   struct gl_texture_object *frame_buffer_texobj;
 
    GLboolean scissor;
    drm_clip_rect_t draw_rect;

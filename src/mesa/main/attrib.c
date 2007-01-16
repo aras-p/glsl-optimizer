@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1009,9 +1009,6 @@ _mesa_PopAttrib(void)
                                  (GLfloat) light->Model.TwoSide);
                _mesa_LightModelf(GL_LIGHT_MODEL_COLOR_CONTROL,
                                  (GLfloat) light->Model.ColorControl);
-               /* materials */
-               MEMCPY(&ctx->Light.Material, &light->Material,
-                      sizeof(struct gl_material));
                /* shade model */
                _mesa_ShadeModel(light->ShadeModel);
                /* color material */
@@ -1019,6 +1016,9 @@ _mesa_PopAttrib(void)
                                    light->ColorMaterialMode);
                _mesa_set_enable(ctx, GL_COLOR_MATERIAL,
                                 light->ColorMaterialEnabled);
+               /* materials */
+               MEMCPY(&ctx->Light.Material, &light->Material,
+                      sizeof(struct gl_material));
             }
             break;
          case GL_LINE_BIT:
@@ -1285,6 +1285,12 @@ _mesa_PushClientAttrib(GLbitfield mask)
       attr = MALLOC_STRUCT( gl_array_attrib );
       obj = MALLOC_STRUCT( gl_array_object );
 
+#if FEATURE_ARB_vertex_buffer_object
+      /* increment ref counts since we're copying pointers to these objects */
+      ctx->Array.ArrayBufferObj->RefCount++;
+      ctx->Array.ElementArrayBufferObj->RefCount++;
+#endif
+
       MEMCPY( attr, &ctx->Array, sizeof(struct gl_array_attrib) );
       MEMCPY( obj, ctx->Array.ArrayObj, sizeof(struct gl_array_object) );
 
@@ -1359,6 +1365,13 @@ _mesa_PopClientAttrib(void)
 
 	    _mesa_BindVertexArrayAPPLE( data->ArrayObj->Name );
 	    
+#if FEATURE_ARB_vertex_buffer_object
+            _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB,
+                                data->ArrayBufferObj->Name);
+            _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB,
+                                data->ElementArrayBufferObj->Name);
+#endif
+
 	    MEMCPY( ctx->Array.ArrayObj, data->ArrayObj,
 		    sizeof( struct gl_array_object ) );
 

@@ -8052,7 +8052,7 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_GetVertexAttribfvNV(table, _mesa_GetVertexAttribfvNV);
    SET_GetVertexAttribivNV(table, _mesa_GetVertexAttribivNV);
    SET_GetVertexAttribPointervNV(table, _mesa_GetVertexAttribPointervNV);
-   SET_IsProgramNV(table, _mesa_IsProgram);
+   SET_IsProgramNV(table, _mesa_IsProgramARB);
    SET_LoadProgramNV(table, save_LoadProgramNV);
    SET_ProgramParameter4dNV(table, save_ProgramParameter4dNV);
    SET_ProgramParameter4dvNV(table, save_ProgramParameter4dvNV);
@@ -8145,7 +8145,7 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_BindProgramNV(table, save_BindProgramNV);
    SET_DeleteProgramsNV(table, _mesa_DeletePrograms);
    SET_GenProgramsNV(table, _mesa_GenPrograms);
-   SET_IsProgramNV(table, _mesa_IsProgram);
+   SET_IsProgramNV(table, _mesa_IsProgramARB);
    SET_GetVertexAttribdvNV(table, _mesa_GetVertexAttribdvNV);
    SET_GetVertexAttribfvNV(table, _mesa_GetVertexAttribfvNV);
    SET_GetVertexAttribivNV(table, _mesa_GetVertexAttribivNV);

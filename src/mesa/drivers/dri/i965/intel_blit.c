@@ -66,7 +66,7 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
    intelFlush( &intel->ctx );
 
 
-   bmFinishFence(intel, intel->last_swap_fence);
+   bmFinishFenceLock(intel, intel->last_swap_fence);
 
    /* The LOCK_HARDWARE is required for the cliprects.  Buffer offsets
     * should work regardless.
@@ -155,7 +155,7 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
 
    intel_batchbuffer_flush( intel->batch );
    intel->second_last_swap_fence = intel->last_swap_fence;
-   intel->last_swap_fence = bmSetFence( intel );
+   intel->last_swap_fence = bmSetFenceLock( intel );
    UNLOCK_HARDWARE( intel );
 
    if (!rect)
@@ -221,6 +221,29 @@ void intelEmitFillBlit( struct intel_context *intel,
    ADVANCE_BATCH();
 }
 
+static GLuint translate_raster_op(GLenum logicop)
+{
+   switch(logicop) {
+   case GL_CLEAR: return 0x00;
+   case GL_AND: return 0x88;
+   case GL_AND_REVERSE: return 0x44;
+   case GL_COPY: return 0xCC;
+   case GL_AND_INVERTED: return 0x22;
+   case GL_NOOP: return 0xAA;
+   case GL_XOR: return 0x66;
+   case GL_OR: return 0xEE;
+   case GL_NOR: return 0x11;
+   case GL_EQUIV: return 0x99;
+   case GL_INVERT: return 0x55;
+   case GL_OR_REVERSE: return 0xDD;
+   case GL_COPY_INVERTED: return 0x33;
+   case GL_OR_INVERTED: return 0xBB;
+   case GL_NAND: return 0x77;
+   case GL_SET: return 0xFF;
+   default: return 0;
+   }
+}
+
 
 /* Copy BitBlt
  */
@@ -236,7 +259,8 @@ void intelEmitCopyBlit( struct intel_context *intel,
 			GLboolean dst_tiled,
 			GLshort src_x, GLshort src_y,
 			GLshort dst_x, GLshort dst_y,
-			GLshort w, GLshort h )
+			GLshort w, GLshort h,
+			GLenum logic_op )
 {
    GLuint CMD, BR13;
    int dst_y2 = dst_y + h;
@@ -244,12 +268,15 @@ void intelEmitCopyBlit( struct intel_context *intel,
    BATCH_LOCALS;
 
 
-   DBG("%s src:buf(%d)/%d %d,%d dst:buf(%d)/%d %d,%d sz:%dx%d\n",
+   DBG("%s src:buf(%d)/%d %d,%d dst:buf(%d)/%d %d,%d sz:%dx%d op:%d\n",
        __FUNCTION__,
        src_buffer, src_pitch, src_x, src_y,
        dst_buffer, dst_pitch, dst_x, dst_y,
-       w,h);
+       w,h,logic_op);
 
+   assert( logic_op - GL_CLEAR >= 0 );
+   assert( logic_op - GL_CLEAR < 0x10 );
+      
    src_pitch *= cpp;
    dst_pitch *= cpp;
 
@@ -257,11 +284,12 @@ void intelEmitCopyBlit( struct intel_context *intel,
    case 1: 
    case 2: 
    case 3: 
-      BR13 = (0xCC << 16) | (1<<24);
+      BR13 = (translate_raster_op(logic_op) << 16) | (1<<24);
       CMD = XY_SRC_COPY_BLT_CMD;
       break;
    case 4:
-      BR13 = (0xCC << 16) | (1<<24) | (1<<25);
+      BR13 = (translate_raster_op(logic_op) << 16) | (1<<24) |
+	  (1<<25);
       CMD = (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
 	     XY_SRC_COPY_BLT_WRITE_RGB);
       break;

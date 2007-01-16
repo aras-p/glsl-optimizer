@@ -52,8 +52,11 @@ typedef struct {
     */
    GLboolean depthHasSurface;
 
-   /* XXX this is for s3v only.  A handy flag to know if this is the back
-    * color buffer.
+   /**
+    * A handy flag to know if this is the back color buffer.
+    * 
+    * \note
+    * This is currently only used by s3v and tdfx.
     */
    GLboolean backBuffer;
 } driRenderbuffer;

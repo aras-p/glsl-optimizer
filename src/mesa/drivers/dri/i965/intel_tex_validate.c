@@ -133,6 +133,9 @@ GLuint intel_finalize_mipmap_tree( struct intel_context *intel,
    GLuint nr_faces = 0;
    struct gl_texture_image *firstImage;
 
+   if( tObj == intel->frame_buffer_texobj )
+      return GL_FALSE;
+   
    /* We know/require this is true by now: 
     */
    assert(intelObj->base.Complete);

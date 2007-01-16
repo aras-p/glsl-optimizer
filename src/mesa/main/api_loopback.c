@@ -510,7 +510,7 @@ loopback_TexCoord2sv( const GLshort *v )
 static void GLAPIENTRY
 loopback_TexCoord3dv( const GLdouble *v )
 {
-   TEXCOORD2((GLfloat) v[0],(GLfloat) v[1]);
+   TEXCOORD3((GLfloat) v[0],(GLfloat) v[1],(GLfloat) v[2]);
 }
 
 static void GLAPIENTRY

@@ -39,6 +39,7 @@
 
 #include "program_instruction.h"
 #include "program.h"
+#include "programopt.h"
 
 
 
@@ -123,6 +124,7 @@ static GLuint src_vector( struct i915_fragment_program *p,
 	    p, p->ctx->FragmentProgram.Parameters[source->Index]);
 	 break;
 
+      case PROGRAM_CONSTANT:
       case PROGRAM_STATE_VAR:
       case PROGRAM_NAMED_PARAM:
          src = i915_emit_param4fv( 
@@ -937,6 +939,12 @@ static void i915ProgramStringNotify( GLcontext *ctx,
        */
       ctx->Driver.Enable( ctx, GL_FRAGMENT_PROGRAM_ARB, 
 			  ctx->FragmentProgram.Enabled );
+
+      if (p->FragProg.FogOption) {
+         /* add extra instructions to do fog, then turn off FogOption field */
+         _mesa_append_fog_code(ctx, &p->FragProg);
+         p->FragProg.FogOption = GL_NONE;
+      }
    }
 
    _tnl_program_string(ctx, target, prog);
@@ -1010,7 +1018,10 @@ void i915ValidateFragmentProgram( i915ContextPtr i915 )
 	 EMIT_PAD( 1 );
    }
 
-#if 0
+   /* XXX this was disabled, but enabling this code helped fix the Glean
+    * tfragprog1 fog tests.
+    */
+#if 1
    if ((inputsRead & FRAG_BIT_FOGC) || i915->vertex_fog != I915_FOG_NONE) {
       EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1F, S4_VFMT_FOG_PARAM, 4 );
    }

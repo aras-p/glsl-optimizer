@@ -86,21 +86,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 int R200_DEBUG = (0);
 #endif
 
-
-/* Return the width and height of the given buffer.
- */
-static void r200GetBufferSize( GLframebuffer *buffer,
-			       GLuint *width, GLuint *height )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-
-   LOCK_HARDWARE( rmesa );
-   *width  = rmesa->dri.drawable->w;
-   *height = rmesa->dri.drawable->h;
-   UNLOCK_HARDWARE( rmesa );
-}
-
 /* Return various strings for glGetString().
  */
 static const GLubyte *r200GetString( GLcontext *ctx, GLenum name )
@@ -232,12 +217,8 @@ static const struct tnl_pipeline_stage *r200_pipeline[] = {
  */
 static void r200InitDriverFuncs( struct dd_function_table *functions )
 {
-    functions->GetBufferSize		= r200GetBufferSize;
+    functions->GetBufferSize		= NULL; /* OBSOLETE */
     functions->GetString		= r200GetString;
-
-    functions->Error			= NULL;
-    functions->DrawPixels		= NULL;
-    functions->Bitmap			= NULL;
 }
 
 static const struct dri_debug_control debug_control[] =
@@ -690,7 +671,13 @@ r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
       if ( newCtx->dri.drawable != driDrawPriv ) {
 	 driDrawableInitVBlank( driDrawPriv, newCtx->vblank_flags,
 				&newCtx->vbl_seq );
+      }
+
+      if ( newCtx->dri.drawable != driDrawPriv ||
+           newCtx->dri.readable != driReadPriv ) {
 	 newCtx->dri.drawable = driDrawPriv;
+	 newCtx->dri.readable = driReadPriv;
+
 	 r200UpdateWindow( newCtx->glCtx );
 	 r200UpdateViewportOffset( newCtx->glCtx );
       }

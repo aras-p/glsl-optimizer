@@ -173,6 +173,9 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
 {
   savageScreenPrivate *savageScreen;
   SAVAGEDRIPtr         gDRIPriv = (SAVAGEDRIPtr)sPriv->pDevPriv;
+   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+     (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
+
 
    if (sPriv->devPrivSize != sizeof(SAVAGEDRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(SAVAGEDRIRec) does not match passed size from device driver\n");
@@ -259,6 +262,11 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
    /* parse information in __driConfigOptions */
    driParseOptionInfo (&savageScreen->optionCache,
 		       __driConfigOptions, __driNConfigOptions);
+
+   if (glx_enable_extension != NULL) {
+      (*glx_enable_extension)(sPriv->psc->screenConfigs,
+			      "GLX_SGI_make_current_read");
+   }
 
 #if 0
    savageDDFastPathInit();
@@ -716,34 +724,18 @@ void XMesaSwapBuffers(__DRIdrawablePrivate *driDrawPriv)
 }
 #endif
 
-void savageXMesaSetFrontClipRects( savageContextPtr imesa )
+
+void savageXMesaSetClipRects(savageContextPtr imesa)
 {
    __DRIdrawablePrivate *dPriv = imesa->driDrawable;
 
-   imesa->numClipRects = dPriv->numClipRects;
-   imesa->pClipRects = dPriv->pClipRects;
-   imesa->drawX = dPriv->x;
-   imesa->drawY = dPriv->y;
-
-   savageCalcViewport( imesa->glCtx );
-}
-
-
-void savageXMesaSetBackClipRects( savageContextPtr imesa )
-{
-   __DRIdrawablePrivate *dPriv = imesa->driDrawable;
-
-   if (dPriv->numBackClipRects == 0) 
-   {
-
-
+   if ((dPriv->numBackClipRects == 0)
+       || (imesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT)) {
       imesa->numClipRects = dPriv->numClipRects;
       imesa->pClipRects = dPriv->pClipRects;
       imesa->drawX = dPriv->x;
       imesa->drawY = dPriv->y;
    } else {
-
-
       imesa->numClipRects = dPriv->numBackClipRects;
       imesa->pClipRects = dPriv->pBackClipRects;
       imesa->drawX = dPriv->backX;
@@ -756,18 +748,17 @@ void savageXMesaSetBackClipRects( savageContextPtr imesa )
 
 static void savageXMesaWindowMoved( savageContextPtr imesa ) 
 {
+   __DRIdrawablePrivate *const drawable = imesa->driDrawable;
+   __DRIdrawablePrivate *const readable = imesa->driReadable;
+
    if (0)
       fprintf(stderr, "savageXMesaWindowMoved\n\n");
 
-   switch (imesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0]) {
-   case BUFFER_BIT_FRONT_LEFT:
-      savageXMesaSetFrontClipRects( imesa );
-      break;
-   case BUFFER_BIT_BACK_LEFT:
-      savageXMesaSetBackClipRects( imesa );
-      break;
-   default:
-       break;
+   savageXMesaSetClipRects(imesa);
+
+   driUpdateFramebufferSize(imesa->glCtx, drawable);
+   if (drawable != readable) {
+      driUpdateFramebufferSize(imesa->glCtx, readable);
    }
 }
 
@@ -858,11 +849,12 @@ savageMakeCurrent(__DRIcontextPrivate *driContextPriv,
 
 void savageGetLock( savageContextPtr imesa, GLuint flags ) 
 {
-   __DRIdrawablePrivate *dPriv = imesa->driDrawable;
+   __DRIdrawablePrivate *const drawable = imesa->driDrawable;
+   __DRIdrawablePrivate *const readable = imesa->driReadable;
    __DRIscreenPrivate *sPriv = imesa->driScreen;
    drm_savage_sarea_t *sarea = imesa->sarea;
    int me = imesa->hHWContext;
-   int stamp = dPriv->lastStamp; 
+   int stamp = drawable->lastStamp; 
    int heap;
    unsigned int timestamp = 0;
 
@@ -882,10 +874,11 @@ void savageGetLock( savageContextPtr imesa, GLuint flags )
     * NOTE: This releases and regains the hw lock, so all state
     * checking must be done *after* this call:
     */
-   DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);		
+   DRI_VALIDATE_DRAWABLE_INFO(sPriv, drawable);
+   if (drawable != readable) {
+      DRI_VALIDATE_DRAWABLE_INFO(sPriv, readable);
+   }
 
-
-  
 
    /* If we lost context, need to dump all registers to hardware.
     * Note that we don't care about 2d contexts, even if they perform
@@ -916,8 +909,8 @@ void savageGetLock( savageContextPtr imesa, GLuint flags )
       DRI_AGE_TEXTURES( imesa->textureHeaps[heap] );
    }
 
-   if (dPriv->lastStamp != stamp) {
-      driUpdateFramebufferSize(imesa->glCtx, dPriv);
+   if (drawable->lastStamp != stamp) {
+      driUpdateFramebufferSize(imesa->glCtx, drawable);
       savageXMesaWindowMoved( imesa );
    }
 }

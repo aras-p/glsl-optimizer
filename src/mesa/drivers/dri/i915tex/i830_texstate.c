@@ -25,21 +25,13 @@
  * 
  **************************************************************************/
 
-#include "glheader.h"
-#include "macros.h"
 #include "mtypes.h"
-#include "simple_list.h"
 #include "enums.h"
 #include "texformat.h"
-#include "texstore.h"
+#include "dri_bufmgr.h"
 
-#include "mm.h"
-
-#include "intel_screen.h"
-#include "intel_ioctl.h"
-#include "intel_tex.h"
 #include "intel_mipmap_tree.h"
-#include "intel_regions.h"
+#include "intel_tex.h"
 
 #include "i830_context.h"
 #include "i830_reg.h"
@@ -129,6 +121,13 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 
    memset(state, 0, sizeof(state));
 
+   /*We need to refcount these. */
+
+   if (i830->state.tex_buffer[unit] != NULL) {
+       driBOUnReference(i830->state.tex_buffer[unit]);
+       i830->state.tex_buffer[unit] = NULL;
+   }
+
    if (!intel_finalize_mipmap_tree(intel, unit))
       return GL_FALSE;
 
@@ -137,7 +136,7 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
     */
    firstImage = tObj->Image[0][intelObj->firstLevel];
 
-   i830->state.tex_buffer[unit] = intelObj->mt->region->buffer;
+   i830->state.tex_buffer[unit] = driBOReference(intelObj->mt->region->buffer);
    i830->state.tex_offset[unit] = intel_miptree_image_offset(intelObj->mt, 0,
                                                              intelObj->
                                                              firstLevel);
@@ -298,10 +297,17 @@ i830UpdateTextureState(struct intel_context *intel)
       case TEXTURE_RECT_BIT:
          ok = i830_update_tex_unit(intel, i, TEXCOORDS_ARE_IN_TEXELUNITS);
          break;
-      case 0:
-         if (i830->state.active & I830_UPLOAD_TEX(i))
+      case 0:{
+	 struct i830_context *i830 = i830_context(&intel->ctx);
+         if (i830->state.active & I830_UPLOAD_TEX(i)) 
             I830_ACTIVESTATE(i830, I830_UPLOAD_TEX(i), GL_FALSE);
+
+	 if (i830->state.tex_buffer[i] != NULL) {
+	    driBOUnReference(i830->state.tex_buffer[i]);
+	    i830->state.tex_buffer[i] = NULL;
+	 }
          break;
+      }
       case TEXTURE_3D_BIT:
       default:
          ok = GL_FALSE;

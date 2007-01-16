@@ -2364,9 +2364,9 @@
         <param name="target" type="GLenum"/>
         <param name="u1" type="GLdouble"/>
         <param name="u2" type="GLdouble"/>
-        <param name="stride" type="GLint"/>
+        <param name="stride" type="GLint" client_only="true"/>
         <param name="order" type="GLint"/>
-        <param name="points" type="const GLdouble *"/>
+        <param name="points" type="const GLdouble *" variable_param="order"/>
         <glx rop="143" handcode="true"/>
     </function>
 
@@ -2374,9 +2374,9 @@
         <param name="target" type="GLenum"/>
         <param name="u1" type="GLfloat"/>
         <param name="u2" type="GLfloat"/>
-        <param name="stride" type="GLint"/>
+        <param name="stride" type="GLint" client_only="true"/>
         <param name="order" type="GLint"/>
-        <param name="points" type="const GLfloat *"/>
+        <param name="points" type="const GLfloat *" variable_param="order"/>
         <glx rop="144" handcode="true"/>
     </function>
 
@@ -2384,13 +2384,13 @@
         <param name="target" type="GLenum"/>
         <param name="u1" type="GLdouble"/>
         <param name="u2" type="GLdouble"/>
-        <param name="ustride" type="GLint"/>
+        <param name="ustride" type="GLint" client_only="true"/>
         <param name="uorder" type="GLint"/>
         <param name="v1" type="GLdouble"/>
         <param name="v2" type="GLdouble"/>
-        <param name="vstride" type="GLint"/>
+        <param name="vstride" type="GLint" client_only="true"/>
         <param name="vorder" type="GLint"/>
-        <param name="points" type="const GLdouble *"/>
+        <param name="points" type="const GLdouble *" variable_param="uorder"/>
         <glx rop="145" handcode="true"/>
     </function>
 
@@ -2398,13 +2398,13 @@
         <param name="target" type="GLenum"/>
         <param name="u1" type="GLfloat"/>
         <param name="u2" type="GLfloat"/>
-        <param name="ustride" type="GLint"/>
+        <param name="ustride" type="GLint" client_only="true"/>
         <param name="uorder" type="GLint"/>
         <param name="v1" type="GLfloat"/>
         <param name="v2" type="GLfloat"/>
-        <param name="vstride" type="GLint"/>
+        <param name="vstride" type="GLint" client_only="true"/>
         <param name="vorder" type="GLint"/>
-        <param name="points" type="const GLfloat *"/>
+        <param name="points" type="const GLfloat *" variable_param="uorder"/>
         <glx rop="146" handcode="true"/>
     </function>
 
@@ -5021,13 +5021,98 @@
 
 
 <category name="2.0">
-    <!-- XXX this section is very much incomplete!!! -->
-    <!-- These function offsets may change too!!! -->
+    <!-- XXX some of the enums and functions probably need additional -->
+    <!-- flags/attributes. -->
 
-    <enum name="POINT_SPRITE_COORD_ORIGIN"     count="1"  value="0x8CA0">
+    <type name="char"   size="1" glx_name="CARD8"/>
+
+    <enum name="GL_BLEND_EQUATION_RGB"            value="0x8009"/>
+    <enum name="VERTEX_ATTRIB_ARRAY_ENABLED"      value="0x8622"/>
+    <enum name="VERTEX_ATTRIB_ARRAY_SIZE"         value="0x8623"/>
+    <enum name="VERTEX_ATTRIB_ARRAY_STRIDE"       value="0x8624"/>
+    <enum name="VERTEX_ATTRIB_ARRAY_TYPE"         value="0x8625"/>
+    <enum name="CURRENT_VERTEX_ATTRIB"            value="0x8626"/>
+    <enum name="VERTEX_PROGRAM_POINT_SIZE"        value="0x8642"/>
+    <enum name="VERTEX_PROGRAM_TWO_SIDE"          value="0x8643"/>
+    <enum name="VERTEX_ATTRIB_ARRAY_POINTER"      value="0x8645"/>
+    <enum name="STENCIL_BACK_FUNC"                value="0x8800"/>
+    <enum name="STENCIL_BACK_FAIL"                value="0x8801"/>
+    <enum name="STENCIL_BACK_PASS_DEPTH_FAIL"     value="0x8802"/>
+    <enum name="STENCIL_BACK_PASS_DEPTH_PASS"     value="0x8803"/>
+    <enum name="MAX_DRAW_BUFFERS"                 value="0x8824"/>
+    <enum name="DRAW_BUFFER0"                     value="0x8825"/>
+    <enum name="DRAW_BUFFER1"                     value="0x8826"/>
+    <enum name="DRAW_BUFFER2"                     value="0x8827"/>
+    <enum name="DRAW_BUFFER3"                     value="0x8828"/>
+    <enum name="DRAW_BUFFER4"                     value="0x8829"/>
+    <enum name="DRAW_BUFFER5"                     value="0x882A"/>
+    <enum name="DRAW_BUFFER6"                     value="0x882B"/>
+    <enum name="DRAW_BUFFER7"                     value="0x882C"/>
+    <enum name="DRAW_BUFFER8"                     value="0x882D"/>
+    <enum name="DRAW_BUFFER9"                     value="0x882E"/>
+    <enum name="DRAW_BUFFER10"                    value="0x882F"/>
+    <enum name="DRAW_BUFFER11"                    value="0x8830"/>
+    <enum name="DRAW_BUFFER12"                    value="0x8831"/>
+    <enum name="DRAW_BUFFER13"                    value="0x8832"/>
+    <enum name="DRAW_BUFFER14"                    value="0x8833"/>
+    <enum name="DRAW_BUFFER15"                    value="0x8834"/>
+    <enum name="BLEND_EQUATION_ALPHA"             value="0x883D"/>
+    <enum name="POINT_SPRITE"                     value="0x8861"/>
+    <enum name="COORD_REPLACE"                    value="0x8862"/>
+    <enum name="MAX_VERTEX_ATTRIBS"               value="0x8869"/>
+    <enum name="VERTEX_ATTRIB_ARRAY_NORMALIZED"   value="0x886A"/>
+    <enum name="MAX_TEXTURE_COORDS"               value="0x8871"/>
+    <enum name="MAX_TEXTURE_IMAGE_UNITS"          value="0x8872"/>
+    <enum name="FRAGMENT_SHADER"                  value="0x8B30"/>
+    <enum name="VERTEX_SHADER"                    value="0x8B31"/>
+    <enum name="MAX_FRAGMENT_UNIFORM_COMPONENTS"  value="0x8B49"/>
+    <enum name="MAX_VERTEX_UNIFORM_COMPONENTS"    value="0x8B4A"/>
+    <enum name="MAX_VARYING_FLOATS"               value="0x8B4B"/>
+    <enum name="MAX_VERTEX_TEXTURE_IMAGE_UNITS"   value="0x8B4C"/>
+    <enum name="MAX_COMBINED_TEXTURE_IMAGE_UNITS" value="0x8B4D"/>
+    <enum name="SHADER_TYPE"                      value="0x8B4F"/>
+    <enum name="FLOAT_VEC2"                       value="0x8B50"/>
+    <enum name="FLOAT_VEC3"                       value="0x8B51"/>
+    <enum name="FLOAT_VEC4"                       value="0x8B52"/>
+    <enum name="INT_VEC2"                         value="0x8B53"/>
+    <enum name="INT_VEC3"                         value="0x8B54"/>
+    <enum name="INT_VEC4"                         value="0x8B55"/>
+    <enum name="BOOL"                             value="0x8B56"/>
+    <enum name="BOOL_VEC2"                        value="0x8B57"/>
+    <enum name="BOOL_VEC3"                        value="0x8B58"/>
+    <enum name="BOOL_VEC4"                        value="0x8B59"/>
+    <enum name="FLOAT_MAT2"                       value="0x8B5A"/>
+    <enum name="FLOAT_MAT3"                       value="0x8B5B"/>
+    <enum name="FLOAT_MAT4"                       value="0x8B5C"/>
+    <enum name="SAMPLER_1D"                       value="0x8B5D"/>
+    <enum name="SAMPLER_2D"                       value="0x8B5E"/>
+    <enum name="SAMPLER_3D"                       value="0x8B5F"/>
+    <enum name="SAMPLER_CUBE"                     value="0x8B60"/>
+    <enum name="SAMPLER_1D_SHADOW"                value="0x8B61"/>
+    <enum name="SAMPLER_2D_SHADOW"                value="0x8B62"/>
+    <enum name="DELETE_STATUS"                    value="0x8B80"/>
+    <enum name="COMPILE_STATUS"                   value="0x8B81"/>
+    <enum name="LINK_STATUS"                      value="0x8B82"/>
+    <enum name="VALIDATE_STATUS"                  value="0x8B83"/>
+    <enum name="INFO_LOG_LENGTH"                  value="0x8B84"/>
+    <enum name="ATTACHED_SHADERS"                 value="0x8B85"/>
+    <enum name="ACTIVE_UNIFORMS"                  value="0x8B86"/>
+    <enum name="ACTIVE_UNIFORM_MAX_LENGTH"        value="0x8B87"/>
+    <enum name="SHADER_SOURCE_LENGTH"             value="0x8B88"/>
+    <enum name="ACTIVE_ATTRIBUTES"                value="0x8B89"/>
+    <enum name="ACTIVE_ATTRIBUTE_MAX_LENGTH"      value="0x8B8A"/>
+    <enum name="FRAGMENT_SHADER_DERIVATIVE_HINT"  value="0x8B8B"/>
+    <enum name="SHADING_LANGUAGE_VERSION"         value="0x8B8C"/>
+    <enum name="CURRENT_PROGRAM"                  value="0x8B8D"/>
+    <enum name="POINT_SPRITE_COORD_ORIGIN" count="1"  value="0x8CA0">
         <size name="PointParameterfvEXT"/>
         <size name="PointParameterivNV"/>
     </enum>
+    <enum name="LOWER_LEFT"                       value="0x8CA1"/>
+    <enum name="UPPER_LEFT"                       value="0x8CA2"/>
+    <enum name="STENCIL_BACK_REF"                 value="0x8CA3"/>
+    <enum name="STENCIL_BACK_VALUE_MASK"          value="0x8CA4"/>
+    <enum name="STENCIL_BACK_WRITEMASK"           value="0x8CA5"/>
 
     <function name="BlendEquationSeparate" alias="BlendEquationSeparateEXT">
         <param name="modeRGB" type="GLenum"/>
@@ -5044,6 +5129,7 @@
         <param name="func" type="GLenum"/>
         <param name="ref" type="GLint"/>
         <param name="mask" type="GLuint"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="StencilOpSeparate" offset="assign">
@@ -5051,12 +5137,588 @@
         <param name="fail" type="GLenum"/>
         <param name="zfail" type="GLenum"/>
         <param name="zpass" type="GLenum"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="StencilMaskSeparate" offset="assign">
         <param name="face" type="GLenum"/>
         <param name="mask" type="GLuint"/>
+        <glx ignore="true"/>
     </function>
+
+    <function name="AttachShader" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="shader" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="BindAttribLocation" alias="BindAttribLocationARB">
+        <param name="program" type="GLuint"/>
+        <param name="index" type="GLuint"/>
+        <param name="name" type="const GLchar *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="CompileShader" alias="CompileShaderARB">
+        <param name="shader" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="CreateProgram" offset="assign">
+        <return type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="CreateShader" offset="assign">
+        <param name="type" type="GLenum"/>
+        <return type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="DeleteProgram" offset="assign">
+        <param name="program" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="DeleteShader" offset="assign">
+        <param name="program" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="DetachShader" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="shader" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="DisableVertexAttribArray" alias="DisableVertexAttribArrayARB">
+        <param name="index" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="EnableVertexAttribArray" alias="EnableVertexAttribArrayARB">
+        <param name="index" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetActiveAttrib" alias="GetActiveAttribARB">
+        <param name="program" type="GLuint"/>
+        <param name="index" type="GLuint"/>
+        <param name="bufSize" type="GLsizei "/>
+        <param name="length" type="GLsizei *" output="true"/>
+        <param name="size" type="GLint *" output="true"/>
+        <param name="type" type="GLenum *" output="true"/>
+        <param name="name" type="GLchar *" output="true"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetActiveUniform" alias="GetActiveUniformARB">
+        <param name="program" type="GLuint"/>
+        <param name="index" type="GLuint"/>
+        <param name="bufSize" type="GLsizei"/>
+        <param name="length" type="GLsizei *" output="true"/>
+        <param name="size" type="GLint *" output="true"/>
+        <param name="type" type="GLenum *" output="true"/>
+        <param name="name" type="GLchar *" output="true"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetAttachedShaders" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="maxCount" type="GLsizei"/>
+        <param name="count" type="GLsizei *" output="true"/>
+        <param name="obj" type="GLuint *" output="true"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetAttribLocation" alias="GetAttribLocationARB">
+        <param name="program" type="GLuint"/>
+        <param name="name" type="const GLchar *"/>
+        <return type="GLint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetProgramiv" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetProgramInfoLog" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="bufSize" type="GLsizei"/>
+        <param name="length" type="GLsizei *"/>
+        <param name="infoLog" type="GLchar *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetShaderiv" offset="assign">
+        <param name="shader" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetShaderInfoLog" offset="assign">
+        <param name="shader" type="GLuint"/>
+        <param name="bufSize" type="GLsizei"/>
+        <param name="length" type="GLsizei *"/>
+        <param name="infoLog" type="GLchar *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetShaderSource" alias="GetShaderSourceARB">
+        <param name="shader" type="GLuint"/>
+        <param name="bufSize" type="GLsizei"/>
+        <param name="length" type="GLsizei *" output="true"/>
+        <param name="source" type="GLchar *" output="true"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetUniformLocation" alias="GetUniformLocationARB">
+        <param name="program" type="GLuint"/>
+        <param name="name" type="const GLchar *"/>
+        <return type="GLint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetUniformfv" alias="GetUniformfvARB">
+        <param name="program" type="GLuint"/>
+        <param name="location" type="GLint"/>
+        <param name="params" type="GLfloat *" output="true"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetUniformiv" alias="GetUniformivARB">
+        <param name="program" type="GLuint"/>
+        <param name="location" type="GLint"/>
+        <param name="params" type="GLint *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetVertexAttribdv" alias="GetVertexAttribdvARB">
+        <param name="index" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLdouble *" output="true" variable_param="pname"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetVertexAttribfv" alias="GetVertexAttribfvARB">
+        <param name="index" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetVertexAttribiv" alias="GetVertexAttribivARB">
+        <param name="index" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetVertexAttribPointerv" alias="GetVertexAttribPointervARB">
+        <param name="index" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="pointer" type="GLvoid **" output="true"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="IsProgram" offset="assign">
+        <param name="program" type="GLuint"/>
+        <return type="GLboolean"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="IsShader" offset="assign">
+        <param name="shader" type="GLuint"/>
+        <return type="GLboolean"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="LinkProgram" alias="LinkProgramARB">
+        <param name="program" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="ShaderSource" alias="ShaderSourceARB">
+        <param name="shader" type="GLuint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="string" type="const GLchar **"/>
+        <param name="length" type="const GLint *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="UseProgram" alias="UseProgramObjectARB">
+        <param name="program" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform1f" alias="Uniform1fARB">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLfloat"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="Uniform2f" alias="Uniform2fARB">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLfloat"/>
+        <param name="v1" type="GLfloat"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="Uniform3f" alias="Uniform3fARB">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLfloat"/>
+        <param name="v1" type="GLfloat"/>
+        <param name="v2" type="GLfloat"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="Uniform4f" alias="Uniform4fARB">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLfloat"/>
+        <param name="v1" type="GLfloat"/>
+        <param name="v2" type="GLfloat"/>
+        <param name="v3" type="GLfloat"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform1i" alias="Uniform1iARB">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLint"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="Uniform2i" alias="Uniform2iARB">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLint"/>
+        <param name="v1" type="GLint"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="Uniform3i" alias="Uniform3iARB">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLint"/>
+        <param name="v1" type="GLint"/>
+        <param name="v2" type="GLint"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="Uniform4i" alias="Uniform4iARB">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLint"/>
+        <param name="v1" type="GLint"/>
+        <param name="v2" type="GLint"/>
+        <param name="v3" type="GLint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform1fv" alias="Uniform1fvARB">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="Uniform2fv" alias="Uniform2fvARB">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="Uniform3fv" alias="Uniform3fvARB">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="Uniform4fv" alias="Uniform4fvARB">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform1iv" alias="Uniform1ivARB">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLint *"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="Uniform2iv" alias="Uniform2ivARB">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLint *"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="Uniform3iv" alias="Uniform3ivARB">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLint *"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="Uniform4iv" alias="Uniform4ivARB">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLint *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="UniformMatrix2fv" alias="UniformMatrix2fvARB">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="transpose" type="GLboolean"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="UniformMatrix3fv" alias="UniformMatrix3fvARB">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="transpose" type="GLboolean"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="UniformMatrix4fv" alias="UniformMatrix4fvARB">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="transpose" type="GLboolean"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="ValidateProgram" alias="ValidateProgramARB">
+        <param name="program" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="VertexAttrib1d" alias="VertexAttrib1dARB">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLdouble"/>
+    </function>
+    <function name="VertexAttrib1dv" alias="VertexAttrib1dvARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLdouble *"/>
+    </function>
+    <function name="VertexAttrib1f" alias="VertexAttrib1fARB">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLfloat"/>
+    </function>
+    <function name="VertexAttrib1fv" alias="VertexAttrib1fvARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *"/>
+    </function>
+    <function name="VertexAttrib1s" alias="VertexAttrib1sARB">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLshort"/>
+    </function>
+    <function name="VertexAttrib1sv" alias="VertexAttrib1svARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLshort *"/>
+    </function>
+
+    <function name="VertexAttrib2d" alias="VertexAttrib2dARB">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLdouble"/>
+        <param name="y" type="GLdouble"/>
+    </function>
+    <function name="VertexAttrib2dv" alias="VertexAttrib2dvARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLdouble *"/>
+    </function>
+    <function name="VertexAttrib2f" alias="VertexAttrib2fARB">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+    </function>
+    <function name="VertexAttrib2fv" alias="VertexAttrib2fvARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *"/>
+    </function>
+    <function name="VertexAttrib2s" alias="VertexAttrib2sARB">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLshort"/>
+        <param name="y" type="GLshort"/>
+    </function>
+    <function name="VertexAttrib2sv" alias="VertexAttrib2svARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLshort *"/>
+    </function>
+
+    <function name="VertexAttrib3d" alias="VertexAttrib3dARB">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLdouble"/>
+        <param name="y" type="GLdouble"/>
+        <param name="z" type="GLdouble"/>
+    </function>
+    <function name="VertexAttrib3dv" alias="VertexAttrib3dvARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLdouble *"/>
+    </function>
+    <function name="VertexAttrib3f" alias="VertexAttrib3fARB">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+        <param name="z" type="GLfloat"/>
+    </function>
+    <function name="VertexAttrib3fv" alias="VertexAttrib3fvARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *"/>
+    </function>
+    <function name="VertexAttrib3s" alias="VertexAttrib3sARB">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLshort"/>
+        <param name="y" type="GLshort"/>
+        <param name="z" type="GLshort"/>
+    </function>
+    <function name="VertexAttrib3sv" alias="VertexAttrib3svARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLshort *"/>
+    </function>
+
+    <function name="VertexAttrib4Nbv" alias="VertexAttrib4NbvARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLbyte *"/>
+    </function>
+    <function name="VertexAttrib4Niv" alias="VertexAttrib4NivARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLint *"/>
+    </function>
+    <function name="VertexAttrib4Nsv" alias="VertexAttrib4NsvARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLshort *"/>
+    </function>
+    <function name="VertexAttrib4Nub" alias="VertexAttrib4NubARB">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLubyte"/>
+        <param name="y" type="GLubyte"/>
+        <param name="z" type="GLubyte"/>
+        <param name="w" type="GLubyte"/>
+    </function>
+    <function name="VertexAttrib4Nubv" alias="VertexAttrib4NubvARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLubyte *"/>
+    </function>
+    <function name="VertexAttrib4Nuiv" alias="VertexAttrib4NuivARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLuint *"/>
+    </function>
+    <function name="VertexAttrib4Nusv" alias="VertexAttrib4NusvARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLushort *"/>
+    </function>
+
+    <function name="VertexAttrib4d" alias="VertexAttrib4dARB">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLdouble"/>
+        <param name="y" type="GLdouble"/>
+        <param name="z" type="GLdouble"/>
+        <param name="w" type="GLdouble"/>
+    </function>
+    <function name="VertexAttrib4dv" alias="VertexAttrib4dvARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLdouble *"/>
+    </function>
+    <function name="VertexAttrib4f" alias="VertexAttrib4fARB">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+        <param name="z" type="GLfloat"/>
+        <param name="w" type="GLfloat"/>
+    </function>
+    <function name="VertexAttrib4fv" alias="VertexAttrib4fvARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *"/>
+    </function>
+    <function name="VertexAttrib4s" alias="VertexAttrib4sARB">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLshort"/>
+        <param name="y" type="GLshort"/>
+        <param name="z" type="GLshort"/>
+        <param name="w" type="GLshort"/>
+    </function>
+    <function name="VertexAttrib4sv" alias="VertexAttrib4svARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLshort *"/>
+    </function>
+
+    <function name="VertexAttribPointer" alias="VertexAttribPointerARB">
+        <param name="index" type="GLuint"/>
+        <param name="size" type="GLint"/>
+        <param name="type" type="GLenum"/>
+        <param name="normalized" type="GLboolean"/>
+        <param name="stride" type="GLsizei"/>
+        <param name="pointer" type="const GLvoid *"/>
+    </function>
+
+</category>
+
+
+<category name="2.1">
+    <!-- XXX some of the enums and functions probably need additional -->
+    <!-- flags/attributes. -->
+
+    <enum name="GL_CURRENT_RASTER_SECONDARY_COLOR" value="0x845F"/>
+    <enum name="GL_PIXEL_PACK_BUFFER"              value="0x88EB"/>
+    <enum name="GL_PIXEL_UNPACK_BUFFER"            value="0x88EC"/>
+    <enum name="GL_PIXEL_PACK_BUFFER_BINDING"      value="0x88ED"/>
+    <enum name="GL_PIXEL_UNPACK_BUFFER_BINDING"    value="0x88EF"/>
+    <enum name="GL_FLOAT_MAT2x3"                   value="0x8B65"/>
+    <enum name="GL_FLOAT_MAT2x4"                   value="0x8B66"/>
+    <enum name="GL_FLOAT_MAT3x2"                   value="0x8B67"/>
+    <enum name="GL_FLOAT_MAT3x4"                   value="0x8B68"/>
+    <enum name="GL_FLOAT_MAT4x2"                   value="0x8B69"/>
+    <enum name="GL_FLOAT_MAT4x3"                   value="0x8B6A"/>
+    <enum name="GL_SRGB"                           value="0x8C40"/>
+    <enum name="GL_SRGB8"                          value="0x8C41"/>
+    <enum name="GL_SRGB_ALPHA"                     value="0x8C42"/>
+    <enum name="GL_SRGB8_ALPHA8"                   value="0x8C43"/>
+    <enum name="GL_SLUMINANCE_ALPHA"               value="0x8C44"/>
+    <enum name="GL_SLUMINANCE8_ALPHA8"             value="0x8C45"/>
+    <enum name="GL_SLUMINANCE"                     value="0x8C46"/>
+    <enum name="GL_SLUMINANCE8"                    value="0x8C47"/>
+    <enum name="GL_COMPRESSED_SRGB"                value="0x8C48"/>
+    <enum name="GL_COMPRESSED_SRGB_ALPHA"          value="0x8C49"/>
+    <enum name="GL_COMPRESSED_SLUMINANCE"          value="0x8C4A"/>
+    <enum name="GL_COMPRESSED_SLUMINANCE_ALPHA"    value="0x8C4B"/>
+
+    <function name="UniformMatrix2x3fv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="transpose" type="GLboolean"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="UniformMatrix3x2fv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="transpose" type="GLboolean"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="UniformMatrix2x4fv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="transpose" type="GLboolean"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="UniformMatrix4x2fv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="transpose" type="GLboolean"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="UniformMatrix3x4fv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="transpose" type="GLboolean"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+    <function name="UniformMatrix4x3fv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="transpose" type="GLboolean"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+
 </category>
 
 
@@ -6834,7 +7496,7 @@
     </function>
 
     <function name="ShaderSourceARB" offset="assign">
-        <param name="shaderObj" type="GLhandleARB"/>
+        <param name="shader" type="GLhandleARB"/>
         <param name="count" type="GLsizei"/>
         <param name="string" type="const GLcharARB **"/>
         <param name="length" type="const GLint *"/>
@@ -6842,7 +7504,7 @@
     </function>
 
     <function name="CompileShaderARB" offset="assign">
-        <param name="shaderObj" type="GLhandleARB"/>
+        <param name="shader" type="GLhandleARB"/>
         <glx ignore="true"/>
     </function>
 
@@ -6858,17 +7520,17 @@
     </function>
 
     <function name="LinkProgramARB" offset="assign">
-        <param name="programObj" type="GLhandleARB"/>
+        <param name="program" type="GLhandleARB"/>
         <glx ignore="true"/>
     </function>
 
     <function name="UseProgramObjectARB" offset="assign">
-        <param name="programObj" type="GLhandleARB"/>
+        <param name="program" type="GLhandleARB"/>
         <glx ignore="true"/>
     </function>
 
     <function name="ValidateProgramARB" offset="assign">
-        <param name="programObj" type="GLhandleARB"/>
+        <param name="program" type="GLhandleARB"/>
         <glx ignore="true"/>
     </function>
 
@@ -7043,16 +7705,16 @@
     </function>
 
     <function name="GetUniformLocationARB" offset="assign">
-        <param name="programObj" type="GLhandleARB"/>
+        <param name="program" type="GLhandleARB"/>
         <param name="name" type="const GLcharARB *"/>
         <return type="GLint"/>
         <glx ignore="true"/>
     </function>
 
     <function name="GetActiveUniformARB" offset="assign">
-        <param name="programObj" type="GLhandleARB"/>
+        <param name="program" type="GLhandleARB"/>
         <param name="index" type="GLuint"/>
-        <param name="maxLength" type="GLsizei"/>
+        <param name="bufSize" type="GLsizei"/>
         <param name="length" type="GLsizei *" output="true"/>
         <param name="size" type="GLint *" output="true"/>
         <param name="type" type="GLenum *" output="true"/>
@@ -7061,22 +7723,22 @@
     </function>
 
     <function name="GetUniformfvARB" offset="assign">
-        <param name="programObj" type="GLhandleARB"/>
+        <param name="program" type="GLhandleARB"/>
         <param name="location" type="GLint"/>
         <param name="params" type="GLfloat *" output="true"/>
         <glx ignore="true"/>
     </function>
 
     <function name="GetUniformivARB" offset="assign">
-        <param name="programObj" type="GLhandleARB"/>
+        <param name="program" type="GLhandleARB"/>
         <param name="location" type="GLint"/>
         <param name="params" type="GLint *" output="true"/>
         <glx ignore="true"/>
     </function>
 
     <function name="GetShaderSourceARB" offset="assign">
-        <param name="obj" type="GLhandleARB"/>
-        <param name="maxLength" type="GLsizei"/>
+        <param name="shader" type="GLhandleARB"/>
+        <param name="bufSize" type="GLsizei"/>
         <param name="length" type="GLsizei *" output="true"/>
         <param name="source" type="GLcharARB *" output="true"/>
         <glx ignore="true"/>
@@ -7093,16 +7755,16 @@
     <enum name="OBJECT_ACTIVE_ATTRIBUTE_MAX_LENGTH_ARB"   value="0x8B8A"/>
 
     <function name="BindAttribLocationARB" offset="assign">
-        <param name="programObj" type="GLhandleARB"/>
+        <param name="program" type="GLhandleARB"/>
         <param name="index" type="GLuint"/>
         <param name="name" type="const GLcharARB *"/>
         <glx ignore="true"/>
     </function>
 
     <function name="GetActiveAttribARB" offset="assign">
-        <param name="programObj" type="GLhandleARB"/>
+        <param name="program" type="GLhandleARB"/>
         <param name="index" type="GLuint"/>
-        <param name="maxLength" type="GLsizei"/>
+        <param name="bufSize" type="GLsizei"/>
         <param name="length" type="GLsizei *" output="true"/>
         <param name="size" type="GLint *" output="true"/>
         <param name="type" type="GLenum *" output="true"/>
@@ -7111,7 +7773,7 @@
     </function>
 
     <function name="GetAttribLocationARB" offset="assign">
-        <param name="programObj" type="GLhandleARB"/>
+        <param name="program" type="GLhandleARB"/>
         <param name="name" type="const GLcharARB *"/>
         <return type="GLint"/>
         <glx ignore="true"/>

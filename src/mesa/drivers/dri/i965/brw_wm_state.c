@@ -122,7 +122,7 @@ static void upload_wm_unit(struct brw_context *brw )
 
    /* BRW_NEW_FRAGMENT_PROGRAM */
    {
-      struct gl_fragment_program *fp = brw->fragment_program; 
+      const struct gl_fragment_program *fp = brw->fragment_program; 
 
       if (fp->Base.InputsRead & (1<<FRAG_ATTRIB_WPOS)) 
 	 wm.wm5.program_uses_depth = 1; /* as far as we can tell */
@@ -168,7 +168,7 @@ static void upload_wm_unit(struct brw_context *brw )
       wm.wm5.line_stipple = 1;
    }
 
-   if (INTEL_DEBUG & DEBUG_STATS)
+   if (INTEL_DEBUG & DEBUG_STATS || intel->stats_wm)
       wm.wm4.stats_enable = 1;
 
    brw->wm.state_gs_offset = brw_cache_data( &brw->cache[BRW_WM_UNIT], &wm );

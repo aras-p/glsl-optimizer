@@ -55,6 +55,7 @@ _mesa_GetString( GLenum name )
    static const char *version_1_4 = "1.4 Mesa " MESA_VERSION_STRING;
    static const char *version_1_5 = "1.5 Mesa " MESA_VERSION_STRING;
    static const char *version_2_0 = "1.5 Mesa " MESA_VERSION_STRING;
+   static const char *version_2_1 = "1.5 Mesa " MESA_VERSION_STRING;
 
 #if FEATURE_ARB_shading_language_100
    static const char *sl_version_110 = "1.10 Mesa " MESA_VERSION_STRING;
@@ -110,9 +111,18 @@ _mesa_GetString( GLenum name )
                    ctx->Extensions.EXT_shadow_funcs) {
                   if (ctx->Extensions.ARB_draw_buffers &&
                       ctx->Extensions.ARB_point_sprite &&
-                      ctx->Extensions.ARB_texture_non_power_of_two &&
-                      ctx->Extensions.ATI_separate_stencil) {
-                     return (const GLubyte *) version_2_0;
+                      ctx->Extensions.ARB_shader_objects &&
+                      ctx->Extensions.ARB_vertex_shader &&
+                      ctx->Extensions.ARB_fragment_shader &&
+                      ctx->Extensions.ARB_texture_non_power_of_two) {
+                     if (ctx->Extensions.ARB_shading_language_120 &&
+                         ctx->Extensions.EXT_pixel_buffer_object &&
+                         ctx->Extensions.EXT_texture_sRGB) {
+                        return (const GLubyte *) version_2_1;
+                     }
+                     else {
+                        return (const GLubyte *) version_2_0;
+                     }
                   }
                   else {
                      return (const GLubyte *) version_1_5;

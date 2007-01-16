@@ -456,7 +456,19 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
       }
       printf("display: %s  screen: %d\n", displayName, scrnum);
       free(displayName);
-      printf("direct rendering: %s\n", glXIsDirect(dpy, ctx) ? "Yes" : "No");
+      printf("direct rendering: ");
+      if (glXIsDirect(dpy, ctx)) {
+         printf("Yes\n");
+      } else {
+         if (!allowDirect) {
+            printf("No (-i specified)\n");
+         } else if (getenv("LIBGL_ALWAYS_INDIRECT")) {
+            printf("No (LIBGL_ALWAYS_INDIRECT set)\n");
+         } else {
+            printf("No (If you want to find out why, try setting "
+                   "LIBGL_DEBUG=verbose)\n");
+         }
+      }
       printf("server glx vendor string: %s\n", serverVendor);
       printf("server glx version string: %s\n", serverVersion);
       printf("server glx extensions:\n");
@@ -927,7 +939,7 @@ main(int argc, char *argv[])
 
    dpy = XOpenDisplay(displayName);
    if (!dpy) {
-      fprintf(stderr, "Error: unable to open display %s\n", displayName);
+      fprintf(stderr, "Error: unable to open display %s\n", XDisplayName(displayName));
       return -1;
    }
 

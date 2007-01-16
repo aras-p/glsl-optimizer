@@ -277,6 +277,30 @@ intelEmitFillBlit(struct intel_context *intel,
 }
 
 
+static GLuint translate_raster_op(GLenum logicop)
+{
+   switch(logicop) {
+   case GL_CLEAR: return 0x00;
+   case GL_AND: return 0x88;
+   case GL_AND_REVERSE: return 0x44;
+   case GL_COPY: return 0xCC;
+   case GL_AND_INVERTED: return 0x22;
+   case GL_NOOP: return 0xAA;
+   case GL_XOR: return 0x66;
+   case GL_OR: return 0xEE;
+   case GL_NOR: return 0x11;
+   case GL_EQUIV: return 0x99;
+   case GL_INVERT: return 0x55;
+   case GL_OR_REVERSE: return 0xDD;
+   case GL_COPY_INVERTED: return 0x33;
+   case GL_OR_INVERTED: return 0xBB;
+   case GL_NAND: return 0x77;
+   case GL_SET: return 0xFF;
+   default: return 0;
+   }
+}
+
+
 /* Copy BitBlt
  */
 void
@@ -289,7 +313,9 @@ intelEmitCopyBlit(struct intel_context *intel,
                   struct _DriBufferObject *dst_buffer,
                   GLuint dst_offset,
                   GLshort src_x, GLshort src_y,
-                  GLshort dst_x, GLshort dst_y, GLshort w, GLshort h)
+                  GLshort dst_x, GLshort dst_y, 
+		  GLshort w, GLshort h,
+		  GLenum logic_op)
 {
    GLuint CMD, BR13;
    int dst_y2 = dst_y + h;
@@ -309,13 +335,14 @@ intelEmitCopyBlit(struct intel_context *intel,
    case 1:
    case 2:
    case 3:
-      BR13 = (((GLint) dst_pitch) & 0xffff) | (0xCC << 16) | (1 << 24);
+      BR13 = (((GLint) dst_pitch) & 0xffff) | 
+	 (translate_raster_op(logic_op) << 16) | (1 << 24);
       CMD = XY_SRC_COPY_BLT_CMD;
       break;
    case 4:
       BR13 =
-         (((GLint) dst_pitch) & 0xffff) | (0xCC << 16) | (1 << 24) | (1 <<
-                                                                      25);
+         (((GLint) dst_pitch) & 0xffff) | 
+	 (translate_raster_op(logic_op) << 16) | (1 << 24) | (1 << 25);
       CMD =
          (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
           XY_SRC_COPY_BLT_WRITE_RGB);

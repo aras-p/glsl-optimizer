@@ -24,6 +24,8 @@
  * Written by Sean D'Epagnier (c) 2006
  */
 
+#include <stdlib.h>
+
 #include <GL/glut.h>
 
 #include "internal.h"
@@ -72,19 +74,16 @@ void glutKeyboardUpFunc(void (*func)(unsigned char key, int x, int y))
 
 void glutMouseFunc(void (*func)(int button, int state, int x, int y))
 {
-   MouseEnabled = 1;
    MouseFunc = func;
 }
 
 void glutMotionFunc(void (*func)(int x, int y))
 {
-   MouseEnabled = 1;
    MotionFunc = func;
 }
 
 void glutPassiveMotionFunc(void (*func)(int x, int y))
 {
-   MouseEnabled = 1;
    PassiveMotionFunc = func;
 }
 

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
  * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
@@ -22,43 +22,36 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#if !defined SLANG_ASSEMBLE_CONSTRUCTOR_H
+#ifndef SLANG_ASSEMBLE_CONSTRUCTOR_H
 #define SLANG_ASSEMBLE_CONSTRUCTOR_H
 
 #if defined __cplusplus
 extern "C" {
 #endif
 
-/*
- * Checks if a field selector is a general swizzle (an r-value swizzle with replicated
- * components or an l-value swizzle mask) for a vector.
- * Returns GL_TRUE if this is the case, <swz> is filled with swizzle information.
- * Returns GL_FALSE otherwise.
- */
-GLboolean _slang_is_swizzle (const char *field, GLuint rows, slang_swizzle *swz);
 
-/*
- * Checks if a general swizzle is an l-value swizzle - these swizzles do not have
- * duplicated fields.
- * Returns GL_TRUE if this is a swizzle mask.
- * Returns GL_FALSE otherwise
- */
-GLboolean _slang_is_swizzle_mask (const slang_swizzle *swz, GLuint rows);
+extern GLboolean
+_slang_is_swizzle(const char *field, GLuint rows, slang_swizzle *swz);
 
-/*
- * Combines (multiplies) two swizzles to form single swizzle.
- * Example: "vec.wzyx.yx" --> "vec.zw".
- */
-GLvoid _slang_multiply_swizzles (slang_swizzle *, const slang_swizzle *, const slang_swizzle *);
+extern GLboolean
+_slang_is_swizzle_mask(const slang_swizzle *swz, GLuint rows);
 
-GLboolean _slang_assemble_constructor (slang_assemble_ctx *, struct slang_operation_ *);
+extern GLvoid
+_slang_multiply_swizzles(slang_swizzle *, const slang_swizzle *,
+                         const slang_swizzle *);
 
-GLboolean _slang_assemble_constructor_from_swizzle (slang_assemble_ctx *, const slang_swizzle *,
-	slang_type_specifier *, slang_type_specifier *);
+extern GLboolean
+_slang_assemble_constructor(slang_assemble_ctx *,
+                            const struct slang_operation_ *);
+
+extern GLboolean
+_slang_assemble_constructor_from_swizzle(slang_assemble_ctx *,
+                                         const slang_swizzle *,
+                                         const slang_type_specifier *,
+                                         const slang_type_specifier *);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
-
+#endif /* SLANG_ASSEMBLE_CONSTRUCTOR_H */

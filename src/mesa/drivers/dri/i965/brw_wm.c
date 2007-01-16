@@ -138,64 +138,75 @@ static void do_wm_prog( struct brw_context *brw,
 			struct brw_fragment_program *fp, 
 			struct brw_wm_prog_key *key)
 {
-   struct brw_wm_compile c;
+   struct brw_wm_compile *c;
    const GLuint *program;
    GLuint program_size;
 
-   memset(&c, 0, sizeof(c));
-   memcpy(&c.key, key, sizeof(*key));
+   c = brw->wm.compile_data;
+   if (c == NULL) {
+     brw->wm.compile_data = calloc(1, sizeof(*brw->wm.compile_data));
+     c = brw->wm.compile_data;
+   } else {
+     memset(c, 0, sizeof(*brw->wm.compile_data));
+   }
+   memcpy(&c->key, key, sizeof(*key));
 
-   c.fp = fp;
-   c.env_param = brw->intel.ctx.FragmentProgram.Parameters;
+   c->fp = fp;
+   c->env_param = brw->intel.ctx.FragmentProgram.Parameters;
 
 
    /* Augment fragment program.  Add instructions for pre- and
     * post-fragment-program tasks such as interpolation and fogging.
     */
-   brw_wm_pass_fp(&c);
+   brw_wm_pass_fp(c);
    
    /* Translate to intermediate representation.  Build register usage
     * chains.
     */
-   brw_wm_pass0(&c);
+   brw_wm_pass0(c);
 
    /* Dead code removal.
     */
-   brw_wm_pass1(&c);
+   brw_wm_pass1(c);
 
    /* Hal optimization
     */
-   brw_wm_pass_hal (&c);
+   brw_wm_pass_hal (c);
    
    /* Register allocation.
     */
-   c.grf_limit = BRW_WM_MAX_GRF/2;
+   c->grf_limit = BRW_WM_MAX_GRF/2;
 
    /* This is where we start emitting gen4 code:
     */
-   brw_init_compile(&c.func);    
+   brw_init_compile(&c->func);    
 
-   brw_wm_pass2(&c);
+   brw_wm_pass2(c);
 
-   c.prog_data.total_grf = c.max_wm_grf;
-   c.prog_data.total_scratch = c.last_scratch ? c.last_scratch + 0x40 : 0;
+   c->prog_data.total_grf = c->max_wm_grf;
+   if (c->last_scratch) {
+      c->prog_data.total_scratch =
+	 c->last_scratch + 0x40;
+   } else {
+      c->prog_data.total_scratch = 0;
+   }
 
    /* Emit GEN4 code.
     */
-   brw_wm_emit(&c);
+   brw_wm_emit(c);
 
    /* get the program
     */
-   program = brw_get_program(&c.func, &program_size);
+   program = brw_get_program(&c->func, &program_size);
 
    /*
     */
    brw->wm.prog_gs_offset = brw_upload_cache( &brw->cache[BRW_WM_PROG],
-					      &c.key,
-					      sizeof(c.key),
+					      &c->key,
+					      sizeof(c->key),
 					      program,
 					      program_size,
-					      &c.prog_data,
+					      &c->prog_data,
 					      &brw->wm.prog_data );
 }
 

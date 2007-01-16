@@ -2,6 +2,7 @@
 #include "macros.h"
 
 #include "intel_context.h"
+#include "intel_batchbuffer.h"
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
 
@@ -109,6 +110,8 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    GLuint nr_faces = 0;
    struct intel_texture_image *firstImage;
 
+   GLboolean need_flush = GL_FALSE;
+
    /* We know/require this is true by now: 
     */
    assert(intelObj->base.Complete);
@@ -155,9 +158,15 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
     * leaving the tree alone.
     */
    if (intelObj->mt &&
-       ((intelObj->mt->first_level > intelObj->firstLevel) ||
-        (intelObj->mt->last_level < intelObj->lastLevel) ||
-        (intelObj->mt->internal_format != firstImage->base.InternalFormat))) {
+       (intelObj->mt->target != intelObj->base.Target ||
+	intelObj->mt->internal_format != firstImage->base.InternalFormat ||
+	intelObj->mt->first_level != intelObj->firstLevel ||
+	intelObj->mt->last_level != intelObj->lastLevel ||
+	intelObj->mt->width0 != firstImage->base.Width ||
+	intelObj->mt->height0 != firstImage->base.Height ||
+	intelObj->mt->depth0 != firstImage->base.Depth ||
+	intelObj->mt->cpp != firstImage->base.TexFormat->TexelBytes ||
+	intelObj->mt->compressed != firstImage->base.IsCompressed)) {
       intel_miptree_release(intel, &intelObj->mt);
    }
 
@@ -165,6 +174,10 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    /* May need to create a new tree:
     */
    if (!intelObj->mt) {
+      int comp_byte = 0;
+      
+      if (firstImage->base.IsCompressed)
+	 comp_byte = intel_compressed_num_bytes(firstImage->base.TexFormat->MesaFormat);
       intelObj->mt = intel_miptree_create(intel,
                                           intelObj->base.Target,
                                           firstImage->base.InternalFormat,
@@ -175,7 +188,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
                                           firstImage->base.Depth,
                                           firstImage->base.TexFormat->
                                           TexelBytes,
-                                          firstImage->base.IsCompressed);
+                                          comp_byte);
    }
 
    /* Pull in any images not in the object's tree:
@@ -190,9 +203,13 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
           */
          if (intelObj->mt != intelImage->mt) {
             copy_image_data_to_tree(intel, intelObj, intelImage);
+	    need_flush = GL_TRUE;
          }
       }
    }
+
+   if (need_flush)
+      intel_batchbuffer_flush(intel->batch);
 
    return GL_TRUE;
 }

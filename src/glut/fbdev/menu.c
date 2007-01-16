@@ -25,6 +25,8 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #include <linux/fb.h>
 
@@ -69,6 +71,7 @@ void FreeMenus(void)
 	 free(Menus[i].Items[j].name);
       free(Menus[i].Items);
    }
+   
    free(Menus);
 }
 
@@ -204,7 +207,6 @@ void CloseMenu(void)
 
 int glutCreateMenu(void (*func)(int value))
 {
-   MouseEnabled = 1;
    CurrentMenu = NumMenus;
    NumMenus++;
    Menus = realloc(Menus, sizeof(*Menus) * NumMenus);

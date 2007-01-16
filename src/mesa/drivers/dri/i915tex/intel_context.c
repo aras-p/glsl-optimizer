@@ -37,7 +37,6 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
-#include "array_cache/acache.h"
 
 #include "tnl/t_pipeline.h"
 #include "tnl/t_vertex.h"
@@ -86,7 +85,7 @@ int INTEL_DEBUG = (0);
 #include "extension_helper.h"
 
 
-#define DRIVER_DATE                     "20060929"
+#define DRIVER_DATE                     "20061102"
 
 _glthread_Mutex lockMutex;
 static GLboolean lockMutexInit = GL_FALSE;
@@ -241,7 +240,7 @@ intelInvalidateState(GLcontext * ctx, GLuint new_state)
 {
    _swrast_InvalidateState(ctx, new_state);
    _swsetup_InvalidateState(ctx, new_state);
-   _ac_InvalidateState(ctx, new_state);
+   _vbo_InvalidateState(ctx, new_state);
    _tnl_InvalidateState(ctx, new_state);
    _tnl_invalidate_vertex_state(ctx, new_state);
    intel_context(ctx)->NewGLState |= new_state;
@@ -390,7 +389,7 @@ intelInitContext(struct intel_context *intel,
 
    /* Initialize the software rasterizer and helper modules. */
    _swrast_CreateContext(ctx);
-   _ac_CreateContext(ctx);
+   _vbo_CreateContext(ctx);
    _tnl_CreateContext(ctx);
    _swsetup_CreateContext(ctx);
 
@@ -500,7 +499,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       release_texture_heaps = (intel->ctx.Shared->RefCount == 1);
       _swsetup_DestroyContext(&intel->ctx);
       _tnl_DestroyContext(&intel->ctx);
-      _ac_DestroyContext(&intel->ctx);
+      _vbo_DestroyContext(&intel->ctx);
 
       _swrast_DestroyContext(&intel->ctx);
       intel->Fallback = 0;      /* don't call _swrast_Flush later */
@@ -576,6 +575,16 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
             intel_region_reference(&irbStencil->region, intel->intelScreen->depth_region);
          }
       }
+
+      /* set initial GLframebuffer size to match window, if needed */
+      if (drawFb->Width == 0 && driDrawPriv->w) {
+         _mesa_resize_framebuffer(&intel->ctx, drawFb,
+                                  driDrawPriv->w, driDrawPriv->h);
+      }         
+      if (readFb->Width == 0 && driReadPriv->w) {
+         _mesa_resize_framebuffer(&intel->ctx, readFb,
+                                  driReadPriv->w, driReadPriv->h);
+      }         
 
       _mesa_make_current(&intel->ctx, drawFb, readFb);
 
@@ -653,9 +662,6 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
       intel->lastStamp = dPriv->lastStamp;
    }
 }
-
-
-extern _glthread_Mutex lockMutex;
 
 
 /* Lock the hardware and validate our state.  

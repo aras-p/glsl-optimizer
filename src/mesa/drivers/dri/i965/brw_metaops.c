@@ -27,6 +27,7 @@
  /*
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
+  *   frame buffer texture by Gary Wong <gtw@gnu.org>
   */
  
 
@@ -143,6 +144,15 @@ static const char *fp_prog =
       "MOV result.color, fragment.color;\n"
       "END\n";
 
+static const char *fp_tex_prog =
+      "!!ARBfp1.0\n"
+      "TEMP a;\n"
+      "ADD a, fragment.position, program.local[0];\n"
+      "MUL a, a, program.local[1];\n"
+      "TEX result.color, a, texture[0], 2D;\n"
+      "MOV result.depth.z, fragment.position;\n"
+      "END\n";
+
 /* Derived values of importance:
  *
  *   FragmentProgram->_Current
@@ -169,12 +179,19 @@ static void init_metaops_state( struct brw_context *brw )
    brw->metaops.fp = (struct gl_fragment_program *)
       ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 1 );
 
+   brw->metaops.fp_tex = (struct gl_fragment_program *)
+      ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 1 );
+
    brw->metaops.vp = (struct gl_vertex_program *)
       ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 1 );
 
    _mesa_parse_arb_fragment_program(ctx, GL_FRAGMENT_PROGRAM_ARB, 
 				    fp_prog, strlen(fp_prog),
 				    brw->metaops.fp);
+
+   _mesa_parse_arb_fragment_program(ctx, GL_FRAGMENT_PROGRAM_ARB, 
+				    fp_tex_prog, strlen(fp_tex_prog),
+				    brw->metaops.fp_tex);
 
    _mesa_parse_arb_vertex_program(ctx, GL_VERTEX_PROGRAM_ARB, 
 				  vp_prog, strlen(vp_prog),
@@ -266,7 +283,76 @@ static void meta_color_mask( struct intel_context *intel, GLboolean state )
 
 static void meta_no_texture( struct intel_context *intel )
 {
-   /* Nothing to do */
+   struct brw_context *brw = brw_context(&intel->ctx);
+   
+   brw->metaops.attribs.FragmentProgram->_Current = brw->metaops.fp;
+   
+   brw->metaops.attribs.Texture->CurrentUnit = 0;
+   brw->metaops.attribs.Texture->_EnabledUnits = 0;
+   brw->metaops.attribs.Texture->_EnabledCoordUnits = 0;
+   brw->metaops.attribs.Texture->Unit[ 0 ].Enabled = 0;
+   brw->metaops.attribs.Texture->Unit[ 0 ]._ReallyEnabled = 0;
+
+   brw->state.dirty.mesa |= _NEW_TEXTURE | _NEW_PROGRAM;
+}
+
+static void meta_texture_blend_replace(struct intel_context *intel)
+{
+   struct brw_context *brw = brw_context(&intel->ctx);
+
+   brw->metaops.attribs.Texture->CurrentUnit = 0;
+   brw->metaops.attribs.Texture->_EnabledUnits = 1;
+   brw->metaops.attribs.Texture->_EnabledCoordUnits = 1;
+   brw->metaops.attribs.Texture->Unit[ 0 ].Enabled = TEXTURE_2D_BIT;
+   brw->metaops.attribs.Texture->Unit[ 0 ]._ReallyEnabled = TEXTURE_2D_BIT;
+   brw->metaops.attribs.Texture->Unit[ 0 ].Current2D =
+      intel->frame_buffer_texobj;
+   brw->metaops.attribs.Texture->Unit[ 0 ]._Current =
+      intel->frame_buffer_texobj;
+
+   brw->state.dirty.mesa |= _NEW_TEXTURE | _NEW_PROGRAM;
+}
+
+static void meta_import_pixel_state(struct intel_context *intel)
+{
+   struct brw_context *brw = brw_context(&intel->ctx);
+   
+   RESTORE(brw, Color, _NEW_COLOR);
+   RESTORE(brw, Depth, _NEW_DEPTH);
+   RESTORE(brw, Fog, _NEW_FOG);
+   RESTORE(brw, Scissor, _NEW_SCISSOR);
+   RESTORE(brw, Stencil, _NEW_STENCIL);
+   RESTORE(brw, Texture, _NEW_TEXTURE);
+   RESTORE(brw, FragmentProgram, _NEW_PROGRAM);
+}
+
+static void meta_frame_buffer_texture( struct intel_context *intel,
+				       GLint xoff, GLint yoff )
+{
+   struct brw_context *brw = brw_context(&intel->ctx);
+   struct intel_region *region = intel_drawbuf_region( intel );
+   
+   INSTALL(brw, FragmentProgram, _NEW_PROGRAM);
+
+   brw->metaops.attribs.FragmentProgram->_Current = brw->metaops.fp_tex;
+   /* This is unfortunate, but seems to be necessary, since later on we
+      will end up calling _mesa_load_state_parameters to lookup the
+      local params (below), and that will want to look in ctx.FragmentProgram
+      instead of brw->attribs.FragmentProgram. */
+   intel->ctx.FragmentProgram.Current = brw->metaops.fp_tex;
+
+   brw->metaops.fp_tex->Base.LocalParams[ 0 ][ 0 ] = xoff;
+   brw->metaops.fp_tex->Base.LocalParams[ 0 ][ 1 ] = yoff;
+   brw->metaops.fp_tex->Base.LocalParams[ 0 ][ 2 ] = 0.0;
+   brw->metaops.fp_tex->Base.LocalParams[ 0 ][ 3 ] = 0.0;
+   brw->metaops.fp_tex->Base.LocalParams[ 1 ][ 0 ] =
+      1.0 / region->pitch;
+   brw->metaops.fp_tex->Base.LocalParams[ 1 ][ 1 ] =
+      -1.0 / region->height;
+   brw->metaops.fp_tex->Base.LocalParams[ 1 ][ 2 ] = 0.0;
+   brw->metaops.fp_tex->Base.LocalParams[ 1 ][ 3 ] = 1.0;
+   
+   brw->state.dirty.mesa |= _NEW_PROGRAM;
 }
 
 
@@ -408,9 +494,11 @@ static void install_meta_state( struct intel_context *intel )
    }
 
    install_attribs(brw);
+   
    meta_no_texture(&brw->intel);
    meta_flat_shade(&brw->intel);
    brw->metaops.restore_draw_mask = ctx->DrawBuffer->_ColorDrawBufferMask[0];
+   brw->metaops.restore_fp = ctx->FragmentProgram.Current;
 
    /* This works without adjusting refcounts.  Fix later? 
     */
@@ -429,6 +517,7 @@ static void leave_meta_state( struct intel_context *intel )
    restore_attribs(brw);
 
    ctx->DrawBuffer->_ColorDrawBufferMask[0] = brw->metaops.restore_draw_mask;
+   ctx->FragmentProgram.Current = brw->metaops.restore_fp;
 
    brw->state.draw_region = brw->metaops.saved_draw_region;
    brw->state.depth_region = brw->metaops.saved_depth_region;
@@ -455,10 +544,11 @@ void brw_init_metaops( struct brw_context *brw )
    brw->intel.vtbl.meta_depth_replace = meta_depth_replace;
    brw->intel.vtbl.meta_color_mask = meta_color_mask;
    brw->intel.vtbl.meta_no_texture = meta_no_texture;
+   brw->intel.vtbl.meta_import_pixel_state = meta_import_pixel_state;
+   brw->intel.vtbl.meta_frame_buffer_texture = meta_frame_buffer_texture;
    brw->intel.vtbl.meta_draw_region = meta_draw_region;
    brw->intel.vtbl.meta_draw_quad = meta_draw_quad;
-
-/*    brw->intel.vtbl.meta_texture_blend_replace = meta_texture_blend_replace; */
+   brw->intel.vtbl.meta_texture_blend_replace = meta_texture_blend_replace;
 /*    brw->intel.vtbl.meta_tex_rect_source = meta_tex_rect_source; */
 /*    brw->intel.vtbl.meta_draw_format = set_draw_format; */
 }
@@ -471,5 +561,6 @@ void brw_destroy_metaops( struct brw_context *brw )
       ctx->Driver.DeleteBuffer( ctx, brw->metaops.vbo );
 
 /*    ctx->Driver.DeleteProgram( ctx, brw->metaops.fp ); */
+/*    ctx->Driver.DeleteProgram( ctx, brw->metaops.fp_tex ); */
 /*    ctx->Driver.DeleteProgram( ctx, brw->metaops.vp ); */
 }

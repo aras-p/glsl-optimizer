@@ -5,7 +5,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -28,8 +28,8 @@
  */
 
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef MESA_CONFIG_H_INCLUDED
+#define MESA_CONFIG_H_INCLUDED
 
 /**
  * \name OpenGL implementation limits
@@ -198,6 +198,7 @@
 #define MAX_PROGRAM_LOCAL_PARAMS 128 /* KW: power of two */
 #define MAX_PROGRAM_MATRICES 8
 #define MAX_PROGRAM_MATRIX_STACK_DEPTH 4
+#define MAX_PROGRAM_CALL_DEPTH 8
 /*@}*/
 
 /** For GL_ARB_fragment_shader */
@@ -323,4 +324,4 @@
 #define MAX_CLIPPED_VERTICES ((2 * (6 + MAX_CLIP_PLANES))+1)
 
 
-#endif /* CONFIG_H */
+#endif /* MESA_CONFIG_H_INCLUDED */

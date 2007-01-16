@@ -895,7 +895,17 @@ struct tdfx_context {
    /* stuff added for DRI */
    __DRIscreenPrivate *driScreen;
    __DRIcontextPrivate *driContext;
-   __DRIdrawablePrivate *driDrawable;
+
+   /**
+    * DRI drawable bound to this context for drawing.
+    */
+   __DRIdrawablePrivate	*driDrawable;
+
+   /**
+    * DRI drawable bound to this context for reading.
+    */
+   __DRIdrawablePrivate	*driReadable;
+
    drm_context_t hHWContext;
    drm_hw_lock_t *driHwLock;
    int driFd;

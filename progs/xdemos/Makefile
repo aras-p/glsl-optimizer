@@ -24,11 +24,11 @@ PROGS = glthreads \
 	pbinfo \
 	pbdemo \
 	wincopy \
-	xdemo \
 	xfont \
 	xrotfontdemo \
 	yuvrect_client
 
+# omit this XMesa API demo:	xdemo
 
 
 ##### RULES #####

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -189,7 +189,8 @@ enum state_index {
    STATE_INTERNAL,		/* Mesa additions */
    STATE_NORMAL_SCALE,
    STATE_TEXRECT_SCALE,
-   STATE_POSITION_NORMALIZED    /* normalized light position */
+   STATE_POSITION_NORMALIZED,   /* normalized light position */
+   STATE_INTERNAL_DRIVER	/* first available state index for drivers (must be last) */
 };
 
 
@@ -238,29 +239,33 @@ _mesa_add_named_parameter(struct gl_program_parameter_list *paramList,
 
 extern GLint
 _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
-                         const char *name, const GLfloat values[4]);
+                         const char *name, const GLfloat values[4],
+                         GLuint size);
 
 extern GLint
 _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
-                           const GLfloat values[4]);
+                           const GLfloat values[4], GLuint size);
 
 extern GLint
 _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
                           const GLint *stateTokens);
 
 extern GLfloat *
-_mesa_lookup_parameter_value(struct gl_program_parameter_list *paramList,
+_mesa_lookup_parameter_value(const struct gl_program_parameter_list *paramList,
                              GLsizei nameLen, const char *name);
 
 extern GLint
-_mesa_lookup_parameter_index(struct gl_program_parameter_list *paramList,
+_mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
                              GLsizei nameLen, const char *name);
+
+extern GLboolean
+_mesa_lookup_parameter_constant(const struct gl_program_parameter_list *paramList,
+                                const GLfloat v[], GLsizei vSize,
+                                GLuint *posOut, GLuint *swizzleOut);
 
 extern void
 _mesa_load_state_parameters(GLcontext *ctx,
                             struct gl_program_parameter_list *paramList);
-
-
 
 extern void
 _mesa_print_instruction(const struct prog_instruction *inst);
@@ -289,9 +294,6 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids);
 
 extern void GLAPIENTRY
 _mesa_GenPrograms(GLsizei n, GLuint *ids);
-
-extern GLboolean GLAPIENTRY
-_mesa_IsProgram(GLuint id);
 
 
 

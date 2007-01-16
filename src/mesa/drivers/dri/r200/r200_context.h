@@ -107,6 +107,8 @@ struct r200_vertex_program {
         VERTEX_SHADER_INSTRUCTION instr[R200_VSF_MAX_INST + 6];
         int pos_end;
         int inputs[VERT_ATTRIB_MAX];
+        int rev_inputs[16];
+        int gen_inputs_mapped;
         int native;
         int fogpidx;
         int fogmode;
@@ -699,6 +701,7 @@ struct r200_dri_mirror {
    __DRIcontextPrivate	*context;	/* DRI context */
    __DRIscreenPrivate	*screen;	/* DRI screen */
    __DRIdrawablePrivate	*drawable;	/* DRI drawable bound to this ctx */
+   __DRIdrawablePrivate	*readable;	/* DRI readable bound to this ctx */
 
    drm_context_t hwContext;
    drm_hw_lock_t *hwLock;
@@ -725,19 +728,21 @@ struct r200_tcl_info {
    GLint last_offset;
    GLuint hw_primitive;
 
-/* FIXME: what's the maximum number of components? */
-   struct r200_dma_region *aos_components[11];
+/* hw can handle 12 components max */
+   struct r200_dma_region *aos_components[12];
    GLuint nr_aos_components;
 
    GLuint *Elts;
 
    struct r200_dma_region indexed_verts;
+   struct r200_dma_region weight;
    struct r200_dma_region obj;
    struct r200_dma_region rgba;
    struct r200_dma_region spec;
    struct r200_dma_region fog;
    struct r200_dma_region tex[R200_MAX_TEXTURE_UNITS];
    struct r200_dma_region norm;
+   struct r200_dma_region generic[16];
 };
 
 

@@ -1,4 +1,4 @@
-# List of ource files in this directory used for X.org xserver build
+# List of source files in this directory used for X.org xserver build
 MESA_TNL_SOURCES = \
 t_context.c \
 t_pipeline.c \
@@ -19,3 +19,16 @@ t_vertex.c \
 t_vertex_generic.c \
 t_vertex_sse.c \
 t_vp_build.c 
+
+MESA_TNL_HEADERS = \
+t_array_api.h \
+t_array_import.h \
+t_context.h \
+t_pipeline.h \
+t_vb_arbprogram.h \
+t_vb_cliptmp.h \
+t_vb_lighttmp.h \
+t_vb_rendertmp.h \
+t_vertex.h \
+t_vp_build.h \
+tnl.h

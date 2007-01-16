@@ -737,6 +737,9 @@ intelFillInModes(unsigned pixel_bits, unsigned depth_bits,
     */
    stencil_bits_array[0] = 0;
    stencil_bits_array[1] = 0;
+   if (depth_bits == 24)
+      stencil_bits_array[1] = (stencil_bits == 0) ? 8 : stencil_bits;
+
    stencil_bits_array[2] = (stencil_bits == 0) ? 8 : stencil_bits;
 
    depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 3 : 1;

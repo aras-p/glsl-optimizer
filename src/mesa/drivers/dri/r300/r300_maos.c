@@ -407,8 +407,8 @@ int r300EmitArrays(GLcontext *ctx)
 	if (hw_tcl_on) {
 		struct r300_vertex_program *prog=(struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 		inputs = prog->inputs;
-		InputsRead = CURRENT_VERTEX_SHADER(ctx)->Base.InputsRead;
-		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->Base.OutputsWritten;
+		InputsRead = CURRENT_VERTEX_SHADER(ctx)->key.InputsRead;
+		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
 	} else {
 		DECLARE_RENDERINPUTS(inputs_bitset);
 		inputs = r300->state.sw_tcl_inputs;

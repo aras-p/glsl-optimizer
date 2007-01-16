@@ -338,7 +338,6 @@ static int evict_mru( struct intel_context *intel, GLuint *pool )
 }
 
 
-
 static int check_fenced( struct intel_context *intel )
 {
    struct bufmgr *bm = intel->bm;
@@ -1328,11 +1327,21 @@ unsigned bmSetFence( struct intel_context *intel )
    return intel->bm->last_fence;
 }
 
+unsigned bmSetFenceLock( struct intel_context *intel )
+{
+  unsigned last;
+  LOCK(intel->bm);
+  last = bmSetFence(intel);
+  UNLOCK(intel->bm);
+  return last;
+}
 unsigned bmLockAndFence( struct intel_context *intel )
 {
    if (intel->bm->need_fence) {
       LOCK_HARDWARE(intel);
+      LOCK(intel->bm);
       bmSetFence(intel);
+      UNLOCK(intel->bm);
       UNLOCK_HARDWARE(intel);
    }
 
@@ -1350,7 +1359,12 @@ void bmFinishFence( struct intel_context *intel, unsigned fence )
    check_fenced(intel);
 }
 
-
+void bmFinishFenceLock( struct intel_context *intel, unsigned fence )
+{
+   LOCK(intel->bm);
+   bmFinishFence(intel, fence);
+   UNLOCK(intel->bm);
+}
 
 
 /* Specifically ignore texture memory sharing.

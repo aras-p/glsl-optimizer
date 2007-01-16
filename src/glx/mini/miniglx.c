@@ -2310,7 +2310,9 @@ __glXGetDrawableInfo(__DRInativeDisplay *dpy, int scrn,
     GLXDrawable drawable = (GLXDrawable) draw;
     drm_clip_rect_t * cliprect;
     Display* display = (Display*)dpy;
+    __DRIscreenPrivate *psp = display->driScreen.private;
     __DRIcontextPrivate *pcp = (__DRIcontextPrivate *)CurrentContext->driContext.private;
+    __DRIdrawablePrivate *pdp = pcp->driDrawablePriv;
     if (drawable == 0) {
         return GL_FALSE;
     }
@@ -2325,6 +2327,7 @@ __glXGetDrawableInfo(__DRInativeDisplay *dpy, int scrn,
     *index = display->clientID;
 
     *stamp = pcp->driScreenPriv->pSAREA->drawableTable[display->clientID].stamp;
+    drmUpdateDrawableInfo(psp->fd, pdp->hHWDrawable, DRM_DRAWABLE_CLIPRECTS, 1, cliprect);
     *x = drawable->x;
     *y = drawable->y;
     *width = drawable->w;
@@ -2352,14 +2355,23 @@ static GLboolean
 xf86DRI_CreateDrawable(__DRInativeDisplay *dpy, int screen, __DRIid drawable,
         drm_drawable_t *hHWDrawable )
 {
-    return GL_TRUE;
+
+  Display *display = (Display *)dpy;
+  __DRIscreenPrivate *psp = display->driScreen.private;
+  int ret;
+  ret = drmCreateDrawable(psp->fd, hHWDrawable);
+  
+  fprintf(stderr, "drawable is %d %08X ret is %d\n", *hHWDrawable, drawable, -ret);
+  if (ret != 0)
+    return GL_FALSE;
+  return GL_TRUE;
 }
 
 
 static GLboolean
 xf86DRI_DestroyDrawable(__DRInativeDisplay *dpy, int screen, __DRIid drawable)
 {
-    return GL_TRUE;
+  return GL_TRUE;
 }
 
 

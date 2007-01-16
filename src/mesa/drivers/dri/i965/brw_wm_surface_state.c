@@ -239,6 +239,12 @@ static void upload_wm_surfaces(struct brw_context *brw )
 	 brw->wm.bind.surf_ss_offset[i+1] = brw_cache_data( &brw->cache[BRW_SS_SURFACE], &surf );
 	 brw->wm.nr_surfaces = i+2;
       }
+      else if( texUnit->_ReallyEnabled &&
+	       texUnit->_Current == intel->frame_buffer_texobj )
+      {
+	 brw->wm.bind.surf_ss_offset[i+1] = brw->wm.bind.surf_ss_offset[0];
+	 brw->wm.nr_surfaces = i+2;
+      }    
       else {
 	 brw->wm.bind.surf_ss_offset[i+1] = 0;
       }

@@ -123,10 +123,8 @@ __glXInitVertexArrayState( __GLXcontext * gc )
     struct array_state_vector * arrays;
 
     unsigned array_count;
-    unsigned texture_units = 1;
-    unsigned i;
-    unsigned j;
-    unsigned vertex_program_attribs = 0;
+    int texture_units = 1, vertex_program_attribs = 0;
+    unsigned i, j;
 
     GLboolean got_fog = GL_FALSE;
     GLboolean got_secondary_color = GL_FALSE;
@@ -529,7 +527,7 @@ static GLubyte *
 emit_DrawArrays_header_old( __GLXcontext * gc,
 			    struct array_state_vector * arrays,
 			    size_t * elements_per_request,
-			    unsigned int * total_requests,
+			    size_t * total_requests,
 			    GLenum mode, GLsizei count )
 {
     size_t command_size;
@@ -642,7 +640,7 @@ emit_DrawArrays_old( GLenum mode, GLint first, GLsizei count )
 
     GLubyte * pc;
     size_t elements_per_request;
-    unsigned total_requests = 0;
+    size_t total_requests = 0;
     unsigned i;
     size_t total_sent = 0;
 
@@ -772,7 +770,7 @@ emit_DrawElements_old( GLenum mode, GLsizei count, GLenum type,
 
     GLubyte * pc;
     size_t elements_per_request;
-    unsigned total_requests = 0;
+    size_t total_requests = 0;
     unsigned i;
     unsigned req;
 

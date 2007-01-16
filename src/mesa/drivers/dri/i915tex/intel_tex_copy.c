@@ -145,7 +145,8 @@ do_copy_texsubimage(struct intel_context *intel,
                            intelImage->mt->pitch,
                            intelImage->mt->region->buffer,
                            image_offset,
-                           x, y + height, dstx, dsty, width, height);
+                           x, y + height, dstx, dsty, width, height,
+			   GL_COPY); /* ? */
 
          intel_batchbuffer_flush(intel->batch);
       }

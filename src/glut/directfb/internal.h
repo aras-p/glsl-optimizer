@@ -26,8 +26,9 @@
 #include <directfb.h>
 #include <directfb_version.h>
 
+#include <directfbgl.h>
+
 #include "GL/glut.h"
-#include "GL/directfbgl.h"
 
 
 #define VERSION_CODE( M, m, r )  (((M) << 16) | ((m) << 8) | ((r)))

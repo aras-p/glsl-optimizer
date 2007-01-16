@@ -28,8 +28,10 @@
    to render the cursor, this is faster, it would be good to use a hardware
    cursor if it exists instead */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <string.h>
 
 #include <linux/fb.h>
 
@@ -63,6 +65,9 @@ void EraseCursor(void)
    int i;
 
    unsigned char *src = MouseBuffer;
+
+   if(!MouseVisible || CurrentCursor < 0 || CurrentCursor >= NUM_CURSORS)
+      return;
 
    for(i = 0; i<CURSOR_HEIGHT; i++) {
       memcpy(BackBuffer + off, src, stride);
@@ -108,7 +113,7 @@ void DrawCursor(void)
    unsigned char *c;
    const unsigned char *d;
 
-   if(CurrentCursor < 0 || CurrentCursor >= NUM_CURSORS)
+   if(!MouseVisible || CurrentCursor < 0 || CurrentCursor >= NUM_CURSORS)
       return;
 
    px = MouseX - CursorsXOffset[CurrentCursor];
@@ -210,10 +215,12 @@ void SwapCursor(void)
    int miny = MIN(py, LastMouseY);
    int sizey = abs(py - LastMouseY);
 
-   DrawCursor();
-   /* now update the portion of the screen that has changed */
+   if(MouseVisible)
+      DrawCursor();
 
-   if(DisplayMode & GLUT_DOUBLE && (sizex || sizey)) {
+   /* now update the portion of the screen that has changed, this is also
+      used to hide the mouse if MouseVisible is 0 */
+   if(DisplayMode & GLUT_DOUBLE && ((sizex || sizey) || !MouseVisible)) {
       int off, stride, i;
       if(minx < 0)
 	 minx = 0;
@@ -228,7 +235,7 @@ void SwapCursor(void)
 	 + minx * VarInfo.bits_per_pixel / 8;
       stride = (sizex + CURSOR_WIDTH) * VarInfo.bits_per_pixel / 8;
 
-      for(i = 0; i< sizey + CURSOR_HEIGHT; i++) {
+      for(i = 0; i < sizey + CURSOR_HEIGHT; i++) {
 	 memcpy(FrameBuffer+off, BackBuffer+off, stride);
 	 off += FixedInfo.line_length;
       }
@@ -258,11 +265,8 @@ void glutSetCursor(int cursor)
    if(cursor == GLUT_CURSOR_FULL_CROSSHAIR)
       cursor = GLUT_CURSOR_CROSSHAIR;
 
-   if(CurrentCursor >= 0 && CurrentCursor < NUM_CURSORS)
-      EraseCursor();
-
+   EraseCursor();
+   MouseVisible = 1;
    CurrentCursor = cursor;
-
-   MouseEnabled = 1;
    SwapCursor();
 }

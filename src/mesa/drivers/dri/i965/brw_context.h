@@ -478,7 +478,7 @@ struct brw_context
        */
       struct brw_state_pointers attribs;
       struct gl_vertex_program *vp;
-      struct gl_fragment_program *fp;
+      struct gl_fragment_program *fp, *fp_tex;
 
       struct gl_buffer_object *vbo;
 
@@ -486,6 +486,8 @@ struct brw_context
       struct intel_region *saved_depth_region;
 
       GLuint restore_draw_mask;
+      struct gl_fragment_program *restore_fp;
+      
       GLboolean active;
    } metaops;
 
@@ -496,8 +498,8 @@ struct brw_context
 
    /* Active vertex program: 
     */
-   struct gl_vertex_program *vertex_program;
-   struct gl_fragment_program *fragment_program;
+   const struct gl_vertex_program *vertex_program;
+   const struct gl_fragment_program *fragment_program;
 
 
    /* For populating the gtt:
@@ -590,6 +592,7 @@ struct brw_context
 
    struct {
       struct brw_wm_prog_data *prog_data;
+      struct brw_wm_compile *compile_data;
 
       /* Input sizes, calculated from active vertex program:
        */
@@ -665,6 +668,8 @@ void brw_destroy_state( struct brw_context *brw );
  */
 void brwUpdateTextureState( struct intel_context *intel );
 void brwInitTextureFuncs( struct dd_function_table *functions );
+void brw_FrameBufferTexInit( struct brw_context *brw );
+void brw_FrameBufferTexDestroy( struct brw_context *brw );
 
 /*======================================================================
  * brw_metaops.c

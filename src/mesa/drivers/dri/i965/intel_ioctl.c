@@ -43,6 +43,26 @@
 #include "drm.h"
 #include "bufmgr.h"
 
+static int intelWaitIdleLocked( struct intel_context *intel )
+{
+   static int in_wait_idle = 0;
+   unsigned int fence;
+
+   if (!in_wait_idle) {
+      if (INTEL_DEBUG & DEBUG_SYNC) {
+	 fprintf(stderr, "waiting for idle\n");
+      }
+
+      in_wait_idle = 1;
+      fence = bmSetFence(intel);
+      intelWaitIrq(intel, fence);
+      in_wait_idle = 0;
+
+      return bmTestFence(intel, fence);
+   } else {
+      return 1;
+   }
+}
 
 int intelEmitIrqLocked( struct intel_context *intel )
 {
@@ -75,7 +95,7 @@ void intelWaitIrq( struct intel_context *intel, int seq )
 {
    if (!intel->no_hw) {
       drmI830IrqWait iw;
-      int ret;
+      int ret, lastdispatch;
       
       if (0)
 	 fprintf(stderr, "%s %d\n", __FUNCTION__, seq );
@@ -83,11 +103,12 @@ void intelWaitIrq( struct intel_context *intel, int seq )
       iw.irq_seq = seq;
 	
       do {
+	 lastdispatch = intel->sarea->last_dispatch;
 	 ret = drmCommandWrite( intel->driFd, DRM_I830_IRQ_WAIT, &iw, sizeof(iw) );
 
 	 /* This seems quite often to return before it should!?! 
 	  */
-      } while (ret == -EAGAIN || ret == -EINTR || (ret == 0 && seq > intel->sarea->last_dispatch));
+      } while (ret == -EAGAIN || ret == -EINTR || (ret == -EBUSY && lastdispatch != intel->sarea->last_dispatch) || (ret == 0 && seq > intel->sarea->last_dispatch));
       
 
       if ( ret ) {
@@ -139,7 +160,11 @@ void intel_batch_ioctl( struct intel_context *intel,
 	 UNLOCK_HARDWARE(intel);
 	 exit(1);
       }
-   }      
+
+      if (INTEL_DEBUG & DEBUG_SYNC) {
+	intelWaitIdleLocked(intel);
+      }
+   }
 }
 
 void intel_cmd_ioctl( struct intel_context *intel, 
@@ -171,5 +196,9 @@ void intel_cmd_ioctl( struct intel_context *intel,
 	 UNLOCK_HARDWARE(intel);
 	 exit(1);
       }
-   }      
+
+      if (INTEL_DEBUG & DEBUG_SYNC) {
+	intelWaitIdleLocked(intel);
+      }
+   }
 }

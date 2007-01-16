@@ -1755,7 +1755,7 @@ tdfxCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
     for (i = 0; i < rows; i++) {
        MEMCPY(dest, data, srcRowStride);
        dest += destRowStride;
-       data = (GLvoid *)((GLuint)data + (GLuint)srcRowStride);
+       data = (GLvoid *)((intptr_t)data + (intptr_t)srcRowStride);
     }
 
     /* [dBorca] Hack alert:

@@ -835,10 +835,15 @@ static void GLAPIENTRY _save_OBE_DrawArrays(GLenum mode, GLint start, GLsizei co
    if (!_mesa_validate_DrawArrays( ctx, mode, start, count ))
       return;
 
+   _ae_map_vbos( ctx );
+
    vbo_save_NotifyBegin( ctx, mode | VBO_SAVE_PRIM_WEAK );
+
    for (i = 0; i < count; i++)
        CALL_ArrayElement(GET_DISPATCH(), (start + i));
    CALL_End(GET_DISPATCH(), ());
+
+   _ae_unmap_vbos( ctx );
 }
 
 /* Could do better by copying the arrays and element list intact and
@@ -852,6 +857,8 @@ static void GLAPIENTRY _save_OBE_DrawElements(GLenum mode, GLsizei count, GLenum
 
    if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices ))
       return;
+
+   _ae_map_vbos( ctx );
 
    vbo_save_NotifyBegin( ctx, mode | VBO_SAVE_PRIM_WEAK );
 
@@ -874,6 +881,8 @@ static void GLAPIENTRY _save_OBE_DrawElements(GLenum mode, GLsizei count, GLenum
    }
 
    CALL_End(GET_DISPATCH(), ());
+
+   _ae_unmap_vbos( ctx );
 }
 
 static void GLAPIENTRY _save_OBE_DrawRangeElements(GLenum mode,
@@ -1095,7 +1104,7 @@ static void _save_current_init( GLcontext *ctx )
       save->current[i] = ctx->ListState.CurrentAttrib[j];
    }
 
-   for (i = VBO_ATTRIB_FIRST_MATERIAL; i <= VBO_ATTRIB_MAT_FRONT_AMBIENT; i++) {
+   for (i = VBO_ATTRIB_FIRST_MATERIAL; i <= VBO_ATTRIB_LAST_MATERIAL; i++) {
       const GLuint j = i - VBO_ATTRIB_FIRST_MATERIAL;
       ASSERT(j < MAT_ATTRIB_MAX);
       save->currentsz[i] = &ctx->ListState.ActiveMaterialSize[j];

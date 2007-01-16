@@ -242,7 +242,6 @@ void intelInitDriverFunctions( struct dd_function_table *functions )
    functions->Clear = intelClear;
    functions->Flush = intelglFlush;
    functions->Finish = intelFinish;
-   functions->GetBufferSize = NULL; /* OBSOLETE */
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
 

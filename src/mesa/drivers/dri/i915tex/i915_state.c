@@ -144,7 +144,7 @@ i915EvalLogicOpBlendState(GLcontext * ctx)
 
    I915_STATECHANGE(i915, I915_UPLOAD_CTX);
 
-   if (ctx->Color._LogicOpEnabled) {
+   if (RGBA_LOGICOP_ENABLED(ctx)) {
       i915->state.Ctx[I915_CTXREG_LIS5] |= S5_LOGICOP_ENABLE;
       i915->state.Ctx[I915_CTXREG_LIS6] &= ~S6_CBUF_BLEND_ENABLE;
    }
@@ -520,7 +520,6 @@ update_specular(GLcontext * ctx)
    /* A hack to trigger the rebuild of the fragment program.
     */
    intel_context(ctx)->NewGLState |= _NEW_TEXTURE;
-   I915_CONTEXT(ctx)->tex_program.translated = 0;
 }
 
 static void

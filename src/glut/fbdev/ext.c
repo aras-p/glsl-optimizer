@@ -24,6 +24,8 @@
  * Written by Sean D'Epagnier (c) 2006
  */
 
+#include <stdio.h>
+
 #include <GL/gl.h>
 #include <GL/glut.h>
 

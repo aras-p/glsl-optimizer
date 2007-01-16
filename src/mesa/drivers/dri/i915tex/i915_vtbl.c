@@ -314,6 +314,7 @@ i915_emit_state(struct intel_context *intel)
    if (dirty & I915_UPLOAD_CTX) {
       if (INTEL_DEBUG & DEBUG_STATE)
          fprintf(stderr, "I915_UPLOAD_CTX:\n");
+
       emit(intel, state->Ctx, sizeof(state->Ctx));
    }
 

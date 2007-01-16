@@ -305,7 +305,7 @@ mach64CreateScreen( __DRIscreenPrivate *sPriv )
       mach64Screen->texSize[MACH64_AGP_HEAP] = 0;
       mach64Screen->logTexGranularity[MACH64_AGP_HEAP] = 0;
    } else {
-      if (mach64Screen->texSize[MACH64_CARD_HEAP] > 0) {
+      if (serverInfo->textureSize > 0) {
 	 mach64Screen->numTexHeaps = MACH64_NR_TEX_HEAPS;
 	 mach64Screen->firstTexHeap = MACH64_CARD_HEAP;
       } else {

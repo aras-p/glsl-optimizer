@@ -400,40 +400,12 @@ meta_import_pixel_state(struct intel_context *intel)
  */
 static void
 meta_draw_region(struct intel_context *intel,
-                 struct intel_region *draw_region,
+                 struct intel_region *color_region,
                  struct intel_region *depth_region)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
-   GLuint format;
-   GLuint depth_format = DEPTH_FRMT_16_FIXED;
 
-   intel_region_release(&i830->meta.draw_region);
-   intel_region_reference(&i830->meta.draw_region, draw_region);
-
-   intel_region_release(&i830->meta.depth_region);
-   intel_region_reference(&i830->meta.depth_region, depth_region);
-
-   /* XXX FBO: grab code from i915 meta_draw_region */
-
-   /* XXX: 555 support?
-    */
-   if (draw_region->cpp == 2)
-      format = DV_PF_565;
-   else
-      format = DV_PF_8888;
-
-   if (depth_region) {
-      if (depth_region->cpp == 2)
-         depth_format = DEPTH_FRMT_16_FIXED;
-      else
-         depth_format = DEPTH_FRMT_24_FIXED_8_OTHER;
-   }
-
-   i830->meta.Buffer[I830_DESTREG_DV1] = (DSTORG_HORT_BIAS(0x8) |       /* .5 */
-                                          DSTORG_VERT_BIAS(0x8) |       /* .5 */
-                                          format | DEPTH_IS_Z | depth_format);
-
-   i830->meta.emitted &= ~I830_UPLOAD_BUFFERS;
+   i830_state_draw_region(intel, &i830->meta, color_region, depth_region);
 }
 
 

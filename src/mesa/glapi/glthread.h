@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.2
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -62,6 +62,12 @@
 
 #ifndef GLTHREAD_H
 #define GLTHREAD_H
+
+
+#if defined(USE_MGL_NAMESPACE)
+#define _glapi_Dispatch _mglapi_Dispatch
+#endif
+
 
 
 #if (defined(PTHREADS) || defined(SOLARIS_THREADS) ||\

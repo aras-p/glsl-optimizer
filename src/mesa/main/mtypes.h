@@ -2402,6 +2402,7 @@ struct gl_extensions
    GLboolean ARB_point_sprite;
    GLboolean ARB_shader_objects;
    GLboolean ARB_shading_language_100;
+   GLboolean ARB_shading_language_120;
    GLboolean ARB_shadow;
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_compression;

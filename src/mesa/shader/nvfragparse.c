@@ -1041,7 +1041,7 @@ Parse_VectorSrc(struct parse_state *parseState,
       GLuint paramIndex;
       if (!Parse_ScalarConstant(parseState, values))
          RETURN_ERROR;
-      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values);
+      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values, 4);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;
    }
@@ -1052,7 +1052,7 @@ Parse_VectorSrc(struct parse_state *parseState,
       (void) Parse_String(parseState, "{");
       if (!Parse_VectorConstant(parseState, values))
          RETURN_ERROR;
-      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values);
+      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values, 4);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;      
    }
@@ -1142,7 +1142,7 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
       (void) Parse_String(parseState, "{");
       if (!Parse_VectorConstant(parseState, values))
          RETURN_ERROR;
-      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values);
+      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values, 4);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;      
    }
@@ -1166,7 +1166,7 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
       GLuint paramIndex;
       if (!Parse_ScalarConstant(parseState, values))
          RETURN_ERROR;
-      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values);
+      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values, 4);
       srcReg->Index = paramIndex;      
       srcReg->File = PROGRAM_NAMED_PARAM;
       needSuffix = GL_FALSE;

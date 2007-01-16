@@ -24,6 +24,7 @@
  * Written by Sean D'Epagnier (c) 2006
  */
 
+#include <string.h>
 #include <sys/time.h>
 
 #include <linux/fb.h>

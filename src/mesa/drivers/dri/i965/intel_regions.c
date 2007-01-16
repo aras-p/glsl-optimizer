@@ -269,7 +269,8 @@ void intel_region_copy( struct intel_context *intel,
 		     dst->pitch, dst->buffer, dst_offset, dst->tiled,
 		     srcx, srcy,
 		     dstx, dsty,
-		     width, height);
+		     width, height,
+		     GL_COPY );
 }
 
 /* Fill a rectangular sub-region.  Need better logic about when to

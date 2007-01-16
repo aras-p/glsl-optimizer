@@ -49,7 +49,8 @@ extern void intelEmitCopyBlit( struct intel_context *intel,
 			       GLboolean dst_tiled,
 			       GLshort srcx, GLshort srcy,
 			       GLshort dstx, GLshort dsty,
-			       GLshort w, GLshort h );
+			       GLshort w, GLshort h,
+			       GLenum logic_op );
 
 extern void intelEmitFillBlit( struct intel_context *intel,
 			       GLuint cpp,

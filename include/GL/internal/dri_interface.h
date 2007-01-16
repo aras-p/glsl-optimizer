@@ -237,6 +237,26 @@ struct __DRIinterfaceMethodsRec {
     GLboolean (*getMSCRate)(__DRInativeDisplay * dpy, __DRIid drawable,
         int32_t * numerator, int32_t * denominator);
     /*@}*/
+
+    /**
+     * Reports areas of the given drawable which have been modified by the
+     * driver.
+     *
+     * \param drawable which the drawing was done to.
+     * \param rects rectangles affected, with the drawable origin as the
+     *	      origin.
+     * \param x X offset of the drawable within the screen (used in the
+     *	      front_buffer case)
+     * \param y Y offset of the drawable within the screen.
+     * \param front_buffer boolean flag for whether the drawing to the
+     * 	      drawable was actually done directly to the front buffer (instead
+     *	      of backing storage, for example)
+     */
+    void (*reportDamage)(__DRInativeDisplay * dpy, int screen,
+			 __DRIid drawable,
+			 int x, int y,
+			 drm_clip_rect_t *rects, int num_rects,
+			 int front_buffer);
 };
 
    

@@ -53,6 +53,11 @@ typedef struct {
    AEarray arrays[32];
    AEattrib attribs[VERT_ATTRIB_MAX + 1];
    GLuint NewState;
+
+   struct gl_buffer_object *vbo[VERT_ATTRIB_MAX];
+   GLuint nr_vbos;
+   GLboolean mapped_vbos;
+
 } AEcontext;
 
 #define AE_CONTEXT(ctx) ((AEcontext *)(ctx)->aelt_context)
@@ -1046,7 +1051,7 @@ GLboolean _ae_create_context( GLcontext *ctx )
    FogCoordFuncs[6] = _gloffset_FogCoordfvEXT;
    FogCoordFuncs[7] = _gloffset_FogCoorddvEXT;
 
-   ctx->aelt_context = MALLOC( sizeof(AEcontext) );
+   ctx->aelt_context = CALLOC( sizeof(AEcontext) );
    if (!ctx->aelt_context)
       return GL_FALSE;
 
@@ -1060,6 +1065,19 @@ void _ae_destroy_context( GLcontext *ctx )
    if ( AE_CONTEXT( ctx ) ) {
       FREE( ctx->aelt_context );
       ctx->aelt_context = NULL;
+   }
+}
+
+static void check_vbo( AEcontext *actx,
+		       struct gl_buffer_object *vbo )
+{
+   if (vbo->Name && !vbo->Pointer) {
+      GLuint i;
+      for (i = 0; i < actx->nr_vbos; i++)
+	 if (actx->vbo[i] == vbo)
+	    return;
+      assert(actx->nr_vbos < VERT_ATTRIB_MAX);
+      actx->vbo[actx->nr_vbos++] = vbo;
    }
 }
 
@@ -1077,35 +1095,43 @@ static void _ae_update_state( GLcontext *ctx )
    AEattrib *at = actx->attribs;
    GLuint i;
 
+   actx->nr_vbos = 0;
+
    /* conventional vertex arrays */
   if (ctx->Array.ArrayObj->Index.Enabled) {
       aa->array = &ctx->Array.ArrayObj->Index;
       aa->offset = IndexFuncs[TYPE_IDX(aa->array->Type)];
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    if (ctx->Array.ArrayObj->EdgeFlag.Enabled) {
       aa->array = &ctx->Array.ArrayObj->EdgeFlag;
       aa->offset = _gloffset_EdgeFlagv;
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    if (ctx->Array.ArrayObj->Normal.Enabled) {
       aa->array = &ctx->Array.ArrayObj->Normal;
       aa->offset = NormalFuncs[TYPE_IDX(aa->array->Type)];
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    if (ctx->Array.ArrayObj->Color.Enabled) {
       aa->array = &ctx->Array.ArrayObj->Color;
       aa->offset = ColorFuncs[aa->array->Size-3][TYPE_IDX(aa->array->Type)];
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    if (ctx->Array.ArrayObj->SecondaryColor.Enabled) {
       aa->array = &ctx->Array.ArrayObj->SecondaryColor;
       aa->offset = SecondaryColorFuncs[TYPE_IDX(aa->array->Type)];
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    if (ctx->Array.ArrayObj->FogCoord.Enabled) {
       aa->array = &ctx->Array.ArrayObj->FogCoord;
       aa->offset = FogCoordFuncs[TYPE_IDX(aa->array->Type)];
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
@@ -1120,11 +1146,12 @@ static void _ae_update_state( GLcontext *ctx )
                                  [at->array->Size-1]
                                  [TYPE_IDX(at->array->Type)];
          at->index = VERT_ATTRIB_TEX0 + i;
+	 check_vbo(actx, at->array->BufferObj);
          at++;
       }
    }
 
-   /* generic vertex attribute arrays */
+   /* generic vertex attribute arrays */   
    for (i = 1; i < VERT_ATTRIB_MAX; i++) {  /* skip zero! */
       struct gl_client_array *attribArray = &ctx->Array.ArrayObj->VertexAttrib[i];
       if (attribArray->Enabled) {
@@ -1146,6 +1173,7 @@ static void _ae_update_state( GLcontext *ctx )
                                      [TYPE_IDX(at->array->Type)];
          }
          at->index = i;
+	 check_vbo(actx, at->array->BufferObj);
          at++;
       }
    }
@@ -1158,13 +1186,17 @@ static void _ae_update_state( GLcontext *ctx )
       aa->array = &ctx->Array.ArrayObj->VertexAttrib[0];
       assert(aa->array->Size >= 2); /* XXX fix someday? */
       aa->offset = VertexFuncs[aa->array->Size-2][TYPE_IDX(aa->array->Type)];
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    else if (ctx->Array.ArrayObj->Vertex.Enabled) {
       aa->array = &ctx->Array.ArrayObj->Vertex;
       aa->offset = VertexFuncs[aa->array->Size-2][TYPE_IDX(aa->array->Type)];
+      check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
+
+   check_vbo(actx, ctx->Array.ElementArrayBufferObj);
 
    ASSERT(at - actx->attribs <= VERT_ATTRIB_MAX);
    ASSERT(aa - actx->arrays < 32);
@@ -1172,6 +1204,45 @@ static void _ae_update_state( GLcontext *ctx )
    aa->offset = -1;  /* terminate the list */
 
    actx->NewState = 0;
+}
+
+void _ae_map_vbos( GLcontext *ctx )
+{
+   AEcontext *actx = AE_CONTEXT(ctx);
+   GLuint i;
+   
+   if (actx->mapped_vbos)
+      return;
+
+   if (actx->NewState)
+      _ae_update_state(ctx);
+
+   for (i = 0; i < actx->nr_vbos; i++)
+      ctx->Driver.MapBuffer(ctx,
+			    GL_ARRAY_BUFFER_ARB,
+			    GL_DYNAMIC_DRAW_ARB,
+			    actx->vbo[i]);
+
+   if (actx->nr_vbos)
+      actx->mapped_vbos = GL_TRUE;
+}
+
+void _ae_unmap_vbos( GLcontext *ctx )
+{
+   AEcontext *actx = AE_CONTEXT(ctx);
+   GLuint i;
+
+   if (!actx->mapped_vbos)
+      return;
+
+   assert (!actx->NewState);
+
+   for (i = 0; i < actx->nr_vbos; i++)
+      ctx->Driver.UnmapBuffer(ctx,
+			      GL_ARRAY_BUFFER_ARB,
+			      actx->vbo[i]);
+
+   actx->mapped_vbos = GL_FALSE;
 }
 
 
@@ -1188,15 +1259,24 @@ void GLAPIENTRY _ae_loopback_array_elt( GLint elt )
    const AEarray *aa;
    const AEattrib *at;
    const struct _glapi_table * const disp = GET_DISPATCH();
+   GLboolean do_map;
 
-
-   if (actx->NewState)
+   if (actx->NewState) {
+      assert(!actx->mapped_vbos);
       _ae_update_state( ctx );
+   }
 
+   do_map = actx->nr_vbos && !actx->mapped_vbos;
+
+   /* 
+    */
+   if (do_map)
+      _ae_map_vbos(ctx);
+   
    /* generic attributes */
    for (at = actx->attribs; at->func; at++) {
       const GLubyte *src
-         = ADD_POINTERS(at->array->BufferObj->Data, at->array->Ptr)
+         = ADD_POINTERS(at->array->BufferObj->Pointer, at->array->Ptr)
          + elt * at->array->StrideB;
       at->func( at->index, src );
    }
@@ -1204,15 +1284,34 @@ void GLAPIENTRY _ae_loopback_array_elt( GLint elt )
    /* conventional arrays */
    for (aa = actx->arrays; aa->offset != -1 ; aa++) {
       const GLubyte *src
-         = ADD_POINTERS(aa->array->BufferObj->Data, aa->array->Ptr)
+         = ADD_POINTERS(aa->array->BufferObj->Pointer, aa->array->Ptr)
          + elt * aa->array->StrideB;
       CALL_by_offset( disp, (array_func), aa->offset, 
 		      ((const void *) src) );
    }
+
+   if (do_map)
+      _ae_unmap_vbos(ctx);
 }
 
 
 void _ae_invalidate_state( GLcontext *ctx, GLuint new_state )
 {
-   AE_CONTEXT(ctx)->NewState |= new_state;
+   AEcontext *actx = AE_CONTEXT(ctx);
+
+   
+   /* Only interested in this subset of mesa state.  Need to prune
+    * this down as both tnl/ and the drivers can raise statechanges
+    * for arcane reasons in the middle of seemingly atomic operations
+    * like DrawElements, over which we'd like to keep a known set of
+    * arrays and vbo's mapped.  
+    *
+    * Luckily, neither the drivers nor tnl muck with the state that
+    * concerns us here:
+    */
+   new_state &= _NEW_ARRAY | _NEW_PROGRAM;
+   if (new_state) {
+      assert(!actx->mapped_vbos);
+      actx->NewState |= new_state;
+   }
 }

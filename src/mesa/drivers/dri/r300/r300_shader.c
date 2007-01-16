@@ -12,13 +12,13 @@ r300BindProgram(GLcontext *ctx, GLenum target, struct gl_program *prog)
 {
 	
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct r300_vertex_program *vp=(void *)prog;
+	struct r300_vertex_program_cont *vp=(void *)prog;
 	
 	
 	switch(target){
 		case GL_VERTEX_PROGRAM_ARB:
-		rmesa->curr_vp = (struct gl_vertex_program *)vp;
-		vp->ref_count++;
+		//rmesa->curr_vp = (struct gl_vertex_program *)vp;
+		//vp->ref_count++;
 #if 0
 		if((vp->ref_count % 1500) == 0) {
 			fprintf(stderr, "id %p, ref_count %d\n", vp, vp->ref_count);
@@ -37,13 +37,13 @@ r300BindProgram(GLcontext *ctx, GLenum target, struct gl_program *prog)
 static struct gl_program *
 r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 {
-	struct r300_vertex_program *vp;
+	struct r300_vertex_program_cont *vp;
 	struct r300_fragment_program *fp;
 	
 	switch(target){
 		case GL_VERTEX_STATE_PROGRAM_NV:
 		case GL_VERTEX_PROGRAM_ARB:
-			vp=CALLOC_STRUCT(r300_vertex_program);
+			vp=CALLOC_STRUCT(r300_vertex_program_cont);
 			return _mesa_init_vertex_program(ctx, &vp->mesa_program, target, id);
 		case GL_FRAGMENT_PROGRAM_ARB:
 			fp=CALLOC_STRUCT(r300_fragment_program);
@@ -77,13 +77,14 @@ r300DeleteProgram(GLcontext *ctx, struct gl_program *prog)
 static void
 r300ProgramStringNotify(GLcontext *ctx, GLenum target, struct gl_program *prog)
 {
-	struct r300_vertex_program *vp=(void *)prog;
+	struct r300_vertex_program_cont *vp=(void *)prog;
 	struct r300_fragment_program *fp = (struct r300_fragment_program *) prog;
 	
 	switch(target) {
 	case GL_VERTEX_PROGRAM_ARB:
-		vp->translated = GL_FALSE;
-		memset(&vp->translated, 0, sizeof(struct r300_vertex_program) - sizeof(struct gl_vertex_program));
+		vp->progs = NULL;
+		/*vp->translated = GL_FALSE;
+		memset(&vp->translated, 0, sizeof(struct r300_vertex_program) - sizeof(struct gl_vertex_program));*/
 		/*r300_translate_vertex_shader(vp);*/
 	break;
 	case GL_FRAGMENT_PROGRAM_ARB:

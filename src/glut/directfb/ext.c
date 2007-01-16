@@ -156,6 +156,13 @@ glutGetProcAddress( const char *name )
                return glut_functions[i].address;
      }
 
+#if DIRECTFBGL_INTERFACE_VERSION >= 1
+     if (g_current) {
+          void *address = NULL;
+          g_current->gl->GetProcAddress( g_current->gl, name, &address );
+          return address;
+     }
+#endif
      return NULL;
 }
 

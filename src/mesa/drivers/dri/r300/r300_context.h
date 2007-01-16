@@ -552,6 +552,7 @@ struct r300_stencilbuffer_state {
 /* Can be tested with colormat currently. */
 #define VSF_MAX_FRAGMENT_TEMPS (14)
 
+#define STATE_R300_WINDOW_DIMENSION (STATE_INTERNAL_DRIVER+0)
 
 struct r300_vertex_shader_fragment {
 	int length;
@@ -595,7 +596,8 @@ struct r300_vertex_shader_state {
 	
 extern int hw_tcl_on;
 
-#define CURRENT_VERTEX_SHADER(ctx) (ctx->VertexProgram._Current)
+//#define CURRENT_VERTEX_SHADER(ctx) (ctx->VertexProgram._Current)
+#define CURRENT_VERTEX_SHADER(ctx) (R300_CONTEXT(ctx)->selected_vp)
 
 /* Should but doesnt work */
 //#define CURRENT_VERTEX_SHADER(ctx) (R300_CONTEXT(ctx)->curr_vp)
@@ -610,20 +612,33 @@ extern int hw_tcl_on;
 /* r300_vertex_shader_state and r300_vertex_program should probably be merged together someday.
  * Keeping them them seperate for now should ensure fixed pipeline keeps functioning properly.
  */	
+
+struct r300_vertex_program_key {
+	GLuint InputsRead;
+	GLuint OutputsWritten;
+};
+
 struct r300_vertex_program {
-	struct gl_vertex_program mesa_program; /* Must be first */
+	struct r300_vertex_program *next;
+	struct r300_vertex_program_key key;
 	int translated;
 	
 	struct r300_vertex_shader_fragment program;
-	struct r300_vertex_shader_fragment params;
 	
 	int pos_end;
 	int num_temporaries; /* Number of temp vars used by program */
+	int wpos_idx;
 	int inputs[VERT_ATTRIB_MAX];
 	int outputs[VERT_RESULT_MAX];
 	int native;
 	int ref_count;
 	int use_ref_count;
+};
+
+struct r300_vertex_program_cont {
+	struct gl_vertex_program mesa_program; /* Must be first */
+	struct r300_vertex_shader_fragment params;
+	struct r300_vertex_program *progs;
 };
 
 #define PFS_MAX_ALU_INST	64
@@ -800,6 +815,7 @@ struct r300_context {
 	struct r300_cmdbuf cmdbuf;
 	struct r300_state state;
 	struct gl_vertex_program *curr_vp;
+	struct r300_vertex_program *selected_vp;
 
 	/* Vertex buffers
 	 */
@@ -857,9 +873,9 @@ extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 
 extern int r300_get_num_verts(r300ContextPtr rmesa, int num_verts, int prim);
 
-void r300_translate_vertex_shader(struct r300_vertex_program *vp);
+extern void r300_select_vertex_shader(r300ContextPtr r300);
 extern void r300InitShaderFuncs(struct dd_function_table *functions);
-extern int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp, float *dst);
+extern int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program_cont *vp, float *dst);
 extern int r300Fallback(GLcontext *ctx);
 
 extern void radeon_vb_to_rvb(r300ContextPtr rmesa, struct radeon_vertex_buffer *rvb, struct vertex_buffer *vb);

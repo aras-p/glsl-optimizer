@@ -173,7 +173,7 @@ static void begin( struct copy_context *copy, GLenum mode, GLboolean begin_flag 
 {
    struct _mesa_prim *prim = &copy->dstprim[copy->dstprim_nr];
 
-   _mesa_printf("begin %s (%d)\n", _mesa_lookup_enum_by_nr(mode), begin_flag);
+/*    _mesa_printf("begin %s (%d)\n", _mesa_lookup_enum_by_nr(mode), begin_flag); */
 		
    prim->mode = mode;
    prim->begin = begin_flag;
@@ -188,7 +188,7 @@ static GLuint elt(struct copy_context *copy, GLuint elt_idx)
    GLuint elt = copy->srcelt[elt_idx];
    GLuint slot = elt & (ELT_TABLE_SIZE-1);
 
-   _mesa_printf("elt %d\n", elt);
+/*    _mesa_printf("elt %d\n", elt); */
 
    /* Look up the incoming element in the vertex cache.  Re-emit if
     * necessary.   
@@ -197,7 +197,7 @@ static GLuint elt(struct copy_context *copy, GLuint elt_idx)
       GLubyte *csr = copy->dstptr;
       GLuint i;
 
-      _mesa_printf("  --> emit to dstelt %d\n", copy->dstbuf_nr);
+/*       _mesa_printf("  --> emit to dstelt %d\n", copy->dstbuf_nr); */
 
       for (i = 0; i < copy->nr_varying; i++) {
 	 const struct gl_client_array *srcarray = copy->varying[i].array;
@@ -206,6 +206,7 @@ static GLuint elt(struct copy_context *copy, GLuint elt_idx)
 	 memcpy(csr, srcptr, copy->varying[i].size);
 	 csr += copy->varying[i].size;
 
+	 if (0) 
 	 {
 	    const GLuint *f = (const GLuint *)srcptr;
 	    GLuint j;
@@ -226,10 +227,10 @@ static GLuint elt(struct copy_context *copy, GLuint elt_idx)
 				    copy->dstbuf_nr * 
 				    copy->vertex_size));
    }
-   else
-      _mesa_printf("  --> reuse vertex\n");
+/*    else */
+/*       _mesa_printf("  --> reuse vertex\n"); */
    
-   _mesa_printf("  --> emit %d\n", copy->vert_cache[slot].out);
+/*    _mesa_printf("  --> emit %d\n", copy->vert_cache[slot].out); */
    copy->dstelt[copy->dstelt_nr++] = copy->vert_cache[slot].out;
    return check_flush(copy);
 }
@@ -238,7 +239,7 @@ static void end( struct copy_context *copy, GLboolean end_flag )
 {
    struct _mesa_prim *prim = &copy->dstprim[copy->dstprim_nr];
 
-   _mesa_printf("end (%d)\n", end_flag);
+/*    _mesa_printf("end (%d)\n", end_flag); */
 
    prim->end = end_flag;
    prim->count = copy->dstelt_nr - prim->start;

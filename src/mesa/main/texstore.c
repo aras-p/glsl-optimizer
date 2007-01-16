@@ -699,6 +699,7 @@ swizzle_copy(GLubyte *dst, GLuint dstComponents, const GLubyte *src,
       }
       break;
    case 1:
+      /* XXX investigate valgrind invalid read when running demos/texenv.c */
       for (i = 0; i < count; i++) {
  	 COPY_4UBV(tmp, src); 
 	 src += srcComponents;      
@@ -807,7 +808,8 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
 
 /*    _mesa_printf("map %d %d %d %d\n", map[0], map[1], map[2], map[3]);  */
 
-   if (srcRowStride == srcWidth * srcComponents &&
+   if (srcRowStride == dstRowStride &&
+       srcRowStride == srcWidth * srcComponents &&
        dimensions < 3) {
       /* 1 and 2D images only */
       GLubyte *dstImage = (GLubyte *) dstAddr

@@ -25,6 +25,7 @@ PROGS = \
 	fire \
 	fogcoord \
 	fplight \
+	fslight \
 	gamma \
 	gearbox \
 	gears \

@@ -73,11 +73,11 @@ _mesa_free_texmemory(void *m)
 #if 0
 static void PrintTexture(GLcontext *ctx, const struct gl_texture_image *img)
 {
-#if CHAN_TYPE == GL_FLOAT
-   _mesa_problem(NULL, "PrintTexture doesn't support float channels");
+#if CHAN_TYPE != GL_UNSIGNED_BYTE
+   _mesa_problem(NULL, "PrintTexture not supported");
 #else
    GLuint i, j, c;
-   const GLchan *data = (const GLchan *) img->Data;
+   const GLubyte *data = (const GLubyte *) img->Data;
 
    if (!data) {
       _mesa_printf("No texture data\n");

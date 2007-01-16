@@ -69,7 +69,7 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
    GLuint height = intelImage->base.Height;
    GLuint depth = intelImage->base.Depth;
    GLuint l2width, l2height, l2depth;
-   GLuint i;
+   GLuint i, comp_byte = 0;
 
    DBG("%s\n", __FUNCTION__);
 
@@ -121,6 +121,8 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
    }
 
    assert(!intelObj->mt);
+   if (intelImage->base.IsCompressed)
+      comp_byte = intel_compressed_num_bytes(intelImage->base.TexFormat->MesaFormat);
    intelObj->mt = intel_miptree_create(intel,
                                        intelObj->base.Target,
                                        intelImage->base.InternalFormat,
@@ -130,7 +132,7 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
                                        height,
                                        depth,
                                        intelImage->base.TexFormat->TexelBytes,
-                                       intelImage->base.IsCompressed);
+                                       comp_byte);
 
    DBG("%s - success\n", __FUNCTION__);
 }
@@ -230,7 +232,8 @@ try_pbo_upload(struct intel_context *intel,
                         intelImage->mt->cpp,
                         src_stride, src_buffer, src_offset,
                         dst_stride, dst_buffer, dst_offset,
-                        0, 0, 0, 0, width, height);
+                        0, 0, 0, 0, width, height,
+			GL_COPY);
 
       intel_batchbuffer_flush(intel->batch);
    }
@@ -298,7 +301,7 @@ intelTexImage(GLcontext * ctx,
               GLenum format, GLenum type, const void *pixels,
               const struct gl_pixelstore_attrib *unpack,
               struct gl_texture_object *texObj,
-              struct gl_texture_image *texImage)
+              struct gl_texture_image *texImage, GLsizei imageSize, int compressed)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_object *intelObj = intel_texture_object(texObj);
@@ -346,16 +349,25 @@ intelTexImage(GLcontext * ctx,
       break;
    }
 
-   texelBytes = texImage->TexFormat->TexelBytes;
-
-
-   /* Minimum pitch of 32 bytes */
-   if (postConvWidth * texelBytes < 32) {
-      postConvWidth = 32 / texelBytes;
-      texImage->RowStride = postConvWidth;
+   if (texImage->TexFormat->TexelBytes == 0) {
+      /* must be a compressed format */
+      texelBytes = 0;
+      texImage->IsCompressed = GL_TRUE;
+      texImage->CompressedSize =
+	 ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
+					   texImage->Height, texImage->Depth,
+					   texImage->TexFormat->MesaFormat);
+   } else {
+      texelBytes = texImage->TexFormat->TexelBytes;
+      
+      /* Minimum pitch of 32 bytes */
+      if (postConvWidth * texelBytes < 32) {
+	 postConvWidth = 32 / texelBytes;
+	 texImage->RowStride = postConvWidth;
+      }
+      
+      assert(texImage->RowStride == postConvWidth);
    }
-
-   assert(texImage->RowStride == postConvWidth);
 
    /* Release the reference to a potentially orphaned buffer.   
     * Release any old malloced memory.
@@ -453,9 +465,15 @@ intelTexImage(GLcontext * ctx,
     * the expectation that the mipmap tree will be set up but nothing
     * more will be done.  This is where those calls return:
     */
-   pixels = _mesa_validate_pbo_teximage(ctx, dims, width, height, 1,
-                                        format, type,
-                                        pixels, unpack, "glTexImage");
+   if (compressed) {
+      pixels = _mesa_validate_pbo_compressed_teximage(ctx, imageSize, pixels,
+						      unpack,
+						      "glCompressedTexImage");
+   } else {
+      pixels = _mesa_validate_pbo_teximage(ctx, dims, width, height, 1,
+					   format, type,
+					   pixels, unpack, "glTexImage");
+   }
    if (!pixels)
       return;
 
@@ -478,7 +496,7 @@ intelTexImage(GLcontext * ctx,
       if (texImage->IsCompressed) {
          sizeInBytes = texImage->CompressedSize;
          dstRowStride =
-            _mesa_compressed_row_stride(texImage->InternalFormat, width);
+            _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
          assert(dims != 3);
       }
       else {
@@ -497,14 +515,16 @@ intelTexImage(GLcontext * ctx,
     * the blitter to copy.  Or, use the hardware to do the format
     * conversion and copy:
     */
-   if (!texImage->TexFormat->StoreImage(ctx, dims, 
-					texImage->_BaseFormat, 
-					texImage->TexFormat, 
-					texImage->Data, 0, 0, 0, /* dstX/Y/Zoffset */
-                                        dstRowStride,
-                                        texImage->ImageOffsets,
-                                        width, height, depth,
-                                        format, type, pixels, unpack)) {
+   if (compressed) {
+     memcpy(texImage->Data, pixels, imageSize);
+   } else if (!texImage->TexFormat->StoreImage(ctx, dims, 
+					       texImage->_BaseFormat, 
+					       texImage->TexFormat, 
+					       texImage->Data, 0, 0, 0, /* dstX/Y/Zoffset */
+					       dstRowStride,
+					       texImage->ImageOffsets,
+					       width, height, depth,
+					       format, type, pixels, unpack)) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
    }
 
@@ -541,7 +561,7 @@ intelTexImage3D(GLcontext * ctx,
 {
    intelTexImage(ctx, 3, target, level,
                  internalFormat, width, height, depth, border,
-                 format, type, pixels, unpack, texObj, texImage);
+                 format, type, pixels, unpack, texObj, texImage, 0, 0);
 }
 
 
@@ -557,7 +577,7 @@ intelTexImage2D(GLcontext * ctx,
 {
    intelTexImage(ctx, 2, target, level,
                  internalFormat, width, height, 1, border,
-                 format, type, pixels, unpack, texObj, texImage);
+                 format, type, pixels, unpack, texObj, texImage, 0, 0);
 }
 
 void
@@ -572,20 +592,30 @@ intelTexImage1D(GLcontext * ctx,
 {
    intelTexImage(ctx, 1, target, level,
                  internalFormat, width, 1, 1, border,
-                 format, type, pixels, unpack, texObj, texImage);
+                 format, type, pixels, unpack, texObj, texImage, 0, 0);
 }
 
-
+void intelCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
+				GLint internalFormat,
+				GLint width, GLint height, GLint border,
+				GLsizei imageSize, const GLvoid *data,
+				struct gl_texture_object *texObj,
+				struct gl_texture_image *texImage )
+{
+   intelTexImage(ctx, 2, target, level,
+		 internalFormat, width, height, 1, border,
+		 0, 0, data, &ctx->Unpack, texObj, texImage, imageSize, 1);
+}
 
 /**
  * Need to map texture image into memory before copying image data,
  * then unmap it.
  */
-void
-intelGetTexImage(GLcontext * ctx, GLenum target, GLint level,
-                 GLenum format, GLenum type, GLvoid * pixels,
-                 struct gl_texture_object *texObj,
-                 struct gl_texture_image *texImage)
+static void
+intel_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
+		    GLenum format, GLenum type, GLvoid * pixels,
+		    struct gl_texture_object *texObj,
+		    struct gl_texture_image *texImage, int compressed)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
@@ -615,12 +645,42 @@ intelGetTexImage(GLcontext * ctx, GLenum target, GLint level,
       assert(intelImage->base.Data);
    }
 
-   _mesa_get_teximage(ctx, target, level, format, type, pixels,
-                      texObj, texImage);
+
+   if (compressed) {
+      _mesa_get_compressed_teximage(ctx, target, level, pixels,
+				    texObj, texImage);
+   } else {
+      _mesa_get_teximage(ctx, target, level, format, type, pixels,
+			 texObj, texImage);
+   }
+     
 
    /* Unmap */
    if (intelImage->mt) {
       intel_miptree_image_unmap(intel, intelImage->mt);
       intelImage->base.Data = NULL;
    }
+}
+
+void
+intelGetTexImage(GLcontext * ctx, GLenum target, GLint level,
+                 GLenum format, GLenum type, GLvoid * pixels,
+                 struct gl_texture_object *texObj,
+                 struct gl_texture_image *texImage)
+{
+   intel_get_tex_image(ctx, target, level, format, type, pixels,
+		       texObj, texImage, 0);
+
+
+}
+
+void
+intelGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
+			   GLvoid *pixels,
+			   const struct gl_texture_object *texObj,
+			   const struct gl_texture_image *texImage)
+{
+   intel_get_tex_image(ctx, target, level, 0, 0, pixels,
+		       texObj, texImage, 1);
+
 }

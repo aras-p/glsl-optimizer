@@ -865,7 +865,7 @@ static void import_tex_obj_state( radeonContextPtr rmesa,
 				  radeonTexObjPtr texobj )
 {
 /* do not use RADEON_DB_STATE to avoid stale texture caches */
-   GLuint *cmd = &rmesa->hw.tex[unit].cmd[TEX_CMD_0];
+   int *cmd = &rmesa->hw.tex[unit].cmd[TEX_CMD_0];
    GLuint se_coord_fmt = rmesa->hw.set.cmd[SET_SE_COORDFMT];
 
    RADEON_STATECHANGE( rmesa, tex[unit] );
@@ -888,7 +888,7 @@ static void import_tex_obj_state( radeonContextPtr rmesa,
       se_coord_fmt &= ~(RADEON_VTX_ST0_NONPARAMETRIC << unit);
 
       if (texobj->base.tObj->Target == GL_TEXTURE_CUBE_MAP) {
-	 GLuint *cube_cmd = &rmesa->hw.cube[unit].cmd[CUBE_CMD_0];
+	 int *cube_cmd = &rmesa->hw.cube[unit].cmd[CUBE_CMD_0];
 	 GLuint bytesPerFace = texobj->base.totalSize / 6;
 	 ASSERT(texobj->base.totalSize % 6 == 0);
 

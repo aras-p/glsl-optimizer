@@ -57,6 +57,9 @@ struct fp_machine
    GLfloat Inputs[MAX_NV_FRAGMENT_PROGRAM_INPUTS][4];
    GLfloat Outputs[MAX_NV_FRAGMENT_PROGRAM_OUTPUTS][4];
    GLuint CondCodes[4];  /**< COND_* value for x/y/z/w */
+
+   GLuint CallStack[MAX_PROGRAM_CALL_DEPTH]; /**< For CAL/RET instructions */
+   GLuint StackDepth; /**< Index/ptr to top of CallStack[] */
 };
 
 
@@ -697,6 +700,37 @@ execute_program( GLcontext *ctx,
                }
             }
             break;
+         case OPCODE_BRA: /* conditional branch */
+            {
+               /* NOTE: The return is conditional! */
+               const GLuint swizzle = inst->DstReg.CondSwizzle;
+               const GLuint condMask = inst->DstReg.CondMask;
+               if (test_cc(machine->CondCodes[GET_SWZ(swizzle, 0)], condMask) ||
+                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 1)], condMask) ||
+                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 2)], condMask) ||
+                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 3)], condMask)) {
+                  /* take branch */
+                  pc = inst->BranchTarget;
+               }
+            }
+            break;
+         case OPCODE_CAL: /* Call subroutine */
+            {
+               /* NOTE: The call is conditional! */
+               const GLuint swizzle = inst->DstReg.CondSwizzle;
+               const GLuint condMask = inst->DstReg.CondMask;
+               if (test_cc(machine->CondCodes[GET_SWZ(swizzle, 0)], condMask) ||
+                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 1)], condMask) ||
+                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 2)], condMask) ||
+                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 3)], condMask)) {
+                  if (machine->StackDepth >= MAX_PROGRAM_CALL_DEPTH) {
+                     return GL_TRUE; /* Per GL_NV_vertex_program2 spec */
+                  }
+                  machine->CallStack[machine->StackDepth++] = pc + 1;
+                  pc = inst->BranchTarget;
+               }
+            }
+            break;
          case OPCODE_CMP:
             {
                GLfloat a[4], b[4], c[4], result[4];
@@ -1091,6 +1125,22 @@ execute_program( GLcontext *ctx,
                }
                result[0] = result[1] = result[2] = result[3] = 1.0F / a[0];
                store_vector4( inst, machine, result );
+            }
+            break;
+         case OPCODE_RET: /* return from subroutine */
+            {
+               /* NOTE: The return is conditional! */
+               const GLuint swizzle = inst->DstReg.CondSwizzle;
+               const GLuint condMask = inst->DstReg.CondMask;
+               if (test_cc(machine->CondCodes[GET_SWZ(swizzle, 0)], condMask) ||
+                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 1)], condMask) ||
+                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 2)], condMask) ||
+                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 3)], condMask)) {
+                  if (machine->StackDepth == 0) {
+                     return GL_TRUE; /* Per GL_NV_vertex_program2 spec */
+                  }
+                  pc = machine->CallStack[--machine->StackDepth];
+               }
             }
             break;
          case OPCODE_RFL: /* reflection vector */
@@ -1539,6 +1589,9 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
    machine->CondCodes[1] = COND_EQ;
    machine->CondCodes[2] = COND_EQ;
    machine->CondCodes[3] = COND_EQ;
+
+   /* init call stack */
+   machine->StackDepth = 0;
 }
 
 

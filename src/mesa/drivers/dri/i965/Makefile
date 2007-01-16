@@ -20,6 +20,7 @@ DRIVER_SOURCES = \
 	intel_pixel_bitmap.c \
 	intel_state.c \
 	intel_tex.c \
+	intel_tex_layout.c \
 	intel_tex_validate.c \
 	brw_aub.c \
 	brw_aub_playback.c \
@@ -83,8 +84,10 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-
+DRIVER_DEFINES = -I../intel
 
 include ../Makefile.template
+
+intel_tex_layout.o: ../intel/intel_tex_layout.c
 
 symlinks:

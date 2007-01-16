@@ -41,13 +41,12 @@
 
 #undef LOCAL_VARS
 #define LOCAL_VARS                                                   	\
-    struct via_context *vmesa = VIA_CONTEXT(ctx);             		\
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;                	\
     struct via_renderbuffer *vrb = (struct via_renderbuffer *) rb;   	\
+    __DRIdrawablePrivate *dPriv = vrb->dPriv;                           \
     GLuint pitch = vrb->pitch;                                          \
     GLuint height = dPriv->h;                                        	\
     GLint p = 0;							\
-    char *buf = (char *)(vrb->origMap + vmesa->drawXoff * vrb->bpp);    \
+    char *buf = (char *)(vrb->origMap + vrb->drawXoff * vrb->bpp);      \
     (void) p;
 
 /* ================================================================
@@ -79,12 +78,11 @@
 /* 16 bit depthbuffer functions.
  */
 #define LOCAL_DEPTH_VARS                                            \
-    struct via_context *vmesa = VIA_CONTEXT(ctx);                   \
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;               \
     struct via_renderbuffer *vrb = (struct via_renderbuffer *) rb;  \
+    __DRIdrawablePrivate *dPriv = vrb->dPriv;                       \
     GLuint depth_pitch = vrb->pitch;                                \
     GLuint height = dPriv->h;                                       \
-    char *buf = (char *)(vrb->map + (vmesa->drawXoff * vrb->bpp/8))
+    char *buf = (char *)(vrb->map + (vrb->drawXoff * vrb->bpp/8))
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS 
 

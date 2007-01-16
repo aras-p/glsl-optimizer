@@ -51,6 +51,8 @@ extern int Swapping, VTSwitch;
 
 void TestVisible(void);
 int ParseFBModes(int, int, int, int, int, int);
+void SetVideoMode(void);
+void CreateBuffer(void);
 void CreateVisual(void);
 
 extern int FrameBufferFD;
@@ -72,20 +74,20 @@ extern GLFBDevVisualPtr Visual;
 #define REVERSECMAPSIZE (1<<REVERSECMAPSIZELOG)
 
 extern unsigned short RedColorMap[256],
-                        GreenColorMap[256],
-                        BlueColorMap[256];
+                      GreenColorMap[256],
+                      BlueColorMap[256];
 extern unsigned char ReverseColorMap[REVERSECMAPSIZE]
                                     [REVERSECMAPSIZE]
                                     [REVERSECMAPSIZE];
-void LoadOldColorMap(void);
+
 void LoadColorMap(void);
-void UnloadColorMap(void);
 void RestoreColorMap(void);
 
 /* --- mouse --- */
 extern int MouseX, MouseY;
 extern int CurrentCursor;
-extern int MouseEnabled;
+extern int MouseVisible;
+extern int LastMouseTime;
 extern int NumMouseButtons;
 
 void InitializeCursor(void);

@@ -33,6 +33,7 @@
 #include "extensions.h"
 #include "framebuffer.h"
 #include "imports.h"
+#include "points.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -70,6 +71,7 @@ int INTEL_DEBUG = (0);
 #define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_vertex_program
 #define need_GL_ARB_window_pos
+#define need_GL_ARB_occlusion_query
 #define need_GL_EXT_blend_color
 #define need_GL_EXT_blend_equation_separate
 #define need_GL_EXT_blend_func_separate
@@ -182,7 +184,8 @@ const struct dri_extension card_extensions[] =
     { NULL,                                NULL }
 };
 
-
+static const struct dri_extension arb_oc_extension = 
+    { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions};
 
 static const struct dri_debug_control debug_control[] =
 {
@@ -241,6 +244,36 @@ void intelFinish( GLcontext *ctx )
    bmFinishFence(intel, bmLockAndFence(intel));
 }
 
+static void
+intelBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+{
+	struct intel_context *intel = intel_context( ctx );
+	GLuint64EXT tmp = 0;	
+	drmI830MMIO io = {
+		.read_write = MMIO_WRITE,
+		.reg = MMIO_REGS_PS_DEPTH_COUNT,
+		.data = &tmp 
+	};
+	intel->stats_wm = GL_TRUE;
+	intelFinish(&intel->ctx);
+	drmCommandWrite(intel->driFd, DRM_I830_MMIO, &io, sizeof(io));
+}
+
+static void
+intelEndQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+{
+	struct intel_context *intel = intel_context( ctx );
+	drmI830MMIO io = {
+		.read_write = MMIO_READ,
+		.reg = MMIO_REGS_PS_DEPTH_COUNT,
+		.data = &q->Result
+	};
+	intelFinish(&intel->ctx);
+	drmCommandRead(intel->driFd, DRM_I830_MMIO, &io, sizeof(io));
+	q->Ready = GL_TRUE;
+	intel->stats_wm = GL_FALSE;
+}
+
 
 void intelInitDriverFunctions( struct dd_function_table *functions )
 {
@@ -250,6 +283,8 @@ void intelInitDriverFunctions( struct dd_function_table *functions )
    functions->Finish = intelFinish;
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
+   functions->BeginQuery = intelBeginQuery;
+   functions->EndQuery = intelEndQuery;
 
    /* CopyPixels can be accelerated even with the current memory
     * manager:
@@ -320,6 +355,11 @@ GLboolean intelInitContext( struct intel_context *intel,
    ctx->Const.MaxPointSizeAA = 3.0;
    ctx->Const.PointSizeGranularity = 1.0;
 
+   /* reinitialize the context point state.
+    * It depend on constants in __GLcontextRec::Const
+    */
+   _mesa_init_point(ctx);
+
    /* Initialize the software rasterizer and helper modules. */
    _swrast_CreateContext( ctx );
    _vbo_CreateContext( ctx );
@@ -373,6 +413,9 @@ GLboolean intelInitContext( struct intel_context *intel,
    driInitExtensions( ctx, card_extensions, 
 		      GL_TRUE );
 
+   if (intel->intelScreen->drmMinor >= 8)
+      driInitSingleExtension (ctx, &arb_oc_extension);
+
    INTEL_DEBUG  = driParseDebugString( getenv( "INTEL_DEBUG" ),
 				       debug_control );
 
@@ -398,7 +441,7 @@ GLboolean intelInitContext( struct intel_context *intel,
 				 intelScreen->cpp,
 				 intelScreen->front.pitch / intelScreen->cpp,
 				 intelScreen->height,
-				 GL_FALSE);
+				 intelScreen->front.tiled != 0); /* 0: LINEAR */
 
 
    intel->back_region = 
@@ -409,7 +452,7 @@ GLboolean intelInitContext( struct intel_context *intel,
 				 intelScreen->cpp,
 				 intelScreen->back.pitch / intelScreen->cpp,
 				 intelScreen->height,
-				 (INTEL_DEBUG & DEBUG_TILE) ? 0 : 1);
+                                 intelScreen->back.tiled != 0);
 
    /* Still assuming front.cpp == depth.cpp
     *
@@ -425,7 +468,7 @@ GLboolean intelInitContext( struct intel_context *intel,
 				 intelScreen->cpp,
 				 intelScreen->depth.pitch / intelScreen->cpp,
 				 intelScreen->height,
-				 (INTEL_DEBUG & DEBUG_TILE) ? 0 : 1);
+                                 intelScreen->depth.tiled != 0);
    
    intel_bufferobj_init( intel );
    intel->batch = intel_batchbuffer_alloc( intel );

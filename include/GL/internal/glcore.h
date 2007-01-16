@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/include/GL/internal/glcore.h,v 1.7 2001/03/25 05:32:00 tsi Exp $ */
 #ifndef __gl_core_h_
 #define __gl_core_h_
 
@@ -37,9 +36,7 @@
 **
 */
 
-#ifndef XFree86LOADER
 #include <sys/types.h>
-#endif
 
 #ifdef CAPI
 #undef CAPI

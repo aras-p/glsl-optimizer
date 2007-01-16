@@ -262,7 +262,7 @@ class glx_function(gl_XML.gl_function):
 
 				if param.name != self.img_reset:
 					param.offset = offset
-					if not param.is_variable_length():
+					if not param.is_variable_length() and not param.is_client_only:
 						offset += param.size()
 					
 				if self.pad_after( param ):
@@ -331,7 +331,7 @@ class glx_function(gl_XML.gl_function):
 
 		size = 0
 		for param in self.parameterIterateGlxSend(0):
-			if param.name != self.img_reset:
+			if param.name != self.img_reset and not param.is_client_only:
 				if size == 0:
 					size = param.offset + param.size()
 				else:

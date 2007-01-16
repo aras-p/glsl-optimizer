@@ -62,6 +62,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 		print '#else'
 		print '# if defined(USE_MGL_NAMESPACE)'
 		print '#  define GL_PREFIX(n,n2) GLNAME(CONCAT(mgl,n))'
+		print '#  define _glapi_Dispatch _mglapi_Dispatch'
 		print '# else'
 		print '#  define GL_PREFIX(n,n2) GLNAME(CONCAT(gl,n))'
 		print '# endif'

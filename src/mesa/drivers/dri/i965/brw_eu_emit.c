@@ -464,7 +464,6 @@ struct brw_instruction *brw_JMPI(struct brw_compile *p,
    return insn;
 }
 
-
 /* EU takes the value from the flag register and pushes it onto some
  * sort of a stack (presumably merging with any flag value already on
  * the stack).  Within an if block, the flags at the top of the stack
@@ -482,7 +481,16 @@ struct brw_instruction *brw_JMPI(struct brw_compile *p,
  */
 struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
 {
-   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_IF);   
+   struct brw_instruction *insn;
+
+   if (p->single_program_flow) {
+      assert(execute_size == BRW_EXECUTE_1);
+
+      insn = next_insn(p, BRW_OPCODE_ADD);
+      insn->header.predicate_inverse = 1;
+   } else {
+      insn = next_insn(p, BRW_OPCODE_IF);
+   }
 
    /* Override the defaults for this instruction:
     */
@@ -504,7 +512,13 @@ struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
 struct brw_instruction *brw_ELSE(struct brw_compile *p, 
 				 struct brw_instruction *if_insn)
 {
-   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_ELSE);   
+   struct brw_instruction *insn;
+
+   if (p->single_program_flow) {
+      insn = next_insn(p, BRW_OPCODE_ADD);
+   } else {
+      insn = next_insn(p, BRW_OPCODE_ELSE);
+   }
 
    brw_set_dest(insn, brw_ip_reg());
    brw_set_src0(insn, brw_ip_reg());
@@ -516,11 +530,17 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
 
    /* Patch the if instruction to point at this instruction.
     */
-   assert(if_insn->header.opcode == BRW_OPCODE_IF);
+   if (p->single_program_flow) {
+      assert(if_insn->header.opcode == BRW_OPCODE_ADD);
 
-   if_insn->bits3.if_else.jump_count = insn - if_insn; 
-   if_insn->bits3.if_else.pop_count = 1;
-   if_insn->bits3.if_else.pad0 = 0;
+      if_insn->bits3.ud = (insn - if_insn + 1) * 16;
+   } else {
+      assert(if_insn->header.opcode == BRW_OPCODE_IF);
+
+      if_insn->bits3.if_else.jump_count = insn - if_insn;
+      if_insn->bits3.if_else.pop_count = 1;
+      if_insn->bits3.if_else.pad0 = 0;
+   }
 
    return insn;
 }
@@ -528,63 +548,76 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
 void brw_ENDIF(struct brw_compile *p, 
 	       struct brw_instruction *patch_insn)
 {
-   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_ENDIF);   
-
-   brw_set_dest(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
-   brw_set_src0(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
-   brw_set_src1(insn, brw_imm_d(0x0));
-
-   insn->header.compression_control = BRW_COMPRESSION_NONE;
-   insn->header.execution_size = patch_insn->header.execution_size;
-   insn->header.mask_control = BRW_MASK_ENABLE;
-
-   assert(patch_insn->bits3.if_else.jump_count == 0);
-      
-   /* Patch the if or else instructions to point at this or the next
-    * instruction respectively.
-    */
-   if (patch_insn->header.opcode == BRW_OPCODE_IF) {
-      /* Automagically turn it into an IFF:
+   if (p->single_program_flow) {
+      /* In single program flow mode, there's no need to execute an ENDIF,
+       * since we don't need to do any stack operations, and if we're executing
+       * currently, we want to just continue executing.
        */
-      patch_insn->header.opcode = BRW_OPCODE_IFF;
-      patch_insn->bits3.if_else.jump_count = insn - patch_insn + 1;
-      patch_insn->bits3.if_else.pop_count = 0;
-      patch_insn->bits3.if_else.pad0 = 0;
+      struct brw_instruction *next = &p->store[p->nr_insn];
 
-   }
-   else if (patch_insn->header.opcode == BRW_OPCODE_ELSE) {
-      patch_insn->bits3.if_else.jump_count = insn - patch_insn + 1;
-      patch_insn->bits3.if_else.pop_count = 1;
-      patch_insn->bits3.if_else.pad0 = 0;
-   }
-   else {
-      assert(0);
-   }
+      assert(patch_insn->header.opcode == BRW_OPCODE_ADD);
 
-   /* Also pop item off the stack in the endif instruction:
-    */
-   insn->bits3.if_else.jump_count = 0;
-   insn->bits3.if_else.pop_count = 1; 
-   insn->bits3.if_else.pad0 = 0;
+      patch_insn->bits3.ud = (next - patch_insn) * 16;
+   } else {
+      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_ENDIF);
+
+      brw_set_dest(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
+      brw_set_src0(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
+      brw_set_src1(insn, brw_imm_d(0x0));
+
+      insn->header.compression_control = BRW_COMPRESSION_NONE;
+      insn->header.execution_size = patch_insn->header.execution_size;
+      insn->header.mask_control = BRW_MASK_ENABLE;
+
+      assert(patch_insn->bits3.if_else.jump_count == 0);
+
+      /* Patch the if or else instructions to point at this or the next
+       * instruction respectively.
+       */
+      if (patch_insn->header.opcode == BRW_OPCODE_IF) {
+	 /* Automagically turn it into an IFF:
+	  */
+	 patch_insn->header.opcode = BRW_OPCODE_IFF;
+	 patch_insn->bits3.if_else.jump_count = insn - patch_insn + 1;
+	 patch_insn->bits3.if_else.pop_count = 0;
+	 patch_insn->bits3.if_else.pad0 = 0;
+      } else if (patch_insn->header.opcode == BRW_OPCODE_ELSE) {
+	 patch_insn->bits3.if_else.jump_count = insn - patch_insn + 1;
+	 patch_insn->bits3.if_else.pop_count = 1;
+	 patch_insn->bits3.if_else.pad0 = 0;
+      } else {
+	 assert(0);
+      }
+
+      /* Also pop item off the stack in the endif instruction:
+       */
+      insn->bits3.if_else.jump_count = 0;
+      insn->bits3.if_else.pop_count = 1;
+      insn->bits3.if_else.pad0 = 0;
+   }
 }
 
 /* DO/WHILE loop:
  */
 struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
 {
-   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_DO);   
+   if (p->single_program_flow) {
+      return &p->store[p->nr_insn];
+   } else {
+      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_DO);
 
-   /* Override the defaults for this instruction:
-    */
-   brw_set_dest(insn, retype(brw_vec1_grf(0,0), BRW_REGISTER_TYPE_UD));
-   brw_set_src0(insn, retype(brw_vec1_grf(0,0), BRW_REGISTER_TYPE_UD));
-   brw_set_src1(insn, retype(brw_vec1_grf(0,0), BRW_REGISTER_TYPE_UD));
+      /* Override the defaults for this instruction:
+       */
+      brw_set_dest(insn, retype(brw_vec1_grf(0,0), BRW_REGISTER_TYPE_UD));
+      brw_set_src0(insn, retype(brw_vec1_grf(0,0), BRW_REGISTER_TYPE_UD));
+      brw_set_src1(insn, retype(brw_vec1_grf(0,0), BRW_REGISTER_TYPE_UD));
 
-   insn->header.compression_control = BRW_COMPRESSION_NONE;
-   insn->header.execution_size = execute_size;
-/*    insn->header.mask_control = BRW_MASK_ENABLE; */
+      insn->header.compression_control = BRW_COMPRESSION_NONE;
+      insn->header.execution_size = execute_size;
+      /* insn->header.mask_control = BRW_MASK_ENABLE; */
 
-   return insn;
+      return insn;
+   }
 }
 
 
@@ -592,19 +625,31 @@ struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
 void brw_WHILE(struct brw_compile *p, 
 	       struct brw_instruction *do_insn)
 {
-   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_WHILE);
+   struct brw_instruction *insn;
+
+   if (p->single_program_flow)
+      insn = next_insn(p, BRW_OPCODE_ADD);
+   else
+      insn = next_insn(p, BRW_OPCODE_WHILE);
 
    brw_set_dest(insn, brw_ip_reg());
    brw_set_src0(insn, brw_ip_reg());
    brw_set_src1(insn, brw_imm_d(0x0));
 
    insn->header.compression_control = BRW_COMPRESSION_NONE;
-   insn->header.execution_size = do_insn->header.execution_size;
 
-   assert(do_insn->header.opcode == BRW_OPCODE_DO);
-   insn->bits3.if_else.jump_count = do_insn - insn;
-   insn->bits3.if_else.pop_count = 0;
-   insn->bits3.if_else.pad0 = 0;
+   if (p->single_program_flow) {
+      insn->header.execution_size = BRW_EXECUTE_1;
+
+      insn->bits3.d = (do_insn - insn) * 16;
+   } else {
+      insn->header.execution_size = do_insn->header.execution_size;
+
+      assert(do_insn->header.opcode == BRW_OPCODE_DO);
+      insn->bits3.if_else.jump_count = do_insn - insn;
+      insn->bits3.if_else.pop_count = 0;
+      insn->bits3.if_else.pad0 = 0;
+   }
 
 /*    insn->header.mask_control = BRW_MASK_ENABLE; */
 

@@ -252,9 +252,9 @@ do_blit_drawpixels(GLcontext * ctx,
       return GL_FALSE;
    }
 
-   if (!intel_check_meta_tex_fragment_ops(ctx)) {
+   if (!intel_check_blit_fragment_ops(ctx)) {
       if (INTEL_DEBUG & DEBUG_PIXEL)
-         _mesa_printf("%s - bad GL fragment state for meta tex\n",
+         _mesa_printf("%s - bad GL fragment state for blitter\n",
                       __FUNCTION__);
       return GL_FALSE;
    }
@@ -320,17 +320,19 @@ do_blit_drawpixels(GLcontext * ctx,
                            rect.x1 - dest_rect.x1,
                            rect.y2 - dest_rect.y2,
                            rect.x1,
-                           rect.y1, rect.x2 - rect.x1, rect.y2 - rect.y1);
+                           rect.y1, rect.x2 - rect.x1, rect.y2 - rect.y1,
+			   ctx->Color.ColorLogicOpEnabled ?
+			   ctx->Color.LogicOp : GL_COPY);
       }
       fence = intel_batchbuffer_flush(intel->batch);
       driFenceReference(fence);
    }
    UNLOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects)
+   if (fence) {
       driFenceFinish(fence, DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW, GL_FALSE);
-
-   driFenceUnReference(fence);
+      driFenceUnReference(fence);
+   }
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s - DONE\n", __FUNCTION__);

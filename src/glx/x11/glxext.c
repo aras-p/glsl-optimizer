@@ -48,6 +48,8 @@
 #include <stdio.h>
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
+#include <X11/extensions/Xfixes.h>
+#include <X11/extensions/Xdamage.h>
 #include <assert.h>
 #include "indirect_init.h"
 #include "glapi.h"
@@ -698,6 +700,68 @@ static __DRIfuncPtr get_proc_address( const char * proc_name )
     return NULL;
 }
 
+#ifdef XDAMAGE_1_1_INTERFACE
+static GLboolean has_damage_post(__DRInativeDisplay *dpy)
+{
+    static GLboolean inited = GL_FALSE;
+    static GLboolean has_damage;
+
+    if (!inited) {
+	int major, minor;
+
+	if (XDamageQueryVersion(dpy, &major, &minor) &&
+	    major == 1 && minor >= 1)
+	{
+	    has_damage = GL_TRUE;
+	} else {
+	    has_damage = GL_FALSE;
+	}
+	inited = GL_TRUE;
+    }
+
+    return has_damage;
+}
+#endif /* XDAMAGE_1_1_INTERFACE */
+
+static void __glXReportDamage(__DRInativeDisplay *dpy, int screen,
+			      __DRIid drawable,
+			      int x, int y,
+			      drm_clip_rect_t *rects, int num_rects,
+			      GLboolean front_buffer)
+{
+#ifdef XDAMAGE_1_1_INTERFACE
+    XRectangle *xrects;
+    XserverRegion region;
+    int i;
+    int x_off, y_off;
+
+    if (!has_damage_post(dpy))
+	return;
+
+    if (front_buffer) {
+	x_off = x;
+	y_off = y;
+	drawable = RootWindow(dpy, screen);
+    } else{
+	x_off = 0;
+	y_off = 0;
+    }
+
+    xrects = malloc(sizeof(XRectangle) * num_rects);
+    if (xrects == NULL)
+	return;
+
+    for (i = 0; i < num_rects; i++) {
+	xrects[i].x = rects[i].x1 + x_off;
+	xrects[i].y = rects[i].y1 + y_off;
+	xrects[i].width = rects[i].x2 - rects[i].x1;
+	xrects[i].height = rects[i].y2 - rects[i].y1;
+    }
+    region = XFixesCreateRegion(dpy, xrects, num_rects);
+    XDamageAdd(dpy, drawable, region);
+    XFixesDestroyRegion(dpy, region);
+#endif
+}
 
 /**
  * Table of functions exported by the loader to the driver.
@@ -720,70 +784,10 @@ static const __DRIinterfaceMethods interface_methods = {
 
     __glXGetUST,
     __glXGetMscRateOML,
+
+    __glXReportDamage,
 };
 
-#define DRM_MAX_FDS 16
-static struct {
-   char *BusID;
-   int fd;
-   int refcount;
-} connection[DRM_MAX_FDS];
-
-static int nr_fds = 0;
-
-int drmOpenOnce(void *unused, 
-		const char *BusID,
-		int *newlyopened)
-{
-   int i;
-   int fd;
-   
-   for (i = 0; i < nr_fds; i++)
-      if (strcmp(BusID, connection[i].BusID) == 0) {
-	 connection[i].refcount++;
-	 *newlyopened = 0;
-	 return connection[i].fd;
-      }
-
-   fd = drmOpen(unused, BusID);
-   if (fd <= 0 || nr_fds == DRM_MAX_FDS)
-      return fd;
-   
-   connection[nr_fds].BusID = strdup(BusID);
-   connection[nr_fds].fd = fd;
-   connection[nr_fds].refcount = 1;
-   *newlyopened = 1;
-
-   if (0)
-      fprintf(stderr, "saved connection %d for %s %d\n", 
-              nr_fds, connection[nr_fds].BusID, 
-              strcmp(BusID, connection[nr_fds].BusID));
-
-   nr_fds++;
-
-   return fd;   
-}
-
-void drmCloseOnce(int fd)
-{
-   int i;
-
-   
-
-   for (i = 0; i < nr_fds; i++) {
-      if (fd == connection[i].fd) {
-	 if (--connection[i].refcount == 0) {
-	    drmClose(connection[i].fd);
-	    free(connection[i].BusID);
-	    
-	    if (i < --nr_fds) 
-	       connection[i] = connection[nr_fds];
-
-	    return;
-	 }
-      }
-   }
-}
 
 
 /**

@@ -36,6 +36,7 @@
 #include "intel_batchbuffer.h"
 #include "context.h"
 #include "utils.h"
+#include "drirenderbuffer.h"
 #include "framebuffer.h"
 #include "swrast/swrast.h"
 #include "vblank.h"
@@ -101,32 +102,6 @@ intel_readbuf_region(struct intel_context *intel)
       return irb->region;
    else
       return NULL;
-}
-
-
-
-static void
-intelBufferSize(GLframebuffer * buffer, GLuint * width, GLuint * height)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   struct intel_context *intel = intel_context(ctx);
-   /* Need to lock to make sure the driDrawable is uptodate.  This
-    * information is used to resize Mesa's software buffers, so it has
-    * to be correct.
-    */
-   /* XXX This isn't 100% correct, the given buffer might not be
-    * bound to the current context!
-    */
-   LOCK_HARDWARE(intel);
-   if (intel->driDrawable) {
-      *width = intel->driDrawable->w;
-      *height = intel->driDrawable->h;
-   }
-   else {
-      *width = 0;
-      *height = 0;
-   }
-   UNLOCK_HARDWARE(intel);
 }
 
 
@@ -209,6 +184,8 @@ void
 intelWindowMoved(struct intel_context *intel)
 {
    GLcontext *ctx = &intel->ctx;
+   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   GLframebuffer *drawFb = (GLframebuffer *) dPriv->driverPrivate;
 
    if (!intel->ctx.DrawBuffer) {
       /* when would this happen? -BP */
@@ -220,7 +197,7 @@ intelWindowMoved(struct intel_context *intel)
    }
    else {
       /* drawing to a window */
-      switch (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0]) {
+      switch (drawFb->_ColorDrawBufferMask[0]) {
       case BUFFER_BIT_FRONT_LEFT:
          intelSetFrontClipRects(intel);
          break;
@@ -233,14 +210,11 @@ intelWindowMoved(struct intel_context *intel)
       }
    }
 
-   /* this update Mesa's notion of window size */
-   if (ctx->WinSysDrawBuffer) {
-      _mesa_resize_framebuffer(ctx, ctx->WinSysDrawBuffer,
-                               intel->driDrawable->w, intel->driDrawable->h);
-   }
+   /* Update Mesa's notion of window size */
+   driUpdateFramebufferSize(ctx, dPriv);
+   drawFb->Initialized = GL_TRUE; /* XXX remove someday */
 
-   if (intel->intelScreen->driScrnPriv->ddxMinor >= 7 && intel->driDrawable) {
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   if (intel->intelScreen->driScrnPriv->ddxMinor >= 7) {
       drmI830Sarea *sarea = intel->sarea;
       drm_clip_rect_t drw_rect = { .x1 = dPriv->x, .x2 = dPriv->x + dPriv->w,
 				   .y1 = dPriv->y, .y2 = dPriv->y + dPriv->h };
@@ -271,6 +245,9 @@ intelWindowMoved(struct intel_context *intel)
    /* Update hardware scissor */
    ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
                        ctx->Scissor.Width, ctx->Scissor.Height);
+
+   /* Re-calculate viewport related state */
+   ctx->Driver.DepthRange( ctx, ctx->Viewport.Near, ctx->Viewport.Far );
 }
 
 
@@ -853,7 +830,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
     ***/
    if (fb->_DepthBuffer && fb->_DepthBuffer->Wrapped) {
       irbDepth = intel_renderbuffer(fb->_DepthBuffer->Wrapped);
-      if (irbDepth->region) {
+      if (irbDepth && irbDepth->region) {
          FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, GL_FALSE);
          depthRegion = irbDepth->region;
       }
@@ -949,8 +926,6 @@ void
 intelInitBufferFuncs(struct dd_function_table *functions)
 {
    functions->Clear = intelClear;
-   functions->GetBufferSize = intelBufferSize;
-   functions->ResizeBuffers = _mesa_resize_framebuffer;
    functions->DrawBuffer = intelDrawBuffer;
    functions->ReadBuffer = intelReadBuffer;
 }

@@ -23,16 +23,13 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_dd.c,v 1.10 2002/10/30 12:52:00 alanh Exp $ */
 
-/*
- * Original rewrite:
- *	Gareth Hughes <gareth@valinux.com>, 29 Sep - 1 Oct 2000
- *
- * Authors:
- *	Gareth Hughes <gareth@valinux.com>
- *	Brian Paul <brianp@valinux.com>
- *
+/**
+ * \file tdfx_dd.c
+ * Device driver interface functions for 3Dfx based cards.
+ * 
+ * \author Gareth Hughes <gareth@valinux.com> (Original rewrite 29 Sep - 1 Oct 2000)
+ * \author Brian Paul <brianp@valinux.com>
  */
 
 #include "tdfx_context.h"
@@ -41,6 +38,7 @@
 #include "tdfx_vb.h"
 #include "tdfx_pixels.h"
 
+#include "utils.h"
 #include "context.h"
 #include "enums.h"
 #include "framebuffer.h"
@@ -50,7 +48,7 @@
 #endif
 
 
-#define TDFX_DATE	"20040719"
+#define DRIVER_DATE	"20061113"
 
 
 /* These are used in calls to FX_grColorMaskv() */
@@ -67,67 +65,40 @@ static const GLubyte *tdfxDDGetString( GLcontext *ctx, GLenum name )
 {
    tdfxContextPtr fxMesa = (tdfxContextPtr) ctx->DriverCtx;
 
-   switch ( name ) {
+   switch (name) {
    case GL_RENDERER:
    {
       /* The renderer string must be per-context state to handle
        * multihead correctly.
        */
-      char *buffer = fxMesa->rendererString;
-      char hardware[100];
+      char *const buffer = fxMesa->rendererString;
+      char hardware[64];
 
       LOCK_HARDWARE(fxMesa);
-      strcpy( hardware, fxMesa->Glide.grGetString(GR_HARDWARE) );
+      strncpy(hardware, fxMesa->Glide.grGetString(GR_HARDWARE),
+	      sizeof(hardware));
+      hardware[sizeof(hardware) - 1] = '\0';
       UNLOCK_HARDWARE(fxMesa);
 
-      strcpy( buffer, "Mesa DRI " );
-      strcat( buffer, TDFX_DATE );
-      strcat( buffer, " " );
-
-      if ( strcmp( hardware, "Voodoo3 (tm)" ) == 0 ) {
-	 strcat( buffer, "Voodoo3" );
+      if ((strncmp(hardware, "Voodoo3", 7) == 0)
+	  || (strncmp(hardware, "Voodoo4", 7) == 0)
+	  || (strncmp(hardware, "Voodoo5", 7) == 0)) {
+	 hardware[7] = '\0';
       }
-      else if ( strcmp( hardware, "Voodoo Banshee (tm)" ) == 0 ) {
-	 strcat( buffer, "VoodooBanshee" );
-      }
-      else if ( strcmp( hardware, "Voodoo4 (tm)" ) == 0 ) {
-	 strcat( buffer, "Voodoo4" );
-      }
-      else if ( strcmp( hardware, "Voodoo5 (tm)" ) == 0 ) {
-	 strcat( buffer, "Voodoo5" );
+      else if (strncmp(hardware, "Voodoo Banshee", 14) == 0) {
+	 strcpy(&hardware[6], "Banshee");
       }
       else {
 	 /* unexpected result: replace spaces with hyphens */
 	 int i;
-	 for ( i = 0 ; hardware[i] && i < 60 ; i++ ) {
-	    if ( hardware[i] == ' ' || hardware[i] == '\t' )
+	 for (i = 0; hardware[i] && (i < sizeof(hardware)); i++) {
+	    if (hardware[i] == ' ' || hardware[i] == '\t') {
 	       hardware[i] = '-';
+	    }
 	 }
-         strcat( buffer, hardware );
       }
 
-      /* Append any CPU-specific information.
-       */
-#ifdef USE_X86_ASM
-      if ( _mesa_x86_cpu_features ) {
-	 strncat( buffer, " x86", 4 );
-      }
-#endif
-#ifdef USE_MMX_ASM
-      if ( cpu_has_mmx ) {
-	 strncat( buffer, "/MMX", 4 );
-      }
-#endif
-#ifdef USE_3DNOW_ASM
-      if ( cpu_has_3dnow ) {
-	 strncat( buffer, "/3DNow!", 7 );
-      }
-#endif
-#ifdef USE_SSE_ASM
-      if ( cpu_has_xmm ) {
-	 strncat( buffer, "/SSE", 4 );
-      }
-#endif
+      (void) driGetRendererString(buffer, hardware, DRIVER_DATE, 0);
       return (const GLubyte *) buffer;
    }
    case GL_VENDOR:
@@ -138,18 +109,52 @@ static const GLubyte *tdfxDDGetString( GLcontext *ctx, GLenum name )
 }
 
 
-/* Return uptodate buffer size information.
- */
-static void tdfxDDGetBufferSize( GLframebuffer *buffer,
-				 GLuint *width, GLuint *height )
+static void
+tdfxBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 {
-   GET_CURRENT_CONTEXT(ctx);
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
-   LOCK_HARDWARE( fxMesa );
-   *width = fxMesa->width;
-   *height = fxMesa->height;
-   UNLOCK_HARDWARE( fxMesa );
+   (void) q;
+
+   if (target == GL_SAMPLES_PASSED_ARB) {
+      LOCK_HARDWARE(fxMesa);
+      fxMesa->Glide.grFinish();
+      fxMesa->Glide.grReset(GR_STATS_PIXELS);
+      UNLOCK_HARDWARE(fxMesa);
+   }
+}
+
+
+static void
+tdfxEndQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+{
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
+   FxI32 total_pixels;
+   FxI32 z_fail_pixels;
+
+
+   if (target == GL_SAMPLES_PASSED_ARB) {
+      LOCK_HARDWARE(fxMesa);
+      fxMesa->Glide.grFinish();
+
+      fxMesa->Glide.grGet(GR_STATS_PIXELS_DEPTHFUNC_FAIL, sizeof(FxI32),
+			  &z_fail_pixels);
+      fxMesa->Glide.grGet(GR_STATS_PIXELS_IN, sizeof(FxI32), &total_pixels);
+
+      q->Result = total_pixels - z_fail_pixels;
+      
+      /* Apparently, people have seen z_fail_pixels > total_pixels under
+       * some conditions on some 3Dfx hardware.  The occlusion query spec
+       * requires that we clamp to 0.
+       */
+      if (q->Result < 0) {
+	 q->Result = 0;
+      }
+
+      q->Ready = GL_TRUE;
+
+      UNLOCK_HARDWARE(fxMesa);
+   }
 }
 
 
@@ -166,8 +171,9 @@ void tdfxDDInitDriverFuncs( const __GLcontextModes *visual,
       fprintf( stderr, "tdfx: %s()\n", __FUNCTION__ );
    }
 
-   functions->GetString		= tdfxDDGetString;
-   functions->GetBufferSize	= tdfxDDGetBufferSize;
+   functions->GetString         = tdfxDDGetString;
+   functions->BeginQuery        = tdfxBeginQuery;
+   functions->EndQuery          = tdfxEndQuery;
 
    /* Accelerated paths
     */

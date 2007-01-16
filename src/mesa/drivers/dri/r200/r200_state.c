@@ -40,6 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "enums.h"
 #include "colormac.h"
 #include "light.h"
+#include "framebuffer.h"
 
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"
@@ -1844,28 +1845,46 @@ static void r200LogicOpCode( GLcontext *ctx, GLenum opcode )
 
 void r200SetCliprects( r200ContextPtr rmesa, GLenum mode )
 {
-   __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
+   __DRIdrawablePrivate *const drawable = rmesa->dri.drawable;
+   __DRIdrawablePrivate *const readable = rmesa->dri.readable;
+   GLframebuffer *const draw_fb = (GLframebuffer*) drawable->driverPrivate;
+   GLframebuffer *const read_fb = (GLframebuffer*) readable->driverPrivate;
 
    switch ( mode ) {
    case GL_FRONT_LEFT:
-      rmesa->numClipRects = dPriv->numClipRects;
-      rmesa->pClipRects = dPriv->pClipRects;
+      rmesa->numClipRects = drawable->numClipRects;
+      rmesa->pClipRects = drawable->pClipRects;
       break;
    case GL_BACK_LEFT:
       /* Can't ignore 2d windows if we are page flipping.
        */
-      if ( dPriv->numBackClipRects == 0 || rmesa->doPageFlip ) {
-	 rmesa->numClipRects = dPriv->numClipRects;
-	 rmesa->pClipRects = dPriv->pClipRects;
+      if ( drawable->numBackClipRects == 0 || rmesa->doPageFlip ) {
+         rmesa->numClipRects = drawable->numClipRects;
+         rmesa->pClipRects = drawable->pClipRects;
       }
       else {
-	 rmesa->numClipRects = dPriv->numBackClipRects;
-	 rmesa->pClipRects = dPriv->pBackClipRects;
+         rmesa->numClipRects = drawable->numBackClipRects;
+         rmesa->pClipRects = drawable->pBackClipRects;
       }
       break;
    default:
       fprintf(stderr, "bad mode in r200SetCliprects\n");
       return;
+   }
+
+   if ((draw_fb->Width != drawable->w) || (draw_fb->Height != drawable->h)) {
+      _mesa_resize_framebuffer(rmesa->glCtx, draw_fb,
+			       drawable->w, drawable->h);
+      draw_fb->Initialized = GL_TRUE;
+   }
+
+   if (drawable != readable) {
+      if ((read_fb->Width != readable->w) ||
+	  (read_fb->Height != readable->h)) {
+	 _mesa_resize_framebuffer(rmesa->glCtx, read_fb,
+				  readable->w, readable->h);
+	 read_fb->Initialized = GL_TRUE;
+      }
    }
 
    if (rmesa->state.scissor.enabled)

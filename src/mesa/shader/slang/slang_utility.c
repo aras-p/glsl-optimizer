@@ -131,75 +131,92 @@ slang_string_cstr (slang_string *self)
 
 /* slang_atom_pool */
 
-void slang_atom_pool_construct (slang_atom_pool *pool)
+void
+slang_atom_pool_construct(slang_atom_pool * pool)
 {
-	GLuint i;
+   GLuint i;
 
-	for (i = 0; i < SLANG_ATOM_POOL_SIZE; i++)
-		pool->entries[i] = NULL;
+   for (i = 0; i < SLANG_ATOM_POOL_SIZE; i++)
+      pool->entries[i] = NULL;
 }
 
-void slang_atom_pool_destruct (slang_atom_pool *pool)
+void
+slang_atom_pool_destruct (slang_atom_pool * pool)
 {
-	GLuint i;
+   GLuint i;
 
-	for (i = 0; i < SLANG_ATOM_POOL_SIZE; i++)
-	{
-		slang_atom_entry *entry;
+   for (i = 0; i < SLANG_ATOM_POOL_SIZE; i++) {
+      slang_atom_entry * entry;
 		
-		entry = pool->entries[i];
-		while (entry != NULL)
-		{
-			slang_atom_entry *next;
+      entry = pool->entries[i];
+      while (entry != NULL) {
+         slang_atom_entry *next;
 
-			next = entry->next;
-			slang_alloc_free (entry->id);
-			slang_alloc_free (entry);
-			entry = next;
+         next = entry->next;
+         slang_alloc_free(entry->id);
+         slang_alloc_free(entry);
+         entry = next;
 		}
 	}
 }
 
-slang_atom slang_atom_pool_atom (slang_atom_pool *pool, const char *id)
+/*
+ * Search the atom pool for an atom with a given name.
+ * If atom is not found, create and add it to the pool.
+ * Returns ATOM_NULL if the atom was not found and the function failed to create a new atom.
+ */
+slang_atom
+slang_atom_pool_atom(slang_atom_pool * pool, const char * id)
 {
-	GLuint hash;
-	const char *p = id;
-	slang_atom_entry **entry;
+   GLuint hash;
+   const char * p = id;
+   slang_atom_entry ** entry;
 
-	hash = 0;
-	while (*p != '\0')
-	{
-		GLuint g;
+   /* Hash a given string to a number in the range [0, ATOM_POOL_SIZE). */
+   hash = 0;
+   while (*p != '\0') {
+      GLuint g;
 
-		hash = (hash << 4) + (GLuint) *p++;
-		g = hash & 0xf0000000;
-		if (g != 0)
-			hash ^= g >> 24;
-		hash &= ~g;
-	}
-	hash %= SLANG_ATOM_POOL_SIZE;
+      hash = (hash << 4) + (GLuint) (*p++);
+      g = hash & 0xf0000000;
+      if (g != 0)
+         hash ^= g >> 24;
+      hash &= ~g;
+   }
+   hash %= SLANG_ATOM_POOL_SIZE;
 
-	entry = &pool->entries[hash];
-	while (*entry != NULL)
-	{
-		if (slang_string_compare ((**entry).id, id) == 0)
-			return (slang_atom) (**entry).id;
-		entry = &(**entry).next;
-	}
+   /* Now the hash points to a linked list of atoms with names that have the same hash value.
+    * Search the linked list for a given name. */
+   entry = &pool->entries[hash];
+   while (*entry != NULL) {
+      /* If the same, return the associated atom. */
+      if (slang_string_compare((**entry).id, id) == 0)
+         return (slang_atom) (**entry).id;
+      /* Grab the next atom in the linked list. */
+      entry = &(**entry).next;
+   }
 
-	*entry = (slang_atom_entry *) slang_alloc_malloc (sizeof (slang_atom_entry));
-	if (*entry == NULL)
-		return SLANG_ATOM_NULL;
+   /* Okay, we have not found an atom. Create a new entry for it.
+    * Note that the <entry> points to the last entry's <next> field. */
+   *entry = (slang_atom_entry *) (slang_alloc_malloc(sizeof(slang_atom_entry)));
+   if (*entry == NULL)
+      return SLANG_ATOM_NULL;
 
-	(**entry).next = NULL;
-	(**entry).id = slang_string_duplicate (id);
-	if ((**entry).id == NULL)
-		return SLANG_ATOM_NULL;
-	return (slang_atom) (**entry).id;
+   /* Initialize a new entry. Because we'll need the actual name of the atom, we use the pointer
+    * to this string as an actual atom's value. */
+   (**entry).next = NULL;
+   (**entry).id = slang_string_duplicate(id);
+   if ((**entry).id == NULL)
+      return SLANG_ATOM_NULL;
+   return (slang_atom) (**entry).id;
 }
 
-const char *slang_atom_pool_id (slang_atom_pool *pool, slang_atom atom)
+/*
+ * Return the name of a given atom.
+ */
+const char *
+slang_atom_pool_id(slang_atom_pool * pool, slang_atom atom)
 {
-	return (const char *) atom;
+	return (const char *) (atom);
 }
 

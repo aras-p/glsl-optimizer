@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.3
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -201,7 +201,10 @@ _swrast_update_fog_state( GLcontext *ctx )
 
    /* determine if fog is needed, and if so, which fog mode */
    swrast->_FogEnabled = GL_FALSE;
-   if (ctx->FragmentProgram._Enabled) {
+   if (ctx->ShaderObjects._FragmentShaderPresent) {
+      swrast->_FogEnabled = GL_FALSE;
+   }
+   else if (ctx->FragmentProgram._Enabled) {
       if (ctx->FragmentProgram._Current->Base.Target==GL_FRAGMENT_PROGRAM_ARB) {
          const struct gl_fragment_program *fp
             = ctx->FragmentProgram._Current;
@@ -227,7 +230,12 @@ _swrast_update_fragment_program(GLcontext *ctx, GLbitfield newState)
 {
    if (ctx->FragmentProgram._Enabled) {
       const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
+#if 0
+      /* XXX Need a way to trigger the initial loading of parameters
+       * even when there's no recent state changes.
+       */
       if (fp->Base.Parameters->StateFlags & newState)
+#endif
          _mesa_load_state_parameters(ctx, fp->Base.Parameters);
    }
 }

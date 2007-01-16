@@ -19,3 +19,26 @@ slang_link.c \
 slang_preprocess.c \
 slang_storage.c \
 slang_utility.c
+
+MESA_SHADER_SLANG_HEADERS = \
+slang_analyse.h \
+slang_assemble.h \
+slang_assemble_assignment.h \
+slang_assemble_conditional.h \
+slang_assemble_constructor.h \
+slang_assemble_typeinfo.h \
+slang_compile.h \
+slang_compile_function.h \
+slang_compile_operation.h \
+slang_compile_struct.h \
+slang_compile_variable.h \
+slang_execute.h \
+slang_export.h \
+slang_library_noise.h \
+slang_library_texsample.h \
+slang_link.h \
+slang_mesa.h \
+slang_preprocess.h \
+slang_storage.h \
+slang_utility.h \
+traverse_wrap.h

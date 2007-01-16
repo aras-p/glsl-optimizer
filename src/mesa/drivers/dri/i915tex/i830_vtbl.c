@@ -451,14 +451,16 @@ i830_emit_state(struct intel_context *intel)
       OUT_BATCH(state->Buffer[I830_DESTREG_CBUFADDR1]);
       OUT_RELOC(state->draw_region->buffer,
                 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-                DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
+                DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE,
+                state->draw_region->draw_offset);
 
       if (state->depth_region) {
          OUT_BATCH(state->Buffer[I830_DESTREG_DBUFADDR0]);
          OUT_BATCH(state->Buffer[I830_DESTREG_DBUFADDR1]);
          OUT_RELOC(state->depth_region->buffer,
                    DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-                   DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
+                   DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE,
+                   state->depth_region->draw_offset);
       }
 
       OUT_BATCH(state->Buffer[I830_DESTREG_DV0]);
@@ -469,7 +471,7 @@ i830_emit_state(struct intel_context *intel)
       OUT_BATCH(state->Buffer[I830_DESTREG_SR2]);
       ADVANCE_BATCH();
    }
-
+   
    if (dirty & I830_UPLOAD_STIPPLE) {
       DBG("I830_UPLOAD_STIPPLE:\n");
       emit(i830, state->Stipple, sizeof(state->Stipple));
@@ -518,28 +520,79 @@ i830_destroy_context(struct intel_context *intel)
    _tnl_free_vertices(&intel->ctx);
 }
 
+
+void
+i830_state_draw_region(struct intel_context *intel,
+		       struct i830_hw_state *state,
+		       struct intel_region *color_region,
+		       struct intel_region *depth_region)
+{
+   struct i830_context *i830 = i830_context(&intel->ctx);
+   GLuint value;
+
+   ASSERT(state == &i830->state || state == &i830->meta);
+
+   if (state->draw_region != color_region) {
+      intel_region_release(&state->draw_region);
+      intel_region_reference(&state->draw_region, color_region);
+   }
+   if (state->depth_region != depth_region) {
+      intel_region_release(&state->depth_region);
+      intel_region_reference(&state->depth_region, depth_region);
+   }
+
+   /*
+    * Set stride/cpp values
+    */
+   if (color_region) {
+      state->Buffer[I830_DESTREG_CBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
+      state->Buffer[I830_DESTREG_CBUFADDR1] =
+         (BUF_3D_ID_COLOR_BACK |
+          BUF_3D_PITCH(color_region->pitch * color_region->cpp) |
+          BUF_3D_USE_FENCE);
+   }
+
+   if (depth_region) {
+      state->Buffer[I830_DESTREG_DBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
+      state->Buffer[I830_DESTREG_DBUFADDR1] =
+         (BUF_3D_ID_DEPTH |
+          BUF_3D_PITCH(depth_region->pitch * depth_region->cpp) |
+          BUF_3D_USE_FENCE);
+   }
+
+   /*
+    * Compute/set I830_DESTREG_DV1 value
+    */
+   value = (DSTORG_HORT_BIAS(0x8) |     /* .5 */
+            DSTORG_VERT_BIAS(0x8) | DEPTH_IS_Z);    /* .5 */
+            
+   if (color_region && color_region->cpp == 4) {
+      value |= DV_PF_8888;
+   }
+   else {
+      value |= DV_PF_565;
+   }
+   if (depth_region && depth_region->cpp == 4) {
+      value |= DEPTH_FRMT_24_FIXED_8_OTHER;
+   }
+   else {
+      value |= DEPTH_FRMT_16_FIXED;
+   }
+   state->Buffer[I830_DESTREG_DV1] = value;
+
+   I830_STATECHANGE(i830, I830_UPLOAD_BUFFERS);
+
+
+}
+
+
 static void
 i830_set_draw_region(struct intel_context *intel,
-                     struct intel_region *draw_region,
+                     struct intel_region *color_region,
                      struct intel_region *depth_region)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
-
-   intel_region_release(&i830->state.draw_region);
-   intel_region_release(&i830->state.depth_region);
-   intel_region_reference(&i830->state.draw_region, draw_region);
-   intel_region_reference(&i830->state.depth_region, depth_region);
-
-   /* XXX FBO: Need code from i915_set_draw_region() */
-
-   I830_STATECHANGE(i830, I830_UPLOAD_BUFFERS);
-   I830_STATECHANGE(i830, I830_UPLOAD_BUFFERS);
-   i830->state.Buffer[I830_DESTREG_CBUFADDR1] =
-      (BUF_3D_ID_COLOR_BACK | BUF_3D_PITCH(draw_region->pitch) |
-       BUF_3D_USE_FENCE);
-   i830->state.Buffer[I830_DESTREG_DBUFADDR1] =
-      (BUF_3D_ID_DEPTH | BUF_3D_PITCH(depth_region->pitch) |
-       BUF_3D_USE_FENCE);
+   i830_state_draw_region(intel, &i830->state, color_region, depth_region);
 }
 
 #if 0

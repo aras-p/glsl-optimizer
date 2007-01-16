@@ -33,8 +33,8 @@ default:
 		$(MAKE) beos ; \
 	elif [ "$(DRIVER_DIRS)" = "directfb" ]; then \
 		$(MAKE) directfb ; \
-	elif [ "$(DRIVER_DIRS)" = "fbdev" ]; then \
-		$(MAKE) fbdev ; \
+	elif [ "$(DRIVER_DIRS)" = "fbdev osmesa" ]; then \
+		$(MAKE) fbdev ; $(MAKE) osmesa-only ; \
 	else \
 		$(MAKE) stand-alone ; \
 	fi

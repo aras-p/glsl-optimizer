@@ -1,4 +1,4 @@
-/* $Id: cva.c,v 1.7 2003/12/08 09:03:35 joukj Exp $ */
+/* $Id: cva.c,v 1.8 2006/11/22 19:37:21 sroland Exp $ */
 
 /*
  * Trivial CVA test, good for testing driver fastpaths (especially
@@ -119,6 +119,7 @@ int main( int argc, char **argv )
 {
    GLenum type;
    char *string;
+   double version;
 
    glutInit( &argc, argv );
 
@@ -138,9 +139,8 @@ int main( int argc, char **argv )
     */
    string = (char *) glGetString( GL_VERSION );
 
-   if ( !strstr(string, "1.2") &&
-        !strstr(string, "1.3") &&
-        !strstr(string, "1.4")) {
+   version = atof(string);
+   if ( version < 1.2 ) {
       fprintf( stderr, "This program requires OpenGL 1.2 vertex arrays.\n" );
       exit( -1 );
    }

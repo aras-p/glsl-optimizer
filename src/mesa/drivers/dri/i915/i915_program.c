@@ -369,10 +369,7 @@ GLuint i915_emit_param4fv( struct i915_fragment_program *p,
 
 void i915_program_error( struct i915_fragment_program *p, const char *msg )
 {
-   /* XXX we shouldn't print anything to stdout, record GL error or
-    * call _mesa_problem()
-    */
-   fprintf(stderr, "%s\n", msg);
+   _mesa_problem(NULL, "i915_program_error: %s", msg);
    p->error = 1;
 }
 

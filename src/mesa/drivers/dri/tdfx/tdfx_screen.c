@@ -73,6 +73,9 @@ tdfxCreateScreen( __DRIscreenPrivate *sPriv )
 {
    tdfxScreenPrivate *fxScreen;
    TDFXDRIPtr fxDRIPriv = (TDFXDRIPtr) sPriv->pDevPriv;
+   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+     (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
+   void *const psc = sPriv->psc->screenConfigs;
 
    if (sPriv->devPrivSize != sizeof(TDFXDRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(TDFXDRIRec) does not match passed size from device driver\n");
@@ -111,6 +114,10 @@ tdfxCreateScreen( __DRIscreenPrivate *sPriv )
    if ( drmMap( sPriv->fd, fxScreen->regs.handle,
 		fxScreen->regs.size, &fxScreen->regs.map ) ) {
       return GL_FALSE;
+   }
+
+   if (glx_enable_extension != NULL) {
+      (*glx_enable_extension)(psc, "GLX_SGI_make_current_read");
    }
 
    return GL_TRUE;
@@ -180,6 +187,7 @@ tdfxCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  driDrawPriv);
          tdfxSetSpanFunctions(backRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
+	 backRb->backBuffer = GL_TRUE;
       }
 
       if (mesaVis->depthBits == 16) {
@@ -265,7 +273,9 @@ tdfxSwapBuffers( __DRIdrawablePrivate *driDrawPriv )
             return;
 	 LOCK_HARDWARE( fxMesa );
 	 fxMesa->Glide.grSstSelect( fxMesa->Glide.Board );
+#ifdef DEBUG
          printf("SwapBuf SetState 1\n");
+#endif
 	 fxMesa->Glide.grGlideSetState(fxMesa->Glide.State );
       }
    }
@@ -325,7 +335,9 @@ tdfxSwapBuffers( __DRIdrawablePrivate *driDrawPriv )
       if (ctx->DriverCtx != fxMesa) {
          fxMesa = TDFX_CONTEXT(ctx);
 	 fxMesa->Glide.grSstSelect( fxMesa->Glide.Board );
+#ifdef DEBUG
          printf("SwapBuf SetState 2\n");
+#endif
 	 fxMesa->Glide.grGlideSetState(fxMesa->Glide.State );
       }
       UNLOCK_HARDWARE( fxMesa );
@@ -393,7 +405,7 @@ static __GLcontextModes *tdfxFillInModes(unsigned pixel_bits,
 			    m->accumRedBits	= accum ? 16 : 0;
 			    m->accumGreenBits	= accum ? 16 : 0;
 			    m->accumBlueBits	= accum ? 16 : 0;
-			    m->accumAlphaBits	= accum ? 16 : 0;
+			    m->accumAlphaBits	= (accum && deep) ? 16 : 0;
 			    m->stencilBits	= stencil ? 8 : 0;
 			    m->depthBits	= deep
 			    			  ? (depth ? 24 : 0)

@@ -9,8 +9,8 @@
 #define I830_MAX_DRAWABLES 256
 
 #define I830_MAJOR_VERSION 1
-#define I830_MINOR_VERSION 3
-#define I830_PATCHLEVEL 0
+#define I830_MINOR_VERSION 7
+#define I830_PATCHLEVEL 2
 
 #define I830_REG_SIZE 0x80000
 
@@ -18,20 +18,20 @@ typedef struct _I830DRIRec {
    drm_handle_t regs;
    drmSize regsSize;
 
-   drmSize backbufferSize;
-   drm_handle_t backbuffer;
+   drmSize unused1; /* backbufferSize */
+   drm_handle_t unused2; /* backbuffer */
 
-   drmSize depthbufferSize;
-   drm_handle_t depthbuffer;
+   drmSize unused3; /* depthbufferSize */
+   drm_handle_t unused4; /* depthbuffer */
 
-   drmSize rotatedSize;
-   drm_handle_t rotatedbuffer;
+   drmSize unused5; /* rotatedSize */
+   drm_handle_t unused6; /* rotatedbuffer */
 
-   drm_handle_t textures;
-   int textureSize;
+   drm_handle_t unused7; /* textures */
+   int unused8; /* textureSize */
 
-   drm_handle_t agp_buffers;
-   drmSize agp_buf_size;
+   drm_handle_t unused9; /* agp_buffers */
+   drmSize unused10; /* agp_buf_size */
 
    int deviceID;
    int width;
@@ -40,20 +40,10 @@ typedef struct _I830DRIRec {
    int cpp;
    int bitsPerPixel;
 
-   int fbOffset;
-   int fbStride;
-
-   int backOffset;
-   int backPitch;
-
-   int depthOffset;
-   int depthPitch;
-
-   int rotatedOffset;
-   int rotatedPitch;
-
-   int logTextureGranularity;
-   int textureOffset;
+   int unused11[8]; /* was front/back/depth/rotated offset/pitch */
+   
+   int unused12; /* logTextureGranularity */
+   int unused13; /* textureOffset */
 
    int irq;
    int sarea_priv_offset;

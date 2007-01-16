@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.2
  *
  * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
  *
@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#if !defined SLANG_EXECUTE_H
+#ifndef SLANG_EXECUTE_H
 #define SLANG_EXECUTE_H
 
 #include "slang_assemble.h"
@@ -31,55 +31,75 @@
 extern "C" {
 #endif
 
+
+/**
+ * A memory location
+ */
 typedef union slang_machine_slot_
 {
-	GLfloat _float;
-	GLuint _addr;
+   GLfloat _float;
+   GLuint _addr;
 } slang_machine_slot;
 
 #define SLANG_MACHINE_GLOBAL_SIZE 3072
 #define SLANG_MACHINE_STACK_SIZE 1024
 #define SLANG_MACHINE_MEMORY_SIZE (SLANG_MACHINE_GLOBAL_SIZE + SLANG_MACHINE_STACK_SIZE)
 
+
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
+/**
+ * Extra machine state for x86 execution.
+ */
 typedef struct
 {
-	GLvoid (* compiled_func) (struct slang_machine_ *);
-	GLuint esp_restore;
-	GLshort fpucntl_rnd_neg;
-	GLshort fpucntl_restore;
+   GLvoid(*compiled_func) (struct slang_machine_ *);
+   GLuint esp_restore;
+   GLshort fpucntl_rnd_neg;
+   GLshort fpucntl_restore;
 } slang_machine_x86;
 #endif
 
+
+/**
+ * Runtime shader machine state.
+ */
 typedef struct slang_machine_
 {
-	GLuint ip;					/* instruction pointer, for flow control */
-	GLuint sp;					/* stack pointer, for stack access */
-	GLuint bp;					/* base pointer, for local variable access */
-	GLuint kill;				/* discard the fragment */
-	GLuint exit;				/* terminate the shader */
-	slang_machine_slot mem[SLANG_MACHINE_MEMORY_SIZE];
-   struct slang_info_log_ *infolog;                /* printMESA() support */
+   GLuint ip;               /**< instruction pointer, for flow control */
+   GLuint sp;               /**< stack pointer, for stack access */
+   GLuint bp;               /**< base pointer, for local variable access */
+   GLboolean kill;          /**< discard the fragment? */
+   GLboolean exit;          /**< terminate the shader */
+   /** Machine memory */
+   slang_machine_slot mem[SLANG_MACHINE_MEMORY_SIZE];
+   struct slang_info_log_ *infolog;     /**< printMESA() support */
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
-	slang_machine_x86 x86;
+   slang_machine_x86 x86;
 #endif
 } slang_machine;
 
-GLvoid slang_machine_ctr (slang_machine *);
-GLvoid slang_machine_dtr (slang_machine *);
 
-void slang_machine_init (slang_machine *);
+extern GLvoid
+slang_machine_ctr(slang_machine *);
 
-GLboolean
-_slang_execute2 (const slang_assembly_file *, slang_machine *);
+extern GLvoid
+slang_machine_dtr(slang_machine *);
+
+extern void
+slang_machine_init(slang_machine *);
+
+extern GLboolean
+_slang_execute2(const slang_assembly_file *, slang_machine *);
+
 
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
-GLboolean _slang_x86_codegen (slang_machine *, slang_assembly_file *, GLuint);
+extern GLboolean
+_slang_x86_codegen(slang_machine *, slang_assembly_file *, GLuint);
 #endif
+
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

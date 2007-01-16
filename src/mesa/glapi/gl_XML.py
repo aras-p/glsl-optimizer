@@ -438,8 +438,9 @@ class gl_parameter:
 		#if ts == "GLdouble":
 		#	print '/* stack size -> %s = %u (after) */' % (self.name, self.type_expr.get_stack_size())
 
-		self.is_counter = is_attr_true( element, 'counter' )
-		self.is_output  = is_attr_true( element, 'output' )
+		self.is_client_only = is_attr_true( element, 'client_only' )
+		self.is_counter     = is_attr_true( element, 'counter' )
+		self.is_output      = is_attr_true( element, 'output' )
 
 
 		# Pixel data has special parameters.

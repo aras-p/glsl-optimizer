@@ -37,7 +37,10 @@
 #include "vbo_context.h"
 
 
-
+/*
+ * After playback, copy everything but the position from the
+ * last vertex to the saved state
+ */
 static void _playback_copy_to_current( GLcontext *ctx,
 				       const struct vbo_save_vertex_list *node )
 {
@@ -46,14 +49,16 @@ static void _playback_copy_to_current( GLcontext *ctx,
    GLuint i, offset;
 
    if (node->count)
-      offset = node->buffer_offset + (node->count-1) * node->vertex_size;
+      offset = (node->buffer_offset + 
+		(node->count-1) * node->vertex_size * sizeof(GLfloat));
    else
       offset = node->buffer_offset;
 
-   ctx->Driver.GetBufferSubData( ctx, 0, offset, node->vertex_size, 
+   ctx->Driver.GetBufferSubData( ctx, 0, offset, 
+				 node->vertex_size * sizeof(GLfloat), 
 				 data, node->vertex_store->bufferobj );
 
-   for (i = VBO_ATTRIB_POS+1 ; i <= VBO_ATTRIB_INDEX ; i++) {
+   for (i = VBO_ATTRIB_POS+1 ; i < VBO_ATTRIB_MAX ; i++) {
       if (node->attrsz[i]) {
 	 GLfloat *current = (GLfloat *)vbo->currval[i].Ptr;
 
@@ -65,8 +70,8 @@ static void _playback_copy_to_current( GLcontext *ctx,
 
 	 data += node->attrsz[i];
 
-	 if (i >= VBO_ATTRIB_MAT_FRONT_AMBIENT &&
-	     i <= VBO_ATTRIB_MAT_BACK_INDEXES)
+	 if (i >= VBO_ATTRIB_FIRST_MATERIAL &&
+	     i <= VBO_ATTRIB_LAST_MATERIAL)
 	    ctx->NewState |= _NEW_LIGHT;
       }
    }

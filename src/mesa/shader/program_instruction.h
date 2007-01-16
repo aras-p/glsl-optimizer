@@ -286,7 +286,7 @@ struct prog_instruction
    GLuint CondUpdate:1;
 
    /**
-    * If prog_instruction::cc_update is \c GL_TRUE, this value selects the
+    * If prog_instruction::CondUpdate is \c GL_TRUE, this value selects the
     * condition code register that is to be updated.
     *
     * In GL_NV_fragment_program or GL_NV_vertex_program2 mode, only condition
@@ -339,6 +339,11 @@ struct prog_instruction
     */
    GLuint TexSrcTarget:3;
    /*@}*/
+
+   /**
+    * For BRA and CAL instructions, the location to jump to.
+    */
+   GLuint BranchTarget;
 };
 
 

@@ -69,7 +69,8 @@ r200UpdatePageFlipping( r200ContextPtr rmesa )
  */
 void r200GetLock( r200ContextPtr rmesa, GLuint flags )
 {
-   __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
+   __DRIdrawablePrivate *drawable = rmesa->dri.drawable;
+   __DRIdrawablePrivate *readable = rmesa->dri.readable;
    __DRIscreenPrivate *sPriv = rmesa->dri.screen;
    drm_radeon_sarea_t *sarea = rmesa->sarea;
    int i;
@@ -84,17 +85,20 @@ void r200GetLock( r200ContextPtr rmesa, GLuint flags )
     * Since the hardware state depends on having the latest drawable
     * clip rects, all state checking must be done _after_ this call.
     */
-   DRI_VALIDATE_DRAWABLE_INFO( sPriv, dPriv );
+   DRI_VALIDATE_DRAWABLE_INFO( sPriv, drawable );
+   if (drawable != readable) {
+      DRI_VALIDATE_DRAWABLE_INFO( sPriv, readable );
+   }
 
-   if ( rmesa->lastStamp != dPriv->lastStamp ) {
+   if ( rmesa->lastStamp != drawable->lastStamp ) {
       r200UpdatePageFlipping( rmesa );
       if (rmesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT)
          r200SetCliprects( rmesa, GL_BACK_LEFT );
       else
          r200SetCliprects( rmesa, GL_FRONT_LEFT );
       r200UpdateViewportOffset( rmesa->glCtx );
-      driUpdateFramebufferSize(rmesa->glCtx, dPriv);
-      rmesa->lastStamp = dPriv->lastStamp;
+      driUpdateFramebufferSize(rmesa->glCtx, drawable);
+      rmesa->lastStamp = drawable->lastStamp;
    }
 
    R200_STATECHANGE( rmesa, ctx );
