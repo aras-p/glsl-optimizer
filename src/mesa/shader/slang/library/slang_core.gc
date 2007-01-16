@@ -155,9 +155,18 @@ float __constructor(const float f)
    __retVal = f.x;
 }
 
+
+//// vec2 constructors
+
 vec2 __constructor(const float f)
 {
    __retVal.xy = f.xx;
+}
+
+vec2 __constructor(const float x, const float y)
+{
+   __retVal.x = x;
+   __retVal.y = y;
 }
 
 vec2 __constructor (const int i) {
@@ -170,9 +179,24 @@ vec2 __constructor (const bool b) {
     return vec2 (b ? 1.0 : 0.0);
 }
 
+vec2 __constructor(const vec3 v)
+{
+   __retVal.xy = v.xy;
+}
+
+
+//// vec3 constructors
+
 vec3 __constructor(const float f)
 {
    __retVal.xyz = f.xxx;
+}
+
+vec3 __constructor(const float x, const float y, const float z)
+{
+   __retVal.x = x;
+   __retVal.y = y;
+   __retVal.z = z;
 }
 
 vec3 __constructor (const int i) {
@@ -190,6 +214,8 @@ vec3 __constructor(const vec4 v)
    __retVal.xyz = v.xyz;
 }
 
+
+//// vec4 constructors
 
 vec4 __constructor(const float f)
 {
@@ -484,7 +510,9 @@ float __operator * (const float a, const float b)
 
 float __operator / (const float a, const float b)
 {
-   __asm float_divide __retVal, a, b;
+   float bInv;
+   __asm float_rcp bInv.x, b.x;
+   __asm vec4_multiply __retVal.x, a, bInv;
 }
 
 
