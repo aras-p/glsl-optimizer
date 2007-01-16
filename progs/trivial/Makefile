@@ -40,11 +40,13 @@ SOURCES = \
 	quad-tex-2d.c \
 	quad-tex-pbo.c \
 	quad-tex-3d.c \
-	quad-tex-dep.c \
 	quad.c \
 	quads.c \
 	quadstrip.c \
 	quadstrip-flat.c \
+	dlist-edgeflag.c \
+	dlist-dangling.c \
+	dlist-edgeflag-dangling.c \
 	tri-blend.c \
 	tri-tex-3d.c \
 	tri-clip.c \
