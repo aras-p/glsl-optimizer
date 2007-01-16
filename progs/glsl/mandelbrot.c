@@ -39,8 +39,8 @@ static struct uniform_info Uniforms[] = {
    { "Shininess",            1, -1, { 20.0, 0, 0, 0 } },
    /* frag */
    { "MaxIterations",        1, -1, { 12, 0, 0, 0 } },
-   { "Zoom",                 1, -1, { 0.5, 0, 0, 0 } },
-   { "Xcenter",              1, -1, { -1.0, 0, 0, 0 } },
+   { "Zoom",                 1, -1, { 0.125, 0, 0, 0 } },
+   { "Xcenter",              1, -1, { -1.5, 0, 0, 0 } },
    { "Ycenter",              1, -1, { .005, 0, 0, 0 } },
    { "InnerColor",           3, -1, { 1, 0, 0, 0 } },
    { "OuterColor1",          3, -1, { 0, 1, 0, 0 } },
@@ -50,10 +50,10 @@ static struct uniform_info Uniforms[] = {
 
 static GLint win = 0;
 
-
 static GLfloat xRot = 0.0f, yRot = 0.0f, zRot = 0.0f;
 
-
+static GLint uZoom, uXcenter, uYcenter;
+static GLfloat zoom = 1.0, xCenter = -1.5, yCenter = 0.0;
 
 
 static void
@@ -61,6 +61,11 @@ Redisplay(void)
 {
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    
+   /* set interactive uniform parameters */
+   glUniform1fv_func(uZoom, 1, &zoom);
+   glUniform1fv_func(uXcenter, 1, &xCenter);
+   glUniform1fv_func(uYcenter, 1, &yCenter);
+
    glPushMatrix();
    glRotatef(xRot, 1.0f, 0.0f, 0.0f);
    glRotatef(yRot, 0.0f, 1.0f, 0.0f);
@@ -75,6 +80,8 @@ Redisplay(void)
 
    glPopMatrix();
 
+   glFinish();
+   glFlush();
    glutSwapBuffers();
 }
 
@@ -110,10 +117,10 @@ Key(unsigned char key, int x, int y)
 
    switch(key) {
    case 'z':
-      zRot -= 1.0;
+      zoom *= 0.9;
       break;
    case 'Z':
-      zRot += 1.0;
+      zoom /= 0.9;
       break;
    case 27:
       CleanUp();
@@ -127,23 +134,23 @@ Key(unsigned char key, int x, int y)
 static void
 SpecialKey(int key, int x, int y)
 {
-   const GLfloat step = 3.0f;
+   const GLfloat step = 0.1 * zoom;
 
   (void) x;
   (void) y;
 
    switch(key) {
    case GLUT_KEY_UP:
-      xRot -= step;
+      yCenter += step;
       break;
    case GLUT_KEY_DOWN:
-      xRot += step;
+      yCenter -= step;
       break;
    case GLUT_KEY_LEFT:
-      yRot -= step;
+      xCenter -= step;
       break;
    case GLUT_KEY_RIGHT:
-      yRot += step;
+      xCenter += step;
       break;
    }
    glutPostRedisplay();
@@ -267,6 +274,10 @@ Init(void)
          abort();
       }
    }
+
+   uZoom = glGetUniformLocation_func(program, "Zoom");
+   uXcenter = glGetUniformLocation_func(program, "Xcenter");
+   uYcenter = glGetUniformLocation_func(program, "Ycenter");
 
    assert(glGetError() == 0);
 
