@@ -363,8 +363,11 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
                attr = shProg->Attributes->Parameters[index].StateIndexes[0];
             }
             else {
-               /* not found, choose our own attribute number */
-               for (attr = 0; attr < MAX_VERTEX_ATTRIBS; attr++) {
+               /* Not found, choose our own attribute number.
+                * Start at 1 since generic attribute 0 always aliases
+                * glVertex/position.
+                */
+               for (attr = 1; attr < MAX_VERTEX_ATTRIBS; attr++) {
                   if (((1 << attr) & usedAttributes) == 0)
                      break;
                }
