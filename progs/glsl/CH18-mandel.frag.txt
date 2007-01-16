@@ -30,8 +30,8 @@ void main()
     float r2 = 0.0;
     float iter;
 
-    for (iter = 0.0; iter < MaxIterations && r2 < 4.0; ++iter)
-//nv:    for (iter = 0.0; iter < 12 && r2 < 4.0; ++iter)
+//    for (iter = 0.0; iter < MaxIterations && r2 < 4.0; ++iter)
+    for (iter = 0.0; iter < 12 && r2 < 4.0; ++iter)
     {
         float tempreal = real;
 

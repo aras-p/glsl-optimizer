@@ -15,7 +15,9 @@ LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME) $(T
 
 PROGS = \
 	brick \
-	mandelbrot
+	bump \
+	mandelbrot \
+	toyball
 
 
 ##### RULES #####
@@ -33,7 +35,9 @@ PROGS = \
 
 default: $(PROGS)
 
-$(PROGS):
+
+
+##### Extra dependencies
 
 extfuncs.h:  $(TOP)/progs/util/extfuncs.h
 	cp $< .
@@ -41,7 +45,11 @@ extfuncs.h:  $(TOP)/progs/util/extfuncs.h
 
 brick.c: extfuncs.h
 
+bump.c: extfuncs.h
+
 mandelbrot.c: extfuncs.h
+
+toyball.c: extfuncs.h
 
 
 clean:
