@@ -2257,22 +2257,12 @@ bool __operator <= (const int a, const int b) {
     return float (a) <= float (b);
 }
 
-bool __operator ^^ (const bool a, const bool b) {
-    return a != b;
-}
+
+//bool __operator ^^ (const bool a, const bool b) {
+//    return a != b;
+//}
 
 
-
-//
-// These operators are handled internally by the compiler:
-//
-// bool __operator && (bool a, bool b) {
-//     return a ? b : false;
-// }
-// bool __operator || (bool a, bool b) {
-//     return a ? true : b;
-// }
-//
 
 bool __logicalNot(const bool a)
 {
@@ -2297,6 +2287,7 @@ bool __logicalOr(const bool a, const bool b)
 
 bool __logicalXor(const bool a, const bool b)
 {
+   // XXX   return a != b;
    if (a)
       return __logicalNot(b);
    return b;
