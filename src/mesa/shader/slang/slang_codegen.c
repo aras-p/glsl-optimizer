@@ -1478,6 +1478,96 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
 
 
 /**
+ * Generate IR node for storage of a temporary of given size.
+ */
+static slang_ir_node *
+_slang_gen_temporary(GLint size)
+{
+   slang_ir_storage *store;
+   slang_ir_node *n;
+
+   store = _slang_new_ir_storage(PROGRAM_TEMPORARY, -1, size);
+   if (store) {
+      n = new_node(IR_VAR_DECL, NULL, NULL);
+      if (n) {
+         n->Store = store;
+      }
+      else {
+         free(store);
+      }
+   }
+   return n;
+}
+
+
+/**
+ * Generate code for a selection expression:   b ? x : y
+ */
+static slang_ir_node *
+_slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_atom altAtom = slang_atom_pool_gen(A->atoms, "__selectAlt");
+   slang_atom endAtom = slang_atom_pool_gen(A->atoms, "__selectEnd");
+   slang_ir_node *altLab, *endLab;
+   slang_ir_node *tree, *tmpDecl, *tmpVar, *cond, *cjump, *jump;
+   slang_ir_node *bodx, *body, *assignx, *assigny;
+    slang_assembly_typeinfo type;
+   int size;
+
+   /* size of x or y's type */
+   slang_assembly_typeinfo_construct(&type);
+   _slang_typeof_operation(A, &oper->children[1], &type);
+   size = _slang_sizeof_type_specifier(&type.spec);
+   assert(size > 0);
+
+   /* temporary var */
+   tmpDecl = _slang_gen_temporary(size);
+
+   /* eval condition */
+   cond = _slang_gen_operation(A, &oper->children[0]);
+   cond = _slang_gen_cond(cond);
+   tree = new_seq(tmpDecl, cond);
+
+   /* jump if true to "alt" label */
+   cjump = new_cjump(altAtom);
+   tree = new_seq(tree, cjump);
+
+   /* evaluate child 2 (y) and assign to tmp */
+   tmpVar = new_node(IR_VAR, NULL, NULL);
+   tmpVar->Store = tmpDecl->Store;
+   body = _slang_gen_operation(A, &oper->children[2]);
+   assigny = new_node(IR_MOVE, tmpVar, body);
+   tree = new_seq(tree, assigny);
+
+   /* jump to "end" label */
+   jump = new_jump(endAtom);
+   tree = new_seq(tree, jump);
+
+   /* "alt" label */
+   altLab = new_label(altAtom);
+   tree = new_seq(tree, altLab);
+
+   /* evaluate child 1 (x) and assign to tmp */
+   tmpVar = new_node(IR_VAR, NULL, NULL);
+   tmpVar->Store = tmpDecl->Store;
+   bodx = _slang_gen_operation(A, &oper->children[1]);
+   assignx = new_node(IR_MOVE, tmpVar, bodx);
+   tree = new_seq(tree, assignx);
+
+   /* "end" label */
+   endLab = new_label(endAtom);
+   tree = new_seq(tree, endLab);
+   
+   /* tmp var value */
+   tmpVar = new_node(IR_VAR, NULL, NULL);
+   tmpVar->Store = tmpDecl->Store;
+   tree = new_seq(tree, tmpVar);
+
+   return tree;
+}
+
+
+/**
  * Generate IR tree for a return statement.
  */
 static slang_ir_node *
@@ -1643,24 +1733,6 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
 }
 
 
-#if 0
-static slang_ir_node *
-_slang_gen_logical_and(slang_assemble_ctx * A, slang_operation *oper)
-{
-   /*
-    * bool b;
-    * b = test(child[0]);
-    * if !b goto endLab;
-    * b = test(child[1]);
-    * endLab:
-    * (b)
-    */
-   slang_ir_node *temp;
-
-}
-#endif
-
-
 /**
  * Generate IR tree for an assignment (=).
  */
@@ -1671,6 +1743,10 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
        oper->children[1].type == slang_oper_call) {
       /* Special case of:  x = f(a, b)
        * Replace with f(a, b, x)  (where x == hidden __retVal out param)
+       *
+       * XXX this could be even more effective if we could accomodate
+       * cases such as "v.x = f();"  - would help with typical vertex
+       * transformation.
        */
       slang_ir_node *n;
       n = _slang_gen_function_call_name(A,
@@ -2020,6 +2096,14 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 	 slang_ir_node *n;
          assert(oper->num_children == 1);
 	 n = _slang_gen_function_call_name(A, "__logicalNot", oper, NULL);
+	 return n;
+      }
+
+   case slang_oper_select:  /* b ? x : y */
+      {
+	 slang_ir_node *n;
+         assert(oper->num_children == 3);
+	 n = _slang_gen_select(A, oper );
 	 return n;
       }
 

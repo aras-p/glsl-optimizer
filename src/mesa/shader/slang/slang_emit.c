@@ -617,7 +617,8 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       assert(n->Store);
       assert(n->Store->File != PROGRAM_UNDEFINED);
       assert(n->Store->Size > 0);
-      if (n->Var->isTemp)
+      assert(n->Store->Index < 0);
+      if (!n->Var || n->Var->isTemp)
          n->Store->Index = _slang_alloc_temp(vt, n->Store->Size);
       else
          n->Store->Index = _slang_alloc_var(vt, n->Store->Size);
