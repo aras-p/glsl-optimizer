@@ -31,7 +31,9 @@
 #include "imports.h"
 #include "macros.h"
 #include "slang_compile.h"
+#include "slang_codegen.h"
 #include "slang_simplify.h"
+#include "slang_print.h"
 
 
 /**
@@ -182,3 +184,149 @@ slang_simplify(slang_operation *oper,
    }
 }
 
+
+
+/**
+ * Adapt the arguments for a function call to match the parameters of
+ * the given function.
+ * This is for:
+ * 1. converting/casting argument types to match parameters
+ * 2. breaking up vector/matrix types into individual components to
+ *    satisfy constructors.
+ */
+GLboolean
+_slang_adapt_call(slang_operation *callOper, const slang_function *fun,
+                  const slang_assembly_name_space * space,
+                  slang_atom_pool * atoms)
+{
+   const GLboolean haveRetValue = _slang_function_has_return_value(fun);
+   const int numParams = fun->param_count - haveRetValue;
+   int i;
+   int dbg = 0;
+
+   if (dbg) printf("Adapt %d args to %d parameters\n",
+                   callOper->num_children, numParams);
+
+   if (callOper->num_children != numParams) {
+      /* number of arguments doesn't match number of parameters */
+
+      if (fun->kind == slang_func_constructor) {
+         /* For constructor calls, we can try to unroll vector/matrix args
+          * into individual floats/ints and try to match the function params.
+          */
+         for (i = 0; i < numParams; i++) {
+            slang_assembly_typeinfo argType;
+            GLint argSz, j;
+
+            /* Get type of arg[i] */
+            if (!slang_assembly_typeinfo_construct(&argType))
+               return GL_FALSE;
+            if (!_slang_typeof_operation_(&callOper->children[i], space,
+                                          &argType, atoms)) {
+               slang_assembly_typeinfo_destruct(&argType);
+               return GL_FALSE;
+            }
+
+            /*
+            paramSz = _slang_sizeof_type_specifier(&paramVar->type.specifier);
+            assert(paramSz == 1);
+            */
+            argSz = _slang_sizeof_type_specifier(&argType.spec);
+            if (argSz > 1) {
+               slang_operation origArg;
+               /* break up arg[i] into components */
+               if (dbg)
+                  printf("Break up arg %d from 1 to %d elements\n", i, argSz);
+
+               slang_operation_construct(&origArg);
+               slang_operation_copy(&origArg,
+                                    &callOper->children[i]);
+
+               /* insert argSz-1 new children/args */
+               for (j = 0; j < argSz - 1; j++) {
+                  (void) slang_operation_insert(&callOper->num_children,
+                                                &callOper->children, i);
+               }
+
+               /* replace arg[i+j] with subscript/index oper */
+               for (j = 0; j < argSz; j++) {
+                  callOper->children[i + j].type = slang_oper_subscript;
+                  callOper->children[i + j].num_children = 2;
+                  callOper->children[i + j].children = slang_operation_new(2);
+                  slang_operation_copy(&callOper->children[i + j].children[0],
+                                       &origArg);
+                  callOper->children[i + j].children[1].type
+                     = slang_oper_literal_int;
+                  callOper->children[i + j].children[1].literal[0] = j;
+               }
+
+            }
+         } /* for i */
+      }
+      else {
+         /* non-constructor function: number of args must match number
+          * of function params.
+          */
+         return GL_FALSE; /* caller will record an error msg */
+      }
+   }
+
+   if (callOper->num_children < numParams) {
+      /* still not enough args for all params */
+      return GL_FALSE;
+   }
+   else if (callOper->num_children > numParams) {
+      /* now too many arguments */
+      /* XXX this isn't always an error, see spec */
+      return GL_FALSE;
+   }
+
+   /*
+    * Second phase, argument casting.
+    * Example:
+    *   void foo(int i, bool b) {}
+    *   x = foo(3.15, 9);
+    * Gets translated into:
+    *   x = foo(int(3.15), bool(9))
+    */
+   for (i = 0; i < numParams; i++) {
+      slang_assembly_typeinfo argType;
+      slang_variable *paramVar = fun->parameters->variables[i];
+
+      /* Get type of arg[i] */
+      if (!slang_assembly_typeinfo_construct(&argType))
+         return GL_FALSE;
+      if (!_slang_typeof_operation_(&callOper->children[i], space,
+                                    &argType, atoms)) {
+         slang_assembly_typeinfo_destruct(&argType);
+         return GL_FALSE;
+      }
+
+      /* see if arg type matches parameter type */
+      if (!slang_type_specifier_equal(&argType.spec,
+                                      &paramVar->type.specifier)) {
+         /* need to adapt arg type to match param type */
+         const char *constructorName =
+            slang_type_specifier_type_to_string(paramVar->type.specifier.type);
+         slang_operation *child = slang_operation_new(1);
+
+         slang_operation_copy(child, &callOper->children[i]);
+         child->locals->outer_scope = callOper->locals;
+
+         callOper->children[i].type = slang_oper_call;
+         callOper->children[i].a_id = slang_atom_pool_atom(atoms, constructorName);
+         callOper->children[i].num_children = 1;
+         callOper->children[i].children = child;
+      }
+
+      slang_assembly_typeinfo_destruct(&argType);
+   }
+
+   if (dbg) {
+      printf("===== New call to %s with adapted arguments ===============\n",
+             (char*) fun->header.a_name);
+      slang_print_tree(callOper, 5);
+   }
+
+   return GL_TRUE;
+}
