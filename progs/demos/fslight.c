@@ -402,7 +402,7 @@ LoadAndCompileShader(GLuint shader, const char *text)
       GLchar log[1000];
       GLsizei len;
       glGetShaderInfoLog_func(shader, 1000, &len, log);
-      fprintf(stderr, "fslight: problem compiling shader: %s\n", log);
+      fprintf(stderr, "fslight: problem compiling shader:\n%s\n", log);
       exit(1);
    }
 }
