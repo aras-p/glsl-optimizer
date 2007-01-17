@@ -101,53 +101,50 @@
 //    specification to provide all valid operator prototypes.
 //
 
-//bp:
-//vec4 vec4(const float a1, const float b1, const float c1, const float d1)
-//{
-//   __retVal.x = a1;
-//   __retVal.y = b1;
-//   __retVal.z = c1;
-//   __retVal.w = d1;
-//}
 
-////
-//// Assorted constructors
-////
 
-int __constructor (const float f) {
-    int i;
-    __asm float_to_int i, f;
-    return i;
+//// Basic, scalar constructors/casts
+
+int __constructor (const float f)
+{
+   __asm float_to_int __retVal, f;
 }
 
-bool __constructor (const int i) {
-    return i != 0;
+bool __constructor(const int i)
+{
+   const float zero = 0.0;
+   __asm vec4_seq __retVal.x, i.x, zero;
 }
 
-bool __constructor (const float f) {
-    return f != 0.0;
+bool __constructor(const float f)
+{
+   const float zero = 0.0;
+   __asm vec4_seq __retVal.x, i.x, zero;
 }
 
-int __constructor (const bool b) {
-    return b ? 1 : 0;
+int __constructor(const bool b)
+{
+   __retVal.x = b.x;
 }
 
-float __constructor (const bool b) {
-    return b ? 1.0 : 0.0;
+float __constructor (const bool b)
+{
+   __retVal.x = b.x;
 }
 
-float __constructor (const int i) {
-    float f;
-    __asm int_to_float f, i;
-    return f;
+float __constructor (const int i)
+{
+    __asm int_to_float __retVal, i;
 }
 
-bool __constructor (const bool b) {
-    return b;
+bool __constructor(const bool b)
+{
+   __retVal = b.x;
 }
 
-int __constructor (const int i) {
-    return i;
+int __constructor(const int i)
+{
+   __retVal = i.x;
 }
 
 float __constructor(const float f)
@@ -158,15 +155,15 @@ float __constructor(const float f)
 
 //// vec2 constructors
 
-vec2 __constructor(const float f)
-{
-   __retVal.xy = f.xx;
-}
-
 vec2 __constructor(const float x, const float y)
 {
    __retVal.x = x;
    __retVal.y = y;
+}
+
+vec2 __constructor(const float f)
+{
+   __retVal.xy = f.xx;
 }
 
 vec2 __constructor (const int i) {
@@ -187,11 +184,6 @@ vec2 __constructor(const vec3 v)
 
 //// vec3 constructors
 
-vec3 __constructor(const float f)
-{
-   __retVal.xyz = f.xxx;
-}
-
 vec3 __constructor(const float x, const float y, const float z)
 {
    __retVal.x = x;
@@ -199,14 +191,19 @@ vec3 __constructor(const float x, const float y, const float z)
    __retVal.z = z;
 }
 
-vec3 __constructor (const int i) {
-    float x;
-    __asm int_to_float x, i;
-    return vec3 (x);
+vec3 __constructor(const float f)
+{
+   __retVal.xyz = f.xxx;
 }
 
-vec3 __constructor (const bool b) {
-    return vec3 (b ? 1.0 : 0.0);
+vec3 __constructor(const int i)
+{
+   __asm int_to_float __retVal.xyz, i.xxx;
+}
+
+vec3 __constructor(const bool b)
+{
+   __retVal.xyz = b.xxx;
 }
 
 vec3 __constructor(const vec4 v)
@@ -217,99 +214,169 @@ vec3 __constructor(const vec4 v)
 
 //// vec4 constructors
 
+vec4 __constructor(const float x, const float y, const float z, const float w)
+{
+   __retVal.x = x;
+   __retVal.y = y;
+   __retVal.z = z;
+   __retVal.w = w;
+}
+
 vec4 __constructor(const float f)
 {
-   __retVal.xyzw = f.xxxx;
+   __retVal = f.xxxx;
 }
 
-vec4 __constructor (const int i) {
-    float x;
-    __asm int_to_float x, i;
-    return vec4 (x);
+vec4 __constructor(const int i)
+{
+   __retVal = i.xxxx;
 }
 
-vec4 __constructor (const bool b) {
-    return vec4 (b ? 1.0 : 0.0);
+vec4 __constructor(const bool b)
+{
+   __retVal = b.xxxx;
 }
 
 vec4 __constructor(const vec3 v3, const float f)
 {
+   // XXX this constructor shouldn't be needed anymore
    __retVal.xyz = v3;
    __retVal.w = f;
 }
 
 
+//// ivec2 constructors
 
-ivec2 __constructor (const int i) {
-    return ivec2 (i, i);
+ivec2 __constructor(const int i, const int j)
+{
+   __retVal.x = i;
+   __retVal.y = j;
 }
 
-ivec2 __constructor (const float f) {
-    return ivec2 (int (f));
+ivec2 __constructor(const int i)
+{
+   __retVal.xy = i.xx;
 }
 
-ivec2 __constructor (const bool b) {
-    return ivec2 (int (b));
+ivec2 __constructor(const float f)
+{
+   __asm float_to_int __retVal.xy, f.xx;
 }
 
-ivec3 __constructor (const int i) {
-    return ivec3 (i, i, i);
+ivec2 __constructor(const bool b)
+{
+   __asm float_to_int __retVal.xy, b.xx;
 }
 
-ivec3 __constructor (const float f) {
-    return ivec3 (int (f));
+
+//// ivec3 constructors
+
+ivec3 __constructor(const int i, const int j, const int k)
+{
+   __retVal.x = i;
+   __retVal.y = j;
+   __retVal.z = k;
 }
 
-ivec3 __constructor (const bool b) {
-    return ivec3 (int (b));
+ivec3 __constructor(const int i)
+{
+   __retVal.xyz = i.xxx;
 }
 
-ivec4 __constructor (const int i) {
-    return ivec4 (i, i, i, i);
+ivec3 __constructor(const float f)
+{
+   __retVal.xyz = f.xxx;
 }
 
-ivec4 __constructor (const float f) {
-    return ivec4 (int (f));
+ivec3 __constructor(const bool b)
+{
+   __retVal.xyz = b.xxx;
 }
 
-ivec4 __constructor (const bool b) {
-    return ivec4 (int (b));
+
+//// ivec4 constructors
+
+ivec4 __constructor(const int x, const int y, const int z, const int w)
+{
+   __retVal.x = x;
+   __retVal.y = y;
+   __retVal.z = z;
+   __retVal.w = w;
 }
 
-bvec2 __constructor (const bool b) {
-    return bvec2 (b, b);
+ivec4 __constructor(const int i)
+{
+   __retVal = i.xxxx;
 }
 
-bvec2 __constructor (const float f) {
-    return bvec2 (bool (f));
+ivec4 __constructor(const float f)
+{
+   __asm float_to_int __retVal, f.xxxx;
 }
 
-bvec2 __constructor (const int i) {
-    return bvec2 (bool (i));
+ivec4 __constructor(const bool b)
+{
+   __retVal = b.xxxx;
 }
 
-bvec3 __constructor (const bool b) {
-    return bvec3 (b, b, b);
+
+//// bvec2 constructors
+
+bvec2 __constructor(const bool b)
+{
+   __retVal.xy = b.xx;
 }
 
-bvec3 __constructor (const float f) {
-    return bvec3 (bool (f));
+bvec2 __constructor(const float f)
+{
+   const vec2 zero = vec2(0.0, 0.0);
+   __asm vec4_seq __retVal.xy, f.xx, zero;
 }
 
-bvec3 __constructor (const int i) {
-    return bvec3 (bool (i));
+bvec2 __constructor(const int i)
+{
+   const ivec2 zero = ivec2(0, 0);
+   __asm vec4_seq __retVal.xy, i.xx, zero;
 }
 
-bvec4 __constructor (const bool b) {
-    return bvec4 (b, b, b, b);
+
+//// bvec3 constructors
+
+bvec3 __constructor(const bool b)
+{
+   __retVal.xyz = b.xxx;
 }
 
-bvec4 __constructor (const float f) {
-    return bvec4 (bool (f));
+bvec3 __constructor(const float f)
+{
+   const vec3 zero = vec3(0.0, 0.0, 0.0);
+   __asm vec4_seq __retVal.xyz, f.xxx, zero;
 }
 
-bvec4 __constructor (const int i) {
-    return bvec4 (bool (i));
+bvec3 __constructor(const int i)
+{
+   const ivec3 zero = ivec3(0, 0, 0);
+   __asm vec4_seq __retVal.xyz, i.xxx, zero;
+}
+
+
+//// bvec4 constructors
+
+bvec4 __constructor(const bool b)
+{
+   __retVal.xyzw = b.xxxx;
+}
+
+bvec4 __constructor(const float f)
+{
+   const vec4 zero = vec4(0.0, 0.0, 0.0, 0.0);
+   __asm vec4_seq __retVal, f.xxxx, zero;
+}
+
+bvec4 __constructor(const int i)
+{
+   const ivec4 zero = ivec4(0, 0, 0, 0);
+   __asm vec4_seq __retVal, i.xxxx, zero;
 }
 
 
@@ -858,13 +925,7 @@ ivec4 __operator / (const ivec4 v, const int b) {
 
 int __operator - (const int a)
 {
-// XXX redo
-    float x;
-    int b;
-    __asm int_to_float x, a;
-    __asm float_negate x, x;
-    __asm float_to_int b, x;
-    return b;
+   __asm float_negate __retVal.x, a;
 }
 
 ivec2 __operator - (const ivec2 v)
