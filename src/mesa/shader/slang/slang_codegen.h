@@ -31,6 +31,9 @@
 #include "slang_compile.h"
 
 
+extern GLuint
+_slang_sizeof_type_specifier(const slang_type_specifier *spec);
+
 extern GLboolean
 _slang_codegen_function(slang_assemble_ctx *A , struct slang_function_ *fun);
 

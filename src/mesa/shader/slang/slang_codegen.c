@@ -187,7 +187,7 @@ _slang_sizeof_struct(const slang_struct *s)
 }
 
 
-static GLuint
+GLuint
 _slang_sizeof_type_specifier(const slang_type_specifier *spec)
 {
    switch (spec->type) {
@@ -482,6 +482,7 @@ static slang_asm_info AsmInfo[] = {
 
    /* unary op */
    { "int_to_float", IR_I_TO_F, 1, 1 },
+   { "float_to_int", IR_F_TO_I, 1, 1 },
    { "float_exp", IR_EXP, 1, 1 },
    { "float_exp2", IR_EXP2, 1, 1 },
    { "float_log2", IR_LOG2, 1, 1 },
@@ -758,6 +759,7 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
 		  printf("Substitute %s with %f in id node %p\n",
 			 (char*)v->a_name, substNew[i]->literal[0],
 			 (void*) oper);
+               }
 #endif
 	       slang_operation_copy(oper, substNew[i]);
 	       break;
@@ -1268,19 +1270,40 @@ _slang_gen_cond(slang_ir_node *n)
 }
 
 
-static void print_funcs(struct slang_function_scope_ *scope)
+static void
+print_funcs(struct slang_function_scope_ *scope, const char *name)
 {
    int i;
    for (i = 0; i < scope->num_functions; i++) {
       slang_function *f = &scope->functions[i];
-      printf("func %s\n", (char *) f->header.a_name);
-      if (strcmp("vec3", (char*) f->header.a_name) == 0)
-         printf("VEC3!\n");
+      if (!name || strcmp(name, (char*) f->header.a_name) == 0)
+          printf("  %s (%d args)\n", name, f->param_count);
 
    }
    if (scope->outer_scope)
-      print_funcs(scope->outer_scope);
+      print_funcs(scope->outer_scope, name);
 }
+
+
+/**
+ * Return first function in the scope that has the given name.
+ * This is the function we'll try to call when there is no exact match
+ * between function parameters and call arguments.
+ */
+static slang_function *
+_slang_first_function(struct slang_function_scope_ *scope, const char *name)
+{
+   int i;
+   for (i = 0; i < scope->num_functions; i++) {
+      slang_function *f = &scope->functions[i];
+      if (strcmp(name, (char*) f->header.a_name) == 0)
+         return f;
+   }
+   if (scope->outer_scope)
+      return _slang_first_function(scope->outer_scope, name);
+   return NULL;
+}
+
 
 
 /**
@@ -1300,15 +1323,21 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
    if (atom == SLANG_ATOM_NULL)
       return NULL;
 
+   /*
+    * Use 'name' to find the function to call
+    */
    fun = _slang_locate_function(A->space.funcs, atom, params, param_count,
 				&A->space, A->atoms);
    if (!fun) {
-      /* XXX temporary */
-      print_funcs(A->space.funcs);
-      fun = _slang_locate_function(A->space.funcs, atom, params, param_count,
-                                   &A->space, A->atoms);
-
-      RETURN_ERROR2("Undefined function", name, 0);
+      /* A function with exactly the right parameters/types was not found.
+       * Try adapting the parameters.
+       */
+      fun = _slang_first_function(A->space.funcs, name);
+      if (!_slang_adapt_call(oper, fun, &A->space, A->atoms)) {
+         RETURN_ERROR2("Undefined function (or no matching parameters)",
+                       name, 0);
+      }
+      assert(fun);
    }
 
    return _slang_gen_function_call(A, fun, oper, dest);
