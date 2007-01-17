@@ -22,6 +22,9 @@
 #include <GL/glext.h>
 #include "extfuncs.h"
 
+
+static GLint CoordAttrib = 0;
+
 static char *FragProgFile = NULL;
 static char *VertProgFile = NULL;
 
@@ -37,7 +40,9 @@ static GLuint program;
 static GLint uLightPos;
 static GLint uDiffuse;
 static GLint uSpecular;
+static GLint uTexture;
 
+static GLuint SphereList, RectList, CurList;
 static GLint win = 0;
 static GLboolean anim = GL_FALSE;
 static GLboolean wire = GL_FALSE;
@@ -46,7 +51,7 @@ static GLboolean pixelLight = GL_TRUE;
 static GLint t0 = 0;
 static GLint frames = 0;
 
-static GLfloat xRot = 0.0f, yRot = 0.0f;
+static GLfloat xRot = 90.0f, yRot = 0.0f;
 
 
 static void
@@ -80,7 +85,10 @@ Redisplay(void)
    glPushMatrix();
    glRotatef(xRot, 1.0f, 0.0f, 0.0f);
    glRotatef(yRot, 0.0f, 1.0f, 0.0f);
+   /*
    glutSolidSphere(2.0, 10, 5);
+   */
+   glCallList(CurList);
    glPopMatrix();
 
    glutSwapBuffers();
@@ -160,6 +168,12 @@ Key(unsigned char key, int x, int y)
          glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
       else
          glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      break;
+   case 'o':
+      if (CurList == SphereList)
+         CurList = RectList;
+      else
+         CurList = SphereList;
       break;
    case 'p':
       pixelLight = !pixelLight;
@@ -268,6 +282,113 @@ TestFunctions(void)
 
 
 static void
+MakeTexture(void)
+{
+#define SZ0 128
+#define SZ1 64
+   GLubyte image0[SZ0][SZ0][SZ0][4];
+   GLubyte image1[SZ1][SZ1][SZ1][4];
+   GLuint i, j, k;
+
+   /* level 0: two-tone gray checkboard */
+   for (i = 0; i < SZ0; i++) {
+      for (j = 0; j < SZ0; j++) {
+         for (k = 0; k < SZ0; k++) {
+            if ((i/8 + j/8 + k/8) & 1) {
+               image0[i][j][k][0] = 
+               image0[i][j][k][1] = 
+               image0[i][j][k][2] = 200;
+            }
+            else {
+               image0[i][j][k][0] = 
+               image0[i][j][k][1] = 
+               image0[i][j][k][2] = 100;
+            }
+            image0[i][j][k][3] = 255;
+         }
+      }
+   }
+
+   /* level 1: two-tone green checkboard */
+   for (i = 0; i < SZ1; i++) {
+      for (j = 0; j < SZ1; j++) {
+         for (k = 0; k < SZ1; k++) {
+            if ((i/8 + j/8 + k/8) & 1) {
+               image1[i][j][k][0] = 0;
+               image1[i][j][k][1] = 250;
+               image1[i][j][k][2] = 0;
+            }
+            else {
+               image1[i][j][k][0] = 0;
+               image1[i][j][k][1] = 200;
+               image1[i][j][k][2] = 0;
+            }
+            image1[i][j][k][3] = 255;
+         }
+      }
+   }
+
+   glActiveTexture(GL_TEXTURE2); /* unit 2 */
+   glBindTexture(GL_TEXTURE_2D, 42);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SZ0, SZ0, 0,
+                GL_RGBA, GL_UNSIGNED_BYTE, image0);
+   glTexImage2D(GL_TEXTURE_2D, 1, GL_RGBA, SZ1, SZ1, 0,
+                GL_RGBA, GL_UNSIGNED_BYTE, image1);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+   glActiveTexture(GL_TEXTURE4); /* unit 4 */
+   glBindTexture(GL_TEXTURE_3D, 43);
+   glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA, SZ0, SZ0, SZ0, 0,
+                GL_RGBA, GL_UNSIGNED_BYTE, image0);
+   glTexImage3D(GL_TEXTURE_3D, 1, GL_RGBA, SZ1, SZ1, SZ1, 0,
+                GL_RGBA, GL_UNSIGNED_BYTE, image1);
+   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, 1);
+   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+}
+
+
+static void
+MakeSphere(void)
+{
+   GLUquadricObj *obj = gluNewQuadric();
+   SphereList = glGenLists(1);
+   gluQuadricTexture(obj, GL_TRUE);
+   glNewList(SphereList, GL_COMPILE);
+   gluSphere(obj, 2.0f, 10, 5);
+   glEndList();
+}
+
+static void
+VertAttrib(GLint index, float x, float y)
+{
+#if 1
+   glVertexAttrib2f_func(index, x, y);
+#else
+   glTexCoord2f(x, y);
+#endif
+}
+
+static void
+MakeRect(void)
+{
+   RectList = glGenLists(1);
+   glNewList(RectList, GL_COMPILE);
+   glNormal3f(0, 0, 1);
+   glBegin(GL_POLYGON);
+   VertAttrib(CoordAttrib, 0, 0);   glVertex2f(-2, -2);
+   VertAttrib(CoordAttrib, 1, 0);   glVertex2f( 2, -2);
+   VertAttrib(CoordAttrib, 1, 1);   glVertex2f( 2,  2);
+   VertAttrib(CoordAttrib, 0, 1);   glVertex2f(-2,  2);
+   glEnd();    /* XXX omit this and crash! */
+   glEndList();
+}
+
+
+
+static void
 LoadAndCompileShader(GLuint shader, const char *text)
 {
    GLint stat;
@@ -281,7 +402,7 @@ LoadAndCompileShader(GLuint shader, const char *text)
       GLchar log[1000];
       GLsizei len;
       glGetShaderInfoLog_func(shader, 1000, &len, log);
-      fprintf(stderr, "Problem compiling shader: %s\n", log);
+      fprintf(stderr, "fslight: problem compiling shader: %s\n", log);
       exit(1);
    }
 }
@@ -298,12 +419,12 @@ ReadShader(GLuint shader, const char *filename)
    char *buffer = (char*) malloc(max);
    FILE *f = fopen(filename, "r");
    if (!f) {
-      fprintf(stderr, "Unable to open shader file %s\n", filename);
+      fprintf(stderr, "fslight: Unable to open shader file %s\n", filename);
       exit(1);
    }
 
    n = fread(buffer, 1, max, f);
-   printf("Read %d bytes from shader file %s\n", n, filename);
+   printf("fslight: read %d bytes from shader file %s\n", n, filename);
    if (n > 0) {
       buffer[n] = 0;
       LoadAndCompileShader(shader, buffer);
@@ -381,11 +502,29 @@ Init(void)
    uLightPos = glGetUniformLocation_func(program, "lightPos");
    uDiffuse = glGetUniformLocation_func(program, "diffuse");
    uSpecular = glGetUniformLocation_func(program, "specular");
-   printf("LightPos %d  DiffusePos %d  SpecularPos %d\n",
-          uLightPos, uDiffuse, uSpecular);
+   uTexture = glGetUniformLocation_func(program, "texture");
+   printf("LightPos %d  DiffusePos %d  SpecularPos %d  TexturePos %d\n",
+          uLightPos, uDiffuse, uSpecular, uTexture);
 
    glUniform4fv_func(uDiffuse, 1, diffuse);
    glUniform4fv_func(uSpecular, 1, specular);
+   glUniform1i_func(uTexture, 2);  /* use texture unit 2 */
+
+   if (CoordAttrib) {
+      int i;
+      glBindAttribLocation_func(program, CoordAttrib, "coord");
+      i = glGetAttribLocation_func(program, "coord");
+      assert(i >= 0);
+      if (i != CoordAttrib) {
+         printf("Hmmm, NVIDIA bug?\n");
+         CoordAttrib = i;
+      }
+      else {
+         printf("Mesa bind attrib: coord = %d\n", i);
+      }
+   }
+
+   /*assert(glGetError() == 0);*/
 
    glClearColor(0.3f, 0.3f, 0.3f, 0.0f);
    glEnable(GL_DEPTH_TEST);
@@ -394,6 +533,13 @@ Init(void)
    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0f);
+
+   MakeSphere();
+   MakeRect();
+
+   CurList = SphereList;
+
+   MakeTexture();
 
    printf("GL_RENDERER = %s\n",(const char *) glGetString(GL_RENDERER));
    printf("Press p to toggle between per-pixel and per-vertex lighting\n");
