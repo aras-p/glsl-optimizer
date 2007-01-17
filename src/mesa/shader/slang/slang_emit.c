@@ -69,6 +69,7 @@ static slang_ir_info IrInfo[] = {
    { IR_POW, "IR_POW", OPCODE_POW, 1, 2 },
    /* unary ops */
    { IR_I_TO_F, "IR_I_TO_F", OPCODE_NOP, 1, 1 },
+   { IR_F_TO_I, "IR_F_TO_I", OPCODE_INT, 4, 1 }, /* 4 floats to 4 ints */
    { IR_EXP, "IR_EXP", OPCODE_EXP, 1, 1 },
    { IR_EXP2, "IR_EXP2", OPCODE_EX2, 1, 1 },
    { IR_LOG2, "IR_LOG2", OPCODE_LG2, 1, 1 },
@@ -589,6 +590,104 @@ emit_tex(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
 
 static struct prog_instruction *
+emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
+{
+   struct prog_instruction *inst;
+
+   /* rhs */
+   assert(n->Children[1]);
+   inst = emit(vt, n->Children[1], prog);
+
+   /* lhs */
+   emit(vt, n->Children[0], prog);
+
+#if 1
+   if (inst && _slang_is_temp(vt, n->Children[1]->Store->Index)) {
+      /* Peephole optimization:
+       * Just modify the RHS to put its result into the dest of this
+       * MOVE operation.  Then, this MOVE is a no-op.
+       */
+      _slang_free_temp(vt, n->Children[1]->Store->Index,
+                       n->Children[1]->Store->Size);
+      *n->Children[1]->Store = *n->Children[0]->Store;
+      /* fixup the prev (RHS) instruction */
+      storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
+      return inst;
+   }
+   else
+#endif
+   {
+      if (n->Children[0]->Store->Size > 4) {
+         /* move matrix/struct etc */
+         slang_ir_storage dstStore = *n->Children[0]->Store;
+         slang_ir_storage srcStore = *n->Children[1]->Store;
+         GLint size = srcStore.Size;
+         ASSERT(n->Children[0]->Writemask == WRITEMASK_XYZW);
+         ASSERT(n->Children[1]->Swizzle == SWIZZLE_NOOP);
+         dstStore.Size = 4;
+         srcStore.Size = 4;
+         while (size >= 4) {
+            inst = new_instruction(prog, OPCODE_MOV);
+            inst->Comment = _mesa_strdup("IR_MOVE block");
+            storage_to_dst_reg(&inst->DstReg, &dstStore, n->Writemask);
+            storage_to_src_reg(&inst->SrcReg[0], &srcStore,
+                               n->Children[1]->Swizzle);
+            srcStore.Index++;
+            dstStore.Index++;
+            size -= 4;
+         }
+      }
+      else {
+         inst = new_instruction(prog, OPCODE_MOV);
+         storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
+         storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store,
+                            n->Children[1]->Swizzle);
+      }
+      /* XXX is this test correct? */
+      if (_slang_is_temp(vt, n->Children[1]->Store->Index)) {
+         _slang_free_temp(vt, n->Children[1]->Store->Index,
+                          n->Children[1]->Store->Size);
+      }
+      /*inst->Comment = _mesa_strdup("IR_MOVE");*/
+      assert(!n->Store);
+      n->Store = n->Children[0]->Store; /*XXX new */
+      return inst;
+   }
+}
+
+
+static struct prog_instruction *
+emit_cond(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
+{
+   /* Conditional expression (in if/while/for stmts).
+    * Need to update condition code register.
+    * Next instruction is typically an IR_CJUMP.
+    */
+   /* last child expr instruction: */
+   struct prog_instruction *inst = emit(vt, n->Children[0], prog);
+   if (inst) {
+      /* set inst's CondUpdate flag */
+      inst->CondUpdate = GL_TRUE;
+      return inst; /* XXX or null? */
+   }
+   else {
+      /* This'll happen for things like "if (i) ..." where no code
+       * is normally generated for the expression "i".
+       * Generate a move instruction just to set condition codes.
+       */
+      alloc_temp_storage(vt, n, 1);
+      inst = new_instruction(prog, OPCODE_MOV);
+      inst->CondUpdate = GL_TRUE;
+      storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+      storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
+                         n->Children[0]->Swizzle);
+      _slang_free_temp(vt, n->Store->Index, n->Store->Size);
+      return inst; /* XXX or null? */
+   }
+}
+
+
+static struct prog_instruction *
 emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 {
    struct prog_instruction *inst;
@@ -597,6 +696,7 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
    switch (n->Opcode) {
    case IR_SEQ:
+      /* sequence of two sub-trees */
       assert(n->Children[0]);
       assert(n->Children[1]);
       emit(vt, n->Children[0], prog);
@@ -662,66 +762,7 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       }
       return NULL; /* no instruction */
 
-   case IR_MOVE:
-      /* rhs */
-      assert(n->Children[1]);
-      inst = emit(vt, n->Children[1], prog);
-      /* lhs */
-      emit(vt, n->Children[0], prog);
-
-#if 1
-      if (inst && _slang_is_temp(vt, n->Children[1]->Store->Index)) {
-         /* Peephole optimization:
-          * Just modify the RHS to put its result into the dest of this
-          * MOVE operation.  Then, this MOVE is a no-op.
-          */
-         _slang_free_temp(vt, n->Children[1]->Store->Index,
-                          n->Children[1]->Store->Size);
-         *n->Children[1]->Store = *n->Children[0]->Store;
-         /* fixup the prev (RHS) instruction */
-         storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
-         return inst;
-      }
-      else
-#endif
-      {
-         if (n->Children[0]->Store->Size > 4) {
-            /* move matrix/struct etc */
-            slang_ir_storage dstStore = *n->Children[0]->Store;
-            slang_ir_storage srcStore = *n->Children[1]->Store;
-            GLint size = srcStore.Size;
-            ASSERT(n->Children[0]->Writemask == WRITEMASK_XYZW);
-            ASSERT(n->Children[1]->Swizzle == SWIZZLE_NOOP);
-            dstStore.Size = 4;
-            srcStore.Size = 4;
-            while (size >= 4) {
-               inst = new_instruction(prog, OPCODE_MOV);
-               inst->Comment = _mesa_strdup("IR_MOVE block");
-               storage_to_dst_reg(&inst->DstReg, &dstStore, n->Writemask);
-               storage_to_src_reg(&inst->SrcReg[0], &srcStore,
-                                  n->Children[1]->Swizzle);
-               srcStore.Index++;
-               dstStore.Index++;
-               size -= 4;
-            }
-         }
-         else {
-            inst = new_instruction(prog, OPCODE_MOV);
-            storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
-            storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store,
-                               n->Children[1]->Swizzle);
-         }
-         /* XXX is this test correct? */
-         if (_slang_is_temp(vt, n->Children[1]->Store->Index)) {
-            _slang_free_temp(vt, n->Children[1]->Store->Index,
-                             n->Children[1]->Store->Size);
-         }
-         /*inst->Comment = _mesa_strdup("IR_MOVE");*/
-         assert(!n->Store);
-         n->Store = n->Children[0]->Store; /*XXX new */
-         return inst;
-      }
-      break;
+   /* Simple binary operators */
    case IR_ADD:
    case IR_SUB:
    case IR_MUL:
@@ -738,10 +779,12 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    case IR_EXP:
    case IR_EXP2:
       return emit_binop(vt, n, prog);
+   /* Simple unary operators */
    case IR_RSQ:
    case IR_RCP:
    case IR_FLOOR:
    case IR_FRAC:
+   case IR_F_TO_I:
    case IR_ABS:
    case IR_SIN:
    case IR_COS:
@@ -754,44 +797,23 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       return emit_tex(vt, n, prog);
    case IR_NEG:
       return emit_negation(vt, n, prog);
-   case IR_LABEL:
-      return emit_label(n->Target, prog);
    case IR_FLOAT:
       n->Store = alloc_constant(n->Value, 4, prog); /*XXX fix size */
       break;
+
+   case IR_MOVE:
+      return emit_move(vt, n, prog);
+
    case IR_COND:
-      {
-         /* Conditional expression (in if/while/for stmts).
-          * Need to update condition code register.
-          * Next instruction is typically an IR_CJUMP.
-          */
-         /* last child expr instruction: */
-         struct prog_instruction *inst = emit(vt, n->Children[0], prog);
-         if (inst) {
-            /* set inst's CondUpdate flag */
-            inst->CondUpdate = GL_TRUE;
-            return inst; /* XXX or null? */
-         }
-         else {
-            /* This'll happen for things like "if (i) ..." where no code
-             * is normally generated for the expression "i".
-             * Generate a move instruction just to set condition codes.
-             */
-            alloc_temp_storage(vt, n, 1);
-            inst = new_instruction(prog, OPCODE_MOV);
-            inst->CondUpdate = GL_TRUE;
-            storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
-            storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
-                               n->Children[0]->Swizzle);
-            _slang_free_temp(vt, n->Store->Index, n->Store->Size);
-            return inst; /* XXX or null? */
-         }
-      }
-      return NULL;
+      return emit_cond(vt, n, prog);
+
+   case IR_LABEL:
+      return emit_label(n->Target, prog);
    case IR_JUMP:
       return emit_jump(n->Target, prog);
    case IR_CJUMP:
       return emit_cjump(n->Target, prog);
+
    default:
       _mesa_problem(NULL, "Unexpected IR opcode in emit()\n");
       abort();
