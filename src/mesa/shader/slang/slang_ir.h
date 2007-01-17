@@ -61,8 +61,8 @@ typedef enum
    IR_CROSS,   /* vec3 cross product */
    IR_MIN,
    IR_MAX,
-   IR_SEQUAL,  /* Set if not equal */
-   IR_SNEQUAL, /* Set if equal */
+   IR_SEQUAL,  /* Set if args are equal */
+   IR_SNEQUAL, /* Set if args are not equal */
    IR_SGE,     /* Set if greater or equal */
    IR_SGT,     /* Set if greater than */
    IR_POW,     /* x^y */
@@ -88,7 +88,8 @@ typedef enum
    IR_TEXP,    /* texture lookup with projection */
    IR_FLOAT,
    IR_FIELD,
-   IR_I_TO_F
+   IR_I_TO_F,  /* int[4] to float[4] conversion */
+   IR_F_TO_I   /* float[4] to int[4] conversion */
 } slang_ir_opcode;
 
 
