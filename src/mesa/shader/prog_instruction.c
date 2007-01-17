@@ -135,6 +135,7 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_EXP,    "EXP",   1 },
    { OPCODE_FLR,    "FLR",   1 },
    { OPCODE_FRC,    "FRC",   1 },
+   { OPCODE_INT,    "INT",   1 },
    { OPCODE_KIL,    "KIL",   1 },
    { OPCODE_KIL_NV, "KIL",   0 },
    { OPCODE_LG2,    "LG2",   1 },

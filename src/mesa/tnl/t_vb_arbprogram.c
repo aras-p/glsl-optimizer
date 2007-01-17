@@ -338,6 +338,17 @@ static void do_FRC( struct arb_vp_machine *m, union instruction op )
    result[3] = arg0[3] - FLOORF(arg0[3]);
 }
 
+static void do_INT( struct arb_vp_machine *m, union instruction op ) 
+{
+   GLfloat *result = m->File[0][op.alu.dst];
+   const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
+
+   result[0] = (GLfloat) (GLint) arg0[0];
+   result[1] = (GLfloat) (GLint) arg0[1];
+   result[2] = (GLfloat) (GLint) arg0[2];
+   result[3] = (GLfloat) (GLint) arg0[3];
+}
+
 /* High precision log base 2:
  */
 static void do_LG2( struct arb_vp_machine *m, union instruction op ) 
@@ -665,6 +676,7 @@ _tnl_disassem_vba_insn( union instruction op )
    case OPCODE_EXP:
    case OPCODE_FLR:
    case OPCODE_FRC:
+   case OPCODE_INT:
    case OPCODE_LG2:
    case OPCODE_LIT:
    case OPCODE_LOG:
@@ -739,6 +751,7 @@ static void (* const opcode_func[MAX_OPCODE+3])(struct arb_vp_machine *, union i
    do_EXP,
    do_FLR,
    do_FRC,
+   do_INT,
    do_NOP,/*KIL*/
    do_NOP,/*KIL_NV*/
    do_LG2,
@@ -1457,6 +1470,10 @@ static GLboolean init_vertex_program( GLcontext *ctx,
    struct arb_vp_machine *m;
    const GLuint size = VB->Size;
    GLuint i;
+
+   /* spot checks to be sure the opcode table is correct */
+   assert(opcode_func[OPCODE_SGE] == do_SGE);
+   assert(opcode_func[OPCODE_XPD] == do_XPD);
 
    stage->privatePtr = _mesa_calloc(sizeof(*m));
    m = ARB_VP_MACHINE(stage);

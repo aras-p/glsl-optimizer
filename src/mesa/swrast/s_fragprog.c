@@ -888,6 +888,17 @@ execute_program( GLcontext *ctx,
                store_vector4( inst, machine, result );
             }
             break;
+         case OPCODE_INT: /* float to int */
+            {
+               GLfloat a[4], result[4];
+               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a );
+               result[0] = (GLfloat) (GLint) a[0];
+               result[1] = (GLfloat) (GLint) a[1];
+               result[2] = (GLfloat) (GLint) a[2];
+               result[3] = (GLfloat) (GLint) a[3];
+               store_vector4( inst, machine, result );
+            }
+            break;
          case OPCODE_KIL_NV: /* NV_f_p only */
             {
                const GLuint swizzle = inst->DstReg.CondSwizzle;
