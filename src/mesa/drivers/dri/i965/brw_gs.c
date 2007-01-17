@@ -82,6 +82,9 @@ static void compile_gs_prog( struct brw_context *brw,
    case GL_QUADS:
       brw_gs_quads( &c ); 
       break;
+   case GL_QUAD_STRIP:
+      brw_gs_quad_strip( &c );
+      break;
    case GL_LINE_LOOP:
       brw_gs_lines( &c );
       break;
@@ -145,7 +148,7 @@ static const GLenum gs_prim[GL_POLYGON+1] = {
    GL_TRIANGLES,
    GL_TRIANGLES,
    GL_QUADS,
-   GL_QUADS,
+   GL_QUAD_STRIP,
    GL_TRIANGLES
 };
 
