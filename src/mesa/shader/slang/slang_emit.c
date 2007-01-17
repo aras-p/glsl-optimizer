@@ -618,10 +618,15 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       assert(n->Store->File != PROGRAM_UNDEFINED);
       assert(n->Store->Size > 0);
       assert(n->Store->Index < 0);
-      if (!n->Var || n->Var->isTemp)
+      if (!n->Var || n->Var->isTemp) {
+         /* a nameless/temporary variable, will be freed after first use */
          n->Store->Index = _slang_alloc_temp(vt, n->Store->Size);
-      else
+      }
+      else {
+         /* a regular variable */
+         _slang_add_variable(vt, n->Var);
          n->Store->Index = _slang_alloc_var(vt, n->Store->Size);
+      }
       assert(n->Store->Index >= 0);
       break;
 

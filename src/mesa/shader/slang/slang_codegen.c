@@ -266,6 +266,7 @@ slang_allocate_storage(slang_assemble_ctx *A, slang_ir_node *n)
          n->Store = _slang_new_ir_storage(PROGRAM_UNDEFINED, -1, -5);
          if (n->Var)
             n->Var->aux = n->Store;
+         assert(n->Var->aux);
       }
    }
 
@@ -281,7 +282,6 @@ slang_allocate_storage(slang_assemble_ctx *A, slang_ir_node *n)
    else {
       assert(n->Opcode == IR_VAR);
       assert(n->Var);
-      assert(n->Store->Size > 0);
 
       if (n->Store->Index < 0) {
          const char *varName = (char *) n->Var->a_name;
@@ -1501,6 +1501,29 @@ _slang_gen_temporary(GLint size)
 
 
 /**
+ * Generate IR node for allocating/declaring a variable.
+ */
+static slang_ir_node *
+_slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
+{
+   slang_ir_node *n;
+   n = new_node(IR_VAR_DECL, NULL, NULL);
+   if (n) {
+      n->Var = var;
+      slang_allocate_storage(A, n);
+      assert(n->Store);
+      assert(n->Store->Index < 0);
+      assert(n->Store->Size > 0);
+      assert(var->aux);
+      assert(n->Store == var->aux);
+   }
+   return n;
+}
+
+
+
+
+/**
  * Generate code for a selection expression:   b ? x : y
  */
 static slang_ir_node *
@@ -1670,13 +1693,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
    v = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
    assert(v);
 
-   varDecl = new_node(IR_VAR_DECL, NULL, NULL);
-   if (!varDecl)
-      return NULL;
-
-   varDecl->Var = v;
-
-   slang_allocate_storage(A, varDecl);
+   varDecl = _slang_gen_var_decl(A, v);
 
    if (oper->num_children > 0) {
       /* child is initializer */
@@ -2314,21 +2331,10 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    }
    else {
       /* ordinary variable (may be const) */
-      const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
-      const GLint index = -1;
       slang_ir_node *n;
 
       /* IR node to declare the variable */
-      n = new_node(IR_VAR_DECL, NULL, NULL);
-      if (!n)
-         return GL_FALSE;
-      n->Var = var;
-      store = _slang_new_ir_storage(PROGRAM_TEMPORARY, index, size);
-      var->aux = store;  /* save var's storage info */
-
-      slang_allocate_storage(A, n);
-
-      _slang_add_variable(A->vartable, var);
+      n = _slang_gen_var_decl(A, var);
 
       /* IR code for the var's initializer, if present */
       if (var->initializer) {
@@ -2338,7 +2344,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          lhs = new_node(IR_VAR, NULL, NULL);
          lhs->Var = var;
          lhs->Swizzle = SWIZZLE_NOOP;
-         lhs->Store = store;
+         lhs->Store = n->Store;
 
          /* constant folding, etc */
          slang_simplify(var->initializer, &A->space, A->atoms);
@@ -2357,8 +2363,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    if (dbg) printf("GLOBAL VAR %s  idx %d\n", (char*) var->a_name,
                    store ? store->Index : -2);
 
-
-   var->aux = store;  /* save var's storage info */
+   if (store)
+      var->aux = store;  /* save var's storage info */
 
    return success;
 }

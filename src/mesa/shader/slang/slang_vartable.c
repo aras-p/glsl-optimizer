@@ -3,6 +3,7 @@
 #include "slang_compile.h"
 #include "slang_compile_variable.h"
 #include "slang_vartable.h"
+#include "slang_ir.h"
 
 
 static int dbg = 0;
@@ -58,15 +59,27 @@ _slang_pop_var_table(slang_var_table *t)
 {
    slang_var_table *parent = t->parent;
    int i;
+
    if (dbg) printf("Popping level %d\n", t->level);
-   if (t->parent) {
-      for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
-         if (t->temps[i] && !t->parent->temps[i])
-            if (dbg) printf("  Free reg %d\n", i);
-      }
-   }
+
+   /* free the storage allocated for each variable */
    for (i = 0; i < t->num_entries; i++) {
+      slang_ir_storage *store = (slang_ir_storage *) t->vars[i]->aux;
       if (dbg) printf("  Free var %s\n", (char*) t->vars[i]->a_name);
+      assert(t->temps[store->Index] == VAR);
+      t->temps[store->Index] = FREE;
+      store->Index = -1;
+   }
+   if (t->parent) {
+      /* just verify that any remaining allocations in this scope 
+       * were for temps
+       */
+      for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
+         if (t->temps[i] && !t->parent->temps[i]) {
+            if (dbg) printf("  Free reg %d\n", i);
+            assert(t->temps[i] == TEMP);
+         }
+      }
    }
 
    if (t->vars)
@@ -84,6 +97,7 @@ void
 _slang_add_variable(slang_var_table *t, slang_variable *v)
 {
    assert(t);
+   if (dbg) printf("Adding var %s\n", (char *) v->a_name);
    t->vars = realloc(t->vars, (t->num_entries + 1) * sizeof(slang_variable *));
    t->vars[t->num_entries] = v;
    t->num_entries++;
