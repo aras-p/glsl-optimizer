@@ -83,6 +83,7 @@ typedef enum
    IR_VAR,     /* variable reference */
    IR_VAR_DECL,/* var declaration */
    IR_ELEMENT, /* array element */
+   IR_SWIZZLE, /* swizzled storage access */
    IR_TEX,     /* texture lookup */
    IR_TEXB,    /* texture lookup with LOD bias */
    IR_TEXP,    /* texture lookup with projection */
@@ -101,6 +102,7 @@ typedef struct
    enum register_file File;  /**< PROGRAM_TEMPORARY, PROGRAM_INPUT, etc */
    GLint Index;  /**< -1 means unallocated */
    GLint Size;  /**< number of floats */
+   GLuint Swizzle;
 } slang_ir_storage;
 
 
@@ -113,11 +115,10 @@ typedef struct slang_ir_node_
    struct slang_ir_node_ *Children[2];
    const char *Comment;
    const char *Target;
-   GLuint Swizzle;
    GLuint Writemask;  /**< If Opcode == IR_MOVE */
    GLfloat Value[4];    /**< If Opcode == IR_FLOAT */
    slang_variable *Var;
-   slang_ir_storage *Store;
+   slang_ir_storage *Store;  /**< location of result of this operation */
 } slang_ir_node;
 
 

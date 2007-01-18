@@ -101,6 +101,7 @@ static slang_ir_info IrInfo[] = {
    { IR_FLOAT, "IR_FLOAT", 0, 0, 0 },
    { IR_FIELD, "IR_FIELD", 0, 0, 0 },
    { IR_ELEMENT, "IR_ELEMENT", 0, 0, 0 },
+   { IR_SWIZZLE, "IR_SWIZZLE", 0, 0, 0 },
    { IR_NOP, NULL, OPCODE_NOP, 0, 0 }
 };
 
@@ -124,6 +125,24 @@ slang_ir_name(slang_ir_opcode opcode)
 }
 
 
+#if 0
+/**
+ * Swizzle a swizzle.
+ */
+static GLuint
+swizzle_compose(GLuint swz1, GLuint swz2)
+{
+   GLuint i, swz, s[4];
+   for (i = 0; i < 4; i++) {
+      GLuint c = GET_SWZ(swz1, i);
+      s[i] = GET_SWZ(swz2, c);
+   }
+   swz = MAKE_SWIZZLE4(s[0], s[1], s[2], s[3]);
+   return swz;
+}
+#endif
+
+
 slang_ir_storage *
 _slang_new_ir_storage(enum register_file file, GLint index, GLint size)
 {
@@ -133,17 +152,9 @@ _slang_new_ir_storage(enum register_file file, GLint index, GLint size)
       st->File = file;
       st->Index = index;
       st->Size = size;
+      st->Swizzle = SWIZZLE_NOOP;
    }
    return st;
-}
-
-
-slang_ir_storage *
-_slang_clone_ir_storage(slang_ir_storage *store)
-{
-   slang_ir_storage *clone
-      = _slang_new_ir_storage(store->File, store->Index, store->Size);
-   return clone;
 }
 
 
@@ -257,7 +268,7 @@ slang_print_ir(const slang_ir_node *n, int indent)
       break;
    case IR_VAR:
       printf("VAR %s%s at %s  store %p\n",
-             (char *) n->Var->a_name, swizzle_string(n->Swizzle),
+             (char *) n->Var->a_name, swizzle_string(n->Store->Swizzle),
              storage_string(n->Store), (void*) n->Store);
       break;
    case IR_VAR_DECL:
@@ -270,7 +281,7 @@ slang_print_ir(const slang_ir_node *n, int indent)
       slang_print_ir(n->Children[0], indent+3);
       break;
    case IR_CALL:
-      printf("ASMCALL %s(%d args)\n", n->Target, n->Swizzle);
+      printf("ASMCALL %s(%d args)\n", n->Target, 0/*XXX*/);
       break;
    case IR_FLOAT:
       printf("FLOAT %f %f %f %f\n",
@@ -279,9 +290,14 @@ slang_print_ir(const slang_ir_node *n, int indent)
    case IR_I_TO_F:
       printf("INT_TO_FLOAT %d\n", (int) n->Value[0]);
       break;
+   case IR_SWIZZLE:
+      printf("SWIZZLE %s of  (store %p) \n",
+             swizzle_string(n->Store->Swizzle), (void*) n->Store);
+      slang_print_ir(n->Children[0], indent + 3);
+      break;
    default:
-      printf("%s (%p, %p)\n", slang_ir_name(n->Opcode),
-             (void*) n->Children[0], (void*) n->Children[1]);
+      printf("%s (%p, %p)  (store %p)\n", slang_ir_name(n->Opcode),
+             (void*) n->Children[0], (void*) n->Children[1], (void*) n->Store);
       slang_print_ir(n->Children[0], indent+3);
       slang_print_ir(n->Children[1], indent+3);
    }
@@ -323,37 +339,6 @@ free_temp_storage(slang_var_table *vt, slang_ir_node *n)
 
 
 /**
- * Allocate storage for a floating point constant.
- */
-static slang_ir_storage *
-alloc_constant(const GLfloat v[], GLuint size, struct gl_program *prog)
-{
-   GLuint swizzle;
-   GLint ind = _mesa_add_unnamed_constant(prog->Parameters, v, size, &swizzle);
-   slang_ir_storage *st = _slang_new_ir_storage(PROGRAM_CONSTANT, ind, size);
-   return st;
-}
-
-
-/**
- * Swizzle a swizzle.
- */
-#if 0
-static GLuint
-swizzle_compose(GLuint swz1, GLuint swz2)
-{
-   GLuint i, swz, s[4];
-   for (i = 0; i < 4; i++) {
-      GLuint c = GET_SWZ(swz1, i);
-      s[i] = GET_SWZ(swz2, c);
-   }
-   swz = MAKE_SWIZZLE4(s[0], s[1], s[2], s[3]);
-   return swz;
-}
-#endif
-
-
-/**
  * Convert IR storage to an instruction dst register.
  */
 static void
@@ -366,6 +351,7 @@ storage_to_dst_reg(struct prog_dst_register *dst, const slang_ir_storage *st,
       WRITEMASK_X | WRITEMASK_Y | WRITEMASK_Z,
       WRITEMASK_X | WRITEMASK_Y | WRITEMASK_Z | WRITEMASK_W
    };
+   assert(st->Index >= 0 && st->Index <= 16);
    dst->File = st->File;
    dst->Index = st->Index;
    assert(st->File != PROGRAM_UNDEFINED);
@@ -388,7 +374,7 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st,
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W)
    };
-     
+   assert(st->File >= 0 && st->File <= 16);
    src->File = st->File;
    src->Index = st->Index;
    assert(st->File != PROGRAM_UNDEFINED);
@@ -396,8 +382,8 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st,
    assert(st->Size <= 4);
    /* XXX swizzling logic here may need some work */
    /*src->Swizzle = swizzle_compose(swizzle, defaultSwizzle[st->Size - 1]);*/
-   if (swizzle != SWIZZLE_NOOP)
-      src->Swizzle = swizzle;
+   if (st->Swizzle != SWIZZLE_NOOP)
+      src->Swizzle = st->Swizzle;
    else
       src->Swizzle = defaultSwizzle[st->Size - 1];
 }
@@ -448,9 +434,9 @@ emit_binop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    /* gen this instruction */
    inst = new_instruction(prog, info->InstOpcode);
    storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
-                      n->Children[0]->Swizzle);
+                      /**n->Children[0]->Swizzle*/0);
    storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store,
-                      n->Children[1]->Swizzle);
+                      /**n->Children[1]->Swizzle*/0);
    free_temp_storage(vt, n->Children[0]);
    free_temp_storage(vt, n->Children[1]);
 
@@ -480,7 +466,7 @@ emit_unop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    /* gen this instruction */
    inst = new_instruction(prog, info->InstOpcode);
    storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
-                      n->Children[0]->Swizzle);
+                      /**n->Children[0]->Swizzle*/0);
    free_temp_storage(vt, n->Children[0]);
 
    if (!n->Store) {
@@ -511,7 +497,7 @@ emit_negation(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    inst = new_instruction(prog, OPCODE_MOV);
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
    storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
-                      n->Children[0]->Swizzle);
+                      /**n->Children[0]->Swizzle*/0);
    inst->SrcReg[0].NegateBase = NEGATE_XYZW;
    inst->Comment = n->Comment;
    return inst;
@@ -574,7 +560,7 @@ emit_tex(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
    /* Child[1] is the coord */
    storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store,
-                      n->Children[1]->Swizzle);
+                      /**n->Children[1]->Swizzle*/0);
 
    /* Child[0] is the sampler (a uniform which'll indicate the texture unit) */
    assert(n->Children[0]->Store);
@@ -598,6 +584,8 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    assert(n->Children[1]);
    inst = emit(vt, n->Children[1], prog);
 
+   assert(n->Children[1]->Store->Index >= 0);
+
    /* lhs */
    emit(vt, n->Children[0], prog);
 
@@ -611,6 +599,8 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
                        n->Children[1]->Store->Size);
       *n->Children[1]->Store = *n->Children[0]->Store;
       /* fixup the prev (RHS) instruction */
+      assert(n->Children[0]->Store->Index >= 0);
+      assert(n->Children[0]->Store->Index < 16);
       storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
       return inst;
    }
@@ -623,7 +613,7 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          slang_ir_storage srcStore = *n->Children[1]->Store;
          GLint size = srcStore.Size;
          ASSERT(n->Children[0]->Writemask == WRITEMASK_XYZW);
-         ASSERT(n->Children[1]->Swizzle == SWIZZLE_NOOP);
+         ASSERT(n->Children[1]->Store->Swizzle == SWIZZLE_NOOP);
          dstStore.Size = 4;
          srcStore.Size = 4;
          while (size >= 4) {
@@ -631,7 +621,7 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
             inst->Comment = _mesa_strdup("IR_MOVE block");
             storage_to_dst_reg(&inst->DstReg, &dstStore, n->Writemask);
             storage_to_src_reg(&inst->SrcReg[0], &srcStore,
-                               n->Children[1]->Swizzle);
+                               /**n->Children[1]->Swizzle*/0);
             srcStore.Index++;
             dstStore.Index++;
             size -= 4;
@@ -639,9 +629,11 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       }
       else {
          inst = new_instruction(prog, OPCODE_MOV);
+         assert(n->Children[0]->Store->Index >= 0);
+         assert(n->Children[0]->Store->Index < 16);
          storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
          storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store,
-                            n->Children[1]->Swizzle);
+                            /**n->Children[1]->Swizzle*/0);
       }
       /* XXX is this test correct? */
       if (_slang_is_temp(vt, n->Children[1]->Store->Index)) {
@@ -680,7 +672,7 @@ emit_cond(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       inst->CondUpdate = GL_TRUE;
       storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
       storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
-                         n->Children[0]->Swizzle);
+                         /**n->Children[0]->Swizzle*/0);
       _slang_free_temp(vt, n->Store->Index, n->Store->Size);
       return inst; /* XXX or null? */
    }
@@ -726,6 +718,11 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          /* a regular variable */
          _slang_add_variable(vt, n->Var);
          n->Store->Index = _slang_alloc_var(vt, n->Store->Size);
+         /*
+         printf("IR_VAR_DECL %s %d store %p\n",
+                (char*) n->Var->a_name, n->Store->Index, (void*) n->Store);
+         */
+         assert(n->Var->aux == n->Store);
       }
       assert(n->Store->Index >= 0);
       break;
@@ -761,6 +758,17 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          n->Store->Index = arrayAddr + index;
       }
       return NULL; /* no instruction */
+
+   case IR_SWIZZLE:
+      /* swizzled storage access */
+      (void) emit(vt, n->Children[0], prog);
+      /* "pull-up" the child's storage info, applying our swizzle info */
+      n->Store->File  = n->Children[0]->Store->File;
+      n->Store->Index = n->Children[0]->Store->Index;
+      n->Store->Size  = n->Children[0]->Store->Size;
+      assert(n->Store->Index >= 0);
+      /* XXX compose swizzles here!!! */
+      return NULL;
 
    /* Simple binary operators */
    case IR_ADD:
@@ -798,8 +806,11 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    case IR_NEG:
       return emit_negation(vt, n, prog);
    case IR_FLOAT:
-      n->Store = alloc_constant(n->Value, 4, prog); /*XXX fix size */
-      break;
+      /* find storage location for this float */
+      n->Store->Index = _mesa_add_unnamed_constant(prog->Parameters, n->Value,
+                                                   4, &n->Store->Swizzle);
+      assert(n->Store->Index >= 0);
+      return NULL;
 
    case IR_MOVE:
       return emit_move(vt, n, prog);

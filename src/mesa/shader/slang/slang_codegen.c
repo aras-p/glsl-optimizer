@@ -57,11 +57,13 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper);
 /**
  * Lookup a named constant and allocate storage for the parameter in
  * the given parameter list.
+ * \param swizzleOut  returns swizzle mask for accessing the constant
  * \return position of the constant in the paramList.
  */
 static GLint
 slang_lookup_constant(const char *name, GLint index,
-                      struct gl_program_parameter_list *paramList)
+                      struct gl_program_parameter_list *paramList,
+                      GLuint *swizzleOut)
 {
    struct constant_info {
       const char *Name;
@@ -82,7 +84,6 @@ slang_lookup_constant(const char *name, GLint index,
       { NULL, 0 }
    };
    GLuint i;
-   GLuint swizzle; /* XXX use this */
 
    for (i = 0; info[i].Name; i++) {
       if (strcmp(info[i].Name, name) == 0) {
@@ -92,7 +93,7 @@ slang_lookup_constant(const char *name, GLint index,
          _mesa_GetFloatv(info[i].Token, &value);
          ASSERT(value >= 0.0);  /* sanity check that glGetFloatv worked */
          /* XXX named constant! */
-         pos = _mesa_add_unnamed_constant(paramList, &value, 1, &swizzle);
+         pos = _mesa_add_unnamed_constant(paramList, &value, 1, swizzleOut);
          return pos;
       }
    }
@@ -299,8 +300,10 @@ slang_allocate_storage(slang_assemble_ctx *A, slang_ir_node *n)
             n->Store->Index = i;
          }
          else if (n->Store->File == PROGRAM_CONSTANT) {
-            GLint i = slang_lookup_constant(varName, 0, prog->Parameters);
+            GLint i = slang_lookup_constant(varName, 0, prog->Parameters,
+                                            &n->Store->Swizzle);
             assert(i >= 0);
+            assert(n->Store->Size == 1);
             n->Store->Index = i;
          }
       }
@@ -518,7 +521,6 @@ new_node(slang_ir_opcode op, slang_ir_node *left, slang_ir_node *right)
       n->Opcode = op;
       n->Children[0] = left;
       n->Children[1] = right;
-      n->Swizzle = SWIZZLE_NOOP;
       n->Writemask = WRITEMASK_XYZW;
    }
    return n;
@@ -544,11 +546,14 @@ new_label(slang_atom labName)
 static slang_ir_node *
 new_float_literal(float x, float y, float z, float w)
 {
+   GLuint size = 4; /* XXX fix */
    slang_ir_node *n = new_node(IR_FLOAT, NULL, NULL);
    n->Value[0] = x;
    n->Value[1] = y;
    n->Value[2] = z;
    n->Value[3] = w;
+   /* allocate a storage object, but compute actual location (Index) later */
+   n->Store = _slang_new_ir_storage(PROGRAM_CONSTANT, -1, size);
    return n;
 }
 
@@ -583,7 +588,6 @@ new_jump(slang_atom target)
 static slang_ir_node *
 new_var(slang_assemble_ctx *A, slang_operation *oper, slang_atom name)
 {
-   GLuint swizzle = SWIZZLE_NOOP;
    slang_variable *v = _slang_locate_variable(oper->locals, name, GL_TRUE);
    slang_ir_node *n = new_node(IR_VAR, NULL, NULL);
    if (!v) {
@@ -592,10 +596,7 @@ new_var(slang_assemble_ctx *A, slang_operation *oper, slang_atom name)
    }
    assert(!oper->var || oper->var == v);
    v->used = GL_TRUE;
-
-   n->Swizzle = swizzle;
    n->Var = v;
-
    slang_allocate_storage(A, n);
 
    return n;
@@ -667,7 +668,9 @@ slang_inline_asm_function(slang_assemble_ctx *A,
    slang_operation *inlined = slang_operation_new(1);
 
    /*assert(oper->type == slang_oper_call);  or vec4_add, etc */
+   /*
    printf("Inline asm %s\n", (char*) fun->header.a_name);
+   */
    inlined->type = fun->body->children[0].type;
    inlined->a_id = fun->body->children[0].a_id;
    inlined->num_children = numArgs;
@@ -871,9 +874,11 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
    substNew = (slang_operation **)
       _mesa_calloc(totalArgs * sizeof(slang_operation *));
 
+#if 0
    printf("Inline call to %s  (total vars=%d  nparams=%d)\n",
 	  (char *) fun->header.a_name,
 	  fun->parameters->num_variables, numArgs);
+#endif
 
    if (haveRetValue && !returnOper) {
       /* Create 3-child comma sequence for inlined code:
@@ -1022,7 +1027,9 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
 	 slang_operation *decl = slang_operation_insert(&inlined->num_children,
 							&inlined->children,
 							numCopyIn);
+         /*
          printf("COPY_IN %s from expr\n", (char*)p->a_name);
+         */
 	 decl->type = slang_oper_variable_decl;
          assert(decl->locals);
 	 decl->locals = fun->parameters;
@@ -1073,13 +1080,12 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
    _mesa_free(substOld);
    _mesa_free(substNew);
 
+#if 0
    printf("Done Inline call to %s  (total vars=%d  nparams=%d)\n",
 	  (char *) fun->header.a_name,
 	  fun->parameters->num_variables, numArgs);
-
-   /*
    slang_print_tree(top, 0);
-   */
+#endif
    return top;
 }
 
@@ -1123,7 +1129,6 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
    assert(inlined->locals);
    printf("*** Inlined code for call to %s:\n",
           (char*) fun->header.a_name);
-
    slang_print_tree(oper, 10);
    printf("\n");
 #endif
@@ -1204,11 +1209,15 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
    assert(info->NumParams <= 2);
 
    if (info->NumParams == oper->num_children) {
-      /* storage for result not specified */
+      /* Storage for result is not specified.
+       * Children[0], [1] are the operands.
+       */
       firstOperand = 0;
    }
    else {
-      /* storage for result (child[0]) is specified */
+      /* Storage for result (child[0]) is specified.
+       * Children[1], [2] are the operands.
+       */
       firstOperand = 1;
    }
 
@@ -1229,9 +1238,9 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
       slang_ir_node *n0;
 
       dest_oper = &oper->children[0];
-      if (dest_oper->type == slang_oper_field) {
+      while /*if*/ (dest_oper->type == slang_oper_field) {
          /* writemask */
-         writemask = make_writemask((char*) dest_oper->a_id);
+         writemask &= /*=*/make_writemask((char*) dest_oper->a_id);
          dest_oper = &dest_oper->children[0];
       }
 
@@ -1829,6 +1838,20 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
 }
 
 
+static slang_ir_node *
+_slang_gen_swizzle(slang_ir_node *child, GLuint swizzle)
+{
+   slang_ir_node *n = new_node(IR_SWIZZLE, child, NULL);
+   if (n) {
+      n->Store = _slang_new_ir_storage(child->Store->File,
+                                       child->Store->Index,
+                                       child->Store->Size);
+      n->Store->Swizzle = swizzle;
+   }
+   return n;
+}
+
+
 /**
  * Generate IR tree for referencing a field in a struct (or basic vector type)
  */
@@ -1845,28 +1868,35 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
       const GLuint rows = _slang_type_dim(ti.spec.type);
       slang_swizzle swz;
       slang_ir_node *n;
+      GLuint swizzle;
       if (!_slang_is_swizzle((char *) oper->a_id, rows, &swz)) {
          RETURN_ERROR("Bad swizzle", 0);
       }
+      swizzle = MAKE_SWIZZLE4(swz.swizzle[0],
+                              swz.swizzle[1],
+                              swz.swizzle[2],
+                              swz.swizzle[3]);
+
       n = _slang_gen_operation(A, &oper->children[0]);
-      n->Swizzle = MAKE_SWIZZLE4(swz.swizzle[0],
-                                 swz.swizzle[1],
-                                 swz.swizzle[2],
-                                 swz.swizzle[3]);
+      /* create new parent node with swizzle */
+      n = _slang_gen_swizzle(n, swizzle);
       return n;
    }
    else if (ti.spec.type == slang_spec_float) {
       const GLuint rows = 1;
       slang_swizzle swz;
       slang_ir_node *n;
+      GLuint swizzle;
       if (!_slang_is_swizzle((char *) oper->a_id, rows, &swz)) {
          RETURN_ERROR("Bad swizzle", 0);
       }
+      swizzle = MAKE_SWIZZLE4(swz.swizzle[0],
+                              swz.swizzle[1],
+                              swz.swizzle[2],
+                              swz.swizzle[3]);
       n = _slang_gen_operation(A, &oper->children[0]);
-      n->Swizzle = MAKE_SWIZZLE4(swz.swizzle[0],
-                                 swz.swizzle[1],
-                                 swz.swizzle[2],
-                                 swz.swizzle[3]);
+      /* create new parent node with swizzle */
+      n = _slang_gen_swizzle(n, swizzle);
       return n;
    }
    else {
@@ -1904,7 +1934,8 @@ _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
       n = _slang_gen_operation(A, &oper->children[0]);
       if (n) {
          /* use swizzle to access the element */
-         n->Swizzle = SWIZZLE_X + index;
+         n = _slang_gen_swizzle(n, SWIZZLE_X + index);
+         /*n->Store = _slang_clone_ir_storage_swz(n->Store, */
          n->Writemask = WRITEMASK_X << index;
       }
       return n;
@@ -2372,7 +2403,6 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          /* Generate IR_MOVE instruction to initialize the variable */
          lhs = new_node(IR_VAR, NULL, NULL);
          lhs->Var = var;
-         lhs->Swizzle = SWIZZLE_NOOP;
          lhs->Store = n->Store;
 
          /* constant folding, etc */
