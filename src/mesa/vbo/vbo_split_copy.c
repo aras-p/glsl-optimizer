@@ -382,7 +382,7 @@ static void replay_init( struct copy_context *copy )
 	 if (vbo->Name && !vbo->Pointer) 
 	    ctx->Driver.MapBuffer(ctx,
 				  GL_ARRAY_BUFFER_ARB, 
-				  GL_DYNAMIC_DRAW_ARB, /* XXX */
+				  GL_WRITE_ONLY, /* XXX */
 				  vbo);
 
 	 copy->varying[j].src_ptr = ADD_POINTERS(vbo->Pointer,
@@ -399,7 +399,7 @@ static void replay_init( struct copy_context *copy )
    if (copy->ib->obj->Name && !copy->ib->obj->Pointer) 
       ctx->Driver.MapBuffer(ctx, 
 			    GL_ARRAY_BUFFER_ARB, /* XXX */
-			    GL_DYNAMIC_DRAW_ARB, /* XXX */
+			    GL_WRITE_ONLY, /* XXX */
 			    copy->ib->obj);
 
    switch (copy->ib->type) {

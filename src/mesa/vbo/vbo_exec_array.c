@@ -334,7 +334,7 @@ vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *ind
    if (ctx->Array.ElementArrayBufferObj->Name) {
       const GLvoid *map = ctx->Driver.MapBuffer(ctx,
 						 GL_ELEMENT_ARRAY_BUFFER_ARB,
-						 GL_DYNAMIC_READ_ARB,
+						 GL_READ_ONLY,
 						 ctx->Array.ElementArrayBufferObj);
 
       max_index = get_max_index(count, type, ADD_POINTERS(map, indices));
