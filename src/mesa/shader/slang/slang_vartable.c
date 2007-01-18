@@ -65,9 +65,13 @@ _slang_pop_var_table(slang_var_table *t)
    /* free the storage allocated for each variable */
    for (i = 0; i < t->num_entries; i++) {
       slang_ir_storage *store = (slang_ir_storage *) t->vars[i]->aux;
-      if (dbg) printf("  Free var %s\n", (char*) t->vars[i]->a_name);
-      assert(t->temps[store->Index] == VAR);
-      t->temps[store->Index] = FREE;
+      GLint j, sz4 = (store->Size + 3) / 4;
+      if (dbg) printf("  Free var %s, size %d\n",
+                      (char*) t->vars[i]->a_name, store->Size);
+      for (j = 0; j < sz4; j++) {
+         assert(t->temps[store->Index + j] == VAR);
+         t->temps[store->Index + j] = FREE;
+      }
       store->Index = -1;
    }
    if (t->parent) {
