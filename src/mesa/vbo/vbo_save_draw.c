@@ -152,7 +152,7 @@ static void vbo_save_loopback_vertex_list( GLcontext *ctx,
 {
    const char *buffer = ctx->Driver.MapBuffer(ctx, 
 					      GL_ARRAY_BUFFER_ARB, 
-					      GL_DYNAMIC_READ_ARB, /* ? */
+					      GL_READ_ONLY, /* ? */
 					       list->vertex_store->bufferobj);
 
    vbo_loopback_vertex_list( ctx,
