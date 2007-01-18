@@ -105,7 +105,7 @@
 
 //// Basic, scalar constructors/casts
 
-int __constructor (const float f)
+int __constructor(const float f)
 {
    __asm float_to_int __retVal, f;
 }
@@ -127,12 +127,12 @@ int __constructor(const bool b)
    __retVal.x = b.x;
 }
 
-float __constructor (const bool b)
+float __constructor(const bool b)
 {
    __retVal.x = b.x;
 }
 
-float __constructor (const int i)
+float __constructor(const int i)
 {
     __asm int_to_float __retVal, i;
 }
@@ -166,14 +166,14 @@ vec2 __constructor(const float f)
    __retVal.xy = f.xx;
 }
 
-vec2 __constructor (const int i) {
-    float x;
-    __asm int_to_float x, i;
-    return vec2 (x);
+vec2 __constructor(const int i)
+{
+   __retVal.xy = i.xx;
 }
 
-vec2 __constructor (const bool b) {
-    return vec2 (b ? 1.0 : 0.0);
+vec2 __constructor(const bool b)
+{
+   __retVal.xy = b.xx;
 }
 
 vec2 __constructor(const vec3 v)
@@ -383,55 +383,147 @@ bvec4 __constructor(const int i)
 
 //// mat2 constructors
 
-mat2 __constructor (const float f) {
-    return mat2 (f, 0.0, 0.0, f);
+mat2 __constructor(const float m00, const float m10,
+                   const float m01, const float m11)
+{
+   // xxx verify:
+   __retVal[0].x = m00;
+   __retVal[0].y = m10;
+   __retVal[1].x = m01;
+   __retVal[1].y = m11;
 }
 
-mat2 __constructor (const int i) {
-    float x;
-    __asm int_to_float x, i;
-    return mat2 (x);
+mat2 __constructor(const float f)
+{
+   __retVal[0].x = f;
+   __retVal[0].y = 0.0;
+   __retVal[1].x = 0.0;
+   __retVal[1].y = f;
 }
 
-mat2 __constructor (const bool b) {
-    return mat2 (b ? 1.0 : 0.0);
+mat2 __constructor(const int i)
+{
+   return mat2(float(i));
+}
+
+mat2 __constructor(const bool b)
+{
+   return mat2(float(b));
+}
+
+mat2 __constructor(const vec2 r0, const vec2 r1)
+{
+   __retVal[0] = r0;
+   __retVal[1] = r1;
 }
 
 
 //// mat3 constructors
 
-mat3 __constructor (const float f) {
-    return mat3 (f, 0.0, 0.0, 0.0, f, 0.0, 0.0, 0.0, f);
+mat3 __constructor(const float m00, const float m10, const float m20,
+                   const float m01, const float m11, const float m21,
+                   const float m02, const float m12, const float m22)
+{
+   // xxx verify:
+   __retVal[0].x = m00;
+   __retVal[0].y = m10;
+   __retVal[0].z = m20;
+   __retVal[1].x = m01;
+   __retVal[1].y = m11;
+   __retVal[1].z = m21;
+   __retVal[2].x = m02;
+   __retVal[2].y = m12;
+   __retVal[2].z = m22;
 }
 
-mat3 __constructor (const int i) {
-    float x;
-    __asm int_to_float x, i;
-    return mat3 (x);
+mat3 __constructor(const float f)
+{
+   __retVal[0].x = f;
+   __retVal[0].y = 0.0;
+   __retVal[0].z = 0.0;
+   __retVal[1].x = 0.0;
+   __retVal[1].y = f;
+   __retVal[1].z = 0.0;
+   __retVal[2].x = 0.0;
+   __retVal[2].y = 0.0;
+   __retVal[2].z = f;
 }
 
-mat3 __constructor (const bool b) {
-    return mat3 (b ? 1.0 : 0.0);
+mat3 __constructor(const int i)
+{
+   return mat3(float(i));
+}
+
+mat3 __constructor(const bool b)
+{
+   return mat3(float(b));
+}
+
+mat3 __constructor(const vec3 r0, const vec3 r1, const vec3 r2)
+{
+   __retVal[0] = r0;
+   __retVal[1] = r1;
+   __retVal[2] = r2;
 }
 
 
 //// mat4 constructors
 
-mat4 __constructor (const float f) {
-    return mat4 (f, 0.0, 0.0, 0.0, 0.0, f, 0.0, 0.0, 0.0, 0.0, f, 0.0, 0.0, 0.0, 0.0, f);
+mat4 __constructor(const float m00, const float m10, const float m20, const float m30,
+                   const float m01, const float m11, const float m21, const float m31,
+                   const float m02, const float m12, const float m22, const float m32,
+                   const float m03, const float m13, const float m23, const float m33)
+{
+   __retVal[0].x = m00;
+   __retVal[0].y = m10;
+   __retVal[0].z = m20;
+   __retVal[0].w = m30;
+   __retVal[1].x = m01;
+   __retVal[1].y = m11;
+   __retVal[1].z = m21;
+   __retVal[1].w = m31;
+   __retVal[2].x = m02;
+   __retVal[2].y = m12;
+   __retVal[2].z = m22;
+   __retVal[2].w = m32;
+   __retVal[3].x = m03;
+   __retVal[3].y = m13;
+   __retVal[3].z = m23;
+   __retVal[3].w = m33;
 }
 
-mat4 __constructor (const int i) {
-    float x;
-    __asm int_to_float x, i;
-    return mat4 (x);
+
+mat4 __constructor(const float f)
+{
+   __retVal[0].x = f;
+   __retVal[0].y = 0.0;
+   __retVal[0].z = 0.0;
+   __retVal[0].w = 0.0;
+   __retVal[1].x = 0.0;
+   __retVal[1].y = f;
+   __retVal[1].z = 0.0;
+   __retVal[1].w = 0.0;
+   __retVal[2].x = 0.0;
+   __retVal[2].y = 0.0;
+   __retVal[2].z = f;
+   __retVal[2].w = 0.0;
+   __retVal[3].x = 0.0;
+   __retVal[3].y = 0.0;
+   __retVal[3].z = 0.0;
+   __retVal[3].w = f;
 }
 
-mat4 __constructor (const bool b) {
-    return mat4 (b ? 1.0 : 0.0);
+mat4 __constructor(const int i)
+{
+   return mat4(float(i));
 }
 
-mat4 __constructor (const vec4 r0, const vec4 r1, const vec4 r2, const vec4 r3)
+mat4 __constructor(const bool b)
+{
+   return mat4(float(b));
+}
+
+mat4 __constructor(const vec4 r0, const vec4 r1, const vec4 r2, const vec4 r3)
 {
    __retVal[0] = r0;
    __retVal[1] = r1;
