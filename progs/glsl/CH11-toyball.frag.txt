@@ -45,7 +45,6 @@ void main()
     distance[2] = dot(p, HalfSpace2);
     distance[3] = dot(p, HalfSpace3);
 
-#if 1
     distance = smoothstep(-FWidth, FWidth, distance);
     inorout += dot(distance, vec4(1.0));
 
@@ -73,7 +72,4 @@ void main()
     surfColor += SpecularColor * intensity;
 
     gl_FragColor = surfColor;
-#else
-    gl_FragColor = distance;
-#endif
 }
