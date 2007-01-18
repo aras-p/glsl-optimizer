@@ -73,6 +73,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 int future_hw_tcl_on=1;
 int hw_tcl_on=1;
 
+#define need_GL_EXT_stencil_two_side
 #define need_GL_ARB_multisample
 #define need_GL_ARB_texture_compression
 #define need_GL_ARB_vertex_buffer_object
@@ -124,6 +125,10 @@ const struct dri_extension card_extensions[] = {
   {"GL_NV_vertex_program",		GL_NV_vertex_program_functions},
   {"GL_SGIS_generate_mipmap",		NULL},
   {NULL,				NULL}
+};
+
+const struct dri_extension stencil_two_side[] = {
+  {"GL_EXT_stencil_two_side",		GL_EXT_stencil_two_side_functions},
 };
 
 extern struct tnl_pipeline_stage _r300_render_stage;
@@ -330,6 +335,9 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->_MaintainTexEnvProgram = GL_TRUE;
 
 	driInitExtensions(ctx, card_extensions, GL_TRUE);
+	
+	if (driQueryOptionb(&r300->radeon.optionCache, "disable_stencil_two_side") == 0)
+		driInitSingleExtension(ctx, stencil_two_side);
 	
 	if (r300->radeon.glCtx->Mesa_DXTn && !driQueryOptionb (&r300->radeon.optionCache, "disable_s3tc")) {
 	  _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );

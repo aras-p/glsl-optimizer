@@ -406,6 +406,10 @@ int r300Fallback(GLcontext *ctx)
 	 */
 	FALLBACK_IF(ctx->Fog.Enabled);
 #endif
+	FALLBACK_IF(ctx->Stencil._TestTwoSide &&
+		    (ctx->Stencil.Ref[0] != ctx->Stencil.Ref[1] ||
+		     ctx->Stencil.ValueMask[0] != ctx->Stencil.ValueMask[1] ||
+		     ctx->Stencil.WriteMask[0] != ctx->Stencil.WriteMask[1]));
 
 	if(!r300->disable_lowimpact_fallback){
 		/* GL_POLYGON_OFFSET_POINT */

@@ -163,6 +163,11 @@ DRI_CONF_OPT_BEGIN(disable_lowimpact_fallback,bool,def) \
         DRI_CONF_DESC(en,"Disable Low-impact fallback") \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_DISABLE_DOUBLE_SIDE_STENCIL(def) \
+DRI_CONF_OPT_BEGIN(disable_stencil_two_side,bool,def) \
+        DRI_CONF_DESC(en,"Disable GL_EXT_stencil_two_side") \
+DRI_CONF_OPT_END
+
 
 const char __driConfigOptions[] =
 DRI_CONF_BEGIN
@@ -174,6 +179,7 @@ DRI_CONF_BEGIN
 		DRI_CONF_MAX_TEXTURE_COORD_UNITS(8, 2, 8)
 		DRI_CONF_COMMAND_BUFFER_SIZE(8, 8, 32)
 		DRI_CONF_DISABLE_FALLBACK(false)
+		DRI_CONF_DISABLE_DOUBLE_SIDE_STENCIL(false)
 	DRI_CONF_SECTION_END
 	DRI_CONF_SECTION_QUALITY
 		DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
@@ -189,7 +195,7 @@ DRI_CONF_BEGIN
 		DRI_CONF_NO_RAST(false)
 	DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 16;
+static const GLuint __driNConfigOptions = 17;
 
 #ifndef RADEON_DEBUG
 int RADEON_DEBUG = 0;

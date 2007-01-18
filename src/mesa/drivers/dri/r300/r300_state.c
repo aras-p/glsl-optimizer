@@ -509,7 +509,6 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 		if (r300->state.stencil.hw_stencil) {
 			R300_STATECHANGE(r300, zs);
 			if (state) {
-				WARN_ONCE("TODO - double side stencil !\n");
 				r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
 				    R300_RB3D_STENCIL_ENABLE;
 			} else {
@@ -863,9 +862,12 @@ static void r300StencilFuncSeparate(GLcontext * ctx, GLenum face,
 						(R300_RB3D_ZS2_STENCIL_MASK << R300_RB3D_ZS2_STENCIL_MASK_SHIFT));
 	
 	flag = translate_func(ctx->Stencil.Function[0]);
-
-	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |= (flag << R300_RB3D_ZS1_FRONT_FUNC_SHIFT)
-					  | (flag << R300_RB3D_ZS1_BACK_FUNC_SHIFT);
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |= (flag << R300_RB3D_ZS1_FRONT_FUNC_SHIFT);
+	
+	if (ctx->Stencil._TestTwoSide)
+		flag = translate_func(ctx->Stencil.Function[1]);
+	
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |= (flag << R300_RB3D_ZS1_BACK_FUNC_SHIFT);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] |= refmask;
 }
 
@@ -894,10 +896,19 @@ static void r300StencilOpSeparate(GLcontext * ctx, GLenum face, GLenum fail,
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
 		 (translate_stencil_op(ctx->Stencil.FailFunc[0]) << R300_RB3D_ZS1_FRONT_FAIL_OP_SHIFT)
 		|(translate_stencil_op(ctx->Stencil.ZFailFunc[0]) << R300_RB3D_ZS1_FRONT_ZFAIL_OP_SHIFT)
-		|(translate_stencil_op(ctx->Stencil.ZPassFunc[0]) << R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT)
-		|(translate_stencil_op(ctx->Stencil.FailFunc[0]) << R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT)
-		|(translate_stencil_op(ctx->Stencil.ZFailFunc[0]) << R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT)
-		|(translate_stencil_op(ctx->Stencil.ZPassFunc[0]) << R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT);
+		|(translate_stencil_op(ctx->Stencil.ZPassFunc[0]) << R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT);
+	
+	if (ctx->Stencil._TestTwoSide) {
+		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
+			 (translate_stencil_op(ctx->Stencil.FailFunc[1]) << R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT)
+			|(translate_stencil_op(ctx->Stencil.ZFailFunc[1]) << R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT)
+			|(translate_stencil_op(ctx->Stencil.ZPassFunc[1]) << R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT);
+	} else {
+		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
+			 (translate_stencil_op(ctx->Stencil.FailFunc[0]) << R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT)
+			|(translate_stencil_op(ctx->Stencil.ZFailFunc[0]) << R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT)
+			|(translate_stencil_op(ctx->Stencil.ZPassFunc[0]) << R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT);
+	}
 }
 
 static void r300ClearStencil(GLcontext * ctx, GLint s)
