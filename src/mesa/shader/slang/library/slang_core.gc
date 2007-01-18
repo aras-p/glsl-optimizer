@@ -1588,39 +1588,51 @@ mat4 __operator - (const mat4 m, const mat4 n)
 
 mat4 __operator * (const mat4 m, const mat4 n)
 {
-   vec4 mRow0, mRow1, mRow2, mRow3;
-   mRow0.x = m[0].x;
-   mRow0.y = m[1].x;
-   mRow0.z = m[2].x;
-   mRow0.w = m[3].x;
-   mRow1.x = m[0].y;
-   mRow1.y = m[1].y;
-   mRow1.z = m[2].y;
-   mRow1.w = m[3].y;
-   mRow2.x = m[0].z;
-   mRow2.y = m[1].z;
-   mRow2.z = m[2].z;
-   mRow2.w = m[3].z;
-   mRow3.x = m[0].w;
-   mRow3.y = m[1].w;
-   mRow3.z = m[2].w;
-   mRow3.w = m[3].w;
-   __retVal[0].x = dot(mRow0, n[0]);
-   __retVal[1].x = dot(mRow0, n[1]);
-   __retVal[2].x = dot(mRow0, n[2]);
-   __retVal[3].x = dot(mRow0, n[3]);
-   __retVal[0].y = dot(mRow1, n[0]);
-   __retVal[1].y = dot(mRow1, n[1]);
-   __retVal[2].y = dot(mRow1, n[2]);
-   __retVal[3].y = dot(mRow1, n[3]);
-   __retVal[0].z = dot(mRow2, n[0]);
-   __retVal[1].z = dot(mRow2, n[1]);
-   __retVal[2].z = dot(mRow2, n[2]);
-   __retVal[3].z = dot(mRow2, n[3]);
-   __retVal[0].w = dot(mRow3, n[0]);
-   __retVal[1].w = dot(mRow3, n[1]);
-   __retVal[2].w = dot(mRow3, n[2]);
-   __retVal[3].w = dot(mRow3, n[3]);
+   // sub-blocks to reduce temporary usage
+   {
+      vec4 mRow0;
+      mRow0.x = m[0].x;
+      mRow0.y = m[1].x;
+      mRow0.z = m[2].x;
+      mRow0.w = m[3].x;
+      __retVal[0].x = dot(mRow0, n[0]);
+      __retVal[1].x = dot(mRow0, n[1]);
+      __retVal[2].x = dot(mRow0, n[2]);
+      __retVal[3].x = dot(mRow0, n[3]);
+   }
+   {
+      vec4 mRow1;
+      mRow1.x = m[0].y;
+      mRow1.y = m[1].y;
+      mRow1.z = m[2].y;
+      mRow1.w = m[3].y;
+      __retVal[0].y = dot(mRow1, n[0]);
+      __retVal[1].y = dot(mRow1, n[1]);
+      __retVal[2].y = dot(mRow1, n[2]);
+      __retVal[3].y = dot(mRow1, n[3]);
+   }
+   {
+      vec4 mRow2;
+      mRow2.x = m[0].z;
+      mRow2.y = m[1].z;
+      mRow2.z = m[2].z;
+      mRow2.w = m[3].z;
+      __retVal[0].z = dot(mRow2, n[0]);
+      __retVal[1].z = dot(mRow2, n[1]);
+      __retVal[2].z = dot(mRow2, n[2]);
+      __retVal[3].z = dot(mRow2, n[3]);
+   }
+   {
+      vec4 mRow3;
+      mRow3.x = m[0].w;
+      mRow3.y = m[1].w;
+      mRow3.z = m[2].w;
+      mRow3.w = m[3].w;
+      __retVal[0].w = dot(mRow3, n[0]);
+      __retVal[1].w = dot(mRow3, n[1]);
+      __retVal[2].w = dot(mRow3, n[2]);
+      __retVal[3].w = dot(mRow3, n[3]);
+   }
 }
 
 mat4 __operator / (const mat4 m, const mat4 n)
