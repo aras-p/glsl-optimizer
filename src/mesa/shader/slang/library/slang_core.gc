@@ -1246,26 +1246,25 @@ void __operator /= (inout float a, const float b)
 
 void __operator += (inout vec2 v, const vec2 u)
 {
-    v.x += u.x;
-    v.y += u.y;
+   __asm vec4_add v.xy, v.xy, u.xy;
 }
 
 void __operator -= (inout vec2 v, const vec2 u)
 {
-    v.x -= u.x;
-    v.y -= u.y;
+   __asm vec4_subtract v.xy, v.xy, u.xy;
 }
 
 void __operator *= (inout vec2 v, const vec2 u)
 {
-    v.x *= u.x;
-    v.y *= u.y;
+   __asm vec4_multiply v.xy, v.xy, u.xy;
 }
 
 void __operator /= (inout vec2 v, const vec2 u)
 {
-    v.x /= u.x;
-    v.y /= u.y;
+   vec2 w;
+   __asm float_rcp w.x, u.x;
+   __asm float_rcp w.y, u.y;
+   __asm vec4_multiply v.xy, v.xy, w.xy;
 }
 
 
@@ -1288,10 +1287,11 @@ void __operator *= (inout vec3 v, const vec3 u)
 
 void __operator /= (inout vec3 v, const vec3 u)
 {
-// XXX rcp
-    v.x /= u.x;
-    v.y /= u.y;
-    v.z /= u.z;
+   vec3 w;
+   __asm float_rcp w.x, u.x;
+   __asm float_rcp w.y, u.y;
+   __asm float_rcp w.z, u.z;
+   __asm vec4_multiply v.xyz, v.xyz, w.xyz;
 }
 
 
@@ -1314,11 +1314,12 @@ void __operator *= (inout vec4 v, const vec4 u)
 
 void __operator /= (inout vec4 v, const vec4 u)
 {
-// XXX rcp
-    v.x /= u.x;
-    v.y /= u.y;
-    v.z /= u.z;
-    v.w /= u.w;
+   vec4 w;
+   __asm float_rcp w.x, u.x;
+   __asm float_rcp w.y, u.y;
+   __asm float_rcp w.z, u.z;
+   __asm float_rcp w.w, u.w;
+   __asm vec4_multiply v, v, w;
 }
 
 
@@ -1327,18 +1328,17 @@ void __operator /= (inout vec4 v, const vec4 u)
 
 void __operator += (inout ivec2 v, const int a)
 {
-   v.x += a;
-   v.y += a;
+   __asm vec4_add v.xy, v.xy, a.xx;
 }
 
 void __operator -= (inout ivec2 v, const int a)
 {
-   v.x -= a;
-   v.y -= a;
+   __asm vec4_subtract v.xy, v.xy, a.xx;
 }
 
 void __operator *= (inout ivec2 v, const int a)
 {
+   __asm vec4_multiply v.xy, v.xy, a.xx;
    v.x *= a;
    v.y *= a;
 }
@@ -1355,27 +1355,22 @@ void __operator /= (inout ivec2 v, const int a)
 
 void __operator += (inout ivec3 v, const int a)
 {
-   v.x += a;
-   v.y += a;
-   v.z += a;
+   __asm vec4_add v.xyz, v.xyz, a.xxx;
 }
 
 void __operator -= (inout ivec3 v, const int a)
 {
-   v.x -= a;
-   v.y -= a;
-   v.z -= a;
+   __asm vec4_subtract v.xyz, v.xyz, a.xxx;
 }
 
 void __operator *= (inout ivec3 v, const int a)
 {
-   v.x *= a;
-   v.y *= a;
-   v.z *= a;
+   __asm vec4_multiply v.xyz, v.xyz, a.xxx;
 }
 
 void __operator /= (inout ivec3 v, const int a)
 {
+   // XXX rcp
     v.x /= a;
     v.y /= a;
     v.z /= a;
