@@ -31,6 +31,7 @@ DRIVER_SOURCES = \
 	nv10_state.c             \
 	nv20_state.c             \
 	nv30_state.c             \
+	nv50_state.c             \
 	nouveau_state_cache.c    \
 	nv20_vertprog.c          \
 	nv30_fragprog.c          \
