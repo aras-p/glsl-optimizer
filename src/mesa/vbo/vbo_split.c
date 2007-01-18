@@ -121,7 +121,7 @@ void vbo_split_prims( GLcontext *ctx,
 	  */
 	 assert(0);
       }
-      else if (max_index - min_index > limits->max_verts) {
+      else if (max_index - min_index >= limits->max_verts) {
 	 /* The vertex buffers are too large for hardware (or the
 	  * swtnl module).  Traverse the indices, re-emitting vertices
 	  * in turn.  Use a vertex cache to preserve some of the
