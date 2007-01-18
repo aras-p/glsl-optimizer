@@ -581,9 +581,9 @@ new_jump(slang_atom target)
  * New IR_VAR node - a reference to a previously declared variable.
  */
 static slang_ir_node *
-new_var(slang_assemble_ctx *A, slang_operation *oper,
-        slang_atom name, GLuint swizzle)
+new_var(slang_assemble_ctx *A, slang_operation *oper, slang_atom name)
 {
+   GLuint swizzle = SWIZZLE_NOOP;
    slang_variable *v = _slang_locate_variable(oper->locals, name, GL_TRUE);
    slang_ir_node *n = new_node(IR_VAR, NULL, NULL);
    if (!v) {
@@ -1728,7 +1728,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       /* child is initializer */
       slang_ir_node *var, *init, *rhs;
       assert(oper->num_children == 1);
-      var = new_var(A, oper, oper->a_id, SWIZZLE_NOOP);
+      var = new_var(A, oper, oper->a_id);
       /* XXX make copy of this initializer? */
       /*
         printf("\n*** ASSEMBLE INITIALIZER %p\n", (void*) v->initializer);
@@ -1741,7 +1741,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
    }
    else if (v->initializer) {
       slang_ir_node *var, *init, *rhs;
-      var = new_var(A, oper, oper->a_id, SWIZZLE_NOOP);
+      var = new_var(A, oper, oper->a_id);
       /* XXX make copy of this initializer? */
       /*
         printf("\n*** ASSEMBLE INITIALIZER %p\n", (void*) v->initializer);
@@ -1771,7 +1771,7 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
     * use it.  Otherwise, use the oper's var id.
     */
    slang_atom aVar = oper->var ? oper->var->a_name : oper->a_id;
-   slang_ir_node *n = new_var(A, oper, aVar, SWIZZLE_NOOP);
+   slang_ir_node *n = new_var(A, oper, aVar);
    /*
    assert(oper->var);
    */
