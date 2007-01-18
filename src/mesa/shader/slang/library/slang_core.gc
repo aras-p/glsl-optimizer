@@ -1539,25 +1539,34 @@ mat3 __operator - (const mat3 m, const mat3 n)
 
 mat3 __operator * (const mat3 m, const mat3 n)
 {
-   vec3 mRow0, mRow1, mRow2;
-   mRow0.x = m[0].x;
-   mRow0.y = m[1].x;
-   mRow0.z = m[2].x;
-   mRow1.x = m[0].y;
-   mRow1.y = m[1].y;
-   mRow1.z = m[2].y;
-   mRow2.x = m[0].z;
-   mRow2.y = m[1].z;
-   mRow2.z = m[2].z;
-   __retVal[0].x = dot(mRow0, n[0]);
-   __retVal[1].x = dot(mRow0, n[1]);
-   __retVal[2].x = dot(mRow0, n[2]);
-   __retVal[0].y = dot(mRow1, n[0]);
-   __retVal[1].y = dot(mRow1, n[1]);
-   __retVal[2].y = dot(mRow1, n[2]);
-   __retVal[0].z = dot(mRow2, n[0]);
-   __retVal[1].z = dot(mRow2, n[1]);
-   __retVal[2].z = dot(mRow2, n[2]);
+   // sub-blocks to reduce register usage
+   {
+      vec3 mRow0;
+      mRow0.x = m[0].x;
+      mRow0.y = m[1].x;
+      mRow0.z = m[2].x;
+      __retVal[0].x = dot(mRow0, n[0]);
+      __retVal[1].x = dot(mRow0, n[1]);
+      __retVal[2].x = dot(mRow0, n[2]);
+   }
+   {
+      vec3 mRow1;
+      mRow1.x = m[0].y;
+      mRow1.y = m[1].y;
+      mRow1.z = m[2].y;
+      __retVal[0].y = dot(mRow1, n[0]);
+      __retVal[1].y = dot(mRow1, n[1]);
+      __retVal[2].y = dot(mRow1, n[2]);
+   }
+   {
+      vec3 mRow2;
+      mRow2.x = m[0].z;
+      mRow2.y = m[1].z;
+      mRow2.z = m[2].z;
+      __retVal[0].z = dot(mRow2, n[0]);
+      __retVal[1].z = dot(mRow2, n[1]);
+      __retVal[2].z = dot(mRow2, n[2]);
+   }
 }
 
 mat3 __operator / (const mat3 m, const mat3 n)
@@ -1850,19 +1859,27 @@ vec3 __operator * (const mat3 m, const vec3 v)
 
 vec3 __operator * (const vec3 v, const mat3 m)
 {
-   vec3 r0, r1, r2;
-   r0.x = m[0].x;
-   r0.y = m[1].x;
-   r0.z = m[2].x;
-   r1.x = m[0].y;
-   r1.y = m[1].y;
-   r1.z = m[2].y;
-   r2.x = m[0].z;
-   r2.y = m[1].z;
-   r2.z = m[2].z;
-   __asm vec3_dot __retVal.x, v, r0;
-   __asm vec3_dot __retVal.y, v, r1;
-   __asm vec3_dot __retVal.z, v, r2;
+   {
+      vec3 r0;
+      r0.x = m[0].x;
+      r0.y = m[1].x;
+      r0.z = m[2].x;
+      __asm vec3_dot __retVal.x, v, r0;
+   }
+   {
+      vec3 r1;
+      r1.x = m[0].y;
+      r1.y = m[1].y;
+      r1.z = m[2].y;
+      __asm vec3_dot __retVal.y, v, r1;
+   }
+   {
+      vec3 r2;
+      r2.x = m[0].z;
+      r2.y = m[1].z;
+      r2.z = m[2].z;
+      __asm vec3_dot __retVal.z, v, r2;
+   }
 }
 
 vec4 __operator * (const mat4 m, const vec4 v)
@@ -1875,27 +1892,38 @@ vec4 __operator * (const mat4 m, const vec4 v)
 
 vec4 __operator * (const vec4 v, const mat4 m)
 {
-   vec4 r0, r1, r2, r3;
-   r0.x = m[0].x;
-   r0.y = m[1].x;
-   r0.z = m[2].x;
-   r0.w = m[3].x;
-   r1.x = m[0].y;
-   r1.y = m[1].y;
-   r1.z = m[2].y;
-   r1.w = m[3].y;
-   r2.x = m[0].z;
-   r2.y = m[1].z;
-   r2.z = m[2].z;
-   r2.w = m[3].z;
-   r3.x = m[0].w;
-   r3.y = m[1].w;
-   r3.z = m[2].w;
-   r3.w = m[3].w;
-   __asm vec4_dot __retVal.x, v, r0;
-   __asm vec4_dot __retVal.y, v, r1;
-   __asm vec4_dot __retVal.z, v, r2;
-   __asm vec4_dot __retVal.w, v, r3;
+   {
+      vec4 r0;
+      r0.x = m[0].x;
+      r0.y = m[1].x;
+      r0.z = m[2].x;
+      r0.w = m[3].x;
+      __asm vec4_dot __retVal.x, v, r0;
+   }
+   {
+      vec4 r1;
+      r1.x = m[0].y;
+      r1.y = m[1].y;
+      r1.z = m[2].y;
+      r1.w = m[3].y;
+      __asm vec4_dot __retVal.y, v, r1;
+   }
+   {
+      vec4 r2;
+      r2.x = m[0].z;
+      r2.y = m[1].z;
+      r2.z = m[2].z;
+      r2.w = m[3].z;
+      __asm vec4_dot __retVal.z, v, r2;
+   }
+   {
+      vec4 r3;
+      r3.x = m[0].w;
+      r3.y = m[1].w;
+      r3.z = m[2].w;
+      r3.w = m[3].w;
+      __asm vec4_dot __retVal.w, v, r3;
+   }
 }
 
 
