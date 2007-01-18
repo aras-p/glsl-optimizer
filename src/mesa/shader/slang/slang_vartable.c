@@ -32,6 +32,8 @@ struct slang_var_table_
 
 /**
  * Create new table, put at head, return ptr to it.
+ * XXX we should take a maxTemps parameter to indicate how many temporaries
+ * are available for the current shader/program target.
  */
 slang_var_table *
 _slang_push_var_table(slang_var_table *parent)
@@ -139,7 +141,7 @@ alloc_reg(slang_var_table *t, GLint size, GLboolean isTemp)
    for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
       GLuint found = 0;
       for (j = 0; j < sz4; j++) {
-         if (!t->temps[i + j]) {
+         if (i + j < MAX_PROGRAM_TEMPS && !t->temps[i + j]) {
             found++;
          }
          else {
