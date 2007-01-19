@@ -546,8 +546,12 @@ new_label(slang_atom labName)
 static slang_ir_node *
 new_float_literal(float x, float y, float z, float w)
 {
-   GLuint size = 4; /* XXX fix */
+   GLuint size;
    slang_ir_node *n = new_node(IR_FLOAT, NULL, NULL);
+   if (x == y && x == z && x == w)
+      size = 1;
+   else
+      size = 4;
    n->Value[0] = x;
    n->Value[1] = y;
    n->Value[2] = z;

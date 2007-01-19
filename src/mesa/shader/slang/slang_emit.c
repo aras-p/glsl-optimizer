@@ -36,6 +36,7 @@
 #include "prog_parameter.h"
 #include "prog_print.h"
 #include "slang_emit.h"
+#include "slang_error.h"
 
 
 /**
@@ -125,22 +126,20 @@ slang_ir_name(slang_ir_opcode opcode)
 }
 
 
-#if 0
 /**
- * Swizzle a swizzle.
+ * Swizzle a swizzle.  That is, return swz2(swz1)
  */
 static GLuint
-swizzle_compose(GLuint swz1, GLuint swz2)
+swizzle_swizzle(GLuint swz1, GLuint swz2)
 {
    GLuint i, swz, s[4];
    for (i = 0; i < 4; i++) {
-      GLuint c = GET_SWZ(swz1, i);
-      s[i] = GET_SWZ(swz2, c);
+      GLuint c = GET_SWZ(swz2, i);
+      s[i] = GET_SWZ(swz1, c);
    }
    swz = MAKE_SWIZZLE4(s[0], s[1], s[2], s[3]);
    return swz;
 }
-#endif
 
 
 slang_ir_storage *
@@ -381,7 +380,7 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st,
    assert(st->Size >= 1);
    assert(st->Size <= 4);
    /* XXX swizzling logic here may need some work */
-   /*src->Swizzle = swizzle_compose(swizzle, defaultSwizzle[st->Size - 1]);*/
+   /*src->Swizzle = swizzle_swizzlee(swizzle, defaultSwizzle[st->Size - 1]);*/
    if (st->Swizzle != SWIZZLE_NOOP)
       src->Swizzle = st->Swizzle;
    else
@@ -767,7 +766,8 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       n->Store->Index = n->Children[0]->Store->Index;
       n->Store->Size  = n->Children[0]->Store->Size;
       assert(n->Store->Index >= 0);
-      /* XXX compose swizzles here!!! */
+      n->Store->Swizzle = swizzle_swizzle(n->Children[0]->Store->Swizzle,
+                                          n->Store->Swizzle);
       return NULL;
 
    /* Simple binary operators */
@@ -806,10 +806,13 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    case IR_NEG:
       return emit_negation(vt, n, prog);
    case IR_FLOAT:
-      /* find storage location for this float */
+      /* find storage location for this float constant */
       n->Store->Index = _mesa_add_unnamed_constant(prog->Parameters, n->Value,
-                                                   4, &n->Store->Swizzle);
-      assert(n->Store->Index >= 0);
+                                                   n->Store->Size/*4*/,
+                                                   &n->Store->Swizzle);
+      if (n->Store->Index < 0) {
+         RETURN_ERROR("Ran out of space for constants.", 0);
+      }
       return NULL;
 
    case IR_MOVE:
