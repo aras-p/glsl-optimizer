@@ -671,14 +671,23 @@ vec2 normalize(const vec2 v)
 
 vec3 normalize(const vec3 v)
 {
-   const float s = inversesqrt(dot(v, v));
-   __asm vec4_multiply __retVal.xyz, v, s.xxx;
+//   const float s = inversesqrt(dot(v, v));
+//   __retVal = v * s;
+// XXX note, we _could_ use __retVal.w instead of tmp and and save a
+// register, but that's actually a compilation error because v is a vec3
+// and the .w suffix is illegal.  Oh well.
+   float tmp;
+   __asm vec3_dot tmp, v, v;
+   __asm float_rsq tmp, tmp;
+   __asm vec4_multiply __retVal.xyz, v, tmp.xxx;
 }
 
 vec4 normalize(const vec4 v)
 {
-   const float s = inversesqrt(dot(v, v));
-   __asm vec4_multiply __retVal, v, s.xxxx;
+   float tmp;
+   __asm vec4_dot tmp, v, v;
+   __asm float_rsq tmp, tmp;
+   __asm vec4_multiply __retVal.xyz, v, tmp.xxx;
 }
 
 
