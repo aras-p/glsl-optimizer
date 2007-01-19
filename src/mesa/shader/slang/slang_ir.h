@@ -90,7 +90,8 @@ typedef enum
    IR_FLOAT,
    IR_FIELD,
    IR_I_TO_F,  /* int[4] to float[4] conversion */
-   IR_F_TO_I   /* float[4] to int[4] conversion */
+   IR_F_TO_I,  /* float[4] to int[4] conversion */
+   IR_KILL     /* fragment kill/discard */
 } slang_ir_opcode;
 
 

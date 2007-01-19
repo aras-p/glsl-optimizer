@@ -90,6 +90,7 @@ static slang_ir_info IrInfo[] = {
    { IR_LABEL, "IR_LABEL", 0, 0, 0 },
    { IR_JUMP, "IR_JUMP", 0, 0, 0 },
    { IR_CJUMP, "IR_CJUMP", 0, 0, 0 },
+   { IR_KILL, "IR_KILL", 0, 0, 0 },
    { IR_COND, "IR_COND", 0, 0, 0 },
    { IR_CALL, "IR_CALL", 0, 0, 0 },
    { IR_MOVE, "IR_MOVE", 0, 0, 1 },
@@ -538,6 +539,19 @@ emit_jump(const char *target, struct gl_program *prog)
 
 
 static struct prog_instruction *
+emit_kill(struct gl_program *prog)
+{
+   struct prog_instruction *inst;
+   /* NV-KILL - discard fragment depending on condition code.
+    * Note that ARB-KILL depends on sign of vector operand.
+    */
+   inst = new_instruction(prog, OPCODE_KIL_NV);
+   inst->DstReg.CondMask = COND_TR;  /* always branch */
+   return inst;
+}
+
+
+static struct prog_instruction *
 emit_tex(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 {
    struct prog_instruction *inst;
@@ -732,6 +746,9 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
        */
       assert(n->Store);
       assert(n->Store->File != PROGRAM_UNDEFINED);
+      if (n->Store->Index < 0) {
+         printf("#### VAR %s not allocated!\n", (char*)n->Var->a_name);
+      }
       assert(n->Store->Index >= 0);
       assert(n->Store->Size > 0);
       break;
@@ -827,6 +844,8 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       return emit_jump(n->Target, prog);
    case IR_CJUMP:
       return emit_cjump(n->Target, prog);
+   case IR_KILL:
+      return emit_kill(prog);
 
    default:
       _mesa_problem(NULL, "Unexpected IR opcode in emit()\n");

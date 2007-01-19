@@ -2054,6 +2054,9 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
          RETURN_ERROR("'continue' not in loop", 0);
       }
       return new_jump(A->CurLoopCont);
+   case slang_oper_discard:
+      return new_node(IR_KILL, NULL, NULL);
+
    case slang_oper_equal:
       return new_node(IR_SEQUAL,
                       _slang_gen_operation(A, &oper->children[0]),
