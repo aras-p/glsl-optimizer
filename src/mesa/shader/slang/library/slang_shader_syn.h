@@ -533,7 +533,7 @@
 " iteration_statement_1 .or iteration_statement_2 .or iteration_statement_3;\n"
 "iteration_statement_1\n"
 " \"while\" .emit OP_WHILE .and lparen .error LPAREN_EXPECTED .and condition .and\n"
-" rparen .error RPAREN_EXPECTED .and statement_no_new_scope;\n"
+" rparen .error RPAREN_EXPECTED .and statement;\n"
 "iteration_statement_2\n"
 " \"do\" .emit OP_DO .and statement_space .and \"while\" .and lparen .error LPAREN_EXPECTED .and\n"
 " expression .and rparen .error RPAREN_EXPECTED .emit OP_END .and semicolon;\n"

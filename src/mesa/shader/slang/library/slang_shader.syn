@@ -1096,7 +1096,7 @@ condition_3
     expression .and .true .emit OP_END;
 
 /*
-    <iteration_statement>               ::= "while" "(" <condition> ")" <statement_no_new_scope>
+    <iteration_statement>               ::= "while" "(" <condition> ")" <statement>
                                           | "do" <statement> "while" "(" <expression> ")" ";"
                                           | "for" "(" <for_init_statement> <for_rest_statement> ")"
                                             <statement_no_new_scope>
@@ -1105,7 +1105,7 @@ iteration_statement
     iteration_statement_1 .or iteration_statement_2 .or iteration_statement_3;
 iteration_statement_1
     "while" .emit OP_WHILE .and lparen .error LPAREN_EXPECTED .and condition .and
-    rparen .error RPAREN_EXPECTED .and statement_no_new_scope;
+    rparen .error RPAREN_EXPECTED .and statement;
 iteration_statement_2
     "do" .emit OP_DO .and statement_space .and "while" .and lparen .error LPAREN_EXPECTED .and
     expression .and rparen .error RPAREN_EXPECTED .emit OP_END .and semicolon;
