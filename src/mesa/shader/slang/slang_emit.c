@@ -89,7 +89,8 @@ static slang_ir_info IrInfo[] = {
    { IR_SCOPE, "IR_SCOPE", 0, 0, 0 },
    { IR_LABEL, "IR_LABEL", 0, 0, 0 },
    { IR_JUMP, "IR_JUMP", 0, 0, 0 },
-   { IR_CJUMP, "IR_CJUMP", 0, 0, 0 },
+   { IR_CJUMP0, "IR_CJUMP0", 0, 0, 0 },
+   { IR_CJUMP1, "IR_CJUMP1", 0, 0, 0 },
    { IR_KILL, "IR_KILL", 0, 0, 0 },
    { IR_COND, "IR_COND", 0, 0, 0 },
    { IR_CALL, "IR_CALL", 0, 0, 0 },
@@ -262,8 +263,12 @@ slang_print_ir(const slang_ir_node *n, int indent)
    case IR_JUMP:
       printf("JUMP %s\n", n->Target);
       break;
-   case IR_CJUMP:
-      printf("CJUMP %s\n", n->Target);
+   case IR_CJUMP0:
+      printf("CJUMP0 %s\n", n->Target);
+      slang_print_ir(n->Children[0], indent+3);
+      break;
+   case IR_CJUMP1:
+      printf("CJUMP1 %s\n", n->Target);
       slang_print_ir(n->Children[0], indent+3);
       break;
    case IR_VAR:
@@ -515,11 +520,14 @@ emit_label(const char *target, struct gl_program *prog)
 
 
 static struct prog_instruction *
-emit_cjump(const char *target, struct gl_program *prog)
+emit_cjump(const char *target, struct gl_program *prog, GLuint zeroOrOne)
 {
    struct prog_instruction *inst;
    inst = new_instruction(prog, OPCODE_BRA);
-   inst->DstReg.CondMask = COND_EQ;  /* branch if equal to zero */
+   if (zeroOrOne)
+      inst->DstReg.CondMask = COND_NE;  /* branch if non-zero */
+   else
+      inst->DstReg.CondMask = COND_EQ;  /* branch if equal to zero */
    inst->DstReg.CondSwizzle = SWIZZLE_X;
    inst->Comment = _mesa_strdup(target);
    return inst;
@@ -666,7 +674,7 @@ emit_cond(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 {
    /* Conditional expression (in if/while/for stmts).
     * Need to update condition code register.
-    * Next instruction is typically an IR_CJUMP.
+    * Next instruction is typically an IR_CJUMP0/1.
     */
    /* last child expr instruction: */
    struct prog_instruction *inst = emit(vt, n->Children[0], prog);
@@ -842,8 +850,10 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       return emit_label(n->Target, prog);
    case IR_JUMP:
       return emit_jump(n->Target, prog);
-   case IR_CJUMP:
-      return emit_cjump(n->Target, prog);
+   case IR_CJUMP0:
+      return emit_cjump(n->Target, prog, 0);
+   case IR_CJUMP1:
+      return emit_cjump(n->Target, prog, 1);
    case IR_KILL:
       return emit_kill(prog);
 

@@ -562,18 +562,22 @@ new_float_literal(float x, float y, float z, float w)
 }
 
 /**
+ * Conditional jump.
+ * \param zeroOrOne indicates if the jump is to be taken on zero, or non-zero
+ *                  condition code state.
  * XXX maybe pass an IR node as second param to indicate the jump target???
  */
 static slang_ir_node *
-new_cjump(slang_atom target)
+new_cjump(slang_atom target, GLuint zeroOrOne)
 {
-   slang_ir_node *n = new_node(IR_CJUMP, NULL, NULL);
+   slang_ir_node *n = new_node(zeroOrOne ? IR_CJUMP1 : IR_CJUMP0, NULL, NULL);
    if (n)
       n->Target = (char *) target;
    return n;
 }
 
 /**
+ * Unconditional jump.
  * XXX maybe pass an IR node as second param to indicate the jump target???
  */
 static slang_ir_node *
@@ -1386,7 +1390,7 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    cond = _slang_gen_cond(cond);
    tree = new_seq(startLab, cond);
 
-   bra = new_cjump(endAtom);
+   bra = new_cjump(endAtom, 0);
    tree = new_seq(tree, bra);
 
    body = _slang_gen_operation(A, &oper->children[1]);
@@ -1394,6 +1398,52 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
 
    jump = new_jump(startAtom);
    tree = new_seq(tree, jump);
+
+   endLab = new_label(endAtom);
+   tree = new_seq(tree, endLab);
+
+   /* Pop this loop */
+   A->CurLoopBreak = prevLoopBreak;
+   A->CurLoopCont = prevLoopCont;
+
+   return tree;
+}
+
+
+/**
+ * Generate IR tree for a do-while-loop.
+ */
+static slang_ir_node *
+_slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
+{
+   /*
+    * label "__startDo"
+    * code body
+    * eval expr (child[0]), updating condcodes
+    * branch if true to "__startDo"
+    * label "__endDo"
+    */
+   slang_atom startAtom = slang_atom_pool_gen(A->atoms, "__startDo");
+   slang_atom endAtom = slang_atom_pool_gen(A->atoms, "__endDo");
+   slang_ir_node *startLab, *cond, *bra, *body, *endLab, *tree;
+   slang_atom prevLoopBreak = A->CurLoopBreak;
+   slang_atom prevLoopCont = A->CurLoopCont;
+
+   /* Push this loop */
+   A->CurLoopBreak = endAtom;
+   A->CurLoopCont = startAtom;
+
+   startLab = new_label(startAtom);
+
+   body = _slang_gen_operation(A, &oper->children[0]);
+   tree = new_seq(startLab, body);
+
+   cond = _slang_gen_operation(A, &oper->children[1]);
+   cond = _slang_gen_cond(cond);
+   tree = new_seq(tree, cond);
+
+   bra = new_cjump(startAtom, 1);
+   tree = new_seq(tree, bra);
 
    endLab = new_label(endAtom);
    tree = new_seq(tree, endLab);
@@ -1443,7 +1493,7 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
    cond = _slang_gen_cond(cond);
    tree = new_seq(tree, cond);
 
-   bra = new_cjump(endAtom);
+   bra = new_cjump(endAtom, 0);
    tree = new_seq(tree, bra);
 
    body = _slang_gen_operation(A, &oper->children[3]);
@@ -1493,7 +1543,7 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
    cond = _slang_gen_operation(A, &oper->children[0]);
    cond = _slang_gen_cond(cond);
    /*assert(cond->Store);*/
-   bra = new_cjump(haveElseClause ? elseAtom : endifAtom);
+   bra = new_cjump(haveElseClause ? elseAtom : endifAtom, 0);
    tree = new_seq(cond, bra);
 
    trueBody = _slang_gen_operation(A, &oper->children[1]);
@@ -1593,8 +1643,8 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
    cond = _slang_gen_cond(cond);
    tree = new_seq(tmpDecl, cond);
 
-   /* jump if true to "alt" label */
-   cjump = new_cjump(altAtom);
+   /* jump if false to "alt" label */
+   cjump = new_cjump(altAtom, 0);
    tree = new_seq(tree, cjump);
 
    /* evaluate child 2 (y) and assign to tmp */
@@ -2042,6 +2092,8 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       break;
    case slang_oper_while:
       return _slang_gen_while(A, oper);
+   case slang_oper_do:
+      return _slang_gen_do(A, oper);
    case slang_oper_for:
       return _slang_gen_for(A, oper);
    case slang_oper_break:

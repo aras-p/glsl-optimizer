@@ -48,7 +48,8 @@ typedef enum
    IR_SCOPE,   /* new variable scope (one child) */
    IR_LABEL,   /* target of a jump or cjump */
    IR_JUMP,    /* unconditional jump */
-   IR_CJUMP,   /* conditional jump */
+   IR_CJUMP0,  /* conditional jump if zero */
+   IR_CJUMP1,  /* conditional jump if one (or non-zero) */
    IR_COND,    /* conditional expression */
    IR_CALL,    /* call subroutine */
    IR_MOVE,
