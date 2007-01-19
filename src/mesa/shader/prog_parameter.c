@@ -185,7 +185,6 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
    size = 4; /** XXX fix */
    return _mesa_add_parameter(paramList, PROGRAM_CONSTANT, name,
                               size, values, NULL);
-                              
 }
 
 
@@ -205,18 +204,44 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
                            GLuint *swizzleOut)
 {
    GLint pos;
-   GLuint swizzle;
    ASSERT(size >= 1);
    ASSERT(size <= 4);
-   size = 4; /* XXX temporary */
-   /* check if we already have this constant */
+
    if (_mesa_lookup_parameter_constant(paramList, values,
-                                       size, &pos, &swizzle)) {
+                                       size, &pos, swizzleOut)) {
       return pos;
    }
-   return _mesa_add_parameter(paramList, PROGRAM_CONSTANT, NULL,
-                              size, values, NULL);
-                              
+
+   /* Look for empty space in an already unnamed constant parameter
+    * to add this constant.  This will only work for single-element
+    * constants because we rely on smearing (i.e. .yyyy or .zzzz).
+    */
+   if (size == 1) {
+      for (pos = 0; pos < paramList->NumParameters; pos++) {
+         struct gl_program_parameter *p = paramList->Parameters + pos;
+         if (p->Type == PROGRAM_CONSTANT && p->Size + size <= 4) {
+            /* ok, found room */
+            GLfloat *pVal = paramList->ParameterValues[pos];
+            GLuint swz = p->Size; /* 1, 2 or 3 for Y, Z, W */
+            pVal[p->Size] = values[0];
+            p->Size++;
+            *swizzleOut = MAKE_SWIZZLE4(swz, swz, swz, swz);
+            return pos;
+         }
+      }
+   }
+
+   /* add a new parameter to store this constant */
+   pos = _mesa_add_parameter(paramList, PROGRAM_CONSTANT, NULL,
+                             size, values, NULL);
+   if (pos >= 0) {
+      if (size == 1)
+         *swizzleOut = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X,
+                                     SWIZZLE_X, SWIZZLE_X);
+      else
+         *swizzleOut = SWIZZLE_NOOP;
+   }
+   return pos;
 }
 
 
@@ -433,7 +458,7 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
 /**
  * Look for a float vector in the given parameter list.  The float vector
  * may be of length 1, 2, 3 or 4.
- * \param paramList  the parameter list to search
+ * \param list  the parameter list to search
  * \param v  the float vector to search for
  * \param size  number of element in v
  * \param posOut  returns the position of the constant, if found
@@ -442,7 +467,7 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
  * \return GL_TRUE if found, GL_FALSE if not found
  */
 GLboolean
-_mesa_lookup_parameter_constant(const struct gl_program_parameter_list *paramList,
+_mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
                                 const GLfloat v[], GLsizei vSize,
                                 GLint *posOut, GLuint *swizzleOut)
 {
@@ -451,32 +476,34 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *paramLis
    assert(vSize >= 1);
    assert(vSize <= 4);
 
-   if (!paramList)
+   if (!list)
       return -1;
 
-   for (i = 0; i < paramList->NumParameters; i++) {
-      if (paramList->Parameters[i].Type == PROGRAM_CONSTANT) {
-         const GLint maxShift = 4 - vSize;
-         GLint shift, j;
-         for (shift = 0; shift <= maxShift; shift++) {
-            GLint matched = 0;
-            GLuint swizzle[4];
-            swizzle[0] = swizzle[1] = swizzle[2] = swizzle[3] = 0;
-            /* XXX we could do out-of-order swizzle matches too, someday */
-            for (j = 0; j < vSize; j++) {
-               assert(shift + j < 4);
-               if (paramList->ParameterValues[i][shift + j] == v[j]) {
-                  matched++;
-                  swizzle[j] = shift + j;
-                  ASSERT(swizzle[j] >= SWIZZLE_X);
-                  ASSERT(swizzle[j] <= SWIZZLE_W);
+   for (i = 0; i < list->NumParameters; i++) {
+      if (list->Parameters[i].Type == PROGRAM_CONSTANT) {
+         if (vSize == 1) {
+            /* look for v[0] anywhere within float[4] value */
+            GLuint j;
+            for (j = 0; j < 4; j++) {
+               if (list->ParameterValues[i][j] == v[0]) {
+                  /* found it */
+                  *posOut = i;
+                  *swizzleOut = MAKE_SWIZZLE4(j, j, j, j);
+                  return GL_TRUE;
                }
             }
-            if (matched == vSize) {
-               /* found! */
+         }
+         else if (list->Parameters[i].Size >= vSize) {
+            /* see if we can match this constant */
+            GLuint match = 0, j;
+            for (j = 0; j < vSize; j++) {
+               if (list->ParameterValues[i][j] == v[j]) {
+                  match++;
+               }
+            }
+            if (match == vSize) {
                *posOut = i;
-               *swizzleOut = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
-                                           swizzle[2], swizzle[3]);
+               *swizzleOut = SWIZZLE_NOOP;
                return GL_TRUE;
             }
          }
