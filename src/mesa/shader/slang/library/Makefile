@@ -29,7 +29,7 @@ builtin: builtin_110 builtin_120 builtin_vec4
 
 syn_to_c: syn_to_c.c
 	$(CC) syn_to_c.c -o syn_to_c
-	
+
 gc_to_bin: gc_to_bin.c slang_shader_syn.h
 	$(CC) gc_to_bin.c -o gc_to_bin
 
