@@ -366,8 +366,7 @@ extern void NV40FPInitShaderFuncs(nvsFunc *);
 
 extern void nouveauShaderInitFuncs(GLcontext *ctx);
 
-extern GLboolean nouveau_shader_pass0_arb(GLcontext *ctx, nouveauShader *nvs);
-extern GLboolean nouveau_shader_pass0_slang(GLcontext *ctx, nouveauShader *nvs);
+extern GLboolean nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs);
 extern GLboolean nouveau_shader_pass1(nvsPtr nvs);
 extern GLboolean nouveau_shader_pass2(nvsPtr nvs);
 

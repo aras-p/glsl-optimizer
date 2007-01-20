@@ -666,7 +666,7 @@ pass0_translate_instructions(nouveauShader *nvs)
 }
 
 GLboolean
-nouveau_shader_pass0_arb(GLcontext *ctx, nouveauShader *nvs)
+nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 {
    nouveauContextPtr		 nmesa	= NOUVEAU_CONTEXT(ctx);
    struct gl_program		*prog	= (struct gl_program*)nvs;

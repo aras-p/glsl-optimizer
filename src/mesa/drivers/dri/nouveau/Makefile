@@ -20,7 +20,7 @@ DRIVER_SOURCES = \
 	nouveau_span.c           \
 	nouveau_state.c          \
 	nouveau_shader.c         \
-	nouveau_shader_0_arb.c   \
+	nouveau_shader_0.c       \
 	nouveau_shader_1.c       \
 	nouveau_shader_2.c       \
 	nouveau_tex.c            \
