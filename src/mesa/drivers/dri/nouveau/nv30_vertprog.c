@@ -48,6 +48,12 @@ NV30VPUpdateConst(GLcontext *ctx, nouveauShader *nvs, int id)
 /*****************************************************************************
  * Assembly routines
  */
+static void
+NV30VPSetBranchTarget(nvsFunc *shader, int addr)
+{
+	shader->inst[2] &= ~NV30_VP_INST_IADDR_MASK;
+	shader->inst[2] |= (addr << NV30_VP_INST_IADDR_SHIFT);
+}
 
 /*****************************************************************************
  * Disassembly routines
@@ -349,5 +355,6 @@ NV30VPInitShaderFuncs(nvsFunc * shader)
    shader->GetCondRegID		= NV30VPGetCondRegID;
 
    shader->GetBranch		= NV30VPGetBranch;
+   shader->SetBranchTarget	= NV30VPSetBranchTarget;
 }
 

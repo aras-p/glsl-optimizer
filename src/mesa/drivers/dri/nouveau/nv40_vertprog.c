@@ -228,6 +228,15 @@ NV40VPSetSource(nvsFunc *shader, nvsRegister * src, int pos)
 }
 
 static void
+NV40VPSetBranchTarget(nvsFunc *shader, int addr)
+{
+	shader->inst[2] &= ~NV40_VP_INST_IADDRH_MASK;
+	shader->inst[2] |= ((addr & 0xf8) >> 3) << NV40_VP_INST_IADDRH_SHIFT;
+	shader->inst[3] &= ~NV40_VP_INST_IADDRL_MASK;
+	shader->inst[3] |= ((addr & 0x07) << NV40_VP_INST_IADDRL_SHIFT);
+}
+
+static void
 NV40VPInitInstruction(nvsFunc *shader)
 {
    unsigned int hwsrc = 0;
@@ -657,6 +666,7 @@ NV40VPInitShaderFuncs(nvsFunc * shader)
    shader->SetResult		= NV40VPSetResult;
    shader->SetSource		= NV40VPSetSource;
    shader->SetLastInst		= NV40VPSetLastInst;
+   shader->SetBranchTarget	= NV40VPSetBranchTarget;
 
    shader->HasMergedInst	= NV40VPHasMergedInst;
    shader->GetOpcodeHW		= NV40VPGetOpcodeHW;

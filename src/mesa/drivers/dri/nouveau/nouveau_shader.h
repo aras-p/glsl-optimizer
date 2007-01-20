@@ -275,6 +275,11 @@ struct _nvsFunc {
    void		(*SetSaturate)		(nvsFunc *);
    void		(*SetLastInst)		(nvsFunc *);
 
+   void		(*SetBranchTarget)	(nvsFunc *, int addr);
+   void		(*SetBranchElse)	(nvsFunc *, int addr);
+   void		(*SetBranchEnd)		(nvsFunc *, int addr);
+   void		(*SetLoopParams)	(nvsFunc *, int cnt, int init, int inc);
+
    int		(*HasMergedInst)	(nvsFunc *);
    int		(*IsLastInst)		(nvsFunc *);
    int		(*GetOffsetNext)	(nvsFunc *);
