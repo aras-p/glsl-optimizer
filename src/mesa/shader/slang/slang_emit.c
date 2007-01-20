@@ -91,6 +91,9 @@ static slang_ir_info IrInfo[] = {
    { IR_JUMP, "IR_JUMP", 0, 0, 0 },
    { IR_CJUMP0, "IR_CJUMP0", 0, 0, 0 },
    { IR_CJUMP1, "IR_CJUMP1", 0, 0, 0 },
+   { IR_IF, "IR_IF", 0, 0, 0 },
+   { IR_ELSE, "IR_ELSE", 0, 0, 0 },
+   { IR_ENDIF, "IR_ENDIF", 0, 0, 0 },
    { IR_KILL, "IR_KILL", 0, 0, 0 },
    { IR_COND, "IR_COND", 0, 0, 0 },
    { IR_CALL, "IR_CALL", 0, 0, 0 },
@@ -271,6 +274,18 @@ slang_print_ir(const slang_ir_node *n, int indent)
       printf("CJUMP1 %s\n", n->Target);
       slang_print_ir(n->Children[0], indent+3);
       break;
+
+   case IR_IF:
+      printf("IF \n");
+      slang_print_ir(n->Children[0], indent+3);
+      break;
+   case IR_ELSE:
+      printf("ELSE\n");
+      break;
+   case IR_ENDIF:
+      printf("ENDIF\n");
+      break;
+
    case IR_VAR:
       printf("VAR %s%s at %s  store %p\n",
              (char *) n->Var->a_name, swizzle_string(n->Store->Swizzle),
@@ -861,6 +876,28 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       return emit_cjump(n->Target, prog, 1);
    case IR_KILL:
       return emit_kill(prog);
+
+   case IR_IF:
+      {
+         struct prog_instruction *inst;
+         emit(vt, n->Children[0], prog);  /* the condition */
+         inst = new_instruction(prog, OPCODE_IF);
+         inst->DstReg.CondMask = COND_NE;  /* if cond is non-zero */
+         inst->DstReg.CondSwizzle = SWIZZLE_X;
+         return inst;
+      }
+   case IR_ELSE:
+      {
+         struct prog_instruction *inst;
+         inst = new_instruction(prog, OPCODE_ELSE);
+         return inst;
+      }
+   case IR_ENDIF:
+      {
+         struct prog_instruction *inst;
+         inst = new_instruction(prog, OPCODE_ENDIF);
+         return inst;
+      }
 
    default:
       _mesa_problem(NULL, "Unexpected IR opcode in emit()\n");

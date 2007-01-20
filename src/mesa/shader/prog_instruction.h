@@ -143,11 +143,14 @@ typedef enum prog_opcode {
    OPCODE_DP4,       /*   X        X       X       X    */
    OPCODE_DPH,       /*   X        X       1.1          */
    OPCODE_DST,       /*   X        X       X       X    */
+   OPCODE_ELSE,
    OPCODE_END,       /*   X        X       X       X    */
+   OPCODE_ENDIF,
    OPCODE_EX2,       /*   X        X       2       X    */
    OPCODE_EXP,       /*   X                X            */
    OPCODE_FLR,       /*   X        X       2       X    */
    OPCODE_FRC,       /*   X        X       2       X    */
+   OPCODE_IF,
    OPCODE_INT,       /*                                 */
    OPCODE_KIL,       /*            X                    */
    OPCODE_KIL_NV,    /*                            X    */

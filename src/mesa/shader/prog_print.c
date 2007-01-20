@@ -295,7 +295,7 @@ _mesa_print_instruction(const struct prog_instruction *inst)
       print_comment(inst);
       break;
    case OPCODE_BRA:
-      _mesa_printf("BRA %u (%s.%s)",
+      _mesa_printf("BRA %u (%s%s)",
                    inst->BranchTarget,
                    condcode_string(inst->DstReg.CondMask),
                    swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE));
@@ -304,6 +304,18 @@ _mesa_print_instruction(const struct prog_instruction *inst)
    case OPCODE_CAL:
       _mesa_printf("CAL %u", inst->BranchTarget);
       print_comment(inst);
+      break;
+   case OPCODE_IF:
+      _mesa_printf("  IF (%s%s)",
+                   condcode_string(inst->DstReg.CondMask),
+                   swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE));
+      print_comment(inst);
+      break;
+   case OPCODE_ELSE:
+      _mesa_printf("  ELSE;\n");
+      break;
+   case OPCODE_ENDIF:
+      _mesa_printf("  ENDIF;\n");
       break;
    case OPCODE_END:
       _mesa_printf("END");

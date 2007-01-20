@@ -1561,6 +1561,51 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
 
 
 /**
+ * Use high-level IF/ELSE/ENDIF instructions
+ */
+static slang_ir_node *
+_slang_gen_if2(slang_assemble_ctx * A, const slang_operation *oper)
+{
+   /*
+    * eval expr (child[0]), updating condcodes
+    * branch if false to _else or _endif
+    * "true" code block
+    * if haveElseClause clause:
+    *    jump "__endif"
+    *    label "__else"
+    *    "false" code block
+    * label "__endif"
+    */
+   const GLboolean haveElseClause = !_slang_is_noop(&oper->children[2]);
+   slang_ir_node *ifNode, *cond, *trueBody, *elseNode, *falseBody, *endifNode;
+   slang_ir_node *tree;
+
+   cond = _slang_gen_operation(A, &oper->children[0]);
+   cond = _slang_gen_cond(cond);
+   /*assert(cond->Store);*/
+   ifNode = new_node(IR_IF, cond, NULL);
+
+   trueBody = _slang_gen_operation(A, &oper->children[1]);
+   tree = new_seq(ifNode, trueBody);
+
+   if (haveElseClause) {
+      /* else clause */
+      elseNode = new_node(IR_ELSE, NULL, NULL);
+      tree = new_seq(tree, elseNode);
+
+      falseBody = _slang_gen_operation(A, &oper->children[2]);
+      tree = new_seq(tree, falseBody);
+   }
+
+   endifNode = new_node(IR_ENDIF, NULL, NULL);
+   tree = new_seq(tree, endifNode);
+
+   return tree;
+}
+
+
+
+/**
  * Generate IR node for storage of a temporary of given size.
  */
 static slang_ir_node *
@@ -2314,7 +2359,13 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case slang_oper_identifier:
       return _slang_gen_variable(A, oper);
    case slang_oper_if:
-      return _slang_gen_if(A, oper);
+      if (A->program->Target == GL_FRAGMENT_PROGRAM_ARB) {
+         return _slang_gen_if(A, oper);
+      }
+      else {
+         /* XXX update tnl executor */
+         return _slang_gen_if(A, oper);
+      }
    case slang_oper_field:
       return _slang_gen_field(A, oper);
    case slang_oper_subscript:

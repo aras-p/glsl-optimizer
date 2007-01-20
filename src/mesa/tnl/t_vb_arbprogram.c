@@ -746,11 +746,14 @@ static void (* const opcode_func[MAX_OPCODE+3])(struct arb_vp_machine *, union i
    do_DP4,
    do_DPH,
    do_DST,
-   do_NOP,
+   do_NOP,/*ELSE*/
+   do_NOP,/*END*/
+   do_NOP,/*ENDIF*/
    do_EX2,
    do_EXP,
    do_FLR,
    do_FRC,
+   do_NOP,/*IF*/
    do_INT,
    do_NOP,/*KIL*/
    do_NOP,/*KIL_NV*/

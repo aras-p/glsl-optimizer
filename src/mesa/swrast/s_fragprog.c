@@ -888,6 +888,73 @@ execute_program( GLcontext *ctx,
                store_vector4( inst, machine, result );
             }
             break;
+         case OPCODE_IF:
+            {
+               const GLuint swizzle = inst->DstReg.CondSwizzle;
+               const GLuint condMask = inst->DstReg.CondMask;
+               if (test_cc(machine->CondCodes[GET_SWZ(swizzle, 0)], condMask) ||
+                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 1)], condMask) ||
+                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 2)], condMask) ||
+                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 3)], condMask)) {
+                  /* do if-clause (just continue execution) */
+               }
+               else {
+                  /* do else-clause, or go to endif */
+                  GLint ifDepth = 1;
+                  do {
+                     pc++;
+                     inst = program->Base.Instructions + pc;
+                     if (inst->Opcode == OPCODE_END) {
+                        /* mal-formed program! */
+                        abort();
+                     }
+                     else if (inst->Opcode == OPCODE_IF) {
+                        ifDepth++;
+                     }
+                     else if (inst->Opcode == OPCODE_ELSE) {
+                        if (ifDepth == 0) {
+                           /* ok, continue normal execution */
+                           break;
+                        }
+                     }
+                     else if (inst->Opcode == OPCODE_ENDIF) {
+                        ifDepth--;
+                        if (ifDepth == 0) {
+                           /* ok, continue normal execution */
+                           break;
+                        }
+                     }
+                     assert(ifDepth >= 0);
+                  } while (pc < maxInst);
+               }
+            }
+            break;
+         case OPCODE_ELSE:
+            {
+               /* find/goto ENDIF */
+               GLint ifDepth = 1;
+               do {
+                  pc++;
+                  inst = program->Base.Instructions + pc;
+                  if (inst->Opcode == OPCODE_END) {
+                     /* mal-formed program! */
+                     abort();
+                  }
+                  else if (inst->Opcode == OPCODE_IF) {
+                     ifDepth++;
+                  }
+                  else if (inst->Opcode == OPCODE_ENDIF) {
+                     ifDepth--;
+                     if (ifDepth == 0)
+                        break;
+                  }
+                  assert(ifDepth >= 0);
+               } while (pc < maxInst);
+            }
+            break;
+         case OPCODE_ENDIF:
+            /* nothing */
+            break;
          case OPCODE_INT: /* float to int */
             {
                GLfloat a[4], result[4];
