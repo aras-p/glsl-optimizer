@@ -385,8 +385,7 @@ storage_to_dst_reg(struct prog_dst_register *dst, const slang_ir_storage *st,
  * Convert IR storage to an instruction src register.
  */
 static void
-storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st,
-                   GLuint swizzle)
+storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st)
 {
    static const GLuint defaultSwizzle[4] = {
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
@@ -457,10 +456,8 @@ emit_binop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
    /* gen this instruction */
    inst = new_instruction(prog, info->InstOpcode);
-   storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
-                      /**n->Children[0]->Swizzle*/0);
-   storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store,
-                      /**n->Children[1]->Swizzle*/0);
+   storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
+   storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
    free_temp_storage(vt, n->Children[0]);
    free_temp_storage(vt, n->Children[1]);
 
@@ -489,8 +486,7 @@ emit_unop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
    /* gen this instruction */
    inst = new_instruction(prog, info->InstOpcode);
-   storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
-                      /**n->Children[0]->Swizzle*/0);
+   storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
    free_temp_storage(vt, n->Children[0]);
 
    if (!n->Store) {
@@ -520,8 +516,7 @@ emit_negation(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
    inst = new_instruction(prog, OPCODE_MOV);
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
-   storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
-                      /**n->Children[0]->Swizzle*/0);
+   storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
    inst->SrcReg[0].NegateBase = NEGATE_XYZW;
    inst->Comment = n->Comment;
    return inst;
@@ -599,8 +594,7 @@ emit_tex(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
 
    /* Child[1] is the coord */
-   storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store,
-                      /**n->Children[1]->Swizzle*/0);
+   storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store);
 
    /* Child[0] is the sampler (a uniform which'll indicate the texture unit) */
    assert(n->Children[0]->Store);
@@ -660,8 +654,7 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
             inst = new_instruction(prog, OPCODE_MOV);
             inst->Comment = _mesa_strdup("IR_MOVE block");
             storage_to_dst_reg(&inst->DstReg, &dstStore, n->Writemask);
-            storage_to_src_reg(&inst->SrcReg[0], &srcStore,
-                               /**n->Children[1]->Swizzle*/0);
+            storage_to_src_reg(&inst->SrcReg[0], &srcStore);
             srcStore.Index++;
             dstStore.Index++;
             size -= 4;
@@ -673,8 +666,7 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          assert(n->Children[0]->Store->Index >= 0);
          assert(n->Children[0]->Store->Index < 16);
          storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
-         storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store,
-                            /**n->Children[1]->Swizzle*/0);
+         storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store);
       }
       /* XXX is this test correct? */
       if (_slang_is_temp(vt, n->Children[1]->Store->Index)) {
@@ -712,8 +704,7 @@ emit_cond(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       inst = new_instruction(prog, OPCODE_MOV);
       inst->CondUpdate = GL_TRUE;
       storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
-      storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store,
-                         /**n->Children[0]->Swizzle*/0);
+      storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
       _slang_free_temp(vt, n->Store->Index, n->Store->Size);
       return inst; /* XXX or null? */
    }
