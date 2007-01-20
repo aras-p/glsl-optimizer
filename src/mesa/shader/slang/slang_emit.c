@@ -39,6 +39,8 @@
 #include "slang_error.h"
 
 
+#define PEEPHOLE_OPTIMIZATIONS 1
+
 /**
  * Assembly and IR info
  */
@@ -450,16 +452,54 @@ emit_binop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
     * replace with MAD instruction.
     */
 
-   /* gen code for children */
-   emit(vt, n->Children[0], prog);
-   emit(vt, n->Children[1], prog);
+#if PEEPHOLE_OPTIMIZATIONS
+   /* Look for MAD opportunity */
+   if (n->Opcode == IR_ADD && n->Children[0]->Opcode == IR_MUL) {
+      /* found pattern IR_ADD(IR_MUL(A, B), C) */
+      emit(vt, n->Children[0]->Children[0], prog);  /* A */
+      emit(vt, n->Children[0]->Children[1], prog);  /* B */
+      emit(vt, n->Children[1], prog);  /* C */
+      /* generate MAD instruction */
+      inst = new_instruction(prog, OPCODE_MAD);
+      /* operands: A, B, C: */
+      storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Children[0]->Store);
+      storage_to_src_reg(&inst->SrcReg[1], n->Children[0]->Children[1]->Store);
+      storage_to_src_reg(&inst->SrcReg[2], n->Children[1]->Store);
+      free_temp_storage(vt, n->Children[0]->Children[0]);
+      free_temp_storage(vt, n->Children[0]->Children[1]);
+      free_temp_storage(vt, n->Children[1]);
+   }
+   else if (n->Opcode == IR_ADD && n->Children[1]->Opcode == IR_MUL) {
+      /* found pattern IR_ADD(A, IR_MUL(B, C)) */
+      emit(vt, n->Children[0], prog);  /* A */
+      emit(vt, n->Children[1]->Children[0], prog);  /* B */
+      emit(vt, n->Children[1]->Children[1], prog);  /* C */
+      /* generate MAD instruction */
+      inst = new_instruction(prog, OPCODE_MAD);
+      /* operands: B, C, A */
+      storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Children[0]->Store);
+      storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Children[1]->Store);
+      storage_to_src_reg(&inst->SrcReg[2], n->Children[0]->Store);
+      free_temp_storage(vt, n->Children[1]->Children[0]);
+      free_temp_storage(vt, n->Children[1]->Children[1]);
+      free_temp_storage(vt, n->Children[0]);
+   }
+   else
+#endif
+   {
+      /* normal case */
 
-   /* gen this instruction */
-   inst = new_instruction(prog, info->InstOpcode);
-   storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
-   storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
-   free_temp_storage(vt, n->Children[0]);
-   free_temp_storage(vt, n->Children[1]);
+      /* gen code for children */
+      emit(vt, n->Children[0], prog);
+      emit(vt, n->Children[1], prog);
+
+      /* gen this instruction */
+      inst = new_instruction(prog, info->InstOpcode);
+      storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
+      storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
+      free_temp_storage(vt, n->Children[0]);
+      free_temp_storage(vt, n->Children[1]);
+   }
 
    if (!n->Store) {
       alloc_temp_storage(vt, n, info->ResultSize);
@@ -623,7 +663,7 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    /* lhs */
    emit(vt, n->Children[0], prog);
 
-#if 1
+#if PEEPHOLE_OPTIMIZATIONS
    if (inst && _slang_is_temp(vt, n->Children[1]->Store->Index)) {
       /* Peephole optimization:
        * Just modify the RHS to put its result into the dest of this
