@@ -1,0 +1,116 @@
+<HTML>
+
+<TITLE>Shading Language Support</TITLE>
+
+<link rel="stylesheet" type="text/css" href="mesa.css"></head>
+
+<BODY>
+
+<H1>Shading Language Support</H1>
+
+<p>
+This page describes the features and status of Mesa's support for the
+<a href="http://opengl.org/documentation/glsl/" target="_parent">
+OpenGL Shading Language</a>.
+</p>
+
+<p>
+Last updated on 20 Jan 2007.
+</p>
+
+<h2>Unsupported Features</h2>
+
+<p>
+The following features of the shading language are not yet supported
+in Mesa:
+</p>
+
+<ul>
+<li>Arrays
+<li>Structs
+<li>Linking of multiple shaders is not supported
+<li>Noise functions
+<li>Not all built-in OpenGL state variables are supported yet.
+    Common variables such as gl_ModelViewMatrix and gl_NormalMatrix
+    are supported.
+<li>Integer operations are not fully implemented (most are implemented
+    as floating point).
+</ul>
+
+<p>
+All other major features of the shading language should function.
+</p>
+
+
+<h2>Implementation Notes</h2>
+
+<ul>
+<li>Shading language programs are compiled into low-level programs
+    very similar to those of GL_ARB_vertex/fragment_program.
+<li>All float/int/bool and vector types currently occupy full
+    float[4] registers.
+<li>Float constants are packed so that up to four floats can occupy one
+    program parameter/register.
+<li>All function calls are inlined.
+<li>Shaders which use too many registers will not compile.
+<li>The quality of generated code is pretty good, register usage is fair.
+<li>Shader error detection and reporting of errors (InfoLog) is not
+    very good yet.
+<li>There are massive memory leaks in the compiler.
+</ul>
+
+<p>
+These issues will be addressed/resolved in the future.
+</p>
+
+
+<h2>Programming Hints</h2>
+
+<ul>
+<li>Always declare <em>in</em> function parameters as <em>const</em>.
+    This improves the efficiency of function inlining.
+</li>
+<br>
+<li>To reduce register usage, declare variables within smaller scopes.
+    For example, the following code:
+<pre>
+    void main()
+    {
+       vec4 a1, a2, b1, b2;
+       gl_Position = expression using a1, a2.
+       gl_Color = expression using b1, b2;
+    }
+</pre>
+    Can be rewritten as follows to use half as many registers:
+<pre>
+    void main()
+    {
+       {
+          vec4 a1, a2;
+          gl_Position = expression using a1, a2.
+       }
+       {
+          vec4 b1, b2;
+          gl_Color = expression using b1, b2;
+       }
+    }
+</pre>
+    Alternately, rather than using several float variables, use
+    a vec4 instead.  Use swizzling and writemasks to access the
+    components of the vec4 as floats.
+</li>
+<br>
+<li>Use the built-in library functions whenever possible.
+    For example, instead of writing this:
+<pre>
+        float x = 1.0 / sqrt(y);
+</pre>
+    Write this:
+<pre>
+        float x = inversesqrt(y);
+</pre>
+</ul>
+
+
+</BODY>
+</HTML>
