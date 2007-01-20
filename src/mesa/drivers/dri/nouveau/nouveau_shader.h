@@ -56,10 +56,6 @@ typedef struct _nouveauShader {
       int        hw_index_cnt;
    } params[NVS_MAX_CONSTS];
 
-   struct {
-      int last_use;
-   } temps[NVS_MAX_TEMPS];
-
    /* Pass-private data */
    void *pass_rec;
 

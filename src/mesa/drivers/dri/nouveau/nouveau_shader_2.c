@@ -68,29 +68,15 @@ pass2_alloc_hw_temp(nvsPtr nvs)
    return -1;
 }
 
-static void
-pass2_free_hw_temp(nvsPtr nvs, int reg)
-{
-   struct pass2_rec *rec = nvs->pass_rec;
-   rec->hw_temps[reg] = 0;
-}
-
 static nvsRegister
 pass2_mangle_reg(nvsPtr nvs, nvsInstruction *inst, nvsRegister reg)
 {
    struct pass2_rec *rec = nvs->pass_rec;
 
    if (reg.file == NVS_FILE_TEMP) {
-      int hwidx;
-
       if (rec->temps[reg.index] == -1)
 	 rec->temps[reg.index] = pass2_alloc_hw_temp(nvs);
-      hwidx = rec->temps[reg.index];
-
-      if (nvs->temps[reg.index].last_use <= inst->header.position)
-	 pass2_free_hw_temp(nvs, hwidx);
-
-      reg.index = hwidx;
+      reg.index = rec->temps[reg.index];
    }
 
    return reg;
