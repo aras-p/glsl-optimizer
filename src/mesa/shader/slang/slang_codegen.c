@@ -544,18 +544,11 @@ new_label(slang_atom labName)
 }
 
 static slang_ir_node *
-new_float_literal(float x, float y, float z, float w)
+new_float_literal(const float v[4])
 {
-   GLuint size;
+   const GLuint size = (v[0] == v[1] && v[0] == v[2] && v[0] == v[3]) ? 1 : 4;
    slang_ir_node *n = new_node(IR_FLOAT, NULL, NULL);
-   if (x == y && x == z && x == w)
-      size = 1;
-   else
-      size = 4;
-   n->Value[0] = x;
-   n->Value[1] = y;
-   n->Value[2] = z;
-   n->Value[3] = w;
+   COPY_4V(n->Value, v);
    /* allocate a storage object, but compute actual location (Index) later */
    n->Store = _slang_new_ir_storage(PROGRAM_CONSTANT, -1, size);
    return n;
@@ -598,10 +591,8 @@ new_var(slang_assemble_ctx *A, slang_operation *oper, slang_atom name)
 {
    slang_variable *v = _slang_locate_variable(oper->locals, name, GL_TRUE);
    slang_ir_node *n = new_node(IR_VAR, NULL, NULL);
-   if (!v) {
-      printf("VAR NOT FOUND %s\n", (char *) name);
-      assert(v);
-   }
+   if (!v)
+      return NULL;
    assert(!oper->var || oper->var == v);
    v->used = GL_TRUE;
    n->Var = v;
@@ -1626,8 +1617,11 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
    slang_ir_node *altLab, *endLab;
    slang_ir_node *tree, *tmpDecl, *tmpVar, *cond, *cjump, *jump;
    slang_ir_node *bodx, *body, *assignx, *assigny;
-    slang_assembly_typeinfo type;
+   slang_assembly_typeinfo type;
    int size;
+
+   assert(oper->type == slang_oper_select);
+   assert(oper->num_children == 3);
 
    /* size of x or y's type */
    slang_assembly_typeinfo_construct(&type);
@@ -1647,10 +1641,10 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
    cjump = new_cjump(altAtom, 0);
    tree = new_seq(tree, cjump);
 
-   /* evaluate child 2 (y) and assign to tmp */
+   /* evaluate child 1 (x) and assign to tmp */
    tmpVar = new_node(IR_VAR, NULL, NULL);
    tmpVar->Store = tmpDecl->Store;
-   body = _slang_gen_operation(A, &oper->children[2]);
+   body = _slang_gen_operation(A, &oper->children[1]);
    assigny = new_node(IR_MOVE, tmpVar, body);
    tree = new_seq(tree, assigny);
 
@@ -1662,10 +1656,10 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
    altLab = new_label(altAtom);
    tree = new_seq(tree, altLab);
 
-   /* evaluate child 1 (x) and assign to tmp */
+   /* evaluate child 2 (y) and assign to tmp */
    tmpVar = new_node(IR_VAR, NULL, NULL);
    tmpVar->Store = tmpDecl->Store;
-   bodx = _slang_gen_operation(A, &oper->children[1]);
+   bodx = _slang_gen_operation(A, &oper->children[2]);
    assignx = new_node(IR_MOVE, tmpVar, bodx);
    tree = new_seq(tree, assignx);
 
@@ -1680,6 +1674,67 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
 
    return tree;
 }
+
+
+/**
+ * Generate code for &&.
+ */
+static slang_ir_node *
+_slang_gen_logical_and(slang_assemble_ctx *A, slang_operation *oper)
+{
+   /* rewrite "a && b" as  "a ? b : false" */
+   slang_operation *select;
+   slang_ir_node *n;
+
+   select = slang_operation_new(1);
+   select->type = slang_oper_select;
+   select->num_children = 3;
+   select->children = slang_operation_new(3);
+
+   slang_operation_copy(&select->children[0], &oper->children[0]);
+   slang_operation_copy(&select->children[1], &oper->children[1]);
+   select->children[2].type = slang_oper_literal_bool;
+   ASSIGN_4V(select->children[2].literal, 0, 0, 0, 0);
+
+   n = _slang_gen_select(A, select);
+
+   /* xxx wrong */
+   free(select->children);
+   free(select);
+
+   return n;
+}
+
+
+/**
+ * Generate code for ||.
+ */
+static slang_ir_node *
+_slang_gen_logical_or(slang_assemble_ctx *A, slang_operation *oper)
+{
+   /* rewrite "a || b" as  "a ? true : b" */
+   slang_operation *select;
+   slang_ir_node *n;
+
+   select = slang_operation_new(1);
+   select->type = slang_oper_select;
+   select->num_children = 3;
+   select->children = slang_operation_new(3);
+
+   slang_operation_copy(&select->children[0], &oper->children[0]);
+   select->children[1].type = slang_oper_literal_bool;
+   ASSIGN_4V(select->children[2].literal, 1, 1, 1, 1);
+   slang_operation_copy(&select->children[2], &oper->children[1]);
+
+   n = _slang_gen_select(A, select);
+
+   /* xxx wrong */
+   free(select->children);
+   free(select);
+
+   return n;
+}
+
 
 
 /**
@@ -1779,6 +1834,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
    slang_ir_node *n;
    slang_ir_node *varDecl;
    slang_variable *v;
+   const char *varName = (char *) oper->a_id;
 
    assert(oper->num_children == 0 || oper->num_children == 1);
 
@@ -1792,10 +1848,10 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       slang_ir_node *var, *init, *rhs;
       assert(oper->num_children == 1);
       var = new_var(A, oper, oper->a_id);
+      if (!var) {
+         RETURN_ERROR2("Undefined variable:", varName, 0);
+      }
       /* XXX make copy of this initializer? */
-      /*
-        printf("\n*** ASSEMBLE INITIALIZER %p\n", (void*) v->initializer);
-      */
       rhs = _slang_gen_operation(A, &oper->children[0]);
       assert(rhs);
       init = new_node(IR_MOVE, var, rhs);
@@ -1805,10 +1861,10 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
    else if (v->initializer) {
       slang_ir_node *var, *init, *rhs;
       var = new_var(A, oper, oper->a_id);
+      if (!var) {
+         RETURN_ERROR2("Undefined variable:", varName, 0);
+      }
       /* XXX make copy of this initializer? */
-      /*
-        printf("\n*** ASSEMBLE INITIALIZER %p\n", (void*) v->initializer);
-      */
       rhs = _slang_gen_operation(A, v->initializer);
       assert(rhs);
       init = new_node(IR_MOVE, var, rhs);
@@ -1835,9 +1891,9 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
     */
    slang_atom aVar = oper->var ? oper->var->a_name : oper->a_id;
    slang_ir_node *n = new_var(A, oper, aVar);
-   /*
-   assert(oper->var);
-   */
+   if (!n) {
+      RETURN_ERROR2("Undefined variable:", (char *) aVar, 0);
+   }
    return n;
 }
 
@@ -1876,18 +1932,19 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
       }
       c0 = _slang_gen_operation(A, lhs);
       c1 = _slang_gen_operation(A, &oper->children[1]);
-
-      assert(c1);
-      n = new_node(IR_MOVE, c0, c1);
-      /*
-        assert(c1->Opcode != IR_SEQ);
-      */
-      if (c0->Writemask != WRITEMASK_XYZW)
-         /* XXX this is a hack! */
-         n->Writemask = c0->Writemask;
-      else
-         n->Writemask = mask;
-      return n;
+      if (c0 && c1) {
+         n = new_node(IR_MOVE, c0, c1);
+         /*assert(c1->Opcode != IR_SEQ);*/
+         if (c0->Writemask != WRITEMASK_XYZW)
+            /* XXX this is a hack! */
+            n->Writemask = c0->Writemask;
+         else
+            n->Writemask = mask;
+         return n;
+      }
+      else {
+         return NULL;
+      }
    }
 }
 
@@ -2206,11 +2263,18 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 	 n = _slang_gen_function_call_name(A, "/=", oper, &oper->children[0]);
 	 return n;
       }
+   case slang_oper_logicaland:
+      {
+	 slang_ir_node *n;
+         assert(oper->num_children == 2);
+	 n = _slang_gen_logical_and(A, oper);
+	 return n;
+      }
    case slang_oper_logicalor:
       {
 	 slang_ir_node *n;
          assert(oper->num_children == 2);
-	 n = _slang_gen_function_call_name(A, "__logicalOr", oper, NULL);
+	 n = _slang_gen_logical_or(A, oper);
 	 return n;
       }
    case slang_oper_logicalxor:
@@ -2218,13 +2282,6 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 	 slang_ir_node *n;
          assert(oper->num_children == 2);
 	 n = _slang_gen_function_call_name(A, "__logicalXor", oper, NULL);
-	 return n;
-      }
-   case slang_oper_logicaland:
-      {
-	 slang_ir_node *n;
-         assert(oper->num_children == 2);
-	 n = _slang_gen_function_call_name(A, "__logicalAnd", oper, NULL);
 	 return n;
       }
    case slang_oper_not:
@@ -2239,7 +2296,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       {
 	 slang_ir_node *n;
          assert(oper->num_children == 3);
-	 n = _slang_gen_select(A, oper );
+	 n = _slang_gen_select(A, oper);
 	 return n;
       }
 
@@ -2263,12 +2320,11 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case slang_oper_subscript:
       return _slang_gen_subscript(A, oper);
    case slang_oper_literal_float:
-      return new_float_literal(oper->literal[0], oper->literal[1],
-                               oper->literal[2], oper->literal[3]);
+      /* fall-through */
    case slang_oper_literal_int:
-      return new_float_literal(oper->literal[0], 0, 0, 0);
+      /* fall-through */
    case slang_oper_literal_bool:
-      return new_float_literal(oper->literal[0], 0, 0, 0);
+      return new_float_literal(oper->literal);
 
    case slang_oper_postincrement:   /* var++ */
       {

@@ -432,6 +432,10 @@ emit_binop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
    assert(info->InstOpcode != OPCODE_NOP);
 
+   /* XXX check if Opcode == OPCODE_ADD, then check if either child is a MUL,
+    * replace with MAD instruction.
+    */
+
    /* gen code for children */
    emit(vt, n->Children[0], prog);
    emit(vt, n->Children[1], prog);
@@ -629,7 +633,7 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 #endif
    {
       if (n->Children[0]->Store->Size > 4) {
-         /* move matrix/struct etc */
+         /* move matrix/struct etc (block of registers) */
          slang_ir_storage dstStore = *n->Children[0]->Store;
          slang_ir_storage srcStore = *n->Children[1]->Store;
          GLint size = srcStore.Size;
@@ -649,6 +653,7 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          }
       }
       else {
+         /* single register move */
          inst = new_instruction(prog, OPCODE_MOV);
          assert(n->Children[0]->Store->Index >= 0);
          assert(n->Children[0]->Store->Index < 16);
@@ -833,7 +838,7 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    case IR_FLOAT:
       /* find storage location for this float constant */
       n->Store->Index = _mesa_add_unnamed_constant(prog->Parameters, n->Value,
-                                                   n->Store->Size/*4*/,
+                                                   n->Store->Size,
                                                    &n->Store->Swizzle);
       if (n->Store->Index < 0) {
          RETURN_ERROR("Ran out of space for constants.", 0);
