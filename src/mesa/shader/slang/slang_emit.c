@@ -40,6 +40,8 @@
 
 
 #define PEEPHOLE_OPTIMIZATIONS 1
+#define ANNOTATE 0
+
 
 /**
  * Assembly and IR info
@@ -437,6 +439,131 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog);
 
 
 /**
+ * Return an annotation string for given node's storage.
+ */
+static char *
+storage_annotation(const slang_ir_node *n, const struct gl_program *prog)
+{
+#if ANNOTATE
+   const slang_ir_storage *st = n->Store;
+   static char s[100] = "";
+
+   if (!st)
+      return _mesa_strdup("");
+
+   switch (st->File) {
+   case PROGRAM_CONSTANT:
+      if (st->Index >= 0) {
+         const GLfloat *val = prog->Parameters->ParameterValues[st->Index];
+         if (st->Swizzle == SWIZZLE_NOOP)
+            sprintf(s, "{%f, %f, %f, %f}", val[0], val[1], val[2], val[3]);
+         else {
+            sprintf(s, "%f", val[GET_SWZ(st->Swizzle, 0)]);
+         }
+      }
+      break;
+   case PROGRAM_TEMPORARY:
+      if (n->Var)
+         sprintf(s, "%s", (char *) n->Var->a_name);
+      else
+         sprintf(s, "t[%d]", st->Index);
+      break;
+   case PROGRAM_STATE_VAR:
+   case PROGRAM_UNIFORM:
+      sprintf(s, "%s", prog->Parameters->Parameters[st->Index].Name);
+      break;
+   case PROGRAM_VARYING:
+      sprintf(s, "%s", prog->Varying->Parameters[st->Index].Name);
+      break;
+   case PROGRAM_INPUT:
+      sprintf(s, "input[%d]", st->Index);
+      break;
+   case PROGRAM_OUTPUT:
+      sprintf(s, "output[%d]", st->Index);
+      break;
+   default:
+      s[0] = 0;
+   }
+   return _mesa_strdup(s);
+#else
+   return NULL;
+#endif
+}
+
+
+/**
+ * Return an annotation string for an instruction.
+ */
+static char *
+instruction_annotation(gl_inst_opcode opcode,
+                       char *dstAnnot, char *srcAnnot0, char *srcAnnot1)
+{
+#if ANNOTATE
+   const char *operator;
+   char *s;
+   int len = 50;
+
+   if (dstAnnot)
+      len += strlen(dstAnnot);
+   else
+      dstAnnot = _mesa_strdup("");
+
+   if (srcAnnot0)
+      len += strlen(srcAnnot0);
+   else
+      srcAnnot0 = _mesa_strdup("");
+
+   if (srcAnnot1)
+      len += strlen(srcAnnot1);
+   else
+      srcAnnot1 = _mesa_strdup("");
+
+   switch (opcode) {
+   case OPCODE_ADD:
+      operator = "+";
+      break;
+   case OPCODE_SUB:
+      operator = "-";
+      break;
+   case OPCODE_MUL:
+      operator = "*";
+      break;
+   case OPCODE_DP3:
+      operator = "DP3";
+      break;
+   case OPCODE_DP4:
+      operator = "DP4";
+      break;
+   case OPCODE_XPD:
+      operator = "XPD";
+      break;
+   case OPCODE_RSQ:
+      operator = "RSQ";
+      break;
+   case OPCODE_SGT:
+      operator = ">";
+      break;
+   default:
+      operator = ",";
+   }
+
+   s = (char *) malloc(len);
+   sprintf(s, "%s = %s %s %s", dstAnnot, srcAnnot0, operator, srcAnnot1);
+   assert(_mesa_strlen(s) < len);
+
+   free(dstAnnot);
+   free(srcAnnot0);
+   free(srcAnnot1);
+
+   return s;
+#else
+   return NULL;
+#endif
+}
+
+
+
+/**
  * Generate code for a simple binary-op instruction.
  */
 static struct prog_instruction *
@@ -444,6 +571,7 @@ emit_binop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 {
    struct prog_instruction *inst;
    const slang_ir_info *info = slang_find_ir_info(n->Opcode);
+   char *srcAnnot0 = NULL, *srcAnnot1 = NULL, *dstAnnot = NULL;
    assert(info);
 
    assert(info->InstOpcode != OPCODE_NOP);
@@ -497,6 +625,10 @@ emit_binop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       inst = new_instruction(prog, info->InstOpcode);
       storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
       storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
+
+      srcAnnot0 = storage_annotation(n->Children[0], prog);
+      srcAnnot1 = storage_annotation(n->Children[1], prog);
+
       free_temp_storage(vt, n->Children[0]);
       free_temp_storage(vt, n->Children[1]);
    }
@@ -506,7 +638,10 @@ emit_binop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    }
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
 
-   inst->Comment = n->Comment;
+   dstAnnot = storage_annotation(n, prog);
+   inst->Comment = instruction_annotation(inst->Opcode, dstAnnot,
+                                          srcAnnot0, srcAnnot1);
+
    /*_mesa_print_instruction(inst);*/
    return inst;
 }
@@ -517,8 +652,9 @@ emit_unop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 {
    struct prog_instruction *inst;
    const slang_ir_info *info = slang_find_ir_info(n->Opcode);
-   assert(info);
+   char *srcAnnot, *dstAnnot;
 
+   assert(info);
    assert(info->NumParams == 1);
 
    /* gen code for child */
@@ -527,6 +663,7 @@ emit_unop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    /* gen this instruction */
    inst = new_instruction(prog, info->InstOpcode);
    storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
+   srcAnnot = storage_annotation(n->Children[0], prog);
    free_temp_storage(vt, n->Children[0]);
 
    if (!n->Store) {
@@ -534,8 +671,10 @@ emit_unop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    }
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
 
-   inst->Comment = n->Comment;
-   /*_mesa_print_instruction(inst);*/
+   dstAnnot = storage_annotation(n, prog);
+   inst->Comment = instruction_annotation(inst->Opcode, dstAnnot,
+                                          NULL, srcAnnot);
+
    return inst;
 }
 
@@ -702,11 +841,16 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       }
       else {
          /* single register move */
+         char *srcAnnot, *dstAnnot;
          inst = new_instruction(prog, OPCODE_MOV);
          assert(n->Children[0]->Store->Index >= 0);
          assert(n->Children[0]->Store->Index < 16);
          storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
          storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store);
+         dstAnnot = storage_annotation(n->Children[0], prog);
+         srcAnnot = storage_annotation(n->Children[1], prog);
+         inst->Comment = instruction_annotation(inst->Opcode, dstAnnot,
+                                                srcAnnot, NULL);
       }
       /* XXX is this test correct? */
       if (_slang_is_temp(vt, n->Children[1]->Store->Index)) {
