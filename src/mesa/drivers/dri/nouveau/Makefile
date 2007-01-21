@@ -19,6 +19,7 @@ DRIVER_SOURCES = \
 	nouveau_screen.c         \
 	nouveau_span.c           \
 	nouveau_state.c          \
+	nouveau_state_cache.c    \
 	nouveau_shader.c         \
 	nouveau_shader_0.c       \
 	nouveau_shader_1.c       \
@@ -26,18 +27,18 @@ DRIVER_SOURCES = \
 	nouveau_tex.c            \
 	nouveau_swtcl.c          \
 	nouveau_sync.c           \
+	nv04_state.c             \
 	nv04_swtcl.c             \
-	nv10_swtcl.c             \
 	nv10_state.c             \
+	nv10_swtcl.c             \
 	nv20_state.c             \
-	nv30_state.c             \
-	nv50_state.c             \
-	nouveau_state_cache.c    \
 	nv20_vertprog.c          \
+	nv30_state.c             \
 	nv30_fragprog.c          \
 	nv30_vertprog.c          \
 	nv40_fragprog.c          \
-	nv40_vertprog.c
+	nv40_vertprog.c          \
+	nv50_state.c
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \

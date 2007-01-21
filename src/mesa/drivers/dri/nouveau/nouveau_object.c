@@ -62,10 +62,17 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 
 	nouveauCreateContextObject(nmesa, Nv3D, nmesa->screen->card->class_3d,
 	      			   0, 0, 0, 0);
-	nouveauCreateContextObject(nmesa, NvCtxSurf2D, NV10_CONTEXT_SURFACES_2D,
+	if (nmesa->screen->card->type>=NV_10) {
+		nouveauCreateContextObject(nmesa, NvCtxSurf2D, NV10_CONTEXT_SURFACES_2D,
 	      			   0, 0, 0, 0);
-	nouveauCreateContextObject(nmesa, NvImageBlit, NV10_IMAGE_BLIT,
+		nouveauCreateContextObject(nmesa, NvImageBlit, NV10_IMAGE_BLIT,
 	      			   NV_DMA_CONTEXT_FLAGS_PATCH_SRCCOPY, 0, 0, 0);
+	} else {
+		nouveauCreateContextObject(nmesa, NvCtxSurf2D, NV04_CONTEXT_SURFACES_2D,
+	      			   0, 0, 0, 0);
+		nouveauCreateContextObject(nmesa, NvImageBlit, NV_IMAGE_BLIT,
+	      			   NV_DMA_CONTEXT_FLAGS_PATCH_SRCCOPY, 0, 0, 0);
+	}
 	nouveauCreateContextObject(nmesa, NvMemFormat,
 	      			   NV_MEMORY_TO_MEMORY_FORMAT,
 	      			   0, 0, 0, 0);
