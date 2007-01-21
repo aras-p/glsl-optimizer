@@ -446,8 +446,8 @@ GLboolean intelInitContext( struct intel_context *intel,
 				 intelScreen->cpp,
 				 intelScreen->front.pitch / intelScreen->cpp,
 				 intelScreen->height,
-				 intelScreen->front.tiled != 0); /* 0: LINEAR */
-
+				 intelScreen->front.size,
+				 intelScreen->front.tiled != 0);
 
    intel->back_region = 
       intel_region_create_static(intel,
@@ -457,6 +457,7 @@ GLboolean intelInitContext( struct intel_context *intel,
 				 intelScreen->cpp,
 				 intelScreen->back.pitch / intelScreen->cpp,
 				 intelScreen->height,
+				 intelScreen->back.size,
                                  intelScreen->back.tiled != 0);
 
    /* Still assuming front.cpp == depth.cpp
@@ -473,6 +474,7 @@ GLboolean intelInitContext( struct intel_context *intel,
 				 intelScreen->cpp,
 				 intelScreen->depth.pitch / intelScreen->cpp,
 				 intelScreen->height,
+				 intelScreen->depth.size,
                                  intelScreen->depth.tiled != 0);
    
    intel_bufferobj_init( intel );

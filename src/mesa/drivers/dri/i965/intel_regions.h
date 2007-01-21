@@ -78,6 +78,7 @@ struct intel_region *intel_region_create_static( struct intel_context *intel,
 						 GLuint cpp,
 						 GLuint pitch,
 						 GLuint height,
+						 GLuint size,
 						 GLboolean tiled );
 
 /* Map/unmap regions.  This is refcounted also: 
