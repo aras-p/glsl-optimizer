@@ -87,11 +87,6 @@ int INTEL_DEBUG = (0);
 int VERBOSE = 0;
 #endif
 
-#if DEBUG_LOCKING
-char *prevLockFile;
-int prevLockLine;
-#endif
-
 /***************************************
  * Mesa's Driver Functions
  ***************************************/
