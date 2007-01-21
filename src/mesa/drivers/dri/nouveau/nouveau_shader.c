@@ -563,12 +563,12 @@ nvsDumpInstruction(nvsInstruction * inst, int slot, int lvl)
 }
 
 void
-nvsDumpFragmentList(nvsFragmentList *f, int lvl)
+nvsDumpFragmentList(nvsFragmentHeader *f, int lvl)
 {
    while (f) {
-      switch (f->fragment->type) {
+      switch (f->type) {
       case NVS_INSTRUCTION:
-	 nvsDumpInstruction((nvsInstruction*)f->fragment, 0, lvl);
+	 nvsDumpInstruction((nvsInstruction*)f, 0, lvl);
 	 break;
       default:
 	 fprintf(stderr, "%s: Only NVS_INSTRUCTION fragments can be in"

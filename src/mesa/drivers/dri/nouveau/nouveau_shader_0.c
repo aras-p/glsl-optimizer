@@ -40,6 +40,7 @@
 
 #include "nouveau_context.h"
 #include "nouveau_shader.h"
+#include "nouveau_msg.h"
 
 static nvsFixedReg _tx_mesa_vp_dst_reg[VERT_RESULT_MAX] = {
    NVS_FR_POSITION, NVS_FR_COL0, NVS_FR_COL1, NVS_FR_FOGCOORD,
@@ -134,21 +135,63 @@ struct pass0_rec {
 #define W NVS_SWZ_W
 
 static void
-pass0_append_fragment(nouveauShader *nvs, nvsFragmentHeader *fragment)
+pass0_append_fragment(nvsFragmentHeader *parent,
+		      nvsFragmentHeader *fragment,
+		      int pos)
 {
-   nvsFragmentList *list = calloc(1, sizeof(nvsFragmentList));
-   if (!list)
-      return;
+	nvsFragmentHeader **head, **tail;
+	assert(parent && fragment);
 
-   list->fragment = fragment;
-   list->prev     = nvs->list_tail;
-   if ( nvs->list_tail)
-      nvs->list_tail->next = list;
-   if (!nvs->list_head)
-      nvs->list_head = list;
-   nvs->list_tail = list;
+	switch (parent->type) {
+	case NVS_BRANCH:
+		if (pos == 0) {
+			head = &((nvsBranch *)parent)->target_head;
+			tail = &((nvsBranch *)parent)->target_tail;
+		} else {
+			head = &((nvsBranch *)parent)->else_head;
+			tail = &((nvsBranch *)parent)->else_tail;
+		}
+		break;
+	case NVS_LOOP:
+		head = &((nvsLoop *)parent)->insn_head;
+		tail = &((nvsLoop *)parent)->insn_tail;
+		break;
+	case NVS_SUBROUTINE:
+		head = &((nvsSubroutine *)parent)->insn_head;
+		tail = &((nvsSubroutine *)parent)->insn_tail;
+		break;
+	default:
+		assert(0);
+		break;
+	}
 
-   nvs->inst_count++;
+	fragment->parent = parent;
+	fragment->prev   = *tail;
+	fragment->next   = NULL;
+	if (!(*head))
+		*head = fragment;
+	else
+		(*tail)->next = fragment;
+	*tail = fragment;
+
+}
+
+static nvsSubroutine *
+pass0_create_subroutine(nouveauShader *nvs, const char *label)
+{
+	nvsSubroutine *sub;
+
+	sub = CALLOC_STRUCT(nvs_subroutine);
+	if (sub) {
+		sub->header.type = NVS_SUBROUTINE;
+		sub->label	 = strdup(label);
+		if (!nvs->program_tree)
+			nvs->program_tree = &sub->header;
+		else
+			pass0_append_fragment(nvs->program_tree, &sub->header, 0);
+	}
+
+	return sub;
 }
 
 static void
@@ -312,41 +355,40 @@ pass0_make_src_reg(nvsPtr nvs, nvsRegister *reg, struct prog_src_register *src)
 }
 
 static nvsInstruction *
-pass0_emit(nouveauShader *nvs, nvsOpcode op, nvsRegister dst,
-      	   unsigned int mask, int saturate,
+pass0_emit(nouveauShader *nvs, nvsFragmentHeader *parent, int fpos,
+	   nvsOpcode op, nvsRegister dst,
+	   unsigned int mask, int saturate,
 	   nvsRegister src0, nvsRegister src1, nvsRegister src2)
 {
-   struct pass0_rec *rec = nvs->pass_rec;
-   nvsInstruction *sif = NULL;
+	nvsInstruction *sif;
 
-   /* Seems mesa doesn't explicitly 0 this.. */
-   if (nvs->mesa.vp.Base.Target == GL_VERTEX_PROGRAM_ARB)
-      saturate = 0;
+	sif = CALLOC_STRUCT(nvs_instruction);
+	if (!sif)
+		return NULL;
 
-   sif = calloc(1, sizeof(nvsInstruction));
-   if (sif) {
-      sif->header.type     = NVS_INSTRUCTION;
-      sif->header.position = rec->nvs_ipos++;
-      sif->op		= op;
-      sif->saturate	= saturate;
-      sif->dest		= dst;
-      sif->mask		= mask;
-      sif->src[0]	= src0;
-      sif->src[1]	= src1;
-      sif->src[2]	= src2;
-      sif->cond		= COND_TR;
-      sif->cond_reg	= 0;
-      sif->cond_test	= 0;
-      sif->cond_update	= 0;
-      pass0_make_swizzle(sif->cond_swizzle, SWIZZLE_NOOP);
-      pass0_append_fragment(nvs, (nvsFragmentHeader *)sif);
-   }
+	/* Seems mesa doesn't explicitly 0 this.. */
+	if (nvs->mesa.vp.Base.Target == GL_VERTEX_PROGRAM_ARB)
+		saturate = 0;
 
-   return sif;
+	sif->op		= op;
+	sif->saturate	= saturate;
+	sif->dest	= dst;
+	sif->mask	= mask;
+	sif->src[0]	= src0;
+	sif->src[1]	= src1;
+	sif->src[2]	= src2;
+	sif->cond	= COND_TR;
+	sif->cond_reg	= 0;
+	sif->cond_test	= 0;
+	sif->cond_update= 0;
+	pass0_make_swizzle(sif->cond_swizzle, SWIZZLE_NOOP);
+	pass0_append_fragment(parent, &sif->header, fpos);
+
+	return sif;
 }
 
 static void
-pass0_fixup_swizzle(nvsPtr nvs,
+pass0_fixup_swizzle(nvsPtr nvs, nvsFragmentHeader *parent, int fpos,
       		    struct prog_src_register *src,
 		    unsigned int sm1,
 		    unsigned int sm2)
@@ -376,7 +418,7 @@ pass0_fixup_swizzle(nvsPtr nvs,
        */
       pass0_make_reg(nvs, &dr, NVS_FILE_TEMP, -1);
       pass0_make_src_reg(nvs, &sr, src);
-      pass0_emit(nvs, NVS_OP_MOV, dr, SMASK_ALL, 0, sr, nvr_unused, nvr_unused);
+      pass0_emit(nvs, parent, fpos, NVS_OP_MOV, dr, SMASK_ALL, 0, sr, nvr_unused, nvr_unused);
       pass0_make_reg(nvs, &sr, NVS_FILE_TEMP, dr.index);
    } else {
       if (fixup_1)
@@ -391,10 +433,10 @@ pass0_fixup_swizzle(nvsPtr nvs,
       /* Any combination with SWIZZLE_ONE */
       pass0_make_reg(nvs, &sm2const, NVS_FILE_CONST, rec->swzconst_id);
       pass0_make_swizzle(sm2const.swizzle, sm2);
-      pass0_emit(nvs, NVS_OP_MAD, dr, SMASK_ALL, 0, sr, sm1const, sm2const);
+      pass0_emit(nvs, parent, fpos, NVS_OP_MAD, dr, SMASK_ALL, 0, sr, sm1const, sm2const);
    } else {
       /* SWIZZLE_ZERO || arbitrary negate */
-      pass0_emit(nvs, NVS_OP_MUL, dr, SMASK_ALL, 0, sr, sm1const, nvr_unused);
+      pass0_emit(nvs, parent, fpos, NVS_OP_MUL, dr, SMASK_ALL, 0, sr, sm1const, nvr_unused);
    }
 
    src->File	= PROGRAM_TEMPORARY;
@@ -404,7 +446,8 @@ pass0_fixup_swizzle(nvsPtr nvs,
 
 #define SET_SWZ(fs, cp, c) fs = (fs & ~(0x7<<(cp*3))) | (c<<(cp*3))
 static void
-pass0_check_sources(nvsPtr nvs, struct prog_instruction *inst)
+pass0_check_sources(nvsPtr nvs, nvsFragmentHeader *parent, int fpos,
+		    struct prog_instruction *inst)
 {
    unsigned int insrc = -1, constsrc = -1;
    int i;
@@ -444,7 +487,7 @@ pass0_check_sources(nvsPtr nvs, struct prog_instruction *inst)
        */
       if ((sm_1 != MAKE_SWIZZLE4(0,0,0,0) && sm_1 != MAKE_SWIZZLE4(2,2,2,2)) ||
 	       sm_2 != MAKE_SWIZZLE4(1,1,1,1)) {
-	 pass0_fixup_swizzle(nvs, src, sm_1, sm_2);
+	 pass0_fixup_swizzle(nvs, parent, fpos, src, sm_1, sm_2);
 	 /* The source is definitely in a temp now, so don't bother checking 
 	  * for multiple ATTRIB/CONST regs.
 	  */
@@ -473,7 +516,7 @@ pass0_check_sources(nvsPtr nvs, struct prog_instruction *inst)
       if (do_mov) {
 	 pass0_make_src_reg(nvs, &sr, src);
 	 pass0_make_reg(nvs, &dr, NVS_FILE_TEMP, -1);
-	 pass0_emit(nvs, NVS_OP_MOV, dr, SMASK_ALL, 0,
+	 pass0_emit(nvs, parent, fpos, NVS_OP_MOV, dr, SMASK_ALL, 0,
 	       sr, nvr_unused, nvr_unused);
 
 	 src->File	= PROGRAM_TEMPORARY;
@@ -484,7 +527,9 @@ pass0_check_sources(nvsPtr nvs, struct prog_instruction *inst)
 }
 
 static GLboolean
-pass0_emulate_instruction(nouveauShader *nvs, struct prog_instruction *inst)
+pass0_emulate_instruction(nouveauShader *nvs,
+			  nvsFragmentHeader *parent, int fpos,
+			  struct prog_instruction *inst)
 {
    nvsFunc *shader = nvs->func;
    nvsRegister src[3], dest, temp;
@@ -504,10 +549,10 @@ pass0_emulate_instruction(nouveauShader *nvs, struct prog_instruction *inst)
    switch (inst->Opcode) {
    case OPCODE_ABS:
       if (shader->caps & SCAP_SRC_ABS)
-	 pass0_emit(nvs, NVS_OP_MOV, dest, mask, sat,
+	 pass0_emit(nvs, parent, fpos, NVS_OP_MOV, dest, mask, sat,
 	       	      nvsAbs(src[0]), nvr_unused, nvr_unused);
       else
-	 pass0_emit(nvs, NVS_OP_MAX, dest, mask, sat,
+	 pass0_emit(nvs, parent, fpos, NVS_OP_MAX, dest, mask, sat,
 	       	      src[0], nvsNegate(src[0]), nvr_unused);
       break;
    case OPCODE_KIL:
@@ -516,12 +561,12 @@ pass0_emulate_instruction(nouveauShader *nvs, struct prog_instruction *inst)
        */
       /* MOVC0 temp, src */
       pass0_make_reg(nvs, &temp, NVS_FILE_TEMP, -1);
-      nvsinst = pass0_emit(nvs, NVS_OP_MOV, temp, SMASK_ALL, 0,
+      nvsinst = pass0_emit(nvs, parent, fpos, NVS_OP_MOV, temp, SMASK_ALL, 0,
 	    		   src[0], nvr_unused, nvr_unused);
       nvsinst->cond_update = 1;
       nvsinst->cond_reg    = 0;
       /* KIL_NV (LT0.xyzw) temp */
-      nvsinst = pass0_emit(nvs, NVS_OP_KIL, nvr_unused, 0, 0,
+      nvsinst = pass0_emit(nvs, parent, fpos, NVS_OP_KIL, nvr_unused, 0, 0,
 	    		   nvr_unused, nvr_unused, nvr_unused);
       nvsinst->cond      = COND_LT;
       nvsinst->cond_reg  = 0;
@@ -532,9 +577,9 @@ pass0_emulate_instruction(nouveauShader *nvs, struct prog_instruction *inst)
       break;
    case OPCODE_LRP:
       pass0_make_reg(nvs, &temp, NVS_FILE_TEMP, -1);
-      pass0_emit(nvs, NVS_OP_MAD, temp, mask, 0,
+      pass0_emit(nvs, parent, fpos, NVS_OP_MAD, temp, mask, 0,
 	    	 nvsNegate(src[0]), src[2], src[2]);
-      pass0_emit(nvs, NVS_OP_MAD, dest, mask, sat,
+      pass0_emit(nvs, parent, fpos, NVS_OP_MAD, dest, mask, sat,
 	    	 src[0], src[1], temp);
       break;
    case OPCODE_POW:
@@ -542,17 +587,17 @@ pass0_emulate_instruction(nouveauShader *nvs, struct prog_instruction *inst)
 	    shader->SupportsOpcode(shader, NVS_OP_EX2)) {
 	 pass0_make_reg(nvs, &temp, NVS_FILE_TEMP, -1);
 	 /* LG2 temp.x, src0.c */
-	 pass0_emit(nvs, NVS_OP_LG2, temp, SMASK_X, 0,
+	 pass0_emit(nvs, parent, fpos, NVS_OP_LG2, temp, SMASK_X, 0,
 	       	      nvsSwizzle(src[0], X, X, X, X),
 		      nvr_unused,
 		      nvr_unused);
 	 /* MUL temp.x, temp.x, src1.c */
-	 pass0_emit(nvs, NVS_OP_MUL, temp, SMASK_X, 0,
+	 pass0_emit(nvs, parent, fpos, NVS_OP_MUL, temp, SMASK_X, 0,
 	       	      nvsSwizzle(temp, X, X, X, X),
 		      nvsSwizzle(src[1], X, X, X, X),
 		      nvr_unused);
 	 /* EX2 dest, temp.x */
-	 pass0_emit(nvs, NVS_OP_EX2, dest, mask, sat,
+	 pass0_emit(nvs, parent, fpos, NVS_OP_EX2, dest, mask, sat,
 	       	      nvsSwizzle(temp, X, X, X, X),
 		      nvr_unused,
 		      nvr_unused);
@@ -571,42 +616,42 @@ pass0_emulate_instruction(nouveauShader *nvs, struct prog_instruction *inst)
 	 COPY_4V(nvs->params[rec->const_half.index].val, const_half);
       }
       pass0_make_reg(nvs, &temp, NVS_FILE_TEMP, -1);
-      pass0_emit(nvs, NVS_OP_LG2, temp, SMASK_X, 0,
+      pass0_emit(nvs, parent, fpos, NVS_OP_LG2, temp, SMASK_X, 0,
 	    	 nvsAbs(nvsSwizzle(src[0], X, X, X, X)),
 		 nvr_unused,
 		 nvr_unused);
-      pass0_emit(nvs, NVS_OP_MUL, temp, SMASK_X, 0,
+      pass0_emit(nvs, parent, fpos, NVS_OP_MUL, temp, SMASK_X, 0,
 	    	 nvsSwizzle(temp, X, X, X, X),
 		 nvsNegate(rec->const_half),
 		 nvr_unused);
-      pass0_emit(nvs, NVS_OP_EX2, dest, mask, sat,
+      pass0_emit(nvs, parent, fpos, NVS_OP_EX2, dest, mask, sat,
 	    	 nvsSwizzle(temp, X, X, X, X),
 		 nvr_unused,
 		 nvr_unused);
       break;
    case OPCODE_SCS:
       if (mask & SMASK_X)
-	 pass0_emit(nvs, NVS_OP_COS, dest, SMASK_X, sat,
+	 pass0_emit(nvs, parent, fpos, NVS_OP_COS, dest, SMASK_X, sat,
 	       	      nvsSwizzle(src[0], X, X, X, X),
 		      nvr_unused,
 		      nvr_unused);
       if (mask & SMASK_Y)
-	 pass0_emit(nvs, NVS_OP_SIN, dest, SMASK_Y, sat,
+	 pass0_emit(nvs, parent, fpos, NVS_OP_SIN, dest, SMASK_Y, sat,
 	       	      nvsSwizzle(src[0], X, X, X, X),
 		      nvr_unused,
 		      nvr_unused);
       break;
    case OPCODE_SUB:
-      pass0_emit(nvs, NVS_OP_ADD, dest, mask, sat,
+      pass0_emit(nvs, parent, fpos, NVS_OP_ADD, dest, mask, sat,
 	    	 src[0], nvsNegate(src[1]), nvr_unused);
       break;
    case OPCODE_XPD:
       pass0_make_reg(nvs, &temp, NVS_FILE_TEMP, -1);
-      pass0_emit(nvs, NVS_OP_MUL, temp, SMASK_ALL, 0,
+      pass0_emit(nvs, parent, fpos, NVS_OP_MUL, temp, SMASK_ALL, 0,
 	    	   nvsSwizzle(src[0], Z, X, Y, Y),
 		   nvsSwizzle(src[1], Y, Z, X, X),
 		   nvr_unused);
-      pass0_emit(nvs, NVS_OP_MAD, dest, (mask & ~SMASK_W), sat,
+      pass0_emit(nvs, parent, fpos, NVS_OP_MAD, dest, (mask & ~SMASK_W), sat,
 	    	   nvsSwizzle(src[0], Y, Z, X, X),
 		   nvsSwizzle(src[1], Z, X, Y, Y),
 		   nvsNegate(temp));
@@ -621,90 +666,132 @@ pass0_emulate_instruction(nouveauShader *nvs, struct prog_instruction *inst)
 }
 
 static GLboolean
-pass0_translate_instructions(nouveauShader *nvs)
+pass0_translate_arith(nouveauShader *nvs, struct gl_program *prog,
+					  int ipos, int fpos,
+					  nvsFragmentHeader *parent)
 {
-   struct gl_program *prog = (struct gl_program *)&nvs->mesa.vp;
-   nvsFunc *shader = nvs->func;
-   int ipos;
+	struct prog_instruction *inst = &prog->Instructions[ipos];
+	nvsFunc *shader = nvs->func;
+	nvsInstruction *nvsinst;
+	GLboolean ret;
 
-   for (ipos=0; ipos<prog->NumInstructions; ipos++) {
-      struct prog_instruction *inst = &prog->Instructions[ipos];
+	/* Deal with multiple ATTRIB/PARAM in a single instruction */
+	pass0_check_sources(nvs, parent, fpos, inst);
 
-      if (inst->Opcode == OPCODE_END)
-	 break;
+	/* Now it's safe to do the prog_instruction->nvsInstruction
+	 * conversion
+	 */
+	if (shader->SupportsOpcode(shader,
+				   pass0_make_opcode(inst->Opcode))) {
+		nvsRegister src[3], dest;
+		int i;
 
-      /* Deal with multiple ATTRIB/PARAM in a single instruction */
-      pass0_check_sources(nvs, inst);
- 
-      /* Now it's safe to do the prog_instruction->nvsInstruction conversion */
-      if (shader->SupportsOpcode(shader, pass0_make_opcode(inst->Opcode))) {
-	 nvsInstruction *nvsinst;
-	 nvsRegister src[3], dest;
-	 int i;
+		for (i=0; i<_mesa_num_inst_src_regs(inst->Opcode); i++)
+			pass0_make_src_reg(nvs, &src[i], &inst->SrcReg[i]);
+		pass0_make_dst_reg(nvs, &dest, &inst->DstReg);
 
-	 for (i=0; i<_mesa_num_inst_src_regs(inst->Opcode); i++)
-	    pass0_make_src_reg(nvs, &src[i], &inst->SrcReg[i]);
-	 pass0_make_dst_reg(nvs, &dest, &inst->DstReg);
+		nvsinst = pass0_emit(nvs, parent, fpos,
+				     pass0_make_opcode(inst->Opcode),
+				     dest,
+				     pass0_make_mask(inst->DstReg.WriteMask),
+				     (inst->SaturateMode != SATURATE_OFF),
+				     src[0], src[1], src[2]);
+		nvsinst->tex_unit   = inst->TexSrcUnit;
+		nvsinst->tex_target = pass0_make_tex_target(inst->TexSrcTarget);
+		/* TODO when NV_fp/vp is implemented */
+		nvsinst->cond       = COND_TR;
 
-	 nvsinst = pass0_emit(nvs,
-	       		      pass0_make_opcode(inst->Opcode),
-			      dest,
-			      pass0_make_mask(inst->DstReg.WriteMask),
-			      (inst->SaturateMode != SATURATE_OFF),
-			      src[0], src[1], src[2]);
-	 nvsinst->tex_unit   = inst->TexSrcUnit;
-	 nvsinst->tex_target = pass0_make_tex_target(inst->TexSrcTarget);
-	 /* TODO when NV_fp/vp is implemented */
-	 nvsinst->cond       = COND_TR;
-      } else {
-	 if (!pass0_emulate_instruction(nvs, inst))
-	    return GL_FALSE;
-      }
-   }
+		ret = GL_TRUE;
+	} else
+		ret = pass0_emulate_instruction(nvs, parent, fpos, inst);
 
-   return GL_TRUE;
+	return ret;
+}
+
+static GLboolean
+pass0_translate_instructions(nouveauShader *nvs, int ipos, int fpos,
+						 nvsFragmentHeader *parent)
+{
+	struct gl_program *prog = (struct gl_program *)&nvs->mesa.vp;
+
+	while (1) {
+		struct prog_instruction *inst = &prog->Instructions[ipos];
+
+		switch (inst->Opcode) {
+		case OPCODE_END:
+			return GL_TRUE;
+		case OPCODE_BRA:
+		case OPCODE_CAL:
+		//case OPCDOE_RET:
+		//case OPCODE_LOOP:
+		//case OPCODE_ENDLOOP:
+		//case OPCODE_IF:
+		//case OPCODE_ELSE:
+		//case OPCODE_ENDIF:
+			WARN_ONCE("branch ops unimplemented\n");
+			return GL_FALSE;
+			break;
+		default:
+			if (!pass0_translate_arith(nvs, prog,
+						   ipos, fpos, parent))
+				return GL_FALSE;
+			break;
+		}
+
+		ipos++;
+	}
+
+	return GL_TRUE;
 }
 
 GLboolean
 nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 {
-   nouveauContextPtr		 nmesa	= NOUVEAU_CONTEXT(ctx);
-   struct gl_program		*prog	= (struct gl_program*)nvs;
-   struct gl_vertex_program	*vp 	= (struct gl_vertex_program *)prog;
-   struct gl_fragment_program	*fp	= (struct gl_fragment_program *)prog;
-   struct pass0_rec *rec;
-   int ret;
+	nouveauContextPtr           nmesa = NOUVEAU_CONTEXT(ctx);
+	struct gl_program          *prog  = (struct gl_program*)nvs;
+	struct gl_vertex_program   *vp    = (struct gl_vertex_program *)prog;
+	struct gl_fragment_program *fp    = (struct gl_fragment_program *)prog;
+	struct pass0_rec *rec;
+	int ret = GL_FALSE;
 
-   switch (prog->Target) {
-   case GL_VERTEX_PROGRAM_ARB:
-      nvs->func = &nmesa->VPfunc;
-      if (vp->IsPositionInvariant)
-	 _mesa_insert_mvp_code(ctx, vp);
+	switch (prog->Target) {
+	case GL_VERTEX_PROGRAM_ARB:
+		nvs->func = &nmesa->VPfunc;
+
+		if (vp->IsPositionInvariant)
+			_mesa_insert_mvp_code(ctx, vp);
 #if 0
-      if (IS_FIXEDFUNCTION_PROG && CLIP_PLANES_USED)
-	 pass0_insert_ff_clip_planes();
+		if (IS_FIXEDFUNCTION_PROG && CLIP_PLANES_USED)
+			pass0_insert_ff_clip_planes();
 #endif
-      break;
-   case GL_FRAGMENT_PROGRAM_ARB:
-      nvs->func = &nmesa->FPfunc;
-      if (fp->FogOption != GL_NONE)
-	 _mesa_append_fog_code(ctx, fp);
-      break;
-   default:
-      fprintf(stderr, "Unknown program type %d", prog->Target);
-      return GL_FALSE;
-   }
+		break;
+	case GL_FRAGMENT_PROGRAM_ARB:
+		nvs->func = &nmesa->FPfunc;
 
-   rec = calloc(1, sizeof(struct pass0_rec));
-   rec->next_temp = prog->NumTemporaries;
-   nvs->pass_rec = rec;
+		if (fp->FogOption != GL_NONE)
+			_mesa_append_fog_code(ctx, fp);
+		break;
+	default:
+		fprintf(stderr, "Unknown program type %d", prog->Target);
+		return GL_FALSE;
+	}
 
-   ret = pass0_translate_instructions(nvs);
-   if (!ret) {
-      /* DESTROY list */
-   }
+	rec = CALLOC_STRUCT(pass0_rec);
+	if (rec) {
+		rec->next_temp = prog->NumTemporaries;
+		nvs->pass_rec  = rec;
+		
+		nvs->program_tree = (nvsFragmentHeader*)
+			pass0_create_subroutine(nvs, "program body");
+		if (nvs->program_tree) {
+			ret = pass0_translate_instructions(nvs,
+							   0, 0,
+							   nvs->program_tree);
+			/*XXX: if (!ret) DESTROY TREE!!! */
+		}
+		FREE(rec);
+	}
 
-   free(nvs->pass_rec);
-   return ret;
+	return ret;
 }
 

@@ -12,18 +12,17 @@ typedef struct _nvsFunc nvsFunc;
 #define NVS_MAX_ADDRESS 2
 #define NVS_MAX_INSNS   4096
 
-typedef struct {
+typedef struct _nvs_fragment_header {
+   struct _nvs_fragment_header *parent;
+   struct _nvs_fragment_header *prev;
+   struct _nvs_fragment_header *next;
    enum {
       NVS_INSTRUCTION,
+      NVS_BRANCH,
+      NVS_LOOP,
+      NVS_SUBROUTINE
    } type;
-   int position;
 } nvsFragmentHeader;
-
-typedef struct _nvs_fragment_list {
-   struct _nvs_fragment_list *prev;
-   struct _nvs_fragment_list *next;
-   nvsFragmentHeader *fragment;
-} nvsFragmentList;
 
 typedef struct _nouveauShader {
    union {
@@ -59,8 +58,7 @@ typedef struct _nouveauShader {
    /* Pass-private data */
    void *pass_rec;
 
-   nvsFragmentList *list_head;
-   nvsFragmentList *list_tail;
+   nvsFragmentHeader *program_tree;
 } nouveauShader, *nvsPtr;
 
 typedef enum {
@@ -186,7 +184,8 @@ typedef enum {
    NVS_TEX_TARGET_UNKNOWN = 0
 } nvsTexTarget;
 
-typedef struct {
+/* Arith/TEX instructions */
+typedef struct nvs_instruction {
    nvsFragmentHeader header;
 
    nvsOpcode	op;
@@ -206,6 +205,43 @@ typedef struct {
    int		cond_test;
    int		cond_update;
 } nvsInstruction;
+
+/* BRA, CAL, IF */
+typedef struct nvs_branch {
+	nvsFragmentHeader  header;
+
+	nvsOpcode	op;
+
+	nvsCond		cond;
+	nvsSwzComp	cond_swizzle[4];
+	int		cond_test;
+
+	nvsFragmentHeader *target_head;
+	nvsFragmentHeader *target_tail;
+	nvsFragmentHeader *else_head;
+	nvsFragmentHeader *else_tail;
+} nvsBranch;
+
+/* LOOP+ENDLOOP */
+typedef struct {
+	nvsFragmentHeader  header;
+
+	int                count;
+	int                initial;
+	int                increment;
+
+	nvsFragmentHeader *insn_head;
+	nvsFragmentHeader *insn_tail;
+} nvsLoop;
+
+/* label+following instructions */
+typedef struct nvs_subroutine {
+	nvsFragmentHeader  header;
+
+	char *             label;
+	nvsFragmentHeader *insn_head;
+	nvsFragmentHeader *insn_tail;
+} nvsSubroutine;
 
 #define SMASK_X (1<<0)
 #define SMASK_Y (1<<1)
@@ -353,7 +389,7 @@ nvsSwizzle(nvsRegister reg, nvsSwzComp x, nvsSwzComp y,
 
 extern GLboolean nvsUpdateShader(GLcontext *ctx, nouveauShader *nvs);
 extern void nvsDisasmHWShader(nvsPtr);
-extern void nvsDumpFragmentList(nvsFragmentList *f, int lvl);
+extern void nvsDumpFragmentList(nvsFragmentHeader *f, int lvl);
 extern nouveauShader *nvsBuildTextShader(GLcontext *ctx, GLenum target,
       					 const char *text);
 

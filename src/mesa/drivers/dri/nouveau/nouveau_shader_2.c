@@ -38,6 +38,7 @@
 
 #include "nouveau_context.h"
 #include "nouveau_shader.h"
+#include "nouveau_msg.h"
 
 struct pass2_rec {
    /* Map nvsRegister temp ID onto hw temp ID */
@@ -166,11 +167,37 @@ pass2_assemble_instruction(nvsPtr nvs, nvsInstruction *inst, int last)
    return 1;
 }
 
+static GLboolean
+pass2_translate(nvsPtr nvs, nvsFragmentHeader *f)
+{
+	nvsFunc *shader = nvs->func;
+	GLboolean last;
+
+	while (f) {
+		last = (f == ((nvsSubroutine*)nvs->program_tree)->insn_tail);
+
+		switch (f->type) {
+		case NVS_INSTRUCTION:
+			if (!pass2_assemble_instruction(nvs,
+							(nvsInstruction *)f,
+							last))
+				return GL_FALSE;
+			break;
+		default:
+			WARN_ONCE("Unimplemented fragment type\n");
+			return GL_FALSE;
+		}
+
+		f = f->next;
+	}
+
+	return GL_TRUE;
+}
+
 /* Translate program into hardware format */
 GLboolean
 nouveau_shader_pass2(nvsPtr nvs)
 {
-   nvsFragmentList *list = nvs->list_head;
    struct pass2_rec *rec;
    int i;
 
@@ -182,21 +209,15 @@ nouveau_shader_pass2(nvsPtr nvs)
    /* Start off with allocating 4 uint32_t's for each inst, will be grown
     * if necessary..
     */
-   nvs->program_alloc_size = nvs->inst_count * 4;
+   nvs->program_alloc_size = nvs->mesa.vp.Base.NumInstructions * 4;
    nvs->program = calloc(nvs->program_alloc_size, sizeof(uint32_t));
    nvs->program_size    = 0;
    nvs->program_current = 0;
 
-   while (list) {
-      assert(list->fragment->type == NVS_INSTRUCTION);
-
-      if (!pass2_assemble_instruction(nvs, (nvsInstruction *)list->fragment, list->next ? 0 : 1)) {
-	 free(nvs->program);
-	 nvs->program = NULL;
-	 return GL_FALSE;
-      }
-
-      list = list->next;
+   if (!pass2_translate(nvs, ((nvsSubroutine*)nvs->program_tree)->insn_head)) {
+	   free(nvs->program);
+	   nvs->program = NULL;
+	   return GL_FALSE;
    }
 
    /* Shrink allocated memory to only what we need */
