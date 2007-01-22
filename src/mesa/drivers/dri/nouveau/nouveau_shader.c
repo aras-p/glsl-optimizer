@@ -111,7 +111,7 @@ nvsUpdateShader(GLcontext *ctx, nouveauShader *nvs)
    /* Translate to HW format now if necessary */
    if (!nvs->translated) {
       /* Mesa ASM shader -> nouveauShader */
-      if (!nouveau_shader_pass0_arb(ctx, nvs))
+      if (!nouveau_shader_pass0(ctx, nvs))
 	 return GL_FALSE;
       /* Basic dead code elimination + register usage info */
       if (!nouveau_shader_pass1(nvs))
@@ -187,7 +187,7 @@ nvsBuildTextShader(GLcontext *ctx, GLenum target, const char *text)
 				       &nvs->mesa.fp);
    }
 
-   nouveau_shader_pass0_arb(ctx, nvs);
+   nouveau_shader_pass0(ctx, nvs);
    nouveau_shader_pass1(nvs);
    nouveau_shader_pass2(nvs);
 

@@ -5,6 +5,47 @@
 unsigned int NVFP_TX_BOP_COUNT = 5;
 struct _op_xlat NVFP_TX_BOP[64];
 
+
+/*****************************************************************************
+ * Assembly routines
+ * 	- These extend the NV30 routines, which are almost identical.  NV40
+ * 	  just has branching hacked into the instruction set.
+ */
+static void
+NV40FPSetBranchTarget(nvsFunc *shader, int addr)
+{
+	shader->inst[2] &= ~NV40_FP_OP_IADDR_MASK;
+	shader->inst[2] |= (addr << NV40_FP_OP_IADDR_SHIFT);
+}
+
+static void
+NV40FPSetBranchElse(nvsFunc *shader, int addr)
+{
+	shader->inst[2] &= ~NV40_FP_OP_ELSE_ID_MASK;
+	shader->inst[2] |= (addr << NV40_FP_OP_ELSE_ID_SHIFT);
+}
+
+static void
+NV40FPSetBranchEnd(nvsFunc *shader, int addr)
+{
+	shader->inst[3] &= ~NV40_FP_OP_END_ID_MASK;
+	shader->inst[3] |= (addr << NV40_FP_OP_END_ID_SHIFT);
+}
+
+static void
+NV40FPSetLoopParams(nvsFunc *shader, int count, int initial, int increment)
+{
+	shader->inst[2] &= ~(NV40_FP_OP_LOOP_COUNT_MASK |
+			     NV40_FP_OP_LOOP_INDEX_MASK |
+			     NV40_FP_OP_LOOP_INCR_MASK);
+	shader->inst[2] |= ((count     << NV40_FP_OP_LOOP_COUNT_SHIFT) |
+			    (initial   << NV40_FP_OP_LOOP_INDEX_SHIFT) |
+			    (increment << NV40_FP_OP_LOOP_INCR_SHIFT));
+}
+
+/*****************************************************************************
+ * Disassembly routines
+ */
 static struct _op_xlat *
 NV40FPGetOPTXRec(nvsFunc * shader, int merged)
 {
@@ -149,4 +190,8 @@ NV40FPInitShaderFuncs(nvsFunc * shader)
    shader->GetLoopCount		= NV40FPGetLoopCount;
    shader->GetLoopInitial	= NV40FPGetLoopInitial;
    shader->GetLoopIncrement	= NV40FPGetLoopIncrement;
+   shader->SetBranchTarget	= NV40FPSetBranchTarget;
+   shader->SetBranchElse	= NV40FPSetBranchElse;
+   shader->SetBranchEnd		= NV40FPSetBranchEnd;
+   shader->SetLoopParams	= NV40FPSetLoopParams;
 }

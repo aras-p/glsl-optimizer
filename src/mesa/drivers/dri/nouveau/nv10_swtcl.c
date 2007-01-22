@@ -23,7 +23,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-/* Software TCL for NV10, NV20, NV30, NV40, G70 */
+/* Software TCL for NV10, NV20, NV30, NV40, NV50 */
 
 #include <stdio.h>
 #include <math.h>
@@ -288,6 +288,20 @@ do {									\
    nmesa->vertex_attr_count++;						\
 } while (0)
 
+static void nv10_render_clipped_line(GLcontext *ctx,GLuint ii,GLuint jj)
+{
+
+}
+
+static void nv10_render_clipped_poly(GLcontext *ctx,const GLuint *elts,GLuint n)
+{
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	struct vertex_buffer *VB = &tnl->vb;
+	GLuint *tmp = VB->Elts;
+	VB->Elts = (GLuint *)elts;
+	nv10_render_generic_primitive_elts( ctx, 0, n, PRIM_BEGIN|PRIM_END,GL_POLYGON );
+	VB->Elts = tmp;
+}
 
 static void nv10ChooseRenderState(GLcontext *ctx)
 {
@@ -296,8 +310,8 @@ static void nv10ChooseRenderState(GLcontext *ctx)
 
 	tnl->Driver.Render.PrimTabVerts = nv10_render_tab_verts;
 	tnl->Driver.Render.PrimTabElts = nv10_render_tab_elts;
-	tnl->Driver.Render.ClippedLine = NULL;
-	tnl->Driver.Render.ClippedPolygon = NULL;
+	tnl->Driver.Render.ClippedLine = nv10_render_clipped_line;
+	tnl->Driver.Render.ClippedPolygon = nv10_render_clipped_poly;
 }
 
 
@@ -323,6 +337,7 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 	   0.0, 0.0, 0.0, 1.0
 	};
 
+	nmesa->vertex_attr_count = 0;
 	RENDERINPUTS_COPY(index, nmesa->render_inputs_bitset);
 
 	/*

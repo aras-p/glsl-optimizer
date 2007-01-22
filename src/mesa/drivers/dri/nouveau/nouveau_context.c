@@ -50,6 +50,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_msg.h"
 #include "nouveau_reg.h"
 #include "nouveau_lock.h"
+#include "nv04_swtcl.h"
 #include "nv10_swtcl.h"
 
 #include "vblank.h"
@@ -212,7 +213,7 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 			break;
 		case NV_04:
 		case NV_05:
-			//nv04TriInitFunctions( ctx );
+			nv04TriInitFunctions( ctx );
 			break;
 		case NV_10:
 		case NV_20:
