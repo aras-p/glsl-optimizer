@@ -764,8 +764,66 @@ static void nv30WindowMoved(nouveauContextPtr nmesa)
 
 static GLboolean nv30InitCard(nouveauContextPtr nmesa)
 {
-	/* Need some love.. */
-	return GL_FALSE;
+	int i;
+	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
+
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SET_OBJECT1, 3);
+	OUT_RING(NvDmaFB);
+	OUT_RING(NvDmaAGP);
+        OUT_RING(NvDmaFB);
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SET_OBJECT8, 1);
+	OUT_RING(NvDmaFB);
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SET_OBJECT4, 2);
+	OUT_RING(NvDmaFB);
+	OUT_RING(NvDmaFB);
+        BEGIN_RING_SIZE(NvSub3D, 0x1b0, 1); /* SET_OBJECT8B*/
+        OUT_RING(NvDmaFB);
+
+        for(i = 0x2c8; i <= 0x2fc; i += 4)
+        {
+            BEGIN_RING_SIZE(NvSub3D, i, 1);
+            OUT_RING(0x0);
+        }
+
+	BEGIN_RING_SIZE(NvSub3D, 0x0220, 1);
+	OUT_RING(1);
+
+	BEGIN_RING_SIZE(NvSub3D, 0x03b0, 1);
+	OUT_RING(0x00100000);
+	BEGIN_RING_SIZE(NvSub3D, 0x1454, 1);
+	OUT_RING(0);
+	BEGIN_RING_SIZE(NvSub3D, 0x1d80, 1);
+	OUT_RING(3);
+	BEGIN_RING_SIZE(NvSub3D, 0x1450, 1);
+	OUT_RING(0x00030004);
+	
+	/* NEW */
+       	BEGIN_RING_SIZE(NvSub3D, 0x1e98, 1);
+        OUT_RING(0);
+        BEGIN_RING_SIZE(NvSub3D, 0x17e0, 3);
+        OUT_RING(0);
+        OUT_RING(0);
+        OUT_RING(0x3f800000);
+        BEGIN_RING_SIZE(NvSub3D, 0x1f80, 16);
+        OUT_RING(0); OUT_RING(0); OUT_RING(0); OUT_RING(0); 
+        OUT_RING(0); OUT_RING(0); OUT_RING(0); OUT_RING(0); 
+        OUT_RING(0x0000ffff);
+        OUT_RING(0); OUT_RING(0); OUT_RING(0); OUT_RING(0); 
+        OUT_RING(0); OUT_RING(0); OUT_RING(0); 
+/*
+        BEGIN_RING_SIZE(NvSub3D, 0x100, 2);
+        OUT_RING(0);
+        OUT_RING(0);
+*/
+        BEGIN_RING_SIZE(NvSub3D, 0x120, 3);
+        OUT_RING(0);
+        OUT_RING(1);
+        OUT_RING(2);
+
+        BEGIN_RING_SIZE(NvSub3D, 0x1d88, 1);
+        OUT_RING(0x00001200);
+
+	return GL_TRUE;
 }
 
 static GLboolean nv40InitCard(nouveauContextPtr nmesa)
@@ -811,36 +869,41 @@ static GLboolean nv40InitCard(nouveauContextPtr nmesa)
 }
 
 static GLboolean nv30BindBuffers(nouveauContextPtr nmesa, int num_color,
-      				 nouveau_renderbuffer **color,
-				 nouveau_renderbuffer *depth)
+		nouveau_renderbuffer **color,
+		nouveau_renderbuffer *depth)
 {
-   GLuint x, y, w, h;
+	GLuint x, y, w, h;
 
-   w = color[0]->mesa.Width;
-   h = color[0]->mesa.Height;
-   x = nmesa->drawX;
-   y = nmesa->drawY;
+	w = color[0]->mesa.Width;
+	h = color[0]->mesa.Height;
+	x = nmesa->drawX;
+	y = nmesa->drawY;
 
-   if (num_color != 1)
-      return GL_FALSE;
-   BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VIEWPORT_COLOR_BUFFER_DIM0, 5);
-   OUT_RING        (((w+x)<<16)|x);
-   OUT_RING        (((h+y)<<16)|y);
-   if (color[0]->mesa._ActualFormat == GL_RGBA8)
-      OUT_RING        (0x148);
-   else
-      OUT_RING        (0x143);
-   OUT_RING        (color[0]->pitch);
-   OUT_RING        (color[0]->offset);
+	if (num_color != 1)
+		return GL_FALSE;
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VIEWPORT_COLOR_BUFFER_DIM0, 5);
+	OUT_RING        (((w+x)<<16)|x);
+	OUT_RING        (((h+y)<<16)|y);
+	if (color[0]->mesa._ActualFormat == GL_RGBA8)
+		OUT_RING        (0x148);
+	else
+		OUT_RING        (0x143);
+	if (nmesa->screen->card->type >= NV_40)
+		OUT_RING        (color[0]->pitch);
+	else
+		OUT_RING        (color[0]->pitch | (depth ? (depth->pitch << 16): 0));
+	OUT_RING        (color[0]->offset);
 
-   if (depth) {
-      BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_DEPTH_OFFSET, 1);
-      OUT_RING        (depth->offset);
-      BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LMA_DEPTH_BUFFER_PITCH, 1);
-      OUT_RING        (depth->pitch);
-   }
+	if (depth) {
+		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_DEPTH_OFFSET, 1);
+		OUT_RING        (depth->offset);
+		if (nmesa->screen->card->type >= NV_40) {
+			BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LMA_DEPTH_BUFFER_PITCH, 1);
+			OUT_RING        (depth->pitch >> 2);
+		}
+	}
 
-   return GL_TRUE;
+	return GL_TRUE;
 }
 
 void nv30InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
@@ -862,6 +925,7 @@ void nv30InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
 	func->FrontFace			= nv30FrontFace;
 	func->DepthFunc			= nv30DepthFunc;
 	func->DepthMask			= nv30DepthMask;
+	func->DepthRange                = nv30DepthRange;
 	func->Enable			= nv30Enable;
 	func->Fogfv			= nv30Fogfv;
 	func->Hint			= nv30Hint;
