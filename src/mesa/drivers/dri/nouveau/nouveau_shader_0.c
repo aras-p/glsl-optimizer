@@ -594,6 +594,30 @@ pass0_emulate_instruction(nouveauShader *nvs,
 			ARITH(NVS_OP_MAX, dest, mask, sat,
 					src[0], nvsNegate(src[0]), nvr_unused);
 		break;
+	case OPCODE_CMP:
+		/*XXX: this will clobber CC0... */
+		ARITH (NVS_OP_MOV, dest, mask, sat,
+				src[2], nvr_unused, nvr_unused);
+		pass0_make_reg(nvs, &temp, NVS_FILE_TEMP, -1);
+		ARITHu(NVS_OP_MOV, temp, SMASK_ALL, 0,
+				src[0], nvr_unused, nvr_unused);
+		nvsinst->cond_update = 1;
+		nvsinst->cond_reg    = 0;
+		ARITH (NVS_OP_MOV, dest, mask, sat,
+				src[1], nvr_unused, nvr_unused);
+		nvsinst->cond      = COND_LT;
+		nvsinst->cond_reg  = 0;
+		nvsinst->cond_test = 1;
+		break;
+	case OPCODE_DPH:
+		pass0_make_reg(nvs, &temp, NVS_FILE_TEMP, -1);
+		ARITHu(NVS_OP_DP3, temp, SMASK_X, 0,
+				 src[0], src[1], nvr_unused);
+		ARITH (NVS_OP_ADD, dest, mask, sat,
+				 nvsSwizzle(temp, X, X, X, X),
+				 nvsSwizzle(src[1], W, W, W, W),
+				 nvr_unused);
+		break;
 	case OPCODE_KIL:
 		/* This is only in ARB shaders, so we don't have to worry
 		 * about clobbering a CC reg as they aren't supported anyway.
