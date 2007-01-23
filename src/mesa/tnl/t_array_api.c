@@ -298,7 +298,7 @@ _tnl_DrawRangeElements(GLenum mode,
 #ifdef DEBUG
    /* check that array indices really fall inside [start, end] range */
    {
-      GLuint i;
+      GLint i;
       for (i = 0; i < count; i++) {
          if (ui_indices[i] < start || ui_indices[i] > end) {
             _mesa_warning(ctx, "Invalid array index in "

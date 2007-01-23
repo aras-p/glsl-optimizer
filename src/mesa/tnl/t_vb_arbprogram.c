@@ -1056,7 +1056,7 @@ static void compile_vertex_program( struct gl_vertex_program *program,
 { 
    struct compilation cp;
    struct tnl_compiled_program *p = CALLOC_STRUCT(tnl_compiled_program);
-   GLuint i;
+   GLint i;
 
    if (program->TnlData) 
       free_tnl_data( program );
@@ -1290,6 +1290,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	 call_func( p, m );
       }
       else {
+         GLint j;
 	 for (j = 0; j < p->nr_instructions; j++) {
 	    union instruction inst = p->instructions[j];	 
 	    opcode_func[inst.alu.opcode]( m, inst );

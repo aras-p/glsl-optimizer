@@ -4476,7 +4476,7 @@ save_ProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
    if (count > 0) {
-      unsigned i;
+      GLint i;
       const GLfloat * p = params;
 
       for (i = 0 ; i < count ; i++) {
@@ -4710,7 +4710,7 @@ save_ProgramEnvParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
    if (count > 0) {
-      unsigned i;
+      GLint i;
       const GLfloat * p = params;
 
       for (i = 0 ; i < count ; i++) {

@@ -1810,7 +1810,7 @@ _mesa_print_program(const struct gl_program *prog)
 void
 _mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog)
 {
-   GLint i;
+   GLuint i;
 
    _mesa_printf("NumInstructions=%d\n", prog->NumInstructions);
    _mesa_printf("NumTemporaries=%d\n", prog->NumTemporaries);

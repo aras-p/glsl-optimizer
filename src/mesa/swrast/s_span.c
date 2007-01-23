@@ -1814,7 +1814,9 @@ _swrast_get_values(GLcontext *ctx, struct gl_renderbuffer *rb,
    GLuint i, inCount = 0, inStart = 0;
 
    for (i = 0; i < count; i++) {
-      if (x[i] >= 0 && y[i] >= 0 && x[i] < rb->Width && y[i] < rb->Height) {
+      if (x[i] >= 0 && y[i] >= 0 &&
+          x[i] < (GLint) rb->Width &&
+          y[i] < (GLint) rb->Height) {
          /* inside */
          if (inCount == 0)
             inStart = i;
@@ -1848,10 +1850,10 @@ _swrast_put_row(GLcontext *ctx, struct gl_renderbuffer *rb,
 {
    GLint skip = 0;
 
-   if (y < 0 || y >= rb->Height)
+   if (y < 0 || (GLint) y >= rb->Height)
       return; /* above or below */
 
-   if (x + (GLint) count <= 0 || x >= rb->Width)
+   if (x + (GLint) count <= 0 || x >= (GLint) rb->Width)
       return; /* entirely left or right */
 
    if (x + count > rb->Width) {
