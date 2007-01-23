@@ -286,6 +286,15 @@ struct intel_context
    GLuint swap_missed_count;
 
    GLuint swap_scheduled;
+
+  /* Rotation. Need to match that of the
+   * current screen.
+   */
+
+  int width;
+  int height;
+  int current_rotation;
+
 };
 
 /* These are functions now:

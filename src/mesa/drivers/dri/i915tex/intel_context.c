@@ -357,6 +357,10 @@ intelInitContext(struct intel_context *intel,
    intel->driScreen = sPriv;
    intel->sarea = saPriv;
 
+   intel->width = intelScreen->width;
+   intel->height = intelScreen->height;
+   intel->current_rotation = intelScreen->current_rotation;
+
    if (!lockMutexInit) {
       lockMutexInit = GL_TRUE;
       _glthread_INIT_MUTEX(lockMutex);
@@ -635,12 +639,22 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
        sarea->rotation != intelScreen->current_rotation) {
 
       intelUpdateScreenRotation(sPriv, sarea);
+   }
 
-      /* 
-       * This will drop the outstanding batchbuffer on the floor
-       * FIXME: This should be done for all contexts?
+   if (sarea->width != intel->width ||
+       sarea->height != intel->height ||
+       sarea->rotation != intel->current_rotation) {
+
+      /*
+       * FIXME: Really only need to do this when drawing to a
+       * common back- or front buffer.
        */
 
+      /*
+       * This will drop the outstanding batchbuffer on the floor
+       */
+
+      driBOUnmap(intel->batch->buffer);
       intel_batchbuffer_reset(intel->batch);
 
       /* lose all primitives */
@@ -653,6 +667,10 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 
       /* force window update */
       intel->lastStamp = 0;
+
+      intel->width = sarea->width;
+      intel->height = sarea->height;
+      intel->current_rotation = sarea->rotation;
    }
 
 
