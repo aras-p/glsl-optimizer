@@ -117,7 +117,8 @@ static nvsOpcode _tx_mesa_opcode[] = {
 };
 
 static nvsCond _tx_mesa_condmask[] = {
-   NVS_COND_UNKNOWN, NVS_COND_GT, NVS_COND_LT, NVS_COND_UN, NVS_COND_GE,
+   NVS_COND_TR, /* workaround mesa not filling a valid value */
+   NVS_COND_GT, NVS_COND_LT, NVS_COND_UN, NVS_COND_GE,
    NVS_COND_LE, NVS_COND_NE, NVS_COND_NE, NVS_COND_TR, NVS_COND_FL
 };
 
@@ -133,6 +134,26 @@ struct pass0_rec {
 #define Y NVS_SWZ_Y
 #define Z NVS_SWZ_Z
 #define W NVS_SWZ_W
+
+#define FILL_CONDITION_FLAGS(fragment) do {                                    \
+	(fragment)->cond =                                                     \
+	pass0_make_condmask(inst->DstReg.CondMask);                            \
+	if ((fragment)->cond != NVS_COND_TR)                                   \
+		(fragment)->cond_test = 1;                                     \
+	(fragment)->cond_reg = inst->CondDst;                                  \
+	pass0_make_swizzle((fragment)->cond_swizzle, inst->DstReg.CondSwizzle);\
+} while(0)
+
+#define ARITH(op,dest,mask,sat,s0,s1,s2) do {               \
+	nvsinst = pass0_emit(nvs, parent, fpos, (op),       \
+		   (dest), (mask), (sat), (s0), (s1), (s2));\
+	FILL_CONDITION_FLAGS(nvsinst);                      \
+} while(0)
+
+#define ARITHu(op,dest,mask,sat,s0,s1,s2) do {              \
+	nvsinst = pass0_emit(nvs, parent, fpos, (op),       \
+		   (dest), (mask), (sat), (s0), (s1), (s2));\
+} while(0)
 
 static void
 pass0_append_fragment(nvsFragmentHeader *parent,
@@ -403,6 +424,7 @@ pass0_fixup_swizzle(nvsPtr nvs, nvsFragmentHeader *parent, int fpos,
 	static const float sc[4] = { 1.0, 0.0, -1.0, 0.0 };
 	struct pass0_rec *rec = nvs->pass_rec;
 	int fixup_1, fixup_2;
+	nvsInstruction *nvsinst;
 	nvsRegister sr, dr = nvr_unused;
 	nvsRegister sm1const, sm2const;
 
@@ -428,8 +450,8 @@ pass0_fixup_swizzle(nvsPtr nvs, nvsFragmentHeader *parent, int fpos,
 		 */
 		pass0_make_reg(nvs, &dr, NVS_FILE_TEMP, -1);
 		pass0_make_src_reg(nvs, &sr, src);
-		pass0_emit(nvs, parent, fpos, NVS_OP_MOV,
-				dr, SMASK_ALL, 0, sr, nvr_unused, nvr_unused);
+		ARITHu(NVS_OP_MOV, dr, SMASK_ALL, 0,
+				 sr, nvr_unused, nvr_unused);
 		pass0_make_reg(nvs, &sr, NVS_FILE_TEMP, dr.index);
 	} else {
 		if (fixup_1)
@@ -445,12 +467,10 @@ pass0_fixup_swizzle(nvsPtr nvs, nvsFragmentHeader *parent, int fpos,
 		pass0_make_reg(nvs, &sm2const,
 				    NVS_FILE_CONST, rec->swzconst_id);
 		pass0_make_swizzle(sm2const.swizzle, sm2);
-		pass0_emit(nvs, parent, fpos, NVS_OP_MAD,
-				dr, SMASK_ALL, 0, sr, sm1const, sm2const);
+		ARITHu(NVS_OP_MAD, dr, SMASK_ALL, 0, sr, sm1const, sm2const);
 	} else {
 		/* SWIZZLE_ZERO || arbitrary negate */
-		pass0_emit(nvs, parent, fpos, NVS_OP_MUL,
-				dr, SMASK_ALL, 0, sr, sm1const, nvr_unused);
+		ARITHu(NVS_OP_MUL, dr, SMASK_ALL, 0, sr, sm1const, nvr_unused);
 	}
 
 	src->File	= PROGRAM_TEMPORARY;
@@ -568,64 +588,54 @@ pass0_emulate_instruction(nouveauShader *nvs,
 	switch (inst->Opcode) {
 	case OPCODE_ABS:
 		if (shader->caps & SCAP_SRC_ABS)
-			pass0_emit(nvs, parent, fpos, NVS_OP_MOV,
-					dest, mask, sat,
+			ARITH(NVS_OP_MOV, dest, mask, sat,
 					nvsAbs(src[0]), nvr_unused, nvr_unused);
 		else
-			pass0_emit(nvs, parent, fpos, NVS_OP_MAX,
-					dest, mask, sat,
+			ARITH(NVS_OP_MAX, dest, mask, sat,
 					src[0], nvsNegate(src[0]), nvr_unused);
 		break;
 	case OPCODE_KIL:
 		/* This is only in ARB shaders, so we don't have to worry
 		 * about clobbering a CC reg as they aren't supported anyway.
+		 *XXX: might have to worry with GLSL however...
 		 */
 		/* MOVC0 temp, src */
 		pass0_make_reg(nvs, &temp, NVS_FILE_TEMP, -1);
-		nvsinst = pass0_emit(nvs, parent, fpos, NVS_OP_MOV, 
-					  temp, SMASK_ALL, 0,
-					  src[0], nvr_unused, nvr_unused);
+		ARITHu(NVS_OP_MOV, temp, SMASK_ALL, 0,
+				 src[0], nvr_unused, nvr_unused);
 		nvsinst->cond_update = 1;
 		nvsinst->cond_reg    = 0;
 		/* KIL_NV (LT0.xyzw) temp */
-		nvsinst = pass0_emit(nvs, parent, fpos, NVS_OP_KIL,
-					  nvr_unused, 0, 0,
-					  nvr_unused, nvr_unused, nvr_unused);
+		ARITHu(NVS_OP_KIL, nvr_unused, 0, 0,
+				 nvr_unused, nvr_unused, nvr_unused);
 		nvsinst->cond      = COND_LT;
 		nvsinst->cond_reg  = 0;
 		nvsinst->cond_test = 1;
-		pass0_make_swizzle(nvsinst->cond_swizzle,
-				   MAKE_SWIZZLE4(0,1,2,3));
+		pass0_make_swizzle(nvsinst->cond_swizzle, SWIZZLE_NOOP);
 		break;
 	case OPCODE_LRP:
 		pass0_make_reg(nvs, &temp, NVS_FILE_TEMP, -1);
-		pass0_emit(nvs, parent, fpos, NVS_OP_MAD, temp, mask, 0,
-				nvsNegate(src[0]), src[2], src[2]);
-		pass0_emit(nvs, parent, fpos, NVS_OP_MAD, dest, mask, sat,
-				src[0], src[1], temp);
+		ARITHu(NVS_OP_MAD, temp, mask, 0,
+				 nvsNegate(src[0]), src[2], src[2]);
+		ARITH (NVS_OP_MAD, dest, mask, sat, src[0], src[1], temp);
 		break;
 	case OPCODE_POW:
 		if (shader->SupportsOpcode(shader, NVS_OP_LG2) &&
 				shader->SupportsOpcode(shader, NVS_OP_EX2)) {
 			pass0_make_reg(nvs, &temp, NVS_FILE_TEMP, -1);
 			/* LG2 temp.x, src0.c */
-			pass0_emit(nvs, parent, fpos, NVS_OP_LG2,
-					temp, SMASK_X, 0,
-					nvsSwizzle(src[0], X, X, X, X),
-					nvr_unused,
-					nvr_unused);
+			ARITHu(NVS_OP_LG2, temp, SMASK_X, 0,
+					 nvsSwizzle(src[0], X, X, X, X),
+					 nvr_unused, nvr_unused);
 			/* MUL temp.x, temp.x, src1.c */
-			pass0_emit(nvs, parent, fpos, NVS_OP_MUL,
-					temp, SMASK_X, 0,
-					nvsSwizzle(temp, X, X, X, X),
-					nvsSwizzle(src[1], X, X, X, X),
-					nvr_unused);
+			ARITHu(NVS_OP_MUL, temp, SMASK_X, 0,
+					 nvsSwizzle(temp, X, X, X, X),
+					 nvsSwizzle(src[1], X, X, X, X),
+					 nvr_unused);
 			/* EX2 dest, temp.x */
-			pass0_emit(nvs, parent, fpos, NVS_OP_EX2,
-					dest, mask, sat,
-					nvsSwizzle(temp, X, X, X, X),
-					nvr_unused,
-					nvr_unused);
+			ARITH (NVS_OP_EX2, dest, mask, sat,
+					 nvsSwizzle(temp, X, X, X, X),
+					 nvr_unused, nvr_unused);
 		} else {
 			/* can we use EXP/LOG instead of EX2/LG2?? */
 			fprintf(stderr, "Implement POW for NV20 vtxprog!\n");
@@ -643,48 +653,41 @@ pass0_emulate_instruction(nouveauShader *nvs,
 				const_half);
 		}
 		pass0_make_reg(nvs, &temp, NVS_FILE_TEMP, -1);
-		pass0_emit(nvs, parent, fpos, NVS_OP_LG2, temp, SMASK_X, 0,
-				nvsAbs(nvsSwizzle(src[0], X, X, X, X)),
-				nvr_unused,
-				nvr_unused);
-		pass0_emit(nvs, parent, fpos, NVS_OP_MUL, temp, SMASK_X, 0,
-				nvsSwizzle(temp, X, X, X, X),
-				nvsNegate(rec->const_half),
-				nvr_unused);
-		pass0_emit(nvs, parent, fpos, NVS_OP_EX2, dest, mask, sat,
-				nvsSwizzle(temp, X, X, X, X),
-				nvr_unused,
-				nvr_unused);
+		ARITHu(NVS_OP_LG2, temp, SMASK_X, 0,
+				 nvsAbs(nvsSwizzle(src[0], X, X, X, X)),
+				 nvr_unused, nvr_unused);
+		ARITHu(NVS_OP_MUL, temp, SMASK_X, 0,
+				 nvsSwizzle(temp, X, X, X, X),
+				 nvsNegate(rec->const_half),
+				 nvr_unused);
+		ARITH (NVS_OP_EX2, dest, mask, sat,
+				 nvsSwizzle(temp, X, X, X, X),
+				 nvr_unused, nvr_unused);
 		break;
 	case OPCODE_SCS:
 		if (mask & SMASK_X)
-			pass0_emit(nvs, parent, fpos, NVS_OP_COS,
-					dest, SMASK_X, sat,
+			ARITH(NVS_OP_COS, dest, SMASK_X, sat,
 					nvsSwizzle(src[0], X, X, X, X),
-					nvr_unused,
-					nvr_unused);
+					nvr_unused, nvr_unused);
 		if (mask & SMASK_Y)
-			pass0_emit(nvs, parent, fpos, NVS_OP_SIN,
-					dest, SMASK_Y, sat,
+			ARITH(NVS_OP_SIN, dest, SMASK_Y, sat,
 					nvsSwizzle(src[0], X, X, X, X),
-					nvr_unused,
-					nvr_unused);
+					nvr_unused, nvr_unused);
 		break;
 	case OPCODE_SUB:
-		pass0_emit(nvs, parent, fpos, NVS_OP_ADD, dest, mask, sat,
+		ARITH(NVS_OP_ADD, dest, mask, sat,
 				src[0], nvsNegate(src[1]), nvr_unused);
 		break;
 	case OPCODE_XPD:
 		pass0_make_reg(nvs, &temp, NVS_FILE_TEMP, -1);
-		pass0_emit(nvs, parent, fpos, NVS_OP_MUL, temp, SMASK_ALL, 0,
-				nvsSwizzle(src[0], Z, X, Y, Y),
-				nvsSwizzle(src[1], Y, Z, X, X),
-				nvr_unused);
-		pass0_emit(nvs, parent, fpos, NVS_OP_MAD,
-				dest, (mask & ~SMASK_W), sat,
-				nvsSwizzle(src[0], Y, Z, X, X),
-				nvsSwizzle(src[1], Z, X, Y, Y),
-				nvsNegate(temp));
+		ARITHu(NVS_OP_MUL, temp, SMASK_ALL, 0,
+				 nvsSwizzle(src[0], Z, X, Y, Y),
+				 nvsSwizzle(src[1], Y, Z, X, X),
+				 nvr_unused);
+		ARITH (NVS_OP_MAD, dest, (mask & ~SMASK_W), sat,
+				 nvsSwizzle(src[0], Y, Z, X, X),
+				 nvsSwizzle(src[1], Z, X, Y, Y),
+				 nvsNegate(temp));
 		break;
 	default:
 		WARN_ONCE("hw doesn't support opcode \"%s\","
@@ -721,16 +724,12 @@ pass0_translate_arith(nouveauShader *nvs, struct gl_program *prog,
 			pass0_make_src_reg(nvs, &src[i], &inst->SrcReg[i]);
 		pass0_make_dst_reg(nvs, &dest, &inst->DstReg);
 
-		nvsinst = pass0_emit(nvs, parent, fpos,
-				     pass0_make_opcode(inst->Opcode),
-				     dest,
-				     pass0_make_mask(inst->DstReg.WriteMask),
-				     (inst->SaturateMode != SATURATE_OFF),
-				     src[0], src[1], src[2]);
+		ARITH(pass0_make_opcode(inst->Opcode), dest,
+				pass0_make_mask(inst->DstReg.WriteMask),
+				(inst->SaturateMode != SATURATE_OFF),
+				src[0], src[1], src[2]);
 		nvsinst->tex_unit   = inst->TexSrcUnit;
 		nvsinst->tex_target = pass0_make_tex_target(inst->TexSrcTarget);
-		/* TODO when NV_fp/vp is implemented */
-		nvsinst->cond       = COND_TR;
 
 		ret = GL_TRUE;
 	} else
@@ -753,7 +752,7 @@ pass0_translate_instructions(nouveauShader *nvs, int ipos, int fpos,
 			return GL_TRUE;
 		case OPCODE_BRA:
 		case OPCODE_CAL:
-		//case OPCDOE_RET:
+		case OPCODE_RET:
 		//case OPCODE_LOOP:
 		//case OPCODE_ENDLOOP:
 		//case OPCODE_IF:
