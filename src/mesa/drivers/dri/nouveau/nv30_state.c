@@ -899,7 +899,7 @@ static GLboolean nv30BindBuffers(nouveauContextPtr nmesa, int num_color,
 		OUT_RING        (depth->offset);
 		if (nmesa->screen->card->type >= NV_40) {
 			BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LMA_DEPTH_BUFFER_PITCH, 1);
-			OUT_RING        (depth->pitch >> 2);
+			OUT_RING        (depth->pitch);
 		}
 	}
 
