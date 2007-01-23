@@ -476,9 +476,6 @@ static void nv10ChooseVertexState( GLcontext *ctx )
 		 * is up to date
 		 */
 		nvsUpdateShader(ctx, nmesa->passthrough_vp);
-		BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VP_IN_REG, 2);
-		OUT_RING_CACHE  (0xff09);   /*IN : POS, COL, TC0-7 */
-		OUT_RING_CACHE  (0x3fc001); /*OUT: COL, TC0-7, POS implied */
 
 		/* Update texenv shader / user fragprog */
 		nvsUpdateShader(ctx, (nouveauShader*)ctx->FragmentProgram._Current);

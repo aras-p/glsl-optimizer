@@ -29,6 +29,10 @@ NV30VPUploadToHW(GLcontext *ctx, nouveauShader *nvs)
    }
    BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VP_PROGRAM_START_ID, 1);
    OUT_RING(0);
+
+   BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VP_IN_REG, 2);
+   OUT_RING(nvs->card_priv.NV30VP.vp_in_reg);
+   OUT_RING(nvs->card_priv.NV30VP.vp_out_reg);
 }
 
 static void

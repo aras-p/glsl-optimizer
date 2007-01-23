@@ -24,6 +24,16 @@ typedef struct _nvs_fragment_header {
    } type;
 } nvsFragmentHeader;
 
+typedef union {
+	struct {
+		uint32_t fp_control;
+	} NV30FP;
+	struct {
+		uint32_t vp_in_reg;
+		uint32_t vp_out_reg;
+	} NV30VP;
+} nvsCardPriv;
+
 typedef struct _nouveauShader {
    union {
       struct gl_vertex_program vp;
@@ -41,9 +51,9 @@ typedef struct _nouveauShader {
    unsigned int program_start_id;
    unsigned int program_current;
    struct gl_buffer_object *program_buffer;
-   unsigned int inputs_read;
-   unsigned int outputs_written;
    int		inst_count;
+
+   nvsCardPriv card_priv;
 
    struct {
       GLfloat  *source_val;	/* NULL if invariant */
@@ -113,35 +123,35 @@ typedef enum {
 } nvsSwzComp;
 
 typedef enum {
-   NVS_FR_POSITION,
-   NVS_FR_WEIGHT,
-   NVS_FR_NORMAL,
-   NVS_FR_COL0,
-   NVS_FR_COL1,
-   NVS_FR_BFC0,
-   NVS_FR_BFC1,
-   NVS_FR_FOGCOORD,
-   NVS_FR_POINTSZ,
-   NVS_FR_TEXCOORD0,
-   NVS_FR_TEXCOORD1,
-   NVS_FR_TEXCOORD2,
-   NVS_FR_TEXCOORD3,
-   NVS_FR_TEXCOORD4,
-   NVS_FR_TEXCOORD5,
-   NVS_FR_TEXCOORD6,
-   NVS_FR_TEXCOORD7,
-   NVS_FR_FRAGDATA0,
-   NVS_FR_FRAGDATA1,
-   NVS_FR_FRAGDATA2,
-   NVS_FR_FRAGDATA3,
-   NVS_FR_CLIP0,
-   NVS_FR_CLIP1,
-   NVS_FR_CLIP2,
-   NVS_FR_CLIP3,
-   NVS_FR_CLIP4,
-   NVS_FR_CLIP5,
-   NVS_FR_CLIP6,
-   NVS_FR_FACING,
+   NVS_FR_POSITION	= 0,
+   NVS_FR_WEIGHT	= 1,
+   NVS_FR_NORMAL	= 2,
+   NVS_FR_COL0		= 3,
+   NVS_FR_COL1		= 4,
+   NVS_FR_FOGCOORD	= 5,
+   NVS_FR_TEXCOORD0	= 8,
+   NVS_FR_TEXCOORD1	= 9,
+   NVS_FR_TEXCOORD2	= 10,
+   NVS_FR_TEXCOORD3	= 11,
+   NVS_FR_TEXCOORD4	= 12,
+   NVS_FR_TEXCOORD5	= 13,
+   NVS_FR_TEXCOORD6	= 14,
+   NVS_FR_TEXCOORD7	= 15,
+   NVS_FR_BFC0		= 16,
+   NVS_FR_BFC1		= 17,
+   NVS_FR_POINTSZ	= 18,
+   NVS_FR_FRAGDATA0	= 19,
+   NVS_FR_FRAGDATA1	= 20,
+   NVS_FR_FRAGDATA2	= 21,
+   NVS_FR_FRAGDATA3	= 22,
+   NVS_FR_CLIP0		= 23,
+   NVS_FR_CLIP1		= 24,
+   NVS_FR_CLIP2		= 25,
+   NVS_FR_CLIP3		= 26,
+   NVS_FR_CLIP4		= 27,
+   NVS_FR_CLIP5		= 28,
+   NVS_FR_CLIP6		= 29,
+   NVS_FR_FACING	= 30,
    NVS_FR_UNKNOWN
 } nvsFixedReg;
 
@@ -279,6 +289,8 @@ extern nvsSwzComp NV20VP_TX_SWIZZLE[4];
 #define SCAP_SRC_ABS	(1<<0)
 
 struct _nvsFunc {
+   nvsCardPriv *card_priv;
+
    unsigned int	MaxInst;
    unsigned int	MaxAttrib;
    unsigned int	MaxTemp;

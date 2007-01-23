@@ -118,8 +118,6 @@ pass2_add_instruction(nvsPtr nvs, nvsInstruction *inst,
 		if (op->srcpos[i] != -1) {
 			reg = pass2_mangle_reg(nvs, inst, inst->src[i]);
 
-			if (reg.file == NVS_FILE_ATTRIB)
-				nvs->inputs_read |= (1 << reg.index);
 			shader->SetSource(shader, &reg, op->srcpos[i]);
 
 			if (reg.file == NVS_FILE_CONST &&
@@ -136,8 +134,6 @@ pass2_add_instruction(nvsPtr nvs, nvsInstruction *inst,
 	}
 
 	reg = pass2_mangle_reg(nvs, inst, inst->dest);
-	if (reg.file == NVS_FILE_RESULT)
-		nvs->outputs_written |= (1 << reg.index);
 	shader->SetResult(shader, &reg, inst->mask, slot);
 }
 

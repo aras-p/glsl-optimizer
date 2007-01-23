@@ -66,6 +66,96 @@ NV40VPSetCondition(nvsFunc *shader, int on, nvsCond cond, int reg,
    shader->inst[0] |= (swizzle[NVS_SWZ_W] << NV40_VP_INST_COND_SWZ_W_SHIFT);
 }
 
+/* these just exist here until nouveau_reg.h has them. */
+#define NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_COL0	(1<<0)
+#define NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_COL1	(1<<1)
+#define NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_BFC0	(1<<2)
+#define NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_BFC1	(1<<3)
+#define NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_FOGC	(1<<4)
+#define NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_PSZ	(1<<5)
+#define NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP0	(1<<6)
+#define NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP1	(1<<7)
+#define NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP2	(1<<8)
+#define NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP3	(1<<9)
+#define NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP4	(1<<10)
+#define NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP5	(1<<11)
+#define NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_TEX0   (1<<14)
+
+static unsigned int
+NV40VPTranslateResultReg(nvsFunc *shader, nvsFixedReg result,
+					  unsigned int *mask_ret)
+{
+	unsigned int *out_reg = &shader->card_priv->NV30VP.vp_out_reg;
+
+	*mask_ret = 0xf;
+
+	switch (result) {
+	case NVS_FR_POSITION:
+		/* out_reg POS implied */
+		return NV40_VP_INST_DEST_POS;
+	case NVS_FR_COL0:
+		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_COL0;
+		return NV40_VP_INST_DEST_COL0;
+	case NVS_FR_COL1:
+		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_COL1;
+		return NV40_VP_INST_DEST_COL1;
+	case NVS_FR_BFC0:
+		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_BFC0;
+		return NV40_VP_INST_DEST_BFC0;
+	case NVS_FR_BFC1:
+		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_BFC1;
+		return NV40_VP_INST_DEST_BFC1;
+	case NVS_FR_FOGCOORD:
+		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_FOGC;
+		*mask_ret = 0x8;
+		return NV40_VP_INST_DEST_FOGC;
+	case NVS_FR_CLIP0:
+		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP0;
+		*mask_ret = 0x4;
+		return NV40_VP_INST_DEST_FOGC;
+	case NVS_FR_CLIP1:
+		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP1;
+		*mask_ret = 0x2;
+		return NV40_VP_INST_DEST_FOGC;
+	case NVS_FR_CLIP2:
+		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP2;
+		*mask_ret = 0x1;
+		return NV40_VP_INST_DEST_FOGC;
+	case NVS_FR_POINTSZ:
+		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_PSZ;
+		*mask_ret = 0x8;
+		return NV40_VP_INST_DEST_PSZ;
+	case NVS_FR_CLIP3:
+		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP3;
+		*mask_ret = 0x4;
+		return NV40_VP_INST_DEST_PSZ;
+	case NVS_FR_CLIP4:
+		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP4;
+		*mask_ret = 0x2;
+		return NV40_VP_INST_DEST_PSZ;
+	case NVS_FR_CLIP5:
+		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP5;
+		*mask_ret = 0x1;
+		return NV40_VP_INST_DEST_PSZ;
+	case NVS_FR_TEXCOORD0:
+	case NVS_FR_TEXCOORD1:
+	case NVS_FR_TEXCOORD2:
+	case NVS_FR_TEXCOORD3:
+	case NVS_FR_TEXCOORD4:
+	case NVS_FR_TEXCOORD5:
+	case NVS_FR_TEXCOORD6:
+	case NVS_FR_TEXCOORD7:
+	{
+		int unit = result - NVS_FR_TEXCOORD0;
+		(*out_reg) |= (NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_TEX0 << unit);
+		return NV40_VP_INST_DEST_TC(unit);
+	}
+	default:
+		WARN_ONCE("unknown vp output %d\n", result);
+		return NV40_VP_INST_DEST_POS;
+	}
+}
+
 static void
 NV40VPSetResult(nvsFunc *shader, nvsRegister * dest, unsigned int mask,
       		int slot)
@@ -78,29 +168,14 @@ NV40VPSetResult(nvsFunc *shader, nvsRegister * dest, unsigned int mask,
    if (mask & SMASK_W) hwmask |= (1 << 0);
 
    if (dest->file == NVS_FILE_RESULT) {
+      unsigned int valid_mask;
       int hwidx;
 
-      switch (dest->index) {
-      case NVS_FR_POSITION : hwidx = NV40_VP_INST_DEST_POS; break;
-      case NVS_FR_COL0     : hwidx = NV40_VP_INST_DEST_COL0; break;
-      case NVS_FR_COL1     : hwidx = NV40_VP_INST_DEST_COL1; break;
-      case NVS_FR_BFC0     : hwidx = NV40_VP_INST_DEST_BFC0; break;
-      case NVS_FR_BFC1     : hwidx = NV40_VP_INST_DEST_BFC1; break;
-      case NVS_FR_FOGCOORD : hwidx = NV40_VP_INST_DEST_FOGC; break;
-      case NVS_FR_POINTSZ  : hwidx = NV40_VP_INST_DEST_PSZ; break;
-      case NVS_FR_TEXCOORD0: hwidx = NV40_VP_INST_DEST_TC(0); break;
-      case NVS_FR_TEXCOORD1: hwidx = NV40_VP_INST_DEST_TC(1); break;
-      case NVS_FR_TEXCOORD2: hwidx = NV40_VP_INST_DEST_TC(2); break;
-      case NVS_FR_TEXCOORD3: hwidx = NV40_VP_INST_DEST_TC(3); break;
-      case NVS_FR_TEXCOORD4: hwidx = NV40_VP_INST_DEST_TC(4); break;
-      case NVS_FR_TEXCOORD5: hwidx = NV40_VP_INST_DEST_TC(5); break;
-      case NVS_FR_TEXCOORD6: hwidx = NV40_VP_INST_DEST_TC(6); break;
-      case NVS_FR_TEXCOORD7: hwidx = NV40_VP_INST_DEST_TC(7); break;
-      default:
-	WARN_ONCE("unknown vtxprog output %d\n", dest->index);
-	hwidx = 0;
-	break;
-      }
+      hwidx = NV40VPTranslateResultReg(shader, dest->index, &valid_mask);
+      if (hwmask & ~valid_mask)
+	      WARN_ONCE("writing invalid components of result reg\n");
+      hwmask &= valid_mask;
+
       shader->inst[3] &= ~NV40_VP_INST_DEST_MASK;
       shader->inst[3] |= (hwidx << NV40_VP_INST_DEST_SHIFT);
 
@@ -174,6 +249,7 @@ NV40VPSetSource(nvsFunc *shader, nvsRegister * src, int pos)
 
       shader->inst[1] &= ~NV40_VP_INST_INPUT_SRC_MASK;
       shader->inst[1] |= (src->index << NV40_VP_INST_INPUT_SRC_SHIFT);
+      shader->card_priv->NV30VP.vp_in_reg |= (1 << src->index);
       if (src->indexed) {
 	 shader->inst[0] |= NV40_VP_INST_INDEX_INPUT;
 	 if (src->addr_reg)

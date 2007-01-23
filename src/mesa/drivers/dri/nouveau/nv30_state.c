@@ -862,9 +862,6 @@ static GLboolean nv40InitCard(nouveauContextPtr nmesa)
 	BEGIN_RING_SIZE(NvSub3D, 0x1e94, 1);
 	OUT_RING(0x00000001);
 
-	BEGIN_RING_SIZE(NvSub3D, 0x1d60, 1);
-	OUT_RING(0x03008000);
-
 	return GL_TRUE;
 }
 

@@ -46,6 +46,8 @@ NV30FPUploadToHW(GLcontext *ctx, nouveauShader *nvs)
     */
    BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FP_ACTIVE_PROGRAM, 1);
    OUT_RING       (offset | 1);
+   BEGIN_RING_SIZE(NvSub3D, 0x1d60, 1);
+   OUT_RING       (nvs->card_priv.NV30FP.fp_control | 0x03000000);
 }
 
 static void
@@ -92,6 +94,8 @@ NV30FPSupportsOpcode(nvsFunc *shader, nvsOpcode op)
 static void
 NV30FPSetOpcode(nvsFunc *shader, unsigned int opcode, int slot)
 {
+   if (opcode == NV30_FP_OP_OPCODE_KIL)
+      shader->card_priv->NV30FP.fp_control |= (1<<7);
    shader->inst[0] &= ~NV30_FP_OP_OPCODE_MASK;
    shader->inst[0] |= (opcode << NV30_FP_OP_OPCODE_SHIFT);
 }

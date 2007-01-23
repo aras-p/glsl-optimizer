@@ -805,6 +805,7 @@ nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 		fprintf(stderr, "Unknown program type %d", prog->Target);
 		return GL_FALSE;
 	}
+	nvs->func->card_priv = &nvs->card_priv;
 
 	rec = CALLOC_STRUCT(pass0_rec);
 	if (rec) {
