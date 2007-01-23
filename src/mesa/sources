@@ -182,6 +182,7 @@ SLANG_SOURCES =	\
 	shader/slang/slang_error.c	\
 	shader/slang/slang_execute.c	\
 	shader/slang/slang_export.c	\
+	shader/slang/slang_label.c	\
 	shader/slang/slang_library_noise.c	\
 	shader/slang/slang_library_texsample.c	\
 	shader/slang/slang_link.c	\

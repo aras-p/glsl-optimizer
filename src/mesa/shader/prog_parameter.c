@@ -217,7 +217,7 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
     * constants because we rely on smearing (i.e. .yyyy or .zzzz).
     */
    if (size == 1) {
-      for (pos = 0; pos < paramList->NumParameters; pos++) {
+      for (pos = 0; pos < (GLint) paramList->NumParameters; pos++) {
          struct gl_program_parameter *p = paramList->Parameters + pos;
          if (p->Type == PROGRAM_CONSTANT && p->Size + size <= 4) {
             /* ok, found room */
@@ -321,7 +321,7 @@ _mesa_add_attribute(struct gl_program_parameter_list *paramList,
    else {
       /* add */
       gl_state_index state[STATE_LENGTH];
-      state[0] = attrib;
+      state[0] = (gl_state_index) attrib;
       if (size < 0)
          size = 4;
       i = _mesa_add_parameter(paramList, PROGRAM_INPUT, name,
@@ -373,7 +373,7 @@ _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
    GLint index;
 
    /* Check if the state reference is already in the list */
-   for (index = 0; index < paramList->NumParameters; index++) {
+   for (index = 0; index < (GLint) paramList->NumParameters; index++) {
       GLuint i, match = 0;
       for (i = 0; i < 6; i++) {
          if (paramList->Parameters[index].StateIndexes[i] == stateTokens[i]) {
@@ -468,7 +468,7 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
  */
 GLboolean
 _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
-                                const GLfloat v[], GLsizei vSize,
+                                const GLfloat v[], GLuint vSize,
                                 GLint *posOut, GLuint *swizzleOut)
 {
    GLuint i;

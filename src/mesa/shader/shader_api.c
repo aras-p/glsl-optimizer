@@ -518,7 +518,7 @@ _mesa_get_attached_shaders(GLcontext *ctx, GLuint program, GLsizei maxCount,
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
    if (shProg) {
-      GLuint i;
+      GLint i;
       for (i = 0; i < maxCount && i < shProg->NumShaders; i++) {
          obj[i] = shProg->Shaders[i]->Name;
       }
@@ -719,7 +719,7 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
    if (shProg) {
-      GLuint i;
+      GLint i;
       if (location >= 0 && location < shProg->Uniforms->NumParameters) {
          for (i = 0; i < shProg->Uniforms->Parameters[location].Size; i++) {
             params[i] = shProg->Uniforms->ParameterValues[location][i];
@@ -883,7 +883,7 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       return;
    }
 
-   if (location < 0 || location >= shProg->Uniforms->NumParameters) {
+   if (location < 0 || location >= (GLint) shProg->Uniforms->NumParameters) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniform(location)");
       return;
    }

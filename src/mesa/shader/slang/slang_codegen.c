@@ -661,7 +661,7 @@ static slang_operation *
 slang_inline_asm_function(slang_assemble_ctx *A,
                           slang_function *fun, slang_operation *oper)
 {
-   const int numArgs = oper->num_children;
+   const GLuint numArgs = oper->num_children;
    const slang_operation *args = oper->children;
    GLuint i;
    slang_operation *inlined = slang_operation_new(1);
@@ -1052,7 +1052,8 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
                                                     &inlined->children,
                                                     inlined->num_children);
       lab->type = slang_oper_label;
-      lab->a_id = slang_atom_pool_atom(A->atoms, A->CurFunction->end_label);
+      lab->a_id = slang_atom_pool_atom(A->atoms,
+                                       (char *) A->CurFunction->end_label);
    }
 
    for (i = 0; i < totalArgs; i++) {
@@ -1281,7 +1282,7 @@ _slang_gen_cond(slang_ir_node *n)
 static void
 print_funcs(struct slang_function_scope_ *scope, const char *name)
 {
-   int i;
+   GLuint i;
    for (i = 0; i < scope->num_functions; i++) {
       slang_function *f = &scope->functions[i];
       if (!name || strcmp(name, (char*) f->header.a_name) == 0)
@@ -1301,7 +1302,7 @@ print_funcs(struct slang_function_scope_ *scope, const char *name)
 static slang_function *
 _slang_first_function(struct slang_function_scope_ *scope, const char *name)
 {
-   int i;
+   GLuint i;
    for (i = 0; i < scope->num_functions; i++) {
       slang_function *f = &scope->functions[i];
       if (strcmp(name, (char*) f->header.a_name) == 0)
@@ -1800,7 +1801,9 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       slang_operation gotoOp;
       slang_operation_construct(&gotoOp);
       gotoOp.type = slang_oper_goto;
-      gotoOp.a_id = slang_atom_pool_atom(A->atoms, A->CurFunction->end_label);
+      /* XXX don't call function? */
+      gotoOp.a_id = slang_atom_pool_atom(A->atoms,
+                                         (char *) A->CurFunction->end_label);
       /* assemble the new code */
       n = _slang_gen_operation(A, &gotoOp);
       /* destroy temp code */
@@ -1855,7 +1858,9 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       jump = &block->children[1];
       jump->type = slang_oper_goto;
       assert(A->CurFunction->end_label);
-      jump->a_id = slang_atom_pool_atom(A->atoms, A->CurFunction->end_label);
+      /* XXX don't call function? */
+      jump->a_id = slang_atom_pool_atom(A->atoms,
+                                        (char *) A->CurFunction->end_label);
 
 #if 0 /* debug */
       printf("NEW RETURN:\n");

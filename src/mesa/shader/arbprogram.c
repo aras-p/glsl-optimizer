@@ -312,7 +312,7 @@ _mesa_ProgramEnvParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
 				 const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   unsigned i;
+   GLint i;
    GLfloat * dest;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -464,7 +464,7 @@ _mesa_ProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_program *prog;
-   unsigned i;
+   GLint i;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);

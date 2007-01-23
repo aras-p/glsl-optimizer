@@ -200,8 +200,7 @@ fetch_vector4( GLcontext *ctx,
    const GLfloat *src = get_register_pointer(ctx, source, machine, program);
    ASSERT(src);
 
-   if (source->Swizzle == MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
-                                        SWIZZLE_Z, SWIZZLE_W)) {
+   if (source->Swizzle == SWIZZLE_NOOP) {
       /* no swizzling */
       COPY_4V(result, src);
    }
@@ -1263,8 +1262,8 @@ execute_program( GLcontext *ctx,
             {
                GLfloat a[4], result[4];
                fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
-               result[0] = (GLfloat)_mesa_cos(a[0]);
-               result[1] = (GLfloat)_mesa_sin(a[0]);
+               result[0] = (GLfloat) _mesa_cos(a[0]);
+               result[1] = (GLfloat) _mesa_sin(a[0]);
                result[2] = 0.0;  /* undefined! */
                result[3] = 0.0;  /* undefined! */
                store_vector4( inst, machine, result );

@@ -133,7 +133,7 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
 
 
 static GLboolean
-is_uniform(enum register_file file)
+is_uniform(GLuint file)
 {
    return (file == PROGRAM_ENV_PARAM ||
            file == PROGRAM_STATE_VAR ||

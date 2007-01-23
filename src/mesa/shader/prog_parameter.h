@@ -50,7 +50,7 @@ struct gl_program_parameter
    /**
     * A sequence of STATE_* tokens and integers to identify GL state.
     */
-   GLuint StateIndexes[STATE_LENGTH];
+   GLint StateIndexes[STATE_LENGTH];
 };
 
 
@@ -127,7 +127,7 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
 
 extern GLboolean
 _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
-                                const GLfloat v[], GLsizei vSize,
+                                const GLfloat v[], GLuint vSize,
                                 GLint *posOut, GLuint *swizzleOut);
 
 extern GLuint

@@ -83,35 +83,35 @@ static slang_ir_info IrInfo[] = {
    { IR_FLOOR, "IR_FLOOR", OPCODE_FLR, 4, 1 },
    { IR_FRAC, "IR_FRAC", OPCODE_FRC, 4, 1 },
    { IR_ABS, "IR_ABS", OPCODE_ABS, 4, 1 },
-   { IR_NEG, "IR_NEG", 0/*spec case*/, 4, 1 },
+   { IR_NEG, "IR_NEG", OPCODE_NOP/*spec case*/, 4, 1 },
    { IR_DDX, "IR_DDX", OPCODE_DDX, 4, 1 },
    { IR_DDX, "IR_DDY", OPCODE_DDX, 4, 1 },
    { IR_SIN, "IR_SIN", OPCODE_SIN, 1, 1 },
    { IR_COS, "IR_COS", OPCODE_COS, 1, 1 },
    /* other */
-   { IR_SEQ, "IR_SEQ", 0, 0, 0 },
-   { IR_SCOPE, "IR_SCOPE", 0, 0, 0 },
-   { IR_LABEL, "IR_LABEL", 0, 0, 0 },
-   { IR_JUMP, "IR_JUMP", 0, 0, 0 },
-   { IR_CJUMP0, "IR_CJUMP0", 0, 0, 0 },
-   { IR_CJUMP1, "IR_CJUMP1", 0, 0, 0 },
-   { IR_IF, "IR_IF", 0, 0, 0 },
-   { IR_ELSE, "IR_ELSE", 0, 0, 0 },
-   { IR_ENDIF, "IR_ENDIF", 0, 0, 0 },
-   { IR_KILL, "IR_KILL", 0, 0, 0 },
-   { IR_COND, "IR_COND", 0, 0, 0 },
-   { IR_CALL, "IR_CALL", 0, 0, 0 },
-   { IR_MOVE, "IR_MOVE", 0, 0, 1 },
-   { IR_NOT, "IR_NOT", 0, 1, 1 },
-   { IR_VAR, "IR_VAR", 0, 0, 0 },
-   { IR_VAR_DECL, "IR_VAR_DECL", 0, 0, 0 },
+   { IR_SEQ, "IR_SEQ", OPCODE_NOP, 0, 0 },
+   { IR_SCOPE, "IR_SCOPE", OPCODE_NOP, 0, 0 },
+   { IR_LABEL, "IR_LABEL", OPCODE_NOP, 0, 0 },
+   { IR_JUMP, "IR_JUMP", OPCODE_NOP, 0, 0 },
+   { IR_CJUMP0, "IR_CJUMP0", OPCODE_NOP, 0, 0 },
+   { IR_CJUMP1, "IR_CJUMP1", OPCODE_NOP, 0, 0 },
+   { IR_IF, "IR_IF", OPCODE_NOP, 0, 0 },
+   { IR_ELSE, "IR_ELSE", OPCODE_NOP, 0, 0 },
+   { IR_ENDIF, "IR_ENDIF", OPCODE_NOP, 0, 0 },
+   { IR_KILL, "IR_KILL", OPCODE_NOP, 0, 0 },
+   { IR_COND, "IR_COND", OPCODE_NOP, 0, 0 },
+   { IR_CALL, "IR_CALL", OPCODE_NOP, 0, 0 },
+   { IR_MOVE, "IR_MOVE", OPCODE_NOP, 0, 1 },
+   { IR_NOT, "IR_NOT", OPCODE_NOP, 1, 1 },
+   { IR_VAR, "IR_VAR", OPCODE_NOP, 0, 0 },
+   { IR_VAR_DECL, "IR_VAR_DECL", OPCODE_NOP, 0, 0 },
    { IR_TEX, "IR_TEX", OPCODE_TEX, 4, 1 },
    { IR_TEXB, "IR_TEXB", OPCODE_TXB, 4, 1 },
    { IR_TEXP, "IR_TEXP", OPCODE_TXP, 4, 1 },
-   { IR_FLOAT, "IR_FLOAT", 0, 0, 0 },
-   { IR_FIELD, "IR_FIELD", 0, 0, 0 },
-   { IR_ELEMENT, "IR_ELEMENT", 0, 0, 0 },
-   { IR_SWIZZLE, "IR_SWIZZLE", 0, 0, 0 },
+   { IR_FLOAT, "IR_FLOAT", OPCODE_NOP, 0, 0 },
+   { IR_FIELD, "IR_FIELD", OPCODE_NOP, 0, 0 },
+   { IR_ELEMENT, "IR_ELEMENT", OPCODE_NOP, 0, 0 },
+   { IR_SWIZZLE, "IR_SWIZZLE", OPCODE_NOP, 0, 0 },
    { IR_NOP, NULL, OPCODE_NOP, 0, 0 }
 };
 
@@ -219,7 +219,7 @@ storage_string(const slang_ir_storage *st)
       sprintf(s, "%s[%d..%d]", files[st->File], st->Index,
               st->Index + st->Size - 1);
 #endif
-   assert(st->File < sizeof(files) / sizeof(files[0]));
+   assert(st->File < (GLint) (sizeof(files) / sizeof(files[0])));
    sprintf(s, "%s[%d]", files[st->File], st->Index);
    return s;
 }
@@ -966,7 +966,7 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       if (n->Children[1]->Opcode == IR_FLOAT) {
          /* OK, constant index */
          const GLint arrayAddr = n->Children[0]->Store->Index;
-         const GLint index = n->Children[1]->Value[0];
+         const GLint index = (GLint) n->Children[1]->Value[0];
          n->Store->Index = arrayAddr + index;
       }
       else {

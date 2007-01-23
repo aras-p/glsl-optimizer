@@ -1187,13 +1187,14 @@ static void cache_item( struct texenvprog_cache *cache,
 			const struct state_key *key,
 			void *data )
 {
-   struct texenvprog_cache_item *c = MALLOC(sizeof(*c));
+   struct texenvprog_cache_item *c
+      = (struct texenvprog_cache_item *) MALLOC(sizeof(*c));
    c->hash = hash;
 
    c->key = _mesa_malloc(sizeof(*key));
    memcpy(c->key, key, sizeof(*key));
 
-   c->data = data;
+   c->data = (struct gl_fragment_program *) data;
 
    if (cache->n_items > cache->size * 1.5) {
       if (cache->size < 1000)
