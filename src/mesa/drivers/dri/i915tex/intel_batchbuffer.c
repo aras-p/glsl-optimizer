@@ -311,7 +311,7 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
                              struct _DriBufferObject *buffer,
                              GLuint flags, GLuint mask, GLuint delta)
 {
-   assert(batch->nr_relocs <= MAX_RELOCS);
+   assert(batch->nr_relocs < MAX_RELOCS);
 
    driBOAddListItem(&batch->list, buffer, flags, mask);
 
