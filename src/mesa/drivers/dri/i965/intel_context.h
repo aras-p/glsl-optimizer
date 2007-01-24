@@ -500,6 +500,7 @@ void intelBitmap(GLcontext * ctx,
 		 const struct gl_pixelstore_attrib *unpack,
 		 const GLubyte * pixels);
 
+void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging);
 #define _NEW_WINDOW_POS 0x40000000
 
 
@@ -521,7 +522,6 @@ static inline struct intel_texture_image *intel_texture_image( struct gl_texture
 {
    return (struct intel_texture_image *)img;
 }
-
 
 #endif
 

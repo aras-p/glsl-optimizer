@@ -38,6 +38,7 @@
 
 #include "intel_screen.h"
 
+#include "intel_context.h"
 #include "intel_tex.h"
 #include "intel_span.h"
 #include "intel_ioctl.h"
@@ -60,8 +61,6 @@ const GLuint __driNConfigOptions = 4;
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 #endif /*USE_NEW_INTERFACE*/
-
-extern const struct dri_extension card_extensions[];
 
 /**
  * Map all the memory regions described by the screen.
@@ -687,7 +686,6 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
 					(dri_priv->cpp == 2) ? 16 : 24,
 					(dri_priv->cpp == 2) ? 0  : 8,
 					GL_TRUE );
-
       /* Calling driInitExtensions here, with a NULL context pointer, does not actually
        * enable the extensions.  It just makes sure that all the dispatch offsets for all
        * the extensions that *might* be enables are known.  This is needed because the
@@ -696,7 +694,7 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
        *
        * Hello chicken.  Hello egg.  How are you two today?
        */
-      driInitExtensions( NULL, card_extensions, GL_FALSE );
+      intelInitExtensions(NULL, GL_FALSE);
    }
 
    return (void *) psp;
