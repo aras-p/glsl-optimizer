@@ -61,6 +61,7 @@
 #include "bufmgr.h"
 
 #include "utils.h"
+#include "vblank.h"
 #ifndef INTEL_DEBUG
 int INTEL_DEBUG = (0);
 #endif
@@ -336,6 +337,11 @@ GLboolean intelInitContext( struct intel_context *intel,
    intel->driScreen = sPriv;
    intel->sarea = saPriv;
 
+   driParseConfigFiles (&intel->optionCache, &intelScreen->optionCache,
+		   intel->driScreen->myNum, "i965");
+
+   intel->vblank_flags = (intel->intelScreen->irq_active != 0)
+	   ? driGetDefaultVBlankFlags(&intel->optionCache) : VBLANK_FLAG_NO_IRQ;
 
    ctx->Const.MaxTextureMaxAnisotropy = 2.0;
 
@@ -563,6 +569,9 @@ GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
 
       if ( intel->driDrawable != driDrawPriv ) {
 	 /* Shouldn't the readbuffer be stored also? */
+	 driDrawableInitVBlank( driDrawPriv, intel->vblank_flags,
+		      &intel->vbl_seq );
+
 	 intel->driDrawable = driDrawPriv;
 	 intelWindowMoved( intel );
       }
