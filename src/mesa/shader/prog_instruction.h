@@ -26,8 +26,7 @@
 /**
  * \file prog_instruction.h
  *
- * Private vertex program types and constants only used by files
- * related to vertex programs.
+ * Vertex/fragment program instruction datatypes and constants.
  *
  * \author Brian Paul
  * \author Keith Whitwell
