@@ -144,13 +144,15 @@
 
 
 #ifdef INTERP_VARYING
-/* XXX need a varyingEnabled[] check */
+
 #define VARYING_LOOP(CODE)                     \
    {                                           \
       GLuint iv, ic;                           \
       for (iv = 0; iv < MAX_VARYING; iv++) {   \
-         for (ic = 0; ic < 4; ic++) {          \
-            CODE                               \
+         if (inputsUsed & FRAG_BIT_VAR(iv)) {  \
+            for (ic = 0; ic < 4; ic++) {       \
+               CODE                            \
+            }                                  \
          }                                     \
       }                                        \
    }
@@ -216,6 +218,10 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
    const GLint snapMask = ~((FIXED_ONE / (1 << SUB_PIXEL_BITS)) - 1); /* for x/y coord snapping */
 #endif
    GLinterp vMin_fx, vMin_fy, vMid_fx, vMid_fy, vMax_fx, vMax_fy;
+#ifdef INTERP_VARYING
+   const GLbitfield inputsUsed = ctx->FragmentProgram._Current ?
+      ctx->FragmentProgram._Current->Base.InputsRead : 0x0;
+#endif
 
    SWspan span;
 
