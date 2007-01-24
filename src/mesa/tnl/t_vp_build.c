@@ -1213,7 +1213,7 @@ static void build_texture_transform( struct tnl_program *p )
 
    for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
 
-      if (!(p->state->fragprog_inputs_read & (FRAG_BIT_TEX0<<i)))
+      if (!(p->state->fragprog_inputs_read & (FRAG_BIT_TEX(i))))
 	 continue;
 							     
       if (p->state->unit[i].texgen_enabled || 
