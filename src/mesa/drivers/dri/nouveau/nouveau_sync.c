@@ -14,6 +14,10 @@ nouveau_notifier_new(GLcontext *ctx, GLuint handle)
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	nouveau_notifier *notifier;
 
+#ifdef NOUVEAU_RING_DEBUG
+	return NULL;
+#endif
+
 	notifier = CALLOC_STRUCT(nouveau_notifier_t);
 	if (!notifier)
 		return NULL;
@@ -53,6 +57,10 @@ nouveau_notifier_reset(nouveau_notifier *notifier)
 {
 	volatile GLuint *n = notifier->mem->map;
 
+#ifdef NOUVEAU_RING_DEBUG
+	return;
+#endif
+
 	n[NV_NOTIFY_TIME_0      /4] = 0x00000000;
 	n[NV_NOTIFY_TIME_1      /4] = 0x00000000;
 	n[NV_NOTIFY_RETURN_VALUE/4] = 0x00000000;
@@ -66,6 +74,10 @@ nouveau_notifier_wait_status(nouveau_notifier *notifier, GLuint status,
 {
 	volatile GLuint *n = notifier->mem->map;
 	unsigned int time = 0;
+
+#ifdef NOUVEAU_RING_DEBUG
+	return GL_TRUE;
+#endif
 
 	while (time <= timeout) {
 		if (n[NV_NOTIFY_STATE/4] & NV_NOTIFY_STATE_ERROR_CODE_MASK) {
@@ -113,6 +125,10 @@ nouveau_notifier_wait_nop(GLcontext *ctx, nouveau_notifier *notifier,
 GLboolean nouveauSyncInitFuncs(GLcontext *ctx)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+#ifdef NOUVEAU_RING_DEBUG
+	return GL_TRUE;
+#endif
 
 	nmesa->syncNotifier = nouveau_notifier_new(ctx, NvSyncNotify);
 	if (!nmesa->syncNotifier) {
