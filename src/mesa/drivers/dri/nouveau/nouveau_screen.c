@@ -341,6 +341,7 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
 	// temporary lock step versioning
 	if (drm_expected.patch!=drm_version->patch) {
 		__driUtilMessage("%s: wrong DRM version, expected %d, got %d\n",
+				__func__,
 				drm_expected.patch, drm_version->patch);
 		return NULL;
 	}
