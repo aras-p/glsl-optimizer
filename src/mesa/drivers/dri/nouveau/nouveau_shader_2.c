@@ -135,6 +135,10 @@ pass2_add_instruction(nvsPtr nvs, nvsInstruction *inst,
 
 	reg = pass2_mangle_reg(nvs, inst, inst->dest);
 	shader->SetResult(shader, &reg, inst->mask, slot);
+
+	if (inst->dest_scale != NVS_SCALE_1X) {
+		shader->SetResultScale(shader, inst->dest_scale);
+	}
 }
 
 static int
