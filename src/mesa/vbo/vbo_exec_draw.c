@@ -114,6 +114,11 @@ static GLuint vbo_copy_vertices( struct vbo_exec_context *exec )
 	 return 2;
       }
    case GL_TRIANGLE_STRIP:
+      /* no parity issue, but need to make sure the tri is not drawn twice */
+      if (nr & 1) {
+	 exec->vtx.prim[exec->vtx.prim_count-1].count--;
+      }
+      /* fallthrough */
    case GL_QUAD_STRIP:
       switch (nr) {
       case 0: ovf = 0; break;
