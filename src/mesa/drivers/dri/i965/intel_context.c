@@ -258,11 +258,11 @@ intelBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 {
 	struct intel_context *intel = intel_context( ctx );
 	drmI830MMIO io = {
-		.read_write = MMIO_WRITE,
+		.read_write = MMIO_READ,
 		.reg = MMIO_REGS_PS_DEPTH_COUNT,
 		.data = &q->Result 
 	};
-	intel->stats_wm = GL_TRUE;
+	intel->stats_wm++;
 	intelFinish(&intel->ctx);
 	drmCommandRead(intel->driFd, DRM_I830_MMIO, &io, sizeof(io));
 }
@@ -281,7 +281,7 @@ intelEndQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 	drmCommandRead(intel->driFd, DRM_I830_MMIO, &io, sizeof(io));
 	q->Result = tmp - q->Result;
 	q->Ready = GL_TRUE;
-	intel->stats_wm = GL_FALSE;
+	intel->stats_wm--;
 }
 
 
