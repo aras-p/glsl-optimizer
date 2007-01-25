@@ -466,7 +466,7 @@ static void replay_init( struct copy_context *copy )
    /* Allocate an output element list:
     */
    copy->dstelt_size = MIN2(65536,
-			    copy->ib->count * 2);
+			    copy->ib->count * 2 + 3);
    copy->dstelt_size = MIN2(copy->dstelt_size,
 			    copy->limits->max_indices);
    copy->dstelt = _mesa_malloc(sizeof(GLuint) * copy->dstelt_size);
