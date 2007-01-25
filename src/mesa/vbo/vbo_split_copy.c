@@ -469,7 +469,7 @@ static void replay_init( struct copy_context *copy )
 			    copy->ib->count * 2);
    copy->dstelt_size = MIN2(copy->dstelt_size,
 			    copy->limits->max_indices);
-   copy->dstelt = _mesa_malloc(copy->dstelt_size);
+   copy->dstelt = _mesa_malloc(sizeof(GLuint) * copy->dstelt_size);
    copy->dstelt_nr = 0;
 
    /* Setup the new index buffer to point to the allocated element
