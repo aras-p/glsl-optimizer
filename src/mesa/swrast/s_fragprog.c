@@ -152,6 +152,7 @@ get_register_pointer( GLcontext *ctx,
                       const struct fp_machine *machine,
                       const struct gl_fragment_program *program )
 {
+   /* XXX relative addressing... */
    switch (source->File) {
    case PROGRAM_TEMPORARY:
       ASSERT(source->Index < MAX_PROGRAM_TEMPS);
@@ -547,7 +548,7 @@ init_machine_deriv( GLcontext *ctx,
    }
 
    /* Add derivatives */
-   if (program->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS)) {
+   if (program->Base.InputsRead & FRAG_BIT_WPOS) {
       GLfloat *wpos = (GLfloat*) machine->Inputs[FRAG_ATTRIB_WPOS];
       if (xOrY == 'X') {
          wpos[0] += 1.0F;
@@ -562,7 +563,7 @@ init_machine_deriv( GLcontext *ctx,
          wpos[3] += span->dwdy;
       }
    }
-   if (program->Base.InputsRead & (1 << FRAG_ATTRIB_COL0)) {
+   if (program->Base.InputsRead & FRAG_BIT_COL0) {
       GLfloat *col0 = (GLfloat*) machine->Inputs[FRAG_ATTRIB_COL0];
       if (xOrY == 'X') {
          col0[0] += span->drdx * (1.0F / CHAN_MAXF);
@@ -577,7 +578,7 @@ init_machine_deriv( GLcontext *ctx,
          col0[3] += span->dady * (1.0F / CHAN_MAXF);
       }
    }
-   if (program->Base.InputsRead & (1 << FRAG_ATTRIB_COL1)) {
+   if (program->Base.InputsRead & FRAG_BIT_COL1) {
       GLfloat *col1 = (GLfloat*) machine->Inputs[FRAG_ATTRIB_COL1];
       if (xOrY == 'X') {
          col1[0] += span->dsrdx * (1.0F / CHAN_MAXF);
@@ -592,7 +593,7 @@ init_machine_deriv( GLcontext *ctx,
          col1[3] += 0.0; /*XXX fix */
       }
    }
-   if (program->Base.InputsRead & (1 << FRAG_ATTRIB_FOGC)) {
+   if (program->Base.InputsRead & FRAG_BIT_FOGC) {
       GLfloat *fogc = (GLfloat*) machine->Inputs[FRAG_ATTRIB_FOGC];
       if (xOrY == 'X') {
          fogc[0] += span->dfogdx;
@@ -602,7 +603,7 @@ init_machine_deriv( GLcontext *ctx,
       }
    }
    for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
-      if (program->Base.InputsRead & (1 << (FRAG_ATTRIB_TEX0 + u))) {
+      if (program->Base.InputsRead & FRAG_BIT_TEX(u)) {
          GLfloat *tex = (GLfloat*) machine->Inputs[FRAG_ATTRIB_TEX0 + u];
          /* XXX perspective-correct interpolation */
          if (xOrY == 'X') {
@@ -621,13 +622,20 @@ init_machine_deriv( GLcontext *ctx,
    }
 
    for (v = 0; v < ctx->Const.MaxVarying; v++) {
-      if (program->Base.InputsRead & (1 << (FRAG_ATTRIB_VAR0 + v))) {
+      if (program->Base.InputsRead & FRAG_BIT_VAR(v)) {
          GLfloat *var = (GLfloat*) machine->Inputs[FRAG_ATTRIB_VAR0 + v];
-         /* XXXX finish this */
-         var[0] += span->varStepX[v][0];
-         var[1] += span->varStepX[v][1];
-         var[2] += span->varStepX[v][2];
-         var[3] += span->varStepX[v][3];
+         if (xOrY == 'X') {
+            var[0] += span->varStepX[v][0];
+            var[1] += span->varStepX[v][1];
+            var[2] += span->varStepX[v][2];
+            var[3] += span->varStepX[v][3];
+         }
+         else {
+            var[0] += span->varStepY[v][0];
+            var[1] += span->varStepY[v][1];
+            var[2] += span->varStepY[v][2];
+            var[3] += span->varStepY[v][3];
+         }
       }
    }
 
@@ -1640,7 +1648,7 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
    }
 
    /* Load input registers */
-   if (inputsRead & (1 << FRAG_ATTRIB_WPOS)) {
+   if (inputsRead & FRAG_BIT_WPOS) {
       GLfloat *wpos = machine->Inputs[FRAG_ATTRIB_WPOS];
       ASSERT(span->arrayMask & SPAN_Z);
       if (span->arrayMask & SPAN_XY) {
@@ -1654,17 +1662,17 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
       wpos[2] = (GLfloat) span->array->z[col] / ctx->DrawBuffer->_DepthMaxF;
       wpos[3] = span->w + col * span->dwdx;
    }
-   if (inputsRead & (1 << FRAG_ATTRIB_COL0)) {
+   if (inputsRead & FRAG_BIT_COL0) {
       ASSERT(span->arrayMask & SPAN_RGBA);
       COPY_4V(machine->Inputs[FRAG_ATTRIB_COL0],
               span->array->color.sz4.rgba[col]);
    }
-   if (inputsRead & (1 << FRAG_ATTRIB_COL1)) {
+   if (inputsRead & FRAG_BIT_COL1) {
       ASSERT(span->arrayMask & SPAN_SPEC);
       COPY_4V(machine->Inputs[FRAG_ATTRIB_COL1],
               span->array->color.sz4.spec[col]);
    }
-   if (inputsRead & (1 << FRAG_ATTRIB_FOGC)) {
+   if (inputsRead & FRAG_BIT_FOGC) {
       GLfloat *fogc = machine->Inputs[FRAG_ATTRIB_FOGC];
       ASSERT(span->arrayMask & SPAN_FOG);
       fogc[0] = span->array->fog[col];
@@ -1673,7 +1681,7 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
       fogc[3] = 0.0F;
    }
    for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
-      if (inputsRead & (1 << (FRAG_ATTRIB_TEX0 + u))) {
+      if (inputsRead & FRAG_BIT_TEX(u)) {
          GLfloat *tex = machine->Inputs[FRAG_ATTRIB_TEX0 + u];
          /*ASSERT(ctx->Texture._EnabledCoordUnits & (1 << u));*/
          COPY_4V(tex, span->array->texcoords[u][col]);
@@ -1685,15 +1693,15 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
       }
    }
    for (v = 0; v < ctx->Const.MaxVarying; v++) {
-      if (inputsRead & (1 << (FRAG_ATTRIB_VAR0 + v))) {
+      if (inputsRead & FRAG_BIT_VAR(v)) {
 #if 0
          printf("Frag Var %d at y=%d: %f %f %f\n", v, col,
-                span->array->varying[col][v][0],
-                span->array->varying[col][v][1],
-                span->array->varying[col][v][2]);
+                span->array->varying[v][col][0],
+                span->array->varying[v][col][1],
+                span->array->varying[v][col][2]);
 #endif
          COPY_4V(machine->Inputs[FRAG_ATTRIB_VAR0 + v],
-                 span->array->varying[col][v]);
+                 span->array->varying[v][col]);
       }
    }
 
