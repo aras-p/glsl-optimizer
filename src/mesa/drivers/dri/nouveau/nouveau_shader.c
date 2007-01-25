@@ -179,7 +179,7 @@ nvsBuildTextShader(GLcontext *ctx, GLenum target, const char *text)
 				     strlen(text),
 				     &nvs->mesa.vp);
    } else if (target == GL_FRAGMENT_PROGRAM_ARB) {
-      _mesa_init_fragment_program(ctx, &nvs->mesa.fp, GL_VERTEX_PROGRAM_ARB, 0);
+      _mesa_init_fragment_program(ctx, &nvs->mesa.fp, GL_FRAGMENT_PROGRAM_ARB, 0);
       _mesa_parse_arb_fragment_program(ctx,
 	    			       GL_FRAGMENT_PROGRAM_ARB,
 				       text,

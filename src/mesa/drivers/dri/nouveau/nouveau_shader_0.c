@@ -402,6 +402,7 @@ pass0_emit(nouveauShader *nvs, nvsFragmentHeader *parent, int fpos,
 	sif->saturate	= saturate;
 	sif->dest	= dst;
 	sif->mask	= mask;
+	sif->dest_scale	= NVS_SCALE_1X;
 	sif->src[0]	= src0;
 	sif->src[1]	= src1;
 	sif->src[2]	= src2;
@@ -667,25 +668,13 @@ pass0_emulate_instruction(nouveauShader *nvs,
 		}
 		break;
 	case OPCODE_RSQ:
-		if (rec->const_half.file != NVS_FILE_CONST) {
-			GLfloat const_half[4] = { 0.5, 0.0, 0.0, 0.0 };
-			pass0_make_reg(nvs, &rec->const_half, NVS_FILE_CONST,
-					_mesa_add_unnamed_constant(
-						nvs->mesa.vp.Base.Parameters,
-						const_half, 4));
-			COPY_4V(nvs->params[rec->const_half.index].val,
-				const_half);
-		}
 		pass0_make_reg(nvs, &temp, NVS_FILE_TEMP, -1);
 		ARITHu(NVS_OP_LG2, temp, SMASK_X, 0,
 				 nvsAbs(nvsSwizzle(src[0], X, X, X, X)),
 				 nvr_unused, nvr_unused);
-		ARITHu(NVS_OP_MUL, temp, SMASK_X, 0,
-				 nvsSwizzle(temp, X, X, X, X),
-				 nvsNegate(rec->const_half),
-				 nvr_unused);
+		nvsinst->dest_scale = NVS_SCALE_INV_2X;
 		ARITH (NVS_OP_EX2, dest, mask, sat,
-				 nvsSwizzle(temp, X, X, X, X),
+				 nvsNegate(nvsSwizzle(temp, X, X, X, X)),
 				 nvr_unused, nvr_unused);
 		break;
 	case OPCODE_SCS:

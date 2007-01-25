@@ -399,8 +399,8 @@
 
 /* high order bits of SRC1 */
 #define NV40_FP_OP_OPCODE_IS_BRANCH                                      (1<<31)
-#define NV40_FP_OP_SRC_SCALE_SHIFT                                            28
-#define NV40_FP_OP_SRC_SCALE_MASK                                      (3 << 28)
+#define NV40_FP_OP_DST_SCALE_SHIFT                                            28
+#define NV40_FP_OP_DST_SCALE_MASK                                      (3 << 28)
 
 /* SRC1 LOOP */
 #define NV40_FP_OP_LOOP_INCR_SHIFT                                            19

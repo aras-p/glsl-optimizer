@@ -194,6 +194,16 @@ typedef enum {
    NVS_TEX_TARGET_UNKNOWN = 0
 } nvsTexTarget;
 
+typedef enum {
+	NVS_SCALE_1X	 = 0,
+	NVS_SCALE_2X	 = 1,
+	NVS_SCALE_4X	 = 2,
+	NVS_SCALE_8X	 = 3,
+	NVS_SCALE_INV_2X = 5,
+	NVS_SCALE_INV_4X = 6,
+	NVS_SCALE_INV_8X = 7,
+} nvsScale;
+
 /* Arith/TEX instructions */
 typedef struct nvs_instruction {
    nvsFragmentHeader header;
@@ -203,6 +213,7 @@ typedef struct nvs_instruction {
 
    nvsRegister	dest;
    unsigned int	mask;
+   nvsScale	dest_scale;
 
    nvsRegister	src[3];
 
@@ -307,6 +318,7 @@ struct _nvsFunc {
 
    void		(*InitInstruction)	(nvsFunc *);
    int		(*SupportsOpcode)	(nvsFunc *, nvsOpcode);
+   int		(*SupportsResultScale)	(nvsFunc *, nvsScale);
    void		(*SetOpcode)		(nvsFunc *, unsigned int opcode,
 	 				 int slot);
    void		(*SetCCUpdate)		(nvsFunc *);
@@ -314,6 +326,7 @@ struct _nvsFunc {
 	 				 nvsSwzComp *swizzle);
    void		(*SetResult)		(nvsFunc *, nvsRegister *,
 	 				 unsigned int mask, int slot);
+   void		(*SetResultScale)	(nvsFunc *, nvsScale);
    void		(*SetSource)		(nvsFunc *, nvsRegister *, int pos);
    void		(*SetTexImageUnit)	(nvsFunc *, int unit);
    void		(*SetSaturate)		(nvsFunc *);
