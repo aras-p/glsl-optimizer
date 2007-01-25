@@ -302,11 +302,12 @@ vbo_exec_DrawRangeElements(GLenum mode,
        * worry about performance implications of start > 0.
        *
        * XXX: consider passing start as min_index to draw_prims instead.
+       * XXX: don't rebase because it didn't work.
        */
       ib.rebase = 0;
    }
    else {
-      ib.rebase = start;
+      ib.rebase = /*start*/ 0;
    }
 
    prim[0].begin = 1;
@@ -318,7 +319,7 @@ vbo_exec_DrawRangeElements(GLenum mode,
    prim[0].count = count;
    prim[0].indexed = 1;
 
-   vbo->draw_prims( ctx, exec->array.inputs, prim, 1, &ib, ib.rebase, end+1 );
+   vbo->draw_prims( ctx, exec->array.inputs, prim, 1, &ib, /*ib.rebase*/ start, end+1 );
 }
 
 
