@@ -822,26 +822,29 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
 static INLINE void
 interpolate_varying(GLcontext *ctx, SWspan *span)
 {
-   GLuint i, j;
+   GLuint var;
+   const GLbitfield inputsUsed = ctx->FragmentProgram._Current->Base.InputsRead;
 
    ASSERT(span->interpMask & SPAN_VARYING);
    ASSERT(!(span->arrayMask & SPAN_VARYING));
 
    span->arrayMask |= SPAN_VARYING;
 
-   for (i = 0; i < MAX_VARYING; i++) {
-      for (j = 0; j < 4; j++) {
-         const GLfloat dvdx = span->varStepX[i][j];
-         GLfloat v = span->var[i][j];
-         const GLfloat dwdx = span->dwdx;
-         GLfloat w = span->w;
-         GLuint k;
-
-         for (k = 0; k < span->end; k++) {
-            GLfloat invW = 1.0f / w;
-            span->array->varying[k][i][j] = v * invW;
-            v += dvdx;
-            w += dwdx;
+   for (var = 0; var < MAX_VARYING; var++) {
+      if (inputsUsed & FRAG_BIT_VAR(var)) {
+         GLuint j;
+         for (j = 0; j < 4; j++) {
+            const GLfloat dvdx = span->varStepX[var][j];
+            GLfloat v = span->var[var][j];
+            const GLfloat dwdx = span->dwdx;
+            GLfloat w = span->w;
+            GLuint k;
+            for (k = 0; k < span->end; k++) {
+               GLfloat invW = 1.0f / w;
+               span->array->varying[var][k][j] = v * invW;
+               v += dvdx;
+               w += dwdx;
+            }
          }
       }
    }
@@ -852,25 +855,37 @@ interpolate_varying(GLcontext *ctx, SWspan *span)
  * Apply the current polygon stipple pattern to a span of pixels.
  */
 static INLINE void
-stipple_polygon_span( GLcontext *ctx, SWspan *span )
+stipple_polygon_span(GLcontext *ctx, SWspan *span)
 {
-   const GLuint highbit = 0x80000000;
-   const GLuint stipple = ctx->PolygonStipple[span->y % 32];
    GLubyte *mask = span->array->mask;
-   GLuint i, m;
 
    ASSERT(ctx->Polygon.StippleFlag);
-   ASSERT((span->arrayMask & SPAN_XY) == 0);
 
-   m = highbit >> (GLuint) (span->x % 32);
-
-   for (i = 0; i < span->end; i++) {
-      if ((m & stipple) == 0) {
-	 mask[i] = 0;
+   if (span->arrayMask & SPAN_XY) {
+      /* arrays of x/y pixel coords */
+      GLuint i;
+      for (i = 0; i < span->end; i++) {
+         const GLint col = span->array->x[i] % 32;
+         const GLint row = span->array->y[i] % 32;
+         const GLuint stipple = ctx->PolygonStipple[row];
+         if (((1 << col) & stipple) == 0) {
+            mask[i] = 0;
+         }
       }
-      m = m >> 1;
-      if (m == 0) {
-         m = highbit;
+   }
+   else {
+      /* horizontal span of pixels */
+      const GLuint highBit = 1 << 31;
+      const GLuint stipple = ctx->PolygonStipple[span->y % 32];
+      GLuint i, m = highBit >> (GLuint) (span->x % 32);
+      for (i = 0; i < span->end; i++) {
+         if ((m & stipple) == 0) {
+            mask[i] = 0;
+         }
+         m = m >> 1;
+         if (m == 0) {
+            m = highBit;
+         }
       }
    }
    span->writeAll = GL_FALSE;
@@ -1295,7 +1310,7 @@ clamp_colors(SWspan *span)
  * Convert the span's color arrays to the given type.
  */
 static INLINE void
-convert_color_type(GLcontext *ctx, SWspan *span, GLenum newType)
+convert_color_type(SWspan *span, GLenum newType)
 {
    GLvoid *src, *dst;
    if (span->array->ChanType == GL_UNSIGNED_BYTE) {
@@ -1598,7 +1613,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
       if (numDrawBuffers > 0) {
          if (fb->_ColorDrawBuffers[output][0]->DataType
              != span->array->ChanType) {
-            convert_color_type(ctx, span,
+            convert_color_type(span,
                                fb->_ColorDrawBuffers[output][0]->DataType);
          }
       }
@@ -1656,9 +1671,9 @@ end:
 
 
 /**
- * Read RGBA pixels from frame buffer.  Clipping will be done to prevent
+ * Read RGBA pixels from a renderbuffer.  Clipping will be done to prevent
  * reading ouside the buffer's boundaries.
- * \param type  datatype for returned colors
+ * \param dstType  datatype for returned colors
  * \param rgba  the returned colors
  */
 void
@@ -1723,7 +1738,7 @@ _swrast_read_rgba_span( GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 /**
- * Read CI pixels from frame buffer.  Clipping will be done to prevent
+ * Read CI pixels from a renderbuffer.  Clipping will be done to prevent
  * reading ouside the buffer's boundaries.
  */
 void
@@ -1805,7 +1820,8 @@ _swrast_get_values(GLcontext *ctx, struct gl_renderbuffer *rb,
    GLuint i, inCount = 0, inStart = 0;
 
    for (i = 0; i < count; i++) {
-      if (x[i] >= 0 && y[i] >= 0 && x[i] < rb->Width && y[i] < rb->Height) {
+      if (x[i] >= 0 && y[i] >= 0 &&
+	  x[i] < (GLint) rb->Width && y[i] < (GLint) rb->Height) {
          /* inside */
          if (inCount == 0)
             inStart = i;
@@ -1839,13 +1855,13 @@ _swrast_put_row(GLcontext *ctx, struct gl_renderbuffer *rb,
 {
    GLint skip = 0;
 
-   if (y < 0 || y >= rb->Height)
+   if (y < 0 || y >= (GLint) rb->Height)
       return; /* above or below */
 
-   if (x + (GLint) count <= 0 || x >= rb->Width)
+   if (x + (GLint) count <= 0 || x >= (GLint) rb->Width)
       return; /* entirely left or right */
 
-   if (x + count > rb->Width) {
+   if ((GLint) (x + count) > (GLint) rb->Width) {
       /* right clip */
       GLint clip = x + count - rb->Width;
       count -= clip;
@@ -1874,10 +1890,10 @@ _swrast_get_row(GLcontext *ctx, struct gl_renderbuffer *rb,
 {
    GLint skip = 0;
 
-   if (y < 0 || y >= rb->Height)
+   if (y < 0 || y >= (GLint) rb->Height)
       return; /* above or below */
 
-   if (x + (GLint) count <= 0 || x >= rb->Width)
+   if (x + (GLint) count <= 0 || x >= (GLint) rb->Width)
       return; /* entirely left or right */
 
    if (x + count > rb->Width) {
