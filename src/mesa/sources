@@ -243,8 +243,7 @@ X86_SOURCES =			\
 	x86/sse_xform3.S	\
 	x86/sse_xform4.S	\
 	x86/sse_normal.S	\
-	x86/read_rgba_span_x86.S \
-	tnl/t_vtx_x86_gcc.S
+	x86/read_rgba_span_x86.S
 
 X86_API =			\
 	x86/glapi_x86.S
