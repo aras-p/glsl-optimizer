@@ -574,27 +574,35 @@ _mesa_ffs(int i)
 #endif
 }
 
+
+/**
+ * Find position of first bit set in given value.
+ * XXX Warning: this function can only be used on 64-bit systems!
+ * \return  position of lest significant bit set, starting at 1, return zero
+ *          if no bits set.
+ */
 int
 _mesa_ffsll(long long val)
 {
 #ifdef ffsll
-	return ffsll(val);
+   return ffsll(val);
 #else
-	int bit;
+   int bit;
 
-	assert(sizeof(val) == 8);
+   assert(sizeof(val) == 8);
 
-	bit = ffs(val);
-	if (bit != 0)
-		return bit;
+   bit = ffs(val);
+   if (bit != 0)
+      return bit;
 
-	bit = ffs(val >> 32);
-	if (bit != 0)
-		return 32 + bit;
+   bit = ffs(val >> 32);
+   if (bit != 0)
+      return 32 + bit;
 
-	return 0;
+   return 0;
 #endif
 }
+
 
 /**
  * Return number of bits set in given GLuint.
