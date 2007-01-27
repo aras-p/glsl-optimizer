@@ -688,6 +688,9 @@ _mesa_pow(double x, double y);
 extern int
 _mesa_ffs(int i);
 
+extern int
+_mesa_ffsll(long long i);
+
 extern unsigned int
 _mesa_bitcount(unsigned int n);
 

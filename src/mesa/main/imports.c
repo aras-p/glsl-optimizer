@@ -574,6 +574,27 @@ _mesa_ffs(int i)
 #endif
 }
 
+int
+_mesa_ffsll(long long val)
+{
+#ifdef ffsll
+	return ffsll(val);
+#else
+	int bit;
+
+	assert(sizeof(val) == 8);
+
+	bit = ffs(val);
+	if (bit != 0)
+		return bit;
+
+	bit = ffs(val >> 32);
+	if (bit != 0)
+		return 32 + bit;
+
+	return 0;
+#endif
+}
 
 /**
  * Return number of bits set in given GLuint.
@@ -1176,16 +1197,6 @@ default_fprintf(__GLcontext *gc, void *stream, const char *fmt, ...)
    return r;
 }
 
-/**
- * \todo this really is driver-specific and can't be here 
- */
-static __GLdrawablePrivate *
-default_GetDrawablePrivate(__GLcontext *gc)
-{
-   (void) gc;
-   return NULL;
-}
-
 /*@}*/
 
 
@@ -1222,6 +1233,7 @@ _mesa_init_default_imports(__GLimports *imports, void *driverCtx)
    imports->fopen = default_fopen;
    imports->fclose = default_fclose;
    imports->fprintf = default_fprintf;
-   imports->getDrawablePrivate = default_GetDrawablePrivate;
+   imports->getDrawablePrivate = NULL; /* driver-specific */
+   imports->getReadablePrivate = NULL; /* driver-specific */
    imports->other = driverCtx;
 }

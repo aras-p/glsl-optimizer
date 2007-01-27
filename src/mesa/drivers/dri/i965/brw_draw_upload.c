@@ -414,7 +414,7 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
     */
    
    while (tmp) {
-      GLuint i = ffsll(tmp)-1;
+      GLuint i = _mesa_ffsll(tmp)-1;
       struct brw_vertex_element *input = &brw->vb.inputs[i];
 
       tmp &= ~((GLuint64EXT)1<<i);

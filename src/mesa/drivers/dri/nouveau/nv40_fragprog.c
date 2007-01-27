@@ -11,6 +11,30 @@ struct _op_xlat NVFP_TX_BOP[64];
  * 	- These extend the NV30 routines, which are almost identical.  NV40
  * 	  just has branching hacked into the instruction set.
  */
+static int
+NV40FPSupportsResultScale(nvsFunc *shader, nvsScale scale)
+{
+	switch (scale) {
+	case NVS_SCALE_1X:
+	case NVS_SCALE_2X:
+	case NVS_SCALE_4X:
+	case NVS_SCALE_8X:
+	case NVS_SCALE_INV_2X:
+	case NVS_SCALE_INV_4X:
+	case NVS_SCALE_INV_8X:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
+static void
+NV40FPSetResultScale(nvsFunc *shader, nvsScale scale)
+{
+	shader->inst[2] &= ~NV40_FP_OP_DST_SCALE_MASK;
+	shader->inst[2] |= ((unsigned int)scale << NV40_FP_OP_DST_SCALE_SHIFT);
+}
+
 static void
 NV40FPSetBranchTarget(nvsFunc *shader, int addr)
 {
@@ -178,6 +202,9 @@ NV40FPInitShaderFuncs(nvsFunc * shader)
    MOD_OPCODE(NVFP_TX_BOP, NV40_FP_OP_BRA_OPCODE_LOOP, NVS_OP_LOOP, -1, -1, -1);
    MOD_OPCODE(NVFP_TX_BOP, NV40_FP_OP_BRA_OPCODE_REP , NVS_OP_REP , -1, -1, -1);
    MOD_OPCODE(NVFP_TX_BOP, NV40_FP_OP_BRA_OPCODE_RET , NVS_OP_RET , -1, -1, -1);
+
+   shader->SupportsResultScale	= NV40FPSupportsResultScale;
+   shader->SetResultScale	= NV40FPSetResultScale;
 
    /* fragment.facing */
    shader->GetSourceID		= NV40FPGetSourceID;

@@ -61,6 +61,7 @@
 #include "bufmgr.h"
 
 #include "utils.h"
+#include "vblank.h"
 #ifndef INTEL_DEBUG
 int INTEL_DEBUG = (0);
 #endif
@@ -84,11 +85,6 @@ int INTEL_DEBUG = (0);
 
 #ifndef VERBOSE
 int VERBOSE = 0;
-#endif
-
-#if DEBUG_LOCKING
-char *prevLockFile;
-int prevLockLine;
 #endif
 
 /***************************************
@@ -184,8 +180,16 @@ const struct dri_extension card_extensions[] =
     { NULL,                                NULL }
 };
 
-static const struct dri_extension arb_oc_extension = 
+const struct dri_extension arb_oc_extension = 
     { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions};
+
+void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
+{	     
+	struct intel_context *intel = ctx?intel_context(ctx):NULL;
+	driInitExtensions(ctx, card_extensions, enable_imaging);
+	if (!ctx || intel->intelScreen->drmMinor >= 8)
+		driInitSingleExtension (ctx, &arb_oc_extension);
+}
 
 static const struct dri_debug_control debug_control[] =
 {
@@ -248,30 +252,31 @@ static void
 intelBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 {
 	struct intel_context *intel = intel_context( ctx );
-	GLuint64EXT tmp = 0;	
 	drmI830MMIO io = {
-		.read_write = MMIO_WRITE,
+		.read_write = MMIO_READ,
 		.reg = MMIO_REGS_PS_DEPTH_COUNT,
-		.data = &tmp 
+		.data = &q->Result 
 	};
-	intel->stats_wm = GL_TRUE;
+	intel->stats_wm++;
 	intelFinish(&intel->ctx);
-	drmCommandWrite(intel->driFd, DRM_I830_MMIO, &io, sizeof(io));
+	drmCommandRead(intel->driFd, DRM_I830_MMIO, &io, sizeof(io));
 }
 
 static void
 intelEndQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 {
 	struct intel_context *intel = intel_context( ctx );
+	GLuint64EXT tmp;	
 	drmI830MMIO io = {
 		.read_write = MMIO_READ,
 		.reg = MMIO_REGS_PS_DEPTH_COUNT,
-		.data = &q->Result
+		.data = &tmp
 	};
 	intelFinish(&intel->ctx);
 	drmCommandRead(intel->driFd, DRM_I830_MMIO, &io, sizeof(io));
+	q->Result = tmp - q->Result;
 	q->Ready = GL_TRUE;
-	intel->stats_wm = GL_FALSE;
+	intel->stats_wm--;
 }
 
 
@@ -327,6 +332,11 @@ GLboolean intelInitContext( struct intel_context *intel,
    intel->driScreen = sPriv;
    intel->sarea = saPriv;
 
+   driParseConfigFiles (&intel->optionCache, &intelScreen->optionCache,
+		   intel->driScreen->myNum, "i965");
+
+   intel->vblank_flags = (intel->intelScreen->irq_active != 0)
+	   ? driGetDefaultVBlankFlags(&intel->optionCache) : VBLANK_FLAG_NO_IRQ;
 
    ctx->Const.MaxTextureMaxAnisotropy = 2.0;
 
@@ -409,12 +419,7 @@ GLboolean intelInitContext( struct intel_context *intel,
       _mesa_printf("IRQs not active.  Exiting\n");
       exit(1);
    }
- 
-   driInitExtensions( ctx, card_extensions, 
-		      GL_TRUE );
-
-   if (intel->intelScreen->drmMinor >= 8)
-      driInitSingleExtension (ctx, &arb_oc_extension);
+   intelInitExtensions(ctx, GL_TRUE); 
 
    INTEL_DEBUG  = driParseDebugString( getenv( "INTEL_DEBUG" ),
 				       debug_control );
@@ -441,8 +446,8 @@ GLboolean intelInitContext( struct intel_context *intel,
 				 intelScreen->cpp,
 				 intelScreen->front.pitch / intelScreen->cpp,
 				 intelScreen->height,
-				 intelScreen->front.tiled != 0); /* 0: LINEAR */
-
+				 intelScreen->front.size,
+				 intelScreen->front.tiled != 0);
 
    intel->back_region = 
       intel_region_create_static(intel,
@@ -452,6 +457,7 @@ GLboolean intelInitContext( struct intel_context *intel,
 				 intelScreen->cpp,
 				 intelScreen->back.pitch / intelScreen->cpp,
 				 intelScreen->height,
+				 intelScreen->back.size,
                                  intelScreen->back.tiled != 0);
 
    /* Still assuming front.cpp == depth.cpp
@@ -468,6 +474,7 @@ GLboolean intelInitContext( struct intel_context *intel,
 				 intelScreen->cpp,
 				 intelScreen->depth.pitch / intelScreen->cpp,
 				 intelScreen->height,
+				 intelScreen->depth.size,
                                  intelScreen->depth.tiled != 0);
    
    intel_bufferobj_init( intel );
@@ -559,6 +566,9 @@ GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
 
       if ( intel->driDrawable != driDrawPriv ) {
 	 /* Shouldn't the readbuffer be stored also? */
+	 driDrawableInitVBlank( driDrawPriv, intel->vblank_flags,
+		      &intel->vbl_seq );
+
 	 intel->driDrawable = driDrawPriv;
 	 intelWindowMoved( intel );
       }
@@ -692,4 +702,5 @@ void UNLOCK_HARDWARE( struct intel_context *intel )
    DRM_UNLOCK(intel->driFd, intel->driHwLock, intel->hHWContext);
    _glthread_UNLOCK_MUTEX(lockMutex); 
 }
+
 
