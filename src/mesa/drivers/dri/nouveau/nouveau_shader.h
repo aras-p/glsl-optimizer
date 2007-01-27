@@ -55,6 +55,7 @@ typedef struct _nouveauShader {
    int		inst_count;
 
    nvsCardPriv card_priv;
+   int		vp_attrib_map[NVS_MAX_ATTRIBS];
 
    struct {
       GLfloat  *source_val;	/* NULL if invariant */

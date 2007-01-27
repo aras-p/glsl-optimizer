@@ -787,6 +787,50 @@ pass0_translate_instructions(nouveauShader *nvs, int ipos, int fpos,
 	return GL_TRUE;
 }
 
+static void
+pass0_build_attrib_map(nouveauShader *nvs, struct gl_vertex_program *vp)
+{
+	GLuint inputs_read = vp->Base.InputsRead;
+	GLuint input_alloc = ~0xFFFF;
+	int i;
+
+	for (i=0; i<NVS_MAX_ATTRIBS; i++)
+		nvs->vp_attrib_map[i] = -1;
+
+	while (inputs_read) {
+		int in = ffs(inputs_read) - 1;
+		int hw;
+		inputs_read &= ~(1<<in);
+
+		if (vp->IsNVProgram) {
+			/* NVvp: must alias */
+			if (in >= VERT_ATTRIB_GENERIC0)
+				hw = in - VERT_ATTRIB_GENERIC0;
+			else
+				hw = in;
+		} else {
+			/* ARBvp: may alias
+			 * GL2.0: must not alias
+			 */
+			if (in >= VERT_ATTRIB_GENERIC0)
+				hw = ffs(~input_alloc) - 1;
+			else 
+				hw = in;
+			input_alloc |= (1<<hw);
+		}
+
+		nvs->vp_attrib_map[hw] = in;
+	}
+
+	if (NOUVEAU_DEBUG & DEBUG_SHADERS) {
+		printf("vtxprog attrib map:\n");
+		for (i=0; i<NVS_MAX_ATTRIBS; i++) {
+			printf(" hw:%d = attrib:%d\n",
+					i, nvs->vp_attrib_map[i]);
+		}
+	}
+}
+
 GLboolean
 nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 {
@@ -800,6 +844,8 @@ nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 	switch (prog->Target) {
 	case GL_VERTEX_PROGRAM_ARB:
 		nvs->func = &nmesa->VPfunc;
+
+		pass0_build_attrib_map(nvs, vp);
 
 		if (vp->IsPositionInvariant)
 			_mesa_insert_mvp_code(ctx, vp);
