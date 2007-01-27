@@ -322,6 +322,7 @@ pass0_make_src_reg(nvsPtr nvs, nvsRegister *reg, struct prog_src_register *src)
 {
 	struct gl_program *mesa = (struct gl_program *)&nvs->mesa.vp.Base;
 	struct gl_program_parameter_list *p = mesa->Parameters;
+	int i;
 
 	*reg = nvr_unused;
 
@@ -329,9 +330,14 @@ pass0_make_src_reg(nvsPtr nvs, nvsRegister *reg, struct prog_src_register *src)
 	case PROGRAM_INPUT:
 		reg->file = NVS_FILE_ATTRIB;
 		if (mesa->Target == GL_VERTEX_PROGRAM_ARB) {
-			reg->index = (src->Index < VERT_ATTRIB_MAX) ?
-				_tx_mesa_vp_src_reg[src->Index] :
-				NVS_FR_UNKNOWN;
+			for (i=0; i<NVS_MAX_ATTRIBS; i++) {
+				if (nvs->vp_attrib_map[i] == src->Index) {
+					reg->index = i;
+					break;
+				}
+			}
+			if (i==NVS_MAX_ATTRIBS)
+				reg->index = NVS_FR_UNKNOWN;
 		} else {
 			reg->index = (src->Index < FRAG_ATTRIB_MAX) ?
 				_tx_mesa_fp_src_reg[src->Index] :
