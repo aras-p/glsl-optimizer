@@ -12,6 +12,7 @@ enum DMAObjects {
 	NvCtxSurf2D		= 0x80000020,
 	NvImageBlit		= 0x80000021,
 	NvMemFormat		= 0x80000022,
+	NvCtxSurf3D		= 0x80000023,
 	NvDmaFB			= 0xD0FB0001,
 	NvDmaAGP		= 0xD0AA0001,
 	NvSyncNotify		= 0xD0000001
@@ -21,6 +22,7 @@ enum DMASubchannel {
 	NvSubCtxSurf2D	= 0,
 	NvSubImageBlit	= 1,
 	NvSubMemFormat	= 2,
+	NvSubCtxSurf3D	= 3,
 	NvSub3D		= 7,
 };
 

@@ -267,6 +267,7 @@ static void nv04Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 			break;
 		case GL_FOG:
 			nv04_emit_blend(ctx);
+			nv04_emit_fog_color(ctx);
 			break;
 //		case GL_HISTOGRAM:
 //		case GL_INDEX_LOGIC_OP:
@@ -436,14 +437,54 @@ static void nv04WindowMoved(nouveauContextPtr nmesa)
 /* Initialise any card-specific non-GL related state */
 static GLboolean nv04InitCard(nouveauContextPtr nmesa)
 {
+	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
+	nouveauObjectOnSubchannel(nmesa, NvSubCtxSurf3D, NvCtxSurf3D);
+
+	BEGIN_RING_SIZE(NvSubCtxSurf3D, NV04_CONTEXT_SURFACES_3D_DMA_NOTIFY, 3);
+	OUT_RING(NvDmaFB);
+	OUT_RING(NvDmaFB);
+	OUT_RING(NvDmaFB);
+	BEGIN_RING_SIZE(NvSub3D, NV04_DX5_TEXTURED_TRIANGLE_SURFACE, 1);
+	OUT_RING(NvCtxSurf3D);
 	return GL_TRUE;
 }
 
 /* Update buffer offset/pitch/format */
 static GLboolean nv04BindBuffers(nouveauContextPtr nmesa, int num_color,
-				 nouveau_renderbuffer **color,
-				 nouveau_renderbuffer *depth)
+		nouveau_renderbuffer **color,
+		nouveau_renderbuffer *depth)
 {
+	GLuint x, y, w, h;
+
+	w = color[0]->mesa.Width;
+	h = color[0]->mesa.Height;
+	x = nmesa->drawX;
+	y = nmesa->drawY;
+
+	/* FIXME pitches have to be aligned ! */
+	BEGIN_RING_SIZE(NvSubCtxSurf3D, NV04_CONTEXT_SURFACES_3D_PITCH, 2);
+	OUT_RING(color[0]->pitch|(depth->pitch<<16));
+	OUT_RING(color[0]->offset);
+
+	if (depth) {
+		BEGIN_RING_SIZE(NvSubCtxSurf3D, NV04_CONTEXT_SURFACES_3D_OFFSET_ZETA, 1);
+		OUT_RING(depth->offset);
+	}
+
+	BEGIN_RING_SIZE(NvSubCtxSurf3D, NV04_CONTEXT_SURFACES_3D_CLIP_HORIZONTAL, 2);
+	OUT_RING((w<<16)|x);
+	OUT_RING((h<<16)|y);
+
+	/* FIXME not sure... */
+	BEGIN_RING_SIZE(NvSubCtxSurf3D, NV04_CONTEXT_SURFACES_3D_CLIP_SIZE, 1);
+	OUT_RING((h<<16)|w);
+
+	BEGIN_RING_SIZE(NvSubCtxSurf3D, NV04_CONTEXT_SURFACES_3D_FORMAT, 1);
+	if (color[0]->mesa._ActualFormat == GL_RGBA8)
+		OUT_RING(108/*A8R8G8B8*/);
+	else
+		OUT_RING(103/*R5G6B5*/);
+
 	return GL_TRUE;
 }
 
