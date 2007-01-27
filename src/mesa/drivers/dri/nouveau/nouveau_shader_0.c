@@ -54,18 +54,6 @@ static nvsFixedReg _tx_mesa_fp_dst_reg[FRAG_RESULT_MAX] = {
    NVS_FR_UNKNOWN /* DEPR */
 };
 
-static nvsFixedReg _tx_mesa_vp_src_reg[VERT_ATTRIB_MAX] = {
-   NVS_FR_POSITION, NVS_FR_WEIGHT, NVS_FR_NORMAL, NVS_FR_COL0, NVS_FR_COL1,
-   NVS_FR_FOGCOORD, NVS_FR_UNKNOWN /* COLOR_INDEX */, NVS_FR_UNKNOWN,
-   NVS_FR_TEXCOORD0, NVS_FR_TEXCOORD1, NVS_FR_TEXCOORD2, NVS_FR_TEXCOORD3,
-   NVS_FR_TEXCOORD4, NVS_FR_TEXCOORD5, NVS_FR_TEXCOORD6, NVS_FR_TEXCOORD7,
-/* Generic attribs 0-15, aliased to the above */
-   NVS_FR_POSITION, NVS_FR_WEIGHT, NVS_FR_NORMAL, NVS_FR_COL0, NVS_FR_COL1,
-   NVS_FR_FOGCOORD, NVS_FR_UNKNOWN /* COLOR_INDEX */, NVS_FR_UNKNOWN,
-   NVS_FR_TEXCOORD0, NVS_FR_TEXCOORD1, NVS_FR_TEXCOORD2, NVS_FR_TEXCOORD3,
-   NVS_FR_TEXCOORD4, NVS_FR_TEXCOORD5, NVS_FR_TEXCOORD6, NVS_FR_TEXCOORD7
-};
-
 static nvsFixedReg _tx_mesa_fp_src_reg[FRAG_ATTRIB_MAX] = {
    NVS_FR_POSITION, NVS_FR_COL0, NVS_FR_COL1, NVS_FR_FOGCOORD,
    NVS_FR_TEXCOORD0, NVS_FR_TEXCOORD1, NVS_FR_TEXCOORD2, NVS_FR_TEXCOORD3,
@@ -815,7 +803,7 @@ pass0_build_attrib_map(nouveauShader *nvs, struct gl_vertex_program *vp)
 			else
 				hw = in;
 		} else {
-			/* ARBvp: may alias
+			/* ARBvp: may alias (but we won't)
 			 * GL2.0: must not alias
 			 */
 			if (in >= VERT_ATTRIB_GENERIC0)
