@@ -5318,7 +5318,7 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="GetVertexAttribPointerv" alias="GetVertexAttribPointervARB">
+    <function name="GetVertexAttribPointerv" alias="GetVertexAttribPointervNV">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="pointer" type="GLvoid **" output="true"/>
