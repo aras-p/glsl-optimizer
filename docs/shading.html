@@ -47,10 +47,10 @@ All other major features of the shading language should function.
 <ul>
 <li>Shading language programs are compiled into low-level programs
     very similar to those of GL_ARB_vertex/fragment_program.
-<li>All float/int/bool and vector types currently occupy full
+<li>All vector types (vec2, vec3, vec4, bvec2, etc) currently occupy full
     float[4] registers.
-<li>Float constants are packed so that up to four floats can occupy one
-    program parameter/register.
+<li>Float constants and variables are packed so that up to four floats
+    can occupy one program parameter/register.
 <li>All function calls are inlined.
 <li>Shaders which use too many registers will not compile.
 <li>The quality of generated code is pretty good, register usage is fair.
@@ -67,7 +67,7 @@ These issues will be addressed/resolved in the future.
 <h2>Programming Hints</h2>
 
 <ul>
-<li>Always declare <em>in</em> function parameters as <em>const</em>.
+<li>Declare <em>in</em> function parameters as <em>const</em> whenever possible.
     This improves the efficiency of function inlining.
 </li>
 <br>
