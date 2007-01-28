@@ -455,6 +455,7 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_dot", IR_DOT4, 1, 2 },
    { "vec3_dot", IR_DOT3, 1, 2 },
    { "vec3_cross", IR_CROSS, 1, 2 },
+   { "vec4_lrp", IR_LRP, 1, 3 },
    { "vec4_min", IR_MIN, 1, 2 },
    { "vec4_max", IR_MAX, 1, 2 },
    { "vec4_seq", IR_SEQ, 1, 2 },
@@ -1195,7 +1196,7 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
                    slang_operation *dest)
 {
    const slang_asm_info *info;
-   slang_ir_node *kids[2], *n;
+   slang_ir_node *kids[3], *n;
    GLuint j, firstOperand;
 
    assert(oper->type == slang_oper_asm);
@@ -1206,7 +1207,7 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
                     (char *) oper->a_id);
       assert(info);
    }
-   assert(info->NumParams <= 2);
+   assert(info->NumParams <= 3);
 
    if (info->NumParams == oper->num_children) {
       /* Storage for result is not specified.
@@ -1222,12 +1223,14 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
    }
 
    /* assemble child(ren) */
-   kids[0] = kids[1] = NULL;
+   kids[0] = kids[1] = kids[2] = NULL;
    for (j = 0; j < info->NumParams; j++) {
       kids[j] = _slang_gen_operation(A, &oper->children[firstOperand + j]);
    }
 
    n = new_node(info->Opcode, kids[0], kids[1]);
+   if (kids[2])
+      n->Children[2] = kids[2];
 
    if (firstOperand) {
       /* Setup n->Store to be a particular location.  Otherwise, storage

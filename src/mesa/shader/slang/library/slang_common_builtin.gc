@@ -1029,44 +1029,37 @@ vec4 clamp(const vec4 val, const vec4 minVal, const vec4 maxVal)
 
 float mix(const float x, const float y, const float a)
 {
-   const float d = y - x;
-   return x + d * a;  // MAD
+   __asm vec4_lrp __retVal, a, y, x;
 }
 
 vec2 mix(const vec2 x, const vec2 y, const float a)
 {
-   const vec2 d = y - x;
-   return x + d * a;  // MAD
+   __asm vec4_lrp __retVal, a, y, x;
 }
 
 vec3 mix(const vec3 x, const vec3 y, const float a)
 {
-   const vec3 d = y - x;
-   return x + d * a;  // MAD
+   __asm vec4_lrp __retVal, a, y, x;
 }
 
 vec4 mix(const vec4 x, const vec4 y, const float a)
 {
-   const vec4 d = y - x;
-   return x + d * a;  // MAD
+   __asm vec4_lrp __retVal, a, y, x;
 }
 
 vec2 mix(const vec2 x, const vec2 y, const vec2 a)
 {
-   const vec2 d = y - x;
-   return x + d * a;  // MAD
+   __asm vec4_lrp __retVal, a, y, x;
 }
 
 vec3 mix(const vec3 x, const vec3 y, const vec3 a)
 {
-   const vec3 d = y - x;
-   return x + d * a;  // MAD
+   __asm vec4_lrp __retVal, a, y, x;
 }
 
 vec4 mix(const vec4 x, const vec4 y, const vec4 a)
 {
-   const vec4 d = y - x;
-   return x + d * a;  // MAD
+   __asm vec4_lrp __retVal, a, y, x;
 }
 
 

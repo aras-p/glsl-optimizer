@@ -65,6 +65,7 @@ static slang_ir_info IrInfo[] = {
    { IR_DOT4, "IR_DOT_4", OPCODE_DP4, 1, 2 },
    { IR_DOT3, "IR_DOT_3", OPCODE_DP3, 1, 2 },
    { IR_CROSS, "IR_CROSS", OPCODE_XPD, 3, 2 },
+   { IR_LRP, "IR_LRP", OPCODE_LRP, 4, 3 },
    { IR_MIN, "IR_MIN", OPCODE_MIN, 4, 2 },
    { IR_MAX, "IR_MAX", OPCODE_MAX, 4, 2 },
    { IR_SEQUAL, "IR_SEQUAL", OPCODE_SEQ, 4, 2 },
@@ -684,6 +685,47 @@ emit_unop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 }
 
 
+/**
+ * Generate code for a simple tri-op instruction.
+ */
+static struct prog_instruction *
+emit_triop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
+{
+   struct prog_instruction *inst;
+   const slang_ir_info *info = slang_find_ir_info(n->Opcode);
+
+   assert(info);
+   assert(info->InstOpcode != OPCODE_NOP);
+
+   /* only one tri-op IR node (for now): */
+   assert(info->InstOpcode == OPCODE_LRP);
+
+   /* gen code for children */
+   emit(vt, n->Children[0], prog);
+   emit(vt, n->Children[1], prog);
+   emit(vt, n->Children[2], prog);
+
+   /* gen this instruction */
+   inst = new_instruction(prog, info->InstOpcode);
+   storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
+   storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
+   storage_to_src_reg(&inst->SrcReg[2], n->Children[2]->Store);
+
+   free_temp_storage(vt, n->Children[0]);
+   free_temp_storage(vt, n->Children[1]);
+   free_temp_storage(vt, n->Children[2]);
+
+   if (!n->Store) {
+      if (!alloc_temp_storage(vt, n, info->ResultSize))
+         return NULL;
+   }
+   storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+
+   return inst;
+}
+
+
+
 static struct prog_instruction *
 emit_negation(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 {
@@ -1025,6 +1067,9 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    case IR_DDX:
    case IR_DDY:
       return emit_unop(vt, n, prog);
+   /* trianary operators */
+   case IR_LRP:
+      return emit_triop(vt, n, prog);
    case IR_TEX:
    case IR_TEXB:
    case IR_TEXP:

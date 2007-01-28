@@ -63,6 +63,7 @@ typedef enum
    IR_DOT4,
    IR_DOT3,
    IR_CROSS,   /* vec3 cross product */
+   IR_LRP,
    IR_MIN,
    IR_MAX,
    IR_SEQUAL,  /* Set if args are equal */
@@ -115,11 +116,12 @@ typedef struct _slang_ir_storage slang_ir_storage;
 
 /**
  * Intermediate Representation (IR) tree node
+ * Basically a binary tree, but IR_LRP has three children.
  */
 typedef struct slang_ir_node_
 {
    slang_ir_opcode Opcode;
-   struct slang_ir_node_ *Children[2];
+   struct slang_ir_node_ *Children[3];
    const char *Comment;
    const char *Target;
    GLuint Writemask;  /**< If Opcode == IR_MOVE */
