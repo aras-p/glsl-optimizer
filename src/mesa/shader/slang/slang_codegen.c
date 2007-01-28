@@ -2141,13 +2141,13 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       {
          slang_ir_node *n;
 
-         A->vartable = _slang_push_var_table(A->vartable);
+         _slang_push_var_table(A->vartable);
 
          oper->type = slang_oper_block_no_new_scope; /* temp change */
          n = _slang_gen_operation(A, oper);
          oper->type = slang_oper_block_new_scope; /* restore */
 
-         A->vartable = _slang_pop_var_table(A->vartable);
+         _slang_pop_var_table(A->vartable);
 
          if (n)
             n = new_node(IR_SCOPE, n, NULL);
@@ -2640,7 +2640,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
       A->CurFunction->end_label = slang_atom_pool_gen(A->atoms, "__endOfFunc_main_");
 
    /* push new vartable scope */
-   A->vartable = _slang_push_var_table(A->vartable);
+   _slang_push_var_table(A->vartable);
 
    /* Generate IR tree for the function body code */
    n = _slang_gen_operation(A, fun->body);
@@ -2648,7 +2648,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
       n = new_node(IR_SCOPE, n, NULL);
 
    /* pop vartable, restore previous */
-   A->vartable = _slang_pop_var_table(A->vartable);
+   _slang_pop_var_table(A->vartable);
 
    if (!n) {
       /* XXX record error */

@@ -1978,8 +1978,20 @@ static GLboolean
 parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
                 struct gl_program *program)
 {
+   GET_CURRENT_CONTEXT(ctx);
    slang_output_ctx o;
    GLboolean success;
+   GLuint maxRegs;
+
+   if (unit->type == slang_unit_fragment_builtin ||
+       unit->type == slang_unit_fragment_shader) {
+      maxRegs = ctx->Const.FragmentProgram.MaxTemps;
+   }
+   else {
+      assert(unit->type == slang_unit_vertex_builtin ||
+             unit->type == slang_unit_vertex_shader);
+      maxRegs = ctx->Const.VertexProgram.MaxTemps;
+   }
 
    /* setup output context */
    o.funs = &unit->funs;
@@ -1989,7 +2001,8 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
    o.global_pool = &unit->object->varpool;
    o.machine = &unit->object->machine;
    o.program = program;
-   o.vartable = _slang_push_var_table(NULL);
+   o.vartable = _slang_new_var_table(maxRegs);
+   _slang_push_var_table(o.vartable);
 
    /* parse individual functions and declarations */
    while (*C->I != EXTERNAL_NULL) {

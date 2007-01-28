@@ -332,14 +332,17 @@ slang_print_ir(const slang_ir_node *n, int indent)
  * Allocate temporary storage for an intermediate result (such as for
  * a multiply or add, etc.
  */
-static void
+static GLboolean
 alloc_temp_storage(slang_var_table *vt, slang_ir_node *n, GLint size)
 {
    assert(!n->Var);
    assert(!n->Store);
    assert(size > 0);
    n->Store = _slang_new_ir_storage(PROGRAM_TEMPORARY, -1, size);
-   (void) _slang_alloc_temp(vt, n->Store);
+   if (!_slang_alloc_temp(vt, n->Store)) {
+      RETURN_ERROR("Ran out of registers, too many temporaries", 0);
+   }
+   return GL_TRUE;
 }
 
 
@@ -634,7 +637,8 @@ emit_binop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    }
 
    if (!n->Store) {
-      alloc_temp_storage(vt, n, info->ResultSize);
+      if (!alloc_temp_storage(vt, n, info->ResultSize))
+         return NULL;
    }
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
 
@@ -667,7 +671,8 @@ emit_unop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    free_temp_storage(vt, n->Children[0]);
 
    if (!n->Store) {
-      alloc_temp_storage(vt, n, info->ResultSize);
+      if (!alloc_temp_storage(vt, n, info->ResultSize))
+         return NULL;
    }
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
 
@@ -691,7 +696,8 @@ emit_negation(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    emit(vt, n->Children[0], prog);
 
    if (!n->Store)
-      alloc_temp_storage(vt, n, n->Children[0]->Store->Size);
+      if (!alloc_temp_storage(vt, n, n->Children[0]->Store->Size))
+         return NULL;
 
    inst = new_instruction(prog, OPCODE_MOV);
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
@@ -768,7 +774,8 @@ emit_tex(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    }
 
    if (!n->Store)
-      alloc_temp_storage(vt, n, 4);
+      if (!alloc_temp_storage(vt, n, 4))
+         return NULL;
 
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
 
@@ -880,7 +887,8 @@ emit_cond(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
        * Note: must use full 4-component vector since all four
        * condition codes must be set identically.
        */
-      alloc_temp_storage(vt, n, 4);
+      if (!alloc_temp_storage(vt, n, 4))
+         return NULL;
       inst = new_instruction(prog, OPCODE_MOV);
       inst->CondUpdate = GL_TRUE;
       storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
@@ -912,9 +920,9 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
    case IR_SCOPE:
       /* new variable scope */
-      vt = _slang_push_var_table(vt);
+      _slang_push_var_table(vt);
       inst = emit(vt, n->Children[0], prog);
-      vt = _slang_pop_var_table(vt);
+      _slang_pop_var_table(vt);
       return inst;
 
    case IR_VAR_DECL:
@@ -925,19 +933,20 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       assert(n->Store->Index < 0);
       if (!n->Var || n->Var->isTemp) {
          /* a nameless/temporary variable, will be freed after first use */
-         (void) _slang_alloc_temp(vt, n->Store);
+         if (!_slang_alloc_temp(vt, n->Store))
+            RETURN_ERROR("Ran out of registers, too many temporaries", 0);
       }
       else {
          /* a regular variable */
          _slang_add_variable(vt, n->Var);
-         (void) _slang_alloc_var(vt, n->Store);
+         if (!_slang_alloc_var(vt, n->Store))
+            RETURN_ERROR("Ran out of registers, too many variables", 0);
          /*
          printf("IR_VAR_DECL %s %d store %p\n",
                 (char*) n->Var->a_name, n->Store->Index, (void*) n->Store);
          */
          assert(n->Var->aux == n->Store);
       }
-      assert(n->Store->Index >= 0);
       break;
 
    case IR_VAR:
