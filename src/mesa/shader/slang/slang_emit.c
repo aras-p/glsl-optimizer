@@ -40,7 +40,7 @@
 
 
 #define PEEPHOLE_OPTIMIZATIONS 1
-#define ANNOTATE 0
+#define ANNOTATE 1
 
 
 /**
@@ -336,11 +336,14 @@ static void
 alloc_temp_storage(slang_var_table *vt, slang_ir_node *n, GLint size)
 {
    GLint indx;
+   GLuint swizzle;
    assert(!n->Var);
    assert(!n->Store);
    assert(size > 0);
-   indx = _slang_alloc_temp(vt, size);
+   indx = _slang_alloc_temp(vt, size, &swizzle);
    n->Store = _slang_new_ir_storage(PROGRAM_TEMPORARY, indx, size);
+   if (n->Store)
+      n->Store->Swizzle = swizzle;
 }
 
 
@@ -352,8 +355,8 @@ static void
 free_temp_storage(slang_var_table *vt, slang_ir_node *n)
 {
    if (n->Store->File == PROGRAM_TEMPORARY && n->Store->Index >= 0) {
-      if (_slang_is_temp(vt, n->Store->Index)) {
-         _slang_free_temp(vt, n->Store->Index, n->Store->Size);
+      if (_slang_is_temp(vt, n->Store->Index, n->Store->Swizzle)) {
+         _slang_free_temp(vt, n->Store->Index, n->Store->Size, n->Store->Swizzle);
          /* XXX free(store)? */
          n->Store->Index = -1;
          n->Store->Size = -1;
@@ -381,7 +384,15 @@ storage_to_dst_reg(struct prog_dst_register *dst, const slang_ir_storage *st,
    assert(st->File != PROGRAM_UNDEFINED);
    assert(st->Size >= 1);
    assert(st->Size <= 4);
-   dst->WriteMask = defaultWritemask[st->Size - 1] & writemask;
+   if (st->Size == 1) {
+      GLuint comp = GET_SWZ(st->Swizzle, 0);
+      assert(comp < 4);
+      assert(writemask & WRITEMASK_X);
+      dst->WriteMask = WRITEMASK_X << comp;
+   }
+   else {
+      dst->WriteMask = defaultWritemask[st->Size - 1] & writemask;
+   }
 }
 
 
@@ -803,13 +814,15 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    emit(vt, n->Children[0], prog);
 
 #if PEEPHOLE_OPTIMIZATIONS
-   if (inst && _slang_is_temp(vt, n->Children[1]->Store->Index)) {
+   if (inst && _slang_is_temp(vt, n->Children[1]->Store->Index,
+                              n->Children[1]->Store->Swizzle)) {
       /* Peephole optimization:
        * Just modify the RHS to put its result into the dest of this
        * MOVE operation.  Then, this MOVE is a no-op.
        */
       _slang_free_temp(vt, n->Children[1]->Store->Index,
-                       n->Children[1]->Store->Size);
+                       n->Children[1]->Store->Size,
+                       n->Children[1]->Store->Swizzle);
       *n->Children[1]->Store = *n->Children[0]->Store;
       /* fixup the prev (RHS) instruction */
       assert(n->Children[0]->Store->Index >= 0);
@@ -852,12 +865,7 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          inst->Comment = instruction_annotation(inst->Opcode, dstAnnot,
                                                 srcAnnot, NULL);
       }
-      /* XXX is this test correct? */
-      if (_slang_is_temp(vt, n->Children[1]->Store->Index)) {
-         _slang_free_temp(vt, n->Children[1]->Store->Index,
-                          n->Children[1]->Store->Size);
-      }
-      /*inst->Comment = _mesa_strdup("IR_MOVE");*/
+      free_temp_storage(vt, n->Children[1]);
       assert(!n->Store);
       n->Store = n->Children[0]->Store; /*XXX new */
       return inst;
@@ -883,13 +891,17 @@ emit_cond(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       /* This'll happen for things like "if (i) ..." where no code
        * is normally generated for the expression "i".
        * Generate a move instruction just to set condition codes.
+       * Note: must use full 4-component vector since all four
+       * condition codes must be set identically.
        */
-      alloc_temp_storage(vt, n, 1);
+      alloc_temp_storage(vt, n, 4);
       inst = new_instruction(prog, OPCODE_MOV);
       inst->CondUpdate = GL_TRUE;
       storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
       storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
-      _slang_free_temp(vt, n->Store->Index, n->Store->Size);
+      _slang_free_temp(vt, n->Store->Index, n->Store->Size,
+                       n->Store->Swizzle);
+      inst->Comment = _mesa_strdup("COND expr");
       return inst; /* XXX or null? */
    }
 }
@@ -928,12 +940,16 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       assert(n->Store->Index < 0);
       if (!n->Var || n->Var->isTemp) {
          /* a nameless/temporary variable, will be freed after first use */
-         n->Store->Index = _slang_alloc_temp(vt, n->Store->Size);
+         GLuint swizzle;
+         n->Store->Index = _slang_alloc_temp(vt, n->Store->Size, &swizzle);
+         n->Store->Swizzle = swizzle;
       }
       else {
          /* a regular variable */
+         GLuint swizzle;
          _slang_add_variable(vt, n->Var);
-         n->Store->Index = _slang_alloc_var(vt, n->Store->Size);
+         n->Store->Index = _slang_alloc_var(vt, n->Store->Size, &swizzle);
+         n->Store->Swizzle = swizzle;
          /*
          printf("IR_VAR_DECL %s %d store %p\n",
                 (char*) n->Var->a_name, n->Store->Index, (void*) n->Store);

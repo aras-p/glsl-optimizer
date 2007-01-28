@@ -20,19 +20,16 @@ extern struct slang_variable_ *
 _slang_find_variable(const slang_var_table *t, slang_atom name);
 
 extern GLint
-_slang_alloc_var(slang_var_table *t, GLint size);
-
-extern void
-_slang_reserve_var(slang_var_table *t, GLint r, GLint size);
+_slang_alloc_var(slang_var_table *t, GLint size, GLuint *swizzle);
 
 extern GLint
-_slang_alloc_temp(slang_var_table *t, GLint size);
+_slang_alloc_temp(slang_var_table *t, GLint size, GLuint *swizzle);
 
 extern void
-_slang_free_temp(slang_var_table *t, GLint r, GLint size);
+_slang_free_temp(slang_var_table *t, GLint r, GLint size, GLuint swizzle);
 
 extern GLboolean
-_slang_is_temp(slang_var_table *t, GLint r);
+_slang_is_temp(slang_var_table *t, GLint r, GLuint swizzle);
 
 
 #endif /* SLANG_VARTABLE_H */
