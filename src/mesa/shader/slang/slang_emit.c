@@ -353,7 +353,6 @@ free_temp_storage(slang_var_table *vt, slang_ir_node *n)
    if (n->Store->File == PROGRAM_TEMPORARY && n->Store->Index >= 0) {
       if (_slang_is_temp(vt, n->Store)) {
          _slang_free_temp(vt, n->Store);
-         /* XXX free(store)? */
          n->Store->Index = -1;
          n->Store->Size = -1;
       }
@@ -410,8 +409,6 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st)
    assert(st->File != PROGRAM_UNDEFINED);
    assert(st->Size >= 1);
    assert(st->Size <= 4);
-   /* XXX swizzling logic here may need some work */
-   /*src->Swizzle = swizzle_swizzlee(swizzle, defaultSwizzle[st->Size - 1]);*/
    if (st->Swizzle != SWIZZLE_NOOP)
       src->Swizzle = st->Swizzle;
    else
@@ -579,13 +576,9 @@ emit_binop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    struct prog_instruction *inst;
    const slang_ir_info *info = slang_find_ir_info(n->Opcode);
    char *srcAnnot0 = NULL, *srcAnnot1 = NULL, *dstAnnot = NULL;
+
    assert(info);
-
    assert(info->InstOpcode != OPCODE_NOP);
-
-   /* XXX check if Opcode == OPCODE_ADD, then check if either child is a MUL,
-    * replace with MAD instruction.
-    */
 
 #if PEEPHOLE_OPTIMIZATIONS
    /* Look for MAD opportunity */
