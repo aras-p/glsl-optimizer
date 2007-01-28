@@ -3,6 +3,7 @@
 
 #include "nouveau_buffers.h"
 
+#define NV_NOTIFIER_SIZE                                                      32
 #define NV_NOTIFY_TIME_0                                              0x00000000
 #define NV_NOTIFY_TIME_1                                              0x00000004
 #define NV_NOTIFY_RETURN_VALUE                                        0x00000008
@@ -24,10 +25,13 @@ typedef struct nouveau_notifier_t {
 	nouveau_mem *mem;
 } nouveau_notifier;
 
-extern nouveau_notifier *nouveau_notifier_new(GLcontext *, GLuint handle);
+extern nouveau_notifier *nouveau_notifier_new(GLcontext *, GLuint handle,
+					      GLuint count);
 extern void nouveau_notifier_destroy(GLcontext *, nouveau_notifier *);
-extern void nouveau_notifier_reset(nouveau_notifier *);
-extern GLboolean nouveau_notifier_wait_status(nouveau_notifier *r,
+extern void nouveau_notifier_reset(nouveau_notifier *, GLuint id);
+extern GLuint nouveau_notifier_status(nouveau_notifier *, GLuint id);
+extern GLuint nouveau_notifier_return_val(nouveau_notifier *, GLuint id);
+extern GLboolean nouveau_notifier_wait_status(nouveau_notifier *r, GLuint id,
 					      GLuint status, GLuint timeout);
 extern void nouveau_notifier_wait_nop(GLcontext *ctx,
       				      nouveau_notifier *, GLuint subc);
