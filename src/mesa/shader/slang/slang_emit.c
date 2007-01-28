@@ -503,8 +503,8 @@ storage_annotation(const slang_ir_node *n, const struct gl_program *prog)
  * Return an annotation string for an instruction.
  */
 static char *
-instruction_annotation(gl_inst_opcode opcode,
-                       char *dstAnnot, char *srcAnnot0, char *srcAnnot1)
+instruction_annotation(gl_inst_opcode opcode, char *dstAnnot,
+                       char *srcAnnot0, char *srcAnnot1, char *srcAnnot2)
 {
 #if ANNOTATE
    const char *operator;
@@ -525,6 +525,11 @@ instruction_annotation(gl_inst_opcode opcode,
       len += strlen(srcAnnot1);
    else
       srcAnnot1 = _mesa_strdup("");
+
+   if (srcAnnot2)
+      len += strlen(srcAnnot2);
+   else
+      srcAnnot2 = _mesa_strdup("");
 
    switch (opcode) {
    case OPCODE_ADD:
@@ -556,12 +561,14 @@ instruction_annotation(gl_inst_opcode opcode,
    }
 
    s = (char *) malloc(len);
-   sprintf(s, "%s = %s %s %s", dstAnnot, srcAnnot0, operator, srcAnnot1);
+   sprintf(s, "%s = %s %s %s %s", dstAnnot,
+           srcAnnot0, operator, srcAnnot1, srcAnnot2);
    assert(_mesa_strlen(s) < len);
 
    free(dstAnnot);
    free(srcAnnot0);
    free(srcAnnot1);
+   free(srcAnnot2);
 
    return s;
 #else
@@ -572,21 +579,26 @@ instruction_annotation(gl_inst_opcode opcode,
 
 
 /**
- * Generate code for a simple binary-op instruction.
+ * Generate code for a simple arithmetic instruction.
+ * Either 1, 2 or 3 operands.
  */
 static struct prog_instruction *
-emit_binop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
+emit_arith(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 {
    struct prog_instruction *inst;
    const slang_ir_info *info = slang_find_ir_info(n->Opcode);
-   char *srcAnnot0 = NULL, *srcAnnot1 = NULL, *dstAnnot = NULL;
+   char *srcAnnot[3], *dstAnnot;
+   GLuint i;
 
    assert(info);
    assert(info->InstOpcode != OPCODE_NOP);
 
+   srcAnnot[0] = srcAnnot[1] = srcAnnot[2] = dstAnnot = NULL;
+
 #if PEEPHOLE_OPTIMIZATIONS
    /* Look for MAD opportunity */
-   if (n->Opcode == IR_ADD && n->Children[0]->Opcode == IR_MUL) {
+   if (info->NumParams == 2 &&
+       n->Opcode == IR_ADD && n->Children[0]->Opcode == IR_MUL) {
       /* found pattern IR_ADD(IR_MUL(A, B), C) */
       emit(vt, n->Children[0]->Children[0], prog);  /* A */
       emit(vt, n->Children[0]->Children[1], prog);  /* B */
@@ -601,7 +613,8 @@ emit_binop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       free_temp_storage(vt, n->Children[0]->Children[1]);
       free_temp_storage(vt, n->Children[1]);
    }
-   else if (n->Opcode == IR_ADD && n->Children[1]->Opcode == IR_MUL) {
+   else if (info->NumParams == 2 &&
+            n->Opcode == IR_ADD && n->Children[1]->Opcode == IR_MUL) {
       /* found pattern IR_ADD(A, IR_MUL(B, C)) */
       emit(vt, n->Children[0], prog);  /* A */
       emit(vt, n->Children[1]->Children[0], prog);  /* B */
@@ -622,21 +635,24 @@ emit_binop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       /* normal case */
 
       /* gen code for children */
-      emit(vt, n->Children[0], prog);
-      emit(vt, n->Children[1], prog);
+      for (i = 0; i < info->NumParams; i++)
+         emit(vt, n->Children[i], prog);
 
-      /* gen this instruction */
+      /* gen this instruction and src registers */
       inst = new_instruction(prog, info->InstOpcode);
-      storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
-      storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
+      for (i = 0; i < info->NumParams; i++)
+         storage_to_src_reg(&inst->SrcReg[i], n->Children[i]->Store);
 
-      srcAnnot0 = storage_annotation(n->Children[0], prog);
-      srcAnnot1 = storage_annotation(n->Children[1], prog);
+      /* annotation */
+      for (i = 0; i < info->NumParams; i++)
+         srcAnnot[i] = storage_annotation(n->Children[i], prog);
 
-      free_temp_storage(vt, n->Children[0]);
-      free_temp_storage(vt, n->Children[1]);
+      /* free temps */
+      for (i = 0; i < info->NumParams; i++)
+         free_temp_storage(vt, n->Children[i]);
    }
 
+   /* result storage */
    if (!n->Store) {
       if (!alloc_temp_storage(vt, n, info->ResultSize))
          return NULL;
@@ -644,83 +660,11 @@ emit_binop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
 
    dstAnnot = storage_annotation(n, prog);
-   inst->Comment = instruction_annotation(inst->Opcode, dstAnnot,
-                                          srcAnnot0, srcAnnot1);
+
+   inst->Comment = instruction_annotation(inst->Opcode, dstAnnot, srcAnnot[0],
+                                          srcAnnot[1], srcAnnot[2]);
 
    /*_mesa_print_instruction(inst);*/
-   return inst;
-}
-
-
-static struct prog_instruction *
-emit_unop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
-{
-   struct prog_instruction *inst;
-   const slang_ir_info *info = slang_find_ir_info(n->Opcode);
-   char *srcAnnot, *dstAnnot;
-
-   assert(info);
-   assert(info->NumParams == 1);
-
-   /* gen code for child */
-   emit(vt, n->Children[0], prog);
-
-   /* gen this instruction */
-   inst = new_instruction(prog, info->InstOpcode);
-   storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
-   srcAnnot = storage_annotation(n->Children[0], prog);
-   free_temp_storage(vt, n->Children[0]);
-
-   if (!n->Store) {
-      if (!alloc_temp_storage(vt, n, info->ResultSize))
-         return NULL;
-   }
-   storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
-
-   dstAnnot = storage_annotation(n, prog);
-   inst->Comment = instruction_annotation(inst->Opcode, dstAnnot,
-                                          NULL, srcAnnot);
-
-   return inst;
-}
-
-
-/**
- * Generate code for a simple tri-op instruction.
- */
-static struct prog_instruction *
-emit_triop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
-{
-   struct prog_instruction *inst;
-   const slang_ir_info *info = slang_find_ir_info(n->Opcode);
-
-   assert(info);
-   assert(info->InstOpcode != OPCODE_NOP);
-
-   /* only one tri-op IR node (for now): */
-   assert(info->InstOpcode == OPCODE_LRP);
-
-   /* gen code for children */
-   emit(vt, n->Children[0], prog);
-   emit(vt, n->Children[1], prog);
-   emit(vt, n->Children[2], prog);
-
-   /* gen this instruction */
-   inst = new_instruction(prog, info->InstOpcode);
-   storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
-   storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
-   storage_to_src_reg(&inst->SrcReg[2], n->Children[2]->Store);
-
-   free_temp_storage(vt, n->Children[0]);
-   free_temp_storage(vt, n->Children[1]);
-   free_temp_storage(vt, n->Children[2]);
-
-   if (!n->Store) {
-      if (!alloc_temp_storage(vt, n, info->ResultSize))
-         return NULL;
-   }
-   storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
-
    return inst;
 }
 
@@ -898,7 +842,7 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          dstAnnot = storage_annotation(n->Children[0], prog);
          srcAnnot = storage_annotation(n->Children[1], prog);
          inst->Comment = instruction_annotation(inst->Opcode, dstAnnot,
-                                                srcAnnot, NULL);
+                                                srcAnnot, NULL, NULL);
       }
       free_temp_storage(vt, n->Children[1]);
       assert(!n->Store);
@@ -1038,7 +982,19 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
                                           n->Store->Swizzle);
       return NULL;
 
-   /* Simple binary operators */
+   /* Simple arithmetic */
+   /* unary */
+   case IR_RSQ:
+   case IR_RCP:
+   case IR_FLOOR:
+   case IR_FRAC:
+   case IR_F_TO_I:
+   case IR_ABS:
+   case IR_SIN:
+   case IR_COS:
+   case IR_DDX:
+   case IR_DDY:
+   /* binary */
    case IR_ADD:
    case IR_SUB:
    case IR_MUL:
@@ -1054,22 +1010,9 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    case IR_POW:
    case IR_EXP:
    case IR_EXP2:
-      return emit_binop(vt, n, prog);
-   /* Simple unary operators */
-   case IR_RSQ:
-   case IR_RCP:
-   case IR_FLOOR:
-   case IR_FRAC:
-   case IR_F_TO_I:
-   case IR_ABS:
-   case IR_SIN:
-   case IR_COS:
-   case IR_DDX:
-   case IR_DDY:
-      return emit_unop(vt, n, prog);
-   /* trianary operators */
+   /* trinary operators */
    case IR_LRP:
-      return emit_triop(vt, n, prog);
+      return emit_arith(vt, n, prog);
    case IR_TEX:
    case IR_TEXB:
    case IR_TEXP:
