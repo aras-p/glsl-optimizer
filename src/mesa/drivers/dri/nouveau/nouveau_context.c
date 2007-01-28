@@ -50,6 +50,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_msg.h"
 #include "nouveau_reg.h"
 #include "nouveau_lock.h"
+#include "nouveau_query.h"
 #include "nv04_swtcl.h"
 #include "nv10_swtcl.h"
 
@@ -71,6 +72,7 @@ static const struct dri_debug_control debug_control[] =
 };
 
 #define need_GL_ARB_vertex_program
+#define need_GL_ARB_occlusion_query
 #include "extension_helper.h"
 
 const struct dri_extension common_extensions[] =
@@ -100,6 +102,7 @@ const struct dri_extension nv40_extensions[] =
     * written for those cards.
     */
 	{ "GL_ARB_vertex_program",	GL_ARB_vertex_program_functions },
+	{ "GL_ARB_occlusion_query",	GL_ARB_occlusion_query_functions},
 	{ NULL, 0 }
 };
 
@@ -229,6 +232,7 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	nouveauInitBufferObjects(ctx);
 	if (!nouveauSyncInitFuncs(ctx))
 	   return GL_FALSE;
+	nouveauQueryInitFuncs(ctx);
 	nmesa->hw_func.InitCard(nmesa);
         nouveauInitState(ctx);
 

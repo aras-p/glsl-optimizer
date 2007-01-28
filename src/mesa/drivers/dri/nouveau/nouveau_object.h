@@ -15,7 +15,8 @@ enum DMAObjects {
 	NvCtxSurf3D		= 0x80000023,
 	NvDmaFB			= 0xD0FB0001,
 	NvDmaAGP		= 0xD0AA0001,
-	NvSyncNotify		= 0xD0000001
+	NvSyncNotify		= 0xD0000001,
+	NvQueryNotify		= 0xD0000002
 };
 
 enum DMASubchannel {
