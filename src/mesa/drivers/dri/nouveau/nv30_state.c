@@ -559,7 +559,7 @@ static void nv30LineWidth(GLcontext *ctx, GLfloat width)
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	GLubyte ubWidth;
 
-	CLAMPED_FLOAT_TO_UBYTE(ubWidth, width);
+	ubWidth = (GLubyte)(width * 8.0) & 0xFF;
 
 	BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LINE_WIDTH_SMOOTH, 1);
 	OUT_RING_CACHE(ubWidth);
