@@ -102,13 +102,15 @@ typedef enum
 /**
  * Describes where data storage is allocated.
  */
-typedef struct
+struct _slang_ir_storage
 {
    enum register_file File;  /**< PROGRAM_TEMPORARY, PROGRAM_INPUT, etc */
    GLint Index;  /**< -1 means unallocated */
    GLint Size;  /**< number of floats */
    GLuint Swizzle;
-} slang_ir_storage;
+};
+
+typedef struct _slang_ir_storage slang_ir_storage;
 
 
 /**

@@ -335,15 +335,11 @@ slang_print_ir(const slang_ir_node *n, int indent)
 static void
 alloc_temp_storage(slang_var_table *vt, slang_ir_node *n, GLint size)
 {
-   GLint indx;
-   GLuint swizzle;
    assert(!n->Var);
    assert(!n->Store);
    assert(size > 0);
-   indx = _slang_alloc_temp(vt, size, &swizzle);
-   n->Store = _slang_new_ir_storage(PROGRAM_TEMPORARY, indx, size);
-   if (n->Store)
-      n->Store->Swizzle = swizzle;
+   n->Store = _slang_new_ir_storage(PROGRAM_TEMPORARY, -1, size);
+   (void) _slang_alloc_temp(vt, n->Store);
 }
 
 
@@ -355,8 +351,8 @@ static void
 free_temp_storage(slang_var_table *vt, slang_ir_node *n)
 {
    if (n->Store->File == PROGRAM_TEMPORARY && n->Store->Index >= 0) {
-      if (_slang_is_temp(vt, n->Store->Index, n->Store->Swizzle)) {
-         _slang_free_temp(vt, n->Store->Index, n->Store->Size, n->Store->Swizzle);
+      if (_slang_is_temp(vt, n->Store)) {
+         _slang_free_temp(vt, n->Store);
          /* XXX free(store)? */
          n->Store->Index = -1;
          n->Store->Size = -1;
@@ -814,15 +810,12 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    emit(vt, n->Children[0], prog);
 
 #if PEEPHOLE_OPTIMIZATIONS
-   if (inst && _slang_is_temp(vt, n->Children[1]->Store->Index,
-                              n->Children[1]->Store->Swizzle)) {
+   if (inst && _slang_is_temp(vt, n->Children[1]->Store)) {
       /* Peephole optimization:
        * Just modify the RHS to put its result into the dest of this
        * MOVE operation.  Then, this MOVE is a no-op.
        */
-      _slang_free_temp(vt, n->Children[1]->Store->Index,
-                       n->Children[1]->Store->Size,
-                       n->Children[1]->Store->Swizzle);
+      _slang_free_temp(vt, n->Children[1]->Store);
       *n->Children[1]->Store = *n->Children[0]->Store;
       /* fixup the prev (RHS) instruction */
       assert(n->Children[0]->Store->Index >= 0);
@@ -899,8 +892,7 @@ emit_cond(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       inst->CondUpdate = GL_TRUE;
       storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
       storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
-      _slang_free_temp(vt, n->Store->Index, n->Store->Size,
-                       n->Store->Swizzle);
+      _slang_free_temp(vt, n->Store);
       inst->Comment = _mesa_strdup("COND expr");
       return inst; /* XXX or null? */
    }
@@ -940,16 +932,12 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       assert(n->Store->Index < 0);
       if (!n->Var || n->Var->isTemp) {
          /* a nameless/temporary variable, will be freed after first use */
-         GLuint swizzle;
-         n->Store->Index = _slang_alloc_temp(vt, n->Store->Size, &swizzle);
-         n->Store->Swizzle = swizzle;
+         (void) _slang_alloc_temp(vt, n->Store);
       }
       else {
          /* a regular variable */
-         GLuint swizzle;
          _slang_add_variable(vt, n->Var);
-         n->Store->Index = _slang_alloc_var(vt, n->Store->Size, &swizzle);
-         n->Store->Swizzle = swizzle;
+         (void) _slang_alloc_var(vt, n->Store);
          /*
          printf("IR_VAR_DECL %s %d store %p\n",
                 (char*) n->Var->a_name, n->Store->Index, (void*) n->Store);

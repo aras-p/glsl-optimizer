@@ -24,8 +24,8 @@ struct slang_var_table_
    int num_entries;
    slang_variable **vars;  /* array [num_entries] */
 
-   TempState temps[MAX_PROGRAM_TEMPS * 4];
-   int size[MAX_PROGRAM_TEMPS];
+   TempState temps[MAX_PROGRAM_TEMPS * 4];  /* per-component state */
+   int size[MAX_PROGRAM_TEMPS];     /* For debug only */
 
    struct slang_var_table_ *parent;
 };
@@ -94,7 +94,7 @@ _slang_pop_var_table(slang_var_table *t)
        * were for temps
        */
       for (i = 0; i < MAX_PROGRAM_TEMPS * 4; i++) {
-         if (t->temps[i] && !t->parent->temps[i]) {
+         if (t->temps[i] != FREE && t->parent->temps[i] == FREE) {
             if (dbg) printf("  Free reg %d\n", i/4);
             assert(t->temps[i] == TEMP);
          }
@@ -160,7 +160,7 @@ alloc_reg(slang_var_table *t, GLint size, GLboolean isTemp)
    for (i = 0; i < MAX_PROGRAM_TEMPS - size; i += step) {
       GLuint found = 0;
       for (j = 0; j < size; j++) {
-         if (i + j < MAX_PROGRAM_TEMPS && !t->temps[i + j]) {
+         if (i + j < MAX_PROGRAM_TEMPS && t->temps[i + j] == FREE) {
             found++;
          }
          else {
@@ -188,24 +188,26 @@ alloc_reg(slang_var_table *t, GLint size, GLboolean isTemp)
  * \param swizzle  returns swizzle mask for accessing var in register
  * \return  register allocated, or -1
  */
-GLint
-_slang_alloc_var(slang_var_table *t, GLint size, GLuint *swizzle)
+GLboolean
+_slang_alloc_var(slang_var_table *t, slang_ir_storage *store)
 {
-   int i = alloc_reg(t, size, GL_FALSE);
+   const int i = alloc_reg(t, store->Size, GL_FALSE);
    if (i < 0)
-      return -1;
+      return GL_FALSE;
 
-   if (size == 1) {
-      GLuint comp = i % 4;
-      *swizzle = MAKE_SWIZZLE4(comp, comp, comp, comp);
-      char swz = "xyzw"[comp];
-      if (dbg) printf("Alloc var sz %d at %d.%c (level %d)\n", size, i/4, swz, t->level);
+   store->Index = i / 4;
+   if (store->Size == 1) {
+      const GLuint comp = i % 4;
+      store->Swizzle = MAKE_SWIZZLE4(comp, comp, comp, comp);
+      if (dbg) printf("Alloc var sz %d at %d.%c (level %d)\n",
+                      store->Size, store->Index, "xyzw"[comp], t->level);
    }
    else {
-      *swizzle = SWIZZLE_NOOP;
-      if (dbg) printf("Alloc var sz %d at %d.xyzw (level %d)\n", size, i/4, t->level);
+      store->Swizzle = SWIZZLE_NOOP;
+      if (dbg) printf("Alloc var sz %d at %d.xyzw (level %d)\n",
+                      store->Size, store->Index, t->level);
    }
-   return i / 4;
+   return GL_TRUE;
 }
 
 
@@ -213,50 +215,50 @@ _slang_alloc_var(slang_var_table *t, GLint size, GLuint *swizzle)
 /**
  * Allocate temp register(s) for storing an unnamed intermediate value.
  */
-GLint
-_slang_alloc_temp(slang_var_table *t, GLint size, GLuint *swizzle)
+GLboolean
+_slang_alloc_temp(slang_var_table *t, slang_ir_storage *store)
 {
-   int i = alloc_reg(t, size, GL_TRUE);
+   const int i = alloc_reg(t, store->Size, GL_TRUE);
    if (i < 0)
-      return -1;
+      return GL_FALSE;
 
-   if (size == 1) {
-      GLuint comp = i % 4;
-      assert(comp < 4);
-      int swz = "xyzw"[comp];
-      *swizzle = MAKE_SWIZZLE4(comp, comp, comp, comp);
+   store->Index = i / 4;
+   if (store->Size == 1) {
+      const GLuint comp = i % 4;
+      store->Swizzle = MAKE_SWIZZLE4(comp, comp, comp, comp);
       if (dbg) printf("Alloc temp sz %d at %d.%c (level %d)\n",
-                      size, i/4, swz, t->level);
+                      store->Size, store->Index, "xyzw"[comp], t->level);
    }
    else {
-      *swizzle = SWIZZLE_NOOP;
+      store->Swizzle = SWIZZLE_NOOP;
       if (dbg) printf("Alloc temp sz %d at %d.xyzw (level %d)\n",
-                      size, i/4, t->level);
+                      store->Size, store->Index, t->level);
    }
-   return i / 4;
+   return GL_TRUE;
 }
 
 
 void
-_slang_free_temp(slang_var_table *t, GLint r, GLint size, GLuint swizzle)
+_slang_free_temp(slang_var_table *t, slang_ir_storage *store)
 {
    GLuint i;
-   assert(size > 0);
+   GLuint r = store->Index;
+   assert(store->Size > 0);
    assert(r >= 0);
-   assert(r + size <= MAX_PROGRAM_TEMPS);
-   if (dbg) printf("Free temp sz %d at %d (level %d)\n", size, r, t->level);
-   if (size == 1) {
-      GLuint comp = GET_SWZ(swizzle, 0);
-      assert(swizzle == MAKE_SWIZZLE4(comp, comp, comp, comp));
+   assert(r + store->Size <= MAX_PROGRAM_TEMPS);
+   if (dbg) printf("Free temp sz %d at %d (level %d)\n", store->Size, r, t->level);
+   if (store->Size == 1) {
+      const GLuint comp = GET_SWZ(store->Swizzle, 0);
+      assert(store->Swizzle == MAKE_SWIZZLE4(comp, comp, comp, comp));
       assert(comp < 4);
       assert(t->size[r * 4 + comp] == 1);
       assert(t->temps[r * 4 + comp] == TEMP);
       t->temps[r * 4 + comp] = FREE;
    }
    else {
-      assert(swizzle == SWIZZLE_NOOP);
-      assert(t->size[r*4] == size);
-      for (i = 0; i < size; i++) {
+      assert(store->Swizzle == SWIZZLE_NOOP);
+      assert(t->size[r*4] == store->Size);
+      for (i = 0; i < store->Size; i++) {
          assert(t->temps[r * 4 + i] == TEMP);
          t->temps[r * 4 + i] = FREE;
       }
@@ -265,17 +267,17 @@ _slang_free_temp(slang_var_table *t, GLint r, GLint size, GLuint swizzle)
 
 
 GLboolean
-_slang_is_temp(slang_var_table *t, GLint r, GLuint swizzle)
+_slang_is_temp(slang_var_table *t, slang_ir_storage *store)
 {
-   assert(r >= 0);
-   assert(r < MAX_PROGRAM_TEMPS);
+   assert(store->Index >= 0);
+   assert(store->Index < MAX_PROGRAM_TEMPS);
    GLuint comp;
-   if (swizzle == SWIZZLE_NOOP)
+   if (store->Swizzle == SWIZZLE_NOOP)
       comp = 0;
    else
-      comp = GET_SWZ(swizzle, 0);
+      comp = GET_SWZ(store->Swizzle, 0);
 
-   if (t->temps[r * 4 + comp] == TEMP)
+   if (t->temps[store->Index * 4 + comp] == TEMP)
       return GL_TRUE;
    else
       return GL_FALSE;
