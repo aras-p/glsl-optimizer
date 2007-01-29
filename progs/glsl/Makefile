@@ -17,6 +17,7 @@ PROGS = \
 	brick \
 	bump \
 	mandelbrot \
+	noise \
 	toyball
 
 
