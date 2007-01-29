@@ -839,14 +839,14 @@ nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 	case GL_VERTEX_PROGRAM_ARB:
 		nvs->func = &nmesa->VPfunc;
 
-		pass0_build_attrib_map(nvs, vp);
-
 		if (vp->IsPositionInvariant)
 			_mesa_insert_mvp_code(ctx, vp);
 #if 0
 		if (IS_FIXEDFUNCTION_PROG && CLIP_PLANES_USED)
 			pass0_insert_ff_clip_planes();
 #endif
+
+		pass0_build_attrib_map(nvs, vp);
 		break;
 	case GL_FRAGMENT_PROGRAM_ARB:
 		nvs->func = &nmesa->FPfunc;
