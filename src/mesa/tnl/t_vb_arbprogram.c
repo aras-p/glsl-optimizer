@@ -766,6 +766,10 @@ static void (* const opcode_func[MAX_OPCODE+3])(struct arb_vp_machine *, union i
    do_MIN,
    do_MOV,
    do_MUL,
+   do_NOP,/*NOISE1*/
+   do_NOP,/*NOISE2*/
+   do_NOP,/*NOISE3*/
+   do_NOP,/*NOISE4*/
    do_NOP,/*PK2H*/
    do_NOP,/*PK2US*/
    do_NOP,/*PK4B*/

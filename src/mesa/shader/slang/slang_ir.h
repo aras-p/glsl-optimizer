@@ -84,6 +84,10 @@ typedef enum
    IR_DDY,     /* derivative w.r.t. Y */
    IR_SIN,     /* sine */
    IR_COS,     /* cosine */
+   IR_NOISE1,  /* noise(x) */
+   IR_NOISE2,  /* noise(x, y) */
+   IR_NOISE3,  /* noise(x, y, z) */
+   IR_NOISE4,  /* noise(x, y, z, w) */
    IR_NOT,     /* logical not */
    IR_VAR,     /* variable reference */
    IR_VAR_DECL,/* var declaration */

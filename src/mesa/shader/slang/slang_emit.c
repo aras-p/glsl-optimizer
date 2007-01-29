@@ -89,6 +89,11 @@ static slang_ir_info IrInfo[] = {
    { IR_DDX, "IR_DDY", OPCODE_DDX, 4, 1 },
    { IR_SIN, "IR_SIN", OPCODE_SIN, 1, 1 },
    { IR_COS, "IR_COS", OPCODE_COS, 1, 1 },
+   { IR_NOISE1, "IR_NOISE1", OPCODE_NOISE1, 1, 1 },
+   { IR_NOISE2, "IR_NOISE2", OPCODE_NOISE2, 1, 1 },
+   { IR_NOISE3, "IR_NOISE3", OPCODE_NOISE3, 1, 1 },
+   { IR_NOISE4, "IR_NOISE4", OPCODE_NOISE4, 1, 1 },
+
    /* other */
    { IR_SEQ, "IR_SEQ", OPCODE_NOP, 0, 0 },
    { IR_SCOPE, "IR_SCOPE", OPCODE_NOP, 0, 0 },
@@ -994,6 +999,10 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    case IR_COS:
    case IR_DDX:
    case IR_DDY:
+   case IR_NOISE1:
+   case IR_NOISE2:
+   case IR_NOISE3:
+   case IR_NOISE4:
    /* binary */
    case IR_ADD:
    case IR_SUB:

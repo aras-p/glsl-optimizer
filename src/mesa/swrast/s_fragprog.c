@@ -32,6 +32,7 @@
 
 #include "s_fragprog.h"
 #include "s_span.h"
+#include "slang_library_noise.h"
 
 
 /* See comments below for info about this */
@@ -1131,6 +1132,50 @@ execute_program( GLcontext *ctx,
                          a[0], a[1], a[2], a[3],
                          b[0], b[1], b[2], b[3]);
                }
+            }
+            break;
+         case OPCODE_NOISE1:
+            {
+               GLfloat a[4], result[4];
+               fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
+               result[0] =
+               result[1] =
+               result[2] =
+               result[3] = _slang_library_noise1(a[0]);
+               store_vector4( inst, machine, result );
+            }
+            break;
+         case OPCODE_NOISE2:
+            {
+               GLfloat a[4], result[4];
+               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a );
+               result[0] =
+               result[1] =
+               result[2] =
+               result[3] = _slang_library_noise2(a[0], a[1]);
+               store_vector4( inst, machine, result );
+            }
+            break;
+         case OPCODE_NOISE3:
+            {
+               GLfloat a[4], result[4];
+               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a );
+               result[0] =
+               result[1] =
+               result[2] =
+               result[3] = _slang_library_noise3(a[0], a[1], a[2]);
+               store_vector4( inst, machine, result );
+            }
+            break;
+         case OPCODE_NOISE4:
+            {
+               GLfloat a[4], result[4];
+               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a );
+               result[0] =
+               result[1] =
+               result[2] =
+               result[3] = _slang_library_noise4(a[0], a[1], a[2], a[3]);
+               store_vector4( inst, machine, result );
             }
             break;
          case OPCODE_NOP:

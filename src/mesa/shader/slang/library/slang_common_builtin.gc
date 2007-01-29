@@ -1699,123 +1699,107 @@ vec4 shadow2DProj (sampler2DShadow sampler, vec4 coord) {
 // AUTHOR: Stefan Gustavson (stegu@itn.liu.se), Nov 26, 2005
 //
 
-float noise1 (float x) {
-    float a;
-    __asm float_noise1 a, x;
-    return a;
+float noise1(const float x)
+{
+   __asm float_noise1 __retVal, x;
 }
 
-float noise1 (vec2 x) {
-    float a;
-    __asm float_noise2 a, x;
-    return a;
+
+float noise1(const vec2 x)
+{
+    __asm float_noise2 __retVal, x;
 }
 
-float noise1 (vec3 x) {
-    float a;
-    __asm float_noise3 a, x;
-    return a;
+float noise1(const vec3 x)
+{
+    __asm float_noise3 __retVal, x;
 }
 
-float noise1 (vec4 x) {
-    float a;
-    __asm float_noise4 a, x;
-    return a;
+float noise1(const vec4 x)
+{
+    __asm float_noise4 __retVal, x;
 }
 
-vec2 noise2 (float x) {
-    return vec2 (
-        noise1 (x),
-        noise1 (x + 19.34)
-    );
+vec2 noise2(const float x)
+{
+   __retVal.x = noise1(x);
+   __retVal.y = noise1(x + 19.34);
 }
 
-vec2 noise2 (vec2 x) {
-    return vec2 (
-        noise1 (x),
-        noise1 (x + vec2 (19.34, 7.66))
-    );
+vec2 noise2(const vec2 x)
+{
+   __retVal.x = noise1(x);
+   __retVal.y = noise1(x + vec2(19.34, 7.66));
 }
 
-vec2 noise2 (vec3 x) {
-    return vec2 (
-        noise1 (x),
-        noise1 (x + vec3 (19.34, 7.66, 3.23))
-    );
+vec2 noise2(const vec3 x)
+{
+   __retVal.x = noise1(x);
+   __retVal.y = noise1(x + vec3(19.34, 7.66, 3.23));
 }
 
-vec2 noise2 (vec4 x) {
-    return vec2 (
-        noise1 (x),
-        noise1 (x + vec4 (19.34, 7.66, 3.23, 2.77))
-    );
+vec2 noise2(const vec4 x)
+{
+   __retVal.x = noise1(x);
+   __retVal.y = noise1(x + vec4(19.34, 7.66, 3.23, 2.77));
 }
 
-vec3 noise3 (float x) {
-    return vec3 (
-        noise1 (x),
-        noise1 (x + 19.34),
-        noise1 (x + 5.47)
-    );
+vec3 noise3(const float x)
+{
+   __retVal.x = noise1(x);
+   __retVal.y = noise1(x + 19.34);
+   __retVal.z = noise1(x + 5.47);
 }
 
-vec3 noise3 (vec2 x) {
-    return vec3 (
-        noise1 (x),
-        noise1 (x + vec2 (19.34, 7.66)),
-        noise1 (x + vec2 (5.47, 17.85))
-    );
+vec3 noise3(const vec2 x)
+{
+   __retVal.x = noise1(x);
+   __retVal.y = noise1(x + vec2(19.34, 7.66));
+   __retVal.z = noise1(x + vec2(5.47, 17.85));
 }
 
-vec3 noise3 (vec3 x) {
-    return vec3 (
-        noise1 (x),
-        noise1 (x + vec3 (19.34, 7.66, 3.23)),
-        noise1 (x + vec3 (5.47, 17.85, 11.04))
-    );
+vec3 noise3(const vec3 x)
+{
+   __retVal.x = noise1(x);
+   __retVal.y = noise1(x + vec3(19.34, 7.66, 3.23));
+   __retVal.z = noise1(x + vec3(5.47, 17.85, 11.04));
 }
 
-vec3 noise3 (vec4 x) {
-    return vec3 (
-        noise1 (x),
-        noise1 (x + vec4 (19.34, 7.66, 3.23, 2.77)),
-        noise1 (x + vec4 (5.47, 17.85, 11.04, 13.19))
-    );
+vec3 noise3(const vec4 x)
+{
+   __retVal.x = noise1(x);
+   __retVal.y = noise1(x + vec4(19.34, 7.66, 3.23, 2.77));
+   __retVal.z = noise1(x + vec4(5.47, 17.85, 11.04, 13.19));
 }
 
-vec4 noise4 (float x) {
-    return vec4 (
-        noise1 (x),
-        noise1 (x + 19.34),
-        noise1 (x + 5.47),
-        noise1 (x + 23.54)
-    );
+vec4 noise4(const float x)
+{
+   __retVal.x = noise1(x);
+   __retVal.y = noise1(x + 19.34);
+   __retVal.z = noise1(x + 5.47);
+   __retVal.w = noise1(x + 23.54);
 }
 
-vec4 noise4 (vec2 x) {
-    return vec4 (
-        noise1 (x),
-        noise1 (x + vec2 (19.34, 7.66)),
-        noise1 (x + vec2 (5.47, 17.85)),
-        noise1 (x + vec2 (23.54, 29.11))
-    );
+vec4 noise4(const vec2 x)
+{
+   __retVal.x = noise1(x);
+   __retVal.y = noise1(x + vec2 (19.34, 7.66));
+   __retVal.z = noise1(x + vec2 (5.47, 17.85));
+   __retVal.w = noise1(x + vec2 (23.54, 29.11));
 }
 
-vec4 noise4 (vec3 x) {
-    return vec4 (
-        noise1 (x),
-        noise1 (x + vec3 (19.34, 7.66, 3.23)),
-        noise1 (x + vec3 (5.47, 17.85, 11.04)),
-        noise1 (x + vec3 (23.54, 29.11, 31.91))
-    );
+vec4 noise4(const vec3 x)
+{
+   __retVal.x = noise1(x);
+   __retVal.y = noise1(x + vec3(19.34, 7.66, 3.23));
+   __retVal.z = noise1(x + vec3(5.47, 17.85, 11.04));
+   __retVal.w = noise1(x + vec3(23.54, 29.11, 31.91));
 }
 
-vec4 noise4 (vec4 x) {
-    return vec4 (
-        noise1 (x),
-        noise1 (x + vec4 (19.34, 7.66, 3.23, 2.77)),
-        noise1 (x + vec4 (5.47, 17.85, 11.04, 13.19)),
-        noise1 (x + vec4 (23.54, 29.11, 31.91, 37.48))
-    );
+vec4 noise4(const vec4 x)
+{
+   __retVal.x = noise1(x);
+   __retVal.y = noise1(x + vec4(19.34, 7.66, 3.23, 2.77));
+   __retVal.z = noise1(x + vec4(5.47, 17.85, 11.04, 13.19));
+   __retVal.w = noise1(x + vec4(23.54, 29.11, 31.91, 37.48));
 }
-

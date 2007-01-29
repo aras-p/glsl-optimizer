@@ -494,6 +494,11 @@ static slang_asm_info AsmInfo[] = {
    { "float_rcp", IR_RCP, 1, 1 },
    { "float_sine", IR_SIN, 1, 1 },
    { "float_cosine", IR_COS, 1, 1 },
+   { "float_noise1", IR_NOISE1, 1, 1},
+   { "float_noise2", IR_NOISE2, 1, 1},
+   { "float_noise3", IR_NOISE3, 1, 1},
+   { "float_noise4", IR_NOISE4, 1, 1},
+
    { NULL, IR_NOP, 0, 0 }
 };
 
@@ -1657,6 +1662,8 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
 
 /**
  * Generate code for a selection expression:   b ? x : y
+ * XXX in some cases we could implement a selection expression
+ * with an LRP instruction (use the boolean as the interpolant).
  */
 static slang_ir_node *
 _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)

@@ -172,6 +172,10 @@ typedef enum prog_opcode {
    OPCODE_MIN,       /*   X        X       X       X         X   */
    OPCODE_MOV,       /*   X        X       X       X         X   */
    OPCODE_MUL,       /*   X        X       X       X         X   */
+   OPCODE_NOISE1,    /*                                      X   */
+   OPCODE_NOISE2,    /*                                      X   */
+   OPCODE_NOISE3,    /*                                      X   */
+   OPCODE_NOISE4,    /*                                      X   */
    OPCODE_PK2H,      /*                            X             */
    OPCODE_PK2US,     /*                            X             */
    OPCODE_PK4B,      /*                            X             */
