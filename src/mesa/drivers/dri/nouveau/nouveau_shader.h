@@ -26,7 +26,8 @@ typedef struct _nvs_fragment_header {
 
 typedef union {
 	struct {
-		uint32_t fp_control;
+		GLboolean uses_kil;
+		GLuint    num_regs;
 	} NV30FP;
 	struct {
 		uint32_t vp_in_reg;
