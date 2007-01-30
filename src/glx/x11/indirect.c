@@ -474,7 +474,7 @@ __indirect_glBegin(GLenum mode)
 void
 __indirect_glBitmap(GLsizei width, GLsizei height, GLfloat xorig,
                     GLfloat yorig, GLfloat xmove, GLfloat ymove,
-                    const GLubyte * bitmap)
+                    const GLubyte *bitmap)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
     const GLuint compsize =
@@ -541,7 +541,7 @@ __indirect_glColor3b(GLbyte red, GLbyte green, GLbyte blue)
 
 #define X_GLrop_Color3bv 6
 void
-__indirect_glColor3bv(const GLbyte * v)
+__indirect_glColor3bv(const GLbyte *v)
 {
     generic_3_byte(X_GLrop_Color3bv, v);
 }
@@ -656,7 +656,7 @@ __indirect_glColor3ub(GLubyte red, GLubyte green, GLubyte blue)
 
 #define X_GLrop_Color3ubv 11
 void
-__indirect_glColor3ubv(const GLubyte * v)
+__indirect_glColor3ubv(const GLubyte *v)
 {
     generic_3_byte(X_GLrop_Color3ubv, v);
 }
@@ -726,7 +726,7 @@ __indirect_glColor4b(GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha)
 
 #define X_GLrop_Color4bv 14
 void
-__indirect_glColor4bv(const GLbyte * v)
+__indirect_glColor4bv(const GLbyte *v)
 {
     generic_4_byte(X_GLrop_Color4bv, v);
 }
@@ -847,7 +847,7 @@ __indirect_glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
 
 #define X_GLrop_Color4ubv 19
 void
-__indirect_glColor4ubv(const GLubyte * v)
+__indirect_glColor4ubv(const GLubyte *v)
 {
     generic_4_byte(X_GLrop_Color4ubv, v);
 }
@@ -1051,7 +1051,7 @@ __indirect_glNormal3b(GLbyte nx, GLbyte ny, GLbyte nz)
 
 #define X_GLrop_Normal3bv 28
 void
-__indirect_glNormal3bv(const GLbyte * v)
+__indirect_glNormal3bv(const GLbyte *v)
 {
     generic_3_byte(X_GLrop_Normal3bv, v);
 }
@@ -2584,7 +2584,7 @@ __indirect_glPolygonMode(GLenum face, GLenum mode)
 
 #define X_GLrop_PolygonStipple 102
 void
-__indirect_glPolygonStipple(const GLubyte * mask)
+__indirect_glPolygonStipple(const GLubyte *mask)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
     const GLuint compsize =
@@ -4207,7 +4207,7 @@ __indirect_glGetPixelMapusv(GLenum map, GLushort * values)
 
 #define X_GLsop_GetPolygonStipple 128
 void
-__indirect_glGetPolygonStipple(GLubyte * mask)
+__indirect_glGetPolygonStipple(GLubyte *mask)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
     const __GLXattribute *const state = gc->client_state_private;
@@ -4977,7 +4977,7 @@ __indirect_glIndexub(GLubyte c)
 
 #define X_GLrop_Indexubv 194
 void
-__indirect_glIndexubv(const GLubyte * c)
+__indirect_glIndexubv(const GLubyte *c)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
@@ -7935,7 +7935,7 @@ __indirect_glVertexAttrib3svARB(GLuint index, const GLshort * v)
 
 #define X_GLrop_VertexAttrib4NbvARB 4235
 void
-__indirect_glVertexAttrib4NbvARB(GLuint index, const GLbyte * v)
+__indirect_glVertexAttrib4NbvARB(GLuint index, const GLbyte *v)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
@@ -7999,7 +7999,7 @@ __indirect_glVertexAttrib4NubARB(GLuint index, GLubyte x, GLubyte y,
 
 #define X_GLrop_VertexAttrib4NubvARB 4201
 void
-__indirect_glVertexAttrib4NubvARB(GLuint index, const GLubyte * v)
+__indirect_glVertexAttrib4NubvARB(GLuint index, const GLubyte *v)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
@@ -8044,7 +8044,7 @@ __indirect_glVertexAttrib4NusvARB(GLuint index, const GLushort * v)
 
 #define X_GLrop_VertexAttrib4bvARB 4230
 void
-__indirect_glVertexAttrib4bvARB(GLuint index, const GLbyte * v)
+__indirect_glVertexAttrib4bvARB(GLuint index, const GLbyte *v)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
@@ -8176,7 +8176,7 @@ __indirect_glVertexAttrib4svARB(GLuint index, const GLshort * v)
 
 #define X_GLrop_VertexAttrib4ubvARB 4232
 void
-__indirect_glVertexAttrib4ubvARB(GLuint index, const GLubyte * v)
+__indirect_glVertexAttrib4ubvARB(GLuint index, const GLubyte *v)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
@@ -8556,7 +8556,7 @@ __indirect_glSecondaryColor3bEXT(GLbyte red, GLbyte green, GLbyte blue)
 
 #define X_GLrop_SecondaryColor3bvEXT 4126
 void
-__indirect_glSecondaryColor3bvEXT(const GLbyte * v)
+__indirect_glSecondaryColor3bvEXT(const GLbyte *v)
 {
     generic_3_byte(X_GLrop_SecondaryColor3bvEXT, v);
 }
@@ -8671,7 +8671,7 @@ __indirect_glSecondaryColor3ubEXT(GLubyte red, GLubyte green, GLubyte blue)
 
 #define X_GLrop_SecondaryColor3ubvEXT 4131
 void
-__indirect_glSecondaryColor3ubvEXT(const GLubyte * v)
+__indirect_glSecondaryColor3ubvEXT(const GLubyte *v)
 {
     generic_3_byte(X_GLrop_SecondaryColor3ubvEXT, v);
 }
@@ -8943,7 +8943,7 @@ __indirect_glGetProgramParameterfvNV(GLenum target, GLuint index,
 
 #define X_GLvop_GetProgramStringNV 1299
 void
-__indirect_glGetProgramStringNV(GLuint id, GLenum pname, GLubyte * program)
+__indirect_glGetProgramStringNV(GLuint id, GLenum pname, GLubyte *program)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
@@ -9087,7 +9087,7 @@ __indirect_glIsProgramNV(GLuint program)
 #define X_GLrop_LoadProgramNV 4183
 void
 __indirect_glLoadProgramNV(GLenum target, GLuint id, GLsizei len,
-                           const GLubyte * program)
+                           const GLubyte *program)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16 + __GLX_PAD(len);
@@ -9656,7 +9656,7 @@ __indirect_glVertexAttrib4ubNV(GLuint index, GLubyte x, GLubyte y, GLubyte z,
 
 #define X_GLrop_VertexAttrib4ubvNV 4277
 void
-__indirect_glVertexAttrib4ubvNV(GLuint index, const GLubyte * v)
+__indirect_glVertexAttrib4ubvNV(GLuint index, const GLubyte *v)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
@@ -9887,7 +9887,7 @@ __indirect_glVertexAttribs4svNV(GLuint index, GLsizei n, const GLshort * v)
 
 #define X_GLrop_VertexAttribs4ubvNV 4214
 void
-__indirect_glVertexAttribs4ubvNV(GLuint index, GLsizei n, const GLubyte * v)
+__indirect_glVertexAttribs4ubvNV(GLuint index, GLsizei n, const GLubyte *v)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 4));
@@ -9951,7 +9951,7 @@ __indirect_glActiveStencilFaceEXT(GLenum face)
 #define X_GLvop_GetProgramNamedParameterdvNV 1311
 void
 __indirect_glGetProgramNamedParameterdvNV(GLuint id, GLsizei len,
-                                          const GLubyte * name,
+                                          const GLubyte *name,
                                           GLdouble * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
@@ -9975,7 +9975,7 @@ __indirect_glGetProgramNamedParameterdvNV(GLuint id, GLsizei len,
 #define X_GLvop_GetProgramNamedParameterfvNV 1310
 void
 __indirect_glGetProgramNamedParameterfvNV(GLuint id, GLsizei len,
-                                          const GLubyte * name,
+                                          const GLubyte *name,
                                           GLfloat * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
@@ -9999,7 +9999,7 @@ __indirect_glGetProgramNamedParameterfvNV(GLuint id, GLsizei len,
 #define X_GLrop_ProgramNamedParameter4dvNV 4219
 void
 __indirect_glProgramNamedParameter4dNV(GLuint id, GLsizei len,
-                                       const GLubyte * name, GLdouble x,
+                                       const GLubyte *name, GLdouble x,
                                        GLdouble y, GLdouble z, GLdouble w)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
@@ -10023,7 +10023,7 @@ __indirect_glProgramNamedParameter4dNV(GLuint id, GLsizei len,
 #define X_GLrop_ProgramNamedParameter4dvNV 4219
 void
 __indirect_glProgramNamedParameter4dvNV(GLuint id, GLsizei len,
-                                        const GLubyte * name,
+                                        const GLubyte *name,
                                         const GLdouble * v)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
@@ -10044,7 +10044,7 @@ __indirect_glProgramNamedParameter4dvNV(GLuint id, GLsizei len,
 #define X_GLrop_ProgramNamedParameter4fvNV 4218
 void
 __indirect_glProgramNamedParameter4fNV(GLuint id, GLsizei len,
-                                       const GLubyte * name, GLfloat x,
+                                       const GLubyte *name, GLfloat x,
                                        GLfloat y, GLfloat z, GLfloat w)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
@@ -10068,7 +10068,7 @@ __indirect_glProgramNamedParameter4fNV(GLuint id, GLsizei len,
 #define X_GLrop_ProgramNamedParameter4fvNV 4218
 void
 __indirect_glProgramNamedParameter4fvNV(GLuint id, GLsizei len,
-                                        const GLubyte * name,
+                                        const GLubyte *name,
                                         const GLfloat * v)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
