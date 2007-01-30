@@ -578,7 +578,7 @@ _mesa_ffs(int i)
 /**
  * Find position of first bit set in given value.
  * XXX Warning: this function can only be used on 64-bit systems!
- * \return  position of lest significant bit set, starting at 1, return zero
+ * \return  position of least-significant bit set, starting at 1, return zero
  *          if no bits set.
  */
 int

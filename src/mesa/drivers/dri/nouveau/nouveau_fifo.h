@@ -33,15 +33,30 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_ctrlreg.h"
 #include "nouveau_state_cache.h"
 
+//#define NOUVEAU_RING_TRACE
 //#define NOUVEAU_RING_DEBUG
 //#define NOUVEAU_STATE_CACHE_DISABLE
+
+#ifndef NOUVEAU_RING_TRACE
+#define NOUVEAU_RING_TRACE 0
+#else
+#undef NOUVEAU_RING_TRACE
+#define NOUVEAU_RING_TRACE 1
+#endif
 
 #define NV_READ(reg) *(volatile u_int32_t *)(nmesa->mmio + (reg))
 
 #define NV_FIFO_READ(reg) *(volatile u_int32_t *)(nmesa->fifo.mmio + (reg/4))
 #define NV_FIFO_WRITE(reg,value) *(volatile u_int32_t *)(nmesa->fifo.mmio + (reg/4)) = value;
 #define NV_FIFO_READ_GET() ((NV_FIFO_READ(NV03_FIFO_REGS_DMAGET) - nmesa->fifo.put_base) >> 2)
-#define NV_FIFO_WRITE_PUT(val) NV_FIFO_WRITE(NV03_FIFO_REGS_DMAPUT, ((val)<<2) + nmesa->fifo.put_base)
+#define NV_FIFO_WRITE_PUT(val) do { \
+	if (NOUVEAU_RING_TRACE) {\
+		printf("FIRE_RING : 0x%08x\n", nmesa->fifo.current << 2); \
+		fflush(stdout); \
+		sleep(1); \
+	} \
+	NV_FIFO_WRITE(NV03_FIFO_REGS_DMAPUT, ((val)<<2) + nmesa->fifo.put_base); \
+} while(0)
 
 /* 
  * Ring/fifo interface
@@ -75,15 +90,23 @@ int i; printf("OUT_RINGp: (size 0x%x dwords)\n",sz); for(i=0;i<sz;i++) printf(" 
 #else
 
 #define OUT_RINGp(ptr,sz) do{							\
+	if (NOUVEAU_RING_TRACE) { \
+		uint32_t* p=(uint32_t*)(ptr);							\
+		int i; printf("OUT_RINGp: (size 0x%x dwords) (%s)\n",sz, __func__); for(i=0;i<sz;i++) printf(" [0x%08x] 0x%08x   %f\n", (nmesa->fifo.current+i) << 2, *(p+i), *((float*)(p+i))); 	\
+	} \
 	memcpy(nmesa->fifo.buffer+nmesa->fifo.current,ptr,(sz)*4);		\
 	nmesa->fifo.current+=(sz);						\
 }while(0)
 
 #define OUT_RING(n) do {							\
+if (NOUVEAU_RING_TRACE) \
+    printf("OUT_RINGn: [0x%08x] 0x%08x (%s)\n", nmesa->fifo.current << 2, n, __func__);        \
 nmesa->fifo.buffer[nmesa->fifo.current++]=(n);					\
 }while(0)
 
 #define OUT_RINGf(n) do {							\
+if (NOUVEAU_RING_TRACE) \
+    printf("OUT_RINGf: [0x%08x] %.04f (%s)\n", nmesa->fifo.current << 2, n, __func__);        \
 *((float*)(nmesa->fifo.buffer+nmesa->fifo.current++))=(n);			\
 }while(0)
 

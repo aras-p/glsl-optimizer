@@ -27,6 +27,7 @@ DRIVER_SOURCES = \
 	nouveau_tex.c            \
 	nouveau_swtcl.c          \
 	nouveau_sync.c           \
+	nouveau_query.c          \
 	nv04_state.c             \
 	nv04_swtcl.c             \
 	nv10_state.c             \

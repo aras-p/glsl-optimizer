@@ -54,18 +54,6 @@ static nvsFixedReg _tx_mesa_fp_dst_reg[FRAG_RESULT_MAX] = {
    NVS_FR_UNKNOWN /* DEPR */
 };
 
-static nvsFixedReg _tx_mesa_vp_src_reg[VERT_ATTRIB_MAX] = {
-   NVS_FR_POSITION, NVS_FR_WEIGHT, NVS_FR_NORMAL, NVS_FR_COL0, NVS_FR_COL1,
-   NVS_FR_FOGCOORD, NVS_FR_UNKNOWN /* COLOR_INDEX */, NVS_FR_UNKNOWN,
-   NVS_FR_TEXCOORD0, NVS_FR_TEXCOORD1, NVS_FR_TEXCOORD2, NVS_FR_TEXCOORD3,
-   NVS_FR_TEXCOORD4, NVS_FR_TEXCOORD5, NVS_FR_TEXCOORD6, NVS_FR_TEXCOORD7,
-/* Generic attribs 0-15, aliased to the above */
-   NVS_FR_POSITION, NVS_FR_WEIGHT, NVS_FR_NORMAL, NVS_FR_COL0, NVS_FR_COL1,
-   NVS_FR_FOGCOORD, NVS_FR_UNKNOWN /* COLOR_INDEX */, NVS_FR_UNKNOWN,
-   NVS_FR_TEXCOORD0, NVS_FR_TEXCOORD1, NVS_FR_TEXCOORD2, NVS_FR_TEXCOORD3,
-   NVS_FR_TEXCOORD4, NVS_FR_TEXCOORD5, NVS_FR_TEXCOORD6, NVS_FR_TEXCOORD7
-};
-
 static nvsFixedReg _tx_mesa_fp_src_reg[FRAG_ATTRIB_MAX] = {
    NVS_FR_POSITION, NVS_FR_COL0, NVS_FR_COL1, NVS_FR_FOGCOORD,
    NVS_FR_TEXCOORD0, NVS_FR_TEXCOORD1, NVS_FR_TEXCOORD2, NVS_FR_TEXCOORD3,
@@ -125,6 +113,10 @@ static nvsCond _tx_mesa_condmask[] = {
 struct pass0_rec {
    int nvs_ipos;
    int next_temp;
+
+   int mesa_const_base;
+   int mesa_const_last;
+
    int swzconst_done;
    int swzconst_id;
    nvsRegister const_half;
@@ -320,8 +312,9 @@ pass0_make_dst_reg(nvsPtr nvs, nvsRegister *reg,
 static void
 pass0_make_src_reg(nvsPtr nvs, nvsRegister *reg, struct prog_src_register *src)
 {
+	struct pass0_rec *rec = nvs->pass_rec;
 	struct gl_program *mesa = (struct gl_program *)&nvs->mesa.vp.Base;
-	struct gl_program_parameter_list *p = mesa->Parameters;
+	int i;
 
 	*reg = nvr_unused;
 
@@ -329,43 +322,30 @@ pass0_make_src_reg(nvsPtr nvs, nvsRegister *reg, struct prog_src_register *src)
 	case PROGRAM_INPUT:
 		reg->file = NVS_FILE_ATTRIB;
 		if (mesa->Target == GL_VERTEX_PROGRAM_ARB) {
-			reg->index = (src->Index < VERT_ATTRIB_MAX) ?
-				_tx_mesa_vp_src_reg[src->Index] :
-				NVS_FR_UNKNOWN;
+			for (i=0; i<NVS_MAX_ATTRIBS; i++) {
+				if (nvs->vp_attrib_map[i] == src->Index) {
+					reg->index = i;
+					break;
+				}
+			}
+			if (i==NVS_MAX_ATTRIBS)
+				reg->index = NVS_FR_UNKNOWN;
 		} else {
 			reg->index = (src->Index < FRAG_ATTRIB_MAX) ?
 				_tx_mesa_fp_src_reg[src->Index] :
 				NVS_FR_UNKNOWN;
 		}
 		break;
-	/* All const types seem to get shoved into here, not really sure why */
 	case PROGRAM_STATE_VAR:
-		switch (p->Parameters[src->Index].Type) {
-		case PROGRAM_NAMED_PARAM:
-		case PROGRAM_CONSTANT:
-			nvs->params[src->Index].source_val = NULL;
-			COPY_4V(nvs->params[src->Index].val,
-				p->ParameterValues[src->Index]); 
-			break;
-		case PROGRAM_STATE_VAR:
-			nvs->params[src->Index].source_val =
-				p->ParameterValues[src->Index];
-			break;
-		default:
-			fprintf(stderr, "Unknown parameter type %d\n",
-					p->Parameters[src->Index].Type);
-			assert(0);
-			break;
+	case PROGRAM_NAMED_PARAM:
+	case PROGRAM_CONSTANT:
+		reg->file    = NVS_FILE_CONST;
+		reg->index   = src->Index + rec->mesa_const_base;
+		reg->indexed = src->RelAddr;
+		if (reg->indexed) {
+			reg->addr_reg  = 0;
+			reg->addr_comp = NVS_SWZ_X;
 		}
-
-		if (src->RelAddr) {
-			reg->indexed	= 1;
-			reg->addr_reg	= 0;
-			reg->addr_comp	= NVS_SWZ_X;
-		} else
-			reg->indexed = 0;
-		reg->file  = NVS_FILE_CONST;
-		reg->index = src->Index;
 		break;
 	case PROGRAM_TEMPORARY:
 		reg->file  = NVS_FILE_TEMP;
@@ -574,7 +554,6 @@ pass0_emulate_instruction(nouveauShader *nvs,
 	nvsFunc *shader = nvs->func;
 	nvsRegister src[3], dest, temp;
 	nvsInstruction *nvsinst;
-	struct pass0_rec *rec = nvs->pass_rec;
 	unsigned int mask = pass0_make_mask(inst->DstReg.WriteMask);
 	int i, sat;
 
@@ -787,6 +766,183 @@ pass0_translate_instructions(nouveauShader *nvs, int ipos, int fpos,
 	return GL_TRUE;
 }
 
+static void
+pass0_build_attrib_map(nouveauShader *nvs, struct gl_vertex_program *vp)
+{
+	GLuint inputs_read = vp->Base.InputsRead;
+	GLuint input_alloc = ~0xFFFF;
+	int i;
+
+	for (i=0; i<NVS_MAX_ATTRIBS; i++)
+		nvs->vp_attrib_map[i] = -1;
+
+	while (inputs_read) {
+		int in = ffs(inputs_read) - 1;
+		int hw;
+		inputs_read &= ~(1<<in);
+
+		if (vp->IsNVProgram) {
+			/* NVvp: must alias */
+			if (in >= VERT_ATTRIB_GENERIC0)
+				hw = in - VERT_ATTRIB_GENERIC0;
+			else
+				hw = in;
+		} else {
+			/* ARBvp: may alias (but we won't)
+			 * GL2.0: must not alias
+			 */
+			if (in >= VERT_ATTRIB_GENERIC0)
+				hw = ffs(~input_alloc) - 1;
+			else 
+				hw = in;
+			input_alloc |= (1<<hw);
+		}
+
+		nvs->vp_attrib_map[hw] = in;
+	}
+
+	if (NOUVEAU_DEBUG & DEBUG_SHADERS) {
+		printf("vtxprog attrib map:\n");
+		for (i=0; i<NVS_MAX_ATTRIBS; i++) {
+			printf(" hw:%d = attrib:%d\n",
+					i, nvs->vp_attrib_map[i]);
+		}
+	}
+}
+
+static void
+pass0_vp_insert_ff_clip_planes(GLcontext *ctx, nouveauShader *nvs)
+{
+	struct gl_program *prog = &nvs->mesa.vp.Base;
+	nvsFragmentHeader *parent = nvs->program_tree;
+	nvsInstruction *nvsinst;
+	GLuint fpos = 0;
+	nvsRegister opos, epos, eqn, mv[4];
+	GLint tokens[6] = { STATE_MATRIX, STATE_MODELVIEW, 0, 0, 0, 0 };
+	GLint id;
+	int i;
+
+	/* modelview transform */
+	pass0_make_reg(nvs, &opos, NVS_FILE_ATTRIB, NVS_FR_POSITION);
+	pass0_make_reg(nvs, &epos, NVS_FILE_TEMP  , -1);
+	for (i=0; i<4; i++) {
+		tokens[3] = tokens[4] = i;
+		id = _mesa_add_state_reference(prog->Parameters, tokens);
+		pass0_make_reg(nvs, &mv[i], NVS_FILE_CONST, id);
+	}
+	ARITHu(NVS_OP_DP4, epos, SMASK_X, 0, opos, mv[0], nvr_unused);
+	ARITHu(NVS_OP_DP4, epos, SMASK_Y, 0, opos, mv[1], nvr_unused);
+	ARITHu(NVS_OP_DP4, epos, SMASK_Z, 0, opos, mv[2], nvr_unused);
+	ARITHu(NVS_OP_DP4, epos, SMASK_W, 0, opos, mv[3], nvr_unused);
+
+	/* Emit code to emulate fixed-function glClipPlane */
+	for (i=0; i<6; i++) {
+		GLuint clipmask = SMASK_X;
+		nvsRegister clip;
+
+		if (!(ctx->Transform.ClipPlanesEnabled & (1<<i)))
+			continue;
+
+		/* Point a const at a user clipping plane */
+		tokens[0] = STATE_CLIPPLANE;
+		tokens[1] = i;
+		id = _mesa_add_state_reference(prog->Parameters, tokens);
+		pass0_make_reg(nvs, &eqn , NVS_FILE_CONST , id);
+		pass0_make_reg(nvs, &clip, NVS_FILE_RESULT, NVS_FR_CLIP0 + i);
+
+		/*XXX: something else needs to take care of modifying the
+		 *     instructions to write to the correct hw clip register.
+		 */
+		switch (i) {
+		case 0: case 3:	clipmask = SMASK_Y; break;
+		case 1: case 4: clipmask = SMASK_Z; break;
+		case 2: case 5: clipmask = SMASK_W; break;
+		}
+
+		/* Emit transform */
+		ARITHu(NVS_OP_DP4, clip, clipmask, 0, epos, eqn, nvr_unused);
+	}
+}
+
+static void
+pass0_rebase_mesa_consts(nouveauShader *nvs)
+{
+	struct pass0_rec *rec = nvs->pass_rec;
+	struct gl_program *prog = &nvs->mesa.vp.Base;
+	struct prog_instruction *inst = prog->Instructions;
+	int i;
+
+	/*XXX: not a good idea, params->hw_index is malloc'd */
+	memset(nvs->params, 0x00, sizeof(nvs->params));
+
+	/* When doing relative addressing on constants, the hardware needs us
+	 * to fill the "const id" field with a positive value.  Determine the
+	 * most negative index that is used so that all accesses to a
+	 * mesa-provided constant can be rebased to a positive index.
+	 */
+	while (inst->Opcode != OPCODE_END) {
+		for (i=0; i<_mesa_num_inst_src_regs(inst->Opcode); i++) {
+			struct prog_src_register *src = &inst->SrcReg[i];
+
+			switch (src->File) {
+			case PROGRAM_STATE_VAR:
+			case PROGRAM_CONSTANT:
+			case PROGRAM_NAMED_PARAM:
+				if (src->RelAddr && src->Index < 0) {
+					int base = src->Index * -1;
+					if (rec->mesa_const_base < base)
+						rec->mesa_const_base = base;
+				}
+				break;
+			default:
+				break;
+			}
+		}
+
+		inst++;
+	}
+}
+
+static void
+pass0_resolve_mesa_consts(nouveauShader *nvs)
+{
+	struct pass0_rec *rec = nvs->pass_rec;
+	struct gl_program *prog = &nvs->mesa.vp.Base;
+	struct gl_program_parameter_list *plist = prog->Parameters;
+	int i;
+
+	/* Init all const tracking/alloc info from the parameter list, rather
+	 * than doing it as we translate the program.  Otherwise:
+	 *   1) we can't get at the correct constant info when relative
+	 *      addressing is being used due to src->Index not pointing
+	 *      at the exact const;
+	 *   2) as we add extra consts to the program, mesa will call realloc()
+	 *      and we get invalid pointers to the const data.
+	 */
+	rec->mesa_const_last = plist->NumParameters + rec->mesa_const_base;
+	nvs->param_high = rec->mesa_const_last;
+	for (i=0; i<plist->NumParameters; i++) {
+		int hw = rec->mesa_const_base + i;
+
+		switch (plist->Parameters[i].Type) {
+		case PROGRAM_NAMED_PARAM:
+		case PROGRAM_STATE_VAR:
+			nvs->params[hw].in_use     = GL_TRUE;
+			nvs->params[hw].source_val = plist->ParameterValues[i];
+			COPY_4V(nvs->params[hw].val, plist->ParameterValues[i]);
+			break;
+		case PROGRAM_CONSTANT:
+			nvs->params[hw].in_use     = GL_TRUE;
+			nvs->params[hw].source_val = NULL;
+			COPY_4V(nvs->params[hw].val, plist->ParameterValues[i]);
+			break;
+		default:
+			assert(0);
+			break;
+		}
+	}
+}
+
 GLboolean
 nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 {
@@ -797,45 +953,54 @@ nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 	struct pass0_rec *rec;
 	int ret = GL_FALSE;
 
+	rec = CALLOC_STRUCT(pass0_rec);
+	if (!rec)
+		return GL_FALSE;
+
+	rec->next_temp = prog->NumTemporaries;
+	nvs->pass_rec  = rec;
+		
+	nvs->program_tree = (nvsFragmentHeader*)
+		pass0_create_subroutine(nvs, "program body");
+	if (!nvs->program_tree) {
+		FREE(rec);
+		return GL_FALSE;
+	}
+
 	switch (prog->Target) {
 	case GL_VERTEX_PROGRAM_ARB:
 		nvs->func = &nmesa->VPfunc;
 
 		if (vp->IsPositionInvariant)
 			_mesa_insert_mvp_code(ctx, vp);
-#if 0
-		if (IS_FIXEDFUNCTION_PROG && CLIP_PLANES_USED)
-			pass0_insert_ff_clip_planes();
-#endif
+		pass0_rebase_mesa_consts(nvs);
+
+		if (!prog->String && ctx->Transform.ClipPlanesEnabled)
+			pass0_vp_insert_ff_clip_planes(ctx, nvs);
+
+		pass0_build_attrib_map(nvs, vp);
 		break;
 	case GL_FRAGMENT_PROGRAM_ARB:
 		nvs->func = &nmesa->FPfunc;
 
 		if (fp->FogOption != GL_NONE)
 			_mesa_append_fog_code(ctx, fp);
+		pass0_rebase_mesa_consts(nvs);
 		break;
 	default:
 		fprintf(stderr, "Unknown program type %d", prog->Target);
+		FREE(rec);
+		/* DESTROY TREE!! */
 		return GL_FALSE;
 	}
 	nvs->func->card_priv = &nvs->card_priv;
 
-	rec = CALLOC_STRUCT(pass0_rec);
-	if (rec) {
-		rec->next_temp = prog->NumTemporaries;
-		nvs->pass_rec  = rec;
-		
-		nvs->program_tree = (nvsFragmentHeader*)
-			pass0_create_subroutine(nvs, "program body");
-		if (nvs->program_tree) {
-			ret = pass0_translate_instructions(nvs,
-							   0, 0,
-							   nvs->program_tree);
-			/*XXX: if (!ret) DESTROY TREE!!! */
-		}
-		FREE(rec);
-	}
+	ret = pass0_translate_instructions(nvs, 0, 0, nvs->program_tree);
+	if (ret)
+		pass0_resolve_mesa_consts(nvs);
+	/*XXX: if (!ret) DESTROY TREE!!! */
 
+	FREE(rec);
 	return ret;
 }
 

@@ -322,7 +322,7 @@ static void nv10Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
     switch(pname)
     {
         case GL_FOG_MODE:
-            BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_FOG_MODE, 1);
+            //BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_FOG_MODE, 1);
             //OUT_RING_CACHE (params);
             break;
             /* TODO: unsure about the rest.*/
@@ -688,10 +688,10 @@ static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
 	if (color[0]->mesa._ActualFormat != GL_RGBA8) {
 		format = 0x103; /* R5G6B5 color buffer */
 	}
-	OUT_RING(format);
-	OUT_RING(pitch);
-	OUT_RING(color[0]->offset);
-	OUT_RING(depth ? depth->offset : color[0]->offset);
+	OUT_RING_CACHE(format);
+	OUT_RING_CACHE(pitch);
+	OUT_RING_CACHE(color[0]->offset);
+	OUT_RING_CACHE(depth ? depth->offset : color[0]->offset);
 
 	return GL_TRUE;
 }

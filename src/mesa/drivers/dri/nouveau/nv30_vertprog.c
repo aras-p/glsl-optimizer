@@ -33,6 +33,9 @@ NV30VPUploadToHW(GLcontext *ctx, nouveauShader *nvs)
    BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VP_IN_REG, 2);
    OUT_RING(nvs->card_priv.NV30VP.vp_in_reg);
    OUT_RING(nvs->card_priv.NV30VP.vp_out_reg);
+
+   BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SET_CLIPPING_PLANES, 1);
+   OUT_RING_CACHE  (nvs->card_priv.NV30VP.clip_enables);
 }
 
 static void

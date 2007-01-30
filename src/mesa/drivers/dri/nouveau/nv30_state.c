@@ -127,6 +127,11 @@ static void nv30ClearStencil(GLcontext *ctx, GLint s)
 static void nv30ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	if (NOUVEAU_CARD_USING_SHADERS)
+		return;
+
+	plane -= GL_CLIP_PLANE0;
 	BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_CLIP_PLANE_A(plane), 4);
 	OUT_RING_CACHEf(equation[0]);
 	OUT_RING_CACHEf(equation[1]);
@@ -208,8 +213,14 @@ static void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 		case GL_CLIP_PLANE3:
 		case GL_CLIP_PLANE4:
 		case GL_CLIP_PLANE5:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_CLIP_PLANE_ENABLE(cap-GL_CLIP_PLANE0), 1);
-			OUT_RING_CACHE(state);
+			if (NOUVEAU_CARD_USING_SHADERS) {
+				nouveauShader *nvs = (nouveauShader *)ctx->VertexProgram._Current;
+				if (nvs)
+					nvs->translated = GL_FALSE;
+			} else {
+				BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_CLIP_PLANE_ENABLE(cap-GL_CLIP_PLANE0), 1);
+				OUT_RING_CACHE(state);
+			}
 			break;
 		case GL_COLOR_LOGIC_OP:
 			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_COLOR_LOGIC_OP_ENABLE, 1);
@@ -233,6 +244,8 @@ static void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 			OUT_RING_CACHE(state);
 			break;
 		case GL_FOG:
+			if (NOUVEAU_CARD_USING_SHADERS)
+				break;
 			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_ENABLE, 1);
 			OUT_RING_CACHE(state);
 			break;
@@ -559,7 +572,7 @@ static void nv30LineWidth(GLcontext *ctx, GLfloat width)
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	GLubyte ubWidth;
 
-	CLAMPED_FLOAT_TO_UBYTE(ubWidth, width);
+	ubWidth = (GLubyte)(width * 8.0) & 0xFF;
 
 	BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LINE_WIDTH_SMOOTH, 1);
 	OUT_RING_CACHE(ubWidth);
@@ -725,9 +738,13 @@ void (*TexParameter)(GLcontext *ctx, GLenum target,
 static void nv30TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
 {
         nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-        BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_TX_MATRIX(unit, 0), 16);
-        /*XXX: This SHOULD work.*/
-        OUT_RING_CACHEp(mat->m, 16);
+
+	if (!NOUVEAU_CARD_USING_SHADERS) {
+		BEGIN_RING_CACHE(NvSub3D,
+				 NV30_TCL_PRIMITIVE_3D_TX_MATRIX(unit, 0), 16);
+		/*XXX: This SHOULD work.*/
+		OUT_RING_CACHEp(mat->m, 16);
+	}
 }
 
 static void nv30WindowMoved(nouveauContextPtr nmesa)

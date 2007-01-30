@@ -26,11 +26,13 @@ typedef struct _nvs_fragment_header {
 
 typedef union {
 	struct {
-		uint32_t fp_control;
+		GLboolean uses_kil;
+		GLuint    num_regs;
 	} NV30FP;
 	struct {
 		uint32_t vp_in_reg;
 		uint32_t vp_out_reg;
+		uint32_t clip_enables;
 	} NV30VP;
 } nvsCardPriv;
 
@@ -54,8 +56,11 @@ typedef struct _nouveauShader {
    int		inst_count;
 
    nvsCardPriv card_priv;
+   int		vp_attrib_map[NVS_MAX_ATTRIBS];
 
    struct {
+      GLboolean in_use;
+
       GLfloat  *source_val;	/* NULL if invariant */
       float	val[4];
       /* Hardware-specific tracking, currently only nv30_fragprog
@@ -64,6 +69,7 @@ typedef struct _nouveauShader {
       int	*hw_index;
       int        hw_index_cnt;
    } params[NVS_MAX_CONSTS];
+   int param_high;
 
    /* Pass-private data */
    void *pass_rec;

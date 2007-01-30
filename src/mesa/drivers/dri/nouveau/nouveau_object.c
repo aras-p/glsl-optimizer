@@ -70,6 +70,8 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 	} else {
 		nouveauCreateContextObject(nmesa, NvCtxSurf2D, NV04_CONTEXT_SURFACES_2D,
 	      			   0, 0, 0, 0);
+		nouveauCreateContextObject(nmesa, NvCtxSurf3D, NV04_CONTEXT_SURFACES_3D,
+	      			   0, 0, 0, 0);
 		nouveauCreateContextObject(nmesa, NvImageBlit, NV_IMAGE_BLIT,
 	      			   NV_DMA_CONTEXT_FLAGS_PATCH_SRCCOPY, 0, 0, 0);
 	}

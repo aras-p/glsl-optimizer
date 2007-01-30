@@ -105,6 +105,11 @@ typedef struct nouveau_context {
 	/* Channel synchronisation */
 	nouveau_notifier *syncNotifier;
 
+	/* ARB_occlusion_query / EXT_timer_query */
+	GLuint		  query_object_max;
+	GLboolean *	  query_alloc;
+	nouveau_notifier *queryNotifier;
+
 	/* Additional hw-specific functions */
 	nouveau_hw_func hw_func;
 

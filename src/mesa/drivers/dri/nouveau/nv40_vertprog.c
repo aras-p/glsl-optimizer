@@ -86,6 +86,7 @@ NV40VPTranslateResultReg(nvsFunc *shader, nvsFixedReg result,
 					  unsigned int *mask_ret)
 {
 	unsigned int *out_reg = &shader->card_priv->NV30VP.vp_out_reg;
+	unsigned int *clip_en = &shader->card_priv->NV30VP.clip_enables;
 
 	*mask_ret = 0xf;
 
@@ -111,14 +112,17 @@ NV40VPTranslateResultReg(nvsFunc *shader, nvsFixedReg result,
 		return NV40_VP_INST_DEST_FOGC;
 	case NVS_FR_CLIP0:
 		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP0;
+		(*clip_en) |= 0x00000002;
 		*mask_ret = 0x4;
 		return NV40_VP_INST_DEST_FOGC;
 	case NVS_FR_CLIP1:
 		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP1;
+		(*clip_en) |= 0x00000020;
 		*mask_ret = 0x2;
 		return NV40_VP_INST_DEST_FOGC;
 	case NVS_FR_CLIP2:
 		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP2;
+		(*clip_en) |= 0x00000200;
 		*mask_ret = 0x1;
 		return NV40_VP_INST_DEST_FOGC;
 	case NVS_FR_POINTSZ:
@@ -127,13 +131,16 @@ NV40VPTranslateResultReg(nvsFunc *shader, nvsFixedReg result,
 		return NV40_VP_INST_DEST_PSZ;
 	case NVS_FR_CLIP3:
 		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP3;
+		(*clip_en) |= 0x00002000;
 		*mask_ret = 0x4;
 		return NV40_VP_INST_DEST_PSZ;
 	case NVS_FR_CLIP4:
+		(*clip_en) |= 0x00020000;
 		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP4;
 		*mask_ret = 0x2;
 		return NV40_VP_INST_DEST_PSZ;
 	case NVS_FR_CLIP5:
+		(*clip_en) |= 0x00200000;
 		(*out_reg) |= NV30_TCL_PRIMITIVE_3D_VP_OUT_REG_CLP5;
 		*mask_ret = 0x1;
 		return NV40_VP_INST_DEST_PSZ;
