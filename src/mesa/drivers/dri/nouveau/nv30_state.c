@@ -244,6 +244,8 @@ static void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 			OUT_RING_CACHE(state);
 			break;
 		case GL_FOG:
+			if (!NOUVEAU_CARD_USING_SHADERS)
+				break;
 			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_ENABLE, 1);
 			OUT_RING_CACHE(state);
 			break;
@@ -736,9 +738,13 @@ void (*TexParameter)(GLcontext *ctx, GLenum target,
 static void nv30TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
 {
         nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-        BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_TX_MATRIX(unit, 0), 16);
-        /*XXX: This SHOULD work.*/
-        OUT_RING_CACHEp(mat->m, 16);
+
+	if (!NOUVEAU_CARD_USING_SHADERS) {
+		BEGIN_RING_CACHE(NvSub3D,
+				 NV30_TCL_PRIMITIVE_3D_TX_MATRIX(unit, 0), 16);
+		/*XXX: This SHOULD work.*/
+		OUT_RING_CACHEp(mat->m, 16);
+	}
 }
 
 static void nv30WindowMoved(nouveauContextPtr nmesa)
