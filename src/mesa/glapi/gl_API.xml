@@ -7209,7 +7209,7 @@
     <function name="GetVertexAttribPointervARB" alias="GetVertexAttribPointervNV">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLvoid **" output="true"/>
+        <param name="pointer" type="GLvoid **" output="true"/>
     </function>
 </category>
 
