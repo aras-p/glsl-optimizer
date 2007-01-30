@@ -126,15 +126,16 @@ nvsUpdateShader(GLcontext *ctx, nouveauShader *nvs)
    /* Update state parameters */
    plist = nvs->mesa.vp.Base.Parameters;
    _mesa_load_state_parameters(ctx, plist);
-   for (i=0; i<plist->NumParameters; i++) {
+   for (i=0; i<nvs->param_high; i++) {
+      if (!nvs->params[i].in_use)
+	 continue;
+
       if (!nvs->on_hardware) {
 	 /* if we've been kicked off the hardware there's no guarantee our
 	  * consts are still there.. reupload them all
 	  */
 	 nvs->func->UpdateConst(ctx, nvs, i);
-      } else if (plist->Parameters[i].Type == PROGRAM_STATE_VAR) {
-	 if (!nvs->params[i].source_val) /* this is a workaround when consts aren't alloc'd from id=0.. */
-	    continue;
+      } else if (nvs->params[i].source_val) {
 	 /* update any changed state parameters */
 	 if (!TEST_EQ_4V(nvs->params[i].val, nvs->params[i].source_val))
 	    nvs->func->UpdateConst(ctx, nvs, i);

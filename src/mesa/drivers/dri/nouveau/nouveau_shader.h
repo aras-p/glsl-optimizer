@@ -58,6 +58,8 @@ typedef struct _nouveauShader {
    int		vp_attrib_map[NVS_MAX_ATTRIBS];
 
    struct {
+      GLboolean in_use;
+
       GLfloat  *source_val;	/* NULL if invariant */
       float	val[4];
       /* Hardware-specific tracking, currently only nv30_fragprog
@@ -66,6 +68,7 @@ typedef struct _nouveauShader {
       int	*hw_index;
       int        hw_index_cnt;
    } params[NVS_MAX_CONSTS];
+   int param_high;
 
    /* Pass-private data */
    void *pass_rec;

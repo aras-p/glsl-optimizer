@@ -113,6 +113,10 @@ static nvsCond _tx_mesa_condmask[] = {
 struct pass0_rec {
    int nvs_ipos;
    int next_temp;
+
+   int mesa_const_base;
+   int mesa_const_last;
+
    int swzconst_done;
    int swzconst_id;
    nvsRegister const_half;
@@ -308,8 +312,8 @@ pass0_make_dst_reg(nvsPtr nvs, nvsRegister *reg,
 static void
 pass0_make_src_reg(nvsPtr nvs, nvsRegister *reg, struct prog_src_register *src)
 {
+	struct pass0_rec *rec = nvs->pass_rec;
 	struct gl_program *mesa = (struct gl_program *)&nvs->mesa.vp.Base;
-	struct gl_program_parameter_list *p = mesa->Parameters;
 	int i;
 
 	*reg = nvr_unused;
@@ -332,34 +336,16 @@ pass0_make_src_reg(nvsPtr nvs, nvsRegister *reg, struct prog_src_register *src)
 				NVS_FR_UNKNOWN;
 		}
 		break;
-	/* All const types seem to get shoved into here, not really sure why */
 	case PROGRAM_STATE_VAR:
-		switch (p->Parameters[src->Index].Type) {
-		case PROGRAM_NAMED_PARAM:
-		case PROGRAM_CONSTANT:
-			nvs->params[src->Index].source_val = NULL;
-			COPY_4V(nvs->params[src->Index].val,
-				p->ParameterValues[src->Index]); 
-			break;
-		case PROGRAM_STATE_VAR:
-			nvs->params[src->Index].source_val =
-				p->ParameterValues[src->Index];
-			break;
-		default:
-			fprintf(stderr, "Unknown parameter type %d\n",
-					p->Parameters[src->Index].Type);
-			assert(0);
-			break;
+	case PROGRAM_NAMED_PARAM:
+	case PROGRAM_CONSTANT:
+		reg->file    = NVS_FILE_CONST;
+		reg->index   = src->Index + rec->mesa_const_base;
+		reg->indexed = src->RelAddr;
+		if (reg->indexed) {
+			reg->addr_reg  = 0;
+			reg->addr_comp = NVS_SWZ_X;
 		}
-
-		if (src->RelAddr) {
-			reg->indexed	= 1;
-			reg->addr_reg	= 0;
-			reg->addr_comp	= NVS_SWZ_X;
-		} else
-			reg->indexed = 0;
-		reg->file  = NVS_FILE_CONST;
-		reg->index = src->Index;
 		break;
 	case PROGRAM_TEMPORARY:
 		reg->file  = NVS_FILE_TEMP;
@@ -568,7 +554,6 @@ pass0_emulate_instruction(nouveauShader *nvs,
 	nvsFunc *shader = nvs->func;
 	nvsRegister src[3], dest, temp;
 	nvsInstruction *nvsinst;
-	struct pass0_rec *rec = nvs->pass_rec;
 	unsigned int mask = pass0_make_mask(inst->DstReg.WriteMask);
 	int i, sat;
 
@@ -825,6 +810,73 @@ pass0_build_attrib_map(nouveauShader *nvs, struct gl_vertex_program *vp)
 	}
 }
 
+static void
+pass0_prealloc_mesa_consts(nouveauShader *nvs)
+{
+	struct pass0_rec *rec = nvs->pass_rec;
+	struct gl_program *prog = &nvs->mesa.vp.Base;
+	struct prog_instruction *inst = prog->Instructions;
+	struct gl_program_parameter_list *plist = prog->Parameters;
+	int i;
+
+	/*XXX: not a good idea, params->hw_index is malloc'd */
+	memset(nvs->params, 0x00, sizeof(nvs->params));
+
+	/* When doing relative addressing on constants, the hardware needs us
+	 * to fill the "const id" field with a positive value.  Determine the
+	 * most negative index that is used so that all accesses to a
+	 * mesa-provided constant can be rebased to a positive index.
+	 */
+	while (inst->Opcode != OPCODE_END) {
+		for (i=0; i<_mesa_num_inst_src_regs(inst->Opcode); i++) {
+			struct prog_src_register *src = &inst->SrcReg[i];
+
+			switch (src->File) {
+			case PROGRAM_STATE_VAR:
+			case PROGRAM_CONSTANT:
+			case PROGRAM_NAMED_PARAM:
+				if (src->RelAddr && src->Index < 0) {
+					int base = src->Index * -1;
+					if (rec->mesa_const_base < base)
+						rec->mesa_const_base = base;
+				}
+				break;
+			default:
+				break;
+			}
+		}
+
+		inst++;
+	}
+	
+	/* Init all const tracking/alloc info from the parameter list, rather
+	 * than doing it as we translate the program.  Otherwise we can't get
+	 * at the correct constant info when relative addressing is being used.
+	 */
+	rec->mesa_const_last = plist->NumParameters + rec->mesa_const_base;
+	nvs->param_high = rec->mesa_const_last;
+	for (i=0; i<plist->NumParameters; i++) {
+		int hw = rec->mesa_const_base + i;
+
+		switch (plist->Parameters[i].Type) {
+		case PROGRAM_NAMED_PARAM:
+		case PROGRAM_STATE_VAR:
+			nvs->params[hw].in_use     = GL_TRUE;
+			nvs->params[hw].source_val = plist->ParameterValues[i];
+			COPY_4V(nvs->params[hw].val, plist->ParameterValues[i]);
+			break;
+		case PROGRAM_CONSTANT:
+			nvs->params[hw].in_use     = GL_TRUE;
+			nvs->params[hw].source_val = NULL;
+			COPY_4V(nvs->params[hw].val, plist->ParameterValues[i]);
+			break;
+		default:
+			assert(0);
+			break;
+		}
+	}
+}
+
 GLboolean
 nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 {
@@ -835,12 +887,28 @@ nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 	struct pass0_rec *rec;
 	int ret = GL_FALSE;
 
+	rec = CALLOC_STRUCT(pass0_rec);
+	if (!rec)
+		return GL_FALSE;
+
+	rec->next_temp = prog->NumTemporaries;
+	nvs->pass_rec  = rec;
+		
+	nvs->program_tree = (nvsFragmentHeader*)
+		pass0_create_subroutine(nvs, "program body");
+	if (!nvs->program_tree) {
+		FREE(rec);
+		return GL_FALSE;
+	}
+
 	switch (prog->Target) {
 	case GL_VERTEX_PROGRAM_ARB:
 		nvs->func = &nmesa->VPfunc;
 
 		if (vp->IsPositionInvariant)
 			_mesa_insert_mvp_code(ctx, vp);
+		pass0_prealloc_mesa_consts(nvs);
+
 #if 0
 		if (IS_FIXEDFUNCTION_PROG && CLIP_PLANES_USED)
 			pass0_insert_ff_clip_planes();
@@ -853,29 +921,20 @@ nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 
 		if (fp->FogOption != GL_NONE)
 			_mesa_append_fog_code(ctx, fp);
+		pass0_prealloc_mesa_consts(nvs);
 		break;
 	default:
 		fprintf(stderr, "Unknown program type %d", prog->Target);
+		FREE(rec);
+		/* DESTROY TREE!! */
 		return GL_FALSE;
 	}
 	nvs->func->card_priv = &nvs->card_priv;
 
-	rec = CALLOC_STRUCT(pass0_rec);
-	if (rec) {
-		rec->next_temp = prog->NumTemporaries;
-		nvs->pass_rec  = rec;
-		
-		nvs->program_tree = (nvsFragmentHeader*)
-			pass0_create_subroutine(nvs, "program body");
-		if (nvs->program_tree) {
-			ret = pass0_translate_instructions(nvs,
-							   0, 0,
-							   nvs->program_tree);
-			/*XXX: if (!ret) DESTROY TREE!!! */
-		}
-		FREE(rec);
-	}
+	ret = pass0_translate_instructions(nvs, 0, 0, nvs->program_tree);
+	/*XXX: if (!ret) DESTROY TREE!!! */
 
+	FREE(rec);
 	return ret;
 }
 
