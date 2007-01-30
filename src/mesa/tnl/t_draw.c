@@ -95,17 +95,13 @@ static void free_space(GLcontext *ctx)
  */
 static void _tnl_import_array( GLcontext *ctx,
 			       GLuint attrib,
-			       GLuint start,
-			       GLuint end,
+			       GLuint count,
 			       const struct gl_client_array *input,
 			       const GLubyte *ptr )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   const GLuint count = end - start;
    GLuint stride = input->StrideB;
-
-   ptr += start * stride;
 
    if (input->Type != GL_FLOAT) {
       const GLuint sz = input->Size;
@@ -183,7 +179,7 @@ static GLboolean *_tnl_import_edgeflag( GLcontext *ctx,
 
 static void bind_inputs( GLcontext *ctx, 
 			 const struct gl_client_array *inputs[],
-			 GLint min_index, GLint max_index,
+			 GLint count,
 			 struct gl_buffer_object **bo,
 			 GLuint *nr_bo )
 {
@@ -215,18 +211,17 @@ static void bind_inputs( GLcontext *ctx,
 	 ptr = inputs[i]->Ptr;
 
       /* Just make sure the array is floating point, otherwise convert to
-       * temporary storage.  Rebase arrays so that 'min_index' becomes
-       * element zero.
+       * temporary storage.  
        *
        * XXX: remove the GLvector4f type at some stage and just use
        * client arrays.
        */
-      _tnl_import_array(ctx, i, min_index, max_index, inputs[i], ptr);
+      _tnl_import_array(ctx, i, count, inputs[i], ptr);
    }
 
    /* We process only the vertices between min & max index:
     */
-   VB->Count = max_index - min_index;
+   VB->Count = count;
 
 
    /* Legacy pointers -- remove one day.
@@ -264,7 +259,6 @@ static void bind_inputs( GLcontext *ctx,
  */
 static void bind_indices( GLcontext *ctx,
 			  const struct _mesa_index_buffer *ib,
-			  GLuint min_index,
 			  struct gl_buffer_object **bo,
 			  GLuint *nr_bo)
 {
@@ -273,8 +267,10 @@ static void bind_indices( GLcontext *ctx,
    GLuint i;
    void *ptr;
 
-   if (!ib)
+   if (!ib) {
+      VB->Elts = NULL;
       return;
+   }
 
    if (ib->obj->Name && !ib->obj->Pointer) {
       bo[*nr_bo] = ib->obj;
@@ -289,60 +285,34 @@ static void bind_indices( GLcontext *ctx,
 
    ptr = ADD_POINTERS(ib->obj->Pointer, ib->ptr);
 
-   if (ib->type == GL_UNSIGNED_INT && min_index == 0) {
+   if (ib->type == GL_UNSIGNED_INT) {
       VB->Elts = (GLuint *) ptr;
-      VB->Elts += ib->rebase;
    }
    else {
       GLuint *elts = (GLuint *)get_space(ctx, ib->count * sizeof(GLuint));
       VB->Elts = elts;
 
-      switch (ib->type) {
-      case GL_UNSIGNED_INT: {
-	 const GLuint *in = ((GLuint *)ptr) + ib->rebase;
+      if (ib->type == GL_UNSIGNED_SHORT) {
+	 const GLushort *in = (GLushort *)ptr;
 	 for (i = 0; i < ib->count; i++) 
-	    *elts++ = *in++ - min_index;
-	 break;
+	    *elts++ = (GLuint)(*in++);
       }
-      case GL_UNSIGNED_SHORT: {
-	 const GLushort *in = ((GLushort *)ptr) + ib->rebase;
+      else {
+	 const GLubyte *in = (GLubyte *)ptr;
 	 for (i = 0; i < ib->count; i++) 
-	    *elts++ = (GLuint)(*in++) - min_index;
-	 break;
+	    *elts++ = (GLuint)(*in++);
       }
-      case GL_UNSIGNED_BYTE: {
-	 const GLubyte *in = ((GLubyte *)ptr) + ib->rebase;
-	 for (i = 0; i < ib->count; i++) 
-	    *elts++ = (GLuint)(*in++) - min_index;
-	 break;
-      }
-      }      
    }
 }
 
 static void bind_prims( GLcontext *ctx,
 			const struct _mesa_prim *prim,
-			GLuint nr_prims,
-			GLuint min_index )
+			GLuint nr_prims )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint i;
 
-   if (min_index != 0) {
-      struct _mesa_prim *tmp = (struct _mesa_prim *)get_space(ctx, nr_prims * sizeof(*prim));
-
-      for (i = 0; i < nr_prims; i++) {
-	 tmp[i] = prim[i];
-	 tmp[i].start -= min_index;
-      }
-
-      VB->Primitive = tmp;
-   }
-   else {
-      VB->Primitive = prim;
-   }
-
+   VB->Primitive = prim;
    VB->PrimitiveCount = nr_prims;
 }
 
@@ -373,19 +343,10 @@ void _tnl_draw_prims( GLcontext *ctx,
 		      GLuint max_index)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   GLint max = VB->Size;
+   const GLuint TEST_SPLIT = 0;
+   const GLint max = TEST_SPLIT ? 8 : tnl->vb.Size - MAX_CLIPPED_VERTICES;
 
-#ifdef TEST_SPLIT
-   max = 8 + MAX_CLIPPED_VERTICES;
-#endif
-   
-   assert(max_index > min_index);
-   assert(!(max_index & 0x80000000));
-
-   VB->Elts = NULL;
-
-#if 0
+   if (0)
    {
       GLuint i;
       _mesa_printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
@@ -395,15 +356,22 @@ void _tnl_draw_prims( GLcontext *ctx,
 		      prim[i].start,
 		      prim[i].count);
    }
-#endif
 
-   /* The software TNL pipeline has a fixed amount of storage for
-    * vertices and it is necessary to split incoming drawing commands
-    * if they exceed that limit.
-    */
-   if (max_index - min_index >= max - MAX_CLIPPED_VERTICES) {
+   if (min_index) {
+      /* We always translate away calls with min_index != 0. 
+       */
+      vbo_rebase_prims( ctx, arrays, prim, nr_prims, ib, 
+			min_index, max_index,
+			_tnl_draw_prims );
+      return;
+   }
+   else if (max_index >= max) {
+      /* The software TNL pipeline has a fixed amount of storage for
+       * vertices and it is necessary to split incoming drawing commands
+       * if they exceed that limit.
+       */
       struct split_limits limits;
-      limits.max_verts = max - MAX_CLIPPED_VERTICES;
+      limits.max_verts = max;
       limits.max_vb_size = ~0;
       limits.max_indices = ~0;
 
@@ -411,7 +379,7 @@ void _tnl_draw_prims( GLcontext *ctx,
        * recursively call back into this function.
        */
       vbo_split_prims( ctx, arrays, prim, nr_prims, ib, 
-		       min_index, max_index,
+		       0, max_index,
 		       _tnl_draw_prims,
 		       &limits );
    }
@@ -425,9 +393,9 @@ void _tnl_draw_prims( GLcontext *ctx,
       /* Binding inputs may imply mapping some vertex buffer objects.
        * They will need to be unmapped below.
        */
-      bind_inputs(ctx, arrays, min_index, max_index+1, bo, &nr_bo);
-      bind_indices(ctx, ib, min_index, bo, &nr_bo);
-      bind_prims(ctx, prim, nr_prims, VB->Elts ? 0 : min_index );
+      bind_inputs(ctx, arrays, max_index+1, bo, &nr_bo);
+      bind_indices(ctx, ib, bo, &nr_bo);
+      bind_prims(ctx, prim, nr_prims );
 
       TNL_CONTEXT(ctx)->Driver.RunPipeline(ctx);
 

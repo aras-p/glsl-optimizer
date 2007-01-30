@@ -55,7 +55,6 @@ struct _mesa_index_buffer {
    GLenum type;
    struct gl_buffer_object *obj;
    const void *ptr;
-   GLuint rebase;
 };
 
 

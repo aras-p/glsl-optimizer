@@ -309,7 +309,6 @@ copy_array_to_vbo_array( struct brw_context *brw,
 			 GLuint i,
 			 const struct gl_client_array *array,
 			 GLuint element_size,
-			 GLuint min_index,
 			 GLuint count)
 {
    GLcontext *ctx = &brw->intel.ctx;
@@ -347,7 +346,7 @@ copy_array_to_vbo_array( struct brw_context *brw,
       map += offset;
 
       copy_strided_array( map, 
-			  array->Ptr + min_index * array->StrideB,
+			  array->Ptr,
 			  element_size,
 			  array->StrideB,
 			  count);
@@ -438,10 +437,8 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
 	 }
 
 	 upload[nr_uploads++] = input;
-	 input->vbo_rebase_offset = 0;
+	 assert(min_index == 0);
       }
-      else 
-	 input->vbo_rebase_offset = min_index * input->glarray->StrideB;
    }
 
    /* Upload interleaved arrays if all uploads are interleaved
@@ -454,7 +451,6 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
       input0->glarray = copy_array_to_vbo_array(brw, 0,
 						input0->glarray, 
 						interleave,
-						min_index,
 						input0->count);
 
       for (i = 1; i < nr_uploads; i++) {
@@ -472,7 +468,6 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
 	 input->glarray = copy_array_to_vbo_array(brw, i, 
 						  input->glarray,
 						  input->element_size,
-						  min_index,
 						  input->count);
 
       }
@@ -520,9 +515,9 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
       vbp.vb[i].vb0.bits.pad = 0;
       vbp.vb[i].vb0.bits.access_type = BRW_VERTEXBUFFER_ACCESS_VERTEXDATA;
       vbp.vb[i].vb0.bits.vb_index = i;
-      vbp.vb[i].offset = (GLuint)input->glarray->Ptr + input->vbo_rebase_offset;
+      vbp.vb[i].offset = (GLuint)input->glarray->Ptr;
       vbp.vb[i].buffer = array_buffer(input->glarray);
-      vbp.vb[i].max_index = max_index - min_index;
+      vbp.vb[i].max_index = max_index;
    }
 
 
@@ -563,93 +558,31 @@ static GLuint element_size( GLenum type )
 
 
 
-
-static void rebase_indices_to_vbo_indices( struct brw_context *brw, 
-					   const struct _mesa_index_buffer *index_buffer,
-					   struct gl_buffer_object **vbo_return,
-					   GLuint *offset_return )
+void brw_upload_indices( struct brw_context *brw,
+			 const struct _mesa_index_buffer *index_buffer )
 {
    GLcontext *ctx = &brw->intel.ctx;
-   GLuint min_index = index_buffer->rebase;
-   const void *indices = index_buffer->ptr;
-   GLsizei count = index_buffer->count;
-   GLenum type = index_buffer->type;
-   GLuint size = element_size(type) * count;
-   struct gl_buffer_object *bufferobj;
-   GLuint offset;
-   GLuint i;
-
-   get_space(brw, size, &bufferobj, &offset);
-
-   *vbo_return = bufferobj;
-   *offset_return = offset;
-
-   if (min_index == 0) {
-      /* Straight upload
-       */
-      ctx->Driver.BufferSubData( ctx,
-				 GL_ELEMENT_ARRAY_BUFFER_ARB,
-				 offset, 
-				 size,
-				 indices,
-				 bufferobj);
-   }
-   else {
-      void *map = ctx->Driver.MapBuffer(ctx,
-					GL_ELEMENT_ARRAY_BUFFER_ARB,
-					GL_DYNAMIC_DRAW_ARB,
-					bufferobj);
-
-      map += offset;
-
-      switch (type) {
-      case GL_UNSIGNED_INT: {
-	 GLuint *ui_map = (GLuint *)map;
-	 const GLuint *ui_indices = (const GLuint *)indices;
-
-	 for (i = 0; i < count; i++)
-	    ui_map[i] = ui_indices[i] - min_index;
-	 break;
-      }
-      case GL_UNSIGNED_SHORT:  {
-	 GLushort *us_map = (GLushort *)map;
-	 const GLushort *us_indices = (const GLushort *)indices;
-
-	 for (i = 0; i < count; i++)
-	    us_map[i] = us_indices[i] - min_index;
-	 break;
-      }
-      case GL_UNSIGNED_BYTE:  {
-	 GLubyte *ub_map = (GLubyte *)map;
-	 const GLubyte *ub_indices = (const GLubyte *)indices;
-
-	 for (i = 0; i < count; i++)
-	    ub_map[i] = ub_indices[i] - min_index;
-	 break;
-      }
-      }
-
-      ctx->Driver.UnmapBuffer(ctx, 
-			      GL_ELEMENT_ARRAY_BUFFER_ARB, 
-			      bufferobj);
-
-   }
-}
-
-
-
-void brw_upload_indices( struct brw_context *brw,
-			 const struct _mesa_index_buffer *index_buffer)
-{
    struct intel_context *intel = &brw->intel;
    GLuint ib_size = get_size(index_buffer->type) * index_buffer->count;
    struct gl_buffer_object *bufferobj = index_buffer->obj;
    GLuint offset = (GLuint)index_buffer->ptr;
 
-   /* Already turned into a proper VBO:
+   /* Turn into a proper VBO:
     */
-   if (!index_buffer->obj->Name) {
-      rebase_indices_to_vbo_indices(brw, index_buffer, &bufferobj, &offset );
+   if (!bufferobj->Name) {
+     
+      /* Get new bufferobj, offset:
+       */
+      get_space(brw, ib_size, &bufferobj, &offset);
+
+      /* Straight upload
+       */
+      ctx->Driver.BufferSubData( ctx,
+				 GL_ELEMENT_ARRAY_BUFFER_ARB,
+				 offset, 
+				 ib_size,
+				 index_buffer->ptr,
+				 bufferobj);
    }
 
    /* Emit the indexbuffer packet:

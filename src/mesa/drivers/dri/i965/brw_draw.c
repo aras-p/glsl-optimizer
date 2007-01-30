@@ -198,7 +198,9 @@ static void brw_merge_inputs( struct brw_context *brw,
       brw->state.dirty.brw |= BRW_NEW_INPUT_VARYING;
 }
 
-
+/* XXX: could split the primitive list to fallback only on the
+ * non-conformant primitives.
+ */
 static GLboolean check_fallbacks( struct brw_context *brw,
 				  const struct _mesa_prim *prim,
 				  GLuint nr_prims )
@@ -251,7 +253,9 @@ static GLboolean check_fallbacks( struct brw_context *brw,
    return GL_FALSE;
 }
 
-
+/* May fail if out of video memory for texture or vbo upload, or on
+ * fallback conditions.
+ */
 static GLboolean brw_try_draw_prims( GLcontext *ctx,
 				     const struct gl_client_array *arrays[],
 				     const struct _mesa_prim *prim,
@@ -376,6 +380,33 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    return retval;
 }
 
+static GLboolean brw_need_rebase( GLcontext *ctx,
+				  const struct gl_client_array *arrays[],
+				  const struct _mesa_index_buffer *ib,
+				  GLuint min_index )
+{
+   if (min_index == 0) 
+      return GL_FALSE;
+
+   if (ib) {
+      if (!vbo_all_varyings_in_vbos(arrays))
+	 return GL_TRUE;
+      else
+	 return GL_FALSE;
+   }
+   else {
+      /* Hmm.  This isn't quite what I wanted.  BRW can actually
+       * handle the mixed case well enough that we shouldn't need to
+       * rebase.  However, it's probably not very common, nor hugely
+       * expensive to do it this way:
+       */
+      if (!vbo_all_varyings_in_vbos(arrays))
+	 return GL_TRUE;
+      else
+	 return GL_FALSE;
+   }
+}
+				  
 
 void brw_draw_prims( GLcontext *ctx,
 		     const struct gl_client_array *arrays[],
@@ -388,6 +419,21 @@ void brw_draw_prims( GLcontext *ctx,
    struct intel_context *intel = intel_context(ctx);
    GLboolean retval;
 
+   /* Decide if we want to rebase.  If so we end up recursing once
+    * only into this function.
+    */
+   if (brw_need_rebase( ctx, arrays, ib, min_index )) {
+      vbo_rebase_prims( ctx, arrays, 
+			prim, nr_prims, 
+			ib, min_index, max_index, 
+			brw_draw_prims );
+      
+      return;
+   }
+
+
+   /* Make a first attempt at drawing:
+    */
    retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
 
    
@@ -440,14 +486,13 @@ void brw_draw_init( struct brw_context *brw )
    for (i = 0; i < BRW_NR_UPLOAD_BUFS; i++) {
       brw->vb.upload.vbo[i] = ctx->Driver.NewBufferObject(ctx, 1, GL_ARRAY_BUFFER_ARB);
       
-      /* XXX: Set these to no-backing-store
+      /* NOTE:  These are set to no-backing-store.
        */
       bmBufferSetInvalidateCB(&brw->intel,
 			      intel_bufferobj_buffer(intel_buffer_object(brw->vb.upload.vbo[i])),
 			      brw_invalidate_vbo_cb,
 			      &brw->intel,
 			      GL_TRUE);
-
    }
 
    ctx->Driver.BufferData( ctx, 

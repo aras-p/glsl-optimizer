@@ -34,45 +34,55 @@
 
 #include "vbo_context.h"
 
-static GLuint get_max_index( GLuint count, GLuint type, 
-			     const GLvoid *indices )
+/* Compute min and max elements for drawelements calls.
+ */
+static void get_minmax_index( GLuint count, GLuint type, 
+			      const GLvoid *indices,
+			      GLuint *min_index,
+			      GLuint *max_index)
 {
    GLint i;
 
-   /* Compute max element.  This is only needed for upload of non-VBO,
-    * non-constant data elements.
-    *
-    * XXX: Postpone this calculation until it is known that it is
-    * needed.  Otherwise could scan this pointlessly in the all-vbo
-    * case.
-    */
    switch(type) {
    case GL_UNSIGNED_INT: {
       const GLuint *ui_indices = (const GLuint *)indices;
-      GLuint max_ui = 0;
-      for (i = 0; i < count; i++)
-	 if (ui_indices[i] > max_ui)
-	    max_ui = ui_indices[i];
-      return max_ui;
+      GLuint max_ui = ui_indices[0];
+      GLuint min_ui = ui_indices[0];
+      for (i = 1; i < count; i++) {
+	 if (ui_indices[i] > max_ui) max_ui = ui_indices[i];
+	 if (ui_indices[i] < min_ui) min_ui = ui_indices[i];
+      }
+      *min_index = min_ui;
+      *max_index = max_ui;
+      break;
    }
    case GL_UNSIGNED_SHORT: {
       const GLushort *us_indices = (const GLushort *)indices;
-      GLuint max_us = 0;
-      for (i = 0; i < count; i++)
-	 if (us_indices[i] > max_us)
-	    max_us = us_indices[i];
-      return max_us;
+      GLuint max_us = us_indices[0];
+      GLuint min_us = us_indices[0];
+      for (i = 1; i < count; i++) {
+	 if (us_indices[i] > max_us) max_us = us_indices[i];
+	 if (us_indices[i] < min_us) min_us = us_indices[i];
+      }
+      *min_index = min_us;
+      *max_index = max_us;
+      break;
    }
    case GL_UNSIGNED_BYTE: {
       const GLubyte *ub_indices = (const GLubyte *)indices;
-      GLuint max_ub = 0;
-      for (i = 0; i < count; i++)
-	 if (ub_indices[i] > max_ub)
-	    max_ub = ub_indices[i];
-      return max_ub;
+      GLuint max_ub = ub_indices[0];
+      GLuint min_ub = ub_indices[0];
+      for (i = 1; i < count; i++) {
+	 if (ub_indices[i] > max_ub) max_ub = ub_indices[i];
+	 if (ub_indices[i] < min_ub) min_ub = ub_indices[i];
+      }
+      *min_index = min_ub;
+      *max_index = max_ub;
+      break;
    }
    default:
-      return 0;
+      assert(0);
+      break;
    }
 }
 
@@ -241,31 +251,12 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
    prim[0].end = 1;
    prim[0].weak = 0;
    prim[0].pad = 0;
+   prim[0].mode = mode;
+   prim[0].start = start;
+   prim[0].count = count;
+   prim[0].indexed = 0;
 
-   if (exec->array.inputs[0]->BufferObj->Name) {
-      /* Use vertex attribute as a hint to tell us if we expect all
-       * arrays to be in VBO's and if so, don't worry about avoiding
-       * the upload of elements < start.
-       */
-      prim[0].mode = mode;
-      prim[0].start = start;
-      prim[0].count = count;
-      prim[0].indexed = 0;
-
-      vbo->draw_prims( ctx, exec->array.inputs, prim, 1, NULL, 0, start + count );
-   }
-   else {
-      /* If not using VBO's, we don't want to upload any more elements
-       * than necessary from the arrays as they will not be valid next
-       * time the application tries to draw with them.
-       */
-      prim[0].mode = mode;
-      prim[0].start = 0;
-      prim[0].count = count;
-      prim[0].indexed = 0;
-
-      vbo->draw_prims( ctx, exec->array.inputs, prim, 1, NULL, start, start + count );
-   }
+   vbo->draw_prims( ctx, exec->array.inputs, prim, 1, NULL, start, start + count - 1 );
 }
 
 
@@ -296,20 +287,6 @@ vbo_exec_DrawRangeElements(GLenum mode,
    ib.obj = ctx->Array.ElementArrayBufferObj;
    ib.ptr = indices;
 
-   if (ctx->Array.ElementArrayBufferObj->Name) {
-      /* Use the fact that indices are in a VBO as a hint that the
-       * program has put all the arrays in VBO's and we don't have to
-       * worry about performance implications of start > 0.
-       *
-       * XXX: consider passing start as min_index to draw_prims instead.
-       * XXX: don't rebase because it didn't work.
-       */
-      ib.rebase = 0;
-   }
-   else {
-      ib.rebase = /*start*/ 0;
-   }
-
    prim[0].begin = 1;
    prim[0].end = 1;
    prim[0].weak = 0;
@@ -319,15 +296,46 @@ vbo_exec_DrawRangeElements(GLenum mode,
    prim[0].count = count;
    prim[0].indexed = 1;
 
-   vbo->draw_prims( ctx, exec->array.inputs, prim, 1, &ib, /*ib.rebase*/ start, end+1 );
-}
+   /* Need to give special consideration to rendering a range of
+    * indices starting somewhere above zero.  Typically the
+    * application is issuing multiple DrawRangeElements() to draw
+    * successive primitives layed out linearly in the vertex arrays.
+    * Unless the vertex arrays are all in a VBO (or locked as with
+    * CVA), the OpenGL semantics imply that we need to re-read or
+    * re-upload the vertex data on each draw call.  
+    *
+    * In the case of hardware tnl, we want to avoid starting the
+    * upload at zero, as it will mean every draw call uploads an
+    * increasing amount of not-used vertex data.  Worse - in the
+    * software tnl module, all those vertices might be transformed and
+    * lit but never rendered.
+    *
+    * If we just upload or transform the vertices in start..end,
+    * however, the indices will be incorrect.
+    *
+    * At this level, we don't know exactly what the requirements of
+    * the backend are going to be, though it will likely boil down to
+    * either:
+    *
+    * 1) Do nothing, everything is in a VBO and is processed once
+    *       only.
+    *
+    * 2) Adjust the indices and vertex arrays so that start becomes
+    *    zero.
+    *
+    * Rather than doing anything here, I'll provide a helper function
+    * for the latter case elsewhere.
+    */
 
+   vbo->draw_prims( ctx, exec->array.inputs, prim, 1, &ib, start, end );
+}
 
 static void GLAPIENTRY
 vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLuint max_index;
+   GLuint min_index = 0;
+   GLuint max_index = 0;
 
    if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices ))
       return;
@@ -338,17 +346,17 @@ vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *ind
 						 GL_READ_ONLY,
 						 ctx->Array.ElementArrayBufferObj);
 
-      max_index = get_max_index(count, type, ADD_POINTERS(map, indices));
+      get_minmax_index(count, type, ADD_POINTERS(map, indices), &min_index, &max_index);
 
       ctx->Driver.UnmapBuffer(ctx,
 			      GL_ELEMENT_ARRAY_BUFFER_ARB,
 			      ctx->Array.ElementArrayBufferObj);
    }
    else {
-      max_index = get_max_index(count, type, indices);
+      get_minmax_index(count, type, indices, &min_index, &max_index);
    }
 
-   vbo_exec_DrawRangeElements(mode, 0, max_index, count, type, indices);
+   vbo_exec_DrawRangeElements(mode, min_index, max_index, count, type, indices);
 }
 
 

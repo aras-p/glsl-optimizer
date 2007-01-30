@@ -479,7 +479,6 @@ static void replay_init( struct copy_context *copy )
    copy->dstib.type = GL_UNSIGNED_INT;
    copy->dstib.obj = ctx->Array.NullBufferObj;
    copy->dstib.ptr = copy->dstelt;
-   copy->dstib.rebase = 0;	
 }
 
 

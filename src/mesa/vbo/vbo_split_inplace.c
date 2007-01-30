@@ -223,7 +223,6 @@ static void split_prims( struct split_context *split)
 	 ib.type = GL_UNSIGNED_INT;
 	 ib.obj = split->ctx->Array.NullBufferObj;
 	 ib.ptr = elts;
-	 ib.rebase = 0;		/* ? */
 	    
 	 tmpprim = *prim;
 	 tmpprim.indexed = 1;
