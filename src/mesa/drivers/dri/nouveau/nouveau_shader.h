@@ -32,6 +32,7 @@ typedef union {
 	struct {
 		uint32_t vp_in_reg;
 		uint32_t vp_out_reg;
+		uint32_t clip_enables;
 	} NV30VP;
 } nvsCardPriv;
 

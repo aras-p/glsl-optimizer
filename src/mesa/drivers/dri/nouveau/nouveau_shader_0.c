@@ -811,12 +811,65 @@ pass0_build_attrib_map(nouveauShader *nvs, struct gl_vertex_program *vp)
 }
 
 static void
-pass0_prealloc_mesa_consts(nouveauShader *nvs)
+pass0_vp_insert_ff_clip_planes(GLcontext *ctx, nouveauShader *nvs)
+{
+	struct gl_program *prog = &nvs->mesa.vp.Base;
+	nvsFragmentHeader *parent = nvs->program_tree;
+	nvsInstruction *nvsinst;
+	GLuint fpos = 0;
+	nvsRegister opos, epos, eqn, mv[4];
+	GLint tokens[6] = { STATE_MATRIX, STATE_MODELVIEW, 0, 0, 0, 0 };
+	GLint id;
+	int i;
+
+	/* modelview transform */
+	pass0_make_reg(nvs, &opos, NVS_FILE_ATTRIB, NVS_FR_POSITION);
+	pass0_make_reg(nvs, &epos, NVS_FILE_TEMP  , -1);
+	for (i=0; i<4; i++) {
+		tokens[3] = tokens[4] = i;
+		id = _mesa_add_state_reference(prog->Parameters, tokens);
+		pass0_make_reg(nvs, &mv[i], NVS_FILE_CONST, id);
+	}
+	ARITHu(NVS_OP_DP4, epos, SMASK_X, 0, opos, mv[0], nvr_unused);
+	ARITHu(NVS_OP_DP4, epos, SMASK_Y, 0, opos, mv[1], nvr_unused);
+	ARITHu(NVS_OP_DP4, epos, SMASK_Z, 0, opos, mv[2], nvr_unused);
+	ARITHu(NVS_OP_DP4, epos, SMASK_W, 0, opos, mv[3], nvr_unused);
+
+	/* Emit code to emulate fixed-function glClipPlane */
+	for (i=0; i<6; i++) {
+		GLuint clipmask = SMASK_X;
+		nvsRegister clip;
+
+		if (!(ctx->Transform.ClipPlanesEnabled & (1<<i)))
+			continue;
+
+		/* Point a const at a user clipping plane */
+		tokens[0] = STATE_CLIPPLANE;
+		tokens[1] = i;
+		id = _mesa_add_state_reference(prog->Parameters, tokens);
+		pass0_make_reg(nvs, &eqn , NVS_FILE_CONST , id);
+		pass0_make_reg(nvs, &clip, NVS_FILE_RESULT, NVS_FR_CLIP0 + i);
+
+		/*XXX: something else needs to take care of modifying the
+		 *     instructions to write to the correct hw clip register.
+		 */
+		switch (i) {
+		case 0: case 3:	clipmask = SMASK_Y; break;
+		case 1: case 4: clipmask = SMASK_Z; break;
+		case 2: case 5: clipmask = SMASK_W; break;
+		}
+
+		/* Emit transform */
+		ARITHu(NVS_OP_DP4, clip, clipmask, 0, epos, eqn, nvr_unused);
+	}
+}
+
+static void
+pass0_rebase_mesa_consts(nouveauShader *nvs)
 {
 	struct pass0_rec *rec = nvs->pass_rec;
 	struct gl_program *prog = &nvs->mesa.vp.Base;
 	struct prog_instruction *inst = prog->Instructions;
-	struct gl_program_parameter_list *plist = prog->Parameters;
 	int i;
 
 	/*XXX: not a good idea, params->hw_index is malloc'd */
@@ -848,10 +901,23 @@ pass0_prealloc_mesa_consts(nouveauShader *nvs)
 
 		inst++;
 	}
-	
+}
+
+static void
+pass0_resolve_mesa_consts(nouveauShader *nvs)
+{
+	struct pass0_rec *rec = nvs->pass_rec;
+	struct gl_program *prog = &nvs->mesa.vp.Base;
+	struct gl_program_parameter_list *plist = prog->Parameters;
+	int i;
+
 	/* Init all const tracking/alloc info from the parameter list, rather
-	 * than doing it as we translate the program.  Otherwise we can't get
-	 * at the correct constant info when relative addressing is being used.
+	 * than doing it as we translate the program.  Otherwise:
+	 *   1) we can't get at the correct constant info when relative
+	 *      addressing is being used due to src->Index not pointing
+	 *      at the exact const;
+	 *   2) as we add extra consts to the program, mesa will call realloc()
+	 *      and we get invalid pointers to the const data.
 	 */
 	rec->mesa_const_last = plist->NumParameters + rec->mesa_const_base;
 	nvs->param_high = rec->mesa_const_last;
@@ -907,12 +973,10 @@ nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 
 		if (vp->IsPositionInvariant)
 			_mesa_insert_mvp_code(ctx, vp);
-		pass0_prealloc_mesa_consts(nvs);
+		pass0_rebase_mesa_consts(nvs);
 
-#if 0
-		if (IS_FIXEDFUNCTION_PROG && CLIP_PLANES_USED)
-			pass0_insert_ff_clip_planes();
-#endif
+		if (!prog->String && ctx->Transform.ClipPlanesEnabled)
+			pass0_vp_insert_ff_clip_planes(ctx, nvs);
 
 		pass0_build_attrib_map(nvs, vp);
 		break;
@@ -921,7 +985,7 @@ nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 
 		if (fp->FogOption != GL_NONE)
 			_mesa_append_fog_code(ctx, fp);
-		pass0_prealloc_mesa_consts(nvs);
+		pass0_rebase_mesa_consts(nvs);
 		break;
 	default:
 		fprintf(stderr, "Unknown program type %d", prog->Target);
@@ -932,6 +996,8 @@ nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 	nvs->func->card_priv = &nvs->card_priv;
 
 	ret = pass0_translate_instructions(nvs, 0, 0, nvs->program_tree);
+	if (ret)
+		pass0_resolve_mesa_consts(nvs);
 	/*XXX: if (!ret) DESTROY TREE!!! */
 
 	FREE(rec);
