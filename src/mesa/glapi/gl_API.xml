@@ -11234,7 +11234,7 @@
     <function name="GetVertexAttribPointervNV" offset="assign">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLvoid **" output="true"/>
+        <param name="pointer" type="GLvoid **" output="true"/>
         <glx handcode="true"/>
     </function>
 
