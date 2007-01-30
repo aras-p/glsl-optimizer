@@ -741,8 +741,9 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
 GLint
 _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
 {
-   if (ctx->Shader.CurrentProgram) {
-      const struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+   struct gl_shader_program *shProg
+      = _mesa_lookup_shader_program(ctx, program);
+   if (shProg) {
       GLuint loc;
       for (loc = 0; loc < shProg->Uniforms->NumParameters; loc++) {
          const struct gl_program_parameter *u
