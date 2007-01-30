@@ -101,4 +101,18 @@ void vbo_split_prims( GLcontext *ctx,
 		      const struct split_limits *limits );
 
 
+/* Helpers for dealing translating away non-zero min_index.
+ */
+GLboolean vbo_all_varyings_in_vbos( const struct gl_client_array *arrays[] );
+
+void vbo_rebase_prims( GLcontext *ctx,
+		       const struct gl_client_array *arrays[],
+		       const struct _mesa_prim *prim,
+		       GLuint nr_prims,
+		       const struct _mesa_index_buffer *ib,
+		       GLuint min_index,
+		       GLuint max_index,
+		       vbo_draw_func draw );
+
+
 #endif
