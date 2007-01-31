@@ -68,6 +68,7 @@ static slang_ir_info IrInfo[] = {
    { IR_LRP, "IR_LRP", OPCODE_LRP, 4, 3 },
    { IR_MIN, "IR_MIN", OPCODE_MIN, 4, 2 },
    { IR_MAX, "IR_MAX", OPCODE_MAX, 4, 2 },
+   { IR_CLAMP, "IR_CLAMP", OPCODE_NOP, 4, 3 }, /* special case: emit_clamp() */
    { IR_SEQUAL, "IR_SEQUAL", OPCODE_SEQ, 4, 2 },
    { IR_SNEQUAL, "IR_SNEQUAL", OPCODE_SNE, 4, 2 },
    { IR_SGE, "IR_SGE", OPCODE_SGE, 4, 2 },
@@ -84,7 +85,7 @@ static slang_ir_info IrInfo[] = {
    { IR_FLOOR, "IR_FLOOR", OPCODE_FLR, 4, 1 },
    { IR_FRAC, "IR_FRAC", OPCODE_FRC, 4, 1 },
    { IR_ABS, "IR_ABS", OPCODE_ABS, 4, 1 },
-   { IR_NEG, "IR_NEG", OPCODE_NOP/*spec case*/, 4, 1 },
+   { IR_NEG, "IR_NEG", OPCODE_NOP, 4, 1 }, /* special case: emit_negation() */
    { IR_DDX, "IR_DDX", OPCODE_DDX, 4, 1 },
    { IR_DDX, "IR_DDY", OPCODE_DDX, 4, 1 },
    { IR_SIN, "IR_SIN", OPCODE_SIN, 1, 1 },
@@ -298,12 +299,14 @@ slang_print_ir(const slang_ir_node *n, int indent)
 
    case IR_VAR:
       printf("VAR %s%s at %s  store %p\n",
-             (char *) n->Var->a_name, swizzle_string(n->Store->Swizzle),
+             (n->Var ? (char *) n->Var->a_name : "TEMP"),
+             swizzle_string(n->Store->Swizzle),
              storage_string(n->Store), (void*) n->Store);
       break;
    case IR_VAR_DECL:
       printf("VAR_DECL %s (%p) at %s  store %p\n",
-             (char *) n->Var->a_name, (void*) n->Var, storage_string(n->Store),
+             (n->Var ? (char *) n->Var->a_name : "TEMP"),
+             (void*) n->Var, storage_string(n->Store),
              (void*) n->Store);
       break;
    case IR_FIELD:
@@ -444,6 +447,19 @@ new_instruction(struct gl_program *prog, gl_inst_opcode opcode)
    _mesa_init_instructions(inst, 1);
    inst->Opcode = opcode;
    return inst;
+}
+
+
+/**
+ * Return pointer to last instruction in program.
+ */
+static struct prog_instruction *
+prev_instruction(struct gl_program *prog)
+{
+   if (prog->NumInstructions == 0)
+      return NULL;
+   else
+      return prog->Instructions + prog->NumInstructions - 1;
 }
 
 
@@ -674,6 +690,73 @@ emit_arith(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 }
 
 
+/**
+ * Generate code for an IR_CLAMP instruction.
+ */
+static struct prog_instruction *
+emit_clamp(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
+{
+   struct prog_instruction *inst;
+
+   assert(n->Opcode == IR_CLAMP);
+   /* ch[0] = value
+    * ch[1] = min limit
+    * ch[2] = max limit
+    */
+
+   inst = emit(vt, n->Children[0], prog);
+
+   /* If lower limit == 0.0 and upper limit == 1.0,
+    *    set prev instruction's SaturateMode field to SATURATE_ZERO_ONE.
+    * Else,
+    *    emit OPCODE_MIN, OPCODE_MAX sequence.
+    */
+#if 0
+   /* XXX this isn't quite finished yet */
+   if (n->Children[1]->Opcode == IR_FLOAT &&
+       n->Children[1]->Value[0] == 0.0 &&
+       n->Children[1]->Value[1] == 0.0 &&
+       n->Children[1]->Value[2] == 0.0 &&
+       n->Children[1]->Value[3] == 0.0 &&
+       n->Children[2]->Opcode == IR_FLOAT &&
+       n->Children[2]->Value[0] == 1.0 &&
+       n->Children[2]->Value[1] == 1.0 &&
+       n->Children[2]->Value[2] == 1.0 &&
+       n->Children[2]->Value[3] == 1.0) {
+      if (!inst) {
+         inst = prev_instruction(prog);
+      }
+      if (inst && inst->Opcode != OPCODE_NOP) {
+         /* and prev instruction's DstReg matches n->Children[0]->Store */
+         inst->SaturateMode = SATURATE_ZERO_ONE;
+         n->Store = n->Children[0]->Store;
+         return inst;
+      }
+   }
+#endif
+
+   if (!n->Store)
+      if (!alloc_temp_storage(vt, n, n->Children[0]->Store->Size))
+         return NULL;
+
+   emit(vt, n->Children[1], prog);
+   emit(vt, n->Children[2], prog);
+
+   /* tmp = max(ch[0], ch[1]) */
+   inst = new_instruction(prog, OPCODE_MAX);
+   storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+   storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
+   storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
+
+   /* tmp = min(tmp, ch[2]) */
+   inst = new_instruction(prog, OPCODE_MIN);
+   storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+   storage_to_src_reg(&inst->SrcReg[0], n->Store);
+   storage_to_src_reg(&inst->SrcReg[1], n->Children[2]->Store);
+
+   return inst;
+}
+
 
 static struct prog_instruction *
 emit_negation(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
@@ -800,6 +883,9 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    /* lhs */
    emit(vt, n->Children[0], prog);
 
+   assert(!n->Store);
+   n->Store = n->Children[0]->Store;
+
 #if PEEPHOLE_OPTIMIZATIONS
    if (inst && _slang_is_temp(vt, n->Children[1]->Store)) {
       /* Peephole optimization:
@@ -850,8 +936,6 @@ emit_move(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
                                                 srcAnnot, NULL, NULL);
       }
       free_temp_storage(vt, n->Children[1]);
-      assert(!n->Store);
-      n->Store = n->Children[0]->Store; /*XXX new */
       return inst;
    }
 }
@@ -1022,6 +1106,8 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    /* trinary operators */
    case IR_LRP:
       return emit_arith(vt, n, prog);
+   case IR_CLAMP:
+      return emit_clamp(vt, n, prog);
    case IR_TEX:
    case IR_TEXB:
    case IR_TEXP:

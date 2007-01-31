@@ -977,51 +977,37 @@ vec4 max(const vec4 a, const float b)
 
 float clamp(const float val, const float minVal, const float maxVal)
 {
-   float t;
-   __asm vec4_max t, val, minVal;
-   __asm vec4_min __retVal.x, t, maxVal;
+   __asm vec4_clamp __retVal, val, minVal, maxVal;
 }
 
 vec2 clamp(const vec2 val, const float minVal, const float maxVal)
 {
-   vec2 t;
-   __asm vec4_max t.xy, val.xy, minVal.xx;
-   __asm vec4_min __retVal.xy, t.xy, maxVal.xx;
+   __asm vec4_clamp __retVal, val, minVal, maxVal;
 }
 
 vec3 clamp(const vec3 val, const float minVal, const float maxVal)
 {
-   vec3 t;
-   __asm vec4_max t.xyz, val.xyz, minVal.xxx;
-   __asm vec4_min __retVal.xyz, t.xyz, maxVal.xxx;
+   __asm vec4_clamp __retVal, val, minVal, maxVal;
 }
 
 vec4 clamp(const vec4 val, const float minVal, const float maxVal)
 {
-   vec4 t;
-   __asm vec4_max t, val, minVal.xxxx;
-   __asm vec4_min __retVal, t, maxVal.xxxx;
+   __asm vec4_clamp __retVal, val, minVal, maxVal;
 }
 
 vec2 clamp(const vec2 val, const vec2 minVal, const vec2 maxVal)
 {
-   vec2 t;
-   __asm vec4_max t.xy, val.xy, minVal.xy;
-   __asm vec4_min __retVal.xy, t.xy, maxVal.xxxx;
+   __asm vec4_clamp __retVal, val, minVal, maxVal;
 }
 
 vec3 clamp(const vec3 val, const vec3 minVal, const vec3 maxVal)
 {
-   vec3 t;
-   __asm vec4_max t.xyz, val.xyz, minVal.xyz;
-   __asm vec4_min __retVal.xyz, t.xyz, maxVal.xxxx;
+   __asm vec4_clamp __retVal, val, minVal, maxVal;
 }
 
 vec4 clamp(const vec4 val, const vec4 minVal, const vec4 maxVal)
 {
-   vec4 t;
-   __asm vec4_max t, val, minVal;
-   __asm vec4_min __retVal, t, maxVal;
+   __asm vec4_clamp __retVal, val, minVal, maxVal;
 }
 
 

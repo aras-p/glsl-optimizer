@@ -64,6 +64,7 @@ typedef enum
    IR_DOT3,
    IR_CROSS,   /* vec3 cross product */
    IR_LRP,
+   IR_CLAMP,
    IR_MIN,
    IR_MAX,
    IR_SEQUAL,  /* Set if args are equal */

@@ -458,6 +458,7 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_lrp", IR_LRP, 1, 3 },
    { "vec4_min", IR_MIN, 1, 2 },
    { "vec4_max", IR_MAX, 1, 2 },
+   { "vec4_clamp", IR_CLAMP, 1, 3 },
    { "vec4_seq", IR_SEQ, 1, 2 },
    { "vec4_sge", IR_SGE, 1, 2 },
    { "vec4_sgt", IR_SGT, 1, 2 },
@@ -1394,7 +1395,8 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    tree = new_seq(tree, bra);
 
    body = _slang_gen_operation(A, &oper->children[1]);
-   tree = new_seq(tree, body);
+   if (body)
+      tree = new_seq(tree, body);
 
    jump = new_jump(startAtom);
    tree = new_seq(tree, jump);
@@ -2167,7 +2169,10 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 
    case slang_oper_block_no_new_scope:
       /* list of operations */
+      /*
       assert(oper->num_children > 0);
+      */
+      if (oper->num_children > 0)
       {
          slang_ir_node *n, *tree = NULL;
          GLuint i;
@@ -2434,6 +2439,9 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 
    case slang_oper_none:
       return NULL;
+   case slang_oper_void:
+      return NULL;
+
    default:
       printf("Unhandled node type %d\n", oper->type);
       abort();
