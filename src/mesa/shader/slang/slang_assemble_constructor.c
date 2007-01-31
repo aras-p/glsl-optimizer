@@ -31,7 +31,7 @@
 #include "imports.h"
 #include "slang_assemble.h"
 #include "slang_storage.h"
-
+#include "prog_instruction.h"
 
 
 /**
@@ -46,9 +46,14 @@ _slang_is_swizzle(const char *field, GLuint rows, slang_swizzle * swz)
    GLuint i;
    GLboolean xyzw = GL_FALSE, rgba = GL_FALSE, stpq = GL_FALSE;
 
-   /* init to default */
+   /* init to undefined.
+    * We rely on undefined/nil values to distinguish between
+    * regular swizzles and writemasks.
+    * For example, the swizzle ".xNNN" is the writemask ".x".
+    * That's different than the swizzle ".xxxx".
+    */
    for (i = 0; i < 4; i++)
-      swz->swizzle[i] = i;
+      swz->swizzle[i] = SWIZZLE_NIL;
 
    /* the swizzle can be at most 4-component long */
    swz->num_components = slang_string_length(field);
@@ -113,12 +118,6 @@ _slang_is_swizzle(const char *field, GLuint rows, slang_swizzle * swz)
    if ((xyzw && rgba) || (xyzw && stpq) || (rgba && stpq))
       return GL_FALSE;
 
-   if (swz->num_components == 1) {
-      /* smear */
-      swz->swizzle[3] = 
-      swz->swizzle[2] = 
-      swz->swizzle[1] = swz->swizzle[0];
-   }
    return GL_TRUE;
 }
 

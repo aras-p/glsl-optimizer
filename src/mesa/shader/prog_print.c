@@ -86,7 +86,7 @@ program_file_string(enum register_file f)
 static const char *
 swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
 {
-   static const char swz[] = "xyzw01";
+   static const char swz[] = "xyzw01?!";
    static char s[20];
    GLuint i = 0;
 

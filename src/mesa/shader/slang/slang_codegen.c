@@ -609,42 +609,6 @@ new_var(slang_assemble_ctx *A, slang_operation *oper, slang_atom name)
 }
 
 
-static GLboolean
-slang_is_writemask(const char *field, GLuint *mask)
-{
-   const GLuint n = 4;
-   GLuint i, bit, c = 0;
-
-   for (i = 0; i < n && field[i]; i++) {
-      switch (field[i]) {
-      case 'x':
-      case 'r':
-         bit = WRITEMASK_X;
-         break;
-      case 'y':
-      case 'g':
-         bit = WRITEMASK_Y;
-         break;
-      case 'z':
-      case 'b':
-         bit = WRITEMASK_Z;
-         break;
-      case 'w':
-      case 'a':
-         bit = WRITEMASK_W;
-         break;
-      default:
-         return GL_FALSE;
-      }
-      if (c & bit)
-         return GL_FALSE;
-      c |= bit;
-   }
-   *mask = c;
-   return GL_TRUE;
-}
-
-
 /**
  * Check if the given function is really just a wrapper for a
  * basic assembly instruction.
@@ -1961,6 +1925,111 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
 
 
 /**
+ * Some write-masked assignments are simple, but others are hard.
+ * Simple example:
+ *    vec3 v;
+ *    v.xy = vec2(a, b);
+ * Hard example:
+ *    vec3 v;
+ *    v.yz = vec2(a, b);
+ * this would have to be transformed/swizzled into:
+ *    v.yz = vec2(a, b).*xy*         (* = don't care)
+ * Instead, we'll effectively do this:
+ *    v.y = vec2(a, b).xxxx;
+ *    v.z = vec2(a, b).yyyy;
+ *
+ */
+static GLboolean
+_slang_simple_writemask(GLuint writemask)
+{
+   switch (writemask) {
+   case WRITEMASK_X:
+   case WRITEMASK_Y:
+   case WRITEMASK_Z:
+   case WRITEMASK_W:
+   case WRITEMASK_XY:
+   case WRITEMASK_XYZ:
+   case WRITEMASK_XYZW:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
+/**
+ * Convert the given swizzle into a writemask.  In some cases this
+ * is trivial, in other cases, we'll need to also swizzle the right
+ * hand side to put components in the right places.
+ * \param swizzle  the incoming swizzle
+ * \param writemaskOut  returns the writemask
+ * \param swizzleOut  swizzle to apply to the right-hand-side
+ * \return GL_FALSE for simple writemasks, GL_TRUE for non-simple
+ */
+static GLboolean
+swizzle_to_writemask(GLuint swizzle,
+                     GLuint *writemaskOut, GLuint *swizzleOut)
+{
+   GLuint mask = 0x0, newSwizzle[4];
+   GLint i, size;
+
+   /* make new dst writemask, compute size */
+   for (i = 0; i < 4; i++) {
+      const GLuint swz = GET_SWZ(swizzle, i);
+      if (swz == SWIZZLE_NIL) {
+         /* end */
+         break;
+      }
+      assert(swz >= 0 && swz <= 3);
+      mask |= (1 << swz);
+   }
+   assert(mask <= 0xf);
+   size = i;  /* number of components in mask/swizzle */
+
+   *writemaskOut = mask;
+
+   /* make new src swizzle, by inversion */
+   for (i = 0; i < 4; i++) {
+      newSwizzle[i] = i; /*identity*/
+   }
+   for (i = 0; i < size; i++) {
+      const GLuint swz = GET_SWZ(swizzle, i);
+      newSwizzle[swz] = i;
+   }
+   *swizzleOut = MAKE_SWIZZLE4(newSwizzle[0],
+                               newSwizzle[1],
+                               newSwizzle[2],
+                               newSwizzle[3]);
+
+   if (_slang_simple_writemask(mask)) {
+      if (size >= 1)
+         assert(GET_SWZ(*swizzleOut, 0) == SWIZZLE_X);
+      if (size >= 2)
+         assert(GET_SWZ(*swizzleOut, 1) == SWIZZLE_Y);
+      if (size >= 3)
+         assert(GET_SWZ(*swizzleOut, 2) == SWIZZLE_Z);
+      if (size >= 4)
+         assert(GET_SWZ(*swizzleOut, 3) == SWIZZLE_W);
+      return GL_TRUE;
+   }
+   else
+      return GL_FALSE;
+}
+
+
+static slang_ir_node *
+_slang_gen_swizzle(slang_ir_node *child, GLuint swizzle)
+{
+   slang_ir_node *n = new_node(IR_SWIZZLE, child, NULL);
+   if (n) {
+      n->Store = _slang_new_ir_storage(PROGRAM_UNDEFINED, -1, -1);
+      n->Store->Swizzle = swizzle;
+   }
+   return n;
+}
+
+
+/**
  * Generate IR tree for an assignment (=).
  */
 static slang_ir_node *
@@ -1982,46 +2051,27 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
       return n;
    }
    else {
-      slang_operation *lhs = &oper->children[0];
-      slang_ir_node *n, *c0, *c1;
-      GLuint mask = WRITEMASK_XYZW;
-      if (lhs->type == slang_oper_field) {
-         /* XXXX this is a hack! */
-         /* writemask */
-         if (!slang_is_writemask((char *) lhs->a_id, &mask))
-            mask = WRITEMASK_XYZW;
-         lhs = &lhs->children[0];
-      }
-      c0 = _slang_gen_operation(A, lhs);
-      c1 = _slang_gen_operation(A, &oper->children[1]);
-      if (c0 && c1) {
-         n = new_node(IR_MOVE, c0, c1);
-         /*assert(c1->Opcode != IR_SEQ);*/
-         if (c0->Writemask != WRITEMASK_XYZW)
-            /* XXX this is a hack! */
-            n->Writemask = c0->Writemask;
-         else
-            n->Writemask = mask;
+      slang_ir_node *n, *lhs, *rhs;
+      lhs = _slang_gen_operation(A, &oper->children[0]);
+      rhs = _slang_gen_operation(A, &oper->children[1]);
+      if (lhs && rhs) {
+         /* convert lhs swizzle into writemask */
+         GLuint writemask, newSwizzle;
+         if (!swizzle_to_writemask(lhs->Store->Swizzle,
+                                   &writemask, &newSwizzle)) {
+            /* Non-simple writemask, need to swizzle right hand side in
+             * order to put components into the right place.
+             */
+            rhs = _slang_gen_swizzle(rhs, newSwizzle);
+         }
+         n = new_node(IR_MOVE, lhs, rhs);
+         n->Writemask = writemask;
          return n;
       }
       else {
          return NULL;
       }
    }
-}
-
-
-static slang_ir_node *
-_slang_gen_swizzle(slang_ir_node *child, GLuint swizzle)
-{
-   slang_ir_node *n = new_node(IR_SWIZZLE, child, NULL);
-   if (n) {
-      n->Store = _slang_new_ir_storage(child->Store->File,
-                                       child->Store->Index,
-                                       child->Store->Size);
-      n->Store->Swizzle = swizzle;
-   }
-   return n;
 }
 
 
@@ -2101,13 +2151,17 @@ _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
       index = (GLint) oper->children[1].literal[0];
       if (oper->children[1].type != slang_oper_literal_int ||
           index >= max) {
-         RETURN_ERROR("Invalid array index", 0);
+         RETURN_ERROR("Invalid array index for vector type", 0);
       }
 
       n = _slang_gen_operation(A, &oper->children[0]);
       if (n) {
          /* use swizzle to access the element */
-         n = _slang_gen_swizzle(n, SWIZZLE_X + index);
+         GLuint swizzle = MAKE_SWIZZLE4(SWIZZLE_X + index,
+                                        SWIZZLE_NIL,
+                                        SWIZZLE_NIL,
+                                        SWIZZLE_NIL);
+         n = _slang_gen_swizzle(n, swizzle);
          /*n->Store = _slang_clone_ir_storage_swz(n->Store, */
          n->Writemask = WRITEMASK_X << index;
       }

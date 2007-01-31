@@ -49,6 +49,7 @@
 #define SWIZZLE_W    3
 #define SWIZZLE_ZERO 4   /**< For SWZ instruction only */
 #define SWIZZLE_ONE  5   /**< For SWZ instruction only */
+#define SWIZZLE_NIL  7   /**< used during shader code gen (undefined value) */
 /*@}*/
 
 #define MAKE_SWIZZLE4(a,b,c,d) (((a)<<0) | ((b)<<3) | ((c)<<6) | ((d)<<9))

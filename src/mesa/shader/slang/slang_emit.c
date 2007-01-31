@@ -424,7 +424,12 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st)
    if (st->Swizzle != SWIZZLE_NOOP)
       src->Swizzle = st->Swizzle;
    else
-      src->Swizzle = defaultSwizzle[st->Size - 1];
+      src->Swizzle = defaultSwizzle[st->Size - 1]; /*XXX really need this?*/
+
+   assert(GET_SWZ(src->Swizzle, 0) != SWIZZLE_NIL);
+   assert(GET_SWZ(src->Swizzle, 1) != SWIZZLE_NIL);
+   assert(GET_SWZ(src->Swizzle, 2) != SWIZZLE_NIL);
+   assert(GET_SWZ(src->Swizzle, 3) != SWIZZLE_NIL);
 }
 
 
@@ -975,6 +980,57 @@ emit_cond(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 }
 
 
+/**
+ * Remove any SWIZZLE_NIL terms from given swizzle mask (smear prev term).
+ * Ex: fix_swizzle("zyNN") -> "zyyy"
+ */
+static GLuint
+fix_swizzle(GLuint swizzle)
+{
+   GLuint swz[4], i;
+   for (i = 0; i < 4; i++) {
+      swz[i] = GET_SWZ(swizzle, i);
+      if (swz[i] == SWIZZLE_NIL) {
+         swz[i] = swz[i - 1];
+      }
+   }
+   return MAKE_SWIZZLE4(swz[0], swz[1], swz[2], swz[3]);
+}
+
+
+static struct prog_instruction *
+emit_swizzle(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
+{
+   GLuint swizzle;
+
+   /* swizzled storage access */
+   (void) emit(vt, n->Children[0], prog);
+
+   /* "pull-up" the child's storage info, applying our swizzle info */
+   n->Store->File  = n->Children[0]->Store->File;
+   n->Store->Index = n->Children[0]->Store->Index;
+   n->Store->Size  = n->Children[0]->Store->Size;
+   /*n->Var = n->Children[0]->Var; XXX for debug */
+   assert(n->Store->Index >= 0);
+
+   swizzle = fix_swizzle(n->Store->Swizzle);
+#ifdef DEBUG
+   {
+      GLuint s = n->Children[0]->Store->Swizzle;
+      assert(GET_SWZ(s, 0) != SWIZZLE_NIL);
+      assert(GET_SWZ(s, 1) != SWIZZLE_NIL);
+      assert(GET_SWZ(s, 2) != SWIZZLE_NIL);
+      assert(GET_SWZ(s, 3) != SWIZZLE_NIL);
+   }
+#endif
+
+   /* apply this swizzle to child's swizzle to get composed swizzle */
+   n->Store->Swizzle = swizzle_swizzle(n->Children[0]->Store->Swizzle,
+                                       swizzle);
+   return NULL;
+}
+
+
 static struct prog_instruction *
 emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 {
@@ -1060,16 +1116,7 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       return NULL; /* no instruction */
 
    case IR_SWIZZLE:
-      /* swizzled storage access */
-      (void) emit(vt, n->Children[0], prog);
-      /* "pull-up" the child's storage info, applying our swizzle info */
-      n->Store->File  = n->Children[0]->Store->File;
-      n->Store->Index = n->Children[0]->Store->Index;
-      n->Store->Size  = n->Children[0]->Store->Size;
-      assert(n->Store->Index >= 0);
-      n->Store->Swizzle = swizzle_swizzle(n->Children[0]->Store->Swizzle,
-                                          n->Store->Swizzle);
-      return NULL;
+      return emit_swizzle(vt, n, prog);
 
    /* Simple arithmetic */
    /* unary */
